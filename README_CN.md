@@ -76,4 +76,4 @@ CODESIGN_IDENTITY="Apple Development: Your Name (TEAMID)" ./build.sh
 
 ## 其他
 
-主代码在 [`prototype/WindowShade.swift`](prototype/WindowShade.swift)。历史背景和设计想法见 [`WindowShade_CN.md`](WindowShade_CN.md) / [`WindowShade.md`](WindowShade.md)。
+主代码在 [`prototype/WindowShade.swift`](prototype/WindowShade.swift)。历史背景和设计想法见 [`WindowShade.md`](WindowShade.md)。
