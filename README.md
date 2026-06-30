@@ -4,11 +4,15 @@
 
 <p align="center">
   <strong>WindowShade</strong><br>
-  Roll a macOS window up without sending it away.
+  Bring the classic Mac OS window shade back to macOS.
 </p>
 
 <p align="center">
   <a href="README.md">English</a> · <a href="README_CN.md">简体中文</a>
+</p>
+
+<p align="center">
+  <a href="https://www.bilibili.com/video/BV1m5Kf6bE6k/">Demo video</a>
 </p>
 
 <p align="center">
@@ -19,21 +23,28 @@
 
 WindowShade is a small macOS prototype that brings back a classic Mac gesture: fold a window into a thin strip, then unfold it from the same spot.
 
-Press `Control + Command + C`, or double-click a title bar. The window gets out of the way without disappearing into the Dock.
+Sometimes you only want to peek behind a window. You do not want to close the document, hide the whole app, or send the window to the Dock and find it again. WindowShade adds that missing middle state: the content steps back, while the title, position, and way back stay where they were.
 
 ## Current state
 
-This is a prototype, not a polished release.
+This is a prototype, not a polished release. Today it can:
 
-It can:
-
-- live in the menu bar, without a Dock icon;
-- fold and unfold the current window;
-- restore folded windows from the menu bar menu;
-- show either captured window chrome or a standard proxy title bar;
-- offer basic preview, arranging, sound, and permission settings.
+- fold and unfold the current window with `Control + Command + C`;
+- fold a window by double-clicking its title bar;
+- keep the system title-bar zoom behavior available through triple-click;
+- keep a title-bar-like strip in place instead of sending the window to the Dock;
+- preview a folded window from its strip, then restore it from the strip, menu bar, or `Control + Command + 1...9`;
+- show folded windows in the menu bar and unfold everything at once;
+- move other apps into a top Focus Shelf when you want to keep one app in front;
+- switch between captured window chrome and a standard proxy title bar;
+- start at login;
+- handle a few special cases, including Quick Look, Stickies, WeChat, and Adobe apps.
 
 Some apps still need special handling. Full-screen spaces, custom title bars, Stage Manager, and multi-display setups can break the spell.
+
+## How it works
+
+WindowShade uses Accessibility APIs to find the current window, ScreenCaptureKit to capture the top of it, and an AppKit overlay as the folded strip. The real window may be parked offscreen, hidden, or minimized underneath. To the user, it stays folded in place.
 
 ## Permissions
 
@@ -63,6 +74,4 @@ CODESIGN_IDENTITY="Apple Development: Your Name (TEAMID)" ./build.sh
 
 ## Notes
 
-The main code is in [`prototype/WindowShade.swift`](prototype/WindowShade.swift).
-
-For the history and design thinking behind the prototype, see [`WindowShade.md`](WindowShade.md).
+The main code is in [`prototype/WindowShade.swift`](prototype/WindowShade.swift). For the history and design notes, see [`WindowShade.md`](WindowShade.md).

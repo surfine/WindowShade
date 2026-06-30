@@ -4,11 +4,15 @@
 
 <p align="center">
   <strong>WindowShade</strong><br>
-  把 macOS 窗口原地卷起来。
+  把 classic Mac OS 的窗口卷帘带回 macOS。
 </p>
 
 <p align="center">
   <a href="README.md">English</a> · <a href="README_CN.md">简体中文</a>
+</p>
+
+<p align="center">
+  <a href="https://www.bilibili.com/video/BV1m5Kf6bE6k/">演示视频</a>
 </p>
 
 <p align="center">
@@ -19,21 +23,30 @@
 
 WindowShade 是一个 macOS 小原型，想把 classic Mac OS 里的窗口卷帘手感带回来。
 
-按 `Control + Command + C`，或者双击标题栏。窗口会收成一条细条，之后还能从原来的位置展开。细条还留在原地，桌面也不用重排。
+有时候你只是想看一眼后面的窗口。不想关掉文档，不想隐藏整个应用，也不想把窗口最小化到 Dock 之后再找回来。
+
+WindowShade 做的事情很小：窗口内容先收起，标题、位置和恢复入口还留在原处。
 
 ## 现在能做什么
 
-先说清楚：这还不是正式发布版。
-
-现在这版主要做了这些事：
+先说清楚：这还不是正式发布版。现在这版已经能做这些事：
 
 - 常驻菜单栏，不出现在 Dock；
-- 折叠和展开当前窗口；
-- 从菜单栏列表里找回已折叠窗口；
-- 使用真实窗口顶部截图，或标准代理标题栏；
-- 提供基础预览、整理、音效和权限设置。
+- `Control + Command + C` 折叠 / 展开当前窗口；
+- 双击标题栏卷起窗口内容，三击标题栏交还系统缩放；
+- 折叠后留一条标题栏入口，不把窗口送进 Dock；
+- 单击卷帘条看预览，也能从原地、菜单栏或 `Control + Command + 1...9` 找回来；
+- 菜单栏能查看已折叠窗口，也能一次性全部展开；
+- 专注 shelf 可以把其他 app 收到屏幕顶部；
+- 在原貌卷帘和标准标题栏之间切换；
+- 登录时自动启动；
+- 对快速预览、便笺、微信、Adobe 应用做了一些兼容处理。
 
 有些地方还会露馅。全屏空间、自绘标题栏、Stage Manager、多显示器环境，都需要继续磨。
+
+## 大概怎么做的
+
+它用 Accessibility API 找到当前窗口，用 ScreenCaptureKit 截取窗口顶部，再生成一条 AppKit 覆盖层作为卷帘条。真实窗口会被移到屏幕外、隐藏或最小化。用户看到的效果是：窗口还在原处，只是卷起来了。
 
 ## 权限
 
@@ -63,6 +76,4 @@ CODESIGN_IDENTITY="Apple Development: Your Name (TEAMID)" ./build.sh
 
 ## 其他
 
-主代码在 [`prototype/WindowShade.swift`](prototype/WindowShade.swift)。
-
-历史背景和设计想法见 [`WindowShade.md`](WindowShade.md)。
+主代码在 [`prototype/WindowShade.swift`](prototype/WindowShade.swift)。历史背景和设计想法见 [`WindowShade.md`](WindowShade.md)。
