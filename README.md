@@ -12,11 +12,11 @@
 </p>
 
 <p align="center">
-  <a href="https://www.bilibili.com/video/BV1m5Kf6bE6k/">Demo video</a>
-</p>
-
-<p align="center">
-  <img src="assets/windowshade-hero.png" alt="WindowShade rolling windows into title bars" width="900"/>
+  <a href="https://www.bilibili.com/video/BV1m5Kf6bE6k/" title="Watch the demo video">
+    <img src="assets/windowshade-hero.png" alt="Watch the WindowShade demo video" width="900"/>
+  </a>
+  <br>
+  <a href="https://www.bilibili.com/video/BV1m5Kf6bE6k/">Watch the demo video</a>
 </p>
 
 ---

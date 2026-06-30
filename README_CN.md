@@ -12,11 +12,11 @@
 </p>
 
 <p align="center">
-  <a href="https://www.bilibili.com/video/BV1m5Kf6bE6k/">演示视频</a>
-</p>
-
-<p align="center">
-  <img src="assets/windowshade-hero.png" alt="WindowShade 把窗口卷成标题栏" width="900"/>
+  <a href="https://www.bilibili.com/video/BV1m5Kf6bE6k/" title="观看演示视频">
+    <img src="assets/windowshade-hero.png" alt="观看 WindowShade 演示视频" width="900"/>
+  </a>
+  <br>
+  <a href="https://www.bilibili.com/video/BV1m5Kf6bE6k/">观看演示视频</a>
 </p>
 
 ---
