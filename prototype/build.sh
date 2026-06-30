@@ -12,7 +12,7 @@ APP="WindowShade.app"
 BIN="$APP/Contents/MacOS/WindowShade"
 RES="$APP/Contents/Resources"
 TMP_BIN="windowshade"
-MODULE_CACHE="$(cd .. && pwd)/.build/module-cache"
+MODULE_CACHE="$(cd .. && pwd -P)/.build/module-cache-public"
 IDENTITY="${CODESIGN_IDENTITY:--}"
 
 mkdir -p "$APP/Contents/MacOS" "$RES" "$MODULE_CACHE"

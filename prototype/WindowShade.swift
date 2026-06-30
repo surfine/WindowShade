@@ -111,6 +111,9 @@ func _AXUIElementGetWindow(_ element: AXUIElement, _ windowID: UnsafeMutablePoin
 private typealias SLSMainConnectionIDFunction = @convention(c) () -> Int32
 private typealias SLSMoveWindowWithGroupFunction = @convention(c) (Int32, UInt32, UnsafeMutablePointer<CGPoint>) -> Int32
 private typealias SLSReassociateWindowsSpacesByGeometryFunction = @convention(c) (Int32, CFArray) -> Int32
+private typealias SLSCopySpacesForWindowsFunction = @convention(c) (Int32, Int32, CFArray) -> CFArray?
+private typealias SLSMoveWindowsToManagedSpaceFunction = @convention(c) (Int32, CFArray, UInt64) -> Void
+private typealias SLSManagedDisplayGetCurrentSpaceFunction = @convention(c) (Int32, CFString) -> UInt64
 private typealias SLSGetWindowAlphaFunction = @convention(c) (Int32, UInt32, UnsafeMutablePointer<Float>) -> Int32
 private typealias SLSSetWindowAlphaFunction = @convention(c) (Int32, UInt32, Float) -> Int32
 
@@ -120,6 +123,9 @@ final class PrivateSLSWindowMover {
     private let mainConnectionID: SLSMainConnectionIDFunction?
     private let moveWindowWithGroup: SLSMoveWindowWithGroupFunction?
     private let reassociateWindowsSpacesByGeometry: SLSReassociateWindowsSpacesByGeometryFunction?
+    private let copySpacesForWindows: SLSCopySpacesForWindowsFunction?
+    private let moveWindowsToManagedSpace: SLSMoveWindowsToManagedSpaceFunction?
+    private let managedDisplayGetCurrentSpace: SLSManagedDisplayGetCurrentSpaceFunction?
     private let getWindowAlpha: SLSGetWindowAlphaFunction?
     private let setWindowAlpha: SLSSetWindowAlphaFunction?
 
@@ -141,6 +147,9 @@ final class PrivateSLSWindowMover {
             mainConnectionID = nil
             moveWindowWithGroup = nil
             reassociateWindowsSpacesByGeometry = nil
+            copySpacesForWindows = nil
+            moveWindowsToManagedSpace = nil
+            managedDisplayGetCurrentSpace = nil
             getWindowAlpha = nil
             setWindowAlpha = nil
             return
@@ -152,6 +161,22 @@ final class PrivateSLSWindowMover {
                                                                to: SLSReassociateWindowsSpacesByGeometryFunction.self)
         } else {
             reassociateWindowsSpacesByGeometry = nil
+        }
+        if let copySpacesSymbol = dlsym(handle, "SLSCopySpacesForWindows") {
+            copySpacesForWindows = unsafeBitCast(copySpacesSymbol, to: SLSCopySpacesForWindowsFunction.self)
+        } else {
+            copySpacesForWindows = nil
+        }
+        if let moveSpacesSymbol = dlsym(handle, "SLSMoveWindowsToManagedSpace") {
+            moveWindowsToManagedSpace = unsafeBitCast(moveSpacesSymbol, to: SLSMoveWindowsToManagedSpaceFunction.self)
+        } else {
+            moveWindowsToManagedSpace = nil
+        }
+        if let currentSpaceSymbol = dlsym(handle, "SLSManagedDisplayGetCurrentSpace") {
+            managedDisplayGetCurrentSpace = unsafeBitCast(currentSpaceSymbol,
+                                                          to: SLSManagedDisplayGetCurrentSpaceFunction.self)
+        } else {
+            managedDisplayGetCurrentSpace = nil
         }
         if let getAlphaSymbol = dlsym(handle, "SLSGetWindowAlpha") {
             getWindowAlpha = unsafeBitCast(getAlphaSymbol, to: SLSGetWindowAlphaFunction.self)
@@ -184,6 +209,43 @@ final class PrivateSLSWindowMover {
             _ = reassociateWindowsSpacesByGeometry(cid, windows)
         }
         return result == 0
+    }
+
+    @discardableResult
+    func reassociateWindowByGeometry(id: CGWindowID) -> Bool {
+        guard let mainConnectionID, let reassociateWindowsSpacesByGeometry else { return false }
+        let windows = [NSNumber(value: UInt32(id))] as CFArray
+        return reassociateWindowsSpacesByGeometry(mainConnectionID(), windows) == 0
+    }
+
+    func windowSpace(id: CGWindowID) -> UInt64? {
+        guard let mainConnectionID, let copySpacesForWindows else { return nil }
+        let windows = [NSNumber(value: UInt32(id))] as CFArray
+        guard let spaces = copySpacesForWindows(mainConnectionID(), 0x7, windows) as? [NSNumber],
+              let first = spaces.first else { return nil }
+        let sid = first.uint64Value
+        return sid == 0 ? nil : sid
+    }
+
+    @discardableResult
+    func moveWindow(id: CGWindowID, toSpace sid: UInt64) -> Bool {
+        guard let mainConnectionID, let moveWindowsToManagedSpace else { return false }
+        let cid = mainConnectionID()
+        let windows = [NSNumber(value: UInt32(id))] as CFArray
+        moveWindowsToManagedSpace(cid, windows, sid)
+        if windowSpace(id: id) == sid {
+            return true
+        }
+        _ = reassociateWindowByGeometry(id: id)
+        return windowSpace(id: id) == sid
+    }
+
+    func currentSpace(displayID: CGDirectDisplayID) -> UInt64? {
+        guard let mainConnectionID, let managedDisplayGetCurrentSpace else { return nil }
+        guard let uuid = CGDisplayCreateUUIDFromDisplayID(displayID)?.takeRetainedValue(),
+              let uuidString = CFUUIDCreateString(nil, uuid) else { return nil }
+        let sid = managedDisplayGetCurrentSpace(mainConnectionID(), uuidString)
+        return sid == 0 ? nil : sid
     }
 
     func windowAlpha(id: CGWindowID) -> Float? {
@@ -1394,6 +1456,18 @@ func cgWindowIsVisible(id: CGWindowID, fallbackSize: CGSize) -> Bool? {
     let size = bounds.size.width > 0 && bounds.size.height > 0 ? bounds.size : fallbackSize
     let axPos = CGPoint(x: bounds.minX, y: bounds.minY)
     return windowIsVisible(pos: axPos, size: size)
+}
+
+func currentOnScreenWindowIDs() -> Set<CGWindowID> {
+    let windows = CGWindowListCopyWindowInfo([.optionOnScreenOnly, .excludeDesktopElements],
+                                             kCGNullWindowID) as? [[String: Any]] ?? []
+    return Set(windows.compactMap { info in
+        (info[kCGWindowNumber as String] as? NSNumber).map { CGWindowID($0.uint32Value) }
+    })
+}
+
+func cgWindowIsCurrentlyOnScreen(_ id: CGWindowID) -> Bool {
+    currentOnScreenWindowIDs().contains(id)
 }
 
 func focusedWindow() -> AXUIElement? {
@@ -3342,6 +3416,7 @@ struct ShadeState {
     let originalPosition: CGPoint
     var originalSize: CGSize
     let sourceDisplayID: CGDirectDisplayID?
+    let sourceSpaceID: UInt64?
     let overlay: NSWindow?
     let overlayID: CGWindowID?
     let hide: HideMethod         // 真窗口的隐藏方式：不隐藏 / 挪屏外 / 整体隐藏 / 最小化
@@ -4801,7 +4876,15 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSMenuDelegate {
         translucent ? shadeTranslucentAlpha : 1
     }
 
+    private func shadedEntry(for overlay: NSWindow) -> (CGWindowID, ShadeState)? {
+        shaded.first { $0.value.overlay === overlay }
+    }
+
     private func applyOverlayPresentation(_ overlay: NSWindow, bringForward: Bool) {
+        if let (id, state) = shadedEntry(for: overlay),
+           !enforceOverlaySpaceInvariant(id: id, state: state, reason: "apply-presentation") {
+            return
+        }
         overlay.level = overlayLevel(for: overlay)
         overlay.alphaValue = overlayAlpha
         if bringForward {
@@ -4809,12 +4892,76 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSMenuDelegate {
         }
     }
 
+    private func sourceSpaceIsActive(_ state: ShadeState) -> Bool {
+        guard let sourceSpaceID = state.sourceSpaceID,
+              let sourceDisplayID = state.sourceDisplayID,
+              let activeSpaceID = PrivateSLSWindowMover.shared.currentSpace(displayID: sourceDisplayID) else {
+            return true
+        }
+        return activeSpaceID == sourceSpaceID
+    }
+
+    @discardableResult
+    private func enforceOverlaySpaceInvariant(id: CGWindowID,
+                                              state: ShadeState,
+                                              reason: String) -> Bool {
+        guard let overlay = state.overlay,
+              let overlayID = state.overlayID,
+              let sourceSpaceID = state.sourceSpaceID else { return true }
+
+        let mover = PrivateSLSWindowMover.shared
+        let overlaySpaceID = mover.windowSpace(id: overlayID)
+        if overlaySpaceID == nil {
+            let active = sourceSpaceIsActive(state)
+            if active {
+                if !overlay.isVisible {
+                    overlay.alphaValue = 0
+                    overlay.orderFrontRegardless()
+                    revealPreparedOverlay(overlay)
+                }
+                wlog("space: overlay space unresolved but source active id=\(overlayID) source=\(id) sid=\(sourceSpaceID) reason=\(reason)")
+                return true
+            }
+            overlay.orderOut(nil)
+            wlog("space: overlay hidden while source inactive and overlay space unresolved id=\(overlayID) source=\(id) sid=\(sourceSpaceID) reason=\(reason)")
+            return false
+        }
+
+        if overlaySpaceID == sourceSpaceID {
+            let active = sourceSpaceIsActive(state)
+            if active, !overlay.isVisible {
+                overlay.alphaValue = 0
+                overlay.orderFrontRegardless()
+                if mover.windowSpace(id: overlayID) != sourceSpaceID {
+                    _ = mover.moveWindow(id: overlayID, toSpace: sourceSpaceID)
+                }
+                revealPreparedOverlay(overlay)
+                wlog("space: overlay restored on source space id=\(overlayID) source=\(id) reason=\(reason)")
+            } else if !active, cgWindowIsCurrentlyOnScreen(overlayID) {
+                overlay.orderOut(nil)
+                wlog("space: overlay hidden off source active space id=\(overlayID) source=\(id) sid=\(sourceSpaceID) reason=\(reason)")
+            }
+            return active
+        }
+
+        if mover.moveWindow(id: overlayID, toSpace: sourceSpaceID) {
+            wlog("space: corrected overlay id=\(overlayID) source=\(id) from=\(overlaySpaceID.map(String.init) ?? "-") to=\(sourceSpaceID) reason=\(reason)")
+            return sourceSpaceIsActive(state)
+        }
+
+        overlay.orderOut(nil)
+        wlog("space: invariant hid overlay id=\(overlayID) source=\(id) overlaySpace=\(overlaySpaceID.map(String.init) ?? "-") expected=\(sourceSpaceID) reason=\(reason)")
+        return false
+    }
+
     private func cleanupProxyIfSourceWindowVisible(id: CGWindowID, state: ShadeState,
-                                                   reason: String) -> Bool {
+                                                   reason: String,
+                                                   onScreenWindowIDs: Set<CGWindowID>? = nil) -> Bool {
         guard state.hide != .quickLookClosed,
               let pos = axPosition(state.element),
               let size = axSize(state.element),
-              sourceWindowLooksUserVisible(state: state, pos: pos, size: size) else {
+              sourceWindowLooksUserVisible(state: state, pos: pos, size: size,
+                                           onScreenWindowIDs: onScreenWindowIDs) else {
             return false
         }
 
@@ -4823,10 +4970,13 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSMenuDelegate {
         return true
     }
 
-    private func presentOverlay(_ overlay: NSWindow) {
+    private func prepareOverlayWindowForSpaceAssignment(_ overlay: NSWindow) {
         overlay.level = overlayLevel
         overlay.alphaValue = 0
         overlay.orderFrontRegardless()
+    }
+
+    private func revealPreparedOverlay(_ overlay: NSWindow) {
         NSAnimationContext.runAnimationGroup { context in
             context.duration = 0.12
             context.timingFunction = CAMediaTimingFunction(name: .easeOut)
@@ -4848,11 +4998,17 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSMenuDelegate {
     }
 
     private func refreshOverlayPresentation(bringForward: Bool = false) {
+        let onScreenIDs = currentOnScreenWindowIDs()
         for (id, state) in Array(shaded) {
-            if cleanupProxyIfSourceWindowVisible(id: id, state: state, reason: "refresh-presentation") {
+            if cleanupProxyIfSourceWindowVisible(id: id, state: state,
+                                                 reason: "refresh-presentation",
+                                                 onScreenWindowIDs: onScreenIDs) {
                 continue
             }
             if let overlay = state.overlay {
+                guard enforceOverlaySpaceInvariant(id: id, state: state, reason: "refresh-presentation") else {
+                    continue
+                }
                 applyOverlayPresentation(overlay, bringForward: bringForward)
             }
         }
@@ -6015,6 +6171,19 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSMenuDelegate {
         return ShadePlan(mode: mode, policy: policy, reason: reason)
     }
 
+    private func resolvedSourceSpaceID(windowID id: CGWindowID,
+                                       sourceDisplayID: CGDirectDisplayID?,
+                                       profile: WindowChromeProfile) -> UInt64? {
+        let mover = PrivateSLSWindowMover.shared
+        if profile.isQuickLook,
+           let sourceDisplayID,
+           let activeSpaceID = mover.currentSpace(displayID: sourceDisplayID) {
+            return activeSpaceID
+        }
+        return mover.windowSpace(id: id)
+            ?? sourceDisplayID.flatMap { mover.currentSpace(displayID: $0) }
+    }
+
     // MARK: 折叠
 
     private func shade(_ win: AXUIElement, _ id: CGWindowID,
@@ -6061,7 +6230,10 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSMenuDelegate {
         if profile.isQuickLook, quickLookReopenURL == nil {
             wlog("quicklook: no direct reopen URL; will use Finder Space fallback title=\(title)")
         }
-        wlog(">>> shade id=\(id) app=\(appName) bundle=\(bundleID) mode=\(mode.rawValue) plan=\(plan.reason) policy=\(policy) hasToolbar=\(profile.hasToolbar) adobe=\(profile.adobeProfile.kind.rawValue):\(profile.adobeProfile.reason) standardTitleBarOnly=\(profile.standardTitleBarOnly) toolbarlessStandard=\(profile.toolbarlessStandardTitleBar) preciseChrome=\(profile.preciseChrome) contentBelowTitleBar=\(profile.hasContentBelowTitleBar) axBarH=\(Int(profile.axBarHeight)) hitBarH=\(Int(profile.hitBarHeight))")
+        let sourceDisplayID = displayID(for: screenForAXWindow(pos: pos, size: size))
+        let sourceSpaceID = resolvedSourceSpaceID(windowID: id, sourceDisplayID: sourceDisplayID, profile: profile)
+        let sourceSpaceMode = profile.isQuickLook ? "active-display" : "window"
+        wlog(">>> shade id=\(id) app=\(appName) bundle=\(bundleID) mode=\(mode.rawValue) plan=\(plan.reason) policy=\(policy) sourceDisplay=\(sourceDisplayID.map { String($0) } ?? "-") sourceSpace=\(sourceSpaceID.map { String($0) } ?? "-") sourceSpaceMode=\(sourceSpaceMode) hasToolbar=\(profile.hasToolbar) adobe=\(profile.adobeProfile.kind.rawValue):\(profile.adobeProfile.reason) standardTitleBarOnly=\(profile.standardTitleBarOnly) toolbarlessStandard=\(profile.toolbarlessStandardTitleBar) preciseChrome=\(profile.preciseChrome) contentBelowTitleBar=\(profile.hasContentBelowTitleBar) axBarH=\(Int(profile.axBarHeight)) hitBarH=\(Int(profile.hitBarHeight))")
 
         func installOverlay(_ overlay: NSWindow, mode: ShadeAppearanceMode, previewImage: NSImage?) {
             shadeOperationIDs.remove(id)
@@ -6072,26 +6244,41 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSMenuDelegate {
                                originalPosition: pos, originalSize: size,
                                mode: mode, policy: policy, planReason: plan.reason,
                                stage: .folded)
-            presentOverlay(overlay)
+            prepareOverlayWindowForSpaceAssignment(overlay)
             let oid = cgWindowID(for: overlay)
             if let oid {
                 overlayIDs.insert(oid)
+                if let sourceSpaceID {
+                    if PrivateSLSWindowMover.shared.moveWindow(id: oid, toSpace: sourceSpaceID) {
+                        wlog("space: overlay assigned id=\(oid) source=\(id) sid=\(sourceSpaceID)")
+                    } else if PrivateSLSWindowMover.shared.reassociateWindowByGeometry(id: oid) {
+                        wlog("space: overlay reassociated by geometry id=\(oid) source=\(id)")
+                    } else {
+                        wlog("space: overlay assignment unavailable id=\(oid) source=\(id)")
+                    }
+                } else if PrivateSLSWindowMover.shared.reassociateWindowByGeometry(id: oid) {
+                    wlog("space: overlay reassociated by geometry id=\(oid) source=\(id) sid=-")
+                }
             }
             let observer = (hide == .quickLookClosed || hide == .ownWindowOrderedOut)
                 ? nil
                 : makeRevealObserver(pid: pid, win: win, id: id)
-            let sourceDisplayID = displayID(for: screenForAXWindow(pos: pos, size: size))
-            shaded[id] = ShadeState(element: win, sourceWindowID: id,
-                                    originalPosition: pos, originalSize: size,
-                                    sourceDisplayID: sourceDisplayID,
-                                    overlay: overlay,
-                                    overlayID: oid, hide: hide, pid: pid, bundleID: bundleID,
-                                    appName: appName, title: title, appearanceMode: mode,
-                                    lifecycleStage: .folded,
-                                    previewImage: previewImage,
-                                    quickLookReopenURL: quickLookReopenURL,
-                                    ignoreAppRevealUntil: Date().addingTimeInterval(1.0),
-                                    observer: observer)
+            let state = ShadeState(element: win, sourceWindowID: id,
+                                   originalPosition: pos, originalSize: size,
+                                   sourceDisplayID: sourceDisplayID,
+                                   sourceSpaceID: sourceSpaceID,
+                                   overlay: overlay,
+                                   overlayID: oid, hide: hide, pid: pid, bundleID: bundleID,
+                                   appName: appName, title: title, appearanceMode: mode,
+                                   lifecycleStage: .folded,
+                                   previewImage: previewImage,
+                                   quickLookReopenURL: quickLookReopenURL,
+                                   ignoreAppRevealUntil: Date().addingTimeInterval(1.0),
+                                   observer: observer)
+            shaded[id] = state
+            if enforceOverlaySpaceInvariant(id: id, state: state, reason: "install") {
+                revealPreparedOverlay(overlay)
+            }
             hoverPreviewSuppressedUntil[id] = Date().addingTimeInterval(0.7)
             rejoinFocusStackAfterShadeIfNeeded(id: id, overlay: overlay)
             if autoJoinFocusShelf {
@@ -6133,10 +6320,10 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSMenuDelegate {
             setAXPosition(win, pos)
             let observer = makeRevealObserver(pid: pid, win: win, id: id)
             clearShadeJournal(id: id)
-            let sourceDisplayID = displayID(for: screenForAXWindow(pos: pos, size: size))
             shaded[id] = ShadeState(element: win, sourceWindowID: id,
                                     originalPosition: pos, originalSize: size,
                                     sourceDisplayID: sourceDisplayID,
+                                    sourceSpaceID: sourceSpaceID,
                                     overlay: nil,
                                     overlayID: nil, hide: .none, pid: pid, bundleID: bundleID,
                                     appName: appName, title: title, appearanceMode: mode,
@@ -7256,8 +7443,12 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSMenuDelegate {
         return now.timeIntervalSince(last) >= journalRescueRetryInterval
     }
 
-    private func sourceWindowLooksUserVisible(state: ShadeState, pos: CGPoint, size: CGSize) -> Bool {
+    private func sourceWindowLooksUserVisible(state: ShadeState, pos: CGPoint, size: CGSize,
+                                              onScreenWindowIDs: Set<CGWindowID>? = nil) -> Bool {
         guard windowIsVisible(pos: pos, size: size) else { return false }
+        let sourceOnScreen = onScreenWindowIDs?.contains(state.sourceWindowID)
+            ?? cgWindowIsCurrentlyOnScreen(state.sourceWindowID)
+        guard sourceOnScreen else { return false }
         switch state.hide {
         case .quickLookClosed:
             return false
@@ -7334,6 +7525,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSMenuDelegate {
             return
         }
 
+        let onScreenIDs = currentOnScreenWindowIDs()
         for (id, state) in Array(shaded) {
             guard let size = axSize(state.element) else {
                 if sourceWindowMissingShouldCleanup(id: id, state: state) {
@@ -7344,7 +7536,8 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSMenuDelegate {
             reconcileInvalidCounts.removeValue(forKey: id)
 
             if let pos = axPosition(state.element),
-               sourceWindowLooksUserVisible(state: state, pos: pos, size: size) {
+               sourceWindowLooksUserVisible(state: state, pos: pos, size: size,
+                                            onScreenWindowIDs: onScreenIDs) {
                 if isFocusShelfMember(id: id) {
                     revealFocusShelfMemberFromOutside(id: id, state: state, reason: "reconcile-\(reason)")
                     continue
@@ -7355,6 +7548,9 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSMenuDelegate {
             }
 
             guard let overlay = state.overlay else { continue }
+            if let overlayID = state.overlayID, !onScreenIDs.contains(overlayID) {
+                continue
+            }
             let oldFrame = overlay.frame
             let newFrame = clampedFrame(oldFrame, margin: 8, preferredDisplayID: state.sourceDisplayID)
             if !framesAlmostEqual(oldFrame, newFrame) {
@@ -7397,7 +7593,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSMenuDelegate {
         menuPreviewHoverID = nil
         menuPreviewAnchor = nil
         refreshOverlayPresentation(bringForward: false)
-        reconcileShadedWindows(reason: "space-change")
+        wlog("space: active space changed; overlays enforced in assigned spaces")
     }
 
     @discardableResult

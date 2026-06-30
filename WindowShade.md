@@ -1,7 +1,5 @@
 # WindowShade design notes
 
-[简体中文](WindowShade_CN.md)
-
 WindowShade was a classic Mac OS gesture: double-click a window title bar and the window rolled up, leaving only the title bar behind. Double-click again and it opened back up.
 
 That sounds small, but the detail matters. The window did not leave the desktop. It did not go to the Dock. It stayed where your eyes and hands expected it to be.
