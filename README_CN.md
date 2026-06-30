@@ -11,17 +11,21 @@
   <a href="README.md">English</a> · <a href="README_CN.md">简体中文</a>
 </p>
 
+<p align="center">
+  <img src="assets/windowshade-hero.png" alt="WindowShade 把窗口卷成标题栏" width="900"/>
+</p>
+
 ---
 
-WindowShade 是一个 macOS 小原型，想把 classic Mac OS 里的窗口卷帘手感带回来：窗口折成一条细条，之后还能从原来的位置展开。
+WindowShade 是一个 macOS 小原型，想把 classic Mac OS 里的窗口卷帘手感带回来。
 
-按 `Control + Command + C`，或者双击标题栏。窗口会先让开，但不会跑进 Dock。
+按 `Control + Command + C`，或者双击标题栏。窗口会收成一条细条，之后还能从原来的位置展开。细条还留在原地，桌面也不用重排。
 
 ## 现在能做什么
 
-这还是原型，不是正式发布版。
+先说清楚：这还不是正式发布版。
 
-它现在可以：
+现在这版主要做了这些事：
 
 - 常驻菜单栏，不出现在 Dock；
 - 折叠和展开当前窗口；
@@ -29,16 +33,16 @@ WindowShade 是一个 macOS 小原型，想把 classic Mac OS 里的窗口卷帘
 - 使用真实窗口顶部截图，或标准代理标题栏；
 - 提供基础预览、整理、音效和权限设置。
 
-有些应用还需要单独适配。全屏空间、自绘标题栏、Stage Manager、多显示器环境，都可能让这个幻觉露馅。
+有些地方还会露馅。全屏空间、自绘标题栏、Stage Manager、多显示器环境，都需要继续磨。
 
 ## 权限
 
-WindowShade 会请求两个 macOS 权限：
+WindowShade 会要两个 macOS 权限：
 
 - 辅助功能：用来找到和移动窗口。
 - 屏幕录制：用来截取窗口顶部，生成折叠后的标题栏。
 
-它不会上传窗口内容。本地诊断日志写在 `/tmp/windowshade.log`；日志里可能包含 app 名称、窗口标题和文件路径。
+它不会上传窗口内容。本地诊断日志写在 `/tmp/windowshade.log`。如果你折叠过带文件路径或窗口标题的窗口，日志里可能会出现这些信息。
 
 ## 构建
 

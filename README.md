@@ -11,6 +11,10 @@
   <a href="README.md">English</a> · <a href="README_CN.md">简体中文</a>
 </p>
 
+<p align="center">
+  <img src="assets/windowshade-hero.png" alt="WindowShade rolling windows into title bars" width="900"/>
+</p>
+
 ---
 
 WindowShade is a small macOS prototype that brings back a classic Mac gesture: fold a window into a thin strip, then unfold it from the same spot.
@@ -29,7 +33,7 @@ It can:
 - show either captured window chrome or a standard proxy title bar;
 - offer basic preview, arranging, sound, and permission settings.
 
-Some apps still need special handling. Full-screen spaces, custom title bars, Stage Manager, and multi-display setups can break the illusion.
+Some apps still need special handling. Full-screen spaces, custom title bars, Stage Manager, and multi-display setups can break the spell.
 
 ## Permissions
 
