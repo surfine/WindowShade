@@ -1,42 +1,34 @@
 # WindowShade
 
-WindowShade is a macOS menu bar prototype for rolling a window up in place. It keeps a title-bar-like strip on the desktop, then restores the real window when you need it again.
+WindowShade is a small macOS prototype that rolls a window up in place.
 
-It is inspired by the classic Mac OS WindowShade interaction. The goal is not to replace Dock minimize, Mission Control, Stage Manager, or tiling. It fills a smaller gap: sometimes a window is just in the way, but you still want its position and identity to stay where they were.
+Press `Control + Command + C`, or double-click a title bar, and the window folds into a thin strip. Press it again and the window comes back where it was.
 
-## What it does
+The idea comes from classic Mac OS. Dock minimize, Mission Control, Stage Manager, and tiling all have their place. This is for the smaller moment when a window is simply in the way, and you still want it to come back from the same spot.
 
-- Lives in the menu bar and stays out of the Dock.
-- `Control + Command + C` folds or unfolds the current window.
-- Double-clicking a title bar can fold the window; double-clicking a folded strip unfolds it.
-- Folded windows stay listed in the menu bar menu.
-- `Control + Command + 1...9` restores folded windows by menu order.
-- Includes two visible styles: a screenshot-based native strip and a standard proxy title bar.
-- Provides menu preview, hover preview, arrange/restore commands, sound settings, and permission helpers.
+## What works now
 
-## How it works
+- Menu bar app, no Dock icon.
+- Fold and unfold the current window with `Control + Command + C`.
+- Double-click title bars to fold, double-click folded strips to restore.
+- Restore folded windows from the menu bar menu.
+- Two strip styles: captured window chrome, or a standard proxy title bar.
+- Basic preview, arranging, sound, and permission settings.
 
-The active prototype is [`prototype/WindowShade.swift`](prototype/WindowShade.swift). It uses Accessibility APIs to identify and restore windows, ScreenCaptureKit to capture the original window chrome, and AppKit overlay windows to keep a folded strip in place.
-
-Because modern macOS does not let a third-party app directly redraw another app's window internals, WindowShade uses a proxy approach: it leaves a visible strip behind, then hides, parks, or minimizes the real window as an implementation fallback.
+This is still a prototype. Some apps behave oddly. Full-screen spaces, custom title bars, Stage Manager, and multi-display setups still need care.
 
 ## Permissions
 
-WindowShade needs two macOS permissions:
+WindowShade asks for:
 
-- Accessibility: read, move, focus, and restore windows.
-- Screen Recording: capture the top chrome of a window and previews.
+- Accessibility, so it can find and move windows.
+- Screen Recording, so it can capture the top of a window for the folded strip.
 
-The prototype does not upload window contents. Diagnostic logs are written locally to `/tmp/windowshade.log`; logs may contain app names, window titles, and local file paths from the windows you fold.
+It does not upload window contents. Local diagnostics go to `/tmp/windowshade.log`; those logs can include app names, window titles, and file paths.
 
 ## Build
 
-Requirements:
-
-- macOS 14 or newer
-- Xcode command line tools / Swift compiler
-
-Build a local app bundle:
+You need macOS 14 or newer and the Xcode command line tools.
 
 ```sh
 cd prototype
@@ -44,22 +36,15 @@ cd prototype
 open WindowShade.app
 ```
 
-The public `build.sh` creates `WindowShade.app` and signs it ad-hoc by default. If you want a stable local TCC identity across rebuilds, pass your own signing certificate:
+The build script creates `WindowShade.app` and signs it ad-hoc by default. If you want macOS to keep Accessibility and Screen Recording trust across rebuilds, sign with your own certificate:
 
 ```sh
 cd prototype
 CODESIGN_IDENTITY="Apple Development: Your Name (TEAMID)" ./build.sh
 ```
 
-You can also compile only the executable:
+## More notes
 
-```sh
-cd prototype
-swiftc -O -o windowshade WindowShade.swift   -framework Cocoa -framework Carbon -framework ApplicationServices   -framework ScreenCaptureKit -framework QuartzCore -framework CoreText   -framework ServiceManagement
-```
+The code lives in [`prototype/WindowShade.swift`](prototype/WindowShade.swift).
 
-## Notes
-
-This is a prototype. It uses private or semi-private system behavior in a few places to make the interaction possible on modern macOS. Some apps, full-screen spaces, Stage Manager layouts, custom title bars, and multi-display setups may need special handling.
-
-For design background and historical notes, see [`WindowShade.md`](WindowShade.md).
+For the history and design thinking behind the prototype, see [`WindowShade.md`](WindowShade.md).
