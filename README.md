@@ -21,13 +21,13 @@
 
 ---
 
-WindowShade is a small macOS prototype that brings back a classic Mac gesture: fold a window into a thin strip, then unfold it from the same spot.
+WindowShade is a small macOS utility that brings back a classic Mac gesture: fold a window into a thin strip, then unfold it from the same spot.
 
 Sometimes you only want to peek behind a window. You do not want to close the document, hide the whole app, or send the window to the Dock and find it again. WindowShade adds that missing middle state: the content steps back, while the title, position, and way back stay where they were.
 
 ## Current state
 
-This is a prototype, not a polished release. Today it can:
+This is an early tool, not a polished release. Today it can:
 
 - fold and unfold the current window with `Control + Command + C`;
 - fold a window by double-clicking its title bar;
@@ -40,7 +40,7 @@ This is a prototype, not a polished release. Today it can:
 - start at login;
 - handle a few special cases, including Quick Look, Stickies, WeChat, and Adobe apps.
 
-Some apps still need special handling. Full-screen spaces, custom title bars, Stage Manager, and multi-display setups can break the spell.
+Some window environments still need work, especially full-screen spaces, custom title bars, Stage Manager, and multi-display setups.
 
 ## How it works
 
@@ -74,4 +74,4 @@ CODESIGN_IDENTITY="Apple Development: Your Name (TEAMID)" ./build.sh
 
 ## Notes
 
-The main code is in [`prototype/WindowShade.swift`](prototype/WindowShade.swift). For the history and design notes, see [`WindowShade.md`](WindowShade.md).
+The main code is in [`prototype/WindowShade.swift`](prototype/WindowShade.swift). For the history and design notes, see [`WindowShade.md`](WindowShade.md) / [`WindowShade_CN.md`](WindowShade_CN.md).

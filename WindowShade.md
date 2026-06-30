@@ -1,10 +1,12 @@
 # WindowShade design notes
 
+[简体中文](WindowShade_CN.md)
+
 WindowShade was a classic Mac OS gesture: double-click a window title bar and the window rolled up, leaving only the title bar behind. Double-click again and it opened back up.
 
 That sounds small, but the detail matters. The window did not leave the desktop. It did not go to the Dock. It stayed where your eyes and hands expected it to be.
 
-This prototype is an attempt to rebuild that gesture with the tools modern macOS still gives us.
+This tool is an attempt to rebuild that gesture with the APIs modern macOS still gives us.
 
 ## Why this exists
 
@@ -26,11 +28,11 @@ There is still one first-party trace of the old feeling: Stickies. Its notes can
 
 That is the part worth keeping.
 
-## How the prototype works
+## How the tool works
 
 Modern macOS does not let one app redraw another app's windows directly. WindowShade works around that.
 
-The current prototype:
+The current version:
 
 1. Finds the focused window with Accessibility APIs.
 2. Captures the top of the window with ScreenCaptureKit.
@@ -57,7 +59,7 @@ Some apps are simple. Some are not.
 
 Custom title bars, full-screen spaces, Stage Manager, multi-display setups, and professional apps with floating panels can all break the illusion. Stickies also needs to be left alone, because it already has its own native folding behavior.
 
-The prototype also uses private or semi-private system behavior in a few places. That makes it useful for exploration, but it is not a polished distribution build.
+The tool also touches private or semi-private system behavior in a few places. That makes it useful for exploration, but it is not a polished distribution build.
 
 ## Design rule
 
