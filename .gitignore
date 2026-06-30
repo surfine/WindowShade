@@ -1,0 +1,25 @@
+# macOS
+.DS_Store
+
+# Swift / build outputs
+.build/
+.swift-module-cache/
+*.swiftmodule
+*.swiftdoc
+*.swiftsourceinfo
+
+# App bundles and local binaries
+prototype/WindowShade.app/
+prototype/windowshade
+prototype/*.zip
+prototype/*.dmg
+
+# Local media / generated captures
+*.mp4
+assets/social/
+assets/windowmizer-video/
+
+# Editor temp files
+*.swp
+*.swo
+*~
