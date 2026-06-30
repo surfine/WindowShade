@@ -4,7 +4,7 @@ WindowShade was a classic Mac OS gesture: double-click a window title bar and th
 
 That sounds small, but the detail matters. The window did not leave the desktop. It did not go to the Dock. It stayed where your eyes and hands expected it to be.
 
-This prototype is an attempt to bring that old interaction back to modern macOS.
+This prototype is an attempt to rebuild that gesture with the tools modern macOS still gives us.
 
 ## Why this exists
 
@@ -12,7 +12,7 @@ Modern macOS already has many ways to manage windows: Dock minimize, Mission Con
 
 WindowShade is for a smaller moment.
 
-A window is covering something. You do not want to close it. You do not want to reorganize the workspace. You just want it to get out of the way for a second.
+A window is covering something. You do not want to close it. You do not want to hide the whole app. You just want to see what is behind it for a moment.
 
 So it folds.
 
@@ -35,7 +35,7 @@ The current prototype:
 1. Finds the focused window with Accessibility APIs.
 2. Captures the top of the window with ScreenCaptureKit.
 3. Creates an AppKit overlay strip in the same place.
-4. Hides, parks, or minimizes the real window.
+4. Parks, hides, or minimizes the real window.
 5. Restores the real window when the strip is opened again.
 
 The main code is in `prototype/WindowShade.swift`.
@@ -45,7 +45,11 @@ There are two visible styles:
 - A captured strip that keeps the original window chrome.
 - A standard proxy title bar for a cleaner, more uniform look.
 
-Both are compromises. The goal is not to perfectly recreate classic Mac OS. The goal is to preserve the useful part: the window is still here, just folded.
+Folded windows can be opened from the strip, the menu bar list, or number shortcuts. There is also a Focus Shelf mode that folds windows from other apps into a small shelf at the top of the screen, so the current app can stay in front without turning the whole desktop into a different mode.
+
+Both are compromises. The goal is not to perfectly recreate classic Mac OS. The goal is to keep the useful part: the window is still here, just folded.
+
+In that sense, WindowShade sits between two familiar states. The window is not fully open, but it has not left the desktop either. The content steps back; the title, position, and way back remain.
 
 ## Current limits
 
