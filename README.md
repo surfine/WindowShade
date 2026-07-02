@@ -34,6 +34,7 @@ This is an early tool, not a polished release. Today it can:
 - keep the system title-bar zoom behavior available through triple-click;
 - keep a title-bar-like strip in place instead of sending the window to the Dock;
 - preview a folded window from its strip, then restore it from the strip, menu bar, or `Control + Command + 1...9`;
+- pin the current window as a live preview with `Control + Command + P`;
 - show folded windows in the menu bar and unfold everything at once;
 - move other apps into a top Focus Shelf when you want to keep one app in front;
 - switch between captured window chrome and a standard proxy title bar;
@@ -44,14 +45,14 @@ Some window environments still need work, especially full-screen spaces, custom 
 
 ## How it works
 
-WindowShade uses Accessibility APIs to find the current window, ScreenCaptureKit to capture the top of it, and an AppKit overlay as the folded strip. The real window may be parked offscreen, hidden, or minimized underneath. To the user, it stays folded in place.
+WindowShade uses Accessibility APIs to find the current window, ScreenCaptureKit to capture the top of it, and an AppKit overlay as the folded strip. The real window may be parked offscreen, hidden, or minimized underneath. To the user, it stays folded in place. Pinned preview uses a ScreenCaptureKit stream and a lightweight AppKit panel.
 
 ## Permissions
 
 WindowShade asks for two macOS permissions:
 
 - Accessibility, so it can find and move windows.
-- Screen Recording, so it can capture the top of a window for the folded strip.
+- Screen Recording, so it can capture the top of a window and show live previews.
 
 It does not upload window contents. Local diagnostics go to `/tmp/windowshade.log`; those logs can include app names, window titles, and file paths.
 

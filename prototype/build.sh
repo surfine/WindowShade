@@ -25,7 +25,17 @@ echo "==> Stopping running WindowShade, if any"
 pkill -x WindowShade 2>/dev/null || true
 
 echo "==> Compiling"
-env CLANG_MODULE_CACHE_PATH="$MODULE_CACHE"   swiftc -O -o "$TMP_BIN" WindowShade.swift   -framework Cocoa -framework Carbon -framework ApplicationServices   -framework ScreenCaptureKit -framework QuartzCore -framework CoreText   -framework ServiceManagement
+env CLANG_MODULE_CACHE_PATH="$MODULE_CACHE" \
+  swiftc -O -o "$TMP_BIN" \
+  main.swift \
+  WindowShade.swift \
+  ScreenCaptureBridge.swift \
+  PinnedPreviewPanel.swift \
+  PinnedPreview.swift \
+  -framework Cocoa -framework Carbon -framework ApplicationServices \
+  -framework ScreenCaptureKit -framework QuartzCore -framework CoreText \
+  -framework AVFoundation \
+  -framework ServiceManagement
 
 cp "$TMP_BIN" "$BIN"
 
