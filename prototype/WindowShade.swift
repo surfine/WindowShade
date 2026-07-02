@@ -7,9 +7,7 @@
 //   4. 把真窗口移到屏幕外 → 内容真正消失，只剩这条标题栏。
 //   再触发（或双击覆盖层）→ 把真窗口移回原位、撤掉覆盖层。
 //
-// 编译：swiftc -O -o windowshade WindowShade.swift \
-//        -framework Cocoa -framework Carbon -framework ApplicationServices -framework ScreenCaptureKit \
-//        -framework QuartzCore -framework CoreText -framework ServiceManagement
+// 编译：见 build.sh。
 // 运行：./windowshade
 //   需要两个权限：辅助功能（移动/读窗口）+ 屏幕录制（截图）。首次会分别弹窗。
 //
@@ -998,9 +996,16 @@ func cgWindowInfo(_ id: CGWindowID) -> [String: Any]? {
     return info?.first
 }
 
+func cgWindowLayer(_ id: CGWindowID) -> Int32? {
+    guard let raw = cgWindowInfo(id)?[kCGWindowLayer as String] else { return nil }
+    if let number = raw as? NSNumber { return number.int32Value }
+    if let int = raw as? Int { return Int32(int) }
+    return nil
+}
+
 func isDesktopWidgetWindow(id: CGWindowID) -> Bool {
-    let desktopWidgetLayer = -2147483601
-    let layer = cgWindowInfo(id)?[kCGWindowLayer as String] as? Int
+    let desktopWidgetLayer: Int32 = -2147483601
+    let layer = cgWindowLayer(id)
     return layer == desktopWidgetLayer
 }
 
@@ -3501,6 +3506,8 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSMenuDelegate {
     private var menuRebuildWorkItem: DispatchWorkItem?
     private var suppressMenuRebuilds = false
     private var pendingMenuRebuild = false
+    private var isUpdatingMenuFromDelegate = false
+    private var pinnedPreviewFocusMonitor: Any?
     private weak var onboardingPermissionStack: NSStackView?
     private weak var onboardingProgressLabel: NSTextField?
     private weak var onboardingDoneButton: NSButton?
@@ -3545,6 +3552,14 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSMenuDelegate {
                                                            capturePreview: false,
                                                            emitFoldFeedback: false,
                                                            rebuildMenuAfterInstall: false)
+    private lazy var pinnedPreviewController = PinnedPreviewController(
+        notice: { [weak self] message, log in
+            self?.quietNotice(message, log: log)
+        },
+        sessionsDidChange: { [weak self] in
+            self?.scheduleMenuRebuild()
+        }
+    )
 
     func applicationDidFinishLaunching(_ note: Notification) {
         migrateDistractingDefaultSounds()
@@ -3555,6 +3570,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSMenuDelegate {
         ensureAccessibility()
         showPermissionOnboardingIfNeeded(force: false)
         setupEventTapWhenTrusted()
+        setupPinnedPreviewFocusTracking()
         NSWorkspace.shared.notificationCenter.addObserver(self,
                                                           selector: #selector(appTerminated(_:)),
                                                           name: NSWorkspace.didTerminateApplicationNotification,
@@ -3611,6 +3627,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSMenuDelegate {
             pendingMenuRebuild = true
             return
         }
+        pinnedPreviewController.refreshCurrentTarget(reason: "rebuild-menu")
         menuRebuildWorkItem?.cancel()
         menuRebuildWorkItem = nil
         statusItem.button?.image = makeStatusBarIcon()
@@ -3638,6 +3655,20 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSMenuDelegate {
         let doubleClick = NSMenuItem(title: "双击标题栏以折叠", action: #selector(toggleTitlebarDoubleClick(_:)), keyEquivalent: "")
         doubleClick.state = titlebarDoubleClickEnabled ? .on : .off
         statusMenu.addItem(doubleClick)
+
+        statusMenu.addItem(.separator())
+        let pinnedPreview = NSMenuItem(title: pinnedPreviewMenuTitle(),
+                                       action: #selector(togglePinnedPreviewAction),
+                                       keyEquivalent: "p")
+        pinnedPreview.keyEquivalentModifierMask = [.control, .command]
+        pinnedPreview.isEnabled = AXIsProcessTrusted() && hasScreenRecordingPermission()
+        statusMenu.addItem(pinnedPreview)
+        if pinnedPreviewController.activePreviewCount > 1 {
+            let stopPinnedPreviews = NSMenuItem(title: "取消所有置顶（\(pinnedPreviewController.activePreviewCount)）",
+                                                action: #selector(stopAllPinnedPreviewsAction),
+                                                keyEquivalent: "")
+            statusMenu.addItem(stopPinnedPreviews)
+        }
 
         if !shaded.isEmpty {
             statusMenu.addItem(.separator())
@@ -3687,6 +3718,16 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSMenuDelegate {
         DispatchQueue.main.asyncAfter(deadline: .now() + delay, execute: work)
     }
 
+    private func setupPinnedPreviewFocusTracking() {
+        pinnedPreviewController.refreshCurrentTarget(reason: "launch")
+        pinnedPreviewFocusMonitor = NSEvent.addGlobalMonitorForEvents(matching: [.leftMouseDown, .rightMouseDown, .otherMouseDown]) { [weak self] _ in
+            DispatchQueue.main.asyncAfter(deadline: .now() + 0.08) {
+                self?.pinnedPreviewController.refreshCurrentTarget(reason: "global-mouse-down")
+                self?.scheduleMenuRebuild()
+            }
+        }
+    }
+
     private func withMenuRebuildSuppressed(_ body: () -> Void) {
         let wasSuppressed = suppressMenuRebuilds
         suppressMenuRebuilds = true
@@ -3709,6 +3750,14 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSMenuDelegate {
         hideMenuHoverPreview()
         menuPreviewHoverID = nil
         menuPreviewAnchor = nil
+    }
+
+    func menuNeedsUpdate(_ menu: NSMenu) {
+        guard menu === statusMenu, !isUpdatingMenuFromDelegate else { return }
+        isUpdatingMenuFromDelegate = true
+        defer { isUpdatingMenuFromDelegate = false }
+        pinnedPreviewController.refreshCurrentTarget(reason: "menu-needs-update")
+        rebuildMenu()
     }
 
     func menu(_ menu: NSMenu, willHighlight item: NSMenuItem?) {
@@ -4145,6 +4194,18 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSMenuDelegate {
         UserDefaults.standard.set(titlebarDoubleClickEnabled, forKey: shadeTitlebarDoubleClickDefaultsKey)
         rebuildMenu()
         refreshPreferencesWindowIfOpen()
+    }
+
+    private func pinnedPreviewMenuTitle() -> String {
+        pinnedPreviewController.currentTargetMenuTitle()
+    }
+
+    @objc private func togglePinnedPreviewAction() {
+        pinnedPreviewController.toggleCurrentTargetPreview()
+    }
+
+    @objc private func stopAllPinnedPreviewsAction() {
+        pinnedPreviewController.stopAllPreviews(reason: "menu-stop-all")
     }
 
     private func soundName(defaultsKey: String, fallback: String) -> String {
@@ -5873,6 +5934,11 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSMenuDelegate {
     func applicationWillTerminate(_ note: Notification) {
         reconcileTimer?.invalidate()
         reconcileTimer = nil
+        if let pinnedPreviewFocusMonitor {
+            NSEvent.removeMonitor(pinnedPreviewFocusMonitor)
+            self.pinnedPreviewFocusMonitor = nil
+        }
+        pinnedPreviewController.stopAllPreviews(reason: "terminate")
         if scaleMinimizeActive {
             restoreDockMinimizeEffect()
             scaleMinimizeActive = false
@@ -7407,6 +7473,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSMenuDelegate {
 
     @objc private func appTerminated(_ note: Notification) {
         guard let app = note.userInfo?[NSWorkspace.applicationUserInfoKey] as? NSRunningApplication else { return }
+        pinnedPreviewController.stopPreviews(forPID: app.processIdentifier, reason: "source-app-terminated")
         for id in shaded.filter({ $0.value.pid == app.processIdentifier }).map(\.key) {
             forceCleanup(id)
         }
@@ -7415,6 +7482,10 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSMenuDelegate {
     @objc private func frontmostApplicationChanged(_ note: Notification) {
         hideHoverPreview()
         hideMenuHoverPreview()
+        DispatchQueue.main.asyncAfter(deadline: .now() + 0.08) { [weak self] in
+            self?.pinnedPreviewController.refreshCurrentTarget(reason: "frontmost-app")
+            self?.scheduleMenuRebuild()
+        }
         refreshOverlayPresentation()
     }
 
@@ -7565,6 +7636,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSMenuDelegate {
     }
 
     @objc private func screenParametersChanged(_ note: Notification) {
+        pinnedPreviewController.refreshAll(reason: "screen")
         for (id, state) in shaded {
             guard let overlay = state.overlay else { continue }
             let oldFrame = overlay.frame
@@ -7592,6 +7664,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSMenuDelegate {
         hideMenuHoverPreview()
         menuPreviewHoverID = nil
         menuPreviewAnchor = nil
+        pinnedPreviewController.refreshAll(reason: "space")
         refreshOverlayPresentation(bringForward: false)
         wlog("space: active space changed; overlays enforced in assigned spaces")
     }
@@ -8458,6 +8531,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSMenuDelegate {
 
         register(kVK_ANSI_C, 1)
         register(kVK_ANSI_0, 2)
+        register(kVK_ANSI_P, 3)
         let digitKeys = [
             kVK_ANSI_1, kVK_ANSI_2, kVK_ANSI_3, kVK_ANSI_4, kVK_ANSI_5,
             kVK_ANSI_6, kVK_ANSI_7, kVK_ANSI_8, kVK_ANSI_9
@@ -8474,6 +8548,10 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSMenuDelegate {
         }
         if id == 2 {
             focusCurrentAppCycle()
+            return
+        }
+        if id == 3 {
+            pinnedPreviewController.toggleCurrentTargetPreview()
             return
         }
         guard id >= 101, id <= 109 else { return }
@@ -8795,12 +8873,3 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSMenuDelegate {
         return true
     }
 }
-
-// MARK: - 入口
-
-let app = NSApplication.shared
-let delegate = AppDelegate()
-appDelegate = delegate
-app.delegate = delegate
-app.setActivationPolicy(.accessory)
-app.run()
