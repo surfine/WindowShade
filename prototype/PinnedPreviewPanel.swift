@@ -17,6 +17,7 @@ final class PinnedPreviewPanel: NSPanel {
         hidesOnDeactivate = false
         isMovableByWindowBackground = false
         isReleasedWhenClosed = false
+        acceptsMouseMovedEvents = true
     }
 
     override var canBecomeKey: Bool { false }
@@ -26,6 +27,7 @@ final class PinnedPreviewPanel: NSPanel {
 final class PinnedPreviewContentView: NSView {
     var onMouseEntered: (() -> Void)?
     var onMouseExited: (() -> Void)?
+    var onMouseMoved: (() -> Void)?
     var onMouseDown: ((NSEvent) -> Void)?
 
     private var tracking: NSTrackingArea?
@@ -57,7 +59,7 @@ final class PinnedPreviewContentView: NSView {
         if let tracking {
             removeTrackingArea(tracking)
         }
-        let options: NSTrackingArea.Options = [.mouseEnteredAndExited, .activeAlways, .inVisibleRect]
+        let options: NSTrackingArea.Options = [.mouseEnteredAndExited, .mouseMoved, .activeAlways, .inVisibleRect]
         let area = NSTrackingArea(rect: .zero, options: options, owner: self, userInfo: nil)
         addTrackingArea(area)
         tracking = area
@@ -69,6 +71,10 @@ final class PinnedPreviewContentView: NSView {
 
     override func mouseExited(with event: NSEvent) {
         onMouseExited?()
+    }
+
+    override func mouseMoved(with event: NSEvent) {
+        onMouseMoved?()
     }
 
     override func mouseDown(with event: NSEvent) {

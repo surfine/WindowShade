@@ -3661,14 +3661,11 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSMenuDelegate {
                                        action: #selector(togglePinnedPreviewAction),
                                        keyEquivalent: "p")
         pinnedPreview.keyEquivalentModifierMask = [.control, .command]
-        pinnedPreview.isEnabled = AXIsProcessTrusted() && hasScreenRecordingPermission()
+        pinnedPreview.isEnabled = AXIsProcessTrusted()
+            && hasScreenRecordingPermission()
+            && pinnedPreviewController.canPinCurrentTarget()
         statusMenu.addItem(pinnedPreview)
-        if pinnedPreviewController.activePreviewCount > 1 {
-            let stopPinnedPreviews = NSMenuItem(title: "取消所有置顶（\(pinnedPreviewController.activePreviewCount)）",
-                                                action: #selector(stopAllPinnedPreviewsAction),
-                                                keyEquivalent: "")
-            statusMenu.addItem(stopPinnedPreviews)
-        }
+        addPinnedPreviewMenuSection()
 
         if !shaded.isEmpty {
             statusMenu.addItem(.separator())
@@ -3702,6 +3699,45 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSMenuDelegate {
         statusMenu.addItem(withTitle: "偏好设置...", action: #selector(showPreferences), keyEquivalent: ",")
         statusMenu.addItem(withTitle: "退出 WindowShade", action: #selector(quit), keyEquivalent: "q")
         updateReconcileTimer()
+    }
+
+    private func addPinnedPreviewMenuSection() {
+        statusMenu.addItem(.separator())
+
+        let entries = pinnedPreviewController.menuEntries()
+        guard !entries.isEmpty else {
+            let empty = NSMenuItem(title: "没有已置顶窗口", action: nil, keyEquivalent: "")
+            empty.isEnabled = false
+            statusMenu.addItem(empty)
+            return
+        }
+
+        let header = NSMenuItem(title: "已置顶窗口（点击取消）", action: nil, keyEquivalent: "")
+        header.isEnabled = false
+        statusMenu.addItem(header)
+
+        for (index, entry) in entries.enumerated() {
+            let item = NSMenuItem(title: menuTitleForPinnedPreview(entry, index: index),
+                                  action: #selector(cancelPinnedPreviewMenuItem(_:)),
+                                  keyEquivalent: "")
+            item.target = self
+            item.representedObject = NSNumber(value: entry.id)
+            statusMenu.addItem(item)
+        }
+
+        statusMenu.addItem(.separator())
+        let stopPinnedPreviews = NSMenuItem(title: "全部取消置顶",
+                                            action: #selector(stopAllPinnedPreviewsAction),
+                                            keyEquivalent: "")
+        stopPinnedPreviews.target = self
+        statusMenu.addItem(stopPinnedPreviews)
+    }
+
+    private func menuTitleForPinnedPreview(_ entry: PinnedPreviewMenuEntry, index: Int) -> String {
+        let raw = entry.displayTitle
+        let maxCount = 42
+        let title = raw.count > maxCount ? String(raw.prefix(maxCount - 1)) + "…" : raw
+        return "\(index + 1)  \(title)"
     }
 
     private func scheduleMenuRebuild(delay: TimeInterval = 0.04) {
@@ -4201,11 +4237,18 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSMenuDelegate {
     }
 
     @objc private func togglePinnedPreviewAction() {
-        pinnedPreviewController.toggleCurrentTargetPreview()
+        pinnedPreviewController.pinCurrentTargetPreview()
+    }
+
+    @objc private func cancelPinnedPreviewMenuItem(_ sender: NSMenuItem) {
+        guard let number = sender.representedObject as? NSNumber else { return }
+        pinnedPreviewController.stopPreviewFromMenu(id: CGWindowID(number.uint32Value))
+        rebuildMenu()
     }
 
     @objc private func stopAllPinnedPreviewsAction() {
         pinnedPreviewController.stopAllPreviews(reason: "menu-stop-all")
+        rebuildMenu()
     }
 
     private func soundName(defaultsKey: String, fallback: String) -> String {
@@ -4608,7 +4651,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSMenuDelegate {
         onboardingCaption = nil
 
         let needsPermissions = !hasAccessibilityPermission() || !hasScreenRecordingPermission()
-        let height: CGFloat = needsPermissions ? 540 : 500
+        let height: CGFloat = needsPermissions ? 565 : 530
         let root = NSView(frame: NSRect(x: 0, y: 0, width: 500, height: height))
         let stack = NSStackView(frame: root.bounds.insetBy(dx: 24, dy: 22))
         stack.orientation = .vertical
@@ -4715,6 +4758,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSMenuDelegate {
             ("cursorarrow.click", "双击标题栏：折叠或展开当前窗口"),
             ("eye", "单击卷帘条：显示 / 收回窗口内容预览"),
             ("keyboard", "⌃⌘C：折叠 / 展开当前窗口"),
+            ("pin", "⌃⌘P：置顶预览当前窗口，鼠标移入即可操作"),
             ("number", "⌃⌘1…9：按菜单顺序快速展开"),
             ("menubar.rectangle", "菜单栏：查看已折叠窗口并全部展开"),
         ]
@@ -4728,6 +4772,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSMenuDelegate {
         let rows: [(String, String)] = [
             ("rectangle.stack", "专注模式会把其他 app 收进顶部 shelf"),
             ("arrow.down.forward.and.arrow.up.backward", "从 shelf 拉出窗口，双击可按当前位置展开"),
+            ("rectangle.on.rectangle", "置顶预览使用实时悬浮画面，交互时交还真实窗口"),
             ("paintpalette", "可在偏好设置切换原貌卷帘 / 标准标题栏"),
             ("power", "可开启登录时自动启动，让 WindowShade 常驻"),
         ]
@@ -8551,7 +8596,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSMenuDelegate {
             return
         }
         if id == 3 {
-            pinnedPreviewController.toggleCurrentTargetPreview()
+            pinnedPreviewController.pinCurrentTargetPreview()
             return
         }
         guard id >= 101, id <= 109 else { return }

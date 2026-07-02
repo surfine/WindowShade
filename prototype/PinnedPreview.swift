@@ -46,6 +46,7 @@ private final class PinnedPreviewSession {
     var display: SCDisplay?
     var lastKnownFrame: NSRect
     var isInteracting = false
+    var isDucked = false
     var watchdog: Timer?
     var globalMouseMonitor: Any?
     var localMouseMonitor: Any?
@@ -90,6 +91,20 @@ private struct PinnedPreviewTarget {
     let axWindow: AXUIElement
 }
 
+struct PinnedPreviewMenuEntry {
+    let id: CGWindowID
+    let appName: String
+    let title: String
+
+    var displayTitle: String {
+        let cleanAppName = cleanDisplayTitle(appName)
+        let cleanTitle = cleanDisplayTitle(title)
+        if cleanTitle.isEmpty { return cleanAppName.isEmpty ? "未命名窗口" : cleanAppName }
+        if cleanAppName.isEmpty { return cleanTitle }
+        return "\(cleanAppName) — \(cleanTitle)"
+    }
+}
+
 final class PinnedPreviewController {
     typealias NoticeHandler = (_ message: String, _ log: String?) -> Void
 
@@ -97,6 +112,10 @@ final class PinnedPreviewController {
     private let sessionsDidChange: () -> Void
     private var sessions: [CGWindowID: PinnedPreviewSession] = [:]
     private var currentTarget: PinnedPreviewTarget?
+    private var pointerDuckingTimer: Timer?
+    private var lastPointerDuckingID: CGWindowID?
+    private var lockedDuckingID: CGWindowID?
+    private var activePreviewID: CGWindowID?
     private let excludedBundleIDs: Set<String> = [
         "com.apple.dock",
         "com.apple.controlcenter",
@@ -131,13 +150,15 @@ final class PinnedPreviewController {
     }
 
     func currentTargetMenuTitle() -> String {
-        guard let target = currentTarget, sessions[target.windowID] != nil else {
-            return "置顶当前窗口"
-        }
-        return "取消置顶当前窗口"
+        "置顶当前窗口"
     }
 
-    func toggleCurrentTargetPreview() {
+    func canPinCurrentTarget() -> Bool {
+        guard let target = currentTarget else { return true }
+        return sessions[target.windowID] == nil
+    }
+
+    func pinCurrentTargetPreview() {
         guard hasAccessibilityPermission() else {
             notice("需要权限", "pin-preview: failed reason=accessibility")
             return
@@ -152,7 +173,7 @@ final class PinnedPreviewController {
             return
         }
         if sessions[target.windowID] != nil {
-            stopPreview(id: target.windowID, reason: "toggle-current")
+            notice("窗口已置顶", "pin-preview: skipped reason=already-pinned id=\(target.windowID)")
             return
         }
         startPreview(for: target.axWindow, id: target.windowID)
@@ -162,6 +183,26 @@ final class PinnedPreviewController {
         for id in Array(sessions.keys) {
             stopPreview(id: id, reason: reason)
         }
+    }
+
+    func menuEntries() -> [PinnedPreviewMenuEntry] {
+        sessions.values
+            .sorted { lhs, rhs in
+                let lhsApp = lhs.appName.localizedCaseInsensitiveCompare(rhs.appName)
+                if lhsApp == .orderedSame {
+                    return lhs.title.localizedCaseInsensitiveCompare(rhs.title) == .orderedAscending
+                }
+                return lhsApp == .orderedAscending
+            }
+            .map { session in
+                PinnedPreviewMenuEntry(id: session.windowID,
+                                       appName: session.appName,
+                                       title: session.title)
+            }
+    }
+
+    func stopPreviewFromMenu(id: CGWindowID) {
+        stopPreview(id: id, reason: "menu-item")
     }
 
     func stopPreviews(forPID pid: pid_t, reason: String) {
@@ -256,6 +297,9 @@ final class PinnedPreviewController {
         contentView.onMouseEntered = { [weak self] in
             self?.beginInteraction(id: id)
         }
+        contentView.onMouseMoved = { [weak self] in
+            self?.beginInteraction(id: id)
+        }
         contentView.onMouseExited = { [weak self] in
             self?.scheduleInteractionExitCheck(id: id)
         }
@@ -265,6 +309,7 @@ final class PinnedPreviewController {
         sessions[id] = session
         panel.orderFrontRegardless()
         startWatchdog(for: session)
+        updatePointerDuckingTimer()
         sessionsDidChange()
         wlog("pin-preview: start id=\(id) app=\(appName) title=\(title) frame=\(format(frame))")
 
@@ -301,14 +346,27 @@ final class PinnedPreviewController {
         let old = session.panel.frame
         session.panel.setFrame(frame, display: true)
         session.capture.updateSize(width: frame.width, height: frame.height, display: session.display)
+        updateDucking(activeID: activeInteractionID())
         wlog("pin-preview: frame changed id=\(id) old=\(format(old)) new=\(format(frame)) reason=\(reason)")
     }
 
     private func beginInteraction(id: CGWindowID) {
-        guard let session = sessions[id], !session.isInteracting else { return }
+        guard let session = sessions[id], !session.isInteracting, !session.isDucked else { return }
+        if let activePreviewID, activePreviewID != id {
+            guard let active = sessions[activePreviewID],
+                  !active.panel.frame.insetBy(dx: -2, dy: -2).contains(NSEvent.mouseLocation) else {
+                return
+            }
+            endInteraction(id: activePreviewID,
+                           sourceFrame: currentSourceFrame(id: activePreviewID) ?? active.panel.frame)
+            return
+        }
         session.pendingExit?.cancel()
         session.pendingExit = nil
         session.isInteracting = true
+        activePreviewID = id
+        lockedDuckingID = id
+        updateDucking(activeID: id)
         session.capture.stop()
         session.panel.alphaValue = 0.02
         session.panel.hasShadow = false
@@ -363,6 +421,7 @@ final class PinnedPreviewController {
     }
 
     private func finishInteractionIfMouseOutside(id: CGWindowID) {
+        guard activePreviewID == id else { return }
         guard let session = sessions[id], session.isInteracting else { return }
         let frame = currentSourceFrame(id: id) ?? session.panel.frame
         if frame.insetBy(dx: -8, dy: -8).contains(NSEvent.mouseLocation) {
@@ -373,7 +432,12 @@ final class PinnedPreviewController {
 
     private func endInteraction(id: CGWindowID, sourceFrame: NSRect) {
         guard let session = sessions[id], session.isInteracting else { return }
+        let wasActive = activePreviewID == id
         session.isInteracting = false
+        if wasActive {
+            activePreviewID = nil
+            lockedDuckingID = nil
+        }
         session.pendingExit?.cancel()
         session.pendingExit = nil
         removeMouseMonitors(for: session)
@@ -383,6 +447,9 @@ final class PinnedPreviewController {
         session.panel.hasShadow = true
         session.panel.level = .floating
         session.panel.orderFrontRegardless()
+        if wasActive {
+            updateDucking(activeID: nil)
+        }
         Task { @MainActor [weak self, weak session] in
             guard let self, let session else { return }
             do {
@@ -424,11 +491,127 @@ final class PinnedPreviewController {
         }
     }
 
+    private func activeInteractionID() -> CGWindowID? {
+        if let activePreviewID, sessions[activePreviewID]?.isInteracting == true {
+            return activePreviewID
+        }
+        return nil
+    }
+
+    private func updatePointerDuckingTimer() {
+        if sessions.count > 1 {
+            guard pointerDuckingTimer == nil else { return }
+            let timer = Timer.scheduledTimer(withTimeInterval: 1.0 / 120.0, repeats: true) { [weak self] _ in
+                self?.pointerDuckingTick()
+            }
+            timer.tolerance = 0
+            pointerDuckingTimer = timer
+        } else {
+            pointerDuckingTimer?.invalidate()
+            pointerDuckingTimer = nil
+            lastPointerDuckingID = nil
+            lockedDuckingID = nil
+            if activeInteractionID() == nil {
+                restoreDuckedPreviews(reason: "single-preview")
+            }
+        }
+    }
+
+    private func pointerDuckingTick() {
+        if let activeID = activeInteractionID() {
+            lockedDuckingID = activeID
+            lastPointerDuckingID = activeID
+            updateDucking(activeID: activeID)
+            return
+        }
+
+        let mouse = NSEvent.mouseLocation
+        if let lockedID = lockedDuckingID, let locked = sessions[lockedID] {
+            if locked.panel.frame.insetBy(dx: -2, dy: -2).contains(mouse) {
+                lastPointerDuckingID = lockedID
+                updateDucking(activeID: lockedID)
+                return
+            }
+            lockedDuckingID = nil
+        }
+
+        guard let hoverID = pointerHoveredPreviewID() else {
+            if lastPointerDuckingID != nil {
+                lastPointerDuckingID = nil
+                lockedDuckingID = nil
+                restoreDuckedPreviews(reason: "pointer-outside")
+            }
+            return
+        }
+
+        lockedDuckingID = hoverID
+        lastPointerDuckingID = hoverID
+        updateDucking(activeID: hoverID)
+    }
+
+    private func pointerHoveredPreviewID() -> CGWindowID? {
+        let mouse = NSEvent.mouseLocation
+        let hits = sessions.filter { _, session in
+            !session.isDucked && session.panel.isVisible && session.panel.frame.contains(mouse)
+        }
+        return hits.min { lhs, rhs in
+            lhs.value.panel.orderedIndex < rhs.value.panel.orderedIndex
+        }?.key
+    }
+
+    private func updateDucking(activeID: CGWindowID?) {
+        guard let activeID, let active = sessions[activeID] else {
+            restoreDuckedPreviews(reason: "no-active")
+            return
+        }
+
+        let activeFrame = active.panel.frame
+        if active.isDucked {
+            restoreDuckedPreview(active, id: activeID, reason: "active")
+        }
+        active.panel.level = .floating
+        active.panel.orderFrontRegardless()
+        for (id, session) in sessions where id != activeID {
+            let shouldDuck = activeFrame.intersects(session.panel.frame)
+            if shouldDuck, !session.isDucked {
+                session.isDucked = true
+                session.panel.ignoresMouseEvents = true
+                session.panel.orderOut(nil)
+                wlog("pin-preview: duck id=\(id) active=\(activeID)")
+            } else if !shouldDuck, session.isDucked {
+                restoreDuckedPreview(session, id: id, reason: "no-overlap")
+            }
+        }
+    }
+
+    private func restoreDuckedPreviews(reason: String) {
+        for (id, session) in sessions where session.isDucked {
+            restoreDuckedPreview(session, id: id, reason: reason)
+        }
+    }
+
+    private func restoreDuckedPreview(_ session: PinnedPreviewSession, id: CGWindowID, reason: String) {
+        session.isDucked = false
+        guard !session.isInteracting else {
+            session.panel.ignoresMouseEvents = true
+            return
+        }
+        session.panel.ignoresMouseEvents = false
+        session.panel.level = .floating
+        session.panel.orderFrontRegardless()
+        wlog("pin-preview: unduck id=\(id) reason=\(reason)")
+    }
+
     private func stopPreview(id: CGWindowID, reason: String) {
         guard let session = sessions.removeValue(forKey: id) else { return }
         session.invalidate()
         session.capture.stop()
         session.panel.close()
+        if activePreviewID == id { activePreviewID = nil }
+        if lockedDuckingID == id { lockedDuckingID = nil }
+        if lastPointerDuckingID == id { lastPointerDuckingID = nil }
+        restoreDuckedPreviews(reason: "stop-\(id)")
+        updatePointerDuckingTimer()
         sessionsDidChange()
         wlog("pin-preview: stop id=\(id) reason=\(reason)")
     }

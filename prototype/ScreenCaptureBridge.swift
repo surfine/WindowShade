@@ -1,5 +1,5 @@
-import Cocoa
 import AVFoundation
+import Cocoa
 import ScreenCaptureKit
 
 enum ShareableContentLoader {
@@ -9,7 +9,8 @@ enum ShareableContentLoader {
         }
 
         return try await withCheckedThrowingContinuation { continuation in
-            SCShareableContent.getExcludingDesktopWindows(false, onScreenWindowsOnly: true) { content, error in
+            SCShareableContent.getExcludingDesktopWindows(false, onScreenWindowsOnly: true) {
+                content, error in
                 if let error {
                     continuation.resume(throwing: error)
                 } else if let content {
@@ -43,7 +44,9 @@ final class WindowStreamCapture: NSObject, SCStreamDelegate, SCStreamOutput {
         try await startStream(filter: newFilter)
     }
 
-    func restart(window: SCWindow, display: SCDisplay?, width: CGFloat, height: CGFloat) async throws {
+    func restart(window: SCWindow, display: SCDisplay?, width: CGFloat, height: CGFloat)
+        async throws
+    {
         stop()
         if filter == nil {
             filter = SCContentFilter(desktopIndependentWindow: window)
@@ -71,13 +74,18 @@ final class WindowStreamCapture: NSObject, SCStreamDelegate, SCStreamOutput {
             }
         }
         DispatchQueue.main.async { [videoLayer] in
-            videoLayer.flushAndRemoveImage()
+            if #available(macOS 15.0, *) {
+                videoLayer.sampleBufferRenderer.flush(removingDisplayedImage: true) {}
+            } else {
+                videoLayer.flushAndRemoveImage()
+            }
         }
     }
 
     private func startStream(filter: SCContentFilter) async throws {
         let newStream = SCStream(filter: filter, configuration: configuration, delegate: self)
-        try newStream.addStreamOutput(self, type: .screen, sampleHandlerQueue: .global(qos: .userInteractive))
+        try newStream.addStreamOutput(
+            self, type: .screen, sampleHandlerQueue: .global(qos: .userInteractive))
         stream = newStream
         try await newStream.startCapture()
     }
@@ -95,7 +103,8 @@ final class WindowStreamCapture: NSObject, SCStreamDelegate, SCStreamOutput {
 
     private func configure(width: CGFloat, height: CGFloat, display: SCDisplay?) {
         configureBase(display: display)
-        let screen = display.flatMap { screenForDisplayID($0.displayID) }
+        let screen =
+            display.flatMap { screenForDisplayID($0.displayID) }
             ?? screenForCocoaFrame(NSRect(x: 0, y: 0, width: width, height: height))
             ?? NSScreen.main
         let scale = screen?.backingScaleFactor ?? 2
@@ -117,11 +126,18 @@ final class WindowStreamCapture: NSObject, SCStreamDelegate, SCStreamOutput {
         configuration.minimumFrameInterval = CMTime(value: 1, timescale: CMTimeScale(max(1, fps)))
     }
 
-    func stream(_ stream: SCStream, didOutputSampleBuffer sampleBuffer: CMSampleBuffer,
-                of outputType: SCStreamOutputType) {
+    func stream(
+        _ stream: SCStream, didOutputSampleBuffer sampleBuffer: CMSampleBuffer,
+        of outputType: SCStreamOutputType
+    ) {
         guard outputType == .screen, sampleBuffer.isValid else { return }
         DispatchQueue.main.async { [weak self] in
-            self?.videoLayer.enqueue(sampleBuffer)
+            guard let videoLayer = self?.videoLayer else { return }
+            if #available(macOS 15.0, *) {
+                videoLayer.sampleBufferRenderer.enqueue(sampleBuffer)
+            } else {
+                videoLayer.enqueue(sampleBuffer)
+            }
         }
     }
 
