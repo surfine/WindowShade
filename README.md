@@ -75,14 +75,23 @@ CODESIGN_IDENTITY="Apple Development: Your Name (TEAMID)" ./build.sh
 
 ## Release
 
-Maintainers can publish a GitHub Release by pushing a version tag:
+Maintainers can package a release locally:
+
+```sh
+cd prototype
+./build.sh
+mkdir -p ../dist
+ditto -c -k --keepParent WindowShade.app ../dist/WindowShade-v0.1.0.zip
+shasum -a 256 ../dist/WindowShade-v0.1.0.zip > ../dist/WindowShade-v0.1.0.zip.sha256
+```
+
+Then create a tag and upload the zip from the repository root:
 
 ```sh
 git tag v0.1.0
 git push origin v0.1.0
+gh release create v0.1.0 dist/WindowShade-v0.1.0.zip dist/WindowShade-v0.1.0.zip.sha256
 ```
-
-GitHub Actions will build `WindowShade.app`, package it as `WindowShade-v0.1.0.zip`, attach a SHA256 file, and upload both files to the release.
 
 ## Notes
 
