@@ -75,6 +75,17 @@ cd prototype
 CODESIGN_IDENTITY="Apple Development: Your Name (TEAMID)" ./build.sh
 ```
 
+## 发布
+
+维护者推送版本 tag 后，GitHub Actions 会自动构建并上传到 Releases：
+
+```sh
+git tag v0.1.0
+git push origin v0.1.0
+```
+
+工作流会生成 `WindowShade-v0.1.0.zip` 和对应的 SHA256 文件。公开构建使用 ad-hoc 签名，没有 notarize。
+
 ## 其他
 
 主代码在 [`prototype/WindowShade.swift`](prototype/WindowShade.swift)。历史背景和设计想法见 [`WindowShade.md`](WindowShade.md)。

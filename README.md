@@ -73,6 +73,17 @@ cd prototype
 CODESIGN_IDENTITY="Apple Development: Your Name (TEAMID)" ./build.sh
 ```
 
+## Release
+
+Maintainers can publish a GitHub Release by pushing a version tag:
+
+```sh
+git tag v0.1.0
+git push origin v0.1.0
+```
+
+GitHub Actions will build `WindowShade.app`, package it as `WindowShade-v0.1.0.zip`, attach a SHA256 file, and upload both files to the release. The public build is ad-hoc signed, not notarized.
+
 ## Notes
 
 The main code is in [`prototype/WindowShade.swift`](prototype/WindowShade.swift). For the history and design notes, see [`WindowShade.md`](WindowShade.md).
