@@ -68,7 +68,7 @@ cd prototype
 open WindowShade.app
 ```
 
-构建脚本会创建 `WindowShade.app`，默认使用 ad-hoc 签名。如果你希望 macOS 在重复构建后仍记住辅助功能和屏幕录制授权，可以用自己的开发者证书签名：
+构建脚本会创建 `WindowShade.app`。如果你希望 macOS 在重复构建后仍记住辅助功能和屏幕录制授权，可以用自己的开发者证书签名：
 
 ```sh
 cd prototype
@@ -84,7 +84,7 @@ git tag v0.1.0
 git push origin v0.1.0
 ```
 
-工作流会生成 `WindowShade-v0.1.0.zip` 和对应的 SHA256 文件。公开构建使用 ad-hoc 签名，没有 notarize。
+工作流会生成 `WindowShade-v0.1.0.zip` 和对应的 SHA256 文件，并把它们上传到 GitHub Releases。
 
 ## 其他
 
