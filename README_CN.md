@@ -1,5 +1,5 @@
 <p align="center">
-  <img src="assets/windowshade-menubar.svg" alt="WindowShade" width="96"/>
+  <img src="assets/app-icon/windowshade-app-icon.png" alt="WindowShade 应用图标" width="128"/>
 </p>
 
 <p align="center">
