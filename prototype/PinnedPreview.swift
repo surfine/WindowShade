@@ -1,3 +1,4 @@
+import AVFoundation
 import Cocoa
 import ApplicationServices
 import ScreenCaptureKit
@@ -155,13 +156,13 @@ final class PinnedPreviewController {
         currentTarget = PinnedPreviewTarget(windowID: id, axWindow: win)
     }
 
+    // 动态翻转：当前聚焦窗口已置顶时显示「取消置顶」，否则「置顶」。依赖 currentTarget
+    // 已刷新——rebuildMenu / menuNeedsUpdate 在取标题前都会先 refreshCurrentTarget。
     func currentTargetMenuTitle() -> String {
-        "置顶当前窗口"
-    }
-
-    func canPinCurrentTarget() -> Bool {
-        guard let target = currentTarget else { return true }
-        return sessions[target.windowID] == nil
+        if let target = currentTarget, sessions[target.windowID] != nil {
+            return "取消置顶当前窗口"
+        }
+        return "置顶当前窗口"
     }
 
     func pinCurrentTargetPreview() {
@@ -178,8 +179,9 @@ final class PinnedPreviewController {
             notice("没有可置顶预览窗口", "pin-preview: failed reason=no-focused-window")
             return
         }
+        // 双向 toggle：已置顶则取消，未置顶则置顶。与 ⌃⌘C 折叠/展开对称。
         if sessions[target.windowID] != nil {
-            notice("窗口已置顶", "pin-preview: skipped reason=already-pinned id=\(target.windowID)")
+            stopPreview(id: target.windowID, reason: "toggle-unpin")
             return
         }
         startPreview(for: target.axWindow, id: target.windowID)
@@ -209,6 +211,28 @@ final class PinnedPreviewController {
 
     func stopPreviewFromMenu(id: CGWindowID) {
         stopPreview(id: id, reason: "menu-item")
+    }
+
+    // 菜单缩略图按窗口原始宽高比排版，返回当前已知的源窗口尺寸。
+    func thumbnailSourceSize(id: CGWindowID) -> NSSize? {
+        guard let session = sessions[id] else { return nil }
+        let size = session.lastKnownFrame.size
+        if size.width > 1, size.height > 1 { return size }
+        let panelSize = session.panel.frame.size
+        return panelSize.width > 1 && panelSize.height > 1 ? panelSize : nil
+    }
+
+    // 为菜单悬停缩略图构建实时预览视图：新建一个显示层挂到该会话正在运行的 capture 上做镜像，
+    // 复用已有采样帧，不新建流。视图销毁或 detachThumbnail 时断开。
+    func makeThumbnailPreviewView(frame: NSRect, id: CGWindowID) -> NSView? {
+        guard let session = sessions[id] else { return nil }
+        let layer = AVSampleBufferDisplayLayer()
+        session.capture.mirrorLayer = layer
+        return PinnedLivePreviewView(frame: frame, videoLayer: layer)
+    }
+
+    func detachThumbnail(id: CGWindowID) {
+        sessions[id]?.capture.mirrorLayer = nil
     }
 
     func stopPreviews(forPID pid: pid_t, reason: String) {

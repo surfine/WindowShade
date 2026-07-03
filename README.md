@@ -21,31 +21,37 @@
 
 ---
 
-WindowShade is a small macOS utility that brings back a classic Mac gesture: fold a window into a thin strip, then unfold it from the same spot.
+WindowShade is a small macOS menu bar app for getting windows out of the way without losing them.
 
-Sometimes you only want to peek behind a window. You do not want to close the document, hide the whole app, or send the window to the Dock and find it again. WindowShade adds that missing middle state: the content steps back, while the title, position, and way back stay where they were.
+It gives a window two temporary states:
 
-## Current state
+- **Folded**: the window content rolls up, leaving a title-bar strip in the same place. Open it again from the strip, the menu bar, or a keyboard shortcut.
+- **Pinned**: the window stays visible as a live floating preview. Move the pointer into it when you want to operate the real window.
 
-This is an early tool, not a polished release. Today it can:
+This is useful when you only need to peek behind a window, keep an iPhone Mirroring window visible, or quiet down a busy desktop without sending everything to the Dock.
 
-- fold and unfold the current window with `Control + Command + C`;
-- fold a window by double-clicking its title bar;
-- keep the system title-bar zoom behavior available through triple-click;
-- keep a title-bar-like strip in place instead of sending the window to the Dock;
-- preview a folded window from its strip, then restore it from the strip, menu bar, or `Control + Command + 1...9`;
-- pin the current window as a live preview with `Control + Command + P`;
-- show folded windows in the menu bar and unfold everything at once;
-- move other apps into a top Focus Shelf when you want to keep one app in front;
-- switch between captured window chrome and a standard proxy title bar;
-- start at login;
-- handle a few special cases, including Quick Look, Stickies, WeChat, and Adobe apps.
+## Download
 
-Some window environments still need work, especially full-screen spaces, custom title bars, Stage Manager, and multi-display setups.
+Download the latest zip from [Releases](https://github.com/surfine/WindowShade/releases), unzip it, and open `WindowShade.app`.
 
-## How it works
+WindowShade lives in the menu bar. It does not show a Dock icon.
 
-WindowShade uses Accessibility APIs to find the current window, ScreenCaptureKit to capture the top of it, and an AppKit overlay as the folded strip. The real window may be parked offscreen, hidden, or minimized underneath. To the user, it stays folded in place. Pinned preview uses a ScreenCaptureKit stream and a lightweight AppKit panel.
+## Basic Use
+
+- `Control + Command + C`: fold or unfold the current window.
+- Double-click a window title bar: fold or unfold that window.
+- Click a folded strip: show or hide a quick preview.
+- `Control + Command + P`: pin or unpin the current window as a live preview.
+- `Control + Command + 1...9`: unfold windows by their order in the menu.
+- Menu bar: manage folded windows, pinned previews, Focus Shelf, appearance, sounds, permissions, and launch at login.
+
+Triple-clicking the title bar keeps the system title-bar zoom behavior available.
+
+## Notes
+
+WindowShade works best with normal desktop windows. Full-screen spaces, Stage Manager, custom title bars, and complex professional apps may need app-specific handling.
+
+The app includes compatibility work for Quick Look, Stickies, WeChat, Adobe apps, and a few other non-standard windows.
 
 ## Permissions
 
@@ -54,9 +60,9 @@ WindowShade asks for two macOS permissions:
 - Accessibility, so it can find and move windows.
 - Screen Recording, so it can capture the top of a window and show live previews.
 
-It does not upload window contents. Local diagnostics go to `/tmp/windowshade.log`; those logs can include app names, window titles, and file paths.
+It does not upload window contents.
 
-## Build
+## Build from Source
 
 You need macOS 14 or newer and the Xcode command line tools.
 
@@ -73,6 +79,6 @@ cd prototype
 CODESIGN_IDENTITY="Apple Development: Your Name (TEAMID)" ./build.sh
 ```
 
-## Notes
+## Design Notes
 
 The main code is in [`prototype/WindowShade.swift`](prototype/WindowShade.swift). For the history and design notes, see [`WindowShade.md`](WindowShade.md).
