@@ -77,14 +77,23 @@ CODESIGN_IDENTITY="Apple Development: Your Name (TEAMID)" ./build.sh
 
 ## 发布
 
-维护者推送版本 tag 后，GitHub Actions 会自动构建并上传到 Releases：
+维护者可以在本机打包：
+
+```sh
+cd prototype
+./build.sh
+mkdir -p ../dist
+ditto -c -k --keepParent WindowShade.app ../dist/WindowShade-v0.1.0.zip
+shasum -a 256 ../dist/WindowShade-v0.1.0.zip > ../dist/WindowShade-v0.1.0.zip.sha256
+```
+
+然后在仓库根目录创建 tag，并上传到 GitHub Releases：
 
 ```sh
 git tag v0.1.0
 git push origin v0.1.0
+gh release create v0.1.0 dist/WindowShade-v0.1.0.zip dist/WindowShade-v0.1.0.zip.sha256
 ```
-
-工作流会生成 `WindowShade-v0.1.0.zip` 和对应的 SHA256 文件，并把它们上传到 GitHub Releases。
 
 ## 其他
 
