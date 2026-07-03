@@ -66,5 +66,5 @@ jobs:
           else
             gh release create "$TAG" "dist/$ASSET" "dist/$ASSET.sha256" \
               --title "WindowShade $TAG" \
-              --notes "Unsigned macOS build. Download the zip, unzip it, and open WindowShade.app."
+              --notes "Download the zip, unzip it, and open WindowShade.app."
           fi

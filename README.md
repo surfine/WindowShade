@@ -66,7 +66,7 @@ cd prototype
 open WindowShade.app
 ```
 
-The build script creates `WindowShade.app` and signs it ad-hoc by default. To keep macOS permission trust across rebuilds, sign with your own certificate:
+The build script creates `WindowShade.app`. To keep macOS permission trust across rebuilds, sign with your own certificate:
 
 ```sh
 cd prototype
@@ -82,7 +82,7 @@ git tag v0.1.0
 git push origin v0.1.0
 ```
 
-GitHub Actions will build `WindowShade.app`, package it as `WindowShade-v0.1.0.zip`, attach a SHA256 file, and upload both files to the release. The public build is ad-hoc signed, not notarized.
+GitHub Actions will build `WindowShade.app`, package it as `WindowShade-v0.1.0.zip`, attach a SHA256 file, and upload both files to the release.
 
 ## Notes
 
