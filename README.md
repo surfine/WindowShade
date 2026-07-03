@@ -73,26 +73,6 @@ cd prototype
 CODESIGN_IDENTITY="Apple Development: Your Name (TEAMID)" ./build.sh
 ```
 
-## Release
-
-Maintainers can package a release locally:
-
-```sh
-cd prototype
-./build.sh
-mkdir -p ../dist
-ditto -c -k --keepParent WindowShade.app ../dist/WindowShade-v0.1.0.zip
-shasum -a 256 ../dist/WindowShade-v0.1.0.zip > ../dist/WindowShade-v0.1.0.zip.sha256
-```
-
-Then create a tag and upload the zip from the repository root:
-
-```sh
-git tag v0.1.0
-git push origin v0.1.0
-gh release create v0.1.0 dist/WindowShade-v0.1.0.zip dist/WindowShade-v0.1.0.zip.sha256
-```
-
 ## Notes
 
 The main code is in [`prototype/WindowShade.swift`](prototype/WindowShade.swift). For the history and design notes, see [`WindowShade.md`](WindowShade.md).
