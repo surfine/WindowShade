@@ -373,18 +373,35 @@ final class PinnedPreviewController {
         activePreviewID = id
         lockedDuckingID = id
         updateDucking(activeID: id)
+
+        // 先把真实窗口定位到面板处、聚焦、并抬到全局最前，此时面板仍不透明地盖着它，
+        // 保证接下来透明穿透露出的一定是这个置顶窗口，而不是它背后的未置顶窗口。
+        let frame = session.panel.frame
+        let targetPosition = axPosition(fromCocoaFrame: frame)
+        _ = setAXSize(session.axWindow, frame.size)
+        setAXPosition(session.axWindow, targetPosition)
+        bringSourceWindowToFront(session)
+
+        // 真实窗口就位后再让面板淡出并放行鼠标，把交互交给它。
         session.capture.stop()
         session.panel.alphaValue = 0.02
         session.panel.hasShadow = false
         session.panel.ignoresMouseEvents = true
 
-        let frame = session.panel.frame
-        let targetPosition = axPosition(fromCocoaFrame: frame)
-        _ = setAXSize(session.axWindow, frame.size)
-        setAXPosition(session.axWindow, targetPosition)
-        raiseAXWindow(session.axWindow)
         installMouseMonitorsIfNeeded(for: session)
         wlog("pin-preview: enter interact id=\(id) frame=\(format(frame))")
+    }
+
+    // kAXRaiseAction 只在所属 app 内部重排 z 序：若该 app 不在前台，被抬升的窗口仍压在
+    // 当前前台 app 的窗口之下，透明面板便会露出那个未置顶窗口。这里激活所属 app，让抬升
+    // 真正到达全局最前；并先把置顶窗口本身设为 app 的 focused/main 窗口，使多窗口 app 激活
+    // 时上浮的是它、而不是某个兄弟窗口。单窗口目标（如 iPhone 镜像）只会带起它自己那一个。
+    private func bringSourceWindowToFront(_ session: PinnedPreviewSession) {
+        focusAXWindow(session.axWindow, pid: session.pid)
+        if NSWorkspace.shared.frontmostApplication?.processIdentifier != session.pid {
+            NSRunningApplication(processIdentifier: session.pid)?.activate()
+        }
+        raiseAXWindow(session.axWindow)
     }
 
     private func passThroughInitialClick(id: CGWindowID, event: NSEvent) {
