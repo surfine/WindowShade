@@ -1510,8 +1510,19 @@ func publicWindowID(of e: AXUIElement) -> CGWindowID? {
 
     let axFrame = CGRect(origin: pos, size: size)
     let axTitle = cleanDisplayTitle(axTitle(e))
-    let windows = CGWindowListCopyWindowInfo([.optionAll, .excludeDesktopElements],
-                                             kCGNullWindowID) as? [[String: Any]] ?? []
+    // 在屏列表远小于全量列表，聚焦/可见窗口（绝大多数调用）都能在这里解析；
+    // 只有停放到屏外、隐藏或最小化的窗口才需要回退到全量扫描，结果不变。
+    if let id = bestPublicWindowIDMatch(pid: pid, axFrame: axFrame, axTitle: axTitle,
+                                        options: [.optionOnScreenOnly, .excludeDesktopElements]) {
+        return id
+    }
+    return bestPublicWindowIDMatch(pid: pid, axFrame: axFrame, axTitle: axTitle,
+                                   options: [.optionAll, .excludeDesktopElements])
+}
+
+func bestPublicWindowIDMatch(pid: pid_t, axFrame: CGRect, axTitle: String,
+                             options: CGWindowListOption) -> CGWindowID? {
+    let windows = CGWindowListCopyWindowInfo(options, kCGNullWindowID) as? [[String: Any]] ?? []
     var best: (id: CGWindowID, score: CGFloat)?
 
     for info in windows {
@@ -2339,6 +2350,26 @@ func dumpWindow(_ win: AXUIElement) {
 }
 
 // MARK: - 全局鼠标事件钩子（CGEventTap）
+
+// tap 回调内的廉价预过滤：只用 WindowServer 数据判断点击点是否可能落在某个
+// 在屏窗口的标题栏带内。WindowServer 查询不依赖目标 app 是否响应；而 AX 命中
+// 测试是到目标 app 的同步 IPC，回调阻塞期间全系统鼠标事件都在排队。
+// 带高取 chromeHeight 的硬上限 300pt，宁可放过（返回 true 走原有完整路径），
+// 不可错杀；因此命中标题栏的行为与过去完全一致，只是内容区双击不再付 AX 成本。
+func pointMayLieInTitlebarBand(_ point: CGPoint) -> Bool {
+    guard let windows = CGWindowListCopyWindowInfo([.optionOnScreenOnly, .excludeDesktopElements],
+                                                   kCGNullWindowID) as? [[String: Any]] else {
+        return true
+    }
+    let maxTitlebarBand: CGFloat = 300
+    for info in windows {
+        guard let bounds = cgWindowBounds(info) else { continue }
+        let alpha = (info[kCGWindowAlpha as String] as? NSNumber)?.doubleValue ?? 1
+        guard alpha > 0, bounds.contains(point) else { continue }
+        if point.y <= bounds.minY + min(maxTitlebarBand, bounds.height) { return true }
+    }
+    return false
+}
 
 func eventTapCallback(proxy: CGEventTapProxy, type: CGEventType,
                       event: CGEvent, refcon: UnsafeMutableRawPointer?) -> Unmanaged<CGEvent>? {
@@ -3508,6 +3539,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSMenuDelegate {
     private var pendingMenuRebuild = false
     private var isUpdatingMenuFromDelegate = false
     private var pinnedPreviewFocusMonitor: Any?
+    private var pinnedPreviewTargetRefreshWorkItem: DispatchWorkItem?
     private weak var onboardingPermissionStack: NSStackView?
     private weak var onboardingProgressLabel: NSTextField?
     private weak var onboardingDoneButton: NSButton?
@@ -3568,6 +3600,10 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSMenuDelegate {
         enableScaleMinimizeEffectForSession()
         registerHotKey()
         ensureAccessibility()
+        // 把本进程所有同步 AX 调用的超时从系统默认 6s 收紧到 2s。
+        // 目标 app 无响应时，event tap 回调和主线程最多被拖 2s 而不是 6s；
+        // 正常 app 的 AX 属性读取都在毫秒级，不受影响。
+        AXUIElementSetMessagingTimeout(AXUIElementCreateSystemWide(), 2.0)
         showPermissionOnboardingIfNeeded(force: false)
         setupEventTapWhenTrusted()
         setupPinnedPreviewFocusTracking()
@@ -3757,11 +3793,22 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSMenuDelegate {
     private func setupPinnedPreviewFocusTracking() {
         pinnedPreviewController.refreshCurrentTarget(reason: "launch")
         pinnedPreviewFocusMonitor = NSEvent.addGlobalMonitorForEvents(matching: [.leftMouseDown, .rightMouseDown, .otherMouseDown]) { [weak self] _ in
-            DispatchQueue.main.asyncAfter(deadline: .now() + 0.08) {
-                self?.pinnedPreviewController.refreshCurrentTarget(reason: "global-mouse-down")
-                self?.scheduleMenuRebuild()
-            }
+            self?.schedulePinnedPreviewTargetRefresh()
         }
+    }
+
+    // 连续点击只在停顿后刷新一次：refreshCurrentTarget 每次都要同步 AX + 窗口
+    // 列表查询，不值得为每一下全局点击都付这笔主线程开销。菜单打开
+    // （menuNeedsUpdate）和 ⌃⌘P 入口都会主动刷新，合并点击不改变可见行为。
+    private func schedulePinnedPreviewTargetRefresh() {
+        pinnedPreviewTargetRefreshWorkItem?.cancel()
+        let work = DispatchWorkItem { [weak self] in
+            self?.pinnedPreviewTargetRefreshWorkItem = nil
+            self?.pinnedPreviewController.refreshCurrentTarget(reason: "global-mouse-down")
+            self?.scheduleMenuRebuild()
+        }
+        pinnedPreviewTargetRefreshWorkItem = work
+        DispatchQueue.main.asyncAfter(deadline: .now() + 0.25, execute: work)
     }
 
     private func withMenuRebuildSuppressed(_ body: () -> Void) {
@@ -8646,6 +8693,9 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSMenuDelegate {
     func handleTitleBarDoubleClick(at point: CGPoint) -> Bool {
         guard titlebarDoubleClickEnabled else { return false }
         guard AXIsProcessTrusted() else { return false }
+        // 先用 WindowServer 廉价排除内容区双击（选词等高频操作），
+        // 避免在 tap 回调里对目标 app 做同步 AX 命中测试。
+        guard pointMayLieInTitlebarBand(point) else { return false }
         let sysWide = AXUIElementCreateSystemWide()
         var elRef: AXUIElement?
         if AXUIElementCopyElementAtPosition(sysWide, Float(point.x), Float(point.y), &elRef) == .success,
@@ -8745,6 +8795,9 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSMenuDelegate {
             }
             return true
         }
+
+        // pending 分支之后才预过滤：三击补系统动作的 pending 匹配不依赖 AX。
+        guard pointMayLieInTitlebarBand(point) else { return false }
 
         let sysWide = AXUIElementCreateSystemWide()
         var elRef: AXUIElement?

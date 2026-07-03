@@ -138,8 +138,14 @@ final class PinnedPreviewController {
     }
 
     func refreshCurrentTarget(reason: String) {
-        guard let win = focusedWindow(), let id = windowID(of: win),
-              isUsableTarget(win, id: id) else {
+        guard let win = focusedWindow() else {
+            wlog("pin-preview: target unchanged reason=\(reason) no-usable-focused-window")
+            return
+        }
+        // 焦点窗口没变就不重新解析 windowID / 校验（CFEqual 只比较 AX token，
+        // 不发 IPC）。真正置顶时 startPreview 还会完整校验一次，安全性不变。
+        if let target = currentTarget, CFEqual(win, target.axWindow) { return }
+        guard let id = windowID(of: win), isUsableTarget(win, id: id) else {
             wlog("pin-preview: target unchanged reason=\(reason) no-usable-focused-window")
             return
         }
@@ -501,10 +507,12 @@ final class PinnedPreviewController {
     private func updatePointerDuckingTimer() {
         if sessions.count > 1 {
             guard pointerDuckingTimer == nil else { return }
-            let timer = Timer.scheduledTimer(withTimeInterval: 1.0 / 120.0, repeats: true) { [weak self] _ in
+            // 30Hz 足够跟手（悬停 ducking 延迟 ~33ms 无感）；120Hz + 零容差会让
+            // 多预览场景下主线程持续满频醒来。
+            let timer = Timer.scheduledTimer(withTimeInterval: 1.0 / 30.0, repeats: true) { [weak self] _ in
                 self?.pointerDuckingTick()
             }
-            timer.tolerance = 0
+            timer.tolerance = 1.0 / 120.0
             pointerDuckingTimer = timer
         } else {
             pointerDuckingTimer?.invalidate()
