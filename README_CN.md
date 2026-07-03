@@ -75,26 +75,6 @@ cd prototype
 CODESIGN_IDENTITY="Apple Development: Your Name (TEAMID)" ./build.sh
 ```
 
-## 发布
-
-维护者可以在本机打包：
-
-```sh
-cd prototype
-./build.sh
-mkdir -p ../dist
-ditto -c -k --keepParent WindowShade.app ../dist/WindowShade-v0.1.0.zip
-shasum -a 256 ../dist/WindowShade-v0.1.0.zip > ../dist/WindowShade-v0.1.0.zip.sha256
-```
-
-然后在仓库根目录创建 tag，并上传到 GitHub Releases：
-
-```sh
-git tag v0.1.0
-git push origin v0.1.0
-gh release create v0.1.0 dist/WindowShade-v0.1.0.zip dist/WindowShade-v0.1.0.zip.sha256
-```
-
 ## 其他
 
 主代码在 [`prototype/WindowShade.swift`](prototype/WindowShade.swift)。历史背景和设计想法见 [`WindowShade.md`](WindowShade.md)。
