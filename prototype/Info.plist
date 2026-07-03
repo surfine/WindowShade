@@ -9,13 +9,13 @@
     <key>CFBundleIconFile</key>
     <string>WindowShade</string>
     <key>CFBundleIdentifier</key>
-    <string>com.windowshade.prototype</string>
+    <string>com.surfine.WindowShade</string>
     <key>CFBundleName</key>
     <string>WindowShade</string>
     <key>CFBundlePackageType</key>
     <string>APPL</string>
     <key>CFBundleShortVersionString</key>
-    <string>0.1</string>
+    <string>1.0</string>
     <key>CFBundleVersion</key>
     <string>1</string>
     <key>LSMinimumSystemVersion</key>
@@ -23,6 +23,6 @@
     <key>LSUIElement</key>
     <true/>
     <key>NSHumanReadableCopyright</key>
-    <string>WindowShade prototype</string>
+    <string>WindowShade</string>
 </dict>
 </plist>

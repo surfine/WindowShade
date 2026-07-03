@@ -1,7 +1,7 @@
 #!/bin/bash
 # Build a local WindowShade.app bundle.
 #
-# By default this uses ad-hoc signing so the prototype can run locally.
+# By default this uses local signing so the app can run locally.
 # For a stable local TCC identity, pass your own signing certificate:
 #   CODESIGN_IDENTITY="Apple Development: Your Name (TEAMID)" ./build.sh
 
