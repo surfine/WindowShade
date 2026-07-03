@@ -3671,7 +3671,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSMenuDelegate {
         statusItem.button?.title = shaded.isEmpty ? "" : " \(shaded.count)"
         statusItem.button?.toolTip = shaded.isEmpty ? "WindowShade" : "WindowShade: \(shaded.count) folded"
         statusMenu.removeAllItems()
-        let toggle = NSMenuItem(title: "折叠/展开当前窗口", action: #selector(toggleAction), keyEquivalent: "c")
+        let toggle = NSMenuItem(title: foldToggleMenuTitle(), action: #selector(toggleAction), keyEquivalent: "c")
         toggle.keyEquivalentModifierMask = [.control, .command]
         statusMenu.addItem(toggle)
 
@@ -3699,7 +3699,6 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSMenuDelegate {
         pinnedPreview.keyEquivalentModifierMask = [.control, .command]
         pinnedPreview.isEnabled = AXIsProcessTrusted()
             && hasScreenRecordingPermission()
-            && pinnedPreviewController.canPinCurrentTarget()
         statusMenu.addItem(pinnedPreview)
         addPinnedPreviewMenuSection()
 
@@ -3719,6 +3718,10 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSMenuDelegate {
                 item.representedObject = NSNumber(value: id)
                 statusMenu.addItem(item)
             }
+            // 与「全部取消置顶」对称：仅在有已折叠窗口时才显示「全部展开」。
+            statusMenu.addItem(.separator())
+            let restore = NSMenuItem(title: "全部展开", action: #selector(restoreAll), keyEquivalent: "")
+            statusMenu.addItem(restore)
         } else {
             statusMenu.addItem(.separator())
             let empty = NSMenuItem(title: "没有已折叠窗口", action: nil, keyEquivalent: "")
@@ -3726,10 +3729,6 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSMenuDelegate {
             statusMenu.addItem(empty)
         }
 
-        statusMenu.addItem(.separator())
-        let restore = NSMenuItem(title: "全部展开", action: #selector(restoreAll), keyEquivalent: "")
-        restore.isEnabled = !shaded.isEmpty
-        statusMenu.addItem(restore)
         statusMenu.addItem(.separator())
         statusMenu.addItem(withTitle: "欢迎与使用说明...", action: #selector(showWelcomeGuide), keyEquivalent: "")
         statusMenu.addItem(withTitle: "偏好设置...", action: #selector(showPreferences), keyEquivalent: ",")
@@ -4255,6 +4254,18 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSMenuDelegate {
         contentView.setAccessibilityCustomActions(actions)
     }
 
+    // 动态翻转折叠项标题，与 ⌃⌘C 实际行为一致：当前会执行展开时显示「展开当前窗口」，
+    // 否则「折叠当前窗口」。没有已折叠窗口时直接返回，避免菜单重建付出无谓的 AX 解析。
+    private func foldToggleMenuTitle() -> String {
+        guard !shaded.isEmpty else { return "折叠当前窗口" }
+        if currentShadedOverlayID() != nil { return "展开当前窗口" }
+        if let win = focusedWindow(),
+           shaded.values.contains(where: { CFEqual($0.element, win) }) {
+            return "展开当前窗口"
+        }
+        return "折叠当前窗口"
+    }
+
     private func currentShadedOverlayID() -> CGWindowID? {
         let activeWindows = [NSApp.keyWindow, NSApp.mainWindow].compactMap { $0 }
         for window in activeWindows {
@@ -4698,7 +4709,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSMenuDelegate {
         onboardingCaption = nil
 
         let needsPermissions = !hasAccessibilityPermission() || !hasScreenRecordingPermission()
-        let height: CGFloat = needsPermissions ? 565 : 530
+        let height: CGFloat = needsPermissions ? 615 : 595
         let root = NSView(frame: NSRect(x: 0, y: 0, width: 500, height: height))
         let stack = NSStackView(frame: root.bounds.insetBy(dx: 24, dy: 22))
         stack.orientation = .vertical
@@ -4718,11 +4729,11 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSMenuDelegate {
         header.addArrangedSubview(title)
         stack.addArrangedSubview(header)
 
-        let copy = NSTextField(labelWithString: "折叠不是最小化：窗口内容会临时收起，标题栏入口仍留在原处。你可以从原地标题栏、菜单栏或专注 shelf 找回窗口。")
+        let copy = NSTextField(labelWithString: "WindowShade 让窗口多两种临时状态：折叠——内容原地收起，只留标题栏入口，可从原地标题栏、菜单栏或专注 shelf 找回；置顶——让窗口的实时画面始终浮在最上方，边看边操作（如 iPhone 镜像）。都是可逆的，不影响原来的布局。")
         copy.font = .systemFont(ofSize: 13)
         copy.textColor = .secondaryLabelColor
         copy.lineBreakMode = .byWordWrapping
-        copy.maximumNumberOfLines = 5
+        copy.maximumNumberOfLines = 6
         copy.preferredMaxLayoutWidth = onboardingContentWidth
         stack.addArrangedSubview(copy)
 
@@ -4804,10 +4815,10 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSMenuDelegate {
         var rows: [(String, String)] = [
             ("cursorarrow.click", "双击标题栏：折叠或展开当前窗口"),
             ("eye", "单击卷帘条：显示 / 收回窗口内容预览"),
-            ("keyboard", "⌃⌘C：折叠 / 展开当前窗口"),
-            ("pin", "⌃⌘P：置顶预览当前窗口，鼠标移入即可操作"),
-            ("number", "⌃⌘1…9：按菜单顺序快速展开"),
-            ("menubar.rectangle", "菜单栏：查看已折叠窗口并全部展开"),
+            ("keyboard", "⌃⌘C：折叠 / 展开当前窗口（同一键来回切换）"),
+            ("pin", "⌃⌘P：置顶 / 取消置顶当前窗口（同一键来回切换）"),
+            ("number", "⌃⌘1…9：按菜单顺序快速展开已折叠窗口"),
+            ("menubar.rectangle", "菜单栏：管理已折叠与已置顶窗口，可逐个或全部恢复"),
         ]
         if let triple = systemTitlebarTripleClickDescription() {
             rows.insert(("cursorarrow.rays", triple), at: 1)
@@ -4817,9 +4828,9 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSMenuDelegate {
 
     private func makeOnboardingFeatureCard() -> NSView {
         let rows: [(String, String)] = [
+            ("rectangle.on.rectangle", "置顶：把窗口的实时画面浮在最上方，鼠标移入即可操作真实窗口"),
             ("rectangle.stack", "专注模式会把其他 app 收进顶部 shelf"),
             ("arrow.down.forward.and.arrow.up.backward", "从 shelf 拉出窗口，双击可按当前位置展开"),
-            ("rectangle.on.rectangle", "置顶预览使用实时悬浮画面，交互时交还真实窗口"),
             ("paintpalette", "可在偏好设置切换原貌卷帘 / 标准标题栏"),
             ("power", "可开启登录时自动启动，让 WindowShade 常驻"),
         ]
@@ -5353,8 +5364,16 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSMenuDelegate {
     }
 
     private func showMenuHoverPreview(_ id: CGWindowID, anchor: NSRect?) {
-        guard let anchor,
-              let state = shaded[id] else { return }
+        guard let anchor else { return }
+        if shaded[id] != nil {
+            showShadedMenuHoverPreview(id, anchor: anchor)
+        } else if pinnedPreviewController.isPreviewing(id: id) {
+            showPinnedMenuHoverPreview(id, anchor: anchor)
+        }
+    }
+
+    private func showShadedMenuHoverPreview(_ id: CGWindowID, anchor: NSRect) {
+        guard let state = shaded[id] else { return }
         guard let image = state.previewImage,
               image.size.width > 1,
               image.size.height > 1 else {
@@ -5366,8 +5385,24 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSMenuDelegate {
             return
         }
 
-        hideHoverPreview()
         let frame = menuHoverPreviewFrame(anchor: anchor, imageSize: image.size)
+        let previewView = SafariStylePreviewView(frame: NSRect(origin: .zero, size: frame.size),
+                                                 image: image)
+        presentMenuHoverPreview(id: id, frame: frame, contentView: previewView)
+    }
+
+    // 已置顶窗口的实时缩略图：镜像该会话仍在运行的 ScreenCaptureKit 流，无需静态截图。
+    private func showPinnedMenuHoverPreview(_ id: CGWindowID, anchor: NSRect) {
+        guard let sourceSize = pinnedPreviewController.thumbnailSourceSize(id: id),
+              sourceSize.width > 1, sourceSize.height > 1 else { return }
+        let frame = menuHoverPreviewFrame(anchor: anchor, imageSize: sourceSize)
+        guard let previewView = pinnedPreviewController.makeThumbnailPreviewView(
+            frame: NSRect(origin: .zero, size: frame.size), id: id) else { return }
+        presentMenuHoverPreview(id: id, frame: frame, contentView: previewView)
+    }
+
+    private func presentMenuHoverPreview(id: CGWindowID, frame: NSRect, contentView: NSView) {
+        hideHoverPreview()
         let window = PreviewWindow(contentRect: frame, styleMask: .borderless,
                                    backing: .buffered, defer: false)
         window.isOpaque = false
@@ -5375,11 +5410,8 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSMenuDelegate {
         window.ignoresMouseEvents = true
         window.level = .popUpMenu
         window.collectionBehavior = [.transient, .ignoresCycle]
-
-        let previewView = SafariStylePreviewView(frame: NSRect(origin: .zero, size: frame.size),
-                                                 image: image)
         window.hasShadow = true
-        window.contentView = previewView
+        window.contentView = contentView
 
         hideMenuHoverPreview()
         menuPreviewOwnerID = id
@@ -5443,6 +5475,11 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSMenuDelegate {
 
     private func hideMenuHoverPreview(id: CGWindowID? = nil) {
         if let id, menuPreviewOwnerID != id { return }
+        // 若当前预览是已置顶窗口的实时镜像，断开镜像层，停止向其投喂采样帧。
+        // 对非置顶窗口是安全的空操作。
+        if let owner = menuPreviewOwnerID {
+            pinnedPreviewController.detachThumbnail(id: owner)
+        }
         menuPreviewOwnerID = nil
         menuPreviewWindow?.orderOut(nil)
         menuPreviewWindow = nil

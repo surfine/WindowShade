@@ -26,6 +26,10 @@ enum ShareableContentLoader {
 final class WindowStreamCapture: NSObject, SCStreamDelegate, SCStreamOutput {
     let videoLayer = AVSampleBufferDisplayLayer()
 
+    // 菜单缩略图的镜像层：同一批采样帧额外喂给它，实现"复用已在跑的流"的实时缩略图，
+    // 不新建 capture、不轮询。弱引用，菜单预览视图销毁后自动断开。
+    weak var mirrorLayer: AVSampleBufferDisplayLayer?
+
     private var stream: SCStream?
     private var filter: SCContentFilter?
     private var configuration = SCStreamConfiguration()
@@ -132,12 +136,19 @@ final class WindowStreamCapture: NSObject, SCStreamDelegate, SCStreamOutput {
     ) {
         guard outputType == .screen, sampleBuffer.isValid else { return }
         DispatchQueue.main.async { [weak self] in
-            guard let videoLayer = self?.videoLayer else { return }
-            if #available(macOS 15.0, *) {
-                videoLayer.sampleBufferRenderer.enqueue(sampleBuffer)
-            } else {
-                videoLayer.enqueue(sampleBuffer)
+            guard let self else { return }
+            Self.enqueue(sampleBuffer, into: self.videoLayer)
+            if let mirrorLayer = self.mirrorLayer {
+                Self.enqueue(sampleBuffer, into: mirrorLayer)
             }
+        }
+    }
+
+    private static func enqueue(_ buffer: CMSampleBuffer, into layer: AVSampleBufferDisplayLayer) {
+        if #available(macOS 15.0, *) {
+            layer.sampleBufferRenderer.enqueue(buffer)
+        } else {
+            layer.enqueue(buffer)
         }
     }
 
