@@ -4,7 +4,7 @@
 
 <p align="center">
   <strong>WindowShade</strong><br>
-  Bring the classic Mac OS window shade back to macOS.
+  Fold windows out of the way without losing their place.
 </p>
 
 <p align="center">
@@ -21,14 +21,20 @@
 
 ---
 
-WindowShade is a small macOS menu bar app for getting windows out of the way without losing them.
+WindowShade is for the moment when a window is in the way, but still belongs on your desktop.
+
+It folds the window content into a slim title-bar strip, keeping the window identifiable and exactly where your layout put it. Open it again from the strip, the menu bar, or a shortcut, without digging through the Dock or rearranging your workspace.
 
 It gives a window two temporary states:
 
-- **Folded**: the window content rolls up, leaving a title-bar strip in the same place. Open it again from the strip, the menu bar, or a keyboard shortcut.
-- **Pinned**: the window stays visible as a live floating preview. Move the pointer into it when you want to operate the real window.
+- **Folded**: keep the title bar in place and roll the window content away.
+- **Pinned**: keep a window visible as a live floating preview, useful for reference windows and iPhone Mirroring.
 
-This is useful when you only need to peek behind a window, keep an iPhone Mirroring window visible, or quiet down a busy desktop without sending everything to the Dock.
+## Why WindowShade?
+
+macOS already has Dock minimization, Mission Control, Spaces, Stage Manager, and tiling. WindowShade is smaller than all of those. It helps when you want to keep a group of open windows arranged as part of your workflow, while temporarily clearing the content that is blocking your view.
+
+Expose and Mission Control are great for finding windows. Dock minimization is good for putting a window away. WindowShade is for the in-between case: leave the window where it is, but roll up its content for now.
 
 ## Download
 
@@ -49,7 +55,7 @@ Triple-clicking the title bar keeps the system title-bar zoom behavior available
 
 ## Notes
 
-WindowShade works best with normal desktop windows. Apps with custom title bars, floating panels, or unusual document windows may need app-specific handling.
+WindowShade works best with ordinary desktop windows. Apps with custom title bars may need app-specific handling.
 
 The app includes compatibility work for Quick Look, Stickies, WeChat, Adobe apps, and a few other non-standard windows.
 
