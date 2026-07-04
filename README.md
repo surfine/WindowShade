@@ -1,14 +1,18 @@
+<h1 align="center">
+  <img src="assets/app-icon/windowshade-app-icon.png" alt="WindowShade app icon" width="128"/><br>
+  WindowShade
+</h1>
+
 <p align="center">
-  <img src="assets/app-icon/windowshade-app-icon.png" alt="WindowShade app icon" width="128"/>
+  <strong>Fold windows out of the way without losing their place.</strong><br>
+  A small macOS menu bar app that brings back the classic window shade gesture for modern desktops.
 </p>
 
 <p align="center">
-  <strong>WindowShade</strong><br>
-  Fold windows out of the way without losing their place.
-</p>
-
-<p align="center">
-  <a href="README.md">English</a> · <a href="README_CN.md">简体中文</a>
+  <a href="https://github.com/surfine/WindowShade/releases/latest"><img src="https://img.shields.io/github/v/release/surfine/WindowShade?style=flat-square&label=release" alt="Latest release"></a>
+  <a href="https://github.com/surfine/WindowShade/stargazers"><img src="https://img.shields.io/github/stars/surfine/WindowShade?style=flat-square" alt="GitHub stars"></a>
+  <img src="https://img.shields.io/badge/macOS-14%2B-black?style=flat-square" alt="macOS 14+">
+  <a href="README_CN.md"><img src="https://img.shields.io/badge/readme-%E7%AE%80%E4%BD%93%E4%B8%AD%E6%96%87-blue?style=flat-square" alt="Simplified Chinese README"></a>
 </p>
 
 <p align="center">
@@ -21,14 +25,16 @@
 
 ---
 
-WindowShade is for the moment when a window is in the way, but still belongs on your desktop.
+WindowShade is for the little desktop moment that macOS still makes oddly expensive: a window is in the way, but it still belongs exactly where you put it.
 
 It folds the window content into a slim title-bar strip, keeping the window identifiable and exactly where your layout put it. Open it again from the strip, the menu bar, or a shortcut, without digging through the Dock or rearranging your workspace.
 
-It gives a window two temporary states:
+## What It Does
 
-- **Folded**: keep the title bar in place and roll the window content away.
-- **Pinned**: keep a window visible as a live floating preview, useful for reference windows and iPhone Mirroring.
+| Mode | What happens | Good for |
+| --- | --- | --- |
+| **Folded** | Keep the title bar in place and roll the window content away. | Peeking behind a window, clearing clutter, keeping a document's place. |
+| **Pinned** | Keep a window visible as a live floating preview. | Reference windows, iPhone Mirroring, dashboards, things you want to watch. |
 
 ## Why WindowShade?
 
@@ -36,20 +42,31 @@ macOS already has Dock minimization, Mission Control, Spaces, Stage Manager, and
 
 Expose and Mission Control are great for finding windows. Dock minimization is good for putting a window away. WindowShade is for the in-between case: leave the window where it is, but roll up its content for now.
 
+## Highlights
+
+- Fold the current window with `Control + Command + C`.
+- Double-click a title bar to fold or unfold that window.
+- Click a folded strip to preview the hidden content.
+- Pin a window as a live floating preview with `Control + Command + P`.
+- Restore folded windows with `Control + Command + 1...9` or from the menu bar.
+- Choose native-looking strips, standard title bars, transparency, sounds, Focus Shelf, and launch at login.
+
 ## Download
 
-Download the latest zip from [Releases](https://github.com/surfine/WindowShade/releases), unzip it, and open `WindowShade.app`.
+Download the latest zip from [Releases](https://github.com/surfine/WindowShade/releases/latest), unzip it, and open `WindowShade.app`.
 
 WindowShade lives in the menu bar. It does not show a Dock icon.
 
 ## Basic Use
 
-- `Control + Command + C`: fold or unfold the current window.
-- Double-click a window title bar: fold or unfold that window.
-- Click a folded strip: show or hide a quick preview.
-- `Control + Command + P`: pin or unpin the current window as a live preview.
-- `Control + Command + 1...9`: unfold windows by their order in the menu.
-- Menu bar: manage folded windows, pinned previews, Focus Shelf, appearance, sounds, permissions, and launch at login.
+| Action | Shortcut / gesture |
+| --- | --- |
+| Fold or unfold the current window | `Control + Command + C` |
+| Fold or unfold a specific window | Double-click its title bar |
+| Preview a folded window | Click its folded strip |
+| Pin or unpin the current window | `Control + Command + P` |
+| Unfold by menu order | `Control + Command + 1...9` |
+| Manage everything | Menu bar icon |
 
 Triple-clicking the title bar keeps the system title-bar zoom behavior available.
 
