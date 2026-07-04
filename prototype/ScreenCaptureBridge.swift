@@ -74,7 +74,11 @@ final class WindowStreamCapture: NSObject, SCStreamDelegate, SCStreamOutput {
         stream = nil
         activeStream.stopCapture { error in
             if let error {
-                wlog("pin-preview: capture stop failed \(error.localizedDescription)")
+                // -3808 = 串流已自行终止（如源窗口关闭后系统停流），再 stop 属预期，静默。
+                let nsError = error as NSError
+                if nsError.code != -3808 {
+                    wlog("pin-preview: capture stop failed \(error.localizedDescription)")
+                }
             }
         }
         DispatchQueue.main.async { [videoLayer] in

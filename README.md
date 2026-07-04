@@ -49,7 +49,7 @@ Triple-clicking the title bar keeps the system title-bar zoom behavior available
 
 ## Notes
 
-WindowShade works best with normal desktop windows. Full-screen spaces, Stage Manager, custom title bars, and complex professional apps may need app-specific handling.
+WindowShade works best with normal desktop windows. Apps with custom title bars, floating panels, or unusual document windows may need app-specific handling.
 
 The app includes compatibility work for Quick Look, Stickies, WeChat, Adobe apps, and a few other non-standard windows.
 
