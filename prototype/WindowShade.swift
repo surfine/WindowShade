@@ -5220,14 +5220,16 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSMenuDelegate {
               let displayID = state.sourceDisplayID,
               let sourceSpaceID = state.sourceSpaceID else { return }
 
-        // 保险丝而非主机制：焦点交接（handOffFocusBeforeHiding）应让隐藏不再触发
-        // Space 跳变，这里只兜极端情况。触发即意味着预防失败，日志标注 UNEXPECTED。
+        // 保险丝：焦点交接（handOffFocusBeforeHiding）负责预防，这里负责兜底补偿。
+        // 检测必须快于 Space 滑动动画（~300ms）：密集轮询 + SLSManagedDisplay-
+        // SetCurrentSpace 瞬时切换（无滑动动画），在动画完成前拉回，把"跳走再
+        // 滑回来"的双重闪动压缩成一瞬。每次检查只是一个 WindowServer 读，极廉价。
         pendingSpaceReturns[id] = PendingSpaceReturn(displayID: displayID,
                                                      sourceSpaceID: sourceSpaceID,
                                                      deadline: Date().addingTimeInterval(2.5))
         wlog("space: scheduled return guard id=\(id) sid=\(sourceSpaceID)")
 
-        for delay in [0.15, 0.6, 1.5] {
+        for delay in [0.05, 0.1, 0.15, 0.22, 0.3, 0.45, 0.7, 1.0, 1.5, 2.2] {
             DispatchQueue.main.asyncAfter(deadline: .now() + delay) { [weak self] in
                 self?.restorePendingSourceSpaceIfNeeded(id: id, reason: "post-shade-\(String(format: "%.2f", delay))")
             }
@@ -5262,7 +5264,9 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSMenuDelegate {
         guard activeSpaceID != request.sourceSpaceID else { return }
 
         if mover.setCurrentSpace(displayID: request.displayID, sid: request.sourceSpaceID) {
-            wlog("space: UNEXPECTED returned display to source sid=\(request.sourceSpaceID) from=\(activeSpaceID) id=\(id) reason=\(reason) — 焦点交接预防失败，需排查")
+            // parking 策略（空 Space 折叠）下系统级联仍可能跳变，此处兜回属预期；
+            // 若前面的 handoff 日志是 same-app/top-window 策略则需排查预防为何失效。
+            wlog("space: return guard fired sid=\(request.sourceSpaceID) from=\(activeSpaceID) id=\(id) reason=\(reason)")
             // 与 overlay 可见性绑定：跳回后立即校正 overlay 归属与显隐。
             if let state = shaded[id] {
                 _ = enforceOverlaySpaceInvariant(id: id, state: state, reason: "space-return-guard")
@@ -6709,8 +6713,10 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSMenuDelegate {
             configureShadedAccessibility(for: overlay, id: id, appName: appName, title: title)
             // 折叠事务序：先把焦点交给当前 Space 的继承人，再隐藏真实窗口。
             // 隐藏非前台窗口不会触发 macOS 的焦点级联（跳 Space / 激活兄弟窗口的病灶）。
-            handOffFocusBeforeHiding(win: win, pid: pid, id: id)
-            let hide = hideWindow(win, pid: pid, originalPosition: pos, size: size, policy: policy)
+            // 无处交接（当前 Space 只有这一个窗口）时 app-hide 不安全，改走 minimize。
+            let appHideSafe = handOffFocusBeforeHiding(win: win, pid: pid, id: id)
+            let hide = hideWindow(win, pid: pid, originalPosition: pos, size: size,
+                                  policy: policy, appHideSafe: appHideSafe)
             // minimize / app-hide 的状态读回是异步的（最小化动画进行中 kAXMinimized
             // 尚未翻转、NSRunningApplication.isHidden 缓存滞后），立即验证会产生假阴性。
             // 立即通过 → 立即 reveal；否则延迟验证（+0.15/+0.45s），通过后才 reveal，
@@ -7038,14 +7044,19 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSMenuDelegate {
     // 非前台 app/窗口没有任何焦点级联。所以隐藏之前由我们显式把焦点交给当前
     // Space 上的继承人：同 app 同 Space 其他窗口（菜单栏不变）→ 当前 Space
     // 最顶层其他 regular app 窗口（与系统自身最小化行为一致）→ Finder。
-    private func handOffFocusBeforeHiding(win: AXUIElement, pid: pid_t, id: CGWindowID) {
+    // 返回值 = app-hide 是否安全（会不会触发系统的前台 app 重新选举）。
+    // 隐藏整个 app 时，若它是前台 app，macOS 按全局最近使用顺序选举继任者，
+    // 继任者的窗口在别的 Space 就会跳过去——这个选举我们无法干预。
+    // 只有当焦点已交接到当前 Space 的其他窗口（或目标 app 本就不在前台）时，
+    // app-hide 才不会触发选举。
+    @discardableResult
+    private func handOffFocusBeforeHiding(win: AXUIElement, pid: pid_t, id: CGWindowID) -> Bool {
         let selfPid = ProcessInfo.processInfo.processIdentifier
         let frontmostPid = NSWorkspace.shared.frontmostApplication?.processIdentifier
-        // 交接同时撤掉截图期的焦点停靠（修复：成功路径此前从不释放，
-        // WindowShade 的隐形窗口会一直持有 key）。
+        // 交接后撤掉截图期的焦点停靠（成功路径此前从不释放）。
         defer { focusParkingWindow?.orderOut(nil) }
         guard frontmostPid == pid || frontmostPid == selfPid else {
-            return   // 目标 app 本就不在前台，隐藏它不会触发焦点级联
+            return true   // 目标 app 本就不在前台，隐藏它不会触发焦点级联
         }
 
         let onScreenIDs = currentOnScreenWindowIDs()
@@ -7058,7 +7069,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSMenuDelegate {
                   onScreenIDs.contains(cid) else { continue }
             focusAXWindow(candidate, pid: pid)
             wlog("focus: handoff strategy=same-app heir=\(cid) id=\(id)")
-            return
+            return true
         }
 
         // 2) 当前 Space 最顶层的其他 regular app 窗口。
@@ -7087,15 +7098,18 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSMenuDelegate {
                 focusAXWindow(heirWin, pid: owner)
             }
             wlog("focus: handoff strategy=top-window heir=\(heirApp.localizedName ?? String(owner)) id=\(id)")
-            return
+            return true
         }
 
-        // 3) 空桌面：Finder（此时菜单栏显示 Finder 是正确语义）。
-        if let finder = NSRunningApplication.runningApplications(
-            withBundleIdentifier: "com.apple.finder").first {
-            finder.activate(options: [])
-            wlog("focus: handoff strategy=finder id=\(id)")
-        }
+        // 3) 当前 Space 没有任何其他窗口：无处交接。
+        //    实测教训（13:37/13:49）：激活 Finder 会被 Mission Control 拉去它有
+        //    窗口的 Space；焦点停靠 + app-hide 也躲不过系统的前台选举跳变；
+        //    补偿式跳回受限于"新 Space 值在动画提交前读不到"，永远慢一拍。
+        //    根治 = 不交接、返回 app-hide 不安全：调用方将禁用 app-hide 改走
+        //    minimize——最小化不触发前台选举（app 保持前台，菜单栏不变），
+        //    这是 macOS 的稳定语义（⌘M 从不切 Space）。
+        wlog("focus: handoff strategy=stay-minimize id=\(id)")
+        return false
     }
 
     // 折叠事务：隐藏生效验证。reveal overlay 之前必须确认真实窗口确实不可见，
@@ -7763,7 +7777,8 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSMenuDelegate {
     }
 
     private func hideWindow(_ win: AXUIElement, pid: pid_t, originalPosition pos: CGPoint,
-                            size: CGSize, policy: ShadePolicy) -> HideMethod {
+                            size: CGSize, policy: ShadePolicy,
+                            appHideSafe: Bool = true) -> HideMethod {
         let id = windowID(of: win)
         if let hide = orderOutOwnWindowIfNeeded(id: id, pid: pid, reason: "shade") {
             return hide
@@ -7779,7 +7794,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSMenuDelegate {
                                 size: size, allowAppHide: false)
         case .hiddenIfSingleWindowElseMinimized(let allowAppHide):
             return fallbackHide(win, pid: pid, id: id, originalPosition: pos,
-                                size: size, allowAppHide: allowAppHide)
+                                size: size, allowAppHide: allowAppHide && appHideSafe)
         case .offscreenForLivePreview:
             let livePreviewParkingSpots = [
                 offscreen,
@@ -7797,10 +7812,10 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSMenuDelegate {
             setAXPosition(win, pos)
             wlog("    live preview parking failed; fallback to app-hide when single-window（pid=\(pid)）")
             return fallbackHide(win, pid: pid, id: id, originalPosition: pos,
-                                size: size, allowAppHide: true)
+                                size: size, allowAppHide: appHideSafe)
         case .offscreenThenFallback(let allowAppHide):
             let bundleID = appBundleID(pid: pid)
-            if allowAppHide && appCurrentUserWindowCount(pid) <= 1 {
+            if allowAppHide && appHideSafe && appCurrentUserWindowCount(pid) <= 1 {
                 wlog("    single-window app → prefer hide fallback（pid=\(pid), bundle=\(bundleID)）")
                 return fallbackHide(win, pid: pid, id: id, originalPosition: pos,
                                     size: size, allowAppHide: true)
@@ -7815,8 +7830,8 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSMenuDelegate {
                     UserDefaults.standard.set(Array(clampingBundleIDs).sorted(), forKey: clampingBundleIDsDefaultsKey)
                 }
                 let hide = fallbackHide(win, pid: pid, id: id, originalPosition: pos,
-                                        size: size, allowAppHide: allowAppHide)
-                wlog("    挪屏外被钳制 → \(hide)（pid=\(pid), bundle=\(bundleID), allowAppHide=\(allowAppHide)）")
+                                        size: size, allowAppHide: allowAppHide && appHideSafe)
+                wlog("    挪屏外被钳制 → \(hide)（pid=\(pid), bundle=\(bundleID), allowAppHide=\(allowAppHide && appHideSafe)）")
                 return hide
             }
         }
