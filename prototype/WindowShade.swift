@@ -7258,7 +7258,15 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSMenuDelegate {
 
     private func bringRestoredWindowToFront(_ win: AXUIElement, pid: pid_t, reason: String) {
         func attempt(_ label: String) {
-            activateApp(pid: pid)
+            // 只在 app 尚未前台时 activate：250ms 内连发 activate 会反复重启
+            // 菜单栏的交叉淡入，赶上时机就把两套菜单叠印留在屏幕上（系统级
+            // 渲染残影，实测截图 2026-07）。激活已生效的重试只做 AX raise/focus
+            // （不触碰菜单栏）；unhide 保留（.hidden 恢复路径依赖，且幂等）。
+            if NSWorkspace.shared.frontmostApplication?.processIdentifier != pid {
+                activateApp(pid: pid)
+            } else {
+                runningApp(pid: pid)?.unhide()
+            }
             raiseAXWindow(win)
             focusAXWindow(win, pid: pid)
             wlog("front: \(reason) \(label)")
