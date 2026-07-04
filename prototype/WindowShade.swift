@@ -31,6 +31,12 @@ let standardTitleBarMaxCropHeight: CGFloat = 64
 let adobeApplicationFrameChromeHeight: CGFloat = 112
 let adobeTabbedDocumentChromeHeight: CGFloat = 84
 let adobeFloatingDocumentChromeHeight: CGFloat = 44
+// 实测裁切（2026-07，本机截图对照）：通用 112pt 会切进面板内容。
+// AE = 细标题栏 + 工具条两排，止于 Project/Effect Controls 面板标签行之前。
+// Premiere = 一体化单条标题栏（交通灯与 Import/Edit/Export 同排），
+// 其下的面包屑/侧栏是内容。
+let afterEffectsWorkspaceChromeHeight: CGFloat = 56
+let premiereWorkspaceChromeHeight: CGFloat = 40
 let shadeCornerRadius: CGFloat = 18   // macOS Tahoe 窗口圆角；固定值保证各折叠条一致
 let shadeAppearanceModeDefaultsKey = "ShadeAppearanceMode"
 let shadeFloatingOnTopDefaultsKey = "ShadeFloatingOnTop"
@@ -806,7 +812,12 @@ func adobeChromeProfile(for win: AXUIElement,
         windowTitle.contains(".ait") ||
         windowTitle.contains(".indd") ||
         windowTitle.contains(".indl") ||
-        windowTitle.contains(".pdf")
+        windowTitle.contains(".pdf") ||
+        windowTitle.contains(".aep") ||
+        windowTitle.contains(".aet") ||
+        windowTitle.contains(".prproj") ||
+        windowTitle.contains(".sesx") ||
+        windowTitle.contains(".fla")
 
     let isProductionWorkspace =
         bundle.contains("aftereffects") ||
@@ -828,9 +839,17 @@ func adobeChromeProfile(for win: AXUIElement,
         appName.contains("illustrator") ||
         appName.contains("indesign")
 
+    // AE/Premiere 的工作区标题总带产品名前缀（"Adobe After Effects 2026 - …"），
+    // 独立面板则是 "Effect Controls" / "Timeline: …" 这类裸面板名。
+    let titleLooksLikeWorkspace = windowTitle.contains("adobe") || windowTitle.contains(appName)
+
     // Adobe panels are usually small floating windows owned by the workspace.
     // Default to ignoring them so WindowShade does not fight Adobe's panel/layout system.
-    if subrole.contains("floating") && !hasDocumentishTitle {
+    // 注意：AE/Premiere 连主工作区的 subrole 都标成 floating（AX 树非标准），
+    // 生产线 app 的工作区窗口（标题带产品名，或带 .aep/.prproj 等工程后缀）
+    // 不得落进面板分支，否则整个 app 无法折叠（实测 2026-07）。
+    if subrole.contains("floating") && !hasDocumentishTitle &&
+        !(isProductionWorkspace && titleLooksLikeWorkspace) {
         return AdobeChromeProfile(kind: .floatingPanel,
                                   preservedChromeHeight: titleBarHeight,
                                   hitChromeHeight: titleBarHeight,
@@ -852,11 +871,30 @@ func adobeChromeProfile(for win: AXUIElement,
                                   reason: "panel-like-title")
     }
 
+    // 主屏/欢迎窗口（标题就是产品名、无文稿、无工具栏）：内容紧贴系统标题栏，
+    // 没有标签条/工作区 chrome 可保留。按标准标题栏高度裁切——84pt 的文档框
+    // 高度在 PS 2026 主屏会把 Ps 头部内容条拼进卷帘条（"灰标题栏+深色头部条"
+    // 两截拼接，实测 2026-07）。文档窗口标题都带文件名/缩放比等后缀，不会误中。
+    let titleIsBareProductName = windowTitle.isEmpty || windowTitle == appName
+    if titleIsBareProductName && !hasDocumentishTitle && !hasToolbar {
+        return AdobeChromeProfile(kind: .tabbedDocumentFrame,
+                                  preservedChromeHeight: titleBarHeight,
+                                  hitChromeHeight: titleBarHeight,
+                                  canShade: true,
+                                  reason: "home-screen")
+    }
+
     if isProductionWorkspace {
-        let h = min(max(adobeApplicationFrameChromeHeight, titleBarHeight), max(titleBarHeight, size.height))
+        // AE / Premiere 用实测的专属裁切高度；其余生产线 app（Audition 等）
+        // 未实测，沿用通用值。hit 高度与裁切一致：可见 chrome 即双击折叠带。
+        let isPremiere = bundle.contains("premiere") || appName.contains("premiere")
+        let isAfterEffects = bundle.contains("aftereffects") || appName.contains("after effects")
+        let base: CGFloat = isPremiere ? premiereWorkspaceChromeHeight
+            : (isAfterEffects ? afterEffectsWorkspaceChromeHeight : adobeApplicationFrameChromeHeight)
+        let h = min(max(base, titleBarHeight), max(titleBarHeight, size.height))
         return AdobeChromeProfile(kind: .applicationFrame,
                                   preservedChromeHeight: h,
-                                  hitChromeHeight: min(max(h, adobeApplicationFrameChromeHeight), max(titleBarHeight, size.height)),
+                                  hitChromeHeight: h,
                                   canShade: true,
                                   reason: "production-workspace")
     }
@@ -990,13 +1028,21 @@ func appCurrentUserWindowCount(_ pid: pid_t) -> Int {
     }.count
 }
 
+// Adobe AE/Premiere 的 AX 树把工作区窗口的 role 报成 AXLayoutArea（非标准），
+// 但它们是货真价实的窗口（有 layer-0 CGWindow 背书）。仅对 Adobe app 放行该
+// 角色，避免把其他 app 的布局容器误当窗口。
+func isWindowLikeRole(_ role: String?, pid: pid_t) -> Bool {
+    if role == kAXWindowRole as String { return true }
+    return role == "AXLayoutArea" && isAdobeApp(pid: pid)
+}
+
 func appWindows(pid: pid_t) -> [AXUIElement] {
     let app = AXUIElementCreateApplication(pid)
     var ref: CFTypeRef?
     guard AXUIElementCopyAttributeValue(app, kAXWindowsAttribute as CFString, &ref) == .success,
           let arr = ref as? [AXUIElement] else { return [] }
     return arr.filter { win in
-        guard axRole(win) == kAXWindowRole as String else { return false }
+        guard isWindowLikeRole(axRole(win), pid: pid) else { return false }
         guard let id = windowID(of: win) else { return true }
         return !isDesktopWidgetWindow(id: id)
     }
@@ -6676,12 +6722,17 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSMenuDelegate {
             quietNotice("无法读取窗口", log: "shade: 取不到 pos/size")
             return
         }
-        guard axRole(win) == kAXWindowRole as String else {
-            quietNotice("此窗口不能折叠", log: "shade: reject non-window role=\(axRole(win) ?? "?") id=\(id)")
-            return
-        }
         var pid: pid_t = 0
         AXUIElementGetPid(win, &pid)
+        let role = axRole(win)
+        // Adobe AE/Premiere 工作区窗口的 role 是 AXLayoutArea：有 layer-0 真实
+        // CGWindow 背书时按窗口放行（见 isWindowLikeRole），其余非窗口角色照旧拒绝。
+        let adobeLayoutWindow = role != kAXWindowRole as String
+            && isWindowLikeRole(role, pid: pid) && cgWindowLayer(id) == 0
+        guard role == kAXWindowRole as String || adobeLayoutWindow else {
+            quietNotice("此窗口不能折叠", log: "shade: reject non-window role=\(role ?? "?") id=\(id)")
+            return
+        }
         let bundleID = appBundleID(pid: pid)
         let appName = appDisplayName(pid: pid)
         let title = axTitle(win)
@@ -9274,7 +9325,12 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSMenuDelegate {
             if let win = containingWindow(el) {
                 return handleTitleBarDoubleClick(win: win, point: point, source: "ax-hit")
             }
-            wlog("titlebar-double-click: no containing window role=\(role ?? "?") at=(\(Int(point.x)),\(Int(point.y)))")
+            // After Effects 等 Adobe 自绘窗口的 AX 命中元素是 AXUnknown 且没有
+            // 窗口祖先（AX 树残缺）——几何回退，titlebarContains 仍会校验标题栏带。
+            wlog("titlebar-double-click: no containing window role=\(role ?? "?") at=(\(Int(point.x)),\(Int(point.y))); trying geometry fallback")
+            if let win = frontmostWindowContaining(point: point, requireCompatProfile: false) {
+                return handleTitleBarDoubleClick(win: win, point: point, source: "geometry-after-orphan-hit")
+            }
         } else if hitErr != .success {
             // 目标 app 忙时 AX 命中测试会超时/出错（此前静默死掉，正是"有时候
             // 双击没反应"的一类来源）。降级用几何回退判定标题栏。
