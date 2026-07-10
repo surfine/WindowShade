@@ -56,11 +56,21 @@ private final class PinnedPreviewSession {
     var interactionEpoch: UInt64 = 0
     // watchdog 稳定门：上一拍读到的源窗口 frame，连续两拍一致才应用到面板。
     var pendingFrame: NSRect?
+    // Mission Control/genie/全屏过渡期间 WindowServer 呈现坐标会"稳定但错误"
+    // （比如 MC 缩略图排布），两拍稳定门本身挡不住。AX 确认后被判定为动画产物的
+    // 候选帧记在这里，避免同一个错误候选帧每 0.2s 都重新发一次 AX 查询。
+    var rejectedFrame: NSRect?
+    var isConfirmingFrame = false
     // 交接管线完成前到达的点击：暂存，待面板真正透明+穿透后补发到真实窗口。
     var pendingClick: (point: CGPoint, count: Int)?
-    // 跨 Space 判定的短 TTL 缓存：mouseMoved 高频触发，不必每次都查 WindowServer。
+    // co-Space 不变量判定的短 TTL 缓存：watchdog 每 0.2s 触发，不必每拍都查 WindowServer。
     var spaceCheckAt: CFAbsoluteTime = 0
-    var spaceCheckOnActive = true
+    // 面板当前应处的 Space（源窗口所在 Space）。nil 表示 SLS 符号不可用/尚未解析，
+    // 此时面板留在创建时的 Space，不追随源窗口跨 Space 移动。
+    var sourceSpaceID: UInt64?
+    // 老板键（暂停全部置顶）挂起态：面板已 orderOut、capture 已停，watchdog 已停。
+    // 恢复时按此位判断是否需要重启 capture/watchdog，而不是"取消置顶"（会话保留）。
+    var isSuspended = false
 
     init(windowID: CGWindowID, pid: pid_t, bundleIdentifier: String, appName: String,
          title: String, axWindow: AXUIElement, scWindow: SCWindow, display: SCDisplay?,
@@ -133,6 +143,8 @@ final class PinnedPreviewController {
     private var lastPointerDuckingID: CGWindowID?
     private var lockedDuckingID: CGWindowID?
     private var activePreviewID: CGWindowID?
+    // 老板键：临时挂起全部置顶预览（隐藏面板 + 停止 capture），再按一次原样恢复。
+    private var isSuspendedAll = false
     private let excludedBundleIDs: Set<String> = [
         "com.apple.dock",
         "com.apple.controlcenter",
@@ -152,6 +164,12 @@ final class PinnedPreviewController {
 
     func isPreviewing(id: CGWindowID) -> Bool {
         sessions[id] != nil
+    }
+
+    // 老板键掛起时 session 仍在（为了一键恢复），但 capture 已停——菜单缩略图这时
+    // 不该去接一个收不到採样帧的 mirror layer，否则弹出一个永远空白的预览面板。
+    func isSuspended(id: CGWindowID) -> Bool {
+        sessions[id]?.isSuspended ?? false
     }
 
     func refreshCurrentTarget(reason: String) {
@@ -206,6 +224,96 @@ final class PinnedPreviewController {
     func stopAllPreviews(reason: String = "manual") {
         for id in Array(sessions.keys) {
             stopPreview(id: id, reason: reason)
+        }
+    }
+
+    var isPinnedPreviewsSuspended: Bool { isSuspendedAll }
+
+    // 菜单标题双态翻转，与折叠/置顶 toggle 同款用法。
+    func suspendAllMenuTitle() -> String {
+        isSuspendedAll ? "恢复置顶预览" : "暂时取消全部置顶"
+    }
+
+    // 老板键：暂停/恢复全部置顶预览。不是取消置顶——会话（真实窗口引用、frame
+    // 记忆）保留，只是面板隐藏 + capture 停止（连带消除录屏指示器），再按一次
+    // 原样恢复。与「全部取消置顶」是两个不同的操作，互不影响。
+    func toggleSuspendAll() {
+        if isSuspendedAll {
+            resumeAllSuspended()
+        } else {
+            suspendAll()
+        }
+    }
+
+    private func suspendAll() {
+        guard !isSuspendedAll, !sessions.isEmpty else { return }
+        isSuspendedAll = true
+        for (id, session) in sessions {
+            suspendSession(session, id: id)
+        }
+        pointerDuckingTimer?.invalidate()
+        pointerDuckingTimer = nil
+        wlog("pin-preview: suspend-all count=\(sessions.count)")
+        sessionsDidChange()
+    }
+
+    private func suspendSession(_ session: PinnedPreviewSession, id: CGWindowID) {
+        guard !session.isSuspended else { return }
+        if session.isInteracting {
+            endInteraction(id: id, sourceFrame: currentSourceFrame(id: id) ?? session.panel.frame)
+        }
+        session.isSuspended = true
+        session.watchdog?.invalidate()
+        session.watchdog = nil
+        session.capture.stop()
+        session.panel.ignoresMouseEvents = true
+        session.panel.orderOut(nil)
+        wlog("pin-preview: suspend id=\(id)")
+    }
+
+    private func resumeAllSuspended() {
+        guard isSuspendedAll else { return }
+        isSuspendedAll = false
+        for (id, session) in Array(sessions) {
+            resumeSession(session, id: id)
+        }
+        updatePointerDuckingTimer()
+        wlog("pin-preview: resume-all count=\(sessions.count)")
+        sessionsDidChange()
+    }
+
+    private func resumeSession(_ session: PinnedPreviewSession, id: CGWindowID) {
+        guard session.isSuspended else { return }
+        session.isSuspended = false
+        // 挂起期间没有 watchdog 追踪源窗口；恢复前先确认它还在，关闭了就直接
+        // 收掉这个会话而不是恢复一个指向已消失窗口的面板。
+        guard let frame = currentSourceFrame(id: id) else {
+            wlog("pin-preview: resume found closed source id=\(id)")
+            stopPreview(id: id, reason: "resume-lost-source")
+            return
+        }
+        session.lastKnownFrame = frame
+        session.pendingFrame = nil
+        session.rejectedFrame = nil
+        session.panel.alphaValue = 1
+        if !framesAlmostEqual(session.panel.frame, frame, tolerance: 1.0) {
+            session.panel.setFrame(frame, display: true)
+        }
+        session.panel.ignoresMouseEvents = false
+        session.panel.orderFrontRegardless()
+        enforcePanelSpaceInvariant(session, reason: "resume")
+        startWatchdog(for: session)
+        Task { @MainActor [weak self] in
+            guard let self else { return }
+            do {
+                try await session.capture.restart(window: session.scWindow, display: session.display,
+                                                  width: frame.width, height: frame.height)
+                wlog("pin-preview: resume id=\(id) frame=\(Self.format(frame))")
+            } catch {
+                self.notice("置顶预览恢复失败",
+                            "pin-preview: resume capture failed id=\(id) \(error.localizedDescription)")
+                self.stopPreview(id: id, reason: "resume-capture-failed")
+            }
         }
     }
 
@@ -275,28 +383,39 @@ final class PinnedPreviewController {
     // AppDelegate 在 activeSpaceChanged 时调用，开启动画抑制窗口期。
     func noteSpaceTransition() {
         spaceTransitionUntil = CFAbsoluteTimeGetCurrent() + 0.6
+        // Space 已经变了，之前锁定的 ducking 目标可能是刚离开的 Space 上的面板；
+        // 清掉缓存，下一拍 pointerDuckingTick 用 Space 过滤后的结果重新判定。
+        lockedDuckingID = nil
+        lastPointerDuckingID = nil
     }
 
     private var isInSpaceTransition: Bool {
         CFAbsoluteTimeGetCurrent() < spaceTransitionUntil
     }
 
-    // 源窗口是否在面板所在屏幕的当前 Space。SLS 符号不可用时视为同 Space（回退现状）。
-    // mouseMoved 高频触发，结果按 0.5s TTL 缓存在会话上。
-    private func sourceIsOnActiveSpace(_ session: PinnedPreviewSession) -> Bool {
+    // 面板与源窗口同 Space 的不变量（与折叠条 overlay 的 enforceOverlaySpaceInvariant
+    // 同构）：源窗口被拖到别的 Space（比如在 Mission Control 里）就让面板跟过去；
+    // 面板自己漂移了（防御性，正常不会发生）就搬回源 Space。SLS 符号不可用时
+    // 整个不变量不生效，面板留在创建时的 Space。0.5s TTL：watchdog 每 0.2s 触发，
+    // 不必每拍都查 WindowServer。
+    private func enforcePanelSpaceInvariant(_ session: PinnedPreviewSession, reason: String) {
         let now = CFAbsoluteTimeGetCurrent()
-        if now - session.spaceCheckAt < 0.5 { return session.spaceCheckOnActive }
-        var onActive = true
-        let mover = PrivateSLSWindowMover.shared
-        if let winSpace = mover.windowSpace(id: session.windowID),
-           let screen = session.panel.screen ?? NSScreen.main,
-           let display = displayID(for: screen),
-           let activeSpace = mover.currentSpace(displayID: display) {
-            onActive = winSpace == activeSpace
-        }
+        guard now - session.spaceCheckAt >= 0.5 else { return }
         session.spaceCheckAt = now
-        session.spaceCheckOnActive = onActive
-        return onActive
+        let mover = PrivateSLSWindowMover.shared
+        guard let sourceSpaceID = mover.windowSpace(id: session.windowID),
+              let panelID = cgWindowID(for: session.panel) else { return }
+        if session.sourceSpaceID != sourceSpaceID {
+            if mover.moveWindow(id: panelID, toSpace: sourceSpaceID) {
+                wlog("pin-preview: space follow id=\(session.windowID) from=\(session.sourceSpaceID.map(String.init) ?? "-") to=\(sourceSpaceID) reason=\(reason)")
+                session.sourceSpaceID = sourceSpaceID
+            }
+            return
+        }
+        if let panelSpace = mover.windowSpace(id: panelID), panelSpace != sourceSpaceID,
+           mover.moveWindow(id: panelID, toSpace: sourceSpaceID) {
+            wlog("pin-preview: space corrected id=\(session.windowID) panel=\(panelSpace) expected=\(sourceSpaceID) reason=\(reason)")
+        }
     }
 
     private func startPreview(for axWindow: AXUIElement, id: CGWindowID) {
@@ -316,7 +435,14 @@ final class PinnedPreviewController {
         Task { @MainActor [weak self] in
             guard let self else { return }
             do {
-                let content = try await ShareableContentLoader.current()
+                // 折叠/预热之后紧接着置顶，多数情况下 ShareableContentCache 已经是热的，
+                // 走它省掉一次全系统枚举；缓存未命中或系统低于 14 时退回原始直接调用。
+                let content: SCShareableContent
+                if #available(macOS 14.0, *), let cached = await ShareableContentCache.shared.content(requiring: id) {
+                    content = cached
+                } else {
+                    content = try await ShareableContentLoader.current()
+                }
                 guard let scWindow = content.windows.first(where: { $0.windowID == id }) else {
                     throw PinnedPreviewError.noSCWindow
                 }
@@ -390,6 +516,7 @@ final class PinnedPreviewController {
         }
         sessions[id] = session
         panel.orderFrontRegardless()
+        enforcePanelSpaceInvariant(session, reason: "install")
         startWatchdog(for: session)
         updatePointerDuckingTimer()
         sessionsDidChange()
@@ -416,19 +543,21 @@ final class PinnedPreviewController {
     }
 
     private func watchdogTick(id: CGWindowID, reason: String) {
-        guard let session = sessions[id] else { return }
+        guard let session = sessions[id], !session.isSuspended else { return }
         // Space 切换动画期间 CGWindow 坐标整屏滑动，全部跳过（也不更新 lastKnownFrame，
         // 避免把动画中间坐标记成稳定值）；窗口期结束后下一次 tick 一次性校正。
         if isInSpaceTransition { return }
+        enforcePanelSpaceInvariant(session, reason: reason)
         guard let frame = currentSourceFrame(id: id) else {
             wlog("pin-preview: closed lost source id=\(id)")
             stopPreview(id: id, reason: "lost-source")
             return
         }
         if session.isInteracting {
-            // 交互中窗口由用户直接操作，持续跟随（exit 时要用）；稳定门不适用。
+            // 交互中窗口由用户直接操作，持续跟随（exit 时要用）；稳定门/AX 确认不适用。
             session.lastKnownFrame = frame
             session.pendingFrame = nil
+            session.rejectedFrame = nil
             return
         }
         // 稳定门：frame 需与上一拍一致（连续两拍相同）才应用。最小化/恢复 genie、
@@ -439,6 +568,45 @@ final class PinnedPreviewController {
         session.pendingFrame = frame
         guard isStable else { return }
         session.pendingFrame = nil
+        guard !framesAlmostEqual(session.lastKnownFrame, frame, tolerance: 1.0) else { return }
+        confirmAndApplyFrame(session: session, id: id, frame: frame, reason: reason)
+    }
+
+    // Mission Control 缩略排布、genie、全屏过渡期间 WindowServer 呈现坐标会"稳定但
+    // 错误"（MC 把窗口缩放后静止摆放，两拍稳定门本身挡不住），但窗口在 app 语境里
+    // 的逻辑几何（AX position/size）不受这类纯合成层变换影响。套用一个与
+    // lastKnownFrame 不同的候选帧前，先用 AX 读数确认二者一致，不一致就判定为动画
+    // 产物、丢弃候选帧。AX 调用可能阻塞（忙 app），必须在 axWorkQueue 上做。
+    private func confirmAndApplyFrame(session: PinnedPreviewSession, id: CGWindowID,
+                                      frame: NSRect, reason: String) {
+        guard !session.isConfirmingFrame else { return }
+        if let rejected = session.rejectedFrame, framesAlmostEqual(rejected, frame, tolerance: 1.0) {
+            return
+        }
+        session.isConfirmingFrame = true
+        let axWindow = session.axWindow
+        axWorkQueue.async { [weak self] in
+            let axFrame: NSRect? = axPosition(axWindow).flatMap { pos in
+                axSize(axWindow).map { size in cocoaFrame(fromAXPosition: pos, size: size) }
+            }
+            DispatchQueue.main.async {
+                guard let self, let session = self.sessions[id] else { return }
+                session.isConfirmingFrame = false
+                // AX 读取失败（忙 app 超时等）时不因此卡死，退回信任 WindowServer 坐标，
+                // 与改动前行为一致。
+                guard let axFrame, !framesAlmostEqual(axFrame, frame, tolerance: 2.0) else {
+                    session.rejectedFrame = nil
+                    self.applyConfirmedFrame(session: session, id: id, frame: frame, reason: reason)
+                    return
+                }
+                session.rejectedFrame = frame
+                wlog("pin-preview: watchdog rejected animated frame id=\(id) cg=\(Self.format(frame)) ax=\(Self.format(axFrame)) reason=\(reason)")
+            }
+        }
+    }
+
+    private func applyConfirmedFrame(session: PinnedPreviewSession, id: CGWindowID,
+                                     frame: NSRect, reason: String) {
         session.lastKnownFrame = frame
         guard !framesAlmostEqual(session.panel.frame, frame, tolerance: 1.0) else { return }
         let old = session.panel.frame
@@ -461,10 +629,6 @@ final class PinnedPreviewController {
                            sourceFrame: currentSourceFrame(id: activePreviewID) ?? active.panel.frame)
             return
         }
-        // 混合跨 Space 语义：源窗口在其他 Space 时悬停只看实时画面，不交接。
-        // （activate 会让系统跳回源 Space，曾引发 enter/exit/space 风暴。）
-        guard sourceIsOnActiveSpace(session) else { return }
-
         session.pendingExit?.cancel()
         session.pendingExit = nil
         session.isInteracting = true
@@ -530,43 +694,10 @@ final class PinnedPreviewController {
         }
     }
 
-    // 跨 Space 点击跳转：只聚焦 + 激活 + 抬升，系统自行切到源 Space；
-    // 不动窗口几何（跨 Space 移动坐标无意义），不透明化面板，不合成点击。
-    private func jumpToSourceWindow(_ session: PinnedPreviewSession) {
-        let axWindow = session.axWindow
-        let pid = session.pid
-        axWorkQueue.async { [weak self] in
-            focusAXWindow(axWindow, pid: pid)
-            DispatchQueue.main.async {
-                NSRunningApplication(processIdentifier: pid)?.activate()
-                self?.axWorkQueue.async {
-                    raiseAXWindow(axWindow)
-                }
-            }
-        }
-    }
-
     private func passThroughInitialClick(id: CGWindowID, event: NSEvent) {
         guard let session = sessions[id] else { return }
-        // 混合跨 Space 语义：源窗口在其他 Space 时，点击面板 = 先尝试把窗口"召"到
-        // 当前 Space（moveWindow 自带 windowSpace 验证；成功则就地走正常交接，最贴合
-        // "窗口跟着你"）；验证失败回退 activate 跳转（单窗口 app 可靠；多窗口 app 若
-        // 在当前 Space 另有窗口，系统会拒绝切换——这正是引入搬窗的原因）。
-        guard sourceIsOnActiveSpace(session) else {
-            let mover = PrivateSLSWindowMover.shared
-            if let screen = session.panel.screen ?? NSScreen.main,
-               let display = displayID(for: screen),
-               let space = mover.currentSpace(displayID: display),
-               mover.moveWindow(id: id, toSpace: space) {
-                wlog("pin-preview: click summoned window to active space id=\(id)")
-                session.spaceCheckAt = 0   // 空间判定缓存立即失效
-                beginInteraction(id: id)
-            } else {
-                wlog("pin-preview: click jump to source space id=\(id)")
-                jumpToSourceWindow(session)
-            }
-            return
-        }
+        // 面板与源窗口现在总是同 Space（enforcePanelSpaceInvariant），点击面板
+        // 就是点在源窗口所在的当前 Space 上，不再需要跨 Space 召唤/跳转分支。
         let windowPoint = event.locationInWindow
         let screenRect = session.panel.convertToScreen(NSRect(origin: windowPoint, size: .zero))
         let axPoint = CGPoint(x: screenRect.origin.x,
@@ -649,6 +780,10 @@ final class PinnedPreviewController {
         }
         Task { @MainActor [weak self, weak session] in
             guard let self, let session else { return }
+            // 老板键可能在这次退出交互的同一拍里把会话挂起（suspendSession 先调用
+            // endInteraction 收尾再停 capture）：挂起态不重启 capture，否则刚被
+            // 老板键停掉的流又被这里重新拉起来。
+            guard !session.isSuspended else { return }
             do {
                 try await session.capture.restart(window: session.scWindow, display: session.display,
                                                   width: stableFrame.width, height: stableFrame.height)
@@ -748,10 +883,29 @@ final class PinnedPreviewController {
         updateDucking(activeID: hoverID)
     }
 
+    // 面板现在按 Space 分布（不再全局跟随），绝对屏幕坐标在不同 Space 间可以重叠：
+    // 命中测试和 duck 重叠判定都必须先过滤到「当前 Space」的会话，否则会误判/误
+    // duck 一个根本不在眼前的 Space 上的面板。
+    private func sessionIsOnCurrentSpace(_ session: PinnedPreviewSession,
+                                         mover: PrivateSLSWindowMover,
+                                         cache: inout [CGDirectDisplayID: UInt64?]) -> Bool {
+        guard let sourceSpaceID = session.sourceSpaceID else { return true }  // SLS 不可用：回退现状
+        guard let screen = session.panel.screen ?? NSScreen.main,
+              let display = displayID(for: screen) else { return true }
+        if cache[display] == nil {
+            cache[display] = mover.currentSpace(displayID: display)
+        }
+        guard let activeSpaceID = cache[display] ?? nil else { return true }
+        return activeSpaceID == sourceSpaceID
+    }
+
     private func pointerHoveredPreviewID() -> CGWindowID? {
         let mouse = NSEvent.mouseLocation
+        let mover = PrivateSLSWindowMover.shared
+        var spaceCache: [CGDirectDisplayID: UInt64?] = [:]
         let hits = sessions.filter { _, session in
             !session.isDucked && session.panel.isVisible && session.panel.frame.contains(mouse)
+                && sessionIsOnCurrentSpace(session, mover: mover, cache: &spaceCache)
         }
         return hits.min { lhs, rhs in
             lhs.value.panel.orderedIndex < rhs.value.panel.orderedIndex
@@ -770,7 +924,10 @@ final class PinnedPreviewController {
         }
         active.panel.level = .floating
         active.panel.orderFrontRegardless()
+        let mover = PrivateSLSWindowMover.shared
+        var spaceCache: [CGDirectDisplayID: UInt64?] = [:]
         for (id, session) in sessions where id != activeID {
+            guard sessionIsOnCurrentSpace(session, mover: mover, cache: &spaceCache) else { continue }
             let shouldDuck = activeFrame.intersects(session.panel.frame)
             if shouldDuck, !session.isDucked {
                 session.isDucked = true
