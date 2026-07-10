@@ -2459,6 +2459,92 @@ func wlog(_ s: String) {
     WindowShadeLogger.shared.write(s)
 }
 
+// SCShareableContent.current 每次调用都要枚举全系统窗口，在部分机器上耗时数百
+// 毫秒到数秒——它是每次折叠截图的同步前置成本，也是"双击后要等一下"的感知延迟
+// 大头（超时还会把原貌卷帘降级成代理条）。短 TTL 缓存 + 标题栏点击预热之后，
+// 双击的第二下落地时内容通常已就绪。缓存未命中目标窗口时强制刷新，
+// 正确性不受 TTL 影响（新建窗口永远走强制刷新）。
+@available(macOS 14.0, *)
+@MainActor
+final class ShareableContentCache {
+    static let shared = ShareableContentCache()
+
+    private var cached: SCShareableContent?
+    private var fetchedAt: CFAbsoluteTime = 0
+    private var inFlight: Task<SCShareableContent, Error>?
+    private let ttl: TimeInterval = 1.5
+    private var lastFailureAt: CFAbsoluteTime = 0
+    private var lastFailureLogAt: CFAbsoluteTime = 0
+    private let failureBackoff: TimeInterval = 2.0
+    private let failureLogThrottle: TimeInterval = 30.0
+
+    private func isFresh() -> Bool {
+        cached != nil && CFAbsoluteTimeGetCurrent() - fetchedAt < ttl
+    }
+
+    func content(requiring windowID: CGWindowID) async -> SCShareableContent? {
+        if isFresh(), let cached, cached.windows.contains(where: { $0.windowID == windowID }) {
+            return cached
+        }
+        if let inFlight, let content = try? await inFlight.value,
+           content.windows.contains(where: { $0.windowID == windowID }) {
+            return content
+        }
+        // 上面等到的快照仍不含目标窗口：没有更新请求正在路上就自己发一次；
+        // 等待期间如果已经有新请求出现（inFlight 非空），加入它而不是再抢发一次。
+        if let inFlight {
+            return try? await inFlight.value
+        }
+        return await refresh()
+    }
+
+    // 标题栏 mousedown 预热。命中新鲜缓存或已有在途请求都直接跳过；无录屏权限或
+    // 处于失败退避期内也跳过，避免每次点击都触发一次注定失败的全系统枚举。
+    func prefetch() async {
+        guard hasScreenRecordingPermission() else { return }
+        guard !isFresh(), inFlight == nil else { return }
+        guard CFAbsoluteTimeGetCurrent() - lastFailureAt >= failureBackoff else { return }
+        _ = await refresh()
+    }
+
+    // "决定要发起 fetch"到"inFlight 被设置"之间必须没有 await：调用方（content(requiring:)
+    // 和 prefetch()）都是在同一段同步代码里确认 inFlight == nil 后立即调用这里，进入
+    // 本函数到 `inFlight = task` 这行之前也没有任何 await，因此并发调用不会互相踩掉
+    // 彼此刚设置的 inFlight、也不会触发重复的全系统枚举。
+    private func refresh() async -> SCShareableContent? {
+        let start = CFAbsoluteTimeGetCurrent()
+        let task = Task { try await SCShareableContent.current }
+        inFlight = task
+        let content = try? await task.value
+        inFlight = nil
+        if let content {
+            cached = content
+            fetchedAt = CFAbsoluteTimeGetCurrent()
+            lastFailureAt = 0
+            let ms = Int((fetchedAt - start) * 1000)
+            if ms >= 300 { wlog("capture: shareable-content fetch took \(ms)ms") }
+        } else {
+            lastFailureAt = CFAbsoluteTimeGetCurrent()
+            if lastFailureAt - lastFailureLogAt >= failureLogThrottle {
+                lastFailureLogAt = lastFailureAt
+                wlog("capture: shareable-content fetch failed")
+            }
+        }
+        return content
+    }
+}
+
+// continuation 竞速的"只 resume 一次"守卫。两个赛跑的 Task 不在同一 actor 上，
+// 需要真正的互斥而非"没有 await 就不会交错"这类单线程论证。
+private actor SingleResumeGuard {
+    private var resumed = false
+    func tryResume() -> Bool {
+        guard !resumed else { return false }
+        resumed = true
+        return true
+    }
+}
+
 // 包裹疑似昂贵的同步块；超过阈值才记日志，避免刷屏。
 @discardableResult
 func logIfSlow<T>(_ label: String, threshold: TimeInterval = 0.05, _ body: () -> T) -> T {
@@ -2732,34 +2818,19 @@ final class PreviewWindow: NSWindow {
     override var canBecomeMain: Bool { false }
 }
 
-final class HoverTrackingView: NSView {
-    var onHoverChanged: ((Bool) -> Void)?
-    private var trackingArea: NSTrackingArea?
+// 统一预览视窗：菜单悬停与标题栏单击 peek 共用同一个显示/隐藏机制，系统中任一
+// 时刻最多只有一个预览视窗存在——不再是两套独立状态各自为政、只靠单向调用
+// 互相关闭撞出来的巧合。
+enum PreviewTrigger {
+    case menuHover
+    case titlebarPeek
+}
 
-    override func hitTest(_ point: NSPoint) -> NSView? {
-        nil
-    }
-
-    override func updateTrackingAreas() {
-        if let trackingArea = trackingArea {
-            removeTrackingArea(trackingArea)
-        }
-        let area = NSTrackingArea(rect: bounds,
-                                  options: [.mouseEnteredAndExited, .activeAlways, .inVisibleRect],
-                                  owner: self,
-                                  userInfo: nil)
-        trackingArea = area
-        addTrackingArea(area)
-        super.updateTrackingAreas()
-    }
-
-    override func mouseEntered(with event: NSEvent) {
-        onHoverChanged?(true)
-    }
-
-    override func mouseExited(with event: NSEvent) {
-        onHoverChanged?(false)
-    }
+struct ActivePreview {
+    let ownerID: CGWindowID
+    let window: NSWindow
+    let trigger: PreviewTrigger
+    let isPinnedLive: Bool
 }
 
 final class SafariStylePreviewView: NSView {
@@ -3431,189 +3502,6 @@ final class ClassicTitleStripView: NSView {
     }
 }
 
-final class ProxyTitleStripView: NSView {
-    var onDoubleClick: (() -> Void)?
-    var onAction: ((TrafficAction) -> Void)?
-    var onMoveEnded: ((NSRect) -> Void)?
-
-    private let appName: String
-    private let windowTitle: String
-    private let appIcon: NSImage?
-    private var dragOffset = CGPoint.zero
-    private var didDrag = false
-    private var pressedAction: TrafficAction?
-    private var trackingArea: NSTrackingArea?
-    private var isHovering = false
-
-    init(frame: NSRect, appName: String, windowTitle: String, appIcon: NSImage?) {
-        self.appName = appName
-        self.windowTitle = windowTitle
-        self.appIcon = appIcon
-        super.init(frame: frame)
-        wantsLayer = true
-        toolTip = displayTitle
-    }
-
-    required init?(coder: NSCoder) { fatalError() }
-
-    private var displayTitle: String {
-        descriptiveDisplayTitle(appName: appName, windowTitle: windowTitle)
-    }
-
-    private func visualRect(for action: TrafficAction) -> NSRect {
-        let rects = ProxyTitleLayoutMetrics.trafficLightRects(in: bounds)
-        return rects.first(where: { $0.1 == action })?.0 ?? .zero
-    }
-
-    private func hitRect(for action: TrafficAction) -> NSRect {
-        visualRect(for: action).insetBy(dx: -7, dy: -7)
-    }
-
-    private func action(at point: NSPoint) -> TrafficAction? {
-        let hits = [TrafficAction.close, .minimize, .zoom].filter { hitRect(for: $0).contains(point) }
-        return hits.min {
-            let a = visualRect(for: $0)
-            let b = visualRect(for: $1)
-            let da = hypot(point.x - a.midX, point.y - a.midY)
-            let db = hypot(point.x - b.midX, point.y - b.midY)
-            return da < db
-        }
-    }
-
-    override func updateTrackingAreas() {
-        if let trackingArea = trackingArea {
-            removeTrackingArea(trackingArea)
-        }
-        let area = NSTrackingArea(rect: bounds,
-                                  options: [.mouseEnteredAndExited, .activeAlways, .inVisibleRect],
-                                  owner: self,
-                                  userInfo: nil)
-        trackingArea = area
-        addTrackingArea(area)
-        super.updateTrackingAreas()
-    }
-
-    override func mouseEntered(with event: NSEvent) {
-        isHovering = true
-        needsDisplay = true
-    }
-
-    override func mouseExited(with event: NSEvent) {
-        isHovering = false
-        needsDisplay = true
-    }
-
-    override func draw(_ dirtyRect: NSRect) {
-        let dark = isDarkAppearance()
-        let bg = dark
-            ? NSColor(calibratedWhite: 0.12, alpha: 0.96)
-            : NSColor(calibratedWhite: 0.93, alpha: 0.96)
-        let stroke = dark
-            ? NSColor(calibratedWhite: 0.32, alpha: 0.75)
-            : NSColor(calibratedWhite: 0.62, alpha: 0.55)
-
-        let pill = NSBezierPath(roundedRect: bounds.insetBy(dx: 0.5, dy: 0.5),
-                                xRadius: min(10, bounds.height / 2),
-                                yRadius: min(10, bounds.height / 2))
-        bg.setFill()
-        pill.fill()
-        stroke.setStroke()
-        pill.lineWidth = 1
-        pill.stroke()
-
-        drawTrafficLight(.close, activeColor: NSColor(calibratedRed: 1.00, green: 0.37, blue: 0.34, alpha: 1))
-        drawTrafficLight(.minimize, activeColor: NSColor(calibratedRed: 1.00, green: 0.74, blue: 0.18, alpha: 1))
-        drawTrafficLight(.zoom, activeColor: NSColor(calibratedRed: 0.18, green: 0.79, blue: 0.27, alpha: 1))
-        drawTitle(dark: dark)
-    }
-
-    private func drawTrafficLight(_ action: TrafficAction, activeColor: NSColor) {
-        let r = visualRect(for: action)
-        if pressedAction == action {
-            NSColor.black.withAlphaComponent(isDarkAppearance() ? 0.30 : 0.12).setFill()
-            NSBezierPath(ovalIn: r.insetBy(dx: -3, dy: -3)).fill()
-        }
-        let fill = (isHovering || pressedAction == action)
-            ? activeColor
-            : NSColor(calibratedWhite: isDarkAppearance() ? 0.34 : 0.78, alpha: 1)
-        fill.setFill()
-        NSBezierPath(ovalIn: r).fill()
-        NSColor.black.withAlphaComponent(isHovering ? 0.18 : 0.08).setStroke()
-        let edge = NSBezierPath(ovalIn: r.insetBy(dx: 0.5, dy: 0.5))
-        edge.lineWidth = 0.7
-        edge.stroke()
-    }
-
-    private func drawTitle(dark: Bool) {
-        let title = displayTitle
-        let font = NSFont.systemFont(ofSize: 12, weight: .semibold)
-        let paragraph = NSMutableParagraphStyle()
-        paragraph.alignment = .left
-        paragraph.lineBreakMode = .byTruncatingTail
-        let color = dark
-            ? NSColor(calibratedWhite: 0.88, alpha: 1)
-            : NSColor(calibratedWhite: 0.18, alpha: 1)
-        let attr = NSAttributedString(string: title, attributes: [
-            .font: font,
-            .foregroundColor: color,
-            .paragraphStyle: paragraph
-        ])
-
-        let hasIcon = appIcon != nil
-        let centerY = ProxyTitleLayoutMetrics.centerY(in: bounds)
-        let iconRect = ProxyTitleLayoutMetrics.iconRect(in: bounds, hasIcon: hasIcon)
-        let textFrame = ProxyTitleLayoutMetrics.textFrame(in: bounds, hasIcon: hasIcon)
-        guard textFrame.width > 40 else { return }
-
-        if let icon = appIcon {
-            icon.draw(in: iconRect,
-                      from: NSRect(origin: .zero, size: icon.size),
-                      operation: .sourceOver,
-                      fraction: 0.92)
-        }
-
-        drawAlignedTitleLine(attr, textX: textFrame.minX, textWidth: textFrame.width, centerY: centerY)
-    }
-
-    override func mouseDown(with event: NSEvent) {
-        let p = convert(event.locationInWindow, from: nil)
-        if let action = action(at: p) {
-            pressedAction = action
-            needsDisplay = true
-            return
-        }
-        guard let window = window else { return }
-        let m = NSEvent.mouseLocation
-        dragOffset = CGPoint(x: m.x - window.frame.origin.x, y: m.y - window.frame.origin.y)
-        didDrag = false
-    }
-
-    override func mouseDragged(with event: NSEvent) {
-        guard pressedAction == nil, let window = window else { return }
-        let m = NSEvent.mouseLocation
-        window.setFrameOrigin(CGPoint(x: m.x - dragOffset.x, y: m.y - dragOffset.y))
-        didDrag = true
-    }
-
-    override func mouseUp(with event: NSEvent) {
-        let p = convert(event.locationInWindow, from: nil)
-        if let pressed = pressedAction {
-            defer {
-                pressedAction = nil
-                needsDisplay = true
-            }
-            if action(at: p) == pressed { onAction?(pressed) }
-            return
-        }
-        if didDrag {
-            didDrag = false
-            if let window { onMoveEnded?(window.frame) }
-            return
-        }
-        if event.clickCount == 2 { onDoubleClick?() }
-    }
-}
-
 // MARK: - 折叠状态
 
 // ShadeState follows one real window, not one app. The stored CGWindowID and
@@ -3697,15 +3585,14 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSMenuDelegate {
     private var privateAlphaOriginalValues: [CGWindowID: Float] = [:]
     private var lastJournalRescueAttempt: Date?
     private var focusParkingWindow: NSWindow?
-    private var previewWindow: NSWindow?
-    private weak var previewImageView: NSImageView?
-    private var previewShowWorkItem: DispatchWorkItem?
-    private var previewPendingID: CGWindowID?
-    private var previewHoverID: CGWindowID?
-    private var previewOwnerID: CGWindowID?
+    // 当前唯一在屏幕上的预览视窗（菜单悬停或标题栏 peek 触发），见 presentPreview/
+    // hidePreview。同一时刻只可能有一个，这是结构性不变量，不是巧合。
+    private var activePreview: ActivePreview?
+    // 标题栏单击 peek 的「意图」追踪：跨异步懒截图等待期，防止用户已经移开后
+    // 慢截图才回来还硬生生弹出一个不相干窗口的预览。
+    private var peekHoverID: CGWindowID?
     private var pendingSpaceReturns: [CGWindowID: PendingSpaceReturn] = [:]
-    private var menuPreviewWindow: NSWindow?
-    private var menuPreviewOwnerID: CGWindowID?
+    // 菜单悬停的「意图」追踪：同上，键于 highlight 变化而非 overlay 位置。
     private var menuPreviewHoverID: CGWindowID?
     private var menuPreviewAnchor: NSRect?
     private var shadeOperationIDs: Set<CGWindowID> = []
@@ -3957,6 +3844,14 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSMenuDelegate {
         }
 
         statusMenu.addItem(.separator())
+        // 老板键：暂时隐藏/恢复全部置顶预览（连带停止/恢复 capture），与下面
+        // 「全部取消置顶」不同——不清空会话，按一次就能原样恢复。
+        let suspendAll = NSMenuItem(title: pinnedPreviewController.suspendAllMenuTitle(),
+                                    action: #selector(toggleSuspendPinnedPreviewsAction),
+                                    keyEquivalent: "")
+        suspendAll.target = self
+        statusMenu.addItem(suspendAll)
+
         let stopPinnedPreviews = NSMenuItem(title: "全部取消置顶",
                                             action: #selector(stopAllPinnedPreviewsAction),
                                             keyEquivalent: "")
@@ -3987,7 +3882,18 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSMenuDelegate {
 
     private func setupPinnedPreviewFocusTracking() {
         pinnedPreviewController.refreshCurrentTarget(reason: "launch")
-        pinnedPreviewFocusMonitor = NSEvent.addGlobalMonitorForEvents(matching: [.leftMouseDown, .rightMouseDown, .otherMouseDown]) { [weak self] _ in
+        pinnedPreviewFocusMonitor = NSEvent.addGlobalMonitorForEvents(matching: [.leftMouseDown, .rightMouseDown, .otherMouseDown]) { [weak self] event in
+            // 标题栏带内的首次按下就预热窗口枚举缓存（监视器回调是异步投递，
+            // 不在 tap 关键路径上）：双击折叠的第二下落地时 SCShareableContent
+            // 通常已就绪，卷帘条"点了要等"的感知延迟显著缩短。
+            if #available(macOS 14.0, *), event.type == .leftMouseDown,
+               self?.titlebarDoubleClickEnabled == true {
+                let mouse = NSEvent.mouseLocation
+                let cgPoint = CGPoint(x: mouse.x, y: coordinateBaselineY() - mouse.y)
+                if pointMayLieInTitlebarBand(cgPoint) {
+                    Task { @MainActor in await ShareableContentCache.shared.prefetch() }
+                }
+            }
             self?.schedulePinnedPreviewTargetRefresh()
         }
     }
@@ -4502,6 +4408,11 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSMenuDelegate {
 
     @objc private func stopAllPinnedPreviewsAction() {
         pinnedPreviewController.stopAllPreviews(reason: "menu-stop-all")
+        rebuildMenu()
+    }
+
+    @objc private func toggleSuspendPinnedPreviewsAction() {
+        pinnedPreviewController.toggleSuspendAll()
         rebuildMenu()
     }
 
@@ -5445,8 +5356,8 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSMenuDelegate {
                 applyOverlayPresentation(overlay, bringForward: bringForward)
             }
         }
-        if let previewWindow = previewWindow {
-            applyOverlayPresentation(previewWindow, bringForward: bringForward)
+        if let active = activePreview, active.trigger == .titlebarPeek {
+            applyOverlayPresentation(active.window, bringForward: bringForward)
         }
     }
 
@@ -5657,21 +5568,30 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSMenuDelegate {
         let frame = menuHoverPreviewFrame(anchor: anchor, imageSize: image.size)
         let previewView = SafariStylePreviewView(frame: NSRect(origin: .zero, size: frame.size),
                                                  image: image)
-        presentMenuHoverPreview(id: id, frame: frame, contentView: previewView)
+        presentPreview(ownerID: id, frame: frame, contentView: previewView,
+                       trigger: .menuHover, isPinnedLive: false)
     }
 
     // 已置顶窗口的实时缩略图：镜像该会话仍在运行的 ScreenCaptureKit 流，无需静态截图。
+    // 老板键挂起中的 session 没有 capture 在跑，视同「没有预览」，不接一个收不到
+    // 采样帧的 mirror layer 出来（否则弹出一个永远空白的预览面板）。
     private func showPinnedMenuHoverPreview(_ id: CGWindowID, anchor: NSRect) {
-        guard let sourceSize = pinnedPreviewController.thumbnailSourceSize(id: id),
+        guard !pinnedPreviewController.isSuspended(id: id),
+              let sourceSize = pinnedPreviewController.thumbnailSourceSize(id: id),
               sourceSize.width > 1, sourceSize.height > 1 else { return }
         let frame = menuHoverPreviewFrame(anchor: anchor, imageSize: sourceSize)
         guard let previewView = pinnedPreviewController.makeThumbnailPreviewView(
             frame: NSRect(origin: .zero, size: frame.size), id: id) else { return }
-        presentMenuHoverPreview(id: id, frame: frame, contentView: previewView)
+        presentPreview(ownerID: id, frame: frame, contentView: previewView,
+                       trigger: .menuHover, isPinnedLive: true)
     }
 
-    private func presentMenuHoverPreview(id: CGWindowID, frame: NSRect, contentView: NSView) {
-        hideHoverPreview()
+    // 唯一的预览显示入口：菜单悬停和标题栏 peek 都经过这里建窗/挂载内容，同时保证
+    // 系统中只有一个预览视窗存在——显示新的一定先关掉旧的（无论是哪种触发路径
+    // 留下的），不需要每个调用端各自记得「要不要顺手关掉另一边」。
+    private func presentPreview(ownerID: CGWindowID, frame: NSRect, contentView: NSView,
+                                trigger: PreviewTrigger, isPinnedLive: Bool, alpha: CGFloat = 1) {
+        hidePreview(reason: "replaced")
         let window = PreviewWindow(contentRect: frame, styleMask: .borderless,
                                    backing: .buffered, defer: false)
         window.isOpaque = false
@@ -5681,11 +5601,24 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSMenuDelegate {
         window.collectionBehavior = [.transient, .ignoresCycle]
         window.hasShadow = true
         window.contentView = contentView
-
-        hideMenuHoverPreview()
-        menuPreviewOwnerID = id
-        menuPreviewWindow = window
+        window.alphaValue = alpha
+        activePreview = ActivePreview(ownerID: ownerID, window: window, trigger: trigger, isPinnedLive: isPinnedLive)
         window.orderFrontRegardless()
+    }
+
+    // 隐藏当前活跃预览。ownerID/trigger 给定时先核对，只清掉匹配的那一个——不匹配
+    // 就是另一条触发路径正显示着别的窗口，什么都不做。
+    private func hidePreview(ownerID: CGWindowID? = nil, trigger: PreviewTrigger? = nil, reason: String) {
+        guard let active = activePreview else { return }
+        if let ownerID, active.ownerID != ownerID { return }
+        if let trigger, active.trigger != trigger { return }
+        // 若当前预览是已置顶窗口的实时镜像，断开镜像层，停止向其投喂采样帧。
+        // 对静态图预览是安全的空操作。
+        if active.isPinnedLive {
+            pinnedPreviewController.detachThumbnail(id: active.ownerID)
+        }
+        active.window.orderOut(nil)
+        activePreview = nil
     }
 
     private func requestCachedPreview(_ id: CGWindowID, reason: String,
@@ -5717,58 +5650,22 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSMenuDelegate {
         }
     }
 
-    @available(macOS 14.0, *)
-    private func warmPreviewCache(_ id: CGWindowID, axPos: CGPoint, size: CGSize, reason: String) {
-        guard !previewCapturePendingIDs.contains(id),
-              let state = shaded[id],
-              state.previewImage == nil else { return }
-        previewCapturePendingIDs.insert(id)
-        Task { @MainActor [weak self] in
-            guard let self else { return }
-            // 同折叠截图：若窗口正被置顶捕获，先停流等录屏标识消失再拍缩略图。
-            if self.pinnedPreviewController.stopPreviewBeforeFoldCapture(id: id) {
-                try? await Task.sleep(nanoseconds: 500_000_000)
-            }
-            let image = await self.captureWindowWithTimeout(id: id,
-                                                            axPos: axPos,
-                                                            size: size,
-                                                            maxPixelSize: hoverPreviewMaxPixelSize,
-                                                            timeoutNanoseconds: shadeCaptureTimeoutNanoseconds)
-            self.previewCapturePendingIDs.remove(id)
-            guard let image,
-                  var latest = self.shaded[id] else {
-                wlog("preview-cache: warm unavailable id=\(id) reason=\(reason)")
-                return
-            }
-            latest.previewImage = NSImage(cgImage: image, size: latest.originalSize)
-            self.shaded[id] = latest
-            wlog("preview-cache: warm ready id=\(id) reason=\(reason)")
-        }
-    }
-
     private func hideMenuHoverPreview(id: CGWindowID? = nil) {
-        if let id, menuPreviewOwnerID != id { return }
-        // 若当前预览是已置顶窗口的实时镜像，断开镜像层，停止向其投喂采样帧。
-        // 对非置顶窗口是安全的空操作。
-        if let owner = menuPreviewOwnerID {
-            pinnedPreviewController.detachThumbnail(id: owner)
-        }
-        menuPreviewOwnerID = nil
-        menuPreviewWindow?.orderOut(nil)
-        menuPreviewWindow = nil
+        hidePreview(ownerID: id, trigger: .menuHover, reason: "menu-hide")
     }
 
     private func updateHoverPreviewFrame(_ id: CGWindowID) {
-        guard let state = shaded[id],
-              let overlay = state.overlay,
-              let previewWindow = previewWindow else { return }
-        let imageSize = previewImageView?.image?.size ?? state.previewImage?.size ?? previewWindow.frame.size
+        guard let active = activePreview, active.trigger == .titlebarPeek, active.ownerID == id,
+              let state = shaded[id],
+              let overlay = state.overlay else { return }
+        let imageSize = (active.window.contentView as? SafariStylePreviewView)?.imageView.image?.size
+            ?? state.previewImage?.size ?? active.window.frame.size
         let frame = safariStylePreviewFrame(id: id, overlayFrame: overlay.frame, imageSize: imageSize)
-        if abs(previewWindow.frame.minX - frame.minX) > 0.5 ||
-           abs(previewWindow.frame.minY - frame.minY) > 0.5 ||
-           abs(previewWindow.frame.width - frame.width) > 0.5 ||
-           abs(previewWindow.frame.height - frame.height) > 0.5 {
-            previewWindow.setFrame(frame, display: true)
+        if abs(active.window.frame.minX - frame.minX) > 0.5 ||
+           abs(active.window.frame.minY - frame.minY) > 0.5 ||
+           abs(active.window.frame.width - frame.width) > 0.5 ||
+           abs(active.window.frame.height - frame.height) > 0.5 {
+            active.window.setFrame(frame, display: true)
         }
     }
 
@@ -5784,107 +5681,44 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSMenuDelegate {
         return false
     }
 
-    private func scheduleHoverPreview(_ id: CGWindowID) {
-        guard !hoverPreviewIsSuppressed(id) else { return }
-        if let state = shaded[id],
-           cleanupProxyIfSourceWindowVisible(id: id, state: state, reason: "hover-preview") {
-            return
-        }
-        if shaded[id]?.previewImage == nil {
-            if isFocusShelfMember(id: id) {
-                wlog("preview-cache: skip live shelf capture id=\(id)")
-                return
-            }
-            previewHoverID = id
-            requestCachedPreview(id, reason: "hover") { [weak self] in
-                guard let self,
-                      self.previewHoverID == id,
-                      self.mouseIsInsideOverlay(id) else { return }
-                self.scheduleHoverPreview(id)
-            }
-            return
-        }
-        previewHoverID = id
-        if previewOwnerID != nil, previewOwnerID != id {
-            hideHoverPreview(preserveHover: true)
-            previewHoverID = id
-        }
-        if previewOwnerID == id, previewWindow?.isVisible == true { return }
-        previewShowWorkItem?.cancel()
-        previewPendingID = id
-        let work = DispatchWorkItem { [weak self] in
-            guard let self = self else { return }
-            guard self.previewPendingID == id,
-                  self.previewHoverID == id,
-                  self.mouseIsInsideOverlay(id) else {
-                if self.previewPendingID == id {
-                    self.previewPendingID = nil
-                    self.previewShowWorkItem = nil
-                }
-                return
-            }
-            self.showHoverPreview(id)
-        }
-        previewShowWorkItem = work
-        DispatchQueue.main.asyncAfter(deadline: .now() + 0.12, execute: work)
-    }
-
     private func peekHoverPreview(_ id: CGWindowID) {
         guard !hoverPreviewIsSuppressed(id) else { return }
         if let state = shaded[id],
            cleanupProxyIfSourceWindowVisible(id: id, state: state, reason: "peek-preview") {
             return
         }
-        previewShowWorkItem?.cancel()
-        previewShowWorkItem = nil
-        previewPendingID = nil
-        if previewOwnerID == id, previewWindow?.isVisible == true {
+        if let active = activePreview, active.trigger == .titlebarPeek, active.ownerID == id,
+           active.window.isVisible {
             hideHoverPreview(id: id)
             return
         }
-        previewHoverID = id
-        if previewOwnerID != nil, previewOwnerID != id {
+        peekHoverID = id
+        if let active = activePreview, active.trigger == .titlebarPeek, active.ownerID != id {
             hideHoverPreview(preserveHover: true)
-            previewHoverID = id
         }
         if shaded[id]?.previewImage != nil {
             showHoverPreview(id, requireMouseInside: false)
             return
         }
-        if isFocusShelfMember(id: id) {
-            wlog("preview-cache: skip live shelf click id=\(id)")
-            return
-        }
+        // 专注 shelf 成员折叠当下不截图（保持批量折叠/reflow 快），但这里是用户
+        // 主动点击、不在热路径上：懒截图一次，与菜单悬停本来就允许的行为对齐。
         requestCachedPreview(id, reason: "click") { [weak self] in
             guard let self,
-                  self.previewHoverID == id else { return }
+                  self.peekHoverID == id else { return }
             self.showHoverPreview(id, requireMouseInside: false)
         }
     }
 
     private func hideHoverPreview(id: CGWindowID? = nil, preserveHover: Bool = false) {
         if let id {
-            if previewPendingID == id {
-                previewShowWorkItem?.cancel()
-                previewShowWorkItem = nil
-                previewPendingID = nil
+            if !preserveHover, peekHoverID == id {
+                peekHoverID = nil
             }
-            if !preserveHover, previewHoverID == id {
-                previewHoverID = nil
-            }
-            guard previewOwnerID == id else { return }
-        } else {
-            previewShowWorkItem?.cancel()
-            previewShowWorkItem = nil
-            previewPendingID = nil
-            if !preserveHover {
-                previewHoverID = nil
-            }
+            guard activePreview?.trigger == .titlebarPeek, activePreview?.ownerID == id else { return }
+        } else if !preserveHover {
+            peekHoverID = nil
         }
-
-        previewImageView = nil
-        previewOwnerID = nil
-        previewWindow?.orderOut(nil)
+        hidePreview(trigger: .titlebarPeek, reason: "peek-hide")
     }
 
     private func clickPreviewImage(for state: ShadeState, overlay: NSWindow) -> NSImage? {
@@ -5918,9 +5752,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSMenuDelegate {
     }
 
     private func showHoverPreview(_ id: CGWindowID, requireMouseInside: Bool = true) {
-        previewShowWorkItem = nil
-        previewPendingID = nil
-        guard previewHoverID == id,
+        guard peekHoverID == id,
               !requireMouseInside || mouseIsInsideOverlay(id) else { return }
         guard let state = shaded[id],
               let overlay = state.overlay,
@@ -5933,26 +5765,13 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSMenuDelegate {
 
         let overlayFrame = overlay.frame
         let frame = safariStylePreviewFrame(id: id, overlayFrame: overlayFrame, imageSize: image.size)
-        let window = PreviewWindow(contentRect: frame, styleMask: .borderless,
-                                   backing: .buffered, defer: false)
-        window.isOpaque = false
-        window.backgroundColor = .clear
-        window.ignoresMouseEvents = true
-        window.level = .popUpMenu
-        window.collectionBehavior = [.transient, .ignoresCycle]
-
         let previewView = SafariStylePreviewView(frame: NSRect(origin: .zero, size: frame.size),
                                                  image: image)
-        window.hasShadow = true
-        window.contentView = previewView
-
-        hideHoverPreview(preserveHover: true)
-        previewHoverID = id
-        previewWindow = window
-        previewImageView = previewView.imageView
-        previewOwnerID = id
-        window.alphaValue = overlayAlpha
-        window.orderFrontRegardless()
+        // 不再跟随「半透明卷帘条」设置——peek 靠白纱+圆角本身就足够区分于真实窗口，
+        // 不需要借用户的透明度偏好，也让它跟菜单悬停预览视觉上一致。
+        presentPreview(ownerID: id, frame: frame, contentView: previewView,
+                       trigger: .titlebarPeek, isPinnedLive: false)
+        peekHoverID = id
         wlog("preview: show id=\(id) style=safari-card size=(\(Int(frame.width))x\(Int(frame.height)))")
     }
 
@@ -6916,16 +6735,39 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSMenuDelegate {
                 installOverlay(overlay, mode: mode, previewImage: nil)
                 return
             }
-            let overlay = makeProxyOverlay(axPos: pos, width: size.width, height: barH,
-                                           pid: pid, appName: appName, title: title, id: id,
-                                           canResize: canProxyResize,
-                                           windowManagement: windowManagementCapability,
-                                           trafficLights: profile.trafficLights)
-            let preview = quickWindowPreviewImage(id: id, logicalSize: size)
-            wlog("    proxy immediate finalBarH=\(Int(barH)) canResize=\(canProxyResize) windowManagement=\(windowManagementCapability) appTitle=\"\(appName)\" windowTitle=\"\(title)\" preview=\(preview == nil ? "-" : "quick") capture=\(options.capturePreview)")
-            installOverlay(overlay, mode: mode, previewImage: preview)
-            if options.capturePreview, preview == nil {
-                warmPreviewCache(id, axPos: pos, size: size, reason: "proxy-immediate")
+            let quickPreview = quickWindowPreviewImage(id: id, logicalSize: size)
+            if quickPreview != nil || !options.capturePreview {
+                // legacy 快照已经成功，或者这次折叠本来就不需要预览（比如专注 shelf
+                // 批量折叠）——两种情况都跟以前一样同步立刻装上，不引入任何延迟。
+                let overlay = makeProxyOverlay(axPos: pos, width: size.width, height: barH,
+                                               pid: pid, appName: appName, title: title, id: id,
+                                               canResize: canProxyResize,
+                                               windowManagement: windowManagementCapability,
+                                               trafficLights: profile.trafficLights)
+                wlog("    proxy immediate finalBarH=\(Int(barH)) canResize=\(canProxyResize) windowManagement=\(windowManagementCapability) appTitle=\"\(appName)\" windowTitle=\"\(title)\" preview=\(quickPreview == nil ? "-" : "quick") capture=\(options.capturePreview)")
+                installOverlay(overlay, mode: mode, previewImage: quickPreview)
+                return
+            }
+            // legacy 快照失败，且这次折叠需要预览：在真实窗口被隐藏前先补一次有超时
+            // 的 ScreenCaptureKit 截图，而不是像以前那样先装后台再异步补——隐藏之后
+            // 窗口就不在可截图列表里了，补拍几乎必然也失败，这条折叠条就永久没有
+            // 预览了（menu 悬停/标题栏 peek 的懒截图重试会撞上同一堵墙）。宁可在这
+            // 个本来就少见的失败分支上多花一点点时间，也不要用「先装后补」制造一堵
+            // 永远撞不过去的墙。
+            handedToAsyncCapture = true
+            Task { @MainActor in
+                defer { self.shadeOperationIDs.remove(id) }
+                let capturedImage = await self.captureWindowWithTimeout(id: id, axPos: pos, size: size,
+                                                                         maxPixelSize: hoverPreviewMaxPixelSize,
+                                                                         timeoutNanoseconds: shadeCaptureTimeoutNanoseconds)
+                let overlay = makeProxyOverlay(axPos: pos, width: size.width, height: barH,
+                                               pid: pid, appName: appName, title: title, id: id,
+                                               canResize: canProxyResize,
+                                               windowManagement: windowManagementCapability,
+                                               trafficLights: profile.trafficLights)
+                wlog("    proxy pre-hide-capture finalBarH=\(Int(barH)) canResize=\(canProxyResize) windowManagement=\(windowManagementCapability) appTitle=\"\(appName)\" windowTitle=\"\(title)\" preview=\(capturedImage == nil ? "-" : "sck")")
+                installOverlay(overlay, mode: mode,
+                               previewImage: capturedImage.map { NSImage(cgImage: $0, size: size) })
             }
             return
         }
@@ -7028,7 +6870,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSMenuDelegate {
     @available(macOS 14.0, *)
     private func captureWindow(id: CGWindowID, axPos: CGPoint, size: CGSize,
                                maxPixelSize: CGSize? = nil) async -> CGImage? {
-        guard let content = try? await SCShareableContent.current,
+        guard let content = await ShareableContentCache.shared.content(requiring: id),
               let scWindow = content.windows.first(where: { $0.windowID == id }) else { return nil }
         let filter = SCContentFilter(desktopIndependentWindow: scWindow)
         let scale = backingScaleForAXWindow(pos: axPos, size: size)
@@ -7048,22 +6890,30 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSMenuDelegate {
         return try? await SCScreenshotManager.captureImage(contentFilter: filter, configuration: config)
     }
 
+    // withTaskGroup 的"组作用域退出前隐式等待所有子任务完成"会让超时形同虚设：
+    // ShareableContentCache 内部的 `await task.value` 对取消完全免疫，cancelAll()
+    // 只是打个标记，慢的那个子任务仍会跑到自然完成——枚举越慢，超时越等不到，
+    // 恰好在这个超时本该拯救的慢机器场景下失效。改用 continuation 竞速：
+    // 截图任务超时后转为无结构的后台任务继续跑完（结果丢弃，顺带把
+    // ShareableContentCache 暖好，供下一次尝试直接命中），不阻塞本次调用返回。
     @available(macOS 14.0, *)
     private func captureWindowWithTimeout(id: CGWindowID, axPos: CGPoint, size: CGSize,
                                           maxPixelSize: CGSize? = nil,
                                           timeoutNanoseconds: UInt64) async -> CGImage? {
-        await withTaskGroup(of: CGImage?.self) { group in
-            group.addTask { [weak self] in
-                guard let self else { return nil }
-                return await self.captureWindow(id: id, axPos: axPos, size: size, maxPixelSize: maxPixelSize)
+        let resumeGuard = SingleResumeGuard()
+        return await withCheckedContinuation { continuation in
+            Task { [weak self] in
+                guard let self else {
+                    if await resumeGuard.tryResume() { continuation.resume(returning: nil) }
+                    return
+                }
+                let image = await self.captureWindow(id: id, axPos: axPos, size: size, maxPixelSize: maxPixelSize)
+                if await resumeGuard.tryResume() { continuation.resume(returning: image) }
             }
-            group.addTask {
+            Task {
                 try? await Task.sleep(nanoseconds: timeoutNanoseconds)
-                return nil
+                if await resumeGuard.tryResume() { continuation.resume(returning: nil) }
             }
-            let result = await group.next() ?? nil
-            group.cancelAll()
-            return result
         }
     }
 
@@ -8330,10 +8180,8 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSMenuDelegate {
                 wlog("screen: clamped overlay id=\(id) frame=(\(Int(newFrame.minX)),\(Int(newFrame.minY)) \(Int(newFrame.width))x\(Int(newFrame.height)))")
             }
         }
-        if let id = previewOwnerID {
-            updateHoverPreviewFrame(id)
-        } else {
-            previewWindow?.orderOut(nil)
+        if let active = activePreview, active.trigger == .titlebarPeek {
+            updateHoverPreviewFrame(active.ownerID)
         }
         if shaded.isEmpty {
             rescueOffscreenWindows(silent: true)
@@ -8813,8 +8661,8 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSMenuDelegate {
             wlog("arrange: restore id=\(id) frame=(\(Int(frame.minX)),\(Int(frame.minY)) \(Int(frame.width))x\(Int(frame.height)))")
         }
 
-        if let id = previewOwnerID {
-            updateHoverPreviewFrame(id)
+        if let active = activePreview, active.trigger == .titlebarPeek {
+            updateHoverPreviewFrame(active.ownerID)
         }
         scheduleMenuRebuild()
         return true
@@ -9110,8 +8958,8 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSMenuDelegate {
             }
         }
 
-        if let id = previewOwnerID {
-            updateHoverPreviewFrame(id)
+        if let active = activePreview, active.trigger == .titlebarPeek {
+            updateHoverPreviewFrame(active.ownerID)
         }
         scheduleMenuRebuild()
         return true

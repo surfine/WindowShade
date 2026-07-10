@@ -9,7 +9,9 @@ final class PinnedPreviewPanel: NSPanel {
                    defer: false)
         title = "WindowShade Pinned Preview"
         level = .floating
-        collectionBehavior = [.moveToActiveSpace, .fullScreenAuxiliary]
+        // 面板与源窗口同 Space（与折叠条 overlay 同构），不再全局跟随所有 Space；
+        // 见 installPreview 里的 SLS Space 指派和 watchdog 里的 co-Space 不变量。
+        collectionBehavior = [.managed, .fullScreenAuxiliary]
         backgroundColor = .clear
         isOpaque = false
         contentView?.wantsLayer = true
