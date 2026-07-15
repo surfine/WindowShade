@@ -2513,7 +2513,11 @@ final class ShareableContentCache {
     // 彼此刚设置的 inFlight、也不会触发重复的全系统枚举。
     private func refresh() async -> SCShareableContent? {
         let start = CFAbsoluteTimeGetCurrent()
-        let task = Task { try await SCShareableContent.current }
+        // 不继承 MainActor：窗口枚举可能持续数秒，cache 状态仍在主 actor 串行化，
+        // 但系统枚举及其完成回调不会占用主线程执行器。
+        let task = Task.detached(priority: .userInitiated) {
+            try await SCShareableContent.current
+        }
         inFlight = task
         let content = try? await task.value
         inFlight = nil
@@ -3558,6 +3562,21 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSMenuDelegate {
         let deadline: Date
     }
 
+    // reconcile 需要知道真实窗口是否仍存在/最小化，但这些 AX 读取可能被忙 app
+    // 阻塞数秒。快照在串行后台队列采集，主线程仅应用已经完成的结果。
+    private struct ReconcileAXTarget {
+        let id: CGWindowID
+        let element: AXUIElement
+        let needsMinimizedState: Bool
+    }
+
+    private struct ReconcileAXSnapshot {
+        let id: CGWindowID
+        let position: CGPoint?
+        let size: CGSize?
+        let isMinimized: Bool?
+    }
+
     private var statusItem: NSStatusItem!
     private var statusMenu: NSMenu!
     private var hotKeyRefs: [EventHotKeyRef?] = []
@@ -3581,6 +3600,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSMenuDelegate {
     private var tapSetupTimer: Timer?
     private var reconcileTimer: Timer?
     private var isReconcilingShadedWindows = false
+    private let reconcileAXWorkQueue = DispatchQueue(label: "WindowShade.reconcile-ax", qos: .utility)
     private var reconcileInvalidCounts: [CGWindowID: Int] = [:]
     private var privateAlphaOriginalValues: [CGWindowID: Float] = [:]
     private var lastJournalRescueAttempt: Date?
@@ -3746,7 +3766,8 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSMenuDelegate {
             pendingMenuRebuild = true
             return
         }
-        pinnedPreviewController.refreshCurrentTarget(reason: "rebuild-menu")
+        // 这里绝不能解析当前 AX 窗口：菜单重建可能由点击、前台切换、会话变化
+        // 高频触发；目标解析在后台完成后仅在目标改变时安排下一次重建。
         menuRebuildWorkItem?.cancel()
         menuRebuildWorkItem = nil
         statusItem.button?.image = makeStatusBarIcon()
@@ -3880,8 +3901,17 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSMenuDelegate {
         DispatchQueue.main.asyncAfter(deadline: .now() + delay, execute: work)
     }
 
+    // 目标解析是后台单飞 AX 工作；只有实际 target 改变才重建菜单。这样一次点击
+    // 不会再形成“刷新 → rebuild → 再刷新”的同步 AX 放大链路。
+    private func refreshPinnedPreviewTarget(reason: String) {
+        pinnedPreviewController.refreshCurrentTarget(reason: reason) { [weak self] _, didChange in
+            guard didChange else { return }
+            self?.scheduleMenuRebuild()
+        }
+    }
+
     private func setupPinnedPreviewFocusTracking() {
-        pinnedPreviewController.refreshCurrentTarget(reason: "launch")
+        refreshPinnedPreviewTarget(reason: "launch")
         pinnedPreviewFocusMonitor = NSEvent.addGlobalMonitorForEvents(matching: [.leftMouseDown, .rightMouseDown, .otherMouseDown]) { [weak self] event in
             // 标题栏带内的首次按下就预热窗口枚举缓存（监视器回调是异步投递，
             // 不在 tap 关键路径上）：双击折叠的第二下落地时 SCShareableContent
@@ -3898,15 +3928,13 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSMenuDelegate {
         }
     }
 
-    // 连续点击只在停顿后刷新一次：refreshCurrentTarget 每次都要同步 AX + 窗口
-    // 列表查询，不值得为每一下全局点击都付这笔主线程开销。菜单打开
-    // （menuNeedsUpdate）和 ⌃⌘P 入口都会主动刷新，合并点击不改变可见行为。
+    // 连续点击只在停顿后请求一次后台 AX 解析；全局 monitor 与菜单路径都不会
+    // 同步等待它。真正置顶动作会强制拿到新 target 后才继续。
     private func schedulePinnedPreviewTargetRefresh() {
         pinnedPreviewTargetRefreshWorkItem?.cancel()
         let work = DispatchWorkItem { [weak self] in
             self?.pinnedPreviewTargetRefreshWorkItem = nil
-            self?.pinnedPreviewController.refreshCurrentTarget(reason: "global-mouse-down")
-            self?.scheduleMenuRebuild()
+            self?.refreshPinnedPreviewTarget(reason: "global-mouse-down")
         }
         pinnedPreviewTargetRefreshWorkItem = work
         DispatchQueue.main.asyncAfter(deadline: .now() + 0.25, execute: work)
@@ -3940,7 +3968,9 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSMenuDelegate {
         guard menu === statusMenu, !isUpdatingMenuFromDelegate else { return }
         isUpdatingMenuFromDelegate = true
         defer { isUpdatingMenuFromDelegate = false }
-        pinnedPreviewController.refreshCurrentTarget(reason: "menu-needs-update")
+        // 先用最近一次快照即时展示菜单，再后台校正下一次菜单内容；不能为一个
+        // 动态标题把菜单打开和系统鼠标输入阻塞在目标 app 的 AX timeout 上。
+        refreshPinnedPreviewTarget(reason: "menu-needs-update")
         rebuildMenu()
     }
 
@@ -4356,13 +4386,13 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSMenuDelegate {
         contentView.setAccessibilityCustomActions(actions)
     }
 
-    // 动态翻转折叠项标题，与 ⌃⌘C 实际行为一致：当前会执行展开时显示「展开当前窗口」，
-    // 否则「折叠当前窗口」。没有已折叠窗口时直接返回，避免菜单重建付出无谓的 AX 解析。
+    // 动态翻转折叠项标题，与 ⌃⌘C 实际行为一致。这里绝不能为菜单文案同步读
+    // focusedWindow：忙 app 的 AX timeout 会把每一次菜单重建卡住。使用置顶预览
+    // 控制器维护的后台 target 快照；快照尚未就绪时宁可显示保守的“折叠”。
     private func foldToggleMenuTitle() -> String {
         guard !shaded.isEmpty else { return "折叠当前窗口" }
         if currentShadedOverlayID() != nil { return "展开当前窗口" }
-        if let win = focusedWindow(),
-           shaded.values.contains(where: { CFEqual($0.element, win) }) {
+        if let id = pinnedPreviewController.currentTargetWindowID, shaded[id] != nil {
             return "展开当前窗口"
         }
         return "折叠当前窗口"
@@ -8014,8 +8044,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSMenuDelegate {
         hideHoverPreview()
         hideMenuHoverPreview()
         DispatchQueue.main.asyncAfter(deadline: .now() + 0.08) { [weak self] in
-            self?.pinnedPreviewController.refreshCurrentTarget(reason: "frontmost-app")
-            self?.scheduleMenuRebuild()
+            self?.refreshPinnedPreviewTarget(reason: "frontmost-app")
         }
         refreshOverlayPresentation()
     }
@@ -8046,7 +8075,8 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSMenuDelegate {
     }
 
     private func sourceWindowLooksUserVisible(state: ShadeState, pos: CGPoint, size: CGSize,
-                                              onScreenWindowIDs: Set<CGWindowID>? = nil) -> Bool {
+                                              onScreenWindowIDs: Set<CGWindowID>? = nil,
+                                              sourceIsMinimized: Bool? = nil) -> Bool {
         guard windowIsVisible(pos: pos, size: size) else { return false }
         let sourceOnScreen = onScreenWindowIDs?.contains(state.sourceWindowID)
             ?? cgWindowIsCurrentlyOnScreen(state.sourceWindowID)
@@ -8068,7 +8098,9 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSMenuDelegate {
             guard let app = runningApp(pid: state.pid) else { return true }
             return !app.isHidden
         case .minimized:
-            return !axBoolAttribute(state.element, kAXMinimizedAttribute as String)
+            // AX 快照读取在 reconcileAXWorkQueue；没有快照时保守地认为仍不可见，
+            // 不能为了确认菜单/定时器状态回到主线程同步 IPC。
+            return sourceIsMinimized.map { !$0 } ?? false
         case .ownWindowOrderedOut:
             guard Date() >= state.ignoreAppRevealUntil else { return false }
             return ownWindow(id: state.sourceWindowID)?.isVisible ?? false
@@ -8106,14 +8138,13 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSMenuDelegate {
     private func reconcileShadedWindows(reason: String) {
         guard !isReconcilingShadedWindows else { return }
         isReconcilingShadedWindows = true
-        defer {
-            isReconcilingShadedWindows = false
-            updateReconcileTimer()
-        }
 
         pruneShadeJournal(reason: "reconcile-\(reason)")
 
-        guard AXIsProcessTrusted() else { return }
+        guard AXIsProcessTrusted() else {
+            finishReconcileShadedWindows()
+            return
+        }
         if eventTap == nil, setupEventTap() {
             wlog("reconcile: event tap restored")
         }
@@ -8124,28 +8155,62 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSMenuDelegate {
                 lastJournalRescueAttempt = now
                 rescueOffscreenWindows(silent: true)
             }
+            finishReconcileShadedWindows()
             return
         }
 
         let onScreenIDs = currentOnScreenWindowIDs()
-        for (id, state) in Array(shaded) {
-            guard let size = axSize(state.element) else {
-                if sourceWindowMissingShouldCleanup(id: id, state: state) {
-                    forceCleanup(id)
+        let targets = shaded.map { id, state in
+            ReconcileAXTarget(id: id, element: state.element, needsMinimizedState: state.hide == .minimized)
+        }
+        reconcileAXWorkQueue.async { [weak self] in
+            let startedAt = CFAbsoluteTimeGetCurrent()
+            let snapshots = targets.map { target -> ReconcileAXSnapshot in
+                guard let size = axSize(target.element) else {
+                    return ReconcileAXSnapshot(id: target.id, position: nil, size: nil, isMinimized: nil)
+                }
+                return ReconcileAXSnapshot(id: target.id,
+                                           position: axPosition(target.element),
+                                           size: size,
+                                           isMinimized: target.needsMinimizedState
+                                               ? axBoolAttribute(target.element, kAXMinimizedAttribute as String)
+                                               : nil)
+            }
+            let elapsedMilliseconds = Int((CFAbsoluteTimeGetCurrent() - startedAt) * 1000)
+            DispatchQueue.main.async { [weak self] in
+                self?.applyReconcileAXSnapshots(snapshots, onScreenIDs: onScreenIDs,
+                                                reason: reason, elapsedMilliseconds: elapsedMilliseconds)
+            }
+        }
+    }
+
+    private func applyReconcileAXSnapshots(_ snapshots: [ReconcileAXSnapshot], onScreenIDs: Set<CGWindowID>,
+                                           reason: String, elapsedMilliseconds: Int) {
+        defer { finishReconcileShadedWindows() }
+        if elapsedMilliseconds >= 50 {
+            wlog("slow: reconcile-ax reason=\(reason) took \(elapsedMilliseconds)ms windows=\(snapshots.count)")
+        }
+        for snapshot in snapshots {
+            // 异步 AX 读取期间用户可能已展开/关闭窗口，只按仍存在的当前 state 应用。
+            guard let state = shaded[snapshot.id] else { continue }
+            guard let size = snapshot.size else {
+                if sourceWindowMissingShouldCleanup(id: snapshot.id, state: state) {
+                    forceCleanup(snapshot.id)
                 }
                 continue
             }
-            reconcileInvalidCounts.removeValue(forKey: id)
+            reconcileInvalidCounts.removeValue(forKey: snapshot.id)
 
-            if let pos = axPosition(state.element),
+            if let pos = snapshot.position,
                sourceWindowLooksUserVisible(state: state, pos: pos, size: size,
-                                            onScreenWindowIDs: onScreenIDs) {
-                if isFocusShelfMember(id: id) {
-                    revealFocusShelfMemberFromOutside(id: id, state: state, reason: "reconcile-\(reason)")
+                                            onScreenWindowIDs: onScreenIDs,
+                                            sourceIsMinimized: snapshot.isMinimized) {
+                if isFocusShelfMember(id: snapshot.id) {
+                    revealFocusShelfMemberFromOutside(id: snapshot.id, state: state, reason: "reconcile-\(reason)")
                     continue
                 }
-                wlog("reconcile: source already visible; cleanup overlay id=\(id) app=\(state.appName)")
-                forceCleanup(id)
+                wlog("reconcile: source already visible; cleanup overlay id=\(snapshot.id) app=\(state.appName)")
+                forceCleanup(snapshot.id)
                 continue
             }
 
@@ -8158,12 +8223,17 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSMenuDelegate {
             if !framesAlmostEqual(oldFrame, newFrame) {
                 overlay.setFrame(newFrame, display: true)
                 applyOverlayPresentation(overlay, bringForward: false)
-                if arrangedOverlayFrames[id] == nil {
-                    syncRestoreJournal(id: id, fromOverlayFrame: newFrame)
+                if arrangedOverlayFrames[snapshot.id] == nil {
+                    syncRestoreJournal(id: snapshot.id, fromOverlayFrame: newFrame)
                 }
-                wlog("reconcile: clamped overlay id=\(id) frame=(\(Int(newFrame.minX)),\(Int(newFrame.minY)) \(Int(newFrame.width))x\(Int(newFrame.height)))")
+                wlog("reconcile: clamped overlay id=\(snapshot.id) frame=(\(Int(newFrame.minX)),\(Int(newFrame.minY)) \(Int(newFrame.width))x\(Int(newFrame.height)))")
             }
         }
+    }
+
+    private func finishReconcileShadedWindows() {
+        isReconcilingShadedWindows = false
+        updateReconcileTimer()
     }
 
     @objc private func screenParametersChanged(_ note: Notification) {
@@ -9161,6 +9231,13 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSMenuDelegate {
 
     // 返回 true = 这次双击我们处理了，应当吞掉，阻止系统默认动作。
     func handleTitleBarDoubleClick(at point: CGPoint) -> Bool {
+        let startedAt = CFAbsoluteTimeGetCurrent()
+        defer {
+            let elapsedMilliseconds = Int((CFAbsoluteTimeGetCurrent() - startedAt) * 1000)
+            if elapsedMilliseconds >= 50 {
+                wlog("slow: titlebar-double-click took \(elapsedMilliseconds)ms")
+            }
+        }
         guard titlebarDoubleClickEnabled else { return false }
         guard AXIsProcessTrusted() else { return false }
         // 先用 WindowServer 廉价排除内容区双击（选词等高频操作），
@@ -9259,6 +9336,13 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSMenuDelegate {
     // 三击补回系统「双击标题栏」动作。第二下已被 WindowShade 吞掉折叠，
     // 所以第三下需要先恢复真实窗口，再执行系统偏好的缩放/最小化。
     func handleTitleBarTripleClick(at point: CGPoint) -> Bool {
+        let startedAt = CFAbsoluteTimeGetCurrent()
+        defer {
+            let elapsedMilliseconds = Int((CFAbsoluteTimeGetCurrent() - startedAt) * 1000)
+            if elapsedMilliseconds >= 50 {
+                wlog("slow: titlebar-triple-click took \(elapsedMilliseconds)ms")
+            }
+        }
         guard titlebarDoubleClickEnabled else { return false }
         guard AXIsProcessTrusted() else { return false }
         guard systemTitlebarDoubleClickAction() != .none else {
@@ -9446,9 +9530,34 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSMenuDelegate {
 
     private func handleTitleBarDoubleClick(win: AXUIElement, point: CGPoint, source: String) -> Bool {
         guard let (id, pid) = titlebarContains(point: point, in: win) else {
-            wlog("titlebar-double-click: miss source=\(source) at=(\(Int(point.x)),\(Int(point.y))) title=\(cleanDisplayTitle(axTitle(win)))")
+            // 该分支仍在 event tap 回调中；失败诊断不能再额外读一次 AXTitle，
+            // 否则忙 app 的一次“未命中”会平白多消耗一个同步 IPC timeout。
+            wlog("titlebar-double-click: miss source=\(source) at=(\(Int(point.x)),\(Int(point.y)))")
             return false
         }
+
+        // 这一层仍由 CGEventTap 同步调用。命中后必须先让 tap 返回，否则 shade()
+        // 的窗口隐藏、overlay 安装与菜单更新会把全局鼠标输入一起卡住（实测 151ms）。
+        // 事件已经确定要被吞掉；把实际状态变更放到下一轮 main queue，不改变双击
+        // 的用户可见语义，却把 tap 临界区缩到 AX 命中/几何确认本身。
+        DispatchQueue.main.async { [weak self] in
+            self?.performTitleBarDoubleClickAction(win: win, id: id, pid: pid,
+                                                    point: point, source: source)
+        }
+        return true
+    }
+
+    private func performTitleBarDoubleClickAction(win: AXUIElement, id: CGWindowID, pid: pid_t,
+                                                   point: CGPoint, source: String) {
+        logIfSlow("titlebar-double-click action id=\(id)", threshold: 0.05) {
+            performTitleBarDoubleClickActionSynchronously(win: win, id: id, pid: pid,
+                                                           point: point, source: source)
+        }
+    }
+
+    private func performTitleBarDoubleClickActionSynchronously(win: AXUIElement, id: CGWindowID,
+                                                                pid: pid_t, point: CGPoint,
+                                                                source: String) {
         clearExpiredPendingTitlebarTripleClick()
 
         wlog("titlebar-double-click: source=\(source) app=\(appDisplayName(pid: pid)) id=\(id)")
@@ -9465,6 +9574,5 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSMenuDelegate {
                                                                         deadline: Date().addingTimeInterval(0.65))
             }
         }
-        return true
     }
 }

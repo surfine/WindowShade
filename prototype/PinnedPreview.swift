@@ -106,7 +106,7 @@ private final class PinnedPreviewSession {
     }
 }
 
-private struct PinnedPreviewTarget {
+struct PinnedPreviewTarget {
     let windowID: CGWindowID
     let axWindow: AXUIElement
 }
@@ -133,6 +133,15 @@ final class PinnedPreviewController {
     private let sessionsDidChange: () -> Void
     private var sessions: [CGWindowID: PinnedPreviewSession] = [:]
     private var currentTarget: PinnedPreviewTarget?
+    // 目标窗口解析会触发多次同步 AX IPC（忙 app 单次可卡到全局 2s timeout）。
+    // 绝不能在主线程或菜单更新路径上执行。多个触发源合并到一个后台请求；用户
+    // 显式点击“置顶”时会强制追加一次最新解析，保证不对陈旧 target 操作。
+    private var targetRefreshInFlight = false
+    private var targetRefreshQueued = false
+    private var targetRefreshQueuedForce = false
+    private var targetRefreshCompletions: [(PinnedPreviewTarget?, Bool) -> Void] = []
+    private var targetFailureBackoffUntil: [pid_t: CFAbsoluteTime] = [:]
+    private var lastTargetUnavailableLogAt: [pid_t: CFAbsoluteTime] = [:]
     // Space 切换动画窗口期：期间 CGWindow 坐标整屏滑动，watchdog 必须停止追踪，
     // 否则会把动画中间坐标当成"窗口移动"疯狂 setFrame + 重配 capture。
     private var spaceTransitionUntil: CFAbsoluteTime = 0
@@ -166,32 +175,123 @@ final class PinnedPreviewController {
         sessions[id] != nil
     }
 
+    // 最近一次后台解析的 target；读取不触发 AX，可安全用于菜单文案。
+    var currentTargetWindowID: CGWindowID? {
+        currentTarget?.windowID
+    }
+
     // 老板键掛起时 session 仍在（为了一键恢复），但 capture 已停——菜单缩略图这时
     // 不该去接一个收不到採样帧的 mirror layer，否则弹出一个永远空白的预览面板。
     func isSuspended(id: CGWindowID) -> Bool {
         sessions[id]?.isSuspended ?? false
     }
 
-    func refreshCurrentTarget(reason: String) {
-        guard let win = focusedWindow() else {
-            wlog("pin-preview: target unchanged reason=\(reason) no-usable-focused-window")
+    // 主线程只合并请求和应用结果；所有 AX / WindowServer 解析都在 axWorkQueue。
+    // completion 一律在主线程调用，target 为 nil 表示本轮无法取得可用焦点窗口。
+    func refreshCurrentTarget(reason: String, force: Bool = false,
+                              completion: ((PinnedPreviewTarget?, Bool) -> Void)? = nil) {
+        let pid = NSWorkspace.shared.frontmostApplication?.processIdentifier ?? 0
+        let now = CFAbsoluteTimeGetCurrent()
+
+        if let completion {
+            targetRefreshCompletions.append(completion)
+        }
+        if targetRefreshInFlight {
+            targetRefreshQueued = true
+            targetRefreshQueuedForce = targetRefreshQueuedForce || force
             return
         }
-        // 焦点窗口没变就不重新解析 windowID / 校验（CFEqual 只比较 AX token，
-        // 不发 IPC）。真正置顶时 startPreview 还会完整校验一次，安全性不变。
-        if let target = currentTarget, CFEqual(win, target.axWindow) { return }
-        guard let id = windowID(of: win), isUsableTarget(win, id: id) else {
-            wlog("pin-preview: target unchanged reason=\(reason) no-usable-focused-window")
+        if !force, pid > 0, let until = targetFailureBackoffUntil[pid], now < until {
+            completeTargetRefresh(target: nil, didChange: false)
             return
         }
-        if currentTarget?.windowID != id {
-            wlog("pin-preview: target changed reason=\(reason) id=\(id) title=\(cleanDisplayTitle(axTitle(win)))")
-        }
-        currentTarget = PinnedPreviewTarget(windowID: id, axWindow: win)
+        beginTargetRefresh(reason: reason, pid: pid)
     }
 
-    // 动态翻转：当前聚焦窗口已置顶时显示「取消置顶」，否则「置顶」。依赖 currentTarget
-    // 已刷新——rebuildMenu / menuNeedsUpdate 在取标题前都会先 refreshCurrentTarget。
+    private func beginTargetRefresh(reason: String, pid: pid_t) {
+        targetRefreshInFlight = true
+        let previous = currentTarget
+        let excludedBundleIDs = self.excludedBundleIDs
+        axWorkQueue.async { [weak self] in
+            let startedAt = CFAbsoluteTimeGetCurrent()
+            let target: PinnedPreviewTarget?
+            let stage: String
+
+            if let win = focusedWindow() {
+                // CFEqual 比较 AX token，不会向目标 app 发 IPC；同一窗口无需再做
+                // geometry/title/role 与全量 CGWindowList 匹配。
+                if let previous, CFEqual(win, previous.axWindow) {
+                    target = previous
+                    stage = "unchanged"
+                } else if let id = windowID(of: win),
+                          Self.isUsableTarget(win, id: id, excludedBundleIDs: excludedBundleIDs) {
+                    target = PinnedPreviewTarget(windowID: id, axWindow: win)
+                    stage = "resolved"
+                } else {
+                    target = nil
+                    stage = "invalid"
+                }
+            } else {
+                target = nil
+                stage = "no-focused-window"
+            }
+
+            let elapsedMilliseconds = Int((CFAbsoluteTimeGetCurrent() - startedAt) * 1000)
+            DispatchQueue.main.async { [weak self] in
+                self?.finishTargetRefresh(target: target, reason: reason, pid: pid,
+                                          stage: stage, elapsedMilliseconds: elapsedMilliseconds)
+            }
+        }
+    }
+
+    private func finishTargetRefresh(target: PinnedPreviewTarget?, reason: String, pid: pid_t,
+                                     stage: String, elapsedMilliseconds: Int) {
+        targetRefreshInFlight = false
+        let now = CFAbsoluteTimeGetCurrent()
+        var didChange = false
+
+        if let target {
+            targetFailureBackoffUntil.removeValue(forKey: pid)
+            didChange = currentTarget.map { $0.windowID != target.windowID || !CFEqual($0.axWindow, target.axWindow) } ?? true
+            currentTarget = target
+            if didChange {
+                wlog("pin-preview: target changed reason=\(reason) id=\(target.windowID) ax=\(stage) took=\(elapsedMilliseconds)ms")
+            }
+        } else {
+            // 自动刷新失败后短暂退避，避免全局点击和菜单重建对同一忙 app 反复烧满 AX timeout。
+            if pid > 0 {
+                targetFailureBackoffUntil[pid] = now + 1.5
+                let lastLogAt = lastTargetUnavailableLogAt[pid] ?? 0
+                if now - lastLogAt >= 5.0 {
+                    lastTargetUnavailableLogAt[pid] = now
+                    wlog("pin-preview: target unavailable reason=\(reason) stage=\(stage) took=\(elapsedMilliseconds)ms")
+                }
+            }
+        }
+        if elapsedMilliseconds >= 50 {
+            wlog("slow: pin-target reason=\(reason) stage=\(stage) took \(elapsedMilliseconds)ms")
+        }
+
+        // 队列中只有显式操作才值得再跑一次：自动事件已经由本轮结果或退避覆盖，
+        // 不能在超时刚结束时立刻制造下一次超时。
+        let rerunForced = targetRefreshQueued && targetRefreshQueuedForce
+        targetRefreshQueued = false
+        targetRefreshQueuedForce = false
+        if rerunForced {
+            beginTargetRefresh(reason: "forced-after-inflight", pid: NSWorkspace.shared.frontmostApplication?.processIdentifier ?? 0)
+            return
+        }
+        completeTargetRefresh(target: target, didChange: didChange)
+    }
+
+    private func completeTargetRefresh(target: PinnedPreviewTarget?, didChange: Bool) {
+        let completions = targetRefreshCompletions
+        targetRefreshCompletions.removeAll()
+        completions.forEach { $0(target, didChange) }
+    }
+
+    // 动态翻转：当前聚焦窗口已置顶时显示「取消置顶」，否则「置顶」。菜单使用
+    // 最近完成的 target 快照；显式 toggle 会在执行前强制刷新，不能误操作旧窗口。
     func currentTargetMenuTitle() -> String {
         if let target = currentTarget, sessions[target.windowID] != nil {
             return "取消置顶当前窗口"
@@ -208,17 +308,19 @@ final class PinnedPreviewController {
             notice("需要屏幕录制权限", "pin-preview: failed reason=screen-recording")
             return
         }
-        refreshCurrentTarget(reason: "toggle")
-        guard let target = currentTarget else {
-            notice("没有可置顶预览窗口", "pin-preview: failed reason=no-focused-window")
-            return
+        refreshCurrentTarget(reason: "toggle", force: true) { [weak self] target, _ in
+            guard let self else { return }
+            guard let target else {
+                self.notice("没有可置顶预览窗口", "pin-preview: failed reason=no-focused-window")
+                return
+            }
+            // 双向 toggle：已置顶则取消，未置顶则置顶。与 ⌃⌘C 折叠/展开对称。
+            if self.sessions[target.windowID] != nil {
+                self.stopPreview(id: target.windowID, reason: "toggle-unpin")
+                return
+            }
+            self.startPreview(for: target.axWindow, id: target.windowID)
         }
-        // 双向 toggle：已置顶则取消，未置顶则置顶。与 ⌃⌘C 折叠/展开对称。
-        if sessions[target.windowID] != nil {
-            stopPreview(id: target.windowID, reason: "toggle-unpin")
-            return
-        }
-        startPreview(for: target.axWindow, id: target.windowID)
     }
 
     func stopAllPreviews(reason: String = "manual") {
@@ -469,18 +571,24 @@ final class PinnedPreviewController {
         guard let size = axSize(axWindow), size.width >= 80, size.height >= 80 else {
             throw PinnedPreviewError.unsupportedWindow
         }
-        guard let info = cgWindowInfo(id), sourceInfoIsUsable(info) else {
+        guard let info = cgWindowInfo(id), Self.sourceInfoIsUsable(info) else {
             throw PinnedPreviewError.unsupportedWindow
         }
     }
 
-    private func isUsableTarget(_ axWindow: AXUIElement, id: CGWindowID) -> Bool {
-        do {
-            try validateAXWindow(axWindow, id: id)
-            return true
-        } catch {
+    private static func isUsableTarget(_ axWindow: AXUIElement, id: CGWindowID,
+                                       excludedBundleIDs: Set<String>) -> Bool {
+        var pid: pid_t = 0
+        guard AXUIElementGetPid(axWindow, &pid) == .success, pid > 0, pid != getpid() else {
             return false
         }
+        guard !excludedBundleIDs.contains(appBundleID(pid: pid)),
+              axRole(axWindow) == kAXWindowRole as String,
+              let size = axSize(axWindow), size.width >= 80, size.height >= 80,
+              let info = cgWindowInfo(id), Self.sourceInfoIsUsable(info) else {
+            return false
+        }
+        return true
     }
 
     private func installPreview(id: CGWindowID, pid: pid_t, bundleID: String,
@@ -973,13 +1081,13 @@ final class PinnedPreviewController {
     }
 
     private func currentSourceFrame(id: CGWindowID) -> NSRect? {
-        guard let info = cgWindowInfo(id), sourceInfoIsUsable(info), let bounds = cgWindowBounds(info) else {
+        guard let info = cgWindowInfo(id), Self.sourceInfoIsUsable(info), let bounds = cgWindowBounds(info) else {
             return nil
         }
         return cocoaFrame(fromWindowServerBounds: bounds)
     }
 
-    private func sourceInfoIsUsable(_ info: [String: Any]) -> Bool {
+    private static func sourceInfoIsUsable(_ info: [String: Any]) -> Bool {
         let layer = (info[kCGWindowLayer as String] as? NSNumber)?.intValue ?? 0
         guard layer == 0 else { return false }
         let alpha = (info[kCGWindowAlpha as String] as? NSNumber)?.doubleValue ?? 1
