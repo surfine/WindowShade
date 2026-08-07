@@ -34,6 +34,7 @@ env CLANG_MODULE_CACHE_PATH="$MODULE_CACHE" \
   Private/SkyLightBridge.swift \
   Compatibility/WindowPolicy.swift \
   Compatibility/Policies.swift \
+  Core/WindowState.swift \
   -framework Cocoa -framework Carbon -framework ApplicationServices \
   -framework ScreenCaptureKit -framework QuartzCore -framework CoreText \
   -framework AVFoundation \
