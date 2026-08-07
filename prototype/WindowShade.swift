@@ -6032,7 +6032,9 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSMenuDelegate {
                                     title: String, originalPosition: CGPoint,
                                     originalSize: CGSize, mode: ShadeAppearanceMode,
                                     policy: ShadePolicy, planReason: String,
-                                    stage: ShadeLifecycleStage) {
+                                    stage: ShadeLifecycleStage,
+                                    sourceDisplayID: CGDirectDisplayID?,
+                                    sourceSpaceID: UInt64?) {
         guard hide == .offscreen || hide == .privateOffscreen || hide == .privateAlpha else {
             clearShadeJournal(id: id)
             return
@@ -6045,8 +6047,8 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSMenuDelegate {
             ?? offscreen
         let now = Date().timeIntervalSince1970
         var entries = shadeJournalEntries().filter { journalID($0) != id }
-        entries.append([
-            "schemaVersion": 2,
+        var entry: [String: Any] = [
+            "schemaVersion": 3,
             "id": Int(id),
             "pid": Int(pid),
             "bundleID": bundleID,
@@ -6057,6 +6059,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSMenuDelegate {
             "policy": shadePolicyDescription(policy),
             "planReason": planReason,
             "stage": stage.rawValue,
+            "state": stage.rawValue,
             "originalX": Double(originalPosition.x),
             "originalY": Double(originalPosition.y),
             "originalWidth": Double(originalSize.width),
@@ -6066,7 +6069,10 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSMenuDelegate {
             "originalAlpha": Double(privateAlphaOriginalValues[id] ?? 1),
             "createdAt": now,
             "updatedAt": now
-        ])
+        ]
+        if let displayID = sourceDisplayID { entry["displayID"] = Double(displayID) }
+        if let spaceID = sourceSpaceID { entry["spaceID"] = Double(spaceID) }
+        entries.append(entry)
         saveShadeJournalEntries(entries)
         wlog("journal: record \(hide.rawValue) id=\(id) app=\(appName) parked=(\(Int(parked.x)),\(Int(parked.y)))")
     }
@@ -6087,6 +6093,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSMenuDelegate {
                                        reason: String) {
         updateShadeJournal(id: id, reason: reason) { entry in
             entry["stage"] = stage.rawValue
+            entry["state"] = stage.rawValue
         }
     }
 
@@ -6159,13 +6166,18 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSMenuDelegate {
         let expectedBundle = journalString(entry, "bundleID")
         if !expectedBundle.isEmpty, app.bundleIdentifier != expectedBundle { return false }
 
+        // 匹配优先级：pid -> bundleID -> title -> windowID。
+        // 窗口 ID 在 app 重启后可能被复用，先按稳定属性（标题）匹配，
+        // 窗口 ID 只作最后兜底；标题为空时必须有 ID 精确匹配才视为同一窗口，
+        // 避免把同 app 的其他窗口误救。
+        let expectedTitle = cleanDisplayTitle(journalString(entry, "title"))
+        if !expectedTitle.isEmpty, cleanDisplayTitle(axTitle(win)) == expectedTitle {
+            return true
+        }
         if let expectedID = journalID(entry), let currentID = windowID(of: win), expectedID == currentID {
             return true
         }
-
-        let expectedTitle = cleanDisplayTitle(journalString(entry, "title"))
-        if expectedTitle.isEmpty { return true }
-        return cleanDisplayTitle(axTitle(win)) == expectedTitle
+        return false
     }
 
     // 扫描 journal 中记录的停车窗口，产出待写回动作（不在这里写回；写回统一在
@@ -6218,7 +6230,10 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSMenuDelegate {
                     safeTarget = target
                 } else {
                     let frame = cocoaFrame(fromAXPosition: target, size: originalSize)
-                    safeTarget = axPosition(fromCocoaFrame: clampedFrame(frame, margin: 16))
+                    // 优先恢复到折叠时所在显示器，避免多显示器布局变化后救错屏。
+                    let displayID = journalNumber(entry, "displayID").map { CGDirectDisplayID($0) }
+                    safeTarget = axPosition(fromCocoaFrame: clampedFrame(frame, margin: 16,
+                                                                          preferredDisplayID: displayID))
                 }
                 actions.append(OffscreenRescueAction(win: win, target: safeTarget, size: originalSize))
                 rescuedIDs.insert(id)
@@ -6759,7 +6774,9 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSMenuDelegate {
                                appName: appName, title: title,
                                originalPosition: pos, originalSize: size,
                                mode: mode, policy: policy, planReason: plan.reason,
-                               stage: .folded)
+                               stage: .folded,
+                               sourceDisplayID: sourceDisplayID,
+                               sourceSpaceID: sourceSpaceID)
             prepareOverlayWindowForSpaceAssignment(overlay)
             let oid = cgWindowID(for: overlay)
             if let oid {
