@@ -27,7 +27,7 @@
 
 WindowShade is for the little desktop moment that macOS still makes oddly expensive: a window is in the way, but it still belongs exactly where you put it.
 
-It folds the window content into a slim title-bar strip, keeping the window identifiable and exactly where your layout put it. Open it again from the strip, the menu bar, or a shortcut, without digging through the Dock or rearranging your workspace.
+It folds the window content into a slim title-bar strip, keeping the window identifiable and exactly where your layout put it. Open it again from the strip, the menu bar, or a shortcut — without digging through the Dock or rearranging your workspace.
 
 ## What It Does
 
@@ -42,6 +42,24 @@ macOS already has Dock minimization, Mission Control, Spaces, Stage Manager, and
 
 Expose and Mission Control are great for finding windows. Dock minimization is good for putting a window away. WindowShade is for the in-between case: leave the window where it is, but roll up its content for now.
 
+It is not a close, quit, hide, or minimize. The app and its document stay alive; the window's identity, position, and recovery entry stay on your desktop. That "space memory" — knowing exactly where a window lives even while it is rolled up — is the whole point.
+
+## How It Works
+
+WindowShade works one window at a time, and it always does the same reversible move:
+
+1. Find the focused window and remember its exact position and size.
+2. Capture the top of the real window so the strip can look native.
+3. Hide, move offscreen, or minimize the real window — whichever the app allows.
+4. Leave a slim strip in its place. Restoring returns the window exactly where it was, or where you dragged the strip.
+
+Two strip styles are available:
+
+| Style | Look | Best for |
+| --- | --- | --- |
+| **Native** | The real window's top chrome, captured live | Keeping the strip visually identical to the original window |
+| **Proxy title bar** | App icon, title, and traffic lights on a standard bar | Focus mode, tidying up, consistent widths |
+
 ## Highlights
 
 - Fold the current window with `Control + Command + C`.
@@ -49,7 +67,30 @@ Expose and Mission Control are great for finding windows. Dock minimization is g
 - Click a folded strip to preview the hidden content.
 - Pin a window as a live floating preview with `Control + Command + P`.
 - Restore folded windows with `Control + Command + 1...9` or from the menu bar.
-- Choose native-looking strips, standard title bars, transparency, sounds, Focus Shelf, and launch at login.
+- Arrange strips or enter Focus Shelf with `Control + Command + 0`.
+- Choose strip style, title-bar double-click, always-on-top, transparency, sounds, and launch at login.
+
+## Compatibility
+
+Most ordinary desktop windows just work. Windows with custom title bars get app-specific handling:
+
+- **Stickies** — WindowShade steps aside for its native roll-up behavior.
+- **WeChat, Elpass, Telegram** — fixed chrome heights and title-bar crop rules so strips never cut into content.
+- **Adobe apps** (Photoshop, Illustrator, InDesign, After Effects, Premiere) — After Effects and Premiere fold the whole workspace frame; Photoshop folds floating documents; utility panels are left alone.
+- **Finder, Quick Look, Codex, System Settings, Calculator** — purpose-built policies for live previews, full-screen handling, and non-resizable windows.
+
+## Permissions
+
+WindowShade asks for two macOS permissions:
+
+- **Accessibility** — to find, move, focus, and restore windows.
+- **Screen Recording** — to capture the top of a window and show live previews.
+
+Window contents never leave your Mac.
+
+## Notes
+
+WindowShade works best with ordinary desktop windows; full-screen, Split View, Stage Manager, multi-display, and sandboxed apps may need app-specific handling. Some windows cannot be moved offscreen reliably and are hidden or minimized instead. A recovery journal records each fold and tries to restore windows after an abnormal exit — it is a safety net, not a system-level transaction.
 
 ## Download
 
@@ -66,24 +107,10 @@ WindowShade lives in the menu bar. It does not show a Dock icon.
 | Preview a folded window | Click its folded strip |
 | Pin or unpin the current window | `Control + Command + P` |
 | Unfold by menu order | `Control + Command + 1...9` |
+| Arrange strips / Focus Shelf | `Control + Command + 0` |
 | Manage everything | Menu bar icon |
 
 Triple-clicking the title bar keeps the system title-bar zoom behavior available.
-
-## Notes
-
-WindowShade works best with ordinary desktop windows. Apps with custom title bars may need app-specific handling.
-
-The app includes compatibility work for Quick Look, Stickies, WeChat, Adobe apps, and a few other non-standard windows.
-
-## Permissions
-
-WindowShade asks for two macOS permissions:
-
-- Accessibility, so it can find and move windows.
-- Screen Recording, so it can capture the top of a window and show live previews.
-
-It does not upload window contents.
 
 ## Build from Source
 
@@ -95,13 +122,8 @@ cd prototype
 open WindowShade.app
 ```
 
-The build script creates `WindowShade.app`. To keep macOS permission trust across rebuilds, sign with your own certificate:
-
-```sh
-cd prototype
-CODESIGN_IDENTITY="Apple Development: Your Name (TEAMID)" ./build.sh
-```
+The script compiles the sources into the existing `WindowShade.app` bundle and signs it. It uses a fixed Apple Development identity; edit `IDENTITY` in `build.sh` to use your own certificate — this keeps macOS permission trust across rebuilds.
 
 ## Design Notes
 
-The main code is in [`prototype/WindowShade.swift`](prototype/WindowShade.swift). For the history and design notes, see [`WindowShade.md`](WindowShade.md).
+The main code is in [`prototype/WindowShade.swift`](prototype/WindowShade.swift). For the history, design rationale, and per-app compatibility details, see [`WindowShade.md`](WindowShade.md).
