@@ -148,12 +148,31 @@ cd prototype
 open WindowShade.app
 ```
 
-脚本会把源码编译进现有的 `WindowShade.app` bundle（原地更新），所以需要先有一个 bundle——全新克隆的话，先从 [Releases](https://github.com/surfine/WindowShade/releases/latest) 下载一份。
+脚本会编译源码并原地更新 `WindowShade.app`。如果 bundle 不存在（全新克隆），
+它会用仓库里的 `Info.plist` 和 app icon 自动 bootstrap 一个最小 bundle——不需要
+先下载预编译 binary。只想验证代码能否编译、不签名也不动 bundle 时：
+
+```sh
+./build.sh --check
+```
 
 ### 签名
 
-`build.sh` 会用 Apple Development 身份对 app 签名，让 macOS 在重复构建后仍记住辅助功能和屏幕录制授权。把你的证书配置在 `prototype/build.sh` 里；构建、签名与发布细节见 [DEVELOPMENT.md](DEVELOPMENT.md)。
+`build.sh` 会用 Apple Development 身份对 app 签名，让 macOS 在重复构建后仍记住
+辅助功能和屏幕录制授权。通过 `WINDOWSHADE_CODESIGN_IDENTITY` 环境变量指定你的
+证书，或写进本机未跟踪的 `prototype/local-codesign.env`：
+
+```sh
+WINDOWSHADE_CODESIGN_IDENTITY="Apple Development: Your Name (TEAMID)" ./build.sh
+```
+
+脚本刻意拒绝 ad-hoc 签名，避免重置辅助功能 / 屏幕录制授权。构建、签名与发布
+细节见 [DEVELOPMENT.md](DEVELOPMENT.md)。
 
 ## 设计说明
 
-主代码在 [`prototype/WindowShade.swift`](prototype/WindowShade.swift)。历史背景、设计取舍和各应用兼容细节见 [`WindowShade.md`](WindowShade.md)；构建、签名与发布细节见 [DEVELOPMENT.md](DEVELOPMENT.md)。
+[`prototype/WindowShade.swift`](prototype/WindowShade.swift) 是 AppDelegate 骨架
+和共享基础设施（日志、缓存、坐标换算）。实际功能分布在 `prototype/` 下的模块里
+（`App/`、`Capture/`、`Compatibility/`、`Core/`、`Overlay/`、`Private/`、
+`Recovery/`、`Window/`）。历史背景、设计取舍和各应用兼容细节见
+[`WindowShade.md`](WindowShade.md)；构建、签名与发布细节见 [DEVELOPMENT.md](DEVELOPMENT.md)。
