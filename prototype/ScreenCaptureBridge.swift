@@ -30,9 +30,34 @@ final class WindowStreamCapture: NSObject, SCStreamDelegate, SCStreamOutput {
     // 不新建 capture、不轮询。弱引用，菜单预览视图销毁后自动断开。
     weak var mirrorLayer: AVSampleBufferDisplayLayer?
 
+    // 交互期主画面全速投递（拖拽/动画需要实时性）；非交互期主画面每 2 帧投 1 帧
+    // （≈15fps@30fps 源），镜像层固定每 3 帧投 1 帧（≈10fps）。帧投递全部离开
+    // 主线程：macOS 15 走线程安全的 sampleBufferRenderer 直接在后台队列 enqueue，
+    // 旧系统降频后回主线程，N 个置顶窗口不再以 30×N 帧/秒的节奏压主线程。
+    var isInteractive: Bool {
+        get {
+            stateLock.lock()
+            defer { stateLock.unlock() }
+            return _isInteractive
+        }
+        set {
+            stateLock.lock()
+            _isInteractive = newValue
+            stateLock.unlock()
+        }
+    }
+
     private var stream: SCStream?
     private var filter: SCContentFilter?
     private var configuration = SCStreamConfiguration()
+    private let stateLock = NSLock()
+    private var _isInteractive = false
+    private var _isStopped = false
+    // 每路 capture 一条串行帧队列：SCStreamOutput 的采样帧在这里做降频与投递，
+    // 计数器只在队列内访问，不需要额外同步。
+    private let frameQueue = DispatchQueue(label: "WindowShade.pin-frames", qos: .userInteractive)
+    private var mainFrameIndex: UInt32 = 0
+    private var mirrorFrameIndex: UInt32 = 0
 
     override init() {
         super.init()
@@ -70,6 +95,9 @@ final class WindowStreamCapture: NSObject, SCStreamDelegate, SCStreamOutput {
     }
 
     func stop() {
+        stateLock.lock()
+        _isStopped = true
+        stateLock.unlock()
         guard let activeStream = stream else { return }
         stream = nil
         activeStream.stopCapture { error in
@@ -95,6 +123,9 @@ final class WindowStreamCapture: NSObject, SCStreamDelegate, SCStreamOutput {
         try newStream.addStreamOutput(
             self, type: .screen, sampleHandlerQueue: .global(qos: .userInteractive))
         stream = newStream
+        stateLock.withLock {
+            _isStopped = false
+        }
         try await newStream.startCapture()
     }
 
@@ -139,11 +170,35 @@ final class WindowStreamCapture: NSObject, SCStreamDelegate, SCStreamOutput {
         of outputType: SCStreamOutputType
     ) {
         guard outputType == .screen, sampleBuffer.isValid else { return }
-        DispatchQueue.main.async { [weak self] in
+        frameQueue.async { [weak self] in
             guard let self else { return }
-            Self.enqueue(sampleBuffer, into: self.videoLayer)
-            if let mirrorLayer = self.mirrorLayer {
-                Self.enqueue(sampleBuffer, into: mirrorLayer)
+            self.stateLock.lock()
+            let stopped = self._isStopped
+            let interactive = self._isInteractive
+            self.stateLock.unlock()
+            guard !stopped else { return }
+            self.mainFrameIndex &+= 1
+            self.mirrorFrameIndex &+= 1
+            let deliverMain = interactive || self.mainFrameIndex % 2 == 1
+            let deliverMirror = self.mirrorFrameIndex % 3 == 1 && self.mirrorLayer != nil
+            guard deliverMain || deliverMirror else { return }
+            self.deliver(sampleBuffer, main: deliverMain, mirror: deliverMirror)
+        }
+    }
+
+    // macOS 15 的 sampleBufferRenderer.enqueue 线程安全，直接在帧队列上投递；
+    // 旧系统必须回主线程，但降频后主线程每路最多 ~15fps（镜像 10fps）。
+    private func deliver(_ sampleBuffer: CMSampleBuffer, main: Bool, mirror: Bool) {
+        if #available(macOS 15.0, *) {
+            if main { Self.enqueue(sampleBuffer, into: videoLayer) }
+            if mirror, let mirrorLayer { Self.enqueue(sampleBuffer, into: mirrorLayer) }
+        } else {
+            DispatchQueue.main.async { [weak self] in
+                guard let self else { return }
+                if main { Self.enqueue(sampleBuffer, into: self.videoLayer) }
+                if mirror, let mirrorLayer = self.mirrorLayer {
+                    Self.enqueue(sampleBuffer, into: mirrorLayer)
+                }
             }
         }
     }
