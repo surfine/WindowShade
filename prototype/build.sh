@@ -38,6 +38,7 @@ env CLANG_MODULE_CACHE_PATH="$MODULE_CACHE" \
   Capture/WindowSnapshotCache.swift \
   Capture/PreviewRenderer.swift \
   Overlay/ShadeStripPool.swift \
+  Overlay/ShadeStrip.swift \
   Window/WindowRegistry.swift \
   Window/AXWindow.swift \
   -framework Cocoa -framework Carbon -framework ApplicationServices \
