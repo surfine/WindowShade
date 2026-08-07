@@ -1431,11 +1431,6 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSMenuDelegate {
     }
 
     // 救援扫描产出的待写回动作：扫描（AX 读取）在后台，写回在主线程。
-    private struct OffscreenRescueAction {
-        let win: AXUIElement
-        let target: CGPoint
-        let size: CGSize
-    }
 
     var statusItem: NSStatusItem!
     var statusMenu: NSMenu!
@@ -1469,9 +1464,9 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSMenuDelegate {
     // 救援扫描的后台队列：journal 逐 app AX 枚举和广域兜底扫描可能被忙 app 拖住
     // 数秒，必须离开主线程。窗口位置写回统一在主线程执行，写回前复查 shaded
     // 是否为空，避免与正在进行的折叠操作交错。
-    private let rescueWorkQueue = DispatchQueue(label: "WindowShade.rescue", qos: .utility)
-    private var isRescuingOffscreenWindows = false
-    private var isRescueQueued = false
+    let rescueWorkQueue = DispatchQueue(label: "WindowShade.rescue", qos: .utility)
+    var isRescuingOffscreenWindows = false
+    var isRescueQueued = false
     private var tapSetupTimer: Timer?
     var reconcileTimer: Timer?
     var isReconcilingShadedWindows = false
@@ -2894,82 +2889,9 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSMenuDelegate {
     // 扫描 journal 中记录的停车窗口，产出待写回动作（不在这里写回；写回统一在
     // 主线程执行，见 rescueOffscreenWindows）。SLS alpha 恢复是纯 WindowServer
     // 调用、无 UI 依赖，可直接在后台执行。
-    private func collectJournalRescueActions(targetTopLeft: CGPoint,
-                                             into actions: inout [OffscreenRescueAction])
-        -> (count: Int, rescuedIDs: Set<CGWindowID>) {
-        let entries = shadeJournalEntries()
-        guard !entries.isEmpty else { return (0, []) }
-
-        var rescuedIDs = Set<CGWindowID>()
-        var rescued = 0
-
-        for app in NSWorkspace.shared.runningApplications {
-            let appEl = AXUIElementCreateApplication(app.processIdentifier)
-            var ref: CFTypeRef?
-            guard AXUIElementCopyAttributeValue(appEl, kAXWindowsAttribute as CFString, &ref) == .success,
-                  let windows = ref as? [AXUIElement] else { continue }
-
-            for win in windows {
-                guard let entry = entries.first(where: { entry in
-                    guard let id = journalID(entry), !rescuedIDs.contains(id) else { return false }
-                    return journalMatches(entry, app: app, win: win)
-                }), let id = journalID(entry) else { continue }
-
-                if journalString(entry, "hide") == HideMethod.privateAlpha.rawValue {
-                    let alpha = Float(journalNumber(entry, "originalAlpha") ?? 1)
-                    if PrivateSLSWindowMover.shared.setAlpha(id: id, alpha: max(0.05, min(alpha, 1.0))) {
-                        rescuedIDs.insert(id)
-                        rescued += 1
-                        wlog("journal: rescued alpha id=\(id) app=\(journalString(entry, "appName"))")
-                    }
-                    continue
-                }
-
-                guard let pos = axPosition(win), let size = axSize(win),
-                      !windowIsVisible(pos: pos, size: size) else { continue }
-
-                let target = CGPoint(
-                    x: CGFloat(journalNumber(entry, "originalX") ?? Double(targetTopLeft.x + CGFloat(rescued * 24))),
-                    y: CGFloat(journalNumber(entry, "originalY") ?? Double(targetTopLeft.y + CGFloat(rescued * 24)))
-                )
-                let originalSize = CGSize(
-                    width: CGFloat(journalNumber(entry, "originalWidth") ?? Double(size.width)),
-                    height: CGFloat(journalNumber(entry, "originalHeight") ?? Double(size.height))
-                )
-                let safeTarget: CGPoint
-                if windowIsVisible(pos: target, size: originalSize) {
-                    safeTarget = target
-                } else {
-                    let frame = cocoaFrame(fromAXPosition: target, size: originalSize)
-                    // 优先恢复到折叠时所在显示器，避免多显示器布局变化后救错屏。
-                    let displayID = journalNumber(entry, "displayID").map { CGDirectDisplayID($0) }
-                    safeTarget = axPosition(fromCocoaFrame: clampedFrame(frame, margin: 16,
-                                                                          preferredDisplayID: displayID))
-                }
-                actions.append(OffscreenRescueAction(win: win, target: safeTarget, size: originalSize))
-                rescuedIDs.insert(id)
-                rescued += 1
-                wlog("journal: rescued id=\(id) app=\(journalString(entry, "appName")) target=(\(Int(safeTarget.x)),\(Int(safeTarget.y)))")
-            }
-        }
-
-        return (rescued, rescuedIDs)
-    }
 
     // 主线程专用：清掉已救援的 journal 条目。写回放在主线程执行，避免和 shade
     // 的 journal 写入（record/update/clear）在后台扫描线程上竞争丢条目。
-    private func pruneRescuedJournalEntries(rescuedIDs: Set<CGWindowID>) {
-        guard !rescuedIDs.isEmpty else { return }
-        let entries = shadeJournalEntries()
-        let filtered = entries.filter { entry in
-            guard let id = journalID(entry) else { return false }
-            return !rescuedIDs.contains(id)
-        }
-        if filtered.count != entries.count {
-            saveShadeJournalEntries(filtered)
-            wlog("journal: pruned \(entries.count - filtered.count) rescued entries")
-        }
-    }
 
     // 广域兜底扫描：候选探测用一次 WindowServer 查询，而不是逐 app 同步 AX 枚举。
     // CGWindowList 与目标 app 是否响应无关；旧的逐 app kAXWindowsAttribute 扫描
@@ -2979,40 +2901,6 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSMenuDelegate {
     // 停车点见 axOffscreenHide：主点 (-32000,-32000)，备选 (-12000, y)/(x, -12000)/
     // (-12000,-12000)。判据必须覆盖全部停车点：任一轴超出 -11000 即候选；
     // AX 阶段再加"确实不可见"约束，避免误动极端多显示器排列下的真实窗口。
-    private func collectParkedWindowRescueActions(targetTopLeft: CGPoint,
-                                                  into actions: inout [OffscreenRescueAction]) -> Int {
-        let parkedAxisThreshold: CGFloat = -11000
-        let allWindows = WindowListCache.shared.allWindows()
-        var parkedPIDs: Set<pid_t> = []
-        for info in allWindows {
-            guard let bounds = cgWindowBounds(info),
-                  bounds.minX < parkedAxisThreshold || bounds.minY < parkedAxisThreshold,
-                  let owner = info[kCGWindowOwnerPID as String] as? NSNumber else { continue }
-            parkedPIDs.insert(owner.int32Value)
-        }
-
-        var rescued = 0
-        for pid in parkedPIDs {
-            let appEl = AXUIElementCreateApplication(pid)
-            var ref: CFTypeRef?
-            guard AXUIElementCopyAttributeValue(appEl, kAXWindowsAttribute as CFString, &ref) == .success,
-                  let windows = ref as? [AXUIElement] else { continue }
-
-            for win in windows {
-                guard let pos = axPosition(win), let size = axSize(win) else { continue }
-                // 只救我们自己的停车点附近、且确实不在任何屏幕可见区的窗口。
-                guard pos.x < parkedAxisThreshold || pos.y < parkedAxisThreshold else { continue }
-                guard !windowIsVisible(pos: pos, size: size) else { continue }
-                actions.append(OffscreenRescueAction(
-                    win: win,
-                    target: CGPoint(x: targetTopLeft.x + CGFloat(rescued * 24),
-                                    y: targetTopLeft.y + CGFloat(rescued * 24)),
-                    size: size))
-                rescued += 1
-            }
-        }
-        return rescued
-    }
 
     @objc func toggleMinimizeEffect(_ sender: NSMenuItem) {
         let enabling = !scaleMinimizeActive
@@ -5764,71 +5652,6 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSMenuDelegate {
         }
     }
 
-    func rescueOffscreenWindows(silent: Bool) {
-        guard !isRescuingOffscreenWindows else {
-            isRescueQueued = true
-            return
-        }
-        isRescuingOffscreenWindows = true
-        // 屏幕几何在主线程取好（NSScreen 只在主线程访问）；AX 扫描在后台。
-        guard let screen = NSScreen.main ?? NSScreen.screens.first else {
-            isRescuingOffscreenWindows = false
-            if !silent { quietNotice("没有可用屏幕", log: "rescue: no screen") }
-            return
-        }
-        let targetTopLeft = CGPoint(x: screen.visibleFrame.minX + 80,
-                                    y: coordinateBaselineY() - (screen.visibleFrame.maxY - 80))
-        let finish: (String?) -> Void = { [weak self] notice in
-            DispatchQueue.main.async { [weak self] in
-                guard let self else { return }
-                self.isRescuingOffscreenWindows = false
-                if let notice {
-                    self.quietNotice(notice, log: "rescue: \(notice)")
-                }
-                if self.isRescueQueued {
-                    self.isRescueQueued = false
-                    self.rescueOffscreenWindows(silent: true)
-                }
-            }
-        }
-        rescueWorkQueue.async { [weak self] in
-            guard let self else { return }
-            guard AXIsProcessTrusted() else {
-                DispatchQueue.main.async { self.showPermissionOnboardingIfNeeded(force: true) }
-                finish(silent ? nil : "需要权限")
-                return
-            }
-            var actions: [OffscreenRescueAction] = []
-            let journalResult = self.collectJournalRescueActions(targetTopLeft: targetTopLeft, into: &actions)
-            var rescued = journalResult.count
-            if rescued == 0 {
-                rescued += self.collectParkedWindowRescueActions(targetTopLeft: targetTopLeft, into: &actions)
-            } else {
-                wlog("rescueOffscreenWindows: journal rescued=\(rescued)")
-            }
-            let rescuedIDs = journalResult.rescuedIDs
-            // 写回统一在主线程：若扫描期间用户折了窗口（shaded 非空），放弃这批
-            // 写回，避免把刚停车的窗口又挪回可见区；journal 清理也回主线程写，
-            // 避免与 shade 的 journal 写入竞争。
-            DispatchQueue.main.async { [weak self] in
-                guard let self else { return }
-                if !self.shaded.isEmpty {
-                    wlog("rescue: shaded windows appeared during scan; skip applying \(actions.count) actions")
-                    finish(nil)
-                    return
-                }
-                self.pruneShadeJournal(reason: "rescue")
-                self.pruneRescuedJournalEntries(rescuedIDs: rescuedIDs)
-                for action in actions {
-                    setAXSize(action.win, action.size)
-                    setAXPosition(action.win, action.target)
-                    raiseAXWindow(action.win)
-                }
-                wlog("rescueOffscreenWindows: rescued=\(rescued)")
-                finish(rescued == 0 && !silent ? "没有需要救援的窗口" : nil)
-            }
-        }
-    }
 
 @objc func unshadeFromMenu(_ sender: NSMenuItem) {
         guard let n = sender.representedObject as? NSNumber else { return }
