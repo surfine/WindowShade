@@ -1,6 +1,6 @@
 # WindowShade
 
-这篇文章分两部分：前半是设计说明（面向普通人），后半是**历史考据与参考资料**（面向后续写文章，可直接引用）。
+这篇文章分两部分：前半是设计说明（面向普通人），后半是**历史考据**（也是大白话，读者不需要任何背景知识，遇到专业词会解释）。想写文章时，考据部分文末的参考资料可以直接引用。
 
 ---
 
@@ -74,45 +74,68 @@ macOS 的窗口差异很大，不是每个窗口都像标准文档窗口：
 
 后来有几条第三方延续：Unsanity 的 WindowShade X（直接改系统，随系统升级变得脆弱）、WindowMizer（把标题栏增强做成了综合窗口管理器）、Deskovery（折叠到标题栏或缩略图两种模式）。它们都印证了同一件事：现代 macOS 上做 WindowShade，只能靠“代理壳 + 藏起真实窗口”来维持用户心里的那个模型。
 
-详细的考据过程、原始出处和引用清单见下方附录。
+想详细了解这段历史、怎么考证的、哪些还没查实，看下面的附录。
 
 ---
 
-# 附录：历史考据与参考资料
+# 附录：历史考据（大白话版）
 
-> 这一部分是为后续写文章准备的原始素材：每条结论都尽量附了出处，引用前建议对照“尚待进一步核验”一节确认证据强度。
+> 这一部分假设读者完全不了解 Mac 历史和术语，遇到专业词都会解释。文末的参考资料是研究笔记——条目多、语言密，是写文章时对照引用用的，不是给读者看的正文。
 
-## 历史与考据
+## 先认识两个词
 
-### Classic Mac OS
+- **标题栏**：窗口最上面那一横条，通常显示窗口名字，还有三个小按钮（关闭、最小化、放大）。
+- **卷帘**：把窗口内容收起来、只留标题栏的动作。想象窗帘卷上去，只剩最上面那根杆。
 
-WindowShade 最初并非苹果从零设计。维基条目和 WindowMizer 历史页都指向 Rob Johnston 为 System 6.0.7 编写的第三方工具；WindowMizer 历史页进一步把开发者身份指向 Interactive Technologies, Inc.。苹果后来买下权利，并在 System 7.5 中把它作为控制面板扩展纳入系统。
+## 窗口卷帘是谁发明的？
 
-System 7.5 后，WindowShade 成为 classic Mac OS 用户熟悉的标准能力。Low End Mac 在回顾 System 7.5 和 Mac OS 7.6 时，把它列为用户可能已经喜欢的功能：任意窗口可通过双击标题栏折叠到只剩标题栏，也可配合修饰键使用。
+现在 macOS 里已经找不到窗口卷帘了，但在 1990 年代的老 Mac 上它很常见。而且它最早不是苹果做的，而是一个叫 Rob Johnston 的程序员写的第三方小工具，装在 System 6.0.7（Mac 在 1990 年代初用的系统）上，给窗口加了一个动作：双击标题栏，内容卷起来只留标题栏；再双击，展开。
 
-Macintosh Garden 保存了 WindowShade 1.1、1.2、1.3.1 三个 classic Mac 版本，标注作者为 Rob Johnston，发行方为 Interactive Technologies Inc.，面向 68k Mac、System 6.x 到 System 7.x。归档页也转述了随附说明中的卷帘隐喻：窗口内容像旧式卷帘一样收起，标题栏留在原处。
+后来苹果看上了这个功能，把它买下来，在 1994 年发布的 System 7.5 里直接内置。从此它不再是第三方插件，而是系统自带能力，很多老 Mac 用户都习惯了。到 Mac OS 8（1997 年）时，它被并进系统的“外观管理器”；再到 2001 年的 Mac OS X，苹果重新设计了整个窗口管理——用 Dock（屏幕底部的停靠栏）、Expose（快速浏览所有窗口）这些新东西——卷帘这个功能就从系统里消失了。
 
-到 Mac OS 8，WindowShade 不再作为独立控制面板出现，而是纳入 Appearance Manager。到 Mac OS X，这项能力从系统中消失，窗口管理转向 Dock 最小化、Expose 和后续的 Mission Control / Stage Manager。
+这些信息的来源：维基百科的 WindowShade 词条、WindowMizer 官网的历史页、老软件存档站 Macintosh Garden 上保存的 1.1 / 1.2 / 1.3.1 三个版本。
 
-### 第三方延续
+## 它后来为什么消失了？
 
-Unsanity 的 WindowShade X 把这一能力带回早期 OS X，但它属于 haxie 式系统修改，随系统升级变得脆弱。Low End Mac 2010 年文章记录了用户因 WindowShade X 尚未支持 Snow Leopard 而推迟升级，并认为 Dock 缩略图无法替代完整标题栏的可识别性。
+主要是 Mac OS X 换了思路：苹果认为找窗口、收窗口应该靠 Dock 和 Expose，而不是“把窗口卷起来”这种动作。对老用户来说这是个损失，但对当时的设计来说，新方式更统一。消失不等于没人要——很多用户一直记着这个功能，这也是后来第三方工具出现的原因。
 
-WindowMizer 是另一条路线。它没有只复刻折叠窗口，而是把标题栏增强扩展成窗口缩放、透明度、置顶、多显示器移动、鼠标手势、快捷键和按应用配置。本地视频 `Introduction to WindowMizer for macOS.mp4` 中，开发者把 roll up windows 称为 flagship feature，但产品重心已明显变成综合窗口管理。
+## 还有人想做这件事吗？
 
-Deskovery 使用 minimize in place / window shading 叙述，提供折叠到标题栏和折叠到缩略图两种模式。它的文档说明现代实现通常需要辅助功能权限和屏幕录制权限，并透露其 window shading 是在真实窗口副本上完成，源窗口会被移到屏幕外或最小化到 Dock。这说明现代 macOS 上的 WindowShade 往往只能通过代理壳维持心理模型。
+有，但从系统里消失后，只能靠第三方做，而且大多比较脆弱：
 
-TidBITS Talk 2021 年讨论提供了用户侧证据：有人长期依赖 WindowShade/WindowMizer，但在 Mojave 上遇到稳定性问题后被迫寻找替代；把窗口挪到大屏边缘或角落被认为只是退而求其次。这说明 WindowShade 的价值不是纯怀旧，而是某些工作流中的真实需求。
+- **WindowShade X**：Unsanity 公司做的，把卷帘带回早期 Mac OS X。它是靠“改系统内部行为”实现的（这种插件有个专门的名字，叫 haxie），所以每次系统升级都可能坏。2010 年有用户为了等它支持新系统，甚至推迟升级。
+- **WindowMizer**：不只是卷帘。它把标题栏扩展成一套完整的窗口管理工具——缩放、透明度、置顶、快捷键、按应用配置——卷帘只是其中一个招牌功能。
+- **Deskovery**：提供两种模式：卷到只剩标题栏，或者卷成缩略图。它的文档还讲了一个现实：现代 macOS 不允许第三方真正修改别的窗口，所以只能“做一个假标题栏盖住窗口，把真窗口藏到屏幕外或最小化”。这也是 WindowShade 现在用的办法。
 
-### 现代语境
+## 现在还有人需要它吗？
 
-Stuff 在 2023 年评论 macOS Sonoma 桌面小组件时，把 WindowShade/window stashing 列为值得复活的旧功能，理由是它能快速看见窗口后面的内容，且避免 Dock 最小化带来的重新寻找成本。
+有，而且有用户侧的证据：
 
-MacStories 的 Single-Space Challenge 从现代单桌面工作流侧面印证了这一点：当用户把所有窗口放在一个 Space 中，问题就从“如何切换桌面”变成“如何降低眼前窗口的噪声”。WindowShade 的优势是比隐藏应用更局部，比 Stage Manager 更轻，比窗口平铺更不破坏自由重叠关系。
+- 2021 年，TidBITS 论坛上有人讨论：一些用户长期依赖这类工具工作，系统升级后工具坏了，被迫找替代品；把窗口拖到屏幕边缘或角落，被认为只是“将就”。
+- 2023 年，科技媒体 Stuff 在评论新 macOS 时，把“窗口卷帘”列为值得苹果复活的老功能，理由是它能看见窗口后面的内容，又不用去 Dock 里重新找。
+- 有人做过“单桌面挑战”：把工作里的所有窗口放在一个桌面，问题就从“怎么切换桌面”变成“怎么降低眼前窗口的噪声”——窗口卷帘正好是轻量解法：比隐藏整个应用更局部，比 Stage Manager 更轻。
 
-OS X Daily 对 Single Application Mode 的介绍说明，“只让当前 app 主导视野”是长期存在的需求；但系统级 single-app 会让其他窗口离开画布。WindowShade 更适合做 soft version：让不用的窗口退到低声量，而不是消失。
+这些证据说明：这不是怀旧，是有些工作流真的需要这个动作。
 
-## 参考文献与阅读记录
+## 哪些是确定的事实，哪些还没查实？
+
+**基本可以确定**（多个来源互相印证）：
+
+- 这个交互最早是第三方工具，作者指向 Rob Johnston，发行方是 Interactive Technologies Inc.。
+- 苹果买下后，在 System 7.5 里内置。
+- 后来在 Mac OS 8 并入外观管理器，到 Mac OS X 消失。
+
+**还没完全查实**：
+
+- Rob Johnston / System 6.0.7 / Interactive Technologies 这条线，目前靠维基、WindowMizer 官网和 Macintosh Garden 三个二手来源互相印证，还没找到更原始的开发者访谈、发行说明或最早发布帖。
+- 一个据称 1989 年的发布帖（MacGUI）网页打不开，互联网档案馆也没有对应快照。
+- Interactive Technologies 公司官网 1998 / 1999 / 2010 年的快照里只有舞台灯光控制产品，找不到 WindowShade 相关线索。
+
+**如果想继续查**：老 Mac 共享软件档案（Info-Mac / UMich 软件库）、当年的 MacUser / Macworld 纸刊索引、System 7.5 自带文档，以及从老安装包里翻原始说明文件。
+
+## 参考资料（研究笔记，供写作引用）
+
+下面是研究过程中读过的资料。条目较密，是为了写文章时对照引用，不是给读者看的正文。
 
 - Wikipedia contributors. [WindowShade](https://en.wikipedia.org/wiki/WindowShade). 读取定义、System 7.5/Mac OS 8/Mac OS X 迁移、第三方工具和 Rob Johnston 来源说明。
 - John Gruber. [Three things OS X could learn from the Classic Mac OS](https://www.macworld.com/article/194590/macat25_classicmacos.html). Macworld, 2009-01-21. 读取作者对 WindowShade 与 Dock 最小化的比较。
@@ -143,15 +166,3 @@ OS X Daily 对 Single Application Mode 的介绍说明，“只让当前 app 主
 - Internet Archive / Wayback Machine. [Macintosh Garden WindowShade 2009-06-16 快照](https://web.archive.org/web/20090616131955/http://macintoshgarden.org:80/apps/windowshade). 用于核验 Macintosh Garden 归档页至少在 2009 年已被存档。
 - Internet Archive / Wayback Machine. [Interactive Technologies 1998-12-05 快照](https://web.archive.org/web/19981205010646/http://www.interactive-online.com:80/), [1999-11-17 快照](https://web.archive.org/web/19991117142936/http://interactive-online.com:80/) 与 [2010-01-07 快照](https://web.archive.org/web/20100107092125/http://www.interactive-online.com/). 已读快照主要描述舞台、建筑和娱乐照明控制产品，未发现 WindowShade、Rob Johnston 或 classic Mac 软件线索。
 - Internet Archive / Wayback Availability API. [MacGUI 1989 WindowShade 1.1 链接核验查询](https://archive.org/wayback/available?url=https://macgui.com/usenet/?author=Robert+George+Johnston+Jr.%26group=14%26id=40850). 本次查询没有返回可用快照。
-
-## 尚待进一步核验
-
-Rob Johnston / System 6.0.7 / Interactive Technologies Inc. 这条来源有维基、WindowMizer 和 Macintosh Garden 的旁证，但仍缺少更原始的开发者访谈、发行说明或可访问的早期发布帖。
-
-当前核验状态：
-
-- WindowMizer 历史页列出的 MacGUI 1989 年 WindowShade 1.1 发布帖，当前站点直连失败；Wayback Availability API 对精确 URL 没有返回可用快照。
-- Macintosh Garden 的 WindowShade 归档页有 2009-06-16 Wayback 快照；这只能证明归档页较早存在，不能把页面中的作者/发行方/版本信息直接提升为 1989/1992 年的一手证据。
-- `interactive-online.com` 在 1998、1999、2010 年有 Wayback 快照，但已读快照描述的是舞台、建筑和娱乐照明控制产品，未出现 WindowShade、Rob Johnston 或 Mac 软件语境。
-
-若要继续做严谨历史考证，下一步应查 classic Mac shareware 档案、旧版 Info-Mac/UMich 软件库、MacUser/Macworld 纸刊索引、Apple System 7.5 随附文档，以及能否从 MacGUI、Usenet 或压缩包内原始 readme 中恢复早期发布记录。
