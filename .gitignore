@@ -12,6 +12,7 @@ prototype/windowshade
 prototype/windowshade-b
 prototype/*.app/
 prototype/*.zip
+prototype/dist/
 
 # Local reference clones, agent scratch, and heavy media sub-projects
 /Topit/
