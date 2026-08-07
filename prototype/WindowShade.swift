@@ -1440,7 +1440,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSMenuDelegate {
     private var statusItem: NSStatusItem!
     private var statusMenu: NSMenu!
     private var hotKeyRefs: [EventHotKeyRef?] = []
-    private var shaded: [CGWindowID: ShadeState] = [:]
+    var shaded: [CGWindowID: ShadeState] = [:]
     private var overlayIDs: Set<CGWindowID> = []      // 我们自己的覆盖层，tap 里要跳过它们
     private var arrangedOverlayFrames: [CGWindowID: NSRect] = [:]
     private var focusSideStackFrames: [CGWindowID: NSRect] = [:]
@@ -1477,7 +1477,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSMenuDelegate {
     private var isReconcilingShadedWindows = false
     private let reconcileAXWorkQueue = DispatchQueue(label: "WindowShade.reconcile-ax", qos: .utility)
     private var reconcileInvalidCounts: [CGWindowID: Int] = [:]
-    private var privateAlphaOriginalValues: [CGWindowID: Float] = [:]
+    var privateAlphaOriginalValues: [CGWindowID: Float] = [:]
     private var lastJournalRescueAttempt: Date?
     private var focusParkingWindow: NSWindow?
     // 当前唯一在屏幕上的预览视窗（菜单悬停或标题栏 peek 触发），见 presentPreview/
@@ -1543,7 +1543,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSMenuDelegate {
     private var translucent: Bool = UserDefaults.standard.bool(forKey: shadeTranslucentDefaultsKey)
     var eventTap: CFMachPort?                          // 供 C 回调重新启用
     private var eventTapReenableWorkItem: DispatchWorkItem?
-    private let offscreen = CGPoint(x: -32000, y: -32000)
+    let offscreen = CGPoint(x: -32000, y: -32000)
     private let defaultShadeOptions = ShadeInvocationOptions(forcedAppearanceMode: nil,
                                                              capturePreview: true,
                                                              emitFoldFeedback: true,
@@ -3836,134 +3836,6 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSMenuDelegate {
         }
     }
 
-    private func shadeJournalEntries() -> [[String: Any]] {
-        UserDefaults.standard.array(forKey: shadeJournalDefaultsKey) as? [[String: Any]] ?? []
-    }
-
-    private func saveShadeJournalEntries(_ entries: [[String: Any]]) {
-        if entries.isEmpty {
-            UserDefaults.standard.removeObject(forKey: shadeJournalDefaultsKey)
-        } else {
-            UserDefaults.standard.set(entries, forKey: shadeJournalDefaultsKey)
-        }
-    }
-
-    private func journalNumber(_ entry: [String: Any], _ key: String) -> Double? {
-        if let n = entry[key] as? NSNumber { return n.doubleValue }
-        if let d = entry[key] as? Double { return d }
-        if let i = entry[key] as? Int { return Double(i) }
-        return nil
-    }
-
-    private func journalString(_ entry: [String: Any], _ key: String) -> String {
-        entry[key] as? String ?? ""
-    }
-
-    private func journalID(_ entry: [String: Any]) -> CGWindowID? {
-        guard let raw = journalNumber(entry, "id") else { return nil }
-        return CGWindowID(max(0, Int(raw)))
-    }
-
-    private func pruneShadeJournal(reason: String) {
-        let now = Date().timeIntervalSince1970
-        let entries = shadeJournalEntries()
-        let filtered = entries.filter { entry in
-            guard journalID(entry) != nil else { return false }
-            let created = journalNumber(entry, "createdAt") ?? journalNumber(entry, "updatedAt") ?? now
-            return now - created <= shadeJournalMaxAge
-        }
-        if filtered.count != entries.count {
-            saveShadeJournalEntries(filtered)
-            wlog("journal: pruned \(entries.count - filtered.count) stale entries reason=\(reason)")
-        }
-    }
-
-    private func recordShadeJournal(id: CGWindowID, win: AXUIElement, hide: HideMethod,
-                                    pid: pid_t, bundleID: String, appName: String,
-                                    title: String, originalPosition: CGPoint,
-                                    originalSize: CGSize, mode: ShadeAppearanceMode,
-                                    policy: ShadePolicy, planReason: String,
-                                    stage: ShadeLifecycleStage,
-                                    sourceDisplayID: CGDirectDisplayID?,
-                                    sourceSpaceID: UInt64?) {
-        guard hide == .offscreen || hide == .privateOffscreen || hide == .privateAlpha else {
-            clearShadeJournal(id: id)
-            return
-        }
-
-        let parked = cgWindowInfo(id)
-            .flatMap { cgWindowBounds($0) }
-            .map { CGPoint(x: $0.minX, y: $0.minY) }
-            ?? axPosition(win)
-            ?? offscreen
-        let now = Date().timeIntervalSince1970
-        var entries = shadeJournalEntries().filter { journalID($0) != id }
-        var entry: [String: Any] = [
-            "schemaVersion": 3,
-            "id": Int(id),
-            "pid": Int(pid),
-            "bundleID": bundleID,
-            "appName": appName,
-            "title": title,
-            "hide": hide.rawValue,
-            "mode": mode.rawValue,
-            "policy": shadePolicyDescription(policy),
-            "planReason": planReason,
-            "stage": stage.rawValue,
-            "state": stage.rawValue,
-            "originalX": Double(originalPosition.x),
-            "originalY": Double(originalPosition.y),
-            "originalWidth": Double(originalSize.width),
-            "originalHeight": Double(originalSize.height),
-            "parkedX": Double(parked.x),
-            "parkedY": Double(parked.y),
-            "originalAlpha": Double(privateAlphaOriginalValues[id] ?? 1),
-            "createdAt": now,
-            "updatedAt": now
-        ]
-        if let displayID = sourceDisplayID { entry["displayID"] = Double(displayID) }
-        if let spaceID = sourceSpaceID { entry["spaceID"] = Double(spaceID) }
-        entries.append(entry)
-        saveShadeJournalEntries(entries)
-        wlog("journal: record \(hide.rawValue) id=\(id) app=\(appName) parked=(\(Int(parked.x)),\(Int(parked.y)))")
-    }
-
-    private func updateShadeJournal(id: CGWindowID, reason: String,
-                                    _ mutate: (inout [String: Any]) -> Void) {
-        var entries = shadeJournalEntries()
-        guard let index = entries.firstIndex(where: { journalID($0) == id }) else { return }
-        var entry = entries[index]
-        mutate(&entry)
-        entry["updatedAt"] = Date().timeIntervalSince1970
-        entry["lastReason"] = reason
-        entries[index] = entry
-        saveShadeJournalEntries(entries)
-    }
-
-    private func markShadeJournalStage(id: CGWindowID, _ stage: ShadeLifecycleStage,
-                                       reason: String) {
-        updateShadeJournal(id: id, reason: reason) { entry in
-            entry["stage"] = stage.rawValue
-            entry["state"] = stage.rawValue
-        }
-    }
-
-    private func markShadeLifecycle(id: CGWindowID, _ stage: ShadeLifecycleStage,
-                                    reason: String) {
-        if var state = shaded[id] {
-            if state.lifecycleStage == stage {
-                markShadeJournalStage(id: id, stage, reason: reason)
-                return
-            }
-            let oldStage = state.lifecycleStage
-            state.lifecycleStage = stage
-            shaded[id] = state
-            wlog("lifecycle: id=\(id) \(oldStage.rawValue) -> \(stage.rawValue) reason=\(reason)")
-        } else {
-            wlog("lifecycle: id=\(id) -> \(stage.rawValue) reason=\(reason)")
-        }
-        markShadeJournalStage(id: id, stage, reason: reason)
-    }
 
     func currentOperationState(_ id: CGWindowID) -> WindowShadeState {
         operationStates[id] ?? .normal
@@ -3983,53 +3855,6 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSMenuDelegate {
         return true
     }
 
-    private func clearShadeJournal(id: CGWindowID) {
-        let entries = shadeJournalEntries()
-        let filtered = entries.filter { journalID($0) != id }
-        if filtered.count != entries.count {
-            saveShadeJournalEntries(filtered)
-            wlog("journal: clear id=\(id)")
-        }
-    }
-
-    private func syncRestoreJournal(id: CGWindowID, fromOverlayFrame frame: NSRect,
-                                    restoredSize: CGSize? = nil) {
-        var entries = shadeJournalEntries()
-        guard let index = entries.firstIndex(where: { journalID($0) == id }) else { return }
-
-        let pos = axPosition(fromCocoaFrame: frame)
-        var entry = entries[index]
-        entry["originalX"] = Double(pos.x)
-        entry["originalY"] = Double(pos.y)
-        if let restoredSize {
-            entry["originalWidth"] = Double(restoredSize.width)
-            entry["originalHeight"] = Double(restoredSize.height)
-        }
-        entry["updatedAt"] = Date().timeIntervalSince1970
-        entries[index] = entry
-        saveShadeJournalEntries(entries)
-        wlog("journal: sync id=\(id) restore=(\(Int(pos.x)),\(Int(pos.y)))")
-    }
-
-    private func journalMatches(_ entry: [String: Any], app: NSRunningApplication,
-                                win: AXUIElement) -> Bool {
-        guard Int(app.processIdentifier) == Int(journalNumber(entry, "pid") ?? -1) else { return false }
-        let expectedBundle = journalString(entry, "bundleID")
-        if !expectedBundle.isEmpty, app.bundleIdentifier != expectedBundle { return false }
-
-        // 匹配优先级：pid -> bundleID -> title -> windowID。
-        // 窗口 ID 在 app 重启后可能被复用，先按稳定属性（标题）匹配，
-        // 窗口 ID 只作最后兜底；标题为空时必须有 ID 精确匹配才视为同一窗口，
-        // 避免把同 app 的其他窗口误救。
-        let expectedTitle = cleanDisplayTitle(journalString(entry, "title"))
-        if !expectedTitle.isEmpty, cleanDisplayTitle(axTitle(win)) == expectedTitle {
-            return true
-        }
-        if let expectedID = journalID(entry), let currentID = windowID(of: win), expectedID == currentID {
-            return true
-        }
-        return false
-    }
 
     // 扫描 journal 中记录的停车窗口，产出待写回动作（不在这里写回；写回统一在
     // 主线程执行，见 rescueOffscreenWindows）。SLS alpha 恢复是纯 WindowServer
