@@ -557,27 +557,82 @@ extension AppDelegate {
                                           timeoutNanoseconds: UInt64) async -> CGImage? {
         // 折叠路径的 500ms 短 TTL 截图缓存：快速连续折叠同一窗口时复用，
         // 避免重复 ScreenCaptureKit capture。悬停预览的懒截图不走这里。
-        if let cached = WindowSnapshotCache.shared.cachedImage(id: id) {
+        // key 区分 capture variant 与请求像素档位，预览小图与完整 Retina
+        // 截图不会互相串用。
+        let variant: WindowSnapshotVariant = maxPixelSize == nil ? .nativeChrome : .preview
+        let key = WindowSnapshotKey(windowID: id, variant: variant, maxPixelSize: maxPixelSize)
+        if let cached = WindowSnapshotCache.shared.cachedImage(key: key) {
             return cached
         }
+
+        // 同一窗口、同一 variant 的重复请求 join 已在途的 capture，不再堆积
+        // 新的重复截图任务；超时由共享任务内部管理（所有调用方用同一个
+        // shadeCaptureTimeoutNanoseconds）。
+        if let existing = WindowSnapshotCache.shared.inFlightTask(for: key) {
+            return await existing.value
+        }
+
+        // 槽先建、任务后建：任务完成时按槽身份清理在途注册表，不会误删
+        // 后到的同 key 任务。任务弱持有槽：若发布失败（已有同 key 在途），
+        // 槽未被缓存持有，任务结束时清理自动 no-op。
+        let slot = WindowSnapshotInFlightSlot(key: key)
+        let task: Task<CGImage?, Never> = Task { [weak self, weak slot] in
+            defer {
+                slot?.markCompleted()
+            }
+            guard let self else { return nil }
+            return await self.raceCaptureWithTimeout(id: id, axPos: axPos, size: size,
+                                                     maxPixelSize: maxPixelSize,
+                                                     timeoutNanoseconds: timeoutNanoseconds,
+                                                     key: key)
+        }
+        slot.task = task
+        if !WindowSnapshotCache.shared.registerInFlight(slot: slot) {
+            // 创建任务期间已有同 key 任务被发布：改用对方的。
+            if let existing = WindowSnapshotCache.shared.inFlightTask(for: key) {
+                return await existing.value
+            }
+            return await task.value
+        }
+        let image = await task.value
+        // 任务已完成的槽在等待结束后按身份清理（幂等，误删不了后到的同 key 任务）。
+        WindowSnapshotCache.shared.completeInFlight(slot)
+        return image
+    }
+
+    // 单次 capture 的内部竞速：timeout 获胜 → 取消 capture task；capture 完成 →
+    // 取消 timeout task。被取消或过期的 capture 不写回缓存。continuation 仍然
+    // 只允许 resume 一次（SingleResumeGuard），两个赛跑的 Task 不会双 resume。
+    private func raceCaptureWithTimeout(id: CGWindowID, axPos: CGPoint, size: CGSize,
+                                        maxPixelSize: CGSize?, timeoutNanoseconds: UInt64,
+                                        key: WindowSnapshotKey) async -> CGImage? {
         let resumeGuard = SingleResumeGuard()
-        let image: CGImage? = await withCheckedContinuation {
-            (continuation: CheckedContinuation<CGImage?, Never>) in
-            Task { [weak self] in
-                guard let self else {
-                    if await resumeGuard.tryResume() { continuation.resume(returning: nil) }
-                    return
+        let image: CGImage? = await withCheckedContinuation { continuation in
+            let captureTask: Task<CGImage?, Never> = Task { [weak self] in
+                guard let self else { return nil }
+                let image = await self.captureWindow(id: id, axPos: axPos, size: size,
+                                                     maxPixelSize: maxPixelSize)
+                // 被取消/超时过期的 capture 不写回缓存，避免晚到的结果污染 TTL 窗口。
+                guard !Task.isCancelled else { return nil }
+                if let image {
+                    WindowSnapshotCache.shared.store(image: image, key: key)
                 }
-                let image = await self.captureWindow(id: id, axPos: axPos, size: size, maxPixelSize: maxPixelSize)
-                if await resumeGuard.tryResume() { continuation.resume(returning: image) }
+                return image
+            }
+            let timeoutTask = Task {
+                try? await Task.sleep(nanoseconds: timeoutNanoseconds)
+                if await resumeGuard.tryResume() {
+                    captureTask.cancel()
+                    continuation.resume(returning: nil)
+                }
             }
             Task {
-                try? await Task.sleep(nanoseconds: timeoutNanoseconds)
-                if await resumeGuard.tryResume() { continuation.resume(returning: nil) }
+                let image = await captureTask.value
+                timeoutTask.cancel()
+                if await resumeGuard.tryResume() {
+                    continuation.resume(returning: image)
+                }
             }
-        }
-        if let image {
-            WindowSnapshotCache.shared.store(image: image, id: id)
         }
         return image
     }
