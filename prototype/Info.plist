@@ -9,7 +9,7 @@
     <key>CFBundleIconFile</key>
     <string>WindowShade</string>
     <key>CFBundleIdentifier</key>
-    <string>com.surfine.WindowShade</string>
+    <string>com.windowshade.prototype</string>
     <key>CFBundleName</key>
     <string>WindowShade</string>
     <key>CFBundlePackageType</key>
