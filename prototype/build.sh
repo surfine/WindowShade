@@ -52,6 +52,7 @@ env CLANG_MODULE_CACHE_PATH="$MODULE_CACHE" \
   App/OverlayFactory.swift \
   App/ArrangeController.swift \
   App/FocusSession.swift \
+  App/FoldTransaction.swift \
   -framework Cocoa -framework Carbon -framework ApplicationServices \
   -framework ScreenCaptureKit -framework QuartzCore -framework CoreText \
   -framework AVFoundation \
