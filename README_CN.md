@@ -60,6 +60,19 @@ WindowShade 一次只处理一个窗口，动作始终可逆：
 | **原貌卷帘** | 实时截取真实窗口的顶部 chrome | 让卷帘条和原窗口视觉上保持一致 |
 | **标准标题栏** | 应用图标、标题和交通灯的标准条 | 专注整理、统一宽度、收拾桌面 |
 
+## 架构
+
+```mermaid
+flowchart TD
+    AX[Accessibility API] --> Locator[Window Locator]
+    Locator --> Controller[Shade Controller]
+    Controller --> SCK[ScreenCaptureKit]
+    Controller --> Overlay[Overlay Window]
+    Controller --> Journal[Recovery Journal]
+```
+
+Window Locator 通过辅助功能 API 找到当前聚焦窗口；Shade Controller 驱动折叠 / 展开事务：ScreenCaptureKit 截取真实标题栏、覆盖层窗口在原地留下卷帘条、恢复日志记录每次折叠，异常退出后尽量把窗口救回来。
+
 ## 亮点
 
 - 用 `Control + Command + C` 折叠 / 展开当前窗口。
@@ -67,7 +80,7 @@ WindowShade 一次只处理一个窗口，动作始终可逆：
 - 单击卷帘条，快速预览被收起的内容。
 - 用 `Control + Command + P` 把窗口置顶成实时预览。
 - 用 `Control + Command + 1...9` 按菜单顺序展开窗口。
-- 用 `Control + Command + 0` 整理卷帘条，或进入专注 shelf。
+- 用 `Control + Command + 0` 整理卷帘条，或进入专注 shelf（实验功能）。
 - 可调卷帘样式、标题栏双击、置顶、半透明、音效和登录启动。
 
 ## 兼容性
@@ -107,14 +120,27 @@ WindowShade 常驻菜单栏，不会出现在 Dock。
 | 预览折叠窗口 | 单击卷帘条 |
 | 置顶 / 取消置顶当前窗口 | `Control + Command + P` |
 | 按菜单顺序展开窗口 | `Control + Command + 1...9` |
-| 整理卷帘条 / 专注 shelf | `Control + Command + 0` |
+| 整理卷帘条 / 专注 shelf（实验功能） | `Control + Command + 0` |
 | 管理所有窗口 | 菜单栏图标 |
 
 三击标题栏会保留系统原本的标题栏缩放动作。
 
 ## 从源码构建
 
-需要 macOS 14 或更新版本，以及 Xcode command line tools。
+### 环境要求
+
+- macOS 14 或更新版本
+- Xcode command line tools（`xcode-select --install`）
+- 用于签名的 Apple Development 证书
+
+### 克隆
+
+```sh
+git clone https://github.com/surfine/WindowShade.git
+cd WindowShade
+```
+
+### 构建
 
 ```sh
 cd prototype
@@ -122,8 +148,12 @@ cd prototype
 open WindowShade.app
 ```
 
-脚本会把源码编译进现有的 `WindowShade.app` 并签名。它使用固定的 Apple Development 身份；把 `build.sh` 里的 `IDENTITY` 改成你自己的证书，就能让 macOS 在重复构建后仍记住辅助功能和屏幕录制授权。
+脚本会把源码编译进现有的 `WindowShade.app` bundle（原地更新），所以需要先有一个 bundle——全新克隆的话，先从 [Releases](https://github.com/surfine/WindowShade/releases/latest) 下载一份。
+
+### 签名
+
+`build.sh` 会用 Apple Development 身份对 app 签名，让 macOS 在重复构建后仍记住辅助功能和屏幕录制授权。把你的证书配置在 `prototype/build.sh` 里；构建、签名与发布细节见 [DEVELOPMENT.md](DEVELOPMENT.md)。
 
 ## 设计说明
 
-主代码在 [`prototype/WindowShade.swift`](prototype/WindowShade.swift)。历史背景、设计取舍和各应用兼容细节见 [`WindowShade.md`](WindowShade.md)。
+主代码在 [`prototype/WindowShade.swift`](prototype/WindowShade.swift)。历史背景、设计取舍和各应用兼容细节见 [`WindowShade.md`](WindowShade.md)；构建、签名与发布细节见 [DEVELOPMENT.md](DEVELOPMENT.md)。
