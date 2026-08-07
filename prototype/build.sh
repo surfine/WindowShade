@@ -54,6 +54,7 @@ env CLANG_MODULE_CACHE_PATH="$MODULE_CACHE" \
   App/FocusSession.swift \
   App/FoldTransaction.swift \
   App/ShadeController.swift \
+  App/FoldExit.swift \
   -framework Cocoa -framework Carbon -framework ApplicationServices \
   -framework ScreenCaptureKit -framework QuartzCore -framework CoreText \
   -framework AVFoundation \
