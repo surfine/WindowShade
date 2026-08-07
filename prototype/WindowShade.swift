@@ -1,20 +1,17 @@
-// WindowShade 主实现：代理卷帘条 + 真实窗口隐藏/恢复（最接近经典 WindowShade）。
+// WindowShade 主文件：AppDelegate 骨架 + 共享基础设施（日志、缓存、坐标换算、
+// 状态机、全局辅助函数）与剩余未拆分的通用 helpers。
 //
-// 触发 ⌃⌘C 时：
-//   1. 取当前聚焦窗口（AX），拿到它的 CGWindowID、位置、尺寸。
-//   2. 用 ScreenCaptureKit 截下整窗图，裁出顶部 titleBarHeight 这一条「真标题栏」。
-//   3. 用无边框 NSWindow 覆盖层把这条标题栏钉在原位（截的是真图，天然匹配 Liquid Glass）。
-//   4. 把真窗口移到屏幕外 → 内容真正消失，只剩这条标题栏。
-//   再触发（或双击覆盖层）→ 把真窗口移回原位、撤掉覆盖层。
+// 折叠/展开、恢复日志、离屏救援、置顶预览等核心功能已拆分到独立模块：
+//   App/        折叠入口、事务、出口、事件 tap、菜单、偏好、悬停预览等
+//   Capture/    截图缓存与图像分析
+//   Compatibility/  各 app 窗口策略
+//   Core/       折叠操作状态机
+//   Overlay/    覆盖层窗口与视图
+//   Private/    SkyLight 私有 API 隔离层
+//   Recovery/   恢复日志与离屏救援
+//   Window/     AX 辅助与窗口元数据
 //
-// 编译：swiftc -O -o windowshade WindowShade.swift \
-//        -framework Cocoa -framework Carbon -framework ApplicationServices -framework ScreenCaptureKit \
-//        -framework QuartzCore -framework CoreText -framework ServiceManagement
-// 运行：./windowshade
-//   需要两个权限：辅助功能（移动/读窗口）+ 屏幕录制（截图）。首次会分别弹窗。
-//
-// 私有 API：_AXUIElementGetWindow —— 把 AXUIElement 映射到 CGWindowID。
-//   它是最稳的私有 API（yabai 等都在用），但仍是私有的；出成品时应隔离成可降级路径。
+// 编译与运行见 prototype/build.sh（自动收集源文件，签名身份走环境变量）。
 
 import Cocoa
 import Carbon.HIToolbox
@@ -308,6 +305,7 @@ func allowsRealFullscreenOrZoom(_ win: AXUIElement) -> Bool {
 enum ClassicAction { case close, zoom, expand }
 enum HideMethod: String { case none, offscreen, privateOffscreen, privateAlpha, hidden, minimized, ownWindowOrderedOut, quickLookClosed }   // 真窗口的隐藏方式
 enum ShadeLifecycleStage: String {
+    case preparing   // 折叠事务已写入 durable recovery intent，但真实窗口尚未完成隐藏
     case folded
     case restoring
     case cleaned
@@ -1445,7 +1443,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSMenuDelegate {
     var focusRejoinStackFrames: [CGWindowID: NSRect] = [:]
     var focusRejoinEntries: [CGWindowID: FocusSessionEntry] = [:]
     var focusSession: FocusSession?
-    private var accessibilityActionTargets: [CGWindowID: ShadedAccessibilityActionTarget] = [:]
+    var accessibilityActionTargets: [CGWindowID: ShadedAccessibilityActionTarget] = [:]   // FoldExit/ShadeStrip 扩展跨文件访问
     var isProgrammaticOverlayArrangement = false
     var clampingApps: Set<pid_t> = []         // 已知会钳制位置的 app → 直接最小化
     var clampingBundleIDs: Set<String> = Set(UserDefaults.standard.stringArray(forKey: clampingBundleIDsDefaultsKey) ?? [])
@@ -1927,22 +1925,6 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSMenuDelegate {
     }
 
 
-    // 扫描 journal 中记录的停车窗口，产出待写回动作（不在这里写回；写回统一在
-    // 主线程执行，见 rescueOffscreenWindows）。SLS alpha 恢复是纯 WindowServer
-    // 调用、无 UI 依赖，可直接在后台执行。
-
-    // 主线程专用：清掉已救援的 journal 条目。写回放在主线程执行，避免和 shade
-    // 的 journal 写入（record/update/clear）在后台扫描线程上竞争丢条目。
-
-    // 广域兜底扫描：候选探测用一次 WindowServer 查询，而不是逐 app 同步 AX 枚举。
-    // CGWindowList 与目标 app 是否响应无关；旧的逐 app kAXWindowsAttribute 扫描
-    // 会让每个慢 app 吃满 2s AX 超时，实测把主线程一次性拖住 57s（启动、reconcile
-    // 空闲重试、屏幕参数变化都会走到这里——正是"总是卡住"的主根因）。
-    // 只对真的有窗口停在 WindowShade 停车点的 app 做定向 AX 解析；正常情况下候选为零。
-    // 停车点见 axOffscreenHide：主点 (-32000,-32000)，备选 (-12000, y)/(x, -12000)/
-    // (-12000,-12000)。判据必须覆盖全部停车点：任一轴超出 -11000 即候选；
-    // AX 阶段再加"确实不可见"约束，避免误动极端多显示器排列下的真实窗口。
-
     @objc func toggleMinimizeEffect(_ sender: NSMenuItem) {
         let enabling = !scaleMinimizeActive
         if enabling {
@@ -1990,55 +1972,11 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSMenuDelegate {
     // 的最前真实窗口作为替代目标。
 
 
-@objc func focusCurrentAppAction() {
+    @objc func focusCurrentAppAction() {
         focusCurrentAppCycle()
     }
 
-
-
-
-
-    // MARK: 折叠
-
-
-    @available(macOS 14.0, *)
-
-    // withTaskGroup 的"组作用域退出前隐式等待所有子任务完成"会让超时形同虚设：
-    // ShareableContentCache 内部的 `await task.value` 对取消完全免疫，cancelAll()
-    // 只是打个标记，慢的那个子任务仍会跑到自然完成——枚举越慢，超时越等不到，
-    // 恰好在这个超时本该拯救的慢机器场景下失效。改用 continuation 竞速：
-    // 截图任务超时后转为无结构的后台任务继续跑完（结果丢弃，顺带把
-    // ShareableContentCache 暖好，供下一次尝试直接命中），不阻塞本次调用返回。
-    @available(macOS 14.0, *)
-
-
-    @discardableResult
-
-    @discardableResult
-
-    // 撤掉折叠条但不还原窗口（关闭/最小化后用）
-
-
-
-
-
-
-    @discardableResult
-
-    @discardableResult
-
-    @discardableResult
-
-
-
-
-    // 点折叠条上的交通灯 → 转发到真窗口
-
-    // Classic 模式的自绘控件：视觉是 Stickies-like，动作仍作用在真实窗口上。
-
-
-
-@objc func unshadeFromMenu(_ sender: NSMenuItem) {
+    @objc func unshadeFromMenu(_ sender: NSMenuItem) {
         guard let n = sender.representedObject as? NSNumber else { return }
         unshade(CGWindowID(n.uint32Value))
     }
@@ -2084,23 +2022,5 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSMenuDelegate {
         CGEvent.tapEnable(tap: tap, enable: true)
         return true
     }
-
-    // 返回 true = 这次双击我们处理了，应当吞掉，阻止系统默认动作。
-
-
-
-
-
-
-
-    // 三击补回系统「双击标题栏」动作。第二下已被 WindowShade 吞掉折叠，
-    // 所以第三下需要先恢复真实窗口，再执行系统偏好的缩放/最小化。
-
-
-
-
-
-
-
 
 }
