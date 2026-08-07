@@ -48,7 +48,6 @@ private final class PinnedPreviewSession {
     var lastKnownFrame: NSRect
     var isInteracting = false
     var isDucked = false
-    var watchdog: Timer?
     var globalMouseMonitor: Any?
     var localMouseMonitor: Any?
     var pendingExit: DispatchWorkItem?
@@ -91,8 +90,6 @@ private final class PinnedPreviewSession {
     }
 
     func invalidate() {
-        watchdog?.invalidate()
-        watchdog = nil
         pendingExit?.cancel()
         pendingExit = nil
         if let globalMouseMonitor {
@@ -148,10 +145,18 @@ final class PinnedPreviewController {
     // AX 同步调用可被忙 app 阻塞（超时 2s/次）；交接管线全部走这条串行队列，
     // 主线程只做面板状态切换。
     private let axWorkQueue = DispatchQueue(label: "WindowShade.pin-ax", qos: .userInteractive)
+    // 共享 watchdog：一次 tick 遍历所有 session。每路一个 0.2s Timer 会让
+    // N 个置顶窗口线性增加 Timer 唤醒、WindowServer 查询与 Space 检查；
+    // 合并成单个 tick 后每 0.2s 只醒来一次。
+    private var watchdogTimer: Timer?
     private var pointerDuckingTimer: Timer?
     private var lastPointerDuckingID: CGWindowID?
     private var lockedDuckingID: CGWindowID?
     private var activePreviewID: CGWindowID?
+    // unexpected stream stop 的有限重试：最多 3 次、指数退避；源窗口关闭时
+    // 直接结束会话，绝不无限重启。
+    private var unexpectedStopRetries: [CGWindowID: Int] = [:]
+    private var unexpectedStopRetryWorkItems: [CGWindowID: DispatchWorkItem] = [:]
     // 老板键：临时挂起全部置顶预览（隐藏面板 + 停止 capture），再按一次原样恢复。
     private var isSuspendedAll = false
     private let excludedBundleIDs: Set<String> = [
@@ -365,8 +370,6 @@ final class PinnedPreviewController {
             endInteraction(id: id, sourceFrame: currentSourceFrame(id: id) ?? session.panel.frame)
         }
         session.isSuspended = true
-        session.watchdog?.invalidate()
-        session.watchdog = nil
         session.capture.stop()
         session.panel.ignoresMouseEvents = true
         session.panel.orderOut(nil)
@@ -404,7 +407,7 @@ final class PinnedPreviewController {
         session.panel.ignoresMouseEvents = false
         session.panel.orderFrontRegardless()
         enforcePanelSpaceInvariant(session, reason: "resume")
-        startWatchdog(for: session)
+        ensureWatchdogStarted()
         Task { @MainActor [weak self] in
             guard let self else { return }
             do {
@@ -594,6 +597,7 @@ final class PinnedPreviewController {
     private func installPreview(id: CGWindowID, pid: pid_t, bundleID: String,
                                 appName: String, title: String, axWindow: AXUIElement,
                                 scWindow: SCWindow, display: SCDisplay?) {
+        dispatchPrecondition(condition: .onQueue(.main))
         guard sessions[id] == nil else { return }
         guard let frame = currentSourceFrame(id: id) ?? Optional(cocoaFrame(fromWindowServerBounds: scWindow.frame)) else {
             notice("无法读取窗口位置", "pin-preview: failed reason=no-frame id=\(id)")
@@ -622,10 +626,17 @@ final class PinnedPreviewController {
         contentView.onMouseDown = { [weak self] event in
             self?.passThroughInitialClick(id: id, event: event)
         }
+        // 流被系统异常终止时（源窗口变化/系统过渡等），走"刷新 SCWindow →
+        // 有限次数退避重启 → 仍失败则结束会话"的路径，而不是让面板停在最后一帧。
+        capture.onUnexpectedStop = { [weak self] error in
+            DispatchQueue.main.async {
+                self?.handleUnexpectedStreamStop(id: id, error: error)
+            }
+        }
         sessions[id] = session
         panel.orderFrontRegardless()
         enforcePanelSpaceInvariant(session, reason: "install")
-        startWatchdog(for: session)
+        ensureWatchdogStarted()
         updatePointerDuckingTimer()
         sessionsDidChange()
         wlog("pin-preview: start id=\(id) app=\(appName) title=\(title) frame=\(format(frame))")
@@ -641,13 +652,26 @@ final class PinnedPreviewController {
         }
     }
 
-    private func startWatchdog(for session: PinnedPreviewSession) {
-        let timer = Timer.scheduledTimer(withTimeInterval: 0.2, repeats: true) { [weak self, weak session] _ in
-            guard let session else { return }
-            self?.watchdogTick(id: session.windowID, reason: "watchdog")
+    private func ensureWatchdogStarted() {
+        guard watchdogTimer == nil else { return }
+        let timer = Timer.scheduledTimer(withTimeInterval: 0.2, repeats: true) { [weak self] _ in
+            self?.watchdogTickAll()
         }
         timer.tolerance = 0.05
-        session.watchdog = timer
+        watchdogTimer = timer
+    }
+
+    // 共享 watchdog 的单个 tick：一次遍历所有 session。
+    private func watchdogTickAll() {
+        for id in Array(sessions.keys) {
+            watchdogTick(id: id, reason: "watchdog")
+        }
+    }
+
+    private func maybeStopWatchdog() {
+        guard sessions.isEmpty else { return }
+        watchdogTimer?.invalidate()
+        watchdogTimer = nil
     }
 
     private func watchdogTick(id: CGWindowID, reason: String) {
@@ -1076,7 +1100,10 @@ final class PinnedPreviewController {
     }
 
     private func stopPreview(id: CGWindowID, reason: String) {
+        dispatchPrecondition(condition: .onQueue(.main))
         guard let session = sessions.removeValue(forKey: id) else { return }
+        unexpectedStopRetryWorkItems.removeValue(forKey: id)?.cancel()
+        unexpectedStopRetries.removeValue(forKey: id)
         session.invalidate()
         session.capture.stop()
         session.panel.close()
@@ -1085,8 +1112,66 @@ final class PinnedPreviewController {
         if lastPointerDuckingID == id { lastPointerDuckingID = nil }
         restoreDuckedPreviews(reason: "stop-\(id)")
         updatePointerDuckingTimer()
+        maybeStopWatchdog()
         sessionsDidChange()
         wlog("pin-preview: stop id=\(id) reason=\(reason)")
+    }
+
+    // ScreenCaptureKit 异常终止流（didStopWithError）后的恢复路径：
+    // 1) 刷新一次 SCWindow（源窗口可能已变化/关闭）
+    // 2) 有限次数（最多 3 次）退避重启（0.5s / 1.5s / 3.0s）
+    // 3) 仍失败 → 正常结束该 preview session，绝不无限重启
+    // 源窗口真的关闭时（content 里找不到 windowID）快速结束会话。
+    private func handleUnexpectedStreamStop(id: CGWindowID, error: Error) {
+        guard let session = sessions[id], !session.isSuspended else {
+            unexpectedStopRetries.removeValue(forKey: id)
+            return
+        }
+        // 已有重试在途（退避窗口内又收到一次 didStopWithError）不重复调度。
+        guard unexpectedStopRetryWorkItems[id] == nil else { return }
+        let attempt = unexpectedStopRetries[id] ?? 0
+        guard attempt < 3 else {
+            wlog("pin-preview: unexpected stop exceeded retries id=\(id) err=\(error.localizedDescription)")
+            stopPreview(id: id, reason: "unexpected-stop-exhausted")
+            return
+        }
+        unexpectedStopRetries[id] = attempt + 1
+        let delay = [0.5, 1.5, 3.0][min(attempt, 2)]
+        let work = DispatchWorkItem { [weak self] in
+            guard let self else { return }
+            self.unexpectedStopRetryWorkItems.removeValue(forKey: id)
+            self.retryUnexpectedStopStream(id: id)
+        }
+        unexpectedStopRetryWorkItems[id] = work
+        wlog("pin-preview: unexpected stop → retry id=\(id) attempt=\(attempt + 1) delay=\(delay) err=\(error.localizedDescription)")
+        DispatchQueue.main.asyncAfter(deadline: .now() + delay, execute: work)
+    }
+
+    private func retryUnexpectedStopStream(id: CGWindowID) {
+        guard let session = sessions[id], !session.isSuspended else {
+            unexpectedStopRetries.removeValue(forKey: id)
+            return
+        }
+        Task { @MainActor [weak self] in
+            guard let self, let session = self.sessions[id], !session.isSuspended else { return }
+            do {
+                let content = try await ShareableContentLoader.current()
+                guard let freshWindow = content.windows.first(where: { $0.windowID == id }) else {
+                    wlog("pin-preview: source window closed id=\(id)")
+                    self.stopPreview(id: id, reason: "source-closed")
+                    return
+                }
+                session.scWindow = freshWindow
+                session.display = Self.bestDisplay(for: freshWindow, displays: content.displays)
+                try await session.capture.restart(window: freshWindow, display: session.display,
+                                                  width: session.lastKnownFrame.width,
+                                                  height: session.lastKnownFrame.height)
+                self.unexpectedStopRetries.removeValue(forKey: id)
+                wlog("pin-preview: capture restarted after unexpected stop id=\(id)")
+            } catch {
+                self.handleUnexpectedStreamStop(id: id, error: error)
+            }
+        }
     }
 
     private func currentSourceFrame(id: CGWindowID) -> NSRect? {
