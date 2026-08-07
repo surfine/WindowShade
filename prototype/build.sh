@@ -35,6 +35,9 @@ env CLANG_MODULE_CACHE_PATH="$MODULE_CACHE" \
   Compatibility/WindowPolicy.swift \
   Compatibility/Policies.swift \
   Core/WindowState.swift \
+  Capture/WindowSnapshotCache.swift \
+  Overlay/ShadeStripPool.swift \
+  Window/WindowRegistry.swift \
   -framework Cocoa -framework Carbon -framework ApplicationServices \
   -framework ScreenCaptureKit -framework QuartzCore -framework CoreText \
   -framework AVFoundation \
