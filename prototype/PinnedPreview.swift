@@ -740,6 +740,8 @@ final class PinnedPreviewController {
         session.pendingExit?.cancel()
         session.pendingExit = nil
         session.isInteracting = true
+        // 交互期全速投递采样帧（拖拽/动画需要 30fps），结束交互后自动降回 15fps。
+        session.capture.isInteractive = true
         session.interactionEpoch &+= 1
         let epoch = session.interactionEpoch
         activePreviewID = id
@@ -765,36 +767,42 @@ final class PinnedPreviewController {
             return live.isInteracting && live.interactionEpoch == epoch
         }
 
-        axWorkQueue.async { [weak self] in
-            guard let self else { return }
-            let proceed = DispatchQueue.main.sync { stillValid() }
-            guard proceed else { return }
-            logIfSlow("pin-interact ax-geometry id=\(id)") {
-                _ = setAXSize(axWindow, frame.size)
-                setAXPosition(axWindow, targetPosition)
-                focusAXWindow(axWindow, pid: pid)
-            }
-            DispatchQueue.main.async {
-                guard stillValid() else { return }
-                if NSWorkspace.shared.frontmostApplication?.processIdentifier != pid {
-                    NSRunningApplication(processIdentifier: pid)?.activate()
+        // 每一跳都先异步回到主线程校验，再回 AX 队列做阻塞 IPC：不再用
+        // main.sync 从 AX 队列同步等主线程——主线程忙时不会反过来卡住 AX 管线，
+        // 也杜绝「主线程等待 AX 队列」与「AX 队列等待主线程」互等的死锁引信。
+        // 多一跳的延迟在毫秒级，且交互接管本来就是用户可感的低频动作。
+        DispatchQueue.main.async { [weak self] in
+            guard let self, stillValid() else { return }
+            self.axWorkQueue.async { [weak self] in
+                guard let self else { return }
+                logIfSlow("pin-interact ax-geometry id=\(id)") {
+                    _ = setAXSize(axWindow, frame.size)
+                    setAXPosition(axWindow, targetPosition)
+                    focusAXWindow(axWindow, pid: pid)
                 }
-                self.axWorkQueue.async {
-                    logIfSlow("pin-interact ax-raise id=\(id)") {
-                        raiseAXWindow(axWindow)
+                DispatchQueue.main.async { [weak self] in
+                    guard let self, stillValid() else { return }
+                    if NSWorkspace.shared.frontmostApplication?.processIdentifier != pid {
+                        NSRunningApplication(processIdentifier: pid)?.activate()
                     }
-                    DispatchQueue.main.async {
-                        guard stillValid(), let session = self.sessions[id] else { return }
-                        // 真实窗口就位后再让面板淡出并放行鼠标，把交互交给它。
-                        session.capture.stop()
-                        session.panel.alphaValue = 0.02
-                        session.panel.hasShadow = false
-                        session.panel.ignoresMouseEvents = true
-                        self.installMouseMonitorsIfNeeded(for: session)
-                        // 面板已穿透，补发交接期间暂存的点击。
-                        if let pending = session.pendingClick {
-                            session.pendingClick = nil
-                            Self.postSyntheticClick(at: pending.point, clickCount: pending.count)
+                    self.axWorkQueue.async { [weak self] in
+                        guard let self else { return }
+                        logIfSlow("pin-interact ax-raise id=\(id)") {
+                            raiseAXWindow(axWindow)
+                        }
+                        DispatchQueue.main.async { [weak self] in
+                            guard let self, stillValid(), let session = self.sessions[id] else { return }
+                            // 真实窗口就位后再让面板淡出并放行鼠标，把交互交给它。
+                            session.capture.stop()
+                            session.panel.alphaValue = 0.02
+                            session.panel.hasShadow = false
+                            session.panel.ignoresMouseEvents = true
+                            self.installMouseMonitorsIfNeeded(for: session)
+                            // 面板已穿透，补发交接期间暂存的点击。
+                            if let pending = session.pendingClick {
+                                session.pendingClick = nil
+                                Self.postSyntheticClick(at: pending.point, clickCount: pending.count)
+                            }
                         }
                     }
                 }
@@ -863,6 +871,7 @@ final class PinnedPreviewController {
         guard let session = sessions[id], session.isInteracting else { return }
         let wasActive = activePreviewID == id
         session.isInteracting = false
+        session.capture.isInteractive = false
         // 令在途的交接管线（axWorkQueue 上的跳板）过期中止，丢弃未补发的点击。
         session.interactionEpoch &+= 1
         session.pendingClick = nil

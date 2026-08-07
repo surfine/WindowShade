@@ -1,17 +1,24 @@
 .DS_Store
-
 .build/
 .swift-module-cache/
-*.swiftmodule
-*.swiftdoc
-*.swiftsourceinfo
+.claude/
 
-prototype/WindowShade.app/
+# Local media / generated analysis assets
+*.mp4
+/assets/
+
+# Build outputs and packaged app bundles
 prototype/windowshade
+prototype/windowshade-b
+prototype/*.app/
 prototype/*.zip
-prototype/*.dmg
-dist/
 
+# Local reference clones, agent scratch, and heavy media sub-projects
+/Topit/
+/.ai-bridge/
+/video/
+
+# Local temporary files
 *.swp
 *.swo
 *~

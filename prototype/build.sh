@@ -1,30 +1,29 @@
 #!/bin/bash
-# Build a local WindowShade.app bundle.
-#
-# By default this uses local signing so the app can run locally.
-# For a stable local TCC identity, pass your own signing certificate:
-#   CODESIGN_IDENTITY="Apple Development: Your Name (TEAMID)" ./build.sh
-
+# 编译 WindowShade 主实现，替换现有 app bundle 里的 Mach-O，并用稳定开发者证书签名。
 set -euo pipefail
 cd "$(dirname "$0")"
 
 APP="WindowShade.app"
 BIN="$APP/Contents/MacOS/WindowShade"
-RES="$APP/Contents/Resources"
 TMP_BIN="windowshade"
-MODULE_CACHE="$(cd .. && pwd -P)/.build/module-cache-public"
-IDENTITY="${CODESIGN_IDENTITY:--}"
+IDENTITY="Apple Development: openkams@gmail.com (G3TN2MBQ2Q)"
+MODULE_CACHE="$(cd .. && pwd)/.build/module-cache"
 
-mkdir -p "$APP/Contents/MacOS" "$RES" "$MODULE_CACHE"
-cp Info.plist "$APP/Contents/Info.plist"
-if [ -f "../assets/app-icon/WindowShade.icns" ]; then
-  cp "../assets/app-icon/WindowShade.icns" "$RES/WindowShade.icns"
+if ! security find-identity -p codesigning 2>/dev/null | grep -q "$IDENTITY"; then
+  echo "ERROR: 未找到 ${IDENTITY}；拒绝 ad-hoc 签名，避免重置 TCC 授权。" >&2
+  exit 1
 fi
 
-echo "==> Stopping running WindowShade, if any"
+if [ ! -d "$APP/Contents/MacOS" ]; then
+  echo "ERROR: 未找到现有 ${APP} bundle；拒绝重建 bundle，避免丢失手工资源或改变 TCC 身份。" >&2
+  exit 1
+fi
+
+echo "==> 停止正在运行的 WindowShade（避免运行中替换 Mach-O 触发 TCC 混乱）"
 pkill -x WindowShade 2>/dev/null || true
 
-echo "==> Compiling"
+echo "==> 编译"
+mkdir -p "$MODULE_CACHE"
 env CLANG_MODULE_CACHE_PATH="$MODULE_CACHE" \
   swiftc -O -o "$TMP_BIN" \
   main.swift \
@@ -37,11 +36,13 @@ env CLANG_MODULE_CACHE_PATH="$MODULE_CACHE" \
   -framework AVFoundation \
   -framework ServiceManagement
 
+echo "==> 替换 Mach-O（保留 bundle、Info.plist、Resources）"
 cp "$TMP_BIN" "$BIN"
 
-echo "==> Signing with ${IDENTITY}"
+echo "==> 用 Apple Development 证书签名（TCC 授权可跨重编保留）"
 codesign --force -s "$IDENTITY" "$APP"
 codesign --verify --deep --strict "$APP"
 touch "$APP"
 
-echo "==> Built $(pwd)/$APP"
+echo "==> 完成：$(pwd)/$APP"
+codesign -dv "$APP" 2>&1 | sed 's/^/    /'
