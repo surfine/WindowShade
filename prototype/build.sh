@@ -44,6 +44,7 @@ env CLANG_MODULE_CACHE_PATH="$MODULE_CACHE" \
   Recovery/Journal.swift \
   App/MenuBarController.swift \
   App/Reconcile.swift \
+  App/EventTap.swift \
   -framework Cocoa -framework Carbon -framework ApplicationServices \
   -framework ScreenCaptureKit -framework QuartzCore -framework CoreText \
   -framework AVFoundation \
