@@ -1437,19 +1437,19 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSMenuDelegate {
         let size: CGSize
     }
 
-    private var statusItem: NSStatusItem!
-    private var statusMenu: NSMenu!
+    var statusItem: NSStatusItem!
+    var statusMenu: NSMenu!
     private var hotKeyRefs: [EventHotKeyRef?] = []
     var shaded: [CGWindowID: ShadeState] = [:]
     private var overlayIDs: Set<CGWindowID> = []      // 我们自己的覆盖层，tap 里要跳过它们
-    private var arrangedOverlayFrames: [CGWindowID: NSRect] = [:]
+    var arrangedOverlayFrames: [CGWindowID: NSRect] = [:]
     private var focusSideStackFrames: [CGWindowID: NSRect] = [:]
     private var focusPulledOutOverlayIDs: Set<CGWindowID> = []
     private var focusPulledOutRestoreFrames: [CGWindowID: NSRect] = [:]
     private var focusPulledOutOriginalSizes: [CGWindowID: CGSize] = [:]
     private var focusRejoinStackFrames: [CGWindowID: NSRect] = [:]
     private var focusRejoinEntries: [CGWindowID: FocusSessionEntry] = [:]
-    private var focusSession: FocusSession?
+    var focusSession: FocusSession?
     private var accessibilityActionTargets: [CGWindowID: ShadedAccessibilityActionTarget] = [:]
     private var isProgrammaticOverlayArrangement = false
     private var clampingApps: Set<pid_t> = []         // 已知会钳制位置的 app → 直接最小化
@@ -1488,8 +1488,8 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSMenuDelegate {
     private var peekHoverID: CGWindowID?
     private var pendingSpaceReturns: [CGWindowID: PendingSpaceReturn] = [:]
     // 菜单悬停的「意图」追踪：同上，键于 highlight 变化而非 overlay 位置。
-    private var menuPreviewHoverID: CGWindowID?
-    private var menuPreviewAnchor: NSRect?
+    var menuPreviewHoverID: CGWindowID?
+    var menuPreviewAnchor: NSRect?
     private var shadeOperationIDs: Set<CGWindowID> = []
     // 显式窗口状态机：operationStates[id] 缺失即 .normal。
     // capturing/failed 为操作期瞬态，folded/restoring 为会话期状态。
@@ -1499,10 +1499,10 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSMenuDelegate {
     private var statusNoticeWorkItem: DispatchWorkItem?
     private var preferencesWindow: NSWindow?
     private var onboardingWindow: NSWindow?
-    private var menuRebuildWorkItem: DispatchWorkItem?
-    private var suppressMenuRebuilds = false
-    private var pendingMenuRebuild = false
-    private var isUpdatingMenuFromDelegate = false
+    var menuRebuildWorkItem: DispatchWorkItem?
+    var suppressMenuRebuilds = false
+    var pendingMenuRebuild = false
+    var isUpdatingMenuFromDelegate = false
     private var pinnedPreviewFocusMonitor: Any?
     private var pinnedPreviewTargetRefreshWorkItem: DispatchWorkItem?
     private var spaceRefreshWorkItem: DispatchWorkItem?
@@ -1527,12 +1527,12 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSMenuDelegate {
     private var unfoldSoundName: String = {
         UserDefaults.standard.string(forKey: shadeUnfoldSoundDefaultsKey) ?? shadeDefaultUnfoldSound
     }()
-    private var appearanceMode: ShadeAppearanceMode = {
+    var appearanceMode: ShadeAppearanceMode = {
         let raw = UserDefaults.standard.string(forKey: shadeAppearanceModeDefaultsKey) ?? ""
         let mode = ShadeAppearanceMode(rawValue: raw) ?? .nativeScreenshot
         return mode == .proxyTitleBar ? .proxyTitleBar : .nativeScreenshot
     }()
-    private var titlebarDoubleClickEnabled: Bool = {
+    var titlebarDoubleClickEnabled: Bool = {
         if UserDefaults.standard.object(forKey: shadeTitlebarDoubleClickDefaultsKey) == nil { return true }
         return UserDefaults.standard.bool(forKey: shadeTitlebarDoubleClickDefaultsKey)
     }()
@@ -1552,7 +1552,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSMenuDelegate {
                                                            capturePreview: false,
                                                            emitFoldFeedback: false,
                                                            rebuildMenuAfterInstall: false)
-    private lazy var pinnedPreviewController = PinnedPreviewController(
+    lazy var pinnedPreviewController = PinnedPreviewController(
         notice: { [weak self] message, log in
             self?.quietNotice(message, log: log)
         },
@@ -1629,160 +1629,14 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSMenuDelegate {
         defaults.set(2, forKey: shadeSoundMigrationVersionDefaultsKey)
     }
 
-    private func setupStatusItem() {
-        statusItem = NSStatusBar.system.statusItem(withLength: NSStatusItem.variableLength)
-        statusMenu = NSMenu()
-        statusMenu.delegate = self
-        statusItem.menu = statusMenu
-        statusItem.button?.image = makeStatusBarIcon()
-        statusItem.button?.imagePosition = .imageLeft
-        statusItem.button?.toolTip = "WindowShade"
-        rebuildMenu()
-    }
 
-    private func rebuildMenu() {
-        if suppressMenuRebuilds {
-            pendingMenuRebuild = true
-            return
-        }
-        // 这里绝不能解析当前 AX 窗口：菜单重建可能由点击、前台切换、会话变化
-        // 高频触发；目标解析在后台完成后仅在目标改变时安排下一次重建。
-        menuRebuildWorkItem?.cancel()
-        menuRebuildWorkItem = nil
-        statusItem.button?.image = makeStatusBarIcon()
-        statusItem.button?.imagePosition = .imageLeft
-        statusItem.button?.title = shaded.isEmpty ? "" : " \(shaded.count)"
-        statusItem.button?.toolTip = shaded.isEmpty ? "WindowShade" : "WindowShade: \(shaded.count) folded"
-        statusMenu.removeAllItems()
-        let toggle = NSMenuItem(title: foldToggleMenuTitle(), action: #selector(toggleAction), keyEquivalent: "c")
-        toggle.keyEquivalentModifierMask = [.control, .command]
-        statusMenu.addItem(toggle)
 
-        if appearanceMode == .proxyTitleBar {
-            let focus = NSMenuItem(title: focusMenuTitle(), action: #selector(focusCurrentAppAction), keyEquivalent: "0")
-            focus.keyEquivalentModifierMask = [.control, .command]
-            focus.isEnabled = AXIsProcessTrusted()
-            statusMenu.addItem(focus)
-        } else {
-            let arrangeTitle = hasArrangedOverlayFrames ? "恢复卷帘条原位" : "整理卷帘条"
-            let arrange = NSMenuItem(title: arrangeTitle, action: #selector(arrangeShadedWindows), keyEquivalent: "0")
-            arrange.keyEquivalentModifierMask = [.control, .command]
-            arrange.isEnabled = shaded.values.contains { $0.overlay != nil }
-            statusMenu.addItem(arrange)
-        }
 
-        let doubleClick = NSMenuItem(title: "双击标题栏以折叠", action: #selector(toggleTitlebarDoubleClick(_:)), keyEquivalent: "")
-        doubleClick.state = titlebarDoubleClickEnabled ? .on : .off
-        statusMenu.addItem(doubleClick)
 
-        statusMenu.addItem(.separator())
-        let pinnedPreview = NSMenuItem(title: pinnedPreviewMenuTitle(),
-                                       action: #selector(togglePinnedPreviewAction),
-                                       keyEquivalent: "p")
-        pinnedPreview.keyEquivalentModifierMask = [.control, .command]
-        pinnedPreview.isEnabled = AXIsProcessTrusted()
-            && hasScreenRecordingPermission()
-        statusMenu.addItem(pinnedPreview)
-        addPinnedPreviewMenuSection()
-
-        if !shaded.isEmpty {
-            statusMenu.addItem(.separator())
-            let header = NSMenuItem(title: "已折叠窗口（按快捷键展开）", action: nil, keyEquivalent: "")
-            header.isEnabled = false
-            statusMenu.addItem(header)
-            for (index, entry) in sortedShadedEntries().enumerated() {
-                let (id, state) = entry
-                let title = descriptiveDisplayTitle(appName: state.appName, windowTitle: state.title)
-                let key = index < 9 ? "\(index + 1)" : ""
-                let itemTitle = key.isEmpty ? title : "\(key)  \(title)"
-                let item = NSMenuItem(title: itemTitle, action: #selector(unshadeFromMenu(_:)), keyEquivalent: key)
-                item.keyEquivalentModifierMask = key.isEmpty ? [] : [.control, .command]
-                item.target = self
-                item.representedObject = NSNumber(value: id)
-                statusMenu.addItem(item)
-            }
-            // 与「全部取消置顶」对称：仅在有已折叠窗口时才显示「全部展开」。
-            statusMenu.addItem(.separator())
-            let restore = NSMenuItem(title: "全部展开", action: #selector(restoreAll), keyEquivalent: "")
-            statusMenu.addItem(restore)
-        } else {
-            statusMenu.addItem(.separator())
-            let empty = NSMenuItem(title: "没有已折叠窗口", action: nil, keyEquivalent: "")
-            empty.isEnabled = false
-            statusMenu.addItem(empty)
-        }
-
-        statusMenu.addItem(.separator())
-        statusMenu.addItem(withTitle: "欢迎与使用说明...", action: #selector(showWelcomeGuide), keyEquivalent: "")
-        statusMenu.addItem(withTitle: "偏好设置...", action: #selector(showPreferences), keyEquivalent: ",")
-        statusMenu.addItem(withTitle: "退出 WindowShade", action: #selector(quit), keyEquivalent: "q")
-        updateReconcileTimer()
-    }
-
-    private func addPinnedPreviewMenuSection() {
-        statusMenu.addItem(.separator())
-
-        let entries = pinnedPreviewController.menuEntries()
-        guard !entries.isEmpty else {
-            let empty = NSMenuItem(title: "没有已置顶窗口", action: nil, keyEquivalent: "")
-            empty.isEnabled = false
-            statusMenu.addItem(empty)
-            return
-        }
-
-        let header = NSMenuItem(title: "已置顶窗口（点击取消）", action: nil, keyEquivalent: "")
-        header.isEnabled = false
-        statusMenu.addItem(header)
-
-        for (index, entry) in entries.enumerated() {
-            let item = NSMenuItem(title: menuTitleForPinnedPreview(entry, index: index),
-                                  action: #selector(cancelPinnedPreviewMenuItem(_:)),
-                                  keyEquivalent: "")
-            item.target = self
-            item.representedObject = NSNumber(value: entry.id)
-            statusMenu.addItem(item)
-        }
-
-        statusMenu.addItem(.separator())
-        // 老板键：暂时隐藏/恢复全部置顶预览（连带停止/恢复 capture），与下面
-        // 「全部取消置顶」不同——不清空会话，按一次就能原样恢复。
-        let suspendAll = NSMenuItem(title: pinnedPreviewController.suspendAllMenuTitle(),
-                                    action: #selector(toggleSuspendPinnedPreviewsAction),
-                                    keyEquivalent: "")
-        suspendAll.target = self
-        statusMenu.addItem(suspendAll)
-
-        let stopPinnedPreviews = NSMenuItem(title: "全部取消置顶",
-                                            action: #selector(stopAllPinnedPreviewsAction),
-                                            keyEquivalent: "")
-        stopPinnedPreviews.target = self
-        statusMenu.addItem(stopPinnedPreviews)
-    }
-
-    private func menuTitleForPinnedPreview(_ entry: PinnedPreviewMenuEntry, index: Int) -> String {
-        let raw = entry.displayTitle
-        let maxCount = 42
-        let title = raw.count > maxCount ? String(raw.prefix(maxCount - 1)) + "…" : raw
-        return "\(index + 1)  \(title)"
-    }
-
-    private func scheduleMenuRebuild(delay: TimeInterval = 0.04) {
-        if suppressMenuRebuilds {
-            pendingMenuRebuild = true
-            return
-        }
-        menuRebuildWorkItem?.cancel()
-        let work = DispatchWorkItem { [weak self] in
-            self?.menuRebuildWorkItem = nil
-            self?.rebuildMenu()
-        }
-        menuRebuildWorkItem = work
-        DispatchQueue.main.asyncAfter(deadline: .now() + delay, execute: work)
-    }
 
     // 目标解析是后台单飞 AX 工作；只有实际 target 改变才重建菜单。这样一次点击
     // 不会再形成“刷新 → rebuild → 再刷新”的同步 AX 放大链路。
-    private func refreshPinnedPreviewTarget(reason: String) {
+    func refreshPinnedPreviewTarget(reason: String) {
         pinnedPreviewController.refreshCurrentTarget(reason: reason) { [weak self] _, didChange in
             guard didChange else { return }
             self?.scheduleMenuRebuild()
@@ -1819,78 +1673,13 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSMenuDelegate {
         DispatchQueue.main.asyncAfter(deadline: .now() + 0.25, execute: work)
     }
 
-    private func withMenuRebuildSuppressed(_ body: () -> Void) {
-        let wasSuppressed = suppressMenuRebuilds
-        suppressMenuRebuilds = true
-        body()
-        suppressMenuRebuilds = wasSuppressed
-        if !suppressMenuRebuilds, pendingMenuRebuild {
-            pendingMenuRebuild = false
-            rebuildMenu()
-        }
-    }
 
-    private func setAppearanceMode(_ mode: ShadeAppearanceMode) {
-        appearanceMode = mode == .proxyTitleBar ? .proxyTitleBar : .nativeScreenshot
-        UserDefaults.standard.set(appearanceMode.rawValue, forKey: shadeAppearanceModeDefaultsKey)
-        rebuildMenu()
-        refreshPreferencesWindowIfOpen()
-    }
 
-    func menuDidClose(_ menu: NSMenu) {
-        hideMenuHoverPreview()
-        menuPreviewHoverID = nil
-        menuPreviewAnchor = nil
-    }
 
-    func menuNeedsUpdate(_ menu: NSMenu) {
-        guard menu === statusMenu, !isUpdatingMenuFromDelegate else { return }
-        isUpdatingMenuFromDelegate = true
-        defer { isUpdatingMenuFromDelegate = false }
-        // 先用最近一次快照即时展示菜单，再后台校正下一次菜单内容；不能为一个
-        // 动态标题把菜单打开和系统鼠标输入阻塞在目标 app 的 AX timeout 上。
-        refreshPinnedPreviewTarget(reason: "menu-needs-update")
-        rebuildMenu()
-    }
 
-    func menu(_ menu: NSMenu, willHighlight item: NSMenuItem?) {
-        guard menu === statusMenu else { return }
-        hideMenuHoverPreview()
-        menuPreviewHoverID = nil
-        menuPreviewAnchor = nil
-        guard let item,
-              let n = item.representedObject as? NSNumber else { return }
-        let mouse = NSEvent.mouseLocation
-        let id = CGWindowID(n.uint32Value)
-        let anchor = estimatedStatusMenuItemAnchor(near: mouse)
-        menuPreviewHoverID = id
-        menuPreviewAnchor = anchor
-        showMenuHoverPreview(id, anchor: anchor)
-    }
 
-    private func sortedShadedEntries() -> [(CGWindowID, ShadeState)] {
-        shaded.sorted {
-            if $0.value.appName != $1.value.appName { return $0.value.appName < $1.value.appName }
-            let aTitle = descriptiveDisplayTitle(appName: $0.value.appName, windowTitle: $0.value.title)
-            let bTitle = descriptiveDisplayTitle(appName: $1.value.appName, windowTitle: $1.value.title)
-            if aTitle != bTitle { return aTitle < bTitle }
-            return $0.key < $1.key
-        }
-    }
 
-    private func focusMenuTitle() -> String {
-        guard let session = focusSession else { return "专注当前 App" }
-        switch session.stage {
-        case .arrangedAway:
-            return "专注：显示卷帘条原位"
-        case .barsRestoredHome:
-            return "专注：恢复专注前状态"
-        }
-    }
 
-    private var hasArrangedOverlayFrames: Bool {
-        arrangedOverlayFrames.keys.contains { shaded[$0]?.overlay != nil }
-    }
 
     private let focusMotionDuration: TimeInterval = 0.065
 
@@ -2268,16 +2057,8 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSMenuDelegate {
     // 动态翻转折叠项标题，与 ⌃⌘C 实际行为一致。这里绝不能为菜单文案同步读
     // focusedWindow：忙 app 的 AX timeout 会把每一次菜单重建卡住。使用置顶预览
     // 控制器维护的后台 target 快照；快照尚未就绪时宁可显示保守的“折叠”。
-    private func foldToggleMenuTitle() -> String {
-        guard !shaded.isEmpty else { return "折叠当前窗口" }
-        if currentShadedOverlayID() != nil { return "展开当前窗口" }
-        if let id = pinnedPreviewController.currentTargetWindowID, shaded[id] != nil {
-            return "展开当前窗口"
-        }
-        return "折叠当前窗口"
-    }
 
-    private func currentShadedOverlayID() -> CGWindowID? {
+    func currentShadedOverlayID() -> CGWindowID? {
         let activeWindows = [NSApp.keyWindow, NSApp.mainWindow].compactMap { $0 }
         for window in activeWindows {
             if let entry = shaded.first(where: { $0.value.overlay === window }) {
@@ -2294,33 +2075,30 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSMenuDelegate {
         return hits.max { $0.1.level.rawValue < $1.1.level.rawValue }?.0
     }
 
-    @objc private func toggleTitlebarDoubleClick(_ sender: NSMenuItem) {
+@objc func toggleTitlebarDoubleClick(_ sender: NSMenuItem) {
         titlebarDoubleClickEnabled.toggle()
         UserDefaults.standard.set(titlebarDoubleClickEnabled, forKey: shadeTitlebarDoubleClickDefaultsKey)
         rebuildMenu()
         refreshPreferencesWindowIfOpen()
     }
 
-    private func pinnedPreviewMenuTitle() -> String {
-        pinnedPreviewController.currentTargetMenuTitle()
-    }
 
-    @objc private func togglePinnedPreviewAction() {
+@objc func togglePinnedPreviewAction() {
         pinnedPreviewController.pinCurrentTargetPreview()
     }
 
-    @objc private func cancelPinnedPreviewMenuItem(_ sender: NSMenuItem) {
+@objc func cancelPinnedPreviewMenuItem(_ sender: NSMenuItem) {
         guard let number = sender.representedObject as? NSNumber else { return }
         pinnedPreviewController.stopPreviewFromMenu(id: CGWindowID(number.uint32Value))
         rebuildMenu()
     }
 
-    @objc private func stopAllPinnedPreviewsAction() {
+@objc func stopAllPinnedPreviewsAction() {
         pinnedPreviewController.stopAllPreviews(reason: "menu-stop-all")
         rebuildMenu()
     }
 
-    @objc private func toggleSuspendPinnedPreviewsAction() {
+@objc func toggleSuspendPinnedPreviewsAction() {
         pinnedPreviewController.toggleSuspendAll()
         rebuildMenu()
     }
@@ -2345,7 +2123,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSMenuDelegate {
         playShadeSound(soundName(defaultsKey: shadeUnfoldSoundDefaultsKey, fallback: shadeDefaultUnfoldSound))
     }
 
-    private func refreshPreferencesWindowIfOpen() {
+    func refreshPreferencesWindowIfOpen() {
         guard let window = preferencesWindow, window.isVisible else { return }
         window.contentView = makePreferencesContentView()
     }
@@ -2364,7 +2142,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSMenuDelegate {
         DispatchQueue.main.asyncAfter(deadline: .now() + 1.4, execute: work)
     }
 
-    @objc private func showPreferences() {
+@objc func showPreferences() {
         if let window = preferencesWindow {
             window.contentView = makePreferencesContentView()
             window.makeKeyAndOrderFront(nil)
@@ -2667,7 +2445,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSMenuDelegate {
         openScreenRecordingPrivacySettings()
     }
 
-    @objc private func showWelcomeGuide() {
+@objc func showWelcomeGuide() {
         showPermissionOnboardingIfNeeded(force: true)
     }
 
@@ -3404,7 +3182,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSMenuDelegate {
         return NSSize(width: targetWidth, height: thumbnailHeight + 20)
     }
 
-    private func statusMenuWindowFrame(near mouse: NSPoint) -> NSRect? {
+    func statusMenuWindowFrame(near mouse: NSPoint) -> NSRect? {
         let selfPID = ProcessInfo.processInfo.processIdentifier
         let windows = CGWindowListCopyWindowInfo([.optionOnScreenOnly], kCGNullWindowID) as? [[String: Any]] ?? []
         let candidates = windows.compactMap { info -> NSRect? in
@@ -3419,7 +3197,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSMenuDelegate {
         return candidates.min { ($0.width * $0.height) < ($1.width * $1.height) }
     }
 
-    private func estimatedStatusMenuItemAnchor(near mouse: NSPoint) -> NSRect {
+    func estimatedStatusMenuItemAnchor(near mouse: NSPoint) -> NSRect {
         let rawVisible = visibleFrame(for: NSRect(x: mouse.x, y: mouse.y, width: 1, height: 1))
         let visible = rawVisible.insetBy(dx: 8, dy: 8)
         if let menuFrame = statusMenuWindowFrame(near: mouse) {
@@ -3456,7 +3234,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSMenuDelegate {
         return clampedFrame(frame, margin: 8)
     }
 
-    private func showMenuHoverPreview(_ id: CGWindowID, anchor: NSRect?) {
+    func showMenuHoverPreview(_ id: CGWindowID, anchor: NSRect?) {
         guard let anchor else { return }
         if shaded[id] != nil {
             showShadedMenuHoverPreview(id, anchor: anchor)
@@ -3563,7 +3341,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSMenuDelegate {
         }
     }
 
-    private func hideMenuHoverPreview(id: CGWindowID? = nil) {
+    func hideMenuHoverPreview(id: CGWindowID? = nil) {
         hidePreview(ownerID: id, trigger: .menuHover, reason: "menu-hide")
     }
 
@@ -4105,7 +3883,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSMenuDelegate {
         }
     }
 
-    @objc private func focusCurrentAppAction() {
+@objc func focusCurrentAppAction() {
         focusCurrentAppCycle()
     }
 
@@ -5892,7 +5670,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSMenuDelegate {
         refreshOverlayPresentation()
     }
 
-    private func updateReconcileTimer() {
+    func updateReconcileTimer() {
         let shouldRun = !shaded.isEmpty || !shadeJournalEntries().isEmpty
         if shouldRun {
             guard reconcileTimer == nil else { return }
@@ -6901,7 +6679,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSMenuDelegate {
         return true
     }
 
-    @objc private func arrangeShadedWindows() {
+@objc func arrangeShadedWindows() {
         if restoreArrangedOverlayFrames() { return }
 
         let entries = shaded.compactMap { id, state -> (CGWindowID, ShadeState, NSWindow)? in
@@ -6993,7 +6771,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSMenuDelegate {
         }
     }
 
-    @objc private func unshadeFromMenu(_ sender: NSMenuItem) {
+@objc func unshadeFromMenu(_ sender: NSMenuItem) {
         guard let n = sender.representedObject as? NSNumber else { return }
         unshade(CGWindowID(n.uint32Value))
     }
