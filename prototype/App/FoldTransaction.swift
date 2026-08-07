@@ -236,10 +236,7 @@ extension AppDelegate {
         var ref: CFTypeRef?
         if AXUIElementCopyAttributeValue(button, kAXEnabledAttribute as CFString, &ref) == .success,
            let value = ref {
-            if CFGetTypeID(value) == CFBooleanGetTypeID() {
-                return CFBooleanGetValue((value as! CFBoolean))
-            }
-            return (value as? NSNumber)?.boolValue ?? true
+            return cfBooleanValue(value) ?? true
         }
         return true
     }
