@@ -50,6 +50,7 @@ env CLANG_MODULE_CACHE_PATH="$MODULE_CACHE" \
   App/OverlayPresentation.swift \
   App/HoverPreview.swift \
   App/OverlayFactory.swift \
+  App/ArrangeController.swift \
   -framework Cocoa -framework Carbon -framework ApplicationServices \
   -framework ScreenCaptureKit -framework QuartzCore -framework CoreText \
   -framework AVFoundation \
