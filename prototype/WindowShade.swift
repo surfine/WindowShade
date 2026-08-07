@@ -600,6 +600,20 @@ final class ChromeProfileCache {
         return entry.profile.hitBarHeight
     }
 
+    // 事件 tap 的 fast path：profile 新鲜、窗口尺寸与 WindowServer 读数一致、
+    // 且明确是"纯标准标题栏"（没有地址栏/搜索框等可抢双击的控件）时返回 profile。
+    // 注意这里不做 CFEqual（tap 回调里没有可靠的新元素可比）；调用方拿到结果后
+    // 仍会经 titlebarContains → cachedHitBarHeight 用真实元素复核，元素被重建时
+    // 自然回退完整解析，行为不退化。
+    func cachedStandardTitleBarOnlyProfile(id: CGWindowID, cgSize: CGSize) -> WindowChromeProfile? {
+        guard let entry = entries[id],
+              CFAbsoluteTimeGetCurrent() - entry.resolvedAt < ttl,
+              abs(cgSize.width - entry.size.width) <= sizeTolerance,
+              abs(cgSize.height - entry.size.height) <= sizeTolerance,
+              entry.profile.standardTitleBarOnly else { return nil }
+        return entry.profile
+    }
+
     private func isFresh(_ entry: Entry, id: CGWindowID, win: AXUIElement, size: CGSize) -> Bool {
         CFAbsoluteTimeGetCurrent() - entry.resolvedAt < ttl
             && CFEqual(win, entry.element)

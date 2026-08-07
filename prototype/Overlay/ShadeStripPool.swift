@@ -14,6 +14,7 @@ final class ShadeStripPool {
     private let maxPooled = 4
 
     func take() -> OverlayWindow? {
+        dispatchPrecondition(condition: .onQueue(.main))
         guard !available.isEmpty else { return nil }
         let window = available.removeLast()
         window.contentView = nil
@@ -21,6 +22,7 @@ final class ShadeStripPool {
     }
 
     func recycle(_ window: OverlayWindow) {
+        dispatchPrecondition(condition: .onQueue(.main))
         window.contentView = nil
         if available.count < maxPooled {
             available.append(window)
