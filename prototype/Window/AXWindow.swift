@@ -10,7 +10,17 @@ func copyAXValue(_ element: AXUIElement, _ attr: String) -> AXValue? {
     var value: CFTypeRef?
     guard AXUIElementCopyAttributeValue(element, attr as CFString, &value) == .success,
           let v = value else { return nil }
+    // CF 类型在 Swift 里 `as?` 被编译器视为恒真，不能当运行时检查；
+    // 先用类型 ID 校验外部返回值，再强转（此时类型已确认）。
+    guard CFGetTypeID(v) == AXValueGetTypeID() else { return nil }
     return (v as! AXValue)
+}
+
+// AX 布尔属性可能是 CFBoolean，也可能是 toll-free 桥接的 NSNumber；都接受。
+// CFBoolean 与 NSNumber 是 toll-free 桥接，统一走 NSNumber 读 boolValue，
+// 不需要任何强转；第三方 app 返回其它类型时按 nil/false 处理。
+func cfBooleanValue(_ value: CFTypeRef) -> Bool? {
+    (value as? NSNumber)?.boolValue
 }
 
 func axPosition(_ e: AXUIElement) -> CGPoint? {
@@ -67,10 +77,7 @@ func axBoolAttribute(_ e: AXUIElement, _ attr: String) -> Bool {
     var ref: CFTypeRef?
     guard AXUIElementCopyAttributeValue(e, attr as CFString, &ref) == .success,
           let value = ref else { return false }
-    if CFGetTypeID(value) == CFBooleanGetTypeID() {
-        return CFBooleanGetValue((value as! CFBoolean))
-    }
-    return (value as? NSNumber)?.boolValue ?? false
+    return cfBooleanValue(value) ?? false
 }
 
 func isAXSizeSettable(_ e: AXUIElement) -> Bool {
@@ -98,6 +105,7 @@ func axButtonElement(_ win: AXUIElement, _ attr: String) -> AXUIElement? {
     var ref: CFTypeRef?
     guard AXUIElementCopyAttributeValue(win, attr as CFString, &ref) == .success,
           let button = ref else { return nil }
+    guard CFGetTypeID(button) == AXUIElementGetTypeID() else { return nil }
     return (button as! AXUIElement)
 }
 
@@ -111,27 +119,21 @@ func isAXButtonEnabled(_ win: AXUIElement, _ attr: String) -> Bool {
     var ref: CFTypeRef?
     if AXUIElementCopyAttributeValue(button, kAXEnabledAttribute as CFString, &ref) == .success,
        let value = ref {
-        if CFGetTypeID(value) == CFBooleanGetTypeID() {
-            return CFBooleanGetValue((value as! CFBoolean))
-        }
-        return (value as? NSNumber)?.boolValue ?? false
+        return cfBooleanValue(value) ?? false
     }
     return true
 }
 
 func axButtonFrame(_ win: AXUIElement, _ attr: String) -> CGRect? {
-    var ref: CFTypeRef?
-    guard AXUIElementCopyAttributeValue(win, attr as CFString, &ref) == .success, let b = ref else { return nil }
-    let btn = b as! AXUIElement
+    guard let btn = axButtonElement(win, attr) else { return nil }
     guard let p = axPosition(btn), let s = axSize(btn) else { return nil }
     return CGRect(origin: p, size: s)
 }
 
 @discardableResult
 func pressAXButton(_ win: AXUIElement, _ attr: String) -> Bool {
-    var ref: CFTypeRef?
-    guard AXUIElementCopyAttributeValue(win, attr as CFString, &ref) == .success, let b = ref else { return false }
-    return AXUIElementPerformAction(b as! AXUIElement, kAXPressAction as CFString) == .success
+    guard let button = axButtonElement(win, attr) else { return false }
+    return AXUIElementPerformAction(button, kAXPressAction as CFString) == .success
 }
 
 func pressAXFullScreenOrZoom(_ win: AXUIElement) {
@@ -354,13 +356,16 @@ func focusedWindow() -> AXUIElement? {
     var win: CFTypeRef?
     guard AXUIElementCopyAttributeValue(appEl, kAXFocusedWindowAttribute as CFString, &win) == .success,
           let w = win else { return nil }
+    guard CFGetTypeID(w) == AXUIElementGetTypeID() else { return nil }
     return (w as! AXUIElement)
 }
 
 func cgWindowBounds(_ info: [String: Any]) -> CGRect? {
     guard let raw = info[kCGWindowBounds as String] else { return nil }
     var rect = CGRect.zero
-    return CGRectMakeWithDictionaryRepresentation(raw as! CFDictionary, &rect) ? rect : nil
+    // CFDictionary 与 NSDictionary toll-free 桥接，as? 是真实运行时检查。
+    guard let dict = raw as? NSDictionary else { return nil }
+    return CGRectMakeWithDictionaryRepresentation(dict, &rect) ? rect : nil
 }
 
 func cocoaFrame(fromWindowServerBounds bounds: CGRect) -> NSRect {
@@ -469,6 +474,7 @@ func containingWindow(_ el: AXUIElement) -> AXUIElement? {
     var winRef: CFTypeRef?
     if AXUIElementCopyAttributeValue(el, kAXWindowAttribute as CFString, &winRef) == .success,
        let w = winRef {
+        guard CFGetTypeID(w) == AXUIElementGetTypeID() else { return nil }
         return (w as! AXUIElement)
     }
     return nil
@@ -630,10 +636,7 @@ func hasContentControlsBelowTitleBar(_ win: AXUIElement, winTop: CGFloat, winSiz
 // 所以 高度 ≈ 2 ×（按钮中心到窗口顶的距离）。Electron 等自绘标题栏也适用，
 // 因为交通灯始终是 macOS 原生绘制、AX 可读。
 func trafficLightHeight(of win: AXUIElement, winTop: CGFloat) -> CGFloat? {
-    var ref: CFTypeRef?
-    guard AXUIElementCopyAttributeValue(win, kAXCloseButtonAttribute as CFString, &ref) == .success,
-          let r = ref else { return nil }
-    let btn = r as! AXUIElement
+    guard let btn = axButtonElement(win, kAXCloseButtonAttribute as String) else { return nil }
     guard let bp = axPosition(btn), let bs = axSize(btn) else { return nil }
     let centerY = bp.y + bs.height / 2
     return (centerY - winTop) * 2
@@ -712,4 +715,3 @@ func titlebarHitHeight(of win: AXUIElement, id: CGWindowID,
 }
 
 // MARK: - 诊断日志（写到 /tmp/windowshade.log）
-

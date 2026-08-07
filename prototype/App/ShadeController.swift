@@ -237,6 +237,15 @@ extension AppDelegate {
             // 隐藏非前台窗口不会触发 macOS 的焦点级联（跳 Space / 激活兄弟窗口的病灶）。
             // 无处交接（当前 Space 只有这一个窗口）时 app-hide 不安全，改走 minimize。
             let appHideSafe = handOffFocusBeforeHiding(win: win, pid: pid, id: id)
+            // crash consistency：先把 durable recovery intent 落盘，再执行任何
+            // 可能让窗口长期不可见的动作。若进程在 hideWindow 中途被杀，重启后
+            // rescue 仍能按 intent 找回窗口；隐藏成功验证后由 recordShadeJournal
+            // 把同一条 entry 更新为 folded（或按最终隐藏方式清掉）。
+            recordShadeRecoveryIntent(id: id, pid: pid, bundleID: bundleID,
+                                      appName: appName, title: title,
+                                      originalPosition: pos, originalSize: size,
+                                      sourceDisplayID: sourceDisplayID,
+                                      sourceSpaceID: sourceSpaceID)
             let hide = hideWindow(win, pid: pid, originalPosition: pos, size: size,
                                   policy: policy, appHideSafe: appHideSafe)
             // minimize / app-hide 的状态读回是异步的（最小化动画进行中 kAXMinimized
