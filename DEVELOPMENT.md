@@ -13,10 +13,23 @@
 ```text
 prototype/
 ├── main.swift                        # 入口（NSApplication + AppDelegate）
-├── WindowShade.swift                 # 主实现：AppDelegate、折叠/展开事务、AX 辅助、覆盖层视图
+├── WindowShade.swift                 # AppDelegate 骨架 + 文件级基础设施（日志、缓存、全局辅助）
 ├── ScreenCaptureBridge.swift         # SCStream 捕获（置顶预览的实时流）
 ├── PinnedPreview.swift               # 置顶预览控制器（目标解析、watchdog、交互接管）
 ├── PinnedPreviewPanel.swift          # 预览面板与菜单实时缩略图
+├── App/                              # AppDelegate 扩展（按功能拆分的控制器）
+│   ├── MenuBarController.swift       # 状态栏图标、菜单重建与菜单代理回调
+│   ├── Reconcile.swift               # 折叠会话监控（reconcile 定时核对/并行快照）
+│   ├── EventTap.swift                # 全局快捷键、事件 tap、标题栏双击/三击
+│   ├── Preferences.swift             # 偏好设置与引导页
+│   ├── OverlayPresentation.swift     # 覆盖层展示与 Space 不变量
+│   ├── HoverPreview.swift            # 悬停预览（peek / 菜单悬停）
+│   ├── OverlayFactory.swift          # 覆盖层窗口工厂（截图条/经典条/代理标题栏）
+│   ├── ArrangeController.swift       # 卷帘条整理与专注 shelf
+│   ├── FocusSession.swift            # 专注会话
+│   ├── FoldTransaction.swift         # 折叠事务辅助（隐藏/恢复/验证/转发/通知）
+│   ├── ShadeController.swift         # 折叠入口（shade/toggle/折叠计划/截图）
+│   └── FoldExit.swift                # 折叠出口（unshade/清理/交通灯/QuickLook）
 ├── Private/
 │   └── SkyLightBridge.swift          # SkyLight 私有 API 隔离层（全部有 fallback）
 ├── Compatibility/
@@ -25,11 +38,17 @@ prototype/
 ├── Core/
 │   └── WindowState.swift             # 折叠操作状态机（非法转换拒绝）
 ├── Capture/
-│   └── WindowSnapshotCache.swift     # 折叠截图 500ms 短 TTL 缓存
+│   ├── WindowSnapshotCache.swift     # 折叠截图 500ms 短 TTL 缓存
+│   └── PreviewRenderer.swift         # 渲染与图像分析（chrome 扫描、圆角镜像、条制备）
 ├── Overlay/
-│   └── ShadeStripPool.swift          # 简单卷帘条窗口池（OverlayWindow 复用）
-└── Window/
-    └── WindowRegistry.swift          # app 元数据（名称/bundleID）短 TTL 缓存
+│   ├── ShadeStripPool.swift          # 简单卷帘条窗口池（OverlayWindow 复用）
+│   └── ShadeStrip.swift              # 覆盖层视图（代理标题栏/经典条/预览窗/调色板）
+├── Window/
+│   ├── WindowRegistry.swift          # app 元数据（名称/bundleID）短 TTL 缓存
+│   └── AXWindow.swift                # AX 辅助（几何/ID 解析/chrome 探测/按钮交互）
+└── Recovery/
+    ├── Journal.swift                 # 恢复日志数据层（持久化/匹配/生命周期标记）
+    └── Rescue.swift                  # 离屏窗口救援编排（后台扫描 + 主线程写回）
 ```
 
 > 新增源文件后，记得把它加进 `prototype/build.sh` 的 swiftc 编译列表。
@@ -59,14 +78,13 @@ IDENTITY="Apple Development: Your Name (TEAMID)"
 ```sh
 cd prototype
 env CLANG_MODULE_CACHE_PATH="$(cd .. && pwd)/.build/module-cache" swiftc -O -o /tmp/windowshade-check \
-  main.swift WindowShade.swift ScreenCaptureBridge.swift PinnedPreviewPanel.swift PinnedPreview.swift \
-  Private/SkyLightBridge.swift Compatibility/WindowPolicy.swift Compatibility/Policies.swift \
-  Core/WindowState.swift Capture/WindowSnapshotCache.swift Overlay/ShadeStripPool.swift \
-  Window/WindowRegistry.swift \
+  $(find . -maxdepth 2 -name '*.swift' | sort) \
   -framework Cocoa -framework Carbon -framework ApplicationServices \
   -framework ScreenCaptureKit -framework QuartzCore -framework CoreText \
   -framework AVFoundation -framework ServiceManagement
 ```
+
+> 直接编译用 `find` 自动收集源文件；新增文件无需手工维护此命令（`build.sh` 的列表仍需手动追加）。
 
 ## 调试
 
