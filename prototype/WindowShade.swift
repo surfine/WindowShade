@@ -1416,14 +1416,14 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSMenuDelegate {
 
     // reconcile 需要知道真实窗口是否仍存在/最小化，但这些 AX 读取可能被忙 app
     // 阻塞数秒。快照在后台按 app 并行采集，主线程仅应用已经完成的结果。
-    private struct ReconcileAXTarget {
+    struct ReconcileAXTarget {
         let id: CGWindowID
         let pid: pid_t
         let element: AXUIElement
         let needsMinimizedState: Bool
     }
 
-    private struct ReconcileAXSnapshot {
+    struct ReconcileAXSnapshot {
         let id: CGWindowID
         let position: CGPoint?
         let size: CGSize?
@@ -1473,12 +1473,12 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSMenuDelegate {
     private var isRescuingOffscreenWindows = false
     private var isRescueQueued = false
     private var tapSetupTimer: Timer?
-    private var reconcileTimer: Timer?
-    private var isReconcilingShadedWindows = false
-    private let reconcileAXWorkQueue = DispatchQueue(label: "WindowShade.reconcile-ax", qos: .utility)
-    private var reconcileInvalidCounts: [CGWindowID: Int] = [:]
+    var reconcileTimer: Timer?
+    var isReconcilingShadedWindows = false
+    let reconcileAXWorkQueue = DispatchQueue(label: "WindowShade.reconcile-ax", qos: .utility)
+    var reconcileInvalidCounts: [CGWindowID: Int] = [:]
     var privateAlphaOriginalValues: [CGWindowID: Float] = [:]
-    private var lastJournalRescueAttempt: Date?
+    var lastJournalRescueAttempt: Date?
     private var focusParkingWindow: NSWindow?
     // 当前唯一在屏幕上的预览视窗（菜单悬停或标题栏 peek 触发），见 presentPreview/
     // hidePreview。同一时刻只可能有一个，这是结构性不变量，不是巧合。
@@ -1924,7 +1924,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSMenuDelegate {
         return true
     }
 
-    private func isFocusShelfMember(id: CGWindowID) -> Bool {
+    func isFocusShelfMember(id: CGWindowID) -> Bool {
         guard let session = focusSession,
               session.stage == .arrangedAway,
               session.entries[id] != nil else { return false }
@@ -1949,7 +1949,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSMenuDelegate {
                                canResize: windowPolicy(for: state.pid).allowsProxyHorizontalResize)
     }
 
-    private func revealFocusShelfMemberFromOutside(id: CGWindowID, state: ShadeState, reason: String) {
+    func revealFocusShelfMemberFromOutside(id: CGWindowID, state: ShadeState, reason: String) {
         let frame = focusTemporaryRevealFrame(for: state)
         var workingState = state
         workingState.originalSize = frame.size
@@ -2838,7 +2838,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSMenuDelegate {
         shaded.first { $0.value.overlay === overlay }
     }
 
-    private func applyOverlayPresentation(_ overlay: NSWindow, bringForward: Bool) {
+    func applyOverlayPresentation(_ overlay: NSWindow, bringForward: Bool) {
         if let (id, state) = shadedEntry(for: overlay),
            !enforceOverlaySpaceInvariant(id: id, state: state, reason: "apply-presentation") {
             return
@@ -3060,7 +3060,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSMenuDelegate {
         screenForDisplayID(preferredDisplayID)?.visibleFrame ?? visibleFrame(for: frame)
     }
 
-    private func clampedFrame(_ frame: NSRect, margin: CGFloat = 8,
+    func clampedFrame(_ frame: NSRect, margin: CGFloat = 8,
                               preferredDisplayID: CGDirectDisplayID? = nil) -> NSRect {
         var visible = visibleFrame(for: frame, preferredDisplayID: preferredDisplayID).insetBy(dx: margin, dy: margin)
         if visible.width <= 1 || visible.height <= 1 {
@@ -5315,7 +5315,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSMenuDelegate {
         return nil
     }
 
-    private func ownWindow(id: CGWindowID?) -> NSWindow? {
+    func ownWindow(id: CGWindowID?) -> NSWindow? {
         guard let id else { return nil }
         return NSApp.windows.first { window in
             cgWindowID(for: window) == id
@@ -5670,211 +5670,13 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSMenuDelegate {
         refreshOverlayPresentation()
     }
 
-    func updateReconcileTimer() {
-        let shouldRun = !shaded.isEmpty || !shadeJournalEntries().isEmpty
-        if shouldRun {
-            guard reconcileTimer == nil else { return }
-            let timer = Timer.scheduledTimer(withTimeInterval: shadedWindowReconcileInterval,
-                                             repeats: true) { [weak self] _ in
-                self?.reconcileShadedWindows(reason: "timer")
-            }
-            timer.tolerance = 1.5
-            reconcileTimer = timer
-            wlog("reconcile: timer started")
-        } else if let timer = reconcileTimer {
-            timer.invalidate()
-            reconcileTimer = nil
-            lastJournalRescueAttempt = nil
-            wlog("reconcile: timer stopped")
-        }
-    }
 
-    private func shouldRetryJournalRescue(now: Date) -> Bool {
-        guard !shadeJournalEntries().isEmpty else { return false }
-        guard let last = lastJournalRescueAttempt else { return true }
-        return now.timeIntervalSince(last) >= journalRescueRetryInterval
-    }
 
-    private func sourceWindowLooksUserVisible(state: ShadeState, pos: CGPoint, size: CGSize,
-                                              onScreenWindowIDs: Set<CGWindowID>? = nil,
-                                              sourceIsMinimized: Bool? = nil) -> Bool {
-        guard windowIsVisible(pos: pos, size: size) else { return false }
-        let sourceOnScreen = onScreenWindowIDs?.contains(state.sourceWindowID)
-            ?? cgWindowIsCurrentlyOnScreen(state.sourceWindowID)
-        guard sourceOnScreen else { return false }
-        switch state.hide {
-        case .quickLookClosed:
-            return false
-        case .none:
-            return false
-        case .offscreen, .privateOffscreen:
-            return Date() >= state.ignoreAppRevealUntil
-        case .privateAlpha:
-            guard Date() >= state.ignoreAppRevealUntil else { return false }
-            let alpha = PrivateSLSWindowMover.shared.windowAlpha(id: state.sourceWindowID)
-                ?? Float((cgWindowInfo(state.sourceWindowID)?[kCGWindowAlpha as String] as? NSNumber)?.doubleValue ?? 1)
-            return alpha > 0.05
-        case .hidden:
-            guard Date() >= state.ignoreAppRevealUntil else { return false }
-            guard let app = runningApp(pid: state.pid) else { return true }
-            return !app.isHidden
-        case .minimized:
-            // AX 快照读取在 reconcileAXWorkQueue；没有快照时保守地认为仍不可见，
-            // 不能为了确认菜单/定时器状态回到主线程同步 IPC。
-            return sourceIsMinimized.map { !$0 } ?? false
-        case .ownWindowOrderedOut:
-            guard Date() >= state.ignoreAppRevealUntil else { return false }
-            return ownWindow(id: state.sourceWindowID)?.isVisible ?? false
-        }
-    }
 
-    private func shouldLogReconcileInvalidCount(_ count: Int) -> Bool {
-        count == 1 || count == 3 || count == 10 || count % 60 == 0
-    }
 
-    private func sourceWindowMissingShouldCleanup(id: CGWindowID, state: ShadeState) -> Bool {
-        guard runningApp(pid: state.pid) != nil else {
-            wlog("reconcile: source app gone id=\(id) app=\(state.appName)")
-            return true
-        }
 
-        let count = (reconcileInvalidCounts[id] ?? 0) + 1
-        reconcileInvalidCounts[id] = count
 
-        switch state.hide {
-        case .hidden, .minimized, .offscreen, .privateOffscreen, .privateAlpha, .ownWindowOrderedOut, .quickLookClosed:
-            if shouldLogReconcileInvalidCount(count) {
-                wlog("reconcile: source geometry unavailable id=\(id) app=\(state.appName) hide=\(state.hide.rawValue) count=\(count)")
-            }
-            return false
-        case .none:
-            let shouldCleanup = count >= 3
-            if shouldCleanup {
-                wlog("reconcile: source invalid repeatedly id=\(id) app=\(state.appName) count=\(count)")
-            }
-            return shouldCleanup
-        }
-    }
 
-    private func reconcileShadedWindows(reason: String) {
-        guard !isReconcilingShadedWindows else { return }
-        isReconcilingShadedWindows = true
-
-        pruneShadeJournal(reason: "reconcile-\(reason)")
-
-        guard AXIsProcessTrusted() else {
-            finishReconcileShadedWindows()
-            return
-        }
-        if eventTap == nil, setupEventTap() {
-            wlog("reconcile: event tap restored")
-        }
-
-        let now = Date()
-        if shaded.isEmpty {
-            if shouldRetryJournalRescue(now: now) {
-                lastJournalRescueAttempt = now
-                rescueOffscreenWindows(silent: true)
-            }
-            finishReconcileShadedWindows()
-            return
-        }
-
-        let onScreenIDs = currentOnScreenWindowIDs()
-        let targets = shaded.map { id, state in
-            ReconcileAXTarget(id: id, pid: state.pid, element: state.element,
-                              needsMinimizedState: state.hide == .minimized)
-        }
-        reconcileAXWorkQueue.async { [weak self] in
-            let startedAt = CFAbsoluteTimeGetCurrent()
-            // 按 app 分组：不同 app 的 AX IPC 互不阻塞，可以并行采集；同 app 的
-            // 窗口串行读取，避免对忙 app 并发轰炸。忙 app 单次 2s 超时不再拖住
-            // 其他 app 的快照（旧实现串行累加，3 个忙 app 就是 6s+）。
-            let grouped = Dictionary(grouping: targets, by: { $0.pid })
-            let group = DispatchGroup()
-            let resultLock = NSLock()
-            var snapshots: [ReconcileAXSnapshot] = []
-            for pidTargets in grouped.values {
-                group.enter()
-                DispatchQueue.global(qos: .utility).async {
-                    let local = pidTargets.map { target -> ReconcileAXSnapshot in
-                        guard let size = axSize(target.element) else {
-                            return ReconcileAXSnapshot(id: target.id, position: nil,
-                                                       size: nil, isMinimized: nil)
-                        }
-                        return ReconcileAXSnapshot(id: target.id,
-                                                   position: axPosition(target.element),
-                                                   size: size,
-                                                   isMinimized: target.needsMinimizedState
-                                                       ? axBoolAttribute(target.element, kAXMinimizedAttribute as String)
-                                                       : nil)
-                    }
-                    resultLock.lock()
-                    snapshots.append(contentsOf: local)
-                    resultLock.unlock()
-                    group.leave()
-                }
-            }
-            group.wait()
-            let elapsedMilliseconds = Int((CFAbsoluteTimeGetCurrent() - startedAt) * 1000)
-            DispatchQueue.main.async { [weak self] in
-                self?.applyReconcileAXSnapshots(snapshots, onScreenIDs: onScreenIDs,
-                                                reason: reason, elapsedMilliseconds: elapsedMilliseconds)
-            }
-        }
-    }
-
-    private func applyReconcileAXSnapshots(_ snapshots: [ReconcileAXSnapshot], onScreenIDs: Set<CGWindowID>,
-                                           reason: String, elapsedMilliseconds: Int) {
-        defer { finishReconcileShadedWindows() }
-        if elapsedMilliseconds >= 50 {
-            wlog("slow: reconcile-ax reason=\(reason) took \(elapsedMilliseconds)ms windows=\(snapshots.count)")
-        }
-        for snapshot in snapshots {
-            // 异步 AX 读取期间用户可能已展开/关闭窗口，只按仍存在的当前 state 应用。
-            guard let state = shaded[snapshot.id] else { continue }
-            guard let size = snapshot.size else {
-                if sourceWindowMissingShouldCleanup(id: snapshot.id, state: state) {
-                    forceCleanup(snapshot.id)
-                }
-                continue
-            }
-            reconcileInvalidCounts.removeValue(forKey: snapshot.id)
-
-            if let pos = snapshot.position,
-               sourceWindowLooksUserVisible(state: state, pos: pos, size: size,
-                                            onScreenWindowIDs: onScreenIDs,
-                                            sourceIsMinimized: snapshot.isMinimized) {
-                if isFocusShelfMember(id: snapshot.id) {
-                    revealFocusShelfMemberFromOutside(id: snapshot.id, state: state, reason: "reconcile-\(reason)")
-                    continue
-                }
-                wlog("reconcile: source already visible; cleanup overlay id=\(snapshot.id) app=\(state.appName)")
-                forceCleanup(snapshot.id)
-                continue
-            }
-
-            guard let overlay = state.overlay else { continue }
-            if let overlayID = state.overlayID, !onScreenIDs.contains(overlayID) {
-                continue
-            }
-            let oldFrame = overlay.frame
-            let newFrame = clampedFrame(oldFrame, margin: 8, preferredDisplayID: state.sourceDisplayID)
-            if !framesAlmostEqual(oldFrame, newFrame) {
-                overlay.setFrame(newFrame, display: true)
-                applyOverlayPresentation(overlay, bringForward: false)
-                if arrangedOverlayFrames[snapshot.id] == nil {
-                    syncRestoreJournal(id: snapshot.id, fromOverlayFrame: newFrame)
-                }
-                wlog("reconcile: clamped overlay id=\(snapshot.id) frame=(\(Int(newFrame.minX)),\(Int(newFrame.minY)) \(Int(newFrame.width))x\(Int(newFrame.height)))")
-            }
-        }
-    }
-
-    private func finishReconcileShadedWindows() {
-        isReconcilingShadedWindows = false
-        updateReconcileTimer()
-    }
 
     @objc private func screenParametersChanged(_ note: Notification) {
         pinnedPreviewController.refreshAll(reason: "screen")
@@ -5998,7 +5800,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSMenuDelegate {
     }
 
     // 撤掉折叠条但不还原窗口（关闭/最小化后用）
-    private func forceCleanup(_ id: CGWindowID, preserveFocusEntry: Bool = false) {
+    func forceCleanup(_ id: CGWindowID, preserveFocusEntry: Bool = false) {
         guard shaded[id] != nil else { return }
         markShadeLifecycle(id: id, .cleaned, reason: "forceCleanup")
         guard let state = shaded.removeValue(forKey: id) else { return }
@@ -6705,7 +6507,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSMenuDelegate {
         }
     }
 
-    private func rescueOffscreenWindows(silent: Bool) {
+    func rescueOffscreenWindows(silent: Bool) {
         guard !isRescuingOffscreenWindows else {
             isRescueQueued = true
             return
@@ -6850,7 +6652,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSMenuDelegate {
     // MARK: 双击标题栏（CGEventTap）
 
     // tap 创建需要辅助功能权限；权限可能晚于启动才授予，所以轮询到授权后再装。
-    private func setupEventTapWhenTrusted() {
+    func setupEventTapWhenTrusted() {
         if setupEventTap() {
             rescueOffscreenWindows(silent: true)
             return
@@ -6875,7 +6677,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSMenuDelegate {
     }
 
     @discardableResult
-    private func setupEventTap() -> Bool {
+    func setupEventTap() -> Bool {
         guard eventTap == nil, AXIsProcessTrusted() else { return eventTap != nil }
         let mask = CGEventMask(1 << CGEventType.leftMouseDown.rawValue)
         guard let tap = CGEvent.tapCreate(tap: .cgSessionEventTap, place: .headInsertEventTap,
