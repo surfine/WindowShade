@@ -60,6 +60,19 @@ Two strip styles are available:
 | **Native** | The real window's top chrome, captured live | Keeping the strip visually identical to the original window |
 | **Proxy title bar** | App icon, title, and traffic lights on a standard bar | Focus mode, tidying up, consistent widths |
 
+## Architecture
+
+```mermaid
+flowchart TD
+    AX[Accessibility API] --> Locator[Window Locator]
+    Locator --> Controller[Shade Controller]
+    Controller --> SCK[ScreenCaptureKit]
+    Controller --> Overlay[Overlay Window]
+    Controller --> Journal[Recovery Journal]
+```
+
+Window Locator finds the focused window through the Accessibility API. The Shade Controller drives the fold/unfold transaction: ScreenCaptureKit captures the real title bar, an overlay window keeps a strip in place, and the recovery journal records each fold so windows can be brought back after an abnormal exit.
+
 ## Highlights
 
 - Fold the current window with `Control + Command + C`.
@@ -67,7 +80,7 @@ Two strip styles are available:
 - Click a folded strip to preview the hidden content.
 - Pin a window as a live floating preview with `Control + Command + P`.
 - Restore folded windows with `Control + Command + 1...9` or from the menu bar.
-- Arrange strips or enter Focus Shelf with `Control + Command + 0`.
+- Arrange strips or enter Focus Shelf with `Control + Command + 0` *(Experimental)*.
 - Choose strip style, title-bar double-click, always-on-top, transparency, sounds, and launch at login.
 
 ## Compatibility
@@ -107,14 +120,27 @@ WindowShade lives in the menu bar. It does not show a Dock icon.
 | Preview a folded window | Click its folded strip |
 | Pin or unpin the current window | `Control + Command + P` |
 | Unfold by menu order | `Control + Command + 1...9` |
-| Arrange strips / Focus Shelf | `Control + Command + 0` |
+| Arrange strips / Focus Shelf *(Experimental)* | `Control + Command + 0` |
 | Manage everything | Menu bar icon |
 
 Triple-clicking the title bar keeps the system title-bar zoom behavior available.
 
 ## Build from Source
 
-You need macOS 14 or newer and the Xcode command line tools.
+### Requirements
+
+- macOS 14 or newer
+- Xcode command line tools (`xcode-select --install`)
+- An Apple Development certificate for signing
+
+### Clone
+
+```sh
+git clone https://github.com/surfine/WindowShade.git
+cd WindowShade
+```
+
+### Build
 
 ```sh
 cd prototype
@@ -122,8 +148,12 @@ cd prototype
 open WindowShade.app
 ```
 
-The script compiles the sources into the existing `WindowShade.app` bundle and signs it. It uses a fixed Apple Development identity; edit `IDENTITY` in `build.sh` to use your own certificate — this keeps macOS permission trust across rebuilds.
+The script compiles the sources into the existing `WindowShade.app` bundle in place, so it needs a bundle to update — grab one from [Releases](https://github.com/surfine/WindowShade/releases/latest) if you cloned fresh.
+
+### Signing
+
+`build.sh` codesigns the app with an Apple Development identity so macOS keeps permission trust across rebuilds. Configure your own certificate in `prototype/build.sh`; see [DEVELOPMENT.md](DEVELOPMENT.md) for build, signing, and release details.
 
 ## Design Notes
 
-The main code is in [`prototype/WindowShade.swift`](prototype/WindowShade.swift). For the history, design rationale, and per-app compatibility details, see [`WindowShade.md`](WindowShade.md).
+The main code is in [`prototype/WindowShade.swift`](prototype/WindowShade.swift). For the history, design rationale, and per-app compatibility details, see [`WindowShade.md`](WindowShade.md). For build, signing, and release details, see [`DEVELOPMENT.md`](DEVELOPMENT.md).
