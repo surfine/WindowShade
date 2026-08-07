@@ -839,11 +839,19 @@ func runningApp(pid: pid_t) -> NSRunningApplication? {
 }
 
 func appDisplayName(pid: pid_t) -> String {
-    runningApp(pid: pid)?.localizedName ?? "?"
+    if let cached = WindowRegistry.shared.appInfo(pid: pid) { return cached.name }
+    let app = runningApp(pid: pid)
+    let name = app?.localizedName ?? "?"
+    WindowRegistry.shared.cacheAppInfo(pid: pid, name: name, bundleID: app?.bundleIdentifier ?? "")
+    return name
 }
 
 func appBundleID(pid: pid_t) -> String {
-    runningApp(pid: pid)?.bundleIdentifier ?? ""
+    if let cached = WindowRegistry.shared.appInfo(pid: pid) { return cached.bundleID }
+    let app = runningApp(pid: pid)
+    let bundleID = app?.bundleIdentifier ?? ""
+    WindowRegistry.shared.cacheAppInfo(pid: pid, name: app?.localizedName ?? "?", bundleID: bundleID)
+    return bundleID
 }
 
 // 全量窗口列表的短 TTL 缓存。
@@ -5387,6 +5395,8 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSMenuDelegate {
         overlay.orderOut(nil)
         if let proxy = overlay as? NativeProxyOverlayWindow {
             proxy.closeProgrammatically()
+        } else if let strip = overlay as? OverlayWindow {
+            ShadeStripPool.shared.recycle(strip)
         } else {
             overlay.close()
         }
@@ -7055,8 +7065,14 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSMenuDelegate {
     private func captureWindowWithTimeout(id: CGWindowID, axPos: CGPoint, size: CGSize,
                                           maxPixelSize: CGSize? = nil,
                                           timeoutNanoseconds: UInt64) async -> CGImage? {
+        // 折叠路径的 500ms 短 TTL 截图缓存：快速连续折叠同一窗口时复用，
+        // 避免重复 ScreenCaptureKit capture。悬停预览的懒截图不走这里。
+        if let cached = WindowSnapshotCache.shared.cachedImage(id: id) {
+            return cached
+        }
         let resumeGuard = SingleResumeGuard()
-        return await withCheckedContinuation { continuation in
+        let image: CGImage? = await withCheckedContinuation {
+            (continuation: CheckedContinuation<CGImage?, Never>) in
             Task { [weak self] in
                 guard let self else {
                     if await resumeGuard.tryResume() { continuation.resume(returning: nil) }
@@ -7070,6 +7086,10 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSMenuDelegate {
                 if await resumeGuard.tryResume() { continuation.resume(returning: nil) }
             }
         }
+        if let image {
+            WindowSnapshotCache.shared.store(image: image, id: id)
+        }
+        return image
     }
 
     private func parkFocusForInactiveCapture() {
@@ -7508,9 +7528,12 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSMenuDelegate {
     private func makeBaseOverlay(axPos: CGPoint, width: CGFloat, height: CGFloat) -> NSWindow {
         let frame = cocoaFrame(fromAXPosition: axPos, size: CGSize(width: width, height: height))
 
-        let overlay = OverlayWindow(contentRect: frame, styleMask: .borderless,
-                                    backing: .buffered, defer: false)
+        // 复用已回收的简单卷帘条窗口，避免频繁创建 NSWindow；池取不到才新建。
+        let overlay = ShadeStripPool.shared.take()
+            ?? OverlayWindow(contentRect: frame, styleMask: .borderless,
+                             backing: .buffered, defer: false)
         overlay.isReleasedWhenClosed = false
+        overlay.setFrame(frame, display: false)
         overlay.isOpaque = false
         overlay.backgroundColor = .clear
         applyOverlayPresentation(overlay, bringForward: false)
