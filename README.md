@@ -148,12 +148,22 @@ cd prototype
 open WindowShade.app
 ```
 
-The script compiles the sources into the existing `WindowShade.app` bundle in place, so it needs a bundle to update — grab one from [Releases](https://github.com/surfine/WindowShade/releases/latest) if you cloned fresh.
+The script compiles the sources and updates `WindowShade.app` in place. If the bundle does not exist yet (fresh clone), it bootstraps a minimal one from the `Info.plist` and app icon in the repo — no need to download a prebuilt binary first. To only verify that the code compiles, without signing or touching the bundle:
+
+```sh
+./build.sh --check
+```
 
 ### Signing
 
-`build.sh` codesigns the app with an Apple Development identity so macOS keeps permission trust across rebuilds. Configure your own certificate in `prototype/build.sh`; see [DEVELOPMENT.md](DEVELOPMENT.md) for build, signing, and release details.
+`build.sh` codesigns the app with an Apple Development identity so macOS keeps permission trust across rebuilds. Set your own certificate via the `WINDOWSHADE_CODESIGN_IDENTITY` environment variable, or put it in a local, un-tracked `prototype/local-codesign.env` file:
+
+```sh
+WINDOWSHADE_CODESIGN_IDENTITY="Apple Development: Your Name (TEAMID)" ./build.sh
+```
+
+The script refuses ad-hoc signing on purpose, so macOS keeps your Accessibility / Screen Recording permissions across rebuilds. See [DEVELOPMENT.md](DEVELOPMENT.md) for build, signing, and release details.
 
 ## Design Notes
 
-The main code is in [`prototype/WindowShade.swift`](prototype/WindowShade.swift). For the history, design rationale, and per-app compatibility details, see [`WindowShade.md`](WindowShade.md). For build, signing, and release details, see [`DEVELOPMENT.md`](DEVELOPMENT.md).
+[`prototype/WindowShade.swift`](prototype/WindowShade.swift) is the AppDelegate skeleton plus shared infrastructure (logging, caches, coordinate helpers). The actual features live in modules under `prototype/` (`App/`, `Capture/`, `Compatibility/`, `Core/`, `Overlay/`, `Private/`, `Recovery/`, `Window/`). For the history, design rationale, and per-app compatibility details, see [`WindowShade.md`](WindowShade.md). For build, signing, and release details, see [`DEVELOPMENT.md`](DEVELOPMENT.md).

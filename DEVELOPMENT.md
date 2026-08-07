@@ -51,11 +51,15 @@ prototype/
     └── Rescue.swift                  # 离屏窗口救援编排（后台扫描 + 主线程写回）
 ```
 
-> 新增源文件后，记得把它加进 `prototype/build.sh` 的 swiftc 编译列表。
+`build.sh` 会自动收集上述目录里的 `.swift` 文件（排序稳定，排除 `WindowShade.app`、
+`dist` 与 `.build`），新增源文件无需手工维护编译列表。
 
 ## 构建
 
-构建脚本原地更新 `prototype/WindowShade.app`（保留 bundle、Info.plist 与资源），所以需要先有一个 app bundle——全新克隆时先从 [Releases](https://github.com/surfine/WindowShade/releases/latest) 下载一份，或复制已有 bundle。
+构建脚本原地更新 `prototype/WindowShade.app`（保留 bundle、Info.plist 与资源）。
+全新克隆没有 bundle 时，脚本会用仓库里的 `Info.plist` 与
+`assets/app-icon/WindowShade.icns` 自动 bootstrap 一个最小 bundle；已有 bundle
+则继续原地替换 Mach-O，保留 TCC 授权身份。
 
 ```sh
 cd prototype
@@ -63,28 +67,38 @@ cd prototype
 open WindowShade.app
 ```
 
-### 签名
-
-`build.sh` 顶部有一个固定的 Apple Development 身份：
+只想验证编译、不签名也不改动 app bundle：
 
 ```sh
-IDENTITY="Apple Development: Your Name (TEAMID)"
+./build.sh --check
 ```
 
-把它改成你自己的证书。保留 bundle + 固定签名身份的原因：macOS 的 TCC 授权（辅助功能 / 屏幕录制）绑定签名身份，重建 bundle 或换 ad-hoc 签名会重置权限。
+### 签名
 
-### 直接编译（不签名，仅验证）
+`build.sh` 的签名身份来自环境变量或本机未跟踪配置文件（不写入 Git）：
+
+```sh
+WINDOWSHADE_CODESIGN_IDENTITY="Apple Development: Your Name (TEAMID)" ./build.sh
+```
+
+也可以写在 `prototype/local-codesign.env` 里（该文件已在 `.gitignore` 中）：
+
+```sh
+WINDOWSHADE_CODESIGN_IDENTITY="Apple Development: Your Name (TEAMID)"
+```
+
+构建脚本默认拒绝 ad-hoc 签名：macOS 的 TCC 授权（辅助功能 / 屏幕录制）绑定签名
+身份，重建 bundle 或换 ad-hoc 签名会重置权限。
+
+### 编译验证（不签名，仅验证）
 
 ```sh
 cd prototype
-env CLANG_MODULE_CACHE_PATH="$(cd .. && pwd)/.build/module-cache" swiftc -O -o /tmp/windowshade-check \
-  $(find . -maxdepth 2 -name '*.swift' | sort) \
-  -framework Cocoa -framework Carbon -framework ApplicationServices \
-  -framework ScreenCaptureKit -framework QuartzCore -framework CoreText \
-  -framework AVFoundation -framework ServiceManagement
+./build.sh --check
 ```
 
-> 直接编译用 `find` 自动收集源文件；新增文件无需手工维护此命令（`build.sh` 的列表仍需手动追加）。
+`--check` 复用 `build.sh` 同一份自动收集的源文件清单，只做 swiftc 类型检查，
+不签名、不修改 app bundle。README 与本文档不再需要第二套独立的 swiftc 文件清单。
 
 ## 调试
 
@@ -118,21 +132,25 @@ env CLANG_MODULE_CACHE_PATH="$(cd .. && pwd)/.build/module-cache" swiftc -O -o /
 
 1. 升级版本号：`prototype/Info.plist` 与 `prototype/WindowShade.app/Contents/Info.plist` 的 `CFBundleShortVersionString`。
 2. `./build.sh` 构建并签名。
-3. 打包：
+3. 打包（版本号统一从 `CFBundleShortVersionString` 读取，不用手改示例）：
 
    ```sh
    cd prototype
+   VERSION=$(/usr/libexec/PlistBuddy -c "Print CFBundleShortVersionString" Info.plist)
    mkdir -p dist
-   ditto -c -k --sequesterRsrc --keepParent WindowShade.app dist/WindowShade-v1.0.8.zip
-   shasum -a 256 dist/WindowShade-v1.0.8.zip > dist/WindowShade-v1.0.8.zip.sha256
+   ditto -c -k --sequesterRsrc --keepParent WindowShade.app "dist/WindowShade-v${VERSION}.zip"
+   shasum -a 256 "dist/WindowShade-v${VERSION}.zip" > "dist/WindowShade-v${VERSION}.zip.sha256"
    ```
 
 4. 打标签并发布：
 
    ```sh
-   git tag v1.0.8 && git push origin v1.0.8
-   gh release create v1.0.8 dist/WindowShade-v1.0.8.zip dist/WindowShade-v1.0.8.zip.sha256 \
-     --title "WindowShade v1.0.8" --notes "..."
+   # 仍在 prototype/ 目录下执行
+   VERSION=$(/usr/libexec/PlistBuddy -c "Print CFBundleShortVersionString" Info.plist)
+   git tag "v${VERSION}" && git push origin "v${VERSION}"
+   gh release create "v${VERSION}" \
+     "dist/WindowShade-v${VERSION}.zip" "dist/WindowShade-v${VERSION}.zip.sha256" \
+     --title "WindowShade v${VERSION}" --notes "..."
    ```
 
 `prototype/dist/` 已在 `.gitignore` 中，发布产物不会污染工作区。
