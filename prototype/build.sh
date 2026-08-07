@@ -31,6 +31,7 @@ env CLANG_MODULE_CACHE_PATH="$MODULE_CACHE" \
   ScreenCaptureBridge.swift \
   PinnedPreviewPanel.swift \
   PinnedPreview.swift \
+  Private/SkyLightBridge.swift \
   -framework Cocoa -framework Carbon -framework ApplicationServices \
   -framework ScreenCaptureKit -framework QuartzCore -framework CoreText \
   -framework AVFoundation \
