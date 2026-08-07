@@ -41,6 +41,7 @@ env CLANG_MODULE_CACHE_PATH="$MODULE_CACHE" \
   Overlay/ShadeStrip.swift \
   Window/WindowRegistry.swift \
   Window/AXWindow.swift \
+  Recovery/Journal.swift \
   -framework Cocoa -framework Carbon -framework ApplicationServices \
   -framework ScreenCaptureKit -framework QuartzCore -framework CoreText \
   -framework AVFoundation \
