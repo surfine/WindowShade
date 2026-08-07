@@ -201,7 +201,7 @@ func isAXAttributeSettable(_ e: AXUIElement, _ attr: String) -> Bool {
 }
 
 func allowsProxyHorizontalResize(_ win: AXUIElement, pid: pid_t) -> Bool {
-    guard appCompatibility(for: pid).allowsProxyHorizontalResize else { return false }
+    guard windowPolicy(for: pid).allowsProxyHorizontalResize else { return false }
     return isAXSizeSettable(win)
 }
 
@@ -278,7 +278,7 @@ func proxyTrafficLightConfiguration(of win: AXUIElement, pid: pid_t) -> ProxyTra
         minimizeEnabled: isAXButtonEnabled(win, kAXMinimizeButtonAttribute as String),
         zoomEnabled: isAXButtonEnabled(win, kAXZoomButtonAttribute as String)
     )
-    if appCompatibility(for: pid).kind == .finder,
+    if windowPolicy(for: pid).kind == .finder,
        configuration.visibleActions.count == 2,
        firstToolbar(win) == nil {
         configuration.style = .quickLook
@@ -510,114 +510,6 @@ struct FocusSession {
     let focusedWindowID: CGWindowID?
     var stage: FocusSessionStage
     var entries: [CGWindowID: FocusSessionEntry]
-}
-
-enum AppCompatibilityKind {
-    case normal
-    case finder
-    case safari
-    case codex
-    case systemSettings
-    case weChat
-    case telegram
-    case elpass
-    case adobe
-    case stickies
-    case calculator
-}
-
-struct AppCompatibility {
-    let kind: AppCompatibilityKind
-    let bundleID: String
-    let appName: String
-
-    var shadePolicy: ShadePolicy {
-        switch kind {
-        case .finder:
-            return .hiddenIfSingleWindowElseMinimized(allowAppHide: false)
-        case .safari:
-            return .offscreenThenFallback(allowAppHide: true)
-        case .codex:
-            return .offscreenForLivePreview
-        case .weChat:
-            return .hiddenIfSingleWindowElseMinimized(allowAppHide: true)
-        default:
-            return .hiddenIfSingleWindowElseMinimized(allowAppHide: true)
-        }
-    }
-
-    var fixedChromeHeight: CGFloat? {
-        switch kind {
-        case .weChat:
-            return 51.5
-        case .elpass:
-            return 50.5
-        default:
-            return nil
-        }
-    }
-
-    var usesStandardTitleBarOnly: Bool {
-        switch kind {
-        case .telegram:
-            return true
-        default:
-            return false
-        }
-    }
-    var extendsTitlebarHitToApplicationFrame: Bool { false }
-    var allowsProxyHorizontalResize: Bool {
-        kind != .systemSettings && kind != .calculator
-    }
-    var delegatesNativeShade: Bool { kind == .stickies }
-    var usesWiderDisplayWithoutResizingRealWindow: Bool { kind == .calculator }
-}
-
-func appCompatibility(for pid: pid_t) -> AppCompatibility {
-    let bundle = appBundleID(pid: pid).lowercased()
-    let name = appDisplayName(pid: pid).lowercased()
-
-    let kind: AppCompatibilityKind
-    if bundle == "com.apple.finder" || name == "finder" {
-        kind = .finder
-    } else if bundle == "com.apple.safari" || name == "safari" {
-        kind = .safari
-    } else if bundle.contains("codex") || name == "codex" {
-        kind = .codex
-    } else if bundle == "com.apple.systempreferences" ||
-                bundle == "com.apple.systemsettings" ||
-                name == "system settings" ||
-                name == "settings" ||
-                name == "系統設定" ||
-                name == "系统设置" {
-        kind = .systemSettings
-    } else if bundle == "com.tencent.xinwechat" ||
-                bundle == "com.tencent.wechat" ||
-                name.contains("wechat") ||
-                name.contains("微信") {
-        kind = .weChat
-    } else if bundle == "com.tdesktop.telegram" ||
-                bundle == "ru.keepcoder.telegram" ||
-                bundle == "org.telegram.desktop" ||
-                name.contains("telegram") {
-        kind = .telegram
-    } else if bundle == "app.elpass.macos" || name.contains("elpass") {
-        kind = .elpass
-    } else if bundle == "com.apple.stickies" ||
-                name.contains("stickies") ||
-                name.contains("便條") ||
-                name.contains("便笺") ||
-                name.contains("便条") {
-        kind = .stickies
-    } else if bundle == "com.apple.calculator" || name == "calculator" ||
-                name == "計算機" || name == "计算器" {
-        kind = .calculator
-    } else if bundle.hasPrefix("com.adobe.") || name.hasPrefix("adobe ") {
-        kind = .adobe
-    } else {
-        kind = .normal
-    }
-    return AppCompatibility(kind: kind, bundleID: bundle, appName: name)
 }
 
 func adobeChromeProfile(for win: AXUIElement,
@@ -1218,39 +1110,39 @@ func makeStatusBarIcon() -> NSImage {
 }
 
 func shadePolicy(for pid: pid_t) -> ShadePolicy {
-    appCompatibility(for: pid).shadePolicy
+    windowPolicy(for: pid).hidingStrategy.shadePolicy
 }
 
 func isCodex(pid: pid_t) -> Bool {
-    appCompatibility(for: pid).kind == .codex
+    windowPolicy(for: pid).kind == .codex
 }
 
 func isSystemSettings(pid: pid_t) -> Bool {
-    appCompatibility(for: pid).kind == .systemSettings
+    windowPolicy(for: pid).kind == .systemSettings
 }
 
 func isWeChat(pid: pid_t) -> Bool {
-    appCompatibility(for: pid).kind == .weChat
+    windowPolicy(for: pid).kind == .weChat
 }
 
 func isElpass(pid: pid_t) -> Bool {
-    appCompatibility(for: pid).kind == .elpass
+    windowPolicy(for: pid).kind == .elpass
 }
 
 func isAdobeApp(pid: pid_t) -> Bool {
-    appCompatibility(for: pid).kind == .adobe
+    windowPolicy(for: pid).kind == .adobe
 }
 
 func usesStandardTitleBarOnly(pid: pid_t) -> Bool {
-    appCompatibility(for: pid).usesStandardTitleBarOnly
+    windowPolicy(for: pid).usesStandardTitleBarOnly
 }
 
 func extendsTitlebarHitToApplicationFrame(pid: pid_t) -> Bool {
-    appCompatibility(for: pid).extendsTitlebarHitToApplicationFrame
+    windowPolicy(for: pid).extendsTitlebarHitToApplicationFrame
 }
 
 func isStickies(pid: pid_t) -> Bool {
-    appCompatibility(for: pid).delegatesNativeShade
+    windowPolicy(for: pid).delegatesNativeShade
 }
 
 func needsControlPaddedChrome(pid: pid_t) -> Bool {
@@ -1261,7 +1153,7 @@ func needsControlPaddedChrome(pid: pid_t) -> Bool {
 // 只保留交通灯、搜索框、标题/工具按钮和它们自己的上下 padding。
 // 下面的列表行、选中条、账号卡即使只露一点，也会让折叠条失去标题栏语义。
 func fixedNonstandardChromeHeight(pid: pid_t) -> CGFloat? {
-    appCompatibility(for: pid).fixedChromeHeight
+    windowPolicy(for: pid).fixedChromeHeight
 }
 
 func fallbackControlPaddedChromeHeight(pid: pid_t, minimum _: CGFloat) -> CGFloat? {
@@ -4194,7 +4086,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSMenuDelegate {
         let visible = screen.visibleFrame.insetBy(dx: 28, dy: 28)
         return focusSizedFrame(pos: pos, size: size,
                                visible: visible, areaRatio: areaRatio,
-                               canResize: appCompatibility(for: pid).allowsProxyHorizontalResize)
+                               canResize: windowPolicy(for: pid).allowsProxyHorizontalResize)
     }
 
     private func focusShelfReservedFrame(on screen: NSScreen) -> NSRect? {
@@ -4216,7 +4108,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSMenuDelegate {
             frame = focusSizedFrame(pos: pos, size: size,
                                     visible: available,
                                     areaRatio: 1.0,
-                                    canResize: appCompatibility(for: pid).allowsProxyHorizontalResize)
+                                    canResize: windowPolicy(for: pid).allowsProxyHorizontalResize)
         }
         let target = axPosition(fromCocoaFrame: frame)
         if allowsProxyHorizontalResize(win, pid: pid) {
@@ -4236,7 +4128,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSMenuDelegate {
         }
         let visible = screen.visibleFrame.insetBy(dx: 28, dy: 28)
         let restoreSize = state.originalSize
-        let compatibility = appCompatibility(for: state.pid)
+        let compatibility = windowPolicy(for: state.pid)
         let isResizableWorkWindow = compatibility.allowsProxyHorizontalResize
         let workSize = focusSizedWorkSize(originalSize: restoreSize,
                                           visible: visible,
@@ -4284,7 +4176,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSMenuDelegate {
             proxy.allowsHorizontalResize = false
             proxy.minSize = NSSize(width: stackFrame.width, height: stackFrame.height)
             proxy.maxSize = NSSize(width: stackFrame.width, height: stackFrame.height)
-            wlog("focus: restore stack affordance app=\(state.appName) resizable=\(appCompatibility(for: state.pid).allowsProxyHorizontalResize)")
+            wlog("focus: restore stack affordance app=\(state.appName) resizable=\(windowPolicy(for: state.pid).allowsProxyHorizontalResize)")
         }
         focusPulledOutOverlayIDs.remove(id)
         focusPulledOutRestoreFrames.removeValue(forKey: id)
@@ -4311,7 +4203,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSMenuDelegate {
 
         var updatedState = state
         let pulled = pulledOutFocusFrames(state: state, draggedFrame: frame)
-        let compatibility = appCompatibility(for: state.pid)
+        let compatibility = windowPolicy(for: state.pid)
         if compatibility.allowsProxyHorizontalResize,
            state.originalSize.width > 1,
            state.originalSize.height > 1 {
@@ -4403,7 +4295,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSMenuDelegate {
                                size: state.originalSize,
                                visible: visible,
                                areaRatio: 0.50,
-                               canResize: appCompatibility(for: state.pid).allowsProxyHorizontalResize)
+                               canResize: windowPolicy(for: state.pid).allowsProxyHorizontalResize)
     }
 
     private func revealFocusShelfMemberFromOutside(id: CGWindowID, state: ShadeState, reason: String) {
@@ -6567,7 +6459,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSMenuDelegate {
             let pid = app.processIdentifier
             guard pid != focusedPID, pid != selfPID else { continue }
             guard app.activationPolicy == .regular || app.activationPolicy == .accessory else { continue }
-            if appCompatibility(for: pid).delegatesNativeShade {
+            if windowPolicy(for: pid).delegatesNativeShade {
                 wlog("focus: skip native-shade app=\(appDisplayName(pid: pid)) pid=\(pid)")
                 continue
             }
