@@ -42,6 +42,7 @@ env CLANG_MODULE_CACHE_PATH="$MODULE_CACHE" \
   Window/WindowRegistry.swift \
   Window/AXWindow.swift \
   Recovery/Journal.swift \
+  Recovery/Rescue.swift \
   App/MenuBarController.swift \
   App/Reconcile.swift \
   App/EventTap.swift \
