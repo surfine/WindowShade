@@ -74,6 +74,7 @@ extension AppDelegate {
         }
         return restoredElement
     }
+    @discardableResult
     func unshade(_ id: CGWindowID) -> Bool {
         unshadeReturningElement(id) != nil
     }
