@@ -7,7 +7,9 @@
 //   4. 把真窗口移到屏幕外 → 内容真正消失，只剩这条标题栏。
 //   再触发（或双击覆盖层）→ 把真窗口移回原位、撤掉覆盖层。
 //
-// 编译：见 build.sh。
+// 编译：swiftc -O -o windowshade WindowShade.swift \
+//        -framework Cocoa -framework Carbon -framework ApplicationServices -framework ScreenCaptureKit \
+//        -framework QuartzCore -framework CoreText -framework ServiceManagement
 // 运行：./windowshade
 //   需要两个权限：辅助功能（移动/读窗口）+ 屏幕录制（截图）。首次会分别弹窗。
 //
@@ -59,6 +61,11 @@ let journalRescueRetryInterval: TimeInterval = 30
 let forwardedTrafficRetryDelays: [TimeInterval] = [0.035, 0.08, 0.14, 0.24, 0.40, 0.65]
 let shadeTranslucentAlpha: CGFloat = 0.82
 let axFullScreenAttribute = "AXFullScreen"
+// AX 子树遍历预算：限制「顶部控件扫描」（collectTopChromeControlSamples）和
+// firstToolbar 在最坏情况下的同步 IPC 数量。复杂窗口（浏览器等）的 AX 树可达
+// 数千节点，无界遍历会让折叠/双击判定在忙 app 上长时间卡住主线程。
+let axTraversalNodeBudget = 150
+let axTraversalMaxChildrenPerNode = 40
 let hoverPreviewMaxPixelSize = CGSize(width: 720, height: 480)
 let menuHoverPreviewMaxSize = NSSize(width: 240, height: 160)
 let shadeCaptureTimeoutNanoseconds: UInt64 = 450_000_000
@@ -957,11 +964,79 @@ func windowLooksToolbarlessStandardTitleBar(_ win: AXUIElement,
     return true
 }
 
-func resolveWindowChromeProfile(win: AXUIElement,
+// 折叠/双击热路径的 chrome profile 缓存：同一窗口在短 TTL 内反复折叠，或双击
+// 判定的第一下/第二下，都会重复执行同一批昂贵 AX IPC（firstToolbar、交通灯高度、
+// 深度 6 的整棵 AX 子树控件扫描）。以「窗口 ID + AX 元素身份 + 窗口尺寸」为
+// 失效条件：ID 被复用、元素被重建、窗口被拖拽改尺寸都立即重算。
+// 只能在主线程访问（事件 tap 回调、shade、双击判定全部在主线程执行）。
+final class ChromeProfileCache {
+    static let shared = ChromeProfileCache()
+
+    private struct Entry {
+        let element: AXUIElement
+        let profile: WindowChromeProfile
+        let size: CGSize
+        let resolvedAt: CFAbsoluteTime
+    }
+
+    private var entries: [CGWindowID: Entry] = [:]
+    private let ttl: TimeInterval = 2.0
+    private let sizeTolerance: CGFloat = 0.5
+    private let maxEntries = 64
+
+    func profile(id: CGWindowID, win: AXUIElement, pos: CGPoint, size: CGSize,
+                 pid: pid_t, title: String) -> WindowChromeProfile {
+        if let entry = entries[id], isFresh(entry, id: id, win: win, size: size) {
+            return entry.profile
+        }
+        let resolved = resolveWindowChromeProfileUncached(win: win, id: id, pos: pos,
+                                                          size: size, pid: pid, title: title)
+        entries[id] = Entry(element: win, profile: resolved, size: size,
+                            resolvedAt: CFAbsoluteTimeGetCurrent())
+        pruneIfNeeded()
+        return resolved
+    }
+
+    // 双击判定只需要标题栏命中高度：profile 新鲜时直接返回，第二次点击不必再
+    // 付一次完整的 chrome 解析。
+    func cachedHitBarHeight(id: CGWindowID, win: AXUIElement, size: CGSize) -> CGFloat? {
+        guard let entry = entries[id], isFresh(entry, id: id, win: win, size: size) else { return nil }
+        return entry.profile.hitBarHeight
+    }
+
+    private func isFresh(_ entry: Entry, id: CGWindowID, win: AXUIElement, size: CGSize) -> Bool {
+        CFAbsoluteTimeGetCurrent() - entry.resolvedAt < ttl
+            && CFEqual(win, entry.element)
+            && abs(size.width - entry.size.width) <= sizeTolerance
+            && abs(size.height - entry.size.height) <= sizeTolerance
+    }
+
+    private func pruneIfNeeded() {
+        guard entries.count > maxEntries else { return }
+        let now = CFAbsoluteTimeGetCurrent()
+        // 先按 TTL 清掉过期项；仍超限（短时间大量不同窗口）就丢最旧的一个。
+        entries = entries.filter { now - $0.value.resolvedAt < ttl }
+        while entries.count > maxEntries {
+            guard let oldest = entries.min(by: { $0.value.resolvedAt < $1.value.resolvedAt }) else { break }
+            entries.removeValue(forKey: oldest.key)
+        }
+    }
+}
+
+func resolveWindowChromeProfile(win: AXUIElement, id: CGWindowID,
                                 pos: CGPoint,
                                 size: CGSize,
                                 pid: pid_t,
                                 title: String) -> WindowChromeProfile {
+    ChromeProfileCache.shared.profile(id: id, win: win, pos: pos, size: size, pid: pid, title: title)
+}
+
+private func resolveWindowChromeProfileUncached(win: AXUIElement,
+                                                id: CGWindowID,
+                                                pos: CGPoint,
+                                                size: CGSize,
+                                                pid: pid_t,
+                                                title: String) -> WindowChromeProfile {
     let hasToolbar = firstToolbar(win) != nil
     let trafficH = trafficLightHeight(of: win, winTop: pos.y)
     let adobeProfile = adobeChromeProfile(for: win, pid: pid, title: title, size: size)
@@ -986,7 +1061,7 @@ func resolveWindowChromeProfile(win: AXUIElement,
         : chromeHeight(of: win, winTop: pos.y, winSize: size, pid: pid)
     let hitBarH = standardTitleBarOnly
         ? standardCropH
-        : titlebarHitHeight(of: win, winTop: pos.y, winSize: size, pid: pid)
+        : titlebarHitHeight(of: win, id: id, winTop: pos.y, winSize: size, pid: pid)
 
     return WindowChromeProfile(hasToolbar: hasToolbar,
                                trafficLightHeight: trafficH,
@@ -1060,7 +1135,116 @@ func appBundleID(pid: pid_t) -> String {
     runningApp(pid: pid)?.bundleIdentifier ?? ""
 }
 
+// 全量窗口列表的短 TTL 缓存。
+// 折叠/展开事务内部会多次触发 CGWindowListCopyWindowInfo 全量枚举（AX→CGWindowID
+// 匹配、在屏 ID 集合、app 窗口计数、标题栏带预过滤……），同一事务里它们读到的
+// 应该是同一份列表，只需向 WindowServer 要一次。TTL 150ms 覆盖单次事务内的全部
+// 重复读取；跨事务的短暂陈旧不影响正确性——窗口 ID 稳定，快照里匹配不到时
+// windowID(of:) 还有 _AXUIElementGetWindow 兜底，且 AX 几何读取始终是实时的。
+// 单窗口查询 cgWindowInfo(id:) 不经过这里：watchdog 和折叠验证必须看到实时值。
+// 线程安全：PinnedPreview 的后台 AX 队列也会走 windowID(of:)，缓存读写用锁保护。
+final class WindowListCache {
+    static let shared = WindowListCache()
+
+    private struct Snapshot {
+        let windows: [[String: Any]]
+        let byID: [CGWindowID: [String: Any]]
+        let byPID: [pid_t: [[String: Any]]]
+    }
+
+    private struct Entry {
+        let snapshot: Snapshot
+        let at: CFAbsoluteTime
+    }
+
+    private enum Kind {
+        case onScreen   // [.optionOnScreenOnly, .excludeDesktopElements]
+        case all        // [.optionAll, .excludeDesktopElements]
+    }
+
+    private let lock = NSLock()
+    private let ttl: TimeInterval = 0.15
+    private var onScreenEntry: Entry?
+    private var allEntry: Entry?
+
+    func onScreenWindows() -> [[String: Any]] {
+        snapshot(.onScreen).windows
+    }
+
+    func onScreenWindows(ofPID pid: pid_t) -> [[String: Any]] {
+        snapshot(.onScreen).byPID[pid] ?? []
+    }
+
+    func allWindows() -> [[String: Any]] {
+        snapshot(.all).windows
+    }
+
+    func allWindows(ofPID pid: pid_t) -> [[String: Any]] {
+        snapshot(.all).byPID[pid] ?? []
+    }
+
+    func onScreenIDs() -> Set<CGWindowID> {
+        let snapshot = snapshot(.onScreen)
+        var ids = Set<CGWindowID>()
+        ids.reserveCapacity(snapshot.windows.count)
+        for info in snapshot.windows {
+            if let n = info[kCGWindowNumber as String] as? NSNumber {
+                ids.insert(CGWindowID(n.uint32Value))
+            }
+        }
+        return ids
+    }
+
+    func isOnScreen(_ id: CGWindowID) -> Bool {
+        snapshot(.onScreen).byID[id] != nil
+    }
+
+    private func snapshot(_ kind: Kind) -> Snapshot {
+        let now = CFAbsoluteTimeGetCurrent()
+        lock.lock()
+        let entry = kind == .onScreen ? onScreenEntry : allEntry
+        if let entry, now - entry.at < ttl {
+            let hit = entry.snapshot
+            lock.unlock()
+            return hit
+        }
+        lock.unlock()
+
+        // 锁外取数：WindowServer 枚举可能耗时，不阻塞其他读取方。
+        let options: CGWindowListOption = kind == .onScreen
+            ? [.optionOnScreenOnly, .excludeDesktopElements]
+            : [.optionAll, .excludeDesktopElements]
+        let windows = CGWindowListCopyWindowInfo(options, kCGNullWindowID) as? [[String: Any]] ?? []
+        let snapshot = build(windows)
+
+        lock.lock()
+        if kind == .onScreen {
+            onScreenEntry = Entry(snapshot: snapshot, at: now)
+        } else {
+            allEntry = Entry(snapshot: snapshot, at: now)
+        }
+        lock.unlock()
+        return snapshot
+    }
+
+    private func build(_ windows: [[String: Any]]) -> Snapshot {
+        var byID: [CGWindowID: [String: Any]] = [:]
+        var byPID: [pid_t: [[String: Any]]] = [:]
+        for info in windows {
+            if let n = info[kCGWindowNumber as String] as? NSNumber {
+                byID[CGWindowID(n.uint32Value)] = info
+            }
+            if let p = info[kCGWindowOwnerPID as String] as? NSNumber {
+                byPID[pid_t(p.int32Value), default: []].append(info)
+            }
+        }
+        return Snapshot(windows: windows, byID: byID, byPID: byPID)
+    }
+}
+
 func cgWindowInfo(_ id: CGWindowID) -> [String: Any]? {
+    // 单窗口直连查询，不走 WindowListCache：watchdog 追踪窗口移动、折叠验证、
+    // SLS alpha 读回都需要实时值，且这里每次只取一个窗口，本来就很廉价。
     let info = CGWindowListCopyWindowInfo([.optionIncludingWindow], id) as? [[String: Any]]
     return info?.first
 }
@@ -1533,15 +1717,11 @@ func cgWindowIsVisible(id: CGWindowID, fallbackSize: CGSize) -> Bool? {
 }
 
 func currentOnScreenWindowIDs() -> Set<CGWindowID> {
-    let windows = CGWindowListCopyWindowInfo([.optionOnScreenOnly, .excludeDesktopElements],
-                                             kCGNullWindowID) as? [[String: Any]] ?? []
-    return Set(windows.compactMap { info in
-        (info[kCGWindowNumber as String] as? NSNumber).map { CGWindowID($0.uint32Value) }
-    })
+    WindowListCache.shared.onScreenIDs()
 }
 
 func cgWindowIsCurrentlyOnScreen(_ id: CGWindowID) -> Bool {
-    currentOnScreenWindowIDs().contains(id)
+    WindowListCache.shared.isOnScreen(id)
 }
 
 func focusedWindow() -> AXUIElement? {
@@ -1596,13 +1776,16 @@ func publicWindowID(of e: AXUIElement) -> CGWindowID? {
 
 func bestPublicWindowIDMatch(pid: pid_t, axFrame: CGRect, axTitle: String,
                              options: CGWindowListOption, strictTitle: Bool = false) -> CGWindowID? {
-    let windows = CGWindowListCopyWindowInfo(options, kCGNullWindowID) as? [[String: Any]] ?? []
+    // 用缓存按 pid 预筛，只遍历目标 app 自己的窗口：一次折叠事务里同一份全量
+    // 列表会被反复枚举（appWindows 对每个 AX 窗口都会做一次 ID 匹配），
+    // 预筛后每次匹配从 O(全量窗口) 降到 O(本 app 窗口)。
+    let windows = options.contains(.optionOnScreenOnly)
+        ? WindowListCache.shared.onScreenWindows(ofPID: pid)
+        : WindowListCache.shared.allWindows(ofPID: pid)
     var best: (id: CGWindowID, score: CGFloat)?
 
     for info in windows {
-        guard let ownerPID = info[kCGWindowOwnerPID as String] as? NSNumber,
-              ownerPID.int32Value == pid,
-              let number = info[kCGWindowNumber as String] as? NSNumber,
+        guard let number = info[kCGWindowNumber as String] as? NSNumber,
               let bounds = cgWindowBounds(info) else { continue }
 
         let alpha = (info[kCGWindowAlpha as String] as? NSNumber)?.doubleValue ?? 1
@@ -1677,7 +1860,8 @@ func axChildren(_ el: AXUIElement) -> [AXUIElement] {
 // 在窗口里找工具栏（含浅层递归），用于量出真实的标题栏+工具栏高度
 func firstToolbar(_ el: AXUIElement, depth: Int = 0) -> AXUIElement? {
     if depth > 2 { return nil }
-    let kids = axChildren(el)
+    // 工具栏几乎总在子列表最前，前缀截断只为挡住极端 AX 树（数千子节点的窗口）。
+    let kids = axChildren(el).prefix(axTraversalMaxChildrenPerNode)
     for c in kids where axRole(c) == (kAXToolbarRole as String) { return c }
     for c in kids { if let t = firstToolbar(c, depth: depth + 1) { return t } }
     return nil
@@ -1716,8 +1900,10 @@ struct TopChromeControlSample {
 func collectTopChromeControlSamples(_ el: AXUIElement, winTop: CGFloat, winSize: CGSize,
                                     ignoredFrames: [CGRect] = [],
                                     depth: Int = 0, scanLimit: CGFloat = 120,
+                                    nodeBudget: inout Int,
                                     into samples: inout [TopChromeControlSample]) {
-    if depth > 6 { return }
+    if depth > 6 || nodeBudget <= 0 { return }
+    nodeBudget -= 1
     if isChromeControlRole(axRole(el)), let p = axPosition(el), let s = axSize(el) {
         let relTop = p.y - winTop
         let relBottom = relTop + s.height
@@ -1730,10 +1916,13 @@ func collectTopChromeControlSamples(_ el: AXUIElement, winTop: CGFloat, winSize:
         }
     }
 
-    for c in axChildren(el) {
+    // 每节点最多展开前 40 个子节点：顶部 chrome 控件（交通灯、搜索框、工具栏
+    // 按钮）几乎总在子列表最前，越界展开只会把预算浪费在内容区深层节点上。
+    for c in axChildren(el).prefix(axTraversalMaxChildrenPerNode) {
         collectTopChromeControlSamples(c, winTop: winTop, winSize: winSize,
                                        ignoredFrames: ignoredFrames,
                                        depth: depth + 1, scanLimit: scanLimit,
+                                       nodeBudget: &nodeBudget,
                                        into: &samples)
     }
 }
@@ -1742,9 +1931,11 @@ func firstTopChromeControlCluster(of win: AXUIElement, winTop: CGFloat, winSize:
                                   ignoredFrames: [CGRect] = [],
                                   scanLimit: CGFloat = 120) -> TopChromeControlSample? {
     var samples: [TopChromeControlSample] = []
+    var nodeBudget = axTraversalNodeBudget
     collectTopChromeControlSamples(win, winTop: winTop, winSize: winSize,
                                    ignoredFrames: ignoredFrames,
                                    scanLimit: scanLimit,
+                                   nodeBudget: &nodeBudget,
                                    into: &samples)
     guard !samples.isEmpty else { return nil }
 
@@ -1880,7 +2071,13 @@ func chromeHeight(of win: AXUIElement, winTop: CGFloat, winSize: CGSize? = nil, 
     return min(h, 300)
 }
 
-func titlebarHitHeight(of win: AXUIElement, winTop: CGFloat, winSize: CGSize, pid: pid_t) -> CGFloat {
+func titlebarHitHeight(of win: AXUIElement, id: CGWindowID,
+                       winTop: CGFloat, winSize: CGSize, pid: pid_t) -> CGFloat {
+    // 双击判定的第一下已解析过完整 profile 的话，第二下直接取缓存，不再重跑
+    // 整棵 AX 子树的 chrome 计算（cache 按元素身份 + 窗口尺寸校验新鲜度）。
+    if let cached = ChromeProfileCache.shared.cachedHitBarHeight(id: id, win: win, size: winSize) {
+        return cached
+    }
     let visualHeight = chromeHeight(of: win, winTop: winTop, winSize: winSize, pid: pid)
     if isAdobeApp(pid: pid) {
         let profile = adobeChromeProfile(for: win, pid: pid, size: winSize)
@@ -2408,6 +2605,59 @@ func quickWindowPreviewImage(id: CGWindowID, logicalSize: CGSize,
     return NSImage(cgImage: image, size: logicalSize)
 }
 
+// 截图后的标题栏条制备结果：像素分析全部在后台完成，主线程只消费这些值。
+private struct NativeStripPreparation {
+    let barH: CGFloat
+    let boundary: String
+    let strip: CGImage?
+    let brokenHealth: (Bool, String)
+    let scale: CGFloat
+    let fixedBarH: CGFloat?
+    let visualBarH: CGFloat?
+    let fallbackBarH: CGFloat
+    let standardBarH: CGFloat
+}
+
+// 纯 CPU 计算，可在任意线程执行：决定标题栏裁切高度（visual/precise chrome
+// 像素扫描）、裁切、原生条健康检查、底部圆角镜像。不触碰 AppKit/AX 状态，
+// 因此可以安全地在 pixelAnalysisQueue 上跑。
+private func prepareNativeStrip(full: CGImage, logicalSize: CGSize,
+                                profile: WindowChromeProfile, pid: pid_t) -> NativeStripPreparation {
+    let scale = CGFloat(full.width) / max(1, logicalSize.width)
+    let minimumBarH = profile.standardCropHeight
+    let standardBarH = profile.standardCropHeight
+    let fixedBarH = fixedNonstandardChromeHeight(pid: pid)
+    let visualBarH = fixedBarH == nil && profile.preciseChrome
+        ? preciseVisualChromeHeight(of: full, scale: scale, minimum: minimumBarH)
+        : nil
+    let fallbackBarH = fixedBarH
+        ?? (profile.preciseChrome
+            ? (fallbackControlPaddedChromeHeight(pid: pid, minimum: minimumBarH) ?? profile.axBarHeight)
+            : profile.axBarHeight)
+    let barH: CGFloat
+    if profile.isQuickLook {
+        barH = min(quickLookOriginalTitleBarHeight, logicalSize.height)
+    } else if profile.standardTitleBarOnly {
+        barH = standardBarH
+    } else {
+        barH = min(visualBarH ?? fallbackBarH, min(logicalSize.height, 300))
+    }
+    let cropHeight = max(1, Int(ceil(barH * scale)))
+    let boundary = fixedBarH == nil ? profile.boundaryName : "fixed"
+    guard let rawStrip = full.cropping(to: CGRect(x: 0, y: 0, width: full.width, height: cropHeight)) else {
+        return NativeStripPreparation(barH: barH, boundary: boundary, strip: nil,
+                                      brokenHealth: (false, ""), scale: scale,
+                                      fixedBarH: fixedBarH, visualBarH: visualBarH,
+                                      fallbackBarH: fallbackBarH, standardBarH: standardBarH)
+    }
+    let health = nativeTitleStripLooksBroken(rawStrip, logicalHeight: barH)
+    let strip = health.0 ? rawStrip : (mirrorRoundCorners(rawStrip) ?? rawStrip)
+    return NativeStripPreparation(barH: barH, boundary: boundary, strip: strip,
+                                  brokenHealth: health, scale: scale,
+                                  fixedBarH: fixedBarH, visualBarH: visualBarH,
+                                  fallbackBarH: fallbackBarH, standardBarH: standardBarH)
+}
+
 // MARK: - 诊断日志（写到 /tmp/windowshade.log）
 
 final class WindowShadeLogger {
@@ -2416,6 +2666,7 @@ final class WindowShadeLogger {
     private let url = URL(fileURLWithPath: "/tmp/windowshade.log")
     private let queue = DispatchQueue(label: "WindowShade.log", qos: .utility)
     private var handle: FileHandle?
+    private let maxLogSize: UInt64 = 5 * 1024 * 1024
 
     // 时间戳在后台队列格式化；Date() 捕获发生在调用线程，保证反映真实记录时刻。
     private let timeFormatter: DateFormatter = {
@@ -2445,13 +2696,32 @@ final class WindowShadeLogger {
 
     private func append(_ data: Data) {
         if handle == nil {
-            if !FileManager.default.fileExists(atPath: url.path) {
-                FileManager.default.createFile(atPath: url.path, contents: nil)
-            }
-            handle = try? FileHandle(forWritingTo: url)
-            handle?.seekToEndOfFile()
+            openHandle()
+        }
+        // 超限轮转：当前文件改名 .1（覆盖旧备份）后开新文件，避免长期运行的
+        // 菜单栏工具把 /tmp 日志无限写大、挤占磁盘。
+        if let handle, handle.offsetInFile + UInt64(data.count) > maxLogSize {
+            rotate()
         }
         handle?.write(data)
+    }
+
+    private func rotate() {
+        try? handle?.synchronize()
+        try? handle?.close()
+        handle = nil
+        let backup = URL(fileURLWithPath: url.path + ".1")
+        try? FileManager.default.removeItem(at: backup)
+        try? FileManager.default.moveItem(at: url, to: backup)
+        openHandle()
+    }
+
+    private func openHandle() {
+        if !FileManager.default.fileExists(atPath: url.path) {
+            FileManager.default.createFile(atPath: url.path, contents: nil)
+        }
+        handle = try? FileHandle(forWritingTo: url)
+        handle?.seekToEndOfFile()
     }
 }
 
@@ -2490,11 +2760,10 @@ final class ShareableContentCache {
            content.windows.contains(where: { $0.windowID == windowID }) {
             return content
         }
-        // 上面等到的快照仍不含目标窗口：没有更新请求正在路上就自己发一次；
-        // 等待期间如果已经有新请求出现（inFlight 非空），加入它而不是再抢发一次。
-        if let inFlight {
-            return try? await inFlight.value
-        }
+        // 等到的在途快照仍不含目标窗口（典型场景：窗口在枚举开始之后才创建）。
+        // 旧任务此刻已经跑完，再 await 它只会拿到同一份过期快照；必须发起新枚举。
+        // refresh() 会覆盖 inFlight 槽位，配合代数守卫避免旧任务收尾时误清掉
+        // 新任务的单飞标记（见 refresh() 的 refreshGeneration）。
         return await refresh()
     }
 
@@ -2508,11 +2777,18 @@ final class ShareableContentCache {
     }
 
     // "决定要发起 fetch"到"inFlight 被设置"之间必须没有 await：调用方（content(requiring:)
-    // 和 prefetch()）都是在同一段同步代码里确认 inFlight == nil 后立即调用这里，进入
-    // 本函数到 `inFlight = task` 这行之前也没有任何 await，因此并发调用不会互相踩掉
-    // 彼此刚设置的 inFlight、也不会触发重复的全系统枚举。
+    // 和 prefetch()）决定发起刷新时，现有 inFlight 要么为空、要么已经完成（content
+    // (requiring:) 只会在 await 完旧任务之后才走进这里），进入本函数到 `inFlight = task`
+    // 这行之前也没有任何 await，因此不会触发重复的全系统枚举。
+    // refreshGeneration 是代数守卫：content(requiring:) 发现旧快照不含目标窗口时会
+    // 立刻发起新一轮 refresh() 并覆盖 inFlight；旧一轮的 await 恢复点可能晚于这个
+    // 覆盖才执行，只有「仍是当前代数」的那一轮才有权清空 inFlight 并写缓存。
+    private var refreshGeneration: UInt64 = 0
+
     private func refresh() async -> SCShareableContent? {
         let start = CFAbsoluteTimeGetCurrent()
+        refreshGeneration &+= 1
+        let generation = refreshGeneration
         // 不继承 MainActor：窗口枚举可能持续数秒，cache 状态仍在主 actor 串行化，
         // 但系统枚举及其完成回调不会占用主线程执行器。
         let task = Task.detached(priority: .userInitiated) {
@@ -2520,6 +2796,10 @@ final class ShareableContentCache {
         }
         inFlight = task
         let content = try? await task.value
+        guard refreshGeneration == generation else {
+            // 已被更新的刷新取代：缓存状态由新代数负责，这里只把结果交还调用方。
+            return content
+        }
         inFlight = nil
         if let content {
             cached = content
@@ -2620,10 +2900,7 @@ func dumpWindow(_ win: AXUIElement) {
 // 带高取 chromeHeight 的硬上限 300pt，宁可放过（返回 true 走原有完整路径），
 // 不可错杀；因此命中标题栏的行为与过去完全一致，只是内容区双击不再付 AX 成本。
 func pointMayLieInTitlebarBand(_ point: CGPoint) -> Bool {
-    guard let windows = CGWindowListCopyWindowInfo([.optionOnScreenOnly, .excludeDesktopElements],
-                                                   kCGNullWindowID) as? [[String: Any]] else {
-        return true
-    }
+    let windows = WindowListCache.shared.onScreenWindows()
     let maxTitlebarBand: CGFloat = 300
     for info in windows {
         guard let bounds = cgWindowBounds(info) else { continue }
@@ -2636,9 +2913,14 @@ func pointMayLieInTitlebarBand(_ point: CGPoint) -> Bool {
 
 func eventTapCallback(proxy: CGEventTapProxy, type: CGEventType,
                       event: CGEvent, refcon: UnsafeMutableRawPointer?) -> Unmanaged<CGEvent>? {
-    // 系统在高负载/输入洪泛时会把 tap 关掉，需要重新启用
-    if type == .tapDisabledByTimeout || type == .tapDisabledByUserInput {
+    // 系统在高负载时会把 tap 关掉，需要重新启用
+    if type == .tapDisabledByTimeout {
         if let tap = appDelegate?.eventTap { CGEvent.tapEnable(tap: tap, enable: true) }
+        return Unmanaged.passUnretained(event)
+    }
+    // 输入洪泛导致的禁用：立即重启用会和系统反复打架，退避后再恢复。
+    if type == .tapDisabledByUserInput {
+        appDelegate?.scheduleEventTapReenable(delay: 1.5)
         return Unmanaged.passUnretained(event)
     }
     if appDelegate?.shouldBypassTitlebarEventTap == true {
@@ -3563,9 +3845,10 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSMenuDelegate {
     }
 
     // reconcile 需要知道真实窗口是否仍存在/最小化，但这些 AX 读取可能被忙 app
-    // 阻塞数秒。快照在串行后台队列采集，主线程仅应用已经完成的结果。
+    // 阻塞数秒。快照在后台按 app 并行采集，主线程仅应用已经完成的结果。
     private struct ReconcileAXTarget {
         let id: CGWindowID
+        let pid: pid_t
         let element: AXUIElement
         let needsMinimizedState: Bool
     }
@@ -3575,6 +3858,13 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSMenuDelegate {
         let position: CGPoint?
         let size: CGSize?
         let isMinimized: Bool?
+    }
+
+    // 救援扫描产出的待写回动作：扫描（AX 读取）在后台，写回在主线程。
+    private struct OffscreenRescueAction {
+        let win: AXUIElement
+        let target: CGPoint
+        let size: CGSize
     }
 
     private var statusItem: NSStatusItem!
@@ -3597,6 +3887,21 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSMenuDelegate {
     private var scaleMinimizeActive = false           // 临时把最小化动画改成 scale（退出还原用户原设置）
     private var originalDockMinimizeEffect: String?   // nil = 原本没有设置 mineffect
     private var dockMinimizeEffectChanged = false
+    // Dock 会话逻辑的后台串行队列：defaults 读写和 killall Dock 都是子进程同步
+    // 调用，不该占用主线程（启动/菜单切换都走这里）。实例状态在后台算好、回主
+    // 线程应用；退出用 dockWorkQueue.sync 兜底，按持久化的 session 键恢复，
+    // 天然抗「启用/恢复」在途操作交错。
+    private let dockWorkQueue = DispatchQueue(label: "WindowShade.dock", qos: .utility)
+    private var dockOperationInFlight = false         // 主线程专用：防重复入队启用
+    // 截图像素分析（chrome 高度扫描、健康检查、圆角镜像）用的后台队列：纯 CPU
+    // 计算（4K Retina 全宽可达数 MB 缓冲），挪出主线程避免折叠瞬间卡 UI。
+    private let pixelAnalysisQueue = DispatchQueue(label: "WindowShade.pixels", qos: .userInitiated)
+    // 救援扫描的后台队列：journal 逐 app AX 枚举和广域兜底扫描可能被忙 app 拖住
+    // 数秒，必须离开主线程。窗口位置写回统一在主线程执行，写回前复查 shaded
+    // 是否为空，避免与正在进行的折叠操作交错。
+    private let rescueWorkQueue = DispatchQueue(label: "WindowShade.rescue", qos: .utility)
+    private var isRescuingOffscreenWindows = false
+    private var isRescueQueued = false
     private var tapSetupTimer: Timer?
     private var reconcileTimer: Timer?
     private var isReconcilingShadedWindows = false
@@ -3664,6 +3969,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSMenuDelegate {
     }()
     private var translucent: Bool = UserDefaults.standard.bool(forKey: shadeTranslucentDefaultsKey)
     var eventTap: CFMachPort?                          // 供 C 回调重新启用
+    private var eventTapReenableWorkItem: DispatchWorkItem?
     private let offscreen = CGPoint(x: -32000, y: -32000)
     private let defaultShadeOptions = ShadeInvocationOptions(forcedAppearanceMode: nil,
                                                              capturePreview: true,
@@ -5211,12 +5517,14 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSMenuDelegate {
         // 检测必须快于 Space 滑动动画（~300ms）：密集轮询 + SLSManagedDisplay-
         // SetCurrentSpace 瞬时切换（无滑动动画），在动画完成前拉回，把"跳走再
         // 滑回来"的双重闪动压缩成一瞬。每次检查只是一个 WindowServer 读，极廉价。
+        // 只覆盖系统级联跳变的窗口期：超过 ~0.55s 的 Space 差异更可能是用户自己
+        // 的切换动作（折叠后主动去别的 Space），旧实现 2.5s 内会把用户切走拽回。
         pendingSpaceReturns[id] = PendingSpaceReturn(displayID: displayID,
                                                      sourceSpaceID: sourceSpaceID,
-                                                     deadline: Date().addingTimeInterval(2.5))
+                                                     deadline: Date().addingTimeInterval(0.8))
         wlog("space: scheduled return guard id=\(id) sid=\(sourceSpaceID)")
 
-        for delay in [0.05, 0.1, 0.15, 0.22, 0.3, 0.45, 0.7, 1.0, 1.5, 2.2] {
+        for delay in [0.05, 0.1, 0.15, 0.22, 0.3, 0.42, 0.55] {
             DispatchQueue.main.asyncAfter(deadline: .now() + delay) { [weak self] in
                 self?.restorePendingSourceSpaceIfNeeded(id: id, reason: "post-shade-\(String(format: "%.2f", delay))")
             }
@@ -5910,35 +6218,47 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSMenuDelegate {
     }
 
     private func enableScaleMinimizeEffectForSession() {
-        guard !scaleMinimizeActive else { return }
-        recoverStaleDockMinimizeEffectSessionIfNeeded()
-        originalDockMinimizeEffect = readDefaults(["read", "com.apple.dock", "mineffect"])
-        let originalWasScale = originalDockMinimizeEffect == "scale"
-        if !originalWasScale {
-            persistDockMinimizeEffectSession(original: originalDockMinimizeEffect)
-        } else {
-            clearDockMinimizeEffectSession()
+        guard !scaleMinimizeActive, !dockOperationInFlight else { return }
+        dockOperationInFlight = true
+        dockWorkQueue.async { [weak self] in
+            guard let self else { return }
+            self.recoverStaleDockMinimizeEffectSessionIfNeeded()
+            let original = self.readDefaults(["read", "com.apple.dock", "mineffect"])
+            let originalWasScale = original == "scale"
+            if !originalWasScale {
+                self.persistDockMinimizeEffectSession(original: original)
+            } else {
+                self.clearDockMinimizeEffectSession()
+            }
+            let verified = self.writeDockMinimizeEffect("scale", reason: "session-start")
+            // Even when defaults already says "scale", the running Dock process may
+            // still be using Genie until it reloads preferences. Restarting Dock here
+            // makes WindowShade's minimize fallback match the product metaphor.
+            self.killDock()
+            DispatchQueue.main.async { [weak self] in
+                guard let self else { return }
+                self.dockOperationInFlight = false
+                self.originalDockMinimizeEffect = original
+                self.dockMinimizeEffectChanged = verified && !originalWasScale
+                self.scaleMinimizeActive = true
+            }
         }
-        let verified = writeDockMinimizeEffect("scale", reason: "session-start")
-        // Even when defaults already says "scale", the running Dock process may
-        // still be using Genie until it reloads preferences. Restarting Dock here
-        // makes WindowShade's minimize fallback match the product metaphor.
-        killDock()
-        dockMinimizeEffectChanged = verified && !originalWasScale
-        scaleMinimizeActive = true
     }
 
     private func restoreDockMinimizeEffect() {
-        guard dockMinimizeEffectChanged else {
-            originalDockMinimizeEffect = nil
-            clearDockMinimizeEffectSession()
-            return
+        // 恢复基于持久化的 session 键而不是实例状态：与在途的 enable 在同一个
+        // 串行队列上按 FIFO 执行，天然得到「先启用后还原」的正确顺序。
+        dockWorkQueue.async { [weak self] in
+            guard let self else { return }
+            self.recoverStaleDockMinimizeEffectSessionIfNeeded()
+            DispatchQueue.main.async { [weak self] in
+                guard let self else { return }
+                self.dockOperationInFlight = false
+                self.originalDockMinimizeEffect = nil
+                self.dockMinimizeEffectChanged = false
+                self.scaleMinimizeActive = false
+            }
         }
-        restoreDockMinimizeEffect(original: originalDockMinimizeEffect)
-        originalDockMinimizeEffect = nil
-        dockMinimizeEffectChanged = false
-        clearDockMinimizeEffectSession()
-        killDock()
     }
 
     private func shadeJournalEntries() -> [[String: Any]] {
@@ -6106,9 +6426,14 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSMenuDelegate {
         return cleanDisplayTitle(axTitle(win)) == expectedTitle
     }
 
-    private func rescueJournaledOffscreenWindows(targetTopLeft: CGPoint) -> Int {
+    // 扫描 journal 中记录的停车窗口，产出待写回动作（不在这里写回；写回统一在
+    // 主线程执行，见 rescueOffscreenWindows）。SLS alpha 恢复是纯 WindowServer
+    // 调用、无 UI 依赖，可直接在后台执行。
+    private func collectJournalRescueActions(targetTopLeft: CGPoint,
+                                             into actions: inout [OffscreenRescueAction])
+        -> (count: Int, rescuedIDs: Set<CGWindowID>) {
         let entries = shadeJournalEntries()
-        guard !entries.isEmpty else { return 0 }
+        guard !entries.isEmpty else { return (0, []) }
 
         var rescuedIDs = Set<CGWindowID>()
         var rescued = 0
@@ -6153,32 +6478,83 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSMenuDelegate {
                     let frame = cocoaFrame(fromAXPosition: target, size: originalSize)
                     safeTarget = axPosition(fromCocoaFrame: clampedFrame(frame, margin: 16))
                 }
-                setAXSize(win, originalSize)
-                setAXPosition(win, safeTarget)
+                actions.append(OffscreenRescueAction(win: win, target: safeTarget, size: originalSize))
                 rescuedIDs.insert(id)
                 rescued += 1
                 wlog("journal: rescued id=\(id) app=\(journalString(entry, "appName")) target=(\(Int(safeTarget.x)),\(Int(safeTarget.y)))")
             }
         }
 
-        if !rescuedIDs.isEmpty {
-            saveShadeJournalEntries(entries.filter { entry in
-                guard let id = journalID(entry) else { return false }
-                return !rescuedIDs.contains(id)
-            })
+        return (rescued, rescuedIDs)
+    }
+
+    // 主线程专用：清掉已救援的 journal 条目。写回放在主线程执行，避免和 shade
+    // 的 journal 写入（record/update/clear）在后台扫描线程上竞争丢条目。
+    private func pruneRescuedJournalEntries(rescuedIDs: Set<CGWindowID>) {
+        guard !rescuedIDs.isEmpty else { return }
+        let entries = shadeJournalEntries()
+        let filtered = entries.filter { entry in
+            guard let id = journalID(entry) else { return false }
+            return !rescuedIDs.contains(id)
+        }
+        if filtered.count != entries.count {
+            saveShadeJournalEntries(filtered)
+            wlog("journal: pruned \(entries.count - filtered.count) rescued entries")
+        }
+    }
+
+    // 广域兜底扫描：候选探测用一次 WindowServer 查询，而不是逐 app 同步 AX 枚举。
+    // CGWindowList 与目标 app 是否响应无关；旧的逐 app kAXWindowsAttribute 扫描
+    // 会让每个慢 app 吃满 2s AX 超时，实测把主线程一次性拖住 57s（启动、reconcile
+    // 空闲重试、屏幕参数变化都会走到这里——正是"总是卡住"的主根因）。
+    // 只对真的有窗口停在 WindowShade 停车点的 app 做定向 AX 解析；正常情况下候选为零。
+    // 停车点见 axOffscreenHide：主点 (-32000,-32000)，备选 (-12000, y)/(x, -12000)/
+    // (-12000,-12000)。判据必须覆盖全部停车点：任一轴超出 -11000 即候选；
+    // AX 阶段再加"确实不可见"约束，避免误动极端多显示器排列下的真实窗口。
+    private func collectParkedWindowRescueActions(targetTopLeft: CGPoint,
+                                                  into actions: inout [OffscreenRescueAction]) -> Int {
+        let parkedAxisThreshold: CGFloat = -11000
+        let allWindows = WindowListCache.shared.allWindows()
+        var parkedPIDs: Set<pid_t> = []
+        for info in allWindows {
+            guard let bounds = cgWindowBounds(info),
+                  bounds.minX < parkedAxisThreshold || bounds.minY < parkedAxisThreshold,
+                  let owner = info[kCGWindowOwnerPID as String] as? NSNumber else { continue }
+            parkedPIDs.insert(owner.int32Value)
         }
 
+        var rescued = 0
+        for pid in parkedPIDs {
+            let appEl = AXUIElementCreateApplication(pid)
+            var ref: CFTypeRef?
+            guard AXUIElementCopyAttributeValue(appEl, kAXWindowsAttribute as CFString, &ref) == .success,
+                  let windows = ref as? [AXUIElement] else { continue }
+
+            for win in windows {
+                guard let pos = axPosition(win), let size = axSize(win) else { continue }
+                // 只救我们自己的停车点附近、且确实不在任何屏幕可见区的窗口。
+                guard pos.x < parkedAxisThreshold || pos.y < parkedAxisThreshold else { continue }
+                guard !windowIsVisible(pos: pos, size: size) else { continue }
+                actions.append(OffscreenRescueAction(
+                    win: win,
+                    target: CGPoint(x: targetTopLeft.x + CGFloat(rescued * 24),
+                                    y: targetTopLeft.y + CGFloat(rescued * 24)),
+                    size: size))
+                rescued += 1
+            }
+        }
         return rescued
     }
 
     @objc func toggleMinimizeEffect(_ sender: NSMenuItem) {
-        if scaleMinimizeActive {
-            restoreDockMinimizeEffect()
-            scaleMinimizeActive = false
-        } else {
+        let enabling = !scaleMinimizeActive
+        if enabling {
             enableScaleMinimizeEffectForSession()
+        } else {
+            restoreDockMinimizeEffect()
         }
-        sender.state = scaleMinimizeActive ? .on : .off
+        // 操作在后台执行，先按意图更新 UI；完成回调会再校正实例状态。
+        sender.state = enabling ? .on : .off
         rebuildMenu()
     }
 
@@ -6190,10 +6566,14 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSMenuDelegate {
             self.pinnedPreviewFocusMonitor = nil
         }
         pinnedPreviewController.stopAllPreviews(reason: "terminate")
-        if scaleMinimizeActive {
-            restoreDockMinimizeEffect()
-            scaleMinimizeActive = false
+        eventTapReenableWorkItem?.cancel()
+        eventTapReenableWorkItem = nil
+        // 退出前还原 Dock 偏好：同步等在途子进程排空，再按持久化 session 键
+        // 恢复（session 键在改动前写入，异步启用/恢复交错下也正确）。
+        dockWorkQueue.sync {
+            recoverStaleDockMinimizeEffectSessionIfNeeded()
         }
+        scaleMinimizeActive = false
         WindowShadeLogger.shared.flushAndClose()
     }
 
@@ -6212,8 +6592,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSMenuDelegate {
     // 后续的激活/聚焦还可能把系统拽回那个 Space。这里在当前 Space 上按 z 序找该 app
     // 的最前真实窗口作为替代目标。
     private func retargetToActiveSpaceWindow(pid: pid_t) -> (AXUIElement, CGWindowID)? {
-        let onScreen = CGWindowListCopyWindowInfo([.optionOnScreenOnly, .excludeDesktopElements],
-                                                  kCGNullWindowID) as? [[String: Any]] ?? []
+        let onScreen = WindowListCache.shared.onScreenWindows()
         // 在屏列表自前向后有序：取该 app 第一个不透明的 layer-0 窗口（排除我们的卷帘条）。
         guard let candidate = onScreen.first(where: { info in
             guard let owner = info[kCGWindowOwnerPID as String] as? NSNumber,
@@ -6590,7 +6969,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSMenuDelegate {
         if UserDefaults.standard.bool(forKey: shadeDebugWindowDumpDefaultsKey) {
             dumpWindow(win)
         }
-        let profile = resolveWindowChromeProfile(win: win, pos: pos, size: size, pid: pid, title: title)
+        let profile = resolveWindowChromeProfile(win: win, id: id, pos: pos, size: size, pid: pid, title: title)
         guard let plan = makeShadePlan(win: win, pos: pos, size: size,
                                        pid: pid, profile: profile,
                                        options: options) else {
@@ -6842,38 +7221,30 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSMenuDelegate {
             if shouldParkFocus {
                 releaseFocusParking(reactivate: nil)
             }
-            // 裁出顶部标题栏条（CGImage 像素坐标，左上原点）
-            let scale = CGFloat(full.width) / size.width
-            let minimumBarH = profile.standardCropHeight
-            let standardTitleBarCropH = profile.standardCropHeight
-            let fixedBarH = fixedNonstandardChromeHeight(pid: pid)
-            let visualBarH = fixedBarH == nil && profile.preciseChrome ? preciseVisualChromeHeight(of: full, scale: scale, minimum: minimumBarH) : nil
-            let fallbackBarH = fixedBarH ?? (profile.preciseChrome ? (fallbackControlPaddedChromeHeight(pid: pid, minimum: minimumBarH) ?? profile.axBarHeight) : profile.axBarHeight)
-            let isQuickLook = profile.isQuickLook
-            let barH: CGFloat
-            if isQuickLook {
-                barH = min(quickLookOriginalTitleBarHeight, size.height)
-            } else if profile.standardTitleBarOnly {
-                barH = standardTitleBarCropH
-            } else {
-                barH = min(visualBarH ?? fallbackBarH, min(size.height, 300))
+            // 裁出顶部标题栏条：chrome 高度判定、健康检查、圆角镜像都是纯 CPU
+            // 像素计算（4K Retina 全宽可达数 MB），挪到后台队列执行，避免在
+            // MainActor 上分配大缓冲并逐像素扫描。AX 命中区和 AppKit 覆盖层
+            // 仍留在主线程。
+            let preparation = await withCheckedContinuation {
+                (continuation: CheckedContinuation<NativeStripPreparation, Never>) in
+                pixelAnalysisQueue.async { [full, size, profile, pid] in
+                    continuation.resume(returning: prepareNativeStrip(full: full, logicalSize: size,
+                                                                      profile: profile, pid: pid))
+                }
             }
+            let barH = preparation.barH
             let buttonRects = trafficLightRects(
                 trafficLightRects(win, winTopLeft: pos, barH: barH),
                 normalizedFor: profile.trafficLights
             )  // 最终高度确定后再换算命中区
-            let cropHeight = max(1, Int(ceil(barH * scale)))
-            let boundary = fixedBarH == nil ? profile.boundaryName : "fixed"
             let windowManagementCapability = realWindowManagementCapability(win)
-            wlog("    capture full=\(full.width)x\(full.height) scale=\(scale) fixedBarH=\(fixedBarH.map { String(format: "%.1f", $0) } ?? "-") visualBarH=\(visualBarH.map { String(Int($0)) } ?? "-") fallbackBarH=\(Int(fallbackBarH)) standardBarH=\(String(format: "%.1f", standardTitleBarCropH)) finalBarH=\(String(format: "%.1f", barH)) buttons=\(buttonRects.count) windowManagement=\(windowManagementCapability) cropPxH=\(cropHeight) boundary=\(boundary)")
-            let stripPx = CGRect(x: 0, y: 0, width: full.width, height: cropHeight)
-            guard let strip = full.cropping(to: stripPx) else {
+            wlog("    capture full=\(full.width)x\(full.height) scale=\(preparation.scale) fixedBarH=\(preparation.fixedBarH.map { String(format: "%.1f", $0) } ?? "-") visualBarH=\(preparation.visualBarH.map { String(Int($0)) } ?? "-") fallbackBarH=\(Int(preparation.fallbackBarH)) standardBarH=\(String(format: "%.1f", preparation.standardBarH)) finalBarH=\(String(format: "%.1f", barH)) buttons=\(buttonRects.count) windowManagement=\(windowManagementCapability) cropPxH=\(max(1, Int(ceil(barH * preparation.scale)))) boundary=\(preparation.boundary)")
+            guard let strip = preparation.strip else {
                 activateApp(pid: pid)
                 quietNotice("折叠失败", log: "shade: 裁剪失败")
                 return
             }
-            let stripHealth = nativeTitleStripLooksBroken(strip, logicalHeight: barH)
-            if stripHealth.0 {
+            if preparation.brokenHealth.0 {
                 let proxyBarH = min(proxyTitleBarHeight, min(size.height, 300))
                 let canProxyResize = allowsProxyHorizontalResize(win, pid: pid)
                 let overlay = makeProxyOverlay(axPos: pos, width: size.width, height: proxyBarH,
@@ -6882,13 +7253,12 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSMenuDelegate {
                                                windowManagement: windowManagementCapability,
                                                trafficLights: profile.trafficLights)
                 let preview = NSImage(cgImage: full, size: size)
-                wlog("    native strip invalid → proxy fallback id=\(id) app=\(appName) reason=\(stripHealth.1)")
+                wlog("    native strip invalid → proxy fallback id=\(id) app=\(appName) reason=\(preparation.brokenHealth.1)")
                 installOverlay(overlay, mode: .proxyTitleBar, previewImage: preview)
                 return
             }
-            let rounded = mirrorRoundCorners(strip) ?? strip      // 底部圆角镜像顶部，必然一致
 
-            let overlay = makeScreenshotOverlay(image: rounded, axPos: pos, width: size.width, height: barH,
+            let overlay = makeScreenshotOverlay(image: strip, axPos: pos, width: size.width, height: barH,
                                                 buttons: buttonRects, id: id,
                                                 windowManagement: windowManagementCapability,
                                                 trafficLights: profile.trafficLights)
@@ -7004,8 +7374,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSMenuDelegate {
         }
 
         // 2) 当前 Space 最顶层的其他 regular app 窗口。
-        let windows = CGWindowListCopyWindowInfo([.optionOnScreenOnly, .excludeDesktopElements],
-                                                 kCGNullWindowID) as? [[String: Any]] ?? []
+        let windows = WindowListCache.shared.onScreenWindows()
         for info in windows {
             guard let owner = (info[kCGWindowOwnerPID as String] as? NSNumber)?.int32Value,
                   owner != pid, owner != selfPid,
@@ -7914,24 +8283,27 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSMenuDelegate {
         let token = UUID()
         restorePinTokens[id] = token
 
-        func attempt(_ label: String) {
+        // 前几次尝试只校正几何，最后一次才 raise+focus：旧实现每次尝试都重新
+        // 激活/聚焦，restoreAll 批量展开时会造成焦点连环跳（每次 3~4 次 focus）。
+        func attempt(_ label: String, focus: Bool) {
             guard restorePinTokens[id] == token else { return }
             let win = applyRestoredGeometry(state, to: pos, label: label, reason: reason)
-            raiseAXWindow(win)
-            focusAXWindow(win, pid: state.pid)
+            if focus {
+                raiseAXWindow(win)
+                focusAXWindow(win, pid: state.pid)
+            }
         }
 
-        // Hidden/minimized windows can snap back to their pre-minimize frame while
-        // AppKit/Dock finishes restoring them. Re-apply the strip's current frame
-        // after those animations so dragging the folded shell becomes authoritative.
-        DispatchQueue.main.asyncAfter(deadline: .now() + 0.08) { attempt("after-80ms") }
-        DispatchQueue.main.asyncAfter(deadline: .now() + 0.25) { attempt("after-250ms") }
-        DispatchQueue.main.asyncAfter(deadline: .now() + 0.55) { attempt("after-550ms") }
         // Safari 等 app 从 unhide/unminimize 自恢复窗口帧可晚于 550ms（"大窗口
         // 恢复成小窗口"的窗口期），只对这两种 hide 方式追加一次晚校验。
         let needsLatePin = state.hide == .hidden || state.hide == .minimized
+        DispatchQueue.main.asyncAfter(deadline: .now() + 0.08) { attempt("after-80ms", focus: true) }
+        DispatchQueue.main.asyncAfter(deadline: .now() + 0.25) { attempt("after-250ms", focus: false) }
         if needsLatePin {
-            DispatchQueue.main.asyncAfter(deadline: .now() + 1.10) { attempt("after-1100ms") }
+            DispatchQueue.main.asyncAfter(deadline: .now() + 0.55) { attempt("after-550ms", focus: false) }
+            DispatchQueue.main.asyncAfter(deadline: .now() + 1.10) { attempt("after-1100ms", focus: true) }
+        } else {
+            DispatchQueue.main.asyncAfter(deadline: .now() + 0.55) { attempt("after-550ms", focus: true) }
         }
         DispatchQueue.main.asyncAfter(deadline: .now() + (needsLatePin ? 1.25 : 0.70)) { [weak self] in
             if self?.restorePinTokens[id] == token {
@@ -8161,21 +8533,40 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSMenuDelegate {
 
         let onScreenIDs = currentOnScreenWindowIDs()
         let targets = shaded.map { id, state in
-            ReconcileAXTarget(id: id, element: state.element, needsMinimizedState: state.hide == .minimized)
+            ReconcileAXTarget(id: id, pid: state.pid, element: state.element,
+                              needsMinimizedState: state.hide == .minimized)
         }
         reconcileAXWorkQueue.async { [weak self] in
             let startedAt = CFAbsoluteTimeGetCurrent()
-            let snapshots = targets.map { target -> ReconcileAXSnapshot in
-                guard let size = axSize(target.element) else {
-                    return ReconcileAXSnapshot(id: target.id, position: nil, size: nil, isMinimized: nil)
+            // 按 app 分组：不同 app 的 AX IPC 互不阻塞，可以并行采集；同 app 的
+            // 窗口串行读取，避免对忙 app 并发轰炸。忙 app 单次 2s 超时不再拖住
+            // 其他 app 的快照（旧实现串行累加，3 个忙 app 就是 6s+）。
+            let grouped = Dictionary(grouping: targets, by: { $0.pid })
+            let group = DispatchGroup()
+            let resultLock = NSLock()
+            var snapshots: [ReconcileAXSnapshot] = []
+            for pidTargets in grouped.values {
+                group.enter()
+                DispatchQueue.global(qos: .utility).async {
+                    let local = pidTargets.map { target -> ReconcileAXSnapshot in
+                        guard let size = axSize(target.element) else {
+                            return ReconcileAXSnapshot(id: target.id, position: nil,
+                                                       size: nil, isMinimized: nil)
+                        }
+                        return ReconcileAXSnapshot(id: target.id,
+                                                   position: axPosition(target.element),
+                                                   size: size,
+                                                   isMinimized: target.needsMinimizedState
+                                                       ? axBoolAttribute(target.element, kAXMinimizedAttribute as String)
+                                                       : nil)
+                    }
+                    resultLock.lock()
+                    snapshots.append(contentsOf: local)
+                    resultLock.unlock()
+                    group.leave()
                 }
-                return ReconcileAXSnapshot(id: target.id,
-                                           position: axPosition(target.element),
-                                           size: size,
-                                           isMinimized: target.needsMinimizedState
-                                               ? axBoolAttribute(target.element, kAXMinimizedAttribute as String)
-                                               : nil)
             }
+            group.wait()
             let elapsedMilliseconds = Int((CFAbsoluteTimeGetCurrent() - startedAt) * 1000)
             DispatchQueue.main.async { [weak self] in
                 self?.applyReconcileAXSnapshots(snapshots, onScreenIDs: onScreenIDs,
@@ -8451,8 +8842,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSMenuDelegate {
                 pids.append(app.processIdentifier)
             }
         }
-        let cgWindows = CGWindowListCopyWindowInfo([.optionOnScreenOnly, .excludeDesktopElements],
-                                                   kCGNullWindowID) as? [[String: Any]] ?? []
+        let cgWindows = WindowListCache.shared.onScreenWindows()
         for info in cgWindows {
             let ownerName = ((info[kCGWindowOwnerName as String] as? String) ?? "").lowercased()
             let windowName = cleanDisplayTitle(cgWindowName(info)).lowercased()
@@ -9062,64 +9452,68 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSMenuDelegate {
     }
 
     private func rescueOffscreenWindows(silent: Bool) {
-        guard ensureAccessibility() else {
-            showPermissionOnboardingIfNeeded(force: true)
-            if !silent { quietNotice("需要权限", log: "rescue: 无辅助功能权限") }
+        guard !isRescuingOffscreenWindows else {
+            isRescueQueued = true
             return
         }
-        pruneShadeJournal(reason: "rescue")
+        isRescuingOffscreenWindows = true
+        // 屏幕几何在主线程取好（NSScreen 只在主线程访问）；AX 扫描在后台。
         guard let screen = NSScreen.main ?? NSScreen.screens.first else {
+            isRescuingOffscreenWindows = false
             if !silent { quietNotice("没有可用屏幕", log: "rescue: no screen") }
             return
         }
         let targetTopLeft = CGPoint(x: screen.visibleFrame.minX + 80,
                                     y: coordinateBaselineY() - (screen.visibleFrame.maxY - 80))
-        var rescued = rescueJournaledOffscreenWindows(targetTopLeft: targetTopLeft)
-        if rescued > 0 {
-            wlog("rescueOffscreenWindows: journal rescued=\(rescued)")
-            return
-        }
-
-        // 广域兜底扫描：候选探测用一次 WindowServer 查询，而不是逐 app 同步 AX 枚举。
-        // CGWindowList 与目标 app 是否响应无关；旧的逐 app kAXWindowsAttribute 扫描
-        // 会让每个慢 app 吃满 2s AX 超时，实测把主线程一次性拖住 57s（启动、reconcile
-        // 空闲重试、屏幕参数变化都会走到这里——正是"总是卡住"的主根因）。
-        // 只对真的有窗口停在 WindowShade 停车点的 app 做定向 AX 解析；正常情况下候选为零。
-        // 停车点见 axOffscreenHide：主点 (-32000,-32000)，备选 (-12000, y)/(x, -12000)/
-        // (-12000,-12000)。判据必须覆盖全部停车点：任一轴超出 -11000 即候选；
-        // AX 阶段再加"确实不可见"约束，避免误动极端多显示器排列下的真实窗口。
-        let parkedAxisThreshold: CGFloat = -11000
-        let allWindows = CGWindowListCopyWindowInfo([.optionAll, .excludeDesktopElements],
-                                                    kCGNullWindowID) as? [[String: Any]] ?? []
-        var parkedPIDs: Set<pid_t> = []
-        for info in allWindows {
-            guard let bounds = cgWindowBounds(info),
-                  bounds.minX < parkedAxisThreshold || bounds.minY < parkedAxisThreshold,
-                  let owner = info[kCGWindowOwnerPID as String] as? NSNumber else { continue }
-            parkedPIDs.insert(owner.int32Value)
-        }
-
-        for pid in parkedPIDs {
-            let appEl = AXUIElementCreateApplication(pid)
-            var ref: CFTypeRef?
-            guard AXUIElementCopyAttributeValue(appEl, kAXWindowsAttribute as CFString, &ref) == .success,
-                  let windows = ref as? [AXUIElement] else { continue }
-
-            for win in windows {
-                guard let pos = axPosition(win), let size = axSize(win) else { continue }
-                // 只救我们自己的停车点附近、且确实不在任何屏幕可见区的窗口。
-                guard pos.x < parkedAxisThreshold || pos.y < parkedAxisThreshold else { continue }
-                guard !windowIsVisible(pos: pos, size: size) else { continue }
-                setAXPosition(win, CGPoint(x: targetTopLeft.x + CGFloat(rescued * 24),
-                                           y: targetTopLeft.y + CGFloat(rescued * 24)))
-                raiseAXWindow(win)
-                rescued += 1
+        let finish: (String?) -> Void = { [weak self] notice in
+            DispatchQueue.main.async { [weak self] in
+                guard let self else { return }
+                self.isRescuingOffscreenWindows = false
+                if let notice {
+                    self.quietNotice(notice, log: "rescue: \(notice)")
+                }
+                if self.isRescueQueued {
+                    self.isRescueQueued = false
+                    self.rescueOffscreenWindows(silent: true)
+                }
             }
         }
-
-        wlog("rescueOffscreenWindows: rescued=\(rescued)")
-        if rescued == 0 && !silent {
-            quietNotice("没有需要救援的窗口", log: "rescue: no windows rescued")
+        rescueWorkQueue.async { [weak self] in
+            guard let self else { return }
+            guard AXIsProcessTrusted() else {
+                DispatchQueue.main.async { self.showPermissionOnboardingIfNeeded(force: true) }
+                finish(silent ? nil : "需要权限")
+                return
+            }
+            var actions: [OffscreenRescueAction] = []
+            let journalResult = self.collectJournalRescueActions(targetTopLeft: targetTopLeft, into: &actions)
+            var rescued = journalResult.count
+            if rescued == 0 {
+                rescued += self.collectParkedWindowRescueActions(targetTopLeft: targetTopLeft, into: &actions)
+            } else {
+                wlog("rescueOffscreenWindows: journal rescued=\(rescued)")
+            }
+            let rescuedIDs = journalResult.rescuedIDs
+            // 写回统一在主线程：若扫描期间用户折了窗口（shaded 非空），放弃这批
+            // 写回，避免把刚停车的窗口又挪回可见区；journal 清理也回主线程写，
+            // 避免与 shade 的 journal 写入竞争。
+            DispatchQueue.main.async { [weak self] in
+                guard let self else { return }
+                if !self.shaded.isEmpty {
+                    wlog("rescue: shaded windows appeared during scan; skip applying \(actions.count) actions")
+                    finish(nil)
+                    return
+                }
+                self.pruneShadeJournal(reason: "rescue")
+                self.pruneRescuedJournalEntries(rescuedIDs: rescuedIDs)
+                for action in actions {
+                    setAXSize(action.win, action.size)
+                    setAXPosition(action.win, action.target)
+                    raiseAXWindow(action.win)
+                }
+                wlog("rescueOffscreenWindows: rescued=\(rescued)")
+                finish(rescued == 0 && !silent ? "没有需要救援的窗口" : nil)
+            }
         }
     }
 
@@ -9213,6 +9607,17 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSMenuDelegate {
                 t.invalidate()
             }
         }
+    }
+
+    // tap 因输入洪泛被系统禁用时退避重启用，避免反复禁用/启用和系统打架。
+    func scheduleEventTapReenable(delay: TimeInterval) {
+        eventTapReenableWorkItem?.cancel()
+        let work = DispatchWorkItem { [weak self] in
+            self?.eventTapReenableWorkItem = nil
+            if let tap = self?.eventTap { CGEvent.tapEnable(tap: tap, enable: true) }
+        }
+        eventTapReenableWorkItem = work
+        DispatchQueue.main.asyncAfter(deadline: .now() + delay, execute: work)
     }
 
     @discardableResult
@@ -9327,7 +9732,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSMenuDelegate {
         var pid: pid_t = 0
         AXUIElementGetPid(win, &pid)
         if isStickies(pid: pid) { return nil }
-        let barH = titlebarHitHeight(of: win, winTop: pos.y, winSize: size, pid: pid)
+        let barH = titlebarHitHeight(of: win, id: id, winTop: pos.y, winSize: size, pid: pid)
         guard point.y >= pos.y, point.y <= pos.y + barH,
               point.x >= pos.x, point.x <= pos.x + size.width else { return nil }
         return (id, pid)
@@ -9396,12 +9801,12 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSMenuDelegate {
         return false
     }
 
-    private func titlebarSystemDoubleClickPoint(for win: AXUIElement,
+    private func titlebarSystemDoubleClickPoint(for win: AXUIElement, id: CGWindowID,
                                                 originalClickPoint: CGPoint) -> CGPoint? {
         guard let pos = axPosition(win), let size = axSize(win) else { return nil }
         var pid: pid_t = 0
         AXUIElementGetPid(win, &pid)
-        let barH = titlebarHitHeight(of: win, winTop: pos.y, winSize: size, pid: pid)
+        let barH = titlebarHitHeight(of: win, id: id, winTop: pos.y, winSize: size, pid: pid)
         let safeLeft = pos.x + min(max(size.width * 0.18, 120), max(120, size.width - 40))
         let safeRight = pos.x + max(40, size.width - 40)
         let x: CGFloat
@@ -9470,7 +9875,8 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSMenuDelegate {
             }
             raiseAXWindow(win)
             focusAXWindow(win, pid: pid)
-            if let target = titlebarSystemDoubleClickPoint(for: win, originalClickPoint: originalClickPoint) {
+            if let target = titlebarSystemDoubleClickPoint(for: win, id: id,
+                                                           originalClickPoint: originalClickPoint) {
                 postSystemTitlebarDoubleClick(at: target, id: id, source: source)
             } else {
                 let ok = pressAXButton(win, kAXZoomButtonAttribute as String)
@@ -9484,7 +9890,8 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSMenuDelegate {
             }
             raiseAXWindow(win)
             focusAXWindow(win, pid: pid)
-            if let target = titlebarSystemDoubleClickPoint(for: win, originalClickPoint: originalClickPoint) {
+            if let target = titlebarSystemDoubleClickPoint(for: win, id: id,
+                                                           originalClickPoint: originalClickPoint) {
                 postSystemTitlebarDoubleClick(at: target, id: id, source: source)
             } else {
                 wlog("titlebar-triple-click: fallback AX minimize failed source=\(source) id=\(id) err=\(err)")
