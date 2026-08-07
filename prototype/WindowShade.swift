@@ -3632,6 +3632,9 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSMenuDelegate {
     private var menuPreviewHoverID: CGWindowID?
     private var menuPreviewAnchor: NSRect?
     private var shadeOperationIDs: Set<CGWindowID> = []
+    // 显式窗口状态机：operationStates[id] 缺失即 .normal。
+    // capturing/failed 为操作期瞬态，folded/restoring 为会话期状态。
+    private var operationStates: [CGWindowID: WindowShadeState] = [:]
     private var previewCapturePendingIDs: Set<CGWindowID> = []
     private var hoverPreviewSuppressedUntil: [CGWindowID: Date] = [:]
     private var statusNoticeWorkItem: DispatchWorkItem?
@@ -6094,6 +6097,24 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSMenuDelegate {
         markShadeJournalStage(id: id, stage, reason: reason)
     }
 
+    func currentOperationState(_ id: CGWindowID) -> WindowShadeState {
+        operationStates[id] ?? .normal
+    }
+
+    // 状态机唯一入口：非法转换拒绝并记日志，避免窗口状态损坏。
+    @discardableResult
+    private func transitionOperationState(id: CGWindowID, to next: WindowShadeState,
+                                          reason: String) -> Bool {
+        let current = currentOperationState(id)
+        guard current.canTransition(to: next) else {
+            wlog("state: illegal transition \(current.rawValue) -> \(next.rawValue) id=\(id) reason=\(reason)")
+            return false
+        }
+        operationStates[id] = next
+        wlog("state: \(current.rawValue) -> \(next.rawValue) id=\(id) reason=\(reason)")
+        return true
+    }
+
     private func clearShadeJournal(id: CGWindowID) {
         let entries = shadeJournalEntries()
         let filtered = entries.filter { journalID($0) != id }
@@ -6646,15 +6667,26 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSMenuDelegate {
 
     private func shade(_ win: AXUIElement, _ id: CGWindowID,
                        options: ShadeInvocationOptions? = nil) {
-        guard !shadeOperationIDs.contains(id) else {
-            wlog("shade: ignore in-flight id=\(id)")
+        // 状态机防护：折叠中/已折叠/展开中的窗口再次触发折叠一律忽略，
+        // 避免状态损坏（与 shadeOperationIDs 在途去重互为冗余）。
+        let operationState = currentOperationState(id)
+        guard !shadeOperationIDs.contains(id),
+              operationState != .capturing,
+              operationState != .folded,
+              operationState != .restoring else {
+            wlog("shade: ignore in-flight id=\(id) state=\(operationState.rawValue)")
             return
         }
         shadeOperationIDs.insert(id)
+        transitionOperationState(id: id, to: .capturing, reason: "shade")
         var handedToAsyncCapture = false
         defer {
             if !handedToAsyncCapture {
                 shadeOperationIDs.remove(id)
+                // 未转入 async capture 就返回 = 本次折叠中止：capturing -> failed。
+                if currentOperationState(id) == .capturing {
+                    transitionOperationState(id: id, to: .failed, reason: "shade-abort")
+                }
             }
         }
         guard let pos = axPosition(win), let size = axSize(win) else {
@@ -6700,6 +6732,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSMenuDelegate {
 
         func installOverlay(_ overlay: NSWindow, mode: ShadeAppearanceMode, previewImage: NSImage?) {
             shadeOperationIDs.remove(id)
+            transitionOperationState(id: id, to: .folded, reason: "install")
             configureShadedAccessibility(for: overlay, id: id, appName: appName, title: title)
             // 折叠事务序：先把焦点交给当前 Space 的继承人，再隐藏真实窗口。
             // 隐藏非前台窗口不会触发 macOS 的焦点级联（跳 Space / 激活兄弟窗口的病灶）。
@@ -6812,6 +6845,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSMenuDelegate {
                                     ignoreAppRevealUntil: Date().addingTimeInterval(1.0),
                                     observer: observer)
             wlog("    interactive native finalBarH=\(Int(targetH)) actualH=\(Int(actual.height))")
+            transitionOperationState(id: id, to: .folded, reason: "interactive-native")
             if options.rebuildMenuAfterInstall {
                 rebuildMenu()
             }
@@ -6876,7 +6910,12 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSMenuDelegate {
             // 永远撞不过去的墙。
             handedToAsyncCapture = true
             Task { @MainActor in
-                defer { self.shadeOperationIDs.remove(id) }
+                defer {
+                    self.shadeOperationIDs.remove(id)
+                    if self.currentOperationState(id) == .capturing {
+                        self.transitionOperationState(id: id, to: .failed, reason: "shade-capture-abort")
+                    }
+                }
                 let capturedImage = await self.captureWindowWithTimeout(id: id, axPos: pos, size: size,
                                                                          maxPixelSize: hoverPreviewMaxPixelSize,
                                                                          timeoutNanoseconds: shadeCaptureTimeoutNanoseconds)
@@ -6898,7 +6937,12 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSMenuDelegate {
         }
         handedToAsyncCapture = true
         Task { @MainActor in
-            defer { self.shadeOperationIDs.remove(id) }
+            defer {
+                self.shadeOperationIDs.remove(id)
+                if self.currentOperationState(id) == .capturing {
+                    self.transitionOperationState(id: id, to: .failed, reason: "shade-capture-abort")
+                }
+            }
             // 折叠一个正被置顶捕获的窗口：系统会在其交通灯处叠加录屏标识，
             // 截图前先停掉置顶流并等标识消失，让卷帘条的红绿灯落在干净背景上。
             if self.pinnedPreviewController.stopPreviewBeforeFoldCapture(id: id) {
@@ -8387,6 +8431,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSMenuDelegate {
                                          pinAfterRestore: Bool = true) -> AXUIElement? {
         guard shaded[id] != nil else { return nil }
         markShadeLifecycle(id: id, .restoring, reason: "unshade")
+        transitionOperationState(id: id, to: .restoring, reason: "unshade")
         guard let state = shaded.removeValue(forKey: id) else { return nil }
         let shouldRememberFocusRejoin = focusPulledOutOverlayIDs.contains(id) && focusSession?.stage == .arrangedAway
         let rejoinEntry = shouldRememberFocusRejoin ? focusSession?.entries[id] : nil
@@ -8435,6 +8480,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSMenuDelegate {
             if playSound && !suppressUnshadeSounds {
                 playUnfoldSound()
             }
+            transitionOperationState(id: id, to: .normal, reason: "unshade-quicklook")
             return nil
         }
         let restoredElement = restoreWindow(state, to: pos)
@@ -8444,6 +8490,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSMenuDelegate {
         } else {
             cancelRestorePin(for: id)
         }
+        transitionOperationState(id: id, to: .normal, reason: "unshade")
         rebuildMenu()
         if playSound && !suppressUnshadeSounds {
             playUnfoldSound()
@@ -8461,6 +8508,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSMenuDelegate {
         guard shaded[id] != nil else { return }
         markShadeLifecycle(id: id, .cleaned, reason: "forceCleanup")
         guard let state = shaded.removeValue(forKey: id) else { return }
+        transitionOperationState(id: id, to: .normal, reason: "forceCleanup")
         hideHoverPreview(id: id)
         hideMenuHoverPreview(id: id)
         clearShadeJournal(id: id)
@@ -8487,6 +8535,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSMenuDelegate {
     private func removeProxyForAction(_ id: CGWindowID, state: ShadeState,
                                       stage: ShadeLifecycleStage, reason: String) {
         markShadeLifecycle(id: id, stage, reason: reason)
+        transitionOperationState(id: id, to: .normal, reason: "removeProxy")
         hideHoverPreview(id: id)
         hideMenuHoverPreview(id: id)
         clearShadeJournal(id: id)
