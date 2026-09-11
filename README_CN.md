@@ -46,11 +46,11 @@ WindowShade 适合这样的桌面时刻：窗口挡住了内容，但它仍然�
 
 ## 权限与隐私
 
-WindowShade 按功能使用两个 macOS 权限：
+WindowShade 按功能使用两项 macOS 权限，另加一项实验性的本地传感器读取：
 
 - **辅助功能**：寻找、移动、聚焦和恢复窗口。
 - **屏幕录制**：截取标题栏、生成窗口预览和实时效果预览。
-- **Apple Silicon 加速度计**：实验性的设备倾斜效果读取本机 HID 报告；部分机型或安全上下文可能显示为不可用。
+- **Apple Silicon 加速度计**：不是系统权限项。“随设备倾斜”开启后读取本机 HID 报告，部分机型或安全上下文会显示为不可用。
 
 实时预览默认关闭，只有用户主动开启时才会检查屏幕录制权限。窗口内容不会上传，也不会离开这台 Mac。
 
@@ -58,9 +58,13 @@ WindowShade 按功能使用两个 macOS 权限：
 
 大多数普通桌面窗口可以直接使用。自绘标题栏的应用会采用专门的兼容策略；全屏、Split View、Stage Manager、多显示器和沙盒应用可能需要额外适配。
 
+动态效果需要机型提供铰链角度传感器（Apple Silicon MacBook）；“随设备倾斜”还要求系统暴露 AppleSPU 加速度计。
+
 ## 下载
 
 到 [Releases](https://github.com/surfine/WindowShade/releases/latest) 下载最新版 zip，解压后打开 WindowShade.app。WindowShade 常驻菜单栏，不会出现在 Dock。
+
+各版本更新内容见 [Release Notes](https://github.com/surfine/WindowShade/releases)。签名身份保持不变，覆盖安装即可升级，辅助功能与屏幕录制授权不会被重置。
 
 ## 从源码构建
 
