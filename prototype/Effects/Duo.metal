@@ -8,10 +8,12 @@
 // with the same magnification applied horizontally. A long focal length keeps the
 // fold flat; a short one leans the page toward the viewer.
 //
-// Defocus. Blur grows with how far the page has receded behind the glass. The wide
-// part of the blur comes from a mip-filtered sample of the page, and four taps at
-// that level keep the kernel from collapsing into a flat average, so a pixel costs
-// between one and five fetches no matter how large the radius becomes.
+// Defocus. Blur grows with how far the page has receded behind the glass. A
+// thirteen-tap hexagonal disk approximates the circle of confusion; every tap is
+// read from the page pyramid at the level that matches the tap spacing, so the
+// pattern stays smooth without a dense kernel. Cost per pixel is one fetch while
+// the page is close to the glass and thirteen once it is fully blurred, against
+// thirty-two for a plain disk.
 
 #include <metal_stdlib>
 using namespace metal;
@@ -53,17 +55,27 @@ fragment float4 duoPage(Varying in [[stage_in]], texture2d<float> src [[texture(
     return src.sample(s, u.content.xy + in.uv * u.content.zw);
 }
 
+constant float kHexStep = 1.0471975512;
+constant float kHexOffset = 0.5235987756;
+
 static float4 defocus(texture2d<float> page, float2 uv, float radius, float2 pixel) {
     float pixels = radius * float(page.get_height());
     if (pixels < 1.0) { return pageSample(page, uv, 0.0); }
-    float lod = log2(pixels * 0.5);
-    float4 sum = pageSample(page, uv, lod) * 0.5;
-    float angle = tiltNoise(pixel);
-    float2 arm = float2(cos(angle), sin(angle)) * radius * 0.55;
-    float2 cross = float2(-arm.y, arm.x);
-    sum += (pageSample(page, uv + arm, lod) + pageSample(page, uv - arm, lod)
-          + pageSample(page, uv + cross, lod) + pageSample(page, uv - cross, lod)) * 0.125;
-    return sum;
+    // Pre-filter to the spacing of the taps themselves; denser kernels only add
+    // fetches once the pyramid already removes the detail they would have caught.
+    float lod = log2(max(pixels * 0.28, 1.0));
+    float rotation = tiltNoise(pixel);
+    float4 sum = pageSample(page, uv, lod);
+    float weight = 1.0;
+    for (int ring = 0; ring < 2; ++ring) {
+        float scale = ring == 0 ? 0.52 : 0.86;
+        for (int tap = 0; tap < 6; ++tap) {
+            float angle = rotation + float(tap) * kHexStep + float(ring) * kHexOffset;
+            sum += pageSample(page, uv + float2(cos(angle), sin(angle)) * radius * scale, lod);
+            weight += 1.0;
+        }
+    }
+    return sum / weight;
 }
 
 fragment float4 duoFragment(Varying in [[stage_in]], texture2d<float> src [[texture(0)]],
@@ -88,7 +100,9 @@ fragment float4 duoFragment(Varying in [[stage_in]], texture2d<float> src [[text
         float4 bg = backdrop.sample(s, uv);
         if (amount >= 1) return bg;
         float body = (uv.y - top) / max(0.001, 1 - top);
-        float height = max(0.0001, cos(angle * M_PI_F * 0.5));
+        // Coverage follows the progress of the gesture; only the defocus radius
+        // tracks the fold angle.
+        float height = max(0.0001, cos(amount * M_PI_F * 0.5));
         float coverage = 1 - smoothstep(height - fwidth(body), height + fwidth(body), body);
         float depth = body / height;
         float2 mapped = float2(0.5 + (uv.x - 0.5) * (1 + amount * depth * 0.45),
