@@ -46,11 +46,11 @@ The menu bar manages the current window and window lists; the hinge angle is rea
 
 ## Permissions and privacy
 
-WindowShade uses two macOS permissions as needed:
+WindowShade uses two macOS permissions as needed, plus one experimental local sensor read:
 
 - **Accessibility** — to find, move, focus, and restore windows.
 - **Screen Recording** — to capture title bars, window previews, and live effect previews.
-- **Apple Silicon accelerometer** — the experimental device-tilt effect reads a local HID report when the Mac exposes one; some models or security contexts may report it as unavailable.
+- **Apple Silicon accelerometer** — not a system permission. With “Tilt with device” enabled, the effect reads a local HID report; some models or security contexts report it as unavailable.
 
 Live preview is off by default and only checks Screen Recording access when you turn it on. Window contents never leave your Mac.
 
@@ -58,9 +58,13 @@ Live preview is off by default and only checks Screen Recording access when you 
 
 Most ordinary desktop windows work directly. Apps with custom title bars receive app-specific handling. Full-screen, Split View, Stage Manager, multi-display, and sandboxed apps may need additional handling.
 
+Dynamic effects need a Mac whose hinge reports an angle (Apple Silicon MacBooks); device tilt additionally needs the system to expose the AppleSPU accelerometer.
+
 ## Download
 
 Download the latest zip from [Releases](https://github.com/surfine/WindowShade/releases/latest), unzip it, and open WindowShade.app. WindowShade lives in the menu bar and does not show a Dock icon.
+
+Per-version changes live in the [release notes](https://github.com/surfine/WindowShade/releases). The signing identity is unchanged, so installing over an older copy keeps your Accessibility and Screen Recording grants.
 
 ## Build from source
 
