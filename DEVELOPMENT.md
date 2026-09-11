@@ -155,3 +155,19 @@ cd prototype
    ```
 
 `prototype/dist/` 已在 `.gitignore` 中，发布产物不会污染工作区。
+
+### 同一版本重新发布
+
+只更换安装包、不升版本号时（例如修好某个功能后重发包），沿用同一个 tag 覆盖发布：
+
+```sh
+# 仍在 prototype/ 目录下执行
+VERSION=$(/usr/libexec/PlistBuddy -c "Print CFBundleShortVersionString" Info.plist)
+git tag -f "v${VERSION}" && git push --force origin "v${VERSION}"
+gh release edit "v${VERSION}" --notes-file "../docs/releases/v${VERSION}.md"
+gh release upload "v${VERSION}" \
+  "dist/WindowShade-v${VERSION}.zip" "dist/WindowShade-v${VERSION}.zip.sha256" --clobber
+```
+
+tag 会被移动到新的发布提交，Release Notes 与附件一并替换；请确保签名身份不变，
+否则用户覆盖安装后需要重新授权辅助功能与屏幕录制。
