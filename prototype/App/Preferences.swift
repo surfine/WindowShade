@@ -90,7 +90,7 @@ extension AppDelegate {
         let stack = NSStackView()
         stack.orientation = .vertical
         stack.alignment = .leading
-        stack.spacing = 6
+        stack.spacing = 10
         stack.translatesAutoresizingMaskIntoConstraints = false
         root.addSubview(stack)
         NSLayoutConstraint.activate([
@@ -106,11 +106,11 @@ extension AppDelegate {
         let stack = NSStackView()
         stack.orientation = .vertical
         stack.alignment = .leading
-        stack.spacing = 4
+        stack.spacing = 6
         let titleLabel = NSTextField(labelWithString: title)
-        titleLabel.font = .systemFont(ofSize: 20, weight: .semibold)
+        titleLabel.font = .systemFont(ofSize: 22, weight: .semibold)
         let subtitleLabel = NSTextField(wrappingLabelWithString: subtitle)
-        subtitleLabel.font = .systemFont(ofSize: 13)
+        subtitleLabel.font = .systemFont(ofSize: 14)
         subtitleLabel.textColor = .secondaryLabelColor
         subtitleLabel.maximumNumberOfLines = 2
         stack.addArrangedSubview(titleLabel)
@@ -123,12 +123,13 @@ extension AppDelegate {
         stack.addArrangedSubview(makeSettingsHeader(
             title: "卷帘", subtitle: "设置窗口折叠、外观和反馈方式。"))
 
-        let trigger = makePrefCard([
-            makePrefToggleRow(name: "双击标题栏以折叠", subtitle: titlebarDoubleClickPreferenceSubtitle(),
-                              isOn: titlebarDoubleClickEnabled, action: #selector(prefToggleTitlebarDoubleClick(_:))),
+        let trigger = makeUnifiedSettingsCard([
+            makeUnifiedToggleRow(name: "双击标题栏以折叠", subtitle: titlebarDoubleClickPreferenceSubtitle(),
+                                 isOn: titlebarDoubleClickEnabled, action: #selector(prefToggleTitlebarDoubleClick(_:))),
         ])
         stack.addArrangedSubview(makePrefGroupLabel("触发"))
         stack.addArrangedSubview(trigger)
+        trigger.widthAnchor.constraint(equalTo: stack.widthAnchor).isActive = true
         stack.setCustomSpacing(14, after: trigger)
 
         let appearanceSeg = NSSegmentedControl(labels: ["原貌卷帘", "标准标题栏"],
@@ -136,26 +137,29 @@ extension AppDelegate {
                                                 target: self,
                                                 action: #selector(prefSelectAppearanceSegment(_:)))
         appearanceSeg.selectedSegment = appearanceMode == .proxyTitleBar ? 1 : 0
-        appearanceSeg.sizeToFit()
         stack.addArrangedSubview(makePrefGroupLabel("外观"))
-        stack.addArrangedSubview(makePrefCard([
-            makePrefControlRow(name: "卷帘样式", subtitle: "标准标题栏带原生红绿灯与材质", control: appearanceSeg),
-            makePrefToggleRow(name: "卷帘条浮动于上方", subtitle: "折叠后的标题栏保持在其他窗口之上",
-                              isOn: floatingOnTop, action: #selector(prefToggleFloating(_:))),
-            makePrefToggleRow(name: "卷帘条半透明", subtitle: "略微降低卷帘条不透明度",
-                              isOn: translucent, action: #selector(prefToggleTranslucent(_:))),
-        ]))
+        let appearance = makeUnifiedSettingsCard([
+            makeUnifiedControlRow(name: "卷帘样式", subtitle: "标准标题栏带原生红绿灯与材质", control: appearanceSeg),
+            makeUnifiedToggleRow(name: "卷帘条浮动于上方", subtitle: "折叠后的标题栏保持在其他窗口之上",
+                                 isOn: floatingOnTop, action: #selector(prefToggleFloating(_:))),
+            makeUnifiedToggleRow(name: "卷帘条半透明", subtitle: "略微降低卷帘条不透明度",
+                                 isOn: translucent, action: #selector(prefToggleTranslucent(_:))),
+        ])
+        stack.addArrangedSubview(appearance)
+        appearance.widthAnchor.constraint(equalTo: stack.widthAnchor).isActive = true
         stack.setCustomSpacing(14, after: stack.arrangedSubviews.last!)
 
         stack.addArrangedSubview(makePrefGroupLabel("声音"))
-        stack.addArrangedSubview(makePrefCard([
-            makePrefToggleRow(name: "启用折叠 / 展开音效", subtitle: nil,
-                              isOn: soundEnabled, action: #selector(prefToggleSound(_:))),
-            makePrefControlRow(name: "折叠音效", subtitle: nil,
-                               control: makeSoundPopup(selected: foldSoundName, action: #selector(prefSelectFoldSound(_:)))),
-            makePrefControlRow(name: "展开音效", subtitle: nil,
-                               control: makeSoundPopup(selected: unfoldSoundName, action: #selector(prefSelectUnfoldSound(_:)))),
-        ]))
+        let sound = makeUnifiedSettingsCard([
+            makeUnifiedToggleRow(name: "启用折叠 / 展开音效", subtitle: nil,
+                                 isOn: soundEnabled, action: #selector(prefToggleSound(_:))),
+            makeUnifiedControlRow(name: "折叠音效", subtitle: nil,
+                                  control: makeSoundPopup(selected: foldSoundName, action: #selector(prefSelectFoldSound(_:)))),
+            makeUnifiedControlRow(name: "展开音效", subtitle: nil,
+                                  control: makeSoundPopup(selected: unfoldSoundName, action: #selector(prefSelectUnfoldSound(_:)))),
+        ])
+        stack.addArrangedSubview(sound)
+        sound.widthAnchor.constraint(equalTo: stack.widthAnchor).isActive = true
         return root
     }
 
@@ -164,21 +168,24 @@ extension AppDelegate {
         stack.addArrangedSubview(makeSettingsHeader(
             title: "权限与启动", subtitle: "WindowShade 只在需要时使用系统权限。"))
         stack.addArrangedSubview(makePrefGroupLabel("权限"))
-        stack.addArrangedSubview(makePrefCard([
-            makePermissionRow(kind: .preferences, width: prefCardWidth, symbol: "accessibility",
-                              name: "辅助功能", subtitle: "读取、移动与恢复窗口",
-                              granted: hasAccessibilityPermission(), action: #selector(openAccessibilitySettingsAction)),
-            makePermissionRow(kind: .preferences, width: prefCardWidth,
-                              symbol: "rectangle.inset.filled.and.person.filled",
-                              name: "屏幕录制", subtitle: "截取真实标题栏与实时预览",
-                              granted: hasScreenRecordingPermission(), action: #selector(openScreenRecordingSettingsAction)),
-        ]))
+        let permissions = makeUnifiedSettingsCard([
+            makeUnifiedPermissionRow(symbol: "accessibility", name: "辅助功能",
+                                     subtitle: "读取、移动与恢复窗口",
+                                     granted: hasAccessibilityPermission(), action: #selector(openAccessibilitySettingsAction)),
+            makeUnifiedPermissionRow(symbol: "rectangle.inset.filled.and.person.filled",
+                                     name: "屏幕录制", subtitle: "截取真实标题栏与实时预览",
+                                     granted: hasScreenRecordingPermission(), action: #selector(openScreenRecordingSettingsAction)),
+        ])
+        stack.addArrangedSubview(permissions)
+        permissions.widthAnchor.constraint(equalTo: stack.widthAnchor).isActive = true
         stack.setCustomSpacing(14, after: stack.arrangedSubviews.last!)
         stack.addArrangedSubview(makePrefGroupLabel("启动"))
-        stack.addArrangedSubview(makePrefCard([
-            makePrefToggleRow(name: "登录时自动启动", subtitle: launchAtLoginSubtitle(),
-                              isOn: launchAtLoginEnabled(), action: #selector(prefToggleLaunchAtLogin(_:))),
-        ]))
+        let launch = makeUnifiedSettingsCard([
+            makeUnifiedToggleRow(name: "登录时自动启动", subtitle: launchAtLoginSubtitle(),
+                                 isOn: launchAtLoginEnabled(), action: #selector(prefToggleLaunchAtLogin(_:))),
+        ])
+        stack.addArrangedSubview(launch)
+        launch.widthAnchor.constraint(equalTo: stack.widthAnchor).isActive = true
         return root
     }
 
@@ -240,9 +247,148 @@ extension AppDelegate {
 
     func makePrefGroupLabel(_ text: String) -> NSTextField {
         let field = NSTextField(labelWithString: text)
-        field.font = .systemFont(ofSize: 12, weight: .medium)
-        field.textColor = .tertiaryLabelColor
+        field.font = .systemFont(ofSize: 13, weight: .semibold)
+        field.textColor = .secondaryLabelColor
         return field
+    }
+
+    private func makeUnifiedSettingsCard(_ rows: [NSView]) -> NSView {
+        let card = NSView()
+        card.wantsLayer = true
+        card.layer?.cornerRadius = 10
+        card.layer?.borderWidth = 0.5
+        card.layer?.borderColor = NSColor.separatorColor.cgColor
+        card.layer?.backgroundColor = NSColor.controlBackgroundColor.cgColor
+        card.translatesAutoresizingMaskIntoConstraints = false
+
+        let inner = NSStackView()
+        inner.orientation = .vertical
+        inner.alignment = .leading
+        inner.spacing = 0
+        inner.translatesAutoresizingMaskIntoConstraints = false
+        card.addSubview(inner)
+        NSLayoutConstraint.activate([
+            inner.leadingAnchor.constraint(equalTo: card.leadingAnchor, constant: 16),
+            inner.trailingAnchor.constraint(equalTo: card.trailingAnchor, constant: -16),
+            inner.topAnchor.constraint(equalTo: card.topAnchor, constant: 10),
+            inner.bottomAnchor.constraint(equalTo: card.bottomAnchor, constant: -10),
+        ])
+
+        for (index, row) in rows.enumerated() {
+            if index > 0 {
+                let separator = NSBox()
+                separator.boxType = .separator
+                inner.addArrangedSubview(separator)
+                separator.widthAnchor.constraint(equalTo: inner.widthAnchor).isActive = true
+            }
+            inner.addArrangedSubview(row)
+            row.widthAnchor.constraint(equalTo: inner.widthAnchor).isActive = true
+        }
+        return card
+    }
+
+    private func makeUnifiedLabels(name: String, subtitle: String?) -> NSStackView {
+        let labels = NSStackView()
+        labels.orientation = .vertical
+        labels.alignment = .leading
+        labels.spacing = 4
+        let title = NSTextField(labelWithString: name)
+        title.font = .systemFont(ofSize: 14)
+        labels.addArrangedSubview(title)
+        if let subtitle {
+            let detail = NSTextField(wrappingLabelWithString: subtitle)
+            detail.font = .systemFont(ofSize: 12)
+            detail.textColor = .secondaryLabelColor
+            detail.maximumNumberOfLines = 2
+            labels.addArrangedSubview(detail)
+        }
+        return labels
+    }
+
+    private func makeUnifiedToggleRow(name: String, subtitle: String?, isOn: Bool,
+                                      action: Selector) -> NSView {
+        let toggle = NSSwitch()
+        toggle.state = isOn ? .on : .off
+        toggle.target = self
+        toggle.action = action
+        toggle.setAccessibilityLabel(name)
+        toggle.controlSize = .regular
+        let labels = makeUnifiedLabels(name: name, subtitle: subtitle)
+        labels.setContentHuggingPriority(.defaultLow, for: .horizontal)
+        labels.setContentCompressionResistancePriority(.defaultLow, for: .horizontal)
+        let row = NSStackView(views: [labels, NSView(), toggle])
+        row.orientation = .horizontal
+        row.alignment = .centerY
+        row.spacing = 16
+        row.heightAnchor.constraint(greaterThanOrEqualToConstant: subtitle == nil ? 52 : 60).isActive = true
+        return row
+    }
+
+    private func makeUnifiedControlRow(name: String, subtitle: String?, control: NSControl) -> NSView {
+        control.sizeToFit()
+        control.setContentHuggingPriority(.required, for: .horizontal)
+        control.setContentCompressionResistancePriority(.required, for: .horizontal)
+        let labels = makeUnifiedLabels(name: name, subtitle: subtitle)
+        labels.setContentHuggingPriority(.defaultLow, for: .horizontal)
+        labels.setContentCompressionResistancePriority(.defaultLow, for: .horizontal)
+        let row = NSStackView(views: [labels, NSView(), control])
+        row.orientation = .horizontal
+        row.alignment = .centerY
+        row.spacing = 16
+        row.heightAnchor.constraint(greaterThanOrEqualToConstant: subtitle == nil ? 52 : 60).isActive = true
+        return row
+    }
+
+    private func makeUnifiedPermissionRow(symbol: String, name: String, subtitle: String,
+                                           granted: Bool, action: Selector) -> NSView {
+        let icon = NSImageView(image: NSImage(systemSymbolName: symbol, accessibilityDescription: name) ?? NSImage())
+        icon.contentTintColor = .secondaryLabelColor
+        icon.imageScaling = .scaleProportionallyDown
+        icon.widthAnchor.constraint(equalToConstant: 22).isActive = true
+        icon.heightAnchor.constraint(equalToConstant: 22).isActive = true
+
+        let labels = makeUnifiedLabels(name: name, subtitle: subtitle)
+        labels.setContentHuggingPriority(.defaultLow, for: .horizontal)
+        labels.setContentCompressionResistancePriority(.defaultLow, for: .horizontal)
+
+        let stateIcon = NSImageView(image: NSImage(
+            systemSymbolName: granted ? "checkmark.circle.fill" : "exclamationmark.circle.fill",
+            accessibilityDescription: granted ? "已授权" : "未授权") ?? NSImage())
+        let stateColor: NSColor = granted ? .systemGreen : .systemOrange
+        stateIcon.contentTintColor = stateColor
+        stateIcon.imageScaling = .scaleProportionallyDown
+        stateIcon.widthAnchor.constraint(equalToConstant: 18).isActive = true
+        stateIcon.heightAnchor.constraint(equalToConstant: 18).isActive = true
+        let state = NSTextField(labelWithString: granted ? "已授权" : "未授权")
+        state.font = .systemFont(ofSize: 13, weight: .medium)
+        state.textColor = stateColor
+
+        let link = NSButton(title: "打开设置", target: self, action: action)
+        link.isBordered = false
+        link.bezelStyle = .inline
+        link.controlSize = .regular
+        link.contentTintColor = .controlAccentColor
+        link.attributedTitle = NSAttributedString(
+            string: "打开设置",
+            attributes: [
+                .font: NSFont.systemFont(ofSize: 13),
+                .foregroundColor: NSColor.controlAccentColor,
+                .underlineStyle: NSUnderlineStyle.single.rawValue,
+            ])
+        link.setAccessibilityLabel("打开\(name)设置")
+        link.setContentHuggingPriority(.required, for: .horizontal)
+
+        let trailing = NSStackView(views: [stateIcon, state, link])
+        trailing.orientation = .horizontal
+        trailing.alignment = .centerY
+        trailing.spacing = 10
+        trailing.setContentHuggingPriority(.required, for: .horizontal)
+        let row = NSStackView(views: [icon, labels, NSView(), trailing])
+        row.orientation = .horizontal
+        row.alignment = .centerY
+        row.spacing = 14
+        row.heightAnchor.constraint(greaterThanOrEqualToConstant: 60).isActive = true
+        return row
     }
 
     func makePrefCard(_ rows: [NSView]) -> NSView {
