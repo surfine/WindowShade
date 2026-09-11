@@ -22,14 +22,19 @@ WindowShade rolls a window's content into a slim strip that keeps its place, its
 
 It fits the small moments — a reference document covering the draft you are writing, or a desktop that simply needs to be quieter for a minute without disturbing the layout.
 
-## What it does
+## Three things
 
-| Capability | Detail |
-| --- | --- |
-| **Fold windows** | `⌃⌘C` or a title-bar double-click rolls the content into a strip; click to preview, click again to open |
-| **Pinned previews** | `⌃⌘P` keeps a window visible as a live floating preview — references, mirrors, dashboards |
-| **Dynamic folding** | As the lid closes, the desktop or window content rolls up, recedes, blurs, and unfolds again |
-| **Arrange and focus** | `⌃⌘0` tidies the strips or switches to a focus layout |
+### Folding
+
+`⌃⌘C` or a title-bar double-click rolls a window's content into a strip that keeps its place, its title, and its way back. Click the strip to preview, click again to open. `⌃⌘1…9` unfolds in menu order, and `⌃⌘0` tidies the strips or switches to a focus layout. Two styles (native capture or proxy title bar), with translucency, fold sounds, and launch at login.
+
+### Pinned previews
+
+`⌃⌘P` turns a window into an always-visible live preview. It follows its source window, drops to a lower frame rate while idle to save power, and suits references, mirrors, and dashboards.
+
+### Dynamic effects
+
+As the lid closes, the desktop or the window content rolls up, recedes, blurs, and unfolds again. Three finishes (Silk, Shade, Frost), an adjustable trigger angle, and a preview you can scrub. “Tilt with device” is experimental: a subtle parallax that follows how the machine is held.
 
 ## Settings
 
