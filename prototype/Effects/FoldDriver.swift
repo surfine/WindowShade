@@ -26,9 +26,9 @@ enum DuoPreset: String, CaseIterable {
   }
   var optics: FoldOptics {
     switch self {
-    case .silk: return FoldOptics(focal: 2.6, defocus: 0.10, dim: 11, baseBlur: 0.008, angle: 0.28)
-    case .shade: return FoldOptics(focal: 2.3, defocus: 0.12, dim: 15, baseBlur: 0.012, angle: 0.42)
-    case .frost: return FoldOptics(focal: 2.0, defocus: 0.16, dim: 19, baseBlur: 0.018, angle: 0.58)
+    case .silk: return FoldOptics(focal: 2.254, defocus: 0.10, dim: 11, baseBlur: 0.008, angle: 0.30)
+    case .shade: return FoldOptics(focal: 2.254, defocus: 0.12, dim: 15, baseBlur: 0.012, angle: 0.45)
+    case .frost: return FoldOptics(focal: 2.0, defocus: 0.16, dim: 19, baseBlur: 0.018, angle: 0.65)
     }
   }
 }
