@@ -54,6 +54,8 @@ final class DuoSettingsWindow: NSWindowController, NSWindowDelegate {
   private var pageScroll: NSScrollView!
   private var pages: [WindowShadeSettingsSection: NSView] = [:]
   private var pageButtons: [WindowShadeSettingsSection: NSButton] = [:]
+  private var pageTitleLabels: [WindowShadeSettingsSection: NSTextField] = [:]
+  private var pageIcons: [WindowShadeSettingsSection: NSImageView] = [:]
   private var activePageConstraints: [NSLayoutConstraint] = []
   private var currentSection: WindowShadeSettingsSection = .effects
 
@@ -156,27 +158,46 @@ final class DuoSettingsWindow: NSWindowController, NSWindowDelegate {
     ])
 
     for section in WindowShadeSettingsSection.allCases {
-      let button = NSButton(title: section.title, target: self, action: #selector(selectSection(_:)))
+      let button = NSButton(title: "", target: self, action: #selector(selectSection(_:)))
       button.tag = section.rawValue
       button.isBordered = false
-      button.alignment = .left
-      button.image = NSImage(systemSymbolName: section.symbolName, accessibilityDescription: section.title)
-      button.imagePosition = .imageLeading
-      button.imageHugsTitle = false
-      button.imageScaling = .scaleProportionallyDown
-      button.contentTintColor = .labelColor
-      button.font = .systemFont(ofSize: 14)
       button.controlSize = .regular
       button.toolTip = section.title
       button.setAccessibilityLabel(section.title)
       button.wantsLayer = true
       button.layer?.cornerRadius = 8
       button.translatesAutoresizingMaskIntoConstraints = false
+
+      let icon = NSImageView(image: NSImage(
+        systemSymbolName: section.symbolName, accessibilityDescription: section.title) ?? NSImage())
+      icon.imageScaling = .scaleProportionallyDown
+      icon.contentTintColor = .labelColor
+      icon.translatesAutoresizingMaskIntoConstraints = false
+      let title = NSTextField(labelWithString: section.title)
+      title.font = .systemFont(ofSize: 14)
+      title.textColor = .labelColor
+      title.setContentHuggingPriority(.defaultLow, for: .horizontal)
+      title.setContentCompressionResistancePriority(.required, for: .horizontal)
+      let content = NSStackView(views: [icon, title])
+      content.orientation = .horizontal
+      content.alignment = .centerY
+      content.spacing = 18
+      content.translatesAutoresizingMaskIntoConstraints = false
+      button.addSubview(content)
+      NSLayoutConstraint.activate([
+        content.leadingAnchor.constraint(equalTo: button.leadingAnchor, constant: 12),
+        content.trailingAnchor.constraint(lessThanOrEqualTo: button.trailingAnchor, constant: -12),
+        content.centerYAnchor.constraint(equalTo: button.centerYAnchor),
+        icon.widthAnchor.constraint(equalToConstant: 20),
+        icon.heightAnchor.constraint(equalToConstant: 20),
+      ])
       // 先入栈再激活约束：跨视图约束要求两端已经有共同祖先，否则 AppKit 直接抛异常。
       stack.addArrangedSubview(button)
       button.widthAnchor.constraint(equalTo: stack.widthAnchor).isActive = true
       button.heightAnchor.constraint(equalToConstant: 34).isActive = true
       pageButtons[section] = button
+      pageTitleLabels[section] = title
+      pageIcons[section] = icon
     }
     return sidebar
   }
@@ -206,8 +227,10 @@ final class DuoSettingsWindow: NSWindowController, NSWindowDelegate {
     pageScroll.contentView.bounds.origin = .zero
     pageScroll.reflectScrolledClipView(pageScroll.contentView)
     for (item, button) in pageButtons {
-      button.font = .systemFont(ofSize: 14, weight: item == section ? .semibold : .regular)
-      button.contentTintColor = item == section ? .controlAccentColor : .labelColor
+      pageTitleLabels[item]?.font = .systemFont(
+        ofSize: 14, weight: item == section ? .semibold : .regular)
+      pageTitleLabels[item]?.textColor = item == section ? .controlAccentColor : .labelColor
+      pageIcons[item]?.contentTintColor = item == section ? .controlAccentColor : .labelColor
       button.layer?.backgroundColor = item == section
         ? NSColor.controlAccentColor.withAlphaComponent(0.14).cgColor
         : NSColor.clear.cgColor
@@ -248,7 +271,28 @@ final class DuoSettingsWindow: NSWindowController, NSWindowDelegate {
     }
   }
 
+  private func makePageRoot() -> NSView {
+    let root = NSView()
+    let background = NSVisualEffectView()
+    background.material = .underPageBackground
+    background.blendingMode = .withinWindow
+    background.state = .active
+    background.translatesAutoresizingMaskIntoConstraints = false
+    root.addSubview(background)
+    NSLayoutConstraint.activate([
+      background.leadingAnchor.constraint(equalTo: root.leadingAnchor),
+      background.trailingAnchor.constraint(equalTo: root.trailingAnchor),
+      background.topAnchor.constraint(equalTo: root.topAnchor),
+      background.bottomAnchor.constraint(equalTo: root.bottomAnchor),
+    ])
+    return root
+  }
+
   private func makePageHeader(title: String, subtitle: String) -> NSView {
+    return makePageHeader(title: title, subtitle: subtitle, symbolName: nil)
+  }
+
+  private func makePageHeader(title: String, subtitle: String, symbolName: String?) -> NSView {
     let stack = NSStackView()
     stack.orientation = .vertical
     stack.alignment = .leading
@@ -261,14 +305,56 @@ final class DuoSettingsWindow: NSWindowController, NSWindowDelegate {
     subtitleLabel.maximumNumberOfLines = 2
     stack.addArrangedSubview(titleLabel)
     stack.addArrangedSubview(subtitleLabel)
-    return stack
+
+    guard let symbolName,
+          let image = NSImage(systemSymbolName: symbolName, accessibilityDescription: title)
+    else { return stack }
+    let icon = NSImageView()
+    icon.image = image.withSymbolConfiguration(.init(pointSize: 20, weight: .semibold))
+    icon.contentTintColor = .controlAccentColor
+    icon.imageScaling = .scaleProportionallyDown
+    icon.translatesAutoresizingMaskIntoConstraints = false
+    let iconPlate = NSView()
+    iconPlate.wantsLayer = true
+    iconPlate.layer?.cornerRadius = 9
+    iconPlate.layer?.backgroundColor = NSColor.controlAccentColor.withAlphaComponent(0.12).cgColor
+    iconPlate.translatesAutoresizingMaskIntoConstraints = false
+    NSLayoutConstraint.activate([
+      icon.widthAnchor.constraint(equalToConstant: 26),
+      icon.heightAnchor.constraint(equalToConstant: 26),
+    ])
+    iconPlate.addSubview(icon)
+    NSLayoutConstraint.activate([
+      icon.centerXAnchor.constraint(equalTo: iconPlate.centerXAnchor),
+      icon.centerYAnchor.constraint(equalTo: iconPlate.centerYAnchor),
+      iconPlate.widthAnchor.constraint(equalToConstant: 34),
+      iconPlate.heightAnchor.constraint(equalToConstant: 34),
+    ])
+    let header = NSStackView(views: [iconPlate, stack])
+    header.orientation = .horizontal
+    header.alignment = .top
+    header.spacing = 12
+    return header
   }
 
-  private func makeSectionLabel(_ title: String) -> NSTextField {
+  private func makeSectionLabel(_ title: String, symbolName: String? = nil) -> NSView {
     let label = NSTextField(labelWithString: title)
     label.font = .systemFont(ofSize: 13, weight: .semibold)
     label.textColor = .secondaryLabelColor
-    return label
+    guard let symbolName,
+          let image = NSImage(systemSymbolName: symbolName, accessibilityDescription: title)
+    else { return label }
+    let icon = NSImageView()
+    icon.image = image.withSymbolConfiguration(.init(pointSize: 13, weight: .medium))
+    icon.contentTintColor = .tertiaryLabelColor
+    icon.imageScaling = .scaleProportionallyDown
+    icon.widthAnchor.constraint(equalToConstant: 18).isActive = true
+    icon.heightAnchor.constraint(equalToConstant: 18).isActive = true
+    let group = NSStackView(views: [icon, label])
+    group.orientation = .horizontal
+    group.alignment = .centerY
+    group.spacing = 6
+    return group
   }
 
   private func makeTextLinkButton(title: String, action: Selector, help: String) -> NSButton {
@@ -292,12 +378,19 @@ final class DuoSettingsWindow: NSWindowController, NSWindowDelegate {
   }
 
   private func makeSettingsCard(_ rows: [NSView]) -> NSView {
-    let card = NSView()
+    let card = NSVisualEffectView()
+    card.material = .contentBackground
+    card.blendingMode = .withinWindow
+    card.state = .active
     card.wantsLayer = true
-    card.layer?.cornerRadius = 10
+    card.layer?.cornerRadius = 12
     card.layer?.borderWidth = 0.5
-    card.layer?.borderColor = NSColor.separatorColor.cgColor
-    card.layer?.backgroundColor = NSColor.controlBackgroundColor.cgColor
+    card.layer?.borderColor = NSColor.separatorColor.withAlphaComponent(0.35).cgColor
+    card.layer?.backgroundColor = NSColor.clear.cgColor
+    card.layer?.shadowColor = NSColor.black.cgColor
+    card.layer?.shadowOpacity = 0.035
+    card.layer?.shadowRadius = 7
+    card.layer?.shadowOffset = CGSize(width: 0, height: 1)
     card.translatesAutoresizingMaskIntoConstraints = false
 
     let inner = NSStackView()
@@ -431,7 +524,7 @@ final class DuoSettingsWindow: NSWindowController, NSWindowDelegate {
   }
 
   private func makeEffectsPage(controller: DuoController) -> NSView {
-    let root = NSView()
+    let root = makePageRoot()
     let stack = NSStackView()
     stack.orientation = .vertical
     stack.alignment = .leading
@@ -447,12 +540,12 @@ final class DuoSettingsWindow: NSWindowController, NSWindowDelegate {
     ])
 
     stack.addArrangedSubview(makePageHeader(
-      title: "动态效果", subtitle: "让桌面或窗口随设备开合平滑变化。"))
+      title: "动态效果", subtitle: "让桌面或窗口随设备开合平滑变化。", symbolName: "sparkles"))
     let statusCard = makeSettingsCard([makeStatusCard()])
     stack.addArrangedSubview(statusCard)
     statusCard.widthAnchor.constraint(equalTo: stack.widthAnchor).isActive = true
 
-    stack.addArrangedSubview(makeSectionLabel("自动效果"))
+    stack.addArrangedSubview(makeSectionLabel("自动效果", symbolName: "wand.and.stars"))
     let automatic = makeSettingsCard([
       makeToggleRow(title: "桌面开合", subtitle: "设备开合时让整个桌面平滑过渡。",
                     control: desktop, action: #selector(changed)),
@@ -462,7 +555,7 @@ final class DuoSettingsWindow: NSWindowController, NSWindowDelegate {
     stack.addArrangedSubview(automatic)
     automatic.widthAnchor.constraint(equalTo: stack.widthAnchor).isActive = true
 
-    stack.addArrangedSubview(makeSectionLabel("预览"))
+    stack.addArrangedSubview(makeSectionLabel("预览", symbolName: "rectangle.on.rectangle"))
     let rendererView: NSView?
     do {
       let renderer = try FoldRenderer(size: CGSize(width: 612, height: 300))
@@ -538,7 +631,7 @@ final class DuoSettingsWindow: NSWindowController, NSWindowDelegate {
   }
 
   private func makeAdvancedPage(controller: DuoController) -> NSView {
-    let root = NSView()
+    let root = makePageRoot()
     let stack = NSStackView()
     stack.orientation = .vertical
     stack.alignment = .leading
@@ -553,11 +646,12 @@ final class DuoSettingsWindow: NSWindowController, NSWindowDelegate {
       stack.bottomAnchor.constraint(lessThanOrEqualTo: root.bottomAnchor),
     ])
     let header = makePageHeader(
-      title: "高级", subtitle: "调整触发行为、校准传感器和恢复动态效果默认值。")
+      title: "高级", subtitle: "调整触发行为、校准传感器和恢复动态效果默认值。",
+      symbolName: "slider.horizontal.3")
     stack.addArrangedSubview(header)
     stack.setCustomSpacing(16, after: header)
 
-    let triggerSection = makeSectionLabel("触发")
+    let triggerSection = makeSectionLabel("触发", symbolName: "sensor.tag.radiowaves.forward")
     stack.addArrangedSubview(triggerSection)
     stack.setCustomSpacing(6, after: triggerSection)
     trigger.target = self
@@ -605,7 +699,7 @@ final class DuoSettingsWindow: NSWindowController, NSWindowDelegate {
     triggerCard.widthAnchor.constraint(equalTo: stack.widthAnchor).isActive = true
     stack.setCustomSpacing(16, after: triggerCard)
 
-    let actionSection = makeSectionLabel("操作")
+    let actionSection = makeSectionLabel("操作", symbolName: "wrench.and.screwdriver")
     stack.addArrangedSubview(actionSection)
     stack.setCustomSpacing(6, after: actionSection)
     calibration.target = self
@@ -659,7 +753,7 @@ final class DuoSettingsWindow: NSWindowController, NSWindowDelegate {
     infoRow.alignment = .centerY
     infoRow.spacing = 16
     let infoCard = makeSettingsCard([infoRow, logPath])
-    let infoSection = makeSectionLabel("辅助功能与日志")
+    let infoSection = makeSectionLabel("辅助功能与日志", symbolName: "accessibility")
     stack.addArrangedSubview(infoSection)
     stack.setCustomSpacing(6, after: infoSection)
     stack.addArrangedSubview(infoCard)
