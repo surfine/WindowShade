@@ -16,6 +16,8 @@
 
 ---
 
+![The desktop folding as the lid closes](assets/windowshade-demo.gif)
+
 ![The dynamic effects page in Settings](assets/windowshade-settings.png)
 
 WindowShade is for the small desktop moment when a window is in the way, but it still belongs exactly where you put it.

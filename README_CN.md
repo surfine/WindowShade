@@ -16,6 +16,8 @@
 
 ---
 
+![合上屏幕时，桌面随铰链角度卷起](assets/windowshade-demo.gif)
+
 ![设置里的动态效果页面](assets/windowshade-settings.png)
 
 WindowShade 适合这样的桌面时刻：窗口挡住了内容，但它仍然应该留在你刚才放好的位置。
