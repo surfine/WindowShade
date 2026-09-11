@@ -165,7 +165,10 @@ extension AppDelegate {
             ?? sourceDisplayID.flatMap { mover.currentSpace(displayID: $0) }
     }
     func shade(_ win: AXUIElement, _ id: CGWindowID,
-                       options: ShadeInvocationOptions? = nil) {
+                       options: ShadeInvocationOptions? = nil, bypassDuo: Bool = false,
+                       preparedImage: CGImage? = nil) {
+        let win = refreshedWindowElement(id: id, fallback: win)
+        if !bypassDuo, duoController.windowEffects.interceptFold(win, id: id, options: options) { return }
         // 状态机防护：折叠中/已折叠/展开中的窗口再次触发折叠一律忽略，
         // 避免状态损坏（与 shadeOperationIDs 在途去重互为冗余）。
         let operationState = currentOperationState(id)
@@ -177,6 +180,8 @@ extension AppDelegate {
             return
         }
         shadeOperationIDs.insert(id)
+        cancelRestorePin(for: id)
+        restoreFocusTokens.removeValue(forKey: id)
         transitionOperationState(id: id, to: .capturing, reason: "shade")
         var handedToAsyncCapture = false
         defer {
@@ -241,11 +246,16 @@ extension AppDelegate {
             // 可能让窗口长期不可见的动作。若进程在 hideWindow 中途被杀，重启后
             // rescue 仍能按 intent 找回窗口；隐藏成功验证后由 recordShadeJournal
             // 把同一条 entry 更新为 folded（或按最终隐藏方式清掉）。
-            recordShadeRecoveryIntent(id: id, pid: pid, bundleID: bundleID,
+            guard recordShadeRecoveryIntent(id: id, pid: pid, bundleID: bundleID,
                                       appName: appName, title: title,
                                       originalPosition: pos, originalSize: size,
                                       sourceDisplayID: sourceDisplayID,
-                                      sourceSpaceID: sourceSpaceID)
+                                      sourceSpaceID: sourceSpaceID) else {
+                dismissOverlay(overlay)
+                transitionOperationState(id: id, to: .failed, reason: "recovery-intent-write-failed")
+                quietNotice("无法保存恢复记录，窗口未折叠", log: "shade: refusing hide without durable intent id=\(id)")
+                return
+            }
             let hide = hideWindow(win, pid: pid, originalPosition: pos, size: size,
                                   policy: policy, appHideSafe: appHideSafe)
             // minimize / app-hide 的状态读回是异步的（最小化动画进行中 kAXMinimized
@@ -287,7 +297,7 @@ extension AppDelegate {
                                    overlayID: oid, hide: hide, pid: pid, bundleID: bundleID,
                                    appName: appName, title: title, appearanceMode: mode,
                                    lifecycleStage: .folded,
-                                   previewImage: previewImage,
+                                   previewImage: previewImage ?? preparedImage.map { NSImage(cgImage: $0, size: size) },
                                    quickLookReopenURL: quickLookReopenURL,
                                    ignoreAppRevealUntil: Date().addingTimeInterval(1.0),
                                    observer: observer)
@@ -296,6 +306,7 @@ extension AppDelegate {
             if hideVerifiedNow {
                 if enforceOverlaySpaceInvariant(id: id, state: state, reason: "install") {
                     revealPreparedOverlay(overlay)
+                    duoController.windowEffects.didVerifyFold(id: id, state: state)
                 }
             } else {
                 wlog("shade: hide not yet verified; deferring overlay reveal id=\(id) hide=\(hide)")
@@ -399,7 +410,8 @@ extension AppDelegate {
                 installOverlay(overlay, mode: mode, previewImage: nil)
                 return
             }
-            let quickPreview = quickWindowPreviewImage(id: id, logicalSize: size)
+            let quickPreview = preparedImage.map { NSImage(cgImage: $0, size: size) }
+                ?? quickWindowPreviewImage(id: id, logicalSize: size)
             if quickPreview != nil || !options.capturePreview {
                 // legacy 快照已经成功，或者这次折叠本来就不需要预览（比如专注 shelf
                 // 批量折叠）——两种情况都跟以前一样同步立刻装上，不引入任何延迟。
@@ -455,19 +467,22 @@ extension AppDelegate {
             }
             // 折叠一个正被置顶捕获的窗口：系统会在其交通灯处叠加录屏标识，
             // 截图前先停掉置顶流并等标识消失，让卷帘条的红绿灯落在干净背景上。
-            if self.pinnedPreviewController.stopPreviewBeforeFoldCapture(id: id) {
+            if self.pinnedPreviewController.stopPreviewBeforeFoldCapture(id: id), preparedImage == nil {
                 wlog("    pinned stream stopped before fold capture; waiting for indicator to clear")
                 try? await Task.sleep(nanoseconds: 500_000_000)
             }
-            let shouldParkFocus = !profile.isQuickLook
+            let shouldParkFocus = preparedImage == nil && !profile.isQuickLook
             if shouldParkFocus {
                 parkFocusForInactiveCapture()
                 try? await Task.sleep(nanoseconds: 35_000_000)       // 等 WindowServer 把整条 toolbar 重绘成非活跃态
             }
-            guard let full = await captureWindowWithTimeout(id: id,
-                                                            axPos: pos,
-                                                            size: size,
-                                                            timeoutNanoseconds: shadeCaptureTimeoutNanoseconds) else {
+            let capturedImage: CGImage?
+            if let preparedImage { capturedImage = preparedImage }
+            else {
+                capturedImage = await captureWindowWithTimeout(id: id, axPos: pos, size: size,
+                    timeoutNanoseconds: shadeCaptureTimeoutNanoseconds)
+            }
+            guard let full = capturedImage else {
                 if shouldParkFocus {
                     releaseFocusParking(reactivate: nil)
                 }

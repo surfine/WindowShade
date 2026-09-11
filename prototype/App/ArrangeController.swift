@@ -364,11 +364,12 @@ extension AppDelegate {
     }
 
     @objc func restoreAll() {
+        duoController.windowEffects.cancelAll()
         guard !shaded.isEmpty else { return }
         let playSound = soundEnabled
         suppressUnshadeSounds = true
         withMenuRebuildSuppressed {
-            for id in Array(shaded.keys) { unshade(id) }
+            for id in Array(shaded.keys) { _ = unshadeReturningElement(id) }
         }
         suppressUnshadeSounds = false
         if playSound {

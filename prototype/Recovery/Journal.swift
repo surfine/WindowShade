@@ -10,15 +10,23 @@ import Cocoa
 
 extension AppDelegate {
     func shadeJournalEntries() -> [[String: Any]] {
-        UserDefaults.standard.array(forKey: shadeJournalDefaultsKey) as? [[String: Any]] ?? []
+        do { if let entries = try (recoveryJournalOverride ?? .application).load() { return entries } }
+        catch { wlog("journal: disk read failed; using preference recovery copy: \(error)") }
+        if recoveryJournalOverride != nil { return [] }
+        return UserDefaults.standard.array(forKey: shadeJournalDefaultsKey) as? [[String: Any]] ?? []
     }
 
-    func saveShadeJournalEntries(_ entries: [[String: Any]]) {
+    @discardableResult
+    func saveShadeJournalEntries(_ entries: [[String: Any]]) -> Bool {
+        do { try (recoveryJournalOverride ?? .application).save(entries) }
+        catch { wlog("journal: durable write failed: \(error)"); return false }
+        if recoveryJournalOverride != nil { return true }
         if entries.isEmpty {
             UserDefaults.standard.removeObject(forKey: shadeJournalDefaultsKey)
         } else {
             UserDefaults.standard.set(entries, forKey: shadeJournalDefaultsKey)
         }
+        return true
     }
 
     func journalNumber(_ entry: [String: Any], _ key: String) -> Double? {
@@ -59,7 +67,7 @@ extension AppDelegate {
                                     stage: ShadeLifecycleStage,
                                     sourceDisplayID: CGDirectDisplayID?,
                                     sourceSpaceID: UInt64?) {
-        guard hide == .offscreen || hide == .privateOffscreen || hide == .privateAlpha else {
+        guard hide != .quickLookClosed && hide != .ownWindowOrderedOut else {
             clearShadeJournal(id: id)
             return
         }
@@ -108,13 +116,13 @@ extension AppDelegate {
 
     // 折叠动作前的 durable intent：在窗口可能被移到屏幕外/设透明之前落盘，
     // 供崩溃后 rescue 恢复。隐藏成功后会由 recordShadeJournal 更新为 folded；
-    // 若最终采用了不需要离屏救援的隐藏方式（minimize/hidden 等），
-    // recordShadeJournal 会清掉这条 intent。
+    // 最小化及隐藏也保留记录；仅本进程窗口和有意关闭的 Quick Look 无需跨进程救援。
     func recordShadeRecoveryIntent(id: CGWindowID, pid: pid_t, bundleID: String,
                                    appName: String, title: String,
                                    originalPosition: CGPoint, originalSize: CGSize,
                                    sourceDisplayID: CGDirectDisplayID?,
-                                   sourceSpaceID: UInt64?) {
+                                   sourceSpaceID: UInt64?) -> Bool {
+        duoRestoreVerificationTokens.removeValue(forKey: id)
         let now = Date().timeIntervalSince1970
         var entries = shadeJournalEntries().filter { journalID($0) != id }
         var entry: [String: Any] = [
@@ -137,8 +145,9 @@ extension AppDelegate {
         if let displayID = sourceDisplayID { entry["displayID"] = Double(displayID) }
         if let spaceID = sourceSpaceID { entry["spaceID"] = Double(spaceID) }
         entries.append(entry)
-        saveShadeJournalEntries(entries)
+        guard saveShadeJournalEntries(entries) else { return false }
         wlog("journal: intent id=\(id) app=\(appName) preparing")
+        return true
     }
 
     func updateShadeJournal(id: CGWindowID, reason: String,
@@ -181,7 +190,7 @@ extension AppDelegate {
         let entries = shadeJournalEntries()
         let filtered = entries.filter { journalID($0) != id }
         if filtered.count != entries.count {
-            saveShadeJournalEntries(filtered)
+            guard saveShadeJournalEntries(filtered) else { return }
             wlog("journal: clear id=\(id)")
         }
     }
@@ -208,17 +217,12 @@ extension AppDelegate {
     func journalMatches(_ entry: [String: Any], app: NSRunningApplication,
                                 win: AXUIElement) -> Bool {
         guard Int(app.processIdentifier) == Int(journalNumber(entry, "pid") ?? -1) else { return false }
+        if let created=journalNumber(entry,"createdAt"), let launched=app.launchDate?.timeIntervalSince1970, created<launched-1 { return false }
         let expectedBundle = journalString(entry, "bundleID")
         if !expectedBundle.isEmpty, app.bundleIdentifier != expectedBundle { return false }
 
-        // 匹配优先级：pid -> bundleID -> title -> windowID。
-        // 窗口 ID 在 app 重启后可能被复用，先按稳定属性（标题）匹配，
-        // 窗口 ID 只作最后兜底；标题为空时必须有 ID 精确匹配才视为同一窗口，
-        // 避免把同 app 的其他窗口误救。
-        let expectedTitle = cleanDisplayTitle(journalString(entry, "title"))
-        if !expectedTitle.isEmpty, cleanDisplayTitle(axTitle(win)) == expectedTitle {
-            return true
-        }
+        // A title is not an identity: two documents/tabs can have the same title.
+        // The creating process and exact CGWindowID must still match before rescue.
         if let expectedID = journalID(entry), let currentID = windowID(of: win), expectedID == currentID {
             return true
         }

@@ -159,6 +159,7 @@ extension AppDelegate {
         guard let overlay = state.overlay else { return }
         if enforceOverlaySpaceInvariant(id: id, state: state, reason: "hide-verified") {
             revealPreparedOverlay(overlay)
+            duoController.windowEffects.didVerifyFold(id: id, state: state)
         }
     }
 
@@ -166,6 +167,7 @@ extension AppDelegate {
     // 曾把实际已 app-hide 的 Safari 留在隐藏态、无卷帘条），再恢复几何、
     // 撤 overlay/状态/journal。
     func rollbackFoldTransaction(id: CGWindowID) {
+        duoController.windowEffects.cancel(id)
         guard let state = shaded[id] else { return }
         switch state.hide {
         case .hidden:
@@ -181,7 +183,8 @@ extension AppDelegate {
             break
         }
         _ = applyRestoredGeometry(state, to: state.originalPosition, label: "rollback", reason: "restore")
-        forceCleanup(id)
+        forceCleanup(id, preserveRecovery: true)
+        verifyRestoredWindow(state, to: state.originalPosition, completion: nil)
         quietNotice("此窗口暂时无法折叠",
                     log: "shade: transaction rolled back id=\(id) app=\(state.appName)")
     }
@@ -193,7 +196,10 @@ extension AppDelegate {
     }
 
     func bringRestoredWindowToFront(_ win: AXUIElement, pid: pid_t, reason: String) {
+        let id=windowID(of:win),token=UUID()
+        if let id { restoreFocusTokens[id]=token }
         func attempt(_ label: String) {
+            if let id { guard restoreFocusTokens[id] == token,shaded[id] == nil,!shadeOperationIDs.contains(id) else { return } }
             // 只在 app 尚未前台时 activate：250ms 内连发 activate 会反复重启
             // 菜单栏的交叉淡入，赶上时机就把两套菜单叠印留在屏幕上（系统级
             // 渲染残影，实测截图 2026-07）。激活已生效的重试只做 AX raise/focus
@@ -211,6 +217,9 @@ extension AppDelegate {
         attempt("immediate")
         DispatchQueue.main.asyncAfter(deadline: .now() + 0.08) { attempt("after-80ms") }
         DispatchQueue.main.asyncAfter(deadline: .now() + 0.25) { attempt("after-250ms") }
+        DispatchQueue.main.asyncAfter(deadline: .now()+0.3) { [weak self] in
+            if let id,self?.restoreFocusTokens[id] == token { self?.restoreFocusTokens.removeValue(forKey:id) }
+        }
     }
 
     func prepareForwardedTrafficAction(_ win: AXUIElement, pid: pid_t, reason: String) {
@@ -650,6 +659,12 @@ extension AppDelegate {
         return axPosition(fromCocoaFrame: clamped)
     }
 
+    func refreshedWindowElement(id: CGWindowID, fallback: AXUIElement) -> AXUIElement {
+        if let info=cgWindowInfo(id),let pid=(info[kCGWindowOwnerPID as String] as? NSNumber)?.int32Value,
+           let current=appWindows(pid:pid).first(where:{windowID(of:$0) == id}) { return current }
+        return fallback
+    }
+
     func resolvedWindowElement(for state: ShadeState) -> AXUIElement {
         let windows = appWindows(pid: state.pid)
         guard !windows.isEmpty else { return state.element }
@@ -657,25 +672,8 @@ extension AppDelegate {
         if let match = windows.first(where: { windowID(of: $0) == state.sourceWindowID }) {
             return match
         }
-        if windows.count == 1 {
-            return windows[0]
-        }
-        let stateTitle = cleanDisplayTitle(state.title)
-        let titleMatches = !stateTitle.isEmpty
-            ? windows.filter { cleanDisplayTitle(axTitle($0)) == stateTitle }
-            : []
-        if titleMatches.count == 1, let match = titleMatches.first {
-            return match
-        }
-        if let pos = axPosition(state.element), let size = axSize(state.element) {
-            let oldFrame = CGRect(origin: pos, size: size)
-            let candidates = titleMatches.isEmpty ? windows : titleMatches
-            return candidates.min {
-                let aFrame = CGRect(origin: axPosition($0) ?? pos, size: axSize($0) ?? size)
-                let bFrame = CGRect(origin: axPosition($1) ?? pos, size: axSize($1) ?? size)
-                return frameDistance(aFrame, oldFrame) < frameDistance(bFrame, oldFrame)
-            } ?? state.element
-        }
+        // A surviving sibling (even the sole remaining window) is not the source.
+        // Keep the original element on failure; AX then fails safely instead of moving another window.
         return state.element
     }
 

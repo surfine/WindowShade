@@ -1033,7 +1033,7 @@ func trafficLightRects(_ rects: [(CGRect, TrafficAction)],
 final class WindowShadeLogger {
     static let shared = WindowShadeLogger()
 
-    private let url = URL(fileURLWithPath: "/tmp/windowshade.log")
+    private let url = URL(fileURLWithPath: getenv("WINDOWSHADE_LOG_PATH").map { String(cString: $0) } ?? "/tmp/windowshade.log")
     private let queue = DispatchQueue(label: "WindowShade.log", qos: .utility)
     private var handle: FileHandle?
     private let maxLogSize: UInt64 = 5 * 1024 * 1024
@@ -1413,6 +1413,7 @@ struct ShadeInvocationOptions {
 // MARK: - App 主体
 
 final class AppDelegate: NSObject, NSApplicationDelegate, NSMenuDelegate {
+    let duoController = DuoController()
     struct PendingTitlebarTripleClick {
         let id: CGWindowID
         let element: AXUIElement
@@ -1485,6 +1486,9 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSMenuDelegate {
     let reconcileAXWorkQueue = DispatchQueue(label: "WindowShade.reconcile-ax", qos: .utility)
     var reconcileInvalidCounts: [CGWindowID: Int] = [:]
     var privateAlphaOriginalValues: [CGWindowID: Float] = [:]
+    var duoRestoreVerificationTokens: [CGWindowID: UUID] = [:]
+    var restoreFocusTokens: [CGWindowID: UUID] = [:]
+    var recoveryJournalOverride: DurableShadeJournal?
     var lastJournalRescueAttempt: Date?
     var focusParkingWindow: NSWindow?
     // 当前唯一在屏幕上的预览视窗（菜单悬停或标题栏 peek 触发），见 presentPreview/
@@ -1521,6 +1525,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSMenuDelegate {
     var onboardingRefreshTimer: Timer?
     let onboardingContentWidth: CGFloat = 452
     var suppressUnshadeSounds = false
+    var ownsGlobalInput = true
     var pendingTitlebarTripleClick: PendingTitlebarTripleClick?
     var restorePinTokens: [CGWindowID: UUID] = [:]
     var titlebarEventTapBypassUntil: Date?
@@ -1569,6 +1574,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSMenuDelegate {
     )
 
     func applicationDidFinishLaunching(_ note: Notification) {
+        duoController.start(owner: self)
         let sessionFormatter = DateFormatter()
         sessionFormatter.dateFormat = "yyyy-MM-dd HH:mm:ss"
         sessionFormatter.locale = Locale(identifier: "en_US_POSIX")
@@ -1952,6 +1958,8 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSMenuDelegate {
     }
 
     func applicationWillTerminate(_ note: Notification) {
+        duoController.stop()
+        restoreAll()
         reconcileTimer?.invalidate()
         reconcileTimer = nil
         if let pinnedPreviewFocusMonitor {

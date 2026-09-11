@@ -5,7 +5,9 @@ import Cocoa
 
 extension AppDelegate {
     func unshadeReturningElement(_ id: CGWindowID, playSound: Bool = true,
-                                         pinAfterRestore: Bool = true) -> AXUIElement? {
+                                         pinAfterRestore: Bool = true,
+                                         onVerified: ((Bool) -> Void)? = nil) -> AXUIElement? {
+        duoController.windowEffects.cancelForSynchronousRestore(id)
         guard shaded[id] != nil else { return nil }
         markShadeLifecycle(id: id, .restoring, reason: "unshade")
         transitionOperationState(id: id, to: .restoring, reason: "unshade")
@@ -15,9 +17,7 @@ extension AppDelegate {
         let rejoinStackFrame = shouldRememberFocusRejoin ? focusSideStackFrames[id] : nil
         hideHoverPreview(id: id)
         hideMenuHoverPreview(id: id)
-        clearShadeJournal(id: id)
         reconcileInvalidCounts.removeValue(forKey: id)
-        privateAlphaOriginalValues.removeValue(forKey: id)
         pendingSpaceReturns.removeValue(forKey: id)
         hoverPreviewSuppressedUntil.removeValue(forKey: id)
         focusSideStackFrames.removeValue(forKey: id)
@@ -46,6 +46,8 @@ extension AppDelegate {
             pos = axPosition(state.element) ?? state.originalPosition
         }
         if state.hide == .quickLookClosed {
+            clearShadeJournal(id: id) // This strategy intentionally closes the original window.
+            onVerified?(false)
             if let url = state.quickLookReopenURL, reopenQuickLookPreview(url: url) {
                 wlog("quicklook: reopened via qlmanage id=\(id) path=\(url.path)")
             } else if reopenQuickLookFromFinderSelection(pid: state.pid) {
@@ -67,6 +69,7 @@ extension AppDelegate {
         } else {
             cancelRestorePin(for: id)
         }
+        verifyRestoredWindow(state, to: pos, completion: onVerified)
         transitionOperationState(id: id, to: .normal, reason: "unshade")
         rebuildMenu()
         if playSound && !suppressUnshadeSounds {
@@ -76,16 +79,19 @@ extension AppDelegate {
     }
     @discardableResult
     func unshade(_ id: CGWindowID) -> Bool {
-        unshadeReturningElement(id) != nil
+        if duoController.windowEffects.interceptRestore(id: id) { return true }
+        return unshadeReturningElement(id) != nil
     }
-    func forceCleanup(_ id: CGWindowID, preserveFocusEntry: Bool = false) {
+    func forceCleanup(_ id: CGWindowID, preserveFocusEntry: Bool = false, preserveRecovery: Bool = false) {
+        duoController.windowEffects.cancel(id)
+        duoRestoreVerificationTokens.removeValue(forKey: id)
         guard shaded[id] != nil else { return }
         markShadeLifecycle(id: id, .cleaned, reason: "forceCleanup")
         guard let state = shaded.removeValue(forKey: id) else { return }
         transitionOperationState(id: id, to: .normal, reason: "forceCleanup")
         hideHoverPreview(id: id)
         hideMenuHoverPreview(id: id)
-        clearShadeJournal(id: id)
+        if !preserveRecovery { clearShadeJournal(id: id) }
         reconcileInvalidCounts.removeValue(forKey: id)
         privateAlphaOriginalValues.removeValue(forKey: id)
         hoverPreviewSuppressedUntil.removeValue(forKey: id)
