@@ -128,8 +128,20 @@ final class DuoSettingsWindow: NSWindowController, NSWindowDelegate {
 
   private func makeSidebar() -> NSView {
     let sidebar = NSView()
-    sidebar.wantsLayer = true
-    sidebar.layer?.backgroundColor = NSColor.controlBackgroundColor.cgColor
+
+    let background = NSVisualEffectView()
+    background.material = .sidebar
+    background.blendingMode = .withinWindow
+    background.state = .active
+    background.translatesAutoresizingMaskIntoConstraints = false
+    sidebar.addSubview(background)
+    NSLayoutConstraint.activate([
+      background.leadingAnchor.constraint(equalTo: sidebar.leadingAnchor),
+      background.trailingAnchor.constraint(equalTo: sidebar.trailingAnchor),
+      background.topAnchor.constraint(equalTo: sidebar.topAnchor),
+      background.bottomAnchor.constraint(equalTo: sidebar.bottomAnchor),
+    ])
+    sidebar.setAccessibilityLabel("设置侧边栏")
 
     let stack = NSStackView()
     stack.orientation = .vertical
@@ -138,9 +150,9 @@ final class DuoSettingsWindow: NSWindowController, NSWindowDelegate {
     stack.translatesAutoresizingMaskIntoConstraints = false
     sidebar.addSubview(stack)
     NSLayoutConstraint.activate([
-      stack.leadingAnchor.constraint(equalTo: sidebar.leadingAnchor, constant: 14),
+      stack.leadingAnchor.constraint(equalTo: sidebar.leadingAnchor, constant: 12),
       stack.trailingAnchor.constraint(equalTo: sidebar.trailingAnchor, constant: -12),
-      stack.topAnchor.constraint(equalTo: sidebar.topAnchor, constant: 22),
+      stack.topAnchor.constraint(equalTo: sidebar.topAnchor, constant: 18),
     ])
 
     for section in WindowShadeSettingsSection.allCases {
@@ -152,6 +164,7 @@ final class DuoSettingsWindow: NSWindowController, NSWindowDelegate {
       button.imagePosition = .imageLeading
       button.imageScaling = .scaleProportionallyDown
       button.contentTintColor = .labelColor
+      button.font = .systemFont(ofSize: 13)
       button.controlSize = .regular
       button.toolTip = section.title
       button.setAccessibilityLabel(section.title)
@@ -189,6 +202,7 @@ final class DuoSettingsWindow: NSWindowController, NSWindowDelegate {
     NSLayoutConstraint.activate(activePageConstraints)
     pageHost.layoutSubtreeIfNeeded()
     pageScroll.contentView.scroll(to: .zero)
+    pageScroll.contentView.bounds.origin = .zero
     pageScroll.reflectScrolledClipView(pageScroll.contentView)
     for (item, button) in pageButtons {
       button.font = .systemFont(ofSize: 13, weight: item == section ? .semibold : .regular)
@@ -204,7 +218,12 @@ final class DuoSettingsWindow: NSWindowController, NSWindowDelegate {
     refreshStatus(force: true)
     DispatchQueue.main.async { [weak self] in
       guard let self, self.currentSection == section else { return }
+      self.window?.displayIfNeeded()
       self.scrollToTop()
+      DispatchQueue.main.async { [weak self] in
+        guard let self, self.currentSection == section else { return }
+        self.scrollToTop()
+      }
     }
   }
 
@@ -212,6 +231,7 @@ final class DuoSettingsWindow: NSWindowController, NSWindowDelegate {
     pageScroll.layoutSubtreeIfNeeded()
     pageHost.layoutSubtreeIfNeeded()
     pageScroll.contentView.scroll(to: .zero)
+    pageScroll.contentView.bounds.origin = .zero
     pageScroll.reflectScrolledClipView(pageScroll.contentView)
   }
 
@@ -367,6 +387,7 @@ final class DuoSettingsWindow: NSWindowController, NSWindowDelegate {
     let stack = NSStackView()
     stack.orientation = .vertical
     stack.alignment = .leading
+    stack.distribution = .fill
     stack.spacing = 12
     stack.translatesAutoresizingMaskIntoConstraints = false
     root.addSubview(stack)
@@ -374,7 +395,7 @@ final class DuoSettingsWindow: NSWindowController, NSWindowDelegate {
       stack.leadingAnchor.constraint(equalTo: root.leadingAnchor),
       stack.trailingAnchor.constraint(equalTo: root.trailingAnchor),
       stack.topAnchor.constraint(equalTo: root.topAnchor),
-      stack.bottomAnchor.constraint(equalTo: root.bottomAnchor),
+      stack.bottomAnchor.constraint(lessThanOrEqualTo: root.bottomAnchor),
     ])
 
     stack.addArrangedSubview(makePageHeader(
@@ -448,10 +469,13 @@ final class DuoSettingsWindow: NSWindowController, NSWindowDelegate {
     permission.target = self
     permission.action = #selector(openPermission)
     permission.bezelStyle = .rounded
-    let actionRow = NSStackView(views: [pause, permission])
+    let actionRow = NSStackView(views: [NSView(), pause, permission])
     actionRow.orientation = .horizontal
+    actionRow.alignment = .centerY
     actionRow.spacing = 10
+    actionRow.translatesAutoresizingMaskIntoConstraints = false
     stack.addArrangedSubview(actionRow)
+    actionRow.widthAnchor.constraint(equalTo: stack.widthAnchor).isActive = true
 
     let note = NSTextField(wrappingLabelWithString: "实时预览默认关闭。按 Esc、点击或开始输入可撤去桌面效果。")
     note.font = .systemFont(ofSize: 12)
@@ -470,6 +494,7 @@ final class DuoSettingsWindow: NSWindowController, NSWindowDelegate {
     let stack = NSStackView()
     stack.orientation = .vertical
     stack.alignment = .leading
+    stack.distribution = .fill
     stack.spacing = 14
     stack.translatesAutoresizingMaskIntoConstraints = false
     root.addSubview(stack)
@@ -477,34 +502,77 @@ final class DuoSettingsWindow: NSWindowController, NSWindowDelegate {
       stack.leadingAnchor.constraint(equalTo: root.leadingAnchor),
       stack.trailingAnchor.constraint(equalTo: root.trailingAnchor),
       stack.topAnchor.constraint(equalTo: root.topAnchor),
-      stack.bottomAnchor.constraint(equalTo: root.bottomAnchor),
+      stack.bottomAnchor.constraint(lessThanOrEqualTo: root.bottomAnchor),
     ])
     stack.addArrangedSubview(makePageHeader(
       title: "高级", subtitle: "调整触发行为、校准传感器和恢复动态效果默认值。"))
 
-    let sliderLabel = NSTextField(labelWithString: "触发角度")
-    sliderLabel.widthAnchor.constraint(equalToConstant: 88).isActive = true
+    stack.addArrangedSubview(makeSectionLabel("触发"))
     trigger.target = self
     trigger.action = #selector(changed)
     trigger.isContinuous = true
     trigger.setAccessibilityLabel("触发角度")
+    trigger.toolTip = "达到此角度后触发动态效果"
+    angleLabel.font = .monospacedDigitSystemFont(ofSize: 13, weight: .medium)
+    angleLabel.alignment = .right
     angleLabel.widthAnchor.constraint(equalToConstant: 56).isActive = true
-    let triggerRow = NSStackView(views: [sliderLabel, trigger, angleLabel])
-    triggerRow.orientation = .horizontal
-    triggerRow.spacing = 10
-    stack.addArrangedSubview(triggerRow)
-    triggerRow.widthAnchor.constraint(equalTo: stack.widthAnchor).isActive = true
+    angleLabel.setAccessibilityLabel("当前触发角度")
 
+    let triggerTitle = NSTextField(labelWithString: "触发角度")
+    triggerTitle.font = .systemFont(ofSize: 13)
+    let triggerSubtitle = NSTextField(wrappingLabelWithString: "达到此角度后开始动态效果。")
+    triggerSubtitle.font = .systemFont(ofSize: 11)
+    triggerSubtitle.textColor = .secondaryLabelColor
+    triggerSubtitle.maximumNumberOfLines = 2
+    let triggerLabels = NSStackView(views: [triggerTitle, triggerSubtitle])
+    triggerLabels.orientation = .vertical
+    triggerLabels.alignment = .leading
+    triggerLabels.spacing = 3
+
+    let triggerHeader = NSStackView(views: [triggerLabels, NSView(), angleLabel])
+    triggerHeader.orientation = .horizontal
+    triggerHeader.alignment = .centerY
+    triggerHeader.spacing = 12
+    triggerLabels.setContentHuggingPriority(.defaultLow, for: .horizontal)
+    triggerLabels.setContentCompressionResistancePriority(.defaultLow, for: .horizontal)
+
+    let minimum = NSTextField(labelWithString: "45°")
+    let maximum = NSTextField(labelWithString: "140°")
+    for label in [minimum, maximum] {
+      label.font = .systemFont(ofSize: 11)
+      label.textColor = .secondaryLabelColor
+      label.alignment = .center
+      label.widthAnchor.constraint(equalToConstant: 38).isActive = true
+    }
+    let triggerSlider = NSStackView(views: [minimum, trigger, maximum])
+    triggerSlider.orientation = .horizontal
+    triggerSlider.alignment = .centerY
+    triggerSlider.spacing = 8
+    let triggerCard = makeSettingsCard([triggerHeader, triggerSlider])
+    stack.addArrangedSubview(triggerCard)
+    triggerCard.widthAnchor.constraint(equalTo: stack.widthAnchor).isActive = true
+
+    stack.addArrangedSubview(makeSectionLabel("操作"))
     calibration.target = self
     calibration.action = #selector(calibrate)
+    calibration.image = NSImage(systemSymbolName: "scope", accessibilityDescription: "校准")
+    calibration.imagePosition = .imageLeading
+    calibration.setAccessibilityHelp("使用当前传感器角度作为触发角度")
     let reset = NSButton(title: "恢复动态效果默认值", target: self, action: #selector(reset))
     reset.bezelStyle = .rounded
+    reset.image = NSImage(systemSymbolName: "arrow.counterclockwise", accessibilityDescription: "恢复默认值")
+    reset.imagePosition = .imageLeading
     let diagnostics = NSButton(title: "打开诊断日志", target: self, action: #selector(openDiagnostics))
     diagnostics.bezelStyle = .rounded
+    diagnostics.image = NSImage(systemSymbolName: "doc.text.magnifyingglass", accessibilityDescription: "诊断日志")
+    diagnostics.imagePosition = .imageLeading
     let buttonRow = NSStackView(views: [calibration, reset, diagnostics])
     buttonRow.orientation = .horizontal
+    buttonRow.alignment = .centerY
     buttonRow.spacing = 10
-    stack.addArrangedSubview(buttonRow)
+    let buttonCard = makeSettingsCard([buttonRow])
+    stack.addArrangedSubview(buttonCard)
+    buttonCard.widthAnchor.constraint(equalTo: stack.widthAnchor).isActive = true
 
     let reduced = NSTextField(wrappingLabelWithString: NSWorkspace.shared.accessibilityDisplayShouldReduceMotion
       ? "系统已开启“减少动态效果”，连续动画会自动暂停。"
@@ -512,11 +580,17 @@ final class DuoSettingsWindow: NSWindowController, NSWindowDelegate {
     reduced.font = .systemFont(ofSize: 12)
     reduced.textColor = .secondaryLabelColor
     reduced.maximumNumberOfLines = 2
-    stack.addArrangedSubview(reduced)
+    reduced.setAccessibilityLabel("减少动态效果提示")
     let logPath = NSTextField(labelWithString: "日志位置：/tmp/windowshade.log")
-    logPath.font = .systemFont(ofSize: 12)
+    logPath.font = .systemFont(ofSize: 11)
     logPath.textColor = .tertiaryLabelColor
-    stack.addArrangedSubview(logPath)
+    let infoRow = NSStackView(views: [reduced, NSView()])
+    infoRow.orientation = .horizontal
+    infoRow.alignment = .centerY
+    let infoCard = makeSettingsCard([infoRow, logPath])
+    stack.addArrangedSubview(makeSectionLabel("辅助功能与日志"))
+    stack.addArrangedSubview(infoCard)
+    infoCard.widthAnchor.constraint(equalTo: stack.widthAnchor).isActive = true
     load(controller.settings)
     return root
   }
