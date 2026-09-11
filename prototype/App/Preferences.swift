@@ -86,23 +86,12 @@ extension AppDelegate {
     }
 
     private func makeSettingsPageRoot() -> (NSView, NSStackView) {
+        // 背景由设置窗口的详情区统一铺满，页面保持透明。
         let root = NSView()
-        let background = NSVisualEffectView()
-        background.material = .underPageBackground
-        background.blendingMode = .withinWindow
-        background.state = .active
-        background.translatesAutoresizingMaskIntoConstraints = false
-        root.addSubview(background)
-        NSLayoutConstraint.activate([
-            background.leadingAnchor.constraint(equalTo: root.leadingAnchor),
-            background.trailingAnchor.constraint(equalTo: root.trailingAnchor),
-            background.topAnchor.constraint(equalTo: root.topAnchor),
-            background.bottomAnchor.constraint(equalTo: root.bottomAnchor),
-        ])
         let stack = NSStackView()
         stack.orientation = .vertical
         stack.alignment = .leading
-        stack.spacing = 10
+        stack.spacing = 8
         stack.translatesAutoresizingMaskIntoConstraints = false
         root.addSubview(stack)
         NSLayoutConstraint.activate([
@@ -120,9 +109,9 @@ extension AppDelegate {
         stack.alignment = .leading
         stack.spacing = 6
         let titleLabel = NSTextField(labelWithString: title)
-        titleLabel.font = .systemFont(ofSize: 22, weight: .semibold)
+        titleLabel.font = .systemFont(ofSize: 20, weight: .semibold)
         let subtitleLabel = NSTextField(wrappingLabelWithString: subtitle)
-        subtitleLabel.font = .systemFont(ofSize: 14)
+        subtitleLabel.font = .systemFont(ofSize: 13)
         subtitleLabel.textColor = .secondaryLabelColor
         subtitleLabel.maximumNumberOfLines = 2
         stack.addArrangedSubview(titleLabel)
@@ -131,28 +120,28 @@ extension AppDelegate {
               let image = NSImage(systemSymbolName: symbolName, accessibilityDescription: title)
         else { return stack }
         let icon = NSImageView()
-        icon.image = image.withSymbolConfiguration(.init(pointSize: 20, weight: .semibold))
+        icon.image = image.withSymbolConfiguration(.init(pointSize: 16, weight: .semibold))
         icon.contentTintColor = .controlAccentColor
         icon.imageScaling = .scaleProportionallyDown
         icon.translatesAutoresizingMaskIntoConstraints = false
         let iconPlate = NSView()
         iconPlate.wantsLayer = true
-        iconPlate.layer?.cornerRadius = 9
+        iconPlate.layer?.cornerRadius = 7
         iconPlate.layer?.backgroundColor = NSColor.controlAccentColor.withAlphaComponent(0.12).cgColor
         iconPlate.translatesAutoresizingMaskIntoConstraints = false
         iconPlate.addSubview(icon)
         NSLayoutConstraint.activate([
-            icon.widthAnchor.constraint(equalToConstant: 26),
-            icon.heightAnchor.constraint(equalToConstant: 26),
+            icon.widthAnchor.constraint(equalToConstant: 22),
+            icon.heightAnchor.constraint(equalToConstant: 22),
             icon.centerXAnchor.constraint(equalTo: iconPlate.centerXAnchor),
             icon.centerYAnchor.constraint(equalTo: iconPlate.centerYAnchor),
-            iconPlate.widthAnchor.constraint(equalToConstant: 34),
-            iconPlate.heightAnchor.constraint(equalToConstant: 34),
+            iconPlate.widthAnchor.constraint(equalToConstant: 28),
+            iconPlate.heightAnchor.constraint(equalToConstant: 28),
         ])
         let header = NSStackView(views: [iconPlate, stack])
         header.orientation = .horizontal
         header.alignment = .top
-        header.spacing = 12
+        header.spacing = 10
         return header
     }
 
@@ -285,7 +274,7 @@ extension AppDelegate {
 
     func makePrefGroupLabel(_ text: String) -> NSView {
         let field = NSTextField(labelWithString: text)
-        field.font = .systemFont(ofSize: 13, weight: .semibold)
+        field.font = .systemFont(ofSize: 12, weight: .semibold)
         field.textColor = .secondaryLabelColor
         let symbol: String?
         switch text {
@@ -300,11 +289,11 @@ extension AppDelegate {
               let image = NSImage(systemSymbolName: symbol, accessibilityDescription: text)
         else { return field }
         let icon = NSImageView()
-        icon.image = image.withSymbolConfiguration(.init(pointSize: 13, weight: .medium))
+        icon.image = image.withSymbolConfiguration(.init(pointSize: 12, weight: .medium))
         icon.contentTintColor = .tertiaryLabelColor
         icon.imageScaling = .scaleProportionallyDown
-        icon.widthAnchor.constraint(equalToConstant: 18).isActive = true
-        icon.heightAnchor.constraint(equalToConstant: 18).isActive = true
+        icon.widthAnchor.constraint(equalToConstant: 16).isActive = true
+        icon.heightAnchor.constraint(equalToConstant: 16).isActive = true
         let group = NSStackView(views: [icon, field])
         group.orientation = .horizontal
         group.alignment = .centerY
@@ -360,11 +349,11 @@ extension AppDelegate {
         labels.alignment = .leading
         labels.spacing = 4
         let title = NSTextField(labelWithString: name)
-        title.font = .systemFont(ofSize: 14)
+        title.font = .systemFont(ofSize: 13)
         labels.addArrangedSubview(title)
         if let subtitle {
             let detail = NSTextField(wrappingLabelWithString: subtitle)
-            detail.font = .systemFont(ofSize: 12)
+            detail.font = .systemFont(ofSize: 11)
             detail.textColor = .secondaryLabelColor
             detail.maximumNumberOfLines = 2
             labels.addArrangedSubview(detail)
@@ -386,8 +375,8 @@ extension AppDelegate {
         let row = NSStackView(views: [labels, NSView(), toggle])
         row.orientation = .horizontal
         row.alignment = .centerY
-        row.spacing = 16
-        row.heightAnchor.constraint(greaterThanOrEqualToConstant: subtitle == nil ? 52 : 60).isActive = true
+        row.spacing = 14
+        row.heightAnchor.constraint(greaterThanOrEqualToConstant: subtitle == nil ? 42 : 48).isActive = true
         return row
     }
 
@@ -401,8 +390,8 @@ extension AppDelegate {
         let row = NSStackView(views: [labels, NSView(), control])
         row.orientation = .horizontal
         row.alignment = .centerY
-        row.spacing = 16
-        row.heightAnchor.constraint(greaterThanOrEqualToConstant: subtitle == nil ? 52 : 60).isActive = true
+        row.spacing = 14
+        row.heightAnchor.constraint(greaterThanOrEqualToConstant: subtitle == nil ? 42 : 48).isActive = true
         return row
     }
 
@@ -411,8 +400,8 @@ extension AppDelegate {
         let icon = NSImageView(image: NSImage(systemSymbolName: symbol, accessibilityDescription: name) ?? NSImage())
         icon.contentTintColor = .secondaryLabelColor
         icon.imageScaling = .scaleProportionallyDown
-        icon.widthAnchor.constraint(equalToConstant: 22).isActive = true
-        icon.heightAnchor.constraint(equalToConstant: 22).isActive = true
+        icon.widthAnchor.constraint(equalToConstant: 18).isActive = true
+        icon.heightAnchor.constraint(equalToConstant: 18).isActive = true
 
         let labels = makeUnifiedLabels(name: name, subtitle: subtitle)
         labels.setContentHuggingPriority(.defaultLow, for: .horizontal)
@@ -424,10 +413,10 @@ extension AppDelegate {
         let stateColor: NSColor = granted ? .systemGreen : .systemOrange
         stateIcon.contentTintColor = stateColor
         stateIcon.imageScaling = .scaleProportionallyDown
-        stateIcon.widthAnchor.constraint(equalToConstant: 18).isActive = true
-        stateIcon.heightAnchor.constraint(equalToConstant: 18).isActive = true
+        stateIcon.widthAnchor.constraint(equalToConstant: 15).isActive = true
+        stateIcon.heightAnchor.constraint(equalToConstant: 15).isActive = true
         let state = NSTextField(labelWithString: granted ? "已授权" : "未授权")
-        state.font = .systemFont(ofSize: 13, weight: .medium)
+        state.font = .systemFont(ofSize: 12, weight: .medium)
         state.textColor = stateColor
 
         let link = NSButton(title: "打开设置", target: self, action: action)
@@ -438,9 +427,8 @@ extension AppDelegate {
         link.attributedTitle = NSAttributedString(
             string: "打开设置",
             attributes: [
-                .font: NSFont.systemFont(ofSize: 13),
+                .font: NSFont.systemFont(ofSize: 12),
                 .foregroundColor: NSColor.controlAccentColor,
-                .underlineStyle: NSUnderlineStyle.single.rawValue,
             ])
         link.setAccessibilityLabel("打开\(name)设置")
         link.setContentHuggingPriority(.required, for: .horizontal)
@@ -453,8 +441,8 @@ extension AppDelegate {
         let row = NSStackView(views: [icon, labels, NSView(), trailing])
         row.orientation = .horizontal
         row.alignment = .centerY
-        row.spacing = 14
-        row.heightAnchor.constraint(greaterThanOrEqualToConstant: 60).isActive = true
+        row.spacing = 12
+        row.heightAnchor.constraint(greaterThanOrEqualToConstant: 48).isActive = true
         return row
     }
 
