@@ -127,9 +127,10 @@ final class DuoSettingsWindow: NSWindowController, NSWindowDelegate {
       button.controlSize = .regular
       button.contentTintColor = .labelColor
       button.translatesAutoresizingMaskIntoConstraints = false
+      // 先入栈再激活约束：跨视图约束要求两端已经有共同祖先，否则 AppKit 直接抛异常。
+      stack.addArrangedSubview(button)
       button.widthAnchor.constraint(equalTo: stack.widthAnchor).isActive = true
       button.heightAnchor.constraint(equalToConstant: 30).isActive = true
-      stack.addArrangedSubview(button)
       pageButtons[section] = button
     }
     return sidebar
@@ -297,8 +298,8 @@ final class DuoSettingsWindow: NSWindowController, NSWindowDelegate {
     let triggerRow = NSStackView(views: [sliderLabel, trigger, angleLabel])
     triggerRow.orientation = .horizontal
     triggerRow.spacing = 10
-    triggerRow.widthAnchor.constraint(equalTo: stack.widthAnchor).isActive = true
     stack.addArrangedSubview(triggerRow)
+    triggerRow.widthAnchor.constraint(equalTo: stack.widthAnchor).isActive = true
 
     calibration.target = self
     calibration.action = #selector(calibrate)
