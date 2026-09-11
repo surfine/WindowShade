@@ -87,15 +87,12 @@ open WindowShade.app
 
 签名身份可以通过 WINDOWSHADE_CODESIGN_IDENTITY 或本机未跟踪的 prototype/local-codesign.env 提供。构建、签名与发布细节见 DEVELOPMENT.md。
 
-## 架构
+## 项目结构
 
-```mermaid
-flowchart TD
-    AX[Accessibility API] --> Locator[Window Locator]
-    Locator --> Controller[Shade Controller]
-    Controller --> SCK[ScreenCaptureKit]
-    Controller --> Overlay[Overlay Window]
-    Controller --> Journal[Recovery Journal]
-```
+实现都在 `prototype/` 下，按职责分模块：`App/` 负责菜单、设置与折叠入口，`Capture/` 负责截图与缓存，`Effects/` 负责动态效果与渲染，`Recovery/` 负责恢复日志与窗口救援，另有 `Overlay/`、`Window/`、`Compatibility/` 和隔离私有 API 的 `Private/`。
 
-实际功能分布在 prototype/ 下的 App/、Capture/、Compatibility/、Core/、Overlay/、Private/、Recovery/ 和 Window/ 模块。历史背景见 WindowShade.md。
+模块划分、构建与发布流程见 DEVELOPMENT.md，设计背景见 WindowShade.md。
+
+## 第三方
+
+动态效果的部分光学实现移植自 [DuoBook](https://github.com/askmaddyy/DuoBook)（MIT）与 [Mac-Duo](https://github.com/sumimakito/Mac-Duo)（Apache-2.0）。来源、版本与改动范围记在 [DUO-THIRD-PARTY.md](docs/DUO-THIRD-PARTY.md)，安装包里保留完整许可文件。
