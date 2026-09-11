@@ -381,6 +381,33 @@ final class DuoSettingsWindow: NSWindowController, NSWindowDelegate {
     return row
   }
 
+  private func makeActionRow(title: String, subtitle: String, button: NSButton) -> NSView {
+    let labels = NSStackView()
+    labels.orientation = .vertical
+    labels.alignment = .leading
+    labels.spacing = 3
+    let titleLabel = NSTextField(labelWithString: title)
+    titleLabel.font = .systemFont(ofSize: 13)
+    let subtitleLabel = NSTextField(wrappingLabelWithString: subtitle)
+    subtitleLabel.font = .systemFont(ofSize: 11)
+    subtitleLabel.textColor = .secondaryLabelColor
+    subtitleLabel.maximumNumberOfLines = 2
+    labels.addArrangedSubview(titleLabel)
+    labels.addArrangedSubview(subtitleLabel)
+
+    button.controlSize = .regular
+    button.setContentHuggingPriority(.required, for: .horizontal)
+    button.setContentCompressionResistancePriority(.required, for: .horizontal)
+    let row = NSStackView(views: [labels, NSView(), button])
+    row.orientation = .horizontal
+    row.alignment = .centerY
+    row.spacing = 12
+    labels.setContentHuggingPriority(.defaultLow, for: .horizontal)
+    labels.setContentCompressionResistancePriority(.defaultLow, for: .horizontal)
+    row.heightAnchor.constraint(greaterThanOrEqualToConstant: 52).isActive = true
+    return row
+  }
+
   private func makeStatusCard() -> NSView {
     let imageView = NSImageView()
     imageView.image = NSImage(
@@ -585,7 +612,7 @@ final class DuoSettingsWindow: NSWindowController, NSWindowDelegate {
     calibration.image = NSImage(systemSymbolName: "scope", accessibilityDescription: "校准")
     calibration.imagePosition = .imageLeading
     calibration.setAccessibilityHelp("使用当前传感器角度作为触发角度")
-    let reset = NSButton(title: "恢复动态效果默认值", target: self, action: #selector(reset))
+    let reset = NSButton(title: "恢复默认值", target: self, action: #selector(reset))
     reset.bezelStyle = .rounded
     reset.image = NSImage(systemSymbolName: "arrow.counterclockwise", accessibilityDescription: "恢复默认值")
     reset.imagePosition = .imageLeading
@@ -593,14 +620,23 @@ final class DuoSettingsWindow: NSWindowController, NSWindowDelegate {
     diagnostics.bezelStyle = .rounded
     diagnostics.image = NSImage(systemSymbolName: "doc.text.magnifyingglass", accessibilityDescription: "诊断日志")
     diagnostics.imagePosition = .imageLeading
-    let buttonRow = NSStackView(views: [NSView(), calibration, reset, diagnostics])
-    buttonRow.orientation = .horizontal
-    buttonRow.alignment = .centerY
-    buttonRow.spacing = 8
-    let buttonCard = makeSettingsCard([buttonRow])
-    stack.addArrangedSubview(buttonCard)
-    buttonCard.widthAnchor.constraint(equalTo: stack.widthAnchor).isActive = true
-    stack.setCustomSpacing(16, after: buttonCard)
+    let actionCard = makeSettingsCard([
+      makeActionRow(
+        title: "校准触发角度",
+        subtitle: "使用当前传感器读数作为触发角度。",
+        button: calibration),
+      makeActionRow(
+        title: "恢复动态效果默认值",
+        subtitle: "将桌面、窗口和样式设置恢复为默认值。",
+        button: reset),
+      makeActionRow(
+        title: "诊断日志",
+        subtitle: "打开 /tmp/windowshade.log 以排查问题。",
+        button: diagnostics),
+    ])
+    stack.addArrangedSubview(actionCard)
+    actionCard.widthAnchor.constraint(equalTo: stack.widthAnchor).isActive = true
+    stack.setCustomSpacing(16, after: actionCard)
 
     let reduced = NSTextField(wrappingLabelWithString: NSWorkspace.shared.accessibilityDisplayShouldReduceMotion
       ? "系统已开启“减少动态效果”，连续动画会自动暂停。"
