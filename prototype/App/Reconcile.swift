@@ -95,7 +95,7 @@ extension AppDelegate {
             finishReconcileShadedWindows()
             return
         }
-        if eventTap == nil, setupEventTap() {
+        if ownsGlobalInput, eventTap == nil, setupEventTap() {
             wlog("reconcile: event tap restored")
         }
 
