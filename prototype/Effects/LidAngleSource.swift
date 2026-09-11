@@ -2,8 +2,8 @@ import Foundation
 import IOKit.hid
 import QuartzCore
 
-/// Feature report formats are derived from Mac-Duo 88cb939 (Apache-2.0, Copyright 2026 Makito).
-/// Device operations are confined to `queue`; delivery tokens invalidate queued callbacks immediately.
+/// Hinge angle reader. Device operations are confined to `queue`; delivery tokens
+/// invalidate queued callbacks immediately. Report formats live in `LidReport`.
 final class LidAngleSource {
   struct Reading {
     let angle: Double
