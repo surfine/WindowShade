@@ -16,6 +16,8 @@
 
 ---
 
+![The dynamic effects page in Settings](assets/windowshade-settings.png)
+
 WindowShade is for the small desktop moment when a window is in the way, but it still belongs exactly where you put it.
 
 It folds the window content into a slim, identifiable strip that can be dragged, previewed, and opened again. The window stays with its app and keeps its place in your layout.
