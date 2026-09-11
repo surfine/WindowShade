@@ -1,4 +1,5 @@
 import Foundation
+import IOKit
 import IOKit.hid
 import QuartzCore
 
@@ -35,6 +36,11 @@ final class AppleSPUAccelerometer {
   private static let usagePage = 0xFF00
   private static let usage = 3
   private static let reportLength = 22
+  private static let driverClass = "AppleSPUHIDDriver"
+  private static let reportingStateKey = "SensorPropertyReportingState"
+  private static let powerStateKey = "SensorPropertyPowerState"
+  private static let reportIntervalKey = "ReportInterval"
+  private static let reportIntervalMicroseconds = 1000
 
   private let queue = DispatchQueue(label: "WindowShade.accelerometer", qos: .userInteractive)
   private let lock = NSLock()
@@ -86,6 +92,15 @@ final class AppleSPUAccelerometer {
     close()
     hasReading = false
 
+    // AppleSPUHIDDevice is present in the registry on M-series MacBooks, but
+    // AppleSPUHIDDriver keeps the IMU asleep until a client explicitly asks
+    // for reports. IOHIDManagerOpen alone succeeds while producing no input
+    // callbacks, which used to surface as “无法读取原始传感器报告”.
+    guard wakeSensorDriver() else {
+      deliver(.unavailable("系统未能唤醒 Apple Silicon 传感器"), token: token)
+      return
+    }
+
     let manager = IOHIDManagerCreate(kCFAllocatorDefault, IOOptionBits(0))
     self.manager = manager
     IOHIDManagerSetDeviceMatching(
@@ -129,6 +144,44 @@ final class AppleSPUAccelerometer {
     }
     self.timeout = timeout
     queue.asyncAfter(deadline: .now() + 2.5, execute: timeout)
+  }
+
+  /// Ask the SPU HID driver to power and report the sensor.
+  ///
+  /// This uses the same user-space IORegistry property path as the sensor's
+  /// own HID driver. It is intentionally best-effort and only touches the
+  /// AppleSPUHIDDriver services; no system files, permissions, or production
+  /// app state are changed.
+  private func wakeSensorDriver() -> Bool {
+    guard let matching = IOServiceMatching(Self.driverClass) else { return false }
+    var iterator: io_iterator_t = 0
+    guard IOServiceGetMatchingServices(kIOMainPortDefault, matching, &iterator) == KERN_SUCCESS else {
+      return false
+    }
+    defer { IOObjectRelease(iterator) }
+
+    var foundDriver = false
+    var wokeDriver = false
+    while true {
+      let service = IOIteratorNext(iterator)
+      guard service != 0 else { break }
+      foundDriver = true
+
+      let properties: [(String, Int)] = [
+        (Self.reportingStateKey, 1),
+        (Self.powerStateKey, 1),
+        (Self.reportIntervalKey, Self.reportIntervalMicroseconds),
+      ]
+      var successfulWrites = 0
+      for (key, value) in properties {
+        if IORegistryEntrySetCFProperty(service, key as CFString, NSNumber(value: value)) == KERN_SUCCESS {
+          successfulWrites += 1
+        }
+      }
+      if successfulWrites == properties.count { wokeDriver = true }
+      IOObjectRelease(service)
+    }
+    return foundDriver && wokeDriver
   }
 
   private func receive(_ report: UnsafeMutablePointer<UInt8>, length: CFIndex) {
