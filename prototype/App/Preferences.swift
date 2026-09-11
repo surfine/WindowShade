@@ -1,10 +1,10 @@
-// 偏好设置与引导页：设置窗口/引导页视图构建、权限引导状态刷新、
+// 设置窗口与引导页：设置窗口/引导页视图构建、权限引导状态刷新、
 // 偏好开关动作。作为 AppDelegate 扩展实现。
 
 import Cocoa
 import ServiceManagement
 
-private let prefCardWidth: CGFloat = 416
+private let prefCardWidth: CGFloat = 560
 private let prefRowInset: CGFloat = 14
 private let prefTrailingControlColumnWidth: CGFloat = 152
 
@@ -58,6 +58,11 @@ extension AppDelegate {
     }
 
     func refreshPreferencesWindowIfOpen() {
+        if let settingsWindow = duoController.settingsWindow,
+           settingsWindow.window?.isVisible == true {
+            settingsWindow.refreshSettings()
+            return
+        }
         guard let window = preferencesWindow, window.isVisible else { return }
         window.contentView = makePreferencesContentView()
     }
@@ -77,28 +82,108 @@ extension AppDelegate {
     }
 
 @objc func showPreferences() {
-        if let window = preferencesWindow {
-            window.contentView = makePreferencesContentView()
-            window.makeKeyAndOrderFront(nil)
-            NSApp.activate(ignoringOtherApps: true)
-            return
-        }
+        showDuoSettings(section: .shade)
+    }
 
-        let window = NSWindow(contentRect: NSRect(x: 0, y: 0, width: 460, height: 700),
-                              styleMask: [.titled, .closable],
-                              backing: .buffered,
-                              defer: false)
-        window.title = "WindowShade 偏好设置"
-        window.isReleasedWhenClosed = false
-        window.center()
-        window.contentView = makePreferencesContentView()
-        preferencesWindow = window
-        window.makeKeyAndOrderFront(nil)
-        NSApp.activate(ignoringOtherApps: true)
+    private func makeSettingsPageRoot() -> (NSView, NSStackView) {
+        let root = NSView()
+        let stack = NSStackView()
+        stack.orientation = .vertical
+        stack.alignment = .leading
+        stack.spacing = 6
+        stack.translatesAutoresizingMaskIntoConstraints = false
+        root.addSubview(stack)
+        NSLayoutConstraint.activate([
+            stack.leadingAnchor.constraint(equalTo: root.leadingAnchor),
+            stack.trailingAnchor.constraint(equalTo: root.trailingAnchor),
+            stack.topAnchor.constraint(equalTo: root.topAnchor),
+            stack.bottomAnchor.constraint(lessThanOrEqualTo: root.bottomAnchor),
+        ])
+        return (root, stack)
+    }
+
+    private func makeSettingsHeader(title: String, subtitle: String) -> NSView {
+        let stack = NSStackView()
+        stack.orientation = .vertical
+        stack.alignment = .leading
+        stack.spacing = 4
+        let titleLabel = NSTextField(labelWithString: title)
+        titleLabel.font = .systemFont(ofSize: 20, weight: .semibold)
+        let subtitleLabel = NSTextField(wrappingLabelWithString: subtitle)
+        subtitleLabel.font = .systemFont(ofSize: 13)
+        subtitleLabel.textColor = .secondaryLabelColor
+        subtitleLabel.maximumNumberOfLines = 2
+        stack.addArrangedSubview(titleLabel)
+        stack.addArrangedSubview(subtitleLabel)
+        return stack
+    }
+
+    func makeShadeSettingsPage() -> NSView {
+        let (root, stack) = makeSettingsPageRoot()
+        stack.addArrangedSubview(makeSettingsHeader(
+            title: "卷帘", subtitle: "设置窗口折叠、外观和反馈方式。"))
+
+        let trigger = makePrefCard([
+            makePrefToggleRow(name: "双击标题栏以折叠", subtitle: titlebarDoubleClickPreferenceSubtitle(),
+                              isOn: titlebarDoubleClickEnabled, action: #selector(prefToggleTitlebarDoubleClick(_:))),
+        ])
+        stack.addArrangedSubview(makePrefGroupLabel("触发"))
+        stack.addArrangedSubview(trigger)
+        stack.setCustomSpacing(14, after: trigger)
+
+        let appearanceSeg = NSSegmentedControl(labels: ["原貌卷帘", "标准标题栏"],
+                                                trackingMode: .selectOne,
+                                                target: self,
+                                                action: #selector(prefSelectAppearanceSegment(_:)))
+        appearanceSeg.selectedSegment = appearanceMode == .proxyTitleBar ? 1 : 0
+        appearanceSeg.sizeToFit()
+        stack.addArrangedSubview(makePrefGroupLabel("外观"))
+        stack.addArrangedSubview(makePrefCard([
+            makePrefControlRow(name: "卷帘样式", subtitle: "标准标题栏带原生红绿灯与材质", control: appearanceSeg),
+            makePrefToggleRow(name: "卷帘条浮动于上方", subtitle: "折叠后的标题栏保持在其他窗口之上",
+                              isOn: floatingOnTop, action: #selector(prefToggleFloating(_:))),
+            makePrefToggleRow(name: "卷帘条半透明", subtitle: "略微降低卷帘条不透明度",
+                              isOn: translucent, action: #selector(prefToggleTranslucent(_:))),
+        ]))
+        stack.setCustomSpacing(14, after: stack.arrangedSubviews.last!)
+
+        stack.addArrangedSubview(makePrefGroupLabel("声音"))
+        stack.addArrangedSubview(makePrefCard([
+            makePrefToggleRow(name: "启用折叠 / 展开音效", subtitle: nil,
+                              isOn: soundEnabled, action: #selector(prefToggleSound(_:))),
+            makePrefControlRow(name: "折叠音效", subtitle: nil,
+                               control: makeSoundPopup(selected: foldSoundName, action: #selector(prefSelectFoldSound(_:)))),
+            makePrefControlRow(name: "展开音效", subtitle: nil,
+                               control: makeSoundPopup(selected: unfoldSoundName, action: #selector(prefSelectUnfoldSound(_:)))),
+        ]))
+        return root
+    }
+
+    func makePermissionsSettingsPage() -> NSView {
+        let (root, stack) = makeSettingsPageRoot()
+        stack.addArrangedSubview(makeSettingsHeader(
+            title: "权限与启动", subtitle: "WindowShade 只在需要时使用系统权限。"))
+        stack.addArrangedSubview(makePrefGroupLabel("权限"))
+        stack.addArrangedSubview(makePrefCard([
+            makePermissionRow(kind: .preferences, width: prefCardWidth, symbol: "accessibility",
+                              name: "辅助功能", subtitle: "读取、移动与恢复窗口",
+                              granted: hasAccessibilityPermission(), action: #selector(openAccessibilitySettingsAction)),
+            makePermissionRow(kind: .preferences, width: prefCardWidth,
+                              symbol: "rectangle.inset.filled.and.person.filled",
+                              name: "屏幕录制", subtitle: "截取真实标题栏与实时预览",
+                              granted: hasScreenRecordingPermission(), action: #selector(openScreenRecordingSettingsAction)),
+        ]))
+        stack.setCustomSpacing(14, after: stack.arrangedSubviews.last!)
+        stack.addArrangedSubview(makePrefGroupLabel("启动"))
+        stack.addArrangedSubview(makePrefCard([
+            makePrefToggleRow(name: "登录时自动启动", subtitle: launchAtLoginSubtitle(),
+                              isOn: launchAtLoginEnabled(), action: #selector(prefToggleLaunchAtLogin(_:))),
+        ]))
+        return root
     }
 
     func makePreferencesContentView() -> NSView {
-        let root = NSView(frame: NSRect(x: 0, y: 0, width: 460, height: 700))
+        let root = NSView(frame: NSRect(x: 0, y: 0, width: prefCardWidth + 44, height: 700))
         let stack = NSStackView(frame: root.bounds.insetBy(dx: 22, dy: 20))
         stack.orientation = .vertical
         stack.alignment = .leading
@@ -448,12 +533,12 @@ extension AppDelegate {
         header.alignment = .centerY
         header.spacing = 12
         header.addArrangedSubview(makeOnboardingAppIconView(size: 40))
-        let title = NSTextField(labelWithString: "把窗口原地卷起来")
+        let title = NSTextField(labelWithString: "把窗口留在原地，暂时收起内容")
         title.font = .systemFont(ofSize: 17, weight: .semibold)
         header.addArrangedSubview(title)
         stack.addArrangedSubview(header)
 
-        let copy = NSTextField(labelWithString: "WindowShade 让窗口多两种临时状态：折叠——内容原地收起，只留标题栏入口，可从原地标题栏、菜单栏或专注 shelf 找回；置顶——让窗口的实时画面始终浮在最上方，边看边操作（如 iPhone 镜像）。都是可逆的，不影响原来的布局。")
+        let copy = NSTextField(labelWithString: "WindowShade 提供三种可逆操作：折叠窗口、置顶预览和动态效果。它们不会关闭窗口，也不会改变你的工作空间布局。")
         copy.font = .systemFont(ofSize: 13)
         copy.textColor = .secondaryLabelColor
         copy.lineBreakMode = .byWordWrapping
@@ -537,12 +622,12 @@ extension AppDelegate {
 
     func makeOnboardingUsageCard() -> NSView {
         var rows: [(String, String)] = [
-            ("cursorarrow.click", "双击标题栏：折叠或展开当前窗口"),
-            ("eye", "单击卷帘条：显示 / 收回窗口内容预览"),
-            ("keyboard", "⌃⌘C：折叠 / 展开当前窗口（同一键来回切换）"),
-            ("pin", "⌃⌘P：置顶 / 取消置顶当前窗口（同一键来回切换）"),
-            ("number", "⌃⌘1…9：按菜单顺序快速展开已折叠窗口"),
-            ("menubar.rectangle", "菜单栏：管理已折叠与已置顶窗口，可逐个或全部恢复"),
+            ("keyboard", "⌃⌘C：折叠 / 展开当前窗口"),
+            ("pin", "⌃⌘P：置顶 / 取消置顶当前窗口预览"),
+            ("cursorarrow.click", "双击标题栏：折叠或展开指定窗口"),
+            ("eye", "单击卷帘条：查看折叠窗口预览"),
+            ("number", "⌃⌘1…9：按菜单顺序展开已折叠窗口"),
+            ("menubar.rectangle", "菜单栏：管理窗口，设置动态效果"),
         ]
         if let triple = systemTitlebarTripleClickDescription() {
             rows.insert(("cursorarrow.rays", triple), at: 1)
@@ -552,11 +637,10 @@ extension AppDelegate {
 
     func makeOnboardingFeatureCard() -> NSView {
         let rows: [(String, String)] = [
-            ("rectangle.on.rectangle", "置顶：把窗口的实时画面浮在最上方，鼠标移入即可操作真实窗口"),
-            ("rectangle.stack", "专注模式会把其他 app 收进顶部 shelf"),
-            ("arrow.down.forward.and.arrow.up.backward", "从 shelf 拉出窗口，双击可按当前位置展开"),
-            ("paintpalette", "可在偏好设置切换原貌卷帘 / 标准标题栏"),
-            ("power", "可开启登录时自动启动，让 WindowShade 常驻"),
+            ("rectangle.on.rectangle", "置顶预览：把窗口实时画面浮在最上方"),
+            ("rectangle.stack", "动态效果：在设置 → 效果中开启桌面或窗口开合"),
+            ("paintpalette", "卷帘：切换原貌卷帘或标准标题栏"),
+            ("power", "启动：可开启登录时自动启动"),
         ]
         return makeOnboardingInfoCard(title: "工作方式", rows: rows)
     }

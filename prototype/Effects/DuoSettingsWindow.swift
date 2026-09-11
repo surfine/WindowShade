@@ -1,6 +1,19 @@
 import Cocoa
 import ScreenCaptureKit
 
+enum WindowShadeSettingsSection: Int, CaseIterable {
+  case effects, shade, permissions, advanced
+
+  var title: String {
+    switch self {
+    case .effects: return "效果"
+    case .shade: return "卷帘"
+    case .permissions: return "权限与启动"
+    case .advanced: return "高级"
+    }
+  }
+}
+
 final class DuoSettingsWindow: NSWindowController, NSWindowDelegate {
   private weak var controller: DuoController?
   private var renderer: FoldRenderer?
@@ -9,111 +22,78 @@ final class DuoSettingsWindow: NSWindowController, NSWindowDelegate {
   private var epoch = EffectEpoch()
   private let clock = EffectDisplayClock()
   private let status = NSTextField(wrappingLabelWithString: "")
-  private let desktop = NSButton(checkboxWithTitle: "桌面跟随开合盖", target: nil, action: nil)
-  private let windows = NSButton(checkboxWithTitle: "窗口使用 Duo 卷帘动画", target: nil, action: nil)
-  private let live = NSButton(checkboxWithTitle: "使用实时桌面预览", target: nil, action: nil)
+  private let desktop = NSButton(checkboxWithTitle: "桌面开合", target: nil, action: nil)
+  private let windows = NSButton(checkboxWithTitle: "窗口卷帘", target: nil, action: nil)
+  private let live = NSButton(checkboxWithTitle: "实时预览", target: nil, action: nil)
   private let pause = NSButton(title: "暂停自动效果", target: nil, action: nil)
-  private let permission = NSButton(title: "屏幕录制权限…", target: nil, action: nil)
-  private let calibration = NSButton(title: "以当前角度校准", target: nil, action: nil)
-  private let scrubber = NSSlider(value: 0, minValue: 0, maxValue: 1, target: nil, action: nil)
+  private let permission = NSButton(title: "打开屏幕录制设置…", target: nil, action: nil)
+  private let calibration = NSButton(title: "使用当前角度", target: nil, action: nil)
   private let trigger = NSSlider(value: 95, minValue: 45, maxValue: 140, target: nil, action: nil)
   private let angleLabel = NSTextField(labelWithString: "")
+  private let scrubber = NSSlider(value: 0, minValue: 0, maxValue: 1, target: nil, action: nil)
   private let preset = NSSegmentedControl(
     labels: DuoPreset.allCases.map(\.title), trackingMode: .selectOne, target: nil, action: nil)
   private let mode = NSSegmentedControl(
     labels: ["桌面", "窗口"], trackingMode: .selectOne, target: nil, action: nil)
   private var lastStatusAt = 0.0
   private var captureMessage: String?
+  private var pageHost: NSView!
+  private var pages: [WindowShadeSettingsSection: NSView] = [:]
+  private var pageButtons: [WindowShadeSettingsSection: NSButton] = [:]
+  private var activePageConstraints: [NSLayoutConstraint] = []
+  private var currentSection: WindowShadeSettingsSection = .effects
 
   init(controller: DuoController) {
     self.controller = controller
     let window = NSWindow(
-      contentRect: NSRect(x: 0, y: 0, width: 660, height: 710),
-      styleMask: [.titled, .closable, .miniaturizable], backing: .buffered, defer: false)
-    window.title = "Duo 开合效果"
+      contentRect: NSRect(x: 0, y: 0, width: 860, height: 620),
+      styleMask: [.titled, .closable, .miniaturizable, .resizable],
+      backing: .buffered,
+      defer: false)
+    window.title = "WindowShade 设置"
     window.isReleasedWhenClosed = false
+    window.minSize = NSSize(width: 760, height: 520)
+    window.setFrameAutosaveName("WindowShade.Settings")
     super.init(window: window)
     window.delegate = self
     build()
     window.center()
   }
+
   required init?(coder: NSCoder) { nil }
+
   private func build() {
     guard let window, let controller else { return }
     let root = NSView()
+    root.translatesAutoresizingMaskIntoConstraints = false
     window.contentView = root
-    let stack = NSStackView()
-    stack.orientation = .vertical
-    stack.alignment = .leading
-    stack.spacing = 14
-    stack.translatesAutoresizingMaskIntoConstraints = false
-    root.addSubview(stack)
+
+    let split = NSSplitView()
+    split.isVertical = true
+    split.dividerStyle = .thin
+    split.translatesAutoresizingMaskIntoConstraints = false
+    root.addSubview(split)
     NSLayoutConstraint.activate([
-      stack.leadingAnchor.constraint(equalTo: root.leadingAnchor, constant: 24),
-      stack.trailingAnchor.constraint(equalTo: root.trailingAnchor, constant: -24),
-      stack.topAnchor.constraint(equalTo: root.topAnchor, constant: 22),
+      split.leadingAnchor.constraint(equalTo: root.leadingAnchor),
+      split.trailingAnchor.constraint(equalTo: root.trailingAnchor),
+      split.topAnchor.constraint(equalTo: root.topAnchor),
+      split.bottomAnchor.constraint(equalTo: root.bottomAnchor),
     ])
-    desktop.target = self
-    desktop.action = #selector(changed)
-    windows.target = self
-    windows.action = #selector(changed)
-    stack.addArrangedSubview(desktop)
-    stack.addArrangedSubview(windows)
-    status.font = .systemFont(ofSize: 12)
-    status.textColor = .secondaryLabelColor
-    status.heightAnchor.constraint(greaterThanOrEqualToConstant: 34).isActive = true
-    stack.addArrangedSubview(status)
-    do {
-      let renderer = try FoldRenderer(size: CGSize(width: 612, height: 300))
-      self.renderer = renderer
-      try renderer.setImage(Self.artwork())
-      renderer.view.translatesAutoresizingMaskIntoConstraints = false
-      stack.addArrangedSubview(renderer.view)
-      renderer.view.widthAnchor.constraint(equalTo: stack.widthAnchor).isActive = true
-      renderer.view.heightAnchor.constraint(equalToConstant: 280).isActive = true
-    } catch { status.stringValue = "预览不可用：\(error.localizedDescription)" }
-    mode.selectedSegment = 0
-    mode.target = self
-    mode.action = #selector(previewChanged)
-    preset.target = self
-    preset.action = #selector(changed)
-    stack.addArrangedSubview(NSStackView(views: [mode, preset]))
-    live.target = self
-    live.action = #selector(liveChanged)
-    stack.addArrangedSubview(live)
-    func row(_ title: String, _ slider: NSSlider, _ action: Selector, extra: NSView? = nil) {
-      let label = NSTextField(labelWithString: title)
-      label.widthAnchor.constraint(equalToConstant: 90).isActive = true
-      slider.target = self
-      slider.action = action
-      slider.isContinuous = true
-      slider.setAccessibilityLabel(title)
-      let items: [NSView] = [label, slider] + (extra.map { [$0] } ?? [])
-      let row = NSStackView(views: items)
-      row.orientation = .horizontal
-      row.distribution = .fill
-      stack.addArrangedSubview(row)
-      row.widthAnchor.constraint(equalTo: stack.widthAnchor).isActive = true
-    }
-    row("展开 ↔ 合起", scrubber, #selector(previewChanged))
-    angleLabel.widthAnchor.constraint(equalToConstant: 54).isActive = true
-    row("正常姿态", trigger, #selector(changed), extra: angleLabel)
-    calibration.target = self
-    calibration.action = #selector(calibrate)
-    let reset = NSButton(title: "恢复默认值", target: self, action: #selector(reset))
-    stack.addArrangedSubview(NSStackView(views: [calibration, reset]))
-    pause.target = self
-    pause.action = #selector(togglePause)
-    permission.target = self
-    permission.action = #selector(openPermission)
-    stack.addArrangedSubview(NSStackView(views: [pause, permission]))
-    let note = NSTextField(wrappingLabelWithString: "半开时保持效果。按 Esc、点击或开始输入可撤去桌面效果。")
-    note.font = .systemFont(ofSize: 12)
-    note.textColor = .secondaryLabelColor
-    stack.addArrangedSubview(note)
-    load(controller.settings)
-    refreshStatus()
-    previewChanged()
+
+    let sidebar = makeSidebar()
+    sidebar.widthAnchor.constraint(equalToConstant: 180).isActive = true
+    split.addArrangedSubview(sidebar)
+
+    pageHost = NSView()
+    pageHost.translatesAutoresizingMaskIntoConstraints = false
+    split.addArrangedSubview(pageHost)
+
+    pages[.effects] = makeEffectsPage(controller: controller)
+    pages[.advanced] = makeAdvancedPage(controller: controller)
+    pages[.shade] = controller.owner?.makeShadeSettingsPage()
+    pages[.permissions] = controller.owner?.makePermissionsSettingsPage()
+    select(section: .effects)
+
     clock.tick = { [weak self] _ in
       guard let self, !EffectSecurityBoundary.isLocked else { return }
       if let frame = source?.frame() { renderer?.setFrame(frame) }
@@ -121,6 +101,231 @@ final class DuoSettingsWindow: NSWindowController, NSWindowDelegate {
     }
     clock.start(window: window)
   }
+
+  private func makeSidebar() -> NSView {
+    let sidebar = NSView()
+    sidebar.wantsLayer = true
+    sidebar.layer?.backgroundColor = NSColor.controlBackgroundColor.cgColor
+
+    let stack = NSStackView()
+    stack.orientation = .vertical
+    stack.alignment = .leading
+    stack.spacing = 4
+    stack.translatesAutoresizingMaskIntoConstraints = false
+    sidebar.addSubview(stack)
+    NSLayoutConstraint.activate([
+      stack.leadingAnchor.constraint(equalTo: sidebar.leadingAnchor, constant: 14),
+      stack.trailingAnchor.constraint(equalTo: sidebar.trailingAnchor, constant: -12),
+      stack.topAnchor.constraint(equalTo: sidebar.topAnchor, constant: 22),
+    ])
+
+    for section in WindowShadeSettingsSection.allCases {
+      let button = NSButton(title: section.title, target: self, action: #selector(selectSection(_:)))
+      button.tag = section.rawValue
+      button.isBordered = false
+      button.alignment = .left
+      button.controlSize = .regular
+      button.contentTintColor = .labelColor
+      button.translatesAutoresizingMaskIntoConstraints = false
+      button.widthAnchor.constraint(equalTo: stack.widthAnchor).isActive = true
+      button.heightAnchor.constraint(equalToConstant: 30).isActive = true
+      stack.addArrangedSubview(button)
+      pageButtons[section] = button
+    }
+    return sidebar
+  }
+
+  @objc private func selectSection(_ sender: NSButton) {
+    guard let section = WindowShadeSettingsSection(rawValue: sender.tag) else { return }
+    select(section: section)
+  }
+
+  func select(section: WindowShadeSettingsSection) {
+    guard let pageHost, let page = pages[section] else { return }
+    currentSection = section
+    NSLayoutConstraint.deactivate(activePageConstraints)
+    activePageConstraints.removeAll()
+    pageHost.subviews.forEach { $0.removeFromSuperview() }
+    page.translatesAutoresizingMaskIntoConstraints = false
+    pageHost.addSubview(page)
+    activePageConstraints = [
+      page.leadingAnchor.constraint(equalTo: pageHost.leadingAnchor, constant: 28),
+      page.trailingAnchor.constraint(equalTo: pageHost.trailingAnchor, constant: -28),
+      page.topAnchor.constraint(equalTo: pageHost.topAnchor, constant: 24),
+      page.bottomAnchor.constraint(lessThanOrEqualTo: pageHost.bottomAnchor, constant: -24),
+    ]
+    NSLayoutConstraint.activate(activePageConstraints)
+    for (item, button) in pageButtons {
+      button.font = .systemFont(ofSize: 13, weight: item == section ? .semibold : .regular)
+      button.contentTintColor = item == section ? .controlAccentColor : .labelColor
+    }
+    if section != .effects {
+      stopLive()
+      live.state = .off
+    }
+    refreshStatus(force: true)
+  }
+
+  func refreshSettings() {
+    if currentSection == .effects {
+      load(controller?.settings ?? DuoSettings())
+      refreshStatus(force: true)
+      previewChanged()
+    } else if let owner = controller?.owner {
+      pages[.shade] = owner.makeShadeSettingsPage()
+      pages[.permissions] = owner.makePermissionsSettingsPage()
+      select(section: currentSection)
+    }
+  }
+
+  private func makePageHeader(title: String, subtitle: String) -> NSView {
+    let stack = NSStackView()
+    stack.orientation = .vertical
+    stack.alignment = .leading
+    stack.spacing = 4
+    let titleLabel = NSTextField(labelWithString: title)
+    titleLabel.font = .systemFont(ofSize: 20, weight: .semibold)
+    let subtitleLabel = NSTextField(wrappingLabelWithString: subtitle)
+    subtitleLabel.font = .systemFont(ofSize: 13)
+    subtitleLabel.textColor = .secondaryLabelColor
+    subtitleLabel.maximumNumberOfLines = 2
+    stack.addArrangedSubview(titleLabel)
+    stack.addArrangedSubview(subtitleLabel)
+    return stack
+  }
+
+  private func makeEffectsPage(controller: DuoController) -> NSView {
+    let root = NSView()
+    let stack = NSStackView()
+    stack.orientation = .vertical
+    stack.alignment = .leading
+    stack.spacing = 12
+    stack.translatesAutoresizingMaskIntoConstraints = false
+    root.addSubview(stack)
+    NSLayoutConstraint.activate([
+      stack.leadingAnchor.constraint(equalTo: root.leadingAnchor),
+      stack.trailingAnchor.constraint(equalTo: root.trailingAnchor),
+      stack.topAnchor.constraint(equalTo: root.topAnchor),
+      stack.bottomAnchor.constraint(lessThanOrEqualTo: root.bottomAnchor),
+    ])
+
+    stack.addArrangedSubview(makePageHeader(
+      title: "动态效果", subtitle: "让桌面或窗口随设备开合平滑变化。"))
+
+    desktop.target = self
+    desktop.action = #selector(changed)
+    windows.target = self
+    windows.action = #selector(changed)
+    stack.addArrangedSubview(desktop)
+    stack.addArrangedSubview(windows)
+
+    status.font = .systemFont(ofSize: 12)
+    status.textColor = .secondaryLabelColor
+    status.heightAnchor.constraint(greaterThanOrEqualToConstant: 36).isActive = true
+    stack.addArrangedSubview(status)
+
+    do {
+      let renderer = try FoldRenderer(size: CGSize(width: 612, height: 300))
+      self.renderer = renderer
+      try renderer.setImage(Self.artwork())
+      renderer.view.translatesAutoresizingMaskIntoConstraints = false
+      stack.addArrangedSubview(renderer.view)
+      renderer.view.widthAnchor.constraint(equalTo: stack.widthAnchor).isActive = true
+      renderer.view.heightAnchor.constraint(equalToConstant: 220).isActive = true
+    } catch {
+      status.stringValue = "预览不可用：\(error.localizedDescription)"
+    }
+
+    mode.selectedSegment = 0
+    mode.target = self
+    mode.action = #selector(previewChanged)
+    preset.target = self
+    preset.action = #selector(changed)
+    let selectors = NSStackView(views: [mode, preset])
+    selectors.orientation = .horizontal
+    selectors.spacing = 10
+    stack.addArrangedSubview(selectors)
+
+    live.target = self
+    live.action = #selector(liveChanged)
+    stack.addArrangedSubview(live)
+
+    pause.target = self
+    pause.action = #selector(togglePause)
+    permission.target = self
+    permission.action = #selector(openPermission)
+    let actionRow = NSStackView(views: [pause, permission])
+    actionRow.orientation = .horizontal
+    actionRow.spacing = 10
+    stack.addArrangedSubview(actionRow)
+
+    let note = NSTextField(wrappingLabelWithString: "实时预览默认关闭。按 Esc、点击或开始输入可撤去桌面效果。")
+    note.font = .systemFont(ofSize: 12)
+    note.textColor = .secondaryLabelColor
+    note.maximumNumberOfLines = 2
+    stack.addArrangedSubview(note)
+
+    load(controller.settings)
+    refreshStatus(force: true)
+    previewChanged()
+    return root
+  }
+
+  private func makeAdvancedPage(controller: DuoController) -> NSView {
+    let root = NSView()
+    let stack = NSStackView()
+    stack.orientation = .vertical
+    stack.alignment = .leading
+    stack.spacing = 14
+    stack.translatesAutoresizingMaskIntoConstraints = false
+    root.addSubview(stack)
+    NSLayoutConstraint.activate([
+      stack.leadingAnchor.constraint(equalTo: root.leadingAnchor),
+      stack.trailingAnchor.constraint(equalTo: root.trailingAnchor),
+      stack.topAnchor.constraint(equalTo: root.topAnchor),
+    ])
+    stack.addArrangedSubview(makePageHeader(
+      title: "高级", subtitle: "调整触发行为、校准传感器和恢复动态效果默认值。"))
+
+    let sliderLabel = NSTextField(labelWithString: "触发角度")
+    sliderLabel.widthAnchor.constraint(equalToConstant: 88).isActive = true
+    trigger.target = self
+    trigger.action = #selector(changed)
+    trigger.isContinuous = true
+    trigger.setAccessibilityLabel("触发角度")
+    angleLabel.widthAnchor.constraint(equalToConstant: 56).isActive = true
+    let triggerRow = NSStackView(views: [sliderLabel, trigger, angleLabel])
+    triggerRow.orientation = .horizontal
+    triggerRow.spacing = 10
+    triggerRow.widthAnchor.constraint(equalTo: stack.widthAnchor).isActive = true
+    stack.addArrangedSubview(triggerRow)
+
+    calibration.target = self
+    calibration.action = #selector(calibrate)
+    let reset = NSButton(title: "恢复动态效果默认值", target: self, action: #selector(reset))
+    reset.bezelStyle = .rounded
+    let diagnostics = NSButton(title: "打开诊断日志", target: self, action: #selector(openDiagnostics))
+    diagnostics.bezelStyle = .rounded
+    let buttonRow = NSStackView(views: [calibration, reset, diagnostics])
+    buttonRow.orientation = .horizontal
+    buttonRow.spacing = 10
+    stack.addArrangedSubview(buttonRow)
+
+    let reduced = NSTextField(wrappingLabelWithString: NSWorkspace.shared.accessibilityDisplayShouldReduceMotion
+      ? "系统已开启“减少动态效果”，连续动画会自动暂停。"
+      : "可在系统设置的辅助功能选项中开启“减少动态效果”。")
+    reduced.font = .systemFont(ofSize: 12)
+    reduced.textColor = .secondaryLabelColor
+    reduced.maximumNumberOfLines = 2
+    stack.addArrangedSubview(reduced)
+    let logPath = NSTextField(labelWithString: "日志位置：/tmp/windowshade.log")
+    logPath.font = .systemFont(ofSize: 12)
+    logPath.textColor = .tertiaryLabelColor
+    stack.addArrangedSubview(logPath)
+    load(controller.settings)
+    return root
+  }
+
   static func artwork() -> CGImage {
     let image = NSImage(size: CGSize(width: 1200, height: 750))
     image.lockFocus()
@@ -139,6 +344,7 @@ final class DuoSettingsWindow: NSWindowController, NSWindowDelegate {
     image.unlockFocus()
     return image.cgImage(forProposedRect: nil, context: nil, hints: nil)!
   }
+
   private func load(_ settings: DuoSettings) {
     desktop.state = settings.desktopEnabled ? .on : .off
     windows.state = settings.windowsEnabled ? .on : .off
@@ -146,49 +352,67 @@ final class DuoSettingsWindow: NSWindowController, NSWindowDelegate {
     preset.selectedSegment = DuoPreset.allCases.firstIndex(of: settings.preset) ?? 1
     angleLabel.stringValue = String(format: "%.1f°", settings.triggerAngle)
   }
+
   @objc private func changed() {
     guard let controller else { return }
     controller.settings = DuoSettings(
-      desktopEnabled: desktop.state == .on, windowsEnabled: windows.state == .on,
-      triggerAngle: trigger.doubleValue, preset: DuoPreset.allCases[max(0, preset.selectedSegment)])
+      desktopEnabled: desktop.state == .on,
+      windowsEnabled: windows.state == .on,
+      triggerAngle: trigger.doubleValue,
+      preset: DuoPreset.allCases[max(0, preset.selectedSegment)])
     angleLabel.stringValue = String(format: "%.1f°", trigger.doubleValue)
     controller.settingsChanged()
+    controller.owner?.rebuildMenu()
     previewChanged()
   }
+
   @objc private func previewChanged() {
-    let amount =
-      mode.selectedSegment == 0
+    let amount = mode.selectedSegment == 0
       ? FoldDriver.progress(
-        angle: trigger.doubleValue * (1 - scrubber.doubleValue), start: trigger.doubleValue)
+          angle: trigger.doubleValue * (1 - scrubber.doubleValue), start: trigger.doubleValue)
       : scrubber.doubleValue
     renderer?.parameters = .init(
       progress: Float(amount), titleFraction: 0.1, windowMode: mode.selectedSegment == 1,
       preset: controller?.settings.preset ?? .shade)
     renderer?.render()
   }
+
   @objc private func calibrate() {
     if let angle = controller?.angle {
       trigger.doubleValue = min(140, max(45, angle))
       changed()
     }
   }
+
   @objc private func reset() {
     load(DuoSettings())
     changed()
   }
+
+  @objc private func openDiagnostics() {
+    let logURL = URL(fileURLWithPath: "/tmp/windowshade.log")
+    if FileManager.default.fileExists(atPath: logURL.path) {
+      NSWorkspace.shared.open(logURL)
+    } else {
+      NSWorkspace.shared.open(logURL.deletingLastPathComponent())
+    }
+  }
+
   @objc private func togglePause() {
     guard let controller else { return }
     controller.pausedByUser.toggle()
     controller.settingsChanged()
+    refreshStatus(force: true)
   }
+
   @objc private func openPermission() {
-    if !CGPreflightScreenCaptureAccess() { _ = CGRequestScreenCaptureAccess() }
-    if let url = URL(
-      string: "x-apple.systempreferences:com.apple.preference.security?Privacy_ScreenCapture")
-    {
-      NSWorkspace.shared.open(url)
+    if let owner = controller?.owner {
+      owner.openScreenRecordingSettingsAction()
+      return
     }
+    if !CGPreflightScreenCaptureAccess() { _ = CGRequestScreenCaptureAccess() }
   }
+
   @objc private func liveChanged() {
     stopLive()
     captureMessage = nil
@@ -198,6 +422,12 @@ final class DuoSettingsWindow: NSWindowController, NSWindowDelegate {
     }
     guard !EffectSecurityBoundary.isLocked else {
       live.state = .off
+      return
+    }
+    guard CGPreflightScreenCaptureAccess() else {
+      live.state = .off
+      captureMessage = "实时预览需要屏幕录制权限。"
+      refreshStatus(force: true)
       return
     }
     let token = epoch.advance()
@@ -232,11 +462,12 @@ final class DuoSettingsWindow: NSWindowController, NSWindowDelegate {
         if epoch.accepts(token) {
           live.state = .off
           captureMessage = "实时预览不可用：\(error.localizedDescription)"
-          refreshStatus()
+          refreshStatus(force: true)
         }
       }
     }
   }
+
   private func stopLive() {
     _ = epoch.advance()
     captureTask?.cancel()
@@ -245,15 +476,19 @@ final class DuoSettingsWindow: NSWindowController, NSWindowDelegate {
     source = nil
     try? renderer?.setImage(Self.artwork())
   }
+
   func suspendPreview() {
     stopLive()
     live.state = .off
     renderer?.render()
   }
+
   func beginMenuPreview() {
+    select(section: .effects)
     live.state = .on
     liveChanged()
   }
+
   func refreshStatus(force: Bool = false) {
     let now = CACurrentMediaTime()
     guard force || now - lastStatusAt > 0.2 else { return }
@@ -263,11 +498,13 @@ final class DuoSettingsWindow: NSWindowController, NSWindowDelegate {
     pause.title = controller.pausedByUser ? "继续自动效果" : "暂停自动效果"
     let reading = controller.angle.map { String(format: "%.2f°", $0) } ?? "—"
     let permission = CGPreflightScreenCaptureAccess() ? "" : " · 需要屏幕录制权限"
-    let reduced = NSWorkspace.shared.accessibilityDisplayShouldReduceMotion ? " · 减少动态效果已暂停动画" : ""
+    let reduced = NSWorkspace.shared.accessibilityDisplayShouldReduceMotion
+      ? " · 减少动态效果已暂停动画" : ""
     let paused = controller.pausedByUser ? " · 自动效果已暂停" : ""
-    status.stringValue =
-      captureMessage ?? "\(controller.sensorStatus) · 当前 \(reading)\(permission)\(reduced)\(paused)"
+    status.stringValue = captureMessage
+      ?? "\(controller.sensorStatus) · 当前 \(reading)\(permission)\(reduced)\(paused)"
   }
+
   func windowWillClose(_ notification: Notification) {
     stopLive()
     clock.stop()
@@ -277,6 +514,7 @@ final class DuoSettingsWindow: NSWindowController, NSWindowDelegate {
     controller?.settingsWindow = nil
     controller?.settingsChanged()
   }
+
   deinit {
     clock.stop()
     captureTask?.cancel()
@@ -286,10 +524,15 @@ final class DuoSettingsWindow: NSWindowController, NSWindowDelegate {
 
 extension AppDelegate {
   @objc func showDuoSettings() {
+    showDuoSettings(section: .effects)
+  }
+
+  func showDuoSettings(section: WindowShadeSettingsSection) {
     if duoController.settingsWindow == nil {
       duoController.settingsWindow = DuoSettingsWindow(controller: duoController)
     }
     duoController.settingsWindow?.showWindow(nil)
+    duoController.settingsWindow?.select(section: section)
     NSApp.activate(ignoringOtherApps: true)
     duoController.settingsChanged()
   }

@@ -4,61 +4,81 @@
 </h1>
 
 <p align="center">
-  <strong>Fold windows out of the way without losing their place.</strong><br>
-  A small macOS menu bar app that brings back the classic window shade gesture for modern desktops.
+  <strong>Keep windows in place while clearing the view.</strong><br>
+  A small macOS menu bar app that brings back the classic window shade gesture.
 </p>
 
 <p align="center">
   <a href="https://github.com/surfine/WindowShade/releases/latest"><img src="https://img.shields.io/github/v/release/surfine/WindowShade?style=flat-square&label=release" alt="Latest release"></a>
-  <a href="https://github.com/surfine/WindowShade/stargazers"><img src="https://img.shields.io/github/stars/surfine/WindowShade?style=flat-square" alt="GitHub stars"></a>
   <img src="https://img.shields.io/badge/macOS-14%2B-black?style=flat-square" alt="macOS 14+">
   <a href="README_CN.md"><img src="https://img.shields.io/badge/readme-%E7%AE%80%E4%BD%93%E4%B8%AD%E6%96%87-blue?style=flat-square" alt="Simplified Chinese README"></a>
 </p>
 
-<p align="center">
-  <a href="https://www.bilibili.com/video/BV1m5Kf6bE6k/" title="Watch the demo video">
-    <img src="assets/windowshade-hero.png" alt="Watch the WindowShade demo video" width="900"/>
-  </a>
-  <br>
-  <a href="https://www.bilibili.com/video/BV1m5Kf6bE6k/">Watch the demo video</a>
-</p>
-
 ---
 
-WindowShade is for the little desktop moment that macOS still makes oddly expensive: a window is in the way, but it still belongs exactly where you put it.
+WindowShade is for the small desktop moment when a window is in the way, but it still belongs exactly where you put it.
 
-It folds the window content into a slim title-bar strip, keeping the window identifiable and exactly where your layout put it. Open it again from the strip, the menu bar, or a shortcut — without digging through the Dock or rearranging your workspace.
+It folds the window content into a slim, identifiable strip that can be dragged, previewed, and opened again. The window stays with its app and keeps its place in your layout.
 
-## What It Does
+## Three capabilities
 
-| Mode | What happens | Good for |
+| Capability | What it does | Good for |
 | --- | --- | --- |
-| **Folded** | Keep the title bar in place and roll the window content away. | Peeking behind a window, clearing clutter, keeping a document's place. |
-| **Pinned** | Keep a window visible as a live floating preview. | Reference windows, iPhone Mirroring, dashboards, things you want to watch. |
+| **Fold windows** | Roll content away and leave a title-bar entry in place. | Clear the desktop without losing a document's place. |
+| **Pinned previews** | Keep a window visible as a live floating preview. | Reference windows, mirroring, dashboards, and things you want to watch. |
+| **Dynamic effects** | Apply a smooth fold effect to the desktop or a window as the device opens and closes. | Let window state follow the device's hinge movement. |
 
-## Why WindowShade?
+## Menu bar and settings
 
-macOS already has Dock minimization, Mission Control, Spaces, Stage Manager, and tiling. WindowShade is smaller than all of those. It helps when you want to keep a group of open windows arranged as part of your workflow, while temporarily clearing the content that is blocking your view.
+The menu bar manages the current window and window lists; the hinge angle is read-only status. Dynamic-effect switches, styles, trigger angle, live preview, and permissions live under Settings → Effects.
 
-Expose and Mission Control are great for finding windows. Dock minimization is good for putting a window away. WindowShade is for the in-between case: leave the window where it is, but roll up its content for now.
+## Basic use
 
-It is not a close, quit, hide, or minimize. The app and its document stay alive; the window's identity, position, and recovery entry stay on your desktop. That "space memory" — knowing exactly where a window lives even while it is rolled up — is the whole point.
+| Action | Shortcut / gesture |
+| --- | --- |
+| Fold or unfold the current window | Control + Command + C |
+| Fold or unfold a specific window | Double-click its title bar |
+| Preview a folded window | Click its folded strip |
+| Pin or unpin the current window | Control + Command + P |
+| Unfold by menu order | Control + Command + 1…9 |
+| Arrange strips / Focus Shelf (Experimental) | Control + Command + 0 |
+| Configure dynamic effects | Menu bar → Settings → Effects |
 
-## How It Works
+## Permissions and privacy
 
-WindowShade works one window at a time, and it always does the same reversible move:
+WindowShade uses two macOS permissions as needed:
 
-1. Find the focused window and remember its exact position and size.
-2. Capture the top of the real window so the strip can look native.
-3. Hide, move offscreen, or minimize the real window — whichever the app allows.
-4. Leave a slim strip in its place. Restoring returns the window exactly where it was, or where you dragged the strip.
+- **Accessibility** — to find, move, focus, and restore windows.
+- **Screen Recording** — to capture title bars, window previews, and live effect previews.
 
-Two strip styles are available:
+Live preview is off by default and only checks Screen Recording access when you turn it on. Window contents never leave your Mac.
 
-| Style | Look | Best for |
-| --- | --- | --- |
-| **Native** | The real window's top chrome, captured live | Keeping the strip visually identical to the original window |
-| **Proxy title bar** | App icon, title, and traffic lights on a standard bar | Focus mode, tidying up, consistent widths |
+## Compatibility
+
+Most ordinary desktop windows work directly. Apps with custom title bars receive app-specific handling. Full-screen, Split View, Stage Manager, multi-display, and sandboxed apps may need additional handling.
+
+## Download
+
+Download the latest zip from [Releases](https://github.com/surfine/WindowShade/releases/latest), unzip it, and open WindowShade.app. WindowShade lives in the menu bar and does not show a Dock icon.
+
+## Build from source
+
+Requirements: macOS 14+, Xcode command line tools, and an Apple Development certificate for signing.
+
+```sh
+git clone https://github.com/surfine/WindowShade.git
+cd WindowShade/prototype
+./build.sh
+open WindowShade.app
+```
+
+To only verify compilation:
+
+```sh
+./build.sh --check
+```
+
+Set the signing identity through WINDOWSHADE_CODESIGN_IDENTITY or a local untracked prototype/local-codesign.env. See DEVELOPMENT.md for build and release details.
 
 ## Architecture
 
@@ -71,99 +91,4 @@ flowchart TD
     Controller --> Journal[Recovery Journal]
 ```
 
-Window Locator finds the focused window through the Accessibility API. The Shade Controller drives the fold/unfold transaction: ScreenCaptureKit captures the real title bar, an overlay window keeps a strip in place, and the recovery journal records each fold so windows can be brought back after an abnormal exit.
-
-## Highlights
-
-- Fold the current window with `Control + Command + C`.
-- Double-click a title bar to fold or unfold that window.
-- Click a folded strip to preview the hidden content.
-- Pin a window as a live floating preview with `Control + Command + P`.
-- Restore folded windows with `Control + Command + 1...9` or from the menu bar.
-- Arrange strips or enter Focus Shelf with `Control + Command + 0` *(Experimental)*.
-- Choose strip style, title-bar double-click, always-on-top, transparency, sounds, and launch at login.
-
-## Compatibility
-
-Most ordinary desktop windows just work. Windows with custom title bars get app-specific handling:
-
-- **Stickies** — WindowShade steps aside for its native roll-up behavior.
-- **WeChat, Elpass, Telegram** — fixed chrome heights and title-bar crop rules so strips never cut into content.
-- **Adobe apps** (Photoshop, Illustrator, InDesign, After Effects, Premiere) — After Effects and Premiere fold the whole workspace frame; Photoshop folds floating documents; utility panels are left alone.
-- **Finder, Quick Look, Codex, System Settings, Calculator** — purpose-built policies for live previews, full-screen handling, and non-resizable windows.
-
-## Permissions
-
-WindowShade asks for two macOS permissions:
-
-- **Accessibility** — to find, move, focus, and restore windows.
-- **Screen Recording** — to capture the top of a window and show live previews.
-
-Window contents never leave your Mac.
-
-## Notes
-
-WindowShade works best with ordinary desktop windows; full-screen, Split View, Stage Manager, multi-display, and sandboxed apps may need app-specific handling. Some windows cannot be moved offscreen reliably and are hidden or minimized instead. A recovery journal records each fold and tries to restore windows after an abnormal exit — it is a safety net, not a system-level transaction.
-
-## Download
-
-Download the latest zip from [Releases](https://github.com/surfine/WindowShade/releases/latest), unzip it, and open `WindowShade.app`.
-
-WindowShade lives in the menu bar. It does not show a Dock icon.
-
-## Basic Use
-
-| Action | Shortcut / gesture |
-| --- | --- |
-| Fold or unfold the current window | `Control + Command + C` |
-| Fold or unfold a specific window | Double-click its title bar |
-| Preview a folded window | Click its folded strip |
-| Pin or unpin the current window | `Control + Command + P` |
-| Unfold by menu order | `Control + Command + 1...9` |
-| Arrange strips / Focus Shelf *(Experimental)* | `Control + Command + 0` |
-| Manage everything | Menu bar icon |
-
-Triple-clicking the title bar keeps the system title-bar zoom behavior available.
-
-## Build from Source
-
-### Requirements
-
-- macOS 14 or newer
-- Xcode command line tools (`xcode-select --install`)
-- An Apple Development certificate for signing
-
-### Clone
-
-```sh
-git clone https://github.com/surfine/WindowShade.git
-cd WindowShade
-```
-
-### Build
-
-```sh
-cd prototype
-./build.sh
-open WindowShade.app
-```
-
-The script compiles the sources and updates `WindowShade.app` in place. If the bundle does not exist yet (fresh clone), it bootstraps a minimal one from the `Info.plist` and app icon in the repo — no need to download a prebuilt binary first. To only verify that the code compiles, without signing or touching the bundle:
-
-```sh
-./build.sh --check
-```
-
-### Signing
-
-`build.sh` codesigns the app with an Apple Development identity so macOS keeps permission trust across rebuilds. Set your own certificate via the `WINDOWSHADE_CODESIGN_IDENTITY` environment variable, or put it in a local, un-tracked `prototype/local-codesign.env` file:
-
-```sh
-WINDOWSHADE_CODESIGN_IDENTITY="Apple Development: Your Name (TEAMID)" ./build.sh
-```
-
-The script refuses ad-hoc signing on purpose, so macOS keeps your Accessibility / Screen Recording permissions across rebuilds. See [DEVELOPMENT.md](DEVELOPMENT.md) for build, signing, and release details.
-
-## Design Notes
-
-[`prototype/WindowShade.swift`](prototype/WindowShade.swift) is the AppDelegate skeleton plus shared infrastructure (logging, caches, coordinate helpers). The actual features live in modules under `prototype/` (`App/`, `Capture/`, `Compatibility/`, `Core/`, `Overlay/`, `Private/`, `Recovery/`, `Window/`). For the history, design rationale, and per-app compatibility details, see [`WindowShade.md`](WindowShade.md). For build, signing, and release details, see [`DEVELOPMENT.md`](DEVELOPMENT.md).
+The implementation lives under prototype/ in the App/, Capture/, Compatibility/, Core/, Overlay/, Private/, Recovery/, and Window/ modules. See WindowShade.md for history and design rationale.

@@ -3,6 +3,14 @@
 
 import Cocoa
 
+struct MenuState {
+  let hingeAngleText: String
+  let canArrangeShades: Bool
+  let foldedWindows: [(CGWindowID, ShadeState)]
+  let pinnedPreviews: [PinnedPreviewMenuEntry]
+  let titlebarDoubleClickEnabled: Bool
+}
+
 extension AppDelegate {
   func setupStatusItem() {
     statusItem = NSStatusBar.system.statusItem(withLength: NSStatusItem.variableLength)
@@ -33,33 +41,18 @@ extension AppDelegate {
       shaded.isEmpty ? "WindowShade" : "WindowShade: \(shaded.count) folded"
     statusMenu.removeAllItems()
 
-    // Keep the first group compact and stateful, following Bendy's interaction model:
-    // a passive sensor readout, one clear desktop toggle, an explicit preview entry,
-    // and a single escape hatch for every active effect.
-    let angle = NSMenuItem(title: duoAngleMenuTitle(), action: nil, keyEquivalent: "")
+    let menuState = makeMenuState()
+
+    // Keep the first row informational. Dynamic-effect configuration lives in Settings;
+    // the menu remains focused on the window-shade workflow and its existing shortcuts.
+    let angle = NSMenuItem(title: menuState.hingeAngleText, action: nil, keyEquivalent: "")
     angle.isEnabled = false
     statusMenu.addItem(angle)
-    let desktop = NSMenuItem(
-      title: "启用桌面开合效果", action: #selector(toggleDuoDesktopEffect), keyEquivalent: "")
-    desktop.target = self
-    desktop.state = duoController.settings.desktopEnabled ? .on : .off
-    desktop.isEnabled = duoController.allowsAnimation || duoController.settings.desktopEnabled
-    statusMenu.addItem(desktop)
-    let windows = NSMenuItem(
-      title: "启用窗口卷帘动画", action: #selector(toggleDuoWindowEffect), keyEquivalent: "")
-    windows.target = self
-    windows.state = duoController.settings.windowsEnabled ? .on : .off
-    windows.isEnabled = duoController.allowsAnimation || duoController.settings.windowsEnabled
-    statusMenu.addItem(windows)
-    let preview = NSMenuItem(
-      title: "预览桌面效果…", action: #selector(previewDuoDesktopEffect), keyEquivalent: "")
-    preview.target = self
-    statusMenu.addItem(preview)
-    let stop = NSMenuItem(title: "停止所有效果", action: #selector(stopAllDuoEffects), keyEquivalent: "")
-    stop.target = self
-    stop.isEnabled = duoController.desktopActive || duoController.windowEffects.activeCount > 0
-    statusMenu.addItem(stop)
     statusMenu.addItem(.separator())
+
+    let currentHeader = NSMenuItem(title: "当前窗口", action: nil, keyEquivalent: "")
+    currentHeader.isEnabled = false
+    statusMenu.addItem(currentHeader)
 
     let toggle = NSMenuItem(
       title: foldToggleMenuTitle(), action: #selector(toggleAction), keyEquivalent: "c")
@@ -77,16 +70,15 @@ extension AppDelegate {
       let arrange = NSMenuItem(
         title: arrangeTitle, action: #selector(arrangeShadedWindows), keyEquivalent: "0")
       arrange.keyEquivalentModifierMask = [.control, .command]
-      arrange.isEnabled = shaded.values.contains { $0.overlay != nil }
+      arrange.isEnabled = menuState.canArrangeShades
       statusMenu.addItem(arrange)
     }
 
     let doubleClick = NSMenuItem(
       title: "双击标题栏以折叠", action: #selector(toggleTitlebarDoubleClick(_:)), keyEquivalent: "")
-    doubleClick.state = titlebarDoubleClickEnabled ? .on : .off
+    doubleClick.state = menuState.titlebarDoubleClickEnabled ? .on : .off
     statusMenu.addItem(doubleClick)
 
-    statusMenu.addItem(.separator())
     let pinnedPreview = NSMenuItem(
       title: pinnedPreviewMenuTitle(),
       action: #selector(togglePinnedPreviewAction),
@@ -96,14 +88,14 @@ extension AppDelegate {
       AXIsProcessTrusted()
       && hasScreenRecordingPermission()
     statusMenu.addItem(pinnedPreview)
-    addPinnedPreviewMenuSection()
+    addPinnedPreviewMenuSection(menuState.pinnedPreviews)
 
-    if !shaded.isEmpty {
+    if !menuState.foldedWindows.isEmpty {
       statusMenu.addItem(.separator())
-      let header = NSMenuItem(title: "已折叠窗口（按快捷键展开）", action: nil, keyEquivalent: "")
+      let header = NSMenuItem(title: "已折叠窗口", action: nil, keyEquivalent: "")
       header.isEnabled = false
       statusMenu.addItem(header)
-      for (index, entry) in sortedShadedEntries().enumerated() {
+      for (index, entry) in menuState.foldedWindows.enumerated() {
         let (id, state) = entry
         let title = descriptiveDisplayTitle(appName: state.appName, windowTitle: state.title)
         let key = index < 9 ? "\(index + 1)" : ""
@@ -119,34 +111,19 @@ extension AppDelegate {
       statusMenu.addItem(.separator())
       let restore = NSMenuItem(title: "全部展开", action: #selector(restoreAll), keyEquivalent: "")
       statusMenu.addItem(restore)
-    } else {
-      statusMenu.addItem(.separator())
-      let empty = NSMenuItem(title: "没有已折叠窗口", action: nil, keyEquivalent: "")
-      empty.isEnabled = false
-      statusMenu.addItem(empty)
     }
 
     statusMenu.addItem(.separator())
-    statusMenu.addItem(
-      withTitle: "欢迎与使用说明...", action: #selector(showWelcomeGuide), keyEquivalent: "")
-    statusMenu.addItem(withTitle: "偏好设置...", action: #selector(showPreferences), keyEquivalent: ",")
-    statusMenu.addItem(
-      withTitle: "Duo 开合屏效果...", action: #selector(showDuoSettings), keyEquivalent: "")
+    statusMenu.addItem(withTitle: "使用说明…", action: #selector(showWelcomeGuide), keyEquivalent: "")
+    statusMenu.addItem(withTitle: "设置…", action: #selector(showPreferences), keyEquivalent: ",")
     statusMenu.addItem(withTitle: "退出 WindowShade", action: #selector(quit), keyEquivalent: "q")
     updateReconcileTimer()
   }
-  func addPinnedPreviewMenuSection() {
+  func addPinnedPreviewMenuSection(_ entries: [PinnedPreviewMenuEntry]) {
+    guard !entries.isEmpty else { return }
+
     statusMenu.addItem(.separator())
-
-    let entries = pinnedPreviewController.menuEntries()
-    guard !entries.isEmpty else {
-      let empty = NSMenuItem(title: "没有已置顶窗口", action: nil, keyEquivalent: "")
-      empty.isEnabled = false
-      statusMenu.addItem(empty)
-      return
-    }
-
-    let header = NSMenuItem(title: "已置顶窗口（点击取消）", action: nil, keyEquivalent: "")
+    let header = NSMenuItem(title: "已置顶窗口", action: nil, keyEquivalent: "")
     header.isEnabled = false
     statusMenu.addItem(header)
 
@@ -159,16 +136,6 @@ extension AppDelegate {
       item.representedObject = NSNumber(value: entry.id)
       statusMenu.addItem(item)
     }
-
-    statusMenu.addItem(.separator())
-    // 老板键：暂时隐藏/恢复全部置顶预览（连带停止/恢复 capture），与下面
-    // 「全部取消置顶」不同——不清空会话，按一次就能原样恢复。
-    let suspendAll = NSMenuItem(
-      title: pinnedPreviewController.suspendAllMenuTitle(),
-      action: #selector(toggleSuspendPinnedPreviewsAction),
-      keyEquivalent: "")
-    suspendAll.target = self
-    statusMenu.addItem(suspendAll)
 
     let stopPinnedPreviews = NSMenuItem(
       title: "全部取消置顶",
@@ -273,8 +240,23 @@ extension AppDelegate {
   func pinnedPreviewMenuTitle() -> String {
     pinnedPreviewController.currentTargetMenuTitle()
   }
+  func makeMenuState() -> MenuState {
+    MenuState(
+      hingeAngleText: duoAngleMenuTitle(),
+      canArrangeShades: shaded.values.contains { $0.overlay != nil },
+      foldedWindows: sortedShadedEntries(),
+      pinnedPreviews: pinnedPreviewController.menuEntries(),
+      titlebarDoubleClickEnabled: titlebarDoubleClickEnabled)
+  }
   func duoAngleMenuTitle() -> String {
-    guard let angle = duoController.angle, angle.isFinite else { return "铰链角度：不可用" }
+    guard let angle = duoController.angle, angle.isFinite else {
+      switch duoController.sensorStatus {
+      case "传感器未启动", "角度读取已暂停":
+        return "铰链角度：等待传感器"
+      default:
+        return "铰链角度：不可用"
+      }
+    }
     return String(format: "铰链角度：%.1f°", angle)
   }
   @objc func toggleDuoDesktopEffect() {

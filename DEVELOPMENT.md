@@ -21,7 +21,7 @@ prototype/
 │   ├── MenuBarController.swift       # 状态栏图标、菜单重建与菜单代理回调
 │   ├── Reconcile.swift               # 折叠会话监控（reconcile 定时核对/并行快照）
 │   ├── EventTap.swift                # 全局快捷键、事件 tap、标题栏双击/三击
-│   ├── Preferences.swift             # 偏好设置与引导页
+│   ├── Preferences.swift             # 设置窗口与引导页
 │   ├── OverlayPresentation.swift     # 覆盖层展示与 Space 不变量
 │   ├── HoverPreview.swift            # 悬停预览（peek / 菜单悬停）
 │   ├── OverlayFactory.swift          # 覆盖层窗口工厂（截图条/经典条/代理标题栏）
@@ -150,7 +150,8 @@ cd prototype
    git tag "v${VERSION}" && git push origin "v${VERSION}"
    gh release create "v${VERSION}" \
      "dist/WindowShade-v${VERSION}.zip" "dist/WindowShade-v${VERSION}.zip.sha256" \
-     --title "WindowShade v${VERSION}" --notes "..."
+     --title "WindowShade v${VERSION}" \
+     --notes-file "../docs/releases/v${VERSION}.md"
    ```
 
 `prototype/dist/` 已在 `.gitignore` 中，发布产物不会污染工作区。
