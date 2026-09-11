@@ -93,4 +93,4 @@ Module layout, build, and release steps are in DEVELOPMENT.md; design background
 
 ## Third-party
 
-Parts of the effect optics are ported from [DuoBook](https://github.com/askmaddyy/DuoBook) (MIT) and [Mac-Duo](https://github.com/sumimakito/Mac-Duo) (Apache-2.0). Sources, revisions, and what changed are recorded in [DUO-THIRD-PARTY.md](docs/DUO-THIRD-PARTY.md), and the shipped app keeps the full license files.
+WindowShade's own code is [MIT licensed](LICENSE). Parts of the effect optics are ported from [DuoBook](https://github.com/askmaddyy/DuoBook) (MIT) and [Mac-Duo](https://github.com/sumimakito/Mac-Duo) (Apache-2.0), and those parts stay under their original licenses. Sources, revisions, and what changed are recorded in [DUO-THIRD-PARTY.md](docs/DUO-THIRD-PARTY.md), and the shipped app keeps the full license files.

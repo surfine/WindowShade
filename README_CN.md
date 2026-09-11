@@ -95,4 +95,4 @@ open WindowShade.app
 
 ## 第三方
 
-动态效果的部分光学实现移植自 [DuoBook](https://github.com/askmaddyy/DuoBook)（MIT）与 [Mac-Duo](https://github.com/sumimakito/Mac-Duo)（Apache-2.0）。来源、版本与改动范围记在 [DUO-THIRD-PARTY.md](docs/DUO-THIRD-PARTY.md)，安装包里保留完整许可文件。
+WindowShade 自身的代码使用 [MIT 许可](LICENSE)。动态效果的部分光学实现移植自 [DuoBook](https://github.com/askmaddyy/DuoBook)（MIT）与 [Mac-Duo](https://github.com/sumimakito/Mac-Duo)（Apache-2.0），这些部分仍按各自的原始许可分发。来源、版本与改动范围记在 [DUO-THIRD-PARTY.md](docs/DUO-THIRD-PARTY.md)，安装包里保留完整许可文件。
