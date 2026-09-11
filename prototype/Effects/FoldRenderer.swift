@@ -9,6 +9,8 @@ final class FoldRenderer: NSObject, MTKViewDelegate {
     var titleFraction: Float = 0
     var windowMode = false
     var opacity: Float = 1
+    var motionX: Float = 0
+    var motionY: Float = 0
     var preset: DuoPreset = .shade
   }
   let view: MTKView
@@ -214,7 +216,8 @@ final class FoldRenderer: NSObject, MTKViewDelegate {
       SIMD4<Float>(
         parameters.progress, parameters.titleFraction, parameters.windowMode ? 1 : 0,
         parameters.opacity),
-      SIMD4<Float>(o.eye, o.spread, o.dim, o.separation), SIMD4<Float>(o.tilt, 0, 0, 0),
+      SIMD4<Float>(o.eye, o.spread, o.dim, o.separation),
+      SIMD4<Float>(o.tilt, parameters.motionX, parameters.motionY, 0),
       SIMD4<Float>(Float(rect.minX), Float(rect.minY), Float(rect.width), Float(rect.height)),
       SIMD4<Float>(Float(drawable.texture.width), Float(drawable.texture.height), 0, 0),
     ]
@@ -237,7 +240,8 @@ final class FoldRenderer: NSObject, MTKViewDelegate {
       onFailure?(EffectError.unavailable("光学纹理分配失败"))
       return
     }
-    if parameters.progress > 0 {
+    let hasMotion = hypot(parameters.motionX, parameters.motionY) > 0.0001
+    if parameters.progress > 0 || hasMotion {
       let opticalPass = MTLRenderPassDescriptor()
       opticalPass.colorAttachments[0].texture = opticalSurface
       opticalPass.colorAttachments[0].loadAction = .dontCare
