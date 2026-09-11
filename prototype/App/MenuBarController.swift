@@ -6,6 +6,7 @@ import Cocoa
 extension AppDelegate {
   func setupStatusItem() {
     statusItem = NSStatusBar.system.statusItem(withLength: NSStatusItem.variableLength)
+    statusItem.isVisible = true
     statusMenu = NSMenu()
     statusMenu.delegate = self
     statusItem.menu = statusMenu
@@ -13,6 +14,7 @@ extension AppDelegate {
     statusItem.button?.imagePosition = .imageLeft
     statusItem.button?.toolTip = "WindowShade"
     rebuildMenu()
+    wlog("status item visible=\(statusItem.isVisible)")
   }
   func rebuildMenu() {
     if suppressMenuRebuilds {
@@ -25,6 +27,7 @@ extension AppDelegate {
     menuRebuildWorkItem = nil
     statusItem.button?.image = makeStatusBarIcon()
     statusItem.button?.imagePosition = .imageLeft
+    statusItem.isVisible = true
     statusItem.button?.title = shaded.isEmpty ? "" : " \(shaded.count)"
     statusItem.button?.toolTip =
       shaded.isEmpty ? "WindowShade" : "WindowShade: \(shaded.count) folded"
