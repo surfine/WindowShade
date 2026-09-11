@@ -12,6 +12,9 @@ extension AppDelegate {
         let win: AXUIElement
         let target: CGPoint
         let size: CGSize
+        var pid: pid_t? = nil
+        var hide: HideMethod? = nil
+        var targetAlpha: Float? = nil
     }
 
     struct JournalAlphaRestore {
@@ -68,16 +71,12 @@ extension AppDelegate {
                     return journalMatches(entry, app: app, win: win)
                 }), let id = journalID(entry) else { continue }
 
-                if journalString(entry, "hide") == HideMethod.privateAlpha.rawValue {
-                    let alpha = Float(journalNumber(entry, "originalAlpha") ?? 1)
-                    result.alphaRestores.append(
-                        JournalAlphaRestore(id: id, targetAlpha: max(0.05, min(alpha, 1.0))))
-                    wlog("journal: alpha restore queued id=\(id) app=\(journalString(entry, "appName"))")
-                    continue
-                }
-
                 guard let pos = axPosition(win), let size = axSize(win) else { continue }
-                if windowIsVisible(pos: pos, size: size) {
+                if windowIsVisible(pos: pos, size: size),
+                   journalString(entry,"stage") != ShadeLifecycleStage.restoring.rawValue,
+                   journalString(entry,"hide") != HideMethod.minimized.rawValue,
+                   journalString(entry,"hide") != HideMethod.hidden.rawValue,
+                   journalString(entry,"hide") != HideMethod.privateAlpha.rawValue {
                     // preparing intent 且窗口仍可见：事务没走到隐藏这一步（进程在
                     // 写 intent 后、隐藏前被杀），窗口完好，无需救援，安全清理。
                     if journalString(entry, "stage") == ShadeLifecycleStage.preparing.rawValue {
@@ -106,7 +105,9 @@ extension AppDelegate {
                                                                           preferredDisplayID: displayID))
                 }
                 result.actions.append(OffscreenRescueAction(id: id, win: win,
-                                                            target: safeTarget, size: originalSize))
+                                                            target: safeTarget, size: originalSize,
+                                                            pid:app.processIdentifier,hide:HideMethod(rawValue:journalString(entry,"hide")),
+                                                            targetAlpha:journalString(entry,"hide") == HideMethod.privateAlpha.rawValue ? Float(journalNumber(entry,"originalAlpha") ?? 1):nil))
                 rescued += 1
                 wlog("journal: rescued id=\(id) app=\(journalString(entry, "appName")) target=(\(Int(safeTarget.x)),\(Int(safeTarget.y)))")
             }
@@ -118,7 +119,14 @@ extension AppDelegate {
     func rescueActionVerified(_ action: OffscreenRescueAction) -> Bool {
         guard let pos = axPosition(action.win), let size = axSize(action.win) else { return false }
         guard pos.x.isFinite, pos.y.isFinite, size.width > 1, size.height > 1 else { return false }
-        return windowIsVisible(pos: pos, size: size)
+        guard windowIsVisible(pos: pos, size: size), windowID(of:action.win) == action.id,
+              let info=cgWindowInfo(action.id), (info[kCGWindowIsOnscreen as String] as? Bool) == true,
+              !axBoolAttribute(action.win,kAXMinimizedAttribute as String) else { return false }
+        if let alpha=action.targetAlpha {
+            guard let actual=PrivateSLSWindowMover.shared.windowAlpha(id:action.id), abs(actual-alpha)<0.05 else { return false }
+        }
+        return abs(pos.x-action.target.x)<=2 && abs(pos.y-action.target.y)<=2 &&
+            abs(size.width-action.size.width)<=2 && abs(size.height-action.size.height)<=2
     }
 
     func alphaRestoreVerified(_ restore: JournalAlphaRestore) -> Bool {
@@ -233,6 +241,9 @@ extension AppDelegate {
                         raiseAXWindow(action.win)
                         continue
                     }
+                    if let alpha=action.targetAlpha { _=PrivateSLSWindowMover.shared.setAlpha(id:action.id,alpha:alpha) }
+                    if action.hide == .hidden,let pid=action.pid { _=NSRunningApplication(processIdentifier:pid)?.unhide() }
+                    if action.hide == .minimized { setAXMinimized(action.win,false) }
                     setAXSize(action.win, action.size)
                     setAXPosition(action.win, action.target)
                     raiseAXWindow(action.win)

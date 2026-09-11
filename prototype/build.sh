@@ -14,9 +14,15 @@
 set -euo pipefail
 cd "$(dirname "$0")"
 
+stage_only=0
+if [ "${1:-}" = "--stage" ]; then stage_only=1; fi
 APP="WindowShade.app"
+if [ "$stage_only" = "1" ]; then
+  APP="$(cd .. && pwd)/.build/duo-validation/WindowShade.app"
+fi
 BIN="$APP/Contents/MacOS/WindowShade"
 TMP_BIN="windowshade"
+if [ "$stage_only" = "1" ]; then TMP_BIN="$(cd .. && pwd)/.build/duo-validation/windowshade"; fi
 MODULE_CACHE="$(cd .. && pwd)/.build/module-cache"
 
 FRAMEWORKS=(
@@ -28,6 +34,11 @@ FRAMEWORKS=(
   -framework CoreText
   -framework AVFoundation
   -framework ServiceManagement
+  -framework Metal
+  -framework MetalKit
+  -framework IOKit
+  -framework CoreImage
+  -framework VideoToolbox
 )
 
 # 自动收集源文件：只扫 prototype/ 与它的模块子目录，顺序稳定（按路径排序）。
@@ -35,7 +46,7 @@ FRAMEWORKS=(
 # macOS 自带 Bash 3.2 可运行（只用 find + sort + grep）。
 collect_sources() {
   find . \
-    -path "./$APP" -prune -o \
+    -path "./WindowShade.app" -prune -o \
     -path ./dist -prune -o \
     -path ./.build -prune -o \
     -name '*.swift' -print \
@@ -58,12 +69,31 @@ fi
 
 SOURCES="main.swift $(collect_sources | grep -v '^main.swift$')"
 echo "==> 源文件：$(collect_sources | wc -l | tr -d ' ') 个 Swift 文件"
+ARCH="${WINDOWSHADE_ARCH:-$(uname -m)}"
+# Compile one coherent source snapshot. Edits made while a long optimized build runs
+# cannot invalidate Swift inputs or mix newer shaders into the signed bundle.
+WORK="$(mktemp -d "$(cd .. && pwd)/.build/duo-build.XXXXXX")"
+trap 'rm -rf "$WORK"' EXIT
+COMPILE_SOURCES=()
+for source in $SOURCES; do
+  mkdir -p "$WORK/$(dirname "$source")"
+  cp "$source" "$WORK/$source"
+  COMPILE_SOURCES+=("$WORK/$source")
+done
+cp Effects/Duo.metal "$WORK/Duo.metal"
+
+# Shader checks and normal builds use the same source and deployment target.
+METAL_BUILD="$(cd .. && pwd)/.build/duo-metal"
+mkdir -p "$METAL_BUILD"
+xcrun -sdk macosx metal -mmacosx-version-min=14.0 -c "$WORK/Duo.metal" -o "$WORK/Duo.air"
+xcrun -sdk macosx metallib "$WORK/Duo.air" -o "$WORK/Duo.metallib"
+cp "$WORK/Duo.metallib" "$METAL_BUILD/Duo.metallib"
 
 if [ "$check_only" = "1" ]; then
   echo "==> 编译验证（--check，不签名、不修改 app bundle）"
   mkdir -p "$MODULE_CACHE"
   env CLANG_MODULE_CACHE_PATH="$MODULE_CACHE" \
-    swiftc -typecheck $SOURCES "${FRAMEWORKS[@]}"
+    swiftc -target "$ARCH-apple-macosx14.0" -typecheck "${COMPILE_SOURCES[@]}" "${FRAMEWORKS[@]}"
   echo "==> 编译验证通过"
   exit 0
 fi
@@ -94,21 +124,26 @@ if [ ! -d "$APP/Contents/MacOS" ]; then
   fi
 fi
 
-echo "==> 停止正在运行的 WindowShade（避免运行中替换 Mach-O 触发 TCC 混乱）"
-pkill -x WindowShade 2>/dev/null || true
+if [ "$stage_only" != "1" ]; then
+  echo "==> 停止正在运行的 WindowShade（避免运行中替换 Mach-O 触发 TCC 混乱）"
+  pkill -x WindowShade 2>/dev/null || true
+fi
 
 echo "==> 编译"
 mkdir -p "$MODULE_CACHE"
 env CLANG_MODULE_CACHE_PATH="$MODULE_CACHE" \
-  swiftc -O -o "$TMP_BIN" $SOURCES "${FRAMEWORKS[@]}"
+  swiftc -target "$ARCH-apple-macosx14.0" -O -whole-module-optimization -o "$TMP_BIN" "${COMPILE_SOURCES[@]}" "${FRAMEWORKS[@]}"
 
 echo "==> 替换 Mach-O（保留 bundle、Info.plist、Resources）"
 cp "$TMP_BIN" "$BIN"
+cp "$WORK/Duo.metallib" "$APP/Contents/Resources/Duo.metallib"
+mkdir -p "$APP/Contents/Resources/ThirdParty"
+cp -R ThirdParty/DuoBook ThirdParty/Mac-Duo "$APP/Contents/Resources/ThirdParty/"
 
 echo "==> 用 Apple Development 证书签名（TCC 授权可跨重编保留）"
 codesign --force -s "$IDENTITY" "$APP"
 codesign --verify --deep --strict "$APP"
 touch "$APP"
 
-echo "==> 完成：$(pwd)/$APP"
+echo "==> 完成：$APP"
 codesign -dv "$APP" 2>&1 | sed 's/^/    /'
