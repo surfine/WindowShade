@@ -270,6 +270,26 @@ final class DuoSettingsWindow: NSWindowController, NSWindowDelegate {
     return label
   }
 
+  private func makeTextLinkButton(title: String, action: Selector, help: String) -> NSButton {
+    let button = NSButton(title: title, target: self, action: action)
+    button.isBordered = false
+    button.bezelStyle = .inline
+    button.controlSize = .regular
+    button.contentTintColor = .controlAccentColor
+    button.attributedTitle = NSAttributedString(
+      string: title,
+      attributes: [
+        .font: NSFont.systemFont(ofSize: 12),
+        .foregroundColor: NSColor.controlAccentColor,
+        .underlineStyle: NSUnderlineStyle.single.rawValue,
+      ])
+    button.setAccessibilityLabel(title)
+    button.setAccessibilityHelp(help)
+    button.setContentHuggingPriority(.required, for: .horizontal)
+    button.setContentCompressionResistancePriority(.required, for: .horizontal)
+    return button
+  }
+
   private func makeSettingsCard(_ rows: [NSView]) -> NSView {
     let card = NSView()
     card.wantsLayer = true
@@ -504,10 +524,14 @@ final class DuoSettingsWindow: NSWindowController, NSWindowDelegate {
       stack.topAnchor.constraint(equalTo: root.topAnchor),
       stack.bottomAnchor.constraint(lessThanOrEqualTo: root.bottomAnchor),
     ])
-    stack.addArrangedSubview(makePageHeader(
-      title: "高级", subtitle: "调整触发行为、校准传感器和恢复动态效果默认值。"))
+    let header = makePageHeader(
+      title: "高级", subtitle: "调整触发行为、校准传感器和恢复动态效果默认值。")
+    stack.addArrangedSubview(header)
+    stack.setCustomSpacing(16, after: header)
 
-    stack.addArrangedSubview(makeSectionLabel("触发"))
+    let triggerSection = makeSectionLabel("触发")
+    stack.addArrangedSubview(triggerSection)
+    stack.setCustomSpacing(6, after: triggerSection)
     trigger.target = self
     trigger.action = #selector(changed)
     trigger.isContinuous = true
@@ -551,8 +575,11 @@ final class DuoSettingsWindow: NSWindowController, NSWindowDelegate {
     let triggerCard = makeSettingsCard([triggerHeader, triggerSlider])
     stack.addArrangedSubview(triggerCard)
     triggerCard.widthAnchor.constraint(equalTo: stack.widthAnchor).isActive = true
+    stack.setCustomSpacing(16, after: triggerCard)
 
-    stack.addArrangedSubview(makeSectionLabel("操作"))
+    let actionSection = makeSectionLabel("操作")
+    stack.addArrangedSubview(actionSection)
+    stack.setCustomSpacing(6, after: actionSection)
     calibration.target = self
     calibration.action = #selector(calibrate)
     calibration.image = NSImage(systemSymbolName: "scope", accessibilityDescription: "校准")
@@ -566,13 +593,14 @@ final class DuoSettingsWindow: NSWindowController, NSWindowDelegate {
     diagnostics.bezelStyle = .rounded
     diagnostics.image = NSImage(systemSymbolName: "doc.text.magnifyingglass", accessibilityDescription: "诊断日志")
     diagnostics.imagePosition = .imageLeading
-    let buttonRow = NSStackView(views: [calibration, reset, diagnostics])
+    let buttonRow = NSStackView(views: [NSView(), calibration, reset, diagnostics])
     buttonRow.orientation = .horizontal
     buttonRow.alignment = .centerY
-    buttonRow.spacing = 10
+    buttonRow.spacing = 8
     let buttonCard = makeSettingsCard([buttonRow])
     stack.addArrangedSubview(buttonCard)
     buttonCard.widthAnchor.constraint(equalTo: stack.widthAnchor).isActive = true
+    stack.setCustomSpacing(16, after: buttonCard)
 
     let reduced = NSTextField(wrappingLabelWithString: NSWorkspace.shared.accessibilityDisplayShouldReduceMotion
       ? "系统已开启“减少动态效果”，连续动画会自动暂停。"
@@ -581,14 +609,22 @@ final class DuoSettingsWindow: NSWindowController, NSWindowDelegate {
     reduced.textColor = .secondaryLabelColor
     reduced.maximumNumberOfLines = 2
     reduced.setAccessibilityLabel("减少动态效果提示")
+    reduced.setContentCompressionResistancePriority(.defaultLow, for: .horizontal)
+    let reduceMotionLink = makeTextLinkButton(
+      title: "打开“减少动态效果”设置…",
+      action: #selector(openReduceMotionSettings),
+      help: "在系统设置的辅助功能中配置减少动态效果")
     let logPath = NSTextField(labelWithString: "日志位置：/tmp/windowshade.log")
     logPath.font = .systemFont(ofSize: 11)
     logPath.textColor = .tertiaryLabelColor
-    let infoRow = NSStackView(views: [reduced, NSView()])
+    let infoRow = NSStackView(views: [reduced, reduceMotionLink])
     infoRow.orientation = .horizontal
     infoRow.alignment = .centerY
+    infoRow.spacing = 12
     let infoCard = makeSettingsCard([infoRow, logPath])
-    stack.addArrangedSubview(makeSectionLabel("辅助功能与日志"))
+    let infoSection = makeSectionLabel("辅助功能与日志")
+    stack.addArrangedSubview(infoSection)
+    stack.setCustomSpacing(6, after: infoSection)
     stack.addArrangedSubview(infoCard)
     infoCard.widthAnchor.constraint(equalTo: stack.widthAnchor).isActive = true
     load(controller.settings)
@@ -664,6 +700,18 @@ final class DuoSettingsWindow: NSWindowController, NSWindowDelegate {
       NSWorkspace.shared.open(logURL)
     } else {
       NSWorkspace.shared.open(logURL.deletingLastPathComponent())
+    }
+  }
+
+  @objc private func openReduceMotionSettings() {
+    let candidates = [
+      "x-apple.systempreferences:com.apple.Accessibility-Settings.extension?Seeing_Display",
+      "x-apple.systempreferences:com.apple.preference.universalaccess?Seeing_Display",
+      "x-apple.systempreferences:com.apple.preference.universalaccess",
+    ]
+    for rawValue in candidates {
+      guard let url = URL(string: rawValue) else { continue }
+      if NSWorkspace.shared.open(url) { return }
     }
   }
 
