@@ -22,7 +22,7 @@ final class EffectPanel: NSPanel {
   override var canBecomeMain: Bool { false }
 }
 
-/// Window-bound refresh clock, as used by Mac-Duo. No timer runs after stop.
+/// Refresh clock bound to a window's display; no timer runs after stop.
 final class EffectDisplayClock: NSObject {
   private var link: CADisplayLink?
   var tick: ((CFTimeInterval) -> Void)?

@@ -25,8 +25,10 @@ final class FoldRenderer: NSObject, MTKViewDelegate {
   }
   private let queue: MTLCommandQueue
   private let pipeline: MTLRenderPipelineState
+  private let pagePipeline: MTLRenderPipelineState
   private let compositePipeline: MTLRenderPipelineState
   private var opticalSurface: MTLTexture?
+  private var pageTexture: MTLTexture?
   private var cache: CVMetalTextureCache?
   private var frame: EffectFrame?
   private var imageTexture: MTLTexture?
@@ -65,6 +67,8 @@ final class FoldRenderer: NSObject, MTKViewDelegate {
     descriptor.fragmentFunction = library.makeFunction(name: "duoFragment")
     descriptor.colorAttachments[0].pixelFormat = .bgra8Unorm
     pipeline = try device.makeRenderPipelineState(descriptor: descriptor)
+    descriptor.fragmentFunction = library.makeFunction(name: "duoPage")
+    pagePipeline = try device.makeRenderPipelineState(descriptor: descriptor)
     descriptor.fragmentFunction = library.makeFunction(name: "duoComposite")
     compositePipeline = try device.makeRenderPipelineState(descriptor: descriptor)
     let transparent = MTLTextureDescriptor.texture2DDescriptor(
@@ -165,6 +169,7 @@ final class FoldRenderer: NSObject, MTKViewDelegate {
     backgroundImage = nil
     background = transparentBackground
     opticalSurface = nil
+    pageTexture = nil
     dirty = false
     view.isHidden = true
     onFrameReady = nil
@@ -216,13 +221,12 @@ final class FoldRenderer: NSObject, MTKViewDelegate {
       SIMD4<Float>(
         parameters.progress, parameters.titleFraction, parameters.windowMode ? 1 : 0,
         parameters.opacity),
-      SIMD4<Float>(o.eye, o.spread, o.dim, o.separation),
-      SIMD4<Float>(o.tilt, parameters.motionX, parameters.motionY, 0),
+      SIMD4<Float>(o.focal, o.defocus, o.dim, o.baseBlur),
+      SIMD4<Float>(o.angle, parameters.motionX, parameters.motionY, 0),
       SIMD4<Float>(Float(rect.minX), Float(rect.minY), Float(rect.width), Float(rect.height)),
       SIMD4<Float>(Float(drawable.texture.width), Float(drawable.texture.height), 0, 0),
     ]
     // Bound only the expensive optical surface; capture, title bars and final output stay native.
-    // The pinned upstream shader still defines the material, including all 32 Vogel taps.
     let opticalWidth = min(960, drawable.texture.width)
     let opticalHeight = max(
       1,
@@ -242,6 +246,39 @@ final class FoldRenderer: NSObject, MTKViewDelegate {
     }
     let hasMotion = hypot(parameters.motionX, parameters.motionY) > 0.0001
     if parameters.progress > 0 || hasMotion {
+      // The page pyramid carries the defocus: one base level plus generated mips, so the
+      // wide part of the blur is a filtered fetch instead of a disk of taps.
+      let pageWidth = max(1, Int((Double(source.width) * Double(rect.width)).rounded()))
+      let pageHeight = max(1, Int((Double(source.height) * Double(rect.height)).rounded()))
+      if pageTexture?.width != pageWidth || pageTexture?.height != pageHeight {
+        let descriptor = MTLTextureDescriptor.texture2DDescriptor(
+          pixelFormat: .bgra8Unorm, width: pageWidth, height: pageHeight, mipmapped: true)
+        descriptor.storageMode = .private
+        descriptor.usage = [.renderTarget, .shaderRead]
+        pageTexture = device.makeTexture(descriptor: descriptor)
+      }
+      guard let pageTexture else {
+        onFailure?(EffectError.unavailable("光学纹理分配失败"))
+        return
+      }
+      let pagePass = MTLRenderPassDescriptor()
+      pagePass.colorAttachments[0].texture = pageTexture
+      pagePass.colorAttachments[0].level = 0
+      pagePass.colorAttachments[0].loadAction = .dontCare
+      pagePass.colorAttachments[0].storeAction = .store
+      guard let pageEncoder = command.makeRenderCommandEncoder(descriptor: pagePass) else {
+        return
+      }
+      pageEncoder.setRenderPipelineState(pagePipeline)
+      pageEncoder.setFragmentTexture(source, index: 0)
+      pageEncoder.setFragmentBytes(
+        &uniforms, length: MemoryLayout<SIMD4<Float>>.stride * uniforms.count, index: 0)
+      pageEncoder.drawPrimitives(type: .triangle, vertexStart: 0, vertexCount: 3)
+      pageEncoder.endEncoding()
+      if let blit = command.makeBlitCommandEncoder() {
+        blit.generateMipmaps(for: pageTexture)
+        blit.endEncoding()
+      }
       let opticalPass = MTLRenderPassDescriptor()
       opticalPass.colorAttachments[0].texture = opticalSurface
       opticalPass.colorAttachments[0].loadAction = .dontCare
@@ -252,6 +289,7 @@ final class FoldRenderer: NSObject, MTKViewDelegate {
       opticalEncoder.setRenderPipelineState(pipeline)
       opticalEncoder.setFragmentTexture(source, index: 0)
       opticalEncoder.setFragmentTexture(background, index: 1)
+      opticalEncoder.setFragmentTexture(pageTexture, index: 2)
       opticalEncoder.setFragmentBytes(
         &uniforms, length: MemoryLayout<SIMD4<Float>>.stride * uniforms.count, index: 0)
       opticalEncoder.drawPrimitives(type: .triangle, vertexStart: 0, vertexCount: 3)

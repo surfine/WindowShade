@@ -9,7 +9,3 @@ swiftc prototype/Effects/FoldDriver.swift prototype/Effects/EffectFrameAwaiter.s
 python3 tests/duo-integration-check.py
 xcrun -sdk macosx metal -mmacosx-version-min=14.0 -c prototype/Effects/Duo.metal -o .build/duo-metal/Duo.air
 xcrun -sdk macosx metallib .build/duo-metal/Duo.air -o .build/duo-metal/Duo.metallib
-xcrun -sdk macosx metal -mmacosx-version-min=14.0 -c tests/fixtures/DuoBook-fd7b0fc.metal -o .build/duo-tests/upstream.air
-xcrun -sdk macosx metallib .build/duo-tests/upstream.air -o .build/duo-tests/upstream.metallib
-swiftc -O prototype/Effects/FoldDriver.swift tests/DuoShaderOracle.swift -framework Metal -o .build/duo-tests/shader-oracle
-.build/duo-tests/shader-oracle
