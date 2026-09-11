@@ -87,6 +87,18 @@ extension AppDelegate {
 
     private func makeSettingsPageRoot() -> (NSView, NSStackView) {
         let root = NSView()
+        let background = NSVisualEffectView()
+        background.material = .underPageBackground
+        background.blendingMode = .withinWindow
+        background.state = .active
+        background.translatesAutoresizingMaskIntoConstraints = false
+        root.addSubview(background)
+        NSLayoutConstraint.activate([
+            background.leadingAnchor.constraint(equalTo: root.leadingAnchor),
+            background.trailingAnchor.constraint(equalTo: root.trailingAnchor),
+            background.topAnchor.constraint(equalTo: root.topAnchor),
+            background.bottomAnchor.constraint(equalTo: root.bottomAnchor),
+        ])
         let stack = NSStackView()
         stack.orientation = .vertical
         stack.alignment = .leading
@@ -102,7 +114,7 @@ extension AppDelegate {
         return (root, stack)
     }
 
-    private func makeSettingsHeader(title: String, subtitle: String) -> NSView {
+    private func makeSettingsHeader(title: String, subtitle: String, symbolName: String? = nil) -> NSView {
         let stack = NSStackView()
         stack.orientation = .vertical
         stack.alignment = .leading
@@ -115,13 +127,39 @@ extension AppDelegate {
         subtitleLabel.maximumNumberOfLines = 2
         stack.addArrangedSubview(titleLabel)
         stack.addArrangedSubview(subtitleLabel)
-        return stack
+        guard let symbolName,
+              let image = NSImage(systemSymbolName: symbolName, accessibilityDescription: title)
+        else { return stack }
+        let icon = NSImageView()
+        icon.image = image.withSymbolConfiguration(.init(pointSize: 20, weight: .semibold))
+        icon.contentTintColor = .controlAccentColor
+        icon.imageScaling = .scaleProportionallyDown
+        icon.translatesAutoresizingMaskIntoConstraints = false
+        let iconPlate = NSView()
+        iconPlate.wantsLayer = true
+        iconPlate.layer?.cornerRadius = 9
+        iconPlate.layer?.backgroundColor = NSColor.controlAccentColor.withAlphaComponent(0.12).cgColor
+        iconPlate.translatesAutoresizingMaskIntoConstraints = false
+        iconPlate.addSubview(icon)
+        NSLayoutConstraint.activate([
+            icon.widthAnchor.constraint(equalToConstant: 26),
+            icon.heightAnchor.constraint(equalToConstant: 26),
+            icon.centerXAnchor.constraint(equalTo: iconPlate.centerXAnchor),
+            icon.centerYAnchor.constraint(equalTo: iconPlate.centerYAnchor),
+            iconPlate.widthAnchor.constraint(equalToConstant: 34),
+            iconPlate.heightAnchor.constraint(equalToConstant: 34),
+        ])
+        let header = NSStackView(views: [iconPlate, stack])
+        header.orientation = .horizontal
+        header.alignment = .top
+        header.spacing = 12
+        return header
     }
 
     func makeShadeSettingsPage() -> NSView {
         let (root, stack) = makeSettingsPageRoot()
         stack.addArrangedSubview(makeSettingsHeader(
-            title: "卷帘", subtitle: "设置窗口折叠、外观和反馈方式。"))
+            title: "卷帘", subtitle: "设置窗口折叠、外观和反馈方式。", symbolName: "rectangle.compress.vertical"))
 
         let trigger = makeUnifiedSettingsCard([
             makeUnifiedToggleRow(name: "双击标题栏以折叠", subtitle: titlebarDoubleClickPreferenceSubtitle(),
@@ -166,7 +204,7 @@ extension AppDelegate {
     func makePermissionsSettingsPage() -> NSView {
         let (root, stack) = makeSettingsPageRoot()
         stack.addArrangedSubview(makeSettingsHeader(
-            title: "权限与启动", subtitle: "WindowShade 只在需要时使用系统权限。"))
+            title: "权限与启动", subtitle: "WindowShade 只在需要时使用系统权限。", symbolName: "lock.shield"))
         stack.addArrangedSubview(makePrefGroupLabel("权限"))
         let permissions = makeUnifiedSettingsCard([
             makeUnifiedPermissionRow(symbol: "accessibility", name: "辅助功能",
@@ -245,20 +283,49 @@ extension AppDelegate {
         return root
     }
 
-    func makePrefGroupLabel(_ text: String) -> NSTextField {
+    func makePrefGroupLabel(_ text: String) -> NSView {
         let field = NSTextField(labelWithString: text)
         field.font = .systemFont(ofSize: 13, weight: .semibold)
         field.textColor = .secondaryLabelColor
-        return field
+        let symbol: String?
+        switch text {
+        case "触发": symbol = "bolt.fill"
+        case "外观": symbol = "paintpalette"
+        case "声音": symbol = "speaker.wave.2"
+        case "权限": symbol = "lock.shield"
+        case "启动": symbol = "power"
+        default: symbol = nil
+        }
+        guard let symbol,
+              let image = NSImage(systemSymbolName: symbol, accessibilityDescription: text)
+        else { return field }
+        let icon = NSImageView()
+        icon.image = image.withSymbolConfiguration(.init(pointSize: 13, weight: .medium))
+        icon.contentTintColor = .tertiaryLabelColor
+        icon.imageScaling = .scaleProportionallyDown
+        icon.widthAnchor.constraint(equalToConstant: 18).isActive = true
+        icon.heightAnchor.constraint(equalToConstant: 18).isActive = true
+        let group = NSStackView(views: [icon, field])
+        group.orientation = .horizontal
+        group.alignment = .centerY
+        group.spacing = 6
+        return group
     }
 
     private func makeUnifiedSettingsCard(_ rows: [NSView]) -> NSView {
-        let card = NSView()
+        let card = NSVisualEffectView()
+        card.material = .contentBackground
+        card.blendingMode = .withinWindow
+        card.state = .active
         card.wantsLayer = true
-        card.layer?.cornerRadius = 10
+        card.layer?.cornerRadius = 12
         card.layer?.borderWidth = 0.5
-        card.layer?.borderColor = NSColor.separatorColor.cgColor
-        card.layer?.backgroundColor = NSColor.controlBackgroundColor.cgColor
+        card.layer?.borderColor = NSColor.separatorColor.withAlphaComponent(0.35).cgColor
+        card.layer?.backgroundColor = NSColor.clear.cgColor
+        card.layer?.shadowColor = NSColor.black.cgColor
+        card.layer?.shadowOpacity = 0.035
+        card.layer?.shadowRadius = 7
+        card.layer?.shadowOffset = CGSize(width: 0, height: 1)
         card.translatesAutoresizingMaskIntoConstraints = false
 
         let inner = NSStackView()
