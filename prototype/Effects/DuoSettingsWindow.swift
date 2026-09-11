@@ -37,6 +37,7 @@ final class DuoSettingsWindow: NSWindowController, NSWindowDelegate {
   private let status = NSTextField(wrappingLabelWithString: "")
   private let desktop = NSSwitch()
   private let windows = NSSwitch()
+  private let motion = NSSwitch()
   private let live = NSSwitch()
   private let pause = NSButton(title: "暂停自动效果", target: nil, action: nil)
   private let permission = NSButton(title: "打开屏幕录制设置…", target: nil, action: nil)
@@ -555,6 +556,17 @@ final class DuoSettingsWindow: NSWindowController, NSWindowDelegate {
     stack.addArrangedSubview(automatic)
     automatic.widthAnchor.constraint(equalTo: stack.widthAnchor).isActive = true
 
+    stack.addArrangedSubview(makeSectionLabel("实验性", symbolName: "gyroscope"))
+    let experimental = makeSettingsCard([
+      makeToggleRow(
+        title: "随设备倾斜",
+        subtitle: "使用 Apple Silicon 加速度计添加轻微空间偏移；仅在桌面效果运行时生效。",
+        control: motion,
+        action: #selector(changed)),
+    ])
+    stack.addArrangedSubview(experimental)
+    experimental.widthAnchor.constraint(equalTo: stack.widthAnchor).isActive = true
+
     stack.addArrangedSubview(makeSectionLabel("预览", symbolName: "rectangle.on.rectangle"))
     let rendererView: NSView?
     do {
@@ -784,6 +796,7 @@ final class DuoSettingsWindow: NSWindowController, NSWindowDelegate {
   private func load(_ settings: DuoSettings) {
     desktop.state = settings.desktopEnabled ? .on : .off
     windows.state = settings.windowsEnabled ? .on : .off
+    motion.state = settings.motionEnabled ? .on : .off
     trigger.doubleValue = settings.triggerAngle
     preset.selectedSegment = DuoPreset.allCases.firstIndex(of: settings.preset) ?? 1
     angleLabel.stringValue = String(format: "%.1f°", settings.triggerAngle)
@@ -794,6 +807,7 @@ final class DuoSettingsWindow: NSWindowController, NSWindowDelegate {
     controller.settings = DuoSettings(
       desktopEnabled: desktop.state == .on,
       windowsEnabled: windows.state == .on,
+      motionEnabled: motion.state == .on,
       triggerAngle: trigger.doubleValue,
       preset: DuoPreset.allCases[max(0, preset.selectedSegment)])
     angleLabel.stringValue = String(format: "%.1f°", trigger.doubleValue)
@@ -949,8 +963,9 @@ final class DuoSettingsWindow: NSWindowController, NSWindowDelegate {
     let reduced = NSWorkspace.shared.accessibilityDisplayShouldReduceMotion
       ? " · 减少动态效果已暂停动画" : ""
     let paused = controller.pausedByUser ? " · 自动效果已暂停" : ""
+    let motion = controller.settings.motionEnabled ? " · \(controller.motionStatus)" : ""
     status.stringValue = captureMessage
-      ?? "\(controller.sensorStatus) · 当前 \(reading)\(permission)\(reduced)\(paused)"
+      ?? "\(controller.sensorStatus) · 当前 \(reading)\(permission)\(reduced)\(paused)\(motion)"
   }
 
   func windowWillClose(_ notification: Notification) {
