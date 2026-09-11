@@ -10,8 +10,9 @@ import Metal
             return try device.makeRenderPipelineState(descriptor:d)
         }
         let optics=try pipeline("duoFragment"),composite=try pipeline("duoComposite")
-        func texture(_ w:Int,_ h:Int,_ shared:Bool=false)->MTLTexture {
-            let d=MTLTextureDescriptor.texture2DDescriptor(pixelFormat:.bgra8Unorm,width:w,height:h,mipmapped:false)
+        let page=try pipeline("duoPage")
+        func texture(_ w:Int,_ h:Int,_ shared:Bool=false,mips:Bool=false)->MTLTexture {
+            let d=MTLTextureDescriptor.texture2DDescriptor(pixelFormat:.bgra8Unorm,width:w,height:h,mipmapped:mips)
             d.usage=[.shaderRead,.renderTarget];d.storageMode=shared ? .shared:.private
             return device.makeTexture(descriptor:d)!
         }
@@ -23,15 +24,21 @@ import Metal
         var reports:[[String:Any]]=[]
         for optWidth in [1280,960] {
             let reduced=texture(optWidth,Int((Double(optWidth)*Double(height)/Double(width)).rounded()))
+            let paper=texture(width,height,mips:true)
             var times:[Double]=[]
             for i in 0..<120 {
-                var uniforms:[Float]=[Float(0.5+0.4*sin(Double(i)*0.1)),0,0,1,2254,0.12,0.015,12,0.45,0,0,0,0,0,1,1,Float(width),Float(height),0,0]
+                var uniforms:[Float]=[Float(0.5+0.4*sin(Double(i)*0.1)),0,0,1,2.3,0.12,15,0.012,0.42,0,0,0,0,0,1,1,Float(width),Float(height),0,0]
                 let command=queue.makeCommandBuffer()!
+                let paperPass=MTLRenderPassDescriptor();paperPass.colorAttachments[0].texture=paper;paperPass.colorAttachments[0].level=0;paperPass.colorAttachments[0].loadAction = .dontCare;paperPass.colorAttachments[0].storeAction = .store
+                let paperEncoder=command.makeRenderCommandEncoder(descriptor:paperPass)!
+                paperEncoder.setRenderPipelineState(page);paperEncoder.setFragmentTexture(source,index:0);paperEncoder.setFragmentBytes(&uniforms,length:uniforms.count*4,index:0)
+                paperEncoder.drawPrimitives(type:.triangle,vertexStart:0,vertexCount:3);paperEncoder.endEncoding()
+                if let blit=command.makeBlitCommandEncoder() { blit.generateMipmaps(for:paper);blit.endEncoding() }
                 for (target,state) in [(reduced,optics),(output,composite)] {
                     let pass=MTLRenderPassDescriptor();pass.colorAttachments[0].texture=target;pass.colorAttachments[0].loadAction = .dontCare;pass.colorAttachments[0].storeAction = .store
                     let encoder=command.makeRenderCommandEncoder(descriptor:pass)!
                     encoder.setRenderPipelineState(state);encoder.setFragmentTexture(source,index:0);encoder.setFragmentTexture(source,index:1)
-                    encoder.setFragmentTexture(reduced,index:2);encoder.setFragmentBytes(&uniforms,length:uniforms.count*4,index:0)
+                    encoder.setFragmentTexture(state === optics ? paper : reduced,index:2);encoder.setFragmentBytes(&uniforms,length:uniforms.count*4,index:0)
                     encoder.drawPrimitives(type:.triangle,vertexStart:0,vertexCount:3);encoder.endEncoding()
                 }
                 command.commit();command.waitUntilCompleted();precondition(command.status == .completed)
