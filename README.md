@@ -85,15 +85,12 @@ To only verify compilation:
 
 Set the signing identity through WINDOWSHADE_CODESIGN_IDENTITY or a local untracked prototype/local-codesign.env. See DEVELOPMENT.md for build and release details.
 
-## Architecture
+## Project layout
 
-```mermaid
-flowchart TD
-    AX[Accessibility API] --> Locator[Window Locator]
-    Locator --> Controller[Shade Controller]
-    Controller --> SCK[ScreenCaptureKit]
-    Controller --> Overlay[Overlay Window]
-    Controller --> Journal[Recovery Journal]
-```
+Everything lives under `prototype/`, split by responsibility: `App/` for menus, settings, and the fold entry points, `Capture/` for screenshots and caching, `Effects/` for the animated effects and rendering, `Recovery/` for the restore journal and window rescue, plus `Overlay/`, `Window/`, `Compatibility/`, and `Private/` for the isolated private-API calls.
 
-The implementation lives under prototype/ in the App/, Capture/, Compatibility/, Core/, Overlay/, Private/, Recovery/, and Window/ modules. See WindowShade.md for history and design rationale.
+Module layout, build, and release steps are in DEVELOPMENT.md; design background is in WindowShade.md.
+
+## Third-party
+
+Parts of the effect optics are ported from [DuoBook](https://github.com/askmaddyy/DuoBook) (MIT) and [Mac-Duo](https://github.com/sumimakito/Mac-Duo) (Apache-2.0). Sources, revisions, and what changed are recorded in [DUO-THIRD-PARTY.md](docs/DUO-THIRD-PARTY.md), and the shipped app keeps the full license files.
