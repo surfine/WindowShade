@@ -36,7 +36,10 @@ fragment float4 duoFragment(Varying in [[stage_in]],texture2d<float> src [[textu
     float2 uv=in.uv, pixel=in.position.xy;
     bool window=u.geometry.z>0.5;
     float top=u.geometry.y;
-    if(amount<=0 || (!window && amount*u.shape.x<1e-5) || (window && uv.y<=top)) {
+    float2 motion=u.shape.yz;
+    float motionMagnitude=length(motion);
+    bool moving=motionMagnitude>1e-4;
+    if((amount<=0 && !moving) || (!window && amount*u.shape.x<1e-5 && !moving) || (window && uv.y<=top)) {
         // Title and fully open endpoints are sampled without any optical processing.
         constexpr sampler sharp(address::clamp_to_edge,filter::linear);
         return src.sample(sharp,u.content.xy+uv*u.content.zw)*u.geometry.w;
@@ -56,13 +59,17 @@ fragment float4 duoFragment(Varying in [[stage_in]],texture2d<float> src [[textu
         float4 color=frost(src,mapped*size,size,radius,pixel,u);
         return mix(bg,color,coverage*edge*u.geometry.w);
     }
-    float d=size.y-uv.y*size.y;
-    float3 glass=float3(uv.x*size.x,size.y-d*cos(tilt),d*sin(tilt));
+    // Keep the captured desktop attached to the glass with a bounded shift.
+    // This path is independent from the hinge fold amount, so the effect is
+    // still visible at the open endpoint.
+    float2 movedUV=clamp(uv+motion*float2(0.055,0.040)*(0.35+0.65*(1.0-uv.y)),0.0,1.0);
+    float d=size.y-movedUV.y*size.y;
+    float3 glass=float3(movedUV.x*size.x,size.y-d*cos(tilt),d*sin(tilt));
     float3 eye=float3(size*0.5,u.optics.x);
     float depth=eye.z-glass.z;
     if(depth<=1e-3) return float4(0,0,0,1);
     float2 hit=eye.xy+(glass.xy-eye.xy)*(eye.z/depth);
-    float radius=u.optics.y*(glass.z+u.optics.w);
+    float radius=u.optics.y*(glass.z+u.optics.w+motionMagnitude*28.0);
     if(any(hit < -radius) || any(hit > size+radius)) return float4(0,0,0,1);
     float4 c=frost(src,hit,size,radius,pixel,u);
     return float4(c.rgb,1)*u.geometry.w;
@@ -76,7 +83,9 @@ fragment float4 duoComposite(Varying in [[stage_in]],texture2d<float> src [[text
     constexpr sampler s(address::clamp_to_edge,filter::linear);
     bool window=u.geometry.z>0.5;
     float amount=clamp(u.geometry.x,0.0,1.0);
-    if(amount<=0 || (!window && amount*u.shape.x<1e-5) || (window && in.uv.y<=u.geometry.y))
+    float motionMagnitude=length(u.shape.yz);
+    bool moving=motionMagnitude>1e-4;
+    if((amount<=0 && !moving) || (!window && amount*u.shape.x<1e-5 && !moving) || (window && in.uv.y<=u.geometry.y))
         return src.sample(s,u.content.xy+in.uv*u.content.zw)*u.geometry.w;
     if(window && amount>=1) return backdrop.sample(s,in.uv);
     return optical.sample(s,in.uv);

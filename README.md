@@ -30,7 +30,7 @@ It folds the window content into a slim, identifiable strip that can be dragged,
 
 ## Menu bar and settings
 
-The menu bar manages the current window and window lists; the hinge angle is read-only status. Dynamic-effect switches, styles, trigger angle, live preview, and permissions live under Settings → Effects.
+The menu bar manages the current window and window lists; the hinge angle is read-only status. Dynamic-effect switches, styles, trigger angle, live preview, and permissions live under Settings → Effects. The optional experimental device-tilt switch uses the Apple Silicon sensor hub for a subtle parallax motion; it only affects the desktop effect while it is running.
 
 ## Basic use
 
@@ -50,6 +50,7 @@ WindowShade uses two macOS permissions as needed:
 
 - **Accessibility** — to find, move, focus, and restore windows.
 - **Screen Recording** — to capture title bars, window previews, and live effect previews.
+- **Apple Silicon accelerometer** — the experimental device-tilt effect reads a local HID report when the Mac exposes one; some models or security contexts may report it as unavailable.
 
 Live preview is off by default and only checks Screen Recording access when you turn it on. Window contents never leave your Mac.
 

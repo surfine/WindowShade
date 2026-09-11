@@ -177,6 +177,7 @@ final class EffectSession {
 struct DuoSettings {
   var desktopEnabled = false
   var windowsEnabled = false
+  var motionEnabled = false
   var triggerAngle: Double = 95
   var preset: DuoPreset = .shade
   static let prefix = "duo.v2."
@@ -185,12 +186,14 @@ struct DuoSettings {
     return DuoSettings(
       desktopEnabled: defaults.bool(forKey: prefix + "desktop"),
       windowsEnabled: defaults.bool(forKey: prefix + "windows"),
+      motionEnabled: defaults.bool(forKey: prefix + "motion"),
       triggerAngle: angle.isFinite ? min(140, max(45, angle)) : 95,
       preset: DuoPreset(rawValue: defaults.string(forKey: prefix + "preset") ?? "") ?? .shade)
   }
   func save(_ defaults: UserDefaults = .standard) {
     defaults.set(desktopEnabled, forKey: Self.prefix + "desktop")
     defaults.set(windowsEnabled, forKey: Self.prefix + "windows")
+    defaults.set(motionEnabled, forKey: Self.prefix + "motion")
     defaults.set(triggerAngle, forKey: Self.prefix + "trigger")
     defaults.set(preset.rawValue, forKey: Self.prefix + "preset")
   }

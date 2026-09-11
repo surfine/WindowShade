@@ -7,7 +7,9 @@ final class DuoController: NSObject {
   var persistsSettings = true
   var pausedByUser = false
   private let sensor = LidAngleSource()
+  private let accelerometer = AppleSPUAccelerometer()
   private(set) var sensorStatus = "传感器未启动"
+  private(set) var motionStatus = "空间倾斜传感器未启用"
   private(set) var angle: Double?
   private var observers: [(NotificationCenter, NSObjectProtocol)] = []
   private var distributedObservers: [NSObjectProtocol] = []
@@ -22,6 +24,10 @@ final class DuoController: NSObject {
   private var target = 0.0
   private var lastReadingTime: CFTimeInterval = 0
   private var desktopFPS = 15
+  private var motion = SIMD2<Double>.zero
+  private var motionFiltered = SIMD3<Double>.zero
+  private var motionBaseline: SIMD3<Double>?
+  private var motionTime: CFTimeInterval = 0
   private struct DisplayConfiguration: Equatable {
     let id: CGDirectDisplayID
     let frame: CGRect
@@ -62,6 +68,11 @@ final class DuoController: NSObject {
       }
     }
     sensor.onReading = { [weak self] in self?.receive($0) }
+    accelerometer.onStatus = { [weak self] status in
+      self?.motionStatus = status.message
+      self?.settingsWindow?.refreshStatus()
+    }
+    accelerometer.onReading = { [weak self] in self?.receiveMotion($0) }
     let workspace = NSWorkspace.shared.notificationCenter
     observe(workspace, NSWorkspace.willSleepNotification) { [weak self] in self?.suspend() }
     observe(workspace, NSWorkspace.screensDidSleepNotification) { [weak self] in self?.suspend() }
@@ -134,6 +145,14 @@ final class DuoController: NSObject {
     } else {
       sensor.stop()
     }
+    let wantsMotion = settings.motionEnabled && !suspended &&
+      (settings.desktopEnabled || settingsWindow != nil)
+    if wantsMotion {
+      accelerometer.start()
+    } else {
+      accelerometer.stop()
+      resetMotion()
+    }
     settingsWindow?.refreshStatus(force: true)
   }
 
@@ -150,6 +169,38 @@ final class DuoController: NSObject {
     if desktop == nil && startTask == nil && reading.angle < settings.triggerAngle + 8 {
       prepareDesktop()
     }
+  }
+
+  private func receiveMotion(_ reading: AppleSPUAccelerometer.Reading) {
+    if motionTime == 0 {
+      motionTime = reading.time
+      motionFiltered = reading.acceleration
+      motionBaseline = reading.acceleration
+      return
+    }
+    let dt = motionTime > 0 ? reading.time - motionTime : 0
+    motionTime = reading.time
+    let alpha = dt > 0 && dt < 1 ? 1 - exp(-dt / 0.08) : 0.35
+    motionFiltered += (reading.acceleration - motionFiltered) * alpha
+    if motionBaseline == nil {
+      motionBaseline = motionFiltered
+    }
+    guard let baseline = motionBaseline else { return }
+    let delta = motionFiltered - baseline
+    // The sensor reports g; keep the visual response small and bounded. The
+    // baseline is captured when the switch is enabled, so resting gravity does
+    // not permanently offset the desktop.
+    motion = SIMD2(
+      min(0.45, max(-0.45, delta.x * 0.7)),
+      min(0.45, max(-0.45, delta.y * 0.7)))
+    settingsWindow?.refreshStatus()
+  }
+
+  private func resetMotion() {
+    motion = .zero
+    motionFiltered = .zero
+    motionBaseline = nil
+    motionTime = 0
   }
 
   private func prepareDesktop() {
@@ -243,7 +294,11 @@ final class DuoController: NSObject {
       desktop.source.updateFPS(fps)
     }
     spring.advance(to: target, dt: dt)
-    desktop.renderer.parameters = .init(progress: Float(spring.value), preset: settings.preset)
+    desktop.renderer.parameters = .init(
+      progress: Float(spring.value),
+      motionX: settings.motionEnabled ? Float(motion.x) : 0,
+      motionY: settings.motionEnabled ? Float(motion.y) : 0,
+      preset: settings.preset)
     desktop.presentationWanted = spring.value > 0
     if target == 0, spring.value == 0, (angle ?? 180) > settings.triggerAngle + 8 { stopDesktop() }
   }
@@ -260,6 +315,8 @@ final class DuoController: NSObject {
     stopDesktop()
     windowEffects.cancelAll()
     sensor.stop()
+    accelerometer.stop()
+    resetMotion()
     settingsWindow?.suspendPreview()
   }
   private func resume() {
