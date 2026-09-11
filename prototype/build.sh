@@ -139,6 +139,15 @@ cp "$TMP_BIN" "$BIN"
 cp "$WORK/Duo.metallib" "$APP/Contents/Resources/Duo.metallib"
 mkdir -p "$APP/Contents/Resources/ThirdParty"
 cp -R ThirdParty/DuoBook ThirdParty/Mac-Duo "$APP/Contents/Resources/ThirdParty/"
+# The released bundle historically carries the Swift concurrency runtime in
+# Contents/Frameworks. Preserve that runtime in isolated stage builds too;
+# otherwise the stage zip differs from the known-good app bundle and can fail
+# before application code starts on systems without the matching toolchain.
+SOURCE_FRAMEWORKS="$(pwd)/WindowShade.app/Contents/Frameworks"
+if [ "$stage_only" = "1" ] && [ -d "$SOURCE_FRAMEWORKS" ]; then
+  mkdir -p "$APP/Contents/Frameworks"
+  cp -R "$SOURCE_FRAMEWORKS/." "$APP/Contents/Frameworks/"
+fi
 
 echo "==> 用 Apple Development 证书签名（TCC 授权可跨重编保留）"
 codesign --force -s "$IDENTITY" "$APP"
