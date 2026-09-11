@@ -137,8 +137,7 @@ env CLANG_MODULE_CACHE_PATH="$MODULE_CACHE" \
 echo "==> 替换 Mach-O（保留 bundle、Info.plist、Resources）"
 cp "$TMP_BIN" "$BIN"
 cp "$WORK/Duo.metallib" "$APP/Contents/Resources/Duo.metallib"
-mkdir -p "$APP/Contents/Resources/ThirdParty"
-cp -R ThirdParty/DuoBook ThirdParty/Mac-Duo "$APP/Contents/Resources/ThirdParty/"
+rm -rf "$APP/Contents/Resources/ThirdParty"
 # The released bundle historically carries the Swift concurrency runtime in
 # Contents/Frameworks. Preserve that runtime in isolated stage builds too;
 # otherwise the stage zip differs from the known-good app bundle and can fail
