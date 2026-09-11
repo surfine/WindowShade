@@ -2,6 +2,7 @@
 .build/
 .swift-module-cache/
 .claude/
+.jspace/
 
 # Local media / generated analysis assets
 *.mp4
