@@ -101,6 +101,20 @@ final class DuoSettingsWindow: NSWindowController, NSWindowDelegate {
     sidebar.widthAnchor.constraint(equalToConstant: 196).isActive = true
     split.addArrangedSubview(sidebar)
 
+    let detail = NSView()
+    let detailBackground = NSVisualEffectView()
+    detailBackground.material = .underPageBackground
+    detailBackground.blendingMode = .withinWindow
+    detailBackground.state = .active
+    detailBackground.translatesAutoresizingMaskIntoConstraints = false
+    detail.addSubview(detailBackground)
+    NSLayoutConstraint.activate([
+      detailBackground.leadingAnchor.constraint(equalTo: detail.leadingAnchor),
+      detailBackground.trailingAnchor.constraint(equalTo: detail.trailingAnchor),
+      detailBackground.topAnchor.constraint(equalTo: detail.topAnchor),
+      detailBackground.bottomAnchor.constraint(equalTo: detail.bottomAnchor),
+    ])
+
     let scroll = NSScrollView()
     scroll.translatesAutoresizingMaskIntoConstraints = false
     scroll.drawsBackground = false
@@ -113,7 +127,14 @@ final class DuoSettingsWindow: NSWindowController, NSWindowDelegate {
     scroll.documentView = pageHost
     pageHost.widthAnchor.constraint(equalTo: scroll.contentView.widthAnchor).isActive = true
     pageHost.heightAnchor.constraint(greaterThanOrEqualTo: scroll.contentView.heightAnchor).isActive = true
-    split.addArrangedSubview(scroll)
+    detail.addSubview(scroll)
+    NSLayoutConstraint.activate([
+      scroll.leadingAnchor.constraint(equalTo: detail.leadingAnchor),
+      scroll.trailingAnchor.constraint(equalTo: detail.trailingAnchor),
+      scroll.topAnchor.constraint(equalTo: detail.topAnchor),
+      scroll.bottomAnchor.constraint(equalTo: detail.bottomAnchor),
+    ])
+    split.addArrangedSubview(detail)
 
     pages[.effects] = makeEffectsPage(controller: controller)
     pages[.advanced] = makeAdvancedPage(controller: controller)
@@ -149,13 +170,13 @@ final class DuoSettingsWindow: NSWindowController, NSWindowDelegate {
     let stack = NSStackView()
     stack.orientation = .vertical
     stack.alignment = .leading
-    stack.spacing = 7
+    stack.spacing = 3
     stack.translatesAutoresizingMaskIntoConstraints = false
     sidebar.addSubview(stack)
     NSLayoutConstraint.activate([
-      stack.leadingAnchor.constraint(equalTo: sidebar.leadingAnchor, constant: 16),
-      stack.trailingAnchor.constraint(equalTo: sidebar.trailingAnchor, constant: -16),
-      stack.topAnchor.constraint(equalTo: sidebar.topAnchor, constant: 22),
+      stack.leadingAnchor.constraint(equalTo: sidebar.leadingAnchor, constant: 10),
+      stack.trailingAnchor.constraint(equalTo: sidebar.trailingAnchor, constant: -10),
+      stack.topAnchor.constraint(equalTo: sidebar.topAnchor, constant: 14),
     ])
 
     for section in WindowShadeSettingsSection.allCases {
@@ -175,27 +196,27 @@ final class DuoSettingsWindow: NSWindowController, NSWindowDelegate {
       icon.contentTintColor = .labelColor
       icon.translatesAutoresizingMaskIntoConstraints = false
       let title = NSTextField(labelWithString: section.title)
-      title.font = .systemFont(ofSize: 14)
+      title.font = .systemFont(ofSize: 13)
       title.textColor = .labelColor
       title.setContentHuggingPriority(.defaultLow, for: .horizontal)
       title.setContentCompressionResistancePriority(.required, for: .horizontal)
       let content = NSStackView(views: [icon, title])
       content.orientation = .horizontal
       content.alignment = .centerY
-      content.spacing = 18
+      content.spacing = 9
       content.translatesAutoresizingMaskIntoConstraints = false
       button.addSubview(content)
       NSLayoutConstraint.activate([
         content.leadingAnchor.constraint(equalTo: button.leadingAnchor, constant: 12),
         content.trailingAnchor.constraint(lessThanOrEqualTo: button.trailingAnchor, constant: -12),
         content.centerYAnchor.constraint(equalTo: button.centerYAnchor),
-        icon.widthAnchor.constraint(equalToConstant: 20),
-        icon.heightAnchor.constraint(equalToConstant: 20),
+        icon.widthAnchor.constraint(equalToConstant: 17),
+        icon.heightAnchor.constraint(equalToConstant: 17),
       ])
       // 先入栈再激活约束：跨视图约束要求两端已经有共同祖先，否则 AppKit 直接抛异常。
       stack.addArrangedSubview(button)
       button.widthAnchor.constraint(equalTo: stack.widthAnchor).isActive = true
-      button.heightAnchor.constraint(equalToConstant: 34).isActive = true
+      button.heightAnchor.constraint(equalToConstant: 30).isActive = true
       pageButtons[section] = button
       pageTitleLabels[section] = title
       pageIcons[section] = icon
@@ -217,10 +238,10 @@ final class DuoSettingsWindow: NSWindowController, NSWindowDelegate {
     page.translatesAutoresizingMaskIntoConstraints = false
     pageHost.addSubview(page)
     activePageConstraints = [
-      page.leadingAnchor.constraint(equalTo: pageHost.leadingAnchor, constant: 32),
-      page.trailingAnchor.constraint(equalTo: pageHost.trailingAnchor, constant: -32),
-      page.topAnchor.constraint(equalTo: pageHost.topAnchor, constant: 30),
-      page.bottomAnchor.constraint(equalTo: pageHost.bottomAnchor, constant: -30),
+      page.leadingAnchor.constraint(equalTo: pageHost.leadingAnchor, constant: 28),
+      page.trailingAnchor.constraint(equalTo: pageHost.trailingAnchor, constant: -28),
+      page.topAnchor.constraint(equalTo: pageHost.topAnchor, constant: 22),
+      page.bottomAnchor.constraint(equalTo: pageHost.bottomAnchor, constant: -22),
     ]
     NSLayoutConstraint.activate(activePageConstraints)
     pageHost.layoutSubtreeIfNeeded()
@@ -229,7 +250,7 @@ final class DuoSettingsWindow: NSWindowController, NSWindowDelegate {
     pageScroll.reflectScrolledClipView(pageScroll.contentView)
     for (item, button) in pageButtons {
       pageTitleLabels[item]?.font = .systemFont(
-        ofSize: 14, weight: item == section ? .semibold : .regular)
+        ofSize: 13, weight: item == section ? .semibold : .regular)
       pageTitleLabels[item]?.textColor = item == section ? .controlAccentColor : .labelColor
       pageIcons[item]?.contentTintColor = item == section ? .controlAccentColor : .labelColor
       button.layer?.backgroundColor = item == section
@@ -273,20 +294,8 @@ final class DuoSettingsWindow: NSWindowController, NSWindowDelegate {
   }
 
   private func makePageRoot() -> NSView {
-    let root = NSView()
-    let background = NSVisualEffectView()
-    background.material = .underPageBackground
-    background.blendingMode = .withinWindow
-    background.state = .active
-    background.translatesAutoresizingMaskIntoConstraints = false
-    root.addSubview(background)
-    NSLayoutConstraint.activate([
-      background.leadingAnchor.constraint(equalTo: root.leadingAnchor),
-      background.trailingAnchor.constraint(equalTo: root.trailingAnchor),
-      background.topAnchor.constraint(equalTo: root.topAnchor),
-      background.bottomAnchor.constraint(equalTo: root.bottomAnchor),
-    ])
-    return root
+    // 背景由详情区统一铺满，页面本身保持透明，避免页边距露出另一种底色。
+    NSView()
   }
 
   private func makePageHeader(title: String, subtitle: String) -> NSView {
@@ -299,9 +308,9 @@ final class DuoSettingsWindow: NSWindowController, NSWindowDelegate {
     stack.alignment = .leading
     stack.spacing = 6
     let titleLabel = NSTextField(labelWithString: title)
-    titleLabel.font = .systemFont(ofSize: 22, weight: .semibold)
+    titleLabel.font = .systemFont(ofSize: 20, weight: .semibold)
     let subtitleLabel = NSTextField(wrappingLabelWithString: subtitle)
-    subtitleLabel.font = .systemFont(ofSize: 14)
+    subtitleLabel.font = .systemFont(ofSize: 13)
     subtitleLabel.textColor = .secondaryLabelColor
     subtitleLabel.maximumNumberOfLines = 2
     stack.addArrangedSubview(titleLabel)
@@ -311,46 +320,46 @@ final class DuoSettingsWindow: NSWindowController, NSWindowDelegate {
           let image = NSImage(systemSymbolName: symbolName, accessibilityDescription: title)
     else { return stack }
     let icon = NSImageView()
-    icon.image = image.withSymbolConfiguration(.init(pointSize: 20, weight: .semibold))
+    icon.image = image.withSymbolConfiguration(.init(pointSize: 16, weight: .semibold))
     icon.contentTintColor = .controlAccentColor
     icon.imageScaling = .scaleProportionallyDown
     icon.translatesAutoresizingMaskIntoConstraints = false
     let iconPlate = NSView()
     iconPlate.wantsLayer = true
-    iconPlate.layer?.cornerRadius = 9
+    iconPlate.layer?.cornerRadius = 7
     iconPlate.layer?.backgroundColor = NSColor.controlAccentColor.withAlphaComponent(0.12).cgColor
     iconPlate.translatesAutoresizingMaskIntoConstraints = false
     NSLayoutConstraint.activate([
-      icon.widthAnchor.constraint(equalToConstant: 26),
-      icon.heightAnchor.constraint(equalToConstant: 26),
+      icon.widthAnchor.constraint(equalToConstant: 22),
+      icon.heightAnchor.constraint(equalToConstant: 22),
     ])
     iconPlate.addSubview(icon)
     NSLayoutConstraint.activate([
       icon.centerXAnchor.constraint(equalTo: iconPlate.centerXAnchor),
       icon.centerYAnchor.constraint(equalTo: iconPlate.centerYAnchor),
-      iconPlate.widthAnchor.constraint(equalToConstant: 34),
-      iconPlate.heightAnchor.constraint(equalToConstant: 34),
+      iconPlate.widthAnchor.constraint(equalToConstant: 28),
+      iconPlate.heightAnchor.constraint(equalToConstant: 28),
     ])
     let header = NSStackView(views: [iconPlate, stack])
     header.orientation = .horizontal
     header.alignment = .top
-    header.spacing = 12
+    header.spacing = 10
     return header
   }
 
   private func makeSectionLabel(_ title: String, symbolName: String? = nil) -> NSView {
     let label = NSTextField(labelWithString: title)
-    label.font = .systemFont(ofSize: 13, weight: .semibold)
+    label.font = .systemFont(ofSize: 12, weight: .semibold)
     label.textColor = .secondaryLabelColor
     guard let symbolName,
           let image = NSImage(systemSymbolName: symbolName, accessibilityDescription: title)
     else { return label }
     let icon = NSImageView()
-    icon.image = image.withSymbolConfiguration(.init(pointSize: 13, weight: .medium))
+    icon.image = image.withSymbolConfiguration(.init(pointSize: 12, weight: .medium))
     icon.contentTintColor = .tertiaryLabelColor
     icon.imageScaling = .scaleProportionallyDown
-    icon.widthAnchor.constraint(equalToConstant: 18).isActive = true
-    icon.heightAnchor.constraint(equalToConstant: 18).isActive = true
+    icon.widthAnchor.constraint(equalToConstant: 16).isActive = true
+    icon.heightAnchor.constraint(equalToConstant: 16).isActive = true
     let group = NSStackView(views: [icon, label])
     group.orientation = .horizontal
     group.alignment = .centerY
@@ -367,9 +376,8 @@ final class DuoSettingsWindow: NSWindowController, NSWindowDelegate {
     button.attributedTitle = NSAttributedString(
       string: title,
       attributes: [
-        .font: NSFont.systemFont(ofSize: 12),
+        .font: NSFont.systemFont(ofSize: 11),
         .foregroundColor: NSColor.controlAccentColor,
-        .underlineStyle: NSUnderlineStyle.single.rawValue,
       ])
     button.setAccessibilityLabel(title)
     button.setAccessibilityHelp(help)
@@ -401,10 +409,10 @@ final class DuoSettingsWindow: NSWindowController, NSWindowDelegate {
     inner.translatesAutoresizingMaskIntoConstraints = false
     card.addSubview(inner)
     NSLayoutConstraint.activate([
-      inner.leadingAnchor.constraint(equalTo: card.leadingAnchor, constant: 18),
-      inner.trailingAnchor.constraint(equalTo: card.trailingAnchor, constant: -18),
-      inner.topAnchor.constraint(equalTo: card.topAnchor, constant: 14),
-      inner.bottomAnchor.constraint(equalTo: card.bottomAnchor, constant: -14),
+      inner.leadingAnchor.constraint(equalTo: card.leadingAnchor, constant: 16),
+      inner.trailingAnchor.constraint(equalTo: card.trailingAnchor, constant: -16),
+      inner.topAnchor.constraint(equalTo: card.topAnchor, constant: 10),
+      inner.bottomAnchor.constraint(equalTo: card.bottomAnchor, constant: -10),
     ])
 
     for (index, row) in rows.enumerated() {
@@ -433,9 +441,9 @@ final class DuoSettingsWindow: NSWindowController, NSWindowDelegate {
     labels.alignment = .leading
     labels.spacing = 4
     let titleLabel = NSTextField(labelWithString: title)
-    titleLabel.font = .systemFont(ofSize: 14)
+    titleLabel.font = .systemFont(ofSize: 13)
     let subtitleLabel = NSTextField(wrappingLabelWithString: subtitle)
-    subtitleLabel.font = .systemFont(ofSize: 12)
+    subtitleLabel.font = .systemFont(ofSize: 11)
     subtitleLabel.textColor = .secondaryLabelColor
     subtitleLabel.maximumNumberOfLines = 2
     labels.addArrangedSubview(titleLabel)
@@ -444,10 +452,10 @@ final class DuoSettingsWindow: NSWindowController, NSWindowDelegate {
     let row = NSStackView(views: [labels, NSView(), control])
     row.orientation = .horizontal
     row.alignment = .centerY
-    row.spacing = 16
+    row.spacing = 14
     labels.setContentHuggingPriority(.defaultLow, for: .horizontal)
     labels.setContentCompressionResistancePriority(.defaultLow, for: .horizontal)
-    row.heightAnchor.constraint(greaterThanOrEqualToConstant: 60).isActive = true
+    row.heightAnchor.constraint(greaterThanOrEqualToConstant: 48).isActive = true
     return row
   }
 
@@ -457,9 +465,9 @@ final class DuoSettingsWindow: NSWindowController, NSWindowDelegate {
     labels.alignment = .leading
     labels.spacing = 4
     let titleLabel = NSTextField(labelWithString: title)
-    titleLabel.font = .systemFont(ofSize: 14)
+    titleLabel.font = .systemFont(ofSize: 13)
     let subtitleLabel = NSTextField(wrappingLabelWithString: subtitle)
-    subtitleLabel.font = .systemFont(ofSize: 12)
+    subtitleLabel.font = .systemFont(ofSize: 11)
     subtitleLabel.textColor = .secondaryLabelColor
     subtitleLabel.maximumNumberOfLines = 2
     labels.addArrangedSubview(titleLabel)
@@ -468,11 +476,11 @@ final class DuoSettingsWindow: NSWindowController, NSWindowDelegate {
     let row = NSStackView(views: [labels, NSView(), control])
     row.orientation = .horizontal
     row.alignment = .centerY
-    row.spacing = 16
+    row.spacing = 14
     labels.setContentHuggingPriority(.defaultLow, for: .horizontal)
     labels.setContentCompressionResistancePriority(.defaultLow, for: .horizontal)
     control.setContentHuggingPriority(.required, for: .horizontal)
-    row.heightAnchor.constraint(greaterThanOrEqualToConstant: 60).isActive = true
+    row.heightAnchor.constraint(greaterThanOrEqualToConstant: 48).isActive = true
     return row
   }
 
@@ -482,9 +490,9 @@ final class DuoSettingsWindow: NSWindowController, NSWindowDelegate {
     labels.alignment = .leading
     labels.spacing = 4
     let titleLabel = NSTextField(labelWithString: title)
-    titleLabel.font = .systemFont(ofSize: 14)
+    titleLabel.font = .systemFont(ofSize: 13)
     let subtitleLabel = NSTextField(wrappingLabelWithString: subtitle)
-    subtitleLabel.font = .systemFont(ofSize: 12)
+    subtitleLabel.font = .systemFont(ofSize: 11)
     subtitleLabel.textColor = .secondaryLabelColor
     subtitleLabel.maximumNumberOfLines = 2
     labels.addArrangedSubview(titleLabel)
@@ -496,10 +504,10 @@ final class DuoSettingsWindow: NSWindowController, NSWindowDelegate {
     let row = NSStackView(views: [labels, NSView(), button])
     row.orientation = .horizontal
     row.alignment = .centerY
-    row.spacing = 16
+    row.spacing = 14
     labels.setContentHuggingPriority(.defaultLow, for: .horizontal)
     labels.setContentCompressionResistancePriority(.defaultLow, for: .horizontal)
-    row.heightAnchor.constraint(greaterThanOrEqualToConstant: 60).isActive = true
+    row.heightAnchor.constraint(greaterThanOrEqualToConstant: 48).isActive = true
     return row
   }
 
@@ -509,9 +517,9 @@ final class DuoSettingsWindow: NSWindowController, NSWindowDelegate {
       systemSymbolName: "waveform.path.ecg", accessibilityDescription: "传感器状态")
     imageView.contentTintColor = .secondaryLabelColor
     imageView.imageScaling = .scaleProportionallyDown
-    imageView.widthAnchor.constraint(equalToConstant: 22).isActive = true
-    imageView.heightAnchor.constraint(equalToConstant: 22).isActive = true
-    status.font = .systemFont(ofSize: 13)
+    imageView.widthAnchor.constraint(equalToConstant: 18).isActive = true
+    imageView.heightAnchor.constraint(equalToConstant: 18).isActive = true
+    status.font = .systemFont(ofSize: 12)
     status.textColor = .secondaryLabelColor
     status.maximumNumberOfLines = 2
     status.lineBreakMode = .byWordWrapping
@@ -519,8 +527,8 @@ final class DuoSettingsWindow: NSWindowController, NSWindowDelegate {
     let row = NSStackView(views: [imageView, status])
     row.orientation = .horizontal
     row.alignment = .centerY
-    row.spacing = 12
-    row.heightAnchor.constraint(greaterThanOrEqualToConstant: 50).isActive = true
+    row.spacing = 10
+    row.heightAnchor.constraint(greaterThanOrEqualToConstant: 42).isActive = true
     return row
   }
 
@@ -530,7 +538,7 @@ final class DuoSettingsWindow: NSWindowController, NSWindowDelegate {
     stack.orientation = .vertical
     stack.alignment = .leading
     stack.distribution = .fill
-    stack.spacing = 16
+    stack.spacing = 14
     stack.translatesAutoresizingMaskIntoConstraints = false
     root.addSubview(stack)
     NSLayoutConstraint.activate([
@@ -540,13 +548,18 @@ final class DuoSettingsWindow: NSWindowController, NSWindowDelegate {
       stack.bottomAnchor.constraint(lessThanOrEqualTo: root.bottomAnchor),
     ])
 
-    stack.addArrangedSubview(makePageHeader(
-      title: "动态效果", subtitle: "让桌面或窗口随设备开合平滑变化。", symbolName: "sparkles"))
+    let pageHeader = makePageHeader(
+      title: "动态效果", subtitle: "让桌面或窗口随设备开合平滑变化。", symbolName: "sparkles")
+    stack.addArrangedSubview(pageHeader)
+    stack.setCustomSpacing(16, after: pageHeader)
     let statusCard = makeSettingsCard([makeStatusCard()])
     stack.addArrangedSubview(statusCard)
     statusCard.widthAnchor.constraint(equalTo: stack.widthAnchor).isActive = true
+    stack.setCustomSpacing(18, after: statusCard)
 
-    stack.addArrangedSubview(makeSectionLabel("自动效果", symbolName: "wand.and.stars"))
+    let automaticSection = makeSectionLabel("自动效果", symbolName: "wand.and.stars")
+    stack.addArrangedSubview(automaticSection)
+    stack.setCustomSpacing(6, after: automaticSection)
     let automatic = makeSettingsCard([
       makeToggleRow(title: "桌面开合", subtitle: "设备开合时让整个桌面平滑过渡。",
                     control: desktop, action: #selector(changed)),
@@ -555,8 +568,11 @@ final class DuoSettingsWindow: NSWindowController, NSWindowDelegate {
     ])
     stack.addArrangedSubview(automatic)
     automatic.widthAnchor.constraint(equalTo: stack.widthAnchor).isActive = true
+    stack.setCustomSpacing(18, after: automatic)
 
-    stack.addArrangedSubview(makeSectionLabel("实验性", symbolName: "gyroscope"))
+    let experimentalSection = makeSectionLabel("实验性", symbolName: "gyroscope")
+    stack.addArrangedSubview(experimentalSection)
+    stack.setCustomSpacing(6, after: experimentalSection)
     let experimental = makeSettingsCard([
       makeToggleRow(
         title: "随设备倾斜",
@@ -566,8 +582,11 @@ final class DuoSettingsWindow: NSWindowController, NSWindowDelegate {
     ])
     stack.addArrangedSubview(experimental)
     experimental.widthAnchor.constraint(equalTo: stack.widthAnchor).isActive = true
+    stack.setCustomSpacing(18, after: experimental)
 
-    stack.addArrangedSubview(makeSectionLabel("预览", symbolName: "rectangle.on.rectangle"))
+    let previewSection = makeSectionLabel("预览", symbolName: "rectangle.on.rectangle")
+    stack.addArrangedSubview(previewSection)
+    stack.setCustomSpacing(6, after: previewSection)
     let rendererView: NSView?
     do {
       let renderer = try FoldRenderer(size: CGSize(width: 612, height: 300))
@@ -600,7 +619,7 @@ final class DuoSettingsWindow: NSWindowController, NSWindowDelegate {
     rangeLabels.alignment = .centerY
     rangeLabels.spacing = 8
     rangeLabels.subviews.compactMap { $0 as? NSTextField }.forEach {
-      $0.font = .systemFont(ofSize: 12)
+      $0.font = .systemFont(ofSize: 11)
       $0.textColor = .secondaryLabelColor
     }
 
@@ -615,6 +634,7 @@ final class DuoSettingsWindow: NSWindowController, NSWindowDelegate {
     let preview = makeSettingsCard(previewRows)
     stack.addArrangedSubview(preview)
     preview.widthAnchor.constraint(equalTo: stack.widthAnchor).isActive = true
+    stack.setCustomSpacing(16, after: preview)
 
     pause.target = self
     pause.action = #selector(togglePause)
@@ -629,9 +649,10 @@ final class DuoSettingsWindow: NSWindowController, NSWindowDelegate {
     actionRow.translatesAutoresizingMaskIntoConstraints = false
     stack.addArrangedSubview(actionRow)
     actionRow.widthAnchor.constraint(equalTo: stack.widthAnchor).isActive = true
+    stack.setCustomSpacing(10, after: actionRow)
 
     let note = NSTextField(wrappingLabelWithString: "实时预览默认关闭。按 Esc、点击或开始输入可撤去桌面效果。")
-    note.font = .systemFont(ofSize: 13)
+    note.font = .systemFont(ofSize: 12)
     note.textColor = .secondaryLabelColor
     note.maximumNumberOfLines = 2
     stack.addArrangedSubview(note)
@@ -648,7 +669,7 @@ final class DuoSettingsWindow: NSWindowController, NSWindowDelegate {
     stack.orientation = .vertical
     stack.alignment = .leading
     stack.distribution = .fill
-    stack.spacing = 18
+    stack.spacing = 14
     stack.translatesAutoresizingMaskIntoConstraints = false
     root.addSubview(stack)
     NSLayoutConstraint.activate([
@@ -671,15 +692,15 @@ final class DuoSettingsWindow: NSWindowController, NSWindowDelegate {
     trigger.isContinuous = true
     trigger.setAccessibilityLabel("触发角度")
     trigger.toolTip = "达到此角度后触发动态效果"
-    angleLabel.font = .monospacedDigitSystemFont(ofSize: 14, weight: .medium)
+    angleLabel.font = .monospacedDigitSystemFont(ofSize: 13, weight: .medium)
     angleLabel.alignment = .right
-    angleLabel.widthAnchor.constraint(equalToConstant: 56).isActive = true
+    angleLabel.widthAnchor.constraint(equalToConstant: 52).isActive = true
     angleLabel.setAccessibilityLabel("当前触发角度")
 
     let triggerTitle = NSTextField(labelWithString: "触发角度")
-    triggerTitle.font = .systemFont(ofSize: 14)
+    triggerTitle.font = .systemFont(ofSize: 13)
     let triggerSubtitle = NSTextField(wrappingLabelWithString: "达到此角度后开始动态效果。")
-    triggerSubtitle.font = .systemFont(ofSize: 12)
+    triggerSubtitle.font = .systemFont(ofSize: 11)
     triggerSubtitle.textColor = .secondaryLabelColor
     triggerSubtitle.maximumNumberOfLines = 2
     let triggerLabels = NSStackView(views: [triggerTitle, triggerSubtitle])
@@ -697,10 +718,10 @@ final class DuoSettingsWindow: NSWindowController, NSWindowDelegate {
     let minimum = NSTextField(labelWithString: "45°")
     let maximum = NSTextField(labelWithString: "140°")
     for label in [minimum, maximum] {
-      label.font = .systemFont(ofSize: 12)
+      label.font = .systemFont(ofSize: 11)
       label.textColor = .secondaryLabelColor
       label.alignment = .center
-      label.widthAnchor.constraint(equalToConstant: 38).isActive = true
+      label.widthAnchor.constraint(equalToConstant: 34).isActive = true
     }
     let triggerSlider = NSStackView(views: [minimum, trigger, maximum])
     triggerSlider.orientation = .horizontal
@@ -709,7 +730,7 @@ final class DuoSettingsWindow: NSWindowController, NSWindowDelegate {
     let triggerCard = makeSettingsCard([triggerHeader, triggerSlider])
     stack.addArrangedSubview(triggerCard)
     triggerCard.widthAnchor.constraint(equalTo: stack.widthAnchor).isActive = true
-    stack.setCustomSpacing(16, after: triggerCard)
+    stack.setCustomSpacing(18, after: triggerCard)
 
     let actionSection = makeSectionLabel("操作", symbolName: "wrench.and.screwdriver")
     stack.addArrangedSubview(actionSection)
@@ -743,12 +764,12 @@ final class DuoSettingsWindow: NSWindowController, NSWindowDelegate {
     ])
     stack.addArrangedSubview(actionCard)
     actionCard.widthAnchor.constraint(equalTo: stack.widthAnchor).isActive = true
-    stack.setCustomSpacing(16, after: actionCard)
+    stack.setCustomSpacing(18, after: actionCard)
 
     let reduced = NSTextField(wrappingLabelWithString: NSWorkspace.shared.accessibilityDisplayShouldReduceMotion
       ? "系统已开启“减少动态效果”，连续动画会自动暂停。"
       : "可在系统设置的辅助功能选项中开启“减少动态效果”。")
-    reduced.font = .systemFont(ofSize: 13)
+    reduced.font = .systemFont(ofSize: 12)
     reduced.textColor = .secondaryLabelColor
     reduced.maximumNumberOfLines = 2
     reduced.setAccessibilityLabel("减少动态效果提示")
@@ -758,12 +779,14 @@ final class DuoSettingsWindow: NSWindowController, NSWindowDelegate {
       action: #selector(openReduceMotionSettings),
       help: "在系统设置的辅助功能中配置减少动态效果")
     let logPath = NSTextField(labelWithString: "日志位置：/tmp/windowshade.log")
-    logPath.font = .systemFont(ofSize: 12)
+    logPath.font = .systemFont(ofSize: 11)
     logPath.textColor = .tertiaryLabelColor
     let infoRow = NSStackView(views: [reduced, reduceMotionLink])
     infoRow.orientation = .horizontal
     infoRow.alignment = .centerY
-    infoRow.spacing = 16
+    infoRow.spacing = 14
+    infoRow.heightAnchor.constraint(greaterThanOrEqualToConstant: 38).isActive = true
+    logPath.heightAnchor.constraint(greaterThanOrEqualToConstant: 30).isActive = true
     let infoCard = makeSettingsCard([infoRow, logPath])
     let infoSection = makeSectionLabel("辅助功能与日志", symbolName: "accessibility")
     stack.addArrangedSubview(infoSection)
