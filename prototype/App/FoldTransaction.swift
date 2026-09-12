@@ -659,16 +659,14 @@ extension AppDelegate {
         return axPosition(fromCocoaFrame: clamped)
     }
 
-    func refreshedWindowElement(id: CGWindowID, fallback: AXUIElement) -> AXUIElement {
-        // 身份校验要用精确的那个 API。windowID(of:) 内部先做几何+标题匹配，
-        // 级联折叠时窗口陆续被隐藏、CG 列表在变，匹配会失配——结果是每个窗口
-        // 先付一次失败的匹配、再付一次完整枚举（实测这样反而从 39ms 涨到 612ms）。
-        // _AXUIElementGetWindow 是 AX 元素到 CGWindowID 的真实映射，一次 IPC，
-        // 不依赖几何启发。
-        var directID: CGWindowID = 0
-        if _AXUIElementGetWindow(fallback, &directID) == .success, directID == id {
-            return fallback
-        }
+    // trustFallback：调用方刚刚枚举出这个元素，只需确认它还活着。
+    // 不做 id 比对——传进来的 id 来自 windowID(of:)，那个函数优先用几何+标题
+    // 匹配，和 _AXUIElementGetWindow 对某些 App 给出的值并不一致，比对会系统性
+    // 失配，结果每个窗口先付一次失败比对再付一次完整枚举。存活探测只要一次
+    // 属性读（约 0.1ms），元素真的死了照旧走下面的完整刷新。
+    func refreshedWindowElement(id: CGWindowID, fallback: AXUIElement,
+                                trustFallback: Bool = false) -> AXUIElement {
+        if trustFallback, axPosition(fallback) != nil { return fallback }
         if let info=cgWindowInfo(id),let pid=(info[kCGWindowOwnerPID as String] as? NSNumber)?.int32Value,
            let current=appWindows(pid:pid).first(where:{windowID(of:$0) == id}) { return current }
         return fallback
