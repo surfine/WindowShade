@@ -91,7 +91,7 @@ extension AppDelegate {
         let stack = NSStackView()
         stack.orientation = .vertical
         stack.alignment = .leading
-        stack.spacing = 8
+        stack.spacing = 6
         stack.translatesAutoresizingMaskIntoConstraints = false
         root.addSubview(stack)
         NSLayoutConstraint.activate([
@@ -124,7 +124,7 @@ extension AppDelegate {
         stack.addArrangedSubview(makePrefGroupLabel("触发"))
         stack.addArrangedSubview(trigger)
         trigger.widthAnchor.constraint(equalTo: stack.widthAnchor).isActive = true
-        stack.setCustomSpacing(14, after: trigger)
+        stack.setCustomSpacing(18, after: trigger)
 
         let appearanceSeg = NSSegmentedControl(labels: ["原貌卷帘", "标准标题栏"],
                                                 trackingMode: .selectOne,
@@ -141,7 +141,7 @@ extension AppDelegate {
         ])
         stack.addArrangedSubview(appearance)
         appearance.widthAnchor.constraint(equalTo: stack.widthAnchor).isActive = true
-        stack.setCustomSpacing(14, after: stack.arrangedSubviews.last!)
+        stack.setCustomSpacing(18, after: stack.arrangedSubviews.last!)
 
         stack.addArrangedSubview(makePrefGroupLabel("声音"))
         let sound = makeUnifiedSettingsCard([
@@ -169,10 +169,10 @@ extension AppDelegate {
             makeUnifiedPermissionRow(symbol: "rectangle.inset.filled.and.person.filled",
                                      name: "屏幕录制", subtitle: "截取真实标题栏与实时预览",
                                      granted: hasScreenRecordingPermission(), action: #selector(openScreenRecordingSettingsAction)),
-        ])
+        ], separatorInset: 46)
         stack.addArrangedSubview(permissions)
         permissions.widthAnchor.constraint(equalTo: stack.widthAnchor).isActive = true
-        stack.setCustomSpacing(14, after: stack.arrangedSubviews.last!)
+        stack.setCustomSpacing(18, after: stack.arrangedSubviews.last!)
         stack.addArrangedSubview(makePrefGroupLabel("启动"))
         let launch = makeUnifiedSettingsCard([
             makeUnifiedToggleRow(name: "登录时自动启动", subtitle: launchAtLoginSubtitle(),
@@ -247,7 +247,7 @@ extension AppDelegate {
         return field
     }
 
-    private func makeUnifiedSettingsCard(_ rows: [NSView]) -> NSView {
+    private func makeUnifiedSettingsCard(_ rows: [NSView], separatorInset: CGFloat = 16) -> NSView {
         let card = SettingsGroupBox()
         card.wantsLayer = true
         card.translatesAutoresizingMaskIntoConstraints = false
@@ -269,13 +269,33 @@ extension AppDelegate {
             if index > 0 {
                 let separator = NSBox()
                 separator.boxType = .separator
-                inner.addArrangedSubview(separator)
-                separator.widthAnchor.constraint(equalTo: card.widthAnchor, constant: -16).isActive = true
+                let line = NSView()
+                separator.translatesAutoresizingMaskIntoConstraints = false
+                line.addSubview(separator)
+                inner.addArrangedSubview(line)
+                NSLayoutConstraint.activate([
+                    line.widthAnchor.constraint(equalTo: card.widthAnchor, constant: -16),
+                    line.heightAnchor.constraint(equalToConstant: 0.5),
+                    separator.leadingAnchor.constraint(equalTo: line.leadingAnchor, constant: separatorInset - 16),
+                    separator.trailingAnchor.constraint(equalTo: line.trailingAnchor),
+                    separator.centerYAnchor.constraint(equalTo: line.centerYAnchor),
+                ])
             }
             inner.addArrangedSubview(row)
             row.widthAnchor.constraint(equalTo: inner.widthAnchor).isActive = true
         }
         return card
+    }
+
+    func makePermissionDesignSample() -> NSView {
+        makeUnifiedSettingsCard([
+            makeUnifiedPermissionRow(symbol: "accessibility", name: "辅助功能",
+                subtitle: "读取、移动与恢复窗口", granted: false,
+                action: #selector(openAccessibilitySettingsAction)),
+            makeUnifiedPermissionRow(symbol: "rectangle.inset.filled.and.person.filled", name: "屏幕录制",
+                subtitle: "截取真实标题栏与实时预览", granted: true,
+                action: #selector(openScreenRecordingSettingsAction)),
+        ], separatorInset: 46)
     }
 
     private func makeUnifiedLabels(name: String, subtitle: String?) -> NSStackView {
@@ -292,6 +312,7 @@ extension AppDelegate {
             detail.textColor = .secondaryLabelColor
             detail.maximumNumberOfLines = 2
             labels.addArrangedSubview(detail)
+            detail.widthAnchor.constraint(equalTo: labels.widthAnchor).isActive = true
         }
         return labels
     }
@@ -307,11 +328,16 @@ extension AppDelegate {
         let labels = makeUnifiedLabels(name: name, subtitle: subtitle)
         labels.setContentHuggingPriority(.defaultLow, for: .horizontal)
         labels.setContentCompressionResistancePriority(.defaultLow, for: .horizontal)
-        let row = NSStackView(views: [labels, NSView(), toggle])
+        let row = NSStackView(views: [labels, toggle])
+        NSLayoutConstraint.activate([
+            labels.leadingAnchor.constraint(equalTo: row.leadingAnchor),
+            labels.trailingAnchor.constraint(equalTo: toggle.leadingAnchor, constant: -14),
+            toggle.trailingAnchor.constraint(equalTo: row.trailingAnchor),
+        ])
         row.orientation = .horizontal
         row.alignment = .centerY
         row.spacing = 14
-        row.heightAnchor.constraint(greaterThanOrEqualToConstant: subtitle == nil ? 42 : 48).isActive = true
+        row.heightAnchor.constraint(greaterThanOrEqualToConstant: subtitle == nil ? 40 : 48).isActive = true
         return row
     }
 
@@ -322,11 +348,16 @@ extension AppDelegate {
         let labels = makeUnifiedLabels(name: name, subtitle: subtitle)
         labels.setContentHuggingPriority(.defaultLow, for: .horizontal)
         labels.setContentCompressionResistancePriority(.defaultLow, for: .horizontal)
-        let row = NSStackView(views: [labels, NSView(), control])
+        let row = NSStackView(views: [labels, control])
+        NSLayoutConstraint.activate([
+            labels.leadingAnchor.constraint(equalTo: row.leadingAnchor),
+            labels.trailingAnchor.constraint(equalTo: control.leadingAnchor, constant: -14),
+            control.trailingAnchor.constraint(equalTo: row.trailingAnchor),
+        ])
         row.orientation = .horizontal
         row.alignment = .centerY
         row.spacing = 14
-        row.heightAnchor.constraint(greaterThanOrEqualToConstant: subtitle == nil ? 42 : 48).isActive = true
+        row.heightAnchor.constraint(greaterThanOrEqualToConstant: subtitle == nil ? 40 : 48).isActive = true
         return row
     }
 
@@ -342,38 +373,22 @@ extension AppDelegate {
         labels.setContentHuggingPriority(.defaultLow, for: .horizontal)
         labels.setContentCompressionResistancePriority(.defaultLow, for: .horizontal)
 
-        let stateIcon = NSImageView(image: NSImage(
-            systemSymbolName: granted ? "checkmark.circle.fill" : "exclamationmark.circle.fill",
-            accessibilityDescription: granted ? "已授权" : "未授权") ?? NSImage())
-        let stateColor: NSColor = granted ? .systemGreen : .systemOrange
-        stateIcon.contentTintColor = stateColor
-        stateIcon.imageScaling = .scaleProportionallyDown
-        stateIcon.widthAnchor.constraint(equalToConstant: 15).isActive = true
-        stateIcon.heightAnchor.constraint(equalToConstant: 15).isActive = true
-        let state = NSTextField(labelWithString: granted ? "已授权" : "未授权")
-        state.font = .systemFont(ofSize: 12, weight: .medium)
-        state.textColor = stateColor
-
-        let link = NSButton(title: "打开设置", target: self, action: action)
-        link.isBordered = false
-        link.bezelStyle = .inline
-        link.controlSize = .regular
-        link.contentTintColor = .controlAccentColor
-        link.attributedTitle = NSAttributedString(
-            string: "打开设置",
-            attributes: [
-                .font: NSFont.systemFont(ofSize: 12),
-                .foregroundColor: NSColor.controlAccentColor,
-            ])
-        link.setAccessibilityLabel("打开\(name)设置")
-        link.setContentHuggingPriority(.required, for: .horizontal)
-
-        let trailing = NSStackView(views: [stateIcon, state, link])
-        trailing.orientation = .horizontal
-        trailing.alignment = .centerY
-        trailing.spacing = 10
-        trailing.setContentHuggingPriority(.required, for: .horizontal)
-        let row = NSStackView(views: [icon, labels, NSView(), trailing])
+        let chip = NSButton(title: granted ? "✓ 已授权" : "● 去授权", target: self, action: action)
+        chip.isBordered = false
+        chip.font = .systemFont(ofSize: 12)
+        chip.contentTintColor = granted ? .systemGreen : .systemOrange
+        chip.wantsLayer = true
+        chip.layer?.cornerRadius = 3
+        chip.setAccessibilityLabel("\(name)，\(granted ? "已授权，打开设置" : "去授权")")
+        chip.setContentHuggingPriority(.required, for: .horizontal)
+        let trailing = chip
+        let row = NSStackView(views: [icon, labels, trailing])
+        NSLayoutConstraint.activate([
+            icon.leadingAnchor.constraint(equalTo: row.leadingAnchor),
+            labels.leadingAnchor.constraint(equalTo: icon.trailingAnchor, constant: 12),
+            labels.trailingAnchor.constraint(equalTo: trailing.leadingAnchor, constant: -12),
+            trailing.trailingAnchor.constraint(equalTo: row.trailingAnchor),
+        ])
         row.orientation = .horizontal
         row.alignment = .centerY
         row.spacing = 12
@@ -655,7 +670,9 @@ extension AppDelegate {
 
         let needsPermissions = !hasAccessibilityPermission() || !hasScreenRecordingPermission()
         let height: CGFloat = needsPermissions ? 615 : 595
-        let root = NSView(frame: NSRect(x: 0, y: 0, width: 500, height: height))
+        let root = NSVisualEffectView(frame: NSRect(x: 0, y: 0, width: 500, height: height))
+        root.material = .underPageBackground
+        root.blendingMode = .withinWindow
         let stack = NSStackView(frame: root.bounds.insetBy(dx: 24, dy: 22))
         stack.orientation = .vertical
         stack.alignment = .leading
@@ -670,7 +687,7 @@ extension AppDelegate {
         header.spacing = 12
         header.addArrangedSubview(makeOnboardingAppIconView(size: 40))
         let title = NSTextField(labelWithString: "把窗口留在原地，暂时收起内容")
-        title.font = .systemFont(ofSize: 17, weight: .semibold)
+        title.font = .systemFont(ofSize: 20, weight: .semibold)
         header.addArrangedSubview(title)
         stack.addArrangedSubview(header)
 
@@ -785,22 +802,21 @@ extension AppDelegate {
         let titleH: CGFloat = 22
         let rowH: CGFloat = 24
         let height = 14 + titleH + CGFloat(rows.count) * rowH + 10
-        let card = NSView(frame: NSRect(x: 0, y: 0, width: onboardingContentWidth, height: height))
+        let card = SettingsGroupBox(frame: NSRect(x: 0, y: 0, width: onboardingContentWidth, height: height))
         card.wantsLayer = true
-        card.layer?.cornerRadius = 8
-        card.layer?.backgroundColor = NSColor.unemphasizedSelectedContentBackgroundColor.withAlphaComponent(0.5).cgColor
+
         card.widthAnchor.constraint(equalToConstant: onboardingContentWidth).isActive = true
         card.heightAnchor.constraint(equalToConstant: height).isActive = true
 
         let heading = NSTextField(labelWithString: title)
-        heading.font = .systemFont(ofSize: 12, weight: .medium)
-        heading.textColor = .tertiaryLabelColor
+        heading.font = .systemFont(ofSize: 12, weight: .semibold)
+        heading.textColor = .secondaryLabelColor
         heading.frame = NSRect(x: 14, y: height - 14 - 16, width: 200, height: 16)
         card.addSubview(heading)
 
         var y = height - 14 - titleH - 18
         for (symbol, text) in rows {
-            if let icon = onboardingSymbol(symbol, pointSize: 12, color: .tertiaryLabelColor) {
+            if let icon = onboardingSymbol(symbol, pointSize: 12, color: .secondaryLabelColor) {
                 icon.frame = NSRect(x: 14, y: y, width: 16, height: 16)
                 card.addSubview(icon)
             }
@@ -830,19 +846,12 @@ extension AppDelegate {
 
         if isOnboarding {
             row.wantsLayer = true
-            row.layer?.cornerRadius = 8
-            row.layer?.borderWidth = granted ? 0.5 : 1
-            if granted {
-                row.layer?.backgroundColor = NSColor.clear.cgColor
-                row.layer?.borderColor = NSColor.separatorColor.cgColor
-            } else {
-                row.layer?.backgroundColor = NSColor.systemYellow.withAlphaComponent(0.12).cgColor
-                row.layer?.borderColor = NSColor.systemYellow.withAlphaComponent(0.55).cgColor
-            }
+            row.layer?.cornerRadius = 10
+            row.layer?.backgroundColor = NSColor.controlBackgroundColor.cgColor
         }
 
-        // Leading: icon + name + subtitle
-        let iconColor: NSColor = (isOnboarding && !granted) ? .systemBrown : .secondaryLabelColor
+        // 权限状态只在行尾呈现，整行保持中性。
+        let iconColor: NSColor = .secondaryLabelColor
         let iconBox: CGFloat = isOnboarding ? 22 : 20
         let iconX: CGFloat = isOnboarding ? 16 : 14
         let textX: CGFloat = isOnboarding ? 50 : 44
@@ -877,7 +886,12 @@ extension AppDelegate {
             let button = NSButton(title: "去授权", target: self, action: action)
             button.bezelStyle = .rounded
             button.controlSize = .regular
-            button.bezelColor = .systemYellow
+            button.isBordered = false
+            button.title = "● 去授权"
+            button.contentTintColor = .systemOrange
+            button.font = .systemFont(ofSize: 12)
+            button.wantsLayer = true
+            button.layer?.cornerRadius = 3
             button.sizeToFit()
             let bw = max(button.frame.width, 64)
             button.frame = NSRect(x: width - 16 - bw, y: (height - button.frame.height) / 2, width: bw, height: button.frame.height)
@@ -921,22 +935,16 @@ extension AppDelegate {
             permissionStack.removeArrangedSubview($0)
             $0.removeFromSuperview()
         }
-        permissionStack.addArrangedSubview(makePermissionRow(
-            kind: .onboarding,
-            width: onboardingContentWidth,
-            symbol: "accessibility",
-            name: "辅助功能",
-            subtitle: "读取、移动与恢复窗口",
-            granted: ax,
-            action: #selector(openAccessibilitySettingsAction)))
-        permissionStack.addArrangedSubview(makePermissionRow(
-            kind: .onboarding,
-            width: onboardingContentWidth,
-            symbol: "rectangle.inset.filled.and.person.filled",
-            name: "屏幕录制",
-            subtitle: "截取真实标题栏与预览",
-            granted: screen,
-            action: #selector(openScreenRecordingSettingsAction)))
+        let card = makeUnifiedSettingsCard([
+            makeUnifiedPermissionRow(symbol: "accessibility", name: "辅助功能",
+                subtitle: "读取、移动与恢复窗口", granted: ax,
+                action: #selector(openAccessibilitySettingsAction)),
+            makeUnifiedPermissionRow(symbol: "rectangle.inset.filled.and.person.filled", name: "屏幕录制",
+                subtitle: "截取真实标题栏与预览", granted: screen,
+                action: #selector(openScreenRecordingSettingsAction)),
+        ], separatorInset: 46)
+        permissionStack.addArrangedSubview(card)
+        card.widthAnchor.constraint(equalToConstant: onboardingContentWidth).isActive = true
 
         let grantedCount = (ax ? 1 : 0) + (screen ? 1 : 0)
         let allGranted = grantedCount == 2

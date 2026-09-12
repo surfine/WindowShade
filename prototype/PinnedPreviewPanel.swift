@@ -20,10 +20,15 @@ final class PinnedPreviewPanel: NSPanel {
         isMovableByWindowBackground = false
         isReleasedWhenClosed = false
         acceptsMouseMovedEvents = true
+        PaperSurfaceStyle.installShadow(on: self)
     }
 
     override var canBecomeKey: Bool { false }
     override var canBecomeMain: Bool { false }
+}
+
+private final class PreviewTitleMaterial: NSVisualEffectView {
+    override func hitTest(_ point: NSPoint) -> NSView? { nil }
 }
 
 final class PinnedPreviewContentView: NSView {
@@ -33,14 +38,31 @@ final class PinnedPreviewContentView: NSView {
     var onMouseDown: ((NSEvent) -> Void)?
 
     private var tracking: NSTrackingArea?
+    private let titleBar = PreviewTitleMaterial()
+    private let titleLabel = NSTextField(labelWithString: "")
+    private let edgeLayer = CAShapeLayer()
     private weak var videoLayer: AVSampleBufferDisplayLayer?
 
-    init(videoLayer: AVSampleBufferDisplayLayer) {
+    init(videoLayer: AVSampleBufferDisplayLayer, title: String) {
         super.init(frame: .zero)
+        // NSView defaults to unclipped on macOS 14+. Keep inVisibleRect
+        // tracking within the preview instead of its enclosing window.
+        clipsToBounds = true
         wantsLayer = true
         layer = CALayer()
         configureRoundedMask()
         attach(videoLayer)
+        titleBar.material = .hudWindow
+        titleBar.blendingMode = .behindWindow
+        titleBar.alphaValue = 0
+        titleLabel.stringValue = title
+        titleLabel.font = .systemFont(ofSize: 13, weight: .semibold)
+        titleLabel.lineBreakMode = .byTruncatingTail
+        titleBar.addSubview(titleLabel)
+        addSubview(titleBar)
+        edgeLayer.fillColor = nil
+        edgeLayer.lineWidth = 0.5
+        layer?.addSublayer(edgeLayer)
     }
 
     required init?(coder: NSCoder) {
@@ -51,8 +73,14 @@ final class PinnedPreviewContentView: NSView {
         super.layout()
         CATransaction.begin()
         CATransaction.setDisableActions(true)
+        titleBar.frame = NSRect(x: 0, y: max(0, bounds.height - 32), width: bounds.width, height: 32)
+        titleLabel.frame = titleBar.bounds.insetBy(dx: 12, dy: 7)
+        edgeLayer.frame = bounds
+        edgeLayer.path = CGPath(roundedRect: bounds.insetBy(dx: 0.25, dy: 0.25),
+                               cornerWidth: 10, cornerHeight: 10, transform: nil)
+        edgeLayer.strokeColor = NSColor.separatorColor.cgColor
         videoLayer?.frame = bounds
-        videoLayer?.cornerRadius = shadeCornerRadius
+        videoLayer?.cornerRadius = 6
         CATransaction.commit()
     }
 
@@ -68,10 +96,12 @@ final class PinnedPreviewContentView: NSView {
     }
 
     override func mouseEntered(with event: NSEvent) {
+        setTitleVisible(true)
         onMouseEntered?()
     }
 
     override func mouseExited(with event: NSEvent) {
+        setTitleVisible(false)
         onMouseExited?()
     }
 
@@ -83,10 +113,18 @@ final class PinnedPreviewContentView: NSView {
         onMouseDown?(event)
     }
 
+    private func setTitleVisible(_ visible: Bool) {
+        NSAnimationContext.runAnimationGroup { context in
+            context.duration = NSWorkspace.shared.accessibilityDisplayShouldReduceMotion ? 0 : 0.15
+            context.timingFunction = CAMediaTimingFunction(name: .easeOut)
+            titleBar.animator().alphaValue = visible ? 1 : 0
+        }
+    }
+
     private func attach(_ layerToAttach: AVSampleBufferDisplayLayer) {
         videoLayer?.removeFromSuperlayer()
         videoLayer = layerToAttach
-        layerToAttach.cornerRadius = shadeCornerRadius
+        layerToAttach.cornerRadius = 6
         layerToAttach.masksToBounds = true
         layer?.addSublayer(layerToAttach)
         needsLayout = true
@@ -94,7 +132,7 @@ final class PinnedPreviewContentView: NSView {
 
     private func configureRoundedMask() {
         layer?.backgroundColor = NSColor.clear.cgColor
-        layer?.cornerRadius = shadeCornerRadius
+        layer?.cornerRadius = 10
         layer?.cornerCurve = .continuous
         layer?.masksToBounds = true
     }
@@ -123,8 +161,9 @@ final class PinnedLivePreviewView: NSView {
         addSubview(materialView)
 
         thumbnailClipView.wantsLayer = true
-        thumbnailClipView.layer?.cornerRadius = 7
+        thumbnailClipView.layer?.cornerRadius = 6
         thumbnailClipView.layer?.masksToBounds = true
+        thumbnailClipView.shadow = PaperSurfaceStyle.shadow()
         thumbnailClipView.layer?.backgroundColor = NSColor.white.withAlphaComponent(0.55).cgColor
         addSubview(thumbnailClipView)
 

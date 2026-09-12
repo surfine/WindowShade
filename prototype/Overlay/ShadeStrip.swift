@@ -69,13 +69,13 @@ func dominantIconColor(pid: pid_t) -> NSColor? {
 }
 
 func classicPalette(pid: pid_t) -> ClassicPalette {
-    let base = dominantIconColor(pid: pid) ?? NSColor(calibratedHue: 0.14, saturation: 0.70, brightness: 0.92, alpha: 1)
+    let base = dominantIconColor(pid: pid) ?? NSColor(calibratedHue: 0.60, saturation: 0.32, brightness: 0.96, alpha: 1)
     let rgb = base.usingColorSpace(.deviceRGB) ?? base
     var hue: CGFloat = 0, sat: CGFloat = 0, bri: CGFloat = 0, alpha: CGFloat = 0
     rgb.getHue(&hue, saturation: &sat, brightness: &bri, alpha: &alpha)
 
     let dark = isDarkAppearance()
-    let tintSat = min(max(sat * 0.58, 0.28), 0.56)
+    let tintSat = min(max(sat * 0.25, 0.06), 0.20)
     if dark {
         return ClassicPalette(
             paper: NSColor(calibratedHue: hue, saturation: tintSat, brightness: 0.25, alpha: 1),
@@ -143,8 +143,9 @@ final class SafariStylePreviewView: NSView {
         addSubview(materialView)
 
         thumbnailClipView.wantsLayer = true
-        thumbnailClipView.layer?.cornerRadius = 7
+        thumbnailClipView.layer?.cornerRadius = 6
         thumbnailClipView.layer?.masksToBounds = true
+        thumbnailClipView.shadow = PaperSurfaceStyle.shadow()
         thumbnailClipView.layer?.backgroundColor = NSColor.white.withAlphaComponent(0.55).cgColor
         addSubview(thumbnailClipView)
 
@@ -404,7 +405,8 @@ final class NativeProxyOverlayWindow: NSWindow, NSWindowDelegate {
         }
         if event.type == .mouseExited {
             cancelWindowManagementHover()
-            return
+            // AppKit must also deliver the exit to content tracking areas so
+            // the paper title's hover hint can disappear.
         }
         if event.type == .leftMouseDown,
            allowsWindowManagement,
@@ -472,6 +474,20 @@ final class NativeProxyTitleContentView: NSView {
         ProxyTitleLayoutMetrics.step
     }
 
+    private var hoverArea: NSTrackingArea?
+    private var hovered = false
+
+    override func updateTrackingAreas() {
+        super.updateTrackingAreas()
+        if let hoverArea { removeTrackingArea(hoverArea) }
+        let area = NSTrackingArea(rect: .zero,
+            options: [.mouseEnteredAndExited, .activeAlways, .inVisibleRect], owner: self, userInfo: nil)
+        addTrackingArea(area)
+        hoverArea = area
+    }
+    override func mouseEntered(with event: NSEvent) { hovered = true; needsDisplay = true }
+    override func mouseExited(with event: NSEvent) { hovered = false; needsDisplay = true }
+
     private let appName: String
     private let windowTitle: String
     private let appIcon: NSImage?
@@ -484,6 +500,7 @@ final class NativeProxyTitleContentView: NSView {
         self.appIcon = appIcon
         self.trafficLightSlots = max(trafficLightSlots, 1)
         super.init(frame: frame)
+        clipsToBounds = true
         wantsLayer = true
     }
 
@@ -494,6 +511,7 @@ final class NativeProxyTitleContentView: NSView {
     }
 
     override func draw(_ dirtyRect: NSRect) {
+        PaperSurfaceStyle.drawEdge(in: bounds, scale: window?.backingScaleFactor ?? 2)
         let title = proxyDisplayTitle(appName: appName, windowTitle: windowTitle)
         let titleFont = NSFont.systemFont(ofSize: 13, weight: .semibold)
         let paragraph = NSMutableParagraphStyle()
@@ -512,9 +530,18 @@ final class NativeProxyTitleContentView: NSView {
         let centerY = ProxyTitleLayoutMetrics.centerY(in: bounds)
         let iconRect = ProxyTitleLayoutMetrics.iconRect(in: bounds, hasIcon: hasIcon,
                                                         trafficLightSlots: trafficLightSlots)
-        let textFrame = ProxyTitleLayoutMetrics.textFrame(in: bounds, hasIcon: hasIcon,
+        var textFrame = ProxyTitleLayoutMetrics.textFrame(in: bounds, hasIcon: hasIcon,
                                                           trafficLightSlots: trafficLightSlots)
 
+        if hovered && textFrame.width > 180 {
+            let hint = NSAttributedString(string: "双击展开", attributes: [
+                .font: NSFont.systemFont(ofSize: 11), .foregroundColor: color,
+            ])
+            let hintWidth = hint.size().width
+            hint.draw(at: NSPoint(x: bounds.maxX - 18 - hintWidth,
+                                 y: floor(centerY - hint.size().height / 2)))
+            textFrame.size.width = max(0, textFrame.width - hintWidth - 16)
+        }
         if let icon = appIcon {
             icon.draw(in: iconRect,
                       from: NSRect(origin: .zero, size: icon.size),
@@ -673,9 +700,12 @@ final class ClassicTitleStripView: NSView {
         bounds.fill()
 
         palette.edge.setStroke()
-        let edge = NSBezierPath(rect: bounds.insetBy(dx: 0.5, dy: 0.5))
-        edge.lineWidth = 1
+        let edge = NSBezierPath(rect: bounds.insetBy(dx: 0.25, dy: 0.25))
+        edge.lineWidth = 0.5
         edge.stroke()
+        NSColor.white.withAlphaComponent(0.9).setFill()
+        let pixel = 1 / (window?.backingScaleFactor ?? 2)
+        NSRect(x: 0.5, y: bounds.maxY - pixel, width: max(0, bounds.width - 1), height: pixel).fill()
 
         drawControl(.close)
         drawControl(.zoom)
@@ -731,7 +761,7 @@ final class ClassicTitleStripView: NSView {
         let text = NSMutableAttributedString(
             string: appName,
             attributes: [
-                .font: NSFont.systemFont(ofSize: 12, weight: .semibold),
+                .font: NSFont.systemFont(ofSize: 13, weight: .semibold),
                 .foregroundColor: palette.text
             ]
         )
@@ -739,7 +769,7 @@ final class ClassicTitleStripView: NSView {
             text.append(NSAttributedString(
                 string: " — \(cleanTitle)",
                 attributes: [
-                    .font: NSFont.systemFont(ofSize: 12, weight: .regular),
+                    .font: NSFont.systemFont(ofSize: 13, weight: .semibold),
                     .foregroundColor: palette.secondaryText
                 ]
             ))
@@ -791,4 +821,3 @@ final class ClassicTitleStripView: NSView {
         if event.clickCount == 2 { onDoubleClick?() }
     }
 }
-

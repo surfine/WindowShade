@@ -1,0 +1,69 @@
+/* Historical chrome, adapted from AI System 6's foundation/Platinum recipes.
+   history.css owns layout. This file owns period fonts, pixels and controls.
+   Aqua targets 10.1: do not inherit the reference project's Jaguar dating
+   or its product-specific red-left / green-right arrangement. */
+@font-face{font-family:EraChicago;src:url('/fonts/ChicagoFLF.woff2') format('woff2');font-display:swap}
+@font-face{font-family:EraPlatinum;src:url('/fonts/Asap-Variable.woff2') format('woff2');font-weight:100 900;font-stretch:75% 125%;font-display:swap}
+.history-page{--classic-font:EraChicago,Chicago,"STSong","Songti SC",SimSun,serif;--platinum-font:Charcoal,"Charcoal CY",EraPlatinum,Geneva,"STSong","Songti SC",SimSun,serif;--aqua-font:"Lucida Grande","Lucida Sans Unicode","STHeiti","Heiti SC",sans-serif}
+/* System 7: black one-pixel rules, white field, close and zoom boxes. */
+.history-page .classic-bar{display:grid;grid-template-columns:15px minmax(0,1fr) 15px;align-items:center;gap:5px;height:20px;min-height:20px;padding:2px 6px;border:1px solid #000;border-radius:0;background:repeating-linear-gradient(to bottom,#000 0 1px,#fff 1px 2px) 0 3px/100% 12px no-repeat,#fff;box-shadow:inset 0 0 0 2px #fff;color:#000;font:12px/12px var(--classic-font);letter-spacing:0;-webkit-font-smoothing:none}
+.history-page .classic-bar b{justify-self:center;max-width:100%;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;background:#fff;padding:0 6px;font:12px/14px var(--classic-font);color:#000;letter-spacing:0}
+.history-page .classic-bar i{width:11px;height:11px;display:block;position:relative;background:#fff;border:1px solid #000;outline:3px solid #fff;box-shadow:none}
+.history-page .classic-bar i:last-child:after{content:"";position:absolute;top:1px;left:1px;width:5px;height:5px;border-bottom:1px solid #000;border-right:1px solid #000}
+.history-page .retro-panel>.classic-bar i:last-child{visibility:hidden}
+.history-page .space-window,.history-page .gesture-window,.history-page .retro-panel{box-shadow:1px 1px 0 #000;border-radius:0}
+.history-page .space-content{background:#fff;color:#000;border-color:#000}
+.history-page .space-desk{background:repeating-conic-gradient(#aaa 0 25%,#ccc 0 50%) 0 0/2px 2px}
+.history-page .desk-menu{height:21px;line-height:16px;padding:2px 16px;font-family:var(--classic-font);font-size:12px;color:#000;border-color:#000;background:#fff}
+.history-page .retro-panel{font:12px/1.5 var(--classic-font);color:#000;background:#fff;border:1px solid #000;color-scheme:light;-webkit-font-smoothing:none}
+.history-page .retro-panel fieldset{border-color:#000}
+.history-page .retro-panel legend,.history-page .retro-panel .sound-label{font:12px/1.6 var(--classic-font)}
+.history-page .retro-panel label{position:relative;gap:8px;min-height:28px}
+.history-page .retro-panel input{appearance:none;-webkit-appearance:none;border-radius:0;position:relative;width:12px;height:12px;flex:0 0 12px;padding:0;margin:0;border:1px solid #000;background:#fff;box-shadow:none;cursor:pointer}
+.history-page .retro-panel input[type=radio]{border:0;background:#fff url('/media/era/radio-border.svg') center/12px 12px no-repeat}
+.history-page .retro-panel input[type=radio]:checked:after{content:"";position:absolute;inset:3px 2px 2px 3px;background:url('/media/era/radio-dot.svg') center/7px 7px no-repeat}
+.history-page .retro-panel input[type=checkbox]:checked:after{content:"";position:absolute;inset:0;background:url('/media/era/checkmark.svg') center/10px 10px no-repeat}
+.history-page .gesture-window p{font:12px/1.7 var(--classic-font)}
+.history-page .pixel-shade{position:relative;width:44px;height:38px;margin:0 auto 16px;background:#fff;border:1px solid #000;box-shadow:inset -4px 0 #eee}
+.history-page .pixel-shade:before{content:"";position:absolute;left:2px;right:2px;top:2px;height:7px;border:1px solid #000;background:repeating-linear-gradient(#000 0 1px,#fff 1px 2px)}
+.history-page .pixel-shade span{display:block;position:absolute;top:16px;left:8px;width:28px;height:6px;border:1px solid #000;background:repeating-linear-gradient(#000 0 1px,#fff 1px 2px)}
+.history-page .pixel-shade:after{content:"";position:absolute;bottom:3px;right:6px;width:13px;height:1px;background:#000;box-shadow:0 -3px #000}
+/* Platinum: 11px beveled art; zoom and collapse are separate controls. */
+.history-page .platinum-bar{display:grid;grid-template-columns:16px minmax(0,1fr) 32px;gap:4px;align-items:center;height:20px;min-height:20px;padding:2px 5px;border:1px solid #000;border-radius:0;background:linear-gradient(#ccc,#ccc) left top/22px 100% no-repeat,linear-gradient(#ccc,#ccc) right top/42px 100% no-repeat,linear-gradient(to bottom,#ccc 0 2px,transparent 2px 15px,#ccc 15px 17px,#999 17px 18px),repeating-linear-gradient(to bottom,#fff 0 1px,#777 1px 2px),#ccc;box-shadow:inset 0 1px #fff;color:#000;font:650 12px/14px var(--platinum-font);font-variation-settings:"wdth" 113;letter-spacing:0}
+.history-page .platinum-bar b{font:700 12px/14px var(--platinum-font);font-variation-settings:"wdth" 123;background:#ccc;color:#000;justify-self:center;max-width:100%;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;padding:0 4px}
+.history-page .platinum-controls-art{display:flex;align-items:center;gap:5px;width:27px;height:13px;justify-self:end}
+.history-page .platinum-bar :is(i,button){position:relative;display:block;flex:0 0 11px;box-sizing:border-box;width:11px;height:11px;min-width:0;padding:0;margin:0;border:1px solid #222;border-radius:0;background:linear-gradient(to bottom right,#999,#fff);box-shadow:-1px -1px #888,1px 1px #fff,inset 1px 1px #ccc,inset -1px -1px #888;outline:0;color:#000}
+.history-page .platinum-bar .era-zoom:after{content:"";position:absolute;left:0;top:0;width:6px;height:6px;background:linear-gradient(#222,#222) right top/1px 6px no-repeat,linear-gradient(#222,#222) left bottom/6px 1px no-repeat}
+.history-page .platinum-bar .era-shade:after{content:"";position:absolute;left:0;top:3px;width:9px;height:3px;background:linear-gradient(#222,#222) left top/9px 1px no-repeat,linear-gradient(#222,#222) left bottom/9px 1px no-repeat}
+.history-page .platinum-bar button:active{background:linear-gradient(to bottom right,#444,#bbb)}
+.history-page .platinum-bar button:focus-visible{outline:2px solid #000;outline-offset:3px}
+.history-page .platinum-window{box-shadow:1px 1px #000,inset 1px 0 #fff,inset -1px 0 #999;background:#ccc;border:1px solid #000;padding:1px}
+.history-page .platinum-window .platinum-bar{border:0;border-bottom:1px solid #000;height:19px;min-height:19px}
+.history-page .platinum-window #platinum-content{border:1px solid #888;background:#fff;box-shadow:inset 1px 1px #ddd;padding:20px}
+.history-page .platinum-window.folded #platinum-content{padding-block:0;border-block:0}
+.history-page .platinum-window p{font:12px/1.6 var(--platinum-font);font-variation-settings:"wdth" 113;color:#000}
+.history-page .platinum-desk{background:#9999bb}
+/* Early Aqua: pinstripes, gel lamps, toolbar pill. CSS reconstruction of
+   10.1 anatomy; not a re-labelled copy of the Jaguar pixel sample. */
+.history-page .aqua-bar{display:grid;grid-template-columns:57px minmax(0,1fr) 22px;align-items:center;gap:8px;height:23px;min-height:23px;padding:3px 7px;border:1px solid #7f7f7f;border-radius:8px 8px 0 0;background:repeating-linear-gradient(to bottom,#fafafa 0 1px,#eee 1px 2px,#e7e7e7 2px 3px,#f5f5f5 3px 4px);box-shadow:inset 0 1px #fff,0 4px 9px #0003;font:13px/15px var(--aqua-font);color:#191919}
+.history-page .aqua-bar b{font:13px/15px var(--aqua-font);font-weight:400;text-shadow:0 1px #fff;justify-self:center;padding-right:35px}
+.history-page .aqua-lamps{display:flex;align-items:center;gap:6px}
+.history-page .aqua-lamps i{display:block;width:14px;height:14px;border-radius:50%;border:1px solid var(--lamp-rim);box-shadow:0 1px 1px #0005,inset 0 1px 1px #fff8;background:radial-gradient(ellipse 80% 40% at 48% 17%,#fff 0%,#fff9 45%,transparent 65%),radial-gradient(ellipse at 50% 92%,var(--lamp-glow) 0,transparent 65%),linear-gradient(var(--lamp-top),var(--lamp-bottom));margin:0}
+.history-page .lamp-close{--lamp-rim:#8b4646;--lamp-top:#b94949;--lamp-bottom:#f56857;--lamp-glow:#ffc7a2}
+.history-page .lamp-minimize{--lamp-rim:#947827;--lamp-top:#c99b19;--lamp-bottom:#ffd645;--lamp-glow:#fff4a7}
+.history-page .lamp-zoom{--lamp-rim:#4d7d3f;--lamp-top:#509737;--lamp-bottom:#88cf55;--lamp-glow:#c6f7a0}
+.history-page .aqua-toolbar-pill{width:20px;height:9px;border:1px solid #808080;border-radius:8px;background:linear-gradient(#fff,#d5d5d5 55%,#fafafa);box-shadow:0 1px #fff;justify-self:end}
+/* Preserve artifact geometry on phones; accessible demonstration buttons
+   remain outside the chrome. Font revivals are documented as substitutes. */
+html[lang] .history-page .classic-bar b{font-size:12px}
+html[lang] .history-page .platinum-window .platinum-bar b{font-size:12px}
+@media(max-width:600px){.history-page .archive-row>div{min-width:0}.history-page .platinum-window{width:86%;margin-left:calc(var(--position,20) * .14%)}.history-page .retro-panel fieldset label{margin-right:13px}.history-page .retro-panel legend,.history-page .retro-panel .sound-label{font-size:12px}}
+/* A fractional editorial baseline would turn 1px black/white rules into
+   grey. Snap only the archival strip group; never scale its pixel art. */
+.history-page :is(.titlebar-archive,.retro-panel,.gesture-window,.platinum-window){translate:0 var(--era-pixel-offset,0px)}
+.history-page .archive-row{height:48px}
+.history-page .retro-panel{width:100%;max-width:330px;justify-self:center}
+.history-page .retro-panel fieldset{padding:8px 12px 12px}
+.history-page .retro-panel legend{padding:8px 0 0;margin-bottom:6px}
+.history-page .retro-panel label{min-height:24px}
+.history-page .retro-panel .sound-label{padding:10px 12px}
