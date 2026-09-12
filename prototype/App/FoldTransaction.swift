@@ -665,14 +665,21 @@ extension AppDelegate {
         return axPosition(fromCocoaFrame: clamped)
     }
 
-    // trustFallback：调用方刚刚枚举出这个元素，只需确认它还活着。
-    // 不做 id 比对——传进来的 id 来自 windowID(of:)，那个函数优先用几何+标题
-    // 匹配，和 _AXUIElementGetWindow 对某些 App 给出的值并不一致，比对会系统性
-    // 失配，结果每个窗口先付一次失败比对再付一次完整枚举。存活探测只要一次
-    // 属性读（约 0.1ms），元素真的死了照旧走下面的完整刷新。
+    // trustFallback：调用方已经在别处确认过这个元素可用（专注模式在预热阶段
+    // 并发读过它的位置和尺寸），这里直接用，一次 IPC 都不发。
+    //
+    // 这里曾经再做一次存活探测，代价被严重低估：单个 AX 属性读只有在目标 App
+    // 空闲时才是 0.1ms，而级联折叠时它正忙着隐藏自己，实测一次 axPosition 要
+    // 19ms，20 个窗口就是 375ms。而且这次探测是多余的——预热阶段已经验证过。
+    // 元素万一在预热之后失效，shade() 开头的 axPosition/axSize 会读不到而干净地
+    // 中止这一个窗口的折叠，不会造成错误状态。
+    //
+    // 不做 id 比对：传进来的 id 来自 windowID(of:)，那个函数优先用几何+标题匹配，
+    // 和 _AXUIElementGetWindow 对某些 App 给出的值并不一致，比对会系统性失配，
+    // 结果每个窗口先付一次失败比对再付一次完整枚举。
     func refreshedWindowElement(id: CGWindowID, fallback: AXUIElement,
                                 trustFallback: Bool = false) -> AXUIElement {
-        if trustFallback, axPosition(fallback) != nil { return fallback }
+        if trustFallback { return fallback }
         if let info=cgWindowInfo(id),let pid=(info[kCGWindowOwnerPID as String] as? NSNumber)?.int32Value,
            let current=appWindows(pid:pid).first(where:{windowID(of:$0) == id}) { return current }
         return fallback
