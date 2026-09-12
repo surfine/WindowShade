@@ -166,7 +166,8 @@ extension AppDelegate {
     }
     func shade(_ win: AXUIElement, _ id: CGWindowID,
                        options: ShadeInvocationOptions? = nil, bypassDuo: Bool = false,
-                       preparedImage: CGImage? = nil, trustElement: Bool = false) {
+                       preparedImage: CGImage? = nil, trustElement: Bool = false,
+                       preparedProfile: WindowChromeProfile? = nil) {
         MainThreadActivity.push("fold: 折叠窗口")
         defer { MainThreadActivity.pop() }
         let memoScope = beginAppWindowsMemo()
@@ -224,7 +225,9 @@ extension AppDelegate {
         if UserDefaults.standard.bool(forKey: shadeDebugWindowDumpDefaultsKey) {
             dumpWindow(win)
         }
-        let profile = foldPhase("外框解析") {
+        // 预解析的结果直接用，绕开 ChromeProfileCache 的 2s TTL：分帧折叠十几个
+        // 窗口会跨越好几秒，靠缓存的话后面几帧全部过期、白白重算一遍。
+        let profile = preparedProfile ?? foldPhase("外框解析") {
             resolveWindowChromeProfile(win: win, id: id, pos: pos, size: size, pid: pid, title: title)
         }
         // guard 的条件里不能写尾随闭包，先算好再解包。
