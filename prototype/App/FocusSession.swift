@@ -382,10 +382,15 @@ extension AppDelegate {
             )
         }
 
+        // 一次全量窗口快照替掉大批注定为空的 AX 枚举：实测 84 个候选进程里只有
+        // 23 个拥有窗口，其余 61 个每个都要付一次同步 AX 往返才能得到空数组。
+        let pidsOwningWindows = WindowListCache.shared.pidsWithWindows()
+
         for app in NSWorkspace.shared.runningApplications {
             let pid = app.processIdentifier
             guard pid != focusedPID, pid != selfPID else { continue }
             guard app.activationPolicy == .regular || app.activationPolicy == .accessory else { continue }
+            guard pidsOwningWindows.contains(pid) else { continue }
             if windowPolicy(for: pid).delegatesNativeShade {
                 wlog("focus: skip native-shade app=\(appDisplayName(pid: pid)) pid=\(pid)")
                 continue
