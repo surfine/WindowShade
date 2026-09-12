@@ -386,6 +386,7 @@ extension AppDelegate {
         // 23 个拥有窗口，其余 61 个每个都要付一次同步 AX 往返才能得到空数组。
         let pidsOwningWindows = WindowListCache.shared.pidsWithWindows()
 
+        var candidates: [(pid: pid_t, app: NSRunningApplication)] = []
         for app in NSWorkspace.shared.runningApplications {
             let pid = app.processIdentifier
             guard pid != focusedPID, pid != selfPID else { continue }
@@ -395,8 +396,18 @@ extension AppDelegate {
                 wlog("focus: skip native-shade app=\(appDisplayName(pid: pid)) pid=\(pid)")
                 continue
             }
+            candidates.append((pid, app))
+        }
 
-            for win in appWindows(pid: pid) {
+        // 发现与折叠分开：枚举是纯 AX IPC，各 App 之间互不相干，并发做；
+        // 折叠要建 overlay 窗口、改 shaded 字典、放音效，只能留在主线程串行。
+        let discovered = logIfSlow("focus: 枚举 \(candidates.count) 个 App 的窗口", threshold: 0.2) {
+            concurrentAppWindows(candidates.map(\.pid))
+        }
+
+        for (index, candidate) in candidates.enumerated() {
+            let pid = candidate.pid
+            for win in discovered[index] {
                 guard let id = windowID(of: win), shaded[id] == nil else { continue }
                 let beforeIDs = Set(shaded.keys)
                 shade(win, id, options: focusShadeOptions)
