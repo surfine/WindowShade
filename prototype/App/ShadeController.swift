@@ -336,9 +336,13 @@ extension AppDelegate {
                     wlog("space: overlay reassociated by geometry id=\(oid) source=\(id) sid=-")
                 }
             }
-            let observer = (hide == .quickLookClosed || hide == .ownWindowOrderedOut)
-                ? nil
-                : makeRevealObserver(pid: pid, win: win, id: id)
+            // 安装闭包里最后一处未测点：AXObserverCreate + 3 次 AXObserverAddNotification，
+            // 四次同步 IPC，而且发给的正是刚被要求隐藏自己、此刻最忙的那个 App。
+            let observer = foldPhase("观察者注册") {
+                (hide == .quickLookClosed || hide == .ownWindowOrderedOut)
+                    ? nil
+                    : makeRevealObserver(pid: pid, win: win, id: id)
+            }
             let state = ShadeState(element: win, sourceWindowID: id,
                                    originalPosition: pos, originalSize: size,
                                    sourceDisplayID: sourceDisplayID,
