@@ -492,8 +492,8 @@ extension AppDelegate {
 
     func privateSLSAlphaHide(id: CGWindowID, pid: pid_t, reason: String) -> HideMethod? {
         // SIP 开启的系统上，跨进程的 SkyLight 窗口改动会被静默忽略：调用返回成功，
-        // 回读却发现 alpha 没变。实测本机 15 次尝试 15 次如此。第一次确认无效之后
-        // 就不再重试，免得每个窗口都白付一次写入 + 一次回读。
+        // 回读却发现 alpha 没变（实测本机 15 次尝试全部如此）。第一次确认无效之后
+        // 就不再重试，免得批量折叠时每个窗口都白付一次写入 + 一次回读。
         guard !privateAlphaKnownIneffective else { return nil }
         let mover = PrivateSLSWindowMover.shared
         guard mover.canSetAlpha else {
@@ -633,13 +633,6 @@ extension AppDelegate {
                               allowAppHide: Bool) -> HideMethod {
         let currentWindowCount = appCurrentUserWindowCount(pid)
         let totalWindowCount = appWindowCount(pid)
-        // 快速隐藏（实验性）：先试 SkyLight alpha。成功就完全绕开目标 App 的
-        // runloop；不生效时 privateSLSAlphaHide 会自己还原 alpha 并返回 nil，
-        // 于是照旧走下面原有的顺序，不改变任何回退语义。
-        if fastHideEnabled, let id,
-           let hide = privateSLSAlphaHide(id: id, pid: pid, reason: "fast-hide") {
-            return hide
-        }
         if allowAppHide && currentWindowCount <= 1 {
             if setAXAppHidden(pid: pid, true) {
                 wlog("    fallback → hidden via AX（pid=\(pid), currentWindows=\(currentWindowCount), windows=\(totalWindowCount)）")
