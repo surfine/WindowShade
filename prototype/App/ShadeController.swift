@@ -300,15 +300,17 @@ extension AppDelegate {
             let verifyStartedAt = CFAbsoluteTimeGetCurrent()
             let hideVerifiedNow = hideTookEffect(hide, win: win, pid: pid, id: id, size: size)
             foldPhaseTotals["隐藏验证", default: 0] += CFAbsoluteTimeGetCurrent() - verifyStartedAt
-            recordShadeJournal(id: id, win: win, hide: hide, pid: pid, bundleID: bundleID,
-                               appName: appName, title: title,
-                               originalPosition: pos, originalSize: size,
-                               mode: mode, policy: policy, planReason: plan.reason,
-                               stage: .folded,
-                               sourceDisplayID: sourceDisplayID,
-                               sourceSpaceID: sourceSpaceID)
-            prepareOverlayWindowForSpaceAssignment(overlay)
-            let oid = cgWindowID(for: overlay)
+            foldPhase("日志落盘") {
+                recordShadeJournal(id: id, win: win, hide: hide, pid: pid, bundleID: bundleID,
+                                   appName: appName, title: title,
+                                   originalPosition: pos, originalSize: size,
+                                   mode: mode, policy: policy, planReason: plan.reason,
+                                   stage: .folded,
+                                   sourceDisplayID: sourceDisplayID,
+                                   sourceSpaceID: sourceSpaceID)
+            }
+            foldPhase("卷帘条 Space 归属") { prepareOverlayWindowForSpaceAssignment(overlay) }
+            let oid = foldPhase("卷帘条窗口号") { cgWindowID(for: overlay) }
             if let oid {
                 overlayIDs.insert(oid)
                 if let sourceSpaceID {

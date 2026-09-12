@@ -491,6 +491,10 @@ extension AppDelegate {
     }
 
     func privateSLSAlphaHide(id: CGWindowID, pid: pid_t, reason: String) -> HideMethod? {
+        // SIP 开启的系统上，跨进程的 SkyLight 窗口改动会被静默忽略：调用返回成功，
+        // 回读却发现 alpha 没变。实测本机 15 次尝试 15 次如此。第一次确认无效之后
+        // 就不再重试，免得每个窗口都白付一次写入 + 一次回读。
+        guard !privateAlphaKnownIneffective else { return nil }
         let mover = PrivateSLSWindowMover.shared
         guard mover.canSetAlpha else {
             wlog("    private SLS alpha unavailable（pid=\(pid), reason=\(reason)）")
@@ -508,6 +512,8 @@ extension AppDelegate {
         guard currentAlpha <= 0.05 else {
             _ = mover.setAlpha(id: id, alpha: originalAlpha)
             wlog("    private SLS alpha did not apply id=\(id) pid=\(pid) current=\(String(format: "%.2f", currentAlpha)) reason=\(reason)")
+            privateAlphaKnownIneffective = true
+            wlog("    private SLS alpha 在本机无效（很可能是 SIP 限制），本会话不再尝试")
             return nil
         }
 
