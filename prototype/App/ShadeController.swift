@@ -341,10 +341,13 @@ extension AppDelegate {
                                    ignoreAppRevealUntil: Date().addingTimeInterval(1.0),
                                    observer: observer)
             shaded[id] = state
-            scheduleSourceSpaceReturnIfNeeded(id: id, state: state)
+            foldPhase("Space 回归调度") { scheduleSourceSpaceReturnIfNeeded(id: id, state: state) }
             if hideVerifiedNow {
-                if enforceOverlaySpaceInvariant(id: id, state: state, reason: "install") {
-                    revealPreparedOverlay(overlay)
+                let spaceInvariantHeld = foldPhase("Space 不变量") {
+                    enforceOverlaySpaceInvariant(id: id, state: state, reason: "install")
+                }
+                if spaceInvariantHeld {
+                    foldPhase("显示卷帘条") { revealPreparedOverlay(overlay) }
                     duoController.windowEffects.didVerifyFold(id: id, state: state)
                 }
             } else {
@@ -352,9 +355,11 @@ extension AppDelegate {
                 scheduleFoldVerification(id: id, attempt: 1)
             }
             hoverPreviewSuppressedUntil[id] = Date().addingTimeInterval(0.7)
-            rejoinFocusStackAfterShadeIfNeeded(id: id, overlay: overlay)
+            foldPhase("重回专注栈") { rejoinFocusStackAfterShadeIfNeeded(id: id, overlay: overlay) }
             if autoJoinFocusShelf {
-                joinFocusShelfAfterShadeIfNeeded(id: id, overlay: overlay)
+                foldPhase("加入专注 shelf") {
+                    joinFocusShelfAfterShadeIfNeeded(id: id, overlay: overlay)
+                }
             }
             if options.rebuildMenuAfterInstall {
                 rebuildMenu()
