@@ -79,6 +79,8 @@ extension AppDelegate {
     }
     @discardableResult
     func unshade(_ id: CGWindowID) -> Bool {
+        MainThreadActivity.push("restore: 展开窗口")
+        defer { MainThreadActivity.pop() }
         if duoController.windowEffects.interceptRestore(id: id) { return true }
         return unshadeReturningElement(id) != nil
     }
