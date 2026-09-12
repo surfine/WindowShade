@@ -660,20 +660,27 @@ extension AppDelegate {
     }
 
     func refreshedWindowElement(id: CGWindowID, fallback: AXUIElement) -> AXUIElement {
-        // 传进来的元素还指向同一个窗口就直接用：一次属性读约 0.1ms，而枚举整个
-        // App 的窗口列表约 20ms。元素失效时照旧走枚举兜底。
-        if windowID(of: fallback) == id { return fallback }
+        // 身份校验要用精确的那个 API。windowID(of:) 内部先做几何+标题匹配，
+        // 级联折叠时窗口陆续被隐藏、CG 列表在变，匹配会失配——结果是每个窗口
+        // 先付一次失败的匹配、再付一次完整枚举（实测这样反而从 39ms 涨到 612ms）。
+        // _AXUIElementGetWindow 是 AX 元素到 CGWindowID 的真实映射，一次 IPC，
+        // 不依赖几何启发。
+        var directID: CGWindowID = 0
+        if _AXUIElementGetWindow(fallback, &directID) == .success, directID == id {
+            return fallback
+        }
         if let info=cgWindowInfo(id),let pid=(info[kCGWindowOwnerPID as String] as? NSNumber)?.int32Value,
            let current=appWindows(pid:pid).first(where:{windowID(of:$0) == id}) { return current }
         return fallback
     }
 
     func resolvedWindowElement(for state: ShadeState) -> AXUIElement {
-        // 先问原元素还指不指向同一个窗口。这一步通常命中窗口列表缓存，比把目标
-        // App 的窗口全枚举一遍便宜一个数量级——而恢复阶梯的每一档、每个窗口都要
-        // 走一次这里。元素真的失效时（App 在 unhide 后重建了 AX 元素）返回 nil
-        // 或别的 id，照样落到下面的枚举兜底，行为不变。
-        if windowID(of: state.element) == state.sourceWindowID { return state.element }
+        // 同上：用 _AXUIElementGetWindow 做精确身份校验，不走几何匹配。
+        var directID: CGWindowID = 0
+        if _AXUIElementGetWindow(state.element, &directID) == .success,
+           directID == state.sourceWindowID {
+            return state.element
+        }
 
         let windows = appWindows(pid: state.pid)
         guard !windows.isEmpty else { return state.element }
