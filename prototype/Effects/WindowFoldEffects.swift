@@ -43,7 +43,7 @@ final class WindowFoldEffects {
       request(job, folded: true)
       return true
     }
-    guard enabled, options == nil, let owner, owner.shaded[id] == nil,
+    guard !suppressedForBulkOperation, enabled, options == nil, let owner, owner.shaded[id] == nil,
       !owner.shadeOperationIDs.contains(id),
       let pos = axPosition(element), let size = axSize(element),
       let screen = screenForAXWindow(pos: pos, size: size),
@@ -176,12 +176,17 @@ final class WindowFoldEffects {
     job.phase = .folding
     if job.desiredFolded { animate(job, folded: true) } else { restoreExisting(job) }
   }
+  // 批量操作期间关掉卷帘动画。十几个窗口同时展开时，每个窗口一段动画既看不出来，
+  // 又会让这些会话互相抢资源：实测批量恢复时首帧呈现的失败次数多过成功次数，
+  // 而每个等待中的会话都在主线程上以 60fps 空转 render()。
+  var suppressedForBulkOperation = false
+
   func interceptRestore(id: CGWindowID) -> Bool {
     if let job = jobs[id] {
       request(job, folded: false)
       return true
     }
-    guard enabled, let owner, let state = owner.shaded[id],
+    guard !suppressedForBulkOperation, enabled, let owner, let state = owner.shaded[id],
       state.hide != .quickLookClosed, let strip = state.overlay,
       let image = state.previewImage?.cgImage(forProposedRect: nil, context: nil, hints: nil)
     else { return false }
