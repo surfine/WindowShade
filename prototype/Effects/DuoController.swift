@@ -19,6 +19,11 @@ final class DuoController: NSObject {
   private var epoch = EffectEpoch()
   private var suspended = false
   private var suppressed = false
+  // 开合基线。原来只看绝对角度：盖子常年停在 95° 以下的人，一打开 App
+  // 传感器第一份读数就满足条件，效果直接播出来——那不是开合，是静止。
+  // 记住「开着的时候停在哪」，只有从基线明显合下去才算一次开合动作。
+  private var engagementBaseline: Double?
+  private let engagementDelta = 3.0
   private var previousTime: CFTimeInterval = 0
   private var spring = FoldSpring()
   private var target = 0.0
@@ -136,6 +141,10 @@ final class DuoController: NSObject {
       (center, center.addObserver(forName: name, object: nil, queue: .main) { _ in action() }))
   }
 
+  private func resetEngagementBaseline() {
+    engagementBaseline = nil
+  }
+
   func settingsChanged() {
     if persistsSettings { settings.save() }
     if !settings.desktopEnabled || !allowsAnimation { stopDesktop() }
@@ -166,7 +175,21 @@ final class DuoController: NSObject {
     if reading.angle > settings.triggerAngle + 5 { suppressed = false }
     if suppressed { return }
     target = next
-    if desktop == nil && startTask == nil && reading.angle < settings.triggerAngle + 8 {
+
+    // 盖子明确开着的时候持续刷新基线，这样基线跟着「当前的静止姿势」走，
+    // 不管用户习惯把屏幕停在 110° 还是 85°。
+    if desktop == nil, reading.angle >= settings.triggerAngle + 8 {
+      engagementBaseline = reading.angle
+    }
+    guard let baseline = engagementBaseline else {
+      // 采样开始后的第一份读数只用来建立基线，不触发任何效果。
+      engagementBaseline = reading.angle
+      return
+    }
+    let closing = baseline - reading.angle >= engagementDelta
+    if desktop == nil && startTask == nil && closing
+      && reading.angle < settings.triggerAngle + 8
+    {
       prepareDesktop()
     }
   }
@@ -334,6 +357,8 @@ final class DuoController: NSObject {
     startTask = nil
     desktop?.stop()
     desktop = nil
+    // 会话结束后重建基线：下一次触发必须来自一次新的合盖动作。
+    resetEngagementBaseline()
     spring.reset()
     target = 0
   }
