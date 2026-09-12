@@ -726,17 +726,37 @@ func isWindowLikeRole(_ role: String?, pid: pid_t) -> Bool {
 // 计数用于定位「一次折叠到底枚举了多少遍」，只在主线程累加。
 nonisolated(unsafe) var axWindowListEnumerations = 0
 
+// 事务级备忘，不是带 TTL 的缓存：只在显式开启的区间内生效（一次折叠/展开事务），
+// 区间结束立刻丢弃。一次折叠里同一个 App 的窗口列表会被问三四遍——刷新元素、
+// 找焦点继承者、数窗口数决定隐藏策略——而事务内这个列表不会变。
+nonisolated(unsafe) private var appWindowsMemo: [pid_t: [AXUIElement]]?
+
+func beginAppWindowsMemo() -> [pid_t: [AXUIElement]]? {
+    guard Thread.isMainThread else { return nil }
+    let outer = appWindowsMemo
+    appWindowsMemo = [:]
+    return outer
+}
+
+func endAppWindowsMemo(_ outer: [pid_t: [AXUIElement]]?) {
+    guard Thread.isMainThread else { return }
+    appWindowsMemo = outer
+}
+
 func appWindows(pid: pid_t) -> [AXUIElement] {
+    if Thread.isMainThread, let cached = appWindowsMemo?[pid] { return cached }
     if Thread.isMainThread { axWindowListEnumerations += 1 }
     let app = AXUIElementCreateApplication(pid)
     var ref: CFTypeRef?
     guard AXUIElementCopyAttributeValue(app, kAXWindowsAttribute as CFString, &ref) == .success,
           let arr = ref as? [AXUIElement] else { return [] }
-    return arr.filter { win in
+    let result = arr.filter { win in
         guard isWindowLikeRole(axRole(win), pid: pid) else { return false }
         guard let id = windowID(of: win) else { return true }
         return !isDesktopWidgetWindow(id: id)
     }
+    if Thread.isMainThread, appWindowsMemo != nil { appWindowsMemo?[pid] = result }
+    return result
 }
 
 // 并发枚举多个 App 的窗口。appWindows(pid:) 全程是同步 AX IPC，逐个串起来
