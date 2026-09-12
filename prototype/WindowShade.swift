@@ -1251,25 +1251,46 @@ actor SingleResumeGuard {
 // 记下当前活动之后，「stall ≈1054ms」就变成「stall ≈1054ms 期间=duo: desktop show」。
 // 只在主线程记账，因此不需要加锁。
 enum MainThreadActivity {
-    private static var stack: [String] = []
-    private static var lastFinished: (label: String, endedAt: CFAbsoluteTime)?
+    private struct Span {
+        let label: String
+        let start: CFAbsoluteTime
+        let end: CFAbsoluteTime
+    }
+
+    private static var stack: [(label: String, start: CFAbsoluteTime)] = []
+    private static var recent: [Span] = []
+    private static let maxSpans = 512
 
     static func push(_ label: String) {
         guard Thread.isMainThread else { return }
-        stack.append(label)
+        stack.append((label, CFAbsoluteTimeGetCurrent()))
     }
 
     static func pop() {
-        guard Thread.isMainThread, let label = stack.popLast() else { return }
-        lastFinished = (label, CFAbsoluteTimeGetCurrent())
+        guard Thread.isMainThread, let item = stack.popLast() else { return }
+        recent.append(Span(label: item.label, start: item.start, end: CFAbsoluteTimeGetCurrent()))
+        if recent.count > maxSpans { recent.removeFirst(recent.count - maxSpans) }
     }
 
-    /// 仍在栈上的活动优先；否则看刚刚在这段卡顿窗口里结束的那一个——
-    /// 阻塞结束触发的 pop 必然落在窗口内，正是我们要找的那次调用。
-    static func attribution(since: CFAbsoluteTime) -> String {
-        if let active = stack.first { return active }
-        if let done = lastFinished, done.endedAt >= since { return done.label }
-        return "未标记"
+    /// 卡顿窗口里累计占用最久的标记，附带次数与占比。
+    /// 报「最后结束的那个」会误导：几秒的连续忙碌通常由几十次短调用组成，
+    /// 末尾那次往往只是恰好排在最后，而不是真正的大头。
+    static func attribution(since: CFAbsoluteTime, until: CFAbsoluteTime) -> String {
+        var totals: [String: (seconds: Double, count: Int)] = [:]
+        func accumulate(_ label: String, from start: CFAbsoluteTime, to end: CFAbsoluteTime) {
+            let overlap = min(end, until) - max(start, since)
+            guard overlap > 0 else { return }
+            var entry = totals[label] ?? (0, 0)
+            entry.seconds += overlap
+            entry.count += 1
+            totals[label] = entry
+        }
+        for span in recent { accumulate(span.label, from: span.start, to: span.end) }
+        for active in stack { accumulate(active.label, from: active.start, to: until) }
+        guard let top = totals.max(by: { $0.value.seconds < $1.value.seconds }) else { return "未标记" }
+        let window = until - since
+        let share = window > 0 ? Int((top.value.seconds / window * 100).rounded()) : 0
+        return "\(top.key)×\(top.value.count) 占 \(share)%"
     }
 }
 
@@ -1317,7 +1338,7 @@ final class MainThreadStallSentinel {
             // 必然不是 afterWaiting；反之，以 afterWaiting 结束的长间隔一律是休眠唤醒
             // （即使因回调时序没先看到 beforeWaiting），不是卡顿，不报告。
             if !self.wasWaiting, activity != .afterWaiting, now - self.lastActivityAt > 0.5 {
-                let blame = MainThreadActivity.attribution(since: self.lastActivityAt)
+                let blame = MainThreadActivity.attribution(since: self.lastActivityAt, until: now)
                 wlog("main-thread stall ≈\(Int((now - self.lastActivityAt) * 1000))ms 期间=\(blame)")
             }
             self.lastActivityAt = now
