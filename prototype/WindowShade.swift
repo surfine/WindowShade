@@ -801,6 +801,13 @@ final class WindowListCache {
         snapshot(.all).byPID[pid] ?? []
     }
 
+    // 拥有至少一个窗口的进程集合。用于在昂贵的 AX 枚举之前筛掉纯后台进程：
+    // 一个窗口都没有的进程，appWindows(pid:) 只可能返回空数组，却要为此付一次
+    // 同步 AX 往返——目标进程无响应时最坏会卡满 2s 消息超时。
+    func pidsWithWindows() -> Set<pid_t> {
+        Set(snapshot(.all).byPID.keys)
+    }
+
     func onScreenIDs() -> Set<CGWindowID> {
         let snapshot = snapshot(.onScreen)
         var ids = Set<CGWindowID>()
@@ -2032,7 +2039,9 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSMenuDelegate {
 
 
     @objc func focusCurrentAppAction() {
-        focusCurrentAppCycle()
+        // 这条路径会同步折叠其它 App 的全部窗口，是主线程上最长的一段工作：
+        // 自报耗时，并让卡顿哨兵能把阻塞归因到它。
+        logIfSlow("focus: 专注当前 App", threshold: 0.2) { focusCurrentAppCycle() }
     }
 
     @objc func unshadeFromMenu(_ sender: NSMenuItem) {
