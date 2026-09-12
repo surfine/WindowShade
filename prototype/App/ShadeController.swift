@@ -247,7 +247,14 @@ extension AppDelegate {
         let sourceSpaceMode = profile.isQuickLook ? "active-display" : "window"
         wlog(">>> shade id=\(id) app=\(appName) bundle=\(bundleID) mode=\(mode.rawValue) plan=\(plan.reason) policy=\(policy) sourceDisplay=\(sourceDisplayID.map { String($0) } ?? "-") sourceSpace=\(sourceSpaceID.map { String($0) } ?? "-") sourceSpaceMode=\(sourceSpaceMode) hasToolbar=\(profile.hasToolbar) adobe=\(profile.adobeProfile.kind.rawValue):\(profile.adobeProfile.reason) standardTitleBarOnly=\(profile.standardTitleBarOnly) toolbarlessStandard=\(profile.toolbarlessStandardTitleBar) preciseChrome=\(profile.preciseChrome) contentBelowTitleBar=\(profile.hasContentBelowTitleBar) axBarH=\(Int(profile.axBarHeight)) hitBarH=\(Int(profile.hitBarHeight))")
 
+        // 整体包住安装阶段：它与已知子项（隐藏窗口/建 overlay/落盘…）的差额
+        // 直接指出剩下的时间是在安装之内还是之外，比继续逐个猜要快。
         func installOverlay(_ overlay: NSWindow, mode: ShadeAppearanceMode, previewImage: NSImage?) {
+            let installStartedAt = CFAbsoluteTimeGetCurrent()
+            defer {
+                foldPhaseTotals["▸安装阶段合计", default: 0] +=
+                    CFAbsoluteTimeGetCurrent() - installStartedAt
+            }
             shadeOperationIDs.remove(id)
             transitionOperationState(id: id, to: .folded, reason: "install")
             foldPhase("辅助功能配置") {
