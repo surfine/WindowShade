@@ -169,6 +169,8 @@ extension AppDelegate {
                        preparedImage: CGImage? = nil) {
         MainThreadActivity.push("fold: 折叠窗口")
         defer { MainThreadActivity.pop() }
+        let memoScope = beginAppWindowsMemo()
+        defer { endAppWindowsMemo(memoScope) }
         let win = refreshedWindowElement(id: id, fallback: win)
         if !bypassDuo, duoController.windowEffects.interceptFold(win, id: id, options: options) { return }
         // 状态机防护：折叠中/已折叠/展开中的窗口再次触发折叠一律忽略，
