@@ -39,6 +39,7 @@ let premiereWorkspaceChromeHeight: CGFloat = 40
 let shadeCornerRadius: CGFloat = 18   // macOS Tahoe 窗口圆角；固定值保证各折叠条一致
 let shadeAppearanceModeDefaultsKey = "ShadeAppearanceMode"
 let shadeFloatingOnTopDefaultsKey = "ShadeFloatingOnTop"
+let shadeFastHideDefaultsKey = "ShadeFastHide"
 let shadeTranslucentDefaultsKey = "ShadeTranslucent"
 let shadeTitlebarDoubleClickDefaultsKey = "ShadeTitlebarDoubleClickEnabled"
 let shadeSoundEnabledDefaultsKey = "ShadeSoundEnabled"
@@ -1733,6 +1734,11 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSMenuDelegate {
         return UserDefaults.standard.bool(forKey: shadeFloatingOnTopDefaultsKey)
     }()
     var translucent: Bool = UserDefaults.standard.bool(forKey: shadeTranslucentDefaultsKey)
+    // 实验性：优先用 SkyLight 把窗口 alpha 归零，而不是请求 App 自己隐藏。
+    // 前者走 WindowServer（约 0.013ms），后者要等目标 App 的 runloop（实测 19–474ms）。
+    // 默认关：它改变隐藏语义——App 仍认为窗口可见，Cmd-Tab 与焦点行为跟 ⌘H 不同，
+    // 而且对部分 App（实测 Safari）alpha 根本不生效。
+    var fastHideEnabled: Bool = UserDefaults.standard.bool(forKey: shadeFastHideDefaultsKey)
     var eventTap: CFMachPort?                          // 供 C 回调重新启用
     var eventTapReenableWorkItem: DispatchWorkItem?
     let offscreen = CGPoint(x: -32000, y: -32000)
