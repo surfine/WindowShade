@@ -258,7 +258,9 @@ extension AppDelegate {
                     CFAbsoluteTimeGetCurrent() - installStartedAt
             }
             shadeOperationIDs.remove(id)
-            transitionOperationState(id: id, to: .folded, reason: "install")
+            foldPhase("状态机转换") {
+                transitionOperationState(id: id, to: .folded, reason: "install")
+            }
             foldPhase("辅助功能配置") {
                 configureShadedAccessibility(for: overlay, id: id, appName: appName, title: title)
             }
@@ -313,6 +315,12 @@ extension AppDelegate {
             let oid = foldPhase("卷帘条窗口号") { cgWindowID(for: overlay) }
             if let oid {
                 overlayIDs.insert(oid)
+                // 安装阶段里最后一块没打点的：跨 Space 移动与它的几何回退。
+                let spaceMoveStartedAt = CFAbsoluteTimeGetCurrent()
+                defer {
+                    foldPhaseTotals["跨 Space 移动", default: 0] +=
+                        CFAbsoluteTimeGetCurrent() - spaceMoveStartedAt
+                }
                 if let sourceSpaceID {
                     if PrivateSLSWindowMover.shared.moveWindow(id: oid, toSpace: sourceSpaceID) {
                         wlog("space: overlay assigned id=\(oid) source=\(id) sid=\(sourceSpaceID)")
