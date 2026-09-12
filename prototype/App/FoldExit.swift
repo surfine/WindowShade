@@ -81,6 +81,8 @@ extension AppDelegate {
     func unshade(_ id: CGWindowID) -> Bool {
         MainThreadActivity.push("restore: 展开窗口")
         defer { MainThreadActivity.pop() }
+        let memoScope = beginAppWindowsMemo()
+        defer { endAppWindowsMemo(memoScope) }
         if duoController.windowEffects.interceptRestore(id: id) { return true }
         return unshadeReturningElement(id) != nil
     }

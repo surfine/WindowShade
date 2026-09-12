@@ -660,6 +660,9 @@ extension AppDelegate {
     }
 
     func refreshedWindowElement(id: CGWindowID, fallback: AXUIElement) -> AXUIElement {
+        // 传进来的元素还指向同一个窗口就直接用：一次属性读约 0.1ms，而枚举整个
+        // App 的窗口列表约 20ms。元素失效时照旧走枚举兜底。
+        if windowID(of: fallback) == id { return fallback }
         if let info=cgWindowInfo(id),let pid=(info[kCGWindowOwnerPID as String] as? NSNumber)?.int32Value,
            let current=appWindows(pid:pid).first(where:{windowID(of:$0) == id}) { return current }
         return fallback
