@@ -273,48 +273,16 @@ extension AppDelegate {
     }
 
     func makePrefGroupLabel(_ text: String) -> NSView {
+        // 分组标题只有文字，与「效果」「高级」两页保持一致。
         let field = NSTextField(labelWithString: text)
         field.font = .systemFont(ofSize: 12, weight: .semibold)
         field.textColor = .secondaryLabelColor
-        let symbol: String?
-        switch text {
-        case "触发": symbol = "bolt.fill"
-        case "外观": symbol = "paintpalette"
-        case "声音": symbol = "speaker.wave.2"
-        case "权限": symbol = "lock.shield"
-        case "启动": symbol = "power"
-        default: symbol = nil
-        }
-        guard let symbol,
-              let image = NSImage(systemSymbolName: symbol, accessibilityDescription: text)
-        else { return field }
-        let icon = NSImageView()
-        icon.image = image.withSymbolConfiguration(.init(pointSize: 12, weight: .medium))
-        icon.contentTintColor = .tertiaryLabelColor
-        icon.imageScaling = .scaleProportionallyDown
-        icon.widthAnchor.constraint(equalToConstant: 16).isActive = true
-        icon.heightAnchor.constraint(equalToConstant: 16).isActive = true
-        let group = NSStackView(views: [icon, field])
-        group.orientation = .horizontal
-        group.alignment = .centerY
-        group.spacing = 6
-        return group
+        return field
     }
 
     private func makeUnifiedSettingsCard(_ rows: [NSView]) -> NSView {
-        let card = NSVisualEffectView()
-        card.material = .contentBackground
-        card.blendingMode = .withinWindow
-        card.state = .active
+        let card = SettingsGroupBox()
         card.wantsLayer = true
-        card.layer?.cornerRadius = 12
-        card.layer?.borderWidth = 0.5
-        card.layer?.borderColor = NSColor.separatorColor.withAlphaComponent(0.35).cgColor
-        card.layer?.backgroundColor = NSColor.clear.cgColor
-        card.layer?.shadowColor = NSColor.black.cgColor
-        card.layer?.shadowOpacity = 0.035
-        card.layer?.shadowRadius = 7
-        card.layer?.shadowOffset = CGSize(width: 0, height: 1)
         card.translatesAutoresizingMaskIntoConstraints = false
 
         let inner = NSStackView()
@@ -335,7 +303,7 @@ extension AppDelegate {
                 let separator = NSBox()
                 separator.boxType = .separator
                 inner.addArrangedSubview(separator)
-                separator.widthAnchor.constraint(equalTo: inner.widthAnchor).isActive = true
+                separator.widthAnchor.constraint(equalTo: card.widthAnchor, constant: -16).isActive = true
             }
             inner.addArrangedSubview(row)
             row.widthAnchor.constraint(equalTo: inner.widthAnchor).isActive = true

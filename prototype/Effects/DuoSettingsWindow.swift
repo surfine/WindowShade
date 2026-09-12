@@ -23,8 +23,27 @@ enum WindowShadeSettingsSection: Int, CaseIterable {
   }
 }
 
+/// 设置页内容列宽度上限，四个分页共用。
+let settingsContentWidth: CGFloat = 640
+
 private final class SettingsPageHost: NSView {
   override var isFlipped: Bool { true }
+}
+
+/// 分组盒：纸面上的一块分区，不是悬浮卡片——实色填充，无描边无投影。
+/// 走 updateLayer 而不是写死 cgColor，明暗外观切换时填充色自动跟随。
+final class SettingsGroupBox: NSView {
+  override var wantsUpdateLayer: Bool { true }
+
+  override func updateLayer() {
+    layer?.cornerRadius = 10
+    layer?.backgroundColor = NSColor.controlBackgroundColor.cgColor
+  }
+
+  override func viewDidChangeEffectiveAppearance() {
+    super.viewDidChangeEffectiveAppearance()
+    needsDisplay = true
+  }
 }
 
 final class DuoSettingsWindow: NSWindowController, NSWindowDelegate {
@@ -50,6 +69,7 @@ final class DuoSettingsWindow: NSWindowController, NSWindowDelegate {
   private let mode = NSSegmentedControl(
     labels: ["桌面", "窗口"], trackingMode: .selectOne, target: nil, action: nil)
   private var lastStatusAt = 0.0
+  private var previewClockRunning = false
   private var captureMessage: String?
   private var pageHost: NSView!
   private var pageScroll: NSScrollView!
@@ -142,12 +162,30 @@ final class DuoSettingsWindow: NSWindowController, NSWindowDelegate {
     pages[.permissions] = controller.owner?.makePermissionsSettingsPage()
     select(section: .effects)
 
+    // 时钟只为实时预览的推帧服务。静态示意图不会自己变化，参数一改就已经
+    // 显式 render() 过了——设置窗口开着的时候没有理由每秒画 60 帧。
     clock.tick = { [weak self] _ in
       guard let self, !EffectSecurityBoundary.isLocked else { return }
       if let frame = source?.frame() { renderer?.setFrame(frame) }
       renderer?.render()
     }
+  }
+
+  private func startPreviewClock() {
+    guard !previewClockRunning, let window else { return }
     clock.start(window: window)
+    previewClockRunning = true
+  }
+
+  private func stopPreviewClock() {
+    guard previewClockRunning else { return }
+    clock.stop()
+    previewClockRunning = false
+  }
+
+  // 时钟停下之后，MTKView（isPaused = true）不会自己重画，改变尺寸会留下上一帧。
+  @objc private func previewViewFrameChanged() {
+    renderer?.render()
   }
 
   private func makeSidebar() -> NSView {
@@ -237,9 +275,13 @@ final class DuoSettingsWindow: NSWindowController, NSWindowDelegate {
     pageHost.subviews.forEach { $0.removeFromSuperview() }
     page.translatesAutoresizingMaskIntoConstraints = false
     pageHost.addSubview(page)
+    // 内容列固定 640pt 上限：窗口再宽也不让一行文字横跨到远端的开关。
+    let preferredWidth = page.widthAnchor.constraint(equalToConstant: settingsContentWidth)
+    preferredWidth.priority = .defaultHigh
     activePageConstraints = [
       page.leadingAnchor.constraint(equalTo: pageHost.leadingAnchor, constant: 28),
-      page.trailingAnchor.constraint(equalTo: pageHost.trailingAnchor, constant: -28),
+      page.trailingAnchor.constraint(lessThanOrEqualTo: pageHost.trailingAnchor, constant: -28),
+      preferredWidth,
       page.topAnchor.constraint(equalTo: pageHost.topAnchor, constant: 22),
       page.bottomAnchor.constraint(equalTo: pageHost.bottomAnchor, constant: -22),
     ]
@@ -257,7 +299,9 @@ final class DuoSettingsWindow: NSWindowController, NSWindowDelegate {
         ? NSColor.controlAccentColor.withAlphaComponent(0.14).cgColor
         : NSColor.clear.cgColor
     }
-    if section != .effects {
+    if section == .effects {
+      previewChanged()
+    } else {
       stopLive()
       live.state = .off
     }
@@ -347,24 +391,12 @@ final class DuoSettingsWindow: NSWindowController, NSWindowDelegate {
     return header
   }
 
-  private func makeSectionLabel(_ title: String, symbolName: String? = nil) -> NSView {
+  private func makeSectionLabel(_ title: String) -> NSView {
+    // 分组标题只有文字：图标在这个层级不传递信息，只增加噪声。
     let label = NSTextField(labelWithString: title)
     label.font = .systemFont(ofSize: 12, weight: .semibold)
     label.textColor = .secondaryLabelColor
-    guard let symbolName,
-          let image = NSImage(systemSymbolName: symbolName, accessibilityDescription: title)
-    else { return label }
-    let icon = NSImageView()
-    icon.image = image.withSymbolConfiguration(.init(pointSize: 12, weight: .medium))
-    icon.contentTintColor = .tertiaryLabelColor
-    icon.imageScaling = .scaleProportionallyDown
-    icon.widthAnchor.constraint(equalToConstant: 16).isActive = true
-    icon.heightAnchor.constraint(equalToConstant: 16).isActive = true
-    let group = NSStackView(views: [icon, label])
-    group.orientation = .horizontal
-    group.alignment = .centerY
-    group.spacing = 6
-    return group
+    return label
   }
 
   private func makeTextLinkButton(title: String, action: Selector, help: String) -> NSButton {
@@ -387,19 +419,8 @@ final class DuoSettingsWindow: NSWindowController, NSWindowDelegate {
   }
 
   private func makeSettingsCard(_ rows: [NSView]) -> NSView {
-    let card = NSVisualEffectView()
-    card.material = .contentBackground
-    card.blendingMode = .withinWindow
-    card.state = .active
+    let card = SettingsGroupBox()
     card.wantsLayer = true
-    card.layer?.cornerRadius = 12
-    card.layer?.borderWidth = 0.5
-    card.layer?.borderColor = NSColor.separatorColor.withAlphaComponent(0.35).cgColor
-    card.layer?.backgroundColor = NSColor.clear.cgColor
-    card.layer?.shadowColor = NSColor.black.cgColor
-    card.layer?.shadowOpacity = 0.035
-    card.layer?.shadowRadius = 7
-    card.layer?.shadowOffset = CGSize(width: 0, height: 1)
     card.translatesAutoresizingMaskIntoConstraints = false
 
     let inner = NSStackView()
@@ -420,7 +441,8 @@ final class DuoSettingsWindow: NSWindowController, NSWindowDelegate {
         let separator = NSBox()
         separator.boxType = .separator
         inner.addArrangedSubview(separator)
-        separator.widthAnchor.constraint(equalTo: inner.widthAnchor).isActive = true
+        // 左端缩进到文字起点，右端铺到盒子边缘——macOS 分组盒的分隔线就是这样。
+        separator.widthAnchor.constraint(equalTo: card.widthAnchor, constant: -16).isActive = true
       }
       inner.addArrangedSubview(row)
       row.widthAnchor.constraint(equalTo: inner.widthAnchor).isActive = true
@@ -557,7 +579,7 @@ final class DuoSettingsWindow: NSWindowController, NSWindowDelegate {
     statusCard.widthAnchor.constraint(equalTo: stack.widthAnchor).isActive = true
     stack.setCustomSpacing(18, after: statusCard)
 
-    let automaticSection = makeSectionLabel("自动效果", symbolName: "wand.and.stars")
+    let automaticSection = makeSectionLabel("自动效果")
     stack.addArrangedSubview(automaticSection)
     stack.setCustomSpacing(6, after: automaticSection)
     let automatic = makeSettingsCard([
@@ -570,7 +592,7 @@ final class DuoSettingsWindow: NSWindowController, NSWindowDelegate {
     automatic.widthAnchor.constraint(equalTo: stack.widthAnchor).isActive = true
     stack.setCustomSpacing(18, after: automatic)
 
-    let experimentalSection = makeSectionLabel("实验性", symbolName: "gyroscope")
+    let experimentalSection = makeSectionLabel("实验性")
     stack.addArrangedSubview(experimentalSection)
     stack.setCustomSpacing(6, after: experimentalSection)
     let experimental = makeSettingsCard([
@@ -584,7 +606,7 @@ final class DuoSettingsWindow: NSWindowController, NSWindowDelegate {
     experimental.widthAnchor.constraint(equalTo: stack.widthAnchor).isActive = true
     stack.setCustomSpacing(18, after: experimental)
 
-    let previewSection = makeSectionLabel("预览", symbolName: "rectangle.on.rectangle")
+    let previewSection = makeSectionLabel("预览")
     stack.addArrangedSubview(previewSection)
     stack.setCustomSpacing(6, after: previewSection)
     let rendererView: NSView?
@@ -594,6 +616,10 @@ final class DuoSettingsWindow: NSWindowController, NSWindowDelegate {
       try renderer.setImage(Self.artwork())
       renderer.view.translatesAutoresizingMaskIntoConstraints = false
       renderer.view.heightAnchor.constraint(equalToConstant: 180).isActive = true
+      renderer.view.postsFrameChangedNotifications = true
+      NotificationCenter.default.addObserver(
+        self, selector: #selector(previewViewFrameChanged),
+        name: NSView.frameDidChangeNotification, object: renderer.view)
       rendererView = renderer.view
     } catch {
       captureMessage = "预览不可用：\(error.localizedDescription)"
@@ -684,7 +710,7 @@ final class DuoSettingsWindow: NSWindowController, NSWindowDelegate {
     stack.addArrangedSubview(header)
     stack.setCustomSpacing(16, after: header)
 
-    let triggerSection = makeSectionLabel("触发", symbolName: "sensor.tag.radiowaves.forward")
+    let triggerSection = makeSectionLabel("触发")
     stack.addArrangedSubview(triggerSection)
     stack.setCustomSpacing(6, after: triggerSection)
     trigger.target = self
@@ -732,7 +758,7 @@ final class DuoSettingsWindow: NSWindowController, NSWindowDelegate {
     triggerCard.widthAnchor.constraint(equalTo: stack.widthAnchor).isActive = true
     stack.setCustomSpacing(18, after: triggerCard)
 
-    let actionSection = makeSectionLabel("操作", symbolName: "wrench.and.screwdriver")
+    let actionSection = makeSectionLabel("操作")
     stack.addArrangedSubview(actionSection)
     stack.setCustomSpacing(6, after: actionSection)
     calibration.target = self
@@ -788,7 +814,7 @@ final class DuoSettingsWindow: NSWindowController, NSWindowDelegate {
     infoRow.heightAnchor.constraint(greaterThanOrEqualToConstant: 38).isActive = true
     logPath.heightAnchor.constraint(greaterThanOrEqualToConstant: 30).isActive = true
     let infoCard = makeSettingsCard([infoRow, logPath])
-    let infoSection = makeSectionLabel("辅助功能与日志", symbolName: "accessibility")
+    let infoSection = makeSectionLabel("辅助功能与日志")
     stack.addArrangedSubview(infoSection)
     stack.setCustomSpacing(6, after: infoSection)
     stack.addArrangedSubview(infoCard)
@@ -935,6 +961,7 @@ final class DuoSettingsWindow: NSWindowController, NSWindowDelegate {
             display: display, excludingApplications: [own], exceptingWindows: []),
           size: CGSize(width: width, height: width * display.height / max(1, display.width)),
           color: EffectColorSpace.display(screenForDisplayID(display.displayID)))
+        startPreviewClock()
         guard epoch.accepts(token), !Task.isCancelled, let frame = await capture.waitForFrame()
         else {
           capture.stop()
@@ -944,6 +971,7 @@ final class DuoSettingsWindow: NSWindowController, NSWindowDelegate {
         renderer?.render()
       } catch {
         capture.stop()
+        stopPreviewClock()
         if epoch.accepts(token) {
           live.state = .off
           captureMessage = "实时预览不可用：\(error.localizedDescription)"
@@ -954,6 +982,7 @@ final class DuoSettingsWindow: NSWindowController, NSWindowDelegate {
   }
 
   private func stopLive() {
+    stopPreviewClock()
     _ = epoch.advance()
     captureTask?.cancel()
     captureTask = nil
@@ -993,7 +1022,10 @@ final class DuoSettingsWindow: NSWindowController, NSWindowDelegate {
 
   func windowWillClose(_ notification: Notification) {
     stopLive()
+    NotificationCenter.default.removeObserver(
+      self, name: NSView.frameDidChangeNotification, object: nil)
     clock.stop()
+    previewClockRunning = false
     clock.tick = nil
     renderer?.clear()
     renderer = nil
@@ -1002,6 +1034,8 @@ final class DuoSettingsWindow: NSWindowController, NSWindowDelegate {
   }
 
   deinit {
+    NotificationCenter.default.removeObserver(
+      self, name: NSView.frameDidChangeNotification, object: nil)
     clock.stop()
     captureTask?.cancel()
     source?.stop()
