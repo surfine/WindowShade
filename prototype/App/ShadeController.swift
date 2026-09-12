@@ -166,12 +166,14 @@ extension AppDelegate {
     }
     func shade(_ win: AXUIElement, _ id: CGWindowID,
                        options: ShadeInvocationOptions? = nil, bypassDuo: Bool = false,
-                       preparedImage: CGImage? = nil) {
+                       preparedImage: CGImage? = nil, trustElement: Bool = false) {
         MainThreadActivity.push("fold: 折叠窗口")
         defer { MainThreadActivity.pop() }
         let memoScope = beginAppWindowsMemo()
         defer { endAppWindowsMemo(memoScope) }
-        let win = foldPhase("元素刷新") { refreshedWindowElement(id: id, fallback: win) }
+        let win = foldPhase("元素刷新") {
+            refreshedWindowElement(id: id, fallback: win, trustFallback: trustElement)
+        }
         if !bypassDuo, duoController.windowEffects.interceptFold(win, id: id, options: options) { return }
         // 状态机防护：折叠中/已折叠/展开中的窗口再次触发折叠一律忽略，
         // 避免状态损坏（与 shadeOperationIDs 在途去重互为冗余）。

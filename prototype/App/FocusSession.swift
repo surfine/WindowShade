@@ -433,7 +433,9 @@ extension AppDelegate {
 
         func foldOne(_ item: (pid: pid_t, win: AXUIElement, id: CGWindowID)) {
             let beforeIDs = Set(shaded.keys)
-            shade(item.win, item.id, options: focusShadeOptions, preparedImage: previews[item.id])
+            // 元素是几毫秒前在并发发现阶段刚枚举出来的，不必再整 App 枚举一遍。
+            shade(item.win, item.id, options: focusShadeOptions,
+                  preparedImage: previews[item.id], trustElement: true)
             guard !beforeIDs.contains(item.id),
                   let state = shaded[item.id],
                   let overlay = state.overlay else { return }
