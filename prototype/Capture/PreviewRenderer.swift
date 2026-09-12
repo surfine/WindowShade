@@ -591,6 +591,14 @@ func downsampleCGImage(_ image: CGImage, maxPixelSize: CGSize) -> CGImage? {
 
 func quickWindowPreviewImage(id: CGWindowID, logicalSize: CGSize,
                              maxPixelSize: CGSize = hoverPreviewMaxPixelSize) -> NSImage? {
+    quickWindowPreviewCGImage(id: id, maxPixelSize: maxPixelSize)
+        .map { NSImage(cgImage: $0, size: logicalSize) }
+}
+
+// 只到 CGImage 为止：CGWindowListCreateImage 与降采样都只碰 CoreGraphics，可在
+// 任意线程调用；包装成 NSImage 的那一步留给主线程的调用方。
+func quickWindowPreviewCGImage(id: CGWindowID,
+                               maxPixelSize: CGSize = hoverPreviewMaxPixelSize) -> CGImage? {
     let options: CGWindowImageOption = [.boundsIgnoreFraming, .bestResolution]
     typealias CreateImage = @convention(c) (CGRect, CGWindowListOption, CGWindowID, CGWindowImageOption) -> Unmanaged<CGImage>?
     struct Loader {
@@ -603,8 +611,7 @@ func quickWindowPreviewImage(id: CGWindowID, logicalSize: CGSize,
     guard let createImage = Loader.createImage else { return nil }
     guard let unmanaged = createImage(.null, .optionIncludingWindow, id, options) else { return nil }
     let raw = unmanaged.takeRetainedValue()
-    let image = downsampleCGImage(raw, maxPixelSize: maxPixelSize) ?? raw
-    return NSImage(cgImage: image, size: logicalSize)
+    return downsampleCGImage(raw, maxPixelSize: maxPixelSize) ?? raw
 }
 
 // 截图后的标题栏条制备结果：像素分析全部在后台完成，主线程只消费这些值。

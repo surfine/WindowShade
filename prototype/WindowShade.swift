@@ -752,6 +752,28 @@ func concurrentAppWindows(_ pids: [pid_t]) -> [[AXUIElement]] {
     return discovered
 }
 
+// 并发预备快速预览图。CGWindowListCreateImage 每个窗口约 60ms，串行折叠时它是
+// 主线程上最大的一块；各窗口之间彼此无关。返回 CGImage 而非 NSImage，包装留给
+// 主线程的 shade()。
+func concurrentQuickPreviews(_ ids: [CGWindowID]) -> [CGWindowID: CGImage] {
+    guard ids.count > 1 else {
+        return ids.reduce(into: [:]) { $0[$1] = quickWindowPreviewCGImage(id: $1) }
+    }
+    var images = [CGImage?](repeating: nil, count: ids.count)
+    let lock = NSLock()
+    DispatchQueue.concurrentPerform(iterations: ids.count) { index in
+        guard let image = quickWindowPreviewCGImage(id: ids[index]) else { return }
+        lock.lock()
+        images[index] = image
+        lock.unlock()
+    }
+    var result: [CGWindowID: CGImage] = [:]
+    for (index, id) in ids.enumerated() where images[index] != nil {
+        result[id] = images[index]
+    }
+    return result
+}
+
 func runningApp(pid: pid_t) -> NSRunningApplication? {
     NSRunningApplication(processIdentifier: pid)
 }
