@@ -1199,11 +1199,47 @@ actor SingleResumeGuard {
     }
 }
 
+// 主线程正在做什么。卡顿哨兵只能在阻塞结束之后才拿到控制权，光报时长无法定位；
+// 记下当前活动之后，「stall ≈1054ms」就变成「stall ≈1054ms 期间=duo: desktop show」。
+// 只在主线程记账，因此不需要加锁。
+enum MainThreadActivity {
+    private static var stack: [String] = []
+    private static var lastFinished: (label: String, endedAt: CFAbsoluteTime)?
+
+    static func push(_ label: String) {
+        guard Thread.isMainThread else { return }
+        stack.append(label)
+    }
+
+    static func pop() {
+        guard Thread.isMainThread, let label = stack.popLast() else { return }
+        lastFinished = (label, CFAbsoluteTimeGetCurrent())
+    }
+
+    /// 仍在栈上的活动优先；否则看刚刚在这段卡顿窗口里结束的那一个——
+    /// 阻塞结束触发的 pop 必然落在窗口内，正是我们要找的那次调用。
+    static func attribution(since: CFAbsoluteTime) -> String {
+        if let active = stack.first { return active }
+        if let done = lastFinished, done.endedAt >= since { return done.label }
+        return "未标记"
+    }
+}
+
+/// 给主线程上那些自己不打日志的同步段落加标记，只为卡顿归因，不产生日志。
+@discardableResult
+func marking<T>(_ label: String, _ body: () throws -> T) rethrows -> T {
+    MainThreadActivity.push(label)
+    defer { MainThreadActivity.pop() }
+    return try body()
+}
+
 // 包裹疑似昂贵的同步块；超过阈值才记日志，避免刷屏。
 @discardableResult
 func logIfSlow<T>(_ label: String, threshold: TimeInterval = 0.05, _ body: () -> T) -> T {
     let start = CFAbsoluteTimeGetCurrent()
+    MainThreadActivity.push(label)
     let result = body()
+    MainThreadActivity.pop()
     let elapsed = CFAbsoluteTimeGetCurrent() - start
     if elapsed >= threshold {
         wlog("slow: \(label) took \(Int(elapsed * 1000))ms")
@@ -1233,7 +1269,8 @@ final class MainThreadStallSentinel {
             // 必然不是 afterWaiting；反之，以 afterWaiting 结束的长间隔一律是休眠唤醒
             // （即使因回调时序没先看到 beforeWaiting），不是卡顿，不报告。
             if !self.wasWaiting, activity != .afterWaiting, now - self.lastActivityAt > 0.5 {
-                wlog("main-thread stall ≈\(Int((now - self.lastActivityAt) * 1000))ms")
+                let blame = MainThreadActivity.attribution(since: self.lastActivityAt)
+                wlog("main-thread stall ≈\(Int((now - self.lastActivityAt) * 1000))ms 期间=\(blame)")
             }
             self.lastActivityAt = now
             self.wasWaiting = activity == .beforeWaiting

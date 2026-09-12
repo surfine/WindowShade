@@ -217,7 +217,9 @@ final class DuoController: NSObject {
           let display = content.displays.first(where: { CGDisplayIsBuiltin($0.displayID) != 0 }),
           let screen = screenForDisplayID(display.displayID)
         else { return }
-        let effect = try EffectSession(frame: screen.frame, desktop: true)
+        let effect = try marking("duo: 创建桌面会话") {
+          try EffectSession(frame: screen.frame, desktop: true)
+        }
         effect.panel.alphaValue = 0
         session = effect
         // Allocate the window number before enumeration; otherwise SCK cannot exclude it.
@@ -263,7 +265,7 @@ final class DuoController: NSObject {
           self?.suppressed = true
           self?.stopDesktop()
         }
-        effect.show()
+        marking("duo: 显示桌面会话") { effect.show() }
       } catch {
         session?.stop()
         if self.epoch.accepts(token) {
