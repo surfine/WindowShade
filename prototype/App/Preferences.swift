@@ -187,17 +187,6 @@ extension AppDelegate {
         ])
         stack.addArrangedSubview(sound)
         sound.widthAnchor.constraint(equalTo: stack.widthAnchor).isActive = true
-        stack.setCustomSpacing(18, after: stack.arrangedSubviews.last!)
-
-        stack.addArrangedSubview(makePrefGroupLabel("实验性"))
-        let experimental = makeUnifiedSettingsCard([
-            makeUnifiedToggleRow(
-                name: "快速隐藏",
-                subtitle: "折叠时直接让窗口透明，不等 App 自己隐藏。更快，但部分 App 无效",
-                isOn: fastHideEnabled, action: #selector(prefToggleFastHide(_:))),
-        ])
-        stack.addArrangedSubview(experimental)
-        experimental.widthAnchor.constraint(equalTo: stack.widthAnchor).isActive = true
         return root
     }
 
@@ -573,12 +562,6 @@ extension AppDelegate {
     @objc func prefToggleTitlebarDoubleClick(_ sender: NSSwitch) {
         titlebarDoubleClickEnabled = sender.state == .on
         UserDefaults.standard.set(titlebarDoubleClickEnabled, forKey: shadeTitlebarDoubleClickDefaultsKey)
-        rebuildMenu()
-    }
-
-    @objc func prefToggleFastHide(_ sender: NSSwitch) {
-        fastHideEnabled = sender.state == .on
-        UserDefaults.standard.set(fastHideEnabled, forKey: shadeFastHideDefaultsKey)
         rebuildMenu()
     }
 
