@@ -25,6 +25,8 @@ extension AppDelegate {
     wlog("status item visible=\(statusItem.isVisible)")
   }
   func rebuildMenu() {
+    MainThreadActivity.push("menu: 重建")
+    defer { MainThreadActivity.pop() }
     if suppressMenuRebuilds {
       pendingMenuRebuild = true
       return
