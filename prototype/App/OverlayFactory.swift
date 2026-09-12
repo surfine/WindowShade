@@ -147,8 +147,12 @@ extension AppDelegate {
         if trafficLights.minimizeVisible { style.insert(.miniaturizable) }
         if canResize || effectiveWindowManagement.isEnabled || trafficLights.zoomVisible { style.insert(.resizable) }
         let contentRect = NSWindow.contentRect(forFrameRect: frame, styleMask: style)
-        let overlay = NativeProxyOverlayWindow(contentRect: contentRect, styleMask: style,
-                                               backing: .buffered, defer: false)
+        // 拆开量：NSWindow 本体创建（titled + 红绿灯是 AppKit 最贵的窗口类型）
+        // 与之后的属性配置。只有前者占大头，池化才值得冒重置漏项的风险。
+        let overlay = foldPhase("└ NSWindow 创建") {
+            NativeProxyOverlayWindow(contentRect: contentRect, styleMask: style,
+                                     backing: .buffered, defer: false)
+        }
         overlay.delegate = overlay
         overlay.fixedTitlebarHeight = frame.height
         overlay.allowsHorizontalResize = canResize
