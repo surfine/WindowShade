@@ -32,6 +32,12 @@ if let index = CommandLine.arguments.firstIndex(of: "--duo-soak-test") {
     withExtendedLifetime(probe) { app.run() }
     exit(0)
 }
+if CommandLine.arguments.contains("--duo-ax-bench") {
+    app.setActivationPolicy(.accessory)
+    DispatchQueue.main.async { MainActor.assumeIsolated { AXLatencyBench.run() } }
+    app.run()
+    exit(0)
+}
 if CommandLine.arguments.contains("--duo-render-test") {
     app.setActivationPolicy(.accessory)
     let output = URL(fileURLWithPath: FileManager.default.currentDirectoryPath).appendingPathComponent(".build/duo-tests/render")
