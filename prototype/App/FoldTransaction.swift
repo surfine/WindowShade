@@ -666,6 +666,12 @@ extension AppDelegate {
     }
 
     func resolvedWindowElement(for state: ShadeState) -> AXUIElement {
+        // 先问原元素还指不指向同一个窗口。这一步通常命中窗口列表缓存，比把目标
+        // App 的窗口全枚举一遍便宜一个数量级——而恢复阶梯的每一档、每个窗口都要
+        // 走一次这里。元素真的失效时（App 在 unhide 后重建了 AX 元素）返回 nil
+        // 或别的 id，照样落到下面的枚举兜底，行为不变。
+        if windowID(of: state.element) == state.sourceWindowID { return state.element }
+
         let windows = appWindows(pid: state.pid)
         guard !windows.isEmpty else { return state.element }
 
@@ -681,13 +687,24 @@ extension AppDelegate {
     // 任何判断），而重试阶梯的中间几档每个窗口都要付一次——批量恢复 15 个窗口时
     // 就是上百次纯日志用途的 IPC。首档与末档仍然回读，"App 自己把窗口挪回去了"
     // 这类问题照样看得见；AX 报错时无条件回读。
+    // element 非空时直接复用上一档解析好的元素：同一个窗口在阶梯的四档之间不会
+    // 变，而重新解析要么是一次整 App 枚举、要么是四次 AX 读。元素真的失效了
+    // （App 在 unhide 后重建了 AX 元素，正是这条阶梯存在的理由）写入会失败，
+    // 那时再解析一次重写，结果与每档都重新解析一致。
+    @discardableResult
     func applyRestoredGeometry(_ state: ShadeState, to pos: CGPoint,
                                        label: String, reason: String,
-                                       verify: Bool = true) -> AXUIElement {
-        let win = resolvedWindowElement(for: state)
+                                       verify: Bool = true,
+                                       element: AXUIElement? = nil) -> AXUIElement {
+        var win = element ?? resolvedWindowElement(for: state)
         let safePos = safeRestorePosition(for: state, desired: pos)
-        let sizeErr = setAXSize(win, state.originalSize)
-        let posErr = setAXPositionReturningError(win, safePos)
+        var sizeErr = setAXSize(win, state.originalSize)
+        var posErr = setAXPositionReturningError(win, safePos)
+        if element != nil, sizeErr != .success || posErr != .success {
+            win = resolvedWindowElement(for: state)
+            sizeErr = setAXSize(win, state.originalSize)
+            posErr = setAXPositionReturningError(win, safePos)
+        }
         let failed = sizeErr != .success || posErr != .success
         let actual: String
         if verify || failed {
@@ -759,11 +776,14 @@ extension AppDelegate {
 
         // 前几次尝试只校正几何，最后一次才 raise+focus：旧实现每次尝试都重新
         // 激活/聚焦，restoreAll 批量展开时会造成焦点连环跳（每次 3~4 次 focus）。
+        var resolvedElement: AXUIElement?
         func attempt(_ label: String, focus: Bool, verify: Bool = true) {
             guard restorePinTokens[id] == token else { return }
             let win = marking("restore: 几何校正") {
-                applyRestoredGeometry(state, to: pos, label: label, reason: reason, verify: verify)
+                applyRestoredGeometry(state, to: pos, label: label, reason: reason,
+                                      verify: verify, element: resolvedElement)
             }
+            resolvedElement = win
             if focus {
                 raiseAXWindow(win)
                 focusAXWindow(win, pid: state.pid)
