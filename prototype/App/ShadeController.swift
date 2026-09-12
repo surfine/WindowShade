@@ -252,18 +252,23 @@ extension AppDelegate {
             // 可能让窗口长期不可见的动作。若进程在 hideWindow 中途被杀，重启后
             // rescue 仍能按 intent 找回窗口；隐藏成功验证后由 recordShadeJournal
             // 把同一条 entry 更新为 folded（或按最终隐藏方式清掉）。
-            guard recordShadeRecoveryIntent(id: id, pid: pid, bundleID: bundleID,
-                                      appName: appName, title: title,
-                                      originalPosition: pos, originalSize: size,
-                                      sourceDisplayID: sourceDisplayID,
-                                      sourceSpaceID: sourceSpaceID) else {
+            let intentWritten = foldPhase("恢复意图落盘") {
+                recordShadeRecoveryIntent(id: id, pid: pid, bundleID: bundleID,
+                                          appName: appName, title: title,
+                                          originalPosition: pos, originalSize: size,
+                                          sourceDisplayID: sourceDisplayID,
+                                          sourceSpaceID: sourceSpaceID)
+            }
+            guard intentWritten else {
                 dismissOverlay(overlay)
                 transitionOperationState(id: id, to: .failed, reason: "recovery-intent-write-failed")
                 quietNotice("无法保存恢复记录，窗口未折叠", log: "shade: refusing hide without durable intent id=\(id)")
                 return
             }
-            let hide = hideWindow(win, pid: pid, originalPosition: pos, size: size,
-                                  policy: policy, appHideSafe: appHideSafe)
+            let hide = foldPhase("隐藏窗口") {
+                hideWindow(win, pid: pid, originalPosition: pos, size: size,
+                                      policy: policy, appHideSafe: appHideSafe)
+            }
             // minimize / app-hide 的状态读回是异步的（最小化动画进行中 kAXMinimized
             // 尚未翻转、NSRunningApplication.isHidden 缓存滞后），立即验证会产生假阴性。
             // 立即通过 → 立即 reveal；否则延迟验证（+0.15/+0.45s），通过后才 reveal，

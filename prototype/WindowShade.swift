@@ -595,6 +595,35 @@ final class ChromeProfileCache {
 
     // 双击判定只需要标题栏命中高度：profile 新鲜时直接返回，第二次点击不必再
     // 付一次完整的 chrome 解析。
+    // 并发预热。外框解析全是只读 AX 调用（工具栏探测、红绿灯几何、标题栏高度），
+    // 各窗口之间互不相干，实测每个窗口约 70ms、批量折叠时是最大的一块。
+    // 先在后台并发把 profile 算好，再回到主线程一次性写入——entries 本身没有锁，
+    // 仍然保持只在主线程读写这一点不变。
+    func prewarm(
+        _ requests: [(id: CGWindowID, win: AXUIElement, pos: CGPoint,
+                      size: CGSize, pid: pid_t, title: String)]
+    ) {
+        guard requests.count > 1 else { return }
+        var resolved = [WindowChromeProfile?](repeating: nil, count: requests.count)
+        let lock = NSLock()
+        DispatchQueue.concurrentPerform(iterations: requests.count) { index in
+            let request = requests[index]
+            let profile = resolveWindowChromeProfileUncached(
+                win: request.win, id: request.id, pos: request.pos,
+                size: request.size, pid: request.pid, title: request.title)
+            lock.lock()
+            resolved[index] = profile
+            lock.unlock()
+        }
+        let now = CFAbsoluteTimeGetCurrent()
+        for (index, request) in requests.enumerated() {
+            guard let profile = resolved[index] else { continue }
+            entries[request.id] = Entry(element: request.win, profile: profile,
+                                        size: request.size, resolvedAt: now)
+        }
+        pruneIfNeeded()
+    }
+
     func cachedHitBarHeight(id: CGWindowID, win: AXUIElement, size: CGSize) -> CGFloat? {
         guard let entry = entries[id], isFresh(entry, id: id, win: win, size: size) else { return nil }
         return entry.profile.hitBarHeight
