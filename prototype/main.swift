@@ -47,6 +47,18 @@ if CommandLine.arguments.contains("--duo-render-test") {
     exit(0)
 }
 let delegate = AppDelegate()
+// Isolated visual QA: builds real settings views without sensors, event taps,
+// window recovery, or changes to the user's saved effect preferences.
+if CommandLine.arguments.contains("--duo-design-preview") {
+    app.setActivationPolicy(.regular)
+    delegate.duoController.persistsSettings = false
+    delegate.duoController.owner = delegate
+    delegate.duoController.isDesignPreview = true
+    let preview = SettingsDesignPreview(owner: delegate)
+    DispatchQueue.main.async { preview.show() }
+    withExtendedLifetime((delegate, preview)) { app.run() }
+    exit(0)
+}
 if CommandLine.arguments.contains("--duo-trial") {
     delegate.duoController.persistsSettings = false
     delegate.duoController.settings.windowsEnabled = true

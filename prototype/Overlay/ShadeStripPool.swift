@@ -17,12 +17,14 @@ final class ShadeStripPool {
         dispatchPrecondition(condition: .onQueue(.main))
         guard !available.isEmpty else { return nil }
         let window = available.removeLast()
+        PaperSurfaceStyle.removeShadow(from: window)
         window.contentView = nil
         return window
     }
 
     func recycle(_ window: OverlayWindow) {
         dispatchPrecondition(condition: .onQueue(.main))
+        PaperSurfaceStyle.removeShadow(from: window)
         window.contentView = nil
         if available.count < maxPooled {
             available.append(window)

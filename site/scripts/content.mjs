@@ -1,0 +1,80 @@
+export const copy = {
+  zh: {
+    lang: 'zh-CN', path: '/', title: 'WindowShade · 给桌面，留一点余地。',
+    description: '把 Mac 窗口像卷帘一样原地收起。双击回来，资料置顶，让桌面随合盖轻轻变化。免费、开源的 macOS 窗口小工具。',
+    nav: ['体验', '动态效果', '常见问题'], download: '下载 Mac 版', source: '源代码',
+    language: 'EN', languageHref: '/en/', theme: '切换浅色或深色外观',
+    eyebrow: '为你的 Mac，留一点巧思。', hero: '给桌面，<br>留一点余地。',
+    intro: '挡住思路的窗口，轻轻收起。<br>位置还在，需要时，双击就回来。', try: '亲手试一下',
+    facts: ['macOS 14+ · Apple Silicon', '免费使用 · MIT 开源', '原生 Swift / AppKit'],
+    demoTitle: '暂时让开。<br>随时回来。', demoBody: '查资料、写东西、来回对照。窗口可以暂时让出空间，不必打乱你放好的位置。',
+    demoModes: ['窗口卷帘', '置顶预览'], demoCaption: '网页交互示意。试着双击「参考笔记」的标题栏。',
+    fold: '收起窗口', unfold: '展开窗口', pin: '置顶预览', unpin: '取消置顶',
+    noteTitle: '参考笔记', noteHeading: '把注意力<br>留给眼前。', noteBody: '好用的工具，懂得什么时候退到一旁。', noteFooter: '想法还在。稍后继续。',
+    draftTitle: '正在写的那一页', draftHeading: '让思路，接着走。', draftText: '留一点空白，下一句话就有了位置。',
+    foldedStatus: '窗口已收起，标题与位置保留。', expandedStatus: '窗口已在原位展开。', pinnedStatus: '参考笔记已变为置顶预览示意。',
+    featureTitle: '少一点遮挡。<br>多一点顺手。',
+    features: [
+      ['原地收起', '双击标题栏，把窗口收成一条。再双击，接着刚才的事。', '⌃ ⌘ C'],
+      ['资料总在眼前', '把参考窗口变成实时置顶预览，写作、对照时少切换几次。', '⌃ ⌘ P'],
+      ['收好，也排好', '把卷帘条整理到一起，桌面上的事情，更容易一眼找到。', '⌃ ⌘ 0']
+    ],
+    motionTitle: '合上 Mac。<br>桌面也轻轻谢幕。', motionBody: '画面随屏幕开合卷起、后退、模糊。再打开，一切回到原样。给每天熟悉的动作，一点新的触感。',
+    play: '播放效果实录', pause: '暂停效果实录', videoCaption: 'WindowShade 效果录屏 · 需要带铰链角度传感器的 Apple Silicon MacBook。',
+    settingsTitle: '刚刚好的效果。<br>由你拿捏。', settingsBody: '轻柔、标准、磨砂，三种质感。调好触发角度，或拖动预览进度，找到喜欢的分寸。',
+    settingsCaption: '原生设置界面 · v1.0.11，跟随系统明暗外观。',
+    trustTitle: '一个小工具，<br>安心待在你的 Mac。',
+    trust: [['只在本机处理', '窗口画面留在你的 Mac，不上传到云端。'], ['安静待在菜单栏', '需要时找到它，平时把空间留给正在做的事。'], ['免费，也开放', 'MIT 许可。你可以查看源码、提出问题，也可以一起改进。']],
+    faqTitle: '下载前，你可能想知道。',
+    faqs: [
+      ['我的 Mac 能用吗？', '下载包需要 macOS 14 或更新版本与 Apple Silicon，不包含 Intel 二进制。窗口卷帘与置顶预览不依赖铰链传感器；随合盖变化的动态效果需要带铰链角度传感器的 Apple Silicon MacBook。不同功能的要求不同。'],
+      ['需要哪些权限？', '辅助功能用于寻找、移动和恢复窗口；屏幕录制用于原貌卷帘、窗口预览和动态效果。画面只在本机处理。macOS 的“屏幕录制”是这项系统权限的名称，不代表画面会被上传。'],
+      ['收起来以后，怎么找回来？', '双击卷帘条即可展开，也可以从菜单栏选择窗口，或用 Control + Command + 1…9 按菜单顺序展开。单击卷帘条可以预览内容。'],
+      ['所有窗口都支持吗？', '适用于大多数普通桌面窗口。全屏、Split View、Stage Manager、多显示器及部分自绘窗口仍可能有兼容限制，建议先在自己的常用应用中试用。'],
+      ['如何安装？', '点击“下载 Mac 版”进入 GitHub Releases，下载最新 ZIP，解压后把 WindowShade.app 拖到“应用程序”，再打开并按提示授予所需权限。首次打开若被系统拦截，可在“系统设置 → 隐私与安全性”查看提示。'],
+      ['要付费或订阅吗？', '不需要。WindowShade 以 MIT 许可免费开源，下载和使用无需订阅。']
+    ],
+    endTitle: '东西都在。<br>桌面，松了一口气。', endBody: '给你熟悉的 Mac，加一个顺手的小动作。',
+    footer: '一个原生 macOS 小工具。', release: '更新记录', issue: '反馈问题', privacy: '权限与隐私',
+    notFound: '这一页，暂时不在这里。', home: '回到首页', skip: '跳到主要内容'
+  },
+  en: {
+    lang: 'en', path: '/en/', title: 'WindowShade · A little room to think.',
+    description: 'Roll Mac windows up in place. Bring them back with a double-click, keep references on top, and add a little motion to your lid. Free and open source.',
+    nav: ['Try it', 'In motion', 'Questions'], download: 'Download for Mac', source: 'Source code',
+    language: '中文', languageHref: '/', theme: 'Switch light or dark appearance',
+    eyebrow: 'A little thoughtfulness for your Mac.', hero: 'A little room<br>to think.',
+    intro: 'Roll a window up. Keep its place.<br>Double-click to pick up where you left off.', try: 'Try it here',
+    facts: ['macOS 14+ · Apple Silicon', 'Free to use · MIT licensed', 'Native Swift / AppKit'],
+    demoTitle: 'Out of the way.<br>Right where you left it.', demoBody: 'Read, write, compare. Give yourself a little room without rearranging everything around you.',
+    demoModes: ['Window shade', 'Pinned preview'], demoCaption: 'Interactive illustration. Try double-clicking the Reference notes title bar.',
+    fold: 'Roll up window', unfold: 'Unroll window', pin: 'Pin preview', unpin: 'Unpin preview',
+    noteTitle: 'Reference notes', noteHeading: 'Keep your focus<br>close at hand.', noteBody: 'A good tool knows when to step aside.', noteFooter: 'The thought is still here. Come back to it.',
+    draftTitle: 'The page you are writing', draftHeading: 'Keep the thought going.', draftText: 'A little space for the next sentence.',
+    foldedStatus: 'Window rolled up. Its title and position are preserved.', expandedStatus: 'Window restored in place.', pinnedStatus: 'Reference notes shown as a pinned preview illustration.',
+    featureTitle: 'Less in the way.<br>More within reach.',
+    features: [
+      ['Roll it up', 'Double-click a title bar to tuck the window away. Double-click again to carry on.', '⌃ ⌘ C'],
+      ['Keep it in sight', 'Turn a reference window into a live preview that stays on top while you work.', '⌃ ⌘ P'],
+      ['Give it a place', 'Arrange your rolled-up windows together, ready to find at a glance.', '⌃ ⌘ 0']
+    ],
+    motionTitle: 'Close your Mac.<br>A softer curtain call.', motionBody: 'Your desktop folds, recedes, and softens as the lid comes down. Open it, and everything returns. A familiar gesture with a little more feeling.',
+    play: 'Play effect recording', pause: 'Pause effect recording', videoCaption: 'WindowShade screen recording · Requires an Apple silicon MacBook with a lid angle sensor.',
+    settingsTitle: 'Just the right feeling.<br>Make it yours.', settingsBody: 'Silk, Standard, or Frost. Set the trigger angle or scrub through the preview to find the touch you like.',
+    settingsCaption: 'Native settings · v1.0.11, in the system’s light or dark appearance.',
+    trustTitle: 'A small utility.<br>At home on your Mac.',
+    trust: [['Processed on your Mac', 'Window contents stay on your Mac. They are not uploaded to the cloud.'], ['Quietly in the menu bar', 'There when you need it, leaving room for whatever you are doing.'], ['Free and open', 'MIT licensed. Read the source, report an issue, or help make it better.']],
+    faqTitle: 'A few things before you download.',
+    faqs: [
+      ['Will it work on my Mac?', 'The download requires macOS 14 or later and Apple Silicon; an Intel binary is not included. Window shading and pinned previews do not require a lid sensor. Lid-driven effects require an Apple silicon MacBook with a lid angle sensor. Requirements vary by feature.'],
+      ['Which permissions does it need?', 'Accessibility is used to find, move, and restore windows. Screen Recording is used for original-appearance shades, previews, and visual effects. Frames are processed on your Mac. Screen Recording is the system permission name; it does not mean your screen is uploaded.'],
+      ['How do I bring a window back?', 'Double-click its shade bar, select the window in the menu bar, or use Control + Command + 1…9 to restore windows in menu order. A single click on a shade bar previews the contents.'],
+      ['Does it support every window?', 'Most ordinary desktop windows work. Full screen, Split View, Stage Manager, multiple displays, and some custom windows may have compatibility limits. Try it with your everyday apps first.'],
+      ['How do I install it?', 'Choose Download for Mac to open GitHub Releases. Download the latest ZIP, unzip it, drag WindowShade.app to Applications, then open it and grant the requested permissions. If macOS blocks the first launch, check System Settings → Privacy & Security for its message.'],
+      ['Is there a price or subscription?', 'No. WindowShade is free and open source under the MIT license. No subscription is needed to download or use it.']
+    ],
+    endTitle: 'Everything in place.<br>A little more space.', endBody: 'One small gesture for the Mac you already love.',
+    footer: 'A native little utility for macOS.', release: 'Release notes', issue: 'Report an issue', privacy: 'Permissions & privacy',
+    notFound: 'This page has wandered off.', home: 'Back to home', skip: 'Skip to content'
+  }
+};
