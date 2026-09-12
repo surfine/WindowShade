@@ -336,13 +336,13 @@ extension AppDelegate {
                     wlog("space: overlay reassociated by geometry id=\(oid) source=\(id) sid=-")
                 }
             }
-            // 安装闭包里最后一处未测点：AXObserverCreate + 3 次 AXObserverAddNotification，
-            // 四次同步 IPC，而且发给的正是刚被要求隐藏自己、此刻最忙的那个 App。
-            let observer = foldPhase("观察者注册") {
-                (hide == .quickLookClosed || hide == .ownWindowOrderedOut)
-                    ? nil
-                    : makeRevealObserver(pid: pid, win: win, id: id)
-            }
+            // 观察者只用来发现「窗口被外部唤回」：⌘Tab 取消隐藏、点 Dock 恢复、
+            // 窗口被关闭。这些在刚折叠完的那一瞬间都不可能发生，而注册它是
+            // AXObserverCreate + 3 次 AXObserverAddNotification 共四次同步 IPC，
+            // 发给的正是刚被要求隐藏自己、此刻最忙的那个 App——实测 18 个窗口
+            // 1363ms，占整次折叠的 32%。推迟到下一轮 runloop 注册，从关键路径上拿掉。
+            let wantsObserver = !(hide == .quickLookClosed || hide == .ownWindowOrderedOut)
+            let observer: AXObserver? = nil
             let state = ShadeState(element: win, sourceWindowID: id,
                                    originalPosition: pos, originalSize: size,
                                    sourceDisplayID: sourceDisplayID,
@@ -356,6 +356,19 @@ extension AppDelegate {
                                    ignoreAppRevealUntil: Date().addingTimeInterval(1.0),
                                    observer: observer)
             shaded[id] = state
+            if wantsObserver {
+                DispatchQueue.main.async { [weak self] in
+                    guard let self else { return }
+                    // 期间被展开、或已经注册过，就不再注册：否则会留下一个没人
+                    // 移除的 runloop source。
+                    guard let current = self.shaded[id], current.observer == nil,
+                          CFEqual(current.element, win) else { return }
+                    guard let registered = foldPhase("观察者注册", {
+                        self.makeRevealObserver(pid: pid, win: win, id: id)
+                    }) else { return }
+                    self.shaded[id]?.observer = registered
+                }
+            }
             foldPhase("Space 回归调度") { scheduleSourceSpaceReturnIfNeeded(id: id, state: state) }
             if hideVerifiedNow {
                 let spaceInvariantHeld = foldPhase("Space 不变量") {

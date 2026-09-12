@@ -1576,7 +1576,7 @@ struct ShadeState {
     var previewImage: NSImage?
     let quickLookReopenURL: URL?
     let ignoreAppRevealUntil: Date
-    let observer: AXObserver?    // 监听窗口被外部唤回
+    var observer: AXObserver?    // 监听窗口被外部唤回（折叠后下一轮 runloop 才注册）
 }
 
 struct ShadePlan {
