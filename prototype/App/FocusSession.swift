@@ -488,7 +488,8 @@ extension AppDelegate {
 
     func restoreFocusSession(_ session: FocusSession) {
         let ids = Set(session.entries.keys)
-        _ = restoreArrangedOverlayFrames(ids: ids)
+        // 紧接着就要按卷帘条的最终位置展开真窗口，这里不能留动画中途的 frame。
+        _ = restoreArrangedOverlayFrames(ids: ids, animated: false)
 
         let createdIDs = session.entries.values
             .filter { !$0.wasAlreadyShaded }
