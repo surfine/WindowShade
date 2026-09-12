@@ -4,7 +4,10 @@
 import Cocoa
 
 extension AppDelegate {
-    func restoreArrangedOverlayFrames(ids requestedIDs: Set<CGWindowID>? = nil) -> Bool {
+    // animated=false 给「归位之后立刻要读卷帘条位置」的调用方用：展开真窗口时
+    // 要按卷帘条的最终位置定位，动画中途的 frame 会把窗口放错地方。
+    func restoreArrangedOverlayFrames(ids requestedIDs: Set<CGWindowID>? = nil,
+                                      animated: Bool = true) -> Bool {
         arrangedOverlayFrames = arrangedOverlayFrames.filter { shaded[$0.key]?.overlay != nil }
         let entries = arrangedOverlayFrames.compactMap { id, frame -> (CGWindowID, NSWindow, NSRect)? in
             if let requestedIDs, !requestedIDs.contains(id) { return nil }
@@ -22,17 +25,35 @@ extension AppDelegate {
         isProgrammaticOverlayArrangement = true
         defer { isProgrammaticOverlayArrangement = false }
 
+        // NSWindow.setFrame(display:animate:) 是同步阻塞的：要等自己那段动画播完
+        // 才返回。放在循环里逐个调用，总耗时就是各自动画时长之和——实测 9 条卷帘条
+        // 3.2 秒，而且看上去是一条接一条地挪。改成一个动画组用 animator() 代理，
+        // 所有卷帘条同时动，总耗时收敛到单条动画的长度。
+        func applyMoves(_ moves: [(window: NSWindow, frame: NSRect)]) {
+            guard !moves.isEmpty else { return }
+            let proxies = moves.compactMap { $0.window as? NativeProxyOverlayWindow }
+            let savedHandlers = proxies.map { ($0, $0.onResize) }
+            proxies.forEach { $0.onResize = nil }
+
+            guard animated else {
+                for move in moves { move.window.setFrame(move.frame, display: true) }
+                for (proxy, handler) in savedHandlers { proxy.onResize = handler }
+                return
+            }
+            let duration = moves.map { $0.window.animationResizeTime($0.frame) }.max() ?? 0.2
+            NSAnimationContext.runAnimationGroup { context in
+                context.duration = duration
+                for move in moves { move.window.animator().setFrame(move.frame, display: true) }
+            } completionHandler: {
+                for (proxy, handler) in savedHandlers { proxy.onResize = handler }
+            }
+        }
+
+        var moves: [(window: NSWindow, frame: NSRect)] = []
         for (id, overlay, savedFrame) in entries {
             let frame = clampedFrame(savedFrame, margin: 8, preferredDisplayID: shaded[id]?.sourceDisplayID)
             if !framesAlmostEqual(overlay.frame, frame) {
-                if let proxy = overlay as? NativeProxyOverlayWindow {
-                    let oldResize = proxy.onResize
-                    proxy.onResize = nil
-                    proxy.setFrame(frame, display: true, animate: true)
-                    proxy.onResize = oldResize
-                } else {
-                    overlay.setFrame(frame, display: true, animate: true)
-                }
+                moves.append((overlay, frame))
             }
             applyOverlayPresentation(overlay, bringForward: true)
             syncRestoreJournal(id: id, fromOverlayFrame: frame)
@@ -45,6 +66,8 @@ extension AppDelegate {
             arrangedOverlayFrames.removeValue(forKey: id)
             wlog("arrange: restore id=\(id) frame=(\(Int(frame.minX)),\(Int(frame.minY)) \(Int(frame.width))x\(Int(frame.height)))")
         }
+
+        applyMoves(moves)
 
         if let active = activePreview, active.trigger == .titlebarPeek {
             updateHoverPreviewFrame(active.ownerID)
