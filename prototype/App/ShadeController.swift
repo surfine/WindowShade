@@ -265,10 +265,14 @@ extension AppDelegate {
                 quietNotice("无法保存恢复记录，窗口未折叠", log: "shade: refusing hide without durable intent id=\(id)")
                 return
             }
-            let hide = foldPhase("隐藏窗口") {
-                hideWindow(win, pid: pid, originalPosition: pos, size: size,
-                                      policy: policy, appHideSafe: appHideSafe)
-            }
+            // 这里不套 foldPhase 的闭包写法：tests/duo-integration-check.py 用
+            // 「recordShadeRecoveryIntent 出现在 let hide = hideWindow( 之前」这条
+            // 源码顺序断言守卫崩溃一致性，包装会让它认不出来。改成手工计时，
+            // 既保留分段数据，也不动那道守卫认的文本。
+            let hideStartedAt = CFAbsoluteTimeGetCurrent()
+            let hide = hideWindow(win, pid: pid, originalPosition: pos, size: size,
+                                  policy: policy, appHideSafe: appHideSafe)
+            foldPhaseTotals["隐藏窗口", default: 0] += CFAbsoluteTimeGetCurrent() - hideStartedAt
             // minimize / app-hide 的状态读回是异步的（最小化动画进行中 kAXMinimized
             // 尚未翻转、NSRunningApplication.isHidden 缓存滞后），立即验证会产生假阴性。
             // 立即通过 → 立即 reveal；否则延迟验证（+0.15/+0.45s），通过后才 reveal，
