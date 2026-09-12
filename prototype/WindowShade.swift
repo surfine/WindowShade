@@ -1667,6 +1667,8 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSMenuDelegate {
     let reconcileAXWorkQueue = DispatchQueue(label: "WindowShade.reconcile-ax", qos: .utility)
     var reconcileInvalidCounts: [CGWindowID: Int] = [:]
     var privateAlphaOriginalValues: [CGWindowID: Float] = [:]
+    // 本机的跨进程 SkyLight alpha 写入是否已被确认无效（SIP 限制）。
+    var privateAlphaKnownIneffective = false
     var duoRestoreVerificationTokens: [CGWindowID: UUID] = [:]
     var restoreFocusTokens: [CGWindowID: UUID] = [:]
     var recoveryJournalOverride: DurableShadeJournal?
