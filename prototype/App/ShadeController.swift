@@ -223,9 +223,10 @@ extension AppDelegate {
         let profile = foldPhase("外框解析") {
             resolveWindowChromeProfile(win: win, id: id, pos: pos, size: size, pid: pid, title: title)
         }
-        guard let plan = makeShadePlan(win: win, pos: pos, size: size,
-                                       pid: pid, profile: profile,
-                                       options: options) else {
+        guard let plan = foldPhase("折叠计划") {
+            makeShadePlan(win: win, pos: pos, size: size,
+                          pid: pid, profile: profile, options: options)
+        } else {
             quietNotice("此窗口不能折叠", log: "shade: plan rejected app=\(appName) id=\(id)")
             return
         }
@@ -236,14 +237,18 @@ extension AppDelegate {
             wlog("quicklook: no direct reopen URL; will use Finder Space fallback title=\(title)")
         }
         let sourceDisplayID = displayID(for: screenForAXWindow(pos: pos, size: size))
-        let sourceSpaceID = resolvedSourceSpaceID(windowID: id, sourceDisplayID: sourceDisplayID, profile: profile)
+        let sourceSpaceID = foldPhase("源 Space 解析") {
+            resolvedSourceSpaceID(windowID: id, sourceDisplayID: sourceDisplayID, profile: profile)
+        }
         let sourceSpaceMode = profile.isQuickLook ? "active-display" : "window"
         wlog(">>> shade id=\(id) app=\(appName) bundle=\(bundleID) mode=\(mode.rawValue) plan=\(plan.reason) policy=\(policy) sourceDisplay=\(sourceDisplayID.map { String($0) } ?? "-") sourceSpace=\(sourceSpaceID.map { String($0) } ?? "-") sourceSpaceMode=\(sourceSpaceMode) hasToolbar=\(profile.hasToolbar) adobe=\(profile.adobeProfile.kind.rawValue):\(profile.adobeProfile.reason) standardTitleBarOnly=\(profile.standardTitleBarOnly) toolbarlessStandard=\(profile.toolbarlessStandardTitleBar) preciseChrome=\(profile.preciseChrome) contentBelowTitleBar=\(profile.hasContentBelowTitleBar) axBarH=\(Int(profile.axBarHeight)) hitBarH=\(Int(profile.hitBarHeight))")
 
         func installOverlay(_ overlay: NSWindow, mode: ShadeAppearanceMode, previewImage: NSImage?) {
             shadeOperationIDs.remove(id)
             transitionOperationState(id: id, to: .folded, reason: "install")
-            configureShadedAccessibility(for: overlay, id: id, appName: appName, title: title)
+            foldPhase("辅助功能配置") {
+                configureShadedAccessibility(for: overlay, id: id, appName: appName, title: title)
+            }
             // 折叠事务序：先把焦点交给当前 Space 的继承人，再隐藏真实窗口。
             // 隐藏非前台窗口不会触发 macOS 的焦点级联（跳 Space / 激活兄弟窗口的病灶）。
             // 无处交接（当前 Space 只有这一个窗口）时 app-hide 不安全，改走 minimize。
@@ -277,7 +282,9 @@ extension AppDelegate {
             // 尚未翻转、NSRunningApplication.isHidden 缓存滞后），立即验证会产生假阴性。
             // 立即通过 → 立即 reveal；否则延迟验证（+0.15/+0.45s），通过后才 reveal，
             // 两次仍失败才补救/回滚。见 scheduleFoldVerification。
-            let hideVerifiedNow = hideTookEffect(hide, win: win, pid: pid, id: id, size: size)
+            let hideVerifiedNow = foldPhase("隐藏验证") {
+                hideTookEffect(hide, win: win, pid: pid, id: id, size: size)
+            }
             recordShadeJournal(id: id, win: win, hide: hide, pid: pid, bundleID: bundleID,
                                appName: appName, title: title,
                                originalPosition: pos, originalSize: size,
