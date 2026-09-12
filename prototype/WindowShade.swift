@@ -599,11 +599,12 @@ final class ChromeProfileCache {
     // 各窗口之间互不相干，实测每个窗口约 70ms、批量折叠时是最大的一块。
     // 先在后台并发把 profile 算好，再回到主线程一次性写入——entries 本身没有锁，
     // 仍然保持只在主线程读写这一点不变。
+    @discardableResult
     func prewarm(
         _ requests: [(id: CGWindowID, win: AXUIElement, pos: CGPoint,
                       size: CGSize, pid: pid_t, title: String)]
-    ) {
-        guard requests.count > 1 else { return }
+    ) -> [CGWindowID: WindowChromeProfile] {
+        guard requests.count > 1 else { return [:] }
         var resolved = [WindowChromeProfile?](repeating: nil, count: requests.count)
         let lock = NSLock()
         DispatchQueue.concurrentPerform(iterations: requests.count) { index in
@@ -616,12 +617,15 @@ final class ChromeProfileCache {
             lock.unlock()
         }
         let now = CFAbsoluteTimeGetCurrent()
+        var warmed: [CGWindowID: WindowChromeProfile] = [:]
         for (index, request) in requests.enumerated() {
             guard let profile = resolved[index] else { continue }
             entries[request.id] = Entry(element: request.win, profile: profile,
                                         size: request.size, resolvedAt: now)
+            warmed[request.id] = profile
         }
         pruneIfNeeded()
+        return warmed
     }
 
     func cachedHitBarHeight(id: CGWindowID, win: AXUIElement, size: CGSize) -> CGFloat? {
