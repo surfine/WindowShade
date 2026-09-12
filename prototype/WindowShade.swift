@@ -726,6 +726,23 @@ func isWindowLikeRole(_ role: String?, pid: pid_t) -> Bool {
 // 计数用于定位「一次折叠到底枚举了多少遍」，只在主线程累加。
 nonisolated(unsafe) var axWindowListEnumerations = 0
 
+// 折叠内部的分段耗时累计。单次折叠每段都只有几十毫秒，逐次打日志会淹掉日志，
+// 所以累计起来在一次专注结束时一并报出。
+nonisolated(unsafe) var foldPhaseTotals: [String: Double] = [:]
+
+@discardableResult
+func foldPhase<T>(_ name: String, _ body: () throws -> T) rethrows -> T {
+    let started = CFAbsoluteTimeGetCurrent()
+    defer { foldPhaseTotals[name, default: 0] += CFAbsoluteTimeGetCurrent() - started }
+    return try body()
+}
+
+func foldPhaseReport() -> String {
+    foldPhaseTotals.sorted { $0.value > $1.value }
+        .map { "\($0.key) \(Int($0.value * 1000))ms" }
+        .joined(separator: " · ")
+}
+
 // 事务级备忘，不是带 TTL 的缓存：只在显式开启的区间内生效（一次折叠/展开事务），
 // 区间结束立刻丢弃。一次折叠里同一个 App 的窗口列表会被问三四遍——刷新元素、
 // 找焦点继承者、数窗口数决定隐藏策略——而事务内这个列表不会变。
@@ -1590,6 +1607,8 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSMenuDelegate {
     var focusRejoinStackFrames: [CGWindowID: NSRect] = [:]
     var focusRejoinEntries: [CGWindowID: FocusSessionEntry] = [:]
     var focusSession: FocusSession?
+    // 分帧折叠进行中：期间不接受新的专注请求，避免两次级联交叉污染会话状态。
+    var focusCascadeActive = false
     var accessibilityActionTargets: [CGWindowID: ShadedAccessibilityActionTarget] = [:]   // FoldExit/ShadeStrip 扩展跨文件访问
     var isProgrammaticOverlayArrangement = false
     var clampingApps: Set<pid_t> = []         // 已知会钳制位置的 app → 直接最小化
@@ -2126,10 +2145,19 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSMenuDelegate {
     // 的最前真实窗口作为替代目标。
 
 
+    // 每轮 runloop 折叠的时间预算。超过就让出主线程，下一轮继续。
+    let focusFoldFrameBudget: TimeInterval = 0.12
+
     @objc func focusCurrentAppAction() {
         // 这条路径会同步折叠其它 App 的全部窗口，是主线程上最长的一段工作：
         // 自报耗时，并让卡顿哨兵能把阻塞归因到它。
+        // 级联进行中再按一次会让两次专注交叉修改同一份会话状态，直接忽略。
+        guard !focusCascadeActive else {
+            wlog("focus: 折叠仍在进行中，忽略本次请求")
+            return
+        }
         let before = axWindowListEnumerations
+        foldPhaseTotals.removeAll()
         logIfSlow("focus: 专注当前 App", threshold: 0.2) { focusCurrentAppCycle() }
         wlog("focus: 主线程 AX 窗口列表枚举 \(axWindowListEnumerations - before) 次（每次约 20ms）")
     }

@@ -171,7 +171,7 @@ extension AppDelegate {
         defer { MainThreadActivity.pop() }
         let memoScope = beginAppWindowsMemo()
         defer { endAppWindowsMemo(memoScope) }
-        let win = refreshedWindowElement(id: id, fallback: win)
+        let win = foldPhase("元素刷新") { refreshedWindowElement(id: id, fallback: win) }
         if !bypassDuo, duoController.windowEffects.interceptFold(win, id: id, options: options) { return }
         // 状态机防护：折叠中/已折叠/展开中的窗口再次触发折叠一律忽略，
         // 避免状态损坏（与 shadeOperationIDs 在途去重互为冗余）。
@@ -220,7 +220,9 @@ extension AppDelegate {
         if UserDefaults.standard.bool(forKey: shadeDebugWindowDumpDefaultsKey) {
             dumpWindow(win)
         }
-        let profile = resolveWindowChromeProfile(win: win, id: id, pos: pos, size: size, pid: pid, title: title)
+        let profile = foldPhase("外框解析") {
+            resolveWindowChromeProfile(win: win, id: id, pos: pos, size: size, pid: pid, title: title)
+        }
         guard let plan = makeShadePlan(win: win, pos: pos, size: size,
                                        pid: pid, profile: profile,
                                        options: options) else {
@@ -245,7 +247,7 @@ extension AppDelegate {
             // 折叠事务序：先把焦点交给当前 Space 的继承人，再隐藏真实窗口。
             // 隐藏非前台窗口不会触发 macOS 的焦点级联（跳 Space / 激活兄弟窗口的病灶）。
             // 无处交接（当前 Space 只有这一个窗口）时 app-hide 不安全，改走 minimize。
-            let appHideSafe = handOffFocusBeforeHiding(win: win, pid: pid, id: id)
+            let appHideSafe = foldPhase("焦点交接") { handOffFocusBeforeHiding(win: win, pid: pid, id: id) }
             // crash consistency：先把 durable recovery intent 落盘，再执行任何
             // 可能让窗口长期不可见的动作。若进程在 hideWindow 中途被杀，重启后
             // rescue 仍能按 intent 找回窗口；隐藏成功验证后由 recordShadeJournal
@@ -419,11 +421,13 @@ extension AppDelegate {
             if quickPreview != nil || !options.capturePreview {
                 // legacy 快照已经成功，或者这次折叠本来就不需要预览（比如专注 shelf
                 // 批量折叠）——两种情况都跟以前一样同步立刻装上，不引入任何延迟。
-                let overlay = makeProxyOverlay(axPos: pos, width: size.width, height: barH,
-                                               pid: pid, appName: appName, title: title, id: id,
-                                               canResize: canProxyResize,
-                                               windowManagement: windowManagementCapability,
-                                               trafficLights: profile.trafficLights)
+                let overlay = foldPhase("建 overlay") {
+                    makeProxyOverlay(axPos: pos, width: size.width, height: barH,
+                                                   pid: pid, appName: appName, title: title, id: id,
+                                                   canResize: canProxyResize,
+                                                   windowManagement: windowManagementCapability,
+                                                   trafficLights: profile.trafficLights)
+                }
                 wlog("    proxy immediate finalBarH=\(Int(barH)) canResize=\(canProxyResize) windowManagement=\(windowManagementCapability) appTitle=\"\(appName)\" windowTitle=\"\(title)\" preview=\(quickPreview == nil ? "-" : "quick") capture=\(options.capturePreview)")
                 installOverlay(overlay, mode: mode, previewImage: quickPreview)
                 return

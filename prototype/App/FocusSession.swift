@@ -421,12 +421,12 @@ extension AppDelegate {
             concurrentQuickPreviews(pending.map(\.id))
         }
 
-        for item in pending {
+        func foldOne(_ item: (pid: pid_t, win: AXUIElement, id: CGWindowID)) {
             let beforeIDs = Set(shaded.keys)
             shade(item.win, item.id, options: focusShadeOptions, preparedImage: previews[item.id])
             guard !beforeIDs.contains(item.id),
                   let state = shaded[item.id],
-                  let overlay = state.overlay else { continue }
+                  let overlay = state.overlay else { return }
             createdCount += 1
             entries[item.id] = FocusSessionEntry(
                 id: item.id,
@@ -437,6 +437,33 @@ extension AppDelegate {
             )
         }
 
+        // 分帧推进：每轮 runloop 折到预算用完就让出主线程，下一轮接着折。
+        // 总时长基本不变，但主线程不再被整段占住——十几个窗口时，这是「卡住了」
+        // 和「正在进行」的区别。会话与卷帘条整理仍然等全部折完后一次性完成，
+        // 语义和同步版本一致。
+        let cascadeStartedAt = CFAbsoluteTimeGetCurrent()
+        var frames = 0
+        focusCascadeActive = true
+
+        func foldFrom(_ start: Int) {
+            frames += 1
+            var index = start
+            let deadline = CFAbsoluteTimeGetCurrent() + focusFoldFrameBudget
+            while index < pending.count {
+                foldOne(pending[index])
+                index += 1
+                if CFAbsoluteTimeGetCurrent() >= deadline { break }
+            }
+            guard index >= pending.count else {
+                DispatchQueue.main.async { foldFrom(index) }
+                return
+            }
+            wlog("focus: 折叠 \(pending.count) 个窗口共 \(Int((CFAbsoluteTimeGetCurrent() - cascadeStartedAt) * 1000))ms，分 \(frames) 帧 · \(foldPhaseReport())")
+            focusCascadeActive = false
+            finishFocusCascade()
+        }
+
+        func finishFocusCascade() {
         let focusIDs = Set(entries.keys)
         let arrangeEntries = focusIDs.compactMap { id -> (CGWindowID, ShadeState, NSWindow)? in
             guard let state = shaded[id], let overlay = state.overlay else { return nil }
@@ -469,6 +496,9 @@ extension AppDelegate {
         }
         quietNotice("专注：\(focusedApp.localizedName ?? "当前 App")",
                     log: "focus: start app=\(focusedApp.localizedName ?? "?") pid=\(focusedPID) entries=\(entries.count) created=\(createdCount) fastProxy=true")
+        }
+
+        foldFrom(0)
     }
 
     func bringFocusedAppToFront(_ app: NSRunningApplication) {
