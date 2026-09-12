@@ -23,19 +23,16 @@ document.querySelector('.theme')?.addEventListener('click', () => {
 
 const desk = document.querySelector('#desk');
 const fold = document.querySelector('#fold');
-const pin = document.querySelector('#pin');
 const bar = document.querySelector('#reference-bar');
 const body = document.querySelector('#reference-body');
 const status = document.querySelector('#demo-status');
 let folded = false;
-let pinned = false;
 if (body && desk) {
   const sizeObserver = new ResizeObserver(() => desk.style.setProperty('--roll-distance', `${-body.offsetHeight}px`));
   sizeObserver.observe(body);
 }
 function renderDemo() {
   desk.classList.toggle('is-folded', folded);
-  desk.classList.toggle('is-pinned', pinned);
   fold.replaceChildren(document.createTextNode(folded ? fold.dataset.unfold : fold.dataset.fold));
   const arrow = document.createElement('span');
   arrow.setAttribute('aria-hidden', 'true'); arrow.textContent = folded ? '↓' : '↑'; fold.append(arrow);
@@ -43,16 +40,13 @@ function renderDemo() {
   bar.setAttribute('aria-expanded', String(!folded));
   bar.setAttribute('aria-label', `${bar.children[1].textContent}: ${folded ? fold.dataset.unfold : fold.dataset.fold}`);
   body.setAttribute('aria-hidden', String(folded));
-  pin.textContent = pinned ? pin.dataset.unpin : pin.dataset.pin;
-  pin.setAttribute('aria-pressed', String(pinned));
-  status.textContent = pinned ? status.dataset.pinned : folded ? status.dataset.folded : status.dataset.expanded;
+  status.textContent = folded ? status.dataset.folded : status.dataset.expanded;
 }
-function toggleFold() { folded = !folded; pinned = false; renderDemo(); }
+function toggleFold() { folded = !folded; renderDemo(); }
 fold?.addEventListener('click', toggleFold);
 bar?.addEventListener('dblclick', toggleFold);
 // Keyboard and touch users have a single-activation route; mouse mirrors the app's double-click.
 bar?.addEventListener('click', e => { if (e.detail === 0) toggleFold(); });
-pin?.addEventListener('click', () => { pinned = !pinned; folded = false; renderDemo(); });
 
 const video = document.querySelector('#effect-video');
 const videoToggle = document.querySelector('#video-toggle');
@@ -85,14 +79,20 @@ if (video) {
 const pinExample = document.querySelector('#pin-example');
 const pinDesk = document.querySelector('#pin-desk');
 const pinState = document.querySelector('#pin-state');
+const pinSwitch = document.querySelector('#pin-switch');
+function renderPinExample() {
+  const pinned = pinExample.getAttribute('aria-pressed') === 'true';
+  const draftFront = pinDesk.classList.contains('draft-front');
+  pinExample.textContent = pinned ? pinExample.dataset.on : pinExample.dataset.off;
+  pinDesk.classList.toggle('has-pin', pinned);
+  pinState.textContent = draftFront ? (pinned ? pinState.dataset.on : pinState.dataset.off) : pinState.dataset.ready;
+  pinSwitch.textContent = `${draftFront ? pinSwitch.dataset.reference : pinSwitch.dataset.draft} \u2197`;
+}
 pinExample?.addEventListener('click', () => {
-  const enabled = pinExample.getAttribute('aria-pressed') !== 'true';
-  pinExample.setAttribute('aria-pressed', String(enabled));
-  pinExample.textContent = enabled ? pinExample.dataset.on : pinExample.dataset.off;
-  pinDesk.classList.toggle('has-pin', enabled);
-  pinState.textContent = enabled ? pinState.dataset.on : pinState.dataset.off;
+  pinExample.setAttribute('aria-pressed', String(pinExample.getAttribute('aria-pressed') !== 'true'));
+  renderPinExample();
 });
-document.querySelector('#pin-switch')?.addEventListener('click', () => {
-  pinDesk.classList.add('draft-front');
-  pinState.textContent = pinExample.getAttribute('aria-pressed') === 'true' ? pinState.dataset.on : pinState.dataset.off;
+pinSwitch?.addEventListener('click', () => {
+  pinDesk.classList.toggle('draft-front');
+  renderPinExample();
 });
