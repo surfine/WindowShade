@@ -133,7 +133,12 @@ final class EffectSession {
     }
     clock.start(window: panel)
     renderer.render()
-    DispatchQueue.main.asyncAfter(deadline: .now() + 2) { [weak self] in
+    // 首帧预算。会话在等待期间以 60fps 在主线程上持续 render()，所以超时越长，
+    // 一次失败越贵——批量折叠时多个会话互抢，还会形成「越慢越超时、越超时越慢」
+    // 的正反馈。实测成功呈现的中位延迟 93ms，而失败率超过一半；把预算从 2s 收到
+    // 0.5s，失败的代价降到四分之一。代价是长尾（p90 约 1.2s）那部分会被判失败，
+    // 但首帧迟到一秒的卷帘动画本来也已经失去意义——那时窗口早就收起来了。
+    DispatchQueue.main.asyncAfter(deadline: .now() + 0.5) { [weak self] in
       guard let self, !stopped, presentationWanted, !hasPresented else { return }
       wlog("duo-session: visible presentation timeout")
       onFailure?()
