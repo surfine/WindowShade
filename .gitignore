@@ -6,7 +6,9 @@
 
 # Local media / generated analysis assets
 *.mp4
-/assets/
+/assets/*
+!/assets/windowshade-settings.png
+!/assets/windowshade-settings-dark.png
 
 # Build outputs and packaged app bundles
 prototype/windowshade
@@ -25,3 +27,6 @@ prototype/local-codesign.env
 *.swp
 *.swo
 *~
+
+# Local Cloudflare deployment state
+/.wrangler/

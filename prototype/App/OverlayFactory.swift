@@ -11,6 +11,7 @@ extension AppDelegate {
         let overlay = ShadeStripPool.shared.take()
             ?? OverlayWindow(contentRect: frame, styleMask: .borderless,
                              backing: .buffered, defer: false)
+        PaperSurfaceStyle.removeShadow(from: overlay)
         overlay.isReleasedWhenClosed = false
         overlay.setFrame(frame, display: false)
         overlay.isOpaque = false
@@ -124,6 +125,7 @@ extension AppDelegate {
         }
         overlay.contentView = view
         overlay.invalidateShadow()
+        PaperSurfaceStyle.installShadow(on: overlay)
         return overlay
     }
 
@@ -198,7 +200,7 @@ extension AppDelegate {
 
             let material = NSVisualEffectView(frame: content.bounds)
             material.autoresizingMask = [.width, .height]
-            material.material = .titlebar
+            material.material = .popover
             material.blendingMode = .behindWindow
             material.state = .active
             content.addSubview(material)
@@ -228,6 +230,7 @@ extension AppDelegate {
         overlay.configureWindowManagementButton(capability: effectiveWindowManagement)
         overlay.onDoubleClick = { [weak self] in self?.unshade(id) }
         applyOverlayPresentation(overlay, bringForward: false)
+        PaperSurfaceStyle.installShadow(on: overlay)
         return overlay
     }
 }

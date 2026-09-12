@@ -111,6 +111,7 @@ struct PinnedPreviewTarget {
 
 struct PinnedPreviewMenuEntry {
     let id: CGWindowID
+    let pid: pid_t
     let appName: String
     let title: String
 
@@ -433,6 +434,7 @@ final class PinnedPreviewController {
             }
             .map { session in
                 PinnedPreviewMenuEntry(id: session.windowID,
+                                       pid: session.pid,
                                        appName: session.appName,
                                        title: session.title)
             }
@@ -606,7 +608,8 @@ final class PinnedPreviewController {
 
         let capture = WindowStreamCapture()
         let panel = PinnedPreviewPanel(frame: frame)
-        let contentView = PinnedPreviewContentView(videoLayer: capture.videoLayer)
+        let contentView = PinnedPreviewContentView(videoLayer: capture.videoLayer,
+            title: descriptiveDisplayTitle(appName: appName, windowTitle: title))
         panel.contentView = contentView
 
         let session = PinnedPreviewSession(windowID: id, pid: pid, bundleIdentifier: bundleID,

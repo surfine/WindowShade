@@ -1,0 +1,15 @@
+{
+  "name": "windowshade-site",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "build": "node scripts/build.mjs",
+    "dev": "node scripts/serve.mjs",
+    "check": "node scripts/check.mjs",
+    "deploy": "npm run build && npm run check && wrangler pages deploy dist --project-name windowshade --branch main"
+  },
+  "devDependencies": {
+    "sharp": "^0.35.4",
+    "wrangler": "^4.131.1"
+  }
+}

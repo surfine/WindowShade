@@ -639,6 +639,9 @@ extension AppDelegate {
         config.width = pixelWidth
         config.height = pixelHeight
         config.showsCursor = false
+        // Crop coordinates are relative to the window frame. Including SCK
+        // framing scales/insets that content inside the requested pixel size.
+        config.ignoreShadowsSingleWindow = true
         return try? await SCScreenshotManager.captureImage(contentFilter: filter, configuration: config)
     }
     func captureWindowWithTimeout(id: CGWindowID, axPos: CGPoint, size: CGSize,
