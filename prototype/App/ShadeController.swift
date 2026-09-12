@@ -204,6 +204,7 @@ extension AppDelegate {
             return
         }
         var pid: pid_t = 0
+        let readStartedAt = CFAbsoluteTimeGetCurrent()
         AXUIElementGetPid(win, &pid)
         let role = axRole(win)
         // Adobe AE/Premiere 工作区窗口的 role 是 AXLayoutArea：有 layer-0 真实
@@ -217,7 +218,8 @@ extension AppDelegate {
         let bundleID = appBundleID(pid: pid)
         let appName = appDisplayName(pid: pid)
         let title = axTitle(win)
-        let autoJoinFocusShelf = shouldAutoJoinFocusShelf(id: id, pid: pid)
+        foldPhaseTotals["窗口属性读取", default: 0] += CFAbsoluteTimeGetCurrent() - readStartedAt
+        let autoJoinFocusShelf = foldPhase("shelf 判定") { shouldAutoJoinFocusShelf(id: id, pid: pid) }
         let options = options ?? (autoJoinFocusShelf ? focusShadeOptions : defaultShadeOptions)
         if UserDefaults.standard.bool(forKey: shadeDebugWindowDumpDefaultsKey) {
             dumpWindow(win)
