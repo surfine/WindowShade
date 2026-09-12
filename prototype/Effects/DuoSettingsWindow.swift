@@ -290,6 +290,7 @@ final class DuoSettingsWindow: NSWindowController, NSWindowDelegate {
     pageScroll.contentView.scroll(to: .zero)
     pageScroll.contentView.bounds.origin = .zero
     pageScroll.reflectScrolledClipView(pageScroll.contentView)
+    window?.subtitle = section.title
     for (item, button) in pageButtons {
       pageTitleLabels[item]?.font = .systemFont(
         ofSize: 13, weight: item == section ? .semibold : .regular)
@@ -346,49 +347,14 @@ final class DuoSettingsWindow: NSWindowController, NSWindowDelegate {
     return makePageHeader(title: title, subtitle: subtitle, symbolName: nil)
   }
 
+  // 页内不再重复一次大标题：分节名已经在侧边栏和标题栏副标题里出现过两次。
+  // 只保留一行说明，页首因此省下约 62pt 竖向空间。
   private func makePageHeader(title: String, subtitle: String, symbolName: String?) -> NSView {
-    let stack = NSStackView()
-    stack.orientation = .vertical
-    stack.alignment = .leading
-    stack.spacing = 6
-    let titleLabel = NSTextField(labelWithString: title)
-    titleLabel.font = .systemFont(ofSize: 20, weight: .semibold)
-    let subtitleLabel = NSTextField(wrappingLabelWithString: subtitle)
-    subtitleLabel.font = .systemFont(ofSize: 13)
-    subtitleLabel.textColor = .secondaryLabelColor
-    subtitleLabel.maximumNumberOfLines = 2
-    stack.addArrangedSubview(titleLabel)
-    stack.addArrangedSubview(subtitleLabel)
-
-    guard let symbolName,
-          let image = NSImage(systemSymbolName: symbolName, accessibilityDescription: title)
-    else { return stack }
-    let icon = NSImageView()
-    icon.image = image.withSymbolConfiguration(.init(pointSize: 16, weight: .semibold))
-    icon.contentTintColor = .controlAccentColor
-    icon.imageScaling = .scaleProportionallyDown
-    icon.translatesAutoresizingMaskIntoConstraints = false
-    let iconPlate = NSView()
-    iconPlate.wantsLayer = true
-    iconPlate.layer?.cornerRadius = 7
-    iconPlate.layer?.backgroundColor = NSColor.controlAccentColor.withAlphaComponent(0.12).cgColor
-    iconPlate.translatesAutoresizingMaskIntoConstraints = false
-    NSLayoutConstraint.activate([
-      icon.widthAnchor.constraint(equalToConstant: 22),
-      icon.heightAnchor.constraint(equalToConstant: 22),
-    ])
-    iconPlate.addSubview(icon)
-    NSLayoutConstraint.activate([
-      icon.centerXAnchor.constraint(equalTo: iconPlate.centerXAnchor),
-      icon.centerYAnchor.constraint(equalTo: iconPlate.centerYAnchor),
-      iconPlate.widthAnchor.constraint(equalToConstant: 28),
-      iconPlate.heightAnchor.constraint(equalToConstant: 28),
-    ])
-    let header = NSStackView(views: [iconPlate, stack])
-    header.orientation = .horizontal
-    header.alignment = .top
-    header.spacing = 10
-    return header
+    let caption = NSTextField(wrappingLabelWithString: subtitle)
+    caption.font = .systemFont(ofSize: 12)
+    caption.textColor = .secondaryLabelColor
+    caption.maximumNumberOfLines = 2
+    return caption
   }
 
   private func makeSectionLabel(_ title: String) -> NSView {
