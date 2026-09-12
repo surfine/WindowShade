@@ -627,6 +627,13 @@ extension AppDelegate {
                               allowAppHide: Bool) -> HideMethod {
         let currentWindowCount = appCurrentUserWindowCount(pid)
         let totalWindowCount = appWindowCount(pid)
+        // 快速隐藏（实验性）：先试 SkyLight alpha。成功就完全绕开目标 App 的
+        // runloop；不生效时 privateSLSAlphaHide 会自己还原 alpha 并返回 nil，
+        // 于是照旧走下面原有的顺序，不改变任何回退语义。
+        if fastHideEnabled, let id,
+           let hide = privateSLSAlphaHide(id: id, pid: pid, reason: "fast-hide") {
+            return hide
+        }
         if allowAppHide && currentWindowCount <= 1 {
             if setAXAppHidden(pid: pid, true) {
                 wlog("    fallback → hidden via AX（pid=\(pid), currentWindows=\(currentWindowCount), windows=\(totalWindowCount)）")
@@ -673,12 +680,12 @@ extension AppDelegate {
     }
 
     func resolvedWindowElement(for state: ShadeState) -> AXUIElement {
-        // 同上：用 _AXUIElementGetWindow 做精确身份校验，不走几何匹配。
-        var directID: CGWindowID = 0
-        if _AXUIElementGetWindow(state.element, &directID) == .success,
-           directID == state.sourceWindowID {
-            return state.element
-        }
+        // 存活即可信。这里同样不能拿 id 做精确比对：state.sourceWindowID 来自
+        // windowID(of:)，那是几何+标题匹配的结果，和 _AXUIElementGetWindow 对某些
+        // App 并不一致，比对会系统性失配，于是每次几何校正都先付一次失败比对再付
+        // 一次整 App 枚举。而这里本来就不需要精确校验：元素死了写入会失败，
+        // applyRestoredGeometry 会重新解析后重写。
+        if axPosition(state.element) != nil { return state.element }
 
         let windows = appWindows(pid: state.pid)
         guard !windows.isEmpty else { return state.element }
