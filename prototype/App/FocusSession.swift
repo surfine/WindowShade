@@ -423,19 +423,20 @@ extension AppDelegate {
 
         // 外框解析是折叠里最大的一块（实测 70ms/窗口），而它全是只读 AX，
         // 各窗口互不相干。折叠前并发算好放进缓存，串行折叠时直接命中。
-        logIfSlow("focus: 预解析 \(pending.count) 个窗口外框", threshold: 0.2) {
+        let warmedProfiles = logIfSlow("focus: 预解析 \(pending.count) 个窗口外框", threshold: 0.2) {
             let requests = pending.compactMap { item -> (id: CGWindowID, win: AXUIElement, pos: CGPoint, size: CGSize, pid: pid_t, title: String)? in
                 guard let pos = axPosition(item.win), let size = axSize(item.win) else { return nil }
                 return (item.id, item.win, pos, size, item.pid, axTitle(item.win))
             }
-            ChromeProfileCache.shared.prewarm(requests)
+            return ChromeProfileCache.shared.prewarm(requests)
         }
 
         func foldOne(_ item: (pid: pid_t, win: AXUIElement, id: CGWindowID)) {
             let beforeIDs = Set(shaded.keys)
             // 元素是几毫秒前在并发发现阶段刚枚举出来的，不必再整 App 枚举一遍。
             shade(item.win, item.id, options: focusShadeOptions,
-                  preparedImage: previews[item.id], trustElement: true)
+                  preparedImage: previews[item.id], trustElement: true,
+                  preparedProfile: warmedProfiles[item.id])
             guard !beforeIDs.contains(item.id),
                   let state = shaded[item.id],
                   let overlay = state.overlay else { return }
