@@ -107,6 +107,14 @@ cd prototype
 - 慢操作：日志里搜 `slow:` 前缀。
 - 状态机：日志里搜 `state:` 前缀；非法状态转换会记录 `state: illegal transition`。
 - 私有 API 降级：SkyLight 不可用时相关调用返回失败，日志可见 `private SLS ... unavailable`。
+- 卡顿归因：`main-thread stall` 会附带卡顿窗口内累计占用最久的标记及占比，
+  `未标记` / `占 0%` 说明阻塞落在所有标记之外（多半在异步回调里）。
+- AX / SkyLight 调用成本基准：`WindowShade.app/Contents/MacOS/WindowShade --duo-ax-bench`
+  （只读；必须用签名后的 bundle 运行，否则拿不到辅助功能权限）。
+
+动手优化这一带之前先读 [docs/performance.md](docs/performance.md)：那里记了
+实测的调用成本量级、已走通的手法、以及已经证伪的方向（比如用 SkyLight
+绕开目标 App 在 SIP 开启时不可行），可以省掉重新走一遍的时间。
 
 ## 发布前测试清单
 
