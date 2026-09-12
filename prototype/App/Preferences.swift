@@ -576,6 +576,12 @@ extension AppDelegate {
         rebuildMenu()
     }
 
+    @objc func prefToggleFastHide(_ sender: NSSwitch) {
+        fastHideEnabled = sender.state == .on
+        UserDefaults.standard.set(fastHideEnabled, forKey: shadeFastHideDefaultsKey)
+        rebuildMenu()
+    }
+
     @objc func prefToggleFloating(_ sender: NSSwitch) {
         floatingOnTop = sender.state == .on
         UserDefaults.standard.set(floatingOnTop, forKey: shadeFloatingOnTopDefaultsKey)
