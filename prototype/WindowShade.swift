@@ -721,7 +721,13 @@ func isWindowLikeRole(_ role: String?, pid: pid_t) -> Bool {
     return role == "AXLayoutArea" && isAdobeApp(pid: pid)
 }
 
+// kAXWindowsAttribute 是这条链路上最贵的一次调用：实测约 20ms，比把全系统
+// 窗口列一遍（CGWindowList 全量 3.3ms）还贵 6 倍，而单个属性读只要 0.1ms。
+// 计数用于定位「一次折叠到底枚举了多少遍」，只在主线程累加。
+nonisolated(unsafe) var axWindowListEnumerations = 0
+
 func appWindows(pid: pid_t) -> [AXUIElement] {
+    if Thread.isMainThread { axWindowListEnumerations += 1 }
     let app = AXUIElementCreateApplication(pid)
     var ref: CFTypeRef?
     guard AXUIElementCopyAttributeValue(app, kAXWindowsAttribute as CFString, &ref) == .success,
@@ -2103,7 +2109,9 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSMenuDelegate {
     @objc func focusCurrentAppAction() {
         // 这条路径会同步折叠其它 App 的全部窗口，是主线程上最长的一段工作：
         // 自报耗时，并让卡顿哨兵能把阻塞归因到它。
+        let before = axWindowListEnumerations
         logIfSlow("focus: 专注当前 App", threshold: 0.2) { focusCurrentAppCycle() }
+        wlog("focus: 主线程 AX 窗口列表枚举 \(axWindowListEnumerations - before) 次（每次约 20ms）")
     }
 
     @objc func unshadeFromMenu(_ sender: NSMenuItem) {
