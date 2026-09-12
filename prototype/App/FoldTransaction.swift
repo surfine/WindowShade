@@ -677,17 +677,28 @@ extension AppDelegate {
         return state.element
     }
 
+    // verify=false 时跳过回读。回读的两次 AX 往返只用来拼日志里的 actual=（不参与
+    // 任何判断），而重试阶梯的中间几档每个窗口都要付一次——批量恢复 15 个窗口时
+    // 就是上百次纯日志用途的 IPC。首档与末档仍然回读，"App 自己把窗口挪回去了"
+    // 这类问题照样看得见；AX 报错时无条件回读。
     func applyRestoredGeometry(_ state: ShadeState, to pos: CGPoint,
-                                       label: String, reason: String) -> AXUIElement {
+                                       label: String, reason: String,
+                                       verify: Bool = true) -> AXUIElement {
         let win = resolvedWindowElement(for: state)
         let safePos = safeRestorePosition(for: state, desired: pos)
         let sizeErr = setAXSize(win, state.originalSize)
         let posErr = setAXPositionReturningError(win, safePos)
-        let actualPos = axPosition(win)
-        let actualSize = axSize(win)
-        let actual = actualPos.flatMap { p in
-            actualSize.map { s in " actual=(\(Int(p.x)),\(Int(p.y)) \(Int(s.width))x\(Int(s.height)))" }
-        } ?? " actual=<unavailable>"
+        let failed = sizeErr != .success || posErr != .success
+        let actual: String
+        if verify || failed {
+            let actualPos = axPosition(win)
+            let actualSize = axSize(win)
+            actual = actualPos.flatMap { p in
+                actualSize.map { s in " actual=(\(Int(p.x)),\(Int(p.y)) \(Int(s.width))x\(Int(s.height)))" }
+            } ?? " actual=<unavailable>"
+        } else {
+            actual = ""
+        }
         wlog("geometry: \(reason) \(label) target=(\(Int(safePos.x)),\(Int(safePos.y)) \(Int(state.originalSize.width))x\(Int(state.originalSize.height))) err=(size:\(sizeErr),pos:\(posErr))\(actual)")
         if safePos != pos {
             wlog("restore: clamped invisible target app=\(state.appName) pos=(\(Int(safePos.x)),\(Int(safePos.y)))")
@@ -748,9 +759,11 @@ extension AppDelegate {
 
         // 前几次尝试只校正几何，最后一次才 raise+focus：旧实现每次尝试都重新
         // 激活/聚焦，restoreAll 批量展开时会造成焦点连环跳（每次 3~4 次 focus）。
-        func attempt(_ label: String, focus: Bool) {
+        func attempt(_ label: String, focus: Bool, verify: Bool = true) {
             guard restorePinTokens[id] == token else { return }
-            let win = applyRestoredGeometry(state, to: pos, label: label, reason: reason)
+            let win = marking("restore: 几何校正") {
+                applyRestoredGeometry(state, to: pos, label: label, reason: reason, verify: verify)
+            }
             if focus {
                 raiseAXWindow(win)
                 focusAXWindow(win, pid: state.pid)
@@ -761,9 +774,13 @@ extension AppDelegate {
         // 恢复成小窗口"的窗口期），只对这两种 hide 方式追加一次晚校验。
         let needsLatePin = state.hide == .hidden || state.hide == .minimized
         DispatchQueue.main.asyncAfter(deadline: .now() + 0.08) { attempt("after-80ms", focus: true) }
-        DispatchQueue.main.asyncAfter(deadline: .now() + 0.25) { attempt("after-250ms", focus: false) }
+        DispatchQueue.main.asyncAfter(deadline: .now() + 0.25) {
+            attempt("after-250ms", focus: false, verify: false)
+        }
         if needsLatePin {
-            DispatchQueue.main.asyncAfter(deadline: .now() + 0.55) { attempt("after-550ms", focus: false) }
+            DispatchQueue.main.asyncAfter(deadline: .now() + 0.55) {
+                attempt("after-550ms", focus: false, verify: false)
+            }
             DispatchQueue.main.asyncAfter(deadline: .now() + 1.10) { attempt("after-1100ms", focus: true) }
         } else {
             DispatchQueue.main.asyncAfter(deadline: .now() + 0.55) { attempt("after-550ms", focus: true) }
