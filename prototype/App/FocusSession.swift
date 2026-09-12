@@ -405,24 +405,36 @@ extension AppDelegate {
             concurrentAppWindows(candidates.map(\.pid))
         }
 
+        var pending: [(pid: pid_t, win: AXUIElement, id: CGWindowID)] = []
         for (index, candidate) in candidates.enumerated() {
-            let pid = candidate.pid
             for win in discovered[index] {
                 guard let id = windowID(of: win), shaded[id] == nil else { continue }
-                let beforeIDs = Set(shaded.keys)
-                shade(win, id, options: focusShadeOptions)
-                guard !beforeIDs.contains(id),
-                      let state = shaded[id],
-                      let overlay = state.overlay else { continue }
-                createdCount += 1
-                entries[id] = FocusSessionEntry(
-                    id: id,
-                    wasAlreadyShaded: false,
-                    homeOverlayFrame: overlay.frame,
-                    pid: pid,
-                    appName: state.appName
-                )
+                pending.append((candidate.pid, win, id))
             }
+        }
+
+        // 折叠前并发截好每张快速预览图。专注强制 proxyTitleBar 且 capturePreview
+        // 为 false，这张图只会走 shade() 的「快速预览」分支，不会被当成原貌截图；
+        // 命中 preparedImage 后每个窗口省掉一次约 60ms 的同步 CGWindowListCreateImage。
+        // 顺带比原来更准：所有窗口都在任何一个被隐藏之前截取。
+        let previews = logIfSlow("focus: 预备 \(pending.count) 张预览图", threshold: 0.2) {
+            concurrentQuickPreviews(pending.map(\.id))
+        }
+
+        for item in pending {
+            let beforeIDs = Set(shaded.keys)
+            shade(item.win, item.id, options: focusShadeOptions, preparedImage: previews[item.id])
+            guard !beforeIDs.contains(item.id),
+                  let state = shaded[item.id],
+                  let overlay = state.overlay else { continue }
+            createdCount += 1
+            entries[item.id] = FocusSessionEntry(
+                id: item.id,
+                wasAlreadyShaded: false,
+                homeOverlayFrame: overlay.frame,
+                pid: item.pid,
+                appName: state.appName
+            )
         }
 
         let focusIDs = Set(entries.keys)
