@@ -3,6 +3,7 @@ import ScreenCaptureKit
 
 final class DuoController: NSObject {
   weak var owner: AppDelegate?
+  var isDesignPreview = false
   var settings = DuoSettings.load()
   var persistsSettings = true
   var pausedByUser = false
@@ -146,6 +147,10 @@ final class DuoController: NSObject {
   }
 
   func settingsChanged() {
+    if isDesignPreview {
+      settingsWindow?.refreshStatus(force: true)
+      return
+    }
     if persistsSettings { settings.save() }
     if !settings.desktopEnabled || !allowsAnimation { stopDesktop() }
     if !settings.windowsEnabled || !allowsAnimation { windowEffects.cancelAll() }

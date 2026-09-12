@@ -4,6 +4,7 @@ import Cocoa
 /// to the application's own main thread can time out and do not represent an ordinary target app.
 final class EffectWindowProbe {
   private let owner = AppDelegate()
+  private let animated = !CommandLine.arguments.contains("--no-animation")
   private var fixture: Process?
   private var id: CGWindowID = 0
   private var element: AXUIElement?
@@ -19,7 +20,7 @@ final class EffectWindowProbe {
     owner.statusItem.isVisible = false
     owner.appearanceMode = .nativeScreenshot
     owner.duoController.persistsSettings = false
-    owner.duoController.settings.windowsEnabled = true
+    owner.duoController.settings.windowsEnabled = animated
     owner.duoController.settings.desktopEnabled = false
     owner.duoController.start(owner: owner)
     let fixture = Process()
@@ -46,17 +47,17 @@ final class EffectWindowProbe {
         owner.shade(element, id)
         NotificationCenter.default.post(
           name: NSApplication.didChangeScreenParametersNotification, object: NSApp)
-        guard owner.duoController.windowEffects.activeCount == 1 else {
+        guard !animated || owner.duoController.windowEffects.activeCount == 1 else {
           throw EffectError.unavailable("unchanged display notification cancelled transition")
         }
         try await wait("folded strip") {
           self.owner.shaded[self.id]?.overlay?.isVisible == true
             && self.owner.duoController.windowEffects.activeCount == 0
         }
-        guard !visible, owner.duoController.windowEffects.completedTransitions > 0 else {
+        guard !visible, !animated || owner.duoController.windowEffects.completedTransitions > 0 else {
           throw EffectError.unavailable("fold failed or used fallback")
         }
-        print("PASS native: fold actually presented, source hidden, strip visible")
+        print("PASS native: fold presented (animation=\(animated)), source hidden, strip visible")
         fflush(stdout)
         _ = owner.unshade(id)
         try await wait("unfold visible") {
@@ -64,11 +65,11 @@ final class EffectWindowProbe {
             && self.owner.duoController.windowEffects.activeCount == 0
             && self.owner.duoRestoreVerificationTokens[self.id] == nil
         }
-        guard close(bounds, original), owner.duoController.windowEffects.completedTransitions >= 2
+        guard close(bounds, original), !animated || owner.duoController.windowEffects.completedTransitions >= 2
         else { throw EffectError.unavailable("restore failed geometry or used fallback") }
-        print("PASS native: restore verified and animation actually presented")
+        print("PASS native: restore verified (animation=\(animated))")
         fflush(stdout)
-        if CommandLine.arguments.contains("--edge") { finish(nil); return }
+        if CommandLine.arguments.contains("--edge") || !animated { finish(nil); return }
         owner.shade(element, id)
         _ = owner.unshade(id)
         try await wait("preparation cancellation") {

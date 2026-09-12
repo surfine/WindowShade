@@ -1,0 +1,6 @@
+{
+  "$schema": "node_modules/wrangler/config-schema.json",
+  "name": "windowshade",
+  "pages_build_output_dir": "./dist",
+  "compatibility_date": "2026-09-13"
+}

@@ -148,6 +148,13 @@ if [ "$stage_only" = "1" ] && [ -d "$SOURCE_FRAMEWORKS" ]; then
   cp -R "$SOURCE_FRAMEWORKS/." "$APP/Contents/Frameworks/"
 fi
 
+# Info.plist in the source tree owns release versions; synchronize only these
+# fields so existing bundle identity and local resources remain intact.
+for version_key in CFBundleShortVersionString CFBundleVersion; do
+  release_value=$(/usr/libexec/PlistBuddy -c "Print $version_key" Info.plist)
+  /usr/libexec/PlistBuddy -c "Set :$version_key $release_value" "$APP/Contents/Info.plist"
+done
+
 echo "==> 用 Apple Development 证书签名（TCC 授权可跨重编保留）"
 codesign --force -s "$IDENTITY" "$APP"
 codesign --verify --deep --strict "$APP"

@@ -50,6 +50,13 @@ final class WindowFoldEffects {
       screen.frame.insetBy(dx: -16, dy: -16).contains(cocoaFrame(fromAXPosition: pos, size: size)),
       !axBoolAttribute(element, "AXFullScreen")
     else { return false }
+    // Measure while the source still has its original presentation state. The
+    // animation cover can change focus before onVisible invokes shade; measuring
+    // there can produce a different chrome boundary for the captured window.
+    var pid: pid_t = 0
+    AXUIElementGetPid(element, &pid)
+    let preparedProfile = resolveWindowChromeProfile(
+      win: element, id: id, pos: pos, size: size, pid: pid, title: axTitle(element))
     let job = Job(id: id, element: element, folded: true)
     wlog("duo-window: prepare fold id=\(id)")
     jobs[id] = job
@@ -94,7 +101,7 @@ final class WindowFoldEffects {
           job.preparedImage = job.session?.source.frame()?.stillImage()
           owner.shade(
             element, id, options: options, bypassDuo: true,
-            preparedImage: job.preparedImage)
+            preparedImage: job.preparedImage, preparedProfile: preparedProfile)
           DispatchQueue.main.asyncAfter(deadline: .now() + 1.2) { [weak self, weak job] in
             guard let self, let job, current(job), job.phase == .hiding else { return }
             // Native collapse and rejected policies retain their original behavior.

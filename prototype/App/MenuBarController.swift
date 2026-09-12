@@ -19,12 +19,14 @@ extension AppDelegate {
     statusMenu.delegate = self
     statusItem.menu = statusMenu
     statusItem.button?.image = makeStatusBarIcon()
+    statusItem.button?.font = .monospacedDigitSystemFont(ofSize: 13, weight: .regular)
     statusItem.button?.imagePosition = .imageLeft
     statusItem.button?.toolTip = "WindowShade"
     rebuildMenu()
     wlog("status item visible=\(statusItem.isVisible)")
   }
   func rebuildMenu() {
+    guard !duoController.isDesignPreview else { return }
     MainThreadActivity.push("menu: 重建")
     defer { MainThreadActivity.pop() }
     if suppressMenuRebuilds {
@@ -36,6 +38,7 @@ extension AppDelegate {
     menuRebuildWorkItem?.cancel()
     menuRebuildWorkItem = nil
     statusItem.button?.image = makeStatusBarIcon()
+    statusItem.button?.font = .monospacedDigitSystemFont(ofSize: 13, weight: .regular)
     statusItem.button?.imagePosition = .imageLeft
     statusItem.isVisible = true
     statusItem.button?.title = shaded.isEmpty ? "" : " \(shaded.count)"
@@ -48,6 +51,7 @@ extension AppDelegate {
     // Keep the first row informational. Dynamic-effect configuration lives in Settings;
     // the menu remains focused on the window-shade workflow and its existing shortcuts.
     let angle = NSMenuItem(title: menuState.hingeAngleText, action: nil, keyEquivalent: "")
+    angle.image = NSImage(systemSymbolName: "angle", accessibilityDescription: nil)
     angle.isEnabled = false
     statusMenu.addItem(angle)
     statusMenu.addItem(.separator())
@@ -107,6 +111,7 @@ extension AppDelegate {
         item.keyEquivalentModifierMask = key.isEmpty ? [] : [.control, .command]
         item.target = self
         item.representedObject = NSNumber(value: id)
+        item.image = windowMenuIcon(for: state.pid)
         statusMenu.addItem(item)
       }
       // 与「全部取消置顶」对称：仅在有已折叠窗口时才显示「全部展开」。
@@ -125,7 +130,7 @@ extension AppDelegate {
     guard !entries.isEmpty else { return }
 
     statusMenu.addItem(.separator())
-    let header = NSMenuItem(title: "已置顶窗口", action: nil, keyEquivalent: "")
+    let header = NSMenuItem(title: "已置顶窗口（点击取消）", action: nil, keyEquivalent: "")
     header.isEnabled = false
     statusMenu.addItem(header)
 
@@ -136,6 +141,7 @@ extension AppDelegate {
         keyEquivalent: "")
       item.target = self
       item.representedObject = NSNumber(value: entry.id)
+      item.image = windowMenuIcon(for: entry.pid)
       statusMenu.addItem(item)
     }
 
@@ -146,6 +152,14 @@ extension AppDelegate {
     stopPinnedPreviews.target = self
     statusMenu.addItem(stopPinnedPreviews)
   }
+  private func windowMenuIcon(for pid: pid_t) -> NSImage? {
+    guard let icon = NSRunningApplication(processIdentifier: pid)?.icon?.copy() as? NSImage else {
+      return nil
+    }
+    icon.size = NSSize(width: 16, height: 16)
+    return icon
+  }
+
   func menuTitleForPinnedPreview(_ entry: PinnedPreviewMenuEntry, index: Int) -> String {
     let raw = entry.displayTitle
     let maxCount = 42

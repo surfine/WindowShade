@@ -102,6 +102,8 @@ cd prototype
 
 ## 调试
 
+- 设置与纸面组件的隔离验收入口：见 [设计规范 v1 落地与验证](docs/design-v1.md)。
+- 纸面组件事件与命中区域回归：`bash tests/run-paper-tests.sh`，使用离屏 AppKit 视图，不操作用户窗口。
 - 日志写在 `/tmp/windowshade.log`，5MB 自动轮转（旧文件为 `.1`）。
 - 主线程卡顿：日志里搜 `main-thread stall`。
 - 慢操作：日志里搜 `slow:` 前缀。
@@ -138,19 +140,19 @@ cd prototype
 
 ## 发布流程
 
-1. 升级版本号：`prototype/Info.plist` 与 `prototype/WindowShade.app/Contents/Info.plist` 的 `CFBundleShortVersionString`。
-2. `./build.sh` 构建并签名。
+1. 在 `prototype/Info.plist` 升级 `CFBundleShortVersionString` 和 `CFBundleVersion`。构建脚本在签名前同步这两个字段，不手改生成的 bundle。
+2. `./build.sh --stage` 隔离构建并签名，产物为 `.build/duo-validation/WindowShade.app`，不会停止或覆盖日常运行的应用。运行相关回归检查并验证签名、版本、架构。
 3. 打包（版本号统一从 `CFBundleShortVersionString` 读取，不用手改示例）：
 
    ```sh
    cd prototype
    VERSION=$(/usr/libexec/PlistBuddy -c "Print CFBundleShortVersionString" Info.plist)
    mkdir -p dist
-   ditto -c -k --sequesterRsrc --keepParent WindowShade.app "dist/WindowShade-v${VERSION}.zip"
-   shasum -a 256 "dist/WindowShade-v${VERSION}.zip" > "dist/WindowShade-v${VERSION}.zip.sha256"
+   ditto -c -k --sequesterRsrc --keepParent ../.build/duo-validation/WindowShade.app "dist/WindowShade-v${VERSION}.zip"
+   (cd dist && shasum -a 256 "WindowShade-v${VERSION}.zip" > "WindowShade-v${VERSION}.zip.sha256")
    ```
 
-4. 打标签并发布：
+4. 将实际构建的源文件、版本与发布说明提交并推送后，打新标签并发布；发布包必须与提交的源码一致：
 
    ```sh
    # 仍在 prototype/ 目录下执行
@@ -162,7 +164,7 @@ cd prototype
      --notes-file "../docs/releases/v${VERSION}.md"
    ```
 
-`prototype/dist/` 已在 `.gitignore` 中，发布产物不会污染工作区。
+`prototype/dist/` 已在 `.gitignore` 中，发布产物不会污染工作区。默认构建架构为本机架构；发布说明须标明实际架构。Apple Development 签名不等于公证，不宣称已经 notarized。
 
 ### 同一版本重新发布
 

@@ -1,0 +1,7 @@
+node_modules/
+dist/
+.wrangler/
+*.log
+.dev.vars*
+.env*
+!/public/media/*.mp4

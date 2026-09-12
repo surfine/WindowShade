@@ -586,7 +586,8 @@ final class ChromeProfileCache {
             return entry.profile
         }
         let resolved = resolveWindowChromeProfileUncached(win: win, id: id, pos: pos,
-                                                          size: size, pid: pid, title: title)
+                                                          size: size, pid: pid, title: title,
+                                                          localChromeHeight: localWindowChromeHeight(id: id, pid: pid))
         entries[id] = Entry(element: win, profile: resolved, size: size,
                             resolvedAt: CFAbsoluteTimeGetCurrent())
         pruneIfNeeded()
@@ -606,12 +607,15 @@ final class ChromeProfileCache {
     ) -> [CGWindowID: WindowChromeProfile] {
         guard requests.count > 1 else { return [:] }
         var resolved = [WindowChromeProfile?](repeating: nil, count: requests.count)
+        // Snapshot AppKit geometry before entering the concurrent AX reads.
+        let localHeights = requests.map { localWindowChromeHeight(id: $0.id, pid: $0.pid) }
         let lock = NSLock()
         DispatchQueue.concurrentPerform(iterations: requests.count) { index in
             let request = requests[index]
             let profile = resolveWindowChromeProfileUncached(
                 win: request.win, id: request.id, pos: request.pos,
-                size: request.size, pid: request.pid, title: request.title)
+                size: request.size, pid: request.pid, title: request.title,
+                localChromeHeight: localHeights[index])
             lock.lock()
             resolved[index] = profile
             lock.unlock()
@@ -674,12 +678,24 @@ func resolveWindowChromeProfile(win: AXUIElement, id: CGWindowID,
     ChromeProfileCache.shared.profile(id: id, win: win, pos: pos, size: size, pid: pid, title: title)
 }
 
+private func localWindowChromeHeight(id: CGWindowID, pid: pid_t) -> CGFloat? {
+    dispatchPrecondition(condition: .onQueue(.main))
+    guard pid == ProcessInfo.processInfo.processIdentifier,
+          let window = NSApp.windows.first(where: { $0.windowNumber == Int(id) }),
+          window.styleMask.contains(.titled) else { return nil }
+    // AX can omit our own toolbar and traffic lights. AppKit provides the
+    // actual unobscured content boundary, including a unified toolbar.
+    let content = window.convertToScreen(window.contentLayoutRect)
+    return max(0, window.frame.maxY - content.maxY)
+}
+
 private func resolveWindowChromeProfileUncached(win: AXUIElement,
                                                 id: CGWindowID,
                                                 pos: CGPoint,
                                                 size: CGSize,
                                                 pid: pid_t,
-                                                title: String) -> WindowChromeProfile {
+                                                title: String,
+                                                localChromeHeight: CGFloat? = nil) -> WindowChromeProfile {
     let hasToolbar = firstToolbar(win) != nil
     let trafficH = trafficLightHeight(of: win, winTop: pos.y)
     let adobeProfile = adobeChromeProfile(for: win, pid: pid, title: title, size: size)
@@ -695,16 +711,17 @@ private func resolveWindowChromeProfileUncached(win: AXUIElement,
         adobeProfile: adobeProfile,
         trafficLights: trafficLights
     )
-    let standardTitleBarOnly = usesStandardTitleBarOnly(pid: pid) || toolbarlessStandardTitleBar
+    let standardTitleBarOnly = localChromeHeight == nil &&
+        (usesStandardTitleBarOnly(pid: pid) || toolbarlessStandardTitleBar)
     let hasContentBelowTitleBar = !standardTitleBarOnly && size.width > 0 &&
         hasContentControlsBelowTitleBar(win, winTop: pos.y, winSize: size, titleBarBottom: trafficH)
     let standardCropH = standardTitleBarCropHeight(of: win, winTop: pos.y, winSize: size)
-    let axBarH = standardTitleBarOnly
+    let axBarH = localChromeHeight ?? (standardTitleBarOnly
         ? standardCropH
-        : chromeHeight(of: win, winTop: pos.y, winSize: size, pid: pid)
-    let hitBarH = standardTitleBarOnly
+        : chromeHeight(of: win, winTop: pos.y, winSize: size, pid: pid))
+    let hitBarH = localChromeHeight ?? (standardTitleBarOnly
         ? standardCropH
-        : titlebarHitHeight(of: win, id: id, winTop: pos.y, winSize: size, pid: pid)
+        : titlebarHitHeight(of: win, id: id, winTop: pos.y, winSize: size, pid: pid))
 
     return WindowChromeProfile(hasToolbar: hasToolbar,
                                trafficLightHeight: trafficH,
