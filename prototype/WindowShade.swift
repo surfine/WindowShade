@@ -733,6 +733,25 @@ func appWindows(pid: pid_t) -> [AXUIElement] {
     }
 }
 
+// 并发枚举多个 App 的窗口。appWindows(pid:) 全程是同步 AX IPC，逐个串起来
+// 总耗时是所有 App 之和（任何一个无响应的进程都能独占 2s 消息超时）；各 App
+// 之间没有依赖，并发之后总耗时收敛到「最慢的那一个」。
+// AX API 本身可在任意线程调用，路径上的 WindowListCache 与 WindowRegistry 都有锁。
+// 返回值按传入顺序回填，调用方拿到的窗口顺序与串行版本一致。
+func concurrentAppWindows(_ pids: [pid_t]) -> [[AXUIElement]] {
+    guard pids.count > 1 else { return pids.map { appWindows(pid: $0) } }
+    var discovered = [[AXUIElement]](repeating: [], count: pids.count)
+    let lock = NSLock()
+    DispatchQueue.concurrentPerform(iterations: pids.count) { index in
+        let windows = appWindows(pid: pids[index])
+        guard !windows.isEmpty else { return }
+        lock.lock()
+        discovered[index] = windows
+        lock.unlock()
+    }
+    return discovered
+}
+
 func runningApp(pid: pid_t) -> NSRunningApplication? {
     NSRunningApplication(processIdentifier: pid)
 }
