@@ -223,10 +223,12 @@ extension AppDelegate {
         let profile = foldPhase("外框解析") {
             resolveWindowChromeProfile(win: win, id: id, pos: pos, size: size, pid: pid, title: title)
         }
-        guard let plan = foldPhase("折叠计划") {
+        // guard 的条件里不能写尾随闭包，先算好再解包。
+        let shadePlan = foldPhase("折叠计划") {
             makeShadePlan(win: win, pos: pos, size: size,
                           pid: pid, profile: profile, options: options)
-        } else {
+        }
+        guard let plan = shadePlan else {
             quietNotice("此窗口不能折叠", log: "shade: plan rejected app=\(appName) id=\(id)")
             return
         }
@@ -282,9 +284,11 @@ extension AppDelegate {
             // 尚未翻转、NSRunningApplication.isHidden 缓存滞后），立即验证会产生假阴性。
             // 立即通过 → 立即 reveal；否则延迟验证（+0.15/+0.45s），通过后才 reveal，
             // 两次仍失败才补救/回滚。见 scheduleFoldVerification。
-            let hideVerifiedNow = foldPhase("隐藏验证") {
-                hideTookEffect(hide, win: win, pid: pid, id: id, size: size)
-            }
+            // 与上面的 hideWindow 同理：duo-integration-check.py 用这行的源码文本
+            // 断言「验证发生在 didVerifyFold 之前」，所以手工计时不做包装。
+            let verifyStartedAt = CFAbsoluteTimeGetCurrent()
+            let hideVerifiedNow = hideTookEffect(hide, win: win, pid: pid, id: id, size: size)
+            foldPhaseTotals["隐藏验证", default: 0] += CFAbsoluteTimeGetCurrent() - verifyStartedAt
             recordShadeJournal(id: id, win: win, hide: hide, pid: pid, bundleID: bundleID,
                                appName: appName, title: title,
                                originalPosition: pos, originalSize: size,
