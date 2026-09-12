@@ -80,3 +80,19 @@ if (video) {
   observer.observe(video);
   document.addEventListener('visibilitychange', () => { if (document.hidden) video.pause(); });
 }
+
+// A self-contained layer-order illustration, not an operating-system window controller.
+const pinExample = document.querySelector('#pin-example');
+const pinDesk = document.querySelector('#pin-desk');
+const pinState = document.querySelector('#pin-state');
+pinExample?.addEventListener('click', () => {
+  const enabled = pinExample.getAttribute('aria-pressed') !== 'true';
+  pinExample.setAttribute('aria-pressed', String(enabled));
+  pinExample.textContent = enabled ? pinExample.dataset.on : pinExample.dataset.off;
+  pinDesk.classList.toggle('has-pin', enabled);
+  pinState.textContent = enabled ? pinState.dataset.on : pinState.dataset.off;
+});
+document.querySelector('#pin-switch')?.addEventListener('click', () => {
+  pinDesk.classList.add('draft-front');
+  pinState.textContent = pinExample.getAttribute('aria-pressed') === 'true' ? pinState.dataset.on : pinState.dataset.off;
+});
