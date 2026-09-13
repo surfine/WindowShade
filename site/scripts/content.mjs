@@ -77,8 +77,8 @@ export const copy = {
     settingsBody: '触发手势、卷帘样式、权限、开机启动，就这几项。卷帘条可以保留窗口原来的样子，也可以换成统一的标题栏。',
     settingsCaption: '原生设置界面 · v1.0.11，跟随系统明暗外观。',
 
-    trustTitle: '卷起来的窗口，<br>保证能找回来。',
-    trustBody: '收起之前，应用会记住窗口的位置和大小，展开时会核对有没有恢复对。万一应用意外退出，日志也能帮你把窗口找回来。辅助功能权限用来寻找和移动窗口，屏幕录制权限用来截图和预览——所有画面只在你电脑上处理，不会传到别的地方。',
+    trustTitle: '你的窗口很安全。',
+    trustBody: '辅助功能权限用来找和移动窗口，屏幕录制用来做卷帘预览。所有画面只在你电脑上处理，不传到任何地方。万一应用意外退出，窗口也会自动恢复。',
 
     faqTitle: '下载之前，你可能会问。',
     faqs: [
@@ -161,8 +161,8 @@ export const copy = {
     settingsBody: 'One page each for the trigger gesture, shade style, permissions, and startup. Shades can keep the window’s own look or use a consistent title bar.',
     settingsCaption: 'Native settings · v1.0.11, follows your system appearance.',
 
-    trustTitle: 'Rolled-up windows<br>always come back.',
-    trustBody: 'Before rolling up a window, the app saves its position and size, and double-checks when restoring. If the app crashes, a log helps you get your windows back. Accessibility permission finds and moves windows. Screen Recording captures previews — everything stays on your Mac, nothing gets uploaded.',
+    trustTitle: 'Your windows are safe.',
+    trustBody: 'Accessibility permission finds and moves windows. Screen Recording makes shade previews. Everything stays on your Mac — nothing gets uploaded. If the app ever crashes, your windows come back on their own.',
 
     faqTitle: 'Quick answers before you download.',
     faqs: [
