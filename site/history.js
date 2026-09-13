@@ -77,16 +77,50 @@
   clickTimer=setTimeout(()=>{clickCount=0;$('gesture-status').textContent=t('这次还没触发。','Not triggered this time. ')+preferenceMessage();},650);
  });
  $('gesture-simulate').addEventListener('click',()=>{clearTimeout(clickTimer);clickCount=0;if(getPreference().count)toggleGesture();else $('gesture-status').textContent=preferenceMessage();});
- let platinumFolded=false;
+ const platinumDesk=$('platinum-desk'),platinumWindow=$('platinum-window'),platinumBar=$('platinum-bar');
+ let platinumFolded=false,drag=null;
+ const platinumSay=text=>{$('platinum-result').textContent=text;};
+ const movedText=()=>t(platinumFolded?'标题栏到了新位置。点方框展开，看内容出现在哪里。':'窗口跟着标题栏一起移动。',platinumFolded?'The title bar is somewhere new. Expand it and see where the contents appear.':'The window moves with its title bar.');
+ let platinumX=null,platinumY=null;
+ function platinumOffset(){
+  if(platinumX===null){
+   const desk=platinumDesk.getBoundingClientRect(),win=platinumWindow.getBoundingClientRect();
+   platinumX=win.left-desk.left;platinumY=win.top-desk.top;
+  }
+  return {x:platinumX,y:platinumY};
+ }
+ // The bar may travel past the lower edge, as a collapsed window could.
+ function placePlatinum(x,y){
+  const desk=platinumDesk.getBoundingClientRect(),win=platinumWindow.getBoundingClientRect();
+  const limit=(value,max)=>Math.min(Math.max(value,0),Math.max(0,max));
+  platinumX=limit(x,desk.width-win.width);platinumY=limit(y,desk.height-platinumBar.offsetHeight);
+  platinumWindow.style.setProperty('--drag-x',`${Math.round(platinumX)}px`);
+  platinumWindow.style.setProperty('--drag-y',`${Math.round(platinumY)}px`);
+ }
  function togglePlatinum(){
-  platinumFolded=!platinumFolded;$('platinum-window').classList.toggle('folded',platinumFolded);
+  platinumFolded=!platinumFolded;platinumWindow.classList.toggle('folded',platinumFolded);
   $('platinum-collapse').setAttribute('aria-expanded',String(!platinumFolded));
   $('platinum-content').setAttribute('aria-hidden',String(platinumFolded));
-  $('platinum-result').textContent=t(platinumFolded?'只剩标题栏。现在挪动它，再展开。':'在这个位置展开了。窗口跟着标题栏回来。',platinumFolded?'Only the title bar remains. Move it, then expand.':'Expanded here. The window follows its title bar.');
+  platinumSay(t(platinumFolded?'只剩标题栏。把它拖到别处，再点一次方框。':'内容在标题栏现在的位置展开。',platinumFolded?'Only the title bar is left. Drag it somewhere else, then click the box again.':'The contents open where the title bar now is.'));
  }
  $('platinum-collapse').addEventListener('click',togglePlatinum);
- $('platinum-toggle').addEventListener('click',togglePlatinum);
- $('platinum-position').addEventListener('input',e=>{$('platinum-window').style.setProperty('--position',e.target.value);});
+ platinumBar.addEventListener('pointerdown',e=>{
+  if(e.target.closest('button'))return;
+  const at=platinumOffset();
+  drag={id:e.pointerId,x:e.clientX-at.x,y:e.clientY-at.y};
+  platinumBar.setPointerCapture(e.pointerId);platinumWindow.classList.add('dragging');e.preventDefault();
+ });
+ platinumBar.addEventListener('pointermove',e=>{if(drag&&e.pointerId===drag.id)placePlatinum(e.clientX-drag.x,e.clientY-drag.y);});
+ for(const end of ['pointerup','pointercancel'])platinumBar.addEventListener(end,e=>{
+  if(!drag||e.pointerId!==drag.id)return;
+  drag=null;platinumWindow.classList.remove('dragging');platinumSay(movedText());
+ });
+ platinumBar.addEventListener('keydown',e=>{
+  const step={ArrowLeft:[-12,0],ArrowRight:[12,0],ArrowUp:[0,-12],ArrowDown:[0,12]}[e.key];
+  if(!step)return;
+  e.preventDefault();
+  const at=platinumOffset();placePlatinum(at.x+step[0],at.y+step[1]);platinumSay(movedText());
+ });
  let stickyFolded=false;
  function toggleSticky(){stickyFolded=!stickyFolded;$('sticky-note').classList.toggle('folded',stickyFolded);$('sticky-bar').setAttribute('aria-expanded',String(!stickyFolded));$('sticky-content').setAttribute('aria-hidden',String(stickyFolded));$('sticky-toggle').textContent=t(stickyFolded?'展开这张便笺 ↕':'试着收起这张便笺 ↕',stickyFolded?'Expand this note ↕':'Collapse this note ↕');}
  $('sticky-toggle').addEventListener('click',toggleSticky);
