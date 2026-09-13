@@ -11,10 +11,7 @@
 .history-page .classic-bar i{width:11px;height:11px;display:block;position:relative;background:#fff;border:1px solid #000;outline:3px solid #fff;box-shadow:none}
 .history-page .classic-bar i:last-child:after{content:"";position:absolute;top:1px;left:1px;width:5px;height:5px;border-bottom:1px solid #000;border-right:1px solid #000}
 .history-page .retro-panel>.classic-bar i:last-child{visibility:hidden}
-.history-page .space-window,.history-page .gesture-window,.history-page .retro-panel{box-shadow:1px 1px 0 #000;border-radius:0}
-.history-page .space-content{background:#fff;color:#000;border-color:#000}
-.history-page .space-desk{background:repeating-conic-gradient(#aaa 0 25%,#ccc 0 50%) 0 0/2px 2px}
-.history-page .desk-menu{height:21px;line-height:16px;padding:2px 16px;font-family:var(--classic-font);font-size:12px;color:#000;border-color:#000;background:#fff}
+.history-page .gesture-window,.history-page .retro-panel{box-shadow:1px 1px 0 #000;border-radius:0}
 .history-page .retro-panel{font:12px/1.5 var(--classic-font);color:#000;background:#fff;border:1px solid #000;color-scheme:light;-webkit-font-smoothing:none}
 .history-page .retro-panel fieldset{border-color:#000}
 .history-page .retro-panel legend,.history-page .retro-panel .sound-label{font:12px/1.6 var(--classic-font)}
@@ -57,7 +54,7 @@
    remain outside the chrome. Font revivals are documented as substitutes. */
 html[lang] .history-page .classic-bar b{font-size:12px}
 html[lang] .history-page .platinum-window .platinum-bar b{font-size:12px}
-@media(max-width:600px){.history-page .archive-row>div{min-width:0}.history-page .platinum-window{width:86%;margin-left:calc(var(--position,20) * .14%)}.history-page .retro-panel fieldset label{margin-right:13px}.history-page .retro-panel legend,.history-page .retro-panel .sound-label{font-size:12px}}
+@media(max-width:600px){.history-page .archive-row>div{min-width:0}.history-page .platinum-window{width:86%}.history-page .retro-panel fieldset label{margin-right:13px}.history-page .retro-panel legend,.history-page .retro-panel .sound-label{font-size:12px}}
 /* A fractional editorial baseline would turn 1px black/white rules into
    grey. Snap only the archival strip group; never scale its pixel art. */
 .history-page :is(.titlebar-archive,.retro-panel,.gesture-window,.platinum-window){translate:0 var(--era-pixel-offset,0px)}
