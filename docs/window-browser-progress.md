@@ -2260,3 +2260,23 @@ window-browser-fixture: records=20 panel=720x560 style=list … searchTop=60 lis
   穿透的子窗口，卡片不再创建额外 NSWindow，因此没有重复阴影或孤立影子。
 - 首次体验：新增一次性说明（Dock 悬停与菜单/快捷键两个入口 + “不会改动窗口”），
   之后不再打断；示例数据预览仍留在隔离入口，不注入真实面板。
+
+## 2026-09-18：1.0.13 提交、推送、发版与本机替换
+
+用户确认“时机成熟”，于是执行了此前按任务书暂缓的动作：
+
+| 动作 | 结果 |
+| --- | --- |
+| 提交 | `0b1b240` 窗口浏览改版；`fe394e3` Release 1.0.13（版本号 + 发布说明 + README） |
+| 推送 | `git push origin main`（05e5472 → fe394e3） |
+| 发版 | tag `v1.0.13` + `gh release create`，附件 zip（3,652,589 字节）与 sha256 已上传，标记 Latest |
+| 本机替换 | `./build.sh`（同一 Apple Development 身份，TeamIdentifier FVGLY6W6S4）替换 `prototype/WindowShade.app` 并 `open`；进程 40843 → 20543 |
+| 校验 | bundle 版本 1.0.13 / build 13，签名身份未变；启动日志出现 `dock-hover: observer rebuilt ... lists=1` 与 `perf-summary:` |
+
+同一已授权 bundle 的只读实机探针（1.0.13）：`--window-browser-catalog-probe`
+得到 `apps=15 windows=17 empty=4 failed=0 total=371ms slowestApp=42ms
+mainThreadMaxGap=6ms`，身份/几何/能力解析各 0 ms。`--window-browser-hover-probe`
+用合成坐标仍无法命中真实 Dock 图标（需要人工悬停），未通过项已写入视觉验收文档。
+
+发版后仅追加文档（本段与探针数据），源码与发布包保持一致；zip 内容为 tag 提交
+构建，构建脚本使用与商店一致的身份签名。
