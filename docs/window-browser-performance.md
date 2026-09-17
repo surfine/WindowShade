@@ -49,6 +49,17 @@
 | --- | --- | --- |
 | 1/3/8/20/120 个窗口 | < 0.001 / 0.001 ms | 纯值计算，2000 次取样 |
 
+### 实机只读探针（1.0.13 已安装构建）
+
+| 样本 | 实测 |
+| --- | --- |
+| 全部运行应用的窗口发现（15 个应用、17 个窗口、0 失败） | 371 ms，最慢应用 42 ms |
+| 主线程最大停顿（同一轮） | 6 ms |
+| 按完整身份解析 identity / geometry / capabilities | 各 0 ms |
+
+命令：`prototype/WindowShade.app/Contents/MacOS/WindowShade --window-browser-catalog-probe`
+（只读，不操作用户窗口）。
+
 ### 首屏文本与缓存路径
 
 自动化回归内的同机测量（`tests/run-window-browser-tests.sh` 每次运行都会重新打印）：

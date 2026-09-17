@@ -75,7 +75,27 @@ cd ..
 `--window-browser-hover-probe`、`--window-browser-thumbnail-probe`、
 `--window-browser-idle-probe` 等）继续保留，用于实机诊断。
 
-## 实机验收（本轮未运行）
+## 实机只读探针（1.0.13 已安装构建，2026-09-18 运行）
+
+安装 1.0.13 到本机后，用同一个已授权 bundle 跑只读探针：
+
+```sh
+prototype/WindowShade.app/Contents/MacOS/WindowShade --window-browser-catalog-probe
+# apps=15 windows=17 empty=4 failed=0 total=371ms slowestApp=42ms mainThreadMaxGap=6ms
+# resolve identity=0ms geometry=0ms capabilities=0ms
+```
+
+真实窗口发现与身份解析通过生产路径执行：15 个应用、17 个窗口，0 失败，最慢应用
+42 ms，主线程最大停顿 6 ms；按完整身份的解析（identity/geometry/capabilities）
+各 0 ms。功能开启后的实时日志也确认观察器在真实 Dock 上重建成功
+（`dock-hover: observer rebuilt ... lists=1`），并写入了 §17.1 的 `perf-summary`。
+
+仍未通过的实机项：`--window-browser-hover-probe` 用合成坐标驱动 AX 命中，真实指针
+不在 Dock 上时不返回应用图标（`icon-hit did not resolve a target`，
+`notificationsReliable=false`），因此“真实悬停产出目标”必须由人把指针停在 Dock
+图标上验证，合成坐标无法替代。
+
+## 实机验收（其余项目未运行）
 
 下面的检查需要辅助功能与屏幕录制授权，并且会真实操作窗口，因此**必须由用户明确
 执行**，本轮没有运行：
