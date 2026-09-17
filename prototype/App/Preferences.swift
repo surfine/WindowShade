@@ -2,6 +2,7 @@
 // 偏好开关动作。作为 AppDelegate 扩展实现。
 
 import Cocoa
+import Carbon.HIToolbox
 import ServiceManagement
 
 private let prefCardWidth: CGFloat = 560
@@ -976,4 +977,264 @@ extension AppDelegate {
         refreshPreferencesWindowIfOpen()
     }
 
+    // MARK: 窗口浏览
+
+    @objc func openWindowBrowserPanel() {
+        windowBrowserController?.openKeyboardPanel()
+    }
+
+    func makeWindowBrowserSettingsPage() -> NSView {
+        let (root, stack) = makeSettingsPageRoot()
+        stack.addArrangedSubview(makeSettingsHeader(
+            title: "窗口浏览",
+            subtitle: "在 Dock 图标上查看该应用的窗口，或用菜单与快捷键打开窗口选择面板。",
+            symbolName: "rectangle.on.rectangle"))
+
+        let triggers = makeUnifiedSettingsCard([
+            makeUnifiedToggleRow(
+                name: "Dock 悬停查看窗口",
+                subtitle: "鼠标停在已运行应用的 Dock 图标上时显示窗口面板；不会启动未运行的应用",
+                isOn: WindowBrowserSettings.dockEnabled,
+                action: #selector(prefToggleWindowBrowserDock(_:))),
+            makeUnifiedToggleRow(
+                name: "允许从菜单打开窗口选择面板",
+                subtitle: "菜单中的“选择窗口…”入口；默认不占用任何快捷键",
+                isOn: WindowBrowserSettings.keyboardPanelEnabled,
+                action: #selector(prefToggleWindowBrowserKeyboard(_:))),
+        ])
+        stack.addArrangedSubview(makePrefGroupLabel("触发"))
+        stack.addArrangedSubview(triggers)
+        triggers.widthAnchor.constraint(equalTo: stack.widthAnchor).isActive = true
+        stack.setCustomSpacing(18, after: triggers)
+
+        let recorder = WindowBrowserHotKeyRecorderView()
+        recorder.configure(current: WindowBrowserSettings.hotKey)
+        recorder.onCapture = { [weak self] hotKey in
+            guard let self else { return }
+            let previous = WindowBrowserSettings.hotKey
+            WindowBrowserSettings.hotKey = hotKey
+            if hotKey != nil, !self.registerWindowBrowserHotKey() {
+                WindowBrowserSettings.hotKey = previous
+                _ = self.registerWindowBrowserHotKey()
+            }
+            recorder.configure(current: WindowBrowserSettings.hotKey)
+        }
+
+        let preview = makeUnifiedSettingsCard([
+            makeUnifiedToggleRow(
+                name: "普通窗口实时预览（实验）",
+                subtitle: "选中普通窗口约 0.4 秒后建立一路低帧率预览；默认关闭",
+                isOn: WindowBrowserSettings.livePreviewEnabled,
+                action: #selector(prefToggleWindowBrowserLive(_:))),
+            makeUnifiedControlRow(
+                name: "打开窗口选择面板",
+                subtitle: "菜单入口与快捷键只在用户明确打开后显示",
+                control: {
+                    let button = NSButton(title: "打开面板…", target: self,
+                                          action: #selector(openWindowBrowserPanel))
+                    button.bezelStyle = .rounded
+                    return button
+                }()),
+            makeUnifiedControlRow(
+                name: "独立快捷键",
+                subtitle: "按下后录制；再次按下同一组合关闭面板。组合必须包含 ⌃ 或 ⌥，"
+                    + "避免抢占 ⌘C/⌘V 这类全系统快捷键",
+                control: recorder),
+            makeUnifiedControlRow(
+                name: "按应用排除",
+                subtitle: excludedAppsSubtitle(),
+                control: {
+                    let button = NSButton(title: "编辑排除清单…", target: self,
+                                          action: #selector(prefEditWindowBrowserExclusions))
+                    button.bezelStyle = .rounded
+                    return button
+                }()),
+        ])
+        stack.addArrangedSubview(makePrefGroupLabel("面板"))
+        stack.addArrangedSubview(preview)
+        preview.widthAnchor.constraint(equalTo: stack.widthAnchor).isActive = true
+        stack.setCustomSpacing(18, after: preview)
+
+        let permissions = makeUnifiedSettingsCard([
+            makeUnifiedPermissionRow(symbol: "accessibility", name: "辅助功能",
+                subtitle: "识别 Dock 图标、激活/折叠/恢复/关闭窗口",
+                granted: hasAccessibilityPermission(),
+                action: #selector(openAccessibilitySettingsAction)),
+            makeUnifiedPermissionRow(symbol: "rectangle.inset.filled.and.person.filled", name: "屏幕录制",
+                subtitle: "窗口缩略图与实时预览；缺失时显示图标和文字列表",
+                granted: hasScreenRecordingPermission(),
+                action: #selector(openScreenRecordingSettingsAction)),
+        ], separatorInset: 46)
+        stack.addArrangedSubview(makePrefGroupLabel("权限"))
+        stack.addArrangedSubview(permissions)
+        permissions.widthAnchor.constraint(equalTo: stack.widthAnchor).isActive = true
+
+        let note = NSTextField(wrappingLabelWithString:
+            "窗口浏览是临时面板：不会替换系统 Dock，不接管原生 Command-Tab，"
+            + "不跨 Space 搬运窗口。关闭功能或退出时会释放新增的观察器、截图与预览流；"
+            + "原有卷帘、恢复日志与置顶预览不受影响。")
+        note.font = .systemFont(ofSize: 11)
+        note.textColor = .secondaryLabelColor
+        note.maximumNumberOfLines = 4
+        stack.addArrangedSubview(note)
+        note.widthAnchor.constraint(equalTo: stack.widthAnchor).isActive = true
+        return root
+    }
+
+    private func excludedAppsSubtitle() -> String {
+        let ids = WindowBrowserSettings.excludedBundleIDs
+        if ids.isEmpty { return "尚未排除任何应用" }
+        return "已排除 \(ids.count) 个应用：\(ids.sorted().prefix(2).joined(separator: "、"))"
+            + (ids.count > 2 ? " 等" : "")
+    }
+
+    @objc func prefToggleWindowBrowserDock(_ sender: NSSwitch) {
+        WindowBrowserSettings.dockEnabled = sender.state == .on
+        notifyWindowBrowserSettingsChanged()
+    }
+
+    @objc func prefToggleWindowBrowserKeyboard(_ sender: NSSwitch) {
+        WindowBrowserSettings.keyboardPanelEnabled = sender.state == .on
+        notifyWindowBrowserSettingsChanged()
+    }
+
+    @objc func prefToggleWindowBrowserLive(_ sender: NSSwitch) {
+        WindowBrowserSettings.livePreviewEnabled = sender.state == .on
+        notifyWindowBrowserSettingsChanged()
+    }
+
+    @objc func prefEditWindowBrowserExclusions() {
+        let alert = NSAlert()
+        alert.messageText = "按应用排除"
+        alert.informativeText = "每行一个 bundle ID。被排除的应用不会出现在 Dock 面板与窗口选择面板中。"
+        // 多行编辑必须用 NSTextView：单行 NSTextField 放不下“每行一个 bundle ID”。
+        let scroll = NSScrollView(frame: NSRect(x: 0, y: 0, width: 360, height: 140))
+        scroll.hasVerticalScroller = true
+        scroll.borderType = .bezelBorder
+        let textView = NSTextView(frame: NSRect(x: 0, y: 0, width: 340, height: 140))
+        textView.isEditable = true
+        textView.isRichText = false
+        textView.font = .monospacedSystemFont(ofSize: 12, weight: .regular)
+        textView.string = WindowBrowserSettings.excludedBundleIDs.sorted().joined(separator: "\n")
+        scroll.documentView = textView
+        alert.accessoryView = scroll
+        alert.addButton(withTitle: "保存")
+        alert.addButton(withTitle: "取消")
+        guard alert.runModal() == .alertFirstButtonReturn else { return }
+        let ids = Set(textView.string
+            .split(whereSeparator: { $0 == "\n" || $0 == "," || $0 == ";" })
+            .map { $0.trimmingCharacters(in: .whitespaces) }
+            .filter { !$0.isEmpty })
+        WindowBrowserSettings.excludedBundleIDs = ids
+        notifyWindowBrowserSettingsChanged()
+        refreshPreferencesWindowIfOpen()
+    }
+
+    private func notifyWindowBrowserSettingsChanged() {
+        NotificationCenter.default.post(name: WindowBrowserNotification.didChangeSettings, object: nil)
+    }
+
+}
+
+/// 快捷键记录器：只在设置页明确聚焦时读取键盘事件，不安装任何全局监听。
+final class WindowBrowserHotKeyRecorderView: NSControl {
+    var onCapture: ((WindowBrowserSettings.HotKey?) -> Void)?
+    private let label = NSTextField(labelWithString: "未设置")
+    private let recordButton = NSButton(title: "录制…", target: nil, action: nil)
+    private let clearButton = NSButton(title: "清除", target: nil, action: nil)
+    private var recording = false
+
+    override init(frame frameRect: NSRect) {
+        super.init(frame: frameRect)
+        label.font = WindowBrowserTypography.monospacedDigits
+        label.lineBreakMode = .byTruncatingTail
+        for button in [recordButton, clearButton] {
+            button.bezelStyle = .rounded
+            button.controlSize = .small
+        }
+        recordButton.target = self
+        recordButton.action = #selector(beginRecording)
+        clearButton.target = self
+        clearButton.action = #selector(clearHotKey)
+        for view in [label, recordButton, clearButton] { addSubview(view) }
+        widthAnchor.constraint(equalToConstant: 240).isActive = true
+        heightAnchor.constraint(equalToConstant: 24).isActive = true
+        setAccessibilityElement(true)
+        setAccessibilityRole(.group)
+        setAccessibilityLabel("窗口选择面板快捷键")
+    }
+
+    required init?(coder: NSCoder) { nil }
+
+    override var acceptsFirstResponder: Bool { true }
+
+    func configure(current: WindowBrowserSettings.HotKey?) {
+        label.stringValue = current.map { WindowBrowserSettings.displayName(for: $0) } ?? "未设置"
+        setAccessibilityValue(label.stringValue)
+        needsLayout = true
+    }
+
+    override func layout() {
+        super.layout()
+        clearButton.frame = NSRect(x: bounds.width - 56, y: (bounds.height - 24) / 2,
+                                   width: 56, height: 24)
+        recordButton.frame = NSRect(x: bounds.width - 56 - 6 - 64,
+                                    y: (bounds.height - 24) / 2, width: 64, height: 24)
+        label.frame = NSRect(x: 0, y: (bounds.height - 16) / 2,
+                             width: max(60, recordButton.frame.minX - 8), height: 16)
+    }
+
+    @objc private func beginRecording() {
+        recording = true
+        label.stringValue = "请按快捷键…"
+        window?.makeFirstResponder(self)
+    }
+
+    @objc private func clearHotKey() {
+        recording = false
+        onCapture?(nil)
+    }
+
+    override func keyDown(with event: NSEvent) {
+        guard recording else {
+            super.keyDown(with: event)
+            return
+        }
+        if event.keyCode == UInt16(kVK_Escape) {
+            recording = false
+            onCapture?(WindowBrowserSettings.hotKey)
+            return
+        }
+        capture(event)
+    }
+
+    override func performKeyEquivalent(with event: NSEvent) -> Bool {
+        guard recording else { return super.performKeyEquivalent(with: event) }
+        capture(event)
+        return true
+    }
+
+    private func capture(_ event: NSEvent) {
+        // 只按修饰键不构成快捷键：保持录制状态，等真正的键。
+        guard !WindowBrowserSettings.isModifierOnlyKeyCode(event.keyCode) else { return }
+        recording = false
+        let hotKey = WindowBrowserSettings.HotKey(
+            keyCode: UInt32(event.keyCode),
+            modifiers: WindowBrowserHotKeyRecorderView.carbonModifiers(from: event.modifierFlags))
+        if WindowBrowserSettings.isReserved(hotKey) {
+            NSSound.beep()
+            configure(current: WindowBrowserSettings.hotKey)
+            return
+        }
+        onCapture?(hotKey)
+    }
+
+    private static func carbonModifiers(from flags: NSEvent.ModifierFlags) -> UInt32 {
+        var modifiers: UInt32 = 0
+        if flags.contains(.command) { modifiers |= UInt32(cmdKey) }
+        if flags.contains(.option) { modifiers |= UInt32(optionKey) }
+        if flags.contains(.control) { modifiers |= UInt32(controlKey) }
+        if flags.contains(.shift) { modifiers |= UInt32(shiftKey) }
+        return modifiers
+    }
 }

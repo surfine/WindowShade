@@ -40,6 +40,13 @@ private final class PaperShadowView: NSView {
     }
 }
 
+/// 纸面阴影子窗口：完全鼠标穿透，且永远不能成为 key/main——它只是影子，
+/// 不该因为被 ordered front 而让所属 app 被激活或抢走键盘焦点。
+private final class PaperShadowPanel: NSPanel {
+    override var canBecomeKey: Bool { false }
+    override var canBecomeMain: Bool { false }
+}
+
 private final class PaperWindowShadow: NSObject {
     private weak var parent: NSWindow?
     private let panel: NSPanel
@@ -49,7 +56,7 @@ private final class PaperWindowShadow: NSObject {
 
     init(parent: NSWindow) {
         self.parent = parent
-        panel = NSPanel(contentRect: parent.frame.insetBy(dx: -24, dy: -24),
+        panel = PaperShadowPanel(contentRect: parent.frame.insetBy(dx: -24, dy: -24),
             styleMask: [.borderless, .nonactivatingPanel], backing: .buffered, defer: false)
         super.init()
         panel.isReleasedWhenClosed = false

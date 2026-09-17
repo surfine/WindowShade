@@ -160,6 +160,7 @@ extension AppDelegate {
         if enforceOverlaySpaceInvariant(id: id, state: state, reason: "hide-verified") {
             revealPreparedOverlay(overlay)
             duoController.windowEffects.didVerifyFold(id: id, state: state)
+            settleWindowBrowserFoldWaiters(id: id, success: true)
         }
     }
 
@@ -185,6 +186,7 @@ extension AppDelegate {
         _ = applyRestoredGeometry(state, to: state.originalPosition, label: "rollback", reason: "restore")
         forceCleanup(id, preserveRecovery: true)
         verifyRestoredWindow(state, to: state.originalPosition, completion: nil)
+        settleWindowBrowserFoldWaiters(id: id, success: false)
         quietNotice("此窗口暂时无法折叠",
                     log: "shade: transaction rolled back id=\(id) app=\(state.appName)")
     }
@@ -927,6 +929,7 @@ extension AppDelegate {
 
     @objc func appTerminated(_ note: Notification) {
         guard let app = note.userInfo?[NSWorkspace.applicationUserInfoKey] as? NSRunningApplication else { return }
+        windowBrowserController?.applicationTerminated(pid: app.processIdentifier)
         pinnedPreviewController.stopPreviews(forPID: app.processIdentifier, reason: "source-app-terminated")
         for id in shaded.filter({ $0.value.pid == app.processIdentifier }).map(\.key) {
             forceCleanup(id)
@@ -936,6 +939,8 @@ extension AppDelegate {
     @objc func frontmostApplicationChanged(_ note: Notification) {
         hideHoverPreview()
         hideMenuHoverPreview()
+        windowBrowserController?.closeTemporaryDockPanel(reason: "frontmost-app")
+        windowBrowserController?.noteAppBecameActive()
         DispatchQueue.main.asyncAfter(deadline: .now() + 0.08) { [weak self] in
             self?.refreshPinnedPreviewTarget(reason: "frontmost-app")
         }
@@ -951,6 +956,7 @@ extension AppDelegate {
 
 
     @objc func screenParametersChanged(_ note: Notification) {
+        windowBrowserController?.screensDidChange()
         pinnedPreviewController.refreshAll(reason: "screen")
         for (id, state) in shaded {
             guard let overlay = state.overlay else { continue }
@@ -974,6 +980,7 @@ extension AppDelegate {
 
     @objc func activeSpaceChanged(_ note: Notification) {
         restorePendingSourceSpacesIfNeeded(reason: "active-space-changed")
+        windowBrowserController?.spaceDidChange()
         // 轻操作即时执行；开启置顶预览的动画抑制窗口期。
         hideHoverPreview()
         hideMenuHoverPreview()

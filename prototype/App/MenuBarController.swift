@@ -96,6 +96,13 @@ extension AppDelegate {
     statusMenu.addItem(pinnedPreview)
     addPinnedPreviewMenuSection(menuState.pinnedPreviews)
 
+    let windowBrowser = NSMenuItem(
+      title: "选择窗口…", action: #selector(openWindowBrowserPanel), keyEquivalent: "")
+    windowBrowser.image = NSImage(systemSymbolName: "rectangle.on.rectangle",
+                                  accessibilityDescription: nil)
+    windowBrowser.isEnabled = WindowBrowserSettings.keyboardPanelEnabled
+    statusMenu.addItem(windowBrowser)
+
     if !menuState.foldedWindows.isEmpty {
       statusMenu.addItem(.separator())
       let header = NSMenuItem(title: "已折叠窗口", action: nil, keyEquivalent: "")
@@ -125,6 +132,8 @@ extension AppDelegate {
     statusMenu.addItem(withTitle: "设置…", action: #selector(showPreferences), keyEquivalent: ",")
     statusMenu.addItem(withTitle: "退出 WindowShade", action: #selector(quit), keyEquivalent: "q")
     updateReconcileTimer()
+    // 折叠/置顶状态也可能由原有菜单或快捷键改变：面板打开时同步刷新投影。
+    windowBrowserController?.managedWindowsDidChange()
   }
   func addPinnedPreviewMenuSection(_ entries: [PinnedPreviewMenuEntry]) {
     guard !entries.isEmpty else { return }
@@ -200,9 +209,10 @@ extension AppDelegate {
     menuPreviewHoverID = nil
     menuPreviewAnchor = nil
   }
-  func menuNeedsUpdate(_ menu: NSMenu) {
-    guard menu === statusMenu, !isUpdatingMenuFromDelegate else { return }
-    isUpdatingMenuFromDelegate = true
+    func menuNeedsUpdate(_ menu: NSMenu) {
+        guard menu === statusMenu, !isUpdatingMenuFromDelegate else { return }
+        windowBrowserController?.menuWillOpen()
+        isUpdatingMenuFromDelegate = true
     defer { isUpdatingMenuFromDelegate = false }
     // 先用最近一次快照即时展示菜单，再后台校正下一次菜单内容；不能为一个
     // 动态标题把菜单打开和系统鼠标输入阻塞在目标 app 的 AX timeout 上。
