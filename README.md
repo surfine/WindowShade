@@ -29,13 +29,15 @@ A reference document covers the draft you are writing. You need the space for a 
 
 WindowShade leaves a slim strip on the desktop with the window's title and a way back. Double-click the strip to restore the window. Drag the strip, and the window opens at its new position. It keeps the small spatial cues that make a busy desktop feel like your own.
 
-## What's new in 1.0.12
+## What's new in 1.0.13
 
-- **Window browsing.** Hover an app icon in the Dock to see that app's real windows as cards or compact rows, with search and per-window actions. The menu's **Choose window…** (or your own hot key) opens the same panel in keyboard mode. Off by default.
+- **Window browsing, matured.** A single-window panel is about 312×349 pt with no dead space; thumbnails and titles come first, and actions live in a compact symbol bar that only appears on hover or keyboard selection. Status text uses system symbols instead of emoji, and folded-and-parked windows are no longer flagged as errors.
+- **System materials.** macOS 26 and later use the public AppKit Liquid Glass control layer; older systems use native materials, with explicit fallbacks for paper, Reduce Transparency, Increase Contrast and Reduce Motion. The minimum target stays macOS 14.
+- **New: arrangement and undo.** A card's context menu can move a window to the left/right half, a corner, the centre, the whole work area, or another display — preview the outline first. Undo is recorded only after the result is verified, and refused if you moved the window yourself.
 - **Identity-safe actions.** Every card action is bound to the full identity of the window you picked and re-validated before it runs; folding and unfolding reuse the existing transaction, restore verification, and recovery journal.
-- **Thumbnails and optional live preview.** Titles and cached images come first, capture stays single-window, and live preview is off by default (one new stream per temporary panel).
+- **Scheduling and resources.** Thumbnail jobs are accounted by ID: a cancelled-but-running capture keeps its slot until the system really finishes. Subscriptions always reach a terminal state, live preview has exactly one mount point, and 120 windows now lay out in ~18 ms instead of ~200 ms.
 
-[Release notes and downloads →](https://github.com/surfine/WindowShade/releases/tag/v1.0.12)
+[Release notes and downloads →](https://github.com/surfine/WindowShade/releases/tag/v1.0.13)
 
 ## Four ways to make room
 
