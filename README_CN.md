@@ -29,13 +29,13 @@
 
 WindowShade 留下一条卷帘：标题还在，展开的入口还在。双击卷帘条，窗口回来；拖动卷帘条，窗口就在新位置展开。桌面上那些帮助你认路的小线索，也一起保留下来。
 
-## 1.0.11 的变化
+## 1.0.12 的变化
 
-- **更安静的原生界面。** 四页 AppKit 设置、统一的纸面边缘和阴影、更清楚的预览与权限状态，随 macOS 切换明暗外观。
-- **批量折叠少做重复工作。** 复用窗口发现与捕获准备，批量操作跳过重叠动画；单窗动画在覆盖层出现前测量顶部区域。
-- **产品和历史都有了入口。** 中英文官网、七章互动考古，以及可以在浏览器里启动的真实旧 Mac 系统。
+- **窗口浏览。** 鼠标停在 Dock 的应用图标上，就能以缩略图卡片或紧凑列表查看该应用的真实窗口，可搜索、可逐窗操作；菜单里的“选择窗口…”或自设快捷键打开同一个键盘面板。默认关闭。
+- **动作绑定真实身份。** 每个卡片动作都绑定你所选窗口的完整身份，执行前重新核对；折叠与展开复用原有事务、恢复验证与恢复日志。
+- **缩略图与可选的实时画面。** 先出标题和缓存，截图只针对目标窗口；实时预览默认关闭，临时面板最多新增一路流。
 
-[发布说明与下载 →](https://github.com/surfine/WindowShade/releases/tag/v1.0.11)
+[发布说明与下载 →](https://github.com/surfine/WindowShade/releases/tag/v1.0.12)
 
 ## 三种腾出空间的方式
 
@@ -77,7 +77,7 @@ WindowShade 留下一条卷帘：标题还在，展开的入口还在。双击�
 
 ## 下载
 
-到 [Releases](https://github.com/surfine/WindowShade/releases/latest) 下载 **WindowShade-v1.0.11.zip**，解压，把 `WindowShade.app` 移到“应用程序”并打开。它会出现在菜单栏。
+到 [Releases](https://github.com/surfine/WindowShade/releases/latest) 下载 **WindowShade-v1.0.12.zip**，解压，把 `WindowShade.app` 移到“应用程序”并打开。它会出现在菜单栏。
 
 - **macOS 14+ · Apple Silicon。** 下载包是 arm64，本次不包含 Intel 二进制。
 - **使用 Apple Development 签名，尚未公证。** 如果 macOS 阻止首次打开，可在“系统设置 → 隐私与安全性”中，对刚下载的应用使用“仍要打开”。无需关闭 Gatekeeper。

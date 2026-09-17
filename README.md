@@ -29,13 +29,13 @@ A reference document covers the draft you are writing. You need the space for a 
 
 WindowShade leaves a slim strip on the desktop with the window's title and a way back. Double-click the strip to restore the window. Drag the strip, and the window opens at its new position. It keeps the small spatial cues that make a busy desktop feel like your own.
 
-## What's new in 1.0.11
+## What's new in 1.0.12
 
-- **A calmer native interface.** A four-page AppKit settings window, shared paper edges and shadows, and clearer preview and permission states. Light and dark appearances follow macOS.
-- **Less repeated work when folding a group.** Window discovery and capture preparation are shared where possible; bulk folding skips overlapping animations. Fold animations measure the window's top region before presenting their cover.
-- **A home for the product and its history.** A bilingual website, seven chapters of interactive archaeology, and real old Mac systems you can boot in your browser.
+- **Window browsing.** Hover an app icon in the Dock to see that app's real windows as cards or compact rows, with search and per-window actions. The menu's **Choose window…** (or your own hot key) opens the same panel in keyboard mode. Off by default.
+- **Identity-safe actions.** Every card action is bound to the full identity of the window you picked and re-validated before it runs; folding and unfolding reuse the existing transaction, restore verification, and recovery journal.
+- **Thumbnails and optional live preview.** Titles and cached images come first, capture stays single-window, and live preview is off by default (one new stream per temporary panel).
 
-[Release notes and downloads →](https://github.com/surfine/WindowShade/releases/tag/v1.0.11)
+[Release notes and downloads →](https://github.com/surfine/WindowShade/releases/tag/v1.0.12)
 
 ## Three ways to make room
 
@@ -77,7 +77,7 @@ Today's WindowShade is an **independent Swift / AppKit implementation**, inspire
 
 ## Download
 
-Get **WindowShade-v1.0.11.zip** from [Releases](https://github.com/surfine/WindowShade/releases/latest), unzip it, move `WindowShade.app` to Applications, and open it. It appears in the menu bar.
+Get **WindowShade-v1.0.12.zip** from [Releases](https://github.com/surfine/WindowShade/releases/latest), unzip it, move `WindowShade.app` to Applications, and open it. It appears in the menu bar.
 
 - **macOS 14+ · Apple Silicon.** The downloadable build is arm64; an Intel binary is not included.
 - **Apple Development signed, not notarized.** If macOS blocks the first launch, use its **System Settings → Privacy & Security → Open Anyway** flow for the app you downloaded. Do not disable Gatekeeper.
