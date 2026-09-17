@@ -26,9 +26,24 @@ enum ShareableContentLoader {
 final class WindowStreamCapture: NSObject, SCStreamDelegate, SCStreamOutput {
     let videoLayer = AVSampleBufferDisplayLayer()
 
-    // 菜单缩略图的镜像层：同一批采样帧额外喂给它，实现"复用已在跑的流"的实时缩略图，
-    // 不新建 capture、不轮询。弱引用，菜单预览视图销毁后自动断开。
-    weak var mirrorLayer: AVSampleBufferDisplayLayer?
+    // 菜单/面板缩略图的镜像层：同一批采样帧额外喂给它，实现"复用已在跑的流"的实时
+    // 缩略图，不新建 capture、不轮询。弱引用，视图销毁后自动断开。
+    //
+    // 它在主线程挂接/解除、在帧队列读取，属于跨线程共享状态：读写都走 stateLock，
+    // 与帧投递使用同一把锁，避免数据竞争。
+    private weak var _mirrorLayer: AVSampleBufferDisplayLayer?
+    var mirrorLayer: AVSampleBufferDisplayLayer? {
+        get {
+            stateLock.lock()
+            defer { stateLock.unlock() }
+            return _mirrorLayer
+        }
+        set {
+            stateLock.lock()
+            _mirrorLayer = newValue
+            stateLock.unlock()
+        }
+    }
 
     // 自适应帧率：普通置顶预览约 15fps，进入交互/拖动提高到 30fps，结束交互
     // 降回 15fps。改动通过 SCStream.updateConfiguration 调整 minimumFrameInterval，
@@ -70,14 +85,52 @@ final class WindowStreamCapture: NSObject, SCStreamDelegate, SCStreamOutput {
     // 计数器只在队列内访问，不需要额外同步。
     private let frameQueue = DispatchQueue(label: "WindowShade.pin-frames", qos: .userInteractive)
     private var mirrorFrameIndex: UInt32 = 0
+    /// 实际投递到显示层的采样帧计数：只用于诊断、性能对照与集成探针。
+    private var _deliveredFrameCount: UInt64 = 0
+    /// 实际投递到镜像层的采样帧计数（同一批帧的子集）。
+    private var _mirroredFrameCount: UInt64 = 0
+    // 普通窗口的临时实时预览配置：初始 8fps、最大 640×400、无音频、无鼠标、
+    // queueDepth 2。它不改变原有置顶预览的默认 15/30fps 与分辨率。
+    private let isPreviewStream: Bool
+    private let previewMaxPixelSize = CGSize(width: 640, height: 400)
     // 流被系统异常终止（源窗口变化、系统过渡等）时回调；由 PinnedPreviewController
     // 决定刷新 SCWindow、有限次数重启或结束会话。
     var onUnexpectedStop: ((Error) -> Void)?
 
-    override init() {
+    init(preview: Bool = false) {
+        isPreviewStream = preview
+        if preview {
+            _streamFPS = 8
+        }
         super.init()
         videoLayer.videoGravity = .resize
         videoLayer.backgroundColor = NSColor.clear.cgColor
+    }
+
+    var deliveredFrameCount: UInt64 {
+        stateLock.lock()
+        defer { stateLock.unlock() }
+        return _deliveredFrameCount
+    }
+
+    /// 源流是否真的在运行（已启动且未被 stop/restart/异常终止清空）。
+    var isRunning: Bool {
+        stateLock.lock()
+        defer { stateLock.unlock() }
+        return stream != nil && !_isStopped
+    }
+
+    var mirroredFrameCount: UInt64 {
+        stateLock.lock()
+        defer { stateLock.unlock() }
+        return _mirroredFrameCount
+    }
+
+    /// 当前配置的目标帧率（普通预览 8；置顶预览 idle 15 / interactive 30）。
+    var configuredFrameRate: Int {
+        stateLock.lock()
+        defer { stateLock.unlock() }
+        return _streamFPS
     }
 
     func start(window: SCWindow, display: SCDisplay?) async throws {
@@ -127,20 +180,31 @@ final class WindowStreamCapture: NSObject, SCStreamDelegate, SCStreamOutput {
     }
 
     func stop() {
+        stop(completion: nil)
+    }
+
+    /// 停止并回报系统调用真实结束；用于新入口在折叠前等待自己创建的临时流停妥。
+    /// completion 恰好在主线程调用一次；参数是系统的停止错误（-3808 表示流已自行终止）。
+    func stop(completion: ((Error?) -> Void)?) {
         stateLock.lock()
         _isStopped = true
         let generation = _captureGeneration
         let activeStream = stream
         stream = nil
         stateLock.unlock()
-        activeStream?.stopCapture { error in
+        let finish: (Error?) -> Void = { error in
             if let error {
-                // -3808 = 串流已自行终止（如源窗口关闭后系统停流），再 stop 属预期，静默。
                 let nsError = error as NSError
                 if nsError.code != -3808 {
                     wlog("pin-preview: capture stop failed \(error.localizedDescription)")
                 }
             }
+            if let completion { DispatchQueue.main.async { completion(error) } }
+        }
+        if let activeStream {
+            activeStream.stopCapture(completionHandler: finish)
+        } else {
+            finish(nil)
         }
         DispatchQueue.main.async { [weak self, videoLayer] in
             // 若在 flush 执行前已重启（generation 递增），旧 flush 不应清掉
@@ -199,15 +263,24 @@ final class WindowStreamCapture: NSObject, SCStreamDelegate, SCStreamOutput {
             ?? screenForCocoaFrame(NSRect(x: 0, y: 0, width: width, height: height))
             ?? NSScreen.main
         let scale = screen?.backingScaleFactor ?? 2
-        configuration.width = max(1, Int(ceil(width * scale)))
-        configuration.height = max(1, Int(ceil(height * scale)))
+        var pixelWidth = max(1, Int(ceil(width * scale)))
+        var pixelHeight = max(1, Int(ceil(height * scale)))
+        if isPreviewStream {
+            let outputScale = min(previewMaxPixelSize.width / CGFloat(pixelWidth),
+                                  previewMaxPixelSize.height / CGFloat(pixelHeight),
+                                  1)
+            pixelWidth = max(1, Int(ceil(CGFloat(pixelWidth) * outputScale)))
+            pixelHeight = max(1, Int(ceil(CGFloat(pixelHeight) * outputScale)))
+        }
+        configuration.width = pixelWidth
+        configuration.height = pixelHeight
     }
 
     private func configureBase(display: SCDisplay?) {
         configuration.pixelFormat = kCVPixelFormatType_32BGRA
         configuration.colorSpaceName = CGColorSpace.sRGB
         configuration.showsCursor = false
-        configuration.queueDepth = 3
+        configuration.queueDepth = isPreviewStream ? 2 : 3
         configuration.scalesToFit = true
         if #available(macOS 13.0, *) {
             configuration.capturesAudio = false
@@ -266,6 +339,10 @@ final class WindowStreamCapture: NSObject, SCStreamDelegate, SCStreamOutput {
         let deliverMain = true
         let deliverMirror = mirrorLayer != nil && mirrorFrameIndex % mirrorDivisor == 1
         guard deliverMain || deliverMirror else { return }
+        stateLock.lock()
+        _deliveredFrameCount &+= 1
+        if deliverMirror { _mirroredFrameCount &+= 1 }
+        stateLock.unlock()
         deliver(sampleBuffer, main: deliverMain, mirror: deliverMirror)
     }
 
