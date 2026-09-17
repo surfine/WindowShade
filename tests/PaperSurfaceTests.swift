@@ -13,6 +13,10 @@ enum PaperSurfaceTests {
         let root = NSView(frame: NSRect(x: 0, y: 0, width: 600, height: 360))
         root.clipsToBounds = true
         window.contentView = root
+        // 先把窗口真正上屏再断言 visibleRect：紧跟多个 GUI 进程之后，WindowServer
+        // 尚未提交窗口时 visibleRect 可能仍是空的，会让本回归假失败。
+        window.orderFrontRegardless()
+        RunLoop.current.run(until: Date(timeIntervalSinceNow: 0.05))
         let video = AVSampleBufferDisplayLayer()
         let preview = PinnedPreviewContentView(videoLayer: video, title: "Test preview")
         preview.frame = NSRect(x: 24, y: 24, width: 552, height: 220)
@@ -23,9 +27,16 @@ enum PaperSurfaceTests {
         precondition(preview.visibleRect == preview.bounds, "hover region escaped preview bounds")
         guard let tracking = preview.trackingAreas.first,
               let owner = tracking.owner as? PinnedPreviewContentView,
-              let title = preview.subviews.first(where: { $0 is NSVisualEffectView }) else {
+              let title = preview.subviews.first(where: { $0 is NSVisualEffectView })
+                as? NSVisualEffectView else {
             fatalError("missing production tracking owner or title")
         }
+        // 离屏回归里这个窗口不在合成器里（实测 occlusionState 不含 .visible），
+        // 材质视图不会自己变成 layer-backed，而没有 layer 时第一次 alpha 动画
+        // 会被丢掉：实测 alpha 一直停在 0。真实面板是合成出来的，材质显示时就
+        // 有 layer。这里显式开启 layer，混合模式仍保留生产用的 behindWindow，
+        // 覆盖的仍是 mouseEntered → setTitleVisible 这条真实代码路径。
+        title.wantsLayer = true
         precondition(owner === preview && tracking.options.contains(.mouseEnteredAndExited))
         precondition(title.alphaValue == 0, "idle title obscures preview")
 
