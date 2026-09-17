@@ -96,3 +96,35 @@ pinSwitch?.addEventListener('click', () => {
   pinDesk.classList.toggle('draft-front');
   renderPinExample();
 });
+
+// Window browsing illustration: pointer-hover opens a read-only panel, like the real one.
+const browseDesk = document.querySelector('#browse-desk');
+const browseIcon = document.querySelector('#browse-icon');
+const browsePanel = document.querySelector('#browse-panel');
+const browseState = document.querySelector('#browse-state');
+if (browseDesk && browseIcon && browsePanel && browseState) {
+  let browseOpen = false;
+  let browseLocked = false;
+  function renderBrowse(open) {
+    browseOpen = open;
+    browseDesk.classList.toggle('is-open', open);
+    browseIcon.classList.toggle('is-active', open);
+    browseIcon.setAttribute('aria-expanded', String(open));
+    browsePanel.setAttribute('aria-hidden', String(!open));
+    browseState.textContent = open ? browseState.dataset.on : browseState.dataset.off;
+  }
+  browseIcon.addEventListener('mouseenter', () => { if (!browseOpen) renderBrowse(true); });
+  browseDesk.addEventListener('mouseleave', () => { if (!browseLocked) renderBrowse(false); });
+  browseIcon.addEventListener('focus', () => { if (!browseOpen) renderBrowse(true); });
+  browseIcon.addEventListener('blur', () => { if (!browseLocked) renderBrowse(false); });
+  browseIcon.addEventListener('click', () => {
+    browseLocked = !browseLocked;
+    renderBrowse(browseLocked);
+  });
+  browseIcon.addEventListener('keydown', event => {
+    if (event.key !== 'Escape') return;
+    browseLocked = false;
+    renderBrowse(false);
+  });
+  renderBrowse(true);
+}

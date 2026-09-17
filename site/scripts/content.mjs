@@ -20,8 +20,8 @@ export const copy = {
     language: 'EN',
     languageHref: '/en/',
     title: 'WindowShade · 窗口挡路？卷上去就好。',
-    description: '双击标题栏，Mac 窗口卷成一条细杠；再双击，原地展开。还能把窗口钉在最前面。免费开源的 macOS 小工具。',
-    nav: ['卷帘', '置顶', '窗口往事'],
+    description: '双击标题栏，Mac 窗口卷成一条细杠；再双击，原地展开。还能把窗口钉在最前面，或停在 Dock 图标上浏览那个应用的所有窗口。免费开源的 macOS 小工具。',
+    nav: ['卷帘', '置顶', '窗口浏览', '窗口往事'],
     eyebrow: '老 Mac 用户都记得的窗口卷帘，又能用了。',
     hero: '窗口挡路？<br>卷上去就好。',
     intro: '双击标题栏，窗口卷成一条细杠。<br>再双击，原地展开。就这么简单。',
@@ -61,6 +61,25 @@ export const copy = {
     pinWorkBody: '根据参考尺寸，写下产品规格。',
     pinDemoCaption: '网页层级示意，不会碰你电脑上的窗口。置顶体验参考 Top.it。',
 
+    browseTitle: '停在 Dock 图标上，<br>那个应用的窗口全在这儿。',
+    browseIntro: '把指针停在 Dock 里的应用图标上，弹出它的真实窗口面板：缩略图卡片或紧凑列表，可以搜索，也能直接对某一个窗口动手。',
+    browseHow: '菜单里的“选择窗口…”或你自己录的快捷键打开键盘面板，搜索框直接可输入。Dock 入口默认关闭，可在“设置 → 窗口浏览”里打开，也能按应用排除。',
+    browsePoints: [
+      ['先看清，再动手', '面板本身只读；只有你按下卡片上的按钮，才会动那个窗口。'],
+      ['动作绑在你选中的那个窗口上', '打开 / 展开、折叠、置顶预览、关闭、最小化，按窗口的实际能力显示。'],
+      ['截图只拍目标窗口', '先出标题和已有缓存，再补图；拍不到就用图标加说明，不会拿整屏截图裁切。'],
+    ],
+    browseHint: '指针停在图标上会打开；移开收起，点一下可以钉住。',
+    browseDockLabel: '窗口浏览示意：停在 Dock 图标上',
+    browsePanelTitle: '窗口选择',
+    browsePanelCount: '8 个窗口',
+    browseCard1: '参考资料 · WindowShade',
+    browseCard2: '文章草稿 · 一个小动作的历史',
+    browseCard3: '尺寸参考 · 240 mm',
+    browseStatusOn: '窗口都在这里了。只有按下卡片上的按钮，才会动它们。',
+    browseStatusOff: '收起了。把指针停到 Dock 图标上，或者点一下。',
+    browseCaption: '网页示意，不会碰你电脑上的窗口。面板是临时的：不替换系统 Dock，也不接管原生 Command-Tab。',
+
     shortcutTitle: '记住这几个快捷键就够了。',
     shortcuts: [
       ['⌃ ⌘ C', '收起或展开当前窗口'],
@@ -75,7 +94,7 @@ export const copy = {
 
     settingsTitle: '设置很简单，<br>全是你要选的东西。',
     settingsBody: '触发手势、卷帘样式、权限、开机启动，就这几项。卷帘条可以保留窗口原来的样子，也可以换成统一的标题栏。',
-    settingsCaption: '原生设置界面 · v1.0.11，跟随系统明暗外观。',
+    settingsCaption: '原生设置界面 · v1.0.12，跟随系统明暗外观。',
 
     trustTitle: '你的窗口很安全。',
     trustBody: '辅助功能权限用来找和移动窗口，屏幕录制用来做卷帘预览。所有画面只在你电脑上处理，不传到任何地方。万一应用意外退出，窗口也会自动恢复。',
@@ -83,7 +102,8 @@ export const copy = {
     faqTitle: '下载之前，你可能会问。',
     faqs: [
       ['我的 Mac 能用吗？', '要 macOS 14 以上加 Apple Silicon，没有 Intel 版。卷帘和钉窗口不用传感器；合盖跟着动的效果需要有铰链传感器的 MacBook。'],
-      ['要什么权限？', '辅助功能——找窗口、移窗口、恢复窗口用的。屏幕录制——截图、预览和动态效果用的。”屏幕录制”只是系统权限的名字，画面不会离开你的电脑。'],
+      ['要什么权限？', '辅助功能——找窗口、移窗口、恢复窗口用的。屏幕录制——截图、缩略图、预览和动态效果用的。”屏幕录制”只是系统权限的名字，画面不会离开你的电脑。'],
+      ['窗口浏览会动我的窗口吗？', '不会，除非你点卡片上的按钮。面板只是显示标题、位置和缩略图；每个动作都绑定你选中的那个窗口的身份，执行前会重新核对，核对不了就拒绝执行，不会拿标题或当前焦点去猜另一个窗口。'],
       ['所有窗口都能卷吗？', '普通桌面窗口都行。便笺走系统自带的卷起逻辑，Adobe 那种自绘工作区另有处理。全屏、Split View、Stage Manager 和多屏还有些边界情况，建议先在你常用的 app 里试试。'],
       ['怎么装？', '下载 ZIP，解压，把 WindowShade.app 拖到”应用程序”里，打开后按提示给权限。安装包有 Apple Development 签名但还没公证，第一次打开如果被拦，去”系统设置 → 隐私与安全性”点”仍要打开”就行。'],
     ],
@@ -104,8 +124,8 @@ export const copy = {
     language: '中文',
     languageHref: '/',
     title: 'WindowShade · Window in the way? Roll it up.',
-    description: 'Double-click a title bar to roll a Mac window into a thin bar. Double-click again — it comes right back. Pin windows to stay on top. Free and open source.',
-    nav: ['Shading', 'Pinning', 'Window stories'],
+    description: 'Double-click a title bar to roll a Mac window into a thin bar. Double-click again — it comes right back. Pin windows on top, or hover a Dock icon to browse that app’s windows. Free and open source.',
+    nav: ['Shading', 'Pinning', 'Window browsing', 'Window stories'],
     eyebrow: 'That classic Mac trick where you roll up windows? It’s back.',
     hero: 'Window in the way?<br>Roll it up.',
     intro: 'Double-click the title bar. The window rolls into a thin bar.<br>Double-click again. It comes right back.',
@@ -145,6 +165,25 @@ export const copy = {
     pinWorkBody: 'Use the reference dimensions to write the specification.',
     pinDemoCaption: 'A browser illustration of window layers — it won’t touch your Mac’s windows. Pinning reference: Top.it.',
 
+    browseTitle: 'Hover a Dock icon.<br>Every window of that app is right there.',
+    browseIntro: 'Rest the pointer on an app icon in the Dock and a panel of that app’s real windows appears: thumbnail cards or compact rows, with search and actions for a single window.',
+    browseHow: 'Choose window… in the menu, or record your own hot key, to open the same panel in keyboard mode with the search field ready. The Dock entry is off by default — turn it on in Settings → Window browsing, where you can also exclude apps.',
+    browsePoints: [
+      ['Look first, then act', 'The panel itself is read-only. Nothing moves until you press a button on a card.'],
+      ['Actions stay bound to the window you picked', 'Open / unfold, fold, pin preview, close, minimize — shown according to what that window supports.'],
+      ['Capture only ever targets that window', 'Titles and cached images come first; if a capture fails you get the app icon and a note, never a cropped screen shot.'],
+    ],
+    browseHint: 'Resting the pointer opens it; moving away closes it, and a click keeps it open.',
+    browseDockLabel: 'Window browsing illustration: hover the Dock icon',
+    browsePanelTitle: 'Choose a window',
+    browsePanelCount: '8 windows',
+    browseCard1: 'Reference · WindowShade',
+    browseCard2: 'Draft · A small gesture’s history',
+    browseCard3: 'Size reference · 240 mm',
+    browseStatusOn: 'All the windows are here. They move only when you press a card button.',
+    browseStatusOff: 'Closed. Rest the pointer on the Dock icon, or click it.',
+    browseCaption: 'A browser illustration — it won’t touch your Mac’s windows. The panel is temporary: it does not replace the Dock or take over the native Command-Tab.',
+
     shortcutTitle: 'Just a few shortcuts to know.',
     shortcuts: [
       ['⌃ ⌘ C', 'Roll up or unroll the current window'],
@@ -159,7 +198,7 @@ export const copy = {
 
     settingsTitle: 'Settings are simple.<br>Just the stuff you’d actually change.',
     settingsBody: 'One page each for the trigger gesture, shade style, permissions, and startup. Shades can keep the window’s own look or use a consistent title bar.',
-    settingsCaption: 'Native settings · v1.0.11, follows your system appearance.',
+    settingsCaption: 'Native settings · v1.0.12, follows your system appearance.',
 
     trustTitle: 'Your windows are safe.',
     trustBody: 'Accessibility permission finds and moves windows. Screen Recording makes shade previews. Everything stays on your Mac — nothing gets uploaded. If the app ever crashes, your windows come back on their own.',
@@ -167,7 +206,8 @@ export const copy = {
     faqTitle: 'Quick answers before you download.',
     faqs: [
       ['Will it work on my Mac?', 'You need macOS 14+ and Apple Silicon — no Intel build. Rolling up and pinning don’t need any sensors. The lid-following desktop effect needs a MacBook with a hinge sensor.'],
-      ['What permissions does it need?', 'Accessibility — for finding, moving, and restoring windows. Screen Recording — for snapshots, previews, and effects. Don’t worry, “Screen Recording” is just the system permission’s name. Nothing leaves your Mac.'],
+      ['What permissions does it need?', 'Accessibility — for finding, moving, and restoring windows. Screen Recording — for snapshots, thumbnails, previews, and effects. Don’t worry, “Screen Recording” is just the system permission’s name. Nothing leaves your Mac.'],
+      ['Does window browsing move my windows?', 'No — not unless you press a button on a card. The panel only shows titles, positions, and thumbnails, and every action is bound to the identity of the window you picked, re-checked before it runs. If the target cannot be confirmed, the action is refused rather than guessed from a title or the current focus.'],
       ['Does it work with every window?', 'Regular desktop windows, yes. Stickies uses its own built-in collapse. Adobe-style custom toolbars get special handling. Full screen, Split View, Stage Manager, and multi-display still have some rough edges — try it with your apps and see.'],
       ['How do I install it?', 'Download the ZIP, unzip, drag WindowShade.app into Applications, and open it. It’ll ask for permissions. The app is Apple Development signed but not notarized — if macOS blocks it, go to System Settings → Privacy & Security and hit Open Anyway.'],
     ],
