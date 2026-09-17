@@ -63,11 +63,12 @@ export const copy = {
     pinDemoCaption: '网页层级示意，不会碰你电脑上的窗口。置顶体验参考 Top.it。',
 
     browseTitle: '停在 Dock 图标上，<br>那个应用的窗口全在这儿。',
-    browseIntro: '把指针停在 Dock 里的应用图标上，弹出它的真实窗口面板：缩略图卡片或紧凑列表，可以搜索，也能直接对某一个窗口动手。',
-    browseHow: '菜单里的“选择窗口…”或你自己录的快捷键打开键盘面板，搜索框直接可输入。Dock 入口默认关闭，可在“设置 → 窗口浏览”里打开，也能按应用排除。',
+    browseIntro: '把指针停在 Dock 里的应用图标上，弹出它的真实窗口面板：窗口截图与标题优先，动作收在悬停才出现的符号条里，可以搜索，也能直接对某一个窗口动手。面板尺寸随内容决定——一个窗口约 312 × 349 pt，不再留一大片空白。',
+    browseHow: '菜单里的“选择窗口…”或你自己录的快捷键打开键盘面板，搜索框在顶部、直接可输入。Dock 入口默认关闭，可在“设置 → 窗口浏览”里打开，也能按应用排除，并选择跟随系统（macOS 26 及以上使用真实系统玻璃）或纸面外观。',
     browsePoints: [
       ['先看清，再动手', '面板本身只读；只有你按下卡片上的按钮，才会动那个窗口。'],
-      ['动作绑在你选中的那个窗口上', '打开 / 展开、折叠、置顶预览、关闭、最小化，按窗口的实际能力显示。'],
+      ['动作绑在你选中的那个窗口上', '打开 / 展开、折叠、置顶预览、关闭、最小化，按窗口的实际能力显示；状态用系统符号表达，不用 emoji 或异常警告色。'],
+      ['排布可以先预览，再撤销', '左半 / 右半 / 四角 / 居中 / 填满可用区域 / 移到另一显示器，先画目标轮廓；执行后读回验证，成功才登记撤销。'],
       ['截图只拍目标窗口', '先出标题和已有缓存，再补图；拍不到就用图标加说明，不会拿整屏截图裁切。'],
     ],
     browseHint: '指针停在图标上会打开；移开收起，点一下可以钉住。',
@@ -95,7 +96,7 @@ export const copy = {
 
     settingsTitle: '设置很简单，<br>全是你要选的东西。',
     settingsBody: '效果、卷帘、窗口浏览、权限与启动、高级，五页侧栏。卷帘条可以保留窗口原来的样子，也可以换成统一的标题栏；窗口浏览的开关、快捷键与排除清单也在里面。',
-    settingsCaption: '原生设置界面 · v1.0.12。这张截图是“效果”页，侧栏里已经有“窗口浏览”。',
+    settingsCaption: '原生设置界面。这张“效果”页截图取自 1.0.12；1.0.13 起“窗口浏览”页新增外观（跟随系统 / 纸面）、默认显示方式与排布说明。',
 
     trustTitle: '你的窗口很安全。',
     trustBody: '辅助功能权限用来找和移动窗口，屏幕录制用来做卷帘预览。所有画面只在你电脑上处理，不传到任何地方。万一应用意外退出，窗口也会自动恢复。',
@@ -168,11 +169,12 @@ export const copy = {
     pinDemoCaption: 'A browser illustration of window layers — it won’t touch your Mac’s windows. Pinning reference: Top.it.',
 
     browseTitle: 'Hover a Dock icon.<br>Every window of that app is right there.',
-    browseIntro: 'Rest the pointer on an app icon in the Dock and a panel of that app’s real windows appears: thumbnail cards or compact rows, with search and actions for a single window.',
-    browseHow: 'Choose window… in the menu, or record your own hot key, to open the same panel in keyboard mode with the search field ready. The Dock entry is off by default — turn it on in Settings → Window browsing, where you can also exclude apps.',
+    browseIntro: 'Rest the pointer on an app icon in the Dock and a panel of that app’s real windows appears: thumbnails and titles first, actions tucked into a symbol bar that only shows on hover, with search and per-window actions. The panel is sized by its content — a single window is about 312 × 349 pt, with no dead space.',
+    browseHow: 'Choose window… in the menu, or record your own hot key, to open the same panel in keyboard mode with the search field at the top. The Dock entry is off by default — turn it on in Settings → Window browsing, include an app exclusion list, and pick system appearance (real system glass on macOS 26 and later) or paper.',
     browsePoints: [
       ['Look first, then act', 'The panel itself is read-only. Nothing moves until you press a button on a card.'],
-      ['Actions stay bound to the window you picked', 'Open / unfold, fold, pin preview, close, minimize — shown according to what that window supports.'],
+      ['Actions stay bound to the window you picked', 'Open / unfold, fold, pin preview, close, minimize — shown according to what that window supports, with system symbols instead of emoji or error colours.'],
+      ['Arrange with a preview, then undo', 'Left/right half, corners, centre, fill the work area, move to another display — the outline is drawn first, the result is read back and verified, and only then does undo become available.'],
       ['Capture only ever targets that window', 'Titles and cached images come first; if a capture fails you get the app icon and a note, never a cropped screen shot.'],
     ],
     browseHint: 'Resting the pointer opens it; moving away closes it, and a click keeps it open.',
@@ -200,7 +202,7 @@ export const copy = {
 
     settingsTitle: 'Settings are simple.<br>Just the stuff you’d actually change.',
     settingsBody: 'Five sidebar pages: effects, shading, window browsing, permissions and startup, and advanced. Shades can keep the window’s own look or use a consistent title bar, and window browsing holds its own switch, hot key, and exclusion list.',
-    settingsCaption: 'Native settings · v1.0.12. This is the Effects page; window browsing now has its own sidebar entry.',
+    settingsCaption: 'Native settings. This Effects-page shot is from 1.0.12; since 1.0.13 the Window browsing page also has appearance (system / paper), default display style, and the arrangement notes.',
 
     trustTitle: 'Your windows are safe.',
     trustBody: 'Accessibility permission finds and moves windows. Screen Recording makes shade previews. Everything stays on your Mac — nothing gets uploaded. If the app ever crashes, your windows come back on their own.',

@@ -1,6 +1,6 @@
 {
   "origin": "https://windowshade.pages.dev",
-  "deployment": "https://b32c91de.windowshade.pages.dev",
+  "deployment": "https://a82e7ce5.windowshade.pages.dev",
   "project": "windowshade",
   "branch": "main",
   "files": {
@@ -9,16 +9,16 @@
     "_redirects": "10738b7bf0dda342fb556e9d4a5c66e9f3ffaebc75e19aa0982ab168b72695ec",
     "app.js": "87da7b6bd85e7c2c04ce37c60b44883c171a1ac009a6f640d16d76e18aa1692c",
     "en/history/index.html": "e78d6085730fc3753ca2a294cf5d339f9d5402393798f13385298edf6f47adc3",
-    "en/index.html": "88e2fe44b567ab69b3104f600a2a710db3edaf1e765aba26452660250a48efbc",
+    "en/index.html": "215d4236298c10560a6d57e0de121e8e34d9be84a123ffd1aa785a46d5c25690",
     "era.css": "142385f004550f821df4e04377b0e3653edad64a623299ab945c4fc19faf7700",
     "fonts/Asap-OFL.txt": "79d8634241e736e967a1539a9c766ea8e68f6d2df9f5d0edba5a4c88b1b5d8a0",
     "fonts/Asap-Variable.woff2": "3f230328a40ee9a05fe099dfb6b403a4c569aaea6690e5d483d5715ed817498f",
     "fonts/ChicagoFLF.woff2": "5d25dcec1f8984c5e0aed398a7c90be8de86bb4f9bcfed4e7e1e2c3c13b7e742",
     "fonts/system-css-LICENSE.txt": "0433a8c105e9d410ca3fb7f205aafe8f1be27e0438cf3bd1447907f738ebc6b0",
+    "history/index.html": "8f22ea8d5177ce8607bb1ffea15304544ae2124abf24e5b4cda4f67b0e9bc6e6",
     "history.css": "75625d0d6f1d056368695e38381dc44a61be786ee453e2259a360b543733d6d9",
     "history.js": "84cd1b8f38cb781c12630877d2b7be7190a2ab3b3a8384b316ad7e56ccbb4bd7",
-    "history/index.html": "8f22ea8d5177ce8607bb1ffea15304544ae2124abf24e5b4cda4f67b0e9bc6e6",
-    "index.html": "8cf3cb3c9ce7c2281045611e2d156775cbacfad1a401bf1fc38ffe2bb1e1beb3",
+    "index.html": "5ca2eb413d6cf0a4c0899386b5d4b6ec44482c4509826b639b3b1270c7b5778c",
     "media/duo-poster.webp": "5b136a7371a8b427d891750f3b5329e467514de7d0ad96f4948082f79db9d398",
     "media/duo.mp4": "df8de4fa8b5edfba635d7528fdc469cd2528dc9251634de6adac2d54f551edbc",
     "media/era/checkmark.svg": "c3e75dc31698c642443681f8988cf9625de86b678a9029705417814927ef2d34",
@@ -31,5 +31,6 @@
     "sitemap.xml": "2adb63b2e068b97040b55c8c160ecbfb9412401ffa8241bd32183de39e269085",
     "style.css": "fec0752b1b6bd91a4a76b786e8d16b79ce7edb8ab7e16179b7df059af7837369"
   },
-  "recordedAt": "2026-09-17T16:18:48.220Z"
+  "recordedAt": "2026-09-17T16:18:48.220Z",
+  "deployedAt": "2026-09-18T07:41:25+08:00"
 }
