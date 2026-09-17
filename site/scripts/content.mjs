@@ -19,12 +19,13 @@ export const copy = {
     path: '/',
     language: 'EN',
     languageHref: '/en/',
-    title: 'WindowShade · 窗口挡路？卷上去就好。',
-    description: '双击标题栏，Mac 窗口卷成一条细杠；再双击，原地展开。还能把窗口钉在最前面，或停在 Dock 图标上浏览那个应用的所有窗口。免费开源的 macOS 小工具。',
+    title: 'WindowShade · 卷起、钉住，或者翻一翻。',
+    description: '双击标题栏，Mac 窗口卷成一条细杠；再双击，原地展开。需要一直看的就钉在最前面，找窗口时停在 Dock 图标上就能浏览那个应用的全部窗口。免费开源的 macOS 小工具。',
     nav: ['卷帘', '置顶', '窗口浏览', '窗口往事'],
-    eyebrow: '老 Mac 用户都记得的窗口卷帘，又能用了。',
-    hero: '窗口挡路？<br>卷上去就好。',
-    intro: '双击标题栏，窗口卷成一条细杠。<br>再双击，原地展开。就这么简单。',
+    eyebrow: '卷起挡路的窗口，钉住要一直看的，或者停在 Dock 图标上翻出那个应用的所有窗口。',
+    hero: '窗口挡路？<br>让它让开。',
+    heroArtLabel: '窗口卷成一条卷帘、一个被钉住的窗口，以及停在 Dock 图标上展开的窗口面板',
+    intro: '双击标题栏，窗口卷成一条细杠。<br>再双击，原地展开；不想让开就钉住它。',
     try: '试试看',
     facts: ['macOS 14+ · Apple Silicon', '免费使用 · MIT 开源', '原生 Swift / AppKit'],
 
@@ -93,8 +94,8 @@ export const copy = {
     videoCaption: 'WindowShade 效果录屏 · 需要带铰链角度传感器的 Apple Silicon MacBook。',
 
     settingsTitle: '设置很简单，<br>全是你要选的东西。',
-    settingsBody: '触发手势、卷帘样式、权限、开机启动，就这几项。卷帘条可以保留窗口原来的样子，也可以换成统一的标题栏。',
-    settingsCaption: '原生设置界面 · v1.0.12，跟随系统明暗外观。',
+    settingsBody: '效果、卷帘、窗口浏览、权限与启动、高级，五页侧栏。卷帘条可以保留窗口原来的样子，也可以换成统一的标题栏；窗口浏览的开关、快捷键与排除清单也在里面。',
+    settingsCaption: '原生设置界面 · v1.0.12。这张截图是“效果”页，侧栏里已经有“窗口浏览”。',
 
     trustTitle: '你的窗口很安全。',
     trustBody: '辅助功能权限用来找和移动窗口，屏幕录制用来做卷帘预览。所有画面只在你电脑上处理，不传到任何地方。万一应用意外退出，窗口也会自动恢复。',
@@ -114,7 +115,7 @@ export const copy = {
     historyLink: '翻开窗口往事',
     researchLink: '设计理由与研究笔记',
 
-    endTitle: '下次有窗口挡路，<br>试试把它卷上去。',
+    endTitle: '下次窗口挤在一起，<br>卷起、钉住，或者翻一翻。',
     endBody: 'macOS 14+ · Apple Silicon · 免费，MIT 开源。',
   },
 
@@ -123,12 +124,13 @@ export const copy = {
     path: '/en/',
     language: '中文',
     languageHref: '/',
-    title: 'WindowShade · Window in the way? Roll it up.',
-    description: 'Double-click a title bar to roll a Mac window into a thin bar. Double-click again — it comes right back. Pin windows on top, or hover a Dock icon to browse that app’s windows. Free and open source.',
+    title: 'WindowShade · Roll it up, pin it, or browse.',
+    description: 'Double-click a title bar to roll a Mac window into a thin bar; double-click again to put it back. Pin what has to stay visible, and hover a Dock icon to find any window behind it. Free and open source.',
     nav: ['Shading', 'Pinning', 'Window browsing', 'Window stories'],
-    eyebrow: 'That classic Mac trick where you roll up windows? It’s back.',
-    hero: 'Window in the way?<br>Roll it up.',
-    intro: 'Double-click the title bar. The window rolls into a thin bar.<br>Double-click again. It comes right back.',
+    eyebrow: 'Roll up the window in your way, pin what has to stay visible, or hover a Dock icon to find any of its windows.',
+    hero: 'Window in the way?<br>Move it aside.',
+    heroArtLabel: 'A window rolled into a strip, a pinned window, and a panel of windows opened from a Dock icon',
+    intro: 'Double-click the title bar. The window rolls into a thin bar.<br>Double-click again and it is back — or pin it instead.',
     try: 'Try it',
     facts: ['macOS 14+ · Apple Silicon', 'Free to use · MIT licensed', 'Native Swift / AppKit'],
 
@@ -197,8 +199,8 @@ export const copy = {
     videoCaption: 'WindowShade screen recording · Requires an Apple Silicon MacBook with a lid angle sensor.',
 
     settingsTitle: 'Settings are simple.<br>Just the stuff you’d actually change.',
-    settingsBody: 'One page each for the trigger gesture, shade style, permissions, and startup. Shades can keep the window’s own look or use a consistent title bar.',
-    settingsCaption: 'Native settings · v1.0.12, follows your system appearance.',
+    settingsBody: 'Five sidebar pages: effects, shading, window browsing, permissions and startup, and advanced. Shades can keep the window’s own look or use a consistent title bar, and window browsing holds its own switch, hot key, and exclusion list.',
+    settingsCaption: 'Native settings · v1.0.12. This is the Effects page; window browsing now has its own sidebar entry.',
 
     trustTitle: 'Your windows are safe.',
     trustBody: 'Accessibility permission finds and moves windows. Screen Recording makes shade previews. Everything stays on your Mac — nothing gets uploaded. If the app ever crashes, your windows come back on their own.',
@@ -218,7 +220,7 @@ export const copy = {
     historyLink: 'Explore the window stories',
     researchLink: 'Design rationale and research notes',
 
-    endTitle: 'Next time a window is in the way,<br>just roll it up.',
+    endTitle: 'Next time windows pile up,<br>roll, pin, or browse.',
     endBody: 'macOS 14+ · Apple Silicon · Free and MIT licensed.',
   },
 };
