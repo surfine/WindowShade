@@ -1,15 +1,10 @@
 const root = document.documentElement;
 const darkPreference = matchMedia('(prefers-color-scheme: dark)');
-const settings = document.querySelector('#settings-image');
 let manualTheme = null;
 try { manualTheme = localStorage.getItem('windowshade-theme'); } catch {}
 if (manualTheme === 'light' || manualTheme === 'dark') root.dataset.theme = manualTheme;
 function syncTheme() {
   const dark = root.dataset.theme ? root.dataset.theme === 'dark' : darkPreference.matches;
-  if (settings) {
-    settings.parentElement.querySelector('source')?.remove();
-    settings.src = `/media/settings${dark ? '-dark' : ''}.webp`;
-  }
   document.querySelector('.theme')?.setAttribute('aria-pressed', String(dark));
 }
 syncTheme();
