@@ -2,12 +2,13 @@ import Cocoa
 import ScreenCaptureKit
 
 enum WindowShadeSettingsSection: Int, CaseIterable {
-  case effects, shade, permissions, advanced
+  case effects, shade, browser, permissions, advanced
 
   var title: String {
     switch self {
     case .effects: return "效果"
     case .shade: return "卷帘"
+    case .browser: return "窗口浏览"
     case .permissions: return "权限与启动"
     case .advanced: return "高级"
     }
@@ -17,6 +18,7 @@ enum WindowShadeSettingsSection: Int, CaseIterable {
     switch self {
     case .effects: return "sparkles"
     case .shade: return "rectangle.compress.vertical"
+    case .browser: return "rectangle.on.rectangle"
     case .permissions: return "lock.shield"
     case .advanced: return "slider.horizontal.3"
     }
@@ -184,6 +186,7 @@ final class DuoSettingsWindow: NSWindowController, NSWindowDelegate, NSTableView
     pages[.effects] = makeEffectsPage(controller: controller)
     pages[.advanced] = makeAdvancedPage(controller: controller)
     pages[.shade] = controller.owner?.makeShadeSettingsPage()
+    pages[.browser] = controller.owner?.makeWindowBrowserSettingsPage()
     pages[.permissions] = controller.owner?.makePermissionsSettingsPage()
     select(section: .effects)
 
@@ -382,6 +385,7 @@ final class DuoSettingsWindow: NSWindowController, NSWindowDelegate, NSTableView
       previewChanged()
     } else if let owner = controller?.owner {
       pages[.shade] = owner.makeShadeSettingsPage()
+      pages[.browser] = owner.makeWindowBrowserSettingsPage()
       pages[.permissions] = owner.makePermissionsSettingsPage()
       select(section: currentSection)
     }

@@ -6,6 +6,97 @@ if CommandLine.arguments.contains(where:{$0.hasPrefix("--duo-")}) {
     setenv("WINDOWSHADE_LOG_PATH",log,1)
 }
 let app = NSApplication.shared
+if CommandLine.arguments.contains("--window-browser-dock-probe") {
+    app.setActivationPolicy(.accessory)
+    let probe = DockHoverProbe()
+    DispatchQueue.main.async { probe.run() }
+    withExtendedLifetime(probe) { app.run() }
+    exit(0)
+}
+if CommandLine.arguments.contains("--window-browser-catalog-probe") {
+    app.setActivationPolicy(.accessory)
+    let probe = WindowCatalogProbe()
+    DispatchQueue.main.async { probe.run() }
+    withExtendedLifetime(probe) { app.run() }
+    exit(0)
+}
+if CommandLine.arguments.contains("--window-browser-capture-probe") {
+    app.setActivationPolicy(.accessory)
+    let probe = WindowBrowserCaptureProbe()
+    DispatchQueue.main.async { probe.run() }
+    withExtendedLifetime(probe) { app.run() }
+    exit(0)
+}
+if CommandLine.arguments.contains("--window-browser-hover-probe") {
+    app.setActivationPolicy(.accessory)
+    let probe = DockHoverPathProbe()
+    DispatchQueue.main.async { probe.run() }
+    withExtendedLifetime(probe) { app.run() }
+    exit(0)
+}
+if CommandLine.arguments.contains("--window-browser-thumbnail-probe") {
+    app.setActivationPolicy(.accessory)
+    let probe = WindowThumbnailPathProbe()
+    DispatchQueue.main.async { probe.run() }
+    withExtendedLifetime(probe) { app.run() }
+    exit(0)
+}
+if CommandLine.arguments.contains("--window-browser-stream-probe") {
+    app.setActivationPolicy(.accessory)
+    let probe = WindowStreamPathProbe()
+    DispatchQueue.main.async { probe.run() }
+    withExtendedLifetime(probe) { app.run() }
+    exit(0)
+}
+if CommandLine.arguments.contains("--window-browser-panel-probe") {
+    app.setActivationPolicy(.accessory)
+    let probe = WindowBrowserPanelProbe()
+    DispatchQueue.main.async { probe.run() }
+    withExtendedLifetime(probe) { app.run() }
+    exit(0)
+}
+if CommandLine.arguments.contains("--window-browser-ui-probe") {
+    app.setActivationPolicy(.accessory)
+    let probe = WindowBrowserUIRouteProbe()
+    DispatchQueue.main.async { probe.run() }
+    withExtendedLifetime(probe) { app.run() }
+    exit(0)
+}
+if CommandLine.arguments.contains("--window-browser-idle-probe") {
+    app.setActivationPolicy(.accessory)
+    let probe = WindowBrowserIdleProbe()
+    DispatchQueue.main.async { probe.run() }
+    withExtendedLifetime(probe) { app.run() }
+    exit(0)
+}
+if CommandLine.arguments.contains("--window-browser-hover-live-probe") {
+    app.setActivationPolicy(.accessory)
+    let probe = DockHoverLiveProbe()
+    DispatchQueue.main.async { probe.run() }
+    withExtendedLifetime(probe) { app.run() }
+    exit(0)
+}
+if CommandLine.arguments.contains("--window-browser-identity-probe") {
+    app.setActivationPolicy(.accessory)
+    let probe = WindowBrowserIdentityProbe()
+    DispatchQueue.main.async { probe.run() }
+    withExtendedLifetime(probe) { app.run() }
+    exit(0)
+}
+if CommandLine.arguments.contains("--window-browser-live-app-probe") {
+    app.setActivationPolicy(.accessory)
+    let probe = WindowBrowserLiveAppProbe()
+    DispatchQueue.main.async { probe.run() }
+    withExtendedLifetime(probe) { app.run() }
+    exit(0)
+}
+if CommandLine.arguments.contains("--window-browser-fixture") {
+    app.setActivationPolicy(.regular)
+    let fixture = WindowBrowserFixture()
+    DispatchQueue.main.async { fixture.show() }
+    withExtendedLifetime(fixture) { app.run() }
+    exit(0)
+}
 if CommandLine.arguments.contains("--duo-window-fixture") {
     app.setActivationPolicy(.regular)
     EffectWindowProbe.runFixture()
