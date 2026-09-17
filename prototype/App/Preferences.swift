@@ -1055,6 +1055,42 @@ extension AppDelegate {
         preview.widthAnchor.constraint(equalTo: stack.widthAnchor).isActive = true
         stack.setCustomSpacing(18, after: preview)
 
+        // 外观：跟随系统（可用的系统玻璃 / 原生材质）或明确的不透明纸面。
+        // 玻璃环境不可用时不会显示一个实际不起作用的玻璃开关。
+        let appearanceControl = NSSegmentedControl(labels: ["跟随系统", "纸面"],
+                                                   trackingMode: .selectOne,
+                                                   target: self,
+                                                   action: #selector(prefChangeWindowBrowserAppearance(_:)))
+        appearanceControl.selectedSegment =
+            WindowBrowserAppearanceStyle.current == .paper ? 1 : 0
+        let styleControl = NSSegmentedControl(
+            labels: WindowBrowserSettings.PreferredStyle.allCases.map(\.displayName),
+            trackingMode: .selectOne, target: self,
+            action: #selector(prefChangeWindowBrowserStyle(_:)))
+        styleControl.selectedSegment = WindowBrowserSettings.PreferredStyle.allCases
+            .firstIndex(of: WindowBrowserSettings.preferredStyle) ?? 0
+        let appearance = makeUnifiedSettingsCard([
+            makeUnifiedControlRow(
+                name: "外观",
+                subtitle: WindowBrowserSystemCapabilities.current.supportsGlass
+                    ? "当前系统支持公开的 AppKit 玻璃控制层；开启减少透明度时会自动改为不透明背景。"
+                    : "当前系统或 SDK 不使用玻璃：控制层使用系统原生材质或不透明纸面。",
+                control: appearanceControl),
+            makeUnifiedControlRow(
+                name: "默认显示方式",
+                subtitle: "自动：窗口多时用紧凑列表，少时用缩略图网格；面板内切换只影响本次会话。",
+                control: styleControl),
+            makeUnifiedControlRow(
+                name: "排布与撤销",
+                subtitle: "在窗口卡片的右键菜单里选择“排布”：左右半、四角、居中、"
+                    + "填满可用区域、移到另一显示器；可先预览，执行成功后可撤销。",
+                control: NSTextField(labelWithString: "")),
+        ])
+        stack.addArrangedSubview(makePrefGroupLabel("外观"))
+        stack.addArrangedSubview(appearance)
+        appearance.widthAnchor.constraint(equalTo: stack.widthAnchor).isActive = true
+        stack.setCustomSpacing(18, after: appearance)
+
         let permissions = makeUnifiedSettingsCard([
             makeUnifiedPermissionRow(symbol: "accessibility", name: "辅助功能",
                 subtitle: "识别 Dock 图标、激活/折叠/恢复/关闭窗口",
@@ -1100,6 +1136,18 @@ extension AppDelegate {
 
     @objc func prefToggleWindowBrowserLive(_ sender: NSSwitch) {
         WindowBrowserSettings.livePreviewEnabled = sender.state == .on
+        notifyWindowBrowserSettingsChanged()
+    }
+
+    @objc func prefChangeWindowBrowserAppearance(_ sender: NSSegmentedControl) {
+        WindowBrowserAppearanceStyle.current = sender.selectedSegment == 1 ? .paper : .system
+        notifyWindowBrowserSettingsChanged()
+    }
+
+    @objc func prefChangeWindowBrowserStyle(_ sender: NSSegmentedControl) {
+        let styles = WindowBrowserSettings.PreferredStyle.allCases
+        guard sender.selectedSegment >= 0, sender.selectedSegment < styles.count else { return }
+        WindowBrowserSettings.preferredStyle = styles[sender.selectedSegment]
         notifyWindowBrowserSettingsChanged()
     }
 

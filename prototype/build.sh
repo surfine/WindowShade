@@ -69,6 +69,13 @@ fi
 
 SOURCES="main.swift $(collect_sources | grep -v '^main.swift$')"
 echo "==> 源文件：$(collect_sources | wc -l | tr -d ' ') 个 Swift 文件"
+
+# 编译条件探测：当前 SDK 是否带公开的 AppKit Liquid Glass API。
+# 用真实头文件存在性判断，而不是猜 Swift 版本；旧 SDK 构建时玻璃分支不参与编译。
+GLASS_DEFINE=""
+if [ -f "$(xcrun --show-sdk-path --sdk macosx)/System/Library/Frameworks/AppKit.framework/Headers/NSGlassEffectView.h" ]; then
+  GLASS_DEFINE="-DWINDOWSHADE_SDK_HAS_GLASS"
+fi
 ARCH="${WINDOWSHADE_ARCH:-$(uname -m)}"
 # Compile one coherent source snapshot. Edits made while a long optimized build runs
 # cannot invalidate Swift inputs or mix newer shaders into the signed bundle.
@@ -93,7 +100,7 @@ if [ "$check_only" = "1" ]; then
   echo "==> 编译验证（--check，不签名、不修改 app bundle）"
   mkdir -p "$MODULE_CACHE"
   env CLANG_MODULE_CACHE_PATH="$MODULE_CACHE" \
-    swiftc -target "$ARCH-apple-macosx14.0" -typecheck "${COMPILE_SOURCES[@]}" "${FRAMEWORKS[@]}"
+    swiftc -target "$ARCH-apple-macosx14.0" -typecheck ${GLASS_DEFINE} "${COMPILE_SOURCES[@]}" "${FRAMEWORKS[@]}"
   echo "==> 编译验证通过"
   exit 0
 fi
@@ -132,7 +139,7 @@ fi
 echo "==> 编译"
 mkdir -p "$MODULE_CACHE"
 env CLANG_MODULE_CACHE_PATH="$MODULE_CACHE" \
-  swiftc -target "$ARCH-apple-macosx14.0" -O -whole-module-optimization -o "$TMP_BIN" "${COMPILE_SOURCES[@]}" "${FRAMEWORKS[@]}"
+  swiftc -target "$ARCH-apple-macosx14.0" -O -whole-module-optimization ${GLASS_DEFINE} -o "$TMP_BIN" "${COMPILE_SOURCES[@]}" "${FRAMEWORKS[@]}"
 
 echo "==> 替换 Mach-O（保留 bundle、Info.plist、Resources）"
 cp "$TMP_BIN" "$BIN"

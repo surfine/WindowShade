@@ -18,22 +18,28 @@ final class WindowBrowserController: NSObject {
         let mode: WindowBrowserPanelMode
         let app: ApplicationInstanceKey?
         let bundleIdentifier: String?
-        let appName: String?
+        var appName: String?
         let targetGeneration: UInt64
-        let displayID: CGDirectDisplayID?
+        var displayID: CGDirectDisplayID?
     }
 
     private final class LivePreviewLease {
         let windowKey: WindowKey
         let ownerID: UUID
+        /// 启动这次租约时的控制器会话代数；旧会话的失败路径不得释放新租约。
+        let sessionID: UInt64
+        /// 同一次会话里第几次尝试（用于退避与重试上限）。
+        let retryIndex: Int
         var mirrorLease: PinnedMirrorLease?
         var stream: WindowStreamCapture?
         var view: NSView?
         var cancelled = false
 
-        init(windowKey: WindowKey, ownerID: UUID) {
+        init(windowKey: WindowKey, ownerID: UUID, sessionID: UInt64, retryIndex: Int) {
             self.windowKey = windowKey
             self.ownerID = ownerID
+            self.sessionID = sessionID
+            self.retryIndex = retryIndex
         }
     }
 
@@ -61,9 +67,15 @@ final class WindowBrowserController: NSObject {
     private var hideWork: WindowBrowserScheduledWork?
     private var liveWork: WindowBrowserScheduledWork?
     private var monitorTokens: [Any] = []
-    private var metadataInFlight: Set<pid_t> = []
-    private var metadataQueued: Set<pid_t> = []
-    private var lastMetadataRequest: [pid_t: WindowBrowserRequestID] = [:]
+    /// 按应用实例的元数据槽：一个在途任务 + 一个最新待处理需求。
+    /// 只在主线程访问；后台结果回主线程后再结算。
+    private let metadataScheduler = WindowBrowserMetadataScheduler()
+    /// 实时预览自有的会话代数与失败退避记账。
+    private var liveSessionID: UInt64 = 0
+    private var liveFailureCounts: [WindowKey: Int] = [:]
+    /// 明确不可重试的原因（权限拒绝、源消失、能力不支持）：本会话不再自动重试。
+    private var liveRetryBlocked: Set<WindowKey> = []
+    private let maxLiveRetriesPerWindow = 2
     private var thumbnailSubscriptions: [WindowKey: WindowThumbnailSubscription] = [:]
     private var thumbnailPurposes: [WindowKey: WindowThumbnailPurpose] = [:]
     private var liveLease: LivePreviewLease?
@@ -90,23 +102,86 @@ final class WindowBrowserController: NSObject {
     private var permissionGeneration: UInt64 = 1
     private var lastAccessibility = false
     private var lastScreenRecording = false
-    private var contextMenuOpen = false
-    /// 菜单跟踪期间收到的关闭请求：等菜单结束再执行，避免释放正在作为菜单锚点的面板。
-    private var pendingCloseReason: String?
+    /// 上次生效的排除清单：只有过滤范围真的变化时才整体失效图像。
+    private var lastExcludedBundleIDs: Set<String> = []
+    /// 菜单跟踪状态：跟踪期间收到的关闭请求延后到菜单结束再执行。
+    private var menuTracking = WindowBrowserMenuTrackingState()
     /// 临时面板显式状态机：每个状态携带当前请求 token，用于拒绝过期回调。
     private var panelState = WindowBrowserPanelStateMachine()
     /// 打开键盘面板前的前台应用；关闭时按 AppKit 正常流程归还焦点。
     private var keyboardPanelPreviousAppPID: pid_t?
     /// 面板页脚的临时说明（例如实时预览失败后回到快照），随选中项变化清除。
     private var statusOverride: String?
-    /// 新增代码实际发起的 AX 查询次数（元数据发现 + 目标解析）。用于“功能关闭时
-    /// 新增常驻查询为零”的实测与性能对照。
-    private(set) var axQueryCount = 0
+    /// 诊断计数：逻辑发现请求次数与真实 AX 调用次数分开统计，且用锁保护，
+    /// 因为后台队列会并发写入。
+    private let counterLock = NSLock()
+    private var discoveryRequestTotal = 0
+    private var axCallTotal = 0
     private var environmentSuspended = false
     private var workspaceTokens: [NSObjectProtocol] = []
     private var distributedTokens: [NSObjectProtocol] = []
     private var dockEntryUnavailable = false
     private var streamStopFailureUntil: CFAbsoluteTime = 0
+    /// 基本排布：预览、执行与撤销。后端就是本控制器（复用真实身份解析）。
+    private var placementPreviewWindow: WindowPlacementPreviewWindow?
+    private lazy var placement: WindowPlacementController = {
+        let presenter = WindowPlacementPreviewWindow()
+        placementPreviewWindow = presenter
+        return WindowPlacementController(backend: self, scheduler: scheduler,
+                                         previewPresenter: presenter)
+    }()
+
+    /// 兼容旧探针：AX 真实调用次数（不是包装函数调用次数）。
+    var axQueryCount: Int {
+        counterLock.lock()
+        defer { counterLock.unlock() }
+        return axCallTotal
+    }
+
+    var axDiagnostics: (discoveryRequests: Int, axCalls: Int) {
+        counterLock.lock()
+        defer { counterLock.unlock() }
+        return (discoveryRequestTotal, axCallTotal)
+    }
+
+    private func noteDiscoveryRequest() {
+        counterLock.lock()
+        discoveryRequestTotal += 1
+        counterLock.unlock()
+    }
+
+    private func noteAXCall() {
+        counterLock.lock()
+        axCallTotal += 1
+        counterLock.unlock()
+    }
+
+    // MARK: 阶段计时（§17.1）
+
+    private var perfSessionID: UInt64 = 0
+    private var perfMarks: [String: CFAbsoluteTime] = [:]
+    private var didMarkFirstCatalogPublish = false
+    private var didMarkFirstThumbnail = false
+    private var didMarkLiveFirstFrame = false
+
+    private func markInputArrival(_ source: String) {
+        perfSessionID &+= 1
+        perfMarks.removeAll()
+        perfMarks["input-\(source)"] = CFAbsoluteTimeGetCurrent()
+        didMarkFirstCatalogPublish = false
+        didMarkFirstThumbnail = false
+        didMarkLiveFirstFrame = false
+        wlog("perf: input-arrival source=\(source) session=\(perfSessionID)")
+    }
+
+    /// 记录阶段并输出相对“输入到达”的耗时，便于区分端到端与扣除意图延迟后的处理时间。
+    private func mark(_ stage: String) {
+        let now = CFAbsoluteTimeGetCurrent()
+        perfMarks[stage] = now
+        let base = perfMarks.first(where: { $0.key.hasPrefix("input-") })?.value ?? now
+        wlog(String(format: "perf: %@ +%.1fms session=%llu", stage,
+                    (now - base) * 1000, perfSessionID))
+    }
 
     init(owner: AppDelegate,
          scheduler: WindowBrowserScheduler = WindowBrowserMainQueueScheduler(),
@@ -135,6 +210,7 @@ final class WindowBrowserController: NSObject {
         running = true
         lastAccessibility = hasAccessibilityPermission()
         lastScreenRecording = hasScreenRecordingPermission()
+        lastExcludedBundleIDs = WindowBrowserSettings.excludedBundleIDs
         installLifecycleObservers()
         refreshManagedWindows(reason: "start")
         if WindowBrowserSettings.dockEnabled {
@@ -153,12 +229,13 @@ final class WindowBrowserController: NSObject {
         listState.removeAll()
         session = nil
         lastDockTarget = nil
-        metadataInFlight.removeAll()
-        metadataQueued.removeAll()
-        lastMetadataRequest.removeAll()
+        metadataScheduler.cancelAll()
+        liveFailureCounts.removeAll()
+        liveRetryBlocked.removeAll()
         removePanelMonitors()
         removeLifecycleObservers()
         wlog("window-browser: stopped; new resources released")
+        logPerformanceSummary(reason: "stop")
     }
 
     @objc private func settingsChanged() {
@@ -173,13 +250,20 @@ final class WindowBrowserController: NSObject {
         if !WindowBrowserSettings.livePreviewEnabled {
             releaseLivePreview(reason: "live-disabled")
         }
+        // 按设置影响范围失效：只有排除清单变化才整体清图像与权限代数；
+        // 外观切换只刷新样式，不重新发现窗口、不停止镜像、不清空用户选择。
+        let excluded = WindowBrowserSettings.excludedBundleIDs
+        if excluded != lastExcludedBundleIDs {
+            lastExcludedBundleIDs = excluded
+            thumbnails.invalidateAll()
+            permissionGeneration &+= 1
+        }
         // 当前目标应用刚被加入排除清单：立即关闭面板，而不是留一个被过滤成空的面板。
         if let bundle = session?.bundleIdentifier,
-           WindowBrowserSettings.excludedBundleIDs.contains(bundle) {
+           excluded.contains(bundle) {
             closePanel(reason: "target-excluded")
         }
-        thumbnails.invalidateAll()
-        permissionGeneration &+= 1
+        contentView?.refreshMaterialAppearance()
         refreshManagedWindows(reason: "settings")
     }
 
@@ -277,9 +361,7 @@ final class WindowBrowserController: NSObject {
     func applicationTerminated(pid: pid_t) {
         dispatchPrecondition(condition: .onQueue(.main))
         actions.cancelPending(for: pid)
-        metadataInFlight.remove(pid)
-        metadataQueued.remove(pid)
-        lastMetadataRequest.removeValue(forKey: pid)
+        metadataScheduler.cancel(pid: pid)
         for key in catalog.records(forPID: pid).map(\.key) {
             thumbnails.invalidate(windowKey: key)
             thumbnailSubscriptions.removeValue(forKey: key)?.cancel()
@@ -350,7 +432,7 @@ final class WindowBrowserController: NSObject {
         }
         let candidate = owner.windowBrowserTargetCandidate(key: key)
         axResolverQueue.async { [weak self] in
-            self?.axQueryCount += 1
+            self?.noteAXCall()
             var resolved: WindowBrowserResolvedTarget?
             if let candidate,
                let checked = WindowBrowserTargetResolver.inspect(candidate, key: key,
@@ -403,19 +485,32 @@ final class WindowBrowserController: NSObject {
         dispatchPrecondition(condition: .onQueue(.main))
         guard running, WindowBrowserSettings.dockEnabled, !environmentSuspended else { return }
         dockEntryUnavailable = false
-        // 键盘面板优先于 Dock 面板。
-        if let session, session.mode == .keyboard, panel?.isVisible == true { return }
         let bundle = target.bundleIdentifier
         guard !WindowBrowserSettings.excludedBundleIDs.contains(bundle) else { return }
         let app = catalog.identityAllocator.applicationInstance(pid: target.pid,
                                                                 bundleIdentifier: bundle)
         lastDockTarget = target
-        let changed: Bool
-        if let session, session.mode == .dock, session.app == app {
-            changed = false
-        } else {
-            changed = true
+        // 会话决策由纯策略给出：键盘面板优先、同应用只更新锚点、换应用才新建会话。
+        let decision = WindowBrowserDockSessionPolicy.decision(
+            sessionMode: session?.mode,
+            sessionApplication: session?.app,
+            keyboardPanelVisible: panel?.isVisible == true,
+            targetApplication: app)
+        switch decision {
+        case .ignore:
+            return
+        case .updateAnchorOnly:
+            guard var existing = session else { return }
+            existing.appName = target.appName
+            existing.displayID = target.displayID
+            session = existing
+            updateDockAnchor(target)
+            scheduleHideCheck()
+            return
+        case .startNewSession:
+            break
         }
+        markInputArrival("dock")
         targetGeneration &+= 1
         requestCounter &+= 1
         let newSession = Session(requestID: WindowBrowserRequestID(value: requestCounter),
@@ -425,21 +520,17 @@ final class WindowBrowserController: NSObject {
                                  appName: target.appName,
                                  targetGeneration: targetGeneration,
                                  displayID: target.displayID)
-        if changed {
-            session = newSession
-            listState.removeAll()
-            searchText = ""
-            liveSelection = nil
-            sessionAutoStyle = nil
-            cancelThumbnailRequests(except: [])
-            releaseLivePreview(reason: "dock-target-changed")
-            // Dock 或键盘面板出现时清掉原有只读临时预览。
-            owner?.hideHoverPreview()
-            owner?.hideMenuHoverPreview()
-            presentDockPanelIfNeeded(target: target)
-        } else {
-            session = newSession
-        }
+        session = newSession
+        listState.removeAll()
+        searchText = ""
+        liveSelection = nil
+        sessionAutoStyle = nil
+        cancelThumbnailRequests(except: [])
+        releaseLivePreview(reason: "dock-target-changed")
+        // Dock 或键盘面板出现时清掉原有只读临时预览。
+        owner?.hideHoverPreview()
+        owner?.hideMenuHoverPreview()
+        presentDockPanelIfNeeded(target: target)
         refreshManagedWindows(reason: "dock-target")
         scheduleMetadataRefresh(pids: [target.pid], requestID: newSession.requestID)
         scheduleHideCheck()
@@ -453,16 +544,8 @@ final class WindowBrowserController: NSObject {
     }
 
     private func presentDockPanelIfNeeded(target: DockHoverTarget) {
-        guard let screen = screenForDisplayID(target.displayID) ?? NSScreen.main else { return }
-        let iconFrame = cocoaFrame(fromAXPosition: target.iconFrameAX.origin,
-                                   size: target.iconFrameAX.size)
-        let edge = WindowBrowserGeometry.dockEdge(iconFrame: iconFrame,
-                                                  screenFrame: screen.frame)
-        let geometry = WindowBrowserGeometry.panelGeometry(
-            iconFrame: iconFrame, edge: edge, screenFrame: screen.frame,
-            visibleFrame: screen.visibleFrame, desiredSize: params.dockPanelSize,
-            windowCount: max(1, catalog.records(forPID: target.pid).count), params: params)
-        self.geometry = geometry
+        guard let plan = dockLayoutPlan(for: target) else { return }
+        self.geometry = WindowBrowserPanelGeometry(plan: plan)
         guard let request = session?.requestID else { return }
         _ = panelState.beginShow(request: request)
         // 面板已经可见时切到另一个 Dock 图标：立即更新目标与几何，不再等显示延迟。
@@ -471,7 +554,7 @@ final class WindowBrowserController: NSObject {
             showWork = nil
             hideWork?.cancel()
             hideWork = nil
-            existing.setPanelFrame(geometry.panelFrame)
+            existing.setPanelFrame(plan.panelFrame)
             applyGeometry()
             refreshPanel()
             _ = panelState.confirmShow(request: request)
@@ -480,6 +563,7 @@ final class WindowBrowserController: NSObject {
         showWork?.cancel()
         let work = scheduler.schedule(after: params.showDelay) { [weak self] in
             guard let self, let session = self.session, session.mode == .dock else { return }
+            self.mark("intent-delay-end")
             // 过期 token 的显示任务直接失效（例如用户在延迟期间换了图标或关掉了功能）。
             guard self.panelState.accepts(session.requestID) else { return }
             guard session.app == self.catalog.identityAllocator
@@ -487,19 +571,68 @@ final class WindowBrowserController: NSObject {
             guard self.mouseInsideDockContext() else { return }
             if self.panel == nil {
                 let newPanel = WindowBrowserPanel(mode: .dock,
-                                                  frame: geometry.panelFrame, params: self.params)
+                                                  frame: plan.panelFrame, params: self.params)
                 self.configurePanel(newPanel, mode: .dock)
                 self.panel = newPanel
             } else {
-                self.panel?.setPanelFrame(geometry.panelFrame)
+                self.panel?.setPanelFrame(plan.panelFrame)
             }
             self.applyGeometry()
             self.refreshPanel()
             self.panel?.presentDockPanel()
+            self.presentFirstRunHintIfNeeded()
+            self.refreshPanel()
             self.installPanelMonitors()
+            self.mark("first-panel-show")
             _ = self.panelState.confirmShow(request: session.requestID)
         }
         showWork = work
+    }
+
+    /// 同一应用图标只移动/放大时的锚点更新：只改 frame 与过渡区域。
+    private func updateDockAnchor(_ target: DockHoverTarget) {
+        guard let plan = dockLayoutPlan(for: target) else { return }
+        geometry = WindowBrowserPanelGeometry(plan: plan)
+        guard let panel, panel.isVisible, session?.mode == .dock else { return }
+        panel.setPanelFrame(plan.panelFrame)
+    }
+
+    /// 首次打开窗口浏览时给一次简短说明，并在页脚停留到下一次刷新。
+    /// 说明只解释入口，不注入任何模拟窗口，也不对真实应用执行动作。
+    private func presentFirstRunHintIfNeeded() {
+        guard running, !WindowBrowserSettings.firstRunHintShown else { return }
+        WindowBrowserSettings.firstRunHintShown = true
+        let display = WindowBrowserSettings.hotKey.map {
+            WindowBrowserSettings.displayName(for: $0)
+        }
+        let text = WindowBrowserSettings.firstRunHintText(hotKeyDisplay: display)
+        statusOverride = text
+        owner?.quietNotice(text, log: "window-browser: first-run hint shown")
+        wlog("window-browser: first-run hint shown")
+    }
+
+    /// 面板布局：内容决定自然尺寸，图标位置决定锚点，屏幕安全区域只做约束。
+    private func dockLayoutPlan(for target: DockHoverTarget) -> WindowBrowserLayoutPlan? {
+        guard let screen = screenForDisplayID(target.displayID) ?? NSScreen.main else { return nil }
+        let iconFrame = cocoaFrame(fromAXPosition: target.iconFrameAX.origin,
+                                   size: target.iconFrameAX.size)
+        let edge = WindowBrowserGeometry.dockEdge(iconFrame: iconFrame,
+                                                  screenFrame: screen.frame)
+        return WindowBrowserGeometry.layoutPlan(
+            iconFrame: iconFrame, edge: edge, screenFrame: screen.frame,
+            visibleFrame: screen.visibleFrame,
+            desiredSize: params.dockPanelSize,
+            windowCount: max(1, catalog.records(forPID: target.pid).count),
+            style: effectiveStyle(),
+            isContentDriven: true,
+            params: params)
+    }
+
+    /// 当前会话应当使用的展示风格：用户显式选择优先，否则按窗口数量自动判定一次。
+    private func effectiveStyle() -> WindowBrowserDisplayStyle {
+        if let sessionAutoStyle { return sessionAutoStyle }
+        let count = session?.app.map { catalog.records(forPID: $0.pid).count } ?? 0
+        return count > params.autoListThreshold ? .list : style
     }
 
     private func scheduleHideCheck() {
@@ -512,7 +645,8 @@ final class WindowBrowserController: NSObject {
         guard let request = session?.requestID,
               panelState.beginHide(request: request) else { return }
         let work = scheduler.schedule(after: delay) { [weak self] in
-            guard let self, self.session?.mode == .dock, !self.contextMenuOpen else { return }
+            guard let self, self.session?.mode == .dock,
+                  !self.menuTracking.isTracking else { return }
             guard self.panelState.accepts(request) else { return }
             if !self.mouseInsideDockContext() {
                 self.closePanel(reason: "dock-clear")
@@ -545,6 +679,7 @@ final class WindowBrowserController: NSObject {
     @discardableResult
     func openKeyboardPanel() -> Bool {
         dispatchPrecondition(condition: .onQueue(.main))
+        markInputArrival("keyboard")
         guard WindowBrowserSettings.keyboardPanelEnabled else {
             owner?.quietNotice("窗口选择面板已在设置中关闭",
                                log: "window-browser: keyboard panel disabled in settings")
@@ -595,18 +730,17 @@ final class WindowBrowserController: NSObject {
         let frame = screen.map { keyboardPanelFrame(on: $0) }
             ?? NSRect(x: 200, y: 200, width: params.keyboardPanelSize.width,
                       height: params.keyboardPanelSize.height)
+        geometry = WindowBrowserPanelGeometry(plan: keyboardLayoutPlan(frame: frame))
         let newPanel = WindowBrowserPanel(mode: .keyboard, frame: frame, params: params)
         configurePanel(newPanel, mode: .keyboard)
         panel = newPanel
-        geometry = WindowBrowserPanelGeometry(
-            panelFrame: frame,
-            transitionRegion: WindowBrowserTransitionRegion(rects: [frame], polygons: []),
-            columns: 1, usesListLayout: false)
         refreshManagedWindows(reason: "keyboard-open")
         // 记录打开前的前台应用，关闭时若仍由本面板持有焦点就归还给它。
         let frontmost = NSWorkspace.shared.frontmostApplication?.processIdentifier
         keyboardPanelPreviousAppPID = (frontmost != getpid()) ? frontmost : nil
         newPanel.presentKeyboardPanel()
+        presentFirstRunHintIfNeeded()
+        refreshPanel()
         installPanelMonitors()
         _ = panelState.beginShow(request: newSession.requestID)
         _ = panelState.confirmShow(request: newSession.requestID)
@@ -616,11 +750,28 @@ final class WindowBrowserController: NSObject {
 
     private func keyboardPanelFrame(on screen: NSScreen) -> NSRect {
         let visible = screen.visibleFrame
-        let size = CGSize(width: min(params.keyboardPanelSize.width, max(320, visible.width - 40)),
-                          height: min(params.keyboardPanelSize.height, max(280, visible.height - 40)))
+        let size = CGSize(width: min(params.keyboardPanelSize.width, max(360, visible.width - 40)),
+                          height: min(params.keyboardPanelSize.height, max(320, visible.height - 40)))
         return NSRect(x: visible.midX - size.width / 2,
                       y: visible.midY - size.height / 2,
                       width: size.width, height: size.height)
+    }
+
+    /// 键盘面板的布局结果：理想 800×560，受屏幕安全区域约束，锚点为空。
+    private func keyboardLayoutPlan(frame: NSRect) -> WindowBrowserLayoutPlan {
+        let contentBounds = NSRect(x: params.panelPadding, y: params.panelPadding,
+                                   width: max(1, frame.width - params.panelPadding * 2),
+                                   height: max(1, frame.height - params.panelPadding * 2))
+        let content = WindowBrowserGeometry.contentPlan(
+            bounds: contentBounds, style: effectiveStyle(), recordCount: 0,
+            mode: .keyboard, params: params)
+        return WindowBrowserLayoutPlan(
+            panelFrame: frame, content: content,
+            transitionRegion: WindowBrowserTransitionRegion(rects: [frame], polygons: []),
+            edge: nil, anchor: .zero,
+            scrollableExtent: CGSize(width: content.listRect.width,
+                                     height: content.documentHeight),
+            isContentDrivenSize: false)
     }
 
     private func configurePanel(_ panel: WindowBrowserPanel, mode: WindowBrowserPanelMode) {
@@ -630,7 +781,9 @@ final class WindowBrowserController: NSObject {
             guard let self else { return }
             self.listState.select(key)
             self.contentView?.select(key)
-            self.cancelThumbnailRequests(except: [key])
+            // 选择变化只提升新选中项的优先级，不取消其他仍然可见的卡片需求。
+            self.thumbnails.promote(windowKey: key, purpose: .selectedLarge)
+            self.thumbnails.promote(windowKey: key, purpose: .card)
             self.updateLivePreview(selected: key)
         }
         content.onActivate = { [weak self] key in
@@ -647,6 +800,9 @@ final class WindowBrowserController: NSObject {
         }
         content.onClose = { [weak self] key in
             self?.submit(action: .close, key: key)
+        }
+        content.onRequestAction = { [weak self] key, action in
+            self?.submit(action: action, key: key)
         }
         content.onContextMenu = { [weak self] key, view, event in
             self?.presentContextMenu(for: key, in: view, event: event)
@@ -667,12 +823,24 @@ final class WindowBrowserController: NSObject {
         content.onVisibleKeysChanged = { [weak self] keys in
             self?.requestThumbnails(forKeys: keys)
         }
+        content.onHoverChanged = { [weak self] _, _ in
+            // 悬停只更新强调与操作条，不触发源窗口操作；离开判定仍由鼠标位置决定。
+            self?.scheduleHideCheck()
+        }
         content.onCommit = { [weak self] in
             guard let self, let key = self.listState.selection else { return }
             self.submit(action: .activate, key: key)
         }
         panel.onBecomeKeyStateChanged = { [weak self] isKey in
-            if isKey { self?.cancelThumbnailRequests(except: []) }
+            guard isKey else { return }
+            // 取得键盘焦点只让选中项升档，不取消仍然可见的卡片需求。
+            self?.refreshPanel()
+            if let key = self?.listState.selection {
+                self?.thumbnails.promote(windowKey: key, purpose: .selectedLarge)
+            }
+        }
+        content.setContextMenuProvider { [weak self] key in
+            self?.makeContextMenu(for: key) ?? nil
         }
     }
 
@@ -683,6 +851,10 @@ final class WindowBrowserController: NSObject {
     private func refreshManagedWindows(reason: String) {
         guard running, let owner else { return }
         _ = catalog.applyManaged(owner.windowBrowserManagedSnapshots())
+        if !didMarkFirstCatalogPublish {
+            didMarkFirstCatalogPublish = true
+            mark("first-catalog-publish")
+        }
         refreshPanel()
         if let session, session.mode == .dock, let pid = session.app?.pid {
             scheduleMetadataRefresh(pids: [pid], requestID: session.requestID)
@@ -705,56 +877,78 @@ final class WindowBrowserController: NSObject {
         guard let requestID else { return }
         let requested = pids ?? []
         for pid in requested {
-            if lastMetadataRequest[pid] == requestID,
-               metadataInFlight.contains(pid) || metadataQueued.contains(pid) {
+            let appInstance = catalog.identityAllocator.knownApplicationInstance(pid: pid)
+            guard let demand = metadataScheduler.request(pid: pid, requestID: requestID,
+                                                         appInstance: appInstance) else {
+                // 同一需求已经在途；新的需求已经记进槽的待处理位置，不会被丢弃。
                 continue
             }
-            lastMetadataRequest[pid] = requestID
-            if metadataInFlight.contains(pid) {
-                metadataQueued.insert(pid)
-                continue
-            }
-            metadataInFlight.insert(pid)
-            let overlays = owner?.overlayIDs ?? []
-            // 单目标请求走高优先级队列；批量（键盘面板的全局发现）走后台队列。
-            // 两侧共享 metadataInFlight/lastMetadataRequest 记账，仍保证每实例一个在途任务。
-            let queue = requested.count == 1 ? targetMetadataQueue : metadataQueue
-            queue.async { [weak self] in
-                guard let self else { return }
-                self.axQueryCount += 1
-                let result = self.discoverWindows(pid: pid, overlayIDs: overlays)
-                DispatchQueue.main.async {
-                    self.metadataInFlight.remove(pid)
-                    // 结果回来时核对：功能仍开启、仍是同一个面板请求代数、目标应用实例
-                    // 没有被终止后复用。任一不成立就丢弃，绝不把旧结果发布出去。
-                    let expectedApp = self.session?.mode == .dock
-                        ? self.session?.app : nil
-                    let enabledNow = self.session?.mode == .keyboard
-                        ? WindowBrowserSettings.keyboardPanelEnabled
-                        : WindowBrowserSettings.dockEnabled
-                    let accepts = WindowBrowserRequestValidity.accepts(
-                        running: self.running,
-                        featureEnabled: enabledNow,
-                        sessionRequestID: self.session?.requestID,
-                        resultRequestID: requestID,
-                        expectedAppInstance: expectedApp,
-                        currentAppInstance: self.catalog.identityAllocator
-                            .knownApplicationInstance(pid: pid))
-                    guard accepts else {
-                        wlog("window-browser: stale metadata dropped pid=\(pid) "
-                             + "request=\(requestID.value)")
-                        // 过期结果也要把这轮的补刷标记清掉，避免记账残留。
-                        self.metadataQueued.remove(pid)
-                        return
-                    }
-                    self.catalog.applyDiscovery(result, pid: pid)
-                    self.refreshPanel()
-                    if self.metadataQueued.remove(pid) != nil {
-                        self.scheduleMetadataRefresh(pids: [pid], requestID: requestID)
-                    }
-                }
+            startMetadataJob(pid: pid, jobID: demand.jobID, requestID: requestID,
+                             appInstance: appInstance, usesTargetQueue: requested.count == 1)
+        }
+    }
+
+    /// 启动一个元数据任务。单目标请求走高优先级队列，批量发现走后台队列；
+    /// 两者共用同一份槽记账，仍然保证每个应用实例只有一个在途任务。
+    private func startMetadataJob(pid: pid_t, jobID: UInt64,
+                                  requestID: WindowBrowserRequestID,
+                                  appInstance: ApplicationInstanceKey?,
+                                  usesTargetQueue: Bool) {
+        noteDiscoveryRequest()
+        let overlays = owner?.overlayIDs ?? []
+        let queue = usesTargetQueue ? targetMetadataQueue : metadataQueue
+        queue.async { [weak self] in
+            guard let self else { return }
+            self.noteAXCall()
+            let result = self.discoverWindows(pid: pid, overlayIDs: overlays)
+            DispatchQueue.main.async {
+                self.finishMetadataJob(pid: pid, jobID: jobID, requestID: requestID,
+                                       appInstance: appInstance, result: result)
             }
         }
+    }
+
+    private func finishMetadataJob(pid: pid_t, jobID: UInt64,
+                                   requestID: WindowBrowserRequestID,
+                                   appInstance: ApplicationInstanceKey?,
+                                   result: WindowBrowserFetchResult<[DiscoveredWindowDescriptor]>) {
+        // 槽身份核对：旧任务的回调不能删除新任务的在途登记。
+        let slot = metadataScheduler.state(pid: pid)
+        guard slot.inFlight?.jobID == jobID else {
+            wlog("window-browser: stale metadata completion ignored pid=\(pid) job=\(jobID)")
+            return
+        }
+        // 结果发布条件：功能仍开启、仍是同一个面板请求代数、目标应用实例没有被终止后复用。
+        let expectedApp = session?.mode == .dock ? session?.app : nil
+        let enabledNow = session?.mode == .keyboard
+            ? WindowBrowserSettings.keyboardPanelEnabled
+            : WindowBrowserSettings.dockEnabled
+        let accepts = WindowBrowserRequestValidity.accepts(
+            running: running,
+            featureEnabled: enabledNow,
+            sessionRequestID: session?.requestID,
+            resultRequestID: requestID,
+            expectedAppInstance: expectedApp,
+            currentAppInstance: catalog.identityAllocator.knownApplicationInstance(pid: pid))
+        if accepts {
+            catalog.applyDiscovery(result, pid: pid)
+            refreshPanel()
+        } else {
+            wlog("window-browser: stale metadata dropped pid=\(pid) request=\(requestID.value)")
+        }
+        // 无论是否允许发布，都推进槽里仍然需要的最新需求。
+        guard let next = metadataScheduler.complete(pid: pid, jobID: jobID) else { return }
+        let usesTarget = session?.mode == .dock && session?.app?.pid == pid
+        startMetadataJob(pid: pid, jobID: next.jobID, requestID: next.requestID,
+                         appInstance: catalog.identityAllocator
+                            .knownApplicationInstance(pid: pid),
+                         usesTargetQueue: usesTarget)
+    }
+
+    /// 测试/诊断接缝：当前槽状态（在途与待处理需求）。
+    func metadataSlotState(pid: pid_t) -> WindowBrowserMetadataSlot {
+        dispatchPrecondition(condition: .onQueue(.main))
+        return metadataScheduler.state(pid: pid)
     }
 
     /// 同步 AX 读取，只在后台队列调用。四种终态严格区分：成功、空、失败、部分失败。
@@ -791,12 +985,14 @@ final class WindowBrowserController: NSObject {
             listState.select(first.key)
         }
         let busy = actions.busyWindowKeys()
-        // 每会话自动判定一次紧凑列表；用户显式选择（sessionAutoStyle 已设置）
-        // 之后不再被窗口数量变化覆盖。
-        if sessionAutoStyle == nil, !reconciled.isEmpty {
-            sessionAutoStyle = reconciled.count > params.autoListThreshold ? .list : style
-        }
-        let effectiveStyle = sessionAutoStyle ?? style
+        // 展示方式：用户在设置里的默认选择 + 本会话的显式切换（sessionAutoStyle）。
+        // 显式选择一旦发生，就不再被后台窗口数量变化覆盖。
+        let effectiveStyle = WindowBrowserSettings.initialDisplayStyle(
+            preferred: WindowBrowserSettings.preferredStyle,
+            explicit: sessionAutoStyle,
+            windowCount: reconciled.count,
+            autoListThreshold: params.autoListThreshold)
+        style = effectiveStyle
         let status: String
         if let statusOverride {
             status = statusOverride
@@ -811,6 +1007,9 @@ final class WindowBrowserController: NSObject {
                            busyKeys: busy,
                            screenRecordingAvailable: hasScreenRecordingPermission(),
                            status: status)
+        contentView.setContextMenuProvider { [weak self] key in
+            self?.makeContextMenu(for: key) ?? nil
+        }
         // 以内容视图的真实视口为准（布局尚未完成时会退回前 8 条兜底），
         // 不能用固定“前 8 条”覆盖用户已经滚动到的位置。
         requestThumbnails(forKeys: contentView.visibleWindowKeys)
@@ -819,12 +1018,12 @@ final class WindowBrowserController: NSObject {
             statusOverride = nil
             if let selected = listState.selection { updateLivePreview(selected: selected) }
             else { releaseLivePreview(reason: "no-selection") }
-        } else if let selected = listState.selection, liveLease == nil,
-                  let record = record(for: selected),
-                  record.pinState == .running || WindowBrowserSettings.livePreviewEnabled {
-            // 选中项未变但还没有画面：可能是置顶流刚启动（挂接时源流尚未运行）或
-            // 上一次启动失败；刷新时重试一次，避免必须重新选择才能看到实时画面。
-            updateLivePreview(selected: selected)
+        }
+        // 布局可能因为窗口数量变化而调整：让面板 frame 跟随统一布局结果。
+        if session.mode == .dock, let target = lastDockTarget {
+            updateDockAnchor(target)
+        } else if session.mode == .keyboard, let geometry, let panel {
+            panel.setPanelFrame(geometry.panelFrame)
         }
     }
 
@@ -834,10 +1033,18 @@ final class WindowBrowserController: NSObject {
         let orderedKeys = keys.filter { seen.insert($0).inserted }
         var wanted = Set(orderedKeys)
         if let selection = listState.selection { wanted.insert(selection) }
-        for (key, subscription) in thumbnailSubscriptions
-        where !wanted.contains(key) {
+        for (key, subscription) in thumbnailSubscriptions {
+            if subscription.isFinished {
+                // 完成/失败/取消后的订阅必须从“仍在请求”的集合里消失，
+                // 否则缓存新鲜度会被误判成“还在请求”。
+                thumbnailSubscriptions.removeValue(forKey: key)
+                thumbnailPurposes.removeValue(forKey: key)
+                continue
+            }
+            guard !wanted.contains(key) else { continue }
             subscription.cancel()
             thumbnailSubscriptions.removeValue(forKey: key)
+            thumbnailPurposes.removeValue(forKey: key)
         }
         guard !environmentSuspended else { return }
         let pinned = owner?.pinnedPreviewController
@@ -897,28 +1104,50 @@ final class WindowBrowserController: NSObject {
     private func requestSingleWindowThumbnail(record: WindowRecord, isSelected: Bool) {
         let purpose: WindowThumbnailPurpose = isSelected ? .selectedLarge : .card
         if let existing = thumbnailSubscriptions[record.key] {
-            // 档位不变就复用；从卡片档升到选中大图档时替换订阅，避免选中预览
-            // 一直停留在 512×320。
-            guard WindowBrowserThumbnailSubscriptionPolicy.needsReplace(
-                existingPurpose: thumbnailPurposes[record.key], desired: purpose) else { return }
-            existing.cancel()
-            thumbnailSubscriptions.removeValue(forKey: record.key)
-            thumbnailPurposes.removeValue(forKey: record.key)
+            if existing.isFinished {
+                // 已经终结的订阅不算“仍在请求”。
+                thumbnailSubscriptions.removeValue(forKey: record.key)
+                thumbnailPurposes.removeValue(forKey: record.key)
+            } else {
+                // 档位不变就复用；从卡片档升到选中大图档时替换订阅。
+                guard WindowBrowserThumbnailSubscriptionPolicy.needsReplace(
+                    existingPurpose: thumbnailPurposes[record.key], desired: purpose) else { return }
+                existing.cancel()
+                thumbnailSubscriptions.removeValue(forKey: record.key)
+                thumbnailPurposes.removeValue(forKey: record.key)
+            }
         }
         let logicalSize = record.logicalFrame?.size ?? CGSize(width: 512, height: 320)
+        let key = record.key
+        // 完成通知里要比较“这个订阅是否还是当前登记”，用一个盒子避免闭包持有自身。
+        final class SubscriptionBox { var value: WindowThumbnailSubscription? }
+        let box = SubscriptionBox()
         let subscription = thumbnails.request(
-            windowKey: record.key, purpose: purpose, logicalSize: logicalSize,
+            windowKey: key, purpose: purpose, logicalSize: logicalSize,
             priority: isSelected,
             onImage: { [weak self] image in
-                self?.contentView?.applyThumbnail(image, for: record.key,
+                if let self, !self.didMarkFirstThumbnail {
+                    self.didMarkFirstThumbnail = true
+                    self.mark("first-new-screenshot")
+                }
+                self?.contentView?.applyThumbnail(image, for: key,
                                                   note: "窗口缩略图")
             },
             onFailure: { [weak self] _ in
-                self?.contentView?.applyThumbnail(nil, for: record.key,
+                self?.contentView?.applyThumbnail(nil, for: key,
                                                   note: "截图不可用，显示应用图标和标题")
+            },
+            onFinish: { [weak self] in
+                guard let self, let current = box.value else { return }
+                // 只有仍然是同一个订阅时才清理登记，避免删除更新的请求。
+                if self.thumbnailSubscriptions[key] === current {
+                    self.thumbnailSubscriptions.removeValue(forKey: key)
+                    self.thumbnailPurposes.removeValue(forKey: key)
+                }
             })
-        thumbnailSubscriptions[record.key] = subscription
-        thumbnailPurposes[record.key] = purpose
+        box.value = subscription
+        thumbnailSubscriptions[key] = subscription
+        thumbnailPurposes[key] = purpose
     }
 
     private func cancelThumbnail(for key: WindowKey) {
@@ -948,6 +1177,11 @@ final class WindowBrowserController: NSObject {
         guard !environmentSuspended, record(for: key) != nil else { return }
         statusOverride = nil
         liveWork?.cancel()
+        // 已经明确不可重试的窗口（权限拒绝、源消失、能力不支持）不再自动重试。
+        guard WindowBrowserLiveLeasePolicy.retryPermitted(
+            failureCount: liveFailureCounts[key] ?? 0,
+            blocked: liveRetryBlocked.contains(key),
+            maxRetries: maxLiveRetriesPerWindow) else { return }
         liveWork = scheduler.schedule(after: 0.4) { [weak self] in
             guard let self, self.running,
                   let current = self.record(for: key),
@@ -960,7 +1194,10 @@ final class WindowBrowserController: NSObject {
                 if let (view, lease) = pinned.makeMirrorView(
                     frame: NSRect(origin: .zero, size: CGSize(width: 240, height: 140)),
                     id: key.originalWindowID, owner: ownerID) {
-                    let live = LivePreviewLease(windowKey: key, ownerID: ownerID)
+                    let live = LivePreviewLease(
+                        windowKey: key, ownerID: ownerID,
+                        sessionID: self.liveSessionID,
+                        retryIndex: self.liveFailureCounts[key] ?? 0)
                     live.mirrorLease = lease
                     live.view = view
                     self.liveLease = live
@@ -990,10 +1227,13 @@ final class WindowBrowserController: NSObject {
             wlog("window-browser: live preview suppressed after a failed stream stop")
             return
         }
+        guard !liveRetryBlocked.contains(key) else { return }
         let id = key.originalWindowID
         let capture = WindowStreamCapture(preview: true)
         let ownerID = UUID()
-        let live = LivePreviewLease(windowKey: key, ownerID: ownerID)
+        let live = LivePreviewLease(windowKey: key, ownerID: ownerID,
+                                    sessionID: liveSessionID,
+                                    retryIndex: liveFailureCounts[key] ?? 0)
         live.stream = capture
         liveLease = live
         Task { @MainActor [weak self] in
@@ -1001,7 +1241,9 @@ final class WindowBrowserController: NSObject {
             do {
                 let content = try await ShareableContentLoader.current()
                 guard let scWindow = content.windows.first(where: { $0.windowID == id }) else {
-                    self.releaseLivePreview(reason: "no-sc-window")
+                    // 找不到 SCWindow：源可能已经消失，不再自动重试。
+                    self.liveRetryBlocked.insert(key)
+                    self.releaseLivePreview(lease: live, reason: "no-sc-window")
                     self.showLivePreviewFallback()
                     return
                 }
@@ -1014,7 +1256,8 @@ final class WindowBrowserController: NSObject {
                 let keep = WindowBrowserLivePreviewPolicy.shouldKeepStartedStream(
                     leaseIsCurrent: self.liveLease === live,
                     cancelled: live.cancelled,
-                    sessionActive: self.running && self.session != nil,
+                    sessionActive: self.running && self.session != nil
+                        && self.liveSessionID == live.sessionID,
                     targetStillKnown: self.record(for: key) != nil)
                 guard keep else {
                     wlog("window-browser: live stream started after close; stopping id=\(id)")
@@ -1027,12 +1270,27 @@ final class WindowBrowserController: NSObject {
                 live.view = view
                 // 静态图保留在实时视图下方，停止/失败后直接回退到快照或图标。
                 self.attachLiveView(view, to: key)
+                self.liveFailureCounts[key] = 0
+                if !self.didMarkLiveFirstFrame {
+                    self.didMarkLiveFirstFrame = true
+                    self.mark("live-first-frame")
+                }
                 wlog("window-browser: live preview started id=\(id)")
             } catch {
                 wlog("window-browser: live preview failed id=\(id) \(error.localizedDescription)")
-                self.releaseLivePreview(reason: "start-failed")
+                self.noteLiveFailure(key: key, reason: error.localizedDescription)
+                self.releaseLivePreview(lease: live, reason: "start-failed")
                 self.showLivePreviewFallback()
             }
+        }
+    }
+
+    /// 启动失败的退避记账：每个窗口每会话最多自动重试两次；
+    /// 权限拒绝、源消失或能力不支持时直接停止自动重试。
+    private func noteLiveFailure(key: WindowKey, reason: String) {
+        liveFailureCounts[key, default: 0] += 1
+        if WindowBrowserLiveLeasePolicy.failureBlocksRetry(reason: reason) {
+            liveRetryBlocked.insert(key)
         }
     }
 
@@ -1051,8 +1309,26 @@ final class WindowBrowserController: NSObject {
         contentView?.setLivePreview(view, for: key)
     }
 
+    /// 释放当前实时预览。只释放控制器当前持有的那一路租约。
     private func releaseLivePreview(reason: String) {
         guard let lease = liveLease else { return }
+        releaseLivePreview(lease: lease, reason: reason)
+    }
+
+    /// 释放指定租约。旧任务（A）的失败/超时分支只能释放自己的租约，
+    /// 不能清掉当前已经换成的新租约（B）。
+    private func releaseLivePreview(lease: LivePreviewLease, reason: String) {
+        guard WindowBrowserLiveLeasePolicy.ownsGlobalRelease(
+            currentLeaseID: liveLease?.ownerID,
+            releasingLeaseID: lease.ownerID) else {
+            // 旧租约：只清理它自己的流与借用，不动当前画面。
+            lease.cancelled = true
+            lease.view?.removeFromSuperview()
+            lease.mirrorLease?.release()
+            lease.stream?.stop { _ in }
+            wlog("window-browser: stale live lease released reason=\(reason)")
+            return
+        }
         liveLease = nil
         lease.cancelled = true
         contentView?.setLivePreview(nil, for: lease.windowKey)
@@ -1073,6 +1349,7 @@ final class WindowBrowserController: NSObject {
 
     private func submit(action: WindowBrowserAction, key: WindowKey) {
         dispatchPrecondition(condition: .onQueue(.main))
+        mark("action-submit-\(action.rawValue)")
         guard let record = record(for: key) else { return }
         if let denied = WindowBrowserActionPolicy.preflight(
             action: action, record: record,
@@ -1119,7 +1396,12 @@ final class WindowBrowserController: NSObject {
             completion(true)
             return
         }
+        guard liveLease === lease else {
+            completion(true)
+            return
+        }
         liveLease = nil
+        liveSessionID &+= 1
         lease.cancelled = true
         contentView?.setLivePreview(nil, for: lease.windowKey)
         lease.view?.removeFromSuperview()
@@ -1156,6 +1438,7 @@ final class WindowBrowserController: NSObject {
 
     private func handleImmediate(outcome: WindowBrowserActionOutcome,
                                  action: WindowBrowserAction, key: WindowKey) {
+        mark("action-verified-\(action.rawValue)")
         switch outcome {
         case .completed, .targetGone, .failed, .unsupported, .permissionRequired:
             if case .targetGone = outcome {
@@ -1185,42 +1468,236 @@ final class WindowBrowserController: NSObject {
     // MARK: 上下文菜单
 
     private func presentContextMenu(for key: WindowKey, in view: NSView, event: NSEvent) {
-        guard let record = record(for: key) else { return }
-        let menu = NSMenu()
-        let activate = NSMenuItem(title: "激活", action: #selector(contextActivate(_:)), keyEquivalent: "")
-        activate.target = self
-        activate.representedObject = encodeKey(key)
-        menu.addItem(activate)
-        if record.shadeState == .folded {
-            let unfold = NSMenuItem(title: "展开", action: #selector(contextUnfold(_:)), keyEquivalent: "")
-            unfold.target = self
-            unfold.representedObject = encodeKey(key)
-            menu.addItem(unfold)
-        }
-        if record.capabilities.contains(.close) {
-            menu.addItem(.separator())
-            let close = NSMenuItem(title: "关闭窗口", action: #selector(contextClose(_:)), keyEquivalent: "")
-            close.target = self
-            close.representedObject = encodeKey(key)
-            menu.addItem(close)
-        }
-        contextMenuOpen = true
+        guard let menu = makeContextMenu(for: key) else { return }
+        menuTracking.beginTracking()
         menu.popUp(positioning: nil, at: NSPoint(x: 0, y: view.bounds.height), in: view)
-        contextMenuOpen = false
         // 菜单跟踪期间收到的关闭请求现在补执行（此时面板不再是菜单锚点）。
-        if let pending = pendingCloseReason {
-            pendingCloseReason = nil
+        if let pending = menuTracking.endTracking() {
             closePanel(reason: pending)
         }
     }
 
-    @objc private func contextActivate(_ sender: NSMenuItem) { contextAction(sender, action: .activate) }
-    @objc private func contextUnfold(_ sender: NSMenuItem) { contextAction(sender, action: .unfold) }
-    @objc private func contextClose(_ sender: NSMenuItem) { contextAction(sender, action: .close) }
+    /// 卡片、列表、上下文菜单与 VoiceOver 菜单命令共用的一份动作列表，
+    /// 能力判断仍然只来自 `WindowBrowserActionPresentation`。
+    func makeContextMenu(for key: WindowKey) -> NSMenu? {
+        guard let record = record(for: key) else { return nil }
+        let context = WindowBrowserActionPresentation.Context(
+            hasAccessibility: hasAccessibilityPermission(),
+            hasScreenRecording: hasScreenRecordingPermission(),
+            isBusy: actions.isBusy(windowKey: key),
+            isSelected: listState.selection == key)
+        let items = WindowBrowserActionPresentation.items(for: record, context: context)
+        let menu = NSMenu()
+        menu.autoenablesItems = false
+        let encoded = encodeKey(key)
+        for item in items {
+            let menuItem = NSMenuItem(title: item.title,
+                                      action: #selector(contextAction(_:)),
+                                      keyEquivalent: "")
+            menuItem.target = self
+            menuItem.representedObject = encoded
+            menuItem.identifier = NSUserInterfaceItemIdentifier(item.action.rawValue)
+            menuItem.isEnabled = item.isEnabled
+            if let symbolName = item.symbolName,
+               let image = WindowBrowserSymbol.image(named: symbolName,
+                                                     accessibilityDescription: item.title) {
+                menuItem.image = image
+            }
+            menu.addItem(menuItem)
+        }
+        menu.addItem(.separator())
+        menu.addItem(placementMenuItem(for: key))
+        return menu
+    }
 
-    private func contextAction(_ sender: NSMenuItem, action: WindowBrowserAction) {
-        guard let raw = sender.representedObject as? String, let key = decodeKey(raw) else { return }
+    private func placementMenuItem(for key: WindowKey) -> NSMenuItem {
+        let parent = NSMenuItem(title: "排布", action: nil, keyEquivalent: "")
+        let submenu = NSMenu()
+        submenu.autoenablesItems = false
+        let encoded = encodeKey(key)
+        for action in WindowPlacementAction.placeable {
+            let item = NSMenuItem(title: action.title,
+                                  action: #selector(placementApply(_:)),
+                                  keyEquivalent: "")
+            item.target = self
+            item.representedObject = "\(encoded)#\(action.rawValue)"
+            if let symbolName = action.symbolName,
+               let image = WindowBrowserSymbol.image(named: symbolName,
+                                                     accessibilityDescription: action.title) {
+                item.image = image
+            }
+            submenu.addItem(item)
+        }
+        submenu.addItem(.separator())
+        let previewParent = NSMenuItem(title: "预览", action: nil, keyEquivalent: "")
+        let previewMenu = NSMenu()
+        previewMenu.autoenablesItems = false
+        for action in WindowPlacementAction.placeable {
+            let item = NSMenuItem(title: action.title,
+                                  action: #selector(placementPreview(_:)),
+                                  keyEquivalent: "")
+            item.target = self
+            item.representedObject = "\(encoded)#\(action.rawValue)"
+            previewMenu.addItem(item)
+        }
+        previewParent.submenu = previewMenu
+        submenu.addItem(previewParent)
+        submenu.addItem(.separator())
+        let undo = NSMenuItem(title: "撤销上次排布",
+                              action: #selector(placementUndo(_:)),
+                              keyEquivalent: "")
+        undo.target = self
+        undo.representedObject = encoded
+        undo.isEnabled = placement.canUndo
+        submenu.addItem(undo)
+        parent.submenu = submenu
+        return parent
+    }
+
+    @objc private func contextAction(_ sender: NSMenuItem) {
+        guard let raw = sender.representedObject as? String,
+              let key = decodeKey(raw),
+              let action = WindowBrowserAction(rawValue: sender.identifier?.rawValue ?? "")
+        else { return }
         submit(action: action, key: key)
+    }
+
+    // MARK: 基本排布
+
+    @objc private func placementApply(_ sender: NSMenuItem) {
+        guard let payload = placementPayload(sender) else { return }
+        applyPlacement(action: payload.action, key: payload.key)
+    }
+
+    @objc private func placementPreview(_ sender: NSMenuItem) {
+        guard let payload = placementPayload(sender) else { return }
+        guard let plan = placementPlan(for: payload.key, action: payload.action) else {
+            reportPlacement(.unsupported(reason: "没有可用的排布目标"), key: payload.key)
+            return
+        }
+        placement.preview(plan)
+        statusOverride = "预览：\(payload.action.title)（不移动窗口）"
+        refreshPanel()
+        // 预览自动消失，不会留下常驻装饰；取消预览也不会改变真实窗口。
+        _ = scheduler.schedule(after: 1.6) { [weak self] in
+            self?.placement.cancelPreview()
+        }
+    }
+
+    @objc private func placementUndo(_ sender: NSMenuItem) {
+        guard let raw = sender.representedObject as? String,
+              let key = decodeKey(raw) else { return }
+        placement.undoLast { [weak self] outcome in
+            self?.reportPlacement(outcome, key: key)
+        }
+    }
+
+    private func placementPayload(_ sender: NSMenuItem) -> (key: WindowKey,
+                                                            action: WindowPlacementAction)? {
+        guard let raw = sender.representedObject as? String else { return nil }
+        let parts = raw.split(separator: "#", maxSplits: 1).map(String.init)
+        guard parts.count == 2, let key = decodeKey(parts[0]),
+              let action = WindowPlacementAction(rawValue: parts[1]) else { return nil }
+        return (key, action)
+    }
+
+    private func applyPlacement(action: WindowPlacementAction, key: WindowKey) {
+        dispatchPrecondition(condition: .onQueue(.main))
+        guard let record = record(for: key) else { return }
+        if record.shadeState == .folded {
+            // 已折叠窗口：先走既有展开与恢复验证，成功后才排布，失败就停止。
+            performAction(.unfold, key: key) { [weak self] outcome in
+                guard let self else { return }
+                switch outcome {
+                case .completed:
+                    self.performPlacement(action: action, key: key)
+                default:
+                    self.reportPlacement(.failed(reason: "展开未确认，未执行排布"), key: key)
+                }
+            }
+            return
+        }
+        if record.shadeState == .restoring {
+            reportPlacement(.refused(reason: "窗口正在恢复，稍后再试"), key: key)
+            return
+        }
+        performPlacement(action: action, key: key)
+    }
+
+    private func performPlacement(action: WindowPlacementAction, key: WindowKey) {
+        guard let plan = placementPlan(for: key, action: action) else {
+            reportPlacement(.unsupported(reason: "没有可用的排布目标"), key: key)
+            return
+        }
+        placement.apply(plan) { [weak self] outcome in
+            self?.reportPlacement(outcome, key: key)
+        }
+    }
+
+    private func placementPlan(for key: WindowKey,
+                               action: WindowPlacementAction) -> WindowPlacementPlan? {
+        dispatchPrecondition(condition: .onQueue(.main))
+        guard let record = record(for: key) else { return nil }
+        guard record.capabilities.contains(.activate) else { return nil }
+        let frameCocoa = record.logicalFrame
+            ?? NSRect(x: 120, y: 120, width: 800, height: 600)
+        guard let screen = screenForCocoaFrame(frameCocoa) ?? NSScreen.main else { return nil }
+        let currentAX = CGRect(origin: axPosition(fromCocoaFrame: frameCocoa),
+                               size: frameCocoa.size)
+        let areaAX = CGRect(origin: axPosition(fromCocoaFrame: screen.visibleFrame),
+                            size: screen.visibleFrame.size)
+        var targetArea: CGRect?
+        var targetDisplay = displayID(for: screen)
+        if action == .moveToDisplay {
+            guard let other = NSScreen.screens.first(where: { $0 != screen }) else { return nil }
+            targetArea = CGRect(origin: axPosition(fromCocoaFrame: other.visibleFrame),
+                                size: other.visibleFrame.size)
+            targetDisplay = displayID(for: other)
+        }
+        return WindowPlacementPolicy.plan(action: action, target: key,
+                                          originalFrameAX: currentAX,
+                                          visibleAreaAX: areaAX,
+                                          targetAreaAX: targetArea,
+                                          displayID: targetDisplay)
+    }
+
+    private func reportPlacement(_ outcome: WindowPlacementOutcome, key: WindowKey) {
+        dispatchPrecondition(condition: .onQueue(.main))
+        switch outcome {
+        case .applied(let record):
+            statusOverride = "已\(record.action.title)排布，可撤销"
+        case .undone:
+            statusOverride = "已撤销上次排布"
+        case .unsupported(let reason):
+            statusOverride = reason
+        case .refused(let reason):
+            statusOverride = reason
+        case .failed(let reason):
+            statusOverride = "排布未完成：\(reason)"
+            owner?.quietNotice("排布未完成", log: "window-browser: placement failed \(reason)")
+        case .uncertain(let reason):
+            statusOverride = "排布结果无法确认：\(reason)"
+        }
+        wlog("window-browser: placement outcome=\(outcome) id=\(key.originalWindowID)")
+        refreshPanel()
+    }
+
+    /// 只执行一次动作并把结果交回调用方（排布前先展开时需要串行等待）。
+    private func performAction(_ action: WindowBrowserAction, key: WindowKey,
+                               completion: @escaping (WindowBrowserActionOutcome) -> Void) {
+        dispatchPrecondition(condition: .onQueue(.main))
+        guard let record = record(for: key) else {
+            completion(.targetGone)
+            return
+        }
+        if let denied = WindowBrowserActionPolicy.preflight(
+            action: action, record: record,
+            hasAccessibility: hasAccessibilityPermission(),
+            hasScreenRecording: hasScreenRecordingPermission()) {
+            completion(denied)
+            return
+        }
+        actions.submit(action: action, target: key, completion: completion)
     }
 
     private func encodeKey(_ key: WindowKey) -> String {
@@ -1267,7 +1744,7 @@ final class WindowBrowserController: NSObject {
 
     private func panelMouseMoved() {
         guard let session else { return }
-        guard !contextMenuOpen else { return }
+        guard !menuTracking.isTracking else { return }
         if session.mode == .dock {
             let mouse = NSEvent.mouseLocation
             if let panel, panel.isVisible, panel.frame.contains(mouse) {
@@ -1289,7 +1766,7 @@ final class WindowBrowserController: NSObject {
     }
 
     private func panelMouseDownOutside() {
-        guard let panel, panel.isVisible, !contextMenuOpen else { return }
+        guard let panel, panel.isVisible, !menuTracking.isTracking else { return }
         let mouse = NSEvent.mouseLocation
         if !panel.frame.contains(mouse) && !mouseInsideDockContext() {
             closePanel(reason: "outside-click")
@@ -1303,9 +1780,8 @@ final class WindowBrowserController: NSObject {
 
     private func closePanel(reason: String) {
         dispatchPrecondition(condition: .onQueue(.main))
-        if contextMenuOpen {
+        if menuTracking.requestClose(reason: reason) {
             // 菜单跟踪使用嵌套事件循环：此时释放面板可能带走菜单锚点视图。
-            pendingCloseReason = reason
             return
         }
         showWork?.cancel()
@@ -1314,6 +1790,10 @@ final class WindowBrowserController: NSObject {
         hideWork = nil
         liveWork?.cancel()
         liveWork = nil
+        panel?.cancelPendingPresentation()
+        liveSessionID &+= 1
+        liveFailureCounts.removeAll()
+        liveRetryBlocked.removeAll()
         releaseLivePreview(reason: "panel-close-\(reason)")
         cancelThumbnailRequests(except: [])
         removePanelMonitors()
@@ -1345,6 +1825,35 @@ final class WindowBrowserController: NSObject {
             owner?.activateApp(pid: previousAppPID)
             wlog("window-browser: returned focus to pid=\(previousAppPID)")
         }
+        mark("panel-resources-released")
+        logPerformanceSummary(reason: "panel-close-\(reason)")
+    }
+
+    /// §17.1：把取消率、过期结果丢弃率、物理截图数量与 AX 排队情况写进日志，
+    /// 便于用真实会话的数据核对预算。
+    private func logPerformanceSummary(reason: String) {
+        let thumbnails = thumbnails.diagnostics()
+        let cancelledShare = thumbnails.started > 0
+            ? Double(thumbnails.queuedCancelled) / Double(thumbnails.started) : 0
+        let staleShare = thumbnails.started > 0
+            ? Double(thumbnails.staleResults) / Double(thumbnails.started) : 0
+        let ax = axDiagnostics
+        wlog(String(format: "perf-summary: reason=%@ thumbnails started=%d delivered=%d "
+                    + "queuedCancelled=%d(%.0f%%) stale=%d(%.0f%%) duplicates=%d stalls=%d "
+                    + "running=%d queued=%d cached=%d/%.1fMiB "
+                    + "ax discoveryRequests=%d axCalls=%d "
+                    + "detections=%d droppedStale=%d pendingDetection=%d",
+                    reason,
+                    thumbnails.started, thumbnails.delivered,
+                    thumbnails.queuedCancelled, cancelledShare * 100,
+                    thumbnails.staleResults, staleShare * 100,
+                    thumbnails.duplicateCompletions, thumbnails.stalledBatches,
+                    thumbnails.running, thumbnails.queued, thumbnails.cachedCount,
+                    Double(thumbnails.cachedBytes) / (1024 * 1024),
+                    ax.discoveryRequests, ax.axCalls,
+                    dockObserver?.detectionCount ?? 0,
+                    dockObserver?.droppedStaleResultCount ?? 0,
+                    dockObserver?.pendingDetectionCount ?? 0))
     }
 }
 
@@ -1445,10 +1954,36 @@ extension WindowBrowserController: WindowBrowserActionBackend {
                 return
             }
             self.resolveBrowserTarget(target) { stillThere in
-                completion(stillThere != nil
-                           ? .completed
-                           : .uncertain(reason: "激活后无法确认目标仍然存在"))
+                guard stillThere != nil else {
+                    completion(WindowBrowserActivationVerification.outcome(
+                        targetFocused: false, stillPresent: false))
+                    return
+                }
+                // 目标存在只说明窗口还在；再核对应用报告的焦点窗口确实是它。
+                self.resolveFocusedWindowMatches(key: target) { focused in
+                    completion(WindowBrowserActivationVerification.outcome(
+                        targetFocused: focused, stillPresent: true))
+                }
             }
+        }
+    }
+
+    /// 读取目标应用当前报告的焦点窗口，判断是否就是这次操作的真实目标。
+    /// AX 读取在专用串行队列执行，主线程不阻塞。
+    private func resolveFocusedWindowMatches(key: WindowKey,
+                                             completion: @escaping (Bool) -> Void) {
+        axResolverQueue.async { [weak self] in
+            self?.noteAXCall()
+            let app = AXUIElementCreateApplication(key.application.pid)
+            var value: CFTypeRef?
+            var matches = false
+            if AXUIElementCopyAttributeValue(app, kAXFocusedWindowAttribute as CFString,
+                                             &value) == .success,
+               let focused = value,
+               CFGetTypeID(focused) == AXUIElementGetTypeID() {
+                matches = windowID(of: (focused as! AXUIElement)) == key.originalWindowID
+            }
+            DispatchQueue.main.async { completion(matches) }
         }
     }
 
@@ -1679,6 +2214,49 @@ extension WindowBrowserController: WindowBrowserActionBackend {
 }
 
 // MARK: - 真实缩略图后端
+
+// MARK: - 排布后端
+
+extension WindowBrowserController: WindowPlacementBackend {
+    /// 读取目标窗口当前 frame。复用明确目标的身份核对，不按焦点或标题猜测。
+    func readFrame(of target: WindowKey, completion: @escaping (CGRect?) -> Void) {
+        DispatchQueue.main.async { [weak self] in
+            guard let self, self.catalog.identityAllocator.isCurrent(target) else {
+                completion(nil)
+                return
+            }
+            self.resolveBrowserTarget(target, options: .geometry) { resolved in
+                guard let resolved,
+                      let position = resolved.axPosition,
+                      let size = resolved.axSize,
+                      size.width > 1, size.height > 1 else {
+                    completion(nil)
+                    return
+                }
+                completion(CGRect(origin: position, size: size))
+            }
+        }
+    }
+
+    func writeFrame(_ frame: CGRect, to target: WindowKey,
+                    completion: @escaping (Bool) -> Void) {
+        DispatchQueue.main.async { [weak self] in
+            guard let self, self.catalog.identityAllocator.isCurrent(target) else {
+                completion(false)
+                return
+            }
+            self.resolveBrowserTarget(target, options: [.geometry, .capabilities]) { resolved in
+                guard let resolved else {
+                    completion(false)
+                    return
+                }
+                setAXPosition(resolved.element, frame.origin)
+                _ = setAXSize(resolved.element, frame.size)
+                completion(true)
+            }
+        }
+    }
+}
 
 final class WindowBrowserThumbnailBackend: WindowThumbnailBackend {
     weak var controller: WindowBrowserController?

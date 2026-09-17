@@ -4,6 +4,8 @@
 // - dock：nonactivating、不抢 key window、不把其他应用输入焦点转走；
 // - keyboard：用户明确打开，可以成为 key window 并编辑搜索框。
 // 不能把 canBecomeKey 永久设为 false，也不能在每次悬停时 makeKeyAndOrderFront。
+//
+// 键盘面板的有限激活重试携带打开请求代数：用户切到其他应用后不再抢回焦点。
 
 import Cocoa
 
@@ -13,9 +15,14 @@ final class WindowBrowserPanel: NSPanel {
     var onCancel: (() -> Void)?
     var onBecomeKeyStateChanged: ((Bool) -> Void)?
 
+    /// 打开请求代数：每次打开/关闭都递增，过期的延迟激活重试直接失效。
+    private var presentationGeneration: UInt64 = 0
+    private var animationParams = WindowBrowserLayoutParams.standard
+
     init(mode: WindowBrowserPanelMode, frame: NSRect,
          params: WindowBrowserLayoutParams = .standard) {
         self.mode = mode
+        self.animationParams = params
         self.browserContentView = WindowBrowserContentView(
             frame: NSRect(origin: .zero, size: frame.size))
         super.init(contentRect: frame,
@@ -71,14 +78,21 @@ final class WindowBrowserPanel: NSPanel {
     func presentKeyboardPanel() {
         // 用户明确打开（菜单/快捷键）时面板应当获得键盘焦点；菜单栏状态项点击有时
         // 不构成 app 激活，因此这里显式激活一次，并在激活完成晚于 makeKey 时补一次。
+        presentationGeneration &+= 1
+        let token = presentationGeneration
         NSApp.activate(ignoringOtherApps: true)
         makeKeyAndOrderFront(nil)
         browserContentView.focusSearch()
         // app 激活是异步的：激活完成可能晚于 makeKeyAndOrderFront，这里有限重试
-        // 直到面板成为 key window，避免搜索框拿不到输入。
+        // 直到面板成为 key window，避免搜索框拿不到输入。重试携带本次打开代数，
+        // 并且只在 app 仍然是前台时执行：用户主动切走以后不再把焦点抢回来。
         for delay in [0.12, 0.3, 0.6] {
             DispatchQueue.main.asyncAfter(deadline: .now() + delay) { [weak self] in
-                guard let self, self.isVisible, !self.isKeyWindow else { return }
+                guard let self,
+                      self.presentationGeneration == token,
+                      self.isVisible,
+                      !self.isKeyWindow,
+                      NSApp.isActive else { return }
                 NSApp.activate(ignoringOtherApps: true)
                 self.makeKeyAndOrderFront(nil)
                 self.browserContentView.focusSearch()
@@ -88,11 +102,44 @@ final class WindowBrowserPanel: NSPanel {
 
     func presentDockPanel() {
         orderFrontRegardless()
+        animateAppearanceIfAllowed()
     }
 
-    func setPanelFrame(_ frame: NSRect) {
-        setFrame(frame, display: true)
+    /// 面板出现约 140–180 ms；减少动态效果时直接显示，不做位移或缩放。
+    private func animateAppearanceIfAllowed() {
+        let reduceMotion = NSWorkspace.shared.accessibilityDisplayShouldReduceMotion
+        guard WindowBrowserAnimationPolicy.shouldAnimate(reduceMotion: reduceMotion) else {
+            alphaValue = 1
+            return
+        }
+        alphaValue = 0
+        NSAnimationContext.runAnimationGroup { context in
+            context.duration = WindowBrowserAnimationPolicy.duration(
+                animationParams.appearDuration, reduceMotion: reduceMotion)
+            context.timingFunction = CAMediaTimingFunction(name: .easeOut)
+            animator().alphaValue = 1
+        }
+    }
+
+    func setPanelFrame(_ frame: NSRect, animated: Bool = false) {
+        guard animated,
+              !NSWorkspace.shared.accessibilityDisplayShouldReduceMotion else {
+            setFrame(frame, display: true)
+            browserContentView.frame = NSRect(origin: .zero, size: frame.size)
+            browserContentView.needsLayout = true
+            return
+        }
+        NSAnimationContext.runAnimationGroup { context in
+            context.duration = animationParams.selectionDuration
+            context.timingFunction = CAMediaTimingFunction(name: .easeInEaseOut)
+            animator().setFrame(frame, display: true)
+        }
         browserContentView.frame = NSRect(origin: .zero, size: frame.size)
         browserContentView.needsLayout = true
+    }
+
+    /// 关闭或切换会话时调用：过期的延迟激活重试立即失效。
+    func cancelPendingPresentation() {
+        presentationGeneration &+= 1
     }
 }

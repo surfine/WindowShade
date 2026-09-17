@@ -90,6 +90,20 @@ if CommandLine.arguments.contains("--window-browser-live-app-probe") {
     withExtendedLifetime(probe) { app.run() }
     exit(0)
 }
+if let shotIndex = CommandLine.arguments.firstIndex(of: "--window-browser-shots") {
+    app.setActivationPolicy(.accessory)
+    let directory = CommandLine.arguments.count > shotIndex + 1
+        ? URL(fileURLWithPath: CommandLine.arguments[shotIndex + 1])
+        : URL(fileURLWithPath: FileManager.default.currentDirectoryPath)
+            .appendingPathComponent(".build/window-browser-shots")
+    let probe = WindowBrowserShotProbe(outputDirectory: directory)
+    DispatchQueue.main.async {
+        probe.run()
+        NSApp.terminate(nil)
+    }
+    withExtendedLifetime(probe) { app.run() }
+    exit(0)
+}
 if CommandLine.arguments.contains("--window-browser-fixture") {
     app.setActivationPolicy(.regular)
     let fixture = WindowBrowserFixture()
