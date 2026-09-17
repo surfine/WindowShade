@@ -43,7 +43,16 @@ final class DockHoverObserver {
     private var dockPID: pid_t = 0
     private var dockElement: AXUIElement?
     private var dockListElements: [AXUIElement] = []
-    private var dockArea: NSRect?
+    /// 每个 Dock 列表元素的实际矩形（逐块判断，不合成一个覆盖中间空白的大框）。
+    private var dockAreas: [NSRect] = []
+    /// 所有检测入口共用的排队器：最多一个在途 + 一个最新待处理。
+    private var detection = WindowBrowserDetectionCoordinator()
+    private var topologyVersion: UInt64 = 1
+    private var screensToken: NSObjectProtocol?
+    /// 诊断：检测请求次数、真实 AX 命中调用次数、被丢弃的过期结果。
+    private(set) var detectionCount = 0
+    private(set) var hitTestCount = 0
+    private(set) var droppedStaleResultCount = 0
     private var globalMouseMonitor: Any?
     private var localMouseMonitor: Any?
     private var workspaceTokens: [NSObjectProtocol] = []
@@ -68,6 +77,8 @@ final class DockHoverObserver {
     var currentTarget: DockHoverTarget? { target }
     var observerGeneration: UInt64 { generation }
     var usesNotifications: Bool { notificationReliable }
+    /// 诊断：当前排队器里的请求数量（≤ 2：一个在途 + 一个最新待处理）。
+    var pendingDetectionCount: Int { detection.pendingCount }
 
     // MARK: 生命周期
 
@@ -76,6 +87,7 @@ final class DockHoverObserver {
         guard !running else { return }
         running = true
         installWorkspaceObservers()
+        installScreenObserver()
         rebuildObserver(reason: "start")
         installMouseFallback()
     }
@@ -91,11 +103,13 @@ final class DockHoverObserver {
         removeObserver()
         removeMouseFallback()
         removeWorkspaceObservers()
+        removeScreenObserver()
         target = nil
         dockListElements = []
         dockElement = nil
         dockPID = 0
-        dockArea = nil
+        dockAreas = []
+        detection.reset()
     }
 
     /// Dock 重启/实例变化/观察对象失效时：递增代数、撤销旧订阅、有界重建。
@@ -103,6 +117,8 @@ final class DockHoverObserver {
         dispatchPrecondition(condition: .onQueue(.main))
         guard running else { return }
         generation &+= 1
+        // 旧观察器实例的在途检测与待处理位置一并失效，新实例的结果才生效。
+        detection.reset()
         let previous = target
         target = nil
         if previous != nil { onClear(generation) }
@@ -134,7 +150,7 @@ final class DockHoverObserver {
                 self.dockPID = pid
                 self.dockElement = app
                 self.dockListElements = lists
-                self.dockArea = self.area(fromAXFrames: listFramesAX)
+                self.dockAreas = listFramesAX.map { self.cocoaRect(fromAXFrame: $0) }
                 self.notificationReliable = false
                 self.createObserver(pid: pid, app: app, lists: lists, reason: reason)
             }
@@ -216,55 +232,102 @@ final class DockHoverObserver {
         DispatchQueue.main.asyncAfter(deadline: .now() + 0.1, execute: work)
     }
 
-    /// 读列表的选中子项，验证 URL→应用实例、鼠标在图标内，才产出目标。
+    /// 通知过期或不可用时的入口：与鼠标回退、失效复检共用同一个排队器。
     private func refreshFromSelection(reason: String) {
         guard running else { return }
-        let generation = self.generation
+        let point = lastPointerCocoa ?? NSEvent.mouseLocation
+        requestDetection(at: point, source: reason, pointerDriven: false)
+    }
+
+    /// 所有检测入口的唯一入口：最多一个在途 + 一个最新待处理位置。
+    private func requestDetection(at point: NSPoint, source: String,
+                                  pointerDriven: Bool) {
+        guard running, dockElement != nil else { return }
+        guard let request = detection.begin(point: point, generation: generation,
+                                            topologyVersion: topologyVersion,
+                                            source: source,
+                                            isPointerDriven: pointerDriven) else {
+            // 已有在途检测：最新位置已经记入待处理位置，等这一轮结束后执行。
+            return
+        }
+        runDetection(request)
+    }
+
+    /// 在后台队列执行一次有界 AX 命中 + 解析。主线程不做同步 IPC。
+    private func runDetection(_ request: WindowBrowserDetectionRequest) {
+        detectionCount += 1
+        hitTestCount += 1
+        let pid = dockPID
         let lists = dockListElements
-        // 鼠标位置换算依赖 NSScreen，必须在主线程算好；AX 读取放到 workQueue。
-        let mouse = NSEvent.mouseLocation
-        let mouseAX = CGPoint(x: mouse.x, y: coordinateBaselineY() - mouse.y)
+        let axPoint = CGPoint(x: request.point.x,
+                              y: coordinateBaselineY() - request.point.y)
         workQueue.async { [weak self] in
             guard let self else { return }
-            var resolved: ResolvedDockItem?
-            for list in lists {
-                guard let selected = self.selectedChildren(of: list),
-                      let item = selected.first,
-                      let candidate = self.resolve(item: item) else { continue }
-                resolved = candidate
-                break
+            var resolved = self.hitTestResolvedItem(pid: pid, axPoint: axPoint)
+            if resolved == nil {
+                resolved = self.selectedChildResolvedItem(lists: lists)
             }
+            let usedNotificationPath = resolved != nil
             DispatchQueue.main.async {
-                guard self.running, self.generation == generation else { return }
-                guard let resolved else {
-                    // 通知没有可用选中项：不显示旧目标，但也不干等下一次鼠标移动
-                    // （用户可能把指针停在图标上不动），立即用最后指针位置兜底命中。
-                    self.fallbackHitTestAfterNotification(reason: reason)
-                    return
-                }
-                self.notificationReliable = true
-                if let target = self.validatedTarget(resolved, reason: reason,
-                                                     mouseAX: mouseAX) {
-                    self.emit(target)
-                } else {
-                    // 选中项已过期（Dock 放大/切换动画、选中滞后）：同样兜底命中，
-                    // 让真正位于指针下的图标在 100ms 节流窗口内出现。
-                    self.fallbackHitTestAfterNotification(reason: reason)
-                }
+                self.completeDetection(request, resolved: resolved,
+                                       usedNotificationPath: usedNotificationPath)
             }
         }
     }
 
-    /// 通知不可用或选中项过期时的兜底：用最后一次指针位置做一次命中检测。
-    /// 仅在候选区域内有意义，命中失败仍会走 staleCheckOrClear 的清除逻辑。
-    private func fallbackHitTestAfterNotification(reason: String) {
-        let point = lastPointerCocoa ?? NSEvent.mouseLocation
-        guard mouseIsNearDock(point) else {
-            clear(reason: reason)
+    private func completeDetection(_ request: WindowBrowserDetectionRequest,
+                                   resolved: ResolvedDockItem?,
+                                   usedNotificationPath: Bool) {
+        let next = detection.finish(requestID: request.requestID)
+        defer { if let next { runDetection(next) } }
+        guard running else { return }
+        // 结果核对：观察器代数、屏幕拓扑、指针请求 ID 都必须是当前的。
+        guard detection.accepts(request, generation: generation,
+                                topologyVersion: topologyVersion) else {
+            droppedStaleResultCount += 1
             return
         }
-        lastHitTestAt = 0        // 兜底命中不受正常节流限制
-        hitTest(atCocoaPoint: point)
+        // 再用“现在”的鼠标位置验证命中，不能拿请求开始时的旧坐标证明仍然悬停。
+        let currentMouse = NSEvent.mouseLocation
+        let currentAX = CGPoint(x: currentMouse.x,
+                                y: coordinateBaselineY() - currentMouse.y)
+        if let resolved,
+           let target = validatedTarget(resolved, reason: request.source,
+                                        mouseAX: currentAX) {
+            if usedNotificationPath { notificationReliable = true }
+            emit(target)
+            return
+        }
+        staleCheckOrClear(reason: resolved == nil ? "no-app-item" : "pointer-moved")
+    }
+
+    /// 用 AX 命中测试找到指针下的 Dock 图标（限定深度与节点数）。
+    private func hitTestResolvedItem(pid: pid_t, axPoint: CGPoint) -> ResolvedDockItem? {
+        let app = AXUIElementCreateApplication(pid)
+        var hit: AXUIElement?
+        guard AXUIElementCopyElementAtPosition(app, Float(axPoint.x), Float(axPoint.y),
+                                               &hit) == .success, let hitElement = hit else {
+            return nil
+        }
+        var node: AXUIElement? = hitElement
+        var depth = 0
+        while let current = node, depth < Limits.maxDepth {
+            if let candidate = resolve(item: current) { return candidate }
+            node = parent(of: current)
+            depth += 1
+        }
+        return nil
+    }
+
+    /// Dock 列表的选中子项（通知路径）：仍然要求指针在该图标区域内才产出目标。
+    private func selectedChildResolvedItem(lists: [AXUIElement]) -> ResolvedDockItem? {
+        for list in lists {
+            guard let selected = selectedChildren(of: list),
+                  let item = selected.first,
+                  let candidate = resolve(item: item) else { continue }
+            return candidate
+        }
+        return nil
     }
 
     private struct ResolvedDockItem {
@@ -312,7 +375,7 @@ final class DockHoverObserver {
         let expanded = item.frameAX.insetBy(dx: -Limits.iconHitTolerance,
                                             dy: -Limits.iconHitTolerance)
         guard expanded.contains(mouseAX) else { return nil }
-        let cocoa = cocoaFrame(fromAXPosition: item.frameAX.origin, size: item.frameAX.size)
+        let cocoa = cocoaRect(fromAXFrame: item.frameAX)
         let display = displayID(for: screenForCocoaFrame(cocoa))
         return DockHoverTarget(pid: item.pid,
                                bundleIdentifier: item.bundleIdentifier,
@@ -376,57 +439,14 @@ final class DockHoverObserver {
     private func handlePointerMove(at mouse: NSPoint) {
         guard running else { return }
         lastPointerCocoa = mouse
-        let now = CFAbsoluteTimeGetCurrent()
-        guard now - lastHitTestAt >= Limits.hitTestInterval else { return }
-        // 只在候选区域（Dock 条带或可能出现 Dock 的屏幕边缘）做命中检测。
+        // 只在候选区域（Dock 条带或该屏的真实边缘带）做命中检测。
         // 不在这里清除目标：鼠标位于图标与面板之间的过渡区域时，面板是否隐藏
         // 由控制器结合面板矩形判断，观察器不能把中间区域误判成离开。
         guard mouseIsNearDock(mouse) else { return }
+        let now = CFAbsoluteTimeGetCurrent()
+        guard now - lastHitTestAt >= Limits.hitTestInterval else { return }
         lastHitTestAt = now
-        hitTest(atCocoaPoint: mouse)
-    }
-
-    /// AX 命中与解析放到 workQueue：鼠标在 Dock 附近移动时，主线程不做同步 IPC。
-    private func hitTest(atCocoaPoint mouse: NSPoint) {
-        guard dockElement != nil else { return }
-        let generation = self.generation
-        let pid = dockPID
-        // NSScreen → 坐标系换算必须在主线程完成。
-        let axPoint = CGPoint(x: mouse.x, y: coordinateBaselineY() - mouse.y)
-        workQueue.async { [weak self] in
-            guard let self else { return }
-            let app = AXUIElementCreateApplication(pid)
-            var hit: AXUIElement?
-            guard AXUIElementCopyElementAtPosition(app, Float(axPoint.x), Float(axPoint.y),
-                                                   &hit) == .success, let hit else {
-                DispatchQueue.main.async {
-                    guard self.running, self.generation == generation else { return }
-                    self.staleCheckOrClear(reason: "hit-test-miss")
-                }
-                return
-            }
-            var resolved: ResolvedDockItem?
-            var node: AXUIElement? = hit
-            var depth = 0
-            while let current = node, depth < Limits.maxDepth {
-                if let candidate = self.resolve(item: current) {
-                    resolved = candidate
-                    break
-                }
-                node = self.parent(of: current)
-                depth += 1
-            }
-            DispatchQueue.main.async {
-                guard self.running, self.generation == generation else { return }
-                if let resolved,
-                   let target = self.validatedTarget(resolved, reason: "mouse-hit-test",
-                                                     mouseAX: axPoint) {
-                    self.emit(target)
-                } else {
-                    self.staleCheckOrClear(reason: "hit-test-no-app-item")
-                }
-            }
-        }
+        requestDetection(at: mouse, source: "mouse-fallback", pointerDriven: true)
     }
 
     /// 指针停在 Dock 上但不在任何应用图标上时，不能因为“不再移动”就保留旧目标。
@@ -451,29 +471,23 @@ final class DockHoverObserver {
             let point = self.lastPointerCocoa ?? NSEvent.mouseLocation
             guard self.mouseIsNearDock(point) else { return }
             self.lastHitTestAt = 0        // 延迟复检不受正常节流限制
-            self.hitTest(atCocoaPoint: point)
+            self.requestDetection(at: point, source: "stale-check", pointerDriven: true)
         }
         staleCheckWork = work
         DispatchQueue.main.asyncAfter(deadline: .now() + delay, execute: work)
     }
 
     private func mouseIsNearDock(_ mouse: NSPoint) -> Bool {
-        if let dockArea {
-            if dockArea.insetBy(dx: -Limits.knownAreaTolerance,
-                                dy: -Limits.knownAreaTolerance).contains(mouse) {
-                return true
-            }
+        // 先找真正包含指针的屏幕，再判断该屏自己的边缘带与已知 Dock 区域。
+        // 逐屏的单轴比较会把别的屏幕的边缘条件当成整块桌面都命中，这里不再那样做。
+        let screens = NSScreen.screens.map {
+            WindowBrowserDockRegion.ScreenSnapshot(frame: $0.frame,
+                                                   displayID: displayID(for: $0))
         }
-        // Dock 自动隐藏/尚未枚举到：只在屏幕边缘激活带内才做命中检测。
-        for screen in NSScreen.screens {
-            let frame = screen.frame
-            if mouse.x <= frame.minX + Limits.edgeActivationBand
-                || mouse.x >= frame.maxX - Limits.edgeActivationBand
-                || mouse.y <= frame.minY + Limits.edgeActivationBand {
-                return true
-            }
-        }
-        return false
+        return WindowBrowserDockRegion.isNearDock(
+            mouse, screens: screens, dockAreas: dockAreas,
+            edgeBand: Limits.edgeActivationBand,
+            tolerance: Limits.knownAreaTolerance)
     }
 
     private func parent(of element: AXUIElement) -> AXUIElement? {
@@ -514,14 +528,9 @@ final class DockHoverObserver {
         return url.path.hasSuffix(".app")
     }
 
-    /// 由后台取回的 AX 矩形在主线程换算成 Cocoa 区域（NSScreen 只能在主线程读）。
-    private func area(fromAXFrames frames: [CGRect]) -> NSRect? {
-        var rect: NSRect?
-        for frame in frames {
-            let cocoa = cocoaFrame(fromAXPosition: frame.origin, size: frame.size)
-            rect = rect.map { $0.union(cocoa) } ?? cocoa
-        }
-        return rect
+    /// AX 矩形（左上原点）转 Cocoa 全局坐标；逐块保留，不合成大框。
+    private func cocoaRect(fromAXFrame frame: CGRect) -> NSRect {
+        cocoaFrame(fromAXPosition: frame.origin, size: frame.size)
     }
 
     private func axFrame(of element: AXUIElement) -> CGRect? {
@@ -560,5 +569,26 @@ final class DockHoverObserver {
         let center = NSWorkspace.shared.notificationCenter
         workspaceTokens.forEach { center.removeObserver($0) }
         workspaceTokens.removeAll()
+    }
+
+    /// 显示器拓扑变化：递增拓扑版本，旧坐标与旧结果全部失效，
+    /// 由控制器在明确交互时重新计算面板归属。
+    private func installScreenObserver() {
+        guard screensToken == nil else { return }
+        screensToken = NotificationCenter.default.addObserver(
+            forName: NSApplication.didChangeScreenParametersNotification,
+            object: nil, queue: .main) { [weak self] _ in
+                guard let self, self.running else { return }
+                self.topologyVersion &+= 1
+                self.detection.reset()
+                self.rebuildObserver(reason: "screens-changed")
+            }
+    }
+
+    private func removeScreenObserver() {
+        if let screensToken {
+            NotificationCenter.default.removeObserver(screensToken)
+            self.screensToken = nil
+        }
     }
 }

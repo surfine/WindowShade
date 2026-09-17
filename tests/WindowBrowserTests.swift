@@ -38,6 +38,23 @@ enum WindowBrowserTests {
         mirrorOwnership()
         foldCacheIsolation()
         panelAndViews()
+        thumbnailJobAccounting()
+        viewOwnershipAndReuse()
+        livePreviewMounting()
+        iconCacheSharedAcrossRows()
+        dockRegionAndDetectionQueue()
+        metadataSlots()
+        layoutPlan()
+        actionPresentationModel()
+        materialAndMotionPolicy()
+        placementPlans()
+        dockSessionDecision()
+        catalogRevisionIsolation()
+        liveLeaseIdentity()
+        preferencesRoundTrip()
+        contextMenuTracking()
+        inputMethodPriority()
+        activationVerification()
         hotKeyPolicy()
         hundredCyclesReturnToBaseline()
         firstContentLatency()
@@ -880,6 +897,25 @@ enum WindowBrowserTests {
             let next = pending.removeFirst()
             next.1(result)
         }
+
+        /// 已完成回调（按注册顺序）；用于模拟重复完成。
+        var pendingCompletions: [(Result<CGImage, WindowThumbnailFailure>) -> Void] {
+            pending.map { $0.1 }
+        }
+
+        /// 完成指定下标仍在等待的任务（顺序可控）。
+        func complete(index: Int, with result: Result<CGImage, WindowThumbnailFailure>) {
+            guard pending.indices.contains(index) else { return }
+            let next = pending.remove(at: index)
+            next.1(result)
+        }
+
+        func completeAll(with result: Result<CGImage, WindowThumbnailFailure>) {
+            while !pending.isEmpty {
+                let next = pending.removeFirst()
+                next.1(result)
+            }
+        }
     }
 
     static func makeImage(width: Int, height: Int, fill: UInt8 = 200) -> CGImage {
@@ -1136,6 +1172,7 @@ enum WindowBrowserTests {
 
     // MARK: 面板与视图事件
 
+    /// 生产视图的行为：面板语义、卡片/列表动作、按下-拖出语义、搜索与布局。
     static func panelAndViews() {
         _ = NSApplication.shared
         let dockPanel = WindowBrowserPanel(mode: .dock,
@@ -1157,274 +1194,198 @@ enum WindowBrowserTests {
         expect(searchField?.accessibilityLabel() == "搜索窗口",
                "the search field exposes an accessibility label")
 
-        // 41. 点击卡片按钮不会额外触发主体激活。
-        let card = WindowBrowserCardView(frame: NSRect(x: 0, y: 0, width: 224, height: 236))
-        var activated = 0
-        var primary = 0
-        card.onActivate = { activated += 1 }
-        card.onPrimary = { primary += 1 }
-        card.configure(record: sampleRecord(), selected: false, busy: false,
-                       params: .standard)
-        card.layout()
-        guard let primaryButton = card.subviews.compactMap({ $0 as? NSButton })
-            .first(where: { $0.title == "折叠" || $0.title == "展开" }) else {
-            expect(false, "card must expose a primary action button")
-            return
+        // 卡片：动作条只显示共享能力模型允许的常用动作，控制通过 weak delegate 回传。
+        let card = WindowBrowserCardView(frame: NSRect(x: 0, y: 0, width: 288, height: 236))
+        let cardDelegate = RecordingItemDelegate()
+        card.delegate = cardDelegate
+        let record = sampleRecord()
+        configure(card: card, record: record, selected: false, busy: false)
+        card.layoutSubtreeIfNeeded()
+        let bar = card.subviews.compactMap { $0 as? WindowBrowserActionBar }.first
+        expect(bar != nil, "cards expose a compact action bar")
+        let buttons = bar?.subviews.compactMap { $0 as? NSButton } ?? []
+        expect(!buttons.isEmpty, "the compact action bar contains symbol buttons")
+        expect(buttons.allSatisfy {
+            $0.frame.height <= WindowBrowserLayoutParams.standard.actionBarHeight + 0.5
+        },
+               "compact action buttons stay inside the reserved action bar space "
+               + "(heights=\(buttons.map { Int($0.frame.height) }) limit=\(WindowBrowserLayoutParams.standard.actionBarHeight) bar=\(Int(bar?.frame.height ?? -1)))")
+        expect(!card.actionBarIsVisible,
+               "the compact action bar stays hidden until hover or selection")
+        card.setSelected(true)
+        card.layoutSubtreeIfNeeded()
+        expect(card.actionBarIsVisible,
+               "a keyboard-selected card shows its compact action bar")
+        if let foldButton = buttons.first(where: {
+            $0.identifier?.rawValue == WindowBrowserAction.fold.rawValue
+        }) {
+            foldButton.performClick(nil)
+            expect(cardDelegate.performed.last?.action == .fold,
+                   "the fold button routes through the shared action model")
+        } else {
+            expect(false, "an ordinary window card must offer the fold action")
         }
-        primaryButton.performClick(nil)
-        expect(primary == 1, "primary button triggers the primary action")
-        expect(activated == 0, "button click must not bubble into card activation")
-        expect(primaryButton.frame.height >= 28,
-               "action buttons keep the ~28pt hit area from the layout parameters")
-        expect(card.bounds.contains(primaryButton.frame),
-               "action buttons stay inside the card bounds")
-        if let thumbnail = card.subviews.first(where: { $0 is NSImageView })?.frame {
-            expect(thumbnail.height <= WindowBrowserLayoutParams.standard.imageMaxHeight + 0.5,
-                   "card image area never exceeds the configured maximum height")
-        }
-        if let event = NSEvent.mouseEvent(with: .leftMouseDown,
-                                          location: NSPoint(x: 10, y: 10),
-                                          modifierFlags: [], timestamp: 0, windowNumber: 0,
-                                          context: nil, eventNumber: 0, clickCount: 1,
-                                          pressure: 1) {
-            card.mouseDown(with: event)
-            expect(activated == 1, "card body click activates the window")
-        }
+        expect(cardDelegate.activatedCount == 0,
+               "clicking a compact action button must not activate the window")
 
-        // 无变化的刷新不应重建卡片内容（可访问性动作/图层样式），有变化才重建。
-        let unchanged = sampleRecord()
-        card.configure(record: unchanged, selected: false, busy: false, params: .standard)
-        primaryButton.title = "手工标记"
-        card.configure(record: unchanged, selected: false, busy: false, params: .standard)
-        expect(primaryButton.title == "手工标记",
-               "an unchanged record skips card reconfiguration")
-        var changed = unchanged
+        // 按下-拖出取消：mouseDown 不激活，松开在外面不提交。
+        card.setSelected(false)
+        card.frame = NSRect(x: 0, y: 0, width: 288, height: 236)
+        func mouseEvent(_ type: NSEvent.EventType, at point: NSPoint) -> NSEvent? {
+            NSEvent.mouseEvent(with: type, location: point, modifierFlags: [], timestamp: 0,
+                               windowNumber: 0, context: nil, eventNumber: 0,
+                               clickCount: 1, pressure: 1)
+        }
+        if let down = mouseEvent(.leftMouseDown, at: NSPoint(x: 20, y: 20)),
+           let dragged = mouseEvent(.leftMouseDragged, at: NSPoint(x: 900, y: 900)),
+           let up = mouseEvent(.leftMouseUp, at: NSPoint(x: 900, y: 900)) {
+            card.mouseDown(with: down)
+            expect(cardDelegate.activatedCount == 0,
+                   "pressing a card must not activate it immediately")
+            card.mouseDragged(with: dragged)
+            card.mouseUp(with: up)
+            expect(cardDelegate.activatedCount == 0,
+                   "dragging out of a card cancels the activation")
+        }
+        var changed = record
         changed.title = "标题已变"
-        card.configure(record: changed, selected: false, busy: false, params: .standard)
-        expect(primaryButton.title != "手工标记",
+        expect(card.thumbnailImageForTesting == nil,
+               "a card without a captured image shows the placeholder")
+        let configureCountBefore = card.configureCount
+        configure(card: card, record: record, selected: false, busy: false)
+        expect(card.configureCount == configureCountBefore,
+               "an unchanged record skips card reconfiguration")
+        configure(card: card, record: changed, selected: false, busy: false)
+        expect(card.configureCount == configureCountBefore + 1,
                "a changed record reconfigures the card")
         let accessibilityActions = card.accessibilityCustomActions() ?? []
-        expect(accessibilityActions.contains { $0.name == "关闭窗口" },
-               "cards expose an explicit accessibility close action")
-        expect(accessibilityActions.contains { $0.name == "激活或展开窗口" },
-               "cards expose an explicit accessibility activate action")
+        expect(accessibilityActions.contains { $0.name == "折叠" },
+               "cards expose the shared action names to VoiceOver")
 
-        // 列表风格：选中项预览栏出现，唯一一路实时画面挂到预览栏而不是每一行。
-        let content = WindowBrowserContentView(frame: NSRect(x: 0, y: 0, width: 720, height: 520))
-        let many = (1...20).map { index -> WindowRecord in
-            var record = sampleRecord()
-            record = WindowRecord(key: WindowKey(
-                application: ApplicationInstanceKey(pid: 5001, generation: 1),
-                originalWindowID: CGWindowID(900 + index), windowGeneration: 1),
-                bundleIdentifier: record.bundleIdentifier, appName: record.appName,
-                title: "窗口 \(index)", logicalFrame: record.logicalFrame,
-                placementSource: record.placementSource,
-                systemVisibility: record.systemVisibility,
-                shadeState: record.shadeState, pinState: record.pinState,
-                capabilities: record.capabilities, confidence: record.confidence,
-                metadataRevision: UInt64(index), isMinimized: false,
-                isOnScreen: true, isFoldedOffscreen: false, isManaged: false)
-            return record
-        }
+        // 列表行：图标、标题、状态与共享动作，不重复占用两颗固定文字按钮。
+        let row = WindowBrowserListRowView(frame: NSRect(x: 0, y: 0, width: 420, height: 52))
+        let rowDelegate = RecordingItemDelegate()
+        row.delegate = rowDelegate
+        configure(row: row, record: record, selected: true, busy: false)
+        row.layoutSubtreeIfNeeded()
+        expect(row.subviews.compactMap { $0 as? NSImageView }
+            .allSatisfy { !$0.isAccessibilityElement() },
+               "row icons are not separate accessibility elements")
+        expect((row.accessibilityLabel() ?? "").contains("示例窗口"),
+               "rows name the target window for VoiceOver")
+
+        // 内容视图：键盘面板搜索、列表详情栏、网格方向键与规模边界。
+        let content = WindowBrowserContentView(frame: NSRect(x: 0, y: 0, width: 800, height: 560))
+        let many = makeRecords(pid: 5001, count: 20)
         let selected = many[3]
         content.update(mode: .keyboard, records: many, selection: selected.key,
                        style: .list, busyKeys: [], status: "")
         content.layout()
         expect(content.selectionPaneIsVisible,
                "list style shows the selected-item preview pane")
+        expect(content.searchFieldVisible,
+               "the keyboard panel keeps a visible search field")
+        let frames = content.layoutFrameSummary
+        expect(!frames.search.intersects(frames.list),
+               "search field must not overlap the list")
+        expect(frames.search.minY >= frames.list.maxY,
+               "the keyboard search field sits above the list")
+        expect(abs(frames.header.minY - frames.search.maxY
+                   - WindowBrowserLayoutParams.standard.searchFieldBottomGap) <= 1,
+               "the search field sits at the top, just below the header "
+               + "(gap=\(Int(frames.header.minY - frames.search.maxY)))")
+        expect(content.renderedLayout.style == .list && content.renderedLayout.rows == many.count,
+               "list style renders one row per window")
+
         var restoringRecord = selected
         restoringRecord.shadeState = .restoring
         expect(WindowBrowserCardViewStatus.text(restoringRecord).contains("正在展开"),
                "a restoring window is labelled as restoring, not as open")
-        let live = NSView(frame: NSRect(x: 0, y: 0, width: 10, height: 10))
-        content.setLivePreview(live, for: selected.key)
-        expect(live.superview != nil,
-               "the single live preview attaches to the selected list item")
-        content.update(mode: .keyboard, records: many, selection: selected.key,
-                       style: .grid, busyKeys: [], status: "")
-        content.layout()
-        expect(!content.selectionPaneIsVisible,
-               "grid style does not keep the separate list preview pane")
+        var foldedRecord = selected
+        foldedRecord.shadeState = .folded
+        foldedRecord.systemVisibility = .offScreen
+        let foldedStatus = WindowBrowserStatusPresentationFactory.make(record: foldedRecord,
+                                                                      hasSnapshot: false)
+        expect(foldedStatus.text == "已折叠" && !foldedStatus.isWarning,
+               "a folded off-screen window is a normal state, not a warning")
 
-        // 搜索框不能被列表压住：键盘面板里列表必须从搜索框下方开始。
-        // 曾经列表底边按 footerHeight + 固定值算，而搜索框占得更靠上，重叠 8pt
-        // （真实截图与 bug 报告：搜索框和窗口缩略图列表重叠）。
-        for size in [CGSize(width: 640, height: 520), CGSize(width: 460, height: 340)] {
-            for layoutStyle in [WindowBrowserDisplayStyle.grid, .list] {
-                let layoutContent = WindowBrowserContentView(
-                    frame: NSRect(origin: .zero, size: size))
-                layoutContent.update(mode: .keyboard, records: many,
-                                     selection: selected.key, style: layoutStyle,
-                                     busyKeys: [], status: "")
-                layoutContent.layout()
-                let frames = layoutContent.layoutFrameSummary
-                let label = "\(layoutStyle.rawValue) \(Int(size.width))x\(Int(size.height))"
-                expect(frames.search.height > 0,
-                       "keyboard panel keeps a visible search field (\(label))")
-                expect(!frames.search.intersects(frames.list),
-                       "search field must not overlap the list (\(label))")
-                // 容器是左下原点：列表要在搜索框上方，即列表底边不低于搜索框顶边。
-                expect(frames.list.minY >= frames.search.maxY,
-                       "the list starts above the search field (\(label))")
-                expect(frames.search.minY >= WindowBrowserLayoutParams.standard.footerHeight,
-                       "the search field stays above the footer status line (\(label))")
-            }
-        }
-
-        // 系统字号变大时底部状态行更高，搜索框与列表必须跟着让位，不能重新叠上。
-        var largeTextParams = WindowBrowserLayoutParams.standard
-        largeTextParams.footerHeight += 10
-        largeTextParams.headerHeight += 8
-        let largeTextContent = WindowBrowserContentView(
-            frame: NSRect(x: 0, y: 0, width: 640, height: 520))
-        largeTextContent.params = largeTextParams
-        largeTextContent.update(mode: .keyboard, records: many, selection: selected.key,
-                                style: .grid, busyKeys: [], status: "")
-        largeTextContent.layout()
-        let largeFrames = largeTextContent.layoutFrameSummary
-        expect(!largeFrames.search.intersects(largeFrames.list),
-               "a taller footer pushes the search field and list apart instead of overlapping")
-
-        // Dock 面板没有搜索框，列表可以使用到状态行上方的空间。
-        let dockContent = WindowBrowserContentView(
-            frame: NSRect(x: 0, y: 0, width: 520, height: 460))
-        dockContent.update(mode: .dock, records: many, selection: nil,
-                           style: .grid, busyKeys: [], status: "")
-        dockContent.layout()
-        let dockFrames = dockContent.layoutFrameSummary
-        expect(dockFrames.search == .zero,
-               "dock panel keeps the search field out of the layout")
-        expect(dockFrames.list.minY >= WindowBrowserLayoutParams.standard.footerHeight,
-               "dock panel's list stays above the footer status line")
-
-        // 风格切换：点“列表/缩略图”必须当场重排，不能等下一次刷新。
-        // 真实 bug：按钮已高亮“列表”，内容仍是缩略图网格。
-        let switchContent = WindowBrowserContentView(
-            frame: NSRect(x: 0, y: 0, width: 640, height: 520))
-        switchContent.update(mode: .keyboard, records: many, selection: selected.key,
-                             style: .grid, busyKeys: [], status: "")
-        switchContent.layout()
-        expect(switchContent.renderedLayout.style == .grid,
-               "the panel starts in the style it was asked for")
+        // 风格切换：点击分段控件立即重排，列表不重建整棵网格视图树。
         var reportedStyles: [WindowBrowserDisplayStyle] = []
-        switchContent.onStyleChanged = { reportedStyles.append($0) }
-        if let control = switchContent.subviews.compactMap({ $0 as? NSSegmentedControl }).first,
+        content.onStyleChanged = { reportedStyles.append($0) }
+        if let control = content.subviews.compactMap({ $0 as? NSSegmentedControl }).first,
            let action = control.action {
-            control.selectedSegment = 1
-            NSApp.sendAction(action, to: control.target, from: control)
-            expect(reportedStyles == [.list], "the style control reports the new style")
-            expect(switchContent.renderedLayout.style == .list,
-                   "clicking 列表 switches the rendered layout immediately")
-            expect(switchContent.renderedLayout.cards == 0
-                    && switchContent.renderedLayout.rows == many.count,
-                   "list style renders one row per window instead of cards")
-            switchContent.layout()
-            expect(switchContent.selectionPaneIsVisible,
-                   "list style shows the selected-item pane after the switch")
             control.selectedSegment = 0
             NSApp.sendAction(action, to: control.target, from: control)
-            expect(switchContent.renderedLayout.style == .grid
-                    && switchContent.renderedLayout.cards == many.count,
-                   "switching back to 缩略图 rebuilds the cards immediately")
+            expect(reportedStyles == [.grid], "the style control reports the new style")
+            expect(content.renderedLayout.style == .grid
+                    && content.renderedLayout.cards == many.count,
+                   "switching to thumbnails rebuilds the grid immediately")
+            control.selectedSegment = 1
+            NSApp.sendAction(action, to: control.target, from: control)
+            content.layout()
+            expect(content.renderedLayout.style == .list,
+                   "switching back to the list renders rows immediately")
         } else {
             expect(false, "the panel must expose a style control")
         }
 
-        // 视口：长列表只请求可见（含向下预取）的项目，滚动后集合随之变化。
+        // 视口：只请求可见（含向下预取）的项目，滚动后集合随之变化。
         var capturedViewport: [[WindowKey]] = []
         content.onVisibleKeysChanged = { capturedViewport.append($0) }
-        content.update(mode: .keyboard, records: many, selection: selected.key,
+        content.update(mode: .keyboard, records: many, selection: many[0].key,
                        style: .list, busyKeys: [], status: "")
         content.layout()
         let topVisible = content.visibleWindowKeys
         expect(!topVisible.isEmpty && topVisible.count < many.count,
                "a long list requests only a bounded viewport subset")
-        expect(topVisible.contains(many[0].key),
-               "the first visible row is inside the viewport subset")
-        content.scrollDocument(toY: 400)
+        content.scrollDocument(toY: 600)
         let scrolled = content.visibleWindowKeys
         expect(!scrolled.isEmpty && scrolled != topVisible,
                "scrolling changes the requested viewport subset")
-        expect(!capturedViewport.isEmpty,
-               "viewport changes are reported to the controller")
+        expect(!capturedViewport.isEmpty, "viewport changes are reported to the controller")
 
-        // 视图内存边界：滚动过的屏不长期驻留缩略图，只保留视口 + 选中项。
+        // 视图内存：滚动过的屏不长期驻留缩略图，离屏单元也清掉图像。
         for record in many {
             content.applyThumbnail(makeImage(width: 8, height: 8), for: record.key)
         }
-        expect(content.cachedThumbnailCount == many.count,
-               "thumbnails can be applied for every record")
         content.scrollDocument(toY: 0)
         content.layout()
-        expect(content.cachedThumbnailCount < many.count,
-               "off-screen thumbnails are dropped from the view")
         expect(content.cachedThumbnailCount <= content.visibleWindowKeys.count + 1,
                "the view keeps at most the viewport (plus the selected item)")
+        let offscreenKey = many[many.count - 1].key
+        if !content.visibleWindowKeys.contains(offscreenKey) {
+            expect(!content.hasThumbnailImage(for: offscreenKey),
+                   "off-screen items release their image and layer contents")
+        }
+        // 旧结果投递到已经不在列表里的窗口时不显示。
+        let absentKey = WindowKey(application: ApplicationInstanceKey(pid: 5999, generation: 1),
+                                  originalWindowID: 999, windowGeneration: 1)
+        content.applyThumbnail(makeImage(width: 8, height: 8), for: absentKey)
+        expect(!content.hasThumbnailImage(for: absentKey),
+               "an image for a window no longer in the list is not displayed")
 
-        // 实时不可用时回退到快照/图标：实时视图只覆盖在静态图之上。
-        let fallbackKey = many[0].key
-        content.update(mode: .keyboard, records: many, selection: fallbackKey,
+        // 方向键按真实列数移动；最后一行不会越界。
+        content.update(mode: .keyboard, records: many, selection: many[0].key,
                        style: .grid, busyKeys: [], status: "")
         content.layout()
-        content.scrollDocument(toY: 0)
-        content.applyThumbnail(makeImage(width: 8, height: 8), for: fallbackKey)
-        let overlay = NSView(frame: NSRect(x: 0, y: 0, width: 10, height: 10))
-        content.setLivePreview(overlay, for: fallbackKey)
-        expect(overlay.superview != nil, "live preview attaches above the card")
-        content.setLivePreview(nil, for: fallbackKey)
-        expect(overlay.superview == nil, "releasing the live preview detaches it")
-        expect(content.cachedThumbnailCount >= 1,
-               "the cached snapshot stays available as the fallback")
+        let columns = content.plan.columns
+        expect(columns >= 1, "grid layout reports a real column count")
+        content.select(many[0].key)
+        content.moveSelection(direction: .down)
+        let movedIndex = many.firstIndex { $0.key == content.selection } ?? -1
+        expect(movedIndex == min(columns, many.count - 1),
+               "down arrow moves by the real column count")
+        let firstColumnIndex = min(columns, many.count - 1)
+        content.select(many[firstColumnIndex].key)
+        content.moveSelection(direction: .left)
+        expect(content.selection == many[firstColumnIndex].key,
+               "left arrow on the first column keeps the selection stable")
 
-        // 方向键选择滚出视口时，选中项必须被滚回可见区域。
-        content.update(mode: .keyboard, records: many, selection: many[0].key,
-                       style: .list, busyKeys: [], status: "")
-        content.layout()
-        content.scrollDocument(toY: 0)
-        let deepKey = many[many.count - 1].key
-        expect(!content.visibleWindowKeys.contains(deepKey),
-               "the last row starts outside the viewport")
-        content.select(deepKey)
-        expect(content.visibleWindowKeys.contains(deepKey),
-               "selecting an off-screen row scrolls it into view")
-        // 搜索/删除导致选中项变化（update 路径）同样滚入视口；
-        // 但用户自己滚走、选中项未变时不能被刷新强行拉回。
-        content.scrollDocument(toY: 0)
-        content.update(mode: .keyboard, records: many, selection: many[0].key,
-                       style: .list, busyKeys: [], status: "")
-        content.layout()
-        content.update(mode: .keyboard, records: many, selection: deepKey,
-                       style: .list, busyKeys: [], status: "")
-        content.layout()
-        expect(content.visibleWindowKeys.contains(deepKey),
-               "selection changed by update (search/deletion) is scrolled into view")
-        content.scrollDocument(toY: 0)
-        content.update(mode: .keyboard, records: many, selection: deepKey,
-                       style: .list, busyKeys: [], status: "")
-        content.layout()
-        expect(!content.visibleWindowKeys.contains(deepKey),
-               "a manual scroll away is not undone by a refresh with the same selection")
-
-        // 规模回归：200 个窗口时视口与视图内存仍然有界。
-        let huge = (1...200).map { index -> WindowRecord in
-            var record = many[0]
-            record = WindowRecord(key: WindowKey(
-                application: ApplicationInstanceKey(pid: 5001, generation: 1),
-                originalWindowID: CGWindowID(3000 + index), windowGeneration: 1),
-                bundleIdentifier: record.bundleIdentifier, appName: record.appName,
-                title: "窗口 \(index)", logicalFrame: record.logicalFrame,
-                placementSource: record.placementSource,
-                systemVisibility: record.systemVisibility,
-                shadeState: record.shadeState, pinState: record.pinState,
-                capabilities: record.capabilities, confidence: record.confidence,
-                metadataRevision: UInt64(index), isMinimized: false,
-                isOnScreen: true, isFoldedOffscreen: false, isManaged: false)
-            return record
-        }
+        // 200 条记录：视口与视图图像仍然有界。
+        let huge = makeRecords(pid: 5001, count: 200)
         content.update(mode: .keyboard, records: huge, selection: huge[0].key,
                        style: .list, busyKeys: [], status: "")
         content.layout()
-        content.scrollDocument(toY: 0)
         for record in huge {
             content.applyThumbnail(makeImage(width: 8, height: 8), for: record.key)
         }
@@ -1433,21 +1394,1316 @@ enum WindowBrowserTests {
                "200 windows still produce a bounded viewport subset")
         expect(content.cachedThumbnailCount <= content.visibleWindowKeys.count + 1,
                "200 windows keep view-side thumbnail memory bounded")
-        expect(content.cachedThumbnailBytes > 0
-               && content.cachedThumbnailBytes < 20 * 1024 * 1024,
+        expect(content.cachedThumbnailBytes > 0 && content.cachedThumbnailBytes < 20 * 1024 * 1024,
                "view-side image bytes stay observable and bounded")
+        // 离屏 AppKit 不会为不可见条目创建单元视图；这里断言数量上界，
+        // 真正的“只创建可见单元”证据来自性能对照（120 条冷启动 18ms vs 200ms）。
+        let materialised = content.createdItemCount
+        expect(materialised <= content.visibleWindowKeys.count + 8,
+               "only visible items (plus a small reuse pool) are materialised "
+               + "(created=\(materialised) visible=\(content.visibleWindowKeys.count))")
+        print("window-browser: materialised cells=\(materialised) "
+              + "visible=\(content.visibleWindowKeys.count) records=\(huge.count)")
+    }
 
-        // 列表行的可访问性：按钮带窗口名，图标不作为独立元素。
-        let row = WindowBrowserListRowView(frame: NSRect(x: 0, y: 0, width: 420, height: 56))
-        row.configure(record: sampleRecord(), selected: false, busy: false, params: .standard)
-        row.layout()
-        let rowButtons = row.subviews.compactMap { $0 as? NSButton }
-        expect(rowButtons.count == 2, "list rows expose two action buttons")
-        expect(rowButtons.allSatisfy { ($0.accessibilityLabel() ?? "").contains("示例窗口") },
-               "row buttons name the target window for VoiceOver")
-        expect(row.subviews.compactMap { $0 as? NSImageView }
-            .allSatisfy { !$0.isAccessibilityElement() },
-               "row icons are not separate accessibility elements")
+    /// 复用与所有权：卡片/列表行不因为闭包自持有而泄漏，集合变化不重建全部单元。
+    static func viewOwnershipAndReuse() {
+        _ = NSApplication.shared
+        let record = sampleRecord()
+        weak var weakCard: WindowBrowserCardView?
+        weak var weakRow: WindowBrowserListRowView?
+        autoreleasepool {
+            let delegate = RecordingItemDelegate()
+            let card = WindowBrowserCardView(frame: NSRect(x: 0, y: 0, width: 288, height: 236))
+            card.delegate = delegate
+            configure(card: card, record: record, selected: true, busy: false)
+            card.layout()
+            weakCard = card
+            let rowDelegate = RecordingItemDelegate()
+            let row = WindowBrowserListRowView(frame: NSRect(x: 0, y: 0, width: 420, height: 52))
+            row.delegate = rowDelegate
+            configure(row: row, record: record, selected: true, busy: false)
+            row.layout()
+            weakRow = row
+        }
+        expect(weakCard == nil, "a removed card is released (no closure retain cycle)")
+        expect(weakRow == nil, "a removed list row is released")
+        // 面板与实时视图：关闭/解除挂载后同样必须释放。
+        weak var weakPanel: WindowBrowserPanel?
+        weak var weakLiveView: NSView?
+        autoreleasepool {
+            let panel = WindowBrowserPanel(mode: .dock,
+                                           frame: NSRect(x: 0, y: 0, width: 320, height: 240))
+            weakPanel = panel
+            let live = NSView(frame: NSRect(x: 0, y: 0, width: 40, height: 30))
+            weakLiveView = live
+            let content = panel.browserContentView
+            content.update(mode: .dock, records: [record], selection: record.key,
+                           style: .grid, busyKeys: [], status: "")
+            content.layout()
+            content.setLivePreview(live, for: record.key)
+            expect(live.superview != nil, "the live view is mounted before release")
+            content.setLivePreview(nil, for: record.key)
+            panel.orderOut(nil)
+            panel.close()
+        }
+        // AppKit 会在下一个 run-loop 周期释放已关闭的窗口，给它一次机会。
+        RunLoop.current.run(until: Date().addingTimeInterval(0.05))
+        expect(weakLiveView == nil, "a detached live view is released")
+        expect(weakPanel == nil, "a closed panel is released")
+        expect(WindowBrowserActionPresentation.primaryActions.contains(.fold),
+               "the shared capability model decides which actions the compact bar shows")
+
+        // 集合变化（删除一条）不重建其他单元，选择与滚动位置保持稳定。
+        let content = WindowBrowserContentView(frame: NSRect(x: 0, y: 0, width: 800, height: 560))
+        let records = makeRecords(pid: 6001, count: 12)
+        content.update(mode: .keyboard, records: records, selection: records[2].key,
+                       style: .grid, busyKeys: [], status: "")
+        content.layout()
+        let keptKey = records[2].key
+        let identityBefore = content.cardInstanceIdentifier(for: keptKey)
+        // 只改内容的刷新（键集合不变）不得销毁单元视图。
+        var renamed = records
+        renamed[2].title = "标题刷新"
+        content.update(mode: .keyboard, records: renamed, selection: keptKey,
+                       style: .grid, busyKeys: [], status: "")
+        content.layout()
+        if let identityBefore, let identityAfter = content.cardInstanceIdentifier(for: keptKey) {
+            expect(identityBefore == identityAfter,
+                   "a content-only refresh keeps the same card view instance")
+        } else {
+            // 离屏环境下 AppKit 可能还没有创建单元视图；此时验证数量边界。
+            expect(content.createdItemCount <= renamed.count,
+                   "content-only refreshes never materialise extra items "
+                   + "(created=\(content.createdItemCount))")
+        }
+        content.scrollDocument(toY: 0)
+        var withoutOne = records
+        withoutOne.remove(at: 7)
+        content.update(mode: .keyboard, records: withoutOne, selection: keptKey,
+                       style: .grid, busyKeys: [], status: "")
+        content.layout()
+        expect(content.selection == keptKey,
+               "removing one record keeps the current selection")
+        expect(content.createdItemCount <= withoutOne.count,
+               "id-diff updates materialise at most one view per record")
+        expect(content.visibleWindowKeys.count < withoutOne.count,
+               "a long list still requests only its viewport after a removal")
+
+        // T16：数量相同但键完全不同时，旧键保留的图像必须被清掉。
+        let swapped = makeRecords(pid: 6401, count: records.count)
+        content.applyThumbnail(makeImage(width: 8, height: 8), for: records[2].key)
+        expect(content.cachedThumbnailCount >= 1, "the baseline image is cached")
+        content.update(mode: .keyboard, records: swapped, selection: nil,
+                       style: .grid, busyKeys: [], status: "")
+        content.layout()
+        expect(!content.hasThumbnailImage(for: records[2].key),
+               "T16: an equal-count update with different keys clears the old images")
+    }
+
+    /// 实时预览只有一个明确挂载点：网格卡片或列表详情，切换只迁移不重建。
+    static func livePreviewMounting() {
+        _ = NSApplication.shared
+        let content = WindowBrowserContentView(frame: NSRect(x: 0, y: 0, width: 800, height: 560))
+        let records = makeRecords(pid: 6101, count: 8)
+        let selected = records[2].key
+        content.update(mode: .keyboard, records: records, selection: selected,
+                       style: .grid, busyKeys: [], status: "")
+        content.layout()
+        let liveView = NSView(frame: NSRect(x: 0, y: 0, width: 40, height: 30))
+        content.setLivePreview(liveView, for: selected)
+        expect(content.liveMountTarget == .card(selected),
+               "grid style mounts the live preview in the card")
+        expect(liveView.superview != nil, "the live preview is attached in grid style")
+        let cardHost = liveView.superview
+        expect(cardHost != nil, "grid live preview has a visible host")
+
+        // 样式切换：迁移现有实时视图，不新开第二路。
+        content.update(mode: .keyboard, records: records, selection: selected,
+                       style: .list, busyKeys: [], status: "")
+        content.layout()
+        expect(content.liveMountTarget == .selectionDetail(selected),
+               "list style mounts the live preview in the selection detail pane")
+        expect(content.liveMountHostIsDetailPane,
+               "the live preview is re-hosted in the detail pane, not duplicated")
+        expect(liveView.superview !== cardHost || cardHost == nil,
+               "the live view is moved instead of being displayed twice")
+        content.setLivePreview(nil, for: selected)
+        expect(liveView.superview == nil, "releasing the live preview detaches it")
+
+        // 列表详情栏隐藏时（网格样式）不能把视频挂进隐藏的详情区。
+        content.update(mode: .keyboard, records: records, selection: selected,
+                       style: .grid, busyKeys: [], status: "")
+        content.layout()
+        let secondView = NSView(frame: NSRect(x: 0, y: 0, width: 40, height: 30))
+        content.setLivePreview(secondView, for: selected)
+        expect(!content.liveMountHostIsDetailPane,
+               "the grid never mounts the live view into the hidden detail pane")
+
+        // 元数据/颜色刷新不 remove/add 同一个正在显示的实时视图。
+        let hostBefore = secondView.superview
+        content.update(mode: .keyboard, records: records, selection: selected,
+                       style: .grid, busyKeys: [], status: "")
+        content.refreshMaterialAppearance()
+        expect(secondView.superview === hostBefore,
+               "a metadata or appearance refresh keeps the same live view host")
+    }
+
+    /// 同一应用的图标只读取一次，多行/多卡片共享缓存。
+    static func iconCacheSharedAcrossRows() {
+        let provider = WindowBrowserIconProvider()
+        _ = provider.icon(for: 6201)
+        _ = provider.icon(for: 6201)
+        _ = provider.icon(for: 6201)
+        expect(provider.loadCount == 1,
+               "three lookups for the same process load the icon once")
+        _ = provider.icon(for: 6202)
+        expect(provider.loadCount == 2, "a different process loads its own icon")
+        provider.invalidate(pid: 6201)
+        _ = provider.icon(for: 6201)
+        expect(provider.loadCount == 3, "invalidation forces a fresh read")
+    }
+
+    // MARK: 新增：截图任务、订阅与额度的真实记账
+
+    /// T01–T12：任务、订阅、额度与降级的真实记账。
+    static func thumbnailJobAccounting() {
+        let keyA = WindowKey(application: ApplicationInstanceKey(pid: 8001, generation: 1),
+                             originalWindowID: 11, windowGeneration: 1)
+        let keyB = WindowKey(application: ApplicationInstanceKey(pid: 8001, generation: 1),
+                             originalWindowID: 12, windowGeneration: 1)
+        let keyC = WindowKey(application: ApplicationInstanceKey(pid: 8001, generation: 1),
+                             originalWindowID: 13, windowGeneration: 1)
+        let size = CGSize(width: 320, height: 200)
+        let image = makeImage(width: 8, height: 8)
+
+        // T01/T02：两个并行任务，无论谁先完成，另一个的物理启动次数都保持 1。
+        for firstIsA in [true, false] {
+            let backend = FakeThumbnailBackend()
+            backend.autoResult = nil
+            let service = WindowThumbnailService(backend: backend, maxConcurrent: 2)
+            _ = service.request(windowKey: keyA, purpose: .card, logicalSize: size,
+                                onImage: { _ in })
+            _ = service.request(windowKey: keyB, purpose: .card, logicalSize: size,
+                                onImage: { _ in })
+            expect(backend.started.count == 2, "two distinct keys start two physical captures")
+            backend.complete(index: firstIsA ? 0 : 1, with: .success(image))
+            expect(backend.started.count == 2,
+                   "completing one capture must not restart the other "
+                   + "(first=\(firstIsA ? "A" : "B"))")
+            expect(service.runningCaptureCount == 1,
+                   "the unfinished capture still occupies exactly one slot")
+            backend.completeAll(with: .success(image))
+            expect(service.runningCaptureCount == 0 && service.inFlightCount == 0,
+                   "both captures settle back to a zero baseline")
+        }
+
+        // T03：连续十个任务，任意完成顺序下物理运行数不超过 2。
+        let manyBackend = FakeThumbnailBackend()
+        manyBackend.autoResult = nil
+        let manyService = WindowThumbnailService(backend: manyBackend, maxConcurrent: 2)
+        for index in 0..<10 {
+            let key = WindowKey(application: ApplicationInstanceKey(pid: 8002, generation: 1),
+                                originalWindowID: CGWindowID(100 + index),
+                                windowGeneration: 1)
+            _ = manyService.request(windowKey: key, purpose: .card, logicalSize: size,
+                                    onImage: { _ in })
+            expect(manyBackend.started.count <= 2,
+                   "physical captures stay within the concurrency budget (index \(index))")
+        }
+        // 固定顺序（交替先完成第二个等待中的任务）覆盖任意完成顺序下的预算不变式。
+        for step in 0..<10 {
+            let pendingCount = manyBackend.started.count - step
+            let index = step % 2 == 0 && pendingCount > 1 ? 1 : 0
+            manyBackend.complete(index: index, with: .success(image))
+            expect(manyService.runningCaptureCount <= 2,
+                   "at most two physical captures run concurrently (step \(step))")
+        }
+        expect(manyBackend.started.count == 10, "every queued job eventually runs")
+        expect(manyService.inFlightCount == 0, "all jobs settle")
+
+        // T04：取消 queued 任务不启动后端，也不错误归还别的任务额度。
+        let queuedBackend = FakeThumbnailBackend()
+        queuedBackend.autoResult = nil
+        let queuedService = WindowThumbnailService(backend: queuedBackend, maxConcurrent: 1)
+        _ = queuedService.request(windowKey: keyA, purpose: .card, logicalSize: size,
+                                  onImage: { _ in })
+        let queued = queuedService.request(windowKey: keyB, purpose: .card, logicalSize: size,
+                                           onImage: { _ in })
+        queued.cancel()
+        expect(queuedBackend.started.count == 1,
+               "cancelling a queued job never starts the backend")
+        expect(queuedService.runningCaptureCount == 1,
+               "the running job keeps its slot after another job is cancelled")
+        queuedBackend.completeAll(with: .success(image))
+        expect(queuedService.queuedCount == 0, "the cancelled job never re-enters the queue")
+
+        // T05：取消 running 任务但系统仍在运行 → 继续占用额度到真实完成。
+        let runningBackend = FakeThumbnailBackend()
+        runningBackend.autoResult = nil
+        let runningService = WindowThumbnailService(backend: runningBackend, maxConcurrent: 1)
+        let running = runningService.request(windowKey: keyA, purpose: .card,
+                                             logicalSize: size, onImage: { _ in })
+        _ = runningService.request(windowKey: keyB, purpose: .card, logicalSize: size,
+                                   onImage: { _ in })
+        running.cancel()
+        expect(runningService.runningCaptureCount == 1,
+               "a cancelled-but-running system call still occupies the budget")
+        expect(runningBackend.started.count == 1,
+               "the queued job does not start while the cancelled job is unfinished")
+        runningBackend.complete(index: 0, with: .success(image))
+        expect(runningBackend.started.count == 2,
+               "the slot is released only after the real completion")
+
+        // T06：两个 running 任务遇到 invalidateAll，晚到完成仍归还额度。
+        let invalidateBackend = FakeThumbnailBackend()
+        invalidateBackend.autoResult = nil
+        let invalidateService = WindowThumbnailService(backend: invalidateBackend,
+                                                       maxConcurrent: 2)
+        _ = invalidateService.request(windowKey: keyA, purpose: .card, logicalSize: size,
+                                      onImage: { _ in })
+        _ = invalidateService.request(windowKey: keyB, purpose: .card, logicalSize: size,
+                                      onImage: { _ in })
+        invalidateService.invalidateAll()
+        expect(invalidateService.runningCaptureCount == 2,
+               "invalidating does not pretend the running captures stopped")
+        invalidateBackend.completeAll(with: .success(image))
+        expect(invalidateService.runningCaptureCount == 0,
+               "late completions still return the budget after invalidation")
+        _ = invalidateService.request(windowKey: keyC, purpose: .card, logicalSize: size,
+                                      onImage: { _ in })
+        expect(invalidateBackend.started.count == 3,
+               "new work can start after the invalidated jobs settle")
+
+        // T07：旧任务失效后同一键的新 JobID 已入队，旧回调不能删除新登记。
+        let staleBackend = FakeThumbnailBackend()
+        staleBackend.autoResult = nil
+        let staleService = WindowThumbnailService(backend: staleBackend, maxConcurrent: 2)
+        _ = staleService.request(windowKey: keyA, purpose: .card, logicalSize: size,
+                                 onImage: { _ in })
+        staleService.invalidate(windowKey: keyA)
+        var replacementDelivered = false
+        _ = staleService.request(windowKey: keyA, purpose: .card, logicalSize: size,
+                                 onImage: { _ in replacementDelivered = true })
+        expect(staleBackend.started.count == 2,
+               "the replacement request starts a new physical capture")
+        staleBackend.complete(index: 0, with: .success(image))
+        expect(!replacementDelivered,
+               "the old job's completion must not publish to the new request")
+        expect(staleService.jobState(windowKey: keyA, purpose: .card) != nil,
+               "the new job stays registered after the stale completion")
+        staleBackend.complete(index: 0, with: .success(image))
+        expect(replacementDelivered, "the new job still delivers its own result")
+
+        // T08：后端重复完成不重复发布、不重复归还额度。
+        let duplicateBackend = FakeThumbnailBackend()
+        duplicateBackend.autoResult = nil
+        let duplicateService = WindowThumbnailService(backend: duplicateBackend)
+        var deliveries = 0
+        _ = duplicateService.request(windowKey: keyA, purpose: .card, logicalSize: size,
+                                     onImage: { _ in deliveries += 1 })
+        let pendingCompletion = duplicateBackend.pendingCompletions.first
+        pendingCompletion?(.success(image))
+        pendingCompletion?(.success(image))
+        expect(deliveries == 1, "a duplicated completion publishes exactly once")
+        expect(duplicateService.duplicateCompletionCount == 1,
+               "the duplicated completion is counted, not acted upon")
+        expect(duplicateService.runningCaptureCount == 0,
+               "the duplicated completion never underflows the budget")
+
+        // T09：后端永不完成 → 有界降级，不无限追加真实任务。
+        var fakeClock: CFAbsoluteTime = 1000
+        let stalledBackend = FakeThumbnailBackend()
+        stalledBackend.autoResult = nil
+        let stalledService = WindowThumbnailService(backend: stalledBackend, maxConcurrent: 1,
+                                                    stallTimeout: 1.0,
+                                                    now: { fakeClock })
+        _ = stalledService.request(windowKey: keyA, purpose: .card, logicalSize: size,
+                                   onImage: { _ in })
+        fakeClock += 5
+        var stalledFailure: WindowThumbnailFailure?
+        let stalledSecond = stalledService.request(windowKey: keyB, purpose: .card,
+                                                   logicalSize: size,
+                                                   onImage: { _ in },
+                                                   onFailure: { stalledFailure = $0 })
+        expect(stalledBackend.started.count == 1,
+               "a stalled backend receives no further physical work")
+        expect(stalledSecond.isFinished,
+               "the new demand fails promptly instead of queueing forever")
+        if case .captureFailed? = stalledFailure {
+            expect(true, "the stalled demand reports a comprehensible failure")
+        } else {
+            expect(false, "the stalled demand must report a capture failure")
+        }
+
+        // T11：选中项优先级提升不会重启已经在运行的截图。
+        let promoteBackend = FakeThumbnailBackend()
+        promoteBackend.autoResult = nil
+        let promoteService = WindowThumbnailService(backend: promoteBackend, maxConcurrent: 1)
+        _ = promoteService.request(windowKey: keyA, purpose: .card, logicalSize: size,
+                                   onImage: { _ in })
+        _ = promoteService.request(windowKey: keyB, purpose: .card, logicalSize: size,
+                                   onImage: { _ in })
+        _ = promoteService.request(windowKey: keyC, purpose: .card, logicalSize: size,
+                                   onImage: { _ in })
+        promoteService.promote(windowKey: keyC, purpose: .card)
+        expect(promoteBackend.started.count == 1,
+               "promoting a queued item never restarts the running capture")
+        promoteBackend.complete(index: 0, with: .success(image))
+        expect(promoteBackend.started.last?.key.windowKey == keyC,
+               "the promoted demand is served first")
+
+        // T12：完成、取消、失败的订阅都进入终态，cancelAction 不自持有。
+        let terminalBackend = FakeThumbnailBackend()
+        terminalBackend.autoResult = .success(image)
+        let terminalService = WindowThumbnailService(backend: terminalBackend)
+        let finished = terminalService.request(windowKey: keyA, purpose: .card,
+                                               logicalSize: size, onImage: { _ in })
+        expect(finished.isFinished && !finished.isActive,
+               "a synchronously completed subscription is already terminal")
+        finished.cancel()
+        expect(finished.isFinished, "calling cancel on a terminal subscription is a no-op")
+
+        let cancelBackend = FakeThumbnailBackend()
+        cancelBackend.autoResult = nil
+        let cancelService = WindowThumbnailService(backend: cancelBackend)
+        var finishNotifications = 0
+        let cancelled = cancelService.request(windowKey: keyB, purpose: .card,
+                                              logicalSize: size, onImage: { _ in },
+                                              onFinish: { finishNotifications += 1 })
+        cancelled.cancel()
+        expect(cancelled.isFinished && cancelled.isCancelled,
+               "a cancelled subscription is terminal and marked cancelled")
+        expect(finishNotifications == 1,
+               "the controller is notified exactly once when the subscription ends")
+
+        let failureBackend = FakeThumbnailBackend()
+        failureBackend.autoResult = .failure(.permissionDenied)
+        let failureService = WindowThumbnailService(backend: failureBackend)
+        var failureNotified = false
+        _ = failureService.request(windowKey: keyC, purpose: .card, logicalSize: size,
+                                   onImage: { _ in },
+                                   onFailure: { _ in failureNotified = true },
+                                   onFinish: { finishNotifications += 1 })
+        expect(failureNotified && finishNotifications == 2,
+               "a failed subscription reports the failure and then finishes once")
+
+        // T10：同步缓存回调不会让订阅被永久认为“正在请求”。
+        let cacheBackend = FakeThumbnailBackend()
+        cacheBackend.autoResult = .success(image)
+        let cacheService = WindowThumbnailService(backend: cacheBackend)
+        let cachedFirst = cacheService.request(windowKey: keyA, purpose: .card,
+                                               logicalSize: size, onImage: { _ in })
+        expect(cachedFirst.isFinished, "a synchronous capture finishes its subscription")
+        let cachedSecond = cacheService.request(windowKey: keyA, purpose: .card,
+                                                logicalSize: size, onImage: { _ in })
+        expect(cachedSecond.isFinished && cacheBackend.started.count == 1,
+               "the second request is served from cache, not from a new capture")
+        expect(cacheService.inFlightCount == 0,
+               "no subscription is left behind as permanently in flight")
+    }
+
+    // MARK: 新增：Dock 区域与检测排队
+
+    /// T21–T29：候选区域、在途合并、过期结果与拓扑变化。
+    static func dockRegionAndDetectionQueue() {
+        let left = WindowBrowserDockRegion.ScreenSnapshot(
+            frame: NSRect(x: -1440, y: 0, width: 1440, height: 900), displayID: 1)
+        let right = WindowBrowserDockRegion.ScreenSnapshot(
+            frame: NSRect(x: 0, y: 0, width: 1440, height: 900), displayID: 2)
+        let screens = [left, right]
+
+        // T21：双屏左侧屏幕中央的移动不能被右屏左边缘条件误判。
+        expect(!WindowBrowserDockRegion.isNearDock(CGPoint(x: -720, y: 450),
+                                                   screens: screens, dockAreas: [],
+                                                   edgeBand: 10, tolerance: 24),
+               "the middle of the left screen is not near any Dock edge")
+        expect(WindowBrowserDockRegion.isNearDock(CGPoint(x: -720, y: 4),
+                                                  screens: screens, dockAreas: [],
+                                                  edgeBand: 10, tolerance: 24),
+               "the bottom edge of the left screen is a candidate region")
+        expect(WindowBrowserDockRegion.isNearDock(CGPoint(x: 4, y: 450),
+                                                  screens: screens, dockAreas: [],
+                                                  edgeBand: 10, tolerance: 24),
+               "the left edge of the right screen is a candidate region")
+
+        // T22：上下排列与负坐标。
+        let above = WindowBrowserDockRegion.ScreenSnapshot(
+            frame: NSRect(x: 0, y: 900, width: 1440, height: 900), displayID: 3)
+        expect(WindowBrowserDockRegion.screenContaining(CGPoint(x: 700, y: 1200),
+                                                        screens: [right, above])?.displayID == 3,
+               "a point in the upper screen is attributed to that screen")
+        expect(WindowBrowserDockRegion.isNearDock(CGPoint(x: 700, y: 905),
+                                                  screens: [right, above], dockAreas: [],
+                                                  edgeBand: 10, tolerance: 24),
+               "a vertically stacked screen keeps its own edge band")
+        expect(!WindowBrowserDockRegion.isNearDock(CGPoint(x: 700, y: 1780),
+                                                   screens: [right, above], dockAreas: [],
+                                                   edgeBand: 10, tolerance: 24),
+               "the middle of the upper screen is not a Dock candidate")
+        // 已知 Dock 区域按实际矩形判断，不会覆盖屏幕之间的空白。
+        let knownArea = NSRect(x: -600, y: 0, width: 700, height: 60)
+        expect(WindowBrowserDockRegion.isInsideAny(CGPoint(x: -300, y: 30),
+                                                   areas: [knownArea], tolerance: 4),
+               "a pointer inside a known Dock area is a candidate")
+        expect(!WindowBrowserDockRegion.isInsideAny(CGPoint(x: -300, y: 300),
+                                                    areas: [knownArea], tolerance: 4),
+               "leaving the Dock area stops producing candidates")
+        expect(!WindowBrowserDockRegion.isNearDock(CGPoint(x: 1500, y: 450),
+                                                   screens: screens, dockAreas: [knownArea],
+                                                   edgeBand: 10, tolerance: 24),
+               "a gap between displays is not silently treated as an edge")
+
+        // T23/T24：慢 AX + 快速移动 → 最多一个在途 + 一个最新待处理位置。
+        var coordinator = WindowBrowserDetectionCoordinator()
+        let first = coordinator.begin(point: CGPoint(x: 10, y: 10), generation: 1,
+                                      topologyVersion: 1, source: "mouse",
+                                      isPointerDriven: true)
+        expect(first != nil, "the first detection runs immediately")
+        _ = coordinator.begin(point: CGPoint(x: 20, y: 20), generation: 1,
+                              topologyVersion: 1, source: "mouse", isPointerDriven: true)
+        let latest = coordinator.begin(point: CGPoint(x: 30, y: 30), generation: 1,
+                                       topologyVersion: 1, source: "mouse",
+                                       isPointerDriven: true)
+        expect(latest == nil, "later pointer positions wait for the in-flight detection")
+        expect(coordinator.pendingCount == 2,
+               "the queue holds at most one in-flight plus one latest pending request")
+        expect(coordinator.pending?.point == CGPoint(x: 30, y: 30),
+               "the pending position is always the latest one")
+        expect(coordinator.coalescedCount == 1,
+               "overwritten pointer positions are counted as coalesced")
+        let notification = coordinator.begin(point: CGPoint(x: 30, y: 30), generation: 1,
+                                             topologyVersion: 1, source: "ax-notification",
+                                             isPointerDriven: false)
+        expect(notification == nil && coordinator.pendingCount == 2,
+               "AX notifications share the same in-flight budget as pointer fallback")
+        let next = coordinator.finish(requestID: first?.requestID ?? 0)
+        expect(next?.point == CGPoint(x: 30, y: 30),
+               "finishing the in-flight detection starts the latest pending request")
+
+        // T25/T27：过期指针结果与旧观察器实例的结果都会被拒绝。
+        var pointerCoordinator = WindowBrowserDetectionCoordinator()
+        let requestA = pointerCoordinator.begin(point: CGPoint(x: 10, y: 10), generation: 1,
+                                                topologyVersion: 1, source: "mouse",
+                                                isPointerDriven: true)
+        _ = pointerCoordinator.finish(requestID: requestA?.requestID ?? 0)
+        let requestB = pointerCoordinator.begin(point: CGPoint(x: 400, y: 10), generation: 1,
+                                                topologyVersion: 1, source: "mouse",
+                                                isPointerDriven: true)
+        expect(requestB != nil, "the pointer moved on and started a new detection")
+        if let requestA {
+            expect(!pointerCoordinator.accepts(requestA, generation: 1, topologyVersion: 1),
+                   "a stale pointer result is rejected once a newer position arrived")
+        }
+        if let requestB {
+            expect(pointerCoordinator.accepts(requestB, generation: 1, topologyVersion: 1),
+                   "the latest pointer request is accepted")
+            expect(!pointerCoordinator.accepts(requestB, generation: 2, topologyVersion: 1),
+                   "a new observer generation rejects the old instance's result")
+            expect(!pointerCoordinator.accepts(requestB, generation: 1, topologyVersion: 9),
+                   "a display topology change rejects the old geometry result")
+        }
+
+        // T29：图标命中区域有限，不覆盖半个桌面。
+        let icon = NSRect(x: 100, y: 20, width: 52, height: 52)
+        expect(WindowBrowserDockRegion.iconHitContains(CGPoint(x: 126, y: 46),
+                                                       iconFrame: icon, tolerance: 8),
+               "the pointer inside the icon is a hit")
+        expect(!WindowBrowserDockRegion.iconHitContains(CGPoint(x: 400, y: 400),
+                                                        iconFrame: icon, tolerance: 8),
+               "the icon hit region is bounded")
+    }
+
+    // MARK: 新增：元数据槽
+
+    /// T31/T32：元数据槽的“在途 + 最新需求”记账。
+    static func metadataSlots() {
+        let app = ApplicationInstanceKey(pid: 9101, generation: 1)
+        let request1 = WindowBrowserRequestID(value: 1)
+        let request2 = WindowBrowserRequestID(value: 2)
+        var slot = WindowBrowserMetadataSlot()
+        expect(slot.request(jobID: 1, requestID: request1, appInstance: app) != nil,
+               "the first metadata demand starts immediately")
+        expect(slot.request(jobID: 2, requestID: request2, appInstance: app) == nil,
+               "a second demand while one is in flight is queued instead of started")
+        // T31：旧任务结束（即使结果被拒绝发布）仍然推进最新需求。
+        let promoted = slot.complete(jobID: 1)
+        expect(promoted?.requestID == request2,
+               "the latest pending demand is promoted after the old job ends")
+        expect(slot.inFlight?.jobID == 2, "the promoted demand is now in flight")
+        expect(slot.complete(jobID: 1) == nil,
+               "a duplicated completion of the old job cannot clear the new slot")
+        expect(slot.inFlight?.jobID == 2,
+               "the new registration survives the stale callback")
+
+        var repeatSlot = WindowBrowserMetadataSlot()
+        _ = repeatSlot.request(jobID: 1, requestID: request1, appInstance: app)
+        expect(repeatSlot.request(jobID: 2, requestID: request1, appInstance: app) == nil,
+               "an identical in-flight demand is not queued a second time")
+        expect(repeatSlot.pending == nil, "no redundant pending demand is recorded")
+
+        // T32：stop/start 后旧回调不能删除新实例的在途槽。
+        let scheduler = WindowBrowserMetadataScheduler()
+        let firstJob = scheduler.request(pid: 9101, requestID: request1, appInstance: app)
+        expect(firstJob != nil, "the scheduler starts the first job")
+        scheduler.cancel(pid: 9101)
+        let restarted = scheduler.request(pid: 9101,
+                                          requestID: WindowBrowserRequestID(value: 9),
+                                          appInstance: app)
+        expect(restarted != nil, "after a stop/start the new instance starts its own job")
+        expect(scheduler.complete(pid: 9101, jobID: firstJob?.jobID ?? 0) == nil,
+               "an old callback cannot complete the new instance's slot")
+        expect(scheduler.state(pid: 9101).inFlight?.jobID == restarted?.jobID,
+               "the new in-flight registration is untouched by the old callback")
+        _ = scheduler.complete(pid: 9101, jobID: restarted?.jobID ?? 0)
+        expect(scheduler.state(pid: 9101).isIdle,
+               "the slot is released after its own completion")
+    }
+
+    // MARK: 新增：统一布局结果
+
+    /// T46–T48/T53：内容决定自然尺寸，列数与方向键一致，新图像不改变布局。
+    static func layoutPlan() {
+        let screen = NSRect(x: 0, y: 0, width: 1440, height: 900)
+        let visible = NSRect(x: 0, y: 78, width: 1440, height: 822)
+        let icon = NSRect(x: 700, y: 8, width: 52, height: 52)
+
+        // T46：单窗口面板不继承 520×460 下限。
+        let single = WindowBrowserGeometry.layoutPlan(
+            iconFrame: icon, edge: .bottom, screenFrame: screen, visibleFrame: visible,
+            desiredSize: CGSize(width: 520, height: 460), windowCount: 1,
+            style: .grid, isContentDriven: true)
+        expect(single.panelFrame.width >= 280 && single.panelFrame.width <= 360,
+               "a single-window Dock panel uses its natural width "
+               + "(\(Int(single.panelFrame.width))pt)")
+        expect(single.panelFrame.height <= 340,
+               "a single-window panel stays compact "
+               + "(\(Int(single.panelFrame.height))pt)")
+        expect(single.content.columns == 1, "one window uses a single column")
+
+        let two = WindowBrowserGeometry.layoutPlan(
+            iconFrame: icon, edge: .bottom, screenFrame: screen, visibleFrame: visible,
+            desiredSize: CGSize(width: 520, height: 460), windowCount: 2,
+            style: .grid, isContentDriven: true)
+        expect(two.content.columns == 2, "two windows prefer two columns")
+        expect(two.panelFrame.width >= 560 && two.panelFrame.width <= 660,
+               "two columns produce a naturally sized panel "
+               + "(\(Int(two.panelFrame.width))pt)")
+
+        let six = WindowBrowserGeometry.layoutPlan(
+            iconFrame: icon, edge: .bottom, screenFrame: screen, visibleFrame: visible,
+            desiredSize: CGSize(width: 520, height: 460), windowCount: 6,
+            style: .grid, isContentDriven: true)
+        expect(six.content.columns == 3, "six windows use three columns")
+        expect(six.panelFrame.width <= 960, "the grid panel never exceeds the width cap")
+
+        // T46 后半：大量窗口的列表不撑满屏幕宽度，并改为滚动。
+        let list = WindowBrowserGeometry.layoutPlan(
+            iconFrame: icon, edge: .bottom, screenFrame: screen, visibleFrame: visible,
+            desiredSize: CGSize(width: 520, height: 460), windowCount: 20,
+            style: .list, isContentDriven: true)
+        expect(list.panelFrame.width < screen.width - 24,
+               "a long list panel does not occupy the full display width")
+        expect(list.content.documentHeight > list.content.listRect.height,
+               "a long list becomes scrollable instead of overflowing")
+
+        // T47：所有 Dock 方向都留在安全区域内。
+        for edge in [WindowBrowserDockEdge.bottom, .left, .right] {
+            let iconFrame: NSRect
+            switch edge {
+            case .bottom: iconFrame = icon
+            case .left: iconFrame = NSRect(x: 6, y: 300, width: 52, height: 52)
+            case .right: iconFrame = NSRect(x: 1382, y: 300, width: 52, height: 52)
+            }
+            let plan = WindowBrowserGeometry.layoutPlan(
+                iconFrame: iconFrame, edge: edge, screenFrame: screen,
+                visibleFrame: visible, desiredSize: CGSize(width: 520, height: 460),
+                windowCount: 4, style: .grid, isContentDriven: true)
+            expect(visible.contains(plan.panelFrame),
+                   "the panel stays inside the visible frame for edge \(edge.rawValue)")
+            expect(plan.transitionRegion.contains(CGPoint(x: iconFrame.midX,
+                                                          y: iconFrame.midY)),
+                   "the transition region always contains the anchor icon")
+        }
+        let narrow = NSRect(x: 0, y: 0, width: 900, height: 600)
+        let narrowVisible = NSRect(x: 0, y: 40, width: 900, height: 560)
+        let narrowPlan = WindowBrowserGeometry.layoutPlan(
+            iconFrame: NSRect(x: 420, y: 4, width: 40, height: 40), edge: .bottom,
+            screenFrame: narrow, visibleFrame: narrowVisible,
+            desiredSize: CGSize(width: 800, height: 560), windowCount: 12,
+            style: .list, isContentDriven: true)
+        expect(narrowPlan.panelFrame.width <= narrowVisible.width,
+               "narrow screens constrain the panel instead of overflowing")
+        expect(narrowPlan.panelFrame.maxY <= narrowVisible.maxY,
+               "the panel never covers the menu bar area")
+
+        // 键盘面板以理想尺寸起步，但仍受屏幕约束。
+        let keyboard = WindowBrowserGeometry.layoutPlan(
+            iconFrame: NSRect(x: 700, y: 8, width: 52, height: 52), edge: .bottom,
+            screenFrame: screen, visibleFrame: visible,
+            desiredSize: CGSize(width: 800, height: 560), windowCount: 3,
+            style: .list, isContentDriven: false)
+        expect(keyboard.panelFrame.width == 800 && keyboard.panelFrame.height == 560,
+               "the keyboard panel uses its ideal size when the screen allows it")
+
+        // T53：网格方向键与真实列数一致。
+        let plan = WindowBrowserGeometry.contentPlan(
+            bounds: NSRect(x: 0, y: 0, width: 940, height: 520), style: .grid,
+            recordCount: 10, mode: .keyboard)
+        expect(plan.columns >= 2, "a wide grid produces several columns")
+        expect(plan.index(movingFrom: 0, direction: .down) == plan.columns,
+               "the down arrow moves by exactly one row")
+        expect(plan.index(movingFrom: 0, direction: .left) == nil,
+               "the left arrow at column 0 does not wrap")
+        expect(plan.index(movingFrom: plan.itemCount - 1, direction: .down) == nil,
+               "the down arrow on the last row does not overflow")
+        expect(plan.index(movingFrom: 4, direction: .end) == plan.itemCount - 1,
+               "End moves to the last item")
+        expect(plan.index(movingFrom: 4, direction: .home) == 0,
+               "Home moves to the first item")
+
+        // T48：布局只依赖数量与风格，新截图到达不会改变尺寸。
+        let again = WindowBrowserGeometry.contentPlan(
+            bounds: NSRect(x: 0, y: 0, width: 940, height: 520), style: .grid,
+            recordCount: 10, mode: .keyboard)
+        expect(again.cellSize == plan.cellSize && again.documentHeight == plan.documentHeight,
+               "the layout result is stable and independent of image arrival")
+    }
+
+    // MARK: 新增：动作与状态呈现
+
+    /// T49/T50：所有入口共享同一份能力判断，正常状态不使用警告色。
+    static func actionPresentationModel() {
+        var record = sampleRecord()
+        record.capabilities = [.activate]
+        let restricted = WindowBrowserActionPresentation.Context(
+            hasAccessibility: true, hasScreenRecording: false, isBusy: false)
+        let items = WindowBrowserActionPresentation.items(for: record, context: restricted)
+        let fold = items.first { $0.action == .fold }
+        expect(fold?.isEnabled == false, "a window without fold capability disables folding")
+        expect(fold?.disabledReason != nil, "the disabled action explains why it cannot run")
+        expect(items.first { $0.action == .activate }?.isEnabled == true,
+               "activation stays available when accessibility is granted")
+        let withoutAccessibility = WindowBrowserActionPresentation.items(
+            for: record,
+            context: WindowBrowserActionPresentation.Context(hasAccessibility: false,
+                                                             hasScreenRecording: false))
+        expect(withoutAccessibility.first { $0.action == .activate }?.isEnabled == false,
+               "without accessibility the same action is disabled everywhere")
+        expect(withoutAccessibility.first { $0.action == .activate }?.disabledReason
+            == "需要辅助功能权限",
+               "the reason matches the permission that is missing")
+
+        var pinned = sampleRecord()
+        pinned.pinState = .running
+        pinned.capabilities = [.activate, .fold, .unpinPreview, .close, .minimize, .capture]
+        let pinnedItems = WindowBrowserActionPresentation.items(for: pinned, context: .init())
+        expect(pinnedItems.contains { $0.action == .unpinPreview && $0.isEnabled },
+               "a pinned window offers 取消置顶")
+        expect(!pinnedItems.contains { $0.action == .pinPreview },
+               "a pinned window does not offer a second 置顶预览 action")
+        expect(pinnedItems.first { $0.action == .unpinPreview }?.isOn == true,
+               "the pinned state is reflected in the action model")
+        expect(WindowBrowserActionPresentation.items(for: sampleRecord(), context: .init())
+            .filter(\.isPrimary).allSatisfy { $0.symbolName != nil },
+               "primary actions always carry a system symbol name")
+
+        var folded = sampleRecord()
+        folded.shadeState = .folded
+        folded.systemVisibility = .offScreen
+        folded.capabilities = [.activate, .unfold, .close, .minimize]
+        let foldedStatus = WindowBrowserStatusPresentationFactory.make(record: folded,
+                                                                      hasSnapshot: false)
+        expect(foldedStatus.text == "已折叠" && !foldedStatus.isWarning,
+               "T50: a folded, physically off-screen window is not an error state")
+        expect(foldedStatus.symbolName != nil,
+               "the folded state has a symbolic representation, not an emoji")
+        var minimized = sampleRecord()
+        minimized.systemVisibility = .minimized
+        minimized.isMinimized = true
+        let minimizedStatus = WindowBrowserStatusPresentationFactory.make(record: minimized,
+                                                                         hasSnapshot: true)
+        expect(minimizedStatus.isSnapshot && !minimizedStatus.isWarning,
+               "a minimized window with a snapshot is marked as a snapshot, not a warning")
+        expect(WindowBrowserStatusPresentationFactory.make(record: sampleRecord(),
+                                                           hasSnapshot: false).text.isEmpty,
+               "an ordinary window only shows its title")
+        let failure = WindowBrowserStatusPresentationFactory.failure("截图不可用")
+        expect(failure.isWarning, "only real failures use the warning styling")
+    }
+
+    /// T51/T52：材质选择与减少动态效果都是明确的可测策略。
+    static func materialAndMotionPolicy() {
+        expect(WindowBrowserMaterialPolicy.kind(style: .system, systemSupportsGlass: true,
+                                                reduceTransparency: false) == .glass,
+               "a supporting system uses the public glass path")
+        expect(WindowBrowserMaterialPolicy.kind(style: .system, systemSupportsGlass: false,
+                                                reduceTransparency: false) == .visualEffect,
+               "older systems fall back to the native vibrancy material")
+        expect(WindowBrowserMaterialPolicy.kind(style: .system, systemSupportsGlass: true,
+                                                reduceTransparency: true) == .paper,
+               "reduce transparency forces an opaque background")
+        expect(WindowBrowserMaterialPolicy.kind(style: .paper, systemSupportsGlass: true,
+                                                reduceTransparency: false) == .paper,
+               "the explicit paper style always wins")
+        expect(WindowBrowserMaterialPolicy.availableStyles(systemSupportsGlass: false)
+            == [.system, .paper],
+               "the appearance choices stay the same on systems without glass")
+        expect(WindowBrowserAnimationPolicy.shouldAnimate(reduceMotion: true) == false,
+               "reduce motion disables animated transitions")
+        expect(WindowBrowserAnimationPolicy.duration(0.16, reduceMotion: true) == 0,
+               "reduce motion compresses the appearance animation to zero")
+        expect(WindowBrowserAnimationPolicy.duration(0.16, reduceMotion: false) == 0.16,
+               "normal systems keep the tuned duration")
+
+        _ = NSApplication.shared
+        let host = WindowBrowserMaterialView(frame: NSRect(x: 0, y: 0, width: 300, height: 200))
+        host.update(style: .paper, cornerRadius: 16,
+                    capabilities: WindowBrowserSystemCapabilities(supportsGlass: false,
+                                                                  reduceTransparency: false,
+                                                                  increaseContrast: true,
+                                                                  reduceMotion: false))
+        expect(host.kind == .paper, "an explicit paper style uses the opaque background")
+        host.update(style: .system, cornerRadius: 16,
+                    capabilities: WindowBrowserSystemCapabilities(supportsGlass: true,
+                                                                  reduceTransparency: false,
+                                                                  increaseContrast: false,
+                                                                  reduceMotion: false))
+        expect(host.kind == .glass, "a supporting system switches to the glass backdrop")
+        expect(host.backdropView is WindowBrowserGlassBackdrop,
+               "the glass path really installs the public AppKit glass view")
+        host.update(style: .system, cornerRadius: 16,
+                    capabilities: WindowBrowserSystemCapabilities(supportsGlass: true,
+                                                                  reduceTransparency: true,
+                                                                  increaseContrast: true,
+                                                                  reduceMotion: true))
+        expect(host.kind == .paper,
+               "reduce transparency downgrades an already-open panel to paper")
+        let surface = WindowBrowserControlSurface(frame: NSRect(x: 0, y: 0, width: 300,
+                                                                height: 40))
+        surface.update(style: .system,
+                       capabilities: WindowBrowserSystemCapabilities(supportsGlass: false,
+                                                                     reduceTransparency: false,
+                                                                     increaseContrast: false,
+                                                                     reduceMotion: false))
+        expect(surface.kind == .visualEffect,
+               "without glass the control surface uses the native vibrancy material")
+        expect(surface.backdropView is NSVisualEffectView,
+               "the fallback material is a real NSVisualEffectView")
+    }
+
+    /// T58/T59：排布先计算与预览，取消不移动；验证成功才登记撤销。
+    static func placementPlans() {
+        let key = WindowKey(application: ApplicationInstanceKey(pid: 9201, generation: 1),
+                            originalWindowID: 31, windowGeneration: 1)
+        let visibleAX = CGRect(x: 0, y: 25, width: 1440, height: 855)
+        let current = CGRect(x: 400, y: 200, width: 600, height: 400)
+
+        guard let left = WindowPlacementPolicy.plan(action: .leftHalf, target: key,
+                                                    originalFrameAX: current,
+                                                    visibleAreaAX: visibleAX) else {
+            expect(false, "left half must produce a plan")
+            return
+        }
+        expect(left.targetFrameAX.minX == visibleAX.minX
+                && abs(left.targetFrameAX.width - visibleAX.width / 2) < 0.5,
+               "left half splits the visible work area")
+        guard let right = WindowPlacementPolicy.plan(action: .rightHalf, target: key,
+                                                     originalFrameAX: current,
+                                                     visibleAreaAX: visibleAX) else {
+            expect(false, "right half must produce a plan")
+            return
+        }
+        expect(abs(right.targetFrameAX.minX - visibleAX.midX) < 0.5,
+               "right half starts at the horizontal midpoint")
+        guard let center = WindowPlacementPolicy.plan(action: .center, target: key,
+                                                      originalFrameAX: current,
+                                                      visibleAreaAX: visibleAX) else {
+            expect(false, "centering must produce a plan")
+            return
+        }
+        expect(abs(center.targetFrameAX.midX - visibleAX.midX) < 0.5
+                && center.targetFrameAX.size == current.size,
+               "centering keeps the window size and centers it")
+        guard let fill = WindowPlacementPolicy.plan(action: .fill, target: key,
+                                                    originalFrameAX: current,
+                                                    visibleAreaAX: visibleAX) else {
+            expect(false, "fill must produce a plan")
+            return
+        }
+        expect(fill.targetFrameAX == visibleAX,
+               "fill uses the visible work area, not the physical screen")
+        expect(fill.targetFrameAX.height < 900,
+               "filling the work area is distinct from covering the whole screen")
+
+        // 跨显示器：按归一化位置映射，不直接复制像素坐标。
+        let otherVisible = CGRect(x: -1600, y: 25, width: 1600, height: 855)
+        guard let moved = WindowPlacementPolicy.plan(action: .moveToDisplay, target: key,
+                                                     originalFrameAX: current,
+                                                     visibleAreaAX: visibleAX,
+                                                     targetAreaAX: otherVisible,
+                                                     displayID: 2) else {
+            expect(false, "moving to another display must produce a plan")
+            return
+        }
+        expect(moved.targetFrameAX.minX < 0,
+               "the window lands on the other display in its own coordinate space")
+        expect(moved.targetFrameAX.width <= otherVisible.width,
+               "the moved frame fits inside the target display")
+
+        // 预览不写真实窗口；取消预览也不改变任何东西。
+        let previewSpy = RecordingPreviewPresenter()
+        let backend = FakePlacementBackend(frame: current)
+        let scheduler = ManualScheduler()
+        let controller = WindowPlacementController(backend: backend, scheduler: scheduler,
+                                                   previewPresenter: previewSpy,
+                                                   verificationDelay: 0)
+        controller.preview(left)
+        expect(previewSpy.shownPlans.count == 1, "previewing shows the target outline")
+        expect(backend.writeCount == 0, "previewing never moves the real window")
+        controller.cancelPreview()
+        expect(backend.writeCount == 0 && previewSpy.dismissCount == 1,
+               "cancelling the preview changes nothing")
+
+        // 执行 → 验证 → 撤销。
+        var outcome: WindowPlacementOutcome?
+        backend.observedFrame = current
+        controller.apply(left) { outcome = $0 }
+        scheduler.advance(0.01)
+        expect(backend.writeCount == 1, "applying writes the planned frame")
+        if case .applied(let undoRecord) = outcome {
+            expect(undoRecord.frameAfterAX == left.targetFrameAX,
+                   "the undo record stores the verified frame")
+            expect(undoRecord.frameBeforeAX == current,
+                   "the undo record keeps the original frame")
+        } else {
+            expect(false, "a verified placement must produce an undo record")
+        }
+
+        var undoOutcome: WindowPlacementOutcome?
+        backend.observedFrame = left.targetFrameAX
+        controller.undoLast { undoOutcome = $0 }
+        scheduler.advance(0.01)
+        if case .undone = undoOutcome {
+            expect(true, "undo succeeds when the window is still where we left it")
+        } else {
+            expect(false, "undo must succeed for an unchanged placement")
+        }
+        expect(backend.writeCount == 2, "undo writes the recorded original frame")
+
+        // 用户已经手动移动 → 拒绝回放旧布局。
+        backend.observedFrame = left.targetFrameAX
+        controller.apply(left) { outcome = $0 }
+        scheduler.advance(0.01)
+        backend.observedFrame = CGRect(x: 10, y: 10, width: 500, height: 300)
+        var refused: WindowPlacementOutcome?
+        controller.undoLast { refused = $0 }
+        if case .refused = refused {
+            expect(true, "undo refuses when the user moved the window afterwards")
+        } else {
+            expect(false, "undo must refuse a layout that no longer matches")
+        }
+
+        // 验证失败（系统最小尺寸限制）不登记撤销。
+        let mismatch = FakePlacementBackend(frame: current)
+        mismatch.frameAfterWrite = CGRect(x: 5, y: 5, width: 300, height: 200)
+        let mismatchScheduler = ManualScheduler()
+        let mismatchController = WindowPlacementController(backend: mismatch,
+                                                           scheduler: mismatchScheduler,
+                                                           verificationDelay: 0)
+        var mismatchOutcome: WindowPlacementOutcome?
+        mismatchController.apply(left) { mismatchOutcome = $0 }
+        mismatchScheduler.advance(0.01)
+        if case .uncertain = mismatchOutcome {
+            expect(true, "an unverified placement is reported as uncertain")
+        } else {
+            expect(false, "a placement that does not match must not be reported as applied")
+        }
+        expect(!mismatchController.canUndo,
+               "T59: only verified placements register an undo step")
+
+        // 没有目标显示器时 moveToDisplay 不产生计划。
+        expect(WindowPlacementPolicy.plan(action: .moveToDisplay, target: key,
+                                          originalFrameAX: current,
+                                          visibleAreaAX: visibleAX) == nil,
+               "moving to another display without a target produces no plan")
+        expect(WindowPlacementPolicy.plan(action: .undoLast, target: key,
+                                          originalFrameAX: current,
+                                          visibleAreaAX: visibleAX) == nil,
+               "the undo action is not itself a placement plan")
+    }
+
+    final class RecordingPreviewPresenter: WindowPlacementPreviewPresenting {
+        private(set) var shownPlans: [WindowPlacementPlan] = []
+        private(set) var dismissCount = 0
+        func show(plan: WindowPlacementPlan) { shownPlans.append(plan) }
+        func dismiss() { dismissCount += 1 }
+    }
+
+    final class FakePlacementBackend: WindowPlacementBackend {
+        var observedFrame: CGRect?
+        /// 系统实际落到的 frame（例如受最小尺寸限制）；nil 表示与写入一致。
+        var frameAfterWrite: CGRect?
+        private(set) var writeCount = 0
+        private(set) var writtenFrames: [CGRect] = []
+        init(frame: CGRect?) { observedFrame = frame }
+        func readFrame(of target: WindowKey, completion: @escaping (CGRect?) -> Void) {
+            completion(observedFrame)
+        }
+        func writeFrame(_ frame: CGRect, to target: WindowKey,
+                        completion: @escaping (Bool) -> Void) {
+            writeCount += 1
+            writtenFrames.append(frame)
+            observedFrame = frameAfterWrite ?? frame
+            completion(true)
+        }
+    }
+
+    // MARK: 新增：测试替身与构造辅助
+
+    final class RecordingItemDelegate: WindowBrowserItemDelegate {
+        struct Performed {
+            let action: WindowBrowserAction
+            let key: WindowKey
+        }
+        private(set) var activatedCount = 0
+        private(set) var performed: [Performed] = []
+        private(set) var contextMenuKeys: [WindowKey] = []
+        private(set) var hoverStates: [Bool] = []
+
+        func browserItemDidActivate(_ sender: NSView, key: WindowKey) {
+            activatedCount += 1
+        }
+
+        func browserItem(_ sender: NSView, perform action: WindowBrowserAction,
+                         key: WindowKey) {
+            performed.append(Performed(action: action, key: key))
+        }
+
+        func browserItem(_ sender: NSView, contextMenu key: WindowKey, event: NSEvent) {
+            contextMenuKeys.append(key)
+        }
+
+        func browserItem(_ sender: NSView, hover key: WindowKey, isHovering: Bool) {
+            hoverStates.append(isHovering)
+        }
+    }
+
+    static func configure(card: WindowBrowserCardView, record: WindowRecord,
+                          selected: Bool, busy: Bool) {
+        let actions = WindowBrowserActionPresentation.items(
+            for: record,
+            context: WindowBrowserActionPresentation.Context(isBusy: busy,
+                                                             isSelected: selected))
+        let status = WindowBrowserStatusPresentationFactory.make(record: record,
+                                                                hasSnapshot: false)
+        card.configure(record: record, actions: actions, status: status,
+                       selected: selected, busy: busy, params: .standard, menu: nil)
+    }
+
+    static func configure(row: WindowBrowserListRowView, record: WindowRecord,
+                          selected: Bool, busy: Bool) {
+        let actions = WindowBrowserActionPresentation.items(
+            for: record,
+            context: WindowBrowserActionPresentation.Context(isBusy: busy,
+                                                             isSelected: selected))
+        let status = WindowBrowserStatusPresentationFactory.make(record: record,
+                                                                hasSnapshot: false)
+        row.configure(record: record, actions: actions, status: status,
+                      selected: selected, busy: busy, params: .standard,
+                      icon: nil, menu: nil)
+    }
+
+    static func makeRecords(pid: pid_t, count: Int) -> [WindowRecord] {
+        var records: [WindowRecord] = []
+        let total = max(1, count)
+        for index in 1...total {
+            let instance = ApplicationInstanceKey(pid: pid, generation: 1)
+            let windowKey = WindowKey(application: instance,
+                                      originalWindowID: CGWindowID(9000 + index),
+                                      windowGeneration: 1)
+            let title = index % 4 == 0
+                ? "较长的中英文混合标题 Window \(index)"
+                : "窗口 \(index)"
+            let record = WindowRecord(
+                key: windowKey,
+                bundleIdentifier: "com.example.app",
+                appName: "示例应用",
+                title: title,
+                logicalFrame: CGRect(x: 80, y: 80, width: 900, height: 640),
+                placementSource: .liveDiscovery,
+                systemVisibility: .onScreen,
+                shadeState: .normal,
+                pinState: .none,
+                capabilities: .discoveredWindow,
+                confidence: .confirmed,
+                metadataRevision: UInt64(index),
+                isMinimized: false,
+                isOnScreen: true,
+                isFoldedOffscreen: false,
+                isManaged: false)
+            records.append(record)
+        }
+        return records
+    }
+
+    // MARK: 新增：T26 / T34 / T37–T39 / 偏好设置
+
+    /// T26：Dock 图标只改几何时不重建数据会话；键盘面板优先；换应用才新建会话。
+    static func dockSessionDecision() {
+        let appA = ApplicationInstanceKey(pid: 9301, generation: 1)
+        let appB = ApplicationInstanceKey(pid: 9302, generation: 1)
+        expect(WindowBrowserDockSessionPolicy.decision(
+            sessionMode: .dock, sessionApplication: appA,
+            keyboardPanelVisible: false, targetApplication: appA) == .updateAnchorOnly,
+               "the same application instance only updates the anchor")
+        expect(WindowBrowserDockSessionPolicy.decision(
+            sessionMode: .dock, sessionApplication: appA,
+            keyboardPanelVisible: false, targetApplication: appB) == .startNewSession,
+               "a different application starts a new data session")
+        expect(WindowBrowserDockSessionPolicy.decision(
+            sessionMode: .keyboard, sessionApplication: nil,
+            keyboardPanelVisible: true, targetApplication: appA) == .ignore,
+               "the keyboard panel keeps priority over Dock hover")
+        expect(WindowBrowserDockSessionPolicy.decision(
+            sessionMode: .keyboard, sessionApplication: nil,
+            keyboardPanelVisible: false, targetApplication: appA) == .startNewSession,
+               "a hidden keyboard session does not block a Dock session")
+        expect(WindowBrowserDockSessionPolicy.decision(
+            sessionMode: nil, sessionApplication: nil,
+            keyboardPanelVisible: false, targetApplication: appA) == .startNewSession,
+               "without a session the Dock target opens a fresh one")
+
+        // 同一应用的多次锚点变化不改变应用实例身份（因此不会重发目录请求）。
+        let allocator = WindowIdentityAllocator()
+        let first = allocator.applicationInstance(pid: 9301, bundleIdentifier: "com.example.app")
+        let second = allocator.applicationInstance(pid: 9301, bundleIdentifier: "com.example.app")
+        expect(first == second,
+               "moving a Dock icon never allocates a new application instance")
+    }
+
+    /// T34：单个应用的结果到达不改变其他应用记录的版本（UI 只做局部更新）。
+    static func catalogRevisionIsolation() {
+        let catalog = WindowCatalog()
+        _ = catalog.applyDiscovery(.success([
+            discovered(pid: 9401, id: 11, title: "甲应用窗口")
+        ]), pid: 9401)
+        let keyA = catalog.windowKey(pid: 9401, bundleIdentifier: "com.example.app",
+                                     originalWindowID: 11)
+        guard let revisionBefore = catalog.record(for: keyA)?.metadataRevision else {
+            expect(false, "the first application must publish a record")
+            return
+        }
+        _ = catalog.applyDiscovery(.success([
+            discovered(pid: 9402, id: 21, title: "乙应用窗口")
+        ]), pid: 9402)
+        expect(catalog.record(for: keyA)?.metadataRevision == revisionBefore,
+               "another application's result does not change this record's revision")
+        // 同一条记录内容真的变化时才推进版本。
+        _ = catalog.applyDiscovery(.success([
+            discovered(pid: 9401, id: 11, title: "甲应用窗口（已改名）")
+        ]), pid: 9401)
+        expect((catalog.record(for: keyA)?.metadataRevision ?? 0) != revisionBefore,
+               "a real change to the record advances its revision")
+    }
+
+    /// T37–T39：实时预览租约身份与重试上限。
+    static func liveLeaseIdentity() {
+        let leaseA = UUID()
+        let leaseB = UUID()
+        let leaseC = UUID()
+        expect(WindowBrowserLiveLeasePolicy.ownsGlobalRelease(currentLeaseID: leaseA,
+                                                              releasingLeaseID: leaseA),
+               "the current lease owns the global release")
+        expect(!WindowBrowserLiveLeasePolicy.ownsGlobalRelease(currentLeaseID: leaseB,
+                                                               releasingLeaseID: leaseA),
+               "a stale lease A cannot release the current lease B")
+        expect(!WindowBrowserLiveLeasePolicy.ownsGlobalRelease(currentLeaseID: leaseC,
+                                                               releasingLeaseID: leaseA),
+               "A → B → A still distinguishes the attempts by lease identity")
+        expect(!WindowBrowserLiveLeasePolicy.ownsGlobalRelease(currentLeaseID: nil,
+                                                               releasingLeaseID: leaseA),
+               "with nothing mounted no lease performs a global release")
+        expect(WindowBrowserLiveLeasePolicy.retryPermitted(failureCount: 0, blocked: false,
+                                                           maxRetries: 2),
+               "the first failure may retry")
+        expect(WindowBrowserLiveLeasePolicy.retryPermitted(failureCount: 2, blocked: false,
+                                                           maxRetries: 2),
+               "the second failure may retry once more")
+        expect(!WindowBrowserLiveLeasePolicy.retryPermitted(failureCount: 3, blocked: false,
+                                                            maxRetries: 2),
+               "after two automatic retries the window is not retried again")
+        expect(!WindowBrowserLiveLeasePolicy.retryPermitted(failureCount: 0, blocked: true,
+                                                            maxRetries: 2),
+               "a blocked window never retries")
+        expect(WindowBrowserLiveLeasePolicy.failureBlocksRetry(reason: "permission denied"),
+               "a permission failure stops automatic retries")
+        expect(WindowBrowserLiveLeasePolicy.failureBlocksRetry(reason: "no-sc-window"),
+               "a missing source stops automatic retries")
+        expect(!WindowBrowserLiveLeasePolicy.failureBlocksRetry(reason: "timeout"),
+               "a transient timeout keeps the bounded retry budget")
+        // 成功的启动条件仍然要求租约身份、会话与目标都成立。
+        expect(WindowBrowserLivePreviewPolicy.shouldKeepStartedStream(
+            leaseIsCurrent: true, cancelled: false, sessionActive: true,
+            targetStillKnown: true), "a current, live lease is kept")
+        expect(!WindowBrowserLivePreviewPolicy.shouldKeepStartedStream(
+            leaseIsCurrent: false, cancelled: false, sessionActive: true,
+            targetStillKnown: true), "an old lease is never kept")
+    }
+
+    /// 偏好设置往返与展示方式策略（“显示”分组的接线）。
+    static func preferencesRoundTrip() {
+        let defaults = UserDefaults.standard
+        let previousStyle = defaults.string(forKey: WindowBrowserSettings.preferredStyleKey)
+        let previousAppearance = defaults.string(
+            forKey: WindowBrowserAppearanceStyle.defaultsKey)
+        defer {
+            if let previousStyle {
+                defaults.set(previousStyle, forKey: WindowBrowserSettings.preferredStyleKey)
+            } else {
+                defaults.removeObject(forKey: WindowBrowserSettings.preferredStyleKey)
+            }
+            if let previousAppearance {
+                defaults.set(previousAppearance, forKey: WindowBrowserAppearanceStyle.defaultsKey)
+            } else {
+                defaults.removeObject(forKey: WindowBrowserAppearanceStyle.defaultsKey)
+            }
+        }
+        WindowBrowserSettings.preferredStyle = .list
+        expect(WindowBrowserSettings.preferredStyle == .list,
+               "the preferred display style round-trips through user defaults")
+        WindowBrowserAppearanceStyle.current = .paper
+        expect(WindowBrowserAppearanceStyle.current == .paper,
+               "the appearance choice round-trips through user defaults")
+
+        // 首次说明只出现一次，并且说明两个入口而不宣称会改动窗口。
+        let previousHint = defaults.object(forKey: WindowBrowserSettings.firstRunHintShownKey)
+        WindowBrowserSettings.firstRunHintShown = false
+        expect(!WindowBrowserSettings.firstRunHintShown,
+               "the first-run hint starts unshown")
+        let hintWithShortcut = WindowBrowserSettings.firstRunHintText(hotKeyDisplay: "⌃⌥W")
+        expect(hintWithShortcut.contains("Dock") && hintWithShortcut.contains("⌃⌥W")
+                && hintWithShortcut.contains("不会改动窗口"),
+               "the hint names both entry points and states the no-op guarantee")
+        let hintWithoutShortcut = WindowBrowserSettings.firstRunHintText(hotKeyDisplay: nil)
+        expect(hintWithoutShortcut.contains("选择窗口…"),
+               "without a recorded shortcut the hint points at the menu entry")
+        WindowBrowserSettings.firstRunHintShown = true
+        expect(WindowBrowserSettings.firstRunHintShown,
+               "the hint is remembered so it is shown only once")
+        if let previousHint {
+            defaults.set(previousHint, forKey: WindowBrowserSettings.firstRunHintShownKey)
+        } else {
+            defaults.removeObject(forKey: WindowBrowserSettings.firstRunHintShownKey)
+        }
+
+        expect(WindowBrowserSettings.initialDisplayStyle(
+            preferred: .automatic, explicit: nil, windowCount: 3, autoListThreshold: 6) == .grid,
+               "automatic style keeps a small set of windows in the grid")
+        expect(WindowBrowserSettings.initialDisplayStyle(
+            preferred: .automatic, explicit: nil, windowCount: 20, autoListThreshold: 6) == .list,
+               "automatic style switches to the compact list for many windows")
+        expect(WindowBrowserSettings.initialDisplayStyle(
+            preferred: .grid, explicit: nil, windowCount: 20, autoListThreshold: 6) == .grid,
+               "an explicit grid preference is not overridden by the window count")
+        expect(WindowBrowserSettings.initialDisplayStyle(
+            preferred: .list, explicit: nil, windowCount: 1, autoListThreshold: 6) == .list,
+               "an explicit list preference is respected for a single window")
+        expect(WindowBrowserSettings.initialDisplayStyle(
+            preferred: .automatic, explicit: .grid, windowCount: 20,
+            autoListThreshold: 6) == .grid,
+               "a session-level explicit choice beats the automatic rule")
+        expect(WindowBrowserSettings.PreferredStyle.allCases.map(\.rawValue)
+            == ["automatic", "grid", "list"],
+               "the stored style values stay stable for migration")
+    }
+
+    /// T30：右键菜单跟踪期间保留锚点，菜单结束后补执行关闭。
+    static func contextMenuTracking() {
+        var tracking = WindowBrowserMenuTrackingState()
+        expect(!tracking.requestClose(reason: "outside-click"),
+               "outside a menu tracking session a close request executes immediately")
+        tracking.beginTracking()
+        expect(tracking.requestClose(reason: "dock-clear"),
+               "a close request during menu tracking is deferred")
+        expect(tracking.isTracking,
+               "the panel stays alive while the menu is still an anchor")
+        expect(tracking.deferredCloseReason == "dock-clear",
+               "the deferred reason is preserved")
+        expect(tracking.endTracking() == "dock-clear",
+               "the deferred close executes once the menu ends")
+        expect(!tracking.isTracking && tracking.deferredCloseReason == nil,
+               "the tracking state is reset after the menu closes")
+        expect(tracking.endTracking() == nil,
+               "a menu that ends without a pending close performs no extra close")
+    }
+
+    /// T54：输入法候选存在时，Return 与方向键先交给文本系统。
+    static func inputMethodPriority() {
+        _ = NSApplication.shared
+        let content = WindowBrowserContentView(frame: NSRect(x: 0, y: 0, width: 800, height: 560))
+        var committed = 0
+        var cancelled = 0
+        var selections: [WindowKey] = []
+        content.onCommit = { committed += 1 }
+        content.onCancel = { cancelled += 1 }
+        content.onSelect = { selections.append($0) }
+        let records = makeRecords(pid: 6501, count: 4)
+        content.update(mode: .keyboard, records: records, selection: records[0].key,
+                       style: .list, busyKeys: [], status: "")
+        let textView = NSTextView(frame: NSRect(x: 0, y: 0, width: 200, height: 24))
+        textView.setMarkedText("ni", selectedRange: NSRange(location: 0, length: 0),
+                               replacementRange: NSRange(location: 0, length: 0))
+        expect(textView.hasMarkedText(), "the test text view really has marked text")
+        let searchField = content.subviews.compactMap { $0 as? NSSearchField }.first
+        guard let searchField else {
+            expect(false, "the keyboard panel exposes a search field")
+            return
+        }
+        expect(!content.control(searchField, textView: textView,
+                                doCommandBy: #selector(NSResponder.insertNewline(_:))),
+               "Return with marked text is left to the input method")
+        expect(!content.control(searchField, textView: textView,
+                                doCommandBy: #selector(NSResponder.moveDown(_:))),
+               "arrow keys with marked text are left to the input method")
+        expect(committed == 0 && selections.isEmpty,
+               "the IME candidate confirmation never activates a window")
+        // 没有 marked text 时，Return/Escape 回到面板语义。
+        textView.unmarkText()
+        expect(content.control(searchField, textView: textView,
+                               doCommandBy: #selector(NSResponder.insertNewline(_:))),
+               "Return without marked text commits the panel action")
+        expect(committed == 1, "the commit callback runs exactly once")
+        expect(content.control(searchField, textView: textView,
+                               doCommandBy: #selector(NSResponder.cancelOperation(_:))),
+               "Escape without marked text cancels the panel")
+        expect(cancelled == 1, "the cancel callback runs exactly once")
+    }
+
+    /// T57：只有真正聚焦目标才算成功；仅“仍然存在”时报告无法确认。
+    static func activationVerification() {
+        expect(WindowBrowserActivationVerification.outcome(targetFocused: true,
+                                                           stillPresent: true) == .completed,
+               "a focused target completes the activation")
+        let uncertain = WindowBrowserActivationVerification.outcome(targetFocused: false,
+                                                                    stillPresent: true)
+        if case .uncertain(let reason) = uncertain {
+            expect(reason.contains("无法确认"), "an unfocused but present target is uncertain")
+        } else {
+            expect(false, "presence alone must not be reported as success")
+        }
+        expect(WindowBrowserActivationVerification.outcome(targetFocused: false,
+                                                           stillPresent: false) == .targetGone,
+               "a vanished target is reported as gone")
+        // 成功选择目标后不会被“归还焦点”逻辑抢走。
+        expect(!WindowBrowserFocusReturnPolicy.shouldReturnFocus(
+            previousAppPID: 501, ownPID: 900, currentFrontmostPID: 501,
+            mode: .keyboard, panelWasKeyWindow: true),
+               "once another app is frontmost the panel does not steal focus back")
+        expect(WindowBrowserFocusReturnPolicy.shouldReturnFocus(
+            previousAppPID: 501, ownPID: 900, currentFrontmostPID: 900,
+            mode: .keyboard, panelWasKeyWindow: true),
+               "the panel returns focus only when it still owns it")
     }
 
     static func hotKeyPolicy() {

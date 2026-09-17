@@ -378,6 +378,31 @@ enum WindowBrowserLivePreviewPolicy {
     }
 }
 
+/// 实时预览租约的所有权与重试纪律。
+/// 一个异步任务只能清理自己的资源：旧租约的失败、超时、找不到来源分支
+/// 都不能释放当前已经换成的新租约。
+enum WindowBrowserLiveLeasePolicy {
+    /// 只有当前持有的租约才能执行“清空画面”的全局清理。
+    static func ownsGlobalRelease(currentLeaseID: UUID?, releasingLeaseID: UUID) -> Bool {
+        guard let currentLeaseID else { return false }
+        return currentLeaseID == releasingLeaseID
+    }
+
+    /// 自动重试预算：不超过上限，且没有明确不可重试的原因。
+    static func retryPermitted(failureCount: Int, blocked: Bool, maxRetries: Int) -> Bool {
+        guard !blocked else { return false }
+        return failureCount <= maxRetries
+    }
+
+    /// 权限拒绝、源消失或能力明确不支持时直接停止自动重试。
+    static func failureBlocksRetry(reason: String) -> Bool {
+        let lower = reason.lowercased()
+        return lower.contains("permission") || lower.contains("denied")
+            || lower.contains("not authorized") || lower.contains("no-sc-window")
+            || lower.contains("unsupported")
+    }
+}
+
 /// 明确目标的身份判定：只由“元素所属 PID + 元素对应的原窗口 ID”决定。
 /// 函数不接受也不读取当前焦点窗口，因此焦点切到别的窗口/应用时不会改变判定结果，
 /// 也不会把动作指向焦点窗口。
@@ -428,6 +453,57 @@ enum WindowBrowserOpenAction: Equatable {
     case create
     case focusExisting
     case replaceExisting
+}
+
+/// Dock 悬停目标到达时的会话决策：把“应用身份变化”和“同一应用的图标几何变化”
+/// 明确分开，控制器不再用一个 `changed` 布尔值同时表示两件事。
+enum WindowBrowserDockSessionDecision: Equatable {
+    /// 换应用（或从键盘面板切回来）：建立新的数据会话。
+    case startNewSession
+    /// 同一应用实例：只更新锚点与过渡区域，不清空选择、不重新发现窗口。
+    case updateAnchorOnly
+    /// 键盘面板正在使用：Dock 悬停不抢占。
+    case ignore
+}
+
+/// 上下文菜单跟踪期间的面板状态：菜单仍然以面板为锚点，不能中途释放它。
+/// 跟踪期间收到的关闭请求被延后，菜单结束后补执行一次。
+struct WindowBrowserMenuTrackingState {
+    private(set) var isTracking = false
+    private(set) var deferredCloseReason: String?
+
+    mutating func beginTracking() {
+        isTracking = true
+    }
+
+    /// 跟踪期间收到关闭请求时返回 true（关闭被延后到菜单结束）。
+    mutating func requestClose(reason: String) -> Bool {
+        guard isTracking else { return false }
+        deferredCloseReason = reason
+        return true
+    }
+
+    /// 菜单结束：返回需要补执行的关闭原因。
+    mutating func endTracking() -> String? {
+        isTracking = false
+        let reason = deferredCloseReason
+        deferredCloseReason = nil
+        return reason
+    }
+}
+
+enum WindowBrowserDockSessionPolicy {
+    static func decision(sessionMode: WindowBrowserPanelMode?,
+                         sessionApplication: ApplicationInstanceKey?,
+                         keyboardPanelVisible: Bool,
+                         targetApplication: ApplicationInstanceKey)
+        -> WindowBrowserDockSessionDecision {
+        if sessionMode == .keyboard, keyboardPanelVisible { return .ignore }
+        if sessionMode == .dock, sessionApplication == targetApplication {
+            return .updateAnchorOnly
+        }
+        return .startNewSession
+    }
 }
 
 enum WindowBrowserOpenPolicy {
