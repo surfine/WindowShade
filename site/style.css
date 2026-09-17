@@ -40,6 +40,54 @@
 @media(max-width:767px){.pinning{grid-template-columns:1fr;gap:32px}.section-note{font-size:13px;max-width:430px;margin-top:18px}.pin-desk{height:300px;border-radius:18px}.pin-source{left:16px;width:82%}.pin-source strong{font-size:17px;padding:22px 18px 30px}.pin-work{right:14px;width:82%;top:112px}.shortcuts{padding-top:12px}.shortcut-list{grid-template-columns:1fr;margin-top:26px}.shortcut-list li{padding:18px 0;gap:16px;font-size:13px}.shortcut-list kbd{min-width:92px;font-size:12px;padding:7px 8px}.trust-body p{font-size:14px}}
 @media(max-width:370px){.shortcut-list kbd{min-width:82px;font-size:11px}.pin-desk{height:280px}}
 
+/* Hero stage: the app's four moves, drawn with the same tokens as the demos.
+   No bitmap, no text: it follows the light/dark theme and stays sharp. */
+.hero-stage{position:absolute;inset:0;background:var(--soft);overflow:hidden}
+.hero-stage::after{content:"";position:absolute;inset:0;background:radial-gradient(120% 80% at 68% 18%,color-mix(in srgb,var(--surface) 70%,transparent),transparent 62%);pointer-events:none}
+.stage-card{position:absolute;background:var(--surface);border:1px solid var(--line);border-radius:16px;box-shadow:0 16px 34px var(--shadow)}
+.stage-bar{display:flex;align-items:center;gap:10px;padding:0 14px;height:34px;border-bottom:1px solid var(--line)}
+.stage-dots{display:flex;gap:5px}
+.stage-dots i{width:7px;height:7px;border-radius:50%;background:color-mix(in srgb,var(--muted) 42%,transparent)}
+.stage-line{height:8px;border-radius:4px;background:color-mix(in srgb,var(--muted) 26%,transparent);flex:1;max-width:120px}
+.stage-lines{display:grid;gap:9px;padding:16px 16px 0}
+.stage-lines i{height:8px;border-radius:4px;background:color-mix(in srgb,var(--muted) 18%,transparent)}
+.stage-lines i:nth-child(2){width:92%}
+.stage-lines i:nth-child(3){width:78%}
+.stage-lines i:last-child{width:56%}
+
+.stage-sheet{left:2%;top:6%;width:38%;transform:rotate(-3.4deg);z-index:1}
+.stage-sheet .stage-block{margin:16px;height:84px;border-radius:10px;background:color-mix(in srgb,var(--accent) 10%,var(--surface))}
+
+.stage-strip{left:5%;top:32%;width:54%;transform:rotate(-0.7deg);z-index:6}
+.stage-strip .stage-bar{border-bottom:0;height:46px;border-radius:16px 16px 0 0}
+.stage-tube{position:relative;height:62px;border-radius:0 0 31px 31px;background:linear-gradient(180deg,var(--surface) 0%,color-mix(in srgb,var(--surface) 82%,var(--soft)) 58%,color-mix(in srgb,var(--line) 70%,var(--surface)) 100%);border-top:1px solid color-mix(in srgb,var(--line) 60%,transparent)}
+.stage-tube::after{content:"";position:absolute;left:6px;right:6px;top:5px;height:12px;border-radius:999px;background:color-mix(in srgb,var(--surface) 88%,transparent)}
+.stage-cap{position:absolute;left:-2px;top:50%;transform:translateY(-50%);width:62px;height:62px;border-radius:50%;background:radial-gradient(circle at 42% 38%,var(--surface),color-mix(in srgb,var(--accent) 16%,var(--surface)) 62%,color-mix(in srgb,var(--accent) 26%,var(--surface)));border:1px solid color-mix(in srgb,var(--line) 80%,transparent);box-shadow:inset 0 0 0 9px color-mix(in srgb,var(--surface) 70%,transparent)}
+
+.stage-pinned{right:5%;top:9%;width:34%;transform:rotate(2.4deg);z-index:4;outline:2px solid color-mix(in srgb,var(--accent) 34%,transparent);outline-offset:3px;border-radius:18px}
+.stage-pinned .stage-blocks{display:grid;grid-template-columns:1fr 1fr;gap:10px;padding:14px 16px 16px}
+.stage-pinned .stage-blocks i{height:56px;border-radius:10px;background:color-mix(in srgb,var(--accent) 10%,var(--surface))}
+.stage-pinned .stage-blocks i:last-child{background:color-mix(in srgb,var(--muted) 12%,var(--surface))}
+
+.stage-dock{position:absolute;left:10%;bottom:6%;width:46%;height:13%;border-radius:22px;background:color-mix(in srgb,var(--surface) 82%,transparent);border:1px solid var(--line);box-shadow:0 14px 30px var(--shadow);display:flex;align-items:center;justify-content:center;gap:10px;z-index:3}
+.stage-dock i{width:11%;aspect-ratio:1;border-radius:22%;background:color-mix(in srgb,var(--muted) 16%,var(--surface))}
+.stage-dock i:nth-child(2),.stage-dock i:nth-child(5){background:color-mix(in srgb,var(--accent) 16%,var(--surface))}
+.stage-dock i.is-hovered{background:var(--surface);border:2px solid color-mix(in srgb,var(--accent) 40%,transparent);transform:translateY(-9%);box-shadow:0 8px 16px var(--shadow)}
+
+.stage-panel{right:5%;top:52%;width:36%;z-index:5}
+.stage-panel .stage-panel-head{display:flex;justify-content:space-between;gap:12px;padding:12px 14px 8px;border-bottom:1px solid var(--line)}
+.stage-panel .stage-panel-head i{height:8px;border-radius:4px;background:color-mix(in srgb,var(--muted) 28%,transparent)}
+.stage-panel .stage-panel-head i:first-child{width:38%}
+.stage-panel .stage-panel-head i:last-child{width:18%;background:color-mix(in srgb,var(--muted) 16%,transparent)}
+.stage-panel .stage-panel-list{display:grid;gap:9px;padding:11px 14px 14px;list-style:none;margin:0}
+.stage-panel .stage-panel-list li{display:grid;grid-template-columns:22% 1fr;gap:9px;align-items:center}
+.stage-panel .stage-panel-list i{height:100%;min-height:30px;border-radius:8px;background:color-mix(in srgb,var(--muted) 14%,var(--surface))}
+.stage-panel .stage-panel-list li:first-child i{background:color-mix(in srgb,var(--accent) 14%,var(--surface));border:1px solid color-mix(in srgb,var(--accent) 38%,transparent)}
+.stage-panel .stage-panel-list b{display:block;height:8px;border-radius:4px;background:color-mix(in srgb,var(--muted) 22%,transparent)}
+.stage-panel .stage-panel-list b::after{content:"";display:block;margin-top:7px;width:62%;height:7px;border-radius:4px;background:color-mix(in srgb,var(--muted) 13%,transparent)}
+.stage-pointer{position:absolute;left:50%;bottom:2%;width:0;height:0;border-left:11px solid transparent;border-right:0 solid transparent;border-top:0 solid transparent;border-bottom:26px solid var(--ink);transform:rotate(-18deg);filter:drop-shadow(0 2px 0 var(--surface));z-index:7}
+@media(max-width:767px){.stage-sheet{width:48%}.stage-strip{width:74%;top:30%}.stage-pinned{width:40%;top:7%}.stage-panel{width:40%;top:54%}.stage-dock{left:8%;width:54%}}
+
 /* Window browsing: the fourth surface shares the shading/pinning rhythm. */
 .browsing{display:grid;grid-template-columns:.78fr 1.22fr;gap:8%;align-items:center;border-top:1px solid var(--line)}
 .browse-points{list-style:none;margin:26px 0 0;padding:0;display:grid;gap:18px;max-width:360px}
