@@ -1,15 +1,15 @@
 {
   "origin": "https://windowshade.pages.dev",
-  "deployment": "https://a478af46.windowshade.pages.dev",
+  "deployment": "https://d47bfb4d.windowshade.pages.dev",
   "project": "windowshade",
   "branch": "main",
   "files": {
     "404.html": "be421d22ed7d99001d267e3a889972874704a6a9616e302e5f3022704b78380e",
     "_headers": "82592475719750d3b527745ad239327dc0e0b486831220b96f0d089231a990f2",
     "_redirects": "10738b7bf0dda342fb556e9d4a5c66e9f3ffaebc75e19aa0982ab168b72695ec",
-    "app.js": "8c1e851c15b8f78be01d7eeed6b9f9c452f13b62008c283b6353a5a60b8c4303",
+    "app.js": "060a4d7b93a427a3499dbf4eb8df8c2a812670c983fedd03d6363b9a06d484bd",
     "en/history/index.html": "e78d6085730fc3753ca2a294cf5d339f9d5402393798f13385298edf6f47adc3",
-    "en/index.html": "97639fcf559344825b0d60dd9d2a2921ca611378fd03965908e00f182799a9f2",
+    "en/index.html": "4d72b610052b81cffa49753f890929f7e61dc81ad3c8c457f2aab1c7e0abe1b2",
     "era.css": "142385f004550f821df4e04377b0e3653edad64a623299ab945c4fc19faf7700",
     "fonts/Asap-OFL.txt": "79d8634241e736e967a1539a9c766ea8e68f6d2df9f5d0edba5a4c88b1b5d8a0",
     "fonts/Asap-Variable.woff2": "3f230328a40ee9a05fe099dfb6b403a4c569aaea6690e5d483d5715ed817498f",
@@ -18,7 +18,7 @@
     "history.css": "75625d0d6f1d056368695e38381dc44a61be786ee453e2259a360b543733d6d9",
     "history.js": "84cd1b8f38cb781c12630877d2b7be7190a2ab3b3a8384b316ad7e56ccbb4bd7",
     "history/index.html": "8f22ea8d5177ce8607bb1ffea15304544ae2124abf24e5b4cda4f67b0e9bc6e6",
-    "index.html": "838bb46ab528ea3cdeb8ab5892cee5fc2f6e11f21abc9723715f4949a4ded0f6",
+    "index.html": "838aecaa20dad6faf76c86653031dd15c61c17c96490b34b8bbc0427b06f6d82",
     "media/duo-poster.webp": "5b136a7371a8b427d891750f3b5329e467514de7d0ad96f4948082f79db9d398",
     "media/duo.mp4": "df8de4fa8b5edfba635d7528fdc469cd2528dc9251634de6adac2d54f551edbc",
     "media/era/checkmark.svg": "c3e75dc31698c642443681f8988cf9625de86b678a9029705417814927ef2d34",
@@ -30,7 +30,7 @@
     "media/settings.webp": "8aab0ea78e94fd65a0fba5cc04b615d9ec918e7b0f44b44a82a9ceeed857a156",
     "robots.txt": "08e4b5b0e500c11923762a8f07ed8cbfa95c129d781822f156f4face4e361e52",
     "sitemap.xml": "2adb63b2e068b97040b55c8c160ecbfb9412401ffa8241bd32183de39e269085",
-    "style.css": "8a3ca1516cbe5415bedfad6057c8fc33a2bed75e27d7c55bc3369743481f7fd0"
+    "style.css": "86372bd5c04ab1c54d96d6a7c7d8a1ea4139968f6199e434a3e856bfff5b6d94"
   },
-  "recordedAt": "2026-09-13T11:04:33.724Z"
+  "recordedAt": "2026-09-17T16:09:14.996Z"
 }
