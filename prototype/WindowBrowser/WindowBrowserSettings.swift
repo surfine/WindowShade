@@ -11,6 +11,58 @@ enum WindowBrowserSettings {
     static let excludedBundleIDsKey = "WindowBrowserExcludedBundleIDs"
     static let hotKeyCodeKey = "WindowBrowserHotKeyCode"
     static let hotKeyModifiersKey = "WindowBrowserHotKeyModifiers"
+    static let preferredStyleKey = "WindowBrowserPreferredStyle"
+    static let firstRunHintShownKey = "WindowBrowserFirstRunHintShown"
+
+    /// 首次打开窗口浏览时看一次说明；之后不再反复打断。
+    static var firstRunHintShown: Bool {
+        get { UserDefaults.standard.bool(forKey: firstRunHintShownKey) }
+        set { UserDefaults.standard.set(newValue, forKey: firstRunHintShownKey) }
+    }
+
+    /// 一次性说明的文案：告诉用户两个入口，并说明不会动真实窗口。
+    static func firstRunHintText(hotKeyDisplay: String?) -> String {
+        let shortcut = hotKeyDisplay.map { "或按 \($0)" } ?? "或用菜单里的“选择窗口…”"
+        return "鼠标停在 Dock 图标上可查看该应用的窗口，\(shortcut)打开窗口选择面板；"
+            + "悬停与搜索都不会改动窗口。"
+    }
+
+    /// 面板默认展示方式：自动（按窗口数量判定）、固定缩略图网格、固定紧凑列表。
+    enum PreferredStyle: String, CaseIterable {
+        case automatic
+        case grid
+        case list
+
+        var displayName: String {
+            switch self {
+            case .automatic: return "自动"
+            case .grid: return "缩略图"
+            case .list: return "列表"
+            }
+        }
+    }
+
+    static var preferredStyle: PreferredStyle {
+        get {
+            let raw = UserDefaults.standard.string(forKey: preferredStyleKey) ?? ""
+            return PreferredStyle(rawValue: raw) ?? .automatic
+        }
+        set { UserDefaults.standard.set(newValue.rawValue, forKey: preferredStyleKey) }
+    }
+
+    /// 面板会话开始时应当使用的展示方式。用户在本会话里显式切换后不再被覆盖。
+    static func initialDisplayStyle(preferred: PreferredStyle,
+                                    explicit: WindowBrowserDisplayStyle?,
+                                    windowCount: Int,
+                                    autoListThreshold: Int)
+        -> WindowBrowserDisplayStyle {
+        if let explicit { return explicit }
+        switch preferred {
+        case .grid: return .grid
+        case .list: return .list
+        case .automatic: return windowCount > autoListThreshold ? .list : .grid
+        }
+    }
 
     static var dockEnabled: Bool {
         get { UserDefaults.standard.bool(forKey: dockEnabledKey) }

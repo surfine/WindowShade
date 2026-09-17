@@ -2177,3 +2177,86 @@ window-browser-fixture: records=20 panel=720x560 style=list … searchTop=60 lis
 
 - 若要让人正在使用的应用也报 1.0.12：`cd prototype && WINDOWSHADE_CODESIGN_IDENTITY=… bash build.sh`
   再 `open WindowShade.app`（会短暂停止并重启应用）。
+
+## 2026-09-18：窗口浏览效率 / 原生界面 / 成熟化改版（阶段 0–7）
+
+依据：《WindowShade：窗口浏览效率、原生界面与窗口管理成熟化任务书》
+（`~/Downloads/WindowShade-native-polish-execution.md`）。实际 HEAD `05e5472`，
+工作区开始时干净；未回退任何更新代码，未提交、未推送、未发版、未替换用户正在
+运行的应用（只用了 `build.sh --stage` 的隔离 bundle）。
+
+### 阶段结果
+
+- 阶段 0：核对 HEAD、`AGENTS.md`、`DEVELOPMENT.md`、`docs/window-browser.md`、
+  构建脚本与测试入口；`tests/run-window-browser-tests.sh` 基线 272 项断言全部通过。
+  建立隔离截图入口（`--window-browser-shots`）。
+- 阶段 1：重写 `WindowThumbnailService`（JobID、runningJobs 强持有、唯一
+  `drainQueue`、订阅终态门、过期结果只结算不发布、后端停滞有界降级）；修好卡片/
+  列表行的闭包自持有；实时预览引入明确挂载点与租约身份核对。
+- 阶段 2：`DockHoverObserver` 拆开身份与锚点，多屏候选区域改为“先找包含指针的
+  屏幕”，所有检测入口共用“一个在途 + 一个最新待处理”的排队器，结果回主线程核对
+  代数/拓扑/最新指针；元数据改为每应用一个槽（在途 + 最新需求）；AX 计数分
+  “逻辑发现”与“真实调用”并加锁。
+- 阶段 3：`WindowBrowserGeometry` 输出完整布局计划（面板/内容/列数/单元/详情/
+  滚动/锚点/过渡）；网格改用 `NSCollectionView` 复用单元，列表改用 view-based
+  `NSTableView`；头部、搜索（键盘面板顶部）、卡片、动作条与详情区按新间距序列重做；
+  动作与状态统一到 `WindowBrowserActionPresentation`，状态不再使用 emoji。
+- 阶段 4：新增真实玻璃路径（macOS 26+ 公开 `NSGlassEffectView`，构建期由 SDK 头
+  文件探测决定是否编译）、`NSVisualEffectView` 与纸面回退；减少透明度/提高对比度
+  /减少动态效果都有明确策略；键盘面板延迟激活重试携带请求代数，用户切走不再抢
+  焦点；激活以“焦点确实到达目标”为成功。
+- 阶段 5：截图需求集合、可见资源释放、实时失败退避（每窗口每会话最多 2 次，权限
+  拒绝/源消失直接停止）、缓存新鲜度、图标读取缓存与性能阶段日志
+  （`perf: input-arrival / intent-delay-end / first-panel-show / first-catalog-publish /
+  first-new-screenshot / live-first-frame / action-submit-* / action-verified-* /
+  panel-resources-released`）。
+- 阶段 6：新增 `WindowPlacement`（纯数据计划 + 预览 + 验证 + 撤销）并接入右键菜单；
+  排布前重新核对身份，验证通过才登记撤销，用户已移动则拒绝撤销。
+- 阶段 7：回归（497 项断言）、真实组件截图 11 张 + 交互 GIF、同机前后性能对照、文档更新。
+
+### 本次运行的命令与结果
+
+| 命令 | 结果 |
+| --- | --- |
+| `bash tests/run-window-browser-tests.sh` | PASS：497 项断言（基线 272 → 497） |
+| `bash tests/run-paper-tests.sh` | PASS（见交付报告） |
+| `bash tests/run-duo-tests.sh` | PASS（见交付报告） |
+| `cd prototype && ./build.sh --check` | 类型检查通过，未签名、未改 bundle |
+| `./build.sh --stage`（隔离 bundle） | 构建 + 签名成功，未停止正在运行的应用 |
+| `… --window-browser-shots .build/window-browser-shots` | 11 张生产组件截图 + `manifest.txt` |
+| `/tmp/run-perf.sh`（基线 worktree 对照） | 见 `docs/window-browser-performance.md` |
+| `… --window-browser-catalog-probe`（隔离 bundle，只读） | apps=15 windows=0：新构建没有 TCC 授权，实机 AX 未验证 |
+
+### 仍未验证
+
+- 实机 Dock 悬停、真实焦点、真实折叠/展开/排布（需要辅助功能与屏幕录制授权的
+  新构建，必须由用户执行；步骤见 `docs/window-browser-visual-qa.md`）。
+- 真实玻璃折射的整窗截图、多显示器/混合缩放与 120 Hz 实机、WindowServer 与能耗
+  采样、长时间会话的进程 footprint。
+
+### 补充（同一轮继续）：T26 / T16 / T34 / T37–T39、显示偏好与交互片段
+
+- T26：新增 `WindowBrowserDockSessionPolicy`，把“键盘面板优先 / 同应用只更新锚点 /
+  换应用新建会话”变成纯策略并接入控制器；同一 PID 的多次图标几何变化不会分配新的
+  应用实例。
+- T16：数量相同但键完全不同的刷新会清掉旧键保留的图像。
+- T34：新增目录版本隔离断言，另一个应用的结果不改变既有记录的 `metadataRevision`。
+- T37–T39：直接断言租约身份（旧 A 不能释放新 B、A→B→A 按租约区分）与重试上限
+  （每窗口每会话最多 2 次自动重试；权限拒绝/源消失直接停止）。
+- 显示偏好：`WindowBrowserSettings.PreferredStyle`（自动/缩略图/列表）接入设置页
+  “默认显示方式”，面板会话内显式切换优先于该默认值；断言覆盖往返与自动规则。
+- 交互片段：`WINDOWSHADE_SHOTS_CLIP=1` 让隔离展示入口输出
+  `window-browser-interaction.gif`（真实面板的选择移动、搜索过滤、网格/列表切换、
+  失败状态与释放，约 17 帧循环）。真实 Dock 悬停、跨图标切换、斜移、折叠再展开、
+  失败重试的录像仍需要辅助功能与屏幕录制授权，未运行。
+
+- 覆盖对照：新增 `docs/window-browser-test-coverage.md`，逐条列出 T01–T60 对应的
+  生产逻辑断言与仍未自动化的证据缺口。
+- 只读探针在本轮改版后的隔离构建上复跑：`--window-browser-hover-probe` 在无 AX 授权
+  时不产出目标并干净停止；`--window-browser-thumbnail-probe` 在无录屏授权时
+  3 次物理尝试全部失败，`running=0 cachedBytes=0`（额度与缓存都回到零，无泄漏）。
+
+- 阴影审计：面板通过 `PaperSurfaceStyle.installShadow` 关闭原生阴影并改用一个鼠标
+  穿透的子窗口，卡片不再创建额外 NSWindow，因此没有重复阴影或孤立影子。
+- 首次体验：新增一次性说明（Dock 悬停与菜单/快捷键两个入口 + “不会改动窗口”），
+  之后不再打断；示例数据预览仍留在隔离入口，不注入真实面板。

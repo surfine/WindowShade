@@ -97,6 +97,18 @@ enum WindowBrowserTargetValidation: Equatable {
     case permissionMissing(WindowBrowserPermissionKind)
 }
 
+/// 激活动作的终态判定：区分“已请求”“已聚焦”和“无法确认”。
+/// 目标仍然存在不等于焦点已经到达，因此不能拿存在当成功。
+enum WindowBrowserActivationVerification {
+    static func outcome(targetFocused: Bool,
+                        stillPresent: Bool) -> WindowBrowserActionOutcome {
+        if targetFocused { return .completed }
+        return stillPresent
+            ? .uncertain(reason: "已请求激活，但无法确认焦点到达该窗口")
+            : .targetGone
+    }
+}
+
 protocol WindowBrowserActionBackend: AnyObject {
     /// 执行前重新核对目标身份、能力与最新状态。不得根据标题猜测替代目标。
     func validate(target: WindowKey,

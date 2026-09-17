@@ -5,10 +5,20 @@ set -euo pipefail
 cd "$(dirname "$0")/.."
 mkdir -p .build/window-browser-tests
 
-swiftc -target "$(uname -m)-apple-macosx14.0" \
+GLASS_DEFINE=""
+if [ -f "$(xcrun --show-sdk-path --sdk macosx)/System/Library/Frameworks/AppKit.framework/Headers/NSGlassEffectView.h" ]; then
+  GLASS_DEFINE="-DWINDOWSHADE_SDK_HAS_GLASS"
+fi
+
+swiftc -target "$(uname -m)-apple-macosx14.0" $GLASS_DEFINE \
   prototype/WindowBrowser/WindowBrowserModels.swift \
   prototype/WindowBrowser/WindowBrowserTypography.swift \
   prototype/WindowBrowser/WindowBrowserGeometry.swift \
+  prototype/WindowBrowser/WindowBrowserActionPresentation.swift \
+  prototype/WindowBrowser/WindowBrowserMaterial.swift \
+  prototype/WindowBrowser/WindowBrowserMetadataScheduler.swift \
+  prototype/WindowBrowser/WindowBrowserDockDetection.swift \
+  prototype/WindowBrowser/WindowPlacement.swift \
   prototype/WindowBrowser/WindowBrowserActions.swift \
   prototype/WindowBrowser/WindowBrowserDiscoveryFilter.swift \
   prototype/WindowBrowser/WindowBrowserThumbnailPolicy.swift \
