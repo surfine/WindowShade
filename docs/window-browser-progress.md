@@ -2125,3 +2125,55 @@ window-browser-fixture: records=20 panel=720x560 style=list … searchTop=60 lis
 - 若风格切换后仍看到旧布局，先看 `renderedLayout` 与 fixture 的
   `clickedStyle/renderedRows/renderedCards`，再查 `renderPanel()` 里
   `contentView.update(..., style: effectiveStyle)` 的 `effectiveStyle` 取值。
+
+## 补充轮次 62：提交、推送并发布 v1.0.12
+
+### 提交与推送
+
+- `2323c54` Add the window browser: Dock hover and keyboard window panels
+  （功能代码 + 272 项测试 + 探针/fixture + 两份 docs）。
+- `07fb907` Make the offscreen paper regression independent of compositing。
+- `899cc43` Release 1.0.12: the window browser ships
+  （`prototype/Info.plist` 1.0.12 / build 12、`docs/releases/v1.0.12.md`、
+  README 与 README_CN 指向新 tag 与 zip）。
+- 推送前先把本地两个提交 rebase 到远端已有的 `2e107cf`（只改 `site/deployment.json`）
+  之上，没有 force、没有覆盖他人提交；`main` 现与 `origin/main` 一致。
+
+### 发布（按 DEVELOPMENT.md 的发布流程）
+
+- 版本号只改 `prototype/Info.plist` 两行（PlistBuddy 会把整个文件的缩进从空格改成 tab，
+  所以改回原格式后用补丁只动版本字段，最终 diff 是 2 行）。
+- `bash build.sh --stage` → `.build/duo-validation/WindowShade.app`：
+  `codesign --verify --deep --strict` 通过、TeamIdentifier `FVGLY6W6S4`、
+  版本 1.0.12 / build 12、`lipo -archs` = arm64。
+- 打包 `prototype/dist/WindowShade-v1.0.12.zip`（3,534,079 B）+ `.sha256`
+  （`0e067102072936a886dec645c1dcb187f1cc341cf62eb3f3021a4a05d9fc6edd`）；
+  解压后再次校验签名、版本、架构，并从解压副本跑只读身份探针
+  （`checks=25 failures=0`），确认发布包本身可启动。
+- `gh release create v1.0.12` 第一次在“上传完成后的发布/清理”阶段遇到网络 EOF，
+  只留下一个草稿（id 390860781）。**两个附件其实都已上传成功**，网络恢复后
+  `gh release edit v1.0.12 --draft=false` 即发布；再 `gh release download` 回来核对，
+  附件 SHA-256 与本地构建完全一致。
+- 结果：<https://github.com/surfine/WindowShade/releases/tag/v1.0.12>，
+  非草稿、非预发布、标记为 Latest，附件两个（zip + sha256）。
+
+### 期间的环境观察（供以后排查）
+
+- 发布中途网络中断：本机同时装着 Surge（127.0.0.1:8888/8889）与 Clash Party 的
+  mihomo TUN（utun1500），DNS 返回 fake-IP `198.18.x.x`。故障期间 `curl`/`gh`/`git`
+  的 HTTPS 全部 0.02s 内失败（`SSL_ERROR_SYSCALL`），ICMP 到真实 IP 正常，
+  属于代理分流线路的问题而非 GitHub 故障；约 5 分钟后自行恢复。
+- 那个时段恰好在写归档记录，`CGSessionScreenIsLocked` 也曾为 1；两者都只影响本机观察，
+  与发布产物无关。
+
+### 仍未验证（与发布说明一致）
+
+- 真实会话里对第三方窗口执行折叠 / 展开 / 置顶 / 关闭的端到端流程、锁屏与唤醒、
+  运行中撤销权限、多 Space 与 Mission Control、全屏、VoiceOver、无响应应用、
+  长列表滚动内存峰值、Dock 自动隐藏/放大组合。
+- 官网 `site/` 里的截图说明文字仍写着 v1.0.11（网站是独立部署流程，本次未动）。
+
+### 下一步
+
+- 若要让人正在使用的应用也报 1.0.12：`cd prototype && WINDOWSHADE_CODESIGN_IDENTITY=… bash build.sh`
+  再 `open WindowShade.app`（会短暂停止并重启应用）。
