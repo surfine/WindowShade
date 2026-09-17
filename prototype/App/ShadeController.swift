@@ -175,7 +175,10 @@ extension AppDelegate {
         let win = foldPhase("元素刷新") {
             refreshedWindowElement(id: id, fallback: win, trustFallback: trustElement)
         }
-        if !bypassDuo, duoController.windowEffects.interceptFold(win, id: id, options: options) { return }
+        if !bypassDuo, duoController.windowEffects.interceptFold(win, id: id, options: options) {
+            settleWindowBrowserFoldWaiters(id: id, success: false)
+            return
+        }
         // 状态机防护：折叠中/已折叠/展开中的窗口再次触发折叠一律忽略，
         // 避免状态损坏（与 shadeOperationIDs 在途去重互为冗余）。
         let operationState = currentOperationState(id)
@@ -197,6 +200,12 @@ extension AppDelegate {
                 // 未转入 async capture 就返回 = 本次折叠中止：capturing -> failed。
                 if currentOperationState(id) == .capturing {
                     transitionOperationState(id: id, to: .failed, reason: "shade-abort")
+                    settleWindowBrowserFoldWaiters(id: id, success: false)
+                } else if currentOperationState(id) == .folded {
+                    // 立即安装路径已经在 installOverlay 成功处结算；这里只作为兜底。
+                    settleWindowBrowserFoldWaiters(id: id, success: true)
+                } else {
+                    settleWindowBrowserFoldWaiters(id: id, success: false)
                 }
             }
         }
@@ -377,6 +386,7 @@ extension AppDelegate {
                 if spaceInvariantHeld {
                     foldPhase("显示卷帘条") { revealPreparedOverlay(overlay) }
                     duoController.windowEffects.didVerifyFold(id: id, state: state)
+                    settleWindowBrowserFoldWaiters(id: id, success: true)
                 }
             } else {
                 wlog("shade: hide not yet verified; deferring overlay reveal id=\(id) hide=\(hide)")
@@ -510,6 +520,7 @@ extension AppDelegate {
                     self.shadeOperationIDs.remove(id)
                     if self.currentOperationState(id) == .capturing {
                         self.transitionOperationState(id: id, to: .failed, reason: "shade-capture-abort")
+                        self.settleWindowBrowserFoldWaiters(id: id, success: false)
                     }
                 }
                 let capturedImage = await self.captureWindowWithTimeout(id: id, axPos: pos, size: size,
@@ -537,6 +548,7 @@ extension AppDelegate {
                 self.shadeOperationIDs.remove(id)
                 if self.currentOperationState(id) == .capturing {
                     self.transitionOperationState(id: id, to: .failed, reason: "shade-capture-abort")
+                    self.settleWindowBrowserFoldWaiters(id: id, success: false)
                 }
             }
             // 折叠一个正被置顶捕获的窗口：系统会在其交通灯处叠加录屏标识，

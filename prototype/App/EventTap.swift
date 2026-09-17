@@ -41,6 +41,42 @@ extension AppDelegate {
         for (index, key) in digitKeys.enumerated() {
             register(key, UInt32(101 + index))
         }
+        registerWindowBrowserHotKey()
+    }
+
+    /// 独立快捷键：默认不注册。注册失败时保留旧的有效组合并提示。
+    @discardableResult
+    func registerWindowBrowserHotKey() -> Bool {
+        unregisterWindowBrowserHotKey()
+        guard let config = WindowBrowserSettings.hotKey else { return true }
+        guard !WindowBrowserSettings.isReserved(config) else {
+            // 旧版本可能存下现在被拒绝的组合（例如纯 ⌘ 系列）：清掉，避免每次启动
+            // 都重复提示；用户重新录制即可。
+            WindowBrowserSettings.hotKey = nil
+            quietNotice("这个快捷键被保留，已忽略",
+                        log: "window-browser: refused reserved hotkey \(config.keyCode)")
+            return false
+        }
+        var ref: EventHotKeyRef?
+        let hkID = EventHotKeyID(signature: OSType(0x57534844), id: 4)
+        let status = RegisterEventHotKey(config.keyCode, config.modifiers, hkID,
+                                         GetApplicationEventTarget(), 0, &ref)
+        guard status == noErr, let ref else {
+            let name = WindowBrowserSettings.displayName(for: config)
+            quietNotice("快捷键 \(name) 注册失败",
+                        log: "window-browser: hotkey registration failed status=\(status)")
+            return false
+        }
+        windowBrowserHotKeyRef = ref
+        wlog("window-browser: hotkey registered \(WindowBrowserSettings.displayName(for: config))")
+        return true
+    }
+
+    func unregisterWindowBrowserHotKey() {
+        if let ref = windowBrowserHotKeyRef {
+            UnregisterEventHotKey(ref)
+            windowBrowserHotKeyRef = nil
+        }
     }
     func handleHotKey(id: UInt32) {
         if id == 1 {
@@ -53,6 +89,10 @@ extension AppDelegate {
         }
         if id == 3 {
             pinnedPreviewController.pinCurrentTargetPreview()
+            return
+        }
+        if id == 4 {
+            windowBrowserController?.toggleKeyboardPanel()
             return
         }
         guard id >= 101, id <= 109 else { return }

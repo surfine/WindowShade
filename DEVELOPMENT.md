@@ -114,6 +114,43 @@ cd prototype
 - AX / SkyLight 调用成本基准：`WindowShade.app/Contents/MacOS/WindowShade --duo-ax-bench`
   （只读；必须用签名后的 bundle 运行，否则拿不到辅助功能权限）。
 
+### 窗口浏览（Dock 悬停 / 窗口选择面板）
+
+- 纯逻辑与离屏 AppKit 回归：`bash tests/run-window-browser-tests.sh`
+  （身份/目录/动作/缩略图/布局/状态机；不请求权限、不操作用户窗口）。
+- 隔离 fixture（不进入正式 AppDelegate，按钮只改 fake 状态）：
+
+  ```sh
+  cd prototype && WINDOWSHADE_CODESIGN_IDENTITY="<身份>" bash build.sh --stage
+  APP=../.build/duo-validation/WindowShade.app/Contents/MacOS/WindowShade
+  WINDOWSHADE_BROWSER_FIXTURE=many WINDOWSHADE_BROWSER_FIXTURE_AUTOEXIT=3 "$APP" --window-browser-fixture
+  ```
+
+  `WINDOWSHADE_BROWSER_FIXTURE` 可选 `mixed / many / empty / long / nopermission`，
+  `WINDOWSHADE_BROWSER_FIXTURE_SIZE=small` 用小屏尺寸，
+  `WINDOWSHADE_BROWSER_FIXTURE_APPEARANCE=dark|light` 强制浅/深色外观，
+  `WINDOWSHADE_BROWSER_FIXTURE_STYLE=list|grid` 会在自动退出前像用户一样点一次
+  分段控件（用来验证“点了就换布局”，输出里的 `renderedStyle/renderedRows/renderedCards`
+  是真实渲染结果）。
+- 只读真机探针（不移动用户指针、不捕获用户窗口；详见
+  [窗口浏览进度](docs/window-browser-progress.md) 的命令清单）：
+  `--window-browser-dock-probe`、`--window-browser-hover-probe`、
+  `--window-browser-catalog-probe`、`--window-browser-capture-probe`
+  （只捕获本应用自己的探针窗口）、`--window-browser-thumbnail-probe`、
+  `--window-browser-stream-probe`、`--window-browser-panel-probe`、
+  `--window-browser-ui-probe`、`--window-browser-idle-probe`
+  （临时关闭 Dock 开关后测空闲查询数，结束时恢复设置）、
+  `--window-browser-identity-probe`（只用真实 AX 核对身份解析与全部拒绝分支，
+  不写任何窗口状态）。
+  例外：`--window-browser-live-app-probe` 会对**另一个正在运行的 WindowShade**
+  走一遍真实状态栏菜单项并打开一次面板（随后按 Esc 关闭）。它只读用户窗口、不改设置，
+  但会短暂占用菜单栏与屏幕，请在不需要用机的时机运行。
+  `--window-browser-hover-live-probe` 会把系统指针移到 Dock 图标上约 1.2 秒再放回，
+  用于验证真实悬停通知；只悬停、不点击、不激活，运行前请确认当前没有正在进行中的
+  拖拽或需要保持指针位置的操作。
+
+用户向说明（入口、权限、兼容限制）见 [docs/window-browser.md](docs/window-browser.md)。
+
 动手优化这一带之前先读 [docs/performance.md](docs/performance.md)：那里记了
 实测的调用成本量级、已走通的手法、以及已经证伪的方向（比如用 SkyLight
 绕开目标 App 在 SIP 开启时不可行），可以省掉重新走一遍的时间。

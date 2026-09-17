@@ -11,6 +11,8 @@ enum PinnedPreviewError: Error, LocalizedError {
     case noSCWindow
     case noAXGeometry
     case screenRecordingDenied
+    case accessibilityDenied
+    case targetChanged
 
     var errorDescription: String? {
         switch self {
@@ -28,8 +30,45 @@ enum PinnedPreviewError: Error, LocalizedError {
             return "无法读取窗口位置"
         case .screenRecordingDenied:
             return "需要屏幕录制权限"
+        case .accessibilityDenied:
+            return "需要辅助功能权限"
+        case .targetChanged:
+            return "目标窗口在启动过程中已变化"
         }
     }
+}
+
+/// 置顶镜像的单槽租约。旧 owner 的释放不会摘掉新 owner 的镜像层。
+final class PinnedMirrorLease {
+    private let lock = NSLock()
+    private var releaseAction: (() -> Void)?
+
+    init(release: @escaping () -> Void) {
+        releaseAction = release
+    }
+
+    func release() {
+        lock.lock()
+        let action = releaseAction
+        releaseAction = nil
+        lock.unlock()
+        action?()
+    }
+
+    deinit {
+        // deinit 只作为兜底；主要释放在面板关闭与目标切换时执行。
+        release()
+    }
+}
+
+struct PinnedPreviewSessionSnapshot {
+    let windowID: CGWindowID
+    let pid: pid_t
+    let bundleIdentifier: String
+    let appName: String
+    let title: String
+    let lastKnownFrame: NSRect
+    let isSuspended: Bool
 }
 
 private final class PinnedPreviewSession {
@@ -160,6 +199,13 @@ final class PinnedPreviewController {
     private var unexpectedStopRetryWorkItems: [CGWindowID: DispatchWorkItem] = [:]
     // 老板键：临时挂起全部置顶预览（隐藏面板 + 停止 capture），再按一次原样恢复。
     private var isSuspendedAll = false
+    // 明确目标启动：预先登记 starting，避免 await 重入创建两路相同捕获。
+    private var startingPreviewIDs: Set<CGWindowID> = []
+    private var startPreviewCompletions: [CGWindowID: [(Result<Void, PinnedPreviewError>) -> Void]] = [:]
+    // 单槽镜像的 owner token：菜单缩略图与窗口浏览面板共用同一槽位，
+    // 旧 owner 的释放只有在 token 仍匹配时才生效。
+    private let mirrorSlot = WindowMirrorSlot()
+    private let menuMirrorOwnerID = UUID()
     private let excludedBundleIDs: Set<String> = [
         "com.apple.dock",
         "com.apple.controlcenter",
@@ -179,6 +225,150 @@ final class PinnedPreviewController {
 
     func isPreviewing(id: CGWindowID) -> Bool {
         sessions[id] != nil
+    }
+
+    /// 只读快照：窗口目录用，不暴露可修改的会话字典。
+    func sessionSnapshots() -> [PinnedPreviewSessionSnapshot] {
+        dispatchPrecondition(condition: .onQueue(.main))
+        return sessions.values.map { session in
+            PinnedPreviewSessionSnapshot(windowID: session.windowID,
+                                         pid: session.pid,
+                                         bundleIdentifier: session.bundleIdentifier,
+                                         appName: session.appName,
+                                         title: session.title,
+                                         lastKnownFrame: session.lastKnownFrame,
+                                         isSuspended: session.isSuspended)
+        }
+    }
+
+    /// 源流确实在运行、没有暂停、目标仍有效时返回 true（镜像可复用）。
+    func isRunning(id: CGWindowID) -> Bool {
+        guard let session = sessions[id] else { return false }
+        return !session.isSuspended
+    }
+
+    /// 供窗口浏览动作在明确目标校验时读取原窗口 AX 引用。只在 pid 与窗口 ID
+    /// 同时匹配时返回，避免把同标题的兄弟窗口当成目标。
+    func axElement(id: CGWindowID, pid: pid_t) -> AXUIElement? {
+        dispatchPrecondition(condition: .onQueue(.main))
+        guard let session = sessions[id], session.pid == pid else { return nil }
+        return session.axWindow
+    }
+
+    /// 明确目标的置顶预览入口。参数必须包含目标身份；不重新读取 focusedWindow，
+    /// 只在启动成功后调用 completion。启动中目标关闭、请求过期或捕获失败都会
+    /// 清理已经创建的面板/流，不留孤儿会话。
+    func startPreview(targetWindowID id: CGWindowID, pid: pid_t, axWindow: AXUIElement,
+                      completion: @escaping (Result<Void, PinnedPreviewError>) -> Void) {
+        dispatchPrecondition(condition: .onQueue(.main))
+        guard hasAccessibilityPermission() else {
+            completion(.failure(.accessibilityDenied))
+            return
+        }
+        guard hasScreenRecordingPermission() else {
+            completion(.failure(.screenRecordingDenied))
+            return
+        }
+        if sessions[id] != nil {
+            completion(.success(()))
+            return
+        }
+        if startingPreviewIDs.contains(id) {
+            startPreviewCompletions[id, default: []].append(completion)
+            return
+        }
+        var elementPID: pid_t = 0
+        guard AXUIElementGetPid(axWindow, &elementPID) == .success,
+              WindowBrowserTargetIdentity.matches(
+                elementPID: elementPID,
+                elementWindowID: windowID(of: axWindow),
+                expectedPID: pid,
+                expectedWindowID: id) else {
+            completion(.failure(.targetChanged))
+            return
+        }
+        do {
+            try validateAXWindow(axWindow, id: id)
+        } catch {
+            completion(.failure(error as? PinnedPreviewError ?? .unsupportedWindow))
+            return
+        }
+
+        startingPreviewIDs.insert(id)
+        startPreviewCompletions[id] = [completion]
+        let appName = appDisplayName(pid: pid)
+        let bundleID = appBundleID(pid: pid)
+        let title = cleanDisplayTitle(axTitle(axWindow))
+        Task { @MainActor [weak self] in
+            guard let self else { return }
+            do {
+                let content: SCShareableContent
+                if #available(macOS 14.0, *),
+                   let cached = await ShareableContentCache.shared.content(requiring: id) {
+                    content = cached
+                } else {
+                    content = try await ShareableContentLoader.current()
+                }
+                guard let scWindow = content.windows.first(where: { $0.windowID == id }) else {
+                    throw PinnedPreviewError.noSCWindow
+                }
+                let display = Self.bestDisplay(for: scWindow, displays: content.displays)
+                self.installPreview(id: id, pid: pid, bundleID: bundleID, appName: appName,
+                                    title: title, axWindow: axWindow, scWindow: scWindow,
+                                    display: display,
+                                    completion: { [weak self] result in
+                    self?.finishStartPreview(id: id, result: result)
+                })
+            } catch {
+                self.finishStartPreview(id: id,
+                    result: .failure(error as? PinnedPreviewError ?? .noShareableContent))
+            }
+        }
+    }
+
+    private func finishStartPreview(id: CGWindowID,
+                                    result: Result<Void, PinnedPreviewError>) {
+        dispatchPrecondition(condition: .onQueue(.main))
+        startingPreviewIDs.remove(id)
+        let completions = startPreviewCompletions.removeValue(forKey: id) ?? []
+        completions.forEach { $0(result) }
+    }
+
+    // MARK: 单槽镜像 owner 租约
+
+    /// 把镜像层挂到该会话正在运行的流上。返回 false 表示会话不存在/已暂停。
+    @discardableResult
+    func attachMirror(id: CGWindowID, owner: UUID, layer: AVSampleBufferDisplayLayer) -> Bool {
+        dispatchPrecondition(condition: .onQueue(.main))
+        guard let session = sessions[id], !session.isSuspended else { return false }
+        // 只有源流确实在运行时才挂接镜像：暂停、已停止或异常终止后仍挂一个收不到
+        // 帧的显示层只会得到空白预览。
+        guard session.capture.isRunning else { return false }
+        session.capture.mirrorLayer = layer
+        return mirrorSlot.attach(owner: owner, windowID: id, layer: layer)
+    }
+
+    /// 只有 token 仍匹配时才解除，旧面板的释放不会摘掉新面板的镜像。
+    func releaseMirror(owner: UUID) {
+        dispatchPrecondition(condition: .onQueue(.main))
+        guard let id = mirrorSlot.release(owner: owner) else { return }
+        sessions[id]?.capture.mirrorLayer = nil
+    }
+
+    /// 为窗口浏览面板构建带 owner 租约的镜像视图。
+    func makeMirrorView(frame: NSRect, id: CGWindowID,
+                        owner: UUID) -> (NSView, PinnedMirrorLease)? {
+        dispatchPrecondition(condition: .onQueue(.main))
+        guard sessions[id] != nil, !isSuspended(id: id) else { return nil }
+        let layer = AVSampleBufferDisplayLayer()
+        guard attachMirror(id: id, owner: owner, layer: layer) else { return nil }
+        let view = PinnedLivePreviewView(frame: frame, videoLayer: layer)
+        let lease = PinnedMirrorLease { [weak self] in
+            DispatchQueue.main.async {
+                self?.releaseMirror(owner: owner)
+            }
+        }
+        return (view, lease)
     }
 
     // 最近一次后台解析的 target；读取不触发 AX，可安全用于菜单文案。
@@ -465,14 +655,14 @@ final class PinnedPreviewController {
     // 为菜单悬停缩略图构建实时预览视图：新建一个显示层挂到该会话正在运行的 capture 上做镜像，
     // 复用已有采样帧，不新建流。视图销毁或 detachThumbnail 时断开。
     func makeThumbnailPreviewView(frame: NSRect, id: CGWindowID) -> NSView? {
-        guard let session = sessions[id] else { return nil }
+        guard sessions[id] != nil else { return nil }
         let layer = AVSampleBufferDisplayLayer()
-        session.capture.mirrorLayer = layer
+        guard attachMirror(id: id, owner: menuMirrorOwnerID, layer: layer) else { return nil }
         return PinnedLivePreviewView(frame: frame, videoLayer: layer)
     }
 
     func detachThumbnail(id: CGWindowID) {
-        sessions[id]?.capture.mirrorLayer = nil
+        releaseMirror(owner: menuMirrorOwnerID)
     }
 
     func stopPreviews(forPID pid: pid_t, reason: String) {
@@ -598,11 +788,16 @@ final class PinnedPreviewController {
 
     private func installPreview(id: CGWindowID, pid: pid_t, bundleID: String,
                                 appName: String, title: String, axWindow: AXUIElement,
-                                scWindow: SCWindow, display: SCDisplay?) {
+                                scWindow: SCWindow, display: SCDisplay?,
+                                completion: ((Result<Void, PinnedPreviewError>) -> Void)? = nil) {
         dispatchPrecondition(condition: .onQueue(.main))
-        guard sessions[id] == nil else { return }
+        guard sessions[id] == nil else {
+            completion?(.success(()))
+            return
+        }
         guard let frame = currentSourceFrame(id: id) ?? Optional(cocoaFrame(fromWindowServerBounds: scWindow.frame)) else {
             notice("无法读取窗口位置", "pin-preview: failed reason=no-frame id=\(id)")
+            completion?(.failure(.noAXGeometry))
             return
         }
 
@@ -647,10 +842,20 @@ final class PinnedPreviewController {
         Task { @MainActor [weak self] in
             do {
                 try await capture.start(window: scWindow, display: display)
+                guard let self, self.sessions[id] === session else {
+                    // 启动期间用户已经离开/目标已切换：刚启动成功的流必须自己停掉。
+                    capture.stop()
+                    completion?(.failure(.targetChanged))
+                    return
+                }
                 wlog("pin-preview: capture started id=\(id) size=\(Int(frame.width))x\(Int(frame.height))")
+                completion?(.success(()))
             } catch {
-                self?.notice("置顶预览失败", "pin-preview: capture failed id=\(id) \(error.localizedDescription)")
+                let failure = error as? PinnedPreviewError ?? .noSCWindow
+                self?.notice("置顶预览失败",
+                             "pin-preview: capture failed id=\(id) \(error.localizedDescription)")
                 self?.stopPreview(id: id, reason: "capture-failed")
+                completion?(.failure(failure))
             }
         }
     }
@@ -1105,6 +1310,7 @@ final class PinnedPreviewController {
     private func stopPreview(id: CGWindowID, reason: String) {
         dispatchPrecondition(condition: .onQueue(.main))
         guard let session = sessions.removeValue(forKey: id) else { return }
+        mirrorSlot.clear(windowID: id)
         unexpectedStopRetryWorkItems.removeValue(forKey: id)?.cancel()
         unexpectedStopRetries.removeValue(forKey: id)
         session.invalidate()

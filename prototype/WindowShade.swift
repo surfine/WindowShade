@@ -1713,6 +1713,12 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSMenuDelegate {
     var statusNoticeWorkItem: DispatchWorkItem?
     var preferencesWindow: NSWindow?
     var onboardingWindow: NSWindow?
+    // 窗口浏览入口的折叠终态等待者：键 = 原窗口 ID，值 = token -> 回调。
+    // 折叠事务是异步的（立即验证 / 延迟验证 / 回滚），浏览器动作只在真实终态
+    // 到达时才完成；token 保证旧请求不会误结算新请求。
+    var windowBrowserFoldWaiters: [CGWindowID: [UUID: (Bool) -> Void]] = [:]
+    var windowBrowserController: WindowBrowserController?
+    var windowBrowserHotKeyRef: EventHotKeyRef?
     var menuRebuildWorkItem: DispatchWorkItem?
     var suppressMenuRebuilds = false
     var pendingMenuRebuild = false
@@ -1805,6 +1811,11 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSMenuDelegate {
         logIfSlow("launch onboarding", threshold: 0.1) { showPermissionOnboardingIfNeeded(force: false) }
         logIfSlow("launch eventTap", threshold: 0.1) { setupEventTapWhenTrusted() }
         logIfSlow("launch pinTracking", threshold: 0.1) { setupPinnedPreviewFocusTracking() }
+        logIfSlow("launch windowBrowser", threshold: 0.1) {
+            let browser = WindowBrowserController(owner: self)
+            windowBrowserController = browser
+            browser.start()
+        }
         NSWorkspace.shared.notificationCenter.addObserver(self,
                                                           selector: #selector(appTerminated(_:)),
                                                           name: NSWorkspace.didTerminateApplicationNotification,
@@ -2162,6 +2173,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSMenuDelegate {
 
     func applicationWillTerminate(_ note: Notification) {
         duoController.stop()
+        windowBrowserController?.stop()
         restoreAll()
         reconcileTimer?.invalidate()
         reconcileTimer = nil
