@@ -37,15 +37,18 @@ WindowShade leaves a slim strip on the desktop with the window's title and a way
 
 [Release notes and downloads →](https://github.com/surfine/WindowShade/releases/tag/v1.0.12)
 
-## Three ways to make room
+## Four ways to make room
 
 | | What it does | A useful moment |
 | --- | --- | --- |
 | **Fold a window** | `⌃⌘C` or double-click the title bar. Keep a strip in place; double-click it to unfold. Choose a captured top region or a standard title bar. | Move a reference out of the way without losing its place. |
 | **Pin a preview** | `⌃⌘P` creates a floating live view of a window. Its capture rate drops while idle. | Keep a reference, mirror, or dashboard visible beside your work. |
+| **Browse a Dock icon** | Hover an app icon in the Dock for a panel of that app's real windows — thumbnail cards or compact rows, with search and per-window actions. The menu's **Choose window…**, or your own hot key, opens the same panel in keyboard mode. Off by default. | Find the window you half-remember, without hunting through the app. |
 | **Feel the lid move** | On a supported MacBook, the desktop rolls, recedes, or blurs as the lid moves. Silk, Shade, and Frost finishes; adjustable trigger and a scrubbable preview. | A small physical connection between the computer and its screen. |
 
 Window folding animations accompany manual fold and unfold actions. The lid sensor drives the desktop effect. Experimental device tilt adds a small parallax when the Mac exposes the required sensor.
+
+Window browsing is a temporary panel: it does not replace the system Dock or take over the native Command-Tab.
 
 ## Native where you use it
 
