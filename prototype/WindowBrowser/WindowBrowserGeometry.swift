@@ -5,7 +5,7 @@
 // 过渡区域全部来自同一份 `WindowBrowserLayoutPlan`，避免“几何层算一种布局、
 // 内容视图又独立算另一种布局”。`desiredSize` 只表达理想尺寸，不是强制下限。
 
-import Foundation
+import AppKit
 
 enum WindowBrowserDockEdge: String {
     case bottom
@@ -30,10 +30,18 @@ struct WindowBrowserLayoutParams {
     var cardWidth: CGFloat = 288
     var imageMaxHeight: CGFloat = 120
     var cardHeight: CGFloat = 236
+    /// 卡片里标题区实际占几行（1 或 2）。由内容决定：短标题不留空行。
+    var cardTitleLines: Int = 2
+    /// 单行标题的行高，用来在行数变化后重算标题区与卡片高度。
+    var titleLineHeight: CGFloat = 16
+    /// 卡片里画面的高度（`cardHeight` 的组成部分之一，便于按行数重算）。
+    var cardImageHeight: CGFloat = 120
     var listRowHeight: CGFloat = 52
     var panelPadding: CGFloat = 12
     var headerHeight: CGFloat = 40
     var footerHeight: CGFloat = 18
+    /// 页脚是否占位。只有真有状态文字时才留出页脚那一段高度。
+    var footerVisible: Bool = true
     /// 键盘面板的搜索框高度、它与底部状态行的间距、以及它与列表之间的间距。
     var searchFieldHeight: CGFloat = 26
     var searchFieldBottomGap: CGFloat = 12
@@ -94,14 +102,18 @@ struct WindowBrowserLayoutParams {
                                detailSize: WindowBrowserTypography.detailSize)
 
     /// 由字号推出整套排版：字号变大时标题/状态/行高一起长高，布局跟着调整。
-    static func make(bodySize: CGFloat, detailSize: CGFloat) -> WindowBrowserLayoutParams {
+    /// `titleLines` 是卡片标题实际需要的行数：只有真会换行的标题才占两行高度。
+    static func make(bodySize: CGFloat, detailSize: CGFloat,
+                     titleLines: Int = 2) -> WindowBrowserLayoutParams {
         var params = WindowBrowserLayoutParams()
         params.imageCornerRadius = SystemCornerRadius.concentric(
             outer: params.cardCornerRadius, inset: params.cardPadding)
         let titleLine = WindowBrowserTypography.lineHeight(
             .systemFont(ofSize: bodySize, weight: .medium))
         let detailLine = WindowBrowserTypography.lineHeight(.systemFont(ofSize: detailSize))
-        params.cardTitleHeight = titleLine * 2 + 2
+        params.titleLineHeight = titleLine
+        params.cardTitleLines = max(1, min(2, titleLines))
+        params.cardTitleHeight = titleLine * CGFloat(params.cardTitleLines) + 2
         params.cardStatusHeight = detailLine
         params.rowTitleHeight = titleLine
         params.rowStatusHeight = detailLine
@@ -109,15 +121,37 @@ struct WindowBrowserLayoutParams {
         params.actionBarHeight = max(params.actionBarHeight, detailLine + 10)
         params.headerHeight = max(params.headerHeight, titleLine + detailLine + 10)
         params.footerHeight = max(params.footerHeight, detailLine + 6)
-        let imageHeight = min(params.imageMaxHeight,
-                              (params.cardWidth - params.cardPadding * 2) * 0.52)
-        params.cardHeight = params.cardPadding * 2 + imageHeight + params.spacingSmall * 2
+        params.cardImageHeight = min(params.imageMaxHeight,
+                                     (params.cardWidth - params.cardPadding * 2) * 0.52)
+        params.cardHeight = params.cardPadding * 2 + params.cardImageHeight + params.spacingSmall * 2
             + params.cardTitleHeight + params.spacingTight + params.cardStatusHeight
             + params.spacingSmall + params.actionBarHeight
         params.listRowHeight = max(params.listRowHeight,
                                    titleLine + detailLine + params.spacingSmall * 3)
         return params
     }
+
+    /// 标题行数变化后重算标题区与卡片高度（不影响缩放后的字号与其它尺寸）。
+    func resized(forTitleLines lines: Int) -> WindowBrowserLayoutParams {
+        var copy = self
+        copy.cardTitleLines = max(1, min(2, lines))
+        copy.cardTitleHeight = titleLineHeight * CGFloat(copy.cardTitleLines) + 2
+        copy.cardHeight = cardPadding * 2 + cardImageHeight + spacingSmall * 2
+            + copy.cardTitleHeight + spacingTight + cardStatusHeight
+            + spacingSmall + actionBarHeight
+        return copy
+    }
+
+    /// 没有状态文字时页脚不该占位：面板贴着内容收口，而不是留一段空白。
+    func resized(showingFooter visible: Bool) -> WindowBrowserLayoutParams {
+        var copy = self
+        copy.footerVisible = visible
+        return copy
+    }
+
+    /// 页脚实际占的高度：没有状态文字时是 0。
+    var effectiveFooterHeight: CGFloat { footerVisible ? footerHeight : 0 }
+
 }
 
 /// 内容区域的完整布局结果：面板、内容视图、网格方向键、可见项计算与截图目标尺寸
@@ -357,9 +391,9 @@ enum WindowBrowserGeometry {
         let panelFrame = clamp(NSRect(origin: origin,
                                       size: CGSize(width: width, height: height)),
                                into: available)
-        let contentBounds = NSRect(x: params.panelPadding, y: params.panelPadding,
-                                   width: max(1, panelFrame.width - params.panelPadding * 2),
-                                   height: max(1, panelFrame.height - params.panelPadding * 2))
+        // 内容视图的坐标空间就是整块面板：`contentPlan` 自己负责左右内边距与
+        // 页眉/页脚的位置，这里再缩一圈会让两份布局不一致（横向还会双重内缩）。
+        let contentBounds = NSRect(origin: .zero, size: panelFrame.size)
         let mode: WindowBrowserPanelMode = isContentDriven ? .dock : .keyboard
         let content = contentPlan(bounds: contentBounds, style: resolvedStyle,
                                   recordCount: windowCount, mode: mode, params: params)
@@ -408,11 +442,15 @@ enum WindowBrowserGeometry {
         let headerHeight = min(params.headerHeight, max(0, bounds.height))
         let header = NSRect(x: padding, y: bounds.height - headerHeight,
                             width: max(1, bounds.width - padding * 2), height: headerHeight)
+        let footerHeight = min(params.effectiveFooterHeight,
+                               max(0, bounds.height - headerHeight))
         let footer = NSRect(x: padding, y: 0,
                             width: max(1, bounds.width - padding * 2),
-                            height: min(params.footerHeight, max(0, bounds.height - headerHeight)))
+                            height: footerHeight)
         var searchRect = NSRect.zero
-        let contentBottom = footer.maxY + params.spacingSmall
+        // 没有页脚时内容直接贴到底部内边距，不再额外留一段间隔。
+        let contentBottom = footer.maxY
+            + (params.effectiveFooterHeight > 0 ? params.spacingSmall : params.panelPadding)
         var contentTop = max(contentBottom, header.minY - params.spacingTight)
         // 键盘面板：搜索框放在顶部（页眉正下方，间隔 searchFieldBottomGap），
         // 列表在搜索框下方；Dock 面板没有常驻搜索框。
@@ -508,12 +546,54 @@ enum WindowBrowserGeometry {
             + CGFloat(max(0, count - 1)) * params.spacingTight
     }
 
+    /// 卡片标题实际需要几行：只有真的放不下单行时才给两行高度。
+    /// 这是 A+C 方案里的 C——短标题不再空出一整行。
+    static func titleLines(forTitles titles: [String], availableWidth: CGFloat,
+                           font: NSFont = WindowBrowserTypography.title) -> Int {
+        guard availableWidth > 20 else { return 2 }
+        for title in titles where !title.isEmpty {
+            if titleWidth(title, font: font) > availableWidth { return 2 }
+        }
+        return 1
+    }
+
+    /// 标题测宽缓存：窗口标题在一次会话里很少变，而 `size(withAttributes:)` 每次约
+    /// 0.01–0.2 ms（200 条要 2.4 ms）。缓存后同一批标题的重复刷新只花一次测量。
+    /// 只在主线程（面板刷新与截图探针）访问。
+    private static var titleWidthCache: [String: CGFloat] = [:]
+    private static let titleWidthCacheLimit = 4096
+
+    static func titleWidth(_ title: String, font: NSFont) -> CGFloat {
+        let key = "\(font.fontName)|\(font.pointSize)|\(title)"
+        if let cached = titleWidthCache[key] { return cached }
+        let width = (title as NSString).size(withAttributes: [.font: font]).width
+        if titleWidthCache.count >= titleWidthCacheLimit {
+            titleWidthCache.removeAll(keepingCapacity: true)
+        }
+        titleWidthCache[key] = width
+        return width
+    }
+
+    /// 把基础排版参数派生成本次内容真正需要的版本：标题几行、页脚是否占位。
+    /// 控制器与截图探针都走这里，避免“真机一种布局、归档图另一种布局”。
+    static func derivedParams(base: WindowBrowserLayoutParams, titles: [String],
+                              hasStatus: Bool) -> WindowBrowserLayoutParams {
+        base.resized(forTitleLines: titleLines(
+            forTitles: titles,
+            availableWidth: base.cardWidth - base.cardPadding * 2))
+            .resized(showingFooter: hasStatus)
+    }
+
     static func chromeHeight(params: WindowBrowserLayoutParams,
                              mode: WindowBrowserPanelMode) -> CGFloat {
-        // 面板高度必须包含内容区与页眉/页脚之间的两处间距，否则内容会被裁掉：
-        // contentBottom = footer.maxY + spacingSmall，contentTop = header.minY - spacingTight。
-        var chrome = params.panelPadding * 2 + params.headerHeight + params.footerHeight
-            + params.spacingSmall + params.spacingTight
+        // 面板高度 = 页眉 + 页眉下的间隔 + 内容 + 底部那一块。
+        // 底部：有页脚时是“间隔 + 页脚”，没有状态文字时只留一层内边距。
+        // 之前这里还多算了一圈 `panelPadding * 2`，内容视图的布局并不消费它，
+        // 于是那 24 pt 永远落在卡片下方，成为“下巴”的一部分。
+        var chrome = params.headerHeight + params.spacingTight
+        chrome += params.effectiveFooterHeight > 0
+            ? params.effectiveFooterHeight + params.spacingSmall
+            : params.panelPadding
         if mode == .keyboard {
             chrome += params.searchFieldHeight + params.searchFieldBottomGap + params.listTopGap
         }
