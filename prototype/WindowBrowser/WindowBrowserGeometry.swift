@@ -69,10 +69,12 @@ struct WindowBrowserLayoutParams {
     var minimumPanelWidth: CGFloat = 232
     var maximumPanelWidth: CGFloat = 960
     var minimumPanelHeight: CGFloat = 108
-    /// 圆角：面板 16、卡片 12、图片 8。
-    var panelCornerRadius: CGFloat = 16
-    var cardCornerRadius: CGFloat = 12
-    var imageCornerRadius: CGFloat = 8
+    /// 圆角刻度来自 `SystemCornerRadius`：窗口级 13（macOS 27 实测）、卡片 12、
+    /// 图片按同心规则取“卡片圆角 − 卡片内边距”。不再各写各的数字。
+    var panelCornerRadius: CGFloat = SystemCornerRadius.window
+    var cardCornerRadius: CGFloat = SystemCornerRadius.card
+    var imageCornerRadius: CGFloat = SystemCornerRadius.concentric(
+        outer: SystemCornerRadius.card, inset: 8)
     // 卡片/列表行内部尺寸。
     var cardPadding: CGFloat = 8
     var cardTitleHeight: CGFloat = 34
@@ -94,6 +96,8 @@ struct WindowBrowserLayoutParams {
     /// 由字号推出整套排版：字号变大时标题/状态/行高一起长高，布局跟着调整。
     static func make(bodySize: CGFloat, detailSize: CGFloat) -> WindowBrowserLayoutParams {
         var params = WindowBrowserLayoutParams()
+        params.imageCornerRadius = SystemCornerRadius.concentric(
+            outer: params.cardCornerRadius, inset: params.cardPadding)
         let titleLine = WindowBrowserTypography.lineHeight(
             .systemFont(ofSize: bodySize, weight: .medium))
         let detailLine = WindowBrowserTypography.lineHeight(.systemFont(ofSize: detailSize))

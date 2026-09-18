@@ -16,15 +16,20 @@ enum PaperSurfaceStyle {
                          capabilities: SystemAppearanceCapabilities = .current) {
         let width = SystemAppearancePolicy.edgeWidth(capabilities)
         NSColor.separatorColor.setStroke()
-        let border = NSBezierPath(roundedRect: bounds.insetBy(dx: width / 2, dy: width / 2),
-                                  xRadius: 10, yRadius: 10)
+        // 卷帘条是“被卷起的窗口顶部”：上面两角跟系统窗口一样是连续曲率的 13 pt，
+        // 下边缘是直切口，和截图条的窗口 chrome 对齐。
+        let radius = SystemCornerRadius.surfaceRadius(forHeight: bounds.height)
+        let border = SystemCornerPath.path(in: bounds.insetBy(dx: width / 2, dy: width / 2),
+                                           radius: radius, corners: .top)
         border.lineWidth = width
         border.stroke()
         let highlight = SystemAppearancePolicy.highlightAlpha(capabilities)
         guard highlight > 0 else { return }
         NSColor.white.withAlphaComponent(highlight).setFill()
         let pixel = 1 / max(scale, 1)
-        NSRect(x: 10, y: bounds.maxY - pixel, width: max(0, bounds.width - 20), height: pixel).fill()
+        let inset = radius
+        NSRect(x: inset, y: bounds.maxY - pixel,
+               width: max(0, bounds.width - inset * 2), height: pixel).fill()
     }
 }
 
@@ -32,9 +37,17 @@ enum PaperSurfaceStyle {
 /// the parent window's frame (which is also the source-window alignment contract).
 /// Child ordering follows the parent through hide/show, moves and Space changes.
 private final class PaperShadowView: NSView {
+    /// 面板四角都要圆；卷帘条只有上面两角圆（下边缘是被卷起后的直切口）。
+    var corners: SystemCornerPath.Corners = .all {
+        didSet { needsDisplay = true }
+    }
+
     override func hitTest(_ point: NSPoint) -> NSView? { nil }
     override func draw(_ dirtyRect: NSRect) {
-        let paper = NSBezierPath(roundedRect: bounds.insetBy(dx: 24, dy: 24), xRadius: 10, yRadius: 10)
+        let inset = bounds.insetBy(dx: 24, dy: 24)
+        let paper = SystemCornerPath.path(
+            in: inset, radius: SystemCornerRadius.surfaceRadius(forHeight: inset.height),
+            corners: corners)
         NSGraphicsContext.saveGraphicsState()
         PaperSurfaceStyle.shadow(capabilities: .current).set()
         NSColor.black.setFill()
@@ -57,12 +70,15 @@ private final class PaperShadowPanel: NSPanel {
 private final class PaperWindowShadow: NSObject {
     private weak var parent: NSWindow?
     private let panel: NSPanel
+    private let shadowView: PaperShadowView
     private var resizeObserver: NSObjectProtocol?
     private var alphaObservation: NSKeyValueObservation?
     private var levelObservation: NSKeyValueObservation?
 
-    init(parent: NSWindow) {
+    init(parent: NSWindow, corners: SystemCornerPath.Corners = .all) {
         self.parent = parent
+        shadowView = PaperShadowView(frame: parent.frame.insetBy(dx: -24, dy: -24))
+        shadowView.corners = corners
         panel = PaperShadowPanel(contentRect: parent.frame.insetBy(dx: -24, dy: -24),
             styleMask: [.borderless, .nonactivatingPanel], backing: .buffered, defer: false)
         super.init()
@@ -76,7 +92,8 @@ private final class PaperWindowShadow: NSObject {
         panel.hidesOnDeactivate = false
         panel.level = parent.level
         panel.collectionBehavior = [.transient, .ignoresCycle, .fullScreenAuxiliary]
-        panel.contentView = PaperShadowView(frame: NSRect(origin: .zero, size: panel.frame.size))
+        shadowView.frame = NSRect(origin: .zero, size: panel.frame.size)
+        panel.contentView = shadowView
         parent.hasShadow = false
         parent.addChildWindow(panel, ordered: .below)
         alphaObservation = parent.observe(\.alphaValue, options: [.initial, .new]) { [weak self] window, _ in
@@ -102,10 +119,13 @@ private final class PaperWindowShadow: NSObject {
 
 private var paperShadowAssociation: UInt8 = 0
 extension PaperSurfaceStyle {
-    static func installShadow(on window: NSWindow) {
+    /// `corners` 决定阴影轮廓：面板用 `.all`，卷帘条用 `.top`。
+    static func installShadow(on window: NSWindow,
+                              corners: SystemCornerPath.Corners = .all) {
         window.hasShadow = false
         guard objc_getAssociatedObject(window, &paperShadowAssociation) == nil else { return }
-        objc_setAssociatedObject(window, &paperShadowAssociation, PaperWindowShadow(parent: window),
+        objc_setAssociatedObject(window, &paperShadowAssociation,
+                                 PaperWindowShadow(parent: window, corners: corners),
                                  .OBJC_ASSOCIATION_RETAIN_NONATOMIC)
     }
 }

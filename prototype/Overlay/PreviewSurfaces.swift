@@ -16,19 +16,18 @@ final class SafariStylePreviewView: NSView {
 
     init(frame: NSRect, image: NSImage, windowTitle: String = "") {
         super.init(frame: frame)
-        wantsLayer = true
-        layer?.cornerRadius = 10
-        layer?.cornerCurve = .continuous
-        layer?.masksToBounds = true
+        SystemCornerRadius.apply(to: self, radius: SystemCornerRadius.window,
+                                 masksToBounds: true)
 
-        materialView.layer?.cornerRadius = 10
+        materialView.layer?.cornerRadius = SystemCornerRadius.window
         materialView.layer?.masksToBounds = true
         addSubview(materialView)
 
         thumbnailClipView.wantsLayer = true
-        thumbnailClipView.layer?.cornerRadius = 6
-        thumbnailClipView.layer?.cornerCurve = .continuous
-        thumbnailClipView.layer?.masksToBounds = true
+        SystemCornerRadius.apply(to: thumbnailClipView,
+                                 radius: SystemCornerRadius.concentric(
+                                    outer: SystemCornerRadius.window, inset: 10),
+                                 masksToBounds: true)
         thumbnailClipView.shadow = PaperSurfaceStyle.shadow()
         addSubview(thumbnailClipView)
 

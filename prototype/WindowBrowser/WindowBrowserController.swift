@@ -1338,9 +1338,11 @@ final class WindowBrowserController: NSObject {
 
     private func attachLiveView(_ view: NSView, to key: WindowKey) {
         // 卡片视图在最底层持有缩略图区域；live view 覆盖其上并保持同样的圆角。
-        view.wantsLayer = true
-        view.layer?.cornerRadius = 6
-        view.layer?.masksToBounds = true
+        SystemCornerRadius.apply(
+            to: view,
+            radius: contentView?.layoutParamsForHosting.imageCornerRadius
+                ?? WindowBrowserLayoutParams.standard.imageCornerRadius,
+            masksToBounds: true)
         contentView?.setLivePreview(view, for: key)
     }
 

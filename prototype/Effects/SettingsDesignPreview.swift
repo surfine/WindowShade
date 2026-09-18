@@ -132,9 +132,8 @@ final class SettingsDesignPreview: NSObject {
         let strip = NSVisualEffectView(frame: NSRect(x: 24, y: 285, width: 552, height: 36))
         strip.material = .popover
         strip.blendingMode = .behindWindow
-        strip.wantsLayer = true
-        strip.layer?.cornerRadius = 10
-        strip.layer?.masksToBounds = true
+        SystemCornerRadius.apply(to: strip, radius: SystemCornerRadius.window,
+                                 masksToBounds: true)
         let title = NativeProxyTitleContentView(frame: strip.bounds, appName: "WindowShade",
             windowTitle: "设计预览.swift", appIcon: NSApp.applicationIconImage)
         title.autoresizingMask = [.width, .height]

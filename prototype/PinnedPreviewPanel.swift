@@ -81,10 +81,11 @@ final class PinnedPreviewContentView: NSView {
         edgeLayer.frame = bounds
         edgeLayer.lineWidth = edgeWidth
         edgeLayer.path = CGPath(roundedRect: bounds.insetBy(dx: edgeWidth / 2, dy: edgeWidth / 2),
-                               cornerWidth: 10, cornerHeight: 10, transform: nil)
+                               cornerWidth: SystemCornerRadius.window,
+                               cornerHeight: SystemCornerRadius.window, transform: nil)
         edgeLayer.strokeColor = SystemAppearancePolicy.cgColor(NSColor.separatorColor, for: self)
         videoLayer?.frame = bounds
-        videoLayer?.cornerRadius = 6
+        videoLayer?.cornerRadius = SystemCornerRadius.window
         CATransaction.commit()
     }
 
@@ -128,7 +129,7 @@ final class PinnedPreviewContentView: NSView {
     private func attach(_ layerToAttach: AVSampleBufferDisplayLayer) {
         videoLayer?.removeFromSuperlayer()
         videoLayer = layerToAttach
-        layerToAttach.cornerRadius = 6
+        layerToAttach.cornerRadius = SystemCornerRadius.window
         layerToAttach.cornerCurve = .continuous
         layerToAttach.masksToBounds = true
         layer?.addSublayer(layerToAttach)
@@ -143,9 +144,8 @@ final class PinnedPreviewContentView: NSView {
 
     private func configureRoundedMask() {
         layer?.backgroundColor = NSColor.clear.cgColor
-        layer?.cornerRadius = 10
-        layer?.cornerCurve = .continuous
-        layer?.masksToBounds = true
+        SystemCornerRadius.apply(to: self, radius: SystemCornerRadius.window,
+                                 masksToBounds: true)
         applySystemAppearance()
     }
 
@@ -187,19 +187,18 @@ final class PinnedLivePreviewView: NSView {
         self.videoLayer = videoLayer
         self.windowTitleForAccessibility = windowTitle
         super.init(frame: frame)
-        wantsLayer = true
-        layer?.cornerRadius = 10
-        layer?.cornerCurve = .continuous
-        layer?.masksToBounds = true
+        SystemCornerRadius.apply(to: self, radius: SystemCornerRadius.window,
+                                 masksToBounds: true)
 
-        materialView.layer?.cornerRadius = 10
+        materialView.layer?.cornerRadius = SystemCornerRadius.window
         materialView.layer?.masksToBounds = true
         addSubview(materialView)
 
         thumbnailClipView.wantsLayer = true
-        thumbnailClipView.layer?.cornerRadius = 6
-        thumbnailClipView.layer?.cornerCurve = .continuous
-        thumbnailClipView.layer?.masksToBounds = true
+        SystemCornerRadius.apply(to: thumbnailClipView,
+                                 radius: SystemCornerRadius.concentric(
+                                    outer: SystemCornerRadius.window, inset: 6),
+                                 masksToBounds: true)
         thumbnailClipView.shadow = PaperSurfaceStyle.shadow()
         addSubview(thumbnailClipView)
 

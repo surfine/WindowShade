@@ -165,6 +165,153 @@ extension SystemAppearancePolicy {
     }
 }
 
+/// 圆角刻度：整套自定义表面共用一份数值，来源是系统本身而不是手感。
+///
+/// 本机实测（macOS 27，2x）：Finder 与 ChatGPT 的标准窗口左上角弧长都是 26 px
+/// = 13 pt，且轮廓比正圆更平（连续曲率，不是 circular）。因此：
+///
+/// - 窗口级表面（浮窗、卷帘条、预览面板）用系统窗口的 13 pt，并配 `.continuous`；
+/// - 内容级卡片 / 分组盒用 12 pt；
+/// - 控件级（自绘小按钮、chip）用 6 pt；
+/// - 嵌在圆角里的内容按 HIG 的同心规则取“外圆角 − 间距”（Live Activities、
+///   Widgets、Toolbars 三处都写明：内层圆角要与外层同心，按间距递减）。
+enum SystemCornerRadius {
+    /// 窗口级表面：与 macOS 27 标准窗口的圆角一致。
+    static let window: CGFloat = 13
+    /// 内容级卡片、设置页分组盒。
+    static let card: CGFloat = 12
+    /// 控件级：自绘小按钮、chip、列表内小色块。
+    static let control: CGFloat = 6
+
+    /// 同心内圆角：外层圆角减去两层之间的间距，最小值 4 pt，
+    /// 免得在 8–10 pt 的间距下算出接近直角的“伪圆角”。
+    static func concentric(outer: CGFloat, inset: CGFloat) -> CGFloat {
+        max(4, outer - inset)
+    }
+
+    /// 卷帘条这类扁平表面：圆角不能超过高度的一半，否则路径会退化。
+    static func surfaceRadius(forHeight height: CGFloat) -> CGFloat {
+        max(0, min(window, height / 2))
+    }
+
+    /// 给图层套圆角：统一带上连续曲率，和系统窗口的轮廓一致。
+    static func apply(to view: NSView, radius: CGFloat, masksToBounds: Bool = false) {
+        view.wantsLayer = true
+        view.layer?.cornerRadius = radius
+        view.layer?.cornerCurve = .continuous
+        if masksToBounds { view.layer?.masksToBounds = true }
+    }
+}
+
+/// 连续曲率的圆角矩形路径。`NSBezierPath` 的 `roundedRect` 只能画正圆角，
+/// 而系统窗口用的是连续曲率，所以这里按 Apple 的连续曲率控制点自己画。
+/// `corners` 决定圆哪些角：卷帘条只圆上面两角，下边缘保留“窗口被卷起后”的直切口，
+/// 与截图条（真实窗口 chrome）保持一致。
+enum SystemCornerPath {
+    struct Corners: OptionSet {
+        let rawValue: Int
+        static let topLeft = Corners(rawValue: 1)
+        static let topRight = Corners(rawValue: 2)
+        static let bottomLeft = Corners(rawValue: 4)
+        static let bottomRight = Corners(rawValue: 8)
+        static let top: Corners = [.topLeft, .topRight]
+        static let all: Corners = [.topLeft, .topRight, .bottomLeft, .bottomRight]
+    }
+
+    /// 连续曲率在 90° 处的等效控制点比例（正圆弧约为 0.5523，系统轮廓更平）。
+    static let control: CGFloat = 0.4477
+
+    static func path(in rect: NSRect, radius: CGFloat,
+                     corners: Corners = .all) -> NSBezierPath {
+        let r = max(0, min(radius, min(rect.width, rect.height) / 2))
+        let path = NSBezierPath()
+        guard r > 0.5 else {
+            path.appendRect(rect)
+            return path
+        }
+        let k = r * control
+        let minX = rect.minX, maxX = rect.maxX, minY = rect.minY, maxY = rect.maxY
+        let bottomLeft = corners.contains(.bottomLeft) ? r : 0
+        let bottomRight = corners.contains(.bottomRight) ? r : 0
+        let topRight = corners.contains(.topRight) ? r : 0
+        let topLeft = corners.contains(.topLeft) ? r : 0
+
+        path.move(to: NSPoint(x: minX + bottomLeft, y: minY))
+        path.line(to: NSPoint(x: maxX - bottomRight, y: minY))
+        if bottomRight > 0 {
+            path.curve(to: NSPoint(x: maxX, y: minY + bottomRight),
+                       controlPoint1: NSPoint(x: maxX - bottomRight + k, y: minY),
+                       controlPoint2: NSPoint(x: maxX, y: minY + bottomRight - k))
+        }
+        path.line(to: NSPoint(x: maxX, y: maxY - topRight))
+        if topRight > 0 {
+            path.curve(to: NSPoint(x: maxX - topRight, y: maxY),
+                       controlPoint1: NSPoint(x: maxX, y: maxY - topRight + k),
+                       controlPoint2: NSPoint(x: maxX - topRight + k, y: maxY))
+        }
+        path.line(to: NSPoint(x: minX + topLeft, y: maxY))
+        if topLeft > 0 {
+            path.curve(to: NSPoint(x: minX, y: maxY - topLeft),
+                       controlPoint1: NSPoint(x: minX + topLeft - k, y: maxY),
+                       controlPoint2: NSPoint(x: minX, y: maxY - topLeft + k))
+        }
+        path.line(to: NSPoint(x: minX, y: minY + bottomLeft))
+        if bottomLeft > 0 {
+            path.curve(to: NSPoint(x: minX + bottomLeft, y: minY),
+                       controlPoint1: NSPoint(x: minX, y: minY + bottomLeft - k),
+                       controlPoint2: NSPoint(x: minX + bottomLeft - k, y: minY))
+        }
+        path.close()
+        return path
+    }
+
+    /// CoreGraphics 版本：截图裁切等只碰 CG 的地方也要用同一条轮廓，
+    /// 免得同一块窗口画面在悬停预览里又变回正圆角。
+    static func cgPath(in rect: CGRect, radius: CGFloat,
+                       corners: Corners = .all) -> CGPath {
+        let r = max(0, min(radius, min(rect.width, rect.height) / 2))
+        let path = CGMutablePath()
+        guard r > 0.5 else {
+            path.addRect(rect)
+            return path
+        }
+        let k = r * control
+        let minX = rect.minX, maxX = rect.maxX, minY = rect.minY, maxY = rect.maxY
+        let bottomLeft = corners.contains(.bottomLeft) ? r : 0
+        let bottomRight = corners.contains(.bottomRight) ? r : 0
+        let topRight = corners.contains(.topRight) ? r : 0
+        let topLeft = corners.contains(.topLeft) ? r : 0
+
+        path.move(to: CGPoint(x: minX + bottomLeft, y: minY))
+        path.addLine(to: CGPoint(x: maxX - bottomRight, y: minY))
+        if bottomRight > 0 {
+            path.addCurve(to: CGPoint(x: maxX, y: minY + bottomRight),
+                          control1: CGPoint(x: maxX - bottomRight + k, y: minY),
+                          control2: CGPoint(x: maxX, y: minY + bottomRight - k))
+        }
+        path.addLine(to: CGPoint(x: maxX, y: maxY - topRight))
+        if topRight > 0 {
+            path.addCurve(to: CGPoint(x: maxX - topRight, y: maxY),
+                          control1: CGPoint(x: maxX, y: maxY - topRight + k),
+                          control2: CGPoint(x: maxX - topRight + k, y: maxY))
+        }
+        path.addLine(to: CGPoint(x: minX + topLeft, y: maxY))
+        if topLeft > 0 {
+            path.addCurve(to: CGPoint(x: minX, y: maxY - topLeft),
+                          control1: CGPoint(x: minX + topLeft - k, y: maxY),
+                          control2: CGPoint(x: minX, y: maxY - topLeft + k))
+        }
+        path.addLine(to: CGPoint(x: minX, y: minY + bottomLeft))
+        if bottomLeft > 0 {
+            path.addCurve(to: CGPoint(x: minX + bottomLeft, y: minY),
+                          control1: CGPoint(x: minX, y: minY + bottomLeft - k),
+                          control2: CGPoint(x: minX + bottomLeft - k, y: minY))
+        }
+        path.closeSubpath()
+        return path
+    }
+}
+
 /// 统一材质视图：所有自定义表面都用它配置材质，避免调用点各自判断开关。
 class SystemMaterialView: NSVisualEffectView {
     var purpose: SystemAppearancePurpose {
