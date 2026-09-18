@@ -68,8 +68,8 @@ export const copy = {
     browsePoints: [
       ['先看清，再动手', '面板本身只读；只有你按下卡片上的按钮，才会动那个窗口。'],
       ['按空格先看一眼', '选中卡片或列表行后按空格，打开只读大图预览；不会激活、展开或移动窗口，点击或 Esc 关闭。'],
-      ['动作绑在你选中的那个窗口上', '打开 / 展开、折叠、置顶预览、关闭、最小化，按窗口的实际能力显示；状态用系统符号表达，不用 emoji 或异常警告色。'],
-      ['排布可以先预览，再撤销', '左半 / 右半 / 四角 / 居中 / 填满可用区域 / 移到另一显示器，先画目标轮廓；执行后读回验证，成功才登记撤销。'],
+      ['动作只作用在你选的那一扇窗口上', '打开 / 展开、折叠、置顶预览、关闭、最小化，按窗口的实际能力显示；状态用系统符号表达，不用 emoji 或异常警告色。'],
+      ['排布可以先预览，再撤销', '左半 / 右半 / 四角 / 居中 / 填满可用区域 / 移到另一显示器。先画出窗口将要去的位置，你确认后才真的移动；移动完再读一次实际位置，确认成功才记进“撤销”。'],
       ['截图只拍目标窗口', '先出标题和已有缓存，再补图；拍不到就用图标加说明，不会拿整屏截图裁切。'],
     ],
     browseHint: '指针停在图标上会打开；移开收起，点一下可以钉住。',
@@ -92,7 +92,7 @@ export const copy = {
     ],
 
     motionTitle: '合上盖子的时候，<br>桌面也跟着动。',
-    motionBody: '在有铰链传感器的 Apple Silicon MacBook 上，合屏幕的时候桌面会跟着卷起、后退或变模糊。纯属彩蛋——卷帘和钉窗口都不需要这个。',
+    motionBody: '在能读到盖子角度的 Apple Silicon MacBook 上（也就是带铰链传感器的那几款），合屏幕时桌面会跟着卷起、后退或变模糊。这只是个彩蛋——卷帘和钉窗口都不需要它。',
     videoCaption: 'WindowShade 效果录屏 · 需要带铰链角度传感器的 Apple Silicon MacBook。',
 
     settingsTitle: '设置很简单，<br>全是你要选的东西。',
@@ -106,8 +106,8 @@ export const copy = {
     faqs: [
       ['我的 Mac 能用吗？', '要 macOS 14 以上加 Apple Silicon，没有 Intel 版。卷帘和钉窗口不用传感器；合盖跟着动的效果需要有铰链传感器的 MacBook。'],
       ['要什么权限？', '辅助功能——找窗口、移窗口、恢复窗口用的。屏幕录制——截图、缩略图、预览和动态效果用的。”屏幕录制”只是系统权限的名字，画面不会离开你的电脑。'],
-      ['窗口浏览会动我的窗口吗？', '不会，除非你点卡片上的按钮。面板只是显示标题、位置和缩略图；每个动作都绑定你选中的那个窗口的身份，执行前会重新核对，核对不了就拒绝执行，不会拿标题或当前焦点去猜另一个窗口。'],
-      ['所有窗口都能卷吗？', '普通桌面窗口都行。便笺走系统自带的卷起逻辑，Adobe 那种自绘工作区另有处理。全屏、Split View、Stage Manager 和多屏还有些边界情况，建议先在你常用的 app 里试试。'],
+      ['窗口浏览会动我的窗口吗？', '不会，除非你点卡片上的按钮。面板只是显示标题、位置和缩略图；每个动作在真的执行前，都会再确认一次“就是这一扇窗口”；确认不了就不做，不会靠标题或当前焦点去猜另一扇。'],
+      ['所有窗口都能卷吗？', '普通桌面窗口都行。便笺用的是系统自己的收起方式，所以走另一条路；Adobe 这类自己画标题栏的 app 会单独处理。全屏、Split View、Stage Manager 和多显示器上还有一些没覆盖到的情况，建议先在你常用的 app 里试一次。'],
       ['怎么装？', '下载 ZIP，解压，把 WindowShade.app 拖到”应用程序”里，打开后按提示给权限。安装包有 Apple Development 签名但还没公证，第一次打开如果被拦，去”系统设置 → 隐私与安全性”点”仍要打开”就行。'],
     ],
 
@@ -175,8 +175,8 @@ export const copy = {
     browsePoints: [
       ['Look first, then act', 'The panel itself is read-only. Nothing moves until you press a button on a card.'],
       ['A look with the space bar', 'With a card or row selected, press Space for a read-only large preview. It never activates, unfolds or moves the window; click it or press Escape to close.'],
-      ['Actions stay bound to the window you picked', 'Open / unfold, fold, pin preview, close, minimize — shown according to what that window supports, with system symbols instead of emoji or error colours.'],
-      ['Arrange with a preview, then undo', 'Left/right half, corners, centre, fill the work area, move to another display — the outline is drawn first, the result is read back and verified, and only then does undo become available.'],
+      ['Actions only ever affect the window you picked', 'Open / unfold, fold, pin preview, close, minimize — shown according to what that window supports, with system symbols instead of emoji or error colours.'],
+      ['Arrange with a preview, then undo', 'Left/right half, corners, centre, fill the work area, move to another display. It draws where the window is going first, so you can say no; after the move it reads the real position back, and only then does undo become available.'],
       ['Capture only ever targets that window', 'Titles and cached images come first; if a capture fails you get the app icon and a note, never a cropped screen shot.'],
     ],
     browseHint: 'Resting the pointer opens it; moving away closes it, and a click keeps it open.',
@@ -199,7 +199,7 @@ export const copy = {
     ],
 
     motionTitle: 'Close the lid,<br>and the desktop rolls up with it.',
-    motionBody: 'On an Apple Silicon MacBook with a lid sensor, the desktop rolls, fades, or blurs as you close the screen. Just a fun extra — rolling up and pinning work without it.',
+    motionBody: 'On an Apple Silicon MacBook that can read its lid angle (the ones with a hinge sensor), the desktop rolls, fades or blurs as you close the screen. It is only an extra — rolling up and pinning work without it.',
     videoCaption: 'WindowShade screen recording · Requires an Apple Silicon MacBook with a lid angle sensor.',
 
     settingsTitle: 'Settings are simple.<br>Just the stuff you’d actually change.',
@@ -213,8 +213,8 @@ export const copy = {
     faqs: [
       ['Will it work on my Mac?', 'You need macOS 14+ and Apple Silicon — no Intel build. Rolling up and pinning don’t need any sensors. The lid-following desktop effect needs a MacBook with a hinge sensor.'],
       ['What permissions does it need?', 'Accessibility — for finding, moving, and restoring windows. Screen Recording — for snapshots, thumbnails, previews, and effects. Don’t worry, “Screen Recording” is just the system permission’s name. Nothing leaves your Mac.'],
-      ['Does window browsing move my windows?', 'No — not unless you press a button on a card. The panel only shows titles, positions, and thumbnails, and every action is bound to the identity of the window you picked, re-checked before it runs. If the target cannot be confirmed, the action is refused rather than guessed from a title or the current focus.'],
-      ['Does it work with every window?', 'Regular desktop windows, yes. Stickies uses its own built-in collapse. Adobe-style custom toolbars get special handling. Full screen, Split View, Stage Manager, and multi-display still have some rough edges — try it with your apps and see.'],
+      ['Does window browsing move my windows?', 'No — not unless you press a button on a card. The panel only shows titles, positions and thumbnails, and every action checks once more that the window is still the one you picked. If it cannot confirm that, it does nothing rather than guess from a title or whatever happens to be in front.'],
+      ['Does it work with every window?', 'Regular desktop windows, yes. Stickies collapses in its own system way, so it takes a different path; apps like Adobe’s that draw their own title bars are handled separately. Full screen, Split View, Stage Manager and multiple displays still have a few uncovered cases — try it once with the apps you use.'],
       ['How do I install it?', 'Download the ZIP, unzip, drag WindowShade.app into Applications, and open it. It’ll ask for permissions. The app is Apple Development signed but not notarized — if macOS blocks it, go to System Settings → Privacy & Security and hit Open Anyway.'],
     ],
 
