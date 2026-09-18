@@ -98,15 +98,22 @@ bash scripts/check-standard-menu.sh       # 关于面板 + ⌘V 对照全部 PAS
 - 卷帘条拖拽没有加入“吸附回原位”：这个手势没有对应的系统惯例，且应用已经提供显式
   排布动作，磁吸可能反而干扰精细定位（保留为有意不做）。
 
-## 8. 如果要交付这批改动
+## 8. 交付记录（2026-09-18）
 
 ```sh
-# 1) 本地提交（不含发布）
-git add -A && git commit -m "Polish system integration across the app"
+# 1) 本地提交：08dab48 Release 1.0.14: system integration and native polish（73 个文件）
 
-# 2) 按项目惯例发 1.0.14（版本号 + 发布说明 + 打包 + tag + release）
-#    参考 DEVELOPMENT.md 的“发布流程”
+# 2) 发 1.0.14：Info.plist 1.0.14 / 14 + docs/releases/v1.0.14.md + README 双语
+#    + build.sh --stage（同一 Apple Development 身份）+ ditto 打包 + sha256
+#    + git push origin main + tag v1.0.14 + gh release create（附件 zip 与 sha256，标记 Latest）
+#    zip：3,702,219 字节，sha256 620bb348e0d1379189d5f9ec823c17557e260d4eae3b5de2e32ed5e4d7390852
 
 # 3) 原地替换本机应用（会短暂停止并重启 WindowShade）
-cd prototype && WINDOWSHADE_CODESIGN_IDENTITY="Apple Development: …" ./build.sh && open WindowShade.app
+cd prototype && WINDOWSHADE_CODESIGN_IDENTITY="Apple Development: openkams@gmail.com (G3TN2MBQ2Q)" \
+  ./build.sh && open WindowShade.app        # pid 20543 → 14370，bundle 1.0.14 / build 14
+
+# 4) 站点：site/scripts/content.mjs 增补空格大图预览与 1.0.14 设置说明，npm run deploy
 ```
+
+发版前的完整验证结果见 §6；替换后的实机只读探针数字见
+[`docs/window-browser-progress.md`](window-browser-progress.md) 的 1.0.14 段落。
