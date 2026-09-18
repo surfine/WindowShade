@@ -387,6 +387,20 @@ final class WindowThumbnailService {
         return entry.image
     }
 
+    /// 按窗口与档位取仍然新鲜的缓存图（内部使用当前失效代数，调用方不需要拼键）。
+    func freshImage(windowKey: WindowKey, purpose: WindowThumbnailPurpose) -> CGImage? {
+        lock.lock()
+        defer { lock.unlock() }
+        let key = WindowThumbnailKey(windowKey: windowKey, purpose: purpose,
+                                     maxPixelSize: purpose.maxPixelSize,
+                                     captureVersion: captureVersion)
+        guard var entry = entries[key], now() - entry.capturedAt < freshInterval else { return nil }
+        useCounter &+= 1
+        entry.lastUsed = useCounter
+        entries[key] = entry
+        return entry.image
+    }
+
     /// 是否已有仍然新鲜的缓存图像（不改变最近使用顺序，供刷新决策读取）。
     func hasFreshImage(for key: WindowThumbnailKey) -> Bool {
         lock.lock()

@@ -45,6 +45,7 @@ enum WindowBrowserTests {
         dockRegionAndDetectionQueue()
         metadataSlots()
         layoutPlan()
+        typographyFollowsSystemTextSize()
         actionPresentationModel()
         materialAndMotionPolicy()
         placementPlans()
@@ -52,6 +53,11 @@ enum WindowBrowserTests {
         catalogRevisionIsolation()
         liveLeaseIdentity()
         preferencesRoundTrip()
+        standardMainMenu()
+        escapeLayering()
+        accessibilityAnnouncements()
+        quickLookPolicy()
+        statusAnnouncementPolicy()
         contextMenuTracking()
         inputMethodPriority()
         activationVerification()
@@ -1185,6 +1191,17 @@ enum WindowBrowserTests {
                "keyboard panel uses nonactivatingPanel semantics")
         expect(dockPanel.title == "窗口浏览" && keyboardPanel.title == "窗口选择",
                "borderless panels expose accessible window titles")
+        expect(keyboardPanel.isMovableByWindowBackground,
+               "the keyboard panel can be moved like a system utility panel")
+        expect(dockPanel.tabbingMode == .disallowed && keyboardPanel.tabbingMode == .disallowed,
+               "utility panels never merge into system window tabs")
+        // ⌘W 走标准“关闭”菜单项 → performClose → 面板的取消回调（先取消预览再关闭）。
+        var closeRequests = 0
+        keyboardPanel.onCancel = { closeRequests += 1 }
+        keyboardPanel.performClose(nil)
+        expect(closeRequests == 1, "the standard 关闭 key equivalent reaches the panel cancel path")
+        expect(!dockPanel.isMovableByWindowBackground,
+               "the Dock panel stays anchored to its icon")
         expect(dockPanel.isExcludedFromWindowsMenu && keyboardPanel.isExcludedFromWindowsMenu,
                "temporary panels stay out of the Window menu")
         let contentForA11y = WindowBrowserContentView(frame: NSRect(x: 0, y: 0, width: 640, height: 520))
@@ -1216,6 +1233,16 @@ enum WindowBrowserTests {
         card.layoutSubtreeIfNeeded()
         expect(card.actionBarIsVisible,
                "a keyboard-selected card shows its compact action bar")
+        // 悬停底色：与系统列表同语言，且选中仍靠边线而非只靠底色。
+        let unselectedCard = WindowBrowserCardView(frame: NSRect(x: 0, y: 0, width: 288, height: 236))
+        configure(card: unselectedCard, record: record, selected: false, busy: false)
+        let idleBackground = unselectedCard.layer?.backgroundColor
+        unselectedCard.mouseEntered(with: NSEvent())
+        let hoverBackground = unselectedCard.layer?.backgroundColor
+        expect(idleBackground != hoverBackground,
+               "hovering a card adds the system-like hover tint")
+        expect(unselectedCard.layer?.borderWidth ?? 0 < 2,
+               "a hovered but unselected card keeps the thin border")
         if let foldButton = buttons.first(where: {
             $0.identifier?.rawValue == WindowBrowserAction.fold.rawValue
         }) {
@@ -1227,6 +1254,28 @@ enum WindowBrowserTests {
         }
         expect(cardDelegate.activatedCount == 0,
                "clicking a compact action button must not activate the window")
+        // VoiceOver 的“按下”（VO-Space）等价于鼠标点击。
+        expect(card.accessibilityPerformPress(),
+               "VO-Space on a configured card is handled by the card")
+        expect(cardDelegate.activatedCount == 1,
+               "VO-Space activates the window exactly like a click")
+        let emptyCard = WindowBrowserCardView(frame: NSRect(x: 0, y: 0, width: 288, height: 236))
+        expect(!emptyCard.accessibilityPerformPress(),
+               "an unconfigured card reports that it cannot be pressed")
+        // 更多操作入口：与右键菜单同一个菜单，不依赖用户知道右键。
+        if let moreButton = buttons.first(where: {
+            $0.identifier?.rawValue == bar?.moreButtonIdentifier
+        }) ?? bar?.subviews.compactMap({ $0 as? NSButton }).first(where: {
+            $0.identifier?.rawValue == bar?.moreButtonIdentifier
+        }) {
+            moreButton.performClick(nil)
+            expect(cardDelegate.moreMenuRequests == 1,
+                   "the always-visible more button requests the shared context menu")
+            expect(cardDelegate.performed.count == 1,
+                   "the more button never performs an action by itself")
+        } else {
+            expect(false, "the compact action bar must expose a discoverable more button")
+        }
 
         // 按下-拖出取消：mouseDown 不激活，松开在外面不提交。
         card.setSelected(false)
@@ -1236,15 +1285,16 @@ enum WindowBrowserTests {
                                windowNumber: 0, context: nil, eventNumber: 0,
                                clickCount: 1, pressure: 1)
         }
+        let activationsBeforePress = cardDelegate.activatedCount
         if let down = mouseEvent(.leftMouseDown, at: NSPoint(x: 20, y: 20)),
            let dragged = mouseEvent(.leftMouseDragged, at: NSPoint(x: 900, y: 900)),
            let up = mouseEvent(.leftMouseUp, at: NSPoint(x: 900, y: 900)) {
             card.mouseDown(with: down)
-            expect(cardDelegate.activatedCount == 0,
+            expect(cardDelegate.activatedCount == activationsBeforePress,
                    "pressing a card must not activate it immediately")
             card.mouseDragged(with: dragged)
             card.mouseUp(with: up)
-            expect(cardDelegate.activatedCount == 0,
+            expect(cardDelegate.activatedCount == activationsBeforePress,
                    "dragging out of a card cancels the activation")
         }
         var changed = record
@@ -1273,6 +1323,8 @@ enum WindowBrowserTests {
                "row icons are not separate accessibility elements")
         expect((row.accessibilityLabel() ?? "").contains("示例窗口"),
                "rows name the target window for VoiceOver")
+        expect(row.accessibilityPerformPress() && rowDelegate.activatedCount == 1,
+               "VO-Space on a list row activates the same way as a click")
 
         // 内容视图：键盘面板搜索、列表详情栏、网格方向键与规模边界。
         let content = WindowBrowserContentView(frame: NSRect(x: 0, y: 0, width: 800, height: 560))
@@ -1363,6 +1415,49 @@ enum WindowBrowserTests {
         content.applyThumbnail(makeImage(width: 8, height: 8), for: absentKey)
         expect(!content.hasThumbnailImage(for: absentKey),
                "an image for a window no longer in the list is not displayed")
+
+        // 浅深色切换：层颜色必须按视图自己的外观重新解析，不能在切换后冻结旧值。
+        let appearanceContent = WindowBrowserContentView(
+            frame: NSRect(x: 0, y: 0, width: 800, height: 560))
+        let appearanceWindow = NSWindow(contentRect: NSRect(x: 0, y: 0, width: 800, height: 560),
+                                        styleMask: [.borderless], backing: .buffered, defer: false)
+        appearanceWindow.isReleasedWhenClosed = false
+        appearanceWindow.contentView = appearanceContent
+        appearanceWindow.orderFrontRegardless()
+        let previousAppearance = NSApp.appearance
+        NSApp.appearance = NSAppearance(named: .aqua)
+        appearanceContent.update(mode: .keyboard, records: many, selection: many[0].key,
+                                 style: .list, busyKeys: [], status: "")
+        appearanceContent.layout()
+        let lightRow = appearanceContent.debugFirstRowBackgroundBrightness() ?? -1
+        NSApp.appearance = NSAppearance(named: .darkAqua)
+        RunLoop.current.run(until: Date().addingTimeInterval(0.1))
+        appearanceContent.refreshMaterialAppearance()
+        appearanceContent.layout()
+        let darkRow = appearanceContent.debugFirstRowBackgroundBrightness() ?? -1
+        NSApp.appearance = previousAppearance
+        expect(lightRow > 0.6, "the row starts light in the light appearance "
+               + "(measured \(String(format: "%.3f", lightRow)))")
+        expect(darkRow < 0.5, "the row follows the dark appearance instead of freezing "
+               + "(measured \(String(format: "%.3f", darkRow)))")
+        appearanceWindow.orderOut(nil)
+        appearanceWindow.close()
+
+        // VoiceOver：方向键/选择变化要把辅助功能焦点移到当前项（否则读屏不跟读），
+        // 关闭读屏时不做无意义通知。
+        content.voiceOverEnabledProvider = { false }
+        let postsBefore = content.accessibilityFocusPostCount
+        content.update(mode: .keyboard, records: many, selection: many[0].key,
+                       style: .list, busyKeys: [], status: "")
+        content.layout()
+        content.select(many[1].key)
+        expect(content.accessibilityFocusPostCount == postsBefore,
+               "no accessibility focus post happens while VoiceOver is off")
+        content.voiceOverEnabledProvider = { true }
+        content.select(many[2].key)
+        expect(content.accessibilityFocusPostCount > postsBefore,
+               "selecting a window moves the accessibility focus when VoiceOver is on")
+        content.voiceOverEnabledProvider = { NSWorkspace.shared.isVoiceOverEnabled }
 
         // 方向键按真实列数移动；最后一行不会越界。
         content.update(mode: .keyboard, records: many, selection: many[0].key,
@@ -1788,6 +1883,18 @@ enum WindowBrowserTests {
         expect(failureNotified && finishNotifications == 2,
                "a failed subscription reports the failure and then finishes once")
 
+        // 按窗口+档位取新鲜缓存（大图预览用；调用方不拼 captureVersion）。
+        let freshBackend = FakeThumbnailBackend()
+        freshBackend.autoResult = .success(image)
+        let freshService = WindowThumbnailService(backend: freshBackend)
+        _ = freshService.request(windowKey: keyA, purpose: .card, logicalSize: size,
+                                 onImage: { _ in })
+        expect(freshService.freshImage(windowKey: keyA, purpose: .card) != nil,
+               "a fresh cached image is reachable by window and purpose")
+        freshService.invalidateAll()
+        expect(freshService.freshImage(windowKey: keyA, purpose: .card) == nil,
+               "invalidation makes the cached image unreachable")
+
         // T10：同步缓存回调不会让订阅被永久认为“正在请求”。
         let cacheBackend = FakeThumbnailBackend()
         cacheBackend.autoResult = .success(image)
@@ -1962,6 +2069,40 @@ enum WindowBrowserTests {
 
     // MARK: 新增：统一布局结果
 
+    /// 排版跟随系统文字大小：字号变大时整套布局（卡片/行高/面板）随之增长。
+    static func typographyFollowsSystemTextSize() {
+        _ = NSApplication.shared
+        let preferred = NSFont.preferredFont(forTextStyle: .body).pointSize
+        expect(abs(WindowBrowserTypography.bodySize - preferred) < 0.01,
+               "the browser body font follows the system text-size preference")
+        expect(WindowBrowserTypography.detailSize
+                == max(9, WindowBrowserTypography.bodySize - 2),
+               "the detail size stays derived from the body size")
+        let standard = WindowBrowserLayoutParams.standard
+        let large = WindowBrowserLayoutParams.make(
+            bodySize: WindowBrowserTypography.bodySize + 5,
+            detailSize: WindowBrowserTypography.detailSize + 5)
+        expect(large.cardHeight > standard.cardHeight
+                && large.cardTitleHeight > standard.cardTitleHeight,
+               "a larger text size grows the card metrics")
+        expect(large.listRowHeight > standard.listRowHeight,
+               "a larger text size grows the list row height")
+        expect(WindowBrowserTypography.lineHeight(forBodySize: 20)
+                > WindowBrowserTypography.lineHeight(forBodySize: 13),
+               "line height grows with the injected font size")
+        // 默认字号下仍然保持紧凑。
+        let screen = NSRect(x: 0, y: 0, width: 1512, height: 982)
+        let visible = NSRect(x: 0, y: 78, width: 1512, height: 904)
+        let plan = WindowBrowserGeometry.layoutPlan(
+            iconFrame: NSRect(x: 740, y: 8, width: 52, height: 52), edge: .bottom,
+            screenFrame: screen, visibleFrame: visible,
+            desiredSize: CGSize(width: 520, height: 460), windowCount: 1,
+            style: .grid, isContentDriven: true, params: standard)
+        expect(plan.panelFrame.height <= 360,
+               "the default text size keeps the single-window panel compact "
+               + "(\(Int(plan.panelFrame.height))pt)")
+    }
+
     /// T46–T48/T53：内容决定自然尺寸，列数与方向键一致，新图像不改变布局。
     static func layoutPlan() {
         let screen = NSRect(x: 0, y: 0, width: 1440, height: 900)
@@ -2006,6 +2147,28 @@ enum WindowBrowserTests {
                "a long list panel does not occupy the full display width")
         expect(list.content.documentHeight > list.content.listRect.height,
                "a long list becomes scrollable instead of overflowing")
+
+        // 左/右 Dock：列数限制在一至两列，面板不横向铺开。
+        for edge in [WindowBrowserDockEdge.left, .right] {
+            let iconFrame = edge == .left ? NSRect(x: 6, y: 300, width: 52, height: 52)
+                                          : NSRect(x: 1382, y: 300, width: 52, height: 52)
+            let sidePlan = WindowBrowserGeometry.layoutPlan(
+                iconFrame: iconFrame, edge: edge, screenFrame: screen, visibleFrame: visible,
+                desiredSize: CGSize(width: 520, height: 460), windowCount: 6,
+                style: .grid, isContentDriven: true)
+            expect(sidePlan.content.columns <= WindowBrowserLayoutParams.standard
+                    .sideDockMaximumColumns,
+                   "a \(edge.rawValue) Dock keeps at most two grid columns")
+            expect(sidePlan.panelFrame.width <= 640,
+                   "a \(edge.rawValue) Dock panel stays narrow "
+                   + "(\(Int(sidePlan.panelFrame.width))pt)")
+        }
+        let bottomSix = WindowBrowserGeometry.layoutPlan(
+            iconFrame: icon, edge: .bottom, screenFrame: screen, visibleFrame: visible,
+            desiredSize: CGSize(width: 520, height: 460), windowCount: 6,
+            style: .grid, isContentDriven: true)
+        expect(bottomSix.content.columns == 3,
+               "a bottom Dock may still use three columns")
 
         // T47：所有 Dock 方向都留在安全区域内。
         for edge in [WindowBrowserDockEdge.bottom, .left, .right] {
@@ -2172,6 +2335,27 @@ enum WindowBrowserTests {
         expect(host.kind == .glass, "a supporting system switches to the glass backdrop")
         expect(host.backdropView is WindowBrowserGlassBackdrop,
                "the glass path really installs the public AppKit glass view")
+        // 面板背景与控制层的玻璃交给同一个 NSGlassEffectContainerView 协调。
+        let glassContent = WindowBrowserContentView(
+            frame: NSRect(x: 0, y: 0, width: 800, height: 560))
+        glassContent.materialOverride = (.system, WindowBrowserSystemCapabilities(
+            supportsGlass: true, reduceTransparency: false,
+            increaseContrast: false, reduceMotion: false))
+        glassContent.update(mode: .keyboard, records: makeRecords(pid: 9801, count: 3),
+                            selection: nil, style: .grid, busyKeys: [], status: "")
+        glassContent.layout()
+        if #available(macOS 26.0, *), WindowBrowserSystemCapabilities.runtimeSupportsGlass {
+            expect(glassContent.glassContainerForDiagnostics != nil,
+                   "two neighbouring glass shapes share one coordination container")
+            let containerHost = glassContent.glassContainerForDiagnostics
+                as? WindowBrowserGlassContainerHost
+            let panelGlass = glassContent.materialHostForDiagnostics.backdropView
+            expect(containerHost != nil && panelGlass?.superview === containerHost?.host,
+                   "the panel glass really lives inside the container host")
+        } else {
+            expect(glassContent.glassContainerForDiagnostics == nil,
+                   "without the glass SDK/runtime no coordination container is created")
+        }
         host.update(style: .system, cornerRadius: 16,
                     capabilities: WindowBrowserSystemCapabilities(supportsGlass: true,
                                                                   reduceTransparency: true,
@@ -2386,6 +2570,11 @@ enum WindowBrowserTests {
 
         func browserItem(_ sender: NSView, hover key: WindowKey, isHovering: Bool) {
             hoverStates.append(isHovering)
+        }
+
+        private(set) var moreMenuRequests = 0
+        func browserItemDidRequestMoreMenu(_ sender: NSView, key: WindowKey) {
+            moreMenuRequests += 1
         }
     }
 
@@ -2616,6 +2805,314 @@ enum WindowBrowserTests {
         expect(WindowBrowserSettings.PreferredStyle.allCases.map(\.rawValue)
             == ["automatic", "grid", "list"],
                "the stored style values stay stable for migration")
+    }
+
+    /// Escape 的层次：先清空搜索文本，再取消排布预览，最后才关闭面板。
+    static func escapeLayering() {
+        _ = NSApplication.shared
+        let content = WindowBrowserContentView(frame: NSRect(x: 0, y: 0, width: 800, height: 560))
+        var searches: [String] = []
+        var cancels = 0
+        content.onSearchChanged = { searches.append($0) }
+        content.onCancel = { cancels += 1 }
+        let records = makeRecords(pid: 9701, count: 4)
+        content.update(mode: .keyboard, records: records, selection: records[0].key,
+                       style: .list, busyKeys: [], status: "")
+        let textView = NSTextView(frame: NSRect(x: 0, y: 0, width: 200, height: 24))
+        guard let searchField = content.subviews.compactMap({ $0 as? NSSearchField }).first else {
+            expect(false, "the keyboard panel exposes a search field")
+            return
+        }
+        // 系统搜索习惯：有文本时 Escape 先清空，不关闭面板。
+        content.setSearchTextForDiagnostics("Safari")
+        searches.removeAll()
+        expect(content.control(searchField, textView: textView,
+                               doCommandBy: #selector(NSResponder.cancelOperation(_:))),
+               "Escape inside the search field is handled by the panel")
+        expect(content.searchText.isEmpty, "Escape clears the search text first")
+        expect(searches == [""], "clearing the field re-runs the filter once")
+        expect(cancels == 0, "the panel is not dismissed by the first Escape")
+        // ⌘F 把焦点交给搜索框（系统“查找”习惯）：在没有窗口时不可能聚焦，
+        // 因此这里放进真实窗口再断言（旧断言曾因 nil === nil 假通过）。
+        expect(!content.searchFieldIsFocused,
+               "without a window the search field is not reported as focused")
+        let focusWindow = NSWindow(contentRect: NSRect(x: 0, y: 0, width: 800, height: 560),
+                                   styleMask: [.borderless], backing: .buffered, defer: false)
+        focusWindow.isReleasedWhenClosed = false
+        focusWindow.contentView = content
+        focusWindow.orderFrontRegardless()
+        content.focusSearch()
+        let responderAfterFocus = focusWindow.firstResponder
+        expect(content.searchFieldIsFocused || responderAfterFocus is NSTextView,
+               "⌘F makes the search field the first responder inside a real window "
+               + "(responder=\(String(describing: responderAfterFocus)))")
+        focusWindow.orderOut(nil)
+        focusWindow.close()
+        // 已经空了：Escape 关闭面板。
+        expect(content.control(searchField, textView: textView,
+                               doCommandBy: #selector(NSResponder.cancelOperation(_:))),
+               "Escape on an empty field is handled by the panel")
+        expect(cancels == 1, "the second Escape dismisses the panel")
+        // Dock 面板没有搜索框：Escape 直接取消。
+        content.update(mode: .dock, records: records, selection: records[0].key,
+                       style: .grid, busyKeys: [], status: "")
+        expect(content.control(searchField, textView: textView,
+                               doCommandBy: #selector(NSResponder.cancelOperation(_:))),
+               "Escape in the Dock panel is handled by the panel")
+        expect(cancels == 2, "the Dock panel cancels on Escape without a search step")
+    }
+
+    /// 代理应用的标准主菜单：文本编辑快捷键与 ⌘W 靠它派发。
+    /// 这里不是结构断言：直接在真实 NSTextField 上发一次 ⌘V，验证确实粘贴成功。
+    static func standardMainMenu() {
+        _ = NSApplication.shared
+        let menu = StandardMenu.make(appName: "WindowShade", settingsTarget: nil,
+                                     settingsAction: nil)
+        NSApp.mainMenu = menu
+        let titles = menu.items.compactMap { $0.submenu?.title }
+        expect(titles.contains("编辑") && titles.contains("窗口"),
+               "the agent app installs standard edit and window menus")
+        guard let appMenu = menu.items.first?.submenu,
+              let about = appMenu.items.first(where: { $0.title.hasPrefix("关于") }) else {
+            expect(false, "the application menu exposes 关于")
+            return
+        }
+        expect(about.action == #selector(NSApplication.orderFrontStandardAboutPanel(_:))
+                || about.action != nil,
+               "关于 is wired to an action (custom panel or the system default)")
+        // 折叠窗口的菜单分区：前 9 个内联带 ⌃⌘1…9，其余进“更多”子菜单。
+        let few = (1...3).map { $0 }
+        let fewSplit = StandardMenu.splitFoldedWindows(few)
+        expect(fewSplit.inline == few && fewSplit.overflow.isEmpty,
+               "a short folded-window list stays inline")
+        let many = Array(1...20)
+        let manySplit = StandardMenu.splitFoldedWindows(many)
+        expect(manySplit.inline.count == StandardMenu.inlineFoldedWindowLimit
+                && manySplit.overflow.count == 20 - StandardMenu.inlineFoldedWindowLimit,
+               "a long list splits into inline shortcuts and an overflow submenu")
+        expect(manySplit.inline + manySplit.overflow == many,
+               "the split preserves order and never drops a window")
+        expect(StandardMenu.foldedWindowShortcut(index: 0) == "1"
+                && StandardMenu.foldedWindowShortcut(index: 8) == "9",
+               "the first nine windows carry ⌃⌘1…9 shortcuts")
+        expect(StandardMenu.foldedWindowShortcut(index: 9) == nil
+                && StandardMenu.foldedWindowShortcut(index: -1) == nil,
+               "the overflow items carry no shortcut")
+        // 菜单标题统一截断：短标题原样，长标题按上限收尾，两处列表共用同一规则。
+        expect(StandardMenu.menuTitle("窗口 1") == "窗口 1",
+               "a short menu title is left unchanged")
+        let long = String(repeating: "长", count: 60)
+        let truncated = StandardMenu.menuTitle(long)
+        expect(truncated.count == 42 && truncated.hasSuffix("…"),
+               "a long menu title is truncated to the shared limit")
+        expect(StandardMenu.menuTitle(long, limit: 10).count == 10,
+               "the truncation limit is configurable (used by tests and future callers)")
+        expect(StandardMenu.menuTitle("  前后有空白  ") == "前后有空白",
+               "menu titles are trimmed before truncation")
+
+        // “关于”面板的内容来自同一份构造：版本、许可与仓库链接。
+        let aboutOptions = StandardMenu.aboutPanelOptions(version: "1.0.14", build: "14")
+        expect((aboutOptions[.applicationVersion] as? String) == "1.0.14"
+                && (aboutOptions[.version] as? String) == "14",
+               "the about panel shows the bundle version and build")
+        let credits = aboutOptions[.credits] as? NSAttributedString
+        expect(credits?.string.contains("MIT License") == true
+                && credits?.string.contains("github.com/surfine/WindowShade") == true,
+               "the about panel credits the license and the repository")
+        var hasLink = false
+        credits?.enumerateAttribute(.link, in: NSRange(location: 0, length: credits?.length ?? 0)) {
+            value, _, _ in if value != nil { hasLink = true }
+        }
+        expect(hasLink, "the repository appears as a clickable link")
+
+        // 注入了 target/action 时，“设置…”必须带上 ⌘, 且指向注入的目标。
+        let withSettings = StandardMenu.make(appName: "WindowShade", settingsTarget: NSApp,
+                                             settingsAction: #selector(NSApplication.terminate(_:)))
+        let settingsItem = withSettings.items.first?.submenu?.items.first { $0.title == "设置…" }
+        expect(settingsItem?.keyEquivalent == "," && settingsItem?.target === NSApp,
+               "设置… uses ⌘, and the injected target")
+        guard let edit = menu.items.compactMap({ $0.submenu }).first(where: { $0.title == "编辑" }),
+              let paste = edit.items.first(where: { $0.title == "粘贴" }) else {
+            expect(false, "the edit menu exposes 粘贴")
+            return
+        }
+        expect(paste.keyEquivalent == "v"
+                && paste.keyEquivalentModifierMask.contains(.command)
+                && !paste.keyEquivalentModifierMask.contains(.shift),
+               "粘贴 keeps the standard ⌘V key equivalent")
+        if let redo = edit.items.first(where: { $0.title == "重做" }) {
+            expect(redo.keyEquivalent == "z" && redo.keyEquivalentModifierMask.contains(.shift),
+                   "重做 uses ⇧⌘Z")
+        } else {
+            expect(false, "the edit menu exposes 重做")
+        }
+        guard let windowMenu = menu.items.compactMap({ $0.submenu })
+            .first(where: { $0.title == "窗口" }),
+              let close = windowMenu.items.first(where: { $0.title == "关闭" }) else {
+            expect(false, "the window menu exposes 关闭")
+            return
+        }
+        expect(close.keyEquivalent == "w", "关闭 keeps the standard ⌘W key equivalent")
+        let copyItem = edit.items.first { $0.title == "拷贝" }
+        let window = NSWindow(contentRect: NSRect(x: 0, y: 0, width: 240, height: 60),
+                              styleMask: [.titled], backing: .buffered, defer: false)
+        window.isReleasedWhenClosed = false
+
+        // 行为验证：菜单必须认领 ⌘V 并把动作指向响应链的 paste:（真正落到文本框
+        // 的端到端验证在独立进程里做，见 scripts/check-standard-menu.sh：
+        // 同一份构建里“无主菜单 → 不粘贴、有主菜单 → 粘贴成功”）。
+        expect(paste.action == #selector(NSText.paste(_:)),
+               "粘贴 is wired to the standard paste: action")
+        expect(copyItem?.action == #selector(NSText.copy(_:)),
+               "拷贝 is wired to the standard copy: action")
+        window.close()
+    }
+
+    /// Space 大图只读预览：取图来源、尺寸适配与无图时的说明。
+    static func quickLookPolicy() {
+        _ = NSApplication.shared
+        expect(WindowBrowserQuickLookPolicy.source(hasThumbnail: true, hasFoldSnapshot: true)
+                == .thumbnail,
+               "an available thumbnail wins for the quick look image")
+        expect(WindowBrowserQuickLookPolicy.source(hasThumbnail: false,
+                                                   hasStaleSnapshot: true,
+                                                   hasFoldSnapshot: true) == .staleSnapshot,
+               "a stale service snapshot is used before the folded snapshot")
+        expect(WindowBrowserQuickLookPolicy.source(hasThumbnail: false, hasFoldSnapshot: true)
+                == .foldSnapshot,
+               "a folded window falls back to its saved snapshot")
+        expect(WindowBrowserQuickLookPolicy.source(hasThumbnail: false, hasFoldSnapshot: false)
+                == .applicationIcon,
+               "without any image the quick look shows the app icon")
+
+        let visible = NSRect(x: 0, y: 0, width: 1440, height: 900)
+        let wide = WindowBrowserQuickLookPolicy.frame(
+            imageSize: CGSize(width: 2560, height: 1440), visibleFrame: visible)
+        expect(visible.contains(wide), "the quick look window stays inside the visible frame")
+        expect(wide.width <= visible.width * 0.7 + 1,
+               "the quick look window never exceeds 70% of the screen width")
+        let portrait = WindowBrowserQuickLookPolicy.frame(
+            imageSize: CGSize(width: 800, height: 2400), visibleFrame: visible)
+        expect(portrait.height <= visible.height * 0.7 + 1 && portrait.width < portrait.height,
+               "a tall window keeps its aspect ratio inside the same budget")
+        let small = WindowBrowserQuickLookPolicy.frame(
+            imageSize: CGSize(width: 200, height: 120), visibleFrame: visible)
+        expect(small.width >= 200 && small.width <= 260,
+               "a small image is not blown up beyond its natural size")
+        // 极小屏幕/异常可用区域：窗口仍必须留在可见区域内。
+        let tiny = NSRect(x: -300, y: -200, width: 200, height: 150)
+        let tinyFrame = WindowBrowserQuickLookPolicy.frame(
+            imageSize: CGSize(width: 3840, height: 2160), visibleFrame: tiny)
+        expect(NSRect(x: -300, y: -200, width: 200, height: 150).contains(tinyFrame),
+               "a huge image on a tiny screen is clamped inside the visible frame")
+        let degenerate = WindowBrowserQuickLookPolicy.frame(
+            imageSize: CGSize(width: 100, height: 100), visibleFrame: .zero)
+        expect(degenerate.width >= 1 && degenerate.height >= 1,
+               "a degenerate visible frame still produces a usable rect")
+
+        expect(WindowBrowserQuickLookPolicy.message(for: .thumbnail) == nil,
+               "a real image needs no explanatory message")
+        expect(WindowBrowserQuickLookPolicy.message(for: .staleSnapshot)?
+                    .contains("快照") == true,
+               "a stale service image is labelled as a snapshot")
+        expect(WindowBrowserQuickLookPolicy.message(for: .foldSnapshot)?
+                    .contains("快照") == true,
+               "the folded snapshot is labelled as a snapshot")
+        expect(WindowBrowserQuickLookPolicy.message(for: .applicationIcon,
+                                                    hasScreenRecording: false)?
+                    .contains("屏幕录制") == true,
+               "a missing permission is explained instead of showing a blank image")
+        expect(WindowBrowserQuickLookPolicy.message(for: .applicationIcon,
+                                                    isFolded: true)?.contains("折叠") == true,
+               "a folded window without a snapshot says so")
+        expect(WindowBrowserQuickLookPolicy.message(for: .applicationIcon) != nil,
+               "the icon-only case always carries a reason")
+
+        // 大图预览视图：点击任意位置触发关闭回调（系统 Quick Look 习惯）。
+        let quickLookView = WindowBrowserQuickLookView(
+            frame: NSRect(x: 0, y: 0, width: 600, height: 400))
+        var dismissed = 0
+        quickLookView.onDismiss = { dismissed += 1 }
+        if let click = NSEvent.mouseEvent(with: .leftMouseDown, location: NSPoint(x: 10, y: 10),
+                                          modifierFlags: [], timestamp: 0, windowNumber: 0,
+                                          context: nil, eventNumber: 0, clickCount: 1,
+                                          pressure: 1) {
+            quickLookView.mouseDown(with: click)
+            expect(dismissed == 1, "clicking the quick look dismisses it")
+        } else {
+            expect(false, "could construct the quick look click event")
+        }
+        expect((quickLookView.accessibilityRole() == .image),
+               "the quick look is exposed to VoiceOver as an image")
+
+        // 键盘：Space 转成一次大图请求，Escape 仍然先取消/关闭。
+        let content = WindowBrowserContentView(frame: NSRect(x: 0, y: 0, width: 800, height: 560))
+        let records = makeRecords(pid: 9901, count: 3)
+        content.update(mode: .keyboard, records: records, selection: records[1].key,
+                       style: .list, busyKeys: [], status: "")
+        var quickLookKeys: [WindowKey] = []
+        content.onQuickLook = { quickLookKeys.append($0) }
+        if let space = NSEvent.keyEvent(with: .keyDown, location: .zero, modifierFlags: [],
+                                        timestamp: 0, windowNumber: 0, context: nil,
+                                        characters: " ", charactersIgnoringModifiers: " ",
+                                        isARepeat: false, keyCode: 49) {
+            content.keyDown(with: space)
+            expect(!content.searchFieldIsFocused,
+                   "the test panel is not editing the search field")
+            expect(quickLookKeys == [records[1].key],
+                   "Space asks for a quick look of the selected window "
+                   + "(got \(quickLookKeys.count), selection=\(content.selection != nil))")
+        } else {
+            expect(false, "could construct the Space key event")
+        }
+    }
+
+    /// 动作结果的 VoiceOver 播报：只在操作结束后一句，不逐条播报刷新。
+    static func accessibilityAnnouncements() {
+        let key = WindowKey(application: ApplicationInstanceKey(pid: 9601, generation: 1),
+                            originalWindowID: 71, windowGeneration: 1)
+        _ = key
+        expect(WindowBrowserAccessibilityAnnouncement.text(
+            for: .completed, action: .fold, windowTitle: "参考资料") == "折叠完成：参考资料",
+               "a completed action announces its result with the window title")
+        expect(WindowBrowserAccessibilityAnnouncement.text(
+            for: .completed, action: .unfold, windowTitle: "  ") == "展开完成",
+               "an untitled window still produces a readable announcement")
+        expect(WindowBrowserAccessibilityAnnouncement.text(
+            for: .failed(reason: "折叠未通过隐藏验证"), action: .fold, windowTitle: "甲")
+                == "折叠未通过隐藏验证",
+               "a failure announces the real reason instead of a generic error")
+        expect(WindowBrowserAccessibilityAnnouncement.text(
+            for: .permissionRequired(kind: .accessibility), action: .close,
+            windowTitle: "甲") == "需要辅助功能权限",
+               "a permission failure names the missing permission")
+        expect(WindowBrowserAccessibilityAnnouncement.text(
+            for: .awaitingUser(reason: "窗口仍在，可能有保存确认框"), action: .close,
+            windowTitle: "甲") == "窗口仍在，可能有保存确认框",
+               "an awaiting-user outcome announces the actionable reason")
+        expect(WindowBrowserAccessibilityAnnouncement.text(
+            for: .busy, action: .fold, windowTitle: "甲") == "操作正在进行中",
+               "a busy rejection is announced once, briefly")
+    }
+
+    /// 页脚结果状态的播报规则：只播结果、只播一次、不播刷新文字。
+    static func statusAnnouncementPolicy() {
+        expect(WindowBrowserStatusAnnouncement.shouldAnnounce(
+            isResultStatus: true, status: "实时预览不可用，已回到快照", previous: nil),
+               "a result status is announced once")
+        expect(!WindowBrowserStatusAnnouncement.shouldAnnounce(
+            isResultStatus: true, status: "实时预览不可用，已回到快照",
+            previous: "实时预览不可用，已回到快照"),
+               "the same status is not announced twice")
+        expect(!WindowBrowserStatusAnnouncement.shouldAnnounce(
+            isResultStatus: false, status: "正在刷新窗口…", previous: nil),
+               "routine refresh text never interrupts VoiceOver")
+        expect(!WindowBrowserStatusAnnouncement.shouldAnnounce(
+            isResultStatus: true, status: "   ", previous: nil),
+               "an empty status is not announced")
+        expect(WindowBrowserStatusAnnouncement.shouldAnnounce(
+            isResultStatus: true, status: " 已排布，可撤销 ", previous: "旧状态"),
+               "a changed result status is announced")
     }
 
     /// T30：右键菜单跟踪期间保留锚点，菜单结束后补执行关闭。

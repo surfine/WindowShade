@@ -123,54 +123,6 @@ struct ActivePreview {
     let isPinnedLive: Bool
 }
 
-final class SafariStylePreviewView: NSView {
-    let imageView = NSImageView()
-    private let materialView = NSVisualEffectView()
-    private let thumbnailClipView = NSView()
-
-    init(frame: NSRect, image: NSImage) {
-        super.init(frame: frame)
-        wantsLayer = true
-        layer?.cornerRadius = 10
-        layer?.masksToBounds = true
-
-        materialView.material = .popover
-        materialView.blendingMode = .behindWindow
-        materialView.state = .active
-        materialView.wantsLayer = true
-        materialView.layer?.cornerRadius = 10
-        materialView.layer?.masksToBounds = true
-        addSubview(materialView)
-
-        thumbnailClipView.wantsLayer = true
-        thumbnailClipView.layer?.cornerRadius = 6
-        thumbnailClipView.layer?.masksToBounds = true
-        thumbnailClipView.shadow = PaperSurfaceStyle.shadow()
-        thumbnailClipView.layer?.backgroundColor = NSColor.white.withAlphaComponent(0.55).cgColor
-        addSubview(thumbnailClipView)
-
-        imageView.image = image
-        imageView.imageScaling = .scaleProportionallyUpOrDown
-        imageView.wantsLayer = true
-        imageView.layer?.backgroundColor = NSColor.clear.cgColor
-        thumbnailClipView.addSubview(imageView)
-    }
-
-    required init?(coder: NSCoder) {
-        fatalError("init(coder:) has not been implemented")
-    }
-
-    override func layout() {
-        super.layout()
-        materialView.frame = bounds
-
-        let padding: CGFloat = 10
-        thumbnailClipView.isHidden = false
-        thumbnailClipView.frame = bounds.insetBy(dx: padding, dy: padding)
-        imageView.frame = thumbnailClipView.bounds
-    }
-}
-
 final class ShadedAccessibilityActionTarget: NSObject {
     private let action: () -> Bool
 
@@ -517,9 +469,8 @@ final class NativeProxyTitleContentView: NSView {
         let paragraph = NSMutableParagraphStyle()
         paragraph.alignment = .left
         paragraph.lineBreakMode = .byTruncatingTail
-        let color = isDarkAppearance()
-            ? NSColor(calibratedWhite: 0.88, alpha: 1)
-            : NSColor(calibratedWhite: 0.24, alpha: 1)
+        // 系统语义颜色：深色、提高对比度与增强活力下都由系统给值，不再手调灰阶。
+        let color = NSColor.labelColor
         let attr = NSAttributedString(string: title, attributes: [
             .font: titleFont,
             .foregroundColor: color,
@@ -535,7 +486,8 @@ final class NativeProxyTitleContentView: NSView {
 
         if hovered && textFrame.width > 180 {
             let hint = NSAttributedString(string: "双击展开", attributes: [
-                .font: NSFont.systemFont(ofSize: 11), .foregroundColor: color,
+                .font: NSFont.systemFont(ofSize: 11),
+                .foregroundColor: NSColor.secondaryLabelColor,
             ])
             let hintWidth = hint.size().width
             hint.draw(at: NSPoint(x: bounds.maxX - 18 - hintWidth,
@@ -583,6 +535,38 @@ final class TitleStripView: NSImageView {
     private var dragOffset = CGPoint.zero
     private var didDrag = false
 
+    /// 截图卷帘条的画面来自真实截图，外观变化时只需要刷新边线。
+    func applySystemAppearance(capabilities: SystemAppearanceCapabilities = .current) {
+        wantsLayer = true
+        layer?.borderWidth = SystemAppearancePolicy.edgeWidth(capabilities)
+        layer?.borderColor = SystemAppearancePolicy.cgColor(NSColor.separatorColor, for: self)
+    }
+
+    /// 截图卷帘条：画面来自真实窗口截图，VoiceOver 读出标题并提供展开动作。
+    func configureAccessibility(appName: String, windowTitle: String) {
+        setAccessibilityElement(true)
+        setAccessibilityRole(.group)
+        setAccessibilityLabel(PaperSurfaceAccessibility.stripLabel(appName: appName,
+                                                                   windowTitle: windowTitle))
+        setAccessibilityHelp(PaperSurfaceAccessibility.stripHelp())
+        setAccessibilityCustomActions([
+            NSAccessibilityCustomAction(name: "展开窗口") { [weak self] in
+                self?.onDoubleClick?()
+                return true
+            }
+        ])
+        // 截图条可能被裁短，鼠标悬停时给出完整标题（与经典条一致）。
+        let clean = windowTitle.trimmingCharacters(in: .whitespacesAndNewlines)
+        toolTip = clean.isEmpty ? appName : "\(appName) — \(clean)"
+    }
+
+    /// VoiceOver 的“按下”（VO-Space）等价于双击展开。
+    override func accessibilityPerformPress() -> Bool {
+        guard onDoubleClick != nil else { return false }
+        onDoubleClick?()
+        return true
+    }
+
     override func mouseDown(with event: NSEvent) {
         guard let window = window else { return }
         onPreviewPeek?()
@@ -616,6 +600,8 @@ final class TrafficLightsView: NSView {
     init(frame: NSRect, lights: [(CGRect, TrafficAction)]) {
         self.lights = lights
         super.init(frame: frame)
+        // 只是盖在真交通灯上的透明命中区，VoiceOver 读到的是源窗口自己的按钮。
+        setAccessibilityElement(false)
     }
     required init?(coder: NSCoder) { fatalError() }
 
@@ -647,24 +633,64 @@ final class ClassicTitleStripView: NSView {
 
     private let appName: String
     private let windowTitle: String
-    private let palette: ClassicPalette
+    private let pid: pid_t
+    /// 经典配色由“应用图标色调 × 当前外观”推出，浅深色切换后需要重算，
+    /// 否则已折叠的卷帘条会停留在旧外观的纸面/文字颜色上。
+    private var palette: ClassicPalette
+    /// 外观读数（默认跟随系统）：探针可以注入“提高对比度”等组合做对照渲染。
+    var appearanceCapabilities: SystemAppearanceCapabilities = .current {
+        didSet { needsDisplay = true }
+    }
     private var dragOffset = CGPoint.zero
     private var didDrag = false
     private var pressedAction: ClassicAction?
 
-    init(frame: NSRect, appName: String, windowTitle: String, palette: ClassicPalette) {
+    init(frame: NSRect, appName: String, windowTitle: String, pid: pid_t) {
         self.appName = appName
         self.windowTitle = windowTitle
-        self.palette = palette
+        self.pid = pid
+        self.palette = classicPalette(pid: pid)
         super.init(frame: frame)
         wantsLayer = true
         toolTip = displayTitle
+        setAccessibilityElement(true)
+        setAccessibilityRole(.group)
+        setAccessibilityLabel(PaperSurfaceAccessibility.stripLabel(appName: appName,
+                                                                   windowTitle: windowTitle))
+        setAccessibilityHelp(PaperSurfaceAccessibility.stripHelp())
+        setAccessibilityCustomActions([
+            NSAccessibilityCustomAction(name: "展开窗口") { [weak self] in
+                self?.onDoubleClick?()
+                return true
+            }
+        ])
     }
 
     required init?(coder: NSCoder) { fatalError() }
 
+    /// 浅深色/强调色变化后重算配色（绘制时用最新外观）。
+    func refreshPalette() {
+        palette = classicPalette(pid: pid)
+        needsDisplay = true
+    }
+
+    override func viewDidChangeEffectiveAppearance() {
+        super.viewDidChangeEffectiveAppearance()
+        refreshPalette()
+    }
+
+    /// 诊断：当前配色（探针比较“刷新后”与“新建”是否一致）。
+    var paletteForDiagnostics: ClassicPalette { palette }
+
     private var displayTitle: String {
         descriptiveDisplayTitle(appName: appName, windowTitle: windowTitle)
+    }
+
+    /// VoiceOver 的“按下”（VO-Space）等价于双击展开。
+    override func accessibilityPerformPress() -> Bool {
+        guard onDoubleClick != nil else { return false }
+        onDoubleClick?()
+        return true
     }
 
     private func visualRect(for action: ClassicAction) -> NSRect {
@@ -699,13 +725,20 @@ final class ClassicTitleStripView: NSView {
         palette.paper.setFill()
         bounds.fill()
 
+        // 边线与顶边高光跟随“提高对比度”：高对比度下加粗并去掉高光。
+        let capabilities = appearanceCapabilities
         palette.edge.setStroke()
-        let edge = NSBezierPath(rect: bounds.insetBy(dx: 0.25, dy: 0.25))
-        edge.lineWidth = 0.5
+        let edgeWidth = SystemAppearancePolicy.edgeWidth(capabilities)
+        let edge = NSBezierPath(rect: bounds.insetBy(dx: edgeWidth / 2, dy: edgeWidth / 2))
+        edge.lineWidth = edgeWidth
         edge.stroke()
-        NSColor.white.withAlphaComponent(0.9).setFill()
-        let pixel = 1 / (window?.backingScaleFactor ?? 2)
-        NSRect(x: 0.5, y: bounds.maxY - pixel, width: max(0, bounds.width - 1), height: pixel).fill()
+        let highlight = SystemAppearancePolicy.highlightAlpha(capabilities)
+        if highlight > 0 {
+            NSColor.white.withAlphaComponent(highlight).setFill()
+            let pixel = 1 / (window?.backingScaleFactor ?? 2)
+            NSRect(x: 0.5, y: bounds.maxY - pixel,
+                   width: max(0, bounds.width - 1), height: pixel).fill()
+        }
 
         drawControl(.close)
         drawControl(.zoom)

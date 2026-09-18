@@ -44,6 +44,8 @@ struct WindowBrowserLayoutParams {
     var actionBarHeight: CGFloat = 22
     var autoListThreshold: Int = 6
     var maximumColumns: Int = 3
+    /// 左/右 Dock 的列数上限：面板贴在图标旁边，纵向列表或一至两列起步（§8）。
+    var sideDockMaximumColumns: Int = 2
     var transitionTolerance: CGFloat = 10
     var panelGap: CGFloat = 10
     var showDelay: TimeInterval = 0.25
@@ -86,10 +88,15 @@ struct WindowBrowserLayoutParams {
 
     /// 文本相关高度按系统字号派生，字号变大时标题/状态/行高一起长高，
     /// 配合“列数收缩 + 滚动”避免文字被裁切。
-    static let standard: WindowBrowserLayoutParams = {
+    static let standard = make(bodySize: WindowBrowserTypography.bodySize,
+                               detailSize: WindowBrowserTypography.detailSize)
+
+    /// 由字号推出整套排版：字号变大时标题/状态/行高一起长高，布局跟着调整。
+    static func make(bodySize: CGFloat, detailSize: CGFloat) -> WindowBrowserLayoutParams {
         var params = WindowBrowserLayoutParams()
-        let titleLine = WindowBrowserTypography.lineHeight(WindowBrowserTypography.title)
-        let detailLine = WindowBrowserTypography.lineHeight(WindowBrowserTypography.detail)
+        let titleLine = WindowBrowserTypography.lineHeight(
+            .systemFont(ofSize: bodySize, weight: .medium))
+        let detailLine = WindowBrowserTypography.lineHeight(.systemFont(ofSize: detailSize))
         params.cardTitleHeight = titleLine * 2 + 2
         params.cardStatusHeight = detailLine
         params.rowTitleHeight = titleLine
@@ -106,7 +113,7 @@ struct WindowBrowserLayoutParams {
         params.listRowHeight = max(params.listRowHeight,
                                    titleLine + detailLine + params.spacingSmall * 3)
         return params
-    }()
+    }
 }
 
 /// 内容区域的完整布局结果：面板、内容视图、网格方向键、可见项计算与截图目标尺寸
@@ -276,8 +283,10 @@ enum WindowBrowserGeometry {
         let columns: Int
         let gridHeight: CGFloat
         if style == .grid {
+            let columnCap = edge == .bottom ? params.maximumColumns : params.sideDockMaximumColumns
             let provisional = gridColumns(availableContentWidth: available.width - params.panelPadding * 2,
                                           count: windowCount, availableWidth: available.width,
+                                          maximumColumns: columnCap,
                                           params: params)
             columns = provisional
             gridHeight = gridDocumentHeight(columns: provisional, count: windowCount, params: params)
@@ -459,10 +468,12 @@ enum WindowBrowserGeometry {
     static func gridColumns(availableContentWidth: CGFloat,
                             count: Int,
                             availableWidth: CGFloat,
+                            maximumColumns: Int? = nil,
                             params: WindowBrowserLayoutParams) -> Int {
         let fits = Int(floor((availableContentWidth + params.cardSpacing)
                              / (params.cardWidth * 0.72 + params.cardSpacing)))
-        let byWidth = max(1, min(params.maximumColumns, fits))
+        let cap = max(1, maximumColumns ?? params.maximumColumns)
+        let byWidth = max(1, min(cap, fits))
         let preferred: Int
         switch count {
         case ...1: preferred = 1

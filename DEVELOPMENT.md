@@ -114,6 +114,15 @@ cd prototype
 - AX / SkyLight 调用成本基准：`WindowShade.app/Contents/MacOS/WindowShade --duo-ax-bench`
   （只读；必须用签名后的 bundle 运行，否则拿不到辅助功能权限）。
 
+### 系统集成与质感批次
+
+- 这批改动的评审索引（改动位置、行为、证据、验证命令、未验证项）见
+  [系统集成与质感批次](docs/system-integration-polish.md)。
+- 两个可复现检查脚本：`scripts/check-settings-appearance.sh`（设置页浅深色自适应）、
+  `scripts/check-standard-menu.sh`（关于面板与代理应用主菜单下的 ⌘V）。
+- 其余入口：`--settings-shots`（设置页真实截图）、`--window-browser-shots`（窗口浏览
+  组件截图 + 卷帘条配色检查）、`--standard-menu-probe`（打包探针）。
+
 ### 窗口浏览（Dock 悬停 / 窗口选择面板）
 
 - 纯逻辑与离屏 AppKit 回归：`bash tests/run-window-browser-tests.sh`
@@ -136,6 +145,26 @@ cd prototype
   `WindowBrowserPanel` 组件，数据是内置记录与本地占位画面，不打开真实窗口。
   `WINDOWSHADE_SHOTS_DEBUG=1` 会打印首张卡片的 frame 摘要。
 
+- 激活应用统一用 `NSApp.activate()`（macOS 14+ 协作式），不要再用将被取代的
+  `activate(ignoringOtherApps:)`；键盘面板的激活重试与聚焦逻辑在
+  `WindowBrowserPanel.presentKeyboardPanel()`。
+- 设置窗口页面截图（离屏、不需要录屏权限）：
+  `./build.sh --stage` 后运行
+  `.build/duo-validation/WindowShade.app/Contents/MacOS/WindowShade --settings-shots .build/settings-shots`
+  输出每页的浅色/深色 PNG 与 `manifest.txt`；侧栏由系统材质绘制、效果页的 Metal 预览
+  画布也不会出现在离屏图里。
+- 设置页外观自适应回归：`bash scripts/check-settings-appearance.sh`
+  （逐页比较浅色/深色平均亮度，防止静态颜色被冻结的缺陷复发）。
+- 系统外观（材质 / 对比度边线 / 薄纱 / 动画 / 可访问性文案）集中在
+  `prototype/Overlay/SystemAppearance.swift`：新增自定义表面时用 `SystemMaterialView`
+  并在 `applySystemAppearance(capabilities:)` 里读取 `SystemAppearancePolicy`，
+  不要在调用点各自判断 `accessibilityDisplayShould*`。`tests/run-paper-tests.sh`
+  覆盖策略本身与各表面的接线（材质、薄纱、边线、VoiceOver 文案）。
+- 代理应用的主菜单：WindowShade 是 `LSUIElement`，不显示菜单栏，但文本编辑快捷键与
+  ⌘W 依赖主菜单的 key equivalent。菜单由 `prototype/App/StandardMenu.swift` 生成，
+  在 `applicationDidFinishLaunching` 里安装；改动菜单后跑
+  `bash scripts/check-standard-menu.sh` 复核关于面板、无主菜单不粘贴、有主菜单可粘贴
+  （打包探针会临时激活应用约 1 秒）。
 - 编译期玻璃能力探测：`build.sh` 与测试脚本都会检查当前 SDK 是否包含
   `AppKit.framework/Headers/NSGlassEffectView.h`，包含时定义
   `WINDOWSHADE_SDK_HAS_GLASS`。旧 SDK 构建时玻璃分支不参与编译，运行时再用

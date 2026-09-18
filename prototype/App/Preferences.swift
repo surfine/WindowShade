@@ -71,8 +71,11 @@ extension AppDelegate {
     func quietNotice(_ message: String, log: String? = nil) {
         wlog(log ?? "notice: \(message)")
         statusNoticeWorkItem?.cancel()
-        statusItem.button?.title = " \(message)"
+        // 菜单栏标题保持短小（完整文案在 tooltip 与可访问性值里），
+        // 否则一句长提示会把状态栏条挤得很宽，顶开旁边的菜单栏项目。
+        statusItem.button?.title = " \(PaperSurfaceAccessibility.statusItemNoticeTitle(message))"
         statusItem.button?.toolTip = message
+        statusItem.button?.setAccessibilityValue(message)
         let work = DispatchWorkItem { [weak self] in
             guard let self else { return }
             self.statusNoticeWorkItem = nil
@@ -81,6 +84,16 @@ extension AppDelegate {
         statusNoticeWorkItem = work
         DispatchQueue.main.asyncAfter(deadline: .now() + 1.4, execute: work)
     }
+
+/// 系统标准“关于”面板 + 一句用途说明与许可信息（代理应用从状态栏菜单进入）。
+@objc func showAboutPanel() {
+    let version = Bundle.main.object(forInfoDictionaryKey: "CFBundleShortVersionString")
+        as? String ?? ""
+    let build = Bundle.main.object(forInfoDictionaryKey: "CFBundleVersion") as? String ?? ""
+    NSApp.orderFrontStandardAboutPanel(options: StandardMenu.aboutPanelOptions(
+        version: version, build: build))
+    NSApp.activate()
+}
 
 @objc func showPreferences() {
         showDuoSettings(section: .shade)
@@ -107,7 +120,7 @@ extension AppDelegate {
     // 与效果页一致：页内不重复大标题，只留一行说明。
     private func makeSettingsHeader(title: String, subtitle: String, symbolName: String? = nil) -> NSView {
         let caption = NSTextField(wrappingLabelWithString: subtitle)
-        caption.font = .systemFont(ofSize: 12)
+        caption.font = SystemAppearancePolicy.font(relativeToBody: -1)
         caption.textColor = .secondaryLabelColor
         caption.maximumNumberOfLines = 2
         return caption
@@ -243,7 +256,7 @@ extension AppDelegate {
     func makePrefGroupLabel(_ text: String) -> NSView {
         // 分组标题只有文字，与「效果」「高级」两页保持一致。
         let field = NSTextField(labelWithString: text)
-        field.font = .systemFont(ofSize: 12, weight: .semibold)
+        field.font = SystemAppearancePolicy.font(relativeToBody: -1, weight: .semibold)
         field.textColor = .secondaryLabelColor
         return field
     }
@@ -305,11 +318,11 @@ extension AppDelegate {
         labels.alignment = .leading
         labels.spacing = 4
         let title = NSTextField(labelWithString: name)
-        title.font = .systemFont(ofSize: 13)
+        title.font = SystemAppearancePolicy.font(relativeToBody: 0)
         labels.addArrangedSubview(title)
         if let subtitle {
             let detail = NSTextField(wrappingLabelWithString: subtitle)
-            detail.font = .systemFont(ofSize: 11)
+            detail.font = SystemAppearancePolicy.font(relativeToBody: -2)
             detail.textColor = .secondaryLabelColor
             detail.maximumNumberOfLines = 2
             labels.addArrangedSubview(detail)
@@ -376,7 +389,7 @@ extension AppDelegate {
 
         let chip = NSButton(title: granted ? "✓ 已授权" : "● 去授权", target: self, action: action)
         chip.isBordered = false
-        chip.font = .systemFont(ofSize: 12)
+        chip.font = SystemAppearancePolicy.font(relativeToBody: -1)
         chip.contentTintColor = granted ? .systemGreen : .systemOrange
         chip.wantsLayer = true
         chip.layer?.cornerRadius = 3
@@ -402,8 +415,10 @@ extension AppDelegate {
         card.wantsLayer = true
         card.layer?.cornerRadius = 10
         card.layer?.borderWidth = 0.5
-        card.layer?.borderColor = NSColor.separatorColor.cgColor
-        card.layer?.backgroundColor = NSColor.controlBackgroundColor.cgColor
+        card.layer?.borderColor = SystemAppearancePolicy.cgColor(
+            NSColor.separatorColor, for: card)
+        card.layer?.backgroundColor = SystemAppearancePolicy.cgColor(
+            NSColor.controlBackgroundColor, for: card)
         card.translatesAutoresizingMaskIntoConstraints = false
         card.widthAnchor.constraint(equalToConstant: prefCardWidth).isActive = true
 
@@ -442,7 +457,7 @@ extension AppDelegate {
 
     func makePrefName(_ text: String, y: CGFloat) -> NSTextField {
         let field = NSTextField(labelWithString: text)
-        field.font = .systemFont(ofSize: 13)
+        field.font = SystemAppearancePolicy.font(relativeToBody: 0)
         let width = prefCardWidth - (prefRowInset * 2) - prefTrailingControlColumnWidth - 12
         field.frame = NSRect(x: prefRowInset, y: y, width: width, height: 18)
         return field
@@ -450,7 +465,7 @@ extension AppDelegate {
 
     func makePrefSubtitle(_ text: String) -> NSTextField {
         let field = NSTextField(labelWithString: text)
-        field.font = .systemFont(ofSize: 11)
+        field.font = SystemAppearancePolicy.font(relativeToBody: -2)
         field.textColor = .tertiaryLabelColor
         let width = prefCardWidth - (prefRowInset * 2) - prefTrailingControlColumnWidth - 12
         field.frame = NSRect(x: prefRowInset, y: 9, width: width, height: 15)
@@ -630,7 +645,7 @@ extension AppDelegate {
             window.setContentSize(window.contentView?.frame.size ?? window.frame.size)
             window.center()
             window.makeKeyAndOrderFront(nil)
-            NSApp.activate(ignoringOtherApps: true)
+            NSApp.activate()
             return
         }
         let content = makeOnboardingContentView()
@@ -640,12 +655,14 @@ extension AppDelegate {
                               defer: false)
         window.title = "欢迎使用 WindowShade"
         window.isReleasedWhenClosed = false
+        // 引导页是独立工具窗口，不参与系统标签页合并。
+        window.tabbingMode = .disallowed
         window.center()
         window.contentView = content
         onboardingWindow = window
         refreshOnboardingState()
         window.makeKeyAndOrderFront(nil)
-        NSApp.activate(ignoringOtherApps: true)
+        NSApp.activate()
 
         onboardingRefreshTimer?.invalidate()
         if onboardingPermissionStack != nil {
@@ -672,8 +689,13 @@ extension AppDelegate {
         let needsPermissions = !hasAccessibilityPermission() || !hasScreenRecordingPermission()
         let height: CGFloat = needsPermissions ? 615 : 595
         let root = NSVisualEffectView(frame: NSRect(x: 0, y: 0, width: 500, height: height))
-        root.material = .underPageBackground
+        // 减少透明度时不使用半透明页面材质，改用不透明语义底色。
+        let appearance = SystemAppearanceCapabilities.current
+        root.material = SystemAppearancePolicy.usesOpaqueFallback(appearance)
+            ? .contentBackground : .underPageBackground
         root.blendingMode = .withinWindow
+        root.isEmphasized = appearance.increaseContrast
+            && !appearance.reduceTransparency
         let stack = NSStackView(frame: root.bounds.insetBy(dx: 24, dy: 22))
         stack.orientation = .vertical
         stack.alignment = .leading
@@ -688,12 +710,12 @@ extension AppDelegate {
         header.spacing = 12
         header.addArrangedSubview(makeOnboardingAppIconView(size: 40))
         let title = NSTextField(labelWithString: "把窗口留在原地，暂时收起内容")
-        title.font = .systemFont(ofSize: 20, weight: .semibold)
+        title.font = SystemAppearancePolicy.font(relativeToBody: 7, weight: .semibold)
         header.addArrangedSubview(title)
         stack.addArrangedSubview(header)
 
         let copy = NSTextField(labelWithString: "WindowShade 提供三种可逆操作：折叠窗口、置顶预览和动态效果。它们不会关闭窗口，也不会改变你的工作空间布局。")
-        copy.font = .systemFont(ofSize: 13)
+        copy.font = SystemAppearancePolicy.font(relativeToBody: 0)
         copy.textColor = .secondaryLabelColor
         copy.lineBreakMode = .byWordWrapping
         copy.maximumNumberOfLines = 6
@@ -707,7 +729,7 @@ extension AppDelegate {
 
         if needsPermissions {
             let permissionCopy = NSTextField(labelWithString: "WindowShade 需要这些权限来读取、移动和恢复窗口，并截取真实标题栏与窗口预览。")
-            permissionCopy.font = .systemFont(ofSize: 12)
+            permissionCopy.font = SystemAppearancePolicy.font(relativeToBody: -1)
             permissionCopy.textColor = .tertiaryLabelColor
             permissionCopy.lineBreakMode = .byWordWrapping
             permissionCopy.maximumNumberOfLines = 3
@@ -715,7 +737,7 @@ extension AppDelegate {
             stack.addArrangedSubview(permissionCopy)
 
             let progress = NSTextField(labelWithString: "")
-            progress.font = .systemFont(ofSize: 13, weight: .medium)
+            progress.font = SystemAppearancePolicy.font(relativeToBody: 0, weight: .medium)
             stack.addArrangedSubview(progress)
             onboardingProgressLabel = progress
 
@@ -743,7 +765,7 @@ extension AppDelegate {
             onboardingDoneButton = done
 
             let caption = NSTextField(labelWithString: "授权全部权限后即可完成设置")
-            caption.font = .systemFont(ofSize: 11)
+            caption.font = SystemAppearancePolicy.font(relativeToBody: -2)
             caption.textColor = .tertiaryLabelColor
             stack.addArrangedSubview(caption)
             onboardingCaption = caption
@@ -810,7 +832,7 @@ extension AppDelegate {
         card.heightAnchor.constraint(equalToConstant: height).isActive = true
 
         let heading = NSTextField(labelWithString: title)
-        heading.font = .systemFont(ofSize: 12, weight: .semibold)
+        heading.font = SystemAppearancePolicy.font(relativeToBody: -1, weight: .semibold)
         heading.textColor = .secondaryLabelColor
         heading.frame = NSRect(x: 14, y: height - 14 - 16, width: 200, height: 16)
         card.addSubview(heading)
@@ -822,7 +844,7 @@ extension AppDelegate {
                 card.addSubview(icon)
             }
             let label = NSTextField(labelWithString: text)
-            label.font = .systemFont(ofSize: 13)
+            label.font = SystemAppearancePolicy.font(relativeToBody: 0)
             label.textColor = .secondaryLabelColor
             label.frame = NSRect(x: 38, y: y - 1, width: onboardingContentWidth - 52, height: 18)
             card.addSubview(label)
@@ -848,7 +870,8 @@ extension AppDelegate {
         if isOnboarding {
             row.wantsLayer = true
             row.layer?.cornerRadius = 10
-            row.layer?.backgroundColor = NSColor.controlBackgroundColor.cgColor
+            row.layer?.backgroundColor = SystemAppearancePolicy.cgColor(
+                NSColor.controlBackgroundColor, for: row)
         }
 
         // 权限状态只在行尾呈现，整行保持中性。
@@ -874,7 +897,7 @@ extension AppDelegate {
         switch kind {
         case .onboarding where granted:
             let status = NSTextField(labelWithString: "已授权")
-            status.font = .systemFont(ofSize: 12, weight: .medium)
+            status.font = SystemAppearancePolicy.font(relativeToBody: -1, weight: .medium)
             status.textColor = .systemGreen
             status.alignment = .right
             status.frame = NSRect(x: width - 92, y: (height - 16) / 2, width: 60, height: 16)
@@ -890,7 +913,7 @@ extension AppDelegate {
             button.isBordered = false
             button.title = "● 去授权"
             button.contentTintColor = .systemOrange
-            button.font = .systemFont(ofSize: 12)
+            button.font = SystemAppearancePolicy.font(relativeToBody: -1)
             button.wantsLayer = true
             button.layer?.cornerRadius = 3
             button.sizeToFit()
@@ -900,9 +923,9 @@ extension AppDelegate {
         case .preferences:
             let link = NSButton(title: "打开设置", target: self, action: action)
             link.isBordered = false
-            link.font = .systemFont(ofSize: 12)
+            link.font = SystemAppearancePolicy.font(relativeToBody: -1)
             link.attributedTitle = NSAttributedString(string: "打开设置",
-                attributes: [.foregroundColor: NSColor.controlAccentColor, .font: NSFont.systemFont(ofSize: 12)])
+                attributes: [.foregroundColor: NSColor.controlAccentColor, .font: SystemAppearancePolicy.font(relativeToBody: -1)])
             link.sizeToFit()
             let lw = link.frame.width
             link.frame = NSRect(x: width - 14 - lw, y: (height - link.frame.height) / 2, width: lw, height: link.frame.height)
@@ -911,7 +934,7 @@ extension AppDelegate {
 
             let statusColor: NSColor = granted ? .systemGreen : .systemOrange
             let status = NSTextField(labelWithString: granted ? "已授权" : "未授权")
-            status.font = .systemFont(ofSize: 12, weight: .medium)
+            status.font = SystemAppearancePolicy.font(relativeToBody: -1, weight: .medium)
             status.textColor = statusColor
             status.sizeToFit()
             let sw = status.frame.width
@@ -1109,7 +1132,7 @@ extension AppDelegate {
             "窗口浏览是临时面板：不会替换系统 Dock，不接管原生 Command-Tab，"
             + "不跨 Space 搬运窗口。关闭功能或退出时会释放新增的观察器、截图与预览流；"
             + "原有卷帘、恢复日志与置顶预览不受影响。")
-        note.font = .systemFont(ofSize: 11)
+        note.font = SystemAppearancePolicy.font(relativeToBody: -2)
         note.textColor = .secondaryLabelColor
         note.maximumNumberOfLines = 4
         stack.addArrangedSubview(note)

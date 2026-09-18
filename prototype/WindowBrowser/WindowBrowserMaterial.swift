@@ -49,23 +49,17 @@ struct WindowBrowserSystemCapabilities {
     var increaseContrast: Bool
     var reduceMotion: Bool
 
+    /// 运行环境读数与其它表面共用同一份策略，避免两处各判断一次辅助功能开关。
     static var current: WindowBrowserSystemCapabilities {
-        WindowBrowserSystemCapabilities(
-            supportsGlass: WindowBrowserSystemCapabilities.runtimeSupportsGlass,
-            reduceTransparency: NSWorkspace.shared
-                .accessibilityDisplayShouldReduceTransparency,
-            increaseContrast: NSWorkspace.shared
-                .accessibilityDisplayShouldIncreaseContrast,
-            reduceMotion: NSWorkspace.shared.accessibilityDisplayShouldReduceMotion)
+        let shared = SystemAppearanceCapabilities.current
+        return WindowBrowserSystemCapabilities(supportsGlass: shared.supportsGlass,
+                                               reduceTransparency: shared.reduceTransparency,
+                                               increaseContrast: shared.increaseContrast,
+                                               reduceMotion: shared.reduceMotion)
     }
 
     static var runtimeSupportsGlass: Bool {
-        #if WINDOWSHADE_SDK_HAS_GLASS
-        if #available(macOS 26.0, *) { return true }
-        return false
-        #else
-        return false
-        #endif
+        SystemAppearanceCapabilities.runtimeSupportsGlass
     }
 }
 
@@ -75,7 +69,14 @@ enum WindowBrowserMaterialPolicy {
                      systemSupportsGlass: Bool,
                      reduceTransparency: Bool) -> WindowBrowserMaterialKind {
         if style == .paper { return .paper }
-        if reduceTransparency { return .paper }
+        // “减少透明度”的判定只在这里之外的 SystemAppearancePolicy 里有一份实现。
+        if SystemAppearancePolicy.usesOpaqueFallback(
+            SystemAppearanceCapabilities(reduceTransparency: reduceTransparency,
+                                         increaseContrast: false,
+                                         reduceMotion: false,
+                                         supportsGlass: systemSupportsGlass)) {
+            return .paper
+        }
         return systemSupportsGlass ? .glass : .visualEffect
     }
 
@@ -132,6 +133,8 @@ final class WindowBrowserMaterialView: NSView {
     let contentHost = NSView()
     private var backdrop: NSView?
     private var appliedCornerRadius: CGFloat = 16
+    /// 玻璃背景被外部容器（NSGlassEffectContainerView）接管后，宿主不再自己摆放它。
+    var backdropIsExternallyCoordinated = false
 
     override init(frame frameRect: NSRect) {
         super.init(frame: frameRect)
@@ -163,7 +166,7 @@ final class WindowBrowserMaterialView: NSView {
 
     override func layout() {
         super.layout()
-        backdrop?.frame = bounds
+        if !backdropIsExternallyCoordinated { backdrop?.frame = bounds }
         contentHost.frame = bounds
         (backdrop as? WindowBrowserCornerRadiusUpdatable)?.cornerRadius = appliedCornerRadius
     }
@@ -205,10 +208,11 @@ final class WindowBrowserMaterialView: NSView {
             layer?.backgroundColor = NSColor.clear.cgColor
             layer?.borderWidth = 0
         case .paper:
-            layer?.backgroundColor = NSColor.windowBackgroundColor.cgColor
-            let highContrast = NSWorkspace.shared.accessibilityDisplayShouldIncreaseContrast
-            layer?.borderColor = (highContrast
-                ? NSColor.labelColor : NSColor.separatorColor).cgColor
+            layer?.backgroundColor = SystemAppearancePolicy.cgColor(
+                NSColor.windowBackgroundColor, for: self)
+            let highContrast = SystemAppearanceCapabilities.current.increaseContrast
+            layer?.borderColor = SystemAppearancePolicy.cgColor(
+                highContrast ? NSColor.labelColor : NSColor.separatorColor, for: self)
             layer?.borderWidth = highContrast ? 1 : 0.5
         }
         needsLayout = true
@@ -218,9 +222,11 @@ final class WindowBrowserMaterialView: NSView {
         // 纸面与原生材质都由系统语义颜色绘制；这里只在对比度变化时更新边线。
         switch kind {
         case .paper:
-            layer?.backgroundColor = NSColor.windowBackgroundColor.cgColor
-            layer?.borderColor = (capabilities.increaseContrast
-                ? NSColor.labelColor : NSColor.separatorColor).cgColor
+            layer?.backgroundColor = SystemAppearancePolicy.cgColor(
+                NSColor.windowBackgroundColor, for: self)
+            layer?.borderColor = SystemAppearancePolicy.cgColor(
+                capabilities.increaseContrast ? NSColor.labelColor : NSColor.separatorColor,
+                for: self)
             layer?.borderWidth = capabilities.increaseContrast ? 1 : 0.5
         case .visualEffect, .glass:
             layer?.backgroundColor = NSColor.clear.cgColor
@@ -230,12 +236,49 @@ final class WindowBrowserMaterialView: NSView {
     var backdropView: NSView? { backdrop }
 }
 
+/// 邻近玻璃形状的协调容器（macOS 26+ 公开 API）。
+/// 面板背景与控制层的玻璃都放进同一个 `NSGlassEffectContainerView`，由系统批量
+/// 处理与合并，而不是两个各自独立的玻璃视图。
+@available(macOS 26.0, *)
+final class WindowBrowserGlassContainerHost: NSView {
+    let container = NSGlassEffectContainerView()
+    let host = NSView()
+
+    init() {
+        super.init(frame: .zero)
+        container.spacing = 8
+        container.contentView = host
+        addSubview(container)
+    }
+
+    required init?(coder: NSCoder) { nil }
+
+    override var isFlipped: Bool { true }
+
+    override func layout() {
+        super.layout()
+        container.frame = bounds
+        host.frame = container.bounds
+    }
+
+    /// 把某个玻璃背景移进容器（已在容器里就只更新 frame）。
+    func attach(_ glass: NSView, frame: NSRect) {
+        if glass.superview !== host {
+            glass.removeFromSuperview()
+            host.addSubview(glass)
+        }
+        glass.frame = frame
+    }
+}
+
 /// 控制层（应用身份、显示方式、搜索与动作区）的材质表面。
 /// 玻璃只进入操作层；窗口截图与长列表保持普通内容。
 final class WindowBrowserControlSurface: NSView {
     private(set) var kind: WindowBrowserMaterialKind = .paper
     let contentHost = NSView()
     private var backdrop: NSView?
+    /// 与面板背景一起交给玻璃容器协调时，控制层不再自己摆放背景。
+    var backdropIsExternallyCoordinated = false
     var cornerRadius: CGFloat = 10 {
         didSet {
             layer?.cornerRadius = cornerRadius
@@ -266,15 +309,16 @@ final class WindowBrowserControlSurface: NSView {
 
     override func layout() {
         super.layout()
-        backdrop?.frame = bounds
+        if !backdropIsExternallyCoordinated { backdrop?.frame = bounds }
         contentHost.frame = bounds
     }
 
     override func viewDidChangeEffectiveAppearance() {
         super.viewDidChangeEffectiveAppearance()
         let capabilities = WindowBrowserSystemCapabilities.current
-        layer?.borderColor = (capabilities.increaseContrast
-            ? NSColor.labelColor : NSColor.separatorColor).cgColor
+        layer?.borderColor = SystemAppearancePolicy.cgColor(
+            capabilities.increaseContrast ? NSColor.labelColor : NSColor.separatorColor,
+            for: self)
     }
 
     private func apply(kind newKind: WindowBrowserMaterialKind) {
@@ -309,9 +353,10 @@ final class WindowBrowserControlSurface: NSView {
             layer?.backgroundColor = NSColor.clear.cgColor
             layer?.borderWidth = 0
         case .paper:
-            layer?.backgroundColor = NSColor.controlBackgroundColor
-                .withAlphaComponent(0.86).cgColor
-            layer?.borderColor = NSColor.separatorColor.withAlphaComponent(0.55).cgColor
+            layer?.backgroundColor = SystemAppearancePolicy.cgColor(
+                NSColor.controlBackgroundColor.withAlphaComponent(0.86), for: self)
+            layer?.borderColor = SystemAppearancePolicy.cgColor(
+                NSColor.separatorColor.withAlphaComponent(0.55), for: self)
             layer?.borderWidth = 0.5
         }
         needsLayout = true
