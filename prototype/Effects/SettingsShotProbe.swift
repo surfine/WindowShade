@@ -1,8 +1,9 @@
-// 设置窗口的离屏截图入口：用生产设置窗口渲染每一页，不需要屏幕录制权限。
+// 设置窗口截图入口：用生产设置窗口渲染每一页，不需要屏幕录制权限。
 //
 // 与 `SettingsDesignPreview`（走 ScreenCaptureKit 的整窗截图）互补：这里用
-// `cacheDisplay` 拍主题框架，因此包含工具栏与内容区；侧栏由系统材质绘制，离屏
-// 渲染可能为空，需要侧栏时仍用设计预览入口。
+// `CGWindowListCreateImage` 抓自己这扇窗（已合成系统侧栏材质），失败时退回
+// `cacheDisplay`；后者拍的是主题框架，侧栏由系统材质绘制、离屏渲染会是透明区域，
+// 因此只在整窗截图拿不到结果时使用。
 //
 // 用法：WindowShade.app/Contents/MacOS/WindowShade --settings-shots [输出目录]
 
@@ -22,7 +23,8 @@ final class SettingsShotProbe {
                                                 withIntermediateDirectories: true)
         let appearances: [(String, NSAppearance.Name)] = [("light", .aqua), ("dark", .darkAqua)]
         var manifest = """
-        设置窗口页面截图（生产设置窗口，cacheDisplay 离屏渲染；侧栏由系统材质绘制，不在此图内）
+        设置窗口页面截图（生产设置窗口整窗截图，含系统侧栏材质；拿不到整窗结果时才退回
+        cacheDisplay 离屏渲染，那种情况下侧栏区域是透明的）
         macOS: \(ProcessInfo.processInfo.operatingSystemVersionString)
         scale: \(Int(NSScreen.main?.backingScaleFactor ?? 1))x
 
@@ -38,7 +40,8 @@ final class SettingsShotProbe {
                                               y: window.frame.origin.y))
                 RunLoop.current.run(until: Date().addingTimeInterval(0.25))
                 let theme = window.contentView?.superview ?? window.contentView
-                guard let theme, let image = render(view: theme) else { continue }
+                guard let theme,
+                      let image = capture(window: window) ?? render(view: theme) else { continue }
                 let bitmap = NSBitmapImageRep(cgImage: image)
                 guard let data = bitmap.representation(using: .png, properties: [:]) else { continue }
                 let name = "settings-\(appearanceName)-\(section.title).png"
@@ -60,5 +63,41 @@ final class SettingsShotProbe {
               let rep = view.bitmapImageRepForCachingDisplay(in: bounds) else { return nil }
         view.cacheDisplay(in: bounds, to: rep)
         return rep.cgImage
+    }
+
+    /// 整窗截图：这是唯一能把系统侧栏材质一起拍下来的路径（`cacheDisplay` 在侧栏
+    /// 区域会留透明）。CGWindowListCreateImage 已被 Apple 标为废弃但仍可用，所以
+    /// 走 dlsym 拿符号，拿不到就退回离屏渲染，不写死对已废弃 API 的依赖。
+    private func capture(window: NSWindow) -> CGImage? {
+        let number = window.windowNumber
+        guard number > 0 else { return nil }
+        typealias CreateImage = @convention(c) (CGRect, CGWindowListOption, CGWindowID,
+                                                CGWindowImageOption) -> Unmanaged<CGImage>?
+        guard let handle = dlopen("/System/Library/Frameworks/CoreGraphics.framework/CoreGraphics",
+                                  RTLD_LAZY),
+              let symbol = dlsym(handle, "CGWindowListCreateImage") else { return nil }
+        let createImage = unsafeBitCast(symbol, to: CreateImage.self)
+        guard let image = createImage(.null, .optionIncludingWindow, CGWindowID(number),
+                                      [.boundsIgnoreFraming, .bestResolution])?
+            .takeRetainedValue() else { return nil }
+        return isBlank(image) ? nil : image
+    }
+
+    /// 窗口还没被合成时 CGWindowListCreateImage 会返回一张全透明图，这种结果要丢弃。
+    private func isBlank(_ image: CGImage) -> Bool {
+        let width = min(image.width, 32)
+        let height = min(image.height, 32)
+        guard width > 1, height > 1,
+              let context = CGContext(data: nil, width: width, height: height,
+                                      bitsPerComponent: 8, bytesPerRow: width * 4,
+                                      space: CGColorSpaceCreateDeviceRGB(),
+                                      bitmapInfo: CGImageAlphaInfo.premultipliedLast.rawValue)
+        else { return true }
+        context.draw(image, in: CGRect(x: 0, y: 0, width: width, height: height))
+        guard let data = context.data?.assumingMemoryBound(to: UInt8.self) else { return true }
+        for index in stride(from: 3, to: width * height * 4, by: 4) where data[index] > 0 {
+            return false
+        }
+        return true
     }
 }

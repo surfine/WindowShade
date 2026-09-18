@@ -1,4 +1,5 @@
-设置窗口页面截图（生产设置窗口，cacheDisplay 离屏渲染；侧栏由系统材质绘制，不在此图内）
+设置窗口页面截图（生产设置窗口整窗截图，含系统侧栏材质；拿不到整窗结果时才退回
+cacheDisplay 离屏渲染，那种情况下侧栏区域是透明的）
 macOS: Version 27.0 (Build 26A428)
 scale: 2x
 settings-light-效果.png: 900x680 section=效果
