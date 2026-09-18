@@ -2,20 +2,27 @@ import Cocoa
 
 /// Shared edge and shadow measurements for the paper surfaces.
 enum PaperSurfaceStyle {
-    static func shadow() -> NSShadow {
+    /// 纸面阴影：提高对比度时阴影更深、更明确（系统外观策略统一决定）。
+    static func shadow(capabilities: SystemAppearanceCapabilities = .current) -> NSShadow {
         let shadow = NSShadow()
         shadow.shadowOffset = NSSize(width: 0, height: -2)
-        shadow.shadowBlurRadius = 12
-        shadow.shadowColor = NSColor.black.withAlphaComponent(0.18)
+        shadow.shadowBlurRadius = capabilities.increaseContrast ? 10 : 12
+        shadow.shadowColor = SystemAppearancePolicy.shadowColor(capabilities)
         return shadow
     }
 
-    static func drawEdge(in bounds: NSRect, scale: CGFloat) {
+    /// 细线按 backing scale 对齐；提高对比度时加粗并去掉顶部高光。
+    static func drawEdge(in bounds: NSRect, scale: CGFloat,
+                         capabilities: SystemAppearanceCapabilities = .current) {
+        let width = SystemAppearancePolicy.edgeWidth(capabilities)
         NSColor.separatorColor.setStroke()
-        let border = NSBezierPath(roundedRect: bounds.insetBy(dx: 0.25, dy: 0.25), xRadius: 10, yRadius: 10)
-        border.lineWidth = 0.5
+        let border = NSBezierPath(roundedRect: bounds.insetBy(dx: width / 2, dy: width / 2),
+                                  xRadius: 10, yRadius: 10)
+        border.lineWidth = width
         border.stroke()
-        NSColor.white.withAlphaComponent(0.9).setFill()
+        let highlight = SystemAppearancePolicy.highlightAlpha(capabilities)
+        guard highlight > 0 else { return }
+        NSColor.white.withAlphaComponent(highlight).setFill()
         let pixel = 1 / max(scale, 1)
         NSRect(x: 10, y: bounds.maxY - pixel, width: max(0, bounds.width - 20), height: pixel).fill()
     }
@@ -29,7 +36,7 @@ private final class PaperShadowView: NSView {
     override func draw(_ dirtyRect: NSRect) {
         let paper = NSBezierPath(roundedRect: bounds.insetBy(dx: 24, dy: 24), xRadius: 10, yRadius: 10)
         NSGraphicsContext.saveGraphicsState()
-        PaperSurfaceStyle.shadow().set()
+        PaperSurfaceStyle.shadow(capabilities: .current).set()
         NSColor.black.setFill()
         paper.fill()
         NSGraphicsContext.restoreGraphicsState()

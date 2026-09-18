@@ -3,6 +3,10 @@ macOS: Version 27.0 (Build 26A428)
 SDK: macOS SDK 26.x（含公开 AppKit 玻璃 API）
 scale: 2x
 数据来源：内置记录与本地生成的占位截图，未打开或操作任何真实窗口
+classic-strip-dark: classic-strip-dark.png — 经典卷帘条：深色外观（配色随外观重算）
+classic-strip-normal: classic-strip-normal.png — 经典卷帘条：普通对比度（0.5pt 细线 + 顶边高光）
+classic-strip-contrast: classic-strip-contrast.png — 经典卷帘条：提高对比度（1pt 边线、无高光）
+peek-preview: peek-preview.png — 悬停缩略图：减少透明度回退（不透明底 + withinWindow 混合）
 interaction-clip: window-browser-interaction.gif — 真实面板的状态变化序列（网格/列表切换、选择、搜索、失败状态）
 dock-single: dock-single.png — 单窗口 Dock 面板：紧凑、标题优先、无大面积空白
 dock-three: dock-three.png — 三个窗口：卡片一致，强调只落在当前项

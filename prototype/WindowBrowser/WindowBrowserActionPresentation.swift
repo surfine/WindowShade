@@ -232,6 +232,118 @@ enum WindowBrowserStatusPresentationFactory {
     }
 }
 
+/// 动作结果的 VoiceOver 播报文案（纯函数，便于断言）。
+/// 只在真实操作结束后播报一句结果，不对悬停、列表刷新或缩略图到达逐条播报。
+enum WindowBrowserAccessibilityAnnouncement {
+    static func text(for outcome: WindowBrowserActionOutcome,
+                     action: WindowBrowserAction,
+                     windowTitle: String) -> String? {
+        let target = windowTitle.trimmingCharacters(in: .whitespacesAndNewlines)
+        let suffix = target.isEmpty ? "" : "：\(target)"
+        switch outcome {
+        case .completed:
+            return "\(actionTitle(action))完成\(suffix)"
+        case .awaitingUser(let reason):
+            return reason
+        case .permissionRequired(let kind):
+            return kind == .accessibility ? "需要辅助功能权限" : "需要屏幕录制权限"
+        case .failed(let reason), .uncertain(let reason), .unsupported(let reason):
+            return reason
+        case .busy:
+            return "操作正在进行中"
+        case .targetGone:
+            return "窗口已不存在"
+        }
+    }
+
+    private static func actionTitle(_ action: WindowBrowserAction) -> String {
+        switch action {
+        case .activate: return "激活"
+        case .fold: return "折叠"
+        case .unfold: return "展开"
+        case .pinPreview: return "置顶预览"
+        case .unpinPreview: return "取消置顶预览"
+        case .close: return "关闭窗口"
+        case .minimize: return "最小化"
+        }
+    }
+}
+
+/// 页脚结果状态的播报规则（纯函数）：
+/// 只播报“结果性”状态（例如实时预览回退、排布结果、首次说明），且只在内容变化时
+/// 播报一次；常规的“正在刷新窗口…”这类刷新型状态不打断读屏。
+enum WindowBrowserStatusAnnouncement {
+    static func shouldAnnounce(isResultStatus: Bool, status: String, previous: String?) -> Bool {
+        let clean = status.trimmingCharacters(in: .whitespacesAndNewlines)
+        guard isResultStatus, !clean.isEmpty else { return false }
+        return clean != previous
+    }
+}
+
+/// Space 大图只读预览的纯策略：取图来源、窗口尺寸与无图时的说明。
+enum WindowBrowserQuickLookSource: Equatable {
+    /// 服务缓存里仍然新鲜的画面。
+    case thumbnail
+    /// 服务缓存里的过期画面：合法但可能已经过期，界面上要标成快照。
+    case staleSnapshot
+    /// 折叠窗口保存的最后画面。
+    case foldSnapshot
+    case applicationIcon
+}
+
+enum WindowBrowserQuickLookPolicy {
+    /// 取图顺序：新鲜缓存 → 过期快照 → 折叠快照 → 应用图标 + 说明。
+    /// 新鲜/过期由调用方（缩略图服务）判定，这里只做优先级。
+    static func source(hasThumbnail: Bool,
+                       hasStaleSnapshot: Bool = false,
+                       hasFoldSnapshot: Bool) -> WindowBrowserQuickLookSource {
+        if hasThumbnail { return .thumbnail }
+        if hasStaleSnapshot { return .staleSnapshot }
+        if hasFoldSnapshot { return .foldSnapshot }
+        return .applicationIcon
+    }
+
+    /// 大图窗口：按图片比例放进当前屏幕可见区域的约 70%，并留出标题/说明的空间。
+    static func frame(imageSize: CGSize, visibleFrame: NSRect,
+                      maximumFraction: CGFloat = 0.7,
+                      chromeHeight: CGFloat = 44) -> NSRect {
+        // 小屏/异常可用区域下也要留在屏幕内：上限先钳到可用区域本身，
+        // 最后再把结果矩形整体夹回可见区域。
+        let safeVisible = NSRect(x: visibleFrame.minX, y: visibleFrame.minY,
+                                 width: max(80, visibleFrame.width),
+                                 height: max(80, visibleFrame.height))
+        let maxWidth = min(safeVisible.width, max(120, safeVisible.width * maximumFraction))
+        let maxHeight = min(safeVisible.height,
+                            max(80, safeVisible.height * maximumFraction - chromeHeight))
+        let safeImage = CGSize(width: max(1, imageSize.width), height: max(1, imageSize.height))
+        let scale = min(1, min(maxWidth / safeImage.width, maxHeight / safeImage.height))
+        let size = CGSize(width: min(maxWidth, ceil(safeImage.width * scale)),
+                          height: min(safeVisible.height,
+                                      ceil(safeImage.height * scale) + chromeHeight))
+        let rect = NSRect(x: safeVisible.midX - size.width / 2,
+                          y: safeVisible.midY - size.height / 2,
+                          width: size.width, height: size.height)
+        return WindowBrowserGeometry.clamp(rect, into: safeVisible)
+    }
+
+    /// 没有画面时给出的原因（大图预览不能让用户面对一块空白）。
+    static func message(for source: WindowBrowserQuickLookSource,
+                        isMinimized: Bool = false,
+                        isFolded: Bool = false,
+                        hasScreenRecording: Bool = true) -> String? {
+        switch source {
+        case .thumbnail: return nil
+        case .staleSnapshot: return "快照（画面可能已过期）"
+        case .foldSnapshot: return "折叠时保存的快照"
+        case .applicationIcon:
+            if !hasScreenRecording { return "缺少屏幕录制权限，暂时只能显示应用图标" }
+            if isFolded { return "折叠窗口没有已保存的画面" }
+            if isMinimized { return "最小化窗口没有快照，暂时只能显示应用图标" }
+            return "暂时没有可用的窗口画面"
+        }
+    }
+}
+
 /// 系统符号的统一入口：验证符号在当前运行系统上存在，缺失时返回 nil，
 /// 视图回落到项目自绘图形或纯文字，不把任意 Unicode 几何字符当图标。
 enum WindowBrowserSymbol {

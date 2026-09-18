@@ -104,9 +104,18 @@ func hasScreenRecordingPermission() -> Bool {
     return true
 }
 
+/// 打开“系统设置”的隐私面板。
+/// macOS 13 起改由 ExtensionKit 面板承载（本机扩展标识实测为
+/// `com.apple.settings.PrivacySecurity.extension`），旧的 `com.apple.preference.security`
+/// 在部分系统上已不再打开目标页，因此先试新标识、失败再退回旧标识。
 func openPrivacySettings(_ pane: String) {
-    guard let url = URL(string: "x-apple.systempreferences:com.apple.preference.security?\(pane)") else { return }
-    NSWorkspace.shared.open(url)
+    let candidates = SystemSettingsLinks.privacyPaneCandidates(
+        pane: pane, hasModernPane: SystemSettingsLinks.hasModernPrivacyPane())
+    for candidate in candidates {
+        guard let url = URL(string: candidate) else { continue }
+        if NSWorkspace.shared.open(url) { return }
+    }
+    wlog("permissions: could not open privacy pane \(pane)")
 }
 
 func openAccessibilityPrivacySettings() { openPrivacySettings("Privacy_Accessibility") }
@@ -1697,6 +1706,8 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSMenuDelegate {
     // 当前唯一在屏幕上的预览视窗（菜单悬停或标题栏 peek 触发），见 presentPreview/
     // hidePreview。同一时刻只可能有一个，这是结构性不变量，不是巧合。
     var activePreview: ActivePreview?
+    /// 浅深色切换的 KVO 令牌（系统外观刷新用）。
+    var appearanceObservation: NSKeyValueObservation?
     // 标题栏单击 peek 的「意图」追踪：跨异步懒截图等待期，防止用户已经移开后
     // 慢截图才回来还硬生生弹出一个不相干窗口的预览。
     var peekHoverID: CGWindowID?
@@ -1783,6 +1794,8 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSMenuDelegate {
     )
 
     func applicationDidFinishLaunching(_ note: Notification) {
+        // 代理应用也要有标准主菜单：文本编辑快捷键与 ⌘W 都靠它的 key equivalent 派发。
+        installStandardMainMenu()
         duoController.start(owner: self)
         let sessionFormatter = DateFormatter()
         sessionFormatter.dateFormat = "yyyy-MM-dd HH:mm:ss"
@@ -1832,6 +1845,60 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSMenuDelegate {
                                                selector: #selector(screenParametersChanged(_:)),
                                                name: NSApplication.didChangeScreenParametersNotification,
                                                object: nil)
+        // 系统外观开关（减少透明度 / 提高对比度 / 减少动态效果）变化时，
+        // 已打开的卷帘条、悬停缩略图、置顶预览与窗口浏览面板立即跟着刷新。
+        NSWorkspace.shared.notificationCenter.addObserver(
+            self, selector: #selector(systemAppearanceOptionsChanged(_:)),
+            name: NSWorkspace.accessibilityDisplayOptionsDidChangeNotification,
+            object: nil)
+        // 强调色与系统颜色变化：刷新自定义表面里用到的语义颜色。
+        NotificationCenter.default.addObserver(
+            self, selector: #selector(systemAppearanceOptionsChanged(_:)),
+            name: NSColor.systemColorsDidChangeNotification, object: nil)
+        // 浅深色切换没有公开的 NSApplication 通知：用 KVO 观察 effectiveAppearance，
+        // 变化时同样只刷新材质与边线。
+        appearanceObservation = NSApp.observe(\.effectiveAppearance, options: [.new]) {
+            [weak self] _, _ in
+            self?.systemAppearanceOptionsChanged(
+                Notification(name: NSWorkspace.accessibilityDisplayOptionsDidChangeNotification))
+        }
+    }
+
+    /// 辅助功能外观变化：只刷新材质/边线/阴影，不动窗口状态、不触发任何捕获。
+    @objc func systemAppearanceOptionsChanged(_ note: Notification) {
+        dispatchPrecondition(condition: .onQueue(.main))
+        let capabilities = SystemAppearanceCapabilities.current
+        wlog("appearance: system options changed reduceTransparency="
+             + "\(capabilities.reduceTransparency) increaseContrast=\(capabilities.increaseContrast) "
+             + "reduceMotion=\(capabilities.reduceMotion)")
+        // 卷帘条：经典条按当前开关重绘，截图条只需刷新可访问性/边线。
+        for state in shaded.values {
+            guard let content = state.overlay?.contentView else { continue }
+            content.needsDisplay = true
+            (content as? TitleStripView)?.applySystemAppearance(capabilities: capabilities)
+            (content as? ClassicTitleStripView)?.appearanceCapabilities = capabilities
+            // 经典条的颜色由应用图标色调 × 当前外观推出：外观变化后必须重算。
+            (content as? ClassicTitleStripView)?.refreshPalette()
+        }
+        // 置顶预览会话与临时悬停缩略图。
+        pinnedPreviewController.refreshSystemAppearance(capabilities: capabilities)
+        (activePreview?.window.contentView as? SafariStylePreviewView)?
+            .applySystemAppearance(capabilities: capabilities)
+        (activePreview?.window.contentView as? PinnedLivePreviewView)?
+            .applySystemAppearance(capabilities: capabilities)
+        windowBrowserController?.refreshSystemAppearance()
+    }
+
+    /// 安装标准最小主菜单（关于/设置/服务/隐藏/退出 + 编辑 + 窗口）。
+    /// 代理应用不显示菜单栏，但文本框与关闭快捷键按系统习惯工作。
+    func installStandardMainMenu() {
+        let appName = Bundle.main.object(forInfoDictionaryKey: "CFBundleName") as? String
+            ?? "WindowShade"
+        NSApp.mainMenu = StandardMenu.make(appName: appName,
+                                           settingsTarget: self,
+                                           settingsAction: #selector(showPreferences),
+                                           aboutTarget: self,
+                                           aboutAction: #selector(showAboutPanel))
     }
 
     private func migrateDistractingDefaultSounds() {

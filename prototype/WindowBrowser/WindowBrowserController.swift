@@ -106,6 +106,10 @@ final class WindowBrowserController: NSObject {
     private var lastExcludedBundleIDs: Set<String> = []
     /// 菜单跟踪状态：跟踪期间收到的关闭请求延后到菜单结束再执行。
     private var menuTracking = WindowBrowserMenuTrackingState()
+    /// Space 打开的只读大图预览（Quick Look 习惯）：只有画面与标题。
+    private var quickLookPanel: NSPanel?
+    /// 上一次播报过的页脚结果状态，避免重复朗读。
+    private var lastAnnouncedStatus: String?
     /// 临时面板显式状态机：每个状态携带当前请求 token，用于拒绝过期回调。
     private var panelState = WindowBrowserPanelStateMachine()
     /// 打开键盘面板前的前台应用；关闭时按 AppKit 正常流程归还焦点。
@@ -265,6 +269,12 @@ final class WindowBrowserController: NSObject {
         }
         contentView?.refreshMaterialAppearance()
         refreshManagedWindows(reason: "settings")
+    }
+
+    /// 系统外观开关变化时局部刷新已打开面板的材质与层颜色（不重排、不重新发现）。
+    func refreshSystemAppearance() {
+        dispatchPrecondition(condition: .onQueue(.main))
+        contentView?.refreshMaterialAppearance()
     }
 
     func permissionsDidChange() {
@@ -578,10 +588,10 @@ final class WindowBrowserController: NSObject {
                 self.panel?.setPanelFrame(plan.panelFrame)
             }
             self.applyGeometry()
-            self.refreshPanel()
-            self.panel?.presentDockPanel()
+            // 首次说明只改页脚文本：先写状态再刷新一次，避免连做两次整面板更新。
             self.presentFirstRunHintIfNeeded()
             self.refreshPanel()
+            self.panel?.presentDockPanel()
             self.installPanelMonitors()
             self.mark("first-panel-show")
             _ = self.panelState.confirmShow(request: session.requestID)
@@ -734,13 +744,13 @@ final class WindowBrowserController: NSObject {
         let newPanel = WindowBrowserPanel(mode: .keyboard, frame: frame, params: params)
         configurePanel(newPanel, mode: .keyboard)
         panel = newPanel
+        // 首次说明只改页脚文本：先写状态，刷新由 refreshManagedWindows 一次完成。
+        presentFirstRunHintIfNeeded()
         refreshManagedWindows(reason: "keyboard-open")
         // 记录打开前的前台应用，关闭时若仍由本面板持有焦点就归还给它。
         let frontmost = NSWorkspace.shared.frontmostApplication?.processIdentifier
         keyboardPanelPreviousAppPID = (frontmost != getpid()) ? frontmost : nil
         newPanel.presentKeyboardPanel()
-        presentFirstRunHintIfNeeded()
-        refreshPanel()
         installPanelMonitors()
         _ = panelState.beginShow(request: newSession.requestID)
         _ = panelState.confirmShow(request: newSession.requestID)
@@ -775,7 +785,7 @@ final class WindowBrowserController: NSObject {
     }
 
     private func configurePanel(_ panel: WindowBrowserPanel, mode: WindowBrowserPanelMode) {
-        panel.onCancel = { [weak self] in self?.closePanel(reason: "cancel") }
+        panel.onCancel = { [weak self] in self?.handleCancel() }
         let content = panel.browserContentView
         content.onSelect = { [weak self] key in
             guard let self else { return }
@@ -805,7 +815,13 @@ final class WindowBrowserController: NSObject {
             self?.submit(action: action, key: key)
         }
         content.onContextMenu = { [weak self] key, view, event in
-            self?.presentContextMenu(for: key, in: view, event: event)
+            self?.presentContextMenu(for: key, in: view)
+        }
+        content.onMoreActions = { [weak self] key, view in
+            self?.presentContextMenu(for: key, in: view)
+        }
+        content.onQuickLook = { [weak self] key in
+            self?.showQuickLook(for: key)
         }
         content.onSearchChanged = { [weak self] text in
             guard let self else { return }
@@ -845,6 +861,24 @@ final class WindowBrowserController: NSObject {
     }
 
     private var contentView: WindowBrowserContentView? { panel?.browserContentView }
+
+    /// Escape 的层次：先取消排布预览，再关闭面板（与系统“先关预览、再关界面”一致）。
+    private func handleCancel() {
+        dispatchPrecondition(condition: .onQueue(.main))
+        if quickLookPanel != nil {
+            dismissQuickLook()
+            statusOverride = nil
+            refreshPanel()
+            return
+        }
+        if placement.previewedPlan != nil {
+            placement.cancelPreview()
+            statusOverride = "已取消排布预览"
+            refreshPanel()
+            return
+        }
+        closePanel(reason: "cancel")
+    }
 
     // MARK: 目录刷新
 
@@ -1002,6 +1036,7 @@ final class WindowBrowserController: NSObject {
         } else {
             status = ""
         }
+        announceResultStatusIfNeeded(status)
         contentView.update(mode: session.mode, records: reconciled,
                            selection: listState.selection, style: effectiveStyle,
                            busyKeys: busy,
@@ -1436,9 +1471,114 @@ final class WindowBrowserController: NSObject {
         }
     }
 
+    // MARK: 只读大图预览（Space）
+
+    /// 展示当前选中窗口的只读大图：只用已经拿到的画面（视图缓存 / 折叠快照 /
+    /// 应用图标），不激活、不展开、不移动源窗口，也不会为了预览去截图。
+    private func showQuickLook(for key: WindowKey) {
+        dispatchPrecondition(condition: .onQueue(.main))
+        guard let record = record(for: key) else { return }
+        let foldSnapshot = foldedSnapshotImage(for: key)
+        // 视图侧缓存会随滚动淘汰；服务缓存里仍然新鲜的图同样可用，过期图退化为快照。
+        let freshServiceImage = thumbnails.freshImage(windowKey: key, purpose: .selectedLarge)
+            ?? thumbnails.freshImage(windowKey: key, purpose: .card)
+        let staleServiceImage = thumbnails.snapshotImage(windowKey: key, purpose: .selectedLarge)
+            ?? thumbnails.snapshotImage(windowKey: key, purpose: .card)
+        let viewImage = contentView?.cachedThumbnailImage(for: key)
+        let freshImage = viewImage ?? freshServiceImage
+        let source = WindowBrowserQuickLookPolicy.source(
+            hasThumbnail: freshImage != nil,
+            hasStaleSnapshot: staleServiceImage != nil,
+            hasFoldSnapshot: foldSnapshot != nil)
+        let image: CGImage?
+        switch source {
+        case .thumbnail: image = freshImage
+        case .staleSnapshot: image = staleServiceImage
+        case .foldSnapshot: image = foldSnapshot
+        case .applicationIcon: image = nil
+        }
+        let icon = NSRunningApplication(processIdentifier: key.application.pid)?.icon
+        let message = WindowBrowserQuickLookPolicy.message(
+            for: source,
+            isMinimized: record.isMinimized,
+            isFolded: record.shadeState == .folded,
+            hasScreenRecording: hasScreenRecordingPermission())
+        let screen = screenForCocoaFrame(record.logicalFrame ?? .zero) ?? NSScreen.main
+        let visible = screen?.visibleFrame ?? NSRect(x: 0, y: 0, width: 1280, height: 800)
+        let imageSize = image.map { CGSize(width: $0.width, height: $0.height) }
+            ?? CGSize(width: 640, height: 400)
+        let frame = WindowBrowserQuickLookPolicy.frame(imageSize: imageSize, visibleFrame: visible)
+
+        dismissQuickLook()
+        let panel = NSPanel(contentRect: frame,
+                            styleMask: [.borderless, .nonactivatingPanel],
+                            backing: .buffered, defer: false)
+        panel.isFloatingPanel = true
+        panel.level = .floating
+        panel.isOpaque = false
+        panel.backgroundColor = .clear
+        panel.hasShadow = true
+        panel.hidesOnDeactivate = false
+        panel.isReleasedWhenClosed = false
+        panel.collectionBehavior = [.transient, .ignoresCycle, .fullScreenAuxiliary,
+                                   .moveToActiveSpace]
+        panel.isExcludedFromWindowsMenu = true
+        panel.title = "窗口大图预览"
+        panel.tabbingMode = .disallowed
+        let view = WindowBrowserQuickLookView(frame: NSRect(origin: .zero, size: frame.size))
+        view.update(record: record, image: image, icon: icon, message: message, params: params)
+        view.onDismiss = { [weak self] in self?.dismissQuickLook() }
+        panel.contentView = view
+        PaperSurfaceStyle.installShadow(on: panel)
+        panel.orderFrontRegardless()
+        quickLookPanel = panel
+        wlog("window-browser: quick look shown id=\(key.originalWindowID) source=\(source)")
+    }
+
+    private func dismissQuickLook() {
+        guard let panel = quickLookPanel else { return }
+        quickLookPanel = nil
+        panel.orderOut(nil)
+        panel.close()
+    }
+
+    /// 页脚出现“结果性”状态时播报一次（实时预览回退、排布结果、首次说明等）；
+    /// 刷新型文字（“正在刷新窗口…”）与重复内容不播报。
+    private func announceResultStatusIfNeeded(_ status: String) {
+        let isResult = statusOverride != nil
+        guard WindowBrowserStatusAnnouncement.shouldAnnounce(isResultStatus: isResult,
+                                                             status: status,
+                                                             previous: lastAnnouncedStatus)
+        else { return }
+        guard NSWorkspace.shared.isVoiceOverEnabled else {
+            lastAnnouncedStatus = status
+            return
+        }
+        lastAnnouncedStatus = status
+        NSAccessibility.post(
+            element: panel ?? NSApp,
+            notification: .announcementRequested,
+            userInfo: [.announcement: status,
+                       .priority: NSAccessibilityPriorityLevel.medium.rawValue])
+    }
+
+    /// 只在真实操作结束后播报一句结果；悬停、列表刷新与缩略图到达都不播报。
+    private func announce(outcome: WindowBrowserActionOutcome,
+                          action: WindowBrowserAction, key: WindowKey) {
+        guard NSWorkspace.shared.isVoiceOverEnabled else { return }
+        let title = record(for: key)?.displayTitle ?? ""
+        guard let text = WindowBrowserAccessibilityAnnouncement.text(
+            for: outcome, action: action, windowTitle: title) else { return }
+        NSAccessibility.post(
+            element: NSApp.mainWindow ?? NSApp,
+            notification: .announcementRequested,
+            userInfo: [.announcement: text, .priority: NSAccessibilityPriorityLevel.medium.rawValue])
+    }
+
     private func handleImmediate(outcome: WindowBrowserActionOutcome,
                                  action: WindowBrowserAction, key: WindowKey) {
         mark("action-verified-\(action.rawValue)")
+        announce(outcome: outcome, action: action, key: key)
         switch outcome {
         case .completed, .targetGone, .failed, .unsupported, .permissionRequired:
             if case .targetGone = outcome {
@@ -1467,7 +1607,7 @@ final class WindowBrowserController: NSObject {
 
     // MARK: 上下文菜单
 
-    private func presentContextMenu(for key: WindowKey, in view: NSView, event: NSEvent) {
+    private func presentContextMenu(for key: WindowKey, in view: NSView) {
         guard let menu = makeContextMenu(for: key) else { return }
         menuTracking.beginTracking()
         menu.popUp(positioning: nil, at: NSPoint(x: 0, y: view.bounds.height), in: view)
@@ -1790,6 +1930,7 @@ final class WindowBrowserController: NSObject {
         hideWork = nil
         liveWork?.cancel()
         liveWork = nil
+        dismissQuickLook()
         panel?.cancelPendingPresentation()
         liveSessionID &+= 1
         liveFailureCounts.removeAll()
@@ -1809,9 +1950,15 @@ final class WindowBrowserController: NSObject {
                 mode: session?.mode ?? .dock,
                 panelWasKeyWindow: panel?.isKeyWindow == true)
         keyboardPanelPreviousAppPID = nil
-        panel?.orderOut(nil)
-        panel?.close()
+        // 面板按系统时长淡出再关闭；停用/退出时立即关闭，不留下残留窗口。
+        let closingPanel = panel
         panel = nil
+        if let closingPanel {
+            closingPanel.dismiss(animated: running) { [weak closingPanel] in
+                closingPanel?.orderOut(nil)
+                closingPanel?.close()
+            }
+        }
         session = nil
         // 会话级状态全部复位：下一次打开面板时不能继承上一次的查询、布局判定、
         // 选中项或缩略图订阅。
