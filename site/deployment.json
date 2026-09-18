@@ -1,6 +1,6 @@
 {
   "origin": "https://windowshade.pages.dev",
-  "deployment": "https://939882a5.windowshade.pages.dev",
+  "deployment": "https://b9cb5e22.windowshade.pages.dev",
   "project": "windowshade",
   "branch": "main",
   "files": {
@@ -9,7 +9,7 @@
     "_redirects": "10738b7bf0dda342fb556e9d4a5c66e9f3ffaebc75e19aa0982ab168b72695ec",
     "app.js": "87da7b6bd85e7c2c04ce37c60b44883c171a1ac009a6f640d16d76e18aa1692c",
     "en/history/index.html": "d0c1134952ef2c2f8699a6dca3eb9d890cb3b594b7d46b72f45ada67facb7995",
-    "en/index.html": "ce7396b31727e7587b99f056f2fa9abbf1b43a8262b9fd31d1e3e5f9ff4f0c29",
+    "en/index.html": "356bf274105384c9b12f2d251774373408891b3b1ee8fa5691ef9c77662b9b32",
     "era.css": "142385f004550f821df4e04377b0e3653edad64a623299ab945c4fc19faf7700",
     "fonts/Asap-OFL.txt": "79d8634241e736e967a1539a9c766ea8e68f6d2df9f5d0edba5a4c88b1b5d8a0",
     "fonts/Asap-Variable.woff2": "3f230328a40ee9a05fe099dfb6b403a4c569aaea6690e5d483d5715ed817498f",
@@ -18,19 +18,19 @@
     "history.css": "7a0d4769e43d537798d139c1db83b6f8cfaad0bf88c77cca9881d1ce3baa7ca1",
     "history.js": "960eae11a8e944bf2315a648402a90aca8501cf3ba5e8f4c4fc238096cf1f075",
     "history/index.html": "9e33c0c5d43e25cf688bef5b9fce8b22d08e91cc28cdb47a105aecc1d24344b5",
-    "index.html": "c8d09d0e46fa1a2e2a2cf4cb855d634d59197ae9f9406d15e93ade526c913bf1",
+    "index.html": "8e9111d46ebadfdbe0ee0ef82f7e94d5150983174c9919493a686d47e6300569",
     "media/bridge-windows.webp": "a2fb90075f7efa7e46d58886edbabd910a79878f3e84ce6ec6c4b44d3b29bd7d",
     "media/duo-poster.webp": "5b136a7371a8b427d891750f3b5329e467514de7d0ad96f4948082f79db9d398",
     "media/duo.mp4": "df8de4fa8b5edfba635d7528fdc469cd2528dc9251634de6adac2d54f551edbc",
     "media/era/checkmark.svg": "c3e75dc31698c642443681f8988cf9625de86b678a9029705417814927ef2d34",
     "media/era/radio-border.svg": "aeefc5c7362f436f039886ebb889ad60348d3917acde5eb7a5f287a8085a371b",
     "media/era/radio-dot.svg": "858f8586e461eb23cb8e51fe8ea3c95202a14f574ff4a9f058dfa90c6c42f895",
-    "media/hero.webp": "2719e975d2050a49c74ed76b4e2152680d796133bfa20edd5f8b2d020e98db45",
+    "media/hero.webp": "1ccf4884b1ab73fe646e94f647fca521b6bb650e76c437566d27ccc9c8860a3e",
     "media/icon.png": "bc8aefec63ee2726a1f02ce9c5e804e557470a43c01679cd5f98d9a86833e1f1",
     "media/settings.webp": "898a9cc8afeb3a25ed0cb37c64eb504cabd08b3c06318298dcf169a1c6024c0b",
     "robots.txt": "08e4b5b0e500c11923762a8f07ed8cbfa95c129d781822f156f4face4e361e52",
     "sitemap.xml": "2adb63b2e068b97040b55c8c160ecbfb9412401ffa8241bd32183de39e269085",
-    "style.css": "86372bd5c04ab1c54d96d6a7c7d8a1ea4139968f6199e434a3e856bfff5b6d94"
+    "style.css": "882a2fc3bdcc6966a1882ce7ad4cc329831626befd24609cdc8d47ae853b0778"
   },
-  "recordedAt": "2026-09-18T04:15:29.018Z"
+  "recordedAt": "2026-09-18T04:28:26.631Z"
 }
