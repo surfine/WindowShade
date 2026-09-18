@@ -113,7 +113,7 @@ export const copy = {
 
     historyDateline: 'WINDOWSHADE FIELD NOTES · 001',
     historyTitle: '窗口让开以后，<br>你还记得它在哪里吗？',
-    historyBody: '一场关于小动作的互动考古。改一改 1994 年的点击偏好，挪一挪收起来的标题栏，再亲手启动一台真正的旧 Mac。',
+    historyBody: '窗口卷帘的历史，可以亲手操作。改一改 1994 年的点击偏好，拖一拖收起来的标题栏，还能启动一台真正的旧 Mac。',
     historyLink: '翻开窗口往事',
     researchLink: '设计理由与研究笔记',
 
@@ -220,7 +220,7 @@ export const copy = {
 
     historyDateline: 'WINDOWSHADE FIELD NOTES · 001',
     historyTitle: 'After a window moves aside,<br>what do you remember?',
-    historyBody: 'An interactive dig into a small gesture. Change a 1994 preference, drag a collapsed window, and boot an actual old Mac.',
+    historyBody: 'A hands-on look at WindowShade’s history. Change a 1994 preference, drag a collapsed title bar, and boot an actual old Mac.',
     historyLink: 'Explore the window stories',
     researchLink: 'Design rationale and research notes',
 
