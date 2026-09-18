@@ -2,7 +2,8 @@
 # 设置窗口外观自适应性检查：
 # 用隔离构建的 --settings-shots 渲染每一页的浅色/深色版本，然后逐页比较内容区平均
 # 亮度。曾经出现过“深色模式下分组卡片仍是浅色、文字几乎不可读”的缺陷（静态颜色被
-# 冻结），这个脚本用来防止同类回归。
+# 冻结），这个脚本用来防止同类回归；同时检查侧栏材质确实被拍了下来（离屏
+# cacheDisplay 会把侧栏留成透明区域，整窗截图才有系统材质）。
 set -euo pipefail
 ROOT="$(cd "$(dirname "$0")/.." && pwd)"
 OUT="$ROOT/.build/design-review/settings-appearance-check.txt"
@@ -36,6 +37,22 @@ func meanBrightness(_ path: String, xRange: Range<Int>, yRange: Range<Int>) -> D
     return count > 0 ? sum / Double(count) : nil
 }
 
+func meanAlpha(_ path: String, xRange: Range<Int>, yRange: Range<Int>) -> Double? {
+    guard let image = NSImage(contentsOfFile: path), let tiff = image.tiffRepresentation,
+          let rep = NSBitmapImageRep(data: tiff) else { return nil }
+    var sum = 0.0
+    var count = 0
+    for y in stride(from: yRange.lowerBound, to: min(yRange.upperBound, rep.pixelsHigh), by: 8) {
+        for x in stride(from: xRange.lowerBound, to: min(xRange.upperBound, rep.pixelsWide), by: 8) {
+            if let color = rep.colorAt(x: x, y: y) {
+                sum += color.alphaComponent
+                count += 1
+            }
+        }
+    }
+    return count > 0 ? sum / Double(count) : nil
+}
+
 @main
 enum SettingsAppearanceCheck {
     static func main() {
@@ -56,6 +73,12 @@ enum SettingsAppearanceCheck {
             print(String(format: "%-14@ %.3f   %.3f   %.3f   %@",
                          page as NSString, light, dark, delta, ok ? "PASS" : "FAIL"))
         }
+        let sidebarAlpha = meanAlpha("\(directory)/settings-dark-窗口浏览.png",
+                                     xRange: 40..<400, yRange: 120..<1300) ?? 0
+        let sidebarOK = sidebarAlpha > 0.95
+        if !sidebarOK { failures += 1 }
+        print(String(format: "sidebar material alpha %.3f   %@",
+                     sidebarAlpha, sidebarOK ? "PASS" : "FAIL"))
         print(failures == 0 ? "PASS: settings pages follow the appearance"
                             : "FAILED: \(failures) page(s) do not adapt")
         exit(failures == 0 ? 0 : 1)
