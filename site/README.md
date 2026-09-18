@@ -33,7 +33,7 @@ npm run deploy
 
 ## 素材来源
 
-- `hero.webp`：使用内置 image_gen 生成的品牌纸面作品；不是应用截图。完整提示词见 `hero-prompt.txt`。生成后用 Sharp 转 WebP，1536 × 1024。
+- `hero.webp` 与 `bridge-windows.webp`：项目真实界面渲染，由应用自带的 `--window-browser-shots` 工具用确定性示例数据生成（跑的是生产 AppKit 组件，不打开任何用户窗口）；图里保留工具自带的“示例数据（fixture）”标注，避免被当成真实桌面。UI 改动后重跑该工具、转 WebP 即可。
 - `icon.png`：项目原有 `assets/app-icon/windowshade-app-icon.png` 的 192px 版本。
 - `settings.webp`：项目真实原生设置截图（作者提供，v1.0.12 的“效果”页），压缩为 WebP 1440 × 1088。之前的深色截图已删除：新截图只有浅色外观，页面说明也相应改成不再声称跟随系统明暗。
 - `duo.mp4` 与 `duo-poster.webp`：项目现有 `assets/windowshade-demo.gif` 的无声 H.264 转码和首帧，约 7 秒。已检查整段内容，没有采用含私人聊天的早期 social 截图。
