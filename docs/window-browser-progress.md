@@ -2347,3 +2347,21 @@ mainThreadMaxGap=6ms`，身份/几何/能力解析各 0 ms。`--window-browser-h
 覆盖，Release Notes 增补圆角条目与“本次一并修好的问题”；本机应用用同一身份
 （TeamIdentifier FVGLY6W6S4）重新构建替换，pid 24486 → 73939，bundle 1.0.14 / build 14。
 线上附件 sha256 与本地打包结果一致；隔离构建的 `--window-browser-idle-probe` 干净。
+
+## 2026-09-18：面板不再留“下巴”（A+C）
+
+用户看了单窗口 Dock 面板的截图，问“为什么要留一个下巴”。查清是三层无条件预留叠加：
+`chromeHeight` 多算一圈 `panelPadding * 2`（24 pt，内容布局并不消费）、没有状态文字时
+页脚仍占 19 pt + 8 pt 间隔、卡片标题无条件按两行预留 34 pt。
+
+- **实现**：新增 `footerVisible` / `effectiveFooterHeight`（没有状态文字时页脚不占位）、
+  `cardTitleLines` + `titleLineHeight`（标题按实际行数取高，量宽结果带缓存，200 条约
+  0.02 ms）、`derivedParams(base:titles:hasStatus:)`（控制器与截图探针共用同一条派生规则）；
+  面板高度公式去掉无人消费的余量，`content.listRect.height == documentHeight` 成了断言；
+  状态出现/消失导致的高度变化走 `setPanelFrame(_:animated:)`，减少动态效果下不动画。
+- **实测（生产组件截图，2x）**：单窗口 · 短标题 · 无状态 312×329 → **312×274 pt**，
+  卡片下方空档 51.5 → 12.5 pt；有状态时 312×289 pt；三窗口两行网格 612×575 → 612×519 pt。
+- **验证**：窗口浏览 604 → **605 项断言**（新增圆角/页脚/标题行数与“面板贴合内容”、
+  “状态行只让面板长出一条页脚”的断言）、纸质与双屏测试、五页设置外观检查、
+  标准菜单对照、`--window-browser-shots`（`classic-strip-palette PASS`）全部通过；
+  `docs/visual-qa/**` 重新生成。

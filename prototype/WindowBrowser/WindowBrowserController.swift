@@ -98,7 +98,11 @@ final class WindowBrowserController: NSObject {
     /// 主线程只负责读取会话里的既有句柄与写回 UI。
     private let axResolverQueue = DispatchQueue(label: "WindowShade.window-browser-ax",
                                                 qos: .userInitiated)
-    private let params: WindowBrowserLayoutParams
+    /// 字号缩放后的基础排版参数；每次刷新再按内容派生“标题几行 / 页脚是否占位”。
+    private let baseParams: WindowBrowserLayoutParams
+    private var params: WindowBrowserLayoutParams
+    /// 内容变化导致面板高度改变时，下一次设置 frame 要走动画而不是跳变。
+    private var pendingAnimatedResize = false
     private var permissionGeneration: UInt64 = 1
     private var lastAccessibility = false
     private var lastScreenRecording = false
@@ -192,6 +196,7 @@ final class WindowBrowserController: NSObject {
          params: WindowBrowserLayoutParams = .standard) {
         self.owner = owner
         self.scheduler = scheduler
+        self.baseParams = params
         self.params = params
         let backend = WindowBrowserThumbnailBackend()
         self.thumbnails = WindowThumbnailService(backend: backend)
@@ -604,7 +609,9 @@ final class WindowBrowserController: NSObject {
         guard let plan = dockLayoutPlan(for: target) else { return }
         geometry = WindowBrowserPanelGeometry(plan: plan)
         guard let panel, panel.isVisible, session?.mode == .dock else { return }
-        panel.setPanelFrame(plan.panelFrame)
+        let animated = pendingAnimatedResize
+        pendingAnimatedResize = false
+        panel.setPanelFrame(plan.panelFrame, animated: animated)
     }
 
     /// 首次打开窗口浏览时给一次简短说明，并在页脚停留到下一次刷新。
@@ -1037,6 +1044,18 @@ final class WindowBrowserController: NSObject {
             status = ""
         }
         announceResultStatusIfNeeded(status)
+        // 内容驱动的两处高度：标题真的会换行才占两行；没有状态文字时页脚不占位。
+        // 面板本来就是“内容决定尺寸”，这两处不再无条件预留空白。
+        let derived = WindowBrowserGeometry.derivedParams(
+            base: baseParams, titles: reconciled.map(\.displayTitle),
+            hasStatus: !status.isEmpty)
+        let panelHeightChanged = derived.cardHeight != params.cardHeight
+            || derived.footerVisible != params.footerVisible
+        params = derived
+        contentView.params = params
+        if panelHeightChanged, session.mode == .dock, panel?.isVisible == true {
+            pendingAnimatedResize = true
+        }
         contentView.update(mode: session.mode, records: reconciled,
                            selection: listState.selection, style: effectiveStyle,
                            busyKeys: busy,
