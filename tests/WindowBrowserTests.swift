@@ -2129,6 +2129,61 @@ enum WindowBrowserTests {
                                                  inset: scaled.cardPadding),
                "the concentric relationship survives a larger system text size")
 
+        // A+C：标题真的换行才占两行；没有状态文字时页脚不占位，面板贴合内容。
+        let base = WindowBrowserLayoutParams.standard
+        expect(WindowBrowserGeometry.titleLines(forTitles: ["音樂"], availableWidth: 272) == 1,
+               "a short window title needs a single line")
+        expect(WindowBrowserGeometry.titleLines(
+                forTitles: ["备忘录 — 一个非常长的中英文混合窗口标题 Window Title 2026"],
+                availableWidth: 272) == 2,
+               "a long window title keeps the second line reserved")
+        let shortTitle = WindowBrowserGeometry.derivedParams(
+            base: base, titles: ["音樂"], hasStatus: false)
+        expect(shortTitle.cardTitleLines == 1
+                && shortTitle.cardHeight == base.cardHeight - base.titleLineHeight,
+               "a single-line title releases one line of card height "
+               + "(\(Int(base.cardHeight)) → \(Int(shortTitle.cardHeight))pt)")
+        expect(!shortTitle.footerVisible && shortTitle.effectiveFooterHeight == 0,
+               "an empty status line releases the footer")
+        let withStatus = WindowBrowserGeometry.derivedParams(
+            base: base, titles: ["音樂"], hasStatus: true)
+        expect(withStatus.footerVisible && withStatus.effectiveFooterHeight > 0,
+               "a real status line still reserves the footer")
+        expect(WindowBrowserGeometry.chromeHeight(params: shortTitle, mode: .dock)
+                < WindowBrowserGeometry.chromeHeight(params: withStatus, mode: .dock),
+               "the collapsed footer makes the panel shorter")
+
+        let compact = WindowBrowserGeometry.layoutPlan(
+            iconFrame: icon, edge: .bottom, screenFrame: screen, visibleFrame: visible,
+            desiredSize: base.dockPanelSize, windowCount: 1, style: .grid,
+            isContentDriven: true, params: shortTitle)
+        let legacy = WindowBrowserGeometry.layoutPlan(
+            iconFrame: icon, edge: .bottom, screenFrame: screen, visibleFrame: visible,
+            desiredSize: base.dockPanelSize, windowCount: 1, style: .grid,
+            isContentDriven: true, params: base)
+        expect(compact.panelFrame.height < legacy.panelFrame.height,
+               "one window without a status line is shorter than before "
+               + "(\(Int(compact.panelFrame.height)) vs \(Int(legacy.panelFrame.height))pt)")
+        let compactExpected = base.headerHeight + base.spacingTight
+            + shortTitle.cardHeight + base.panelPadding
+        expect(compact.panelFrame.height == compactExpected,
+               "the panel hugs its content (\(Int(compactExpected))pt) instead of "
+               + "reserving empty space below")
+        expect(compact.content.listRect.height == compact.content.documentHeight,
+               "no leftover band between the card and the panel edge")
+        expect(compact.content.listRect.minY == base.panelPadding,
+               "the content keeps one panel padding below it "
+               + "(\(Int(compact.content.listRect.minY))pt)")
+        let statusPlan = WindowBrowserGeometry.layoutPlan(
+            iconFrame: icon, edge: .bottom, screenFrame: screen, visibleFrame: visible,
+            desiredSize: base.dockPanelSize, windowCount: 1, style: .grid,
+            isContentDriven: true, params: withStatus)
+        let statusExpected = base.headerHeight + base.spacingTight + withStatus.cardHeight
+            + base.effectiveFooterHeight + base.spacingSmall
+        expect(statusPlan.panelFrame.height == statusExpected,
+               "the status line grows the panel by exactly the footer strip "
+               + "(\(Int(statusPlan.panelFrame.height)) vs \(Int(compact.panelFrame.height))pt)")
+
         // T46：单窗口面板不继承 520×460 下限。
         let single = WindowBrowserGeometry.layoutPlan(
             iconFrame: icon, edge: .bottom, screenFrame: screen, visibleFrame: visible,

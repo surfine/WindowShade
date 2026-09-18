@@ -24,6 +24,9 @@ final class WindowBrowserShotProbe {
         let searchText: String
         let selectionIndex: Int
         let note: String
+        /// 面板页脚文字。空字符串表示“没有状态文字”：这种情况下面板不预留页脚，
+        /// 直接贴合内容（对应用户日常打开 Dock 面板时的样子）。
+        var statusText: String = "示例数据（fixture）"
     }
 
     private let outputDirectory: URL
@@ -41,7 +44,8 @@ final class WindowBrowserShotProbe {
                      appearance: nil, appearanceStyle: nil, reduceTransparency: false,
                      increaseContrast: false, screenRecordingAvailable: true,
                      searchText: "", selectionIndex: 0,
-                     note: "单窗口 Dock 面板：紧凑、标题优先、无大面积空白"),
+                     note: "单窗口 Dock 面板：没有状态文字时页脚不占位，卡片下方不再留空档",
+                     statusText: ""),
             Scenario(name: "dock-three", mode: .dock, style: .grid, recordCount: 3,
                      appearance: nil, appearanceStyle: nil, reduceTransparency: false,
                      increaseContrast: false, screenRecordingAvailable: true,
@@ -195,6 +199,12 @@ final class WindowBrowserShotProbe {
     private func render(scenario: Scenario) -> URL? {
         let records = Self.records(count: scenario.recordCount,
                                    includeImages: scenario.screenRecordingAvailable)
+        // 与控制器同一条派生规则：标题真的换行才占两行，没有状态文字时页脚不占位。
+        let statusText = scenario.screenRecordingAvailable
+            ? scenario.statusText : "缺少屏幕录制权限：显示图标与文字"
+        let shotParams = WindowBrowserGeometry.derivedParams(
+            base: .standard, titles: records.map(\.displayTitle),
+            hasStatus: !statusText.isEmpty)
         let screen = NSScreen.main ?? NSScreen.screens.first
         let size: CGSize
         if scenario.mode == .keyboard {
@@ -204,8 +214,9 @@ final class WindowBrowserShotProbe {
                 iconFrame: NSRect(x: 0, y: 0, width: 52, height: 52), edge: .bottom,
                 screenFrame: screen?.frame ?? NSRect(x: 0, y: 0, width: 1440, height: 900),
                 visibleFrame: screen?.visibleFrame ?? NSRect(x: 0, y: 80, width: 1440, height: 820),
-                desiredSize: WindowBrowserLayoutParams.standard.dockPanelSize,
-                windowCount: records.count, style: scenario.style, isContentDriven: true)
+                desiredSize: shotParams.dockPanelSize,
+                windowCount: records.count, style: scenario.style, isContentDriven: true,
+                params: shotParams)
             size = plan.panelFrame.size
         }
         let frame = NSRect(x: 80, y: 80, width: size.width, height: size.height)
@@ -225,11 +236,11 @@ final class WindowBrowserShotProbe {
 
         let selection = records.indices.contains(scenario.selectionIndex)
             ? records[scenario.selectionIndex].key : records.first?.key
+        content.params = shotParams
         content.update(mode: scenario.mode, records: records, selection: selection,
                        style: scenario.style, busyKeys: [],
                        screenRecordingAvailable: scenario.screenRecordingAvailable,
-                       status: scenario.screenRecordingAvailable
-                           ? "示例数据（fixture）" : "缺少屏幕录制权限：显示图标与文字")
+                       status: statusText)
         for record in records {
             if !scenario.screenRecordingAvailable {
                 // 与控制器一致：缺少屏幕录制权限时仍然显示图标、标题与原因。
@@ -249,11 +260,15 @@ final class WindowBrowserShotProbe {
             let filtered = records.filter {
                 WindowBrowserSearch.matches(normalizedQuery: needle, record: $0)
             }
+            let searchStatus = "搜索：\(scenario.searchText)（\(filtered.count) 个结果）"
+            content.params = WindowBrowserGeometry.derivedParams(
+                base: .standard, titles: filtered.map(\.displayTitle),
+                hasStatus: !searchStatus.isEmpty)
             content.update(mode: scenario.mode, records: filtered,
                            selection: filtered.first?.key, style: scenario.style,
                            busyKeys: [],
                            screenRecordingAvailable: scenario.screenRecordingAvailable,
-                           status: "搜索：\(scenario.searchText)（\(filtered.count) 个结果）")
+                           status: searchStatus)
             for record in filtered where scenario.screenRecordingAvailable {
                 content.applyThumbnail(Self.placeholderImage(for: record), for: record.key,
                                        note: "示例窗口画面")
