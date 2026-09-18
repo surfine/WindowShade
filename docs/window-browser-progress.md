@@ -2339,3 +2339,11 @@ mainThreadMaxGap=6ms`，身份/几何/能力解析各 0 ms。`--window-browser-h
   `classic-strip-palette PASS`、`--window-browser-idle-probe` 干净；`docs/visual-qa/**`
   全部重新生成。离屏 `cacheDisplay` 会把图层蒙版按 1x 光栅化，归档图上量到的弧长比实际
   小约 20%（已用独立实验确认），因此数值以代码值与调试打印 `panelRadius=13.0` 为准。
+
+交付（同一版本重新发布）：用户确认“同一版本重新发布”，于是按 `DEVELOPMENT.md` 覆盖
+1.0.14——tag 从 `3136799` 移到 `6c744cc`，附件 `WindowShade-v1.0.14.zip`
+（3,706,089 字节，sha256
+`77aa0ebc014b88bcfe79f418cfd969c5fdca561aa323eb8a2db91af565748f55`）与校验文件已
+覆盖，Release Notes 增补圆角条目与“本次一并修好的问题”；本机应用用同一身份
+（TeamIdentifier FVGLY6W6S4）重新构建替换，pid 24486 → 73939，bundle 1.0.14 / build 14。
+线上附件 sha256 与本地打包结果一致；隔离构建的 `--window-browser-idle-probe` 干净。
