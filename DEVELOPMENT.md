@@ -211,6 +211,9 @@ cd prototype
 
 用户向说明（入口、权限、兼容限制）见 [docs/window-browser.md](docs/window-browser.md)。
 
+需要外部/更高智能模型复检时，用 [复检交接与提示词](docs/review-handoff.md)：里面是
+可直接粘贴的评审提示词、按任务书逐条列出的需求与状态、已知缺口、冲突消解记录和复检命令。
+
 动手优化这一带之前先读 [docs/performance.md](docs/performance.md)：那里记了
 实测的调用成本量级、已走通的手法、以及已经证伪的方向（比如用 SkyLight
 绕开目标 App 在 SIP 开启时不可行），可以省掉重新走一遍的时间。
