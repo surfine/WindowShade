@@ -2280,3 +2280,35 @@ mainThreadMaxGap=6ms`，身份/几何/能力解析各 0 ms。`--window-browser-h
 
 发版后仅追加文档（本段与探针数据），源码与发布包保持一致；zip 内容为 tag 提交
 构建，构建脚本使用与商店一致的身份签名。
+
+## 2026-09-18：1.0.14 提交、推送、发版、站点更新与本机替换
+
+用户确认“时机成熟”，于是执行此前按任务书暂缓的动作：
+
+| 动作 | 结果 |
+| --- | --- |
+| 提交 | `08dab48 Release 1.0.14: system integration and native polish`（73 个文件） |
+| 推送 | `git push origin main`（4406db3 → 08dab48） |
+| 发版 | tag `v1.0.14` + `gh release create`，附件 `WindowShade-v1.0.14.zip`（3,702,219 字节）与 sha256 `620bb348…0852`，标记 Latest |
+| 站点 | `site/scripts/content.mjs` 增补“空格大图预览”与 1.0.14 设置说明，`npm run deploy` → 生产域名已核验中英文页面包含新文案 |
+| 本机替换 | `./build.sh`（同一 Apple Development 身份，TeamIdentifier FVGLY6W6S4）替换 `prototype/WindowShade.app` 并 `open`；进程 20543 → 14370，bundle 1.0.14 / build 14 |
+
+发版前的完整回归：窗口浏览 **589 项断言**、纸质与双屏测试、`build.sh --check`、
+`build.sh --stage` 隔离构建与签名、五页设置外观检查（浅深亮度差 0.744–0.842）、
+标准菜单对照（⌘V）、`--window-browser-shots`（`classic-strip-palette PASS`）。
+性能表按同一次会话内背靠背对照改写为 271.8 / 342.8 → 24.2 / 30.4 ms。
+
+替换后同一构建的实机只读证据（1.0.14 已安装构建，非人工编排）：
+
+- 启动后本机日志出现一次 Dock 入口会话：`thumbnails started=1 delivered=1
+  queuedCancelled=0 stale=0 duplicates=0 running=0 ax discoveryRequests=1 axCalls=2
+  detections=5`，阶段耗时 `first-panel-show +345.7ms`、`first-new-screenshot +528.6ms`。
+- `--window-browser-catalog-probe` 四次：total 1710 / 334 / 518 / 895 ms（第一次为冷启动，
+  其余 334–895 ms，接近 1.0.13 记录的 371 ms），`apps=15 windows=18 empty=4 failed=0`，
+  `mainThreadMaxGap` 6 / 6 / 6 / 15 ms。
+- `--window-browser-idle-probe`：功能关闭后 `axQueries=0 thumbnailsInFlight=0
+  thumbnailBytes=0`、`settingsRestored=true`。
+
+仍未验证的项目与 1.0.13 相同（真实斜向悬停、真实键盘焦点、真实折叠与排布、玻璃折射整窗
+截图、1x 与多显示器 / 120 Hz、能耗与长会话内存），已写入 `window-browser-visual-qa.md`
+与 `releases/v1.0.14.md`。
