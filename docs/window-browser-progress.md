@@ -2289,7 +2289,7 @@ mainThreadMaxGap=6ms`，身份/几何/能力解析各 0 ms。`--window-browser-h
 | --- | --- |
 | 提交 | `08dab48 Release 1.0.14: system integration and native polish`（73 个文件） |
 | 推送 | `git push origin main`（4406db3 → 08dab48） |
-| 发版 | tag `v1.0.14` + `gh release create`，附件 `WindowShade-v1.0.14.zip`（3,702,219 字节）与 sha256 `620bb348…0852`，标记 Latest |
+| 发版 | tag `v1.0.14` + `gh release create`，附件 `WindowShade-v1.0.14.zip`（首发 3,702,219 字节，sha256 `620bb348…0852`），标记 Latest |
 | 站点 | `site/scripts/content.mjs` 增补“空格大图预览”与 1.0.14 设置说明，`npm run deploy` → 生产域名已核验中英文页面包含新文案 |
 | 本机替换 | `./build.sh`（同一 Apple Development 身份，TeamIdentifier FVGLY6W6S4）替换 `prototype/WindowShade.app` 并 `open`；进程 20543 → 14370，bundle 1.0.14 / build 14 |
 
@@ -2312,3 +2312,9 @@ mainThreadMaxGap=6ms`，身份/几何/能力解析各 0 ms。`--window-browser-h
 仍未验证的项目与 1.0.13 相同（真实斜向悬停、真实键盘焦点、真实折叠与排布、玻璃折射整窗
 截图、1x 与多显示器 / 120 Hz、能耗与长会话内存），已写入 `window-browser-visual-qa.md`
 与 `releases/v1.0.14.md`。
+
+补充（同一版本重新发布）：设置页截图入口改成整窗截图（侧栏材质进入归档图）后，按
+`DEVELOPMENT.md` 的“同一版本重新发布”路径重发 1.0.14——tag 从 `08dab48` 移到
+`3136799`，附件 `WindowShade-v1.0.14.zip`（3,702,451 字节，sha256
+`f7e0086606fae80e7ff9a3c1f097a3cbffa7a0be0cc683c38f19e89d37ab7a35`）与校验文件
+已覆盖，Release Notes 同步；本机应用用同一身份重新构建替换（pid 14370 → 24486）。
