@@ -22,6 +22,9 @@ extension AppDelegate {
     statusItem.button?.font = .monospacedDigitSystemFont(ofSize: 13, weight: .regular)
     statusItem.button?.imagePosition = .imageLeft
     statusItem.button?.toolTip = "WindowShade"
+    statusItem.button?.setAccessibilityLabel(PaperSurfaceAccessibility.statusItemLabel)
+    statusItem.button?.setAccessibilityValue(
+      PaperSurfaceAccessibility.statusItemValue(foldedCount: shaded.count))
     rebuildMenu()
     wlog("status item visible=\(statusItem.isVisible)")
   }
@@ -44,6 +47,10 @@ extension AppDelegate {
     statusItem.button?.title = shaded.isEmpty ? "" : " \(shaded.count)"
     statusItem.button?.toolTip =
       shaded.isEmpty ? "WindowShade" : "WindowShade: \(shaded.count) folded"
+    // VoiceOver：状态栏按钮读成“WindowShade + 当前折叠数量”，而不是一个孤立的数字。
+    statusItem.button?.setAccessibilityLabel(PaperSurfaceAccessibility.statusItemLabel)
+    statusItem.button?.setAccessibilityValue(
+      PaperSurfaceAccessibility.statusItemValue(foldedCount: shaded.count))
     statusMenu.removeAllItems()
 
     let menuState = makeMenuState()
@@ -108,18 +115,20 @@ extension AppDelegate {
       let header = NSMenuItem(title: "已折叠窗口", action: nil, keyEquivalent: "")
       header.isEnabled = false
       statusMenu.addItem(header)
-      for (index, entry) in menuState.foldedWindows.enumerated() {
-        let (id, state) = entry
-        let title = descriptiveDisplayTitle(appName: state.appName, windowTitle: state.title)
-        let key = index < 9 ? "\(index + 1)" : ""
-        let itemTitle = key.isEmpty ? title : "\(key)  \(title)"
-        let item = NSMenuItem(
-          title: itemTitle, action: #selector(unshadeFromMenu(_:)), keyEquivalent: key)
-        item.keyEquivalentModifierMask = key.isEmpty ? [] : [.control, .command]
-        item.target = self
-        item.representedObject = NSNumber(value: id)
-        item.image = windowMenuIcon(for: state.pid)
-        statusMenu.addItem(item)
+      // 前 9 个内联并带 ⌃⌘1…9；其余进“更多已折叠窗口”子菜单（同样的动作与图标）。
+      let sections = StandardMenu.splitFoldedWindows(menuState.foldedWindows)
+      for (index, entry) in sections.inline.enumerated() {
+        statusMenu.addItem(foldedWindowMenuItem(entry, index: index))
+      }
+      if !sections.overflow.isEmpty {
+        let more = NSMenuItem(title: "更多已折叠窗口（\(sections.overflow.count)）",
+                              action: nil, keyEquivalent: "")
+        let submenu = NSMenu()
+        for entry in sections.overflow {
+          submenu.addItem(foldedWindowMenuItem(entry, index: nil))
+        }
+        more.submenu = submenu
+        statusMenu.addItem(more)
       }
       // 与「全部取消置顶」对称：仅在有已折叠窗口时才显示「全部展开」。
       statusMenu.addItem(.separator())
@@ -130,6 +139,10 @@ extension AppDelegate {
     statusMenu.addItem(.separator())
     statusMenu.addItem(withTitle: "使用说明…", action: #selector(showWelcomeGuide), keyEquivalent: "")
     statusMenu.addItem(withTitle: "设置…", action: #selector(showPreferences), keyEquivalent: ",")
+    // 代理应用没有菜单栏，“关于”按惯例放在状态栏菜单里，用系统标准面板。
+    statusMenu.addItem(withTitle: "关于 WindowShade",
+                       action: #selector(showAboutPanel),
+                       keyEquivalent: "")
     statusMenu.addItem(withTitle: "退出 WindowShade", action: #selector(quit), keyEquivalent: "q")
     updateReconcileTimer()
     // 折叠/置顶状态也可能由原有菜单或快捷键改变：面板打开时同步刷新投影。
@@ -169,11 +182,10 @@ extension AppDelegate {
     return icon
   }
 
+  /// 置顶列表不带编号：它的条目没有 ⌃⌘ 快捷键，编号只会让人误以为有。
   func menuTitleForPinnedPreview(_ entry: PinnedPreviewMenuEntry, index: Int) -> String {
-    let raw = entry.displayTitle
-    let maxCount = 42
-    let title = raw.count > maxCount ? String(raw.prefix(maxCount - 1)) + "…" : raw
-    return "\(index + 1)  \(title)"
+    _ = index
+    return StandardMenu.menuTitle(entry.displayTitle)
   }
   func scheduleMenuRebuild(delay: TimeInterval = 0.04) {
     if suppressMenuRebuilds {
@@ -266,6 +278,23 @@ extension AppDelegate {
   func pinnedPreviewMenuTitle() -> String {
     pinnedPreviewController.currentTargetMenuTitle()
   }
+  /// 单个折叠窗口的菜单项（内联时带 ⌃⌘1…9，子菜单里不带快捷键）。
+  private func foldedWindowMenuItem(_ entry: (CGWindowID, ShadeState),
+                                    index: Int?) -> NSMenuItem {
+    let (id, state) = entry
+    let title = StandardMenu.menuTitle(
+      descriptiveDisplayTitle(appName: state.appName, windowTitle: state.title))
+    let key = index.flatMap { StandardMenu.foldedWindowShortcut(index: $0) } ?? ""
+    let itemTitle = key.isEmpty ? title : "\(key)  \(title)"
+    let item = NSMenuItem(title: itemTitle, action: #selector(unshadeFromMenu(_:)),
+                          keyEquivalent: key)
+    item.keyEquivalentModifierMask = key.isEmpty ? [] : [.control, .command]
+    item.target = self
+    item.representedObject = NSNumber(value: id)
+    item.image = windowMenuIcon(for: state.pid)
+    return item
+  }
+
   func makeMenuState() -> MenuState {
     MenuState(
       hingeAngleText: duoAngleMenuTitle(),

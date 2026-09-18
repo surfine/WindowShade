@@ -46,12 +46,13 @@ final class SettingsGroupBox: NSBox {
     borderWidth = 0
     cornerRadius = 10
     contentViewMargins = .zero
-    fillColor = NSColor.controlBackgroundColor.blended(withFraction: 0.035, of: .labelColor) ?? .controlBackgroundColor
+    // 动态颜色：浅深色在绘制时各自解析，不再依赖外观回调重新赋值。
+    fillColor = SystemAppearancePolicy.groupBoxFill()
   }
   required init?(coder: NSCoder) { nil }
   override func viewDidChangeEffectiveAppearance() {
     super.viewDidChangeEffectiveAppearance()
-    fillColor = NSColor.controlBackgroundColor.blended(withFraction: 0.035, of: .labelColor) ?? .controlBackgroundColor
+    fillColor = SystemAppearancePolicy.groupBoxFill()
     needsDisplay = true
   }
 }
@@ -98,6 +99,8 @@ final class DuoSettingsWindow: NSWindowController, NSWindowDelegate, NSTableView
       defer: false)
     window.title = "WindowShade 设置"
     window.isReleasedWhenClosed = false
+    // 工具型窗口不与其它窗口合并成标签页（系统偏好设为“始终”时也保持一致）。
+    window.tabbingMode = .disallowed
     window.minSize = NSSize(width: 820, height: 580)
     if !controller.isDesignPreview {
       window.setFrameAutosaveName("WindowShade.Settings")
@@ -281,7 +284,7 @@ final class DuoSettingsWindow: NSWindowController, NSWindowDelegate, NSTableView
     let icon = NSImageView(image: NSImage(systemSymbolName: section.symbolName,
                                         accessibilityDescription: nil) ?? NSImage())
     let label = NSTextField(labelWithString: section.title)
-    label.font = .systemFont(ofSize: 13)
+    label.font = SystemAppearancePolicy.font(relativeToBody: 0)
     icon.translatesAutoresizingMaskIntoConstraints = false
     label.translatesAutoresizingMaskIntoConstraints = false
     cell.addSubview(icon)
@@ -404,7 +407,7 @@ final class DuoSettingsWindow: NSWindowController, NSWindowDelegate, NSTableView
   // 只保留一行说明，页首因此省下约 62pt 竖向空间。
   private func makePageHeader(title: String, subtitle: String, symbolName: String?) -> NSView {
     let caption = NSTextField(wrappingLabelWithString: subtitle)
-    caption.font = .systemFont(ofSize: 12)
+    caption.font = SystemAppearancePolicy.font(relativeToBody: -1)
     caption.textColor = .secondaryLabelColor
     caption.maximumNumberOfLines = 2
     return caption
@@ -413,7 +416,7 @@ final class DuoSettingsWindow: NSWindowController, NSWindowDelegate, NSTableView
   private func makeSectionLabel(_ title: String) -> NSView {
     // 分组标题只有文字：图标在这个层级不传递信息，只增加噪声。
     let label = NSTextField(labelWithString: title)
-    label.font = .systemFont(ofSize: 12, weight: .semibold)
+    label.font = SystemAppearancePolicy.font(relativeToBody: -1, weight: .semibold)
     label.textColor = .secondaryLabelColor
     return label
   }
@@ -427,7 +430,7 @@ final class DuoSettingsWindow: NSWindowController, NSWindowDelegate, NSTableView
     button.attributedTitle = NSAttributedString(
       string: title,
       attributes: [
-        .font: NSFont.systemFont(ofSize: 11),
+        .font: SystemAppearancePolicy.font(relativeToBody: -2),
         .foregroundColor: NSColor.controlAccentColor,
       ])
     button.setAccessibilityLabel(title)
@@ -482,9 +485,9 @@ final class DuoSettingsWindow: NSWindowController, NSWindowDelegate, NSTableView
     labels.alignment = .leading
     labels.spacing = 4
     let titleLabel = NSTextField(labelWithString: title)
-    titleLabel.font = .systemFont(ofSize: 13)
+    titleLabel.font = SystemAppearancePolicy.font(relativeToBody: 0)
     let subtitleLabel = NSTextField(wrappingLabelWithString: subtitle)
-    subtitleLabel.font = .systemFont(ofSize: 11)
+    subtitleLabel.font = SystemAppearancePolicy.font(relativeToBody: -2)
     subtitleLabel.textColor = .secondaryLabelColor
     subtitleLabel.maximumNumberOfLines = 2
     labels.addArrangedSubview(titleLabel)
@@ -512,9 +515,9 @@ final class DuoSettingsWindow: NSWindowController, NSWindowDelegate, NSTableView
     labels.alignment = .leading
     labels.spacing = 4
     let titleLabel = NSTextField(labelWithString: title)
-    titleLabel.font = .systemFont(ofSize: 13)
+    titleLabel.font = SystemAppearancePolicy.font(relativeToBody: 0)
     let subtitleLabel = NSTextField(wrappingLabelWithString: subtitle)
-    subtitleLabel.font = .systemFont(ofSize: 11)
+    subtitleLabel.font = SystemAppearancePolicy.font(relativeToBody: -2)
     subtitleLabel.textColor = .secondaryLabelColor
     subtitleLabel.maximumNumberOfLines = 2
     labels.addArrangedSubview(titleLabel)
@@ -538,15 +541,15 @@ final class DuoSettingsWindow: NSWindowController, NSWindowDelegate, NSTableView
   }
 
   private func makeActionRow(title: String, subtitle: String, button: NSButton) -> NSView {
-    button.font = .systemFont(ofSize: 12)
+    button.font = SystemAppearancePolicy.font(relativeToBody: -1)
     let labels = NSStackView()
     labels.orientation = .vertical
     labels.alignment = .leading
     labels.spacing = 4
     let titleLabel = NSTextField(labelWithString: title)
-    titleLabel.font = .systemFont(ofSize: 13)
+    titleLabel.font = SystemAppearancePolicy.font(relativeToBody: 0)
     let subtitleLabel = NSTextField(wrappingLabelWithString: subtitle)
-    subtitleLabel.font = .systemFont(ofSize: 11)
+    subtitleLabel.font = SystemAppearancePolicy.font(relativeToBody: -2)
     subtitleLabel.textColor = .secondaryLabelColor
     subtitleLabel.maximumNumberOfLines = 2
     labels.addArrangedSubview(titleLabel)
@@ -653,7 +656,7 @@ final class DuoSettingsWindow: NSWindowController, NSWindowDelegate, NSTableView
     rangeLabels.alignment = .centerY
     rangeLabels.spacing = 8
     rangeLabels.subviews.compactMap { $0 as? NSTextField }.forEach {
-      $0.font = .systemFont(ofSize: 11)
+      $0.font = SystemAppearancePolicy.font(relativeToBody: -2)
       $0.textColor = .secondaryLabelColor
     }
 
@@ -687,7 +690,7 @@ final class DuoSettingsWindow: NSWindowController, NSWindowDelegate, NSTableView
     stack.setCustomSpacing(18, after: experimental)
 
     let note = NSTextField(wrappingLabelWithString: "实时预览默认关闭。按 Esc、点击或开始输入可撤去桌面效果。")
-    note.font = .systemFont(ofSize: 12)
+    note.font = SystemAppearancePolicy.font(relativeToBody: -1)
     note.textColor = .secondaryLabelColor
     note.maximumNumberOfLines = 2
     stack.addArrangedSubview(note)
@@ -733,9 +736,9 @@ final class DuoSettingsWindow: NSWindowController, NSWindowDelegate, NSTableView
     angleLabel.setAccessibilityLabel("当前触发角度")
 
     let triggerTitle = NSTextField(labelWithString: "触发角度")
-    triggerTitle.font = .systemFont(ofSize: 13)
+    triggerTitle.font = SystemAppearancePolicy.font(relativeToBody: 0)
     let triggerSubtitle = NSTextField(wrappingLabelWithString: "达到此角度后开始动态效果。")
-    triggerSubtitle.font = .systemFont(ofSize: 11)
+    triggerSubtitle.font = SystemAppearancePolicy.font(relativeToBody: -2)
     triggerSubtitle.textColor = .secondaryLabelColor
     triggerSubtitle.maximumNumberOfLines = 2
     let triggerLabels = NSStackView(views: [triggerTitle, triggerSubtitle])
@@ -760,7 +763,7 @@ final class DuoSettingsWindow: NSWindowController, NSWindowDelegate, NSTableView
     let minimum = NSTextField(labelWithString: "45°")
     let maximum = NSTextField(labelWithString: "140°")
     for label in [minimum, maximum] {
-      label.font = .systemFont(ofSize: 11)
+      label.font = SystemAppearancePolicy.font(relativeToBody: -2)
       label.textColor = .secondaryLabelColor
       label.alignment = .center
       label.widthAnchor.constraint(equalToConstant: 34).isActive = true
@@ -812,7 +815,7 @@ final class DuoSettingsWindow: NSWindowController, NSWindowDelegate, NSTableView
     let reduced = NSTextField(wrappingLabelWithString: NSWorkspace.shared.accessibilityDisplayShouldReduceMotion
       ? "系统已开启“减少动态效果”，连续动画会自动暂停。"
       : "可在系统设置的辅助功能选项中开启“减少动态效果”。")
-    reduced.font = .systemFont(ofSize: 12)
+    reduced.font = SystemAppearancePolicy.font(relativeToBody: -1)
     reduced.textColor = .secondaryLabelColor
     reduced.maximumNumberOfLines = 2
     reduced.setAccessibilityLabel("减少动态效果提示")
@@ -822,7 +825,7 @@ final class DuoSettingsWindow: NSWindowController, NSWindowDelegate, NSTableView
       action: #selector(openReduceMotionSettings),
       help: "在系统设置的辅助功能中配置减少动态效果")
     let logPath = NSTextField(labelWithString: "日志位置：/tmp/windowshade.log")
-    logPath.font = .systemFont(ofSize: 11)
+    logPath.font = SystemAppearancePolicy.font(relativeToBody: -2)
     logPath.textColor = .tertiaryLabelColor
     let infoRow = NSStackView(views: [reduced, reduceMotionLink])
     infoRow.orientation = .horizontal
@@ -927,11 +930,9 @@ final class DuoSettingsWindow: NSWindowController, NSWindowDelegate, NSTableView
   }
 
   @objc private func openReduceMotionSettings() {
-    let candidates = [
-      "x-apple.systempreferences:com.apple.Accessibility-Settings.extension?Seeing_Display",
-      "x-apple.systempreferences:com.apple.preference.universalaccess?Seeing_Display",
-      "x-apple.systempreferences:com.apple.preference.universalaccess",
-    ]
+    // 与权限深链共用同一份“按本机面板决定顺序”的策略。
+    let candidates = SystemSettingsLinks.accessibilityDisplayCandidates(
+      hasModernPane: SystemSettingsLinks.hasModernAccessibilityPane())
     for rawValue in candidates {
       guard let url = URL(string: rawValue) else { continue }
       if NSWorkspace.shared.open(url) { return }
@@ -1082,7 +1083,7 @@ extension AppDelegate {
     }
     duoController.settingsWindow?.showWindow(nil)
     duoController.settingsWindow?.select(section: section)
-    NSApp.activate(ignoringOtherApps: true)
+    NSApp.activate()
     duoController.settingsChanged()
   }
 }

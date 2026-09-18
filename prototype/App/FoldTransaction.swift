@@ -15,7 +15,7 @@ extension AppDelegate {
             w.collectionBehavior = [.managed]
             focusParkingWindow = w
         }
-        NSApp.activate(ignoringOtherApps: true)
+        NSApp.activate()
         focusParkingWindow?.makeKeyAndOrderFront(nil)
     }
 
@@ -778,7 +778,7 @@ extension AppDelegate {
                 let safePos = safeRestorePosition(for: state, desired: pos)
                 window.setFrame(cocoaFrame(fromAXPosition: safePos, size: state.originalSize), display: true)
                 window.makeKeyAndOrderFront(nil)
-                NSApp.activate(ignoringOtherApps: true)
+                NSApp.activate()
                 wlog("restore: own window ordered front id=\(state.sourceWindowID) target=(\(Int(safePos.x)),\(Int(safePos.y)))")
             } else {
                 wlog("restore: own window unavailable id=\(state.sourceWindowID)")

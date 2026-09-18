@@ -181,7 +181,8 @@ extension AppDelegate {
 
         let frame = menuHoverPreviewFrame(anchor: anchor, imageSize: image.size)
         let previewView = SafariStylePreviewView(frame: NSRect(origin: .zero, size: frame.size),
-                                                 image: image)
+                                                 image: image,
+                                                 windowTitle: hoverPreviewTitle(ownerID: id))
         presentPreview(ownerID: id, frame: frame, contentView: previewView,
                        trigger: .menuHover, isPinnedLive: false)
     }
@@ -189,6 +190,18 @@ extension AppDelegate {
     // 已置顶窗口的实时缩略图：镜像该会话仍在运行的 ScreenCaptureKit 流，无需静态截图。
     // 老板键挂起中的 session 没有 capture 在跑，视同「没有预览」，不接一个收不到
     // 采样帧的 mirror layer 出来（否则弹出一个永远空白的预览面板）。
+    /// 悬停缩略图要展示的窗口名：折叠会话优先，其次置顶会话。
+    func hoverPreviewTitle(ownerID: CGWindowID) -> String {
+        if let state = shaded[ownerID] {
+            return descriptiveDisplayTitle(appName: state.appName, windowTitle: state.title)
+        }
+        if let snapshot = pinnedPreviewController.sessionSnapshots()
+            .first(where: { $0.windowID == ownerID }) {
+            return descriptiveDisplayTitle(appName: snapshot.appName, windowTitle: snapshot.title)
+        }
+        return ""
+    }
+
     func showPinnedMenuHoverPreview(_ id: CGWindowID, anchor: NSRect) {
         guard !pinnedPreviewController.isSuspended(id: id),
               let sourceSize = pinnedPreviewController.thumbnailSourceSize(id: id),
@@ -380,7 +393,8 @@ extension AppDelegate {
         let overlayFrame = overlay.frame
         let frame = safariStylePreviewFrame(id: id, overlayFrame: overlayFrame, imageSize: image.size)
         let previewView = SafariStylePreviewView(frame: NSRect(origin: .zero, size: frame.size),
-                                                 image: image)
+                                                 image: image,
+                                                 windowTitle: hoverPreviewTitle(ownerID: id))
         // 不再跟随「半透明卷帘条」设置——peek 靠白纱+圆角本身就足够区分于真实窗口，
         // 不需要借用户的透明度偏好，也让它跟菜单悬停预览视觉上一致。
         presentPreview(ownerID: id, frame: frame, contentView: previewView,

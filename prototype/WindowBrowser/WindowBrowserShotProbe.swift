@@ -102,6 +102,75 @@ final class WindowBrowserShotProbe {
         数据来源：内置记录与本地生成的占位截图，未打开或操作任何真实窗口
 
         """
+        // 经典卷帘条的配色刷新：在浅色下创建 → 切到深色后 refreshPalette()，
+        // 必须与“直接在深色下创建”得到同一份配色。
+        let previousAppearance = NSApp.appearance
+        NSApp.appearance = NSAppearance(named: .aqua)
+        let lightCreated = ClassicTitleStripView(frame: NSRect(x: 0, y: 0, width: 480, height: 34),
+                                                 appName: "Safari", windowTitle: "OpenAI",
+                                                 pid: 99_999)
+        let refreshed = ClassicTitleStripView(frame: NSRect(x: 0, y: 0, width: 480, height: 34),
+                                              appName: "Safari", windowTitle: "OpenAI",
+                                              pid: 99_999)
+        NSApp.appearance = NSAppearance(named: .darkAqua)
+        refreshed.refreshPalette()
+        let freshDark = ClassicTitleStripView(frame: NSRect(x: 0, y: 0, width: 480, height: 34),
+                                              appName: "Safari", windowTitle: "OpenAI",
+                                              pid: 99_999)
+        func paletteMatches(_ a: ClassicPalette, _ b: ClassicPalette,
+                            appearance: NSAppearance) -> Bool {
+            let keys: [(NSColor, NSColor)] = [(a.paper, b.paper), (a.edge, b.edge),
+                                              (a.text, b.text), (a.control, b.control)]
+            return keys.allSatisfy { pair in
+                let left = SystemAppearancePolicy.resolvedColor(pair.0, appearance: appearance)
+                let right = SystemAppearancePolicy.resolvedColor(pair.1, appearance: appearance)
+                return abs(left.brightnessComponent - right.brightnessComponent) < 0.02
+            }
+        }
+        let darkAppearance = NSAppearance(named: .darkAqua)!
+        let refreshMatchesFresh = paletteMatches(refreshed.paletteForDiagnostics,
+                                                 freshDark.paletteForDiagnostics,
+                                                 appearance: darkAppearance)
+        let lightDiffersFromDark = !paletteMatches(lightCreated.paletteForDiagnostics,
+                                                   freshDark.paletteForDiagnostics,
+                                                   appearance: darkAppearance)
+        print("window-browser-shots: classic-strip-palette "
+              + "\((refreshMatchesFresh && lightDiffersFromDark) ? "PASS" : "FAIL") "
+              + "(refresh-matches-fresh=\(refreshMatchesFresh) "
+              + "light-differs-from-dark=\(lightDiffersFromDark))")
+        NSApp.appearance = previousAppearance
+
+        // 系统外观对照：同一卷帘条在普通与“提高对比度”下的真实像素。
+        let appearanceBeforeSamples = NSApp.appearance
+        for (name, capabilities, note) in [
+            ("classic-strip-dark",
+             SystemAppearanceCapabilities(reduceTransparency: false, increaseContrast: false,
+                                          reduceMotion: false,
+                                          supportsGlass: SystemAppearanceCapabilities.runtimeSupportsGlass),
+             "经典卷帘条：深色外观（配色随外观重算）"),
+            ("classic-strip-normal",
+             SystemAppearanceCapabilities(reduceTransparency: false, increaseContrast: false,
+                                          reduceMotion: false,
+                                          supportsGlass: SystemAppearanceCapabilities.runtimeSupportsGlass),
+             "经典卷帘条：普通对比度（0.5pt 细线 + 顶边高光）"),
+            ("classic-strip-contrast",
+             SystemAppearanceCapabilities(reduceTransparency: false, increaseContrast: true,
+                                          reduceMotion: false,
+                                          supportsGlass: SystemAppearanceCapabilities.runtimeSupportsGlass),
+             "经典卷帘条：提高对比度（1pt 边线、无高光）"),
+            ("peek-preview",
+             SystemAppearanceCapabilities(reduceTransparency: true, increaseContrast: false,
+                                          reduceMotion: false, supportsGlass: false),
+             "悬停缩略图：减少透明度回退（不透明底 + withinWindow 混合）"),
+        ] {
+            if let path = renderSurfaceSample(name: name, capabilities: capabilities, note: note) {
+                manifest += "\(name): \(path.lastPathComponent) — \(note)\n"
+                print("window-browser-shots: \(name) -> \(path.path)")
+            }
+        }
+
+        NSApp.appearance = appearanceBeforeSamples
+
         if ProcessInfo.processInfo.environment["WINDOWSHADE_SHOTS_CLIP"] != nil {
             let clip = renderInteractionClip()
             manifest += "interaction-clip: \(clip?.lastPathComponent ?? "FAILED")"
@@ -230,6 +299,128 @@ final class WindowBrowserShotProbe {
         #endif
     }
 
+
+
+    // MARK: 表面样例（卷帘条 / 悬停缩略图）
+
+    /// 渲染一张自定义表面的真实像素，用于检查系统外观开关下的表现。
+    private func renderSurfaceSample(name: String,
+                                     capabilities: SystemAppearanceCapabilities,
+                                     note: String) -> URL? {
+        let previousAppearance = NSApp.appearance
+        if name.hasSuffix("-dark") { NSApp.appearance = NSAppearance(named: .darkAqua) }
+        defer { NSApp.appearance = previousAppearance }
+        let size = CGSize(width: 520, height: 120)
+        let frame = NSRect(origin: .zero, size: size)
+        let host = NSView(frame: frame)
+        host.wantsLayer = true
+        host.layer?.backgroundColor = NSColor.windowBackgroundColor.cgColor
+        let sample: NSView
+        if name.hasPrefix("classic-strip") {
+            let strip = ClassicTitleStripView(frame: NSRect(x: 12, y: 34, width: 496, height: 34),
+                                              appName: "Safari", windowTitle: "OpenAI · 参考资料",
+                                              pid: 99_999)
+            strip.refreshPalette()
+            strip.appearanceCapabilities = capabilities
+            sample = strip
+        } else {
+            let preview = SafariStylePreviewView(
+                frame: NSRect(x: 12, y: 8, width: 320, height: 104),
+                image: Self.placeholderImage(named: "peek", size: NSSize(width: 640, height: 400)))
+            preview.applySystemAppearance(capabilities: capabilities)
+            sample = preview
+        }
+        host.addSubview(sample)
+        let window = NSWindow(contentRect: frame, styleMask: .borderless,
+                              backing: .buffered, defer: false)
+        window.isReleasedWhenClosed = false
+        window.contentView = host
+        window.orderFrontRegardless()
+        host.layoutSubtreeIfNeeded()
+        RunLoop.current.run(until: Date().addingTimeInterval(0.3))
+        host.layoutSubtreeIfNeeded()
+        let image = renderImage(of: host)
+        window.orderOut(nil)
+        window.close()
+        guard let image else { return nil }
+        let bitmap = NSBitmapImageRep(cgImage: image)
+        guard let data = bitmap.representation(using: .png, properties: [:]) else { return nil }
+        let url = outputDirectory.appendingPathComponent("\(name).png")
+        try? data.write(to: url)
+        return url
+    }
+
+    /// 与窗口画面同一套绘制方式的合成图，用作缩略图样例内容。
+    private static func placeholderImage(named name: String, size: NSSize) -> NSImage {
+        let image = NSImage(size: size)
+        image.lockFocus()
+        NSColor(calibratedWhite: 0.16, alpha: 1).setFill()
+        NSRect(origin: .zero, size: size).fill()
+        NSColor.systemTeal.withAlphaComponent(0.85).setFill()
+        NSRect(x: 24, y: 120, width: 200, height: 120).fill()
+        NSColor(calibratedWhite: 0.92, alpha: 1).setFill()
+        NSRect(x: 260, y: 200, width: 340, height: 16).fill()
+        NSRect(x: 260, y: 168, width: 280, height: 16).fill()
+        (name as NSString).draw(at: NSPoint(x: 24, y: size.height - 44),
+                                withAttributes: [.font: NSFont.systemFont(ofSize: 20,
+                                                                            weight: .semibold),
+                                                 .foregroundColor: NSColor.white])
+        image.unlockFocus()
+        return image
+    }
+
+    // MARK: 主菜单 / 文本编辑快捷键端到端探针
+
+    /// 用真实键盘面板验证“代理应用也需要主菜单”：聚焦搜索框后发送 ⌘V，
+    /// 打印面板是否成为 key window 以及搜索框内容。
+    func runStandardMenuProbe() {
+        // --without-menu 用于对照：证明没有主菜单时同一条快捷键不会粘贴。
+        let installsMenu = !CommandLine.arguments.contains("--without-menu")
+        if installsMenu {
+            NSApp.mainMenu = StandardMenu.make(appName: "WindowShade",
+                                               settingsTarget: nil, settingsAction: nil)
+        }
+        // 只有当前台应用才能拥有 key window；探针临时用 regular 策略取得前台。
+        NSApp.setActivationPolicy(.regular)
+        // WINDOWSHADE_PROBE_COOPERATIVE_ACTIVATION=1 时改用 macOS 14 起的协作式
+        // activate()，用于对比两种激活方式在这个（最少用户手势的）场景下是否都能生效。
+        if ProcessInfo.processInfo.environment["WINDOWSHADE_PROBE_COOPERATIVE_ACTIVATION"] != nil {
+            NSApp.activate()
+        } else {
+            NSApp.activate(ignoringOtherApps: true)
+        }
+        RunLoop.current.run(until: Date().addingTimeInterval(0.5))
+        let frame = NSRect(x: 120, y: 120, width: 640, height: 420)
+        let panel = WindowBrowserPanel(mode: .keyboard, frame: frame)
+        let records = Self.records(count: 4, includeImages: true)
+        let content = panel.browserContentView
+        content.update(mode: .keyboard, records: records, selection: records.first?.key,
+                       style: .list, busyKeys: [], status: "主菜单探针")
+        // 走生产入口（含协作式激活、makeKey、聚焦搜索框与延迟重试）。
+        panel.presentKeyboardPanel()
+        RunLoop.current.run(until: Date().addingTimeInterval(0.4))
+
+        let pasteboard = NSPasteboard.general
+        pasteboard.clearContents()
+        pasteboard.setString("粘贴内容", forType: .string)
+        var handled = false
+        if let event = NSEvent.keyEvent(with: .keyDown, location: .zero,
+                                        modifierFlags: .command, timestamp: 0,
+                                        windowNumber: panel.windowNumber, context: nil,
+                                        characters: "v", charactersIgnoringModifiers: "v",
+                                        isARepeat: false, keyCode: 9) {
+            handled = NSApp.mainMenu?.performKeyEquivalent(with: event) ?? false
+            if !handled { NSApp.sendEvent(event) }
+        }
+        RunLoop.current.run(until: Date().addingTimeInterval(0.4))
+        print("standard-menu-probe: menu=\(installsMenu) active=\(NSApp.isActive) "
+              + "key=\(panel.isKeyWindow) "
+              + "panelKey=\(panel.canBecomeKey) handled=\(handled) "
+              + "searchText=\"\(content.searchText)\" "
+              + "a11y=\"\(content.searchFieldAccessibilityLabel ?? "-")\"")
+        panel.orderOut(nil)
+        panel.close()
+    }
 
     // MARK: 交互片段
 

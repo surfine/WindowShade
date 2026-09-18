@@ -1,0 +1,13 @@
+设置窗口页面截图（生产设置窗口，cacheDisplay 离屏渲染；侧栏由系统材质绘制，不在此图内）
+macOS: Version 27.0 (Build 26A428)
+scale: 2x
+settings-light-效果.png: 900x680 section=效果
+settings-light-卷帘.png: 900x680 section=卷帘
+settings-light-窗口浏览.png: 900x680 section=窗口浏览
+settings-light-权限与启动.png: 900x680 section=权限与启动
+settings-light-高级.png: 900x680 section=高级
+settings-dark-效果.png: 900x680 section=效果
+settings-dark-卷帘.png: 900x680 section=卷帘
+settings-dark-窗口浏览.png: 900x680 section=窗口浏览
+settings-dark-权限与启动.png: 900x680 section=权限与启动
+settings-dark-高级.png: 900x680 section=高级

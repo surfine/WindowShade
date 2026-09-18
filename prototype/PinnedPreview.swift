@@ -228,6 +228,24 @@ final class PinnedPreviewController {
     }
 
     /// 只读快照：窗口目录用，不暴露可修改的会话字典。
+    /// 辅助功能外观变化：刷新所有已打开置顶预览的材质与边线（不改窗口状态）。
+    func refreshSystemAppearance(capabilities: SystemAppearanceCapabilities = .current) {
+        dispatchPrecondition(condition: .onQueue(.main))
+        for session in sessions.values {
+            session.contentView.applySystemAppearance(capabilities: capabilities)
+        }
+        for view in thumbnailPreviewViews() {
+            view.applySystemAppearance(capabilities: capabilities)
+        }
+    }
+
+    /// 当前还活着的悬停缩略图视图。
+    private func thumbnailPreviewViews() -> [PinnedLivePreviewView] {
+        NSApplication.shared.windows.compactMap {
+            $0.contentView as? PinnedLivePreviewView
+        }
+    }
+
     func sessionSnapshots() -> [PinnedPreviewSessionSnapshot] {
         dispatchPrecondition(condition: .onQueue(.main))
         return sessions.values.map { session in
@@ -654,11 +672,15 @@ final class PinnedPreviewController {
 
     // 为菜单悬停缩略图构建实时预览视图：新建一个显示层挂到该会话正在运行的 capture 上做镜像，
     // 复用已有采样帧，不新建流。视图销毁或 detachThumbnail 时断开。
+    /// 菜单悬停缩略图：带上窗口名，VoiceOver 与 tooltip 都能说明是哪个窗口。
     func makeThumbnailPreviewView(frame: NSRect, id: CGWindowID) -> NSView? {
-        guard sessions[id] != nil else { return nil }
+        guard let session = sessions[id] else { return nil }
         let layer = AVSampleBufferDisplayLayer()
         guard attachMirror(id: id, owner: menuMirrorOwnerID, layer: layer) else { return nil }
-        return PinnedLivePreviewView(frame: frame, videoLayer: layer)
+        return PinnedLivePreviewView(
+            frame: frame, videoLayer: layer,
+            windowTitle: descriptiveDisplayTitle(appName: session.appName,
+                                                 windowTitle: session.title))
     }
 
     func detachThumbnail(id: CGWindowID) {
@@ -803,8 +825,11 @@ final class PinnedPreviewController {
 
         let capture = WindowStreamCapture()
         let panel = PinnedPreviewPanel(frame: frame)
+        let displayTitle = descriptiveDisplayTitle(appName: appName, windowTitle: title)
+        // 窗口名与面板内标题一致：VoiceOver 读窗口时能听到是哪个窗口的置顶预览。
+        panel.title = "置顶预览：\(displayTitle)"
         let contentView = PinnedPreviewContentView(videoLayer: capture.videoLayer,
-            title: descriptiveDisplayTitle(appName: appName, windowTitle: title))
+            title: displayTitle)
         panel.contentView = contentView
 
         let session = PinnedPreviewSession(windowID: id, pid: pid, bundleIdentifier: bundleID,

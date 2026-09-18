@@ -4,8 +4,11 @@
 import Cocoa
 
 enum WindowBrowserTypography {
-    /// 正文字号（macOS 默认为 13pt；系统文本尺寸设置会改变它）。
-    static var bodySize: CGFloat { NSFont.systemFontSize }
+    /// 正文字号：跟随系统“文字大小”偏好（macOS 14+ 可以按 App 单独调大），
+    /// 默认仍是 13pt。用 preferredFont 而不是写死 13，调大字号的用户同样能读清。
+    static var bodySize: CGFloat {
+        NSFont.preferredFont(forTextStyle: .body).pointSize
+    }
     /// 次要说明字号，最小 9pt，避免在大字号下反而缩得不可读。
     static var detailSize: CGFloat { max(9, bodySize - 2) }
 
@@ -16,6 +19,13 @@ enum WindowBrowserTypography {
     static var control: NSFont { .systemFont(ofSize: detailSize) }
     static var monospacedDigits: NSFont {
         .monospacedDigitSystemFont(ofSize: bodySize, weight: .regular)
+    }
+
+    /// 指定字号下的行高（测试可以注入更大字号验证布局随之增长）。
+    static func lineHeight(forBodySize size: CGFloat) -> CGFloat {
+        max(11, ceil(NSFont.systemFont(ofSize: size).ascender
+                     - NSFont.systemFont(ofSize: size).descender
+                     + NSFont.systemFont(ofSize: size).leading))
     }
 
     /// 文本行高向上取整，避免 Retina 下半像素被裁掉。

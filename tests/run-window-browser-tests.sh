@@ -11,6 +11,7 @@ if [ -f "$(xcrun --show-sdk-path --sdk macosx)/System/Library/Frameworks/AppKit.
 fi
 
 swiftc -target "$(uname -m)-apple-macosx14.0" $GLASS_DEFINE \
+  prototype/App/StandardMenu.swift \
   prototype/WindowBrowser/WindowBrowserModels.swift \
   prototype/WindowBrowser/WindowBrowserTypography.swift \
   prototype/WindowBrowser/WindowBrowserGeometry.swift \
@@ -29,7 +30,7 @@ swiftc -target "$(uname -m)-apple-macosx14.0" $GLASS_DEFINE \
   prototype/WindowBrowser/WindowBrowserPanel.swift \
   prototype/WindowBrowser/WindowBrowserSettings.swift \
   prototype/Capture/WindowSnapshotCache.swift \
-  prototype/Overlay/PaperSurfaceStyle.swift \
+  prototype/Overlay/SystemAppearance.swift prototype/Overlay/PaperSurfaceStyle.swift \
   tests/WindowBrowserTests.swift \
   -framework Cocoa -framework AVFoundation \
   -o .build/window-browser-tests/core

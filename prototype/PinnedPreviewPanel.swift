@@ -27,7 +27,9 @@ final class PinnedPreviewPanel: NSPanel {
     override var canBecomeMain: Bool { false }
 }
 
-private final class PreviewTitleMaterial: NSVisualEffectView {
+private final class PreviewTitleMaterial: SystemMaterialView {
+    init() { super.init(purpose: .floatingChrome) }
+    required init?(coder: NSCoder) { nil }
     override func hitTest(_ point: NSPoint) -> NSView? { nil }
 }
 
@@ -52,8 +54,7 @@ final class PinnedPreviewContentView: NSView {
         layer = CALayer()
         configureRoundedMask()
         attach(videoLayer)
-        titleBar.material = .hudWindow
-        titleBar.blendingMode = .behindWindow
+        titleBar.apply()
         titleBar.alphaValue = 0
         titleLabel.stringValue = title
         titleLabel.font = .systemFont(ofSize: 13, weight: .semibold)
@@ -61,8 +62,9 @@ final class PinnedPreviewContentView: NSView {
         titleBar.addSubview(titleLabel)
         addSubview(titleBar)
         edgeLayer.fillColor = nil
-        edgeLayer.lineWidth = 0.5
+        edgeLayer.lineWidth = SystemAppearancePolicy.edgeWidth(.current)
         layer?.addSublayer(edgeLayer)
+        configureAccessibility()
     }
 
     required init?(coder: NSCoder) {
@@ -75,10 +77,12 @@ final class PinnedPreviewContentView: NSView {
         CATransaction.setDisableActions(true)
         titleBar.frame = NSRect(x: 0, y: max(0, bounds.height - 32), width: bounds.width, height: 32)
         titleLabel.frame = titleBar.bounds.insetBy(dx: 12, dy: 7)
+        let edgeWidth = SystemAppearancePolicy.edgeWidth(.current)
         edgeLayer.frame = bounds
-        edgeLayer.path = CGPath(roundedRect: bounds.insetBy(dx: 0.25, dy: 0.25),
+        edgeLayer.lineWidth = edgeWidth
+        edgeLayer.path = CGPath(roundedRect: bounds.insetBy(dx: edgeWidth / 2, dy: edgeWidth / 2),
                                cornerWidth: 10, cornerHeight: 10, transform: nil)
-        edgeLayer.strokeColor = NSColor.separatorColor.cgColor
+        edgeLayer.strokeColor = SystemAppearancePolicy.cgColor(NSColor.separatorColor, for: self)
         videoLayer?.frame = bounds
         videoLayer?.cornerRadius = 6
         CATransaction.commit()
@@ -125,9 +129,16 @@ final class PinnedPreviewContentView: NSView {
         videoLayer?.removeFromSuperlayer()
         videoLayer = layerToAttach
         layerToAttach.cornerRadius = 6
+        layerToAttach.cornerCurve = .continuous
         layerToAttach.masksToBounds = true
         layer?.addSublayer(layerToAttach)
         needsLayout = true
+    }
+
+    /// 源窗口标题变化时同步 VoiceOver 文案。
+    func updateTitle(_ title: String) {
+        titleLabel.stringValue = title
+        configureAccessibility()
     }
 
     private func configureRoundedMask() {
@@ -135,41 +146,95 @@ final class PinnedPreviewContentView: NSView {
         layer?.cornerRadius = 10
         layer?.cornerCurve = .continuous
         layer?.masksToBounds = true
+        applySystemAppearance()
+    }
+
+    /// 悬浮预览：VoiceOver 读出窗口名，视频内容本身不是独立元素。
+    private func configureAccessibility() {
+        setAccessibilityElement(true)
+        setAccessibilityRole(.group)
+        setAccessibilityLabel(PaperSurfaceAccessibility.previewLabel(
+            windowTitle: titleLabel.stringValue))
+        titleLabel.setAccessibilityElement(false)
+    }
+
+    /// 诊断/回归：标题条材质与最近一次应用的外观读数。
+    var titleMaterialForDiagnostics: NSVisualEffectView { titleBar }
+    var appliedCapabilitiesForDiagnostics: SystemAppearanceCapabilities? {
+        titleBar.appliedCapabilities
+    }
+
+    /// 暴露给探针/回归：材质与边线跟随系统外观开关。
+    func applySystemAppearance(capabilities: SystemAppearanceCapabilities = .current) {
+        titleBar.apply(capabilities: capabilities)
+        titleBar.layer?.cornerRadius = 0
+        layer?.borderWidth = SystemAppearancePolicy.edgeWidth(capabilities)
+        layer?.borderColor = SystemAppearancePolicy.cgColor(NSColor.separatorColor, for: self)
     }
 }
 
 // 状态菜单里已置顶窗口的悬停缩略图。视觉上与 SafariStylePreviewView（已折叠窗口用的静态
 // 缩略图）一致：popover 材质 + 圆角裁切 + 白色薄纱底；区别是内容为镜像的实时画面而非静态图。
 final class PinnedLivePreviewView: NSView {
-    private let materialView = NSVisualEffectView()
+    private let materialView = SystemMaterialView(purpose: .transientPeek)
     private let thumbnailClipView = NSView()
     private let videoLayer: AVSampleBufferDisplayLayer
 
-    init(frame: NSRect, videoLayer: AVSampleBufferDisplayLayer) {
+    /// 该缩略图对应的窗口名（tooltip + VoiceOver）。
+    private(set) var windowTitleForAccessibility: String = ""
+
+    init(frame: NSRect, videoLayer: AVSampleBufferDisplayLayer, windowTitle: String = "") {
         self.videoLayer = videoLayer
+        self.windowTitleForAccessibility = windowTitle
         super.init(frame: frame)
         wantsLayer = true
         layer?.cornerRadius = 10
+        layer?.cornerCurve = .continuous
         layer?.masksToBounds = true
 
-        materialView.material = .popover
-        materialView.blendingMode = .behindWindow
-        materialView.state = .active
-        materialView.wantsLayer = true
         materialView.layer?.cornerRadius = 10
         materialView.layer?.masksToBounds = true
         addSubview(materialView)
 
         thumbnailClipView.wantsLayer = true
         thumbnailClipView.layer?.cornerRadius = 6
+        thumbnailClipView.layer?.cornerCurve = .continuous
         thumbnailClipView.layer?.masksToBounds = true
         thumbnailClipView.shadow = PaperSurfaceStyle.shadow()
-        thumbnailClipView.layer?.backgroundColor = NSColor.white.withAlphaComponent(0.55).cgColor
         addSubview(thumbnailClipView)
 
         videoLayer.videoGravity = .resizeAspect
         videoLayer.backgroundColor = NSColor.clear.cgColor
         thumbnailClipView.layer?.addSublayer(videoLayer)
+        setAccessibilityElement(true)
+        setAccessibilityRole(.image)
+        configureWindowTitle(windowTitle)
+        applySystemAppearance()
+    }
+
+    /// 设置该缩略图对应的窗口名：VoiceOver 朗读 + 鼠标悬停 tooltip。
+    func configureWindowTitle(_ title: String) {
+        windowTitleForAccessibility = title
+        let clean = title.trimmingCharacters(in: .whitespacesAndNewlines)
+        setAccessibilityLabel(PaperSurfaceAccessibility.previewLabel(windowTitle: clean))
+        toolTip = clean.isEmpty ? "窗口预览" : clean
+    }
+
+    /// 诊断/回归：当前实际使用的材质与最近一次应用的外观读数。
+    var appliedMaterialForDiagnostics: NSVisualEffectView.Material { materialView.material }
+    var appliedCapabilitiesForDiagnostics: SystemAppearanceCapabilities? {
+        materialView.appliedCapabilities
+    }
+
+    /// 菜单悬停的实时缩略图：材质、薄纱与阴影跟随系统外观开关。
+    func applySystemAppearance(capabilities: SystemAppearanceCapabilities = .current) {
+        materialView.apply(capabilities: capabilities)
+        layer?.borderWidth = SystemAppearancePolicy.edgeWidth(capabilities)
+        layer?.borderColor = SystemAppearancePolicy.cgColor(NSColor.separatorColor, for: self)
+        let veil = SystemAppearancePolicy.contentVeilColor(.transientPeek, capabilities)
+        thumbnailClipView.layer?.backgroundColor = SystemAppearancePolicy.cgColor(
+            veil, for: thumbnailClipView)
+        thumbnailClipView.shadow = PaperSurfaceStyle.shadow(capabilities: capabilities)
     }
 
     required init?(coder: NSCoder) {
