@@ -2318,3 +2318,24 @@ mainThreadMaxGap=6ms`，身份/几何/能力解析各 0 ms。`--window-browser-h
 `3136799`，附件 `WindowShade-v1.0.14.zip`（3,702,451 字节，sha256
 `f7e0086606fae80e7ff9a3c1f097a3cbffa7a0be0cc683c38f19e89d37ab7a35`）与校验文件
 已覆盖，Release Notes 同步；本机应用用同一身份重新构建替换（pid 14370 → 24486）。
+
+## 2026-09-18：圆角对齐 macOS 27（`5b7c683`）
+
+用户指出“圆角注意一下，要跟 macOS 27 相协调”。先做检索与实测，再统一实现：
+
+- **依据**：HIG《Materials》要求 Liquid Glass 只用于控件/导航层、内容层用标准材质；
+  《Toolbars》要求自定义控件与外框圆角同心；《Live Activities》《Widgets》给出同心公式
+  “内层圆角 = 外层圆角 − 边距”。本机实测：`screencapture -l` 抓 Finder 与 ChatGPT
+  窗口，左上角弧长 26 px @2x = 13 pt，轮廓比正圆更平（连续曲率）。
+- **实现**：新增 `SystemCornerRadius`（窗口 13 / 卡片 12 / 控件 6 / 同心取 `max(4, 外 − 间距)`）
+  与 `SystemCornerPath`（连续曲率路径，含 CGPath 版）。卷帘条、面板、卡片、缩略图、
+  悬停/置顶预览、设置分组盒、chip 与按钮、排布预览全部改读这份刻度，图层统一 `.continuous`。
+- **形状**：经典卷帘条从整块直角改为“上面两角圆、下边缘直切”，截图条/代理条/经典条
+  共用同一条轮廓的纸面阴影（面板四角圆、卷帘条上圆下直）。
+- **顺带修**：fixture 用 `String.hashValue` 挑强调色，而它每个进程重新播种，导致同一份
+  数据每次渲染出不同画面；换成 FNV-1a 后两次渲染逐字节一致，归档图可以逐像素比较。
+  fixture 的窗口画面也补上了窗口圆角，不再是直角。
+- **验证**：窗口浏览 594 项断言、纸质与双屏测试、五页设置外观检查（侧栏 alpha 1.000）、
+  `classic-strip-palette PASS`、`--window-browser-idle-probe` 干净；`docs/visual-qa/**`
+  全部重新生成。离屏 `cacheDisplay` 会把图层蒙版按 1x 光栅化，归档图上量到的弧长比实际
+  小约 20%（已用独立实验确认），因此数值以代码值与调试打印 `panelRadius=13.0` 为准。
