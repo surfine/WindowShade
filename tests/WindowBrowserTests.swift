@@ -1424,6 +1424,11 @@ enum WindowBrowserTests {
         appearanceWindow.isReleasedWhenClosed = false
         appearanceWindow.contentView = appearanceContent
         appearanceWindow.orderFrontRegardless()
+        // 这一条查的是“层颜色是否跟随外观”，因此用纸面材质（卡片是实色）；
+        // 玻璃面板下卡片的底色来自内容层材质，另有断言覆盖。
+        appearanceContent.materialOverride = (.paper, WindowBrowserSystemCapabilities(
+            supportsGlass: false, reduceTransparency: false,
+            increaseContrast: false, reduceMotion: false))
         let previousAppearance = NSApp.appearance
         NSApp.appearance = NSAppearance(named: .aqua)
         appearanceContent.update(mode: .keyboard, records: many, selection: many[0].key,
@@ -2420,16 +2425,23 @@ enum WindowBrowserTests {
                             selection: nil, style: .grid, busyKeys: [], status: "")
         glassContent.layout()
         if #available(macOS 26.0, *), WindowBrowserSystemCapabilities.runtimeSupportsGlass {
-            expect(glassContent.glassContainerForDiagnostics != nil,
-                   "two neighbouring glass shapes share one coordination container")
-            let containerHost = glassContent.glassContainerForDiagnostics
-                as? WindowBrowserGlassContainerHost
+            // HIG：玻璃只出现在功能层的一层上，玻璃叠玻璃会互相抹掉折射与高光。
             let panelGlass = glassContent.materialHostForDiagnostics.backdropView
-            expect(containerHost != nil && panelGlass?.superview === containerHost?.host,
-                   "the panel glass really lives inside the container host")
+            expect(panelGlass is WindowBrowserGlassBackdrop,
+                   "the panel keeps exactly one public AppKit glass surface")
+            expect(panelGlass?.superview === glassContent.materialHostForDiagnostics,
+                   "the panel glass hangs directly in the material host, not in a wrapper")
+            expect(!glassContent.controlSurfaceHasGlassForDiagnostics,
+                   "the control layer never adds a second glass layer")
+            expect(glassContent.glassContainerForDiagnostics == nil,
+                   "a single glass surface needs no coordination container")
+            expect(glassContent.adoptedCardSurfaceForDiagnostics == .material,
+                   "the content layer uses the standard material instead of glass")
         } else {
             expect(glassContent.glassContainerForDiagnostics == nil,
                    "without the glass SDK/runtime no coordination container is created")
+            expect(glassContent.adoptedCardSurfaceForDiagnostics == .solid,
+                   "without glass the cards stay opaque")
         }
         host.update(style: .system, cornerRadius: 16,
                     capabilities: WindowBrowserSystemCapabilities(supportsGlass: true,
