@@ -52,6 +52,45 @@ enum WindowBrowserLiveMountTarget: Equatable {
 /// 浅深色、强调色、提高对比度变化时由 `viewDidChangeEffectiveAppearance` 重算。
 protocol WindowBrowserAppearanceRefreshable: AnyObject {
     func refreshAppearance()
+    /// 卡片该用实色还是系统内容层材质。面板本身是玻璃时用材质（HIG：玻璃只做一层，
+    /// 内容层用标准材质），纸面与旧系统仍然是实色卡片。
+    func adoptCardSurface(_ surface: WindowBrowserCardSurface)
+}
+
+/// 卡片背景的两种来源：实色（纸面/旧系统）或系统内容层材质（玻璃面板）。
+enum WindowBrowserCardSurface {
+    case solid
+    case material
+}
+
+extension WindowBrowserAppearanceRefreshable {
+    func adoptCardSurface(_ surface: WindowBrowserCardSurface) {}
+}
+
+/// 卡片背景的来源：读取这个属性的是共享的卡片样式函数，因此各视图不需要在每个
+/// `applyCard` 调用点重复传参。
+protocol WindowBrowserCardSurfaceHosting: AnyObject {
+    var cardSurface: WindowBrowserCardSurface { get }
+}
+
+/// 卡片的内容层材质。面板本身是液态玻璃时，卡片改用系统 `contentBackground`
+/// 材质（`withinWindow` 混合 + 活跃状态跟随），文字由活力自动保持对比度；
+/// 纸面与旧系统上这个视图不参与渲染，卡片仍是实色。
+final class WindowBrowserCardBackdropView: NSVisualEffectView {
+    init() {
+        super.init(frame: .zero)
+        material = .contentBackground
+        blendingMode = .withinWindow
+        state = .followsWindowActiveState
+        isHidden = true
+    }
+
+    required init?(coder: NSCoder) { nil }
+
+    func update(surface: WindowBrowserCardSurface, radius: CGFloat) {
+        isHidden = surface == .solid
+        SystemCornerRadius.apply(to: self, radius: radius, masksToBounds: true)
+    }
 }
 
 extension NSView {
@@ -94,11 +133,19 @@ enum WindowBrowserSurfaceStyle {
                           params: WindowBrowserLayoutParams) {
         // 卡片是面板里的内容分组：圆角走同一份刻度，并且和系统窗口一样用连续曲率。
         SystemCornerRadius.apply(to: view, radius: params.cardCornerRadius)
+        let surface = (view as? WindowBrowserCardSurfaceHosting)?.cardSurface ?? .solid
         let capabilities = SystemAppearanceCapabilities.current
         view.layer?.borderWidth = selected ? (capabilities.increaseContrast ? 2.5 : 2)
                                           : (capabilities.increaseContrast ? 1 : 0.5)
         view.layer?.borderColor = SystemAppearancePolicy.cgColor(
             selected ? NSColor.controlAccentColor : NSColor.separatorColor, for: view)
+        guard surface == .solid else {
+            // 材质卡片：底色由内容层材质给，选中/悬停只叠一层很轻的强调，边框仍是主信号。
+            let tint: NSColor = selected ? .controlAccentColor.withAlphaComponent(0.12)
+                : (hovering ? NSColor.labelColor.withAlphaComponent(0.06) : .clear)
+            view.layer?.backgroundColor = SystemAppearancePolicy.cgColor(tint, for: view)
+            return
+        }
         // 悬停底色沿用系统列表的弱强调语言；选中仍由边线颜色与宽度表达，
         // 不只靠底色（“区分无颜色”同样可辨）。动态颜色一律在该视图外观下解析。
         var background = NSColor.controlBackgroundColor
@@ -242,6 +289,8 @@ final class WindowBrowserCardView: NSView {
     private var mountedLiveView: NSView?
     private var providedMenu: NSMenu?
     private var statusIsWarning = false
+    private let cardBackdrop = WindowBrowserCardBackdropView()
+    private(set) var cardSurface: WindowBrowserCardSurface = .solid
     /// 诊断：真正执行了内容配置的次数（未变化的刷新应保持为 0 增量）。
     private(set) var configureCount = 0
     var titleForTesting: String { titleField.stringValue }
@@ -262,6 +311,8 @@ final class WindowBrowserCardView: NSView {
     override init(frame frameRect: NSRect) {
         super.init(frame: frameRect)
         wantsLayer = true
+        // 内容层材质永远在最底层：纸面/旧系统下它隐藏，卡片用实色。
+        addSubview(cardBackdrop)
         thumbnailView.imageScaling = .scaleProportionallyUpOrDown
         thumbnailView.setAccessibilityElement(false)
         WindowBrowserSurfaceStyle.applyImageArea(thumbnailHost, params: params)
@@ -441,6 +492,8 @@ final class WindowBrowserCardView: NSView {
 
     override func layout() {
         super.layout()
+        cardBackdrop.frame = bounds
+        cardBackdrop.update(surface: cardSurface, radius: params.cardCornerRadius)
         let padding = params.cardPadding
         let width = max(1, bounds.width - padding * 2)
         let actionHeight = params.actionBarHeight
@@ -598,6 +651,8 @@ final class WindowBrowserListRowView: NSView {
     private var configuredSignature: String?
     private var providedMenu: NSMenu?
     private var statusIsWarning = false
+    private let cardBackdrop = WindowBrowserCardBackdropView()
+    private(set) var cardSurface: WindowBrowserCardSurface = .solid
     /// 诊断：真正执行了内容配置的次数。
     private(set) var configureCount = 0
     var titleForTesting: String { titleField.stringValue }
@@ -605,6 +660,7 @@ final class WindowBrowserListRowView: NSView {
     override init(frame frameRect: NSRect) {
         super.init(frame: frameRect)
         wantsLayer = true
+        addSubview(cardBackdrop)
         iconView.imageScaling = .scaleProportionallyUpOrDown
         iconView.setAccessibilityElement(false)
         titleField.font = WindowBrowserTypography.title
@@ -709,6 +765,8 @@ final class WindowBrowserListRowView: NSView {
 
     override func layout() {
         super.layout()
+        cardBackdrop.frame = bounds
+        cardBackdrop.update(surface: cardSurface, radius: params.cardCornerRadius)
         let height = bounds.height
         iconView.frame = NSRect(x: params.rowHorizontalPadding,
                                 y: (height - params.iconSize) / 2,
@@ -834,10 +892,13 @@ final class WindowBrowserSelectionDetailView: NSView {
     private let liveHost = NSView()
     private var mountedLiveView: NSView?
     private var params = WindowBrowserLayoutParams.standard
+    private let cardBackdrop = WindowBrowserCardBackdropView()
+    private(set) var cardSurface: WindowBrowserCardSurface = .solid
 
     override init(frame frameRect: NSRect) {
         super.init(frame: frameRect)
         wantsLayer = true
+        addSubview(cardBackdrop)
         WindowBrowserSurfaceStyle.applyCard(self, selected: false, params: params)
         imageView.imageScaling = .scaleProportionallyUpOrDown
         imageView.setAccessibilityElement(false)
@@ -910,6 +971,8 @@ final class WindowBrowserSelectionDetailView: NSView {
 
     override func layout() {
         super.layout()
+        cardBackdrop.frame = bounds
+        cardBackdrop.update(surface: cardSurface, radius: params.cardCornerRadius)
         let padding = params.selectionPanePadding
         let width = max(1, bounds.width - padding * 2)
         let titleBlock = params.cardTitleHeight
@@ -940,13 +1003,35 @@ enum WindowBrowserCardViewStatus {
     }
 }
 
-extension WindowBrowserCardView: WindowBrowserAppearanceRefreshable {}
-extension WindowBrowserListRowView: WindowBrowserAppearanceRefreshable {}
-extension WindowBrowserSelectionDetailView: WindowBrowserAppearanceRefreshable {
+extension WindowBrowserCardView: WindowBrowserAppearanceRefreshable,
+                                 WindowBrowserCardSurfaceHosting {
+    func adoptCardSurface(_ surface: WindowBrowserCardSurface) {
+        guard surface != cardSurface else { return }
+        cardSurface = surface
+        refreshAppearance()
+    }
+}
+extension WindowBrowserListRowView: WindowBrowserAppearanceRefreshable,
+                                    WindowBrowserCardSurfaceHosting {
+    func adoptCardSurface(_ surface: WindowBrowserCardSurface) {
+        guard surface != cardSurface else { return }
+        cardSurface = surface
+        WindowBrowserSurfaceStyle.applyCard(self, selected: isSelected, hovering: isHovering,
+                                            params: params)
+    }
+}
+extension WindowBrowserSelectionDetailView: WindowBrowserAppearanceRefreshable,
+                                            WindowBrowserCardSurfaceHosting {
     /// 详情区自己重算层颜色（图片区域与卡片共享同一套规则）。
     func refreshAppearance() {
         WindowBrowserSurfaceStyle.applyCard(self, selected: false,
                                             params: WindowBrowserLayoutParams.standard)
+    }
+
+    func adoptCardSurface(_ surface: WindowBrowserCardSurface) {
+        guard surface != cardSurface else { return }
+        cardSurface = surface
+        refreshAppearance()
     }
 }
 
@@ -1218,7 +1303,9 @@ final class WindowBrowserContentView: NSView, NSSearchFieldDelegate, NSTextViewD
         setAccessibilityLabel("窗口浏览面板")
 
         materialHost.update()
-        controlSurface.update()
+        controlSurface.update(style: effectiveMaterialStyle,
+                              capabilities: effectiveMaterialCapabilities,
+                              panelKind: materialHost.kind)
     }
 
     required init?(coder: NSCoder) { nil }
@@ -1304,13 +1391,38 @@ final class WindowBrowserContentView: NSView, NSSearchFieldDelegate, NSTextViewD
     }
 
     private func updateMaterialSurfaces() {
-        let style = materialOverride?.style ?? .current
-        let capabilities = materialOverride?.capabilities ?? .current
+        let style = effectiveMaterialStyle
+        let capabilities = effectiveMaterialCapabilities
         materialHost.update(style: style, cornerRadius: params.panelCornerRadius,
                             capabilities: capabilities)
-        controlSurface.update(style: style, capabilities: capabilities)
+        controlSurface.update(style: style, capabilities: capabilities,
+                              panelKind: materialHost.kind)
         coordinateGlassBackdrops()
+        // 玻璃面板下的卡片改用内容层材质（HIG：玻璃只做一层，内容层用标准材质）；
+        // 纸面与旧系统仍然是不透明卡片。
+        let surface: WindowBrowserCardSurface = materialHost.kind == .glass ? .material : .solid
+        adoptedCardSurfaceForDiagnostics = surface
+        for target in browserAppearanceTargets() {
+            target.adoptCardSurface(surface)
+        }
     }
+
+    /// 当前生效的材质输入：诊断入口可以注入，真机读系统。
+    private var effectiveMaterialStyle: WindowBrowserAppearanceStyle {
+        materialOverride?.style ?? .current
+    }
+
+    private var effectiveMaterialCapabilities: WindowBrowserSystemCapabilities {
+        materialOverride?.capabilities ?? .current
+    }
+
+    /// 诊断：控制层当前是否自带玻璃。HIG 不允许玻璃叠玻璃，正常应始终是 false。
+    var controlSurfaceHasGlassForDiagnostics: Bool {
+        controlSurface.backdropView is WindowBrowserGlassBackdrop
+    }
+
+    /// 诊断：本次材质决策后卡片用的表面（玻璃面板下应为 .material）。
+    private(set) var adoptedCardSurfaceForDiagnostics: WindowBrowserCardSurface = .solid
 
     /// 面板背景与控制层的玻璃交给同一个 NSGlassEffectContainerView 协调，
     /// 让系统按邻近规则批量处理/合并玻璃形状（公开 API，不做折射伪造）。
@@ -1319,7 +1431,9 @@ final class WindowBrowserContentView: NSView, NSSearchFieldDelegate, NSTextViewD
         if #available(macOS 26.0, *) {
             let glasses = [materialHost.backdropView, controlSurface.backdropView]
                 .compactMap { $0 as? WindowBrowserGlassBackdrop }
-            guard !glasses.isEmpty else { return }
+            // 容器只为一件事存在：让相邻的多个玻璃形状合并/批量处理。现在面板只有
+            // 一层玻璃（控制层不再叠玻璃），再套一层容器没有收益，反而多一道离屏合成。
+            guard glasses.count > 1 else { return }
             let host: WindowBrowserGlassContainerHost
             if let existing = glassContainerForDiagnostics as? WindowBrowserGlassContainerHost {
                 host = existing
@@ -1349,6 +1463,13 @@ final class WindowBrowserContentView: NSView, NSSearchFieldDelegate, NSTextViewD
         guard let color = row.layer?.backgroundColor,
               let nsColor = NSColor(cgColor: color)?.usingColorSpace(.deviceRGB) else { return nil }
         return nsColor.brightnessComponent
+    }
+
+    /// 诊断：强制卡片用实色或内容层材质（探针做同机对照；真机由材质自动决定）。
+    func setCardSurfaceForDiagnostics(_ surface: WindowBrowserCardSurface) {
+        for target in browserAppearanceTargets() {
+            target.adoptCardSurface(surface)
+        }
     }
 
     /// 诊断：玻璃协调容器（仅 macOS 26+ 且使用玻璃时存在）。
@@ -1662,7 +1783,9 @@ final class WindowBrowserContentView: NSView, NSSearchFieldDelegate, NSTextViewD
         updateMaterialSurfaces()
         controlSurface.frame = plan.headerRect.insetBy(dx: -params.panelPadding,
                                                        dy: -params.spacingSmall)
-        controlSurface.update()
+        controlSurface.update(style: effectiveMaterialStyle,
+                              capabilities: effectiveMaterialCapabilities,
+                              panelKind: materialHost.kind)
         let header = plan.headerRect
         iconView.frame = NSRect(x: header.minX, y: header.midY - params.iconSize / 2,
                                 width: params.iconSize, height: params.iconSize)

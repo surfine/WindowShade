@@ -304,6 +304,38 @@ chip 3），曲线也一半正圆一半连续曲率，所以同一屏里会出�
 | 单窗口 · 短标题 · 有状态（“正在刷新窗口…”） | — | 312 × 289 pt（页脚真的装内容时才长出来） |
 | 三窗口 · 两行网格 · 有页脚 | 612 × 575 pt | 612 × 519 pt |
 
+## 液态玻璃：只按 HIG 的分层纪律用（1.0.14 之后）
+
+用户反馈面板“像毛玻璃、不像液态玻璃”，并要求不能自创对 Liquid Glass 的理解。于是先回到
+Apple 的 HIG 原文（本仓库 `apple-design` 语料里的《Materials》《Color》与逐页蒸馏的
+Liquid Glass 指南，Apple 最后更新 2025-12-16），只按写明的规则做：
+
+| HIG 规则（原文） | 本项目的落实 |
+| --- | --- |
+| “Don't use Liquid Glass in the content layer.” 内容层要用标准材质 | 卡片、列表行、详情区在玻璃面板下改用 `NSVisualEffectView`（`.contentBackground` + `.withinWindow`，即 HIG 说的“macOS 的用途命名材质 + 两种混合模式”）；纸面与旧系统仍是实色卡片 |
+| “Use Liquid Glass effects sparingly.” 审查清单：玻璃叠玻璃会毁掉层级 | **全应用只剩一层玻璃**：窗口浏览面板本身。控制层以前自己又叠了一层玻璃，两层互相抹掉折射与高光，这就是“毛玻璃感”的来源，现已删除 |
+| “Use the regular variant when components have a significant amount of text, such as alerts, sidebars, or popovers.”；“Only use clear Liquid Glass for components that appear over visually rich backgrounds.” | 面板文字多、背景是桌面而不是照片/视频，因此固定用 `NSGlassEffectView.Style.regular`；过程中试过的 `clear` + 自造薄纱方案按这条删掉 |
+| “Liquid Glass has no inherent color.”；上色要节省 | 不设 `tintColor`，玻璃只取背景的颜色 |
+| 系统组件自动获得该材质 | 分段控件、搜索框用系统控件，由系统给它们玻璃外观，不自绘 |
+| 减少透明度 / 提高对比度 / 减少动态效果都要有回退 | 减少透明度 → 不透明纸面；提高对比度 → 更实的材质与加粗边线；减少动态效果 → 不做位移与缩放（既有实现保持不变） |
+| “Scroll edge effect.” 内容与功能条相遇处要淡出 | 面板里列表位于页眉与页脚**之间**，滚动内容不与条重叠，因此不需要这个效果；本机 SDK 的 AppKit 也没有对应的公开 API（逐个 grep 过 Headers），所以不自造模糊带 |
+
+`NSGlassEffectContainerView` 只在**同时存在两个以上玻璃形状**时才有意义（它负责合并与
+批量处理）。现在面板只有一层玻璃，容器路径不再创建，代码保留但带注释说明触发条件。
+
+真实观感证据是屏幕截图，不是离屏渲染：离屏 `cacheDisplay` 看不到玻璃（合成器不参与），
+单窗口截图也只拿得到窗口自己的表面。所以用 `--window-browser-shots` 的
+`WINDOWSHADE_GLASS_RIG=1` 在面板正后方放一块确定性对照板（渐变 + 细字 + 明暗分区，
+只有 440×380），再用系统截屏抓真实合成结果：
+
+| 样例 | 说明 |
+| --- | --- |
+| `liquid-glass-panel.png` | 面板浮在对照板上：玻璃把背景的色相与亮度带上来，卡片是内容层材质；底部同一帧里的 Dock 是系统原生玻璃对照 |
+
+回归断言（`tests/run-window-browser-tests.sh`）：面板只保留一个 `NSGlassEffectBackdrop`、
+控制层不再带玻璃、单层玻璃时不创建协调容器、玻璃面板下卡片采用内容层材质（纸面与旧系统
+仍为实色）。
+
 ## 与示意稿的语义对齐
 
 标准卷帘的恢复交互原本需要双击，因此提示写作“**双击展开**”，没有照抄会误导操作的“点按展开”。真实窗口截图模式继续保留源应用的原貌；系统绘制的窗口标题和圆角跟随当前 macOS，而不覆盖系统内部视图。

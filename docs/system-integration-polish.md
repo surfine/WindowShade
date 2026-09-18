@@ -18,7 +18,7 @@ Release 一并完成，本机应用用同一签名身份原地替换。版本历
 | 新增全应用 `SystemAppearancePolicy`（材质、边线、薄纱、阴影、动画、字号） | `prototype/Overlay/SystemAppearance.swift` | `tests/run-paper-tests.sh` 策略断言 |
 | 卷帘条、悬停缩略图、置顶预览、代理标题栏、引导页背景、窗口浏览面板统一走该策略 | `Overlay/*`、`PinnedPreviewPanel.swift`、`App/OverlayFactory.swift`、`App/Preferences.swift` | 材质接线断言 + `docs/visual-qa/system-appearance/*.png` |
 | 减少透明度 / 提高对比度 / 减少动态效果 / 浅深色变化时刷新已打开表面 | `WindowShade.swift` 的外观观察者 | `classic-strip-palette PASS`、设置页外观检查 |
-| 面板背景与控制层两块玻璃交给公开 `NSGlassEffectContainerView` 协调 | `WindowBrowserMaterial.swift`、`WindowBrowserViews.swift` | 容器存在与归属断言 |
+| 液态玻璃只保留一层（面板容器），控制层不再叠玻璃；卡片/列表行改用内容层标准材质 `NSVisualEffectView(.contentBackground/.withinWindow)` | `WindowBrowserMaterial.swift`、`WindowBrowserViews.swift` | 单层玻璃、控制层无玻璃、卡片材质与容器不创建的断言；真实屏幕截图 `docs/visual-qa/system-appearance/liquid-glass-panel.png` |
 | 窗口浏览面板 100–120 ms 淡出，遵守减少动态效果 | `WindowBrowserPanel.swift`、`WindowBrowserController.swift` | 代码路径 + 设置页外观检查 |
 | 首次显示只做一次整面板刷新（首次说明只改页脚文本） | `WindowBrowserController.swift` | 代码路径（Dock 与键盘两条入口都已合并） |
 | 左/右 Dock 的网格列数上限收紧到两列、面板 ≤640 pt | `WindowBrowserGeometry.swift` | 几何断言（side Dock ≤2 列、bottom Dock 仍 3 列） |
