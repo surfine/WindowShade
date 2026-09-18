@@ -44,7 +44,7 @@ final class SettingsGroupBox: NSBox {
     boxType = .custom
     titlePosition = .noTitle
     borderWidth = 0
-    cornerRadius = 10
+    cornerRadius = SystemCornerRadius.card
     contentViewMargins = .zero
     // 动态颜色：浅深色在绘制时各自解析，不再依赖外观回调重新赋值。
     fillColor = SystemAppearancePolicy.groupBoxFill()

@@ -269,7 +269,8 @@ final class WindowBrowserShotProbe {
            let card = content.debugFirstCardFrames() {
             print("shots-debug: cell=\(content.plan.cellSize) cardBounds=\(card.bounds) "
                   + "thumbnail=\(card.thumbnailHostFrame) title=\(card.titleFrame) "
-                  + "action=\(card.actionFrame)")
+                  + "action=\(card.actionFrame) "
+                  + "panelRadius=\(content.panelCornerRadiusForDiagnostics)")
         }
         let image = renderImage(of: content)
         panel.orderOut(nil)
@@ -354,6 +355,10 @@ final class WindowBrowserShotProbe {
     private static func placeholderImage(named name: String, size: NSSize) -> NSImage {
         let image = NSImage(size: size)
         image.lockFocus()
+        // 与卡片里的占位画面同一规则：真实窗口截图自带窗口圆角，占位画面也要有，
+        // 否则缩略图会在圆角容器里露出一块直角。
+        SystemCornerPath.path(in: NSRect(origin: .zero, size: size),
+                              radius: max(4, SystemCornerRadius.window * 0.6)).addClip()
         NSColor(calibratedWhite: 0.16, alpha: 1).setFill()
         NSRect(origin: .zero, size: size).fill()
         NSColor.systemTeal.withAlphaComponent(0.85).setFill()
@@ -574,6 +579,17 @@ final class WindowBrowserShotProbe {
 
     /// 本地生成的占位窗口画面：代表一张复杂背景上的真实窗口截图，
     /// 不来自任何用户窗口，也不写入磁盘之外的位置。
+    /// 稳定哈希：`String.hashValue` 每个进程都会重新播种，用它挑颜色会让同一份
+    /// fixture 每次渲染出不同画面，归档图没法逐像素比较。这里用 FNV-1a 固定下来。
+    private static func stableHash(_ value: String) -> UInt64 {
+        var hash: UInt64 = 0xcbf2_9ce4_8422_2325
+        for byte in value.utf8 {
+            hash ^= UInt64(byte)
+            hash = hash &* 0x100_0000_01b3
+        }
+        return hash
+    }
+
     private static func placeholderImage(for record: WindowRecord) -> CGImage? {
         let width = 640
         let height = 400
@@ -587,12 +603,17 @@ final class WindowBrowserShotProbe {
         NSGraphicsContext.saveGraphicsState()
         NSGraphicsContext.current = context
         let rect = NSRect(x: 0, y: 0, width: width, height: height)
+        // 真实截图是窗口画面：四角带系统窗口的圆角（按窗口宽度缩放到本图像素）。
+        // 归档图里的占位画面必须长得像真截图，否则卡片里会出现一块直角画面。
+        let windowWidth = max(1, record.logicalFrame?.width ?? 800)
+        let cornerRadius = max(4, min(24, SystemCornerRadius.window * CGFloat(width) / windowWidth))
+        SystemCornerPath.path(in: rect, radius: cornerRadius).addClip()
         NSColor(calibratedWhite: 0.16, alpha: 1).setFill()
         rect.fill()
         // 简单的“内容”块：文字、行、色块，用来判断缩放与清晰度。
         let palette: [NSColor] = [.systemBlue, .systemTeal, .systemOrange,
                                   .systemPurple, .systemGreen]
-        let accent = palette[abs(record.title.hashValue) % palette.count]
+        let accent = palette[Int(stableHash(record.title) % UInt64(palette.count))]
         accent.withAlphaComponent(0.9).setFill()
         NSRect(x: 24, y: 120, width: 260, height: 140).fill()
         NSColor(calibratedWhite: 0.92, alpha: 1).setFill()
