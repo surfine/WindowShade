@@ -38,6 +38,7 @@ WindowShade leaves a slim strip on the desktop with the window's title and a way
 - **Still fast, and honest about it.** 120 windows fill and lay out in 24.2 / 30.4 ms (p50/p95) against a 271.8 / 342.8 ms baseline measured back to back in the same session, and warm refreshes stay inside the 4 ms p95 budget.
 - **Corners that match the system.** One radius scale for every custom surface — 13 pt for windows and panels (measured on a real macOS 27 window), 12 pt for cards, 6 pt for controls, always with continuous curvature — and thumbnails follow the HIG concentric rule inside their card. The rolled-up strip now keeps rounded top corners with a straight bottom cut, like the window it replaces.
 - **The panel hugs its content.** Titles take the height they actually need and the footer only exists when there is a status line, so a single-window Dock panel is 312 × 274 pt with 12 pt of padding under the card instead of 312 × 329 pt with an empty band.
+- **Liquid Glass, used the way the HIG prescribes.** The panel keeps exactly one `NSGlassEffectView` (the `regular` variant Apple prescribes for text-heavy popovers), with no second glass stacked on the control layer, and the cards and list rows use a standard content-layer material instead of glass. The glass is never tinted, and the deployment target stays macOS 14 with opaque, high-contrast and reduced-motion fallbacks.
 
 [Release notes and downloads →](https://github.com/surfine/WindowShade/releases/tag/v1.0.14)
 
