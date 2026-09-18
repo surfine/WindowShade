@@ -66,6 +66,8 @@ extension AppDelegate {
             let iv = TitleStripView(frame: NSRect(origin: .zero, size: frame.size))
             iv.image = NSImage(cgImage: image, size: frame.size)
             iv.imageScaling = .scaleAxesIndependently
+            iv.configureAccessibility(appName: shaded[id]?.appName ?? "",
+                                      windowTitle: shaded[id]?.title ?? "")
             iv.onDoubleClick = { [weak self] in self?.unshade(id) }
             iv.onPreviewPeek = { [weak self] in self?.peekHoverPreview(id) }
             iv.onMoveEnded = { [weak self] frame in
@@ -93,6 +95,8 @@ extension AppDelegate {
         let iv = TitleStripView(frame: NSRect(origin: .zero, size: frame.size))
         iv.image = NSImage(cgImage: image, size: frame.size)
         iv.imageScaling = .scaleAxesIndependently
+        iv.configureAccessibility(appName: shaded[id]?.appName ?? "",
+                                  windowTitle: shaded[id]?.title ?? "")
         iv.onDoubleClick = { [weak self] in self?.unshade(id) }
         iv.onPreviewPeek = { [weak self] in self?.peekHoverPreview(id) }
         iv.onMoveEnded = { [weak self] frame in
@@ -117,7 +121,7 @@ extension AppDelegate {
         overlay.hasShadow = false
         let view = ClassicTitleStripView(frame: NSRect(origin: .zero, size: overlay.frame.size),
                                          appName: appName, windowTitle: title,
-                                         palette: classicPalette(pid: pid))
+                                         pid: pid)
         view.onDoubleClick = { [weak self] in self?.unshade(id) }
         view.onAction = { [weak self] action in self?.handleClassicAction(action, id) }
         view.onMoveEnded = { [weak self] frame in
@@ -198,11 +202,11 @@ extension AppDelegate {
             content.wantsLayer = true
             content.layer?.backgroundColor = NSColor.clear.cgColor
 
-            let material = NSVisualEffectView(frame: content.bounds)
+            // 代理标题栏材质与其它自定义表面共用同一份系统外观策略。
+            let material = SystemMaterialView(purpose: .proxyTitleBar)
+            material.frame = content.bounds
             material.autoresizingMask = [.width, .height]
-            material.material = .popover
-            material.blendingMode = .behindWindow
-            material.state = .active
+            material.apply()
             content.addSubview(material)
 
             let titleView = NativeProxyTitleContentView(frame: content.bounds,

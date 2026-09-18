@@ -595,6 +595,27 @@ func quickWindowPreviewImage(id: CGWindowID, logicalSize: CGSize,
         .map { NSImage(cgImage: $0, size: logicalSize) }
 }
 
+/// 快速预览所依赖的旧接口只报一次可用性，便于未来系统移除时定位。
+enum LegacyQuickCapture {
+    private static let lock = NSLock()
+    private static var reported = false
+
+    static func reportUnavailableOnce() {
+        lock.lock()
+        defer { lock.unlock() }
+        guard !reported else { return }
+        reported = true
+        wlog("capture: CGWindowListCreateImage unavailable; quick preview falls back "
+             + "(folded strip → proxy title bar, hover preview → none)")
+    }
+
+    static func resetReportForTesting() {
+        lock.lock()
+        reported = false
+        lock.unlock()
+    }
+}
+
 // 只到 CGImage 为止：CGWindowListCreateImage 与降采样都只碰 CoreGraphics，可在
 // 任意线程调用；包装成 NSImage 的那一步留给主线程的调用方。
 func quickWindowPreviewCGImage(id: CGWindowID,
@@ -604,7 +625,13 @@ func quickWindowPreviewCGImage(id: CGWindowID,
     struct Loader {
         static let createImage: CreateImage? = {
             guard let handle = dlopen("/System/Library/Frameworks/CoreGraphics.framework/CoreGraphics", RTLD_LAZY),
-                  let symbol = dlsym(handle, "CGWindowListCreateImage") else { return nil }
+                  let symbol = dlsym(handle, "CGWindowListCreateImage") else {
+                // Apple 已把 CGWindowListCreateImage 标记为废弃（改用 ScreenCaptureKit）。
+                // 当前系统上它仍可用；一旦未来系统移除该符号，这里记录一次，
+                // 折叠条会退回代理标题栏、悬停预览退回“无预览”，不会静默损坏。
+                LegacyQuickCapture.reportUnavailableOnce()
+                return nil
+            }
             return unsafeBitCast(symbol, to: CreateImage.self)
         }()
     }

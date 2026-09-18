@@ -154,6 +154,37 @@ if CommandLine.arguments.contains("--duo-render-test") {
 let delegate = AppDelegate()
 // Isolated visual QA: builds real settings views without sensors, event taps,
 // window recovery, or changes to the user's saved effect preferences.
+if CommandLine.arguments.contains("--standard-menu-probe") {
+    app.setActivationPolicy(.accessory)
+    DispatchQueue.main.async {
+        let probe = WindowBrowserShotProbe(
+            outputDirectory: URL(fileURLWithPath: FileManager.default.currentDirectoryPath)
+                .appendingPathComponent(".build/design-review"))
+        probe.runStandardMenuProbe()
+        NSApp.terminate(nil)
+    }
+    app.run()
+    exit(0)
+}
+if CommandLine.arguments.contains("--settings-shots") {
+    // 隔离设置窗口截图：不启动传感器、全局事件监听或恢复扫描，也不写入用户偏好。
+    app.setActivationPolicy(.accessory)
+    delegate.duoController.persistsSettings = false
+    delegate.duoController.owner = delegate
+    delegate.duoController.isDesignPreview = true
+    let index = CommandLine.arguments.firstIndex(of: "--settings-shots")!
+    let directory = CommandLine.arguments.count > index + 1
+        ? URL(fileURLWithPath: CommandLine.arguments[index + 1])
+        : URL(fileURLWithPath: FileManager.default.currentDirectoryPath)
+            .appendingPathComponent(".build/settings-shots")
+    DispatchQueue.main.async {
+        SettingsShotProbe(owner: delegate, outputDirectory: directory).run {
+            NSApp.terminate(nil)
+        }
+    }
+    withExtendedLifetime(delegate) { app.run() }
+    exit(0)
+}
 if CommandLine.arguments.contains("--duo-design-preview") {
     app.setActivationPolicy(.regular)
     delegate.duoController.persistsSettings = false
