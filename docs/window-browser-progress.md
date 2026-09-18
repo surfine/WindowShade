@@ -2390,3 +2390,12 @@ Liquid Glass 的理解。于是回到 HIG 原文（`apple-design` 语料里的�
 - **断言**：面板只有一个玻璃表面、控制层无玻璃、单层时不创建容器、玻璃面板下卡片用内容层
   材质（纸面与旧系统仍为实色）；窗口浏览检查 605 → **608 项**，全部通过；纸质、双屏、
   五页设置外观检查、标准菜单对照、`classic-strip-palette PASS` 一并复跑。
+
+交付（同一版本重新发布，第三次）：用户确认“同一版本重新发布”，把“面板贴合内容”
+（`ca3f295`）与“液态玻璃分层纪律”（`ac648cf`）连同文档（`480a7fd`）一起覆盖进 1.0.14——
+tag 从 `6c744cc` 移到 `480a7fd`，附件 `WindowShade-v1.0.14.zip`（3,715,311 字节，
+sha256 `ed82d3a6d3f7f3fc28c1a5e09b0754f03a86f6b3d9e68353656479dbdfcd160e`）与校验文件
+已覆盖；Release Notes 增补“面板贴着内容收口”与“液态玻璃按 HIG 只用一层”两条中英文；
+本机应用用同一身份（TeamIdentifier FVGLY6W6S4）重新构建替换，pid 73939 → 20707，
+bundle 1.0.14 / build 14。线上附件 sha256 与本地打包结果一致；隔离构建的
+`--window-browser-idle-probe`、`--window-browser-shots`（`classic-strip-palette PASS`）干净。
