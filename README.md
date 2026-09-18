@@ -37,6 +37,7 @@ WindowShade leaves a slim strip on the desktop with the window's title and a way
 - **Space takes a look.** A read-only large preview of the window you picked, without activating, unfolding or moving it; click or Escape to close, with layered Escape for the arrangement preview and the panel.
 - **Still fast, and honest about it.** 120 windows fill and lay out in 24.2 / 30.4 ms (p50/p95) against a 271.8 / 342.8 ms baseline measured back to back in the same session, and warm refreshes stay inside the 4 ms p95 budget.
 - **Corners that match the system.** One radius scale for every custom surface — 13 pt for windows and panels (measured on a real macOS 27 window), 12 pt for cards, 6 pt for controls, always with continuous curvature — and thumbnails follow the HIG concentric rule inside their card. The rolled-up strip now keeps rounded top corners with a straight bottom cut, like the window it replaces.
+- **The panel hugs its content.** Titles take the height they actually need and the footer only exists when there is a status line, so a single-window Dock panel is 312 × 274 pt with 12 pt of padding under the card instead of 312 × 329 pt with an empty band.
 
 [Release notes and downloads →](https://github.com/surfine/WindowShade/releases/tag/v1.0.14)
 
