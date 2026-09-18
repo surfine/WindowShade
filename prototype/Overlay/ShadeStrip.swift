@@ -722,22 +722,29 @@ final class ClassicTitleStripView: NSView {
     }
 
     override func draw(_ dirtyRect: NSRect) {
+        // 经典条是“被卷起的窗口顶部”：上面两角跟系统窗口（macOS 27 实测 13 pt）一致，
+        // 下边缘保持直切口，与截图条的窗口 chrome 对齐。
+        let radius = SystemCornerRadius.surfaceRadius(forHeight: bounds.height)
+        let shape = SystemCornerPath.path(in: bounds, radius: radius, corners: .top)
         palette.paper.setFill()
-        bounds.fill()
+        shape.fill()
 
         // 边线与顶边高光跟随“提高对比度”：高对比度下加粗并去掉高光。
         let capabilities = appearanceCapabilities
         palette.edge.setStroke()
         let edgeWidth = SystemAppearancePolicy.edgeWidth(capabilities)
-        let edge = NSBezierPath(rect: bounds.insetBy(dx: edgeWidth / 2, dy: edgeWidth / 2))
+        let edge = SystemCornerPath.path(in: bounds.insetBy(dx: edgeWidth / 2, dy: edgeWidth / 2),
+                                         radius: SystemCornerRadius.surfaceRadius(
+                                            forHeight: bounds.height - edgeWidth),
+                                         corners: .top)
         edge.lineWidth = edgeWidth
         edge.stroke()
         let highlight = SystemAppearancePolicy.highlightAlpha(capabilities)
         if highlight > 0 {
             NSColor.white.withAlphaComponent(highlight).setFill()
             let pixel = 1 / (window?.backingScaleFactor ?? 2)
-            NSRect(x: 0.5, y: bounds.maxY - pixel,
-                   width: max(0, bounds.width - 1), height: pixel).fill()
+            NSRect(x: radius, y: bounds.maxY - pixel,
+                   width: max(0, bounds.width - radius * 2), height: pixel).fill()
         }
 
         drawControl(.close)

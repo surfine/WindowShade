@@ -496,8 +496,8 @@ func roundedClippedImage(_ image: CGImage, cornerRadius: CGFloat,
                               bitmapInfo: CGImageAlphaInfo.premultipliedLast.rawValue) else { return nil }
     ctx.clear(CGRect(x: 0, y: 0, width: w, height: h))
     let rect = CGRect(x: 0, y: 0, width: w, height: h)
-    let path = CGPath(roundedRect: rect, cornerWidth: cornerRadius, cornerHeight: cornerRadius,
-                      transform: nil)
+    // 窗口原貌的圆角同样是连续曲率，不用正圆近似。
+    let path = SystemCornerPath.cgPath(in: rect, radius: cornerRadius)
     ctx.addPath(path)
     ctx.clip()
     ctx.draw(image, in: rect)
@@ -558,8 +558,11 @@ func configurePreviewImageView(_ imageView: NSImageView, image: NSImage) -> Bool
         imageView.layer?.borderWidth = 0
         imageView.layer?.borderColor = nil
     } else {
-        imageView.layer?.cornerRadius = 8
-        imageView.layer?.masksToBounds = true
+        // 没有圆角透明度说明这不是窗口原貌：按同心规则给一个和容器匹配的小圆角。
+        SystemCornerRadius.apply(
+            to: imageView,
+            radius: SystemCornerRadius.concentric(outer: SystemCornerRadius.window, inset: 10),
+            masksToBounds: true)
         imageView.layer?.borderWidth = 0.5
         imageView.layer?.borderColor = NSColor.black.withAlphaComponent(0.22).cgColor
     }

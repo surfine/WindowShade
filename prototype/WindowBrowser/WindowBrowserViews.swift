@@ -92,8 +92,8 @@ final class WindowBrowserIconProvider {
 enum WindowBrowserSurfaceStyle {
     static func applyCard(_ view: NSView, selected: Bool, hovering: Bool = false,
                           params: WindowBrowserLayoutParams) {
-        view.wantsLayer = true
-        view.layer?.cornerRadius = params.cardCornerRadius
+        // 卡片是面板里的内容分组：圆角走同一份刻度，并且和系统窗口一样用连续曲率。
+        SystemCornerRadius.apply(to: view, radius: params.cardCornerRadius)
         let capabilities = SystemAppearanceCapabilities.current
         view.layer?.borderWidth = selected ? (capabilities.increaseContrast ? 2.5 : 2)
                                           : (capabilities.increaseContrast ? 1 : 0.5)
@@ -113,9 +113,8 @@ enum WindowBrowserSurfaceStyle {
     }
 
     static func applyImageArea(_ view: NSView, params: WindowBrowserLayoutParams) {
-        view.wantsLayer = true
-        view.layer?.cornerRadius = params.imageCornerRadius
-        view.layer?.masksToBounds = true
+        // 画面嵌在卡片里，按同心规则取“卡片圆角 − 卡片内边距”。
+        SystemCornerRadius.apply(to: view, radius: params.imageCornerRadius, masksToBounds: true)
         view.layer?.borderWidth = 0.5
         view.layer?.borderColor = SystemAppearancePolicy.cgColor(
             NSColor.separatorColor.withAlphaComponent(0.6), for: view)
@@ -967,10 +966,8 @@ final class WindowBrowserQuickLookView: NSView {
 
     override init(frame frameRect: NSRect) {
         super.init(frame: frameRect)
-        wantsLayer = true
-        layer?.cornerRadius = params.cardCornerRadius
-        layer?.cornerCurve = .continuous
-        layer?.masksToBounds = true
+        SystemCornerRadius.apply(to: self, radius: params.panelCornerRadius,
+                                 masksToBounds: true)
         addSubview(material)
         material.frame = bounds
 
@@ -1010,8 +1007,11 @@ final class WindowBrowserQuickLookView: NSView {
             NSColor.clear, for: material)
         imageView.wantsLayer = true
         imageView.layer?.backgroundColor = SystemAppearancePolicy.cgColor(veil, for: imageView)
-        imageView.layer?.cornerRadius = params.imageCornerRadius
-        imageView.layer?.masksToBounds = true
+        SystemCornerRadius.apply(to: imageView,
+                                 radius: SystemCornerRadius.concentric(
+                                    outer: params.panelCornerRadius,
+                                    inset: params.spacingMedium),
+                                 masksToBounds: true)
         needsLayout = true
     }
 
@@ -1091,6 +1091,10 @@ final class WindowBrowserContentView: NSView, NSSearchFieldDelegate, NSTextViewD
     private var screenRecordingAvailable = true
     private var hasAccessibility = true
     private(set) var plan: WindowBrowserContentPlan
+    /// 宿主（控制器）需要的排版参数：实时预览挂载时要和卡片用同一份圆角刻度。
+    var layoutParamsForHosting: WindowBrowserLayoutParams { params }
+    /// 诊断：面板背景当前实际生效的圆角（视觉回归与截图核对用）。
+    var panelCornerRadiusForDiagnostics: CGFloat { materialHost.layer?.cornerRadius ?? -1 }
 
     let materialHost = WindowBrowserMaterialView()
     private let controlSurface = WindowBrowserControlSurface()
@@ -1519,9 +1523,8 @@ final class WindowBrowserContentView: NSView, NSSearchFieldDelegate, NSTextViewD
         detachLiveView()
         liveView = view
         liveMountTarget = target
-        view.wantsLayer = true
-        view.layer?.cornerRadius = params.imageCornerRadius
-        view.layer?.masksToBounds = true
+        SystemCornerRadius.apply(to: view, radius: params.imageCornerRadius,
+                                 masksToBounds: true)
         switch target {
         case .card(let targetKey):
             let card = cardView(for: targetKey)

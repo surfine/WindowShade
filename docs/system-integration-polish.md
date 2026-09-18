@@ -22,6 +22,7 @@ Release 一并完成，本机应用用同一签名身份原地替换。版本历
 | 窗口浏览面板 100–120 ms 淡出，遵守减少动态效果 | `WindowBrowserPanel.swift`、`WindowBrowserController.swift` | 代码路径 + 设置页外观检查 |
 | 首次显示只做一次整面板刷新（首次说明只改页脚文本） | `WindowBrowserController.swift` | 代码路径（Dock 与键盘两条入口都已合并） |
 | 左/右 Dock 的网格列数上限收紧到两列、面板 ≤640 pt | `WindowBrowserGeometry.swift` | 几何断言（side Dock ≤2 列、bottom Dock 仍 3 列） |
+| 圆角统一到一份刻度：窗口级 13 pt（本机实测 macOS 27 窗口）、卡片 12、控件 6，嵌套按“外圆角 − 间距”同心，图层一律连续曲率；经典卷帘条改为“上两角圆、下边缘直切” | `Overlay/SystemAppearance.swift`（`SystemCornerRadius` / `SystemCornerPath`）、`WindowBrowserGeometry.swift`、`ShadeStrip.swift`、`PaperSurfaceStyle.swift`、`PinnedPreviewPanel.swift`、`PreviewSurfaces.swift`、`Preferences.swift` | `tests/run-paper-tests.sh` 与 `tests/run-window-browser-tests.sh` 的刻度/同心/路径断言 + `docs/visual-qa/**` 重新生成的截图 |
 
 ## 2. 修掉的三类真实缺陷
 
