@@ -78,9 +78,9 @@
  });
  $('gesture-simulate').addEventListener('click',()=>{clearTimeout(clickTimer);clickCount=0;if(getPreference().count)toggleGesture();else $('gesture-status').textContent=preferenceMessage();});
  const platinumDesk=$('platinum-desk'),platinumWindow=$('platinum-window'),platinumBar=$('platinum-bar');
- let platinumFolded=false,drag=null;
+ let platinumFolded=false,drag=null,dragMoved=false;
  const platinumSay=text=>{$('platinum-result').textContent=text;};
- const movedText=()=>t(platinumFolded?'标题栏到了新位置。点方框展开，看内容出现在哪里。':'窗口跟着标题栏一起移动。',platinumFolded?'The title bar is somewhere new. Expand it and see where the contents appear.':'The window moves with its title bar.');
+ const movedText=()=>t(platinumFolded?'标题栏到了新位置。双击标题栏（或点方框）展开，看内容出现在哪里。':'窗口跟着标题栏一起移动。',platinumFolded?'The title bar is somewhere new. Double-click it (or click the box) and see where the contents appear.':'The window moves with its title bar.');
  let platinumX=null,platinumY=null;
  function platinumOffset(){
   if(platinumX===null){
@@ -101,21 +101,24 @@
   platinumFolded=!platinumFolded;platinumWindow.classList.toggle('folded',platinumFolded);
   $('platinum-collapse').setAttribute('aria-expanded',String(!platinumFolded));
   $('platinum-content').setAttribute('aria-hidden',String(platinumFolded));
-  platinumSay(t(platinumFolded?'只剩标题栏。把它拖到别处，再点一次方框。':'内容在标题栏现在的位置展开。',platinumFolded?'Only the title bar is left. Drag it somewhere else, then click the box again.':'The contents open where the title bar now is.'));
+  platinumSay(t(platinumFolded?'只剩标题栏。把它拖到别处，再双击一次（或点方框）展开。':'内容在标题栏现在的位置展开。',platinumFolded?'Only the title bar is left. Drag it somewhere else, then double-click it (or click the box) to expand.':'The contents open where the title bar now is.'));
  }
  $('platinum-collapse').addEventListener('click',togglePlatinum);
+ // 1997 年的手势本身就是双击标题栏；拖动过的这一次不算双击。
+ platinumBar.addEventListener('dblclick',()=>{if(!dragMoved)togglePlatinum();});
  platinumBar.addEventListener('pointerdown',e=>{
   if(e.target.closest('button'))return;
   const at=platinumOffset();
-  drag={id:e.pointerId,x:e.clientX-at.x,y:e.clientY-at.y};
+  drag={id:e.pointerId,x:e.clientX-at.x,y:e.clientY-at.y,sx:e.clientX,sy:e.clientY};dragMoved=false;
   platinumBar.setPointerCapture(e.pointerId);platinumWindow.classList.add('dragging');e.preventDefault();
  });
- platinumBar.addEventListener('pointermove',e=>{if(drag&&e.pointerId===drag.id)placePlatinum(e.clientX-drag.x,e.clientY-drag.y);});
+ platinumBar.addEventListener('pointermove',e=>{if(!drag||e.pointerId!==drag.id)return;if(Math.abs(e.clientX-drag.sx)>4||Math.abs(e.clientY-drag.sy)>4)dragMoved=true;placePlatinum(e.clientX-drag.x,e.clientY-drag.y);});
  for(const end of ['pointerup','pointercancel'])platinumBar.addEventListener(end,e=>{
   if(!drag||e.pointerId!==drag.id)return;
-  drag=null;platinumWindow.classList.remove('dragging');platinumSay(movedText());
+  drag=null;platinumWindow.classList.remove('dragging');if(dragMoved)platinumSay(movedText());
  });
  platinumBar.addEventListener('keydown',e=>{
+  if(e.key==='Enter'||e.key===' '){e.preventDefault();togglePlatinum();return;}
   const step={ArrowLeft:[-12,0],ArrowRight:[12,0],ArrowUp:[0,-12],ArrowDown:[0,12]}[e.key];
   if(!step)return;
   e.preventDefault();
