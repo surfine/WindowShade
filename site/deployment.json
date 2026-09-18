@@ -1,6 +1,6 @@
 {
   "origin": "https://windowshade.pages.dev",
-  "deployment": "https://62e7eeb5.windowshade.pages.dev",
+  "deployment": "https://d613f79f.windowshade.pages.dev",
   "project": "windowshade",
   "branch": "main",
   "files": {
@@ -8,17 +8,18 @@
     "_headers": "82592475719750d3b527745ad239327dc0e0b486831220b96f0d089231a990f2",
     "_redirects": "10738b7bf0dda342fb556e9d4a5c66e9f3ffaebc75e19aa0982ab168b72695ec",
     "app.js": "87da7b6bd85e7c2c04ce37c60b44883c171a1ac009a6f640d16d76e18aa1692c",
-    "en/history/index.html": "e78d6085730fc3753ca2a294cf5d339f9d5402393798f13385298edf6f47adc3",
+    "en/history/index.html": "0b995af5738972a49264f56efdeaf70f1935d20e1272a6288bc2fed1b9d9c719",
     "en/index.html": "43f8a15416366146274d0f6644352684af971771f983a32e1cdd1470d06f5ff2",
     "era.css": "142385f004550f821df4e04377b0e3653edad64a623299ab945c4fc19faf7700",
     "fonts/Asap-OFL.txt": "79d8634241e736e967a1539a9c766ea8e68f6d2df9f5d0edba5a4c88b1b5d8a0",
     "fonts/Asap-Variable.woff2": "3f230328a40ee9a05fe099dfb6b403a4c569aaea6690e5d483d5715ed817498f",
     "fonts/ChicagoFLF.woff2": "5d25dcec1f8984c5e0aed398a7c90be8de86bb4f9bcfed4e7e1e2c3c13b7e742",
     "fonts/system-css-LICENSE.txt": "0433a8c105e9d410ca3fb7f205aafe8f1be27e0438cf3bd1447907f738ebc6b0",
-    "history.css": "75625d0d6f1d056368695e38381dc44a61be786ee453e2259a360b543733d6d9",
-    "history.js": "84cd1b8f38cb781c12630877d2b7be7190a2ab3b3a8384b316ad7e56ccbb4bd7",
-    "history/index.html": "8f22ea8d5177ce8607bb1ffea15304544ae2124abf24e5b4cda4f67b0e9bc6e6",
+    "history.css": "7a0d4769e43d537798d139c1db83b6f8cfaad0bf88c77cca9881d1ce3baa7ca1",
+    "history.js": "960eae11a8e944bf2315a648402a90aca8501cf3ba5e8f4c4fc238096cf1f075",
+    "history/index.html": "cc9615e5ff135b6d9000f8c697b2648faa19ffce4b1eab835c2f105bf405cdde",
     "index.html": "0ba18d2c468070810c8a8cea4e228bbda92159d55b8d2b8ecc4cbbf0a438d14a",
+    "media/bridge-windows.webp": "a2fb90075f7efa7e46d58886edbabd910a79878f3e84ce6ec6c4b44d3b29bd7d",
     "media/duo-poster.webp": "5b136a7371a8b427d891750f3b5329e467514de7d0ad96f4948082f79db9d398",
     "media/duo.mp4": "df8de4fa8b5edfba635d7528fdc469cd2528dc9251634de6adac2d54f551edbc",
     "media/era/checkmark.svg": "c3e75dc31698c642443681f8988cf9625de86b678a9029705417814927ef2d34",
@@ -31,5 +32,5 @@
     "sitemap.xml": "2adb63b2e068b97040b55c8c160ecbfb9412401ffa8241bd32183de39e269085",
     "style.css": "86372bd5c04ab1c54d96d6a7c7d8a1ea4139968f6199e434a3e856bfff5b6d94"
   },
-  "recordedAt": "2026-09-18T00:03:40.118Z"
+  "recordedAt": "2026-09-18T00:50:58.676Z"
 }
