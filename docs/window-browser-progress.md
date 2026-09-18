@@ -2365,3 +2365,28 @@ mainThreadMaxGap=6ms`，身份/几何/能力解析各 0 ms。`--window-browser-h
   “状态行只让面板长出一条页脚”的断言）、纸质与双屏测试、五页设置外观检查、
   标准菜单对照、`--window-browser-shots`（`classic-strip-palette PASS`）全部通过；
   `docs/visual-qa/**` 重新生成。
+
+## 2026-09-18：液态玻璃的分层纪律
+
+用户反馈“要有液态玻璃的感觉，不要只是毛玻璃”，并明确不能玻璃叠玻璃、不能自创对
+Liquid Glass 的理解。于是回到 HIG 原文（`apple-design` 语料里的《Materials》《Color》
+与逐页蒸馏指南，Apple 最后更新 2025-12-16）逐条核对，只按写明的规则改：
+
+- **删掉控制层那层玻璃**。原来面板背景一层玻璃、控制层再叠一层，两层互相抹掉折射与
+  高光——这正是“毛玻璃感”的来源；HIG 的审查清单明确写着玻璃叠玻璃会毁掉层级。
+- **内容层改标准材质**。卡片、列表行、详情区在玻璃面板下改用
+  `NSVisualEffectView(.contentBackground, .withinWindow)`；纸面与旧系统仍是实色卡片。
+- **固定 `regular` 变体、不上色**。HIG：文字多的弹窗/侧栏用 regular，clear 只用于浮在
+  照片/视频上的控件；玻璃本身不带色，所以不设 `tintColor`。过程中试过的 `clear` + 自造
+  薄纱方案按这条删掉。
+- **容器只在需要时用**。`NSGlassEffectContainerView` 负责合并多个玻璃形状；现在只有一层，
+  容器路径不再创建（代码保留并注明触发条件）。
+- **滚动边缘**：列表位于页眉与页脚之间，滚动内容不与功能条重叠，不需要自造 scroll edge
+  effect；本机 SDK 的 AppKit 也没有对应公开 API（已逐个 grep Headers）。
+- **真实观感证据**：离屏渲染看不到玻璃，单窗口截图只有窗口自己的表面，所以给截图探针加了
+  确定性对照板（`WINDOWSHADE_GLASS_RIG=1`，440×380 的渐变+细字+明暗分区）与
+  `WINDOWSHADE_SHOTS_HOLD`，用系统截屏抓真实合成结果：
+  `docs/visual-qa/system-appearance/liquid-glass-panel.png`（同一帧里还有系统 Dock 作对照）。
+- **断言**：面板只有一个玻璃表面、控制层无玻璃、单层时不创建容器、玻璃面板下卡片用内容层
+  材质（纸面与旧系统仍为实色）；窗口浏览检查 605 → **608 项**，全部通过；纸质、双屏、
+  五页设置外观检查、标准菜单对照、`classic-strip-palette PASS` 一并复跑。

@@ -31,6 +31,7 @@ final class WindowBrowserShotProbe {
 
     private let outputDirectory: URL
     private var panel: WindowBrowserPanel?
+    private var glassRigWindow: NSWindow?
 
     init(outputDirectory: URL) {
         self.outputDirectory = outputDirectory
@@ -39,6 +40,9 @@ final class WindowBrowserShotProbe {
     func run() {
         try? FileManager.default.createDirectory(at: outputDirectory,
                                                 withIntermediateDirectories: true)
+        if ProcessInfo.processInfo.environment["WINDOWSHADE_GLASS_RIG"] != nil {
+            glassRigWindow = Self.makeGlassRigWindow()
+        }
         let scenarios: [Scenario] = [
             Scenario(name: "dock-single", mode: .dock, style: .grid, recordCount: 1,
                      appearance: nil, appearanceStyle: nil, reduceTransparency: false,
@@ -241,6 +245,10 @@ final class WindowBrowserShotProbe {
                        style: scenario.style, busyKeys: [],
                        screenRecordingAvailable: scenario.screenRecordingAvailable,
                        status: statusText)
+        // 诊断对照：强制卡片用实色，用来验证内容层材质到底改变了什么。
+        if ProcessInfo.processInfo.environment["WINDOWSHADE_CARD_SURFACE"] == "solid" {
+            content.setCardSurfaceForDiagnostics(.solid)
+        }
         for record in records {
             if !scenario.screenRecordingAvailable {
                 // 与控制器一致：缺少屏幕录制权限时仍然显示图标、标题与原因。
@@ -287,7 +295,26 @@ final class WindowBrowserShotProbe {
                   + "action=\(card.actionFrame) "
                   + "panelRadius=\(content.panelCornerRadiusForDiagnostics)")
         }
-        let image = renderImage(of: content)
+        // 默认抓内容视图（离屏 `cacheDisplay`，不需要屏幕录制权限）；设
+        // `WINDOWSHADE_SHOTS_REAL=1` 时改抓真实窗口，只有它能看到
+        // NSGlassEffectView 由合成器渲染出来的液态玻璃（离屏渲染里玻璃是不可见的）。
+        let wantsRealWindow = ProcessInfo.processInfo.environment["WINDOWSHADE_SHOTS_REAL"] != nil
+        let image = (wantsRealWindow ? capture(window: panel) : nil) ?? renderImage(of: content)
+        // 玻璃的折射只有屏幕截图能看到（单窗口截图拿到的只是窗口自己的表面），
+        // 因此留一个“把面板停在屏幕上”的钩子，便于用 screencapture 抓真实观感。
+        let holdName = ProcessInfo.processInfo.environment["WINDOWSHADE_SHOTS_HOLD_NAME"]
+        if let hold = ProcessInfo.processInfo.environment["WINDOWSHADE_SHOTS_HOLD"]
+            .flatMap(Double.init), hold > 0,
+           holdName == nil || holdName == scenario.name {
+            let screen = NSScreen.main?.frame.height ?? 0
+            let frame = panel.frame
+            let topLeftY = screen - frame.maxY
+            print("window-browser-shots: holding \(scenario.name) for \(hold)s "
+                  + "at screen-rect \(Int(frame.minX)),\(Int(topLeftY)) "
+                  + "\(Int(frame.width))x\(Int(frame.height)) "
+                  + "kind=\(content.materialHostForDiagnostics.kind.rawValue)")
+            RunLoop.current.run(until: Date().addingTimeInterval(hold))
+        }
         panel.orderOut(nil)
         panel.close()
         guard let image else { return nil }
@@ -304,6 +331,56 @@ final class WindowBrowserShotProbe {
               let rep = view.bitmapImageRepForCachingDisplay(in: bounds) else { return nil }
         view.cacheDisplay(in: bounds, to: rep)
         return rep.cgImage
+    }
+
+    /// 玻璃对照背景：确定性图案（高饱和渐变 + 细字 + 明暗分区）放在面板正后方，
+    /// 让 regular / clear、不同变暗强度可以在同一背景上直接比较。
+    private static func makeGlassRigWindow() -> NSWindow {
+        let frame = NSRect(x: 30, y: 30, width: 440, height: 380)
+        let window = NSWindow(contentRect: frame, styleMask: .borderless,
+                              backing: .buffered, defer: false)
+        window.isOpaque = true
+        window.hasShadow = false
+        // 高于普通窗口，低于面板（面板是 .floating），保证对照背景始终在面板正后方。
+        window.level = NSWindow.Level(rawValue: NSWindow.Level.floating.rawValue - 1)
+        window.isReleasedWhenClosed = false
+        window.contentView = GlassRigBackgroundView(frame: NSRect(origin: .zero, size: frame.size))
+        window.orderFrontRegardless()
+        return window
+    }
+
+    /// 真实窗口截图：走合成器，因此包含 NSGlassEffectView 的液态玻璃、材质与阴影轮廓。
+    /// 窗口还没被合成时 CGWindowListCreateImage 会返回全透明图，这种结果要丢弃。
+    private func capture(window: NSWindow) -> CGImage? {
+        let number = window.windowNumber
+        guard number > 0 else { return nil }
+        typealias CreateImage = @convention(c) (CGRect, CGWindowListOption, CGWindowID,
+                                                CGWindowImageOption) -> Unmanaged<CGImage>?
+        guard let handle = dlopen("/System/Library/Frameworks/CoreGraphics.framework/CoreGraphics",
+                                  RTLD_LAZY),
+              let symbol = dlsym(handle, "CGWindowListCreateImage") else { return nil }
+        let createImage = unsafeBitCast(symbol, to: CreateImage.self)
+        guard let image = createImage(.null, .optionIncludingWindow, CGWindowID(number),
+                                      [.boundsIgnoreFraming, .bestResolution])?
+            .takeRetainedValue() else { return nil }
+        return Self.isBlank(image) ? nil : image
+    }
+
+    private static func isBlank(_ image: CGImage) -> Bool {
+        let width = min(image.width, 32)
+        let height = min(image.height, 32)
+        guard width > 1, height > 1,
+              let context = CGContext(data: nil, width: width, height: height,
+                                      bitsPerComponent: 8, bytesPerRow: width * 4,
+                                      space: CGColorSpaceCreateDeviceRGB(),
+                                      bitmapInfo: CGImageAlphaInfo.premultipliedLast.rawValue)
+        else { return true }
+        context.draw(image, in: CGRect(x: 0, y: 0, width: width, height: height))
+        guard let data = context.data?.assumingMemoryBound(to: UInt8.self) else { return true }
+        for index in stride(from: 3, to: width * height * 4, by: 4) where data[index] > 0 {
+            return false
+        }
+        return true
     }
 
     private func sdkVersion() -> String {
@@ -646,5 +723,32 @@ final class WindowBrowserShotProbe {
                   withAttributes: attributes)
         NSGraphicsContext.restoreGraphicsState()
         return rep.cgImage
+    }
+}
+
+/// 玻璃对照背景（只在 `--window-browser-shots` 的诊断入口使用）。
+private final class GlassRigBackgroundView: NSView {
+    override func draw(_ dirtyRect: NSRect) {
+        let gradient = NSGradient(colors: [NSColor.systemPink, NSColor.systemTeal,
+                                           NSColor.systemYellow, NSColor.systemIndigo])!
+        gradient.draw(in: bounds, angle: -35)
+        // 明暗分区：玻璃的变暗层与自适应色调在这里最容易看出来。
+        NSColor.black.withAlphaComponent(0.75).setFill()
+        NSRect(x: 0, y: 0, width: bounds.width / 2, height: bounds.height / 3).fill()
+        NSColor.white.withAlphaComponent(0.9).setFill()
+        NSRect(x: bounds.width / 2, y: 0, width: bounds.width / 2, height: bounds.height / 3).fill()
+        // 细字：看模糊与可读性。
+        let text = "WindowShade glass rig — 液态玻璃对照 0123456789"
+        for row in 0..<8 {
+            (text as NSString).draw(
+                at: NSPoint(x: 12, y: bounds.height - 26 - CGFloat(row) * 18),
+                withAttributes: [.font: NSFont.systemFont(ofSize: 12, weight: row % 2 == 0 ? .regular : .semibold),
+                                 .foregroundColor: NSColor.labelColor])
+        }
+        // 高频细节：看清晰度与折射。
+        for column in 0..<44 {
+            NSColor(white: column % 2 == 0 ? 0 : 1, alpha: 0.85).setFill()
+            NSRect(x: CGFloat(column) * 10, y: 0, width: 5, height: 14).fill()
+        }
     }
 }

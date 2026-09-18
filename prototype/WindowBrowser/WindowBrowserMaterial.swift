@@ -110,6 +110,8 @@ final class WindowBrowserGlassBackdrop: NSView, WindowBrowserCornerRadiusUpdatab
         glass = NSGlassEffectView()
         super.init(frame: .zero)
         glass.cornerRadius = cornerRadius
+        // HIG：`clear` 只用于浮在照片/视频这类内容上的控件；窗口浏览面板文字多、
+        // 背景是桌面而不是媒体，所以用 `regular`。不给玻璃上色（玻璃本身不带色）。
         glass.style = .regular
         addSubview(glass)
     }
@@ -296,7 +298,21 @@ final class WindowBrowserControlSurface: NSView {
     override var isFlipped: Bool { true }
 
     func update(style: WindowBrowserAppearanceStyle = .current,
-                capabilities: WindowBrowserSystemCapabilities = .current) {
+                capabilities: WindowBrowserSystemCapabilities = .current,
+                panelKind: WindowBrowserMaterialKind = .paper) {
+        // 面板背景本身就是液态玻璃时，控制层不再叠一层玻璃：HIG 要求玻璃只做
+        // 一层功能表面，玻璃压玻璃会把两层的折射/高光互相抹掉，看起来就是普通毛玻璃。
+        // 这一层上的系统控件（分段控件、搜索框）在 macOS 26+ 自带玻璃与活力。
+        if panelKind == .glass {
+            self.kind = .glass
+            backdrop?.removeFromSuperview()
+            backdrop = nil
+            SystemCornerRadius.apply(to: self, radius: cornerRadius)
+            layer?.backgroundColor = NSColor.clear.cgColor
+            layer?.borderWidth = 0
+            needsLayout = true
+            return
+        }
         let resolved = WindowBrowserMaterialPolicy.kind(
             style: style,
             systemSupportsGlass: capabilities.supportsGlass,
