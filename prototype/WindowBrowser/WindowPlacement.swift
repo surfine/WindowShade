@@ -362,7 +362,9 @@ final class WindowPlacementPreviewWindow: NSPanel, WindowPlacementPreviewPresent
         outlineLayer.fillColor = NSColor.clear.cgColor
         outlineLayer.lineWidth = 2
         outlineLayer.lineDashPattern = [6, 4]
-        outlineLayer.cornerRadius = 8
+        // 预览的是窗口将要占据的位置，圆角跟着系统窗口走。
+        outlineLayer.cornerRadius = SystemCornerRadius.window
+        outlineLayer.cornerCurve = .continuous
         outlineLayer.strokeColor = NSColor.controlAccentColor.cgColor
         content.layer?.addSublayer(outlineLayer)
         contentView = content
@@ -379,7 +381,8 @@ final class WindowPlacementPreviewWindow: NSPanel, WindowPlacementPreviewPresent
         setFrame(panelFrame, display: true)
         outlineLayer.frame = contentView?.bounds ?? .zero
         outlineLayer.path = CGPath(roundedRect: contentView?.bounds ?? .zero,
-                                   cornerWidth: 8, cornerHeight: 8, transform: nil)
+                                   cornerWidth: SystemCornerRadius.window,
+                                   cornerHeight: SystemCornerRadius.window, transform: nil)
         orderFrontRegardless()
     }
 

@@ -112,6 +112,10 @@ extension AppDelegate {
         }
         overlay.contentView = iv
         overlay.invalidateShadow()                 // 阴影跟随（已镜像的）圆角轮廓
+        // 截图条的画面自带窗口圆角；系统方角阴影会在透明角落透出一块方形底，
+        // 因此换成与经典条同一套“上圆下直”的纸面阴影。
+        overlay.hasShadow = false
+        PaperSurfaceStyle.installShadow(on: overlay, corners: .top)
         return overlay
     }
 
@@ -129,7 +133,8 @@ extension AppDelegate {
         }
         overlay.contentView = view
         overlay.invalidateShadow()
-        PaperSurfaceStyle.installShadow(on: overlay)
+        // 卷帘条只有上面两角是圆的，阴影要跟着同一条轮廓。
+        PaperSurfaceStyle.installShadow(on: overlay, corners: .top)
         return overlay
     }
 
@@ -234,7 +239,7 @@ extension AppDelegate {
         overlay.configureWindowManagementButton(capability: effectiveWindowManagement)
         overlay.onDoubleClick = { [weak self] in self?.unshade(id) }
         applyOverlayPresentation(overlay, bringForward: false)
-        PaperSurfaceStyle.installShadow(on: overlay)
+        PaperSurfaceStyle.installShadow(on: overlay, corners: .top)
         return overlay
     }
 }

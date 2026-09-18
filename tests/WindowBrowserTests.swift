@@ -2109,6 +2109,26 @@ enum WindowBrowserTests {
         let visible = NSRect(x: 0, y: 78, width: 1440, height: 822)
         let icon = NSRect(x: 700, y: 8, width: 52, height: 52)
 
+        // 圆角刻度：窗口级表面跟系统窗口一致（macOS 27 实测 13 pt），卡片次一级，
+        // 卡片里的画面按 HIG 的同心规则取“卡片圆角 − 卡片内边距”。
+        let radii = WindowBrowserLayoutParams.standard
+        expect(radii.panelCornerRadius == SystemCornerRadius.window,
+               "the panel uses the system window radius (\(radii.panelCornerRadius)pt)")
+        expect(radii.cardCornerRadius == SystemCornerRadius.card,
+               "cards use the content radius (\(radii.cardCornerRadius)pt)")
+        expect(radii.imageCornerRadius
+                == SystemCornerRadius.concentric(outer: radii.cardCornerRadius,
+                                                 inset: radii.cardPadding),
+               "the thumbnail radius is concentric with its card "
+               + "(\(radii.imageCornerRadius)pt inside \(radii.cardCornerRadius)pt)")
+        expect(radii.imageCornerRadius < radii.cardCornerRadius,
+               "a nested shape is never rounder than the shape that contains it")
+        let scaled = WindowBrowserLayoutParams.make(bodySize: 17, detailSize: 14)
+        expect(scaled.imageCornerRadius
+                == SystemCornerRadius.concentric(outer: scaled.cardCornerRadius,
+                                                 inset: scaled.cardPadding),
+               "the concentric relationship survives a larger system text size")
+
         // T46：单窗口面板不继承 520×460 下限。
         let single = WindowBrowserGeometry.layoutPlan(
             iconFrame: icon, edge: .bottom, screenFrame: screen, visibleFrame: visible,

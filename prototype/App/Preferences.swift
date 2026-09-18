@@ -391,8 +391,7 @@ extension AppDelegate {
         chip.isBordered = false
         chip.font = SystemAppearancePolicy.font(relativeToBody: -1)
         chip.contentTintColor = granted ? .systemGreen : .systemOrange
-        chip.wantsLayer = true
-        chip.layer?.cornerRadius = 3
+        SystemCornerRadius.apply(to: chip, radius: SystemCornerRadius.control)
         chip.setAccessibilityLabel("\(name)，\(granted ? "已授权，打开设置" : "去授权")")
         chip.setContentHuggingPriority(.required, for: .horizontal)
         let trailing = chip
@@ -412,8 +411,7 @@ extension AppDelegate {
 
     func makePrefCard(_ rows: [NSView]) -> NSView {
         let card = NSView()
-        card.wantsLayer = true
-        card.layer?.cornerRadius = 10
+        SystemCornerRadius.apply(to: card, radius: SystemCornerRadius.card)
         card.layer?.borderWidth = 0.5
         card.layer?.borderColor = SystemAppearancePolicy.cgColor(
             NSColor.separatorColor, for: card)
@@ -868,8 +866,7 @@ extension AppDelegate {
         row.heightAnchor.constraint(equalToConstant: height).isActive = true
 
         if isOnboarding {
-            row.wantsLayer = true
-            row.layer?.cornerRadius = 10
+            SystemCornerRadius.apply(to: row, radius: SystemCornerRadius.card)
             row.layer?.backgroundColor = SystemAppearancePolicy.cgColor(
                 NSColor.controlBackgroundColor, for: row)
         }
@@ -914,8 +911,7 @@ extension AppDelegate {
             button.title = "● 去授权"
             button.contentTintColor = .systemOrange
             button.font = SystemAppearancePolicy.font(relativeToBody: -1)
-            button.wantsLayer = true
-            button.layer?.cornerRadius = 3
+            SystemCornerRadius.apply(to: button, radius: SystemCornerRadius.control)
             button.sizeToFit()
             let bw = max(button.frame.width, 64)
             button.frame = NSRect(x: width - 16 - bw, y: (height - button.frame.height) / 2, width: bw, height: button.frame.height)

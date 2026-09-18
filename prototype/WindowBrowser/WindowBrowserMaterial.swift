@@ -132,7 +132,7 @@ final class WindowBrowserMaterialView: NSView {
     private(set) var kind: WindowBrowserMaterialKind = .paper
     let contentHost = NSView()
     private var backdrop: NSView?
-    private var appliedCornerRadius: CGFloat = 16
+    private var appliedCornerRadius: CGFloat = SystemCornerRadius.window
     /// 玻璃背景被外部容器（NSGlassEffectContainerView）接管后，宿主不再自己摆放它。
     var backdropIsExternallyCoordinated = false
 
@@ -150,7 +150,7 @@ final class WindowBrowserMaterialView: NSView {
 
     /// 重新按当前环境选择材质。已打开的面板在浅深色、对比度或减少透明度变化时调用。
     func update(style: WindowBrowserAppearanceStyle = .current,
-                cornerRadius: CGFloat = 16,
+                cornerRadius: CGFloat = SystemCornerRadius.window,
                 capabilities: WindowBrowserSystemCapabilities = .current) {
         appliedCornerRadius = cornerRadius
         let resolved = WindowBrowserMaterialPolicy.kind(
@@ -180,8 +180,7 @@ final class WindowBrowserMaterialView: NSView {
         kind = newKind
         backdrop?.removeFromSuperview()
         backdrop = nil
-        layer?.cornerRadius = appliedCornerRadius
-        layer?.masksToBounds = true
+        SystemCornerRadius.apply(to: self, radius: appliedCornerRadius, masksToBounds: true)
         switch newKind {
         case .glass:
             #if WINDOWSHADE_SDK_HAS_GLASS
@@ -200,9 +199,8 @@ final class WindowBrowserMaterialView: NSView {
             effect.material = .popover
             effect.blendingMode = .behindWindow
             effect.state = .followsWindowActiveState
-            effect.wantsLayer = true
-            effect.layer?.cornerRadius = appliedCornerRadius
-            effect.layer?.masksToBounds = true
+            SystemCornerRadius.apply(to: effect, radius: appliedCornerRadius,
+                                     masksToBounds: true)
             addSubview(effect, positioned: .below, relativeTo: contentHost)
             backdrop = effect
             layer?.backgroundColor = NSColor.clear.cgColor
@@ -279,9 +277,9 @@ final class WindowBrowserControlSurface: NSView {
     private var backdrop: NSView?
     /// 与面板背景一起交给玻璃容器协调时，控制层不再自己摆放背景。
     var backdropIsExternallyCoordinated = false
-    var cornerRadius: CGFloat = 10 {
+    var cornerRadius: CGFloat = SystemCornerRadius.card {
         didSet {
-            layer?.cornerRadius = cornerRadius
+            SystemCornerRadius.apply(to: self, radius: cornerRadius)
             (backdrop as? WindowBrowserCornerRadiusUpdatable)?.cornerRadius = cornerRadius
         }
     }
@@ -325,8 +323,7 @@ final class WindowBrowserControlSurface: NSView {
         kind = newKind
         backdrop?.removeFromSuperview()
         backdrop = nil
-        layer?.cornerRadius = cornerRadius
-        layer?.masksToBounds = true
+        SystemCornerRadius.apply(to: self, radius: cornerRadius, masksToBounds: true)
         switch newKind {
         case .glass:
             #if WINDOWSHADE_SDK_HAS_GLASS
@@ -345,9 +342,7 @@ final class WindowBrowserControlSurface: NSView {
             effect.material = .headerView
             effect.blendingMode = .withinWindow
             effect.state = .followsWindowActiveState
-            effect.wantsLayer = true
-            effect.layer?.cornerRadius = cornerRadius
-            effect.layer?.masksToBounds = true
+            SystemCornerRadius.apply(to: effect, radius: cornerRadius, masksToBounds: true)
             addSubview(effect, positioned: .below, relativeTo: contentHost)
             backdrop = effect
             layer?.backgroundColor = NSColor.clear.cgColor

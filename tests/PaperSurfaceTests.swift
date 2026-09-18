@@ -244,6 +244,45 @@ enum PaperSurfaceTests {
         print("system-settings-links: hasModernPane=\(SystemSettingsLinks.hasModernPrivacyPane()) "
               + "hasModernAccessibilityPane=\(SystemSettingsLinks.hasModernAccessibilityPane())")
 
+        // MARK: 圆角刻度（macOS 27 窗口实测 13 pt，连续曲率）
+
+        precondition(SystemCornerRadius.window == 13,
+                     "the window radius matches the measured system window (13pt)")
+        precondition(SystemCornerRadius.card < SystemCornerRadius.window
+                        && SystemCornerRadius.control < SystemCornerRadius.card,
+                     "the scale steps down from windows to cards to controls")
+        precondition(SystemCornerRadius.concentric(outer: 12, inset: 8) == 4,
+                     "a nested shape subtracts its margin from the outer radius")
+        precondition(SystemCornerRadius.concentric(outer: 13, inset: 40) == 4,
+                     "the concentric radius never collapses into a square corner")
+        precondition(SystemCornerRadius.surfaceRadius(forHeight: 34) == 13,
+                     "a strip keeps the full window radius")
+        precondition(SystemCornerRadius.surfaceRadius(forHeight: 16) == 8,
+                     "a short strip clamps the radius to half its height")
+
+        let shapeRect = NSRect(x: 0, y: 0, width: 480, height: 34)
+        let stripShape = SystemCornerPath.path(in: shapeRect, radius: 13, corners: .top)
+        precondition(stripShape.bounds == shapeRect, "the strip path fills its rect")
+        precondition(stripShape.contains(NSPoint(x: 2, y: 2)),
+                     "a rolled-up strip keeps a straight cut at the bottom edge")
+        precondition(!stripShape.contains(NSPoint(x: 2, y: 32)),
+                     "the top corners of a strip are rounded")
+        let cardShape = SystemCornerPath.path(in: shapeRect, radius: 12, corners: .all)
+        precondition(!cardShape.contains(NSPoint(x: 2, y: 2)),
+                     "a card rounds all four corners")
+        precondition(cardShape.contains(NSPoint(x: 12, y: 12)),
+                     "the rounded corner does not eat into the card content")
+        precondition(SystemCornerPath.cgPath(in: shapeRect, radius: 13, corners: .top)
+                        .boundingBox == shapeRect,
+                     "the CoreGraphics path keeps the same outline as the AppKit path")
+
+        let rounded = NSView(frame: shapeRect)
+        SystemCornerRadius.apply(to: rounded, radius: 12, masksToBounds: true)
+        precondition(rounded.layer?.cornerCurve == .continuous,
+                     "custom surfaces use the continuous corner curve like system windows")
+        precondition(rounded.layer?.masksToBounds == true,
+                     "a clipped surface masks to its rounding")
+
         // MARK: 卷帘条可访问性文案
 
         precondition(PaperSurfaceAccessibility.stripLabel(appName: "Safari", windowTitle: "OpenAI")

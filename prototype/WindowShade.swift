@@ -36,7 +36,9 @@ let adobeFloatingDocumentChromeHeight: CGFloat = 44
 // 其下的面包屑/侧栏是内容。
 let afterEffectsWorkspaceChromeHeight: CGFloat = 56
 let premiereWorkspaceChromeHeight: CGFloat = 40
-let shadeCornerRadius: CGFloat = 18   // macOS Tahoe 窗口圆角；固定值保证各折叠条一致
+// 卷帘条圆角跟系统窗口一致（macOS 27 实测 13 pt）；此前这里写死的 18 与其它表面不一致，
+// 而且没有任何调用点，实际生效的是 ShadeStrip 里的绘制路径。
+let shadeCornerRadius: CGFloat = SystemCornerRadius.window
 let shadeAppearanceModeDefaultsKey = "ShadeAppearanceMode"
 let shadeFloatingOnTopDefaultsKey = "ShadeFloatingOnTop"
 let shadeTranslucentDefaultsKey = "ShadeTranslucent"
