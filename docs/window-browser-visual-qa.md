@@ -12,19 +12,37 @@
 
 | 场景 | 文件 | 检查结果 |
 | --- | --- | --- |
-| 单窗口 Dock | [dock-single.png](visual-qa/window-browser/dock-single.png) | 面板 312×349 pt，标题清楚，图片与标题优先，无大面积空白，操作条紧凑 |
+| 单窗口 Dock | [dock-single.png](visual-qa/window-browser/dock-single.png) | 面板 312×274 pt（没有状态文字时页脚不占位），标题清楚，图片与标题优先，无大面积空白，操作条紧凑 |
 | 三窗口 Dock | [dock-three.png](visual-qa/window-browser/dock-three.png) | 两列、卡片一致，强调只落在当前项 |
 | 八窗口列表 | [keyboard-list-eight.png](visual-qa/window-browser/keyboard-list-eight.png) | 行高约 52 pt，长标题单行截断，选中行显示符号操作条，右侧详情对应同一窗口 |
 | 键盘搜索 | [keyboard-search.png](visual-qa/window-browser/keyboard-search.png) | 搜索框在顶部，查询文本与结果集一致，选中项有强调 |
 | 纸面浅色 | [paper-light.png](visual-qa/window-browser/paper-light.png) | 中性层次与细边线，无发灰/模糊/重复阴影 |
 | 纸面深色 | [paper-dark.png](visual-qa/window-browser/paper-dark.png) | 深色下文字与选中边线对比正常 |
-| 系统玻璃浅色 | [system-glass-light.png](visual-qa/window-browser/system-glass-light.png) | 控制层由 `NSGlassEffectView` 承载（类型断言见自动化回归） |
-| 系统玻璃深色 | [system-glass-dark.png](visual-qa/window-browser/system-glass-dark.png) | 同上；截图本身不含系统合成器的折射 |
+| 系统玻璃浅色 | [system-glass-light.png](visual-qa/window-browser/system-glass-light.png) | 面板背景由**一层** `NSGlassEffectView` 承载（类型与单层断言见自动化回归）；离屏截图拿不到系统合成器的折射，真实观感见 `visual-qa/system-appearance/liquid-glass-panel.png` |
+| 系统玻璃深色 | [system-glass-dark.png](visual-qa/window-browser/system-glass-dark.png) | 同上；深色下切换的是系统材质本身，不由本项目上色 |
 | 减少透明度 + 提高对比度 | [reduce-transparency-contrast.png](visual-qa/window-browser/reduce-transparency-contrast.png) | 不透明回退完整，选中不只靠颜色 |
 | 无图像/缺权限/折叠/最小化 | [states-without-image.png](visual-qa/window-browser/states-without-image.png) | 每个卡片显示应用图标位与明确原因；已折叠/最小化不使用警告色 |
 | Dock 入口的紧凑列表 | [dock-list-many.png](visual-qa/window-browser/dock-list-many.png) | 18 个窗口时列表宽 544 pt，不占满屏幕宽度，改为滚动 |
 
 环境：macOS 27.0（26A428）、Xcode 26.6、macOS SDK 26.5、2x 缩放。
+
+### 真实合成器截图（玻璃）
+
+离屏 `cacheDisplay` 看不到 `NSGlassEffectView`（玻璃由系统合成器渲染），单窗口截图也只
+拿得到窗口自己的表面，因此玻璃的观感另用屏幕截图取证：
+
+```sh
+WINDOWSHADE_GLASS_RIG=1 WINDOWSHADE_SHOTS_HOLD=16 \
+  WINDOWSHADE_SHOTS_HOLD_NAME=dock-single \
+  .build/duo-validation/WindowShade.app/Contents/MacOS/WindowShade \
+  --window-browser-shots /tmp/shots-hold
+# 面板停在屏幕上时，用系统截屏抓它所在的区域（对照板位于 (30,30) 440×380）
+screencapture -x /tmp/screen.png
+```
+
+`WINDOWSHADE_GLASS_RIG=1` 会在面板正后方放一块 440×380 的确定性对照板（渐变 + 细字 +
+明暗分区），`WINDOWSHADE_SHOTS_HOLD*` 让面板停留以便外部截图。产物：
+`docs/visual-qa/system-appearance/liquid-glass-panel.png`（同帧底部有系统 Dock 作原生对照）。
 
 ### 交互片段（真实面板状态变化）
 
