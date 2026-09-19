@@ -181,6 +181,9 @@ final class WindowThumbnailService {
     private var useCounter: UInt64 = 0
     private var captureVersion: UInt64 = 1
     private var backendStalled = false
+    /// 锁内产生、必须在解锁后才投递的终态失败：订阅回调绝不能在持锁时执行，
+    /// 否则回调里再调用本服务就会在不可重入的 NSLock 上死锁。
+    private var pendingFailuresLocked: [(WindowThumbnailSubscription, WindowThumbnailFailure)] = []
 
     // MARK: 诊断计数（全部在锁内更新）
 
@@ -489,14 +492,16 @@ final class WindowThumbnailService {
             }
             starts = drainQueueLocked()
         }
+        if immediateImage != nil { deliveredCount += 1 }
+        let droppedFailures = takePendingFailuresLocked()
         lock.unlock()
 
         subscription.cancelAction = { [weak self, weak subscription] in
             guard let self, let subscription else { return }
             self.cancelSubscription(subscription, key: key)
         }
+        deliver(droppedFailures)
         if let immediateImage {
-            deliveredCount += 1
             subscription.finishTerminal(image: immediateImage, failure: nil)
         } else if let stallFailure {
             subscription.finishTerminal(image: nil, failure: stallFailure)
@@ -537,7 +542,7 @@ final class WindowThumbnailService {
                 if isCurrentKey { jobByKey.removeValue(forKey: job.request.key) }
                 for consumer in job.liveConsumers {
                     consumer.isCancelled = true
-                    consumer.finishTerminal(image: nil, failure: .windowGone)
+                    pendingFailuresLocked.append((consumer, .windowGone))
                 }
                 job.consumers.removeAll()
                 continue
@@ -547,6 +552,20 @@ final class WindowThumbnailService {
             starts.append(job)
         }
         return starts
+    }
+
+    /// 取走锁内积累的待投递失败（调用方持锁），解锁后再逐个结算。
+    private func takePendingFailuresLocked()
+        -> [(WindowThumbnailSubscription, WindowThumbnailFailure)] {
+        let pending = pendingFailuresLocked
+        pendingFailuresLocked.removeAll()
+        return pending
+    }
+
+    private func deliver(_ failures: [(WindowThumbnailSubscription, WindowThumbnailFailure)]) {
+        for (consumer, failure) in failures where !consumer.isFinished {
+            consumer.finishTerminal(image: nil, failure: failure)
+        }
     }
 
     private func startBackend(_ jobs: [Job]) {
@@ -599,12 +618,14 @@ final class WindowThumbnailService {
             deliveries = consumers.map { ($0, nil, Optional(failure)) }
         }
         starts = drainQueueLocked()
+        deliveredCount += deliveries.filter { $0.1 != nil && !$0.0.isFinished }.count
+        let droppedFailures = takePendingFailuresLocked()
         lock.unlock()
 
+        deliver(droppedFailures)
         for (consumer, image, failure) in deliveries {
             if consumer.isFinished { continue }
             if let image {
-                deliveredCount += 1
                 consumer.finishTerminal(image: image, failure: nil)
             } else if let failure {
                 consumer.finishTerminal(image: nil, failure: failure)
@@ -676,8 +697,8 @@ final class WindowThumbnailService {
                 jobByKey.removeValue(forKey: job.request.key)
             }
             for consumer in job.consumers where !consumer.isFinished {
-                consumer.finishTerminal(
-                    image: nil, failure: .captureFailed("截图后端长时间无响应"))
+                pendingFailuresLocked.append(
+                    (consumer, .captureFailed("截图后端长时间无响应")))
             }
             job.consumers.removeAll()
         }
