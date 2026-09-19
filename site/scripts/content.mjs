@@ -63,7 +63,7 @@ export const copy = {
     pinDemoCaption: '网页层级示意，不会碰你电脑上的窗口。置顶体验参考 Top.it。',
 
     browseTitle: '停在 Dock 图标上，<br>那个应用的窗口全在这儿。',
-    browseIntro: '把指针停在 Dock 里的应用图标上，弹出它的真实窗口面板：窗口截图与标题优先，动作收在悬停才出现的符号条里，可以搜索，也能直接对某一个窗口动手。面板尺寸随内容决定——一个窗口约 312 × 349 pt，不再留一大片空白。',
+    browseIntro: '把指针停在 Dock 里的应用图标上，弹出它的真实窗口面板：窗口截图与标题优先，动作收在悬停才出现的符号条里，可以搜索，也能直接对某一个窗口动手。面板尺寸随内容决定——一个窗口约 312 × 274 pt，不再留一大片空白。',
     browseHow: '菜单里的“选择窗口…”或你自己录的快捷键打开键盘面板，搜索框在顶部、直接可输入。Dock 入口默认关闭，可在“设置 → 窗口浏览”里打开，也能按应用排除，并选择跟随系统（macOS 26 及以上使用真实系统玻璃）或纸面外观。',
     browsePoints: [
       ['先看清，再动手', '面板本身只读；只有你按下卡片上的按钮，才会动那个窗口。'],
@@ -170,7 +170,7 @@ export const copy = {
     pinDemoCaption: 'A browser illustration of window layers — it won’t touch your Mac’s windows. Pinning reference: Top.it.',
 
     browseTitle: 'Hover a Dock icon.<br>Every window of that app is right there.',
-    browseIntro: 'Rest the pointer on an app icon in the Dock and a panel of that app’s real windows appears: thumbnails and titles first, actions tucked into a symbol bar that only shows on hover, with search and per-window actions. The panel is sized by its content — a single window is about 312 × 349 pt, with no dead space.',
+    browseIntro: 'Rest the pointer on an app icon in the Dock and a panel of that app’s real windows appears: thumbnails and titles first, actions tucked into a symbol bar that only shows on hover, with search and per-window actions. The panel is sized by its content — a single window is about 312 × 274 pt, with no dead space.',
     browseHow: 'Choose window… in the menu, or record your own hot key, to open the same panel in keyboard mode with the search field at the top. The Dock entry is off by default — turn it on in Settings → Window browsing, include an app exclusion list, and pick system appearance (real system glass on macOS 26 and later) or paper.',
     browsePoints: [
       ['Look first, then act', 'The panel itself is read-only. Nothing moves until you press a button on a card.'],
