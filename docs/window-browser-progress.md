@@ -2431,3 +2431,21 @@ bundle 1.0.14 / build 14。线上附件 sha256 与本地打包结果一致；隔
 仍受环境限制：没有 macOS 14/15 机器（旧系统路径以 macOS 27 上同一 API 的表现为据）；
 没有做经窗口服务器的全局点击（屏幕上有系统截图程序的全屏窗口）。真实 Dock 悬停用
 `--window-browser-hover-live-probe` 实测通过（Finder 图标 `match=true`，移开后清空，指针已放回）。
+
+交付（同一版本重新发布，第四次）：设计稿实现 `c303965` 连同站点渲染 `68033e3`、部署记录
+`e7649a0` 与发布说明 `e744555` 合入并推送到 `main`；tag 从 `480a7fd` 移到 `e744555`，附件
+`WindowShade-v1.0.14.zip`（3,729,620 字节，
+sha256 `25af12cea07ae44aa4ed8bdf20672e270e5e3c1e139d43a03be4dc8aeb6b8e31`）与校验文件用
+`--clobber` 覆盖，Release Notes 增补“内容挂进玻璃的 contentView / 卡片只用系统填充色”
+与面板几何、内容、交互、状态四条中英文；本机应用用同一身份（TeamIdentifier FVGLY6W6S4）
+重新构建替换，bundle 1.0.14 / build 14 / arm64。发布前的隔离构建检查：
+`--window-browser-shots`（`classic-strip-palette PASS`，16 张 PNG 与文档归档逐字节一致）、
+`--window-browser-idle-probe`（`axQueries=0 settingsRestored=true`）、
+`tests/run-window-browser-tests.sh`（638 项）、`run-paper-tests.sh`、`run-duo-tests.sh`、
+`build.sh --check`、`scripts/check-settings-appearance.sh`、`scripts/check-standard-menu.sh`
+全部通过；打包后解压复核签名、架构（arm64）与版本。
+
+站点同一批重新部署：`https://70d1449c.windowshade.pages.dev`，线上 28 个文件与本地构建
+逐字节一致（`_headers` / `_redirects` 仍由 Pages 消费，与以前一样返回 404 页）。首页 hero 与
+历史页 bridge 换成新面板的真实渲染，历史页 bridge 改按 1102 × 348 的比例显示；Dock 一节的
+单窗口尺寸从 1.0.13 遗留的 312 × 349 pt 更正为 312 × 274 pt。
