@@ -28,14 +28,15 @@ struct WindowBrowserLayoutParams {
     var outerMargin: CGFloat = 12
     var cardSpacing: CGFloat = 12
     var cardWidth: CGFloat = 288
-    var imageMaxHeight: CGFloat = 120
-    var cardHeight: CGFloat = 236
+    /// 卡片画面区的固定高度（272 × 144 外框，画面按比例放进去）。
+    var imageMaxHeight: CGFloat = 144
+    var cardHeight: CGFloat = 218
     /// 卡片里标题区实际占几行（1 或 2）。由内容决定：短标题不留空行。
     var cardTitleLines: Int = 2
     /// 单行标题的行高，用来在行数变化后重算标题区与卡片高度。
     var titleLineHeight: CGFloat = 16
     /// 卡片里画面的高度（`cardHeight` 的组成部分之一，便于按行数重算）。
-    var cardImageHeight: CGFloat = 120
+    var cardImageHeight: CGFloat = 144
     var listRowHeight: CGFloat = 52
     var panelPadding: CGFloat = 12
     var headerHeight: CGFloat = 40
@@ -43,13 +44,16 @@ struct WindowBrowserLayoutParams {
     /// 页脚是否占位。只有真有状态文字时才留出页脚那一段高度。
     var footerVisible: Bool = true
     /// 键盘面板的搜索框高度、它与底部状态行的间距、以及它与列表之间的间距。
-    var searchFieldHeight: CGFloat = 26
-    var searchFieldBottomGap: CGFloat = 12
+    var searchFieldHeight: CGFloat = 28
+    var searchFieldBottomGap: CGFloat = 8
     var listTopGap: CGFloat = 8
-    var iconSize: CGFloat = 18
-    var buttonHitHeight: CGFloat = 24
+    var iconSize: CGFloat = 20
+    /// 操作按钮命中区：HIG《Accessibility》给 macOS 的默认控件尺寸是 28 × 28。
+    var buttonHitHeight: CGFloat = 28
     /// 卡片/行内为悬停或选中时的紧凑操作条预留的空间；出现时不挤动标题。
-    var actionBarHeight: CGFloat = 22
+    var actionBarHeight: CGFloat = 28
+    /// 卡片信息行：左侧状态、右侧操作按钮合在一行（原来的状态行 + 操作条）。
+    var cardMetaRowHeight: CGFloat = 28
     var autoListThreshold: Int = 6
     var maximumColumns: Int = 3
     /// 左/右 Dock 的列数上限：面板贴在图标旁边，纵向列表或一至两列起步（§8）。
@@ -63,6 +67,8 @@ struct WindowBrowserLayoutParams {
     var disappearDuration: TimeInterval = 0.11
     var selectionDuration: TimeInterval = 0.1
     var firstImageDuration: TimeInterval = 0.08
+    /// 面板尺寸变化（页脚出现/消失、首次数据补全）的过渡。
+    var panelResizeDuration: TimeInterval = 0.12
     var keyboardPanelSize = CGSize(width: 800, height: 560)
     /// Dock 面板的理想尺寸；实际尺寸由内容决定，它只作为上限参考。
     var dockPanelSize = CGSize(width: 520, height: 460)
@@ -80,19 +86,23 @@ struct WindowBrowserLayoutParams {
     /// 圆角刻度来自 `SystemCornerRadius`：窗口级 13（macOS 27 实测）、卡片 12、
     /// 图片按同心规则取“卡片圆角 − 卡片内边距”。不再各写各的数字。
     var panelCornerRadius: CGFloat = SystemCornerRadius.window
-    var cardCornerRadius: CGFloat = SystemCornerRadius.card
+    /// 卡片 / 列表行 / 详情栏：卡片距面板边 12 pt，严格同心会得到 13 − 12 = 1 pt，
+    /// 因此取介于面板 13 与控件 6 之间的 `SystemCornerRadius.item`（8 pt）。
+    var cardCornerRadius: CGFloat = SystemCornerRadius.item
     var imageCornerRadius: CGFloat = SystemCornerRadius.concentric(
-        outer: SystemCornerRadius.card, inset: 8)
+        outer: SystemCornerRadius.item, inset: 8)
     // 卡片/列表行内部尺寸。
     var cardPadding: CGFloat = 8
     var cardTitleHeight: CGFloat = 34
     var cardStatusHeight: CGFloat = 14
     var cardTitleIconGap: CGFloat = 6
     var rowHorizontalPadding: CGFloat = 10
-    var rowIconLeading: CGFloat = 36
-    var rowTrailingControlsWidth: CGFloat = 84
+    var rowIconLeading: CGFloat = 38
+    /// 行尾操作区：3 个 28 pt 按钮 + 2 个 4 pt 间距。
+    var rowTrailingControlsWidth: CGFloat = 92
+    var rowTrailingPadding: CGFloat = 8
     var rowControlWidth: CGFloat = 28
-    var rowControlHeight: CGFloat = 24
+    var rowControlHeight: CGFloat = 28
     var rowTitleHeight: CGFloat = 16
     var rowStatusHeight: CGFloat = 14
 
@@ -118,14 +128,17 @@ struct WindowBrowserLayoutParams {
         params.rowTitleHeight = titleLine
         params.rowStatusHeight = detailLine
         params.rowControlHeight = max(params.buttonHitHeight, detailLine + 12)
-        params.actionBarHeight = max(params.actionBarHeight, detailLine + 10)
+        params.actionBarHeight = max(params.buttonHitHeight, detailLine + 10)
+        params.cardMetaRowHeight = params.actionBarHeight
         params.headerHeight = max(params.headerHeight, titleLine + detailLine + 10)
-        params.footerHeight = max(params.footerHeight, detailLine + 6)
-        params.cardImageHeight = min(params.imageMaxHeight,
-                                     (params.cardWidth - params.cardPadding * 2) * 0.52)
-        params.cardHeight = params.cardPadding * 2 + params.cardImageHeight + params.spacingSmall * 2
-            + params.cardTitleHeight + params.spacingTight + params.cardStatusHeight
-            + params.spacingSmall + params.actionBarHeight
+        params.footerHeight = max(params.footerHeight, detailLine + 5)
+        params.cardImageHeight = params.imageMaxHeight
+        // 搜索框高度取系统控件的固有高度（macOS 26 的控件比 15 及更早更高）。
+        let searchHeight = NSSearchField().intrinsicContentSize.height
+        if searchHeight.isFinite, searchHeight > 0 {
+            params.searchFieldHeight = ceil(searchHeight)
+        }
+        params.cardHeight = cardHeight(params: params)
         params.listRowHeight = max(params.listRowHeight,
                                    titleLine + detailLine + params.spacingSmall * 3)
         return params
@@ -136,10 +149,15 @@ struct WindowBrowserLayoutParams {
         var copy = self
         copy.cardTitleLines = max(1, min(2, lines))
         copy.cardTitleHeight = titleLineHeight * CGFloat(copy.cardTitleLines) + 2
-        copy.cardHeight = cardPadding * 2 + cardImageHeight + spacingSmall * 2
-            + copy.cardTitleHeight + spacingTight + cardStatusHeight
-            + spacingSmall + actionBarHeight
+        copy.cardHeight = Self.cardHeight(params: copy)
         return copy
+    }
+
+    /// 卡片高度 = 内边距 + 画面区 + 8 + 标题 + 4 + 信息行 + 内边距
+    /// （单行标题 8 + 144 + 8 + 18 + 4 + 28 + 8 = 218）。
+    static func cardHeight(params: WindowBrowserLayoutParams) -> CGFloat {
+        params.cardPadding * 2 + params.cardImageHeight + params.spacingSmall
+            + params.cardTitleHeight + params.spacingTight + params.cardMetaRowHeight
     }
 
     /// 没有状态文字时页脚不该占位：面板贴着内容收口，而不是留一段空白。
@@ -321,7 +339,7 @@ enum WindowBrowserGeometry {
         let columns: Int
         let gridHeight: CGFloat
         if style == .grid {
-            let columnCap = edge == .bottom ? params.maximumColumns : params.sideDockMaximumColumns
+            let columnCap = columnCap(edge: edge, params: params)
             let provisional = gridColumns(availableContentWidth: available.width - params.panelPadding * 2,
                                           count: windowCount, availableWidth: available.width,
                                           maximumColumns: columnCap,
@@ -396,7 +414,8 @@ enum WindowBrowserGeometry {
         let contentBounds = NSRect(origin: .zero, size: panelFrame.size)
         let mode: WindowBrowserPanelMode = isContentDriven ? .dock : .keyboard
         let content = contentPlan(bounds: contentBounds, style: resolvedStyle,
-                                  recordCount: windowCount, mode: mode, params: params)
+                                  recordCount: windowCount, mode: mode, params: params,
+                                  maximumColumns: columnCap(edge: edge, params: params))
         let transition = transitionRegion(iconFrame: iconFrame, panelFrame: panelFrame,
                                           edge: edge, params: params)
         let anchor = CGPoint(x: iconFrame.midX, y:
@@ -432,11 +451,22 @@ enum WindowBrowserGeometry {
     // MARK: 内容级布局
 
     /// 内容视图内部布局。面板内容视图和键盘面板直接调用它，保证与面板级结果一致。
+    /// 列数上限：左/右 Dock 贴在图标旁边，最多两列；底部 Dock 与键盘面板用通用上限。
+    /// 面板级与内容级两份布局都读这一处，不会一个按 3 列、一个按 2 列。
+    static func columnCap(edge: WindowBrowserDockEdge?,
+                          params: WindowBrowserLayoutParams) -> Int {
+        switch edge {
+        case .left?, .right?: return params.sideDockMaximumColumns
+        default: return params.maximumColumns
+        }
+    }
+
     static func contentPlan(bounds: NSRect,
                             style: WindowBrowserDisplayStyle,
                             recordCount: Int,
                             mode: WindowBrowserPanelMode,
-                            params: WindowBrowserLayoutParams = .standard)
+                            params: WindowBrowserLayoutParams = .standard,
+                            maximumColumns: Int? = nil)
         -> WindowBrowserContentPlan {
         let padding = params.panelPadding
         let headerHeight = min(params.headerHeight, max(0, bounds.height))
@@ -485,6 +515,7 @@ enum WindowBrowserGeometry {
         } else {
             columns = gridColumns(availableContentWidth: listRect.width,
                                   count: recordCount, availableWidth: listRect.width,
+                                  maximumColumns: maximumColumns,
                                   params: params)
             let width = columnCellWidth(contentWidth: listRect.width, columns: columns,
                                         params: params)
@@ -517,9 +548,12 @@ enum WindowBrowserGeometry {
         let cap = max(1, maximumColumns ?? params.maximumColumns)
         let byWidth = max(1, min(cap, fits))
         let preferred: Int
+        // 3 个窗口放一行三列（避免第二行只剩一张卡）；4 个用 2×2；5 个以上三列。
         switch count {
         case ...1: preferred = 1
-        case 2...4: preferred = 2
+        case 2: preferred = 2
+        case 3: preferred = 3
+        case 4: preferred = 2
         default: preferred = 3
         }
         return max(1, min(byWidth, preferred))

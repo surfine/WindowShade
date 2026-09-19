@@ -153,7 +153,9 @@ VoiceOver 焦点移到卡片/行（见上文）之后，VO-Space 的“按下”
 本机探测结果 `hasModernPane=true hasModernAccessibilityPane=true`；不再有硬编码在视图
 里的深链列表。
 
-## 玻璃形状的容器协调（1.0.13 之后）
+## 玻璃形状的容器协调（1.0.13 之后；已被取代）
+
+> 已被后文“玻璃挂载与内容层（1.0.14 复检之后）”取代：控制层玻璃与协调容器均已删除。
 
 窗口浏览面板有两块相邻玻璃（面板背景 + 控制层）。它们现在都放进同一个公开
 `NSGlassEffectContainerView`（`WindowBrowserGlassContainerHost`，`spacing = 8`）由系统
@@ -233,8 +235,8 @@ VoiceOver 焦点移到卡片/行（见上文）之后，VO-Space 的“按下”
 - **可访问性**：截图卷帘条与经典卷帘条现在都有 VoiceOver 名称、帮助与“展开窗口”
   自定义动作；悬停缩略图与置顶预览只作为一个图像/分组播报窗口名，视频与命中层不再
   单独进入可访问性树；窗口浏览的动作结果只在真实操作结束后播报一句。
-- 玻璃与材质的边界保持一致：只有真正的操作层（窗口浏览控制层）使用公开的
-  `NSGlassEffectView`，内容与预览表面保持系统材质，不在窗口画面上再叠折射。
+- 玻璃与材质的边界保持一致：只有窗口浏览面板本身是一层公开的 `NSGlassEffectView`
+  （后续改为面板根视图，界面在其 contentView 内），内容与预览表面不叠玻璃与折射。
 
 真实像素对照（`--window-browser-shots` 渲染生产视图，`docs/visual-qa/system-appearance/`）：
 
@@ -335,6 +337,23 @@ Liquid Glass 指南，Apple 最后更新 2025-12-16），只按写明的规则�
 回归断言（`tests/run-window-browser-tests.sh`）：面板只保留一个 `NSGlassEffectBackdrop`、
 控制层不再带玻璃、单层玻璃时不创建协调容器、玻璃面板下卡片采用内容层材质（纸面与旧系统
 仍为实色）。
+
+## 玻璃挂载与内容层（1.0.14 复检之后）
+
+依据 `docs/design-proposal-claude.md` 落地，替代上面“液态玻璃分层纪律”里两处做法：
+
+- **内容进玻璃的 contentView。** AppKit 头文件：`NSGlassEffectView` “only guarantees the
+  `contentView` will be placed inside the glass effect”。以前玻璃是内容的兄弟视图（被包在
+  `WindowBrowserGlassBackdrop` 里、宿主还裁切了玻璃边缘）；现在材质宿主的 `contentHost`
+  就是 `NSGlassEffectView.contentView`，页眉、搜索框、列表、详情、页脚都在里面，宿主不裁切。
+- **卡片不再叠材质视图。** 《Adopting Liquid Glass》要求审查 popover 背景、去掉自加的
+  visual effect view；以前每张卡片/每行/详情都有一个 `.contentBackground` 材质，把玻璃盖成
+  白块。现在只用系统填充色：静止 quinary、悬停/选中 quaternary、按下 tertiary，选中另加
+  强调色描边环；纸面与旧系统仍是不透明卡片。
+- **删除**控制层表面（纸面下它画出一个跨满页眉的描边框）与 `NSGlassEffectContainerView`
+  协调容器（单一玻璃形状无需合并）。旧系统材质改为 `state = .active`。
+- 断言：玻璃数恰为 1、内容在 contentView 内、面板里没有 `NSVisualEffectView`、宿主不裁切、
+  旧系统回退为 `.active`。`liquid-glass-panel.png` 已于 2026-09-19 按新结构重拍。
 
 ## 与示意稿的语义对齐
 

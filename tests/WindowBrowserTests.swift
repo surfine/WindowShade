@@ -65,6 +65,7 @@ enum WindowBrowserTests {
         hundredCyclesReturnToBaseline()
         firstContentLatency()
         geometry()
+        designProposalBehaviours()
         if failures == 0 {
             print("PASS: \(checks) window-browser pure-logic checks")
         } else {
@@ -1207,7 +1208,7 @@ enum WindowBrowserTests {
         let contentForA11y = WindowBrowserContentView(frame: NSRect(x: 0, y: 0, width: 640, height: 520))
         expect(contentForA11y.accessibilityLabel() == "窗口浏览面板",
                "the panel content view exposes an accessibility label")
-        let searchField = contentForA11y.subviews.compactMap { $0 as? NSSearchField }.first
+        let searchField = contentForA11y.interfaceSubviews.compactMap { $0 as? NSSearchField }.first
         expect(searchField?.accessibilityLabel() == "搜索窗口",
                "the search field exposes an accessibility label")
 
@@ -1364,7 +1365,7 @@ enum WindowBrowserTests {
         // 风格切换：点击分段控件立即重排，列表不重建整棵网格视图树。
         var reportedStyles: [WindowBrowserDisplayStyle] = []
         content.onStyleChanged = { reportedStyles.append($0) }
-        if let control = content.subviews.compactMap({ $0 as? NSSegmentedControl }).first,
+        if let control = content.interfaceSubviews.compactMap({ $0 as? NSSegmentedControl }).first,
            let action = control.action {
             control.selectedSegment = 0
             NSApp.sendAction(action, to: control.target, from: control)
@@ -2119,8 +2120,10 @@ enum WindowBrowserTests {
         let radii = WindowBrowserLayoutParams.standard
         expect(radii.panelCornerRadius == SystemCornerRadius.window,
                "the panel uses the system window radius (\(radii.panelCornerRadius)pt)")
-        expect(radii.cardCornerRadius == SystemCornerRadius.card,
-               "cards use the content radius (\(radii.cardCornerRadius)pt)")
+        expect(radii.cardCornerRadius == SystemCornerRadius.item,
+               "cards use the panel-item radius (\(radii.cardCornerRadius)pt)")
+        expect(radii.panelCornerRadius - radii.cardCornerRadius >= 5,
+               "a card 12 pt inside the panel is visibly less round than the panel")
         expect(radii.imageCornerRadius
                 == SystemCornerRadius.concentric(outer: radii.cardCornerRadius,
                                                  inset: radii.cardPadding),
@@ -2413,9 +2416,15 @@ enum WindowBrowserTests {
                                                                   increaseContrast: false,
                                                                   reduceMotion: false))
         expect(host.kind == .glass, "a supporting system switches to the glass backdrop")
-        expect(host.backdropView is WindowBrowserGlassBackdrop,
-               "the glass path really installs the public AppKit glass view")
-        // 面板背景与控制层的玻璃交给同一个 NSGlassEffectContainerView 协调。
+        if #available(macOS 26.0, *), WindowBrowserSystemCapabilities.runtimeSupportsGlass {
+            expect(host.surfaceView is NSGlassEffectView,
+                   "the glass path really installs the public AppKit glass view")
+            expect(host.contentIsInsideGlass,
+                   "content is the glass view's contentView, not a sibling on top of it")
+            expect(host.layer?.masksToBounds != true,
+                   "the host does not clip the system-drawn glass edge")
+        }
+        // 玻璃只有一层：面板根表面。
         let glassContent = WindowBrowserContentView(
             frame: NSRect(x: 0, y: 0, width: 800, height: 560))
         glassContent.materialOverride = (.system, WindowBrowserSystemCapabilities(
@@ -2426,20 +2435,23 @@ enum WindowBrowserTests {
         glassContent.layout()
         if #available(macOS 26.0, *), WindowBrowserSystemCapabilities.runtimeSupportsGlass {
             // HIG：玻璃只出现在功能层的一层上，玻璃叠玻璃会互相抹掉折射与高光。
-            let panelGlass = glassContent.materialHostForDiagnostics.backdropView
-            expect(panelGlass is WindowBrowserGlassBackdrop,
-                   "the panel keeps exactly one public AppKit glass surface")
-            expect(panelGlass?.superview === glassContent.materialHostForDiagnostics,
-                   "the panel glass hangs directly in the material host, not in a wrapper")
-            expect(!glassContent.controlSurfaceHasGlassForDiagnostics,
-                   "the control layer never adds a second glass layer")
-            expect(glassContent.glassContainerForDiagnostics == nil,
-                   "a single glass surface needs no coordination container")
+            expect(glassContent.contentIsInsideGlassForDiagnostics,
+                   "the whole panel UI lives inside the single glass contentView")
+            func countGlass(_ view: NSView) -> Int {
+                (view is NSGlassEffectView ? 1 : 0)
+                    + view.subviews.reduce(0) { $0 + countGlass($1) }
+            }
+            expect(countGlass(glassContent) == 1,
+                   "the panel keeps exactly one public AppKit glass surface (no glass on glass)")
+            func countEffects(_ view: NSView) -> Int {
+                (view is NSVisualEffectView ? 1 : 0)
+                    + view.subviews.reduce(0) { $0 + countEffects($1) }
+            }
+            expect(countEffects(glassContent) == 0,
+                   "cards and rows on glass add no visual effect views (system fills only)")
             expect(glassContent.adoptedCardSurfaceForDiagnostics == .material,
-                   "the content layer uses the standard material instead of glass")
+                   "cards on glass switch to the system-fill surface")
         } else {
-            expect(glassContent.glassContainerForDiagnostics == nil,
-                   "without the glass SDK/runtime no coordination container is created")
             expect(glassContent.adoptedCardSurfaceForDiagnostics == .solid,
                    "without glass the cards stay opaque")
         }
@@ -2450,17 +2462,18 @@ enum WindowBrowserTests {
                                                                   reduceMotion: true))
         expect(host.kind == .paper,
                "reduce transparency downgrades an already-open panel to paper")
-        let surface = WindowBrowserControlSurface(frame: NSRect(x: 0, y: 0, width: 300,
-                                                                height: 40))
-        surface.update(style: .system,
-                       capabilities: WindowBrowserSystemCapabilities(supportsGlass: false,
-                                                                     reduceTransparency: false,
-                                                                     increaseContrast: false,
-                                                                     reduceMotion: false))
-        expect(surface.kind == .visualEffect,
-               "without glass the control surface uses the native vibrancy material")
-        expect(surface.backdropView is NSVisualEffectView,
-               "the fallback material is a real NSVisualEffectView")
+        let legacy = WindowBrowserMaterialView(frame: NSRect(x: 0, y: 0, width: 300, height: 200))
+        legacy.update(style: .system, cornerRadius: 13,
+                      capabilities: WindowBrowserSystemCapabilities(supportsGlass: false,
+                                                                    reduceTransparency: false,
+                                                                    increaseContrast: false,
+                                                                    reduceMotion: false))
+        expect(legacy.kind == .visualEffect,
+               "without glass the panel uses the native vibrancy material")
+        expect((legacy.surfaceView as? NSVisualEffectView)?.state == .active,
+               "the never-key Dock panel keeps the active material look on macOS 14/15")
+        expect(legacy.contentHost.superview === legacy,
+               "the fallback keeps content on top of the material view")
     }
 
     /// T58/T59：排布先计算与预览，取消不移动；验证成功才登记撤销。
@@ -2906,7 +2919,7 @@ enum WindowBrowserTests {
         content.update(mode: .keyboard, records: records, selection: records[0].key,
                        style: .list, busyKeys: [], status: "")
         let textView = NSTextView(frame: NSRect(x: 0, y: 0, width: 200, height: 24))
-        guard let searchField = content.subviews.compactMap({ $0 as? NSSearchField }).first else {
+        guard let searchField = content.interfaceSubviews.compactMap({ $0 as? NSSearchField }).first else {
             expect(false, "the keyboard panel exposes a search field")
             return
         }
@@ -3239,7 +3252,7 @@ enum WindowBrowserTests {
         textView.setMarkedText("ni", selectedRange: NSRange(location: 0, length: 0),
                                replacementRange: NSRange(location: 0, length: 0))
         expect(textView.hasMarkedText(), "the test text view really has marked text")
-        let searchField = content.subviews.compactMap { $0 as? NSSearchField }.first
+        let searchField = content.interfaceSubviews.compactMap { $0 as? NSSearchField }.first
         guard let searchField else {
             expect(false, "the keyboard panel exposes a search field")
             return
@@ -3424,6 +3437,201 @@ enum WindowBrowserTests {
     }
 
     // MARK: 构造描述
+
+    /// docs/design-proposal-claude.md 落地后的行为：悬停追踪、列表不溢出、翻页、
+    /// Dock 面板不显示键盘选中环、三窗口单行三列、排布预览令牌、服务回调不在锁内执行。
+    static func designProposalBehaviours() {
+        _ = NSApplication.shared
+        // Dock 面板永远不会成为 key window：悬停追踪必须不依赖 key 状态。
+        let records = makeRecords(pid: 9901, count: 20)
+        let card = WindowBrowserCardView(frame: NSRect(x: 0, y: 0, width: 288, height: 218))
+        card.updateTrackingAreas()
+        expect(card.trackingAreas.contains { $0.options.contains(.activeAlways) }
+                && !card.trackingAreas.contains { $0.options.contains(.activeInKeyWindow) },
+               "card hover tracking works in the never-key Dock panel")
+        let row = WindowBrowserListRowView(frame: NSRect(x: 0, y: 0, width: 400, height: 52))
+        row.updateTrackingAreas()
+        expect(row.trackingAreas.contains { $0.options.contains(.activeAlways) },
+               "row hover tracking works in the never-key Dock panel")
+
+        // 列表：plain 样式，行不超出列表宽度，行间距与统一几何一致。
+        let content = WindowBrowserContentView(frame: NSRect(x: 0, y: 0, width: 800, height: 560))
+        content.update(mode: .keyboard, records: records, selection: records[0].key,
+                       style: .list, busyKeys: [], status: "")
+        content.layout()
+        let scroll = content.interfaceSubviews.compactMap { $0 as? NSScrollView }.first
+        if let table = scroll?.documentView as? NSTableView {
+            expect(table.effectiveStyle == .plain, "the list table uses the plain style")
+            let visibleWidth = scroll?.contentView.bounds.width ?? 0
+            expect(table.frameOfCell(atColumn: 0, row: 0).minX < 0.5
+                    && table.rect(ofRow: 0).width <= visibleWidth + 0.5,
+                   "list rows start at the list edge and never overflow it "
+                   + "(row=\(table.rect(ofRow: 0)) visible=\(visibleWidth))")
+            expect(abs(table.rect(ofRow: 1).minY - table.rect(ofRow: 0).minY
+                       - (content.params.listRowHeight + content.params.spacingTight)) < 0.5,
+                   "row stride matches the shared geometry (row + 4 pt)")
+            expect(table.selectionHighlightStyle == .none,
+                   "the table draws no second system selection highlight")
+        } else {
+            expect(false, "the list style renders a table view")
+        }
+
+        // PageDown / PageUp：按视口可见行数翻页。
+        content.movePage(by: 1)
+        let pagedIndex = records.firstIndex { $0.key == content.selection } ?? 0
+        expect(pagedIndex >= 2, "PageDown moves by a page of rows (index \(pagedIndex))")
+        content.movePage(by: -1)
+        expect(content.selection == records[0].key, "PageUp moves back by the same page")
+
+        // Dock 面板没有键盘选择：不画选中环；键盘面板照常画。
+        expect(content.showsSelectionRing(for: records[0].key),
+               "the keyboard panel shows the selection ring")
+        let dock = WindowBrowserContentView(frame: NSRect(x: 0, y: 0, width: 612, height: 274))
+        dock.update(mode: .dock, records: Array(records.prefix(2)), selection: records[0].key,
+                    style: .grid, busyKeys: [], status: "")
+        expect(!dock.showsSelectionRing(for: records[0].key),
+               "the Dock panel shows no keyboard selection ring")
+
+        // 三个窗口放一行三列；左/右 Dock 仍 ≤ 2 列。
+        let screen = NSRect(x: 0, y: 0, width: 1440, height: 900)
+        let visible = NSRect(x: 0, y: 78, width: 1440, height: 822)
+        let icon = NSRect(x: 700, y: 8, width: 52, height: 52)
+        let three = WindowBrowserGeometry.layoutPlan(
+            iconFrame: icon, edge: .bottom, screenFrame: screen, visibleFrame: visible,
+            desiredSize: CGSize(width: 520, height: 460), windowCount: 3)
+        expect(three.columns == 3 && abs(three.panelFrame.width - 912) < 0.5,
+               "three windows on a bottom Dock use one row of three (\(three.panelFrame.size))")
+        let side = WindowBrowserGeometry.layoutPlan(
+            iconFrame: NSRect(x: 4, y: 400, width: 52, height: 52), edge: .left,
+            screenFrame: screen, visibleFrame: visible,
+            desiredSize: CGSize(width: 520, height: 460), windowCount: 3)
+        expect(side.columns <= 2, "a side Dock keeps at most two columns")
+        let sideContent = WindowBrowserGeometry.contentPlan(
+            bounds: NSRect(x: 0, y: 0, width: 960, height: 560), style: .grid, recordCount: 6,
+            mode: .dock, maximumColumns: WindowBrowserGeometry.columnCap(edge: .left,
+                                                                        params: .standard))
+        expect(sideContent.columns <= 2,
+               "the content plan honours the side-Dock column cap even when wide enough for three")
+
+        // 排布预览：旧计时器只能收起它自己那一次预览。
+        let key = records[0].key
+        let visibleAX = CGRect(x: 0, y: 25, width: 1440, height: 855)
+        let current = CGRect(x: 400, y: 200, width: 600, height: 400)
+        if let left = WindowPlacementPolicy.plan(action: .leftHalf, target: key,
+                                                 originalFrameAX: current,
+                                                 visibleAreaAX: visibleAX),
+           let right = WindowPlacementPolicy.plan(action: .rightHalf, target: key,
+                                                  originalFrameAX: current,
+                                                  visibleAreaAX: visibleAX) {
+            let presenter = RecordingPreviewPresenter()
+            let placement = WindowPlacementController(
+                backend: FakePlacementBackend(frame: current), scheduler: ManualScheduler(),
+                previewPresenter: presenter)
+            let first = placement.preview(left)
+            let second = placement.preview(right)
+            expect(!placement.cancelPreview(ifToken: first) && placement.previewedPlan != nil,
+                   "an earlier preview's timer does not dismiss a newer preview")
+            expect(placement.cancelPreview(ifToken: second) && placement.previewedPlan == nil,
+                   "the current preview's own timer dismisses it")
+        } else {
+            expect(false, "placement plans for the preview-token check")
+        }
+
+        // 列表选中行与系统列表一致：强调色实心圆角底，而不是描边环。
+        let selectedRow = WindowBrowserListRowView(frame: NSRect(x: 0, y: 0, width: 400, height: 52))
+        configure(row: selectedRow, record: records[0], selected: true, busy: false)
+        let expectedFill = SystemAppearancePolicy.cgColor(NSColor.selectedContentBackgroundColor,
+                                                          for: selectedRow)
+        expect(selectedRow.layer?.backgroundColor == expectedFill
+                && (selectedRow.layer?.borderWidth ?? 1) < 0.5
+                    || SystemAppearanceCapabilities.current.increaseContrast,
+               "a selected list row uses the native accent-filled selection")
+
+        // 搜索无结果：列表区中央给一行说明，而不是一块空白。
+        let empty = WindowBrowserContentView(frame: NSRect(x: 0, y: 0, width: 800, height: 560))
+        empty.setSearchTextForDiagnostics("不存在的窗口")
+        empty.update(mode: .keyboard, records: [], selection: nil, style: .list,
+                     busyKeys: [], status: "")
+        empty.layout()
+        let labels = empty.interfaceSubviews.compactMap { $0 as? NSTextField }
+            .filter { !$0.isHidden && !($0 is NSSearchField) }
+        expect(labels.contains { $0.stringValue == "没有匹配的窗口" },
+               "a search with no results says so in the list area")
+
+        // 缺少屏幕录制权限：页脚给一个打开系统设置的入口；有权限时不出现。
+        let noPermission = WindowBrowserContentView(
+            frame: NSRect(x: 0, y: 0, width: 800, height: 560))
+        var openedSettings = 0
+        noPermission.onOpenScreenRecordingSettings = { openedSettings += 1 }
+        noPermission.update(mode: .keyboard, records: Array(records.prefix(3)),
+                            selection: records[0].key, style: .grid, busyKeys: [],
+                            screenRecordingAvailable: false,
+                            status: "没有屏幕录制权限，只显示图标与标题")
+        noPermission.layout()
+        let settingsButton = noPermission.interfaceSubviews.compactMap { $0 as? NSButton }
+            .first { $0.accessibilityLabel() == "打开屏幕录制设置" }
+        expect(settingsButton?.isHidden == false && (settingsButton?.frame.width ?? 0) > 0,
+               "missing screen recording shows a settings link in the footer")
+        if let settingsButton, let action = settingsButton.action {
+            NSApp.sendAction(action, to: settingsButton.target, from: settingsButton)
+        }
+        expect(openedSettings == 1, "the footer link opens the existing settings deep link")
+        let settingsHidden = content.interfaceSubviews.compactMap { $0 as? NSButton }
+            .first { $0.accessibilityLabel() == "打开屏幕录制设置" }?.isHidden ?? true
+        expect(settingsHidden, "with permission the footer has no settings link")
+
+        // Tab 顺序：搜索框 → 列表 → 显示方式 → 搜索框。
+        let search = content.interfaceSubviews.compactMap { $0 as? NSSearchField }.first
+        let control = content.interfaceSubviews.compactMap { $0 as? NSSegmentedControl }.first
+        expect(search?.nextKeyView is NSTableView
+                && search?.nextKeyView?.nextKeyView === control
+                && control?.nextKeyView === search,
+               "Tab cycles search field → list → display style → search field")
+
+        // 忙碌：操作条前方出现转圈指示并占位，按钮是带悬停底的系统按钮。
+        let busyBar = WindowBrowserActionBar(frame: NSRect(x: 0, y: 0, width: 200, height: 28))
+        let item = WindowBrowserActionPresentation.items(
+            for: records[0], context: WindowBrowserActionPresentation.Context(isBusy: true,
+                                                                              isSelected: true))
+            .filter(\.isPrimary)
+        busyBar.configure(items: item, key: records[0].key, target: busyBar,
+                          action: #selector(NSView.layout), busy: true)
+        busyBar.layout()
+        expect(busyBar.isBusy
+                && busyBar.subviews.contains { $0 is NSProgressIndicator },
+               "a busy window shows a spinner in its action bar")
+        expect(busyBar.subviews.compactMap { $0 as? NSButton }
+                .allSatisfy { $0 is WindowBrowserActionButton },
+               "action buttons are hover-aware system buttons")
+        expect(busyBar.requiredWidth == CGFloat(item.count + 2) * 28 + CGFloat(item.count + 1) * 4,
+               "the spinner takes one 28 pt slot before the buttons")
+        busyBar.configure(items: item, key: records[0].key, target: busyBar,
+                          action: #selector(NSView.layout), busy: false)
+        expect(!busyBar.isBusy && !busyBar.subviews.contains { $0 is NSProgressIndicator },
+               "the spinner goes away when the action finishes")
+
+        // 截图服务：锁内丢弃的排队需求在解锁后才回调，回调里再调用服务不会死锁。
+        var clock: CFAbsoluteTime = 100
+        let backend = FakeThumbnailBackend()
+        let service = WindowThumbnailService(backend: backend, maxConcurrent: 1,
+                                             stallTimeout: 1, now: { clock })
+        let size = CGSize(width: 800, height: 600)
+        _ = service.request(windowKey: records[0].key, purpose: .card, logicalSize: size,
+                            onImage: { _ in })
+        var reentered = false
+        _ = service.request(windowKey: records[1].key, purpose: .card, logicalSize: size,
+                            onImage: { _ in },
+                            onFailure: { _ in
+                                _ = service.cachedCount
+                                reentered = true
+                            })
+        clock += 5
+        _ = service.request(windowKey: records[2].key, purpose: .card, logicalSize: size,
+                            onImage: { _ in })
+        expect(reentered, "a dropped request's failure callback may call back into the service")
+        backend.completeAll(with: .failure(.windowGone))
+        expect(service.runningCaptureCount == 0, "the stalled job still settles its slot")
+    }
 
     static func managed(pid: pid_t, id: CGWindowID, title: String,
                         frame: CGRect? = nil, isOnScreen: Bool = false,
