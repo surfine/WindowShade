@@ -2400,7 +2400,7 @@ sha256 `ed82d3a6d3f7f3fc28c1a5e09b0754f03a86f6b3d9e68353656479dbdfcd160e`）与�
 bundle 1.0.14 / build 14。线上附件 sha256 与本地打包结果一致；隔离构建的
 `--window-browser-idle-probe`、`--window-browser-shots`（`classic-strip-palette PASS`）干净。
 
-## 2026-09-19：按复检设计稿落地（未提交、未发版）
+## 2026-09-19：按复检设计稿落地（已合入 main，第四次重新发布 1.0.14）
 
 依据 `docs/design-proposal-claude.md`，修复复检列出的 R1–R18（R19 文档已同步，R20 性能未复测）：
 
