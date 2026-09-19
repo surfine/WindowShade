@@ -85,7 +85,7 @@ WindowShade 留下一条卷帘：标题还在，展开的入口还在。双击�
 
 ## 下载
 
-到 [Releases](https://github.com/surfine/WindowShade/releases/latest) 下载 **WindowShade-v1.0.12.zip**，解压，把 `WindowShade.app` 移到“应用程序”并打开。它会出现在菜单栏。
+到 [Releases](https://github.com/surfine/WindowShade/releases/latest) 下载 **WindowShade-v1.0.14.zip**，解压，把 `WindowShade.app` 移到“应用程序”并打开。它会出现在菜单栏。
 
 - **macOS 14+ · Apple Silicon。** 下载包是 arm64，本次不包含 Intel 二进制。
 - **使用 Apple Development 签名，尚未公证。** 如果 macOS 阻止首次打开，可在“系统设置 → 隐私与安全性”中，对刚下载的应用使用“仍要打开”。无需关闭 Gatekeeper。
