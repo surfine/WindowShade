@@ -227,7 +227,7 @@ p95 0.95–2.82 ms，预算 4 ms）。
 
 | # | 要求 | 状态 |
 | --- | --- | --- |
-| G1 | 用 `NSGlassEffectView`，**把实际控制内容设为它的 `contentView`**，不要当成与文字并列的透明背景兄弟视图 | ❌ **未落实**（当前玻璃是内容背后的兄弟视图，`contentHost` 未被使用）；本机没有第二个玻璃形状，容器路径也不再触发 |
+| G1 | 用 `NSGlassEffectView`，**把实际控制内容设为它的 `contentView`**，不要当成与文字并列的透明背景兄弟视图 | ✅（2026-09-19 落实：面板根视图是唯一玻璃，界面在其 contentView 内；见 `docs/design-proposal-claude.md`） |
 | G2 | 邻近同组玻璃用 `NSGlassEffectContainerView` 协调；少量完整控制组，不为每张卡片/按钮单独加效果 | ✅（现在只有一层玻璃，容器不创建；代码保留并在两个以上形状时才启用） |
 | G3 | 截图与长列表保持普通内容；不在截图上叠玻璃、不自行采样背景色 | ✅ |
 | G4 | 编辑与运行条件分别检查：SDK 有 API 才编译玻璃分支，macOS 26+ 才运行；旧 SDK 明确只包含回退 | ✅（`WINDOWSHADE_SDK_HAS_GLASS` + `#available(macOS 26.0, *)`） |

@@ -73,26 +73,6 @@ protocol WindowBrowserCardSurfaceHosting: AnyObject {
     var cardSurface: WindowBrowserCardSurface { get }
 }
 
-/// 卡片的内容层材质。面板本身是液态玻璃时，卡片改用系统 `contentBackground`
-/// 材质（`withinWindow` 混合 + 活跃状态跟随），文字由活力自动保持对比度；
-/// 纸面与旧系统上这个视图不参与渲染，卡片仍是实色。
-final class WindowBrowserCardBackdropView: NSVisualEffectView {
-    init() {
-        super.init(frame: .zero)
-        material = .contentBackground
-        blendingMode = .withinWindow
-        state = .followsWindowActiveState
-        isHidden = true
-    }
-
-    required init?(coder: NSCoder) { nil }
-
-    func update(surface: WindowBrowserCardSurface, radius: CGFloat) {
-        isHidden = surface == .solid
-        SystemCornerRadius.apply(to: self, radius: radius, masksToBounds: true)
-    }
-}
-
 extension NSView {
     /// 视图树里所有实现刷新协议的后代（含自身）。
     func browserAppearanceTargets() -> [WindowBrowserAppearanceRefreshable] {
@@ -129,55 +109,179 @@ final class WindowBrowserIconProvider {
 }
 
 enum WindowBrowserSurfaceStyle {
+    /// 卡片 / 列表行 / 详情栏的底色与边线。
+    ///
+    /// - 玻璃面板（`.material`）：不叠任何材质视图，只用系统填充色表达分组与状态
+    ///   （HIG《Adopting Liquid Glass》：审查 popover 背景，去掉自加的 visual effect view）。
+    ///   静止 quinary、悬停 / 选中 quaternary、按下 tertiary；
+    /// - 纸面 / 旧系统（`.solid`）：`controlBackgroundColor` + 1 px 细线，悬停/按下混入标签色。
+    ///
+    /// 选中始终是强调色描边环（形状 + 颜色），“区分无颜色”下同样可辨。
+    /// `restFill == false` 用于列表行：玻璃上的行静止时不铺底，靠行间距分组。
     static func applyCard(_ view: NSView, selected: Bool, hovering: Bool = false,
+                          pressed: Bool = false, restFill: Bool = true,
+                          animated: Bool = false,
                           params: WindowBrowserLayoutParams) {
-        // 卡片是面板里的内容分组：圆角走同一份刻度，并且和系统窗口一样用连续曲率。
         SystemCornerRadius.apply(to: view, radius: params.cardCornerRadius)
         let surface = (view as? WindowBrowserCardSurfaceHosting)?.cardSurface ?? .solid
         let capabilities = SystemAppearanceCapabilities.current
-        view.layer?.borderWidth = selected ? (capabilities.increaseContrast ? 2.5 : 2)
-                                          : (capabilities.increaseContrast ? 1 : 0.5)
-        view.layer?.borderColor = SystemAppearancePolicy.cgColor(
-            selected ? NSColor.controlAccentColor : NSColor.separatorColor, for: view)
+        if animated { fadeTransition(on: view, duration: params.selectionDuration) }
+        let hairline = hairlineWidth(for: view)
+        if selected {
+            view.layer?.borderWidth = capabilities.increaseContrast ? 2.5 : 2
+            view.layer?.borderColor = SystemAppearancePolicy.cgColor(
+                NSColor.controlAccentColor, for: view)
+        } else if surface == .solid || capabilities.increaseContrast {
+            view.layer?.borderWidth = capabilities.increaseContrast ? 1 : hairline
+            view.layer?.borderColor = SystemAppearancePolicy.cgColor(
+                NSColor.separatorColor, for: view)
+        } else {
+            view.layer?.borderWidth = 0
+        }
         guard surface == .solid else {
-            // 材质卡片：底色由内容层材质给，选中/悬停只叠一层很轻的强调，边框仍是主信号。
-            let tint: NSColor = selected ? .controlAccentColor.withAlphaComponent(0.12)
-                : (hovering ? NSColor.labelColor.withAlphaComponent(0.06) : .clear)
-            view.layer?.backgroundColor = SystemAppearancePolicy.cgColor(tint, for: view)
+            let fill: NSColor
+            if pressed {
+                fill = .tertiarySystemFill
+            } else if hovering || selected {
+                fill = capabilities.increaseContrast ? .tertiarySystemFill : .quaternarySystemFill
+            } else {
+                fill = restFill ? .quinarySystemFill : .clear
+            }
+            view.layer?.backgroundColor = SystemAppearancePolicy.cgColor(fill, for: view)
             return
         }
-        // 悬停底色沿用系统列表的弱强调语言；选中仍由边线颜色与宽度表达，
-        // 不只靠底色（“区分无颜色”同样可辨）。动态颜色一律在该视图外观下解析。
+        // 动态颜色一律在该视图外观下解析（blended 返回静态颜色，必须放在块内）。
         var background = NSColor.controlBackgroundColor
         view.effectiveAppearance.performAsCurrentDrawingAppearance {
             let base = NSColor.controlBackgroundColor
-            background = (hovering && !selected
-                ? base.blended(withFraction: capabilities.increaseContrast ? 0.14 : 0.07,
-                               of: NSColor.labelColor) ?? base
-                : base)
+            let fraction: CGFloat
+            if pressed { fraction = capabilities.increaseContrast ? 0.2 : 0.14 }
+            else if hovering && !selected { fraction = capabilities.increaseContrast ? 0.14 : 0.07 }
+            else { fraction = 0 }
+            background = fraction > 0
+                ? (base.blended(withFraction: fraction, of: NSColor.labelColor) ?? base) : base
         }
         view.layer?.backgroundColor = SystemAppearancePolicy.cgColor(background, for: view)
     }
 
-    static func applyImageArea(_ view: NSView, params: WindowBrowserLayoutParams) {
-        // 画面嵌在卡片里，按同心规则取“卡片圆角 − 卡片内边距”。
+    /// 画面区：圆角落在实际画面矩形上。纸面路径保留 1 px 细线（画面常为白底，需要边界）；
+    /// 玻璃路径不描边。占位（无画面）用 quaternary 填充 / 纸面底色。
+    static func applyImageArea(_ view: NSView, surface: WindowBrowserCardSurface = .solid,
+                               placeholder: Bool = false,
+                               params: WindowBrowserLayoutParams) {
         SystemCornerRadius.apply(to: view, radius: params.imageCornerRadius, masksToBounds: true)
-        view.layer?.borderWidth = 0.5
-        view.layer?.borderColor = SystemAppearancePolicy.cgColor(
-            NSColor.separatorColor.withAlphaComponent(0.6), for: view)
-        view.layer?.backgroundColor = SystemAppearancePolicy.cgColor(
-            NSColor.windowBackgroundColor, for: view)
+        if surface == .solid {
+            view.layer?.borderWidth = hairlineWidth(for: view)
+            view.layer?.borderColor = SystemAppearancePolicy.cgColor(
+                NSColor.separatorColor.withAlphaComponent(0.6), for: view)
+        } else {
+            view.layer?.borderWidth = 0
+        }
+        let fill: NSColor = surface == .solid ? .windowBackgroundColor
+            : (placeholder ? .quaternarySystemFill : .clear)
+        view.layer?.backgroundColor = SystemAppearancePolicy.cgColor(fill, for: view)
     }
 
     /// 1x/2x 都锐利的细线：按 backing scale 对齐到实际像素。
     static func hairlineWidth(for view: NSView) -> CGFloat {
-        let scale = view.window?.backingScaleFactor
-            ?? NSScreen.main?.backingScaleFactor ?? 2
+        // 在窗口里用窗口自己的缩放；还没进窗口（离屏构建/复用池）时用启动时读到的主屏缩放，
+        // 不在每次刷新里反复查询 NSScreen（它会走窗口服务器，放在逐卡片刷新里有尾延迟）。
+        let scale = view.window?.backingScaleFactor ?? fallbackBackingScale
         return 1 / max(1, scale)
+    }
+
+    private static let fallbackBackingScale: CGFloat = NSScreen.main?.backingScaleFactor ?? 2
+
+    /// 状态变化的短淡变（选择强调约 100 ms、首图约 80 ms）；减少动态效果时不动画。
+    static func fadeTransition(on view: NSView, duration: TimeInterval) {
+        let reduceMotion = SystemAppearanceCapabilities.current.reduceMotion
+        let resolved = WindowBrowserAnimationPolicy.duration(duration, reduceMotion: reduceMotion)
+        guard resolved > 0, let layer = view.layer else { return }
+        let transition = CATransition()
+        transition.type = .fade
+        transition.duration = resolved
+        transition.timingFunction = CAMediaTimingFunction(name: .easeInEaseOut)
+        layer.add(transition, forKey: "windowBrowserStateFade")
+    }
+
+    /// 按比例把画面放进外框，返回实际画面矩形（居中）。
+    static func fittedRect(for imageSize: CGSize, in box: NSRect) -> NSRect {
+        guard imageSize.width > 0, imageSize.height > 0, box.width > 0, box.height > 0 else {
+            return box
+        }
+        let scale = min(box.width / imageSize.width, box.height / imageSize.height)
+        let size = CGSize(width: floor(imageSize.width * scale), height: floor(imageSize.height * scale))
+        return NSRect(x: box.minX + floor((box.width - size.width) / 2),
+                      y: box.minY + floor((box.height - size.height) / 2),
+                      width: size.width, height: size.height)
     }
 }
 
 // MARK: - 动作条
+
+/// 操作条里的无边框符号按钮：悬停出现 6 pt 圆角的系统填充底（按下更深一级），
+/// 与系统工具栏按钮的反馈一致。跟踪区域不依赖 key window（Dock 面板永远不是 key）。
+final class WindowBrowserActionButton: NSButton {
+    private var hovering = false
+    private var trackingAreaRef: NSTrackingArea?
+
+    override func updateTrackingAreas() {
+        super.updateTrackingAreas()
+        if let trackingAreaRef { removeTrackingArea(trackingAreaRef) }
+        let area = NSTrackingArea(rect: bounds,
+                                  options: [.mouseEnteredAndExited, .activeAlways, .inVisibleRect],
+                                  owner: self, userInfo: nil)
+        addTrackingArea(area)
+        trackingAreaRef = area
+    }
+
+    override func mouseEntered(with event: NSEvent) {
+        hovering = true
+        refreshBackground()
+    }
+
+    override func mouseExited(with event: NSEvent) {
+        hovering = false
+        refreshBackground()
+    }
+
+    override func mouseDown(with event: NSEvent) {
+        refreshBackground(pressed: true)
+        super.mouseDown(with: event)
+        refreshBackground()
+    }
+
+    override var isEnabled: Bool {
+        didSet { refreshBackground() }
+    }
+
+    override func viewDidChangeEffectiveAppearance() {
+        super.viewDidChangeEffectiveAppearance()
+        refreshBackground()
+    }
+
+    func resetHover() {
+        hovering = false
+        refreshBackground()
+    }
+
+    private var hasBackground = false
+
+    private func refreshBackground(pressed: Bool = false) {
+        let visible = isEnabled && (pressed || hovering)
+        // 静止按钮没有底：不解析颜色、不动图层（面板冷启动时成批创建按钮，这里要便宜）。
+        guard visible || hasBackground else { return }
+        hasBackground = visible
+        wantsLayer = true
+        guard visible else {
+            layer?.backgroundColor = nil
+            return
+        }
+        SystemCornerRadius.apply(to: self, radius: SystemCornerRadius.control)
+        let fill: NSColor = pressed ? .tertiarySystemFill : .quaternarySystemFill
+        layer?.backgroundColor = SystemAppearancePolicy.cgColor(fill, for: self)
+    }
+}
 
 /// 紧凑操作条：只在悬停或键盘选中时显示符号按钮，空间始终预留。
 final class WindowBrowserActionBar: NSView {
@@ -185,7 +289,10 @@ final class WindowBrowserActionBar: NSView {
     private(set) var windowKey: WindowKey?
     private var buttons: [NSButton] = []
     private var items: [WindowBrowserActionItem] = []
+    /// 窗口有动作正在执行时，按钮前方显示一个小号转圈指示（其余动作按策略置灰）。
+    private var busyIndicator: NSProgressIndicator?
     var buttonPointSize: CGFloat = 12
+    var isBusy: Bool { busyIndicator != nil }
 
     override var isFlipped: Bool { true }
 
@@ -195,13 +302,14 @@ final class WindowBrowserActionBar: NSView {
     private(set) var moreButtonIdentifier = "window-browser-more"
 
     func configure(items: [WindowBrowserActionItem], key: WindowKey,
-                   target: AnyObject, action: Selector) {
+                   target: AnyObject, action: Selector, busy: Bool = false) {
         windowKey = key
         self.items = items
         for button in buttons { button.removeFromSuperview() }
         buttons.removeAll()
+        setBusy(busy)
         for item in items {
-            let button = NSButton(title: "", target: target, action: action)
+            let button = WindowBrowserActionButton(title: "", target: target, action: action)
             button.isBordered = false
             button.bezelStyle = .regularSquare
             button.imagePosition = .imageOnly
@@ -227,7 +335,7 @@ final class WindowBrowserActionBar: NSView {
         }
         // 溢出入口：始终放在末尾，像系统工具栏一样靠右。
         if showsMoreButton {
-            let more = NSButton(title: "", target: target, action: action)
+            let more = WindowBrowserActionButton(title: "", target: target, action: action)
             more.isBordered = false
             more.bezelStyle = .regularSquare
             more.imagePosition = .imageOnly
@@ -247,19 +355,69 @@ final class WindowBrowserActionBar: NSView {
         for button in buttons { button.removeFromSuperview() }
         buttons.removeAll()
         items.removeAll()
+        setBusy(false)
         windowKey = nil
+    }
+
+    private func setBusy(_ busy: Bool) {
+        if busy, busyIndicator == nil {
+            let indicator = NSProgressIndicator()
+            indicator.style = .spinning
+            indicator.controlSize = .small
+            indicator.isDisplayedWhenStopped = false
+            indicator.setAccessibilityLabel("正在执行")
+            addSubview(indicator)
+            indicator.startAnimation(nil)
+            busyIndicator = indicator
+        } else if !busy, let indicator = busyIndicator {
+            indicator.stopAnimation(nil)
+            indicator.removeFromSuperview()
+            busyIndicator = nil
+        }
+    }
+
+    /// 放在强调色选中底上时，符号改用选中文字色（白），与系统列表一致；
+    /// 开启态与危险动作保留各自的语义色以外，其余一律跟随。
+    func setEmphasized(_ emphasized: Bool) {
+        for (index, button) in buttons.enumerated() {
+            let item = items.indices.contains(index) ? items[index] : nil
+            let base: NSColor? = item.map { $0.isDestructive ? .systemRed
+                : ($0.isOn ? .controlAccentColor : nil) } ?? nil
+            button.contentTintColor = emphasized ? .alternateSelectedControlTextColor : base
+        }
+    }
+
+    private var arrangedViews: [NSView] {
+        (busyIndicator.map { [$0] } ?? []) + buttons
+    }
+
+    /// 按钮实际占用的宽度（28 pt 命中区 + 4 pt 间距），供信息行给状态文字让位。
+    var requiredWidth: CGFloat {
+        let count = arrangedViews.count
+        guard count > 0 else { return 0 }
+        return CGFloat(count) * 28 + CGFloat(count - 1) * 4
     }
 
     override func layout() {
         super.layout()
-        guard !buttons.isEmpty else { return }
-        let spacing: CGFloat = 2
-        let width = min(28, max(18, (bounds.width - spacing * CGFloat(buttons.count - 1))
-                                / CGFloat(buttons.count)))
-        let total = width * CGFloat(buttons.count) + spacing * CGFloat(buttons.count - 1)
+        let views = arrangedViews
+        guard !views.isEmpty else { return }
+        // 命中区 28 × 28（HIG：macOS 默认控件尺寸），按钮之间 4 pt。
+        let spacing: CGFloat = 4
+        let side = min(28, bounds.height)
+        let width = min(28, max(18, (bounds.width - spacing * CGFloat(views.count - 1))
+                                / CGFloat(views.count)))
+        let total = width * CGFloat(views.count) + spacing * CGFloat(views.count - 1)
         var x = max(0, bounds.width - total)
-        for button in buttons {
-            button.frame = NSRect(x: x, y: 0, width: width, height: bounds.height)
+        let y = floor((bounds.height - side) / 2)
+        for view in views {
+            if view === busyIndicator {
+                let spin: CGFloat = 16
+                view.frame = NSRect(x: x + (width - spin) / 2, y: y + (side - spin) / 2,
+                                    width: spin, height: spin)
+            } else {
+                view.frame = NSRect(x: x, y: y, width: width, height: side)
+            }
             x += width + spacing
         }
     }
@@ -287,9 +445,10 @@ final class WindowBrowserCardView: NSView {
     private var pressedInside = false
     private var configuredSignature: String?
     private var mountedLiveView: NSView?
+    /// 当前静态画面的像素尺寸：用来把画面区收成实际画面矩形（圆角落在画面上）。
+    private var imagePixelSize: CGSize?
     private var providedMenu: NSMenu?
     private var statusIsWarning = false
-    private let cardBackdrop = WindowBrowserCardBackdropView()
     private(set) var cardSurface: WindowBrowserCardSurface = .solid
     /// 诊断：真正执行了内容配置的次数（未变化的刷新应保持为 0 增量）。
     private(set) var configureCount = 0
@@ -311,8 +470,6 @@ final class WindowBrowserCardView: NSView {
     override init(frame frameRect: NSRect) {
         super.init(frame: frameRect)
         wantsLayer = true
-        // 内容层材质永远在最底层：纸面/旧系统下它隐藏，卡片用实色。
-        addSubview(cardBackdrop)
         thumbnailView.imageScaling = .scaleProportionallyUpOrDown
         thumbnailView.setAccessibilityElement(false)
         WindowBrowserSurfaceStyle.applyImageArea(thumbnailHost, params: params)
@@ -352,10 +509,17 @@ final class WindowBrowserCardView: NSView {
     }
 
     func refreshAppearance() {
+        refreshAppearance(animated: false)
+    }
+
+    private func refreshAppearance(animated: Bool) {
         WindowBrowserSurfaceStyle.applyCard(self, selected: isSelected, hovering: isHovering,
+                                            pressed: pressedInside, animated: animated,
                                             params: params)
-        WindowBrowserSurfaceStyle.applyImageArea(thumbnailHost, params: params)
-        WindowBrowserSurfaceStyle.applyImageArea(placeholderView, params: params)
+        WindowBrowserSurfaceStyle.applyImageArea(thumbnailHost, surface: cardSurface,
+                                                 params: params)
+        WindowBrowserSurfaceStyle.applyImageArea(placeholderView, surface: cardSurface,
+                                                 placeholder: true, params: params)
         statusField.textColor = statusIsWarning ? .systemOrange : .secondaryLabelColor
         needsLayout = true
     }
@@ -391,9 +555,12 @@ final class WindowBrowserCardView: NSView {
         statusField.isHidden = status.text.isEmpty
         statusField.textColor = status.isWarning ? .systemOrange : .secondaryLabelColor
         actionBar.configure(items: actions.filter(\.isPrimary), key: record.key,
-                            target: self, action: #selector(actionButtonClicked(_:)))
+                            target: self, action: #selector(actionButtonClicked(_:)),
+                            busy: busy)
         providedMenu = menu
-        WindowBrowserSurfaceStyle.applyCard(self, selected: selected, params: params)
+        // 内容配置只重算卡片底色与选中环；画面区样式只在外观/表面变化时重算。
+        WindowBrowserSurfaceStyle.applyCard(self, selected: isSelected, hovering: isHovering,
+                                            pressed: pressedInside, params: params)
         var label = "\(record.appName)，\(record.displayTitle)"
         if status.hasVisibleText { label += "，\(status.text)" }
         setAccessibilityLabel(label)
@@ -413,6 +580,13 @@ final class WindowBrowserCardView: NSView {
 
     func applyThumbnail(_ image: CGImage?, note: String?) {
         if let image {
+            if thumbnailView.image == nil {
+                WindowBrowserSurfaceStyle.fadeTransition(on: thumbnailHost,
+                                                         duration: params.firstImageDuration)
+            }
+            let newSize = CGSize(width: image.width, height: image.height)
+            let sizeChanged = imagePixelSize != newSize
+            imagePixelSize = newSize
             thumbnailView.image = NSImage(cgImage: image, size: .zero)
             if thumbnailView.superview !== thumbnailHost {
                 thumbnailHost.addSubview(thumbnailView)
@@ -422,7 +596,11 @@ final class WindowBrowserCardView: NSView {
             thumbnailHost.isHidden = false
             placeholderView.isHidden = true
             thumbnailView.setAccessibilityLabel(note ?? "窗口缩略图")
+            // 只有画面比例真的变了才需要重新收框；同一张图重复投递不触发布局。
+            if sizeChanged { needsLayout = true }
         } else {
+            let hadImage = imagePixelSize != nil
+            imagePixelSize = nil
             thumbnailView.image = nil
             thumbnailView.removeFromSuperview()
             // 没有静态图时隐藏缩略图宿主，让下面的占位层（应用图标 + 说明）可见；
@@ -430,7 +608,10 @@ final class WindowBrowserCardView: NSView {
             thumbnailHost.isHidden = mountedLiveView == nil
             placeholderView.isHidden = false
             placeholderLabel.stringValue = note ?? "暂无画面"
+            // 空说明 = 原因已由页脚统一说明（如缺少屏幕录制权限），卡片里只留应用图标。
+            placeholderLabel.isHidden = placeholderLabel.stringValue.isEmpty
             placeholderLabel.setAccessibilityLabel(note ?? "窗口缩略图不可用")
+            if hadImage { needsLayout = true }
         }
     }
 
@@ -469,11 +650,13 @@ final class WindowBrowserCardView: NSView {
         mountedLiveView?.removeFromSuperview()
         mountedLiveView = nil
         thumbnailView.image = nil
+        imagePixelSize = nil
         thumbnailView.removeFromSuperview()
         thumbnailHost.isHidden = true
         placeholderView.isHidden = false
         placeholderIcon = nil
         placeholderLabel.stringValue = "暂无画面"
+        placeholderLabel.isHidden = false
         titleField.stringValue = ""
         titleField.toolTip = nil
         statusField.stringValue = ""
@@ -485,68 +668,63 @@ final class WindowBrowserCardView: NSView {
         setAccessibilityValue(nil)
         setAccessibilityCustomActions(nil)
         alphaValue = 1
-        WindowBrowserSurfaceStyle.applyCard(self, selected: false, params: params)
+        refreshAppearance()
     }
 
-    private var actionBarShouldShow: Bool { isSelected || isHovering }
+    private var actionBarShouldShow: Bool { isSelected || isHovering || actionBar.isBusy }
 
     override func layout() {
         super.layout()
-        cardBackdrop.frame = bounds
-        cardBackdrop.update(surface: cardSurface, radius: params.cardCornerRadius)
+        // 自上而下：画面区 → 标题（1 或 2 行）→ 信息行（左状态、右操作按钮）。
+        // 信息行把“状态行 + 操作条”合成一行：没有状态的卡片不再留一条空带，
+        // 操作按钮出现时也不挤动标题；状态文字与按钮重叠时由状态文字截断让位。
         let padding = params.cardPadding
         let width = max(1, bounds.width - padding * 2)
-        let actionHeight = params.actionBarHeight
-        let actionY = padding
-        // 状态为空时（普通窗口只显示标题）收起状态行，内容块在保留的操作条上方
-        // 垂直居中：卡片不会出现一大片无意义空白。
-        let hasStatus = !statusField.isHidden
-        let statusHeight = hasStatus ? params.cardStatusHeight : 0
-        let statusGap = hasStatus ? params.spacingSmall : 0
-        let region = max(60, bounds.height - padding * 2 - actionHeight - params.spacingSmall)
-        // 状态行为空时，把腾出的高度让给图片区域，避免卡片中部留下空白带。
-        let imageBudget = region - params.cardTitleHeight - statusHeight
-            - statusGap - params.spacingSmall
-        let imageCap = params.imageMaxHeight
-            + (hasStatus ? 0 : params.cardStatusHeight + params.spacingSmall)
-        let imageHeight = min(imageCap, max(48, imageBudget))
-        let blockHeight = imageHeight + params.spacingSmall + params.cardTitleHeight
-            + statusGap + statusHeight + params.spacingSmall + actionHeight
-        let topOffset = max(0, (region - blockHeight) / 2)
-        // 自上而下排列：图片 → 标题 → 状态 → 操作条；余量平均分给上下边距，
-        // 操作条紧贴状态行下方而不是钉在卡片底部，悬停出现时不产生位移。
-        let imageY = bounds.height - padding - topOffset - imageHeight
-        let imageFrame = NSRect(x: padding, y: imageY, width: width, height: imageHeight)
-        thumbnailHost.frame = imageFrame
-        placeholderView.frame = imageFrame
-        let iconSide: CGFloat = 30
-        let labelHeight: CGFloat = 18
+        let metaHeight = params.cardMetaRowHeight
+        let titleHeight = params.cardTitleHeight
+        let available = bounds.height - padding * 2 - params.spacingSmall
+            - titleHeight - params.spacingTight - metaHeight
+        let imageHeight = max(48, min(params.cardImageHeight, available))
+        let imageY = bounds.height - padding - imageHeight
+        let imageBox = NSRect(x: padding, y: imageY, width: width, height: imageHeight)
+        placeholderView.frame = imageBox
+        if mountedLiveView == nil, let size = imagePixelSize {
+            thumbnailHost.frame = WindowBrowserSurfaceStyle.fittedRect(for: size, in: imageBox)
+        } else {
+            thumbnailHost.frame = imageBox
+        }
+        let iconSide: CGFloat = 32
+        // 占位说明与状态同字号：直接用已派生的行高，布局时不再重新取字体。
+        let labelHeight = params.cardStatusHeight
         let placeholderHeight = iconSide + params.spacingSmall + labelHeight
-        let blockBottom = max(4, (imageFrame.height - placeholderHeight) / 2)
-        placeholderIconView.frame = NSRect(x: (imageFrame.width - iconSide) / 2,
+        let blockBottom = max(4, (imageBox.height - placeholderHeight) / 2)
+        placeholderIconView.frame = NSRect(x: (imageBox.width - iconSide) / 2,
                                            y: blockBottom + labelHeight + params.spacingSmall,
                                            width: iconSide, height: iconSide)
         placeholderIconView.isHidden = placeholderIconView.image == nil
         placeholderIconView.alphaValue = 0.65
         placeholderLabel.frame = NSRect(x: 6, y: blockBottom,
-                                        width: max(1, imageFrame.width - 12),
+                                        width: max(1, imageBox.width - 12),
                                         height: labelHeight)
-        let titleY = imageY - params.spacingSmall - params.cardTitleHeight
-        titleField.frame = NSRect(x: padding, y: titleY, width: width,
-                                  height: params.cardTitleHeight)
-        let statusY = titleY - statusGap - statusHeight
-        statusIconView.frame = NSRect(x: padding, y: statusY,
-                                      width: params.cardStatusHeight,
-                                      height: params.cardStatusHeight)
-        let statusTextX = padding + params.cardStatusHeight + params.spacingTight
-        statusField.frame = NSRect(x: statusTextX, y: statusY,
-                                   width: max(1, width - (statusTextX - padding)),
-                                   height: params.cardStatusHeight)
-        let actionTop = statusY - params.spacingSmall - actionHeight
-        actionBar.frame = NSRect(x: padding, y: max(actionY, actionTop),
-                                 width: width, height: actionHeight)
+        let titleY = imageY - params.spacingSmall - titleHeight
+        titleField.frame = NSRect(x: padding, y: titleY, width: width, height: titleHeight)
+        let metaY = titleY - params.spacingTight - metaHeight
+        let showActions = actionBarShouldShow
+        let actionsWidth = actionBar.requiredWidth
+        actionBar.frame = NSRect(x: padding + width - actionsWidth, y: metaY,
+                                 width: actionsWidth, height: metaHeight)
         actionBar.needsLayout = true
-        actionBar.isHidden = !actionBarShouldShow
+        actionBar.isHidden = !showActions
+        let statusSide = params.cardStatusHeight
+        let statusMidY = metaY + (metaHeight - statusSide) / 2
+        statusIconView.frame = NSRect(x: padding, y: statusMidY,
+                                      width: statusSide, height: statusSide)
+        let statusTextX = statusIconView.isHidden ? padding
+            : padding + statusSide + params.spacingTight
+        let reserved = showActions ? actionsWidth + params.spacingSmall : 0
+        statusField.frame = NSRect(x: statusTextX, y: statusMidY,
+                                   width: max(1, padding + width - reserved - statusTextX),
+                                   height: statusSide)
         thumbnailView.frame = thumbnailHost.bounds
         mountedLiveView?.frame = thumbnailHost.bounds
     }
@@ -555,7 +733,7 @@ final class WindowBrowserCardView: NSView {
         super.updateTrackingAreas()
         if let trackingAreaRef { removeTrackingArea(trackingAreaRef) }
         let area = NSTrackingArea(rect: bounds,
-                                  options: [.mouseEnteredAndExited, .activeInKeyWindow,
+                                  options: [.mouseEnteredAndExited, .activeAlways,
                                             .inVisibleRect],
                                   owner: self, userInfo: nil)
         addTrackingArea(area)
@@ -569,8 +747,8 @@ final class WindowBrowserCardView: NSView {
     private func setHovering(_ hovering: Bool) {
         guard isHovering != hovering else { return }
         isHovering = hovering
-        actionBar.isHidden = !actionBarShouldShow
-        refreshAppearance()
+        needsLayout = true
+        refreshAppearance(animated: true)
         if let key = windowKey {
             delegate?.browserItem(self, hover: key, isHovering: hovering)
         }
@@ -579,14 +757,21 @@ final class WindowBrowserCardView: NSView {
     override func mouseDown(with event: NSEvent) {
         // 按下不激活：拖出取消，松开提交。
         pressedInside = true
+        refreshAppearance()
     }
 
     override func mouseDragged(with event: NSEvent) {
-        pressedInside = bounds.contains(convert(event.locationInWindow, from: nil))
+        let inside = bounds.contains(convert(event.locationInWindow, from: nil))
+        guard inside != pressedInside else { return }
+        pressedInside = inside
+        refreshAppearance()
     }
 
     override func mouseUp(with event: NSEvent) {
-        defer { pressedInside = false }
+        defer {
+            pressedInside = false
+            refreshAppearance()
+        }
         guard pressedInside,
               bounds.contains(convert(event.locationInWindow, from: nil)),
               let key = windowKey else { return }
@@ -627,7 +812,7 @@ final class WindowBrowserCardView: NSView {
     func setSelected(_ selected: Bool) {
         guard isSelected != selected else { return }
         isSelected = selected
-        refreshAppearance()
+        refreshAppearance(animated: true)
         needsLayout = true
     }
 }
@@ -651,7 +836,6 @@ final class WindowBrowserListRowView: NSView {
     private var configuredSignature: String?
     private var providedMenu: NSMenu?
     private var statusIsWarning = false
-    private let cardBackdrop = WindowBrowserCardBackdropView()
     private(set) var cardSurface: WindowBrowserCardSurface = .solid
     /// 诊断：真正执行了内容配置的次数。
     private(set) var configureCount = 0
@@ -660,7 +844,6 @@ final class WindowBrowserListRowView: NSView {
     override init(frame frameRect: NSRect) {
         super.init(frame: frameRect)
         wantsLayer = true
-        addSubview(cardBackdrop)
         iconView.imageScaling = .scaleProportionallyUpOrDown
         iconView.setAccessibilityElement(false)
         titleField.font = WindowBrowserTypography.title
@@ -689,10 +872,59 @@ final class WindowBrowserListRowView: NSView {
     private(set) var refreshCount = 0
 
     func refreshAppearance() {
+        refreshAppearance(animated: false)
+    }
+
+    private func refreshAppearance(animated: Bool) {
         refreshCount += 1
-        WindowBrowserSurfaceStyle.applyCard(self, selected: isSelected, hovering: isHovering,
-                                            params: params)
-        statusField.textColor = statusIsWarning ? .systemOrange : .secondaryLabelColor
+        guard isSelected else {
+            WindowBrowserSurfaceStyle.applyCard(self, selected: false, hovering: isHovering,
+                                                pressed: pressedInside, restFill: false,
+                                                animated: animated, params: params)
+            titleField.textColor = .labelColor
+            statusField.textColor = statusIsWarning ? .systemOrange : .secondaryLabelColor
+            statusIconView.contentTintColor = nil
+            actionBar.setEmphasized(false)
+            return
+        }
+        // 选中行与系统列表一致：窗口是 key 时强调色实心圆角底 + 白字，
+        // 不是 key 时退为非强调的灰底 + 正常文字色。实心底本身就是形状信号，不只靠颜色。
+        SystemCornerRadius.apply(to: self, radius: params.cardCornerRadius)
+        if animated { WindowBrowserSurfaceStyle.fadeTransition(on: self,
+                                                               duration: params.selectionDuration) }
+        let emphasized = window?.isKeyWindow ?? true
+        let fill: NSColor = emphasized ? .selectedContentBackgroundColor
+            : .unemphasizedSelectedContentBackgroundColor
+        layer?.backgroundColor = SystemAppearancePolicy.cgColor(fill, for: self)
+        let highContrast = SystemAppearanceCapabilities.current.increaseContrast
+        layer?.borderWidth = highContrast ? 1 : 0
+        layer?.borderColor = SystemAppearancePolicy.cgColor(NSColor.labelColor, for: self)
+        titleField.textColor = emphasized ? .alternateSelectedControlTextColor : .labelColor
+        statusField.textColor = emphasized ? .alternateSelectedControlTextColor
+            : (statusIsWarning ? .systemOrange : .secondaryLabelColor)
+        statusIconView.contentTintColor = emphasized ? .alternateSelectedControlTextColor : nil
+        actionBar.setEmphasized(emphasized)
+    }
+
+    private var keyObservers: [NSObjectProtocol] = []
+
+    /// 面板取得/失去 key 状态时，选中行在强调与非强调外观之间切换（与系统列表相同）。
+    override func viewDidMoveToWindow() {
+        super.viewDidMoveToWindow()
+        for observer in keyObservers { NotificationCenter.default.removeObserver(observer) }
+        keyObservers.removeAll()
+        guard let window else { return }
+        for name in [NSWindow.didBecomeKeyNotification, NSWindow.didResignKeyNotification] {
+            keyObservers.append(NotificationCenter.default.addObserver(
+                forName: name, object: window, queue: .main) { [weak self] _ in
+                    guard let self, self.isSelected else { return }
+                    self.refreshAppearance(animated: false)
+                })
+        }
+    }
+
+    deinit {
+        for observer in keyObservers { NotificationCenter.default.removeObserver(observer) }
     }
 
     func configure(record: WindowRecord,
@@ -726,9 +958,10 @@ final class WindowBrowserListRowView: NSView {
         statusIconView.isHidden = status.symbolName == nil
         statusField.isHidden = status.text.isEmpty
         actionBar.configure(items: actions.filter(\.isPrimary), key: record.key,
-                            target: self, action: #selector(actionButtonClicked(_:)))
+                            target: self, action: #selector(actionButtonClicked(_:)),
+                            busy: busy)
         providedMenu = menu
-        WindowBrowserSurfaceStyle.applyCard(self, selected: selected, params: params)
+        refreshAppearance()
         var label = "\(record.appName)，\(record.displayTitle)"
         if status.hasVisibleText { label += "，\(status.text)" }
         setAccessibilityLabel(label)
@@ -760,43 +993,45 @@ final class WindowBrowserListRowView: NSView {
         setAccessibilityLabel(nil)
         setAccessibilityValue(nil)
         setAccessibilityCustomActions(nil)
-        WindowBrowserSurfaceStyle.applyCard(self, selected: false, params: params)
+        refreshAppearance()
     }
 
     override func layout() {
         super.layout()
-        cardBackdrop.frame = bounds
-        cardBackdrop.update(surface: cardSurface, radius: params.cardCornerRadius)
         let height = bounds.height
         iconView.frame = NSRect(x: params.rowHorizontalPadding,
-                                y: (height - params.iconSize) / 2,
+                                y: floor((height - params.iconSize) / 2),
                                 width: params.iconSize, height: params.iconSize)
-        let trailing = params.rowTrailingControlsWidth
-        actionBar.frame = NSRect(x: bounds.width - trailing - params.rowHorizontalPadding / 2,
-                                 y: (height - params.rowControlHeight) / 2,
-                                 width: trailing, height: params.rowControlHeight)
+        let actionsWidth = actionBar.requiredWidth
+        actionBar.frame = NSRect(x: bounds.width - params.rowTrailingPadding - actionsWidth,
+                                 y: floor((height - params.rowControlHeight) / 2),
+                                 width: actionsWidth, height: params.rowControlHeight)
         actionBar.needsLayout = true
-        actionBar.isHidden = !(isSelected || isHovering)
+        actionBar.isHidden = !(isSelected || isHovering || actionBar.isBusy)
         let textLeft = params.rowIconLeading
-        let textWidth = max(1, bounds.width - textLeft - params.rowHorizontalPadding - trailing)
-        let textY = (height - (params.rowTitleHeight + params.rowStatusHeight)) / 2
-        titleField.frame = NSRect(x: textLeft, y: textY + params.rowStatusHeight,
+        let trailing = params.rowTrailingControlsWidth + params.rowTrailingPadding
+        let textWidth = max(1, bounds.width - textLeft - trailing - params.spacingSmall)
+        // 有状态时“标题 + 状态”整体垂直居中；没有状态时标题单独居中。
+        let hasStatus = !statusField.isHidden
+        let block = params.rowTitleHeight + (hasStatus ? params.rowStatusHeight : 0)
+        let textY = floor((height - block) / 2)
+        titleField.frame = NSRect(x: textLeft, y: textY + (hasStatus ? params.rowStatusHeight : 0),
                                   width: textWidth, height: params.rowTitleHeight)
         statusIconView.frame = NSRect(x: textLeft, y: textY,
                                       width: params.rowStatusHeight,
                                       height: params.rowStatusHeight)
-        statusField.frame = NSRect(
-            x: textLeft + params.rowStatusHeight + params.spacingTight,
-            y: textY,
-            width: max(1, textWidth - params.rowStatusHeight - params.spacingTight),
-            height: params.rowStatusHeight)
+        let statusX = statusIconView.isHidden ? textLeft
+            : textLeft + params.rowStatusHeight + params.spacingTight
+        statusField.frame = NSRect(x: statusX, y: textY,
+                                   width: max(1, textLeft + textWidth - statusX),
+                                   height: params.rowStatusHeight)
     }
 
     override func updateTrackingAreas() {
         super.updateTrackingAreas()
         if let trackingAreaRef { removeTrackingArea(trackingAreaRef) }
         let area = NSTrackingArea(rect: bounds,
-                                  options: [.mouseEnteredAndExited, .activeInKeyWindow,
+                                  options: [.mouseEnteredAndExited, .activeAlways,
                                             .inVisibleRect],
                                   owner: self, userInfo: nil)
         addTrackingArea(area)
@@ -805,26 +1040,35 @@ final class WindowBrowserListRowView: NSView {
 
     override func mouseEntered(with event: NSEvent) {
         isHovering = true
-        actionBar.isHidden = !(isSelected || isHovering)
-        refreshAppearance()
+        actionBar.isHidden = !(isSelected || isHovering || actionBar.isBusy)
+        refreshAppearance(animated: true)
         if let key = windowKey { delegate?.browserItem(self, hover: key, isHovering: true) }
     }
 
     override func mouseExited(with event: NSEvent) {
         isHovering = false
-        actionBar.isHidden = !(isSelected || isHovering)
-        refreshAppearance()
+        actionBar.isHidden = !(isSelected || isHovering || actionBar.isBusy)
+        refreshAppearance(animated: true)
         if let key = windowKey { delegate?.browserItem(self, hover: key, isHovering: false) }
     }
 
-    override func mouseDown(with event: NSEvent) { pressedInside = true }
+    override func mouseDown(with event: NSEvent) {
+        pressedInside = true
+        refreshAppearance()
+    }
 
     override func mouseDragged(with event: NSEvent) {
-        pressedInside = bounds.contains(convert(event.locationInWindow, from: nil))
+        let inside = bounds.contains(convert(event.locationInWindow, from: nil))
+        guard inside != pressedInside else { return }
+        pressedInside = inside
+        refreshAppearance()
     }
 
     override func mouseUp(with event: NSEvent) {
-        defer { pressedInside = false }
+        defer {
+            pressedInside = false
+            refreshAppearance()
+        }
         guard pressedInside,
               bounds.contains(convert(event.locationInWindow, from: nil)),
               let key = windowKey else { return }
@@ -859,7 +1103,7 @@ final class WindowBrowserListRowView: NSView {
     func setSelected(_ selected: Bool) {
         guard isSelected != selected else { return }
         isSelected = selected
-        refreshAppearance()
+        refreshAppearance(animated: true)
         needsLayout = true
     }
 }
@@ -892,17 +1136,13 @@ final class WindowBrowserSelectionDetailView: NSView {
     private let liveHost = NSView()
     private var mountedLiveView: NSView?
     private var params = WindowBrowserLayoutParams.standard
-    private let cardBackdrop = WindowBrowserCardBackdropView()
     private(set) var cardSurface: WindowBrowserCardSurface = .solid
 
     override init(frame frameRect: NSRect) {
         super.init(frame: frameRect)
         wantsLayer = true
-        addSubview(cardBackdrop)
-        WindowBrowserSurfaceStyle.applyCard(self, selected: false, params: params)
         imageView.imageScaling = .scaleProportionallyUpOrDown
         imageView.setAccessibilityElement(false)
-        WindowBrowserSurfaceStyle.applyImageArea(imageView, params: params)
         titleField.font = WindowBrowserTypography.title
         titleField.maximumNumberOfLines = 2
         titleField.lineBreakMode = .byTruncatingTail
@@ -918,8 +1158,7 @@ final class WindowBrowserSelectionDetailView: NSView {
 
     override func viewDidChangeEffectiveAppearance() {
         super.viewDidChangeEffectiveAppearance()
-        WindowBrowserSurfaceStyle.applyCard(self, selected: false, params: params)
-        WindowBrowserSurfaceStyle.applyImageArea(imageView, params: params)
+        refreshAppearance()
     }
 
     func update(record: WindowRecord, status: WindowBrowserStatusPresentation,
@@ -938,12 +1177,14 @@ final class WindowBrowserSelectionDetailView: NSView {
         imageView.isHidden = image == nil && mountedLiveView == nil
         setAccessibilityLabel("\(record.appName)，\(record.displayTitle)")
         setAccessibilityValue(status.text)
+        refreshAppearance()
         needsLayout = true
     }
 
     func setImage(_ image: CGImage?) {
         imageView.image = image.map { NSImage(cgImage: $0, size: .zero) }
         imageView.isHidden = image == nil && mountedLiveView == nil
+        needsLayout = true
     }
 
     @discardableResult
@@ -971,26 +1212,32 @@ final class WindowBrowserSelectionDetailView: NSView {
 
     override func layout() {
         super.layout()
-        cardBackdrop.frame = bounds
-        cardBackdrop.update(surface: cardSurface, radius: params.cardCornerRadius)
+        // 自上而下：画面（按比例，最高为栏高的 55%）→ 标题（最多两行）→ 状态，
+        // 与 Finder 预览栏的阅读顺序一致；不再把画面压到栏底。
         let padding = params.selectionPanePadding
         let width = max(1, bounds.width - padding * 2)
+        let imageHeight = max(40, min(floor(width * 0.625),
+                                      floor((bounds.height - padding * 2) * 0.55)))
+        let imageBox = NSRect(x: padding, y: bounds.height - padding - imageHeight,
+                              width: width, height: imageHeight)
+        if mountedLiveView == nil, let image = imageView.image, image.size.width > 0 {
+            imageView.frame = WindowBrowserSurfaceStyle.fittedRect(for: image.size, in: imageBox)
+        } else {
+            imageView.frame = imageBox
+        }
+        liveHost.frame = imageBox
+        mountedLiveView?.frame = liveHost.bounds
         let titleBlock = params.cardTitleHeight
-        let statusBlock = params.cardStatusHeight
-        let titleY = bounds.height - padding - titleBlock
+        let titleY = imageBox.minY - params.spacingSmall - titleBlock
         titleField.frame = NSRect(x: padding, y: titleY, width: width, height: titleBlock)
-        let statusY = titleY - statusBlock - params.spacingTight
+        let statusBlock = params.cardStatusHeight
+        let statusY = titleY - params.spacingTight - statusBlock
         statusIconView.frame = NSRect(x: padding, y: statusY,
                                       width: statusBlock, height: statusBlock)
-        statusField.frame = NSRect(
-            x: padding + statusBlock + params.spacingTight, y: statusY,
-            width: max(1, width - statusBlock - params.spacingTight), height: statusBlock)
-        let imageTop = max(padding, statusY - params.spacingSmall)
-        let imageFrame = NSRect(x: padding, y: padding, width: width,
-                                height: max(40, imageTop - padding))
-        imageView.frame = imageFrame
-        liveHost.frame = imageFrame
-        mountedLiveView?.frame = liveHost.bounds
+        let statusX = statusIconView.isHidden ? padding
+            : padding + statusBlock + params.spacingTight
+        statusField.frame = NSRect(x: statusX, y: statusY,
+                                   width: max(1, padding + width - statusX), height: statusBlock)
     }
 }
 
@@ -1016,16 +1263,15 @@ extension WindowBrowserListRowView: WindowBrowserAppearanceRefreshable,
     func adoptCardSurface(_ surface: WindowBrowserCardSurface) {
         guard surface != cardSurface else { return }
         cardSurface = surface
-        WindowBrowserSurfaceStyle.applyCard(self, selected: isSelected, hovering: isHovering,
-                                            params: params)
+        refreshAppearance()
     }
 }
 extension WindowBrowserSelectionDetailView: WindowBrowserAppearanceRefreshable,
                                             WindowBrowserCardSurfaceHosting {
     /// 详情区自己重算层颜色（图片区域与卡片共享同一套规则）。
     func refreshAppearance() {
-        WindowBrowserSurfaceStyle.applyCard(self, selected: false,
-                                            params: WindowBrowserLayoutParams.standard)
+        WindowBrowserSurfaceStyle.applyCard(self, selected: false, params: params)
+        WindowBrowserSurfaceStyle.applyImageArea(imageView, surface: cardSurface, params: params)
     }
 
     func adoptCardSurface(_ surface: WindowBrowserCardSurface) {
@@ -1162,6 +1408,8 @@ final class WindowBrowserContentView: NSView, NSSearchFieldDelegate, NSTextViewD
     var onHoverChanged: ((WindowKey, Bool) -> Void)?
 
     var params = WindowBrowserLayoutParams.standard
+    /// 网格列数上限（控制器按 Dock 方向设置；左/右 Dock 为 2）。
+    var maximumColumns: Int?
     private(set) var mode: WindowBrowserPanelMode = .dock
     private(set) var style: WindowBrowserDisplayStyle = .grid
     private(set) var records: [WindowRecord] = []
@@ -1182,7 +1430,6 @@ final class WindowBrowserContentView: NSView, NSSearchFieldDelegate, NSTextViewD
     var panelCornerRadiusForDiagnostics: CGFloat { materialHost.layer?.cornerRadius ?? -1 }
 
     let materialHost = WindowBrowserMaterialView()
-    private let controlSurface = WindowBrowserControlSurface()
     private let iconView = NSImageView()
     private let appNameField = NSTextField(labelWithString: "")
     private let detailStatusField = NSTextField(labelWithString: "")
@@ -1195,13 +1442,21 @@ final class WindowBrowserContentView: NSView, NSSearchFieldDelegate, NSTextViewD
     private let tableColumn = NSTableColumn(identifier: NSUserInterfaceItemIdentifier("window"))
     private let detailPane = WindowBrowserSelectionDetailView()
     private let footerStatusField = NSTextField(labelWithString: "")
+    /// 列表为空时列表区中央的一行说明（搜索无结果 / 没有窗口）。
+    private let emptyStateField = NSTextField(labelWithString: "")
+    /// 缺少屏幕录制权限时页脚右侧的入口：走现有的系统设置深链，不在悬停时弹授权框。
+    private let permissionButton = NSButton(title: "打开“屏幕录制”设置…", target: nil, action: nil)
+    /// 页脚“打开设置”入口的回调（控制器接到现有权限页面）。
+    var onOpenScreenRecordingSettings: (() -> Void)?
     private var boundsObserver: NSObjectProtocol?
     private var lastVisibleKeys: [WindowKey] = []
     private var lastScrolledSelection: WindowKey?
     private var contextMenuProvider: ((WindowKey) -> NSMenu?)?
     /// 诊断接缝：隔离展示入口可以在不改系统设置的情况下渲染指定的材质组合。
     var materialOverride: (style: WindowBrowserAppearanceStyle,
-                           capabilities: WindowBrowserSystemCapabilities)?
+                           capabilities: WindowBrowserSystemCapabilities)? {
+        didSet { refreshMaterialAppearance() }
+    }
     /// 应用图标读取缓存：同一实例的多个行/卡片只读一次高成本图标。
     let iconProvider = WindowBrowserIconProvider()
     /// 唯一挂载的实时预览视图与其目标。
@@ -1220,8 +1475,11 @@ final class WindowBrowserContentView: NSView, NSSearchFieldDelegate, NSTextViewD
         super.init(frame: frameRect)
         wantsLayer = true
 
+        // 唯一的材质表面铺满面板；所有界面元素都挂在它的 contentHost 上
+        // （玻璃路径下 contentHost 就是 NSGlassEffectView.contentView）。
         addSubview(materialHost)
-        addSubview(controlSurface)
+        materialHost.frame = bounds
+        materialHost.autoresizingMask = [.width, .height]
 
         iconView.imageScaling = .scaleProportionallyUpOrDown
         iconView.setAccessibilityElement(false)
@@ -1275,7 +1533,11 @@ final class WindowBrowserContentView: NSView, NSSearchFieldDelegate, NSTextViewD
         tableView.rowSizeStyle = .custom
         tableView.usesAutomaticRowHeights = false
         tableView.backgroundColor = .clear
-        tableView.selectionHighlightStyle = .regular
+        // 显式 plain：未设置时 effectiveStyle 是 inset，会给每行左右各加 16 pt，
+        // 行宽超出列表而被裁掉右侧；行间距由统一几何给出（4 pt），选中由行自己绘制。
+        tableView.style = .plain
+        tableView.intercellSpacing = NSSize(width: 0, height: params.spacingTight)
+        tableView.selectionHighlightStyle = .none
         tableView.allowsEmptySelection = true
         tableView.setAccessibilityLabel("窗口列表")
         tableView.isHidden = true
@@ -1291,21 +1553,33 @@ final class WindowBrowserContentView: NSView, NSSearchFieldDelegate, NSTextViewD
             }
 
         footerStatusField.font = WindowBrowserTypography.detail
-        footerStatusField.textColor = .tertiaryLabelColor
+        footerStatusField.textColor = .secondaryLabelColor
         footerStatusField.lineBreakMode = .byTruncatingTail
 
+        emptyStateField.font = WindowBrowserTypography.body
+        emptyStateField.textColor = .secondaryLabelColor
+        emptyStateField.alignment = .center
+        emptyStateField.lineBreakMode = .byTruncatingTail
+        emptyStateField.isHidden = true
+
+        permissionButton.isBordered = false
+        permissionButton.font = WindowBrowserTypography.detail
+        permissionButton.contentTintColor = .linkColor
+        permissionButton.target = self
+        permissionButton.action = #selector(openScreenRecordingSettings)
+        permissionButton.setAccessibilityLabel("打开屏幕录制设置")
+        permissionButton.isHidden = true
+
         for view in [iconView, appNameField, detailStatusField, searchField, styleControl,
-                     scrollView, detailPane, footerStatusField] {
-            addSubview(view)
+                     scrollView, detailPane, footerStatusField, emptyStateField,
+                     permissionButton] {
+            materialHost.contentHost.addSubview(view)
         }
         setAccessibilityElement(true)
         setAccessibilityRole(.group)
         setAccessibilityLabel("窗口浏览面板")
 
-        materialHost.update()
-        controlSurface.update(style: effectiveMaterialStyle,
-                              capabilities: effectiveMaterialCapabilities,
-                              panelKind: materialHost.kind)
+        updateMaterialSurfaces()
     }
 
     required init?(coder: NSCoder) { nil }
@@ -1339,13 +1613,23 @@ final class WindowBrowserContentView: NSView, NSSearchFieldDelegate, NSTextViewD
             : nil
         detailStatusField.stringValue = mode == .dock ? detailStatus(for: records) : ""
         footerStatusField.stringValue = status
+        permissionButton.isHidden = screenRecordingAvailable || status.isEmpty
+        if records.isEmpty {
+            emptyStateField.stringValue = mode == .keyboard && !searchField.stringValue.isEmpty
+                ? "没有匹配的窗口" : "没有可显示的窗口"
+        }
+        emptyStateField.isHidden = !records.isEmpty
         searchField.isHidden = mode == .dock
+        // 单窗口 Dock 面板没有可切换的内容：不显示网格/列表切换。
+        styleControl.isHidden = mode == .dock && records.count <= 1
         styleControl.selectedSegment = style == .grid ? 0 : 1
         plan = WindowBrowserGeometry.contentPlan(
             bounds: NSRect(origin: .zero, size: bounds.size),
-            style: style, recordCount: records.count, mode: mode, params: params)
+            style: style, recordCount: records.count, mode: mode, params: params,
+            maximumColumns: maximumColumns)
         refreshActionItems()
         rebuildItems()
+        updateKeyViewLoop()
         needsLayout = true
         layoutSubtreeIfNeeded()
         updateDetailPane()
@@ -1384,7 +1668,7 @@ final class WindowBrowserContentView: NSView, NSSearchFieldDelegate, NSTextViewD
     /// 不触发任何截图，也不重建数据。
     func refreshMaterialAppearance() {
         updateMaterialSurfaces()
-        for target in browserAppearanceTargets() {
+        for target in materialHost.contentHost.browserAppearanceTargets() {
             target.refreshAppearance()
         }
         needsLayout = true
@@ -1395,14 +1679,10 @@ final class WindowBrowserContentView: NSView, NSSearchFieldDelegate, NSTextViewD
         let capabilities = effectiveMaterialCapabilities
         materialHost.update(style: style, cornerRadius: params.panelCornerRadius,
                             capabilities: capabilities)
-        controlSurface.update(style: style, capabilities: capabilities,
-                              panelKind: materialHost.kind)
-        coordinateGlassBackdrops()
-        // 玻璃面板下的卡片改用内容层材质（HIG：玻璃只做一层，内容层用标准材质）；
-        // 纸面与旧系统仍然是不透明卡片。
+        // 玻璃面板上的卡片不叠材质，改用系统填充色；纸面与旧系统仍是不透明卡片。
         let surface: WindowBrowserCardSurface = materialHost.kind == .glass ? .material : .solid
-        adoptedCardSurfaceForDiagnostics = surface
-        for target in browserAppearanceTargets() {
+        currentCardSurface = surface
+        for target in materialHost.contentHost.browserAppearanceTargets() {
             target.adoptCardSurface(surface)
         }
     }
@@ -1416,47 +1696,18 @@ final class WindowBrowserContentView: NSView, NSSearchFieldDelegate, NSTextViewD
         materialOverride?.capabilities ?? .current
     }
 
-    /// 诊断：控制层当前是否自带玻璃。HIG 不允许玻璃叠玻璃，正常应始终是 false。
-    var controlSurfaceHasGlassForDiagnostics: Bool {
-        controlSurface.backdropView is WindowBrowserGlassBackdrop
-    }
+    /// 当前面板的卡片表面（玻璃面板下为 .material）；新建/复用的单元也按它设定。
+    private(set) var currentCardSurface: WindowBrowserCardSurface = .solid
+    /// 诊断别名（测试沿用旧名）。
+    var adoptedCardSurfaceForDiagnostics: WindowBrowserCardSurface { currentCardSurface }
 
-    /// 诊断：本次材质决策后卡片用的表面（玻璃面板下应为 .material）。
-    private(set) var adoptedCardSurfaceForDiagnostics: WindowBrowserCardSurface = .solid
+    /// 面板界面元素（页眉、搜索框、滚动区、详情、页脚）。它们挂在材质宿主的
+    /// contentHost 上（玻璃路径下即玻璃的 contentView），不是内容视图的直接子视图。
+    var interfaceSubviews: [NSView] { materialHost.contentHost.subviews }
 
-    /// 面板背景与控制层的玻璃交给同一个 NSGlassEffectContainerView 协调，
-    /// 让系统按邻近规则批量处理/合并玻璃形状（公开 API，不做折射伪造）。
-    private func coordinateGlassBackdrops() {
-        #if WINDOWSHADE_SDK_HAS_GLASS
-        if #available(macOS 26.0, *) {
-            let glasses = [materialHost.backdropView, controlSurface.backdropView]
-                .compactMap { $0 as? WindowBrowserGlassBackdrop }
-            // 容器只为一件事存在：让相邻的多个玻璃形状合并/批量处理。现在面板只有
-            // 一层玻璃（控制层不再叠玻璃），再套一层容器没有收益，反而多一道离屏合成。
-            guard glasses.count > 1 else { return }
-            let host: WindowBrowserGlassContainerHost
-            if let existing = glassContainerForDiagnostics as? WindowBrowserGlassContainerHost {
-                host = existing
-            } else {
-                let created = WindowBrowserGlassContainerHost()
-                addSubview(created, positioned: .below, relativeTo: materialHost)
-                glassContainerForDiagnostics = created
-                host = created
-            }
-            host.frame = bounds
-            // 面板背景铺满，控制层对齐控制区（host 与内容视图同尺寸，直接换算）。
-            let controlFrame = controlSurface.convert(controlSurface.bounds, to: host)
-            if let panelGlass = materialHost.backdropView as? WindowBrowserGlassBackdrop {
-                materialHost.backdropIsExternallyCoordinated = true
-                host.attach(panelGlass, frame: bounds)
-            }
-            if let controlGlass = controlSurface.backdropView as? WindowBrowserGlassBackdrop {
-                controlSurface.backdropIsExternallyCoordinated = true
-                host.attach(controlGlass, frame: controlFrame)
-            }
-        }
-        #endif
-    }
+    /// 诊断：界面内容是否确实挂在玻璃的 contentView 里（只有玻璃路径为 true）。
+    var contentIsInsideGlassForDiagnostics: Bool { materialHost.contentIsInsideGlass }
+
     /// 诊断：第一行的背景亮度（探针验证浅深色是否实时跟随）。
     func debugFirstRowBackgroundBrightness() -> CGFloat? {
         guard let key = records.first?.key, let row = rowView(for: key) else { return nil }
@@ -1467,13 +1718,11 @@ final class WindowBrowserContentView: NSView, NSSearchFieldDelegate, NSTextViewD
 
     /// 诊断：强制卡片用实色或内容层材质（探针做同机对照；真机由材质自动决定）。
     func setCardSurfaceForDiagnostics(_ surface: WindowBrowserCardSurface) {
-        for target in browserAppearanceTargets() {
+        for target in materialHost.contentHost.browserAppearanceTargets() {
             target.adoptCardSurface(surface)
         }
     }
 
-    /// 诊断：玻璃协调容器（仅 macOS 26+ 且使用玻璃时存在）。
-    private(set) var glassContainerForDiagnostics: NSView?
     /// 诊断：面板背景材质宿主。
     var materialHostForDiagnostics: WindowBrowserMaterialView { materialHost }
 
@@ -1560,7 +1809,8 @@ final class WindowBrowserContentView: NSView, NSSearchFieldDelegate, NSTextViewD
     private func resizeDocumentViews() {
         plan = WindowBrowserGeometry.contentPlan(
             bounds: NSRect(origin: .zero, size: bounds.size),
-            style: style, recordCount: records.count, mode: mode, params: params)
+            style: style, recordCount: records.count, mode: mode, params: params,
+            maximumColumns: maximumColumns)
         let documentWidth = max(1, plan.listRect.width)
         let documentHeight = max(1, plan.documentHeight)
         collectionView.frame = NSRect(x: 0, y: 0, width: documentWidth, height: documentHeight)
@@ -1580,7 +1830,7 @@ final class WindowBrowserContentView: NSView, NSSearchFieldDelegate, NSTextViewD
                 ?? WindowBrowserStatusPresentationFactory.make(record: record, hasSnapshot: false)
             if let card = cardView(for: record.key) {
                 card.configure(record: record, actions: actions, status: status,
-                               selected: record.key == selection,
+                               selected: showsSelectionRing(for: record.key),
                                busy: busyKeys.contains(record.key),
                                params: params, menu: contextMenuProvider?(record.key))
                 card.placeholderIcon = iconProvider.icon(for: record.key.application.pid)
@@ -1589,7 +1839,7 @@ final class WindowBrowserContentView: NSView, NSSearchFieldDelegate, NSTextViewD
             }
             if let row = rowView(for: record.key) {
                 row.configure(record: record, actions: actions, status: status,
-                              selected: record.key == selection,
+                              selected: showsSelectionRing(for: record.key),
                               busy: busyKeys.contains(record.key),
                               params: params,
                               icon: iconProvider.icon(for: record.key.application.pid),
@@ -1778,29 +2028,49 @@ final class WindowBrowserContentView: NSView, NSSearchFieldDelegate, NSTextViewD
         super.layout()
         plan = WindowBrowserGeometry.contentPlan(bounds: bounds, style: style,
                                                 recordCount: records.count,
-                                                mode: mode, params: params)
+                                                mode: mode, params: params,
+            maximumColumns: maximumColumns)
+        // 材质只在外观/设置变化时更新（init、refreshMaterialAppearance），布局只摆位置。
         materialHost.frame = bounds
-        updateMaterialSurfaces()
-        controlSurface.frame = plan.headerRect.insetBy(dx: -params.panelPadding,
-                                                       dy: -params.spacingSmall)
-        controlSurface.update(style: effectiveMaterialStyle,
-                              capabilities: effectiveMaterialCapabilities,
-                              panelKind: materialHost.kind)
         let header = plan.headerRect
-        iconView.frame = NSRect(x: header.minX, y: header.midY - params.iconSize / 2,
+        // 页眉尺寸从字体行高与控件固有尺寸派生，系统字号变大时一起长高。
+        let hasIcon = iconView.image != nil
+        iconView.isHidden = !hasIcon
+        iconView.frame = NSRect(x: header.minX, y: floor(header.midY - params.iconSize / 2),
                                 width: params.iconSize, height: params.iconSize)
-        let isDock = mode == .dock
-        let controlsWidth: CGFloat = isDock ? 96 : 200
-        let textLeft = header.minX + params.iconSize + params.spacingSmall
-        let textWidth = max(60, header.width - params.iconSize - params.spacingSmall - controlsWidth)
-        appNameField.frame = NSRect(x: textLeft, y: header.midY + 1,
-                                    width: textWidth, height: 16)
-        detailStatusField.frame = NSRect(x: textLeft, y: header.midY - 15,
-                                         width: textWidth, height: 14)
-        styleControl.frame = NSRect(x: header.maxX - 84, y: header.midY - 13,
-                                    width: 84, height: 26)
+        let controlSize = styleControl.isHidden ? .zero : styleControl.intrinsicContentSize
+        styleControl.frame = NSRect(x: header.maxX - controlSize.width,
+                                    y: floor(header.midY - controlSize.height / 2),
+                                    width: controlSize.width, height: controlSize.height)
+        let textLeft = hasIcon ? header.minX + params.iconSize + params.spacingSmall : header.minX
+        let controlsWidth = controlSize.width > 0 ? controlSize.width + params.spacingSmall : 0
+        let textWidth = max(60, header.maxX - controlsWidth - textLeft)
+        // 行高来自派生排版参数（随系统字号一起算好），布局时不再逐次取字体。
+        let nameHeight = params.titleLineHeight
+        let detailHeight = params.cardStatusHeight
+        let hasDetail = !detailStatusField.stringValue.isEmpty
+        let block = nameHeight + (hasDetail ? detailHeight : 0)
+        let blockBottom = floor(header.midY - block / 2)
+        appNameField.frame = NSRect(x: textLeft, y: blockBottom + (hasDetail ? detailHeight : 0),
+                                    width: textWidth, height: nameHeight)
+        detailStatusField.isHidden = !hasDetail
+        detailStatusField.frame = NSRect(x: textLeft, y: blockBottom,
+                                         width: textWidth, height: detailHeight)
         searchField.frame = plan.searchRect
-        footerStatusField.frame = plan.footerRect
+        let buttonSize = permissionButton.isHidden ? .zero : permissionButton.intrinsicContentSize
+        permissionButton.frame = NSRect(
+            x: plan.footerRect.maxX - buttonSize.width,
+            y: floor(plan.footerRect.midY - buttonSize.height / 2),
+            width: buttonSize.width, height: buttonSize.height)
+        var footerFrame = plan.footerRect
+        if buttonSize.width > 0 {
+            footerFrame.size.width = max(1, footerFrame.width - buttonSize.width - params.spacingSmall)
+        }
+        footerStatusField.frame = footerFrame
+        let emptyHeight = params.titleLineHeight
+        emptyStateField.frame = NSRect(x: plan.listRect.minX,
+                                       y: floor(plan.listRect.midY - emptyHeight / 2),
+                                       width: plan.listRect.width, height: emptyHeight)
         scrollView.frame = plan.listRect
         detailPane.isHidden = !plan.usesDetailPane
         detailPane.frame = plan.detailRect
@@ -1808,6 +2078,18 @@ final class WindowBrowserContentView: NSView, NSSearchFieldDelegate, NSTextViewD
         updateDetailPane()
         reattachLiveViewIfNeeded()
         notifyVisibleKeys()
+    }
+
+    @objc private func openScreenRecordingSettings() {
+        onOpenScreenRecordingSettings?()
+    }
+
+    /// 键盘面板的 Tab 顺序：搜索框 → 当前列表/网格 → 显示方式 → 回到搜索框。
+    private func updateKeyViewLoop() {
+        let document: NSView = style == .list ? tableView : collectionView
+        searchField.nextKeyView = document
+        document.nextKeyView = styleControl
+        styleControl.nextKeyView = searchField
     }
 
     // MARK: 数据源
@@ -1826,12 +2108,14 @@ final class WindowBrowserContentView: NSView, NSSearchFieldDelegate, NSTextViewD
               indexPath.item < records.count else { return item }
         let record = records[indexPath.item]
         gridItem.card.delegate = self
+        // 复用池新建/取出的单元要采用当前面板的卡片表面（玻璃面板上用系统填充色）。
+        gridItem.card.adoptCardSurface(currentCardSurface)
         gridItem.card.configure(record: record,
                                 actions: actionsByKey[record.key] ?? [],
                                 status: statusesByKey[record.key]
                                     ?? WindowBrowserStatusPresentationFactory.make(
                                         record: record, hasSnapshot: false),
-                                selected: record.key == selection,
+                                selected: showsSelectionRing(for: record.key),
                                 busy: busyKeys.contains(record.key),
                                 params: params,
                                 menu: contextMenuProvider?(record.key))
@@ -1862,12 +2146,13 @@ final class WindowBrowserContentView: NSView, NSSearchFieldDelegate, NSTextViewD
             rowView.identifier = WindowBrowserGridItem.identifier
         }
         rowView.delegate = self
+        rowView.adoptCardSurface(currentCardSurface)
         rowView.configure(record: record,
                           actions: actionsByKey[record.key] ?? [],
                           status: statusesByKey[record.key]
                             ?? WindowBrowserStatusPresentationFactory.make(
                                 record: record, hasSnapshot: false),
-                          selected: record.key == selection,
+                          selected: showsSelectionRing(for: record.key),
                           busy: busyKeys.contains(record.key),
                           params: params,
                           icon: iconProvider.icon(for: record.key.application.pid),
@@ -1923,9 +2208,15 @@ final class WindowBrowserContentView: NSView, NSSearchFieldDelegate, NSTextViewD
         NSAccessibility.post(element: element, notification: .focusedUIElementChanged)
     }
 
+    /// Dock 面板不能成为 key window、收不到方向键：不显示“键盘选中”环，
+    /// 当前项由悬停决定（悬停自带底色反馈）。键盘面板照常显示选中环。
+    func showsSelectionRing(for key: WindowKey) -> Bool {
+        mode == .keyboard && key == selection
+    }
+
     private func applySelectionStyling() {
         for record in records {
-            let selected = record.key == selection
+            let selected = showsSelectionRing(for: record.key)
             cardView(for: record.key)?.setSelected(selected)
             rowView(for: record.key)?.setSelected(selected)
             if let card = cardView(for: record.key) {
@@ -2054,6 +2345,23 @@ final class WindowBrowserContentView: NSView, NSSearchFieldDelegate, NSTextViewD
         onSelect?(key)
     }
 
+    /// PageUp / PageDown：按“视口可见行数 − 1”翻页（至少一行），网格按行计。
+    func movePage(by direction: Int) {
+        guard !records.isEmpty else { return }
+        let stride = max(1, plan.cellSize.height + plan.spacing)
+        let visibleRows = Int(floor(scrollView.documentVisibleRect.height / stride))
+        let rows = max(1, visibleRows - 1)
+        let columns = plan.style == .grid ? max(1, plan.columns) : 1
+        let currentIndex = selection.flatMap { key in
+            records.firstIndex { $0.key == key }
+        } ?? 0
+        let target = max(0, min(records.count - 1, currentIndex + direction * rows * columns))
+        guard target != currentIndex || selection == nil else { return }
+        let key = records[target].key
+        select(key)
+        onSelect?(key)
+    }
+
     func moveSelection(offset: Int) {
         moveSelection(direction: offset < 0 ? .up : .down)
     }
@@ -2078,6 +2386,8 @@ final class WindowBrowserContentView: NSView, NSSearchFieldDelegate, NSTextViewD
         case 125: moveSelection(direction: .down)
         case 115: moveSelection(direction: .home)
         case 119: moveSelection(direction: .end)
+        case 116: movePage(by: -1)
+        case 121: movePage(by: 1)
         case 36, 76: onCommit?()
         case 49:
             // Space：macOS 的 Quick Look 习惯；只在列表/卡片上有选中项时用。
@@ -2104,6 +2414,12 @@ final class WindowBrowserContentView: NSView, NSSearchFieldDelegate, NSTextViewD
         switch commandSelector {
         case #selector(NSResponder.insertNewline(_:)):
             onCommit?()
+            return true
+        case #selector(NSResponder.pageUp(_:)), #selector(NSResponder.scrollPageUp(_:)):
+            movePage(by: -1)
+            return true
+        case #selector(NSResponder.pageDown(_:)), #selector(NSResponder.scrollPageDown(_:)):
+            movePage(by: 1)
             return true
         case #selector(NSResponder.moveUp(_:)):
             moveSelection(direction: .up)

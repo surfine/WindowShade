@@ -7,15 +7,14 @@ classic-strip-dark: classic-strip-dark.png — 经典卷帘条：深色外观（
 classic-strip-normal: classic-strip-normal.png — 经典卷帘条：普通对比度（0.5pt 细线 + 顶边高光）
 classic-strip-contrast: classic-strip-contrast.png — 经典卷帘条：提高对比度（1pt 边线、无高光）
 peek-preview: peek-preview.png — 悬停缩略图：减少透明度回退（不透明底 + withinWindow 混合）
-interaction-clip: window-browser-interaction.gif — 真实面板的状态变化序列（网格/列表切换、选择、搜索、失败状态）
-dock-single: dock-single.png — 单窗口 Dock 面板：紧凑、标题优先、无大面积空白
-dock-three: dock-three.png — 三个窗口：卡片一致，强调只落在当前项
+dock-single: dock-single.png — 单窗口 Dock 面板：没有状态文字时页脚不占位，卡片下方不再留空档
+dock-three: dock-three.png — 三个窗口：单行三列（912 pt），Dock 面板不画键盘选中环
 keyboard-list-eight: keyboard-list-eight.png — 八窗口列表：行间距、长标题、选中详情与滚动
 keyboard-search: keyboard-search.png — 键盘搜索：顶部搜索框、过滤结果与当前选择
 paper-light: paper-light.png — 纸面浅色：中性层次与细边线
 paper-dark: paper-dark.png — 纸面深色：深色下的对比与选中指示
-system-glass-light: system-glass-light.png — 系统玻璃浅色：控制层为真实 AppKit 玻璃
-system-glass-dark: system-glass-dark.png — 系统玻璃深色：控制层为真实 AppKit 玻璃
+system-glass-light: system-glass-light.png — 系统玻璃浅色：面板根视图是唯一一层 AppKit 玻璃，界面在其 contentView 内（离屏图看不到玻璃本身）
+system-glass-dark: system-glass-dark.png — 系统玻璃深色：面板根视图是唯一一层 AppKit 玻璃，界面在其 contentView 内（离屏图看不到玻璃本身）
 reduce-transparency-contrast: reduce-transparency-contrast.png — 减少透明度 + 提高对比度：不透明回退，选择不只靠颜色
 states-without-image: states-without-image.png — 无图像 / 缺权限 / 已折叠 / 最小化：信息明确
 dock-list-many: dock-list-many.png — Dock 入口的紧凑列表：面板不占满屏幕宽度

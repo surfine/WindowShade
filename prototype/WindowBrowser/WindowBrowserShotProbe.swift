@@ -54,7 +54,7 @@ final class WindowBrowserShotProbe {
                      appearance: nil, appearanceStyle: nil, reduceTransparency: false,
                      increaseContrast: false, screenRecordingAvailable: true,
                      searchText: "", selectionIndex: 1,
-                     note: "三个窗口：卡片一致，强调只落在当前项"),
+                     note: "三个窗口：单行三列（912 pt），Dock 面板不画键盘选中环"),
             Scenario(name: "keyboard-list-eight", mode: .keyboard, style: .list, recordCount: 8,
                      appearance: nil, appearanceStyle: nil, reduceTransparency: false,
                      increaseContrast: false, screenRecordingAvailable: true,
@@ -79,12 +79,12 @@ final class WindowBrowserShotProbe {
                      appearance: .aqua, appearanceStyle: .system, reduceTransparency: false,
                      increaseContrast: false, screenRecordingAvailable: true,
                      searchText: "", selectionIndex: 0,
-                     note: "系统玻璃浅色：控制层为真实 AppKit 玻璃"),
+                     note: "系统玻璃浅色：面板根视图是唯一一层 AppKit 玻璃，界面在其 contentView 内（离屏图看不到玻璃本身）"),
             Scenario(name: "system-glass-dark", mode: .keyboard, style: .grid, recordCount: 4,
                      appearance: .darkAqua, appearanceStyle: .system, reduceTransparency: false,
                      increaseContrast: false, screenRecordingAvailable: true,
                      searchText: "", selectionIndex: 0,
-                     note: "系统玻璃深色：控制层为真实 AppKit 玻璃"),
+                     note: "系统玻璃深色：面板根视图是唯一一层 AppKit 玻璃，界面在其 contentView 内（离屏图看不到玻璃本身）"),
             Scenario(name: "reduce-transparency-contrast", mode: .keyboard, style: .grid,
                      recordCount: 4, appearance: .darkAqua, appearanceStyle: .paper,
                      reduceTransparency: true, increaseContrast: true,
@@ -205,7 +205,7 @@ final class WindowBrowserShotProbe {
                                    includeImages: scenario.screenRecordingAvailable)
         // 与控制器同一条派生规则：标题真的换行才占两行，没有状态文字时页脚不占位。
         let statusText = scenario.screenRecordingAvailable
-            ? scenario.statusText : "缺少屏幕录制权限：显示图标与文字"
+            ? scenario.statusText : "没有屏幕录制权限，只显示图标与标题"
         let shotParams = WindowBrowserGeometry.derivedParams(
             base: .standard, titles: records.map(\.displayTitle),
             hasStatus: !statusText.isEmpty)
@@ -253,9 +253,9 @@ final class WindowBrowserShotProbe {
             if !scenario.screenRecordingAvailable {
                 // 与控制器一致：缺少屏幕录制权限时仍然显示图标、标题与原因。
                 content.applyThumbnail(nil, for: record.key,
-                                       note: "缺少屏幕录制权限，显示应用图标与标题")
+                                       note: "")
             } else if record.title.contains("图像失败") {
-                content.applyThumbnail(nil, for: record.key, note: "截图不可用，显示应用图标与标题")
+                content.applyThumbnail(nil, for: record.key, note: "画面暂不可用")
             } else {
                 content.applyThumbnail(Self.placeholderImage(for: record),
                                        for: record.key, note: "示例窗口画面")
@@ -306,7 +306,10 @@ final class WindowBrowserShotProbe {
         if let hold = ProcessInfo.processInfo.environment["WINDOWSHADE_SHOTS_HOLD"]
             .flatMap(Double.init), hold > 0,
            holdName == nil || holdName == scenario.name {
-            let screen = NSScreen.main?.frame.height ?? 0
+            // screencapture 的坐标以主显示器（原点在 (0,0) 的那块屏）左上角为原点，
+            // 不是 NSScreen.main（带键盘焦点的屏）；多显示器时两者不同。
+            let screen = (NSScreen.screens.first { $0.frame.origin == .zero }
+                ?? NSScreen.screens.first)?.frame.height ?? 0
             let frame = panel.frame
             let topLeftY = screen - frame.maxY
             print("window-browser-shots: holding \(scenario.name) for \(hold)s "

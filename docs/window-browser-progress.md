@@ -2399,3 +2399,35 @@ sha256 `ed82d3a6d3f7f3fc28c1a5e09b0754f03a86f6b3d9e68353656479dbdfcd160e`）与�
 本机应用用同一身份（TeamIdentifier FVGLY6W6S4）重新构建替换，pid 73939 → 20707，
 bundle 1.0.14 / build 14。线上附件 sha256 与本地打包结果一致；隔离构建的
 `--window-browser-idle-probe`、`--window-browser-shots`（`classic-strip-palette PASS`）干净。
+
+## 2026-09-19：按复检设计稿落地（未提交、未发版）
+
+依据 `docs/design-proposal-claude.md`，修复复检列出的 R1–R18（R19 文档已同步，R20 性能未复测）：
+
+| 项 | 改动 |
+| --- | --- |
+| 玻璃 | 面板根视图是唯一 `NSGlassEffectView`，界面在其 contentView 内；删除控制层表面、协调容器与卡片材质；旧系统材质 `.active` |
+| 卡片/列表 | 系统填充色 + 选中环；信息行 28、画面 144（圆角落在实际画面上）、圆角 8；列表 `.plain`、行距 4、无系统选中灰块；详情画面在上 |
+| 交互 | 悬停追踪 `.activeAlways`；Dock 面板不画键盘选中环、当前项随悬停；PageUp/PageDown；选中 100 ms / 首图 80 ms / 尺寸 120 ms 淡变；键盘面板淡入 |
+| 几何 | 3 窗口单行三列（912 × 274）；操作按钮 28 × 28、间距 4；页脚 18；搜索框取系统固有高度；次级字号下限 10 |
+| 正确性 | 截图服务回调不在锁内执行、计数全在锁内；控制器释放后目标解析仍回调；旧实时预览租约失败不再给新选中项报错；排布预览计时器绑定令牌、清页脚，描边内缩 + 连续曲率 + 随外观刷新 |
+| 文案 | 画面区原因只写原因（“需要屏幕录制权限”“画面暂不可用”等） |
+
+验证：`tests/run-window-browser-tests.sh` **627 项**通过（新增 16 项：跟踪区域、列表不溢出与行距、翻页、Dock 无选中环、三列、预览令牌、服务回调重入、单层玻璃与 contentView）；`run-paper-tests.sh`、`run-duo-tests.sh`、`build.sh --check` 通过；`build.sh --stage` 后重新生成 `docs/visual-qa/window-browser/*.png`。
+
+同日补齐：Tab 键视图循环（搜索框 → 列表/网格 → 显示方式）；操作按钮悬停/按下底（6 pt 圆角系统填充）；
+动作执行中操作条前方显示转圈；搜索无结果时列表区显示“没有匹配的窗口”；缺少屏幕录制权限时页脚
+给出“打开‘屏幕录制’设置…”入口，卡片只留图标；列表选中行改为系统列表的强调色实心底；
+左/右 Dock 的列数上限在面板级与内容级布局共用 `columnCap(edge:)`；截图探针打印的屏幕坐标改用
+主显示器高度（多显示器时原来算错）。断言增至 **638 项**。
+
+性能：同一会话与 `a1a0a01` 交替 6 轮取中位数，冷启动与暖刷新持平，暖刷新 p95 ≤ 2.9 ms
+（见 `docs/window-browser-performance.md`）。第一版曾把暖刷新 p95 推到 4.7–6.6 ms，已查明并修掉。
+
+实机检查（详见 `docs/window-browser-visual-qa.md`“设计稿落地后的实机检查”）：真实合成的玻璃截图
+已重拍；玻璃路径未见重复阴影；非 key 面板里 `.activeAlways` 收到真实指针的进入/离开而旧写法 0 次；
+第一次点击经窗口派发直达卡片；非 key 面板上 `.followsWindowActiveState` 实测恒为灰色非激活外观。
+
+仍受环境限制：没有 macOS 14/15 机器（旧系统路径以 macOS 27 上同一 API 的表现为据）；
+没有做经窗口服务器的全局点击（屏幕上有系统截图程序的全屏窗口）。真实 Dock 悬停用
+`--window-browser-hover-live-probe` 实测通过（Finder 图标 `match=true`，移开后清空，指针已放回）。

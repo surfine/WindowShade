@@ -458,8 +458,9 @@ final class WindowBrowserController: NSObject {
                                                                options: options)
             }
             DispatchQueue.main.async {
-                guard self != nil else { return }
-                completion(resolved)
+                // 控制器已释放时仍要回调（结果为空）：截图后端依赖它给已开始的
+                // 物理任务结算终态，不能把回调悄悄丢掉。
+                completion(self == nil ? nil : resolved)
             }
         }
     }
@@ -561,6 +562,8 @@ final class WindowBrowserController: NSObject {
     private func presentDockPanelIfNeeded(target: DockHoverTarget) {
         guard let plan = dockLayoutPlan(for: target) else { return }
         self.geometry = WindowBrowserPanelGeometry(plan: plan)
+        contentView?.maximumColumns = WindowBrowserGeometry.columnCap(edge: plan.edge,
+                                                                      params: params)
         guard let request = session?.requestID else { return }
         _ = panelState.beginShow(request: request)
         // 面板已经可见时切到另一个 Dock 图标：立即更新目标与几何，不再等显示延迟。
@@ -588,6 +591,8 @@ final class WindowBrowserController: NSObject {
                 let newPanel = WindowBrowserPanel(mode: .dock,
                                                   frame: plan.panelFrame, params: self.params)
                 self.configurePanel(newPanel, mode: .dock)
+                newPanel.browserContentView.maximumColumns = WindowBrowserGeometry.columnCap(
+                    edge: plan.edge, params: self.params)
                 self.panel = newPanel
             } else {
                 self.panel?.setPanelFrame(plan.panelFrame)
@@ -608,6 +613,8 @@ final class WindowBrowserController: NSObject {
     private func updateDockAnchor(_ target: DockHoverTarget) {
         guard let plan = dockLayoutPlan(for: target) else { return }
         geometry = WindowBrowserPanelGeometry(plan: plan)
+        contentView?.maximumColumns = WindowBrowserGeometry.columnCap(edge: plan.edge,
+                                                                      params: params)
         guard let panel, panel.isVisible, session?.mode == .dock else { return }
         let animated = pendingAnimatedResize
         pendingAnimatedResize = false
@@ -846,9 +853,23 @@ final class WindowBrowserController: NSObject {
         content.onVisibleKeysChanged = { [weak self] keys in
             self?.requestThumbnails(forKeys: keys)
         }
-        content.onHoverChanged = { [weak self] _, _ in
+        content.onHoverChanged = { [weak self] key, isHovering in
             // 悬停只更新强调与操作条，不触发源窗口操作；离开判定仍由鼠标位置决定。
-            self?.scheduleHideCheck()
+            guard let self else { return }
+            // Dock 面板收不到键盘：当前项由悬停决定（缩略图升档与实时预览挂载都跟着它），
+            // 界面上不显示键盘选中环。
+            if isHovering, self.session?.mode == .dock, self.listState.selection != key {
+                self.listState.select(key)
+                self.contentView?.select(key)
+                self.thumbnails.promote(windowKey: key, purpose: .selectedLarge)
+                self.thumbnails.promote(windowKey: key, purpose: .card)
+                self.updateLivePreview(selected: key)
+            }
+            self.scheduleHideCheck()
+        }
+        content.onOpenScreenRecordingSettings = {
+            // 走现有的系统设置深链；不在悬停或刷新时弹授权框。
+            openScreenRecordingPrivacySettings()
         }
         content.onCommit = { [weak self] in
             guard let self, let key = self.listState.selection else { return }
@@ -1037,9 +1058,11 @@ final class WindowBrowserController: NSObject {
         let status: String
         if let statusOverride {
             status = statusOverride
-        } else if session.mode == .dock {
-            status = catalog.isRefreshPending(pid: session.app?.pid ?? 0)
-                ? "正在刷新窗口…" : ""
+        } else if session.mode == .dock, catalog.isRefreshPending(pid: session.app?.pid ?? 0) {
+            status = "正在刷新窗口…"
+        } else if !hasScreenRecordingPermission() {
+            // 缺权限只在页脚说一次（旁边是“打开设置”入口），卡片里只写短原因。
+            status = "没有屏幕录制权限，只显示图标与标题"
         } else {
             status = ""
         }
@@ -1137,13 +1160,14 @@ final class WindowBrowserController: NSObject {
                 }
                 let note: String
                 if record.isMinimized {
-                    note = "最小化窗口暂无快照，显示应用图标和标题"
+                    note = "已最小化，没有最新画面"
                 } else if record.shadeState == .folded {
-                    note = "没有已保存的折叠画面，显示应用图标和标题"
+                    note = "没有已保存的折叠画面"
                 } else if !hasScreenRecording {
-                    note = "缺少屏幕录制权限，显示应用图标和标题"
+                    // 页脚已统一说明缺权限并给出设置入口，卡片里不再逐张重复。
+                    note = ""
                 } else {
-                    note = "暂无可用的窗口画面，显示应用图标和标题"
+                    note = "画面暂不可用"
                 }
                 contentView?.applyThumbnail(nil, for: record.key, note: note)
             case .pinnedMirror, .liveStream:
@@ -1189,7 +1213,7 @@ final class WindowBrowserController: NSObject {
             },
             onFailure: { [weak self] _ in
                 self?.contentView?.applyThumbnail(nil, for: key,
-                                                  note: "截图不可用，显示应用图标和标题")
+                                                  note: "画面暂不可用")
             },
             onFinish: { [weak self] in
                 guard let self, let current = box.value else { return }
@@ -1297,8 +1321,10 @@ final class WindowBrowserController: NSObject {
                 guard let scWindow = content.windows.first(where: { $0.windowID == id }) else {
                     // 找不到 SCWindow：源可能已经消失，不再自动重试。
                     self.liveRetryBlocked.insert(key)
+                    // 只有仍是当前租约的失败才在页脚说明；旧任务失败不能给新选中项报错。
+                    let wasCurrent = self.liveLease === live
                     self.releaseLivePreview(lease: live, reason: "no-sc-window")
-                    self.showLivePreviewFallback()
+                    if wasCurrent { self.showLivePreviewFallback() }
                     return
                 }
                 let display = content.displays.max { lhs, rhs in
@@ -1333,8 +1359,9 @@ final class WindowBrowserController: NSObject {
             } catch {
                 wlog("window-browser: live preview failed id=\(id) \(error.localizedDescription)")
                 self.noteLiveFailure(key: key, reason: error.localizedDescription)
+                let wasCurrent = self.liveLease === live
                 self.releaseLivePreview(lease: live, reason: "start-failed")
-                self.showLivePreviewFallback()
+                if wasCurrent { self.showLivePreviewFallback() }
             }
         }
     }
@@ -1736,12 +1763,19 @@ final class WindowBrowserController: NSObject {
             reportPlacement(.unsupported(reason: "没有可用的排布目标"), key: payload.key)
             return
         }
-        placement.preview(plan)
-        statusOverride = "预览：\(payload.action.title)（不移动窗口）"
+        let token = placement.preview(plan)
+        let previewStatus = "预览：\(payload.action.title)（不移动窗口）"
+        statusOverride = previewStatus
         refreshPanel()
         // 预览自动消失，不会留下常驻装饰；取消预览也不会改变真实窗口。
-        _ = scheduler.schedule(after: 1.6) { [weak self] in
-            self?.placement.cancelPreview()
+        // 计时器绑定本次预览的令牌：之后发起的另一次预览不会被它提前收起；
+        // 收起时一并清掉页脚里的“预览：…”。
+        _ = scheduler.schedule(after: 2.0) { [weak self] in
+            guard let self, self.placement.cancelPreview(ifToken: token) else { return }
+            if self.statusOverride == previewStatus {
+                self.statusOverride = nil
+                self.refreshPanel()
+            }
         }
     }
 

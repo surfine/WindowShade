@@ -9,8 +9,8 @@ enum WindowBrowserTypography {
     static var bodySize: CGFloat {
         NSFont.preferredFont(forTextStyle: .body).pointSize
     }
-    /// 次要说明字号，最小 9pt，避免在大字号下反而缩得不可读。
-    static var detailSize: CGFloat { max(9, bodySize - 2) }
+    /// 次要说明字号，最小 10pt（HIG《Accessibility》：macOS 最小字号 10 pt）。
+    static var detailSize: CGFloat { max(10, bodySize - 2) }
 
     static var body: NSFont { .systemFont(ofSize: bodySize) }
     static var detail: NSFont { .systemFont(ofSize: detailSize) }

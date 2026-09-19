@@ -64,7 +64,7 @@ final class WindowBrowserFixture {
                 // 可选：像用户点分段控件一样切一次风格，验证“点了就换”这条真实路径。
                 var clickedStyle = "-"
                 if let wanted = ProcessInfo.processInfo.environment["WINDOWSHADE_BROWSER_FIXTURE_STYLE"],
-                   let control = panel.browserContentView.subviews
+                   let control = panel.browserContentView.interfaceSubviews
                     .compactMap({ $0 as? NSSegmentedControl }).first,
                    let action = control.action {
                     control.selectedSegment = wanted == "list" ? 1 : 0
@@ -112,7 +112,7 @@ final class WindowBrowserFixture {
         if visible.isEmpty {
             status = "没有结果（fixture）"
         } else if !screenRecordingAvailable {
-            status = "缺少屏幕录制权限：显示图标与文字（fixture）"
+            status = "没有屏幕录制权限，只显示图标与标题（fixture）"
         } else if records.contains(where: { $0.confidence == .provisional }) {
             status = "部分数据待刷新（fixture）"
         } else {

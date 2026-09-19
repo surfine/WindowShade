@@ -243,10 +243,24 @@ final class WindowPlacementController {
 
     var canUndo: Bool { undoRecord != nil }
 
-    /// 只画目标位置轮廓，不移动真实窗口。
-    func preview(_ plan: WindowPlacementPlan) {
+    /// 每次预览递增：延迟的自动收起只能收起发起它的那一次预览。
+    private(set) var previewToken: UInt64 = 0
+
+    /// 只画目标位置轮廓，不移动真实窗口。返回本次预览的令牌。
+    @discardableResult
+    func preview(_ plan: WindowPlacementPlan) -> UInt64 {
+        previewToken &+= 1
         previewedPlan = plan
         previewPresenter?.show(plan: plan)
+        return previewToken
+    }
+
+    /// 只在令牌仍是当前预览时收起；之后发起的新预览不受旧计时器影响。
+    @discardableResult
+    func cancelPreview(ifToken token: UInt64) -> Bool {
+        guard token == previewToken, previewedPlan != nil else { return false }
+        cancelPreview()
+        return true
     }
 
     /// 取消预览不改变真实窗口。
@@ -346,6 +360,15 @@ final class WindowPlacementController {
 final class WindowPlacementPreviewWindow: NSPanel, WindowPlacementPreviewPresenting {
     private let outlineLayer = CAShapeLayer()
 
+    /// 外观变化时回调窗口重算颜色（动态颜色必须在视图自己的外观下解析）。
+    private final class ContentView: NSView {
+        var onAppearanceChange: (() -> Void)?
+        override func viewDidChangeEffectiveAppearance() {
+            super.viewDidChangeEffectiveAppearance()
+            onAppearanceChange?()
+        }
+    }
+
     init() {
         super.init(contentRect: NSRect(x: 0, y: 0, width: 10, height: 10),
                    styleMask: [.borderless, .nonactivatingPanel],
@@ -357,17 +380,22 @@ final class WindowPlacementPreviewWindow: NSPanel, WindowPlacementPreviewPresent
         level = .floating
         isFloatingPanel = true
         collectionBehavior = [.transient, .ignoresCycle, .fullScreenAuxiliary, .moveToActiveSpace]
-        let content = NSView(frame: .zero)
+        let content = ContentView(frame: .zero)
         content.wantsLayer = true
-        outlineLayer.fillColor = NSColor.clear.cgColor
         outlineLayer.lineWidth = 2
         outlineLayer.lineDashPattern = [6, 4]
-        // 预览的是窗口将要占据的位置，圆角跟着系统窗口走。
-        outlineLayer.cornerRadius = SystemCornerRadius.window
-        outlineLayer.cornerCurve = .continuous
-        outlineLayer.strokeColor = NSColor.controlAccentColor.cgColor
         content.layer?.addSublayer(outlineLayer)
         contentView = content
+        content.onAppearanceChange = { [weak self] in self?.refreshColors() }
+        refreshColors()
+    }
+
+    private func refreshColors() {
+        guard let view = contentView else { return }
+        outlineLayer.strokeColor = SystemAppearancePolicy.cgColor(
+            NSColor.controlAccentColor, for: view)
+        outlineLayer.fillColor = SystemAppearancePolicy.cgColor(
+            NSColor.controlAccentColor.withAlphaComponent(0.10), for: view)
     }
 
     func show(plan: WindowPlacementPlan) {
@@ -379,10 +407,14 @@ final class WindowPlacementPreviewWindow: NSPanel, WindowPlacementPreviewPresent
             size: plan.targetFrameAX.size,
             baselineY: baseline)
         setFrame(panelFrame, display: true)
-        outlineLayer.frame = contentView?.bounds ?? .zero
-        outlineLayer.path = CGPath(roundedRect: contentView?.bounds ?? .zero,
-                                   cornerWidth: SystemCornerRadius.window,
-                                   cornerHeight: SystemCornerRadius.window, transform: nil)
+        let bounds = contentView?.bounds ?? .zero
+        outlineLayer.frame = bounds
+        // 描边居中画在路径上：路径内缩半个线宽，2 pt 描边才完整可见。
+        // 预览的是窗口将要占据的位置，圆角跟系统窗口一样用连续曲率。
+        outlineLayer.path = SystemCornerPath.cgPath(
+            in: bounds.insetBy(dx: outlineLayer.lineWidth / 2, dy: outlineLayer.lineWidth / 2),
+            radius: SystemCornerRadius.window)
+        refreshColors()
         orderFrontRegardless()
     }
 

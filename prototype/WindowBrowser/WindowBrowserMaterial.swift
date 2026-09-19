@@ -97,52 +97,30 @@ enum WindowBrowserAnimationPolicy {
     }
 }
 
-/// 玻璃背景的隔离包装：只有 `WINDOWSHADE_SDK_HAS_GLASS` 构建才编译真实 API。
+/// 材质宿主内部表面的圆角更新入口（玻璃与旧系统材质共用）。
 protocol WindowBrowserCornerRadiusUpdatable: AnyObject {
     var cornerRadius: CGFloat { get set }
 }
 
-@available(macOS 26.0, *)
-final class WindowBrowserGlassBackdrop: NSView, WindowBrowserCornerRadiusUpdatable {
-    private let glass: NSGlassEffectView
-
-    init(cornerRadius: CGFloat) {
-        glass = NSGlassEffectView()
-        super.init(frame: .zero)
-        glass.cornerRadius = cornerRadius
-        // HIG：`clear` 只用于浮在照片/视频这类内容上的控件；窗口浏览面板文字多、
-        // 背景是桌面而不是媒体，所以用 `regular`。不给玻璃上色（玻璃本身不带色）。
-        glass.style = .regular
-        addSubview(glass)
-    }
-
-    required init?(coder: NSCoder) { nil }
-
-    var cornerRadius: CGFloat {
-        get { glass.cornerRadius }
-        set { glass.cornerRadius = newValue }
-    }
-
-    override func layout() {
-        super.layout()
-        glass.frame = bounds
-    }
-}
-
-/// 面板外层的材质宿主：真实内容始终挂在 `contentHost` 上，宿主只改变背景。
+/// 面板外层的材质宿主。真实内容始终挂在 `contentHost` 上：
+/// - 玻璃（macOS 26+）：`contentHost` 就是 `NSGlassEffectView.contentView`。AppKit 头文件写明
+///   “only guarantees the contentView will be placed inside the glass effect”，因此内容必须
+///   进玻璃的 contentView，而不是作为玻璃的兄弟视图叠在上面；
+/// - 旧系统：`contentHost` 叠在 `NSVisualEffectView` 之上；
+/// - 纸面 / 减少透明度：宿主自己画不透明底，`contentHost` 直接挂在宿主上。
+/// 面板里只有这一个材质表面：不再有控制层玻璃、协调容器或卡片材质。
 final class WindowBrowserMaterialView: NSView {
     private(set) var kind: WindowBrowserMaterialKind = .paper
     let contentHost = NSView()
-    private var backdrop: NSView?
+    /// 玻璃或旧系统材质视图；纸面时为 nil。
+    private var surface: NSView?
     private var appliedCornerRadius: CGFloat = SystemCornerRadius.window
-    /// 玻璃背景被外部容器（NSGlassEffectContainerView）接管后，宿主不再自己摆放它。
-    var backdropIsExternallyCoordinated = false
+    private var hasApplied = false
 
     override init(frame frameRect: NSRect) {
         super.init(frame: frameRect)
         wantsLayer = true
-        contentHost.wantsLayer = true
-        addSubview(contentHost)
+        contentHost.autoresizingMask = [.width, .height]
         apply(kind: .paper)
     }
 
@@ -150,27 +128,31 @@ final class WindowBrowserMaterialView: NSView {
 
     override var isFlipped: Bool { true }
 
-    /// 重新按当前环境选择材质。已打开的面板在浅深色、对比度或减少透明度变化时调用。
+    /// 重新按当前环境选择材质。已打开的面板在浅深色、对比度或减少透明度变化时调用；
+    /// 材质种类不变时只刷新颜色与圆角，不重建视图树。
     func update(style: WindowBrowserAppearanceStyle = .current,
                 cornerRadius: CGFloat = SystemCornerRadius.window,
                 capabilities: WindowBrowserSystemCapabilities = .current) {
+        let radiusChanged = appliedCornerRadius != cornerRadius
         appliedCornerRadius = cornerRadius
         let resolved = WindowBrowserMaterialPolicy.kind(
             style: style,
             systemSupportsGlass: capabilities.supportsGlass,
             reduceTransparency: capabilities.reduceTransparency)
-        guard resolved != kind || backdrop == nil else {
+        guard resolved != kind || !hasApplied else {
+            if radiusChanged { applyCornerRadius() }
             refreshColors(capabilities: capabilities)
             return
         }
         apply(kind: resolved)
+        refreshColors(capabilities: capabilities)
     }
 
     override func layout() {
         super.layout()
-        if !backdropIsExternallyCoordinated { backdrop?.frame = bounds }
-        contentHost.frame = bounds
-        (backdrop as? WindowBrowserCornerRadiusUpdatable)?.cornerRadius = appliedCornerRadius
+        surface?.frame = bounds
+        contentHost.frame = contentHost.superview === self ? bounds
+            : (contentHost.superview?.bounds ?? bounds)
     }
 
     override func viewDidChangeEffectiveAppearance() {
@@ -178,48 +160,72 @@ final class WindowBrowserMaterialView: NSView {
         refreshColors(capabilities: .current)
     }
 
+    private func applyCornerRadius() {
+        (surface as? WindowBrowserCornerRadiusUpdatable)?.cornerRadius = appliedCornerRadius
+        if let effect = surface as? NSVisualEffectView {
+            SystemCornerRadius.apply(to: effect, radius: appliedCornerRadius, masksToBounds: true)
+        }
+        if kind == .paper {
+            SystemCornerRadius.apply(to: self, radius: appliedCornerRadius, masksToBounds: true)
+        } else {
+            // 玻璃的圆角与边缘高光由系统绘制：宿主不裁切，避免把玻璃边缘切掉。
+            SystemCornerRadius.apply(to: self, radius: appliedCornerRadius)
+            layer?.masksToBounds = false
+        }
+    }
+
     private func apply(kind newKind: WindowBrowserMaterialKind) {
+        hasApplied = true
         kind = newKind
-        backdrop?.removeFromSuperview()
-        backdrop = nil
-        SystemCornerRadius.apply(to: self, radius: appliedCornerRadius, masksToBounds: true)
+        contentHost.removeFromSuperview()
+        #if WINDOWSHADE_SDK_HAS_GLASS
+        if #available(macOS 26.0, *), let glass = surface as? NSGlassEffectView {
+            glass.contentView = nil
+        }
+        #endif
+        surface?.removeFromSuperview()
+        surface = nil
+        layer?.backgroundColor = NSColor.clear.cgColor
+        layer?.borderWidth = 0
         switch newKind {
         case .glass:
             #if WINDOWSHADE_SDK_HAS_GLASS
             if #available(macOS 26.0, *) {
-                let glass = WindowBrowserGlassBackdrop(cornerRadius: appliedCornerRadius)
-                addSubview(glass, positioned: .below, relativeTo: contentHost)
-                backdrop = glass
-                layer?.backgroundColor = NSColor.clear.cgColor
-                layer?.borderWidth = 0
+                let glass = WindowBrowserGlassSurface()
+                // HIG：`regular` 用于文字较多的弹出面板；`clear` 只用于浮在照片/视频上的控件。
+                // 不设 tintColor：玻璃本身不带色，选中强调落在卡片上。
+                glass.style = .regular
+                glass.frame = bounds
+                addSubview(glass)
+                glass.contentView = contentHost
+                contentHost.frame = glass.bounds
+                surface = glass
+                applyCornerRadius()
+                needsLayout = true
                 return
             }
             #endif
             apply(kind: .visualEffect)
+            return
         case .visualEffect:
             let effect = NSVisualEffectView()
             effect.material = .popover
             effect.blendingMode = .behindWindow
-            effect.state = .followsWindowActiveState
-            SystemCornerRadius.apply(to: effect, radius: appliedCornerRadius,
-                                     masksToBounds: true)
-            addSubview(effect, positioned: .below, relativeTo: contentHost)
-            backdrop = effect
-            layer?.backgroundColor = NSColor.clear.cgColor
-            layer?.borderWidth = 0
+            // Dock 面板永远不会成为 key window：跟随窗口激活状态会让它恒为非激活外观。
+            effect.state = .active
+            effect.frame = bounds
+            addSubview(effect)
+            surface = effect
         case .paper:
-            layer?.backgroundColor = SystemAppearancePolicy.cgColor(
-                NSColor.windowBackgroundColor, for: self)
-            let highContrast = SystemAppearanceCapabilities.current.increaseContrast
-            layer?.borderColor = SystemAppearancePolicy.cgColor(
-                highContrast ? NSColor.labelColor : NSColor.separatorColor, for: self)
-            layer?.borderWidth = highContrast ? 1 : 0.5
+            break
         }
+        addSubview(contentHost)
+        contentHost.frame = bounds
+        applyCornerRadius()
         needsLayout = true
     }
 
     private func refreshColors(capabilities: WindowBrowserSystemCapabilities) {
-        // 纸面与原生材质都由系统语义颜色绘制；这里只在对比度变化时更新边线。
         switch kind {
         case .paper:
             layer?.backgroundColor = SystemAppearancePolicy.cgColor(
@@ -227,151 +233,29 @@ final class WindowBrowserMaterialView: NSView {
             layer?.borderColor = SystemAppearancePolicy.cgColor(
                 capabilities.increaseContrast ? NSColor.labelColor : NSColor.separatorColor,
                 for: self)
-            layer?.borderWidth = capabilities.increaseContrast ? 1 : 0.5
+            layer?.borderWidth = capabilities.increaseContrast
+                ? 1 : WindowBrowserSurfaceStyle.hairlineWidth(for: self)
         case .visualEffect, .glass:
             layer?.backgroundColor = NSColor.clear.cgColor
+            layer?.borderWidth = 0
         }
     }
 
-    var backdropView: NSView? { backdrop }
+    /// 诊断：玻璃或旧系统材质视图（纸面时为 nil）。
+    var surfaceView: NSView? { surface }
+    /// 诊断：内容是否确实挂在玻璃的 contentView 上。
+    var contentIsInsideGlass: Bool {
+        #if WINDOWSHADE_SDK_HAS_GLASS
+        if #available(macOS 26.0, *), let glass = surface as? NSGlassEffectView {
+            return glass.contentView === contentHost
+        }
+        #endif
+        return false
+    }
 }
 
-/// 邻近玻璃形状的协调容器（macOS 26+ 公开 API）。
-/// 面板背景与控制层的玻璃都放进同一个 `NSGlassEffectContainerView`，由系统批量
-/// 处理与合并，而不是两个各自独立的玻璃视图。
+#if WINDOWSHADE_SDK_HAS_GLASS
+/// 面板唯一的玻璃表面（公开 `NSGlassEffectView`）。只补一个圆角协议，不改任何渲染。
 @available(macOS 26.0, *)
-final class WindowBrowserGlassContainerHost: NSView {
-    let container = NSGlassEffectContainerView()
-    let host = NSView()
-
-    init() {
-        super.init(frame: .zero)
-        container.spacing = 8
-        container.contentView = host
-        addSubview(container)
-    }
-
-    required init?(coder: NSCoder) { nil }
-
-    override var isFlipped: Bool { true }
-
-    override func layout() {
-        super.layout()
-        container.frame = bounds
-        host.frame = container.bounds
-    }
-
-    /// 把某个玻璃背景移进容器（已在容器里就只更新 frame）。
-    func attach(_ glass: NSView, frame: NSRect) {
-        if glass.superview !== host {
-            glass.removeFromSuperview()
-            host.addSubview(glass)
-        }
-        glass.frame = frame
-    }
-}
-
-/// 控制层（应用身份、显示方式、搜索与动作区）的材质表面。
-/// 玻璃只进入操作层；窗口截图与长列表保持普通内容。
-final class WindowBrowserControlSurface: NSView {
-    private(set) var kind: WindowBrowserMaterialKind = .paper
-    let contentHost = NSView()
-    private var backdrop: NSView?
-    /// 与面板背景一起交给玻璃容器协调时，控制层不再自己摆放背景。
-    var backdropIsExternallyCoordinated = false
-    var cornerRadius: CGFloat = SystemCornerRadius.card {
-        didSet {
-            SystemCornerRadius.apply(to: self, radius: cornerRadius)
-            (backdrop as? WindowBrowserCornerRadiusUpdatable)?.cornerRadius = cornerRadius
-        }
-    }
-
-    override init(frame frameRect: NSRect) {
-        super.init(frame: frameRect)
-        wantsLayer = true
-        addSubview(contentHost)
-        apply(kind: .paper)
-    }
-
-    required init?(coder: NSCoder) { nil }
-
-    override var isFlipped: Bool { true }
-
-    func update(style: WindowBrowserAppearanceStyle = .current,
-                capabilities: WindowBrowserSystemCapabilities = .current,
-                panelKind: WindowBrowserMaterialKind = .paper) {
-        // 面板背景本身就是液态玻璃时，控制层不再叠一层玻璃：HIG 要求玻璃只做
-        // 一层功能表面，玻璃压玻璃会把两层的折射/高光互相抹掉，看起来就是普通毛玻璃。
-        // 这一层上的系统控件（分段控件、搜索框）在 macOS 26+ 自带玻璃与活力。
-        if panelKind == .glass {
-            self.kind = .glass
-            backdrop?.removeFromSuperview()
-            backdrop = nil
-            SystemCornerRadius.apply(to: self, radius: cornerRadius)
-            layer?.backgroundColor = NSColor.clear.cgColor
-            layer?.borderWidth = 0
-            needsLayout = true
-            return
-        }
-        let resolved = WindowBrowserMaterialPolicy.kind(
-            style: style,
-            systemSupportsGlass: capabilities.supportsGlass,
-            reduceTransparency: capabilities.reduceTransparency)
-        guard resolved != kind || backdrop == nil else { return }
-        apply(kind: resolved)
-    }
-
-    override func layout() {
-        super.layout()
-        if !backdropIsExternallyCoordinated { backdrop?.frame = bounds }
-        contentHost.frame = bounds
-    }
-
-    override func viewDidChangeEffectiveAppearance() {
-        super.viewDidChangeEffectiveAppearance()
-        let capabilities = WindowBrowserSystemCapabilities.current
-        layer?.borderColor = SystemAppearancePolicy.cgColor(
-            capabilities.increaseContrast ? NSColor.labelColor : NSColor.separatorColor,
-            for: self)
-    }
-
-    private func apply(kind newKind: WindowBrowserMaterialKind) {
-        kind = newKind
-        backdrop?.removeFromSuperview()
-        backdrop = nil
-        SystemCornerRadius.apply(to: self, radius: cornerRadius, masksToBounds: true)
-        switch newKind {
-        case .glass:
-            #if WINDOWSHADE_SDK_HAS_GLASS
-            if #available(macOS 26.0, *) {
-                let glass = WindowBrowserGlassBackdrop(cornerRadius: cornerRadius)
-                addSubview(glass, positioned: .below, relativeTo: contentHost)
-                backdrop = glass
-                layer?.backgroundColor = NSColor.clear.cgColor
-                layer?.borderWidth = 0
-                return
-            }
-            #endif
-            apply(kind: .visualEffect)
-        case .visualEffect:
-            let effect = NSVisualEffectView()
-            effect.material = .headerView
-            effect.blendingMode = .withinWindow
-            effect.state = .followsWindowActiveState
-            SystemCornerRadius.apply(to: effect, radius: cornerRadius, masksToBounds: true)
-            addSubview(effect, positioned: .below, relativeTo: contentHost)
-            backdrop = effect
-            layer?.backgroundColor = NSColor.clear.cgColor
-            layer?.borderWidth = 0
-        case .paper:
-            layer?.backgroundColor = SystemAppearancePolicy.cgColor(
-                NSColor.controlBackgroundColor.withAlphaComponent(0.86), for: self)
-            layer?.borderColor = SystemAppearancePolicy.cgColor(
-                NSColor.separatorColor.withAlphaComponent(0.55), for: self)
-            layer?.borderWidth = 0.5
-        }
-        needsLayout = true
-    }
-
-    var backdropView: NSView? { backdrop }
-}
+final class WindowBrowserGlassSurface: NSGlassEffectView, WindowBrowserCornerRadiusUpdatable {}
+#endif
