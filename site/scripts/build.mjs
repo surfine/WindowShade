@@ -33,7 +33,7 @@ function page(c) {
 <a class="skip" href="#main">${c.skip}</a>
 <header class="header"><a class="brand" href="${c.path}" aria-label="WindowShade"><img src="/media/icon.png" width="36" height="36" alt=""><span>WindowShade</span></a><nav aria-label="${c.lang === 'en' ? 'Main navigation' : '主导航'}"><a href="#experience">${c.nav[0]}</a><a href="#pinning">${c.nav[1]}</a><a href="#browsing">${c.nav[2]}</a><a href="${history}">${c.nav[3]}</a></nav><div class="header-tools"><a class="language" href="${c.languageHref}" lang="${c.lang === 'en' ? 'zh-CN' : 'en'}">${c.language}</a><button type="button" class="theme" aria-label="${c.theme}" title="${c.theme}"><span aria-hidden="true">◐</span></button><a class="nav-download" href="${release}">${c.download}<span aria-hidden="true"> ↗</span></a></div></header>
 <main id="main">
-<section class="hero wrap"><div class="hero-copy"><p class="eyebrow">${c.eyebrow}</p><h1>${c.hero}</h1><p class="hero-intro">${c.intro}</p><div class="actions">${download(c)}<a class="text-link" href="#experience">${c.try}<span aria-hidden="true">↘</span></a></div></div><div class="hero-art"><img src="/media/hero.webp" width="1536" height="1024" alt="${c.heroArtLabel}" fetchpriority="high"></div>
+<section class="hero wrap"><div class="hero-copy"><p class="eyebrow">${c.eyebrow}</p><h1>${c.hero}</h1><p class="hero-intro">${c.intro}</p><div class="actions">${download(c)}<a class="text-link" href="#experience">${c.try}<span aria-hidden="true">↘</span></a></div></div><div class="hero-art"><img src="/media/hero.webp" width="1600" height="1120" alt="${c.heroArtLabel}" fetchpriority="high"></div>
 </section>
 <div class="facts wrap">${c.facts.map(f => `<span>${f}</span>`).join('')}</div>
 
