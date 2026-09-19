@@ -85,7 +85,7 @@ Today's WindowShade is an **independent Swift / AppKit implementation**, inspire
 
 ## Download
 
-Get **WindowShade-v1.0.12.zip** from [Releases](https://github.com/surfine/WindowShade/releases/latest), unzip it, move `WindowShade.app` to Applications, and open it. It appears in the menu bar.
+Get **WindowShade-v1.0.14.zip** from [Releases](https://github.com/surfine/WindowShade/releases/latest), unzip it, move `WindowShade.app` to Applications, and open it. It appears in the menu bar.
 
 - **macOS 14+ · Apple Silicon.** The downloadable build is arm64; an Intel binary is not included.
 - **Apple Development signed, not notarized.** If macOS blocks the first launch, use its **System Settings → Privacy & Security → Open Anyway** flow for the app you downloaded. Do not disable Gatekeeper.
