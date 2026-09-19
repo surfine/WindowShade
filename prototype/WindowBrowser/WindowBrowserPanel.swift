@@ -88,7 +88,9 @@ final class WindowBrowserPanel: NSPanel {
         // macOS 14 起的协作式激活：不再强制抢占前台（实测在最少用户手势的场景下
         // 同样能让面板成为 key window，见 scripts/check-standard-menu.sh）。
         NSApp.activate()
+        let wasVisible = isVisible
         makeKeyAndOrderFront(nil)
+        if !wasVisible { animateAppearanceIfAllowed() }
         browserContentView.focusSearch()
         // app 激活是异步的：激活完成可能晚于 makeKeyAndOrderFront，这里有限重试
         // 直到面板成为 key window，避免搜索框拿不到输入。重试携带本次打开代数，
@@ -155,7 +157,7 @@ final class WindowBrowserPanel: NSPanel {
             return
         }
         NSAnimationContext.runAnimationGroup { context in
-            context.duration = animationParams.selectionDuration
+            context.duration = animationParams.panelResizeDuration
             context.timingFunction = CAMediaTimingFunction(name: .easeInEaseOut)
             animator().setFrame(frame, display: true)
         }

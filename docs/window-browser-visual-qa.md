@@ -13,15 +13,15 @@
 | 场景 | 文件 | 检查结果 |
 | --- | --- | --- |
 | 单窗口 Dock | [dock-single.png](visual-qa/window-browser/dock-single.png) | 面板 312×274 pt（没有状态文字时页脚不占位），标题清楚，图片与标题优先，无大面积空白，操作条紧凑 |
-| 三窗口 Dock | [dock-three.png](visual-qa/window-browser/dock-three.png) | 两列、卡片一致，强调只落在当前项 |
-| 八窗口列表 | [keyboard-list-eight.png](visual-qa/window-browser/keyboard-list-eight.png) | 行高约 52 pt，长标题单行截断，选中行显示符号操作条，右侧详情对应同一窗口 |
+| 三窗口 Dock | [dock-three.png](visual-qa/window-browser/dock-three.png) | 单行三列，面板 912 × 288 pt（示例数据带页脚）；Dock 面板不画键盘选中环 |
+| 八窗口列表 | [keyboard-list-eight.png](visual-qa/window-browser/keyboard-list-eight.png) | 行高 52 pt、行距 4 pt，行不再超出列表（plain 样式）；选中行为系统列表式实心底（截图时面板非 key，显示非强调灰底）；无状态时标题垂直居中；右侧详情画面在上 |
 | 键盘搜索 | [keyboard-search.png](visual-qa/window-browser/keyboard-search.png) | 搜索框在顶部，查询文本与结果集一致，选中项有强调 |
 | 纸面浅色 | [paper-light.png](visual-qa/window-browser/paper-light.png) | 中性层次与细边线，无发灰/模糊/重复阴影 |
 | 纸面深色 | [paper-dark.png](visual-qa/window-browser/paper-dark.png) | 深色下文字与选中边线对比正常 |
-| 系统玻璃浅色 | [system-glass-light.png](visual-qa/window-browser/system-glass-light.png) | 面板背景由**一层** `NSGlassEffectView` 承载（类型与单层断言见自动化回归）；离屏截图拿不到系统合成器的折射，真实观感见 `visual-qa/system-appearance/liquid-glass-panel.png` |
+| 系统玻璃浅色 | [system-glass-light.png](visual-qa/window-browser/system-glass-light.png) | 面板根视图是**唯一一层** `NSGlassEffectView`，界面挂在它的 contentView 里；卡片只用系统填充色、无描边（断言：玻璃数 = 1、内容在 contentView 内、无 `NSVisualEffectView`）。离屏截图拿不到系统合成器的折射；真实合成观感见 `visual-qa/system-appearance/liquid-glass-panel.png`（2026-09-19 按新结构重拍） |
 | 系统玻璃深色 | [system-glass-dark.png](visual-qa/window-browser/system-glass-dark.png) | 同上；深色下切换的是系统材质本身，不由本项目上色 |
 | 减少透明度 + 提高对比度 | [reduce-transparency-contrast.png](visual-qa/window-browser/reduce-transparency-contrast.png) | 不透明回退完整，选中不只靠颜色 |
-| 无图像/缺权限/折叠/最小化 | [states-without-image.png](visual-qa/window-browser/states-without-image.png) | 每个卡片显示应用图标位与明确原因；已折叠/最小化不使用警告色 |
+| 无图像/缺权限/折叠/最小化 | [states-without-image.png](visual-qa/window-browser/states-without-image.png) | 缺权限时卡片只留应用图标，原因与“打开‘屏幕录制’设置…”入口在页脚出现一次；已折叠/最小化不使用警告色 |
 | Dock 入口的紧凑列表 | [dock-list-many.png](visual-qa/window-browser/dock-list-many.png) | 18 个窗口时列表宽 544 pt，不占满屏幕宽度，改为滚动 |
 
 环境：macOS 27.0（26A428）、Xcode 26.6、macOS SDK 26.5、2x 缩放。
@@ -92,6 +92,17 @@ cd ..
 `window-browser-interaction.gif`。已有的只读探针（`--window-browser-catalog-probe`、
 `--window-browser-hover-probe`、`--window-browser-thumbnail-probe`、
 `--window-browser-idle-probe` 等）继续保留，用于实机诊断。
+
+## 设计稿落地后的实机检查（2026-09-19，macOS 27.0，2x，多显示器）
+
+| 检查 | 方法 | 结果 |
+| --- | --- | --- |
+| 真实合成的玻璃观感 | `WINDOWSHADE_GLASS_RIG=1 WINDOWSHADE_SHOTS_HOLD=25` 启动后固定等待约 9 s 再 `screencapture -R`（探针输出重定向到文件时是整块缓冲的，不能等日志行再截） | [liquid-glass-panel.png](visual-qa/system-appearance/liquid-glass-panel.png)：背景的色相与亮度透过整个面板，卡片只是很淡的系统填充，不再是白块 |
+| 玻璃路径的阴影 | 同一张截图放大面板角部（深色背景处） | 只见玻璃自带的细亮边与一层柔和投影，未见纸面阴影与玻璃阴影叠成两道边；阴影保持现状 |
+| 非 key 面板里的悬停 | 独立程序：生产 `WindowBrowserCardView` 放进 `canBecomeKey == false` 的非激活面板，向 HID 投递真实指针移动（只在本程序面板上，结束后放回原位） | 新写法 `.activeAlways`：进入/离开 `[true, false, true, false]`；旧写法 `.activeInKeyWindow` 对照视图：0 次。面板与应用均未激活 |
+| 非 key 面板上的第一次点击 | 同一程序，经 `NSWindow.sendEvent` 派发按下/松开 | 卡片直接收到激活（1 次），不需要先点一下面板。未做经窗口服务器的全局点击：该点最上层有系统“截图”程序的全屏窗口，真实点击可能落到它身上 |
+| 真实 Dock 悬停 | 隔离构建 `--window-browser-hover-live-probe`（指针移到 Dock 图标约 1.2 s 后放回，只悬停不点击） | `target=com.apple.finder expected=com.apple.finder match=true`，`notificationsReliable=true`；移开图标后 `target=cleared`；`pointerRestored=true` |
+| 旧系统材质（macOS 14/15 回退路径） | 本机两块非 key 面板、同一 `NSVisualEffectView(.popover, .behindWindow)`，只差 `state` | [visual-effect-state-nonkey.png](visual-qa/system-appearance/visual-effect-state-nonkey.png)：`.active`（左）正常透出背景；`.followsWindowActiveState`（右）恒为不透明灰色的非激活外观。本机没有 macOS 14/15，结论基于同一 AppKit API 在 macOS 27 上的表现 |
 
 ## 实机只读探针（1.0.13 已安装构建，2026-09-18 运行）
 

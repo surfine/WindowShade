@@ -128,7 +128,7 @@ cd prototype
 - 纯逻辑与离屏 AppKit 回归：`bash tests/run-window-browser-tests.sh`
   （身份/目录/动作/缩略图/布局/状态机；不请求权限、不操作用户窗口）。
 
-  - 该脚本编译窗口浏览的生产源文件并运行 497 项断言；每次都会打印 50/200 窗口的
+  - 该脚本编译窗口浏览的生产源文件并运行 638 项断言；每次都会打印 50/200 窗口的
     首屏耗时，便于和 `docs/window-browser-performance.md` 的数字对照。
   - 生产源文件清单与 `prototype/build.sh` 的自动收集保持一致；新增窗口浏览源文件
     时同步更新该脚本（只是显式列出，不复制实现）。
@@ -141,7 +141,7 @@ cd prototype
     --window-browser-shots .build/window-browser-shots
   ```
 
-  输出 11 张 PNG 与 `manifest.txt`（OS/SDK/缩放率/数据来源）。截图来自生产
+  输出 16 张 PNG 与 `manifest.txt`（OS/SDK/缩放率/数据来源）。截图来自生产
   `WindowBrowserPanel` 组件，数据是内置记录与本地占位画面，不打开真实窗口。
   `WINDOWSHADE_SHOTS_DEBUG=1` 会打印首张卡片的 frame 摘要。
 

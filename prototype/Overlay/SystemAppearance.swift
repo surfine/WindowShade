@@ -5,8 +5,9 @@
 // - 减少透明度：改用不透明语义底色 + withinWindow 混合，并去掉内容薄纱；
 // - 提高对比度：边线加粗、去掉顶部高光、阴影加深，vibrancy 更实；
 // - 减少动态效果：所有新增过渡时长为 0；
-// - 系统支持公开玻璃 API 时，只有真正的操作层（窗口浏览控制层）使用玻璃，
-//   内容/预览表面保持系统材质，避免在窗口画面上再叠一层折射。
+// - 系统支持公开玻璃 API 时，全应用只有窗口浏览面板本身是一层玻璃（内容挂在
+//   NSGlassEffectView.contentView 里）；内容/预览表面保持系统材质或系统填充色，
+//   不在窗口画面上再叠折射。
 
 import Cocoa
 
@@ -116,9 +117,10 @@ extension SystemAppearancePolicy {
     static var bodyFontSize: CGFloat { NSFont.preferredFont(forTextStyle: .body).pointSize }
 
     /// 相对正文字号的字号：默认外观与原来的固定字号一致，同时跟随系统文字大小。
-    /// 例：delta = 0 → 13pt，-1 → 12pt，-2 → 11pt；下限 9pt 保证可读。
+    /// 例：delta = 0 → 13pt，-1 → 12pt，-2 → 11pt；下限 10pt（HIG macOS 最小字号）。
     static func fontSize(relativeToBody delta: CGFloat) -> CGFloat {
-        max(9, bodyFontSize + delta)
+        // HIG《Accessibility》：macOS 最小字号 10 pt。
+        max(10, bodyFontSize + delta)
     }
 
     static func font(relativeToBody delta: CGFloat,
@@ -180,6 +182,9 @@ enum SystemCornerRadius {
     static let window: CGFloat = 13
     /// 内容级卡片、设置页分组盒。
     static let card: CGFloat = 12
+    /// 窗口浏览面板里的卡片、列表行、详情栏：嵌在 13 pt 面板里、距边 12 pt，
+    /// 取介于窗口级与控件级之间的 8 pt（严格同心会退化成 1 pt）。
+    static let item: CGFloat = 8
     /// 控件级：自绘小按钮、chip、列表内小色块。
     static let control: CGFloat = 6
 
