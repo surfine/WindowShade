@@ -54,12 +54,30 @@ struct WindowBrowserLayoutParams {
     var actionBarHeight: CGFloat = 28
     /// 卡片信息行：左侧状态、右侧操作按钮合在一行（原来的状态行 + 操作条）。
     var cardMetaRowHeight: CGFloat = 28
+    /// 卡片是否留状态行：只有这一批窗口里真有状态（已折叠、已最小化等）时才留，
+    /// 普通窗口的卡片标题下面不再有空带。
+    var cardStatusLineVisible: Bool = true
+    /// 页眉是否占位：Dock 面板的应用身份已由 Dock 图标与系统气泡交代，
+    /// 单窗口时不再重复页眉；多窗口时页眉只留窗口数与显示方式。
+    var headerVisible: Bool = true
+    /// Dock 面板页眉（只有窗口数与显示方式）的高度，比键盘面板的页眉矮。
+    var dockHeaderHeight: CGFloat = 32
     var autoListThreshold: Int = 6
     var maximumColumns: Int = 3
     /// 左/右 Dock 的列数上限：面板贴在图标旁边，纵向列表或一至两列起步（§8）。
     var sideDockMaximumColumns: Int = 2
     var transitionTolerance: CGFloat = 10
-    var panelGap: CGFloat = 10
+    /// 面板与左/右 Dock 图标之间的距离：系统在图标侧面显示应用名气泡，面板让开它。
+    var panelGap: CGFloat = 36
+    /// 底部 Dock：面板底边贴近图标（距可点击区域顶端 4 pt），在面板底部留一条标签带，
+    /// 系统的应用名气泡（画在面板上层，约占图标区域顶端上方 6–36 pt）正好落在带里，
+    /// 成为面板自己的标签，气泡的尖角指向图标。
+    var dockBottomGap: CGFloat = 4
+    var dockCaptionHeight: CGFloat = 38
+    /// 是否留这条标签带（只有底部 Dock 面板）。
+    var dockCaptionVisible: Bool = false
+    /// 标签带实际高度（不留时为 0）。
+    var effectiveCaptionHeight: CGFloat { dockCaptionVisible ? dockCaptionHeight : 0 }
     var showDelay: TimeInterval = 0.25
     var hideDelay: TimeInterval = 0.18
     /// 动画参数集中在这里；减少动态效果时由视图读取并跳过位移/缩放。
@@ -153,12 +171,27 @@ struct WindowBrowserLayoutParams {
         return copy
     }
 
-    /// 卡片高度 = 内边距 + 画面区 + 8 + 标题 + 4 + 信息行 + 内边距
-    /// （单行标题 8 + 144 + 8 + 18 + 4 + 28 + 8 = 218）。
+    /// 卡片高度 = 内边距 + 画面区 + 8 + 标题 +（4 + 状态行）+ 内边距。
+    /// 操作按钮悬停时浮在画面右上角，不再占卡片高度：
+    /// 单行标题、无状态 8 + 144 + 8 + 18 + 8 = 186；带状态再加 4 + 13。
     static func cardHeight(params: WindowBrowserLayoutParams) -> CGFloat {
         params.cardPadding * 2 + params.cardImageHeight + params.spacingSmall
-            + params.cardTitleHeight + params.spacingTight + params.cardMetaRowHeight
+            + params.cardTitleHeight
+            + (params.cardStatusLineVisible ? params.spacingTight + params.cardStatusHeight : 0)
     }
+
+    /// 这一批卡片是否需要状态行、Dock 面板是否需要页眉。
+    func resized(cardStatusLine: Bool, header: Bool, dockHeader: Bool) -> WindowBrowserLayoutParams {
+        var copy = self
+        copy.cardStatusLineVisible = cardStatusLine
+        copy.headerVisible = header
+        if dockHeader { copy.headerHeight = dockHeaderHeight }
+        copy.cardHeight = Self.cardHeight(params: copy)
+        return copy
+    }
+
+    /// 页眉实际占的高度（不占位时为 0）。
+    var effectiveHeaderHeight: CGFloat { headerVisible ? headerHeight : 0 }
 
     /// 没有状态文字时页脚不该占位：面板贴着内容收口，而不是留一段空白。
     func resized(showingFooter visible: Bool) -> WindowBrowserLayoutParams {
@@ -398,7 +431,8 @@ enum WindowBrowserGeometry {
         switch edge {
         case .bottom:
             origin = CGPoint(x: iconFrame.midX - width / 2,
-                             y: iconFrame.maxY + params.panelGap)
+                             y: iconFrame.maxY
+                                + (params.dockCaptionVisible ? params.dockBottomGap : params.panelGap))
         case .left:
             origin = CGPoint(x: iconFrame.maxX + params.panelGap,
                              y: iconFrame.midY - height / 2)
@@ -406,9 +440,19 @@ enum WindowBrowserGeometry {
             origin = CGPoint(x: iconFrame.minX - params.panelGap - width,
                              y: iconFrame.midY - height / 2)
         }
+        // 可见区域不含 Dock 所在的那条带：底部 Dock 面板要贴近图标、让系统气泡落进标签带，
+        // 所以下沿允许伸进图标上方的空白（到图标上方 dockBottomGap 为止），其余方向照常约束。
+        var bounds = available
+        if edge == .bottom, params.dockCaptionVisible {
+            let floor = iconFrame.maxY + params.dockBottomGap
+            if floor < bounds.minY {
+                bounds.size.height += bounds.minY - floor
+                bounds.origin.y = floor
+            }
+        }
         let panelFrame = clamp(NSRect(origin: origin,
                                       size: CGSize(width: width, height: height)),
-                               into: available)
+                               into: bounds)
         // 内容视图的坐标空间就是整块面板：`contentPlan` 自己负责左右内边距与
         // 页眉/页脚的位置，这里再缩一圈会让两份布局不一致（横向还会双重内缩）。
         let contentBounds = NSRect(origin: .zero, size: panelFrame.size)
@@ -469,19 +513,24 @@ enum WindowBrowserGeometry {
                             maximumColumns: Int? = nil)
         -> WindowBrowserContentPlan {
         let padding = params.panelPadding
-        let headerHeight = min(params.headerHeight, max(0, bounds.height))
+        let headerHeight = min(params.effectiveHeaderHeight, max(0, bounds.height))
         let header = NSRect(x: padding, y: bounds.height - headerHeight,
                             width: max(1, bounds.width - padding * 2), height: headerHeight)
         let footerHeight = min(params.effectiveFooterHeight,
                                max(0, bounds.height - headerHeight))
-        let footer = NSRect(x: padding, y: 0,
+        // 底部 Dock 面板的最下方是系统应用名气泡落脚的标签带，页脚与内容都在它上面。
+        let captionHeight = params.effectiveCaptionHeight
+        let footer = NSRect(x: padding, y: captionHeight,
                             width: max(1, bounds.width - padding * 2),
                             height: footerHeight)
         var searchRect = NSRect.zero
-        // 没有页脚时内容直接贴到底部内边距，不再额外留一段间隔。
+        // 没有页脚时内容直接贴到底部内边距（或标签带），不再额外留一段间隔。
         let contentBottom = footer.maxY
-            + (params.effectiveFooterHeight > 0 ? params.spacingSmall : params.panelPadding)
-        var contentTop = max(contentBottom, header.minY - params.spacingTight)
+            + (params.effectiveFooterHeight > 0 ? params.spacingSmall
+                : (captionHeight > 0 ? 0 : params.panelPadding))
+        // 没有页眉时内容顶端只留一层面板内边距。
+        var contentTop = max(contentBottom, header.minY
+            - (params.headerVisible ? params.spacingTight : params.panelPadding))
         // 键盘面板：搜索框放在顶部（页眉正下方，间隔 searchFieldBottomGap），
         // 列表在搜索框下方；Dock 面板没有常驻搜索框。
         if mode == .keyboard {
@@ -611,11 +660,20 @@ enum WindowBrowserGeometry {
     /// 把基础排版参数派生成本次内容真正需要的版本：标题几行、页脚是否占位。
     /// 控制器与截图探针都走这里，避免“真机一种布局、归档图另一种布局”。
     static func derivedParams(base: WindowBrowserLayoutParams, titles: [String],
-                              hasStatus: Bool) -> WindowBrowserLayoutParams {
-        base.resized(forTitleLines: titleLines(
+                              hasStatus: Bool,
+                              anyCardStatus: Bool = true,
+                              mode: WindowBrowserPanelMode = .keyboard,
+                              windowCount: Int = 2,
+                              dockEdge: WindowBrowserDockEdge? = nil) -> WindowBrowserLayoutParams {
+        var derived = base.resized(forTitleLines: titleLines(
             forTitles: titles,
             availableWidth: base.cardWidth - base.cardPadding * 2))
             .resized(showingFooter: hasStatus)
+            .resized(cardStatusLine: anyCardStatus,
+                     header: mode == .keyboard || windowCount > 1,
+                     dockHeader: mode == .dock)
+        derived.dockCaptionVisible = mode == .dock && (dockEdge ?? .bottom) == .bottom
+        return derived
     }
 
     static func chromeHeight(params: WindowBrowserLayoutParams,
@@ -624,10 +682,12 @@ enum WindowBrowserGeometry {
         // 底部：有页脚时是“间隔 + 页脚”，没有状态文字时只留一层内边距。
         // 之前这里还多算了一圈 `panelPadding * 2`，内容视图的布局并不消费它，
         // 于是那 24 pt 永远落在卡片下方，成为“下巴”的一部分。
-        var chrome = params.headerHeight + params.spacingTight
+        var chrome = params.headerVisible
+            ? params.headerHeight + params.spacingTight : params.panelPadding
+        let captionHeight = params.effectiveCaptionHeight
         chrome += params.effectiveFooterHeight > 0
-            ? params.effectiveFooterHeight + params.spacingSmall
-            : params.panelPadding
+            ? captionHeight + params.effectiveFooterHeight + params.spacingSmall
+            : (captionHeight > 0 ? captionHeight : params.panelPadding)
         if mode == .keyboard {
             chrome += params.searchFieldHeight + params.searchFieldBottomGap + params.listTopGap
         }

@@ -206,9 +206,13 @@ final class WindowBrowserShotProbe {
         // 与控制器同一条派生规则：标题真的换行才占两行，没有状态文字时页脚不占位。
         let statusText = scenario.screenRecordingAvailable
             ? scenario.statusText : "没有屏幕录制权限，只显示图标与标题"
+        let anyCardStatus = records.contains {
+            !WindowBrowserStatusPresentationFactory.make(record: $0, hasSnapshot: false).text.isEmpty
+        }
         let shotParams = WindowBrowserGeometry.derivedParams(
             base: .standard, titles: records.map(\.displayTitle),
-            hasStatus: !statusText.isEmpty)
+            hasStatus: !statusText.isEmpty, anyCardStatus: anyCardStatus,
+            mode: scenario.mode, windowCount: records.count)
         let screen = NSScreen.main ?? NSScreen.screens.first
         let size: CGSize
         if scenario.mode == .keyboard {
@@ -241,6 +245,8 @@ final class WindowBrowserShotProbe {
         let selection = records.indices.contains(scenario.selectionIndex)
             ? records[scenario.selectionIndex].key : records.first?.key
         content.params = shotParams
+        // 静态截图里没有系统气泡：标签带显示面板自己的接力标签。
+        content.setSystemBubbleShowing(false)
         content.update(mode: scenario.mode, records: records, selection: selection,
                        style: scenario.style, busyKeys: [],
                        screenRecordingAvailable: scenario.screenRecordingAvailable,
@@ -271,7 +277,13 @@ final class WindowBrowserShotProbe {
             let searchStatus = "搜索：\(scenario.searchText)（\(filtered.count) 个结果）"
             content.params = WindowBrowserGeometry.derivedParams(
                 base: .standard, titles: filtered.map(\.displayTitle),
-                hasStatus: !searchStatus.isEmpty)
+                hasStatus: !searchStatus.isEmpty,
+                anyCardStatus: filtered.contains {
+                    !WindowBrowserStatusPresentationFactory.make(record: $0, hasSnapshot: false)
+                        .text.isEmpty
+                },
+                mode: scenario.mode, windowCount: filtered.count)
+            content.setSystemBubbleShowing(false)
             content.update(mode: scenario.mode, records: filtered,
                            selection: filtered.first?.key, style: scenario.style,
                            busyKeys: [],
