@@ -637,9 +637,14 @@ extension AppDelegate {
         guard let content = await ShareableContentCache.shared.content(requiring: id),
               let scWindow = content.windows.first(where: { $0.windowID == id }) else { return nil }
         let filter = SCContentFilter(desktopIndependentWindow: scWindow)
-        let scale = backingScaleForAXWindow(pos: axPos, size: size)
-        var pixelWidth = max(1, Int(ceil(size.width * scale)))
-        var pixelHeight = max(1, Int(ceil(size.height * scale)))
+        // 画面长宽比必须取自窗口自身：调用方传来的 AX 尺寸可能是上一轮读到的，
+        // 也可能正好落在窗口动画（折叠/展开/移动）中间。按它配置
+        // SCStreamConfiguration 会把窗口内容拉伸到那个尺寸，缩略图就成了变形图。
+        let windowSize = scWindow.frame.size
+        let pointSize = (windowSize.width > 1 && windowSize.height > 1) ? windowSize : size
+        let scale = backingScaleForAXWindow(pos: axPos, size: pointSize)
+        var pixelWidth = max(1, Int(ceil(pointSize.width * scale)))
+        var pixelHeight = max(1, Int(ceil(pointSize.height * scale)))
         if let maxPixelSize {
             let outputScale = min(maxPixelSize.width / CGFloat(pixelWidth),
                                   maxPixelSize.height / CGFloat(pixelHeight),

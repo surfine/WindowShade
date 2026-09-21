@@ -294,6 +294,34 @@ final class WindowBrowserActionBar: NSView {
     var buttonPointSize: CGFloat = 12
     var isBusy: Bool { busyIndicator != nil }
 
+    /// 浮层样式：卡片上的操作按钮悬停时浮在画面右上角，需要一块圆角底托住符号，
+    /// 让它在任意窗口画面上都清楚。底用窗口背景色（不透明度 0.9）+ 细边，不用玻璃。
+    var overlayStyle = false {
+        didSet { refreshOverlayBackground() }
+    }
+    /// 浮层四周的内边距（按钮与底托边缘之间）。
+    static let overlayInset: CGFloat = 2
+
+    override func viewDidChangeEffectiveAppearance() {
+        super.viewDidChangeEffectiveAppearance()
+        refreshOverlayBackground()
+    }
+
+    private func refreshOverlayBackground() {
+        wantsLayer = true
+        guard overlayStyle else {
+            layer?.backgroundColor = nil
+            layer?.borderWidth = 0
+            layer?.shadowOpacity = 0
+            return
+        }
+        SystemCornerRadius.apply(to: self, radius: SystemCornerRadius.control + Self.overlayInset)
+        layer?.backgroundColor = SystemAppearancePolicy.cgColor(
+            NSColor.windowBackgroundColor.withAlphaComponent(0.9), for: self)
+        layer?.borderColor = SystemAppearancePolicy.cgColor(NSColor.separatorColor, for: self)
+        layer?.borderWidth = WindowBrowserSurfaceStyle.hairlineWidth(for: self)
+    }
+
     override var isFlipped: Bool { true }
 
     /// 紧凑操作条末尾固定的“更多操作”入口：不随动作数量变化，始终可在
@@ -391,11 +419,12 @@ final class WindowBrowserActionBar: NSView {
         (busyIndicator.map { [$0] } ?? []) + buttons
     }
 
-    /// 按钮实际占用的宽度（28 pt 命中区 + 4 pt 间距），供信息行给状态文字让位。
+    /// 按钮实际占用的宽度（28 pt 命中区 + 4 pt 间距；浮层样式再加两侧内边距）。
     var requiredWidth: CGFloat {
         let count = arrangedViews.count
         guard count > 0 else { return 0 }
-        return CGFloat(count) * 28 + CGFloat(count - 1) * 4
+        let inset = overlayStyle ? Self.overlayInset * 2 : 0
+        return CGFloat(count) * 28 + CGFloat(count - 1) * 4 + inset
     }
 
     override func layout() {
@@ -404,12 +433,14 @@ final class WindowBrowserActionBar: NSView {
         guard !views.isEmpty else { return }
         // 命中区 28 × 28（HIG：macOS 默认控件尺寸），按钮之间 4 pt。
         let spacing: CGFloat = 4
-        let side = min(28, bounds.height)
-        let width = min(28, max(18, (bounds.width - spacing * CGFloat(views.count - 1))
+        let area = overlayStyle ? bounds.insetBy(dx: Self.overlayInset, dy: Self.overlayInset)
+            : bounds
+        let side = min(28, area.height)
+        let width = min(28, max(18, (area.width - spacing * CGFloat(views.count - 1))
                                 / CGFloat(views.count)))
         let total = width * CGFloat(views.count) + spacing * CGFloat(views.count - 1)
-        var x = max(0, bounds.width - total)
-        let y = floor((bounds.height - side) / 2)
+        var x = area.minX + max(0, area.width - total)
+        let y = area.minY + floor((area.height - side) / 2)
         for view in views {
             if view === busyIndicator {
                 let spin: CGFloat = 16
@@ -490,6 +521,7 @@ final class WindowBrowserCardView: NSView {
         statusIconView.imageScaling = .scaleProportionallyDown
         statusIconView.setAccessibilityElement(false)
         actionBar.buttonPointSize = WindowBrowserTypography.detailSize
+        actionBar.overlayStyle = true
         for view in [placeholderView, thumbnailHost, titleField, statusIconView,
                      statusField, actionBar] {
             addSubview(view)
@@ -675,15 +707,16 @@ final class WindowBrowserCardView: NSView {
 
     override func layout() {
         super.layout()
-        // 自上而下：画面区 → 标题（1 或 2 行）→ 信息行（左状态、右操作按钮）。
-        // 信息行把“状态行 + 操作条”合成一行：没有状态的卡片不再留一条空带，
-        // 操作按钮出现时也不挤动标题；状态文字与按钮重叠时由状态文字截断让位。
+        // 自上而下：画面区 → 标题（1 或 2 行，占满卡片宽度）→ 状态（这一批里有状态才留）。
+        // 操作按钮悬停/选中时浮在画面右上角（照片、Safari 标签页概览的习惯），
+        // 不占卡片高度，也不挤动标题——标题下面不再留一条等着按钮出现的空带。
         let padding = params.cardPadding
         let width = max(1, bounds.width - padding * 2)
-        let metaHeight = params.cardMetaRowHeight
         let titleHeight = params.cardTitleHeight
+        let statusBlock = params.cardStatusLineVisible
+            ? params.spacingTight + params.cardStatusHeight : 0
         let available = bounds.height - padding * 2 - params.spacingSmall
-            - titleHeight - params.spacingTight - metaHeight
+            - titleHeight - statusBlock
         let imageHeight = max(48, min(params.cardImageHeight, available))
         let imageY = bounds.height - padding - imageHeight
         let imageBox = NSRect(x: padding, y: imageY, width: width, height: imageHeight)
@@ -708,23 +741,30 @@ final class WindowBrowserCardView: NSView {
                                         height: labelHeight)
         let titleY = imageY - params.spacingSmall - titleHeight
         titleField.frame = NSRect(x: padding, y: titleY, width: width, height: titleHeight)
-        let metaY = titleY - params.spacingTight - metaHeight
-        let showActions = actionBarShouldShow
+        // 浮层贴着“实际画面”的右上角（画面比外框窄时不悬在空白处）。
+        let picture = thumbnailHost.isHidden ? imageBox : thumbnailHost.frame
         let actionsWidth = actionBar.requiredWidth
-        actionBar.frame = NSRect(x: padding + width - actionsWidth, y: metaY,
-                                 width: actionsWidth, height: metaHeight)
+        let overlayHeight = 28 + WindowBrowserActionBar.overlayInset * 2
+        let overlayInset: CGFloat = 6
+        actionBar.frame = NSRect(x: max(imageBox.minX, picture.maxX - overlayInset - actionsWidth),
+                                 y: picture.maxY - overlayInset - overlayHeight,
+                                 width: actionsWidth, height: overlayHeight)
         actionBar.needsLayout = true
-        actionBar.isHidden = !showActions
+        actionBar.isHidden = !actionBarShouldShow
         let statusSide = params.cardStatusHeight
-        let statusMidY = metaY + (metaHeight - statusSide) / 2
-        statusIconView.frame = NSRect(x: padding, y: statusMidY,
+        let statusY = titleY - params.spacingTight - statusSide
+        let showStatusLine = params.cardStatusLineVisible
+        statusIconView.frame = NSRect(x: padding, y: statusY,
                                       width: statusSide, height: statusSide)
         let statusTextX = statusIconView.isHidden ? padding
             : padding + statusSide + params.spacingTight
-        let reserved = showActions ? actionsWidth + params.spacingSmall : 0
-        statusField.frame = NSRect(x: statusTextX, y: statusMidY,
-                                   width: max(1, padding + width - reserved - statusTextX),
+        statusField.frame = NSRect(x: statusTextX, y: statusY,
+                                   width: max(1, padding + width - statusTextX),
                                    height: statusSide)
+        if !showStatusLine {
+            statusIconView.frame = .zero
+            statusField.frame = .zero
+        }
         thumbnailView.frame = thumbnailHost.bounds
         mountedLiveView?.frame = thumbnailHost.bounds
     }
@@ -1442,6 +1482,17 @@ final class WindowBrowserContentView: NSView, NSSearchFieldDelegate, NSTextViewD
     private let tableColumn = NSTableColumn(identifier: NSUserInterfaceItemIdentifier("window"))
     private let detailPane = WindowBrowserSelectionDetailView()
     private let footerStatusField = NSTextField(labelWithString: "")
+    /// 底部 Dock 面板标签带里的应用名：指针停在 Dock 图标上时由系统气泡占据这个位置，
+    /// 指针移进面板、系统收起气泡后由它在同一位置接替——两者从不同时出现。
+    private let captionField = NSTextField(labelWithString: "")
+    /// 标签在面板里的水平中心（= Dock 图标中心），由控制器按实际锚点设置。
+    var captionAnchorX: CGFloat? {
+        didSet { needsLayout = true }
+    }
+    private var systemBubbleShowing = true
+    /// 诊断：接力标签当前是否可见。
+    var captionIsShowingForDiagnostics: Bool { captionTargetVisible }
+    private var captionTargetVisible = false
     /// 列表为空时列表区中央的一行说明（搜索无结果 / 没有窗口）。
     private let emptyStateField = NSTextField(labelWithString: "")
     /// 缺少屏幕录制权限时页脚右侧的入口：走现有的系统设置深链，不在悬停时弹授权框。
@@ -1556,6 +1607,12 @@ final class WindowBrowserContentView: NSView, NSSearchFieldDelegate, NSTextViewD
         footerStatusField.textColor = .secondaryLabelColor
         footerStatusField.lineBreakMode = .byTruncatingTail
 
+        captionField.font = WindowBrowserTypography.body
+        captionField.textColor = .labelColor
+        captionField.alignment = .center
+        captionField.lineBreakMode = .byTruncatingTail
+        captionField.isHidden = true
+
         emptyStateField.font = WindowBrowserTypography.body
         emptyStateField.textColor = .secondaryLabelColor
         emptyStateField.alignment = .center
@@ -1572,7 +1629,7 @@ final class WindowBrowserContentView: NSView, NSSearchFieldDelegate, NSTextViewD
 
         for view in [iconView, appNameField, detailStatusField, searchField, styleControl,
                      scrollView, detailPane, footerStatusField, emptyStateField,
-                     permissionButton] {
+                     permissionButton, captionField] {
             materialHost.contentHost.addSubview(view)
         }
         setAccessibilityElement(true)
@@ -1605,13 +1662,21 @@ final class WindowBrowserContentView: NSView, NSSearchFieldDelegate, NSTextViewD
         self.hasAccessibility = hasAccessibility
         self.style = style
         self.selection = selection
-        appNameField.stringValue = mode == .dock
-            ? (records.first?.appName ?? "窗口")
-            : "窗口选择"
-        iconView.image = mode == .dock
-            ? records.first.flatMap { iconProvider.icon(for: $0.key.application.pid) }
-            : nil
-        detailStatusField.stringValue = mode == .dock ? detailStatus(for: records) : ""
+        // Dock 面板锚在该应用的 Dock 图标正上方，系统气泡已经写着应用名：页眉不再重复
+        // 应用图标与名称，只写窗口数（单窗口时整个页眉不占位）。键盘面板照常有标题。
+        appNameField.stringValue = mode == .dock ? detailStatus(for: records) : "窗口选择"
+        appNameField.font = mode == .dock ? WindowBrowserTypography.body
+            : WindowBrowserTypography.header
+        appNameField.textColor = mode == .dock ? .secondaryLabelColor : .labelColor
+        iconView.image = nil
+        detailStatusField.stringValue = ""
+        captionField.stringValue = mode == .dock ? (records.first?.appName ?? "") : ""
+        refreshCaptionVisibility(animated: false)
+        for view in [appNameField, iconView, detailStatusField, styleControl]
+            where !params.headerVisible {
+            view.isHidden = true
+        }
+        if params.headerVisible { appNameField.isHidden = false }
         footerStatusField.stringValue = status
         permissionButton.isHidden = screenRecordingAvailable || status.isEmpty
         if records.isEmpty {
@@ -1621,7 +1686,7 @@ final class WindowBrowserContentView: NSView, NSSearchFieldDelegate, NSTextViewD
         emptyStateField.isHidden = !records.isEmpty
         searchField.isHidden = mode == .dock
         // 单窗口 Dock 面板没有可切换的内容：不显示网格/列表切换。
-        styleControl.isHidden = mode == .dock && records.count <= 1
+        styleControl.isHidden = (mode == .dock && records.count <= 1) || !params.headerVisible
         styleControl.selectedSegment = style == .grid ? 0 : 1
         plan = WindowBrowserGeometry.contentPlan(
             bounds: NSRect(origin: .zero, size: bounds.size),
@@ -1674,11 +1739,17 @@ final class WindowBrowserContentView: NSView, NSSearchFieldDelegate, NSTextViewD
         needsLayout = true
     }
 
+    /// 面板当前实际使用的材质（面板据此决定阴影由系统还是纸面子窗口提供）。
+    var materialKind: WindowBrowserMaterialKind { materialHost.kind }
+    var onMaterialKindChanged: ((WindowBrowserMaterialKind) -> Void)?
+
     private func updateMaterialSurfaces() {
         let style = effectiveMaterialStyle
         let capabilities = effectiveMaterialCapabilities
+        let previousKind = materialHost.kind
         materialHost.update(style: style, cornerRadius: params.panelCornerRadius,
                             capabilities: capabilities)
+        if materialHost.kind != previousKind { onMaterialKindChanged?(materialHost.kind) }
         // 玻璃面板上的卡片不叠材质，改用系统填充色；纸面与旧系统仍是不透明卡片。
         let surface: WindowBrowserCardSurface = materialHost.kind == .glass ? .material : .solid
         currentCardSurface = surface
@@ -2024,6 +2095,13 @@ final class WindowBrowserContentView: NSView, NSSearchFieldDelegate, NSTextViewD
 
     // MARK: 布局
 
+    /// 面板换尺寸（含动画中间帧）时必须重排：只改窗口尺寸而不重画，只会把已经
+    /// 画好的图层拉伸/裁切，看起来就是“画面变形、卡片错位”。
+    override func setFrameSize(_ newSize: NSSize) {
+        super.setFrameSize(newSize)
+        needsLayout = true
+    }
+
     override func layout() {
         super.layout()
         plan = WindowBrowserGeometry.contentPlan(bounds: bounds, style: style,
@@ -2067,6 +2145,20 @@ final class WindowBrowserContentView: NSView, NSSearchFieldDelegate, NSTextViewD
             footerFrame.size.width = max(1, footerFrame.width - buttonSize.width - params.spacingSmall)
         }
         footerStatusField.frame = footerFrame
+        // 接力标签：放在系统气泡正文所在的高度（标签带里离底边约 18 pt 的中线），
+        // 水平中心对准 Dock 图标；靠近屏幕边缘被夹住时仍不超出面板。
+        if params.dockCaptionVisible {
+            let text = captionField.intrinsicContentSize
+            let width = min(bounds.width - params.panelPadding * 2, ceil(text.width) + 16)
+            let anchor = captionAnchorX ?? bounds.midX
+            let x = min(max(params.panelPadding, anchor - width / 2),
+                        bounds.width - params.panelPadding - width)
+            let height = params.titleLineHeight
+            captionField.frame = NSRect(x: x, y: floor(18 - height / 2),
+                                        width: width, height: height)
+        } else {
+            captionField.frame = .zero
+        }
         let emptyHeight = params.titleLineHeight
         emptyStateField.frame = NSRect(x: plan.listRect.minX,
                                        y: floor(plan.listRect.midY - emptyHeight / 2),
@@ -2078,6 +2170,36 @@ final class WindowBrowserContentView: NSView, NSSearchFieldDelegate, NSTextViewD
         updateDetailPane()
         reattachLiveViewIfNeeded()
         notifyVisibleKeys()
+    }
+
+    /// 系统应用名气泡是否正显示在标签带里（指针停在 Dock 图标上时为 true）。
+    func setSystemBubbleShowing(_ showing: Bool) {
+        guard showing != systemBubbleShowing else { return }
+        systemBubbleShowing = showing
+        refreshCaptionVisibility(animated: true)
+    }
+
+    private func refreshCaptionVisibility(animated: Bool) {
+        let visible = params.dockCaptionVisible && !systemBubbleShowing
+            && !captionField.stringValue.isEmpty
+        captionTargetVisible = visible
+        if visible { captionField.isHidden = false }
+        let target: CGFloat = visible ? 1 : 0
+        let duration = WindowBrowserAnimationPolicy.duration(
+            params.selectionDuration,
+            reduceMotion: SystemAppearanceCapabilities.current.reduceMotion)
+        guard animated, duration > 0 else {
+            captionField.alphaValue = target
+            captionField.isHidden = !visible
+            return
+        }
+        NSAnimationContext.runAnimationGroup({ context in
+            context.duration = duration
+            captionField.animator().alphaValue = target
+        }, completionHandler: { [weak self] in
+            guard let self else { return }
+            self.captionField.isHidden = self.captionField.alphaValue < 0.5
+        })
     }
 
     @objc private func openScreenRecordingSettings() {

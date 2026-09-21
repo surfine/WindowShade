@@ -17,6 +17,8 @@ final class WindowBrowserPanel: NSPanel {
 
     /// 打开请求代数：每次打开/关闭都递增，过期的延迟激活重试直接失效。
     private var presentationGeneration: UInt64 = 0
+    /// 换尺寸代数：动画收尾时只认最后一次请求，旧动画不会把新尺寸盖回去。
+    private var resizeGeneration: UInt64 = 0
     private var animationParams = WindowBrowserLayoutParams.standard
 
     init(mode: WindowBrowserPanelMode, frame: NSRect,
@@ -51,7 +53,27 @@ final class WindowBrowserPanel: NSPanel {
         // 与置顶预览面板同一套纸面阴影。曾怀疑它会激活 app，但面板探针的对照实验
         // （不显示窗口 / 同进程第二次显示）证明激活来自“新进程首次出窗”，阴影不是
         // 原因；阴影子窗口还额外改成不可成为 key/main，不会再抢键盘焦点。
-        PaperSurfaceStyle.installShadow(on: self)
+        applyShadow(for: browserContentView.materialKind)
+        browserContentView.onMaterialKindChanged = { [weak self] kind in
+            self?.applyShadow(for: kind)
+        }
+    }
+
+    /// 阴影跟随材质：玻璃路径交给系统窗口阴影（按窗口实际不透明形状计算，天然贴合
+    /// 玻璃的圆角）；纸面与旧系统路径仍用纸面阴影子窗口。自绘阴影用自己的圆角路径，
+    /// 与系统玻璃的圆角并不完全重合，放在玻璃下面会在四角露出楔形暗影。
+    private(set) var usesSystemShadow = false
+
+    private func applyShadow(for kind: WindowBrowserMaterialKind) {
+        if kind == .glass {
+            PaperSurfaceStyle.removeShadow(from: self)
+            hasShadow = true
+            usesSystemShadow = true
+            invalidateShadow()
+        } else {
+            usesSystemShadow = false
+            PaperSurfaceStyle.installShadow(on: self)
+        }
     }
 
     override var canBecomeKey: Bool { mode == .keyboard }
@@ -149,18 +171,30 @@ final class WindowBrowserPanel: NSPanel {
     }
 
     func setPanelFrame(_ frame: NSRect, animated: Bool = false) {
+        resizeGeneration &+= 1
+        let token = resizeGeneration
         guard animated,
               !NSWorkspace.shared.accessibilityDisplayShouldReduceMotion else {
-            setFrame(frame, display: true)
-            browserContentView.frame = NSRect(origin: .zero, size: frame.size)
-            browserContentView.needsLayout = true
+            settle(to: frame)
             return
         }
-        NSAnimationContext.runAnimationGroup { context in
+        // 动画期间不要把内容视图提前设成最终尺寸：窗口还在半路，内容却按终点布局，
+        // 两者会各走一套（系统会把偏小的内容视图摆到窗口中间），于是露出“面板空了
+        // 大半、卡片被裁掉标题、画面被压扁”的中间帧。这里让窗口动画带着内容一起变，
+        // 收尾时再对齐一次保证收敛。
+        NSAnimationContext.runAnimationGroup({ context in
             context.duration = animationParams.panelResizeDuration
             context.timingFunction = CAMediaTimingFunction(name: .easeInEaseOut)
             animator().setFrame(frame, display: true)
-        }
+        }, completionHandler: { [weak self] in
+            guard let self, self.resizeGeneration == token else { return }
+            self.settle(to: frame)
+        })
+    }
+
+    /// 窗口与内容视图收口到同一尺寸：面板几何永远由内容决定，两者不能各留一份。
+    private func settle(to frame: NSRect) {
+        setFrame(frame, display: true)
         browserContentView.frame = NSRect(origin: .zero, size: frame.size)
         browserContentView.needsLayout = true
     }

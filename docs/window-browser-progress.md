@@ -2400,6 +2400,72 @@ sha256 `ed82d3a6d3f7f3fc28c1a5e09b0754f03a86f6b3d9e68353656479dbdfcd160e`）与�
 bundle 1.0.14 / build 14。线上附件 sha256 与本地打包结果一致；隔离构建的
 `--window-browser-idle-probe`、`--window-browser-shots`（`classic-strip-palette PASS`）干净。
 
+## 2026-09-20：用户截图里的“空面板 + 被裁的小卡片”修正
+
+用户在实机截图里看到：Dock 悬停时面板是一整块宽而空的玻璃，里面只有一张很小的、被裁掉标题的
+窗口画面，系统应用名气泡落在面板下沿。查出三条真实缺陷，彼此叠加：
+
+| 现象 | 原因 | 修正 |
+| --- | --- | --- |
+| 面板宽而空、卡片小且丢了标题 | `WindowBrowserPanel.setPanelFrame(animated:)` 在动画开始时就
+把内容视图设成终点尺寸，而窗口还在半路；系统把偏小的内容视图摆到窗口中间，于是露出“窗口还是旧
+尺寸、内容已经按新尺寸画”的中间帧 | 换尺寸时让窗口动画带着内容一起走，动画收尾才收口；新增换
+尺寸代数，旧动画不会把新尺寸盖回去。内容视图在尺寸变化时重排，中间帧不再拉伸已画好的图层 |
+| 单窗口应用拿到列表面板尺寸（544 × 129） | 面板几何用“上一次会话遗留的 `style`”和未过滤的目录
+计数决定风格与数量，内容却用本会话过滤后的记录，两边各算一套 | 几何与内容共用
+`resolvedStyle(windowCount:)` 与 `dockPlanRecords(for:)`；`refreshPanel` 每次都按同一份记录重算
+面板 frame，指针已离开图标（`lastDockTarget == nil`）时也不再冻结旧尺寸 |
+| 缩略图被拉扁/裁掉 | `captureWindow` 用调用方给的 AX 尺寸配置 `SCStreamConfiguration`；那个尺寸
+可能过期，或正好落在窗口动画中间，SCK 会把画面拉伸到它 | 截图尺寸改取窗口自身
+（`SCWindow.frame`）的长宽比，AX 尺寸只作回退 |
+
+证据（都在本机执行，不操作用户窗口）：
+
+- 隔离构建面板探针 `--window-browser-panel-probe`：把一块列表面板尺寸（544 × 129）动画换成单窗口
+  缩略图尺寸（312 × 236），逐帧比对内容视图与窗口尺寸。
+  - 修正前：`animated-resize before=0 immediate=232 worst=232 settled=0 samples=20
+    finalFrame=(312x236) matchesRequestedFrame=true interpolatedFrame=true`
+    ——请求动画的那一刻，内容视图就比窗口大 232 pt，整个动画期间都是这个错位帧。
+  - 修正后：`animated-resize before=0 immediate=0 worst=0 settled=0 samples=20
+    finalFrame=(312x236) matchesRequestedFrame=true interpolatedFrame=true`
+    ——全程同尺寸，动画照常插值。
+- `bash tests/run-window-browser-tests.sh` → `PASS: 663 window-browser pure-logic checks`
+  （新增 15 项：“内容计划与面板 frame 同尺寸”“内容不画到面板之外”“缩略图/列表面板宽度”“自动风格
+  只由当前窗口数决定”“本会话显式选择优先于自动判定”）。首屏延迟同批打印：50 窗口 2.16 ms、
+  200 窗口 7.99 ms。
+- `bash prototype/build.sh --check` → 通过（81 个 Swift 文件）。
+- 真实 Dock 悬停（同一身份原地重建并重启本机应用后实测）：指针停在“照片”图标上约 2.3 s 再放回，
+  面板出现且几何正确（卡片画面、标题、底部标签带完整），截图与日志一致。
+
+顺带修掉同一功能里的一个真实缺口：Dock 重启如果发生在订阅真正生效之前，
+`kAXUIElementDestroyedNotification` 与 `didLaunchApplicationNotification` 都可能错过，观察器会一直
+绑在已经消失的 Dock 进程上，Dock 悬停从此静默失效（本机重建应用后即复现：观察器记录
+`pid=47501`，实际 Dock 已是 `pid=48344`，无任何目标产出）。现在“指针在 Dock 条带里却解析不出应用
+项”时按秒节流核对一次 Dock 实例，换了就重建。实测日志：
+`dock-hover: dock instance changed 48344 -> 61602` →
+`dock-hover: observer rebuilt pid=61602 lists=1 reason=dock-instance-changed` →
+下一次指针移动立即 `dock-hover: target pid=54155 bundle=com.apple.Photos`，面板正常出现。
+
+仍未验证（沿用之前的清单，与本轮改动无关）：多显示器缩放、Space、全屏、Mission Control、
+睡眠唤醒、锁屏、权限撤销重授权、连续 100 次开关的资源计数与性能对照。
+
+`prototype/WindowShade.app` 已用同一身份原地重建并重启，供用户继续测试。
+
+## 2026-09-19（晚）：用户实机反馈后的三处修正
+
+用户测试 1.0.14 第四次重发版时指出：面板圆角处的阴影不对；单窗口面板底部空太多；面板与 Dock
+的应用名气泡重叠，且与气泡重复写了应用名。
+
+| 问题 | 原因 | 修正 |
+| --- | --- | --- |
+| 圆角阴影 | 纸面阴影子窗口按自己的圆角路径画阴影再挖空，与系统玻璃圆角不重合 | 玻璃路径改用系统窗口阴影（`hasShadow`），纸面/旧系统路径保留纸面阴影；材质切换时面板跟着切换 |
+| 底部留空 | 卡片为悬停按钮预留 28 pt 信息行，无状态、未悬停时是空带 | 操作按钮浮在画面右上角；状态行只在这一批里真有状态时才留；单窗口卡片 218 → 186 |
+| 气泡重叠与重复信息 | 面板位置被“可见区域内缩 12 pt”夹住（可见区域不含 Dock 带），落在系统气泡位置上；页眉又写一遍应用名 | 用户否定了“把面板挪到气泡上方”的第一版（两者仍是分开的）。现为：底部 Dock 面板贴近图标，底部留 38 pt 标签带给系统气泡，气泡成为面板的标签；指针移进面板、气泡收起后面板在同一位置显示应用名接替；Dock 页眉不写应用名，单窗口不留页眉（312 × 236），多窗口页眉只写窗口数（高 32）。气泡位置按用户截图推算，真机对齐待用户确认 |
+
+验证：窗口浏览 645 项断言（新增 10 项）通过；隔离构建截图与对照板真实合成截图复核；本机
+`prototype/WindowShade.app` 同身份原地重建并重启供用户测试。机器负载很高（load average 180–265）时，
+“200 窗口首屏 < 50 ms”这条断言会偶发超时，负载下降后复跑通过。
+
 ## 2026-09-19：按复检设计稿落地（已合入 main，第四次重新发布 1.0.14）
 
 依据 `docs/design-proposal-claude.md`，修复复检列出的 R1–R18（R19 文档已同步，R20 性能未复测）：
@@ -2449,3 +2515,23 @@ sha256 `25af12cea07ae44aa4ed8bdf20672e270e5e3c1e139d43a03be4dc8aeb6b8e31`）与�
 逐字节一致（`_headers` / `_redirects` 仍由 Pages 消费，与以前一样返回 404 页）。首页 hero 与
 历史页 bridge 换成新面板的真实渲染，历史页 bridge 改按 1102 × 348 的比例显示；Dock 一节的
 单窗口尺寸从 1.0.13 遗留的 312 × 349 pt 更正为 312 × 274 pt。
+
+## 2026-09-22：发版前的设计评审与站点同步
+
+按 `apple-design` 与 `apple-design-hig` 两套标准做了一次发版前评审，报告见
+[设计评审：WindowShade 1.0.14](design-review-1.0.14.md)。应用侧没有发现 Critical，两条 High
+（底 Dock 标签带依赖系统气泡落点、列表行按两行预留高度）记在该报告的改进项里，并同步进
+[复检交接](review-handoff.md) 的 G12 / G13；这一轮不改应用的几何与行为，避免动到已经逐帧验证过的
+面板。
+
+站点这一轮改了四处，改完重新构建、逐页实拍复核：
+
+| 改动 | 说明 |
+| --- | --- |
+| 中文 hero 字距 | `style.css` 新增 `html[lang="zh-CN"] .hero h1{letter-spacing:-.02em}`。拉丁文的 `-.055em` 用在 PingFang 上会把全角字身压掉 5.5%（实测“窗口挡路？”374.4 → 353.8 px），字与字几乎相碰 |
+| 面板尺寸数字 | 中文与英文的窗口浏览段落、两侧 README、发布说明从 312 × 274 pt 更正为 **312 × 236 pt**（有状态 312 × 253），三窗口 Dock 面板 288 → **286** |
+| 引号方向 | FAQ 里四组中文引号从右引号改为成对的 `“ ”` |
+| 面板渲染 | `site/public/media/bridge-windows.webp` 用当前 `--window-browser-shots` 的 `dock-three` 重出（1824 × 572 → 1102 × 348） |
+
+站点改动只涉及 `content.mjs`、`style.css` 和一张渲染图；`npm run build` 与 `npm run check` 通过
+（30 个部署文件），浅色/深色/移动端实拍与逐宽度断行比对通过，等待与这一版发布一起部署。
