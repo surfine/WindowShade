@@ -63,7 +63,7 @@ export const copy = {
     pinDemoCaption: '网页层级示意，不会碰你电脑上的窗口。置顶体验参考 Top.it。',
 
     browseTitle: '停在 Dock 图标上，<br>那个应用的窗口全在这儿。',
-    browseIntro: '把指针停在 Dock 里的应用图标上，弹出它的真实窗口面板：窗口截图与标题优先，动作收在悬停才出现的符号条里，可以搜索，也能直接对某一个窗口动手。面板尺寸随内容决定——一个窗口约 312 × 274 pt，不再留一大片空白。',
+    browseIntro: '把指针停在 Dock 里的应用图标上，弹出它的真实窗口面板：窗口截图与标题优先，动作收在悬停才出现的符号条里，可以搜索，也能直接对某一个窗口动手。面板贴着 Dock 图标、尺寸随内容决定——一个窗口约 312 × 236 pt，不再留一大片空白。',
     browseHow: '菜单里的“选择窗口…”或你自己录的快捷键打开键盘面板，搜索框在顶部、直接可输入。Dock 入口默认关闭，可在“设置 → 窗口浏览”里打开，也能按应用排除，并选择跟随系统（macOS 26 及以上使用真实系统玻璃）或纸面外观。',
     browsePoints: [
       ['先看清，再动手', '面板本身只读；只有你按下卡片上的按钮，才会动那个窗口。'],
@@ -105,10 +105,10 @@ export const copy = {
     faqTitle: '下载之前，你可能会问。',
     faqs: [
       ['我的 Mac 能用吗？', '要 macOS 14 以上加 Apple Silicon，没有 Intel 版。卷帘和钉窗口不用传感器；合盖跟着动的效果需要有铰链传感器的 MacBook。'],
-      ['要什么权限？', '辅助功能——找窗口、移窗口、恢复窗口用的。屏幕录制——截图、缩略图、预览和动态效果用的。”屏幕录制”只是系统权限的名字，画面不会离开你的电脑。'],
+      ['要什么权限？', '辅助功能——找窗口、移窗口、恢复窗口用的。屏幕录制——截图、缩略图、预览和动态效果用的。“屏幕录制”只是系统权限的名字，画面不会离开你的电脑。'],
       ['窗口浏览会动我的窗口吗？', '不会，除非你点卡片上的按钮。面板只是显示标题、位置和缩略图；每个动作在真的执行前，都会再确认一次“就是这一扇窗口”；确认不了就不做，不会靠标题或当前焦点去猜另一扇。'],
       ['所有窗口都能卷吗？', '普通桌面窗口都行。便笺用的是系统自己的收起方式，所以走另一条路；Adobe 这类自己画标题栏的 app 会单独处理。全屏、Split View、Stage Manager 和多显示器上还有一些没覆盖到的情况，建议先在你常用的 app 里试一次。'],
-      ['怎么装？', '下载 ZIP，解压，把 WindowShade.app 拖到”应用程序”里，打开后按提示给权限。安装包有 Apple Development 签名但还没公证，第一次打开如果被拦，去”系统设置 → 隐私与安全性”点”仍要打开”就行。'],
+      ['怎么装？', '下载 ZIP，解压，把 WindowShade.app 拖到“应用程序”里，打开后按提示给权限。安装包有 Apple Development 签名但还没公证，第一次打开如果被拦，去“系统设置 → 隐私与安全性”点“仍要打开”就行。'],
     ],
 
     historyDateline: 'WINDOWSHADE FIELD NOTES · 001',
@@ -170,7 +170,7 @@ export const copy = {
     pinDemoCaption: 'A browser illustration of window layers — it won’t touch your Mac’s windows. Pinning reference: Top.it.',
 
     browseTitle: 'Hover a Dock icon.<br>Every window of that app is right there.',
-    browseIntro: 'Rest the pointer on an app icon in the Dock and a panel of that app’s real windows appears: thumbnails and titles first, actions tucked into a symbol bar that only shows on hover, with search and per-window actions. The panel is sized by its content — a single window is about 312 × 274 pt, with no dead space.',
+    browseIntro: 'Rest the pointer on an app icon in the Dock and a panel of that app’s real windows appears: thumbnails and titles first, actions tucked into a symbol bar that only shows on hover, with search and per-window actions. The panel hugs the Dock icon and is sized by its content — a single window is about 312 × 236 pt, with no dead space.',
     browseHow: 'Choose window… in the menu, or record your own hot key, to open the same panel in keyboard mode with the search field at the top. The Dock entry is off by default — turn it on in Settings → Window browsing, include an app exclusion list, and pick system appearance (real system glass on macOS 26 and later) or paper.',
     browsePoints: [
       ['Look first, then act', 'The panel itself is read-only. Nothing moves until you press a button on a card.'],

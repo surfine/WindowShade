@@ -59,6 +59,7 @@ final class DockHoverObserver {
     private var scheduleWorkItem: DispatchWorkItem?
     private var lastHitTestAt: CFAbsoluteTime = 0
     private var lastResolvedAt: CFAbsoluteTime = 0
+    private var lastDockLivenessCheck: CFAbsoluteTime = 0
     private var lastPointerCocoa: NSPoint?
     private var staleCheckWork: DispatchWorkItem?
     private var target: DockHoverTarget?
@@ -298,7 +299,28 @@ final class DockHoverObserver {
             emit(target)
             return
         }
+        verifyDockInstanceIfNeeded()
         staleCheckOrClear(reason: resolved == nil ? "no-app-item" : "pointer-moved")
+    }
+
+    /// 指针明明在 Dock 条带里、却解析不出任何应用项时，先确认观察的还是当前那个 Dock。
+    /// Dock 会因为改设置或崩溃被 launchd 重新拉起；如果重启发生在订阅真正生效之前，
+    /// `kAXUIElementDestroyedNotification` 与 `didLaunchApplicationNotification` 都可能
+    /// 错过，观察器就一直绑在一个已经消失的进程上——Dock 悬停从此静默失效（既不报错，
+    /// 也不再有目标）。这里按秒节流核对一次实例，发现换了就重建。
+    private func verifyDockInstanceIfNeeded() {
+        guard running else { return }
+        let now = CFAbsoluteTimeGetCurrent()
+        guard now - lastDockLivenessCheck >= 1.0 else { return }
+        lastDockLivenessCheck = now
+        guard let dockApp = NSWorkspace.shared.runningApplications
+            .first(where: { $0.bundleIdentifier == "com.apple.dock" }) else {
+            invalidate(reason: "dock-not-running")
+            return
+        }
+        guard dockApp.processIdentifier != dockPID else { return }
+        wlog("dock-hover: dock instance changed \(dockPID) -> \(dockApp.processIdentifier)")
+        invalidate(reason: "dock-instance-changed")
     }
 
     /// 用 AX 命中测试找到指针下的 Dock 图标（限定深度与节点数）。

@@ -15,6 +15,15 @@
 @media(prefers-reduced-motion:reduce){html{scroll-behavior:auto}*,*::before,*::after{animation:none!important;transition:none!important}.button:hover{transform:none}}
 @media(prefers-reduced-transparency:reduce){.header{background:var(--bg);backdrop-filter:none}}
 
+/* The editorial display tracking above is sized for Latin. On PingFang it pulls every 全角
+   glyph box 5.5% into its neighbour — measured on the hero: “窗口挡路？” renders 374.4 px
+   wide at 0 tracking and 353.8 px at -.055em, so 窗/口 and 让/开 crowd each other at 74.88 px.
+   The Chinese hero therefore tracks -.02em (−1.5 px a glyph) and keeps its editorial tone.
+   Section headings keep the Latin value: their 9-character lines only fit the copy column
+   because of it, so retracking them is a type-scale change, not a one-line fix. See
+   docs/design-review-1.0.14.md for the measurements. */
+html[lang="zh-CN"] .hero h1{letter-spacing:-.02em}
+
 [hidden]{display:none!important}
 
 /* Shading and pinning share one editorial two-column rhythm; the shortcut list replaces a feature grid. */

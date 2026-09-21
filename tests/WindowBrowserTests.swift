@@ -43,6 +43,7 @@ enum WindowBrowserTests {
         livePreviewMounting()
         iconCacheSharedAcrossRows()
         dockRegionAndDetectionQueue()
+        dockPlanUsesOneSourceOfTruth()
         metadataSlots()
         layoutPlan()
         typographyFollowsSystemTextSize()
@@ -2030,6 +2031,68 @@ enum WindowBrowserTests {
     // MARK: 新增：元数据槽
 
     /// T31/T32：元数据槽的“在途 + 最新需求”记账。
+    /// 面板几何与内容必须来自同一份记录：同一批输入下，内容计划的 bounds 就是面板
+    /// frame，展示风格也只由“这一次会话的窗口数 + 用户显式选择”决定，不继承上一次
+    /// 会话遗留的风格。否则换应用后的第一份几何会算错（单窗口应用先得到一整个宽而
+    /// 空的列表面板），面板 frame 与内容布局还会各走一套，中间帧就是用户实机截图里
+    /// 那块几乎空的面板。
+    static func dockPlanUsesOneSourceOfTruth() {
+        let screen = NSRect(x: 0, y: 0, width: 1440, height: 900)
+        let visible = NSRect(x: 0, y: 78, width: 1440, height: 822)
+        let icon = NSRect(x: 700, y: 8, width: 52, height: 52)
+        let base = WindowBrowserLayoutParams.standard
+
+        for (style, count) in [(WindowBrowserDisplayStyle.grid, 1),
+                               (WindowBrowserDisplayStyle.grid, 3),
+                               (WindowBrowserDisplayStyle.list, 1),
+                               (WindowBrowserDisplayStyle.list, 12)] {
+            let params = WindowBrowserGeometry.derivedParams(
+                base: base, titles: ["窗口标题"], hasStatus: false, anyCardStatus: false,
+                mode: .dock, windowCount: count, dockEdge: .bottom)
+            let plan = WindowBrowserGeometry.layoutPlan(
+                iconFrame: icon, edge: .bottom, screenFrame: screen, visibleFrame: visible,
+                desiredSize: params.dockPanelSize, windowCount: count, style: style,
+                isContentDriven: true, params: params)
+            expect(plan.content.bounds.size == plan.panelFrame.size,
+                   "\(style.rawValue)/\(count) 个窗口：内容计划与面板 frame 同尺寸 "
+                   + "(\(Int(plan.panelFrame.width))x\(Int(plan.panelFrame.height))pt)")
+            expect(plan.content.listRect.maxY <= plan.panelFrame.height + 0.5,
+                   "\(style.rawValue)/\(count) 个窗口：内容不会画到面板之外")
+        }
+
+        // 风格决定面板宽度，所以风格必须按“当前这批窗口”判定，不能沿用上一会话。
+        let gridSingle = WindowBrowserGeometry.layoutPlan(
+            iconFrame: icon, edge: .bottom, screenFrame: screen, visibleFrame: visible,
+            desiredSize: base.dockPanelSize, windowCount: 1, style: .grid,
+            isContentDriven: true, params: base)
+        let listSingle = WindowBrowserGeometry.layoutPlan(
+            iconFrame: icon, edge: .bottom, screenFrame: screen, visibleFrame: visible,
+            desiredSize: base.dockPanelSize, windowCount: 1, style: .list,
+            isContentDriven: true, params: base)
+        expect(gridSingle.panelFrame.width < listSingle.panelFrame.width,
+               "缩略图面板比列表面板窄：风格算错就会得到一整个空面板 "
+               + "(\(Int(gridSingle.panelFrame.width)) vs \(Int(listSingle.panelFrame.width))pt)")
+        expect(gridSingle.panelFrame.width == base.cardWidth + base.panelPadding * 2,
+               "单窗口缩略图面板宽度＝卡片宽＋两侧内边距 "
+               + "(\(Int(gridSingle.panelFrame.width))pt)")
+        expect(listSingle.panelFrame.width == base.listNaturalWidth + base.panelPadding * 2,
+               "列表面板宽度＝列表自然宽＋两侧内边距 "
+               + "(\(Int(listSingle.panelFrame.width))pt)")
+
+        for (count, expected) in [(1, WindowBrowserDisplayStyle.grid),
+                                  (6, WindowBrowserDisplayStyle.grid),
+                                  (7, WindowBrowserDisplayStyle.list)] {
+            let style = WindowBrowserSettings.initialDisplayStyle(
+                preferred: .automatic, explicit: nil, windowCount: count,
+                autoListThreshold: base.autoListThreshold)
+            expect(style == expected, "\(count) 个窗口的自动风格是 \(expected.rawValue)")
+        }
+        expect(WindowBrowserSettings.initialDisplayStyle(
+            preferred: .automatic, explicit: .list, windowCount: 1,
+            autoListThreshold: base.autoListThreshold) == .list,
+               "用户在本会话显式选过的风格优先于自动判定")
+    }
+
     static func metadataSlots() {
         let app = ApplicationInstanceKey(pid: 9101, generation: 1)
         let request1 = WindowBrowserRequestID(value: 1)
@@ -3609,6 +3672,75 @@ enum WindowBrowserTests {
                           action: #selector(NSView.layout), busy: false)
         expect(!busyBar.isBusy && !busyBar.subviews.contains { $0 is NSProgressIndicator },
                "the spinner goes away when the action finishes")
+
+        // Dock 面板不重复系统气泡里的应用名：单窗口时没有页眉，卡片没有状态就不留状态行；
+        // 底部 Dock 面板贴近图标，最下方留一条标签带给系统的应用名气泡。
+        let oneDock = WindowBrowserGeometry.derivedParams(
+            base: .standard, titles: ["短标题"], hasStatus: false, anyCardStatus: false,
+            mode: .dock, windowCount: 1, dockEdge: .bottom)
+        let onePlan = WindowBrowserGeometry.layoutPlan(
+            iconFrame: icon, edge: .bottom, screenFrame: screen, visibleFrame: visible,
+            desiredSize: CGSize(width: 520, height: 460), windowCount: 1, params: oneDock)
+        expect(!oneDock.headerVisible && oneDock.dockCaptionVisible
+                && abs(oneDock.cardHeight - 186) < 0.5
+                && abs(onePlan.panelFrame.width - 312) < 0.5
+                && abs(onePlan.panelFrame.height - (12 + 186 + oneDock.dockCaptionHeight)) < 0.5,
+               "a one-window Dock panel is the card plus the caption band (\(onePlan.panelFrame.size))")
+        expect(abs(onePlan.panelFrame.minY - icon.maxY - oneDock.dockBottomGap) < 0.5
+                && abs(onePlan.content.listRect.minY - oneDock.dockCaptionHeight) < 0.5,
+               "the panel hugs the icon and keeps the caption band below the card for the system bubble "
+               + "(gap=\(onePlan.panelFrame.minY - icon.maxY) list=\(onePlan.content.listRect))")
+        let sideDock = WindowBrowserGeometry.derivedParams(
+            base: .standard, titles: ["短标题"], hasStatus: false, anyCardStatus: false,
+            mode: .dock, windowCount: 1, dockEdge: .left)
+        expect(!sideDock.dockCaptionVisible,
+               "side Docks show the bubble beside the icon, so no caption band")
+        let captionContent = WindowBrowserContentView(
+            frame: NSRect(x: 0, y: 0, width: 312, height: 236))
+        captionContent.params = oneDock
+        captionContent.update(mode: .dock, records: [records[0]], selection: nil,
+                              style: .grid, busyKeys: [], status: "")
+        captionContent.layout()
+        expect(!captionContent.captionIsShowingForDiagnostics,
+               "while the pointer is on the Dock icon the system bubble owns the caption band")
+        captionContent.setSystemBubbleShowing(false)
+        expect(captionContent.captionIsShowingForDiagnostics,
+               "once the system bubble goes away the panel shows the app name in the same place")
+        let threeDock = WindowBrowserGeometry.derivedParams(
+            base: .standard, titles: ["a", "b", "c"], hasStatus: false, anyCardStatus: true,
+            mode: .dock, windowCount: 3)
+        expect(threeDock.headerVisible && threeDock.headerHeight == threeDock.dockHeaderHeight
+                && abs(threeDock.cardHeight - 203) < 0.5,
+               "multi-window Dock panels keep a compact header; a status line appears only when needed")
+        let dockContent = WindowBrowserContentView(frame: NSRect(x: 0, y: 0, width: 612, height: 300))
+        dockContent.params = threeDock
+        dockContent.update(mode: .dock, records: Array(records.prefix(3)), selection: nil,
+                           style: .grid, busyKeys: [], status: "")
+        dockContent.layout()
+        let dockTexts = dockContent.interfaceSubviews.compactMap { $0 as? NSTextField }
+            .filter { !$0.isHidden }.map(\.stringValue)
+        expect(!dockTexts.contains(records[0].appName) && dockTexts.contains("3 个窗口"),
+               "the Dock header shows the window count, not the app name again")
+
+        // 操作按钮悬停/选中时浮在画面右上角，不占卡片高度。
+        let overlayCard = WindowBrowserCardView(frame: NSRect(x: 0, y: 0, width: 288, height: 186))
+        configure(card: overlayCard, record: records[0], selected: true, busy: false)
+        overlayCard.layout()
+        let picture = overlayCard.thumbnailHostFrameForDiagnostics
+        let bar = overlayCard.actionFrameForDiagnostics
+        expect(overlayCard.actionBarIsVisible && picture.contains(bar),
+               "card actions float inside the picture's top-right corner (bar=\(bar) picture=\(picture))")
+        expect(overlayCard.titleFrameForDiagnostics.width >= 288 - 16 - 0.5,
+               "the title keeps the full card width")
+
+        // 玻璃面板的阴影交给系统（按窗口实际形状计算，贴合玻璃圆角）。
+        let shadowPanel = WindowBrowserPanel(mode: .dock, frame: NSRect(x: 0, y: 0, width: 312, height: 210))
+        if shadowPanel.browserContentView.materialKind == .glass {
+            expect(shadowPanel.usesSystemShadow && shadowPanel.hasShadow,
+                   "a glass panel uses the system window shadow instead of the drawn paper shadow")
+        } else {
+            expect(!shadowPanel.usesSystemShadow, "paper and legacy panels keep the paper shadow")
+        }
 
         // 截图服务：锁内丢弃的排队需求在解锁后才回调，回调里再调用服务不会死锁。
         var clock: CFAbsoluteTime = 100
