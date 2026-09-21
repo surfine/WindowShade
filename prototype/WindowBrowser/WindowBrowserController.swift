@@ -763,12 +763,12 @@ final class WindowBrowserController: NSObject {
         dispatchPrecondition(condition: .onQueue(.main))
         markInputArrival("keyboard")
         guard WindowBrowserSettings.keyboardPanelEnabled else {
-            owner?.quietNotice("窗口选择面板已在设置中关闭",
+            owner?.quietNotice("窗口浏览已在设置里关闭",
                                log: "window-browser: keyboard panel disabled in settings")
             return false
         }
         guard !environmentSuspended, !EffectSecurityBoundary.isLocked else {
-            owner?.quietNotice("当前不可打开窗口面板",
+            owner?.quietNotice("现在打不开窗口面板",
                                log: "window-browser: panel refused (locked or suspended)")
             return false
         }
@@ -1210,7 +1210,7 @@ final class WindowBrowserController: NSObject {
             case .cachedFoldSnapshot:
                 cancelThumbnail(for: record.key)
                 contentView?.applyThumbnail(foldedImage, for: record.key,
-                                            note: "已保存的折叠快照")
+                                            note: "上次的画面")
             case .applicationIcon:
                 cancelThumbnail(for: record.key)
                 // 折叠/最小化窗口优先展示“已保存的最后画面”，明确标为快照；没有才用图标。
@@ -1218,14 +1218,14 @@ final class WindowBrowserController: NSObject {
                     windowKey: record.key,
                     purpose: isSelected ? .selectedLarge : .card)
                     ?? thumbnails.snapshotImage(windowKey: record.key, purpose: .card) {
-                    contentView?.applyThumbnail(snapshot, for: record.key, note: "已保存的快照")
+                    contentView?.applyThumbnail(snapshot, for: record.key, note: "上次的画面")
                     break
                 }
                 let note: String
                 if record.isMinimized {
-                    note = "已最小化，没有最新画面"
+                    note = "窗口已最小化，没有画面"
                 } else if record.shadeState == .folded {
-                    note = "没有已保存的折叠画面"
+                    note = "没有可用的旧画面"
                 } else if !hasScreenRecording {
                     // 页脚已统一说明缺权限并给出设置入口，卡片里不再逐张重复。
                     note = ""
@@ -1441,7 +1441,7 @@ final class WindowBrowserController: NSObject {
     /// 实时预览不可用时在页脚说明原因：界面已经回退到快照或图标。
     private func showLivePreviewFallback() {
         guard let selected = listState.selection, record(for: selected) != nil else { return }
-        statusOverride = "实时预览不可用，已回到快照"
+        statusOverride = "实时画面不可用，改用上次的画面"
         refreshPanel()
     }
 
@@ -1511,7 +1511,7 @@ final class WindowBrowserController: NSObject {
                 guard let self else { return }
                 guard ready else {
                     self.handleImmediate(
-                        outcome: .failed(reason: "无法确认临时预览流已停止，未执行折叠"),
+                        outcome: .failed(reason: "没能确认临时预览已停止，没有收起窗口"),
                         action: action, key: key)
                     return
                 }
@@ -1870,7 +1870,7 @@ final class WindowBrowserController: NSObject {
                 case .completed:
                     self.performPlacement(action: action, key: key)
                 default:
-                    self.reportPlacement(.failed(reason: "展开未确认，未执行排布"), key: key)
+                    self.reportPlacement(.failed(reason: "没能确认窗口已展开，没有排布"), key: key)
                 }
             }
             return
@@ -2302,7 +2302,7 @@ extension WindowBrowserController: WindowBrowserActionBackend {
         }
         let element = owner.unshadeReturningElement(id, playSound: true, pinAfterRestore: true,
                                                     onVerified: { success in
-            finish.call(success ? .completed : .failed(reason: "恢复未确认"))
+            finish.call(success ? .completed : .failed(reason: "没能确认窗口已经恢复"))
         })
         if element == nil {
             // quickLookClosed 路径会在 onVerified(false) 中给出结果；已经展开的情况
@@ -2464,7 +2464,7 @@ extension WindowBrowserController: WindowBrowserActionBackend {
                           resolved: WindowBrowserResolvedTarget,
                           completion: @escaping (WindowBrowserActionOutcome) -> Void) {
         guard resolved.canMinimize else {
-            completion(.unsupported(reason: "这个窗口不提供最小化能力"))
+            completion(.unsupported(reason: "这个窗口不能最小化"))
             return
         }
         setAXMinimized(resolved.element, true)
