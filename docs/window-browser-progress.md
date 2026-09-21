@@ -2535,3 +2535,8 @@ sha256 `25af12cea07ae44aa4ed8bdf20672e270e5e3c1e139d43a03be4dc8aeb6b8e31`）与�
 
 站点改动只涉及 `content.mjs`、`style.css` 和一张渲染图；`npm run build` 与 `npm run check` 通过
 （30 个部署文件），浅色/深色/移动端实拍与逐宽度断行比对通过，等待与这一版发布一起部署。
+
+补记（同日）：官网又用 WebKit 复核了一遍（Playwright 自带构建，需把 `DYLD_FRAMEWORK_PATH` 指向该
+bundle，直接用系统 WebKit 会因 `_WKBrowserContext` 符号缺失而崩）。390 / 767 / 900 / 1100 / 1440
+五个宽度下每个标题的断行结构与 Chromium 完全一致，绝对字宽小约 2%；唯一可见差异是全角标点（`？`
+`。`）WebKit 留完整字身、Chromium 压紧，与这轮字距改动无关。
