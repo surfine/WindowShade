@@ -520,7 +520,7 @@ final class WindowBrowserController: NSObject {
             existing.appName = target.appName
             existing.displayID = target.displayID
             session = existing
-            updateDockAnchor(target)
+            updateDockAnchor()
             scheduleHideCheck()
             return
         case .startNewSession:
@@ -555,6 +555,7 @@ final class WindowBrowserController: NSObject {
     private func handleDockClear(generation: UInt64) {
         dispatchPrecondition(condition: .onQueue(.main))
         guard let session, session.mode == .dock else { return }
+        contentView?.setSystemBubbleShowing(false)
         lastDockTarget = nil
         scheduleHide(after: params.hideDelay)
     }
@@ -598,6 +599,7 @@ final class WindowBrowserController: NSObject {
                 self.panel?.setPanelFrame(plan.panelFrame)
             }
             self.applyGeometry()
+            self.updateCaptionAnchor()
             // 首次说明只改页脚文本：先写状态再刷新一次，避免连做两次整面板更新。
             self.presentFirstRunHintIfNeeded()
             self.refreshPanel()
@@ -610,15 +612,36 @@ final class WindowBrowserController: NSObject {
     }
 
     /// 同一应用图标只移动/放大时的锚点更新：只改 frame 与过渡区域。
-    private func updateDockAnchor(_ target: DockHoverTarget) {
-        guard let plan = dockLayoutPlan(for: target) else { return }
+    private func updateDockAnchor() {
+        let animated = pendingAnimatedResize
+        pendingAnimatedResize = false
+        applyDockGeometry(animated: animated)
+    }
+
+    /// 把统一布局结果套到面板上：有实时悬停目标时用目标的图标矩形，否则用最后一次
+    /// 已知的图标矩形。指针停在面板里、Dock 目标已被清除的那段时间里内容仍会变化
+    /// （缩略图到达、状态文字出现/消失），没有这条兜底路径面板 frame 会冻在旧尺寸，
+    /// 于是内容按新尺寸画、面板还是旧尺寸——正是用户截图里那块“几乎空的面板”。
+    private func applyDockGeometry(animated: Bool) {
+        guard session?.mode == .dock else { return }
+        let plan: WindowBrowserLayoutPlan?
+        if let target = lastDockTarget {
+            plan = dockLayoutPlan(for: target)
+        } else if let iconFrame = dockIconFrame, let edge = dockEdge,
+                  let pid = session?.app?.pid,
+                  let screen = screenForCocoaFrame(iconFrame) ?? NSScreen.main {
+            plan = dockLayoutPlan(iconFrame: iconFrame, edge: edge, pid: pid, screen: screen)
+        } else {
+            plan = nil
+        }
+        guard let plan else { return }
         geometry = WindowBrowserPanelGeometry(plan: plan)
         contentView?.maximumColumns = WindowBrowserGeometry.columnCap(edge: plan.edge,
                                                                       params: params)
-        guard let panel, panel.isVisible, session?.mode == .dock else { return }
-        let animated = pendingAnimatedResize
-        pendingAnimatedResize = false
+        guard let panel, panel.isVisible else { return }
         panel.setPanelFrame(plan.panelFrame, animated: animated)
+        updateCaptionAnchor()
+        updateSystemBubbleState()
     }
 
     /// 首次打开窗口浏览时给一次简短说明，并在页脚停留到下一次刷新。
@@ -636,27 +659,62 @@ final class WindowBrowserController: NSObject {
     }
 
     /// 面板布局：内容决定自然尺寸，图标位置决定锚点，屏幕安全区域只做约束。
+    /// 当前 Dock 图标（Cocoa 全局坐标）与所在边：面板锚点、标签带与“系统气泡是否在显示”都读它。
+    private var dockIconFrame: NSRect?
+    private var dockEdge: WindowBrowserDockEdge?
+
+    /// 指针停在 Dock 图标上时系统会在图标上方显示应用名气泡；面板里的接力标签据此让位或接替。
+    private func updateSystemBubbleState(mouse: NSPoint = NSEvent.mouseLocation) {
+        guard let contentView, let icon = dockIconFrame else { return }
+        contentView.setSystemBubbleShowing(icon.contains(mouse))
+    }
+
+    /// 接力标签的水平中心对准 Dock 图标（面板在屏幕边缘被夹住时两者不再同心）。
+    private func updateCaptionAnchor() {
+        guard let panel, let icon = dockIconFrame else { return }
+        panel.browserContentView.captionAnchorX = icon.midX - panel.frame.minX
+    }
+
     private func dockLayoutPlan(for target: DockHoverTarget) -> WindowBrowserLayoutPlan? {
         guard let screen = screenForDisplayID(target.displayID) ?? NSScreen.main else { return nil }
         let iconFrame = cocoaFrame(fromAXPosition: target.iconFrameAX.origin,
                                    size: target.iconFrameAX.size)
         let edge = WindowBrowserGeometry.dockEdge(iconFrame: iconFrame,
                                                   screenFrame: screen.frame)
+        dockIconFrame = iconFrame
+        dockEdge = edge
+        return dockLayoutPlan(iconFrame: iconFrame, edge: edge, pid: target.pid, screen: screen)
+    }
+
+    /// 会话当前真正会渲染的记录：与 `refreshPanel` 用同一套过滤，面板几何和内容
+    /// 因此来自同一份数据。之前这里读的是未过滤的目录计数，一旦目录里还留着上一批
+    /// 记录（或该 PID 的旧记录），就会先算出一个和内容对不上的面板尺寸。
+    private func dockPlanRecords(for pid: pid_t) -> [WindowRecord] {
+        let excluded = WindowBrowserSettings.excludedBundleIDs
+        return catalog.records(forPID: pid).filter { !excluded.contains($0.bundleIdentifier) }
+    }
+
+    private func dockLayoutPlan(iconFrame: NSRect, edge: WindowBrowserDockEdge,
+                                pid: pid_t, screen: NSScreen) -> WindowBrowserLayoutPlan? {
+        let count = dockPlanRecords(for: pid).count
         return WindowBrowserGeometry.layoutPlan(
             iconFrame: iconFrame, edge: edge, screenFrame: screen.frame,
             visibleFrame: screen.visibleFrame,
             desiredSize: params.dockPanelSize,
-            windowCount: max(1, catalog.records(forPID: target.pid).count),
-            style: effectiveStyle(),
+            windowCount: max(1, count),
+            style: resolvedStyle(windowCount: count),
             isContentDriven: true,
             params: params)
     }
 
-    /// 当前会话应当使用的展示风格：用户显式选择优先，否则按窗口数量自动判定一次。
-    private func effectiveStyle() -> WindowBrowserDisplayStyle {
-        if let sessionAutoStyle { return sessionAutoStyle }
-        let count = session?.app.map { catalog.records(forPID: $0.pid).count } ?? 0
-        return count > params.autoListThreshold ? .list : style
+    /// 展示风格只有这一个来源：用户在本会话的显式选择优先，否则按这一批窗口数量判定。
+    /// 不再沿用控制器里上一次会话遗留的 `style`——那会让换应用后的第一份几何用错风格。
+    private func resolvedStyle(windowCount: Int) -> WindowBrowserDisplayStyle {
+        WindowBrowserSettings.initialDisplayStyle(
+            preferred: WindowBrowserSettings.preferredStyle,
+            explicit: sessionAutoStyle,
+            windowCount: windowCount,
+            autoListThreshold: params.autoListThreshold)
     }
 
     private func scheduleHideCheck() {
@@ -787,7 +845,7 @@ final class WindowBrowserController: NSObject {
                                    width: max(1, frame.width - params.panelPadding * 2),
                                    height: max(1, frame.height - params.panelPadding * 2))
         let content = WindowBrowserGeometry.contentPlan(
-            bounds: contentBounds, style: effectiveStyle(), recordCount: 0,
+            bounds: contentBounds, style: style, recordCount: 0,
             mode: .keyboard, params: params)
         return WindowBrowserLayoutPlan(
             panelFrame: frame, content: content,
@@ -1049,11 +1107,7 @@ final class WindowBrowserController: NSObject {
         let busy = actions.busyWindowKeys()
         // 展示方式：用户在设置里的默认选择 + 本会话的显式切换（sessionAutoStyle）。
         // 显式选择一旦发生，就不再被后台窗口数量变化覆盖。
-        let effectiveStyle = WindowBrowserSettings.initialDisplayStyle(
-            preferred: WindowBrowserSettings.preferredStyle,
-            explicit: sessionAutoStyle,
-            windowCount: reconciled.count,
-            autoListThreshold: params.autoListThreshold)
+        let effectiveStyle = resolvedStyle(windowCount: reconciled.count)
         style = effectiveStyle
         let status: String
         if let statusOverride {
@@ -1069,11 +1123,18 @@ final class WindowBrowserController: NSObject {
         announceResultStatusIfNeeded(status)
         // 内容驱动的两处高度：标题真的会换行才占两行；没有状态文字时页脚不占位。
         // 面板本来就是“内容决定尺寸”，这两处不再无条件预留空白。
+        // 卡片状态行只在这一批里真有状态时才留；Dock 面板单窗口不重复页眉。
+        let anyCardStatus = reconciled.contains {
+            !WindowBrowserStatusPresentationFactory.make(record: $0, hasSnapshot: false).text.isEmpty
+        }
         let derived = WindowBrowserGeometry.derivedParams(
             base: baseParams, titles: reconciled.map(\.displayTitle),
-            hasStatus: !status.isEmpty)
+            hasStatus: !status.isEmpty, anyCardStatus: anyCardStatus,
+            mode: session.mode, windowCount: reconciled.count,
+            dockEdge: session.mode == .dock ? dockEdge : nil)
         let panelHeightChanged = derived.cardHeight != params.cardHeight
             || derived.footerVisible != params.footerVisible
+            || derived.headerVisible != params.headerVisible
         params = derived
         contentView.params = params
         if panelHeightChanged, session.mode == .dock, panel?.isVisible == true {
@@ -1097,8 +1158,10 @@ final class WindowBrowserController: NSObject {
             else { releaseLivePreview(reason: "no-selection") }
         }
         // 布局可能因为窗口数量变化而调整：让面板 frame 跟随统一布局结果。
-        if session.mode == .dock, let target = lastDockTarget {
-            updateDockAnchor(target)
+        if session.mode == .dock {
+            let animated = pendingAnimatedResize
+            pendingAnimatedResize = false
+            applyDockGeometry(animated: animated)
         } else if session.mode == .keyboard, let geometry, let panel {
             panel.setPanelFrame(geometry.panelFrame)
         }
@@ -1942,6 +2005,7 @@ final class WindowBrowserController: NSObject {
         guard !menuTracking.isTracking else { return }
         if session.mode == .dock {
             let mouse = NSEvent.mouseLocation
+            updateSystemBubbleState(mouse: mouse)
             if let panel, panel.isVisible, panel.frame.contains(mouse) {
                 // 指针在面板内部：进入交互态，取消任何待隐藏。
                 _ = panelState.beginInteraction(request: session.requestID)
@@ -2022,6 +2086,8 @@ final class WindowBrowserController: NSObject {
         sessionAutoStyle = nil
         liveSelection = nil
         geometry = nil
+        dockIconFrame = nil
+        dockEdge = nil
         panelState.reset()
         if shouldReturnFocus, let previousAppPID {
             owner?.activateApp(pid: previousAppPID)

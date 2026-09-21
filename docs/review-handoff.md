@@ -180,7 +180,7 @@ p95 0.95–2.82 ms，预算 4 ms）。
 | --- | --- | --- |
 | E1 | `WindowBrowserGeometry` 返回完整布局结果（面板/内容/模式/列数/单元/详情/滚动范围/锚点/过渡区），所有消费者共用 | ✅ |
 | E2 | `desiredSize` 只表达理想尺寸，不是 520×460 强制下限；列表宽度不占满屏幕 | ✅ |
-| E3 | 单窗口 Dock 面板自然宽度约 300–336 pt、无理由不超过约 320 pt 高 | ✅（实测 312×274 pt） |
+| E3 | 单窗口 Dock 面板自然宽度约 300–336 pt、无理由不超过约 320 pt 高 | ✅（实测 312×236 pt；有状态 312×253） |
 | E4 | 两窗口两列约 600–640 pt；3–6 窗口最多三列、宽度受上限约束、放不下滚动或切列表 | ✅ |
 | E5 | 左右 Dock 用纵向列表或 1–2 列，不挡工作区 | ✅（列数上限 2） |
 | E6 | 键盘面板约 800×560，受安全区约束 | ✅ |
@@ -335,7 +335,9 @@ p95 0.95–2.82 ms，预算 4 ms）。
 | G8 | `WindowBrowserShotProbe` 的诊断环境变量（`WINDOWSHADE_GLASS_RIG`/`WINDOWSHADE_SHOTS_HOLD*`/`WINDOWSHADE_CARD_SURFACE`）随应用二进制发布，只影响探针入口；复检可评估是否需要改为独立目标 | P2 |
 | G9 | 1x 屏幕、多显示器与混合缩放只有纯几何测试，没有实机样本 | P2 |
 | G10 | 卡片在玻璃面板下改用 `.contentBackground` 标准材质，但卡片文字仍在材质上方（不是材质内部），未获得系统文字的“活力”处理；HIG 只要求内容层用标准材质，这一点满足，但复检可判断是否应把文字放进材质内部 | P2 |
-| G11 | 紧凑操作条按钮高约 24–25 pt（`buttonHitHeight` 24 + 行高派生），低于 HIG 清单里桌面 28 pt 的默认目标（高于 20 pt 下限）；密度与可达性的取舍需要复检 | P2 |
+| G11 | ~~紧凑操作条按钮高约 24–25 pt~~ **已解决**：操作条改为浮在画面右上角，命中区 28 × 28、间距 4 pt，不再是 24–25 pt 的行内按钮（`WindowBrowserActionBar.layout()`，断言“spinner 占一个 28 pt 槽位”） | 已关闭 |
+| G12 | **底 Dock 的 38 pt 标签带依赖系统应用名气泡的落点**：气泡高度/位置是按用户截图推算的常量（`dockCaptionHeight`、`dockBottomGap`），系统版本、Dock 缩放或字号变化都可能让气泡落在带外，重新出现“两个应用名”或带里空着。真机对齐待确认 | P1 |
+| G13 | 列表行固定 52 pt（+4 pt 行距），单行标题的行也按两行预留；18 个窗口时首屏约 8 行。密度是有意取舍还是缺陷，复检可判定 | P2 |
 
 ---
 
@@ -453,9 +455,9 @@ cd prototype && ./build.sh --stage        # 基线对照需要 worktree: git wor
 | 圆角刻度 | 窗口/面板 13 pt（本机实测 Finder/ChatGPT 窗口 26 px @2x = 13 pt，连续曲率）；卡片 12；控件 6；嵌套同心 `max(4, 外 − 间距)`；画面 = 卡片 12 − 内边距 8 = 4 | `Overlay/SystemAppearance.swift`（`SystemCornerRadius`、`SystemCornerPath`）、`WindowBrowserGeometry.swift` |
 | 卷帘条形状 | 上两角圆（=窗口圆角）、下边缘直切；纸面阴影同一轮廓 | `Overlay/ShadeStrip.swift`、`Overlay/PaperSurfaceStyle.swift` |
 | 间距序列 | 4 / 8 / 12 / 16 / 24 pt | `WindowBrowserLayoutParams.spacingTight/Small/Medium/Large` |
-| 面板尺寸 | 单窗口 312×274 pt（无状态文字）/ 312×289（有状态）；三窗口 612×519；左右 Dock 最多 2 列、面板 ≤640 pt；键盘面板 800×560；Dock 列表宽 ≤544 pt | `WindowBrowserGeometry.swift`、`WindowBrowserPanel.swift` |
-| 卡片与行 | 卡片 288 pt 宽、218 pt 高（单行标题）/234（两行）；图片上限 120 pt（无状态行时吸收到 141）；操作条 ≈23 pt；行高 52 pt | `WindowBrowserGeometry.swift`（`make(...)`、`resized(forTitleLines:)`） |
-| 内边距 | 面板 12 pt；卡片 8 pt；卡片间距 12 pt；页脚 19 pt（无状态文字时不占位） | 同上 |
+| 面板尺寸 | 底 Dock 单窗口 312×236 pt（有状态 312×253，含 38 pt 标签带）；三窗口 912×286；菜单/快捷键键盘面板 800×560 且没有标签带；左右 Dock 最多 2 列、面板 ≤640 pt；Dock 列表宽 ≤544 pt | `WindowBrowserGeometry.swift`、`WindowBrowserPanel.swift` |
+| 卡片与行 | 卡片 288 pt 宽、186 pt 高（单行标题、无状态）/203（有状态）；图片 144 pt；操作按钮 28×28 浮在画面右上角；行高 52 pt、行距 4 pt | `WindowBrowserGeometry.swift`（`make(...)`、`resized(forTitleLines:)`、`resized(cardStatusLine:header:dockHeader:)`） |
+| 内边距 | 面板 12 pt；卡片 8 pt；卡片间距 12 pt；页脚 18 pt（有状态才占位）；底 Dock 标签带 38 pt | 同上 |
 | 排版 | 正文 = 系统正文字号（默认 13 pt）；次级 = 正文 − 2（最小 9）；标题 medium、头部 semibold；行高按字体向上取整 | `WindowBrowserTypography.swift` |
 | 时序 | 悬停意图延迟 0.25 s、隐藏 0.18 s、出现 0.16 s、消失 0.11 s、选择 0.10 s、首图 0.08 s；减少动态效果全部归零 | `WindowBrowserLayoutParams`（`showDelay` 等） |
 | 材质 | 面板层：`NSGlassEffectView`（`regular`，唯一一层，未上色）；内容层：`NSVisualEffectView(.contentBackground, .withinWindow)`；纸面：`windowBackgroundColor` + 0.5/1 pt 边线；减少透明度 → 纸面 | `WindowBrowserMaterial.swift`、`WindowBrowserViews.swift` |

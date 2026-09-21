@@ -12,8 +12,8 @@
 
 | 场景 | 文件 | 检查结果 |
 | --- | --- | --- |
-| 单窗口 Dock | [dock-single.png](visual-qa/window-browser/dock-single.png) | 面板 312×274 pt（没有状态文字时页脚不占位），标题清楚，图片与标题优先，无大面积空白，操作条紧凑 |
-| 三窗口 Dock | [dock-three.png](visual-qa/window-browser/dock-three.png) | 单行三列，面板 912 × 288 pt（示例数据带页脚）；Dock 面板不画键盘选中环 |
+| 单窗口 Dock | [dock-single.png](visual-qa/window-browser/dock-single.png) | 312 × 236 pt：没有页眉、没有状态行；底部标签带在真机上由系统应用名气泡占据，静态图里显示的是指针移进面板后接替气泡的应用名 |
+| 三窗口 Dock | [dock-three.png](visual-qa/window-browser/dock-three.png) | 单行三列；页眉只有“3 个窗口”与显示方式；Dock 面板不画键盘选中环 |
 | 八窗口列表 | [keyboard-list-eight.png](visual-qa/window-browser/keyboard-list-eight.png) | 行高 52 pt、行距 4 pt，行不再超出列表（plain 样式）；选中行为系统列表式实心底（截图时面板非 key，显示非强调灰底）；无状态时标题垂直居中；右侧详情画面在上 |
 | 键盘搜索 | [keyboard-search.png](visual-qa/window-browser/keyboard-search.png) | 搜索框在顶部，查询文本与结果集一致，选中项有强调 |
 | 纸面浅色 | [paper-light.png](visual-qa/window-browser/paper-light.png) | 中性层次与细边线，无发灰/模糊/重复阴影 |
@@ -98,7 +98,7 @@ cd ..
 | 检查 | 方法 | 结果 |
 | --- | --- | --- |
 | 真实合成的玻璃观感 | `WINDOWSHADE_GLASS_RIG=1 WINDOWSHADE_SHOTS_HOLD=25` 启动后固定等待约 9 s 再 `screencapture -R`（探针输出重定向到文件时是整块缓冲的，不能等日志行再截） | [liquid-glass-panel.png](visual-qa/system-appearance/liquid-glass-panel.png)：背景的色相与亮度透过整个面板，卡片只是很淡的系统填充，不再是白块 |
-| 玻璃路径的阴影 | 同一张截图放大面板角部（深色背景处） | 只见玻璃自带的细亮边与一层柔和投影，未见纸面阴影与玻璃阴影叠成两道边；阴影保持现状 |
+| 玻璃路径的阴影 | 用户在真实桌面上发现圆角处阴影不贴合；对照板截图放大右上角复核 | 原因是纸面阴影子窗口按自己的圆角路径画阴影再挖空内部，与玻璃实际圆角不重合。玻璃路径改用系统窗口阴影后，阴影与边缘沿圆角连续走过，楔形暗影消失 |
 | 非 key 面板里的悬停 | 独立程序：生产 `WindowBrowserCardView` 放进 `canBecomeKey == false` 的非激活面板，向 HID 投递真实指针移动（只在本程序面板上，结束后放回原位） | 新写法 `.activeAlways`：进入/离开 `[true, false, true, false]`；旧写法 `.activeInKeyWindow` 对照视图：0 次。面板与应用均未激活 |
 | 非 key 面板上的第一次点击 | 同一程序，经 `NSWindow.sendEvent` 派发按下/松开 | 卡片直接收到激活（1 次），不需要先点一下面板。未做经窗口服务器的全局点击：该点最上层有系统“截图”程序的全屏窗口，真实点击可能落到它身上 |
 | 真实 Dock 悬停 | 隔离构建 `--window-browser-hover-live-probe`（指针移到 Dock 图标约 1.2 s 后放回，只悬停不点击） | `target=com.apple.finder expected=com.apple.finder match=true`，`notificationsReliable=true`；移开图标后 `target=cleared`；`pointerRestored=true` |

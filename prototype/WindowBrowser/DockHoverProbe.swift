@@ -982,11 +982,80 @@ final class WindowBrowserPanelProbe {
                               + "appActiveAfter=\(NSApp.isActive) "
                               + "key=\(dockPanel2.isKeyWindow)")
                         dockPanel2.close()
-                        exit(0)
+                        self.checkAnimatedResize()
                     }
                 }
             }
         }
+    }
+
+    /// 第四阶段：内容驱动的面板换尺寸时必须“窗口多大、内容就多大”。
+    ///
+    /// 用户实机反馈的截图就是这条不变量被破坏的中间帧：窗口还在旧尺寸（宽而矮的
+    /// 列表面板），内容视图却已经被设成新尺寸（窄而高的缩略图面板），系统把偏小的
+    /// 内容视图摆到窗口中间，于是露出几乎空的面板、被裁掉的卡片标题和变形的画面。
+    private func checkAnimatedResize() {
+        let listFrame = NSRect(x: 320, y: 320, width: 544, height: 129)
+        let gridFrame = NSRect(x: 320, y: 320, width: 312, height: 236)
+        let panel = WindowBrowserPanel(mode: .dock, frame: listFrame)
+        panel.browserContentView.update(mode: .dock, records: [Self.probeRecord()],
+                                        selection: nil, style: .grid, busyKeys: [],
+                                        status: "")
+        panel.presentDockPanel()
+        panel.layoutIfNeeded()
+
+        func mismatch() -> CGFloat {
+            let content = panel.browserContentView.frame.size
+            let windowSize = panel.frame.size
+            return max(abs(content.width - windowSize.width), abs(content.height - windowSize.height))
+        }
+
+        let before = mismatch()
+        panel.setPanelFrame(gridFrame, animated: true)
+        let immediate = mismatch()
+        var worst = immediate
+        var samples = 0
+        var widths: [CGFloat] = [panel.frame.width]
+        Timer.scheduledTimer(withTimeInterval: 0.02, repeats: true) { timer in
+            samples += 1
+            worst = max(worst, mismatch())
+            widths.append(panel.frame.width)
+            if samples < 20 { return }
+            timer.invalidate()
+            let settled = mismatch()
+            let frame = panel.frame
+            let sizeMatches = abs(frame.width - gridFrame.width) < 0.5
+                && abs(frame.height - gridFrame.height) < 0.5
+            let interpolated = widths.contains { $0 > gridFrame.width + 1 && $0 < listFrame.width - 1 }
+            print("panel-probe: animated-resize before=\(Int(before)) "
+                  + "immediate=\(Int(immediate)) worst=\(Int(worst)) settled=\(Int(settled)) "
+                  + "samples=\(samples) finalFrame=(\(Int(frame.width))x\(Int(frame.height))) "
+                  + "matchesRequestedFrame=\(sizeMatches) interpolatedFrame=\(interpolated)")
+            panel.orderOut(nil)
+            panel.close()
+            exit(0)
+        }
+    }
+
+    private static func probeRecord() -> WindowRecord {
+        let instance = ApplicationInstanceKey(pid: 4242, generation: 1)
+        return WindowRecord(
+            key: WindowKey(application: instance, originalWindowID: 91, windowGeneration: 1),
+            bundleIdentifier: "probe.app",
+            appName: "Probe",
+            title: "Probe — 一个用来量尺寸的窗口",
+            logicalFrame: CGRect(x: 120, y: 120, width: 980, height: 700),
+            placementSource: .liveDiscovery,
+            systemVisibility: .onScreen,
+            shadeState: .normal,
+            pinState: .none,
+            capabilities: [.activate, .fold, .close],
+            confidence: .confirmed,
+            metadataRevision: 1,
+            isMinimized: false,
+            isOnScreen: true,
+            isFoldedOffscreen: false,
+            isManaged: false)
     }
 }
 
