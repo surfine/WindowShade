@@ -22,6 +22,7 @@ final class SettingsShotProbe {
         try? FileManager.default.createDirectory(at: outputDirectory,
                                                 withIntermediateDirectories: true)
         let shotSize = Self.requestedShotSize()
+        let sidebarCheck = Self.requestedSidebarCheck()
         let appearances: [(String, NSAppearance.Name)] = [("light", .aqua), ("dark", .darkAqua)]
         var manifest = """
         设置窗口页面截图（生产设置窗口整窗截图，含系统侧栏材质；拿不到整窗结果时才退回
@@ -45,6 +46,19 @@ final class SettingsShotProbe {
                     .contentColumnOffsetForDiagnostics {
                     let verdict = abs(offset) < 0.5 ? "PASS" : "FAIL"
                     print("settings-shots: 内容列居中偏移 \(String(format: "%.1f", offset))pt \(verdict)")
+                }
+                if let sidebarCheck, section == .shade,
+                   let settings = owner.duoController.settingsWindow {
+                    // 切换侧栏只应重新分配窗口内部的宽度，窗口本身不能变大变小。
+                    let before = window.frame.width
+                    settings.sidebarCollapsedForDiagnostics = sidebarCheck
+                    RunLoop.current.run(until: Date().addingTimeInterval(0.2))
+                    let after = window.frame.width
+                    let verdict = abs(after - before) < 0.5 ? "PASS" : "FAIL"
+                    print("settings-shots: 侧栏\(sidebarCheck ? "收起" : "展开")时窗口宽 "
+                          + "\(String(format: "%.0f", after))pt（切换前 \(String(format: "%.0f", before))pt）\(verdict)")
+                    settings.sidebarCollapsedForDiagnostics = false
+                    RunLoop.current.run(until: Date().addingTimeInterval(0.2))
                 }
                 let theme = window.contentView?.superview ?? window.contentView
                 guard let theme,
@@ -77,6 +91,16 @@ final class SettingsShotProbe {
               let width = Double(parts[0]), let height = Double(parts[1]),
               width >= 640, height >= 400 else { return fallback }
         return NSSize(width: width, height: height)
+    }
+
+    /// `WINDOWSHADE_SETTINGS_SHOTS_SIDEBAR=collapsed|expanded` 时，在拍卷帘页之前先把侧栏切到该状态，
+    /// 并核对窗口宽度没有跟着变——"展开/收起侧栏把窗口撑大"就是这条自检要挡住的回归。
+    private static func requestedSidebarCheck() -> Bool? {
+        switch ProcessInfo.processInfo.environment["WINDOWSHADE_SETTINGS_SHOTS_SIDEBAR"]?.lowercased() {
+        case "collapsed": return true
+        case "expanded": return false
+        default: return nil
+        }
     }
 
     private func render(view: NSView) -> CGImage? {
