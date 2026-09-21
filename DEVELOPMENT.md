@@ -156,6 +156,10 @@ cd prototype
   可以把同一批页面渲染成别的尺寸（内容列左右留白是否对称只能在非默认宽度上看出来）。
   每次渲染都会打印一行内容列居中自检（`内容列居中偏移 0.0pt PASS`）：收起侧栏后详情区变成
   整窗宽，内容列必须仍然居中，贴左会在右半边留下大片空白。
+  `WINDOWSHADE_SETTINGS_SHOTS_SIDEBAR=collapsed|expanded` 会在拍卷帘页前切换侧栏并核对窗口宽度
+  没变（`侧栏展开时窗口宽 900pt（切换前 900pt）PASS`）——设置窗口的最小尺寸只能用
+  `window.contentMinSize` 表达，给 split view 挂 required 宽高约束会让 AppKit 在展开侧栏时把整扇
+  窗口撑大一个侧栏宽度（实测 900 → 1115）。
 - 设置页外观自适应回归：`bash scripts/check-settings-appearance.sh`
   （逐页比较浅色/深色平均亮度，防止静态颜色被冻结的缺陷复发）。
 - 系统外观（材质 / 对比度边线 / 薄纱 / 动画 / 可访问性文案）集中在

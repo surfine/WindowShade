@@ -2566,3 +2566,28 @@ bundle，直接用系统 WebKit 会因 `_WKBrowserContext` 符号缺失而崩）
 `tests/run-window-browser-tests.sh`（663 项）通过；`prototype/WindowShade.app` 用同一身份
 （FVGLY6W6S4）原地重建，重新打包 `WindowShade-v1.0.14.zip`（3,736,666 字节，
 sha256 `84e7f581ae949d96caa86cc977abe14ab3c715ef0348b8c72e1c10579b21a678`）。
+
+## 2026-09-22：切换侧栏不再改变窗口尺寸
+
+用户指出"展开和收纳侧边栏不应该把窗口撑大"，附了三张截图。量窗口宽度确认：**收起侧栏 900 pt，展开
+侧栏 1105–1115 pt，差值正好是一个侧栏的宽度**。
+
+最小复现（`/tmp` 的 AppKit 小程序，同样的 split view + 侧栏 item + 详情页约束）：
+
+| 变体 | 初始 | 收起 | 展开 |
+| --- | --- | --- | --- |
+| 现状：`splitController.view.widthAnchor ≥ 820` | 900 | 900 | **1115** |
+| 去掉该约束、改用 `window.contentMinSize` | 900 | 900 | **900** |
+| 只去掉约束 | 900 | 900 | 900 |
+
+根因：设置窗口把最小尺寸写成 `splitController.view` 的 **required 宽度约束**。AppKit 为了让这条约束
+成立，在展开侧栏时选择"把整扇窗口撑宽一个侧栏"，而不是压窄详情区。现在最小尺寸只写在
+`window.contentMinSize`（它只限制用户能把窗口拖多小，不参与窗口内部的宽度分配），required 约束删除。
+
+防回归：`DuoSettingsWindow.sidebarCollapsedForDiagnostics` + 探针开关
+`WINDOWSHADE_SETTINGS_SHOTS_SIDEBAR=collapsed|expanded`，拍卷帘页前切换侧栏并核对窗口宽度：
+收起 `900pt（切换前 900pt）PASS`、展开 `900pt（切换前 900pt）PASS`（改前展开是 1115）。
+
+验证：`build.sh --check`、`--stage`、`--settings-shots`（归档图重出）、663 项窗口浏览器断言、
+`scripts/check-settings-appearance.sh` 通过；`prototype/WindowShade.app` 同身份原地重建并重新打包
+`WindowShade-v1.0.14.zip`（sha256 `b30a5922308217306ad944c539d59c4f56eabbceac8adc4e1ceb8c74de2f39f8`）。
