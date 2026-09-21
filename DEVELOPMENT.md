@@ -152,7 +152,10 @@ cd prototype
   `./build.sh --stage` 后运行
   `.build/duo-validation/WindowShade.app/Contents/MacOS/WindowShade --settings-shots .build/settings-shots`
   输出每页的浅色/深色 PNG 与 `manifest.txt`；侧栏由系统材质绘制、效果页的 Metal 预览
-  画布也不会出现在离屏图里。
+  画布也不会出现在离屏图里。窗口可自由缩放，`WINDOWSHADE_SETTINGS_SHOTS_SIZE=1115x680`
+  可以把同一批页面渲染成别的尺寸（内容列左右留白是否对称只能在非默认宽度上看出来）。
+  每次渲染都会打印一行内容列居中自检（`内容列居中偏移 0.0pt PASS`）：收起侧栏后详情区变成
+  整窗宽，内容列必须仍然居中，贴左会在右半边留下大片空白。
 - 设置页外观自适应回归：`bash scripts/check-settings-appearance.sh`
   （逐页比较浅色/深色平均亮度，防止静态颜色被冻结的缺陷复发）。
 - 系统外观（材质 / 对比度边线 / 薄纱 / 动画 / 可访问性文案）集中在

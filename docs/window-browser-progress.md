@@ -2540,3 +2540,29 @@ sha256 `25af12cea07ae44aa4ed8bdf20672e270e5e3c1e139d43a03be4dc8aeb6b8e31`）与�
 bundle，直接用系统 WebKit 会因 `_WKBrowserContext` 符号缺失而崩）。390 / 767 / 900 / 1100 / 1440
 五个宽度下每个标题的断行结构与 Chromium 完全一致，绝对字宽小约 2%；唯一可见差异是全角标点（`？`
 `。`）WebKit 留完整字身、Chromium 压紧，与这轮字距改动无关。
+
+## 2026-09-22：设置页内容列改为居中（收起侧栏后右半边不再空着）
+
+用户指出"切换侧边栏的时候"内容区有一大片空白。两张截图对比后确认：两张图是**同一个窗口的两种侧栏状态**——
+图 1 侧栏展开（左侧区域 237 底色 1073 行、选中行 215），图 2 **侧栏已收起**（左侧区域已是内容卡片 248
+底色 786 行）。收起侧栏后详情区变成整窗宽 ~1115 pt，而内容列仍是 640 pt 且钉在左边，右侧留白实测
+**447 pt**；展开侧栏时也有 187 pt。
+
+对照 Apple 自己的分组表单（本机离线渲染 SwiftUI `.formStyle(.grouped)`）：854 pt 容器左右各 75 pt、
+1200 pt 容器左右各 248 pt，内容列恒为 703.5 pt——**上限 + 居中**，不贴边。
+
+改动：`DuoSettingsWindow.select(section:)` 把 `leading == pageHost.leading + 28` 换成
+`centerX == pageHost.centerX`，两侧各留 ≥28 pt、宽度仍 ≤640（`== 640` 降为 510 优先级，窄窗口自动收窄）。
+实测（生产窗口截图，2x）：900 × 680 → 左右 **28.0 / 28.5 pt**（改前 28 / 20）；1115 × 680 → **130.5 / 131.0 pt**
+（改前 28 / 187）；侧栏收起时按同一约束即为整窗居中。
+
+同时加防回归：`DuoSettingsWindow.contentColumnOffsetForDiagnostics` 给出当前分页相对详情区中心的偏移，
+`--settings-shots` 每次渲染打印一行（两档宽度、5 个分页全部 `0.0pt PASS`）。探针新增
+`WINDOWSHADE_SETTINGS_SHOTS_SIZE=1115x680`，可在非默认窗口宽度上复核（窗口本来就可自由缩放，
+只在 900 pt 宽看是看不出这个缺陷的）。
+
+验证：`build.sh --check`、`build.sh --stage`、`--settings-shots`（10 张归档图重出）、
+`scripts/check-settings-appearance.sh`（浅深亮度 0.547–0.796 全 PASS，侧栏材质 alpha 1.000）、
+`tests/run-window-browser-tests.sh`（663 项）通过；`prototype/WindowShade.app` 用同一身份
+（FVGLY6W6S4）原地重建，重新打包 `WindowShade-v1.0.14.zip`（3,736,666 字节，
+sha256 `84e7f581ae949d96caa86cc977abe14ab3c715ef0348b8c72e1c10579b21a678`）。
