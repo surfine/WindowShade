@@ -59,7 +59,7 @@ format is especially well suited to making text easy to scan and read." 行高�
 
 ### Medium · 11 pt 次要状态文字的对比度 3.98:1
 
-**问题**：`已折叠` / `正在展开` 这类状态行用 `NSColor.secondaryLabelColor`、字号 `detailSize`（默认 11 pt）。
+**问题**：`已收起` / `正在展开` 这类状态行用 `NSColor.secondaryLabelColor`、字号 `detailSize`（默认 11 pt）。
 在浅色卡片 `#FBFBFB` 上采样得到 `#7D7D7D`，对比度 **3.98:1**，低于 HIG 引用的 WCAG AA 门槛。
 `SystemAppearancePolicy` 在"提高对比度"下改的是描边宽度与选中指示，没有动文字颜色。
 

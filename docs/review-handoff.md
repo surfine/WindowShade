@@ -462,7 +462,7 @@ cd prototype && ./build.sh --stage        # 基线对照需要 worktree: git wor
 | 时序 | 悬停意图延迟 0.25 s、隐藏 0.18 s、出现 0.16 s、消失 0.11 s、选择 0.10 s、首图 0.08 s；减少动态效果全部归零 | `WindowBrowserLayoutParams`（`showDelay` 等） |
 | 材质 | 面板层：`NSGlassEffectView`（`regular`，唯一一层，未上色）；内容层：`NSVisualEffectView(.contentBackground, .withinWindow)`；纸面：`windowBackgroundColor` + 0.5/1 pt 边线；减少透明度 → 纸面 | `WindowBrowserMaterial.swift`、`WindowBrowserViews.swift` |
 | 已知待修 | 任务书要求“把控制内容设为玻璃的 `contentView`”，当前仍是背景兄弟视图（§3-G1） | `WindowBrowserMaterial.swift`（`WindowBrowserGlassBackdrop`） |
-| 状态文案 | 普通 / 已折叠 / 置顶预览 / 预览暂停 / 最小化 / 应用隐藏 / 屏外 / 正在展开 / 无画面原因 | `WindowBrowserActionPresentation.swift`（`WindowBrowserStatusPresentationFactory`） |
+| 状态文案 | 普通 / 已收起 / 置顶预览 / 预览暂停 / 最小化 / 应用隐藏 / 屏外 / 正在展开 / 无画面原因 | `WindowBrowserActionPresentation.swift`（`WindowBrowserStatusPresentationFactory`） |
 | 可访问性 | 卡片/行：label + value + help + 自定义动作；卷帘条/预览：窗口名 + 展开动作 | `WindowBrowserViews.swift`、`Overlay/PaperSurfaceStyle.swift` |
 
 ### 7.4 设计稿里不要做的事

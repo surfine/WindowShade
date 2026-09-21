@@ -104,7 +104,7 @@ enum WindowBrowserActivationVerification {
                         stillPresent: Bool) -> WindowBrowserActionOutcome {
         if targetFocused { return .completed }
         return stillPresent
-            ? .uncertain(reason: "已请求激活，但无法确认焦点到达该窗口")
+            ? .uncertain(reason: "点了，但不确定窗口是否到了最前面")
             : .targetGone
     }
 }
@@ -137,7 +137,7 @@ enum WindowBrowserActionPolicy {
             guard record.shadeState != .folded else { return .completed }
             guard record.shadeState != .restoring else { return .busy }
             guard record.capabilities.contains(.fold) else {
-                return .unsupported(reason: "这个窗口不能折叠")
+                return .unsupported(reason: "这个窗口不能收起来")
             }
             guard hasAccessibility else { return .permissionRequired(kind: .accessibility) }
         case .unfold:
@@ -146,7 +146,7 @@ enum WindowBrowserActionPolicy {
                 return record.shadeState == .restoring ? .busy : .completed
             }
             guard record.capabilities.contains(.unfold) else {
-                return .unsupported(reason: "这个窗口没有可用的恢复入口")
+                return .unsupported(reason: "只能用它自己的方式恢复")
             }
             guard hasAccessibility else { return .permissionRequired(kind: .accessibility) }
         case .pinPreview:
@@ -158,12 +158,12 @@ enum WindowBrowserActionPolicy {
             if record.shadeState == .folded {
                 // 已折叠窗口的按钮写“展开并置顶预览”，先走恢复。
                 guard record.capabilities.contains(.unfold) else {
-                    return .unsupported(reason: "折叠窗口缺少恢复入口")
+                    return .unsupported(reason: "收起的窗口找不到恢复入口")
                 }
             }
             if record.pinState == .suspended {
                 // 暂停中的置顶会话不能被悬停或新入口偷偷恢复/另建流。
-                return .unsupported(reason: "置顶预览已暂停，请先在菜单恢复")
+                return .unsupported(reason: "置顶预览已暂停，先在菜单里打开")
             }
         case .unpinPreview:
             guard record.pinState != .none else { return .completed }
@@ -172,13 +172,13 @@ enum WindowBrowserActionPolicy {
             }
         case .close:
             guard record.capabilities.contains(.close) else {
-                return .unsupported(reason: "这个窗口不提供关闭能力")
+                return .unsupported(reason: "这个窗口不能关闭")
             }
             guard hasAccessibility else { return .permissionRequired(kind: .accessibility) }
         case .minimize:
             if record.isMinimized { return .completed }
             guard record.capabilities.contains(.minimize) else {
-                return .unsupported(reason: "这个窗口不提供最小化能力")
+                return .unsupported(reason: "这个窗口不能最小化")
             }
             guard hasAccessibility else { return .permissionRequired(kind: .accessibility) }
         }
@@ -287,7 +287,7 @@ final class WindowBrowserActionCoordinator {
             allSubmissions.removeValue(forKey: queued.id)
             queued.timeoutWork?.cancel()
             if !queued.didEmitOutcome {
-                queued.completions.forEach { $0(.uncertain(reason: "请求已取消，但事务可能仍在执行")) }
+                queued.completions.forEach { $0(.uncertain(reason: "已取消，但操作可能还在进行")) }
             }
         }
     }
@@ -312,7 +312,7 @@ final class WindowBrowserActionCoordinator {
         activeByPID[pid] = next
         allSubmissions[next.id] = next
         guard let backend else {
-            finish(pid: pid, submissionID: next.id, outcome: .failed(reason: "动作后端已释放"))
+            finish(pid: pid, submissionID: next.id, outcome: .failed(reason: "操作没能完成"))
             return
         }
         backend.validate(target: next.target) { [weak self] validation in
@@ -332,7 +332,7 @@ final class WindowBrowserActionCoordinator {
             let target = submission.target
             guard let backend = self.backend else {
                 self.finish(pid: pid, submissionID: submissionID,
-                            outcome: .failed(reason: "动作后端已释放"))
+                            outcome: .failed(reason: "操作没能完成"))
                 return
             }
             backend.perform(action: action, target: target) { [weak self] outcome in
@@ -345,7 +345,7 @@ final class WindowBrowserActionCoordinator {
             finish(pid: pid, submissionID: submissionID, outcome: .targetGone)
         case .unverifiable(let reason):
             finish(pid: pid, submissionID: submissionID,
-                   outcome: .uncertain(reason: "目标无法确认：\(reason)"))
+                   outcome: .uncertain(reason: "没能确认是哪一扇窗口：\(reason)"))
         case .permissionMissing(let kind):
             finish(pid: pid, submissionID: submissionID,
                    outcome: .permissionRequired(kind: kind))
@@ -362,7 +362,7 @@ final class WindowBrowserActionCoordinator {
         // 超时只影响 UI/调用方的“等待”状态：底层同步 AX/捕获调用可能已经无法取消，
         // 仍然占据该 PID 的写额度，直到它真实返回。
         submission.completions.forEach {
-            $0(.uncertain(reason: "操作超时，底层事务可能仍在执行"))
+            $0(.uncertain(reason: "操作超时，可能还在进行"))
         }
     }
 

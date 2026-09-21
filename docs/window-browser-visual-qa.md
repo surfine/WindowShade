@@ -21,7 +21,7 @@
 | 系统玻璃浅色 | [system-glass-light.png](visual-qa/window-browser/system-glass-light.png) | 面板根视图是**唯一一层** `NSGlassEffectView`，界面挂在它的 contentView 里；卡片只用系统填充色、无描边（断言：玻璃数 = 1、内容在 contentView 内、无 `NSVisualEffectView`）。离屏截图拿不到系统合成器的折射；真实合成观感见 `visual-qa/system-appearance/liquid-glass-panel.png`（2026-09-19 按新结构重拍） |
 | 系统玻璃深色 | [system-glass-dark.png](visual-qa/window-browser/system-glass-dark.png) | 同上；深色下切换的是系统材质本身，不由本项目上色 |
 | 减少透明度 + 提高对比度 | [reduce-transparency-contrast.png](visual-qa/window-browser/reduce-transparency-contrast.png) | 不透明回退完整，选中不只靠颜色 |
-| 无图像/缺权限/折叠/最小化 | [states-without-image.png](visual-qa/window-browser/states-without-image.png) | 缺权限时卡片只留应用图标，原因与“打开‘屏幕录制’设置…”入口在页脚出现一次；已折叠/最小化不使用警告色 |
+| 无图像/缺权限/折叠/最小化 | [states-without-image.png](visual-qa/window-browser/states-without-image.png) | 缺权限时卡片只留应用图标，原因与“打开‘屏幕录制’设置…”入口在页脚出现一次；已收起/最小化不使用警告色 |
 | Dock 入口的紧凑列表 | [dock-list-many.png](visual-qa/window-browser/dock-list-many.png) | 18 个窗口时列表宽 544 pt，不占满屏幕宽度，改为滚动 |
 
 环境：macOS 27.0（26A428）、Xcode 26.6、macOS SDK 26.5、2x 缩放。
