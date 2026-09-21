@@ -1,6 +1,6 @@
 {
   "origin": "https://windowshade.pages.dev",
-  "deployment": "https://70d1449c.windowshade.pages.dev",
+  "deployment": "https://6044efba.windowshade.pages.dev",
   "project": "windowshade",
   "branch": "main",
   "files": {
@@ -9,7 +9,7 @@
     "_redirects": "10738b7bf0dda342fb556e9d4a5c66e9f3ffaebc75e19aa0982ab168b72695ec",
     "app.js": "87da7b6bd85e7c2c04ce37c60b44883c171a1ac009a6f640d16d76e18aa1692c",
     "en/history/index.html": "152ab0b53f6c275314e9430566fff6667c6d529399c081d210f8cef48c7f7110",
-    "en/index.html": "3b666a3a072c8a815a5439e157770bbd86ff4e29db1cff6241bd8347f65105f7",
+    "en/index.html": "ebd971f2ab6eac0539bb5df3a3bbf5f0de57ec0f19524c2b4a649da8183d174d",
     "era.css": "4f3f085b220120267e1bc518a3a7c81d40aced5c695c60d671e64f51914fc0e7",
     "fonts/Asap-OFL.txt": "79d8634241e736e967a1539a9c766ea8e68f6d2df9f5d0edba5a4c88b1b5d8a0",
     "fonts/Asap-Variable.woff2": "3f230328a40ee9a05fe099dfb6b403a4c569aaea6690e5d483d5715ed817498f",
@@ -18,8 +18,8 @@
     "history.css": "5afc12002cf2e24bcf71ebd02dda39ceba3f14034b7cff27fd2479bc2e7e3314",
     "history.js": "960eae11a8e944bf2315a648402a90aca8501cf3ba5e8f4c4fc238096cf1f075",
     "history/index.html": "7deae6f2428220463cfa8d8b8e4bd2eb07215b5fc937f23f216ddce92c1113ad",
-    "index.html": "7313f7e31baac37ed12de79159bdaf50b5826a52568d215d270e988ef1062e28",
-    "media/bridge-windows.webp": "a5ee1ab2549da825d8a0f6794bf2d377bbf49015f856187462f970feea00f2c4",
+    "index.html": "8e65d8fea4f2882a86395fa5043463dba027b81168c4376e70a6ebe80e2ea626",
+    "media/bridge-windows.webp": "18da52da0c7124b7df21cf5ee4627fe40e166fb1a46e0908f8d58a9807c8be5a",
     "media/duo-poster.webp": "5b136a7371a8b427d891750f3b5329e467514de7d0ad96f4948082f79db9d398",
     "media/duo.mp4": "df8de4fa8b5edfba635d7528fdc469cd2528dc9251634de6adac2d54f551edbc",
     "media/era/aqua-lamp-close.png": "aec074a2c6ef5c740daec7d76ac5518552d837b6ce3d165fd0693af7d8a9b32f",
@@ -33,7 +33,7 @@
     "media/settings.webp": "898a9cc8afeb3a25ed0cb37c64eb504cabd08b3c06318298dcf169a1c6024c0b",
     "robots.txt": "08e4b5b0e500c11923762a8f07ed8cbfa95c129d781822f156f4face4e361e52",
     "sitemap.xml": "2adb63b2e068b97040b55c8c160ecbfb9412401ffa8241bd32183de39e269085",
-    "style.css": "d3f9cedc33f5cf632dec54e8c561962ffcdeac3ac78edab36dbf318debefa1d4"
+    "style.css": "149112f69d3f09c73d9c9de31d62aa9331b5eba33a811d8a1f4ca4c5bff8665f"
   },
-  "recordedAt": "2026-09-19T12:39:20.073Z"
+  "recordedAt": "2026-09-21T19:29:56.973Z"
 }
