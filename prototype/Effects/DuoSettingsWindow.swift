@@ -170,19 +170,18 @@ final class DuoSettingsWindow: NSWindowController, NSWindowDelegate, NSTableView
     // Give the controller the requested initial frame before NSWindow adopts it.
     splitController.view.translatesAutoresizingMaskIntoConstraints = false
     splitController.view.setFrameSize(NSSize(width: 900, height: 680))
-    // AppKit adds the toolbar's extra height to the content fitting minimum
-    // and to the explicit minSize setter,
-    // even for a full-size content view. Measure it rather than assuming a
-    // toolbar height, so the outer frame can actually resize down to 580pt.
+    window.contentViewController = splitController
+    // AppKit adds the toolbar's extra height to the window's own minimum, even for a full-size
+    // content view, so measure the chrome instead of assuming a toolbar height. The minimum is
+    // expressed as `contentMinSize`, never as a required width/height constraint on the split
+    // view: a required constraint there makes AppKit satisfy it by growing the whole window
+    // whenever the sidebar expands, so toggling the sidebar pushed the window from 900 to
+    // 1115 pt (one sidebar wider). `contentMinSize` only limits how small a person can drag the
+    // window; AppKit stays free to redistribute sidebar and detail inside it.
     let titlebarHeight = NSWindow.frameRect(forContentRect: .zero,
       styleMask: window.styleMask.subtracting(.fullSizeContentView)).height
     let toolbarHeight = max(0, window.frame.height - window.contentLayoutRect.height - titlebarHeight)
-    NSLayoutConstraint.activate([
-      splitController.view.widthAnchor.constraint(greaterThanOrEqualToConstant: 820),
-      splitController.view.heightAnchor.constraint(greaterThanOrEqualToConstant: 580 - toolbarHeight),
-    ])
-    window.contentViewController = splitController
-    window.minSize = NSSize(width: 820, height: 580 - toolbarHeight)
+    window.contentMinSize = NSSize(width: 820, height: max(320, 580 - titlebarHeight - toolbarHeight))
     toolbar.isVisible = true
     splitController.splitView.setPosition(214, ofDividerAt: 0)
 
@@ -393,6 +392,17 @@ final class DuoSettingsWindow: NSWindowController, NSWindowDelegate, NSTableView
     guard let pageHost, let page = pageHost.subviews.first else { return nil }
     pageHost.layoutSubtreeIfNeeded()
     return page.frame.midX - pageHost.bounds.midX
+  }
+
+  /// 诊断：收起 / 展开侧栏（截图探针用它验证"切换侧栏不改变窗口尺寸"）。
+  /// 收起侧栏只是把宽度还给详情区，不应该让窗口本身变大或变小。
+  var sidebarCollapsedForDiagnostics: Bool {
+    get { splitController.splitViewItems.first?.isCollapsed ?? false }
+    set {
+      guard let item = splitController.splitViewItems.first, item.isCollapsed != newValue else { return }
+      item.isCollapsed = newValue
+      window?.layoutIfNeeded()
+    }
   }
 
   func refreshSettings() {
