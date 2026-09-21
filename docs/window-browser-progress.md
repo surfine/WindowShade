@@ -2591,3 +2591,16 @@ sha256 `84e7f581ae949d96caa86cc977abe14ab3c715ef0348b8c72e1c10579b21a678`）。
 验证：`build.sh --check`、`--stage`、`--settings-shots`（归档图重出）、663 项窗口浏览器断言、
 `scripts/check-settings-appearance.sh` 通过；`prototype/WindowShade.app` 同身份原地重建并重新打包
 `WindowShade-v1.0.14.zip`（sha256 `b30a5922308217306ad944c539d59c4f56eabbceac8adc4e1ceb8c74de2f39f8`）。
+
+## 2026-09-22：1.0.14 第五次重新发布（同版本号）与官网部署
+
+GitHub：tag `v1.0.14` 从 `e744555` 移到 `c62c4ba`（本轮全部改动所在的提交），Release 说明替换为
+`docs/releases/v1.0.14.md` 最新版，附件 `WindowShade-v1.0.14.zip` 与校验文件 `--clobber` 覆盖。
+端到端复核：从 Release 下载回来重算 `sha256 b30a5922308217306ad944c539d59c4f56eabbceac8adc4e1ceb8c74de2f39f8`
+（3,737,534 字节），与本地构建逐字节一致，`.sha256` 自校验 OK；Release 仍是最新，非草稿/预发布。
+
+官网：`npm run deploy` 部署到 `https://6044efba.windowshade.pages.dev`，上传 4 个文件（其余 24 个未变，
+与本地 diff 预测一致）：`index.html`、`en/index.html`、`style.css`、`media/bridge-windows.webp`。
+复核：28 个可部署文件从部署域名逐个下载重算哈希，与本地构建**全部一致**（`_headers` / `_redirects`
+按 Pages 约定由平台消费，不参与比对）；生产域名 `https://windowshade.pages.dev` 的 `index.html` 与
+`style.css` 哈希也已等于新构建（`8e65d8fe…` / `149112f6…`）。`site/deployment.json` 更新为本次记录。
