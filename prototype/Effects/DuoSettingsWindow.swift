@@ -326,10 +326,15 @@ final class DuoSettingsWindow: NSWindowController, NSWindowDelegate, NSTableView
     page.translatesAutoresizingMaskIntoConstraints = false
     pageHost.addSubview(page)
     // 内容列固定 640pt 上限：窗口再宽也不让一行文字横跨到远端的开关。
-    let preferredWidth = page.trailingAnchor.constraint(equalTo: pageHost.trailingAnchor, constant: -28)
+    // 但在详情区里**居中**，不贴左边——收起侧栏（详情区变成整窗宽）或把窗口拉宽之后，
+    // 多出来的宽度应当均分到两侧。Apple 自己的分组表单就是这么摆的：本机实测
+    // 854pt 容器左右各 75pt、1200pt 容器左右各 248pt，内容列本身恒为 703.5pt。
+    // 贴左边会让收起侧栏后的窗口右半边整片空着（640pt 内容 + 447pt 空白）。
+    let preferredWidth = page.widthAnchor.constraint(equalToConstant: settingsContentWidth)
     preferredWidth.priority = .dragThatCannotResizeWindow
     activePageConstraints = [
-      page.leadingAnchor.constraint(equalTo: pageHost.leadingAnchor, constant: 28),
+      page.centerXAnchor.constraint(equalTo: pageHost.centerXAnchor),
+      page.leadingAnchor.constraint(greaterThanOrEqualTo: pageHost.leadingAnchor, constant: 28),
       page.trailingAnchor.constraint(lessThanOrEqualTo: pageHost.trailingAnchor, constant: -28),
       preferredWidth,
       page.widthAnchor.constraint(lessThanOrEqualToConstant: settingsContentWidth),
@@ -379,6 +384,15 @@ final class DuoSettingsWindow: NSWindowController, NSWindowDelegate, NSTableView
     pageScroll.contentView.scroll(to: .zero)
     pageScroll.contentView.bounds.origin = .zero
     pageScroll.reflectScrolledClipView(pageScroll.contentView)
+  }
+
+  /// 诊断：当前分页的内容列中心相对详情区中心的偏移（0 表示居中）。
+  /// 收起侧栏或把窗口拉宽之后，内容列必须仍在详情区里居中——贴左会在右半边留下
+  /// 一大片空白（截图探针每次都会打这一行，见 `SettingsShotProbe`）。
+  var contentColumnOffsetForDiagnostics: CGFloat? {
+    guard let pageHost, let page = pageHost.subviews.first else { return nil }
+    pageHost.layoutSubtreeIfNeeded()
+    return page.frame.midX - pageHost.bounds.midX
   }
 
   func refreshSettings() {

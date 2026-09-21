@@ -2,6 +2,7 @@
 cacheDisplay 离屏渲染，那种情况下侧栏区域是透明的）
 macOS: Version 27.0 (Build 26A428)
 scale: 2x
+截图尺寸: 900x680
 settings-light-效果.png: 900x680 section=效果
 settings-light-卷帘.png: 900x680 section=卷帘
 settings-light-窗口浏览.png: 900x680 section=窗口浏览

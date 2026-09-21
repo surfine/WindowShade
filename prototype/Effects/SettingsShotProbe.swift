@@ -21,12 +21,14 @@ final class SettingsShotProbe {
     func run(completion: @escaping () -> Void) {
         try? FileManager.default.createDirectory(at: outputDirectory,
                                                 withIntermediateDirectories: true)
+        let shotSize = Self.requestedShotSize()
         let appearances: [(String, NSAppearance.Name)] = [("light", .aqua), ("dark", .darkAqua)]
         var manifest = """
         设置窗口页面截图（生产设置窗口整窗截图，含系统侧栏材质；拿不到整窗结果时才退回
         cacheDisplay 离屏渲染，那种情况下侧栏区域是透明的）
         macOS: \(ProcessInfo.processInfo.operatingSystemVersionString)
         scale: \(Int(NSScreen.main?.backingScaleFactor ?? 1))x
+        截图尺寸: \(Int(shotSize.width))x\(Int(shotSize.height))
 
         """
         for (appearanceName, appearance) in appearances {
@@ -35,10 +37,15 @@ final class SettingsShotProbe {
                 owner.showDuoSettings(section: section)
                 RunLoop.current.run(until: Date().addingTimeInterval(0.45))
                 guard let window = owner.duoController.settingsWindow?.window else { continue }
-                window.setContentSize(NSSize(width: 900, height: 680))
+                window.setContentSize(shotSize)
                 window.setFrameOrigin(NSPoint(x: window.frame.origin.x,
                                               y: window.frame.origin.y))
                 RunLoop.current.run(until: Date().addingTimeInterval(0.25))
+                if appearanceName == "light", let offset = owner.duoController.settingsWindow?
+                    .contentColumnOffsetForDiagnostics {
+                    let verdict = abs(offset) < 0.5 ? "PASS" : "FAIL"
+                    print("settings-shots: 内容列居中偏移 \(String(format: "%.1f", offset))pt \(verdict)")
+                }
                 let theme = window.contentView?.superview ?? window.contentView
                 guard let theme,
                       let image = capture(window: window) ?? render(view: theme) else { continue }
@@ -55,6 +62,21 @@ final class SettingsShotProbe {
                             atomically: true, encoding: .utf8)
         owner.duoController.settingsWindow?.close()
         completion()
+    }
+
+    /// 截图尺寸默认 900 × 680（窗口默认尺寸）。设置 `WINDOWSHADE_SETTINGS_SHOTS_SIZE=1115x680`
+    /// 可以把同一批页面渲染成别的窗口尺寸——窗口可自由缩放，内容列的左右留白是否对称、
+    /// 收起侧栏后的宽详情区是否还留大片空白，都要在非默认宽度上看过才算数。
+    private static func requestedShotSize() -> NSSize {
+        let fallback = NSSize(width: 900, height: 680)
+        guard let raw = ProcessInfo.processInfo.environment["WINDOWSHADE_SETTINGS_SHOTS_SIZE"] else {
+            return fallback
+        }
+        let parts = raw.lowercased().split(separator: "x")
+        guard parts.count == 2,
+              let width = Double(parts[0]), let height = Double(parts[1]),
+              width >= 640, height >= 400 else { return fallback }
+        return NSSize(width: width, height: height)
     }
 
     private func render(view: NSView) -> CGImage? {
