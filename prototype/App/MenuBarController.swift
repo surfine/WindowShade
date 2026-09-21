@@ -88,7 +88,7 @@ extension AppDelegate {
     }
 
     let doubleClick = NSMenuItem(
-      title: "双击标题栏以折叠", action: #selector(toggleTitlebarDoubleClick(_:)), keyEquivalent: "")
+      title: "双击标题栏收起窗口", action: #selector(toggleTitlebarDoubleClick(_:)), keyEquivalent: "")
     doubleClick.state = menuState.titlebarDoubleClickEnabled ? .on : .off
     statusMenu.addItem(doubleClick)
 
@@ -112,7 +112,7 @@ extension AppDelegate {
 
     if !menuState.foldedWindows.isEmpty {
       statusMenu.addItem(.separator())
-      let header = NSMenuItem(title: "已折叠窗口", action: nil, keyEquivalent: "")
+      let header = NSMenuItem(title: "已收起的窗口", action: nil, keyEquivalent: "")
       header.isEnabled = false
       statusMenu.addItem(header)
       // 前 9 个内联并带 ⌃⌘1…9；其余进“更多已折叠窗口”子菜单（同样的动作与图标）。
@@ -121,7 +121,7 @@ extension AppDelegate {
         statusMenu.addItem(foldedWindowMenuItem(entry, index: index))
       }
       if !sections.overflow.isEmpty {
-        let more = NSMenuItem(title: "更多已折叠窗口（\(sections.overflow.count)）",
+        let more = NSMenuItem(title: "更多收起的窗口（\(sections.overflow.count)）",
                               action: nil, keyEquivalent: "")
         let submenu = NSMenu()
         for entry in sections.overflow {
@@ -152,7 +152,7 @@ extension AppDelegate {
     guard !entries.isEmpty else { return }
 
     statusMenu.addItem(.separator())
-    let header = NSMenuItem(title: "已置顶窗口（点击取消）", action: nil, keyEquivalent: "")
+    let header = NSMenuItem(title: "已置顶的窗口（点一下取消）", action: nil, keyEquivalent: "")
     header.isEnabled = false
     statusMenu.addItem(header)
 

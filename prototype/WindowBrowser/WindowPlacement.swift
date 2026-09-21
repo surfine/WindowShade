@@ -28,7 +28,7 @@ enum WindowPlacementAction: String, CaseIterable {
         case .bottomLeft: return "左下角"
         case .bottomRight: return "右下角"
         case .center: return "居中"
-        case .fill: return "填满可用区域"
+        case .fill: return "铺满屏幕"
         case .moveToDisplay: return "移到另一显示器"
         case .undoLast: return "撤销上次排布"
         }
@@ -284,7 +284,7 @@ final class WindowPlacementController {
             }
             backend.writeFrame(plan.targetFrameAX, to: plan.target) { wrote in
                 guard wrote else {
-                    completion(.failed(reason: "系统拒绝了移动或调整尺寸"))
+                    completion(.failed(reason: "系统不允许移动这个窗口"))
                     return
                 }
                 _ = self.scheduler.schedule(after: self.verificationDelay) { [weak self] in
@@ -296,7 +296,7 @@ final class WindowPlacementController {
                         }
                         guard WindowPlacementPolicy.matches(observed, plan: plan) else {
                             completion(.uncertain(
-                                reason: "窗口未达到目标位置（可能受最小尺寸限制）"))
+                                reason: "没能移到目标位置（窗口可能有最小尺寸限制）"))
                             return
                         }
                         let record = WindowPlacementUndoRecord(

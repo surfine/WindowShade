@@ -119,11 +119,11 @@ enum WindowBrowserActionPresentation {
     static func title(for action: WindowBrowserAction, record: WindowRecord) -> String {
         switch action {
         case .activate:
-            return record.shadeState == .folded ? "展开" : "激活"
+            return record.shadeState == .folded ? "展开窗口" : "显示窗口"
         case .fold:
-            return "折叠"
+            return "收起窗口"
         case .unfold:
-            return "展开"
+            return "展开窗口"
         case .pinPreview:
             return record.shadeState == .folded ? "展开并置顶预览" : "置顶预览"
         case .unpinPreview:
@@ -184,16 +184,16 @@ enum WindowBrowserStatusPresentationFactory {
                 isWarning: false, isSnapshot: false)
         case (.folded, .running, _):
             return WindowBrowserStatusPresentation(
-                text: "已折叠 · 置顶预览", symbolName: "curtains.closed",
+                text: "已收起 · 置顶预览", symbolName: "curtains.closed",
                 isWarning: false, isSnapshot: false)
         case (.folded, .suspended, _):
             return WindowBrowserStatusPresentation(
-                text: "已折叠 · 预览已暂停", symbolName: "curtains.closed",
+                text: "已收起 · 预览已暂停", symbolName: "curtains.closed",
                 isWarning: false, isSnapshot: false)
         case (.folded, _, _):
             // 已折叠且物理离屏是正常状态，不使用异常警告。
             return WindowBrowserStatusPresentation(
-                text: "已折叠", symbolName: "curtains.closed",
+                text: "已收起", symbolName: "curtains.closed",
                 isWarning: false, isSnapshot: false)
         case (_, .running, _):
             return WindowBrowserStatusPresentation(

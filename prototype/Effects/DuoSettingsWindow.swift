@@ -621,9 +621,9 @@ final class DuoSettingsWindow: NSWindowController, NSWindowDelegate, NSTableView
     stack.addArrangedSubview(automaticSection)
     stack.setCustomSpacing(6, after: automaticSection)
     let automatic = makeSettingsCard([
-      makeToggleRow(title: "桌面开合", subtitle: "设备开合时让整个桌面平滑过渡。",
+      makeToggleRow(title: "桌面开合", subtitle: "合上或打开盖子时，桌面跟着动一下。",
                     control: desktop, action: #selector(changed)),
-      makeToggleRow(title: "窗口折叠动画", subtitle: "折叠或展开窗口时播放卷帘动画。",
+      makeToggleRow(title: "收起窗口时的动画", subtitle: "收起或展开窗口时播放动画。",
                     control: windows, action: #selector(changed)),
       makeActionRow(title: "暂停效果", subtitle: "临时停用，不改动上面的开关。", button: pause),
     ])
@@ -678,9 +678,9 @@ final class DuoSettingsWindow: NSWindowController, NSWindowDelegate, NSTableView
     let previewRows = [
       rendererView,
       rangeLabels,
-      makeControlRow(title: "预览对象", subtitle: "查看桌面或单个窗口的卷帘方式。", control: mode),
-      makeControlRow(title: "预览样式", subtitle: "选择动态效果的视觉材质。", control: preset),
-      makeToggleRow(title: "实时预览", subtitle: "主动开启后才会使用屏幕录制权限。",
+      makeControlRow(title: "预览对象", subtitle: "看看桌面或单个窗口的效果。", control: mode),
+      makeControlRow(title: "预览样式", subtitle: "选择效果的观感。", control: preset),
+      makeToggleRow(title: "实时预览", subtitle: "打开后才会用到屏幕录制权限。",
                     control: live, action: #selector(liveChanged)),
       makeActionRow(title: "屏幕录制权限", subtitle: "实时预览需要此权限。", button: permission),
     ].compactMap { $0 }
@@ -695,7 +695,7 @@ final class DuoSettingsWindow: NSWindowController, NSWindowDelegate, NSTableView
     let experimental = makeSettingsCard([
       makeToggleRow(
         title: "随设备倾斜",
-        subtitle: "使用 Apple Silicon 加速度计添加轻微空间偏移；仅在桌面效果运行时生效。",
+        subtitle: "用机身倾斜让桌面轻微偏移。只在桌面效果运行时生效。",
         control: motion,
         action: #selector(changed)),
     ])
@@ -703,7 +703,7 @@ final class DuoSettingsWindow: NSWindowController, NSWindowDelegate, NSTableView
     experimental.widthAnchor.constraint(equalTo: stack.widthAnchor).isActive = true
     stack.setCustomSpacing(18, after: experimental)
 
-    let note = NSTextField(wrappingLabelWithString: "实时预览默认关闭。按 Esc、点击或开始输入可撤去桌面效果。")
+    let note = NSTextField(wrappingLabelWithString: "实时预览默认关闭。按 Esc、点一下或开始打字都能撤掉。")
     note.font = SystemAppearancePolicy.font(relativeToBody: -1)
     note.textColor = .secondaryLabelColor
     note.maximumNumberOfLines = 2
@@ -731,7 +731,7 @@ final class DuoSettingsWindow: NSWindowController, NSWindowDelegate, NSTableView
       stack.bottomAnchor.constraint(lessThanOrEqualTo: root.bottomAnchor),
     ])
     let header = makePageHeader(
-      title: "高级", subtitle: "调整触发行为、校准传感器和恢复动态效果默认值。",
+      title: "高级", subtitle: "调整触发角度、校准传感器，或恢复默认值。",
       symbolName: "slider.horizontal.3")
     stack.addArrangedSubview(header)
     stack.setCustomSpacing(16, after: header)
@@ -743,7 +743,7 @@ final class DuoSettingsWindow: NSWindowController, NSWindowDelegate, NSTableView
     trigger.action = #selector(changed)
     trigger.isContinuous = true
     trigger.setAccessibilityLabel("触发角度")
-    trigger.toolTip = "达到此角度后触发动态效果"
+    trigger.toolTip = "盖子合到这个角度就开始动。"
     angleLabel.font = .monospacedDigitSystemFont(ofSize: 13, weight: .medium)
     angleLabel.alignment = .right
     angleLabel.widthAnchor.constraint(equalToConstant: 52).isActive = true
@@ -751,7 +751,7 @@ final class DuoSettingsWindow: NSWindowController, NSWindowDelegate, NSTableView
 
     let triggerTitle = NSTextField(labelWithString: "触发角度")
     triggerTitle.font = SystemAppearancePolicy.font(relativeToBody: 0)
-    let triggerSubtitle = NSTextField(wrappingLabelWithString: "达到此角度后开始动态效果。")
+    let triggerSubtitle = NSTextField(wrappingLabelWithString: "盖子合到这个角度就开始动。")
     triggerSubtitle.font = SystemAppearancePolicy.font(relativeToBody: -2)
     triggerSubtitle.textColor = .secondaryLabelColor
     triggerSubtitle.maximumNumberOfLines = 2
@@ -811,15 +811,15 @@ final class DuoSettingsWindow: NSWindowController, NSWindowDelegate, NSTableView
     let actionCard = makeSettingsCard([
       makeActionRow(
         title: "校准触发角度",
-        subtitle: "使用当前传感器读数作为触发角度。",
+        subtitle: "把当前读数设为触发角度。",
         button: calibration),
       makeActionRow(
         title: "恢复动态效果默认值",
-        subtitle: "将桌面、窗口和样式设置恢复为默认值。",
+        subtitle: "把桌面、窗口和样式都恢复默认。",
         button: reset),
       makeActionRow(
         title: "诊断日志",
-        subtitle: "打开 /tmp/windowshade.log 以排查问题。",
+        subtitle: "打开 /tmp/windowshade.log 排查问题。",
         button: diagnostics),
     ])
     stack.addArrangedSubview(actionCard)
