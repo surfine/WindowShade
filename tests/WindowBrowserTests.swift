@@ -450,7 +450,7 @@ enum WindowBrowserTests {
         var uncertain: WindowBrowserActionOutcome?
         coordinator.submit(action: .close, target: targetB) { uncertain = $0 }
         scheduler.runAsync()
-        expect(uncertain == .uncertain(reason: "目标无法确认：PID 复用"),
+        expect(uncertain == .uncertain(reason: "没能确认是哪一扇窗口：PID 复用"),
                "unverifiable target must be refused without performing an action")
         expect(backend.performed.count == 2, "refused action must not reach the backend")
 
@@ -475,7 +475,7 @@ enum WindowBrowserTests {
         timeoutCoordinator.submit(action: .fold, target: targetA) { timedOut = $0 }
         timeoutScheduler.runAsync()
         timeoutScheduler.advance(6.0)
-        expect(timedOut == .uncertain(reason: "操作超时，底层事务可能仍在执行"),
+        expect(timedOut == .uncertain(reason: "操作超时，可能还在进行"),
                "timeout reports uncertain without freeing the slot")
         expect(timeoutCoordinator.isBusy(windowKey: targetA),
                "timed-out transaction still holds the per-PID write slot")
@@ -713,7 +713,7 @@ enum WindowBrowserTests {
         var suspended = base
         suspended.pinState = .suspended
         expect(preflight(.pinPreview, suspended)
-               == .unsupported(reason: "置顶预览已暂停，请先在菜单恢复"),
+               == .unsupported(reason: "置顶预览已暂停，先在菜单里打开"),
                "a suspended pinned session is never resumed by the new entry")
 
         expect(preflight(.unfold, base) == .completed,
@@ -730,7 +730,7 @@ enum WindowBrowserTests {
         var noUnfold = folded
         noUnfold.capabilities = [.activate]
         expect(preflight(.unfold, noUnfold)
-               == .unsupported(reason: "这个窗口没有可用的恢复入口"),
+               == .unsupported(reason: "只能用它自己的方式恢复"),
                "unfold without a restore entry is refused")
 
         var restoring = base
@@ -741,7 +741,7 @@ enum WindowBrowserTests {
         var noMinimize = base
         noMinimize.capabilities = [.activate]
         expect(preflight(.minimize, noMinimize)
-               == .unsupported(reason: "这个窗口不提供最小化能力"),
+               == .unsupported(reason: "这个窗口不能最小化"),
                "minimize without capability is refused")
         var minimized = base
         minimized.isMinimized = true
@@ -1311,7 +1311,7 @@ enum WindowBrowserTests {
         expect(card.configureCount == configureCountBefore + 1,
                "a changed record reconfigures the card")
         let accessibilityActions = card.accessibilityCustomActions() ?? []
-        expect(accessibilityActions.contains { $0.name == "折叠" },
+        expect(accessibilityActions.contains { $0.name == "收起窗口" },
                "cards expose the shared action names to VoiceOver")
 
         // 列表行：图标、标题、状态与共享动作，不重复占用两颗固定文字按钮。
@@ -1360,7 +1360,7 @@ enum WindowBrowserTests {
         foldedRecord.systemVisibility = .offScreen
         let foldedStatus = WindowBrowserStatusPresentationFactory.make(record: foldedRecord,
                                                                       hasSnapshot: false)
-        expect(foldedStatus.text == "已折叠" && !foldedStatus.isWarning,
+        expect(foldedStatus.text == "已收起" && !foldedStatus.isWarning,
                "a folded off-screen window is a normal state, not a warning")
 
         // 风格切换：点击分段控件立即重排，列表不重建整棵网格视图树。
@@ -2423,7 +2423,7 @@ enum WindowBrowserTests {
         folded.capabilities = [.activate, .unfold, .close, .minimize]
         let foldedStatus = WindowBrowserStatusPresentationFactory.make(record: folded,
                                                                       hasSnapshot: false)
-        expect(foldedStatus.text == "已折叠" && !foldedStatus.isWarning,
+        expect(foldedStatus.text == "已收起" && !foldedStatus.isWarning,
                "T50: a folded, physically off-screen window is not an error state")
         expect(foldedStatus.symbolName != nil,
                "the folded state has a symbolic representation, not an emoji")
@@ -3348,7 +3348,7 @@ enum WindowBrowserTests {
         let uncertain = WindowBrowserActivationVerification.outcome(targetFocused: false,
                                                                     stillPresent: true)
         if case .uncertain(let reason) = uncertain {
-            expect(reason.contains("无法确认"), "an unfocused but present target is uncertain")
+            expect(reason.contains("不确定窗口是否到了最前面"), "an unfocused but present target is uncertain")
         } else {
             expect(false, "presence alone must not be reported as success")
         }

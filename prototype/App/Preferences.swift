@@ -129,10 +129,10 @@ extension AppDelegate {
     func makeShadeSettingsPage() -> NSView {
         let (root, stack) = makeSettingsPageRoot()
         stack.addArrangedSubview(makeSettingsHeader(
-            title: "卷帘", subtitle: "设置窗口折叠、外观和反馈方式。", symbolName: "rectangle.compress.vertical"))
+            title: "卷帘", subtitle: "设置怎么收起窗口、收起后什么样、要不要提示音。", symbolName: "rectangle.compress.vertical"))
 
         let trigger = makeUnifiedSettingsCard([
-            makeUnifiedToggleRow(name: "双击标题栏以折叠", subtitle: titlebarDoubleClickPreferenceSubtitle(),
+            makeUnifiedToggleRow(name: "双击标题栏收起窗口", subtitle: titlebarDoubleClickPreferenceSubtitle(),
                                  isOn: titlebarDoubleClickEnabled, action: #selector(prefToggleTitlebarDoubleClick(_:))),
         ])
         stack.addArrangedSubview(makePrefGroupLabel("触发"))
@@ -140,17 +140,17 @@ extension AppDelegate {
         trigger.widthAnchor.constraint(equalTo: stack.widthAnchor).isActive = true
         stack.setCustomSpacing(18, after: trigger)
 
-        let appearanceSeg = NSSegmentedControl(labels: ["原貌卷帘", "标准标题栏"],
+        let appearanceSeg = NSSegmentedControl(labels: ["跟原来一样", "统一标题栏"],
                                                 trackingMode: .selectOne,
                                                 target: self,
                                                 action: #selector(prefSelectAppearanceSegment(_:)))
         appearanceSeg.selectedSegment = appearanceMode == .proxyTitleBar ? 1 : 0
         stack.addArrangedSubview(makePrefGroupLabel("外观"))
         let appearance = makeUnifiedSettingsCard([
-            makeUnifiedControlRow(name: "卷帘样式", subtitle: "标准标题栏带原生红绿灯与材质", control: appearanceSeg),
-            makeUnifiedToggleRow(name: "卷帘条浮动于上方", subtitle: "折叠后的标题栏保持在其他窗口之上",
+            makeUnifiedControlRow(name: "收起后的样子", subtitle: "跟原来一样，或换成统一的标题栏", control: appearanceSeg),
+            makeUnifiedToggleRow(name: "浮在其他窗口上面", subtitle: "收起的窗口也不会被别的窗口挡住",
                                  isOn: floatingOnTop, action: #selector(prefToggleFloating(_:))),
-            makeUnifiedToggleRow(name: "卷帘条半透明", subtitle: "略微降低卷帘条不透明度",
+            makeUnifiedToggleRow(name: "卷帘条半透明", subtitle: "让它更透一些，能看到后面的内容",
                                  isOn: translucent, action: #selector(prefToggleTranslucent(_:))),
         ])
         stack.addArrangedSubview(appearance)
@@ -159,9 +159,9 @@ extension AppDelegate {
 
         stack.addArrangedSubview(makePrefGroupLabel("声音"))
         let sound = makeUnifiedSettingsCard([
-            makeUnifiedToggleRow(name: "启用折叠 / 展开音效", subtitle: nil,
+            makeUnifiedToggleRow(name: "收起和展开时播放音效", subtitle: nil,
                                  isOn: soundEnabled, action: #selector(prefToggleSound(_:))),
-            makeUnifiedControlRow(name: "折叠音效", subtitle: nil,
+            makeUnifiedControlRow(name: "收起音效", subtitle: nil,
                                   control: makeSoundPopup(selected: foldSoundName, action: #selector(prefSelectFoldSound(_:)))),
             makeUnifiedControlRow(name: "展开音效", subtitle: nil,
                                   control: makeSoundPopup(selected: unfoldSoundName, action: #selector(prefSelectUnfoldSound(_:)))),
@@ -178,10 +178,10 @@ extension AppDelegate {
         stack.addArrangedSubview(makePrefGroupLabel("权限"))
         let permissions = makeUnifiedSettingsCard([
             makeUnifiedPermissionRow(symbol: "accessibility", name: "辅助功能",
-                                     subtitle: "读取、移动与恢复窗口",
+                                     subtitle: "找到、移动和恢复窗口",
                                      granted: hasAccessibilityPermission(), action: #selector(openAccessibilitySettingsAction)),
             makeUnifiedPermissionRow(symbol: "rectangle.inset.filled.and.person.filled",
-                                     name: "屏幕录制", subtitle: "截取真实标题栏与实时预览",
+                                     name: "屏幕录制", subtitle: "截取窗口画面做预览",
                                      granted: hasScreenRecordingPermission(), action: #selector(openScreenRecordingSettingsAction)),
         ], separatorInset: 46)
         stack.addArrangedSubview(permissions)
@@ -213,7 +213,7 @@ extension AppDelegate {
         }
 
         let general = makePrefCard([
-            makePrefToggleRow(name: "双击标题栏以折叠", subtitle: titlebarDoubleClickPreferenceSubtitle(),
+            makePrefToggleRow(name: "双击标题栏收起窗口", subtitle: titlebarDoubleClickPreferenceSubtitle(),
                               isOn: titlebarDoubleClickEnabled, action: #selector(prefToggleTitlebarDoubleClick(_:))),
             makePrefToggleRow(name: "卷帘条浮动于上方", subtitle: "折叠后的标题栏保持在其他窗口之上",
                               isOn: floatingOnTop, action: #selector(prefToggleFloating(_:))),
@@ -224,29 +224,29 @@ extension AppDelegate {
         ])
         addGroup("通用", general)
 
-        let appearanceSeg = NSSegmentedControl(labels: ["原貌卷帘", "标准标题栏"],
+        let appearanceSeg = NSSegmentedControl(labels: ["跟原来一样", "统一标题栏"],
                                                trackingMode: .selectOne,
                                                target: self,
                                                action: #selector(prefSelectAppearanceSegment(_:)))
         appearanceSeg.selectedSegment = appearanceMode == .proxyTitleBar ? 1 : 0
         appearanceSeg.sizeToFit()
         addGroup("外观", makePrefCard([
-            makePrefControlRow(name: "卷帘样式", subtitle: "标准标题栏带原生红绿灯与材质", control: appearanceSeg),
+            makePrefControlRow(name: "收起后的样子", subtitle: "跟原来一样，或换成统一的标题栏", control: appearanceSeg),
         ]))
 
         addGroup("声音", makePrefCard([
-            makePrefToggleRow(name: "启用折叠 / 展开音效", subtitle: nil,
+            makePrefToggleRow(name: "收起和展开时播放音效", subtitle: nil,
                               isOn: soundEnabled, action: #selector(prefToggleSound(_:))),
-            makePrefControlRow(name: "折叠音效", subtitle: nil,
+            makePrefControlRow(name: "收起音效", subtitle: nil,
                                control: makeSoundPopup(selected: foldSoundName, action: #selector(prefSelectFoldSound(_:)))),
             makePrefControlRow(name: "展开音效", subtitle: nil,
                                control: makeSoundPopup(selected: unfoldSoundName, action: #selector(prefSelectUnfoldSound(_:)))),
         ]))
 
         addGroup("权限", makePrefCard([
-            makePermissionRow(kind: .preferences, width: prefCardWidth, symbol: "accessibility", name: "辅助功能", subtitle: "读取、移动与恢复窗口",
+            makePermissionRow(kind: .preferences, width: prefCardWidth, symbol: "accessibility", name: "辅助功能", subtitle: "找到、移动和恢复窗口",
                               granted: hasAccessibilityPermission(), action: #selector(openAccessibilitySettingsAction)),
-            makePermissionRow(kind: .preferences, width: prefCardWidth, symbol: "rectangle.inset.filled.and.person.filled", name: "屏幕录制", subtitle: "截取真实标题栏与窗口预览",
+            makePermissionRow(kind: .preferences, width: prefCardWidth, symbol: "rectangle.inset.filled.and.person.filled", name: "屏幕录制", subtitle: "截取窗口画面做预览",
                               granted: hasScreenRecordingPermission(), action: #selector(openScreenRecordingSettingsAction)),
         ]))
 
@@ -304,10 +304,10 @@ extension AppDelegate {
     func makePermissionDesignSample() -> NSView {
         makeUnifiedSettingsCard([
             makeUnifiedPermissionRow(symbol: "accessibility", name: "辅助功能",
-                subtitle: "读取、移动与恢复窗口", granted: false,
+                subtitle: "找到、移动和恢复窗口", granted: false,
                 action: #selector(openAccessibilitySettingsAction)),
             makeUnifiedPermissionRow(symbol: "rectangle.inset.filled.and.person.filled", name: "屏幕录制",
-                subtitle: "截取真实标题栏与实时预览", granted: true,
+                subtitle: "截取窗口画面做预览", granted: true,
                 action: #selector(openScreenRecordingSettingsAction)),
         ], separatorInset: 46)
     }
@@ -518,9 +518,9 @@ extension AppDelegate {
 
     func titlebarDoubleClickPreferenceSubtitle() -> String {
         if let triple = systemTitlebarTripleClickDescription() {
-            return "双击标题栏卷起；\(triple)"
+            return "双击标题栏收起窗口；\(triple)"
         }
-        return "在任意窗口标题栏双击即可卷起"
+        return "在任意窗口标题栏双击即可收起"
     }
 
     func makePrefButton(title: String, action: Selector) -> NSButton {
@@ -712,7 +712,7 @@ extension AppDelegate {
         header.addArrangedSubview(title)
         stack.addArrangedSubview(header)
 
-        let copy = NSTextField(labelWithString: "WindowShade 提供三种可逆操作：折叠窗口、置顶预览和动态效果。它们不会关闭窗口，也不会改变你的工作空间布局。")
+        let copy = NSTextField(labelWithString: "WindowShade 只做三件事：把窗口收起来、把窗口置顶、跟着合盖动一动。它不会关掉窗口，也不会改动桌面排布。")
         copy.font = SystemAppearancePolicy.font(relativeToBody: 0)
         copy.textColor = .secondaryLabelColor
         copy.lineBreakMode = .byWordWrapping
@@ -726,7 +726,7 @@ extension AppDelegate {
         }
 
         if needsPermissions {
-            let permissionCopy = NSTextField(labelWithString: "WindowShade 需要这些权限来读取、移动和恢复窗口，并截取真实标题栏与窗口预览。")
+            let permissionCopy = NSTextField(labelWithString: "这两项权限让 WindowShade 能找到、移动和恢复窗口，也能截取窗口画面。")
             permissionCopy.font = SystemAppearancePolicy.font(relativeToBody: -1)
             permissionCopy.textColor = .tertiaryLabelColor
             permissionCopy.lineBreakMode = .byWordWrapping
@@ -762,7 +762,7 @@ extension AppDelegate {
             stack.addArrangedSubview(buttonRow)
             onboardingDoneButton = done
 
-            let caption = NSTextField(labelWithString: "授权全部权限后即可完成设置")
+            let caption = NSTextField(labelWithString: "两项都授权后就能开始用")
             caption.font = SystemAppearancePolicy.font(relativeToBody: -2)
             caption.textColor = .tertiaryLabelColor
             stack.addArrangedSubview(caption)
@@ -797,11 +797,11 @@ extension AppDelegate {
     func makeOnboardingUsageCard() -> NSView {
         var rows: [(String, String)] = [
             ("keyboard", "⌃⌘C：折叠 / 展开当前窗口"),
-            ("pin", "⌃⌘P：置顶 / 取消置顶当前窗口预览"),
-            ("cursorarrow.click", "双击标题栏：折叠或展开指定窗口"),
-            ("eye", "单击卷帘条：查看折叠窗口预览"),
-            ("number", "⌃⌘1…9：按菜单顺序展开已折叠窗口"),
-            ("menubar.rectangle", "菜单栏：管理窗口，设置动态效果"),
+            ("pin", "⌃⌘P：置顶或取消置顶当前窗口"),
+            ("cursorarrow.click", "双击标题栏：收起或展开那个窗口"),
+            ("eye", "单击卷帘条：看一眼收起的窗口"),
+            ("number", "⌃⌘1…9：按菜单顺序展开已收起的窗口"),
+            ("menubar.rectangle", "菜单栏：管理窗口和效果"),
         ]
         if let triple = systemTitlebarTripleClickDescription() {
             rows.insert(("cursorarrow.rays", triple), at: 1)
@@ -811,10 +811,10 @@ extension AppDelegate {
 
     func makeOnboardingFeatureCard() -> NSView {
         let rows: [(String, String)] = [
-            ("rectangle.on.rectangle", "置顶预览：把窗口实时画面浮在最上方"),
-            ("rectangle.stack", "动态效果：在设置 → 效果中开启桌面或窗口开合"),
-            ("paintpalette", "卷帘：切换原貌卷帘或标准标题栏"),
-            ("power", "启动：可开启登录时自动启动"),
+            ("rectangle.on.rectangle", "置顶：让窗口一直待在其他窗口前面"),
+            ("rectangle.stack", "合盖效果：在设置 → 效果中开启"),
+            ("paintpalette", "卷帘：收起后跟原来一样，或换成统一标题栏"),
+            ("power", "启动：登录后自动打开"),
         ]
         return makeOnboardingInfoCard(title: "工作方式", rows: rows)
     }
@@ -957,10 +957,10 @@ extension AppDelegate {
         }
         let card = makeUnifiedSettingsCard([
             makeUnifiedPermissionRow(symbol: "accessibility", name: "辅助功能",
-                subtitle: "读取、移动与恢复窗口", granted: ax,
+                subtitle: "找到、移动和恢复窗口", granted: ax,
                 action: #selector(openAccessibilitySettingsAction)),
             makeUnifiedPermissionRow(symbol: "rectangle.inset.filled.and.person.filled", name: "屏幕录制",
-                subtitle: "截取真实标题栏与预览", granted: screen,
+                subtitle: "截取窗口画面做预览", granted: screen,
                 action: #selector(openScreenRecordingSettingsAction)),
         ], separatorInset: 46)
         permissionStack.addArrangedSubview(card)
@@ -1006,18 +1006,18 @@ extension AppDelegate {
         let (root, stack) = makeSettingsPageRoot()
         stack.addArrangedSubview(makeSettingsHeader(
             title: "窗口浏览",
-            subtitle: "在 Dock 图标上查看该应用的窗口，或用菜单与快捷键打开窗口选择面板。",
+            subtitle: "在 Dock 图标上看这个应用的全部窗口，也可以用菜单或快捷键打开。",
             symbolName: "rectangle.on.rectangle"))
 
         let triggers = makeUnifiedSettingsCard([
             makeUnifiedToggleRow(
                 name: "Dock 悬停查看窗口",
-                subtitle: "鼠标停在已运行应用的 Dock 图标上时显示窗口面板；不会启动未运行的应用",
+                subtitle: "鼠标停在 Dock 图标上时显示窗口面板。不会启动没在运行的应用。",
                 isOn: WindowBrowserSettings.dockEnabled,
                 action: #selector(prefToggleWindowBrowserDock(_:))),
             makeUnifiedToggleRow(
                 name: "允许从菜单打开窗口选择面板",
-                subtitle: "菜单中的“选择窗口…”入口；默认不占用任何快捷键",
+                subtitle: "在菜单里加入“选择窗口…”；默认不占用快捷键",
                 isOn: WindowBrowserSettings.keyboardPanelEnabled,
                 action: #selector(prefToggleWindowBrowserKeyboard(_:))),
         ])
@@ -1042,12 +1042,12 @@ extension AppDelegate {
         let preview = makeUnifiedSettingsCard([
             makeUnifiedToggleRow(
                 name: "普通窗口实时预览（实验）",
-                subtitle: "选中普通窗口约 0.4 秒后建立一路低帧率预览；默认关闭",
+                subtitle: "选中窗口 0.4 秒后开始放实时画面。默认关闭。",
                 isOn: WindowBrowserSettings.livePreviewEnabled,
                 action: #selector(prefToggleWindowBrowserLive(_:))),
             makeUnifiedControlRow(
-                name: "打开窗口选择面板",
-                subtitle: "菜单入口与快捷键只在用户明确打开后显示",
+                name: "打开窗口浏览",
+                subtitle: "打开开关后，菜单和快捷键才会出现",
                 control: {
                     let button = NSButton(title: "打开面板…", target: self,
                                           action: #selector(openWindowBrowserPanel))
@@ -1056,8 +1056,8 @@ extension AppDelegate {
                 }()),
             makeUnifiedControlRow(
                 name: "独立快捷键",
-                subtitle: "按下后录制；再次按下同一组合关闭面板。组合必须包含 ⌃ 或 ⌥，"
-                    + "避免抢占 ⌘C/⌘V 这类全系统快捷键",
+                subtitle: "点一下开始录制，再按一次同一个组合就关掉面板。"
+                    + "组合里要有 ⌃ 或 ⌥，免得和 ⌘C、⌘V 这类系统快捷键冲突。",
                 control: recorder),
             makeUnifiedControlRow(
                 name: "按应用排除",
@@ -1097,12 +1097,12 @@ extension AppDelegate {
                 control: appearanceControl),
             makeUnifiedControlRow(
                 name: "默认显示方式",
-                subtitle: "自动：窗口多时用紧凑列表，少时用缩略图网格；面板内切换只影响本次会话。",
+                subtitle: "自动：窗口多的时候用列表，少的时候用缩略图。面板里的切换只影响这一次。",
                 control: styleControl),
             makeUnifiedControlRow(
                 name: "排布与撤销",
-                subtitle: "在窗口卡片的右键菜单里选择“排布”：左右半、四角、居中、"
-                    + "填满可用区域、移到另一显示器；可先预览，执行成功后可撤销。",
+                subtitle: "在窗口右键菜单里选“排布”：左半、右半、四角、居中、铺满屏幕、"
+                    + "移到另一块屏幕。可以先看效果，移好之后还能撤销。",
                 control: NSTextField(labelWithString: "")),
         ])
         stack.addArrangedSubview(makePrefGroupLabel("外观"))
@@ -1173,7 +1173,7 @@ extension AppDelegate {
     @objc func prefEditWindowBrowserExclusions() {
         let alert = NSAlert()
         alert.messageText = "按应用排除"
-        alert.informativeText = "每行一个 bundle ID。被排除的应用不会出现在 Dock 面板与窗口选择面板中。"
+        alert.informativeText = "一行一个应用标识。这里列出的应用不会出现在窗口浏览面板里。"
         // 多行编辑必须用 NSTextView：单行 NSTextField 放不下“每行一个 bundle ID”。
         let scroll = NSScrollView(frame: NSRect(x: 0, y: 0, width: 360, height: 140))
         scroll.hasVerticalScroller = true
@@ -1228,7 +1228,7 @@ final class WindowBrowserHotKeyRecorderView: NSControl {
         heightAnchor.constraint(equalToConstant: 24).isActive = true
         setAccessibilityElement(true)
         setAccessibilityRole(.group)
-        setAccessibilityLabel("窗口选择面板快捷键")
+        setAccessibilityLabel("打开窗口浏览的快捷键")
     }
 
     required init?(coder: NSCoder) { nil }
