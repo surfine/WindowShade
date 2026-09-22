@@ -72,6 +72,22 @@ final class SettingsShotProbe {
                 print("settings-shots: \(name)")
             }
         }
+        // 引导窗口（“使用说明…”）：新用户第一眼看到的就是它，浅深色各拍一张。
+        for (appearanceName, appearance) in appearances {
+            NSApp.appearance = NSAppearance(named: appearance)
+            owner.showPermissionOnboarding()
+            RunLoop.current.run(until: Date().addingTimeInterval(0.5))
+            guard let window = owner.onboardingWindow,
+                  let image = capture(window: window)
+                    ?? window.contentView.flatMap({ render(view: $0) }) else { continue }
+            let name = "onboarding-\(appearanceName).png"
+            if let data = NSBitmapImageRep(cgImage: image).representation(using: .png, properties: [:]) {
+                try? data.write(to: outputDirectory.appendingPathComponent(name))
+                manifest += "\(name): \(Int(window.frame.width))x\(Int(window.frame.height))\n"
+                print("settings-shots: \(name)")
+            }
+            window.close()
+        }
         try? manifest.write(to: outputDirectory.appendingPathComponent("manifest.txt"),
                             atomically: true, encoding: .utf8)
         owner.duoController.settingsWindow?.close()
