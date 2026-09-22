@@ -168,6 +168,10 @@ extension AppDelegate {
                        options: ShadeInvocationOptions? = nil, bypassDuo: Bool = false,
                        preparedImage: CGImage? = nil, trustElement: Bool = false,
                        preparedProfile: WindowChromeProfile? = nil) {
+        let completionTokens = foldWaiters[id].map { Array($0.keys) } ?? []
+        func completeFold(success: Bool) {
+            settleFoldWaiters(id: id, tokens: completionTokens, success: success)
+        }
         MainThreadActivity.push("fold: 折叠窗口")
         defer { MainThreadActivity.pop() }
         let memoScope = beginAppWindowsMemo()
@@ -176,7 +180,6 @@ extension AppDelegate {
             refreshedWindowElement(id: id, fallback: win, trustFallback: trustElement)
         }
         if !bypassDuo, duoController.windowEffects.interceptFold(win, id: id, options: options) {
-            settleWindowBrowserFoldWaiters(id: id, success: false)
             return
         }
         // 状态机防护：折叠中/已折叠/展开中的窗口再次触发折叠一律忽略，
@@ -200,13 +203,12 @@ extension AppDelegate {
                 // 未转入 async capture 就返回 = 本次折叠中止：capturing -> failed。
                 if currentOperationState(id) == .capturing {
                     transitionOperationState(id: id, to: .failed, reason: "shade-abort")
-                    settleWindowBrowserFoldWaiters(id: id, success: false)
-                } else if currentOperationState(id) == .folded {
-                    // 立即安装路径已经在 installOverlay 成功处结算；这里只作为兜底。
-                    settleWindowBrowserFoldWaiters(id: id, success: true)
-                } else {
-                    settleWindowBrowserFoldWaiters(id: id, success: false)
+                    completeFold(success: false)
+                } else if currentOperationState(id) != .folded {
+                    completeFold(success: false)
                 }
+                // Installed does not mean verified. The hide verification or
+                // successful native resize owns the success notification.
             }
         }
         guard let pos = axPosition(win), let size = axSize(win) else {
@@ -270,9 +272,6 @@ extension AppDelegate {
                     CFAbsoluteTimeGetCurrent() - installStartedAt
             }
             shadeOperationIDs.remove(id)
-            foldPhase("状态机转换") {
-                transitionOperationState(id: id, to: .folded, reason: "install")
-            }
             foldPhase("辅助功能配置") {
                 configureShadedAccessibility(for: overlay, id: id, appName: appName, title: title)
             }
@@ -294,6 +293,7 @@ extension AppDelegate {
             guard intentWritten else {
                 dismissOverlay(overlay)
                 transitionOperationState(id: id, to: .failed, reason: "recovery-intent-write-failed")
+                completeFold(success: false)
                 quietNotice("无法保存恢复记录，窗口未折叠", log: "shade: refusing hide without durable intent id=\(id)")
                 return
             }
@@ -365,6 +365,9 @@ extension AppDelegate {
                                    ignoreAppRevealUntil: Date().addingTimeInterval(1.0),
                                    observer: observer)
             shaded[id] = state
+            foldPhase("状态机转换") {
+                transitionOperationState(id: id, to: .folded, reason: "install")
+            }
             if wantsObserver {
                 DispatchQueue.main.async { [weak self] in
                     guard let self else { return }
@@ -386,11 +389,12 @@ extension AppDelegate {
                 if spaceInvariantHeld {
                     foldPhase("显示卷帘条") { revealPreparedOverlay(overlay) }
                     duoController.windowEffects.didVerifyFold(id: id, state: state)
-                    settleWindowBrowserFoldWaiters(id: id, success: true)
                 }
+                // Hiding is committed even if the user switched away from its Space.
+                completeFold(success: true)
             } else {
                 wlog("shade: hide not yet verified; deferring overlay reveal id=\(id) hide=\(hide)")
-                scheduleFoldVerification(id: id, attempt: 1)
+                scheduleFoldVerification(id: id)
             }
             hoverPreviewSuppressedUntil[id] = Date().addingTimeInterval(0.7)
             foldPhase("重回专注栈") { rejoinFocusStackAfterShadeIfNeeded(id: id, overlay: overlay) }
@@ -449,6 +453,7 @@ extension AppDelegate {
                                     observer: observer)
             wlog("    interactive native finalBarH=\(Int(targetH)) actualH=\(Int(actual.height))")
             transitionOperationState(id: id, to: .folded, reason: "interactive-native")
+            completeFold(success: true)
             if options.rebuildMenuAfterInstall {
                 rebuildMenu()
             }
@@ -520,7 +525,7 @@ extension AppDelegate {
                     self.shadeOperationIDs.remove(id)
                     if self.currentOperationState(id) == .capturing {
                         self.transitionOperationState(id: id, to: .failed, reason: "shade-capture-abort")
-                        self.settleWindowBrowserFoldWaiters(id: id, success: false)
+                        completeFold(success: false)
                     }
                 }
                 let capturedImage = await self.captureWindowWithTimeout(id: id, axPos: pos, size: size,
@@ -548,7 +553,7 @@ extension AppDelegate {
                 self.shadeOperationIDs.remove(id)
                 if self.currentOperationState(id) == .capturing {
                     self.transitionOperationState(id: id, to: .failed, reason: "shade-capture-abort")
-                    self.settleWindowBrowserFoldWaiters(id: id, success: false)
+                    completeFold(success: false)
                 }
             }
             // 折叠一个正被置顶捕获的窗口：系统会在其交通灯处叠加录屏标识，
