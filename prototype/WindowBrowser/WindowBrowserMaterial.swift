@@ -26,8 +26,8 @@ enum WindowBrowserAppearanceStyle: String, CaseIterable {
 
     var displayName: String {
         switch self {
-        case .system: return "跟随系统"
-        case .paper: return "不透明"
+        case .system: return "跟随系统外观"
+        case .paper: return "不透明背景"
         }
     }
 }

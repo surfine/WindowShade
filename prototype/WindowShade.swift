@@ -93,11 +93,18 @@ func cgWindowID(for window: NSWindow) -> CGWindowID? {
 
 final class AppDelegate: NSObject, NSApplicationDelegate, NSMenuDelegate {
     let duoController = DuoController()
-    struct PendingTitlebarTripleClick {
+    final class PendingTitlebarTripleClick {
         let id: CGWindowID
-        let element: AXUIElement
         let point: CGPoint
-        let deadline: Date
+        var deadline: Date
+        let intent = TitlebarTripleClickIntent()
+        var foldTransactionID: UUID?
+
+        init(id: CGWindowID, point: CGPoint, deadline: Date) {
+            self.id = id
+            self.point = point
+            self.deadline = deadline
+        }
     }
 
     struct PendingSpaceReturn {
@@ -197,7 +204,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSMenuDelegate {
     // 窗口浏览入口的折叠终态等待者：键 = 原窗口 ID，值 = token -> 回调。
     // 折叠事务是异步的（立即验证 / 延迟验证 / 回滚），浏览器动作只在真实终态
     // 到达时才完成；token 保证旧请求不会误结算新请求。
-    var windowBrowserFoldWaiters: [CGWindowID: [UUID: (Bool) -> Void]] = [:]
+    var foldWaiters: [CGWindowID: [UUID: (Bool) -> Void]] = [:]
     var windowBrowserController: WindowBrowserController?
     var windowBrowserHotKeyRef: EventHotKeyRef?
     var menuRebuildWorkItem: DispatchWorkItem?
