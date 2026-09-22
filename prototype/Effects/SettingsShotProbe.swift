@@ -86,7 +86,8 @@ final class SettingsShotProbe {
                 manifest += "\(name): \(Int(window.frame.width))x\(Int(window.frame.height))\n"
                 print("settings-shots: \(name)")
             }
-            window.close()
+            // orderOut 而不是 close：关闭会把“看过引导”写进偏好，探针不写用户偏好。
+            window.orderOut(nil)
         }
         try? manifest.write(to: outputDirectory.appendingPathComponent("manifest.txt"),
                             atomically: true, encoding: .utf8)
