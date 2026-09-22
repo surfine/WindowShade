@@ -13,7 +13,7 @@
 ```text
 prototype/
 ├── main.swift                        # 入口（NSApplication + AppDelegate）
-├── WindowShade.swift                 # AppDelegate 骨架 + 文件级基础设施（日志、缓存、全局辅助）
+├── WindowShade.swift                 # 全局常量 + AppDelegate 骨架（启动、观察者、生命周期）
 ├── ScreenCaptureBridge.swift         # SCStream 捕获（置顶预览的实时流）
 ├── PinnedPreview.swift               # 置顶预览控制器（目标解析、watchdog、交互接管）
 ├── PinnedPreviewPanel.swift          # 预览面板与菜单实时缩略图
@@ -21,6 +21,9 @@ prototype/
 │   ├── MenuBarController.swift       # 状态栏图标、菜单重建与菜单代理回调
 │   ├── Reconcile.swift               # 折叠会话监控（reconcile 定时核对/并行快照）
 │   ├── EventTap.swift                # 全局快捷键、事件 tap、标题栏双击/三击
+│   ├── EventTapCallback.swift        # CGEventTap 的 C 回调与标题栏带预过滤
+│   ├── Permissions.swift             # 权限检测与隐私设置跳转
+│   ├── StatusBarIcon.swift           # 状态栏模板图标
 │   ├── Preferences.swift             # 设置窗口与引导页
 │   ├── OverlayPresentation.swift     # 覆盖层展示与 Space 不变量
 │   ├── HoverPreview.swift            # 悬停预览（peek / 菜单悬停）
@@ -34,18 +37,28 @@ prototype/
 │   └── SkyLightBridge.swift          # SkyLight 私有 API 隔离层（全部有 fallback）
 ├── Compatibility/
 │   ├── WindowPolicy.swift            # 窗口策略协议 + CaptureMode/HidingStrategy
-│   └── Policies.swift                # 具体策略 + windowPolicy(for:)
+│   ├── Policies.swift                # 具体策略 + windowPolicy(for:)
+│   └── AppPredicates.swift           # 按应用的判断（特殊外框高度、应用识别）
 ├── Core/
-│   └── WindowState.swift             # 折叠操作状态机（非法转换拒绝）
+│   ├── WindowState.swift             # 折叠操作状态机（非法转换拒绝）
+│   └── ShadeModels.swift             # 折叠相关值类型（ShadeState、策略、外框画像）
 ├── Capture/
 │   ├── WindowSnapshotCache.swift     # 折叠截图 500ms 短 TTL 缓存
-│   └── PreviewRenderer.swift         # 渲染与图像分析（chrome 扫描、圆角镜像、条制备）
+│   ├── PreviewRenderer.swift         # 渲染与图像分析（chrome 扫描、圆角镜像、条制备）
+│   └── ShareableContentCache.swift   # SCShareableContent 短 TTL 缓存
 ├── Overlay/
 │   ├── ShadeStripPool.swift          # 简单卷帘条窗口池（OverlayWindow 复用）
 │   └── ShadeStrip.swift              # 覆盖层视图（代理标题栏/经典条/预览窗/调色板）
 ├── Window/
 │   ├── WindowRegistry.swift          # app 元数据（名称/bundleID）短 TTL 缓存
-│   └── AXWindow.swift                # AX 辅助（几何/ID 解析/chrome 探测/按钮交互）
+│   ├── AXWindow.swift                # AX 辅助（几何/ID 解析/chrome 探测/按钮交互）
+│   ├── AXHelpers.swift               # 交通灯、QuickLook 重开、系统标题栏设置、唤回回调
+│   ├── AppWindows.swift              # 应用窗口枚举（事务备忘/并发）与显示标题
+│   ├── ChromeProfile.swift           # 窗口外框画像与缓存
+│   ├── Coordinates.swift             # AX / Cocoa 坐标换算与屏幕归属
+│   └── WindowListCache.swift         # WindowServer 窗口列表缓存与单窗口查询
+├── Support/
+│   └── Diagnostics.swift             # 日志、主线程活动标记、慢调用日志、卡顿哨兵
 └── Recovery/
     ├── Journal.swift                 # 恢复日志数据层（持久化/匹配/生命周期标记）
     └── Rescue.swift                  # 离屏窗口救援编排（后台扫描 + 主线程写回）
