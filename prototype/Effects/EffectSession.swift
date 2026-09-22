@@ -66,6 +66,7 @@ final class EffectSession {
     panel = EffectPanel(frame: frame, desktop: desktop)
     renderer = try FoldRenderer(size: frame.size)
     panel.contentView = renderer.view
+    source.removesCaptureIndicator = !desktop
     source.onStop = { [weak self] _ in if desktop { self?.onFailure?() } }
     source.onContentUnavailable = { [weak self] in if desktop { self?.onFailure?() } }
     renderer.onFailure = { [weak self] _ in self?.onFailure?() }

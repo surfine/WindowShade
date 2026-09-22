@@ -765,6 +765,7 @@ final class PinnedPreviewController {
         }
 
         let capture = WindowStreamCapture()
+        capture.takesCleanPlate = true
         let panel = PinnedPreviewPanel(frame: frame)
         let displayTitle = descriptiveDisplayTitle(appName: appName, windowTitle: title)
         // 窗口名与面板内标题一致：VoiceOver 读窗口时能听到是哪个窗口的置顶预览。

@@ -57,6 +57,12 @@ final class EffectFrameSource: NSObject, SCStreamOutput, SCStreamDelegate {
   var onStop: ((Error) -> Void)?
   var onContentUnavailable: (() -> Void)?
   func frame() -> EffectFrame? { lock.withLock { slot.value } }
+  /// 只对捕获单扇窗口的流打开（整屏捕获里别的窗口的胶囊不归我们管）。开流前设置。
+  var removesCaptureIndicator: Bool {
+    get { lock.withLock { _removesCaptureIndicator } }
+    set { lock.withLock { _removesCaptureIndicator = newValue } }
+  }
+  private var _removesCaptureIndicator = false
   var lastActivity: CFTimeInterval { lock.withLock { heartbeat } }
 
   private static func configuration(size: CGSize, fps: Int, color: EffectColorSpace)
@@ -199,6 +205,8 @@ final class EffectFrameSource: NSObject, SCStreamOutput, SCStreamDelegate {
         return
       }
       guard status == .complete, let buffer = sample.imageBuffer else { return }
+      // 捕获单扇窗口时，系统在它的红绿灯处画录屏胶囊；交给渲染前先抹平。
+      if _removesCaptureIndicator { CaptureIndicatorRemoval.clean(sample) }
       let scale = (info[.scaleFactor] as? NSNumber)?.doubleValue ?? 1
       let contentScale = (info[.contentScale] as? NSNumber)?.doubleValue ?? 1
       sequence &+= 1
