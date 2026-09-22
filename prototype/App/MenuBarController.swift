@@ -4,7 +4,8 @@
 import Cocoa
 
 struct MenuState {
-  let hingeAngleText: String
+  /// 屏幕开合角度；只有打开了桌面开合效果才显示，其余时候为 nil。
+  let hingeAngleText: String?
   let canArrangeShades: Bool
   let foldedWindows: [(CGWindowID, ShadeState)]
   let pinnedPreviews: [PinnedPreviewMenuEntry]
@@ -18,7 +19,7 @@ extension AppDelegate {
     statusMenu = NSMenu()
     statusMenu.delegate = self
     statusItem.menu = statusMenu
-    statusItem.button?.image = makeStatusBarIcon()
+    statusItem.button?.image = Self.statusBarIcon
     statusItem.button?.font = .monospacedDigitSystemFont(ofSize: 13, weight: .regular)
     statusItem.button?.imagePosition = .imageLeft
     statusItem.button?.toolTip = "WindowShade"
@@ -40,13 +41,14 @@ extension AppDelegate {
     // 高频触发；目标解析在后台完成后仅在目标改变时安排下一次重建。
     menuRebuildWorkItem?.cancel()
     menuRebuildWorkItem = nil
-    statusItem.button?.image = makeStatusBarIcon()
+    statusItem.button?.image = Self.statusBarIcon
     statusItem.button?.font = .monospacedDigitSystemFont(ofSize: 13, weight: .regular)
     statusItem.button?.imagePosition = .imageLeft
     statusItem.isVisible = true
     statusItem.button?.title = shaded.isEmpty ? "" : " \(shaded.count)"
     statusItem.button?.toolTip =
-      shaded.isEmpty ? "WindowShade" : "WindowShade: \(shaded.count) folded"
+      shaded.isEmpty ? "WindowShade"
+        : "WindowShade：\(PaperSurfaceAccessibility.statusItemValue(foldedCount: shaded.count))"
     // VoiceOver：状态栏按钮读成“WindowShade + 当前折叠数量”，而不是一个孤立的数字。
     statusItem.button?.setAccessibilityLabel(PaperSurfaceAccessibility.statusItemLabel)
     statusItem.button?.setAccessibilityValue(
@@ -55,17 +57,17 @@ extension AppDelegate {
 
     let menuState = makeMenuState()
 
-    // Keep the first row informational. Dynamic-effect configuration lives in Settings;
-    // the menu remains focused on the window-shade workflow and its existing shortcuts.
-    let angle = NSMenuItem(title: menuState.hingeAngleText, action: nil, keyEquivalent: "")
-    angle.image = NSImage(systemSymbolName: "angle", accessibilityDescription: nil)
-    angle.isEnabled = false
-    statusMenu.addItem(angle)
-    statusMenu.addItem(.separator())
+    // 开合角度只对用合盖效果的人有意义；没开这个效果（或台式 Mac 根本没有盖子）时
+    // 不占菜单第一行。效果的配置在设置里，菜单只管窗口。
+    if let hingeAngleText = menuState.hingeAngleText {
+      let angle = NSMenuItem(title: hingeAngleText, action: nil, keyEquivalent: "")
+      angle.image = NSImage(systemSymbolName: "angle", accessibilityDescription: nil)
+      angle.isEnabled = false
+      statusMenu.addItem(angle)
+      statusMenu.addItem(.separator())
+    }
 
-    let currentHeader = NSMenuItem(title: "当前窗口", action: nil, keyEquivalent: "")
-    currentHeader.isEnabled = false
-    statusMenu.addItem(currentHeader)
+    statusMenu.addItem(.sectionHeader(title: "当前窗口"))
 
     let toggle = NSMenuItem(
       title: foldToggleMenuTitle(), action: #selector(toggleAction), keyEquivalent: "")
@@ -113,9 +115,7 @@ extension AppDelegate {
 
     if !menuState.foldedWindows.isEmpty {
       statusMenu.addItem(.separator())
-      let header = NSMenuItem(title: "已收起的窗口", action: nil, keyEquivalent: "")
-      header.isEnabled = false
-      statusMenu.addItem(header)
+      statusMenu.addItem(.sectionHeader(title: "已收起的窗口"))
       // 前 9 个内联并带 ⌃⌘1…9；其余进“更多已折叠窗口”子菜单（同样的动作与图标）。
       let sections = StandardMenu.splitFoldedWindows(menuState.foldedWindows)
       for (index, entry) in sections.inline.enumerated() {
@@ -153,9 +153,7 @@ extension AppDelegate {
     guard !entries.isEmpty else { return }
 
     statusMenu.addItem(.separator())
-    let header = NSMenuItem(title: "已置顶的窗口（点一下取消）", action: nil, keyEquivalent: "")
-    header.isEnabled = false
-    statusMenu.addItem(header)
+    statusMenu.addItem(.sectionHeader(title: "已置顶的窗口（点一下取消）"))
 
     for (index, entry) in entries.enumerated() {
       let item = NSMenuItem(
@@ -312,21 +310,24 @@ extension AppDelegate {
 
   func makeMenuState() -> MenuState {
     MenuState(
-      hingeAngleText: duoAngleMenuTitle(),
+      hingeAngleText: duoController.settings.desktopEnabled ? duoAngleMenuTitle() : nil,
       canArrangeShades: shaded.values.contains { $0.overlay != nil },
       foldedWindows: sortedShadedEntries(),
       pinnedPreviews: pinnedPreviewController.menuEntries(),
       titlebarDoubleClickEnabled: titlebarDoubleClickEnabled)
   }
+  /// 模板图，跟随菜单栏浅深色；画一次就够，不必每次重建菜单都重画。
+  static let statusBarIcon = makeStatusBarIcon()
+
   func duoAngleMenuTitle() -> String {
     guard let angle = duoController.angle, angle.isFinite else {
       switch duoController.sensorStatus {
       case "传感器未启动", "角度读取已暂停":
-        return "铰链角度：等待传感器"
+        return "屏幕开合角度：等待传感器"
       default:
-        return "铰链角度：不可用"
+        return "屏幕开合角度：不可用"
       }
     }
-    return String(format: "铰链角度：%.1f°", angle)
+    return String(format: "屏幕开合角度：%.1f°", angle)
   }
 }
