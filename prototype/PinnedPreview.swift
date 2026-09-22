@@ -553,7 +553,7 @@ final class PinnedPreviewController {
         refreshCurrentTarget(reason: "toggle", force: true) { [weak self] target, _ in
             guard let self else { return }
             guard let target else {
-                self.notice("没有可置顶预览窗口", "pin-preview: failed reason=no-focused-window")
+                self.notice("没有可以置顶的窗口", "pin-preview: failed reason=no-focused-window")
                 return
             }
             // 双向 toggle：已置顶则取消，未置顶则置顶。与 ⌃⌘C 折叠/展开对称。
@@ -819,7 +819,7 @@ final class PinnedPreviewController {
                 completion?(.success(()))
             } catch {
                 let failure = error as? PinnedPreviewError ?? .noSCWindow
-                self?.notice("置顶预览失败",
+                self?.notice("没能置顶这个窗口",
                              "pin-preview: capture failed id=\(id) \(error.localizedDescription)")
                 self?.stopPreview(id: id, reason: "capture-failed")
                 completion?(.failure(failure))
@@ -1106,7 +1106,7 @@ final class PinnedPreviewController {
                 wlog("pin-preview: exit interact id=\(id) frame=\(Self.format(stableFrame))")
                 self.sessionsDidChange()
             } catch {
-                self.notice("置顶预览恢复失败",
+                self.notice("置顶的画面没能恢复",
                             "pin-preview: restart failed id=\(id) \(error.localizedDescription)")
                 self.stopPreview(id: id, reason: "restart-failed")
             }

@@ -44,13 +44,13 @@ extension AppDelegate {
             return
         }
         guard let focusedWin = focusedWindow(), let focusedID = windowID(of: focusedWin) else {
-            quietNotice("没有可折叠窗口", log: "toggle: 取不到聚焦窗口/windowID")
+            quietNotice("没有可以收起的窗口", log: "toggle: 取不到聚焦窗口/windowID")
             return
         }
         var win = focusedWin
         var id = focusedID
         if isDesktopWidgetWindow(id: id) {
-            quietNotice("桌面小组件不参与折叠", log: "toggle: reject desktop widget id=\(id)")
+            quietNotice("桌面小组件不能收起", log: "toggle: reject desktop widget id=\(id)")
             return
         }
         // 聚焦窗口不在当前 Space（已折叠的除外——它们的真实窗口本来就不在屏上，
@@ -222,7 +222,7 @@ extension AppDelegate {
         let adobeLayoutWindow = role != kAXWindowRole as String
             && isWindowLikeRole(role, pid: pid) && cgWindowLayer(id) == 0
         guard role == kAXWindowRole as String || adobeLayoutWindow else {
-            quietNotice("此窗口不能折叠", log: "shade: reject non-window role=\(role ?? "?") id=\(id)")
+            quietNotice("这个窗口不能收起", log: "shade: reject non-window role=\(role ?? "?") id=\(id)")
             return
         }
         let bundleID = appBundleID(pid: pid)
@@ -245,7 +245,7 @@ extension AppDelegate {
                           pid: pid, profile: profile, options: options)
         }
         guard let plan = shadePlan else {
-            quietNotice("此窗口不能折叠", log: "shade: plan rejected app=\(appName) id=\(id)")
+            quietNotice("这个窗口不能收起", log: "shade: plan rejected app=\(appName) id=\(id)")
             return
         }
         let policy = plan.policy
@@ -294,7 +294,7 @@ extension AppDelegate {
             guard intentWritten else {
                 dismissOverlay(overlay)
                 transitionOperationState(id: id, to: .failed, reason: "recovery-intent-write-failed")
-                quietNotice("无法保存恢复记录，窗口未折叠", log: "shade: refusing hide without durable intent id=\(id)")
+                quietNotice("恢复记录存不下来，窗口没有收起", log: "shade: refusing hide without durable intent id=\(id)")
                 return
             }
             // 这里不套 foldPhase 的闭包写法：tests/duo-integration-check.py 用
@@ -607,7 +607,7 @@ extension AppDelegate {
             wlog("    capture full=\(full.width)x\(full.height) scale=\(preparation.scale) fixedBarH=\(preparation.fixedBarH.map { String(format: "%.1f", $0) } ?? "-") visualBarH=\(preparation.visualBarH.map { String(Int($0)) } ?? "-") fallbackBarH=\(Int(preparation.fallbackBarH)) standardBarH=\(String(format: "%.1f", preparation.standardBarH)) finalBarH=\(String(format: "%.1f", barH)) buttons=\(buttonRects.count) windowManagement=\(windowManagementCapability) cropPxH=\(max(1, Int(ceil(barH * preparation.scale)))) boundary=\(preparation.boundary)")
             guard let strip = preparation.strip else {
                 activateApp(pid: pid)
-                quietNotice("折叠失败", log: "shade: 裁剪失败")
+                quietNotice("没能收起这个窗口", log: "shade: 裁剪失败")
                 return
             }
             if preparation.brokenHealth.0 {
