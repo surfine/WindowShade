@@ -57,6 +57,11 @@ prototype/
 │   ├── ChromeProfile.swift           # 窗口外框画像与缓存
 │   ├── Coordinates.swift             # AX / Cocoa 坐标换算与屏幕归属
 │   └── WindowListCache.swift         # WindowServer 窗口列表缓存与单窗口查询
+├── Effects/                          # 合盖桌面效果与窗口收起动画（Metal 渲染、传感器、设置窗口）
+├── WindowBrowser/                    # 窗口浏览：Dock 悬停与“选择窗口…”面板
+│   ├── WindowBrowserController.swift # 会话、目录、截图请求与面板生命周期
+│   ├── WindowBrowserViews.swift      # 视图共用部分（协议、图标缓存、表面样式）
+│   └── WindowBrowser*View.swift 等   # 每个视图一个文件：卡片、列表行、详情、大图预览、内容视图
 ├── Support/
 │   └── Diagnostics.swift             # 日志、主线程活动标记、慢调用日志、卡顿哨兵
 └── Recovery/
