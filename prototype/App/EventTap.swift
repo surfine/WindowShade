@@ -23,12 +23,17 @@ extension AppDelegate {
             return noErr
         }, 1, &eventType, nil, nil)
 
+        var failed: [UInt32: OSStatus] = [:]
         func register(_ keyCode: Int, _ id: UInt32) {
             var ref: EventHotKeyRef?
             let hkID = EventHotKeyID(signature: OSType(0x57534844), id: id) // 'WSHD'
-            RegisterEventHotKey(UInt32(keyCode), UInt32(cmdKey | controlKey),
-                                hkID, GetApplicationEventTarget(), 0, &ref)
-            hotKeyRefs.append(ref)
+            let status = RegisterEventHotKey(UInt32(keyCode), UInt32(cmdKey | controlKey),
+                                             hkID, GetApplicationEventTarget(), 0, &ref)
+            if status == noErr, let ref {
+                hotKeyRefs.append(ref)
+            } else {
+                failed[id] = status
+            }
         }
 
         register(kVK_ANSI_C, 1)
@@ -41,7 +46,34 @@ extension AppDelegate {
         for (index, key) in digitKeys.enumerated() {
             register(key, UInt32(101 + index))
         }
+        unavailableHotKeyIDs = Set(failed.keys)
+        if !failed.isEmpty {
+            // 被别的应用占用的组合不再显示在菜单里（按了没反应比没有更糟），并提示一次。
+            let names = Self.hotKeyDisplayNames(Set(failed.keys))
+            quietNotice("\(names.joined(separator: "、")) 被其他应用占用",
+                        log: "hotkey: registration failed "
+                            + failed.sorted { $0.key < $1.key }.map { "\($0.key)=\($0.value)" }
+                                .joined(separator: ","))
+        }
         registerWindowBrowserHotKey()
+    }
+
+    func isHotKeyAvailable(_ id: UInt32) -> Bool {
+        !unavailableHotKeyIDs.contains(id)
+    }
+
+    static func hotKeyDisplayNames(_ ids: Set<UInt32>) -> [String] {
+        var names: [String] = []
+        if ids.contains(1) { names.append("⌃⌘C") }
+        if ids.contains(2) { names.append("⌃⌘0") }
+        if ids.contains(3) { names.append("⌃⌘P") }
+        let digits = (1...9).filter { ids.contains(UInt32(100 + $0)) }
+        if digits.count == 9 {
+            names.append("⌃⌘1…9")
+        } else {
+            names += digits.map { "⌃⌘\($0)" }
+        }
+        return names
     }
 
     /// 独立快捷键：默认不注册。注册失败时保留旧的有效组合并提示。
