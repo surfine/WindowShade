@@ -552,7 +552,7 @@ final class WindowBrowserCardView: NSView {
                                                  params: params)
         WindowBrowserSurfaceStyle.applyImageArea(placeholderView, surface: cardSurface,
                                                  placeholder: true, params: params)
-        statusField.textColor = statusIsWarning ? .systemOrange : .secondaryLabelColor
+        statusField.textColor = SystemAppearancePolicy.statusTextColor(warning: statusIsWarning)
         needsLayout = true
     }
 
@@ -585,7 +585,7 @@ final class WindowBrowserCardView: NSView {
             pointSize: WindowBrowserTypography.detailSize)
         statusIconView.isHidden = status.symbolName == nil
         statusField.isHidden = status.text.isEmpty
-        statusField.textColor = status.isWarning ? .systemOrange : .secondaryLabelColor
+        statusField.textColor = SystemAppearancePolicy.statusTextColor(warning: status.isWarning)
         actionBar.configure(items: actions.filter(\.isPrimary), key: record.key,
                             target: self, action: #selector(actionButtonClicked(_:)),
                             busy: busy)
@@ -922,7 +922,7 @@ final class WindowBrowserListRowView: NSView {
                                                 pressed: pressedInside, restFill: false,
                                                 animated: animated, params: params)
             titleField.textColor = .labelColor
-            statusField.textColor = statusIsWarning ? .systemOrange : .secondaryLabelColor
+            statusField.textColor = SystemAppearancePolicy.statusTextColor(warning: statusIsWarning)
             statusIconView.contentTintColor = nil
             actionBar.setEmphasized(false)
             return
@@ -941,7 +941,7 @@ final class WindowBrowserListRowView: NSView {
         layer?.borderColor = SystemAppearancePolicy.cgColor(NSColor.labelColor, for: self)
         titleField.textColor = emphasized ? .alternateSelectedControlTextColor : .labelColor
         statusField.textColor = emphasized ? .alternateSelectedControlTextColor
-            : (statusIsWarning ? .systemOrange : .secondaryLabelColor)
+            : SystemAppearancePolicy.statusTextColor(warning: statusIsWarning)
         statusIconView.contentTintColor = emphasized ? .alternateSelectedControlTextColor : nil
         actionBar.setEmphasized(emphasized)
     }
@@ -991,7 +991,7 @@ final class WindowBrowserListRowView: NSView {
         titleField.toolTip = record.displayTitle
         statusField.stringValue = status.text
         statusIsWarning = status.isWarning
-        statusField.textColor = status.isWarning ? .systemOrange : .secondaryLabelColor
+        statusField.textColor = SystemAppearancePolicy.statusTextColor(warning: status.isWarning)
         statusIconView.image = WindowBrowserSymbol.image(
             named: status.symbolName, accessibilityDescription: status.text,
             pointSize: WindowBrowserTypography.detailSize)
@@ -1207,7 +1207,7 @@ final class WindowBrowserSelectionDetailView: NSView {
         titleField.stringValue = record.displayTitle
         titleField.toolTip = record.displayTitle
         statusField.stringValue = status.text
-        statusField.textColor = status.isWarning ? .systemOrange : .secondaryLabelColor
+        statusField.textColor = SystemAppearancePolicy.statusTextColor(warning: status.isWarning)
         statusIconView.image = WindowBrowserSymbol.image(
             named: status.symbolName, accessibilityDescription: status.text,
             pointSize: WindowBrowserTypography.detailSize)

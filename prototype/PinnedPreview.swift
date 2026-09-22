@@ -192,6 +192,10 @@ final class PinnedPreviewController {
     private var pointerDuckingTimer: Timer?
     private var lastPointerDuckingID: CGWindowID?
     private var lockedDuckingID: CGWindowID?
+    // 最近一次由 ducking 提到最前的面板。悬停或交互期间 30Hz 的 tick 每拍都以同一
+    // 目标调用 updateDucking；目标没变且面板仍在屏时不必再发 orderFront（每次都是
+    // 一趟 WindowServer 往返）。其它路径重新排序面板时清掉，下一拍照常置前。
+    private var duckingFrontID: CGWindowID?
     private var activePreviewID: CGWindowID?
     // unexpected stream stop 的有限重试：最多 3 次、指数退避；源窗口关闭时
     // 直接结束会话，绝不无限重启。
@@ -615,6 +619,7 @@ final class PinnedPreviewController {
         }
         session.panel.ignoresMouseEvents = false
         session.panel.orderFrontRegardless()
+        duckingFrontID = nil
         enforcePanelSpaceInvariant(session, reason: "resume")
         ensureWatchdogStarted()
         Task { @MainActor [weak self] in
@@ -706,6 +711,7 @@ final class PinnedPreviewController {
         // 清掉缓存，下一拍 pointerDuckingTick 用 Space 过滤后的结果重新判定。
         lockedDuckingID = nil
         lastPointerDuckingID = nil
+        duckingFrontID = nil
     }
 
     private var isInSpaceTransition: Bool {
@@ -858,6 +864,7 @@ final class PinnedPreviewController {
         }
         sessions[id] = session
         panel.orderFrontRegardless()
+        duckingFrontID = nil
         enforcePanelSpaceInvariant(session, reason: "install")
         ensureWatchdogStarted()
         updatePointerDuckingTimer()
@@ -1149,6 +1156,7 @@ final class PinnedPreviewController {
             session.panel.level = .floating
             session.panel.orderFrontRegardless()
         }
+        duckingFrontID = nil
         if wasActive {
             updateDucking(activeID: nil)
         }
@@ -1296,8 +1304,11 @@ final class PinnedPreviewController {
         if active.isDucked {
             restoreDuckedPreview(active, id: activeID, reason: "active")
         }
-        active.panel.level = .floating
-        active.panel.orderFrontRegardless()
+        if active.panel.level != .floating { active.panel.level = .floating }
+        if duckingFrontID != activeID || !active.panel.isVisible {
+            active.panel.orderFrontRegardless()
+            duckingFrontID = activeID
+        }
         let mover = PrivateSLSWindowMover.shared
         var spaceCache: [CGDirectDisplayID: UInt64?] = [:]
         for (id, session) in sessions where id != activeID {
@@ -1329,6 +1340,7 @@ final class PinnedPreviewController {
         session.panel.ignoresMouseEvents = false
         session.panel.level = .floating
         session.panel.orderFrontRegardless()
+        duckingFrontID = nil
         wlog("pin-preview: unduck id=\(id) reason=\(reason)")
     }
 
@@ -1344,6 +1356,7 @@ final class PinnedPreviewController {
         if activePreviewID == id { activePreviewID = nil }
         if lockedDuckingID == id { lockedDuckingID = nil }
         if lastPointerDuckingID == id { lastPointerDuckingID = nil }
+        if duckingFrontID == id { duckingFrontID = nil }
         restoreDuckedPreviews(reason: "stop-\(id)")
         updatePointerDuckingTimer()
         maybeStopWatchdog()

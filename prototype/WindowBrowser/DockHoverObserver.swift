@@ -49,6 +49,9 @@ final class DockHoverObserver {
     private var detection = WindowBrowserDetectionCoordinator()
     private var topologyVersion: UInt64 = 1
     private var screensToken: NSObjectProtocol?
+    /// 屏幕快照按拓扑版本缓存：全局鼠标回退每次移动都要判断“是否靠近 Dock”，
+    /// 不必每次都重建快照、逐屏查一遍 deviceDescription。
+    private var screenSnapshotCache: (version: UInt64, snapshots: [WindowBrowserDockRegion.ScreenSnapshot])?
     /// 诊断：检测请求次数、真实 AX 命中调用次数、被丢弃的过期结果。
     private(set) var detectionCount = 0
     private(set) var hitTestCount = 0
@@ -110,6 +113,7 @@ final class DockHoverObserver {
         dockElement = nil
         dockPID = 0
         dockAreas = []
+        screenSnapshotCache = nil
         detection.reset()
     }
 
@@ -502,14 +506,25 @@ final class DockHoverObserver {
     private func mouseIsNearDock(_ mouse: NSPoint) -> Bool {
         // 先找真正包含指针的屏幕，再判断该屏自己的边缘带与已知 Dock 区域。
         // 逐屏的单轴比较会把别的屏幕的边缘条件当成整块桌面都命中，这里不再那样做。
-        let screens = NSScreen.screens.map {
+        return WindowBrowserDockRegion.isNearDock(
+            mouse, screens: currentScreenSnapshots(), dockAreas: dockAreas,
+            edgeBand: Limits.edgeActivationBand,
+            tolerance: Limits.knownAreaTolerance)
+    }
+
+    private func currentScreenSnapshots() -> [WindowBrowserDockRegion.ScreenSnapshot] {
+        let screens = NSScreen.screens
+        // 拓扑通知与 NSScreen.screens 更新之间有先后：屏幕数变了也视为失效。
+        if let cache = screenSnapshotCache, cache.version == topologyVersion,
+           cache.snapshots.count == screens.count {
+            return cache.snapshots
+        }
+        let snapshots = screens.map {
             WindowBrowserDockRegion.ScreenSnapshot(frame: $0.frame,
                                                    displayID: displayID(for: $0))
         }
-        return WindowBrowserDockRegion.isNearDock(
-            mouse, screens: screens, dockAreas: dockAreas,
-            edgeBand: Limits.edgeActivationBand,
-            tolerance: Limits.knownAreaTolerance)
+        screenSnapshotCache = (topologyVersion, snapshots)
+        return snapshots
     }
 
     private func parent(of element: AXUIElement) -> AXUIElement? {
