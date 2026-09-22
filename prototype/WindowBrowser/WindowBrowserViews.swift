@@ -9,6 +9,7 @@
 // - 同一个实时预览 NSView 只有一个明确挂载点（卡片或列表详情），切换不会重建流。
 
 import Cocoa
+import UniformTypeIdentifiers
 
 /// 卡片/列表行动作回传。控件只持弱引用，闭包不参与生命周期。
 protocol WindowBrowserItemDelegate: AnyObject {
@@ -94,10 +95,13 @@ final class WindowBrowserIconProvider {
     func icon(for pid: pid_t) -> NSImage? {
         if let cached = cache[pid] { return cached }
         loadCount += 1
-        let icon = NSRunningApplication(processIdentifier: pid)?.icon
+        // 应用刚退出或读不到图标时用系统的通用应用图标，行首不留空洞。
+        let icon = NSRunningApplication(processIdentifier: pid)?.icon ?? Self.genericAppIcon
         cache[pid] = icon
         return icon
     }
+
+    private static let genericAppIcon: NSImage = NSWorkspace.shared.icon(for: .applicationBundle)
 
     func invalidate(pid: pid_t) {
         cache.removeValue(forKey: pid)
