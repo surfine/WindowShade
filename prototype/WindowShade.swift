@@ -648,20 +648,6 @@ final class ChromeProfileCache {
         return entry.profile.hitBarHeight
     }
 
-    // 事件 tap 的 fast path：profile 新鲜、窗口尺寸与 WindowServer 读数一致、
-    // 且明确是"纯标准标题栏"（没有地址栏/搜索框等可抢双击的控件）时返回 profile。
-    // 注意这里不做 CFEqual（tap 回调里没有可靠的新元素可比）；调用方拿到结果后
-    // 仍会经 titlebarContains → cachedHitBarHeight 用真实元素复核，元素被重建时
-    // 自然回退完整解析，行为不退化。
-    func cachedStandardTitleBarOnlyProfile(id: CGWindowID, cgSize: CGSize) -> WindowChromeProfile? {
-        guard let entry = entries[id],
-              CFAbsoluteTimeGetCurrent() - entry.resolvedAt < ttl,
-              abs(cgSize.width - entry.size.width) <= sizeTolerance,
-              abs(cgSize.height - entry.size.height) <= sizeTolerance,
-              entry.profile.standardTitleBarOnly else { return nil }
-        return entry.profile
-    }
-
     private func isFresh(_ entry: Entry, id: CGWindowID, win: AXUIElement, size: CGSize) -> Bool {
         CFAbsoluteTimeGetCurrent() - entry.resolvedAt < ttl
             && CFEqual(win, entry.element)
@@ -902,8 +888,8 @@ func appBundleID(pid: pid_t) -> String {
 // 折叠/展开事务内部会多次触发 CGWindowListCopyWindowInfo 全量枚举（AX→CGWindowID
 // 匹配、在屏 ID 集合、app 窗口计数、标题栏带预过滤……），同一事务里它们读到的
 // 应该是同一份列表，只需向 WindowServer 要一次。TTL 150ms 覆盖单次事务内的全部
-// 重复读取；跨事务的短暂陈旧不影响正确性——窗口 ID 稳定，快照里匹配不到时
-// windowID(of:) 还有 _AXUIElementGetWindow 兜底，且 AX 几何读取始终是实时的。
+// 重复读取。windowID(of:) 优先读取元素自身的 ID；这些快照仅用于发现和兼容匹配，
+// 不作为动作提交、移动或隐藏完成的实时证明。
 // 单窗口查询 cgWindowInfo(id:) 不经过这里：watchdog 和折叠验证必须看到实时值。
 // 线程安全：PinnedPreview 的后台 AX 队列也会走 windowID(of:)，缓存读写用锁保护。
 final class WindowListCache {
@@ -929,6 +915,10 @@ final class WindowListCache {
     private let ttl: TimeInterval = 0.15
     private var onScreenEntry: Entry?
     private var allEntry: Entry?
+    // 多个 AX/缩略图队列可能在同一 TTL 边界同时 miss。只允许每种快照有一个
+    // WindowServer 枚举，其余调用等待同一结果，避免高峰期重复做昂贵 IPC。
+    private var onScreenRefresh: DispatchSemaphore?
+    private var allRefresh: DispatchSemaphore?
 
     func onScreenWindows() -> [[String: Any]] {
         snapshot(.onScreen).windows
@@ -970,31 +960,52 @@ final class WindowListCache {
     }
 
     private func snapshot(_ kind: Kind) -> Snapshot {
-        let now = CFAbsoluteTimeGetCurrent()
-        lock.lock()
-        let entry = kind == .onScreen ? onScreenEntry : allEntry
-        if let entry, now - entry.at < ttl {
-            let hit = entry.snapshot
+        while true {
+            let now = CFAbsoluteTimeGetCurrent()
+            lock.lock()
+            let entry = kind == .onScreen ? onScreenEntry : allEntry
+            if let entry, now - entry.at < ttl {
+                let hit = entry.snapshot
+                lock.unlock()
+                return hit
+            }
+
+            let refresh = kind == .onScreen ? onScreenRefresh : allRefresh
+            if let refresh {
+                lock.unlock()
+                // 另一个调用正在锁外访问 WindowServer；拿到结果后重新检查 TTL。
+                refresh.wait()
+                continue
+            }
+
+            let gate = DispatchSemaphore(value: 0)
+            if kind == .onScreen {
+                onScreenRefresh = gate
+            } else {
+                allRefresh = gate
+            }
             lock.unlock()
-            return hit
-        }
-        lock.unlock()
 
-        // 锁外取数：WindowServer 枚举可能耗时，不阻塞其他读取方。
-        let options: CGWindowListOption = kind == .onScreen
-            ? [.optionOnScreenOnly, .excludeDesktopElements]
-            : [.optionAll, .excludeDesktopElements]
-        let windows = CGWindowListCopyWindowInfo(options, kCGNullWindowID) as? [[String: Any]] ?? []
-        let snapshot = build(windows)
+            // 锁外取数：WindowServer 枚举可能耗时，不阻塞缓存读写锁。
+            let options: CGWindowListOption = kind == .onScreen
+                ? [.optionOnScreenOnly, .excludeDesktopElements]
+                : [.optionAll, .excludeDesktopElements]
+            let windows = CGWindowListCopyWindowInfo(options, kCGNullWindowID) as? [[String: Any]] ?? []
+            let fresh = build(windows)
 
-        lock.lock()
-        if kind == .onScreen {
-            onScreenEntry = Entry(snapshot: snapshot, at: now)
-        } else {
-            allEntry = Entry(snapshot: snapshot, at: now)
+            lock.lock()
+            let finishedAt = CFAbsoluteTimeGetCurrent()
+            if kind == .onScreen {
+                onScreenEntry = Entry(snapshot: fresh, at: finishedAt)
+                onScreenRefresh = nil
+            } else {
+                allEntry = Entry(snapshot: fresh, at: finishedAt)
+                allRefresh = nil
+            }
+            lock.unlock()
+            gate.signal()
+            return fresh
         }
-        lock.unlock()
-        return snapshot
     }
 
     private func build(_ windows: [[String: Any]]) -> Snapshot {
@@ -1509,7 +1520,7 @@ func eventTapCallback(proxy: CGEventTapProxy, type: CGEventType,
     if type == .leftMouseDown {
         let clickState = event.getIntegerValueField(.mouseEventClickState)
         if clickState >= 3 {
-            if appDelegate?.handleTitleBarTripleClick(at: event.location) == true {
+            if appDelegate?.handleTitleBarTripleClick(at: event.location, clickCount: clickState) == true {
                 return nil
             }
         } else if clickState == 2 {                                     // 双击的第二下
@@ -1586,6 +1597,7 @@ func backingScaleForAXWindow(pos: CGPoint, size: CGSize) -> CGFloat {
 // geometry are the continuity contract: unfold should restore the same window
 // identity and the strip's current spatial anchor whenever macOS allows it.
 struct ShadeState {
+    let foldTransactionID = UUID()
     let element: AXUIElement
     let sourceWindowID: CGWindowID
     let originalPosition: CGPoint
@@ -1624,11 +1636,18 @@ struct ShadeInvocationOptions {
 
 final class AppDelegate: NSObject, NSApplicationDelegate, NSMenuDelegate {
     let duoController = DuoController()
-    struct PendingTitlebarTripleClick {
+    final class PendingTitlebarTripleClick {
         let id: CGWindowID
-        let element: AXUIElement
         let point: CGPoint
-        let deadline: Date
+        var deadline: Date
+        let intent = TitlebarTripleClickIntent()
+        var foldTransactionID: UUID?
+
+        init(id: CGWindowID, point: CGPoint, deadline: Date) {
+            self.id = id
+            self.point = point
+            self.deadline = deadline
+        }
     }
 
     struct PendingSpaceReturn {
@@ -1729,7 +1748,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSMenuDelegate {
     // 窗口浏览入口的折叠终态等待者：键 = 原窗口 ID，值 = token -> 回调。
     // 折叠事务是异步的（立即验证 / 延迟验证 / 回滚），浏览器动作只在真实终态
     // 到达时才完成；token 保证旧请求不会误结算新请求。
-    var windowBrowserFoldWaiters: [CGWindowID: [UUID: (Bool) -> Void]] = [:]
+    var foldWaiters: [CGWindowID: [UUID: (Bool) -> Void]] = [:]
     var windowBrowserController: WindowBrowserController?
     var windowBrowserHotKeyRef: EventHotKeyRef?
     var menuRebuildWorkItem: DispatchWorkItem?

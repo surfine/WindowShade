@@ -28,6 +28,7 @@ prototype/
 │   ├── ArrangeController.swift       # 卷帘条整理与专注 shelf
 │   ├── FocusSession.swift            # 专注会话
 │   ├── FoldTransaction.swift         # 折叠事务辅助（隐藏/恢复/验证/转发/通知）
+│   ├── FoldCompletion.swift          # 窗口动作与标题栏手势共用的完成等待
 │   ├── ShadeController.swift         # 折叠入口（shade/toggle/折叠计划/截图）
 │   └── FoldExit.swift                # 折叠出口（unshade/清理/交通灯/QuickLook）
 ├── Private/
@@ -104,6 +105,9 @@ cd prototype
 
 - 设置与纸面组件的隔离验收入口：见 [设计规范 v1 落地与验证](docs/design-v1.md)。
 - 纸面组件事件与命中区域回归：`bash tests/run-paper-tests.sh`，使用离屏 AppKit 视图，不操作用户窗口。
+- 设置页恢复与滚动保持：`bash tests/run-settings-tests.sh`，编译生产 AppKit 视图的独立入口；使用隔离偏好设置，不显示或操作用户窗口。
+- 经典卷帘条辅助操作与点击边界：`bash tests/run-appkit-tests.sh ClassicStripTests`；直接调用生产视图的事件处理，不注入系统事件，浅深色组件图输出到 `.build/appkit-tests/strip-shots/`。设置测试也复用这个构建入口，保留原命令作为包装。
+- 窗口动画生命周期：`bash tests/run-appkit-tests.sh WindowFoldEffectsTests`；用无捕获任务检查旧回调隔离、取消、回退移交、隐藏超时代数和重入，不操作真实窗口。测试扩展仅拼入临时源码快照，以访问生产类型的私有生命周期。
 - 日志写在 `/tmp/windowshade.log`，5MB 自动轮转（旧文件为 `.1`）。
 - 主线程卡顿：日志里搜 `main-thread stall`。
 - 慢操作：日志里搜 `slow:` 前缀。
@@ -113,6 +117,10 @@ cd prototype
   `未标记` / `占 0%` 说明阻塞落在所有标记之外（多半在异步回调里）。
 - AX / SkyLight 调用成本基准：`WindowShade.app/Contents/MacOS/WindowShade --duo-ax-bench`
   （只读；必须用签名后的 bundle 运行，否则拿不到辅助功能权限）。
+  输出首次/重复完整枚举、原始 AX 列表、新建/复用应用句柄、ID 匹配及过滤成本。
+  加 `--ax-raw-first` 会先读原始列表，用来区分系统首次读取与生产过滤成本；
+  两种顺序应分别运行，不能把相邻热查询的中位数当作首次响应或 p95/p99。
+- 标题栏控件输入回归：签名后的隔离应用运行 `--duo-window-test --input-test`。探针启动自己的临时窗口，在标题栏放入输入框并预热裁剪缓存，确认真实 AX 命中后调用生产双击/三击处理函数，检查输入没有被吞掉或排入窗口操作。需要辅助功能权限及系统标题栏双击动作；不发送全局模拟点击，输出耗时不包含系统事件交付。测试会短暂激活临时窗口，以核对聚焦查找；结束后仅在前台仍是临时窗口时恢复原应用，不覆盖用户中途切换。
 
 ### 系统集成与质感批次
 
@@ -128,7 +136,7 @@ cd prototype
 - 纯逻辑与离屏 AppKit 回归：`bash tests/run-window-browser-tests.sh`
   （身份/目录/动作/缩略图/布局/状态机；不请求权限、不操作用户窗口）。
 
-  - 该脚本编译窗口浏览的生产源文件并运行 663 项断言；每次都会打印 50/200 窗口的
+  - 该脚本编译窗口浏览的生产源文件并运行 690 项断言，另运行预览启动取消/乱序和元数据队列阻塞回归；每次都会打印 50/200 窗口的
     首屏耗时，便于和 `docs/window-browser-performance.md` 的数字对照。
   - 生产源文件清单与 `prototype/build.sh` 的自动收集保持一致；新增窗口浏览源文件
     时同步更新该脚本（只是显式列出，不复制实现）。
@@ -207,8 +215,8 @@ cd prototype
   `--window-browser-stream-probe`、`--window-browser-panel-probe`、
   `--window-browser-ui-probe`、`--window-browser-idle-probe`
   （临时关闭 Dock 开关后测空闲查询数，结束时恢复设置）、
-  `--window-browser-identity-probe`（只用真实 AX 核对身份解析与全部拒绝分支，
-  不写任何窗口状态）。
+  `--window-browser-identity-probe`（真实 AX 身份解析：包含同名同位置的两个原生窗口、
+  歧义拒绝、关闭后不替换目标与协调器拒绝分支；不修改用户窗口）。
   例外：`--window-browser-live-app-probe` 会对**另一个正在运行的 WindowShade**
   走一遍真实状态栏菜单项并打开一次面板（随后按 Esc 关闭）。它只读用户窗口、不改设置，
   但会短暂占用菜单栏与屏幕，请在不需要用机的时机运行。
