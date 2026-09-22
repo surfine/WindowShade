@@ -542,7 +542,7 @@ extension AppDelegate {
         header.addArrangedSubview(title)
         stack.addArrangedSubview(header)
 
-        let copy = NSTextField(labelWithString: "WindowShade 只做三件事：把窗口收起来、把窗口置顶、跟着合盖动一动。它不会关掉窗口，也不会改动桌面排布。")
+        let copy = NSTextField(labelWithString: "WindowShade 让挡路的窗口暂时让开：原地收起、置顶到最前，或者在 Dock 上直接挑窗口。它不会关掉窗口，也不会擅自改动桌面排布。")
         copy.font = SystemAppearancePolicy.font(relativeToBody: 0)
         copy.textColor = .secondaryLabelColor
         copy.lineBreakMode = .byWordWrapping
@@ -553,6 +553,15 @@ extension AppDelegate {
         stack.addArrangedSubview(makeOnboardingUsageCard())
         if !needsPermissions {
             stack.addArrangedSubview(makeOnboardingFeatureCard())
+            // 权限都齐了：给一个明确的收尾按钮（回车即可），关掉后不再自动弹出。
+            let start = NSButton(title: "开始使用", target: self, action: #selector(dismissOnboarding))
+            start.bezelStyle = .rounded
+            start.keyEquivalent = "\r"
+            let row = NSStackView()
+            row.orientation = .horizontal
+            row.addView(start, in: .trailing)
+            row.widthAnchor.constraint(equalToConstant: onboardingContentWidth).isActive = true
+            stack.addArrangedSubview(row)
         }
 
         if needsPermissions {
@@ -599,6 +608,15 @@ extension AppDelegate {
             onboardingCaption = caption
         }
 
+        if !needsPermissions {
+            // 内容是固定的，窗口按内容取高，不留底部空白。需要授权时权限行稍后才填入，
+            // 仍用预留高度。
+            let fitting = stack.fittingSize.height
+            if fitting > 0 {
+                root.setFrameSize(NSSize(width: root.frame.width, height: ceil(fitting) + 44))
+                stack.frame = root.bounds.insetBy(dx: 24, dy: 22)
+            }
+        }
         return root
     }
 
@@ -634,8 +652,10 @@ extension AppDelegate {
             rows.append(("pin", "\(name)：置顶或取消置顶当前窗口"))
         }
         rows.append(("cursorarrow.click", "双击标题栏：收起或展开那个窗口"))
-        if let triple = systemTitlebarTripleClickDescription() {
-            rows.append(("cursorarrow.rays", triple))
+        switch systemTitlebarDoubleClickAction() {
+        case .zoom: rows.append(("cursorarrow.rays", "三击标题栏：缩放窗口"))
+        case .minimize: rows.append(("cursorarrow.rays", "三击标题栏：最小化窗口"))
+        case .none: break
         }
         rows.append(("eye", "单击卷帘条：看一眼收起的窗口"))
         if GlobalShortcutSettings.numberedExpandEnabled {
@@ -647,10 +667,11 @@ extension AppDelegate {
 
     func makeOnboardingFeatureCard() -> NSView {
         let rows: [(String, String)] = [
-            ("rectangle.on.rectangle", "置顶：让窗口一直待在其他窗口前面"),
-            ("rectangle.stack", "合盖效果：在设置 → 效果中开启"),
+            ("pin", "置顶：让窗口一直待在其他窗口前面"),
+            ("dock.rectangle", "窗口浏览：鼠标停在 Dock 图标上查看它的窗口，在设置里打开"),
             ("paintpalette", "卷帘：收起后跟原来一样，或换成统一标题栏"),
-            ("power", "启动：登录后自动打开"),
+            ("rectangle.stack", "合盖效果：在设置 → 效果里打开"),
+            ("power", "登录时启动：在设置 → 权限与启动里打开"),
         ]
         return makeOnboardingInfoCard(title: "工作方式", rows: rows)
     }
