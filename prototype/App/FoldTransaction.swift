@@ -597,11 +597,8 @@ extension AppDelegate {
                                           pid: pid, reason: "shade") {
                 return hide
             } else {
-                clampingApps.insert(pid)              // 被钳制回可见区 → 记下来，但下次仍先重试当前窗口
-                if !bundleID.isEmpty {
-                    clampingBundleIDs.insert(bundleID)
-                    UserDefaults.standard.set(Array(clampingBundleIDs).sorted(), forKey: clampingBundleIDsDefaultsKey)
-                }
+                // 被钳制回可见区。不记成“这个应用挪不出去”：能否挪出屏幕取决于窗口大小、
+                // 位置与显示器布局，下次仍先试挪屏外——它比最小化更接近“收起”。
                 let hide = fallbackHide(win, pid: pid, id: id, originalPosition: pos,
                                         size: size, allowAppHide: allowAppHide && appHideSafe)
                 wlog("    挪屏外被钳制 → \(hide)（pid=\(pid), bundle=\(bundleID), allowAppHide=\(allowAppHide && appHideSafe)）")
