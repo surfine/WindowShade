@@ -1091,6 +1091,11 @@ final class WindowBrowserUIRouteProbe {
         let shortcutItems = delegate.statusMenu.items.filter { !$0.keyEquivalent.isEmpty }
             .map { "\($0.title)=\($0.keyEquivalent)" }
         print("ui-probe: menuShortcuts \(shortcutItems.joined(separator: " "))")
+        let outline = delegate.statusMenu.items.map { item -> String in
+            if item.isSeparatorItem { return "—" }
+            return item.isSectionHeader ? "[\(item.title)]" : item.title
+        }
+        print("ui-probe: menuOutline \(outline.joined(separator: " | "))")
         let enabledItem = browserMenuItem()
         print("ui-probe: menuItem present=\(enabledItem != nil) "
               + "enabled=\(enabledItem?.isEnabled ?? false) "
