@@ -4,6 +4,18 @@ import ScreenCaptureKit
 enum WindowShadeSettingsSection: Int, CaseIterable {
   case effects, shade, browser, permissions, advanced
 
+  private static let lastViewedKey = "WindowShade.Settings.LastViewedSection"
+
+  static func lastViewed(in defaults: UserDefaults = .standard) -> Self {
+    guard let rawValue = defaults.object(forKey: lastViewedKey) as? Int,
+          let section = Self(rawValue: rawValue) else { return .shade }
+    return section
+  }
+
+  func remember(in defaults: UserDefaults = .standard) {
+    defaults.set(rawValue, forKey: Self.lastViewedKey)
+  }
+
   var title: String {
     switch self {
     case .effects: return "效果"
@@ -190,7 +202,7 @@ final class DuoSettingsWindow: NSWindowController, NSWindowDelegate, NSTableView
     pages[.shade] = controller.owner?.makeShadeSettingsPage()
     pages[.browser] = controller.owner?.makeWindowBrowserSettingsPage()
     pages[.permissions] = controller.owner?.makePermissionsSettingsPage()
-    select(section: .effects)
+    select(section: controller.isDesignPreview ? .effects : .lastViewed())
 
     // 时钟只为实时预览的推帧服务。静态示意图不会自己变化，参数一改就已经
     // 显式 render() 过了——设置窗口开着的时候没有理由每秒画 60 帧。
@@ -317,7 +329,9 @@ final class DuoSettingsWindow: NSWindowController, NSWindowDelegate, NSTableView
 
   func select(section: WindowShadeSettingsSection) {
     guard let pageHost, let page = pages[section] else { return }
+    guard currentSection != section || pageHost.subviews.first !== page else { return }
     currentSection = section
+    if controller?.isDesignPreview != true { section.remember() }
     allowHorizontalExpansion(in: page)
     NSLayoutConstraint.deactivate(activePageConstraints)
     activePageConstraints.removeAll()
@@ -997,7 +1011,7 @@ final class DuoSettingsWindow: NSWindowController, NSWindowDelegate, NSTableView
     }
     let token = epoch.advance()
     captureTask = Task { @MainActor [weak self] in
-      guard let self else { return }
+      guard let self, epoch.accepts(token), !Task.isCancelled else { return }
       let capture = EffectFrameSource()
       source = capture
       do {
@@ -1007,26 +1021,43 @@ final class DuoSettingsWindow: NSWindowController, NSWindowDelegate, NSTableView
           let display = content.displays.first(where: { CGDisplayIsBuiltin($0.displayID) != 0 }),
           let own = content.applications.first(where: { $0.processID == getpid() })
         else { throw EffectError.unavailable("内建屏幕不可用") }
-        capture.onContentUnavailable = { [weak self] in self?.suspendPreview() }
-        capture.onStop = { [weak self] _ in self?.suspendPreview() }
+        capture.onContentUnavailable = { [weak self] in
+          guard let self, epoch.accepts(token) else { return }
+          suspendPreview()
+        }
+        capture.onStop = { [weak self] _ in
+          guard let self, epoch.accepts(token) else { return }
+          suspendPreview()
+        }
         let width = min(1920, display.width)
         try await capture.start(
           filter: SCContentFilter(
             display: display, excludingApplications: [own], exceptingWindows: []),
           size: CGSize(width: width, height: width * display.height / max(1, display.width)),
           color: EffectColorSpace.display(screenForDisplayID(display.displayID)))
-        startPreviewClock()
-        guard epoch.accepts(token), !Task.isCancelled, let frame = await capture.waitForFrame()
-        else {
+        guard epoch.accepts(token), !Task.isCancelled else {
           capture.stop()
+          return
+        }
+        startPreviewClock()
+        let frame = await capture.waitForFrame()
+        // waitForFrame suspends: a new preview may own the renderer by the time it returns.
+        guard epoch.accepts(token), !Task.isCancelled else {
+          capture.stop()
+          return
+        }
+        guard let frame else {
+          suspendPreview()
           return
         }
         renderer?.setFrame(frame)
         renderer?.render()
       } catch {
         capture.stop()
-        stopPreviewClock()
         if epoch.accepts(token) {
+          stopPreviewClock()
+          source = nil
+          captureTask = nil
           live.state = .off
           captureMessage = "实时预览不可用：\(error.localizedDescription)"
           refreshStatus(force: true)
@@ -1102,11 +1133,16 @@ extension AppDelegate {
   }
 
   func showDuoSettings(section: WindowShadeSettingsSection) {
+    showSettingsWindow(section: section)
+  }
+
+  /// A plain Settings command restores the last pane; contextual commands select a target.
+  func showSettingsWindow(section: WindowShadeSettingsSection? = nil) {
     if duoController.settingsWindow == nil {
       duoController.settingsWindow = DuoSettingsWindow(controller: duoController)
     }
     duoController.settingsWindow?.showWindow(nil)
-    duoController.settingsWindow?.select(section: section)
+    if let section { duoController.settingsWindow?.select(section: section) }
     NSApp.activate()
     duoController.settingsChanged()
   }

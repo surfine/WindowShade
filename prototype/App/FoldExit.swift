@@ -12,6 +12,8 @@ extension AppDelegate {
         markShadeLifecycle(id: id, .restoring, reason: "unshade")
         transitionOperationState(id: id, to: .restoring, reason: "unshade")
         guard let state = shaded.removeValue(forKey: id) else { return nil }
+        let interruptedWaiters = foldWaiters[id].map { Array($0.keys) } ?? []
+        defer { cancelFoldWaiters(id: id, tokens: interruptedWaiters) }
         let shouldRememberFocusRejoin = focusPulledOutOverlayIDs.contains(id) && focusSession?.stage == .arrangedAway
         let rejoinEntry = shouldRememberFocusRejoin ? focusSession?.entries[id] : nil
         let rejoinStackFrame = shouldRememberFocusRejoin ? focusSideStackFrames[id] : nil
@@ -92,6 +94,8 @@ extension AppDelegate {
         guard shaded[id] != nil else { return }
         markShadeLifecycle(id: id, .cleaned, reason: "forceCleanup")
         guard let state = shaded.removeValue(forKey: id) else { return }
+        let interruptedWaiters = foldWaiters[id].map { Array($0.keys) } ?? []
+        defer { cancelFoldWaiters(id: id, tokens: interruptedWaiters) }
         transitionOperationState(id: id, to: .normal, reason: "forceCleanup")
         hideHoverPreview(id: id)
         hideMenuHoverPreview(id: id)
@@ -117,6 +121,8 @@ extension AppDelegate {
     }
     func removeProxyForAction(_ id: CGWindowID, state: ShadeState,
                                       stage: ShadeLifecycleStage, reason: String) {
+        let interruptedWaiters = foldWaiters[id].map { Array($0.keys) } ?? []
+        defer { cancelFoldWaiters(id: id, tokens: interruptedWaiters) }
         markShadeLifecycle(id: id, stage, reason: reason)
         transitionOperationState(id: id, to: .normal, reason: "removeProxy")
         hideHoverPreview(id: id)

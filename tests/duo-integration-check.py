@@ -5,6 +5,11 @@ shade = (root / 'prototype/App/ShadeController.swift').read_text()
 transaction = shade.split('func installOverlay(', 1)[1].split('func installInteractiveNativeCollapse', 1)[0]
 assert transaction.index('recordShadeRecoveryIntent(') < transaction.index('let hide = hideWindow(')
 assert transaction.index('let hideVerifiedNow = hideTookEffect(') < transaction.index('didVerifyFold(')
+assert transaction.index('guard intentWritten else') < transaction.index('to: .folded'), 'Failed durable intent must still be able to transition capturing -> failed'
+sync_finish = shade.split('if !handedToAsyncCapture {', 1)[1].split('guard let pos =', 1)[0]
+assert 'success: true' not in sync_finish, 'Returning from shade does not prove hiding completed'
+native = shade.split('func installInteractiveNativeCollapse', 1)[1].split('if mode == .interactiveNative', 1)[0]
+assert 'completeFold(success: true)' in native, 'Verified native collapse must complete explicitly'
 exit_code = (root / 'prototype/App/FoldExit.swift').read_text()
 sync = exit_code.split('func unshadeReturningElement(', 1)[1].split('@discardableResult', 1)[0]
 assert 'interceptRestore(' not in sync, 'Synchronous callers must never acquire async restore semantics'

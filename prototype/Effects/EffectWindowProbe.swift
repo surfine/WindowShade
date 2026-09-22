@@ -27,6 +27,7 @@ final class EffectWindowProbe {
     fixture.executableURL = Bundle.main.executableURL
     fixture.arguments = ["--duo-window-fixture"]
     if CommandLine.arguments.contains("--edge") { fixture.arguments?.append("--edge") }
+    if CommandLine.arguments.contains("--input-test") { fixture.arguments?.append("--input-test") }
     do {
       try fixture.run()
       self.fixture = fixture
@@ -43,6 +44,11 @@ final class EffectWindowProbe {
         }
         guard let element, let original = bounds else {
           throw EffectError.unavailable("fixture unavailable")
+        }
+        if CommandLine.arguments.contains("--input-test") {
+          try await verifyTitlebarControls(element, original: original)
+          finish(nil)
+          return
         }
         owner.shade(element, id)
         NotificationCenter.default.post(
@@ -65,8 +71,12 @@ final class EffectWindowProbe {
             && self.owner.duoController.windowEffects.activeCount == 0
             && self.owner.duoRestoreVerificationTokens[self.id] == nil
         }
-        guard close(bounds, original), !animated || owner.duoController.windowEffects.completedTransitions >= 2
-        else { throw EffectError.unavailable("restore failed geometry or used fallback") }
+        guard close(bounds, original) else {
+          throw EffectError.unavailable("restore geometry mismatch expected=\(original) actual=\(String(describing: bounds))")
+        }
+        guard !animated || owner.duoController.windowEffects.completedTransitions >= 2 else {
+          throw EffectError.unavailable("restore used animation fallback; geometry restored")
+        }
         print("PASS native: restore verified (animation=\(animated))")
         fflush(stdout)
         if CommandLine.arguments.contains("--edge") || !animated { finish(nil); return }
@@ -113,6 +123,71 @@ final class EffectWindowProbe {
     return abs(actual.minX - expected.minX) < 2 && abs(actual.minY - expected.minY) < 2
       && abs(actual.width - expected.width) < 2 && abs(actual.height - expected.height) < 2
   }
+  @MainActor private func verifyTitlebarControls(_ window: AXUIElement, original: CGRect) async throws {
+    guard AXIsProcessTrusted(), systemTitlebarDoubleClickAction() != .none else {
+      throw EffectError.unavailable("input probe requires AX permission and a system titlebar double-click action")
+    }
+    guard let fixturePID = fixture?.processIdentifier,
+          let application = NSRunningApplication(processIdentifier: fixturePID) else {
+      throw EffectError.unavailable("input fixture process unavailable")
+    }
+    let previousApplication = NSWorkspace.shared.frontmostApplication
+    defer {
+      if NSWorkspace.shared.frontmostApplication?.processIdentifier == fixturePID,
+         previousApplication?.processIdentifier != fixturePID {
+        previousApplication?.activate(options: [])
+      }
+    }
+    application.activate(options: [])
+    try await wait("input fixture is frontmost") {
+      NSWorkspace.shared.frontmostApplication?.processIdentifier == fixturePID
+    }
+    owner.titlebarDoubleClickEnabled = true
+    func find(_ element: AXUIElement, depth: Int = 0) -> AXUIElement? {
+      if axRole(element) == "AXTextField" { return element }
+      guard depth < 8 else { return nil }
+      return axChildren(element).compactMap { find($0, depth: depth + 1) }.first
+    }
+    guard let field = find(window), let position = axPosition(field), let size = axSize(field) else {
+      throw EffectError.unavailable("fixture titlebar field missing")
+    }
+    let point = CGPoint(x: position.x + size.width / 2, y: position.y + size.height / 2)
+    guard owner.titlebarContains(point: point, in: window) != nil else {
+      throw EffectError.unavailable("fixture field is outside titlebar hit band")
+    }
+    try await wait("fixture titlebar field becomes the topmost AX hit") {
+      var hit: AXUIElement?
+      guard AXUIElementCopyElementAtPosition(AXUIElementCreateSystemWide(),
+        Float(point.x), Float(point.y), &hit) == .success,
+        let hit else { return false }
+      return axRole(hit) == "AXTextField"
+        && containingWindow(hit).flatMap(windowID(of:)) == self.id
+    }
+    let profile = resolveWindowChromeProfile(win: window, id: id,
+      pos: original.origin, size: original.size, pid: fixture!.processIdentifier, title: axTitle(window))
+    print("INPUT fixture: standardTitleBarOnly=\(profile.standardTitleBarOnly), field in hit band")
+    for clicks in [2, 3] {
+      let started = CACurrentMediaTime()
+      let consumed = clicks == 2 ? owner.handleTitleBarDoubleClick(at: point)
+        : owner.handleTitleBarTripleClick(at: point)
+      print("INPUT \(clicks) clicks: consumed=\(consumed), \((CACurrentMediaTime() - started) * 1000)ms")
+      guard !consumed else { throw EffectError.unavailable("titlebar text field click was consumed") }
+      await Task.yield()
+      guard owner.shaded[id] == nil, owner.pendingTitlebarTripleClick == nil else {
+        throw EffectError.unavailable("control click queued a window operation")
+      }
+    }
+    let enumerations = axWindowListEnumerations
+    let started = CACurrentMediaTime()
+    let fallback = owner.frontmostWindowContaining(point: point, requireCompatProfile: false)
+    var fallbackID: CGWindowID = 0
+    guard let fallback, _AXUIElementGetWindow(fallback, &fallbackID) == .success,
+          fallbackID == id, axWindowListEnumerations == enumerations else {
+      throw EffectError.unavailable("focused geometry lookup expected=\(id) actual=\(fallbackID) enumerations=\(axWindowListEnumerations - enumerations) frontPID=\(NSWorkspace.shared.frontmostApplication?.processIdentifier ?? 0)")
+    }
+    print("PASS native: focused geometry lookup without AXWindows (\((CACurrentMediaTime() - started) * 1000)ms)")
+    print("PASS native: titlebar text field retains double/triple clicks")
+  }
   @MainActor private func wait(_ label: String, condition: () -> Bool) async throws {
     let deadline = CACurrentMediaTime() + 10
     while !Task.isCancelled, CACurrentMediaTime() < deadline {
@@ -141,8 +216,17 @@ final class EffectWindowProbe {
       contentRect: frame,
       styleMask: [.titled, .closable, .resizable, .miniaturizable], backing: .buffered, defer: false
     )
+    NSApp.activate(ignoringOtherApps: true)
     window.title = "WindowShade Duo · 临时事务测试"
     window.isReleasedWhenClosed = false
+    if CommandLine.arguments.contains("--input-test") {
+      let accessory = NSTitlebarAccessoryViewController()
+      accessory.layoutAttribute = .right
+      let field = NSTextField(string: "Editable titlebar fixture")
+      field.frame = NSRect(x: 0, y: 0, width: 180, height: 22)
+      accessory.view = field
+      window.addTitlebarAccessoryViewController(accessory)
+    }
     let content = NSImageView(frame: NSRect(x: 0, y: 0, width: 640, height: 420))
     content.image = NSImage(cgImage: DuoSettingsWindow.artwork(), size: content.frame.size)
     content.imageScaling = .scaleAxesIndependently
