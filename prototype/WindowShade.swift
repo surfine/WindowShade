@@ -130,8 +130,8 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSMenuDelegate {
 
     var statusItem: NSStatusItem!
     var statusMenu: NSMenu!
-    var hotKeyRefs: [EventHotKeyRef?] = []
-    /// 注册失败（被其他应用占用）的 ⌃⌘ 快捷键编号；菜单不再显示这些组合。
+    var hotKeyRefs: [UInt32: EventHotKeyRef] = [:]
+    /// 注册失败（被其他应用占用）的快捷键编号；菜单不再显示这些组合。
     var unavailableHotKeyIDs: Set<UInt32> = []
     var shaded: [CGWindowID: ShadeState] = [:]
     var overlayIDs: Set<CGWindowID> = []      // 我们自己的覆盖层，tap 里要跳过它们
