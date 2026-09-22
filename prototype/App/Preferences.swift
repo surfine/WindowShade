@@ -488,6 +488,14 @@ extension AppDelegate {
         window.center()
         window.contentView = content
         onboardingWindow = window
+        // 点关闭按钮也算看过：否则下次启动它又会自己弹出来。缺权限时的再次提醒
+        // 走的是“缺权限”这条判断，不受这个标记影响。
+        NotificationCenter.default.addObserver(forName: NSWindow.willCloseNotification,
+                                               object: window, queue: .main) { [weak self] _ in
+            UserDefaults.standard.set(true, forKey: shadeOnboardingShownDefaultsKey)
+            self?.onboardingRefreshTimer?.invalidate()
+            self?.onboardingRefreshTimer = nil
+        }
         refreshOnboardingState()
         window.makeKeyAndOrderFront(nil)
         NSApp.activate()
