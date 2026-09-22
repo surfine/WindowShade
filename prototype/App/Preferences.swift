@@ -84,7 +84,7 @@ extension AppDelegate {
 }
 
 @objc func showPreferences() {
-        showDuoSettings(section: .shade)
+        showSettingsWindow()
     }
 
     private func makeSettingsPageRoot() -> (NSView, NSStackView) {
@@ -279,10 +279,13 @@ extension AppDelegate {
             labels.leadingAnchor.constraint(equalTo: row.leadingAnchor),
             labels.trailingAnchor.constraint(equalTo: toggle.leadingAnchor, constant: -14),
             toggle.trailingAnchor.constraint(equalTo: row.trailingAnchor),
+            labels.topAnchor.constraint(greaterThanOrEqualTo: row.topAnchor, constant: 8),
+            labels.bottomAnchor.constraint(lessThanOrEqualTo: row.bottomAnchor, constant: -8),
         ])
         row.orientation = .horizontal
         row.alignment = .centerY
         row.spacing = 14
+        row.edgeInsets = NSEdgeInsets(top: 8, left: 0, bottom: 8, right: 0)
         row.heightAnchor.constraint(greaterThanOrEqualToConstant: subtitle == nil ? 40 : 48).isActive = true
         return row
     }
@@ -299,10 +302,13 @@ extension AppDelegate {
             labels.leadingAnchor.constraint(equalTo: row.leadingAnchor),
             labels.trailingAnchor.constraint(equalTo: control.leadingAnchor, constant: -14),
             control.trailingAnchor.constraint(equalTo: row.trailingAnchor),
+            labels.topAnchor.constraint(greaterThanOrEqualTo: row.topAnchor, constant: 8),
+            labels.bottomAnchor.constraint(lessThanOrEqualTo: row.bottomAnchor, constant: -8),
         ])
         row.orientation = .horizontal
         row.alignment = .centerY
         row.spacing = 14
+        row.edgeInsets = NSEdgeInsets(top: 8, left: 0, bottom: 8, right: 0)
         row.heightAnchor.constraint(greaterThanOrEqualToConstant: subtitle == nil ? 40 : 48).isActive = true
         return row
     }
@@ -922,7 +928,7 @@ extension AppDelegate {
         let appearance = makeUnifiedSettingsCard([
             makeUnifiedControlRow(
                 name: "面板背景",
-                subtitle: "选“不透明”后面板不再透出后面的内容；系统打开“减少透明度”时也会这样。",
+                subtitle: "开启系统的“减少透明度”时，自动使用不透明背景。",
                 control: appearanceControl),
             makeUnifiedControlRow(
                 name: "默认显示方式",
@@ -941,7 +947,7 @@ extension AppDelegate {
 
         let permissions = makeUnifiedSettingsCard([
             makeUnifiedPermissionRow(symbol: "accessibility", name: "辅助功能",
-                subtitle: "识别 Dock 图标，切换、收起、恢复或关闭窗口",
+                subtitle: "识别 Dock 图标，切换、收起、展开和关闭窗口",
                 granted: hasAccessibilityPermission(),
                 action: #selector(openAccessibilitySettingsAction)),
             makeUnifiedPermissionRow(symbol: "rectangle.inset.filled.and.person.filled", name: "屏幕录制",
