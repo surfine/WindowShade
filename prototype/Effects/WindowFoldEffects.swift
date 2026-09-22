@@ -63,8 +63,14 @@ final class WindowFoldEffects {
     job.task = Task { @MainActor [weak self, weak job] in
       guard let self, let job else { return }
       do {
-        let content = try await SCShareableContent.excludingDesktopWindows(
-          false, onScreenWindowsOnly: false)
+        // 收起时用共享缓存：双击的第一下就在预取，第二下到达时多半已经就绪，
+        // 省掉一次数百毫秒的全系统枚举。这里只需要在屏窗口（源窗口本身、所在显示器、
+        // 背景截图要排除的源窗口），缓存足够；缓存里没有源窗口时它会强制刷新。
+        // 展开路径不能这样做：它要排除收起时才创建的卷帘条，旧快照里可能还没有它。
+        guard let content = await ShareableContentCache.shared.content(requiring: id) else {
+          fallback(job)
+          return
+        }
         guard current(job), enabled, job.desiredFolded,
           let window = content.windows.first(where: { $0.windowID == id }), window.isOnScreen
         else {
