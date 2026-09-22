@@ -795,17 +795,23 @@ extension AppDelegate {
     }
 
     func makeOnboardingUsageCard() -> NSView {
-        var rows: [(String, String)] = [
-            ("keyboard", "⌃⌘C：折叠 / 展开当前窗口"),
-            ("pin", "⌃⌘P：置顶或取消置顶当前窗口"),
-            ("cursorarrow.click", "双击标题栏：收起或展开那个窗口"),
-            ("eye", "单击卷帘条：看一眼收起的窗口"),
-            ("number", "⌃⌘1…9：按菜单顺序展开已收起的窗口"),
-            ("menubar.rectangle", "菜单栏：管理窗口和效果"),
-        ]
-        if let triple = systemTitlebarTripleClickDescription() {
-            rows.insert(("cursorarrow.rays", triple), at: 1)
+        // 快捷键按当前设置写：改过键或关掉了，引导页不再说原来的组合。
+        var rows: [(String, String)] = []
+        if let name = GlobalShortcutSettings.displayName(for: .toggleShade) {
+            rows.append(("keyboard", "\(name)：收起或展开当前窗口"))
         }
+        if let name = GlobalShortcutSettings.displayName(for: .pinPreview) {
+            rows.append(("pin", "\(name)：置顶或取消置顶当前窗口"))
+        }
+        rows.append(("cursorarrow.click", "双击标题栏：收起或展开那个窗口"))
+        if let triple = systemTitlebarTripleClickDescription() {
+            rows.append(("cursorarrow.rays", triple))
+        }
+        rows.append(("eye", "单击卷帘条：看一眼收起的窗口"))
+        if GlobalShortcutSettings.numberedExpandEnabled {
+            rows.append(("number", "\(GlobalShortcutSettings.numberedDisplayName)：按菜单顺序展开已收起的窗口"))
+        }
+        rows.append(("menubar.rectangle", "菜单栏：管理窗口和效果"))
         return makeOnboardingInfoCard(title: "常用入口", rows: rows)
     }
 
@@ -1002,6 +1008,99 @@ extension AppDelegate {
         windowBrowserController?.openKeyboardPanel()
     }
 
+    func makeShortcutsSettingsPage() -> NSView {
+        let (root, stack) = makeSettingsPageRoot()
+        stack.addArrangedSubview(makeSettingsHeader(
+            title: "快捷键",
+            subtitle: "在任何应用里都能用。点“录制…”再按下新的组合；“清除”会关掉这个快捷键。",
+            symbolName: "command"))
+
+        func recorderRow(_ shortcut: GlobalShortcut, subtitle: String?) -> NSView {
+            let recorder = HotKeyRecorderView(accessibilityName: shortcut.title)
+            recorder.configure(current: GlobalShortcutSettings.hotKey(for: shortcut))
+            recorder.validate = { hotKey in
+                GlobalShortcutSettings.conflictName(for: hotKey, excluding: shortcut)
+                    .map { "已用于：\($0)" }
+            }
+            recorder.onCapture = { [weak self, weak recorder] hotKey in
+                self?.applyShortcut(hotKey, for: shortcut)
+                recorder?.configure(current: GlobalShortcutSettings.hotKey(for: shortcut))
+            }
+            return makeUnifiedControlRow(name: shortcut.title, subtitle: subtitle, control: recorder)
+        }
+
+        let window = makeUnifiedSettingsCard([
+            recorderRow(.toggleShade, subtitle: nil),
+            recorderRow(.pinPreview, subtitle: nil),
+        ])
+        stack.addArrangedSubview(makePrefGroupLabel("当前窗口"))
+        stack.addArrangedSubview(window)
+        window.widthAnchor.constraint(equalTo: stack.widthAnchor).isActive = true
+        stack.setCustomSpacing(18, after: window)
+
+        let strips = makeUnifiedSettingsCard([
+            recorderRow(.arrangeOrFocus, subtitle: "外观选“统一标题栏”时，改为专注当前 App"),
+            makeUnifiedToggleRow(
+                name: "按编号展开已收起的窗口",
+                subtitle: "\(GlobalShortcutSettings.numberedDisplayName) 对应菜单里的前 9 个窗口",
+                isOn: GlobalShortcutSettings.numberedExpandEnabled,
+                action: #selector(prefToggleNumberedShortcuts(_:))),
+        ])
+        stack.addArrangedSubview(makePrefGroupLabel("已收起的窗口"))
+        stack.addArrangedSubview(strips)
+        strips.widthAnchor.constraint(equalTo: stack.widthAnchor).isActive = true
+        stack.setCustomSpacing(18, after: strips)
+
+        let browser = makeUnifiedSettingsCard([
+            recorderRow(.windowBrowser,
+                        subtitle: "默认不设置。再按一次同一个组合会关掉面板。"),
+        ])
+        stack.addArrangedSubview(makePrefGroupLabel("窗口浏览"))
+        stack.addArrangedSubview(browser)
+        browser.widthAnchor.constraint(equalTo: stack.widthAnchor).isActive = true
+        stack.setCustomSpacing(12, after: browser)
+
+        let reset = NSButton(title: "恢复默认", target: self, action: #selector(prefResetShortcuts))
+        reset.bezelStyle = .rounded
+        reset.isEnabled = !GlobalShortcutSettings.isAllDefault
+        reset.setContentHuggingPriority(.required, for: .horizontal)
+        // 靠右的普通按钮，与分组卡片右边缘对齐；不随页面宽度拉伸。
+        let resetRow = NSStackView()
+        resetRow.orientation = .horizontal
+        resetRow.addView(reset, in: .trailing)
+        stack.addArrangedSubview(resetRow)
+        resetRow.widthAnchor.constraint(equalTo: stack.widthAnchor).isActive = true
+        return root
+    }
+
+    /// 改键后立刻生效：重新注册、刷新菜单；新组合注册失败时退回原来的组合。
+    private func applyShortcut(_ hotKey: GlobalShortcutSettings.HotKey?, for shortcut: GlobalShortcut) {
+        let previous = GlobalShortcutSettings.hotKey(for: shortcut)
+        guard hotKey != previous else { return }
+        GlobalShortcutSettings.setHotKey(hotKey, for: shortcut)
+        registerGlobalShortcuts()
+        if hotKey != nil, unavailableHotKeyIDs.contains(shortcut.hotKeyID) {
+            GlobalShortcutSettings.setHotKey(previous, for: shortcut)
+            registerGlobalShortcuts()
+        }
+        rebuildMenu()
+        refreshPreferencesWindowIfOpen()
+    }
+
+    @objc func prefToggleNumberedShortcuts(_ sender: NSSwitch) {
+        GlobalShortcutSettings.numberedExpandEnabled = sender.state == .on
+        registerGlobalShortcuts()
+        rebuildMenu()
+        refreshPreferencesWindowIfOpen()
+    }
+
+    @objc func prefResetShortcuts() {
+        GlobalShortcutSettings.resetAll()
+        registerGlobalShortcuts()
+        rebuildMenu()
+        refreshPreferencesWindowIfOpen()
+    }
+
     func makeWindowBrowserSettingsPage() -> NSView {
         let (root, stack) = makeSettingsPageRoot()
         stack.addArrangedSubview(makeSettingsHeader(
@@ -1016,8 +1115,8 @@ extension AppDelegate {
                 isOn: WindowBrowserSettings.dockEnabled,
                 action: #selector(prefToggleWindowBrowserDock(_:))),
             makeUnifiedToggleRow(
-                name: "允许从菜单打开窗口选择面板",
-                subtitle: "在菜单里加入“选择窗口…”；默认不占用快捷键",
+                name: "在菜单里显示“选择窗口…”",
+                subtitle: "默认不占用快捷键，可以在“快捷键”里设置",
                 isOn: WindowBrowserSettings.keyboardPanelEnabled,
                 action: #selector(prefToggleWindowBrowserKeyboard(_:))),
         ])
@@ -1025,19 +1124,6 @@ extension AppDelegate {
         stack.addArrangedSubview(triggers)
         triggers.widthAnchor.constraint(equalTo: stack.widthAnchor).isActive = true
         stack.setCustomSpacing(18, after: triggers)
-
-        let recorder = WindowBrowserHotKeyRecorderView()
-        recorder.configure(current: WindowBrowserSettings.hotKey)
-        recorder.onCapture = { [weak self] hotKey in
-            guard let self else { return }
-            let previous = WindowBrowserSettings.hotKey
-            WindowBrowserSettings.hotKey = hotKey
-            if hotKey != nil, !self.registerWindowBrowserHotKey() {
-                WindowBrowserSettings.hotKey = previous
-                _ = self.registerWindowBrowserHotKey()
-            }
-            recorder.configure(current: WindowBrowserSettings.hotKey)
-        }
 
         let preview = makeUnifiedSettingsCard([
             makeUnifiedToggleRow(
@@ -1054,11 +1140,6 @@ extension AppDelegate {
                     button.bezelStyle = .rounded
                     return button
                 }()),
-            makeUnifiedControlRow(
-                name: "独立快捷键",
-                subtitle: "点一下开始录制，再按一次同一个组合就关掉面板。"
-                    + "组合里要有 ⌃ 或 ⌥，免得和 ⌘C、⌘V 这类系统快捷键冲突。",
-                control: recorder),
             makeUnifiedControlRow(
                 name: "按应用排除",
                 subtitle: excludedAppsSubtitle(),
@@ -1204,15 +1285,20 @@ extension AppDelegate {
 }
 
 /// 快捷键记录器：只在设置页明确聚焦时读取键盘事件，不安装任何全局监听。
-final class WindowBrowserHotKeyRecorderView: NSControl {
-    var onCapture: ((WindowBrowserSettings.HotKey?) -> Void)?
+final class HotKeyRecorderView: NSControl {
+    typealias HotKey = WindowBrowserSettings.HotKey
+    var onCapture: ((HotKey?) -> Void)?
+    /// 录到的组合不能用时返回原因（显示在标签里）；能用返回 nil。
+    var validate: ((HotKey) -> String?)?
     private let label = NSTextField(labelWithString: "未设置")
     private let recordButton = NSButton(title: "录制…", target: nil, action: nil)
     private let clearButton = NSButton(title: "清除", target: nil, action: nil)
+    private var current: HotKey?
     private var recording = false
+    private var messageWork: DispatchWorkItem?
 
-    override init(frame frameRect: NSRect) {
-        super.init(frame: frameRect)
+    init(accessibilityName: String) {
+        super.init(frame: .zero)
         label.font = WindowBrowserTypography.monospacedDigits
         label.lineBreakMode = .byTruncatingTail
         for button in [recordButton, clearButton] {
@@ -1224,21 +1310,42 @@ final class WindowBrowserHotKeyRecorderView: NSControl {
         clearButton.target = self
         clearButton.action = #selector(clearHotKey)
         for view in [label, recordButton, clearButton] { addSubview(view) }
-        widthAnchor.constraint(equalToConstant: 240).isActive = true
+        widthAnchor.constraint(equalToConstant: 280).isActive = true
         heightAnchor.constraint(equalToConstant: 24).isActive = true
         setAccessibilityElement(true)
         setAccessibilityRole(.group)
-        setAccessibilityLabel("打开窗口浏览的快捷键")
+        setAccessibilityLabel(accessibilityName)
     }
 
     required init?(coder: NSCoder) { nil }
 
     override var acceptsFirstResponder: Bool { true }
 
-    func configure(current: WindowBrowserSettings.HotKey?) {
-        label.stringValue = current.map { WindowBrowserSettings.displayName(for: $0) } ?? "未设置"
-        setAccessibilityValue(label.stringValue)
+    func configure(current: HotKey?) {
+        self.current = current
+        messageWork?.cancel()
+        showText(current.map { WindowBrowserSettings.displayName(for: $0) } ?? "未设置")
+        clearButton.isEnabled = current != nil
+    }
+
+    private func showText(_ text: String) {
+        label.stringValue = text
+        label.toolTip = text
+        setAccessibilityValue(text)
         needsLayout = true
+    }
+
+    /// 录到不能用的组合：提示音 + 标签里说明原因，1.8 秒后回到当前组合。
+    private func reject(_ message: String) {
+        NSSound.beep()
+        showText(message)
+        messageWork?.cancel()
+        let work = DispatchWorkItem { [weak self] in
+            guard let self else { return }
+            self.configure(current: self.current)
+        }
+        messageWork = work
+        DispatchQueue.main.asyncAfter(deadline: .now() + 1.8, execute: work)
     }
 
     override func layout() {
@@ -1253,13 +1360,22 @@ final class WindowBrowserHotKeyRecorderView: NSControl {
 
     @objc private func beginRecording() {
         recording = true
-        label.stringValue = "请按快捷键…"
+        messageWork?.cancel()
+        showText("请按快捷键…")
         window?.makeFirstResponder(self)
     }
 
     @objc private func clearHotKey() {
         recording = false
         onCapture?(nil)
+    }
+
+    override func resignFirstResponder() -> Bool {
+        if recording {
+            recording = false
+            configure(current: current)
+        }
+        return super.resignFirstResponder()
     }
 
     override func keyDown(with event: NSEvent) {
@@ -1269,7 +1385,7 @@ final class WindowBrowserHotKeyRecorderView: NSControl {
         }
         if event.keyCode == UInt16(kVK_Escape) {
             recording = false
-            onCapture?(WindowBrowserSettings.hotKey)
+            configure(current: current)
             return
         }
         capture(event)
@@ -1285,12 +1401,15 @@ final class WindowBrowserHotKeyRecorderView: NSControl {
         // 只按修饰键不构成快捷键：保持录制状态，等真正的键。
         guard !WindowBrowserSettings.isModifierOnlyKeyCode(event.keyCode) else { return }
         recording = false
-        let hotKey = WindowBrowserSettings.HotKey(
-            keyCode: UInt32(event.keyCode),
-            modifiers: WindowBrowserHotKeyRecorderView.carbonModifiers(from: event.modifierFlags))
+        let hotKey = HotKey(keyCode: UInt32(event.keyCode),
+                            modifiers: Self.carbonModifiers(from: event.modifierFlags))
         if WindowBrowserSettings.isReserved(hotKey) {
-            NSSound.beep()
-            configure(current: WindowBrowserSettings.hotKey)
+            let hasControlOrOption = hotKey.modifiers & UInt32(controlKey | optionKey) != 0
+            reject(hasControlOrOption ? "系统在用这个组合" : "组合里要有 ⌃ 或 ⌥")
+            return
+        }
+        if let message = validate?(hotKey) {
+            reject(message)
             return
         }
         onCapture?(hotKey)

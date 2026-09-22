@@ -103,6 +103,9 @@ Get **WindowShade-v1.0.14.zip** from [Releases](https://github.com/surfine/Windo
 | Pin or unpin the current window | `⌃⌘P` |
 | Unfold by menu order | `⌃⌘1…9` |
 | Arrange strips / focus layout | `⌃⌘0` |
+| Open the window browser | Menu → “选择窗口…” (Choose Window…); no shortcut by default |
+
+These are the defaults. Settings → 快捷键 (Shortcuts) lets you re-record or turn off each one, and switch `⌃⌘1…9` on or off as a group. If another app already owns a combination, WindowShade says so once and drops it from the menu.
 
 ## Permissions, recovery, and compatibility
 

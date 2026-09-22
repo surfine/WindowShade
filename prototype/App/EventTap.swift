@@ -6,6 +6,11 @@ import Carbon.HIToolbox
 
 extension AppDelegate {
     func registerHotKey() {
+        installHotKeyHandler()
+        registerGlobalShortcuts()
+    }
+
+    private func installHotKeyHandler() {
         var eventType = EventTypeSpec(eventClass: OSType(kEventClassKeyboard),
                                       eventKind: UInt32(kEventHotKeyPressed))
         InstallEventHandler(GetApplicationEventTarget(), { _, event, _ -> OSStatus in
@@ -22,58 +27,61 @@ extension AppDelegate {
             }
             return noErr
         }, 1, &eventType, nil, nil)
+    }
 
-        var failed: [UInt32: OSStatus] = [:]
-        func register(_ keyCode: Int, _ id: UInt32) {
+    /// 按当前设置（重新）注册全部全局快捷键。设置页改键后也走这里。
+    /// 被其他应用占用的组合提示一次，并且不再显示在菜单里（按了没反应比没有更糟）。
+    func registerGlobalShortcuts() {
+        for ref in hotKeyRefs.values { UnregisterEventHotKey(ref) }
+        hotKeyRefs.removeAll()
+        var failed: [UInt32: (name: String, status: OSStatus)] = [:]
+        func register(_ hotKey: GlobalShortcutSettings.HotKey, id: UInt32, name: String) {
             var ref: EventHotKeyRef?
             let hkID = EventHotKeyID(signature: OSType(0x57534844), id: id) // 'WSHD'
-            let status = RegisterEventHotKey(UInt32(keyCode), UInt32(cmdKey | controlKey),
+            let status = RegisterEventHotKey(hotKey.keyCode, hotKey.modifiers,
                                              hkID, GetApplicationEventTarget(), 0, &ref)
             if status == noErr, let ref {
-                hotKeyRefs.append(ref)
+                hotKeyRefs[id] = ref
             } else {
-                failed[id] = status
+                failed[id] = (name, status)
             }
         }
-
-        register(kVK_ANSI_C, 1)
-        register(kVK_ANSI_0, 2)
-        register(kVK_ANSI_P, 3)
-        let digitKeys = [
-            kVK_ANSI_1, kVK_ANSI_2, kVK_ANSI_3, kVK_ANSI_4, kVK_ANSI_5,
-            kVK_ANSI_6, kVK_ANSI_7, kVK_ANSI_8, kVK_ANSI_9
-        ]
-        for (index, key) in digitKeys.enumerated() {
-            register(key, UInt32(101 + index))
+        for shortcut in [GlobalShortcut.toggleShade, .arrangeOrFocus, .pinPreview] {
+            guard let hotKey = GlobalShortcutSettings.hotKey(for: shortcut) else { continue }
+            register(hotKey, id: shortcut.hotKeyID,
+                     name: WindowBrowserSettings.displayName(for: hotKey))
+        }
+        if GlobalShortcutSettings.numberedExpandEnabled {
+            for (index, keyCode) in GlobalShortcutSettings.numberedKeyCodes.enumerated() {
+                register(GlobalShortcutSettings.HotKey(keyCode: keyCode,
+                                                       modifiers: GlobalShortcutSettings.numberedModifiers),
+                         id: UInt32(101 + index), name: "⌃⌘\(index + 1)")
+            }
         }
         unavailableHotKeyIDs = Set(failed.keys)
         if !failed.isEmpty {
-            // 被别的应用占用的组合不再显示在菜单里（按了没反应比没有更糟），并提示一次。
-            let names = Self.hotKeyDisplayNames(Set(failed.keys))
+            let numbered = failed.keys.filter { $0 >= 101 }
+            var names = failed.filter { $0.key < 101 }.sorted { $0.key < $1.key }.map(\.value.name)
+            names += numbered.count == 9
+                ? [GlobalShortcutSettings.numberedDisplayName]
+                : numbered.sorted().compactMap { failed[$0]?.name }
             quietNotice("\(names.joined(separator: "、")) 被其他应用占用",
                         log: "hotkey: registration failed "
-                            + failed.sorted { $0.key < $1.key }.map { "\($0.key)=\($0.value)" }
+                            + failed.sorted { $0.key < $1.key }.map { "\($0.key)=\($0.value.status)" }
                                 .joined(separator: ","))
         }
         registerWindowBrowserHotKey()
     }
 
-    func isHotKeyAvailable(_ id: UInt32) -> Bool {
-        !unavailableHotKeyIDs.contains(id)
+    /// 菜单项上要不要显示这个快捷键：设置里开着，而且注册没失败。
+    func menuHotKey(for shortcut: GlobalShortcut) -> GlobalShortcutSettings.HotKey? {
+        guard !unavailableHotKeyIDs.contains(shortcut.hotKeyID) else { return nil }
+        return GlobalShortcutSettings.hotKey(for: shortcut)
     }
 
-    static func hotKeyDisplayNames(_ ids: Set<UInt32>) -> [String] {
-        var names: [String] = []
-        if ids.contains(1) { names.append("⌃⌘C") }
-        if ids.contains(2) { names.append("⌃⌘0") }
-        if ids.contains(3) { names.append("⌃⌘P") }
-        let digits = (1...9).filter { ids.contains(UInt32(100 + $0)) }
-        if digits.count == 9 {
-            names.append("⌃⌘1…9")
-        } else {
-            names += digits.map { "⌃⌘\($0)" }
-        }
-        return names
+    func isNumberedShortcutActive(index: Int) -> Bool {
+        GlobalShortcutSettings.numberedExpandEnabled
+            && !unavailableHotKeyIDs.contains(UInt32(101 + index))
     }
 
     /// 独立快捷键：默认不注册。注册失败时保留旧的有效组合并提示。
@@ -94,12 +102,14 @@ extension AppDelegate {
         let status = RegisterEventHotKey(config.keyCode, config.modifiers, hkID,
                                          GetApplicationEventTarget(), 0, &ref)
         guard status == noErr, let ref else {
+            unavailableHotKeyIDs.insert(GlobalShortcut.windowBrowser.hotKeyID)
             let name = WindowBrowserSettings.displayName(for: config)
             quietNotice("快捷键 \(name) 注册失败",
                         log: "window-browser: hotkey registration failed status=\(status)")
             return false
         }
         windowBrowserHotKeyRef = ref
+        unavailableHotKeyIDs.remove(GlobalShortcut.windowBrowser.hotKeyID)
         wlog("window-browser: hotkey registered \(WindowBrowserSettings.displayName(for: config))")
         return true
     }
