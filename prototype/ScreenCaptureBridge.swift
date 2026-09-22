@@ -70,6 +70,9 @@ final class WindowStreamCapture: NSObject, SCStreamDelegate, SCStreamOutput {
 
     private var stream: SCStream?
     private var filter: SCContentFilter?
+    /// 置顶预览要拍干净底片；窗口浏览的小预览在意启动速度，只抹平。
+    var takesCleanPlate = false
+    private var cleanPlate: CleanPlate?
     private var configuration = SCStreamConfiguration()
     private let stateLock = NSLock()
     private var _isInteractive = false
@@ -138,7 +141,19 @@ final class WindowStreamCapture: NSObject, SCStreamDelegate, SCStreamOutput {
         let newFilter = SCContentFilter(desktopIndependentWindow: window)
         filter = newFilter
         configure(window: window, display: display)
+        if takesCleanPlate { await takeCleanPlate(filter: newFilter, window: window) }
         try await startStream(filter: newFilter)
+    }
+
+    /// 置顶预览开流前拍一张干净底片（此时这扇窗上还没有流，也就没有录屏胶囊），
+    /// 之后每帧把胶囊那一块换回底片上的红绿灯。用与流相同的配置，比例一致。
+    /// 已经有别的流在捕获这扇窗时底片本身带胶囊，CleanPlate 会拒收，退回抹平。
+    private func takeCleanPlate(filter: SCContentFilter, window: SCWindow) async {
+        guard let image = try? await SCScreenshotManager.captureImage(
+            contentFilter: filter, configuration: configuration) else { return }
+        let scale = CGFloat(configuration.width) / max(1, window.frame.width)
+        let plate = CleanPlate(image: image, scale: scale)
+        stateLock.withLock { cleanPlate = plate }
     }
 
     func restart(window: SCWindow, display: SCDisplay?, width: CGFloat, height: CGFloat)
@@ -343,6 +358,8 @@ final class WindowStreamCapture: NSObject, SCStreamDelegate, SCStreamOutput {
         let fps = _streamFPS
         stateLock.unlock()
         guard !stopped, isCurrentStream else { return }
+        // 这扇窗正被我们的流捕获，系统在它的红绿灯处画了录屏胶囊：交给画面之前修掉。
+        CaptureIndicatorRemoval.clean(sampleBuffer, plate: stateLock.withLock { cleanPlate })
         mirrorFrameIndex &+= 1
         // 主画面按源流帧率全量投递（15/30fps 已由流本身自适应）；镜像层取
         // 约 8~10fps 的子集：15fps 源隔帧投（≈8fps），30fps 源每 3 帧投（10fps）。
