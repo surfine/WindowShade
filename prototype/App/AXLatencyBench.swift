@@ -5,7 +5,9 @@ import Cocoa
 @MainActor
 enum AXLatencyBench {
     private static func ms(_ block: () -> Void) -> Double {
-        let t = CFAbsoluteTimeGetCurrent(); block(); return (CFAbsoluteTimeGetCurrent() - t) * 1000
+        let t = ProcessInfo.processInfo.systemUptime
+        block()
+        return (ProcessInfo.processInfo.systemUptime - t) * 1000
     }
 
     static func run() {
@@ -23,10 +25,19 @@ enum AXLatencyBench {
             targets.append((app.localizedName ?? "?", pid))
         }
 
-        print("App                       窗口  枚举ms  位置ms  尺寸ms  标题ms  角色ms  单窗口合计ms")
+        let rawFirst = CommandLine.arguments.contains("--ax-raw-first")
+        func readWindows(_ application: AXUIElement) {
+            var value: CFTypeRef?
+            _ = AXUIElementCopyAttributeValue(application, kAXWindowsAttribute as CFString, &value)
+        }
+        print("顺序：\(rawFirst ? "先读原始 AX 列表，再调用生产枚举" : "先调用生产枚举，再拆分测量")")
+        print("App\t窗口\t原始列表预读\t完整枚举(首次)\t完整枚举(重复)\tAX列表(新句柄)\tAX列表(复用句柄)\t窗口ID\t小组件过滤\t位置\t尺寸\t标题\t角色")
+        print("单位 ms；首次各一次，其余各三次中位数；按列顺序采样，不作冷启动或 p95/p99 结论。")
         var totalPerWindow = 0.0
         var windowCount = 0
         for target in targets {
+            let rawFirstMs: Double? = rawFirst
+                ? ms { readWindows(AXUIElementCreateApplication(target.pid)) } : nil
             var windows: [AXUIElement] = []
             let enumMs = ms { windows = appWindows(pid: target.pid) }
             guard let win = windows.first else { continue }
@@ -35,6 +46,16 @@ enum AXLatencyBench {
                 let samples = (0..<3).map { _ in ms(body) }.sorted()
                 return samples[1]
             }
+            let repeatedEnumMs = median { _ = appWindows(pid: target.pid) }
+            let newHandleMs = median { readWindows(AXUIElementCreateApplication(target.pid)) }
+            let application = AXUIElementCreateApplication(target.pid)
+            // Warm the connection separately so reuse is not confounded with its first message.
+            readWindows(application)
+            let reusedHandleMs = median { readWindows(application) }
+            let idMs = median { _ = windowID(of: win) }
+            let widgetMs = windowID(of: win).map { id in
+                median { _ = isDesktopWidgetWindow(id: id) }
+            }
             let posMs = median { _ = axPosition(win) }
             let sizeMs = median { _ = axSize(win) }
             let titleMs = median { _ = axTitle(win) }
@@ -42,9 +63,10 @@ enum AXLatencyBench {
             let per = posMs + sizeMs + titleMs + roleMs
             totalPerWindow += per
             windowCount += 1
-            print(String(format: "%-24s %4d %7.1f %7.1f %7.1f %7.1f %7.1f %11.1f",
-                         (target.name as NSString).utf8String!, windows.count,
-                         enumMs, posMs, sizeMs, titleMs, roleMs, per))
+            let measurements = [rawFirstMs ?? .nan, enumMs, repeatedEnumMs, newHandleMs, reusedHandleMs,
+                                idMs, widgetMs ?? .nan, posMs, sizeMs, titleMs, roleMs]
+                .map { String(format: "%.3f", $0) }.joined(separator: "\t")
+            print("\(target.name)\t\(windows.count)\t\(measurements)")
         }
 
         // 对照：走 WindowServer 而不是目标 App 的 runloop

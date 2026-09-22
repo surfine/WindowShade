@@ -116,6 +116,7 @@ func shadePolicyDescription(_ policy: ShadePolicy) -> String {
 // geometry are the continuity contract: unfold should restore the same window
 // identity and the strip's current spatial anchor whenever macOS allows it.
 struct ShadeState {
+    let foldTransactionID = UUID()
     let element: AXUIElement
     let sourceWindowID: CGWindowID
     let originalPosition: CGPoint

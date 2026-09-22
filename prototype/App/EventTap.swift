@@ -170,14 +170,8 @@ extension AppDelegate {
         // 先用 WindowServer 廉价排除内容区双击（选词等高频操作），
         // 避免在 tap 回调里对目标 app 做同步 AX 命中测试。
         guard pointMayLieInTitlebarBand(point) else { return false }
-        // 缓存 profile 明确是"纯标准标题栏"（标题栏带里除交通灯外没有控件）时，
-        // 直接走几何 fast path，跳过对目标 app 的 AX 命中测试——忙 app 的
-        // AX IPC 可能拖住整个 event tap 数秒。profile 缺失/过期/含控件时返回
-        // nil，继续走原有完整路径，行为与之前完全一致。
-        if let hit = cachedTitlebarBlankFastPath(at: point) {
-            wlog("titlebar-double-click: cached-profile fast path id=\(hit.id) at=(\(Int(point.x)),\(Int(point.y)))")
-            return handleTitleBarDoubleClick(win: hit.win, point: point, source: "cached-profile-fast")
-        }
+        // Chrome profiles describe crop geometry, not the absence of controls.
+        // Even a standard titlebar can contain an editable accessory view.
         // 过了带内预过滤的点击都是"疑似标题栏双击"，低频且用户可感——
         // 此后的每个拒绝分支都要留日志，否则"有时候折叠不了"无从排查。
         let sysWide = AXUIElementCreateSystemWide()
@@ -213,45 +207,6 @@ extension AppDelegate {
         }
 
         return false
-    }
-
-    // 只有缓存 profile 明确是纯标准标题栏、点击点落在命中带内且不在交通灯簇上
-    // 的"确定空白区"，才允许跳过 AX 命中测试。所有不确定情况一律返回 nil，
-    // 把决定交还给原有 hit test / geometry fallback 路径。
-    private func cachedTitlebarBlankFastPath(at point: CGPoint)
-        -> (win: AXUIElement, id: CGWindowID, pid: pid_t)? {
-        guard let info = topmostOnScreenWindowInfo(at: point),
-              let number = info[kCGWindowNumber as String] as? NSNumber,
-              let owner = info[kCGWindowOwnerPID as String] as? NSNumber,
-              let bounds = cgWindowBounds(info) else { return nil }
-        let id = CGWindowID(number.uint32Value)
-        let pid = owner.int32Value
-        guard let profile = ChromeProfileCache.shared
-            .cachedStandardTitleBarOnlyProfile(id: id, cgSize: bounds.size) else { return nil }
-        let hitH = profile.hitBarHeight
-        guard point.y >= bounds.minY, point.y <= bounds.minY + hitH,
-              point.x >= bounds.minX, point.x <= bounds.maxX else { return nil }
-        // 避开左侧交通灯簇：标准标题栏 3 颗灯最右约 72pt，留 4pt 余量。
-        guard point.x >= bounds.minX + 76 else { return nil }
-        // 双击第二下时窗口已经激活：只信任前台 app 的聚焦窗口，且 windowID
-        // 必须与 WindowServer 在屏窗口一致，防止误折叠同几何的兄弟窗口。
-        guard NSWorkspace.shared.frontmostApplication?.processIdentifier == pid,
-              let focused = focusedWindow(),
-              windowID(of: focused) == id else { return nil }
-        return (focused, id, pid)
-    }
-
-    // WindowServer 在屏列表按 z 序（前到后）返回；取第一层 layer 0 且不透明
-    // 的命中窗口。纯 WindowServer 数据，不依赖目标 app 是否响应。
-    private func topmostOnScreenWindowInfo(at point: CGPoint) -> [String: Any]? {
-        for info in WindowListCache.shared.onScreenWindows() {
-            guard let bounds = cgWindowBounds(info), bounds.contains(point) else { continue }
-            let alpha = (info[kCGWindowAlpha as String] as? NSNumber)?.doubleValue ?? 1
-            let layer = (info[kCGWindowLayer as String] as? NSNumber)?.intValue ?? 0
-            guard alpha > 0, layer == 0 else { continue }
-            return info
-        }
-        return nil
     }
 
     func clearExpiredPendingTitlebarTripleClick() {
@@ -290,7 +245,7 @@ extension AppDelegate {
               point.x >= pos.x, point.x <= pos.x + size.width else { return nil }
         return (id, pid)
     }
-    func handleTitleBarTripleClick(at point: CGPoint) -> Bool {
+    func handleTitleBarTripleClick(at point: CGPoint, clickCount: Int64 = 3) -> Bool {
         let startedAt = CFAbsoluteTimeGetCurrent()
         defer {
             let elapsedMilliseconds = Int((CFAbsoluteTimeGetCurrent() - startedAt) * 1000)
@@ -309,20 +264,15 @@ extension AppDelegate {
         if let pending = pendingTitlebarTripleClick,
            pending.deadline >= Date(),
            pendingTitlebarTripleClickMatches(pending, point: point) {
-            pendingTitlebarTripleClick = nil
-            let restored = shaded[pending.id] != nil
-                ? unshadeReturningElement(pending.id, playSound: false, pinAfterRestore: false)
-                : pending.element
-            if let win = restored {
-                DispatchQueue.main.asyncAfter(deadline: .now() + 0.14) { [weak self] in
-                    self?.performSystemTitlebarDoubleClickAction(on: win,
-                                                                 id: pending.id,
-                                                                 originalClickPoint: pending.point,
-                                                                 source: "pending")
-                }
-            }
+            pending.deadline = Date().addingTimeInterval(max(0.65, NSEvent.doubleClickInterval))
+            // The third click can arrive before capture or hide verification.
+            // Record it now; only the verified fold may begin restoration.
+            if clickCount == 3, pending.intent.request() { enqueuePendingTitlebarTripleClick(pending) }
             return true
         }
+
+        // A fourth click must not bypass a consumed triple's completion gate.
+        guard clickCount == 3 else { return false }
 
         // pending 分支之后才预过滤：三击补系统动作的 pending 匹配不依赖 AX。
         guard pointMayLieInTitlebarBand(point) else { return false }
@@ -330,25 +280,68 @@ extension AppDelegate {
         let sysWide = AXUIElementCreateSystemWide()
         var elRef: AXUIElement?
         if AXUIElementCopyElementAtPosition(sysWide, Float(point.x), Float(point.y), &elRef) == .success,
-           let el = elRef,
-           !stealsTitlebarDoubleClick(axRole(el)),
-           let win = containingWindow(el),
-           let (id, _) = titlebarContains(point: point, in: win) {
-            performSystemTitlebarDoubleClickAction(on: win, id: id,
-                                                   originalClickPoint: point,
-                                                   source: "ax-hit")
-            return true
+           let el = elRef {
+            // A rejected control is conclusive. Geometry must not turn a text
+            // selection or button click into a window action.
+            guard !stealsTitlebarDoubleClick(axRole(el)) else { return false }
+            if let win = containingWindow(el) {
+                guard let (id, _) = titlebarContains(point: point, in: win) else { return false }
+                enqueueSystemTitlebarDoubleClickAction(on: win, id: id,
+                                                       originalClickPoint: point,
+                                                       source: "ax-hit")
+                return true
+            }
         }
 
         if let win = frontmostWindowContaining(point: point),
            let (id, _) = titlebarContains(point: point, in: win) {
-            performSystemTitlebarDoubleClickAction(on: win, id: id,
+            enqueueSystemTitlebarDoubleClickAction(on: win, id: id,
                                                    originalClickPoint: point,
                                                    source: "frontmost-geometry")
             return true
         }
 
         return false
+    }
+    private func enqueuePendingTitlebarTripleClick(_ pending: PendingTitlebarTripleClick) {
+        DispatchQueue.main.async { [weak self] in
+            guard let self, self.titlebarDoubleClickEnabled,
+                  systemTitlebarDoubleClickAction() != .none,
+                  let transaction = pending.foldTransactionID,
+                  self.shaded[pending.id]?.foldTransactionID == transaction else { return }
+            // The verifier schedules completion after this call returns its element.
+            var restored: AXUIElement?
+            restored = self.unshadeReturningElement(
+                pending.id, playSound: false, pinAfterRestore: false,
+                onVerified: { [weak self] success in
+                    guard success, let self, let restored else { return }
+                    self.completeTitlebarTripleClick(on: restored, pending: pending)
+                })
+        }
+    }
+    private func titlebarFoldCanBegin(id: CGWindowID) -> Bool {
+        let state = currentOperationState(id)
+        return shaded[id] == nil && !shadeOperationIDs.contains(id)
+            && !duoController.windowEffects.hasActiveTransition(for: id)
+            && (state == .normal || state == .failed)
+    }
+    private func completeTitlebarTripleClick(on win: AXUIElement,
+                                            pending: PendingTitlebarTripleClick) {
+        // A new fold may have started while restoration was being verified.
+        guard shaded[pending.id] == nil, !shadeOperationIDs.contains(pending.id),
+              !duoController.windowEffects.hasActiveTransition(for: pending.id),
+              currentOperationState(pending.id) == .normal else { return }
+        performSystemTitlebarDoubleClickAction(on: win, id: pending.id,
+                                               originalClickPoint: pending.point,
+                                               source: "pending")
+    }
+    private func enqueueSystemTitlebarDoubleClickAction(on win: AXUIElement, id: CGWindowID,
+                                                       originalClickPoint: CGPoint, source: String) {
+        DispatchQueue.main.async { [weak self] in
+            self?.performSystemTitlebarDoubleClickAction(on: win, id: id,
+                                                        originalClickPoint: originalClickPoint,
+                                                        source: source)
+        }
     }
     func titlebarSystemDoubleClickPoint(for win: AXUIElement, id: CGWindowID,
                                                 originalClickPoint: CGPoint) -> CGPoint? {
@@ -409,6 +402,8 @@ extension AppDelegate {
     func performSystemTitlebarDoubleClickAction(on win: AXUIElement, id: CGWindowID,
                                                         originalClickPoint: CGPoint,
                                                         source: String) {
+        guard titlebarDoubleClickEnabled, systemTitlebarDoubleClickAction() != .none,
+              windowID(of: win) == id else { return }
         cancelRestorePin(for: id)
         var pid: pid_t = 0
         AXUIElementGetPid(win, &pid)
@@ -461,6 +456,28 @@ extension AppDelegate {
         if requireCompatProfile {
             guard needsControlPaddedChrome(pid: app.processIdentifier) else { return nil }
         }
+        // Avoid AXWindows when the focused element is demonstrably the window
+        // under the pointer. Crop geometry and title matching cannot prove this.
+        if let info = WindowListCache.shared.onScreenWindows().first(where: { info in
+            guard let bounds = cgWindowBounds(info), bounds.contains(point) else { return false }
+            return (info[kCGWindowLayer as String] as? NSNumber)?.intValue == 0
+                && ((info[kCGWindowAlpha as String] as? NSNumber)?.doubleValue ?? 1) > 0
+        }),
+           (info[kCGWindowOwnerPID as String] as? NSNumber)?.int32Value == app.processIdentifier,
+           let number = info[kCGWindowNumber as String] as? NSNumber,
+           let focused = focusedWindow() {
+            var focusedID: CGWindowID = 0
+            var focusedPID: pid_t = 0
+            if AXUIElementGetPid(focused, &focusedPID) == .success,
+               focusedPID == app.processIdentifier,
+               _AXUIElementGetWindow(focused, &focusedID) == .success,
+               focusedID == number.uint32Value,
+               let position = axPosition(focused), let size = axSize(focused),
+               size.width > 1, size.height > 1,
+               CGRect(origin: position, size: size).contains(point) {
+                return focused
+            }
+        }
         func distanceSquared(_ a: CGPoint, _ b: CGPoint) -> CGFloat {
             let dx = a.x - b.x
             let dy = a.y - b.y
@@ -487,40 +504,60 @@ extension AppDelegate {
             return false
         }
 
-        // 这一层仍由 CGEventTap 同步调用。命中后必须先让 tap 返回，否则 shade()
-        // 的窗口隐藏、overlay 安装与菜单更新会把全局鼠标输入一起卡住（实测 151ms）。
-        // 事件已经确定要被吞掉；把实际状态变更放到下一轮 main queue，不改变双击
-        // 的用户可见语义，却把 tap 临界区缩到 AX 命中/几何确认本身。
+        pendingTitlebarTripleClick?.intent.cancel()
+        let pending: PendingTitlebarTripleClick?
+        if titlebarFoldCanBegin(id: id), systemTitlebarDoubleClickAction() != .none {
+            pending = PendingTitlebarTripleClick(id: id, point: point,
+                deadline: Date().addingTimeInterval(max(0.65, NSEvent.doubleClickInterval)))
+        } else {
+            pending = nil
+        }
+        pendingTitlebarTripleClick = pending
+        // Register the gesture before leaving the tap, but defer all window work.
         DispatchQueue.main.async { [weak self] in
             self?.performTitleBarDoubleClickAction(win: win, id: id, pid: pid,
-                                                    point: point, source: source)
+                                                   point: point, source: source, pending: pending)
         }
         return true
     }
-    func performTitleBarDoubleClickAction(win: AXUIElement, id: CGWindowID, pid: pid_t,
-                                                   point: CGPoint, source: String) {
-        logIfSlow("titlebar-double-click action id=\(id)", threshold: 0.05) {
-            performTitleBarDoubleClickActionSynchronously(win: win, id: id, pid: pid,
-                                                           point: point, source: source)
+    private func performTitleBarDoubleClickAction(win: AXUIElement, id: CGWindowID, pid: pid_t,
+                                                  point: CGPoint, source: String,
+                                                  pending: PendingTitlebarTripleClick?) {
+        guard titlebarDoubleClickEnabled else { pending?.intent.cancel(); return }
+        var currentPID: pid_t = 0
+        guard AXUIElementGetPid(win, &currentPID) == .success, currentPID == pid,
+              windowID(of: win) == id, axRole(win) == (kAXWindowRole as String),
+              let info = cgWindowInfo(id),
+              (info[kCGWindowOwnerPID as String] as? NSNumber)?.int32Value == pid else {
+            pending?.intent.cancel()
+            if pendingTitlebarTripleClick === pending { pendingTitlebarTripleClick = nil }
+            return
         }
-    }
-    func performTitleBarDoubleClickActionSynchronously(win: AXUIElement, id: CGWindowID,
-                                                                pid: pid_t, point: CGPoint,
-                                                                source: String) {
-        clearExpiredPendingTitlebarTripleClick()
-
-        wlog("titlebar-double-click: source=\(source) app=\(appDisplayName(pid: pid)) id=\(id)")
-        if shaded[id] != nil {
-            pendingTitlebarTripleClick = nil
-            unshade(id)
-        } else {
-            let options = focusRejoinEntries[id] != nil ? focusShadeOptions : nil
-            shade(win, id, options: options)
-            if systemTitlebarDoubleClickAction() != .none, shaded[id] != nil {
-                pendingTitlebarTripleClick = PendingTitlebarTripleClick(id: id,
-                                                                        element: win,
-                                                                        point: point,
-                                                                        deadline: Date().addingTimeInterval(0.65))
+        logIfSlow("titlebar-double-click action id=\(id)", threshold: 0.05) {
+            wlog("titlebar-double-click: source=\(source) app=\(appDisplayName(pid: pid)) id=\(id)")
+            if let pending {
+                // Another action may have changed this window since the tap returned.
+                guard titlebarFoldCanBegin(id: id) else {
+                    pending.intent.cancel()
+                    if pendingTitlebarTripleClick === pending { pendingTitlebarTripleClick = nil }
+                    return
+                }
+                registerFoldWaiter(id: id) { [weak self, pending] success in
+                    guard let self else { return }
+                    if success { pending.foldTransactionID = self.shaded[id]?.foldTransactionID }
+                    if pending.intent.completeFold(success: success && pending.foldTransactionID != nil) {
+                        self.enqueuePendingTitlebarTripleClick(pending)
+                    }
+                    if !success, self.pendingTitlebarTripleClick === pending {
+                        self.pendingTitlebarTripleClick = nil
+                    }
+                }
+            }
+            if shaded[id] != nil {
+                unshade(id)
+            } else {
+                let options = focusRejoinEntries[id] != nil ? focusShadeOptions : nil
+                shade(win, id, options: options, trustElement: true)
             }
         }
     }

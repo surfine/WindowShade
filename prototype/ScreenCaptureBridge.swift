@@ -154,11 +154,15 @@ final class WindowStreamCapture: NSObject, SCStreamDelegate, SCStreamOutput {
             stream = nil
             return old
         }
-        oldStream?.stopCapture { error in
-            if let error {
-                let nsError = error as NSError
-                if nsError.code != -3808 {
-                    wlog("pin-preview: capture stop failed \(error.localizedDescription)")
+        if let oldStream {
+            Task { [oldStream] in
+                do {
+                    try await oldStream.stopCapture()
+                } catch {
+                    let nsError = error as NSError
+                    if nsError.code != -3808 {
+                        wlog("pin-preview: capture stop failed \(error.localizedDescription)")
+                    }
                 }
             }
         }
@@ -202,7 +206,14 @@ final class WindowStreamCapture: NSObject, SCStreamDelegate, SCStreamOutput {
             if let completion { DispatchQueue.main.async { completion(error) } }
         }
         if let activeStream {
-            activeStream.stopCapture(completionHandler: finish)
+            Task { [activeStream] in
+                do {
+                    try await activeStream.stopCapture()
+                    finish(nil)
+                } catch {
+                    finish(error)
+                }
+            }
         } else {
             finish(nil)
         }

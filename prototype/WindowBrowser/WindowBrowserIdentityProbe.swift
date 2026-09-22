@@ -76,12 +76,14 @@ final class IdentityProbeBackend: WindowBrowserActionBackend {
 
 final class WindowBrowserIdentityProbe {
     private var window: NSWindow?
+    private var twin: NSWindow?
     private let allocator = WindowIdentityAllocator()
     private let queue = DispatchQueue(label: "WindowShade.window-browser-identity-probe",
                                       qos: .userInitiated)
     private var checks = 0
     private var failures: [String] = []
     private var liveKey: WindowKey?
+    private var liveElement: AXUIElement?
     private var fabricatedKey: WindowKey?
 
     func run() {
@@ -89,6 +91,7 @@ final class WindowBrowserIdentityProbe {
             print("identity-probe: no accessibility permission; result=unverified")
             exit(2)
         }
+        NSApp.activate(ignoringOtherApps: true)
         let window = NSWindow(contentRect: NSRect(x: 0, y: 0, width: 380, height: 240),
                               styleMask: [.titled, .closable], backing: .buffered,
                               defer: false)
@@ -97,14 +100,62 @@ final class WindowBrowserIdentityProbe {
         window.center()
         // 只在窗口层级上短暂置顶，既不激活本进程也不抢 key，避免影响用户当前前台应用。
         window.level = .floating
-        window.orderFrontRegardless()
+        // Make the probe's AX tree active enough for WindowServer to expose
+        // both windows consistently, while keeping the actual user windows
+        // untouched. The previous implementation only ordered the window
+        // forward, which intermittently left the accessory app out of AX.
+        window.makeKeyAndOrderFront(nil)
         self.window = window
+        let twin = NSWindow(contentRect: .zero, styleMask: [.titled, .closable],
+                            backing: .buffered, defer: false)
+        twin.title = window.title
+        twin.isReleasedWhenClosed = false
+        twin.setFrame(window.frame, display: false)
+        twin.level = window.level
+        twin.orderFrontRegardless()
+        self.twin = twin
         DispatchQueue.main.asyncAfter(deadline: .now() + 0.6) { [weak self] in
-            self?.checkProbeWindow()
+            self?.checkTwinWindows()
         }
     }
 
     // MARK: 真实 AX 身份解析
+
+    private func checkTwinWindows() {
+        guard let window, let twin,
+              let firstID = cgWindowID(for: window), let secondID = cgWindowID(for: twin) else {
+            print("identity-probe: twin windows unavailable; result=unverified")
+            exit(3)
+        }
+        record("twin fixture has identical titles and frames",
+               firstID != secondID && window.title == twin.title && window.frame == twin.frame)
+        let expected = Set([firstID, secondID])
+        let pid = getpid()
+        queue.async { [self] in
+            var value: CFTypeRef?
+            _ = AXUIElementCopyAttributeValue(AXUIElementCreateApplication(pid),
+                                              kAXWindowsAttribute as CFString, &value)
+            let elements = value as? [AXUIElement] ?? []
+            var observed: [CGWindowID: CGWindowID] = [:]
+            var ambiguousPublicMatches = 0
+            for element in elements {
+                var actual: CGWindowID = 0
+                guard _AXUIElementGetWindow(element, &actual) == .success,
+                      expected.contains(actual) else { continue }
+                observed[actual] = windowID(of: element) ?? 0
+                if publicWindowID(of: element) != nil { ambiguousPublicMatches += 1 }
+            }
+            DispatchQueue.main.async { [self] in
+                record("both twin AX elements discovered", Set(observed.keys) == expected)
+                record("identical windows retain their own IDs",
+                       observed.count == 2 && observed.allSatisfy { $0.key == $0.value })
+                record("public geometry fallback refuses ambiguous twins", ambiguousPublicMatches == 0)
+                print("identity-probe: twins mapping=\(observed) ambiguousPublicMatches=\(ambiguousPublicMatches)")
+                checkProbeWindow()
+            }
+        }
+    }
+
 
     private func checkProbeWindow() {
         guard let window, let id = cgWindowID(for: window) else {
@@ -112,6 +163,7 @@ final class WindowBrowserIdentityProbe {
             exit(3)
         }
         let pid = getpid()
+        let expectedSize = window.frame.size
         let bundle = Bundle.main.bundleIdentifier ?? "com.windowshade.prototype"
         let key = allocator.windowKey(pid: pid, bundleIdentifier: bundle,
                                       originalWindowID: id)
@@ -138,9 +190,10 @@ final class WindowBrowserIdentityProbe {
             } ?? false
             let fabricatedRejected = WindowBrowserTargetResolver.enumerate(key: fabricatedKey!) == nil
             let geometry = inspected?.axSize.map {
-                abs($0.width - window.frame.width) <= 2 && abs($0.height - window.frame.height) <= 2
+                abs($0.width - expectedSize.width) <= 2 && abs($0.height - expectedSize.height) <= 2
             } ?? false
             DispatchQueue.main.async { [self] in
+                liveElement = enumerated
                 record("own window resolved by full identity", inspected != nil)
                 record("own window geometry matches NSWindow frame", geometry)
                 record("own window reports close capability", inspected?.canClose == true)
@@ -258,14 +311,22 @@ final class WindowBrowserIdentityProbe {
     private func closeProbeWindow() {
         window?.close()
         let key = liveKey!
+        let retainedElement = liveElement
         waitForWindowGone(key: key) { [self] gone in
             record("closed probe window disappears from AX", gone)
             queue.async { [self] in
                 let enumerated = WindowBrowserTargetResolver.enumerate(key: key) != nil
+                let retainedID = retainedElement.flatMap(windowID(of:))
+                let retainedAccepted = retainedElement.flatMap {
+                    WindowBrowserTargetResolver.inspect($0, key: key)
+                } != nil
                 DispatchQueue.main.async { [self] in
                     record("closed window is not resolved", !enumerated)
+                    record("retained AX element of closed window is refused",
+                           retainedElement != nil && !retainedAccepted)
                     print("identity-probe: closedWindow gone=\(gone) "
                           + "enumerate=\(enumerated ? "found" : "none") "
+                          + "retainedID=\(retainedID ?? 0) retainedAccepted=\(retainedAccepted) "
                           + "allocatorStillCurrent=\(allocator.isCurrent(key))")
                     checkRefusalOnGoneWindow()
                 }

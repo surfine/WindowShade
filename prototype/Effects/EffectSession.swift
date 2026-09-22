@@ -115,6 +115,11 @@ final class EffectSession {
       if let frame = source.frame() { renderer.setFrame(frame) }
       tick?(now)
       guard !stopped else { return }
+      // A static restore image may have been submitted while the panel was
+      // still transparent. GPU completion alone does not prove visibility;
+      // keep submitting until a visible drawable is acknowledged. After that,
+      // unchanged images return to normal on-demand rendering.
+      if gpuReady, presentationWanted, !hasPresented { renderer.invalidate() }
       renderer.render()
       if !gpuReady && now - startedAt > 1 {
         wlog("duo-session: GPU readiness timeout")
@@ -140,7 +145,7 @@ final class EffectSession {
     // 但首帧迟到一秒的卷帘动画本来也已经失去意义——那时窗口早就收起来了。
     DispatchQueue.main.asyncAfter(deadline: .now() + 0.5) { [weak self] in
       guard let self, !stopped, presentationWanted, !hasPresented else { return }
-      wlog("duo-session: visible presentation timeout")
+      wlog("duo-session: visible presentation timeout visible=\(panel.isVisible) alpha=\(panel.alphaValue) occlusion=\(panel.occlusionState.rawValue) \(renderer.metrics())")
       onFailure?()
     }
   }
