@@ -484,7 +484,7 @@ extension AppDelegate {
         }
 
         guard !arrangeEntries.isEmpty else {
-            quietNotice("没有可收起的窗口", log: "focus: no foldable windows outside \(focusedPID)")
+            quietNotice("没有可以收起的窗口", log: "focus: no foldable windows outside \(focusedPID)")
             return
         }
 

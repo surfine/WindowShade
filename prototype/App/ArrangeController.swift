@@ -381,7 +381,7 @@ extension AppDelegate {
             return (id, state, overlay)
         }
         guard arrangeShadedEntries(entries, reason: "housekeeping") else {
-            quietNotice("没有已折叠窗口", log: "arrange: no shaded overlays")
+            quietNotice("没有收起的窗口", log: "arrange: no shaded overlays")
             return
         }
     }
