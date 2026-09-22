@@ -356,10 +356,8 @@ extension AppDelegate {
     }
 
     func titlebarDoubleClickPreferenceSubtitle() -> String {
-        if let triple = systemTitlebarTripleClickDescription() {
-            return "双击标题栏收起窗口；\(triple)"
-        }
-        return "在任意窗口标题栏双击即可收起"
+        // 标题已经说了“双击收起”，说明只补标题里没有的信息。
+        systemTitlebarTripleClickDescription() ?? "在任意窗口的标题栏上双击"
     }
 
     func launchAtLoginEnabled() -> Bool {
@@ -852,12 +850,12 @@ extension AppDelegate {
         let preview = makeUnifiedSettingsCard([
             makeUnifiedToggleRow(
                 name: "普通窗口实时预览（实验）",
-                subtitle: "选中窗口 0.4 秒后开始放实时画面。默认关闭。",
+                subtitle: "选中窗口 0.4 秒后开始播放实时画面",
                 isOn: WindowBrowserSettings.livePreviewEnabled,
                 action: #selector(prefToggleWindowBrowserLive(_:))),
             makeUnifiedControlRow(
                 name: "打开窗口浏览",
-                subtitle: "打开开关后，菜单和快捷键才会出现",
+                subtitle: nil,
                 control: {
                     let button = NSButton(title: "打开面板…", target: self,
                                           action: #selector(openWindowBrowserPanel))
@@ -879,12 +877,11 @@ extension AppDelegate {
         preview.widthAnchor.constraint(equalTo: stack.widthAnchor).isActive = true
         stack.setCustomSpacing(18, after: preview)
 
-        // 外观：跟随系统（可用的系统玻璃 / 原生材质）或明确的不透明纸面。
-        // 玻璃环境不可用时不会显示一个实际不起作用的玻璃开关。
-        let appearanceControl = NSSegmentedControl(labels: ["跟随系统", "纸面"],
-                                                   trackingMode: .selectOne,
-                                                   target: self,
-                                                   action: #selector(prefChangeWindowBrowserAppearance(_:)))
+        // 外观：跟随系统（可用的系统玻璃 / 原生材质）或明确的不透明背景。
+        let appearanceControl = NSSegmentedControl(
+            labels: WindowBrowserAppearanceStyle.allCases.map(\.displayName),
+            trackingMode: .selectOne, target: self,
+            action: #selector(prefChangeWindowBrowserAppearance(_:)))
         appearanceControl.selectedSegment =
             WindowBrowserAppearanceStyle.current == .paper ? 1 : 0
         let styleControl = NSSegmentedControl(
@@ -895,10 +892,8 @@ extension AppDelegate {
             .firstIndex(of: WindowBrowserSettings.preferredStyle) ?? 0
         let appearance = makeUnifiedSettingsCard([
             makeUnifiedControlRow(
-                name: "外观",
-                subtitle: WindowBrowserSystemCapabilities.current.supportsGlass
-                    ? "当前系统支持公开的 AppKit 玻璃控制层；开启减少透明度时会自动改为不透明背景。"
-                    : "当前系统或 SDK 不使用玻璃：控制层使用系统原生材质或不透明纸面。",
+                name: "面板背景",
+                subtitle: "选“不透明”后面板不再透出后面的内容；系统打开“减少透明度”时也会这样。",
                 control: appearanceControl),
             makeUnifiedControlRow(
                 name: "默认显示方式",
