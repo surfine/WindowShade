@@ -259,7 +259,7 @@ enum WindowBrowserAccessibilityAnnouncement {
     private static func actionTitle(_ action: WindowBrowserAction) -> String {
         switch action {
         case .activate: return "激活"
-        case .fold: return "折叠"
+        case .fold: return "收起"
         case .unfold: return "展开"
         case .pinPreview: return "置顶预览"
         case .unpinPreview: return "取消置顶预览"
@@ -334,10 +334,10 @@ enum WindowBrowserQuickLookPolicy {
         switch source {
         case .thumbnail: return nil
         case .staleSnapshot: return "快照（画面可能已过期）"
-        case .foldSnapshot: return "折叠时保存的快照"
+        case .foldSnapshot: return "收起时保存的快照"
         case .applicationIcon:
             if !hasScreenRecording { return "缺少屏幕录制权限，暂时只能显示应用图标" }
-            if isFolded { return "折叠窗口没有已保存的画面" }
+            if isFolded { return "收起的窗口没有保存画面" }
             if isMinimized { return "最小化窗口没有快照，暂时只能显示应用图标" }
             return "暂时没有可用的窗口画面"
         }

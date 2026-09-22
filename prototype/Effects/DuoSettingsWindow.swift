@@ -1075,7 +1075,7 @@ final class DuoSettingsWindow: NSWindowController, NSWindowDelegate, NSTableView
     let paused = controller.pausedByUser ? " · 效果已暂停" : ""
     let motion = controller.settings.motionEnabled ? " · \(controller.motionStatus)" : ""
     status.stringValue = captureMessage
-      ?? "设置合盖桌面效果与窗口折叠动画。\(controller.sensorStatus) · 当前 \(reading)\(permission)\(reduced)\(paused)\(motion)"
+      ?? "设置合盖桌面效果与窗口收起动画。\(controller.sensorStatus) · 当前 \(reading)\(permission)\(reduced)\(paused)\(motion)"
   }
 
   func windowWillClose(_ notification: Notification) {
