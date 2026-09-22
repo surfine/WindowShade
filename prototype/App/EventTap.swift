@@ -278,17 +278,6 @@ extension AppDelegate {
         titlebarEventTapBypassUntil = nil
         return false
     }
-    func hasPendingTitlebarTripleClick(at point: CGPoint) -> Bool {
-        guard titlebarDoubleClickEnabled else { return false }
-        guard systemTitlebarDoubleClickAction() != .none else {
-            pendingTitlebarTripleClick = nil
-            return false
-        }
-        clearExpiredPendingTitlebarTripleClick()
-        guard let pending = pendingTitlebarTripleClick,
-              pending.deadline >= Date() else { return false }
-        return pendingTitlebarTripleClickMatches(pending, point: point)
-    }
     func titlebarContains(point: CGPoint, in win: AXUIElement) -> (CGWindowID, pid_t)? {
         guard let id = windowID(of: win), !isDesktopWidgetWindow(id: id) else { return nil }
         if overlayIDs.contains(id) { return nil }

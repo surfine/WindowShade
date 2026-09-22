@@ -1065,12 +1065,6 @@ final class WindowBrowserController: NSObject {
                          usesTargetQueue: usesTarget)
     }
 
-    /// 测试/诊断接缝：当前槽状态（在途与待处理需求）。
-    func metadataSlotState(pid: pid_t) -> WindowBrowserMetadataSlot {
-        dispatchPrecondition(condition: .onQueue(.main))
-        return metadataScheduler.state(pid: pid)
-    }
-
     /// 同步 AX 读取，只在后台队列调用。四种终态严格区分：成功、空、失败、部分失败。
     private func discoverWindows(pid: pid_t, overlayIDs: Set<CGWindowID>)
         -> WindowBrowserFetchResult<[DiscoveredWindowDescriptor]> {
