@@ -417,10 +417,18 @@ final class PinnedPreviewController {
             completeTargetRefresh(target: nil, didChange: false)
             return
         }
-        beginTargetRefresh(reason: reason, pid: pid)
+        beginTargetRefresh(reason: reason, pid: pid,
+                           allowWindowServerShortcut: !force && Self.isAutomaticRefresh(reason))
     }
 
-    private func beginTargetRefresh(reason: String, pid: pid_t) {
+    /// 全局点击、切换前台应用触发的刷新只为让菜单标题提前就绪；显式操作与打开菜单
+    /// 时的刷新不走快速路径。
+    private static func isAutomaticRefresh(_ reason: String) -> Bool {
+        reason == "global-mouse-down" || reason == "frontmost-app"
+    }
+
+    private func beginTargetRefresh(reason: String, pid: pid_t,
+                                    allowWindowServerShortcut: Bool = false) {
         targetRefreshInFlight = true
         let previous = currentTarget
         let excludedBundleIDs = self.excludedBundleIDs
@@ -429,7 +437,14 @@ final class PinnedPreviewController {
             let target: PinnedPreviewTarget?
             let stage: String
 
-            if let win = focusedWindow() {
+            // 快速路径：前台应用最上层的普通窗口仍是上一次完整解析出的那扇窗，
+            // 焦点窗口就没变，不必向刚被点击、正忙着的应用要焦点窗口（实测 50ms–2s）。
+            // 只查 WindowServer，不经过目标应用；任何不确定都回到完整的 AX 解析。
+            if allowWindowServerShortcut, let previous,
+               Self.topmostNormalWindowID(pid: pid) == previous.windowID {
+                target = previous
+                stage = "unchanged-windowserver"
+            } else if let win = focusedWindow() {
                 // CFEqual 比较 AX token，不会向目标 app 发 IPC；同一窗口无需再做
                 // geometry/title/role 与全量 CGWindowList 匹配。
                 if let previous, CFEqual(win, previous.axWindow) {
@@ -454,6 +469,21 @@ final class PinnedPreviewController {
                                           stage: stage, elapsedMilliseconds: elapsedMilliseconds)
             }
         }
+    }
+
+    /// 某个应用在当前屏幕上最靠前的普通窗口（layer 0、不透明）。纯 WindowServer 查询。
+    private static func topmostNormalWindowID(pid: pid_t) -> CGWindowID? {
+        guard pid > 0,
+              let windows = CGWindowListCopyWindowInfo([.optionOnScreenOnly, .excludeDesktopElements],
+                                                       kCGNullWindowID) as? [[String: Any]] else { return nil }
+        for info in windows {
+            guard (info[kCGWindowOwnerPID as String] as? NSNumber)?.int32Value == pid,
+                  (info[kCGWindowLayer as String] as? NSNumber)?.intValue == 0,
+                  ((info[kCGWindowAlpha as String] as? NSNumber)?.doubleValue ?? 1) > 0,
+                  let number = info[kCGWindowNumber as String] as? NSNumber else { continue }
+            return CGWindowID(number.uint32Value)
+        }
+        return nil
     }
 
     private func finishTargetRefresh(target: PinnedPreviewTarget?, reason: String, pid: pid_t,
