@@ -28,6 +28,12 @@ swiftc -target "$(uname -m)-apple-macosx14.0" $GLASS_DEFINE \
   prototype/WindowBrowser/WindowThumbnailService.swift \
   prototype/WindowBrowser/WindowCatalog.swift \
   prototype/WindowBrowser/WindowBrowserViews.swift \
+  prototype/WindowBrowser/WindowBrowserActionBar.swift \
+  prototype/WindowBrowser/WindowBrowserCardView.swift \
+  prototype/WindowBrowser/WindowBrowserListRowView.swift \
+  prototype/WindowBrowser/WindowBrowserSelectionDetailView.swift \
+  prototype/WindowBrowser/WindowBrowserQuickLookView.swift \
+  prototype/WindowBrowser/WindowBrowserContentView.swift \
   prototype/WindowBrowser/WindowBrowserPanel.swift \
   prototype/WindowBrowser/WindowBrowserSettings.swift \
   prototype/Capture/WindowSnapshotCache.swift \
