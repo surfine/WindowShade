@@ -596,12 +596,21 @@ extension AppDelegate {
             // 像素计算（4K Retina 全宽可达数 MB），挪到后台队列执行，避免在
             // MainActor 上分配大缓冲并逐像素扫描。AX 命中区和 AppKit 覆盖层
             // 仍留在主线程。
-            let preparation = await withCheckedContinuation {
-                (continuation: CheckedContinuation<NativeStripPreparation, Never>) in
+            // 截图时系统往往已经在这扇窗的红绿灯处画上了录屏胶囊（捕获本身触发的）。
+            // 先把它抹回标题栏底色，卷帘条与悬停预览都用清理后的图；没有胶囊时原样不动。
+            let (preparation, stripSource, indicatorRemoved) = await withCheckedContinuation {
+                (continuation: CheckedContinuation<(NativeStripPreparation, CGImage, Bool), Never>) in
                 pixelAnalysisQueue.async { [full, size, profile, pid] in
-                    continuation.resume(returning: prepareNativeStrip(full: full, logicalSize: size,
-                                                                      profile: profile, pid: pid))
+                    let scale = CGFloat(full.width) / max(1, size.width)
+                    let cleaned = CaptureIndicatorRemoval.removingIndicator(from: full, scale: scale)
+                    let image = cleaned ?? full
+                    continuation.resume(returning: (prepareNativeStrip(full: image, logicalSize: size,
+                                                                       profile: profile, pid: pid),
+                                                    image, cleaned != nil))
                 }
+            }
+            if indicatorRemoved {
+                wlog("    capture indicator removed from strip id=\(id)")
             }
             let barH = preparation.barH
             let buttonRects = trafficLightRects(
@@ -623,7 +632,7 @@ extension AppDelegate {
                                                canResize: canProxyResize,
                                                windowManagement: windowManagementCapability,
                                                trafficLights: profile.trafficLights)
-                let preview = NSImage(cgImage: full, size: size)
+                let preview = NSImage(cgImage: stripSource, size: size)
                 wlog("    native strip invalid → proxy fallback id=\(id) app=\(appName) reason=\(preparation.brokenHealth.1)")
                 installOverlay(overlay, mode: .proxyTitleBar, previewImage: preview)
                 return
@@ -633,7 +642,7 @@ extension AppDelegate {
                                                 buttons: buttonRects, id: id,
                                                 windowManagement: windowManagementCapability,
                                                 trafficLights: profile.trafficLights)
-            let preview = NSImage(cgImage: full, size: size)
+            let preview = NSImage(cgImage: stripSource, size: size)
             installOverlay(overlay, mode: mode, previewImage: preview)
         }
     }
