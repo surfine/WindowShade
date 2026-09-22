@@ -68,20 +68,23 @@ extension AppDelegate {
     statusMenu.addItem(currentHeader)
 
     let toggle = NSMenuItem(
-      title: foldToggleMenuTitle(), action: #selector(toggleAction), keyEquivalent: "c")
+      title: foldToggleMenuTitle(), action: #selector(toggleAction),
+      keyEquivalent: isHotKeyAvailable(1) ? "c" : "")
     toggle.keyEquivalentModifierMask = [.control, .command]
     statusMenu.addItem(toggle)
 
     if appearanceMode == .proxyTitleBar {
       let focus = NSMenuItem(
-        title: focusMenuTitle(), action: #selector(focusCurrentAppAction), keyEquivalent: "0")
+        title: focusMenuTitle(), action: #selector(focusCurrentAppAction),
+        keyEquivalent: isHotKeyAvailable(2) ? "0" : "")
       focus.keyEquivalentModifierMask = [.control, .command]
       focus.isEnabled = AXIsProcessTrusted()
       statusMenu.addItem(focus)
     } else {
       let arrangeTitle = hasArrangedOverlayFrames ? "恢复卷帘条原位" : "整理卷帘条"
       let arrange = NSMenuItem(
-        title: arrangeTitle, action: #selector(arrangeShadedWindows), keyEquivalent: "0")
+        title: arrangeTitle, action: #selector(arrangeShadedWindows),
+        keyEquivalent: isHotKeyAvailable(2) ? "0" : "")
       arrange.keyEquivalentModifierMask = [.control, .command]
       arrange.isEnabled = menuState.canArrangeShades
       statusMenu.addItem(arrange)
@@ -95,7 +98,7 @@ extension AppDelegate {
     let pinnedPreview = NSMenuItem(
       title: pinnedPreviewMenuTitle(),
       action: #selector(togglePinnedPreviewAction),
-      keyEquivalent: "p")
+      keyEquivalent: isHotKeyAvailable(3) ? "p" : "")
     pinnedPreview.keyEquivalentModifierMask = [.control, .command]
     pinnedPreview.isEnabled =
       AXIsProcessTrusted()
@@ -284,7 +287,9 @@ extension AppDelegate {
     let (id, state) = entry
     let title = StandardMenu.menuTitle(
       descriptiveDisplayTitle(appName: state.appName, windowTitle: state.title))
-    let key = index.flatMap { StandardMenu.foldedWindowShortcut(index: $0) } ?? ""
+    let key = index.flatMap { index in
+      isHotKeyAvailable(UInt32(101 + index)) ? StandardMenu.foldedWindowShortcut(index: index) : nil
+    } ?? ""
     let itemTitle = key.isEmpty ? title : "\(key)  \(title)"
     let item = NSMenuItem(title: itemTitle, action: #selector(unshadeFromMenu(_:)),
                           keyEquivalent: key)
