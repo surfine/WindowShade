@@ -113,13 +113,11 @@ struct WindowBrowserLayoutParams {
     var cardPadding: CGFloat = 8
     var cardTitleHeight: CGFloat = 34
     var cardStatusHeight: CGFloat = 14
-    var cardTitleIconGap: CGFloat = 6
     var rowHorizontalPadding: CGFloat = 10
     var rowIconLeading: CGFloat = 38
     /// 行尾操作区：3 个 28 pt 按钮 + 2 个 4 pt 间距。
     var rowTrailingControlsWidth: CGFloat = 92
     var rowTrailingPadding: CGFloat = 8
-    var rowControlWidth: CGFloat = 28
     var rowControlHeight: CGFloat = 28
     var rowTitleHeight: CGFloat = 16
     var rowStatusHeight: CGFloat = 14

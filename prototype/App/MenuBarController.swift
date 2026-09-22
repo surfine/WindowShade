@@ -329,24 +329,4 @@ extension AppDelegate {
     }
     return String(format: "铰链角度：%.1f°", angle)
   }
-  @objc func toggleDuoDesktopEffect() {
-    duoController.settings.desktopEnabled.toggle()
-    duoController.settingsChanged()
-    rebuildMenu()
-  }
-  @objc func toggleDuoWindowEffect() {
-    duoController.settings.windowsEnabled.toggle()
-    duoController.settingsChanged()
-    rebuildMenu()
-  }
-  @objc func previewDuoDesktopEffect() {
-    showDuoSettings()
-    duoController.settingsWindow?.beginMenuPreview()
-  }
-  @objc func stopAllDuoEffects() {
-    duoController.stopDesktop()
-    duoController.windowEffects.cancelAll()
-    withMenuRebuildSuppressed { restoreAll() }
-    rebuildMenu()
-  }
 }

@@ -136,12 +136,6 @@ final class PinnedPreviewContentView: NSView {
         needsLayout = true
     }
 
-    /// 源窗口标题变化时同步 VoiceOver 文案。
-    func updateTitle(_ title: String) {
-        titleLabel.stringValue = title
-        configureAccessibility()
-    }
-
     private func configureRoundedMask() {
         layer?.backgroundColor = NSColor.clear.cgColor
         SystemCornerRadius.apply(to: self, radius: SystemCornerRadius.window,

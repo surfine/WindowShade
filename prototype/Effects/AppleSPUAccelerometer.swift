@@ -35,7 +35,6 @@ final class AppleSPUAccelerometer {
 
   private static let usagePage = 0xFF00
   private static let usage = 3
-  private static let reportLength = 22
   private static let driverClass = "AppleSPUHIDDriver"
   private static let reportingStateKey = "SensorPropertyReportingState"
   private static let powerStateKey = "SensorPropertyPowerState"

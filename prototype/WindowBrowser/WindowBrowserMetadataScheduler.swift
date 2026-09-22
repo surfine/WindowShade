@@ -96,6 +96,4 @@ final class WindowBrowserMetadataScheduler {
     func state(pid: pid_t) -> WindowBrowserMetadataSlot {
         slots[pid] ?? WindowBrowserMetadataSlot()
     }
-
-    var activeSlotCount: Int { slots.count }
 }
