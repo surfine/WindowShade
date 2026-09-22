@@ -63,6 +63,7 @@ enum WindowBrowserTests {
         inputMethodPriority()
         activationVerification()
         hotKeyPolicy()
+        globalShortcutSettings()
         hundredCyclesReturnToBaseline()
         firstContentLatency()
         geometry()
@@ -3393,6 +3394,69 @@ enum WindowBrowserTests {
                "modifier-only presses are not recorded as shortcuts")
         expect(!WindowBrowserSettings.isModifierOnlyKeyCode(UInt16(kVK_ANSI_K)),
                "a real key can be recorded")
+        expect(!WindowBrowserSettings.isReserved(hotKey(kVK_ANSI_C, cmdKey | controlKey)),
+               "the app's own ⌃⌘ combinations can be re-recorded; clashes are checked per setting")
+    }
+
+    static func globalShortcutSettings() {
+        typealias HotKey = WindowBrowserSettings.HotKey
+        let suite = "WindowShadeTests.GlobalShortcuts.\(getpid())"
+        let defaults = UserDefaults(suiteName: suite)!
+        defaults.removePersistentDomain(forName: suite)
+        let saved = GlobalShortcutSettings.defaults
+        GlobalShortcutSettings.defaults = defaults
+        defer {
+            defaults.removePersistentDomain(forName: suite)
+            GlobalShortcutSettings.defaults = saved
+        }
+        let controlCommand = UInt32(controlKey | cmdKey)
+        let ctrlCmdC = HotKey(keyCode: UInt32(kVK_ANSI_C), modifiers: controlCommand)
+        let ctrlCmdK = HotKey(keyCode: UInt32(kVK_ANSI_K), modifiers: controlCommand)
+
+        expect(GlobalShortcutSettings.hotKey(for: .toggleShade) == ctrlCmdC
+                && GlobalShortcutSettings.hotKey(for: .pinPreview)?.keyCode == UInt32(kVK_ANSI_P)
+                && GlobalShortcutSettings.hotKey(for: .arrangeOrFocus)?.keyCode == UInt32(kVK_ANSI_0)
+                && GlobalShortcutSettings.numberedExpandEnabled
+                && GlobalShortcutSettings.isAllDefault,
+               "untouched settings keep the shipped ⌃⌘C / ⌃⌘P / ⌃⌘0 / ⌃⌘1…9")
+
+        GlobalShortcutSettings.setHotKey(ctrlCmdK, for: .toggleShade)
+        expect(GlobalShortcutSettings.hotKey(for: .toggleShade) == ctrlCmdK
+                && !GlobalShortcutSettings.isAllDefault,
+               "a recorded combination replaces the default")
+        GlobalShortcutSettings.setHotKey(nil, for: .toggleShade)
+        expect(GlobalShortcutSettings.hotKey(for: .toggleShade) == nil,
+               "clearing turns the shortcut off instead of falling back to the default")
+        GlobalShortcutSettings.setHotKey(ctrlCmdC, for: .toggleShade)
+        expect(defaults.object(forKey: "GlobalShortcut.toggleShade") == nil,
+               "choosing the default again stores nothing, so future default changes still apply")
+
+        expect(GlobalShortcutSettings.conflictName(for: ctrlCmdC, excluding: .pinPreview)
+                == GlobalShortcut.toggleShade.title,
+               "recording another action's combination names the action that owns it")
+        expect(GlobalShortcutSettings.conflictName(for: ctrlCmdC, excluding: .toggleShade) == nil,
+               "re-recording an action's own combination is not a clash")
+        let ctrlCmd3 = HotKey(keyCode: UInt32(kVK_ANSI_3), modifiers: controlCommand)
+        expect(GlobalShortcutSettings.conflictName(for: ctrlCmd3, excluding: .pinPreview) != nil,
+               "⌃⌘1…9 are taken while numbered expansion is on")
+        GlobalShortcutSettings.numberedExpandEnabled = false
+        expect(GlobalShortcutSettings.conflictName(for: ctrlCmd3, excluding: .pinPreview) == nil,
+               "turning numbered expansion off frees ⌃⌘1…9")
+
+        GlobalShortcutSettings.setHotKey(nil, for: .pinPreview)
+        GlobalShortcutSettings.resetAll()
+        expect(GlobalShortcutSettings.isAllDefault,
+               "restore defaults brings every shortcut and numbered expansion back")
+
+        let menu = GlobalShortcutSettings.menuKeyEquivalent(for: ctrlCmdC)
+        expect(menu?.modifiers == [.control, .command] && menu?.key.count == 1
+                && menu?.key == menu?.key.lowercased(),
+               "menu items show a lower-case key so AppKit does not add a phantom ⇧")
+        let f5 = HotKey(keyCode: UInt32(kVK_F5), modifiers: controlCommand)
+        let f5Name = WindowBrowserSettings.displayName(for: f5)
+        expect(GlobalShortcutSettings.menuKeyEquivalent(for: f5) == nil
+                || f5Name.drop { "⌃⌥⇧⌘".contains($0) }.count == 1,
+               "keys whose name is not one character are not squeezed into a menu key (\(f5Name))")
     }
 
     /// 37. 连续 100 轮 fake 打开关闭后，缩略图服务与动作协调器的资源回到基线。

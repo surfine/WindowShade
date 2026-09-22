@@ -127,13 +127,10 @@ enum WindowBrowserSettings {
         // 含 Control 或 Option。项目自身的 ⌃⌘ 系列就是这个约定。
         if isCommand, !hasControlOrOption { return true }
         if !isCommand { return false }
+        // 与本应用其它快捷键的冲突不在这里写死，由 GlobalShortcutSettings 按当前设置判断。
         let forbidden: Set<UInt32> = [
             UInt32(kVK_ANSI_Q), UInt32(kVK_ANSI_W), UInt32(kVK_Tab),
-            UInt32(kVK_Space), UInt32(kVK_ANSI_C), UInt32(kVK_ANSI_P),
-            UInt32(kVK_ANSI_0), UInt32(kVK_ANSI_1), UInt32(kVK_ANSI_2),
-            UInt32(kVK_ANSI_3), UInt32(kVK_ANSI_4), UInt32(kVK_ANSI_5),
-            UInt32(kVK_ANSI_6), UInt32(kVK_ANSI_7), UInt32(kVK_ANSI_8),
-            UInt32(kVK_ANSI_9), UInt32(kVK_ANSI_Comma), UInt32(kVK_ANSI_H)
+            UInt32(kVK_Space), UInt32(kVK_ANSI_Comma), UInt32(kVK_ANSI_H)
         ]
         return forbidden.contains(hotKey.keyCode)
     }

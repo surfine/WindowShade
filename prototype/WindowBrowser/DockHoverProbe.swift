@@ -1075,7 +1075,7 @@ final class WindowBrowserUIRouteProbe {
             if view is NSSwitch { switches += 1 }
             if view is NSButton { buttons += 1 }
             if view is NSTextField { fields += 1 }
-            if view is WindowBrowserHotKeyRecorderView { recorders += 1 }
+            if view is HotKeyRecorderView { recorders += 1 }
             view.subviews.forEach(walk)
         }
         walk(page)
@@ -1088,6 +1088,9 @@ final class WindowBrowserUIRouteProbe {
         func browserMenuItem() -> NSMenuItem? {
             delegate.statusMenu.items.first { $0.title == "选择窗口…" }
         }
+        let shortcutItems = delegate.statusMenu.items.filter { !$0.keyEquivalent.isEmpty }
+            .map { "\($0.title)=\($0.keyEquivalent)" }
+        print("ui-probe: menuShortcuts \(shortcutItems.joined(separator: " "))")
         let enabledItem = browserMenuItem()
         print("ui-probe: menuItem present=\(enabledItem != nil) "
               + "enabled=\(enabledItem?.isEnabled ?? false) "

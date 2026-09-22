@@ -68,24 +68,21 @@ extension AppDelegate {
     statusMenu.addItem(currentHeader)
 
     let toggle = NSMenuItem(
-      title: foldToggleMenuTitle(), action: #selector(toggleAction),
-      keyEquivalent: isHotKeyAvailable(1) ? "c" : "")
-    toggle.keyEquivalentModifierMask = [.control, .command]
+      title: foldToggleMenuTitle(), action: #selector(toggleAction), keyEquivalent: "")
+    applyShortcut(.toggleShade, to: toggle)
     statusMenu.addItem(toggle)
 
     if appearanceMode == .proxyTitleBar {
       let focus = NSMenuItem(
-        title: focusMenuTitle(), action: #selector(focusCurrentAppAction),
-        keyEquivalent: isHotKeyAvailable(2) ? "0" : "")
-      focus.keyEquivalentModifierMask = [.control, .command]
+        title: focusMenuTitle(), action: #selector(focusCurrentAppAction), keyEquivalent: "")
+      applyShortcut(.arrangeOrFocus, to: focus)
       focus.isEnabled = AXIsProcessTrusted()
       statusMenu.addItem(focus)
     } else {
       let arrangeTitle = hasArrangedOverlayFrames ? "恢复卷帘条原位" : "整理卷帘条"
       let arrange = NSMenuItem(
-        title: arrangeTitle, action: #selector(arrangeShadedWindows),
-        keyEquivalent: isHotKeyAvailable(2) ? "0" : "")
-      arrange.keyEquivalentModifierMask = [.control, .command]
+        title: arrangeTitle, action: #selector(arrangeShadedWindows), keyEquivalent: "")
+      applyShortcut(.arrangeOrFocus, to: arrange)
       arrange.isEnabled = menuState.canArrangeShades
       statusMenu.addItem(arrange)
     }
@@ -98,8 +95,8 @@ extension AppDelegate {
     let pinnedPreview = NSMenuItem(
       title: pinnedPreviewMenuTitle(),
       action: #selector(togglePinnedPreviewAction),
-      keyEquivalent: isHotKeyAvailable(3) ? "p" : "")
-    pinnedPreview.keyEquivalentModifierMask = [.control, .command]
+      keyEquivalent: "")
+    applyShortcut(.pinPreview, to: pinnedPreview)
     pinnedPreview.isEnabled =
       AXIsProcessTrusted()
       && hasScreenRecordingPermission()
@@ -108,6 +105,7 @@ extension AppDelegate {
 
     let windowBrowser = NSMenuItem(
       title: "选择窗口…", action: #selector(openWindowBrowserPanel), keyEquivalent: "")
+    applyShortcut(.windowBrowser, to: windowBrowser)
     windowBrowser.image = NSImage(systemSymbolName: "rectangle.on.rectangle",
                                   accessibilityDescription: nil)
     windowBrowser.isEnabled = WindowBrowserSettings.keyboardPanelEnabled
@@ -278,6 +276,18 @@ extension AppDelegate {
     }
     return "折叠当前窗口"
   }
+  /// 菜单项显示当前设置的快捷键；关掉了、被其他应用占用或按键画不出来时不显示。
+  private func applyShortcut(_ shortcut: GlobalShortcut, to item: NSMenuItem) {
+    guard let hotKey = menuHotKey(for: shortcut),
+          let equivalent = GlobalShortcutSettings.menuKeyEquivalent(for: hotKey) else {
+      item.keyEquivalent = ""
+      item.keyEquivalentModifierMask = []
+      return
+    }
+    item.keyEquivalent = equivalent.key
+    item.keyEquivalentModifierMask = equivalent.modifiers
+  }
+
   func pinnedPreviewMenuTitle() -> String {
     pinnedPreviewController.currentTargetMenuTitle()
   }
@@ -288,7 +298,7 @@ extension AppDelegate {
     let title = StandardMenu.menuTitle(
       descriptiveDisplayTitle(appName: state.appName, windowTitle: state.title))
     let key = index.flatMap { index in
-      isHotKeyAvailable(UInt32(101 + index)) ? StandardMenu.foldedWindowShortcut(index: index) : nil
+      isNumberedShortcutActive(index: index) ? StandardMenu.foldedWindowShortcut(index: index) : nil
     } ?? ""
     let itemTitle = key.isEmpty ? title : "\(key)  \(title)"
     let item = NSMenuItem(title: itemTitle, action: #selector(unshadeFromMenu(_:)),

@@ -2,13 +2,14 @@ import Cocoa
 import ScreenCaptureKit
 
 enum WindowShadeSettingsSection: Int, CaseIterable {
-  case effects, shade, browser, permissions, advanced
+  case effects, shade, browser, shortcuts, permissions, advanced
 
   var title: String {
     switch self {
     case .effects: return "效果"
     case .shade: return "卷帘"
     case .browser: return "窗口浏览"
+    case .shortcuts: return "快捷键"
     case .permissions: return "权限与启动"
     case .advanced: return "高级"
     }
@@ -19,13 +20,14 @@ enum WindowShadeSettingsSection: Int, CaseIterable {
     case .effects: return "sparkles"
     case .shade: return "rectangle.compress.vertical"
     case .browser: return "rectangle.on.rectangle"
+    case .shortcuts: return "command"
     case .permissions: return "lock.shield"
     case .advanced: return "slider.horizontal.3"
     }
   }
 }
 
-/// 设置页内容列宽度上限，四个分页共用。
+/// 设置页内容列宽度上限，各分页共用。
 let settingsContentWidth: CGFloat = 640
 
 private final class SettingsPageHost: NSView {
@@ -37,7 +39,7 @@ private final class SettingsPageHost: NSView {
   }
 }
 
-/// All four settings pages and onboarding share the same native, flat group box.
+/// All settings pages and onboarding share the same native, flat group box.
 final class SettingsGroupBox: NSBox {
   override init(frame frameRect: NSRect) {
     super.init(frame: frameRect)
@@ -189,6 +191,7 @@ final class DuoSettingsWindow: NSWindowController, NSWindowDelegate, NSTableView
     pages[.advanced] = makeAdvancedPage(controller: controller)
     pages[.shade] = controller.owner?.makeShadeSettingsPage()
     pages[.browser] = controller.owner?.makeWindowBrowserSettingsPage()
+    pages[.shortcuts] = controller.owner?.makeShortcutsSettingsPage()
     pages[.permissions] = controller.owner?.makePermissionsSettingsPage()
     select(section: .effects)
 
@@ -413,6 +416,7 @@ final class DuoSettingsWindow: NSWindowController, NSWindowDelegate, NSTableView
     } else if let owner = controller?.owner {
       pages[.shade] = owner.makeShadeSettingsPage()
       pages[.browser] = owner.makeWindowBrowserSettingsPage()
+      pages[.shortcuts] = owner.makeShortcutsSettingsPage()
       pages[.permissions] = owner.makePermissionsSettingsPage()
       select(section: currentSection)
     }

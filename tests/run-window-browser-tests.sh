@@ -12,6 +12,7 @@ fi
 
 swiftc -target "$(uname -m)-apple-macosx14.0" $GLASS_DEFINE \
   prototype/App/StandardMenu.swift \
+  prototype/App/GlobalShortcuts.swift \
   prototype/WindowBrowser/WindowBrowserModels.swift \
   prototype/WindowBrowser/WindowBrowserTypography.swift \
   prototype/WindowBrowser/WindowBrowserGeometry.swift \
