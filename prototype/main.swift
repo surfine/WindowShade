@@ -166,6 +166,17 @@ if CommandLine.arguments.contains("--standard-menu-probe") {
     app.run()
     exit(0)
 }
+if let index = CommandLine.arguments.firstIndex(of: "--capture-indicator-probe") {
+    app.setActivationPolicy(.accessory)
+    let directory = CommandLine.arguments.count > index + 1
+        ? URL(fileURLWithPath: CommandLine.arguments[index + 1])
+        : URL(fileURLWithPath: FileManager.default.currentDirectoryPath)
+            .appendingPathComponent(".build/capture-indicator-probe")
+    let probe = CaptureIndicatorProbe(output: directory)
+    DispatchQueue.main.async { probe.run() }
+    withExtendedLifetime(probe) { app.run() }
+    exit(0)
+}
 if CommandLine.arguments.contains("--settings-shots") {
     // 隔离设置窗口截图：不启动传感器、全局事件监听或恢复扫描，也不写入用户偏好。
     app.setActivationPolicy(.accessory)
