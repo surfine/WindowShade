@@ -5,10 +5,6 @@ import Cocoa
 import Carbon.HIToolbox
 import ServiceManagement
 
-private let prefCardWidth: CGFloat = 560
-private let prefRowInset: CGFloat = 14
-private let prefTrailingControlColumnWidth: CGFloat = 152
-
 extension AppDelegate {
 @objc func toggleTitlebarDoubleClick(_ sender: NSMenuItem) {
         titlebarDoubleClickEnabled.toggle()
@@ -62,10 +58,7 @@ extension AppDelegate {
         if let settingsWindow = duoController.settingsWindow,
            settingsWindow.window?.isVisible == true {
             settingsWindow.refreshSettings()
-            return
         }
-        guard let window = preferencesWindow, window.isVisible else { return }
-        window.contentView = makePreferencesContentView()
     }
 
     func quietNotice(_ message: String, log: String? = nil) {
@@ -194,62 +187,6 @@ extension AppDelegate {
         ])
         stack.addArrangedSubview(launch)
         launch.widthAnchor.constraint(equalTo: stack.widthAnchor).isActive = true
-        return root
-    }
-
-    func makePreferencesContentView() -> NSView {
-        let root = NSView(frame: NSRect(x: 0, y: 0, width: prefCardWidth + 44, height: 700))
-        let stack = NSStackView(frame: root.bounds.insetBy(dx: 22, dy: 20))
-        stack.orientation = .vertical
-        stack.alignment = .leading
-        stack.spacing = 6
-        stack.autoresizingMask = [.width, .height]
-        root.addSubview(stack)
-
-        func addGroup(_ title: String, _ card: NSView) {
-            stack.addArrangedSubview(makePrefGroupLabel(title))
-            stack.addArrangedSubview(card)
-            stack.setCustomSpacing(16, after: card)
-        }
-
-        let general = makePrefCard([
-            makePrefToggleRow(name: "双击标题栏收起窗口", subtitle: titlebarDoubleClickPreferenceSubtitle(),
-                              isOn: titlebarDoubleClickEnabled, action: #selector(prefToggleTitlebarDoubleClick(_:))),
-            makePrefToggleRow(name: "卷帘条浮动于上方", subtitle: "折叠后的标题栏保持在其他窗口之上",
-                              isOn: floatingOnTop, action: #selector(prefToggleFloating(_:))),
-            makePrefToggleRow(name: "卷帘条半透明", subtitle: "略微降低卷帘条不透明度",
-                              isOn: translucent, action: #selector(prefToggleTranslucent(_:))),
-            makePrefToggleRow(name: "登录时自动启动", subtitle: launchAtLoginSubtitle(),
-                              isOn: launchAtLoginEnabled(), action: #selector(prefToggleLaunchAtLogin(_:))),
-        ])
-        addGroup("通用", general)
-
-        let appearanceSeg = NSSegmentedControl(labels: ["跟原来一样", "统一标题栏"],
-                                               trackingMode: .selectOne,
-                                               target: self,
-                                               action: #selector(prefSelectAppearanceSegment(_:)))
-        appearanceSeg.selectedSegment = appearanceMode == .proxyTitleBar ? 1 : 0
-        appearanceSeg.sizeToFit()
-        addGroup("外观", makePrefCard([
-            makePrefControlRow(name: "收起后的样子", subtitle: "跟原来一样，或换成统一的标题栏", control: appearanceSeg),
-        ]))
-
-        addGroup("声音", makePrefCard([
-            makePrefToggleRow(name: "收起和展开时播放音效", subtitle: nil,
-                              isOn: soundEnabled, action: #selector(prefToggleSound(_:))),
-            makePrefControlRow(name: "收起音效", subtitle: nil,
-                               control: makeSoundPopup(selected: foldSoundName, action: #selector(prefSelectFoldSound(_:)))),
-            makePrefControlRow(name: "展开音效", subtitle: nil,
-                               control: makeSoundPopup(selected: unfoldSoundName, action: #selector(prefSelectUnfoldSound(_:)))),
-        ]))
-
-        addGroup("权限", makePrefCard([
-            makePermissionRow(kind: .preferences, width: prefCardWidth, symbol: "accessibility", name: "辅助功能", subtitle: "找到、移动和恢复窗口",
-                              granted: hasAccessibilityPermission(), action: #selector(openAccessibilitySettingsAction)),
-            makePermissionRow(kind: .preferences, width: prefCardWidth, symbol: "rectangle.inset.filled.and.person.filled", name: "屏幕录制", subtitle: "截取窗口画面做预览",
-                              granted: hasScreenRecordingPermission(), action: #selector(openScreenRecordingSettingsAction)),
-        ]))
-
         return root
     }
 
@@ -409,99 +346,6 @@ extension AppDelegate {
         return row
     }
 
-    func makePrefCard(_ rows: [NSView]) -> NSView {
-        let card = NSView()
-        SystemCornerRadius.apply(to: card, radius: SystemCornerRadius.card)
-        card.layer?.borderWidth = 0.5
-        card.layer?.borderColor = SystemAppearancePolicy.cgColor(
-            NSColor.separatorColor, for: card)
-        card.layer?.backgroundColor = SystemAppearancePolicy.cgColor(
-            NSColor.controlBackgroundColor, for: card)
-        card.translatesAutoresizingMaskIntoConstraints = false
-        card.widthAnchor.constraint(equalToConstant: prefCardWidth).isActive = true
-
-        let inner = NSStackView()
-        inner.orientation = .vertical
-        inner.alignment = .leading
-        inner.spacing = 0
-        inner.translatesAutoresizingMaskIntoConstraints = false
-        card.addSubview(inner)
-        NSLayoutConstraint.activate([
-            inner.leadingAnchor.constraint(equalTo: card.leadingAnchor),
-            inner.trailingAnchor.constraint(equalTo: card.trailingAnchor),
-            inner.topAnchor.constraint(equalTo: card.topAnchor),
-            inner.bottomAnchor.constraint(equalTo: card.bottomAnchor),
-        ])
-        for (i, row) in rows.enumerated() {
-            if i > 0 {
-                let sep = NSBox()
-                sep.boxType = .separator
-                sep.translatesAutoresizingMaskIntoConstraints = false
-                inner.addArrangedSubview(sep)
-                sep.widthAnchor.constraint(equalToConstant: prefCardWidth).isActive = true
-            }
-            inner.addArrangedSubview(row)
-        }
-        return card
-    }
-
-    func makePrefRow(height: CGFloat) -> NSView {
-        let row = NSView(frame: NSRect(x: 0, y: 0, width: prefCardWidth, height: height))
-        row.translatesAutoresizingMaskIntoConstraints = false
-        row.widthAnchor.constraint(equalToConstant: prefCardWidth).isActive = true
-        row.heightAnchor.constraint(equalToConstant: height).isActive = true
-        return row
-    }
-
-    func makePrefName(_ text: String, y: CGFloat) -> NSTextField {
-        let field = NSTextField(labelWithString: text)
-        field.font = SystemAppearancePolicy.font(relativeToBody: 0)
-        let width = prefCardWidth - (prefRowInset * 2) - prefTrailingControlColumnWidth - 12
-        field.frame = NSRect(x: prefRowInset, y: y, width: width, height: 18)
-        return field
-    }
-
-    func makePrefSubtitle(_ text: String) -> NSTextField {
-        let field = NSTextField(labelWithString: text)
-        field.font = SystemAppearancePolicy.font(relativeToBody: -2)
-        field.textColor = .tertiaryLabelColor
-        let width = prefCardWidth - (prefRowInset * 2) - prefTrailingControlColumnWidth - 12
-        field.frame = NSRect(x: prefRowInset, y: 9, width: width, height: 15)
-        return field
-    }
-
-    func makePrefToggleRow(name: String, subtitle: String?, isOn: Bool, action: Selector) -> NSView {
-        let h: CGFloat = subtitle == nil ? 42 : 54
-        let row = makePrefRow(height: h)
-        row.addSubview(makePrefName(name, y: subtitle == nil ? (h - 18) / 2 : h - 14 - 18))
-        if let subtitle = subtitle { row.addSubview(makePrefSubtitle(subtitle)) }
-        let sw = NSSwitch()
-        sw.state = isOn ? .on : .off
-        sw.target = self
-        sw.action = action
-        sw.sizeToFit()
-        let swW = sw.frame.width
-        let swH = sw.frame.height
-        sw.frame = NSRect(x: prefCardWidth - prefRowInset - swW, y: floor((h - swH) / 2), width: swW, height: swH)
-        sw.autoresizingMask = [.minXMargin]
-        row.addSubview(sw)
-        return row
-    }
-
-    func makePrefControlRow(name: String, subtitle: String?, control: NSControl) -> NSView {
-        let h: CGFloat = subtitle == nil ? 44 : 54
-        let row = makePrefRow(height: h)
-        row.addSubview(makePrefName(name, y: subtitle == nil ? (h - 18) / 2 : h - 14 - 18))
-        if let subtitle = subtitle { row.addSubview(makePrefSubtitle(subtitle)) }
-        control.sizeToFit()
-        let cw = control.frame.width
-        let ch = control.frame.height
-        control.frame = NSRect(x: prefCardWidth - prefRowInset - cw, y: floor((h - ch) / 2), width: cw, height: ch)
-        control.autoresizingMask = [.minXMargin]
-        row.addSubview(control)
-        return row
-    }
-
     func makeSoundPopup(selected: String, action: Selector) -> NSPopUpButton {
         let popup = NSPopUpButton(frame: NSRect(x: 0, y: 0, width: 170, height: 26), pullsDown: false)
         for sound in shadeSoundChoices {
@@ -521,13 +365,6 @@ extension AppDelegate {
             return "双击标题栏收起窗口；\(triple)"
         }
         return "在任意窗口标题栏双击即可收起"
-    }
-
-    func makePrefButton(title: String, action: Selector) -> NSButton {
-        let button = NSButton(title: title, target: self, action: action)
-        button.bezelStyle = .rounded
-        button.controlSize = .regular
-        return button
     }
 
     func launchAtLoginEnabled() -> Bool {
@@ -1193,7 +1030,7 @@ extension AppDelegate {
 
         let permissions = makeUnifiedSettingsCard([
             makeUnifiedPermissionRow(symbol: "accessibility", name: "辅助功能",
-                subtitle: "识别 Dock 图标、激活/折叠/恢复/关闭窗口",
+                subtitle: "识别 Dock 图标，切换、收起、恢复或关闭窗口",
                 granted: hasAccessibilityPermission(),
                 action: #selector(openAccessibilitySettingsAction)),
             makeUnifiedPermissionRow(symbol: "rectangle.inset.filled.and.person.filled", name: "屏幕录制",

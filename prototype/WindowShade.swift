@@ -199,7 +199,6 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSMenuDelegate {
     var previewCapturePendingIDs: Set<CGWindowID> = []
     var hoverPreviewSuppressedUntil: [CGWindowID: Date] = [:]
     var statusNoticeWorkItem: DispatchWorkItem?
-    var preferencesWindow: NSWindow?
     var onboardingWindow: NSWindow?
     // 窗口浏览入口的折叠终态等待者：键 = 原窗口 ID，值 = token -> 回调。
     // 折叠事务是异步的（立即验证 / 延迟验证 / 回滚），浏览器动作只在真实终态
@@ -496,7 +495,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSMenuDelegate {
     func configureShadedAccessibility(for overlay: NSWindow, id: CGWindowID,
                                               appName: String, title: String) {
         let displayTitle = descriptiveDisplayTitle(appName: appName, windowTitle: title)
-        let label = "已折叠窗口：\(displayTitle)"
+        let label = "已收起的窗口：\(displayTitle)"
         let target = ShadedAccessibilityActionTarget { [weak self] in
             self?.unshade(id) ?? false
         }
@@ -510,8 +509,8 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSMenuDelegate {
         contentView.setAccessibilityElement(true)
         contentView.setAccessibilityRole(NSAccessibility.Role.button)
         contentView.setAccessibilityLabel(label)
-        contentView.setAccessibilityValue("已折叠")
-        contentView.setAccessibilityHelp("展开这个折叠窗口")
+        contentView.setAccessibilityValue("已收起")
+        contentView.setAccessibilityHelp("展开这个窗口")
         contentView.setAccessibilityCustomActions(actions)
     }
 
