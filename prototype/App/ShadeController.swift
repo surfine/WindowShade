@@ -64,7 +64,7 @@ extension AppDelegate {
                 win = retargetWin
                 id = retargetID
             } else {
-                quietNotice("当前空间没有可折叠窗口",
+                quietNotice("这个桌面没有可以收起的窗口",
                             log: "toggle: focused id=\(id) off active space; no on-space window")
                 return
             }

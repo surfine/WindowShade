@@ -269,12 +269,12 @@ extension AppDelegate {
     arrangedOverlayFrames.keys.contains { shaded[$0]?.overlay != nil }
   }
   func foldToggleMenuTitle() -> String {
-    guard !shaded.isEmpty else { return "折叠当前窗口" }
+    guard !shaded.isEmpty else { return "收起当前窗口" }
     if currentShadedOverlayID() != nil { return "展开当前窗口" }
     if let id = pinnedPreviewController.currentTargetWindowID, shaded[id] != nil {
       return "展开当前窗口"
     }
-    return "折叠当前窗口"
+    return "收起当前窗口"
   }
   /// 菜单项显示当前设置的快捷键；关掉了、被其他应用占用或按键画不出来时不显示。
   private func applyShortcut(_ shortcut: GlobalShortcut, to item: NSMenuItem) {

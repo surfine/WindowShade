@@ -2268,7 +2268,7 @@ extension WindowBrowserController: WindowBrowserActionBackend {
         }
         guard owner.windowBrowserBeginFold(key: target, element: element,
                                            completion: { success in
-            completion(success ? .completed : .failed(reason: "折叠未通过隐藏验证"))
+            completion(success ? .completed : .failed(reason: "窗口没能收起"))
         }) != nil else {
             completion(.busy)
             return

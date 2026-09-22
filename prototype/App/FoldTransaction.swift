@@ -187,7 +187,7 @@ extension AppDelegate {
         forceCleanup(id, preserveRecovery: true)
         verifyRestoredWindow(state, to: state.originalPosition, completion: nil)
         settleWindowBrowserFoldWaiters(id: id, success: false)
-        quietNotice("此窗口暂时无法折叠",
+        quietNotice("这个窗口暂时收不起来",
                     log: "shade: transaction rolled back id=\(id) app=\(state.appName)")
     }
 

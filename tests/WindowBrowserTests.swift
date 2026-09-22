@@ -3187,7 +3187,7 @@ enum WindowBrowserTests {
                     .contains("屏幕录制") == true,
                "a missing permission is explained instead of showing a blank image")
         expect(WindowBrowserQuickLookPolicy.message(for: .applicationIcon,
-                                                    isFolded: true)?.contains("折叠") == true,
+                                                    isFolded: true)?.contains("收起") == true,
                "a folded window without a snapshot says so")
         expect(WindowBrowserQuickLookPolicy.message(for: .applicationIcon) != nil,
                "the icon-only case always carries a reason")
@@ -3237,7 +3237,7 @@ enum WindowBrowserTests {
                             originalWindowID: 71, windowGeneration: 1)
         _ = key
         expect(WindowBrowserAccessibilityAnnouncement.text(
-            for: .completed, action: .fold, windowTitle: "参考资料") == "折叠完成：参考资料",
+            for: .completed, action: .fold, windowTitle: "参考资料") == "收起完成：参考资料",
                "a completed action announces its result with the window title")
         expect(WindowBrowserAccessibilityAnnouncement.text(
             for: .completed, action: .unfold, windowTitle: "  ") == "展开完成",

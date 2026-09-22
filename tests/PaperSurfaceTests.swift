@@ -297,10 +297,10 @@ enum PaperSurfaceTests {
                         == "窗口预览",
                      "an untitled preview falls back to a generic label")
         precondition(PaperSurfaceAccessibility.statusItemValue(foldedCount: 0)
-                        == "没有折叠的窗口",
+                        == "没有收起的窗口",
                      "the status item announces an empty state instead of a bare zero")
         precondition(PaperSurfaceAccessibility.statusItemValue(foldedCount: 3)
-                        == "3 个折叠窗口",
+                        == "3 个收起的窗口",
                      "the status item announces the folded window count")
         precondition(PaperSurfaceAccessibility.statusItemLabel == "WindowShade",
                      "the status item keeps a stable accessible name")
