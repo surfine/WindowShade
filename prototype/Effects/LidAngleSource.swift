@@ -54,9 +54,15 @@ final class LidAngleSource {
     queue.async { [weak self] in
       guard let self, engaged != value else { return }
       engaged = value
-      timer?.schedule(
-        deadline: .now(), repeating: value ? 1.0 / 60 : 1.0 / 12, leeway: .milliseconds(2))
+      timer?.schedule(deadline: .now(), repeating: Self.interval(engaged: value),
+                      leeway: Self.leeway(engaged: value))
     }
+  }
+  // 合盖途中 60Hz 且几乎不给余量，动画才跟手；静止时 12Hz 只用来发现「开始合盖」，
+  // 放宽到 20ms 余量让系统把这次唤醒和别的定时器合并，常驻开销更低。
+  private static func interval(engaged: Bool) -> Double { engaged ? 1.0 / 60 : 1.0 / 12 }
+  private static func leeway(engaged: Bool) -> DispatchTimeInterval {
+    .milliseconds(engaged ? 2 : 20)
   }
   private func current(_ token: UInt64) -> Bool { lock.withLock { wanted && epoch.accepts(token) } }
   private func connect(_ token: UInt64) {
@@ -86,8 +92,8 @@ final class LidAngleSource {
     failures = 0
     deliverStatus(.connected(report), token)
     let timer = DispatchSource.makeTimerSource(queue: queue)
-    timer.schedule(
-      deadline: .now(), repeating: engaged ? 1.0 / 60 : 1.0 / 12, leeway: .milliseconds(2))
+    timer.schedule(deadline: .now(), repeating: Self.interval(engaged: engaged),
+                   leeway: Self.leeway(engaged: engaged))
     timer.setEventHandler { [weak self] in self?.poll(token) }
     self.timer = timer
     timer.resume()

@@ -3712,6 +3712,17 @@ enum WindowBrowserTests {
         expect(threeDock.headerVisible && threeDock.headerHeight == threeDock.dockHeaderHeight
                 && abs(threeDock.cardHeight - 203) < 0.5,
                "multi-window Dock panels keep a compact header; a status line appears only when needed")
+        // 列表行与卡片同一个判断：这一批都没有状态时按单行取行高，有状态时仍留两行。
+        let plainRows = WindowBrowserGeometry.derivedParams(
+            base: .standard, titles: ["a", "b"], hasStatus: false, anyCardStatus: false)
+        let statusRows = WindowBrowserGeometry.derivedParams(
+            base: .standard, titles: ["a", "b"], hasStatus: false, anyCardStatus: true)
+        expect(abs(statusRows.listRowHeight - WindowBrowserLayoutParams.standard.listRowHeight) < 0.5
+                && plainRows.listRowHeight < statusRows.listRowHeight
+                && plainRows.listRowHeight >= plainRows.rowTitleHeight + plainRows.spacingSmall * 3
+                && plainRows.listRowHeight >= plainRows.rowControlHeight + plainRows.spacingSmall,
+               "list rows without any status drop the empty second line "
+               + "(\(plainRows.listRowHeight) vs \(statusRows.listRowHeight))")
         let dockContent = WindowBrowserContentView(frame: NSRect(x: 0, y: 0, width: 612, height: 300))
         dockContent.params = threeDock
         dockContent.update(mode: .dock, records: Array(records.prefix(3)), selection: nil,

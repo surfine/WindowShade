@@ -94,6 +94,15 @@ enum SystemAppearancePolicy {
         capabilities.increaseContrast ? 0 : 0.9
     }
 
+    /// 卡片/列表行的状态文字色。11 pt 的 secondaryLabelColor 在浅色卡片上约 3.9:1，
+    /// 低于 HIG 对 17 pt 以下文字的 4.5:1；「提高对比度」打开时提到正文色，
+    /// 与同一开关下加粗的边线一致。警告状态仍用橙色。
+    static func statusTextColor(warning: Bool,
+                                _ capabilities: SystemAppearanceCapabilities = .current) -> NSColor {
+        if warning { return .systemOrange }
+        return capabilities.increaseContrast ? .labelColor : .secondaryLabelColor
+    }
+
     static func shadowColor(_ capabilities: SystemAppearanceCapabilities) -> NSColor {
         NSColor.black.withAlphaComponent(capabilities.increaseContrast ? 0.28 : 0.18)
     }

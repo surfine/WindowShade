@@ -181,9 +181,16 @@ struct WindowBrowserLayoutParams {
     }
 
     /// 这一批卡片是否需要状态行、Dock 面板是否需要页眉。
+    /// 列表行跟卡片同一个判断：这一批都没有状态时按单行标题取行高（约 40 pt），
+    /// 不再为不存在的状态行留出两行高度。
     func resized(cardStatusLine: Bool, header: Bool, dockHeader: Bool) -> WindowBrowserLayoutParams {
         var copy = self
         copy.cardStatusLineVisible = cardStatusLine
+        if !cardStatusLine {
+            copy.listRowHeight = min(listRowHeight,
+                                     max(rowTitleHeight + spacingSmall * 3,
+                                         rowControlHeight + spacingSmall))
+        }
         copy.headerVisible = header
         if dockHeader { copy.headerHeight = dockHeaderHeight }
         copy.cardHeight = Self.cardHeight(params: copy)
