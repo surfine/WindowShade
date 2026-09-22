@@ -96,7 +96,7 @@ extension AppDelegate {
 }
 
 @objc func showPreferences() {
-        showDuoSettings(section: .shade)
+        showSettingsWindow()
     }
 
     private func makeSettingsPageRoot() -> (NSView, NSStackView) {
@@ -347,10 +347,13 @@ extension AppDelegate {
             labels.leadingAnchor.constraint(equalTo: row.leadingAnchor),
             labels.trailingAnchor.constraint(equalTo: toggle.leadingAnchor, constant: -14),
             toggle.trailingAnchor.constraint(equalTo: row.trailingAnchor),
+            labels.topAnchor.constraint(greaterThanOrEqualTo: row.topAnchor, constant: 8),
+            labels.bottomAnchor.constraint(lessThanOrEqualTo: row.bottomAnchor, constant: -8),
         ])
         row.orientation = .horizontal
         row.alignment = .centerY
         row.spacing = 14
+        row.edgeInsets = NSEdgeInsets(top: 8, left: 0, bottom: 8, right: 0)
         row.heightAnchor.constraint(greaterThanOrEqualToConstant: subtitle == nil ? 40 : 48).isActive = true
         return row
     }
@@ -367,10 +370,13 @@ extension AppDelegate {
             labels.leadingAnchor.constraint(equalTo: row.leadingAnchor),
             labels.trailingAnchor.constraint(equalTo: control.leadingAnchor, constant: -14),
             control.trailingAnchor.constraint(equalTo: row.trailingAnchor),
+            labels.topAnchor.constraint(greaterThanOrEqualTo: row.topAnchor, constant: 8),
+            labels.bottomAnchor.constraint(lessThanOrEqualTo: row.bottomAnchor, constant: -8),
         ])
         row.orientation = .horizontal
         row.alignment = .centerY
         row.spacing = 14
+        row.edgeInsets = NSEdgeInsets(top: 8, left: 0, bottom: 8, right: 0)
         row.heightAnchor.constraint(greaterThanOrEqualToConstant: subtitle == nil ? 40 : 48).isActive = true
         return row
     }
@@ -1016,7 +1022,7 @@ extension AppDelegate {
                 isOn: WindowBrowserSettings.dockEnabled,
                 action: #selector(prefToggleWindowBrowserDock(_:))),
             makeUnifiedToggleRow(
-                name: "允许从菜单打开窗口选择面板",
+                name: "从菜单打开窗口浏览",
                 subtitle: "在菜单里加入“选择窗口…”；默认不占用快捷键",
                 isOn: WindowBrowserSettings.keyboardPanelEnabled,
                 action: #selector(prefToggleWindowBrowserKeyboard(_:))),
@@ -1056,8 +1062,7 @@ extension AppDelegate {
                 }()),
             makeUnifiedControlRow(
                 name: "独立快捷键",
-                subtitle: "点一下开始录制，再按一次同一个组合就关掉面板。"
-                    + "组合里要有 ⌃ 或 ⌥，免得和 ⌘C、⌘V 这类系统快捷键冲突。",
+                subtitle: "用同一组合打开或关闭面板。需包含 ⌃ 或 ⌥。",
                 control: recorder),
             makeUnifiedControlRow(
                 name: "按应用排除",
@@ -1076,7 +1081,7 @@ extension AppDelegate {
 
         // 外观：跟随系统（可用的系统玻璃 / 原生材质）或明确的不透明纸面。
         // 玻璃环境不可用时不会显示一个实际不起作用的玻璃开关。
-        let appearanceControl = NSSegmentedControl(labels: ["跟随系统", "纸面"],
+        let appearanceControl = NSSegmentedControl(labels: ["跟随系统外观", "不透明背景"],
                                                    trackingMode: .selectOne,
                                                    target: self,
                                                    action: #selector(prefChangeWindowBrowserAppearance(_:)))
@@ -1091,9 +1096,7 @@ extension AppDelegate {
         let appearance = makeUnifiedSettingsCard([
             makeUnifiedControlRow(
                 name: "外观",
-                subtitle: WindowBrowserSystemCapabilities.current.supportsGlass
-                    ? "当前系统支持公开的 AppKit 玻璃控制层；开启减少透明度时会自动改为不透明背景。"
-                    : "当前系统或 SDK 不使用玻璃：控制层使用系统原生材质或不透明纸面。",
+                subtitle: "开启系统的“减少透明度”时，自动使用不透明背景。",
                 control: appearanceControl),
             makeUnifiedControlRow(
                 name: "默认显示方式",
@@ -1112,7 +1115,7 @@ extension AppDelegate {
 
         let permissions = makeUnifiedSettingsCard([
             makeUnifiedPermissionRow(symbol: "accessibility", name: "辅助功能",
-                subtitle: "识别 Dock 图标、激活/折叠/恢复/关闭窗口",
+                subtitle: "识别 Dock 图标，切换、收起、展开和关闭窗口",
                 granted: hasAccessibilityPermission(),
                 action: #selector(openAccessibilitySettingsAction)),
             makeUnifiedPermissionRow(symbol: "rectangle.inset.filled.and.person.filled", name: "屏幕录制",

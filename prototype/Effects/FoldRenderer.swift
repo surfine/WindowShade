@@ -365,6 +365,12 @@ final class FoldRenderer: NSObject, MTKViewDelegate {
         }
         append(gpu, to: &gpuTimes)
         onFrameReady?()
+        // The first command may complete while the panel is still transparent.
+        // onFrameReady can then invalidate the view, but a paused MTKView is not
+        // guaranteed to receive a display-link tick before the presentation
+        // deadline. Submit the newly dirty frame from the completion callback,
+        // after busy is cleared, so visibility is proven by a real drawable.
+        if dirty { render() }
         if let output,
           let provider = CGDataProvider(
             data: Data(bytes: output.contents(), count: output.length) as CFData),

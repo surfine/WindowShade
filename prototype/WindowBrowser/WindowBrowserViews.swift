@@ -1563,10 +1563,18 @@ final class WindowBrowserContentView: NSView, NSSearchFieldDelegate, NSTextViewD
         styleControl.action = #selector(styleChanged)
         styleControl.segmentStyle = .automatic
 
-        collectionLayout.itemSize = CGSize(width: params.cardWidth, height: params.cardHeight)
+        // NSCollectionView performs an initial layout as soon as the flow layout
+        // is attached. Give the document view a real provisional width first;
+        // otherwise its default zero width makes AppKit report an invalid item
+        // size during panel construction, before the first content layout pass.
+        collectionView.frame = NSRect(x: 0, y: 0,
+                                       width: max(2, frameRect.width),
+                                       height: max(2, frameRect.height))
         collectionLayout.minimumInteritemSpacing = params.cardSpacing
         collectionLayout.minimumLineSpacing = params.cardSpacing
         collectionLayout.sectionInset = NSEdgeInsets(top: 0, left: 0, bottom: 0, right: 0)
+        collectionLayout.itemSize = fittingCollectionItemSize(
+            CGSize(width: params.cardWidth, height: params.cardHeight))
         collectionView.collectionViewLayout = collectionLayout
         collectionView.dataSource = self
         collectionView.delegate = self
@@ -1595,7 +1603,11 @@ final class WindowBrowserContentView: NSView, NSSearchFieldDelegate, NSTextViewD
 
         scrollView.hasVerticalScroller = true
         scrollView.drawsBackground = false
-        scrollView.documentView = collectionView
+        // A document view is measured against the scroll view's current bounds
+        // when it is attached. Keep that provisional viewport non-zero so the
+        // flow layout does not validate a 240pt card against a zero-width host
+        // during panel construction.
+        scrollView.frame = bounds
         scrollView.contentView.postsBoundsChangedNotifications = true
         boundsObserver = NotificationCenter.default.addObserver(
             forName: NSView.boundsDidChangeNotification,
@@ -1817,6 +1829,19 @@ final class WindowBrowserContentView: NSView, NSSearchFieldDelegate, NSTextViewD
         let keys = records.map(\.key)
         let styleChanged = renderedStyle != style
         let isList = style == .list
+        // Set the viewport before attaching the collection document. NSScrollView
+        // otherwise reports a zero content width for that first attachment and
+        // AppKit validates the ideal card size against an empty viewport.
+        scrollView.frame = plan.listRect
+        scrollView.layoutSubtreeIfNeeded()
+        resizeDocumentViews()
+        if !isList {
+            // NSScrollView briefly gives a new document view a very narrow clip
+            // during attachment. Use a tiny positive placeholder for that one
+            // validation pass, then restore the fitted size immediately below.
+            collectionLayout.itemSize = CGSize(width: 0.5,
+                                                height: max(0.5, plan.cellSize.height))
+        }
         scrollView.documentView = isList ? tableView : collectionView
         collectionView.isHidden = isList
         tableView.isHidden = !isList
@@ -1882,16 +1907,31 @@ final class WindowBrowserContentView: NSView, NSSearchFieldDelegate, NSTextViewD
             bounds: NSRect(origin: .zero, size: bounds.size),
             style: style, recordCount: records.count, mode: mode, params: params,
             maximumColumns: maximumColumns)
-        let documentWidth = max(1, plan.listRect.width)
-        let documentHeight = max(1, plan.documentHeight)
+        let documentWidth = max(2, plan.listRect.width)
+        let documentHeight = max(2, plan.documentHeight)
         collectionView.frame = NSRect(x: 0, y: 0, width: documentWidth, height: documentHeight)
         tableView.frame = NSRect(x: 0, y: 0, width: documentWidth, height: documentHeight)
         tableColumn.width = documentWidth
-        collectionLayout.itemSize = plan.cellSize
+        collectionLayout.itemSize = fittingCollectionItemSize(plan.cellSize)
         collectionLayout.minimumInteritemSpacing = plan.spacing
         collectionLayout.minimumLineSpacing = plan.spacing
         collectionLayout.invalidateLayout()
         tableView.rowHeight = plan.cellSize.height
+    }
+
+    /// AppKit validates a flow-layout item against the collection view's current
+    /// viewport before the first content layout pass. During panel construction
+    /// or a narrow resize that viewport can be smaller than the ideal card. Keep
+    /// the requested size whenever it fits, and trim only the transient excess
+    /// (with a one-point margin because AppKit's diagnostic requires a strict
+    /// less-than relationship).
+    private func fittingCollectionItemSize(_ requested: CGSize) -> CGSize {
+        let horizontalInsets = collectionLayout.sectionInset.left
+            + collectionLayout.sectionInset.right
+        let viewportWidth = max(0, collectionView.bounds.width - horizontalInsets)
+        let maximumWidth = max(0.5, viewportWidth - 1)
+        return CGSize(width: min(max(0.5, requested.width), maximumWidth),
+                      height: max(0.5, requested.height))
     }
 
     private func refreshVisibleItemContent() {
