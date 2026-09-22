@@ -4,5 +4,5 @@ set -euo pipefail
 cd "$(dirname "$0")/.."
 mkdir -p .build/capture-indicator-tests
 swiftc prototype/Capture/CaptureIndicatorRemoval.swift tests/CaptureIndicatorTests.swift \
-  -framework AppKit -o .build/capture-indicator-tests/run
+  -framework AppKit -framework ScreenCaptureKit -framework CoreMedia -o .build/capture-indicator-tests/run
 .build/capture-indicator-tests/run

@@ -556,11 +556,10 @@ extension AppDelegate {
                     completeFold(success: false)
                 }
             }
-            // 折叠一个正被置顶捕获的窗口：系统会在其交通灯处叠加录屏标识，
-            // 截图前先停掉置顶流并等标识消失，让卷帘条的红绿灯落在干净背景上。
+            // 收起一个正被置顶捕获的窗口：先停掉置顶流。流在时系统会在它的红绿灯处画录屏胶囊；
+            // 截到的胶囊由 captureWindow 抹掉，不必再干等它消失（原先固定等 500ms）。
             if self.pinnedPreviewController.stopPreviewBeforeFoldCapture(id: id), preparedImage == nil {
-                wlog("    pinned stream stopped before fold capture; waiting for indicator to clear")
-                try? await Task.sleep(nanoseconds: 500_000_000)
+                wlog("    pinned stream stopped before fold capture")
             }
             let shouldParkFocus = preparedImage == nil && !profile.isQuickLook
             if shouldParkFocus {
@@ -673,7 +672,16 @@ extension AppDelegate {
         // Crop coordinates are relative to the window frame. Including SCK
         // framing scales/insets that content inside the requested pixel size.
         config.ignoreShadowsSingleWindow = true
-        return try? await SCScreenshotManager.captureImage(contentFilter: filter, configuration: config)
+        guard let image = try? await SCScreenshotManager.captureImage(contentFilter: filter,
+                                                                       configuration: config) else {
+            return nil
+        }
+        // 这扇窗若正被某条流捕获（置顶、实时预览、收起动画），截图里带着录屏胶囊：
+        // 在后台抹掉（检测不到时原图返回，几乎零成本）。缩略图与卷帘条都走这里。
+        let pixelScale = CGFloat(image.width) / max(1, pointSize.width)
+        return await Task.detached(priority: .userInitiated) {
+            CaptureIndicatorRemoval.removingIndicator(from: image, scale: pixelScale) ?? image
+        }.value
     }
     func captureWindowWithTimeout(id: CGWindowID, axPos: CGPoint, size: CGSize,
                                           maxPixelSize: CGSize? = nil,
