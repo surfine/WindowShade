@@ -49,7 +49,6 @@ let dockMineffectSessionActiveDefaultsKey = "DockMineffectSessionActive"
 let dockMineffectHadOriginalDefaultsKey = "DockMineffectHadOriginal"
 let dockMineffectOriginalDefaultsKey = "DockMineffectOriginal"
 let shadeJournalDefaultsKey = "ShadeJournalEntries"
-let clampingBundleIDsDefaultsKey = "ClampingBundleIDs"
 let shadeDebugWindowDumpDefaultsKey = "ShadeDebugWindowDump"
 let shadeJournalMaxAge: TimeInterval = 14 * 24 * 60 * 60
 let shadedWindowReconcileInterval: TimeInterval = 5
@@ -144,8 +143,6 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSMenuDelegate {
     var focusCascadeActive = false
     var accessibilityActionTargets: [CGWindowID: ShadedAccessibilityActionTarget] = [:]   // FoldExit/ShadeStrip 扩展跨文件访问
     var isProgrammaticOverlayArrangement = false
-    var clampingApps: Set<pid_t> = []         // 已知会钳制位置的 app → 直接最小化
-    var clampingBundleIDs: Set<String> = Set(UserDefaults.standard.stringArray(forKey: clampingBundleIDsDefaultsKey) ?? [])
     private var scaleMinimizeActive = false           // 临时把最小化动画改成 scale（退出还原用户原设置）
     private var originalDockMinimizeEffect: String?   // nil = 原本没有设置 mineffect
     private var dockMinimizeEffectChanged = false
