@@ -106,8 +106,8 @@ private final class PinnedPreviewSession {
     // 面板当前应处的 Space（源窗口所在 Space）。nil 表示 SLS 符号不可用/尚未解析，
     // 此时面板留在创建时的 Space，不追随源窗口跨 Space 移动。
     var sourceSpaceID: UInt64?
-    // 老板键（暂停全部置顶）挂起态：面板已 orderOut、capture 已停，watchdog 已停。
-    // 恢复时按此位判断是否需要重启 capture/watchdog，而不是"取消置顶"（会话保留）。
+    // 挂起态：面板已 orderOut、capture 已停。窗口浏览的模型区分“运行/挂起”，
+    // 所以这一位保留；目前没有入口会挂起会话（原先的“全部暂停”已移除）。
     var isSuspended = false
 
     init(windowID: CGWindowID, pid: pid_t, bundleIdentifier: String, appName: String,
@@ -201,8 +201,6 @@ final class PinnedPreviewController {
     // 直接结束会话，绝不无限重启。
     private var unexpectedStopRetries: [CGWindowID: Int] = [:]
     private var unexpectedStopRetryWorkItems: [CGWindowID: DispatchWorkItem] = [:]
-    // 老板键：临时挂起全部置顶预览（隐藏面板 + 停止 capture），再按一次原样恢复。
-    private var isSuspendedAll = false
     // 明确目标启动：预先登记 starting，避免 await 重入创建两路相同捕获。
     private var startingPreviewIDs: Set<CGWindowID> = []
     private var startPreviewCompletions: [CGWindowID: [(Result<Void, PinnedPreviewError>) -> Void]] = [:]
@@ -221,10 +219,6 @@ final class PinnedPreviewController {
     init(notice: @escaping NoticeHandler, sessionsDidChange: @escaping () -> Void) {
         self.notice = notice
         self.sessionsDidChange = sessionsDidChange
-    }
-
-    var activePreviewCount: Int {
-        sessions.count
     }
 
     func isPreviewing(id: CGWindowID) -> Bool {
@@ -398,8 +392,8 @@ final class PinnedPreviewController {
         currentTarget?.windowID
     }
 
-    // 老板键掛起时 session 仍在（为了一键恢复），但 capture 已停——菜单缩略图这时
-    // 不该去接一个收不到採样帧的 mirror layer，否则弹出一个永远空白的预览面板。
+    // 挂起时 session 仍在但 capture 已停——菜单缩略图不该去接一个收不到采样帧的
+    // mirror layer，否则弹出一个永远空白的预览面板。
     func isSuspended(id: CGWindowID) -> Bool {
         sessions[id]?.isSuspended ?? false
     }
@@ -544,95 +538,6 @@ final class PinnedPreviewController {
     func stopAllPreviews(reason: String = "manual") {
         for id in Array(sessions.keys) {
             stopPreview(id: id, reason: reason)
-        }
-    }
-
-    var isPinnedPreviewsSuspended: Bool { isSuspendedAll }
-
-    // 菜单标题双态翻转，与折叠/置顶 toggle 同款用法。
-    func suspendAllMenuTitle() -> String {
-        isSuspendedAll ? "恢复置顶预览" : "暂时取消全部置顶"
-    }
-
-    // 老板键：暂停/恢复全部置顶预览。不是取消置顶——会话（真实窗口引用、frame
-    // 记忆）保留，只是面板隐藏 + capture 停止（连带消除录屏指示器），再按一次
-    // 原样恢复。与「全部取消置顶」是两个不同的操作，互不影响。
-    func toggleSuspendAll() {
-        if isSuspendedAll {
-            resumeAllSuspended()
-        } else {
-            suspendAll()
-        }
-    }
-
-    private func suspendAll() {
-        guard !isSuspendedAll, !sessions.isEmpty else { return }
-        isSuspendedAll = true
-        for (id, session) in sessions {
-            suspendSession(session, id: id)
-        }
-        pointerDuckingTimer?.invalidate()
-        pointerDuckingTimer = nil
-        wlog("pin-preview: suspend-all count=\(sessions.count)")
-        sessionsDidChange()
-    }
-
-    private func suspendSession(_ session: PinnedPreviewSession, id: CGWindowID) {
-        guard !session.isSuspended else { return }
-        if session.isInteracting {
-            endInteraction(id: id, sourceFrame: currentSourceFrame(id: id) ?? session.panel.frame)
-        }
-        session.isSuspended = true
-        session.capture.stop()
-        session.panel.ignoresMouseEvents = true
-        session.panel.orderOut(nil)
-        wlog("pin-preview: suspend id=\(id)")
-    }
-
-    private func resumeAllSuspended() {
-        guard isSuspendedAll else { return }
-        isSuspendedAll = false
-        for (id, session) in Array(sessions) {
-            resumeSession(session, id: id)
-        }
-        updatePointerDuckingTimer()
-        wlog("pin-preview: resume-all count=\(sessions.count)")
-        sessionsDidChange()
-    }
-
-    private func resumeSession(_ session: PinnedPreviewSession, id: CGWindowID) {
-        guard session.isSuspended else { return }
-        session.isSuspended = false
-        // 挂起期间没有 watchdog 追踪源窗口；恢复前先确认它还在，关闭了就直接
-        // 收掉这个会话而不是恢复一个指向已消失窗口的面板。
-        guard let frame = currentSourceFrame(id: id) else {
-            wlog("pin-preview: resume found closed source id=\(id)")
-            stopPreview(id: id, reason: "resume-lost-source")
-            return
-        }
-        session.lastKnownFrame = frame
-        session.pendingFrame = nil
-        session.rejectedFrame = nil
-        session.panel.alphaValue = 1
-        if !framesAlmostEqual(session.panel.frame, frame, tolerance: 1.0) {
-            session.panel.setFrame(frame, display: true)
-        }
-        session.panel.ignoresMouseEvents = false
-        session.panel.orderFrontRegardless()
-        duckingFrontID = nil
-        enforcePanelSpaceInvariant(session, reason: "resume")
-        ensureWatchdogStarted()
-        Task { @MainActor [weak self] in
-            guard let self else { return }
-            do {
-                try await session.capture.restart(window: session.scWindow, display: session.display,
-                                                  width: frame.width, height: frame.height)
-                wlog("pin-preview: resume id=\(id) frame=\(Self.format(frame))")
-            } catch {
-                self.notice("置顶预览恢复失败",
-                            "pin-preview: resume capture failed id=\(id) \(error.localizedDescription)")
-                self.stopPreview(id: id, reason: "resume-capture-failed")
-            }
         }
     }
 
@@ -1162,9 +1067,7 @@ final class PinnedPreviewController {
         }
         Task { @MainActor [weak self, weak session] in
             guard let self, let session else { return }
-            // 老板键可能在这次退出交互的同一拍里把会话挂起（suspendSession 先调用
-            // endInteraction 收尾再停 capture）：挂起态不重启 capture，否则刚被
-            // 老板键停掉的流又被这里重新拉起来。
+            // 挂起态不重启 capture。
             guard !session.isSuspended else { return }
             do {
                 try await session.capture.restart(window: session.scWindow, display: session.display,

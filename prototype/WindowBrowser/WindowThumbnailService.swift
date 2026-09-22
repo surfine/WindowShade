@@ -242,12 +242,6 @@ final class WindowThumbnailService {
         return runningJobs.count
     }
 
-    var backendIsStalled: Bool {
-        lock.lock()
-        defer { lock.unlock() }
-        return backendStalled
-    }
-
     /// 一次性诊断快照：取消率、过期结果丢弃率与物理截图数量都在这里汇总，
     /// 供控制器在关闭面板/停止功能时写进日志（§17.1）。
     struct Diagnostics {
@@ -402,14 +396,6 @@ final class WindowThumbnailService {
         entry.lastUsed = useCounter
         entries[key] = entry
         return entry.image
-    }
-
-    /// 是否已有仍然新鲜的缓存图像（不改变最近使用顺序，供刷新决策读取）。
-    func hasFreshImage(for key: WindowThumbnailKey) -> Bool {
-        lock.lock()
-        defer { lock.unlock() }
-        guard let entry = entries[key] else { return false }
-        return now() - entry.capturedAt < freshInterval
     }
 
     /// 过期但合法的最后画面：用于折叠/最小化窗口的“快照”展示，不触发任何新截图，

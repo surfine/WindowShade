@@ -29,11 +29,6 @@ extension AppDelegate {
         rebuildMenu()
     }
 
-@objc func toggleSuspendPinnedPreviewsAction() {
-        pinnedPreviewController.toggleSuspendAll()
-        rebuildMenu()
-    }
-
     func soundName(defaultsKey: String, fallback: String) -> String {
         let name = UserDefaults.standard.string(forKey: defaultsKey) ?? fallback
         return shadeSoundChoices.contains(where: { $0.name == name }) ? name : fallback
@@ -696,99 +691,6 @@ extension AppDelegate {
 
     enum PermissionRowKind { case onboarding, preferences }
 
-    // Shared permission row. `.onboarding` draws an emphasized standalone card
-    // (yellow tint + 去授权 button when pending); `.preferences` is a borderless
-    // row inside a grouped card (status text + 打开设置 link).
-    func makePermissionRow(kind: PermissionRowKind, width: CGFloat, symbol: String,
-                                   name: String, subtitle: String, granted: Bool, action: Selector) -> NSView {
-        let isOnboarding = kind == .onboarding
-        let height: CGFloat = isOnboarding ? 58 : 56
-        let row = NSView(frame: NSRect(x: 0, y: 0, width: width, height: height))
-        row.translatesAutoresizingMaskIntoConstraints = false
-        row.widthAnchor.constraint(equalToConstant: width).isActive = true
-        row.heightAnchor.constraint(equalToConstant: height).isActive = true
-
-        if isOnboarding {
-            SystemCornerRadius.apply(to: row, radius: SystemCornerRadius.card)
-            row.layer?.backgroundColor = SystemAppearancePolicy.cgColor(
-                NSColor.controlBackgroundColor, for: row)
-        }
-
-        // 权限状态只在行尾呈现，整行保持中性。
-        let iconColor: NSColor = .secondaryLabelColor
-        let iconBox: CGFloat = isOnboarding ? 22 : 20
-        let iconX: CGFloat = isOnboarding ? 16 : 14
-        let textX: CGFloat = isOnboarding ? 50 : 44
-        if let icon = onboardingSymbol(symbol, pointSize: isOnboarding ? 18 : 17, color: iconColor) {
-            icon.frame = NSRect(x: iconX, y: (height - iconBox) / 2, width: iconBox, height: iconBox)
-            row.addSubview(icon)
-        }
-        let nameLabel = NSTextField(labelWithString: name)
-        nameLabel.font = .systemFont(ofSize: 13, weight: isOnboarding ? .medium : .regular)
-        nameLabel.frame = NSRect(x: textX, y: isOnboarding ? 30 : height - 13 - 18, width: 240, height: 18)
-        row.addSubview(nameLabel)
-        let sub = NSTextField(labelWithString: subtitle)
-        sub.font = .systemFont(ofSize: isOnboarding ? 12 : 11)
-        sub.textColor = isOnboarding ? .secondaryLabelColor : .tertiaryLabelColor
-        sub.frame = NSRect(x: textX, y: 10, width: isOnboarding ? 240 : 230, height: isOnboarding ? 16 : 15)
-        row.addSubview(sub)
-
-        // Trailing
-        switch kind {
-        case .onboarding where granted:
-            let status = NSTextField(labelWithString: "已授权")
-            status.font = SystemAppearancePolicy.font(relativeToBody: -1, weight: .medium)
-            status.textColor = .systemGreen
-            status.alignment = .right
-            status.frame = NSRect(x: width - 92, y: (height - 16) / 2, width: 60, height: 16)
-            row.addSubview(status)
-            if let check = onboardingSymbol("checkmark.circle.fill", pointSize: 13, color: .systemGreen) {
-                check.frame = NSRect(x: width - 92 - 20, y: (height - 16) / 2, width: 16, height: 16)
-                row.addSubview(check)
-            }
-        case .onboarding:
-            let button = NSButton(title: "去授权", target: self, action: action)
-            button.bezelStyle = .rounded
-            button.controlSize = .regular
-            button.isBordered = false
-            button.title = "● 去授权"
-            button.contentTintColor = .systemOrange
-            button.font = SystemAppearancePolicy.font(relativeToBody: -1)
-            SystemCornerRadius.apply(to: button, radius: SystemCornerRadius.control)
-            button.sizeToFit()
-            let bw = max(button.frame.width, 64)
-            button.frame = NSRect(x: width - 16 - bw, y: (height - button.frame.height) / 2, width: bw, height: button.frame.height)
-            row.addSubview(button)
-        case .preferences:
-            let link = NSButton(title: "打开设置", target: self, action: action)
-            link.isBordered = false
-            link.font = SystemAppearancePolicy.font(relativeToBody: -1)
-            link.attributedTitle = NSAttributedString(string: "打开设置",
-                attributes: [.foregroundColor: NSColor.controlAccentColor, .font: SystemAppearancePolicy.font(relativeToBody: -1)])
-            link.sizeToFit()
-            let lw = link.frame.width
-            link.frame = NSRect(x: width - 14 - lw, y: (height - link.frame.height) / 2, width: lw, height: link.frame.height)
-            link.autoresizingMask = [.minXMargin]
-            row.addSubview(link)
-
-            let statusColor: NSColor = granted ? .systemGreen : .systemOrange
-            let status = NSTextField(labelWithString: granted ? "已授权" : "未授权")
-            status.font = SystemAppearancePolicy.font(relativeToBody: -1, weight: .medium)
-            status.textColor = statusColor
-            status.sizeToFit()
-            let sw = status.frame.width
-            status.frame = NSRect(x: link.frame.minX - 12 - sw, y: (height - 16) / 2, width: sw, height: 16)
-            status.autoresizingMask = [.minXMargin]
-            row.addSubview(status)
-            if let dot = onboardingSymbol(granted ? "checkmark.circle.fill" : "exclamationmark.circle.fill", pointSize: 12, color: statusColor) {
-                dot.frame = NSRect(x: status.frame.minX - 17, y: (height - 15) / 2, width: 15, height: 15)
-                dot.autoresizingMask = [.minXMargin]
-                row.addSubview(dot)
-            }
-        }
-        return row
-    }
-
     func refreshOnboardingState() {
         guard let permissionStack = onboardingPermissionStack else { return }
         let ax = hasAccessibilityPermission()
@@ -822,21 +724,6 @@ extension AppDelegate {
         }
         onboardingDoneButton?.isEnabled = allGranted
         onboardingCaption?.isHidden = allGranted
-    }
-    @objc func toggleFloatingOnTop(_ sender: NSMenuItem) {
-        floatingOnTop.toggle()
-        UserDefaults.standard.set(floatingOnTop, forKey: shadeFloatingOnTopDefaultsKey)
-        refreshOverlayPresentation(bringForward: floatingOnTop)
-        rebuildMenu()
-        refreshPreferencesWindowIfOpen()
-    }
-
-    @objc func toggleTranslucent(_ sender: NSMenuItem) {
-        translucent.toggle()
-        UserDefaults.standard.set(translucent, forKey: shadeTranslucentDefaultsKey)
-        refreshOverlayPresentation()
-        rebuildMenu()
-        refreshPreferencesWindowIfOpen()
     }
 
     // MARK: 窗口浏览

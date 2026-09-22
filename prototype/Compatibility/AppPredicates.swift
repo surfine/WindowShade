@@ -6,18 +6,6 @@ func shadePolicy(for pid: pid_t) -> ShadePolicy {
     windowPolicy(for: pid).hidingStrategy.shadePolicy
 }
 
-func isCodex(pid: pid_t) -> Bool {
-    windowPolicy(for: pid).kind == .codex
-}
-
-func isSystemSettings(pid: pid_t) -> Bool {
-    windowPolicy(for: pid).kind == .systemSettings
-}
-
-func isWeChat(pid: pid_t) -> Bool {
-    windowPolicy(for: pid).kind == .weChat
-}
-
 func isElpass(pid: pid_t) -> Bool {
     windowPolicy(for: pid).kind == .elpass
 }

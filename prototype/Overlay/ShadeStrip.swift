@@ -412,19 +412,8 @@ final class NativeProxyOverlayWindow: NSWindow, NSWindowDelegate {
 }
 
 final class NativeProxyTitleContentView: NSView {
-    static let horizontalTitleInset: CGFloat = 18
     static let minimumVisibleTextWidth: CGFloat = 96
     static let arrangedColumnFallbackWidth: CGFloat = 402
-
-    static func trafficLightGroupWidth(slots: Int = 3) -> CGFloat {
-        ProxyTitleLayoutMetrics.trafficLightDiameter * CGFloat(max(slots, 1)) +
-            ProxyTitleLayoutMetrics.trafficLightGap * CGFloat(max(slots - 1, 0)) +
-            ProxyTitleLayoutMetrics.trafficLightGroupInset * 2
-    }
-
-    static var trafficLightStep: CGFloat {
-        ProxyTitleLayoutMetrics.step
-    }
 
     private var hoverArea: NSTrackingArea?
     private var hovered = false
