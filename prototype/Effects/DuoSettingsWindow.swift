@@ -852,17 +852,13 @@ final class DuoSettingsWindow: NSWindowController, NSWindowDelegate, NSTableView
       title: "打开“减少动态效果”设置…",
       action: #selector(openReduceMotionSettings),
       help: "在系统设置的辅助功能中配置减少动态效果")
-    let logPath = NSTextField(labelWithString: "日志位置：/tmp/windowshade.log")
-    logPath.font = SystemAppearancePolicy.font(relativeToBody: -2)
-    logPath.textColor = .tertiaryLabelColor
     let infoRow = NSStackView(views: [reduced, reduceMotionLink])
     infoRow.orientation = .horizontal
     infoRow.alignment = .centerY
     infoRow.spacing = 14
     infoRow.heightAnchor.constraint(greaterThanOrEqualToConstant: 40).isActive = true
-    logPath.heightAnchor.constraint(greaterThanOrEqualToConstant: 30).isActive = true
-    let infoCard = makeSettingsCard([infoRow, logPath])
-    let infoSection = makeSectionLabel("辅助功能与日志")
+    let infoCard = makeSettingsCard([infoRow])
+    let infoSection = makeSectionLabel("辅助功能")
     stack.addArrangedSubview(infoSection)
     stack.setCustomSpacing(6, after: infoSection)
     stack.addArrangedSubview(infoCard)

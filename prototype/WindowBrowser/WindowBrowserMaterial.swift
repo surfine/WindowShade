@@ -10,7 +10,7 @@
 
 import Cocoa
 
-enum WindowBrowserAppearanceStyle: String {
+enum WindowBrowserAppearanceStyle: String, CaseIterable {
     case system
     case paper
 
@@ -27,7 +27,7 @@ enum WindowBrowserAppearanceStyle: String {
     var displayName: String {
         switch self {
         case .system: return "跟随系统"
-        case .paper: return "纸面"
+        case .paper: return "不透明"
         }
     }
 }
