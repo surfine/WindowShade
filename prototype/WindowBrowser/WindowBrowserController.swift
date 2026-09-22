@@ -59,6 +59,9 @@ final class WindowBrowserController: NSObject {
 
     private var dockObserver: DockHoverObserver?
     private var panel: WindowBrowserPanel?
+    /// 意图延迟期间预先建好、尚未显示的 Dock 面板。刻意不放进 `panel`：延迟期间其余
+    /// 代码看到的仍是“没有面板”，不会提前刷新内容或发起截图；显示时才接过来。
+    private var prewarmedDockPanel: WindowBrowserPanel?
     private var session: Session?
     private var listState = WindowBrowserListState()
     private var requestCounter: UInt64 = 0
@@ -580,6 +583,7 @@ final class WindowBrowserController: NSObject {
             return
         }
         showWork?.cancel()
+        prewarmDockPanelIfNeeded(frame: plan.panelFrame)
         let work = scheduler.schedule(after: params.showDelay) { [weak self] in
             guard let self, let session = self.session, session.mode == .dock else { return }
             self.mark("intent-delay-end")
@@ -589,9 +593,9 @@ final class WindowBrowserController: NSObject {
                 .applicationInstance(pid: target.pid, bundleIdentifier: target.bundleIdentifier) else { return }
             guard self.mouseInsideDockContext() else { return }
             if self.panel == nil {
-                let newPanel = WindowBrowserPanel(mode: .dock,
-                                                  frame: plan.panelFrame, params: self.params)
-                self.configurePanel(newPanel, mode: .dock)
+                let newPanel = self.prewarmedDockPanel ?? self.makeDockPanel(frame: plan.panelFrame)
+                self.prewarmedDockPanel = nil
+                newPanel.setPanelFrame(plan.panelFrame)
                 newPanel.browserContentView.maximumColumns = WindowBrowserGeometry.columnCap(
                     edge: plan.edge, params: self.params)
                 self.panel = newPanel
@@ -609,6 +613,29 @@ final class WindowBrowserController: NSObject {
             _ = self.panelState.confirmShow(request: session.requestID)
         }
         showWork = work
+    }
+
+    private func makeDockPanel(frame: NSRect) -> WindowBrowserPanel {
+        let newPanel = WindowBrowserPanel(mode: .dock, frame: frame, params: params)
+        configurePanel(newPanel, mode: .dock)
+        return newPanel
+    }
+
+    /// 建窗（玻璃层、内容视图）是面板第一次出现前最大的一笔主线程开销；放进 250 ms 的
+    /// 意图延迟里做，延迟结束只剩填内容和显示。一次 Dock 停留最多建一个，
+    /// 只在下一轮 runloop 做，不挤占这次悬停事件本身。
+    private func prewarmDockPanelIfNeeded(frame: NSRect) {
+        guard panel == nil, prewarmedDockPanel == nil else { return }
+        DispatchQueue.main.async { [weak self] in
+            guard let self, self.running, self.session?.mode == .dock,
+                  self.panel == nil, self.prewarmedDockPanel == nil else { return }
+            self.prewarmedDockPanel = self.makeDockPanel(frame: frame)
+        }
+    }
+
+    private func releasePrewarmedDockPanel() {
+        prewarmedDockPanel?.close()
+        prewarmedDockPanel = nil
     }
 
     /// 同一应用图标只移动/放大时的锚点更新：只改 frame 与过渡区域。
@@ -2067,6 +2094,7 @@ final class WindowBrowserController: NSObject {
         // 面板按系统时长淡出再关闭；停用/退出时立即关闭，不留下残留窗口。
         let closingPanel = panel
         panel = nil
+        releasePrewarmedDockPanel()
         if let closingPanel {
             closingPanel.dismiss(animated: running) { [weak closingPanel] in
                 closingPanel?.orderOut(nil)
