@@ -1133,6 +1133,7 @@ final class WindowBrowserController: NSObject {
             mode: session.mode, windowCount: reconciled.count,
             dockEdge: session.mode == .dock ? dockEdge : nil)
         let panelHeightChanged = derived.cardHeight != params.cardHeight
+            || derived.listRowHeight != params.listRowHeight
             || derived.footerVisible != params.footerVisible
             || derived.headerVisible != params.headerVisible
         params = derived
