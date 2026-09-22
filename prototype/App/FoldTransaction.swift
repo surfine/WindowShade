@@ -122,37 +122,46 @@ extension AppDelegate {
     // 延迟验证链：+0.15s / +0.45s 重查隐藏是否生效；通过 → reveal overlay；
     // 两次失败 → 补救 minimize（焦点已交接，无级联副作用）；补救仍失败 → 回滚。
     // overlay 在验证通过前保持隐形，保证 proxy 与真实窗口永不同框。
-    func scheduleFoldVerification(id: CGWindowID, attempt: Int) {
-        let delay = attempt == 1 ? 0.15 : 0.45
-        DispatchQueue.main.asyncAfter(deadline: .now() + delay) { [weak self] in
-            guard let self, let state = self.shaded[id],
-                  state.lifecycleStage == .folded else { return }
-            if self.hideTookEffect(state.hide, win: state.element, pid: state.pid,
-                                   id: id, size: state.originalSize) {
-                wlog("shade: hide verified attempt=\(attempt) id=\(id) hide=\(state.hide)")
-                self.revealOverlayAfterVerification(id: id, state: state)
-                return
-            }
-            if attempt == 1 {
-                self.scheduleFoldVerification(id: id, attempt: 2)
-                return
-            }
-            setAXMinimized(state.element, true)
-            DispatchQueue.main.asyncAfter(deadline: .now() + 0.35) { [weak self] in
-                guard let self, var latest = self.shaded[id],
-                      latest.lifecycleStage == .folded else { return }
-                if self.hideTookEffect(.minimized, win: latest.element, pid: latest.pid,
-                                       id: id, size: latest.originalSize) {
-                    latest.hide = .minimized
-                    self.shaded[id] = latest
-                    wlog("shade: hide salvaged via minimize id=\(id) app=\(latest.appName)")
-                    self.revealOverlayAfterVerification(id: id, state: latest)
-                    return
+    func scheduleFoldVerification(id: CGWindowID) {
+        guard let transactionID = shaded[id]?.foldTransactionID else { return }
+        FoldVerifier(
+            schedule: { delay, action in
+                DispatchQueue.main.asyncAfter(deadline: .now() + delay, execute: action)
+            },
+            isCurrent: { [weak self] in
+                guard let state = self?.shaded[id] else { return false }
+                return state.foldTransactionID == transactionID && state.lifecycleStage == .folded
+            },
+            observe: { [weak self] in
+                guard let self, let state = self.shaded[id] else { return false }
+                return self.hideTookEffect(state.hide, win: state.element, pid: state.pid,
+                                          id: id, size: state.originalSize)
+            },
+            minimize: { [weak self] in
+                guard let state = self?.shaded[id] else { return }
+                setAXMinimized(state.element, true)
+            },
+            observeMinimized: { [weak self] in
+                guard let self, let state = self.shaded[id] else { return false }
+                let hidden = self.hideTookEffect(.minimized, win: state.element, pid: state.pid,
+                                                id: id, size: state.originalSize)
+                if hidden, self.shaded[id]?.foldTransactionID == transactionID {
+                    self.shaded[id]?.hide = .minimized
+                    wlog("shade: hide salvaged via minimize id=\(id) app=\(state.appName)")
                 }
-                wlog("shade: hide failed after salvage; rolling back id=\(id) app=\(latest.appName)")
-                self.rollbackFoldTransaction(id: id)
+                return hidden
+            },
+            completion: { [weak self] success in
+                guard let self, let state = self.shaded[id] else { return }
+                if success {
+                    wlog("shade: hide verified id=\(id) hide=\(state.hide)")
+                    self.revealOverlayAfterVerification(id: id, state: state)
+                } else {
+                    wlog("shade: hide failed after salvage; rolling back id=\(id) app=\(state.appName)")
+                    self.rollbackFoldTransaction(id: id)
+                }
             }
-        }
+        ).start()
     }
 
     func revealOverlayAfterVerification(id: CGWindowID, state: ShadeState) {
@@ -160,8 +169,9 @@ extension AppDelegate {
         if enforceOverlaySpaceInvariant(id: id, state: state, reason: "hide-verified") {
             revealPreparedOverlay(overlay)
             duoController.windowEffects.didVerifyFold(id: id, state: state)
-            settleWindowBrowserFoldWaiters(id: id, success: true)
         }
+        // Visibility on the active Space is presentation, not hide completion.
+        settleFoldWaiters(id: id, success: true)
     }
 
     // 回滚折叠事务：按已尝试的隐藏方式逐项逆操作（此前的回滚漏了这步，
@@ -186,7 +196,6 @@ extension AppDelegate {
         _ = applyRestoredGeometry(state, to: state.originalPosition, label: "rollback", reason: "restore")
         forceCleanup(id, preserveRecovery: true)
         verifyRestoredWindow(state, to: state.originalPosition, completion: nil)
-        settleWindowBrowserFoldWaiters(id: id, success: false)
         quietNotice("这个窗口暂时收不起来",
                     log: "shade: transaction rolled back id=\(id) app=\(state.appName)")
     }

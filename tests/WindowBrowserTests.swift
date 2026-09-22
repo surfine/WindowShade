@@ -45,6 +45,7 @@ enum WindowBrowserTests {
         dockRegionAndDetectionQueue()
         dockPlanUsesOneSourceOfTruth()
         metadataSlots()
+        targetEnumerationBatches()
         layoutPlan()
         typographyFollowsSystemTextSize()
         actionPresentationModel()
@@ -2094,6 +2095,53 @@ enum WindowBrowserTests {
                "用户在本会话显式选过的风格优先于自动判定")
     }
 
+    static func targetEnumerationBatches() {
+        let app = ApplicationInstanceKey(pid: 8101, generation: 1)
+        func key(_ id: CGWindowID, generation: UInt64 = 1,
+                 application: ApplicationInstanceKey? = nil) -> WindowKey {
+            WindowKey(application: application ?? app, originalWindowID: id,
+                      windowGeneration: generation)
+        }
+        let batch = WindowBrowserTargetBatch<Int>()
+        var loads = 0
+        var inspections = 0
+        var source: [(CGWindowID, Int)] = (1...50).map { (CGWindowID($0), $0) }
+        var invalid = Set<Int>()
+        func resolve(_ key: WindowKey, in current: WindowBrowserTargetBatch<Int>) -> Int? {
+            current.resolve(key: key, load: { loads += 1; return source }, inspect: {
+                inspections += 1
+                return invalid.contains($0) ? nil : $0
+            })
+        }
+        for id in 1...8 {
+            expect(resolve(key(CGWindowID(id)), in: batch) == id, "batch resolves each visible window")
+        }
+        expect(loads == 1 && inspections == 8,
+               "eight thumbnails enumerate once but independently inspect all eight identities")
+        invalid.insert(1)
+        source[0] = (1, 101)
+        expect(resolve(key(1), in: batch) == 101 && loads == 2,
+               "a stale AX candidate is re-enumerated rather than accepted")
+        expect(resolve(key(2), in: batch) == 2 && loads == 2,
+               "siblings reuse the refreshed enumeration")
+        source.append((3, 103))
+        invalid.insert(3)
+        expect(resolve(key(3), in: batch) == nil && loads == 3,
+               "ambiguous identity after refresh must be rejected")
+        expect(resolve(key(99), in: batch) == nil && loads == 4,
+               "a missing window cannot borrow a sibling element")
+        source.append((99, 99))
+        expect(resolve(key(99), in: batch) == 99 && loads == 5,
+               "a newly-created window can be discovered inside an active batch")
+        expect(resolve(key(2, generation: 2), in: batch) == 2 && loads == 6,
+               "window-generation changes invalidate reused enumeration")
+        let restarted = ApplicationInstanceKey(pid: app.pid, generation: 2)
+        expect(resolve(key(2, application: restarted), in: batch) == 2 && loads == 7,
+               "a reused PID cannot inherit its previous application snapshot")
+        expect(resolve(key(2), in: WindowBrowserTargetBatch()) == 2 && loads == 8,
+               "a new viewport batch starts with a fresh enumeration")
+    }
+
     static func metadataSlots() {
         let app = ApplicationInstanceKey(pid: 9101, generation: 1)
         let request1 = WindowBrowserRequestID(value: 1)
@@ -2135,6 +2183,36 @@ enum WindowBrowserTests {
         _ = scheduler.complete(pid: 9101, jobID: restarted?.jobID ?? 0)
         expect(scheduler.state(pid: 9101).isIdle,
                "the slot is released after its own completion")
+
+        // Closing a panel before a queued job begins must prevent its physical
+        // AX read, not merely suppress its eventual UI publication.
+        let queued = scheduler.request(pid: 9101, requestID: request1, appInstance: app)!
+        _ = scheduler.request(pid: 9101, requestID: request2, appInstance: app)
+        let pending = scheduler.state(pid: 9101).pending!
+        scheduler.cancelRequests()
+        expect(!queued.demand.execution.begin() && !pending.execution.begin(),
+               "closing a panel prevents both queued and pending AX work from starting")
+        expect(scheduler.state(pid: 9101).pending == nil,
+               "closing clears the pending demand")
+        expect(scheduler.request(pid: 9101, requestID: request2, appInstance: app) == nil,
+               "reopening waits for the cancelled in-flight slot to settle")
+        let reopened = scheduler.complete(pid: 9101, jobID: queued.jobID)!
+        expect(reopened.execution.begin(), "the new session can execute after old work settles")
+        expect(!reopened.execution.begin(), "one demand cannot issue AX work twice")
+        scheduler.cancelRequests()
+        expect(reopened.execution.isCancelled,
+               "cancelling in-flight AX work invalidates publication without replacing its slot")
+        expect(scheduler.request(pid: 9101, requestID: request2, appInstance: app) == nil,
+               "even the same request ID can queue fresh work behind a cancelled demand")
+        let latest = scheduler.complete(pid: 9101, jobID: reopened.jobID)!
+        expect(latest.execution.begin(), "fresh demand survives completion of cancelled work")
+        scheduler.cancelAll()
+        expect(latest.execution.isCancelled && scheduler.activeSlotCount == 0,
+               "stopping cancels execution tickets as well as clearing scheduler bookkeeping")
+
+        let terminated = scheduler.request(pid: 9101, requestID: request1, appInstance: app)!
+        scheduler.cancel(pid: 9101)
+        expect(!terminated.demand.execution.begin(), "terminated app's queued AX work cannot begin")
     }
 
     // MARK: 新增：统一布局结果

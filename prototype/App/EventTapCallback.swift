@@ -39,7 +39,7 @@ func eventTapCallback(proxy: CGEventTapProxy, type: CGEventType,
     if type == .leftMouseDown {
         let clickState = event.getIntegerValueField(.mouseEventClickState)
         if clickState >= 3 {
-            if appDelegate?.handleTitleBarTripleClick(at: event.location) == true {
+            if appDelegate?.handleTitleBarTripleClick(at: event.location, clickCount: clickState) == true {
                 return nil
             }
         } else if clickState == 2 {                                     // 双击的第二下

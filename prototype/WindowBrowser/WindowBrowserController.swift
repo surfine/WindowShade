@@ -34,6 +34,7 @@ final class WindowBrowserController: NSObject {
         var stream: WindowStreamCapture?
         var view: NSView?
         var cancelled = false
+        var startupTask: Task<Void, Never>?
 
         init(windowKey: WindowKey, ownerID: UUID, sessionID: UInt64, retryIndex: Int) {
             self.windowKey = windowKey
@@ -80,6 +81,7 @@ final class WindowBrowserController: NSObject {
     private var liveRetryBlocked: Set<WindowKey> = []
     private let maxLiveRetriesPerWindow = 2
     private var thumbnailSubscriptions: [WindowKey: WindowThumbnailSubscription] = [:]
+    private var thumbnailResolutionBatch: WindowBrowserTargetBatch<AXUIElement>?
     private var thumbnailPurposes: [WindowKey: WindowThumbnailPurpose] = [:]
     private var liveLease: LivePreviewLease?
     private var liveSelection: WindowKey?
@@ -92,11 +94,7 @@ final class WindowBrowserController: NSObject {
     private var lastDockTarget: DockHoverTarget?
     private let discoveryQueue = DispatchQueue(label: "WindowShade.window-browser-discovery",
                                                qos: .userInitiated)
-    private let metadataQueue = DispatchQueue(label: "WindowShade.window-browser-metadata",
-                                              qos: .utility)
-    /// 单目标（Dock 悬停）元数据专用高优先级队列：不能排在整批普通应用查询之后。
-    private let targetMetadataQueue = DispatchQueue(
-        label: "WindowShade.window-browser-target-metadata", qos: .userInitiated)
+    private let metadataQueue = WindowBrowserMetadataQueue()
     /// 新增的同步 AX 读取专用串行队列：身份核对、应用窗口枚举、按钮能力、几何。
     /// 主线程只负责读取会话里的既有句柄与写回 UI。
     private let axResolverQueue = DispatchQueue(label: "WindowShade.window-browser-ax",
@@ -443,6 +441,13 @@ final class WindowBrowserController: NSObject {
     func resolveBrowserTarget(_ key: WindowKey,
                               options: WindowBrowserTargetResolver.Options = [],
                               completion: @escaping (WindowBrowserResolvedTarget?) -> Void) {
+        resolveTarget(key, options: options, batch: nil, completion: completion)
+    }
+
+    private func resolveTarget(_ key: WindowKey,
+                               options: WindowBrowserTargetResolver.Options,
+                               batch: WindowBrowserTargetBatch<AXUIElement>?,
+                               completion: @escaping (WindowBrowserResolvedTarget?) -> Void) {
         dispatchPrecondition(condition: .onQueue(.main))
         guard hasAccessibilityPermission(), let owner else {
             completion(nil)
@@ -456,6 +461,10 @@ final class WindowBrowserController: NSObject {
                let checked = WindowBrowserTargetResolver.inspect(candidate, key: key,
                                                                  options: options) {
                 resolved = checked
+            } else if let batch {
+                resolved = batch.resolve(key: key,
+                    load: { WindowBrowserTargetResolver.candidates(pid: key.application.pid) },
+                    inspect: { WindowBrowserTargetResolver.inspect($0, key: key, options: options) })
             } else if let enumerated = WindowBrowserTargetResolver.enumerate(key: key) {
                 resolved = WindowBrowserTargetResolver.inspect(enumerated, key: key,
                                                                options: options)
@@ -466,6 +475,12 @@ final class WindowBrowserController: NSObject {
                 completion(self == nil ? nil : resolved)
             }
         }
+    }
+
+    func resolveThumbnailTarget(_ key: WindowKey,
+                                completion: @escaping (WindowBrowserResolvedTarget?) -> Void) {
+        resolveTarget(key, options: .geometry, batch: thumbnailResolutionBatch,
+                      completion: completion)
     }
 
     // MARK: Dock
@@ -1043,11 +1058,18 @@ final class WindowBrowserController: NSObject {
                                   usesTargetQueue: Bool) {
         noteDiscoveryRequest()
         let overlays = owner?.overlayIDs ?? []
-        let queue = usesTargetQueue ? targetMetadataQueue : metadataQueue
-        queue.async { [weak self] in
+        guard let demand = metadataScheduler.state(pid: pid).inFlight,
+              demand.jobID == jobID else { return }
+        metadataQueue.submit(pid: pid, isInteractive: usesTargetQueue) { [weak self] in
             guard let self else { return }
-            self.noteAXCall()
-            let result = self.discoverWindows(pid: pid, overlayIDs: overlays)
+            let result: WindowBrowserFetchResult<[DiscoveredWindowDescriptor]>
+            if demand.execution.begin() {
+                self.noteAXCall()
+                result = self.discoverWindows(pid: pid, overlayIDs: overlays)
+            } else {
+                // Still settle the slot: a newer request may be waiting behind it.
+                result = .empty
+            }
             DispatchQueue.main.async {
                 self.finishMetadataJob(pid: pid, jobID: jobID, requestID: requestID,
                                        appInstance: appInstance, result: result)
@@ -1061,7 +1083,7 @@ final class WindowBrowserController: NSObject {
                                    result: WindowBrowserFetchResult<[DiscoveredWindowDescriptor]>) {
         // 槽身份核对：旧任务的回调不能删除新任务的在途登记。
         let slot = metadataScheduler.state(pid: pid)
-        guard slot.inFlight?.jobID == jobID else {
+        guard let activeDemand = slot.inFlight, activeDemand.jobID == jobID else {
             wlog("window-browser: stale metadata completion ignored pid=\(pid) job=\(jobID)")
             return
         }
@@ -1077,7 +1099,7 @@ final class WindowBrowserController: NSObject {
             resultRequestID: requestID,
             expectedAppInstance: expectedApp,
             currentAppInstance: catalog.identityAllocator.knownApplicationInstance(pid: pid))
-        if accepts {
+        if accepts && !activeDemand.execution.isCancelled {
             catalog.applyDiscovery(result, pid: pid)
             refreshPanel()
         } else {
@@ -1191,6 +1213,7 @@ final class WindowBrowserController: NSObject {
 
     /// 只对给定键集合（视口 + 选中项 + 少量预取）请求缩略图；其余订阅立即取消。
     private func requestThumbnails(forKeys keys: [WindowKey]) {
+        thumbnailResolutionBatch = WindowBrowserTargetBatch()
         var seen = Set<WindowKey>()
         let orderedKeys = keys.filter { seen.insert($0).inserted }
         var wanted = Set(orderedKeys)
@@ -1337,9 +1360,12 @@ final class WindowBrowserController: NSObject {
     // MARK: 实时预览
 
     private func updateLivePreview(selected key: WindowKey) {
+        liveWork?.cancel()
+        liveSessionID &+= 1
+        let sessionID = liveSessionID
+        releaseLivePreview(reason: "selection-changed")
         guard !environmentSuspended, record(for: key) != nil else { return }
         statusOverride = nil
-        liveWork?.cancel()
         // 已经明确不可重试的窗口（权限拒绝、源消失、能力不支持）不再自动重试。
         guard WindowBrowserLiveLeasePolicy.retryPermitted(
             failureCount: liveFailureCounts[key] ?? 0,
@@ -1347,6 +1373,7 @@ final class WindowBrowserController: NSObject {
             maxRetries: maxLiveRetriesPerWindow) else { return }
         liveWork = scheduler.schedule(after: 0.4) { [weak self] in
             guard let self, self.running,
+                  self.liveSessionID == sessionID,
                   let current = self.record(for: key),
                   self.listState.selection == key else { return }
             self.releaseLivePreview(reason: "switch")
@@ -1376,16 +1403,27 @@ final class WindowBrowserController: NSObject {
                   hasScreenRecordingPermission() else { return }
             // 选中项的启动条件里包含一次 AX 几何读取：放到专用队列做，主线程不阻塞。
             self.resolveBrowserTarget(key, options: .geometry) { resolved in
-                guard let resolved,
+                guard self.ordinaryLivePreviewIsWanted(key: key, sessionID: sessionID),
+                      let resolved,
                       let size = resolved.axSize,
                       size.width > 40, size.height > 40,
                       self.listState.selection == key else { return }
-                self.startOrdinaryLivePreview(key: key, element: resolved.element)
+                self.startOrdinaryLivePreview(key: key)
             }
         }
     }
 
-    private func startOrdinaryLivePreview(key: WindowKey, element: AXUIElement) {
+    private func ordinaryLivePreviewIsWanted(key: WindowKey, sessionID: UInt64) -> Bool {
+        guard running, session != nil, liveSessionID == sessionID,
+              !environmentSuspended, !EffectSecurityBoundary.isLocked,
+              listState.selection == key, WindowBrowserSettings.livePreviewEnabled,
+              let record = record(for: key), record.shadeState == .normal,
+              !record.isMinimized, record.capabilities.contains(.capture) else { return false }
+        return hasScreenRecordingPermission()
+    }
+
+    private func startOrdinaryLivePreview(key: WindowKey) {
+        guard ordinaryLivePreviewIsWanted(key: key, sessionID: liveSessionID) else { return }
         guard CFAbsoluteTimeGetCurrent() >= streamStopFailureUntil else {
             wlog("window-browser: live preview suppressed after a failed stream stop")
             return
@@ -1399,55 +1437,55 @@ final class WindowBrowserController: NSObject {
                                     retryIndex: liveFailureCounts[key] ?? 0)
         live.stream = capture
         liveLease = live
-        Task { @MainActor [weak self] in
+        live.startupTask = Task { @MainActor [weak self] in
+            defer { live.startupTask = nil }
             guard let self else { return }
-            do {
-                let content = try await ShareableContentLoader.current()
-                guard let scWindow = content.windows.first(where: { $0.windowID == id }) else {
-                    // 找不到 SCWindow：源可能已经消失，不再自动重试。
-                    self.liveRetryBlocked.insert(key)
-                    // 只有仍是当前租约的失败才在页脚说明；旧任务失败不能给新选中项报错。
-                    let wasCurrent = self.liveLease === live
-                    self.releaseLivePreview(lease: live, reason: "no-sc-window")
-                    if wasCurrent { self.showLivePreviewFallback() }
-                    return
-                }
-                let display = content.displays.max { lhs, rhs in
-                    lhs.frame.intersection(scWindow.frame).width * lhs.frame.intersection(scWindow.frame).height
-                        < rhs.frame.intersection(scWindow.frame).width * rhs.frame.intersection(scWindow.frame).height
-                }
-                try await capture.start(window: scWindow, display: display)
-                // 异步启动成功后再次核对代数：用户可能已经离开。
-                let keep = WindowBrowserLivePreviewPolicy.shouldKeepStartedStream(
-                    leaseIsCurrent: self.liveLease === live,
-                    cancelled: live.cancelled,
-                    sessionActive: self.running && self.session != nil
-                        && self.liveSessionID == live.sessionID,
-                    targetStillKnown: self.record(for: key) != nil)
-                guard keep else {
-                    wlog("window-browser: live stream started after close; stopping id=\(id)")
-                    capture.stop()
-                    return
-                }
-                let view = PinnedLivePreviewView(
-                    frame: NSRect(origin: .zero, size: CGSize(width: 240, height: 140)),
-                    videoLayer: capture.videoLayer)
-                live.view = view
-                // 静态图保留在实时视图下方，停止/失败后直接回退到快照或图标。
-                self.attachLiveView(view, to: key)
-                self.liveFailureCounts[key] = 0
-                if !self.didMarkLiveFirstFrame {
-                    self.didMarkLiveFirstFrame = true
-                    self.mark("live-first-frame")
-                }
-                wlog("window-browser: live preview started id=\(id)")
-            } catch {
-                wlog("window-browser: live preview failed id=\(id) \(error.localizedDescription)")
-                self.noteLiveFailure(key: key, reason: error.localizedDescription)
-                let wasCurrent = self.liveLease === live
-                self.releaseLivePreview(lease: live, reason: "start-failed")
-                if wasCurrent { self.showLivePreviewFallback() }
-            }
+            await WindowBrowserPreviewStartup.run(
+                load: { try await ShareableContentLoader.current() },
+                start: { content in
+                    guard let scWindow = content.windows.first(where: { $0.windowID == id }) else {
+                        throw PinnedPreviewError.noSCWindow
+                    }
+                    let display = content.displays.max { lhs, rhs in
+                        lhs.frame.intersection(scWindow.frame).width * lhs.frame.intersection(scWindow.frame).height
+                            < rhs.frame.intersection(scWindow.frame).width * rhs.frame.intersection(scWindow.frame).height
+                    }
+                    try await capture.start(window: scWindow, display: display)
+                },
+                isCurrent: {
+                    WindowBrowserLivePreviewPolicy.shouldKeepStartedStream(
+                        leaseIsCurrent: self.liveLease === live,
+                        cancelled: live.cancelled,
+                        sessionActive: self.ordinaryLivePreviewIsWanted(
+                            key: key, sessionID: live.sessionID),
+                        targetStillKnown: self.record(for: key) != nil)
+                },
+                discard: { capture.stop() },
+                ready: {
+                    let view = PinnedLivePreviewView(
+                        frame: NSRect(origin: .zero, size: CGSize(width: 240, height: 140)),
+                        videoLayer: capture.videoLayer)
+                    live.view = view
+                    // 静态图保留在实时视图下方，停止/失败后回退到快照或图标。
+                    self.attachLiveView(view, to: key)
+                    self.liveFailureCounts[key] = 0
+                    if !self.didMarkLiveFirstFrame {
+                        self.didMarkLiveFirstFrame = true
+                        self.mark("live-first-frame")
+                    }
+                    wlog("window-browser: live preview started id=\(id)")
+                },
+                failed: { error in
+                    wlog("window-browser: live preview failed id=\(id) \(error.localizedDescription)")
+                    if let previewError = error as? PinnedPreviewError,
+                       case .noSCWindow = previewError {
+                        self.liveRetryBlocked.insert(key)
+                    } else {
+                        self.noteLiveFailure(key: key, reason: error.localizedDescription)
+                    }
+                    self.releaseLivePreview(lease: live, reason: "start-failed")
+                    self.showLivePreviewFallback()
+                })
         }
     }
 
@@ -1491,6 +1529,7 @@ final class WindowBrowserController: NSObject {
             releasingLeaseID: lease.ownerID) else {
             // 旧租约：只清理它自己的流与借用，不动当前画面。
             lease.cancelled = true
+            lease.startupTask?.cancel()
             lease.view?.removeFromSuperview()
             lease.mirrorLease?.release()
             lease.stream?.stop { _ in }
@@ -1499,6 +1538,7 @@ final class WindowBrowserController: NSObject {
         }
         liveLease = nil
         lease.cancelled = true
+        lease.startupTask?.cancel()
         contentView?.setLivePreview(nil, for: lease.windowKey)
         lease.view?.removeFromSuperview()
         lease.mirrorLease?.release()
@@ -1571,6 +1611,7 @@ final class WindowBrowserController: NSObject {
         liveLease = nil
         liveSessionID &+= 1
         lease.cancelled = true
+        lease.startupTask?.cancel()
         contentView?.setLivePreview(nil, for: lease.windowKey)
         lease.view?.removeFromSuperview()
         lease.mirrorLease?.release()
@@ -1689,7 +1730,7 @@ final class WindowBrowserController: NSObject {
         }
         lastAnnouncedStatus = status
         NSAccessibility.post(
-            element: panel ?? NSApp,
+            element: panel ?? NSApplication.shared,
             notification: .announcementRequested,
             userInfo: [.announcement: status,
                        .priority: NSAccessibilityPriorityLevel.medium.rawValue])
@@ -1703,7 +1744,7 @@ final class WindowBrowserController: NSObject {
         guard let text = WindowBrowserAccessibilityAnnouncement.text(
             for: outcome, action: action, windowTitle: title) else { return }
         NSAccessibility.post(
-            element: NSApp.mainWindow ?? NSApp,
+            element: NSApp.mainWindow ?? NSApplication.shared,
             notification: .announcementRequested,
             userInfo: [.announcement: text, .priority: NSAccessibilityPriorityLevel.medium.rawValue])
     }
@@ -2065,6 +2106,8 @@ final class WindowBrowserController: NSObject {
             // 菜单跟踪使用嵌套事件循环：此时释放面板可能带走菜单锚点视图。
             return
         }
+        metadataScheduler.cancelRequests()
+        thumbnailResolutionBatch = nil
         showWork?.cancel()
         showWork = nil
         hideWork?.cancel()
@@ -2570,7 +2613,7 @@ final class WindowBrowserThumbnailBackend: WindowThumbnailBackend {
                 completion(.failure(.windowGone))
                 return
             }
-            controller.resolveBrowserTarget(request.key.windowKey, options: .geometry) { resolved in
+            controller.resolveThumbnailTarget(request.key.windowKey) { resolved in
                 guard let resolved else {
                     completion(.failure(.windowGone))
                     return

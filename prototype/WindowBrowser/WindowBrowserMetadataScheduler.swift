@@ -6,10 +6,34 @@
 
 import Foundation
 
+/// Only this ticket crosses from the main-thread scheduler to the AX queue.
+/// Cancelled queued jobs cannot begin IPC; already-running calls finish normally.
+final class WindowBrowserMetadataExecution: Equatable {
+    private let lock = NSLock()
+    private var cancelled = false
+    private var started = false
+
+    var isCancelled: Bool { lock.withLock { cancelled } }
+
+    func begin() -> Bool {
+        lock.withLock {
+            guard !cancelled, !started else { return false }
+            started = true
+            return true
+        }
+    }
+
+    func cancel() { lock.withLock { cancelled = true } }
+
+    static func == (lhs: WindowBrowserMetadataExecution,
+                    rhs: WindowBrowserMetadataExecution) -> Bool { lhs === rhs }
+}
+
 struct WindowBrowserMetadataDemand: Equatable {
     let jobID: UInt64
     let requestID: WindowBrowserRequestID
     let appInstance: ApplicationInstanceKey?
+    let execution = WindowBrowserMetadataExecution()
 }
 
 struct WindowBrowserMetadataSlot: Equatable {
@@ -30,11 +54,14 @@ struct WindowBrowserMetadataSlot: Equatable {
             inFlight = demand
             return demand
         }
-        if current.requestID == requestID, current.appInstance == appInstance {
+        if current.requestID == requestID, current.appInstance == appInstance,
+           !current.execution.isCancelled {
             // 同一需求已经在途：不重复排队。
             return nil
         }
+        current.execution.cancel()
         if pending != nil, pending != demand { coalescedCount += 1 }
+        pending?.execution.cancel()
         pending = demand
         return nil
     }
@@ -52,7 +79,17 @@ struct WindowBrowserMetadataSlot: Equatable {
 
     /// 应用终止或功能停止：整槽失效。
     mutating func reset() {
+        inFlight?.execution.cancel()
+        pending?.execution.cancel()
         inFlight = nil
+        pending = nil
+    }
+
+    /// Closing a panel cancels work but preserves an in-flight slot until its
+    /// callback arrives, so reopening cannot overlap AX reads for the same app.
+    mutating func cancelRequests() {
+        inFlight?.execution.cancel()
+        pending?.execution.cancel()
         pending = nil
     }
 }
@@ -86,14 +123,23 @@ final class WindowBrowserMetadataScheduler {
     }
 
     func cancel(pid: pid_t) {
-        slots.removeValue(forKey: pid)
+        var slot = slots.removeValue(forKey: pid)
+        slot?.reset()
     }
 
     func cancelAll() {
+        for var slot in slots.values { slot.reset() }
         slots.removeAll()
+    }
+
+    func cancelRequests() {
+        for pid in Array(slots.keys) { slots[pid]?.cancelRequests() }
     }
 
     func state(pid: pid_t) -> WindowBrowserMetadataSlot {
         slots[pid] ?? WindowBrowserMetadataSlot()
     }
+
+    /// 诊断：当前仍占用的槽数（停止后应归零）。
+    var activeSlotCount: Int { slots.count }
 }

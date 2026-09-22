@@ -19,6 +19,7 @@ swiftc -target "$(uname -m)-apple-macosx14.0" $GLASS_DEFINE \
   prototype/WindowBrowser/WindowBrowserActionPresentation.swift \
   prototype/WindowBrowser/WindowBrowserMaterial.swift \
   prototype/WindowBrowser/WindowBrowserMetadataScheduler.swift \
+  prototype/WindowBrowser/WindowBrowserTargetBatch.swift \
   prototype/WindowBrowser/WindowBrowserDockDetection.swift \
   prototype/WindowBrowser/WindowPlacement.swift \
   prototype/WindowBrowser/WindowBrowserActions.swift \
@@ -42,3 +43,15 @@ swiftc -target "$(uname -m)-apple-macosx14.0" $GLASS_DEFINE \
   -framework Cocoa -framework AVFoundation \
   -o .build/window-browser-tests/core
 .build/window-browser-tests/core
+
+swiftc -target "$(uname -m)-apple-macosx14.0" \
+  prototype/WindowBrowser/WindowBrowserPreviewStartup.swift \
+  tests/WindowBrowserPreviewStartupTests.swift \
+  -o .build/window-browser-tests/preview-startup
+.build/window-browser-tests/preview-startup
+
+swiftc -target "$(uname -m)-apple-macosx14.0" \
+  prototype/WindowBrowser/WindowBrowserMetadataQueue.swift \
+  tests/MetadataQueueTests.swift \
+  -o .build/window-browser-tests/metadata-queue
+.build/window-browser-tests/metadata-queue

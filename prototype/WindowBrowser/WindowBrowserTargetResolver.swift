@@ -36,11 +36,12 @@ enum WindowBrowserTargetResolver {
             elementWindowID: windowID(of: element),
             expectedPID: key.application.pid,
             expectedWindowID: key.originalWindowID) else { return nil }
-        if let info = cgWindowInfo(key.originalWindowID),
-           let ownerPID = (info[kCGWindowOwnerPID as String] as? NSNumber)?.int32Value,
-           ownerPID != key.application.pid {
-            return nil
-        }
+        // A stale AX element can outlive its WindowServer entry. The ID must
+        // still exist and belong to the same process; absence is not evidence
+        // that the old element remains actionable.
+        guard let info = cgWindowInfo(key.originalWindowID),
+              let ownerPID = (info[kCGWindowOwnerPID as String] as? NSNumber)?.int32Value,
+              ownerPID == key.application.pid else { return nil }
         let needsGeometry = options.contains(.geometry)
         let needsCapabilities = options.contains(.capabilities)
         let closeExists = needsCapabilities
@@ -62,11 +63,13 @@ enum WindowBrowserTargetResolver {
     /// 该应用里按“原窗口 ID”唯一匹配的 AX 窗口；不唯一就拒绝（不猜替代窗口）。
     /// 必须在非主线程队列调用。
     static func enumerate(key: WindowKey) -> AXUIElement? {
-        var matches: [AXUIElement] = []
-        for element in appWindows(pid: key.application.pid)
-        where windowID(of: element) == key.originalWindowID {
-            matches.append(element)
+        let matches = candidates(pid: key.application.pid).filter { $0.0 == key.originalWindowID }
+        return matches.count == 1 ? matches[0].1 : nil
+    }
+
+    static func candidates(pid: pid_t) -> [(CGWindowID, AXUIElement)] {
+        appWindows(pid: pid).compactMap { element in
+            windowID(of: element).map { ($0, element) }
         }
-        return matches.count == 1 ? matches[0] : nil
     }
 }

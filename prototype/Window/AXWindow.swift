@@ -364,73 +364,35 @@ func publicWindowID(of e: AXUIElement) -> CGWindowID? {
     guard AXUIElementGetPid(e, &pid) == .success, pid > 0 else { return nil }
 
     let axFrame = CGRect(origin: pos, size: size)
-    let axTitle = cleanDisplayTitle(axTitle(e))
-    // 在屏快速通道：列表远小于全量，聚焦/可见窗口（绝大多数调用）都能在这里解析。
-    // 必须要求标题精确一致（strictTitle）：若目标窗口其实在另一个 Space（不在在屏
-    // 列表里），同 app 在当前 Space 的同几何兄弟窗口会无竞争地被错误匹配——
-    // 曾造成"折叠当前窗口折到了另一个 Space 的窗口"。标题对不上就回退全量列表，
-    // 让所有候选同场竞争，结果与旧的全量逻辑一致。
-    if let id = bestPublicWindowIDMatch(pid: pid, axFrame: axFrame, axTitle: axTitle,
-                                        options: [.optionOnScreenOnly, .excludeDesktopElements],
-                                        strictTitle: true) {
-        return id
+    let title = cleanDisplayTitle(axTitle(e))
+    // Compare all Spaces, including transparent windows. A visible sibling must
+    // not win merely because the source window is hidden or off the current Space.
+    let candidates = WindowListCache.shared.allWindows(ofPID: pid).filter { info in
+        guard let bounds = cgWindowBounds(info) else { return false }
+        return frameDistance(bounds, axFrame) <= 96
     }
-    return bestPublicWindowIDMatch(pid: pid, axFrame: axFrame, axTitle: axTitle,
-                                   options: [.optionAll, .excludeDesktopElements],
-                                   strictTitle: false)
-}
-
-func bestPublicWindowIDMatch(pid: pid_t, axFrame: CGRect, axTitle: String,
-                             options: CGWindowListOption, strictTitle: Bool = false) -> CGWindowID? {
-    // 用缓存按 pid 预筛，只遍历目标 app 自己的窗口：一次折叠事务里同一份全量
-    // 列表会被反复枚举（appWindows 对每个 AX 窗口都会做一次 ID 匹配），
-    // 预筛后每次匹配从 O(全量窗口) 降到 O(本 app 窗口)。
-    let windows = options.contains(.optionOnScreenOnly)
-        ? WindowListCache.shared.onScreenWindows(ofPID: pid)
-        : WindowListCache.shared.allWindows(ofPID: pid)
-    var best: (id: CGWindowID, score: CGFloat)?
-
-    for info in windows {
-        guard let number = info[kCGWindowNumber as String] as? NSNumber,
-              let bounds = cgWindowBounds(info) else { continue }
-
-        let alpha = (info[kCGWindowAlpha as String] as? NSNumber)?.doubleValue ?? 1
-        guard alpha > 0 else { continue }
-
-        let delta = frameDistance(bounds, axFrame)
-        guard delta <= 96 else { continue }
-
-        var score = delta
-        let name = cleanDisplayTitle(cgWindowName(info))
-        // 严格模式（在屏快速通道）：标题必须精确一致，否则交给全量回退去竞争。
-        if strictTitle, axTitle.isEmpty || name != axTitle { continue }
-        if !axTitle.isEmpty && !name.isEmpty {
-            if name == axTitle {
-                score -= 24
-            } else if name.localizedCaseInsensitiveContains(axTitle) ||
-                        axTitle.localizedCaseInsensitiveContains(name) {
-                score -= 8
-            } else {
-                score += 18
-            }
-        }
-
-        let layer = (info[kCGWindowLayer as String] as? NSNumber)?.intValue ?? 0
-        if layer != 0 { score += CGFloat(abs(layer)) * 2 }
-
-        let candidate = (CGWindowID(number.uint32Value), score)
-        if best == nil || candidate.1 < best!.score {
-            best = candidate
-        }
-    }
-
-    return best?.id
+    // Geometry is only a compatibility fallback. Rank ordering cannot establish
+    // identity when more than one window has a plausible frame.
+    guard candidates.count == 1, let info = candidates.first,
+          let number = info[kCGWindowNumber as String] as? NSNumber,
+          number.uint32Value != 0 else { return nil }
+    let name = cleanDisplayTitle(cgWindowName(info))
+    guard title.isEmpty || name.isEmpty || title == name else { return nil }
+    return number.uint32Value
 }
 
 func windowID(of e: AXUIElement) -> CGWindowID? {
-    if let id = publicWindowID(of: e) { return id }
     var id: CGWindowID = 0
-    return _AXUIElementGetWindow(e, &id) == .success ? id : nil
+    let error = _AXUIElementGetWindow(e, &id)
+    if error == .success, id != 0 { return id }
+    // Some otherwise healthy AX windows report success with a zero ID. Keep
+    // the compatibility path for that case; publicWindowID now accepts only
+    // a unique, title-compatible WindowServer candidate, so it cannot silently
+    // replace an ambiguous window.
+    if error == .success { return publicWindowID(of: e) }
+    // A failed/stale target must not be replaced by a lookalike window.
+    guard error != .invalidUIElement, error != .cannotComplete else { return nil }
+    return publicWindowID(of: e)
 }
 
 func axRole(_ e: AXUIElement) -> String? {

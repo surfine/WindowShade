@@ -540,8 +540,7 @@ final class TitleStripView: NSImageView {
         setAccessibilityHelp(PaperSurfaceAccessibility.stripHelp())
         setAccessibilityCustomActions([
             NSAccessibilityCustomAction(name: "展开窗口") { [weak self] in
-                self?.onDoubleClick?()
-                return true
+                self?.accessibilityPerformPress() ?? false
             }
         ])
         // 截图条可能被裁短，鼠标悬停时给出完整标题（与经典条一致）。
@@ -615,6 +614,35 @@ final class TrafficLightsView: NSView {
     }
 }
 
+/// A custom-drawn classic strip still exposes each control as a real button to
+/// VoiceOver and Full Keyboard Access. Custom actions on the parent remain as a
+/// rotor-friendly fallback, while these children provide separate focus targets.
+private final class ClassicControlAccessibilityElement: NSObject, NSAccessibilityButton {
+    private let handler: () -> Bool
+    private weak var parent: NSView?
+    private var frameInParentSpace: NSRect
+    private let label: String
+
+    init(frame: NSRect, label: String, parent: NSView, handler: @escaping () -> Bool) {
+        self.handler = handler
+        self.frameInParentSpace = frame
+        self.label = label
+        self.parent = parent
+        super.init()
+    }
+
+    func accessibilityFrame() -> NSRect {
+        guard let parent, let window = parent.window else { return frameInParentSpace }
+        return window.convertToScreen(parent.convert(frameInParentSpace, to: nil))
+    }
+
+    func accessibilityParent() -> Any? { parent }
+    func accessibilityLabel() -> String? { label }
+    func accessibilityPerformPress() -> Bool { handler() }
+
+    func update(frame: NSRect) { frameInParentSpace = frame }
+}
+
 final class ClassicTitleStripView: NSView {
     var onDoubleClick: (() -> Void)?
     var onAction: ((ClassicAction) -> Void)?
@@ -633,6 +661,7 @@ final class ClassicTitleStripView: NSView {
     private var dragOffset = CGPoint.zero
     private var didDrag = false
     private var pressedAction: ClassicAction?
+    private var accessibilityControls: [ClassicControlAccessibilityElement] = []
 
     init(frame: NSRect, appName: String, windowTitle: String, pid: pid_t) {
         self.appName = appName
@@ -649,13 +678,56 @@ final class ClassicTitleStripView: NSView {
         setAccessibilityHelp(PaperSurfaceAccessibility.stripHelp())
         setAccessibilityCustomActions([
             NSAccessibilityCustomAction(name: "展开窗口") { [weak self] in
-                self?.onDoubleClick?()
-                return true
-            }
+                self?.accessibilityPerformPress() ?? false
+            },
+            NSAccessibilityCustomAction(name: "缩放窗口") { [weak self] in
+                self?.performControlAction(.zoom) ?? false
+            },
+            NSAccessibilityCustomAction(name: "关闭窗口") { [weak self] in
+                self?.performControlAction(.close) ?? false
+            },
         ])
+        rebuildAccessibilityControls()
     }
 
     required init?(coder: NSCoder) { fatalError() }
+
+    private func accessibilityLabel(for action: ClassicAction) -> String {
+        switch action {
+        case .close: return "关闭窗口"
+        case .zoom: return "缩放窗口"
+        case .expand: return "展开窗口"
+        }
+    }
+
+    private func rebuildAccessibilityControls() {
+        let actions: [ClassicAction] = [.close, .zoom, .expand]
+        accessibilityControls = actions.map { action in
+            ClassicControlAccessibilityElement(
+                frame: hitRect(for: action),
+                label: accessibilityLabel(for: action),
+                parent: self) { [weak self] in
+                    self?.performControlAction(action) ?? false
+                }
+        }
+        setAccessibilityChildren(accessibilityControls)
+    }
+
+    private func updateAccessibilityControlFrames() {
+        let actions: [ClassicAction] = [.close, .zoom, .expand]
+        guard accessibilityControls.count == actions.count else {
+            rebuildAccessibilityControls()
+            return
+        }
+        for (element, action) in zip(accessibilityControls, actions) {
+            element.update(frame: hitRect(for: action))
+        }
+    }
+
+    override func layout() {
+        super.layout()
+        updateAccessibilityControlFrames()
+    }
 
     /// 浅深色/强调色变化后重算配色（绘制时用最新外观）。
     func refreshPalette() {
@@ -689,7 +761,7 @@ final class ClassicTitleStripView: NSView {
         case .close:
             return NSRect(x: 12, y: y, width: size, height: size)
         case .zoom:
-            return NSRect(x: max(12, bounds.width - 32), y: y, width: size, height: size)
+            return NSRect(x: max(12, bounds.width - 52), y: y, width: size, height: size)
         case .expand:
             return NSRect(x: max(12, bounds.width - 20), y: y, width: size, height: size)
         }
@@ -697,6 +769,13 @@ final class ClassicTitleStripView: NSView {
 
     private func hitRect(for action: ClassicAction) -> NSRect {
         visualRect(for: action).insetBy(dx: -10, dy: -8)
+    }
+
+    @discardableResult
+    private func performControlAction(_ action: ClassicAction) -> Bool {
+        guard let onAction else { return false }
+        onAction(action)
+        return true
     }
 
     private func action(at point: NSPoint) -> ClassicAction? {
@@ -839,7 +918,7 @@ final class ClassicTitleStripView: NSView {
                 pressedAction = nil
                 needsDisplay = true
             }
-            if action(at: p) == pressed { onAction?(pressed) }
+            if action(at: p) == pressed { performControlAction(pressed) }
             return
         }
         if didDrag {

@@ -13,6 +13,7 @@ final class WindowFoldEffects {
     var captureTask: Task<Void, Never>?
     var preparedImage: CGImage?
     var phase: Phase = .preparing
+    var hideGeneration = 0
     var transition: FoldTransition
     var awaitingFinalFrame = false
     init(id: CGWindowID, element: AXUIElement, folded: Bool) {
@@ -28,6 +29,7 @@ final class WindowFoldEffects {
   private var internalRestores: Set<CGWindowID> = []
   private var restoreAfterHide: [CGWindowID: UUID] = [:]
   var activeCount: Int { jobs.count }
+  func hasActiveTransition(for id: CGWindowID) -> Bool { jobs[id] != nil }
   private(set) var completedTransitions = 0
   private var enabled: Bool {
     controller?.settings.windowsEnabled == true && controller?.allowsAnimation == true
@@ -90,31 +92,25 @@ final class WindowFoldEffects {
             height: size.height * screen.backingScaleFactor),
           color: EffectColorSpace.display(screen))
         guard current(job), enabled, !Task.isCancelled else {
-          cancel(id)
+          cancel(job)
           return
         }
         try await background(for: job, content: content, screen: screen, position: pos, size: size)
         guard current(job), job.desiredFolded, enabled else {
-          cancel(id)
+          cancel(job)
           return
         }
         assignSpace(session.panel, source: id)
         session.onFailure = { [weak self, weak job] in if let job { self?.fallback(job) } }
         session.onVisible = { [weak self, weak job] in
           guard let self, let job, current(job), job.desiredFolded else { return }
-          job.phase = .hiding
+          let generation = beginHide(job)
           wlog("duo-window: presented cover; hiding id=\(id)")
           job.preparedImage = job.session?.source.frame()?.stillImage()
           owner.shade(
             element, id, options: options, bypassDuo: true,
             preparedImage: job.preparedImage, preparedProfile: preparedProfile)
-          DispatchQueue.main.asyncAfter(deadline: .now() + 1.2) { [weak self, weak job] in
-            guard let self, let job, current(job), job.phase == .hiding else { return }
-            // Native collapse and rejected policies retain their original behavior.
-            let restore = !job.desiredFolded
-            cancel(id)
-            if restore { _ = self.owner?.unshadeReturningElement(id) }
-          }
+          scheduleHideWatchdog(job, generation: generation)
         }
         session.show()
       } catch {
@@ -242,14 +238,14 @@ final class WindowFoldEffects {
           }
         }
         guard current(job), enabled, !Task.isCancelled else {
-          cancel(id)
+          cancel(job)
           return
         }
         assignSpace(session.panel, source: state.overlayID ?? id)
         session.onFailure = { [weak self, weak job] in if let job { self?.fallback(job) } }
         session.onVisible = { [weak self, weak job] in
           guard let self, let job, current(job) else { return }
-          if job.desiredFolded { cancel(id) } else { restoreExisting(job) }
+          if job.desiredFolded { cancel(job) } else { restoreExisting(job) }
         }
         session.show()
       } catch {
@@ -266,7 +262,7 @@ final class WindowFoldEffects {
     switch job.phase {
     case .preparing:
       // Before a transaction starts there is nothing to reverse on screen.
-      if folded == (owner?.shaded[job.id] != nil) { cancel(job.id) }
+      if folded == (owner?.shaded[job.id] != nil) { cancel(job) }
     case .hiding, .restoring: break  // Wait for the outstanding mutation to be verified.
     case .folding:
       if !folded { restoreExisting(job) }
@@ -289,14 +285,14 @@ final class WindowFoldEffects {
         guard let self, let job, current(job) else { return }
         wlog("duo-window: restore verified id=\(job.id) success=\(success)")
         guard success else {
-          cancel(job.id)
+          cancel(job)
           return
         }
         job.phase = .unfolding
         animate(job, folded: job.desiredFolded)
       })
     internalRestores.remove(job.id)
-    if result == nil { cancel(job.id) }
+    if result == nil { cancel(job) }
   }
   private func animate(_ job: Job, folded: Bool) {
     guard current(job), let session = job.session else { return }
@@ -327,18 +323,33 @@ final class WindowFoldEffects {
     let needsFold = desired && owner?.shaded[id] == nil
     if needsFold {
       // Keep the fully folded mask up while the legacy hide transaction commits.
-      job.phase = .hiding
+      let generation = beginHide(job)
       owner?.shade(
         element, id, bypassDuo: true,
         preparedImage: job.session?.source.frame()?.stillImage() ?? job.preparedImage)
-      DispatchQueue.main.asyncAfter(deadline: .now() + 1.2) { [weak self, weak job] in
-        guard let self, let job, current(job) else { return }
-        cancel(id)
-      }
+      scheduleHideWatchdog(job, generation: generation)
     } else {
       completedTransitions += 1
-      cancel(id)
+      dispose(job)
     }
+  }
+  private func beginHide(_ job: Job) -> Int {
+    job.phase = .hiding
+    job.hideGeneration += 1
+    return job.hideGeneration
+  }
+  private func scheduleHideWatchdog(_ job: Job, generation: Int) {
+    DispatchQueue.main.asyncAfter(deadline: .now() + 1.2) { [weak self, weak job] in
+      guard let self, let job else { return }
+      self.hideWatchdogExpired(job, generation: generation)
+    }
+  }
+  private func hideWatchdogExpired(_ job: Job, generation: Int) {
+    guard current(job), job.phase == .hiding, job.hideGeneration == generation else { return }
+    // Capture/install may still be pending. Preserve reversal until hide
+    // verification rather than attempting to restore a not-yet-installed state.
+    if !job.desiredFolded { deferRestoreUntilHidden(job.id) }
+    dispose(job)
   }
   private func fallback(_ job: Job) {
     guard current(job) else { return }
@@ -347,15 +358,22 @@ final class WindowFoldEffects {
     let id = job.id
     let element = job.element
     let phase = job.phase
-    if !desired, phase == .hiding { deferRestoreUntilHidden(id) }
-    cancel(id)
-    guard phase != .hiding, phase != .restoring else { return }
-    if desired, owner?.shaded[id] == nil {
+    if phase == .hiding {
+      if !desired { deferRestoreUntilHidden(id) }
+      dispose(job)
+      return // The in-flight hide transaction still owns completion.
+    }
+    if desired, phase != .restoring, owner?.shaded[id] == nil {
+      dispose(job)
       owner?.shade(element, id, bypassDuo: true)
-    } else if !desired, owner?.shaded[id] != nil {
-      _ = owner?.unshadeReturningElement(id)
+    } else {
+      cancel(job)
+      if phase != .restoring, !desired, owner?.shaded[id] != nil {
+        _ = owner?.unshadeReturningElement(id)
+      }
     }
   }
+
   private func assignSpace(_ panel: NSWindow, source: CGWindowID) {
     if let space = PrivateSLSWindowMover.shared.windowSpace(id: source) {
       _ = PrivateSLSWindowMover.shared.moveWindow(
@@ -366,8 +384,24 @@ final class WindowFoldEffects {
     if !internalRestores.contains(id) { cancel(id) }
   }
   func cancel(_ id: CGWindowID) {
-    guard let job = jobs.removeValue(forKey: id) else { return }
-    wlog("duo-window: cancel id=\(id) phase=\(job.phase)")
+    guard let job = jobs[id] else { return }
+    cancel(job)
+  }
+  private func cancel(_ job: Job) {
+    guard current(job) else { return }
+    // Hiding is already owned by the legacy transaction. Other phases can
+    // abandon a requested fold, including reversal during preparation.
+    let tokens = job.phase == .hiding ? []
+      : owner?.foldWaiters[job.id].map { Array($0.keys) } ?? []
+    dispose(job)
+    for token in tokens {
+      owner?.settleFoldWaiter(id: job.id, token: token, success: false)
+    }
+  }
+  private func dispose(_ job: Job) {
+    guard current(job) else { return }
+    jobs.removeValue(forKey: job.id)
+    wlog("duo-window: release id=\(job.id) phase=\(job.phase)")
     job.task?.cancel()
     job.captureTask?.cancel()
     job.session?.stop()
@@ -377,13 +411,20 @@ final class WindowFoldEffects {
   }
   func cancelAll() {
     // Complete the most recent requested normal state when aborting an animation.
-    let restoring = jobs.values.filter { !$0.desiredFolded }.map(\.id)
-    for job in jobs.values where !job.desiredFolded && job.phase == .hiding {
+    let snapshot = Array(jobs.values)
+    let restoring = snapshot.filter { !$0.desiredFolded }.compactMap { job -> (CGWindowID, UUID)? in
+      guard let state = owner?.shaded[job.id] else { return nil }
+      return (job.id, state.foldTransactionID)
+    }
+    for job in snapshot where !job.desiredFolded && job.phase == .hiding {
       deferRestoreUntilHidden(job.id)
     }
-    for id in Array(jobs.keys) { cancel(id) }
-    for id in restoring where owner?.shaded[id] != nil { _ = owner?.unshadeReturningElement(id) }
+    for job in snapshot { cancel(job) }
+    for (id, transaction) in restoring where owner?.shaded[id]?.foldTransactionID == transaction {
+      _ = owner?.unshadeReturningElement(id)
+    }
   }
+
   private func deferRestoreUntilHidden(_ id: CGWindowID) {
     let token = UUID()
     restoreAfterHide[id] = token
