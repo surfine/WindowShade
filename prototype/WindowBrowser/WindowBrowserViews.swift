@@ -264,11 +264,6 @@ final class WindowBrowserActionButton: NSButton {
         refreshBackground()
     }
 
-    func resetHover() {
-        hovering = false
-        refreshBackground()
-    }
-
     private var hasBackground = false
 
     private func refreshBackground(pressed: Bool = false) {
@@ -488,7 +483,6 @@ final class WindowBrowserCardView: NSView {
     /// 诊断：真正执行了内容配置的次数（未变化的刷新应保持为 0 增量）。
     private(set) var configureCount = 0
     var titleForTesting: String { titleField.stringValue }
-    var statusTextForTesting: String { statusField.stringValue }
     var thumbnailImageForTesting: NSImage? { thumbnailView.image }
     var actionBarIsVisible: Bool { !actionBar.isHidden }
     /// 无画面时展示的应用图标（由内容视图按实例缓存后传入）。
@@ -670,7 +664,6 @@ final class WindowBrowserCardView: NSView {
         if view.superview === thumbnailHost { view.removeFromSuperview() }
     }
 
-    var hostViewForLivePreview: NSView { thumbnailHost }
     var thumbnailHostFrameForDiagnostics: NSRect { thumbnailHost.frame }
     var titleFrameForDiagnostics: NSRect { titleField.frame }
     var actionFrameForDiagnostics: NSRect { actionBar.frame }
@@ -1801,15 +1794,6 @@ final class WindowBrowserContentView: NSView, NSSearchFieldDelegate, NSTextViewD
     /// 诊断：面板背景材质宿主。
     var materialHostForDiagnostics: WindowBrowserMaterialView { materialHost }
 
-    /// 供控制器把“正在请求的订阅状态”映射到紧凑操作条的忙碌显示。
-    func setBusyKeys(_ keys: Set<WindowKey>) {
-        guard keys != busyKeys else { return }
-        busyKeys = keys
-        refreshActionItems()
-        refreshVisibleItemContent()
-        applySelectionStyling()
-    }
-
     private func detailStatus(for records: [WindowRecord]) -> String {
         if records.isEmpty { return "" }
         return records.count == 1 ? "1 个窗口" : "\(records.count) 个窗口"
@@ -2426,10 +2410,6 @@ final class WindowBrowserContentView: NSView, NSSearchFieldDelegate, NSTextViewD
     /// 复用检查：可见卡片视图的对象身份。
     func cardInstanceIdentifier(for key: WindowKey) -> ObjectIdentifier? {
         cardView(for: key).map(ObjectIdentifier.init)
-    }
-
-    func rowInstanceIdentifier(for key: WindowKey) -> ObjectIdentifier? {
-        rowView(for: key).map(ObjectIdentifier.init)
     }
 
     /// 当前挂载实时预览的宿主类型（诊断）。

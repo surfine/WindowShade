@@ -36,9 +36,6 @@ let adobeFloatingDocumentChromeHeight: CGFloat = 44
 // 其下的面包屑/侧栏是内容。
 let afterEffectsWorkspaceChromeHeight: CGFloat = 56
 let premiereWorkspaceChromeHeight: CGFloat = 40
-// 卷帘条圆角跟系统窗口一致（macOS 27 实测 13 pt）；此前这里写死的 18 与其它表面不一致，
-// 而且没有任何调用点，实际生效的是 ShadeStrip 里的绘制路径。
-let shadeCornerRadius: CGFloat = SystemCornerRadius.window
 let shadeAppearanceModeDefaultsKey = "ShadeAppearanceMode"
 let shadeFloatingOnTopDefaultsKey = "ShadeFloatingOnTop"
 let shadeTranslucentDefaultsKey = "ShadeTranslucent"
@@ -701,18 +698,6 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSMenuDelegate {
         return true
     }
 
-
-    @objc func toggleMinimizeEffect(_ sender: NSMenuItem) {
-        let enabling = !scaleMinimizeActive
-        if enabling {
-            enableScaleMinimizeEffectForSession()
-        } else {
-            restoreDockMinimizeEffect()
-        }
-        // 操作在后台执行，先按意图更新 UI；完成回调会再校正实例状态。
-        sender.state = enabling ? .on : .off
-        rebuildMenu()
-    }
 
     func applicationWillTerminate(_ note: Notification) {
         duoController.stop()

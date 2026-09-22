@@ -136,11 +136,6 @@ func pressAXButton(_ win: AXUIElement, _ attr: String) -> Bool {
     return AXUIElementPerformAction(button, kAXPressAction as CFString) == .success
 }
 
-func pressAXFullScreenOrZoom(_ win: AXUIElement) {
-    if pressAXButton(win, kAXFullScreenButtonAttribute as String) { return }
-    pressAXButton(win, kAXZoomButtonAttribute as String)
-}
-
 func pressFullScreenShortcut() {
     let source = CGEventSource(stateID: .hidSystemState)
     let flags: CGEventFlags = [.maskCommand, .maskControl]
@@ -278,24 +273,6 @@ func humanClickAXPoint(_ axPoint: CGPoint, reason: String, logLabel: String,
         wlog("mouse: human up \(logLabel) event=(\(Int(eventPoint.x)),\(Int(eventPoint.y))) ax=(\(Int(axPoint.x)),\(Int(axPoint.y))) visible=(\(Int(NSEvent.mouseLocation.x)),\(Int(NSEvent.mouseLocation.y)))")
     }
     wlog("mouse: scheduled human click \(logLabel) ax=(\(Int(axPoint.x)),\(Int(axPoint.y))) event=(\(Int(eventPoint.x)),\(Int(eventPoint.y))) hoverDelay=\(String(format: "%.2f", hoverDelay))")
-    return true
-}
-
-@discardableResult
-func clickAXFullScreenOrZoom(_ win: AXUIElement) -> Bool {
-    if clickAXButton(win, kAXFullScreenButtonAttribute as String) { return true }
-    if clickAXButton(win, kAXZoomButtonAttribute as String) { return true }
-    return false
-}
-
-@discardableResult
-func movePointerToAXButton(_ win: AXUIElement, _ attr: String) -> Bool {
-    guard let frame = axButtonFrame(win, attr) else { return false }
-    let axPoint = CGPoint(x: frame.midX, y: frame.midY)
-    let eventPoint = movePointerVisibly(to: axPoint, reason: "move-\(attr)")
-    let source = CGEventSource(stateID: .hidSystemState)
-    CGEvent(mouseEventSource: source, mouseType: .mouseMoved,
-            mouseCursorPosition: eventPoint, mouseButton: .left)?.post(tap: .cghidEventTap)
     return true
 }
 

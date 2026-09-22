@@ -388,23 +388,6 @@ extension AppDelegate {
         attempt(0)
     }
 
-    func triggerFullScreenOnRestoredWindow(_ win: AXUIElement, pid: pid_t) {
-        bringRestoredWindowToFront(win, pid: pid, reason: "fullscreen")
-        DispatchQueue.main.asyncAfter(deadline: .now() + 0.45) {
-            self.bringRestoredWindowToFront(win, pid: pid, reason: "fullscreen-before-click")
-            if clickAXButton(win, kAXFullScreenButtonAttribute as String) {
-                wlog("fullscreen: clicked real fullscreen button")
-                return
-            }
-            if pressAXButton(win, kAXFullScreenButtonAttribute as String) {
-                wlog("fullscreen: AX fullscreen press")
-                return
-            }
-            pressFullScreenShortcut()
-            wlog("fullscreen: sent ctrl-cmd-f fallback")
-        }
-    }
-
     func showRealWindowManagementPopover(_ id: CGWindowID) {
         guard let state = shaded[id], let overlay = state.overlay else { return }
         guard state.hide != .quickLookClosed else {

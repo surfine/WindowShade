@@ -190,10 +190,6 @@ func realWindowManagementCapability(_ win: AXUIElement) -> WindowManagementCapab
     return .none
 }
 
-func allowsRealFullscreenOrZoom(_ win: AXUIElement) -> Bool {
-    realWindowManagementCapability(win).isEnabled
-}
-
 // 窗口被外部（⌘Tab / Dock）唤回或销毁时的回调：refcon 里编码了 CGWindowID
 let axWindowCallback: AXObserverCallback = { _, _, notification, refcon in
     guard let refcon = refcon else { return }

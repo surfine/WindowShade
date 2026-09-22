@@ -4,76 +4,6 @@
 import Cocoa
 
 extension AppDelegate {
-    func fullSizeTitlebarPreviewFrame(overlayFrame: NSRect, imageSize: NSSize) -> NSRect {
-        let rawVisible = visibleFrame(for: overlayFrame)
-        var visible = rawVisible.insetBy(dx: 8, dy: 8)
-        if visible.width <= 80 || visible.height <= 60 {
-            visible = rawVisible
-        }
-
-        let scale = min(visible.width / max(1, imageSize.width),
-                        visible.height / max(1, imageSize.height),
-                        1)
-        let size = NSSize(width: max(1, floor(imageSize.width * scale)),
-                          height: max(1, floor(imageSize.height * scale)))
-        let gap: CGFloat = 8
-        let spaceBelow = overlayFrame.minY - visible.minY - gap
-        let spaceAbove = visible.maxY - overlayFrame.maxY - gap
-
-        var origin = NSPoint(x: overlayFrame.midX - size.width / 2,
-                             y: overlayFrame.minY - size.height - gap)
-        if spaceBelow < size.height && spaceAbove > spaceBelow {
-            origin.y = overlayFrame.maxY + gap
-        }
-        if spaceBelow < size.height && spaceAbove < size.height {
-            origin.y = visible.midY - size.height / 2
-        }
-
-        return clampedFrame(NSRect(origin: origin, size: size), margin: 8)
-    }
-
-    func hoverPreviewFrame(id: CGWindowID, overlayFrame: NSRect, imageSize: NSSize,
-                                   fullSizeForOriginalStrip: Bool = false) -> NSRect {
-        if fullSizeForOriginalStrip,
-           shaded[id]?.appearanceMode == .nativeScreenshot {
-            return fullSizeTitlebarPreviewFrame(overlayFrame: overlayFrame, imageSize: imageSize)
-        }
-
-        let rawVisible = visibleFrame(for: overlayFrame)
-        var visible = rawVisible.insetBy(dx: 8, dy: 8)
-        if visible.width <= 80 || visible.height <= 60 {
-            visible = rawVisible
-        }
-
-        let isShelfStrip = isFocusShelfMember(id: id) && !focusPulledOutOverlayIDs.contains(id)
-        let size: NSSize
-        if isShelfStrip {
-            let width = min(max(1, overlayFrame.width), max(1, visible.width))
-            let naturalHeight = width * max(1, imageSize.height) / max(1, imageSize.width)
-            let maxHeight = min(260, max(80, visible.height * 0.45))
-            size = NSSize(width: floor(width),
-                          height: floor(min(max(naturalHeight, 96), maxHeight)))
-        } else {
-            let maxSize = NSSize(width: min(360, max(1, visible.width)),
-                                 height: min(240, max(1, visible.height)))
-            let scale = min(maxSize.width / max(1, imageSize.width),
-                            maxSize.height / max(1, imageSize.height),
-                            1)
-            size = NSSize(width: max(1, floor(imageSize.width * scale)),
-                          height: max(1, floor(imageSize.height * scale)))
-        }
-        let gap: CGFloat = 8
-        let spaceBelow = overlayFrame.minY - visible.minY - gap
-        let spaceAbove = visible.maxY - overlayFrame.maxY - gap
-        var origin = NSPoint(x: overlayFrame.midX - size.width / 2,
-                             y: overlayFrame.minY - size.height - gap)
-        if spaceBelow < size.height && spaceAbove > spaceBelow {
-            origin.y = overlayFrame.maxY + gap
-        }
-
-        let unclamped = NSRect(origin: origin, size: size)
-        return clampedFrame(unclamped, margin: 8)
-    }
 
     func safariStylePreviewFrame(id: CGWindowID, overlayFrame: NSRect, imageSize: NSSize) -> NSRect {
         let rawVisible = visibleFrame(for: overlayFrame)
@@ -187,9 +117,6 @@ extension AppDelegate {
                        trigger: .menuHover, isPinnedLive: false)
     }
 
-    // 已置顶窗口的实时缩略图：镜像该会话仍在运行的 ScreenCaptureKit 流，无需静态截图。
-    // 老板键挂起中的 session 没有 capture 在跑，视同「没有预览」，不接一个收不到
-    // 采样帧的 mirror layer 出来（否则弹出一个永远空白的预览面板）。
     /// 悬停缩略图要展示的窗口名：折叠会话优先，其次置顶会话。
     func hoverPreviewTitle(ownerID: CGWindowID) -> String {
         if let state = shaded[ownerID] {

@@ -89,110 +89,6 @@ struct ProxyTitleLayoutMetrics {
     }
 }
 
-// AX 看不到的 toolbar/titlebar 控件，用截图补判。只用于没有 AXToolbar 的窗口。
-// 只在真的看见搜索框/输入框这类“内部浅色控件块”时生效：
-// 取控件块上下边界，并用控件块上 margin 推出同等下 margin。纯 titlebar 没有控件时返回 nil。
-func visualChromeHeight(of image: CGImage, scale: CGFloat, minimum: CGFloat) -> CGFloat? {
-    let w = image.width, h = image.height
-    guard w > 20, h > 20, scale > 0 else { return nil }
-    let maxScan = min(h, Int(ceil(110 * scale)))
-    guard maxScan > Int(minimum * scale) else { return nil }
-    guard let top = image.cropping(to: CGRect(x: 0, y: 0, width: w, height: maxScan)) else { return nil }
-
-    let bpr = w * 4
-    var buf = [UInt8](repeating: 0, count: bpr * maxScan)
-    guard let ctx = CGContext(data: &buf, width: w, height: maxScan, bitsPerComponent: 8,
-                              bytesPerRow: bpr, space: CGColorSpaceCreateDeviceRGB(),
-                              bitmapInfo: CGImageAlphaInfo.premultipliedLast.rawValue) else { return nil }
-    ctx.draw(top, in: CGRect(x: 0, y: 0, width: w, height: maxScan))
-
-    func transparentCount(row: Int) -> Int {
-        var c = 0
-        let edge = max(8, min(w / 8, 80))
-        for x in 0..<edge {
-            if buf[row * bpr + x * 4 + 3] < 96 { c += 1 }
-        }
-        for x in max(edge, w - edge)..<w {
-            if buf[row * bpr + x * 4 + 3] < 96 { c += 1 }
-        }
-        return c
-    }
-
-    let topIsLowRow = transparentCount(row: 0) >= transparentCount(row: maxScan - 1)
-    let step = max(1, w / 900)
-    let edgeInset = max(Int(18 * scale), min(w / 18, 90))
-    let minRunWidth = max(Int(60 * scale), min(w / 12, 120))
-    let maxRunWidth = Int(CGFloat(w) * 0.56)
-    var controlRows: [(Int, Int)] = []
-
-    for rawY in 0..<maxScan {
-        let y = topIsLowRow ? rawY : (maxScan - 1 - rawY)
-        var currentRunStart: Int?
-        var bestRun = 0
-        var x = 0
-        while x < w {
-            let i = rawY * bpr + x * 4
-            let r = Int(buf[i]), g = Int(buf[i + 1]), b = Int(buf[i + 2]), a = Int(buf[i + 3])
-            let lum = (r + g + b) / 3
-            let saturation = max(r, max(g, b)) - min(r, min(g, b))
-            let isControlFill = a > 180 && lum > 238 && saturation < 18
-
-            if isControlFill {
-                if currentRunStart == nil { currentRunStart = x }
-            } else if let start = currentRunStart {
-                let width = x - start
-                if start > edgeInset && x < w - edgeInset &&
-                   width >= minRunWidth && width <= maxRunWidth {
-                    bestRun = max(bestRun, width)
-                }
-                currentRunStart = nil
-            }
-
-            if x + step >= w, let start = currentRunStart {
-                let end = min(w, x + step)
-                let width = end - start
-                if start > edgeInset && end < w - edgeInset &&
-                   width >= minRunWidth && width <= maxRunWidth {
-                    bestRun = max(bestRun, width)
-                }
-                currentRunStart = nil
-            }
-            x += step
-        }
-        if bestRun > 0 {
-            controlRows.append((y, bestRun))
-        }
-    }
-
-    let sortedRows = controlRows.sorted { $0.0 < $1.0 }
-    let maxGap = max(2, Int(ceil(2 * scale)))
-    let minRows = max(10, Int(ceil(10 * scale)))
-    var clusters: [[(Int, Int)]] = []
-    for row in sortedRows {
-        if clusters.isEmpty || row.0 - (clusters[clusters.count - 1].last?.0 ?? row.0) > maxGap {
-            clusters.append([])
-        }
-        clusters[clusters.count - 1].append(row)
-    }
-
-    let minPx = minimum * scale
-    let searchLimit = min(CGFloat(maxScan), minPx + 32 * scale)
-    guard let chromeCluster = clusters.first(where: {
-        guard $0.count >= minRows, let first = $0.first, let last = $0.last else { return false }
-        return CGFloat(first.0) <= searchLimit && CGFloat(last.0 - first.0) >= 12 * scale
-    }) else { return nil }
-
-    let controlTop = CGFloat(chromeCluster.first!.0)
-    let controlBottom = CGFloat(chromeCluster.last!.0)
-    let topMargin = max(6 * scale, min(controlTop, 28 * scale))
-    let candidate = controlBottom + topMargin
-    guard candidate > minPx + 3 * scale else { return nil }
-    let candidatePt = candidate / scale
-    let maxReasonable = min(72, max(56, minimum + 24))
-    guard candidatePt <= maxReasonable else { return nil }
-    return candidatePt
-}
-
 // Elpass / WeChat 这类窗口的 AX 树不给稳定 toolbar：
 // - Elpass 会把内容区控件混进顶部扫描，AX 高度偏大；
 // - WeChat 只暴露交通灯，AX 高度偏小。
@@ -520,55 +416,6 @@ func roundedClippedImage(_ image: CGImage, cornerRadius: CGFloat,
     return ctx.makeImage()
 }
 
-func imageHasTransparentCorners(_ image: NSImage) -> Bool {
-    guard let cg = image.cgImage(forProposedRect: nil, context: nil, hints: nil) else { return false }
-    let alphaInfo = cg.alphaInfo
-    switch alphaInfo {
-    case .none, .noneSkipFirst, .noneSkipLast:
-        return false
-    default:
-        break
-    }
-
-    guard let rep = NSBitmapImageRep(cgImage: cg).copy() as? NSBitmapImageRep else { return false }
-    let points = [
-        NSPoint(x: 0, y: 0),
-        NSPoint(x: max(0, rep.pixelsWide - 1), y: 0),
-        NSPoint(x: 0, y: max(0, rep.pixelsHigh - 1)),
-        NSPoint(x: max(0, rep.pixelsWide - 1), y: max(0, rep.pixelsHigh - 1)),
-        NSPoint(x: min(4, max(0, rep.pixelsWide - 1)), y: min(4, max(0, rep.pixelsHigh - 1))),
-        NSPoint(x: max(0, rep.pixelsWide - 5), y: min(4, max(0, rep.pixelsHigh - 1))),
-        NSPoint(x: min(4, max(0, rep.pixelsWide - 1)), y: max(0, rep.pixelsHigh - 5)),
-        NSPoint(x: max(0, rep.pixelsWide - 5), y: max(0, rep.pixelsHigh - 5)),
-    ]
-    return points.contains { point in
-        guard let color = rep.colorAt(x: Int(point.x), y: Int(point.y)) else { return false }
-        return color.alphaComponent < 0.92
-    }
-}
-
-func configurePreviewImageView(_ imageView: NSImageView, image: NSImage) -> Bool {
-    let hasSourceRoundedAlpha = imageHasTransparentCorners(image)
-    imageView.image = image
-    imageView.imageScaling = .scaleProportionallyUpOrDown
-    imageView.wantsLayer = true
-    if hasSourceRoundedAlpha {
-        imageView.layer?.cornerRadius = 0
-        imageView.layer?.masksToBounds = false
-        imageView.layer?.borderWidth = 0
-        imageView.layer?.borderColor = nil
-    } else {
-        // 没有圆角透明度说明这不是窗口原貌：按同心规则给一个和容器匹配的小圆角。
-        SystemCornerRadius.apply(
-            to: imageView,
-            radius: SystemCornerRadius.concentric(outer: SystemCornerRadius.window, inset: 10),
-            masksToBounds: true)
-        imageView.layer?.borderWidth = 0.5
-        imageView.layer?.borderColor = NSColor.black.withAlphaComponent(0.22).cgColor
-    }
-    return hasSourceRoundedAlpha
-}
-
 func downsampleCGImage(_ image: CGImage, maxPixelSize: CGSize) -> CGImage? {
     let maxWidth = max(1, maxPixelSize.width)
     let maxHeight = max(1, maxPixelSize.height)
@@ -612,11 +459,6 @@ enum LegacyQuickCapture {
              + "(folded strip → proxy title bar, hover preview → none)")
     }
 
-    static func resetReportForTesting() {
-        lock.lock()
-        reported = false
-        lock.unlock()
-    }
 }
 
 // 只到 CGImage 为止：CGWindowListCreateImage 与降采样都只碰 CoreGraphics，可在

@@ -1055,12 +1055,6 @@ final class DuoSettingsWindow: NSWindowController, NSWindowDelegate, NSTableView
     renderer?.render()
   }
 
-  func beginMenuPreview() {
-    select(section: .effects)
-    live.state = .on
-    liveChanged()
-  }
-
   func refreshStatus(force: Bool = false) {
     let now = CACurrentMediaTime()
     guard force || now - lastStatusAt > 0.2 else { return }

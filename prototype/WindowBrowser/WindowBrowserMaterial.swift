@@ -39,8 +39,6 @@ enum WindowBrowserMaterialKind: String {
     case visualEffect
     /// 完全不透明的纸面背景。
     case paper
-
-    var isGlass: Bool { self == .glass }
 }
 
 struct WindowBrowserSystemCapabilities {
