@@ -16,10 +16,10 @@
  const $ = id => document.getElementById(id);
  const pressed = (selector, active) => document.querySelectorAll(selector).forEach(b => b.setAttribute('aria-pressed', String(b === active)));
  const spaceText = {
-  open:t('让参考资料让开，看看草稿。','Move the reference aside to see the draft.'),
-  shade:t('内容让开了，标题与位置还在。点标题栏，原地回来。','The contents step aside. The title and place remain. Click the bar to return.'),
-  minimize:t('入口到了底部。要回来，得把目光也移过去。','The return point moves to the bottom. Your attention has to follow it there.'),
-  overview:t('两扇窗口一起出现；布局暂时改变，便于挑选。点参考标题栏结束总览。','Both windows become visible in a temporary arrangement. Click the reference bar to leave overview.')
+  open:t('选一种办法，把参考资料挪开。','Pick a way to move the reference aside.'),
+  shade:t('内容收上去了，标题栏还在原处。点一下标题栏，窗口回来。','The contents rolled up; the title bar stayed put. Click it to bring the window back.'),
+  minimize:t('窗口去了底部。要回来，得先去那里找。','The window went to the bottom. To get it back, you have to look there.'),
+  overview:t('两扇窗口都摆出来了，位置也变了。点参考资料的标题栏，恢复原样。','Both windows are laid out, in new places. Click the reference’s title bar to put things back.')
  };
  function arrange(mode) {
   $('space-desk').dataset.mode = mode;
@@ -52,7 +52,7 @@
  function preferenceMessage() {
   const {count, modifiers}=getPreference();
   const names={meta:'⌘',alt:'Option',ctrl:'Control'};
-  return count===0?t('已关闭。点击标题栏不会折叠。','Off. Title-bar clicks will not collapse the window.'):
+  return count===0?t('已关闭。点击标题栏不会收起。','Off. Title-bar clicks will not collapse the window.'):
    t(`当前：${modifiers.length ? '按住 '+modifiers.map(k=>names[k]).join(' + ')+'，':''}连续点击 ${count} 次。`,`Current: ${modifiers.length ? 'hold '+modifiers.map(k=>names[k]).join(' + ')+' and ':''}click ${count} times in succession.`);
  }
  function toggleGesture() {
@@ -60,7 +60,7 @@
   $('gesture-window').classList.toggle('folded',gestureFolded);
   $('gesture-bar').setAttribute('aria-expanded',String(!gestureFolded));
   $('gesture-content').setAttribute('aria-hidden',String(gestureFolded));
-  $('gesture-status').textContent=t(gestureFolded?'收起了。再用同样的节奏展开。':'展开了，还是原来的位置。',gestureFolded?'Rolled up. Repeat the rhythm to expand.':'Expanded, in the same place.');
+  $('gesture-status').textContent=t(gestureFolded?'收起了。用同样的次数再点一遍，就能展开。':'展开了，还在原来的位置。',gestureFolded?'Rolled up. Click the same number of times to unroll.':'Unrolled, in the same place.');
   sound(gestureFolded);
  }
  form.addEventListener('submit',e=>e.preventDefault());
@@ -74,13 +74,13 @@
   clearTimeout(clickTimer);clickCount++;
   if(clickCount>=count){clickCount=0;toggleGesture();return;}
   $('gesture-status').textContent=t(`已点 ${clickCount} / ${count} 次……`,`${clickCount} / ${count} clicks…`);
-  clickTimer=setTimeout(()=>{clickCount=0;$('gesture-status').textContent=t('这次还没触发。','Not triggered this time. ')+preferenceMessage();},650);
+  clickTimer=setTimeout(()=>{clickCount=0;$('gesture-status').textContent=t('次数不对，没收起。','Wrong count, so nothing happened. ')+preferenceMessage();},650);
  });
  $('gesture-simulate').addEventListener('click',()=>{clearTimeout(clickTimer);clickCount=0;if(getPreference().count)toggleGesture();else $('gesture-status').textContent=preferenceMessage();});
  const platinumDesk=$('platinum-desk'),platinumWindow=$('platinum-window'),platinumBar=$('platinum-bar');
  let platinumFolded=false,drag=null,dragMoved=false;
  const platinumSay=text=>{$('platinum-result').textContent=text;};
- const movedText=()=>t(platinumFolded?'标题栏到了新位置。双击标题栏（或点方框）展开，看内容出现在哪里。':'窗口跟着标题栏一起移动。',platinumFolded?'The title bar is somewhere new. Double-click it (or click the box) and see where the contents appear.':'The window moves with its title bar.');
+ const movedText=()=>t(platinumFolded?'挪好了。双击标题栏或点方框展开，看窗口在哪儿打开。':'窗口跟着标题栏一起移动。',platinumFolded?'Moved. Double-click the title bar or click the box, and see where the window opens.':'The window moves with its title bar.');
  let platinumX=null,platinumY=null;
  function platinumOffset(){
   if(platinumX===null){
@@ -101,7 +101,7 @@
   platinumFolded=!platinumFolded;platinumWindow.classList.toggle('folded',platinumFolded);
   $('platinum-collapse').setAttribute('aria-expanded',String(!platinumFolded));
   $('platinum-content').setAttribute('aria-hidden',String(platinumFolded));
-  platinumSay(t(platinumFolded?'只剩标题栏。把它拖到别处，再双击一次（或点方框）展开。':'内容在标题栏现在的位置展开。',platinumFolded?'Only the title bar is left. Drag it somewhere else, then double-click it (or click the box) to expand.':'The contents open where the title bar now is.'));
+  platinumSay(t(platinumFolded?'只剩标题栏了。拖到别处，再双击或点方框展开。':'窗口在标题栏现在的位置展开了。',platinumFolded?'Only the title bar is left. Drag it somewhere else, then double-click it or click the box.':'The contents open where the title bar now is.'));
  }
  $('platinum-collapse').addEventListener('click',togglePlatinum);
  // 1997 年的手势本身就是双击标题栏；拖动过的这一次不算双击。
@@ -135,16 +135,16 @@
  });
  machineSize.observe($('machine-screen'));
  const machines=[
-  {name:'System 7.5',year:1994,tasks:[t('打开 Apple 菜单 → Control Panels → WindowShade。','Open Apple menu → Control Panels → WindowShade.'),t('选择 2 次点击，然后双击另一个窗口的标题栏。','Choose two clicks, then double-click another window’s title bar.'),t('改为 3 次点击，感受同一个动作的不同节奏。','Switch to three clicks and feel the change of rhythm.')]},
-  {name:'Mac OS 8.0',year:1997,tasks:[t('打开磁盘上的文件夹，看看标题栏最右边的按钮。','Open a folder on the disk and inspect the rightmost title-bar button.'),t('点 collapse box，把窗口收起。','Click the collapse box to roll the window up.'),t('拖动留下的标题栏，再点按钮展开，检查新位置。','Drag the remaining title bar, then expand and check its new location.')]},
-  {name:'Mac OS X 10.1',year:2001,tasks:[t('等待 OS X 启动，打开一个 Finder 窗口。','Let OS X boot, then open a Finder window.'),t('点标题栏的黄色按钮，观察窗口去了哪里。','Click the yellow title-bar button and watch where the window goes.'),t('从 Dock 恢复窗口。与前面两台系统比较。','Restore the window from the Dock. Compare it with the other systems.')]}
+  {name:'System 7.5',year:1994,tasks:[t('打开 Apple 菜单 → Control Panels → WindowShade。','Open Apple menu → Control Panels → WindowShade.'),t('选择 2 次点击，然后双击另一个窗口的标题栏。','Choose two clicks, then double-click another window’s title bar.'),t('改成 3 次点击，再双击试试。','Switch to three clicks and double-click again.')]},
+  {name:'Mac OS 8.0',year:1997,tasks:[t('打开磁盘上的文件夹，看看标题栏最右边的按钮。','Open a folder on the disk and inspect the rightmost title-bar button.'),t('点 collapse box，把窗口收起。','Click the collapse box to roll the window up.'),t('拖动标题栏，再点按钮展开，看窗口在哪儿打开。','Drag the title bar, click the box again, and see where the window opens.')]},
+  {name:'Mac OS X 10.1',year:2001,tasks:[t('等待 OS X 启动，打开一个 Finder 窗口。','Let OS X boot, then open a Finder window.'),t('点黄色按钮，看窗口去了哪里。','Click the yellow button and watch where the window goes.'),t('再从 Dock 把它点回来，和前两台比一比。','Bring it back from the Dock, and compare with the other two.')]}
  ];
  let current=0, iframe=null, loadTimer, loaded=false;
  const done=new Set();
  function stopMachine(notify=true){
   clearTimeout(loadTimer);iframe?.remove();iframe=null;loaded=false;
   $('machine-placeholder').hidden=false;$('machine-stop').hidden=true;$('power-light').classList.remove('on');
-  if(notify)$('machine-status').textContent=t('模拟器已关闭，运行资源已释放。可以重新启动。','Emulator closed and its running resources released. You can start again.');
+  if(notify)$('machine-status').textContent=t('已关机，可以重新开机。','Shut down. You can boot it again.');
  }
  document.querySelectorAll('[data-machine]').forEach(b=>b.addEventListener('click',()=>{
   const next=Number(b.dataset.machine);if(next===current)return;
@@ -153,7 +153,7 @@
   $('machine-external').href=`https://infinitemac.org/${m.year}/${encodeURIComponent(m.name)}`;
   $('machine-tasks').replaceChildren(...m.tasks.map(text=>{const li=document.createElement('li');li.textContent=text;return li;}));
   $('machine-done').checked=done.has(current);
-  $('machine-status').textContent=t('已选择 '+m.name+'。点击启动才会加载系统。',m.name+' selected. It loads only when you press Start.');
+  $('machine-status').textContent=t('选了 '+m.name+'。点“开机”才会加载。',m.name+' selected. Nothing loads until you boot it.');
  }));
  $('machine-done').addEventListener('change',e=>{if(e.target.checked)done.add(current);else done.delete(current);});
  $('machine-start').addEventListener('click',()=>{
@@ -162,14 +162,33 @@
   url.searchParams.set('disk',m.name);url.searchParams.set('auto_pause','true');url.searchParams.set('library','false');url.searchParams.set('screenSize','640x480');
   iframe=document.createElement('iframe');iframe.src=url.href;iframe.title=t(`可交互的 ${m.name} 旧系统`, `Interactive ${m.name} system`);iframe.allow='cross-origin-isolated';
   $('machine-screen').append(iframe);$('machine-placeholder').hidden=true;$('machine-stop').hidden=false;$('power-light').classList.add('on');
-  $('machine-status').textContent=t('正在加载系统数据。旧 Mac 的启动需要一些时间；也可在独立页面打开。','Loading system data. An old Mac takes a little time to boot; you can also open it separately.');
-  loadTimer=setTimeout(()=>{$('machine-status').textContent=t(loaded?'系统已开始运行；如果尚未进入桌面，请继续等待，或在独立页面打开。':'尚未收到模拟器启动信号。可关闭后重试，或在独立页面打开。',loaded?'The machine has begun running. If the desktop is not ready, give it more time or open it separately.':'No startup signal received yet. Close and retry, or open the system separately.');},45000);
+  $('machine-status').textContent=t('正在加载，旧 Mac 开机要一会儿。等不及可以在独立页面打开。','Loading. An old Mac takes a moment to boot; you can also open it on its own page.');
+  loadTimer=setTimeout(()=>{$('machine-status').textContent=t(loaded?'已经在跑了。还没看到桌面的话再等等，或者在独立页面打开。':'旧系统还没反应。可以关机重试，或者在独立页面打开。',loaded?'The machine has begun running. If the desktop is not ready, give it more time or open it separately.':'No startup signal received yet. Close and retry, or open the system separately.');},45000);
  });
  $('machine-stop').addEventListener('click',()=>{stopMachine();$('machine-start').focus({preventScroll:true});});
  window.addEventListener('message',e=>{
   if(e.origin!=='https://infinitemac.org'||e.source!==iframe?.contentWindow||e.data?.type!=='emulator_loaded')return;
-  loaded=true;$('machine-status').textContent=t('系统数据已载入，机器开始运行。进入桌面后，就可以按旁边的线索探索。','System data loaded; the machine has begun running. Follow the tasks once the desktop appears.');
+  loaded=true;$('machine-status').textContent=t('开机了。看到桌面后，照着右边的步骤试试。','It’s running. Once the desktop appears, follow the steps alongside.');
  });
  // The provider's auto_pause handles both viewport and page visibility, including resume.
  window.addEventListener('pagehide',()=>{stopMachine(false);audioContext?.close().catch(()=>{});});
+})();
+
+// Reading progress: how far through the essay (not the sources) the reader is.
+(() => {
+ const bar = document.querySelector('.read-progress');
+ const article = document.querySelector('main article');
+ if (!bar || !article) return;
+ let frame = 0;
+ function update() {
+  frame = 0;
+  const r = article.getBoundingClientRect();
+  const total = r.height - innerHeight;
+  const read = total > 0 ? Math.min(1, Math.max(0, -r.top / total)) : 0;
+  bar.style.setProperty('--read', read.toFixed(4));
+ }
+ const schedule = () => { if (!frame) frame = requestAnimationFrame(update); };
+ addEventListener('scroll', schedule, { passive: true });
+ addEventListener('resize', schedule);
+ update();
 })();
