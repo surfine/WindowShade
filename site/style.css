@@ -12,8 +12,8 @@
   --chip:rgba(20,26,38,.06);--chip-hover:rgba(20,26,38,.1);
   --header:rgba(246,247,249,.74);--shadow:rgba(48,63,86,.14);
   --win:#fff;--win-bar:#f5f5f7;--win-ink:#24262b;--win-muted:#70747c;--win-line:rgba(0,0,0,.08);
-  --win-shadow:drop-shadow(0 0 .5px rgba(0,0,0,.35)) drop-shadow(0 10px 18px rgba(24,32,52,.2));
-  --lamp-off:#dcdcdf;--lamp-off-rim:#c3c3c8;
+  --win-edge:rgba(0,0,0,.37);--win-drop:rgba(0,0,0,.32);--win-edge-off:rgba(0,0,0,.28);--win-drop-off:rgba(0,0,0,.22);--pt:.6px;
+  --lamp-off:linear-gradient(#e3e3e7,#ecedf0 70%,#e2e2e5);--lamp-off-rim:#a8a9ad;
   --wall:radial-gradient(120% 90% at 0% 0%,#c9dbff 0%,transparent 58%),radial-gradient(90% 80% at 100% 0%,#f1d9ee 0%,transparent 62%),radial-gradient(120% 90% at 70% 110%,#ffe3c9 0%,transparent 62%),#e7eaf3;
   --menubar:rgba(255,255,255,.5);
   --ease-out:cubic-bezier(.23,1,.32,1);--ease-roll:cubic-bezier(.65,0,.35,1);
@@ -28,7 +28,7 @@
   --chip:rgba(255,255,255,.08);--chip-hover:rgba(255,255,255,.13);
   --header:rgba(17,19,23,.72);--shadow:rgba(0,0,0,.42);
   --win:#26282d;--win-bar:#2d2f35;--win-ink:#eceef2;--win-muted:#a0a5ae;--win-line:rgba(255,255,255,.08);
-  --win-shadow:drop-shadow(0 0 .5px rgba(0,0,0,.9)) drop-shadow(0 12px 22px rgba(0,0,0,.45));
+  --win-edge:rgba(0,0,0,.85);--win-drop:rgba(0,0,0,.5);--win-edge-off:rgba(0,0,0,.7);--win-drop-off:rgba(0,0,0,.36);
   --lamp-off:#4a4c52;--lamp-off-rim:#3b3d42;
   --wall:radial-gradient(120% 90% at 0% 0%,#233a6b 0%,transparent 58%),radial-gradient(90% 80% at 100% 0%,#4a2a55 0%,transparent 62%),radial-gradient(120% 90% at 70% 110%,#5a3a2a 0%,transparent 62%),#171a24;
   --menubar:rgba(20,22,28,.45)
@@ -41,7 +41,7 @@
   --chip:rgba(255,255,255,.08);--chip-hover:rgba(255,255,255,.13);
   --header:rgba(17,19,23,.72);--shadow:rgba(0,0,0,.42);
   --win:#26282d;--win-bar:#2d2f35;--win-ink:#eceef2;--win-muted:#a0a5ae;--win-line:rgba(255,255,255,.08);
-  --win-shadow:drop-shadow(0 0 .5px rgba(0,0,0,.9)) drop-shadow(0 12px 22px rgba(0,0,0,.45));
+  --win-edge:rgba(0,0,0,.85);--win-drop:rgba(0,0,0,.5);--win-edge-off:rgba(0,0,0,.7);--win-drop-off:rgba(0,0,0,.36);
   --lamp-off:#4a4c52;--lamp-off-rim:#3b3d42;
   --wall:radial-gradient(120% 90% at 0% 0%,#233a6b 0%,transparent 58%),radial-gradient(90% 80% at 100% 0%,#4a2a55 0%,transparent 62%),radial-gradient(120% 90% at 70% 110%,#5a3a2a 0%,transparent 62%),#171a24;
   --menubar:rgba(20,22,28,.45)
@@ -50,7 +50,7 @@
 
 /* Base */
 *{box-sizing:border-box}
-html{scroll-behavior:smooth;scroll-padding-top:72px;-webkit-text-size-adjust:100%}
+html{scroll-behavior:smooth;scroll-padding-top:72px;-webkit-text-size-adjust:100%;touch-action:manipulation}
 body{margin:0;background:var(--bg);color:var(--ink);-webkit-font-smoothing:antialiased;transition:background-color .3s,color .3s}
 a{color:inherit;text-decoration:none}
 button,input{font:inherit;color:inherit}
@@ -140,19 +140,31 @@ html[lang=zh-CN] .hero-intro{line-height:1.85}
 .writing-lines i:nth-child(2){width:92%}.writing-lines i:nth-child(3){width:96%}.writing-lines i:nth-child(4){width:58%}
 /* Lamps: measured live — lighter toward the bottom, a hairline rim in each lamp's own dark hue. */
 .lights{display:flex;gap:1.2cqw;flex:none}
-.lights i{width:1.95cqw;height:1.95cqw;border-radius:50%;background:linear-gradient(var(--lamp) 30%,var(--lamp-low) 75%,var(--lamp-edge));box-shadow:inset .5px 0 0 var(--lamp-rim),inset -.5px 0 0 var(--lamp-rim),inset 0 -.5px 0 var(--lamp-rim)}
+.lights i{width:1.95cqw;height:1.95cqw;border-radius:50%;background:linear-gradient(var(--lamp) 30%,var(--lamp-low) 75%,var(--lamp-edge));box-shadow:inset .5px 0 0 var(--lamp-rim),inset -.5px 0 0 var(--lamp-rim),0 calc(.5 * var(--pt)) calc(1.5 * var(--pt)) color-mix(in srgb,var(--lamp) 35%,transparent)}
 .lights i:nth-child(1){--lamp:#ea7468;--lamp-low:#e8928b;--lamp-edge:#e0857c;--lamp-rim:#b40a09}
 .lights i:nth-child(2){--lamp:#efbb50;--lamp-low:#f7d563;--lamp-edge:#e8c55d;--lamp-rim:#90200b}
 .lights i:nth-child(3){--lamp:#7cca4a;--lamp-low:#a6d989;--lamp-edge:#97ca7b;--lamp-rim:#09530a}
-.inactive .lights i{background:var(--lamp-off);box-shadow:inset 0 0 0 .5px var(--lamp-off-rim)}
+.inactive .lights i{background:var(--lamp-off);box-shadow:inset .5px 0 0 var(--lamp-off-rim),inset -.5px 0 0 var(--lamp-off-rim)}
+
+/* Window shadows, fitted to live macOS 27 captures (2x, measured edge-outward):
+   active  — a 0.5 pt outline at 37 % black, then a neutral black shadow, 32 % peak,
+             σ 17 pt, 8 pt down; inactive — outline 28 %, a lighter, shorter shadow.
+   Each scene sets --pt: how wide one real point is in that drawing (its 14 pt lamps). */
+.stage{--pt:.139cqw}
+.mini{--pt:.243cqw}
+.page{--pt:.107cqw}
+.win,.mini-win,.panel{--win-shadow:drop-shadow(0 0 .5px var(--win-edge)) drop-shadow(0 calc(8 * var(--pt)) calc(17 * var(--pt)) var(--win-drop))}
+.win-draft,.stage-pin.draft-front .pin-source,.stage-pin:not(.draft-front) .pin-work{--win-shadow:drop-shadow(0 0 .5px var(--win-edge-off)) drop-shadow(0 calc(3 * var(--pt)) calc(8 * var(--pt)) var(--win-drop-off))}
 
 /* Hero desktop: a draft behind, a reference in front. */
 .win-draft{left:27%;top:17%;width:66%;height:72%;display:flex;flex-direction:column}
 .win-draft .win-body{flex:1}
 .win-draft h3{font-size:5.4cqw}
-.win-draft .lights i{background:var(--lamp-off);box-shadow:inset 0 0 0 .5px var(--lamp-off-rim)}
+.win-draft .lights i{background:var(--lamp-off);box-shadow:inset .5px 0 0 var(--lamp-off-rim),inset -.5px 0 0 var(--lamp-off-rim)}
 .win-draft .win-bar{color:var(--win-muted)}
-.win-ref{left:7%;top:11%;width:55%;z-index:2;touch-action:none}
+.win-ref{left:7%;top:11%;width:55%;z-index:2}
+/* Only the bar is a drag handle: a swipe that starts on the window body still scrolls the page. */
+.win-ref .win-bar{touch-action:none}
 .win-ref .win-bar{cursor:default}
 .win-ref h3{font-size:4.3cqw}
 .win-ref .win-body{min-height:38cqw;background:var(--blue-soft);color:var(--blue-text);clip-path:inset(0 0 0 0);transition:clip-path .52s var(--ease-roll)}
@@ -174,7 +186,7 @@ html[lang=zh-CN] .hero-intro{line-height:1.85}
 .way-no{display:block;font:500 12px/1 ui-monospace,SFMono-Regular,Menlo,monospace;color:var(--faint);letter-spacing:.08em;margin-bottom:12px}
 .way-text p{font-size:15px;line-height:1.75;color:var(--muted);margin-top:8px;max-width:22em}
 .way[data-way=shade] h3{color:var(--accent)}
-.mini{position:relative;container-type:inline-size;aspect-ratio:1.45;border-radius:18px;overflow:hidden;background:var(--wall);box-shadow:0 0 0 1px var(--hair)}
+.mini{position:relative;cursor:pointer;container-type:inline-size;aspect-ratio:1.45;border-radius:18px;overflow:hidden;background:var(--wall);box-shadow:0 0 0 1px var(--hair)}
 .mini-win{position:absolute;left:18%;top:14%;width:64%;filter:var(--win-shadow);transform-origin:50% 100%;transition:transform .5s var(--ease-roll),opacity .3s var(--ease-out)}
 .mini-bar{display:flex;align-items:center;height:9cqw;padding:0 3.4cqw;background:var(--win-bar);border-radius:4.4cqw 4.4cqw 0 0;box-shadow:inset 0 -.5px 0 var(--win-line);transition:border-radius .1s .32s}
 .mini-bar .lights{gap:2cqw}
@@ -256,7 +268,7 @@ html[lang=zh-CN] .today .lead{max-width:34em}
 .pin-work .win-body{flex:1}
 .pin-work .win-body p{font-size:2.3cqw;margin-top:0;color:var(--win-ink)}
 .stage-pin.draft-front .pin-work{z-index:3}
-.stage-pin.draft-front .pin-source .lights i,.stage-pin:not(.draft-front) .pin-work .lights i{background:var(--lamp-off);box-shadow:inset 0 0 0 .5px var(--lamp-off-rim)}
+.stage-pin.draft-front .pin-source .lights i,.stage-pin:not(.draft-front) .pin-work .lights i{background:var(--lamp-off);box-shadow:inset .5px 0 0 var(--lamp-off-rim),inset -.5px 0 0 var(--lamp-off-rim)}
 .stage-pin.draft-front .pin-source .win-bar,.stage-pin:not(.draft-front) .pin-work .win-bar{color:var(--win-muted)}
 .stage-pin.has-pin .pin-source{z-index:4}
 .stage-pin.has-pin .pin-source{outline:.36cqw solid var(--accent);outline-offset:.3cqw;border-radius:2.6cqw}
@@ -313,18 +325,23 @@ html[lang=zh-CN] .today .lead{max-width:34em}
 .motion-heading{max-width:680px;margin:0 auto 56px;text-align:center}
 .motion-heading .lead{margin-inline:auto;max-width:32em}
 
-/* Lid illustration. The page hinges on its bottom edge and tips back behind the glass,
-   with the app's own fold optics: focal length 2.25 page heights, and per style a fold
-   angle of 0.30 / 0.45 / 0.65 rad with rising defocus and dimming. */
+/* Lid illustration. The desktop stays put while the glass closes over it, drawn with the
+   app's own fold optics (app.js sets --fold, --blur-top and the shade stops each frame).
+   Blur and dimming grow from the hinge toward the top, as in Duo.metal. */
 .lid-figure{max-width:880px;margin:auto}
-.laptop{--lid:0;--e:0;--angle:26deg;--blur:1.1cqw;--dim:.5;width:min(780px,100%);margin:auto;perspective:2400px;perspective-origin:50% -30%}
-.laptop[data-preset=silk]{--angle:17deg;--blur:.7cqw;--dim:.38}
-.laptop[data-preset=frost]{--angle:37deg;--blur:1.8cqw;--dim:.62}
+.laptop{--lid:0;width:min(780px,100%);margin:auto;perspective:2400px;perspective-origin:50% -30%}
 .lid{width:88%;margin:auto;transform-origin:50% 100%;transform:rotateX(calc(var(--lid) * -62deg))}
 .bezel{padding:1.8% 1.8% 2.6%;border-radius:22px 22px 8px 8px;background:#0b0b0d;box-shadow:inset 0 0 0 1.5px #26272b,0 0 0 1px #45474d,0 -1px 0 1px #1b1c1f}
 .glass{position:relative;aspect-ratio:1.6;overflow:hidden;border-radius:10px 10px 3px 3px;background:#050506;container-type:inline-size}
 .glass::after{content:"";position:absolute;inset:0;background:linear-gradient(115deg,rgba(255,255,255,.07) 0%,transparent 38%);pointer-events:none}
-.page{position:absolute;inset:0;background:var(--wall);transform-origin:50% 100%;transform:perspective(140cqw) rotateX(calc(var(--e) * var(--angle)));filter:blur(calc(var(--e) * var(--blur))) brightness(calc(1 - var(--e) * var(--dim)))}
+.page{position:absolute;inset:0;background:var(--wall);transform-origin:0 0;transform:var(--fold,none)}
+.depth{position:absolute;inset:0;pointer-events:none;display:none}
+.laptop.is-folding .depth{display:block}
+.depth>i{position:absolute;inset:0}
+.depth>i:nth-child(1){filter:blur(calc(var(--blur-top,0px) / 3));-webkit-mask:linear-gradient(to top,transparent,#000 20%);mask:linear-gradient(to top,transparent,#000 20%)}
+.depth>i:nth-child(2){filter:blur(calc(var(--blur-top,0px) * 2 / 3));-webkit-mask:linear-gradient(to top,transparent 15%,#000 50%);mask:linear-gradient(to top,transparent 15%,#000 50%)}
+.depth>i:nth-child(3){filter:blur(var(--blur-top,0px));-webkit-mask:linear-gradient(to top,transparent 45%,#000 85%);mask:linear-gradient(to top,transparent 45%,#000 85%)}
+.depth>b{position:absolute;inset:0;background:linear-gradient(to top,rgb(0 0 0/var(--shade-hinge,0)),rgb(0 0 0/var(--shade-top,0)))}
 .page .stage-menubar{height:3.4cqw;font-size:1.45cqw}
 .page .win-draft{left:30%;top:16%;width:58%;height:70%}
 .page .win-draft h3{font-size:4.2cqw}
@@ -390,11 +407,20 @@ details>p{font-size:15px;line-height:1.85;color:var(--muted);padding-bottom:24px
   .js [data-reveal]{opacity:0;transform:translateY(16px);transition:opacity .7s var(--ease-out),transform .7s var(--ease-out)}
   .js [data-reveal].is-in{opacity:1;transform:none}
 }
+/* Reduce Motion keeps every state change, and trades travel for a short cross-fade:
+   the window and tiles still show what happened, nothing slides or flies. */
 @media(prefers-reduced-motion:reduce){
   html{scroll-behavior:auto}
-  *,*::before,*::after{animation:none!important;transition-duration:.01ms!important;transition-delay:0s!important}
-  .stage-browse .panel{transition:opacity .2s!important}
+  *,*::before,*::after{animation:none!important;transition-delay:0s!important}
   .roller,.mini-roll{display:none}
+  .win-ref .win-body,.mini-body{transition:opacity .25s ease!important;clip-path:none!important}
+  .stage.is-folded .win-ref .win-body,.way.play[data-way=shade] .mini-body{opacity:0}
+  .mini-win{transition:opacity .25s ease!important}
+  .way.play[data-way=minimize] .mini-win{transform:none;opacity:0}
+  .way.play[data-way=close] .mini-win{transform:none}
+  .stage-browse .panel{transition:opacity .2s!important;scale:1!important}
+  .js [data-reveal]{transform:none!important;transition:opacity .4s ease!important}
+  .reference,.win-ref,.stage-pin .win,.lid,.page,.button,.chip{transition:none!important}
 }
 @media(prefers-reduced-transparency:reduce){
   .header{background:var(--bg);backdrop-filter:none;-webkit-backdrop-filter:none}
@@ -435,6 +461,7 @@ details>p{font-size:15px;line-height:1.85;color:var(--muted);padding-bottom:24px
   .win-draft{left:20%;width:75%;top:24%;height:68%}
   .win-bar{height:6.4cqw;font-size:2.6cqw}
   .lights i{width:2.6cqw;height:2.6cqw}
+  .stage{--pt:.186cqw}
   .win-body{padding:5cqw}
   .win-kicker{font-size:2.4cqw}
   .win-body p{font-size:2.6cqw}

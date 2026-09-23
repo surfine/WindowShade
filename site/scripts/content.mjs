@@ -106,8 +106,8 @@ export const copy = {
     browseCaption: '网页示意，不会碰你电脑上的窗口。面板是临时的：不替换系统 Dock，也不接管 Command-Tab。',
 
     motionKicker: '彩蛋',
-    motionTitle: '合上盖子，<br>桌面也跟着合上。',
-    motionBody: '在带铰链传感器的 Apple Silicon MacBook 上，合盖时，整张桌面像一页纸跟着屏幕往后倒，越倒越暗、越模糊；开盖，它又立回来。它只是个彩蛋，收起窗口和置顶都用不着它。',
+    motionTitle: '合上盖子，<br>桌面留在原处。',
+    motionBody: '在带铰链传感器的 Apple Silicon MacBook 上，合盖时，屏幕合下来，桌面却像一页纸留在原处，越往上越暗、越模糊；开盖就复原。它只是个彩蛋，收起窗口和置顶都用不着它。',
     lidLabel: '网页示意：一台 MacBook，屏幕上是桌面',
     lidPresetsLabel: '效果质感',
     lidPresets: ['轻柔', '标准', '磨砂'],
@@ -235,8 +235,8 @@ export const copy = {
     browseCaption: 'A browser illustration — it won’t touch your Mac’s windows. The panel is temporary: it does not replace the Dock or take over Command-Tab.',
 
     motionKicker: 'An extra',
-    motionTitle: 'Close the lid,<br>and the desktop closes with it.',
-    motionBody: 'On an Apple Silicon MacBook with a hinge sensor, the whole desktop tips back like a page as you close the lid, dimming and blurring the further it goes. Open the lid and it stands back up. It’s only an extra: rolling up and pinning work without it.',
+    motionTitle: 'Close the lid,<br>and the desktop stays put.',
+    motionBody: 'On an Apple Silicon MacBook with a hinge sensor, the screen closes but the desktop seems to stay where it was, like a page behind glass, growing darker and blurrier toward the top. Open the lid and it’s back. It’s only an extra: rolling up and pinning work without it.',
     lidLabel: 'Browser illustration: a MacBook showing a desktop',
     lidPresetsLabel: 'Effect style',
     lidPresets: ['Gentle', 'Standard', 'Frosted'],

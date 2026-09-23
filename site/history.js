@@ -14,6 +14,17 @@
  pixelSurfaces.forEach(surface=>pixelResize.observe(surface));
  const t = (zh, eng) => en ? eng : zh;
  const $ = id => document.getElementById(id);
+ // Touch browsers do not reliably send dblclick (iOS Safari least of all): count two quick taps
+ // in the same spot ourselves. Mouse users keep the native dblclick.
+ const onDoubleTap = (el, fn, ignore = () => false) => {
+  let last = { t: 0, x: 0, y: 0 };
+  el.addEventListener('pointerup', e => {
+   if (e.pointerType === 'mouse' || ignore()) return;
+   const now = performance.now();
+   if (now - last.t < 350 && Math.hypot(e.clientX - last.x, e.clientY - last.y) < 24) { last.t = 0; fn(); return; }
+   last = { t: now, x: e.clientX, y: e.clientY };
+  });
+ };
  const pressed = (selector, active) => document.querySelectorAll(selector).forEach(b => b.setAttribute('aria-pressed', String(b === active)));
  const spaceText = {
   open:t('选一种办法，把参考资料挪开。','Pick a way to move the reference aside.'),
@@ -106,6 +117,7 @@
  $('platinum-collapse').addEventListener('click',togglePlatinum);
  // 1997 年的手势本身就是双击标题栏；拖动过的这一次不算双击。
  platinumBar.addEventListener('dblclick',()=>{if(!dragMoved)togglePlatinum();});
+ onDoubleTap(platinumBar,togglePlatinum,()=>dragMoved);
  platinumBar.addEventListener('pointerdown',e=>{
   if(e.target.closest('button'))return;
   const at=platinumOffset();
@@ -128,6 +140,7 @@
  function toggleSticky(){stickyFolded=!stickyFolded;$('sticky-note').classList.toggle('folded',stickyFolded);$('sticky-bar').setAttribute('aria-expanded',String(!stickyFolded));$('sticky-content').setAttribute('aria-hidden',String(stickyFolded));$('sticky-toggle').textContent=t(stickyFolded?'展开这张便笺 ↕':'试着收起这张便笺 ↕',stickyFolded?'Expand this note ↕':'Collapse this note ↕');}
  $('sticky-toggle').addEventListener('click',toggleSticky);
  $('sticky-bar').addEventListener('dblclick',toggleSticky);
+ onDoubleTap($('sticky-bar'),toggleSticky);
  $('sticky-bar').addEventListener('click',e=>{if(e.detail===0)toggleSticky();});
  const machineSize = new ResizeObserver(() => {
   const screen=$('machine-screen');
