@@ -52,7 +52,7 @@
  function preferenceMessage() {
   const {count, modifiers}=getPreference();
   const names={meta:'⌘',alt:'Option',ctrl:'Control'};
-  return count===0?t('已关闭。点击标题栏不会折叠。','Off. Title-bar clicks will not collapse the window.'):
+  return count===0?t('已关闭。点击标题栏不会收起。','Off. Title-bar clicks will not collapse the window.'):
    t(`当前：${modifiers.length ? '按住 '+modifiers.map(k=>names[k]).join(' + ')+'，':''}连续点击 ${count} 次。`,`Current: ${modifiers.length ? 'hold '+modifiers.map(k=>names[k]).join(' + ')+' and ':''}click ${count} times in succession.`);
  }
  function toggleGesture() {
@@ -172,4 +172,23 @@
  });
  // The provider's auto_pause handles both viewport and page visibility, including resume.
  window.addEventListener('pagehide',()=>{stopMachine(false);audioContext?.close().catch(()=>{});});
+})();
+
+// Reading progress: how far through the essay (not the sources) the reader is.
+(() => {
+ const bar = document.querySelector('.read-progress');
+ const article = document.querySelector('main article');
+ if (!bar || !article) return;
+ let frame = 0;
+ function update() {
+  frame = 0;
+  const r = article.getBoundingClientRect();
+  const total = r.height - innerHeight;
+  const read = total > 0 ? Math.min(1, Math.max(0, -r.top / total)) : 0;
+  bar.style.setProperty('--read', read.toFixed(4));
+ }
+ const schedule = () => { if (!frame) frame = requestAnimationFrame(update); };
+ addEventListener('scroll', schedule, { passive: true });
+ addEventListener('resize', schedule);
+ update();
 })();
