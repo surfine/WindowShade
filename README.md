@@ -68,11 +68,11 @@ Roll up, and a window stays where it was. Pin, and it stays in front. Browse, an
 
 You can also open it from Choose window… in the menu bar, or with a hot key you set. The Dock entry is off by default; turn it on in Settings → Window browsing. The panel is temporary: it does not replace the Dock or take over Command-Tab. Details are in the [window browsing notes](docs/window-browser.md).
 
-**An extra: close the lid, and the desktop closes with it.**
+**An extra: close the lid, and the desktop stays put.**
 
-<img src="assets/windowshade-lid-en.gif" alt="As the MacBook lid closes, the desktop tips back like a page, dimming and blurring" width="620">
+<img src="assets/windowshade-lid-en.gif" alt="As the MacBook lid closes, the desktop seems to stay where it was, darker and blurrier toward the top" width="620">
 
-On an Apple Silicon MacBook with a hinge sensor, the whole desktop tips back like a page as you close the lid, dimming and blurring the further it goes. Open the lid and it stands back up. There are three styles: gentle, standard and frosted. It’s only an extra: rolling up and pinning work without it.
+On an Apple Silicon MacBook with a hinge sensor, the screen closes but the desktop seems to stay where it was, like a page behind glass, growing darker and blurrier toward the top. Open the lid and it’s back. There are three styles: gentle, standard and frosted. It’s only an extra: rolling up and pinning work without it.
 
 ## Four shortcuts. That’s all.
 
