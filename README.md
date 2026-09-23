@@ -2,120 +2,102 @@
 
 <img src="assets/app-icon/windowshade-app-icon.png" alt="WindowShade" width="112">
 
-<samp>A CLASSIC MAC GESTURE, BACK IN PLACE.</samp>
-
 # WindowShade
 
-**Make room. Keep your place.**<br>
-Roll a window up to its title bar. Bring it back where you left it.<br>
-A native macOS menu bar utility, with pinned previews and lid-driven desktop effects.
+**Roll it up. Keep its place.**<br>
+Double-click a title bar and the window rolls up into a thin bar, right where it was.<br>
+Double-click again and it’s back. A free, open-source window utility for Mac.
 
 [![Release](https://img.shields.io/github/v/release/surfine/WindowShade?style=flat-square&color=303b49)](https://github.com/surfine/WindowShade/releases/latest)
 [![macOS](https://img.shields.io/badge/macOS-14%2B-303b49?style=flat-square)](#download)
 [![Apple Silicon](https://img.shields.io/badge/download-Apple%20Silicon-303b49?style=flat-square)](#download)
 [![License](https://img.shields.io/badge/license-MIT-303b49?style=flat-square)](LICENSE)
 
-[**DOWNLOAD**](https://github.com/surfine/WindowShade/releases/latest) · [**PRODUCT SITE**](https://windowshade.pages.dev/en/) · [**INTERACTIVE HISTORY**](https://windowshade.pages.dev/en/history/) · [简体中文](README_CN.md)
+[**Download for Mac**](https://github.com/surfine/WindowShade/releases/latest) · [**Website**](https://windowshade.pages.dev/en/) · [**Window stories**](https://windowshade.pages.dev/en/history/) · [简体中文](README_CN.md)
 
-![WindowShade's desktop effect responding as the MacBook lid closes](assets/windowshade-demo.gif)
+<picture>
+  <source media="(prefers-color-scheme: dark)" srcset="assets/readme-desk-en-dark.png">
+  <img src="assets/readme-desk-en.png" alt="The Reference window rolled up into a thin bar where it was, uncovering the draft behind it" width="720">
+</picture>
 
-<sub>A REAL CAPTURE OF THE LID-DRIVEN DESKTOP EFFECT. WINDOW FOLDING ALSO WORKS WITH A SHORTCUT OR TITLE-BAR GESTURE.</sub>
+<sub>The interactive illustration from the website: Reference rolls up, and the draft behind it shows through. <a href="https://windowshade.pages.dev/en/">Try it yourself →</a></sub>
 
 </div>
 
-## A little less window. The same place.
+## Three ways to move a window aside. Only one never makes you look for it.
 
-A reference document covers the draft you are writing. You need the space for a moment, and you want to remember where that document was.
+When a window covers something, you probably close it or minimize it. Both work. Getting it back just takes a little effort.
 
-WindowShade leaves a slim strip on the desktop with the window's title and a way back. Double-click the strip to restore the window. Drag the strip, and the window opens at its new position. It keeps the small spatial cues that make a busy desktop feel like your own.
-
-## What's new in 1.0.14
-
-- **One appearance policy, every surface.** Strips, hover thumbnails, pinned previews, the browsing panel, settings and onboarding all read the same system appearance policy. Dynamic colours are resolved inside each view's own appearance, so a light row can no longer end up on a dark panel — and the classic strip recomputes its palette when the system switches.
-- **The AppKit contracts a menu bar app still owes.** A real main menu (⌘X/⌘C/⌘V/⌘A/⌘Z, ⌘W, About), cooperative activation, panels that opt out of system tabbing, and settings deep links that prefer the modern ExtensionKit panes.
-- **Accessibility you can actually use.** Cards, rows, strips and previews share one capability model for labels, values, help and custom actions; VoiceOver focus follows arrow keys and search, and VoiceOver-Space takes the same path as a click.
-- **Space takes a look.** A read-only large preview of the window you picked, without activating, unfolding or moving it; click or Escape to close, with layered Escape for the arrangement preview and the panel.
-- **Still fast, and honest about it.** 120 windows fill and lay out in 24.2 / 30.4 ms (p50/p95) against a 271.8 / 342.8 ms baseline measured back to back in the same session, and warm refreshes stay inside the 4 ms p95 budget.
-- **Corners that match the system.** One radius scale for every custom surface — 13 pt for windows and panels (measured on a real macOS 27 window), 12 pt for cards, 6 pt for controls, always with continuous curvature — and thumbnails follow the HIG concentric rule inside their card. The rolled-up strip now keeps rounded top corners with a straight bottom cut, like the window it replaces.
-- **The panel hugs its content, and the Dock icon.** Titles take the height they actually need, the status line only exists when a window has one, and the actions float over the picture instead of holding a row of their own. A single-window Dock panel is 312 × 236 pt — 12 pt of padding under the card, against the 312 × 329 pt of 1.0.13. Under a bottom Dock the panel sits 4 pt above the icon and keeps a 38 pt band at its foot, which is where the system's own app-name bubble lands; once that bubble fades, the panel's label takes its place, so the name is never written twice. Panels opened from the menu or a hot key keep the full header.
-- **Liquid Glass, used the way the HIG prescribes.** The panel keeps exactly one `NSGlassEffectView` (the `regular` variant Apple prescribes for text-heavy popovers), with no second glass stacked on the control layer, and the cards and list rows use a standard content-layer material instead of glass. The glass is never tinted, takes the system's own window shadow so the corners of the shadow match the corners of the glass, and the deployment target stays macOS 14 with opaque, high-contrast and reduced-motion fallbacks.
-
-[Release notes and downloads →](https://github.com/surfine/WindowShade/releases/tag/v1.0.14)
-
-## Four ways to make room
-
-| | What it does | A useful moment |
+| | Where the window goes | Getting it back |
 | --- | --- | --- |
-| **Roll up a window** | `⌃⌘C` or double-click the title bar. Keep a strip in place; double-click it to unfold. Choose a captured top region or a standard title bar. | Move a reference out of the way without losing its place. |
-| **Pin a preview** | `⌃⌘P` creates a floating live view of a window. Its capture rate drops while idle. | Keep a reference, mirror, or dashboard visible beside your work. |
-| **Browse a Dock icon** | Hover an app icon in the Dock for a panel of that app's real windows — thumbnail cards or compact rows, with search and per-window actions. The menu's **Choose window…**, or your own hot key, opens the same panel in keyboard mode. Off by default. | Find the window you half-remember, without hunting through the app. |
-| **Feel the lid move** | On a supported MacBook, the desktop rolls, recedes, or blurs as the lid moves. Silk, Shade, and Frost finishes; adjustable trigger and a scrubbable preview. | A small physical connection between the computer and its screen. |
+| **Close** | It’s gone | Open it again, then find your place again |
+| **Minimize** | Into the Dock | Spot it in the Dock first |
+| **Roll up** | A thin bar, right where it was | Double-click the bar |
 
-Window folding animations accompany manual fold and unfold actions. The lid sensor drives the desktop effect. Experimental device tilt adds a small parallax when the Mac exposes the required sensor.
+Unlike minimizing, the window never leaves the desktop. Drag the bar somewhere else and the window opens there.
 
-Window browsing is a temporary panel: it does not replace the system Dock or take over the native Command-Tab.
+## This double-click is older than your Mac
 
-## Native where you use it
+In the ’90s, most Mac users knew this trick. Then the system changed course, sent windows to the Dock, and the trick was slowly forgotten. We wrote its story as a long read you can operate, **[Window stories](https://windowshade.pages.dev/en/history/)**: seven chapters, four hands-on experiments, 14 primary sources.
 
-<picture>
-  <source media="(prefers-color-scheme: dark)" srcset="assets/windowshade-settings-dark.png">
-  <img src="assets/windowshade-settings.png" alt="WindowShade's native settings: a sidebar, paper preview, and controls for dynamic effects" width="100%">
-</picture>
+1. [Don’t close it yet](https://windowshade.pages.dev/en/history/#space): one desktop, three arrangements, side by side
+2. [A small utility](https://windowshade.pages.dev/en/history/#origin): a 1994 user-group newsletter
+3. [Two clicks or three](https://windowshade.pages.dev/en/history/#preference): change the old control panel yourself
+4. [A button for it](https://windowshade.pages.dev/en/history/#button): drag a rolled-up window somewhere new
+5. [Off to the Dock](https://windowshade.pages.dev/en/history/#departure): the Dock, Exposé and Mission Control
+6. [Still in use](https://windowshade.pages.dev/en/history/#survival): Stickies still keeps the trick
+7. [Back to today](https://windowshade.pages.dev/en/history/#return): an old gesture on today’s desk
 
-<sub>REAL APPKIT SETTINGS, SHOWN IN YOUR GITHUB THEME. CAPTURED IN THE ISOLATED DESIGN PREVIEW; SENSORS ARE NOT RUNNING IN THIS IMAGE.</sub>
+Then [boot an old Mac](https://windowshade.pages.dev/en/history/#lab) — System 7.5, Mac OS 8 or Mac OS X 10.1, run by [Infinite Mac](https://infinitemac.org/) — and find the setting through the original menus yourself.
 
-Effects, Shading, Permissions & Startup, and Advanced keep related controls together. The menu bar holds your window list and the controls you need during work. There is no Dock icon.
+Today’s WindowShade is an independent Swift / AppKit app: the old name and the old idea, with code written from scratch. It is not an Apple product, and it uses no code from Rob Johnston, Apple, or Unsanity’s WindowShade X.
 
-## An old idea worth keeping
+## Beyond the old gesture, it keeps track of every window
 
-The useful part of window shading is **continuity**: contents can move out of sight while their place stays visible. A small gesture can be a preference. A folded window can still tell you what it holds.
+Roll up, and a window stays where it was. Pin, and it stays in front. Browse, and you find it from the Dock. All three answer one question: where is the window you need?
 
-| A few stops in the archive | What to look for |
+**Roll up.** Double-click a title bar or press `⌃⌘C` and the window rolls up into a thin bar; double-click the bar to unroll it. Rest the pointer on the bar for a quick look at the window. The bar can keep the window’s own look, or use one consistent title bar.
+
+**Pin.** Writing from notes, or following a tutorial step by step? Press `⌃⌘P` to pin that window, and it stays uncovered while you switch to anything else. The menu bar lists every pinned window and can unpin them all at once.
+
+**Window browsing.** Rest the pointer on an app’s icon in the Dock and every window that app has open is listed, each with a picture and a title.
+
+- The panel is for looking. A window changes only when you press a button on its card.
+- Select a window and press Space for a large preview. The window isn’t brought forward or moved.
+- Left half, right half, a corner, centred, full, or another display: it shows where the window will go and moves it only when you agree. You can undo afterwards.
+
+You can also open it from Choose window… in the menu bar, or with a hot key you set. The Dock entry is off by default; turn it on in Settings → Window browsing. The panel is temporary: it does not replace the Dock or take over Command-Tab. Details are in the [window browsing notes](docs/window-browser.md).
+
+**An extra: close the lid, and the desktop closes with it.**
+
+<img src="assets/windowshade-lid-en.gif" alt="As the MacBook lid closes, the desktop tips back like a page, dimming and blurring" width="620">
+
+On an Apple Silicon MacBook with a hinge sensor, the whole desktop tips back like a page as you close the lid, dimming and blurring the further it goes. Open the lid and it stands back up. There are three styles: gentle, standard and frosted. It’s only an extra: rolling up and pinning work without it.
+
+## Four shortcuts. That’s all.
+
+| Shortcut | What it does |
 | --- | --- |
-| **1994 · A small utility** | A January Mini’app’les newsletter lists WindowShade 1.2, credited to Rob Johnston / Interactive Technologies, with a 1989–92 copyright range. That range is not a verified first-release date. |
-| **System 7.5 · A personal rhythm** | The control panel offers two or three clicks, modifier keys, and sound. |
-| **Mac OS 8 · A visible control** | A dedicated collapse box makes the action part of the window frame. |
-| **Mac OS X and beyond · Other ways to make room** | The Dock, later Exposé, third-party utilities, and the surviving roll-up behavior in Stickies tell different parts of the story. |
+| `⌃⌘C` | Roll up or unroll the current window |
+| `⌃⌘P` | Pin or unpin the current window |
+| `⌃⌘1…9` | Unroll a rolled-up window, in menu order |
+| `⌃⌘0` | Line up the bars, or switch to a focus layout |
 
-[**Explore the illustrated, source-linked history →**](https://windowshade.pages.dev/en/history/)
-
-Try the reconstructed controls, compare folding with minimizing, or boot System 7.5, Mac OS 8.0, and Mac OS X 10.1 through [Infinite Mac](https://infinitemac.org/). Reconstructions are identified as such, and original sources are linked beside the story.
-
-Today's WindowShade is an **independent Swift / AppKit implementation**, inspired by that interaction. It is not a continuation of Rob Johnston's code, Apple's implementation, or Unsanity's WindowShade X. The [original design and research notes](WindowShade.md) remain in the repository; the interactive essay carries later source corrections.
+Double-click a title bar to roll up; double-click the bar to unroll. Every shortcut can be changed or turned off in Settings, and if another app already uses a combination, WindowShade tells you once.
 
 ## Download
 
-Get **WindowShade-v1.0.14.zip** from [Releases](https://github.com/surfine/WindowShade/releases/latest), unzip it, move `WindowShade.app` to Applications, and open it. It appears in the menu bar.
+Get the latest ZIP from [Releases](https://github.com/surfine/WindowShade/releases/latest), unzip it, drag `WindowShade.app` into Applications and open it, then follow the permission prompts. It lives in the menu bar and stays out of your Dock.
 
-- **macOS 14+ · Apple Silicon.** The downloadable build is arm64; an Intel binary is not included.
-- **Apple Development signed, not notarized.** If macOS blocks the first launch, use its **System Settings → Privacy & Security → Open Anyway** flow for the app you downloaded. Do not disable Gatekeeper.
-- The bundle identifier and signing identity are retained for upgrades. macOS may still ask for permissions again depending on the installation and system state.
-- Each release includes a SHA-256 checksum alongside the zip.
+- **Needs macOS 14 or later and Apple Silicon.** There’s no Intel build.
+- **Not notarized yet.** If macOS blocks the first launch, go to System Settings → Privacy & Security and choose Open Anyway. You don’t need to turn off any system security.
+- Every release comes with a SHA-256 checksum. For what changed in each version, see the [release notes](https://github.com/surfine/WindowShade/releases).
 
-## Shortcuts
+## Your windows stay on your Mac
 
-| Action | Shortcut / gesture |
-| --- | --- |
-| Fold or unfold the current window | `⌃⌘C` |
-| Roll up a specific window | Double-click its title bar |
-| Restore a folded window | Double-click its strip |
-| Preview a folded window | Hover; captured strips also reveal a preview on click |
-| Pin or unpin the current window | `⌃⌘P` |
-| Unfold by menu order | `⌃⌘1…9` |
-| Arrange strips / focus layout | `⌃⌘0` |
-| Open the window browser | Menu → “选择窗口…” (Choose Window…); no shortcut by default |
+WindowShade asks for two permissions. **Accessibility**: finding, moving and restoring windows. **Screen Recording**: taking the window pictures used for previews. “Screen Recording” is just the name the system gives that permission — everything is processed on your Mac and nothing is uploaded. If the app ever quits unexpectedly, your windows go back to how they were.
 
-These are the defaults. Settings → 快捷键 (Shortcuts) lets you re-record or turn off each one, and switch `⌃⌘1…9` on or off as a group. If another app already owns a combination, WindowShade says so once and drops it from the menu.
-
-## Permissions, recovery, and compatibility
-
-**Accessibility** finds, moves, focuses, and restores windows. **Screen Recording** supplies captured strips, previews, and effects. Live preview is off by default and checks recording access when enabled. Window contents are processed locally on your Mac.
-
-Before hiding a captured window, the app records recovery information. Restore checks and a persistent recovery journal help bring parked windows back after an interrupted session. Different apps need different hiding strategies, including offscreen placement, hiding, or minimizing; a strip is the visible interface to that work.
-
-Ordinary desktop windows are the main target. Custom toolbars can still need application-specific handling; full-screen, Split View, Stage Manager, Adobe workspaces, and multi-display arrangements have compatibility limits. Captured toolbar artwork does not make every pictured button interactive. [Report a reproducible window case](https://github.com/surfine/WindowShade/issues) with your macOS version, app version, and steps.
-
-The lid effect requires a supported hinge-angle sensor. Experimental tilt additionally requires the local AppleSPU accelerometer interface; unavailable hardware is shown as unavailable.
+Regular windows all roll up. Stickies rolls up in its own system way; apps like Adobe’s that draw their own title bars are handled separately. Full screen, Split View, Stage Manager and multiple displays still have a few gaps — try it once with the apps you use. If something goes wrong, please [report it](https://github.com/surfine/WindowShade/issues) with your macOS version, the app, and the steps.
 
 ## Build and contribute
 
@@ -129,19 +111,19 @@ cd WindowShade/prototype
 open WindowShade.app
 ```
 
-Set `WINDOWSHADE_CODESIGN_IDENTITY` or use an untracked `prototype/local-codesign.env`. This project uses a `swiftc` build script. See [DEVELOPMENT.md](DEVELOPMENT.md) for signing, isolated builds, and release instructions.
+Set `WINDOWSHADE_CODESIGN_IDENTITY` or use an untracked `prototype/local-codesign.env`. See [DEVELOPMENT.md](DEVELOPMENT.md) for signing, isolated builds, and release instructions; interface and website copy follows the [copy guide](docs/copy-guide.md).
 
 | In the repository | Purpose |
 | --- | --- |
 | [`prototype/`](prototype/) | Native app: window policies, capture, overlays, effects, and recovery |
 | [`tests/`](tests/) | State, recovery, frame, Metal, and paper-component checks |
-| [`site/`](site/) | Bilingual product site and interactive history, hosted on Cloudflare Pages |
+| [`site/`](site/) | Bilingual website and window stories, hosted on Cloudflare Pages |
 | [`docs/performance.md`](docs/performance.md) | Measurements and approaches that did or did not work |
 | [`docs/releases/`](docs/releases/) | Preserved release notes |
 | [`WindowShade.md`](WindowShade.md) | Original design rationale and research notes |
 
-For changes to window behavior, include the affected app and window type, what happened before and after, and the checks you ran. The existing compatibility and recovery boundaries matter more than a broad claim of support.
+For changes to window behavior, include the affected app and window type, what happened before and after, and the checks you ran.
 
 ## Credits and license
 
-[MIT](LICENSE) for this project's code. Historical names and software belong to their respective authors. The history experience credits [Infinite Mac](https://infinitemac.org/), Marcin Wichary's [Frame of preference](https://aresluna.org/frame-of-preference/), and [AI System 6](https://github.com/surfine/AI-System-6) for its era-rendering reference. Bundled font and reference-asset licenses are retained in [`site/public/fonts/`](site/public/fonts/).
+[MIT](LICENSE) for this project's code. Historical names and software belong to their respective authors. The window stories credit [Infinite Mac](https://infinitemac.org/), Marcin Wichary's [Frame of preference](https://aresluna.org/frame-of-preference/), and [AI System 6](https://github.com/surfine/AI-System-6) for its era-rendering reference. Bundled font and reference-asset licenses are retained in [`site/public/fonts/`](site/public/fonts/).
