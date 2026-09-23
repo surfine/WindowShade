@@ -40,12 +40,12 @@ Unlike minimizing, the window never leaves the desktop. Drag the bar somewhere e
 
 In the ’90s, most Mac users knew this trick. Then the system changed course, sent windows to the Dock, and the trick was slowly forgotten. We wrote its story as a long read you can operate, **[Window stories](https://windowshade.pages.dev/en/history/)**: seven chapters, four hands-on experiments, 14 primary sources.
 
-1. [Keeping a place](https://windowshade.pages.dev/en/history/#space): one desktop, three arrangements, side by side
-2. [A utility’s beginnings](https://windowshade.pages.dev/en/history/#origin): a 1994 user-group newsletter
-3. [A preference in the fingers](https://windowshade.pages.dev/en/history/#preference): change the old control panel yourself
-4. [A visible button](https://windowshade.pages.dev/en/history/#button): drag a rolled-up window somewhere new
-5. [Another destination](https://windowshade.pages.dev/en/history/#departure): the Dock, Exposé and Mission Control
-6. [Never quite gone](https://windowshade.pages.dev/en/history/#survival): Stickies still keeps the trick
+1. [Don’t close it yet](https://windowshade.pages.dev/en/history/#space): one desktop, three arrangements, side by side
+2. [A small utility](https://windowshade.pages.dev/en/history/#origin): a 1994 user-group newsletter
+3. [Two clicks or three](https://windowshade.pages.dev/en/history/#preference): change the old control panel yourself
+4. [A button for it](https://windowshade.pages.dev/en/history/#button): drag a rolled-up window somewhere new
+5. [Off to the Dock](https://windowshade.pages.dev/en/history/#departure): the Dock, Exposé and Mission Control
+6. [Still in use](https://windowshade.pages.dev/en/history/#survival): Stickies still keeps the trick
 7. [Back to today](https://windowshade.pages.dev/en/history/#return): an old gesture on today’s desk
 
 Then [boot an old Mac](https://windowshade.pages.dev/en/history/#lab) — System 7.5, Mac OS 8 or Mac OS X 10.1, run by [Infinite Mac](https://infinitemac.org/) — and find the setting through the original menus yourself.
