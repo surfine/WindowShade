@@ -3,6 +3,10 @@
    era.css owns the period pixels; this file owns layout and everything from today. */
 
 .history-page{--essay-serif:var(--serif);background:var(--bg)}
+/* Lamps here are drawn at 12 px for 14 pt: one point is .857 px. */
+.space-desk,.now-bar{--pt:.857px}
+.space-window,.now-bar{--win-shadow:drop-shadow(0 0 .5px var(--win-edge)) drop-shadow(0 calc(8 * var(--pt)) calc(17 * var(--pt)) var(--win-drop))}
+.space-draft{--win-shadow:drop-shadow(0 0 .5px var(--win-edge-off)) drop-shadow(0 calc(3 * var(--pt)) calc(8 * var(--pt)) var(--win-drop-off))}
 .essay-wide{width:min(1180px,calc(100% - 96px));margin-inline:auto}
 .essay-mid{width:min(920px,calc(100% - 96px));margin-inline:auto}
 .prose{width:min(680px,calc(100% - 48px));margin-inline:auto}
@@ -38,7 +42,7 @@ html[lang=zh-CN] .history-hero h1{letter-spacing:0;line-height:1.3}
 .now-bar>i:last-child{justify-self:end}
 .now-bar i{font-style:normal;color:var(--win-muted)}
 :is(.today-bar,.now-bar) .traffic{display:flex;gap:7px}
-:is(.today-bar,.now-bar) .traffic i{display:block;width:12px;height:12px;border-radius:50%;background:linear-gradient(var(--lamp) 30%,var(--lamp-low) 75%,var(--lamp-edge));box-shadow:inset .5px 0 0 var(--lamp-rim),inset -.5px 0 0 var(--lamp-rim),inset 0 -.5px 0 var(--lamp-rim)}
+:is(.today-bar,.now-bar) .traffic i{display:block;width:12px;height:12px;border-radius:50%;background:linear-gradient(var(--lamp) 30%,var(--lamp-low) 75%,var(--lamp-edge));box-shadow:inset .5px 0 0 var(--lamp-rim),inset -.5px 0 0 var(--lamp-rim),0 calc(.5 * var(--pt)) calc(1.5 * var(--pt)) color-mix(in srgb,var(--lamp) 35%,transparent)}
 :is(.today-bar,.now-bar) .traffic i:nth-child(1){--lamp:#ea7468;--lamp-low:#e8928b;--lamp-edge:#e0857c;--lamp-rim:#b40a09}
 :is(.today-bar,.now-bar) .traffic i:nth-child(2){--lamp:#efbb50;--lamp-low:#f7d563;--lamp-edge:#e8c55d;--lamp-rim:#90200b}
 :is(.today-bar,.now-bar) .traffic i:nth-child(3){--lamp:#7cca4a;--lamp-low:#a6d989;--lamp-edge:#97ca7b;--lamp-rim:#09530a}
@@ -276,6 +280,7 @@ html[lang=zh-CN] .ending p{font-size:24px;line-height:1.9}
   .today-bar{height:32px;min-height:32px;grid-template-columns:48px minmax(0,1fr) 48px;padding-inline:11px;font-size:12px}
   :is(.today-bar,.now-bar) .traffic{gap:6px}
   :is(.today-bar,.now-bar) .traffic i{width:10px;height:10px}
+  .space-desk{--pt:.714px}
   .space-content{height:220px;padding:24px}
   .space-content h3{font-size:28px}
   .space-content p{font-size:12px}
