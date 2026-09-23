@@ -313,18 +313,23 @@ html[lang=zh-CN] .today .lead{max-width:34em}
 .motion-heading{max-width:680px;margin:0 auto 56px;text-align:center}
 .motion-heading .lead{margin-inline:auto;max-width:32em}
 
-/* Lid illustration. The page hinges on its bottom edge and tips back behind the glass,
-   with the app's own fold optics: focal length 2.25 page heights, and per style a fold
-   angle of 0.30 / 0.45 / 0.65 rad with rising defocus and dimming. */
+/* Lid illustration. The desktop stays put while the glass closes over it, drawn with the
+   app's own fold optics (app.js sets --fold, --blur-top and the shade stops each frame).
+   Blur and dimming grow from the hinge toward the top, as in Duo.metal. */
 .lid-figure{max-width:880px;margin:auto}
-.laptop{--lid:0;--e:0;--angle:26deg;--blur:1.1cqw;--dim:.5;width:min(780px,100%);margin:auto;perspective:2400px;perspective-origin:50% -30%}
-.laptop[data-preset=silk]{--angle:17deg;--blur:.7cqw;--dim:.38}
-.laptop[data-preset=frost]{--angle:37deg;--blur:1.8cqw;--dim:.62}
+.laptop{--lid:0;width:min(780px,100%);margin:auto;perspective:2400px;perspective-origin:50% -30%}
 .lid{width:88%;margin:auto;transform-origin:50% 100%;transform:rotateX(calc(var(--lid) * -62deg))}
 .bezel{padding:1.8% 1.8% 2.6%;border-radius:22px 22px 8px 8px;background:#0b0b0d;box-shadow:inset 0 0 0 1.5px #26272b,0 0 0 1px #45474d,0 -1px 0 1px #1b1c1f}
 .glass{position:relative;aspect-ratio:1.6;overflow:hidden;border-radius:10px 10px 3px 3px;background:#050506;container-type:inline-size}
 .glass::after{content:"";position:absolute;inset:0;background:linear-gradient(115deg,rgba(255,255,255,.07) 0%,transparent 38%);pointer-events:none}
-.page{position:absolute;inset:0;background:var(--wall);transform-origin:50% 100%;transform:perspective(140cqw) rotateX(calc(var(--e) * var(--angle)));filter:blur(calc(var(--e) * var(--blur))) brightness(calc(1 - var(--e) * var(--dim)))}
+.page{position:absolute;inset:0;background:var(--wall);transform-origin:0 0;transform:var(--fold,none)}
+.depth{position:absolute;inset:0;pointer-events:none;display:none}
+.laptop.is-folding .depth{display:block}
+.depth>i{position:absolute;inset:0}
+.depth>i:nth-child(1){filter:blur(calc(var(--blur-top,0px) / 3));-webkit-mask:linear-gradient(to top,transparent,#000 20%);mask:linear-gradient(to top,transparent,#000 20%)}
+.depth>i:nth-child(2){filter:blur(calc(var(--blur-top,0px) * 2 / 3));-webkit-mask:linear-gradient(to top,transparent 15%,#000 50%);mask:linear-gradient(to top,transparent 15%,#000 50%)}
+.depth>i:nth-child(3){filter:blur(var(--blur-top,0px));-webkit-mask:linear-gradient(to top,transparent 45%,#000 85%);mask:linear-gradient(to top,transparent 45%,#000 85%)}
+.depth>b{position:absolute;inset:0;background:linear-gradient(to top,rgb(0 0 0/var(--shade-hinge,0)),rgb(0 0 0/var(--shade-top,0)))}
 .page .stage-menubar{height:3.4cqw;font-size:1.45cqw}
 .page .win-draft{left:30%;top:16%;width:58%;height:70%}
 .page .win-draft h3{font-size:4.2cqw}
