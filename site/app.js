@@ -187,10 +187,46 @@ if (laptop && lidRange && lidPlay) {
       v = (slope - frequency * (offset + slope * dt)) * decay;
     }
     laptop.style.setProperty('--lid', lid.toFixed(4));
-    laptop.style.setProperty('--e', Math.min(1, Math.max(0, e)).toFixed(4));
     if (playing || Math.abs(e - goal) > .0005 || Math.abs(v) > .002) frame = requestAnimationFrame(tick);
-    else { e = goal; v = 0; frame = 0; last = 0; laptop.style.setProperty('--e', e.toFixed(4)); }
+    else { e = goal; v = 0; frame = 0; last = 0; }
+    fold(Math.min(1, Math.max(0, e)));
   }
+  // The desktop stays where it was and the glass closes over it, as in Duo.metal: glass row d
+  // (0 at the hinge, 1 at the top) shows page row d·cos θ, magnified by f / (f − d·sin θ).
+  // That map is a plane-to-plane projection, so one matrix3d draws it exactly.
+  const optics = {
+    silk: { focal: 2.254, defocus: .10, dim: 11, base: .008, angle: .30 },
+    shade: { focal: 2.254, defocus: .12, dim: 15, base: .012, angle: .45 },
+    frost: { focal: 2.0, defocus: .16, dim: 19, base: .018, angle: .65 },
+  };
+  const glass = laptop.querySelector('.glass');
+  // Blur grows toward the top: three blurred copies of the page, each faded in over one band.
+  for (const layer of laptop.querySelectorAll('.depth > i')) layer.append(laptop.querySelector('.page').cloneNode(true));
+  function fold(amount) {
+    const o = optics[laptop.dataset.preset] || optics.shade;
+    const s = Math.sin(amount * o.angle), c = Math.cos(amount * o.angle), f = o.focal;
+    // Glass (u, v, 1) → page, v measured down from the top; inverted to draw the page on the glass.
+    const g = [f, .5 * s, -.5 * s, 0, .5 * s + c * f, f - .5 * s - c * f, 0, s, f - s];
+    const m = [
+      g[4] * g[8] - g[5] * g[7], g[2] * g[7] - g[1] * g[8], g[1] * g[5] - g[2] * g[4],
+      g[5] * g[6] - g[3] * g[8], g[0] * g[8] - g[2] * g[6], g[2] * g[3] - g[0] * g[5],
+      g[3] * g[7] - g[4] * g[6], g[1] * g[6] - g[0] * g[7], g[0] * g[4] - g[1] * g[3],
+    ].map(x => x / m0(g));
+    // Same map in CSS pixels of the glass (origin top-left).
+    const w = glass.clientWidth, h = glass.clientHeight;
+    if (!w || !h) return;
+    laptop.classList.toggle('is-folding', amount > 0);
+    const n = x => +x.toFixed(6);
+    laptop.style.setProperty('--fold', `matrix3d(${n(m[0])},${n(m[3] * h / w)},0,${n(m[6] / w)},${n(m[1] * w / h)},${n(m[4])},0,${n(m[7] / h)},0,0,1,0,${n(m[2] * w)},${n(m[5] * h)},0,${n(m[8])})`);
+    // Blur radius in page heights, as in the shader; it darkens the page by `dim` per unit.
+    // A Gaussian of 0.6 × that disk radius matches the app's own render (--duo-render-test).
+    const radius = d => o.defocus * (d * s + o.base * amount);
+    laptop.style.setProperty('--blur-top', `${(radius(1) * h * .6).toFixed(2)}px`);
+    laptop.style.setProperty('--shade-top', Math.min(1, o.dim * radius(1)).toFixed(3));
+    laptop.style.setProperty('--shade-hinge', Math.min(1, o.dim * radius(0)).toFixed(3));
+  }
+  const m0 = g => g[0] * (g[4] * g[8] - g[5] * g[7]) - g[1] * (g[3] * g[8] - g[5] * g[6]) + g[2] * (g[3] * g[7] - g[4] * g[6]);
+  new ResizeObserver(() => fold(Math.min(1, Math.max(0, e)))).observe(glass);
   const wake = () => { if (!frame) { last = 0; frame = requestAnimationFrame(tick); } };
   lidRange.addEventListener('input', () => { playing = null; lid = lidRange.valueAsNumber / 100; wake(); });
   function play() {
@@ -202,6 +238,7 @@ if (laptop && lidRange && lidPlay) {
   for (const button of document.querySelectorAll('.segmented-ctl button')) {
     button.addEventListener('click', () => {
       laptop.dataset.preset = button.dataset.preset;
+      fold(Math.min(1, Math.max(0, e)));
       for (const b of document.querySelectorAll('.segmented-ctl button')) b.setAttribute('aria-pressed', String(b === button));
       if (lid < trigger) play();
     });
