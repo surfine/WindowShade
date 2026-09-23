@@ -54,7 +54,6 @@ export const copy = {
       ['minimize', '最小化', '窗口进了 Dock。要用时，先在 Dock 里认出它。'],
       ['shade', '收起', '窗口收成一条卷帘条，还在原处。它在哪，一眼就知道。'],
     ],
-    waysReplay: '再看一遍',
     waysNote: '收起和最小化不一样：窗口不离开这张桌面。把卷帘条拖到别处，窗口就在新位置展开。',
 
     storyKicker: '窗口往事',
@@ -183,7 +182,6 @@ export const copy = {
       ['minimize', 'Minimize', 'It flies into the Dock. You have to spot it there first.'],
       ['shade', 'Roll up', 'It becomes a thin bar, right where it was. You always know where it is.'],
     ],
-    waysReplay: 'Play again',
     waysNote: 'Unlike minimizing, the window never leaves the desktop. Drag the bar somewhere else and the window opens there.',
 
     storyKicker: 'Window stories',

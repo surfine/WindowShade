@@ -29,7 +29,7 @@ const eraBar = (kind, label) => ({
   now: `<div class="now-bar"><span class="traffic"><i></i><i></i><i></i></span><b>${label}</b><i>⌃</i></div>`,
 }[kind]);
 const keys = (k) => k.split(' ').map(x => `<kbd>${x}</kbd>`).join('');
-const miniDesk = (kind) => `<div class="mini" data-way="${kind}" aria-hidden="true"><div class="mini-win"><div class="mini-bar">${lights}</div><div class="mini-body"><i></i><i></i><i></i></div><span class="mini-roll"></span></div><div class="mini-dock"><i></i><i></i><i class="mini-slot"></i></div></div>`;
+const miniDesk = (kind) => `<div class="mini" data-way="${kind}" aria-hidden="true"><div class="mini-win"><span class="cast" aria-hidden="true"></span><div class="mini-bar">${lights}</div><div class="mini-body"><i></i><i></i><i></i></div><span class="mini-roll"></span></div><div class="mini-dock"><i></i><i></i><i class="mini-slot"></i></div></div>`;
 const thumb = (i) => `<span class="thumb thumb-${i}" aria-hidden="true"><span class="thumb-bar"></span><span class="thumb-art"></span></span>`;
 const actionIcons = [
   '<svg viewBox="0 0 16 16"><path d="M3 5.5h10M8 13V8.5M5.8 10.6 8 8.4l2.2 2.2"/></svg>',
@@ -61,7 +61,7 @@ ${siteHeader(en, 'home')}
 <div class="stage" id="desk" role="group" aria-label="${c.stageLabel}">
 <div class="stage-menubar" aria-hidden="true"><b>${c.stageMenu[0]}</b>${c.stageMenu.slice(1).map(m => `<span>${m}</span>`).join('')}<span class="stage-clock">9:41</span></div>
 <div class="win win-draft" aria-hidden="true"><div class="win-bar">${lights}<span class="win-title">${c.draftTitle}</span></div><div class="win-body"><p class="win-kicker">${c.draftKicker}</p><h3>${c.draftHeading}</h3><p>${c.draftText}</p><div class="writing-lines"><i></i><i></i><i></i><i></i></div></div></div>
-<div class="win win-ref" id="reference"><button type="button" class="win-bar" id="reference-bar" aria-expanded="true" aria-controls="reference-body" aria-label="${c.noteTitle}: ${c.fold}">${lights}<span class="win-title">${c.noteTitle}</span></button><div class="win-body" id="reference-body"><p class="win-kicker">${c.noteKicker}</p><h3>${c.noteHeading}</h3><p>${c.noteBody}</p></div><span class="roller" aria-hidden="true"></span></div>
+<div class="win win-ref" id="reference"><span class="cast" aria-hidden="true"></span><button type="button" class="win-bar" id="reference-bar" aria-expanded="true" aria-controls="reference-body" aria-label="${c.noteTitle}: ${c.fold}">${lights}<span class="win-title">${c.noteTitle}</span></button><div class="win-body" id="reference-body"><p class="win-kicker">${c.noteKicker}</p><h3>${c.noteHeading}</h3><p>${c.noteBody}</p></div><span class="roller" aria-hidden="true"></span></div>
 </div>
 <div class="stage-foot"><p class="stage-hint">${c.stageHint}</p><button class="chip" id="fold" type="button" aria-controls="reference-body" aria-expanded="true" data-fold="${c.fold}" data-unfold="${c.unfold}">${c.fold}</button></div>
 <p class="sr-only" id="demo-status" aria-live="polite" data-expanded="${c.expandedStatus}" data-folded="${c.foldedStatus}"></p>
@@ -72,7 +72,7 @@ ${siteHeader(en, 'home')}
 <section class="ways wrap section" id="experience">
 <div class="section-head"><p class="kicker">${c.waysKicker}</p><h2>${c.waysTitle}</h2><p class="lead">${c.waysBody}</p></div>
 <ol class="way-list">${c.ways.map(([kind, name, text], i) => `<li class="way" data-way="${kind}">${miniDesk(kind)}<div class="way-text"><span class="way-no">0${i + 1}</span><h3>${name}</h3><p>${text}</p></div></li>`).join('')}</ol>
-<div class="ways-foot"><p>${c.waysNote}</p><button type="button" class="chip" id="ways-replay">${c.waysReplay}</button></div>
+<div class="ways-foot"><p>${c.waysNote}</p></div>
 </section>
 
 <section class="story section" id="story">
