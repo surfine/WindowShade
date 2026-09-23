@@ -19,6 +19,12 @@ for(const file of files){
   for(const m of html.matchAll(/href="#([^"]+)"/g))if(!html.includes(`id="${m[1]}"`))errors.push(`Missing anchor ${m[1]}`);
   if((html.match(/<h1>/g)||[]).length!==1)errors.push(`Expected one h1: ${file}`);
   if(/localhost|TODO|PLACEHOLDER/.test(html))errors.push(`Unfinished content: ${file}`);
+  // Link previews: each page needs its own reachable 1200 × 630 JPEG card, a title and a description.
+  if(!file.endsWith('404.html')){
+    for(const key of ['og:title','og:description','og:image','og:image:alt','twitter:card'])if(!html.includes(`"${key}"`))errors.push(`Missing ${key} in ${file}`);
+    const og=html.match(/property="og:image" content="https?:\/\/[^/]+(\/[^"]+)"/);
+    if(og){try{await stat(path.join(root,og[1]));}catch{errors.push(`Missing share image ${og[1]} in ${file}`);} if(!og[1].endsWith('.jpg'))errors.push(`Share image should be JPEG: ${og[1]}`);}
+  }
 }
 if(errors.length){console.error(errors.join('\n'));process.exit(1);}
 console.log(`Checked ${files.length} deploy assets: references, anchors, JS syntax, page headings, file sizes.`);
