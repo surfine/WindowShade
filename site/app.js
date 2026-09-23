@@ -51,6 +51,14 @@ if (desk && reference && fold && bar && body && status) {
   let touched = false;
   let rollTimer = 0;
   new ResizeObserver(() => desk.style.setProperty('--body-h', `${body.offsetHeight}px`)).observe(body);
+  // When the screen changes size (a window resized, a foldable opened or closed), a dragged
+  // position measured in pixels no longer means the same place: settle the window back home.
+  let deskWidth = 0;
+  new ResizeObserver(([entry]) => {
+    const w = Math.round(entry.contentRect.width);
+    if (deskWidth && w !== deskWidth && (offset.x || offset.y)) { offset.x = offset.y = 0; reference.style.transition = 'none'; place(0, 0); }
+    deskWidth = w;
+  }).observe(desk);
 
   function setFolded(next, announce = true) {
     folded = next;
@@ -121,10 +129,21 @@ if (desk && reference && fold && bar && body && status) {
   bar.addEventListener('pointerup', endDrag);
   bar.addEventListener('pointercancel', endDrag);
   bar.addEventListener('lostpointercapture', endDrag);
-  bar.addEventListener('dblclick', () => { if (performance.now() - lastDragEnd > 250) toggle(); });
+  bar.addEventListener('dblclick', e => { if (lastTap.touch) return; if (performance.now() - lastDragEnd > 250) toggle(); });
+  // Touch browsers do not reliably send dblclick (iOS Safari least of all), so count taps here.
+  const lastTap = { t: 0, x: 0, y: 0, touch: false };
+  bar.addEventListener('pointerup', e => {
+    lastTap.touch = e.pointerType !== 'mouse';
+    if (!lastTap.touch || performance.now() - lastDragEnd < 250) return;
+    const now = performance.now();
+    if (now - lastTap.t < 350 && Math.hypot(e.clientX - lastTap.x, e.clientY - lastTap.y) < 24) { lastTap.t = 0; toggle(); return; }
+    Object.assign(lastTap, { t: now, x: e.clientX, y: e.clientY });
+  });
 
-  // One quiet demonstration the first time the desk is seen, unless the reader got there first.
-  if (!reduceMotion.matches && 'IntersectionObserver' in window) {
+  // One quiet demonstration the first time the desk reaches the middle of the screen, unless the
+  // reader got there first. On a phone the desk starts below the headline, half under the toolbar:
+  // playing on first sight would spend the demo where nobody is looking.
+  if ('IntersectionObserver' in window) {
     const once = new IntersectionObserver(entries => {
       if (!entries.some(e => e.isIntersecting)) return;
       once.disconnect();
@@ -133,7 +152,7 @@ if (desk && reference && fold && bar && body && status) {
         setFolded(true, false);
         setTimeout(() => { if (!touched) setFolded(false, false); }, 1900);
       }, 1100);
-    }, { threshold: .6 });
+    }, { rootMargin: '-35% 0px -35% 0px' });
     once.observe(desk);
   }
 }
@@ -142,21 +161,25 @@ if (desk && reference && fold && bar && body && status) {
 const ways = [...document.querySelectorAll('.way')];
 if (ways.length) {
   function play(way, delay = 0) {
-    if (reduceMotion.matches || way.classList.contains('play')) return;
+    if (way.classList.contains('play')) return;
     setTimeout(() => way.classList.add('play', 'rolling'), delay);
     setTimeout(() => way.classList.remove('rolling'), delay + 520);
     setTimeout(() => { way.classList.add('rolling'); way.classList.remove('play'); }, delay + 2100);
     setTimeout(() => way.classList.remove('rolling'), delay + 2620);
   }
   const playAll = () => ways.forEach((way, i) => play(way, i * 140));
+  // Each tile plays when it reaches the middle of the screen: side by side on a wide screen that is
+  // all three at once, stacked on a phone it is one at a time, as the reader gets to it.
   const seen = new IntersectionObserver(entries => {
-    if (!entries.some(e => e.isIntersecting)) return;
-    seen.disconnect();
-    setTimeout(playAll, 250);
-  }, { threshold: .5 });
-  seen.observe(document.querySelector('.way-list'));
+    const due = entries.filter(e => e.isIntersecting).map(e => e.target);
+    due.forEach((way, i) => { seen.unobserve(way); play(way, 250 + i * 140); });
+  }, { rootMargin: '-30% 0px -30% 0px' });
+  ways.forEach(way => seen.observe(way));
   document.querySelector('#ways-replay')?.addEventListener('click', playAll);
-  for (const way of ways) way.addEventListener('pointerenter', () => { if (finePointer.matches) play(way); });
+  for (const way of ways) {
+    way.addEventListener('pointerenter', () => { if (finePointer.matches) play(way); });
+    way.querySelector('.mini')?.addEventListener('click', () => play(way));
+  }
 }
 
 // Lid illustration: the hinge drives the page through the app's own trigger and spring.
