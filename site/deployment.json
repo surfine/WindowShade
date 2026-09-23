@@ -1,6 +1,6 @@
 {
   "origin": "https://windowshade.pages.dev",
-  "deployment": "https://2c884e34.windowshade.pages.dev",
+  "deployment": "https://7fbd645d.windowshade.pages.dev",
   "project": "windowshade",
   "branch": "main",
   "files": {
@@ -8,17 +8,17 @@
     "_headers": "d5401edd1ba01c41c7b87ae3f67a0dabdeb52456e94d120733cdae4e5acd149a",
     "_redirects": "10738b7bf0dda342fb556e9d4a5c66e9f3ffaebc75e19aa0982ab168b72695ec",
     "app.js": "08a1c340212ce670a15539f0421b96b224de808e4f1b577aac7715fd4402c7ff",
-    "en/history/index.html": "92059fca111846d9a4444fc6259ab7d903c1c66a2b97e4ab4270b58ffe6f9b7e",
-    "en/index.html": "ce969a4561a2bf2c6e226057041eb325b866c4e282c09a3a31c50ac4b8761767",
+    "en/history/index.html": "abfc3cd12742debd85068ac1ca52430054075b151ea098f05d04d2f8d3b63669",
+    "en/index.html": "b421213e35ddcbbd17778c9f241decaa96ad1a85f99d2e283504344bd3ba1f12",
     "era.css": "4f3f085b220120267e1bc518a3a7c81d40aced5c695c60d671e64f51914fc0e7",
     "fonts/Asap-OFL.txt": "79d8634241e736e967a1539a9c766ea8e68f6d2df9f5d0edba5a4c88b1b5d8a0",
     "fonts/Asap-Variable.woff2": "3f230328a40ee9a05fe099dfb6b403a4c569aaea6690e5d483d5715ed817498f",
     "fonts/ChicagoFLF.woff2": "5d25dcec1f8984c5e0aed398a7c90be8de86bb4f9bcfed4e7e1e2c3c13b7e742",
     "fonts/system-css-LICENSE.txt": "0433a8c105e9d410ca3fb7f205aafe8f1be27e0438cf3bd1447907f738ebc6b0",
     "history.css": "eb38b843e92eb5d1dc3e5d8020ee6f01d861530da2d6a88afe5a0e71605332b2",
-    "history.js": "62b0d149437e5918e8d41d421991139a9f91ffdb0d9d34c6d048f315c9ca4796",
-    "history/index.html": "0b14d731c0f826b7484e6e6542273daa400ad9937af1c637648f1a02086ac026",
-    "index.html": "14e721953b0007ab81e74f93b624b1dba6ccef7bb956ca1bc0495f78fc393154",
+    "history.js": "f210ff33ede3e66265054147e3e210fe66187f2f1cbdef9dfad8de70bc655099",
+    "history/index.html": "a90c912088659b49edcc8da9e08aea77f1dc304bb931895a8ed2b5bafb608d3c",
+    "index.html": "4e14d6079e4bdbffd82563fc8ca8728ea3c47224380fa98881efc31e9ed767b3",
     "media/apple-touch-icon.png": "a2505d055eb6c8476ab78b6e95628d36db5582fbc22576bce4fccd32e1422d2a",
     "media/desk-dark.webp": "b2f21a0a7ece49ffce15597b67631e089a58885e71a6edcb302a5e726219e69b",
     "media/desk-en-dark.webp": "7a5d51d484013285f8a7915e85be1eec9fb7c069c5393ebb552835fbd44b6f82",
@@ -33,13 +33,13 @@
     "media/icon-256.png": "86d4530d3ff7ebabf4fe56ac64d40107905b707b379921712269edbb8db555ee",
     "media/icon.png": "9311783a695b89ea69873f72f22bb29368d5943edf080b75189d03472f3e0273",
     "media/og-en.jpg": "b205b9c1fdde953774c918cf35c2b261f6cac2cfb70906f4239942f9ec4a7dfe",
-    "media/og-history-en.jpg": "4aa79dbfe3ebc0ee093cc0a4bb1441bb2bae52ced8287e66abf918a26d9cb73d",
-    "media/og-history.jpg": "1394ed5c28f55d4f58327d04b79ed22fd12b8991367f74ab4328068a218f8bc0",
+    "media/og-history-en.jpg": "9a3d559da5aba239d048e6653c817edcea56ef1a69c4b95c175552254e5a4309",
+    "media/og-history.jpg": "efe2e2d365c4b8f62b1caacf94ecf46c55ed17d6b7d721fe700e6b536f3c2df6",
     "media/og.jpg": "ab73420b486c9f012f8d69e1ae86d078179898240d3ee0e02c5872a9c3c3b168",
     "media/share-square.jpg": "c20066c0e2cc5c48d68c7db87a187aca35b18da9f5838490a584614eb4123bb4",
     "robots.txt": "08e4b5b0e500c11923762a8f07ed8cbfa95c129d781822f156f4face4e361e52",
     "sitemap.xml": "2adb63b2e068b97040b55c8c160ecbfb9412401ffa8241bd32183de39e269085",
     "style.css": "7b63ae3aaaa4e9da215733349f17138f49f8e86b7b3ee55bb594a3b78fee79d0"
   },
-  "recordedAt": "2026-09-23T01:31:15.835Z"
+  "recordedAt": "2026-09-23T01:51:13.427Z"
 }
