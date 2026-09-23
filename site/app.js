@@ -39,6 +39,30 @@ if ('IntersectionObserver' in window && document.body.classList.contains('home')
   }
 }
 
+// Scroll-linked animation, the way Apple's product pages do it: a demo's progress follows
+// where it sits on screen, so a reader scrolling on a phone drives it with their own finger
+// and can never miss it. Each scrubber maps its element's centre from `from` to `to`
+// (fractions of the viewport height) onto 0 → 1. With Reduce Motion, progress snaps to
+// 0 or 1 and the CSS turns the change into a short fade instead of travel.
+const scrubbers = [];
+let scrubFrame = 0;
+function runScrubbers() {
+  scrubFrame = 0;
+  const vh = innerHeight;
+  for (const sc of scrubbers) {
+    if (sc.off?.()) continue;
+    const r = sc.el.getBoundingClientRect();
+    const c = (r.top + r.height / 2) / vh;
+    const from = typeof sc.from === 'function' ? sc.from() : sc.from, to = from - sc.span;
+    let p = Math.min(1, Math.max(0, (from - c) / (from - to)));
+    if (reduceMotion.matches) p = p >= .5 ? 1 : 0;
+    sc.apply(p);
+  }
+}
+const scheduleScrub = () => { if (!scrubFrame) scrubFrame = requestAnimationFrame(runScrubbers); };
+addEventListener('scroll', scheduleScrub, { passive: true });
+addEventListener('resize', scheduleScrub);
+
 // Hero: roll the reference window up into its bar, and drag the bar anywhere on the desk.
 const desk = document.querySelector('#desk');
 const reference = document.querySelector('#reference');
@@ -60,12 +84,17 @@ if (desk && reference && fold && bar && body && status) {
     deskWidth = w;
   }).observe(desk);
 
+  function setRoll(p) {
+    desk.style.setProperty('--roll', p.toFixed(4));
+    desk.style.setProperty('--roller', p > .01 && p < .99 ? '1' : '0');
+    desk.classList.toggle('is-folded', p >= .99);
+  }
   function setFolded(next, announce = true) {
     folded = next;
-    desk.classList.add('is-rolling');
+    desk.classList.add('is-rolling', 'is-animating');
     clearTimeout(rollTimer);
-    rollTimer = setTimeout(() => desk.classList.remove('is-rolling'), 540);
-    desk.classList.toggle('is-folded', folded);
+    rollTimer = setTimeout(() => desk.classList.remove('is-rolling', 'is-animating'), 540);
+    setRoll(folded ? 1 : 0);
     fold.textContent = folded ? fold.dataset.unfold : fold.dataset.fold;
     fold.setAttribute('aria-expanded', String(!folded));
     bar.setAttribute('aria-expanded', String(!folded));
@@ -140,46 +169,24 @@ if (desk && reference && fold && bar && body && status) {
     Object.assign(lastTap, { t: now, x: e.clientX, y: e.clientY });
   });
 
-  // One quiet demonstration the first time the desk reaches the middle of the screen, unless the
-  // reader got there first. On a phone the desk starts below the headline, half under the toolbar:
-  // playing on first sight would spend the demo where nobody is looking.
-  if ('IntersectionObserver' in window) {
-    const once = new IntersectionObserver(entries => {
-      if (!entries.some(e => e.isIntersecting)) return;
-      once.disconnect();
-      setTimeout(() => {
-        if (touched) return;
-        setFolded(true, false);
-        setTimeout(() => { if (!touched) setFolded(false, false); }, 1900);
-      }, 1100);
-    }, { rootMargin: '-35% 0px -35% 0px' });
-    once.observe(desk);
-  }
+  // Scrolling rolls the window up; scrolling back unrolls it. It starts from wherever the desk
+  // sits when the page opens, so nothing is rolled before the reader moves. Once they double-click,
+  // drag or press the button, the window is theirs and scrolling leaves it alone.
+  const home = (desk.getBoundingClientRect().top + scrollY + desk.offsetHeight / 2) / innerHeight;
+  scrubbers.push({ el: desk, from: () => Math.min(.62, home) - .02, span: .3, off: () => touched, apply: p => {
+    if (!!folded !== p >= .5) { folded = p >= .5; fold.textContent = folded ? fold.dataset.unfold : fold.dataset.fold; bar.setAttribute('aria-expanded', String(!folded)); fold.setAttribute('aria-expanded', String(!folded)); }
+    setRoll(p);
+  } });
 }
 
-// Three ways to move a window aside, played side by side.
-const ways = [...document.querySelectorAll('.way')];
-if (ways.length) {
-  function play(way, delay = 0) {
-    if (way.classList.contains('play')) return;
-    setTimeout(() => way.classList.add('play', 'rolling'), delay);
-    setTimeout(() => way.classList.remove('rolling'), delay + 520);
-    setTimeout(() => { way.classList.add('rolling'); way.classList.remove('play'); }, delay + 2100);
-    setTimeout(() => way.classList.remove('rolling'), delay + 2620);
-  }
-  const playAll = () => ways.forEach((way, i) => play(way, i * 140));
-  // Each tile plays when it reaches the middle of the screen: side by side on a wide screen that is
-  // all three at once, stacked on a phone it is one at a time, as the reader gets to it.
-  const seen = new IntersectionObserver(entries => {
-    const due = entries.filter(e => e.isIntersecting).map(e => e.target);
-    due.forEach((way, i) => { seen.unobserve(way); play(way, 250 + i * 140); });
-  }, { rootMargin: '-30% 0px -30% 0px' });
-  ways.forEach(way => seen.observe(way));
-  document.querySelector('#ways-replay')?.addEventListener('click', playAll);
-  for (const way of ways) {
-    way.addEventListener('pointerenter', () => { if (finePointer.matches) play(way); });
-    way.querySelector('.mini')?.addEventListener('click', () => play(way));
-  }
+// Three ways to move a window aside: each tile follows its own position on screen.
+for (const way of document.querySelectorAll('.way')) {
+  scrubbers.push({ el: way, from: .85, span: .4, apply: p => {
+    way.style.setProperty('--p', p.toFixed(4));
+    way.style.setProperty('--pr', p > .02 && p < .98 ? '1' : '0');
+    way.classList.toggle('done', p >= .98);
+    way.classList.toggle('play', p >= .5);
+  } });
 }
 
 // Lid illustration: the hinge drives the page through the app's own trigger and spring.
@@ -251,27 +258,28 @@ if (laptop && lidRange && lidPlay) {
   const m0 = g => g[0] * (g[4] * g[8] - g[5] * g[7]) - g[1] * (g[3] * g[8] - g[5] * g[6]) + g[2] * (g[3] * g[7] - g[4] * g[6]);
   new ResizeObserver(() => fold(Math.min(1, Math.max(0, e)))).observe(glass);
   const wake = () => { if (!frame) { last = 0; frame = requestAnimationFrame(tick); } };
-  lidRange.addEventListener('input', () => { playing = null; lid = lidRange.valueAsNumber / 100; wake(); });
+  let lidTouched = false;
+  lidRange.addEventListener('input', () => { lidTouched = true; playing = null; lid = lidRange.valueAsNumber / 100; wake(); });
+  // Scrolling closes the lid as the laptop rises toward the middle of the screen.
+  scrubbers.push({ el: laptop, from: .85, span: .45, off: () => lidTouched || !!playing, apply: p => {
+    const next = .9 * p;
+    if (Math.abs(next - lid) < .0005) return;
+    lid = next; lidRange.value = String(Math.round(lid * 100)); wake();
+  } });
   function play() {
     if (reduceMotion.matches) return;
     playing = { start: performance.now() };
     wake();
   }
-  lidPlay.addEventListener('click', play);
+  lidPlay.addEventListener('click', () => { lidTouched = true; play(); });
   for (const button of document.querySelectorAll('.segmented-ctl button')) {
     button.addEventListener('click', () => {
       laptop.dataset.preset = button.dataset.preset;
       fold(Math.min(1, Math.max(0, e)));
       for (const b of document.querySelectorAll('.segmented-ctl button')) b.setAttribute('aria-pressed', String(b === button));
-      if (lid < trigger) play();
+      if (lid < trigger) { lidTouched = true; play(); }
     });
   }
-  const seenLid = new IntersectionObserver(entries => {
-    if (!entries.some(x => x.isIntersecting)) return;
-    seenLid.disconnect();
-    setTimeout(() => { if (lid === 0 && !playing) play(); }, 400);
-  }, { threshold: .6 });
-  seenLid.observe(laptop);
 }
 
 // Pinning: a self-contained layer-order illustration, not an operating-system window controller.
@@ -333,3 +341,6 @@ if (browseDesk && browseIcon && browsePanel && browseState) {
   });
   renderBrowse(true);
 }
+
+// Draw every scroll-linked demo once, so a page opened mid-way starts in the right state.
+runScrubbers();
