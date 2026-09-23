@@ -40,12 +40,12 @@
 
 三十年前的 Mac 用户，大多会这一招。后来系统换了思路，把窗口送进 Dock，它就慢慢被人忘了。我们把这段往事写成了一篇可以动手的长文 **[窗口往事](https://windowshade.pages.dev/history/)**：七章，四个动手实验，14 条原始史料。
 
-1. [留下位置](https://windowshade.pages.dev/history/#space)：同一张桌面，三种安排，亲手比一比
-2. [小工具的来路](https://windowshade.pages.dev/history/#origin)：一份 1994 年的用户社群刊物
-3. [手指的偏好](https://windowshade.pages.dev/history/#preference)：改一次当年的控制面板
-4. [一颗按钮](https://windowshade.pages.dev/history/#button)：拖着收起的窗口换个地方
-5. [换一个去处](https://windowshade.pages.dev/history/#departure)：Dock、Exposé 与 Mission Control
-6. [没有消失](https://windowshade.pages.dev/history/#survival)：便笺至今还留着这一招
+1. [先别关掉](https://windowshade.pages.dev/history/#space)：同一张桌面，三种安排，亲手比一比
+2. [一个小工具](https://windowshade.pages.dev/history/#origin)：一份 1994 年的用户社群刊物
+3. [点两下还是三下](https://windowshade.pages.dev/history/#preference)：改一次当年的控制面板
+4. [有了按钮](https://windowshade.pages.dev/history/#button)：拖着收起的窗口换个地方
+5. [去了 Dock](https://windowshade.pages.dev/history/#departure)：Dock、Exposé 与 Mission Control
+6. [还有人在用](https://windowshade.pages.dev/history/#survival)：便笺至今还留着这一招
 7. [回到今天](https://windowshade.pages.dev/history/#return)：旧动作，新的工作现场
 
 读完还可以 [启动一台旧 Mac](https://windowshade.pages.dev/history/#lab)（System 7.5、Mac OS 8、Mac OS X 10.1，由 [Infinite Mac](https://infinitemac.org/) 运行），沿着当年的菜单自己找到这个设置。

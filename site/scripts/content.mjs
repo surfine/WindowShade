@@ -59,7 +59,7 @@ export const copy = {
 
     storyKicker: '窗口往事',
     storyTitle: '这个双击，<br>比你的 Mac 还老。',
-    storyLead: '三十年前的 Mac 用户，大多会这一招。后来系统换了思路，把窗口送进 Dock，它就慢慢被人忘了。我们把这段往事写成了一篇可以动手的长文：翻一翻 1994 年的旧刊物，改一次当年的控制面板，再开一台真正的旧 Mac。',
+    storyLead: '三十年前的 Mac 用户，大多会这一招。后来系统换了思路，把窗口送进 Dock，它就慢慢被人忘了。我们把这段往事写成了一篇可以动手的长文：改一次当年的控制面板，拖一拖收起的窗口，再开一台真正的旧 Mac。',
     storyLink: '翻开窗口往事',
     storyMeta: (n) => `七章 · 四个动手实验 · ${n} 条原始史料`,
     storyCover: '窗口让开以后，<br>你还记得它在哪里吗？',
@@ -188,10 +188,10 @@ export const copy = {
 
     storyKicker: 'Window stories',
     storyTitle: 'This double-click<br>is older than your Mac.',
-    storyLead: 'In the ’90s, most Mac users knew this trick. Then the system changed course, sent windows to the Dock, and the trick was slowly forgotten. We wrote its story as a long read you can operate: leaf through a 1994 newsletter, change the old control panel, then boot a real old Mac.',
+    storyLead: 'In the ’90s, most Mac users knew this trick. Then the system changed course, sent windows to the Dock, and the trick was slowly forgotten. We wrote its story as a long read you can operate: change the old control panel, drag a rolled-up window, then boot a real old Mac.',
     storyLink: 'Read the window stories',
     storyMeta: (n) => `Seven chapters · four hands-on experiments · ${n} primary sources`,
-    storyCover: 'After a window moves aside,<br>what stays with you?',
+    storyCover: 'After a window moves aside,<br>do you remember where it was?',
     storyCoverLabel: 'Cover of the window stories: title bars from four eras',
 
     todayKicker: 'WindowShade today',
