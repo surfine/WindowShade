@@ -1,15 +1,15 @@
 {
   "origin": "https://windowshade.pages.dev",
-  "deployment": "https://7fbd645d.windowshade.pages.dev",
+  "deployment": "https://e16bd2a7.windowshade.pages.dev",
   "project": "windowshade",
   "branch": "main",
   "files": {
     "404.html": "be421d22ed7d99001d267e3a889972874704a6a9616e302e5f3022704b78380e",
     "_headers": "d5401edd1ba01c41c7b87ae3f67a0dabdeb52456e94d120733cdae4e5acd149a",
     "_redirects": "10738b7bf0dda342fb556e9d4a5c66e9f3ffaebc75e19aa0982ab168b72695ec",
-    "app.js": "08a1c340212ce670a15539f0421b96b224de808e4f1b577aac7715fd4402c7ff",
-    "en/history/index.html": "abfc3cd12742debd85068ac1ca52430054075b151ea098f05d04d2f8d3b63669",
-    "en/index.html": "b421213e35ddcbbd17778c9f241decaa96ad1a85f99d2e283504344bd3ba1f12",
+    "app.js": "ed01f7a2096aaa6464c8b5ce24aee29fe92a1139918e9b1069ab8d17d5b36e98",
+    "en/history/index.html": "b76093987de3530ebbe1164cf143db1d98beb70a892ea3a745fefcf0f8ebe2e8",
+    "en/index.html": "d02821115565a0a8dbf6fdb8c89ea2108035a1126387b8d18c7744c9d2a59b35",
     "era.css": "4f3f085b220120267e1bc518a3a7c81d40aced5c695c60d671e64f51914fc0e7",
     "fonts/Asap-OFL.txt": "79d8634241e736e967a1539a9c766ea8e68f6d2df9f5d0edba5a4c88b1b5d8a0",
     "fonts/Asap-Variable.woff2": "3f230328a40ee9a05fe099dfb6b403a4c569aaea6690e5d483d5715ed817498f",
@@ -17,8 +17,8 @@
     "fonts/system-css-LICENSE.txt": "0433a8c105e9d410ca3fb7f205aafe8f1be27e0438cf3bd1447907f738ebc6b0",
     "history.css": "eb38b843e92eb5d1dc3e5d8020ee6f01d861530da2d6a88afe5a0e71605332b2",
     "history.js": "f210ff33ede3e66265054147e3e210fe66187f2f1cbdef9dfad8de70bc655099",
-    "history/index.html": "a90c912088659b49edcc8da9e08aea77f1dc304bb931895a8ed2b5bafb608d3c",
-    "index.html": "4e14d6079e4bdbffd82563fc8ca8728ea3c47224380fa98881efc31e9ed767b3",
+    "history/index.html": "f0e008247950358f3543fba5050b6b1ac0f2af14cb32f5ae6c6cf0d09f98c9e7",
+    "index.html": "325008909f5e3d378c37dce7223375fd3651a4cf614caf18064a3eb63a64e5c8",
     "media/apple-touch-icon.png": "a2505d055eb6c8476ab78b6e95628d36db5582fbc22576bce4fccd32e1422d2a",
     "media/desk-dark.webp": "b2f21a0a7ece49ffce15597b67631e089a58885e71a6edcb302a5e726219e69b",
     "media/desk-en-dark.webp": "7a5d51d484013285f8a7915e85be1eec9fb7c069c5393ebb552835fbd44b6f82",
@@ -39,7 +39,7 @@
     "media/share-square.jpg": "c20066c0e2cc5c48d68c7db87a187aca35b18da9f5838490a584614eb4123bb4",
     "robots.txt": "08e4b5b0e500c11923762a8f07ed8cbfa95c129d781822f156f4face4e361e52",
     "sitemap.xml": "2adb63b2e068b97040b55c8c160ecbfb9412401ffa8241bd32183de39e269085",
-    "style.css": "7b63ae3aaaa4e9da215733349f17138f49f8e86b7b3ee55bb594a3b78fee79d0"
+    "style.css": "2aa94524e7b113f04916aea2e94b723fa244e74aa1a50033fa1e418af08ae17f"
   },
-  "recordedAt": "2026-09-23T01:51:13.427Z"
+  "recordedAt": "2026-09-23T03:48:44.376Z"
 }
