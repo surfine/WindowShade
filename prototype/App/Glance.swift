@@ -476,7 +476,11 @@ final class GlanceController {
         guard let session = sessions[id] else { return }
         if session.stage == .shown || session.stage == .waitingForFrame { return }
         guard let target = target(for: id) else {
+            // 卷帘条还在，但背后的窗口不再能看一眼：忘掉这条卷帘条的意图，
+            // 立刻收掉已经开始准备的会话，别留下没人管的准备。
             wlog("glance: no room id=\(id)")
+            _ = intent.forget(id)
+            finish(session, reason: "no-room")
             return
         }
         let now = clock()
