@@ -40,6 +40,9 @@ final class TrackpadGestureController {
     /// 刚执行完的这段时间里，同一扇窗朝同一个方向再划一下不接：连划几下（Magic Mouse 上
     /// 很常见）不会在尺寸梯子上连走两格（本想还原，结果又收起了）。换个手势照常接。
     static let commitCooldown: TimeInterval = 0.6
+    /// 窗口跟手的比例：走满“松手即执行”的门槛时窗口卷到 0.55，松手接着卷完；
+    /// 继续往前推到约 1.8 倍门槛，窗口就在手指下完全卷起。
+    static let followRatio: Double = 0.55
 
     enum Phase {
         case began, changed, ended, cancelled
@@ -67,6 +70,9 @@ final class TrackpadGestureController {
         /// 刚在这扇窗上朝这个方向执行过：这次同方向的滑动不接（冷却）。
         var cooledDirection: GestureDirection?
         var suppressed = false
+        /// 窗口本体正在跟手（收起时是窗口的盖板，展开时是卷帘条下的画面）。
+        var following = false
+        var followFailed = false
         var element: AXUIElement?
         var verified: Bool
         var rejected = false
@@ -184,8 +190,9 @@ final class TrackpadGestureController {
 
     /// 换桌面、设置关闭等：丢掉进行中的手势，不执行。
     func cancel(reason: String) {
-        guard session != nil else { return }
+        guard let current = session else { return }
         wlog("gesture: cancel reason=\(reason)")
+        stopFollowing(current)
         session?.recognizer.cancel()
         session = nil
         wheelEnd?.cancel()
@@ -542,6 +549,7 @@ final class TrackpadGestureController {
             return
         }
         render(session, animated: animated)
+        updateFollow(session)
         if feedback.contains(.armed) {
             NSHapticFeedbackManager.defaultPerformer.perform(.alignment, performanceTime: .now)
         }
@@ -564,16 +572,55 @@ final class TrackpadGestureController {
         guard session.verified, !session.suppressed,
               let action = session.recognizer.end(at: time ?? clock()) else {
             session.recognizer.cancel()
+            stopFollowing(session)
             hud.cancel()
             return
         }
+        if session.following, action != .shade, action != .expand { stopFollowing(session) }
         if perform(action, in: session) {
             lastPerformed = (action, session.windowID)
             lastCommit = (session.windowID, clock(), direction)
             hud.commit()
         } else {
+            stopFollowing(session)
             hud.cancel()
         }
+    }
+
+    /// 窗口本体跟手：认出“收起”或“展开”后，窗口跟着手指卷起、放下（滚轮一格一格走也一样）；
+    /// 换了方向、这件事做不了时，窗口退回原样。松手才真正收起或展开。
+    /// 减少动态效果、暂停效果时不跟，只有提示浮窗。
+    private func updateFollow(_ session: Session) {
+        let frame = session.recognizer.frame
+        let effects = owner.duoController.windowEffects
+        let id = session.windowID
+        guard frame.available, frame.action == .shade || frame.action == .expand else {
+            stopFollowing(session)
+            return
+        }
+        if !session.following, !session.followFailed {
+            var started = false
+            if frame.action == .shade, let win = session.element, owner.titlebarFoldCanBegin(id: id),
+               owner.focusRejoinEntries[id] == nil {
+                started = effects.beginTrackingFold(win, id: id)
+            } else if frame.action == .expand, owner.currentOperationState(id) == .folded {
+                started = effects.beginTrackingRestore(id: id)
+                // 卷帘条下面挂着看一眼的卡片时先收起它：窗口要从这里放下来。
+                if started { owner.glance.cancelAll(reason: "gesture-follow") }
+            }
+            session.following = started
+            session.followFailed = !started
+            if started { wlog("gesture: window follows id=\(id) action=\(frame.action?.rawValue ?? "-")") }
+        }
+        if session.following {
+            effects.track(id: id, fraction: Double(frame.progress) * Self.followRatio)
+        }
+    }
+
+    private func stopFollowing(_ session: Session) {
+        guard session.following else { return }
+        session.following = false
+        owner.duoController.windowEffects.cancelTracking(id: session.windowID)
     }
 
     private func cooledDirection(for id: CGWindowID) -> GestureDirection? {
@@ -586,11 +633,19 @@ final class TrackpadGestureController {
         wlog("gesture: \(action.rawValue) id=\(id) zone=\(session.zone)")
         switch action {
         case .shade:
+            if session.following {
+                session.following = false
+                return owner.duoController.windowEffects.commitTracking(id: id)
+            }
             guard let win = session.element, owner.titlebarFoldCanBegin(id: id) else { return false }
             let options = owner.focusRejoinEntries[id] != nil ? owner.focusShadeOptions : nil
             owner.shade(win, id, options: options, trustElement: true)
             return true
         case .expand:
+            if session.following {
+                session.following = false
+                return owner.duoController.windowEffects.commitTracking(id: id)
+            }
             guard owner.shaded[id] != nil else { return false }
             return owner.unshade(id)
         case .leftHalf, .rightHalf, .fill:
