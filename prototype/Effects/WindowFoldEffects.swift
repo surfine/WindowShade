@@ -88,17 +88,10 @@ final class WindowFoldEffects {
     job.task = Task { @MainActor [weak self, weak job] in
       guard let self, let job else { return }
       do {
-        // 收起时用共享缓存：双击的第一下就在预取，第二下到达时多半已经就绪，
-        // 省掉一次数百毫秒的全系统枚举。这里只需要在屏窗口（源窗口本身、所在显示器、
-        // 背景截图要排除的源窗口），缓存足够；缓存里没有源窗口时它会强制刷新。
-        // 展开路径不能这样做：它要排除收起时才创建的卷帘条，旧快照里可能还没有它。
-        guard let content = await ShareableContentCache.shared.content(requiring: id) else {
-          fallback(job)
-          return
-        }
-        guard current(job), allowed(job), job.desiredFolded,
-          let window = content.windows.first(where: { $0.windowID == id }), window.isOnScreen
-        else {
+        // 先用 WindowServer 的实时状态确认窗口在屏上，不等全系统窗口清单（忙的时候要几百
+        // 毫秒）：快速截图成功时，盖板用它起步、背景用快速合成，马上能出现；实时流需要的
+        // 清单放到后台去要（共享缓存：双击的第一下就在预取，缓存里没有源窗口时强制刷新）。
+        guard current(job), allowed(job), job.desiredFolded, windowIsOnScreenNow(id) else {
           fallback(job)
           return
         }
@@ -108,21 +101,33 @@ final class WindowFoldEffects {
         session.renderer.parameters = .init(
           titleFraction: Float(titleBarHeight / max(1, size.height)), windowMode: true,
           preset: controller?.settings.preset ?? .shade)
-        let filter = SCContentFilter(desktopIndependentWindow: window)
         let pixels = CGSize(
           width: size.width * screen.backingScaleFactor,
           height: size.height * screen.backingScaleFactor)
         let color = EffectColorSpace.display(screen)
+        var content: SCShareableContent?
         if let still = await owner.fastWindowCapture(id) {
           // 快速截图起步（和展开一样）：一张静态图就能开始卷，不必先等实时流
           // （热启动 150–220ms，冷启动更久）；流就绪后由显示时钟自动换成实时帧。
           try session.renderer.setImage(still, color: color)
           job.preparedImage = still
           job.captureTask = Task { @MainActor [weak session] in
-            try? await session?.start(filter: filter, pixels: pixels, color: color)
+            guard let content = await ShareableContentCache.shared.content(requiring: id),
+                  let window = content.windows.first(where: { $0.windowID == id }) else { return }
+            try? await session?.start(
+              filter: SCContentFilter(desktopIndependentWindow: window), pixels: pixels, color: color)
           }
         } else {
-          try await session.start(filter: filter, pixels: pixels, color: color)
+          guard let shareable = await ShareableContentCache.shared.content(requiring: id),
+            current(job),
+            let window = shareable.windows.first(where: { $0.windowID == id }), window.isOnScreen
+          else {
+            fallback(job)
+            return
+          }
+          content = shareable
+          try await session.start(
+            filter: SCContentFilter(desktopIndependentWindow: window), pixels: pixels, color: color)
         }
         guard current(job), allowed(job), !Task.isCancelled else {
           cancel(job)
@@ -157,37 +162,51 @@ final class WindowFoldEffects {
     }
     return true
   }
+  /// content 可以不给：快速合成成功时用不到它；失败时才去要一份（展开时要包括隐藏的窗口）。
   @MainActor private func background(
-    for job: Job, content: SCShareableContent, screen: NSScreen, position: CGPoint, size: CGSize
+    for job: Job, content: SCShareableContent?, screen: NSScreen, position: CGPoint, size: CGSize
   ) async throws {
-    guard let session = job.session,
-      let display = content.displays.first(where: { $0.displayID == displayID(for: screen) })
-    else { throw EffectError.unavailable("窗口所在屏幕不可用") }
+    guard let session = job.session, let did = displayID(for: screen) else {
+      throw EffectError.unavailable("窗口所在屏幕不可用")
+    }
+    // 显示器的全局位置直接问 CoreGraphics（和 SCDisplay.frame 同一套坐标），不必先枚举全系统窗口。
+    let displayFrame = CGDisplayBounds(did)
     let ids: Set<CGWindowID> = [
       job.id, CGWindowID(session.panel.windowNumber), owner?.shaded[job.id]?.overlayID ?? 0,
     ]
-    let excluded = content.windows.filter { ids.contains($0.windowID) }
-    let filter = SCContentFilter(display: display, excludingWindows: excluded)
-    let config = SCStreamConfiguration()
     // SCK sourceRect is local display points, not global AX coordinates.
     let requested = CGRect(
-      x: position.x - display.frame.minX, y: position.y - display.frame.minY, width: size.width,
+      x: position.x - displayFrame.minX, y: position.y - displayFrame.minY, width: size.width,
       height: size.height)
-    let clipped = requested.intersection(CGRect(origin: .zero, size: display.frame.size))
+    let clipped = requested.intersection(CGRect(origin: .zero, size: displayFrame.size))
     guard !clipped.isEmpty else { throw EffectError.unavailable("窗口不在屏幕上") }
-    config.sourceRect = clipped
     let scale = screen.backingScaleFactor
-    config.width = Int((clipped.width * scale).rounded())
-    config.height = Int((clipped.height * scale).rounded())
-    config.showsCursor = false
-    config.colorSpaceName = EffectColorSpace.display(screen).name
+    let pixelWidth = Int((clipped.width * scale).rounded())
+    let pixelHeight = Int((clipped.height * scale).rounded())
     // 快速合成（几十毫秒）优先：同样去掉源窗口、动画面板和卷帘条；尺寸不对再走 ScreenCaptureKit。
-    let globalClipped = clipped.offsetBy(dx: display.frame.minX, dy: display.frame.minY)
+    let globalClipped = clipped.offsetBy(dx: displayFrame.minX, dy: displayFrame.minY)
     let image: CGImage
     if let fast = FastCapture.composite(excluding: ids, rect: globalClipped),
-       abs(fast.width - config.width) <= 2, abs(fast.height - config.height) <= 2 {
+       abs(fast.width - pixelWidth) <= 2, abs(fast.height - pixelHeight) <= 2 {
       image = fast
     } else {
+      let shareable: SCShareableContent
+      if let content {
+        shareable = content
+      } else {
+        shareable = try await SCShareableContent.excludingDesktopWindows(false, onScreenWindowsOnly: false)
+      }
+      guard let display = shareable.displays.first(where: { $0.displayID == did }) else {
+        throw EffectError.unavailable("窗口所在屏幕不可用")
+      }
+      let excluded = shareable.windows.filter { ids.contains($0.windowID) }
+      let filter = SCContentFilter(display: display, excludingWindows: excluded)
+      let config = SCStreamConfiguration()
+      config.sourceRect = clipped
+      config.width = pixelWidth
+      config.height = pixelHeight
+      config.showsCursor = false
+      config.colorSpaceName = EffectColorSpace.display(screen).name
       image = try await SCScreenshotManager.captureImage(
         contentFilter: filter, configuration: config)
     }
@@ -263,8 +282,8 @@ final class WindowFoldEffects {
     job.task = Task { @MainActor [weak self, weak job] in
       guard let self, let job else { return }
       do {
-        let content = try await SCShareableContent.excludingDesktopWindows(
-          false, onScreenWindowsOnly: false)
+        // 不先枚举全系统窗口（忙的时候要几百毫秒）：画面用收起时的截图，背景用快速合成，
+        // 盖板马上能出现；实时流需要的窗口清单放到后台去要。
         guard current(job), allowed(job) else {
           fallback(job)
           return
@@ -276,18 +295,19 @@ final class WindowFoldEffects {
           progress: 1, titleFraction: Float(min(0.5, strip.frame.height / max(1, rect.height))),
           windowMode: true, preset: controller?.settings.preset ?? .shade)
         try await background(
-          for: job, content: content, screen: screen, position: pos, size: state.originalSize)
-        if let window = content.windows.first(where: { $0.windowID == id }) {
-          // Show the valid stored frame immediately. A hidden window commonly produces no
-          // fresh frame until restored; waiting for it delayed every unfold by the timeout.
-          job.captureTask = Task { @MainActor [weak session] in
-            try? await session?.start(
-              filter: SCContentFilter(desktopIndependentWindow: window),
-              pixels: CGSize(
-                width: rect.width * screen.backingScaleFactor,
-                height: rect.height * screen.backingScaleFactor),
-              color: EffectColorSpace.display(screen))
-          }
+          for: job, content: nil, screen: screen, position: pos, size: state.originalSize)
+        // Show the valid stored frame immediately. A hidden window commonly produces no
+        // fresh frame until restored; waiting for it delayed every unfold by the timeout.
+        job.captureTask = Task { @MainActor [weak session] in
+          guard let content = try? await SCShareableContent.excludingDesktopWindows(
+                  false, onScreenWindowsOnly: false),
+                let window = content.windows.first(where: { $0.windowID == id }) else { return }
+          try? await session?.start(
+            filter: SCContentFilter(desktopIndependentWindow: window),
+            pixels: CGSize(
+              width: rect.width * screen.backingScaleFactor,
+              height: rect.height * screen.backingScaleFactor),
+            color: EffectColorSpace.display(screen))
         }
         guard current(job), allowed(job), !Task.isCancelled else {
           cancel(job)
