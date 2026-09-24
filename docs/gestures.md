@@ -44,6 +44,15 @@
 **Magic Mouse。** 单指滑动发出的事件和触控板两指滑动是同一种，上下左右、尺寸梯子照常用。
 它没有张合，所以“铺满 ⇄ 还原”靠上下滑或单指轻点两下；它没有触感，走满时靠浮窗变色提示。
 
+**窗口跟手。** 认出“收起”或“展开”之后，动的不只是提示浮窗，窗口本身也跟着手指走：
+在标题栏上往上推，窗口就在手指下往上卷，卷走的地方露出后面的桌面；在卷帘条上往下拉，
+窗口从卷帘条那里放下来。松手才真的收起或展开，接着卷完；过了门槛又往回拉、或换了方向，
+窗口退回原样，真窗口从头到尾没被碰过。走满门槛时窗口卷到 0.55，继续推到约 1.8 倍门槛就
+完全卷起。做法是用收起动画的盖板：先盖上一张和窗口一样的画面（背后垫着窗口后面的真实桌面），
+进度交给手指，松手后才在盖板下面藏起或恢复真窗口。盖板晚于手指出现、或滚轮一格一格跳时，
+显示值用 40 毫秒的指数跟随追上去，不会一下跳过去。这是手指的直接反馈，不看“收起窗口时的
+动画”开关；打开减少动态效果、暂停效果或桌面开合时不跟，只有提示浮窗。
+
 **连划不连走。** 刚执行完的 0.6 秒里，同一扇窗朝同一个方向再划一下不接：Magic Mouse 上
 常见的连划几下，不会在梯子上连走两格（本想还原，结果又收起了）。换个手势照常接；窗口还在
 收起、展开的动画里时，什么手势都不接。
@@ -174,8 +183,9 @@ PASS gesture: pulling down on the title bar fills; pushing up on the filled wind
 PASS gesture: a quick second push in the same direction is ignored (no double step on the ladder)
 PASS gesture: mouse wheel — 2 notches do nothing, 3 notches down fill, 3 notches up put it back
 PASS gesture: double tap (smart zoom) fills, and again puts it back
-PASS gesture: pulling back before release cancels
+PASS gesture: the window itself follows the fingers (69% rolled at the threshold); pulling back rolls it back untouched
 PASS gesture: swipe up rolls the window up (strip 439–1024ms after release)
+PASS gesture: pulling down on the strip unrolls the window under the fingers (41% rolled mid-gesture)
 PASS gesture: pulling down on the strip expands it
 PASS gesture: double tap on the strip expands it
 ```

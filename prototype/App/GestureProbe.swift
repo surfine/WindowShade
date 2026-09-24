@@ -4,8 +4,23 @@ import Cocoa
 /// 合成的两指滚动事件不发给系统，而是直接交给手势控制器：不动用户的指针、不影响别的 App，
 /// 但走的是真实的事件解析、标题栏确认、浮窗与窗口操作。张合事件无法用公开 API 合成，
 /// 直接调用控制器的张合入口（真机上张合来自只读事件监听，见 PinchEventTap）。
+/// 临时 App 的进程号：每次做手势前把它切回前台（探针运行时有人用电脑，别的窗口会盖上来）。
+@MainActor private var gestureFixturePID: pid_t = 0
+
 extension GlanceProbe {
+  /// 真实的滚动只会落在指针下最上面那扇窗：做手势前确认临时 App 在最前面。
+  func keepFixtureInFront() async {
+    guard gestureFixturePID != 0,
+          NSWorkspace.shared.frontmostApplication?.processIdentifier != gestureFixturePID else { return }
+    NSRunningApplication(processIdentifier: gestureFixturePID)?.activate()
+    for _ in 0..<40 where NSWorkspace.shared.frontmostApplication?.processIdentifier != gestureFixturePID {
+      try? await Task.sleep(nanoseconds: 25_000_000)
+    }
+    try? await Task.sleep(nanoseconds: 250_000_000)
+  }
+
   func exerciseGestures(element: AXUIElement, original: CGRect, pid: pid_t) async throws {
+    gestureFixturePID = pid
     let gestures = owner.gestures
     // 真实的滚动只会落在指针下最上面那扇窗：先把临时 App 切到前面，免得被别的窗口盖住标题栏。
     NSRunningApplication(processIdentifier: pid)?.activate()
@@ -144,9 +159,11 @@ extension GlanceProbe {
 
     // 4d. 轻点两下（智能缩放：触控板两指 / Magic Mouse 单指）：铺满，再点两下还原。
     try await Task.sleep(nanoseconds: 700_000_000)
+    await keepFixtureInFront()
     gestures.doubleTap(at: titleBarPoint())
     try await wait("double tap fills", timeout: 2) { self.bounds(self.id).map { self.near($0, visibleAX) } == true }
     try await Task.sleep(nanoseconds: 700_000_000)
+    await keepFixtureInFront()
     gestures.doubleTap(at: titleBarPoint())
     try await wait("double tap restores", timeout: 2) { self.bounds(self.id).map { self.near($0, original) } == true }
     print("PASS gesture: double tap (smart zoom) fills, and again puts it back")
@@ -154,12 +171,27 @@ extension GlanceProbe {
     // 5. 上滑过了门槛又往回拉：取消，不收起。
     try await Task.sleep(nanoseconds: 700_000_000)
     let performedBefore = gestures.lastPerformed?.action
-    try await swipe(at: bar, finger: CGVector(dx: 0, dy: 5), steps: 14, then: CGVector(dx: 0, dy: -9), backSteps: 3)
-    try await Task.sleep(nanoseconds: 300_000_000)
+    let effects = owner.duoController.windowEffects
+    var followed: (value: Double, visible: Bool)?
+    try await swipe(at: bar, finger: CGVector(dx: 0, dy: 5), steps: 14, then: CGVector(dx: 0, dy: -9), backSteps: 3) { step in
+      if step == 13 {
+        // 走满门槛、还没松手：窗口本体应该已经跟着卷起一半多。
+        try await Task.sleep(nanoseconds: 300_000_000)
+        followed = effects.trackingState(id: self.id)
+        self.shoot(cocoaFrame(fromAXPosition: original.origin, size: original.size), "follow-mid")
+      }
+    }
+    try await Task.sleep(nanoseconds: 700_000_000)
     guard owner.shaded[id] == nil, gestures.lastPerformed?.action == performedBefore else {
       throw EffectError.unavailable("pull-back still acted")
     }
-    print("PASS gesture: pulling back before release cancels")
+    guard let followed, followed.visible, followed.value > 0.45, followed.value < 0.8 else {
+      throw EffectError.unavailable("window did not follow the fingers: \(String(describing: followed))")
+    }
+    guard effects.activeCount == 0, onscreen(id), let back = bounds(id), closeTo(back, original) else {
+      throw EffectError.unavailable("cover left behind after pull-back (active=\(effects.activeCount))")
+    }
+    print(String(format: "PASS gesture: the window itself follows the fingers (%.0f%% rolled at the threshold); pulling back rolls it back untouched", followed.value * 100))
 
     // 6. 上滑：收起窗口。
     try await Task.sleep(nanoseconds: 300_000_000)
@@ -175,8 +207,19 @@ extension GlanceProbe {
     try await Task.sleep(nanoseconds: 800_000_000)
     guard let overlay = owner.shaded[id]?.overlay else { throw EffectError.unavailable("no strip") }
     let stripPoint = CGPoint(x: overlay.frame.midX, y: coordinateBaselineY() - overlay.frame.midY)
-    try await swipe(at: stripPoint, finger: CGVector(dx: 0, dy: -5), steps: 14, ownWindow: overlay)
+    var unrolling: (value: Double, visible: Bool)?
+    try await swipe(at: stripPoint, finger: CGVector(dx: 0, dy: -5), steps: 14, ownWindow: overlay) { step in
+      if step == 11 {
+        try await Task.sleep(nanoseconds: 300_000_000)
+        unrolling = effects.trackingState(id: self.id)
+        self.shoot(cocoaFrame(fromAXPosition: original.origin, size: original.size), "follow-unroll")
+      }
+    }
     let pulled = CACurrentMediaTime()
+    guard let unrolling, unrolling.visible, unrolling.value < 0.7 else {
+      throw EffectError.unavailable("strip did not follow the fingers: \(String(describing: unrolling))")
+    }
+    print(String(format: "PASS gesture: pulling down on the strip unrolls the window under the fingers (%.0f%% rolled mid-gesture)", unrolling.value * 100))
     try await wait("expanded by gesture", timeout: 3) {
       // 最小化的窗口在窗口表里仍报原来的位置：还要确认它真的回到了屏幕上。
       self.owner.shaded[self.id] == nil && self.onscreen(self.id)
@@ -186,6 +229,15 @@ extension GlanceProbe {
 
     // 8. 卷帘条上轻点两下：展开（Magic Mouse 单指轻点两下同样走这里）。
     try await Task.sleep(nanoseconds: 800_000_000)
+    await keepFixtureInFront()
+    let stack8 = (CGWindowListCopyWindowInfo([.optionOnScreenOnly, .excludeDesktopElements], kCGNullWindowID)
+      as? [[String: Any]] ?? []).filter { cgWindowBounds($0)?.contains(bar) == true }.prefix(5)
+      .map { info -> String in
+        let number = (info[kCGWindowNumber as String] as? NSNumber)?.intValue ?? 0
+        let own = NSApp.window(withWindowNumber: number).map { "\(type(of: $0)) ignores=\($0.ignoresMouseEvents) alpha=\($0.alphaValue)" } ?? ""
+        return "\(info[kCGWindowOwnerName as String] ?? "?")#\(number) L\(info[kCGWindowLayer as String] ?? 0) \(own)"
+      }
+    print("INFO gesture: before step 8: \(stack8.joined(separator: ", ")) state=\(owner.currentOperationState(id).rawValue) active=\(effects.activeCount)")
     try await swipe(at: bar, finger: CGVector(dx: 0, dy: 5), steps: 14)
     try await wait("folded again", timeout: 3) { self.owner.currentOperationState(self.id) == .folded }
     try await Task.sleep(nanoseconds: 800_000_000)
@@ -254,6 +306,7 @@ extension GlanceProbe {
              then back: CGVector = .zero, backSteps: Int = 0, ownWindow: NSWindow? = nil,
              inspect: ((Int) async throws -> Void)? = nil) async throws {
     let gestures = owner.gestures
+    if ownWindow == nil { await keepFixtureInFront() }
     for step in 0..<(steps + backSteps) {
       let delta = step < steps ? finger : back
       guard let event = scrollEvent(phase: step == 0 ? 1 : 2, finger: delta, at: point) else {
@@ -270,6 +323,7 @@ extension GlanceProbe {
 
   /// 鼠标滚轮：按行、没有相位。lines > 0 = 滚轮往上推（内容往下走，关了自然滚动时）。
   func wheel(at point: CGPoint, lines: Int32, count: Int) async throws {
+    await keepFixtureInFront()
     for _ in 0..<count {
       guard let cg = CGEvent(scrollWheelEvent2Source: nil, units: .line, wheelCount: 1,
                              wheel1: lines, wheel2: 0, wheel3: 0),
@@ -283,6 +337,7 @@ extension GlanceProbe {
   func magnify(at point: CGPoint, delta: CGFloat, steps: Int,
                inspect: ((Int) async throws -> Void)? = nil) async throws {
     let gestures = owner.gestures
+    await keepFixtureInFront()
     for step in 0..<steps {
       gestures.magnify(phase: step == 0 ? .began : .changed, delta: delta, location: point, ownWindow: nil)
       try await Task.sleep(nanoseconds: 8_000_000)

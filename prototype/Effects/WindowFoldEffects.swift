@@ -3,7 +3,8 @@ import ScreenCaptureKit
 
 /// Owns one explicit desired state per window. The legacy transaction still owns all window mutations.
 final class WindowFoldEffects {
-  enum Phase { case preparing, hiding, folding, restoring, unfolding }
+  /// tracking：标题栏手势跟手中。盖板已经盖在窗口上，进度由手指给，松手之前不碰真窗口。
+  enum Phase { case preparing, tracking, hiding, folding, restoring, unfolding }
   final class Job {
     let id: CGWindowID
     let element: AXUIElement
@@ -16,6 +17,13 @@ final class WindowFoldEffects {
     var hideGeneration = 0
     var transition: FoldTransition
     var awaitingFinalFrame = false
+    /// 跟手：由手势驱动。committed = 已松手确认；commitPending = 盖板还没出现就松手了。
+    var tracking = false
+    var committed = false
+    var commitPending = false
+    /// 手指给的目标进度（0 = 窗口完整，1 = 卷成卷帘条）。
+    var fingerValue: Double = 0
+    var preparedProfile: WindowChromeProfile?
     init(id: CGWindowID, element: AXUIElement, folded: Bool) {
       self.id = id
       self.element = element
@@ -35,6 +43,13 @@ final class WindowFoldEffects {
     controller?.settings.windowsEnabled == true && controller?.allowsAnimation == true
       && controller?.desktopActive == false
   }
+  /// 手势跟手不是一段播放的动画，而是手指的直接反馈：不看“收起窗口时的动画”开关，
+  /// 但尊重减少动态效果、暂停效果和桌面开合。
+  var trackingAllowed: Bool {
+    !suppressedForBulkOperation && controller?.allowsAnimation == true
+      && controller?.desktopActive == false
+  }
+  private func allowed(_ job: Job) -> Bool { job.tracking ? trackingAllowed : enabled }
   private func current(_ job: Job) -> Bool { jobs[job.id] === job }
 
   func interceptFold(_ element: AXUIElement, id: CGWindowID, options: ShadeInvocationOptions?)
@@ -45,7 +60,13 @@ final class WindowFoldEffects {
       request(job, folded: true)
       return true
     }
-    guard !suppressedForBulkOperation, enabled, options == nil, let owner, owner.shaded[id] == nil,
+    guard !suppressedForBulkOperation, enabled else { return false }
+    return prepareFold(element, id: id, options: options, tracking: false)
+  }
+
+  private func prepareFold(_ element: AXUIElement, id: CGWindowID,
+                           options: ShadeInvocationOptions?, tracking: Bool) -> Bool {
+    guard options == nil, let owner, owner.shaded[id] == nil,
       !owner.shadeOperationIDs.contains(id),
       let pos = axPosition(element), let size = axSize(element),
       let screen = screenForAXWindow(pos: pos, size: size),
@@ -60,7 +81,9 @@ final class WindowFoldEffects {
     let preparedProfile = resolveWindowChromeProfile(
       win: element, id: id, pos: pos, size: size, pid: pid, title: axTitle(element))
     let job = Job(id: id, element: element, folded: true)
-    wlog("duo-window: prepare fold id=\(id)")
+    job.tracking = tracking
+    job.preparedProfile = preparedProfile
+    wlog("duo-window: prepare fold id=\(id)\(tracking ? " tracking" : "")")
     jobs[id] = job
     job.task = Task { @MainActor [weak self, weak job] in
       guard let self, let job else { return }
@@ -73,7 +96,7 @@ final class WindowFoldEffects {
           fallback(job)
           return
         }
-        guard current(job), enabled, job.desiredFolded,
+        guard current(job), allowed(job), job.desiredFolded,
           let window = content.windows.first(where: { $0.windowID == id }), window.isOnScreen
         else {
           fallback(job)
@@ -101,12 +124,12 @@ final class WindowFoldEffects {
         } else {
           try await session.start(filter: filter, pixels: pixels, color: color)
         }
-        guard current(job), enabled, !Task.isCancelled else {
+        guard current(job), allowed(job), !Task.isCancelled else {
           cancel(job)
           return
         }
         try await background(for: job, content: content, screen: screen, position: pos, size: size)
-        guard current(job), job.desiredFolded, enabled else {
+        guard current(job), job.desiredFolded, allowed(job) else {
           cancel(job)
           return
         }
@@ -114,6 +137,10 @@ final class WindowFoldEffects {
         session.onFailure = { [weak self, weak job] in if let job { self?.fallback(job) } }
         session.onVisible = { [weak self, weak job] in
           guard let self, let job, current(job), job.desiredFolded else { return }
+          if job.tracking, !job.committed || job.commitPending {
+            startFollowing(job)
+            return
+          }
           let generation = beginHide(job)
           wlog("duo-window: presented cover; hiding id=\(id)")
           job.preparedImage = job.session?.source.frame()?.stillImage() ?? job.preparedImage
@@ -213,7 +240,12 @@ final class WindowFoldEffects {
       request(job, folded: false)
       return true
     }
-    guard !suppressedForBulkOperation, enabled, let owner, let state = owner.shaded[id],
+    guard !suppressedForBulkOperation, enabled else { return false }
+    return prepareRestore(id: id, tracking: false)
+  }
+
+  private func prepareRestore(id: CGWindowID, tracking: Bool) -> Bool {
+    guard let owner, let state = owner.shaded[id],
       state.hide != .quickLookClosed, let strip = state.overlay,
       let image = state.previewImage?.cgImage(forProposedRect: nil, context: nil, hints: nil)
     else { return false }
@@ -224,14 +256,16 @@ final class WindowFoldEffects {
     else { return false }
     let job = Job(id: id, element: state.element, folded: false)
     job.preparedImage = image
-    wlog("duo-window: prepare restore id=\(id)")
+    job.tracking = tracking
+    job.fingerValue = 1
+    wlog("duo-window: prepare restore id=\(id)\(tracking ? " tracking" : "")")
     jobs[id] = job
     job.task = Task { @MainActor [weak self, weak job] in
       guard let self, let job else { return }
       do {
         let content = try await SCShareableContent.excludingDesktopWindows(
           false, onScreenWindowsOnly: false)
-        guard current(job), enabled else {
+        guard current(job), allowed(job) else {
           fallback(job)
           return
         }
@@ -255,7 +289,7 @@ final class WindowFoldEffects {
               color: EffectColorSpace.display(screen))
           }
         }
-        guard current(job), enabled, !Task.isCancelled else {
+        guard current(job), allowed(job), !Task.isCancelled else {
           cancel(job)
           return
         }
@@ -263,6 +297,10 @@ final class WindowFoldEffects {
         session.onFailure = { [weak self, weak job] in if let job { self?.fallback(job) } }
         session.onVisible = { [weak self, weak job] in
           guard let self, let job, current(job) else { return }
+          if job.tracking, !job.committed || job.commitPending {
+            if job.desiredFolded { cancel(job) } else { startFollowing(job) }
+            return
+          }
           if job.desiredFolded { cancel(job) } else { restoreExisting(job) }
         }
         session.show()
@@ -285,6 +323,7 @@ final class WindowFoldEffects {
     case .folding:
       if !folded { restoreExisting(job) }
     case .unfolding: animate(job, folded: folded)
+    case .tracking: animate(job, folded: folded)  // 手指还没松开时反向请求：盖板退回原样再撤
     }
   }
   private func restoreExisting(_ job: Job) {
@@ -334,6 +373,9 @@ final class WindowFoldEffects {
   }
   private func finish(_ job: Job) {
     guard current(job) else { return }
+    // 跟手松手后，盖板边卷边等真窗口藏好/恢复；卷完先盖着，确认到了再收尾
+    // （didVerifyFold / 恢复回调会再 animate 一次，走到这里时就不再等）。
+    if job.phase == .hiding || job.phase == .restoring { return }
     wlog("duo-window: transition presented id=\(job.id) folded=\(job.desiredFolded)")
     let desired = job.desiredFolded
     let id = job.id
@@ -372,6 +414,21 @@ final class WindowFoldEffects {
   private func fallback(_ job: Job) {
     guard current(job) else { return }
     wlog("duo-window: fallback id=\(job.id) phase=\(job.phase)")
+    if job.tracking, !job.committed {
+      // 手指还没松开：只撤掉盖板，真窗口没动过。
+      cancel(job)
+      return
+    }
+    if job.tracking, job.commitPending {
+      // 盖板没能出现就松手了：退回普通的收起/展开，窗口不会停在半路。
+      let id = job.id
+      let element = job.element
+      let fold = job.desiredFolded
+      cancel(job)
+      if fold, owner?.shaded[id] == nil { owner?.shade(element, id, bypassDuo: true) }
+      if !fold, owner?.shaded[id] != nil { _ = owner?.unshadeReturningElement(id) }
+      return
+    }
     let desired = job.desiredFolded
     let id = job.id
     let element = job.element
@@ -389,6 +446,125 @@ final class WindowFoldEffects {
       if phase != .restoring, !desired, owner?.shaded[id] != nil {
         _ = owner?.unshadeReturningElement(id)
       }
+    }
+  }
+
+  // MARK: - 手势跟手
+
+  /// 诊断：跟手中的窗口显示到几成（0 = 完整，1 = 卷起），以及盖板是否已经出现。
+  func trackingState(id: CGWindowID) -> (value: Double, visible: Bool)? {
+    guard let job = jobs[id], job.tracking else { return nil }
+    return (job.transition.value, job.phase == .tracking)
+  }
+
+  /// 标题栏手势：先把盖板盖在窗口上（进度 0），之后由 track 驱动；松手 commit 才真的收起。
+  func beginTrackingFold(_ element: AXUIElement, id: CGWindowID) -> Bool {
+    guard jobs[id] == nil, trackingAllowed else { return false }
+    restoreAfterHide.removeValue(forKey: id)
+    return prepareFold(element, id: id, options: nil, tracking: true)
+  }
+
+  /// 卷帘条上下拉：用收起时的画面做盖板（进度 1），之后由 track 驱动；松手 commit 才真的展开。
+  func beginTrackingRestore(id: CGWindowID) -> Bool {
+    guard jobs[id] == nil, trackingAllowed else { return false }
+    return prepareRestore(id: id, tracking: true)
+  }
+
+  /// fraction：这一下手势走到了几成（0...1）。收起时就是卷起的比例，展开时是放下的比例。
+  func track(id: CGWindowID, fraction: Double) {
+    guard let job = jobs[id], job.tracking, !job.committed else { return }
+    let f = min(1, max(0, fraction))
+    job.fingerValue = job.desiredFolded ? f : 1 - f
+  }
+
+  /// 松手确认。收起：盖板接着卷完，同时在盖板下藏真窗口；展开：接着放下，同时在盖板下恢复真窗口。
+  /// 返回 false 表示没有进行中的跟手（调用方走普通路径）。
+  @discardableResult
+  func commitTracking(id: CGWindowID) -> Bool {
+    guard let job = jobs[id], job.tracking, !job.committed else { return false }
+    job.committed = true
+    guard job.phase == .tracking else {
+      // 盖板还没出现：出现后立刻接着做（onVisible 里）。
+      job.commitPending = true
+      return true
+    }
+    runCommit(job)
+    return true
+  }
+
+  /// 往回拉或换了方向：盖板退回原样再撤掉，真窗口从头到尾没动过。
+  func cancelTracking(id: CGWindowID) {
+    guard let job = jobs[id], job.tracking, !job.committed else { return }
+    let wasFolding = job.desiredFolded
+    job.desiredFolded = !wasFolding
+    guard job.phase == .tracking else {
+      cancel(job)
+      return
+    }
+    animate(job, folded: !wasFolding)
+  }
+
+  private func startFollowing(_ job: Job) {
+    guard current(job), let session = job.session else { return }
+    job.phase = .tracking
+    wlog("duo-window: tracking id=\(job.id) folding=\(job.desiredFolded)")
+    if job.commitPending {
+      job.commitPending = false
+      runCommit(job)
+      return
+    }
+    var last = CACurrentMediaTime()
+    var shown = job.transition.value
+    session.tick = { [weak self, weak job] now in
+      guard let self, let job, current(job), let session = job.session else { return }
+      let dt = max(0, now - last)
+      last = now
+      // 手指给目标，显示值用 40ms 的指数跟随追上去：平时几乎是 1:1，
+      // 盖板比手指晚出现、或滚轮一格一格跳时，平滑追上而不是一下跳过去。
+      shown += (job.fingerValue - shown) * (1 - exp(-dt / 0.04))
+      if abs(job.fingerValue - shown) < 0.0005 { shown = job.fingerValue }
+      job.transition = FoldTransition(value: shown)
+      session.renderer.parameters.progress = Float(shown)
+    }
+  }
+
+  private func runCommit(_ job: Job) {
+    guard current(job), let owner else { return }
+    if job.desiredFolded {
+      let generation = beginHide(job)
+      job.preparedImage = job.session?.source.frame()?.stillImage() ?? job.preparedImage
+      wlog("duo-window: tracking commit fold id=\(job.id) at=\(job.transition.value)")
+      owner.shade(job.element, job.id, bypassDuo: true, preparedImage: job.preparedImage,
+                  preparedProfile: job.preparedProfile)
+      scheduleHideWatchdog(job, generation: generation)
+      // 盖板一直盖着真窗口：不等藏好，接着卷完。
+      animate(job, folded: true)
+    } else {
+      wlog("duo-window: tracking commit restore id=\(job.id) at=\(job.transition.value)")
+      guard owner.shaded[job.id] != nil else {
+        fallback(job)
+        return
+      }
+      job.phase = .restoring
+      internalRestores.insert(job.id)
+      let result = owner.unshadeReturningElement(
+        job.id,
+        onVerified: { [weak self, weak job] success in
+          guard let self, let job, current(job) else { return }
+          wlog("duo-window: tracking restore verified id=\(job.id) success=\(success)")
+          guard success else {
+            cancel(job)
+            return
+          }
+          job.phase = .unfolding
+          animate(job, folded: false)
+        })
+      internalRestores.remove(job.id)
+      if result == nil {
+        cancel(job)
+        return
+      }
+      animate(job, folded: false)
     }
   }
 
