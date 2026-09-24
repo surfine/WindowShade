@@ -236,6 +236,11 @@ extension AppDelegate {
     }
 
     func peekHoverPreview(_ id: CGWindowID) {
+        // 看一眼打开时，单击卷帘条就是马上看一眼（原位、原尺寸），不再弹小卡片。
+        if GlanceController.isEnabled {
+            MainActor.assumeIsolated { glance.stripClicked(id) }
+            return
+        }
         guard !hoverPreviewIsSuppressed(id) else { return }
         if let state = shaded[id],
            cleanupProxyIfSourceWindowVisible(id: id, state: state, reason: "peek-preview") {

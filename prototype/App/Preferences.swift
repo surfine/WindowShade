@@ -18,6 +18,10 @@ extension AppDelegate {
         pinnedPreviewController.pinCurrentTargetPreview()
     }
 
+@objc func toggleCarryAction() {
+        MainActor.assumeIsolated { carry.toggleCurrentWindow() }
+    }
+
 @objc func cancelPinnedPreviewMenuItem(_ sender: NSMenuItem) {
         guard let number = sender.representedObject as? NSNumber else { return }
         pinnedPreviewController.stopPreviewFromMenu(id: CGWindowID(number.uint32Value))
@@ -122,6 +126,11 @@ extension AppDelegate {
         let trigger = makeUnifiedSettingsCard([
             makeUnifiedToggleRow(name: "双击标题栏收起窗口", subtitle: titlebarDoubleClickPreferenceSubtitle(),
                                  isOn: titlebarDoubleClickEnabled, action: #selector(prefToggleTitlebarDoubleClick(_:))),
+            makeUnifiedToggleRow(name: "看一眼", subtitle: "指针停在卷帘条上，窗口在原处出现，移开就收回",
+                                 isOn: GlanceController.isEnabled, action: #selector(prefToggleGlance(_:))),
+            makeUnifiedToggleRow(name: "标题栏手势", subtitle: trackpadGesturePreferenceSubtitle(),
+                                 isOn: TrackpadGestureController.isEnabled,
+                                 action: #selector(prefToggleTrackpadGestures(_:))),
         ])
         stack.addArrangedSubview(makePrefGroupLabel("触发"))
         stack.addArrangedSubview(trigger)
@@ -397,6 +406,27 @@ extension AppDelegate {
         rebuildMenu()
     }
 
+    func trackpadGesturePreferenceSubtitle() -> String {
+        if TrackpadGestureController.conflictingApp() != nil {
+            return "Swish 正在运行，标题栏上的手势交给它；在卷帘条上往下滑仍可展开"
+        }
+        return "在标题栏上两指滑动或滚动滚轮：往上收起窗口，往下铺满屏幕"
+    }
+
+    @objc func prefToggleTrackpadGestures(_ sender: NSSwitch) {
+        TrackpadGestureController.isEnabled = sender.state == .on
+        MainActor.assumeIsolated { gestures.refreshMonitors() }
+        rebuildMenu()
+    }
+
+    @objc func prefToggleGlance(_ sender: NSSwitch) {
+        GlanceController.isEnabled = sender.state == .on
+        if !GlanceController.isEnabled {
+            MainActor.assumeIsolated { glance.cancelAll(reason: "setting-off") }
+        }
+        rebuildMenu()
+    }
+
     @objc func prefToggleFloating(_ sender: NSSwitch) {
         floatingOnTop = sender.state == .on
         UserDefaults.standard.set(floatingOnTop, forKey: shadeFloatingOnTopDefaultsKey)
@@ -665,13 +695,19 @@ extension AppDelegate {
         if let name = GlobalShortcutSettings.displayName(for: .pinPreview) {
             rows.append(("pin", "\(name)：置顶或取消置顶当前窗口"))
         }
+        if let name = GlobalShortcutSettings.displayName(for: .carry) {
+            rows.append(("rectangle.on.rectangle.angled", "\(name)：把当前窗口带到每张桌面"))
+        }
         rows.append(("cursorarrow.click", "双击标题栏：收起或展开那个窗口"))
         switch systemTitlebarDoubleClickAction() {
         case .zoom: rows.append(("cursorarrow.rays", "三击标题栏：缩放窗口"))
         case .minimize: rows.append(("cursorarrow.rays", "三击标题栏：最小化窗口"))
         case .none: break
         }
-        rows.append(("eye", "单击卷帘条：看一眼收起的窗口"))
+        rows.append(("eye", GlanceController.isEnabled ? "指针停在卷帘条上：看一眼收起的窗口" : "单击卷帘条：看一眼收起的窗口"))
+        if TrackpadGestureController.isEnabled {
+            rows.append(("hand.draw", "在标题栏上两指滑动或滚动滚轮：往上收起，往下铺满，左右占半屏"))
+        }
         if GlobalShortcutSettings.numberedExpandEnabled {
             rows.append(("number", "\(GlobalShortcutSettings.numberedDisplayName)：按菜单顺序展开已收起的窗口"))
         }
@@ -789,6 +825,7 @@ extension AppDelegate {
         let window = makeUnifiedSettingsCard([
             recorderRow(.toggleShade, subtitle: nil),
             recorderRow(.pinPreview, subtitle: nil),
+            recorderRow(.carry, subtitle: "窗口留在原处，在别的桌面上也能看一眼"),
         ])
         stack.addArrangedSubview(makePrefGroupLabel("当前窗口"))
         stack.addArrangedSubview(window)

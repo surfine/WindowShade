@@ -85,12 +85,22 @@ final class WindowFoldEffects {
         session.renderer.parameters = .init(
           titleFraction: Float(titleBarHeight / max(1, size.height)), windowMode: true,
           preset: controller?.settings.preset ?? .shade)
-        try await session.start(
-          filter: SCContentFilter(desktopIndependentWindow: window),
-          pixels: CGSize(
-            width: size.width * screen.backingScaleFactor,
-            height: size.height * screen.backingScaleFactor),
-          color: EffectColorSpace.display(screen))
+        let filter = SCContentFilter(desktopIndependentWindow: window)
+        let pixels = CGSize(
+          width: size.width * screen.backingScaleFactor,
+          height: size.height * screen.backingScaleFactor)
+        let color = EffectColorSpace.display(screen)
+        if let still = await owner.fastWindowCapture(id) {
+          // 快速截图起步（和展开一样）：一张静态图就能开始卷，不必先等实时流
+          // （热启动 150–220ms，冷启动更久）；流就绪后由显示时钟自动换成实时帧。
+          try session.renderer.setImage(still, color: color)
+          job.preparedImage = still
+          job.captureTask = Task { @MainActor [weak session] in
+            try? await session?.start(filter: filter, pixels: pixels, color: color)
+          }
+        } else {
+          try await session.start(filter: filter, pixels: pixels, color: color)
+        }
         guard current(job), enabled, !Task.isCancelled else {
           cancel(job)
           return
@@ -106,7 +116,7 @@ final class WindowFoldEffects {
           guard let self, let job, current(job), job.desiredFolded else { return }
           let generation = beginHide(job)
           wlog("duo-window: presented cover; hiding id=\(id)")
-          job.preparedImage = job.session?.source.frame()?.stillImage()
+          job.preparedImage = job.session?.source.frame()?.stillImage() ?? job.preparedImage
           owner.shade(
             element, id, options: options, bypassDuo: true,
             preparedImage: job.preparedImage, preparedProfile: preparedProfile)
@@ -144,8 +154,16 @@ final class WindowFoldEffects {
     config.height = Int((clipped.height * scale).rounded())
     config.showsCursor = false
     config.colorSpaceName = EffectColorSpace.display(screen).name
-    let image = try await SCScreenshotManager.captureImage(
-      contentFilter: filter, configuration: config)
+    // 快速合成（几十毫秒）优先：同样去掉源窗口、动画面板和卷帘条；尺寸不对再走 ScreenCaptureKit。
+    let globalClipped = clipped.offsetBy(dx: display.frame.minX, dy: display.frame.minY)
+    let image: CGImage
+    if let fast = FastCapture.composite(excluding: ids, rect: globalClipped),
+       abs(fast.width - config.width) <= 2, abs(fast.height - config.height) <= 2 {
+      image = fast
+    } else {
+      image = try await SCScreenshotManager.captureImage(
+        contentFilter: filter, configuration: config)
+    }
     guard current(job), !Task.isCancelled else { throw CancellationError() }
     if clipped == requested {
       try session.renderer.setBackground(image)

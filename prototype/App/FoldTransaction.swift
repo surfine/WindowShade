@@ -151,6 +151,13 @@ extension AppDelegate {
                 }
                 return hidden
             },
+            // 隐藏或最小化生效后窗口立刻离开屏幕（实测整体隐藏约 13ms），而 isHidden /
+            // kAXMinimized 的读回会滞后：WindowServer 说它已不在屏幕上，就可以亮出卷帘条。
+            quickObserve: { [weak self] in
+                guard let self, let state = self.shaded[id],
+                      state.hide == .hidden || state.hide == .minimized else { return false }
+                return cgWindowInfo(id) != nil && !windowIsOnScreenNow(id)
+            },
             completion: { [weak self] success in
                 guard let self, let state = self.shaded[id] else { return }
                 if success {
@@ -900,6 +907,10 @@ extension AppDelegate {
                 unshade(id)
             }
         } else if notification == (kAXApplicationShownNotification as String) {
+            if MainActor.assumeIsolated({ glance.holdsReveal(id) }) {
+                wlog("ignore app reveal caused by glance id=\(id) app=\(state.appName)")
+                return
+            }
             if Date() < state.ignoreAppRevealUntil {
                 wlog("ignore early app reveal notification=\(notification) id=\(id) app=\(state.appName)")
                 return
@@ -920,6 +931,7 @@ extension AppDelegate {
         guard let app = note.userInfo?[NSWorkspace.applicationUserInfoKey] as? NSRunningApplication else { return }
         windowBrowserController?.applicationTerminated(pid: app.processIdentifier)
         pinnedPreviewController.stopPreviews(forPID: app.processIdentifier, reason: "source-app-terminated")
+        MainActor.assumeIsolated { carry.stop(pid: app.processIdentifier, reason: "app-terminated") }
         for id in shaded.filter({ $0.value.pid == app.processIdentifier }).map(\.key) {
             forceCleanup(id)
         }
@@ -928,6 +940,14 @@ extension AppDelegate {
     @objc func frontmostApplicationChanged(_ note: Notification) {
         hideHoverPreview()
         hideMenuHoverPreview()
+        MainActor.assumeIsolated {
+            if let app = note.userInfo?[NSWorkspace.applicationUserInfoKey] as? NSRunningApplication {
+                glance.takeOverUnhiddenSessions(for: app.processIdentifier) { id in
+                    _ = self.unshade(id)
+                }
+            }
+            glance.cancelAll(reason: "frontmost-app")
+        }
         windowBrowserController?.closeTemporaryDockPanel(reason: "frontmost-app")
         windowBrowserController?.noteAppBecameActive()
         DispatchQueue.main.asyncAfter(deadline: .now() + 0.08) { [weak self] in
@@ -946,6 +966,7 @@ extension AppDelegate {
 
     @objc func screenParametersChanged(_ note: Notification) {
         windowBrowserController?.screensDidChange()
+        MainActor.assumeIsolated { carry.layout() }
         pinnedPreviewController.refreshAll(reason: "screen")
         for (id, state) in shaded {
             guard let overlay = state.overlay else { continue }
@@ -973,6 +994,11 @@ extension AppDelegate {
         // 轻操作即时执行；开启置顶预览的动画抑制窗口期。
         hideHoverPreview()
         hideMenuHoverPreview()
+        MainActor.assumeIsolated {
+            glance.cancelAll(reason: "space-changed")
+            carry.activeSpaceChanged()
+            gestures.cancel(reason: "space-changed")
+        }
         menuPreviewHoverID = nil
         menuPreviewAnchor = nil
         pinnedPreviewController.noteSpaceTransition()

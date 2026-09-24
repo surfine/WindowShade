@@ -46,7 +46,7 @@ extension AppDelegate {
                 failed[id] = (name, status)
             }
         }
-        for shortcut in [GlobalShortcut.toggleShade, .arrangeOrFocus, .pinPreview] {
+        for shortcut in [GlobalShortcut.toggleShade, .arrangeOrFocus, .pinPreview, .carry] {
             guard let hotKey = GlobalShortcutSettings.hotKey(for: shortcut) else { continue }
             register(hotKey, id: shortcut.hotKeyID,
                      name: WindowBrowserSettings.displayName(for: hotKey))
@@ -135,6 +135,10 @@ extension AppDelegate {
         }
         if id == 4 {
             windowBrowserController?.toggleKeyboardPanel()
+            return
+        }
+        if id == GlobalShortcut.carry.hotKeyID {
+            MainActor.assumeIsolated { carry.toggleCurrentWindow() }
             return
         }
         guard id >= 101, id <= 109 else { return }
@@ -319,7 +323,7 @@ extension AppDelegate {
                 })
         }
     }
-    private func titlebarFoldCanBegin(id: CGWindowID) -> Bool {
+    func titlebarFoldCanBegin(id: CGWindowID) -> Bool {
         let state = currentOperationState(id)
         return shaded[id] == nil && !shadeOperationIDs.contains(id)
             && !duoController.windowEffects.hasActiveTransition(for: id)

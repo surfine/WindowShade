@@ -1,6 +1,6 @@
 import Cocoa
 
-if CommandLine.arguments.contains(where:{$0.hasPrefix("--duo-")}) {
+if CommandLine.arguments.contains(where:{$0.hasPrefix("--duo-") || $0.hasPrefix("--glance-")}) {
     let log=FileManager.default.currentDirectoryPath+"/.build/duo-tests/native-\(getpid()).log"
     try? FileManager.default.createDirectory(atPath:URL(fileURLWithPath:log).deletingLastPathComponent().path,withIntermediateDirectories:true)
     setenv("WINDOWSHADE_LOG_PATH",log,1)
@@ -120,6 +120,13 @@ if CommandLine.arguments.contains("--duo-inspector") {
     app.setActivationPolicy(.accessory)
     let inspector=EffectInspector();inspector.run()
     withExtendedLifetime(inspector) { app.run() }
+    exit(0)
+}
+if CommandLine.arguments.contains("--glance-probe") {
+    app.setActivationPolicy(.accessory)
+    let probe = MainActor.assumeIsolated { GlanceProbe() }
+    DispatchQueue.main.async { MainActor.assumeIsolated { probe.run() } }
+    withExtendedLifetime(probe) { app.run() }
     exit(0)
 }
 if CommandLine.arguments.contains("--duo-window-test") {

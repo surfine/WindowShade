@@ -105,6 +105,12 @@ extension AppDelegate {
     statusMenu.addItem(pinnedPreview)
     addPinnedPreviewMenuSection(menuState.pinnedPreviews)
 
+    let carryItem = NSMenuItem(
+      title: "带到每张桌面", action: #selector(toggleCarryAction), keyEquivalent: "")
+    applyShortcut(.carry, to: carryItem)
+    carryItem.isEnabled = AXIsProcessTrusted()
+    statusMenu.addItem(carryItem)
+
     let windowBrowser = NSMenuItem(
       title: "选择窗口…", action: #selector(openWindowBrowserPanel), keyEquivalent: "")
     applyShortcut(.windowBrowser, to: windowBrowser)
