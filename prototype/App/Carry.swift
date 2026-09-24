@@ -77,6 +77,12 @@ final class CarryStripView: NSView {
 
     required init?(coder: NSCoder) { nil }
 
+    var appIconForMenu: NSImage? {
+        guard let image = icon.image?.copy() as? NSImage else { return nil }
+        image.size = NSSize(width: 16, height: 16)
+        return image
+    }
+
     func setTitle(_ title: String) {
         titleLabel.stringValue = title
         toolTip = title
@@ -118,9 +124,41 @@ final class CarryStripView: NSView {
     }
 }
 
+/// 系统菜单入口，外层沿用卷帘条的非激活面板。
+private final class CarryMoreView: NSView {
+    let button = NSButton(title: "更多窗口", target: nil, action: nil)
+    var onPress: (() -> Void)?
+
+    override init(frame: NSRect) {
+        super.init(frame: frame)
+        button.bezelStyle = .rounded
+        button.font = .systemFont(ofSize: 12)
+        button.target = self
+        button.action = #selector(pressed)
+        button.toolTip = "选择一个窗口看一眼"
+        button.setAccessibilityLabel("更多窗口")
+        button.setAccessibilityHelp("选择一个窗口看一眼，不切换桌面")
+        addSubview(button)
+    }
+    required init?(coder: NSCoder) { nil }
+    override func layout() {
+        super.layout()
+        button.frame = bounds
+        button.title = bounds.width >= 72 ? "更多窗口" : "•••"
+    }
+    @objc private func pressed() { onPress?() }
+}
+
+private final class CarryMenuSelection: NSObject {
+    var id: CGWindowID?
+    @objc func selectWindow(_ sender: NSMenuItem) {
+        id = (sender.representedObject as? NSNumber)?.uint32Value
+    }
+}
+
 @MainActor
 final class CarryController: GlanceCarrySource {
-    static let stripSize = NSSize(width: 260, height: 30)
+    static let stripSize = CarryShelfLayout.stripSize
 
     private final class Carried {
         let id: CGWindowID
@@ -152,6 +190,15 @@ final class CarryController: GlanceCarrySource {
     private var carried: [CGWindowID: Carried] = [:]
     private var order: [CGWindowID] = []
     private var timer: Timer?
+    private var promotedID: CGWindowID?
+    private var overflowIDs: [CGWindowID] = []
+    private var morePanel: CarryStripPanel?
+    private var moreView: CarryMoreView?
+    /// 读系统状态的入口；测试只替换这些读取，不移动真实窗口。
+    var sourceExists: (CGWindowID, pid_t) -> Bool = { cgWindowInfo($0) != nil && runningApp(pid: $1) != nil }
+    var sourceIsOnScreen: (CGWindowID) -> Bool = { windowIsOnScreenNow($0) }
+    var shelfVisibleFrame: () -> CGRect? = { NSScreen.screens.first?.visibleFrame }
+
     /// 探针：在窗口自己的桌面上也显示卷帘条（平时自己的桌面上不需要它）。
     var showsOnOwnDesktop = false
 
@@ -213,8 +260,6 @@ final class CarryController: GlanceCarrySource {
         view.onStop = { [weak self] in self?.stop(id, reason: "strip-button") }
         carried[id] = item
         order.append(id)
-        layout()
-        owner.glance.attach(id: id, overlay: panel)
         refreshVisibility(reason: "carry")
         refreshSnapshot(item)
         ensureTimer()
@@ -225,6 +270,7 @@ final class CarryController: GlanceCarrySource {
     func stop(_ id: CGWindowID, reason: String) {
         guard let item = carried.removeValue(forKey: id) else { return }
         order.removeAll { $0 == id }
+        if promotedID == id { promotedID = nil }
         owner.glance.detach(id: id)
         item.panel.orderOut(nil)
         layout()
@@ -246,37 +292,104 @@ final class CarryController: GlanceCarrySource {
 
     // MARK: 位置与可见性
 
-    /// 卷帘条排在主屏右上角，菜单栏下面，从右往左排。
+    /// 只为当前需要的卷帘条占位，溢出项从菜单访问。
     func layout() {
-        guard let screen = NSScreen.screens.first else { return }
-        let visible = screen.visibleFrame
-        let size = Self.stripSize
-        for (index, id) in order.enumerated() {
+        let eligible = order.filter { id in
+            guard let item = carried[id] else { return false }
+            return sourceExists(id, item.pid) && (showsOnOwnDesktop || !sourceIsOnScreen(id))
+        }
+        if let promotedID, !eligible.contains(promotedID) { self.promotedID = nil }
+        let plan = shelfVisibleFrame().map {
+            CarryShelfLayout.compute(ids: eligible, visibleFrame: $0, promotedID: promotedID)
+        } ?? CarryShelfLayout.Result()
+        let frames = Dictionary(uniqueKeysWithValues: plan.strips.map { ($0.id, $0.frame) })
+        for id in order {
             guard let item = carried[id] else { continue }
-            let x = visible.maxX - 10 - size.width - CGFloat(index) * (size.width + 8)
-            let frame = NSRect(x: max(visible.minX + 10, x), y: visible.maxY - 8 - size.height,
-                               width: size.width, height: size.height)
-            if !framesAlmostEqual(item.panel.frame, frame) {
-                item.panel.setFrame(frame, display: true)
+            guard let frame = frames[id] else {
+                if item.panel.isVisible || owner.glance.hasSession(id) {
+                    owner.glance.detach(id: id)
+                    item.panel.orderOut(nil)
+                }
+                continue
             }
+            let changed = !framesAlmostEqual(item.panel.frame, frame)
+            let showing = !item.panel.isVisible
+            if changed || showing {
+                owner.glance.detach(id: id)
+                item.panel.setFrame(frame, display: true)
+                item.panel.orderFrontRegardless()
+                owner.glance.attach(id: id, overlay: item.panel)
+            }
+        }
+        overflowIDs = plan.overflow
+        if let frame = plan.moreFrame, !overflowIDs.isEmpty {
+            if morePanel == nil {
+                let panel = CarryStripPanel(frame: frame)
+                panel.title = "更多窗口"
+                let view = CarryMoreView(frame: NSRect(origin: .zero, size: frame.size))
+                view.onPress = { [weak self] in self?.showOverflowMenu() }
+                panel.contentView = view
+                morePanel = panel
+                moreView = view
+            }
+            morePanel?.setFrame(frame, display: true)
+            if morePanel?.isVisible == false { morePanel?.orderFrontRegardless() }
+        } else {
+            morePanel?.orderOut(nil)
+            morePanel = nil
+            moreView = nil
         }
     }
 
-    /// 窗口就在眼前（它的桌面、没被隐藏或最小化）时不需要卷帘条；其余时候每张桌面都显示。
+    /// 先移除消失的来源，再一次性排布；不能把溢出项重新 orderFront。
     func refreshVisibility(reason: String) {
         for id in order {
             guard let item = carried[id] else { continue }
-            guard cgWindowInfo(id) != nil, runningApp(pid: item.pid) != nil else {
-                stop(id, reason: "window-gone")
-                continue
-            }
-            let inFront = windowIsOnScreenNow(id)
-            if inFront && !showsOnOwnDesktop {
-                if item.panel.isVisible { item.panel.orderOut(nil) }
-            } else if !item.panel.isVisible {
-                item.panel.orderFrontRegardless()
-            }
+            if !sourceExists(id, item.pid) { stop(id, reason: "window-gone") }
         }
+        layout()
+    }
+
+    private func makeOverflowMenu(selection: CarryMenuSelection) -> NSMenu {
+        let menu = NSMenu(title: "更多窗口")
+        menu.autoenablesItems = false
+        for id in overflowIDs {
+            guard let item = carried[id] else { continue }
+            let entry = NSMenuItem(title: item.title, action: #selector(CarryMenuSelection.selectWindow(_:)),
+                                   keyEquivalent: "")
+            entry.target = selection
+            entry.representedObject = NSNumber(value: id)
+            entry.image = item.view.appIconForMenu
+            entry.toolTip = "看一眼"
+            menu.addItem(entry)
+        }
+        return menu
+    }
+
+    private func showOverflowMenu() {
+        guard let view = moreView else { return }
+        owner.glance.cancelAll(reason: "carry-menu")
+        let candidates = Dictionary(uniqueKeysWithValues: overflowIDs.compactMap { id in
+            carried[id].map { (id, $0) }
+        })
+        let selection = CarryMenuSelection()
+        let menu = makeOverflowMenu(selection: selection)
+        menu.popUp(positioning: nil, at: NSPoint(x: 0, y: 0), in: view)
+        // popUp 返回后菜单已关闭；等本轮输入结束，再交给预览。
+        guard let id = selection.id, let item = candidates[id] else { return }
+        DispatchQueue.main.async { [weak self] in self?.previewOverflowItem(id, expected: item) }
+    }
+
+    @discardableResult
+    private func previewOverflowItem(_ id: CGWindowID, expected: Carried? = nil) -> Bool {
+        guard let item = carried[id], expected == nil || item === expected,
+              sourceExists(id, item.pid),
+              showsOnOwnDesktop || !sourceIsOnScreen(id) else { return false }
+        promotedID = id
+        layout()
+        guard item.panel.isVisible else { return false }
+        owner.glance.previewFromMenu(id)
+        return true
     }
 
     /// 换桌面：切换动画结束后窗口的在屏状态才准，稍后再核对一次。
