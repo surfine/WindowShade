@@ -3,13 +3,19 @@
 // without a screen-capture stream, real window, or AX write.
 @MainActor private final class LifecycleCarrySource: GlanceCarrySource {
     let frame = NSRect(x: 100, y: 100, width: 260, height: 30)
-    func carriedStripFrame(_ id: CGWindowID) -> NSRect? { frame }
-    func glanceTarget(forCarried id: CGWindowID) -> GlanceTarget? {
-        GlanceTarget(strip: frame, panel: frame, card: frame, picture: frame,
-                     backdropArea: nil, cornerRadius: 8, source: .snapshotOnly,
-                     snapshot: nil, pid: 123_456, bundleID: "test.lifecycle",
-                     accessibilityTitle: "test", staleText: "test")
+    /// The strip can outlive the carried window: a target lookup may start
+    /// failing while `carriedStripFrame` still answers.
+    var target: GlanceTarget?
+
+    init() {
+        target = GlanceTarget(strip: frame, panel: frame, card: frame, picture: frame,
+                              backdropArea: nil, cornerRadius: 8, source: .snapshotOnly,
+                              snapshot: nil, pid: 123_456, bundleID: "test.lifecycle",
+                              accessibilityTitle: "test", staleText: "test")
     }
+
+    func carriedStripFrame(_ id: CGWindowID) -> NSRect? { frame }
+    func glanceTarget(forCarried id: CGWindowID) -> GlanceTarget? { target }
     func openCarriedWindow(_ id: CGWindowID) {}
 }
 
@@ -85,6 +91,27 @@ extension GlanceController {
         controller.takeOverUnhiddenSessions(for: preparing.pid) { restored.append($0) }
         precondition(controller.sessions[id] === preparing && restored == [id])
         controller.finish(preparing, reason: "test-cleanup")
+
+        // The strip can still be on screen while its carried window is no longer
+        // carried: opening must not leave the preparing session and intent alive.
+        controller.apply(controller.intent.entered(id, at: 1))
+        let stale = controller.sessions[id]
+        precondition(stale != nil && stale!.stage == .preparing && !stale!.liveExpected)
+        let startup = Task { @MainActor () -> Void in
+            try? await Task.sleep(nanoseconds: 5_000_000_000)
+        }
+        stale!.startupTask = startup
+        source.target = nil
+        controller.apply(controller.intent.sample(GlancePointerSample(strip: id), at: 10))
+        precondition(controller.sessions[id] == nil, "Lost target must end the preparing session")
+        precondition(stale!.cancelled, "Lost target must tear the session down")
+        precondition(startup.isCancelled, "Lost target must cancel the pending startup")
+        precondition(!controller.intent.needsSampling)
+        precondition(controller.intent.phase == .idle)
+        precondition(controller.intent.blocked.isEmpty)
+        precondition(!controller.needsTimer, "Nothing left to sample: the timer must stop")
+        // Restore the fixture so later scenarios still see a target.
+        source.target = LifecycleCarrySource().target
     }
 }
 
