@@ -594,26 +594,40 @@ final class TrackpadGestureController {
         let frame = session.recognizer.frame
         let effects = owner.duoController.windowEffects
         let id = session.windowID
-        guard frame.available, frame.action == .shade || frame.action == .expand else {
+        let decided = frame.available && (frame.action == .shade || frame.action == .expand)
+        // 手指刚放上、还没认出方向：先把盖板以 0 进度盖上（和窗口看起来一模一样），
+        // 一认出往上推（卷帘条上是往下拉）窗口马上跟着动，不用等盖板准备好再追。
+        // 认出的是别的方向就撤掉。滚轮第一格就带着方向，不需要预备。
+        let undecided = frame.action == nil && session.recognizer.direction == nil && !session.isWheel
+        let map = session.recognizer.map
+        let intent: GestureAction?
+        if decided {
+            intent = frame.action
+        } else if undecided {
+            intent = map.up == .shade ? .shade : (map.down == .expand ? .expand : nil)
+        } else {
+            intent = nil
+        }
+        guard let intent else {
             stopFollowing(session)
             return
         }
         if !session.following, !session.followFailed {
             var started = false
-            if frame.action == .shade, let win = session.element, owner.titlebarFoldCanBegin(id: id),
+            if intent == .shade, let win = session.element, owner.titlebarFoldCanBegin(id: id),
                owner.focusRejoinEntries[id] == nil {
                 started = effects.beginTrackingFold(win, id: id)
-            } else if frame.action == .expand, owner.currentOperationState(id) == .folded {
+            } else if intent == .expand, owner.currentOperationState(id) == .folded {
                 started = effects.beginTrackingRestore(id: id)
                 // 卷帘条下面挂着看一眼的卡片时先收起它：窗口要从这里放下来。
                 if started { owner.glance.cancelAll(reason: "gesture-follow") }
             }
             session.following = started
             session.followFailed = !started
-            if started { wlog("gesture: window follows id=\(id) action=\(frame.action?.rawValue ?? "-")") }
+            if started { wlog("gesture: window follows id=\(id) action=\(intent.rawValue)\(decided ? "" : " (ready)")") }
         }
         if session.following {
-            effects.track(id: id, fraction: Double(frame.progress) * Self.followRatio)
+            effects.track(id: id, fraction: decided ? Double(frame.progress) * Self.followRatio : 0)
         }
     }
 
