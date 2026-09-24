@@ -48,6 +48,8 @@ extension AppDelegate {
             return alpha > 0.05
         case .hidden:
             guard Date() >= state.ignoreAppRevealUntil else { return false }
+            // 看一眼在画面下面临时取消隐藏：那不是用户唤回。
+            guard !MainActor.assumeIsolated({ glance.holdsReveal(state.sourceWindowID) }) else { return false }
             guard let app = runningApp(pid: state.pid) else { return true }
             return !app.isHidden
         case .minimized:

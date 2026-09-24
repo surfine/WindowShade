@@ -365,6 +365,11 @@ extension AppDelegate {
                                    ignoreAppRevealUntil: Date().addingTimeInterval(1.0),
                                    observer: observer)
             shaded[id] = state
+            MainActor.assumeIsolated {
+                // 收起一扇带到每张桌面的窗口：它不再需要别处的卷帘条。
+                carry.stopIfCarried(id, reason: "shaded")
+                glance.attach(id: id, overlay: overlay)
+            }
             foldPhase("状态机转换") {
                 transitionOperationState(id: id, to: .folded, reason: "install")
             }
@@ -548,7 +553,9 @@ extension AppDelegate {
             return
         }
         handedToAsyncCapture = true
+        let captureTaskQueuedAt = CFAbsoluteTimeGetCurrent()
         Task { @MainActor in
+            let captureTaskStartedAt = CFAbsoluteTimeGetCurrent()
             defer {
                 self.shadeOperationIDs.remove(id)
                 if self.currentOperationState(id) == .capturing {
@@ -566,9 +573,14 @@ extension AppDelegate {
                 parkFocusForInactiveCapture()
                 try? await Task.sleep(nanoseconds: 35_000_000)       // 等 WindowServer 把整条 toolbar 重绘成非活跃态
             }
+            let captureStartedAt = CFAbsoluteTimeGetCurrent()
             let capturedImage: CGImage?
             if let preparedImage { capturedImage = preparedImage }
-            else {
+            else if let fast = await fastWindowCapture(id) {
+                // 快速截图（实测几十毫秒）优先；ScreenCaptureKit 单张截图在收起途中要 200ms 以上，
+                // 还会超时退回代理标题栏。拿不到快速截图时才走它。
+                capturedImage = fast
+            } else {
                 capturedImage = await captureWindowWithTimeout(id: id, axPos: pos, size: size,
                     timeoutNanoseconds: shadeCaptureTimeoutNanoseconds)
             }
@@ -597,6 +609,7 @@ extension AppDelegate {
             // 仍留在主线程。
             // 截图时系统往往已经在这扇窗的红绿灯处画上了录屏胶囊（捕获本身触发的）。
             // 先把它抹回标题栏底色，卷帘条与悬停预览都用清理后的图；没有胶囊时原样不动。
+            let capturedAt = CFAbsoluteTimeGetCurrent()
             let (preparation, stripSource, indicatorRemoved) = await withCheckedContinuation {
                 (continuation: CheckedContinuation<(NativeStripPreparation, CGImage, Bool), Never>) in
                 pixelAnalysisQueue.async { [full, size, profile, pid] in
@@ -611,6 +624,8 @@ extension AppDelegate {
             if indicatorRemoved {
                 wlog("    capture indicator removed from strip id=\(id)")
             }
+            let ms = { (a: CFAbsoluteTime, b: CFAbsoluteTime) in Int((b - a) * 1000) }
+            wlog("    fold-capture timing id=\(id) queued=\(ms(captureTaskQueuedAt, captureTaskStartedAt))ms park=\(ms(captureTaskStartedAt, captureStartedAt))ms capture=\(ms(captureStartedAt, capturedAt))ms prepare=\(ms(capturedAt, CFAbsoluteTimeGetCurrent()))ms")
             let barH = preparation.barH
             let buttonRects = trafficLightRects(
                 trafficLightRects(win, winTopLeft: pos, barH: barH),
@@ -683,6 +698,14 @@ extension AppDelegate {
             CaptureIndicatorRemoval.removingIndicator(from: image, scale: pixelScale) ?? image
         }.value
     }
+    /// 收起用的快速整窗截图，放到后台线程做，不占主线程。
+    func fastWindowCapture(_ id: CGWindowID) async -> CGImage? {
+        guard hasScreenRecordingPermission() else { return nil }
+        return await withCheckedContinuation { continuation in
+            pixelAnalysisQueue.async { continuation.resume(returning: FastCapture.window(id)) }
+        }
+    }
+
     func captureWindowWithTimeout(id: CGWindowID, axPos: CGPoint, size: CGSize,
                                           maxPixelSize: CGSize? = nil,
                                           timeoutNanoseconds: UInt64) async -> CGImage? {

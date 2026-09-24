@@ -261,6 +261,11 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSMenuDelegate {
                                                            capturePreview: false,
                                                            emitFoldFeedback: false,
                                                            rebuildMenuAfterInstall: false)
+    /// 看一眼：指针停在卷帘条上，窗口原样出现，移开就收回。
+    lazy var glance = MainActor.assumeIsolated { GlanceController(owner: self) }
+    /// 带到每张桌面：窗口留在自己的桌面，别的桌面上看得到它的卷帘条。
+    lazy var carry = MainActor.assumeIsolated { CarryController(owner: self) }
+    lazy var gestures = MainActor.assumeIsolated { TrackpadGestureController(owner: self) }
     lazy var pinnedPreviewController = PinnedPreviewController(
         notice: { [weak self] message, log in
             self?.quietNotice(message, log: log)
@@ -300,6 +305,9 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSMenuDelegate {
         }
         logIfSlow("launch onboarding", threshold: 0.1) { showPermissionOnboardingIfNeeded(force: false) }
         logIfSlow("launch eventTap", threshold: 0.1) { setupEventTapWhenTrusted() }
+        logIfSlow("launch gestures", threshold: 0.1) {
+            MainActor.assumeIsolated { gestures.refreshMonitors() }
+        }
         logIfSlow("launch pinTracking", threshold: 0.1) { setupPinnedPreviewFocusTracking() }
         logIfSlow("launch windowBrowser", threshold: 0.1) {
             let browser = WindowBrowserController(owner: self)

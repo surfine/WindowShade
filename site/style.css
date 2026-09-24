@@ -271,6 +271,27 @@ html[lang=zh-CN] .today .lead{max-width:34em}
 .demo-state{font-size:14px;line-height:1.7;color:var(--ink);margin-top:18px;min-height:3.4em}
 
 /* Pin stage: a click on a window brings it forward, like the real desktop. */
+/* Glance: a rolled-up bar with the card that hangs under it, and the gesture panel.
+   Sizes in points × --pt; the panel copies the macOS 27 volume indicator measured on a
+   real Mac: 290 × 63 pt, 24 pt corners, title over a track with a glyph at each end. */
+.stage-glance{aspect-ratio:1.36}
+.stage-glance .win-draft{left:30%;top:22%;width:62%;height:68%}
+.glance-strip{left:8%;top:13%;width:56%;z-index:3;padding:0;border:0;background:none;text-align:inherit;font:inherit;cursor:default}
+.glance-strip .win-bar{border-radius:2.6cqw}
+.glance-card{position:absolute;left:8%;top:calc(13% + 5cqw + 6 * var(--pt));width:56%;z-index:2;border-radius:2.6cqw;overflow:hidden;box-shadow:0 0 0 .5px var(--win-edge),0 calc(8 * var(--pt)) calc(34 * var(--pt)) var(--win-drop);clip-path:inset(0 0 100% 0 round 2.6cqw);opacity:0;pointer-events:none}
+.glance-card .win-body{border-radius:0;min-height:30cqw;background:var(--blue-soft);color:var(--blue-text)}
+.glance-card h3{font-size:4.3cqw}
+.glance-card .win-body p{color:color-mix(in srgb,var(--blue-text) 78%,transparent)}
+.stage-glance.is-open .glance-card{clip-path:inset(0 0 0 0 round 2.6cqw);opacity:1;pointer-events:auto}
+.gesture-hud{position:absolute;left:50%;bottom:6%;transform:translateX(-50%);z-index:4;width:calc(290 * var(--pt));height:calc(63 * var(--pt));border-radius:calc(24 * var(--pt));padding:calc(10 * var(--pt)) calc(16 * var(--pt)) 0;display:grid;align-content:start;gap:calc(6 * var(--pt));background:color-mix(in srgb,var(--surface) 58%,transparent);-webkit-backdrop-filter:blur(18px) saturate(180%);backdrop-filter:blur(18px) saturate(180%);box-shadow:inset 0 0 0 .5px var(--hair),0 calc(10 * var(--pt)) calc(30 * var(--pt)) var(--win-drop)}
+.hud-title{font-size:calc(13 * var(--pt));font-weight:600;color:var(--muted);line-height:1.3}
+.hud-row{display:flex;align-items:center;gap:calc(8 * var(--pt))}
+.hud-from,.hud-to{position:relative;flex:none;width:calc(17 * var(--pt));height:calc(14 * var(--pt));border-radius:calc(3 * var(--pt));box-shadow:inset 0 0 0 calc(1.3 * var(--pt)) var(--ink)}
+.hud-from::before,.hud-to::before{content:"";position:absolute;inset:0 0 auto;height:calc(4.5 * var(--pt));border-radius:calc(3 * var(--pt)) calc(3 * var(--pt)) 0 0;background:var(--ink)}
+.hud-to{opacity:.45;box-shadow:inset 0 0 0 calc(1.1 * var(--pt)) color-mix(in srgb,var(--ink) 45%,transparent)}
+.hud-track{flex:1;height:calc(4 * var(--pt));border-radius:99px;background:color-mix(in srgb,var(--ink) 14%,transparent);overflow:hidden}
+.hud-track b{display:block;width:68%;height:100%;border-radius:inherit;background:#fff;box-shadow:0 0 0 .5px color-mix(in srgb,var(--ink) 18%,transparent)}
+@media(prefers-reduced-motion:no-preference){.glance-card{transition:clip-path .22s var(--ease-out),opacity .12s}}
 .stage-pin{aspect-ratio:1.36}
 .stage-pin .win{transition:transform .28s var(--ease-out)}
 .stage-pin .win-bar{cursor:default}

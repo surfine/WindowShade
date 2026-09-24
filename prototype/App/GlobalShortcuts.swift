@@ -10,6 +10,7 @@ enum GlobalShortcut: String, CaseIterable {
     case arrangeOrFocus
     case pinPreview
     case windowBrowser
+    case carry
 
     typealias HotKey = WindowBrowserSettings.HotKey
 
@@ -20,6 +21,7 @@ enum GlobalShortcut: String, CaseIterable {
         case .arrangeOrFocus: return 2
         case .pinPreview: return 3
         case .windowBrowser: return 4
+        case .carry: return 5
         }
     }
 
@@ -30,6 +32,7 @@ enum GlobalShortcut: String, CaseIterable {
         case .arrangeOrFocus: return "整理卷帘条"
         case .pinPreview: return "置顶或取消置顶当前窗口"
         case .windowBrowser: return "选择窗口…"
+        case .carry: return "把当前窗口带到每张桌面"
         }
     }
 
@@ -40,6 +43,7 @@ enum GlobalShortcut: String, CaseIterable {
         case .arrangeOrFocus: return HotKey(keyCode: UInt32(kVK_ANSI_0), modifiers: controlCommand)
         case .pinPreview: return HotKey(keyCode: UInt32(kVK_ANSI_P), modifiers: controlCommand)
         case .windowBrowser: return nil
+        case .carry: return HotKey(keyCode: UInt32(kVK_ANSI_G), modifiers: controlCommand)
         }
     }
 

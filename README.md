@@ -6,7 +6,8 @@
 
 **Roll it up. Keep its place.**<br>
 Double-click a title bar and the window rolls up into a thin bar, right where it was.<br>
-Double-click again and it’s back. A free, open-source window utility for Mac.
+Double-click again and it’s back. Rest the pointer on the bar to glance at it without unrolling.<br>
+A free, open-source window utility for Mac.
 
 [![Release](https://img.shields.io/github/v/release/surfine/WindowShade?style=flat-square&color=303b49)](https://github.com/surfine/WindowShade/releases/latest)
 [![macOS](https://img.shields.io/badge/macOS-14%2B-303b49?style=flat-square)](#download)
@@ -54,9 +55,15 @@ Today’s WindowShade is an independent Swift / AppKit app: the old name and the
 
 ## Beyond the old gesture, it keeps track of every window
 
-Roll up, and a window stays where it was. Pin, and it stays in front. Browse, and you find it from the Dock. All three answer one question: where is the window you need?
+Roll up, and a window stays where it was. Glance, and you see it without unrolling. Carry it to every desktop, and you can see it from anywhere. Pin, and it stays in front. Browse, and you find it from the Dock. They all answer one question: where is the window you need, without a round trip to get it?
 
-**Roll up.** Double-click a title bar or press `⌃⌘C` and the window rolls up into a thin bar; double-click the bar to unroll it. Rest the pointer on the bar for a quick look at the window. The bar can keep the window’s own look, or use one consistent title bar.
+**Roll up.** Double-click a title bar or press `⌃⌘C` and the window rolls up into a thin bar; double-click the bar to unroll it. The bar can keep the window’s own look, or use one consistent title bar.
+
+**Swipe the title bar.** With the pointer on a title bar, push two fingers up and the window rolls up like a shade; pull down and it fills the screen between the menu bar and the Dock, and pushing up again puts it back. Pull down on a rolled-up bar to unroll it. Swipe left or right for half the screen; spreading two fingers, as if zooming into a photo, also fills the screen, and pinching puts it back. Double-tap (two fingers on a trackpad, one on a Magic Mouse) to toggle between filled and the previous size. Three notches of an ordinary scroll wheel count as one swipe. Magic Mouse support is included but still awaits testing on real hardware. While you move, a small panel styled like the system volume indicator appears by the window, showing what letting go will do and how far is left; pull back to cancel. Swiping sideways on a Safari tab still switches tabs, and if Swish is running, title-bar gestures are left to it. Details are in the [gesture notes](docs/gestures.md).
+
+**Glance.** Rest the pointer on the bar and a card drops down beneath it, showing the window's content at its own size; move away and it rolls back up. Click the card to unroll the window for real. The bar stays put and the card hangs just below it, so it reads as a preview, not the window itself. A glance never switches the app you’re in and never moves a window. A window that was minimized when it rolled up can’t be shown live, so you see how it looked then, and the corner says so. Details are in the [glance notes](docs/glance.md).
+
+**Carry to every desktop.** If you keep one app per desktop, press `⌃⌘G` to carry the current window to every desktop: it stays where it is, and its bar appears in the top-right corner of your other desktops. Rest on the bar for a live picture; if the window is hidden or minimized, a labelled snapshot appears instead. Click the picture to go to it. Press `⌃⌘G` again, or click the bar’s ×, to put it down.
 
 **Pin.** Writing from notes, or following a tutorial step by step? Press `⌃⌘P` to pin that window, and it stays uncovered while you switch to anything else. The menu bar lists every pinned window and can unpin them all at once.
 
@@ -74,12 +81,13 @@ You can also open it from Choose window… in the menu bar, or with a hot key yo
 
 On an Apple Silicon MacBook with a hinge sensor, the screen closes but the desktop seems to stay where it was, like a page behind glass, growing darker and blurrier toward the top. Open the lid and it’s back. There are three styles: gentle, standard and frosted. It’s only an extra: rolling up and pinning work without it.
 
-## Four shortcuts. That’s all.
+## Five shortcuts. That’s all.
 
 | Shortcut | What it does |
 | --- | --- |
 | `⌃⌘C` | Roll up or unroll the current window |
 | `⌃⌘P` | Pin or unpin the current window |
+| `⌃⌘G` | Carry the current window to every desktop; press again to put it down |
 | `⌃⌘1…9` | Unroll a rolled-up window, in menu order |
 | `⌃⌘0` | Line up the bars, or switch to a focus layout |
 
@@ -89,6 +97,7 @@ Double-click a title bar to roll up; double-click the bar to unroll. Every short
 
 Get the latest ZIP from [Releases](https://github.com/surfine/WindowShade/releases/latest), unzip it, drag `WindowShade.app` into Applications and open it, then follow the permission prompts. It lives in the menu bar and stays out of your Dock.
 
+- **1.0.15 download:** 3.99 MB ZIP; the extracted app contains 7.72 MB of files (decimal MB; filesystem allocation may differ).
 - **Needs macOS 14 or later and Apple Silicon.** There’s no Intel build.
 - **Not notarized yet.** If macOS blocks the first launch, go to System Settings → Privacy & Security and choose Open Anyway. You don’t need to turn off any system security.
 - Every release comes with a SHA-256 checksum. For what changed in each version, see the [release notes](https://github.com/surfine/WindowShade/releases).
