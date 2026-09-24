@@ -99,6 +99,28 @@ import Foundation
       expect(intent.cancel() == [.discard(b)], "cancel discards an unopened preparation")
     }
 
+    // Menu selection bridges the pointer trip, but arrival and explicit cancellation win.
+    do {
+      let intent = GlanceIntent()
+      expect(intent.menuSelected(a, at: 0) == [.prewarm(a), .open(a)], "menu opens without dwell")
+      expect(intent.sample(nowhere, at: 0.2).isEmpty, "menu dismissal is not leaving the preview")
+      expect(intent.sample(nowhere, at: 1.0).isEmpty, "time to reach the preview")
+      expect(intent.sample(onPanel, at: 1.05).isEmpty, "arrival completes the handoff")
+      expect(intent.sample(nowhere, at: 1.06).isEmpty, "ordinary leave grace resumes")
+      expect(intent.sample(nowhere, at: 1.23) == [.close(a)], "no lingering after arrival")
+      _ = intent.menuSelected(a, at: 2)
+      expect(intent.cancel() == [.close(a)], "setting or Space changes cancel immediately")
+      _ = intent.clicked(a, at: 2.1)
+      _ = intent.sample(nowhere, at: 2.2)
+      expect(intent.sample(nowhere, at: 2.4) == [.close(a)], "handoff does not leak into later clicks")
+      _ = intent.menuSelected(a, at: 3)
+      expect(intent.sample(onB, at: 3.05) == [.close(a), .prewarm(b)], "another strip wins immediately")
+      _ = intent.cancel()
+      _ = intent.menuSelected(a, at: 4)
+      _ = intent.sample(nowhere, at: 5.21)
+      expect(intent.sample(nowhere, at: 5.38) == [.close(a)], "unattended menu preview eventually closes")
+    }
+
     print("PASS glance intent")
   }
 }
