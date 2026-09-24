@@ -92,6 +92,8 @@ final class WindowStreamCapture: NSObject, SCStreamDelegate, SCStreamOutput {
     private var _deliveredFrameCount: UInt64 = 0
     /// 实际投递到镜像层的采样帧计数（同一批帧的子集）。
     private var _mirroredFrameCount: UInt64 = 0
+    /// 带像素的帧：画面没变化时系统也会送来不带图像的状态帧，“已经是实时画面”只看这个。
+    private var _pixelFrameCount: UInt64 = 0
     // 普通窗口的临时实时预览配置：初始 8fps、最大 640×400、无音频、无鼠标、
     // queueDepth 2。它不改变原有置顶预览的默认 15/30fps 与分辨率。
     private let isPreviewStream: Bool
@@ -121,6 +123,12 @@ final class WindowStreamCapture: NSObject, SCStreamDelegate, SCStreamOutput {
         stateLock.lock()
         defer { stateLock.unlock() }
         return stream != nil && !_isStopped
+    }
+
+    var pixelFrameCount: UInt64 {
+        stateLock.lock()
+        defer { stateLock.unlock() }
+        return _pixelFrameCount
     }
 
     var mirroredFrameCount: UInt64 {
@@ -367,8 +375,10 @@ final class WindowStreamCapture: NSObject, SCStreamDelegate, SCStreamOutput {
         let deliverMain = true
         let deliverMirror = mirrorLayer != nil && mirrorFrameIndex % mirrorDivisor == 1
         guard deliverMain || deliverMirror else { return }
+        let carriesPixels = CMSampleBufferGetImageBuffer(sampleBuffer) != nil
         stateLock.lock()
         _deliveredFrameCount &+= 1
+        if carriesPixels { _pixelFrameCount &+= 1 }
         if deliverMirror { _mirroredFrameCount &+= 1 }
         stateLock.unlock()
         deliver(sampleBuffer, main: deliverMain, mirror: deliverMirror)

@@ -282,6 +282,38 @@ if (laptop && lidRange && lidPlay) {
   }
 }
 
+// Glance: preserve the crossing between the bar and card; touch and keyboard toggle it.
+const glanceDesk = document.querySelector('.stage-glance');
+const glanceStrip = document.querySelector('.glance-strip');
+const glanceCard = document.querySelector('#glance-card');
+if (glanceDesk && glanceStrip && glanceCard) {
+  let closeTimer = 0;
+  const setGlance = open => {
+    clearTimeout(closeTimer);
+    glanceDesk.classList.toggle('is-open', open);
+    glanceStrip.setAttribute('aria-expanded', String(open));
+    glanceCard.setAttribute('aria-hidden', String(!open));
+  };
+  for (const surface of [glanceStrip, glanceCard]) {
+    surface.addEventListener('pointerenter', event => {
+      if (event.pointerType !== 'touch') setGlance(true);
+    });
+    surface.addEventListener('pointerleave', event => {
+      if (event.pointerType !== 'touch') closeTimer = setTimeout(() => setGlance(false), 160);
+    });
+  }
+  glanceStrip.addEventListener('click', event => {
+    // Mouse hover already opened the card. Touch and keyboard get an explicit toggle.
+    if (event.detail === 0 || event.pointerType === 'touch' || !finePointer.matches) {
+      setGlance(!glanceDesk.classList.contains('is-open'));
+    }
+  });
+  glanceStrip.addEventListener('blur', () => setGlance(false));
+  glanceStrip.addEventListener('keydown', event => {
+    if (event.key === 'Escape') setGlance(false);
+  });
+}
+
 // Pinning: a self-contained layer-order illustration, not an operating-system window controller.
 const pinExample = document.querySelector('#pin-example');
 const pinDesk = document.querySelector('#pin-desk');

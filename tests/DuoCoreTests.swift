@@ -168,6 +168,43 @@ import Foundation
                    "Rollback only after the rescue has also failed")
     }
 
+    // The cheap on-screen signal reveals the strip as soon as the window has left the
+    // screen, without extra probes of the (possibly busy) app.
+    do {
+      let clock = Clock()
+      var offScreen = false
+      var probes = 0
+      var completions: [Bool] = []
+      let quick = FoldVerifier(
+        schedule: clock.schedule, isCurrent: { true },
+        observe: { probes += 1; return false }, minimize: {}, observeMinimized: { false },
+        quickObserve: { offScreen }, completion: { completions.append($0) })
+      quick.start()
+      clock.advance(0.05)
+      precondition(completions.isEmpty, "Nothing is confirmed while the window is still on screen")
+      offScreen = true
+      clock.advance(0.035)
+      precondition(completions == [true] && probes == 0,
+                   "Leaving the screen confirms the hide before the first full probe")
+      clock.advance(2)
+      precondition(completions == [true] && probes == 0, "Completion is reported once")
+      let lateClock = Clock()
+      var lateOffScreen = false
+      var lateProbes = 0
+      var lateCompletions: [Bool] = []
+      let late = FoldVerifier(
+        schedule: lateClock.schedule, isCurrent: { true },
+        observe: { lateProbes += 1; return false }, minimize: {}, observeMinimized: { false },
+        quickObserve: { lateOffScreen }, completion: { lateCompletions.append($0) })
+      late.start()
+      lateClock.advance(0.3)
+      precondition(lateProbes == 1 && lateCompletions.isEmpty, "First full probe failed")
+      lateOffScreen = true
+      lateClock.advance(0.035)
+      precondition(lateCompletions == [true] && lateProbes == 1,
+                   "Between the full probes the cheap signal keeps being watched")
+    }
+
     for replacedAt in [0.0, 0.2, 0.7] {
       let stale = Scenario()
       stale.verifier.start()

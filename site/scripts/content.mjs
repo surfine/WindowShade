@@ -21,14 +21,14 @@ export const copy = {
     languageHref: '/en/',
     title: 'WindowShade · 收起窗口，留下位置',
     shareAlt: 'WindowShade 官网首屏：大标题「收起窗口，留下位置。」，旁边是一张网页示意的 Mac 桌面，上面有两扇窗口。',
-    description: '双击标题栏，Mac 窗口收成一条卷帘条，留在原处；再双击，原样展开。要一直看的窗口可以置顶，停在 Dock 图标上还能找到那个应用的全部窗口。免费开源。',
+    description: '双击标题栏，Mac 窗口收成一条卷帘条，留在原处；指针停在卷帘条上，不用展开就能看一眼。在标题栏上两指一滑，收起、铺满、半屏。要一直看的窗口可以置顶，停在 Dock 图标上还能找到那个应用的全部窗口。免费开源。',
     nav: ['收起窗口', '置顶', '窗口浏览'],
     navHistory: '窗口往事',
     eyebrow: 'Mac 窗口小工具 · 免费开源',
     hero: '收起窗口，<br>留下位置。',
     intro: '双击标题栏，窗口收成一条卷帘条，停在原处。<br>再双击，它原样回来。',
     try: '先看看怎么用',
-    facts: ['macOS 14 及以上', 'Apple Silicon', '免费 · MIT 开源'],
+    facts: ['macOS 14 及以上', 'Apple Silicon', '免费 · MIT 开源', '1.0.15 · ZIP 3.99 MB'],
 
     stageLabel: '网页示意：一张 Mac 桌面，上面有两扇窗口',
     stageMenu: ['文本编辑', '文件', '编辑', '格式', '显示', '窗口'],
@@ -66,7 +66,20 @@ export const copy = {
 
     todayKicker: '今天的 WindowShade',
     todayTitle: '老动作之外，<br>它还帮你看住每扇窗口。',
-    todayBody: '收起，窗口留在原处；置顶，窗口留在最前面；窗口浏览，从 Dock 里把它找出来。三件事，都是为了让你知道要的那扇窗口在哪儿。',
+    todayBody: '收起，窗口留在原处；看一眼，不用展开就能看到它；置顶，窗口留在最前面；窗口浏览，从 Dock 里把它找出来。都是为了让你知道要的那扇窗口在哪儿，而且不用去了再回来。',
+
+    glanceKicker: '看一眼',
+    glanceTitle: '不用去了再回来，<br>停一下就看到。',
+    glanceIntro: '指针停在卷帘条上，下面就挂出一张卡片，按原来的大小显示窗口里的内容；移开，它自己收回去。不切换应用，不动任何窗口。单击卡片才真正展开。',
+    glancePoints: [
+      ['带到每张桌面', '一张桌面放一个应用的话，按 ⌃⌘G 把当前窗口带到每张桌面：别的桌面右上角出现它的卷帘条，停一下就能看到实时画面；窗口被隐藏或最小化时，显示带提示的截图。'],
+      ['在标题栏上滑一下', '指针停在标题栏上，两指往上推收起，往下拉铺满菜单栏和 Dock 之间的屏幕，再往上推回到原来的大小；左右滑占半屏，轻点两下在铺满和原来大小之间切换。'],
+      ['鼠标也行', '普通鼠标在标题栏上滚三格算一次；Magic Mouse 已加入单指滑动和轻点两下的适配，仍待真机验证。Safari 标签上的左右滑照样切换标签。'],
+    ],
+    glanceHow: '滑动时，窗口旁边会出现一块和系统音量提示同款的小浮窗，告诉你松手会做什么、还差多少；往回拉就取消。收起时被最小化的窗口拿不到实时画面，卡片上会写明“收起时的画面”。',
+    glanceStripLabel: '网页示意：一条收起的卷帘条，指针停上去，下面挂出窗口的卡片',
+    glanceHud: '收起窗口',
+    glanceCaption: '网页示意，不会碰你电脑上的窗口。把指针停在卷帘条上，或轻点一下试试。',
 
     pinKicker: '置顶',
     pinTitle: '要一直看的，<br>就让它一直在前面。',
@@ -116,10 +129,11 @@ export const copy = {
     lidPlay: '演示一次',
     lidCaption: '网页示意，按应用里三种质感的参数画的。真实效果需要带铰链传感器的 Apple Silicon MacBook。',
 
-    shortcutTitle: '四个快捷键，够用了。',
+    shortcutTitle: '五个快捷键，够用了。',
     shortcuts: [
       ['⌃ ⌘ C', '收起或展开当前窗口'],
       ['⌃ ⌘ P', '置顶或取消置顶当前窗口'],
+      ['⌃ ⌘ G', '把当前窗口带到每张桌面，再按一次放下'],
       ['⌃ ⌘ 1…9', '按菜单里的顺序展开收起的窗口'],
       ['⌃ ⌘ 0', '排好卷帘条，或进入专注布局'],
     ],
@@ -132,6 +146,7 @@ export const copy = {
     faqs: [
       ['我的 Mac 能用吗？', '要 macOS 14 以上，Apple Silicon，没有 Intel 版。收起窗口和置顶都不用传感器；跟着合盖动的效果需要带铰链传感器的 MacBook。'],
       ['要什么权限？', '两项。辅助功能：找到、移动、恢复窗口。屏幕录制：拍下窗口画面做预览。“屏幕录制”只是系统给这个权限起的名字，画面不会离开你的电脑。'],
+      ['看一眼和手势会动我的窗口吗？', '看一眼不会：它不切换应用，也不移动窗口。标题栏手势只在你松手、而且浮窗显示走满的时候才动；往回拉就取消，指针在网页、列表这些能滚动的地方时不接手势。'],
       ['窗口浏览会动我的窗口吗？', '不会，除非你按下卡片上的按钮。动手之前，它还会再确认一次“就是这一扇窗口”，确认不了就不做。'],
       ['所有窗口都能收起来吗？', '普通窗口都可以。便笺用系统自己的收起方式；Adobe 这类自己画标题栏的应用会单独处理。全屏、分屏、台前调度和多显示器还有少数情况没覆盖，建议先在你常用的应用里试一次。'],
       ['怎么装？', '下载 ZIP，解压，把 WindowShade.app 拖进“应用程序”打开，按提示给权限。安装包还没公证，第一次打开如果被系统拦住，去“系统设置 → 隐私与安全性”点“仍要打开”。'],
@@ -149,14 +164,14 @@ export const copy = {
     languageHref: '/',
     title: 'WindowShade · Roll it up. Keep its place.',
     shareAlt: 'The WindowShade website: the headline “Roll it up. Keep its place.” beside an illustrated Mac desktop with two windows.',
-    description: 'Double-click a title bar and a Mac window rolls up into a thin bar that stays where it was; double-click again to bring it back. Pin what has to stay visible, and hover a Dock icon to find any window of that app. Free and open source.',
+    description: 'Double-click a title bar and a Mac window rolls up into a thin bar that stays where it was; rest the pointer on the bar to glance at it without unrolling. Swipe a title bar to roll up, fill or halve the screen. Pin what has to stay visible, and hover a Dock icon to find any window of that app. Free and open source.',
     nav: ['Roll up', 'Pin', 'Window browsing'],
     navHistory: 'Window stories',
     eyebrow: 'A window utility for Mac · Free and open source',
     hero: 'Roll it up.<br>Keep its place.',
     intro: 'Double-click a title bar and the window rolls up into a thin bar, right where it was. Double-click again and it’s back.',
     try: 'See how it works',
-    facts: ['macOS 14 or later', 'Apple Silicon', 'Free · MIT licensed'],
+    facts: ['macOS 14 or later', 'Apple Silicon', 'Free · MIT licensed', '1.0.15 · ZIP 3.99 MB'],
 
     stageLabel: 'Browser illustration: a Mac desktop with two windows',
     stageMenu: ['TextEdit', 'File', 'Edit', 'Format', 'View', 'Window'],
@@ -194,7 +209,20 @@ export const copy = {
 
     todayKicker: 'WindowShade today',
     todayTitle: 'Beyond the old gesture,<br>it keeps track of every window.',
-    todayBody: 'Roll up, and a window stays where it was. Pin, and it stays in front. Browse, and you find it from the Dock. All three answer one question: where is the window you need?',
+    todayBody: 'Roll up, and a window stays where it was. Glance, and you see it without unrolling. Pin, and it stays in front. Browse, and you find it from the Dock. They all answer one question: where is the window you need, without a round trip to get it?',
+
+    glanceKicker: 'Glance',
+    glanceTitle: 'No round trip.<br>Just rest and look.',
+    glanceIntro: 'Rest the pointer on a rolled-up bar and a card drops down beneath it, showing the window’s content at its own size; move away and it rolls back up. It never switches apps or moves a window. Click the card to unroll the window for real.',
+    glancePoints: [
+      ['Carry to every desktop', 'If you keep one app per desktop, press ⌃⌘G to carry the current window to every desktop: its bar appears in the top-right corner of the others, and resting on it shows a live picture. Hidden or minimized windows show a labelled snapshot instead.'],
+      ['Swipe the title bar', 'With the pointer on a title bar, push two fingers up to roll up, pull down to fill the screen between the menu bar and the Dock, and push up again to put it back. Swipe sideways for half the screen; double-tap to toggle between filled and the previous size.'],
+      ['A mouse works too', 'Three notches of an ordinary scroll wheel count as one swipe; Magic Mouse support for one-finger swipes and double-taps is included but awaits hardware testing. Swiping sideways on a Safari tab still switches tabs.'],
+    ],
+    glanceHow: 'While you swipe, a small panel styled like the system volume indicator appears by the window, showing what letting go will do and how far is left; pull back to cancel. A window that was minimized when it rolled up can’t be shown live, so the card says it’s the picture from when it was put away.',
+    glanceStripLabel: 'Web illustration: a rolled-up bar; rest the pointer on it and the window’s card drops down',
+    glanceHud: 'Roll up window',
+    glanceCaption: 'A web illustration. It never touches the windows on your Mac. Rest the pointer on the bar, or tap it, to try it.',
 
     pinKicker: 'Pin',
     pinTitle: 'Need to keep an eye on it?<br>Keep it in front.',
@@ -244,10 +272,11 @@ export const copy = {
     lidPlay: 'Play once',
     lidCaption: 'A browser illustration, drawn with the app’s settings for its three styles. The real effect needs an Apple Silicon MacBook with a hinge sensor.',
 
-    shortcutTitle: 'Four shortcuts. That’s all.',
+    shortcutTitle: 'Five shortcuts. That’s all.',
     shortcuts: [
       ['⌃ ⌘ C', 'Roll up or unroll the current window'],
       ['⌃ ⌘ P', 'Pin or unpin the current window'],
+      ['⌃ ⌘ G', 'Carry the current window to every desktop; press again to put it down'],
       ['⌃ ⌘ 1…9', 'Unroll a rolled-up window, in menu order'],
       ['⌃ ⌘ 0', 'Line up the bars, or switch to a focus layout'],
     ],
@@ -260,6 +289,7 @@ export const copy = {
     faqs: [
       ['Will it work on my Mac?', 'You need macOS 14 or later and Apple Silicon — there’s no Intel build. Rolling up and pinning don’t need any sensors. The lid-following desktop effect needs a MacBook with a hinge sensor.'],
       ['What permissions does it need?', 'Two. Accessibility: finding, moving and restoring windows. Screen Recording: taking the window pictures used for previews. “Screen Recording” is just the name the system gives that permission — nothing leaves your Mac.'],
+      ['Do glances and gestures move my windows?', 'A glance never does: it doesn’t switch apps or move anything. A title-bar gesture acts only when you let go with the panel showing it’s ready; pull back to cancel. Gestures aren’t taken where the pointer is over something that scrolls, like a web page or a list.'],
       ['Does window browsing move my windows?', 'No — not unless you press a button on a card. Before it acts, it checks once more that the window is still the one you picked. If it can’t be sure, it does nothing.'],
       ['Does it work with every window?', 'With regular windows, yes. Stickies rolls up in its own system way; apps like Adobe’s that draw their own title bars are handled separately. Full screen, Split View, Stage Manager and multiple displays still have a few gaps — try it once with the apps you use.'],
       ['How do I install it?', 'Download the ZIP, unzip, drag WindowShade.app into Applications and open it, then follow the permission prompts. The app is not notarized yet, so if macOS blocks the first launch, go to System Settings → Privacy & Security and choose Open Anyway.'],

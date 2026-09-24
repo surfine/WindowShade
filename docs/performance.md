@@ -183,6 +183,30 @@ AX API 可在任意线程调用。各 App / 各窗口之间没有依赖的只读
 背景截图要排除收起时才创建的卷帘条，1.5s 内的旧快照里可能还没有它。
 改动后的真机数字还没有，看日志里 `duo-window: prepare fold` 到 `presented cover` 的间隔。
 
+**12. 收起截图先用 `CGWindowListCreateImage`，ScreenCaptureKit 兜底。**
+卷帘条（“跟原来一样”外观）原来用 `SCScreenshotManager` 截整窗：单独测 82ms，
+放在收起途中（焦点刚停靠、窗口在重绘成非活跃态）变成 229ms，超过 450ms 还会退回
+代理标题栏。现在先在后台队列用 `CGWindowListCreateImage`（`Capture/FastCapture.swift`，
+按符号动态取，单独测 48–57ms），拿不到或整张全透明才走 ScreenCaptureKit。收起动画的
+背景同理改用 `CGWindowListCreateImageFromArray`：同样去掉源窗口、动画面板和卷帘条，
+其余在屏窗口按原顺序合成，34ms；尺寸对不上才走 ScreenCaptureKit。
+
+同一进程连续收起 5 次、取后 4 次的中位数（`tests/run-glance-probe.sh --single --fold-timing`，
+设 `WINDOWSHADE_DISABLE_FAST_CAPTURE=1` 得到对照组），Mac17,4 · macOS 27.0 · 2026-09-24：
+
+| | 第一眼看到变化 | 卷帘条出现 |
+| --- | --- | --- |
+| 不带动画，只用 ScreenCaptureKit | 342ms | 499ms |
+| 不带动画，快速截图 | **147ms** | **328ms** |
+| 带动画，只用 ScreenCaptureKit | 591ms | 1015ms |
+| 带动画，快速截图 | **478ms** | **904ms** |
+
+带动画时原来剩下的大头是动画自己的实时流启动。现在收起动画也像展开一样先用快速截图起步
+（`renderer.setImage`），实时流在后台就绪后由显示时钟换成实时帧，不再等它。同一进程连续
+5 轮，“准备收起”到“盖板出现”：只用 ScreenCaptureKit 冷启动 659ms、其余四轮 199/562/265/277ms；
+快速截图起步冷启动 409ms、其余四轮 211/209/157/189ms（中位数约 271 → 199ms，偶发的
+500ms 以上长尾消失）。
+
 ## 四、两次「凭直觉的优化」反而变慢
 
 都是同一个错误：**拿几何匹配当身份校验。**
