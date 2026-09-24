@@ -152,6 +152,35 @@ import Foundation
       expect(r.frame == .idle && r.end(at: t + 0.2) == nil, "and the rest of that gesture stays the app's")
     }
 
+    // A late ownership check must use the first intent, even after the fingers turn.
+    do {
+      let r = GestureRecognizer(map: titleBar)
+      var t: TimeInterval = 0
+      swipe(r, dx: -5, steps: 6, &t)
+      swipe(r, dy: 5, steps: 16, &t)
+      expect(r.frame.action == .shade, "provisional map sees the later upward drift")
+      r.updateMap(.titleBar(canUndoPlacement: false, appOwnsHorizontal: true))
+      expect(r.frame == .idle, "late confirmation preserves the original tab-switch intent")
+      r.updateMap(.titleBar(canUndoPlacement: false, appOwnsHorizontal: true))
+      expect(r.end(at: t + 0.2) == nil, "rechecking must not turn a tab switch into roll up")
+      swipe(r, dy: 5, steps: 12, &t)
+      expect(r.end(at: t + 0.2) == .shade, "a new upward gesture still works after rejection")
+    }
+
+    // The result of an app-owned swipe cannot depend on when AX confirmation arrives.
+    for confirmationFrame in 0...22 {
+      let r = GestureRecognizer(map: titleBar)
+      let tabs = GestureMap.titleBar(canUndoPlacement: false, appOwnsHorizontal: true)
+      var t: TimeInterval = 0
+      for frame in 0...22 {
+        if frame == confirmationFrame { r.updateMap(tabs) }
+        if frame < 6 { swipe(r, dx: -5, steps: 1, &t) }
+        else if frame < 22 { swipe(r, dy: 5, steps: 1, &t) }
+      }
+      expect(r.frame == .idle && r.end(at: t + 0.2) == nil,
+             "tab switching stays with the app for every confirmation delay")
+    }
+
     // Double tap (smart zoom): fill, and back; on a strip it expands.
     do {
       let fill = GestureMap.doubleTap(zone: .titleBar, isFilled: false, canUndoPlacement: false)
