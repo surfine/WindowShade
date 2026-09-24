@@ -524,7 +524,9 @@ final class GlanceController {
             show(session, now: now)
             let rollDuration = NSWorkspace.shared.accessibilityDisplayShouldReduceMotion ? 0.12 : 0.18
             session.unhideAt = now + rollDuration + 0.02
-        } else if session.liveExpected, !session.hasLiveFrame, !session.captureFailed {
+        } else if target.snapshot == nil, session.liveExpected,
+                  !session.hasLiveFrame, !session.captureFailed {
+            // 有截图就先显示，实时流照常接替；只有没有可用画面时才等首帧。
             session.stage = .waitingForFrame
             session.showDeadline = now + Self.firstFrameWait
         } else {
