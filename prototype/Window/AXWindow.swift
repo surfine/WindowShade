@@ -327,6 +327,12 @@ func cgWindowIsCurrentlyOnScreen(_ id: CGWindowID) -> Bool {
     WindowListCache.shared.isOnScreen(id)
 }
 
+/// 实时问 WindowServer（不走 150ms 缓存）：这扇窗此刻是否在屏幕上。
+/// 用于“藏好了没有 / 回来了没有”这类必须看到当下状态的判断。
+func windowIsOnScreenNow(_ id: CGWindowID) -> Bool {
+    (cgWindowInfo(id)?[kCGWindowIsOnscreen as String] as? Bool) == true
+}
+
 func focusedWindow() -> AXUIElement? {
     guard let app = NSWorkspace.shared.frontmostApplication else { return nil }
     let appEl = AXUIElementCreateApplication(app.processIdentifier)

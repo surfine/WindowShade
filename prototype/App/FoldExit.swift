@@ -19,6 +19,7 @@ extension AppDelegate {
         let rejoinStackFrame = shouldRememberFocusRejoin ? focusSideStackFrames[id] : nil
         hideHoverPreview(id: id)
         hideMenuHoverPreview(id: id)
+        MainActor.assumeIsolated { glance.detach(id: id) }
         reconcileInvalidCounts.removeValue(forKey: id)
         pendingSpaceReturns.removeValue(forKey: id)
         hoverPreviewSuppressedUntil.removeValue(forKey: id)
@@ -99,6 +100,7 @@ extension AppDelegate {
         transitionOperationState(id: id, to: .normal, reason: "forceCleanup")
         hideHoverPreview(id: id)
         hideMenuHoverPreview(id: id)
+        MainActor.assumeIsolated { glance.detach(id: id) }
         if !preserveRecovery { clearShadeJournal(id: id) }
         reconcileInvalidCounts.removeValue(forKey: id)
         privateAlphaOriginalValues.removeValue(forKey: id)
@@ -127,6 +129,7 @@ extension AppDelegate {
         transitionOperationState(id: id, to: .normal, reason: "removeProxy")
         hideHoverPreview(id: id)
         hideMenuHoverPreview(id: id)
+        MainActor.assumeIsolated { glance.detach(id: id) }
         clearShadeJournal(id: id)
         reconcileInvalidCounts.removeValue(forKey: id)
         focusSideStackFrames.removeValue(forKey: id)

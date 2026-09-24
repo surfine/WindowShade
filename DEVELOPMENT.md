@@ -123,8 +123,14 @@ cd prototype
 
 - 设置与纸面组件的隔离验收入口：见 [设计规范 v1 落地与验证](docs/design-v1.md)。
 - 纸面组件事件与命中区域回归：`bash tests/run-paper-tests.sh`，使用离屏 AppKit 视图，不操作用户窗口。
+- 看一眼：状态机 `bash tests/run-glance-tests.sh`；真机探针先 `./build.sh --stage`，再
+  `bash tests/run-glance-probe.sh [--single | --carry [--other-space]]`（独立临时 App，解锁状态下运行）。说明见 [docs/glance.md](docs/glance.md)。
+- 标题栏手势：识别状态机 `bash tests/run-gesture-tests.sh`；真机探针 `bash tests/run-glance-probe.sh --gesture`
+  （同一个临时 App，合成事件直接交给控制器，不动指针）。说明见 [docs/gestures.md](docs/gestures.md)。
+- AppKit 回归合跑：`bash tests/run-appkit-tests.sh all`，一次编译后在四个独立进程运行设置、经典卷帘条、收起动画和看一眼生命周期测试，避免重复编译整套生产源码。各单项入口保留。
 - 设置页恢复与滚动保持：`bash tests/run-settings-tests.sh`，编译生产 AppKit 视图的独立入口；使用隔离偏好设置，不显示或操作用户窗口。
 - 经典卷帘条辅助操作与点击边界：`bash tests/run-appkit-tests.sh ClassicStripTests`；直接调用生产视图的事件处理，不注入系统事件，浅深色组件图输出到 `.build/appkit-tests/strip-shots/`。设置测试也复用这个构建入口，保留原命令作为包装。
+- 看一眼与携带窗口生命周期：`bash tests/run-appkit-tests.sh GlanceLifecycleTests`；覆盖临时显示后的用户接管、关闭重入与旧回调隔离，以及返回前取消最小化的成功／失败顺序。使用注入的 AX 操作，不改用户窗口。
 - 窗口动画生命周期：`bash tests/run-appkit-tests.sh WindowFoldEffectsTests`；用无捕获任务检查旧回调隔离、取消、回退移交、隐藏超时代数和重入，不操作真实窗口。测试扩展仅拼入临时源码快照，以访问生产类型的私有生命周期。
 - 日志写在 `/tmp/windowshade.log`，5MB 自动轮转（旧文件为 `.1`）。
 - 主线程卡顿：日志里搜 `main-thread stall`。
