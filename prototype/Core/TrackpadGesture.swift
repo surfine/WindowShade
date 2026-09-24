@@ -147,6 +147,8 @@ final class GestureRecognizer {
     private var mode = Mode.undecided
     /// 已经认过一次方向；第一次认出的方向不归我们时，整下手势作废（foreign）。
     private var decided = false
+    /// 保留首次越过方向门槛的意图，迟到的控件确认不能把切标签改判成收起。
+    private var initialDirection: GestureDirection?
     private var foreign = false
     private var translation = CGVector.zero
     private var magnification: CGFloat = 0
@@ -213,7 +215,7 @@ final class GestureRecognizer {
     func cancel() { reset() }
 
     /// 手势开始后才确认了指针下是什么（辅助功能查询是异步的）：换成确认后的地图，
-    /// 按已经走过的位移重新认一次方向，就像一开始就知道一样。
+    /// 保留最初的方向意图，更新当前动作；不能因确认较晚而接管原本属于 App 的手势。
     @discardableResult
     func updateMap(_ newMap: GestureMap) -> [GestureFeedback] {
         map = newMap
@@ -221,9 +223,12 @@ final class GestureRecognizer {
         case .undecided:
             return []
         case .swipe:
-            decided = false
-            foreign = false
-            direction = nil
+            decided = initialDirection != nil
+            foreign = initialDirection.map { newMap.action(for: $0) == nil } ?? false
+            if foreign {
+                direction = nil
+                return update(to: .idle)
+            }
             return update(to: swipeFrame())
         case .pinch:
             return update(to: pinchFrame())
@@ -253,6 +258,7 @@ final class GestureRecognizer {
         }
         if !decided, let direction {
             decided = true
+            initialDirection = direction
             if map.action(for: direction) == nil {
                 foreign = true
                 return .idle
@@ -336,6 +342,7 @@ final class GestureRecognizer {
         magnification = 0
         direction = nil
         decided = false
+        initialDirection = nil
         foreign = false
         swipeSamples.removeAll()
         pinchSamples.removeAll()
