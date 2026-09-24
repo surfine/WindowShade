@@ -101,6 +101,10 @@ final class TrackpadGestureController {
     private struct PlacementUndo {
         let before: CGRect
         let after: CGRect
+        /// 换屏后排回去要用：哪扇窗、怎么排的、当时那块屏幕的可用区域（AX 坐标）。
+        var element: AXUIElement? = nil
+        var layout: RefitLayout? = nil
+        var area: CGRect = .zero
     }
 
     unowned let owner: AppDelegate
@@ -694,8 +698,46 @@ final class TrackpadGestureController {
         _ = setAXSize(win, target.size)
         setAXPosition(win, target.origin)
         let observed = CGRect(origin: axPosition(win) ?? target.origin, size: axSize(win) ?? target.size)
-        undoRecords[id] = PlacementUndo(before: current, after: observed)
+        undoRecords[id] = PlacementUndo(before: current, after: observed, element: win,
+                                        layout: RefitLayout(rawValue: placement.rawValue), area: visibleAX)
         return true
+    }
+
+    // MARK: - 换屏后排回去
+
+    private var refitWork: DispatchWorkItem?
+
+    /// 内屏、外屏切换后，把手势排过的窗口按原来的排法（铺满、左半、右半）排到它现在所在的
+    /// 屏幕上。系统换屏时会先自己挪窗口，等它挪完（1.5 秒）再看。
+    func screensChanged() {
+        refitWork?.cancel()
+        let work = DispatchWorkItem { [weak self] in
+            MainActor.assumeIsolated { self?.refitPlacedWindows() }
+        }
+        refitWork = work
+        DispatchQueue.main.asyncAfter(deadline: .now() + 1.5, execute: work)
+    }
+
+    private func refitPlacedWindows() {
+        for (id, record) in undoRecords {
+            guard let win = record.element, let layout = record.layout,
+                  owner.shaded[id] == nil, cgWindowInfo(id) != nil,
+                  let pos = axPosition(win), let size = axSize(win),
+                  let screen = screenForAXWindow(pos: pos, size: size) else { continue }
+            let current = CGRect(origin: pos, size: size)
+            let visible = screen.visibleFrame
+            let area = CGRect(origin: axPosition(fromCocoaFrame: visible), size: visible.size)
+            guard let target = DisplayRefit.target(layout: layout, placed: record.after,
+                                                   current: current, area: area) else { continue }
+            setAXPosition(win, target.origin)
+            _ = setAXSize(win, target.size)
+            setAXPosition(win, target.origin)
+            let observed = CGRect(origin: axPosition(win) ?? target.origin, size: axSize(win) ?? target.size)
+            // 撤销仍然可用：排之前的样子按两块屏幕的比例换算到新屏幕上。
+            undoRecords[id] = PlacementUndo(before: DisplayRefit.mapped(record.before, from: record.area, to: area),
+                                            after: observed, element: win, layout: layout, area: area)
+            wlog("gesture: refit after screen change id=\(id) layout=\(layout.rawValue) frame=(\(Int(observed.minX)),\(Int(observed.minY)) \(Int(observed.width))x\(Int(observed.height)))")
+        }
     }
 
     private func undoPlacement(_ win: AXUIElement, id: CGWindowID) -> Bool {

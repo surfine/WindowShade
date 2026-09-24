@@ -3,5 +3,5 @@
 set -euo pipefail
 cd "$(dirname "$0")/.."
 mkdir -p .build/gesture-tests
-swiftc prototype/Core/TrackpadGesture.swift tests/TrackpadGestureTests.swift -o .build/gesture-tests/recognizer
+swiftc prototype/Core/TrackpadGesture.swift prototype/Core/DisplayRefit.swift tests/TrackpadGestureTests.swift -o .build/gesture-tests/recognizer
 .build/gesture-tests/recognizer
