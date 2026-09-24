@@ -115,9 +115,85 @@ extension GlanceController {
     }
 }
 
+@MainActor private final class StagedOpenCarrySource: GlanceCarrySource {
+    let frame = NSRect(x: 100, y: 100, width: 260, height: 30)
+    var snapshot: CGImage?
+    let source: GlanceTarget.Source = .stream
+
+    func carriedStripFrame(_ id: CGWindowID) -> NSRect? { frame }
+    func glanceTarget(forCarried id: CGWindowID) -> GlanceTarget? {
+        GlanceTarget(strip: frame, panel: frame, card: frame, picture: frame,
+                     backdropArea: nil, cornerRadius: 8, source: source,
+                     snapshot: snapshot, pid: 123_456, bundleID: "test.lifecycle",
+                     accessibilityTitle: "test", staleText: "收起时的画面")
+    }
+    func openCarriedWindow(_ id: CGWindowID) {}
+}
+
+extension GlanceController {
+    /// 打开：能马上显示的截图不该陪实时首帧一起等；没有截图才用有界的首帧等待。
+    @MainActor static func verifyOpenStaging() {
+        let owner = AppDelegate()
+        let controller = GlanceController(owner: owner)
+        let source = StagedOpenCarrySource()
+        controller.carrySource = source
+        let id: CGWindowID = 4_100_001
+        var now = 10.0
+        controller.clock = { now }
+        func install() -> GlanceSession {
+            let session = GlanceSession(id: id, preparedAt: 1, stripFrame: source.frame,
+                                        liveExpected: true, carried: true)
+            session.pid = 123_456
+            controller.sessions[id] = session
+            return session
+        }
+        func makeImage() -> CGImage {
+            let provider = CGDataProvider(data: Data(count: 4 * 4 * 4) as CFData)!
+            return CGImage(width: 4, height: 4, bitsPerComponent: 8, bitsPerPixel: 32,
+                           bytesPerRow: 16, space: CGColorSpaceCreateDeviceRGB(),
+                           bitmapInfo: CGBitmapInfo(rawValue: CGImageAlphaInfo.premultipliedLast.rawValue),
+                           provider: provider, decode: nil, shouldInterpolate: false,
+                           intent: .defaultIntent)!
+        }
+
+        // 截图已经在手：照常显示，不排队等实时首帧。
+        source.snapshot = makeImage()
+        let withSnapshot = install()
+        controller.open(id)
+        precondition(withSnapshot.stage == .shown,
+                     "An available snapshot must show without waiting for a live frame")
+        precondition(withSnapshot.showDeadline == nil, "Nothing to wait for when a snapshot is ready")
+        precondition(withSnapshot.content?.hasSnapshot == true)
+        precondition(controller.diagnostics.opens == 1)
+        precondition(controller.isShowing)
+        controller.finish(withSnapshot, reason: "test-cleanup")
+        precondition(controller.sessions[id] == nil)
+
+        // 没有截图：保留有界的首帧等待；清理时待显示的会话整条都要收掉。
+        source.snapshot = nil
+        now = 20
+        let noSnapshot = install()
+        controller.open(id)
+        precondition(noSnapshot.stage == .waitingForFrame,
+                     "A missing snapshot still waits for the live first frame")
+        precondition(noSnapshot.showDeadline == now + GlanceController.firstFrameWait)
+        precondition(controller.isShowing, "Waiting for a frame still counts as on screen")
+        let startup = Task { @MainActor () -> Void in
+            try? await Task.sleep(nanoseconds: 5_000_000_000)
+        }
+        noSnapshot.startupTask = startup
+        controller.close(id)
+        precondition(controller.sessions[id] == nil, "Cleanup must remove the waiting session")
+        precondition(noSnapshot.cancelled && startup.isCancelled)
+        precondition(noSnapshot.panel == nil && noSnapshot.content == nil)
+    }
+}
+
 @main struct GlanceLifecycleTests {
     @MainActor static func main() {
+        _ = NSApplication.shared
         GlanceController.verifyLifecycle()
+        GlanceController.verifyOpenStaging()
         let element = AXUIElementCreateApplication(getpid())
         var events: [String] = []
         let opened = CarryController.restoreForOpening(element,
