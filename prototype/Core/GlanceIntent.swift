@@ -11,6 +11,8 @@ import Foundation
 struct GlanceTiming: Equatable {
     var intentDelay: TimeInterval = 0.22
     var leaveGrace: TimeInterval = 0.16
+    /// 从菜单选择后，留出移动到卷帘条或画面的时间。到达后恢复普通离开宽限。
+    var menuHandoffGrace: TimeInterval = 1.2
 
     static let standard = GlanceTiming()
 }
@@ -44,6 +46,7 @@ final class GlanceIntent {
 
     private(set) var phase: Phase = .idle
     private(set) var blocked: Set<CGWindowID> = []
+    private var menuHandoffUntil: TimeInterval?
     let timing: GlanceTiming
 
     init(timing: GlanceTiming = .standard) {
@@ -77,6 +80,7 @@ final class GlanceIntent {
     /// 指针进入某条卷帘条。
     func entered(_ id: CGWindowID, at time: TimeInterval) -> [GlanceEffect] {
         guard !blocked.contains(id) else { return [] }
+        menuHandoffUntil = nil
         switch phase {
         case .idle:
             phase = .arming(id, since: time)
@@ -95,9 +99,17 @@ final class GlanceIntent {
         }
     }
 
+    /// 菜单选择时指针还在菜单处，不能按普通悬停立刻收回。
+    func menuSelected(_ id: CGWindowID, at time: TimeInterval) -> [GlanceEffect] {
+        let effects = clicked(id, at: time)
+        menuHandoffUntil = time + timing.menuHandoffGrace
+        return effects
+    }
+
     /// 单击卷帘条：不等计时，立刻打开。
     func clicked(_ id: CGWindowID, at time: TimeInterval) -> [GlanceEffect] {
         blocked.remove(id)
+        menuHandoffUntil = nil
         switch phase {
         case .idle:
             phase = .open(id, leftAt: nil)
@@ -131,13 +143,17 @@ final class GlanceIntent {
             return [.open(id)]
         case .open(let id, let leftAt):
             if sample.strip == id || sample.overGlance {
+                menuHandoffUntil = nil
                 if leftAt != nil { phase = .open(id, leftAt: nil) }
                 return []
             }
             if let other = sample.strip, !blocked.contains(other) {
+                menuHandoffUntil = nil
                 phase = .arming(other, since: time)
                 return [.close(id), .prewarm(other)]
             }
+            if let until = menuHandoffUntil, time < until { return [] }
+            menuHandoffUntil = nil
             guard let leftAt else {
                 phase = .open(id, leftAt: time)
                 return []
@@ -150,6 +166,7 @@ final class GlanceIntent {
 
     /// 收回或放弃当前这一个（切换 App、换桌面、设置关闭……）。
     func cancel() -> [GlanceEffect] {
+        menuHandoffUntil = nil
         switch phase {
         case .idle:
             return []
