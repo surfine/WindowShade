@@ -135,12 +135,16 @@ private final class CarryMoreView: NSView {
         button.font = .systemFont(ofSize: 12)
         button.target = self
         button.action = #selector(pressed)
-        button.toolTip = "选择一个窗口看一眼"
         button.setAccessibilityLabel("更多窗口")
-        button.setAccessibilityHelp("选择一个窗口看一眼，不切换桌面")
+        updateHelp(previewsEnabled: GlanceController.isEnabled)
         addSubview(button)
     }
     required init?(coder: NSCoder) { nil }
+    func updateHelp(previewsEnabled: Bool) {
+        let help = previewsEnabled ? "选择一个窗口看一眼，不切换桌面" : "选择一个窗口，显示它的卷帘条"
+        button.toolTip = help
+        button.setAccessibilityHelp(help)
+    }
     override func layout() {
         super.layout()
         button.frame = bounds
@@ -332,6 +336,7 @@ final class CarryController: GlanceCarrySource {
                 morePanel = panel
                 moreView = view
             }
+            moreView?.updateHelp(previewsEnabled: GlanceController.isEnabled)
             morePanel?.setFrame(frame, display: true)
             if morePanel?.isVisible == false { morePanel?.orderFrontRegardless() }
         } else {
@@ -360,7 +365,7 @@ final class CarryController: GlanceCarrySource {
             entry.target = selection
             entry.representedObject = NSNumber(value: id)
             entry.image = item.view.appIconForMenu
-            entry.toolTip = "看一眼"
+            entry.toolTip = GlanceController.isEnabled ? "看一眼" : "显示卷帘条"
             menu.addItem(entry)
         }
         return menu
