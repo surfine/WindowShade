@@ -3,7 +3,7 @@ set -euo pipefail
 cd "$(dirname "$0")/.."
 TEST_NAME="${1:-SettingsNavigationTests}"
 case "$TEST_NAME" in
-  all|SettingsNavigationTests|ClassicStripTests|WindowFoldEffectsTests|GlanceLifecycleTests) ;;
+  all|SettingsNavigationTests|ClassicStripTests|WindowFoldEffectsTests|GlanceLifecycleTests|CarryControllerTests) ;;
   *) echo "Unknown AppKit test: $TEST_NAME" >&2; exit 2 ;;
 esac
 mkdir -p .build/appkit-tests
@@ -18,7 +18,7 @@ while IFS= read -r source; do
 done < <(rg --files prototype -g '*.swift' -g '!main.swift' -g '!*.app/**' | sort)
 TEST_SOURCE=()
 if [ "$TEST_NAME" = all ]; then
-  TESTS=(SettingsNavigationTests ClassicStripTests WindowFoldEffectsTests GlanceLifecycleTests)
+  TESTS=(SettingsNavigationTests ClassicStripTests WindowFoldEffectsTests GlanceLifecycleTests CarryControllerTests)
 else
   TESTS=("$TEST_NAME")
 fi
@@ -32,6 +32,7 @@ for name in "${TESTS[@]}"; do
   fi
   case "$name" in
     WindowFoldEffectsTests) cat "$WORK/$name.swift" >> "$WORK/prototype/Effects/WindowFoldEffects.swift" ;;
+    CarryControllerTests) cat "$WORK/$name.swift" >> "$WORK/prototype/App/Carry.swift" ;;
     GlanceLifecycleTests) cat "$WORK/$name.swift" >> "$WORK/prototype/App/Glance.swift" ;;
     *) TEST_SOURCE+=("$WORK/$name.swift") ;;
   esac
@@ -46,6 +47,7 @@ import Cocoa
     case "ClassicStripTests": ClassicStripTests.main()
     case "WindowFoldEffectsTests": WindowFoldEffectsTests.main()
     case "GlanceLifecycleTests": GlanceLifecycleTests.main()
+    case "CarryControllerTests": CarryControllerTests.main()
     default: preconditionFailure("Choose an AppKit test suite")
     }
   }

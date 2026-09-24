@@ -245,6 +245,12 @@ final class GlanceController {
         apply(intent.clicked(id, at: clock()))
     }
 
+    /// 更多窗口菜单关闭后，给指针从菜单移到预览的时间；不激活源窗口。
+    func previewFromMenu(_ id: CGWindowID) {
+        guard Self.isEnabled, stripFrame(id) != nil else { return }
+        apply(intent.menuSelected(id, at: clock()))
+    }
+
     /// 切换 App、换桌面、关掉设置：收回正在看的那一个。
     func cancelAll(reason: String) {
         let effects = intent.cancel()
