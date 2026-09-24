@@ -194,6 +194,34 @@ import Foundation
       expect(strip.action == .expand && strip.armed, "double tap on a strip expands")
     }
 
+    // Switching displays: windows WindowShade placed go back to their layout on the new screen.
+    do {
+      let external = CGRect(x: -435, y: -1415, width: 2560, height: 1390)  // Studio Display, below its menu bar
+      let builtIn = CGRect(x: 0, y: 34, width: 1710, height: 1000)          // MacBook, menu bar to Dock
+      let filledOnExternal = RefitLayout.fill.frame(in: external)
+      let squeezed = CGRect(x: 0, y: 40, width: 1710, height: 990)
+      expect(DisplayRefit.target(layout: .fill, placed: filledOnExternal, current: squeezed, area: builtIn) == builtIn,
+             "a filled window the system squeezed onto the built-in screen fills it again")
+      expect(DisplayRefit.target(layout: .fill, placed: filledOnExternal, current: builtIn, area: builtIn) == nil,
+             "already filling the new screen: leave it")
+      let leftOnExternal = RefitLayout.leftHalf.frame(in: external)
+      let moved = CGRect(x: 0, y: 34, width: 1280, height: 1000)
+      expect(DisplayRefit.target(layout: .leftHalf, placed: leftOnExternal, current: moved, area: builtIn)
+               == CGRect(x: 0, y: 34, width: 855, height: 1000),
+             "a left half squeezed by the system becomes the left half of the new screen")
+      let resizedByHand = CGRect(x: 100, y: 120, width: 900, height: 600)
+      expect(DisplayRefit.target(layout: .fill, placed: filledOnExternal, current: resizedByHand, area: builtIn) == nil,
+             "a window the person resized is their new arrangement: leave it")
+      let rightHalf = RefitLayout.rightHalf.frame(in: builtIn)
+      let draggedAside = CGRect(x: 200, y: 300, width: 855, height: 1000)
+      expect(DisplayRefit.target(layout: .rightHalf, placed: rightHalf, current: draggedAside, area: builtIn) == rightHalf,
+             "same size, only moved by the system: back into the right half")
+      let before = CGRect(x: 100, y: 134, width: 855, height: 500)
+      let mapped = DisplayRefit.mapped(before, from: builtIn, to: external)
+      expect(external.contains(mapped) && abs(mapped.width - 855 * 2560 / 1710) < 1,
+             "undo still returns to the same place and size, scaled onto the new screen")
+    }
+
     // Which directions the control under the pointer keeps for itself.
     do {
       let safariTab: [GestureOwnership.Element] = [
@@ -314,6 +342,6 @@ import Foundation
       expect(right == CGVector(dx: 10, dy: 0), "content moving right is right")
     }
 
-    print("PASS: trackpad gestures — hysteresis, deliberate swipe with one tick, pause cancels, flick projection, short flick, pull-back cancel, halves, direction switch lead, return to origin, vertical ladder (fill / undo fill / roll up), app-owned horizontal on tabs, late map update, ownership rules, double tap, strip expand, spread/pinch with undo availability (unavailable undo explains itself), pinch exclusivity, reset, content direction")
+    print("PASS: trackpad gestures — hysteresis, deliberate swipe with one tick, pause cancels, flick projection, short flick, pull-back cancel, halves, direction switch lead, return to origin, vertical ladder (fill / undo fill / roll up), app-owned horizontal on tabs, late map update, ownership rules, double tap, display refit, strip expand, spread/pinch with undo availability (unavailable undo explains itself), pinch exclusivity, reset, content direction")
   }
 }

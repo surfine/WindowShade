@@ -50,8 +50,13 @@
 窗口退回原样，真窗口从头到尾没被碰过。走满门槛时窗口卷到 0.55，继续推到约 1.8 倍门槛就
 完全卷起。做法是用收起动画的盖板：先盖上一张和窗口一样的画面（背后垫着窗口后面的真实桌面），
 进度交给手指，松手后才在盖板下面藏起或恢复真窗口。盖板晚于手指出现、或滚轮一格一格跳时，
-显示值用 40 毫秒的指数跟随追上去，不会一下跳过去。这是手指的直接反馈，不看“收起窗口时的
+显示值用 40 毫秒的指数跟随追上去，不会一下跳过去。手指一落到标题栏（或卷帘条）上就开始准备盖板，以 0 进度盖上，看起来和窗口一样；认出是左右滑、张合或滚轮就撤掉。盖板不等全系统窗口清单：画面先用快速截图，背景用快速合成，实时流在后台接上。实测从确认标题栏到盖板可以跟手，收起约 140 毫秒、展开约 100 毫秒（原来机器忙时收起要 300–490 毫秒）。这是手指的直接反馈，不看“收起窗口时的
 动画”开关；打开减少动态效果、暂停效果或桌面开合时不跟，只有提示浮窗。
+
+**换屏后排回去。** 内屏、外屏切换时，系统只挪窗口、不改排法。用手势或轻点两下排过的窗口
+（铺满、左半、右半），换屏后按原来的排法排到它现在所在的屏幕上；系统先自己挪窗口，所以等
+1.5 秒再看。只处理“只是被系统挪过或按新屏幕缩小过”的窗口：尺寸没变，或者缩小后贴着屏幕边；
+尺寸被人手改过的不动。重排后撤销仍然可用，排之前的样子按两块屏幕的比例换算过去。
 
 **连划不连走。** 刚执行完的 0.6 秒里，同一扇窗朝同一个方向再划一下不接：Magic Mouse 上
 常见的连划几下，不会在梯子上连走两格（本想还原，结果又收起了）。换个手势照常接；窗口还在
@@ -183,6 +188,7 @@ PASS gesture: pulling down on the title bar fills; pushing up on the filled wind
 PASS gesture: a quick second push in the same direction is ignored (no double step on the ladder)
 PASS gesture: mouse wheel — 2 notches do nothing, 3 notches down fill, 3 notches up put it back
 PASS gesture: double tap (smart zoom) fills, and again puts it back
+PASS gesture: after a screen change a filled window the system squeezed fills again; one resized by hand is left alone
 PASS gesture: the window itself follows the fingers (69% rolled at the threshold); pulling back rolls it back untouched
 PASS gesture: swipe up rolls the window up (strip 439–1024ms after release)
 PASS gesture: pulling down on the strip unrolls the window under the fingers (41% rolled mid-gesture)

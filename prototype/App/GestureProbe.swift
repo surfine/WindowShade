@@ -168,6 +168,31 @@ extension GlanceProbe {
     try await wait("double tap restores", timeout: 2) { self.bounds(self.id).map { self.near($0, original) } == true }
     print("PASS gesture: double tap (smart zoom) fills, and again puts it back")
 
+    // 4e. 换屏后排回去。插拔显示器没法自动化：用 AX 把铺满的窗口挤小一点，模拟系统换屏时
+    // 的调整，再调用换屏处理；人手改过尺寸的窗口则不能被排回去。
+    try await Task.sleep(nanoseconds: 700_000_000)
+    try await swipe(at: titleBarPoint(), finger: CGVector(dx: 0, dy: -5), steps: 14)
+    try await wait("fill before refit", timeout: 2) { self.bounds(self.id).map { self.near($0, visibleAX) } == true }
+    let squeezed = CGRect(x: visibleAX.minX, y: visibleAX.minY + 8, width: visibleAX.width, height: visibleAX.height - 20)
+    setAXPosition(element, squeezed.origin)
+    _ = setAXSize(element, squeezed.size)
+    try await Task.sleep(nanoseconds: 300_000_000)
+    gestures.screensChanged()
+    try await wait("refit after screen change", timeout: 4) { self.bounds(self.id).map { self.near($0, visibleAX) } == true }
+    let byHand = CGRect(x: visibleAX.minX + 120, y: visibleAX.minY + 90, width: 700, height: 460)
+    setAXPosition(element, byHand.origin)
+    _ = setAXSize(element, byHand.size)
+    try await Task.sleep(nanoseconds: 300_000_000)
+    gestures.screensChanged()
+    try await Task.sleep(nanoseconds: 2_200_000_000)
+    guard let kept = bounds(id), near(kept, byHand) else {
+      throw EffectError.unavailable("a window resized by hand was refit")
+    }
+    setAXPosition(element, original.origin)
+    _ = setAXSize(element, original.size)
+    try await wait("back to original", timeout: 2) { self.bounds(self.id).map { self.near($0, original) } == true }
+    print("PASS gesture: after a screen change a filled window the system squeezed fills again; one resized by hand is left alone")
+
     // 5. 上滑过了门槛又往回拉：取消，不收起。
     try await Task.sleep(nanoseconds: 700_000_000)
     let performedBefore = gestures.lastPerformed?.action

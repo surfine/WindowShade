@@ -966,7 +966,10 @@ extension AppDelegate {
 
     @objc func screenParametersChanged(_ note: Notification) {
         windowBrowserController?.screensDidChange()
-        MainActor.assumeIsolated { carry.layout() }
+        MainActor.assumeIsolated {
+            carry.layout()
+            gestures.screensChanged()
+        }
         pinnedPreviewController.refreshAll(reason: "screen")
         for (id, state) in shaded {
             guard let overlay = state.overlay else { continue }
