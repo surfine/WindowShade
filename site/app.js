@@ -283,6 +283,100 @@ if (laptop && lidRange && lidPlay) {
 }
 
 // Glance: preserve the crossing between the bar and card; touch and keyboard toggle it.
+// Title-bar gestures: scroll on the illustrated title bar and the window follows, as in the app.
+// deltaY > 0 means the content moves up (natural scrolling: fingers up) — that rolls the window up.
+const swipeDesk = document.querySelector('#swipe-desk');
+if (swipeDesk) {
+  const win = swipeDesk.querySelector('#swipe-win');
+  const bar = swipeDesk.querySelector('#swipe-bar');
+  const hud = swipeDesk.querySelector('#swipe-hud');
+  const hudTitle = swipeDesk.querySelector('#swipe-hud-title');
+  const hudFill = swipeDesk.querySelector('#swipe-hud-fill');
+  const stateText = document.querySelector('#swipe-state');
+  const buttons = [...document.querySelectorAll('[data-swipe]')];
+  const titles = JSON.parse(hud.dataset.titles);
+  const states = JSON.parse(stateText.dataset.states);
+  const ARM = 140;      // scroll distance for "let go and it happens"
+  const FOLLOW = .55;   // how far the window has moved at that point, as in the app
+  let state = 'normal';
+  let travel = 0;
+  let idle = null;
+  const actionFor = up => state === 'normal' ? (up ? 'shade' : 'fill')
+    : state === 'filled' ? (up ? 'restore' : null)
+    : (up ? null : 'expand');
+  const base = () => ({ roll: state === 'folded' ? 1 : 0, fill: state === 'filled' ? 1 : 0 });
+  function apply(roll, fill, animate) {
+    swipeDesk.classList.toggle('is-animating', animate);
+    win.style.setProperty('--roll', roll.toFixed(4));
+    win.style.setProperty('--fill', fill.toFixed(4));
+  }
+  function show(action, progress) {
+    const moved = Math.min(1, progress * FOLLOW);
+    let { roll, fill } = base();
+    if (action === 'shade') roll = moved;
+    if (action === 'expand') roll = 1 - moved;
+    if (action === 'fill') fill = moved;
+    if (action === 'restore') fill = 1 - moved;
+    apply(roll, fill, false);
+    hud.classList.toggle('is-visible', Boolean(action));
+    hud.classList.toggle('is-armed', Boolean(action) && progress >= 1);
+    if (action) {
+      hudTitle.textContent = titles[action];
+      hudFill.style.width = `${Math.min(1, progress) * 100}%`;
+    }
+  }
+  function refreshButtons() {
+    for (const button of buttons) button.disabled = !actionFor(button.dataset.swipe === 'up');
+  }
+  function finish() {
+    const action = actionFor(travel > 0);
+    const done = action && Math.abs(travel) / ARM >= 1;
+    travel = 0;
+    hud.classList.remove('is-visible', 'is-armed');
+    if (done) {
+      state = action === 'shade' ? 'folded' : action === 'fill' ? 'filled' : 'normal';
+      swipeDesk.dataset.state = state;
+      stateText.textContent = states[state];
+    } else if (action) {
+      stateText.textContent = states.canceled;
+    }
+    const { roll, fill } = base();
+    apply(roll, fill, true);
+    refreshButtons();
+  }
+  bar.addEventListener('wheel', event => {
+    event.preventDefault();
+    const scale = event.deltaMode === 1 ? 40 : event.deltaMode === 2 ? 400 : 1;
+    travel += event.deltaY * scale;
+    show(actionFor(travel > 0), Math.abs(travel) / ARM);
+    clearTimeout(idle);
+    idle = setTimeout(finish, 180);
+  }, { passive: false });
+  for (const button of buttons) {
+    button.addEventListener('click', () => {
+      const up = button.dataset.swipe === 'up';
+      const action = actionFor(up);
+      if (!action) return;
+      if (reduceMotion.matches) {
+        travel = up ? ARM : -ARM;
+        finish();
+        return;
+      }
+      const start = performance.now();
+      const step = now => {
+        const t = Math.min(1, (now - start) / 460);
+        const progress = 1.25 * (1 - (1 - t) ** 3);
+        travel = (up ? 1 : -1) * progress * ARM;
+        show(action, progress);
+        if (t < 1) requestAnimationFrame(step);
+        else setTimeout(finish, 140);
+      };
+      requestAnimationFrame(step);
+    });
+  }
+  refreshButtons();
+}
+
 const glanceDesk = document.querySelector('.stage-glance');
 const glanceStrip = document.querySelector('.glance-strip');
 const glanceCard = document.querySelector('#glance-card');
