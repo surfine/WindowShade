@@ -1,6 +1,6 @@
 // 换屏后把排过的窗口排回去（内屏、外屏切换时，窗口大小不会跟着新屏幕变）。
 //
-// 纯几何，不碰窗口。只处理 WindowShade 自己排过的窗口（铺满、左半、右半），而且只在
+// 纯几何，不碰窗口。只处理 WindowShade 自己排过的窗口（铺满、半屏、四角），而且只在
 // 窗口“只是被系统挪过或缩小过”时才重排：尺寸没变，或者被系统按新屏幕缩小、贴着屏幕边。
 // 尺寸被人手改过的窗口不动——那是用户的新安排。
 
@@ -10,6 +10,14 @@ enum RefitLayout: String, Equatable {
     case fill
     case leftHalf
     case rightHalf
+    case topLeft
+    case topRight
+    case bottomLeft
+    case bottomRight
+    case leftTwoThirds
+    case leftThird
+    case rightTwoThirds
+    case rightThird
 
     /// 这种排法在某块屏幕可用区域（AX 坐标）里的位置。
     func frame(in area: CGRect) -> CGRect {
@@ -17,6 +25,14 @@ enum RefitLayout: String, Equatable {
         case .fill: return area
         case .leftHalf: return CGRect(x: area.minX, y: area.minY, width: area.width / 2, height: area.height)
         case .rightHalf: return CGRect(x: area.midX, y: area.minY, width: area.width / 2, height: area.height)
+        case .topLeft: return CGRect(x: area.minX, y: area.minY, width: area.width / 2, height: area.height / 2)
+        case .topRight: return CGRect(x: area.midX, y: area.minY, width: area.width / 2, height: area.height / 2)
+        case .bottomLeft: return CGRect(x: area.minX, y: area.midY, width: area.width / 2, height: area.height / 2)
+        case .bottomRight: return CGRect(x: area.midX, y: area.midY, width: area.width / 2, height: area.height / 2)
+        case .leftTwoThirds: return CGRect(x: area.minX, y: area.minY, width: area.width * 2 / 3, height: area.height)
+        case .leftThird: return CGRect(x: area.minX, y: area.minY, width: area.width / 3, height: area.height)
+        case .rightTwoThirds: return CGRect(x: area.maxX - area.width * 2 / 3, y: area.minY, width: area.width * 2 / 3, height: area.height)
+        case .rightThird: return CGRect(x: area.maxX - area.width / 3, y: area.minY, width: area.width / 3, height: area.height)
         }
     }
 }
