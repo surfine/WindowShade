@@ -14,14 +14,14 @@
 [![Apple Silicon](https://img.shields.io/badge/download-Apple%20Silicon-303b49?style=flat-square)](#下载)
 [![许可](https://img.shields.io/badge/license-MIT-303b49?style=flat-square)](LICENSE)
 
-[**下载 Mac 版**](https://github.com/surfine/WindowShade/releases/latest) · [**官网**](https://windowshade.pages.dev/) · [**窗口往事**](https://windowshade.pages.dev/history/) · [English](README.md)
+[**下载 Mac 版**](https://github.com/surfine/WindowShade/releases/latest) · [**官网**](https://windowshade.aaronlau.me/) · [**介绍视频**](https://www.bilibili.com/video/BV1K7ag6WEdH/) · [**窗口往事**](https://windowshade.aaronlau.me/history/) · [English](README.md)
 
 <picture>
   <source media="(prefers-color-scheme: dark)" srcset="assets/readme-desk-dark.png">
   <img src="assets/readme-desk.png" alt="「参考资料」窗口收成一条卷帘条，停在原处，露出后面的文章草稿" width="720">
 </picture>
 
-<sub>官网首页的互动示意：「参考资料」收起后，后面的草稿露了出来。<a href="https://windowshade.pages.dev/">去官网亲手试一试 →</a></sub>
+<sub>官网首页的互动示意：「参考资料」收起后，后面的草稿露了出来。<a href="https://windowshade.aaronlau.me/">去官网亲手试一试 →</a></sub>
 
 </div>
 
@@ -39,17 +39,17 @@
 
 ## 这个双击，比你的 Mac 还老
 
-三十年前的 Mac 用户，大多会这一招。后来系统换了思路，把窗口送进 Dock，它就慢慢被人忘了。我们把这段往事写成了一篇可以动手的长文 **[窗口往事](https://windowshade.pages.dev/history/)**：七章，四个动手实验，14 条原始史料。
+三十年前的 Mac 用户，大多会这一招。后来系统换了思路，把窗口送进 Dock，它就慢慢被人忘了。我们把这段往事写成了一篇可以动手的长文 **[窗口往事](https://windowshade.aaronlau.me/history/)**：七章，四个动手实验，14 条原始史料。
 
-1. [先别关掉](https://windowshade.pages.dev/history/#space)：同一张桌面，三种安排，亲手比一比
-2. [一个小工具](https://windowshade.pages.dev/history/#origin)：一份 1994 年的用户社群刊物
-3. [点两下还是三下](https://windowshade.pages.dev/history/#preference)：改一次当年的控制面板
-4. [有了按钮](https://windowshade.pages.dev/history/#button)：拖着收起的窗口换个地方
-5. [去了 Dock](https://windowshade.pages.dev/history/#departure)：Dock、Exposé 与 Mission Control
-6. [还有人在用](https://windowshade.pages.dev/history/#survival)：便笺至今还留着这一招
-7. [回到今天](https://windowshade.pages.dev/history/#return)：旧动作，新的工作现场
+1. [先别关掉](https://windowshade.aaronlau.me/history/#space)：同一张桌面，三种安排，亲手比一比
+2. [一个小工具](https://windowshade.aaronlau.me/history/#origin)：一份 1994 年的用户社群刊物
+3. [点两下还是三下](https://windowshade.aaronlau.me/history/#preference)：改一次当年的控制面板
+4. [有了按钮](https://windowshade.aaronlau.me/history/#button)：拖着收起的窗口换个地方
+5. [去了 Dock](https://windowshade.aaronlau.me/history/#departure)：Dock、Exposé 与 Mission Control
+6. [还有人在用](https://windowshade.aaronlau.me/history/#survival)：便笺至今还留着这一招
+7. [回到今天](https://windowshade.aaronlau.me/history/#return)：旧动作，新的工作现场
 
-读完还可以 [启动一台旧 Mac](https://windowshade.pages.dev/history/#lab)（System 7.5、Mac OS 8、Mac OS X 10.1，由 [Infinite Mac](https://infinitemac.org/) 运行），沿着当年的菜单自己找到这个设置。
+读完还可以 [启动一台旧 Mac](https://windowshade.aaronlau.me/history/#lab)（System 7.5、Mac OS 8、Mac OS X 10.1，由 [Infinite Mac](https://infinitemac.org/) 运行），沿着当年的菜单自己找到这个设置。
 
 今天的 WindowShade 是独立的 Swift / AppKit 实现，借用了老名字和老想法，代码从头写起。它不是 Apple 的产品，也没有用 Rob Johnston、Apple 或 Unsanity WindowShade X 的代码。
 
