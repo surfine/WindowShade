@@ -1,15 +1,15 @@
 {
   "origin": "https://windowshade.pages.dev",
-  "deployment": "https://a271061c.windowshade.pages.dev",
+  "deployment": "https://15960926.windowshade.pages.dev",
   "project": "windowshade",
   "branch": "main",
   "files": {
     "404.html": "be421d22ed7d99001d267e3a889972874704a6a9616e302e5f3022704b78380e",
     "_headers": "d5401edd1ba01c41c7b87ae3f67a0dabdeb52456e94d120733cdae4e5acd149a",
     "_redirects": "10738b7bf0dda342fb556e9d4a5c66e9f3ffaebc75e19aa0982ab168b72695ec",
-    "app.js": "0327b839b763c54aae3fbf97752a57b6b5de573e8b123968a756d802fa8d14bf",
+    "app.js": "1c37a10cbc4c1472b25793ec800c96144f1a6d0b34733a515248d54a68397232",
     "en/history/index.html": "80b43d87bca729ddbbde5974930c0dc9ea5a8e7b1c5d2d64d790bd628d05b657",
-    "en/index.html": "f4389684521ce5e64ce8f933da46c4bdbe525763355296ee7c0c8a4e330c7c65",
+    "en/index.html": "fb7a06fd547537b5a38a3197368914162cb2aa1d5c188c1d7b7d32cfd142eeb4",
     "era.css": "4f3f085b220120267e1bc518a3a7c81d40aced5c695c60d671e64f51914fc0e7",
     "fonts/Asap-OFL.txt": "79d8634241e736e967a1539a9c766ea8e68f6d2df9f5d0edba5a4c88b1b5d8a0",
     "fonts/Asap-Variable.woff2": "3f230328a40ee9a05fe099dfb6b403a4c569aaea6690e5d483d5715ed817498f",
@@ -18,7 +18,7 @@
     "history.css": "a2069565851de9bc24007bed07b10e54589b449f752f1be0e3c6e77b5134c089",
     "history.js": "9694a014bec3a7da821a3d538e63816fc5fd9aa9f439576d020936baf6944a05",
     "history/index.html": "14d8f5491ff4a4a591edfb3a72c7330716b0ab4df7d3a1da410938e7dfec41ee",
-    "index.html": "41478eb49c46bba9f26e478d73a3fe9e9578bfc94d6e8d7c543776e82988696e",
+    "index.html": "9e90551cb3ec912ca4e9906ce5d97104f442dc514bff87a2dbf644c5cbfe4dab",
     "media/apple-touch-icon.png": "a2505d055eb6c8476ab78b6e95628d36db5582fbc22576bce4fccd32e1422d2a",
     "media/desk-dark.webp": "b2f21a0a7ece49ffce15597b67631e089a58885e71a6edcb302a5e726219e69b",
     "media/desk-en-dark.webp": "7a5d51d484013285f8a7915e85be1eec9fb7c069c5393ebb552835fbd44b6f82",
@@ -39,7 +39,7 @@
     "media/share-square.jpg": "c20066c0e2cc5c48d68c7db87a187aca35b18da9f5838490a584614eb4123bb4",
     "robots.txt": "08e4b5b0e500c11923762a8f07ed8cbfa95c129d781822f156f4face4e361e52",
     "sitemap.xml": "2adb63b2e068b97040b55c8c160ecbfb9412401ffa8241bd32183de39e269085",
-    "style.css": "d2985b2e7922fcb714680f3cbc0d1f2730c0e495f6388344dc2f650b220cf587"
+    "style.css": "7fadf4e6123845a313b93577e0b75dec3a7bb519ecc3edafa8e48525a1839e44"
   },
-  "recordedAt": "2026-09-25T00:23:20.398Z"
+  "recordedAt": "2026-09-25T00:29:36.190Z"
 }
