@@ -1987,6 +1987,11 @@ final class WindowBrowserController: NSObject {
         switch outcome {
         case .applied(let record):
             statusOverride = "已\(record.action.title)排布，可撤销"
+            MainActor.assumeIsolated {
+                appDelegate?.gestures.recordPlacement(windowID: key.originalWindowID, pid: key.application.pid,
+                                                      action: record.action, before: record.frameBeforeAX,
+                                                      after: record.frameAfterAX)
+            }
         case .undone:
             statusOverride = "已撤销上次排布"
         case .unsupported(let reason):

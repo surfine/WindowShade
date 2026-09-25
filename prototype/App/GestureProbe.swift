@@ -19,9 +19,48 @@ extension GlanceProbe {
     try? await Task.sleep(nanoseconds: 250_000_000)
   }
 
+  /// 合成手势前：那个位置最上面的普通窗口必须是临时 App 的。探针运行时有人在用电脑，
+  /// 别的窗口可能盖上来；这时宁可中止，也不能把手势做到别人的窗口上（曾把 Claude 的窗口挪进角落）。
+  func ensureFixtureAt(_ point: CGPoint) async throws {
+    func topOwner() -> (pid: pid_t, name: String)? {
+      let list = CGWindowListCopyWindowInfo([.optionOnScreenOnly, .excludeDesktopElements], kCGNullWindowID)
+        as? [[String: Any]] ?? []
+      guard let top = list.first(where: {
+        ($0[kCGWindowLayer as String] as? Int) == 0 && cgWindowBounds($0)?.contains(point) == true
+      }) else { return nil }
+      return ((top[kCGWindowOwnerPID as String] as? pid_t) ?? 0, (top[kCGWindowOwnerName as String] as? String) ?? "?")
+    }
+    for attempt in 0..<2 {
+      await keepFixtureInFront()
+      if topOwner()?.pid == gestureFixturePID { return }
+      if attempt == 0 {
+        NSRunningApplication(processIdentifier: gestureFixturePID)?.activate()
+        try await Task.sleep(nanoseconds: 400_000_000)
+      }
+    }
+    throw EffectError.unavailable("the fixture is covered by \(topOwner()?.name ?? "?") there; stopped so no other window is touched")
+  }
+
+  /// 按排布快捷键前：前台必须是临时 App、焦点就在它的窗口上（快捷键作用于焦点窗口）。
+  /// requireFocus = false 只用于“刚收起那扇”的记忆：那时焦点本来就不在它身上。
+  func key(_ direction: GestureDirection, requireFocus: Bool = true) async throws {
+    if requireFocus {
+      await keepFixtureInFront()
+      guard NSWorkspace.shared.frontmostApplication?.processIdentifier == gestureFixturePID,
+            let focused = focusedWindow(), windowID(of: focused) == id else {
+        throw EffectError.unavailable("the fixture is not focused; stopped so no other window is touched")
+      }
+    } else {
+      guard owner.shaded[id] != nil else { throw EffectError.unavailable("nothing rolled up to bring back") }
+    }
+    owner.gestures.keyStep(direction)
+  }
+
   func exerciseGestures(element: AXUIElement, original: CGRect, pid: pid_t) async throws {
     gestureFixturePID = pid
     let gestures = owner.gestures
+    // 探针不走 applicationDidFinishLaunching，卷帘条上的 ⌘ 键转发要自己装（第 12 步用）。
+    owner.installStripKeyForwarding()
     // 真实的滚动只会落在指针下最上面那扇窗：先把临时 App 切到前面，免得被别的窗口盖住标题栏。
     NSRunningApplication(processIdentifier: pid)?.activate()
     try await wait("fixture frontmost", timeout: 3) {
@@ -159,11 +198,11 @@ extension GlanceProbe {
 
     // 4d. 轻点两下（智能缩放：触控板两指 / Magic Mouse 单指）：铺满，再点两下还原。
     try await Task.sleep(nanoseconds: 700_000_000)
-    await keepFixtureInFront()
+    try await ensureFixtureAt(titleBarPoint())
     gestures.doubleTap(at: titleBarPoint())
     try await wait("double tap fills", timeout: 2) { self.bounds(self.id).map { self.near($0, visibleAX) } == true }
     try await Task.sleep(nanoseconds: 700_000_000)
-    await keepFixtureInFront()
+    try await ensureFixtureAt(titleBarPoint())
     gestures.doubleTap(at: titleBarPoint())
     try await wait("double tap restores", timeout: 2) { self.bounds(self.id).map { self.near($0, original) } == true }
     print("PASS gesture: double tap (smart zoom) fills, and again puts it back")
@@ -177,13 +216,13 @@ extension GlanceProbe {
     setAXPosition(element, squeezed.origin)
     _ = setAXSize(element, squeezed.size)
     try await Task.sleep(nanoseconds: 300_000_000)
-    gestures.screensChanged()
+    gestures.screensChanged(force: true)
     try await wait("refit after screen change", timeout: 4) { self.bounds(self.id).map { self.near($0, visibleAX) } == true }
     let byHand = CGRect(x: visibleAX.minX + 120, y: visibleAX.minY + 90, width: 700, height: 460)
     setAXPosition(element, byHand.origin)
     _ = setAXSize(element, byHand.size)
     try await Task.sleep(nanoseconds: 300_000_000)
-    gestures.screensChanged()
+    gestures.screensChanged(force: true)
     try await Task.sleep(nanoseconds: 2_200_000_000)
     guard let kept = bounds(id), near(kept, byHand) else {
       throw EffectError.unavailable("a window resized by hand was refit")
@@ -200,9 +239,13 @@ extension GlanceProbe {
     var followed: (value: Double, visible: Bool)?
     try await swipe(at: bar, finger: CGVector(dx: 0, dy: 5), steps: 14, then: CGVector(dx: 0, dy: -9), backSteps: 3) { step in
       if step == 13 {
-        // 走满门槛、还没松手：窗口本体应该已经跟着卷起一半多。
-        try await Task.sleep(nanoseconds: 300_000_000)
-        followed = effects.trackingState(id: self.id)
+        // 走满门槛、还没松手：窗口本体应该已经跟着卷起一半多。机器忙时画面会晚一点跟上，
+        // 手指按着不动，最多等 2 秒再读。
+        let deadline = CACurrentMediaTime() + 2
+        repeat {
+          try await Task.sleep(nanoseconds: 50_000_000)
+          followed = effects.trackingState(id: self.id)
+        } while CACurrentMediaTime() < deadline && !(followed.map { $0.visible && $0.value > 0.45 } ?? false)
         self.shoot(cocoaFrame(fromAXPosition: original.origin, size: original.size), "follow-mid")
       }
     }
@@ -272,6 +315,134 @@ extension GlanceProbe {
       self.owner.shaded[self.id] == nil && self.onscreen(self.id)
     }
     print("PASS gesture: double tap on the strip expands it")
+
+    // 9. 键盘：方向键和手势是同一架梯子（左半屏 → 铺满 → 往上撤销铺满 → 再往上收起 →
+    //    往下把刚收起的那扇放下来）。直接调用快捷键入口，不合成按键。
+    try await Task.sleep(nanoseconds: 800_000_000)
+    await keepFixtureInFront()
+    let leftHalf = CGRect(x: visibleAX.minX, y: visibleAX.minY, width: visibleAX.width / 2, height: visibleAX.height)
+    try await key(.left)
+    try await wait("key: left half", timeout: 3) { self.bounds(self.id).map { self.near($0, leftHalf) } == true }
+    print("PASS gesture: ⌃⌘← puts the focused window on the left half")
+    // 紧接着按 ⌃⌘↓ 是拐进左下角（第 10 步单独验）；这里要的是铺满，等拐弯的窗口过去再按。
+    try await Task.sleep(nanoseconds: UInt64((KeyTurn.window + 0.3) * 1_000_000_000))
+    try await key(.down)
+    try await wait("key: fill", timeout: 3) { self.bounds(self.id).map { self.near($0, visibleAX) } == true }
+    print("PASS gesture: ⌃⌘↓ fills the screen between the menu bar and the Dock")
+    try await Task.sleep(nanoseconds: 700_000_000)
+    try await key(.up)
+    try await wait("key: undo fill", timeout: 3) { self.bounds(self.id).map { self.near($0, leftHalf) } == true }
+    print("PASS gesture: ⌃⌘↑ on a filled window undoes the fill")
+    try await Task.sleep(nanoseconds: 700_000_000)
+    try await key(.up)
+    try await wait("key: roll up", timeout: 4) { self.owner.currentOperationState(self.id) == .folded }
+    print("PASS gesture: ⌃⌘↑ again rolls the window up")
+    try await Task.sleep(nanoseconds: 900_000_000)
+    try await key(.down, requireFocus: false)
+    try await wait("key: unroll", timeout: 4) {
+      self.owner.shaded[self.id] == nil && self.onscreen(self.id)
+        && self.bounds(self.id).map { self.near($0, leftHalf) } == true
+    }
+    print("PASS gesture: ⌃⌘↓ right after brings back the window it rolled up, where it was")
+
+    // 10. 拐弯占角：一口气往左滑走满，再往下拐，落在左下角。刚展开的窗口在动画结束前不接手势，多等一会儿。
+    try await Task.sleep(nanoseconds: 1_500_000_000)
+    let leftBar = CGPoint(x: leftHalf.minX + 180, y: leftHalf.minY + 12)
+    try await swipe(at: leftBar, finger: CGVector(dx: -5, dy: 0), steps: 14,
+                    then: CGVector(dx: 0, dy: -5), backSteps: 10)
+    let bottomLeft = CGRect(x: visibleAX.minX, y: visibleAX.midY, width: visibleAX.width / 2, height: visibleAX.height / 2)
+    try await Task.sleep(nanoseconds: 600_000_000)
+    print("INFO gesture: after the turn, window=\(bounds(id).map { "\($0)" } ?? "-") expected=\(bottomLeft) hud=\(gestures.hud.shownAction?.rawValue ?? "-")")
+    try await wait("turned into the bottom left corner", timeout: 3) {
+      self.bounds(self.id).map { self.near($0, bottomLeft) } == true
+    }
+    print("PASS gesture: swiping left and then turning down puts the window in the bottom left corner")
+
+    // 11. 左右梯子：回到左半屏后连按 ⌃⌘←，½ → ⅔ → ⅓，再按一次移到左边的屏幕，没有就回到 ½。
+    try await Task.sleep(nanoseconds: 700_000_000)
+    try await key(.left)
+    try await wait("back to the left half", timeout: 3) { self.bounds(self.id).map { self.near($0, leftHalf) } == true }
+    try await Task.sleep(nanoseconds: 900_000_000)
+    let twoThirds = CGRect(x: visibleAX.minX, y: visibleAX.minY, width: visibleAX.width * 2 / 3, height: visibleAX.height)
+    try await key(.left)
+    try await wait("key: left two thirds", timeout: 3) { self.bounds(self.id).map { self.near($0, twoThirds) } == true }
+    try await Task.sleep(nanoseconds: 900_000_000)
+    let oneThird = CGRect(x: visibleAX.minX, y: visibleAX.minY, width: visibleAX.width / 3, height: visibleAX.height)
+    try await key(.left)
+    try await wait("key: left third", timeout: 3) { self.bounds(self.id).map { self.near($0, oneThird) } == true }
+    print("PASS gesture: ⌃⌘← again and again walks the left ladder: half, two thirds, one third")
+    try await Task.sleep(nanoseconds: 900_000_000)
+    let here = NSScreen.screens.first { $0.frame.contains(cocoaMousePoint(fromAXPoint: leftBar)) }
+    if let here, let neighbor = TrackpadGestureController.neighbor(of: here, toward: .left) {
+      let area = CGRect(origin: axPosition(fromCocoaFrame: neighbor.visibleFrame), size: neighbor.visibleFrame.size)
+      let landing = CGRect(x: area.midX, y: area.minY, width: area.width / 2, height: area.height)
+      try await key(.left)
+      try await wait("moved to the display on the left", timeout: 3) {
+        self.bounds(self.id).map { self.near($0, landing) } == true
+      }
+      print("PASS gesture: one more ⌃⌘← from a third moves it to the right half of the display on the left")
+    } else {
+      try await key(.left)
+      try await wait("wrapped back to the half", timeout: 3) { self.bounds(self.id).map { self.near($0, leftHalf) } == true }
+      print("PASS gesture: with no display on the left, one more ⌃⌘← goes back to the half")
+    }
+
+    // 11b. 键盘也能拐弯：⌃⌘→ 之后马上 ⌃⌘↓，落在右下角（按窗口此刻所在的屏幕算）。
+    try await Task.sleep(nanoseconds: 900_000_000)
+    try await key(.right)
+    guard let now = bounds(id),
+          let screen = NSScreen.screens.first(where: { $0.frame.contains(cocoaMousePoint(fromAXPoint: CGPoint(x: now.midX, y: now.midY))) })
+    else { throw EffectError.unavailable("no screen for the keyboard corner") }
+    let area = CGRect(origin: axPosition(fromCocoaFrame: screen.visibleFrame), size: screen.visibleFrame.size)
+    let rightHalf = CGRect(x: area.midX, y: area.minY, width: area.width / 2, height: area.height)
+    try await wait("key: right half", timeout: 3) { self.bounds(self.id).map { self.near($0, rightHalf) } == true }
+    try await key(.down)
+    let bottomRight = CGRect(x: area.midX, y: area.midY, width: area.width / 2, height: area.height / 2)
+    try await wait("key: turned into the bottom right corner", timeout: 3) {
+      self.bounds(self.id).map { self.near($0, bottomRight) } == true
+    }
+    print("PASS gesture: ⌃⌘→ then ⌃⌘↓ right away puts the window in the bottom right corner")
+
+    // 11c. 甩一下标题栏：真实拖动没法合成（会动到用户的指针和窗口），这里先用辅助功能把窗口挪开
+    //      当作拖过，再把一段快速往左的指针轨迹交给松手时的判定。按下、拖动时的采集要在真机上试。
+    try await Task.sleep(nanoseconds: 900_000_000)
+    guard let before = bounds(id) else { throw EffectError.unavailable("no fixture frame for the flick") }
+    let dragged = before.offsetBy(dx: -160, dy: 0)
+    setAXPosition(element, dragged.origin)
+    try await Task.sleep(nanoseconds: 200_000_000)
+    let t0 = CACurrentMediaTime()
+    let down = cocoaMousePoint(fromAXPoint: CGPoint(x: before.midX, y: before.minY + 12))
+    let samples = (0..<6).map { i in (t0 - 0.05 + Double(i) * 0.01, NSPoint(x: down.x - 100 + CGFloat(i) * -24, y: down.y)) }
+    if let rejected = gestures.simulateFlick(windowID: id, pid: gestureFixturePID, frameAtDown: before, down: down,
+                                             samples: samples, release: NSPoint(x: down.x - 160, y: down.y), at: t0) {
+      print("INFO gesture: flick not taken — \(rejected); frame before=\(before) after drag=\(String(describing: bounds(id)))")
+    }
+    let flickArea = NSScreen.screens.first { $0.frame.contains(down) }.map {
+      CGRect(origin: axPosition(fromCocoaFrame: $0.visibleFrame), size: $0.visibleFrame.size)
+    } ?? visibleAX
+    let flickLeft = CGRect(x: flickArea.minX, y: flickArea.minY, width: flickArea.width / 2, height: flickArea.height)
+    try await wait("flick left", timeout: 3) { self.bounds(self.id).map { self.near($0, flickLeft) } == true }
+    print("PASS gesture: a fast flick of the title bar to the left puts the window on the left half")
+
+    // 12. 卷帘条在最前面时按 ⌘H：隐藏的是它背后的 App，不是 WindowShade（卷帘条都还在）。
+    try await Task.sleep(nanoseconds: 1_500_000_000)
+    try await key(.up)
+    try await wait("rolled up for the key check", timeout: 4) { self.owner.currentOperationState(self.id) == .folded }
+    guard let stripWindow = owner.shaded[id]?.overlay,
+          let commandH = NSEvent.keyEvent(with: .keyDown, location: .zero, modifierFlags: .command,
+                                          timestamp: ProcessInfo.processInfo.systemUptime,
+                                          windowNumber: stripWindow.windowNumber, context: nil,
+                                          characters: "h", charactersIgnoringModifiers: "h",
+                                          isARepeat: false, keyCode: UInt16(4)) else {
+      throw EffectError.unavailable("no strip for the key check")
+    }
+    let handled = stripWindow.performKeyEquivalent(with: commandH)
+    try await wait("the app behind the strip is hidden", timeout: 3) {
+      NSRunningApplication(processIdentifier: gestureFixturePID)?.isHidden == true
+    }
+    let stillHere = !NSApp.isHidden && stripWindow.isVisible
+    print("\(handled && stillHere ? "PASS" : "FAIL") gesture: ⌘H on a strip hides the app behind it, not WindowShade")
+    NSRunningApplication(processIdentifier: gestureFixturePID)?.unhide()
   }
 
   // MARK: - 合成输入
@@ -331,7 +502,7 @@ extension GlanceProbe {
              then back: CGVector = .zero, backSteps: Int = 0, ownWindow: NSWindow? = nil,
              inspect: ((Int) async throws -> Void)? = nil) async throws {
     let gestures = owner.gestures
-    if ownWindow == nil { await keepFixtureInFront() }
+    if ownWindow == nil { try await ensureFixtureAt(point) }
     for step in 0..<(steps + backSteps) {
       let delta = step < steps ? finger : back
       guard let event = scrollEvent(phase: step == 0 ? 1 : 2, finger: delta, at: point) else {
@@ -348,7 +519,7 @@ extension GlanceProbe {
 
   /// 鼠标滚轮：按行、没有相位。lines > 0 = 滚轮往上推（内容往下走，关了自然滚动时）。
   func wheel(at point: CGPoint, lines: Int32, count: Int) async throws {
-    await keepFixtureInFront()
+    try await ensureFixtureAt(point)
     for _ in 0..<count {
       guard let cg = CGEvent(scrollWheelEvent2Source: nil, units: .line, wheelCount: 1,
                              wheel1: lines, wheel2: 0, wheel3: 0),
@@ -362,7 +533,7 @@ extension GlanceProbe {
   func magnify(at point: CGPoint, delta: CGFloat, steps: Int,
                inspect: ((Int) async throws -> Void)? = nil) async throws {
     let gestures = owner.gestures
-    await keepFixtureInFront()
+    try await ensureFixtureAt(point)
     for step in 0..<steps {
       gestures.magnify(phase: step == 0 ? .began : .changed, delta: delta, location: point, ownWindow: nil)
       try await Task.sleep(nanoseconds: 8_000_000)

@@ -410,7 +410,7 @@ extension AppDelegate {
         if TrackpadGestureController.conflictingApp() != nil {
             return "Swish 正在运行，标题栏上的手势交给它；在卷帘条上往下滑仍可展开"
         }
-        return "在标题栏上两指滑动或滚动滚轮：往上收起窗口，往下铺满屏幕"
+        return "在标题栏上两指滑动、滚动滚轮或拖着甩一下：往上收起，往下铺满"
     }
 
     @objc func prefToggleTrackpadGestures(_ sender: NSSwitch) {
@@ -831,6 +831,18 @@ extension AppDelegate {
         stack.addArrangedSubview(window)
         window.widthAnchor.constraint(equalTo: stack.widthAnchor).isActive = true
         stack.setCustomSpacing(18, after: window)
+
+        // 和标题栏手势同一架梯子：往上变小、往下变大，左右占半屏。每一次都能撤销。
+        let arrange = makeUnifiedSettingsCard([
+            recorderRow(.stepLarger, subtitle: "卷帘条展开；原来大小的窗口铺满屏幕"),
+            recorderRow(.stepSmaller, subtitle: "铺满的窗口回到原来大小；原来大小的窗口收起"),
+            recorderRow(.leftHalf, subtitle: nil),
+            recorderRow(.rightHalf, subtitle: nil),
+        ])
+        stack.addArrangedSubview(makePrefGroupLabel("排布当前窗口"))
+        stack.addArrangedSubview(arrange)
+        arrange.widthAnchor.constraint(equalTo: stack.widthAnchor).isActive = true
+        stack.setCustomSpacing(18, after: arrange)
 
         let strips = makeUnifiedSettingsCard([
             recorderRow(.arrangeOrFocus, subtitle: "外观选“统一标题栏”时，改为专注当前 App"),
