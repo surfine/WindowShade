@@ -352,27 +352,64 @@ if (swipeDesk) {
     clearTimeout(idle);
     idle = setTimeout(finish, 180);
   }, { passive: false });
-  for (const button of buttons) {
-    button.addEventListener('click', () => {
-      const up = button.dataset.swipe === 'up';
-      const action = actionFor(up);
-      if (!action) return;
-      if (reduceMotion.matches) {
-        travel = up ? ARM : -ARM;
-        finish();
-        return;
-      }
+  const fingers = swipeDesk.querySelector('.swipe-fingers');
+  let demoRun = 0;
+  // One gesture, played for the reader: the fingertips move the way two fingers would,
+  // the window follows, and it settles once the track has filled.
+  function playGesture(up) {
+    const action = actionFor(up);
+    if (!action) return Promise.resolve();
+    if (reduceMotion.matches) {
+      travel = up ? ARM : -ARM;
+      finish();
+      return Promise.resolve();
+    }
+    const run = demoRun;
+    return new Promise(resolve => {
       const start = performance.now();
+      fingers.classList.add('is-on');
       const step = now => {
-        const t = Math.min(1, (now - start) / 460);
+        if (run !== demoRun) { fingers.classList.remove('is-on'); resolve(); return; }
+        const t = Math.min(1, (now - start) / 620);
         const progress = 1.25 * (1 - (1 - t) ** 3);
         travel = (up ? 1 : -1) * progress * ARM;
+        fingers.style.setProperty('--dy', ((up ? -1 : 1) * progress * 2.4).toFixed(3));
         show(action, progress);
-        if (t < 1) requestAnimationFrame(step);
-        else setTimeout(finish, 140);
+        if (t < 1) { requestAnimationFrame(step); return; }
+        setTimeout(() => {
+          fingers.classList.remove('is-on');
+          fingers.style.setProperty('--dy', '0');
+          finish();
+          setTimeout(resolve, 520);
+        }, 160);
       };
       requestAnimationFrame(step);
     });
+  }
+  const stopDemo = () => { demoRun += 1; };
+  bar.addEventListener('wheel', stopDemo, { passive: true });
+  for (const button of buttons) {
+    button.addEventListener('click', () => {
+      stopDemo();
+      playGesture(button.dataset.swipe === 'up');
+    });
+  }
+  // The first time the illustration is on screen, play the ladder once: roll up, unroll,
+  // fill, and back. Any scroll or click on it stops the demo and hands it to the reader.
+  if ('IntersectionObserver' in window && !reduceMotion.matches) {
+    const seen = new IntersectionObserver(async entries => {
+      if (!entries.some(entry => entry.isIntersecting)) return;
+      seen.disconnect();
+      const run = demoRun;
+      await new Promise(r => setTimeout(r, 500));
+      for (const up of [true, false, false, true]) {
+        if (run !== demoRun) return;
+        await playGesture(up);
+        await new Promise(r => setTimeout(r, 380));
+      }
+      if (run === demoRun) stateText.textContent = states.ready;
+    }, { threshold: .6 });
+    seen.observe(swipeDesk);
   }
   refreshButtons();
 }
@@ -403,6 +440,19 @@ if (glanceDesk && glanceStrip && glanceCard) {
     }
   });
   glanceStrip.addEventListener('blur', () => setGlance(false));
+  // Shown once when it first comes into view: the card drops down, stays a moment, rolls back.
+  if ('IntersectionObserver' in window && !reduceMotion.matches) {
+    const seen = new IntersectionObserver(entries => {
+      if (!entries.some(entry => entry.isIntersecting)) return;
+      seen.disconnect();
+      setTimeout(() => {
+        if (glanceDesk.classList.contains('is-open')) return;
+        setGlance(true);
+        closeTimer = setTimeout(() => { if (!glanceDesk.matches(':hover')) setGlance(false); }, 1800);
+      }, 600);
+    }, { threshold: .6 });
+    seen.observe(glanceDesk);
+  }
   glanceStrip.addEventListener('keydown', event => {
     if (event.key === 'Escape') setGlance(false);
   });
