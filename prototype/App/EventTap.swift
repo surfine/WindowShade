@@ -46,7 +46,8 @@ extension AppDelegate {
                 failed[id] = (name, status)
             }
         }
-        for shortcut in [GlobalShortcut.toggleShade, .arrangeOrFocus, .pinPreview, .carry] {
+        for shortcut in [GlobalShortcut.toggleShade, .arrangeOrFocus, .pinPreview, .carry,
+                         .stepSmaller, .stepLarger, .leftHalf, .rightHalf] {
             guard let hotKey = GlobalShortcutSettings.hotKey(for: shortcut) else { continue }
             register(hotKey, id: shortcut.hotKeyID,
                      name: WindowBrowserSettings.displayName(for: hotKey))
@@ -139,6 +140,15 @@ extension AppDelegate {
         }
         if id == GlobalShortcut.carry.hotKeyID {
             MainActor.assumeIsolated { carry.toggleCurrentWindow() }
+            return
+        }
+        // 排布这一组：和手势同向，往上变小、往下变大。
+        let steps: [UInt32: GestureDirection] = [
+            GlobalShortcut.stepSmaller.hotKeyID: .up, GlobalShortcut.stepLarger.hotKeyID: .down,
+            GlobalShortcut.leftHalf.hotKeyID: .left, GlobalShortcut.rightHalf.hotKeyID: .right,
+        ]
+        if let step = steps[id] {
+            MainActor.assumeIsolated { gestures.keyStep(step) }
             return
         }
         guard id >= 101, id <= 109 else { return }
