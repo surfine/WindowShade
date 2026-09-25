@@ -304,6 +304,10 @@ html[lang=zh-CN] .today .lead{max-width:34em}
 .stage-swipe.is-animating .swipe-win{transition:left .42s var(--ease-out),top .42s var(--ease-out),width .42s var(--ease-out),height .42s var(--ease-out)}
 .stage-swipe.is-animating .swipe-win .win-body{transition:clip-path .42s var(--ease-roll)}
 .stage-swipe.is-animating .swipe-win .cast{transition:bottom .42s var(--ease-roll)}
+/* Two fingertips on the title bar during a demo: they move the way the fingers would. */
+.swipe-fingers{position:absolute;left:50%;top:50%;display:flex;gap:1.5cqw;translate:-50% calc(-50% + var(--dy,0) * 1cqw);opacity:0;pointer-events:none;z-index:3;transition:opacity .16s}
+.swipe-fingers i{width:2.3cqw;height:2.3cqw;border-radius:50%;background:color-mix(in srgb,var(--accent) 38%,transparent);box-shadow:0 0 0 .25cqw color-mix(in srgb,#fff 70%,transparent),0 .4cqw 1cqw rgba(20,30,60,.25)}
+.swipe-fingers.is-on{opacity:1}
 .swipe-hud{opacity:0;transition:opacity .12s;pointer-events:none}
 .swipe-hud.is-visible{opacity:1}
 .swipe-hud .hud-track b{width:0}
