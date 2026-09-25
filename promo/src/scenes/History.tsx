@@ -2,7 +2,7 @@ import React from "react";
 import { AbsoluteFill, staticFile, useCurrentFrame } from "remotion";
 import { HISTORY } from "../timeline";
 import { C, FONT, MONO, easeInOut, easeOut, mix, tw } from "../theme";
-import { Caption, Canvas, Lamps } from "../ui";
+import { Caption, Canvas, Lamps, useVertical } from "../ui";
 
 // Thirty years of the same bar. Each era's title bar lands on a beat; 2001 is the gap.
 
@@ -11,12 +11,38 @@ const BAR_W = 820;
 const BAR_H = 64;
 const X = 600;
 const ROW_Y = [330, 450, 570, 690];
+// 9:16: year above the bar, note below it, one era per block.
+const ROW_Y_V = [500, 800, 1100, 1400];
+const XV = (1080 - BAR_W) / 2;
 
 const Classic: React.FC = () => (
-  <div style={{ width: BAR_W, height: BAR_H, background: "#fff", border: "3px solid #000", position: "relative", display: "flex", alignItems: "center" }}>
+  <div
+    style={{ width: BAR_W, height: BAR_H, background: "#fff", border: "3px solid #000", position: "relative", display: "flex", alignItems: "center" }}
+  >
     <div style={{ position: "absolute", inset: "10px 8px", background: "repeating-linear-gradient(#000 0 3px, transparent 3px 7px)" }} />
-    <div style={{ position: "absolute", left: 28, top: 16, width: 26, height: 26, background: "#fff", border: "3px solid #000", outline: "6px solid #fff" }} />
-    <div style={{ position: "relative", margin: "0 auto", padding: "0 18px", background: "#fff", fontFamily: "EraChicago, Chicago, sans-serif", fontSize: 30, color: "#000" }}>
+    <div
+      style={{
+        position: "absolute",
+        left: 28,
+        top: 16,
+        width: 26,
+        height: 26,
+        background: "#fff",
+        border: "3px solid #000",
+        outline: "6px solid #fff",
+      }}
+    />
+    <div
+      style={{
+        position: "relative",
+        margin: "0 auto",
+        padding: "0 18px",
+        background: "#fff",
+        fontFamily: "EraChicago, Chicago, sans-serif",
+        fontSize: 30,
+        color: "#000",
+      }}
+    >
       WindowShade
     </div>
   </div>
@@ -51,7 +77,17 @@ const Platinum: React.FC = () => (
         {i === 2 ? <div style={{ position: "absolute", left: 5, right: 5, top: 12, height: 4, background: "#555" }} /> : null}
       </div>
     ))}
-    <div style={{ position: "relative", margin: "0 auto", padding: "0 18px", background: "#dcdcdc", fontFamily: "EraChicago, Charcoal, sans-serif", fontSize: 28, color: "#111" }}>
+    <div
+      style={{
+        position: "relative",
+        margin: "0 auto",
+        padding: "0 18px",
+        background: "#dcdcdc",
+        fontFamily: "EraChicago, Charcoal, sans-serif",
+        fontSize: 28,
+        color: "#111",
+      }}
+    >
       WindowShade
     </div>
   </div>
@@ -85,7 +121,17 @@ const Aqua: React.FC = () => (
         />
       ))}
     </div>
-    <div style={{ position: "absolute", left: 0, right: 0, textAlign: "center", fontFamily: '"Lucida Grande", "Helvetica Neue", sans-serif', fontSize: 27, color: "#222" }}>
+    <div
+      style={{
+        position: "absolute",
+        left: 0,
+        right: 0,
+        textAlign: "center",
+        fontFamily: '"Lucida Grande", "Helvetica Neue", sans-serif',
+        fontSize: 27,
+        color: "#222",
+      }}
+    >
       Untitled
     </div>
   </div>
@@ -121,6 +167,7 @@ const ROWS = [
 
 export const History: React.FC = () => {
   const frame = useCurrentFrame();
+  const v = useVertical();
   const focus = tw(frame, HISTORY.focus, HISTORY.focus + 70, 0, 1, easeInOut);
   return (
     <Canvas dark>
@@ -129,7 +176,7 @@ export const History: React.FC = () => {
       <AbsoluteFill
         style={{
           scale: String(mix(1, 1.18, focus)),
-          transformOrigin: `${X + BAR_W / 2}px ${ROW_Y[3] + BAR_H / 2}px`,
+          transformOrigin: v ? `540px ${ROW_Y_V[3] + 70 + BAR_H / 2}px` : `${X + BAR_W / 2}px ${ROW_Y[3] + BAR_H / 2}px`,
           translate: `0 ${mix(0, -60, focus)}px`,
         }}
       >
@@ -145,21 +192,31 @@ export const History: React.FC = () => {
                 position: "absolute",
                 left: 0,
                 right: 0,
-                top: ROW_Y[i],
+                top: v ? ROW_Y_V[i] : ROW_Y[i],
                 height: BAR_H,
                 opacity: p * dim * (gone ? mix(1, 0.55, tw(frame, at + 24, at + 40)) : 1),
                 translate: `${(1 - p) * -80}px 0`,
                 filter: `blur(${(1 - p) * 8}px)`,
               }}
             >
-              <div style={{ position: "absolute", left: 300, width: 250, top: 6, fontFamily: MONO, fontSize: 50, fontWeight: 600, color: i === 3 ? "#7ea4ff" : "#f4f5f7", textAlign: "right" }}>
+              <div
+                style={{
+                  position: "absolute",
+                  left: v ? XV : 300,
+                  width: 250,
+                  top: v ? 0 : 6,
+                  fontFamily: MONO,
+                  fontSize: 50,
+                  fontWeight: 600,
+                  color: i === 3 ? "#7ea4ff" : "#f4f5f7",
+                  textAlign: v ? "left" : "right",
+                }}
+              >
                 {r.year}
               </div>
-              <div style={{ position: "absolute", left: X, top: 0 }}>{r.bar}</div>
-              <div style={{ position: "absolute", left: X + BAR_W + 40, top: -2, fontFamily: FONT, whiteSpace: "nowrap" }}>
-                <div style={{ fontSize: 32, fontWeight: 600, color: i === 3 ? "#7ea4ff" : "#f4f5f7" }}>
-                  {r.zh}
-                </div>
+              <div style={{ position: "absolute", left: v ? XV : X, top: v ? 70 : 0 }}>{r.bar}</div>
+              <div style={{ position: "absolute", left: v ? XV : X + BAR_W + 40, top: v ? 150 : -2, fontFamily: FONT, whiteSpace: "nowrap" }}>
+                <div style={{ fontSize: 32, fontWeight: 600, color: i === 3 ? "#7ea4ff" : "#f4f5f7" }}>{r.zh}</div>
                 <div style={{ fontSize: 22, color: "#8b9099", marginTop: 4 }}>{r.en}</div>
               </div>
             </div>

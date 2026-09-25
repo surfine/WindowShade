@@ -1,5 +1,5 @@
 import React from "react";
-import { Composition, Folder, Series, getStaticFiles, staticFile } from "remotion";
+import { Composition, Folder, Series, Still, getStaticFiles, staticFile } from "remotion";
 import { Audio } from "@remotion/media";
 import { FPS, HEIGHT, SCENES, SceneId, TOTAL, WIDTH, sceneFrames } from "./timeline";
 import { Opener } from "./scenes/Opener";
@@ -10,6 +10,7 @@ import { Glance } from "./scenes/Glance";
 import { Gestures } from "./scenes/Gestures";
 import { More } from "./scenes/More";
 import { End } from "./scenes/End";
+import { CoverTall, CoverWide } from "./Covers";
 
 const COMPONENTS: Record<SceneId, React.FC> = { Opener, Ways, DoubleClick, History, Glance, Gestures, More, End };
 
@@ -34,6 +35,12 @@ export const Promo: React.FC = () => (
 export const RemotionRoot: React.FC = () => (
   <>
     <Composition id="Promo" component={Promo} durationInFrames={TOTAL} fps={FPS} width={WIDTH} height={HEIGHT} />
+    <Composition id="PromoVertical" component={Promo} durationInFrames={TOTAL} fps={FPS} width={HEIGHT} height={WIDTH} />
+    <Folder name="Covers">
+      <Still id="CoverBilibili" component={CoverWide} width={1920} height={1080} />
+      <Still id="CoverYouTube" component={CoverWide} width={1920} height={1080} defaultProps={{ en: true }} />
+      <Still id="CoverXiaohongshu" component={CoverTall} width={1080} height={1440} />
+    </Folder>
     <Folder name="Scenes">
       {SCENES.map((s) => (
         <Composition key={s.id} id={s.id} component={COMPONENTS[s.id]} durationInFrames={sceneFrames(s.id)} fps={FPS} width={WIDTH} height={HEIGHT} />

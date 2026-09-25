@@ -9,14 +9,14 @@ export const WIDTH = 1920;
 export const HEIGHT = 1080;
 
 export const SCENES = [
-  { id: "Opener", bars: 4 },
-  { id: "Ways", bars: 4 },
-  { id: "DoubleClick", bars: 3 },
-  { id: "History", bars: 3 },
-  { id: "Glance", bars: 3 },
-  { id: "Gestures", bars: 8 },
-  { id: "More", bars: 3 },
-  { id: "End", bars: 3 },
+  { id: "Opener", bars: 3 },
+  { id: "Ways", bars: 3 },
+  { id: "DoubleClick", bars: 2 },
+  { id: "History", bars: 2 },
+  { id: "Glance", bars: 2 },
+  { id: "Gestures", bars: 6 },
+  { id: "More", bars: 2 },
+  { id: "End", bars: 2 },
 ] as const;
 
 export type SceneId = (typeof SCENES)[number]["id"];
@@ -39,67 +39,67 @@ export const typedFrames = (t: Typed) => [...t.text].length * (t.rate ?? 4);
 // ---- Scene cues (local frames) ----
 
 export const OPENER = {
-  lineA: { at: 12, text: "窗口一多，", rate: 5 } as Typed,
-  pile: [60, 75, 90, 100, 110, 118, 126, 134, 142],
-  lineB: { at: 150, text: "桌面就满了。", rate: 5 } as Typed,
-  black: 240,
-  lineC: { at: 256, text: "先别急着关。", rate: 6 } as Typed,
-  morph: 420, // caret becomes a bar, the bar opens into the next scene
+  lineA: { at: 8, text: "窗口一多，", rate: 4 } as Typed,
+  pile: [36, 46, 56, 64, 72, 78, 84, 90, 96],
+  lineB: { at: 104, text: "桌面就满了。", rate: 4 } as Typed,
+  black: 180,
+  lineC: { at: 190, text: "先别急着关。", rate: 5 } as Typed,
+  morph: 300, // caret becomes a bar, the bar opens into the next scene
 };
 
 export const WAYS = {
-  cards: [8, 16, 24],
-  close: 90,
-  minimize: 180,
-  shade: 270,
-  focus: 360,
+  cards: [6, 12, 18],
+  close: 54,
+  minimize: 120,
+  shade: 186,
+  focus: 260,
 };
 
 export const DOUBLE = {
-  clicks: [60, 70],
-  roll: 74,
-  swap: 180,
-  clicksBack: [186, 196],
-  unroll: 200,
+  clicks: [44, 52],
+  roll: 56,
+  swap: 130,
+  clicksBack: [134, 142],
+  unroll: 146,
 };
 
 export const HISTORY = {
-  rows: [60, 90, 120, 150],
-  focus: 240,
+  rows: [36, 56, 76, 96],
+  focus: 150,
 };
 
 export const GLANCE = {
-  arrive: 60,
-  open: 73, // the card appears 0.22 s after the pointer stops
-  second: 200,
-  leave: 285,
+  arrive: 44,
+  open: 57, // the card appears 0.22 s after the pointer stops
+  second: 130,
+  leave: 190,
 };
 
 // Gestures: one bar of black title, then the desk.
 export const GESTURES = {
-  line: { at: 10, text: "在标题栏上，用两根手指。", rate: 4 } as Typed,
+  line: { at: 8, text: "在标题栏上，用两根手指。", rate: 3 } as Typed,
   desk: 120,
   // [fingers down, release]; progress runs between them
-  shade: { down: 150, release: 222 },
-  expand: { down: 270, release: 330 },
-  fill: { down: 380, release: 440 },
-  left: { down: 520, release: 575 },
-  right: { down: 620, release: 675 },
-  cancel: { down: 740, peak: 790, back: 830 },
-  wheel: { swap: 855, notches: [880, 895, 910], commit: 920 },
+  shade: { down: 150, release: 206 },
+  expand: { down: 244, release: 292 },
+  fill: { down: 322, release: 370 },
+  left: { down: 410, release: 452 },
+  right: { down: 474, release: 516 },
+  cancel: { down: 546, peak: 580, back: 610 },
+  wheel: { swap: 628, notches: [646, 658, 670], commit: 680 },
 };
 
 export const MORE = {
-  cards: [30, 60, 90],
-  keys: [130, 190, 250],
+  cards: [12, 24, 36],
+  keys: [70, 120, 170],
 };
 
 export const END = {
-  icon: 6,
-  word: 40,
-  tagline: 90,
-  cta: 150,
-  facts: 180,
+  icon: 4,
+  word: 30,
+  tagline: 60,
+  cta: 100,
+  facts: 120,
 };
 
 // ---- Sound effects (global frames) ----
@@ -117,8 +117,7 @@ const typedClicks = (scene: SceneId, t: Typed, gain = 0.28): Sfx[] =>
 export const sfx = (): Sfx[] => {
   const s = (id: SceneId) => sceneStart(id);
   const list: Sfx[] = [];
-  const add = (scene: SceneId, at: number, kind: string, gain = 1, pitch = 1) =>
-    list.push({ at: s(scene) + at, kind, gain, pitch });
+  const add = (scene: SceneId, at: number, kind: string, gain = 1, pitch = 1) => list.push({ at: s(scene) + at, kind, gain, pitch });
 
   list.push(...typedClicks("Opener", OPENER.lineA));
   OPENER.pile.forEach((f, i) => add("Opener", f, "pop", 0.5 + i * 0.04, 1 + i * 0.05));

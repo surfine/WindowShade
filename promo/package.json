@@ -28,7 +28,7 @@
     "lint": "eslint src && tsc",
     "audio": "node scripts/audio.ts",
     "stills": "node scripts/stills.mjs",
-    "render": "npm run audio && remotion render Promo out/windowshade-promo.mp4 --codec h264 --crf 16 --audio-codec aac --audio-bitrate 256k"
+    "render": "npm run audio && node scripts/render.mjs out/windowshade-promo-4k.mp4 2 Promo && node scripts/render.mjs out/windowshade-promo-vertical.mp4 1 PromoVertical"
   },
   "sideEffects": [
     "*.css"

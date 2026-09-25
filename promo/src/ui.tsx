@@ -1,5 +1,5 @@
 import React from "react";
-import { AbsoluteFill, interpolate, useCurrentFrame } from "remotion";
+import { AbsoluteFill, interpolate, useCurrentFrame, useVideoConfig } from "remotion";
 import { C, FONT, MONO, easeOut, pop, tw } from "./theme";
 import { Typed } from "./timeline";
 
@@ -80,6 +80,7 @@ export const MacWindow: React.FC<WinProps> = ({
         height: bar + shown,
         borderRadius: `${radius}px ${radius}px ${roll > 0.93 ? barRound : radius}px ${roll > 0.93 ? barRound : radius}px`,
         overflow: "hidden",
+        isolation: "isolate", // its bar's z-index stays inside this window
         opacity,
         boxShadow: active
           ? `0 0 0 ${0.6}px rgba(0,0,0,.28), 0 ${10 * k}px ${34 * k}px rgba(22,28,45,.26), 0 ${2 * k}px ${6 * k}px rgba(22,28,45,.08)`
@@ -105,9 +106,7 @@ export const MacWindow: React.FC<WinProps> = ({
         }}
       >
         <Lamps k={k} gray={lamps ? lamps === "gray" : !active} />
-        <div style={{ position: "absolute", left: 0, right: 0, textAlign: "center", pointerEvents: "none", whiteSpace: "nowrap" }}>
-          {title}
-        </div>
+        <div style={{ position: "absolute", left: 0, right: 0, textAlign: "center", pointerEvents: "none", whiteSpace: "nowrap" }}>{title}</div>
       </div>
       <div style={{ position: "relative", height: bodyH, overflow: "hidden" }}>
         {children}
@@ -119,8 +118,7 @@ export const MacWindow: React.FC<WinProps> = ({
               right: 0,
               top: shown - 16 * k,
               height: 16 * k,
-              background:
-                "linear-gradient(to bottom, rgba(0,0,0,0), rgba(0,0,0,.07) 35%, rgba(255,255,255,.85) 62%, rgba(0,0,0,.14) 100%)",
+              background: "linear-gradient(to bottom, rgba(0,0,0,0), rgba(0,0,0,.07) 35%, rgba(255,255,255,.85) 62%, rgba(0,0,0,.14) 100%)",
             }}
           />
         ) : null}
@@ -169,7 +167,13 @@ export const Cursor: React.FC<{ x: number; y: number; size?: number; opacity?: n
       zIndex: 50,
     }}
   >
-    <path d="M1.5 1.5 L1.5 22.5 L6.6 17.7 L10.2 26 L13.6 24.5 L10.1 16.5 L17.2 16.5 Z" fill="#000" stroke="#fff" strokeWidth="1.6" strokeLinejoin="round" />
+    <path
+      d="M1.5 1.5 L1.5 22.5 L6.6 17.7 L10.2 26 L13.6 24.5 L10.1 16.5 L17.2 16.5 Z"
+      fill="#000"
+      stroke="#fff"
+      strokeWidth="1.6"
+      strokeLinejoin="round"
+    />
   </svg>
 );
 
@@ -203,8 +207,7 @@ export const Clicks: React.FC<{ x: number; y: number; at: number[] }> = ({ x, y,
 };
 
 /** Pointer press amount for a click at frame f. */
-export const pressAt = (frame: number, clicks: number[]) =>
-  Math.max(0, ...clicks.map((f) => (frame >= f - 2 && frame < f + 5 ? 1 : 0)));
+export const pressAt = (frame: number, clicks: number[]) => Math.max(0, ...clicks.map((f) => (frame >= f - 2 && frame < f + 5 ? 1 : 0)));
 
 // ---------------------------------------------------------------------------
 // Liquid Glass: thick, bright-rimmed, blurring and lifting what's behind it.
@@ -298,7 +301,9 @@ export const Hud: React.FC<{
       }}
     >
       <div style={{ position: "relative", padding: `${10 * k}px ${16 * k}px 0`, display: "grid", gap: 7 * k }}>
-        <div style={{ fontFamily: FONT, fontSize: 13 * k, fontWeight: 600, color: "rgba(255,255,255,.96)", textShadow: "0 1px 2px rgba(0,0,0,.18)" }}>{title}</div>
+        <div style={{ fontFamily: FONT, fontSize: 13 * k, fontWeight: 600, color: "rgba(255,255,255,.96)", textShadow: "0 1px 2px rgba(0,0,0,.18)" }}>
+          {title}
+        </div>
         <div style={{ display: "flex", alignItems: "center", gap: 8 * k }}>
           {glyph(false)}
           <div style={{ flex: 1, height: 4 * k, borderRadius: 99, background: "rgba(0,0,0,.2)", overflow: "hidden" }}>
@@ -490,6 +495,12 @@ export const Rise: React.FC<{
 };
 
 /** Headline with an English line under it. Centered at the top of the frame. */
+/** True in the 9:16 cut. Scenes pick their positions from this. */
+export const useVertical = () => {
+  const { width, height } = useVideoConfig();
+  return height > width;
+};
+
 export const Caption: React.FC<{
   zh: string;
   en: string;
@@ -498,27 +509,46 @@ export const Caption: React.FC<{
   top?: number;
   dark?: boolean;
   size?: number;
-}> = ({ zh, en, at, out, top = 88, dark, size = 76 }) => (
-  <div style={{ position: "absolute", left: 0, right: 0, top, textAlign: "center", zIndex: 60 }}>
-    <Rise at={at} out={out}>
-      <div
-        style={{
-          fontFamily: FONT,
-          fontSize: size,
-          fontWeight: 650,
-          letterSpacing: "-0.01em",
-          color: dark ? "#f4f5f7" : C.ink,
-          lineHeight: 1.15,
-        }}
-      >
-        {zh}
-      </div>
-    </Rise>
-    <Rise at={at + 6} out={out}>
-      <div style={{ fontFamily: FONT, fontSize: 34, fontWeight: 500, color: dark ? "#9ea3ad" : C.muted, marginTop: 12 }}>{en}</div>
-    </Rise>
-  </div>
-);
+}> = ({ zh, en, at, out, top, dark, size = 76 }) => {
+  const v = useVertical();
+  return (
+    <div
+      style={{
+        position: "absolute",
+        left: v ? 60 : 0,
+        right: v ? 60 : 0,
+        top: top ?? (v ? 190 : 88),
+        textAlign: "center",
+        zIndex: 60,
+      }}
+    >
+      <Rise at={at} out={out}>
+        <div
+          style={{
+            fontFamily: FONT,
+            fontSize: v ? Math.min(size, 72) : size,
+            fontWeight: 650,
+            letterSpacing: "-0.01em",
+            color: dark ? "#f4f5f7" : C.ink,
+            lineHeight: 1.2,
+            textWrap: "balance",
+            whiteSpace: "pre-line",
+          }}
+        >
+          {/* "\n" marks where the tall cut breaks the line; the wide cut keeps one line */}
+          {v ? zh : zh.replace(/\n/g, "")}
+        </div>
+      </Rise>
+      <Rise at={at + 6} out={out}>
+        <div
+          style={{ fontFamily: FONT, fontSize: v ? 32 : 34, fontWeight: 500, color: dark ? "#9ea3ad" : C.muted, marginTop: 12, textWrap: "balance" }}
+        >
+          {en}
+        </div>
+      </Rise>
+    </div>
+  );
+};
 
 export const Canvas: React.FC<{ children?: React.ReactNode; dark?: boolean }> = ({ children, dark }) => (
   <AbsoluteFill

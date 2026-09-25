@@ -1,6 +1,6 @@
 // Render the film in chunks (so temporary frames never need more than ~150 MB of disk),
 // join the chunks without re-encoding, then lay the soundtrack under them.
-//   node scripts/render.mjs [out.mp4] [scale]
+//   node scripts/render.mjs [out.mp4] [scale] [composition]
 import { bundle } from "@remotion/bundler";
 import { renderMedia, selectComposition } from "@remotion/renderer";
 import { execFileSync } from "node:child_process";
@@ -9,12 +9,13 @@ import path from "node:path";
 
 const out = path.resolve(process.argv[2] ?? "out/windowshade-promo.mp4");
 const scale = Number(process.argv[3] ?? 1);
+const id = process.argv[4] ?? "Promo";
 const CHUNK = 480;
-const work = path.join(path.dirname(out), ".chunks");
+const work = path.join(path.dirname(out), `.chunks-${id}`);
 fs.mkdirSync(work, { recursive: true });
 
 const serveUrl = await bundle({ entryPoint: path.resolve("src/index.ts") });
-const composition = await selectComposition({ serveUrl, id: "Promo" });
+const composition = await selectComposition({ serveUrl, id });
 const parts = [];
 for (let from = 0; from < composition.durationInFrames; from += CHUNK) {
   const to = Math.min(composition.durationInFrames, from + CHUNK) - 1;
