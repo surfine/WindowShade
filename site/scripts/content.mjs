@@ -29,7 +29,7 @@ export const copy = {
     intro: '双击标题栏，窗口收成一条卷帘条，停在原处。<br>再双击，它原样回来。',
     try: '先看看怎么用',
     video: '看介绍视频',
-    facts: ['macOS 14 及以上', 'Apple Silicon', '免费 · MIT 开源', '1.0.15 · ZIP 4.02 MB'],
+    facts: ['macOS 14 及以上', 'Apple Silicon', '免费 · MIT 开源', '1.0.15 · ZIP 4.06 MB'],
 
     stageLabel: '网页示意：一张 Mac 桌面，上面有两扇窗口',
     stageMenu: ['文本编辑', '文件', '编辑', '格式', '显示', '窗口'],
@@ -85,10 +85,10 @@ export const copy = {
     swipeIntro: '把指针放在标题栏上，用两根手指滑。窗口跟着手指走：往上推，它收成一条卷帘条；往下拉，它铺满菜单栏和 Dock 之间的屏幕。松手才算数，滑到一半往回拉，就当没发生过。',
     swipePoints: [
       ['先看，再松手', '滑动时，窗口旁边会出现一块和系统音量提示同样样式的小浮窗，写着松手会做什么。进度条走满，松手才会执行。'],
-      ['左右和张合', '往左滑占左半边，往右滑占右半边。两指张开也是铺满，捏合放回原来的大小；轻点两下，在铺满和原来之间切换。'],
+      ['左右、拐角和张合', '往左滑占左半边，接着往左滑，变成三分之二、三分之一；滑到位再往下拐，窗口占左下角。两指张开也是铺满，捏合撤销上次排布；轻点两下，在铺满和原来之间切换。'],
       ['不抢别的操作', '指针在网页、列表这些能滚动的地方，照常滚动。Safari 标签上的左右滑，照样切换标签。'],
     ],
-    swipeHow: '普通鼠标也能用：在标题栏上滚三格算一次。换显示器以后，用手势铺满或占半屏的窗口，会照原样排到新屏幕上。',
+    swipeHow: '拖着标题栏甩一下也行：往哪边甩就排到哪边，往上收起，往下铺满，斜着甩占一角。键盘上是 ⌃⌘ 加方向键；普通鼠标在标题栏上滚三格算一次。换显示器以后，排过的窗口会照原样排到新屏幕上。',
     swipeLabel: '网页示意：一扇窗口，可以在它的标题栏上滑动',
     swipeWindow: '会议记录',
     swipeWindowKicker: '周四 · 产品例会',
@@ -147,13 +147,14 @@ export const copy = {
     lidPlay: '演示一次',
     lidCaption: '网页示意，按应用里三种质感的参数画的。真实效果需要带铰链传感器的 Apple Silicon MacBook。',
 
-    shortcutTitle: '五个快捷键，够用了。',
+    shortcutTitle: '六组快捷键，够用了。',
     shortcuts: [
       ['⌃ ⌘ C', '收起或展开当前窗口'],
       ['⌃ ⌘ P', '置顶或取消置顶当前窗口'],
       ['⌃ ⌘ G', '把当前窗口带到每张桌面，再按一次放下'],
       ['⌃ ⌘ 1…9', '按菜单里的顺序展开收起的窗口'],
       ['⌃ ⌘ 0', '排好卷帘条，或进入专注布局'],
+      ['⌃ ⌘ ←→↑↓', '左右排布，变小一级，变大一级'],
     ],
 
     trustTitle: '你的窗口，<br>只留在你的 Mac 上。',
@@ -191,7 +192,7 @@ export const copy = {
     intro: 'Double-click a title bar and the window rolls up into a thin bar, right where it was. Double-click again and it’s back.',
     try: 'See how it works',
     video: 'Watch the intro (in Chinese)',
-    facts: ['macOS 14 or later', 'Apple Silicon', 'Free · MIT licensed', '1.0.15 · ZIP 4.02 MB'],
+    facts: ['macOS 14 or later', 'Apple Silicon', 'Free · MIT licensed', '1.0.15 · ZIP 4.06 MB'],
 
     stageLabel: 'Browser illustration: a Mac desktop with two windows',
     stageMenu: ['TextEdit', 'File', 'Edit', 'Format', 'View', 'Window'],
@@ -247,10 +248,10 @@ export const copy = {
     swipeIntro: 'Put the pointer on a title bar and swipe with two fingers. The window follows your fingers: push up and it rolls up like a shade; pull down and it fills the screen between the menu bar and the Dock. Nothing happens until you let go, so pulling back halfway undoes it.',
     swipePoints: [
       ['See it before you let go', 'While you swipe, a small panel styled like the system volume indicator says what letting go will do. Only a full track acts.'],
-      ['Sideways, spread and pinch', 'Swipe left or right for half the screen. Spreading two fingers also fills it, pinching puts it back, and a double-tap toggles between the two.'],
+      ['Sideways, corners, spread and pinch', 'Swipe left for the left half; keep swiping left for two thirds, then one third. Turn down at the end and the window takes the bottom-left corner. Spreading two fingers also fills the screen, pinching undoes the last placement, and a double-tap toggles between filled and the original size.'],
       ['It stays out of the way', 'Over a web page or a list, scrolling still scrolls. Swiping sideways on a Safari tab still switches tabs.'],
     ],
-    swipeHow: 'An ordinary mouse works too: three notches of the wheel on a title bar count as one swipe. After you switch displays, windows you filled or halved this way are laid out the same way on the new screen.',
+    swipeHow: 'You can also flick the title bar: drag it, throw it and let go, and the window goes where you threw it. Up rolls it up, down fills the screen, a diagonal takes a corner. On the keyboard it’s ⌃⌘ plus an arrow; with an ordinary mouse, three notches of the wheel on a title bar count as one swipe. After you switch displays, placed windows are laid out the same way on the new screen.',
     swipeLabel: 'Web illustration: a window whose title bar you can swipe',
     swipeWindow: 'Meeting notes',
     swipeWindowKicker: 'Thursday · Product review',
@@ -309,13 +310,14 @@ export const copy = {
     lidPlay: 'Play once',
     lidCaption: 'A browser illustration, drawn with the app’s settings for its three styles. The real effect needs an Apple Silicon MacBook with a hinge sensor.',
 
-    shortcutTitle: 'Five shortcuts. That’s all.',
+    shortcutTitle: 'Six sets of shortcuts. That’s all.',
     shortcuts: [
       ['⌃ ⌘ C', 'Roll up or unroll the current window'],
       ['⌃ ⌘ P', 'Pin or unpin the current window'],
       ['⌃ ⌘ G', 'Carry the current window to every desktop; press again to put it down'],
       ['⌃ ⌘ 1…9', 'Unroll a rolled-up window, in menu order'],
       ['⌃ ⌘ 0', 'Line up the bars, or switch to a focus layout'],
+      ['⌃ ⌘ ←→↑↓', 'To the sides, one size down, one size up'],
     ],
 
     trustTitle: 'Your windows<br>stay on your Mac.',
