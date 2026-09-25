@@ -57,11 +57,13 @@ Today’s WindowShade is an independent Swift / AppKit app: the old name and the
 
 Roll up, and a window stays where it was. Glance, and you see it without unrolling. Carry it to every desktop, and you can see it from anywhere. Pin, and it stays in front. Browse, and you find it from the Dock. They all answer one question: where is the window you need, without a round trip to get it?
 
-**Roll up.** Double-click a title bar or press `⌃⌘C` and the window rolls up into a thin bar; double-click the bar to unroll it. The bar can keep the window’s own look, or use one consistent title bar.
+**Roll up.** Double-click a title bar or press `⌃⌘C` and the window rolls up into a thin bar; double-click the bar to unroll it. The bar can keep the window’s own look, or use one consistent title bar. While a bar is in front, `⌘W`, `⌘M`, `⌘H`, `⌘Q` and `⌘N` go to the window and app behind it; `⌘Q` puts the window back down first, so any “save changes?” question is where you can see it.
 
-**Swipe the title bar.** Put the pointer on a title bar and swipe with two fingers. The window follows your fingers: push up and it rolls up like a shade; pull down and it fills the screen between the menu bar and the Dock, and pushing up again puts it back. Nothing happens until you let go, so pulling back halfway undoes it. While you swipe, a small panel styled like the system volume indicator says what letting go will do. Swipe sideways for half the screen; spreading two fingers also fills it, pinching puts it back, and a double-tap toggles between the two. With an ordinary mouse, three notches of the wheel on a title bar count as one swipe; Magic Mouse support is still being checked on real hardware. After you switch displays, windows you filled or halved this way are laid out the same way on the new screen. Web pages and lists still scroll, sideways swipes on a Safari tab still switch tabs, and while Swish is running the title bar is left to it. Details are in the [gesture notes](docs/gestures.md).
+**Swipe the title bar.** Put the pointer on a title bar and swipe with two fingers. The window follows your fingers: push up and it rolls up like a shade; pull down and it fills the screen between the menu bar and the Dock, and pushing up again puts it back. Nothing happens until you let go, so pulling back halfway undoes it. While you swipe, a small panel styled like the system volume indicator says what letting go will do. Swipe sideways for half the screen; keep swiping the same way for two thirds, then one third, and if there’s another display on that side, once more moves the window there. Once a sideways swipe is complete, turn down or up and the window takes that corner. Spreading two fingers also fills the screen, pinching undoes the last placement, and a double-tap toggles between filled and the original size. With an ordinary mouse, three notches of the wheel on a title bar count as one swipe; Magic Mouse support is still being checked on real hardware.
 
-**Glance.** Rest the pointer on the bar and a card drops down beneath it, showing the window's content at its own size; move away and it rolls back up. Click the card to unroll the window for real. The bar stays put and the card hangs just below it, so it reads as a preview, not the window itself. A glance never switches the app you’re in and never moves a window. A window that was minimized when it rolled up can’t be shown live, so you see how it looked then, and the corner says so. Details are in the [glance notes](docs/glance.md).
+**Flick the title bar.** Drag a title bar, throw it and let go, and the window goes where you threw it: up rolls it up, down fills the screen, left and right walk the same steps, and a diagonal takes a corner. A slow drag, or letting go at the edge of the screen, is still the system’s own dragging and tiling. The keyboard follows the same steps: `⌃⌘←` and `⌃⌘→` for the sides, `⌃⌘↓` one size up, `⌃⌘↑` one size down; press `⌃⌘←` then `⌃⌘↓` right away for the bottom-left corner. After you switch displays, windows you placed with a gesture, a shortcut or the window browser are laid out the same way on the new screen. Web pages and lists still scroll, sideways swipes on a Safari tab still switch tabs, and while Swish is running the title bar is left to it. Details are in the [gesture notes](docs/gestures.md).
+
+**Glance.** Rest the pointer on the bar and a card drops down beneath it, showing the window's content at its own size; move away and it rolls back up. Click the card to unroll the window for real; on a Force Touch trackpad, pressing firmly on the bar also glances, and letting go puts it away. The bar stays put and the card hangs just below it, so it reads as a preview, not the window itself. A glance never switches the app you’re in and never moves a window. A window that was minimized when it rolled up can’t be shown live, so you see how it looked then, and the corner says so. Details are in the [glance notes](docs/glance.md).
 
 **Carry to every desktop.** If you keep one app per desktop, press `⌃⌘G` to carry the current window to every desktop: it stays where it is, and its bar appears in the top-right corner of your other desktops. Rest on the bar for a live picture; if the window is hidden or minimized, a labelled snapshot appears instead. Click the picture to go to it. Press `⌃⌘G` again, or click the bar’s ×, to put it down.
 
@@ -81,7 +83,7 @@ You can also open it from Choose window… in the menu bar, or with a hot key yo
 
 On an Apple Silicon MacBook with a hinge sensor, the screen closes but the desktop seems to stay where it was, like a page behind glass, growing darker and blurrier toward the top. Open the lid and it’s back. There are three styles: gentle, standard and frosted. It’s only an extra: rolling up and pinning work without it.
 
-## Five shortcuts. That’s all.
+## Six sets of shortcuts. That’s all.
 
 | Shortcut | What it does |
 | --- | --- |
@@ -90,6 +92,7 @@ On an Apple Silicon MacBook with a hinge sensor, the screen closes but the deskt
 | `⌃⌘G` | Carry the current window to every desktop; press again to put it down |
 | `⌃⌘1…9` | Unroll a rolled-up window, in menu order |
 | `⌃⌘0` | Line up the bars, or switch to a focus layout |
+| `⌃⌘←` `⌃⌘→` `⌃⌘↑` `⌃⌘↓` | Place the current window: to the sides, one size down, one size up |
 
 Double-click a title bar to roll up; double-click the bar to unroll. Every shortcut can be changed or turned off in Settings, and if another app already uses a combination, WindowShade tells you once.
 
@@ -97,7 +100,7 @@ Double-click a title bar to roll up; double-click the bar to unroll. Every short
 
 Get the latest ZIP from [Releases](https://github.com/surfine/WindowShade/releases/latest), unzip it, drag `WindowShade.app` into Applications and open it, then follow the permission prompts. It lives in the menu bar and stays out of your Dock.
 
-- **1.0.15 download:** 4.02 MB ZIP; the extracted app contains 7.82 MB of files (decimal MB; filesystem allocation may differ).
+- **1.0.15 download:** 4.06 MB ZIP; the extracted app contains 7.98 MB of files (decimal MB; filesystem allocation may differ).
 - **Needs macOS 14 or later and Apple Silicon.** There’s no Intel build.
 - **Not notarized yet.** If macOS blocks the first launch, go to System Settings → Privacy & Security and choose Open Anyway. You don’t need to turn off any system security.
 - Every release comes with a SHA-256 checksum. For what changed in each version, see the [release notes](https://github.com/surfine/WindowShade/releases).
