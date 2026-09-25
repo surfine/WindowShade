@@ -1,25 +1,24 @@
 {
   "origin": "https://windowshade.pages.dev",
-  "deployment": "https://dbb05a22.windowshade.pages.dev",
+  "deployment": "https://a271061c.windowshade.pages.dev",
   "project": "windowshade",
   "branch": "main",
-  "sourceCommit": "fc23ceca61dc846c113bb5430fef28a4c9956aa9",
   "files": {
     "404.html": "be421d22ed7d99001d267e3a889972874704a6a9616e302e5f3022704b78380e",
     "_headers": "d5401edd1ba01c41c7b87ae3f67a0dabdeb52456e94d120733cdae4e5acd149a",
     "_redirects": "10738b7bf0dda342fb556e9d4a5c66e9f3ffaebc75e19aa0982ab168b72695ec",
-    "app.js": "43ceeca05d42c5a6d57d538fc812eba44539e6043fe9b66aa0c5e3f6f7069541",
-    "en/history/index.html": "b76093987de3530ebbe1164cf143db1d98beb70a892ea3a745fefcf0f8ebe2e8",
-    "en/index.html": "976bbcb105ee7665d2dd1a595463d98c716e243424c886a1860fcff9596dc3d3",
+    "app.js": "0327b839b763c54aae3fbf97752a57b6b5de573e8b123968a756d802fa8d14bf",
+    "en/history/index.html": "80b43d87bca729ddbbde5974930c0dc9ea5a8e7b1c5d2d64d790bd628d05b657",
+    "en/index.html": "f4389684521ce5e64ce8f933da46c4bdbe525763355296ee7c0c8a4e330c7c65",
     "era.css": "4f3f085b220120267e1bc518a3a7c81d40aced5c695c60d671e64f51914fc0e7",
     "fonts/Asap-OFL.txt": "79d8634241e736e967a1539a9c766ea8e68f6d2df9f5d0edba5a4c88b1b5d8a0",
     "fonts/Asap-Variable.woff2": "3f230328a40ee9a05fe099dfb6b403a4c569aaea6690e5d483d5715ed817498f",
     "fonts/ChicagoFLF.woff2": "5d25dcec1f8984c5e0aed398a7c90be8de86bb4f9bcfed4e7e1e2c3c13b7e742",
     "fonts/system-css-LICENSE.txt": "0433a8c105e9d410ca3fb7f205aafe8f1be27e0438cf3bd1447907f738ebc6b0",
-    "history/index.html": "f0e008247950358f3543fba5050b6b1ac0f2af14cb32f5ae6c6cf0d09f98c9e7",
     "history.css": "a2069565851de9bc24007bed07b10e54589b449f752f1be0e3c6e77b5134c089",
     "history.js": "9694a014bec3a7da821a3d538e63816fc5fd9aa9f439576d020936baf6944a05",
-    "index.html": "e79f8edb88bd205af9825c501557218fa87f19f8d1f361559f1018586a38f4c1",
+    "history/index.html": "14d8f5491ff4a4a591edfb3a72c7330716b0ab4df7d3a1da410938e7dfec41ee",
+    "index.html": "41478eb49c46bba9f26e478d73a3fe9e9578bfc94d6e8d7c543776e82988696e",
     "media/apple-touch-icon.png": "a2505d055eb6c8476ab78b6e95628d36db5582fbc22576bce4fccd32e1422d2a",
     "media/desk-dark.webp": "b2f21a0a7ece49ffce15597b67631e089a58885e71a6edcb302a5e726219e69b",
     "media/desk-en-dark.webp": "7a5d51d484013285f8a7915e85be1eec9fb7c069c5393ebb552835fbd44b6f82",
@@ -40,7 +39,7 @@
     "media/share-square.jpg": "c20066c0e2cc5c48d68c7db87a187aca35b18da9f5838490a584614eb4123bb4",
     "robots.txt": "08e4b5b0e500c11923762a8f07ed8cbfa95c129d781822f156f4face4e361e52",
     "sitemap.xml": "2adb63b2e068b97040b55c8c160ecbfb9412401ffa8241bd32183de39e269085",
-    "style.css": "4254e8698d60f3e7cfdcf39749bcfc0d0091e76ae1666a07cd380a2278def5c7"
+    "style.css": "d2985b2e7922fcb714680f3cbc0d1f2730c0e495f6388344dc2f650b220cf587"
   },
-  "recordedAt": "2026-09-24T19:49:34.958724Z"
+  "recordedAt": "2026-09-25T00:23:20.398Z"
 }
