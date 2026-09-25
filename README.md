@@ -14,14 +14,14 @@ A free, open-source window utility for Mac.
 [![Apple Silicon](https://img.shields.io/badge/download-Apple%20Silicon-303b49?style=flat-square)](#download)
 [![License](https://img.shields.io/badge/license-MIT-303b49?style=flat-square)](LICENSE)
 
-[**Download for Mac**](https://github.com/surfine/WindowShade/releases/latest) · [**Website**](https://windowshade.pages.dev/en/) · [**Window stories**](https://windowshade.pages.dev/en/history/) · [简体中文](README_CN.md)
+[**Download for Mac**](https://github.com/surfine/WindowShade/releases/latest) · [**Website**](https://windowshade.aaronlau.me/en/) · [**Intro video**](https://www.bilibili.com/video/BV1K7ag6WEdH/) (Bilibili, in Chinese) · [**Window stories**](https://windowshade.aaronlau.me/en/history/) · [简体中文](README_CN.md)
 
 <picture>
   <source media="(prefers-color-scheme: dark)" srcset="assets/readme-desk-en-dark.png">
   <img src="assets/readme-desk-en.png" alt="The Reference window rolled up into a thin bar where it was, uncovering the draft behind it" width="720">
 </picture>
 
-<sub>The interactive illustration from the website: Reference rolls up, and the draft behind it shows through. <a href="https://windowshade.pages.dev/en/">Try it yourself →</a></sub>
+<sub>The interactive illustration from the website: Reference rolls up, and the draft behind it shows through. <a href="https://windowshade.aaronlau.me/en/">Try it yourself →</a></sub>
 
 </div>
 
@@ -39,17 +39,17 @@ Unlike minimizing, the window never leaves the desktop. Drag the bar somewhere e
 
 ## This double-click is older than your Mac
 
-In the ’90s, most Mac users knew this trick. Then the system changed course, sent windows to the Dock, and the trick was slowly forgotten. We wrote its story as a long read you can operate, **[Window stories](https://windowshade.pages.dev/en/history/)**: seven chapters, four hands-on experiments, 14 primary sources.
+In the ’90s, most Mac users knew this trick. Then the system changed course, sent windows to the Dock, and the trick was slowly forgotten. We wrote its story as a long read you can operate, **[Window stories](https://windowshade.aaronlau.me/en/history/)**: seven chapters, four hands-on experiments, 14 primary sources.
 
-1. [Don’t close it yet](https://windowshade.pages.dev/en/history/#space): one desktop, three arrangements, side by side
-2. [A small utility](https://windowshade.pages.dev/en/history/#origin): a 1994 user-group newsletter
-3. [Two clicks or three](https://windowshade.pages.dev/en/history/#preference): change the old control panel yourself
-4. [A button for it](https://windowshade.pages.dev/en/history/#button): drag a rolled-up window somewhere new
-5. [Off to the Dock](https://windowshade.pages.dev/en/history/#departure): the Dock, Exposé and Mission Control
-6. [Still in use](https://windowshade.pages.dev/en/history/#survival): Stickies still keeps the trick
-7. [Back to today](https://windowshade.pages.dev/en/history/#return): an old gesture on today’s desk
+1. [Don’t close it yet](https://windowshade.aaronlau.me/en/history/#space): one desktop, three arrangements, side by side
+2. [A small utility](https://windowshade.aaronlau.me/en/history/#origin): a 1994 user-group newsletter
+3. [Two clicks or three](https://windowshade.aaronlau.me/en/history/#preference): change the old control panel yourself
+4. [A button for it](https://windowshade.aaronlau.me/en/history/#button): drag a rolled-up window somewhere new
+5. [Off to the Dock](https://windowshade.aaronlau.me/en/history/#departure): the Dock, Exposé and Mission Control
+6. [Still in use](https://windowshade.aaronlau.me/en/history/#survival): Stickies still keeps the trick
+7. [Back to today](https://windowshade.aaronlau.me/en/history/#return): an old gesture on today’s desk
 
-Then [boot an old Mac](https://windowshade.pages.dev/en/history/#lab) — System 7.5, Mac OS 8 or Mac OS X 10.1, run by [Infinite Mac](https://infinitemac.org/) — and find the setting through the original menus yourself.
+Then [boot an old Mac](https://windowshade.aaronlau.me/en/history/#lab) — System 7.5, Mac OS 8 or Mac OS X 10.1, run by [Infinite Mac](https://infinitemac.org/) — and find the setting through the original menus yourself.
 
 Today’s WindowShade is an independent Swift / AppKit app: the old name and the old idea, with code written from scratch. It is not an Apple product, and it uses no code from Rob Johnston, Apple, or Unsanity’s WindowShade X.
 

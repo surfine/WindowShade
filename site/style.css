@@ -491,7 +491,7 @@ details>p{font-size:15px;line-height:1.85;color:var(--muted);padding-bottom:24px
 @media(max-width:1100px){
   .wrap{width:calc(100% - 64px)}
   .header nav{gap:18px}
-  .hero{grid-template-columns:1fr;gap:48px;min-height:0;padding-top:56px}
+  .hero,html[lang=en] .hero{grid-template-columns:1fr;gap:48px;min-height:0;padding-top:56px}
   .hero-copy{max-width:640px}
   .section{padding-block:104px}
   .feature{gap:48px}
