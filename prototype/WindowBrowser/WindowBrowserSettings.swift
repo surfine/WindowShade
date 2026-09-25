@@ -160,6 +160,14 @@ enum WindowBrowserSettings {
     /// 优先用当前输入源的键盘布局翻译键码，避免把键码硬解释成美国键盘字符；
     /// 取不到布局数据时退回内置的 US 名称表。
     private static func keyName(for keyCode: UInt32, shift: Bool) -> String {
+        // 方向键、回车这类键按布局翻译出来是控制字符，直接给符号。
+        let special: [Int: String] = [
+            kVK_LeftArrow: "←", kVK_RightArrow: "→", kVK_UpArrow: "↑", kVK_DownArrow: "↓",
+            kVK_Return: "↩", kVK_Delete: "⌫", kVK_ForwardDelete: "⌦", kVK_Escape: "esc",
+            kVK_Tab: "⇥", kVK_Space: "空格", kVK_Home: "↖", kVK_End: "↘",
+            kVK_PageUp: "⇞", kVK_PageDown: "⇟"
+        ]
+        if let name = special[Int(keyCode)] { return name }
         if let translated = layoutKeyName(keyCode: keyCode, shift: shift),
            !translated.isEmpty {
             return translated.uppercased()
