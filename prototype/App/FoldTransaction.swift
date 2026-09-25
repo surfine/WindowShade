@@ -965,12 +965,28 @@ extension AppDelegate {
 
 
     @objc func screenParametersChanged(_ note: Notification) {
-        windowBrowserController?.screensDidChange()
-        MainActor.assumeIsolated {
-            carry.layout()
-            gestures.screensChanged()
+        // 菜单栏时隐时现、Dock 高度差一点也会发这条通知（接 Studio Display 的 Mac 上每隔几秒
+        // 一次）。只有显示器本身变了才关窗口浏览、排回窗口、找回屏幕外的窗口；
+        // 可用区域变了只做跟它有关的事：卷帘条别压在菜单栏下，携带窗口那排卷帘条跟着菜单栏挪。
+        let layout = DisplayLayout.current()
+        let visibleFrames = NSScreen.screens.map(\.visibleFrame)
+        let displaysChanged = layout != lastDisplayLayout
+        let visibleChanged = visibleFrames != lastVisibleFrames
+        lastDisplayLayout = layout
+        lastVisibleFrames = visibleFrames
+        if displaysChanged {
+            wlog("screen: displays changed count=\(layout.screens.count)")
+            windowBrowserController?.screensDidChange()
         }
-        pinnedPreviewController.refreshAll(reason: "screen")
+        if displaysChanged || visibleChanged {
+            MainActor.assumeIsolated {
+                carry.layout()
+                if displaysChanged { gestures.screensChanged() }
+            }
+        }
+        if displaysChanged {
+            pinnedPreviewController.refreshAll(reason: "screen")
+        }
         for (id, state) in shaded {
             guard let overlay = state.overlay else { continue }
             let oldFrame = overlay.frame
@@ -986,7 +1002,7 @@ extension AppDelegate {
         if let active = activePreview, active.trigger == .titlebarPeek {
             updateHoverPreviewFrame(active.ownerID)
         }
-        if shaded.isEmpty {
+        if displaysChanged, shaded.isEmpty {
             rescueOffscreenWindows(silent: true)
         }
     }

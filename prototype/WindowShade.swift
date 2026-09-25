@@ -214,6 +214,9 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSMenuDelegate {
     private var pinnedPreviewFocusMonitor: Any?
     private var pinnedPreviewTargetRefreshWorkItem: DispatchWorkItem?
     var spaceRefreshWorkItem: DispatchWorkItem?
+    /// 上一次看到的显示器与各屏可用区域，用来分辨“真的换了屏”和“只是菜单栏、Dock 变了”。
+    var lastDisplayLayout = DisplayLayout(screens: [])
+    var lastVisibleFrames: [CGRect] = []
     private var appNapActivity: NSObjectProtocol?
     weak var onboardingPermissionStack: NSStackView?
     weak var onboardingProgressLabel: NSTextField?
@@ -326,6 +329,8 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSMenuDelegate {
                                                           selector: #selector(activeSpaceChanged(_:)),
                                                           name: NSWorkspace.activeSpaceDidChangeNotification,
                                                           object: nil)
+        lastDisplayLayout = .current()
+        lastVisibleFrames = NSScreen.screens.map(\.visibleFrame)
         NotificationCenter.default.addObserver(self,
                                                selector: #selector(screenParametersChanged(_:)),
                                                name: NSApplication.didChangeScreenParametersNotification,
