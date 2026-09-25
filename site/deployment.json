@@ -1,6 +1,6 @@
 {
   "origin": "https://windowshade.aaronlau.me",
-  "deployment": "https://4204d0d1.windowshade.pages.dev",
+  "deployment": "https://c68f9f38.windowshade.pages.dev",
   "project": "windowshade",
   "branch": "main",
   "files": {
@@ -9,7 +9,7 @@
     "_redirects": "10738b7bf0dda342fb556e9d4a5c66e9f3ffaebc75e19aa0982ab168b72695ec",
     "app.js": "1c37a10cbc4c1472b25793ec800c96144f1a6d0b34733a515248d54a68397232",
     "en/history/index.html": "a66e617fe84616a7139cbaa3405583635731b201d4657f2a5bdfc7eedfe33fe2",
-    "en/index.html": "0c3a7caa77135f8748fac7a043230ef300ba28dd9c0e117d43d616966dcf3bb4",
+    "en/index.html": "c4e017b05c47df249cce28f54d9d7a6b7131d41401eadfbd443f4f47f7cac10c",
     "era.css": "4f3f085b220120267e1bc518a3a7c81d40aced5c695c60d671e64f51914fc0e7",
     "fonts/Asap-OFL.txt": "79d8634241e736e967a1539a9c766ea8e68f6d2df9f5d0edba5a4c88b1b5d8a0",
     "fonts/Asap-Variable.woff2": "3f230328a40ee9a05fe099dfb6b403a4c569aaea6690e5d483d5715ed817498f",
@@ -18,7 +18,7 @@
     "history.css": "a2069565851de9bc24007bed07b10e54589b449f752f1be0e3c6e77b5134c089",
     "history.js": "9694a014bec3a7da821a3d538e63816fc5fd9aa9f439576d020936baf6944a05",
     "history/index.html": "4830b25cedaf824ae21ededf82e0e1638fd49c48652a1a672a60ea05f364172a",
-    "index.html": "6ad9feef5b905c098ad5d23ab8d0d36674ecd6b878bb1da5ed7f2afdb046c2bc",
+    "index.html": "ef9b097ee9cd459f7f71775fa46dd8f8f4515fbe5bc05ba5045f59c0b3c82979",
     "media/apple-touch-icon.png": "a2505d055eb6c8476ab78b6e95628d36db5582fbc22576bce4fccd32e1422d2a",
     "media/desk-dark.webp": "b2f21a0a7ece49ffce15597b67631e089a58885e71a6edcb302a5e726219e69b",
     "media/desk-en-dark.webp": "7a5d51d484013285f8a7915e85be1eec9fb7c069c5393ebb552835fbd44b6f82",
