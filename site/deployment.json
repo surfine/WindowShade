@@ -1,6 +1,6 @@
 {
   "origin": "https://windowshade.pages.dev",
-  "deployment": "https://15960926.windowshade.pages.dev",
+  "deployment": "https://09cd8511.windowshade.pages.dev",
   "project": "windowshade",
   "branch": "main",
   "files": {
@@ -18,7 +18,7 @@
     "history.css": "a2069565851de9bc24007bed07b10e54589b449f752f1be0e3c6e77b5134c089",
     "history.js": "9694a014bec3a7da821a3d538e63816fc5fd9aa9f439576d020936baf6944a05",
     "history/index.html": "14d8f5491ff4a4a591edfb3a72c7330716b0ab4df7d3a1da410938e7dfec41ee",
-    "index.html": "9e90551cb3ec912ca4e9906ce5d97104f442dc514bff87a2dbf644c5cbfe4dab",
+    "index.html": "bc33aa4d6040ae79bee80a5a43b4833e89e6d96941ca88548d4b8464809af5d3",
     "media/apple-touch-icon.png": "a2505d055eb6c8476ab78b6e95628d36db5582fbc22576bce4fccd32e1422d2a",
     "media/desk-dark.webp": "b2f21a0a7ece49ffce15597b67631e089a58885e71a6edcb302a5e726219e69b",
     "media/desk-en-dark.webp": "7a5d51d484013285f8a7915e85be1eec9fb7c069c5393ebb552835fbd44b6f82",
@@ -41,5 +41,5 @@
     "sitemap.xml": "2adb63b2e068b97040b55c8c160ecbfb9412401ffa8241bd32183de39e269085",
     "style.css": "7fadf4e6123845a313b93577e0b75dec3a7bb519ecc3edafa8e48525a1839e44"
   },
-  "recordedAt": "2026-09-25T00:29:36.190Z"
+  "recordedAt": "2026-09-25T04:15:04.326Z"
 }
