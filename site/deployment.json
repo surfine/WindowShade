@@ -1,6 +1,6 @@
 {
   "origin": "https://windowshade.aaronlau.me",
-  "deployment": "https://09cd8511.windowshade.pages.dev",
+  "deployment": "https://4204d0d1.windowshade.pages.dev",
   "project": "windowshade",
   "branch": "main",
   "files": {
@@ -8,8 +8,8 @@
     "_headers": "d5401edd1ba01c41c7b87ae3f67a0dabdeb52456e94d120733cdae4e5acd149a",
     "_redirects": "10738b7bf0dda342fb556e9d4a5c66e9f3ffaebc75e19aa0982ab168b72695ec",
     "app.js": "1c37a10cbc4c1472b25793ec800c96144f1a6d0b34733a515248d54a68397232",
-    "en/history/index.html": "80b43d87bca729ddbbde5974930c0dc9ea5a8e7b1c5d2d64d790bd628d05b657",
-    "en/index.html": "fb7a06fd547537b5a38a3197368914162cb2aa1d5c188c1d7b7d32cfd142eeb4",
+    "en/history/index.html": "a66e617fe84616a7139cbaa3405583635731b201d4657f2a5bdfc7eedfe33fe2",
+    "en/index.html": "0c3a7caa77135f8748fac7a043230ef300ba28dd9c0e117d43d616966dcf3bb4",
     "era.css": "4f3f085b220120267e1bc518a3a7c81d40aced5c695c60d671e64f51914fc0e7",
     "fonts/Asap-OFL.txt": "79d8634241e736e967a1539a9c766ea8e68f6d2df9f5d0edba5a4c88b1b5d8a0",
     "fonts/Asap-Variable.woff2": "3f230328a40ee9a05fe099dfb6b403a4c569aaea6690e5d483d5715ed817498f",
@@ -17,8 +17,8 @@
     "fonts/system-css-LICENSE.txt": "0433a8c105e9d410ca3fb7f205aafe8f1be27e0438cf3bd1447907f738ebc6b0",
     "history.css": "a2069565851de9bc24007bed07b10e54589b449f752f1be0e3c6e77b5134c089",
     "history.js": "9694a014bec3a7da821a3d538e63816fc5fd9aa9f439576d020936baf6944a05",
-    "history/index.html": "14d8f5491ff4a4a591edfb3a72c7330716b0ab4df7d3a1da410938e7dfec41ee",
-    "index.html": "bc33aa4d6040ae79bee80a5a43b4833e89e6d96941ca88548d4b8464809af5d3",
+    "history/index.html": "4830b25cedaf824ae21ededf82e0e1638fd49c48652a1a672a60ea05f364172a",
+    "index.html": "6ad9feef5b905c098ad5d23ab8d0d36674ecd6b878bb1da5ed7f2afdb046c2bc",
     "media/apple-touch-icon.png": "a2505d055eb6c8476ab78b6e95628d36db5582fbc22576bce4fccd32e1422d2a",
     "media/desk-dark.webp": "b2f21a0a7ece49ffce15597b67631e089a58885e71a6edcb302a5e726219e69b",
     "media/desk-en-dark.webp": "7a5d51d484013285f8a7915e85be1eec9fb7c069c5393ebb552835fbd44b6f82",
@@ -37,9 +37,9 @@
     "media/og-history.jpg": "efe2e2d365c4b8f62b1caacf94ecf46c55ed17d6b7d721fe700e6b536f3c2df6",
     "media/og.jpg": "ab73420b486c9f012f8d69e1ae86d078179898240d3ee0e02c5872a9c3c3b168",
     "media/share-square.jpg": "c20066c0e2cc5c48d68c7db87a187aca35b18da9f5838490a584614eb4123bb4",
-    "robots.txt": "08e4b5b0e500c11923762a8f07ed8cbfa95c129d781822f156f4face4e361e52",
-    "sitemap.xml": "2adb63b2e068b97040b55c8c160ecbfb9412401ffa8241bd32183de39e269085",
-    "style.css": "7fadf4e6123845a313b93577e0b75dec3a7bb519ecc3edafa8e48525a1839e44"
+    "robots.txt": "f905019fe641ef35e74c7b1e5e3228ffe45b6a59edfdf6e8c436b897e87525c0",
+    "sitemap.xml": "1af25a3a812eec83f38661141b7627eb469cbb78c9cc6e5d8a7766a8da6e85a2",
+    "style.css": "d268d410a6c7d295b798b1da68c3981194010536e5aae4e8bf1896b224b55c7f"
   },
-  "recordedAt": "2026-09-25T04:15:04.326Z"
+  "recordedAt": "2026-09-25T05:23:37.937Z"
 }
