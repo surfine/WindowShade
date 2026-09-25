@@ -308,6 +308,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSMenuDelegate {
         logIfSlow("launch gestures", threshold: 0.1) {
             MainActor.assumeIsolated { gestures.refreshMonitors() }
         }
+        MainActor.assumeIsolated { installStripKeyForwarding() }
         logIfSlow("launch pinTracking", threshold: 0.1) { setupPinnedPreviewFocusTracking() }
         logIfSlow("launch windowBrowser", threshold: 0.1) {
             let browser = WindowBrowserController(owner: self)

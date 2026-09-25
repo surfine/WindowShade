@@ -98,9 +98,28 @@ func classicPalette(pid: pid_t) -> ClassicPalette {
 
 // MARK: - 覆盖层
 
+/// 卷帘条在最前面时按 ⌘N / ⌘H / ⌘M / ⌘Q / ⌘W：本意是对它背后的 App 或窗口说的。卷帘条是
+/// WindowShade 的窗口，不转的话 ⌘Q 会退出 WindowShade、⌘H 会把所有卷帘条一起藏起来、
+/// ⌘M 会把卷帘条自己缩进 Dock。
+enum StripKeyForwarding {
+    @MainActor static var handler: ((NSWindow, String) -> Bool)?
+
+    static func handle(_ event: NSEvent, in window: NSWindow) -> Bool {
+        guard event.type == .keyDown,
+              event.modifierFlags.intersection(.deviceIndependentFlagsMask) == .command,
+              let key = event.charactersIgnoringModifiers?.lowercased(),
+              ["n", "h", "m", "q", "w"].contains(key) else { return false }
+        return MainActor.assumeIsolated { handler?(window, key) ?? false }
+    }
+}
+
 final class OverlayWindow: NSWindow {
     override var canBecomeKey: Bool { true }
     override var canBecomeMain: Bool { true }
+
+    override func performKeyEquivalent(with event: NSEvent) -> Bool {
+        StripKeyForwarding.handle(event, in: self) || super.performKeyEquivalent(with: event)
+    }
 }
 
 final class PreviewWindow: NSWindow {
@@ -164,6 +183,10 @@ final class NativeProxyOverlayWindow: NSWindow, NSWindowDelegate {
 
     override var canBecomeKey: Bool { true }
     override var canBecomeMain: Bool { true }
+
+    override func performKeyEquivalent(with event: NSEvent) -> Bool {
+        StripKeyForwarding.handle(event, in: self) || super.performKeyEquivalent(with: event)
+    }
 
     override func performClose(_ sender: Any?) {
         onAction?(.close)

@@ -19,6 +19,16 @@ extension GestureAction {
         case .rightHalf: return WindowPlacementAction.rightHalf.title
         case .fill: return WindowPlacementAction.fill.title
         case .undoPlacement: return WindowPlacementAction.undoLast.title
+        case .topLeft: return WindowPlacementAction.topLeft.title
+        case .topRight: return WindowPlacementAction.topRight.title
+        case .bottomLeft: return WindowPlacementAction.bottomLeft.title
+        case .bottomRight: return WindowPlacementAction.bottomRight.title
+        case .leftTwoThirds: return "左三分之二"
+        case .leftThird: return "左三分之一"
+        case .rightTwoThirds: return "右三分之二"
+        case .rightThird: return "右三分之一"
+        case .toLeftDisplay: return "移到左边的屏幕"
+        case .toRightDisplay: return "移到右边的屏幕"
         }
     }
 
@@ -26,6 +36,8 @@ extension GestureAction {
     var unavailableTitle: String {
         switch self {
         case .undoPlacement: return "没有可撤销的排布"
+        case .toLeftDisplay: return "左边没有别的屏幕"
+        case .toRightDisplay: return "右边没有别的屏幕"
         default: return hudTitle
         }
     }
@@ -44,11 +56,21 @@ extension GestureAction {
         case .rightHalf: return (.symbol("macwindow"), .symbol("rectangle.righthalf.inset.filled"))
         case .fill: return (.symbol("macwindow"), .symbol("rectangle.inset.filled"))
         case .undoPlacement: return (.symbol("macwindow"), .symbol("arrow.uturn.backward"))
+        case .topLeft: return (.symbol("macwindow"), .symbol("rectangle.inset.topleft.filled"))
+        case .topRight: return (.symbol("macwindow"), .symbol("rectangle.inset.topright.filled"))
+        case .bottomLeft: return (.symbol("macwindow"), .symbol("rectangle.inset.bottomleft.filled"))
+        case .bottomRight: return (.symbol("macwindow"), .symbol("rectangle.inset.bottomright.filled"))
+        case .leftTwoThirds, .rightTwoThirds: return (.symbol("macwindow"), .symbol("rectangle.split.3x1"))
+        case .leftThird: return (.symbol("macwindow"), .symbol("rectangle.leftthird.inset.filled"))
+        case .rightThird: return (.symbol("macwindow"), .symbol("rectangle.rightthird.inset.filled"))
+        case .toLeftDisplay, .toRightDisplay: return (.symbol("macwindow"), .symbol("rectangle.on.rectangle"))
         }
     }
 
     /// 手指往左的动作：终点放左边，从右往左填。
-    fileprivate var fillsTowardLeading: Bool { self == .leftHalf }
+    fileprivate var fillsTowardLeading: Bool {
+        [.leftHalf, .leftTwoThirds, .leftThird, .topLeft, .bottomLeft, .toLeftDisplay].contains(self)
+    }
 }
 
 /// 提示浮窗本体（面板 + 内容）。一次只有一个；控制器按手势帧驱动。

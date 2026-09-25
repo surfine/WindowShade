@@ -342,6 +342,159 @@ import Foundation
       expect(right == CGVector(dx: 10, dy: 0), "content moving right is right")
     }
 
-    print("PASS: trackpad gestures — hysteresis, deliberate swipe with one tick, pause cancels, flick projection, short flick, pull-back cancel, halves, direction switch lead, return to origin, vertical ladder (fill / undo fill / roll up), app-owned horizontal on tabs, late map update, ownership rules, double tap, display refit, strip expand, spread/pinch with undo availability (unavailable undo explains itself), pinch exclusivity, reset, content direction")
+    // Turning the corner: once left or right is armed, going on up or down takes that corner.
+    do {
+      let map = GestureMap.titleBar(canUndoPlacement: false)
+      var r = GestureRecognizer(map: map)
+      var t: TimeInterval = 0
+      swipe(r, dx: -5, steps: 14, &t)
+      expect(r.frame.action == .leftHalf && r.frame.armed, "left arms the left half first")
+      swipe(r, dy: 5, steps: 10, &t)
+      expect(r.frame.action == .topLeft && r.frame.armed, "then turning up takes the top left corner")
+      expect(r.end(at: t + 0.2) == .topLeft, "and releasing there places it in the corner")
+
+      r = GestureRecognizer(map: map)
+      swipe(r, dx: 5, steps: 14, &t)
+      swipe(r, dy: -3, steps: 10, &t)
+      expect(r.frame.action == .rightHalf, "a small drift downward is not a turn")
+      expect(r.end(at: t + 0.2) == .rightHalf, "so the right half stays")
+
+      r = GestureRecognizer(map: map)
+      swipe(r, dx: 5, steps: 14, &t)
+      swipe(r, dy: -5, steps: 10, &t)
+      expect(r.frame.action == .bottomRight, "turning down on the right is the bottom right corner")
+      swipe(r, dy: 5, steps: 10, &t)
+      expect(r.frame.action == .rightHalf && r.frame.armed, "turning back is the half again")
+
+      r = GestureRecognizer(map: map)
+      swipe(r, dx: -5, dy: -1.5, steps: 30, &t)
+      expect(r.frame.action == .leftHalf && r.frame.armed, "a long left swipe that drifts down along an arc stays the left half")
+      r.cancel()
+
+      r = GestureRecognizer(map: map)
+      swipe(r, dx: -5, steps: 6, &t)
+      swipe(r, dy: 5, steps: 12, &t)
+      expect(r.frame.action == .shade, "going up before left is armed is still a roll up, not a corner")
+      r.cancel()
+
+      r = GestureRecognizer(map: map)
+      swipe(r, dx: -5, steps: 14, &t)
+      swipe(r, dy: 5, steps: 10, &t)
+      swipe(r, dx: 5, steps: 10, &t)
+      expect(r.frame.action == .topLeft && !r.frame.armed, "pulling back sideways disarms the corner")
+      expect(r.end(at: t + 0.2) == nil, "and releasing then does nothing")
+
+      r = GestureRecognizer(map: GestureMap.titleBar(canUndoPlacement: false, appOwnsHorizontal: true))
+      swipe(r, dx: -5, steps: 14, &t)
+      swipe(r, dy: 5, steps: 10, &t)
+      expect(r.frame == .idle, "on a tab strip left and right belong to the app, so there is no corner either")
+      r.cancel()
+    }
+
+    // Left and right are a ladder too: ½ → ⅔ → ⅓, then on to the display on that side (or back to ½).
+    do {
+      var t: TimeInterval = 0
+      expect(HorizontalLadder.next(from: nil, toward: .left, neighbor: false) == .leftHalf, "a free window goes to the left half first")
+      expect(HorizontalLadder.next(from: .leftHalf, toward: .left, neighbor: false) == .leftTwoThirds, "then two thirds")
+      expect(HorizontalLadder.next(from: .leftTwoThirds, toward: .left, neighbor: false) == .leftThird, "then one third")
+      expect(HorizontalLadder.next(from: .leftThird, toward: .left, neighbor: true) == .toLeftDisplay, "then over to the display on the left")
+      expect(HorizontalLadder.next(from: .leftThird, toward: .left, neighbor: false) == .leftHalf, "with no display there, back to the half")
+      expect(HorizontalLadder.next(from: .leftThird, toward: .right, neighbor: false) == .rightHalf, "the other way is the right half")
+      expect(HorizontalLadder.next(from: .rightTwoThirds, toward: .right, neighbor: false) == .rightThird, "and the right side climbs the same way")
+      let onHalf = GestureMap.titleBar(canUndoPlacement: false, side: .leftHalf)
+      var r = GestureRecognizer(map: onHalf)
+      swipe(r, dx: -5, steps: 14, &t)
+      expect(r.frame.action == .leftTwoThirds && r.frame.armed, "swiping left on the left half is two thirds")
+      expect(r.end(at: t + 0.2) == .leftTwoThirds, "on release")
+      r = GestureRecognizer(map: GestureMap.titleBar(canUndoPlacement: false, side: .leftThird, neighbors: [.left]))
+      swipe(r, dx: -5, steps: 14, &t)
+      expect(r.end(at: t + 0.2) == .toLeftDisplay, "from one third it moves to the display on the left")
+      r = GestureRecognizer(map: onHalf)
+      swipe(r, dx: -5, steps: 14, &t)
+      swipe(r, dy: -5, steps: 10, &t)
+      expect(r.frame.action == .bottomLeft, "turning the corner still works from any column")
+      r.cancel()
+
+      // Flicking the title bar with the pointer climbs the same ladder: only fast releases count.
+      let plain = GestureMap.titleBar(canUndoPlacement: false)
+      expect(FlickClassifier.action(velocity: CGVector(dx: -900, dy: 0), map: plain) == nil, "an ordinary drag is too slow to be a flick")
+      expect(FlickClassifier.action(velocity: CGVector(dx: -2400, dy: 100), map: plain) == .leftHalf, "a fast flick left is the left half")
+      expect(FlickClassifier.action(velocity: CGVector(dx: 0, dy: -2600), map: plain) == .fill, "flicking down fills, like pulling down")
+      expect(FlickClassifier.action(velocity: CGVector(dx: 60, dy: 2600), map: plain) == .shade, "flicking up rolls it up, like pushing up")
+      let filled = GestureMap.titleBar(canUndoPlacement: true, isFilled: true)
+      expect(FlickClassifier.action(velocity: CGVector(dx: 0, dy: 2600), map: filled) == .undoPlacement, "up on a filled window puts it back first")
+      expect(FlickClassifier.windowFollowed(moved: CGVector(dx: -120, dy: 2), pointer: CGVector(dx: -160, dy: 0)), "a window a frame behind a fast flick still counts as dragged")
+      expect(!FlickClassifier.windowFollowed(moved: CGVector(dx: 0, dy: 0), pointer: CGVector(dx: -160, dy: 0)), "dragging text or a tab out leaves the window where it was")
+      expect(!FlickClassifier.windowFollowed(moved: CGVector(dx: 0, dy: 150), pointer: CGVector(dx: -160, dy: 0)), "a window moving another way is not following the pointer")
+      expect(!FlickClassifier.windowFollowed(moved: CGVector(dx: -10, dy: 0), pointer: CGVector(dx: -20, dy: 0)), "a nudge is too short to judge")
+      expect(FlickClassifier.action(velocity: CGVector(dx: 2000, dy: 2000), map: plain) == .topRight, "toward a corner takes that corner")
+      expect(FlickClassifier.action(velocity: CGVector(dx: -1900, dy: -1900), map: plain) == .bottomLeft, "including the bottom ones")
+      expect(FlickClassifier.action(velocity: CGVector(dx: -2400, dy: 0),
+                                    map: GestureMap.titleBar(canUndoPlacement: false, side: .leftHalf)) == .leftTwoThirds,
+             "flicking left again walks the left ladder")
+
+      let main = CGRect(x: 0, y: 0, width: 1440, height: 900)
+      let leftOfMain = CGRect(x: -1920, y: -180, width: 1920, height: 1080)
+      let aboveRight = CGRect(x: 1440, y: 1000, width: 1920, height: 1080)
+      let frames = [main, leftOfMain, aboveRight]
+      expect(DisplayNeighbor.index(in: frames, of: 0, toward: .left) == 1, "the external display on the left is found")
+      expect(DisplayNeighbor.index(in: frames, of: 0, toward: .right) == nil, "a display up and away is not beside it")
+      expect(DisplayNeighbor.index(in: frames, of: 1, toward: .right) == 0, "and from the left display, the main one is on the right")
+    }
+
+    // Arrow keys climb the same ladder as the gestures, one step per press.
+    do {
+      let plain = GestureMap.titleBar(canUndoPlacement: false)
+      expect(plain.keyFrame(.down) == GestureFrame(action: .fill, progress: 1), "down on a normal window fills")
+      expect(plain.keyFrame(.up) == GestureFrame(action: .shade, progress: 1), "up on a normal window rolls up")
+      expect(plain.keyFrame(.left)?.armed == true && plain.keyFrame(.left)?.action == .leftHalf, "left is the left half")
+      let filled = GestureMap.titleBar(canUndoPlacement: true, isFilled: true)
+      expect(filled.keyFrame(.up) == GestureFrame(action: .undoPlacement, progress: 1), "up on a filled window undoes the fill")
+      expect(filled.keyFrame(.down) == nil, "down on a filled window has nothing to do")
+      let stuck = GestureMap.titleBar(canUndoPlacement: false, isFilled: true)
+      expect(stuck.keyFrame(.up)?.action == .shade, "filled by hand with nothing to undo: up rolls up")
+      expect(GestureMap.strip.keyFrame(.down) == GestureFrame(action: .expand, progress: 1), "down on a bar unrolls it")
+      expect(GestureMap.strip.keyFrame(.up) == nil, "up on a bar does nothing")
+      var noUndo = GestureMap.titleBar(canUndoPlacement: false)
+      noUndo.up = .undoPlacement
+      let explained = noUndo.keyFrame(.up)
+      expect(explained?.action == .undoPlacement && explained?.armed == false, "an unavailable step explains itself and does nothing")
+    }
+
+    // The keyboard turns corners too: a quick up or down right after left or right.
+    do {
+      expect(KeyTurn.corner(after: .left, elapsed: 0.3, press: .down) == .bottomLeft, "⌃⌘← then ⌃⌘↓ is the bottom left corner")
+      expect(KeyTurn.corner(after: .right, elapsed: 0.5, press: .up) == .topRight, "⌃⌘→ then ⌃⌘↑ is the top right corner")
+      expect(KeyTurn.corner(after: .left, elapsed: 1.2, press: .down) == nil, "after a pause, ⌃⌘↓ is just a step larger again")
+      expect(KeyTurn.corner(after: nil, elapsed: 0.1, press: .down) == nil, "without a half first there is no corner")
+      expect(KeyTurn.corner(after: .left, elapsed: 0.2, press: .right) == nil, "left then right is not a turn")
+    }
+
+    // Thirds go back too.
+    do {
+      let big = CGRect(x: 0, y: 25, width: 2400, height: 1200)
+      let small = CGRect(x: 0, y: 25, width: 1500, height: 900)
+      let placed = RefitLayout.rightTwoThirds.frame(in: big)
+      expect(placed == CGRect(x: 800, y: 25, width: 1600, height: 1200), "right two thirds of the big screen")
+      let moved = CGRect(x: 0, y: 25, width: 1500, height: 900)
+      expect(DisplayRefit.target(layout: .rightTwoThirds, placed: placed, current: moved, area: small)
+               == CGRect(x: 500, y: 25, width: 1000, height: 900), "a two-thirds window squeezed by the system is laid out again")
+    }
+
+    // Corners go back to their corner on the new screen too.
+    do {
+      let big = CGRect(x: 0, y: 25, width: 2000, height: 1200)
+      let small = CGRect(x: 0, y: 25, width: 1400, height: 860)
+      let placed = RefitLayout.bottomRight.frame(in: big)
+      expect(placed == CGRect(x: 1000, y: 625, width: 1000, height: 600), "bottom right quarter of the big screen")
+      let moved = CGRect(x: 400, y: 285, width: 1000, height: 600)
+      expect(DisplayRefit.target(layout: .bottomRight, placed: placed, current: moved, area: small)
+               == CGRect(x: 700, y: 455, width: 700, height: 430), "a quarter moved by the system is laid out again")
+      let resized = CGRect(x: 100, y: 100, width: 640, height: 400)
+      expect(DisplayRefit.target(layout: .topLeft, placed: RefitLayout.topLeft.frame(in: big), current: resized, area: small) == nil,
+             "a quarter resized by hand stays as the person left it")
+    }
+
+    print("PASS: trackpad gestures — hysteresis, deliberate swipe with one tick, pause cancels, flick projection, short flick, pull-back cancel, halves, direction switch lead, return to origin, vertical ladder (fill / undo fill / roll up), app-owned horizontal on tabs, late map update, ownership rules, double tap, display refit, strip expand, spread/pinch with undo availability (unavailable undo explains itself), pinch exclusivity, reset, content direction, arrow-key ladder, corner refit, turning corners, horizontal ladder with thirds, pushing to the next display, keyboard corner turns, flick directions")
   }
 }
