@@ -28,6 +28,7 @@ export const copy = {
     hero: '收起窗口，<br>留下位置。',
     intro: '双击标题栏，窗口收成一条卷帘条，停在原处。<br>再双击，它原样回来。',
     try: '先看看怎么用',
+    video: '看介绍视频',
     facts: ['macOS 14 及以上', 'Apple Silicon', '免费 · MIT 开源', '1.0.15 · ZIP 4.02 MB'],
 
     stageLabel: '网页示意：一张 Mac 桌面，上面有两扇窗口',
@@ -189,6 +190,7 @@ export const copy = {
     hero: 'Roll it up.<br>Keep its place.',
     intro: 'Double-click a title bar and the window rolls up into a thin bar, right where it was. Double-click again and it’s back.',
     try: 'See how it works',
+    video: 'Watch the intro (in Chinese)',
     facts: ['macOS 14 or later', 'Apple Silicon', 'Free · MIT licensed', '1.0.15 · ZIP 4.02 MB'],
 
     stageLabel: 'Browser illustration: a Mac desktop with two windows',

@@ -7,7 +7,8 @@ import { siteHeader, siteFooter, shareMeta, shareFallback, repo, release } from 
 
 const root = fileURLToPath(new URL('../', import.meta.url));
 const dist = path.join(root, 'dist');
-const origin = process.env.SITE_ORIGIN || 'https://windowshade.pages.dev';
+const origin = process.env.SITE_ORIGIN || 'https://windowshade.aaronlau.me';
+const video = 'https://www.bilibili.com/video/BV1K7ag6WEdH/';
 const escape = (s) => s.replaceAll('&', '&amp;').replaceAll('"', '&quot;').replaceAll('<', '&lt;');
 await rm(dist, { recursive: true, force: true });
 await mkdir(dist, { recursive: true });
@@ -56,7 +57,7 @@ ${siteHeader(en, 'home')}
 <main id="main">
 
 <section class="hero wrap">
-<div class="hero-copy"><p class="eyebrow">${c.eyebrow}</p><h1>${c.hero}</h1><p class="hero-intro">${c.intro}</p><div class="actions">${download(c)}<a class="text-link" href="#experience">${c.try}${arrow('down')}</a></div><ul class="facts">${c.facts.map(f => `<li>${f}</li>`).join('')}</ul></div>
+<div class="hero-copy"><p class="eyebrow">${c.eyebrow}</p><h1>${c.hero}</h1><p class="hero-intro">${c.intro}</p><div class="actions">${download(c)}<a class="text-link" href="#experience">${c.try}${arrow('down')}</a><a class="text-link" href="${video}" target="_blank" rel="noopener">${c.video}${arrow('out')}</a></div><ul class="facts">${c.facts.map(f => `<li>${f}</li>`).join('')}</ul></div>
 <div class="hero-demo">
 <div class="stage" id="desk" role="group" aria-label="${c.stageLabel}">
 <div class="stage-menubar" aria-hidden="true"><b>${c.stageMenu[0]}</b>${c.stageMenu.slice(1).map(m => `<span>${m}</span>`).join('')}<span class="stage-clock">9:41</span></div>
