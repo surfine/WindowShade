@@ -11,6 +11,11 @@ enum GlobalShortcut: String, CaseIterable {
     case pinPreview
     case windowBrowser
     case carry
+    // 排布当前窗口：和标题栏手势是同一架梯子（卷帘条 ⇄ 原来大小 ⇄ 铺满屏幕），左右占半屏。
+    case stepSmaller
+    case stepLarger
+    case leftHalf
+    case rightHalf
 
     typealias HotKey = WindowBrowserSettings.HotKey
 
@@ -22,6 +27,10 @@ enum GlobalShortcut: String, CaseIterable {
         case .pinPreview: return 3
         case .windowBrowser: return 4
         case .carry: return 5
+        case .stepSmaller: return 6
+        case .stepLarger: return 7
+        case .leftHalf: return 8
+        case .rightHalf: return 9
         }
     }
 
@@ -33,6 +42,10 @@ enum GlobalShortcut: String, CaseIterable {
         case .pinPreview: return "置顶或取消置顶当前窗口"
         case .windowBrowser: return "选择窗口…"
         case .carry: return "把当前窗口带到每张桌面"
+        case .stepSmaller: return "变小一级"
+        case .stepLarger: return "变大一级"
+        case .leftHalf: return "左半屏"
+        case .rightHalf: return "右半屏"
         }
     }
 
@@ -44,6 +57,10 @@ enum GlobalShortcut: String, CaseIterable {
         case .pinPreview: return HotKey(keyCode: UInt32(kVK_ANSI_P), modifiers: controlCommand)
         case .windowBrowser: return nil
         case .carry: return HotKey(keyCode: UInt32(kVK_ANSI_G), modifiers: controlCommand)
+        case .stepSmaller: return HotKey(keyCode: UInt32(kVK_UpArrow), modifiers: controlCommand)
+        case .stepLarger: return HotKey(keyCode: UInt32(kVK_DownArrow), modifiers: controlCommand)
+        case .leftHalf: return HotKey(keyCode: UInt32(kVK_LeftArrow), modifiers: controlCommand)
+        case .rightHalf: return HotKey(keyCode: UInt32(kVK_RightArrow), modifiers: controlCommand)
         }
     }
 
