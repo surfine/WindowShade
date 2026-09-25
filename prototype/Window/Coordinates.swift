@@ -47,6 +47,24 @@ func displayID(for screen: NSScreen?) -> CGDirectDisplayID? {
         .flatMap { ($0 as? NSNumber)?.uint32Value }
 }
 
+/// 显示器本身的样子：有哪几块屏、各自的位置尺寸与缩放。
+/// 菜单栏时隐时现、Dock 高度差一点只改 visibleFrame，不算在内——接 Studio Display 的
+/// Mac 上这类“屏幕参数变了”每隔几秒就来一次，只有这里变了才算真的换了屏。
+struct DisplayLayout: Equatable {
+    struct Screen: Equatable {
+        let id: CGDirectDisplayID?
+        let frame: CGRect
+        let scale: CGFloat
+    }
+    let screens: [Screen]
+
+    static func current() -> DisplayLayout {
+        DisplayLayout(screens: NSScreen.screens.map {
+            Screen(id: displayID(for: $0), frame: $0.frame, scale: $0.backingScaleFactor)
+        })
+    }
+}
+
 func screenForDisplayID(_ displayID: CGDirectDisplayID?) -> NSScreen? {
     guard let displayID else { return nil }
     return NSScreen.screens.first {
