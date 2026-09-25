@@ -1,17 +1,19 @@
 import React from "react";
 import { AbsoluteFill, useCurrentFrame } from "remotion";
-import { GLANCE } from "../timeline";
+import { GLANCE, sceneFrames } from "../timeline";
 import { C, FONT, SERIF, easeInOut, easeOut, mix, pop, tw } from "../theme";
-import { Caption, Canvas, Cursor, Lines, MacWindow, tiltIn } from "../ui";
+import { Caption, Canvas, Cursor, Lines, MacWindow, tiltIn, useVertical } from "../ui";
 
 // Rest on a 卷帘条 and a card drops below it, live. Move away and it goes back up.
 // The window in the card is exporting, so you can see the picture is live.
 
 const K = 1.6;
-const STRIP = { x: 230, y: 330, w: 820 };
+const LAYOUT = {
+  h: { STRIP: { x: 230, y: 330, w: 820 }, DRAFT: { x: 780, y: 420, w: 960, h: 600 }, from: [1500, 1000], away: [1480, 820] },
+  v: { STRIP: { x: 130, y: 520, w: 820 }, DRAFT: { x: 100, y: 760, w: 880, h: 900 }, from: [1000, 1800], away: [900, 1500] },
+};
 const BAR = 36 * K;
 const CARD_H = 380;
-const REST = { x: STRIP.x + STRIP.w / 2 + 90, y: STRIP.y + BAR / 2 + 4 };
 
 const Exporting: React.FC<{ pct: number; frame: number }> = ({ pct, frame }) => (
   <div style={{ padding: "40px 48px", fontFamily: FONT, color: C.winInk }}>
@@ -42,20 +44,22 @@ const Exporting: React.FC<{ pct: number; frame: number }> = ({ pct, frame }) => 
 
 export const Glance: React.FC = () => {
   const frame = useCurrentFrame();
+  const { STRIP, DRAFT, from, away } = LAYOUT[useVertical() ? "v" : "h"];
+  const REST = { x: STRIP.x + STRIP.w / 2 + 90, y: STRIP.y + BAR / 2 + 4 };
   const arrive = tw(frame, 12, GLANCE.arrive, 0, 1, easeOut);
   const leave = tw(frame, GLANCE.leave, GLANCE.leave + 30, 0, 1, easeInOut);
-  const cx = mix(mix(1500, REST.x, arrive), 1480, leave);
-  const cy = mix(mix(1000, REST.y, arrive), 820, leave);
+  const cx = mix(mix(from[0], REST.x, arrive), away[0], leave);
+  const cy = mix(mix(from[1], REST.y, arrive), away[1], leave);
   const open = frame < GLANCE.leave + 4 ? pop(frame, GLANCE.open, 22, 220) : 1 - tw(frame, GLANCE.leave + 4, GLANCE.leave + 20, 0, 1, easeOut);
-  const pct = 0.42 + 0.004 * Math.max(0, frame - 20) * 0.5;
+  const pct = 0.42 + 0.003 * Math.max(0, frame - 20);
 
   return (
     <Canvas>
       <Caption zh="停一下，就看到。" en="Rest on the bar. See the window." at={2} out={GLANCE.second - 14} />
       <Caption zh="不用展开，也不用切过去。" en="No unrolling. No switching apps." at={GLANCE.second} />
-      <AbsoluteFill style={{ scale: String(mix(1, 1.04, tw(frame, 0, 360, 0, 1, easeInOut))), transformOrigin: "30% 45%" }}>
+      <AbsoluteFill style={{ scale: String(mix(1, 1.04, tw(frame, 0, sceneFrames("Glance"), 0, 1, easeInOut))), transformOrigin: "30% 45%" }}>
         <div style={{ position: "absolute", inset: 0, ...tiltIn(frame, 0, { y: 160, rx: 20 }) }}>
-          <MacWindow x={780} y={420} w={960} h={600} title="文章草稿" k={K} active>
+          <MacWindow {...DRAFT} title="文章草稿" k={K} active>
             <div style={{ padding: "60px 70px", color: C.winInk }}>
               <div style={{ fontSize: 26, fontWeight: 600, color: C.winMuted }}>一个小动作的历史</div>
               <div style={{ fontFamily: SERIF, fontSize: 84, lineHeight: 1.15, margin: "20px 0 32px" }}>

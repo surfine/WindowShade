@@ -29,14 +29,7 @@ export const easeInOut = Easing.bezier(0.65, 0, 0.35, 1);
 export const easeRoll = Easing.bezier(0.65, 0, 0.35, 1);
 
 /** Clamped interpolate between two frames. */
-export const tw = (
-  frame: number,
-  from: number,
-  to: number,
-  a = 0,
-  b = 1,
-  easing: (t: number) => number = easeOut,
-) =>
+export const tw = (frame: number, from: number, to: number, a = 0, b = 1, easing: (t: number) => number = easeOut) =>
   interpolate(frame, [from, to], [a, b], {
     extrapolateLeft: "clamp",
     extrapolateRight: "clamp",

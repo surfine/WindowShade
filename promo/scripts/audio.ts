@@ -3,7 +3,8 @@
 // No dependencies. Writes public/soundtrack.wav (48 kHz, 16-bit, stereo).
 //   node scripts/audio.ts
 import fs from "node:fs";
-import { BAR, FPS, SCENES, TOTAL, sfx } from "../src/timeline.ts";
+import { BAR, FPS, OPENER, SCENES, TOTAL, sceneStart, sfx } from "../src/timeline.ts";
+import type { SceneId } from "../src/timeline.ts";
 
 const RATE = 48000;
 const N = Math.round((TOTAL / FPS) * RATE);
@@ -92,10 +93,7 @@ function hiss(b: Bus, at: number, o: HissOpts) {
     const high = noise() - low - damp * band;
     band += f * high;
     low += f * band;
-    const e =
-      o.shape === "bell"
-        ? Math.pow(Math.sin(Math.PI * x), 1.6)
-        : Math.min(1, i / (0.001 * RATE)) * Math.exp(-i / ((o.decay ?? 0.05) * RATE));
+    const e = o.shape === "bell" ? Math.pow(Math.sin(Math.PI * x), 1.6) : Math.min(1, i / (0.001 * RATE)) * Math.exp(-i / ((o.decay ?? 0.05) * RATE));
     const am = o.am ? 0.8 + 0.2 * Math.sin((TAU * o.am * i) / RATE) : 1;
     const [l, r] = panLR(p0 + (p1 - p0) * x);
     const v = (o.high ? high * 0.5 : band) * o.amp * e * am;
@@ -188,15 +186,23 @@ const hat = (at: number, open: boolean, amp: number) =>
 
 // ---------------------------------------------------------------- arrangement
 
+// Sections follow the scenes, so the music changes when the picture does.
+const barOf = (id: SceneId) => sceneStart(id) / BAR;
+const HISTORY_BARS = [barOf("History"), barOf("Glance")];
+const GESTURE_BAR = barOf("Gestures");
+const END_BAR = barOf("End");
+const GROOVE_BAR = barOf("Ways");
+const BLACK_S = (sceneStart("Opener") + OPENER.black) * SPF; // cut to black, mid-bar
+
 type Part = { pad: number; pluck: number; drums: boolean; bass: boolean; clap: boolean; dark: boolean; sparkle: boolean };
 function part(bar: number): Part {
   const p: Part = { pad: 1, pluck: 1, drums: true, bass: true, clap: true, dark: false, sparkle: false };
-  if (bar <= 1) return { ...p, drums: false, bass: false, clap: false, pluck: 0.8 }; // windows pile up
-  if (bar <= 3) return { ...p, pad: 0, pluck: 0, drums: false, bass: false, clap: false }; // black: hold
-  if (bar >= 11 && bar <= 13) return { ...p, dark: true, clap: false, pluck: 0.8 }; // history
-  if (bar === 17) return { ...p, pad: 0.7, pluck: 0, drums: false, bass: false, clap: false }; // title card + riser
-  if (bar >= 18 && bar <= 24) return { ...p, sparkle: true }; // gestures
-  if (bar >= 28) return { ...p, pad: 0, drums: false, bass: false, clap: false, pluck: bar === 28 ? 0.9 : 0 }; // end card
+  const quiet = { drums: false, bass: false, clap: false };
+  if (bar < GROOVE_BAR) return { ...p, ...quiet, pluck: 0.8 }; // windows pile up (cut short by the black)
+  if (bar >= HISTORY_BARS[0] && bar < HISTORY_BARS[1]) return { ...p, dark: true, clap: false, pluck: 0.8 };
+  if (bar === GESTURE_BAR) return { ...p, ...quiet, pad: 0.7, pluck: 0 }; // title card + riser
+  if (bar > GESTURE_BAR && bar < barOf("More")) return { ...p, sparkle: true };
+  if (bar >= END_BAR) return { ...p, ...quiet, pad: 0, pluck: bar === END_BAR ? 0.9 : 0 };
   return p;
 }
 
@@ -204,19 +210,19 @@ const ARP = [0, 4, 2, 4, 1, 4, 2, 4];
 const eighth = BAR_S / 8;
 for (let bar = 0; bar < BARS; bar++) {
   const at = Math.round(bar * BAR_S);
-  const ch = bar >= 28 ? CHORDS[0] : CHORDS[bar % 4];
-  const root = bar >= 28 ? ROOTS[0] : ROOTS[bar % 4];
+  const ch = bar >= END_BAR ? CHORDS[0] : CHORDS[bar % 4];
+  const root = bar >= END_BAR ? ROOTS[0] : ROOTS[bar % 4];
   const p = part(bar);
+  // Before the groove, nothing may sound past the cut to black.
+  const before = (i: number) => bar >= GROOVE_BAR || at + i < BLACK_S;
 
-  if (bar === 28) pad(at, ch, (BARS - 28) * (BAR / FPS), 0.34); // final chord holds to the end
-  if (bar === 2) {
-    pad(at, [50, 57, 62], 2 * (BAR / FPS) + 0.1, 0.26); // low and sparse under "先别急着关"
-    tone(music, at, { dur: 4, f0: hz(38), amp: 0.16, attack: 0.4, decay: 6 });
-  }
-  if (p.pad > 0) pad(at, ch, BAR / FPS + 0.1, 0.3 * p.pad);
+  if (bar === END_BAR) pad(at, ch, (BARS - END_BAR) * (BAR / FPS), 0.34); // final chord holds to the end
+  if (p.pad > 0 && bar >= GROOVE_BAR) pad(at, ch, BAR / FPS + 0.1, 0.3 * p.pad);
+  if (p.pad > 0 && bar < GROOVE_BAR && at < BLACK_S) pad(at, ch, Math.min(BAR_S, BLACK_S - at) / RATE, 0.3 * p.pad);
 
   if (p.pluck > 0) {
     for (let k = 0; k < 8; k++) {
+      if (!before(k * eighth)) continue;
       const n = ch[ARP[k]] + (k % 4 === 2 ? 12 : 0);
       pluck(Math.round(at + k * eighth), hz(n), (0.24 + 0.05 * rnd()) * p.pluck * (k % 2 ? 0.8 : 1), k % 2 ? 0.3 : -0.3, p.dark);
     }
@@ -237,7 +243,15 @@ for (let bar = 0; bar < BARS; bar++) {
     }
     for (let k = 0; k < 8; k++) hat(Math.round(at + (k + 0.5) * eighth), k === 7 && bar % 4 === 3, p.dark ? 0.5 : 1);
   }
-  if (bar === 17) hiss(music, at, { dur: BAR / FPS, f0: 300, f1: 6000, q: 0.9, amp: 0.55, shape: "bell", pan0: -0.3, pan1: 0.3, wet: 0.4 });
+  if (bar === GESTURE_BAR) hiss(music, at, { dur: BAR / FPS, f0: 300, f1: 6000, q: 0.9, amp: 0.55, shape: "bell", pan0: -0.3, pan1: 0.3, wet: 0.4 });
+}
+
+// Under "先别急着关": a low, sparse chord from the cut to black until the groove.
+{
+  const at = Math.round(BLACK_S);
+  const seconds = (GROOVE_BAR * BAR_S - BLACK_S) / RATE;
+  pad(at, [50, 57, 62], seconds + 0.1, 0.26);
+  tone(music, at, { dur: seconds, f0: hz(38), amp: 0.16, attack: 0.4, decay: 6 });
 }
 
 // ---------------------------------------------------------------- sound effects

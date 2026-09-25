@@ -1,8 +1,8 @@
 import React from "react";
 import { AbsoluteFill, useCurrentFrame } from "remotion";
-import { MORE } from "../timeline";
+import { MORE, sceneFrames } from "../timeline";
 import { C, FONT, easeInOut, easeOut, mix, pop, tw } from "../theme";
-import { Caption, Canvas, Cursor, Glass, Keycap, Lamps, tiltIn } from "../ui";
+import { Caption, Canvas, Cursor, Glass, Keycap, Lamps, tiltIn, useVertical } from "../ui";
 
 // The rest of the app in three cards: pin, carry to every desktop, window browsing.
 
@@ -10,17 +10,18 @@ const XS = [390, 960, 1530];
 const CW = 520;
 const TOP = 300;
 const ART_H = 330;
+const ROWS_V = [470, 840, 1210]; // 9:16: one card per row, picture left, words right
 
-const Mini: React.FC<{ x: number; y: number; w: number; h: number; title: string; body?: string; style?: React.CSSProperties; children?: React.ReactNode }> = ({
-  x,
-  y,
-  w,
-  h,
-  title,
-  body = "#fff",
-  style,
-  children,
-}) => (
+const Mini: React.FC<{
+  x: number;
+  y: number;
+  w: number;
+  h: number;
+  title: string;
+  body?: string;
+  style?: React.CSSProperties;
+  children?: React.ReactNode;
+}> = ({ x, y, w, h, title, body = "#fff", style, children }) => (
   <div
     style={{
       position: "absolute",
@@ -35,7 +36,19 @@ const Mini: React.FC<{ x: number; y: number; w: number; h: number; title: string
       ...style,
     }}
   >
-    <div style={{ height: 30, background: C.bar, display: "flex", alignItems: "center", padding: "0 9px", position: "relative", fontSize: 14, fontWeight: 600, color: C.winInk }}>
+    <div
+      style={{
+        height: 30,
+        background: C.bar,
+        display: "flex",
+        alignItems: "center",
+        padding: "0 9px",
+        position: "relative",
+        fontSize: 14,
+        fontWeight: 600,
+        color: C.winInk,
+      }}
+    >
       <Lamps k={0.72} />
       <div style={{ position: "absolute", left: 0, right: 0, textAlign: "center" }}>{title}</div>
     </div>
@@ -50,7 +63,15 @@ const Pin: React.FC<{ frame: number }> = ({ frame }) => {
   const badge = pop(frame, k + 12, 12, 200);
   return (
     <>
-      <Mini x={48} y={70} w={230} h={170} title="尺寸参考" body={C.blueSoft} style={{ zIndex: pinned ? 3 : 1, scale: String(1 + 0.04 * Math.sin(Math.PI * tw(frame, k + 12, k + 24))) }}>
+      <Mini
+        x={48}
+        y={70}
+        w={230}
+        h={170}
+        title="尺寸参考"
+        body={C.blueSoft}
+        style={{ zIndex: pinned ? 3 : 1, scale: String(1 + 0.04 * Math.sin(Math.PI * tw(frame, k + 12, k + 24))) }}
+      >
         <div style={{ padding: 16, fontSize: 26, color: C.blueText, fontWeight: 600 }}>240 × 160 mm</div>
       </Mini>
       <Mini x={mix(420, 170, slide)} y={120} w={280} h={180} title="产品说明" style={{ zIndex: 2 }}>
@@ -79,7 +100,9 @@ const Pin: React.FC<{ frame: number }> = ({ frame }) => {
           boxShadow: "0 6px 14px rgba(36,94,234,.4)",
         }}
       >
-        <svg width="22" height="22" viewBox="0 0 24 24" fill="#fff"><path d="M15 3l6 6-3 1-4 4 1 5-2 2-4-4-5 5-1-1 5-5-4-4 2-2 5 1 4-4z" /></svg>
+        <svg width="22" height="22" viewBox="0 0 24 24" fill="#fff">
+          <path d="M15 3l6 6-3 1-4 4 1 5-2 2-4-4-5 5-1-1 5-5-4-4 2-2 5 1 4-4z" />
+        </svg>
       </div>
     </>
   );
@@ -92,10 +115,17 @@ const Carry: React.FC<{ frame: number }> = ({ frame }) => {
   return (
     <>
       <div style={{ position: "absolute", inset: 0, display: "flex", gap: 20, translate: `${-move * (CW + 20)}px 0` }}>
-        {[C.wall, "radial-gradient(120% 90% at 20% 0%,#d6f0e0 0%,transparent 60%),radial-gradient(100% 90% at 100% 100%,#dde4ff 0%,transparent 60%),#eef1f4"].map((bg, i) => (
+        {[
+          C.wall,
+          "radial-gradient(120% 90% at 20% 0%,#d6f0e0 0%,transparent 60%),radial-gradient(100% 90% at 100% 100%,#dde4ff 0%,transparent 60%),#eef1f4",
+        ].map((bg, i) => (
           <div key={i} style={{ flex: "none", width: CW, height: ART_H, background: bg, position: "relative" }}>
             <div style={{ position: "absolute", left: 18, top: 16, fontSize: 18, fontWeight: 600, color: C.winMuted }}>桌面 {i + 1}</div>
-            {i === 0 ? <Mini x={60} y={70} w={300} h={200} title="会议记录" body={C.blueSoft} /> : <Mini x={120} y={110} w={320} h={190} title="邮件" />}
+            {i === 0 ? (
+              <Mini x={60} y={70} w={300} h={200} title="会议记录" body={C.blueSoft} />
+            ) : (
+              <Mini x={120} y={110} w={320} h={190} title="邮件" />
+            )}
           </div>
         ))}
       </div>
@@ -187,10 +217,11 @@ const CARDS = [
 
 export const More: React.FC = () => {
   const frame = useCurrentFrame();
+  const v = useVertical();
   return (
     <Canvas>
-      <Caption zh="老动作之外，它还帮你看住每扇窗口。" en="Beyond the old trick, it keeps track of every window." at={2} size={68} />
-      <AbsoluteFill style={{ scale: String(mix(1, 1.03, tw(frame, 0, 360, 0, 1, easeInOut))) }}>
+      <Caption zh={"老动作之外，\n它还帮你看住每扇窗口。"} en="Beyond the old trick, it keeps track of every window." at={2} size={68} />
+      <AbsoluteFill style={{ scale: String(mix(1, 1.03, tw(frame, 0, sceneFrames("More"), 0, 1, easeInOut))) }}>
         {CARDS.map((c, i) => {
           const keyAt = MORE.keys[i];
           const lit = tw(frame, keyAt - 6, keyAt + 6) * (1 - tw(frame, keyAt + 80, keyAt + 100));
@@ -199,19 +230,20 @@ export const More: React.FC = () => {
               <div
                 style={{
                   position: "absolute",
-                  left: XS[i] - CW / 2,
-                  top: TOP,
-                  width: CW,
+                  left: v ? 60 : XS[i] - CW / 2,
+                  top: v ? ROWS_V[i] : TOP,
+                  width: v ? 960 : CW,
+                  display: v ? "flex" : "block",
                   borderRadius: 34,
                   background: "#fff",
                   overflow: "hidden",
                   boxShadow: `0 0 0 1px rgba(20,26,38,.06), 0 30px 60px rgba(20,28,48,.12), 0 0 0 ${lit * 4}px rgba(36,94,234,.5)`,
                 }}
               >
-                <div style={{ position: "relative", height: ART_H, overflow: "hidden", background: "#eef0f4" }}>
+                <div style={{ position: "relative", flex: "none", width: CW, height: ART_H, overflow: "hidden", background: "#eef0f4" }}>
                   <c.Art frame={frame} />
                 </div>
-                <div style={{ padding: "26px 32px 30px", fontFamily: FONT }}>
+                <div style={{ padding: v ? "30px 30px" : "26px 32px 30px", fontFamily: FONT, flex: 1 }}>
                   <div style={{ fontSize: 44, fontWeight: 650, color: C.ink }}>
                     {c.zh}
                     <div style={{ fontSize: 24, fontWeight: 500, color: C.faint, marginTop: 2 }}>{c.en}</div>
@@ -223,9 +255,7 @@ export const More: React.FC = () => {
                       const press = tw(frame, d, d + 2) * (1 - tw(frame, d + 30 - j * 6, d + 36 - j * 6));
                       return <Keycap key={j} label={key} press={press} size={56} />;
                     })}
-                    {c.keys.length === 0 ? (
-                      <div style={{ fontSize: 24, color: C.faint }}>快捷键可以自己设 · or your own shortcut</div>
-                    ) : null}
+                    {c.keys.length === 0 ? <div style={{ fontSize: 24, color: C.faint }}>快捷键可以自己设 · or your own shortcut</div> : null}
                   </div>
                 </div>
               </div>

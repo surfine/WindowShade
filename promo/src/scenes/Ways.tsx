@@ -2,7 +2,7 @@ import React from "react";
 import { AbsoluteFill, useCurrentFrame } from "remotion";
 import { WAYS } from "../timeline";
 import { C, FONT, easeInOut, easeOut, easeRoll, mix, pop, tw } from "../theme";
-import { Caption, Canvas, Clicks, Glass, Lines, MacWindow, Rise, tiltIn } from "../ui";
+import { Caption, Canvas, Clicks, Glass, Lines, MacWindow, Rise, tiltIn, useVertical } from "../ui";
 
 // Three ways out of the way, side by side: close, minimize, roll up. Only the last one stays put.
 
@@ -11,6 +11,23 @@ const W = 520;
 const H = 340;
 const TOP = 350;
 const K = 1.3;
+
+// Where each of the three sits: side by side in 16:9, one per row in 9:16 (label on the right).
+const ROWS_V = [470, 930, 1390];
+const geo = (i: number, v: boolean) =>
+  v
+    ? {
+        x: 60,
+        top: ROWS_V[i],
+        label: { left: 620, top: ROWS_V[i] + 80, width: 420, align: "left" as const },
+        dock: { left: 620, top: ROWS_V[i] + 250 },
+      }
+    : {
+        x: COLS[i] - W / 2,
+        top: TOP,
+        label: { left: COLS[i] - 260, top: TOP + H + 44, width: 520, align: "center" as const },
+        dock: { left: COLS[i] - 150, top: TOP + H + 200 },
+      };
 
 const labels = [
   ["关掉", "Close", "窗口没了", "Gone"],
@@ -28,6 +45,7 @@ const Body: React.FC = () => (
 
 export const Ways: React.FC = () => {
   const frame = useCurrentFrame();
+  const v = useVertical();
   const focus = tw(frame, WAYS.focus, WAYS.focus + 80, 0, 1, easeInOut);
 
   // Close: shrink, blur, gone.
@@ -46,19 +64,21 @@ export const Ways: React.FC = () => {
       <Caption zh="只有一种，不用回头找。" en="Only one leaves it where it was." at={WAYS.focus} />
       <AbsoluteFill
         style={{
-          scale: String(mix(1, 1.32, focus)),
-          translate: `${mix(0, -(COLS[2] - 960) * 1.32, focus)}px ${mix(0, 40, focus)}px`,
+          scale: String(mix(1, v ? 1.08 : 1.32, focus)),
+          translate: v ? `0px ${mix(0, -460, focus)}px` : `${mix(0, -(COLS[2] - 960) * 1.32, focus)}px ${mix(0, 40, focus)}px`,
         }}
       >
-        {COLS.map((cx, i) => {
+        {COLS.map((_, i) => {
           const dim = i < 2 ? mix(1, 0.22, focus) : 1;
-          const x = cx - W / 2;
+          const g = geo(i, v);
+          const x = g.x;
+          const TOP = g.top;
           let style: React.CSSProperties = {};
           if (i === 0) style = { opacity: 1 - c, scale: String(1 - c * 0.14), filter: `blur(${c * 12}px)` };
           if (i === 1)
             style = {
               opacity: mz < 1 ? 1 : 0,
-              transformOrigin: `${cx}px ${TOP + H + 223}px`,
+              transformOrigin: `${g.dock.left + 150}px ${g.dock.top + 33}px`,
               transform: `translateY(${mz * 60}px) scale(${mix(1, 0.1, mz)}, ${mix(1, 0.06, Math.min(1, mz * 1.3))})`,
             };
           return (
@@ -79,19 +99,20 @@ export const Ways: React.FC = () => {
                         height: 14 * K + 8,
                         borderRadius: "50%",
                         boxShadow: `0 0 0 3px ${i === 0 ? "rgba(236,106,94,.5)" : "rgba(244,191,79,.6)"}`,
-                        opacity: tw(frame, (i === 0 ? WAYS.close : WAYS.minimize) - 10, (i === 0 ? WAYS.close : WAYS.minimize) - 4) *
+                        opacity:
+                          tw(frame, (i === 0 ? WAYS.close : WAYS.minimize) - 10, (i === 0 ? WAYS.close : WAYS.minimize) - 4) *
                           (1 - tw(frame, (i === 0 ? WAYS.close : WAYS.minimize) + 2, (i === 0 ? WAYS.close : WAYS.minimize) + 10)),
                         scale: String(lampPulse(i === 0 ? WAYS.close : WAYS.minimize)),
                       }}
                     />
                   ) : null}
                 </div>
-                {i === 2 ? <Clicks x={cx + 30} y={TOP + 18 * K} at={[WAYS.shade, WAYS.shade + 8]} /> : null}
+                {i === 2 ? <Clicks x={x + W / 2 + 30} y={TOP + 18 * K} at={[WAYS.shade, WAYS.shade + 8]} /> : null}
               </div>
               {i === 1 ? (
                 <Glass
                   radius={22}
-                  style={{ left: cx - 150, top: TOP + H + 200, width: 300, height: 66, opacity: dock, scale: String(0.9 + 0.1 * dock) }}
+                  style={{ left: g.dock.left, top: g.dock.top, width: 300, height: 66, opacity: dock, scale: String(0.9 + 0.1 * dock) }}
                 >
                   <div style={{ position: "relative", display: "flex", gap: 12, padding: 10, justifyContent: "center" }}>
                     {["#3d7bf7", "#f2a93b", "#48b865", C.blueSoft].map((bg, j) => (
@@ -111,7 +132,16 @@ export const Ways: React.FC = () => {
                   </div>
                 </Glass>
               ) : null}
-              <div style={{ position: "absolute", left: cx - 260, width: 520, top: TOP + H + 44, textAlign: "center", fontFamily: FONT }}>
+              <div
+                style={{
+                  position: "absolute",
+                  left: g.label.left,
+                  width: g.label.width,
+                  top: g.label.top,
+                  textAlign: g.label.align,
+                  fontFamily: FONT,
+                }}
+              >
                 <Rise at={WAYS.cards[i] + 20}>
                   <div style={{ fontSize: 50, fontWeight: 650, color: i === 2 && focus > 0 ? C.accent : C.ink }}>
                     {labels[i][0]} <span style={{ fontSize: 30, fontWeight: 500, color: C.faint }}>{labels[i][1]}</span>
