@@ -30,6 +30,10 @@ final class WindowBrowserContentView: NSView, NSSearchFieldDelegate, NSTextViewD
     var onCommit: (() -> Void)?
     /// 悬停或键盘选中项的紧凑操作条状态变化（供控制器决定是否保持面板）。
     var onHoverChanged: ((WindowKey, Bool) -> Void)?
+    /// 卡片被拖出面板（屏幕坐标）：开始时返回 false 表示这张卡片不能拖去排布，照旧按“拖出取消”。
+    var onDragBegan: ((WindowKey, NSPoint) -> Bool)?
+    var onDragMoved: ((WindowKey, NSPoint) -> Void)?
+    var onDragEnded: ((WindowKey, NSPoint) -> Void)?
 
     var params = WindowBrowserLayoutParams.standard
     /// 网格列数上限（控制器按 Dock 方向设置；左/右 Dock 为 2）。
@@ -61,7 +65,7 @@ final class WindowBrowserContentView: NSView, NSSearchFieldDelegate, NSTextViewD
     private let styleControl = NSSegmentedControl()
     private let scrollView = NSScrollView()
     private let collectionView = NSCollectionView()
-    private let collectionLayout = NSCollectionViewFlowLayout()
+    private let collectionLayout = WindowBrowserFlowLayout()
     private let tableView = NSTableView()
     private let tableColumn = NSTableColumn(identifier: NSUserInterfaceItemIdentifier("window"))
     private let detailPane = WindowBrowserSelectionDetailView()
@@ -102,6 +106,11 @@ final class WindowBrowserContentView: NSView, NSSearchFieldDelegate, NSTextViewD
     /// 诊断：当前真实存在的卡片视图数量（复用池里的空壳也算）。
     private(set) var createdItemCount = 0
     private var gridItemsSeen: Set<ObjectIdentifier> = []
+    /// 刚关掉、下一次刷新会移出列表的窗口（记下标记的时刻）：移出时卡片缩小淡出，其余卡片顺势补位。
+    private var departingMarks: [WindowKey: CFTimeInterval] = [:]
+    /// 诊断：做过几次退场动画；上一次更新有没有做（控制器据此让面板尺寸也走动画）。
+    private(set) var departureAnimationCount = 0
+    private(set) var lastUpdateAnimatedDeparture = false
 
     override init(frame frameRect: NSRect) {
         plan = WindowBrowserGeometry.contentPlan(
@@ -401,6 +410,7 @@ final class WindowBrowserContentView: NSView, NSSearchFieldDelegate, NSTextViewD
     // MARK: 数据源重建（ID 差异）
 
     private func rebuildItems() {
+        lastUpdateAnimatedDeparture = false
         let keys = records.map(\.key)
         let styleChanged = renderedStyle != style
         let isList = style == .list
@@ -437,12 +447,24 @@ final class WindowBrowserContentView: NSView, NSSearchFieldDelegate, NSTextViewD
             createdItemCount = 0
             gridItemsSeen.removeAll()
         } else if let diff = collectionDiff(from: previousKeys, to: keys) {
-            // 集合变化做 ID 差异更新：删除旧位置、插入新位置，其余单元保持原样。
-            collectionView.performBatchUpdates({
-                collectionView.deleteItems(at: Set(diff.removals))
-                collectionView.insertItems(at: Set(diff.insertions))
-            }, completionHandler: nil)
-            tableView.reloadData()
+            let removedKeys = diff.removals.compactMap { path in
+                previousKeys.indices.contains(path.item) ? previousKeys[path.item] : nil
+            }
+            departingMarks = WindowBrowserDepartureMotion.liveMarks(
+                departingMarks, now: CACurrentMediaTime(), listed: Set(previousKeys))
+            if WindowBrowserDepartureMotion.shouldAnimate(
+                removed: removedKeys, insertedCount: diff.insertions.count,
+                departing: Set(departingMarks.keys), styleChanged: false) {
+                animateDeparture(diff, isList: isList)
+            } else {
+                // 集合变化做 ID 差异更新：删除旧位置、插入新位置，其余单元保持原样。
+                collectionView.performBatchUpdates({
+                    collectionView.deleteItems(at: Set(diff.removals))
+                    collectionView.insertItems(at: Set(diff.insertions))
+                }, completionHandler: nil)
+                tableView.reloadData()
+            }
+            for key in removedKeys { departingMarks.removeValue(forKey: key) }
         } else {
             resizeDocumentViews()
             tableView.reloadData()
@@ -455,6 +477,78 @@ final class WindowBrowserContentView: NSView, NSSearchFieldDelegate, NSTextViewD
     private struct ItemDiff {
         let removals: [IndexPath]
         let insertions: [IndexPath]
+    }
+
+    // MARK: 关窗时卡片退场
+
+    /// 控制器确认这些窗口已经关掉（关窗动作完成、或在 WindowServer 里已经找不到）：
+    /// 它们接下来移出列表时做一次短暂退场。标记几秒后自动失效。
+    func markDeparting(_ keys: [WindowKey]) {
+        let now = CACurrentMediaTime()
+        for key in keys { departingMarks[key] = now }
+    }
+
+    /// 被移出的卡片缩小并淡出（约 0.16 秒），其余卡片同一段时间里滑到新位置；
+    /// 开启“减少动态效果”时不缩放、不滑动，整块列表 0.12 秒交叉淡化。
+    /// 动画期间不拦任何输入：再来一次刷新，集合视图会从当前位置接着排，不必等它做完。
+    private func animateDeparture(_ diff: ItemDiff, isList: Bool) {
+        lastUpdateAnimatedDeparture = true
+        departureAnimationCount += 1
+        let reduceMotion = SystemAppearanceCapabilities.current.reduceMotion
+        let duration = WindowBrowserDepartureMotion.duration(reduceMotion: reduceMotion)
+        if reduceMotion {
+            let dissolve = CATransition()
+            dissolve.type = .fade
+            dissolve.duration = duration
+            (isList ? tableView : collectionView).layer?.add(dissolve, forKey: "departure")
+            collectionView.performBatchUpdates({
+                collectionView.deleteItems(at: Set(diff.removals))
+            }, completionHandler: nil)
+            tableView.reloadData()
+            return
+        }
+        if isList {
+            // 网格藏着：立即同步；列表行淡出，下面的行往上补。
+            collectionView.performBatchUpdates({
+                collectionView.deleteItems(at: Set(diff.removals))
+            }, completionHandler: nil)
+            NSAnimationContext.runAnimationGroup { context in
+                context.duration = duration
+                tableView.removeRows(at: IndexSet(diff.removals.map(\.item)),
+                                     withAnimation: [.effectFade, .slideUp])
+            }
+            return
+        }
+        var frames: [IndexPath: NSRect] = [:]
+        for path in diff.removals {
+            guard let item = collectionView.item(at: path) else { continue }
+            frames[path] = item.view.frame
+            shrinkAway(item.view, duration: duration)
+        }
+        collectionLayout.departingFrames = frames
+        tableView.reloadData()
+        NSAnimationContext.runAnimationGroup { context in
+            context.duration = duration
+            context.timingFunction = CAMediaTimingFunction(name: .easeOut)
+            context.allowsImplicitAnimation = true
+            collectionView.animator().performBatchUpdates({
+                collectionView.deleteItems(at: Set(diff.removals))
+            }, completionHandler: { [weak self] _ in
+                self?.collectionLayout.departingFrames = [:]
+            })
+        }
+    }
+
+    /// 卡片以自己的中心缩小（淡出由集合视图的消失属性负责）。
+    private func shrinkAway(_ view: NSView, duration: TimeInterval) {
+        guard let layer = view.layer, layer.bounds.width > 1 else { return }
+        let shrink = CABasicAnimation(keyPath: "transform")
+        shrink.fromValue = CATransform3DIdentity
+        shrink.toValue = WindowBrowserDepartureMotion.centeredScale(
+            WindowBrowserDepartureMotion.scale, size: layer.bounds.size, anchor: layer.anchorPoint)
+        shrink.duration = duration
+        shrink.timingFunction = CAMediaTimingFunction(name: .easeIn)
+        layer.add(shrink, forKey: WindowBrowserFlowLayout.departureAnimationKey)
     }
 
     /// 集合差异：同一批条目里如果有键被替换，只更新受影响的单元，
@@ -1198,7 +1292,7 @@ final class WindowBrowserContentView: NSView, NSSearchFieldDelegate, NSTextViewD
             onPin?(key)
         case .close:
             onClose?(key)
-        case .minimize:
+        case .minimize, .fullScreen, .newWindow, .hideApp, .quitApp:
             onRequestAction?(key, action)
         }
     }
@@ -1217,5 +1311,37 @@ final class WindowBrowserContentView: NSView, NSSearchFieldDelegate, NSTextViewD
         select(key)
         onSelect?(key)
         onMoreActions?(key, sender)
+    }
+
+    func browserItem(_ sender: NSView, dragBegan key: WindowKey, at point: NSPoint) -> Bool {
+        onDragBegan?(key, point) ?? false
+    }
+
+    func browserItem(_ sender: NSView, dragMoved key: WindowKey, to point: NSPoint) {
+        onDragMoved?(key, point)
+    }
+
+    func browserItem(_ sender: NSView, dragEnded key: WindowKey, at point: NSPoint) {
+        onDragEnded?(key, point)
+    }
+}
+
+/// 网格用的流式布局：平时和系统的一模一样；有卡片退场时，给它一个“原地、透明”的终点，
+/// 集合视图就把它在原处淡出，而不是直接消失。
+final class WindowBrowserFlowLayout: NSCollectionViewFlowLayout {
+    static let departureAnimationKey = "window-browser-departure"
+    /// 这次批量删除里被移出的卡片（旧下标 → 旧位置）。
+    var departingFrames: [IndexPath: NSRect] = [:]
+
+    override func finalLayoutAttributesForDisappearingItem(at itemIndexPath: IndexPath)
+        -> NSCollectionViewLayoutAttributes? {
+        guard let frame = departingFrames[itemIndexPath] else {
+            return super.finalLayoutAttributesForDisappearingItem(at: itemIndexPath)
+        }
+        let attributes = NSCollectionViewLayoutAttributes(forItemWith: itemIndexPath)
+        attributes.frame = frame
+        attributes.alpha = 0
+        attributes.zIndex = -1
+        return attributes
     }
 }

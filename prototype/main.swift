@@ -1,5 +1,9 @@
 import Cocoa
 
+// 应用内更新：试跑新版（--self-check）要在建 App 之前返回；再读更新日志，记一条启动。见 App/UpdaterLaunch.swift。
+if let code = UpdateLaunch.handleEarlyArguments() { exit(code) }
+UpdateLaunch.recordLaunch()
+
 if CommandLine.arguments.contains(where:{$0.hasPrefix("--duo-") || $0.hasPrefix("--glance-")}) {
     let log=FileManager.default.currentDirectoryPath+"/.build/duo-tests/native-\(getpid()).log"
     try? FileManager.default.createDirectory(atPath:URL(fileURLWithPath:log).deletingLastPathComponent().path,withIntermediateDirectories:true)

@@ -72,19 +72,52 @@ final class SettingsShotProbe {
                 print("settings-shots: \(name)")
             }
         }
-        // 引导窗口（“使用说明…”）：新用户第一眼看到的就是它，浅深色各拍一张。
+        // 欢迎窗口（“欢迎使用 WindowShade…”）：新用户第一眼看到的就是它，三步在浅深色下各拍一组。
         for (appearanceName, appearance) in appearances {
             NSApp.appearance = NSAppearance(named: appearance)
             owner.showPermissionOnboarding()
             RunLoop.current.run(until: Date().addingTimeInterval(0.5))
-            guard let window = owner.onboardingWindow,
-                  let image = capture(window: window)
-                    ?? window.contentView.flatMap({ render(view: $0) }) else { continue }
-            let name = "onboarding-\(appearanceName).png"
-            if let data = NSBitmapImageRep(cgImage: image).representation(using: .png, properties: [:]) {
+            guard let window = owner.onboardingWindow else { continue }
+            // 全拍静帧，不等动画：有动画的一步按有刘海的屏摆出 WelcomeScene.shotMoments 里的那几刻（和“减少动态效果”同一条路径），
+            // 刘海里那两行字至少拍到一次，再按没有刘海的屏拍最后那一刻（胶囊浮出来说话），哪台 Mac 上拍都一样；
+            // 问来处的一步拍“还没选”和“选了 Windows”（只画出来，不存，探针不写用户偏好）；授权页拍一张。一步拍几张时按 a、b、c 编号。
+            let (welcome, plan): (WelcomeView?, [[WelcomePreview]]) = MainActor.assumeIsolated {
+                (owner.onboardingWelcomeView, WelcomeView.pages.indices.map { page in
+                    if page == WelcomeView.originPage {
+                        return [WelcomePreview(origin: .unanswered), WelcomePreview(origin: .windows)]
+                    }
+                    guard WelcomeView.pages[page].picture != nil, page < WelcomeScene.shotMoments.count else { return [WelcomePreview()] }
+                    let moments = WelcomeScene.shotMoments[page]
+                    return moments.map { WelcomePreview(moment: $0, notched: true) }
+                        + [WelcomePreview(moment: moments.last, notched: false)]
+                })
+            }
+            // 三步之前那一步（只在 App 不在“应用程序”里时出现）：按“第一次放进去”摆出来拍一张，编号 0。
+            MainActor.assumeIsolated { welcome?.showMove(UpdaterMoveStep(kind: .move)) }
+            RunLoop.current.run(until: Date().addingTimeInterval(0.4))
+            if let image = capture(window: window) ?? window.contentView.flatMap({ render(view: $0) }),
+               let data = NSBitmapImageRep(cgImage: image).representation(using: .png, properties: [:]) {
+                let name = "onboarding-\(appearanceName)-0.png"
                 try? data.write(to: outputDirectory.appendingPathComponent(name))
-                manifest += "\(name): \(Int(window.frame.width))x\(Int(window.frame.height))\n"
+                manifest += "\(name): \(Int(window.frame.width))x\(Int(window.frame.height)) 放进“应用程序”那一步\n"
                 print("settings-shots: \(name)")
+            }
+            for (page, shots) in plan.enumerated() {
+                for (index, shot) in shots.enumerated() {
+                    MainActor.assumeIsolated { welcome?.show(page, preview: shot) }
+                    RunLoop.current.run(until: Date().addingTimeInterval(0.4))
+                    guard let image = capture(window: window) ?? window.contentView.flatMap({ render(view: $0) }) else { continue }
+                    let letter = shots.count > 1 ? String(Array("abcdefgh")[index]) : ""
+                    let name = "onboarding-\(appearanceName)-\(page + 1)\(letter).png"
+                    if let data = NSBitmapImageRep(cgImage: image).representation(using: .png, properties: [:]) {
+                        try? data.write(to: outputDirectory.appendingPathComponent(name))
+                        let at = shot.moment.map { String(format: " at=%.2f", $0) } ?? ""
+                        let origin = shot.origin.map { " origin=\($0.rawValue)（只画出来，没存）" } ?? ""
+                        let notch = shot.notched.map { $0 ? " notch=yes" : " notch=no（没有刘海的屏）" } ?? ""
+                        manifest += "\(name): \(Int(window.frame.width))x\(Int(window.frame.height))\(at)\(notch)\(origin)\n"
+                        print("settings-shots: \(name)")
+                    }
+                }
             }
             // orderOut 而不是 close：关闭会把“看过引导”写进偏好，探针不写用户偏好。
             window.orderOut(nil)

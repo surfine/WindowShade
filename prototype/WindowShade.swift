@@ -213,7 +213,12 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSMenuDelegate {
     var isUpdatingMenuFromDelegate = false
     private var pinnedPreviewFocusMonitor: Any?
     private var pinnedPreviewTargetRefreshWorkItem: DispatchWorkItem?
+    private var titlebarPrefetchInFlight = false
+    private var titlebarPrefetchGeneration: UInt64 = 0
     var spaceRefreshWorkItem: DispatchWorkItem?
+    /// 上一次看到的显示器与各屏可用区域，用来分辨“真的换了屏”和“只是菜单栏、Dock 变了”。
+    var lastDisplayLayout = DisplayLayout(screens: [])
+    var lastVisibleFrames: [CGRect] = []
     private var appNapActivity: NSObjectProtocol?
     weak var onboardingPermissionStack: NSStackView?
     weak var onboardingProgressLabel: NSTextField?
@@ -265,7 +270,22 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSMenuDelegate {
     lazy var glance = MainActor.assumeIsolated { GlanceController(owner: self) }
     /// 带到每张桌面：窗口留在自己的桌面，别的桌面上看得到它的卷帘条。
     lazy var carry = MainActor.assumeIsolated { CarryController(owner: self) }
+    lazy var slideOver = MainActor.assumeIsolated { SlideOverController(owner: self) }
+    lazy var notch = MainActor.assumeIsolated { NotchController(owner: self) }
+    lazy var launchpad = MainActor.assumeIsolated { LaunchpadController(owner: self) }
     lazy var gestures = MainActor.assumeIsolated { TrackpadGestureController(owner: self) }
+    /// 再点一下 Dock 图标让开这个 App（见 DockClickHide.swift）。
+    lazy var dockClick = MainActor.assumeIsolated { DockClickHide() }
+    /// 按住 ⌥（或 ⌘）连按 Tab 按窗口切换（见 WindowSwitcher.swift）。
+    lazy var switcher = MainActor.assumeIsolated { WindowSwitcher(owner: self) }
+    /// Dock 留在一块屏上（见 DockLock.swift）。
+    lazy var dockLock = MainActor.assumeIsolated { DockLock() }
+    /// 分屏：两扇拼满一块屏时中间的把手（见 SplitView.swift）。
+    lazy var splitView = MainActor.assumeIsolated { SplitViewController(owner: self) }
+    /// 画中画：任意窗口缩成实时画面浮在角落（见 PictureInPicture.swift）。
+    lazy var pip = MainActor.assumeIsolated { PictureInPictureController(owner: self) }
+    /// 调度中心里按 ⌘W 关窗、⌘Q 退出 App（见 MissionControlKeys.swift）。
+    lazy var missionControlKeys = MainActor.assumeIsolated { MissionControlKeys() }
     lazy var pinnedPreviewController = PinnedPreviewController(
         notice: { [weak self] message, log in
             self?.quietNotice(message, log: log)
@@ -276,6 +296,11 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSMenuDelegate {
     )
 
     func applicationDidFinishLaunching(_ note: Notification) {
+        // 新装还是升级：赶在这一次启动写下任何设置之前认一次、存下来（声音迁移每次启动都写，清理收起记录会删键；
+        // 见 App/GlobalShortcuts.swift 的 InstallHistory）。
+        _ = InstallHistory.settled(in: .standard)
+        // 量耗电等场合另开一份：刘海不播报、不教，也不把“教过”写进设置。
+        if CommandLine.arguments.contains("--no-teach") { NotchController.probeSilence = true }
         // 代理应用也要有标准主菜单：文本编辑快捷键与 ⌘W 都靠它的 key equivalent 派发。
         installStandardMainMenu()
         duoController.start(owner: self)
@@ -309,6 +334,21 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSMenuDelegate {
             MainActor.assumeIsolated { gestures.refreshMonitors() }
         }
         MainActor.assumeIsolated { installStripKeyForwarding() }
+        MainActor.assumeIsolated { SlideOverRecovery.recoverAbandoned(); notch.install() }
+        // 卡住时刘海开口：跟着来处、刘海和教学的开关装上或拆掉只听的钩子（见 App/HabitContext.swift）。
+        MainActor.assumeIsolated { HabitCenter.shared.start(owner: self) }
+        MainActor.assumeIsolated { launchpad.warmUp() }
+        MainActor.assumeIsolated {
+            dockClick.onHidden = { [weak self] app in
+                guard let self else { return }
+                if !self.notch.teach(.dockHide) {
+                    self.notch.announce("已让开 \(app.localizedName ?? "它")", detail: "再点一下 Dock 图标就回来", tone: .done)
+                }
+            }
+            dockClick.start(); switcher.applySetting(); dockLock.apply(); splitView.start()
+            missionControlKeys.applySetting()
+        }
+        ArrangeGap.points = CGFloat(UserDefaults.standard.double(forKey: ArrangeGap.defaultsKey))
         logIfSlow("launch pinTracking", threshold: 0.1) { setupPinnedPreviewFocusTracking() }
         logIfSlow("launch windowBrowser", threshold: 0.1) {
             let browser = WindowBrowserController(owner: self)
@@ -327,6 +367,8 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSMenuDelegate {
                                                           selector: #selector(activeSpaceChanged(_:)),
                                                           name: NSWorkspace.activeSpaceDidChangeNotification,
                                                           object: nil)
+        lastDisplayLayout = .current()
+        lastVisibleFrames = NSScreen.screens.map(\.visibleFrame)
         NotificationCenter.default.addObserver(self,
                                                selector: #selector(screenParametersChanged(_:)),
                                                name: NSApplication.didChangeScreenParametersNotification,
@@ -348,6 +390,16 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSMenuDelegate {
             self?.systemAppearanceOptionsChanged(
                 Notification(name: NSWorkspace.accessibilityDisplayOptionsDidChangeNotification))
         }
+        // 应用内更新（App/Updater.swift）：最后启动；装好新版本后两项授权没了，翻到欢迎窗口的授权页请他再打开一次。
+        MainActor.assumeIsolated {
+            UpdaterController.shared.onPermissionsLostAfterUpdate = { [weak self] in self?.showPermissionsAgainAfterUpdate() }
+            UpdaterController.shared.start()
+        }
+    }
+
+    /// 更新下载、解包、把关的途中退出：先否决、确认 Sparkle 停了再放行（App/Updater.swift）；平时直接退出。
+    func applicationShouldTerminate(_ sender: NSApplication) -> NSApplication.TerminateReply {
+        MainActor.assumeIsolated { UpdaterController.shared.applicationShouldTerminate() }
     }
 
     /// 辅助功能外观变化：只刷新材质/边线/阴影，不动窗口状态、不触发任何捕获。
@@ -426,18 +478,32 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSMenuDelegate {
     private func setupPinnedPreviewFocusTracking() {
         refreshPinnedPreviewTarget(reason: "launch")
         pinnedPreviewFocusMonitor = NSEvent.addGlobalMonitorForEvents(matching: [.leftMouseDown, .rightMouseDown, .otherMouseDown]) { [weak self] event in
-            // 标题栏带内的首次按下就预热窗口枚举缓存（监视器回调是异步投递，
-            // 不在 tap 关键路径上）：双击折叠的第二下落地时 SCShareableContent
-            // 通常已就绪，卷帘条"点了要等"的感知延迟显著缩短。
-            if #available(macOS 14.0, *), event.type == .leftMouseDown,
-               self?.titlebarDoubleClickEnabled == true {
-                let mouse = NSEvent.mouseLocation
-                let cgPoint = CGPoint(x: mouse.x, y: coordinateBaselineY() - mouse.y)
-                if pointMayLieInTitlebarBand(cgPoint) {
-                    Task { @MainActor in await ShareableContentCache.shared.prefetch() }
-                }
+            // NSEvent 全局 monitor 仍在主线程回调；连 WindowServer 的标题栏预过滤
+            // 也可能很慢。预热整体放到后台，连续点击至多留一份工作，过时结果直接丢弃。
+            if #available(macOS 14.0, *), event.type == .leftMouseDown {
+                self?.scheduleTitlebarPrefetch()
             }
             self?.schedulePinnedPreviewTargetRefresh()
+        }
+    }
+
+    @available(macOS 14.0, *)
+    private func scheduleTitlebarPrefetch() {
+        titlebarPrefetchGeneration &+= 1
+        guard titlebarDoubleClickEnabled, !titlebarPrefetchInFlight else { return }
+        titlebarPrefetchInFlight = true
+        let generation = titlebarPrefetchGeneration
+        let mouse = NSEvent.mouseLocation
+        let point = CGPoint(x: mouse.x, y: coordinateBaselineY() - mouse.y)
+        DispatchQueue.global(qos: .utility).async { [weak self] in
+            let mayBeTitlebar = pointMayLieInTitlebarBand(point)
+            DispatchQueue.main.async { [weak self] in
+                guard let self else { return }
+                self.titlebarPrefetchInFlight = false
+                guard self.titlebarPrefetchGeneration == generation,
+                      self.titlebarDoubleClickEnabled, mayBeTitlebar else { return }
+                Task { @MainActor in await ShareableContentCache.shared.prefetch() }
+            }
         }
     }
 
@@ -713,6 +779,9 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSMenuDelegate {
 
 
     func applicationWillTerminate(_ note: Notification) {
+        MainActor.assumeIsolated { UpdaterController.shared.applicationWillTerminate() }
+        MainActor.assumeIsolated { pip.shutdown(); slideOver.shutdown() }
+        MainActor.assumeIsolated { HabitCenter.shared.stop() }
         duoController.stop()
         windowBrowserController?.stop()
         restoreAll()
@@ -808,9 +877,17 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSMenuDelegate {
                                           options: .defaultTap, eventsOfInterest: mask,
                                           callback: eventTapCallback, userInfo: nil) else { return false }
         eventTap = tap
-        let src = CFMachPortCreateRunLoopSource(kCFAllocatorDefault, tap, 0)
-        CFRunLoopAddSource(CFRunLoopGetCurrent(), src, .commonModes)
-        CGEvent.tapEnable(tap: tap, enable: true)
+        mouseDownTapPort = tap
+        // 钩子跑在自己的线程上：主线程卡住时，全系统的单击不用等它（见 eventTapCallback）。
+        let thread = Thread {
+            let src = CFMachPortCreateRunLoopSource(kCFAllocatorDefault, tap, 0)
+            CFRunLoopAddSource(CFRunLoopGetCurrent(), src, .commonModes)
+            CGEvent.tapEnable(tap: tap, enable: true)
+            CFRunLoopRun()
+        }
+        thread.name = "WindowShade.mouse-down-tap"
+        thread.qualityOfService = .userInteractive
+        thread.start()
         return true
     }
 

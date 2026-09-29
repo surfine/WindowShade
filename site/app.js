@@ -283,135 +283,72 @@ if (laptop && lidRange && lidPlay) {
 }
 
 // Glance: preserve the crossing between the bar and card; touch and keyboard toggle it.
-// Title-bar gestures: scroll on the illustrated title bar and the window follows, as in the app.
-// deltaY > 0 means the content moves up (natural scrolling: fingers up) — that rolls the window up.
-const swipeDesk = document.querySelector('#swipe-desk');
-if (swipeDesk) {
-  const win = swipeDesk.querySelector('#swipe-win');
-  const bar = swipeDesk.querySelector('#swipe-bar');
-  const hud = swipeDesk.querySelector('#swipe-hud');
-  const hudTitle = swipeDesk.querySelector('#swipe-hud-title');
-  const hudFill = swipeDesk.querySelector('#swipe-hud-fill');
-  const stateText = document.querySelector('#swipe-state');
-  const buttons = [...document.querySelectorAll('[data-swipe]')];
-  const titles = JSON.parse(hud.dataset.titles);
-  const states = JSON.parse(stateText.dataset.states);
-  const ARM = 140;      // scroll distance for "let go and it happens"
-  const FOLLOW = .55;   // how far the window has moved at that point, as in the app
-  let state = 'normal';
-  let travel = 0;
-  let idle = null;
-  const actionFor = up => state === 'normal' ? (up ? 'shade' : 'fill')
-    : state === 'filled' ? (up ? 'restore' : null)
-    : (up ? null : 'expand');
-  const base = () => ({ roll: state === 'folded' ? 1 : 0, fill: state === 'filled' ? 1 : 0 });
-  function apply(roll, fill, animate) {
-    swipeDesk.classList.toggle('is-animating', animate);
-    win.style.setProperty('--roll', roll.toFixed(4));
-    win.style.setProperty('--fill', fill.toFixed(4));
+// Slide Over: drag the window's title bar and it follows 1:1 (toward the middle it drags like a rubber band);
+// on release, momentum is projected (WWDC18: (v/1000)·r/(1−r), r = 0.998) and the nearer resting place wins:
+// docked, or tucked past the edge. A spring (0.88 / 0.42, as in the app) carries on at the drag's speed.
+const slideDesk = document.querySelector('#slide-desk');
+if (slideDesk) {
+  const win = slideDesk.querySelector('#slide-win');
+  const bar = slideDesk.querySelector('#slide-bar');
+  const handle = slideDesk.querySelector('#slide-handle');
+  const toggle = document.querySelector('#slide-toggle');
+  const stateText = document.querySelector('#slide-state');
+  let x = 0, tucked = false, anim = 0;
+  const tuckedX = () => -(win.offsetLeft + win.offsetWidth - slideDesk.clientWidth * 0.006);
+  const rubber = (d, limit) => (d * limit * 0.55) / (limit + 0.55 * d);
+  const setX = v => { x = v; win.style.transform = `translateX(${v.toFixed(2)}px)`; };
+  function settle(nextTucked, velocity = 0) {
+    tucked = nextTucked;
+    slideDesk.classList.toggle('is-tucked', tucked);
+    handle.tabIndex = tucked ? 0 : -1;
+    toggle.textContent = tucked ? toggle.dataset.show : toggle.dataset.hide;
+    stateText.textContent = tucked ? stateText.dataset.tucked : stateText.dataset.docked;
+    const from = x, to = tucked ? tuckedX() : 0;
+    cancelAnimationFrame(anim);
+    if (reduceMotion.matches || Math.abs(to - from) < 0.5) { setX(to); return; }
+    // Spring with initial velocity (px/s) handed over from the drag.
+    const w = (2 * Math.PI) / 0.42, z = 0.88, wd = w * Math.sqrt(1 - z * z);
+    const v0 = velocity / (to - from);
+    const start = performance.now();
+    const step = now => {
+      const t = (now - start) / 1000;
+      const p = 1 - Math.exp(-z * w * t) * (Math.cos(wd * t) + ((z * w - v0) / wd) * Math.sin(wd * t));
+      setX(from + (to - from) * p);
+      if (t < 1.1) anim = requestAnimationFrame(step); else setX(to);
+    };
+    anim = requestAnimationFrame(step);
   }
-  function show(action, progress) {
-    const moved = Math.min(1, progress * FOLLOW);
-    let { roll, fill } = base();
-    if (action === 'shade') roll = moved;
-    if (action === 'expand') roll = 1 - moved;
-    if (action === 'fill') fill = moved;
-    if (action === 'restore') fill = 1 - moved;
-    apply(roll, fill, false);
-    hud.classList.toggle('is-visible', Boolean(action));
-    hud.classList.toggle('is-armed', Boolean(action) && progress >= 1);
-    if (action) {
-      hudTitle.textContent = titles[action];
-      hudFill.style.width = `${Math.min(1, progress) * 100}%`;
-    }
-  }
-  function refreshButtons() {
-    for (const button of buttons) button.disabled = !actionFor(button.dataset.swipe === 'up');
-  }
-  function finish() {
-    const action = actionFor(travel > 0);
-    const done = action && Math.abs(travel) / ARM >= 1;
-    travel = 0;
-    hud.classList.remove('is-visible', 'is-armed');
-    if (done) {
-      state = action === 'shade' ? 'folded' : action === 'fill' ? 'filled' : 'normal';
-      swipeDesk.dataset.state = state;
-      stateText.textContent = states[state];
-    } else if (action) {
-      stateText.textContent = states.canceled;
-    }
-    const { roll, fill } = base();
-    apply(roll, fill, true);
-    refreshButtons();
-  }
-  bar.addEventListener('wheel', event => {
-    event.preventDefault();
-    const scale = event.deltaMode === 1 ? 40 : event.deltaMode === 2 ? 400 : 1;
-    travel += event.deltaY * scale;
-    show(actionFor(travel > 0), Math.abs(travel) / ARM);
-    clearTimeout(idle);
-    idle = setTimeout(finish, 180);
-  }, { passive: false });
-  const fingers = swipeDesk.querySelector('.swipe-fingers');
-  let demoRun = 0;
-  // One gesture, played for the reader: the fingertips move the way two fingers would,
-  // the window follows, and it settles once the track has filled.
-  function playGesture(up) {
-    const action = actionFor(up);
-    if (!action) return Promise.resolve();
-    if (reduceMotion.matches) {
-      travel = up ? ARM : -ARM;
-      finish();
-      return Promise.resolve();
-    }
-    const run = demoRun;
-    return new Promise(resolve => {
-      const start = performance.now();
-      fingers.classList.add('is-on');
-      const step = now => {
-        if (run !== demoRun) { fingers.classList.remove('is-on'); resolve(); return; }
-        const t = Math.min(1, (now - start) / 620);
-        const progress = 1.25 * (1 - (1 - t) ** 3);
-        travel = (up ? 1 : -1) * progress * ARM;
-        fingers.style.setProperty('--dy', ((up ? -1 : 1) * progress * 2.4).toFixed(3));
-        show(action, progress);
-        if (t < 1) { requestAnimationFrame(step); return; }
-        setTimeout(() => {
-          fingers.classList.remove('is-on');
-          fingers.style.setProperty('--dy', '0');
-          finish();
-          setTimeout(resolve, 520);
-        }, 160);
-      };
-      requestAnimationFrame(step);
-    });
-  }
-  const stopDemo = () => { demoRun += 1; };
-  bar.addEventListener('wheel', stopDemo, { passive: true });
-  for (const button of buttons) {
-    button.addEventListener('click', () => {
-      stopDemo();
-      playGesture(button.dataset.swipe === 'up');
-    });
-  }
-  // The first time the illustration is on screen, play the ladder once: roll up, unroll,
-  // fill, and back. Any scroll or click on it stops the demo and hands it to the reader.
-  if ('IntersectionObserver' in window && !reduceMotion.matches) {
-    const seen = new IntersectionObserver(async entries => {
-      if (!entries.some(entry => entry.isIntersecting)) return;
-      seen.disconnect();
-      const run = demoRun;
-      await new Promise(r => setTimeout(r, 500));
-      for (const up of [true, false, false, true]) {
-        if (run !== demoRun) return;
-        await playGesture(up);
-        await new Promise(r => setTimeout(r, 380));
-      }
-      if (run === demoRun) stateText.textContent = states.ready;
-    }, { threshold: .6 });
-    seen.observe(swipeDesk);
-  }
-  refreshButtons();
+  toggle.addEventListener('click', () => settle(!tucked));
+  handle.addEventListener('click', () => settle(false));
+  let drag = null;
+  bar.addEventListener('pointerdown', e => {
+    if (e.button !== 0) return;
+    cancelAnimationFrame(anim);
+    bar.setPointerCapture(e.pointerId);
+    drag = { start: e.clientX, from: x, samples: [[e.timeStamp, x]] };
+    win.classList.add('is-dragging');
+  });
+  bar.addEventListener('pointermove', e => {
+    if (!drag) return;
+    const raw = drag.from + (e.clientX - drag.start);
+    const limit = tuckedX();
+    const v = raw > 0 ? rubber(raw, 40) : raw < limit ? limit - rubber(limit - raw, 20) : raw;
+    setX(v);
+    drag.samples.push([e.timeStamp, v]);
+    if (drag.samples.length > 6) drag.samples.shift();
+  });
+  const release = e => {
+    if (!drag) return;
+    const [t0, x0] = drag.samples[0], [t1, x1] = drag.samples[drag.samples.length - 1];
+    const velocity = t1 - t0 > 8 ? ((x1 - x0) / (t1 - t0)) * 1000 : 0;
+    drag = null;
+    win.classList.remove('is-dragging');
+    const projected = x + (velocity / 1000) * 0.998 / (1 - 0.998);
+    settle(projected < tuckedX() / 2, e.type === 'pointercancel' ? 0 : velocity);
+  };
+  bar.addEventListener('pointerup', release);
+  bar.addEventListener('pointercancel', release);
+  addEventListener('resize', () => { if (tucked) setX(tuckedX()); });
 }
 
 const glanceDesk = document.querySelector('.stage-glance');

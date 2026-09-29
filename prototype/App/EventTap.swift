@@ -1,4 +1,4 @@
-// 全局快捷键与事件 tap：注册 ⌃⌘ 快捷键、标题栏双击/三击处理、
+// 全局快捷键与事件 tap：注册全局快捷键、标题栏双击/三击处理、
 // 事件 tap 生命周期与退避重启用。作为 AppDelegate 扩展实现。
 
 import Cocoa
@@ -7,7 +7,13 @@ import Carbon.HIToolbox
 extension AppDelegate {
     func registerHotKey() {
         installHotKeyHandler()
+        // 新装还是升级：启动第一步已经认过、存下了（见 GlobalShortcuts.swift 的 InstallHistory），这里只读出来记一笔。
+        // 新装的 ⌃⌘ 一个都不占，升级上来的照他原来在用的。
+        let history = GlobalShortcutSettings.history
+        wlog("hotkey: install history=\(history) factory ⌃⌘ shortcuts \(history.hadFactoryShortcuts ? "kept" : "off")")
         registerGlobalShortcuts()
+        // Dock 图标上的两指上下滑（默认关，见 DockSwipe.swift）：开着的话随启动装上监听；设置里开关时再装、拆。
+        MainActor.assumeIsolated { DockSwipeController.shared.apply(owner: self) }
     }
 
     private func installHotKeyHandler() {
@@ -46,8 +52,8 @@ extension AppDelegate {
                 failed[id] = (name, status)
             }
         }
-        for shortcut in [GlobalShortcut.toggleShade, .arrangeOrFocus, .pinPreview, .carry,
-                         .stepSmaller, .stepLarger, .leftHalf, .rightHalf] {
+        // 窗口浏览的快捷键由窗口浏览自己注册。
+        for shortcut in GlobalShortcut.allCases where shortcut != .windowBrowser {
             guard let hotKey = GlobalShortcutSettings.hotKey(for: shortcut) else { continue }
             register(hotKey, id: shortcut.hotKeyID,
                      name: WindowBrowserSettings.displayName(for: hotKey))
@@ -61,12 +67,21 @@ extension AppDelegate {
         }
         unavailableHotKeyIDs = Set(failed.keys)
         if !failed.isEmpty {
-            let numbered = failed.keys.filter { $0 >= 101 }
-            var names = failed.filter { $0.key < 101 }.sorted { $0.key < $1.key }.map(\.value.name)
-            names += numbered.count == 9
-                ? [GlobalShortcutSettings.numberedDisplayName]
-                : numbered.sorted().compactMap { failed[$0]?.name }
-            quietNotice("\(names.joined(separator: "、")) 被其他应用占用",
+            func names(_ group: [UInt32: (name: String, status: OSStatus)]) -> String {
+                let numbered = group.keys.filter { $0 >= 101 }
+                var names = group.filter { $0.key < 101 }.sorted { $0.key < $1.key }.map(\.value.name)
+                names += numbered.count == 9
+                    ? [GlobalShortcutSettings.numberedDisplayName]
+                    : numbered.sorted().compactMap { group[$0]?.name }
+                return names.joined(separator: "、")
+            }
+            // 同一个组合在本应用里注册第二次会得到 eventHotKeyExistsErr：占着它的是我们自己的另一个快捷键，不是别的应用。
+            let duplicated = failed.filter { $0.value.status == OSStatus(eventHotKeyExistsErr) }
+            let taken = failed.filter { $0.value.status != OSStatus(eventHotKeyExistsErr) }
+            var parts: [String] = []
+            if !taken.isEmpty { parts.append("\(names(taken)) 被其他应用占用") }
+            if !duplicated.isEmpty { parts.append("\(names(duplicated)) 被 WindowShade 里的另一个快捷键占用") }
+            quietNotice(parts.joined(separator: "；"),
                         log: "hotkey: registration failed "
                             + failed.sorted { $0.key < $1.key }.map { "\($0.key)=\($0.value.status)" }
                                 .joined(separator: ","))
@@ -105,7 +120,8 @@ extension AppDelegate {
         guard status == noErr, let ref else {
             unavailableHotKeyIDs.insert(GlobalShortcut.windowBrowser.hotKeyID)
             let name = WindowBrowserSettings.displayName(for: config)
-            quietNotice("快捷键 \(name) 注册失败",
+            quietNotice(status == OSStatus(eventHotKeyExistsErr)
+                            ? "\(name) 被 WindowShade 里的另一个快捷键占用" : "快捷键 \(name) 注册失败",
                         log: "window-browser: hotkey registration failed status=\(status)")
             return false
         }
@@ -134,12 +150,49 @@ extension AppDelegate {
             pinnedPreviewController.pinCurrentTargetPreview()
             return
         }
+        if id == GlobalShortcut.pictureInPicture.hotKeyID {
+            MainActor.assumeIsolated { pip.toggleCurrentWindow() }
+            return
+        }
         if id == 4 {
             windowBrowserController?.toggleKeyboardPanel()
             return
         }
         if id == GlobalShortcut.carry.hotKeyID {
             MainActor.assumeIsolated { carry.toggleCurrentWindow() }
+            return
+        }
+        if id == GlobalShortcut.slideOver.hotKeyID {
+            MainActor.assumeIsolated { slideOver.toggleCurrentWindow() }
+            return
+        }
+        if id == GlobalShortcut.suspendPins.hotKeyID {
+            pinnedPreviewController.toggleSuspendAll()
+            rebuildMenu()
+            return
+        }
+        if id == GlobalShortcut.launchpad.hotKeyID {
+            MainActor.assumeIsolated { launchpad.toggle() }
+            return
+        }
+        if id == GlobalShortcut.magicTile.hotKeyID {
+            MainActor.assumeIsolated { gestures.magicTile() }
+            return
+        }
+        if id == GlobalShortcut.nextDisplay.hotKeyID {
+            MainActor.assumeIsolated { _ = gestures.moveToNextDisplay() }
+            return
+        }
+        if id == GlobalShortcut.previousDisplay.hotKeyID {
+            MainActor.assumeIsolated { _ = gestures.moveToNextDisplay(backward: true) }
+            return
+        }
+        if let action = GlobalShortcut.allCases.first(where: { $0.hotKeyID == id })?.placement {
+            MainActor.assumeIsolated { gestures.keyPlace(action) }
+            return
+        }
+        if id == GlobalShortcut.tuckAll.hotKeyID {
+            MainActor.assumeIsolated { _ = notch.tuckAll() }
             return
         }
         // 排布这一组：和手势同向，往上变小、往下变大。
@@ -571,6 +624,8 @@ extension AppDelegate {
                 unshade(id)
             } else {
                 let options = focusRejoinEntries[id] != nil ? focusShadeOptions : nil
+                // 收起了就是顺利：刘海不开口（docs/direction.md，顺利的时候一声不吐）。
+                // 想要的其实是铺满的人，由卡住时的提示接（HabitContext 的双击标题栏那一条）。
                 shade(win, id, options: options, trustElement: true)
             }
         }

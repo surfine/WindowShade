@@ -101,6 +101,10 @@ final class WindowStreamCapture: NSObject, SCStreamDelegate, SCStreamOutput {
     // 流被系统异常终止（源窗口变化、系统过渡等）时回调；由 PinnedPreviewController
     // 决定刷新 SCWindow、有限次数重启或结束会话。
     var onUnexpectedStop: ((Error) -> Void)?
+    /// 画中画：按画中画自己的小尺寸出画面（像素），可以只截窗口里的一块（窗口自己的坐标，点，左上角为原点）。
+    /// 只有画中画设它；置顶、侧拉、窗口浏览不设，行为不变。
+    private var pipOutput: (pixels: CGSize, source: CGRect?)?
+    private let defaultSourceRect = SCStreamConfiguration().sourceRect
 
     init(preview: Bool = false) {
         isPreviewStream = preview
@@ -288,6 +292,23 @@ final class WindowStreamCapture: NSObject, SCStreamDelegate, SCStreamOutput {
         } else {
             configure(width: window.frame.width, height: window.frame.height, display: display)
         }
+        applyPictureInPictureOutput()
+    }
+
+    /// 画中画改了大小或“只看一块”：下一帧起按新的尺寸和范围出画面。
+    func setPictureInPictureOutput(pixels: CGSize, source: CGRect?) {
+        pipOutput = (pixels, source)
+        applyPictureInPictureOutput()
+        stream?.updateConfiguration(configuration) { error in
+            if let error { wlog("pip: capture update failed \(error.localizedDescription)") }
+        }
+    }
+
+    private func applyPictureInPictureOutput() {
+        guard let pip = pipOutput else { return }
+        configuration.width = max(1, Int(pip.pixels.width.rounded()))
+        configuration.height = max(1, Int(pip.pixels.height.rounded()))
+        configuration.sourceRect = pip.source ?? defaultSourceRect
     }
 
     private func configure(width: CGFloat, height: CGFloat, display: SCDisplay?) {

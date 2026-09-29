@@ -22,9 +22,42 @@ extension AppDelegate {
         MainActor.assumeIsolated { carry.toggleCurrentWindow() }
     }
 
+@objc func toggleLaunchpadAction() {
+        MainActor.assumeIsolated { launchpad.toggle() }
+    }
+
+    @objc func magicTileAction() {
+        MainActor.assumeIsolated { gestures.magicTile() }
+    }
+
+    @objc func tuckAllAction() {
+        MainActor.assumeIsolated { _ = notch.tuckAll() }
+    }
+
+    @objc func nextDisplayAction() {
+        MainActor.assumeIsolated { _ = gestures.moveToNextDisplay() }
+    }
+
+    @objc func pictureInPictureAction() {
+        MainActor.assumeIsolated { pip.toggleCurrentWindow() }
+    }
+
+    @objc func toggleSlideOverAction() {
+        MainActor.assumeIsolated { slideOver.toggleCurrentWindow() }
+    }
+
+@objc func exitSlideOverAction() {
+        MainActor.assumeIsolated { slideOver.exit(reason: "menu") }
+    }
+
 @objc func cancelPinnedPreviewMenuItem(_ sender: NSMenuItem) {
         guard let number = sender.representedObject as? NSNumber else { return }
         pinnedPreviewController.stopPreviewFromMenu(id: CGWindowID(number.uint32Value))
+        rebuildMenu()
+    }
+
+@objc func toggleSuspendPinnedPreviewsAction() {
+        pinnedPreviewController.toggleSuspendAll()
         rebuildMenu()
     }
 
@@ -62,6 +95,14 @@ extension AppDelegate {
 
     func quietNotice(_ message: String, log: String? = nil) {
         wlog(log ?? "notice: \(message)")
+        // 在刘海上说（灵动岛那样），人一眼看得到；刘海关着、正展开着时才退回菜单栏标题。
+        let tone = Self.noticeTone(message)
+        let needsPermission = message.contains("权限")
+        let spoken = MainActor.assumeIsolated {
+            notch.announce(message, detail: needsPermission ? "点一下打开设置" : "", tone: tone,
+                           onClick: needsPermission ? { [weak self] in self?.showPermissionOnboardingIfNeeded(force: true) } : nil)
+        }
+        if spoken { return }
         statusNoticeWorkItem?.cancel()
         // 菜单栏标题保持短小（完整文案在 tooltip 与可访问性值里），
         // 否则一句长提示会把状态栏条挤得很宽，顶开旁边的菜单栏项目。
@@ -76,6 +117,14 @@ extension AppDelegate {
         statusNoticeWorkItem = work
         DispatchQueue.main.asyncAfter(deadline: .now() + 1.4, execute: work)
     }
+
+/// 提示的语气：“已……”是做成了；说做不了、缺什么的是出了问题；其余是说明。
+static func noticeTone(_ message: String) -> NotchPanel.Tone {
+    if message.hasPrefix("已") { return .done }
+    let problems = ["不能", "没有", "没能", "失败", "未完成", "不支持", "需要", "暂时", "无法", "占用", "打不开", "关着",
+                    "没跟上", "没有跟上", "被保留", "存不下", "取不到", "不可用", "只有"]
+    return problems.contains(where: message.contains) ? .problem : .info
+}
 
 /// 系统标准“关于”面板 + 一句用途说明与许可信息（代理应用从状态栏菜单进入）。
 @objc func showAboutPanel() {
@@ -137,18 +186,43 @@ extension AppDelegate {
         trigger.widthAnchor.constraint(equalTo: stack.widthAnchor).isActive = true
         stack.setCustomSpacing(18, after: trigger)
 
-        let appearanceSeg = NSSegmentedControl(labels: ["跟原来一样", "统一标题栏"],
-                                                trackingMode: .selectOne,
-                                                target: self,
-                                                action: #selector(prefSelectAppearanceSegment(_:)))
-        appearanceSeg.selectedSegment = appearanceMode == .proxyTitleBar ? 1 : 0
+        let notchCard = makeUnifiedSettingsCard([
+            makeUnifiedToggleRow(name: "收进刘海", subtitle: "朝刘海甩一下标题栏，窗口就收进刘海；指针停在刘海上，点一下放回",
+                                 isOn: NotchController.isEnabled, action: #selector(prefToggleNotch(_:))),
+            makeUnifiedToggleRow(name: "有变化时提醒", subtitle: "收起的窗口标题变了，比如编译完成，刘海会短暂展开告诉你",
+                                 isOn: NotchController.alertsEnabled, action: #selector(prefToggleNotchAlerts(_:))),
+            // 欢迎窗口第二步问的那一句，在这里能改；没答时一段都不选。
+            makeUnifiedControlRow(name: "之前常用", subtitle: "卡住时，刘海按你原来的习惯提示 Mac 上怎么做",
+                                  control: SwitcherOriginControl.make()),
+        ])
+        stack.addArrangedSubview(makePrefGroupLabel("刘海"))
+        stack.addArrangedSubview(notchCard)
+        notchCard.widthAnchor.constraint(equalTo: stack.widthAnchor).isActive = true
+        stack.setCustomSpacing(18, after: notchCard)
+
+        let gapSeg = NSSegmentedControl(labels: ["不留", "窄", "宽"], trackingMode: .selectOne,
+                                        target: self, action: #selector(prefSelectArrangeGap(_:)))
+        gapSeg.selectedSegment = ArrangeGap.choices.firstIndex(of: ArrangeGap.points) ?? 0
+        let arrangeCard = makeUnifiedSettingsCard([
+            makeUnifiedControlRow(name: "窗口之间留缝",
+                                  subtitle: "半屏、四角、网格、魔法平铺、卷轴排好的窗口之间和屏幕边留一道缝",
+                                  control: gapSeg),
+            makeUnifiedToggleRow(name: "分屏把手",
+                                 subtitle: "两扇窗口拼满一块屏时，中间出现一根小竖条：拖它两扇一起变，推到屏幕边那一扇进侧拉",
+                                 isOn: SplitViewController.isEnabled, action: #selector(prefToggleSplitDivider(_:))),
+        ])
+        stack.addArrangedSubview(makePrefGroupLabel("排布"))
+        stack.addArrangedSubview(arrangeCard)
+        arrangeCard.widthAnchor.constraint(equalTo: stack.widthAnchor).isActive = true
+        stack.setCustomSpacing(18, after: arrangeCard)
+
         stack.addArrangedSubview(makePrefGroupLabel("外观"))
+        let collapseRows = makeCollapseAppearanceRows()   // [收起后的样子, 卷帘条/缩略图半透明]
         let appearance = makeUnifiedSettingsCard([
-            makeUnifiedControlRow(name: "收起后的样子", subtitle: "跟原来一样，或换成统一的标题栏", control: appearanceSeg),
+            collapseRows[0],
             makeUnifiedToggleRow(name: "浮在其他窗口上面", subtitle: "收起的窗口也不会被别的窗口挡住",
                                  isOn: floatingOnTop, action: #selector(prefToggleFloating(_:))),
-            makeUnifiedToggleRow(name: "卷帘条半透明", subtitle: "让它更透一些，能看到后面的内容",
-                                 isOn: translucent, action: #selector(prefToggleTranslucent(_:))),
+            collapseRows[1],
         ])
         stack.addArrangedSubview(appearance)
         appearance.widthAnchor.constraint(equalTo: stack.widthAnchor).isActive = true
@@ -191,6 +265,11 @@ extension AppDelegate {
         ])
         stack.addArrangedSubview(launch)
         launch.widthAnchor.constraint(equalTo: stack.widthAnchor).isActive = true
+        stack.setCustomSpacing(18, after: launch)
+        stack.addArrangedSubview(makePrefGroupLabel(UpdateCopy.settingsGroup))
+        let update = makeUnifiedSettingsCard(MainActor.assumeIsolated { UpdaterController.shared.makeSettingsRows() })
+        stack.addArrangedSubview(update)
+        update.widthAnchor.constraint(equalTo: stack.widthAnchor).isActive = true
         return root
     }
 
@@ -419,6 +498,14 @@ extension AppDelegate {
         rebuildMenu()
     }
 
+    @objc func prefToggleNotch(_ sender: NSSwitch) {
+        MainActor.assumeIsolated { notch.setEnabled(sender.state == .on) }
+    }
+
+    @objc func prefToggleNotchAlerts(_ sender: NSSwitch) {
+        MainActor.assumeIsolated { notch.setAlertsEnabled(sender.state == .on) }
+    }
+
     @objc func prefToggleGlance(_ sender: NSSwitch) {
         GlanceController.isEnabled = sender.state == .on
         if !GlanceController.isEnabled {
@@ -432,17 +519,6 @@ extension AppDelegate {
         UserDefaults.standard.set(floatingOnTop, forKey: shadeFloatingOnTopDefaultsKey)
         refreshOverlayPresentation(bringForward: floatingOnTop)
         rebuildMenu()
-    }
-
-    @objc func prefToggleTranslucent(_ sender: NSSwitch) {
-        translucent = sender.state == .on
-        UserDefaults.standard.set(translucent, forKey: shadeTranslucentDefaultsKey)
-        refreshOverlayPresentation()
-        rebuildMenu()
-    }
-
-    @objc func prefSelectAppearanceSegment(_ sender: NSSegmentedControl) {
-        setAppearanceMode(sender.selectedSegment == 1 ? .proxyTitleBar : .nativeScreenshot)
     }
 
     @objc func prefToggleSound(_ sender: NSSwitch) {
@@ -492,7 +568,8 @@ extension AppDelegate {
     }
 
 @objc func showWelcomeGuide() {
-        showPermissionOnboardingIfNeeded(force: true)
+        // 菜单里的“欢迎使用 WindowShade…”：从第一页看起。
+        showPermissionOnboarding()
     }
 
     func showPermissionOnboardingIfNeeded(force: Bool) {
@@ -500,270 +577,131 @@ extension AppDelegate {
         let shouldShowFirstRun = !UserDefaults.standard.bool(forKey: shadeOnboardingShownDefaultsKey)
         guard missing || shouldShowFirstRun || force else { return }
         if !force && UserDefaults.standard.bool(forKey: shadeOnboardingShownDefaultsKey) { return }
-        showPermissionOnboarding()
+        // force 都是缺权限时的提醒（按快捷键没权限、刘海里点“需要权限”、换显示器时的恢复）：直接到授权页，
+        // 和 1.0.15 一样一打开就看得到授权行。首次打开从第一页看起。
+        showPermissionOnboarding(toPermissions: force)
     }
 
-    func showPermissionOnboarding() {
-        if let window = onboardingWindow {
-            window.contentView = makeOnboardingContentView()
-            window.setContentSize(window.contentView?.frame.size ?? window.frame.size)
-            window.center()
+    /// 欢迎使用 WindowShade：三步，一句话说清它是什么、问“你之前常用哪个？”、授权（见 Welcome.swift）。
+    /// toPermissions：缺权限时的提醒，直接翻到授权页；否则从第一步开始。
+    func showPermissionOnboarding(toPermissions: Bool = false) {
+        MainActor.assumeIsolated { showWelcome(startPage: toPermissions ? WelcomeView.permissionPage : 0) }
+    }
+
+    /// 欢迎窗口里那一页（窗口没建过或内容换过时是 nil）。
+    @MainActor var onboardingWelcomeView: WelcomeView? {
+        onboardingWindow?.contentView?.subviews.lazy.compactMap { $0 as? WelcomeView }.first
+    }
+
+    /// 装好新版本后辅助功能或屏幕录制没了（系统有时要重新打开）：翻到授权页，换成“再打开一次这两项”那组文案。
+    func showPermissionsAgainAfterUpdate() {
+        MainActor.assumeIsolated {
+            showWelcome(startPage: WelcomeView.permissionPage)
+            onboardingWelcomeView?.permissionsAgain = true
+        }
+    }
+
+    @MainActor private func showWelcome(startPage: Int) {
+        let permissionPage = WelcomeView.permissionPage
+        // 已经开着：不重建、不挪回正中，看到哪一页还在哪一页，只拿到最前面；缺权限的提醒才翻到授权页。
+        if let window = onboardingWindow, window.isVisible, let current = onboardingWelcomeView {
+            if startPage == permissionPage, current.index != permissionPage || current.onMoveStep { current.show(permissionPage) }
             window.makeKeyAndOrderFront(nil)
+            window.makeFirstResponder(current)
             NSApp.activate()
+            updateOnboardingRefresh()
             return
         }
-        let content = makeOnboardingContentView()
-        let window = NSWindow(contentRect: NSRect(origin: .zero, size: content.frame.size),
-                              styleMask: [.titled, .closable],
-                              backing: .buffered,
-                              defer: false)
-        window.title = "欢迎使用 WindowShade"
-        window.isReleasedWhenClosed = false
-        // 引导页是独立工具窗口，不参与系统标签页合并。
-        window.tabbingMode = .disallowed
-        window.center()
-        window.contentView = content
-        onboardingWindow = window
-        // 点关闭按钮也算看过：否则下次启动它又会自己弹出来。缺权限时的再次提醒
-        // 走的是“缺权限”这条判断，不受这个标记影响。
-        NotificationCenter.default.addObserver(forName: NSWindow.willCloseNotification,
-                                               object: window, queue: .main) { [weak self] _ in
-            UserDefaults.standard.set(true, forKey: shadeOnboardingShownDefaultsKey)
-            self?.onboardingRefreshTimer?.invalidate()
-            self?.onboardingRefreshTimer = nil
-        }
-        refreshOnboardingState()
-        window.makeKeyAndOrderFront(nil)
-        NSApp.activate()
-
-        onboardingRefreshTimer?.invalidate()
-        if onboardingPermissionStack != nil {
-            onboardingRefreshTimer = Timer.scheduledTimer(withTimeInterval: 1.0, repeats: true) { [weak self] timer in
-                guard let self = self else { timer.invalidate(); return }
-                guard let window = self.onboardingWindow, window.isVisible else {
-                    timer.invalidate()
-                    self.onboardingRefreshTimer = nil
-                    return
-                }
-                self.refreshOnboardingState()
-            }
-        } else {
-            onboardingRefreshTimer = nil
-        }
-    }
-
-    func makeOnboardingContentView() -> NSView {
-        onboardingPermissionStack = nil
-        onboardingProgressLabel = nil
+        let view = WelcomeView(frame: NSRect(origin: .zero, size: WelcomeView.size))
+        view.permissionsGranted = { hasAccessibilityPermission() && hasScreenRecordingPermission() }
+        view.onFinish = { [weak self] in self?.dismissOnboarding() }
+        view.onLater = { [weak self] in self?.dismissOnboarding() }
+        onboardingPermissionStack = view.permissionStack
+        onboardingProgressLabel = view.progressLabel
         onboardingDoneButton = nil
         onboardingCaption = nil
-
-        let needsPermissions = !hasAccessibilityPermission() || !hasScreenRecordingPermission()
-        let height: CGFloat = needsPermissions ? 615 : 595
-        let root = NSVisualEffectView(frame: NSRect(x: 0, y: 0, width: 500, height: height))
-        // 减少透明度时不使用半透明页面材质，改用不透明语义底色。
+        let window: NSWindow
+        if let existing = onboardingWindow {
+            window = existing
+        } else {
+            window = NSWindow(contentRect: NSRect(origin: .zero, size: WelcomeView.size),
+                              styleMask: [.titled, .closable, .fullSizeContentView], backing: .buffered, defer: false)
+            window.title = "欢迎使用 WindowShade"
+            window.titleVisibility = .hidden
+            window.titlebarAppearsTransparent = true
+            window.isMovableByWindowBackground = true
+            window.isReleasedWhenClosed = false
+            // 引导页是独立工具窗口，不参与系统标签页合并。
+            window.tabbingMode = .disallowed
+            onboardingWindow = window
+            // 点关闭按钮也算看过：否则下次启动它又会自己弹出来。缺权限时的再次提醒
+            // 走的是“缺权限”这条判断，不受这个标记影响。
+            NotificationCenter.default.addObserver(forName: NSWindow.willCloseNotification,
+                                                   object: window, queue: .main) { [weak self] _ in
+                UserDefaults.standard.set(true, forKey: shadeOnboardingShownDefaultsKey)
+                self?.onboardingRefreshTimer?.invalidate()
+                self?.onboardingRefreshTimer = nil
+            }
+            // 整个被挡住、在别的桌面上时授权页不再每秒查；又看得见了马上刷新一次、接着查。
+            NotificationCenter.default.addObserver(forName: NSWindow.didChangeOcclusionStateNotification,
+                                                   object: window, queue: .main) { [weak self] _ in
+                MainActor.assumeIsolated { self?.updateOnboardingRefresh() }
+            }
+        }
+        let background = NSVisualEffectView(frame: NSRect(origin: .zero, size: WelcomeView.size))
         let appearance = SystemAppearanceCapabilities.current
-        root.material = SystemAppearancePolicy.usesOpaqueFallback(appearance)
-            ? .contentBackground : .underPageBackground
-        root.blendingMode = .withinWindow
-        root.isEmphasized = appearance.increaseContrast
-            && !appearance.reduceTransparency
-        let stack = NSStackView(frame: root.bounds.insetBy(dx: 24, dy: 22))
-        stack.orientation = .vertical
-        stack.alignment = .leading
-        stack.spacing = 14
-        stack.autoresizingMask = [.width, .height]
-        root.addSubview(stack)
+        background.material = SystemAppearancePolicy.usesOpaqueFallback(appearance) ? .contentBackground : .underPageBackground
+        background.blendingMode = .withinWindow
+        view.autoresizingMask = [.width, .height]
+        background.addSubview(view)
+        window.contentView = background
+        window.setContentSize(WelcomeView.size)
+        window.center()
+        refreshOnboardingState()
+        view.onPageChange = { [weak self] in self?.updateOnboardingRefresh() }
+        // 从第一步打开、而 App 不在“应用程序”里：三步之前先问要不要放进去（UpdaterMove 决定要不要这一步）。
+        // 开发版没有更新清单地址、不启动更新器，“放进去才能更新”对它不成立，不问。
+        if startPage == 0, Bundle.main.object(forInfoDictionaryKey: "SUFeedURL") != nil,
+           let move = UpdaterMove.shared.welcomeStep() {
+            view.showMove(move)
+        } else if view.index != startPage { view.show(startPage) } else { view.refreshButtons() }
+        window.makeKeyAndOrderFront(nil)
+        window.makeFirstResponder(view)
+        NSApp.activate()
+        updateOnboardingRefresh()
+    }
 
-        // Header: app icon + title
-        let header = NSStackView()
-        header.orientation = .horizontal
-        header.alignment = .centerY
-        header.spacing = 12
-        header.addArrangedSubview(makeOnboardingAppIconView(size: 40))
-        let title = NSTextField(labelWithString: "把窗口留在原地，暂时收起内容")
-        title.font = SystemAppearancePolicy.font(relativeToBody: 7, weight: .semibold)
-        header.addArrangedSubview(title)
-        stack.addArrangedSubview(header)
-
-        let copy = NSTextField(labelWithString: "WindowShade 让挡路的窗口暂时让开：原地收起、置顶到最前，或者在 Dock 上直接挑窗口。它不会关掉窗口，也不会擅自改动桌面排布。")
-        copy.font = SystemAppearancePolicy.font(relativeToBody: 0)
-        copy.textColor = .secondaryLabelColor
-        copy.lineBreakMode = .byWordWrapping
-        copy.maximumNumberOfLines = 6
-        copy.preferredMaxLayoutWidth = onboardingContentWidth
-        stack.addArrangedSubview(copy)
-
-        stack.addArrangedSubview(makeOnboardingUsageCard())
-        if !needsPermissions {
-            stack.addArrangedSubview(makeOnboardingFeatureCard())
-            // 权限都齐了：给一个明确的收尾按钮（回车即可），关掉后不再自动弹出。
-            let start = NSButton(title: "开始使用", target: self, action: #selector(dismissOnboarding))
-            start.bezelStyle = .rounded
-            start.keyEquivalent = "\r"
-            let row = NSStackView()
-            row.orientation = .horizontal
-            row.addView(start, in: .trailing)
-            row.widthAnchor.constraint(equalToConstant: onboardingContentWidth).isActive = true
-            stack.addArrangedSubview(row)
+    /// 授权页的刷新：在系统设置里打开了，这里马上变成打勾。只在窗口看得见、停在授权页、还没全部授权时每秒查一次；
+    /// 翻到别的页、两项都有了、窗口收起来或整个被挡住就停（1.0.15 起权限齐全时本来就不跑）。
+    @MainActor func updateOnboardingRefresh() {
+        guard let window = onboardingWindow, window.isVisible, window.occlusionState.contains(.visible),
+              let view = onboardingWelcomeView, view.index == WelcomeView.permissionPage else {
+            onboardingRefreshTimer?.invalidate()
+            onboardingRefreshTimer = nil
+            return
         }
-
-        if needsPermissions {
-            let permissionCopy = NSTextField(labelWithString: "这两项权限让 WindowShade 能找到、移动和恢复窗口，也能截取窗口画面。")
-            permissionCopy.font = SystemAppearancePolicy.font(relativeToBody: -1)
-            permissionCopy.textColor = .tertiaryLabelColor
-            permissionCopy.lineBreakMode = .byWordWrapping
-            permissionCopy.maximumNumberOfLines = 3
-            permissionCopy.preferredMaxLayoutWidth = onboardingContentWidth
-            stack.addArrangedSubview(permissionCopy)
-
-            let progress = NSTextField(labelWithString: "")
-            progress.font = SystemAppearancePolicy.font(relativeToBody: 0, weight: .medium)
-            stack.addArrangedSubview(progress)
-            onboardingProgressLabel = progress
-
-            let permissionStack = NSStackView()
-            permissionStack.orientation = .vertical
-            permissionStack.alignment = .leading
-            permissionStack.spacing = 10
-            stack.addArrangedSubview(permissionStack)
-            onboardingPermissionStack = permissionStack
-        }
-
-        if needsPermissions {
-            let buttonRow = NSStackView()
-            buttonRow.orientation = .horizontal
-            buttonRow.spacing = 10
-            let later = NSButton(title: "稍后再说", target: self, action: #selector(dismissOnboarding))
-            later.bezelStyle = .rounded
-            buttonRow.addArrangedSubview(later)
-            let done = NSButton(title: "完成设置", target: self, action: #selector(finishOnboarding))
-            done.bezelStyle = .rounded
-            done.keyEquivalent = "\r"
-            buttonRow.addArrangedSubview(done)
-            buttonRow.widthAnchor.constraint(equalToConstant: onboardingContentWidth).isActive = true
-            stack.addArrangedSubview(buttonRow)
-            onboardingDoneButton = done
-
-            let caption = NSTextField(labelWithString: "两项都授权后就能开始用")
-            caption.font = SystemAppearancePolicy.font(relativeToBody: -2)
-            caption.textColor = .tertiaryLabelColor
-            stack.addArrangedSubview(caption)
-            onboardingCaption = caption
-        }
-
-        if !needsPermissions {
-            // 内容是固定的，窗口按内容取高，不留底部空白。需要授权时权限行稍后才填入，
-            // 仍用预留高度。
-            let fitting = stack.fittingSize.height
-            if fitting > 0 {
-                root.setFrameSize(NSSize(width: root.frame.width, height: ceil(fitting) + 44))
-                stack.frame = root.bounds.insetBy(dx: 24, dy: 22)
+        if refreshOnboardingState() { view.refreshButtons() }
+        if view.shownGrants == [true, true] {
+            onboardingRefreshTimer?.invalidate()
+            onboardingRefreshTimer = nil
+        } else if onboardingRefreshTimer == nil {
+            let timer = Timer.scheduledTimer(withTimeInterval: 1.0, repeats: true) { [weak self] _ in
+                MainActor.assumeIsolated { self?.updateOnboardingRefresh() }
             }
+            timer.tolerance = 0.2
+            onboardingRefreshTimer = timer
         }
-        return root
     }
 
-    func onboardingSymbol(_ name: String, pointSize: CGFloat, weight: NSFont.Weight = .regular, color: NSColor) -> NSImageView? {
-        guard let image = NSImage(systemSymbolName: name, accessibilityDescription: nil) else { return nil }
-        let config = NSImage.SymbolConfiguration(pointSize: pointSize, weight: weight)
-        let view = NSImageView()
-        view.image = image.withSymbolConfiguration(config)
-        view.contentTintColor = color
-        view.imageScaling = .scaleProportionallyUpOrDown
-        return view
-    }
-
-    func makeOnboardingAppIconView(size: CGFloat) -> NSImageView {
-        let view = NSImageView(frame: NSRect(x: 0, y: 0, width: size, height: size))
-        let baseImage = NSApp.applicationIconImage ?? NSImage(named: NSImage.applicationIconName) ?? NSImage(size: NSSize(width: size, height: size))
-        let image = baseImage.copy() as? NSImage ?? baseImage
-        image.size = NSSize(width: size, height: size)
-        view.image = image
-        view.imageScaling = .scaleProportionallyUpOrDown
-        view.widthAnchor.constraint(equalToConstant: size).isActive = true
-        view.heightAnchor.constraint(equalToConstant: size).isActive = true
-        return view
-    }
-
-    func makeOnboardingUsageCard() -> NSView {
-        // 快捷键按当前设置写：改过键或关掉了，引导页不再说原来的组合。
-        var rows: [(String, String)] = []
-        if let name = GlobalShortcutSettings.displayName(for: .toggleShade) {
-            rows.append(("keyboard", "\(name)：收起或展开当前窗口"))
-        }
-        if let name = GlobalShortcutSettings.displayName(for: .pinPreview) {
-            rows.append(("pin", "\(name)：置顶或取消置顶当前窗口"))
-        }
-        if let name = GlobalShortcutSettings.displayName(for: .carry) {
-            rows.append(("rectangle.on.rectangle.angled", "\(name)：把当前窗口带到每张桌面"))
-        }
-        rows.append(("cursorarrow.click", "双击标题栏：收起或展开那个窗口"))
-        switch systemTitlebarDoubleClickAction() {
-        case .zoom: rows.append(("cursorarrow.rays", "三击标题栏：缩放窗口"))
-        case .minimize: rows.append(("cursorarrow.rays", "三击标题栏：最小化窗口"))
-        case .none: break
-        }
-        rows.append(("eye", GlanceController.isEnabled ? "指针停在卷帘条上：看一眼收起的窗口" : "单击卷帘条：看一眼收起的窗口"))
-        if TrackpadGestureController.isEnabled {
-            rows.append(("hand.draw", "在标题栏上两指滑动或滚动滚轮：往上收起，往下铺满，左右占半屏"))
-        }
-        if GlobalShortcutSettings.numberedExpandEnabled {
-            rows.append(("number", "\(GlobalShortcutSettings.numberedDisplayName)：按菜单顺序展开已收起的窗口"))
-        }
-        rows.append(("menubar.rectangle", "菜单栏：管理窗口和效果"))
-        return makeOnboardingInfoCard(title: "常用入口", rows: rows)
-    }
-
-    func makeOnboardingFeatureCard() -> NSView {
-        let rows: [(String, String)] = [
-            ("pin", "置顶：让窗口一直待在其他窗口前面"),
-            ("dock.rectangle", "窗口浏览：鼠标停在 Dock 图标上查看它的窗口，在设置里打开"),
-            ("paintpalette", "卷帘：收起后跟原来一样，或换成统一标题栏"),
-            ("rectangle.stack", "合盖效果：在设置 → 效果里打开"),
-            ("power", "登录时启动：在设置 → 权限与启动里打开"),
-        ]
-        return makeOnboardingInfoCard(title: "工作方式", rows: rows)
-    }
-
-    func makeOnboardingInfoCard(title: String, rows: [(String, String)]) -> NSView {
-        let titleH: CGFloat = 22
-        let rowH: CGFloat = 24
-        let height = 14 + titleH + CGFloat(rows.count) * rowH + 10
-        let card = SettingsGroupBox(frame: NSRect(x: 0, y: 0, width: onboardingContentWidth, height: height))
-        card.wantsLayer = true
-
-        card.widthAnchor.constraint(equalToConstant: onboardingContentWidth).isActive = true
-        card.heightAnchor.constraint(equalToConstant: height).isActive = true
-
-        let heading = NSTextField(labelWithString: title)
-        heading.font = SystemAppearancePolicy.font(relativeToBody: -1, weight: .semibold)
-        heading.textColor = .secondaryLabelColor
-        heading.frame = NSRect(x: 14, y: height - 14 - 16, width: 200, height: 16)
-        card.addSubview(heading)
-
-        var y = height - 14 - titleH - 18
-        for (symbol, text) in rows {
-            if let icon = onboardingSymbol(symbol, pointSize: 12, color: .secondaryLabelColor) {
-                icon.frame = NSRect(x: 14, y: y, width: 16, height: 16)
-                card.addSubview(icon)
-            }
-            let label = NSTextField(labelWithString: text)
-            label.font = SystemAppearancePolicy.font(relativeToBody: 0)
-            label.textColor = .secondaryLabelColor
-            label.frame = NSRect(x: 38, y: y - 1, width: onboardingContentWidth - 52, height: 18)
-            card.addSubview(label)
-            y -= rowH
-        }
-        return card
-    }
-
-    enum PermissionRowKind { case onboarding, preferences }
-
-    func refreshOnboardingState() {
-        guard let permissionStack = onboardingPermissionStack else { return }
+    /// 按现在的授权状态画授权行和进度字；和上次画的一样就什么都不动。返回画没画。
+    @MainActor @discardableResult
+    func refreshOnboardingState() -> Bool {
+        guard let permissionStack = onboardingPermissionStack else { return false }
         let ax = hasAccessibilityPermission()
         let screen = hasScreenRecordingPermission()
+        let welcome = onboardingWelcomeView
+        if let welcome, welcome.shownGrants == [ax, screen] { return false }
+        welcome?.shownGrants = [ax, screen]
 
         permissionStack.arrangedSubviews.forEach {
             permissionStack.removeArrangedSubview($0)
@@ -793,6 +731,7 @@ extension AppDelegate {
         }
         onboardingDoneButton?.isEnabled = allGranted
         onboardingCaption?.isHidden = allGranted
+        return true
     }
 
     // MARK: 窗口浏览
@@ -825,7 +764,11 @@ extension AppDelegate {
         let window = makeUnifiedSettingsCard([
             recorderRow(.toggleShade, subtitle: nil),
             recorderRow(.pinPreview, subtitle: nil),
+            recorderRow(.suspendPins, subtitle: "一下让开所有置顶的窗口，再按一下按原来的前后顺序放回"),
             recorderRow(.carry, subtitle: "窗口留在原处，在别的桌面上也能看一眼"),
+            recorderRow(.slideOver, subtitle: "窗口靠到屏幕边、浮在前面；再按一次收到屏幕边，或拉出来"),
+            recorderRow(.pictureInPicture, subtitle: "窗口缩成一张实时画面浮在屏幕角落，再按一次回到原处；把标题栏拖到屏幕角落停一下也行"),
+            recorderRow(.launchpad, subtitle: "列出所有 App；把图标拖到屏幕边就侧拉，拖到一边就开在那一半"),
         ])
         stack.addArrangedSubview(makePrefGroupLabel("当前窗口"))
         stack.addArrangedSubview(window)
@@ -838,14 +781,60 @@ extension AppDelegate {
             recorderRow(.stepSmaller, subtitle: "铺满的窗口回到原来大小；原来大小的窗口收起"),
             recorderRow(.leftHalf, subtitle: nil),
             recorderRow(.rightHalf, subtitle: nil),
+            recorderRow(.magicTile, subtitle: "把这块屏上的窗口一次排好：要地方多的占大头，聊天放侧拉；捏合整批撤回"),
+            recorderRow(.nextDisplay, subtitle: "按原来的排法放到下一块屏幕上；上下摆的显示器也行"),
+            recorderRow(.tuckAll, subtitle: "这块屏上的窗口全部收进刘海，再按一下放回来"),
         ])
         stack.addArrangedSubview(makePrefGroupLabel("排布当前窗口"))
         stack.addArrangedSubview(arrange)
         arrange.widthAnchor.constraint(equalTo: stack.widthAnchor).isActive = true
         stack.setCustomSpacing(18, after: arrange)
 
+        // Rectangle、Raycast 里有的那些排法：默认不占快捷键。一键换成 Rectangle 的那一套，用惯它的人手上不用改。
+        let takeOver = NSButton(title: "换上", target: self, action: #selector(prefUseRectangleShortcuts))
+        takeOver.bezelStyle = .rounded
+        // Swish 的方向键位：排布当前窗口的四个方向一下换成 ⌃⌥ 加字母；键名按当前键盘布局显示（Dvorak 上是 ,AOE）。
+        let directionSets = DirectionKeySet.allCases
+        let directionKeys = NSSegmentedControl(labels: directionSets.map(DirectionKeyPresets.label(for:)),
+                                               trackingMode: .selectOne, target: self,
+                                               action: #selector(prefSelectDirectionKeys(_:)))
+        directionKeys.selectedSegment = DirectionKeyPresets.currentSet.flatMap(directionSets.firstIndex(of:)) ?? -1
+        directionKeys.setAccessibilityLabel("方向键换成字母")
+        let more = makeUnifiedSettingsCard([
+            makeUnifiedControlRow(
+                name: "用 Rectangle 的快捷键",
+                subtitle: "装过 Rectangle 的照它现在的设置，没装过的用它推荐的那一套（⌃⌥ 加方向键和字母）。下面的名字和 Raycast 的窗口命令一一对应",
+                control: takeOver),
+            makeUnifiedControlRow(
+                name: "方向键换成字母",
+                subtitle: "变小一级、变大一级、左半屏、右半屏改用 ⌃⌥ 加字母，和 Swish 一样。别的动作在用的组合不抢",
+                control: directionKeys),
+            recorderRow(.topHalf, subtitle: nil),
+            recorderRow(.bottomHalf, subtitle: nil),
+            recorderRow(.topLeft, subtitle: nil),
+            recorderRow(.topRight, subtitle: nil),
+            recorderRow(.bottomLeft, subtitle: nil),
+            recorderRow(.bottomRight, subtitle: nil),
+            recorderRow(.leftThird, subtitle: nil),
+            recorderRow(.centerThird, subtitle: nil),
+            recorderRow(.rightThird, subtitle: nil),
+            recorderRow(.leftTwoThirds, subtitle: nil),
+            recorderRow(.rightTwoThirds, subtitle: nil),
+            recorderRow(.fill, subtitle: nil),
+            recorderRow(.fullHeight, subtitle: "左右不动，上下占满"),
+            recorderRow(.center, subtitle: "大小不变，放到正中"),
+            recorderRow(.larger, subtitle: "四边各往外 30 点"),
+            recorderRow(.smaller, subtitle: "四边各往里 30 点"),
+            recorderRow(.undoPlacement, subtitle: "回到排之前的位置和大小"),
+            recorderRow(.previousDisplay, subtitle: "和“移到另一块屏幕”反着转"),
+        ])
+        stack.addArrangedSubview(makePrefGroupLabel("更多排法"))
+        stack.addArrangedSubview(more)
+        more.widthAnchor.constraint(equalTo: stack.widthAnchor).isActive = true
+        stack.setCustomSpacing(18, after: more)
+
         let strips = makeUnifiedSettingsCard([
-            recorderRow(.arrangeOrFocus, subtitle: "外观选“统一标题栏”时，改为专注当前 App"),
+            recorderRow(.arrangeOrFocus, subtitle: "外观选“统一标题栏”时，改为专注当前 App；选“缩略图”时，把缩略图排到屏幕下边，再按放回原位"),
             makeUnifiedToggleRow(
                 name: "按编号展开已收起的窗口",
                 subtitle: "\(GlobalShortcutSettings.numberedDisplayName) 对应菜单里的前 9 个窗口",
@@ -921,6 +910,26 @@ extension AppDelegate {
                 isOn: WindowBrowserSettings.dockEnabled,
                 action: #selector(prefToggleWindowBrowserDock(_:))),
             makeUnifiedToggleRow(
+                name: "再点一下 Dock 图标，让开这个 App",
+                subtitle: "它已经在最前、窗口露着时才这样（和 Windows 任务栏一样）；再点一下回来",
+                isOn: DockClickHide.isEnabled,
+                action: #selector(prefToggleDockClickHide(_:))),
+            makeUnifiedToggleRow(
+                name: "在 Dock 图标上两指上下滑",
+                subtitle: "往上滑看这个 App 的所有窗口，往下滑让开这个 App",
+                isOn: DockSwipeController.isEnabled,
+                action: #selector(prefToggleDockSwipe(_:))),
+            makeUnifiedToggleRow(
+                name: "Dock 留在现在这块屏上",
+                subtitle: "指针碰到别的屏的底边时 Dock 不跟过去（只管放在底部的 Dock）；打开时记下 Dock 现在在哪",
+                isOn: DockLock.isEnabled,
+                action: #selector(prefToggleDockLock(_:))),
+            makeUnifiedToggleRow(
+                name: "调度中心里按 ⌘W 关窗",
+                subtitle: "指针指着哪扇就关哪扇，⌘Q 退出它的 App；只在调度中心开着时这样，平时不动你的 ⌘W",
+                isOn: MissionControlKeys.isEnabled,
+                action: #selector(prefToggleMissionControlKeys(_:))),
+            makeUnifiedToggleRow(
                 name: "在菜单里显示“选择窗口…”",
                 subtitle: "默认不占用快捷键，可以在“快捷键”里设置",
                 isOn: WindowBrowserSettings.keyboardPanelEnabled,
@@ -930,6 +939,23 @@ extension AppDelegate {
         stack.addArrangedSubview(triggers)
         triggers.widthAnchor.constraint(equalTo: stack.widthAnchor).isActive = true
         stack.setCustomSpacing(18, after: triggers)
+
+        let triggerSeg = NSSegmentedControl(labels: ["关", "⌥Tab", "⌘Tab"], trackingMode: .selectOne,
+                                            target: self, action: #selector(prefSelectSwitcherTrigger(_:)))
+        switch WindowSwitcherKeys.trigger {
+        case .off: triggerSeg.selectedSegment = 0
+        case .option: triggerSeg.selectedSegment = 1
+        case .command: triggerSeg.selectedSegment = 2
+        }
+        let switcherCard = makeUnifiedSettingsCard([
+            makeUnifiedControlRow(name: "按窗口切换",
+                                  subtitle: "按住连按 Tab 一扇一扇地挑，松手切过去；收着的窗口也在里面。选 ⌘Tab 会换掉系统的 App 切换",
+                                  control: triggerSeg),
+        ])
+        stack.addArrangedSubview(makePrefGroupLabel("切换"))
+        stack.addArrangedSubview(switcherCard)
+        switcherCard.widthAnchor.constraint(equalTo: stack.widthAnchor).isActive = true
+        stack.setCustomSpacing(18, after: switcherCard)
 
         let preview = makeUnifiedSettingsCard([
             makeUnifiedToggleRow(
@@ -1032,6 +1058,42 @@ extension AppDelegate {
         notifyWindowBrowserSettingsChanged()
     }
 
+    @objc func prefSelectArrangeGap(_ sender: NSSegmentedControl) {
+        let value = ArrangeGap.choices[max(0, min(ArrangeGap.choices.count - 1, sender.selectedSegment))]
+        ArrangeGap.points = value
+        UserDefaults.standard.set(Double(value), forKey: ArrangeGap.defaultsKey)
+    }
+
+    @objc func prefSelectSwitcherTrigger(_ sender: NSSegmentedControl) {
+        let choices: [WindowSwitcherKeys.Trigger] = [.off, .option, .command]
+        WindowSwitcherKeys.trigger = choices[max(0, min(2, sender.selectedSegment))]
+        MainActor.assumeIsolated { switcher.applySetting() }
+    }
+
+    @objc func prefToggleDockLock(_ sender: NSSwitch) {
+        DockLock.isEnabled = sender.state == .on
+        MainActor.assumeIsolated { DockLock.isEnabled ? dockLock.relock() : dockLock.apply() }
+    }
+
+    @objc func prefToggleSplitDivider(_ sender: NSSwitch) {
+        SplitViewController.isEnabled = sender.state == .on
+        MainActor.assumeIsolated { splitView.refresh() }
+    }
+
+    @objc func prefToggleDockClickHide(_ sender: NSSwitch) {
+        DockClickHide.isEnabled = sender.state == .on
+    }
+
+    @objc func prefToggleDockSwipe(_ sender: NSSwitch) {
+        DockSwipeController.isEnabled = sender.state == .on
+        MainActor.assumeIsolated { DockSwipeController.shared.apply(owner: self) }
+    }
+
+    @objc func prefToggleMissionControlKeys(_ sender: NSSwitch) {
+        UserDefaults.standard.set(sender.state == .on, forKey: MissionControlKeys.defaultsKey)
+        MainActor.assumeIsolated { missionControlKeys.applySetting() }
+    }
+
     @objc func prefToggleWindowBrowserKeyboard(_ sender: NSSwitch) {
         WindowBrowserSettings.keyboardPanelEnabled = sender.state == .on
         notifyWindowBrowserSettingsChanged()
@@ -1085,6 +1147,35 @@ extension AppDelegate {
         NotificationCenter.default.post(name: WindowBrowserNotification.didChangeSettings, object: nil)
     }
 
+}
+
+/// 设置里的“之前常用”：Windows / iPad / 一直用 Mac 三段，名字和欢迎窗口第二步一样；没答时一段都不选。
+/// 自己盯着 SwitcherOrigin 的变化（欢迎窗口里点了、刘海问过之后他点了），设置页开着也跟着变。
+final class SwitcherOriginControl: NSSegmentedControl {
+    static func make() -> SwitcherOriginControl {
+        let control = SwitcherOriginControl(labels: SwitcherOrigin.answers.compactMap(\.title),
+                                            trackingMode: .selectOne, target: nil, action: nil)
+        control.target = control
+        control.action = #selector(picked)
+        control.setAccessibilityLabel("之前常用")
+        control.showCurrent()
+        NotificationCenter.default.addObserver(control, selector: #selector(showCurrent),
+                                               name: SwitcherOrigin.didChangeNotification, object: nil)
+        return control
+    }
+
+    @objc private func picked() {
+        guard SwitcherOrigin.answers.indices.contains(selectedSegment) else { return }
+        SwitcherOrigin.current = SwitcherOrigin.answers[selectedSegment]
+    }
+
+    @objc private func showCurrent() {
+        if let at = SwitcherOrigin.answers.firstIndex(of: SwitcherOrigin.current) {
+            selectedSegment = at
+        } else {
+            for segment in 0..<segmentCount { setSelected(false, forSegment: segment) }
+        }
+    }
 }
 
 /// 快捷键记录器：只在设置页明确聚焦时读取键盘事件，不安装任何全局监听。

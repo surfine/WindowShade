@@ -101,7 +101,7 @@ extension AppDelegate {
         let base = ProxyTitleLayoutMetrics.trafficLightDiameter * 0.95
         let clamped = min(visibleFrame.width * 0.05, base)
         switch state.appearanceMode {
-        case .proxyTitleBar, .nativeScreenshot:
+        case .proxyTitleBar, .nativeScreenshot, .thumbnail:
             return max(10, clamped)
         case .interactiveNative, .classicSemantic:
             return max(9, clamped * 0.9)
@@ -380,7 +380,12 @@ extension AppDelegate {
             guard let overlay = state.overlay else { return nil }
             return (id, state, overlay)
         }
-        guard arrangeShadedEntries(entries, reason: "housekeeping") else {
+        // 缩略图排到屏幕下边一排（见 Thumbnail.swift）；卷帘条照旧。
+        let thumbnails = entries.filter { $0.1.appearanceMode == .thumbnail }
+        let strips = entries.filter { $0.1.appearanceMode != .thumbnail }
+        let arrangedThumbnails = arrangeThumbnailEntries(thumbnails)
+        let arrangedStrips = arrangeShadedEntries(strips, reason: "housekeeping")
+        guard arrangedThumbnails || arrangedStrips else {
             quietNotice("没有收起的窗口", log: "arrange: no shaded overlays")
             return
         }

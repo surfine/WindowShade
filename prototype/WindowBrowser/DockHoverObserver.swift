@@ -49,6 +49,7 @@ final class DockHoverObserver {
     private var detection = WindowBrowserDetectionCoordinator()
     private var topologyVersion: UInt64 = 1
     private var screensToken: NSObjectProtocol?
+    private var displayLayout = DisplayLayout(screens: [])
     /// 屏幕快照按拓扑版本缓存：全局鼠标回退每次移动都要判断“是否靠近 Dock”，
     /// 不必每次都重建快照、逐屏查一遍 deviceDescription。
     private var screenSnapshotCache: (version: UInt64, snapshots: [WindowBrowserDockRegion.ScreenSnapshot])?
@@ -610,16 +611,43 @@ final class DockHoverObserver {
 
     /// 显示器拓扑变化：递增拓扑版本，旧坐标与旧结果全部失效，
     /// 由控制器在明确交互时重新计算面板归属。
+    /// 菜单栏时隐时现、Dock 高度变了也会发这条通知（有的 Mac 每隔几秒一次）：
+    /// 显示器没变就不作废进行中的检测，只重读 Dock 占的区域。
     private func installScreenObserver() {
         guard screensToken == nil else { return }
+        displayLayout = .current()
         screensToken = NotificationCenter.default.addObserver(
             forName: NSApplication.didChangeScreenParametersNotification,
             object: nil, queue: .main) { [weak self] _ in
                 guard let self, self.running else { return }
+                let layout = DisplayLayout.current()
+                guard layout != self.displayLayout else {
+                    self.refreshDockAreas()
+                    return
+                }
+                self.displayLayout = layout
                 self.topologyVersion &+= 1
                 self.detection.reset()
                 self.rebuildObserver(reason: "screens-changed")
             }
+    }
+
+    /// 只重读已知 Dock 列表的矩形（Dock 改了大小）；不重建订阅、不动检测状态。
+    private func refreshDockAreas() {
+        let lists = dockListElements
+        guard !lists.isEmpty else { return }
+        let generation = self.generation
+        workQueue.async { [weak self] in
+            guard let self else { return }
+            let framesAX = lists.compactMap { self.axFrame(of: $0) }
+            DispatchQueue.main.async {
+                // 期间 Dock 重建过（列表换了）就以重建结果为准。
+                guard self.running, self.generation == generation,
+                      framesAX.count == lists.count,
+                      self.dockListElements.elementsEqual(lists, by: { CFEqual($0, $1) }) else { return }
+                self.dockAreas = framesAX.map { self.cocoaRect(fromAXFrame: $0) }
+            }
+        }
     }
 
     private func removeScreenObserver() {

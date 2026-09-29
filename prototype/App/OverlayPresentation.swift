@@ -20,8 +20,17 @@ extension AppDelegate {
         return .normal
     }
 
+    /// 卷帘条的不透明度：设置里的滑块（ShadeTranslucency）。没拖过滑块时按老的“卷帘条半透明”开关算，
+    /// 开着就是 shadeTranslucentAlpha（0.82），和原来一样。
     var overlayAlpha: CGFloat {
-        translucent ? shadeTranslucentAlpha : 1
+        let fraction = ShadeTranslucency.fraction()
+        return fraction == ShadeTranslucency.legacyFraction ? shadeTranslucentAlpha : CGFloat(1 - fraction)
+    }
+
+    /// 某一扇覆盖层该有的不透明度：缩略图的窗口保持不透明，半透明由它的画面自己管
+    /// （指针停上去要变实，减少透明度时一直实，见 Thumbnail.swift）。
+    func overlayAlpha(for overlay: NSWindow) -> CGFloat {
+        overlay is ShadeThumbnailWindow ? 1 : overlayAlpha
     }
 
     func shadedEntry(for overlay: NSWindow) -> (CGWindowID, ShadeState)? {
@@ -34,7 +43,8 @@ extension AppDelegate {
             return
         }
         overlay.level = overlayLevel(for: overlay)
-        overlay.alphaValue = overlayAlpha
+        overlay.alphaValue = overlayAlpha(for: overlay)
+        (overlay.contentView as? ShadeThumbnailView)?.refreshOpacity()
         if bringForward {
             overlay.orderFrontRegardless()
         }
@@ -200,10 +210,13 @@ extension AppDelegate {
     }
 
     func revealPreparedOverlay(_ overlay: NSWindow) {
+        // 缩略图第一次亮出来：截图从窗口原处缩进去，落定前缩略图自己不露面。
+        playThumbnailEntranceIfNeeded(overlay)
+        let alpha = overlayAlpha(for: overlay)
         NSAnimationContext.runAnimationGroup { context in
             context.duration = 0.12
             context.timingFunction = CAMediaTimingFunction(name: .easeOut)
-            overlay.animator().alphaValue = overlayAlpha
+            overlay.animator().alphaValue = alpha
         }
     }
 

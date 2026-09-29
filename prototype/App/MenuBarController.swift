@@ -14,6 +14,8 @@ struct MenuState {
 
 extension AppDelegate {
   func setupStatusItem() {
+    // 启动时补上“收起后的样子”选的缩略图（WindowShade.swift 只认得前两项）。
+    adoptPersistedCollapseAppearance()
     statusItem = NSStatusBar.system.statusItem(withLength: NSStatusItem.variableLength)
     statusItem.isVisible = true
     statusMenu = NSMenu()
@@ -81,7 +83,10 @@ extension AppDelegate {
       focus.isEnabled = AXIsProcessTrusted()
       statusMenu.addItem(focus)
     } else {
-      let arrangeTitle = hasArrangedOverlayFrames ? "恢复卷帘条原位" : "整理卷帘条"
+      // 屏幕上留的是缩略图时，说“缩略图”（见 Thumbnail.swift）。
+      let arrangeTitle = thumbnailsInUse
+        ? (hasArrangedOverlayFrames ? "恢复缩略图原位" : "整理缩略图")
+        : (hasArrangedOverlayFrames ? "恢复卷帘条原位" : "整理卷帘条")
       let arrange = NSMenuItem(
         title: arrangeTitle, action: #selector(arrangeShadedWindows), keyEquivalent: "")
       applyShortcut(.arrangeOrFocus, to: arrange)
@@ -110,6 +115,42 @@ extension AppDelegate {
     applyShortcut(.carry, to: carryItem)
     carryItem.isEnabled = AXIsProcessTrusted()
     statusMenu.addItem(carryItem)
+
+    let slideOverTitle = MainActor.assumeIsolated { slideOver.menuTitle }
+    let slideOverItem = NSMenuItem(title: slideOverTitle, action: #selector(toggleSlideOverAction), keyEquivalent: "")
+    applyShortcut(.slideOver, to: slideOverItem)
+    slideOverItem.isEnabled = AXIsProcessTrusted() && hasScreenRecordingPermission()
+    statusMenu.addItem(slideOverItem)
+    if MainActor.assumeIsolated({ slideOver.dockedWindowID != nil }) {
+      statusMenu.addItem(NSMenuItem(title: "退出侧拉", action: #selector(exitSlideOverAction), keyEquivalent: ""))
+    }
+
+    let pipItem = NSMenuItem(title: "画中画当前窗口", action: #selector(pictureInPictureAction), keyEquivalent: "")
+    applyShortcut(.pictureInPicture, to: pipItem)
+    pipItem.isEnabled = AXIsProcessTrusted() && hasScreenRecordingPermission()
+    statusMenu.addItem(pipItem)
+
+    let magicItem = NSMenuItem(title: "魔法平铺", action: #selector(magicTileAction), keyEquivalent: "")
+    applyShortcut(.magicTile, to: magicItem)
+    magicItem.isEnabled = AXIsProcessTrusted()
+    statusMenu.addItem(magicItem)
+
+    if NSScreen.screens.count > 1 {
+      let displayItem = NSMenuItem(title: "移到另一块屏幕", action: #selector(nextDisplayAction), keyEquivalent: "")
+      applyShortcut(.nextDisplay, to: displayItem)
+      displayItem.isEnabled = AXIsProcessTrusted()
+      statusMenu.addItem(displayItem)
+    }
+    if NotchController.isEnabled {
+      let tuckAllItem = NSMenuItem(title: "全部收进刘海", action: #selector(tuckAllAction), keyEquivalent: "")
+      applyShortcut(.tuckAll, to: tuckAllItem)
+      tuckAllItem.isEnabled = AXIsProcessTrusted()
+      statusMenu.addItem(tuckAllItem)
+    }
+
+    let launchpadItem = NSMenuItem(title: "启动台", action: #selector(toggleLaunchpadAction), keyEquivalent: "")
+    applyShortcut(.launchpad, to: launchpadItem)
+    statusMenu.addItem(launchpadItem)
 
     let windowBrowser = NSMenuItem(
       title: "选择窗口…", action: #selector(openWindowBrowserPanel), keyEquivalent: "")
@@ -144,12 +185,13 @@ extension AppDelegate {
     }
 
     statusMenu.addItem(.separator())
-    statusMenu.addItem(withTitle: "使用说明…", action: #selector(showWelcomeGuide), keyEquivalent: "")
+    statusMenu.addItem(withTitle: "欢迎使用 WindowShade…", action: #selector(showWelcomeGuide), keyEquivalent: "")
     statusMenu.addItem(withTitle: "设置…", action: #selector(showPreferences), keyEquivalent: ",")
     // 代理应用没有菜单栏，“关于”按惯例放在状态栏菜单里，用系统标准面板。
     statusMenu.addItem(withTitle: "关于 WindowShade",
                        action: #selector(showAboutPanel),
                        keyEquivalent: "")
+    statusMenu.addItem(MainActor.assumeIsolated { UpdaterController.shared.makeMenuItem() })
     statusMenu.addItem(withTitle: "退出 WindowShade", action: #selector(quit), keyEquivalent: "q")
     updateReconcileTimer()
     // 折叠/置顶状态也可能由原有菜单或快捷键改变：面板打开时同步刷新投影。
@@ -171,6 +213,15 @@ extension AppDelegate {
       item.image = windowMenuIcon(for: entry.pid)
       statusMenu.addItem(item)
     }
+
+    // 老板键：一下让开全部置顶，再按一下按原来的前后顺序放回（会话不结束）。
+    let suspendPinned = NSMenuItem(
+      title: pinnedPreviewController.suspendAllMenuTitle(),
+      action: #selector(toggleSuspendPinnedPreviewsAction),
+      keyEquivalent: "")
+    suspendPinned.target = self
+    applyShortcut(.suspendPins, to: suspendPinned)
+    statusMenu.addItem(suspendPinned)
 
     let stopPinnedPreviews = NSMenuItem(
       title: "全部取消置顶",
@@ -215,8 +266,12 @@ extension AppDelegate {
       rebuildMenu()
     }
   }
+  /// 设置里“收起后的样子”：跟原来一样 / 统一标题栏 / 缩略图。只影响之后收起的窗口。
   func setAppearanceMode(_ mode: ShadeAppearanceMode) {
-    appearanceMode = mode == .proxyTitleBar ? .proxyTitleBar : .nativeScreenshot
+    switch mode {
+    case .proxyTitleBar, .thumbnail: appearanceMode = mode
+    case .nativeScreenshot, .interactiveNative, .classicSemantic: appearanceMode = .nativeScreenshot
+    }
     UserDefaults.standard.set(appearanceMode.rawValue, forKey: shadeAppearanceModeDefaultsKey)
     rebuildMenu()
     refreshPreferencesWindowIfOpen()

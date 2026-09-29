@@ -22,6 +22,9 @@ final class WindowBrowserCardView: NSView {
     private var params = WindowBrowserLayoutParams.standard
     private var trackingAreaRef: NSTrackingArea?
     private var pressedInside = false
+    /// 按下时指针的屏幕位置；拖出面板后这张卡片就在“拖去排布”，松手交给控制器决定落点。
+    private var pressLocation: NSPoint?
+    private(set) var isDraggingOut = false
     private var configuredSignature: String?
     private var mountedLiveView: NSView?
     /// 当前静态画面的像素尺寸：用来把画面区收成实际画面矩形（圆角落在画面上）。
@@ -225,6 +228,9 @@ final class WindowBrowserCardView: NSView {
         isSelected = false
         isHovering = false
         pressedInside = false
+        pressLocation = nil
+        isDraggingOut = false
+        layer?.removeAnimation(forKey: WindowBrowserFlowLayout.departureAnimationKey)
         mountedLiveView?.removeFromSuperview()
         mountedLiveView = nil
         thumbnailView.image = nil
@@ -343,10 +349,28 @@ final class WindowBrowserCardView: NSView {
     override func mouseDown(with event: NSEvent) {
         // 按下不激活：拖出取消，松开提交。
         pressedInside = true
+        pressLocation = NSEvent.mouseLocation
+        isDraggingOut = false
         refreshAppearance()
     }
 
     override func mouseDragged(with event: NSEvent) {
+        let pointer = NSEvent.mouseLocation
+        if isDraggingOut {
+            if let key = windowKey { delegate?.browserItem(self, dragMoved: key, to: pointer) }
+            return
+        }
+        // 面板里面拖动仍是原来的“拖出取消”；拖出面板才变成“拖去排布”。
+        if let down = pressLocation, let panelFrame = window?.frame, let key = windowKey,
+           WindowBrowserCardDragPolicy.shouldBegin(down: down, pointer: pointer, panelFrame: panelFrame) {
+            pressLocation = nil
+            if delegate?.browserItem(self, dragBegan: key, at: pointer) == true {
+                isDraggingOut = true
+                pressedInside = false
+                refreshAppearance()
+                return
+            }
+        }
         let inside = bounds.contains(convert(event.locationInWindow, from: nil))
         guard inside != pressedInside else { return }
         pressedInside = inside
@@ -356,7 +380,15 @@ final class WindowBrowserCardView: NSView {
     override func mouseUp(with event: NSEvent) {
         defer {
             pressedInside = false
+            pressLocation = nil
             refreshAppearance()
+        }
+        if isDraggingOut {
+            isDraggingOut = false
+            if let key = windowKey {
+                delegate?.browserItem(self, dragEnded: key, at: NSEvent.mouseLocation)
+            }
+            return
         }
         guard pressedInside,
               bounds.contains(convert(event.locationInWindow, from: nil)),

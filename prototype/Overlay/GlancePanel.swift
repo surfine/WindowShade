@@ -1,6 +1,7 @@
 // 看一眼的画面：一张单独的卡片，和真窗口分得开。
 // 收起的窗口：原貌卷帘条不动，卡片挂在它下面、隔一道缝，显示标题栏以下的内容。
 // 带到每张桌面的窗口：卡片挂在那条卷帘条下面，整扇窗按比例缩小。
+// 缩略图：卡片就是整扇窗口，从缩略图长回原来的大小，移开时缩回去（grow / shrink）。
 // 卡片四个角都用真窗口的圆角（从截图里量），带自己的投影；有画面时不铺底色。
 // 被隐藏的 App 临时在原处取消隐藏时，缝和圆角缺口底下垫一张真实背景，真窗口露不出来。
 // 面板不激活 WindowShade、不抢键盘焦点；单击卡片才真正打开那扇窗。
@@ -51,6 +52,11 @@ final class GlanceContentView: NSView {
     private let rollMask = CALayer()
     private let badge: GlanceBadge
     private let message = NSTextField(labelWithString: "")
+    /// badge 和 message 装在这一层里。缩略图的卡片长大、缩回时它们不跟着缩放：整层先藏起来，
+    /// 卡片整张铺开再露出来。各自该不该显示仍由 setStaleNoticeVisible / refreshPlaceholder 管，这里不动。
+    private let notices = NSView()
+    /// 每次长大、缩回、停住都加一：过时的“铺开了再露出提示”不再生效。
+    private var noticesGeneration = 0
     private(set) var hasSnapshot = false
     /// 视频层挂在画面里，且盖在截图上面。
     var showsVideo: Bool { videoLayer?.superlayer === cardLayer && snapshotLayer.isHidden }
@@ -91,9 +97,12 @@ final class GlanceContentView: NSView {
         message.textColor = .secondaryLabelColor
         message.alignment = .center
         message.isHidden = true
-        addSubview(message)
+        notices.addSubview(message)
         badge.isHidden = true
-        addSubview(badge)
+        notices.addSubview(badge)
+        notices.frame = bounds
+        notices.autoresizingMask = [.width, .height]
+        addSubview(notices)
         applySystemAppearance()
 
         setAccessibilityElement(true)
@@ -132,8 +141,12 @@ final class GlanceContentView: NSView {
         super.layout()
         CATransaction.begin()
         CATransaction.setDisableActions(true)
-        shadowLayer.frame = bounds
-        cardLayer.frame = cardFrame
+        // 用 bounds + position 摆，不用 frame：缩略图的看一眼长大、缩回时这两层带着变换，
+        // 那时写 frame 会被变换折算错。没有变换时两种写法一样。
+        shadowLayer.bounds = CGRect(origin: .zero, size: bounds.size)
+        shadowLayer.position = CGPoint(x: bounds.midX, y: bounds.midY)
+        cardLayer.bounds = CGRect(origin: .zero, size: cardFrame.size)
+        cardLayer.position = CGPoint(x: cardFrame.midX, y: cardFrame.midY)
         snapshotLayer.frame = pictureFrame
         videoLayer?.frame = pictureFrame
         if rollMask.animationKeys()?.isEmpty ?? true {
@@ -141,6 +154,7 @@ final class GlanceContentView: NSView {
                                      height: rollMask.bounds.height)
             rollMask.position = CGPoint(x: 0, y: bounds.height)
         }
+        notices.frame = bounds
         message.sizeToFit()
         message.frame = NSRect(x: cardFrame.minX + 16,
                                y: floor(cardFrame.midY - message.frame.height / 2),
@@ -185,6 +199,9 @@ final class GlanceContentView: NSView {
         CATransaction.commit()
         refreshPlaceholder()
     }
+
+    /// 右下角“收起时的画面”此刻看得见（探针用）。
+    var showsStaleNotice: Bool { !notices.isHidden && !badge.isHidden }
 
     /// 实时画面等不到时，照实说这是哪个时候的画面。
     func setStaleNoticeVisible(_ visible: Bool) {
@@ -242,7 +259,49 @@ final class GlanceContentView: NSView {
         rollMask.add(roll, forKey: "glance-roll")
     }
 
-    /// 卷上途中指针又回来了：停在全开，不重播卷下。
+    /// 手指在卷帘条上往下拉：卡片跟着手指卷下 fraction（0...1），不做动画。
+    func setRoll(_ fraction: CGFloat) {
+        layoutSubtreeIfNeeded()
+        let f = max(0, min(1, fraction))
+        rollMask.removeAllAnimations()
+        layer?.removeAnimation(forKey: "glance-fade")
+        CATransaction.begin()
+        CATransaction.setDisableActions(true)
+        rollMask.position = CGPoint(x: 0, y: bounds.height)
+        if reduceMotion {
+            layer?.opacity = Float(f)
+            rollMask.bounds = CGRect(x: 0, y: 0, width: bounds.width, height: bounds.height)
+        } else {
+            layer?.opacity = 1
+            rollMask.bounds = CGRect(x: 0, y: 0, width: bounds.width, height: bounds.height * f)
+        }
+        CATransaction.commit()
+    }
+
+    /// 没拉满就松手：从手指停下的地方接着卷到全开，停在“看一眼”。返回要多久。
+    @discardableResult
+    func settleRoll() -> CFTimeInterval {
+        let full = bounds.height
+        let current = rollMask.presentation()?.bounds.height ?? rollMask.bounds.height
+        rollMask.removeAllAnimations()
+        CATransaction.begin()
+        CATransaction.setDisableActions(true)
+        layer?.opacity = 1
+        rollMask.bounds = CGRect(x: 0, y: 0, width: bounds.width, height: full)
+        rollMask.position = CGPoint(x: 0, y: full)
+        CATransaction.commit()
+        guard !reduceMotion, full > 1, current < full - 0.5 else { return 0 }
+        let duration = 0.18 * Double(max(0.3, (full - current) / full))
+        let roll = CABasicAnimation(keyPath: "bounds.size.height")
+        roll.fromValue = current
+        roll.toValue = full
+        roll.duration = duration
+        roll.timingFunction = CAMediaTimingFunction(controlPoints: 0.23, 1, 0.32, 1)
+        rollMask.add(roll, forKey: "glance-roll")
+        return duration
+    }
+
+    /// 卷上（或缩回缩略图）途中指针又回来了：停在全开，不重播卷下。
     func cancelRollUp() {
         rollMask.removeAllAnimations()
         layer?.removeAnimation(forKey: "glance-fade")
@@ -251,6 +310,118 @@ final class GlanceContentView: NSView {
         layer?.opacity = 1
         rollMask.bounds = CGRect(x: 0, y: 0, width: bounds.width, height: bounds.height)
         rollMask.position = CGPoint(x: 0, y: bounds.height)
+        for grown in [shadowLayer, cardLayer] {
+            grown.removeAnimation(forKey: "glance-grow")
+            grown.transform = CATransform3DIdentity
+        }
+        CATransaction.commit()
+        // 卡片停在全开：缩回时藏起来的提示照各自的状态露出来。
+        noticesGeneration += 1
+        notices.isHidden = false
+    }
+
+    // MARK: 从缩略图长回原大小 / 缩回缩略图
+
+    /// 卡片 delay 秒后整张铺开：到时再露出提示（中途又缩回、停住就作废）。
+    private func revealNotices(after delay: CFTimeInterval) {
+        noticesGeneration += 1
+        let generation = noticesGeneration
+        notices.isHidden = true
+        DispatchQueue.main.asyncAfter(deadline: .now() + delay) { [weak self] in
+            MainActor.assumeIsolated {
+                guard let self, self.noticesGeneration == generation else { return }
+                self.notices.isHidden = false
+            }
+        }
+    }
+
+    /// 卡片（连同投影）缩在 rect（本视图坐标）里的样子：把卡片外框映到 rect 上的变换。
+    private func shrunkTransform(for target: CALayer, into rect: NSRect) -> CATransform3D {
+        guard cardFrame.width > 0, cardFrame.height > 0 else { return CATransform3DIdentity }
+        let kx = rect.width / cardFrame.width
+        let ky = rect.height / cardFrame.height
+        let p = target.position
+        let tx = rect.minX + kx * (p.x - cardFrame.minX) - p.x
+        let ty = rect.minY + ky * (p.y - cardFrame.minY) - p.y
+        return CATransform3DConcat(CATransform3DMakeScale(kx, ky, 1), CATransform3DMakeTranslation(tx, ty, 0))
+    }
+
+    /// 缩略图上停够了：卡片从缩略图（rect，本视图坐标）长回窗口原来的大小，弹簧 0.3 / 不回弹。
+    /// 返回多久之后卡片整张盖住原处（被隐藏的 App 要等到那时才在下面取消隐藏）。
+    @discardableResult
+    func grow(from rect: NSRect) -> CFTimeInterval {
+        layoutSubtreeIfNeeded()
+        rollMask.removeAllAnimations()
+        layer?.removeAnimation(forKey: "glance-fade")
+        CATransaction.begin()
+        CATransaction.setDisableActions(true)
+        layer?.opacity = 1
+        rollMask.bounds = CGRect(x: 0, y: 0, width: bounds.width, height: bounds.height)
+        rollMask.position = CGPoint(x: 0, y: bounds.height)
+        for grown in [shadowLayer, cardLayer] {
+            grown.removeAnimation(forKey: "glance-grow")
+            grown.transform = CATransform3DIdentity
+        }
+        CATransaction.commit()
+        if reduceMotion {
+            // 整张一起淡入，提示跟着淡入就行。
+            noticesGeneration += 1
+            notices.isHidden = false
+            let fade = CABasicAnimation(keyPath: "opacity")
+            fade.fromValue = 0
+            fade.toValue = 1
+            fade.duration = 0.12
+            layer?.add(fade, forKey: "glance-fade")
+            return 0.12
+        }
+        var settle: CFTimeInterval = 0
+        for grown in [shadowLayer, cardLayer] {
+            let spring = CASpringAnimation(perceptualDuration: 0.3, bounce: 0)
+            spring.keyPath = "transform"
+            spring.fromValue = NSValue(caTransform3D: shrunkTransform(for: grown, into: rect))
+            spring.toValue = NSValue(caTransform3D: CATransform3DIdentity)
+            spring.duration = spring.settlingDuration
+            settle = spring.settlingDuration
+            grown.add(spring, forKey: "glance-grow")
+        }
+        // 临界阻尼的弹簧到 0.45 秒已差不到 0.1%：千点宽的窗口也露不出一点。
+        let covered = min(settle, 0.45)
+        // 右下角“收起时的画面”、正中“画面暂时看不到”不跟着缩放：卡片铺开了再露出来。
+        revealNotices(after: covered)
+        return covered
+    }
+
+    /// 指针移开：卡片缩回缩略图（rect，本视图坐标），0.16 秒，缩完再交回 completion。
+    func shrink(to rect: NSRect, completion: @escaping () -> Void) {
+        rollMask.removeAllAnimations()
+        CATransaction.begin()
+        CATransaction.setCompletionBlock(completion)
+        CATransaction.setDisableActions(true)
+        if reduceMotion {
+            layer?.opacity = 0
+            let fade = CABasicAnimation(keyPath: "opacity")
+            fade.fromValue = 1
+            fade.toValue = 0
+            fade.duration = 0.1
+            layer?.add(fade, forKey: "glance-fade")
+        } else {
+            for grown in [shadowLayer, cardLayer] {
+                let from = grown.presentation()?.transform ?? grown.transform
+                let to = shrunkTransform(for: grown, into: rect)
+                grown.removeAnimation(forKey: "glance-grow")
+                grown.transform = to
+                let shrink = CABasicAnimation(keyPath: "transform")
+                shrink.fromValue = NSValue(caTransform3D: from)
+                shrink.toValue = NSValue(caTransform3D: to)
+                shrink.duration = 0.16
+                shrink.timingFunction = CAMediaTimingFunction(controlPoints: 0.65, 0, 0.35, 1)
+                grown.add(shrink, forKey: "glance-grow")
+            }
+            // 画面缩小时右下角“收起时的画面”那块提示不跟着缩：整层先藏起来（各自的状态留着，
+            // 指针中途回来时 cancelRollUp 照原样露出来）。
+            noticesGeneration += 1
+            notices.isHidden = true
+        }
         CATransaction.commit()
     }
 

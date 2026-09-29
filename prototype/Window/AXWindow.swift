@@ -650,6 +650,12 @@ func titlebarHitHeight(of win: AXUIElement, id: CGWindowID,
     if let cached = ChromeProfileCache.shared.cachedHitBarHeight(id: id, win: win, size: winSize) {
         return cached
     }
+    return measuredTitlebarHitHeight(of: win, winTop: winTop, winSize: winSize, pid: pid)
+}
+
+/// 不看缓存、当场量。只有辅助功能查询，不碰只在主线程读写的 ChromeProfileCache，可以在后台线程上做
+/// （手势起点的确认就在后台量，见 TrackpadGestures.swift 的 resolveTitleBar）。
+func measuredTitlebarHitHeight(of win: AXUIElement, winTop: CGFloat, winSize: CGSize, pid: pid_t) -> CGFloat {
     let visualHeight = chromeHeight(of: win, winTop: winTop, winSize: winSize, pid: pid)
     if isAdobeApp(pid: pid) {
         let profile = adobeChromeProfile(for: win, pid: pid, size: winSize)

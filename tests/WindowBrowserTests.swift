@@ -32,6 +32,12 @@ enum WindowBrowserTests {
         search()
         actions()
         actionPolicy()
+        newWindowActions()
+        newWindowCommand()
+        departureMotion()
+        cardDropZones()
+        helperGrouping()
+        missionControlPick()
         thumbnails()
         thumbnailPolicy()
         discoveryFilter()
@@ -759,6 +765,404 @@ enum WindowBrowserTests {
                "unpinning a running session does not require screen recording")
         expect(preflight(.unpinPreview, pinned, screenRecording: false) == nil,
                "local cleanup must not be blocked by revoked screen recording")
+
+        // 9/28 新增的三个动作（对标 DockDoor）：进入全屏 / 让开这个 App / 退出 App。
+        expect(preflight(.fullScreen, base) == nil,
+               "fullscreen is allowed for a normal window with accessibility")
+        expect(preflight(.fullScreen, base, accessibility: false)
+               == .permissionRequired(kind: .accessibility),
+               "fullscreen without accessibility asks for the permission")
+        expect(preflight(.hideApp, base, accessibility: false) == nil,
+               "hiding the owning app does not need accessibility")
+        expect(preflight(.quitApp, base, accessibility: false) == nil,
+               "quitting the owning app does not need accessibility")
+        var lean = base
+        lean.capabilities = [.activate]
+        expect(preflight(.fullScreen, lean) == .unsupported(reason: "这个窗口不能全屏"),
+               "fullscreen without capability is refused")
+        expect(preflight(.hideApp, lean) == .unsupported(reason: "这个 App 不能这样让开"),
+               "hiding without capability is refused")
+        expect(preflight(.quitApp, lean) == .unsupported(reason: "这个 App 不能退出"),
+               "quitting without capability is refused")
+    }
+
+    /// 三个新动作出现在哪儿、叫什么、算不算危险动作。
+    static func newWindowActions() {
+        let record = sampleRecord()
+        let context = WindowBrowserActionPresentation.Context()
+        let items = WindowBrowserActionPresentation.items(for: record, context: context)
+        let actions = items.map(\.action)
+        expect(actions.contains(.fullScreen) && actions.contains(.hideApp)
+               && actions.contains(.quitApp),
+               "the three new actions are all presented for a normal window")
+        if let closeIndex = actions.firstIndex(of: .close),
+           let fullIndex = actions.firstIndex(of: .fullScreen),
+           let hideIndex = actions.firstIndex(of: .hideApp),
+           let quitIndex = actions.firstIndex(of: .quitApp) {
+            expect(fullIndex > closeIndex && hideIndex > fullIndex && quitIndex > hideIndex,
+                   "the three new actions sit after close, in order")
+        } else {
+            expect(false, "the three new actions all have a position")
+        }
+        expect(WindowBrowserActionPresentation.title(for: .fullScreen, record: record) == "进入全屏",
+               "the fullscreen action reads 进入全屏")
+        expect(WindowBrowserActionPresentation.title(for: .hideApp, record: record) == "让开这个 App",
+               "the hide action reads 让开这个 App")
+        expect(WindowBrowserActionPresentation.title(for: .quitApp, record: record) == "退出 App",
+               "the quit action reads 退出 App")
+        expect(items.first { $0.action == .quitApp }?.isDestructive == true,
+               "quitting the app is marked destructive")
+        expect(items.first { $0.action == .close }?.isDestructive == true,
+               "closing the window stays destructive")
+        expect(!WindowBrowserActionPresentation.primaryActions.contains(.quitApp)
+               && !WindowBrowserActionPresentation.primaryActions.contains(.hideApp)
+               && !WindowBrowserActionPresentation.primaryActions.contains(.fullScreen),
+               "the new actions stay out of the compact bar")
+        // 不能全屏的窗口：条目留着但置灰，并带上原因，不出现“点了没反应”的按钮。
+        var noFullScreen = record
+        noFullScreen.capabilities = [.activate, .hideApp, .quitApp]
+        let greyed = WindowBrowserActionPresentation.items(for: noFullScreen, context: context)
+            .first { $0.action == .fullScreen }
+        expect(greyed?.isEnabled == false && greyed?.disabledReason == "这个窗口不能全屏",
+               "a window that cannot go fullscreen keeps the row, greyed with a reason")
+    }
+
+    /// 新建窗口：按标题认“新建窗口”，⌘N 只是排序依据；标题不像的 ⌘N 不按，菜单读不到也不发按键。
+    static func newWindowCommand() {
+        typealias C = WindowBrowserNewWindowCommand.Candidate
+        typealias P = WindowBrowserNewWindowCommand.ItemPath
+        func item(_ menu: Int, _ index: Int, _ title: String, _ char: String?, _ mods: Int?,
+                  enabled: Bool = true, submenu: Bool = false) -> C {
+            C(menuIndex: menu, itemIndex: index, title: title, commandCharacter: char,
+              commandModifiers: mods, enabled: enabled, hasSubmenu: submenu)
+        }
+        func sub(_ menu: Int, _ index: Int, _ subIndex: Int, parent: String, _ title: String,
+                 _ char: String?, _ mods: Int?, enabled: Bool = true) -> C {
+            C(menuIndex: menu, itemIndex: index, subItemIndex: subIndex, title: title, parentTitle: parent,
+              commandCharacter: char, commandModifiers: mods, enabled: enabled)
+        }
+        func press(_ menu: Int, _ index: Int, _ subIndex: Int? = nil) -> WindowBrowserNewWindowCommand.Plan {
+            .press(P(menuIndex: menu, itemIndex: index, subItemIndex: subIndex))
+        }
+        let plan = WindowBrowserNewWindowCommand.plan
+        let kind = WindowBrowserNewWindowCommand.titleKind
+        expect(WindowBrowserNewWindowCommand.isNewWindowShortcut(character: "N", modifiers: 0)
+               && WindowBrowserNewWindowCommand.isNewWindowShortcut(character: "n", modifiers: nil),
+               "⌘N counts whether the modifiers attribute says command-only or is missing")
+        expect(!WindowBrowserNewWindowCommand.isNewWindowShortcut(character: "N", modifiers: 1),
+               "⇧⌘N (new private window, new folder) is not the new-window shortcut")
+        expect(["新建窗口", "新建访达窗口", "打开新的窗口", "新建查看器窗口", "New Window", "New Finder Window",
+                "新規ウインドウ", "Neues Fenster", "新增視窗"].allSatisfy { kind($0) == .newWindow },
+               "titles that say new window are recognised in the languages the Mac ships")
+        expect(["新建无痕窗口", "新建无痕浏览窗口", "New Private Window", "New Incognito Window",
+                "New InPrivate Window", "Nouvelle fenêtre privée", "将标签页移到新窗口", "Move Tab to New Window",
+                "重新打开上次关闭的窗口", "Reopen Closed Window", "关闭窗口", "合并所有窗口"]
+                .allSatisfy { kind($0) == .other },
+               "private windows, moving tabs, reopening and closing are never taken for a new window")
+        expect(["新建", "New", "New Document", "新建文稿…"].allSatisfy { kind($0) == .newDocument }
+               && ["新建事件", "新建提醒事项", "新建备忘录", "新建名片", "New Event", "New Note", "从剪贴板新建",
+                   "新建邮件"].allSatisfy { kind($0) == .other },
+               "only a bare 新建 / New counts as a new document; new event, note, card or mail do not")
+        // 审查发现的问题：日历、提醒事项、备忘录、通讯录的 ⌘N 会新建日程 / 提醒 / 备忘录 / 名片。
+        for title in ["新建事件", "新建提醒事项", "新建备忘录", "新建名片", "New Event"] {
+            expect(plan(true, [item(2, 0, title, "N", 0)]) == .noCommand,
+                   "a ⌘N titled \(title) is not pressed: it would add a record to the user's data")
+        }
+        expect(plan(true, [item(2, 0, "新建文件…", "N", 0)]) == .noCommand,
+               "Xcode's ⌘N (a new-file sheet) is not pressed either")
+        expect(plan(true, [item(2, 0, "新建访达窗口", "N", 0), item(2, 1, "新建文件夹", "N", 1)]) == press(2, 0),
+               "Finder: 新建访达窗口 ⌘N is pressed")
+        expect(plan(true, [item(2, 0, "打开新的标签页", "T", 0), item(2, 1, "打开新的窗口", "N", 0),
+                           item(2, 2, "打开新的无痕窗口", "N", 1)]) == press(2, 1),
+               "Chrome: the ordinary new window, never the incognito one")
+        expect(plan(true, [item(2, 0, "新建文本文件", "N", 0), item(2, 3, "新建窗口", "N", 1)]) == press(2, 3),
+               "VS Code: 新建窗口 on ⇧⌘N wins over ⌘N 新建文本文件")
+        expect(plan(true, [item(2, 0, "新建邮件", "N", 0), item(2, 1, "新建查看器窗口", "N", 2)]) == press(2, 1),
+               "Mail: 新建查看器窗口 on ⌥⌘N, not 新建邮件")
+        expect(plan(true, [item(7, 0, "新建窗口", nil, nil), item(2, 5, "New Window", "N", 0)]) == press(2, 5),
+               "the ⌘N one outranks a new-window item without a shortcut")
+        expect(plan(true, [item(3, 0, "新建窗口", "N", 0), item(2, 4, "新建窗口", "N", 0)]) == press(2, 4),
+               "the File menu (index 2) wins over a later menu at the same rank")
+        expect(plan(true, [item(3, 2, "新建窗口", nil, nil, submenu: true),
+                           sub(3, 2, 0, parent: "新建窗口", "使用描述文件 – Basic", "N", 0),
+                           sub(3, 2, 1, parent: "新建窗口", "Grass", nil, nil)]) == press(3, 2, 0),
+               "Terminal: the ⌘N entry inside the 新建窗口 submenu is pressed, not the submenu itself")
+        expect(plan(true, [item(3, 2, "新建窗口", nil, nil, submenu: true),
+                           sub(3, 2, 1, parent: "新建窗口", "Grass", nil, nil)]) == .noCommand,
+               "a profile without ⌘N in that submenu is not guessed at")
+        expect(plan(true, [item(2, 0, "新建", "N", 0)]) == press(2, 0),
+               "TextEdit / Pages: a bare 新建 on ⌘N opens a new document window")
+        expect(plan(true, [item(2, 0, "新建", "N", 0), item(8, 1, "新建窗口", nil, nil)]) == press(8, 1),
+               "a real 新建窗口 wins over the document fallback")
+        expect(plan(true, [item(2, 0, "新建窗口", "N", 0, enabled: false), item(2, 1, "新建", "N", 0)])
+               == press(2, 1),
+               "a greyed 新建窗口 falls back to an enabled 新建")
+        expect(plan(true, [item(0, 0, "新建窗口", "N", 0)]) == .noCommand,
+               "the Apple menu never counts")
+        expect(plan(true, [item(2, 0, "新建窗口", "N", 0, enabled: false)]) == .disabled,
+               "a greyed 新建窗口 is reported, not pressed and not replaced by a keystroke")
+        expect(plan(true, []) == .noCommand,
+               "a readable menu without a new-window item means nothing is pressed")
+        expect(plan(false, []) == .unreadable,
+               "an unreadable menu posts nothing either: a blind ⌘N could add a record")
+        expect(WindowBrowserNewWindowCommand.isSettled([item(2, 0, "新建窗口", "N", 0)])
+               && !WindowBrowserNewWindowCommand.isSettled([item(2, 0, "新建窗口", "N", 1)])
+               && !WindowBrowserNewWindowCommand.isSettled([item(2, 0, "新建事件", "N", 0)]),
+               "menu reading stops early only on an enabled ⌘N 新建窗口")
+        expect(WindowBrowserAccessibilityAnnouncement.text(for: .completed, action: .newWindow,
+                                                           windowTitle: "旧窗口") == "新建窗口完成"
+               && WindowBrowserAccessibilityAnnouncement.text(for: .completed, action: .close,
+                                                              windowTitle: "旧窗口") == "关闭窗口完成：旧窗口",
+               "VoiceOver does not read the clicked old window's title as if it were the new one")
+        expect(WindowBrowserNewWindowCommand.appeared(before: [1, 2], after: [1, 2, 9])
+               && !WindowBrowserNewWindowCommand.appeared(before: [1, 2], after: [2]),
+               "a new window counts only when a window number that was not there shows up")
+        // 新建窗口出现在右键菜单里，名字统一，不算危险动作；也常驻在紧凑操作条上（悬停提示带 ⌘N）。
+        let record = sampleRecord()
+        let items = WindowBrowserActionPresentation.items(for: record, context: .init())
+        let entry = items.first { $0.action == .newWindow }
+        expect(entry?.title == "新建窗口" && entry?.isEnabled == true && entry?.isDestructive == false,
+               "the new-window entry reads 新建窗口 and is enabled for a normal window")
+        expect(WindowBrowserActionPresentation.primaryActions.contains(.newWindow)
+               && WindowBrowserActionPresentation.macShortcut(for: .newWindow)?.label == "⌘N",
+               "新建窗口 is a button on the compact bar and shows ⌘N")
+        if let full = items.firstIndex(where: { $0.action == .fullScreen }),
+           let new = items.firstIndex(where: { $0.action == .newWindow }),
+           let hide = items.firstIndex(where: { $0.action == .hideApp }) {
+            expect(full < new && new < hide, "新建窗口 sits between 进入全屏 and 让开这个 App")
+        } else {
+            expect(false, "新建窗口 has a position in the menu")
+        }
+        var lean = record
+        lean.capabilities = [.activate]
+        expect(WindowBrowserActionPolicy.preflight(action: .newWindow, record: lean,
+                                                   hasAccessibility: true, hasScreenRecording: true)
+               == .unsupported(reason: "这个 App 不能新建窗口"),
+               "without the capability the entry is refused")
+        expect(WindowBrowserActionPolicy.preflight(action: .newWindow, record: record,
+                                                   hasAccessibility: false, hasScreenRecording: true)
+               == .permissionRequired(kind: .accessibility),
+               "reading the app's menu needs accessibility")
+    }
+
+    /// 关窗时卡片退场：只有“刚关掉的窗口”纯移出才做，时长不超过 200 ms。
+    static func departureMotion() {
+        let keys = (1...3).map {
+            WindowKey(application: ApplicationInstanceKey(pid: 5001, generation: 1),
+                      originalWindowID: CGWindowID(100 + $0), windowGeneration: 1)
+        }
+        let shouldAnimate = WindowBrowserDepartureMotion.shouldAnimate
+        expect(shouldAnimate([keys[1]], 0, [keys[1]], false),
+               "a closed window leaving the list animates")
+        expect(!shouldAnimate([keys[1]], 0, [], false),
+               "a search filter hiding a card does not animate")
+        expect(!shouldAnimate([keys[1], keys[2]], 0, [keys[1]], false),
+               "a mixed removal (one closed, one filtered) stays instant")
+        expect(!shouldAnimate([keys[1]], 1, [keys[1]], false),
+               "a removal that comes with insertions stays instant")
+        expect(!shouldAnimate([keys[1]], 0, [keys[1]], true),
+               "switching grid/list never animates departures")
+        expect(WindowBrowserDepartureMotion.duration(reduceMotion: false) <= 0.2
+               && WindowBrowserDepartureMotion.duration(reduceMotion: true) <= 0.2,
+               "the exit takes 200 ms or less, with or without reduced motion")
+        let size = CGSize(width: 200, height: 100)
+        let t = WindowBrowserDepartureMotion.centeredScale(0.5, size: size, anchor: .zero)
+        // 以中心缩放：左下角 (0,0) 应落到 (50,25)，中心 (100,50) 不动。
+        let corner = CGPoint(x: t.m41, y: t.m42)
+        let center = CGPoint(x: 100 * t.m11 + t.m41, y: 50 * t.m22 + t.m42)
+        expect(abs(corner.x - 50) < 0.001 && abs(corner.y - 25) < 0.001
+               && abs(center.x - 100) < 0.001 && abs(center.y - 50) < 0.001,
+               "the shrink is centred on the card even when the layer anchor is its corner")
+        let mid = WindowBrowserDepartureMotion.centeredScale(0.5, size: size,
+                                                             anchor: CGPoint(x: 0.5, y: 0.5))
+        expect(abs(mid.m41) < 0.001 && abs(mid.m42) < 0.001 && abs(mid.m11 - 0.5) < 0.001,
+               "a centred anchor needs no translation")
+        let marks: [WindowKey: CFTimeInterval] = [keys[0]: 10, keys[1]: 1, keys[2]: 10]
+        let live = WindowBrowserDepartureMotion.liveMarks(marks, now: 11, listed: [keys[0], keys[1]])
+        expect(live.keys.sorted() == [keys[0]],
+               "stale marks and marks for windows no longer listed are dropped")
+    }
+
+    /// 卡片拖出面板：落点只在贴着屏幕边的地方；面板四周一圈、屏幕中间、Dock 上都是取消。
+    static func cardDropZones() {
+        let screen = CGRect(x: 0, y: 0, width: 1600, height: 1000)
+        let visible = CGRect(x: 0, y: 80, width: 1600, height: 895)  // 底部 Dock、顶上菜单栏
+        let panel = CGRect(x: 600, y: 90, width: 400, height: 260)
+        func zone(_ x: CGFloat, _ y: CGFloat, edge: Bool = false, visibleFrame: CGRect? = nil,
+                  panelFrame: CGRect? = nil) -> WindowBrowserDropZone? {
+            WindowBrowserCardDragPolicy.zone(pointer: CGPoint(x: x, y: y), screenFrame: screen,
+                                             visibleFrame: visibleFrame ?? visible,
+                                             panelFrame: panelFrame ?? panel, slideOverEdgeHit: edge)
+        }
+        expect(zone(20, 600) == .leftHalf, "against the left edge drops onto the left half")
+        expect(zone(1585, 600) == .rightHalf, "against the right edge drops onto the right half")
+        expect(zone(800, 960) == .fill, "just under the menu bar fills the screen")
+        expect(zone(800, 990) == .fill, "the menu bar counts as the top")
+        expect(zone(200, 500) == nil && zone(1400, 600) == nil,
+               "the left and right quarters away from the edge are no longer targets")
+        expect(zone(800, 500) == nil, "the middle of the screen is no target, so letting go cancels")
+        expect(zone(800, 200) == nil, "back on the panel is a cancel")
+        expect(zone(20, 40) == nil, "over the Dock is a cancel, even at the left edge")
+        expect(zone(10, 500, edge: true) == .slideOver,
+               "the slide-over strip at the edge wins over the left half")
+        // 审查发现的问题：Dock 在左侧时面板贴着可用区域左边，拖出面板上下方松手原来会落进“左半屏”。
+        let leftDockVisible = CGRect(x: 80, y: 0, width: 1520, height: 975)
+        let leftDockPanel = CGRect(x: 88, y: 380, width: 400, height: 260)
+        expect(zone(100, 660, visibleFrame: leftDockVisible, panelFrame: leftDockPanel) == nil
+               && zone(100, 360, visibleFrame: leftDockVisible, panelFrame: leftDockPanel) == nil
+               && zone(95, 700, visibleFrame: leftDockVisible, panelFrame: leftDockPanel) == nil
+               && zone(95, 310, visibleFrame: leftDockVisible, panelFrame: leftDockPanel) == nil,
+               "Dock on the left: letting go just above or below the panel is still a cancel")
+        expect(zone(40, 900, visibleFrame: leftDockVisible, panelFrame: leftDockPanel) == nil,
+               "Dock on the left: over the Dock itself is a cancel")
+        expect(zone(100, 900, visibleFrame: leftDockVisible, panelFrame: leftDockPanel) == .leftHalf,
+               "Dock on the left: well clear of the panel, against the edge, is still the left half")
+        // Dock 在底部、停在靠左的图标上（访达、启动台）：面板贴着屏幕左边。
+        let leftIconPanel = CGRect(x: 8, y: 88, width: 400, height: 260)
+        expect(zone(20, 380, panelFrame: leftIconPanel) == nil && zone(300, 420, panelFrame: leftIconPanel) == nil,
+               "a leftmost Dock icon: dragging just out of the top of the panel is a cancel")
+        expect(zone(20, 600, panelFrame: leftIconPanel) == .leftHalf,
+               "a leftmost Dock icon: far above the panel against the edge is the left half")
+        expect(WindowBrowserDropZone.leftHalf.placementAction == .leftHalf
+               && WindowBrowserDropZone.fill.placementAction == .fill
+               && WindowBrowserDropZone.slideOver.placementAction == nil,
+               "halves and fill reuse the existing placement actions")
+        let begin = WindowBrowserCardDragPolicy.shouldBegin
+        expect(!begin(CGPoint(x: 700, y: 355), CGPoint(x: 704, y: 365), panel),
+               "a small move does not start a drag")
+        expect(!begin(CGPoint(x: 700, y: 200), CGPoint(x: 900, y: 300), panel),
+               "dragging inside the panel keeps the old press-and-drag-out-cancels behaviour")
+        expect(begin(CGPoint(x: 700, y: 200), CGPoint(x: 700, y: 420), panel),
+               "leaving the panel starts the drag")
+    }
+
+    /// 辅助进程归到所属 App：只认装在它包里、没有 Dock 图标、同一家的进程。
+    static func helperGrouping() {
+        let wechat = WindowBrowserAppProcess(pid: 10, bundleIdentifier: "com.tencent.xinWeChat",
+                                             bundlePath: "/Applications/WeChat.app",
+                                             hasDockIcon: true, name: "微信")
+        let appEx = WindowBrowserAppProcess(
+            pid: 11, bundleIdentifier: "com.tencent.flue.WeChatAppEx",
+            bundlePath: "/Applications/WeChat.app/Contents/MacOS/WeChatAppEx.app",
+            hasDockIcon: false, name: "WeChatAppEx")
+        let qq = WindowBrowserAppProcess(pid: 20, bundleIdentifier: "com.tencent.qq",
+                                         bundlePath: "/Applications/QQ.app", hasDockIcon: true, name: "QQ")
+        let qqMini = WindowBrowserAppProcess(
+            pid: 21, bundleIdentifier: "com.tencent.qqexminiprogram",
+            bundlePath: "/Applications/QQ.app/Contents/MacOS/QQEXMiniProgram.app",
+            hasDockIcon: false, name: "QQEXMiniProgram")
+        let capture = WindowBrowserAppProcess(
+            pid: 22, bundleIdentifier: "FN2V63AD2J.com.tencent.ScreenCapture3",
+            bundlePath: "/Applications/QQ.app/Contents/Resources/app/QQ ScreenCapture plugin.app",
+            hasDockIcon: false, name: "QQ ScreenCapture")
+        let stranger = WindowBrowserAppProcess(
+            pid: 30, bundleIdentifier: "com.example.agent",
+            bundlePath: "/Applications/WeChat.app/Contents/MacOS/Agent.app",
+            hasDockIcon: false, name: "Agent")
+        let outside = WindowBrowserAppProcess(
+            pid: 31, bundleIdentifier: "com.tencent.flue.WeChatAppEx",
+            bundlePath: "/Users/me/Library/WeChatAppEx.app", hasDockIcon: false, name: "WeChatAppEx")
+        let ownIcon = WindowBrowserAppProcess(
+            pid: 32, bundleIdentifier: "com.tencent.flue.WeChatAppEx",
+            bundlePath: "/Applications/WeChat.app/Contents/MacOS/WeChatAppEx.app",
+            hasDockIcon: true, name: "小程序")
+        let lookalike = WindowBrowserAppProcess(
+            pid: 33, bundleIdentifier: "com.tencent.xinWeChatX",
+            bundlePath: "/Applications/WeChat.appx/Contents/MacOS/X.app", hasDockIcon: false, name: "X")
+        expect(WindowBrowserHelperApps.isHelper(appEx, of: wechat),
+               "WeChat's mini-program process is listed under WeChat")
+        expect(WindowBrowserHelperApps.isHelper(qqMini, of: qq),
+               "QQ's mini-program process is listed under QQ")
+        expect(!WindowBrowserHelperApps.isHelper(appEx, of: qq),
+               "same vendor is not enough: the helper must live inside that app's bundle")
+        expect(!WindowBrowserHelperApps.isHelper(capture, of: qq),
+               "a team-prefixed bundle id from another signer is not grouped")
+        expect(!WindowBrowserHelperApps.isHelper(stranger, of: wechat),
+               "a different vendor inside the bundle is not grouped")
+        expect(!WindowBrowserHelperApps.isHelper(outside, of: wechat),
+               "a same-named process outside the bundle is not grouped")
+        expect(!WindowBrowserHelperApps.isHelper(ownIcon, of: wechat),
+               "a helper with its own Dock icon keeps its windows under its own icon")
+        expect(!WindowBrowserHelperApps.isHelper(lookalike, of: wechat),
+               "a path that only starts with the same characters is not inside the bundle")
+        expect(!WindowBrowserHelperApps.isHelper(wechat, of: wechat), "an app is not its own helper")
+        let map = WindowBrowserHelperApps.parentsByHelper(
+            [wechat, appEx, qq, qqMini, capture, stranger, outside])
+        expect(map[11]?.pid == 10 && map[21]?.pid == 20 && map.count == 2,
+               "the map pairs exactly the two mini-program processes with their apps")
+        expect(WindowBrowserHelperApps.helperPIDs(of: 10, in: map) == [11],
+               "hovering WeChat also lists its mini-program process")
+        expect(WindowBrowserHelperApps.vendorPrefix("com.tencent.xinWeChat") == "com.tencent"
+               && WindowBrowserHelperApps.vendorPrefix("com.apple") == nil,
+               "vendor prefix needs three components")
+        // 审查发现的问题：Chrome / Electron 的 Helper 也按这条规则归到 App 名下，但它们没有自己的窗口。
+        let chrome = WindowBrowserAppProcess(pid: 40, bundleIdentifier: "com.google.Chrome",
+                                             bundlePath: "/Applications/Google Chrome.app",
+                                             hasDockIcon: true, name: "Google Chrome")
+        let chromeHelper = WindowBrowserAppProcess(
+            pid: 41, bundleIdentifier: "com.google.Chrome.helper",
+            bundlePath: "/Applications/Google Chrome.app/Contents/Frameworks/Google Chrome Framework.framework"
+                + "/Versions/1/Helpers/Google Chrome Helper.app",
+            hasDockIcon: false, name: "Google Chrome Helper")
+        expect(WindowBrowserHelperApps.isHelper(chromeHelper, of: chrome),
+               "a Chromium helper does match the bundle rule, so window ownership has to decide")
+        let layer0: [String: Any] = [kCGWindowLayer as String: NSNumber(value: 0)]
+        let layer25: [String: Any] = [kCGWindowLayer as String: NSNumber(value: 25)]
+        expect(!WindowBrowserHelperApps.hasLayerZeroWindow([])
+               && !WindowBrowserHelperApps.hasLayerZeroWindow([layer25]),
+               "a helper with no window, or only overlay-level ones, is not asked through accessibility")
+        expect(WindowBrowserHelperApps.hasLayerZeroWindow([layer25, layer0]),
+               "a helper with an ordinary window (a WeChat mini program) is asked")
+    }
+
+    /// 调度中心开着时按 ⌘W 挑哪一扇：只认那一层、只挑普通窗口、指针底下的第一扇。
+    static func missionControlPick() {
+        func window(pid: Int, id: Int, owner: String, name: String = "", layer: Int = 0, alpha: Double = 1,
+                    rect: CGRect) -> [String: Any] {
+            [kCGWindowOwnerPID as String: NSNumber(value: pid),
+             kCGWindowNumber as String: NSNumber(value: id),
+             kCGWindowName as String: name,
+             kCGWindowOwnerName as String: owner,
+             kCGWindowLayer as String: NSNumber(value: layer),
+             kCGWindowAlpha as String: NSNumber(value: alpha),
+             kCGWindowBounds as String: [
+                "X": NSNumber(value: Double(rect.minX)), "Y": NSNumber(value: Double(rect.minY)),
+                "Width": NSNumber(value: Double(rect.width)), "Height": NSNumber(value: Double(rect.height)),
+             ]]
+        }
+        let shield = window(pid: 687, id: 9001, owner: "WindowManager",
+                            name: MissionControlPick.shieldName, layer: 19,
+                            rect: CGRect(x: 0, y: 0, width: 1710, height: 1107))
+        let frontApp = window(pid: 4242, id: 9002, owner: "示例应用",
+                              rect: CGRect(x: 100, y: 100, width: 400, height: 300))
+        let behind = window(pid: 4243, id: 9003, owner: "另一个应用",
+                            rect: CGRect(x: 200, y: 200, width: 400, height: 300))
+        let ours = window(pid: Int(getpid()), id: 9004, owner: "WindowShade",
+                          rect: CGRect(x: 0, y: 0, width: 1710, height: 1107))
+
+        expect(!MissionControlPick.isActive(in: [frontApp]),
+               "without the shield layer Mission Control is not considered open")
+        expect(MissionControlPick.isActive(in: [shield, frontApp]),
+               "the WindowManager shield layer means Mission Control is open")
+
+        let overlapped = CGPoint(x: 250, y: 250)
+        let picked = MissionControlPick.target(at: overlapped, in: [shield, ours, frontApp, behind])
+        expect(picked == MissionControlTarget(pid: 4242, windowID: 9002,
+                                              frame: CGRect(x: 100, y: 100, width: 400, height: 300)),
+               "the pointer picks the frontmost normal window under it")
+        expect(MissionControlPick.target(at: CGPoint(x: 500, y: 500),
+                                         in: [shield, ours, frontApp, behind]) == nil,
+               "an empty spot picks nothing")
+        expect(MissionControlPick.target(at: overlapped, in: [shield, ours]) == nil,
+               "our own windows are never picked")
+        let dockish = window(pid: 50870, id: 9005, owner: "Dock", layer: 20,
+                             rect: CGRect(x: 0, y: 0, width: 1710, height: 1107))
+        expect(MissionControlPick.target(at: overlapped, in: [shield, dockish]) == nil,
+               "system layers are never picked")
+        let invisible = window(pid: 4244, id: 9006, owner: "看不见的应用", alpha: 0.0,
+                               rect: CGRect(x: 0, y: 0, width: 1710, height: 1107))
+        expect(MissionControlPick.target(at: overlapped, in: [shield, invisible, frontApp])?.pid == 4242,
+               "a fully transparent window is skipped")
     }
 
     static func thumbnails() {
@@ -3481,6 +3885,8 @@ enum WindowBrowserTests {
         let suite = "WindowShadeTests.GlobalShortcuts.\(getpid())"
         let defaults = UserDefaults(suiteName: suite)!
         defaults.removePersistentDomain(forName: suite)
+        // 这一组测的是 1.0.15 出厂的 ⌃⌘ 组合：按升级上来的算（新装的一个都不占，见 tests/QuietDefaultsTests.swift）。
+        defaults.set(2, forKey: "ShadeSoundMigrationVersion")
         let saved = GlobalShortcutSettings.defaults
         GlobalShortcutSettings.defaults = defaults
         defer {

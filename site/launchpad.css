@@ -1,0 +1,64 @@
+/* 启动台小样：所有样式限定在 .lp-demo 内。背景沿现有 macOS 蓝紫淡壁纸方向。 */
+.lp-demo{container-type:inline-size;position:relative;width:100%;max-width:550px;margin-inline:auto;border-radius:26px;overflow:hidden;background:radial-gradient(120% 100% at 0% 0%,#d7e2ff 0%,transparent 60%),radial-gradient(90% 90% at 100% 0%,#f0d9f2 0%,transparent 62%),radial-gradient(120% 90% at 60% 110%,#ffe6d2 0%,transparent 60%),#e8ebf6;box-shadow:0 0 0 1px var(--hair,rgba(20,26,38,.1)),0 40px 80px -48px var(--shadow,rgba(48,63,86,.14));color:#20232b;isolation:isolate}
+.lp-demo *{box-sizing:border-box}
+.lp-tabs{position:absolute;top:14px;left:50%;transform:translateX(-50%);z-index:3;display:flex;gap:4px;padding:4px;border-radius:99px;background:rgba(255,255,255,.66);box-shadow:0 0 0 1px rgba(255,255,255,.6),0 6px 18px -10px rgba(40,50,80,.4);-webkit-backdrop-filter:blur(14px) saturate(180%);backdrop-filter:blur(14px) saturate(180%)}
+.lp-tab{min-height:44px;padding:0 18px;border-radius:99px;font-size:14px;font-weight:600;color:#3d4351;background:none;transition:background-color .15s,color .15s}
+.lp-tab[aria-pressed=true]{background:#fff;color:#171a20;box-shadow:0 2px 8px -4px rgba(30,40,70,.5)}
+.lp-demo :focus-visible{outline:2px solid #245eea;outline-offset:3px;border-radius:10px}
+/* 舞台：550 × 440 的比例，随容器宽度缩放。 */
+.lp-stage{position:relative;aspect-ratio:5/4;min-height:440px;padding:74px 8% 6%}
+.lp-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:clamp(8px,2.6cqw,20px) clamp(6px,2cqw,16px);margin:0;padding:0;list-style:none}
+.lp-slot{display:flex}
+.lp-app{display:flex;flex-direction:column;align-items:center;gap:7px;width:100%;min-height:44px;padding:6px 2px;border-radius:14px;background:none;color:#20232b;transition:background-color .16s}
+.lp-app:hover{background:rgba(255,255,255,.5)}
+.lp-name{font-size:clamp(10px,2.6cqw,13px);line-height:1.3;font-weight:500;text-align:center;color:#2b2f39;text-shadow:0 1px 0 rgba(255,255,255,.7)}
+.lp-ico{display:grid;place-items:center;width:clamp(38px,12cqw,58px);aspect-ratio:1;border-radius:26%;background:#fff;color:#fff;box-shadow:0 6px 14px -8px rgba(30,40,70,.55),inset 0 0 0 1px rgba(255,255,255,.5)}
+.lp-ico svg{width:62%;height:62%}
+.lp-ico-mail{background:linear-gradient(#5b9bff,#2f6ae0)}
+.lp-ico-notes{background:linear-gradient(#ffd968,#f5b428);color:#7a4d05}
+.lp-ico-calendar{background:linear-gradient(#fff,#f2f3f7);color:#e0453a}
+.lp-ico-photos{background:linear-gradient(#ff9ec3,#ffd06a 55%,#7fd0ff);color:#fff}
+.lp-ico-reference{background:linear-gradient(#a99cff,#6c5ce0)}
+.lp-ico-tools{background:linear-gradient(#9fb4cf,#6c7f9b)}
+/* 资料库：三个分组，每组三个大图标加一小簇图标。 */
+.lp-library{display:grid;gap:clamp(8px,2.4cqw,18px);margin:0;padding:0;list-style:none}
+.lp-group-btn{display:grid;grid-template-columns:auto 1fr;grid-template-areas:"head head" "apps cluster";align-items:center;gap:10px;width:100%;min-height:44px;padding:12px 14px;border-radius:18px;background:rgba(255,255,255,.52);box-shadow:0 0 0 1px rgba(255,255,255,.55);text-align:left;color:#20232b;transition:background-color .16s}
+.lp-group-btn:hover{background:rgba(255,255,255,.78)}
+.lp-group-head{grid-area:head;font-size:14px;font-weight:650}
+.lp-group-apps{grid-area:apps;display:flex;gap:8px}
+.lp-group-apps .lp-ico{width:clamp(30px,9cqw,44px)}
+.lp-group-cluster{grid-area:cluster;justify-self:end;display:grid;grid-template-columns:repeat(3,1fr);gap:6px}
+.lp-group-cluster .lp-ico{width:clamp(20px,6cqw,28px);border-radius:30%;box-shadow:inset 0 0 0 1px rgba(255,255,255,.5)}
+.lp-ico-g0-0,.lp-ico-g0-1,.lp-ico-g0-2,.lp-ico-g0-c0,.lp-ico-g0-c1,.lp-ico-g0-c2{background:linear-gradient(#9fb4cf,#6c7f9b)}
+.lp-ico-g1-0,.lp-ico-g1-1,.lp-ico-g1-2,.lp-ico-g1-c0,.lp-ico-g1-c1,.lp-ico-g1-c2{background:linear-gradient(#ffd968,#f0a81e)}
+.lp-ico-g2-0,.lp-ico-g2-1,.lp-ico-g2-2,.lp-ico-g2-c0,.lp-ico-g2-c1,.lp-ico-g2-c2{background:linear-gradient(#ff9ec3,#a06cff)}
+.lp-group-label{margin-top:10px;font-size:12px;color:#4b5262;line-height:1.5}
+/* overlay：示意窗口与文件夹面板共用一个层；默认 hidden，CSS 不覆写 hidden。 */
+.lp-overlay{position:absolute;left:50%;top:50%;transform:translate(-50%,-50%);width:min(78%,360px);padding:44px 22px 22px;border-radius:18px;background:rgba(255,255,255,.94);box-shadow:0 30px 60px -30px rgba(25,35,60,.6),0 0 0 1px rgba(255,255,255,.7);animation:lp-pop .18s var(--ease-out,ease-out) both}
+.lp-lights{position:absolute;top:14px;left:16px;display:flex;gap:7px}
+.lp-lights i{width:12px;height:12px;border-radius:50%}
+.lp-lights i:nth-child(1){background:#ea7468}
+.lp-lights i:nth-child(2){background:#efbb50}
+.lp-lights i:nth-child(3){background:#7cca4a}
+.lp-overlay-title{margin:0;font-size:16px;font-weight:650;color:#1b1e26}
+.lp-overlay-body{margin:10px 0 0;font-size:13px;line-height:1.7;color:#4b5262}
+.lp-close{position:absolute;top:10px;right:10px;display:grid;place-items:center;width:44px;height:44px;border-radius:50%;background:none;color:#4b5262;transition:background-color .15s}
+.lp-close:hover{background:rgba(20,26,38,.08)}
+.lp-close svg{width:18px;height:18px}
+.lp-close svg,.lp-ico svg{fill:none;stroke:currentColor;stroke-width:1.8;stroke-linecap:round;stroke-linejoin:round}
+@keyframes lp-pop{from{opacity:0;transform:translate(-50%,-50%) scale(.94)}to{opacity:1;transform:translate(-50%,-50%) scale(1)}}
+.feature-demo .lp-caption{margin-top:14px;font-size:12px;line-height:1.7;color:var(--faint,#8b9099)}
+@media(max-width:640px){.lp-stage{padding:70px 5% 5%;min-height:380px}.lp-tabs{top:10px}}
+@media(max-width:359px){.lp-tab{padding:0 12px;font-size:13px}.lp-stage{padding-inline:4%}}
+@media(prefers-reduced-motion:reduce){.lp-overlay{animation:none}.lp-tab,.lp-app,.lp-group-btn,.lp-close{transition:none}}
+
+.lp-demo [hidden]{display:none!important}
+.lp-demo .lp-overlay{z-index:4}
+.lp-demo .lp-folder-grid{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:8px;padding-top:18px}
+.lp-demo .lp-folder-grid .lp-slot{list-style:none}
+.lp-demo .lp-folder-grid .lp-ico{width:44px}
+.lp-demo .lp-tabs{white-space:nowrap}
+/* Let library rows determine height; a minimum height must not widen the stage on phones. */
+.lp-demo .lp-stage{width:100%;aspect-ratio:auto}
+.lp-demo .lp-group-label{grid-column:1/-1;min-width:0}
+.lp-demo .lp-overlay{width:78%;max-width:360px}

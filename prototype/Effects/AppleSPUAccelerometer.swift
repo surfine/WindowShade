@@ -12,11 +12,6 @@ import QuartzCore
 /// The feature is deliberately optional: failure to open the device never
 /// affects the existing hinge sensor or desktop effect.
 final class AppleSPUAccelerometer {
-  struct Reading {
-    let acceleration: SIMD3<Double>
-    let time: CFTimeInterval
-  }
-
   enum Status {
     case searching
     case connected
@@ -39,18 +34,45 @@ final class AppleSPUAccelerometer {
   private static let reportingStateKey = "SensorPropertyReportingState"
   private static let powerStateKey = "SensorPropertyPowerState"
   private static let reportIntervalKey = "ReportInterval"
-  private static let reportIntervalMicroseconds = 1000
+  /// 设备认这个间隔：实测 1000 µs 出 807 次/秒、8000 µs 出 134 次/秒、16000 µs 出 62 次/秒。
+  /// 原来按 1000 µs 收，一秒 800 次 HID 回调，占掉常驻 CPU 的约 3 个百分点（消融实验：
+  /// 同一构建把间隔改成 16000 µs，60 秒平均从 4.6–5.4% 掉到 1.7–2.9%）。
+  /// 倾斜效果本来就按 80 毫秒低通、由屏幕刷新率驱动渲染，输入侧 62 次/秒远在需求之上。
+  private static let reportIntervalMicroseconds = 16000
 
   private let queue = DispatchQueue(label: "WindowShade.accelerometer", qos: .userInteractive)
+  /// 保护 wanted、epoch、published、statusTicks。
   private let lock = NSLock()
   private var wanted = false
   private var epoch = EffectEpoch()
+  /// 最新的倾斜偏移，桌面效果每帧来读。停下时当场清零。
+  private var published = SIMD2<Double>.zero
+  private var statusTicks = false
+  // 以下只在 queue 上用。
   private var manager: IOHIDManager?
   private var timeout: DispatchWorkItem?
   private var hasReading = false
+  private var connection: UInt64 = 0
+  /// 低通和基线在这条队列上算，不再每份读数都叫醒主线程：桌面没合上时主线程一次都不用醒。
+  private var filter = MotionTiltFilter()
+  /// 滤波按实际间隔算，喂得再密画面也一样；ReportInterval 是驱动上所有进程共用的属性，
+  /// 别的程序可能把它调到 1000 µs（800 次/秒），这里每秒最多收 120 份，多出来的直接丢。
+  private static let forwardInterval: CFTimeInterval = 1.0 / 120
+  private var lastForward: CFTimeInterval = 0
+  /// 设置窗口开着时，状态字每秒最多跟着刷新四次（原来由每份读数顺带触发）。
+  private static let statusTickInterval: CFTimeInterval = 0.25
+  private var lastStatusTick: CFTimeInterval = 0
 
-  var onReading: ((Reading) -> Void)?
   var onStatus: ((Status) -> Void)?
+  /// 只在 setStatusTicks(true) 期间、在主线程上调用。
+  var onStatusTick: (() -> Void)?
+
+  /// 当前倾斜偏移（已低通、已减去基线、已限幅）。任意线程可读，不跨线程排队。
+  var tilt: SIMD2<Double> { lock.withLock { published } }
+
+  func setStatusTicks(_ enabled: Bool) {
+    lock.withLock { statusTicks = enabled }
+  }
 
   deinit {
     timeout?.cancel()
@@ -72,6 +94,7 @@ final class AppleSPUAccelerometer {
 
   func stop() {
     let shouldStop = lock.withLock { () -> Bool in
+      published = .zero
       guard wanted else { return false }
       wanted = false
       _ = epoch.advance()
@@ -89,7 +112,7 @@ final class AppleSPUAccelerometer {
   private func connect(token: UInt64) {
     guard current(token) else { return }
     close()
-    hasReading = false
+    connection = token
 
     // AppleSPUHIDDevice is present in the registry on M-series MacBooks, but
     // AppleSPUHIDDriver keeps the IMU asleep until a client explicitly asks
@@ -201,11 +224,23 @@ final class AppleSPUAccelerometer {
     else { return }
     let firstReading = !hasReading
     hasReading = true
-    let reading = Reading(acceleration: vector, time: CACurrentMediaTime())
-    DispatchQueue.main.async { [weak self] in
-      guard let self else { return }
-      if firstReading { onStatus?(.connected) }
-      onReading?(reading)
+    let now = CACurrentMediaTime()
+    guard firstReading || now - lastForward >= Self.forwardInterval else { return }
+    lastForward = now
+    let token = connection
+    let next = filter.update(vector, at: now)
+    let ticks = lock.withLock { () -> Bool in
+      guard wanted, epoch.accepts(token) else { return false }
+      if let next { published = next }
+      return statusTicks
+    }
+    if firstReading { deliver(.connected, token: token) }
+    if ticks, now - lastStatusTick >= Self.statusTickInterval {
+      lastStatusTick = now
+      DispatchQueue.main.async { [weak self] in
+        guard let self, current(token) else { return }
+        onStatusTick?()
+      }
     }
   }
 
@@ -225,6 +260,9 @@ final class AppleSPUAccelerometer {
     }
     manager = nil
     hasReading = false
+    lastForward = 0
+    lastStatusTick = 0
+    filter = MotionTiltFilter()
   }
 }
 

@@ -112,12 +112,19 @@ struct WindowBrowserCapabilities: OptionSet, Hashable {
     static let close = WindowBrowserCapabilities(rawValue: 1 << 5)
     static let minimize = WindowBrowserCapabilities(rawValue: 1 << 6)
     static let capture = WindowBrowserCapabilities(rawValue: 1 << 7)
+    static let fullScreen = WindowBrowserCapabilities(rawValue: 1 << 8)
+    static let hideApp = WindowBrowserCapabilities(rawValue: 1 << 9)
+    static let quitApp = WindowBrowserCapabilities(rawValue: 1 << 10)
+    /// 让窗口所属的 App 新开一扇窗（它自己菜单里的 ⌘N）。
+    static let newWindow = WindowBrowserCapabilities(rawValue: 1 << 11)
 
     static let managedWindow: WindowBrowserCapabilities = [
-        .activate, .fold, .unfold, .pinPreview, .unpinPreview, .close, .minimize
+        .activate, .fold, .unfold, .pinPreview, .unpinPreview, .close, .minimize,
+        .fullScreen, .newWindow, .hideApp, .quitApp
     ]
     static let discoveredWindow: WindowBrowserCapabilities = [
-        .activate, .fold, .pinPreview, .close, .minimize, .capture
+        .activate, .fold, .pinPreview, .close, .minimize, .capture,
+        .fullScreen, .newWindow, .hideApp, .quitApp
     ]
 }
 
@@ -207,6 +214,11 @@ enum WindowBrowserAction: String, CaseIterable {
     case unpinPreview
     case close
     case minimize
+    case fullScreen
+    /// 作用于窗口所属的 App：让它新开一扇窗。
+    case newWindow
+    case hideApp
+    case quitApp
 }
 
 enum WindowBrowserActionOutcome: Equatable {

@@ -24,19 +24,40 @@ final class WindowListCache {
         let at: CFAbsoluteTime
     }
 
-    private enum Kind {
+    // 快照种类。internal 以便可注入的 provider 在测试中区分两种查询。
+    enum Kind: Hashable {
         case onScreen   // [.optionOnScreenOnly, .excludeDesktopElements]
         case all        // [.optionAll, .excludeDesktopElements]
     }
 
-    private let lock = NSLock()
-    private let ttl: TimeInterval = 0.15
+    // 窗口列表 provider。默认直连 WindowServer，测试可注入可控阻塞的假 provider。
+    private let provider: (Kind) -> [[String: Any]]
+
+    // 单一状态锁保护缓存与 in-flight 标记；provider 调用一律在锁外进行，
+    // 慢 provider 不会阻塞其他读写者。
+    private let lock = NSCondition()
+    private let ttl: TimeInterval
     private var onScreenEntry: Entry?
     private var allEntry: Entry?
-    // 多个 AX/缩略图队列可能在同一 TTL 边界同时 miss。只允许每种快照有一个
-    // WindowServer 枚举，其余调用等待同一结果，避免高峰期重复做昂贵 IPC。
-    private var onScreenRefresh: DispatchSemaphore?
-    private var allRefresh: DispatchSemaphore?
+    // 每个 kind 各自的 single-flight 标记：为真表示已有调用在锁外枚举 WindowServer。
+    // 多个 AX/缩略图队列可能在同一 TTL 边界同时 miss，只允许每种快照有一个 IPC，
+    // 其余调用（任意数量）在此条件变量上等待，刷新完成后被 broadcast 全部唤醒并
+    // 重新检查 TTL（而不是各自再枚举一次）。
+    private var onScreenRefreshing = false
+    private var allRefreshing = false
+
+    init(ttl: TimeInterval = 0.15,
+         provider: @escaping (Kind) -> [[String: Any]] = WindowListCache.systemProvider) {
+        self.ttl = ttl
+        self.provider = provider
+    }
+
+    private static func systemProvider(for kind: Kind) -> [[String: Any]] {
+        let options: CGWindowListOption = kind == .onScreen
+            ? [.optionOnScreenOnly, .excludeDesktopElements]
+            : [.optionAll, .excludeDesktopElements]
+        return CGWindowListCopyWindowInfo(options, kCGNullWindowID) as? [[String: Any]] ?? []
+    }
 
     func onScreenWindows() -> [[String: Any]] {
         snapshot(.onScreen).windows
@@ -78,51 +99,57 @@ final class WindowListCache {
     }
 
     private func snapshot(_ kind: Kind) -> Snapshot {
+        lock.lock()
+        defer { lock.unlock() }
+
         while true {
             let now = CFAbsoluteTimeGetCurrent()
-            lock.lock()
-            let entry = kind == .onScreen ? onScreenEntry : allEntry
-            if let entry, now - entry.at < ttl {
-                let hit = entry.snapshot
-                lock.unlock()
-                return hit
+
+            // 命中未过期缓存：直接返回同一份列表（同步语义，不发 IPC）。
+            if let entry = cacheEntry(kind), now - entry.at < ttl {
+                return entry.snapshot
             }
 
-            let refresh = kind == .onScreen ? onScreenRefresh : allRefresh
-            if let refresh {
-                lock.unlock()
-                // 另一个调用正在锁外访问 WindowServer；拿到结果后重新检查 TTL。
-                refresh.wait()
+            // 已有调用在锁外刷新同一种快照：等待其完成（锁在此期间被释放，
+            // 因此慢 provider 不会阻塞状态锁），被唤醒后回到循环顶部重查 TTL。
+            if isRefreshing(kind) {
+                lock.wait()
                 continue
             }
 
-            let gate = DispatchSemaphore(value: 0)
-            if kind == .onScreen {
-                onScreenRefresh = gate
-            } else {
-                allRefresh = gate
-            }
+            // 成为该 kind 的唯一刷新者。锁外取数，完成后写回缓存并广播唤醒全部等待者。
+            setRefreshing(kind, true)
             lock.unlock()
-
-            // 锁外取数：WindowServer 枚举可能耗时，不阻塞缓存读写锁。
-            let options: CGWindowListOption = kind == .onScreen
-                ? [.optionOnScreenOnly, .excludeDesktopElements]
-                : [.optionAll, .excludeDesktopElements]
-            let windows = CGWindowListCopyWindowInfo(options, kCGNullWindowID) as? [[String: Any]] ?? []
-            let fresh = build(windows)
-
+            let fresh = build(provider(kind))
             lock.lock()
-            let finishedAt = CFAbsoluteTimeGetCurrent()
-            if kind == .onScreen {
-                onScreenEntry = Entry(snapshot: fresh, at: finishedAt)
-                onScreenRefresh = nil
-            } else {
-                allEntry = Entry(snapshot: fresh, at: finishedAt)
-                allRefresh = nil
-            }
-            lock.unlock()
-            gate.signal()
+            setEntry(kind, Entry(snapshot: fresh, at: CFAbsoluteTimeGetCurrent()))
+            setRefreshing(kind, false)
+            lock.broadcast()
             return fresh
+        }
+    }
+
+    private func cacheEntry(_ kind: Kind) -> Entry? {
+        kind == .onScreen ? onScreenEntry : allEntry
+    }
+
+    private func setEntry(_ kind: Kind, _ entry: Entry) {
+        if kind == .onScreen {
+            onScreenEntry = entry
+        } else {
+            allEntry = entry
+        }
+    }
+
+    private func isRefreshing(_ kind: Kind) -> Bool {
+        kind == .onScreen ? onScreenRefreshing : allRefreshing
+    }
+
+    private func setRefreshing(_ kind: Kind, _ value: Bool) {
+        if kind == .onScreen {
+            onScreenRefreshing = value
+        } else {
+            allRefreshing = value
         }
     }
 

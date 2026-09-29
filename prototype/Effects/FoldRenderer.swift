@@ -1,5 +1,6 @@
 import Cocoa
 import CoreVideo
+import Accelerate
 import MetalKit
 
 /// Main-thread presentation. Capture buffers are retained through GPU completion, one submission at a time.
@@ -133,6 +134,22 @@ final class FoldRenderer: NSObject, MTKViewDelegate {
     let height = image.height
     let bitmap =
       CGBitmapInfo.byteOrder32Little.rawValue | CGImageAlphaInfo.premultipliedFirst.rawValue
+    // 先用 vImage 换色彩空间：它会用上所有核心。实测 5K 屏上 4800×2600 的窗口背景，从显示器的色彩空间
+    // 换到 Display P3，CGContext 画一遍要 650ms（单线程，收起动画开头主线程卡住的就是这里），vImage 30ms，
+    // 抽样逐字节一致。换不了（少见的格式）再走原来的画法。
+    if let converted = Self.convert(image, to: colorSpace.cg, bitmap: CGBitmapInfo(rawValue: bitmap)) {
+      defer { converted.free() }
+      let descriptor = MTLTextureDescriptor.texture2DDescriptor(
+        pixelFormat: .bgra8Unorm, width: width, height: height, mipmapped: false)
+      descriptor.usage = .shaderRead
+      guard let texture = device.makeTexture(descriptor: descriptor) else {
+        throw EffectError.unavailable("图像纹理分配失败")
+      }
+      texture.replace(
+        region: MTLRegionMake2D(0, 0, width, height), mipmapLevel: 0, withBytes: converted.data,
+        bytesPerRow: converted.rowBytes)
+      return texture
+    }
     guard
       let context = CGContext(
         data: nil, width: width, height: height, bitsPerComponent: 8, bytesPerRow: width * 4,
@@ -150,6 +167,25 @@ final class FoldRenderer: NSObject, MTKViewDelegate {
       region: MTLRegionMake2D(0, 0, width, height), mipmapLevel: 0, withBytes: data,
       bytesPerRow: width * 4)
     return texture
+  }
+  private static func convert(_ image: CGImage, to space: CGColorSpace, bitmap: CGBitmapInfo) -> vImage_Buffer? {
+    guard let source = vImage_CGImageFormat(cgImage: image),
+      let target = vImage_CGImageFormat(
+        bitsPerComponent: 8, bitsPerPixel: 32, colorSpace: space, bitmapInfo: bitmap),
+      let converter = try? vImageConverter.make(sourceFormat: source, destinationFormat: target),
+      let input = try? vImage_Buffer(cgImage: image, format: source)
+    else { return nil }
+    defer { input.free() }
+    guard var output = try? vImage_Buffer(width: image.width, height: image.height, bitsPerPixel: 32) else {
+      return nil
+    }
+    do {
+      try converter.convert(source: input, destination: &output)
+    } catch {
+      output.free()
+      return nil
+    }
+    return output
   }
   func invalidate() { if !cleared { dirty = true } }
   func render() {

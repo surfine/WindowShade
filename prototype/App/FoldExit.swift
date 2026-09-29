@@ -12,6 +12,10 @@ extension AppDelegate {
         markShadeLifecycle(id: id, .restoring, reason: "unshade")
         transitionOperationState(id: id, to: .restoring, reason: "unshade")
         guard let state = shaded.removeValue(forKey: id) else { return nil }
+        // 缩略图原地展开：整理（⌃⌘0）过的，按整理前的原位放，和飞回去的截图、看一眼的卡片落在同一处。
+        // 要在下面清掉整理记录之前取。卷帘条照旧在它现在的位置展开。
+        let thumbnailHome = state.appearanceMode == .thumbnail
+            ? state.overlay.map { restoreReferenceFrame(id: id, overlay: $0) } : nil
         let interruptedWaiters = foldWaiters[id].map { Array($0.keys) } ?? []
         defer { cancelFoldWaiters(id: id, tokens: interruptedWaiters) }
         let shouldRememberFocusRejoin = focusPulledOutOverlayIDs.contains(id) && focusSession?.stage == .arrangedAway
@@ -43,7 +47,7 @@ extension AppDelegate {
         // 折叠条可能被拖动过 → 窗口在折叠条「当前」位置展开（标题栏带着窗口走）
         let pos: CGPoint
         if let overlay = state.overlay {
-            pos = axPosition(fromCocoaFrame: restoreReferenceFrame(id: id, overlay: overlay))
+            pos = axPosition(fromCocoaFrame: thumbnailHome ?? restoreReferenceFrame(id: id, overlay: overlay))
             dismissOverlay(overlay)
         } else {
             pos = axPosition(state.element) ?? state.originalPosition
@@ -86,7 +90,11 @@ extension AppDelegate {
         defer { MainThreadActivity.pop() }
         let memoScope = beginAppWindowsMemo()
         defer { endAppWindowsMemo(memoScope) }
-        if duoController.windowEffects.interceptRestore(id: id) { return true }
+        // 缩略图展开时截图自己从缩略图飞回原处（Thumbnail.swift），不再播卷帘展开的动画；
+        // 正在播的那一段（手势跟手收起到一半又放回）照旧交给它。
+        let thumbnail = shaded[id]?.appearanceMode == .thumbnail
+            && !duoController.windowEffects.hasActiveTransition(for: id)
+        if !thumbnail, duoController.windowEffects.interceptRestore(id: id) { return true }
         return unshadeReturningElement(id) != nil
     }
     func forceCleanup(_ id: CGWindowID, preserveFocusEntry: Bool = false, preserveRecovery: Bool = false) {

@@ -23,12 +23,41 @@ extension GestureAction {
         case .topRight: return WindowPlacementAction.topRight.title
         case .bottomLeft: return WindowPlacementAction.bottomLeft.title
         case .bottomRight: return WindowPlacementAction.bottomRight.title
+        case .topHalf: return "上半屏"
+        case .bottomHalf: return "下半屏"
+        case .center: return WindowPlacementAction.center.title
+        case .larger: return "大一点"
+        case .smaller: return "小一点"
+        case .fullHeight: return "高度占满"
         case .leftTwoThirds: return "左三分之二"
         case .leftThird: return "左三分之一"
         case .rightTwoThirds: return "右三分之二"
         case .rightThird: return "右三分之一"
         case .toLeftDisplay: return "移到左边的屏幕"
         case .toRightDisplay: return "移到右边的屏幕"
+        case .centerThird: return "中间三分之一"
+        case .topLeftTwoThirds: return "左上三分之二"
+        case .topRightTwoThirds: return "右上三分之二"
+        case .bottomLeftTwoThirds: return "左下三分之二"
+        case .bottomRightTwoThirds: return "右下三分之二"
+        case .topLeftThird: return "左上六分之一"
+        case .topCenterThird: return "中上六分之一"
+        case .topRightThird: return "右上六分之一"
+        case .bottomLeftThird: return "左下六分之一"
+        case .bottomCenterThird: return "中下六分之一"
+        case .bottomRightThird: return "右下六分之一"
+        case .topLeftNinth: return "左上九分之一"
+        case .topCenterNinth: return "中上九分之一"
+        case .topRightNinth: return "右上九分之一"
+        case .middleLeftNinth: return "左中九分之一"
+        case .middleCenterNinth: return "正中九分之一"
+        case .middleRightNinth: return "右中九分之一"
+        case .bottomLeftNinth: return "左下九分之一"
+        case .bottomCenterNinth: return "中下九分之一"
+        case .bottomRightNinth: return "右下九分之一"
+        case .magicTile: return "魔法平铺"
+        case .widerColumn: return "这一列宽一档"
+        case .narrowerColumn: return "这一列窄一档"
         }
     }
 
@@ -60,16 +89,37 @@ extension GestureAction {
         case .topRight: return (.symbol("macwindow"), .symbol("rectangle.inset.topright.filled"))
         case .bottomLeft: return (.symbol("macwindow"), .symbol("rectangle.inset.bottomleft.filled"))
         case .bottomRight: return (.symbol("macwindow"), .symbol("rectangle.inset.bottomright.filled"))
+        case .topHalf: return (.symbol("macwindow"), .symbol("rectangle.tophalf.inset.filled"))
+        case .bottomHalf: return (.symbol("macwindow"), .symbol("rectangle.bottomhalf.inset.filled"))
+        case .center: return (.symbol("macwindow"), .symbol("rectangle.center.inset.filled"))
+        case .larger: return (.symbol("macwindow"), .symbol("arrow.up.left.and.arrow.down.right"))
+        case .smaller: return (.symbol("macwindow"), .symbol("arrow.down.right.and.arrow.up.left"))
+        case .fullHeight: return (.symbol("macwindow"), .symbol("arrow.up.and.down"))
         case .leftTwoThirds, .rightTwoThirds: return (.symbol("macwindow"), .symbol("rectangle.split.3x1"))
         case .leftThird: return (.symbol("macwindow"), .symbol("rectangle.leftthird.inset.filled"))
         case .rightThird: return (.symbol("macwindow"), .symbol("rectangle.rightthird.inset.filled"))
         case .toLeftDisplay, .toRightDisplay: return (.symbol("macwindow"), .symbol("rectangle.on.rectangle"))
+        case .centerThird: return (.symbol("macwindow"), .symbol("rectangle.split.3x1"))
+        case .topLeftTwoThirds, .topRightTwoThirds, .bottomLeftTwoThirds, .bottomRightTwoThirds,
+             .topLeftThird, .topCenterThird, .topRightThird, .bottomLeftThird, .bottomCenterThird, .bottomRightThird:
+            return (.symbol("macwindow"), .symbol("square.grid.3x2"))
+        case .topLeftNinth, .topCenterNinth, .topRightNinth, .middleLeftNinth, .middleCenterNinth, .middleRightNinth,
+             .bottomLeftNinth, .bottomCenterNinth, .bottomRightNinth:
+            return (.symbol("macwindow"), .symbol("square.grid.3x3"))
+        case .magicTile:
+            return (.symbol("macwindow"), .symbol("rectangle.split.3x1"))
+        case .widerColumn:
+            return (.symbol("rectangle.portrait"), .symbol("rectangle"))
+        case .narrowerColumn:
+            return (.symbol("rectangle"), .symbol("rectangle.portrait"))
         }
     }
 
     /// 手指往左的动作：终点放左边，从右往左填。
     fileprivate var fillsTowardLeading: Bool {
-        [.leftHalf, .leftTwoThirds, .leftThird, .topLeft, .bottomLeft, .toLeftDisplay].contains(self)
+        [.leftHalf, .leftTwoThirds, .leftThird, .topLeft, .bottomLeft, .toLeftDisplay,
+         .topLeftTwoThirds, .bottomLeftTwoThirds, .topLeftThird, .bottomLeftThird,
+         .topLeftNinth, .middleLeftNinth, .bottomLeftNinth].contains(self)
     }
 }
 
@@ -122,10 +172,34 @@ final class GestureHUD {
         }
     }
 
+    /// 执行了，但结果和标题说的不完全一样（窗口大小是固定的、已经不能再小了）：换一句话说清，
+    /// 这一次多停一会儿再淡出（照 Rectangle 2.0.1 的“已达到最小尺寸”）。
+    private var holdNote = false
+
+    func note(_ text: String) {
+        guard isVisible, let panel else { return }
+        panel.hudView.setTitle(text)
+        holdNote = true
+        NSAccessibility.post(element: NSApp as Any, notification: .announcementRequested,
+                             userInfo: [.announcement: text, .priority: NSAccessibilityPriorityLevel.high.rawValue])
+    }
+
+    /// 不是手势触发的（快捷键、菜单、晃一晃）：直接亮出执行完的样子，说一句结果，停一会儿淡出。
+    func announce(_ action: GestureAction, note text: String?, anchor: CGPoint, screen: NSScreen?) {
+        update(GestureFrame(action: action, progress: 1), anchor: anchor, screen: screen)
+        if let text { note(text) }
+        commit()
+    }
+
     /// 已经执行：停一下让人看清，再淡出。
     func commit() {
         guard isVisible, let panel else { return }
         panel.hudView.setProgress(1, armed: true)
+        if holdNote {
+            holdNote = false
+            scheduleHide(after: 1.4, fade: 0.2)
+            return
+        }
         if let title = shownAction?.hudTitle {
             NSAccessibility.post(element: NSApp as Any, notification: .announcementRequested,
                                  userInfo: [.announcement: title, .priority: NSAccessibilityPriorityLevel.high.rawValue])
@@ -275,6 +349,11 @@ final class GestureHUDView: NSView {
     }
 
     var title: String { titleField.stringValue }
+
+    func setTitle(_ text: String) {
+        titleField.stringValue = text
+        layoutContent()
+    }
 
     func show(action: GestureAction, available: Bool, crossfade: Bool) {
         if crossfade, !SystemAppearanceCapabilities.current.reduceMotion {

@@ -21,6 +21,9 @@ final class WindowBrowserController: NSObject {
         var appName: String?
         let targetGeneration: UInt64
         var displayID: CGDirectDisplayID?
+        /// Dock 会话：这个 App 自带、没有自己 Dock 图标的辅助进程（例如微信的小程序进程），
+        /// 它们的窗口一起列在这个图标下面。
+        var helperPIDs: Set<pid_t> = []
     }
 
     private final class LivePreviewLease {
@@ -92,6 +95,13 @@ final class WindowBrowserController: NSObject {
     private var geometry: WindowBrowserPanelGeometry?
     private var running = false
     private var lastDockTarget: DockHoverTarget?
+    /// Dock 图标上弹出了它自己的菜单（右键、按住 Control 点、长按）：预览让开，
+    /// 直到指针离开这个图标（Wins 修过“右键菜单被预览挡住”）。
+    private var dockMenuYieldPID: pid_t?
+    /// 让开时那个图标的位置（AX 坐标）：指针离开它才恢复。
+    private var dockMenuYieldIcon: CGRect = .null
+    private var dockMenuMonitor: Any?
+    private var dockLongPressWork: DispatchWorkItem?
     private let discoveryQueue = DispatchQueue(label: "WindowShade.window-browser-discovery",
                                                qos: .userInitiated)
     private let metadataQueue = WindowBrowserMetadataQueue()
@@ -127,9 +137,29 @@ final class WindowBrowserController: NSObject {
     private var discoveryRequestTotal = 0
     private var axCallTotal = 0
     private var environmentSuspended = false
+    /// 面板开着时定时看一眼列表里的窗口还在不在；关掉的窗口靠一次成功的重新查询移出列表。
+    private var livenessTimer: Timer?
+    private var livenessAsked: Set<WindowKey> = []
+    /// 唤醒后应用要过一会儿才重画窗口，太早截到的图只有红绿灯；稍后整批重截一次。
+    private var wakeSettleWork: DispatchWorkItem?
     private var workspaceTokens: [NSObjectProtocol] = []
     private var distributedTokens: [NSObjectProtocol] = []
     private var dockEntryUnavailable = false
+    /// 辅助进程 → 它所属的 App。每次打开面板（换 Dock 图标、打开键盘面板）时按正在运行的进程重算一次，
+    /// 不常驻监听。
+    private var helperParents: [pid_t: WindowBrowserAppProcess] = [:]
+    /// 进程的 .app 路径（解析过符号链接）按 pid 记住：重算归属时只解析新出现的进程，
+    /// 不在每次换 Dock 图标时把所有进程的路径都在主线程上解析一遍。进程退出时删掉。
+    private var bundlePathCache: [pid_t: (url: URL, path: String)] = [:]
+    /// 正在把一张卡片拖出面板去排布：拖的是哪扇、现在停在哪个落点、Esc 的键盘监听。
+    private struct CardDrag {
+        let key: WindowKey
+        var zone: WindowBrowserDropZone?
+        var keyMonitors: [Any]
+    }
+    private var cardDrag: CardDrag?
+    /// 拖动时画目标位置的轮廓（与排布预览同一种样子，点击穿透、不移动窗口）。
+    private var dragPreview: WindowPlacementPreviewWindow?
     private var streamStopFailureUntil: CFAbsoluteTime = 0
     /// 基本排布：预览、执行与撤销。后端就是本控制器（复用真实身份解析）。
     private var placementPreviewWindow: WindowPlacementPreviewWindow?
@@ -356,6 +386,8 @@ final class WindowBrowserController: NSObject {
         dispatchPrecondition(condition: .onQueue(.main))
         guard !environmentSuspended else { return }
         environmentSuspended = true
+        wakeSettleWork?.cancel()
+        wakeSettleWork = nil
         stopDockObserver()
         closePanel(reason: "environment-\(reason)")
         thumbnails.invalidateAll()
@@ -371,6 +403,16 @@ final class WindowBrowserController: NSObject {
         if WindowBrowserSettings.dockEnabled, hasAccessibilityPermission() {
             startDockObserver()
         }
+        wakeSettleWork?.cancel()
+        let settle = DispatchWorkItem { [weak self] in
+            guard let self, self.running, !self.environmentSuspended else { return }
+            self.wakeSettleWork = nil
+            self.thumbnails.invalidateAll()
+            self.refreshPanel()
+            wlog("window-browser: thumbnails recaptured after wake")
+        }
+        wakeSettleWork = settle
+        DispatchQueue.main.asyncAfter(deadline: .now() + 3.0, execute: settle)
         wlog("window-browser: environment resumed reason=\(reason)")
     }
 
@@ -383,6 +425,9 @@ final class WindowBrowserController: NSObject {
             thumbnailSubscriptions.removeValue(forKey: key)?.cancel()
         }
         catalog.removeApplication(pid: pid)
+        helperParents.removeValue(forKey: pid)
+        bundlePathCache.removeValue(forKey: pid)
+        session?.helperPIDs.remove(pid)
         if session?.app?.pid == pid {
             closePanel(reason: "target-app-terminated")
         }
@@ -499,6 +544,44 @@ final class WindowBrowserController: NSObject {
         })
         dockObserver = observer
         observer.start()
+        installDockMenuMonitor()
+    }
+
+    /// 在 Dock 图标上右键、按住 Control 点、或者按住不放：那是在开 Dock 的菜单，预览马上让开。
+    private func installDockMenuMonitor() {
+        guard dockMenuMonitor == nil else { return }
+        dockMenuMonitor = NSEvent.addGlobalMonitorForEvents(matching: [.rightMouseDown, .leftMouseDown, .leftMouseUp]) { [weak self] event in
+            guard let self, self.lastDockTarget != nil else { return }
+            switch event.type {
+            case .rightMouseDown:
+                self.yieldToDockMenu(reason: "right-click")
+            case .leftMouseDown where event.modifierFlags.contains(.control):
+                self.yieldToDockMenu(reason: "control-click")
+            case .leftMouseDown:
+                self.dockLongPressWork?.cancel()
+                let work = DispatchWorkItem { [weak self] in
+                    guard let self, NSEvent.pressedMouseButtons & 1 != 0, self.lastDockTarget != nil else { return }
+                    self.yieldToDockMenu(reason: "long-press")
+                }
+                self.dockLongPressWork = work
+                DispatchQueue.main.asyncAfter(deadline: .now() + 0.45, execute: work)
+            case .leftMouseUp:
+                self.dockLongPressWork?.cancel()
+                self.dockLongPressWork = nil
+            default:
+                break
+            }
+        }
+    }
+
+    private func yieldToDockMenu(reason: String) {
+        guard let target = lastDockTarget else { return }
+        dockMenuYieldPID = target.pid
+        dockMenuYieldIcon = target.iconFrameAX
+        if session?.mode == .dock {
+            closePanel(reason: "dock-menu")
+        }
+        wlog("window-browser: dock menu (\(reason)) pid=\(target.pid): preview yields until the pointer leaves the icon")
     }
 
     /// 观察器失效且无法恢复时只停用 Dock 入口并提示一次；菜单与快捷键入口仍可用。
@@ -513,17 +596,29 @@ final class WindowBrowserController: NSObject {
     private func stopDockObserver() {
         dockObserver?.stop()
         dockObserver = nil
+        if let dockMenuMonitor { NSEvent.removeMonitor(dockMenuMonitor) }
+        dockMenuMonitor = nil
+        dockLongPressWork?.cancel()
+        dockLongPressWork = nil
+        dockMenuYieldPID = nil
     }
 
     private func handleDockTarget(_ target: DockHoverTarget) {
         dispatchPrecondition(condition: .onQueue(.main))
         guard running, WindowBrowserSettings.dockEnabled, !environmentSuspended else { return }
+        // 正拖着卡片经过 Dock：不换会话，不然被拖的那张卡片可能被换掉。
+        guard cardDrag == nil else { return }
         dockEntryUnavailable = false
         let bundle = target.bundleIdentifier
         guard !WindowBrowserSettings.excludedBundleIDs.contains(bundle) else { return }
         let app = catalog.identityAllocator.applicationInstance(pid: target.pid,
                                                                 bundleIdentifier: bundle)
         lastDockTarget = target
+        if let yielded = dockMenuYieldPID {
+            // Dock 菜单开着的那个图标：不再弹预览；换到别的图标、或者离开后再回来才恢复。
+            if yielded == target.pid, target.iconFrameAX.intersects(dockMenuYieldIcon.insetBy(dx: -8, dy: -8)) { return }
+            dockMenuYieldPID = nil
+        }
         // 会话决策由纯策略给出：键盘面板优先、同应用只更新锚点、换应用才新建会话。
         let decision = WindowBrowserDockSessionPolicy.decision(
             sessionMode: session?.mode,
@@ -555,6 +650,8 @@ final class WindowBrowserController: NSObject {
                                  targetGeneration: targetGeneration,
                                  displayID: target.displayID)
         session = newSession
+        refreshHelperMap()
+        session?.helperPIDs = WindowBrowserHelperApps.helperPIDs(of: target.pid, in: helperParents)
         listState.removeAll()
         searchText = ""
         liveSelection = nil
@@ -567,11 +664,22 @@ final class WindowBrowserController: NSObject {
         presentDockPanelIfNeeded(target: target)
         refreshManagedWindows(reason: "dock-target")
         scheduleMetadataRefresh(pids: [target.pid], requestID: newSession.requestID)
+        if let helpers = session?.helperPIDs, !helpers.isEmpty {
+            // 辅助进程走后台队列：不和这个图标的 App 抢那条只跑一个任务的交互队列。
+            scheduleMetadataRefresh(pids: helpers.sorted(), requestID: newSession.requestID,
+                                    interactive: false)
+        }
         scheduleHideCheck()
     }
 
     private func handleDockClear(generation: UInt64) {
         dispatchPrecondition(condition: .onQueue(.main))
+        // Dock 菜单打开时图标的悬停状态会跳一下：指针还在这个图标上就继续让开。
+        if dockMenuYieldPID != nil {
+            let mouse = NSEvent.mouseLocation
+            let pointer = CGPoint(x: mouse.x, y: coordinateBaselineY() - mouse.y)
+            if !dockMenuYieldIcon.insetBy(dx: -8, dy: -8).contains(pointer) { dockMenuYieldPID = nil }
+        }
         guard let session, session.mode == .dock else { return }
         contentView?.setSystemBubbleShowing(false)
         lastDockTarget = nil
@@ -733,7 +841,11 @@ final class WindowBrowserController: NSObject {
     /// 记录（或该 PID 的旧记录），就会先算出一个和内容对不上的面板尺寸。
     private func dockPlanRecords(for pid: pid_t) -> [WindowRecord] {
         let excluded = WindowBrowserSettings.excludedBundleIDs
-        return catalog.records(forPID: pid).filter { !excluded.contains($0.bundleIdentifier) }
+        let helpers = session?.app?.pid == pid ? (session?.helperPIDs ?? []) : []
+        return catalog.publish().filter {
+            ($0.key.application.pid == pid || helpers.contains($0.key.application.pid))
+                && !excluded.contains($0.bundleIdentifier)
+        }
     }
 
     private func dockLayoutPlan(iconFrame: NSRect, edge: WindowBrowserDockEdge,
@@ -780,6 +892,8 @@ final class WindowBrowserController: NSObject {
     }
 
     private func mouseInsideDockContext() -> Bool {
+        // 正拖着卡片去排布：面板不能在半路收起（卡片跟着消失，拖动就断了）。
+        if cardDrag != nil { return true }
         let mouse = NSEvent.mouseLocation
         if let panel, panel.isVisible, panel.frame.insetBy(dx: -2, dy: -2).contains(mouse) {
             return true
@@ -868,6 +982,7 @@ final class WindowBrowserController: NSObject {
         installPanelMonitors()
         _ = panelState.beginShow(request: newSession.requestID)
         _ = panelState.confirmShow(request: newSession.requestID)
+        refreshHelperMap()
         scheduleGlobalDiscovery()
         return true
     }
@@ -967,6 +1082,15 @@ final class WindowBrowserController: NSObject {
             }
             self.scheduleHideCheck()
         }
+        content.onDragBegan = { [weak self] key, point in
+            self?.beginCardDrag(key: key, at: point) ?? false
+        }
+        content.onDragMoved = { [weak self] key, point in
+            self?.moveCardDrag(key: key, to: point)
+        }
+        content.onDragEnded = { [weak self] key, point in
+            self?.endCardDrag(key: key, at: point)
+        }
         content.onOpenScreenRecordingSettings = {
             // 走现有的系统设置深链；不在悬停或刷新时弹授权框。
             openScreenRecordingPrivacySettings()
@@ -1020,7 +1144,45 @@ final class WindowBrowserController: NSObject {
         refreshPanel()
         if let session, session.mode == .dock, let pid = session.app?.pid {
             scheduleMetadataRefresh(pids: [pid], requestID: session.requestID)
+            if !session.helperPIDs.isEmpty {
+                scheduleMetadataRefresh(pids: session.helperPIDs.sorted(), requestID: session.requestID,
+                                        interactive: false)
+            }
         }
+    }
+
+    /// 按正在运行的进程重算“辅助进程 → 所属 App”。只在打开面板时调用一次（主线程，只读进程表）。
+    /// 路径解析要碰文件系统，按 pid 缓存，只解析新出现的进程。
+    private func refreshHelperMap() {
+        let selfPID = getpid()
+        var alive = Set<pid_t>()
+        let processes = NSWorkspace.shared.runningApplications
+            .filter { !$0.isTerminated && $0.processIdentifier != selfPID }
+            .map { app -> WindowBrowserAppProcess in
+                let pid = app.processIdentifier
+                alive.insert(pid)
+                return WindowBrowserAppProcess(
+                    pid: pid,
+                    bundleIdentifier: app.bundleIdentifier,
+                    bundlePath: resolvedBundlePath(pid: pid, url: app.bundleURL),
+                    hasDockIcon: app.activationPolicy == .regular,
+                    name: app.localizedName ?? app.bundleIdentifier ?? "")
+            }
+        if bundlePathCache.count > alive.count {
+            bundlePathCache = bundlePathCache.filter { alive.contains($0.key) }
+        }
+        helperParents = WindowBrowserHelperApps.parentsByHelper(processes)
+    }
+
+    private func resolvedBundlePath(pid: pid_t, url: URL?) -> String? {
+        guard let url else {
+            bundlePathCache.removeValue(forKey: pid)
+            return nil
+        }
+        if let cached = bundlePathCache[pid], cached.url == url { return cached.path }
+        let path = url.standardizedFileURL.resolvingSymlinksInPath().path
+        bundlePathCache[pid] = (url, path)
+        return path
     }
 
     private func scheduleGlobalDiscovery() {
@@ -1032,12 +1194,18 @@ final class WindowBrowserController: NSObject {
             .filter { $0.processIdentifier != selfPID }
             .filter { !excluded.contains($0.bundleIdentifier ?? "") }
             .map(\.processIdentifier)
-        scheduleMetadataRefresh(pids: pids, requestID: session?.requestID)
+        // 各 App 自带的辅助进程（没有自己的 Dock 图标）一起查：它们的窗口列在所属 App 名下。
+        let parents = Set(pids)
+        let helpers = helperParents.filter { parents.contains($0.value.pid) }.map(\.key).sorted()
+        scheduleMetadataRefresh(pids: pids + helpers, requestID: session?.requestID)
     }
 
-    private func scheduleMetadataRefresh(pids: [pid_t]?, requestID: WindowBrowserRequestID?) {
+    /// interactive：走那条只跑一个任务的高优先级队列；不指定时只有单个目标才走。
+    private func scheduleMetadataRefresh(pids: [pid_t]?, requestID: WindowBrowserRequestID?,
+                                         interactive: Bool? = nil) {
         guard let requestID else { return }
         let requested = pids ?? []
+        let usesTargetQueue = interactive ?? (requested.count == 1)
         for pid in requested {
             let appInstance = catalog.identityAllocator.knownApplicationInstance(pid: pid)
             guard let demand = metadataScheduler.request(pid: pid, requestID: requestID,
@@ -1046,7 +1214,7 @@ final class WindowBrowserController: NSObject {
                 continue
             }
             startMetadataJob(pid: pid, jobID: demand.jobID, requestID: requestID,
-                             appInstance: appInstance, usesTargetQueue: requested.count == 1)
+                             appInstance: appInstance, usesTargetQueue: usesTargetQueue)
         }
     }
 
@@ -1058,14 +1226,21 @@ final class WindowBrowserController: NSObject {
                                   usesTargetQueue: Bool) {
         noteDiscoveryRequest()
         let overlays = owner?.overlayIDs ?? []
+        let parent = helperParents[pid]
         guard let demand = metadataScheduler.state(pid: pid).inFlight,
               demand.jobID == jobID else { return }
         metadataQueue.submit(pid: pid, isInteractive: usesTargetQueue) { [weak self] in
             guard let self else { return }
             let result: WindowBrowserFetchResult<[DiscoveredWindowDescriptor]>
             if demand.execution.begin() {
-                self.noteAXCall()
-                result = self.discoverWindows(pid: pid, overlayIDs: overlays)
+                if parent != nil,
+                   !WindowBrowserHelperApps.hasLayerZeroWindow(WindowListCache.shared.allWindows(ofPID: pid)) {
+                    // 没有普通窗口的辅助进程（Chrome、Electron 的 Helper）不去问 AX。
+                    result = .empty
+                } else {
+                    self.noteAXCall()
+                    result = self.discoverWindows(pid: pid, overlayIDs: overlays, groupedUnder: parent)
+                }
             } else {
                 // Still settle the slot: a newer request may be waiting behind it.
                 result = .empty
@@ -1088,7 +1263,13 @@ final class WindowBrowserController: NSObject {
             return
         }
         // 结果发布条件：功能仍开启、仍是同一个面板请求代数、目标应用实例没有被终止后复用。
-        let expectedApp = session?.mode == .dock ? session?.app : nil
+        // 辅助进程的结果核对它自己的应用实例（任务开始时记下的），不是 Dock 图标那个 App 的。
+        let expectedApp: ApplicationInstanceKey?
+        if session?.mode == .dock {
+            expectedApp = session?.app?.pid == pid ? session?.app : appInstance
+        } else {
+            expectedApp = nil
+        }
         let enabledNow = session?.mode == .keyboard
             ? WindowBrowserSettings.keyboardPanelEnabled
             : WindowBrowserSettings.dockEnabled
@@ -1115,14 +1296,59 @@ final class WindowBrowserController: NSObject {
     }
 
     /// 同步 AX 读取，只在后台队列调用。四种终态严格区分：成功、空、失败、部分失败。
-    private func discoverWindows(pid: pid_t, overlayIDs: Set<CGWindowID>)
+    private func discoverWindows(pid: pid_t, overlayIDs: Set<CGWindowID>,
+                                 groupedUnder parent: WindowBrowserAppProcess?)
         -> WindowBrowserFetchResult<[DiscoveredWindowDescriptor]> {
         WindowBrowserDiscovery.discover(pid: pid, overlayIDs: overlayIDs,
-                                        excludedBundleIDs: WindowBrowserSettings.excludedBundleIDs)
+                                        excludedBundleIDs: WindowBrowserSettings.excludedBundleIDs,
+                                        groupedUnder: parent)
     }
 
     func record(for key: WindowKey) -> WindowRecord? {
         catalog.record(for: key)
+    }
+
+    // MARK: 关掉的窗口移出列表
+
+    private func startLivenessSweep() {
+        livenessAsked.removeAll()
+        let timer = Timer(timeInterval: 0.6, repeats: true) { [weak self] _ in
+            self?.sweepClosedWindows()
+        }
+        RunLoop.main.add(timer, forMode: .common)
+        livenessTimer = timer
+    }
+
+    private func stopLivenessSweep() {
+        livenessTimer?.invalidate()
+        livenessTimer = nil
+        livenessAsked.removeAll()
+    }
+
+    /// 列表里有窗口在 WindowServer 里已经找不到：重新查一次它的应用。一次缺席不直接删，
+    /// 由那次成功的查询决定去留；每个窗口只问一次，查到还在就不再反复问。
+    private func sweepClosedWindows() {
+        guard running, !environmentSuspended, let session, let contentView,
+              panel?.isVisible == true else { return }
+        var missingPIDs = Set<pid_t>()
+        var missingKeys: [WindowKey] = []
+        let byPID = Dictionary(grouping: contentView.records, by: { $0.key.application.pid })
+        for (pid, records) in byPID {
+            let alive = Set(WindowListCache.shared.allWindows(ofPID: pid).compactMap {
+                ($0[kCGWindowNumber as String] as? NSNumber).map { CGWindowID($0.uint32Value) }
+            })
+            for record in records where !alive.contains(record.key.originalWindowID)
+                && !livenessAsked.contains(record.key) {
+                livenessAsked.insert(record.key)
+                missingPIDs.insert(pid)
+                missingKeys.append(record.key)
+            }
+        }
+        guard !missingPIDs.isEmpty else { return }
+        wlog("window-browser: closed windows noticed pids=\(missingPIDs.sorted())")
+        // 真的被移出时（那次重新查询确认它没了）卡片做一次退场；查到还在就不会移出，标记自然过期。
+        contentView.markDeparting(missingKeys)
+        scheduleMetadataRefresh(pids: Array(missingPIDs), requestID: session.requestID)
     }
 
     // MARK: 面板渲染
@@ -1133,7 +1359,10 @@ final class WindowBrowserController: NSObject {
         let excluded = WindowBrowserSettings.excludedBundleIDs
         var records = catalog.publish().filter { !excluded.contains($0.bundleIdentifier) }
         if let app = session.app {
-            records = records.filter { $0.key.application == app }
+            let helpers = session.helperPIDs
+            records = records.filter {
+                $0.key.application == app || helpers.contains($0.key.application.pid)
+            }
         }
         if session.mode == .keyboard {
             let needle = WindowBrowserSearch.normalize(searchText)
@@ -1189,12 +1418,17 @@ final class WindowBrowserController: NSObject {
                            busyKeys: busy,
                            screenRecordingAvailable: hasScreenRecordingPermission(),
                            status: status)
+        // 卡片在退场：面板尺寸也跟着走同一段动画（减少动态效果时 setPanelFrame 自己改成立即）。
+        if contentView.lastUpdateAnimatedDeparture, session.mode == .dock {
+            pendingAnimatedResize = true
+        }
         contentView.setContextMenuProvider { [weak self] key in
             self?.makeContextMenu(for: key) ?? nil
         }
         // 以内容视图的真实视口为准（布局尚未完成时会退回前 8 条兜底），
         // 不能用固定“前 8 条”覆盖用户已经滚动到的位置。
         requestThumbnails(forKeys: contentView.visibleWindowKeys)
+        if livenessTimer == nil { startLivenessSweep() }
         if listState.selection != liveSelection {
             liveSelection = listState.selection
             statusOverride = nil
@@ -1462,6 +1696,9 @@ final class WindowBrowserController: NSObject {
                 },
                 discard: { capture.stop() },
                 ready: {
+                    // 按比例放进卡片，不拉伸：台前调度里窗口外框被缩放、捕获尺寸和真实比例对不上时，
+                    // 只留边，不变形（Wins 修过“台前调度下缩略图变形”）。
+                    capture.videoLayer.videoGravity = .resizeAspect
                     let view = PinnedLivePreviewView(
                         frame: NSRect(origin: .zero, size: CGSize(width: 240, height: 140)),
                         videoLayer: capture.videoLayer)
@@ -1766,8 +2003,20 @@ final class WindowBrowserController: NSObject {
             if case .failed(let reason) = outcome {
                 owner?.quietNotice("操作未完成", log: "window-browser: \(action.rawValue) failed \(reason)")
             }
+            if case .unsupported(let reason) = outcome, action == .newWindow {
+                owner?.quietNotice(reason, log: "window-browser: new window unsupported \(reason)")
+            }
             if action == .unpinPreview || action == .close {
                 releaseLivePreview(reason: "action-\(action.rawValue)")
+            }
+            if case .completed = outcome, action == .close || action == .newWindow {
+                // 关掉的窗口马上重新查一次它的 App，确认没了就移出列表（卡片退场）；
+                // 新建的窗口同样马上查出来，不等下一轮检查。
+                if action == .close { contentView?.markDeparting([key]) }
+                let pid = action == .newWindow
+                    ? (helperParents[key.application.pid]?.pid ?? key.application.pid)
+                    : key.application.pid
+                scheduleMetadataRefresh(pids: [pid], requestID: session?.requestID)
             }
         case .awaitingUser(let reason):
             owner?.quietNotice(reason, log: "window-browser: awaiting user \(reason)")
@@ -1807,7 +2056,7 @@ final class WindowBrowserController: NSObject {
         for item in items {
             let menuItem = NSMenuItem(title: item.title,
                                       action: #selector(contextAction(_:)),
-                                      keyEquivalent: "")
+                                      keyEquivalent: WindowBrowserActionPresentation.macShortcut(for: item.action)?.key ?? "")
             menuItem.target = self
             menuItem.representedObject = encoded
             menuItem.identifier = NSUserInterfaceItemIdentifier(item.action.rawValue)
@@ -1922,7 +2171,9 @@ final class WindowBrowserController: NSObject {
         return (key, action)
     }
 
-    private func applyPlacement(action: WindowPlacementAction, key: WindowKey) {
+    private func applyPlacement(action: WindowPlacementAction, key: WindowKey,
+                                on screen: NSScreen? = nil,
+                                then: ((WindowPlacementOutcome) -> Void)? = nil) {
         dispatchPrecondition(condition: .onQueue(.main))
         guard let record = record(for: key) else { return }
         if record.shadeState == .folded {
@@ -1931,38 +2182,49 @@ final class WindowBrowserController: NSObject {
                 guard let self else { return }
                 switch outcome {
                 case .completed:
-                    self.performPlacement(action: action, key: key)
+                    self.performPlacement(action: action, key: key, on: screen, then: then)
                 default:
-                    self.reportPlacement(.failed(reason: "没能确认窗口已展开，没有排布"), key: key)
+                    let failed = WindowPlacementOutcome.failed(reason: "没能确认窗口已展开，没有排布")
+                    self.reportPlacement(failed, key: key)
+                    then?(failed)
                 }
             }
             return
         }
         if record.shadeState == .restoring {
-            reportPlacement(.refused(reason: "窗口正在恢复，稍后再试"), key: key)
+            let refused = WindowPlacementOutcome.refused(reason: "窗口正在恢复，稍后再试")
+            reportPlacement(refused, key: key)
+            then?(refused)
             return
         }
-        performPlacement(action: action, key: key)
+        performPlacement(action: action, key: key, on: screen, then: then)
     }
 
-    private func performPlacement(action: WindowPlacementAction, key: WindowKey) {
-        guard let plan = placementPlan(for: key, action: action) else {
-            reportPlacement(.unsupported(reason: "没有可用的排布目标"), key: key)
+    private func performPlacement(action: WindowPlacementAction, key: WindowKey,
+                                  on screen: NSScreen? = nil,
+                                  then: ((WindowPlacementOutcome) -> Void)? = nil) {
+        guard let plan = placementPlan(for: key, action: action, on: screen) else {
+            let unsupported = WindowPlacementOutcome.unsupported(reason: "没有可用的排布目标")
+            reportPlacement(unsupported, key: key)
+            then?(unsupported)
             return
         }
         placement.apply(plan) { [weak self] outcome in
             self?.reportPlacement(outcome, key: key)
+            then?(outcome)
         }
     }
 
+    /// on：排到哪块屏上（拖到哪块屏松手）；不给就用窗口现在所在的那块。
     private func placementPlan(for key: WindowKey,
-                               action: WindowPlacementAction) -> WindowPlacementPlan? {
+                               action: WindowPlacementAction,
+                               on targetScreen: NSScreen? = nil) -> WindowPlacementPlan? {
         dispatchPrecondition(condition: .onQueue(.main))
         guard let record = record(for: key) else { return nil }
         guard record.capabilities.contains(.activate) else { return nil }
         let frameCocoa = record.logicalFrame
             ?? NSRect(x: 120, y: 120, width: 800, height: 600)
-        guard let screen = screenForCocoaFrame(frameCocoa) ?? NSScreen.main else { return nil }
+        guard let screen = targetScreen ?? screenForCocoaFrame(frameCocoa) ?? NSScreen.main else { return nil }
         let currentAX = CGRect(origin: axPosition(fromCocoaFrame: frameCocoa),
                                size: frameCocoa.size)
         let areaAX = CGRect(origin: axPosition(fromCocoaFrame: screen.visibleFrame),
@@ -2039,6 +2301,201 @@ final class WindowBrowserController: NSObject {
                          windowGeneration: UInt64(parts[3]))
     }
 
+    // MARK: 拖出面板去排布
+
+    /// 卡片拖出面板（iPad 从 Dock 把 App 拖到屏幕边分屏的对应做法）：贴着屏幕左边 / 右边松手是
+    /// 左半屏 / 右半屏，贴着顶边是铺满屏幕，拖到屏幕边上那一小块停一下是侧拉。
+    /// 面板四周一圈（WindowBrowserCardDragPolicy.cancelBand）、屏幕中间、Dock 上松手、按 Esc 都是取消：
+    /// 按原来“拖出取消”的习惯拖出面板一点松手，窗口不动。只在有辅助功能权限、窗口能排布时接手。
+    private func beginCardDrag(key: WindowKey, at point: NSPoint) -> Bool {
+        dispatchPrecondition(condition: .onQueue(.main))
+        guard running, cardDrag == nil, let record = record(for: key),
+              record.capabilities.contains(.activate), record.shadeState != .restoring,
+              hasAccessibilityPermission() else { return false }
+        hideWork?.cancel()
+        hideWork = nil
+        dismissQuickLook()
+        if placement.previewedPlan != nil { placement.cancelPreview() }
+        // Esc 取消：只在拖动期间监听键盘，松手或取消就撤掉。Dock 面板不是 key window，
+        // 所以要全局监听；键盘面板是 key window，本地监听把这一下 Esc 吃掉，不再关面板。
+        var monitors: [Any] = []
+        let isEscape: (NSEvent) -> Bool = { [weak self] event in
+            guard event.keyCode == 53, let self, self.cardDrag != nil else { return false }
+            self.cancelCardDrag(reason: "escape")
+            return true
+        }
+        if let token = NSEvent.addGlobalMonitorForEvents(matching: .keyDown, handler: { event in
+            _ = isEscape(event)
+        }) {
+            monitors.append(token)
+        }
+        if let token = NSEvent.addLocalMonitorForEvents(matching: .keyDown, handler: { event in
+            isEscape(event) ? nil : event
+        }) {
+            monitors.append(token)
+        }
+        // 兜底：卡片在拖动途中被移出列表（窗口被关掉）时收不到松手，这里在松手之后收尾。
+        if let token = NSEvent.addLocalMonitorForEvents(matching: .leftMouseUp, handler: { [weak self] event in
+            DispatchQueue.main.async {
+                guard let self, self.cardDrag?.key == key else { return }
+                self.cancelCardDrag(reason: "card-gone")
+            }
+            return event
+        }) {
+            monitors.append(token)
+        }
+        cardDrag = CardDrag(key: key, zone: nil, keyMonitors: monitors)
+        wlog("window-browser: card drag began id=\(key.originalWindowID)")
+        moveCardDrag(key: key, to: point)
+        return true
+    }
+
+    private func moveCardDrag(key: WindowKey, to point: NSPoint) {
+        dispatchPrecondition(condition: .onQueue(.main))
+        guard var drag = cardDrag, drag.key == key else { return }
+        let zone = dropZone(at: point)
+        let owner = self.owner
+        let id = key.originalWindowID
+        if zone == .slideOver {
+            // 侧拉那一块和拖标题栏进侧拉是同一个提示：边上的玻璃片，停一下出现窗口将落下的虚影。
+            dragPreview?.dismiss()
+            MainActor.assumeIsolated { owner?.slideOver.dropHint.update(id: id, at: point) }
+        } else {
+            if drag.zone == .slideOver {
+                MainActor.assumeIsolated { owner?.slideOver.dropHint.cancel() }
+            }
+            if zone != drag.zone || drag.zone == nil {
+                if let action = zone?.placementAction,
+                   let plan = placementPlan(for: key, action: action,
+                                            on: NSScreen.screens.first(where: { $0.frame.contains(point) })) {
+                    let preview = dragPreview ?? WindowPlacementPreviewWindow()
+                    dragPreview = preview
+                    preview.show(plan: plan)
+                } else {
+                    dragPreview?.dismiss()
+                }
+            }
+        }
+        drag.zone = zone
+        cardDrag = drag
+    }
+
+    private func endCardDrag(key: WindowKey, at point: NSPoint) {
+        dispatchPrecondition(condition: .onQueue(.main))
+        guard let drag = cardDrag, drag.key == key else { return }
+        let zone = dropZone(at: point)
+        let owner = self.owner
+        let id = key.originalWindowID
+        // 侧拉要停够才算（和拖标题栏一样）：没停够就松手，什么都不做。
+        let slideLeft: Bool? = zone == .slideOver
+            ? MainActor.assumeIsolated { owner?.slideOver.dropHint.take(id: id, at: point).map { $0.side == .left } }
+            : nil
+        finishCardDrag()
+        let screen = NSScreen.screens.first { $0.frame.contains(point) }
+        if let slideLeft, let screen {
+            wlog("window-browser: card dropped into slide-over id=\(id)")
+            dropIntoSlideOver(key: key, left: slideLeft, screen: screen)
+        } else if let action = zone?.placementAction {
+            wlog("window-browser: card dropped on \(action.rawValue) id=\(id)")
+            prepareForDrop(key, unfoldFolded: false) { [weak self] ready in
+                guard let self else { return }
+                guard ready else {
+                    self.owner?.quietNotice("没能把窗口放过去", log: "window-browser: drop prepare failed id=\(id)")
+                    return
+                }
+                self.applyPlacement(action: action, key: key, on: screen) { [weak self] outcome in
+                    // 排好了就把它带到前面：拖过去的窗口要看得见。
+                    if case .applied = outcome { self?.submit(action: .activate, key: key) }
+                }
+            }
+        } else {
+            wlog("window-browser: card drag cancelled (no drop target) id=\(id)")
+        }
+        if session?.mode == .dock { scheduleHide(after: params.hideDelay) }
+    }
+
+    /// Esc、面板关闭时调用：撤掉提示和键盘监听，窗口不动。
+    private func cancelCardDrag(reason: String) {
+        guard cardDrag != nil else { return }
+        let id = cardDrag?.key.originalWindowID ?? 0
+        finishCardDrag()
+        wlog("window-browser: card drag cancelled reason=\(reason) id=\(id)")
+        if reason == "escape", session?.mode == .dock { scheduleHide(after: params.hideDelay) }
+    }
+
+    private func finishCardDrag() {
+        guard let drag = cardDrag else { return }
+        cardDrag = nil
+        for token in drag.keyMonitors { NSEvent.removeMonitor(token) }
+        dragPreview?.dismiss()
+        let owner = self.owner
+        MainActor.assumeIsolated { owner?.slideOver.dropHint.cancel() }
+    }
+
+    private func dropZone(at point: NSPoint) -> WindowBrowserDropZone? {
+        guard let screen = NSScreen.screens.first(where: { $0.frame.contains(point) }) else { return nil }
+        let edgeHit = MainActor.assumeIsolated { SlideOverDropHint.target(at: point) != nil }
+        return WindowBrowserCardDragPolicy.zone(
+            pointer: point, screenFrame: screen.frame, visibleFrame: screen.visibleFrame,
+            panelFrame: panel?.isVisible == true ? panel?.frame : nil,
+            slideOverEdgeHit: edgeHit)
+    }
+
+    /// 落下之前先让窗口能被挪：收起的先展开（侧拉要；排布自己会展开），最小化的先还原。
+    private func prepareForDrop(_ key: WindowKey, unfoldFolded: Bool,
+                                completion: @escaping (Bool) -> Void) {
+        guard let record = record(for: key) else {
+            completion(false)
+            return
+        }
+        let step: WindowBrowserAction?
+        if record.shadeState == .folded {
+            step = unfoldFolded ? .unfold : nil
+        } else if record.isMinimized {
+            step = .activate
+        } else {
+            step = nil
+        }
+        guard let step else {
+            completion(true)
+            return
+        }
+        performAction(step, key: key) { outcome in
+            switch outcome {
+            case .completed, .uncertain: completion(true)
+            default: completion(false)
+            }
+        }
+    }
+
+    /// 侧拉走侧拉自己的入口（owner.slideOver.enter），这里只负责认准是哪一扇。
+    private func dropIntoSlideOver(key: WindowKey, left: Bool, screen: NSScreen) {
+        let id = key.originalWindowID
+        let pid = key.application.pid
+        prepareForDrop(key, unfoldFolded: true) { [weak self] ready in
+            guard let self else { return }
+            guard ready else {
+                self.owner?.quietNotice("没能把窗口放过去", log: "window-browser: slide-over prepare failed id=\(id)")
+                return
+            }
+            self.resolveBrowserTarget(key) { [weak self] resolved in
+                guard let self else { return }
+                guard let element = resolved?.element else {
+                    self.owner?.quietNotice("没能确认是哪一扇窗口",
+                                            log: "window-browser: slide-over target unresolved id=\(id)")
+                    return
+                }
+                let owner = self.owner
+                let entered = MainActor.assumeIsolated { () -> Bool in
+                    guard let owner else { return false }
+                    owner.slideOver.enter(element, id: id, pid: pid, side: left ? .left : .right, on: screen)
+                    return owner.slideOver.isSlideOver(id)
+                }
+                wlog("window-browser: slide-over from card id=\(id) entered=\(entered)")
+            }
+        }
+    }
+
     // MARK: 事件监听与关闭
 
     private func installPanelMonitors() {
@@ -2070,7 +2527,7 @@ final class WindowBrowserController: NSObject {
 
     private func panelMouseMoved() {
         guard let session else { return }
-        guard !menuTracking.isTracking else { return }
+        guard !menuTracking.isTracking, cardDrag == nil else { return }
         if session.mode == .dock {
             let mouse = NSEvent.mouseLocation
             updateSystemBubbleState(mouse: mouse)
@@ -2093,7 +2550,7 @@ final class WindowBrowserController: NSObject {
     }
 
     private func panelMouseDownOutside() {
-        guard let panel, panel.isVisible, !menuTracking.isTracking else { return }
+        guard let panel, panel.isVisible, !menuTracking.isTracking, cardDrag == nil else { return }
         let mouse = NSEvent.mouseLocation
         if !panel.frame.contains(mouse) && !mouseInsideDockContext() {
             closePanel(reason: "outside-click")
@@ -2111,7 +2568,9 @@ final class WindowBrowserController: NSObject {
             // 菜单跟踪使用嵌套事件循环：此时释放面板可能带走菜单锚点视图。
             return
         }
+        cancelCardDrag(reason: "panel-close")
         metadataScheduler.cancelRequests()
+        stopLivenessSweep()
         thumbnailResolutionBatch = nil
         showWork?.cancel()
         showWork = nil
@@ -2267,6 +2726,15 @@ extension WindowBrowserController: WindowBrowserActionBackend {
                 case .minimize:
                     self.performMinimize(target: target, resolved: resolved,
                                          completion: completion)
+                case .fullScreen:
+                    self.performFullScreen(target: target, resolved: resolved,
+                                           completion: completion)
+                case .newWindow:
+                    self.performNewWindow(target: target, completion: completion)
+                case .hideApp:
+                    self.performHideApp(target: target, completion: completion)
+                case .quitApp:
+                    self.performQuitApp(target: target, completion: completion)
                 }
             }
         }
@@ -2441,6 +2909,207 @@ extension WindowBrowserController: WindowBrowserActionBackend {
                     completion(.failed(reason: error.localizedDescription))
                 }
             }
+    }
+
+    /// 进入全屏：已经是全屏就说一声不动（菜单上写的是“进入全屏”，不能点了反而退出）；
+    /// 否则写入全屏，0.4 秒后重读验证真的变了。
+    /// AX 读写都在专用串行队列执行，主线程不阻塞；结果只在主线程回调。
+    private func performFullScreen(target: WindowKey,
+                                   resolved: WindowBrowserResolvedTarget,
+                                   completion: @escaping (WindowBrowserActionOutcome) -> Void) {
+        guard hasAccessibilityPermission() else {
+            completion(.permissionRequired(kind: .accessibility))
+            return
+        }
+        let element = resolved.element
+        axResolverQueue.async { [weak self] in
+            guard let self else {
+                DispatchQueue.main.async { completion(.failed(reason: "控制器已释放")) }
+                return
+            }
+            self.noteAXCall()
+            // 属性名在 WindowShade.swift 里已经有一份（AXHelpers 的容量判断也用它）。
+            let before = axBoolAttribute(element, axFullScreenAttribute)
+            self.noteAXCall()
+            guard isAXAttributeSettable(element, axFullScreenAttribute) else {
+                DispatchQueue.main.async { completion(.unsupported(reason: "这个窗口不能全屏")) }
+                return
+            }
+            guard !before else {
+                DispatchQueue.main.async { completion(.unsupported(reason: "它已经是全屏了")) }
+                return
+            }
+            let wrote = AXUIElementSetAttributeValue(
+                element, axFullScreenAttribute as CFString, kCFBooleanTrue) == .success
+            guard wrote else {
+                DispatchQueue.main.async { completion(.unsupported(reason: "这个窗口不能全屏")) }
+                return
+            }
+            _ = self.scheduler.schedule(after: 0.4) { [weak self] in
+                guard let self else {
+                    completion(.uncertain(reason: "全屏状态没变"))
+                    return
+                }
+                self.axResolverQueue.async { [weak self] in
+                    guard let self else {
+                        DispatchQueue.main.async { completion(.uncertain(reason: "全屏状态没变")) }
+                        return
+                    }
+                    self.noteAXCall()
+                    let after = axBoolAttribute(element, axFullScreenAttribute)
+                    DispatchQueue.main.async {
+                        completion(after != before ? .completed
+                                   : .uncertain(reason: "全屏状态没变"))
+                    }
+                }
+            }
+        }
+    }
+
+    /// 新建窗口：先在后台读这个 App 的菜单，定下按哪一项（标题得是“新建窗口”一类，见
+    /// WindowBrowserNewWindow）；定下了才把 App 带到前面再按，没东西可按就什么都不动
+    /// （不把让开或隐藏的 App 翻出来）。等 2.5 秒内出现一扇新的普通窗口才算完成。
+    /// 辅助进程的窗口（小程序）算在所属 App 上。
+    private func performNewWindow(target: WindowKey,
+                                  completion: @escaping (WindowBrowserActionOutcome) -> Void) {
+        let pid = helperParents[target.application.pid]?.pid ?? target.application.pid
+        guard NSRunningApplication(processIdentifier: pid)?.isTerminated == false else {
+            completion(.failed(reason: "找不到这个 App"))
+            return
+        }
+        axResolverQueue.async { [weak self] in
+            guard let self else {
+                DispatchQueue.main.async { completion(.failed(reason: "控制器已释放")) }
+                return
+            }
+            self.noteAXCall()
+            let resolution = WindowBrowserNewWindow.resolve(pid: pid)
+            DispatchQueue.main.async {
+                wlog("window-browser: new window pid=\(pid) menu=\(resolution.label)")
+                switch resolution {
+                case .disabled:
+                    completion(.unsupported(reason: "这个 App 现在不能新建窗口"))
+                case .noCommand:
+                    completion(.unsupported(reason: "这个 App 的菜单里没有新建窗口"))
+                case .unreadable:
+                    completion(.unsupported(reason: "没能让它新建窗口"))
+                case .ready(let item):
+                    self.pressNewWindow(item: item, pid: pid, completion: completion)
+                }
+            }
+        }
+    }
+
+    /// 定下了要按的那一项：把 App 带到前面（新窗口要出现在前面），回到后台队列按下，再等新窗口出来。
+    private func pressNewWindow(item: AXUIElement, pid: pid_t,
+                                completion: @escaping (WindowBrowserActionOutcome) -> Void) {
+        dispatchPrecondition(condition: .onQueue(.main))
+        guard running, NSRunningApplication(processIdentifier: pid)?.isTerminated == false else {
+            completion(.failed(reason: "找不到这个 App"))
+            return
+        }
+        owner?.activateApp(pid: pid)
+        axResolverQueue.async { [weak self] in
+            guard let self else {
+                DispatchQueue.main.async { completion(.failed(reason: "控制器已释放")) }
+                return
+            }
+            let before = WindowBrowserNewWindow.layerZeroWindowIDs(pid: pid)
+            self.noteAXCall()
+            let pressed = WindowBrowserNewWindow.press(item)
+            DispatchQueue.main.async {
+                wlog("window-browser: new window pid=\(pid) pressed=\(pressed)")
+                guard pressed else {
+                    completion(.failed(reason: "没能让它新建窗口"))
+                    return
+                }
+                self.waitForNewWindow(pid: pid, before: before, attempt: 0, completion: completion)
+            }
+        }
+    }
+
+    private func waitForNewWindow(pid: pid_t, before: Set<CGWindowID>, attempt: Int,
+                                  completion: @escaping (WindowBrowserActionOutcome) -> Void) {
+        _ = scheduler.schedule(after: 0.25) { [weak self] in
+            guard let self else {
+                completion(.uncertain(reason: "没看到新窗口出来"))
+                return
+            }
+            let after = WindowBrowserNewWindow.layerZeroWindowIDs(pid: pid)
+            if WindowBrowserNewWindowCommand.appeared(before: before, after: after) {
+                completion(.completed)
+                return
+            }
+            guard attempt + 1 < 10 else {
+                completion(.uncertain(reason: "没看到新窗口出来"))
+                return
+            }
+            self.waitForNewWindow(pid: pid, before: before, attempt: attempt + 1, completion: completion)
+        }
+    }
+
+    /// 让开这个 App：隐藏目标应用，0.4 秒后核对它真的隐藏或已经不在屏幕上。
+    private func performHideApp(target: WindowKey,
+                                completion: @escaping (WindowBrowserActionOutcome) -> Void) {
+        let pid = target.application.pid
+        guard let app = NSRunningApplication(processIdentifier: pid) else {
+            completion(.failed(reason: "找不到这个 App"))
+            return
+        }
+        guard app.hide() else {
+            completion(.failed(reason: "系统没有让开它"))
+            return
+        }
+        _ = scheduler.schedule(after: 0.4) { [weak self] in
+            guard let self else {
+                completion(.failed(reason: "系统没有让开它"))
+                return
+            }
+            let hidden = NSRunningApplication(processIdentifier: pid)?.isHidden ?? false
+            let stillOnScreen = self.owner?.windowBrowserIsWindowStillPresent(key: target) ?? false
+            completion(hidden || !stillOnScreen ? .completed
+                       : .failed(reason: "系统没有让开它"))
+        }
+    }
+
+    /// 退出 App：请求终止后每 0.25 秒轮询一次、最多 8 次，等到真的终止才算完成。
+    private func performQuitApp(target: WindowKey,
+                                completion: @escaping (WindowBrowserActionOutcome) -> Void) {
+        let pid = target.application.pid
+        guard let app = NSRunningApplication(processIdentifier: pid) else {
+            completion(.failed(reason: "找不到这个 App"))
+            return
+        }
+        guard app.terminate() else {
+            completion(.failed(reason: "这个 App 不能退出"))
+            return
+        }
+        waitForApplicationToTerminate(pid: pid, attempt: 0) { terminated in
+            completion(terminated ? .completed
+                       : .awaitingUser(reason: "App 还在，可能有未保存的内容要确认"))
+        }
+    }
+
+    private func waitForApplicationToTerminate(pid: pid_t, attempt: Int,
+                                               completion: @escaping (Bool) -> Void) {
+        let maxAttempts = 8
+        let interval = 0.25
+        _ = scheduler.schedule(after: interval) { [weak self] in
+            guard let self else {
+                completion(false)
+                return
+            }
+            if NSRunningApplication(processIdentifier: pid)?.isTerminated ?? true {
+                completion(true)
+                return
+            }
+            if attempt + 1 >= maxAttempts {
+                completion(false)
+                return
+            }
+            self.waitForApplicationToTerminate(pid: pid, attempt: attempt + 1,
+                                                completion: completion)
+        }
     }
 
     private func performClose(target: WindowKey,
@@ -2666,4 +3335,20 @@ final class WindowBrowserThumbnailBackend: WindowThumbnailBackend {
         // SCScreenshotManager 无法真正取消已经开始的一次截图；服务端保持在途计数，
         // 直到它真实返回并丢弃结果。这里没有额外的系统取消 API 可调用。
     }
+}
+
+// MARK: - 真机探针用的接缝（只读，或走与界面完全相同的入口）
+
+extension WindowBrowserController {
+    /// 面板列表里现在有哪几扇（和用户看到的是同一份）。
+    var probeListedKeys: [WindowKey] { contentView?.records.map(\.key) ?? [] }
+    var probePanelVisible: Bool { panel?.isVisible == true }
+    var probeDepartureAnimationCount: Int { contentView?.departureAnimationCount ?? 0 }
+    /// 这个 Dock 会话一起列出的辅助进程。
+    var probeSessionHelperPIDs: Set<pid_t> { session?.helperPIDs ?? [] }
+    /// 与点卡片、右键菜单同一个入口提交动作。
+    func probeSubmit(_ action: WindowBrowserAction, key: WindowKey) {
+        submit(action: action, key: key)
+    }
+    func probeClosePanel() { closePanel(reason: "probe") }
 }

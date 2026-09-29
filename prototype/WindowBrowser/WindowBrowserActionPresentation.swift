@@ -43,12 +43,14 @@ enum WindowBrowserActionPresentation {
 
     /// 卡片/列表行/菜单都按这个顺序展示。
     static let orderedActions: [WindowBrowserAction] = [
-        .activate, .fold, .unfold, .pinPreview, .unpinPreview, .minimize, .close
+        .activate, .fold, .unfold, .pinPreview, .unpinPreview, .minimize, .close,
+        .fullScreen, .newWindow, .hideApp, .quitApp
     ]
 
     /// 紧凑操作条常驻的动作；其余动作通过“更多”菜单或上下文菜单到达。
+    /// 新建窗口也常驻（Aaron 9/28 定：保留，按钮上标 ⌘N）：从 Windows 来的人习惯在任务栏上再开一扇，悬停提示写着 Mac 上按 ⌘N。
     static let primaryActions: [WindowBrowserAction] = [
-        .fold, .unfold, .pinPreview, .unpinPreview
+        .fold, .unfold, .pinPreview, .unpinPreview, .newWindow
     ]
 
     static func items(for record: WindowRecord, context: Context) -> [WindowBrowserActionItem] {
@@ -110,7 +112,7 @@ enum WindowBrowserActionPresentation {
             symbolName: symbolName(for: action, record: record),
             isEnabled: enabled,
             disabledReason: reason,
-            isDestructive: action == .close,
+            isDestructive: action == .close || action == .quitApp,
             isBusy: context.isBusy && !blocked,
             isOn: isOn(action: action, record: record),
             isPrimary: primaryActions.contains(action))
@@ -132,6 +134,23 @@ enum WindowBrowserActionPresentation {
             return "最小化"
         case .close:
             return "关闭窗口"
+        case .fullScreen:
+            return "进入全屏"
+        case .newWindow:
+            return "新建窗口"
+        case .hideApp:
+            return "让开这个 App"
+        case .quitApp:
+            return "退出 App"
+        }
+    }
+
+    /// Mac 上做同一件事按哪一下：菜单里右侧显示，悬停提示里跟在名字后面。
+    /// 替他做成的同时让他看到 Mac 的按法（从 Windows 来的人习惯从任务栏再开一个窗口；见 docs/direction.md）。
+    static func macShortcut(for action: WindowBrowserAction) -> (key: String, label: String)? {
+        switch action {
+        case .newWindow: return ("n", "⌘N")
+        default: return nil
         }
     }
 
@@ -151,6 +170,14 @@ enum WindowBrowserActionPresentation {
             return "minus"
         case .close:
             return "xmark"
+        case .fullScreen:
+            return "arrow.up.left.and.arrow.down.right"
+        case .newWindow:
+            return "macwindow.badge.plus"
+        case .hideApp:
+            return "eye.slash"
+        case .quitApp:
+            return "power"
         }
     }
 
@@ -239,7 +266,8 @@ enum WindowBrowserAccessibilityAnnouncement {
                      action: WindowBrowserAction,
                      windowTitle: String) -> String? {
         let target = windowTitle.trimmingCharacters(in: .whitespacesAndNewlines)
-        let suffix = target.isEmpty ? "" : "：\(target)"
+        // 新建窗口完成时手上的标题是被点那扇旧窗口的，不是新窗口的：不念标题。
+        let suffix = target.isEmpty || action == .newWindow ? "" : "：\(target)"
         switch outcome {
         case .completed:
             return "\(actionTitle(action))完成\(suffix)"
@@ -265,6 +293,10 @@ enum WindowBrowserAccessibilityAnnouncement {
         case .unpinPreview: return "取消置顶预览"
         case .close: return "关闭窗口"
         case .minimize: return "最小化"
+        case .fullScreen: return "进入全屏"
+        case .newWindow: return "新建窗口"
+        case .hideApp: return "让开这个 App"
+        case .quitApp: return "退出 App"
         }
     }
 }

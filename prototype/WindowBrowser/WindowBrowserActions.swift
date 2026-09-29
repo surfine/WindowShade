@@ -181,6 +181,25 @@ enum WindowBrowserActionPolicy {
                 return .unsupported(reason: "这个窗口不能最小化")
             }
             guard hasAccessibility else { return .permissionRequired(kind: .accessibility) }
+        case .fullScreen:
+            guard record.capabilities.contains(.fullScreen) else {
+                return .unsupported(reason: "这个窗口不能全屏")
+            }
+            guard hasAccessibility else { return .permissionRequired(kind: .accessibility) }
+        case .newWindow:
+            guard record.capabilities.contains(.newWindow) else {
+                return .unsupported(reason: "这个 App 不能新建窗口")
+            }
+            // 要读它的菜单、按下“新建窗口”那一项。
+            guard hasAccessibility else { return .permissionRequired(kind: .accessibility) }
+        case .hideApp:
+            guard record.capabilities.contains(.hideApp) else {
+                return .unsupported(reason: "这个 App 不能这样让开")
+            }
+        case .quitApp:
+            guard record.capabilities.contains(.quitApp) else {
+                return .unsupported(reason: "这个 App 不能退出")
+            }
         }
         return nil
     }
