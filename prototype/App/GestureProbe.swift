@@ -385,7 +385,13 @@ extension GlanceProbe {
     }
     print("PASS gesture: swiping left and then turning down puts the window in the bottom left corner")
 
-    // 11. 左右梯子：回到左半屏后连按 ⌃⌘←，½ → ⅔ → ⅓，再按一次移到左边的屏幕，没有就回到 ½。
+    // 10b. 撤销这一下（捏合），回到整高的左半屏：下面 11、11b 测的是整高的梯子，
+    //      而窗口在下半行时键盘是在这一行里走（那套由 --grid 覆盖）。
+    try await Task.sleep(nanoseconds: 700_000_000)
+    try await magnify(at: titleBarPoint(), delta: -0.03, steps: 10)
+    try await wait("undo the corner", timeout: 3) { self.bounds(self.id).map { self.near($0, leftHalf) } == true }
+
+    // 11. 左右梯子：在整高的左半屏连按 ⌃⌘←，½ → ⅔ → ⅓，再按一次移到左边的屏幕，没有就回到 ½。
     try await Task.sleep(nanoseconds: 700_000_000)
     try await key(.left)
     try await wait("back to the left half", timeout: 3) { self.bounds(self.id).map { self.near($0, leftHalf) } == true }
@@ -2011,7 +2017,15 @@ extension GlanceProbe {
     print("\(carried && carryListed && behind && front ? "PASS" : "FAIL") notch: a window taken to every desktop is in the row, and clicking it brings that window to the front (listed=\(carryListed) behind first=\(behind) front=\(front))")
 
     // 已隐藏的 App：临时 App 整个藏起来（和 ⌘H 一样），它出现在一排里；点那一格显示出来。
-    if !setAXAppHidden(pid: pid, true) { _ = NSRunningApplication(processIdentifier: pid)?.hide() }
+    // 藏由临时 App 自己做（被前的 App 不能由别的进程 AX 藏起来，实测返回成功但不生效）；
+    // AX / hide() 留作退路。
+    DistributedNotificationCenter.default().post(
+      name: Notification.Name("com.windowshade.fixture.hide"), object: nil)
+    try? await Task.sleep(nanoseconds: 400_000_000)
+    if NSRunningApplication(processIdentifier: pid)?.isHidden != true,
+       !setAXAppHidden(pid: pid, true) {
+      _ = NSRunningApplication(processIdentifier: pid)?.hide()
+    }
     let hid = (try? await wait("fixture hidden", timeout: 4) {
       NSRunningApplication(processIdentifier: pid)?.isHidden == true && !windowIsOnScreenNow(self.id)
     }) != nil
