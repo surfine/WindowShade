@@ -29,9 +29,22 @@ passes=0
 failures=0
 ok()   { printf 'ok   %s\n' "$1"; passes=$((passes + 1)); }
 bad()  { printf 'FAIL %s\n' "$1"; failures=$((failures + 1)); }
+# 看护换回后会按路径打开装好的那一版：必须真的把它关掉——它是同一个 bundle id 的另一份
+# WindowShade，留着会和用户那一份抢全局快捷键、多出一个菜单栏图标。
+stop_launched_copy() {
+  # 按目录名匹配，不按 $WORK 的全路径：macOS 上 /var 是指向 /private/var 的符号链接，
+  # 而进程的命令行里是 /private/var/...，全路径匹配不上（这一条踩过）。
+  # LaunchServices 也可能晚一拍才把 App 起起来，所以先等一会儿再杀。
+  sleep 1
+  for _ in 1 2 3 4 5 6 7 8 9 10; do
+    pkill -f "ws-update-integration." 2>/dev/null || true
+    pgrep -f "ws-update-integration." >/dev/null 2>&1 || break
+    sleep 0.3
+  done
+  pkill -9 -f "ws-update-integration." 2>/dev/null || true
+}
 cleanup() {
-  # 看护换回后会按路径打开装好的那一版：把它关掉，别留一个临时 App 在菜单栏上。
-  pkill -f "$WORK/installed/WindowShade.app/Contents/MacOS/WindowShade" 2>/dev/null || true
+  stop_launched_copy
   if [ -z "${WS_UPDATE_INT_KEEP:-}" ]; then rm -rf "$WORK"; fi
 }
 trap cleanup EXIT
@@ -178,6 +191,14 @@ else
   bad "坏包：refused.json 里还留着「$(refused_builds "$STORE_BAD/Update/refused.json")」"
 fi
 if [ -s "$STORE_BAD/Update/guard.log" ]; then ok "坏包：看护写了日志"; else bad "坏包：看护没写日志"; fi
+
+# 收尾自己也要干净：看护换回后打开的那一份要关掉，不能留一个临时 WindowShade 在跑。
+stop_launched_copy
+if pgrep -f "ws-update-integration." >/dev/null 2>&1; then
+  bad "收尾：临时目录里还有 WindowShade 在跑（同一个 bundle id，会和用户那一份抢快捷键）"
+else
+  ok "收尾：换回后打开的那一份已关掉，没留下第二个 WindowShade"
+fi
 
 echo
 echo "PASS: 更新器本地隔离验证 —— 自检、状态迁移、换回（好备份真换回、坏备份不动装着的包）"
