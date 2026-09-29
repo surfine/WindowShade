@@ -71,6 +71,13 @@ final class FixtureDelegate: NSObject, NSApplicationDelegate, NSWindowDelegate {
       windows.append(long)
     }
     if CommandLine.arguments.contains("--fullscreen") { addFullScreenWindow() }
+    // 刘海探针要一扇「真的被藏起来」的窗口（和按 ⌘H 一样）。被前的 App 不能由别的进程调
+    // AX 藏起来（实测 setAXHidden 返回成功但不生效），所以由临时 App 自己藏自己。
+    DistributedNotificationCenter.default().addObserver(
+      forName: Notification.Name("com.windowshade.fixture.hide"), object: nil, queue: .main
+    ) { _ in
+      MainActor.assumeIsolated { NSApp.hide(nil) }
+    }
     NSApp.activate()
     window.makeKeyAndOrderFront(nil)
     if CommandLine.arguments.contains("--habits") { addHabitsWindow() }

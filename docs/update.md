@@ -718,6 +718,20 @@ Sparkle 框架不放进仓库：每次升级都会让 git 历史多出几 MB 二
 
 ## 验收
 
+**本地隔离验证**（`tests/run-update-integration.sh`，要签名身份，先 `./build.sh --stage`；不联网、不链接 Sparkle、不动已装的 App）：
+在临时目录里用看护自己的 `--store` 跑一遍真东西——
+
+- **自检**：`WindowShade --self-check` 返回 `build=<n> ok`。
+- **状态迁移**：`--self-check --write-sample-state DIR` 写出一份样例状态（恢复日志 + 偏好 + 更新日志），
+  再用 `--read-state DIR` 读回来；读得懂就说明「换回后的旧版还认这些文件」。
+- **换回（回退）**：造一个「已经装上来的坏版」（build +1、带一个记号文件）和一份真备份 zip，
+  让看护 `--restore` 真换回来：装着的包要变回备份那一版、记号文件消失、store 记 `restored`、
+  `refused.json` 记下坏版、`guard.log` 有 `restored`。
+- **坏包**：把备份的 SHA-256 改坏再换一次：要记 `restoreFailed`、装着的包一动不动、
+  `refused.json` 撤掉那一条（没换回就不算拒绝过）。
+
+2026-09-30 在 1.0.16 / build 16 的签名构建上跑过：13 通过 / 0 失败。
+
 **纯逻辑测试**（`tests/run-update-tests.sh`，不联网、不链接 Sparkle、不动已装的 App）：
 - 日志每个 `phase` 下“我是新版 / 我是旧版 / 看护在不在”的恢复决定；看护的决策表（输入：旧 pid 退出时的 phase、版本、pid、`cleanExit`、`healthy`、超时 → 动作）。
 - 连续崩溃计数：两次不干净结束才换回；一次干净退出或跑满 30 分钟就清零；7 天后不再计。
