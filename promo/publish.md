@@ -32,6 +32,8 @@ Mac 丢了 25 年的功能，我把它做回来了｜WindowShade
 - 标题栏手势：往上推收起，往下拉铺满，左右滑占半屏；窗口跟着手指走，松手才算数
 - 置顶、带到每张桌面、从 Dock 图标找到应用的每扇窗口
 
+本片还预告开发版的启动台、App 资料库、侧拉和刘海提醒；下载版尚未包含这些新增内容。
+
 免费开源，macOS 14 及以上，Apple Silicon。
 官网：https://windowshade.aaronlau.me
 下载：https://github.com/surfine/WindowShade/releases/latest
@@ -42,7 +44,7 @@ Mac 丢了 25 年的功能，我把它做回来了｜WindowShade
 
 **配套动态**
 
-做了一支 44 秒的短片，讲 WindowShade 在做什么。
+做了一支 56 秒的短片，讲 WindowShade 在做什么。
 
 窗口一多，多数人会关掉或者最小化。其实还有第三种：双击标题栏，让窗口收成一条，留在原处。1994 年的 Mac 就能这么做，2001 年以后没了。
 
@@ -89,7 +91,7 @@ No screen recordings: everything in the film is animation, drawn to the app's re
 
 Double-click a Mac window. It rolls up. #Shorts
 
-片子只有 44 秒，太短，YouTube 章节不成立（要求至少 3 段、每段 10 秒以上），所以不加章节。
+这一版不设章节，保持连续观看。
 
 ---
 

@@ -8,15 +8,21 @@ import Cocoa
 import ApplicationServices
 
 enum WindowBrowserDiscovery {
+    /// groupedUnder：这个进程是某个 App 自带的辅助进程（例如微信的小程序进程 WeChatAppEx）时，
+    /// 它的窗口按那个 App 的名字显示，那个 App 被排除时一起排除；“让开这个 App / 退出 App”
+    /// 不给它（只会让开或退出看不见的辅助进程，不是用户以为的那个 App）。
     static func discover(pid: pid_t,
                          overlayIDs: Set<CGWindowID>,
-                         excludedBundleIDs: Set<String>)
+                         excludedBundleIDs: Set<String>,
+                         groupedUnder parent: WindowBrowserAppProcess? = nil)
         -> WindowBrowserFetchResult<[DiscoveredWindowDescriptor]> {
         guard let app = NSRunningApplication(processIdentifier: pid), !app.isTerminated else {
             return .empty
         }
         let bundle = app.bundleIdentifier ?? ""
         guard !excludedBundleIDs.contains(bundle) else { return .empty }
+        if let parentBundle = parent?.bundleIdentifier,
+           excludedBundleIDs.contains(parentBundle) { return .empty }
         guard pid != getpid() else { return .empty }
         let appElement = AXUIElementCreateApplication(pid)
         var ref: CFTypeRef?
@@ -53,13 +59,15 @@ enum WindowBrowserDiscovery {
             }
             let minimized = axBoolAttribute(window, kAXMinimizedAttribute as String)
             let onScreen = cgWindowIsCurrentlyOnScreen(id)
-            let capabilities: WindowBrowserCapabilities = [
-                .activate, .fold, .pinPreview, .close, .minimize, .capture
+            var capabilities: WindowBrowserCapabilities = [
+                .activate, .fold, .pinPreview, .close, .minimize, .capture,
+                .fullScreen, .newWindow, .hideApp, .quitApp
             ]
+            if parent != nil { capabilities.subtract([.hideApp, .quitApp]) }
             descriptors.append(DiscoveredWindowDescriptor(
                 pid: pid,
                 bundleIdentifier: bundle,
-                appName: app.localizedName,
+                appName: parent?.name ?? app.localizedName,
                 originalWindowID: id,
                 title: axTitle(window),
                 frame: frame,

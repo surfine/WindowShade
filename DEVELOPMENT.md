@@ -33,7 +33,10 @@ prototype/
 │   ├── FoldTransaction.swift         # 折叠事务辅助（隐藏/恢复/验证/转发/通知）
 │   ├── FoldCompletion.swift          # 窗口动作与标题栏手势共用的完成等待
 │   ├── ShadeController.swift         # 折叠入口（shade/toggle/折叠计划/截图）
-│   └── FoldExit.swift                # 折叠出口（unshade/清理/交通灯/QuickLook）
+│   ├── FoldExit.swift                # 折叠出口（unshade/清理/交通灯/QuickLook）
+│   └── Updater*.swift                # 应用内更新（docs/update.md）：Updater 状态与把关、UpdaterSparkle 唯一接 Sparkle 的一层
+│                                     # （#if canImport(Sparkle)）、UpdaterLaunch（--self-check 与启动时读更新日志）、
+│                                     # UpdaterSystem（DR、备份、换回、launchd，看护也编译）、UpdaterMove、UpdaterWindow、UpdaterSettings、UpdaterCopy
 ├── Private/
 │   └── SkyLightBridge.swift          # SkyLight 私有 API 隔离层（全部有 fallback）
 ├── Compatibility/
@@ -42,7 +45,8 @@ prototype/
 │   └── AppPredicates.swift           # 按应用的判断（特殊外框高度、应用识别）
 ├── Core/
 │   ├── WindowState.swift             # 折叠操作状态机（非法转换拒绝）
-│   └── ShadeModels.swift             # 折叠相关值类型（ShadeState、策略、外框画像）
+│   ├── ShadeModels.swift             # 折叠相关值类型（ShadeState、策略、外框画像）
+│   └── Update*.swift                 # 更新的纯逻辑：版本比较、更新日志与 refused.json、每一步的判断（看护也编译）
 ├── Capture/
 │   ├── WindowSnapshotCache.swift     # 折叠截图 500ms 短 TTL 缓存
 │   ├── PreviewRenderer.swift         # 渲染与图像分析（chrome 扫描、圆角镜像、条制备）
@@ -65,13 +69,18 @@ prototype/
 │   └── WindowBrowser*View.swift 等   # 每个视图一个文件：卡片、列表行、详情、大图预览、内容视图
 ├── Support/
 │   └── Diagnostics.swift             # 日志、主线程活动标记、慢调用日志、卡顿哨兵
-└── Recovery/
-    ├── Journal.swift                 # 恢复日志数据层（持久化/匹配/生命周期标记）
-    └── Rescue.swift                  # 离屏窗口救援编排（后台扫描 + 主线程写回）
+├── Recovery/
+│   ├── Journal.swift                 # 恢复日志数据层（持久化/匹配/生命周期标记）
+│   └── Rescue.swift                  # 离屏窗口救援编排（后台扫描 + 主线程写回）
+├── Watchdog/                         # 更新看护 WindowShadeUpdateGuard.app 的入口和图标，单独编译，放进 Contents/Helpers/
+└── Vendor/
+    └── Sparkle.framework             # Sparkle 2.10.0，已删 XPCServices，符号链接保留（ditto 放入）
 ```
 
 `build.sh` 会自动收集上述目录里的 `.swift` 文件（排序稳定，排除 `WindowShade.app`、
-`dist` 与 `.build`），新增源文件无需手工维护编译列表。
+`dist`、`.build`、`Watchdog`、`Vendor`），新增源文件无需手工维护编译列表。
+看护只编 `Watchdog/*.swift` 加 `Core/Update*.swift`、`App/UpdaterSystem.swift`、`App/UpdaterCopy.swift`；
+这几份共用文件只能依赖 Foundation/AppKit/Security/ServiceManagement 和彼此，不能引用 App 里别的类型。
 
 ## 构建
 
@@ -118,6 +127,12 @@ cd prototype
 
 `--check` 复用 `build.sh` 同一份自动收集的源文件清单，只做 swiftc 类型检查，
 不签名、不修改 app bundle。README 与本文档不再需要第二套独立的 swiftc 文件清单。
+找得到 `Vendor/Sparkle.framework` 时带 `-F` 一起检查 Sparkle 接口层，找不到时 `App/UpdaterSparkle.swift`
+靠 `#if canImport(Sparkle)` 跳过；另有一次小的类型检查只编看护。更新的纯逻辑测试：`tests/run-update-tests.sh`
+（不链接 Sparkle，不动已装的 App）。
+
+日常 `./build.sh` 出来的开发版不写 `SUFeedURL`，更新器不启动，不会被线上版本换掉；只有 `--stage` 写。
+签名从里往外逐个签（Sparkle 的 Autoupdate、Updater.app、框架、看护，最后主程序），全部同一个身份，不用 `--deep`。
 
 ## 调试
 
@@ -279,9 +294,16 @@ cd prototype
 
 ## 发布流程
 
-1. 在 `prototype/Info.plist` 升级 `CFBundleShortVersionString` 和 `CFBundleVersion`。构建脚本在签名前同步这两个字段，不手改生成的 bundle。
-2. `./build.sh --stage` 隔离构建并签名，产物为 `.build/duo-validation/WindowShade.app`，不会停止或覆盖日常运行的应用。运行相关回归检查并验证签名、版本、架构。
-3. 打包（版本号统一从 `CFBundleShortVersionString` 读取，不用手改示例）：
+带更新器以后，每个公开的包都会被已装的 App 当成新版本，所以规则比以前严：
+
+1. **每个公开的包都升 `CFBundleVersion`**（`prototype/Info.plist`，同时升 `CFBundleShortVersionString`）。不再移动已发布的 tag，不再 `--clobber`；
+   换包就升一个小版本。以前的“同一版本重新发布”一节作废。
+2. `./build.sh --stage` 隔离构建并签名，产物为 `.build/duo-validation/WindowShade.app`，不会停止或覆盖日常运行的应用。
+   它会写入 `SUFeedURL`，检查链接了 Sparkle、嵌套代码同一个 Team、`SUPublicEDKey` 没变，并试跑 `--self-check`。
+   **输出里出现“更新器没接齐，这个包不能发布”就停下**：少了 `main.swift` 里的 `UpdateLaunch.handleEarlyArguments()` /
+   `UpdateLaunch.recordLaunch()` 或 `WindowShade.swift` 里的 `UpdaterController.shared.start()` 等，安装前的试跑会拉起整个 App、
+   新版写不了 healthy，每次更新都会被换回。然后运行相关回归检查。
+3. 打包（`ditto` 保留框架里的符号链接）：
 
    ```sh
    cd prototype
@@ -291,7 +313,18 @@ cd prototype
    (cd dist && shasum -a 256 "WindowShade-v${VERSION}.zip" > "WindowShade-v${VERSION}.zip.sha256")
    ```
 
-4. 将实际构建的源文件、版本与发布说明提交并推送后，打新标签并发布；发布包必须与提交的源码一致：
+4. **发布关**：检查要发出去的这个 zip，不是构建目录；有一项不过就停下。`scripts/release-gate.sh` 还没写，先按下面手动做：
+   1. `gh release download` 取上一版的发布包，`codesign -d -r- <App>` 读出它的 DR。
+   2. 新 zip 解到临时目录，里面只有一个 `WindowShade.app`，`codesign --verify --deep --strict` 通过。
+   3. 新版的 DR 和上一版逐字相同，`codesign --verify -R="=<上一版 DR>"` 通过。不同就只能走“换证书的一版”（docs/update.md）。
+   4. `WindowShade.app/Contents/MacOS/WindowShade --self-check` 返回 0，输出里有这次的 build 号（`build=N`），1 秒左右返回。
+   5. `CFBundleVersion` 大于上一版。
+   6. `LSMinimumSystemVersion` 和清单的 `minimumSystemVersion` 按版本号比相等（`14.0` 等于 `14.0.0`）。
+   7. `lipo -archs` 和清单的 `hardwareRequirements` 一致。
+   8. 链接了 Sparkle，`SUPublicEDKey`、`SUFeedURL` 没变，`Contents/Helpers/WindowShadeUpdateGuard.app` 在且签名同 Team。
+   9. 上一版读得懂这一版的状态：新版 `--self-check --write-sample-state <目录>`，上一版 `--self-check --read-state <目录>` 返回 0。
+      第一个带更新器的版本没有“上一版”，跳过；从第二个起必做。
+5. 提交并推送实际构建的源文件、版本与发布说明，打新标签，上传 zip 和 `.sha256`，再下载回来核对 SHA-256：
 
    ```sh
    # 仍在 prototype/ 目录下执行
@@ -301,22 +334,43 @@ cd prototype
      "dist/WindowShade-v${VERSION}.zip" "dist/WindowShade-v${VERSION}.zip.sha256" \
      --title "WindowShade v${VERSION}" \
      --notes-file "../docs/releases/v${VERSION}.md"
+   curl -L -o /tmp/ws-check.zip "https://github.com/surfine/WindowShade/releases/download/v${VERSION}/WindowShade-v${VERSION}.zip"
+   shasum -a 256 /tmp/ws-check.zip; cat "dist/WindowShade-v${VERSION}.zip.sha256"
    ```
+
+6. **清单**（`scripts/make-appcast.sh` 还没写，先手动）：`sign_update dist/WindowShade-v${VERSION}.zip` 得到 `sparkle:edSignature` 和
+   `length`，在 `site/public/appcast.xml` 加一条（保留最近三条，写法见 docs/update.md“发布流程”里的条目样子），改动说明取
+   `docs/releases/v<版本>.md` 开头最多三行；再给整个清单签名，`npm run deploy`，最后 `curl` 一次线上的清单。
+   先上传包、后发清单，反过来他会先看到新版本却下载不到。
+7. **先走测试频道**：条目先带 `<sparkle:channel>beta</sparkle:channel>` 发一次。Aaron 自己
+   `defaults write com.windowshade.prototype WindowShadeUpdateChannel beta` 打开测试频道，装上用一天，再去掉频道标记重发清单。
+8. **分批推送**：条目带 `sparkle:phasedRolloutInterval` 86400。**撤回一版**：从清单删掉那一条再部署。
 
 `prototype/dist/` 已在 `.gitignore` 中，发布产物不会污染工作区。默认构建架构为本机架构；发布说明须标明实际架构。Apple Development 签名不等于公证，不宣称已经 notarized。
 
-### 同一版本重新发布
+### 更新签名的密钥
 
-只更换安装包、不升版本号时（例如修好某个功能后重发包），沿用同一个 tag 覆盖发布：
+- EdDSA 私钥只在 Aaron 的登录钥匙串里（账户名 `windowshade`），另有一份加密的离线备份，永不进仓库、不导出到别处。
+  `sign_update` 从钥匙串读它；Sparkle 的命令行工具在 Sparkle 2.10.0 发布包的 `bin/` 里（`sign_update`、`generate_appcast`）。
+- 公钥 `D/MZytH+oxawqKQsskoXBdwbvoPentrqfaj7Tj2pnkw=` 写在 `prototype/Info.plist` 的 `SUPublicEDKey`，`build.sh` 的 `EXPECTED_ED_KEY`
+  也记了一份，`--stage` 时比对。
+- 私钥丢了没有兜底：所有人要手动装一次带新公钥的版本。换密钥要单独发一版（用旧私钥签、Info.plist 换新公钥），这一版不能同时换证书。
 
-```sh
-# 仍在 prototype/ 目录下执行
-VERSION=$(/usr/libexec/PlistBuddy -c "Print CFBundleShortVersionString" Info.plist)
-git tag -f "v${VERSION}" && git push --force origin "v${VERSION}"
-gh release edit "v${VERSION}" --notes-file "../docs/releases/v${VERSION}.md"
-gh release upload "v${VERSION}" \
-  "dist/WindowShade-v${VERSION}.zip" "dist/WindowShade-v${VERSION}.zip.sha256" --clobber
-```
+### 证书续期（开发证书 2027-06-14 到期，2027 年 5 月前做）
 
-tag 会被移动到新的发布提交，Release Notes 与附件一并替换；请确保签名身份不变，
-否则用户覆盖安装后需要重新授权辅助功能与屏幕录制。
+1. 同一个账号下申请新的 Apple Development 证书。钥匙串里两张同名证书会让 `codesign` 报身份不唯一，
+   `WINDOWSHADE_CODESIGN_IDENTITY` 改用新证书的 SHA-1。
+2. `--stage` 后跑发布关。DR 逐字相同就照常发；不同就按 docs/update.md 的“换证书的一版”发（清单 `informationalUpdate` 配 `belowVersion`，
+   发布说明写明要手动安装、重新授权）。
+3. 确认新证书发的第一版在测试账户上授权还在，再删旧证书。
+
+### 升级 Sparkle
+
+1. 下载新版本的 `Sparkle-<版本>.tar.xz`，核对官方发布页的 SHA-256。
+2. `rm -rf prototype/Vendor/Sparkle.framework && ditto <解包目录>/Sparkle.framework prototype/Vendor/Sparkle.framework`（`ditto` 保留符号链接），
+   再删掉 `prototype/Vendor/Sparkle.framework/Versions/B/XPCServices` 和顶层的 `XPCServices` 链接（没开沙盒用不到）。
+   `build.sh` 的注释和本节的版本号一起改。
+3. 读发布说明，留意安装器、缓存目录（`~/Library/Caches/<bundle id>/org.sparkle-project.Sparkle/Installation/`，关靠它找解开的 App）、
+   续装和取消流程、`<bundle id>-sparkle-updater` 这个 launchd 标签有没有变。
+4. 跑 `tests/run-update-tests.sh`，再在发布机上把 docs/update.md“验收”里的集成测试走一遍。关找不到解开的 App 时结果是“不装”，
+   这样发出去就等于没法更新，所以不过不发。

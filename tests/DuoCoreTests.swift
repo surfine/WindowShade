@@ -58,6 +58,7 @@ import Foundation
       precondition((0...1).contains(transition.value))
     }
     precondition(LidReport.precise.decode([7, 0x98, 0x2C, 0, 0]) == 114.16)
+    try motionTiltTests()
     precondition(LidReport.whole.decode([1, 95, 0]) == 95)
     for bytes: [UInt8] in [[], [7], [1, 95, 0], [7, 255, 255, 255, 255], [7, 0x51, 0x46, 0, 0]] {
       precondition(LidReport.precise.decode(bytes) == nil)
@@ -300,5 +301,104 @@ import Foundation
       hidden = true
     } catch {}
     precondition(!hidden)
+  }
+
+  /// 原来 DuoController.receiveMotion 的算法，逐字抄下来做对照。
+  struct LegacyMotion {
+    var motion = SIMD2<Double>.zero
+    var motionFiltered = SIMD3<Double>.zero
+    var motionBaseline: SIMD3<Double>?
+    var motionTime: Double = 0
+    mutating func receive(_ acceleration: SIMD3<Double>, time: Double) {
+      if motionTime == 0 {
+        motionTime = time
+        motionFiltered = acceleration
+        motionBaseline = acceleration
+        return
+      }
+      let dt = motionTime > 0 ? time - motionTime : 0
+      motionTime = time
+      let alpha = dt > 0 && dt < 1 ? 1 - exp(-dt / 0.08) : 0.35
+      motionFiltered += (acceleration - motionFiltered) * alpha
+      if motionBaseline == nil {
+        motionBaseline = motionFiltered
+      }
+      guard let baseline = motionBaseline else { return }
+      let delta = motionFiltered - baseline
+      motion = SIMD2(
+        min(0.45, max(-0.45, delta.x * 0.7)),
+        min(0.45, max(-0.45, delta.y * 0.7)))
+    }
+  }
+
+  static func motionTiltTests() throws {
+    // 挪到传感器队列上的滤波必须与原来主线程上的逐位一致：同一串读数，同样的输出。
+    var generator = SystemRandomNumberGenerator()
+    for run in 0..<50 {
+      var legacy = LegacyMotion()
+      var filter = MotionTiltFilter()
+      var published = SIMD2<Double>.zero
+      var time = 1000.0 + Double(run)
+      for step in 0..<2000 {
+        // 正常 16 ms、偶尔挤在一起、偶尔停顿超过 1 秒（走 0.35 的分支）、偶尔大幅倾斜到限幅。
+        let gap: Double
+        switch step % 97 {
+        case 0: gap = 1.5
+        case 13: gap = 0.0005
+        default: gap = 0.016 + Double.random(in: -0.004...0.004, using: &generator)
+        }
+        time += gap
+        let big = step % 331 < 20
+        let acceleration = SIMD3<Double>(
+          Double.random(in: big ? -1.2...1.2 : -0.002...0.002, using: &generator),
+          Double.random(in: big ? -1.2...1.2 : -0.002...0.002, using: &generator),
+          -1 + Double.random(in: -0.002...0.002, using: &generator))
+        legacy.receive(acceleration, time: time)
+        if let next = filter.update(acceleration, at: time) { published = next }
+        precondition(
+          published == legacy.motion, "tilt filter diverged at run \(run) step \(step)")
+      }
+    }
+    var first = MotionTiltFilter()
+    precondition(first.update(SIMD3(0.3, 0.3, -0.9), at: 5) == nil, "First reading only sets the baseline")
+    precondition(first.update(SIMD3(0.3, 0.3, -0.9), at: 5.016) == .zero, "Resting posture is not a tilt")
+
+    // 沿用旧值的门槛：内建屏最大 3456×2234，折算成屏幕位移不超过 0.05 像素。
+    let threshold = TiltHold.threshold(pixelWidth: 3456, pixelHeight: 2234)
+    precondition(threshold.x * 0.055 * 3456 <= 0.0501 && threshold.y * 0.040 * 2234 <= 0.0501)
+    var hold = TiltHold()
+    precondition(hold.update(SIMD2(0.01, 0.01), threshold: threshold) == SIMD2(0.01, 0.01),
+      "First frame of a session takes the exact value")
+    let base = SIMD2<Float>(0.01, 0.01)
+    precondition(hold.update(base + SIMD2(threshold.x * 0.5, 0), threshold: threshold) == base,
+      "Sub-pixel noise keeps the previous frame")
+    precondition(hold.update(base + SIMD2(0, -threshold.y * 0.9), threshold: threshold) == base)
+    let moved = base + SIMD2(threshold.x * 1.01, 0)
+    precondition(hold.update(moved, threshold: threshold) == moved,
+      "A change past the threshold shows on the same frame")
+    // 慢慢漂：每步都在门槛内，但累计超过门槛的那一帧就跟上，偏差永远小于门槛。
+    var drift = moved
+    for _ in 0..<200 {
+      drift.x += threshold.x * 0.3
+      let shown = hold.update(drift, threshold: threshold)
+      precondition(abs(shown.x - drift.x) < threshold.x, "Held value never lags more than the threshold")
+    }
+    // 跨过“在动”的门槛（渲染器和着色器都用 1e-4）当帧跟上，渲染路径与原来相同。
+    var edge = TiltHold()
+    let still = SIMD2<Float>(0.00009, 0)
+    let barely = SIMD2<Float>(0.00011, 0)
+    let wide = SIMD2<Float>(repeating: 1)
+    precondition(edge.update(still, threshold: wide) == still)
+    precondition(edge.update(barely, threshold: wide) == barely, "Crossing into motion is never held")
+    precondition(edge.update(still, threshold: wide) == still, "Crossing out of motion is never held")
+    precondition(edge.update(.zero, threshold: wide) == .zero, "Switching tilt off is exact")
+    edge.reset()
+    precondition(edge.update(barely, threshold: wide) == barely, "Reset primes the next session")
+    var exact = TiltHold()
+    let zero = SIMD2<Float>(repeating: 0)
+    for value in [SIMD2<Float>(0.2, 0.1), SIMD2(0.2000001, 0.1), SIMD2(0.2, 0.1000001)] {
+      precondition(exact.update(value, threshold: zero) == value, "No threshold means no holding")
+    }
+    print("PASS: tilt filter matches the main-thread version bit for bit; sub-pixel hold is bounded")
   }
 }

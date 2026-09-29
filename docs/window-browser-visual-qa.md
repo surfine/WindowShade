@@ -141,5 +141,20 @@ prototype/WindowShade.app/Contents/MacOS/WindowShade --window-browser-catalog-pr
 8. 关闭功能与退出：日志出现 `window-browser: stopped; new resources released` 与
    `perf: panel-resources-released`，原有折叠窗口仍可恢复。
 
+9. Dock 菜单：在图标上右键、按住 Control 点、按住不放，Dock 自己的菜单弹出时面板立刻让开，
+   指针还在这个图标上就不再弹出；离开再回来才恢复（日志 `window-browser: dock menu`）。
+10. 快速在几个图标之间来回移：面板就地换内容，不消失再出现。
+11. Dock 自动隐藏：指针贴到屏幕边、Dock 滑出来之后，悬停照常出现，面板不被 Dock 挡住。
+12. 一个应用开很多窗口：面板不超出屏幕，改为滚动。
+13. 睡眠唤醒后：缩略图不带红绿灯、不是唤醒前的旧图。
+14. 台前调度打开时：缩略图比例不变形。
+15. 刚关掉的窗口：不残留在列表里。
+
+第 9–15 条是 Wins 更新日志里修过的坑，当作我们的验收用例（R42，合同 E–I）。第 10、11、12 条代码里原有处理；
+其余几条的做法：第 9 条面板让开 Dock 菜单；第 13 条唤醒后 3 秒整批重截一次（日志
+`window-browser: thumbnails recaptured after wake`）；第 14 条实时画面按原比例放进卡片
+（`resizeAspect`）；第 15 条面板开着时每 0.6 秒核对列表里的窗口还在不在，找不到就重新查一次这个应用
+（日志 `window-browser: closed windows noticed`），由那次查询把它移出列表。13–15 条还要在真机上各走一遍。
+
 记录模板：逐项写“通过/失败/未运行”，附日志片段（`/tmp/windowshade.log` 中
 `perf:` 与 `window-browser:` 前缀）与必要的录屏片段。

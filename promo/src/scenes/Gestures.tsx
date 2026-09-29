@@ -392,7 +392,7 @@ export const Gestures: React.FC = () => {
           ...tiltIn(frame, G.desk + 8, { y: 200, rx: 30 }),
         }}
       >
-        <Trackpad x={hand.x} y={hand.y} w={500} fingers={s.fingers} opacity={1 - mouseOn} style={{ translate: `0 ${mouseOn * 40}px` }} />
+        <Trackpad x={hand.x} y={hand.y} w={500} fingers={s.fingers} trail={stateAt(frame - 16).fingers} opacity={1 - mouseOn} style={{ translate: `0 ${mouseOn * 40}px` }} />
         {mouseOn > 0 ? (
           <Mouse x={hand.x + 155} y={hand.y - 60 + (1 - mouseOn) * 60} w={190} wheel={wheelTurns} glow={wheelGlow} opacity={mouseOn} />
         ) : null}

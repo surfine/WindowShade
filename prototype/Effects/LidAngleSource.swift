@@ -31,6 +31,9 @@ final class LidAngleSource {
   private var timer: DispatchSourceTimer?
   private var failures = 0
   private var engaged = false
+  /// 最近一次请求的 engaged，受 lock 保护。主线程每份读数都会调 setEngaged，
+  /// 值没变就不再往 queue 上排一个空转的任务（静置时每秒省 12 次线程唤醒）。
+  private var requestedEngaged = false
   var onReading: ((Reading) -> Void)?
   var onStatus: ((Status) -> Void)?
 
@@ -51,6 +54,12 @@ final class LidAngleSource {
     queue.async { [weak self] in self?.close() }
   }
   func setEngaged(_ value: Bool) {
+    let changed = lock.withLock { () -> Bool in
+      guard requestedEngaged != value else { return false }
+      requestedEngaged = value
+      return true
+    }
+    guard changed else { return }
     queue.async { [weak self] in
       guard let self, engaged != value else { return }
       engaged = value

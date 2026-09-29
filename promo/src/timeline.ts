@@ -15,6 +15,7 @@ export const SCENES = [
   { id: "History", bars: 2 },
   { id: "Glance", bars: 2 },
   { id: "Gestures", bars: 6 },
+  { id: "Multitask", bars: 6 },
   { id: "More", bars: 2 },
   { id: "End", bars: 2 },
 ] as const;
@@ -162,6 +163,9 @@ export const sfx = (): Sfx[] => {
   GESTURES.wheel.notches.forEach((f, i) => add("Gestures", f, "notch", 0.9, 1 + i * 0.1));
   add("Gestures", GESTURES.wheel.notches[2] + 1, "arm", 0.9);
   add("Gestures", GESTURES.wheel.commit, "whoosh", 0.45);
+
+  for (const frame of [48, 166, 270, 409, 472, 535]) add("Multitask", frame, "whoosh", 0.45);
+  add("Multitask", 600, "chime", 0.5);
 
   MORE.cards.forEach((f, i) => add("More", f, "pop", 0.5, 1 + i * 0.08));
   MORE.keys.forEach((f) => {

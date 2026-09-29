@@ -22,10 +22,17 @@ protocol WindowBrowserItemDelegate: AnyObject {
     func browserItem(_ sender: NSView, hover key: WindowKey, isHovering: Bool)
     /// 紧凑操作条上的“更多”入口：打开与右键完全相同的菜单。
     func browserItemDidRequestMoreMenu(_ sender: NSView, key: WindowKey)
+    /// 卡片被拖出面板（屏幕坐标）。返回 false：这张卡片不能拖去排布，照旧按“拖出取消”。
+    func browserItem(_ sender: NSView, dragBegan key: WindowKey, at point: NSPoint) -> Bool
+    func browserItem(_ sender: NSView, dragMoved key: WindowKey, to point: NSPoint)
+    func browserItem(_ sender: NSView, dragEnded key: WindowKey, at point: NSPoint)
 }
 
 extension WindowBrowserItemDelegate {
     func browserItemDidRequestMoreMenu(_ sender: NSView, key: WindowKey) {}
+    func browserItem(_ sender: NSView, dragBegan key: WindowKey, at point: NSPoint) -> Bool { false }
+    func browserItem(_ sender: NSView, dragMoved key: WindowKey, to point: NSPoint) {}
+    func browserItem(_ sender: NSView, dragEnded key: WindowKey, at point: NSPoint) {}
 }
 
 /// 实时预览的明确挂载目标：同一租约只能有一个可见父视图。

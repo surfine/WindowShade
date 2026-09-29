@@ -16,6 +16,8 @@ enum ShadeAppearanceMode: String {
     case nativeScreenshot
     case classicSemantic
     case proxyTitleBar
+    /// 收起后窗口在原处缩成一张缩略图（设置里“收起后的样子”的第三项，见 App/Thumbnail.swift）。
+    case thumbnail
 }
 
 // Product semantic: shading is a per-window temporary state in macOS's

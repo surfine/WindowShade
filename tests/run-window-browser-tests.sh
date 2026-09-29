@@ -17,11 +17,13 @@ swiftc -target "$(uname -m)-apple-macosx14.0" $GLASS_DEFINE \
   prototype/WindowBrowser/WindowBrowserTypography.swift \
   prototype/WindowBrowser/WindowBrowserGeometry.swift \
   prototype/WindowBrowser/WindowBrowserActionPresentation.swift \
+  prototype/WindowBrowser/WindowBrowserMorePolicy.swift \
   prototype/WindowBrowser/WindowBrowserMaterial.swift \
   prototype/WindowBrowser/WindowBrowserMetadataScheduler.swift \
   prototype/WindowBrowser/WindowBrowserTargetBatch.swift \
   prototype/WindowBrowser/WindowBrowserDockDetection.swift \
-  prototype/WindowBrowser/WindowPlacement.swift \
+  prototype/WindowBrowser/WindowPlacement.swift prototype/Core/ArrangeGap.swift \
+  prototype/Core/MissionControlPick.swift \
   prototype/WindowBrowser/WindowBrowserActions.swift \
   prototype/WindowBrowser/WindowBrowserDiscoveryFilter.swift \
   prototype/WindowBrowser/WindowBrowserThumbnailPolicy.swift \

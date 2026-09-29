@@ -29,7 +29,7 @@ enum WindowPlacementAction: String, CaseIterable {
         case .bottomRight: return "右下角"
         case .center: return "居中"
         case .fill: return "铺满屏幕"
-        case .moveToDisplay: return "移到另一显示器"
+        case .moveToDisplay: return "移到另一块屏幕"
         case .undoLast: return "撤销上次排布"
         }
     }
@@ -132,7 +132,9 @@ enum WindowPlacementGeometry {
         case .undoLast:
             return nil
         }
-        return normalized(frame, minimumSize: minimumSize, within: area)
+        // 半屏、四角、铺满和手势排的一样留缝（设置里的“窗口之间留缝”）；居中、换屏按原来的大小不动。
+        let gapped = action == .center || action == .moveToDisplay ? frame : ArrangeGap.apply(frame, in: area)
+        return normalized(gapped, minimumSize: minimumSize, within: area)
     }
 
     /// 跨显示器搬运：按可用区域的归一化位置映射，绝不直接复制像素坐标。

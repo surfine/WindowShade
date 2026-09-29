@@ -167,8 +167,116 @@ final class MainThreadStallSentinel {
             }
             self.lastActivityAt = now
             self.wasWaiting = activity == .beforeWaiting
+            MainThreadSampler.shared.beat(waiting: self.wasWaiting)
         }
         observer = obs
         CFRunLoopAddObserver(CFRunLoopGetMain(), obs, CFRunLoopMode.commonModes)
+        MainThreadSampler.shared.start()
+    }
+}
+
+// 卡顿时抓主线程的调用栈。哨兵只能在卡顿结束后报时长，“期间=未标记”说不出是谁；
+// 这里另起一条看门狗线程，主线程超过 250ms 没回到 RunLoop（又不是在睡觉）时，暂停它一下，
+// 沿帧指针链抄下返回地址，马上放开，再在看门狗线程上查符号写进日志。每次卡顿只抓一次。
+// 平时每 50ms 只读一次时间戳。自家代码记“镜像+偏移”，用 atos 对着构建出来的程序就能还原到行。
+final class MainThreadSampler: @unchecked Sendable {
+    static let shared = MainThreadSampler()
+
+    private var lock = os_unfair_lock()
+    private var beatAt = CFAbsoluteTimeGetCurrent()
+    private var busy = false
+    private var sampled = false
+    private var mainThread: thread_act_t = 0
+    private var stackLow: UInt = 0
+    private var stackHigh: UInt = 0
+    private var started = false
+
+    /// 在主线程上调用一次。
+    func start() {
+        guard Thread.isMainThread, !started else { return }
+        started = true
+        mainThread = mach_thread_self()
+        let top = UInt(bitPattern: pthread_get_stackaddr_np(pthread_self()))
+        stackHigh = top
+        stackLow = top - UInt(pthread_get_stacksize_np(pthread_self()))
+        let watchdog = Thread { [weak self] in self?.watch() }
+        watchdog.name = "WindowShade.stall-sampler"
+        watchdog.qualityOfService = .utility
+        watchdog.start()
+    }
+
+    /// 主线程每次 RunLoop 活动时调用。
+    func beat(waiting: Bool) {
+        os_unfair_lock_lock(&lock)
+        beatAt = CFAbsoluteTimeGetCurrent()
+        busy = !waiting
+        sampled = false
+        os_unfair_lock_unlock(&lock)
+    }
+
+    private func watch() {
+        while true {
+            usleep(50_000)
+            os_unfair_lock_lock(&lock)
+            let stuck = busy && !sampled ? CFAbsoluteTimeGetCurrent() - beatAt : 0
+            if stuck > 0.25 { sampled = true }
+            os_unfair_lock_unlock(&lock)
+            guard stuck > 0.25 else { continue }
+            let frames = captureMainStack()
+            guard !frames.isEmpty else { continue }
+            let described = frames.prefix(18).map(Self.describe)
+            // 主线程其实在等输入：菜单、拖动这类跟踪循环跑在私有的 RunLoop 模式里，看不到它入睡，但它是闲着的，不算卡顿。
+            if described.contains(where: { $0.contains("ReceiveNextEventCommon") || $0.contains("BlockUntilNextEventMatchingListInMode") }) {
+                continue
+            }
+            wlog("main-thread stall sample ≈\(Int(stuck * 1000))ms: \(described.joined(separator: " ← "))")
+        }
+    }
+
+    /// 暂停主线程，抄下返回地址，立刻放开。暂停期间不做任何可能拿锁的事（查符号放在放开之后）。
+    private func captureMainStack() -> [UInt] {
+        guard mainThread != 0, thread_suspend(mainThread) == KERN_SUCCESS else { return [] }
+        var frames: [UInt] = []
+        frames.reserveCapacity(64)
+        var state = arm_thread_state64_t()
+        var count = mach_msg_type_number_t(MemoryLayout<arm_thread_state64_t>.size / MemoryLayout<natural_t>.size)
+        let result = withUnsafeMutablePointer(to: &state) {
+            $0.withMemoryRebound(to: natural_t.self, capacity: Int(count)) {
+                thread_get_state(mainThread, ARM_THREAD_STATE64, $0, &count)
+            }
+        }
+        if result == KERN_SUCCESS {
+            frames.append(Self.strip(UInt(state.__pc)))
+            frames.append(Self.strip(UInt(state.__lr)))
+            var fp = UInt(state.__fp)
+            for _ in 0..<60 {
+                guard fp >= stackLow, fp + 16 <= stackHigh, fp % 8 == 0,
+                      let slot = UnsafePointer<UInt>(bitPattern: fp) else { break }
+                let next = slot[0]
+                let ret = Self.strip(slot[1])
+                if ret == 0 { break }
+                frames.append(ret)
+                if next <= fp { break }
+                fp = next
+            }
+        }
+        thread_resume(mainThread)
+        return frames
+    }
+
+    /// 去掉指针认证位（系统库的返回地址带签名）。
+    private static func strip(_ address: UInt) -> UInt { address & 0x0000_7FFF_FFFF_FFFF }
+
+    private static func describe(_ address: UInt) -> String {
+        var info = Dl_info()
+        guard dladdr(UnsafeRawPointer(bitPattern: address), &info) != 0 else { return String(format: "0x%lx", address) }
+        let image = info.dli_fname.map { URL(fileURLWithPath: String(cString: $0)).lastPathComponent } ?? "?"
+        let offset = address - UInt(bitPattern: info.dli_fbase)
+        // 自家程序记偏移（atos 还原）；系统库记符号名更直接。
+        if image == "WindowShade" || info.dli_sname == nil {
+            return "\(image)+0x\(String(offset, radix: 16))"
+        }
+        let name = String(cString: info.dli_sname!)
+        return "\(image):\(name.count > 60 ? String(name.prefix(60)) + "…" : name)"
     }
 }

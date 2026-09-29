@@ -3,15 +3,18 @@ import Cocoa
 /// 看一眼的真机探针。另起一个临时窗口进程（画面每 50ms 变一次），走生产收起路径，
 /// 再模拟指针：路过、停留、移到画面上、移开、单击卷帘条、单击画面展开。
 /// 核对位置、实时画面、前台 App 不变、真窗口不动、收回与展开之间不露空，并打印耗时。
-/// 用法：tests/run-glance-probe.sh [--single] [--unhide-test] [--gesture]
+/// 用法：tests/run-glance-probe.sh [--single] [--unhide-test] [--gesture] [--flick]
 /// --single 让临时 App 只开一扇窗：收起会走整体隐藏。
+/// 其余参数各跑一项，见下面的调度（例如 --launchpad-keys、--fullscreen、--thumbnail、--habits、--quiet-defaults、--notch-shape；别的包写的 --strip-peek、--browser-more、
+/// --dock-gestures 见 ProbeEntries.swift）。
 @MainActor
 final class GlanceProbe {
   let owner = AppDelegate()
   private let single = CommandLine.arguments.contains("--single")
   private var fixture: Process?
   var id: CGWindowID = 0
-  private var pointer = NSPoint(x: -9000, y: -9000)
+  /// 看一眼读到的指针位置（探针模拟，不动真指针）。
+  var pointer = NSPoint(x: -9000, y: -9000)
   private var task: Task<Void, Never>?
   private var lastLookup = ""
 
@@ -42,8 +45,14 @@ final class GlanceProbe {
     }
     let process = Process()
     process.executableURL = URL(fileURLWithPath: CommandLine.arguments[index + 1])
-    process.arguments = (single ? ["--single"] : [])
+    let manyWindows = CommandLine.arguments.contains("--strip") || CommandLine.arguments.contains("--wins")
+      || CommandLine.arguments.contains("--split") || CommandLine.arguments.contains("--strip-peek")
+    let pipRun = CommandLine.arguments.contains("--pip")
+    process.arguments = (single || manyWindows || pipRun ? ["--single"] : [])
+      + (manyWindows ? ["--strip"] : [])
+      + (pipRun ? ["--scroll"] : [])
       + (CommandLine.arguments.contains("--other-space") ? ["--other-space"] : [])
+      + (CommandLine.arguments.contains("--fullscreen") ? ["--fullscreen"] : [])
     do {
       try process.run()
       fixture = process
@@ -87,6 +96,204 @@ final class GlanceProbe {
     }
     if CommandLine.arguments.contains("--capture-bench") {
       try await captureBench(size: original.size)
+      finish(nil)
+      return
+    }
+    if CommandLine.arguments.contains("--space-follow") {
+      // 侧拉带到每张桌面的前提：窗口在别的桌面时，最小化再还原，会落到哪张桌面？桌面会不会跟着切过去？
+      // 临时 App 自己把窗口挪到另一张桌面（--other-space），不切换你的桌面。
+      try await wait("window on another desktop", timeout: 6) { !cgWindowIsCurrentlyOnScreen(self.id) }
+      func spaces() -> String {
+        let mover = PrivateSLSWindowMover.shared
+        let window = mover.windowSpace(id: id).map(String.init) ?? "-"
+        let current = NSScreen.screens.compactMap { s -> String? in
+          guard let n = s.deviceDescription[NSDeviceDescriptionKey("NSScreenNumber")] as? NSNumber else { return nil }
+          return mover.currentSpace(displayID: CGDirectDisplayID(n.uint32Value)).map(String.init)
+        }.joined(separator: ",")
+        return "window-space=\(window) current=\(current) onscreen=\(cgWindowIsCurrentlyOnScreen(id))"
+      }
+      print("INFO space-follow before: \(spaces())")
+      let minimized = setAXMinimizedReturningError(element, true)
+      try await Task.sleep(nanoseconds: 1_200_000_000)
+      print("INFO space-follow minimized err=\(minimized.rawValue): \(spaces())")
+      let restored = setAXMinimizedReturningError(element, false)
+      try await Task.sleep(nanoseconds: 1_500_000_000)
+      print("INFO space-follow restored err=\(restored.rawValue): \(spaces()) frontmost=\(NSWorkspace.shared.frontmostApplication?.localizedName ?? "?")")
+      // 再试：用我们自己的连接把别的进程的窗口挪到当前桌面。
+      if let screen = NSScreen.screens.first(where: { $0.frame.origin == .zero }),
+         let n = screen.deviceDescription[NSDeviceDescriptionKey("NSScreenNumber")] as? NSNumber,
+         let here = PrivateSLSWindowMover.shared.currentSpace(displayID: CGDirectDisplayID(n.uint32Value)) {
+        let moved = PrivateSLSWindowMover.shared.moveWindow(id: id, toSpace: here)
+        try await Task.sleep(nanoseconds: 800_000_000)
+        print("INFO space-follow SLS move to \(here) reported=\(moved): \(spaces())")
+      }
+      finish(nil)
+      return
+    }
+    if CommandLine.arguments.contains("--edge-park") {
+      // 侧拉的前提：辅助功能能把窗口推到屏幕边外多远（只动临时 App 的窗口）。
+      for screen in NSScreen.screens {
+        let v = CGRect(origin: axPosition(fromCocoaFrame: screen.visibleFrame), size: screen.visibleFrame.size)
+        for (label, x) in [("right-40", v.maxX - 40), ("right-8", v.maxX - 8), ("left-40", v.minX - original.width + 40)] {
+          setAXPosition(element, CGPoint(x: x, y: v.minY + 60))
+          try await Task.sleep(nanoseconds: 350_000_000)
+          let b = bounds(id)
+          print("INFO edge-park screen=\(screen.frame) \(label) asked x=\(Int(x)) got=\(b.map { "(\(Int($0.minX)),\(Int($0.minY)) \(Int($0.width))x\(Int($0.height)))" } ?? "?")")
+        }
+      }
+      setAXPosition(element, original.origin)
+      finish(nil)
+      return
+    }
+    if CommandLine.arguments.contains("--stall-sample") {
+      // 卡顿定位器自测：故意让主线程卡 0.7 秒，日志里应该出现调用栈，而且指向这里。
+      MainThreadStallSentinel.shared.start()
+      try await Task.sleep(nanoseconds: 300_000_000)
+      stallOnPurpose()
+      try await Task.sleep(nanoseconds: 400_000_000)
+      finish(nil)
+      return
+    }
+    NotchController.probeSilence = !CommandLine.arguments.contains("--coach")
+    if CommandLine.arguments.contains("--pull") {
+      try await exerciseStripPull(element: element, original: original, pid: process.processIdentifier)
+      finish(nil)
+      return
+    }
+    if CommandLine.arguments.contains("--grid") {
+      try await exerciseGrid(element: element, original: original, pid: process.processIdentifier)
+      finish(nil)
+      return
+    }
+    NotchController.probeSilence = !CommandLine.arguments.contains("--coach")
+    NotchController.probeCoachRun = CommandLine.arguments.contains("--coach")
+    if CommandLine.arguments.contains("--coach") {
+      try await exerciseCoach(pid: process.processIdentifier)
+      finish(nil)
+      return
+    }
+    if CommandLine.arguments.contains("--launchpad-keys") {
+      try await exerciseLaunchpadKeys()
+      finish(nil)
+      return
+    }
+    if CommandLine.arguments.contains("--fullscreen") {
+      try await exerciseFullScreenDesktops(element: element, original: original, pid: process.processIdentifier)
+      finish(nil)
+      return
+    }
+    // 别的包写的探针：还没写的那个由 ProbeEntries.swift 里的默认实现报“还没写”（算失败）。
+    if CommandLine.arguments.contains("--strip-peek") {
+      adoptFixture(pid: process.processIdentifier)
+      try await exerciseStripPeek(pid: process.processIdentifier)
+      finish(nil)
+      return
+    }
+    if CommandLine.arguments.contains("--thumbnail") {
+      adoptFixture(pid: process.processIdentifier)
+      try await exerciseThumbnail(pid: process.processIdentifier)
+      finish(nil)
+      return
+    }
+    if CommandLine.arguments.contains("--browser-more") {
+      adoptFixture(pid: process.processIdentifier)
+      try await exerciseBrowserMore(pid: process.processIdentifier)
+      finish(nil)
+      return
+    }
+    if CommandLine.arguments.contains("--dock-gestures") {
+      adoptFixture(pid: process.processIdentifier)
+      try await exerciseDockGestures(pid: process.processIdentifier)
+      finish(nil)
+      return
+    }
+    if CommandLine.arguments.contains("--split") {
+      try await exerciseSplit(pid: process.processIdentifier)
+      finish(nil)
+      return
+    }
+    if CommandLine.arguments.contains("--pip") {
+      try await exercisePictureInPicture(element: element, original: original, pid: process.processIdentifier)
+      finish(nil)
+      return
+    }
+    if CommandLine.arguments.contains("--rect") {
+      try await exerciseRectangle(element: element, original: original, pid: process.processIdentifier)
+      finish(nil)
+      return
+    }
+    if CommandLine.arguments.contains("--mc-keys") {
+      try await exerciseMissionControlKeys(pid: process.processIdentifier)
+      finish(nil)
+      return
+    }
+    if CommandLine.arguments.contains("--wins") {
+      try await exerciseWins(element: element, original: original, pid: process.processIdentifier)
+      finish(nil)
+      return
+    }
+    if CommandLine.arguments.contains("--strip") {
+      try await exerciseStrip(element: element, original: original, pid: process.processIdentifier)
+      finish(nil)
+      return
+    }
+    if CommandLine.arguments.contains("--magic") {
+      try await exerciseMagic(element: element, original: original, pid: process.processIdentifier)
+      finish(nil)
+      return
+    }
+    if CommandLine.arguments.contains("--home") {
+      try await exerciseHomeKey(pid: process.processIdentifier)
+      finish(nil)
+      return
+    }
+    if CommandLine.arguments.contains("--pins") {
+      try await exercisePinSuspend(element: element, pid: process.processIdentifier)
+      finish(nil)
+      return
+    }
+    if CommandLine.arguments.contains("--launchpad") {
+      try await exerciseLaunchpad(element: element, pid: process.processIdentifier)
+      finish(nil)
+      return
+    }
+    if CommandLine.arguments.contains("--quiet-defaults") {
+      try await exerciseQuietDefaults()
+      finish(nil)
+      return
+    }
+    if CommandLine.arguments.contains("--habits") {
+      try await exerciseHabits(pid: process.processIdentifier)
+      finish(nil)
+      return
+    }
+    if CommandLine.arguments.contains("--notch-shape") {
+      try await exerciseNotchShape(pid: process.processIdentifier)
+      finish(nil)
+      return
+    }
+    if CommandLine.arguments.contains("--notch-calibrate") {
+      try await exerciseNotchCalibration(pid: process.processIdentifier)
+      finish(nil)
+      return
+    }
+    if CommandLine.arguments.contains("--notch") {
+      try await exerciseNotch(element: element, pid: process.processIdentifier)
+      finish(nil)
+      return
+    }
+    if CommandLine.arguments.contains("--slide-over-desktops") {
+      try await exerciseSlideOverAcrossDesktops(element: element, pid: process.processIdentifier)
+      finish(nil)
+      return
+    }
+    if CommandLine.arguments.contains("--slide-over") {
+      try await exerciseSlideOver(element: element, original: original, pid: process.processIdentifier)
+      finish(nil)
+      return
+    }
+    if CommandLine.arguments.contains("--flick") {
+      try await exerciseFlicksAlone(element: element, original: original, pid: process.processIdentifier)
       finish(nil)
       return
     }
@@ -451,5 +658,13 @@ final class GlanceProbe {
     WindowShadeLogger.shared.flushAndClose()
     fflush(stdout)
     exit(error == nil ? 0 : 1)
+  }
+}
+
+
+extension GlanceProbe {
+  /// 探针用：在主线程上卡住 0.7 秒。不内联，好在调用栈里认出来。
+  @inline(never) func stallOnPurpose() {
+    usleep(700_000)
   }
 }

@@ -213,6 +213,12 @@ final class CarryController: GlanceCarrySource {
 
     var carriedIDs: [CGWindowID] { order }
 
+    /// 刘海的一排里要显示的：哪个 App、标题、最近一张画面。
+    func notchInfo(_ id: CGWindowID) -> (pid: pid_t, title: String, snapshot: CGImage?)? {
+        guard let item = carried[id] else { return nil }
+        return (item.pid, item.title.isEmpty ? item.appName : item.title, item.snapshot)
+    }
+
     func isCarried(_ id: CGWindowID) -> Bool { carried[id] != nil }
 
     func stripPanel(_ id: CGWindowID) -> NSPanel? { carried[id]?.panel }

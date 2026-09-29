@@ -106,8 +106,8 @@ private final class PinnedPreviewSession {
     // 面板当前应处的 Space（源窗口所在 Space）。nil 表示 SLS 符号不可用/尚未解析，
     // 此时面板留在创建时的 Space，不追随源窗口跨 Space 移动。
     var sourceSpaceID: UInt64?
-    // 挂起态：面板已 orderOut、capture 已停。窗口浏览的模型区分“运行/挂起”，
-    // 所以这一位保留；目前没有入口会挂起会话（原先的“全部暂停”已移除）。
+    // 挂起态（暂时取消全部置顶）：面板已 orderOut、capture 已停，会话保留，
+    // 再按一次按原来的前后顺序放回。
     var isSuspended = false
 
     init(windowID: CGWindowID, pid: pid_t, bundleIdentifier: String, appName: String,
@@ -203,6 +203,7 @@ final class PinnedPreviewController {
     private var unexpectedStopRetryWorkItems: [CGWindowID: DispatchWorkItem] = [:]
     // 明确目标启动：预先登记 starting，避免 await 重入创建两路相同捕获。
     private var startingPreviewIDs: Set<CGWindowID> = []
+    private var startingPreviewTokens: [CGWindowID: UUID] = [:]
     private var startPreviewCompletions: [CGWindowID: [(Result<Void, PinnedPreviewError>) -> Void]] = [:]
     // 单槽镜像的 owner token：菜单缩略图与窗口浏览面板共用同一槽位，
     // 旧 owner 的释放只有在 token 仍匹配时才生效。
@@ -310,6 +311,8 @@ final class PinnedPreviewController {
             return
         }
 
+        let startToken = UUID()
+        startingPreviewTokens[id] = startToken
         startingPreviewIDs.insert(id)
         startPreviewCompletions[id] = [completion]
         let appName = appDisplayName(pid: pid)
@@ -328,14 +331,17 @@ final class PinnedPreviewController {
                 guard let scWindow = content.windows.first(where: { $0.windowID == id }) else {
                     throw PinnedPreviewError.noSCWindow
                 }
+                guard self.startingPreviewTokens[id] == startToken else { return }
                 let display = Self.bestDisplay(for: scWindow, displays: content.displays)
                 self.installPreview(id: id, pid: pid, bundleID: bundleID, appName: appName,
                                     title: title, axWindow: axWindow, scWindow: scWindow,
                                     display: display,
                                     completion: { [weak self] result in
-                    self?.finishStartPreview(id: id, result: result)
+                    guard let self, self.startingPreviewTokens[id] == startToken else { return }
+                    self.finishStartPreview(id: id, result: result)
                 })
             } catch {
+                guard self.startingPreviewTokens[id] == startToken else { return }
                 self.finishStartPreview(id: id,
                     result: .failure(error as? PinnedPreviewError ?? .noShareableContent))
             }
@@ -346,6 +352,7 @@ final class PinnedPreviewController {
                                     result: Result<Void, PinnedPreviewError>) {
         dispatchPrecondition(condition: .onQueue(.main))
         startingPreviewIDs.remove(id)
+        startingPreviewTokens.removeValue(forKey: id)
         let completions = startPreviewCompletions.removeValue(forKey: id) ?? []
         completions.forEach { $0(result) }
     }
@@ -566,8 +573,121 @@ final class PinnedPreviewController {
     }
 
     func stopAllPreviews(reason: String = "manual") {
-        for id in Array(sessions.keys) {
+        for id in Set(sessions.keys).union(startingPreviewIDs) {
             stopPreview(id: id, reason: reason)
+        }
+    }
+
+    /// 探针用：置顶面板此刻在不在屏幕上。
+    func panelVisibleForProbe(id: CGWindowID) -> Bool {
+        sessions[id]?.panel.isVisible ?? false
+    }
+
+    // MARK: 暂时取消全部置顶
+
+    /// 有被暂时取消的置顶（菜单显示“恢复全部置顶”）。
+    var hasSuspendedPreviews: Bool { sessions.values.contains { $0.isSuspended } }
+
+    /// 菜单标题双态翻转：和“置顶当前窗口 / 取消置顶当前窗口”同一种用法。
+    func suspendAllMenuTitle() -> String {
+        hasSuspendedPreviews ? "恢复全部置顶" : "暂时取消全部置顶"
+    }
+
+    /// 老板键：一下把所有置顶的窗口让开，再按一下原样放回。不是取消置顶——会话（真实窗口、位置）
+    /// 保留，只是面板收起、画面停掉（录屏标识跟着消失）。和“全部取消置顶”是两回事，互不影响。
+    func toggleSuspendAll() {
+        if hasSuspendedPreviews { resumeAll() } else { suspendAll() }
+    }
+
+    /// 暂时取消时的前后顺序（从最后面到最前面）：放回时照这个顺序一扇扇拿到前面，谁压着谁不变。
+    private var suspendedOrder: [CGWindowID] = []
+
+    private func suspendAll() {
+        let running = sessions.filter { !$0.value.isSuspended }
+        guard !running.isEmpty else { return }
+        // orderedIndex 越小越靠前；被避让收起的面板不在屏幕上，排到最后面。
+        suspendedOrder = running.sorted { lhs, rhs in
+            let l = lhs.value.panel.isVisible ? lhs.value.panel.orderedIndex : Int.max
+            let r = rhs.value.panel.isVisible ? rhs.value.panel.orderedIndex : Int.max
+            return l > r
+        }.map(\.key)
+        for id in suspendedOrder {
+            guard let session = sessions[id] else { continue }
+            if session.isInteracting {
+                endInteraction(id: id, sourceFrame: currentSourceFrame(id: id) ?? session.panel.frame)
+            }
+            unexpectedStopRetryWorkItems.removeValue(forKey: id)?.cancel()
+            unexpectedStopRetries.removeValue(forKey: id)
+            session.isSuspended = true
+            session.isDucked = false
+            session.capture.stop()
+            session.panel.ignoresMouseEvents = true
+            session.panel.orderOut(nil)
+            if activePreviewID == id { activePreviewID = nil }
+            // 菜单缩略图、窗口浏览借用的镜像也断开：流停了，留着只会是一块不动的画面。
+            mirrorSlot.clear(windowID: id)
+        }
+        lockedDuckingID = nil
+        lastPointerDuckingID = nil
+        duckingFrontID = nil
+        updatePointerDuckingTimer()
+        wlog("pin-preview: suspend-all count=\(suspendedOrder.count)")
+        sessionsDidChange()
+    }
+
+    private func resumeAll() {
+        let suspended = sessions.filter { $0.value.isSuspended }.map(\.key)
+        guard !suspended.isEmpty else { return }
+        // 先按记下的顺序（后面的先放回），期间新置顶、没被记下的排在它们之前（更靠后）。
+        let known = suspendedOrder.filter { suspended.contains($0) }
+        let order = suspended.filter { !known.contains($0) } + known
+        // 暂时取消之后又新置顶的那几扇，放回之后仍在最前面。
+        let runningFront = sessions.filter { !$0.value.isSuspended && $0.value.panel.isVisible }
+            .sorted { $0.value.panel.orderedIndex > $1.value.panel.orderedIndex }.map(\.key)
+        suspendedOrder = []
+        for id in order {
+            guard let session = sessions[id] else { continue }
+            resumeSession(session, id: id)
+        }
+        for id in runningFront { sessions[id]?.panel.orderFrontRegardless() }
+        updatePointerDuckingTimer()
+        ensureWatchdogStarted()
+        wlog("pin-preview: resume-all count=\(order.count)")
+        sessionsDidChange()
+    }
+
+    private func resumeSession(_ session: PinnedPreviewSession, id: CGWindowID) {
+        guard session.isSuspended else { return }
+        session.isSuspended = false
+        // 暂停期间 watchdog 不追踪它：先确认源窗口还在，关掉了就直接结束这个置顶。
+        guard let frame = currentSourceFrame(id: id) else {
+            wlog("pin-preview: resume found closed source id=\(id)")
+            stopPreview(id: id, reason: "resume-lost-source")
+            return
+        }
+        session.lastKnownFrame = frame
+        session.pendingFrame = nil
+        session.rejectedFrame = nil
+        session.panel.alphaValue = 1
+        if !framesAlmostEqual(session.panel.frame, frame, tolerance: 1.0) {
+            session.panel.setFrame(frame, display: true)
+        }
+        session.panel.ignoresMouseEvents = false
+        session.panel.level = .floating
+        session.panel.orderFrontRegardless()
+        session.spaceCheckAt = 0
+        enforcePanelSpaceInvariant(session, reason: "resume")
+        Task { @MainActor [weak self, weak session] in
+            guard let self, let session, !session.isSuspended else { return }
+            do {
+                try await session.capture.restart(window: session.scWindow, display: session.display,
+                                                  width: frame.width, height: frame.height)
+                wlog("pin-preview: resume id=\(id) frame=\(Self.format(frame))")
+            } catch {
+                self.notice("置顶的画面没能恢复",
+                            "pin-preview: resume restart failed id=\(id) \(error.localizedDescription)")
+                self.stopPreview(id: id, reason: "resume-restart-failed")
+            }
         }
     }
 
@@ -1147,7 +1267,7 @@ final class PinnedPreviewController {
     }
 
     private func updatePointerDuckingTimer() {
-        if sessions.count > 1 {
+        if sessions.values.filter({ !$0.isSuspended }).count > 1 {
             guard pointerDuckingTimer == nil else { return }
             // 30Hz 足够跟手（悬停 ducking 延迟 ~33ms 无感）；120Hz + 零容差会让
             // 多预览场景下主线程持续满频醒来。
@@ -1229,7 +1349,7 @@ final class PinnedPreviewController {
     }
 
     private func updateDucking(activeID: CGWindowID?) {
-        guard let activeID, let active = sessions[activeID] else {
+        guard let activeID, let active = sessions[activeID], !active.isSuspended else {
             restoreDuckedPreviews(reason: "no-active")
             return
         }
@@ -1245,7 +1365,7 @@ final class PinnedPreviewController {
         }
         let mover = PrivateSLSWindowMover.shared
         var spaceCache: [CGDirectDisplayID: UInt64?] = [:]
-        for (id, session) in sessions where id != activeID {
+        for (id, session) in sessions where id != activeID && !session.isSuspended {
             guard sessionIsOnCurrentSpace(session, mover: mover, cache: &spaceCache) else { continue }
             let shouldDuck = activeFrame.intersects(session.panel.frame)
             if shouldDuck, !session.isDucked {
@@ -1260,7 +1380,7 @@ final class PinnedPreviewController {
     }
 
     private func restoreDuckedPreviews(reason: String) {
-        for (id, session) in sessions where session.isDucked {
+        for (id, session) in sessions where session.isDucked && !session.isSuspended {
             restoreDuckedPreview(session, id: id, reason: reason)
         }
     }
@@ -1280,6 +1400,7 @@ final class PinnedPreviewController {
 
     private func stopPreview(id: CGWindowID, reason: String) {
         dispatchPrecondition(condition: .onQueue(.main))
+        if startingPreviewIDs.contains(id) { finishStartPreview(id: id, result: .failure(.targetChanged)) }
         guard let session = sessions.removeValue(forKey: id) else { return }
         mirrorSlot.clear(windowID: id)
         unexpectedStopRetryWorkItems.removeValue(forKey: id)?.cancel()

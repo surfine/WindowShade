@@ -329,51 +329,23 @@ export const Hud: React.FC<{
 // ---------------------------------------------------------------------------
 
 export const Trackpad: React.FC<{
-  x: number;
-  y: number;
-  w: number;
+  x: number; y: number; w: number;
   fingers: { x: number; y: number; on: number; spread?: number };
-  opacity?: number;
-  style?: React.CSSProperties;
-}> = ({ x, y, w, fingers, opacity = 1, style }) => {
-  const h = w * 0.66;
-  const d = w * 0.13;
-  const gap = (fingers.spread ?? 1) * w * 0.14;
-  return (
-    <div
-      style={{
-        position: "absolute",
-        left: x,
-        top: y,
-        width: w,
-        height: h,
-        borderRadius: w * 0.055,
-        background: "linear-gradient(170deg,#eceef2,#d9dce2 60%,#cfd3da)",
-        boxShadow:
-          "inset 0 0 0 1.5px rgba(255,255,255,.9), inset 0 -2px 3px rgba(0,0,0,.05), 0 0 0 1px rgba(0,0,0,.08), 0 24px 50px rgba(20,28,48,.18), 0 3px 8px rgba(20,28,48,.08)",
-        opacity,
-        ...style,
-      }}
-    >
-      {[-1, 1].map((s) => (
-        <div
-          key={s}
-          style={{
-            position: "absolute",
-            left: fingers.x * w + s * gap * 0.5 - d / 2,
-            top: fingers.y * h - d / 2 + (s > 0 ? -d * 0.18 : 0),
-            width: d,
-            height: d,
-            borderRadius: "50%",
-            background: "radial-gradient(circle at 45% 40%, rgba(255,255,255,.9), rgba(36,94,234,.45) 75%)",
-            boxShadow: `0 0 0 3px rgba(36,94,234,.75), 0 8px 22px rgba(36,94,234,.35)`,
-            opacity: fingers.on,
-            scale: String(0.7 + 0.3 * fingers.on),
-          }}
-        />
-      ))}
-    </div>
-  );
+  trail?: { x: number; y: number; on: number };
+  opacity?: number; style?: React.CSSProperties;
+}> = ({ x, y, w, fingers, trail, opacity = 1, style }) => {
+  const h = w * .66, d = w * .10, gap = (fingers.spread ?? 1) * w * .16;
+  return <div style={{ position: "absolute", left: x, top: y, width: w, height: h,
+    borderRadius: w * .055, border: "2px solid #aeb3bc", boxSizing: "border-box", opacity, ...style }}>
+    <svg width={w} height={h} viewBox={`0 0 ${w} ${h}`} style={{ overflow: "visible" }}>
+      {[-1, 1].map(s => <g key={s} opacity={Math.max(.25, fingers.on)}>
+        {trail && trail.on > .3 && fingers.on > .3 && <line x1={trail.x * w + s * gap / 2} y1={trail.y * h}
+          x2={fingers.x * w + s * gap / 2} y2={fingers.y * h} stroke="rgba(26,89,184,.20)" strokeWidth={d * .65} strokeLinecap="round" />}
+        <circle cx={fingers.x * w + s * gap / 2} cy={fingers.y * h} r={d / 2}
+          fill={`rgba(26,89,184,${.2 + .46 * fingers.on})`} stroke="rgba(26,89,184,.66)" strokeWidth={1.5} />
+      </g>)}
+    </svg>
+  </div>;
 };
 
 export const Mouse: React.FC<{ x: number; y: number; w: number; wheel: number; glow: number; opacity?: number }> = ({

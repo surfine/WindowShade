@@ -30,10 +30,9 @@ final class DuoController: NSObject {
   private var target = 0.0
   private var lastReadingTime: CFTimeInterval = 0
   private var desktopFPS = 15
-  private var motion = SIMD2<Double>.zero
-  private var motionFiltered = SIMD3<Double>.zero
-  private var motionBaseline: SIMD3<Double>?
-  private var motionTime: CFTimeInterval = 0
+  // 倾斜的低通和基线在 AppleSPUAccelerometer 自己的队列上算，这里每帧读最新值。
+  private var tiltHold = TiltHold()
+  private var tiltThreshold = SIMD2<Float>(repeating: 0)
   private struct DisplayConfiguration: Equatable {
     let id: CGDirectDisplayID
     let frame: CGRect
@@ -52,12 +51,17 @@ final class DuoController: NSObject {
         wideColor: screen.canRepresent(.p3))
     }.sorted { $0.id < $1.id }
   }
-  var settingsWindow: DuoSettingsWindow?
+  var settingsWindow: DuoSettingsWindow? {
+    didSet { accelerometer.setStatusTicks(settingsWindow != nil) }
+  }
   let windowEffects = WindowFoldEffects()
   var desktopActive: Bool { desktop != nil || startTask != nil }
   var allowsAnimation: Bool {
-    !pausedByUser && !suspended && !EffectSecurityBoundary.isLocked
-      && !NSWorkspace.shared.accessibilityDisplayShouldReduceMotion
+    allowsAnimationIgnoringLock && !EffectSecurityBoundary.isLocked
+  }
+  /// 同 allowsAnimation，但不问 WindowServer 锁屏状态（那是一次同步 IPC）。
+  private var allowsAnimationIgnoringLock: Bool {
+    !pausedByUser && !suspended && !NSWorkspace.shared.accessibilityDisplayShouldReduceMotion
   }
 
   func start(owner: AppDelegate) {
@@ -78,7 +82,7 @@ final class DuoController: NSObject {
       self?.motionStatus = status.message
       self?.settingsWindow?.refreshStatus()
     }
-    accelerometer.onReading = { [weak self] in self?.receiveMotion($0) }
+    accelerometer.onStatusTick = { [weak self] in self?.settingsWindow?.refreshStatus() }
     let workspace = NSWorkspace.shared.notificationCenter
     observe(workspace, NSWorkspace.willSleepNotification) { [weak self] in self?.suspend() }
     observe(workspace, NSWorkspace.screensDidSleepNotification) { [weak self] in self?.suspend() }
@@ -165,7 +169,6 @@ final class DuoController: NSObject {
       accelerometer.start()
     } else {
       accelerometer.stop()
-      resetMotion()
     }
     settingsWindow?.refreshStatus(force: true)
   }
@@ -174,7 +177,13 @@ final class DuoController: NSObject {
     angle = reading.angle
     lastReadingTime = reading.time
     settingsWindow?.refreshStatus()
-    guard settings.desktopEnabled, allowsAnimation else { return }
+    guard settings.desktopEnabled else { return }
+    // 盖子明确开着（不低于触发角 + 8°）时，这份读数只刷新基线、清掉 suppressed，
+    // 不会开始任何效果（prepareDesktop 只在这个角度以下调用，它和 tickDesktop 自己也查锁屏）。
+    // 这时不问锁屏状态：CGSessionCopyCurrentDictionary 是一次同步的 WindowServer 往返，静置时每秒 12 次；
+    // 机器很忙时实测单次约 0.2 ms CPU，主线程还要等几毫秒。离触发角近了照旧每份都查。
+    let clearlyOpen = reading.angle >= settings.triggerAngle + 8
+    guard clearlyOpen ? allowsAnimationIgnoringLock : allowsAnimation else { return }
     let next = FoldDriver.progress(angle: reading.angle, start: settings.triggerAngle)
     sensor.setEngaged(next > 0 || desktop != nil || reading.angle < settings.triggerAngle + 8)
     if reading.angle > settings.triggerAngle + 5 { suppressed = false }
@@ -197,38 +206,6 @@ final class DuoController: NSObject {
     {
       prepareDesktop()
     }
-  }
-
-  private func receiveMotion(_ reading: AppleSPUAccelerometer.Reading) {
-    if motionTime == 0 {
-      motionTime = reading.time
-      motionFiltered = reading.acceleration
-      motionBaseline = reading.acceleration
-      return
-    }
-    let dt = motionTime > 0 ? reading.time - motionTime : 0
-    motionTime = reading.time
-    let alpha = dt > 0 && dt < 1 ? 1 - exp(-dt / 0.08) : 0.35
-    motionFiltered += (reading.acceleration - motionFiltered) * alpha
-    if motionBaseline == nil {
-      motionBaseline = motionFiltered
-    }
-    guard let baseline = motionBaseline else { return }
-    let delta = motionFiltered - baseline
-    // The sensor reports g; keep the visual response small and bounded. The
-    // baseline is captured when the switch is enabled, so resting gravity does
-    // not permanently offset the desktop.
-    motion = SIMD2(
-      min(0.45, max(-0.45, delta.x * 0.7)),
-      min(0.45, max(-0.45, delta.y * 0.7)))
-    settingsWindow?.refreshStatus()
-  }
-
-  private func resetMotion() {
-    motion = .zero
-    motionFiltered = .zero
-    motionBaseline = nil
-    motionTime = 0
   }
 
   private func prepareDesktop() {
@@ -274,9 +251,10 @@ final class DuoController: NSObject {
           throw EffectError.unavailable("无法从捕获中排除效果窗口")
         }
         let width = screen.frame.width * screen.backingScaleFactor
+        let height = width * screen.frame.height / screen.frame.width
         try await effect.start(
           filter: filter,
-          pixels: CGSize(width: width, height: width * screen.frame.height / screen.frame.width),
+          pixels: CGSize(width: width, height: height),
           fps: 15, color: EffectColorSpace.display(screen))
         guard self.epoch.accepts(token), self.allowsAnimation else {
           effect.stop()
@@ -286,6 +264,8 @@ final class DuoController: NSObject {
         self.desktop = effect
         self.desktopFPS = 15
         self.spring.reset(self.target)
+        self.tiltHold.reset()
+        self.tiltThreshold = TiltHold.threshold(pixelWidth: width, pixelHeight: height)
         self.previousTime = CACurrentMediaTime()
         effect.presentationWanted = self.target > 0
         effect.tick = { [weak self] now in self?.tickDesktop(now) }
@@ -324,10 +304,12 @@ final class DuoController: NSObject {
       desktop.source.updateFPS(fps)
     }
     spring.advance(to: target, dt: dt)
+    let tilt = settings.motionEnabled ? accelerometer.tilt : .zero
+    let motion = tiltHold.update(SIMD2(Float(tilt.x), Float(tilt.y)), threshold: tiltThreshold)
     desktop.renderer.parameters = .init(
       progress: Float(spring.value),
-      motionX: settings.motionEnabled ? Float(motion.x) : 0,
-      motionY: settings.motionEnabled ? Float(motion.y) : 0,
+      motionX: motion.x,
+      motionY: motion.y,
       preset: settings.preset)
     desktop.presentationWanted = spring.value > 0
     if target == 0, spring.value == 0, (angle ?? 180) > settings.triggerAngle + 8 { stopDesktop() }
@@ -346,7 +328,6 @@ final class DuoController: NSObject {
     windowEffects.cancelAll()
     sensor.stop()
     accelerometer.stop()
-    resetMotion()
     settingsWindow?.suspendPreview()
   }
   private func resume() {

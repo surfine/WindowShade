@@ -131,11 +131,13 @@ extension AppDelegate {
             reason += "-quicklook"
         }
 
-        if options.forcedAppearanceMode == nil && mode == .nativeScreenshot && !hasScreenRecordingPermission() {
+        // 缩略图要收起那一刻的截图：截不了的时候和“跟原来一样”一样，退回统一标题栏。
+        let needsScreenshot = mode == .nativeScreenshot || mode == .thumbnail
+        if options.forcedAppearanceMode == nil && needsScreenshot && !hasScreenRecordingPermission() {
             mode = .proxyTitleBar
             reason = "screen-recording-missing"
         }
-        if options.forcedAppearanceMode == nil && mode == .nativeScreenshot {
+        if options.forcedAppearanceMode == nil && needsScreenshot {
             if #unavailable(macOS 14.0) {
                 mode = .proxyTitleBar
                 reason = "screencapturekit-unavailable"
@@ -167,7 +169,8 @@ extension AppDelegate {
     func shade(_ win: AXUIElement, _ id: CGWindowID,
                        options: ShadeInvocationOptions? = nil, bypassDuo: Bool = false,
                        preparedImage: CGImage? = nil, trustElement: Bool = false,
-                       preparedProfile: WindowChromeProfile? = nil) {
+                       preparedProfile: WindowChromeProfile? = nil,
+                       recordedPosition: CGPoint? = nil) {
         let completionTokens = foldWaiters[id].map { Array($0.keys) } ?? []
         func completeFold(success: Bool) {
             settleFoldWaiters(id: id, tokens: completionTokens, success: success)
@@ -179,7 +182,11 @@ extension AppDelegate {
         let win = foldPhase("元素刷新") {
             refreshedWindowElement(id: id, fallback: win, trustFallback: trustElement)
         }
-        if !bypassDuo, duoController.windowEffects.interceptFold(win, id: id, options: options) {
+        // 缩略图有自己的收起动画（截图缩进缩略图，见 Thumbnail.swift），不再播卷帘动画；
+        // 手势跟手中已经开始的那一段照旧交给它收尾。
+        let thumbnailFold = (options?.forcedAppearanceMode ?? appearanceMode) == .thumbnail
+            && !duoController.windowEffects.hasActiveTransition(for: id)
+        if !bypassDuo, !thumbnailFold, duoController.windowEffects.interceptFold(win, id: id, options: options) {
             return
         }
         // 状态机防护：折叠中/已折叠/展开中的窗口再次触发折叠一律忽略，
@@ -353,7 +360,7 @@ extension AppDelegate {
             let wantsObserver = !(hide == .quickLookClosed || hide == .ownWindowOrderedOut)
             let observer: AXObserver? = nil
             let state = ShadeState(element: win, sourceWindowID: id,
-                                   originalPosition: pos, originalSize: size,
+                                   originalPosition: recordedPosition ?? pos, originalSize: size,
                                    sourceDisplayID: sourceDisplayID,
                                    sourceSpaceID: sourceSpaceID,
                                    overlay: overlay,
@@ -445,7 +452,7 @@ extension AppDelegate {
             let observer = makeRevealObserver(pid: pid, win: win, id: id)
             clearShadeJournal(id: id)
             shaded[id] = ShadeState(element: win, sourceWindowID: id,
-                                    originalPosition: pos, originalSize: size,
+                                    originalPosition: recordedPosition ?? pos, originalSize: size,
                                     sourceDisplayID: sourceDisplayID,
                                     sourceSpaceID: sourceSpaceID,
                                     overlay: nil,
@@ -602,6 +609,26 @@ extension AppDelegate {
             }
             if shouldParkFocus {
                 releaseFocusParking(reactivate: nil)
+            }
+            if mode == .thumbnail {
+                // 缩略图：抹掉录屏胶囊（悬停预览、看一眼也用这张），再在后台缩成缩略图用的小图。
+                let thumbnailSize = ThumbnailLayout.size(for: size)
+                let pixelScale = screenForAXWindow(pos: pos, size: size)?.backingScaleFactor ?? 2
+                let (snapshot, picture) = await withCheckedContinuation {
+                    (continuation: CheckedContinuation<(CGImage, CGImage?), Never>) in
+                    pixelAnalysisQueue.async { [full, size] in
+                        let scale = CGFloat(full.width) / max(1, size.width)
+                        let cleaned = CaptureIndicatorRemoval.removingIndicator(from: full, scale: scale) ?? full
+                        continuation.resume(returning: (cleaned, downsampledThumbnailPicture(
+                            cleaned, size: thumbnailSize, scale: pixelScale)))
+                    }
+                }
+                let overlay = makeThumbnailOverlay(picture: picture ?? snapshot, snapshot: snapshot,
+                                                   axPos: pos, windowSize: size, pid: pid,
+                                                   appName: appName, title: title, id: id)
+                wlog("    thumbnail size=\(Int(thumbnailSize.width))x\(Int(thumbnailSize.height)) capture=\(full.width)x\(full.height)")
+                installOverlay(overlay, mode: .thumbnail, previewImage: NSImage(cgImage: snapshot, size: size))
+                return
             }
             // 裁出顶部标题栏条：chrome 高度判定、健康检查、圆角镜像都是纯 CPU
             // 像素计算（4K Retina 全宽可达数 MB），挪到后台队列执行，避免在

@@ -132,7 +132,8 @@ final class WindowBrowserActionBar: NSView {
             button.isEnabled = item.isEnabled
             button.contentTintColor = item.isDestructive ? .systemRed
                 : (item.isOn ? .controlAccentColor : nil)
-            button.toolTip = item.disabledReason.map { "\(item.title)（\($0)）" } ?? item.title
+            let named = WindowBrowserActionPresentation.macShortcut(for: item.action).map { "\(item.title) \($0.label)" } ?? item.title
+            button.toolTip = item.disabledReason.map { "\(named)（\($0)）" } ?? named
             button.setAccessibilityLabel(item.title)
             if let reason = item.disabledReason {
                 button.setAccessibilityHelp(reason)
