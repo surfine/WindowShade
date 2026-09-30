@@ -57,15 +57,17 @@ final class DuoController: NSObject {
   let windowEffects = WindowFoldEffects()
   var desktopActive: Bool { desktop != nil || startTask != nil }
   var allowsAnimation: Bool {
-    allowsAnimationIgnoringLock && !EffectSecurityBoundary.isLocked
+    allowsAnimationIgnoringLock && EffectEnvironment.allowsDisplay
   }
-  /// 同 allowsAnimation，但不问 WindowServer 锁屏状态（那是一次同步 IPC）。
+  /// 同 allowsAnimation，但不看锁屏/电源状态（那要读 EffectEnvironment 的缓存）。
   private var allowsAnimationIgnoringLock: Bool {
     !pausedByUser && !suspended && !NSWorkspace.shared.accessibilityDisplayShouldReduceMotion
   }
 
   func start(owner: AppDelegate) {
     self.owner = owner
+    // 先把锁屏状态读一次，别停在 unknown（unknown 不许当成解锁，会挡掉所有效果）。
+    EffectEnvironment.refresh()
     displayConfiguration = currentDisplayConfiguration()
     windowEffects.owner = owner
     windowEffects.controller = self
@@ -84,14 +86,29 @@ final class DuoController: NSObject {
     }
     accelerometer.onStatusTick = { [weak self] in self?.settingsWindow?.refreshStatus() }
     let workspace = NSWorkspace.shared.notificationCenter
-    observe(workspace, NSWorkspace.willSleepNotification) { [weak self] in self?.suspend() }
-    observe(workspace, NSWorkspace.screensDidSleepNotification) { [weak self] in self?.suspend() }
-    observe(workspace, NSWorkspace.sessionDidResignActiveNotification) { [weak self] in
+    // 通知只用来触发重读：状态变了先进 EffectEnvironment，再决定停还是恢复。
+    observe(workspace, NSWorkspace.willSleepNotification) { [weak self] in
+      EffectEnvironment.willSleep()
       self?.suspend()
     }
-    observe(workspace, NSWorkspace.didWakeNotification) { [weak self] in self?.resume() }
-    observe(workspace, NSWorkspace.screensDidWakeNotification) { [weak self] in self?.resume() }
+    observe(workspace, NSWorkspace.screensDidSleepNotification) { [weak self] in
+      EffectEnvironment.displaySlept()
+      self?.suspend()
+    }
+    observe(workspace, NSWorkspace.sessionDidResignActiveNotification) { [weak self] in
+      EffectEnvironment.refresh()
+      self?.suspend()
+    }
+    observe(workspace, NSWorkspace.didWakeNotification) { [weak self] in
+      EffectEnvironment.didWake()
+      self?.resume()
+    }
+    observe(workspace, NSWorkspace.screensDidWakeNotification) { [weak self] in
+      EffectEnvironment.displayWoke()
+      self?.resume()
+    }
     observe(workspace, NSWorkspace.sessionDidBecomeActiveNotification) { [weak self] in
+      EffectEnvironment.refresh()
       self?.resume()
     }
     observe(workspace, NSWorkspace.activeSpaceDidChangeNotification) { [weak self] in
@@ -118,6 +135,7 @@ final class DuoController: NSObject {
         DistributedNotificationCenter.default().addObserver(
           forName: Notification.Name(name), object: nil, queue: .main
         ) { [weak self] note in
+          EffectEnvironment.refresh()
           if note.name.rawValue.hasSuffix("IsLocked") { self?.suspend() } else { self?.resume() }
         })
     }
@@ -288,6 +306,8 @@ final class DuoController: NSObject {
 
   private func tickDesktop(_ now: CFTimeInterval) {
     guard let desktop else { return }
+    // 每帧只读缓存；最多每秒重读一次权威状态（通知丢了最多错一秒），不再一帧一次 WindowServer 往返。
+    EffectEnvironment.recheckIfStale()
     guard allowsAnimation else {
       suspend()
       return
@@ -338,11 +358,16 @@ final class DuoController: NSObject {
     settingsChanged()
   }
   func stopDesktop() {
+    let hadSession = desktop != nil || startTask != nil
     _ = epoch.advance()
     startTask?.cancel()
     startTask = nil
     desktop?.stop()
     desktop = nil
+    if hadSession {
+      // 性能记录用：一次桌面会话总共问了 WindowServer 几次锁屏状态。
+      wlog("duo: desktop stopped lockQueries=\(EffectEnvironment.queries) generation=\(EffectEnvironment.generation)")
+    }
     // 会话结束后重建基线：下一次触发必须来自一次新的合盖动作。
     resetEngagementBaseline()
     spring.reset()

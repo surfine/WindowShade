@@ -167,3 +167,75 @@ Glance 是 MIT（`github.com/jonnyoo/glance`），其中 `NotchSkyLight.swift` �
 ## 下一步
 
 给 ChatGPT Pro 的深挖提示词见 [glance-pro-prompt.md](glance-pro-prompt.md)。
+
+---
+
+## 记录：ChatGPT Pro 的审查、我们的核对，以及改定的方案（2026-09-30）
+
+提示词发出去后拿到了 Pro 的完整审查（本机存档在当次会话附件里）。**它的三条具体代码主张我逐条核对了，
+全部成立**；它推翻了我原方案里的两处设计，我采纳。
+
+### 一、它说对了的三件事（本项目源码核对）
+
+1. **渲染 tick 里每帧都在问 WindowServer。** `DuoController.tickDesktop` 每帧调 `allowsAnimation`，
+   而 `allowsAnimation` 里有 `EffectSecurityBoundary.isLocked` → `CGSessionCopyCurrentDictionary`，
+   一次同步 IPC（代码另一处注释自己实测过：单次约 0.2 ms CPU，主线程还要等几毫秒）。桌面效果 60 fps
+   就是每秒 60 次；传感器读数那条路（每秒 62 份）也走 `allowsAnimation`。
+   → **已修**：新增 `Effects/EffectEnvironment.swift`，通知只触发重读，渲染每帧只读缓存，
+   效果在跑时按最长 1 秒复查一次权威状态（通知丢了最多错一秒）。桌面会话结束时打一行
+   `duo: desktop stopped lockQueries=…` 便于记录。
+2. **`EffectFrameSource.stop()` 把结果丢了。** 现在是 `Task { try? await old.stopCapture() }`，
+   停止完成与失败都不可观测（它建议：代次立即失效保留，另加可观测的停止结果）。
+3. **`FoldRenderer.setImage()` 不推进 revision。** 换素材不会撤销已经提交的旧绘制，所以
+   「先 setImage(安全素材) 再把这扇窗 delegate 到锁屏」**不能**证明旧桌面帧不会上锁屏。
+
+### 二、它推翻了我原方案里的两处，已采纳
+
+- **锁屏上不复用真实桌面像素。** 我原来写的是「留锁屏前最后一帧，锁屏上把它折起来」；
+  Pro 指出那本身就是一次信息披露（对未认证的观看者展示原桌面），「只有几百毫秒／只在内存里／加了模糊」
+  都不改变这一点。**改定**：锁屏那一层只用程序生成的纸面/边缘折叠等安全素材，
+  并且**新建独立的 `LockOverlaySession`（自己的窗口 + 自己的 `FoldRenderer` 实例）**，
+  从创建起就不接触真实桌面像素；不复用跑过真实桌面的那个实例。
+- **不要收窄现有的私有空间编号。** 我们 `Private/SkyLightBridge.swift` 里 managed space 用的是 `UInt64`；
+  Glance/SkyLightWindow 那份配方把空间号和返回值写成 `Int32`，历史 CGS 头文件却是 `size_t`。
+  两边都不是经核定的契约，**新能力单独放一层，失败不连带禁用现有的挪窗口/透明度功能**。
+
+### 三、我们补的证据：导出存在性（阶段 1A）
+
+`scripts/sls-symbols.c`（Pro 附带的探针，已入库）只 `dlopen`／`dlsym`，不建空间、不挪窗口、不锁屏。
+
+2026-09-30 在本机跑：**macOS 27.0（build 26A428）、arm64，十个符号全在**——
+六个基础符号（`SLSMainConnectionID`、`SLSSpaceCreate`、`SLSSpaceSetAbsoluteLevel`、`SLSShowSpaces`、
+`SLSSpaceAddWindowsAndRemoveFromSpaces`、`SLSRemoveWindowsFromSpaces`）加
+`SLSHideSpaces`、`SLSSpaceDestroy`、`SLSCopySpacesForWindows`、`SLSSpaceGetType`，退出码 0。
+
+**这只证明这台机器、这个系统构建、这个架构上符号在**；ABI、真锁屏可见、完整生命周期都还没验，
+别的系统版本和架构也没有记录。按 Pro 的要求，未验证的组合一律默认关闭新能力。
+
+### 四、阶段表（改用 Pro 的划分）
+
+| 阶段 | 内容 | 验收 |
+| --- | --- | --- |
+| **0 状态与日志** | `EffectEnvironment` + Duo 接线：通知只重读、渲染 tick 无同步查询、unknown 不当解锁 | **已完成（2026-09-30）**：`--check` 通过、28 个 runner 全过；关闭新协调器时行为与之前一致 |
+| **1A 只查符号** | 上面的 C 探针 | 本机已过；其余 OS build × 架构待补 |
+| **1B 第一次改私有空间状态** | 独立小窗口探针 + `Private/LockScreenSpaceBridge.swift` | 真锁屏上出现小标记、鼠标与认证不受影响、到期/解锁后消失（**要人在场解锁**） |
+| **2 安全离线呈现** | `Effects/LockOverlaySession.swift`：独立窗口 + 独立渲染器 + 安全素材 | 无 ScreenCaptureKit、无桌面素材也能跑折叠；任何失败先隐藏 |
+| **3 接合盖状态转换** | Duo 的锁屏交接、`stop()` 可观测化 | 锁屏但未睡眠时接棒；睡眠立即撤场；唤醒不复播旧桌面 |
+| **4 循环与显示配置** | 热插拔、显示器睡眠、全屏、Stage Manager、用户切换、退出 | 资源不持续增长，无残影 |
+| **5 受限发布** | 兼容记录、默认开关、公证产物 | 只对验证过的组合声明支持 |
+
+### 五、测试分工（照 Pro 的约束）
+
+- 状态机与失败恢复：可以无人值守（重放通知、mock 失败）。
+- **真锁屏：必须有人在旁边用系统认证解锁。** 探针不 key/main、整窗鼠标穿透、独立到期撤场，
+  再有一个普通父进程看着它（不用 root、不用 LaunchDaemon）。**不能承诺无认证自动解锁**，
+  也不拿 `CGSession -suspend` 之类的私有接口当稳定锁屏入口（系统给用户的是 ⌃⌘Q）。
+- 首批实验：一个 240×48 的小窗口、只画计数、不碰 Metal 与 ScreenCaptureKit；先做
+  「只提高 window level」与「私有空间委托」两组对照，再做「锁屏前建窗」与「锁屏后建窗」对照。
+
+### 六、给 Pro 的提示词要补一条
+
+上一版提示词只给了仓库根地址，没有写分支，Pro 按 `main` 读，于是
+`docs/glance-integration.md`、`prototype/Private/ScreenBezel.swift`、`prototype/App/Notch.swift`
+三个路径 404（这些文件都在分支上）。**下次一律给带 ref 的完整链接**：
+`https://github.com/surfine/WindowShade/blob/codex/1.0.16-local-closure/<path>`。
