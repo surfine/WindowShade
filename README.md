@@ -25,6 +25,14 @@ A free, open-source window utility for Mac.
 
 </div>
 
+## Live activities in development
+
+The notch and the Launchpad Today page share up to three live activities: Music/Spotify, AirPods, shares and routes started here, and Voice Memos microphone use or confirmed recording state. Swipe between them and hold to expand. Connect music explicitly to allow playback controls. Existing title-bar gestures and system three-finger dragging remain available. [API boundaries, gestures and validation](docs/live-activities.md). These changes are not in the current release download.
+
+## Touch ID in the notch, in development
+
+Choose **Verify Touch ID…** to expand the notch around the system fingerprint prompt. Displays without a notch use a separate capsule below the menu bar. It closes when finished and restores the previous live activity. This confirms a WindowShade application request; it does not unlock macOS. The current download does not include it, and physical authentication and display setups still need on-device validation. [Design and validation](docs/touch-id-island.md).
+
 ## Launchpad in development
 
 Press ⌃⌘L for the Home grid. Hold an icon to rearrange apps and make folders. The last page is the App Library; search by name, Chinese pinyin or initials. Removing an app from Home leaves it installed and available in the library. Outside editing mode, drag an icon straight to the screen edge to open its window in Slide Over. You can also drag a window by its title bar onto the Slide Over arrow midway along a free screen edge; pause until the target highlights, then release. To leave Slide Over, drag the title bar to the middle of the screen, stop, and release; the window stays where you put it.

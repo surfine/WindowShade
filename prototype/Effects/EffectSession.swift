@@ -210,12 +210,16 @@ struct DuoSettings {
   }
 }
 
-/// Lock notifications are undocumented; keep them in one boundary and also invalidate on public
-/// sleep/session notifications. Lock-screen effects are deliberately unsupported.
+/// Notifications trigger a query; they never authorize desktop capture or unlock.
 enum EffectSecurityBoundary {
-  static var isLocked: Bool {
+  static var lockState: SessionLockState {
     let state = CGSessionCopyCurrentDictionary() as? [String: Any]
-    return state?["CGSSessionScreenIsLocked"] as? Bool == true
-      || state?[kCGSessionOnConsoleKey as String] as? Bool == false
+    return .resolve(locked: state?["CGSSessionScreenIsLocked"] as? Bool,
+                    onConsole: state?[kCGSessionOnConsoleKey as String] as? Bool,
+                    loginDone: state?[kCGSessionLoginDoneKey as String] as? Bool,
+                    dictionaryPresent: state != nil)
+  }
+  static var isLocked: Bool {
+    lockState != .unlocked
   }
 }

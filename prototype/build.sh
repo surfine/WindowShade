@@ -5,6 +5,7 @@
 #   ./build.sh            构建 + 签名（需要签名身份，见下）
 #   ./build.sh --check    仅编译验证（swiftc typecheck），不签名、不修改 app bundle
 #   ./build.sh --stage    隔离构建到 .build/duo-validation/（发布包从这里打），写入更新清单地址 SUFeedURL
+#   ./build.sh --local-parallel  本地全模块优化，使用四个后端线程；发布仍用 --stage
 #
 # 应用内更新（docs/update.md）：主程序链接 prototype/Vendor/Sparkle.framework（2.10.0，已删 XPCServices），
 # 包里另有 Contents/Helpers/WindowShadeUpdateGuard.app（看护，源码在 Watchdog/）。嵌套代码从里往外逐个签，
@@ -23,6 +24,8 @@ cd "$(dirname "$0")"
 
 stage_only=0
 if [ "${1:-}" = "--stage" ]; then stage_only=1; fi
+OPTIMIZATION_FLAGS=(-O -whole-module-optimization)
+if [ "${1:-}" = "--local-parallel" ]; then OPTIMIZATION_FLAGS+=(-num-threads 4); fi
 APP="WindowShade.app"
 if [ "$stage_only" = "1" ]; then
   APP="$(cd .. && pwd)/.build/duo-validation/WindowShade.app"
@@ -46,6 +49,7 @@ FRAMEWORKS=(
   -framework QuartzCore
   -framework CoreText
   -framework AVFoundation
+  -framework Vision
   -framework ServiceManagement
   -framework Metal
   -framework MetalKit
@@ -53,6 +57,10 @@ FRAMEWORKS=(
   -framework CoreImage
   -framework VideoToolbox
   -framework Security
+  -framework CoreAudio
+  -framework MapKit
+  -framework LocalAuthentication
+  -framework LocalAuthenticationEmbeddedUI
 )
 
 # 自动收集源文件：只扫 prototype/ 与它的模块子目录，顺序稳定（按路径排序）。
@@ -120,7 +128,7 @@ GUARD_FRAMEWORKS=(-framework AppKit -framework Security -framework ServiceManage
 # Shader checks and normal builds use the same source and deployment target.
 METAL_BUILD="$(cd .. && pwd)/.build/duo-metal"
 mkdir -p "$METAL_BUILD"
-xcrun -sdk macosx metal -mmacosx-version-min=14.0 -c "$WORK/Duo.metal" -o "$WORK/Duo.air"
+xcrun -sdk macosx metal -mmacosx-version-min=14.0 -fmodules-cache-path="$MODULE_CACHE" -c "$WORK/Duo.metal" -o "$WORK/Duo.air"
 xcrun -sdk macosx metallib "$WORK/Duo.air" -o "$WORK/Duo.metallib"
 cp "$WORK/Duo.metallib" "$METAL_BUILD/Duo.metallib"
 
@@ -131,11 +139,11 @@ if [ "$check_only" = "1" ]; then
   echo "==> 编译验证（--check，和发布构建同样的优化参数；不签名、不修改 app bundle）"
   mkdir -p "$MODULE_CACHE"
   env CLANG_MODULE_CACHE_PATH="$MODULE_CACHE" \
-    swiftc -target "$ARCH-apple-macosx14.0" -O -whole-module-optimization ${GLASS_DEFINE} -o "$WORK/windowshade-check" \
+    swiftc -module-cache-path "$MODULE_CACHE" -target "$ARCH-apple-macosx14.0" -O -whole-module-optimization ${GLASS_DEFINE} -o "$WORK/windowshade-check" \
       "${COMPILE_SOURCES[@]}" "${FRAMEWORKS[@]}" \
       "${SPARKLE_FLAGS[@]}" -framework Sparkle -Xlinker -rpath -Xlinker @executable_path/../Frameworks
   env CLANG_MODULE_CACHE_PATH="$MODULE_CACHE" \
-    swiftc -target "$ARCH-apple-macosx14.0" -O -o "$WORK/WindowShadeUpdateGuard-check" \
+    swiftc -module-cache-path "$MODULE_CACHE" -target "$ARCH-apple-macosx14.0" -O -o "$WORK/WindowShadeUpdateGuard-check" \
       "${GUARD_SOURCES[@]}" "${GUARD_FRAMEWORKS[@]}"
   echo "==> 编译验证通过"
   exit 0
@@ -172,25 +180,29 @@ if [ ! -d "$APP/Contents/MacOS" ]; then
   fi
 fi
 
-if [ "$stage_only" != "1" ]; then
-  echo "==> 停止正在运行的 WindowShade（避免运行中替换 Mach-O 触发 TCC 混乱）"
-  pkill -x WindowShade 2>/dev/null || true
-fi
-
 echo "==> 编译"
 mkdir -p "$MODULE_CACHE"
-env CLANG_MODULE_CACHE_PATH="$MODULE_CACHE" \
-  swiftc -target "$ARCH-apple-macosx14.0" -O -whole-module-optimization ${GLASS_DEFINE} -o "$TMP_BIN" \
+mkdir -p "$WORK/compiler-tmp"
+env TMPDIR="$WORK/compiler-tmp" CLANG_MODULE_CACHE_PATH="$MODULE_CACHE" \
+  swiftc -module-cache-path "$MODULE_CACHE" -target "$ARCH-apple-macosx14.0" "${OPTIMIZATION_FLAGS[@]}" ${GLASS_DEFINE} -o "$TMP_BIN" \
     "${COMPILE_SOURCES[@]}" "${FRAMEWORKS[@]}" \
     "${SPARKLE_FLAGS[@]}" -framework Sparkle -Xlinker -rpath -Xlinker @executable_path/../Frameworks
 echo "==> 编译看护（WindowShadeUpdateGuard）"
 env CLANG_MODULE_CACHE_PATH="$MODULE_CACHE" \
-  swiftc -target "$ARCH-apple-macosx14.0" -O -o "$WORK/WindowShadeUpdateGuard" \
+  swiftc -module-cache-path "$MODULE_CACHE" -target "$ARCH-apple-macosx14.0" -O -o "$WORK/WindowShadeUpdateGuard" \
     "${GUARD_SOURCES[@]}" "${GUARD_FRAMEWORKS[@]}"
 
+if [ "$stage_only" != "1" ]; then
+  echo "==> 停止这个 bundle 的 WindowShade（编译通过后才替换）"
+  for task_pid in $(pgrep -x WindowShade 2>/dev/null || true); do
+    task_executable=$(ps -p "$task_pid" -o comm= 2>/dev/null || true)
+    if [ "$task_executable" = "$(pwd)/$BIN" ]; then kill -TERM "$task_pid" 2>/dev/null || true; fi
+  done
+fi
 echo "==> 替换 Mach-O（保留 bundle、Info.plist、Resources）"
 cp "$TMP_BIN" "$BIN"
 cp "$WORK/Duo.metallib" "$APP/Contents/Resources/Duo.metallib"
+cp ../docs/third-party-lock-overlay.txt "$APP/Contents/Resources/LockOverlay-LICENSE.txt"
 rm -rf "$APP/Contents/Resources/ThirdParty"
 # The released bundle historically carries the Swift concurrency runtime in
 # Contents/Frameworks. Preserve that runtime in isolated stage builds too;
@@ -266,6 +278,8 @@ for version_key in CFBundleShortVersionString CFBundleVersion; do
   /usr/libexec/PlistBuddy -c "Set :$version_key $release_value" "$APP/Contents/Info.plist"
 done
 # 更新器的设置同样以源码树为准（SUFeedURL 除外：只有 --stage 写，开发版不写就不启动更新器）。
+music_usage=$(plutil -extract NSAppleEventsUsageDescription xml1 -o - Info.plist)
+plutil -replace NSAppleEventsUsageDescription -xml "$music_usage" "$APP/Contents/Info.plist"
 for su_key in SUPublicEDKey SUVerifyUpdateBeforeExtraction SURequireSignedFeed SUEnableAutomaticChecks \
   SUScheduledCheckInterval SUAllowsAutomaticUpdates SUAutomaticallyUpdate SUEnableSystemProfiling; do
   su_value=$(plutil -extract "$su_key" xml1 -o - Info.plist)

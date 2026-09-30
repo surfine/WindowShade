@@ -3,7 +3,7 @@ set -euo pipefail
 cd "$(dirname "$0")/.."
 TEST_NAME="${1:-SettingsNavigationTests}"
 case "$TEST_NAME" in
-  all|SettingsNavigationTests|ClassicStripTests|WindowFoldEffectsTests|GlanceLifecycleTests|CarryControllerTests) ;;
+  all|SettingsNavigationTests|ClassicStripTests|WindowFoldEffectsTests|GlanceLifecycleTests|CarryControllerTests|NotchActivityViewTests|NotchAuthenticationTests) ;;
   *) echo "Unknown AppKit test: $TEST_NAME" >&2; exit 2 ;;
 esac
 mkdir -p .build/appkit-tests
@@ -18,7 +18,7 @@ while IFS= read -r source; do
 done < <(rg --files prototype -g '*.swift' -g '!main.swift' -g '!*.app/**' | sort)
 TEST_SOURCE=()
 if [ "$TEST_NAME" = all ]; then
-  TESTS=(SettingsNavigationTests ClassicStripTests WindowFoldEffectsTests GlanceLifecycleTests CarryControllerTests)
+  TESTS=(SettingsNavigationTests ClassicStripTests WindowFoldEffectsTests GlanceLifecycleTests CarryControllerTests NotchActivityViewTests NotchAuthenticationTests)
 else
   TESTS=("$TEST_NAME")
 fi
@@ -34,6 +34,7 @@ for name in "${TESTS[@]}"; do
     WindowFoldEffectsTests) cat "$WORK/$name.swift" >> "$WORK/prototype/Effects/WindowFoldEffects.swift" ;;
     CarryControllerTests) cat "$WORK/$name.swift" >> "$WORK/prototype/App/Carry.swift" ;;
     GlanceLifecycleTests) cat "$WORK/$name.swift" >> "$WORK/prototype/App/Glance.swift" ;;
+    NotchAuthenticationTests) cat "$WORK/$name.swift" >> "$WORK/prototype/App/NotchAuthentication.swift" ;;
     *) TEST_SOURCE+=("$WORK/$name.swift") ;;
   esac
 done
@@ -48,6 +49,8 @@ import Cocoa
     case "WindowFoldEffectsTests": WindowFoldEffectsTests.main()
     case "GlanceLifecycleTests": GlanceLifecycleTests.main()
     case "CarryControllerTests": CarryControllerTests.main()
+    case "NotchActivityViewTests": await NotchActivityViewTests.main()
+    case "NotchAuthenticationTests": NotchAuthenticationTests.main()
     default: preconditionFailure("Choose an AppKit test suite")
     }
   }
@@ -59,12 +62,12 @@ GLASS_DEFINE=()
 if [ -f "$(xcrun --show-sdk-path --sdk macosx)/System/Library/Frameworks/AppKit.framework/Headers/NSGlassEffectView.h" ]; then
   GLASS_DEFINE=(-DWINDOWSHADE_SDK_HAS_GLASS)
 fi
-swiftc -whole-module-optimization -target "$(uname -m)-apple-macosx14.0" ${GLASS_DEFINE[@]+"${GLASS_DEFINE[@]}"} \
+swiftc -module-cache-path "$(pwd)/.build/module-cache" -whole-module-optimization -target "$(uname -m)-apple-macosx14.0" ${GLASS_DEFINE[@]+"${GLASS_DEFINE[@]}"} \
   "${SOURCES[@]}" ${TEST_SOURCE[@]+"${TEST_SOURCE[@]}"} \
-  -framework Cocoa -framework Carbon -framework ApplicationServices \
+  -framework Cocoa -framework Carbon -framework ApplicationServices -framework LocalAuthentication -framework LocalAuthenticationEmbeddedUI \
   -framework ScreenCaptureKit -framework QuartzCore -framework CoreText \
-  -framework AVFoundation -framework ServiceManagement -framework Metal \
-  -framework MetalKit -framework IOKit -framework CoreImage -framework VideoToolbox \
+  -framework AVFoundation -framework Vision -framework ServiceManagement -framework Metal \
+  -framework CoreAudio -framework MapKit -framework MetalKit -framework IOKit -framework CoreImage -framework VideoToolbox \
   -o ".build/appkit-tests/$TEST_NAME"
 if [ "$TEST_NAME" = all ]; then
   for name in "${TESTS[@]}"; do ".build/appkit-tests/$TEST_NAME" "$name"; done

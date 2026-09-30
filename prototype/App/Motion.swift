@@ -5,6 +5,10 @@ import Cocoa
 
 enum Motion {
     static var reduced: Bool { NSWorkspace.shared.accessibilityDisplayShouldReduceMotion }
+
+    /// 设计系统 §4.6 的弹簧令牌。定义在 `Core/FlickMotion.swift` 的 `MotionSpring`（只编译 FlickMotion
+    /// 的单测也要能用），这里只是给 App 里的调用点留一个和文档一致的名字。
+    typealias Spring = MotionSpring
 }
 
 extension FlickGlidePath {

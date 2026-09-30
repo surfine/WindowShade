@@ -40,9 +40,9 @@ struct FoldSpring {
   private(set) var velocity = 0.0
   /// Angular frequency giving a settle to within 2% of the target in ~0.2s.
   static let frequency = 5.83 / 0.20
-  mutating func reset(_ value: Double = 0) {
+  mutating func reset(_ value: Double = 0, velocity: Double = 0) {
     self.value = value
-    velocity = 0
+    self.velocity = velocity
   }
   mutating func advance(to target: Double, dt: Double) {
     guard target.isFinite, dt.isFinite, dt > 0 else { return }

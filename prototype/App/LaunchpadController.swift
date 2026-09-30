@@ -39,6 +39,9 @@ final class LaunchpadController {
     }
 
     var isShowing: Bool { panel != nil }
+    func updateActivities(_ values: [NotchActivity], selected: String?) {
+        panel?.view.today.updateActivities(values)
+    }
 
     /// 启动时在后台先扫一遍、画好第一页（文件夹里的小图标也画），壁纸也先解码：第一次打开也是立刻出来。
     func warmUp() {
@@ -159,6 +162,13 @@ final class LaunchpadController {
         view.registerForDraggedTypes([.fileURL])
         view.notchRect = notch.map { view.convert(panel.convertFromScreen($0), from: nil) }
         view.onClose = { [weak self] in self?.hide(reason: "dismiss") }
+        view.today.updateActivities(owner.notch.activities.store.visible)
+        view.onActivityAction = { [weak self] id, action in
+            guard let self else { return }
+            if let id { self.owner.notch.activities.select(id) }
+            if [.airDrop, .route, .voiceMemos, .open].contains(action) { self.hide(reason: "activity", launched: true) }
+            self.owner.notch.activities.perform(action)
+        }
         view.onSpotlight = { [weak self] in self?.openSystemSearch() }
         view.onCalendar = { [weak self] in
             guard let url = NSWorkspace.shared.urlForApplication(withBundleIdentifier: "com.apple.iCal") else { return }

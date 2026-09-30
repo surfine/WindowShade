@@ -285,9 +285,21 @@ extension GlanceProbe {
     // 机器忙时铺开、定位要一会儿才定下来；等它稳定再比。
     try await Task.sleep(nanoseconds: 900_000_000)
     let listed = Set(overview.idsForProbe) == Set(strip.ids) && overview.columnsForProbe == strip.columns.count
-    let covers = abs(overview.frameForProbe.width - area.width) < 1 && abs(overview.frameForProbe.height - area.height) < 1
+    // 铺开的框对着“卷轴自己用的那块区域”比：概览是按 strip.area 摆的，契约是两者一致。
+    // 卷轴的区域是建卷轴那一刻量的 visibleFrame；Dock 在这中间动过（放大、显示/隐藏）时，它和此刻的
+    // visibleFrame 会差几点——那是取数时刻的不同，不是概览摆错，单独按 INFO 记，不算失败。
+    let request = cocoaFrame(fromAXPosition: strip.area.origin, size: strip.area.size)
+    let covers = abs(overview.frameForProbe.width - request.width) < 1 && abs(overview.frameForProbe.height - request.height) < 1
+    // 两边的坐标原点不一样（strip.area 是 AX 的左上原点，area 也是 AX；request 只是面板用的 Cocoa 框），
+    // 所以拿 AX 的那份比：高度和顶边，都是同一套坐标。
+    let dockDrift = abs(strip.area.height - area.height) >= 1 || abs(strip.area.origin.y - area.origin.y) >= 1
+    let overviewDetail = "listed=\(listed) (overview \(overview.columnsForProbe) 列 / \(Set(overview.idsForProbe).count) 窗, strip \(strip.columns.count) 列 / \(strip.ids.count) 窗)"
+      + " covers=\(covers) (overview \(overview.frameForProbe), strip.area \(request))"
     shoot(overview.frameForProbe, "strip-overview")
-    print("\(listed && covers ? "PASS" : "FAIL") strip-peek: the overview\(viaGesture ? " (opened by a spread on the title bar)" : "") shows all \(strip.columns.count) columns and \(strip.ids.count) windows over the screen")
+    print("\(listed && covers ? "PASS" : "FAIL") strip-peek: the overview\(viaGesture ? " (opened by a spread on the title bar)" : "") shows all \(strip.columns.count) columns and \(strip.ids.count) windows over the screen (\(overviewDetail))")
+    if dockDrift {
+      print("INFO strip-peek: 卷轴那份可见区域和现在的 visibleFrame 差了 \(strip.area.height - area.height) pt 高、\(strip.area.origin.y - area.origin.y) pt 顶边（建卷轴之后 Dock 动过；概览按前者摆）")
+    }
     print("INFO strip-peek: overview panel is key=\(overview.isKeyForProbe), frontmost still the fixture=\(NSWorkspace.shared.frontmostApplication?.processIdentifier == pid)")
     print("\(overview.isWatchingInterruptionsForProbe ? "PASS" : "FAIL") strip-peek: the overview also puts itself away on a space change, app switch or screen lock (system notifications)")
     let first = overview.selectedForProbe

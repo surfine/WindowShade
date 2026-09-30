@@ -522,6 +522,11 @@ WWDC25 356、WWDC23 10158 和 HIG 是其他讲者或文档给的补充来源。�
 ### 5.7 启动台（App/Launchpad*.swift）
 
 - **结构**：整屏面板（在菜单栏下面，层级 dock−1，屏幕圆角由硬件裁）、图标、文件夹、App 资料库。
+- **搜索在哪**：主屏幕和负一屏共用底部正中一枚玻璃胶囊（iPad 的排法），页码点压在它正上方；翻到 App 资料库时
+  同一枚移到顶端、放大成资料库搜索。放底部是几何约束：刘海从顶部中间往下长，摆在顶端的搜索框会被它盖住，
+  还会和悬停展开抢指针（`LaunchpadView.layoutPill`，钉在 `tests/LaunchpadViewTests.swift`）。
+- **负一屏**：照 iPad 排——左边日期/时钟与当月日历，右边实时活动与四个快捷方式；不带自己的搜索小组件
+  （`LaunchpadToday.swift`，出图看 `tests/run-launchpad-visual-fixture.sh`）。
 - **从刘海长出来 / 收回刘海**：遮罩路径改用 `notchPath(body:)`，从精确的刘海轮廓（带肩、硬件底角）长到整屏，拓扑固定，可以直接做路径插值（LaunchpadOpenWith.swift:119–162）。中间态不再四角全圆，顶边始终带肩；终点是整屏矩形，顶角交给硬件去裁。
 - **拖图标到“收进刘海”的高亮**：改成刘海长大后的轮廓，不再是四角 r18 的圆块（LaunchpadView.swift:1371–1410；LaunchpadController.swift:152–156；Core/LaunchpadModel.swift:149–150）。命中范围不变。
 - **令牌**：图标后的玻璃块圆角 = 图标圆角 + 间距（LaunchpadLibrary.swift:113，已同心）。弹簧和贝塞尔曲线改成令牌（§4.6）。
@@ -594,11 +599,15 @@ WWDC25 356、WWDC23 10158 和 HIG 是其他讲者或文档给的补充来源。�
   快捷键默认不占、可在设置 → 快捷键 → 排布当前窗口里自己录（`GlobalShortcut.tuckCurrent`），
   事件分派在 `EventTap`，动作是 `NotchController.tuckFocused()`（走和拖放、甩标题栏同一条 `tuck` 路径；
   对话框、浮动面板、全屏窗口收不进去时在刘海上说一声）。整批那条（⌃⌘H）行为不变。
+- **§6-5 动效令牌收拢**（2026-10-01）：§4.6 那张表收进 `Core/FlickMotion.swift` 的 `MotionSpring`
+  （App 里叫 `Motion.Spring`，别名），刘海、截图飞行、窗口滑行、提示浮窗的调用点改成引用令牌，
+  参数逐字不变；对照测试 `tests/MotionTokensTests.swift` + `tests/run-motion-tokens-tests.sh` 逐项比对。
+  令牌放在 Core 是因为只编译 `FlickMotion.swift` 的单测也要能用（放在 App 层曾让 9 个 runner 编不过）。
 
 还等视觉确认的：上面这几项的眼睛检查（要和改前的截屏对比）——2026-09-30 那次屏幕锁着，
 探针截图要等解锁后补；`--settings-shots` / `--notch-shape` / `--gesture` 都能出图。
 
-仍未做：§6-1 之外的几何（§6-2/3/4 要先做小样）、§6-5 动效令牌收拢、§6-7/8 玻璃审计、
+仍未做：§6-1 之外的几何（§6-2/3/4 要先做小样）、§6-7/8 玻璃审计、
 §6-13 欢迎窗口标题（要 Aaron 挑）、§6-16 App 图标（要 Aaron 认概念）。
 
 **1. 建 `DisplayShape`（地基，不改外观）**

@@ -1,17 +1,28 @@
 import Cocoa
 
-/// 负一屏只展示本机实时数据；不读取日历事件或模拟第三方小组件。
+/// 负一屏照 iPad 的排法：一列小组件——左边日期/时钟与当月日历，右边实时活动与四个快捷方式。
+/// 只展示本机实时数据；不读取日历事件，也不模拟第三方小组件。搜索不在这里，是 Home Screen 底部那枚胶囊。
 @MainActor
 final class LaunchpadTodayPage {
-    enum Action: Equatable { case spotlight, calendar, app(String) }
+    enum Action: Equatable { case spotlight, calendar, app(String), activity(String, NotchActivityAction), activityTool(NotchActivityAction) }
     struct Item { let frame: CGRect; let title: String; let action: Action }
     let root = CALayer()
     private(set) var items: [Item] = []
     private var scale: CGFloat = 2
+    let activities = LaunchpadActivityCards()
+    private var baseItems: [Item] = []
+    func updateActivities(_ values: [NotchActivity]) {
+        activities.update(values)
+        refreshActivityHits()
+    }
+    private func refreshActivityHits() {
+        items = baseItems + activities.hits.map { Item(frame: $0.frame, title: $0.title, action: .activity($0.id, $0.action)) }
+    }
 
     func layout(size: CGSize, top: CGFloat, bottom: CGFloat, date: Date = Date(),
                 running: [(path: String, name: String, icon: CGImage?)]) {
-        root.sublayers?.forEach { $0.removeFromSuperlayer() }
+        root.sublayers?.filter { $0 !== activities.root }.forEach { $0.removeFromSuperlayer() }
+        if activities.root.superlayer == nil { root.addSublayer(activities.root) }
         items = []
         scale = NSScreen.main?.backingScaleFactor ?? 2
         let width = min(820, max(280, size.width - 80))
@@ -23,8 +34,7 @@ final class LaunchpadTodayPage {
         let calendarHeight = min(310, available - clockHeight - 24)
         let clock = CGRect(x: left, y: y, width: column, height: clockHeight)
         let month = CGRect(x: left, y: clock.maxY + 24, width: column, height: calendarHeight)
-        let search = CGRect(x: clock.maxX + 24, y: y, width: column, height: 60)
-        plate(clock); plate(month); plate(search, radius: 22)
+        plate(clock); plate(month)
         text(date.formatted(.dateTime.month(.wide).day().weekday(.wide)),
              frame: clock.insetBy(dx: 24, dy: 16).withHeight(24), font: 16)
         text(date.formatted(date: .omitted, time: .shortened),
@@ -32,31 +42,24 @@ final class LaunchpadTodayPage {
              font: min(64, clockHeight * 0.40), weight: .light)
         drawMonth(date, frame: month)
         items.append(Item(frame: month, title: "打开日历", action: .calendar))
-        let symbol = NSImage(systemSymbolName: "magnifyingglass", accessibilityDescription: nil)?
-            .withSymbolConfiguration(.init(pointSize: 20, weight: .regular))
-        let icon = CALayer()
-        icon.contents = symbol?.cgImage(forProposedRect: nil, context: nil, hints: nil)
-        icon.frame = CGRect(x: search.minX + 20, y: search.midY - 11, width: 22, height: 22)
-        icon.contentsGravity = .resizeAspect; root.addSublayer(icon)
-        text("Spotlight", frame: CGRect(x: search.minX + 54, y: search.minY + 9, width: column - 70, height: 23), font: 18)
-        text("搜索 App、文件与更多内容", frame: CGRect(x: search.minX + 54, y: search.minY + 32, width: column - 70, height: 20), font: 12, alpha: 0.7)
-        items.append(Item(frame: search, title: "打开 Spotlight", action: .spotlight))
-        text("正在运行", frame: CGRect(x: search.minX + 4, y: search.maxY + 26, width: column - 8, height: 28), font: 20, weight: .semibold)
-        let listTop = search.maxY + 68
-        let count = min(6, running.count)
-        let pitch = min(66, max(40, (bottom - listTop) / CGFloat(max(1, count))))
-        for (index, app) in running.prefix(count).enumerated() {
-            let rect = CGRect(x: search.minX, y: listTop + CGFloat(index) * pitch, width: column, height: pitch)
-            let side = min(48, pitch - 8)
-            let icon = CALayer(); icon.contents = app.icon; icon.contentsGravity = .resizeAspect
-            icon.frame = CGRect(x: rect.minX, y: rect.midY - side / 2, width: side, height: side)
-            root.addSublayer(icon)
-            text(app.name, frame: CGRect(x: rect.minX + side + 14, y: rect.midY - 12, width: column - side - 20, height: 24), font: 15)
-            items.append(Item(frame: rect, title: app.name, action: .app(app.path)))
+        // 右边那一列：小组件标题在上，活动卡片铺开，四个快捷方式压在列底。
+        let rightX = clock.maxX + 24
+        let toolsHeight: CGFloat = 30
+        let toolRow = CGRect(x: rightX, y: month.maxY - toolsHeight, width: column, height: toolsHeight)
+        text("实时活动", frame: CGRect(x: rightX + 4, y: y, width: column - 8, height: 28), font: 20, weight: .semibold)
+        let tools: [(String, NotchActivityAction)] = [("音乐", .enableMusic), ("隔空投送", .airDrop), ("路线", .route), ("语音备忘录", .voiceMemos)]
+        for (index, tool) in tools.enumerated() {
+            let rect = CGRect(x: toolRow.minX + CGFloat(index) * column / 4, y: toolRow.minY, width: column / 4 - 4, height: toolsHeight)
+            plate(rect, radius: 15)
+            text(tool.0, frame: rect.insetBy(dx: 4, dy: 6), font: 12, alignment: .center)
+            items.append(Item(frame: rect, title: tool.0, action: .activityTool(tool.1)))
         }
-        if count == 0 {
-            text("没有正在运行的 App", frame: CGRect(x: search.minX + 4, y: listTop, width: column - 8, height: 24), font: 14, alpha: 0.65)
-        }
+        let activityTop = y + 36
+        activities.layout(CGRect(x: rightX, y: activityTop, width: column,
+                                 height: max(0, toolRow.minY - 22 - activityTop)), scale: scale)
+        baseItems = items
+        refreshActivityHits()
+        activities.root.removeFromSuperlayer(); root.addSublayer(activities.root)
     }
 
     func target(at point: CGPoint) -> Action? { items.first { $0.frame.contains(point) }?.action }

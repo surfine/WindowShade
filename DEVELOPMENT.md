@@ -95,6 +95,10 @@ cd prototype
 open WindowShade.app
 ```
 
+本地反复检查界面时，若 LLVM 优化耗时过长，可用 `./build.sh --local-parallel`。
+它保留 `-O -whole-module-optimization`，增加四个后端线程。
+默认构建和 `--stage` 发布构建保持原编译选项，性能验收须注明所用模式。
+
 只想验证编译、不签名也不改动 app bundle：
 
 ```sh

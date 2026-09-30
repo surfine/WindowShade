@@ -55,6 +55,7 @@ final class DuoController: NSObject {
     didSet { accelerometer.setStatusTicks(settingsWindow != nil) }
   }
   let windowEffects = WindowFoldEffects()
+  let lockOverlay = LockOverlayController()
   var desktopActive: Bool { desktop != nil || startTask != nil }
   var allowsAnimation: Bool {
     allowsAnimationIgnoringLock && EffectEnvironment.allowsDisplay
@@ -155,6 +156,7 @@ final class DuoController: NSObject {
       inputMonitors.append(monitor)
     }
     settingsChanged()
+    lockOverlay.start()
   }
 
   private func observe(
@@ -176,7 +178,9 @@ final class DuoController: NSObject {
     if persistsSettings { settings.save() }
     if !settings.desktopEnabled || !allowsAnimation { stopDesktop() }
     if !settings.windowsEnabled || !allowsAnimation { windowEffects.cancelAll() }
-    if !suspended && ((!pausedByUser && settings.desktopEnabled) || settingsWindow != nil) {
+    let lockedLid = lockOverlay.enabled && EffectEnvironment.lockState == .locked
+      && !EffectEnvironment.asleep && EffectEnvironment.displayAwake
+    if lockedLid || (!suspended && ((!pausedByUser && settings.desktopEnabled) || settingsWindow != nil)) {
       sensor.start()
     } else {
       sensor.stop()
@@ -192,6 +196,7 @@ final class DuoController: NSObject {
   }
 
   private func receive(_ reading: LidAngleSource.Reading) {
+    lockOverlay.receive(reading)
     angle = reading.angle
     lastReadingTime = reading.time
     settingsWindow?.refreshStatus()
@@ -344,14 +349,21 @@ final class DuoController: NSObject {
   private func suspend() {
     wlog("duo: suspend")
     suspended = true
+    lockOverlay.handoff(progress: spring.value, velocity: spring.velocity,
+                        preset: settings.preset, trigger: settings.triggerAngle)
     stopDesktop()
     windowEffects.cancelAll()
-    sensor.stop()
+    if lockOverlay.enabled && EffectEnvironment.lockState == .locked
+      && !EffectEnvironment.asleep && EffectEnvironment.displayAwake { sensor.start() }
+    else { sensor.stop() }
     accelerometer.stop()
     settingsWindow?.suspendPreview()
   }
   private func resume() {
-    guard !EffectSecurityBoundary.isLocked else { return }
+    guard !EffectSecurityBoundary.isLocked else {
+      if lockOverlay.enabled && !EffectEnvironment.asleep && EffectEnvironment.displayAwake { sensor.start() }
+      return
+    }
     suspended = false
     suppressed = false
     angle = nil
@@ -374,7 +386,9 @@ final class DuoController: NSObject {
     target = 0
   }
   func stop() {
+    lockOverlay.stop()
     suspend()
+    sensor.stop()
     for (center, observer) in observers { center.removeObserver(observer) }
     observers.removeAll()
     for observer in distributedObservers {

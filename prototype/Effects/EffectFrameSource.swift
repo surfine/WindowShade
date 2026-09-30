@@ -53,6 +53,9 @@ final class EffectFrameSource: NSObject, SCStreamOutput, SCStreamDelegate {
   private var colorSpace: EffectColorSpace = .sRGB
   private var revision: UInt64 = 0
   private var configurationTask: Task<Void, Never>?
+  private var startingTask: Task<Void, Error>?
+  private var teardownTask: Task<Void, Never>?
+  private var teardownError: Error?
   private var heartbeat: CFTimeInterval = 0
   var onStop: ((Error) -> Void)?
   var onContentUnavailable: (() -> Void)?
@@ -85,38 +88,46 @@ final class EffectFrameSource: NSObject, SCStreamOutput, SCStreamDelegate {
   func start(filter: SCContentFilter, size: CGSize, fps: Int = 60, color: EffectColorSpace = .sRGB)
     async throws
   {
-    stop()
+    let request = stop()
+    try await waitForStop()
+    guard lock.withLock({ slot.accepts(request) }), !Task.isCancelled else {
+      throw CancellationError()
+    }
     let candidate = SCStream(
       filter: filter, configuration: Self.configuration(size: size, fps: fps, color: color),
       delegate: self)
     try candidate.addStreamOutput(self, type: .screen, sampleHandlerQueue: queue)
-    let generation = lock.withLock {
+    let launch: (UInt64, Task<Void, Error>)? = lock.withLock {
+      guard slot.accepts(request) else { return nil }
       stream = candidate
       pixels = size
       colorSpace = color
       heartbeat = CACurrentMediaTime()
-      return slot.generation
+      let task = Task { try await candidate.startCapture() }
+      startingTask = task
+      return (slot.generation, task)
     }
+    guard let (generation, task) = launch else { throw CancellationError() }
     do {
-      try await candidate.startCapture()
+      try await task.value
       guard lock.withLock({ self.slot.accepts(generation) && self.stream === candidate }),
         !Task.isCancelled
       else {
-        try? await candidate.stopCapture()
         throw CancellationError()
       }
+      lock.withLock { if stream === candidate { startingTask = nil } }
     } catch {
-      lock.withLock {
-        if stream === candidate {
-          stream = nil
-          _ = slot.reset()
-        }
-      }
+      // Only tear down this request. A late failed start cannot stop its replacement.
+      lock.withLock { if stream === candidate { _ = stopLocked() } }
+      try await waitForStop()
       throw error
     }
   }
-  func stop() {
-    let old = lock.withLock { () -> SCStream? in
+  @discardableResult func stop() -> UInt64 {
+    lock.withLock { stopLocked() }
+  }
+  private func stopLocked() -> UInt64 {
+      let configuration = configurationTask
       configurationTask?.cancel()
       configurationTask = nil
       _ = slot.reset()
@@ -124,9 +135,34 @@ final class EffectFrameSource: NSObject, SCStreamOutput, SCStreamDelegate {
       heartbeat = 0
       let old = stream
       stream = nil
-      return old
-    }
-    if let old { Task { try? await old.stopCapture() } }
+      let start = startingTask
+      startingTask = nil
+      let previous = teardownTask
+      // Wait for startCapture to finish before stopCapture. Stopping a not-yet-running
+      // stream used to let an asynchronous start resurrect capture after suspension.
+      teardownTask = Task { [weak self] in
+        await previous?.value
+        _ = await start?.result
+        await configuration?.value
+        guard let old else { return }
+        do { try await old.stopCapture() }
+        catch {
+          self?.lock.withLock { self?.teardownError = error }
+          NSLog("WindowShade: capture teardown failed: %@", error.localizedDescription)
+        }
+        if let self { try? old.removeStreamOutput(self, type: .screen) }
+      }
+      return slot.generation
+  }
+  /// Completion means the native stop succeeded, not merely that our latest slot is empty.
+  func stopAndWait() async throws {
+    stop()
+    try await waitForStop()
+  }
+  private func waitForStop() async throws {
+    let task = lock.withLock { teardownTask }
+    await task?.value
+    if let error = lock.withLock({ teardownError }) { throw error }
   }
   func updateFPS(_ fps: Int) {
     let request = lock.withLock { () -> (SCStream, UInt64, UInt64, CGSize, EffectColorSpace)? in
@@ -237,8 +273,7 @@ final class EffectFrameSource: NSObject, SCStreamOutput, SCStreamDelegate {
   private func fail(_ candidate: SCStream, error: Error) {
     let token = lock.withLock { () -> UInt64? in
       guard stream === candidate else { return nil }
-      stream = nil
-      return slot.reset()
+      return stopLocked()
     }
     if let token {
       DispatchQueue.main.async { [weak self] in

@@ -143,6 +143,40 @@ struct FlickRelease: Equatable {
     }
 }
 
+/// 设计系统 §4.6 的弹簧令牌（§6-5 收拢）。第一轮只把现值收进来，参数逐字不变；
+/// 对照测试在 tests/MotionTokensTests.swift。dampingRatio = 1 − bounce。
+///
+/// 放在 Core 这一层（而不是 App/Motion.swift）：只编译 `Core/FlickMotion.swift` 的单测也要能用它，
+/// `Motion.Spring` 在 App/Motion.swift 里是这里的同名别名。
+struct MotionSpring: Equatable {
+    var response: Double
+    var dampingRatio: Double
+    var bounce: CGFloat
+
+    /// 没有动量的变化：指针停上来、收回、换状态。
+    static let calm = MotionSpring(response: 0.34, dampingRatio: 1, bounce: 0)
+    /// 尺寸变化；截图飞进刘海（终点是个口子，不回弹）。
+    static let settle = MotionSpring(response: 0.38, dampingRatio: 1, bounce: 0)
+    /// 展开一排。
+    static let expand = MotionSpring(response: 0.4, dampingRatio: 0.92, bounce: 0.08)
+    /// 有变化时提醒、教学。
+    static let bloom = MotionSpring(response: 0.42, dampingRatio: 0.84, bounce: 0.16)
+    /// 拖着窗口到刘海时的落点小岛（`catch` 是保留字，所以叫 catchDrop）。
+    static let catchDrop = MotionSpring(response: 0.4, dampingRatio: 0.8, bounce: 0.2)
+    /// 甩一下标题栏后的窗口滑行位置；画中画落角沿用同一手感。
+    static let glide = MotionSpring(response: 0.42, dampingRatio: 0.88, bounce: 0.12)
+    /// 截图从刘海飞出。
+    static let flyOut = MotionSpring(response: 0.38, dampingRatio: 0.9, bounce: 0.1)
+    /// 刘海下拉松手弹回。
+    static let pull = MotionSpring(response: 0.36, dampingRatio: 0.86, bounce: 0.14)
+    /// 只给小元素的确认：提示浮窗的终点图标。
+    static let pop = MotionSpring(response: 0.3, dampingRatio: 0.75, bounce: 0.25)
+    /// 减少动态效果时的岛。
+    static let reducedNotch = MotionSpring(response: 0.25, dampingRatio: 1, bounce: 0)
+    /// 减少动态效果时的窗口滑行。
+    static let reducedWindow = MotionSpring(response: 0.3, dampingRatio: 1, bounce: 0)
+}
+
 /// 一维阻尼弹簧，参数用 Apple 的两个说法：dampingRatio（1 = 不过冲，越小越弹）与 response（秒，越小越快）。
 /// 解析解：任何时刻都能直接算出位置和速度，所以动画可以按当前时间取值，卡了就跳帧，不会越走越慢。
 struct FlickSpring: Equatable {
@@ -150,11 +184,11 @@ struct FlickSpring: Equatable {
     var response: Double
 
     /// 位置沿用 PiP 挪动的手感，带一点落定时的回弹（甩的动作本身带着动量）。
-    static let position = FlickSpring(dampingRatio: 0.88, response: 0.42)
+    static let position = FlickSpring(dampingRatio: MotionSpring.glide.dampingRatio, response: MotionSpring.glide.response)
     /// 尺寸不带初速度，不回弹。
-    static let size = FlickSpring(dampingRatio: 1, response: 0.38)
+    static let size = FlickSpring(dampingRatio: MotionSpring.settle.dampingRatio, response: MotionSpring.settle.response)
     /// 打开了“减少动态效果”：不回弹，快一点落定（HIG：Motion，收紧弹簧、减少回弹）。
-    static let calm = FlickSpring(dampingRatio: 1, response: 0.3)
+    static let calm = FlickSpring(dampingRatio: MotionSpring.reducedWindow.dampingRatio, response: MotionSpring.reducedWindow.response)
 
     /// t 秒后离目标的位移与速度。x0：起点减目标；v0：初速度（同一坐标轴）。
     func state(displacement x0: Double, velocity v0: Double, at t: Double) -> (x: Double, v: Double) {
