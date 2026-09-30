@@ -9,6 +9,8 @@ extension AppDelegate {
                                          onVerified: ((Bool) -> Void)? = nil) -> AXUIElement? {
         duoController.windowEffects.cancelForSynchronousRestore(id)
         guard shaded[id] != nil else { return nil }
+        // 同 ShadeController.shade：展开开始就在后台把音频设备叫醒，音效不迟半秒。
+        prewarmUnfoldSound()
         markShadeLifecycle(id: id, .restoring, reason: "unshade")
         transitionOperationState(id: id, to: .restoring, reason: "unshade")
         guard let state = shaded.removeValue(forKey: id) else { return nil }

@@ -207,6 +207,17 @@ AX API 可在任意线程调用。各 App / 各窗口之间没有依赖的只读
 快速截图起步冷启动 409ms、其余四轮 211/209/157/189ms（中位数约 271 → 199ms，偶发的
 500ms 以上长尾消失）。
 
+**13. 音效不要在主线程上播。**
+音频设备闲下来之后，`NSSound.play()` 会在**调用线程上**同步把设备拉起来：2026-10-01 在 Mac17,4 /
+macOS 27.0 上实测第一次 496ms（同一进程随后立即再播是 0ms）。收起 / 展开的音效原来就在主线播
+（`AppDelegate.playShadeSound`），日志里的主线程卡顿采样有三次停在
+`CoreAudio AudioDeviceStart ← AQMEIO_HAL ← AudioToolbox`——每次折叠都可能冻半秒，而折叠动画自己
+才 300ms 左右。现在 `prototype/App/ShadeSoundPlayer.swift` 把播放固定到一条串行队列上、缓存实例，
+`ShadeController.shade` 与 `FoldExit.unshadeReturningElement` 在动作开始前用一次静音播放预热设备；
+两处 `NSSound.beep()` 同样走这条队列。`tests/run-shade-sound-tests.sh` 钉住「调用方立即返回、
+真正播放在后台队列、连续两次都不阻塞」。冷启动那一下仍要 ~500ms，但它花在后台队列上，并且会打
+一行 `perf: sound … play …ms on the sound queue (audio device cold start)`。
+
 ## 四、两次「凭直觉的优化」反而变慢
 
 都是同一个错误：**拿几何匹配当身份校验。**
