@@ -42,6 +42,11 @@ final class NotchController {
     private var tucked: [Tucked] = []
     /// 甩进来的窗口：卷帘条第一次装上时摆到这个位置（展开时按卷帘条的位置算落点）。
     private var parkOnInstall: [CGWindowID: NSPoint] = [:]
+
+    /// 系统外观开关（提高对比度、强调色…）变了：每块屏上的岛按当前状态重画一次。
+    func refreshAppearance() {
+        for panel in panels.values { panel.refreshAppearance() }
+    }
     /// 每块屏一个：带刘海的屏挂在刘海上，别的屏挂在顶部正中。
     private var panels: [CGDirectDisplayID: NotchPanel] = [:]
     private var screenObserver: NSObjectProtocol?
@@ -963,6 +968,15 @@ struct NotchTile {
 final class NotchPanel: NSPanel {
     enum DropState { case none, offered, armed, confirmed }
 
+    /// 岛和内容之间那条细边：提高对比度时按设计系统升到 0.5（§4.10、§6-11），其余时候保持 0.14。
+    /// nonisolated：IslandStyle 的默认值在非主线程隔离的上下文里求值。
+    nonisolated static var hairline: NSColor {
+        NSColor.white.withAlphaComponent(SystemAppearanceCapabilities.current.increaseContrast ? 0.5 : 0.14)
+    }
+
+    /// 系统外观开关（提高对比度、强调色…）变了：按当前状态重画一次，边线跟着换。
+    func refreshAppearance() { apply(animated: false) }
+
     /// 落点小岛上的五个去处（照 Windows 11 把窗口拖到屏幕顶上时出现的布局选择）：左边是左半屏、右边是右半屏，
     /// 正中是收进刘海（刘海正下方，原来的落点），挨着正中是铺满和魔法平铺。指针横着移过去就换，松手就去。
     enum DropChoice: Int, CaseIterable {
@@ -993,7 +1007,7 @@ final class NotchPanel: NSPanel {
         var fill: NSColor
         var border: CGFloat
         /// 边线颜色：落点点亮时是强调色；展开、提醒时是一圈淡淡的细边（HIG：深色底上用细边把岛和内容分开）。
-        var borderColor: NSColor = NSColor.white.withAlphaComponent(0.14)
+        var borderColor: NSColor = NotchPanel.hairline
     }
 
     /// 紧凑样式：最近收进去那扇窗的 App 图标、收着几扇、有没有变过的。
@@ -1389,7 +1403,7 @@ final class NotchPanel: NSPanel {
         if taken { onSwipeDown?(icon) }
     }
 
-    /// 越往下越拉不动（Apple 的橡皮筋，见 FluidMotion）。
+    /// 越往下越拉不动（橡皮筋，c = 0.55；公式见 FluidMotion）。
     static func rubberBand(_ x: CGFloat, limit d: CGFloat) -> CGFloat {
         CGFloat(FluidMotion.rubberBand(Double(x), limit: Double(d)))
     }
@@ -1458,7 +1472,7 @@ final class NotchPanel: NSPanel {
                                       fill: dropState == .armed ? NSColor(white: 0.12, alpha: 1) : .black,
                                       border: dropState == .armed ? 2 : 1,
                                       borderColor: dropState == .armed ? NSColor.controlAccentColor.withAlphaComponent(0.9)
-                                                                       : NSColor.white.withAlphaComponent(0.14)))
+                                                                       : NotchPanel.hairline))
         }
         if isExpanded {
             let count = max(tiles.count, 1)
@@ -1475,7 +1489,7 @@ final class NotchPanel: NSPanel {
             switch alert.tone {
             case .problem: border = NSColor.systemOrange.withAlphaComponent(0.75)
             case .tip: border = NSColor.controlAccentColor.withAlphaComponent(0.8)
-            default: border = NSColor.white.withAlphaComponent(0.14)
+            default: border = NotchPanel.hairline
             }
             return (NSRect(x: notch.midX - width / 2, y: notch.maxY - height, width: width, height: height),
                     IslandStyle(cornerRadius: 24, allCorners: false, fill: .black,
@@ -2438,7 +2452,8 @@ final class NotchCompactView: NSView {
         let dot: CGFloat = compact.changed ? 6 : 0
         var number = NSAttributedString()
         if compact.count > 0 {
-            let font = NSFont.systemFont(ofSize: min(13, slots.trailing.height - 10), weight: .semibold)
+            // 个数用等宽数字（§4.10）：1 和 11 一样宽，数字不会跳。
+            let font = NSFont.monospacedDigitSystemFont(ofSize: min(13, slots.trailing.height - 10), weight: .semibold)
             let rounded = font.fontDescriptor.withDesign(.rounded).flatMap { NSFont(descriptor: $0, size: font.pointSize) } ?? font
             number = NSAttributedString(string: "\(compact.count)", attributes: [
                 .font: rounded, .foregroundColor: NSColor.white.withAlphaComponent(0.92),
@@ -2498,7 +2513,7 @@ final class NotchAlertView: NSView {
             let title = NSAttributedString(string: alert.title, attributes: [
                 .font: NSFont.systemFont(ofSize: 13, weight: .semibold), .foregroundColor: NSColor.white])
             let small = NSAttributedString(string: alert.subtitle, attributes: [
-                .font: NSFont.systemFont(ofSize: 10.5), .foregroundColor: NSColor.white.withAlphaComponent(0.55)])
+                .font: NSFont.systemFont(ofSize: 11), .foregroundColor: NSColor.white.withAlphaComponent(0.6)])
             let titleBox = title.boundingRect(with: NSSize(width: width, height: 40), options: [.usesLineFragmentOrigin])
             let smallHeight = ceil(small.size().height)
             let block = ceil(titleBox.height) + 4 + smallHeight

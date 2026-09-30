@@ -1,5 +1,5 @@
 // 触控板手势的提示浮窗：照 macOS 27 音量/亮度浮窗的样子做（本机实测：约 290×63 的玻璃
-// 胶囊，上面一行标题，下面是两端带图标的进度条），但挂在手势所在的窗口旁边，而不是
+// 浮窗，固定圆角 24——不是两端全圆的胶囊；上面一行标题，下面是两端带图标的进度条），但挂在手势所在的窗口旁边，而不是
 // 菜单栏下——手势有明确的来源，提示就出现在来源附近。
 //
 // - 进度条跟手指 1:1 走，不做插值动画；走满时终点图标弹一下（系统同款弹簧）。
@@ -292,7 +292,7 @@ final class GestureHUDPanel: NSPanel {
     override var canBecomeMain: Bool { false }
 }
 
-/// 胶囊内容：标题、两端图标、进度条。材质跟随系统（玻璃 / 旧系统材质 / 减少透明度时不透明）。
+/// 浮窗内容：标题、两端图标、进度条。材质跟随系统（玻璃 / 旧系统材质 / 减少透明度时不透明）。
 final class GestureHUDView: NSView {
     static let cornerRadius: CGFloat = 24
     private static let margin: CGFloat = 16
@@ -445,9 +445,10 @@ final class GestureHUDView: NSView {
     private func popTarget() {
         guard !SystemAppearanceCapabilities.current.reduceMotion,
               let layer = (towardLeading ? leadingGlyph : trailingGlyph).layer else { return }
-        // 弹簧：response 0.3 s、阻尼比 0.6（Apple 把质量/刚度/阻尼换算成这两个量）。
+        // 弹簧：response 0.3 s、阻尼比 0.75（Apple 把质量/刚度/阻尼换算成这两个量；
+        // 0.75 比原来的 0.6 少一点过冲，和设计系统 §4.10 的 pop 一致）。
         let response: CGFloat = 0.3
-        let dampingRatio: CGFloat = 0.6
+        let dampingRatio: CGFloat = 0.75
         let spring = CASpringAnimation(keyPath: "transform.scale")
         spring.mass = 1
         spring.stiffness = pow(2 * .pi / response, 2)
@@ -535,7 +536,8 @@ private final class OpaqueHUDSurface: NSView {
     private func refresh() {
         wantsLayer = true
         layer?.backgroundColor = SystemAppearancePolicy.cgColor(.windowBackgroundColor, for: self)
-        layer?.borderColor = SystemAppearancePolicy.cgColor(.separatorColor, for: self)
+        // 边线用 labelColor，和窗口浏览面板一致（设计系统 §4.10、§6-11）。
+        layer?.borderColor = SystemAppearancePolicy.cgColor(.labelColor, for: self)
         layer?.borderWidth = SystemAppearanceCapabilities.current.increaseContrast ? 1 : 0.5
     }
 }

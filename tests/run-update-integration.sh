@@ -3,7 +3,10 @@
 #     cd prototype && ./build.sh --stage
 #
 # 全程在临时目录里：看护用 --store 指到自己的 store，装着的“那一版”也在临时目录里；
-# 不碰已装的 WindowShade、不碰 ~/Library/Application Support、不联网、不动用户设置。
+# 不碰已装的 WindowShade、不联网、不动用户设置。
+# 一处例外要说清楚：看护换回成功后会按路径把装好的那一版打开一次，而 App 没有 --store 参数，
+# 所以那一份读的是你自己的 ~/Library/Application Support/WindowShade——它只会做产品本来也会做的事
+# （没有任何更新记录时，清掉一份超过 7 天的过期备份），不会写别的。
 # 不跑 Sparkle（那一步要 Sparkle 发布包里的 sign_update / generate_appcast，见 docs/update.md）。
 #
 # 验三件事：
