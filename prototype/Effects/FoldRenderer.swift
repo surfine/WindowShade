@@ -104,6 +104,7 @@ final class FoldRenderer: NSObject, MTKViewDelegate {
     setColorSpace(next.colorSpace)
     frame = next
     imageTexture = nil
+    revision &+= 1
     dirty = true
   }
   func setImage(_ image: CGImage, color: EffectColorSpace? = nil) throws {
@@ -111,12 +112,14 @@ final class FoldRenderer: NSObject, MTKViewDelegate {
     setColorSpace(color ?? (image.colorSpace?.name == CGColorSpace.displayP3 ? .displayP3 : .sRGB))
     imageTexture = try texture(from: image, device: device)
     frame = nil
+    revision &+= 1
     dirty = true
   }
   func setBackground(_ image: CGImage) throws {
     guard !cleared, let device = view.device else { return }
     backgroundImage = image
     background = try texture(from: image, device: device)
+    revision &+= 1
     dirty = true
   }
   private func setColorSpace(_ value: EffectColorSpace) {
@@ -199,6 +202,7 @@ final class FoldRenderer: NSObject, MTKViewDelegate {
   func clear() {
     guard !cleared else { return }
     cleared = true
+    revision &+= 1
     _ = epoch.advance()
     frame = nil
     imageTexture = nil

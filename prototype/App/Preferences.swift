@@ -195,6 +195,8 @@ static func noticeTone(_ message: String) -> NotchPanel.Tone {
                                  isOn: NotchController.isEnabled, action: #selector(prefToggleNotch(_:))),
             makeUnifiedToggleRow(name: "有变化时提醒", subtitle: "收起的窗口标题变了，比如编译完成，刘海会短暂展开告诉你",
                                  isOn: NotchController.alertsEnabled, action: #selector(prefToggleNotchAlerts(_:))),
+            makeUnifiedToggleRow(name: "实时活动", subtitle: "在刘海和启动台负一屏查看音乐、耳机、隔空投送与路线",
+                                 isOn: NotchActivityController.isEnabled, action: #selector(prefToggleActivities(_:))),
             // 欢迎窗口第二步问的那一句，在这里能改；没答时一段都不选。
             makeUnifiedControlRow(name: "之前常用", subtitle: "卡住时，刘海按你原来的习惯提示 Mac 上怎么做",
                                   control: SwitcherOriginControl.make()),
@@ -506,6 +508,10 @@ static func noticeTone(_ message: String) -> NotchPanel.Tone {
         MainActor.assumeIsolated { notch.setEnabled(sender.state == .on) }
     }
 
+    @objc func prefToggleActivities(_ sender: NSSwitch) {
+        NotchActivityController.isEnabled = sender.state == .on
+        MainActor.assumeIsolated { notch.activities.configure() }
+    }
     @objc func prefToggleNotchAlerts(_ sender: NSSwitch) {
         MainActor.assumeIsolated { notch.setAlertsEnabled(sender.state == .on) }
     }
@@ -739,6 +745,25 @@ static func noticeTone(_ message: String) -> NotchPanel.Tone {
     }
 
     // MARK: 窗口浏览
+
+    @objc func openActivitiesAction() {
+        MainActor.assumeIsolated { launchpad.navigate(to: .today) }
+    }
+
+    @objc func verifyTouchIDAction() {
+        MainActor.assumeIsolated { notch.authentication.authenticate() }
+    }
+
+    @objc func toggleLockOverlayAction() {
+        duoController.lockOverlay.setEnabled(!duoController.lockOverlay.enabled)
+        duoController.settingsChanged()
+        scheduleMenuRebuild()
+    }
+
+    @objc func observeFaceAction(_ sender: NSMenuItem) {
+        guard let cameraID = sender.representedObject as? String else { return }
+        MainActor.assumeIsolated { notch.faceObservations.start(cameraID: cameraID) }
+    }
 
     @objc func openWindowBrowserPanel() {
         windowBrowserController?.openKeyboardPanel()

@@ -16,13 +16,7 @@ import Cocoa
 /// 状态很小，用一把锁护住，和 AppleSPUAccelerometer 里 published 的做法一致；
 /// 拿锁的时候绝不调用 WindowServer（IPC 放在锁外面）。
 enum EffectEnvironment {
-    enum LockState: Equatable {
-        case unknown
-        /// 明确没锁。
-        case unlocked
-        /// 明确锁着。
-        case locked
-    }
+    typealias LockState = SessionLockState
 
     private struct State {
         var lock: LockState = .unknown
@@ -55,12 +49,12 @@ enum EffectEnvironment {
     /// 重读权威状态。只在启动、状态转换和按需复查时调用，不在渲染 tick 里同步问。
     static func refresh() {
         // IPC 放在锁外面：不能一边拿着锁一边等 WindowServer。
-        let locked = EffectSecurityBoundary.isLocked
+        let locked = EffectSecurityBoundary.lockState
         let now = CACurrentMediaTime()
         write {
             $0.queries += 1
             $0.lastQuery = now
-            $0.lock = locked ? .locked : .unlocked
+            $0.lock = locked
             $0.generation &+= 1
         }
     }

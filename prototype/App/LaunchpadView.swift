@@ -9,6 +9,7 @@ final class LaunchpadView: NSView, NSTextFieldDelegate {
     var onClose: (() -> Void)?
     var onSpotlight: (() -> Void)?
     var onCalendar: (() -> Void)?
+    var onActivityAction: ((String?, NotchActivityAction) -> Void)?
     var notchDropRect: CGRect?
     var onLayoutChange: ((LaunchpadLayout) -> Void)?
     var art: ((LaunchpadApp) -> (CGImage?, CGImage?))?
@@ -503,11 +504,12 @@ final class LaunchpadView: NSView, NSTextFieldDelegate {
 
     func layoutPill(animated: Bool) {
         let frame: NSRect
-        // 换底板（平面 ⇄ 玻璃）会把搜索框挪到另一个父视图里（NSGlassEffectView.contentView 先摘下来再装上），
-        // 摘下来那一下键盘从搜索框掉到窗口上：从 App 资料库回到第一页后，Esc、方向键、回车、打字都没人接了
-        // （真机：资料库里 Esc 回到第一页，再按 Esc 关不掉启动台）。原来在搜索框里打字的，挪完还给它，光标位置不变。
+        // 资料库那枚搜索框比主屏幕的大一号（iPad 的资料库搜索也是这样），换尺寸时键盘别掉：
+        // 原来在搜索框里打字的，重新摆完还把第一响应者还给它，光标位置不变
+        // （真机：资料库里 Esc 回到第一页，再按 Esc 关不掉启动台，就是因为键盘落到了窗口上）。
         let caret = (field.currentEditor() as? NSTextView).flatMap { window?.firstResponder === $0 ? $0.selectedRange() : nil }
-        pill.flat = !pillAtTop
+        // iPad 的 Home Screen：搜索是底部正中一枚玻璃胶囊（大号那枚是资料库的）。
+        pill.flat = false
         if let caret, let window, window.firstResponder !== field.currentEditor() {
             window.makeFirstResponder(field)
             if let editor = field.currentEditor() as? NSTextView {
@@ -516,19 +518,23 @@ final class LaunchpadView: NSView, NSTextFieldDelegate {
                 editor.setSelectedRange(NSRange(location: location, length: min(caret.length, length - location)))
             }
         }
-        pill.radius = pillAtTop ? nil : 5
+        pill.radius = nil
         if pillAtTop {
             let width = min(480, bounds.width * 0.285)
             frame = NSRect(x: bounds.midX - width / 2, y: usableArea().minY + 24, width: width, height: 38)
         } else {
-            var width = min(320, max(180, bounds.width * 0.166))
+            // 底部正中，落在程序坞上方、页码点下面。放底部不只是照 iPad：刘海从顶部中间长出来时，
+            // 摆在顶端的搜索框正好被它盖住（还会跟悬停展开抢指针）。
+            var width = min(460, max(200, bounds.width * 0.26))
             if openingFiles != nil {
                 // 提示比“搜索”长：框跟着放宽，最多到屏幕的一半。
                 let text = (pillPrompt as NSString).size(withAttributes: [.font: NSFont.systemFont(ofSize: 13)]).width
                 width = min(bounds.width * 0.5, max(width, text + 48))
             }
-            let height = min(28, max(22, bounds.height * 0.025))
-            frame = NSRect(x: bounds.midX - width / 2, y: max(usableArea().minY + 10, bounds.height * 0.058), width: width, height: height)
+            let height: CGFloat = 36
+            let bottom = usableArea().maxY - 12
+            let x = bounds.midX - width / 2
+            frame = NSRect(x: x, y: bottom - height, width: width, height: height)
         }
         let icon: CGFloat = pillAtTop ? 16 : 12
         let textHeight: CGFloat = pillAtTop ? 19 : 17
@@ -552,7 +558,9 @@ final class LaunchpadView: NSView, NSTextFieldDelegate {
             }
         } else { pill.frame = frame; glyph.frame = glyphFrame; field.frame = fieldFrame }
         let width = CGFloat(pageCount) * 7 + CGFloat(max(0, pageCount - 1)) * 12
-        dots.frame = CGRect(x: bounds.midX - width / 2, y: min(bounds.height * 0.88, usableArea().maxY - 24), width: width, height: 7)
+        // 页码点跟着搜索胶囊走：主屏幕上压在胶囊正上方（iPad 的排法），资料库那页照旧贴底。
+        let dotsY = pillAtTop ? min(bounds.height * 0.88, usableArea().maxY - 24) : frame.minY - 18
+        dots.frame = CGRect(x: bounds.midX - width / 2, y: dotsY, width: width, height: 7)
         updateDots()
         showDots(true)
     }
@@ -1797,6 +1805,8 @@ final class LaunchpadView: NSView, NSTextFieldDelegate {
 
     func activateToday(_ action: LaunchpadTodayPage.Action) {
         switch action {
+        case .activity(let id, let action): onActivityAction?(id, action)
+        case .activityTool(let action): onActivityAction?(nil, action)
         case .spotlight: onSpotlight?()
         case .calendar: onCalendar?()
         case .app(let path):

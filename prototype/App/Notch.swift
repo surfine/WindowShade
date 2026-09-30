@@ -62,6 +62,13 @@ final class NotchController {
     private var syncTimer: Timer?
     /// 系统里最小化的窗口、隐藏的 App（见 NotchShelf.swift）。
     let shelf = NotchShelf()
+    let activities = NotchActivityController()
+    lazy var authentication = NotchAuthenticationController(owner: self)
+    lazy var faceObservations = NotchFaceObservationController(owner: self)
+
+    func authenticationPanel() -> NotchPanel? {
+        panel(containing: NSEvent.mouseLocation) ?? NSScreen.main.flatMap { panel(for: $0) } ?? notchPanel
+    }
 
     nonisolated static let enabledKey = "Notch.enabled"
     nonisolated static let alertsKey = "Notch.changeAlerts"
@@ -81,6 +88,11 @@ final class NotchController {
         screenObserver = NotificationCenter.default.addObserver(
             forName: NSApplication.didChangeScreenParametersNotification, object: nil, queue: .main) { [weak self] _ in
             MainActor.assumeIsolated { self?.install() }
+        }
+        activities.onChange = { [weak self] values, selected in
+            guard let self else { return }
+            for panel in self.panels.values { panel.setActivities(values, selected: selected) }
+            self.owner.launchpad.updateActivities(values, selected: selected)
         }
         watcher.onTitleSettled = { [weak self] id, title in self?.titleSettled(id, title: title) }
         menuRoom.onChange = { [weak self] in self?.refresh() }
@@ -148,6 +160,7 @@ final class NotchController {
 
     /// 启动、换屏时调用：每块屏挂一个，屏没了就拆掉。
     func install() {
+        activities.configure()
         var alive = Set<CGDirectDisplayID>()
         for screen in NSScreen.screens where Self.isEnabled {
             guard let id = Self.displayID(screen) else { continue }
@@ -159,6 +172,15 @@ final class NotchController {
             panel.onHoverChanged = { [weak self, weak panel] inside in
                 guard let panel else { return }
                 self?.hoverChanged(inside, panel: panel)
+            }
+            panel.setActivities(activities.store.visible, selected: activities.store.selectedID)
+            panel.onActivitySelect = { [weak self] id in self?.activities.select(id) }
+            panel.onActivityAction = { [weak self] action in self?.activities.perform(action) }
+            panel.canSwipeActivities = { [weak self] in self?.owner.launchpad.isShowing == false }
+            panel.onLongPress = { [weak self, weak panel] in
+                guard let self, let panel else { return }
+                if self.activities.store.visible.isEmpty { self.owner.launchpad.navigate(to: .today) }
+                else { panel.expand(with: self.tiles()) }
             }
             panel.onTileClicked = { [weak self] id, rect in self?.open(id, from: rect) }
             panel.onSwipeDown = { [weak self] rect in
@@ -194,6 +216,7 @@ final class NotchController {
             }
         }
         for (id, panel) in panels where !alive.contains(id) {
+            authentication.reconcile(panels: panels.filter { alive.contains($0.key) }.map(\.value))
             panel.orderOut(nil)
             panels.removeValue(forKey: id)
         }
@@ -491,14 +514,15 @@ final class NotchController {
     // MARK: - 刘海面板
 
     private func hoverChanged(_ inside: Bool, panel: NotchPanel) {
+        guard !panel.isAuthenticating else { return }
         forgetGone()
         // 隐形刘海里什么都没收着时，指针划过菜单栏正中不展开。
         if inside { refreshShelf() }
         // 正在播报或教手势：指针停上来是要点它，不展开一排。
         if inside, panel.isAnnouncing { return }
         // 第一次停到刘海上、里面什么都没有：教一下刘海能做什么。
-        if inside, tucked.isEmpty, !panel.isVirtual { teach(.notchHome, on: panel) }
-        if inside, !(panel.isVirtual && tucked.isEmpty && changed.isEmpty) {
+        if inside, tucked.isEmpty, activities.store.visible.isEmpty, !panel.isVirtual { teach(.notchHome, on: panel) }
+        if inside, !(panel.isVirtual && tucked.isEmpty && changed.isEmpty && activities.store.visible.isEmpty) {
             if !panel.isExpanded { wlog("notch: expand on hover at \(NSEvent.mouseLocation)") }
             panel.expand(with: tiles())
         } else if !inside {
@@ -959,7 +983,8 @@ final class NotchController {
         let flight = SnapshotFlight(image: image, from: from, to: to, level: level)
         flights.append(flight)
         // 飞进刘海不回弹（终点是个口子，没有东西可撞）；飞出来带一点落定的回弹。
-        flight.fly(to: to, velocity: velocity, response: 0.38, bounce: style == .out ? 0.1 : 0,
+        let flightSpring = style == .out ? Motion.Spring.flyOut : Motion.Spring.settle
+        flight.fly(to: to, velocity: velocity, response: flightSpring.response, bounce: flightSpring.bounce,
                    cornerRadius: style == .out ? 10 : 13, fadeOut: style == .intoVirtualNotch) { [weak self, weak flight] in
             flight?.remove(fade: style == .out)
             self?.flights.removeAll { $0 === flight }
@@ -1089,6 +1114,34 @@ final class NotchPanel: NSPanel {
     var onPress: ((Int, NSRect) -> Void)?
     /// 拖着文件停在刘海上（或者丢进刘海）。
     var onFiles: (([URL], NSRect) -> Void)?
+    var onActivitySelect: ((String) -> Void)?
+    var onActivityAction: ((NotchActivityAction) -> Void)?
+    var canSwipeActivities: (() -> Bool)?
+    var onLongPress: (() -> Void)?
+    private var activityItems: [NotchActivity] = []
+    private var activitySelection: String?
+    private var authenticationView: (NSView & NotchInteractiveContent)?
+    var isAuthenticating: Bool { authenticationView != nil }
+    private var activitiesShown: Bool { !isAuthenticating && !activityItems.isEmpty && dropState == .none && alertInfo == nil }
+    func setAuthentication(_ view: NotchAuthenticationView?, animated: Bool = true) {
+        setInteraction(view, animated: animated)
+    }
+    func setInteraction(_ view: (NSView & NotchInteractiveContent)?, animated: Bool = true) {
+        canvas.resetInteractions()
+        pressWork?.cancel(); pressWork = nil
+        hoverTimer?.invalidate(); hinting = false; pulled = 0
+        alertTimer?.invalidate(); alertInfo = nil; dropState = .none
+        authenticationView = view
+        canvas.setAuthentication(view)
+        updateVisibility(); apply(animated: animated)
+    }
+    func setActivities(_ items: [NotchActivity], selected: String?) {
+        guard activityItems != items || activitySelection != selected else { return }
+        let changedShape = activityItems.isEmpty != items.isEmpty
+        activityItems = Array(items.prefix(3)); activitySelection = selected
+        updateVisibility()
+        apply(animated: changedShape)
+    }
     private var pressWork: DispatchWorkItem?
     /// 现在有没有东西能往下拉出来（收进刘海的窗、收在屏幕边的侧拉）。
     var canPull: (() -> Bool)?
@@ -1149,6 +1202,15 @@ final class NotchPanel: NSPanel {
         canvas.onHover = { [weak self] inside in self?.hover(inside) }
         canvas.onTileClicked = { [weak self] id, rect in self?.onTileClicked?(id, rect) }
         canvas.onTileHover = { [weak self] id, inside in self?.onTileHover?(id, inside) }
+        canvas.onActivitySelect = { [weak self] id in self?.onActivitySelect?(id) }
+        canvas.onActivityAction = { [weak self] action in self?.onActivityAction?(action) }
+        canvas.canSwipeActivities = { [weak self] in self?.canSwipeActivities?() ?? false }
+        canvas.onLongPress = { [weak self] in self?.onLongPress?() }
+        canvas.onAuxiliaryClick = { [weak self] event in self?.showActivityMenu(event) }
+        canvas.onSmartExpand = { [weak self] in
+            guard let self else { return }
+            if self.isExpanded { self.collapse() } else { self.onLongPress?() }
+        }
         canvas.onPull = { [weak self] distance, touching, velocity in self?.pull(distance, touching: touching, velocity: velocity) }
         canvas.onNavigation = { [weak self] destination in
             if destination == .back { self?.collapse() }
@@ -1169,11 +1231,29 @@ final class NotchPanel: NSPanel {
         updateVisibility()
     }
 
-    override var canBecomeKey: Bool { false }
+    private func showActivityMenu(_ event: NSEvent) {
+        let menu = NSMenu()
+        let destinations: [(String, String)] = [("实时活动", "today"), ("音乐", "enableMusic"), ("隔空投送", "airDrop"), ("路线", "route"), ("语音备忘录", "voiceMemos")]
+        for (title, action) in destinations {
+            let item = NSMenuItem(title: title, action: #selector(activityMenuAction(_:)), keyEquivalent: "")
+            item.representedObject = action; item.target = self; menu.addItem(item)
+        }
+        NSMenu.popUpContextMenu(menu, with: event, for: canvas)
+    }
+    @objc private func activityMenuAction(_ item: NSMenuItem) {
+        guard let raw = item.representedObject as? String else { return }
+        if raw == "today" { onLongPress?(); return }
+        if let action = NotchActivityAction(rawValue: raw) { onActivityAction?(action) }
+    }
+
+    override var canBecomeKey: Bool { isAuthenticating }
 
     override func orderOut(_ sender: Any?) {
+        canvas.cancelHold()
+        let cancelAuthentication = authenticationView?.onCancel
         super.orderOut(sender)
         shoulderWindow?.orderOut(nil)
+        cancelAuthentication?()
     }
 
     /// 肩那层窗口跟着刘海和硬件形状走：盖住这块屏最上面一窄条；不知道形状、隐形刘海就不要它。
@@ -1240,7 +1320,7 @@ final class NotchPanel: NSPanel {
     }
 
     private func updateVisibility() {
-        let needed = !isVirtual || compact != nil || dropState != .none || isExpanded || alertInfo != nil
+        let needed = isAuthenticating || !isVirtual || compact != nil || dropState != .none || isExpanded || alertInfo != nil || !activityItems.isEmpty
         if needed, !isVisible {
             orderFrontRegardless()
             shoulderWindow?.orderFrontRegardless()
@@ -1312,7 +1392,7 @@ final class NotchPanel: NSPanel {
 
     /// 提醒：短暂展开说一句，2.6 秒后收回（指针停在上面时展开的是一排，不插提醒）。
     func alert(_ info: Alert, duration: TimeInterval = 2.6) {
-        guard !isExpanded, dropState == .none else { return }
+        guard !isAuthenticating, !isExpanded, dropState == .none else { return }
         alertInfo = info
         pointerWhenGrown = NSEvent.mouseLocation
         updateVisibility()
@@ -1328,6 +1408,7 @@ final class NotchPanel: NSPanel {
     }
 
     func expand(with tiles: [NotchTile]) {
+        guard !isAuthenticating else { return }
         alertTimer?.invalidate()
         alertInfo = nil
         isExpanded = true
@@ -1340,6 +1421,7 @@ final class NotchPanel: NSPanel {
     }
 
     func collapse() {
+        guard !isAuthenticating else { return }
         guard isExpanded else { return }
         isExpanded = false
         tiles = []
@@ -1348,6 +1430,7 @@ final class NotchPanel: NSPanel {
 
     /// 收下了：托盘换成对勾，触控板轻轻一下；0.55 秒后收回（刘海两边这时已经露出图标和个数）。
     func confirmDrop() {
+        guard !isAuthenticating else { return }
         dropState = .confirmed
         NSHapticFeedbackManager.defaultPerformer.perform(.levelChange, performanceTime: .now)
         updateVisibility()
@@ -1362,6 +1445,7 @@ final class NotchPanel: NSPanel {
     }
 
     func setDropState(_ state: DropState, choice: DropChoice? = nil) {
+        guard !isAuthenticating else { return }
         let nextChoice = choice ?? dropChoice
         guard state != dropState || (state == .armed && nextChoice != dropChoice) else { return }
         // 落点点亮、换到另一格的那一下，触控板轻轻“咔”一下（有压感触控板时）。
@@ -1374,6 +1458,7 @@ final class NotchPanel: NSPanel {
 
     /// 指针进出：进来停一小会儿才展开（从菜单栏划过去不算），出去立刻收。
     private func hover(_ inside: Bool) {
+        guard !isAuthenticating else { return }
         hoverTimer?.invalidate()
         enterDeferred = false
         if inside, let still = pointerWhenGrown, NSEvent.mouseLocation == still {
@@ -1403,6 +1488,7 @@ final class NotchPanel: NSPanel {
 
     /// 两指往下拉（见 NotchCanvasView.scrollWheel）：手指在上面时岛一比一跟着长，松手时按速度推算落点。
     private func pull(_ distance: CGFloat, touching: Bool, velocity: CGFloat) {
+        guard !isAuthenticating else { return }
         let pullable = canPull?() ?? false
         if touching {
             pulled = distance
@@ -1418,7 +1504,8 @@ final class NotchPanel: NSPanel {
         pulled = 0
         // 弹回去时接上手指的速度（往下还在走 = 背离终点，速度为负）。
         let speed = extra > 1 ? -Self.rubberBandSlope(distance, limit: pullable ? 84 : 18) * velocity / extra : 0
-        apply(animated: true, spring: NotchCanvasView.Spring(response: 0.36, bounce: Motion.reduced ? 0 : 0.14,
+        let pullSpring = Motion.reduced ? Motion.Spring.reducedNotch : Motion.Spring.pull
+        apply(animated: true, spring: NotchCanvasView.Spring(response: pullSpring.response, bounce: pullSpring.bounce,
                                                             initialVelocity: max(-30, min(30, speed))))
         if taken { onSwipeDown?(icon) }
     }
@@ -1449,7 +1536,7 @@ final class NotchPanel: NSPanel {
     /// 展开时外框圆角 28、四周边距 14，格子圆角 14（HIG：同心、边距一致）。
     private func target() -> Target {
         var (rect, style) = baseTarget()
-        let resting = !isExpanded && dropState == .none && alertInfo == nil
+        let resting = !isAuthenticating && !isExpanded && dropState == .none && alertInfo == nil
         if resting, pulled > 0 {
             let extra = Self.rubberBand(pulled, limit: (canPull?() ?? false) ? 84 : 18)
             rect.origin.y -= extra
@@ -1485,6 +1572,15 @@ final class NotchPanel: NSPanel {
     }
 
     private func baseTarget() -> (rect: NSRect, style: IslandStyle) {
+        if isAuthenticating {
+            let screenWidth = screen?.frame.width ?? 1000
+            let width = min(screenWidth - 44, max(notch.width, 344))
+            // Actual notch: content below the camera. Other displays: a detached, fully rounded capsule below the menu bar.
+            let height = isVirtual ? 68 : notch.height + 68
+            let top = isVirtual ? notch.minY - 8 : notch.maxY
+            return (NSRect(x: notch.midX - width / 2, y: top - height, width: width, height: height),
+                    IslandStyle(cornerRadius: isVirtual ? 34 : 24, allCorners: isVirtual, fill: .black, border: 0.5))
+        }
         if dropState != .none {
             let zone = dropZone
             let rect = NSRect(x: zone.minX, y: zone.minY, width: zone.width, height: notch.maxY - zone.minY)
@@ -1496,8 +1592,9 @@ final class NotchPanel: NSPanel {
         }
         if isExpanded {
             let count = max(tiles.count, 1)
-            let width = max(notch.width + 120, CGFloat(min(count, 8)) * 132 + 20)
-            let height = notch.height + (tiles.isEmpty ? 56 : 142)
+            let screenWidth = NSScreen.screens.first { $0.frame.contains(NSPoint(x: notch.midX, y: notch.midY)) }?.frame.width ?? 1000
+            let width = min(screenWidth - 44, max(activityItems.isEmpty ? notch.width + 120 : 420, CGFloat(min(count, 8)) * 132 + 20))
+            let height = notch.height + (activityItems.isEmpty ? (tiles.isEmpty ? 56 : 142) : (tiles.isEmpty ? 144 : 286))
             return (NSRect(x: notch.midX - width / 2, y: notch.maxY - height, width: width, height: height),
                     IslandStyle(cornerRadius: 28, allCorners: false, fill: .black, border: 1))
         }
@@ -1514,6 +1611,12 @@ final class NotchPanel: NSPanel {
             return (NSRect(x: notch.midX - width / 2, y: notch.maxY - height, width: width, height: height),
                     IslandStyle(cornerRadius: 24, allCorners: false, fill: .black,
                                 border: alert.tone == .problem || alert.tone == .tip ? 1.5 : 1, borderColor: border))
+        }
+        if !activityItems.isEmpty {
+            let width = max(notch.width, 240)
+            let height = notch.height + 32
+            return (NSRect(x: notch.midX - width / 2, y: notch.maxY - height, width: width, height: height),
+                    IslandStyle(cornerRadius: 18, allCorners: false, fill: .black, border: 0))
         }
         if compact != nil {
             switch compactShape {
@@ -1545,11 +1648,12 @@ final class NotchPanel: NSPanel {
 
     /// 这一下该用的弹簧：没有动量的（指针停上来、收回）不回弹；提醒、落点带一点弹性；减少动态效果时一律不回弹、快一点。
     private func spring() -> NotchCanvasView.Spring {
-        if Motion.reduced { return NotchCanvasView.Spring(response: 0.25, bounce: 0) }
-        if dropState != .none { return NotchCanvasView.Spring(response: 0.4, bounce: 0.2) }
-        if alertInfo != nil { return NotchCanvasView.Spring(response: 0.42, bounce: 0.16) }
-        if isExpanded { return NotchCanvasView.Spring(response: 0.4, bounce: 0.08) }
-        return NotchCanvasView.Spring(response: 0.34, bounce: 0)
+        if Motion.reduced { return NotchCanvasView.Spring(response: Motion.Spring.reducedNotch.response, bounce: Motion.Spring.reducedNotch.bounce) }
+        if isAuthenticating { return NotchCanvasView.Spring(response: 0.28, bounce: 0.02) }
+        if dropState != .none { return NotchCanvasView.Spring(response: Motion.Spring.catchDrop.response, bounce: Motion.Spring.catchDrop.bounce) }
+        if alertInfo != nil { return NotchCanvasView.Spring(response: Motion.Spring.bloom.response, bounce: Motion.Spring.bloom.bounce) }
+        if isExpanded { return NotchCanvasView.Spring(response: Motion.Spring.expand.response, bounce: Motion.Spring.expand.bounce) }
+        return NotchCanvasView.Spring(response: Motion.Spring.calm.response, bounce: Motion.Spring.calm.bounce)
     }
 
     /// roomOnly：只是量到的空位变了（内容、状态都没变）：肩因此长出、收掉时淡入淡出，不跟着弹簧长（S5）。
@@ -1562,8 +1666,8 @@ final class NotchPanel: NSPanel {
         let bare = !isVirtual && rect == notch && pulled == 0
         let resting = !isExpanded && dropState == .none && alertInfo == nil
         let shape = compactShape
-        let compactShown = resting && compact != nil && (shape == .sides || shape == .pill)
-        let chinShown = resting && compact != nil && shape == .chin
+        let compactShown = resting && activityItems.isEmpty && compact != nil && (shape == .sides || shape == .pill)
+        let chinShown = resting && activityItems.isEmpty && compact != nil && shape == .chin
         let extra = resting && pulled > 0 ? Self.rubberBand(pulled, limit: (canPull?() ?? false) ? 84 : 18) : 0
         let content = NotchCanvasView.Content(
             tiles: isExpanded ? tiles : [],
@@ -1575,7 +1679,9 @@ final class NotchPanel: NSPanel {
             alert: (!isExpanded && dropState == .none) ? alertInfo : nil,
             hint: hintText(), notchHeight: notch.height,
             pullIcon: extra > 0 ? compact?.icon : nil, pullExtra: extra, pullProgress: min(1, extra / 50),
-            drop: dropState, dropChoice: dropChoice)
+            drop: dropState, dropChoice: dropChoice,
+            activities: activitiesShown ? activityItems : [], activitySelection: activitySelection,
+            activitiesExpanded: isExpanded && activitiesShown)
         // 面板开到能装下“现在”和“终点”（四周多留一点给回弹），顶边贴着屏幕顶；岛在屏幕上原地不动。
         // 肩在另一层不接指针的窗口里，不占面板（S2）。
         let now = canvas.islandOnScreen(panelOrigin: frame.origin) ?? rect
@@ -1609,6 +1715,7 @@ final class NotchPanel: NSPanel {
             self.settledGeneration = generation
             self.updateVisibility()
         }
+        canvas.placeAuthentication(in: local)
     }
 
     /// 肩这一次怎么动（§5.1 S3、S5）。肩和硬件的肩重合、或者岛没画时，肩是看不出来的：
@@ -1632,7 +1739,7 @@ final class NotchPanel: NSPanel {
 
     /// 收进来一扇窗的那一下：岛鼓一下。
     func swallow() {
-        guard !Motion.reduced, isVisible else { return }
+        guard !isAuthenticating, !Motion.reduced, isVisible else { return }
         // 鼓出来的那一圈要有地方画：面板先四周放大一点（顶边仍贴着屏幕顶），鼓完再缩回。
         var room = frame.insetBy(dx: -12, dy: -10)
         room.size.height = notch.maxY - room.minY
@@ -1672,7 +1779,7 @@ final class NotchPanel: NSPanel {
         case .confirmed: return dropChoice == .tuck ? "收进刘海了" : dropChoice.title
         case .none:
             if pulled > 0, compact == nil { return "启动台" }
-            return isExpanded && tiles.isEmpty ? "点一下回主屏幕 · 左右滑换 App" : nil
+            return isExpanded && tiles.isEmpty && activityItems.isEmpty ? "点一下回主屏幕 · 左右滑换 App" : nil
         }
     }
 }
@@ -1704,10 +1811,14 @@ final class NotchCanvasView: NSView {
         var drop: NotchPanel.DropState = .none
         /// 落点小岛上指针停在哪一格。
         var dropChoice: NotchPanel.DropChoice = .tuck
+        var activities: [NotchActivity] = []
+        var activitySelection: String? = nil
+        var activitiesExpanded: Bool = false
 
         /// 是不是同一份内容（只是岛的大小、位置变了）：同一份就原地挪，不淡出淡入。
         func same(as other: Content) -> Bool {
             tiles.map(\.id) == other.tiles.map(\.id) && tiles.map(\.changed) == other.tiles.map(\.changed)
+                && activities.isEmpty == other.activities.isEmpty && activitiesExpanded == other.activitiesExpanded
                 && dots == other.dots && dotsChanged == other.dotsChanged
                 && (compact?.same(as: other.compact) ?? (other.compact == nil))
                 && alert?.id == other.alert?.id && alert?.title == other.alert?.title
@@ -1731,6 +1842,15 @@ final class NotchCanvasView: NSView {
     /// 两指在刘海上往下拉：拉了多少（点，往下为正）、手指是不是还在上面、此刻速度（点/秒）。
     var onPull: ((CGFloat, Bool, CGFloat) -> Void)?
     var onNavigation: ((LaunchpadController.Destination) -> Void)?
+    var onActivitySelect: ((String) -> Void)?
+    var onActivityAction: ((NotchActivityAction) -> Void)?
+    var canSwipeActivities: (() -> Bool)?
+    var onLongPress: (() -> Void)?
+    var onAuxiliaryClick: ((NSEvent) -> Void)?
+    var onSmartExpand: (() -> Void)?
+    private var holdTimer: Timer?
+    private var holdUsed = false
+    private var horizontalSamples: [(TimeInterval, CGFloat)] = []
     private var travel = CGPoint.zero
     private var horizontal: Bool?
     private var pinchAmount: CGFloat = 0
@@ -1741,6 +1861,17 @@ final class NotchCanvasView: NSView {
     private let clipHost = NSView()
     private let clip = CALayer()
     private var current: NotchContentView?
+    private var authenticationView: (NSView & NotchInteractiveContent)?
+    func setAuthentication(_ view: (NSView & NotchInteractiveContent)?) {
+        authenticationView?.removeFromSuperview()
+        authenticationView = view
+        if let view { clipHost.addSubview(view) }
+        current?.isHidden = view != nil
+    }
+    func placeAuthentication(in rect: NSRect) {
+        authenticationView?.frame = NSRect(x: rect.minX, y: rect.minY, width: rect.width, height: 68)
+        authenticationView?.layoutSubtreeIfNeeded()
+    }
     private var shown: Content?
     private var morphs = 0
     private var pull: (distance: CGFloat, samples: [(TimeInterval, CGFloat)])?
@@ -1894,9 +2025,13 @@ final class NotchCanvasView: NSView {
             }
         }
         let incoming = NotchContentView(content: content)
+        incoming.isHidden = authenticationView != nil
         incoming.onTileClicked = { [weak self] id, rect in self?.onTileClicked?(id, rect) }
+        incoming.activityView.onSelect = { [weak self] id in self?.onActivitySelect?(id) }
+        incoming.activityView.onAction = { [weak self] action in self?.onActivityAction?(action) }
         incoming.onTileHover = { [weak self] id, inside in self?.onTileHover?(id, inside) }
         clipHost.addSubview(incoming)
+        if let authenticationView { clipHost.addSubview(authenticationView, positioned: .above, relativeTo: incoming) }
         incoming.place(in: rect, content: content)
         if animated, !incoming.isEmpty {
             incoming.alphaValue = 0
@@ -1911,7 +2046,7 @@ final class NotchCanvasView: NSView {
 
     /// 落定：旧的一层都撤掉。
     func settle() {
-        for view in clipHost.subviews where view !== current { view.removeFromSuperview() }
+        for view in clipHost.subviews where view !== current && view !== authenticationView { view.removeFromSuperview() }
         current?.alphaValue = 1
     }
 
@@ -1957,30 +2092,103 @@ final class NotchCanvasView: NSView {
     }
 
     override func mouseEntered(with event: NSEvent) { onHover?(true) }
-    override func mouseExited(with event: NSEvent) { onHover?(false) }
+    override func mouseExited(with event: NSEvent) { holdTimer?.invalidate(); holdTimer = nil; if mouseDragAxis == nil { pressedAt = nil }; onHover?(false) }
     override func mouseMoved(with event: NSEvent) { onPointerMoved?() }
     override func acceptsFirstMouse(for event: NSEvent?) -> Bool { true }
 
     /// 点刘海（不在某一格上）：按下时岛就鼓一下（点几下鼓多大），松开才算；按下后拖开了不算。
     var onPress: ((Int) -> Void)?
     private var pressedAt: NSPoint?
+    private var mouseDragAxis: Bool?
+    private var mouseDragSamples: [(TimeInterval, CGPoint)] = []
+    private func mouseScreenPoint(_ event: NSEvent) -> NSPoint { window?.convertPoint(toScreen: event.locationInWindow) ?? event.locationInWindow }
     override func mouseDown(with event: NSEvent) {
-        pressedAt = event.locationInWindow
+        guard authenticationView == nil else { return }
+        holdTimer?.invalidate(); holdUsed = false
+        pressedAt = mouseScreenPoint(event); mouseDragAxis = nil; mouseDragSamples = []
+        if event.clickCount == 1 {
+            holdTimer = Timer.scheduledTimer(withTimeInterval: 0.5, repeats: false) { [weak self] _ in
+                MainActor.assumeIsolated {
+                    guard let self, self.pressedAt != nil else { return }
+                    self.holdUsed = true; self.holdTimer = nil
+                    self.onLongPress?()
+                }
+            }
+        }
         let clicks = CGFloat(min(event.clickCount, 3))
         pulse(width: 4 + 4 * clicks, height: 1 + clicks)
     }
     override func mouseUp(with event: NSEvent) {
+        holdTimer?.invalidate(); holdTimer = nil
         guard let down = pressedAt else { return }
         pressedAt = nil
-        let up = event.locationInWindow
+        guard !holdUsed else { holdUsed = false; return }
+        let up = mouseScreenPoint(event)
+        if let axis = mouseDragAxis {
+            mouseDragAxis = nil
+            let distance = CGPoint(x: up.x - down.x, y: down.y - up.y)
+            var velocity = CGPoint.zero
+            if let first = mouseDragSamples.first, let last = mouseDragSamples.last, last.0 - first.0 > 0.005 {
+                let dt = CGFloat(last.0 - first.0)
+                velocity = CGPoint(x: (last.1.x - first.1.x) / dt, y: (last.1.y - first.1.y) / dt)
+            }
+            if axis {
+                if canSwipeActivities?() == true && currentActivitySwipe(distance.x, touching: false, velocity: velocity.x) { return }
+                if abs(distance.x) > 60 { onNavigation?(distance.x > 0 ? .today : .library) }
+            } else if distance.y < -60 { onPull?(0, false, 0); onNavigation?(.back) }
+            else { onPull?(max(0, distance.y), false, velocity.y) }
+            return
+        }
         guard hypot(up.x - down.x, up.y - down.y) < 6 else { return }
+        if event.clickCount == 1, let current, let shown, !shown.activitiesExpanded, !shown.activities.isEmpty,
+           current.activityView.bounds.contains(current.activityView.convert(event.locationInWindow, from: nil)) {
+            onActivityAction?(.open)
+            return
+        }
         onPress?(max(1, event.clickCount))
+    }
+
+    override func mouseDragged(with event: NSEvent) {
+        guard let down = pressedAt, !holdUsed else { return }
+        let point = mouseScreenPoint(event)
+        let distance = CGPoint(x: point.x - down.x, y: down.y - point.y)
+        if max(abs(distance.x), abs(distance.y)) >= 6 { holdTimer?.invalidate(); holdTimer = nil }
+        if mouseDragAxis == nil, max(abs(distance.x), abs(distance.y)) >= 8 { mouseDragAxis = abs(distance.x) > abs(distance.y) }
+        guard let axis = mouseDragAxis else { return }
+        mouseDragSamples.append((event.timestamp, distance)); mouseDragSamples = Array(mouseDragSamples.suffix(6))
+        if axis { if canSwipeActivities?() == true { _ = currentActivitySwipe(distance.x, touching: true, velocity: 0) } }
+        else { onPull?(max(0, distance.y), true, 0) }
+    }
+    func cancelHold() { holdTimer?.invalidate(); holdTimer = nil; pressedAt = nil; mouseDragAxis = nil }
+    func resetInteractions() {
+        cancelHold(); fileDwell?.invalidate(); fileDwell = nil
+        _ = currentActivitySwipe(0, touching: false, velocity: 0, cancelled: true)
+        pull = nil; horizontal = nil; travel = .zero; horizontalSamples = []
+    }
+    override func cancelOperation(_ sender: Any?) {
+        if let authenticationView { authenticationView.onCancel?(); return }
+        cancelHold()
+        _ = currentActivitySwipe(0, touching: false, velocity: 0, cancelled: true)
+        onPull?(0, false, 0)
+    }
+    override func rightMouseDown(with event: NSEvent) { if authenticationView == nil { onAuxiliaryClick?(event) } }
+    override func smartMagnify(with event: NSEvent) { if authenticationView == nil { onSmartExpand?() } }
+    override func swipe(with event: NSEvent) {
+        guard authenticationView == nil else { return }
+        // Delivered by AppKit only when the system hasn't consumed the gesture.
+        guard abs(event.deltaX) > abs(event.deltaY), abs(event.deltaX) > 0 else { return }
+        if canSwipeActivities?() == true, let shown, shown.activities.count > 1 {
+            let index = shown.activities.firstIndex { $0.id == shown.activitySelection } ?? 0
+            let next = max(0, min(shown.activities.count - 1, index + (event.deltaX > 0 ? -1 : 1)))
+            onActivitySelect?(shown.activities[next].id)
+        } else { onNavigation?(event.deltaX > 0 ? .today : .library) }
     }
 
     /// 拖着文件停在刘海上 0.35 秒：主屏幕弹开给它挑 App（Finder 的弹簧文件夹）；没等弹开就松手也一样。
     var onFiles: (([URL]) -> Void)?
     private var fileDwell: Timer?
     override func draggingEntered(_ sender: NSDraggingInfo) -> NSDragOperation {
+        guard authenticationView == nil else { return [] }
         let files = LaunchpadView.fileURLs(sender)
         guard !files.isEmpty else { return [] }
         fileDwell?.invalidate()
@@ -1998,6 +2206,7 @@ final class NotchCanvasView: NSView {
         fileDwell = nil
     }
     override func performDragOperation(_ sender: NSDraggingInfo) -> Bool {
+        guard authenticationView == nil else { return false }
         let files = LaunchpadView.fileURLs(sender)
         guard !files.isEmpty else { return false }
         if fileDwell != nil {
@@ -2012,17 +2221,24 @@ final class NotchCanvasView: NSView {
     /// 拉得够远或者甩得够快就拿出最近那扇窗，不然弹回去（WWDC18：跟手、接上速度、按惯性推算落点）。
     /// 松手后的惯性滚动不算；横着划不算。
     override func scrollWheel(with event: NSEvent) {
+        guard authenticationView == nil else { return }
+        holdTimer?.invalidate(); holdTimer = nil; pressedAt = nil
         guard event.hasPreciseScrollingDeltas, event.momentumPhase == [] else { return }
         let fingerDown = event.isDirectionInvertedFromDevice ? event.scrollingDeltaY : -event.scrollingDeltaY
         let fingerRight = event.isDirectionInvertedFromDevice ? event.scrollingDeltaX : -event.scrollingDeltaX
         switch event.phase {
         case .began, .mayBegin:
-            travel = .zero; horizontal = nil
+            travel = .zero; horizontal = nil; horizontalSamples = [(event.timestamp, 0)]
             pull = (0, [(event.timestamp, 0)])
         case .changed:
             guard var current = pull else { return }
             travel.x += fingerRight; travel.y += fingerDown
             if horizontal == nil, max(abs(travel.x), abs(travel.y)) >= 8 { horizontal = abs(travel.x) > abs(travel.y) }
+            if horizontal == true {
+                horizontalSamples.append((event.timestamp, travel.x)); horizontalSamples = Array(horizontalSamples.suffix(6))
+                if canSwipeActivities?() == true { _ = currentActivitySwipe(travel.x, touching: true, velocity: 0) }
+                return
+            }
             guard horizontal == false else { return }
             current.distance = max(0, travel.y)
             current.samples.append((event.timestamp, current.distance))
@@ -2032,9 +2248,17 @@ final class NotchCanvasView: NSView {
             guard let current = pull else { return }
             pull = nil
             // 取消必须回弹，不能拿累计位移当作一次成功的松手。
-            if event.phase == .cancelled { onPull?(0, false, 0); return }
+            if event.phase == .cancelled {
+                _ = currentActivitySwipe(0, touching: false, velocity: 0, cancelled: true)
+                onPull?(0, false, 0); return
+            }
             if horizontal == true {
                 onPull?(0, false, 0)
+                var velocity: CGFloat = 0
+                if let first = horizontalSamples.first, let last = horizontalSamples.last, last.0 - first.0 > 0.005 {
+                    velocity = (last.1 - first.1) / CGFloat(last.0 - first.0)
+                }
+                if canSwipeActivities?() == true && currentActivitySwipe(travel.x, touching: false, velocity: velocity) { return }
                 if abs(travel.x) > 60 { onNavigation?(travel.x > 0 ? .today : .library) }
             } else if travel.y < -60 {
                 onPull?(0, false, 0); onNavigation?(.back)
@@ -2049,7 +2273,13 @@ final class NotchCanvasView: NSView {
         }
     }
 
+    private func currentActivitySwipe(_ distance: CGFloat, touching: Bool, velocity: CGFloat, cancelled: Bool = false) -> Bool {
+        current?.activityView.swipe(distance, touching: touching, velocity: velocity, cancelled: cancelled) ?? false
+    }
+
     override func magnify(with event: NSEvent) {
+        guard authenticationView == nil else { return }
+        holdTimer?.invalidate(); holdTimer = nil; pressedAt = nil
         if event.phase == .began { pinchAmount = 0 }
         pinchAmount += event.magnification
         if event.phase == .cancelled { pinchAmount = 0; return }
@@ -2196,7 +2426,8 @@ final class NotchShoulders: NSPanel {
             // 跟手的时候（岛没有弹簧、立刻到位）：位置跟着到；肩长出、收掉仍走一段不回弹的弹簧，不在一帧里跳没。
             if old != new, !snap {
                 animate(layer, "transform.scale", from: old - new, zero: 0,
-                        spring: NotchCanvasView.Spring(response: Motion.reduced ? 0.25 : 0.34, bounce: 0), key: key)
+                        spring: NotchCanvasView.Spring(response: Motion.reduced ? Motion.Spring.reducedNotch.response : Motion.Spring.calm.response,
+                                                       bounce: Motion.Spring.calm.bounce), key: key)
             }
             return
         }
@@ -2286,6 +2517,7 @@ final class NotchContentView: NSView {
     var inert = false
     var onTileClicked: ((CGWindowID, NSRect?) -> Void)?
     var onTileHover: ((CGWindowID, Bool) -> Void)?
+    let activityView = NotchActivityView(frame: .zero)
     private let hint = NSTextField(labelWithString: "")
     private let dots = NotchDotsView()
     private let compactView = NotchCompactView()
@@ -2302,7 +2534,7 @@ final class NotchContentView: NSView {
 
     init(content: NotchCanvasView.Content) {
         isEmpty = content.tiles.isEmpty && content.hint == nil && content.compact == nil && content.alert == nil
-            && content.dots == 0 && !content.dotsChanged && content.pullIcon == nil
+            && content.activities.isEmpty && content.dots == 0 && !content.dotsChanged && content.pullIcon == nil
         super.init(frame: .zero)
         wantsLayer = true
         hint.font = .systemFont(ofSize: 12, weight: .medium)
@@ -2314,6 +2546,7 @@ final class NotchContentView: NSView {
         addSubview(dots)
         addSubview(compactView)
         addSubview(alertView)
+        addSubview(activityView)
         pullView.imageScaling = .scaleProportionallyUpOrDown
         pullView.image = content.pullIcon
         addSubview(pullView)
@@ -2355,12 +2588,16 @@ final class NotchContentView: NSView {
         alertView.isHidden = content.alert == nil
         alertView.frame = NSRect(x: 0, y: 0, width: rect.width, height: max(0, rect.height - content.notchHeight))
         alertView.update(content.alert)
+        activityView.isHidden = content.activities.isEmpty
+        let activityHeight: CGFloat = content.activitiesExpanded ? 142 : 30
+        activityView.frame = NSRect(x: 0, y: max(0, rect.height - content.notchHeight - activityHeight), width: rect.width, height: activityHeight)
+        activityView.update(content.activities, selected: content.activitySelection, expanded: content.activitiesExpanded)
         // 外框圆角 28、四周边距 14；格子之间 8。
         let top = rect.height - content.notchHeight
         let total = CGFloat(tileViews.count) * 132 - 8
         for (index, tile) in tileViews.enumerated() {
             tile.frame = NSRect(x: (rect.width - total) / 2 + CGFloat(index) * 132, y: 14,
-                                width: 124, height: max(0, top - 22))
+                                width: 124, height: max(0, top - 22 - (content.activitiesExpanded ? 142 : 0)))
         }
         hint.stringValue = content.hint ?? ""
         hint.isHidden = content.hint == nil

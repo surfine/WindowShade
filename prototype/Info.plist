@@ -22,6 +22,10 @@
 	<string>14.0</string>
 	<key>LSUIElement</key>
 	<true/>
+	<key>NSAppleEventsUsageDescription</key>
+	<string>在刘海和启动台中显示并控制你正在播放的音乐。</string>
+	<key>NSCameraUsageDescription</key>
+	<string>检测你选择的眨眼和转头动作。</string>
 	<key>NSHumanReadableCopyright</key>
 	<string>© 2026 Aaron (surfine). MIT License.</string>
 	<key>SUAllowsAutomaticUpdates</key>

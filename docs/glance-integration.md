@@ -1,18 +1,23 @@
 # Glance 调研与整合方案
 
+> **当前方案见 [锁屏翻盖与多因素解锁](lock-unlock-plan.md)（2026-09-30 晚）。**
+> Aaron 已要求研究人脸、注视、主动活体、Apple Watch 与手机认证，原文“人脸解锁不做”作废。
+> 本文保留历史研究和 Pro 修订记录；旧方案中锁屏回放真实桌面、自动无认证解锁、
+> 私有符号存在即代表兼容的说法，不再作为实现依据。最新方案优先于本文历史段落。
+
 2026-09-30。调研对象：[jonnyoo/glance](https://github.com/jonnyoo/glance)（MIT，1.5k★，Swift/SwiftUI，
 macOS 15+，作者 Jonathan Zhou）。下面每一条结论都标了出处文件；Glance 的代码读的是本地克隆（`--depth 1`，main）。
 
 ## 结论
 
-**该整合的是两样，不是人脸解锁。**
+**当前整合目标包含锁屏动画、本人面容、注视和设备认证。** 下面两项是 Glance 已提供的技术入口；它们不能代替其余认证链的实现。
 
 1. **锁屏上可见**：Glance 用私有 SkyLight 的「空间」API 把自己的面板抬到真正的锁屏之上
    （`glance/NotchOverlay/NotchSkyLight.swift`）。这是我们做不到、而它能做到的那一件事。
 2. **锁屏 / 休眠 / 唤醒状态的可靠判断**：`glance/LockMonitor.swift` 的做法值得对齐——权威状态问
    `CGSSessionCopyCurrentDictionary`，通知只当触发，并且记下了两个坑（见下文）。
 
-**不该整合的是它的主打功能**：人脸解锁要存登录密码（`SecureCredentialManager`、`KeychainManager`），
+**凭据后端需要单独核定**：Glance 的人脸解锁会存登录密码（`SecureCredentialManager`、`KeychainManager`），
 识别后用 `CGEvent` 把密码打进锁屏（`glance/KeystrokeInjector.swift`）。那是安全类功能，和我们
 「窗口去哪儿了」的产品定位无关，而且一旦做错代价是用户的登录口令。
 

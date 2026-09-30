@@ -44,7 +44,17 @@ struct LaunchpadViewTests {
             navigation.settle(to: navigation.homePages)
             precondition(navigation.pillAtTop && !navigation.pill.flat)
             navigation.settle(to: 0)
-            precondition(!navigation.pillAtTop && navigation.pill.flat && navigation.field.superview === navigation.pill.content)
+            // iPad 的排法：主屏幕这枚搜索也是玻璃胶囊，位置在底部正中。
+            precondition(!navigation.pillAtTop && !navigation.pill.flat && navigation.field.superview === navigation.pill.content)
+            let usable = navigation.usableArea()
+            precondition(navigation.pill.frame.midY > navigation.bounds.midY,
+                         "the Home Screen search sits in the lower half, not across from the notch")
+            precondition(navigation.pill.frame.minY > 160,
+                         "the notch grows down from the top; the search must stay clear of it")
+            precondition(navigation.pill.frame.maxY <= usable.maxY - 8 && navigation.pill.frame.minY > usable.maxY - 60,
+                         "and right above the dock, inside the usable area")
+            precondition(navigation.dots.frame.midY < navigation.pill.frame.minY,
+                         "page dots sit above the search, like iPad")
             navigation.beginPlacing(apps[0], at: CGPoint(x: 200, y: 200), source: nil)
             precondition(navigation.dots.opacity == 0)
             navigation.cancelPlacing()
@@ -180,7 +190,7 @@ struct LaunchpadViewTests {
             precondition(focus.onLibrary && !focus.pill.flat && searchHasKeyboard(),
                          "turning to the App Library must keep the keyboard in the search field")
             escape()
-            precondition(focus.pageForProbe == 0 && focus.pill.flat && closes == 0,
+            precondition(focus.pageForProbe == 0 && !focus.pillAtTop && closes == 0,
                          "Esc in the App Library must come back to the first page")
             precondition(searchHasKeyboard(), "after Esc from the App Library the search field must still have the keyboard")
             escape()

@@ -156,6 +156,31 @@ extension AppDelegate {
     applyShortcut(.launchpad, to: launchpadItem)
     statusMenu.addItem(launchpadItem)
 
+    let activitiesItem = NSMenuItem(title: "实时活动", action: #selector(openActivitiesAction), keyEquivalent: "")
+    activitiesItem.isEnabled = NotchActivityController.isEnabled
+    statusMenu.addItem(activitiesItem)
+
+    let touchIDItem = NSMenuItem(title: "验证 Touch ID…", action: #selector(verifyTouchIDAction), keyEquivalent: "")
+    touchIDItem.isEnabled = MainActor.assumeIsolated { NotchController.isEnabled && !notch.authentication.isPresenting }
+    statusMenu.addItem(touchIDItem)
+
+    let lockOverlayItem = NSMenuItem(title: "锁屏开合效果", action: #selector(toggleLockOverlayAction), keyEquivalent: "")
+    lockOverlayItem.state = duoController.lockOverlay.enabled ? .on : .off
+    statusMenu.addItem(lockOverlayItem)
+
+    let faceItem = NSMenuItem(title: "检测面部动作", action: nil, keyEquivalent: "")
+    let cameras = NSMenu()
+    MainActor.assumeIsolated {
+      for camera in FaceObservationSource.devices() {
+        let item = NSMenuItem(title: camera.name, action: #selector(observeFaceAction(_:)), keyEquivalent: "")
+        item.representedObject = camera.id
+        cameras.addItem(item)
+      }
+    }
+    faceItem.submenu = cameras
+    faceItem.isEnabled = NotchController.isEnabled && !cameras.items.isEmpty
+    statusMenu.addItem(faceItem)
+
     let windowBrowser = NSMenuItem(
       title: "选择窗口…", action: #selector(openWindowBrowserPanel), keyEquivalent: "")
     applyShortcut(.windowBrowser, to: windowBrowser)

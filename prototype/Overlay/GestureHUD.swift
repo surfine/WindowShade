@@ -445,10 +445,9 @@ final class GestureHUDView: NSView {
     private func popTarget() {
         guard !SystemAppearanceCapabilities.current.reduceMotion,
               let layer = (towardLeading ? leadingGlyph : trailingGlyph).layer else { return }
-        // 弹簧：response 0.3 s、阻尼比 0.75（Apple 把质量/刚度/阻尼换算成这两个量；
-        // 0.75 比原来的 0.6 少一点过冲，和设计系统 §4.10 的 pop 一致）。
-        let response: CGFloat = 0.3
-        let dampingRatio: CGFloat = 0.75
+        // 弹簧：设计系统 §4.6 的 pop 令牌（response 0.3 s、阻尼比 0.75；Apple 把质量/刚度/阻尼换算成这两个量）。
+        let response = CGFloat(Motion.Spring.pop.response)
+        let dampingRatio = CGFloat(Motion.Spring.pop.dampingRatio)
         let spring = CASpringAnimation(keyPath: "transform.scale")
         spring.mass = 1
         spring.stiffness = pow(2 * .pi / response, 2)

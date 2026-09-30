@@ -163,6 +163,7 @@ final class TrackpadGestureController {
     /// 每个 App 最近移动一次窗口要多久（秒）：慢的下次直接用替身滑。
     private var moveCost: [pid_t: TimeInterval] = [:]
     /// 触控板上此刻接触着几根手指（只读监听的触摸流）。
+    private var titleHold: Timer?
     private var touchesNow = 0
     /// 拖动中每来一个事件就往后推：40 毫秒没有新的拖动事件，看看是不是在高速中停住了（手离开了）。
     private var stopCheck: DispatchWorkItem?
@@ -1189,6 +1190,11 @@ final class TrackpadGestureController {
                                  touches: touchesNow)
             drag.direct = touchesNow > 0 && touchesDirect
             flickDrag = drag
+            if event.clickCount == 1 {
+                titleHold = Timer.scheduledTimer(withTimeInterval: 0.55, repeats: false) { [weak self] _ in
+                    MainActor.assumeIsolated { self?.showTitleHold(drag, location: axPoint) }
+                }
+            }
             DispatchQueue.global(qos: .userInitiated).async { [weak self] in
                 let win = appWindows(pid: pid).first { windowID(of: $0) == id }
                 DispatchQueue.main.async {
@@ -1200,6 +1206,7 @@ final class TrackpadGestureController {
             }
         case .leftMouseDragged:
             guard let drag = flickDrag else { return }
+            if hypot(point.x - drag.down.x, point.y - drag.down.y) >= 6 { titleHold?.invalidate(); titleHold = nil }
             if drag.decided {
                 // 系统在等迟到的“松开”时，可能在原地补发拖动事件：指针没真动就不算接着拖。
                 guard let last = drag.samples.last, hypot(point.x - last.point.x, point.y - last.point.y) > 3 else { return }
@@ -1246,6 +1253,7 @@ final class TrackpadGestureController {
             stopCheck = check
             DispatchQueue.main.asyncAfter(deadline: .now() + 0.04, execute: check)
         case .leftMouseUp:
+            titleHold?.invalidate(); titleHold = nil
             stopCheck?.cancel()
             guard let drag = flickDrag else { return }
             flickDrag = nil
@@ -1291,8 +1299,41 @@ final class TrackpadGestureController {
 
     /// 丢下正在拖的标题栏、不再判它（又按下了一次、手势被取消、设置关掉）。已经判过的由判的那一步收尾。
     private func dropFlickDrag() {
+        titleHold?.invalidate(); titleHold = nil
         if let drag = flickDrag, !drag.decided { releaseGrab(drag) }
         flickDrag = nil
+    }
+
+    /// A hold offers the same existing window actions; it never executes on timeout.
+    private func showTitleHold(_ drag: FlickDrag, location: CGPoint) {
+        titleHold = nil
+        guard Self.isEnabled, session == nil, Self.conflictingApp() == nil, flickDrag === drag, !drag.decided,
+              CGEventSource.buttonState(.combinedSessionState, button: .left),
+              hypot(NSEvent.mouseLocation.x - drag.down.x, NSEvent.mouseLocation.y - drag.down.y) < 6 else { return }
+        resolveTitleBar(windowID: drag.id, location: location) { [weak self] hit in
+            guard let self, let hit, self.session == nil, self.flickDrag === drag, !drag.decided,
+                  CGEventSource.buttonState(.combinedSessionState, button: .left),
+                  hypot(NSEvent.mouseLocation.x - drag.down.x, NSEvent.mouseLocation.y - drag.down.y) < 6,
+                  let info = self.freshWindowInfo(drag.id), let current = cgWindowBounds(info),
+                  current == drag.frameAtDown else { return }
+            let choices: [(String, GestureAction)] = [("收起窗口", .shade), ("左半屏", .leftHalf), ("右半屏", .rightHalf), ("铺满屏幕", .fill), ("魔法平铺", .magicTile)]
+            let target = TitlebarHoldMenuTarget { [weak self] action in
+                guard let self, let info = self.freshWindowInfo(drag.id),
+                      info[kCGWindowOwnerPID as String] as? pid_t == drag.pid,
+                      windowID(of: hit.window) == drag.id else { return }
+                _ = self.run(GestureFrame(action: action, progress: 1), zone: .titleBar,
+                             id: drag.id, pid: drag.pid, element: hit.window, location: location, anchor: hit.anchor)
+            }
+            let menu = NSMenu()
+            for (title, action) in choices {
+                let item = NSMenuItem(title: title, action: #selector(TitlebarHoldMenuTarget.activateAction(_:)), keyEquivalent: "")
+                item.representedObject = action.rawValue; item.target = target; menu.addItem(item)
+            }
+            self.dropFlickDrag()
+            _ = menu.popUp(positioning: nil, at: drag.down, in: nil)
+            // NSMenuItem.target is weak; keep the callback alive through menu tracking.
+            withExtendedLifetime(target) {}
+        }
     }
 
     /// 拖着标题栏的指针 40 毫秒没动了：若是在高速中突然停住（甩的样子），就当手已经离开，
@@ -2084,4 +2125,14 @@ private func pinchTapCallback(proxy: CGEventTapProxy, type: CGEventType, event: 
         }
     }
     return Unmanaged.passUnretained(event)
+}
+
+@MainActor
+private final class TitlebarHoldMenuTarget: NSObject {
+    private let callback: (GestureAction) -> Void
+    init(_ callback: @escaping (GestureAction) -> Void) { self.callback = callback }
+    @objc func activateAction(_ item: NSMenuItem) {
+        guard let raw = item.representedObject as? String, let action = GestureAction(rawValue: raw) else { return }
+        callback(action)
+    }
 }
