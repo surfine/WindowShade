@@ -522,9 +522,9 @@ WWDC25 356、WWDC23 10158 和 HIG 是其他讲者或文档给的补充来源。�
 ### 5.7 启动台（App/Launchpad*.swift）
 
 - **结构**：整屏面板（在菜单栏下面，层级 dock−1，屏幕圆角由硬件裁）、图标、文件夹、App 资料库。
-- **搜索在哪**：主屏幕和负一屏共用底部正中一枚玻璃胶囊（iPad 的排法），页码点压在它正上方；翻到 App 资料库时
-  同一枚移到顶端、放大成资料库搜索。放底部是几何约束：刘海从顶部中间往下长，摆在顶端的搜索框会被它盖住，
-  还会和悬停展开抢指针（`LaunchpadView.layoutPill`，钉在 `tests/LaunchpadViewTests.swift`）。
+- **搜索在哪**：主屏幕和负一屏共用底部正中一枚玻璃胶囊（iPad 的排法，Aaron 2026-10-01 给的 iPadOS 27 参照图），
+  落在程序坞上面，页码点压在它上面；翻到 App 资料库时同一枚挪到顶端、放大成资料库搜索。
+  放底部也避开从顶部正中长出来的刘海（`LaunchpadView.layoutPill`，钉在 `tests/LaunchpadViewTests.swift`）。
 - **负一屏**：照 iPad 排——左边日期/时钟与当月日历，右边实时活动与四个快捷方式；不带自己的搜索小组件
   （`LaunchpadToday.swift`，出图看 `tests/run-launchpad-visual-fixture.sh`）。
 - **从刘海长出来 / 收回刘海**：遮罩路径改用 `notchPath(body:)`，从精确的刘海轮廓（带肩、硬件底角）长到整屏，拓扑固定，可以直接做路径插值（LaunchpadOpenWith.swift:119–162）。中间态不再四角全圆，顶边始终带肩；终点是整屏矩形，顶角交给硬件去裁。
