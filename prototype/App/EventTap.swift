@@ -195,6 +195,10 @@ extension AppDelegate {
             MainActor.assumeIsolated { _ = notch.tuckAll() }
             return
         }
+        if id == GlobalShortcut.tuckCurrent.hotKeyID {
+            MainActor.assumeIsolated { _ = notch.tuckFocused() }
+            return
+        }
         // 排布这一组：和手势同向，往上变小、往下变大。
         let steps: [UInt32: GestureDirection] = [
             GlobalShortcut.stepSmaller.hotKeyID: .up, GlobalShortcut.stepLarger.hotKeyID: .down,
