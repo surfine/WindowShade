@@ -77,17 +77,29 @@ extension AppDelegate {
 
     func playShadeSound(_ name: String) {
         guard soundEnabled else { return }
-        let sound = NSSound(named: NSSound.Name(name))
-        guard let sound else { return }
-        sound.play()
+        shadeSounds.play(name)
+    }
+
+    /// 折叠/展开动画开始前叫醒音频设备（见 ShadeSoundPlayer 的说明）：这样音效落在动作上，不迟半秒。
+    func prewarmShadeSound(_ name: String) {
+        guard soundEnabled else { return }
+        shadeSounds.prewarm(name)
     }
 
     func playFoldSound() {
         playShadeSound(soundName(defaultsKey: shadeFoldSoundDefaultsKey, fallback: shadeDefaultFoldSound))
     }
 
+    func prewarmFoldSound() {
+        prewarmShadeSound(soundName(defaultsKey: shadeFoldSoundDefaultsKey, fallback: shadeDefaultFoldSound))
+    }
+
     func playUnfoldSound() {
         playShadeSound(soundName(defaultsKey: shadeUnfoldSoundDefaultsKey, fallback: shadeDefaultUnfoldSound))
+    }
+
+    func prewarmUnfoldSound() {
+        prewarmShadeSound(soundName(defaultsKey: shadeUnfoldSoundDefaultsKey, fallback: shadeDefaultUnfoldSound))
     }
 
     func refreshPreferencesWindowIfOpen() {
@@ -1261,7 +1273,7 @@ final class HotKeyRecorderView: NSControl {
 
     /// 录到不能用的组合：提示音 + 标签里说明原因，1.8 秒后回到当前组合。
     private func reject(_ message: String) {
-        NSSound.beep()
+        shadeSounds.beep()
         showText(message)
         messageWork?.cancel()
         let work = DispatchWorkItem { [weak self] in

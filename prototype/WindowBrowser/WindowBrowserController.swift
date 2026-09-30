@@ -2021,7 +2021,7 @@ final class WindowBrowserController: NSObject {
         case .awaitingUser(let reason):
             owner?.quietNotice(reason, log: "window-browser: awaiting user \(reason)")
         case .busy:
-            NSSound.beep()
+            shadeSounds.beep()
         case .uncertain(let reason):
             owner?.quietNotice(reason, log: "window-browser: uncertain \(reason)")
         }

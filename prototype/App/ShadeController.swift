@@ -177,6 +177,9 @@ extension AppDelegate {
         }
         MainThreadActivity.push("fold: 折叠窗口")
         defer { MainThreadActivity.pop() }
+        // 音频设备闲下来后，第一次播放要在调用线程上花 250–500ms 把设备拉起来（见 ShadeSoundPlayer）。
+        // 折叠开始就先在后台预热，等真正播音效时它是热的。
+        prewarmFoldSound()
         let memoScope = beginAppWindowsMemo()
         defer { endAppWindowsMemo(memoScope) }
         let win = foldPhase("元素刷新") {
