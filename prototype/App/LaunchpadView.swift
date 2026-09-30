@@ -508,7 +508,7 @@ final class LaunchpadView: NSView, NSTextFieldDelegate {
         // 原来在搜索框里打字的，重新摆完还把第一响应者还给它，光标位置不变
         // （真机：资料库里 Esc 回到第一页，再按 Esc 关不掉启动台，就是因为键盘落到了窗口上）。
         let caret = (field.currentEditor() as? NSTextView).flatMap { window?.firstResponder === $0 ? $0.selectedRange() : nil }
-        // iPad 的 Home Screen：搜索是底部正中一枚玻璃胶囊（大号那枚是资料库的）。
+        // iPad 的 Home Screen：搜索是底部正中一枚玻璃胶囊，落在程序坞上方、图标区下面（大号那枚是资料库的）。
         pill.flat = false
         if let caret, let window, window.firstResponder !== field.currentEditor() {
             window.makeFirstResponder(field)
@@ -523,16 +523,16 @@ final class LaunchpadView: NSView, NSTextFieldDelegate {
             let width = min(480, bounds.width * 0.285)
             frame = NSRect(x: bounds.midX - width / 2, y: usableArea().minY + 24, width: width, height: 38)
         } else {
-            // 底部正中，落在程序坞上方、页码点下面。放底部不只是照 iPad：刘海从顶部中间长出来时，
-            // 摆在顶端的搜索框正好被它盖住（还会跟悬停展开抢指针）。
-            var width = min(460, max(200, bounds.width * 0.26))
+            // 底部正中、程序坞上面（Aaron 给的 iPadOS 27 参照图就是这个位置）。放这里也不会跟从顶部中间
+            // 长出来的刘海打架。页码点压在它上面。
+            var width = min(380, max(220, bounds.width * 0.22))
             if openingFiles != nil {
                 // 提示比“搜索”长：框跟着放宽，最多到屏幕的一半。
                 let text = (pillPrompt as NSString).size(withAttributes: [.font: NSFont.systemFont(ofSize: 13)]).width
                 width = min(bounds.width * 0.5, max(width, text + 48))
             }
-            let height: CGFloat = 36
-            let bottom = usableArea().maxY - 12
+            let height: CGFloat = 42
+            let bottom = usableArea().maxY - 10
             let x = bounds.midX - width / 2
             frame = NSRect(x: x, y: bottom - height, width: width, height: height)
         }
@@ -558,8 +558,8 @@ final class LaunchpadView: NSView, NSTextFieldDelegate {
             }
         } else { pill.frame = frame; glyph.frame = glyphFrame; field.frame = fieldFrame }
         let width = CGFloat(pageCount) * 7 + CGFloat(max(0, pageCount - 1)) * 12
-        // 页码点跟着搜索胶囊走：主屏幕上压在胶囊正上方（iPad 的排法），资料库那页照旧贴底。
-        let dotsY = pillAtTop ? min(bounds.height * 0.88, usableArea().maxY - 24) : frame.minY - 18
+        // 页码点压在搜索胶囊上面（iPhone / iPad 的排法），资料库那页照旧。
+        let dotsY = pillAtTop ? min(bounds.height * 0.88, usableArea().maxY - 24) : frame.minY - 16
         dots.frame = CGRect(x: bounds.midX - width / 2, y: dotsY, width: width, height: 7)
         updateDots()
         showDots(true)

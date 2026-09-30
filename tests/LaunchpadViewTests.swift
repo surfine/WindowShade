@@ -44,17 +44,19 @@ struct LaunchpadViewTests {
             navigation.settle(to: navigation.homePages)
             precondition(navigation.pillAtTop && !navigation.pill.flat)
             navigation.settle(to: 0)
-            // iPad 的排法：主屏幕这枚搜索也是玻璃胶囊，位置在底部正中。
+            // iPad 的排法：主屏幕这枚搜索是底部正中的玻璃胶囊（程序坞上面），页码点压在它上面。
             precondition(!navigation.pillAtTop && !navigation.pill.flat && navigation.field.superview === navigation.pill.content)
             let usable = navigation.usableArea()
+            precondition(abs(navigation.pill.frame.midX - navigation.bounds.midX) < 1,
+                         "and it is centred")
             precondition(navigation.pill.frame.midY > navigation.bounds.midY,
-                         "the Home Screen search sits in the lower half, not across from the notch")
+                         "the Home Screen search sits in the lower half, above the dock, like iPad")
             precondition(navigation.pill.frame.minY > 160,
                          "the notch grows down from the top; the search must stay clear of it")
-            precondition(navigation.pill.frame.maxY <= usable.maxY - 8 && navigation.pill.frame.minY > usable.maxY - 60,
-                         "and right above the dock, inside the usable area")
+            precondition(navigation.pill.frame.maxY <= usable.maxY - 6 && navigation.pill.frame.minY > usable.maxY - 62,
+                         "right above the dock, inside the usable area")
             precondition(navigation.dots.frame.midY < navigation.pill.frame.minY,
-                         "page dots sit above the search, like iPad")
+                         "page dots sit above the search")
             navigation.beginPlacing(apps[0], at: CGPoint(x: 200, y: 200), source: nil)
             precondition(navigation.dots.opacity == 0)
             navigation.cancelPlacing()
