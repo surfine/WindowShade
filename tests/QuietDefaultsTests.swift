@@ -54,6 +54,7 @@ struct QuietDefaultsTests {
     static func main() {
         installHistory()
         shortcuts()
+        identifiers()
         dockClickDefault()
         dockClickGuard()
         print(failures == 0 ? "all quiet-defaults tests passed" : "\(failures) quiet-defaults test(s) FAILED")
@@ -61,6 +62,21 @@ struct QuietDefaultsTests {
     }
 
     // MARK: 新装还是升级
+
+    /// 事件分派靠 hotKeyID（`EventTap` 按它找动作），编号重了会把快捷键指到别的动作上；
+    /// 名字空着则设置页和冲突提示里会是一片空白。两样都没有别的地方会挡。
+    static func identifiers() {
+        var seen: [UInt32: GlobalShortcut] = [:]
+        for shortcut in GlobalShortcut.allCases {
+            expect(!shortcut.title.isEmpty, "\(shortcut) 在设置里没有名字")
+            if let other = seen[shortcut.hotKeyID] {
+                expect(false, "\(shortcut) 和 \(other) 共用热键编号 \(shortcut.hotKeyID)")
+            }
+            seen[shortcut.hotKeyID] = shortcut
+        }
+        expect(seen.count == GlobalShortcut.allCases.count,
+               "每个动作有自己的热键编号（\(seen.count) / \(GlobalShortcut.allCases.count)）")
+    }
 
     static func installHistory() {
         withDefaults { defaults in
