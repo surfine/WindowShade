@@ -579,6 +579,24 @@ WWDC25 356、WWDC23 10158 和 HIG 是其他讲者或文档给的补充来源。�
 
 按影响从大到小排。每一条都写明帕累托守卫：做不到守卫，就不合入。
 
+### 落代码进度（2026-09-30，Codex）
+
+已经落到产品里的（都是文档里已定的值，不涉及要 Aaron 拍板的概念）：
+
+- **§6-10 改值清单的四项**：`pop` 阻尼比 0.6 → 0.75（`Overlay/GestureHUD.swift`）；
+  `notch.textSecondary` 0.55 → 0.6、`notch.detail` 10.5 → 11（教学提醒那一行，`Notch.swift`）；
+  `notch.count` 改成等宽数字（还是圆体，`NSFont.monospacedDigitSystemFont` + `.rounded`）。
+- **§6-11 增强对比度**：岛和内容之间那条细边的透明度跟随设置（关 0.14 / 开 0.5，`NotchPanel.hairline`），
+  并且刘海现在也监听系统外观变化（`AppDelegate.systemAppearanceOptionsChanged` → `notch.refreshAppearance()`），
+  开关一拨就重画；提示浮窗的边从 `separatorColor` 改成 `labelColor`，和窗口浏览一致。
+- **§6-17 注释更正**：GestureHUD 不再叫「胶囊」（写明固定圆角 24）；橡皮筋的 c = 0.55 不再写成「Apple 的」。
+
+还等视觉确认的：上面这几项的眼睛检查（要和改前的截屏对比）——2026-09-30 那次屏幕锁着，
+探针截图要等解锁后补；`--settings-shots` / `--notch-shape` / `--gesture` 都能出图。
+
+仍未做：§6-1 之外的几何（§6-2/3/4 要先做小样）、§6-5 动效令牌收拢、§6-7/8 玻璃审计、
+§6-13 欢迎窗口标题（要 Aaron 挑）、§6-16 App 图标（要 Aaron 认概念）、§6-19 单扇收进刘海的菜单项。
+
 **1. 建 `DisplayShape`（地基，不改外观）**
 - 改什么：来源顺序、`bezelPath` 守卫（问题 1 定之前只在探针里用）、机型表（按 px 存）、pxPerPt 换算；加 `hardware-fit` dump 探针；离线比较 CALayer 与 SwiftUI 的 `.continuous`。
 - 文件：新文件 `Window/DisplayShape.swift`、`Private/ScreenBezel.swift`；`Overlay/SystemAppearance.swift:189–209` 增加硬件令牌。

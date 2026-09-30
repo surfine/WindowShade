@@ -420,6 +420,8 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSMenuDelegate {
         }
         // 置顶预览会话与临时悬停缩略图。
         pinnedPreviewController.refreshSystemAppearance(capabilities: capabilities)
+        // 刘海岛的边线跟着“提高对比度”走（设计系统 §6-11）：按当前状态重画一次。
+        MainActor.assumeIsolated { notch.refreshAppearance() }
         (activePreview?.window.contentView as? SafariStylePreviewView)?
             .applySystemAppearance(capabilities: capabilities)
         (activePreview?.window.contentView as? PinnedLivePreviewView)?
