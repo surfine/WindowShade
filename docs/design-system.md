@@ -590,12 +590,16 @@ WWDC25 356、WWDC23 10158 和 HIG 是其他讲者或文档给的补充来源。�
   并且刘海现在也监听系统外观变化（`AppDelegate.systemAppearanceOptionsChanged` → `notch.refreshAppearance()`），
   开关一拨就重画；提示浮窗的边从 `separatorColor` 改成 `labelColor`，和窗口浏览一致。
 - **§6-17 注释更正**：GestureHUD 不再叫「胶囊」（写明固定圆角 24）；橡皮筋的 c = 0.55 不再写成「Apple 的」。
+- **§6-19 单扇「收进刘海」**：菜单栏新增一条只对当前窗口的「收进刘海」（`MenuBarController`），
+  快捷键默认不占、可在设置 → 快捷键 → 排布当前窗口里自己录（`GlobalShortcut.tuckCurrent`），
+  事件分派在 `EventTap`，动作是 `NotchController.tuckFocused()`（走和拖放、甩标题栏同一条 `tuck` 路径；
+  对话框、浮动面板、全屏窗口收不进去时在刘海上说一声）。整批那条（⌃⌘H）行为不变。
 
 还等视觉确认的：上面这几项的眼睛检查（要和改前的截屏对比）——2026-09-30 那次屏幕锁着，
 探针截图要等解锁后补；`--settings-shots` / `--notch-shape` / `--gesture` 都能出图。
 
 仍未做：§6-1 之外的几何（§6-2/3/4 要先做小样）、§6-5 动效令牌收拢、§6-7/8 玻璃审计、
-§6-13 欢迎窗口标题（要 Aaron 挑）、§6-16 App 图标（要 Aaron 认概念）、§6-19 单扇收进刘海的菜单项。
+§6-13 欢迎窗口标题（要 Aaron 挑）、§6-16 App 图标（要 Aaron 认概念）。
 
 **1. 建 `DisplayShape`（地基，不改外观）**
 - 改什么：来源顺序、`bezelPath` 守卫（问题 1 定之前只在探针里用）、机型表（按 px 存）、pxPerPt 换算；加 `hardware-fit` dump 探针；离线比较 CALayer 与 SwiftUI 的 `.continuous`。

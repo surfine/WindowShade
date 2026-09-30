@@ -34,6 +34,10 @@ extension AppDelegate {
         MainActor.assumeIsolated { _ = notch.tuckAll() }
     }
 
+    @objc func tuckCurrentAction() {
+        MainActor.assumeIsolated { _ = notch.tuckFocused() }
+    }
+
     @objc func nextDisplayAction() {
         MainActor.assumeIsolated { _ = gestures.moveToNextDisplay() }
     }
@@ -784,6 +788,7 @@ static func noticeTone(_ message: String) -> NotchPanel.Tone {
             recorderRow(.magicTile, subtitle: "把这块屏上的窗口一次排好：要地方多的占大头，聊天放侧拉；捏合整批撤回"),
             recorderRow(.nextDisplay, subtitle: "按原来的排法放到下一块屏幕上；上下摆的显示器也行"),
             recorderRow(.tuckAll, subtitle: "这块屏上的窗口全部收进刘海，再按一下放回来"),
+            recorderRow(.tuckCurrent, subtitle: "只把当前窗口收进刘海"),
         ])
         stack.addArrangedSubview(makePrefGroupLabel("排布当前窗口"))
         stack.addArrangedSubview(arrange)

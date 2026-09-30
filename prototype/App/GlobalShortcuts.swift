@@ -29,6 +29,8 @@ enum GlobalShortcut: String, CaseIterable {
     case nextDisplay
     /// 这块屏上的窗口全部收进刘海，再按一下放回来（和在刘海上往上推是同一件事）。
     case tuckAll
+    /// 只把当前窗口收进刘海（和甩一下标题栏、拖到落点小岛是同一件事）。默认不占快捷键。
+    case tuckCurrent
     /// Rectangle、Raycast 里有的那些排法：默认不占快捷键，在设置里录一个，或一键换成 Rectangle 的那一套。
     case topHalf
     case bottomHalf
@@ -71,6 +73,7 @@ enum GlobalShortcut: String, CaseIterable {
         case .magicTile: return 13
         case .nextDisplay: return 14
         case .tuckAll: return 15
+        case .tuckCurrent: return 35
         case .topHalf: return 16
         case .bottomHalf: return 17
         case .topLeft: return 18
@@ -111,6 +114,7 @@ enum GlobalShortcut: String, CaseIterable {
         case .magicTile: return "魔法平铺"
         case .nextDisplay: return "移到另一块屏幕"
         case .tuckAll: return "全部收进刘海"
+        case .tuckCurrent: return "收进刘海"
         case .topHalf: return "上半屏"
         case .bottomHalf: return "下半屏"
         case .topLeft: return "左上角"
@@ -153,6 +157,7 @@ enum GlobalShortcut: String, CaseIterable {
         case .magicTile: return history == .preview ? key(kVK_ANSI_M) : nil
         case .nextDisplay: return history == .preview ? key(kVK_ANSI_N) : nil
         case .tuckAll: return history == .preview ? key(kVK_ANSI_H) : nil
+        case .tuckCurrent: return nil
         case .windowBrowser, .suspendPins, .topHalf, .bottomHalf, .topLeft, .topRight, .bottomLeft, .bottomRight, .leftThird,
              .centerThird, .rightThird, .leftTwoThirds, .rightTwoThirds, .fill, .fullHeight, .larger, .smaller, .center,
              .undoPlacement, .previousDisplay, .pictureInPicture: return nil

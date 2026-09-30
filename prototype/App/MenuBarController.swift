@@ -142,6 +142,10 @@ extension AppDelegate {
       statusMenu.addItem(displayItem)
     }
     if NotchController.isEnabled {
+      let tuckCurrentItem = NSMenuItem(title: "收进刘海", action: #selector(tuckCurrentAction), keyEquivalent: "")
+      applyShortcut(.tuckCurrent, to: tuckCurrentItem)
+      tuckCurrentItem.isEnabled = AXIsProcessTrusted()
+      statusMenu.addItem(tuckCurrentItem)
       let tuckAllItem = NSMenuItem(title: "全部收进刘海", action: #selector(tuckAllAction), keyEquivalent: "")
       applyShortcut(.tuckAll, to: tuckAllItem)
       tuckAllItem.isEnabled = AXIsProcessTrusted()

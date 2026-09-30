@@ -626,6 +626,26 @@ final class NotchController {
     /// 最近一次整批收进来的窗口（往上推、菜单里的“全部收进刘海”）：往下拉时整批拿出来。
     private var lastBatch: [CGWindowID] = []
 
+    /// 只把当前窗口收进刘海（菜单项「收进刘海」、或设置里自己录的快捷键，见设计系统 §6-19）。
+    /// 找不到焦点窗口、它已经收着、或者它不是能收的窗口时什么都不做，返回 false。
+    @discardableResult
+    func tuckFocused() -> Bool {
+        guard Self.isEnabled, isAvailable, AXIsProcessTrusted() else { return false }
+        guard let focused = focusedWindow(), let id = windowID(of: focused) else { return false }
+        guard !isTucked(id), owner.shaded[id] == nil, !owner.slideOver.isSlideOver(id) else { return false }
+        guard let pos = axPosition(focused), let size = axSize(focused),
+              let screen = screenForAXWindow(pos: pos, size: size) ?? NSScreen.main else { return false }
+        let windows = owner.gestures.arrangeableWindows(on: screen, focused: id)
+        guard let match = windows.first(where: { $0.window.id == id }) else {
+            announce("这个窗口收不进去", tone: .problem)
+            return false
+        }
+        tuck(match.element, id: match.window.id, pid: match.window.pid,
+             landed: match.window.frame, home: match.window.frame, velocity: .zero)
+        coachUsed(.notchHome)
+        return true
+    }
+
     /// 这块屏上的窗口全部收进刘海（Wins 的“隐藏全部窗口”；我们收进刘海，原处的位置记着）。
     /// 已经收进来一批、还没拿出来时，再做一次就是整批拿出来。返回收进去几扇（拿出来返回 0）。
     @discardableResult
