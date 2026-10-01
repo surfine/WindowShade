@@ -38,6 +38,14 @@ final class LidAngleSource {
   private var hingeGate = HingeMoveGate()
   /// 上次真正生效并打过日志的间隔，避免状态没变还反复写日志。
   private var loggedInterval: Double?
+  /// 盖角设备其实会**主动推送** input report（2026-10-01 用 tools/lid-report-probe 实测：
+  /// 静止时也 ~10Hz、3 字节、report id 1 = 整度，和 feature 读同格式，读数一致）。
+  /// 所以主路径改成「订阅推送」：一次 feature 读 0.914ms，原来静止 4Hz 就是常驻 0.37% 单核。
+  /// 推送健康时只留一条 1Hz 看门狗（不读 HID，只检查推送有没有断），断了才退回轮询。
+  private var lastPushAt: CFTimeInterval = 0
+  private var connection: UInt64 = 0
+  private static let pushStale: CFTimeInterval = 3
+  private static let watchdogInterval: CFTimeInterval = 1
   /// 最近一次请求的 engaged，受 lock 保护。主线程每份读数都会调 setEngaged，
   /// 值没变就不再往 queue 上排一个空转的任务（静置时每秒省 12 次线程唤醒）。
   private var requestedEngaged = false
@@ -88,12 +96,25 @@ final class LidAngleSource {
 
   /// 按当前状态重排定时器；间隔真的变了才写日志（`lid: poll 4.0Hz (still)` 就是省下来的那 ~0.8% CPU）。
   private func applyIntervalIfChanged() {
-    let interval = Self.interval(engaged: engaged, moving: effectiveMoving())
+    let interval = currentInterval()
     timer?.schedule(deadline: .now(), repeating: interval, leeway: Self.leeway(engaged: engaged))
     guard loggedInterval != interval else { return }
     loggedInterval = interval
-    let reason = engaged ? "folding" : (effectiveMoving() ? "moving" : "still")
+    let reason: String
+    if engaged { reason = "folding" }
+    else if pushIsFresh() { reason = "push" }
+    else { reason = effectiveMoving() ? "moving" : "still" }
     wlog(String(format: "lid: poll %.1fHz (%@)", 1 / interval, reason))
+  }
+
+  /// 推送还新鲜吗（最近 pushStale 秒内收到过）。
+  private func pushIsFresh() -> Bool {
+    lastPushAt > 0 && CACurrentMediaTime() - lastPushAt < Self.pushStale
+  }
+
+  /// 当前该跑的定时器间隔：合盖 60Hz；推送健康时只留 1Hz 看门狗；推送断了才退回 4/12Hz 轮询。
+  private func currentInterval() -> Double {
+    LidPollInterval.seconds(engaged: engaged, moving: effectiveMoving(), pushFresh: pushIsFresh())
   }
   // 合盖途中 60Hz 且几乎不给余量，动画才跟手；静止时 12Hz 只用来发现「开始合盖」，
   // 放宽到 20ms 余量让系统把这次唤醒和别的定时器合并，常驻开销更低。
@@ -112,6 +133,16 @@ final class LidAngleSource {
     self.manager = manager
     IOHIDManagerSetDeviceMatching(
       manager, [kIOHIDPrimaryUsagePageKey: 0x20, kIOHIDPrimaryUsageKey: 0x8A] as CFDictionary)
+    // 先挂推送回调再开：驱动推上来的报告几乎不花钱，主路径就靠它。
+    IOHIDManagerSetDispatchQueue(manager, queue)
+    IOHIDManagerRegisterInputReportCallback(
+      manager,
+      { context, _, _, _, _, report, length in
+        guard let context else { return }
+        let source = Unmanaged<LidAngleSource>.fromOpaque(context).takeUnretainedValue()
+        source.receive(report, length: length)
+      },
+      Unmanaged.passUnretained(self).toOpaque())
     if IOHIDManagerOpen(manager, 0) == kIOReturnSuccess,
       let devices = IOHIDManagerCopyDevices(manager) as? Set<IOHIDDevice>
     {
@@ -129,6 +160,9 @@ final class LidAngleSource {
       reconnect(token)
       return
     }
+    connection = token
+    lastPushAt = 0
+    IOHIDManagerActivate(manager)
     failures = 0
     deliverStatus(.connected(report), token)
     let timer = DispatchSource.makeTimerSource(queue: queue)
@@ -150,6 +184,8 @@ final class LidAngleSource {
   }
   private func poll(_ token: UInt64) {
     guard current(token) else { return }
+    // 推送健康、又没在合盖：这一拍只当看门狗，不读 HID（一次 0.914ms）。
+    if !engaged, pushIsFresh() { return }
     let started = CACurrentMediaTime()
     guard let device, let angle = read(device, report) else {
       failures += 1
@@ -164,9 +200,26 @@ final class LidAngleSource {
     }
     failures = 0
     if hingeGate.feed(angle, at: CACurrentMediaTime()) { applyIntervalIfChanged() }
-    let reading = Reading(
-      angle: angle, time: CACurrentMediaTime(),
-      readMilliseconds: (CACurrentMediaTime() - started) * 1000)
+    deliver(angle, token: token, startedAt: started)
+  }
+
+  /// 推送来的报告（在 queue 上）。格式与 feature 读一样：字节 0 是报告号。
+  private func receive(_ report: UnsafeMutablePointer<UInt8>, length: CFIndex) {
+    guard current(connection), length > 0, length <= 32 else { return }
+    let bytes = Array(UnsafeBufferPointer(start: report, count: length))
+    let angle = self.report.decode(bytes)
+      ?? (self.report == .precise ? LidReport.whole.decode(bytes) : LidReport.precise.decode(bytes))
+    guard let angle else { return }
+    let wasFresh = pushIsFresh()
+    lastPushAt = CACurrentMediaTime()
+    if hingeGate.feed(angle, at: lastPushAt) || !wasFresh { applyIntervalIfChanged() }
+    deliver(angle, token: connection, startedAt: lastPushAt)
+  }
+
+  /// 交一份读数给主线程（轮询和推送两条路共用）。
+  private func deliver(_ angle: Double, token: UInt64, startedAt: CFAbsoluteTime) {
+    let reading = Reading(angle: angle, time: CACurrentMediaTime(),
+                          readMilliseconds: (CACurrentMediaTime() - startedAt) * 1000)
     DispatchQueue.main.async { [weak self] in
       guard let self, current(token) else { return }
       onReading?(reading)
@@ -188,6 +241,8 @@ final class LidAngleSource {
     timer = nil
     hingeGate.reset()
     loggedInterval = nil
+    lastPushAt = 0
+    connection = 0
     if let device { IOHIDDeviceClose(device, 0) }
     device = nil
     if let manager { IOHIDManagerClose(manager, 0) }

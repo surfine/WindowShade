@@ -49,6 +49,18 @@ struct MotionActivityTests {
         expect(LidPollInterval.seconds(engaged: false, moving: false) > LidPollInterval.seconds(engaged: false, moving: true),
                "the still rate is slower than the moving rate")
 
+        // 5b. 有推送时：合盖照旧 60Hz，其余只留 1Hz 看门狗；推送断了才用上面的兜底。
+        expect(abs(LidPollInterval.seconds(engaged: true, moving: true, pushFresh: true) - 1.0 / 60) < 1e-9,
+               "with a fresh push stream the folding rate is still 60Hz")
+        expect(abs(LidPollInterval.seconds(engaged: false, moving: false, pushFresh: true) - 1) < 1e-9,
+               "and when idle with a fresh push stream only a 1Hz watchdog is left")
+        expect(abs(LidPollInterval.seconds(engaged: false, moving: true, pushFresh: true) - 1) < 1e-9,
+               "moving does not raise the rate while the push stream is healthy")
+        expect(abs(LidPollInterval.seconds(engaged: false, moving: false, pushFresh: false) - 1.0 / 4) < 1e-9,
+               "a stalled push stream falls back to the 4Hz poll")
+        expect(abs(LidPollInterval.seconds(engaged: false, moving: true, pushFresh: false) - 1.0 / 12) < 1e-9,
+               "a stalled push stream while moving falls back to 12Hz")
+
         // 6. 自愈：慢慢合盖（底座几乎不动、加速度计看不出来）时，铰链自己看到角度变化就把采样率拉回来。
         var gate = HingeMoveGate()
         _ = gate.feed(112.0, at: 0)
