@@ -39,11 +39,14 @@ final class LidAngleSource {
   /// 上次真正生效并打过日志的间隔，避免状态没变还反复写日志。
   private var loggedInterval: Double?
   /// 盖角设备其实会**主动推送** input report（2026-10-01 用 tools/lid-report-probe 实测：
-  /// 静止时也 ~10Hz、3 字节、report id 1 = 整度，和 feature 读同格式，读数一致）。
+  /// 静止时也 ~10Hz、3 字节、report id 1 = 整度）。注意：本机 feature 读走的是精细格式（id 7，0.01°），
+  /// 和推送不是同一格式，所以合盖途中不混用（见 receive）。
   /// 所以主路径改成「订阅推送」：一次 feature 读 0.914ms，原来静止 4Hz 就是常驻 0.37% 单核。
   /// 推送健康时只留一条 1Hz 看门狗（不读 HID，只检查推送有没有断），断了才退回轮询。
   private var lastPushAt: CFTimeInterval = 0
   private var connection: UInt64 = 0
+  /// 管理器是否已 Activate（订阅推送）。只有激活过的才能、也必须先 Cancel 再 Close。
+  private var activated = false
   private static let pushStale: CFTimeInterval = 3
   private static let watchdogInterval: CFTimeInterval = 1
   /// 最近一次请求的 engaged，受 lock 保护。主线程每份读数都会调 setEngaged，
@@ -66,7 +69,9 @@ final class LidAngleSource {
       wanted = false
       _ = epoch.advance()
     }
-    queue.async { [weak self] in self?.close() }
+    // 强引用到 close() 跑完：推送回调拿的是不持有的指针，必须保证先 Cancel 再释放对象，
+    // 不能让 deinit 和队列上的回调赛跑。
+    queue.async { self.close() }
   }
   func setEngaged(_ value: Bool) {
     let changed = lock.withLock { () -> Bool in
@@ -133,16 +138,6 @@ final class LidAngleSource {
     self.manager = manager
     IOHIDManagerSetDeviceMatching(
       manager, [kIOHIDPrimaryUsagePageKey: 0x20, kIOHIDPrimaryUsageKey: 0x8A] as CFDictionary)
-    // 先挂推送回调再开：驱动推上来的报告几乎不花钱，主路径就靠它。
-    IOHIDManagerSetDispatchQueue(manager, queue)
-    IOHIDManagerRegisterInputReportCallback(
-      manager,
-      { context, _, _, _, _, report, length in
-        guard let context else { return }
-        let source = Unmanaged<LidAngleSource>.fromOpaque(context).takeUnretainedValue()
-        source.receive(report, length: length)
-      },
-      Unmanaged.passUnretained(self).toOpaque())
     if IOHIDManagerOpen(manager, 0) == kIOReturnSuccess,
       let devices = IOHIDManagerCopyDevices(manager) as? Set<IOHIDDevice>
     {
@@ -162,7 +157,19 @@ final class LidAngleSource {
     }
     connection = token
     lastPushAt = 0
+    // 找到设备之后才挂推送回调并激活：没找到设备时（别的机型、重连）走的仍是原来那条
+    // 只 Open/Close 的路，不会去 Cancel 一个从没激活过的管理器。
+    IOHIDManagerSetDispatchQueue(manager, queue)
+    IOHIDManagerRegisterInputReportCallback(
+      manager,
+      { context, _, _, _, _, report, length in
+        guard let context else { return }
+        let source = Unmanaged<LidAngleSource>.fromOpaque(context).takeUnretainedValue()
+        source.receive(report, length: length)
+      },
+      Unmanaged.passUnretained(self).toOpaque())
     IOHIDManagerActivate(manager)
+    activated = true
     failures = 0
     deliverStatus(.connected(report), token)
     let timer = DispatchSource.makeTimerSource(queue: queue)
@@ -207,12 +214,16 @@ final class LidAngleSource {
   private func receive(_ report: UnsafeMutablePointer<UInt8>, length: CFIndex) {
     guard current(connection), length > 0, length <= 32 else { return }
     let bytes = Array(UnsafeBufferPointer(start: report, count: length))
-    let angle = self.report.decode(bytes)
+    let sameFormat = self.report.decode(bytes)
+    let angle = sameFormat
       ?? (self.report == .precise ? LidReport.whole.decode(bytes) : LidReport.precise.decode(bytes))
     guard let angle else { return }
     let wasFresh = pushIsFresh()
     lastPushAt = CACurrentMediaTime()
     if hingeGate.feed(angle, at: lastPushAt) || !wasFresh { applyIntervalIfChanged() }
+    // 合盖途中由 60Hz 的 feature 读驱动动画。这台机器 feature 读是精细格式（0.01°），
+    // 推送却是整度：两路交替送进动画会差出最多 1°（约 2% 进度）来回跳，所以这时只认同格式的推送。
+    if engaged, sameFormat == nil { return }
     deliver(angle, token: connection, startedAt: lastPushAt)
   }
 
@@ -246,17 +257,22 @@ final class LidAngleSource {
     if let device { IOHIDDeviceClose(device, 0) }
     device = nil
     if let manager {
-      // Activate 和 Cancel 是一对：只 Close 不 Cancel，IOKit 里会在 release 时过释放，
+      // Activate 和 Cancel 是一对：激活过却只 Close 不 Cancel，IOKit 里会在 release 时过释放，
       // 直接 abort（2026-10-01 被 tests/run-lid-source-tests.sh 抓到：
       // "Invalid dispatch state" ← IOHIDManagerExtRelease ← IOHIDManagerClose）。
-      IOHIDManagerCancel(manager)
+      if activated { IOHIDManagerCancel(manager) }
       IOHIDManagerClose(manager, 0)
     }
     manager = nil
+    activated = false
   }
   deinit {
     timer?.cancel()
     if let device { IOHIDDeviceClose(device, 0) }
-    if let manager { IOHIDManagerClose(manager, 0) }
+    if let manager {
+      // 和 close() 同一条规则：激活过的必须先 Cancel，否则同样会过释放。
+      if activated { IOHIDManagerCancel(manager) }
+      IOHIDManagerClose(manager, 0)
+    }
   }
 }

@@ -25,6 +25,15 @@ struct AudioDeviceCacheTests {
         cache.store([])
         expect(cache.take(maxAge: 5)?.isEmpty == true, "a fresh store is reusable again")
 
+        // 枚举途中设备又变了：这次的结果照存，但不能把那次变化吞掉、一直用到 30 秒兜底。
+        cache.markDirty()
+        expect(cache.take(maxAge: 30) == nil, "a change starts a recompute")
+        cache.markDirty()
+        cache.store([])
+        expect(cache.take(maxAge: 30) == nil, "a change that lands mid-recompute forces one more recompute")
+        cache.store([])
+        expect(cache.take(maxAge: 30)?.isEmpty == true, "and after that clean recompute the cache is reused")
+
         // 并发：真实的调用点是「其它线程 markDirty、worker 线程 take/store」，这里照那个形状打一遍。
         let shared = AudioDeviceCache()
         shared.store([])
