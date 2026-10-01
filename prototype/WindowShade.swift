@@ -393,6 +393,11 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSMenuDelegate {
         // 应用内更新（App/Updater.swift）：最后启动；装好新版本后两项授权没了，翻到欢迎窗口的授权页请他再打开一次。
         MainActor.assumeIsolated {
             UpdaterController.shared.onPermissionsLostAfterUpdate = { [weak self] in self?.showPermissionsAgainAfterUpdate() }
+            UpdaterController.shared.confirmChange = { [weak self] target, done in
+                guard let authentication = self?.notch.authentication, authentication.canAuthorize else { return false }
+                authentication.authorize(target, completion: done)
+                return true
+            }
             UpdaterController.shared.start()
         }
     }

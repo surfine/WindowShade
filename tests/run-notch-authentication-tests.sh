@@ -1,6 +1,9 @@
 #!/bin/bash
+# 刘海里的 Touch ID 确认：验签通过才发一次性授权（KEY-01…05）、取消只回一次、旧回调不生效。
+# 授权链是真的（账本、模型、锁态、文案、密钥封装、服务）；只有界面宿主是下面的薄绑定，不调真的 Touch ID。
 set -euo pipefail
 cd "$(dirname "$0")/.."
+mkdir -p .build
 WORK=$(mktemp -d "$(pwd)/.build/auth-transactions.XXXXXX")
 trap 'rm -rf "$WORK"' EXIT
 cat prototype/App/NotchAuthentication.swift tests/NotchAuthenticationTests.swift > "$WORK/AuthenticationTests.swift"
@@ -27,8 +30,11 @@ final class AppDelegate: NSObject {}
     }
     func alert(_ value: Alert) {}
 }
+enum EffectSecurityBoundary { static var lockState: SessionLockState { .unlocked } }
 SWIFT
 swiftc -swift-version 6 -O "$WORK/UIBindings.swift" "$WORK/AuthenticationTests.swift" \
-  -framework Cocoa -framework LocalAuthentication -framework LocalAuthenticationEmbeddedUI \
+  prototype/Core/SessionLockState.swift prototype/Core/AuthorizationModels.swift prototype/Core/AuthorizationLedger.swift \
+  prototype/App/AuthorizationCopy.swift prototype/App/AuthorizationService.swift prototype/App/DeviceAuthorizationKey.swift \
+  -framework Cocoa -framework LocalAuthentication -framework LocalAuthenticationEmbeddedUI -framework CryptoKit -framework Security \
   -o "$WORK/tests"
 "$WORK/tests"

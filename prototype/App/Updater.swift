@@ -230,6 +230,9 @@ final class UpdaterController: NSObject, NSMenuItemValidation {
 
     // MARK: 设置
 
+    /// 用 Touch ID 确认一项安全相关的改动（AppDelegate 接到刘海上）。返回 false 表示这台 Mac 现在没法确认。
+    var confirmChange: ((AuthTarget, @escaping (AuthorizationGrant?) -> Void) -> Bool)?
+
     var automaticallyChecks: Bool {
         get {
             if let backend { return backend.automaticallyChecks }
