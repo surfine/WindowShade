@@ -227,6 +227,9 @@ final class MainThreadSampler: @unchecked Sendable {
             let described = frames.prefix(18).map(Self.describe)
             // 主线程其实在等输入：菜单、拖动这类跟踪循环跑在私有的 RunLoop 模式里，看不到它入睡，但它是闲着的，不算卡顿。
             if described.contains(where: { $0.contains("ReceiveNextEventCommon") || $0.contains("BlockUntilNextEventMatchingListInMode") }) {
+                // 哨兵只看 runloop 活动，分辨不出「跟踪循环」和「真冻结」，两边会给出矛盾的两行日志。
+                // 这里把它如实记成 tracking（2026-10-01 排查 5 秒级卡顿时被这两行绕进去过）。
+                wlog("main-thread tracking ≈\(Int(stuck * 1000))ms (menu or drag tracking; main thread is waiting for input, not frozen)")
                 continue
             }
             wlog("main-thread stall sample ≈\(Int(stuck * 1000))ms: \(described.joined(separator: " ← "))")
