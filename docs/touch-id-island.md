@@ -26,7 +26,7 @@ macOS 12 起，官方 `LocalAuthenticationEmbeddedUI.LAAuthenticationView` 可�
 4. 账本用公钥验签，再核对期限、代次和锁态（读不到锁态当作锁着），通过才发一张一次性授权；这时才显示对勾。
 5. 调用方执行前按**此刻的实际状态**重算目标并消费授权：用途或目标对不上、过期、锁屏、已用过，都不执行，而且这张授权当场作废。锁屏、睡眠、屏幕睡眠、会话切走会让所有未完成的请求和未用的授权失效（`App/AuthorizationService.swift`）。
 
-为什么能这样做：`tools/secure-enclave-probe/run.sh --check` 在本机实测，WindowShade 这种签名方式（开发证书、无 entitlements）下 Secure Enclave 可用；受指纹保护的密钥只保存 Secure Enclave 包裹过的句柄（`~/Library/Application Support/WindowShade/Authorization/`，0600），私钥不离开 Secure Enclave；没经过认证的 context 签名会被拒绝。钥匙串里的永久密钥会得到 -34018，所以不走那条路。指纹增删后密钥失效：确认是指纹集合真的变了才删掉，提示「Touch ID 指纹有变化，下次确认时会重新设置」，下次确认时重建。
+为什么能这样做：`tools/secure-enclave-probe/run.sh --check` 在本机实测，WindowShade 这种签名方式（开发证书、无 entitlements）下 Secure Enclave 可用；受指纹保护的密钥只保存 Secure Enclave 包裹过的句柄（`~/Library/Application Support/WindowShade/Authorization/`，0600），私钥不离开 Secure Enclave；没经过认证的 context 签名会被拒绝。钥匙串里的永久密钥会得到 -34018，所以不走那条路。真指纹实测（2026-10-01，本机）：`--sign=policy`（先 evaluatePolicy 再用同一 context 签名，App 用的就是这种）、`--sign=acl`（evaluateAccessControl 后签名）、`--sign=direct`（签名本身驱动内嵌控件）三种都签名并验签通过，都没有出现第二个系统认证窗口（按窗口列表检测）。指纹增删后密钥失效：确认是指纹集合真的变了才删掉，提示「Touch ID 指纹有变化，下次确认时会重新设置」，下次确认时重建。
 
 刘海里那一行和系统认证理由只能由用途和目标生成（`App/AuthorizationCopy.swift`），例如「关闭自动检查更新」，所以写在界面上的和实际要放行的是同一件事。
 
