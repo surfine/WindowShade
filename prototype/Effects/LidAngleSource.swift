@@ -31,6 +31,9 @@ final class LidAngleSource {
   private var timer: DispatchSourceTimer?
   private var failures = 0
   private var engaged = false
+  /// 机器在不在动（由加速度计喂进来，见 MotionActivityDetector）：不动时把轮询降到 4Hz。
+  /// 没有运动数据时保持 true，也就是维持原来的 12Hz——降频不能靠猜。
+  private var moving = true
   /// 最近一次请求的 engaged，受 lock 保护。主线程每份读数都会调 setEngaged，
   /// 值没变就不再往 queue 上排一个空转的任务（静置时每秒省 12 次线程唤醒）。
   private var requestedEngaged = false
@@ -63,13 +66,29 @@ final class LidAngleSource {
     queue.async { [weak self] in
       guard let self, engaged != value else { return }
       engaged = value
-      timer?.schedule(deadline: .now(), repeating: Self.interval(engaged: value),
+      let interval = Self.interval(engaged: value, moving: moving)
+      timer?.schedule(deadline: .now(), repeating: interval,
                       leeway: Self.leeway(engaged: value))
+      wlog(String(format: "lid: poll %.1fHz (%@)", 1 / interval, value ? "folding" : (moving ? "moving" : "still")))
+    }
+  }
+  func setMoving(_ value: Bool) {
+    queue.async { [weak self] in
+      guard let self, moving != value else { return }
+      moving = value
+      let interval = Self.interval(engaged: engaged, moving: moving)
+      timer?.schedule(deadline: .now(), repeating: interval,
+                      leeway: Self.leeway(engaged: engaged))
+      // 降频这件事要能看见：日志里 `lid: poll 4.0Hz (still)` 就是省下来的那 ~0.8% CPU。
+      wlog(String(format: "lid: poll %.1fHz (%@)", 1 / interval, engaged ? "folding" : (value ? "moving" : "still")))
     }
   }
   // 合盖途中 60Hz 且几乎不给余量，动画才跟手；静止时 12Hz 只用来发现「开始合盖」，
   // 放宽到 20ms 余量让系统把这次唤醒和别的定时器合并，常驻开销更低。
-  private static func interval(engaged: Bool) -> Double { engaged ? 1.0 / 60 : 1.0 / 12 }
+  /// 见 Core/MotionActivity.swift 的 LidPollInterval（合盖 60Hz / 在动 12Hz / 静止 4Hz）。
+  private static func interval(engaged: Bool, moving: Bool) -> Double {
+    LidPollInterval.seconds(engaged: engaged, moving: moving)
+  }
   private static func leeway(engaged: Bool) -> DispatchTimeInterval {
     .milliseconds(engaged ? 2 : 20)
   }
@@ -101,7 +120,7 @@ final class LidAngleSource {
     failures = 0
     deliverStatus(.connected(report), token)
     let timer = DispatchSource.makeTimerSource(queue: queue)
-    timer.schedule(deadline: .now(), repeating: Self.interval(engaged: engaged),
+    timer.schedule(deadline: .now(), repeating: Self.interval(engaged: engaged, moving: moving),
                    leeway: Self.leeway(engaged: engaged))
     timer.setEventHandler { [weak self] in self?.poll(token) }
     self.timer = timer
