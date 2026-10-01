@@ -220,7 +220,10 @@ final class MainThreadSampler: @unchecked Sendable {
 
     private func watch() {
         while true {
-            usleep(50_000)
+            // 200ms：卡顿阈值是 250ms，这个粒度够（检测到的时间点是 250–450ms，报的是真实卡了多久），
+            // 但唤醒从 20 次/秒降到 5 次/秒——锁屏空闲那 0.1% 里相当一部分就是这类唤醒
+            // （2026-10-01 量过：把铰链/AirPods 这些真活儿都拿掉之后，剩下的基本是定时器）。
+            usleep(200_000)
             let now = CFAbsoluteTimeGetCurrent()
             os_unfair_lock_lock(&lock)
             let stuck = busy ? now - beatAt : 0
