@@ -405,6 +405,9 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSMenuDelegate {
     /// 辅助功能外观变化：只刷新材质/边线/阴影，不动窗口状态、不触发任何捕获。
     @objc func systemAppearanceOptionsChanged(_ note: Notification) {
         dispatchPrecondition(condition: .onQueue(.main))
+        // 同上：外观开关的通知回调也要能在卡顿归因里看出名字。
+        MainThreadActivity.push("system: 外观开关变化")
+        defer { MainThreadActivity.pop() }
         let capabilities = SystemAppearanceCapabilities.current
         wlog("appearance: system options changed reduceTransparency="
              + "\(capabilities.reduceTransparency) increaseContrast=\(capabilities.increaseContrast) "
