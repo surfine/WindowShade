@@ -13,7 +13,6 @@ final class LockOverlayController {
     private var progress = 0.85
     private var velocity = 0.0
     private var preset: DuoPreset = .shade
-    private var trigger = 95.0
     private var running = false
 
     func start() {
@@ -44,14 +43,14 @@ final class LockOverlayController {
         retreat()
         reschedule()
     }
-    func handoff(progress: Double, velocity: Double, preset: DuoPreset, trigger: Double) {
+    func handoff(progress: Double, velocity: Double, preset: DuoPreset) {
         self.progress = progress.isFinite ? min(1, max(0, progress)) : 0.85
         self.velocity = velocity.isFinite ? velocity : 0
         self.preset = preset
-        self.trigger = trigger
     }
-    func receive(_ reading: LidAngleSource.Reading) {
-        sessions.forEach { $0.receive(angle: reading.angle, trigger: trigger) }
+    /// 合盖进度和桌面效果是同一份（DuoController 里的 LidGesture，见 docs/lid-effect.md）。
+    func receive(progress: Double) {
+        sessions.forEach { $0.receive(progress: progress) }
     }
     private func observe(_ center: NotificationCenter, _ name: Notification.Name, action: @escaping () -> Void) {
         observers.append((center, center.addObserver(forName: name, object: nil, queue: .main) { _ in action() }))

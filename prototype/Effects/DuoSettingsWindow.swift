@@ -81,13 +81,9 @@ final class DuoSettingsWindow: NSWindowController, NSWindowDelegate, NSTableView
   private let status = NSTextField(wrappingLabelWithString: "")
   private let desktop = NSSwitch()
   private let windows = NSSwitch()
-  private let motion = NSSwitch()
   private let live = NSSwitch()
   private let pause = NSButton(title: "暂停效果", target: nil, action: nil)
   private let permission = NSButton(title: "打开屏幕录制设置…", target: nil, action: nil)
-  private let calibration = NSButton(title: "使用当前角度", target: nil, action: nil)
-  private let trigger = NSSlider(value: 95, minValue: 45, maxValue: 140, target: nil, action: nil)
-  private let angleLabel = NSTextField(labelWithString: "")
   private let scrubber = NSSlider(value: 0, minValue: 0, maxValue: 1, target: nil, action: nil)
   private let preset = NSSegmentedControl(
     labels: DuoPreset.allCases.map(\.title), trackingMode: .selectOne, target: nil, action: nil)
@@ -717,19 +713,6 @@ final class DuoSettingsWindow: NSWindowController, NSWindowDelegate, NSTableView
     preview.widthAnchor.constraint(equalTo: stack.widthAnchor).isActive = true
     stack.setCustomSpacing(18, after: preview)
 
-    let experimentalSection = makeSectionLabel("实验性")
-    stack.addArrangedSubview(experimentalSection)
-    stack.setCustomSpacing(6, after: experimentalSection)
-    let experimental = makeSettingsCard([
-      makeToggleRow(
-        title: "随设备倾斜",
-        subtitle: "用机身倾斜让桌面轻微偏移。只在桌面效果运行时生效。",
-        control: motion,
-        action: #selector(changed)),
-    ])
-    stack.addArrangedSubview(experimental)
-    experimental.widthAnchor.constraint(equalTo: stack.widthAnchor).isActive = true
-    stack.setCustomSpacing(18, after: experimental)
 
     let note = NSTextField(wrappingLabelWithString: "实时预览默认关闭。按 Esc、点一下或开始打字都能撤掉。")
     note.font = SystemAppearancePolicy.font(relativeToBody: -1)
@@ -759,75 +742,15 @@ final class DuoSettingsWindow: NSWindowController, NSWindowDelegate, NSTableView
       stack.bottomAnchor.constraint(lessThanOrEqualTo: root.bottomAnchor),
     ])
     let header = makePageHeader(
-      title: "高级", subtitle: "调整触发角度、校准传感器，或恢复默认值。",
+      title: "高级", subtitle: "恢复默认值，或打开诊断日志排查问题。",
       symbolName: "slider.horizontal.3")
     stack.addArrangedSubview(header)
     stack.setCustomSpacing(16, after: header)
 
-    let triggerSection = makeSectionLabel("触发")
-    stack.addArrangedSubview(triggerSection)
-    stack.setCustomSpacing(6, after: triggerSection)
-    trigger.target = self
-    trigger.action = #selector(changed)
-    trigger.isContinuous = true
-    trigger.setAccessibilityLabel("触发角度")
-    trigger.toolTip = "盖子合到这个角度就开始动。"
-    angleLabel.font = .monospacedDigitSystemFont(ofSize: 13, weight: .medium)
-    angleLabel.alignment = .right
-    angleLabel.widthAnchor.constraint(equalToConstant: 52).isActive = true
-    angleLabel.setAccessibilityLabel("当前触发角度")
-
-    let triggerTitle = NSTextField(labelWithString: "触发角度")
-    triggerTitle.font = SystemAppearancePolicy.font(relativeToBody: 0)
-    let triggerSubtitle = NSTextField(wrappingLabelWithString: "盖子合到这个角度就开始动。")
-    triggerSubtitle.font = SystemAppearancePolicy.font(relativeToBody: -2)
-    triggerSubtitle.textColor = .secondaryLabelColor
-    triggerSubtitle.maximumNumberOfLines = 2
-    let triggerLabels = NSStackView(views: [triggerTitle, triggerSubtitle])
-    triggerLabels.orientation = .vertical
-    triggerLabels.alignment = .leading
-    triggerLabels.spacing = 4
-
-    let triggerHeader = NSStackView(views: [triggerLabels, angleLabel])
-    NSLayoutConstraint.activate([
-      triggerLabels.leadingAnchor.constraint(equalTo: triggerHeader.leadingAnchor),
-      triggerLabels.trailingAnchor.constraint(equalTo: angleLabel.leadingAnchor, constant: -12),
-      angleLabel.trailingAnchor.constraint(equalTo: triggerHeader.trailingAnchor),
-      triggerSubtitle.widthAnchor.constraint(equalTo: triggerLabels.widthAnchor),
-    ])
-    triggerHeader.orientation = .horizontal
-    triggerHeader.alignment = .centerY
-    triggerHeader.spacing = 12
-    triggerHeader.heightAnchor.constraint(greaterThanOrEqualToConstant: 48).isActive = true
-    triggerLabels.setContentHuggingPriority(.defaultLow, for: .horizontal)
-    triggerLabels.setContentCompressionResistancePriority(.defaultLow, for: .horizontal)
-
-    let minimum = NSTextField(labelWithString: "45°")
-    let maximum = NSTextField(labelWithString: "140°")
-    for label in [minimum, maximum] {
-      label.font = SystemAppearancePolicy.font(relativeToBody: -2)
-      label.textColor = .secondaryLabelColor
-      label.alignment = .center
-      label.widthAnchor.constraint(equalToConstant: 34).isActive = true
-    }
-    let triggerSlider = NSStackView(views: [minimum, trigger, maximum])
-    triggerSlider.orientation = .horizontal
-    triggerSlider.alignment = .centerY
-    triggerSlider.spacing = 10
-    triggerSlider.heightAnchor.constraint(greaterThanOrEqualToConstant: 40).isActive = true
-    let triggerCard = makeSettingsCard([triggerHeader, triggerSlider])
-    stack.addArrangedSubview(triggerCard)
-    triggerCard.widthAnchor.constraint(equalTo: stack.widthAnchor).isActive = true
-    stack.setCustomSpacing(18, after: triggerCard)
 
     let actionSection = makeSectionLabel("操作")
     stack.addArrangedSubview(actionSection)
     stack.setCustomSpacing(6, after: actionSection)
-    calibration.target = self
-    calibration.action = #selector(calibrate)
-    calibration.image = NSImage(systemSymbolName: "scope", accessibilityDescription: "校准")
-    calibration.imagePosition = .imageLeading
-    calibration.setAccessibilityHelp("使用当前传感器角度作为触发角度")
     let reset = NSButton(title: "恢复默认值", target: self, action: #selector(reset))
     reset.bezelStyle = .rounded
     reset.image = NSImage(systemSymbolName: "arrow.counterclockwise", accessibilityDescription: "恢复默认值")
@@ -837,10 +760,6 @@ final class DuoSettingsWindow: NSWindowController, NSWindowDelegate, NSTableView
     diagnostics.image = NSImage(systemSymbolName: "doc.text.magnifyingglass", accessibilityDescription: "诊断日志")
     diagnostics.imagePosition = .imageLeading
     let actionCard = makeSettingsCard([
-      makeActionRow(
-        title: "校准触发角度",
-        subtitle: "把当前读数设为触发角度。",
-        button: calibration),
       makeActionRow(
         title: "恢复动态效果默认值",
         subtitle: "把桌面、窗口和样式都恢复默认。",
@@ -915,10 +834,7 @@ final class DuoSettingsWindow: NSWindowController, NSWindowDelegate, NSTableView
   private func load(_ settings: DuoSettings) {
     desktop.state = settings.desktopEnabled ? .on : .off
     windows.state = settings.windowsEnabled ? .on : .off
-    motion.state = settings.motionEnabled ? .on : .off
-    trigger.doubleValue = settings.triggerAngle
     preset.selectedSegment = DuoPreset.allCases.firstIndex(of: settings.preset) ?? 1
-    angleLabel.stringValue = String(format: "%.1f°", settings.triggerAngle)
   }
 
   @objc private func changed() {
@@ -926,31 +842,19 @@ final class DuoSettingsWindow: NSWindowController, NSWindowDelegate, NSTableView
     controller.settings = DuoSettings(
       desktopEnabled: desktop.state == .on,
       windowsEnabled: windows.state == .on,
-      motionEnabled: motion.state == .on,
-      triggerAngle: trigger.doubleValue,
       preset: DuoPreset.allCases[max(0, preset.selectedSegment)])
-    angleLabel.stringValue = String(format: "%.1f°", trigger.doubleValue)
     controller.settingsChanged()
     controller.owner?.rebuildMenu()
     previewChanged()
   }
 
   @objc private func previewChanged() {
-    let amount = mode.selectedSegment == 0
-      ? FoldDriver.progress(
-          angle: trigger.doubleValue * (1 - scrubber.doubleValue), start: trigger.doubleValue)
-      : scrubber.doubleValue
+    // 桌面预览：两头收得柔一点，和合盖时跟着盖子走的手感一致。
+    let amount = mode.selectedSegment == 0 ? FoldDriver.ease(scrubber.doubleValue) : scrubber.doubleValue
     renderer?.parameters = .init(
       progress: Float(amount), titleFraction: 0.1, windowMode: mode.selectedSegment == 1,
       preset: controller?.settings.preset ?? .shade)
     renderer?.render()
-  }
-
-  @objc private func calibrate() {
-    if let angle = controller?.angle {
-      trigger.doubleValue = min(140, max(45, angle))
-      changed()
-    }
   }
 
   @objc private func reset() {
@@ -1087,16 +991,14 @@ final class DuoSettingsWindow: NSWindowController, NSWindowDelegate, NSTableView
     guard force || now - lastStatusAt > 0.2 else { return }
     guard let controller else { return }
     lastStatusAt = now
-    calibration.isEnabled = controller.angle != nil
     pause.title = controller.pausedByUser ? "继续" : "暂停"
-    let reading = controller.angle.map { String(format: "%.2f°", $0) } ?? "—"
+    let reading = controller.angle.map { String(format: "%.0f°", $0) } ?? "—"
     let permission = CGPreflightScreenCaptureAccess() ? "" : " · 需要屏幕录制权限"
     let reduced = NSWorkspace.shared.accessibilityDisplayShouldReduceMotion
       ? " · 减少动态效果已暂停动画" : ""
     let paused = controller.pausedByUser ? " · 效果已暂停" : ""
-    let motion = controller.settings.motionEnabled ? " · \(controller.motionStatus)" : ""
     status.stringValue = captureMessage
-      ?? "设置合盖桌面效果与窗口收起动画。\(controller.sensorStatus) · 当前 \(reading)\(permission)\(reduced)\(paused)\(motion)"
+      ?? "设置合盖桌面效果与窗口收起动画。\(controller.sensorStatus) · 当前 \(reading)\(permission)\(reduced)\(paused)"
   }
 
   func windowWillClose(_ notification: Notification) {

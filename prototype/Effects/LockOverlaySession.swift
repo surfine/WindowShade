@@ -52,9 +52,9 @@ final class LockOverlaySession {
         renderer.render()
         return true
     }
-    func receive(angle: Double, trigger: Double) {
+    func receive(progress: Double) {
         guard !stopped else { return }
-        target = FoldDriver.progress(angle: angle, start: trigger)
+        target = progress
     }
     private func tick(_ now: Double) {
         guard !stopped else { return }
