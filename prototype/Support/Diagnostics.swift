@@ -177,7 +177,9 @@ final class MainThreadStallSentinel {
 
 // 卡顿时抓主线程的调用栈。哨兵只能在卡顿结束后报时长，“期间=未标记”说不出是谁；
 // 这里另起一条看门狗线程，主线程超过 250ms 没回到 RunLoop（又不是在睡觉）时，暂停它一下，
-// 沿帧指针链抄下返回地址，马上放开，再在看门狗线程上查符号写进日志。每次卡顿只抓一次。
+// 沿帧指针链抄下返回地址，马上放开，再在看门狗线程上查符号写进日志。
+// 一次卡顿最多抓 4 张（每张至少隔 200ms）：一秒多的长卡顿能自己分成几段，
+// 不会像以前那样只留下第一张（2026-10-01：CoreAudio 那张抓到了，同一次卡顿的后半段完全看不见）。
 // 平时每 50ms 只读一次时间戳。自家代码记“镜像+偏移”，用 atos 对着构建出来的程序就能还原到行。
 final class MainThreadSampler: @unchecked Sendable {
     static let shared = MainThreadSampler()
@@ -185,7 +187,8 @@ final class MainThreadSampler: @unchecked Sendable {
     private var lock = os_unfair_lock()
     private var beatAt = CFAbsoluteTimeGetCurrent()
     private var busy = false
-    private var sampled = false
+    private var samples = 0
+    private var lastSampleAt: CFAbsoluteTime = 0
     private var mainThread: thread_act_t = 0
     private var stackLow: UInt = 0
     private var stackHigh: UInt = 0
@@ -210,18 +213,22 @@ final class MainThreadSampler: @unchecked Sendable {
         os_unfair_lock_lock(&lock)
         beatAt = CFAbsoluteTimeGetCurrent()
         busy = !waiting
-        sampled = false
+        samples = 0
+        lastSampleAt = 0
         os_unfair_lock_unlock(&lock)
     }
 
     private func watch() {
         while true {
             usleep(50_000)
+            let now = CFAbsoluteTimeGetCurrent()
             os_unfair_lock_lock(&lock)
-            let stuck = busy && !sampled ? CFAbsoluteTimeGetCurrent() - beatAt : 0
-            if stuck > 0.25 { sampled = true }
+            let stuck = busy ? now - beatAt : 0
+            let takeSample = busy && stuck > 0.25 && samples < 4 && now - lastSampleAt >= 0.2
+            if takeSample { samples += 1; lastSampleAt = now }
+            let index = samples
             os_unfair_lock_unlock(&lock)
-            guard stuck > 0.25 else { continue }
+            guard takeSample else { continue }
             let frames = captureMainStack()
             guard !frames.isEmpty else { continue }
             let described = frames.prefix(18).map(Self.describe)
@@ -229,10 +236,12 @@ final class MainThreadSampler: @unchecked Sendable {
             if described.contains(where: { $0.contains("ReceiveNextEventCommon") || $0.contains("BlockUntilNextEventMatchingListInMode") }) {
                 // 哨兵只看 runloop 活动，分辨不出「跟踪循环」和「真冻结」，两边会给出矛盾的两行日志。
                 // 这里把它如实记成 tracking（2026-10-01 排查 5 秒级卡顿时被这两行绕进去过）。
-                wlog("main-thread tracking ≈\(Int(stuck * 1000))ms (menu or drag tracking; main thread is waiting for input, not frozen)")
+                if index == 1 {
+                    wlog("main-thread tracking ≈\(Int(stuck * 1000))ms (menu or drag tracking; main thread is waiting for input, not frozen)")
+                }
                 continue
             }
-            wlog("main-thread stall sample ≈\(Int(stuck * 1000))ms: \(described.joined(separator: " ← "))")
+            wlog("main-thread stall sample \(index)/4 ≈\(Int(stuck * 1000))ms: \(described.joined(separator: " ← "))")
         }
     }
 
