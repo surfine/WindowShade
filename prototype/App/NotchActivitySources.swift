@@ -276,7 +276,7 @@ private final class ActivitySourceToken: @unchecked Sendable {
 
 /// AirPods 那段结果的缓存：CoreAudio 枚举设备一次 1.74ms，2 秒问一次就是常驻约 0.11% 单核。
 /// 设备或默认输出变了（CoreAudio 监听置脏）才重算，另有 `maxAge` 兜底。
-private final class AudioDeviceCache: @unchecked Sendable {
+final class AudioDeviceCache: @unchecked Sendable {
     private let lock = NSLock()
     private var snapshots: [NotchSourceSnapshot] = []
     private var at: CFAbsoluteTime = 0
