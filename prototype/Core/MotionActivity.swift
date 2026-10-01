@@ -44,3 +44,30 @@ enum LidPollInterval {
         return moving ? 1.0 / 12 : 1.0 / 4
     }
 }
+
+/// 铰链自己看到的「有人在掰盖子」：角度变化超过阈值，就把「在动」续到 `hold` 秒之后。
+/// 兜底「慢慢合盖、底座几乎不动、加速度计看不出来」的情况——最多晚一个 4Hz 周期（250ms）
+/// 就靠下一份读数把采样率拉回 12Hz，合盖动画不会一直慢半拍。
+struct HingeMoveGate {
+    /// 两份读数差多少度算「在掰」。0.3° 远大于读数噪声。
+    var threshold: Double = 0.3
+    /// 看到变化之后保持「在动」多久（秒）。
+    var hold: Double = 3
+
+    private var lastAngle: Double?
+    private var movedUntil: Double = -.infinity
+
+    mutating func feed(_ angle: Double, at now: Double) -> Bool {
+        defer { lastAngle = angle }
+        guard let lastAngle else { return isMoving(at: now) }
+        if abs(angle - lastAngle) >= threshold { movedUntil = now + hold }
+        return isMoving(at: now)
+    }
+
+    func isMoving(at now: Double) -> Bool { now < movedUntil }
+
+    mutating func reset() {
+        lastAngle = nil
+        movedUntil = -.infinity
+    }
+}
