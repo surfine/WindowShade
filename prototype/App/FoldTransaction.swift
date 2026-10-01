@@ -946,6 +946,9 @@ extension AppDelegate {
     }
 
     @objc func frontmostApplicationChanged(_ note: Notification) {
+        // 卡顿归因：这几条系统回调以前不在任何标记里，出了长卡顿只能看到「未标记」。
+        MainThreadActivity.push("system: 前台应用变化")
+        defer { MainThreadActivity.pop() }
         hideHoverPreview()
         hideMenuHoverPreview()
         MainActor.assumeIsolated {
@@ -973,6 +976,8 @@ extension AppDelegate {
 
 
     @objc func screenParametersChanged(_ note: Notification) {
+        MainThreadActivity.push("system: 屏幕参数变化")
+        defer { MainThreadActivity.pop() }
         // 菜单栏时隐时现、Dock 高度差一点也会发这条通知（接 Studio Display 的 Mac 上每隔几秒
         // 一次）。只有显示器本身变了才关窗口浏览、排回窗口、找回屏幕外的窗口；
         // 可用区域变了只做跟它有关的事：卷帘条别压在菜单栏下，携带窗口那排卷帘条跟着菜单栏挪。
@@ -1016,6 +1021,8 @@ extension AppDelegate {
     }
 
     @objc func activeSpaceChanged(_ note: Notification) {
+        MainThreadActivity.push("system: 切换桌面")
+        defer { MainThreadActivity.pop() }
         restorePendingSourceSpacesIfNeeded(reason: "active-space-changed")
         windowBrowserController?.spaceDidChange()
         // 轻操作即时执行；开启置顶预览的动画抑制窗口期。

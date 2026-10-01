@@ -280,6 +280,16 @@ macOS 27.0 上实测第一次 496ms（同一进程随后立即再播是 0ms）�
 实时活动的音乐来源只在用户显式开启（`Notch.activities.musicEnabled`）后才每 2 秒起一个
 `osascript`；这台机器没开，日志里也没有这类进程，所以它不是本机现在的瓶颈。
 
+**量过、可以不再怀疑的（2026-10-01，Mac17,4 / macOS 27.0）。**
+
+- Dock 悬停观察者重建：日志里 19 分钟出现 9 次 `dock-element-destroyed` 重建，看着可疑；
+  实测建订阅那几个调用（`AXObserverCreate` 0.0ms、`AXObserverAddNotification` 0.8/0.0ms）加
+  `AXUIElementCopyAttributeValue(kAXChildren)` 32.8ms（这一步本来就在 `workQueue` 上）——
+  重建的主线程代价约 1–2ms，不是瓶颈。
+- 收起音效的强冷启动确实存在（一次 496ms），但设备闲下来后通常能热 ≥60 秒才凉；
+  探针 `--single --fold-timing` 里的 `shade()` 用默认选项，**本来就播反馈音**，
+  只是设备热着时不打 `perf: sound` 那一行——看不到那行不等于没走到播放路径。
+
 ## 六、改这一带代码时的注意事项
 
 `tests/duo-integration-check.py` 有两条**源码顺序断言**，守卫崩溃一致性：
