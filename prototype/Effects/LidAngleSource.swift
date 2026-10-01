@@ -31,9 +31,13 @@ final class LidAngleSource {
   private var timer: DispatchSourceTimer?
   private var failures = 0
   private var engaged = false
-  /// 机器在不在动（由加速度计喂进来，见 MotionActivityDetector）：不动时把轮询降到 4Hz。
+  /// 加速度计喂进来的「在动」（见 MotionActivityDetector）：不动时把轮询降到 4Hz。
   /// 没有运动数据时保持 true，也就是维持原来的 12Hz——降频不能靠猜。
   private var moving = true
+  /// 自愈：铰链自己看到角度在变，也当作「在动」一段时间（见 HingeMoveGate）。
+  private var hingeGate = HingeMoveGate()
+  /// 上次真正生效并打过日志的间隔，避免状态没变还反复写日志。
+  private var loggedInterval: Double?
   /// 最近一次请求的 engaged，受 lock 保护。主线程每份读数都会调 setEngaged，
   /// 值没变就不再往 queue 上排一个空转的任务（静置时每秒省 12 次线程唤醒）。
   private var requestedEngaged = false
@@ -66,22 +70,30 @@ final class LidAngleSource {
     queue.async { [weak self] in
       guard let self, engaged != value else { return }
       engaged = value
-      let interval = Self.interval(engaged: value, moving: moving)
-      timer?.schedule(deadline: .now(), repeating: interval,
-                      leeway: Self.leeway(engaged: value))
-      wlog(String(format: "lid: poll %.1fHz (%@)", 1 / interval, value ? "folding" : (moving ? "moving" : "still")))
+      applyIntervalIfChanged()
     }
   }
   func setMoving(_ value: Bool) {
     queue.async { [weak self] in
       guard let self, moving != value else { return }
       moving = value
-      let interval = Self.interval(engaged: engaged, moving: moving)
-      timer?.schedule(deadline: .now(), repeating: interval,
-                      leeway: Self.leeway(engaged: engaged))
-      // 降频这件事要能看见：日志里 `lid: poll 4.0Hz (still)` 就是省下来的那 ~0.8% CPU。
-      wlog(String(format: "lid: poll %.1fHz (%@)", 1 / interval, engaged ? "folding" : (value ? "moving" : "still")))
+      applyIntervalIfChanged()
     }
+  }
+
+  /// 现在算不算「在动」：加速度计说在动，或者铰链自己刚看到角度变化（自愈，见 HingeMoveGate）。
+  private func effectiveMoving() -> Bool {
+    moving || hingeGate.isMoving(at: CACurrentMediaTime())
+  }
+
+  /// 按当前状态重排定时器；间隔真的变了才写日志（`lid: poll 4.0Hz (still)` 就是省下来的那 ~0.8% CPU）。
+  private func applyIntervalIfChanged() {
+    let interval = Self.interval(engaged: engaged, moving: effectiveMoving())
+    timer?.schedule(deadline: .now(), repeating: interval, leeway: Self.leeway(engaged: engaged))
+    guard loggedInterval != interval else { return }
+    loggedInterval = interval
+    let reason = engaged ? "folding" : (effectiveMoving() ? "moving" : "still")
+    wlog(String(format: "lid: poll %.1fHz (%@)", 1 / interval, reason))
   }
   // 合盖途中 60Hz 且几乎不给余量，动画才跟手；静止时 12Hz 只用来发现「开始合盖」，
   // 放宽到 20ms 余量让系统把这次唤醒和别的定时器合并，常驻开销更低。
@@ -120,10 +132,10 @@ final class LidAngleSource {
     failures = 0
     deliverStatus(.connected(report), token)
     let timer = DispatchSource.makeTimerSource(queue: queue)
-    timer.schedule(deadline: .now(), repeating: Self.interval(engaged: engaged, moving: moving),
-                   leeway: Self.leeway(engaged: engaged))
     timer.setEventHandler { [weak self] in self?.poll(token) }
     self.timer = timer
+    loggedInterval = nil
+    applyIntervalIfChanged()
     timer.resume()
   }
   private func read(_ device: IOHIDDevice, _ report: LidReport) -> Double? {
@@ -151,6 +163,7 @@ final class LidAngleSource {
       return
     }
     failures = 0
+    if hingeGate.feed(angle, at: CACurrentMediaTime()) { applyIntervalIfChanged() }
     let reading = Reading(
       angle: angle, time: CACurrentMediaTime(),
       readMilliseconds: (CACurrentMediaTime() - started) * 1000)
@@ -173,6 +186,8 @@ final class LidAngleSource {
   private func close() {
     timer?.cancel()
     timer = nil
+    hingeGate.reset()
+    loggedInterval = nil
     if let device { IOHIDDeviceClose(device, 0) }
     device = nil
     if let manager { IOHIDManagerClose(manager, 0) }

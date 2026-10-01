@@ -49,6 +49,19 @@ struct MotionActivityTests {
         expect(LidPollInterval.seconds(engaged: false, moving: false) > LidPollInterval.seconds(engaged: false, moving: true),
                "the still rate is slower than the moving rate")
 
+        // 6. 自愈：慢慢合盖（底座几乎不动、加速度计看不出来）时，铰链自己看到角度变化就把采样率拉回来。
+        var gate = HingeMoveGate()
+        _ = gate.feed(112.0, at: 0)
+        expect(!gate.isMoving(at: 0.1), "a first angle reading alone is not a move")
+        _ = gate.feed(112.1, at: 0.25)   // 噪声级别，不算
+        expect(!gate.isMoving(at: 0.3), "0.1 degree of noise is not a move")
+        _ = gate.feed(111.0, at: 0.5)    // 真在掰
+        expect(gate.isMoving(at: 0.6), "a degree of change counts as moving")
+        expect(gate.isMoving(at: 0.5 + gate.hold - 0.1), "and it holds for a while")
+        expect(!gate.isMoving(at: 0.5 + gate.hold + 0.1), "then it lets go again")
+        gate.reset()
+        expect(!gate.isMoving(at: 100), "reset forgets the hinge motion")
+
         if failures == 0 { print("PASS: motion gating only slows the hinge poll when nothing is moving") }
         else { print("FAILED \(failures)"); exit(1) }
     }
