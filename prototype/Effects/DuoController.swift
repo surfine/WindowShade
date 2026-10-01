@@ -86,6 +86,9 @@ final class DuoController: NSObject {
       self?.settingsWindow?.refreshStatus()
     }
     accelerometer.onStatusTick = { [weak self] in self?.settingsWindow?.refreshStatus() }
+    // 加速度计是驱动推上来的（62 份/秒），拿它当「机器在动」的信号：静止时把铰链轮询
+    // 从 12Hz 降到 4Hz（一次读取 0.914ms，12Hz 就是常驻 ~1.1% 单核）。
+    accelerometer.onMotionChange = { [weak self] moving in self?.sensor.setMoving(moving) }
     let workspace = NSWorkspace.shared.notificationCenter
     // 通知只用来触发重读：状态变了先进 EffectEnvironment，再决定停还是恢复。
     observe(workspace, NSWorkspace.willSleepNotification) { [weak self] in
