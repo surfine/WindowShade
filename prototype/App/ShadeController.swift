@@ -656,15 +656,28 @@ extension AppDelegate {
             // 截图时系统往往已经在这扇窗的红绿灯处画上了录屏胶囊（捕获本身触发的）。
             // 先把它抹回标题栏底色，卷帘条与悬停预览都用清理后的图；没有胶囊时原样不动。
             let capturedAt = CFAbsoluteTimeGetCurrent()
-            let (preparation, stripSource, indicatorRemoved) = await withCheckedContinuation {
-                (continuation: CheckedContinuation<(NativeStripPreparation, CGImage, Bool), Never>) in
-                pixelAnalysisQueue.async { [full, size, profile, pid] in
+            // 红绿灯命中区与「能不能全屏」原来在这段 await 之后、主线程上问目标 App；
+            // 对方忙的时候一次 AX 读约 19ms（见 docs/performance.md 第一节），七八次就是上百毫秒，
+            // 而这正卡着折叠的安装与菜单重建。它们读的是同一扇窗、同一时刻，值不变，所以一并放进
+            // 这条后台任务里算（AX 可以从任意线程调用，项目里其它地方也这么做）。主线程仍然要等结果，
+            // 但等待期间 runloop 是活的——被冻住的是这段等待，不是整个 App。
+            let (preparation, stripSource, indicatorRemoved, buttonRects, windowManagementCapability) =
+                await withCheckedContinuation {
+                (continuation: CheckedContinuation<(NativeStripPreparation, CGImage, Bool,
+                                                    [(CGRect, TrafficAction)], WindowManagementCapability), Never>) in
+                pixelAnalysisQueue.async { [full, size, profile, pid, win, pos] in
                     let scale = CGFloat(full.width) / max(1, size.width)
                     let cleaned = CaptureIndicatorRemoval.removingIndicator(from: full, scale: scale)
                     let image = cleaned ?? full
-                    continuation.resume(returning: (prepareNativeStrip(full: image, logicalSize: size,
-                                                                       profile: profile, pid: pid),
-                                                    image, cleaned != nil))
+                    let preparation = prepareNativeStrip(full: image, logicalSize: size,
+                                                         profile: profile, pid: pid)
+                    // 最终高度确定后再换算命中区。
+                    let buttonRects = trafficLightRects(
+                        trafficLightRects(win, winTopLeft: pos, barH: preparation.barH),
+                        normalizedFor: profile.trafficLights
+                    )
+                    continuation.resume(returning: (preparation, image, cleaned != nil,
+                                                    buttonRects, realWindowManagementCapability(win)))
                 }
             }
             if indicatorRemoved {
@@ -673,11 +686,6 @@ extension AppDelegate {
             let ms = { (a: CFAbsoluteTime, b: CFAbsoluteTime) in Int((b - a) * 1000) }
             wlog("    fold-capture timing id=\(id) queued=\(ms(captureTaskQueuedAt, captureTaskStartedAt))ms park=\(ms(captureTaskStartedAt, captureStartedAt))ms capture=\(ms(captureStartedAt, capturedAt))ms prepare=\(ms(capturedAt, CFAbsoluteTimeGetCurrent()))ms")
             let barH = preparation.barH
-            let buttonRects = trafficLightRects(
-                trafficLightRects(win, winTopLeft: pos, barH: barH),
-                normalizedFor: profile.trafficLights
-            )  // 最终高度确定后再换算命中区
-            let windowManagementCapability = realWindowManagementCapability(win)
             wlog("    capture full=\(full.width)x\(full.height) scale=\(preparation.scale) fixedBarH=\(preparation.fixedBarH.map { String(format: "%.1f", $0) } ?? "-") visualBarH=\(preparation.visualBarH.map { String(Int($0)) } ?? "-") fallbackBarH=\(Int(preparation.fallbackBarH)) standardBarH=\(String(format: "%.1f", preparation.standardBarH)) finalBarH=\(String(format: "%.1f", barH)) buttons=\(buttonRects.count) windowManagement=\(windowManagementCapability) cropPxH=\(max(1, Int(ceil(barH * preparation.scale)))) boundary=\(preparation.boundary)")
             guard let strip = preparation.strip else {
                 activateApp(pid: pid)
