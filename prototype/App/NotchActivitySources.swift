@@ -26,11 +26,17 @@ final class NotchActivitySources {
     private var workToken = ActivitySourceToken()
     private var musicApp: String?
     static let musicKey = "Notch.activities.musicEnabled"
+    /// 设备列表与 AirPods 那段结果：CoreAudio 枚举一次 1.74ms（2026-10-01 实测，100 次平均），
+    /// 每 2 秒问一次就是常驻约 0.11% 单核——锁屏下量到的 0.100% 基本就是它。
+    /// 现在只在「设备/默认输出变了」或 30 秒兜底时才重新枚举。
+    private let audioCache = AudioDeviceCache()
+    private var audioListenersInstalled = false
 
     func start() {
         guard timer == nil else { return }
         epoch += 1
         workToken = ActivitySourceToken()
+        installAudioListeners()
         timer = Timer(timeInterval: 2, repeats: true) { [weak self] _ in
             MainActor.assumeIsolated { self?.poll() }
         }
@@ -84,7 +90,7 @@ final class NotchActivitySources {
                 if music == nil || (music!.isPaused && !candidate.isPaused) { music = candidate }
             }
             if let music { result.append(music) }
-            result.append(contentsOf: Self.audioSnapshot())
+            result.append(contentsOf: self?.audioSnapshot() ?? [])
             let snapshots = result
             DispatchQueue.main.async {
                 guard let self else { return }
@@ -177,32 +183,62 @@ final class NotchActivitySources {
         return nil
     }
 
-    nonisolated private static func audioSnapshot() -> [NotchSourceSnapshot] {
+    /// CoreAudio 的「设备/默认输出」变化监听：变了就把缓存标脏，下一次对账才重新枚举。
+    /// 只装一次，不拆——这台 App 只有一个 `NotchActivitySources` 实例，进程退出时监听自然消失，
+    /// 拆的时候还要原样留着 block 才能摘掉，收益不值得那份复杂度。
+    private func installAudioListeners() {
+        guard !audioListenersInstalled else { return }
+        audioListenersInstalled = true
+        var addresses: [AudioObjectPropertyAddress] = [
+            AudioObjectPropertyAddress(mSelector: kAudioHardwarePropertyDevices,
+                                       mScope: kAudioObjectPropertyScopeGlobal,
+                                       mElement: kAudioObjectPropertyElementMain),
+            AudioObjectPropertyAddress(mSelector: kAudioHardwarePropertyDefaultOutputDevice,
+                                       mScope: kAudioObjectPropertyScopeGlobal,
+                                       mElement: kAudioObjectPropertyElementMain),
+        ]
+        for index in addresses.indices {
+            _ = AudioObjectAddPropertyListenerBlock(
+                AudioObjectID(kAudioObjectSystemObject), &addresses[index], worker) { [audioCache] _, _ in
+                    audioCache.markDirty()
+                }
+        }
+    }
+
+    nonisolated private func audioSnapshot() -> [NotchSourceSnapshot] {
         var result: [NotchSourceSnapshot] = []
         let systemObject = AudioObjectID(kAudioObjectSystemObject)
-        let output = uint(systemObject, kAudioHardwarePropertyDefaultOutputDevice)
-        var devicesAddress = AudioObjectPropertyAddress(mSelector: kAudioHardwarePropertyDevices,
-            mScope: kAudioObjectPropertyScopeGlobal, mElement: kAudioObjectPropertyElementMain)
-        var devicesSize: UInt32 = 0
-        var devices: [AudioObjectID] = []
-        if AudioObjectGetPropertyDataSize(systemObject, &devicesAddress, 0, nil, &devicesSize) == noErr,
-           devicesSize > 0, devicesSize <= 1024, Int(devicesSize) % MemoryLayout<AudioObjectID>.size == 0 {
-            devices = [AudioObjectID](repeating: 0, count: Int(devicesSize) / MemoryLayout<AudioObjectID>.size)
-            let status = devices.withUnsafeMutableBytes {
-                AudioObjectGetPropertyData(systemObject, &devicesAddress, 0, nil, &devicesSize, $0.baseAddress!)
+        // AirPods 那段只在缓存脏了或超过 30 秒兜底时重算（枚举设备要 1.74ms，见 audioCache 的注释）。
+        if let cached = audioCache.take(maxAge: 30) {
+            result.append(contentsOf: cached)
+        } else {
+            let output = Self.uint(systemObject, kAudioHardwarePropertyDefaultOutputDevice)
+            var devicesAddress = AudioObjectPropertyAddress(mSelector: kAudioHardwarePropertyDevices,
+                mScope: kAudioObjectPropertyScopeGlobal, mElement: kAudioObjectPropertyElementMain)
+            var devicesSize: UInt32 = 0
+            var devices: [AudioObjectID] = []
+            if AudioObjectGetPropertyDataSize(systemObject, &devicesAddress, 0, nil, &devicesSize) == noErr,
+               devicesSize > 0, devicesSize <= 1024, Int(devicesSize) % MemoryLayout<AudioObjectID>.size == 0 {
+                devices = [AudioObjectID](repeating: 0, count: Int(devicesSize) / MemoryLayout<AudioObjectID>.size)
+                let status = devices.withUnsafeMutableBytes {
+                    AudioObjectGetPropertyData(systemObject, &devicesAddress, 0, nil, &devicesSize, $0.baseAddress!)
+                }
+                if status != noErr { devices = [] }
             }
-            if status != noErr { devices = [] }
-        }
-        if let output { devices = [output] + devices.filter { $0 != output } }
-        for device in devices {
-            guard uint(device, kAudioDevicePropertyDeviceIsAlive) == 1,
-                  let transport = uint(device, kAudioDevicePropertyTransportType),
-                  [kAudioDeviceTransportTypeBluetooth, kAudioDeviceTransportTypeBluetoothLE].contains(transport),
-                  let name = string(device, kAudioObjectPropertyName), name.localizedCaseInsensitiveContains("AirPods") else { continue }
-            result.append(NotchSourceSnapshot(kind: .airPods, title: name,
-                subtitle: device == output ? "已连接 · 当前声音输出" : "已连接", symbol: "airpodspro",
-                progress: nil, isPaused: false, detail: ""))
-            break
+            if let output { devices = [output] + devices.filter { $0 != output } }
+            var airPods: [NotchSourceSnapshot] = []
+            for device in devices {
+                guard Self.uint(device, kAudioDevicePropertyDeviceIsAlive) == 1,
+                      let transport = Self.uint(device, kAudioDevicePropertyTransportType),
+                      [kAudioDeviceTransportTypeBluetooth, kAudioDeviceTransportTypeBluetoothLE].contains(transport),
+                      let name = Self.string(device, kAudioObjectPropertyName), name.localizedCaseInsensitiveContains("AirPods") else { continue }
+                airPods.append(NotchSourceSnapshot(kind: .airPods, title: name,
+                    subtitle: device == output ? "已连接 · 当前声音输出" : "已连接", symbol: "airpodspro",
+                    progress: nil, isPaused: false, detail: ""))
+                break
+            }
+            audioCache.store(airPods)
+            result.append(contentsOf: airPods)
         }
         if #available(macOS 14.2, *) {
             var address = AudioObjectPropertyAddress(mSelector: kAudioHardwarePropertyProcessObjectList,
@@ -215,9 +251,9 @@ final class NotchActivitySources {
                 let status = objects.withUnsafeMutableBytes { bytes in
                     AudioObjectGetPropertyData(system, &address, 0, nil, &size, bytes.baseAddress!)
                 }
-                if status == noErr, let object = objects.first(where: { string($0, kAudioProcessPropertyBundleID) == "com.apple.VoiceMemos" }) {
-                    let input = uint(object, kAudioProcessPropertyIsRunningInput) == 1
-                    let state = uint(object, kAudioProcessPropertyPID).flatMap { recordingState(pid: pid_t($0)) }
+                if status == noErr, let object = objects.first(where: { Self.string($0, kAudioProcessPropertyBundleID) == "com.apple.VoiceMemos" }) {
+                    let input = Self.uint(object, kAudioProcessPropertyIsRunningInput) == 1
+                    let state = Self.uint(object, kAudioProcessPropertyPID).flatMap { Self.recordingState(pid: pid_t($0)) }
                     if input || state != nil {
                         result.append(NotchSourceSnapshot(kind: .recording, title: "语音备忘录",
                             subtitle: state == true ? "录音已暂停" : (state == false ? "正在录音" : "麦克风使用中"),
@@ -236,4 +272,31 @@ private final class ActivitySourceToken: @unchecked Sendable {
     private var cancelled = false
     var valid: Bool { lock.lock(); defer { lock.unlock() }; return !cancelled }
     func cancel() { lock.lock(); cancelled = true; lock.unlock() }
+}
+
+/// AirPods 那段结果的缓存：CoreAudio 枚举设备一次 1.74ms，2 秒问一次就是常驻约 0.11% 单核。
+/// 设备或默认输出变了（CoreAudio 监听置脏）才重算，另有 `maxAge` 兜底。
+private final class AudioDeviceCache: @unchecked Sendable {
+    private let lock = NSLock()
+    private var snapshots: [NotchSourceSnapshot] = []
+    private var at: CFAbsoluteTime = 0
+    private var dirty = true
+
+    func markDirty() {
+        lock.lock(); dirty = true; lock.unlock()
+    }
+
+    func take(maxAge: CFTimeInterval) -> [NotchSourceSnapshot]? {
+        lock.lock(); defer { lock.unlock() }
+        guard !dirty, CFAbsoluteTimeGetCurrent() - at < maxAge else { return nil }
+        return snapshots
+    }
+
+    func store(_ value: [NotchSourceSnapshot]) {
+        lock.lock()
+        snapshots = value
+        at = CFAbsoluteTimeGetCurrent()
+        dirty = false
+        lock.unlock()
+    }
 }
