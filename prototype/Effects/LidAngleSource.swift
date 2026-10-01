@@ -44,6 +44,8 @@ final class LidAngleSource {
   /// 所以主路径改成「订阅推送」：一次 feature 读 0.914ms，原来静止 4Hz 就是常驻 0.37% 单核。
   /// 推送健康时只留一条 1Hz 看门狗（不读 HID，只检查推送有没有断），断了才退回轮询。
   private var lastPushAt: CFTimeInterval = 0
+  /// 上一份整度推送的角度：精细格式的机器上，推送只当「角度变了」的信号用（见 receive）。
+  private var lastPushAngle: Double?
   private var connection: UInt64 = 0
   /// 管理器是否已 Activate（订阅推送）。只有激活过的才能、也必须先 Cancel 再 Close。
   private var activated = false
@@ -102,8 +104,11 @@ final class LidAngleSource {
   /// 按当前状态重排定时器；间隔真的变了才写日志（`lid: poll 4.0Hz (still)` 就是省下来的那 ~0.8% CPU）。
   private func applyIntervalIfChanged() {
     let interval = currentInterval()
-    timer?.schedule(deadline: .now(), repeating: interval, leeway: Self.leeway(engaged: engaged))
+    // 间隔没变就什么都不动。以前这里每次都 `schedule(deadline: .now())`，而盖子在动时每份读数都会
+    // 调到这里——定时器被一次次改成「立刻触发」，60Hz 的轮询变成能读多快读多快
+    // （2026-10-01 真机测试：合盖 1 秒 760 份读数），每份还都排一次主线程。
     guard loggedInterval != interval else { return }
+    timer?.schedule(deadline: .now(), repeating: interval, leeway: Self.leeway(engaged: engaged))
     loggedInterval = interval
     let reason: String
     if engaged { reason = "folding" }
@@ -191,8 +196,9 @@ final class LidAngleSource {
   }
   private func poll(_ token: UInt64) {
     guard current(token) else { return }
-    // 推送健康、又没在合盖：这一拍只当看门狗，不读 HID（一次 0.914ms）。
-    if !engaged, pushIsFresh() { return }
+    // 推送健康、又没在合盖：这一拍只当看门狗。推送和 feature 读同格式时不读 HID（一次 0.914ms）；
+    // 精细格式的机器上推送只是整度，读数只能来自 feature 读，所以看门狗这一拍顺带读一次（1Hz）。
+    if !engaged, pushIsFresh(), report != .precise { return }
     let started = CACurrentMediaTime()
     guard let device, let angle = read(device, report) else {
       failures += 1
@@ -221,10 +227,19 @@ final class LidAngleSource {
     let wasFresh = pushIsFresh()
     lastPushAt = CACurrentMediaTime()
     if hingeGate.feed(angle, at: lastPushAt) || !wasFresh { applyIntervalIfChanged() }
-    // 合盖途中由 60Hz 的 feature 读驱动动画。这台机器 feature 读是精细格式（0.01°），
-    // 推送却是整度：两路交替送进动画会差出最多 1°（约 2% 进度）来回跳，所以这时只认同格式的推送。
-    if engaged, sameFormat == nil { return }
-    deliver(angle, token: connection, startedAt: lastPushAt)
+    guard sameFormat == nil else {
+      deliver(angle, token: connection, startedAt: lastPushAt)
+      return
+    }
+    // 精细格式的机器（feature 读 0.01°）上推送只有整度，而且是向下取整。两种刻度不能混着交给下游：
+    // 合盖途中会差出最多 1° 来回跳；在「触发角 + 8°」那条线上更糟——推送说 102、feature 读说 103.1，
+    // 下游一会儿判「开始合盖」一会儿判「盖子开着」，效果每半秒起停一次（2026-10-01 真机日志）。
+    // 所以这里推送只当「角度变了」的信号：变了就立刻做一次精细读，交出去的永远是同一种刻度。
+    // 盖子不动时推送角度不变，不读；合盖途中 60Hz 轮询本来就在读，推送直接忽略。
+    let changed = lastPushAngle != angle
+    lastPushAngle = angle
+    guard !engaged, changed, let device, let precise = read(device, self.report) else { return }
+    deliver(precise, token: connection, startedAt: lastPushAt)
   }
 
   /// 交一份读数给主线程（轮询和推送两条路共用）。
@@ -253,6 +268,7 @@ final class LidAngleSource {
     hingeGate.reset()
     loggedInterval = nil
     lastPushAt = 0
+    lastPushAngle = nil
     connection = 0
     if let device { IOHIDDeviceClose(device, 0) }
     device = nil

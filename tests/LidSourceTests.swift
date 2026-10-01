@@ -19,11 +19,12 @@ struct LidSourceTests {
 
         let source = LidAngleSource()
         var angles: [Double] = []
+        var idleReadings: [LidAngleSource.Reading] = []
         var engagedReadings: [LidAngleSource.Reading] = []
         var engagedPhase = false
         var statuses: [String] = []
         source.onReading = { reading in
-            if engagedPhase { engagedReadings.append(reading) } else { angles.append(reading.angle) }
+            if engagedPhase { engagedReadings.append(reading) } else { angles.append(reading.angle); idleReadings.append(reading) }
         }
         source.onStatus = { statuses.append($0.message) }
 
@@ -58,16 +59,23 @@ struct LidSourceTests {
             exit(0)
         }
         expect(statuses.contains { $0.contains("已连接") }, "and it connected to the hinge sensor")
-        // 推送约 10Hz：3 秒应该有二三十份读数；就算只走推送也远多于 0。
-        expect(angles.count >= 8, "readings arrive (got \(angles.count) in 3s)")
+        // 推送与 feature 读同格式时，推送本身就是读数（约 10Hz）；精细格式的机器上盖子不动只剩
+        // 1Hz 看门狗那一读（推送只当「变了」的信号）。两种情况 3 秒里都至少有两三份。
+        expect(angles.count >= 2, "readings arrive (got \(angles.count) in 3s)")
         expect(angles.allSatisfy { $0.isFinite && (0...180).contains($0) },
                "every reading is a sane angle (last \(angles.last.map { String(format: "%.2f", $0) } ?? "-")°)")
         expect(!pushLines.isEmpty, "the log shows the push path: \(pushLines.last ?? "no 'lid: poll 1.0Hz (push)' line")")
         expect(!lines.contains { $0.contains("(still)") && $0.contains("lid: poll 4.0Hz") },
                "and it did not fall back to 4Hz polling while the push stream was healthy")
 
-        expect(engagedReadings.count >= 30, "while folding the hinge is read at about 60Hz (got \(engagedReadings.count) in 1s)")
+        expect((30...90).contains(engagedReadings.count),
+               "while folding the hinge is read at about 60Hz, not as fast as it can (got \(engagedReadings.count) in 1s)")
         if statuses.contains(where: { $0.contains("精细") }) {
+            // 不在合盖时也一样：交出去的必须全是精细读数。整度推送向下取整，在「触发角 + 8°」那条线上
+            // 和精细读数一边一个，会让桌面效果每半秒起停一次（2026-10-01 真机日志）。
+            let wholeIdle = idleReadings.filter { $0.readMilliseconds < 0.1 }
+            expect(wholeIdle.isEmpty,
+                   "with the lid still, no whole-degree push is handed on as a reading (\(wholeIdle.count) handed on)")
             // 推送读数在投递前几乎不花时间（< 0.1ms），feature 读要走一趟 HID（实测 0.5ms 以上）。
             let pushed = engagedReadings.filter { $0.readMilliseconds < 0.1 }
             expect(pushed.isEmpty,
