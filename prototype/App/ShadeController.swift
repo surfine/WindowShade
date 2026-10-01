@@ -180,6 +180,8 @@ extension AppDelegate {
         // 单窗口折叠不像专注会话那样有阶段汇总：这里记一个起点，安装阶段慢的时候补一行
         // `perf: fold install …`（2026-10-01：折叠期间 0.5–1.5s 的主线程卡顿只能靠猜哪一段贵）。
         let foldStartedAt = CFAbsoluteTimeGetCurrent()
+        // 各段耗时的全局累计在折叠前先拍一张，结束做差就是「这一次」的分段——一次折叠就能定位。
+        let foldPhaseBaseline = foldPhaseTotals
         // 音频设备闲下来后，第一次播放要在调用线程上花 250–500ms 把设备拉起来（见 ShadeSoundPlayer）。
         // 折叠开始就先在后台预热，等真正播音效时它是热的。
         prewarmFoldSound()
@@ -286,7 +288,13 @@ extension AppDelegate {
                 // 慢的时候留一行：这一段全在主线程上，量出来才知道该改哪儿。
                 if installMilliseconds >= 150 {
                     let totalMilliseconds = (CFAbsoluteTimeGetCurrent() - foldStartedAt) * 1000
-                    wlog("perf: fold install id=\(id) install=\(Int(installMilliseconds))ms total=\(Int(totalMilliseconds))ms mode=\(mode)")
+                    let phases = foldPhaseTotals
+                        .map { (name: $0.key, seconds: $0.value - (foldPhaseBaseline[$0.key] ?? 0)) }
+                        .filter { $0.seconds > 0.005 }
+                        .sorted { $0.seconds > $1.seconds }
+                        .map { "\($0.name) \(Int($0.seconds * 1000))ms" }
+                        .joined(separator: " · ")
+                    wlog("perf: fold install id=\(id) install=\(Int(installMilliseconds))ms total=\(Int(totalMilliseconds))ms mode=\(mode) phases: \(phases)")
                 }
             }
             shadeOperationIDs.remove(id)
