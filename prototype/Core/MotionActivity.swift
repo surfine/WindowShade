@@ -43,6 +43,16 @@ enum LidPollInterval {
         if engaged { return 1.0 / 60 }
         return moving ? 1.0 / 12 : 1.0 / 4
     }
+
+    /// 有推送时的间隔：合盖途中照旧 60Hz（动画要跟手）；其余时候只留 1Hz 看门狗——
+    /// 看门狗那一拍**不读 HID**，只检查推送有没有断，断了才退回上面的 4/12Hz 兜底轮询。
+    /// 设备一次 feature 读 0.914ms，所以静止时从 4Hz（≈0.37% 单核）降到 1Hz（≈0.09%），
+    /// 而且推送本身是 ~10Hz，比原来的 4Hz 更跟手。
+    static func seconds(engaged: Bool, moving: Bool, pushFresh: Bool) -> Double {
+        if engaged { return 1.0 / 60 }
+        if pushFresh { return 1 }
+        return seconds(engaged: false, moving: moving)
+    }
 }
 
 /// 铰链自己看到的「有人在掰盖子」：角度变化超过阈值，就把「在动」续到 `hold` 秒之后。
