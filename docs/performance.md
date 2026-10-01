@@ -254,6 +254,14 @@ macOS 27.0 上实测第一次 496ms（同一进程随后立即再播是 0ms）�
 1Hz×0.914ms≈**0.09%**（合盖那几秒照旧 60Hz，短促、不影响常驻）。
 真机日志里会写成 `lid: poll 1.0Hz (push)`；这一行要解锁后才会出现（锁屏不起传感器，见上一条）。
 
+**改这一带时顺手抓到的一个真崩溃。** 为了验证上面那条，新加的 `tests/run-lid-source-tests.sh`
+直接驱动应用里那个 `LidAngleSource`（不是另写一份），结果一跑就 abort：
+`IOHIDManagerClose` 之前没有 `IOHIDManagerCancel`（加速计那边是对的，铰链这边漏了），
+IOKit 在 release 时过释放——`"Invalid dispatch state" ← IOHIDManagerExtRelease ← IOHIDManagerClose`。
+订阅推送那条路一上来就要 Activate，正好把这个漏掉的配对暴露出来。补上 Cancel 后测试全绿。
+这条测试同时钉住三件事：连得上传感器、3 秒收到 ~31 份读数（推送约 10Hz，1Hz 看门狗不读 HID）、
+日志里出现 `lid: poll 1.0Hz (push)` 而不是退回 4Hz。没有盖角传感器的机器会自动 SKIP。
+
 ## 四、两次「凭直觉的优化」反而变慢
 
 都是同一个错误：**拿几何匹配当身份校验。**

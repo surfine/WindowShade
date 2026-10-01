@@ -245,7 +245,13 @@ final class LidAngleSource {
     connection = 0
     if let device { IOHIDDeviceClose(device, 0) }
     device = nil
-    if let manager { IOHIDManagerClose(manager, 0) }
+    if let manager {
+      // Activate 和 Cancel 是一对：只 Close 不 Cancel，IOKit 里会在 release 时过释放，
+      // 直接 abort（2026-10-01 被 tests/run-lid-source-tests.sh 抓到：
+      // "Invalid dispatch state" ← IOHIDManagerExtRelease ← IOHIDManagerClose）。
+      IOHIDManagerCancel(manager)
+      IOHIDManagerClose(manager, 0)
+    }
     manager = nil
   }
   deinit {
