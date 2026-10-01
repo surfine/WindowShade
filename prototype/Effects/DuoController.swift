@@ -181,15 +181,21 @@ final class DuoController: NSObject {
     if persistsSettings { settings.save() }
     if !settings.desktopEnabled || !allowsAnimation { stopDesktop() }
     if !settings.windowsEnabled || !allowsAnimation { windowEffects.cancelAll() }
-    let lockedLid = lockOverlay.enabled && EffectEnvironment.lockState == .locked
+    // 锁屏时只有「锁屏效果」还需要传感器；别的时候一律停掉。
+    // 注意这里必须看**当前**锁屏状态，不能只看 `suspended`：应用在已经锁屏的状态下启动时，
+    // 从没发生过锁屏*转换*，suspended 一直是 false，于是启动即锁屏也会一直 4Hz 问铰链
+    // （2026-10-01 实测：那种状态下常驻 0.37% 单核，全花在这上面）。
+    let lockedScreen = EffectEnvironment.lockState == .locked
+    let lockOverlayNeedsSensors = lockOverlay.enabled && lockedScreen
       && !EffectEnvironment.asleep && EffectEnvironment.displayAwake
-    if lockedLid || (!suspended && ((!pausedByUser && settings.desktopEnabled) || settingsWindow != nil)) {
+    let normalSensors = !suspended && !lockedScreen
+      && ((!pausedByUser && settings.desktopEnabled) || settingsWindow != nil)
+    if lockOverlayNeedsSensors || normalSensors {
       sensor.start()
     } else {
       sensor.stop()
     }
-    let wantsMotion = settings.motionEnabled && !suspended &&
-      (settings.desktopEnabled || settingsWindow != nil)
+    let wantsMotion = settings.motionEnabled && (lockOverlayNeedsSensors || normalSensors)
     if wantsMotion {
       accelerometer.start()
     } else {

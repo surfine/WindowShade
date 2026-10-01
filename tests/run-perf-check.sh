@@ -13,10 +13,11 @@ STAGE=.build/duo-validation/WindowShade.app/Contents/MacOS/WindowShade
 
 front=$(lsappinfo front 2>/dev/null || true)
 if lsappinfo info -only name "$front" 2>/dev/null | grep -q loginwindow; then
-  echo "屏幕锁着：GUI 探针在这个状态下会以 kAXErrorCannotComplete 失败。解锁后再跑。"
-  exit 2
+  # 退出码 0：这是需要图形会话的手工复检，锁屏下跳过不该让「跑一遍全部 runner」变红。
+  echo "SKIP: 屏幕锁着，GUI 探针在这个状态下会以 kAXErrorCannotComplete 失败；解锁后再跑。"
+  exit 0
 fi
-[ -x "$STAGE" ] || { echo "没有签名隔离构建：先在 prototype/ 跑 ./build.sh --stage"; exit 2; }
+[ -x "$STAGE" ] || { echo "SKIP: 没有签名隔离构建；先在 prototype/ 跑 ./build.sh --stage"; exit 0; }
 
 restore() { open "$APP" >/dev/null 2>&1 || true; }
 trap restore EXIT
