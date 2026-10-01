@@ -8,9 +8,7 @@ final class DuoController: NSObject {
   var persistsSettings = true
   var pausedByUser = false
   private let sensor = LidAngleSource()
-  private let accelerometer = AppleSPUAccelerometer()
   private(set) var sensorStatus = "传感器未启动"
-  private(set) var motionStatus = "空间倾斜传感器未启用"
   private(set) var angle: Double?
   private var observers: [(NotificationCenter, NSObjectProtocol)] = []
   private var distributedObservers: [NSObjectProtocol] = []
@@ -19,27 +17,20 @@ final class DuoController: NSObject {
   private var startTask: Task<Void, Never>?
   private var epoch = EffectEpoch()
   private var suspended = false
-  // 合盖效果是一次性动画（docs/lid-effect.md）：什么时候播合上、什么时候播展开，全由 LidGesture 按
-  // 「相对静止角度」判断；这里只负责把指令变成画面。target 是动画要去的地方：1 = 合上的样子，0 = 桌面。
+  // 合盖效果（docs/lid-effect.md）：合上和展开都跟着盖子走，进度只由 LidGesture 一处算，
+  // 桌面效果和锁屏效果读的是同一份；这里只负责把进度画出来。
   private var gesture = LidGesture()
   private var previousTime: CFTimeInterval = 0
-  /// 一次性动画的弹簧：design-system 的 `settle`（无过冲，约 0.56 秒到位），和缩略图收起 / 展开同一手感。
-  private var spring = FoldSpring(frequency: DuoController.closeFrequency)
-  /// 合上是一次性动画，用 design-system 的 `settle`；展开跟着盖子走，用原来的快弹簧（约 0.2 秒跟上）
-  /// 把 10Hz 的整度推送抹平。
-  private static let closeFrequency = 2 * .pi / MotionSpring.settle.response
-  /// 正在跟着盖子展开：从哪个角度开始、要回到哪个角度，以及盖子最后一次动是什么时候。
-  /// 盖子停住 1 秒还没回到原位，剩下的展开就自己播完，不让屏幕停在半合的样子。
-  private var opening: (from: Double, to: Double, lastAngle: Double, movedAt: CFTimeInterval)?
-  /// 合上动画播完时留下的最后一帧和它所在的屏：屏熄后再亮，直接拿它开始展开，
-  /// 不必等 1 秒多的新截图（2026-10-01 实测屏亮到第一帧 1.0–1.3 秒，期间看得到桌面）。
+  /// 把约 10Hz 的整度推送抹平成连续的画面（临界阻尼，约 0.2 秒跟上）。
+  private var spring = FoldSpring()
+  /// 合满定格时留下的最后一帧和它所在的屏：屏再亮时直接拿它起步，不必等 1 秒多的新截图
+  /// （2026-10-01 实测屏亮到第一帧 1.0–1.3 秒，期间看得到桌面）。盖子回到静止就丢掉，不留旧图。
   private var closedStill: (image: CGImage, displayID: CGDirectDisplayID, color: EffectColorSpace)?
-  private var target = 0.0
+  /// 这一次开合里效果被撤掉了（按键、点击、会话失败）：盖子回到静止之前不再起会话，免得反复重开。
+  private var dismissed = false
   private var lastReadingTime: CFTimeInterval = 0
   private var desktopFPS = 15
-  // 倾斜的低通和基线在 AppleSPUAccelerometer 自己的队列上算，这里每帧读最新值。
-  private var tiltHold = TiltHold()
-  private var tiltThreshold = SIMD2<Float>(repeating: 0)
+  private var displayCallbackRegistered = false
   private struct DisplayConfiguration: Equatable {
     let id: CGDirectDisplayID
     let frame: CGRect
@@ -58,9 +49,7 @@ final class DuoController: NSObject {
         wideColor: screen.canRepresent(.p3))
     }.sorted { $0.id < $1.id }
   }
-  var settingsWindow: DuoSettingsWindow? {
-    didSet { accelerometer.setStatusTicks(settingsWindow != nil) }
-  }
+  var settingsWindow: DuoSettingsWindow?
   let windowEffects = WindowFoldEffects()
   let lockOverlay = LockOverlayController()
   var desktopActive: Bool { desktop != nil || startTask != nil }
@@ -88,27 +77,11 @@ final class DuoController: NSObject {
       }
     }
     sensor.onReading = { [weak self] in self?.receive($0) }
-    accelerometer.onStatus = { [weak self] status in
-      self?.motionStatus = status.message
-      self?.settingsWindow?.refreshStatus()
+    // 内建屏熄 / 亮就是「盖子真的合上过 / 打开了」（docs/lid-effect.md）。系统重排显示器结束时回调，在主线程上。
+    if !displayCallbackRegistered {
+      displayCallbackRegistered = true
+      CGDisplayRegisterReconfigurationCallback(Self.displayReconfigured, Unmanaged.passUnretained(self).toOpaque())
     }
-    accelerometer.onStatusTick = { [weak self] in self?.settingsWindow?.refreshStatus() }
-    // 诊断：内建屏随合盖熄灭 / 点亮时，系统重排显示器那半秒里主线程上任何 WindowServer 调用都会等。
-    // 记下「开始重排」通知何时到、当时盖角多少，用来判断能不能抢在重排之前把效果收掉。
-    CGDisplayRegisterReconfigurationCallback({ display, flags, context in
-      guard let context, CGDisplayIsBuiltin(display) != 0 else { return }
-      let controller = Unmanaged<DuoController>.fromOpaque(context).takeUnretainedValue()
-      let phase = flags.contains(.beginConfigurationFlag) ? "begin" : "end"
-      let angle = controller.angle.map { String(format: "%.1f", $0) } ?? "-"
-      wlog("duo: builtin display reconfig \(phase) flags=0x\(String(flags.rawValue, radix: 16)) angle=\(angle) desktop=\(controller.desktop != nil)")
-      // 内建屏熄 / 亮就是「盖子真的合上过 / 打开了」：开盖动画以屏熄过为准（docs/lid-effect.md）。
-      guard phase == "end" else { return }
-      if flags.contains(.removeFlag) || flags.contains(.disabledFlag) {
-        controller.builtinDisplayChanged(lit: false)
-      } else if flags.contains(.addFlag) || flags.contains(.enabledFlag) {
-        controller.builtinDisplayChanged(lit: true)
-      }
-    }, Unmanaged.passUnretained(self).toOpaque())
     let workspace = NSWorkspace.shared.notificationCenter
     // 通知只用来触发重读：状态变了先进 EffectEnvironment，再决定停还是恢复。
     observe(workspace, NSWorkspace.willSleepNotification) { [weak self] in
@@ -189,37 +162,27 @@ final class DuoController: NSObject {
       (center, center.addObserver(forName: name, object: nil, queue: .main) { _ in action() }))
   }
 
-  /// 内建屏熄了 / 亮了（CG 显示器重排回调，主线程）。
-  fileprivate func builtinDisplayChanged(lit: Bool) {
+  private static let displayReconfigured: CGDisplayReconfigurationCallBack = { display, flags, context in
+    guard let context, CGDisplayIsBuiltin(display) != 0, !flags.contains(.beginConfigurationFlag) else { return }
+    let controller = Unmanaged<DuoController>.fromOpaque(context).takeUnretainedValue()
+    if flags.contains(.removeFlag) || flags.contains(.disabledFlag) {
+      controller.builtinDisplayChanged(lit: false)
+    } else if flags.contains(.addFlag) || flags.contains(.enabledFlag) {
+      controller.builtinDisplayChanged(lit: true)
+    }
+  }
+
+  /// 内建屏熄了 / 亮了。熄了：进度停在合上的样子。亮了：熄过的话从合上的样子起一个会话，跟着盖子展开。
+  private func builtinDisplayChanged(lit: Bool) {
+    wlog("duo: builtin display \(lit ? "lit" : "dark") angle=\(angle.map { String(format: "%.0f", $0) } ?? "-")")
     guard lit else {
       gesture.displayOff()
       return
     }
-    guard let command = gesture.displayOn(at: CACurrentMediaTime()) else { return }
-    play(command, afterWake: true)
-  }
-
-  /// 把 LidGesture 的指令变成画面。合上：动画去 1，没有会话就开一个（从桌面开始）。
-  /// 展开：动画回 0；只有屏刚亮、而且之前没有会话时，才开一个从「合上的样子」开始的会话。
-  private func play(_ command: LidGesture.Command, afterWake: Bool) {
-    guard settings.desktopEnabled, allowsAnimation else { return }
-    wlog("duo: lid \(command) afterWake=\(afterWake) desktop=\(desktop != nil)")
-    switch command {
-    case .playClose:
-      opening = nil
-      spring.frequency = Self.closeFrequency
-      target = 1
-      if desktop == nil, startTask == nil { prepareDesktop(startClosed: false) }
-    case .playOpen:
-      let from = angle ?? 0
-      let to = max(gesture.restBeforeClose ?? 100, from + 10)
-      opening = (from, to, from, CACurrentMediaTime())
-      spring.frequency = FoldSpring.frequency
-      target = 1
-      wlog(String(format: "duo: opening follows the lid %.0f° → %.0f°", from, to))
-      guard afterWake, desktop == nil, startTask == nil else { return }
-      if !showClosedStill() { prepareDesktop(startClosed: true) }
-    }
+    guard gesture.displayOn(at: CACurrentMediaTime()), settings.desktopEnabled, allowsAnimation else { return }
+    dismissed = false
+    guard desktop == nil, startTask == nil else { return }
+    if !showClosedStill() { prepareDesktop(startProgress: 1) }
   }
 
   func settingsChanged() {
@@ -244,54 +207,26 @@ final class DuoController: NSObject {
     } else {
       sensor.stop()
     }
-    // 倾斜只在合盖效果进行时有用（tickDesktop 一处），所以加速度计只在效果进行时、或设置窗开着时跑
-    // （它原来一天到晚 62 次/秒，是解锁空闲时最大的常驻开销）。
-    let wantsMotion = settings.motionEnabled && (lockOverlayNeedsSensors || normalSensors)
-      && (desktopActive || settingsWindow != nil)
-    if wantsMotion {
-      accelerometer.start()
-    } else {
-      accelerometer.stop()
-    }
     settingsWindow?.refreshStatus(force: true)
   }
 
-  private var lastAngleLog: CFTimeInterval = 0
   private func receive(_ reading: LidAngleSource.Reading) {
-    // 诊断（临时）：效果在跑或角度低于触发线时，每 0.2 秒记一份读数和它从哪来（读 HID 花了多久）。
-    if (desktop != nil || reading.angle < settings.triggerAngle + 8), reading.time - lastAngleLog >= 0.2 {
-      lastAngleLog = reading.time
-      wlog(String(format: "duo: reading angle=%.2f read=%.2fms desktop=%@ spring=%.3f", reading.angle,
-                  reading.readMilliseconds, desktop != nil ? "on" : "off", spring.value))
-    }
-    lockOverlay.receive(reading)
     angle = reading.angle
     lastReadingTime = reading.time
+    // 每份读数都喂给 LidGesture（静止角度要一直跟着学），锁屏效果和桌面效果读同一份进度。
+    gesture.feed(reading.angle, at: reading.time)
+    lockOverlay.receive(progress: gesture.progress)
     settingsWindow?.refreshStatus()
     guard settings.desktopEnabled else { return }
-    // 每份读数都喂给 LidGesture（静止角度要一直跟着学）；只有真出了指令才去查能不能播
-    // （allowsAnimation 会读锁屏状态缓存，不必每份读数都问）。
-    if let command = gesture.feed(reading.angle, at: reading.time) { play(command, afterWake: false) }
-    followOpening(reading)
-  }
-
-  /// 展开跟着盖子走：进度随角度变；回到合盖前的角度附近就展开完。
-  private func followOpening(_ reading: LidAngleSource.Reading) {
-    guard var current = opening else { return }
-    if abs(reading.angle - current.lastAngle) >= 1 {
-      current.lastAngle = reading.angle
-      current.movedAt = reading.time
-      opening = current
+    guard gesture.phase == .following else {
+      // 回到静止：这次开合结束，留帧作废、撤掉的效果下次可以再起；会话由 tickDesktop 收到 0 后收掉。
+      dismissed = false
+      closedStill = nil
+      return
     }
-    target = LidGesture.openProgress(angle: reading.angle, from: current.from, to: current.to)
-    if reading.angle >= current.to - 2 { finishOpening() }
-  }
-
-  /// 不再跟手：剩下的展开用一次性动画播完。
-  private func finishOpening() {
-    opening = nil
-    target = 0
-    spring.frequency = Self.closeFrequency
+    // 开始跟手：还没有会话就从桌面（进度 0 附近）起一个。allowsAnimation 读锁屏状态缓存，只在这时才问。
+    guard desktop == nil, startTask == nil, !dismissed, allowsAnimation else { return }
+    prepareDesktop(startProgress: 0)
   }
 
   /// 屏刚亮：用合上时留下的最后一帧立刻起一个静态会话，从「合上的样子」往桌面展开。
@@ -308,21 +243,17 @@ final class DuoController: NSObject {
     desktop = effect
     desktopFPS = 15
     spring.reset(1)
-    tiltHold.reset()
-    tiltThreshold = TiltHold.threshold(
-      pixelWidth: Double(still.image.width), pixelHeight: Double(still.image.height))
-    if settings.motionEnabled { accelerometer.start() }
     previousTime = CACurrentMediaTime()
     effect.presentationWanted = true
     // 屏刚亮时第一帧要 0.3–0.8 秒才呈现得出来（2026-10-01 实测），默认 0.5 秒预算会判失败。
     effect.firstPresentationBudget = 1.5
     effect.tick = { [weak self] now in self?.tickDesktop(now) }
-    effect.onFailure = { [weak self] in self?.stopDesktop() }
+    effect.onFailure = { [weak self] in self?.dismiss() }
     marking("duo: 显示合上时留下的一帧") { effect.show() }
     return true
   }
 
-  private func prepareDesktop(startClosed: Bool) {
+  private func prepareDesktop(startProgress: Double) {
     guard allowsAnimation, settings.desktopEnabled else { return }
     let token = epoch.advance()
     startTask = Task { @MainActor [weak self] in
@@ -377,19 +308,18 @@ final class DuoController: NSObject {
         self.windowEffects.cancelAll()
         self.desktop = effect
         self.desktopFPS = 15
-        // 合上从桌面（0）开始往 1 播；屏刚亮的展开从「合上的样子」（1）开始往 0 播。
-        self.spring.reset(startClosed ? 1 : 0)
-        if self.settings.motionEnabled { self.accelerometer.start() }
-        self.tiltHold.reset()
-        self.tiltThreshold = TiltHold.threshold(pixelWidth: width, pixelHeight: height)
+        // 开始合时从桌面（0）起步；屏刚亮时从合上的样子（1）起步。之后都跟着 LidGesture 的进度走。
+        self.spring.reset(startProgress)
         self.previousTime = CACurrentMediaTime()
-        effect.presentationWanted = self.spring.value > 0 || self.target > 0
+        // 要呈现：起点 0 的第一帧和桌面一模一样，先把它呈现出来，进度才开始走（见 tickDesktop）。
+        effect.presentationWanted = true
         effect.tick = { [weak self] now in self?.tickDesktop(now) }
-        effect.onFailure = { [weak self] in self?.stopDesktop() }
+        effect.onFailure = { [weak self] in self?.dismiss() }
         marking("duo: 显示桌面会话") { effect.show() }
       } catch {
         session?.stop()
         if self.epoch.accepts(token) {
+          self.dismissed = true
           wlog("duo: desktop start failed \(error.localizedDescription)")
           self.sensorStatus = "捕获不可用：\(error.localizedDescription)"
           self.settingsWindow?.refreshStatus()
@@ -413,26 +343,18 @@ final class DuoController: NSObject {
     }
     let dt = now - previousTime
     previousTime = now
+    let target = gesture.progress
     let fps = target > 0 || spring.value > 0 ? 60 : 15
     if fps != desktopFPS, !desktop.holdsLastFrame {
       desktopFPS = fps
       desktop.source.updateFPS(fps)
     }
-    // 第一帧还没呈现到屏上之前，动画不走（参数照常设，第一帧画的就是起点）：
-    // 否则屏刚亮时要等 0.3 秒才看得见，展开已经播完大半（2026-10-01 实测）。
-    if let current = opening, now - current.movedAt > 1 { finishOpening() }
+    // 第一帧还没呈现到屏上之前，进度不走（参数照常设，第一帧画的就是起点）：
+    // 否则屏刚亮时要等 0.3 秒才看得见，展开已经走掉一截（2026-10-01 实测）。
     if desktop.isPresented { spring.advance(to: target, dt: dt) }
-    let tilt = settings.motionEnabled ? accelerometer.tilt : .zero
-    let motion = tiltHold.update(SIMD2(Float(tilt.x), Float(tilt.y)), threshold: tiltThreshold)
-    desktop.renderer.parameters = .init(
-      progress: Float(spring.value),
-      motionX: motion.x,
-      motionY: motion.y,
-      preset: settings.preset)
-    // 要去「合上」时也算想呈现：起点 0 的第一帧和桌面一模一样，先把它呈现出来，动画才开始走。
-    desktop.presentationWanted = spring.value > 0 || target > 0
-    // 合上动画播完：定格最后一帧、不再画新帧，录屏降到 1fps（盖子停着时不必录；保留 1fps 是为了
-    // 会话的「画面还活着」检查不误判）。展开时自动恢复。
+    desktop.renderer.parameters = .init(progress: Float(spring.value), preset: settings.preset)
+    // 合满、画面到位：定格最后一帧、不再画新帧（屏熄那一刻就不会卡在要新画面上），录屏降到 1fps
+    // （保留 1fps 是为了会话的「画面还活着」检查不误判）。盖子往回开时自动恢复。
     let holding = target == 1 && spring.value == 1
     if holding != desktop.holdsLastFrame {
       desktop.holdsLastFrame = holding
@@ -443,26 +365,28 @@ final class DuoController: NSObject {
         closedStill = (image, id, EffectColorSpace.display(desktop.panel.screen))
       }
     }
-    // 展开动画播完就收掉会话。
-    if target == 0, spring.value == 0 { stopDesktop() }
+    // 回到静止、画面也回到桌面，收掉会话。
+    if gesture.phase == .resting, spring.value == 0 { stopDesktop() }
   }
 
   private func dismissForInput() {
-    if desktopActive {
-      stopDesktop()
-    }
+    if desktopActive { dismiss() }
+  }
+  /// 撤掉这一次的效果（按键、点击、会话失败）；盖子回到静止之前不再起会话。
+  private func dismiss() {
+    dismissed = true
+    stopDesktop()
   }
   private func suspend() {
     wlog("duo: suspend")
     suspended = true
     lockOverlay.handoff(progress: spring.value, velocity: spring.velocity,
-                        preset: settings.preset, trigger: settings.triggerAngle)
+                        preset: settings.preset)
     stopDesktop()
     windowEffects.cancelAll()
     if lockOverlay.enabled && EffectEnvironment.lockState == .locked
       && !EffectEnvironment.asleep && EffectEnvironment.displayAwake { sensor.start() }
     else { sensor.stop() }
-    accelerometer.stop()
     settingsWindow?.suspendPreview()
   }
   private func resume() {
@@ -488,14 +412,13 @@ final class DuoController: NSObject {
       // （内建屏熄灭、系统重排显示器时，orderOut 会在主线程上等 WindowServer）。
       wlog("duo: desktop stopped lockQueries=\(EffectEnvironment.queries) generation=\(EffectEnvironment.generation) stop=\(stopMilliseconds)ms")
     }
-    // 会话结束后重建基线：下一次触发必须来自一次新的合盖动作。
     spring.reset()
-    opening = nil
-    spring.frequency = Self.closeFrequency
-    if settingsWindow == nil { accelerometer.stop() }
-    target = 0
   }
   func stop() {
+    if displayCallbackRegistered {
+      CGDisplayRemoveReconfigurationCallback(Self.displayReconfigured, Unmanaged.passUnretained(self).toOpaque())
+      displayCallbackRegistered = false
+    }
     lockOverlay.stop()
     suspend()
     sensor.stop()
