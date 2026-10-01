@@ -67,6 +67,13 @@ struct LidGestureTests {
         }
         do {
             var g = LidGesture()
+            run(&g, hold(104, seconds: 2) + ramp(104, 20, seconds: 1.5))
+            run(&g, ramp(20, 98, seconds: 2), from: 10)
+            expect(g.phase == .resting && g.progress == 0,
+                   "opening to a few degrees short of the old rest angle still ends once the fold is no longer visible")
+        }
+        do {
+            var g = LidGesture()
             let noisy = (0..<200).map { 101.0 + Double([0, 1, 0, -1, 1][$0 % 5]) }
             run(&g, noisy)
             expect(g.phase == .resting && g.progress == 0, "a lid resting with one degree of noise never starts")

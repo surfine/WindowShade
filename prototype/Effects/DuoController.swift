@@ -20,6 +20,7 @@ final class DuoController: NSObject {
   // 合盖效果（docs/lid-effect.md）：合上和展开都跟着盖子走，进度只由 LidGesture 一处算，
   // 桌面效果和锁屏效果读的是同一份；这里只负责把进度画出来。
   private var gesture = LidGesture()
+  private var loggedPhase: LidGesture.Phase = .resting
   private var previousTime: CFTimeInterval = 0
   /// 把约 10Hz 的整度推送抹平成连续的画面（临界阻尼，约 0.2 秒跟上）。
   private var spring = FoldSpring()
@@ -215,6 +216,13 @@ final class DuoController: NSObject {
     lastReadingTime = reading.time
     // 每份读数都喂给 LidGesture（静止角度要一直跟着学），锁屏效果和桌面效果读同一份进度。
     gesture.feed(reading.angle, at: reading.time)
+    if gesture.phase != loggedPhase {
+      // 阶段变化才记一行（静止 / 跟手 / 熄屏），低频，用来事后看一次开合是怎么走的。
+      loggedPhase = gesture.phase
+      wlog(String(format: "duo: lid %@ angle=%.0f progress=%.2f rest=%@ restBeforeClose=%@", "\(gesture.phase)",
+                  reading.angle, gesture.progress, gesture.baseline.map { String(format: "%.0f", $0) } ?? "-",
+                  gesture.restBeforeClose.map { String(format: "%.0f", $0) } ?? "-"))
+    }
     lockOverlay.receive(progress: gesture.progress)
     settingsWindow?.refreshStatus()
     guard settings.desktopEnabled else { return }

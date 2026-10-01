@@ -7,7 +7,7 @@
 // - 比基线低 15° 以上、而且还在往下合，才开始跟手。合上：从触发点（基线 − 15°）到 35° 进度 0 → 1。
 // - 往回开：从开始往回开的那一点，到合盖前的静止角度，进度从当时的值走到 0。
 // - 中途换方向（往回开 / 又往下合）都从当下的角度和进度接着走，画面不跳。盖子停住，进度就停住。
-// - 回到合盖前静止角度附近，进度归零，回到静止。
+// - 回到合盖前静止角度附近，或进度已经低到看不出（< 2%），进度归零，回到静止。
 // - 内建屏熄过（合到底、睡眠），屏一亮就从“合上的样子”开始跟着展开——以“屏真的熄过”为准。
 
 import Foundation
@@ -25,6 +25,9 @@ struct LidGesture {
   static let reverseBand = 2.0
   /// 离合盖前的静止角度还差多少度算展开完。
   static let restBand = 2.0
+  /// 往回开时进度低到这里就算展开完：画面和桌面已经看不出差别，再留着效果窗口和录屏只是白白耗电
+  /// （2026-10-01 实测：这次开得比上次低几度，效果在后台多挂了 13 秒，屏幕看起来是正常的）。
+  static let doneProgress = 0.02
   /// 盖子在这个范围里晃动算“没动”；稳住多久，基线跟过去。
   static let stillBand = 1.5
   static let settleTime = 1.0
@@ -127,7 +130,7 @@ struct LidGesture {
     segment = current
     progress = Self.interpolate(current, angle)
     // 回到合盖前的静止角度附近：展开完，回到静止，基线从这里接着学。
-    if !current.closing, let rest = restBeforeClose, angle >= rest - Self.restBand {
+    if !current.closing, progress < Self.doneProgress || restBeforeClose.map({ angle >= $0 - Self.restBand }) == true {
       progress = 0
       phase = .resting
       segment = nil
