@@ -281,14 +281,21 @@ final class AudioDeviceCache: @unchecked Sendable {
     private var snapshots: [NotchSourceSnapshot] = []
     private var at: CFAbsoluteTime = 0
     private var dirty = true
+    /// 每次置脏加一。store 只在「从 take 到 store 之间没有新的置脏」时才清脏：
+    /// 枚举途中设备又变了，这次结果照存，但下一次仍会重算，而不是等 30 秒兜底。
+    private var generation = 0
+    private var takenGeneration = 0
 
     func markDirty() {
-        lock.lock(); dirty = true; lock.unlock()
+        lock.lock(); dirty = true; generation += 1; lock.unlock()
     }
 
     func take(maxAge: CFTimeInterval) -> [NotchSourceSnapshot]? {
         lock.lock(); defer { lock.unlock() }
-        guard !dirty, CFAbsoluteTimeGetCurrent() - at < maxAge else { return nil }
+        guard !dirty, CFAbsoluteTimeGetCurrent() - at < maxAge else {
+            takenGeneration = generation
+            return nil
+        }
         return snapshots
     }
 
@@ -296,7 +303,7 @@ final class AudioDeviceCache: @unchecked Sendable {
         lock.lock()
         snapshots = value
         at = CFAbsoluteTimeGetCurrent()
-        dirty = false
+        if generation == takenGeneration { dirty = false }
         lock.unlock()
     }
 }

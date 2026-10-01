@@ -26,10 +26,16 @@ final class TrackpadGestureController {
 
     /// Swish 也在标题栏上认两指手势：两边同时响应会对同一下滑动各做一件事，
     /// 所以它在运行时，标题栏手势交给它；卷帘条是我们自己的窗口，不受影响。
+    ///
+    /// 每次手势开始、每次甩动都会问它，而逐个读 `localizedName` 是去 LaunchServices 同步要一次
+    /// （2026-10-01 主线程采样：一次手势开始就在这里等了约 140ms）。结果只在有 App 启动或退出时
+    /// 才会变，所以缓存起来，由那两个通知置脏，另有 30 秒兜底。
     nonisolated static func conflictingApp() -> NSRunningApplication? {
-        NSWorkspace.shared.runningApplications.first { app in
-            let id = app.bundleIdentifier?.lowercased() ?? ""
-            return id.hasSuffix(".swish") || app.localizedName == "Swish"
+        ConflictingAppCache.shared.value {
+            NSWorkspace.shared.runningApplications.first { app in
+                let id = app.bundleIdentifier?.lowercased() ?? ""
+                return id.hasSuffix(".swish") || app.localizedName == "Swish"
+            }
         }
     }
 
@@ -2134,5 +2140,44 @@ private final class TitlebarHoldMenuTarget: NSObject {
     @objc func activateAction(_ item: NSMenuItem) {
         guard let raw = item.representedObject as? String, let action = GestureAction(rawValue: raw) else { return }
         callback(action)
+    }
+}
+
+/// `conflictingApp()` 的结果缓存：App 启动 / 退出时置脏，最多 30 秒重算一次兜底。
+/// 任意线程都会来问（主线程、手势队列），状态只在锁里读写。
+private final class ConflictingAppCache: @unchecked Sendable {
+    static let shared = ConflictingAppCache()
+    private let lock = NSLock()
+    private var cached: NSRunningApplication?
+    private var computedAt: CFAbsoluteTime = 0
+    private var dirty = true
+    private static let maxAge: CFTimeInterval = 30
+
+    private init() {
+        let center = NSWorkspace.shared.notificationCenter
+        for name in [NSWorkspace.didLaunchApplicationNotification, NSWorkspace.didTerminateApplicationNotification] {
+            center.addObserver(forName: name, object: nil, queue: nil) { [weak self] _ in self?.markDirty() }
+        }
+    }
+
+    private func markDirty() {
+        lock.lock(); dirty = true; lock.unlock()
+    }
+
+    func value(_ compute: () -> NSRunningApplication?) -> NSRunningApplication? {
+        lock.lock()
+        if !dirty, CFAbsoluteTimeGetCurrent() - computedAt < Self.maxAge, cached?.isTerminated != true {
+            defer { lock.unlock() }
+            return cached
+        }
+        // 先清脏再算：算的途中又有 App 启动 / 退出，会重新置脏，下一次照样重算，不会被这次覆盖掉。
+        dirty = false
+        lock.unlock()
+        let result = compute()
+        lock.lock()
+        cached = result
+        computedAt = CFAbsoluteTimeGetCurrent()
+        lock.unlock()
+        return result
     }
 }
