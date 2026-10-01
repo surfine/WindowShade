@@ -98,6 +98,8 @@ final class FoldRenderer: NSObject, MTKViewDelegate {
     view.autoresizingMask = [.width, .height]
     (view.layer as? CAMetalLayer)?.maximumDrawableCount = 2
   }
+  /// 当前画面的一张静止图（合上动画播完时留着，屏再亮时直接拿它开始展开，不用等新截图）。
+  var currentStill: CGImage? { frame?.stillImage() }
   func setFrame(_ next: EffectFrame) {
     guard !cleared, frame?.id != next.id || frame?.generation != next.generation else { return }
     if frame?.generation != next.generation { measuredFrame = nil }

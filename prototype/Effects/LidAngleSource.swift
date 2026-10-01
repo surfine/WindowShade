@@ -30,30 +30,19 @@ final class LidAngleSource {
   private var report: LidReport = .whole
   private var timer: DispatchSourceTimer?
   private var failures = 0
-  private var engaged = false
-  /// 加速度计喂进来的「在动」（见 MotionActivityDetector）：不动时把轮询降到 4Hz。
-  /// 没有运动数据时保持 true，也就是维持原来的 12Hz——降频不能靠猜。
-  private var moving = true
-  /// 自愈：铰链自己看到角度在变，也当作「在动」一段时间（见 HingeMoveGate）。
-  private var hingeGate = HingeMoveGate()
-  /// 上次真正生效并打过日志的间隔，避免状态没变还反复写日志。
-  private var loggedInterval: Double?
-  /// 盖角设备其实会**主动推送** input report（2026-10-01 用 tools/lid-report-probe 实测：
-  /// 静止时也 ~10Hz、3 字节、report id 1 = 整度）。注意：本机 feature 读走的是精细格式（id 7，0.01°），
-  /// 和推送不是同一格式，所以合盖途中不混用（见 receive）。
-  /// 所以主路径改成「订阅推送」：一次 feature 读 0.914ms，原来静止 4Hz 就是常驻 0.37% 单核。
-  /// 推送健康时只留一条 1Hz 看门狗（不读 HID，只检查推送有没有断），断了才退回轮询。
+  /// 主路径是设备主动推送的 input report：约 10Hz，静止时也推（2026-10-01 tools/lid-report-probe 实测）。
+  /// 合盖效果只看相对角度判断「开始合 / 往回开」（Core/LidGesture.swift，见 docs/lid-effect.md），
+  /// 整度推送足够，所以推送一律直接交出去，不再跟 feature 读混用、也不再 60Hz 精细读。
+  /// 定时器只做两件事：推送健康时 1Hz 看门狗（不读 HID）；推送断了（不推送的机型、驱动卡住）退回 4Hz feature 轮询。
   private var lastPushAt: CFTimeInterval = 0
-  /// 上一份整度推送的角度：精细格式的机器上，推送只当「角度变了」的信号用（见 receive）。
-  private var lastPushAngle: Double?
   private var connection: UInt64 = 0
   /// 管理器是否已 Activate（订阅推送）。只有激活过的才能、也必须先 Cancel 再 Close。
   private var activated = false
+  /// 当前是不是在退回轮询；nil = 还没排过定时器。
+  private var pollingFallback: Bool?
   private static let pushStale: CFTimeInterval = 3
-  private static let watchdogInterval: CFTimeInterval = 1
-  /// 最近一次请求的 engaged，受 lock 保护。主线程每份读数都会调 setEngaged，
-  /// 值没变就不再往 queue 上排一个空转的任务（静置时每秒省 12 次线程唤醒）。
-  private var requestedEngaged = false
+  static let watchdogInterval = 1.0
+  static let fallbackInterval = 0.25
   var onReading: ((Reading) -> Void)?
   var onStatus: ((Status) -> Void)?
 
@@ -75,65 +64,21 @@ final class LidAngleSource {
     // 不能让 deinit 和队列上的回调赛跑。
     queue.async { self.close() }
   }
-  func setEngaged(_ value: Bool) {
-    let changed = lock.withLock { () -> Bool in
-      guard requestedEngaged != value else { return false }
-      requestedEngaged = value
-      return true
-    }
-    guard changed else { return }
-    queue.async { [weak self] in
-      guard let self, engaged != value else { return }
-      engaged = value
-      applyIntervalIfChanged()
-    }
-  }
-  func setMoving(_ value: Bool) {
-    queue.async { [weak self] in
-      guard let self, moving != value else { return }
-      moving = value
-      applyIntervalIfChanged()
-    }
-  }
-
-  /// 现在算不算「在动」：加速度计说在动，或者铰链自己刚看到角度变化（自愈，见 HingeMoveGate）。
-  private func effectiveMoving() -> Bool {
-    moving || hingeGate.isMoving(at: CACurrentMediaTime())
-  }
-
-  /// 按当前状态重排定时器；间隔真的变了才写日志（`lid: poll 4.0Hz (still)` 就是省下来的那 ~0.8% CPU）。
-  private func applyIntervalIfChanged() {
-    let interval = currentInterval()
-    // 间隔没变就什么都不动。以前这里每次都 `schedule(deadline: .now())`，而盖子在动时每份读数都会
-    // 调到这里——定时器被一次次改成「立刻触发」，60Hz 的轮询变成能读多快读多快
-    // （2026-10-01 真机测试：合盖 1 秒 760 份读数），每份还都排一次主线程。
-    guard loggedInterval != interval else { return }
-    timer?.schedule(deadline: .now(), repeating: interval, leeway: Self.leeway(engaged: engaged))
-    loggedInterval = interval
-    let reason: String
-    if engaged { reason = "folding" }
-    else if pushIsFresh() { reason = "push" }
-    else { reason = effectiveMoving() ? "moving" : "still" }
-    wlog(String(format: "lid: poll %.1fHz (%@)", 1 / interval, reason))
-  }
 
   /// 推送还新鲜吗（最近 pushStale 秒内收到过）。
   private func pushIsFresh() -> Bool {
     lastPushAt > 0 && CACurrentMediaTime() - lastPushAt < Self.pushStale
   }
 
-  /// 当前该跑的定时器间隔：合盖 60Hz；推送健康时只留 1Hz 看门狗；推送断了才退回 4/12Hz 轮询。
-  private func currentInterval() -> Double {
-    LidPollInterval.seconds(engaged: engaged, moving: effectiveMoving(), pushFresh: pushIsFresh())
-  }
-  // 合盖途中 60Hz 且几乎不给余量，动画才跟手；静止时 12Hz 只用来发现「开始合盖」，
-  // 放宽到 20ms 余量让系统把这次唤醒和别的定时器合并，常驻开销更低。
-  /// 见 Core/MotionActivity.swift 的 LidPollInterval（合盖 60Hz / 在动 12Hz / 静止 4Hz）。
-  private static func interval(engaged: Bool, moving: Bool) -> Double {
-    LidPollInterval.seconds(engaged: engaged, moving: moving)
-  }
-  private static func leeway(engaged: Bool) -> DispatchTimeInterval {
-    .milliseconds(engaged ? 2 : 20)
+  /// 推送健康 → 1Hz 看门狗；推送断了 → 4Hz 轮询。状态真的变了才重排定时器、写日志
+  /// （每次都 `schedule(deadline: .now())` 会让定时器一直立刻触发，2026-10-01 吃过这个亏）。
+  private func updateTimer() {
+    let fallback = !pushIsFresh()
+    guard pollingFallback != fallback else { return }
+    pollingFallback = fallback
+    let interval = fallback ? Self.fallbackInterval : Self.watchdogInterval
+    timer?.schedule(deadline: .now() + interval, repeating: interval, leeway: .milliseconds(50))
+    wlog(String(format: "lid: poll %.1fHz (%@)", 1 / interval, fallback ? "no push" : "push"))
   }
   private func current(_ token: UInt64) -> Bool { lock.withLock { wanted && epoch.accepts(token) } }
   private func connect(_ token: UInt64) {
@@ -180,8 +125,8 @@ final class LidAngleSource {
     let timer = DispatchSource.makeTimerSource(queue: queue)
     timer.setEventHandler { [weak self] in self?.poll(token) }
     self.timer = timer
-    loggedInterval = nil
-    applyIntervalIfChanged()
+    pollingFallback = nil
+    updateTimer()
     timer.resume()
   }
   private func read(_ device: IOHIDDevice, _ report: LidReport) -> Double? {
@@ -196,9 +141,9 @@ final class LidAngleSource {
   }
   private func poll(_ token: UInt64) {
     guard current(token) else { return }
-    // 推送健康、又没在合盖：这一拍只当看门狗。推送和 feature 读同格式时不读 HID（一次 0.914ms）；
-    // 精细格式的机器上推送只是整度，读数只能来自 feature 读，所以看门狗这一拍顺带读一次（1Hz）。
-    if !engaged, pushIsFresh(), report != .precise { return }
+    updateTimer()
+    // 推送健康：这一拍只是看门狗，不读 HID（一次 feature 读约 0.9ms）。
+    guard !pushIsFresh() else { return }
     let started = CACurrentMediaTime()
     guard let device, let angle = read(device, report) else {
       failures += 1
@@ -212,34 +157,18 @@ final class LidAngleSource {
       return
     }
     failures = 0
-    if hingeGate.feed(angle, at: CACurrentMediaTime()) { applyIntervalIfChanged() }
     deliver(angle, token: token, startedAt: started)
   }
 
-  /// 推送来的报告（在 queue 上）。格式与 feature 读一样：字节 0 是报告号。
+  /// 推送来的报告（在 queue 上）。字节 0 是报告号；本机推送是整度（id 1），也认精细格式（id 7）。
   private func receive(_ report: UnsafeMutablePointer<UInt8>, length: CFIndex) {
     guard current(connection), length > 0, length <= 32 else { return }
     let bytes = Array(UnsafeBufferPointer(start: report, count: length))
-    let sameFormat = self.report.decode(bytes)
-    let angle = sameFormat
-      ?? (self.report == .precise ? LidReport.whole.decode(bytes) : LidReport.precise.decode(bytes))
-    guard let angle else { return }
+    guard let angle = LidReport.whole.decode(bytes) ?? LidReport.precise.decode(bytes) else { return }
     let wasFresh = pushIsFresh()
     lastPushAt = CACurrentMediaTime()
-    if hingeGate.feed(angle, at: lastPushAt) || !wasFresh { applyIntervalIfChanged() }
-    guard sameFormat == nil else {
-      deliver(angle, token: connection, startedAt: lastPushAt)
-      return
-    }
-    // 精细格式的机器（feature 读 0.01°）上推送只有整度（四舍五入）。两种刻度不能混着交给下游：
-    // 合盖途中会差出最多 1° 来回跳；在「触发角 + 8°」那条线上更糟——推送说 102、feature 读说 103.1，
-    // 下游一会儿判「开始合盖」一会儿判「盖子开着」，效果每半秒起停一次（2026-10-01 真机日志）。
-    // 所以这里推送只当「角度变了」的信号：变了就立刻做一次精细读，交出去的永远是同一种刻度。
-    // 盖子不动时推送角度不变，不读；合盖途中 60Hz 轮询本来就在读，推送直接忽略。
-    let changed = lastPushAngle != angle
-    lastPushAngle = angle
-    guard !engaged, changed, let device, let precise = read(device, self.report) else { return }
-    deliver(precise, token: connection, startedAt: lastPushAt)
+    if !wasFresh { updateTimer() }
+    deliver(angle, token: connection, startedAt: lastPushAt)
   }
 
   /// 交一份读数给主线程（轮询和推送两条路共用）。
@@ -265,10 +194,8 @@ final class LidAngleSource {
   private func close() {
     timer?.cancel()
     timer = nil
-    hingeGate.reset()
-    loggedInterval = nil
+    pollingFallback = nil
     lastPushAt = 0
-    lastPushAngle = nil
     connection = 0
     if let device { IOHIDDeviceClose(device, 0) }
     device = nil

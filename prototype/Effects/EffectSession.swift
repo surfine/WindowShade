@@ -52,6 +52,14 @@ final class EffectSession {
   var onFailure: (() -> Void)?
   var onVisible: (() -> Void)?
   var presentationWanted = true { didSet { updateVisibility() } }
+  /// 停在最后一帧：时钟照走、tick 照调，但不再向 Metal 要新的 drawable（合上动画播完之后用，
+  /// 内建屏熄灭那一刻就不会卡在 `nextDrawable` 上）。只在第一帧已经呈现、也没有在等某一帧呈现时才生效，
+  /// 否则会话第一帧出不来、0.5 秒后被判呈现超时（2026-10-01 吃过这个亏）。
+  var holdsLastFrame = false
+  /// 第一帧已经真的呈现到屏上了。
+  var isPresented: Bool { hasPresented }
+  /// 首帧预算（秒）。默认 0.5（见 show() 里的说明）；屏刚亮时的第一帧要慢得多，调用方可以放宽。
+  var firstPresentationBudget: Double = 0.5
   private var gpuReady = false
   private var hasPresented = false
   private var shown = false
@@ -115,7 +123,7 @@ final class EffectSession {
       guard let self, !stopped else { return }
       if let frame = source.frame() { renderer.setFrame(frame) }
       tick?(now)
-      guard !stopped else { return }
+      guard !stopped, !(holdsLastFrame && hasPresented && pendingPresentation == nil) else { return }
       // A static restore image may have been submitted while the panel was
       // still transparent. GPU completion alone does not prove visibility;
       // keep submitting until a visible drawable is acknowledged. After that,
@@ -144,7 +152,7 @@ final class EffectSession {
     // 的正反馈。实测成功呈现的中位延迟 93ms，而失败率超过一半；把预算从 2s 收到
     // 0.5s，失败的代价降到四分之一。代价是长尾（p90 约 1.2s）那部分会被判失败，
     // 但首帧迟到一秒的卷帘动画本来也已经失去意义——那时窗口早就收起来了。
-    DispatchQueue.main.asyncAfter(deadline: .now() + 0.5) { [weak self] in
+    DispatchQueue.main.asyncAfter(deadline: .now() + firstPresentationBudget) { [weak self] in
       guard let self, !stopped, presentationWanted, !hasPresented else { return }
       wlog("duo-session: visible presentation timeout visible=\(panel.isVisible) alpha=\(panel.alphaValue) occlusion=\(panel.occlusionState.rawValue) \(renderer.metrics())")
       onFailure?()

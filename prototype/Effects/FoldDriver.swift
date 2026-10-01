@@ -40,6 +40,8 @@ struct FoldSpring {
   private(set) var velocity = 0.0
   /// Angular frequency giving a settle to within 2% of the target in ~0.2s.
   static let frequency = 5.83 / 0.20
+  /// 每个实例自己的角频率（临界阻尼）。默认跟原来一样；合盖的一次性动画用 design-system 的 `settle`。
+  var frequency = FoldSpring.frequency
   mutating func reset(_ value: Double = 0, velocity: Double = 0) {
     self.value = value
     self.velocity = velocity
@@ -49,10 +51,10 @@ struct FoldSpring {
     let target = min(1, max(0, target))
     let step = min(dt, 0.25)
     let offset = value - target
-    let decay = exp(-Self.frequency * step)
-    let slope = velocity + Self.frequency * offset
+    let decay = exp(-frequency * step)
+    let slope = velocity + frequency * offset
     value = target + (offset + slope * step) * decay
-    velocity = (slope - Self.frequency * (offset + slope * step)) * decay
+    velocity = (slope - frequency * (offset + slope * step)) * decay
     value = min(1, max(0, value))
     if abs(value - target) < 0.0001 && abs(velocity) < 0.002 { reset(target) }
   }
