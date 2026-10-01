@@ -64,6 +64,7 @@
 
 - `bash tests/run-launchpad-tests.sh`（模型、搜索、排列完整性）。
 - `bash tests/run-launchpad-view-tests.sh`（需要 macOS 图形会话；验证静止拖拽合并、主屏幕与文件夹边缘翻页、松手停止、关闭取消、连续切换文件夹、扫描与编辑交错、键盘、辅助功能结构、材质回退和异步图像更新）。
+- `bash tests/run-launchpad-perf.sh`（无头性能基线：扫描 / 图标 / 每一页与分类的布局逐段计时，**锁屏也能跑**）。
 - `prototype/build.sh --stage`，然后
   `PROBE_SHOTS=<绝对目录> bash tests/run-glance-probe.sh --launchpad`
 - 探针只修改内存中的排列，并检查用户保存的排列没有变化。
