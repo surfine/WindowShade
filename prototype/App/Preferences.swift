@@ -763,7 +763,7 @@ static func noticeTone(_ message: String) -> NotchPanel.Tone {
     }
 
     @objc func verifyTouchIDAction() {
-        MainActor.assumeIsolated { notch.authentication.authenticate() }
+        MainActor.assumeIsolated { notch.authentication.selfCheck() }
     }
 
     @objc func toggleLockOverlayAction() {

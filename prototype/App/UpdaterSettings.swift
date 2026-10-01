@@ -52,8 +52,27 @@ extension UpdaterController {
         return rows
     }
 
+    /// 关掉自动检查更新会让这台 Mac 收不到安全更新，所以要用 Touch ID 确认（docs/touch-id-island.md）。
+    /// 开关先保持“开”，拿到一次性授权、并按此刻的实际值重算目标消费成功后，才真的关掉。重新打开不需要确认。
+    /// 这台 Mac 没法确认（没有 Touch ID、刘海关着）时直接改：没有可用来确认的东西。
+    /// 局限：同一用户下的其他程序仍能直接改偏好文件；这里挡的是“有人在没锁的 Mac 前从设置里把它关掉”。
     @objc func settingsToggleAutomaticChecks(_ sender: NSSwitch) {
-        automaticallyChecks = sender.state == .on
+        let wantsOn = sender.state == .on
+        guard !wantsOn, automaticallyChecks else { automaticallyChecks = wantsOn; return }
+        sender.state = .on
+        let target = AuthTarget.setting(UpdateSettingsKeys.automaticChecks, from: true, to: false)
+        let started = confirmChange?(target) { [weak self, weak sender] grant in
+            guard let self else { return }
+            let current = AuthTarget.setting(UpdateSettingsKeys.automaticChecks, from: self.automaticallyChecks, to: false)
+            if let grant, AuthorizationService.shared.consume(grant, purpose: .changeSecurityPolicy, currentTarget: current) == nil {
+                self.automaticallyChecks = false
+            }
+            sender?.state = self.automaticallyChecks ? .on : .off
+        } ?? false
+        if !started {
+            automaticallyChecks = false
+            sender.state = .off
+        }
     }
 
     @objc func settingsSelectFrequency(_ sender: NSSegmentedControl) {

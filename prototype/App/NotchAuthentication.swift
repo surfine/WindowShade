@@ -1,27 +1,43 @@
 import Cocoa
+import CryptoKit
 import LocalAuthentication
 import LocalAuthenticationEmbeddedUI
 
 @MainActor protocol NotchInteractiveContent: AnyObject { var onCancel: (() -> Void)? { get set } }
 
-/// A single, explicit application-authentication transaction, presented by the existing island.
+/// One explicit, bound authorization transaction, presented by the existing island (docs/touch-id-island.md).
+///
+/// Success is not "evaluatePolicy returned true". It is: the native Touch ID view authenticated this request's
+/// own LAContext, the Secure Enclave device key signed this request's canonical bytes with that same context
+/// (no second prompt), and the ledger verified the signature and minted a one-time grant bound to the purpose
+/// and target. Callers get the grant and must consume it against the target as it is at execution time.
 @MainActor
 final class NotchAuthenticationController {
     private weak var owner: NotchController?
     private weak var panel: NotchPanel?
+    private let service: AuthorizationService
     private var context: LAContext?
     private var evaluating = false
     private var deadline: TimeInterval = 0
     private var presentation: NotchAuthenticationView?
     private var epoch = 0
     private var task: Task<Void, Never>?
-    private var completion: ((Bool) -> Void)?
+    private var completion: ((AuthorizationGrant?) -> Void)?
+    private var request: AuthRequest?
+    private var target: AuthTarget?
+    private var publicKey: P256.Signing.PublicKey?
     private var previousApplication: NSRunningApplication?
     private var observers: [NSObjectProtocol] = []
+    static let lifetime: TimeInterval = 30
     var isPresenting: Bool { presentation != nil }
+    /// The single native evaluation for a request (KEY-05); replaced in tests.
+    var evaluate: (LAContext, String, @escaping @Sendable (Bool, Error?) -> Void) -> Void = { context, reason, reply in
+        context.evaluatePolicy(.deviceOwnerAuthenticationWithBiometrics, localizedReason: reason, reply: reply)
+    }
 
-    init(owner: NotchController) {
+    init(owner: NotchController, service: AuthorizationService? = nil) {
         self.owner = owner
+        self.service = service ?? .shared
         observers.append(NSWorkspace.shared.notificationCenter.addObserver(forName: NSWorkspace.willSleepNotification,
             object: nil, queue: .main) { [weak self] _ in MainActor.assumeIsolated { self?.cancel(animated: false, restoreFocus: false) } })
         observers.append(DistributedNotificationCenter.default().addObserver(forName: .init("com.apple.screenIsLocked"),
@@ -32,29 +48,56 @@ final class NotchAuthenticationController {
             object: nil, queue: .main) { [weak self] _ in MainActor.assumeIsolated { self?.evaluateIfReady() } })
     }
 
-    func authenticate(reason: String = "确认你正在使用 WindowShade。", completion: @escaping (Bool) -> Void = { _ in }) {
+    /// Whether a confirmation can be shown at all right now: the island exists and Touch ID is set up.
+    /// Callers that protect a change ask this first; when it's false there is nothing to confirm with.
+    var canAuthorize: Bool {
+        guard NotchController.isEnabled, owner?.authenticationPanel() != nil else { return false }
+        let probe = LAContext()
+        defer { probe.invalidate() }
+        var error: NSError?
+        return probe.canEvaluatePolicy(.deviceOwnerAuthenticationWithBiometrics, error: &error) && probe.biometryType == .touchID
+    }
+
+    /// Menu 「验证 Touch ID…」: create the device key if missing, sign once with Touch ID, verify. A diagnostic, not protection.
+    func selfCheck() {
+        guard let raw = try? service.key.prepare().rawRepresentation else { alert(AuthorizationCopy.unavailable); return }
+        let target = AuthTarget.deviceKey(publicKeyRaw: Array(raw))
+        authorize(target) { [weak self] grant in
+            guard let self, let grant else { return }
+            _ = self.service.consume(grant, purpose: .enrollDevice, currentTarget: target)
+        }
+    }
+
+    /// Ask for Touch ID to confirm this concrete target. `completion` gets a one-time grant only after the
+    /// signature verified; every other outcome (cancel, timeout, lock, sleep, wrong finger, stale) gets nil, once.
+    func authorize(_ target: AuthTarget, completion: @escaping (AuthorizationGrant?) -> Void) {
         if isPresenting && context == nil { cancel(animated: false, restoreFocus: false) }
-        guard !isPresenting else { completion(false); return }
-        guard let owner, NotchController.isEnabled, let panel = owner.authenticationPanel() else { completion(false); return }
-        guard !panel.isAuthenticating else { completion(false); return }
+        guard !isPresenting else { completion(nil); return }
+        guard let owner, NotchController.isEnabled, let panel = owner.authenticationPanel() else { completion(nil); return }
+        guard !panel.isAuthenticating else { completion(nil); return }
+        guard let publicKey = try? service.key.prepare() else {
+            alert(AuthorizationCopy.unavailable, on: panel); completion(nil); return
+        }
         let context = LAContext()
         context.localizedFallbackTitle = ""; context.touchIDAuthenticationAllowableReuseDuration = 0
         var error: NSError?
         guard context.canEvaluatePolicy(.deviceOwnerAuthenticationWithBiometrics, error: &error),
-              context.biometryType == .touchID else {
+              context.biometryType == .touchID,
+              case .success(let request) = service.ledger.begin(target: target, ttl: UInt64(Self.lifetime * 1_000_000_000)) else {
             context.invalidate()
-            panel.alert(.init(id: 0, icon: nil, title: "Touch ID 暂时不可用", subtitle: "", tone: .problem))
-            completion(false); return
+            alert(AuthorizationCopy.unavailable, on: panel)
+            completion(nil); return
         }
         epoch += 1; let transaction = epoch
-        deadline = ProcessInfo.processInfo.systemUptime + 30
-        let view = NotchAuthenticationView(context: context, reason: reason)
+        deadline = ProcessInfo.processInfo.systemUptime + Self.lifetime
+        let view = NotchAuthenticationView(context: context, reason: AuthorizationCopy.action(for: target))
         view.onCancel = { [weak self] in self?.cancel() }
         self.panel = panel; self.context = context; evaluating = false; self.presentation = view; self.completion = completion
+        self.request = request; self.target = target; self.publicKey = publicKey
         previousApplication = NSWorkspace.shared.frontmostApplication
         panel.setAuthentication(view)
         task = Task { @MainActor [weak self] in
-            try? await Task.sleep(for: .seconds(30))
+            try? await Task.sleep(for: .seconds(Self.lifetime))
             guard !Task.isCancelled, let self, self.epoch == transaction else { return }
             self.cancel()
         }
@@ -68,21 +111,41 @@ final class NotchAuthenticationController {
         guard !evaluating, NSApp.isActive, let context, let panel, panel.isVisible,
               presentation?.window === panel else { return }
         evaluating = true; let transaction = epoch
-        let reason = presentation?.reason ?? "确认你正在使用 WindowShade。"
-        context.evaluatePolicy(.deviceOwnerAuthenticationWithBiometrics, localizedReason: reason) { [weak self] success, _ in
-            Task { @MainActor [weak self] in self?.finish(success, transaction: transaction) }
+        evaluate(context, presentation?.reason ?? "") { [weak self] success, _ in
+            Task { @MainActor [weak self] in self?.evaluated(success, transaction: transaction) }
         }
     }
 
-    private func finish(_ success: Bool, transaction: Int) {
-        guard epoch == transaction, context != nil, evaluating else { return }
-        guard ProcessInfo.processInfo.systemUptime < deadline else { cancel(animated: false); return }
-        guard let panel, panel.isVisible, presentation?.window === panel else { cancel(animated: false); return }
+    /// Native evaluation finished. On success, sign with the same context off the main thread.
+    private func evaluated(_ success: Bool, transaction: Int) {
+        guard isCurrent(transaction) else { return }
+        guard success else { fail(AuthorizationCopy.notConfirmed(for:)); return }
+        guard let context, let request else { return }
+        let job = SigningJob(key: service.key, message: request.canonicalBytes(), context: context)
+        DispatchQueue.global(qos: .userInitiated).async { [weak self] in
+            let result = Result { try job.key.sign(job.message, context: job.context) }
+            DispatchQueue.main.async { MainActor.assumeIsolated { self?.signed(result, transaction: transaction) } }
+        }
+    }
+
+    private func signed(_ result: Result<Data, Error>, transaction: Int) {
+        guard isCurrent(transaction), let request, let publicKey else { return }
         task?.cancel(); task = nil; context?.invalidate(); context = nil
+        let signature: Data
+        switch result {
+        case .success(let value): signature = value
+        case .failure(let error):
+            fail(error as? DeviceKeyError == .keyInvalidated ? { _ in AuthorizationCopy.fingerprintsChanged } : AuthorizationCopy.notConfirmed(for:))
+            return
+        }
+        guard case .success(let grant) = service.ledger.complete(
+            request, signature: signature, publicKey: publicKey, lock: service.lockState()) else {
+            fail(AuthorizationCopy.notConfirmed(for:)); return
+        }
+        self.request = nil  // completed in the ledger; nothing left to cancel there
         let reply = completion; completion = nil
-        if !success { cancel(); reply?(false); return }
         presentation?.confirm()
-        reply?(true) // Authorization is never delayed until an animation finishes.
+        reply?(grant) // Authorization is never delayed until an animation finishes.
         guard epoch == transaction else { return }
         task = Task { @MainActor [weak self] in
             try? await Task.sleep(for: .milliseconds(800))
@@ -91,10 +154,31 @@ final class NotchAuthenticationController {
         }
     }
 
+    /// Still this request, still in time, still on its visible host.
+    private func isCurrent(_ transaction: Int) -> Bool {
+        guard epoch == transaction, context != nil, evaluating else { return false }
+        guard ProcessInfo.processInfo.systemUptime < deadline else { cancel(animated: false); return false }
+        guard let panel, panel.isVisible, presentation?.window === panel else { cancel(animated: false); return false }
+        return true
+    }
+
+    private func fail(_ message: (AuthTarget) -> String) {
+        let host = panel, target = self.target
+        cancel()
+        if let host, let target { alert(message(target), on: host) }
+    }
+
+    private func alert(_ title: String, on host: NotchPanel? = nil) {
+        guard let host = host ?? owner?.authenticationPanel() else { return }
+        host.alert(.init(id: 0, icon: nil, title: title, subtitle: "", tone: .problem))
+    }
+
     func cancel(animated: Bool = true, restoreFocus: Bool = true) {
         guard isPresenting || context != nil else { return }
         epoch += 1; task?.cancel(); task = nil
         context?.invalidate(); context = nil; evaluating = false
+        if let request { service.ledger.cancel(requestID: request.requestID) }
+        request = nil; target = nil; publicKey = nil
         let reply = completion; completion = nil
         panel?.setAuthentication(nil, animated: animated); panel?.resignKey()
         panel = nil; presentation = nil
@@ -103,12 +187,19 @@ final class NotchAuthenticationController {
            let previous, previous.processIdentifier != ProcessInfo.processInfo.processIdentifier, !previous.isTerminated {
             previous.activate(options: [])
         }
-        reply?(false)
+        reply?(nil)
     }
 
     func reconcile(panels: [NotchPanel]) {
         if let panel, !panels.contains(where: { $0 === panel }) { cancel(animated: false) }
     }
+}
+
+/// Values handed to the signing queue. The context is used there exactly once and then only invalidated on main.
+private struct SigningJob: @unchecked Sendable {
+    let key: ProtectedKeySigning
+    let message: [UInt8]
+    let context: LAContext
 }
 
 /// The fingerprint is the system's own embedded view; only purpose/cancel/result belong to us.
