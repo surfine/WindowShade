@@ -57,7 +57,6 @@ final class EffectSoakProbe {
       if sensorTimes.count > 3600 { sensorTimes.removeFirst(sensorTimes.count - 3600) }
     }
     sensor.start()
-    sensor.setEngaged(true)
     Task { @MainActor in
       do {
         let content = try await SCShareableContent.excludingDesktopWindows(

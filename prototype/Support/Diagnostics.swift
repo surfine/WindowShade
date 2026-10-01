@@ -234,7 +234,7 @@ final class MainThreadSampler: @unchecked Sendable {
             guard takeSample else { continue }
             let frames = captureMainStack()
             guard !frames.isEmpty else { continue }
-            let described = frames.prefix(18).map(Self.describe)
+            let described = frames.prefix(32).map(Self.describe)
             // 主线程其实在等输入：菜单、拖动这类跟踪循环跑在私有的 RunLoop 模式里，看不到它入睡，但它是闲着的，不算卡顿。
             if described.contains(where: { $0.contains("ReceiveNextEventCommon") || $0.contains("BlockUntilNextEventMatchingListInMode") }) {
                 // 哨兵只看 runloop 活动，分辨不出「跟踪循环」和「真冻结」，两边会给出矛盾的两行日志。

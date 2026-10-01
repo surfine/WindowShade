@@ -64,11 +64,6 @@ final class AppleSPUAccelerometer {
   private var lastStatusTick: CFTimeInterval = 0
 
   var onStatus: ((Status) -> Void)?
-  /// 运动状态变化（在 queue 上回调，只在真正变化时叫一次）。
-  /// true = 在动或不知道，false = 确实是静止——盖角传感器据此把轮询降到 4Hz。
-  var onMotionChange: ((Bool) -> Void)?
-  private var activity = MotionActivityDetector()
-  private var publishedMotion: Bool?
   /// 只在 setStatusTicks(true) 期间、在主线程上调用。
   var onStatusTick: (() -> Void)?
 
@@ -230,8 +225,6 @@ final class AppleSPUAccelerometer {
     let firstReading = !hasReading
     hasReading = true
     let now = CACurrentMediaTime()
-    // 运动判定要看着**每一份**报告（限流只管往下游转发）：它决定盖角传感器的采样率。
-    publishMotion(activity.feed(vector, at: now))
     guard firstReading || now - lastForward >= Self.forwardInterval else { return }
     lastForward = now
     let token = connection
@@ -270,16 +263,6 @@ final class AppleSPUAccelerometer {
     lastForward = 0
     lastStatusTick = 0
     filter = MotionTiltFilter()
-    // 没有运动数据了就别再让盖角传感器降频：回到「当成在动」（12Hz），降频不能靠猜。
-    activity.reset()
-    publishMotion(true)
-  }
-
-  /// 只在状态变化时回调一次；`close()` 里也用同一路径回到「在动」。
-  private func publishMotion(_ moving: Bool) {
-    if let publishedMotion, publishedMotion == moving { return }
-    publishedMotion = moving
-    onMotionChange?(moving)
   }
 }
 

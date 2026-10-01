@@ -6,6 +6,8 @@
 // - 比基线低 15° 以上、而且这一份读数还在往下合，才算开始合盖 → 播合上动画，之后保持合上的样子。
 // - 合上的样子保持着，盖子从最低点往回抬 5° 以上 → 播展开动画，回到静止。
 // - 内建屏熄过（合到底、睡眠），屏一亮就播展开动画——以“屏真的熄过”为准，合上动画没来得及播也照样播。
+// - 展开跟着角度走（Aaron 2026-10-01）：从开始展开的角度到合盖前的静止角度，进度随盖子走，
+//   到平时的角度正好展开完。合盖照旧是一次性动画。
 
 import Foundation
 
@@ -25,6 +27,8 @@ struct LidGesture {
 
   private(set) var phase: Phase = .resting
   private(set) var baseline: Double?
+  /// 合盖前的静止角度：展开要回到这里才算展开完。屏熄后基线会重学，这个值留着。
+  private(set) var restBeforeClose: Double?
   private var lowest = 180.0
   private var previous: Double?
   private var anchor: (angle: Double, time: Double)?
@@ -47,12 +51,15 @@ struct LidGesture {
       guard angle <= baseline - Self.closeDrop, descending else { return nil }
       phase = .closed
       lowest = angle
+      restBeforeClose = baseline
       return .playClose
     }
   }
 
   /// 内建屏熄了：不管之前在哪个阶段，都记成“熄过”。
   mutating func displayOff() {
+    // 合得太快、合上动画没来得及播：合盖前的静止角度就是当时的基线。
+    if phase == .resting { restBeforeClose = baseline ?? restBeforeClose }
     phase = .dark
     lowest = 0
   }
@@ -65,6 +72,15 @@ struct LidGesture {
     anchor = nil
     previous = nil
     return .playOpen
+  }
+
+  /// 展开进度（1 = 合上的样子，0 = 桌面）：从开始展开的角度 `from` 到合盖前的静止角度 `to`，
+  /// 盖子走到哪进度就到哪，两头用 smoothstep 收得柔一点。`to` 不比 `from` 高时直接算展开完。
+  static func openProgress(angle: Double, from: Double, to: Double) -> Double {
+    guard to > from + 1 else { return 0 }
+    let t = min(1, max(0, (angle - from) / (to - from)))
+    let eased = t * t * (3 - 2 * t)
+    return 1 - eased
   }
 
   /// 基线：盖子在 stillBand 里稳住 settleTime 秒，就把基线挪到那里；往上开得比基线还高，立刻跟上去。

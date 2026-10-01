@@ -84,6 +84,29 @@ struct LidGestureTests {
             expect(commands.map(\.1) == [.playClose], "after waking, a new rest angle is learned and the next close triggers")
         }
 
+        do {
+            expect(LidGesture.openProgress(angle: 13, from: 13, to: 104) == 1, "opening starts from the closed look")
+            expect(LidGesture.openProgress(angle: 104, from: 13, to: 104) == 0, "and is fully open at the old resting angle")
+            let mid = LidGesture.openProgress(angle: 58.5, from: 13, to: 104)
+            expect(abs(mid - 0.5) < 0.001, "half way up the lid is half way through the opening")
+            expect(LidGesture.openProgress(angle: 5, from: 13, to: 104) == 1, "going back below the start stays closed")
+            expect(LidGesture.openProgress(angle: 50, from: 60, to: 60) == 0, "a degenerate range counts as open")
+        }
+        do {
+            var g = LidGesture()
+            _ = run(&g, hold(104, seconds: 2) + ramp(104, 20, seconds: 1.5))
+            expect(g.restBeforeClose == 104, "the resting angle before a close is remembered")
+            g.displayOff()
+            _ = g.displayOn(at: 10)
+            expect(g.restBeforeClose == 104, "and survives the display going dark, so the opening knows where to end")
+        }
+        do {
+            var g = LidGesture()
+            _ = run(&g, hold(98, seconds: 2))
+            g.displayOff()
+            expect(g.restBeforeClose == 98, "a close too fast to trigger still remembers where the lid rested")
+        }
+
         // 真实录下的序列：每个文件只回放推送那一路（App 以后只用它），打出指令供人对照文件名核对。
         let dir = "tests/fixtures/lid-traces"
         let files = ((try? FileManager.default.contentsOfDirectory(atPath: dir)) ?? []).filter { $0.hasSuffix(".csv") }.sorted()
