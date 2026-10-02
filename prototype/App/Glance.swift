@@ -56,6 +56,15 @@ protocol GlanceCarrySource: AnyObject {
     func openCarriedWindow(_ id: CGWindowID)
 }
 
+/// 别的桌面上的窗口：由刘海那一排提供（停在那一格上看一眼，点一下过去）。
+@MainActor
+protocol GlanceElsewhereSource: AnyObject {
+    /// 指着的那一格在屏幕上的位置（画面从这里长出来、缩回这里）；不是正在指着的就返回 nil。
+    func elsewhereAnchorFrame(_ id: CGWindowID) -> NSRect?
+    func glanceTarget(forElsewhere id: CGWindowID) -> GlanceTarget?
+    func openElsewhereWindow(_ id: CGWindowID)
+}
+
 /// 探针与日志读的数字：从指针决定打开到画面出现、到第一帧实时画面各用了多久。
 struct GlanceDiagnostics {
     var opens = 0
@@ -186,6 +195,7 @@ final class GlanceController {
 
     unowned let owner: AppDelegate
     weak var carrySource: GlanceCarrySource?
+    weak var elsewhereSource: GlanceElsewhereSource?
     let intent = GlanceIntent()
     /// 探针替换这两个入口来模拟指针与时钟；平时读真实的指针位置。
     var pointerLocation: () -> NSPoint = { NSEvent.mouseLocation }
@@ -433,7 +443,7 @@ final class GlanceController {
 
     private func stripFrame(_ id: CGWindowID) -> NSRect? {
         if let overlay = owner.shaded[id]?.overlay { return overlay.frame }
-        return carrySource?.carriedStripFrame(id)
+        return carrySource?.carriedStripFrame(id) ?? elsewhereSource?.elsewhereAnchorFrame(id)
     }
 
     private func target(for id: CGWindowID) -> GlanceTarget? {
@@ -444,7 +454,8 @@ final class GlanceController {
             }
             return shadedTarget(state: state, strip: overlay.frame)
         }
-        return carrySource?.glanceTarget(forCarried: id)
+        if carrySource?.carriedStripFrame(id) != nil { return carrySource?.glanceTarget(forCarried: id) }
+        return elsewhereSource?.glanceTarget(forElsewhere: id)
     }
 
     /// 卡片和卷帘条之间的缝（点）。
@@ -794,8 +805,13 @@ final class GlanceController {
         session.stage = .expanding
         _ = intent.forget(id)
         if session.carried {
-            wlog("glance: open carried window id=\(id)")
-            carrySource?.openCarriedWindow(id)
+            if carrySource?.carriedStripFrame(id) != nil {
+                wlog("glance: open carried window id=\(id)")
+                carrySource?.openCarriedWindow(id)
+            } else {
+                wlog("glance: open window elsewhere id=\(id)")
+                elsewhereSource?.openElsewhereWindow(id)
+            }
             finish(session, reason: "opened")
             return
         }

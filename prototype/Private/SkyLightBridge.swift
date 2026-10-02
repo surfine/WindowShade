@@ -23,6 +23,9 @@ private typealias SLSManagedDisplayGetCurrentSpaceFunction = @convention(c) (Int
 private typealias SLSManagedDisplaySetCurrentSpaceFunction = @convention(c) (Int32, CFString, UInt64) -> Int32
 private typealias SLSGetWindowAlphaFunction = @convention(c) (Int32, UInt32, UnsafeMutablePointer<Float>) -> Int32
 private typealias SLSSetWindowAlphaFunction = @convention(c) (Int32, UInt32, Float) -> Int32
+private typealias SLSCopyManagedDisplaySpacesFunction = @convention(c) (Int32) -> CFArray?
+private typealias GetProcessForPIDFunction = @convention(c) (pid_t, UnsafeMutablePointer<ProcessSerialNumber>) -> OSStatus
+private typealias SLPSSetFrontProcessWithOptionsFunction = @convention(c) (UnsafeMutablePointer<ProcessSerialNumber>, UInt32, UInt32) -> Int32
 
 final class PrivateSLSWindowMover {
     static let shared = PrivateSLSWindowMover()
@@ -36,6 +39,9 @@ final class PrivateSLSWindowMover {
     private let managedDisplaySetCurrentSpace: SLSManagedDisplaySetCurrentSpaceFunction?
     private let getWindowAlpha: SLSGetWindowAlphaFunction?
     private let setWindowAlpha: SLSSetWindowAlphaFunction?
+    private let copyManagedDisplaySpaces: SLSCopyManagedDisplaySpacesFunction?
+    private let getProcessForPID: GetProcessForPIDFunction?
+    private let setFrontProcessWithOptions: SLPSSetFrontProcessWithOptionsFunction?
 
     private init() {
         let paths = [
@@ -61,6 +67,9 @@ final class PrivateSLSWindowMover {
             managedDisplaySetCurrentSpace = nil
             getWindowAlpha = nil
             setWindowAlpha = nil
+            copyManagedDisplaySpaces = nil
+            getProcessForPID = nil
+            setFrontProcessWithOptions = nil
             return
         }
         mainConnectionID = unsafeBitCast(mainSymbol, to: SLSMainConnectionIDFunction.self)
@@ -103,6 +112,14 @@ final class PrivateSLSWindowMover {
         } else {
             setWindowAlpha = nil
         }
+        copyManagedDisplaySpaces = dlsym(handle, "SLSCopyManagedDisplaySpaces")
+            .map { unsafeBitCast($0, to: SLSCopyManagedDisplaySpacesFunction.self) }
+        setFrontProcessWithOptions = dlsym(handle, "_SLPSSetFrontProcessWithOptions")
+            .map { unsafeBitCast($0, to: SLPSSetFrontProcessWithOptionsFunction.self) }
+        // GetProcessForPID 是公开但已弃用的 HIServices 函数，Swift 里看不到，照样用 dlsym 取。
+        let services = dlopen("/System/Library/Frameworks/ApplicationServices.framework/ApplicationServices", RTLD_LAZY)
+        getProcessForPID = services.flatMap { dlsym($0, "GetProcessForPID") }
+            .map { unsafeBitCast($0, to: GetProcessForPIDFunction.self) }
     }
 
     var isAvailable: Bool {
@@ -131,6 +148,43 @@ final class PrivateSLSWindowMover {
         guard let mainConnectionID, let reassociateWindowsSpacesByGeometry else { return false }
         let windows = [NSNumber(value: UInt32(id))] as CFArray
         return reassociateWindowsSpacesByGeometry(mainConnectionID(), windows) == 0
+    }
+
+    /// 这扇窗所在的所有桌面（“在所有桌面上”的窗口有好几张；最小化的窗口一张都没有）。读不到时返回空。
+    func windowSpaces(id: CGWindowID) -> [UInt64] {
+        guard let mainConnectionID, let copySpacesForWindows else { return [] }
+        let windows = [NSNumber(value: UInt32(id))] as CFArray
+        let spaces = copySpacesForWindows(mainConnectionID(), 0x7, windows) as? [NSNumber] ?? []
+        return spaces.map(\.uint64Value).filter { $0 != 0 }
+    }
+
+    /// 每块屏（“显示器具有单独的空间”关掉时是所有屏共用的一组）的桌面，按调度中心里的次序，和它此刻正显示的那张。
+    /// 只认普通桌面（type 0）和全屏 App 的桌面（type 4）。读不到时返回空。
+    func desktopRows() -> [DesktopRow] {
+        guard let mainConnectionID, let copyManagedDisplaySpaces,
+              let displays = copyManagedDisplaySpaces(mainConnectionID()) as? [[String: Any]] else { return [] }
+        return displays.compactMap { entry in
+            guard let current = ((entry["Current Space"] as? [String: Any])?["ManagedSpaceID"] as? NSNumber)?.uint64Value
+            else { return nil }
+            let spaces = ((entry["Spaces"] as? [[String: Any]]) ?? []).compactMap { space -> DesktopRow.Space? in
+                guard let id = (space["ManagedSpaceID"] as? NSNumber)?.uint64Value,
+                      let type = (space["type"] as? NSNumber)?.intValue, type == 0 || type == 4 else { return nil }
+                return DesktopRow.Space(id: id, isFullScreen: type == 4)
+            }
+            return DesktopRow(spaces: spaces, current: current)
+        }
+    }
+
+    /// 把这扇窗的 App 带到最前，而且是带着这扇窗：它在别的桌面上时，系统切到那张桌面
+    /// （AltTab 用同一个私有入口）。光 activate 不行：这个 App 在当前桌面上也有窗口时，系统不切。
+    /// 返回 false：私有入口不在，调用方退回普通的 activate。
+    @discardableResult
+    func bringToFront(pid: pid_t, windowID: CGWindowID) -> Bool {
+        guard let getProcessForPID, let setFrontProcessWithOptions else { return false }
+        var psn = ProcessSerialNumber()
+        guard getProcessForPID(pid, &psn) == noErr else { return false }
+        // 0x200：当作用户自己点的（kCPSUserGenerated）。
+        return setFrontProcessWithOptions(&psn, UInt32(windowID), 0x200) == 0
     }
 
     func windowSpace(id: CGWindowID) -> UInt64? {

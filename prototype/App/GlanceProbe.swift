@@ -183,6 +183,11 @@ final class GlanceProbe {
       return
     }
     // 别的包写的探针：还没写的那个由 ProbeEntries.swift 里的默认实现报“还没写”（算失败）。
+    if CommandLine.arguments.contains("--elsewhere") {
+      try await exerciseElsewhere(pid: process.processIdentifier)
+      finish(nil)
+      return
+    }
     if CommandLine.arguments.contains("--strip-peek") {
       adoptFixture(pid: process.processIdentifier)
       try await exerciseStripPeek(pid: process.processIdentifier)
