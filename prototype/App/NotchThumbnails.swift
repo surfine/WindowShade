@@ -18,7 +18,8 @@ final class NotchThumbnails {
     var captureStill: @Sendable (CGWindowID, NotchThumbnailPolicy.StillQuality) -> CGImage? = { id, quality in
         WindowSnapshot.image(id, quality: quality == .full ? .full : .thumbnail) ?? FastCapture.window(id)
     }
-    var now: () -> CFAbsoluteTime = { CFAbsoluteTimeGetCurrent() }
+    /// 单调钟（不受手动改时间、唤醒后校时的影响）；测试可以换掉。
+    var now: () -> CFAbsoluteTime = { CACurrentMediaTime() }
     var permitted: () -> Bool = { hasScreenRecordingPermission() }
     /// 一张格子图到了（主线程）。
     var onImage: ((CGWindowID, CGImage) -> Void)?
@@ -39,10 +40,15 @@ final class NotchThumbnails {
 
     /// 给这几格要画面：缺图的、或者图已经超过 10 秒的才截。
     func request(_ ids: [CGWindowID]) {
-        guard permitted() else { return }
+        guard permitted() else {
+            wlog("notch: thumbnails skipped (no screen recording)")
+            return
+        }
         let moment = now()
         for id in ids where !inFlight.contains(id) {
-            if let cached = cache[id], NotchThumbnailPolicy.isFresh(capturedAt: cached.at, now: moment) { continue }
+            // 表往回拨时缓存时间会晚于此刻，也算不新鲜，重抓一张。
+            if let cached = cache[id], cached.at <= moment,
+               NotchThumbnailPolicy.isFresh(capturedAt: cached.at, now: moment) { continue }
             inFlight.insert(id)
             let started = generation
             let capture = self.capture
@@ -58,6 +64,7 @@ final class NotchThumbnails {
     private func finish(_ id: CGWindowID, _ picture: CGImage?, _ started: Int) {
         guard started == generation else { return }
         inFlight.remove(id)
+        wlog("notch: thumbnail id=\(id) \(picture.map { "\($0.width)x\($0.height)" } ?? "none")")
         // 截不到（窗口没了、受保护、动画中间）：保留上一张。
         guard let picture else { return }
         cache[id] = (picture, now())

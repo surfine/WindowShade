@@ -405,6 +405,8 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSMenuDelegate {
                 self?.notch.announceWhenFree(key: key, text: text, detail: detail, symbol: symbol, priority: priority, ttl: ttl)
             }
             deviceBattery.start()
+            // 相机列表在后台枚举（菜单“检测面部动作”读缓存，主线程不再卡几百毫秒）。
+            MainActor.assumeIsolated { FaceObservationSource.startWatchingCameras() }
         }
     }
 
