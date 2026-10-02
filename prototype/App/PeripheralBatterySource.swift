@@ -129,7 +129,10 @@ final class PeripheralBatterySource: @unchecked Sendable {
   // MARK: 属性
 
   /// 稳定身份：蓝牙地址优先，其次序列号；两者都没有就不建档（不拿名字或注册表 ID 冒充永久 ID）。
+  /// 本机内建的键盘 / 触控板也挂这个服务（Transport 是 FIFO、没有电量），它不是外设，不建档。
   static func identity(of service: io_object_t) -> DeviceIdentity? {
+    if (IORegistryEntryCreateCFProperty(service, "Built-In" as CFString, kCFAllocatorDefault, 0)?
+      .takeRetainedValue() as? Bool) == true { return nil }
     let productID = intProperty(service, "ProductID")
     let transport = stringProperty(service, "Transport") ?? ""
     let id: String
