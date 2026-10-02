@@ -56,9 +56,11 @@ enum ElsewhereWindows {
                      ownPID: pid_t, limit: Int = limit, perApp: Int = perApp) -> [ElsewhereWindow] {
         let current = Set(desktops.map(\.current))
         // 每张桌面的叫法：普通桌面按它在这块屏上的次序编号，全屏桌面不编号。
+        // 各屏有独立桌面时，调度中心（和“切换到桌面 N”那组快捷键、yabai 的 mission-control 序号）是跨屏连续编号的：
+        // 内建屏两张，外接屏第一张就是“桌面 3”。所以计数不在每块屏重新开始。
         var places: [UInt64: ElsewhereWindow.Place] = [:]
+        var number = 0
         for row in desktops {
-            var number = 0
             for space in row.spaces {
                 if space.isFullScreen {
                     places[space.id] = .fullScreen
@@ -109,6 +111,61 @@ enum ElsewhereWindows {
         let size = CGSize(width: floor(window.width * scale), height: floor(window.height * scale))
         let x = min(max(tile.midX - size.width / 2, visible.minX + 8), visible.maxX - 8 - size.width)
         return CGRect(x: x, y: min(tile.minY, visible.maxY) - gap - size.height, width: size.width, height: size.height)
+    }
+
+    /// 系统设置里“调度中心”的一组快捷键（往左 / 往右移动一个空间）：按键码和修饰键（CGEventFlags 的原始值）。
+    struct SpaceKey: Equatable, Sendable {
+        let keyCode: UInt16
+        let flags: UInt64
+    }
+
+    enum GoPlan: Equatable, Sendable {
+        /// 激活这个 App，系统自己切到它最前那扇窗所在的桌面（实测约 0.8 秒）。
+        case activate
+        /// 它在这张桌面上也有窗口，激活不会切：按系统自己的“移动一个空间”快捷键走过去，走 count 步。
+        case keys(SpaceKey, count: Int)
+    }
+
+    /// 怎么去那扇窗时要知道的几件事。
+    struct GoFacts: Equatable, Sendable {
+        /// 这个 App 在眼前（任何一块屏的当前桌面）有窗口：激活只会叫出那一扇，不切。
+        var appHasWindowHere: Bool
+        /// 要去的这扇正是这个 App 最前的那扇：激活切去的就是它的桌面；不是的话激活会带错桌面。
+        var targetIsAppFront: Bool
+        /// 系统设置里“切换到某个应用程序时，会切换到包含该应用程序已打开窗口的空间”开着。
+        var activationSwitches: Bool
+        /// 这个 App 已经在最前：再激活什么也不会发生。
+        var appIsFrontmost: Bool
+        /// 目标那一排就是指针所在那块屏的：“移动一个空间”只作用在指针所在的屏上。
+        var targetOnPointerDisplay: Bool
+    }
+
+    /// 怎么去那扇窗。row：目标那块屏的桌面次序（全屏桌面也算一步，和 ⌃← ⌃→ 一样）；target：窗口所在的桌面。
+    /// 激活能准确切过去时就激活；否则在目标就在指针那块屏上时按快捷键走过去；都不行就退回激活（至少把 App 叫到前面）。
+    static func goPlan(_ facts: GoFacts, row: DesktopRow?, target: UInt64?,
+                       moveLeft: SpaceKey?, moveRight: SpaceKey?) -> GoPlan {
+        let activationLandsThere = !facts.appHasWindowHere && facts.targetIsAppFront && facts.activationSwitches
+            && !facts.appIsFrontmost
+        guard !activationLandsThere, facts.targetOnPointerDisplay, let row, let target,
+              let from = row.spaces.firstIndex(where: { $0.id == row.current }),
+              let to = row.spaces.firstIndex(where: { $0.id == target }), from != to else { return .activate }
+        let steps = to - from
+        guard let key = steps > 0 ? moveRight : moveLeft else { return .activate }
+        return .keys(key, count: abs(steps))
+    }
+
+    /// 读“往左 / 往右移动一个空间”（AppleSymbolicHotKeys 的 79 / 81）。关掉了返回 nil；没改过用系统默认的 ⌃← / ⌃→。
+    /// entry：那一项的字典（enabled、value.parameters = [字符, 键码, 修饰键]）。
+    static func spaceKey(_ entry: [String: Any]?, defaultKeyCode: UInt16) -> SpaceKey? {
+        let controlFn: UInt64 = 0x40000 | 0x800000
+        guard let entry else { return SpaceKey(keyCode: defaultKeyCode, flags: controlFn) }
+        guard (entry["enabled"] as? Bool) ?? ((entry["enabled"] as? NSNumber)?.boolValue ?? true) else { return nil }
+        guard let parameters = (entry["value"] as? [String: Any])?["parameters"] as? [Any], parameters.count >= 3,
+              let code = (parameters[1] as? NSNumber)?.uint16Value,
+              let flags = (parameters[2] as? NSNumber)?.uint64Value else {
+            return SpaceKey(keyCode: defaultKeyCode, flags: controlFn)
+        }
+        return SpaceKey(keyCode: code, flags: flags)
     }
 
     /// 格子上写的那一句。

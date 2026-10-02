@@ -65,7 +65,7 @@ struct ElsewhereWindowsTests {
         windows: [window(31, spaces: [50], onScreen: false), window(32, spaces: [51]), window(33, spaces: [2])],
         desktops: [row, external], exclude: [], ownPID: 1)
       expect(ids(plan) == [32, 33], "the other display's current desktop counts as visible")
-      expect(plan.first?.place == .desktop(2), "each display numbers its own desktops from 1")
+      expect(plan.first?.place == .desktop(5), "numbering continues across displays like Mission Control (3 here, then 4, 5 there)")
     }
 
     do {  // 读到一半桌面变了：不认识的桌面不放
@@ -100,6 +100,36 @@ struct ElsewhereWindowsTests {
              && abs(hung.width / hung.height - 1.6) < 0.01, "a window on another display hangs under the tile, scaled down")
       expect(ElsewhereWindows.cardFrame(window: .zero, visible: visible, screen: screen, tile: tile) == .zero,
              "an empty window gives no card")
+    }
+
+    do {  // 怎么过去：激活能准确切过去就激活，否则在指针那块屏上按“移动一个空间”走过去
+      let left = ElsewhereWindows.SpaceKey(keyCode: 123, flags: 0x840000)
+      let right = ElsewhereWindows.SpaceKey(keyCode: 124, flags: 0x840000)
+      let easy = ElsewhereWindows.GoFacts(appHasWindowHere: false, targetIsAppFront: true, activationSwitches: true,
+                                          appIsFrontmost: false, targetOnPointerDisplay: true)
+      func go(_ facts: ElsewhereWindows.GoFacts, _ r: DesktopRow = row, _ t: UInt64 = 3,
+              right rk: ElsewhereWindows.SpaceKey? = right) -> ElsewhereWindows.GoPlan {
+        ElsewhereWindows.goPlan(facts, row: r, target: t, moveLeft: left, moveRight: rk)
+      }
+      expect(go(easy) == .activate, "an app with no window here, target its front window: just activate (the system switches)")
+      var here = easy; here.appHasWindowHere = true
+      expect(go(here) == .keys(right, count: 3), "with a window here too, walk right past the full-screen space: 3 steps")
+      expect(go(here, DesktopRow(spaces: row.spaces, current: 3), 2) == .keys(left, count: 2), "and walk left when the target is to the left")
+      var notFront = easy; notFront.targetIsAppFront = false
+      expect(go(notFront) == .keys(right, count: 3), "the app's front window is on another desktop: activating would land there, so walk")
+      var noSwitch = easy; noSwitch.activationSwitches = false
+      expect(go(noSwitch) == .keys(right, count: 3), "switch-on-activate turned off: walk")
+      var frontmost = easy; frontmost.appIsFrontmost = true
+      expect(go(frontmost) == .keys(right, count: 3), "the app is already frontmost: activating does nothing, so walk")
+      var otherDisplay = here; otherDisplay.targetOnPointerDisplay = false
+      expect(go(otherDisplay) == .activate, "the target is on another display: the shortcut would move the wrong display, so activate")
+      expect(go(here, right: nil) == .activate, "with the shortcut turned off it falls back to activating")
+      expect(go(here, row, 77) == .activate, "an unknown target desktop falls back to activating")
+      expect(ElsewhereWindows.spaceKey(nil, defaultKeyCode: 124) == right, "an untouched shortcut is the system default ⌃→")
+      expect(ElsewhereWindows.spaceKey(["enabled": false], defaultKeyCode: 124) == nil, "a disabled shortcut is not used")
+      let custom: [String: Any] = ["enabled": true, "value": ["parameters": [NSNumber(value: 65535), NSNumber(value: 2), NSNumber(value: 0x100000)]]]
+      expect(ElsewhereWindows.spaceKey(custom, defaultKeyCode: 124) == ElsewhereWindows.SpaceKey(keyCode: 2, flags: 0x100000),
+             "a rebound shortcut is followed as the user set it")
     }
 
     print(failures == 0 ? "all elsewhere window tests passed" : "\(failures) failure(s)")
