@@ -20,3 +20,5 @@ enum WindowSnapshot {
 enum FastCapture {
     static func window(_ id: CGWindowID) -> CGImage? { nil }
 }
+
+func wlog(_ s: String) {}

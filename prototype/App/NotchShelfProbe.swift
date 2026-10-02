@@ -67,13 +67,17 @@ extension GlanceProbe {
     let glance = owner.glance
     let label = kind == .minimized ? "the minimized window" : "the hidden app's window"
 
-    // 3. 格子小图（和指针停上来的那一下一样）。
-    notch.requestThumbnailsForProbe()
-    let thumbAt = CACurrentMediaTime()
-    try await wait("thumbnail for the tile", timeout: 3) { notch.thumbnailForProbe(id) != nil }
-    let thumbMs = (CACurrentMediaTime() - thumbAt) * 1000
-    let picture = notch.thumbnailForProbe(id)
-    print("\(picture != nil ? "PASS" : "FAIL") shelf-glance: the tile has a picture of \(label) (\(picture.map { "\($0.width)x\($0.height)" } ?? "none"), \(Int(thumbMs))ms, screenRecording=\(hasScreenRecordingPermission()))")
+    // 3. 格子小图（和指针停上来的那一下一样）。格子在 8 个之外时不会要图，这里就别等。
+    if notch.tileKindsForProbe.contains(where: { $0.id == id }) {
+      notch.requestThumbnailsForProbe()
+      let thumbAt = CACurrentMediaTime()
+      try await wait("thumbnail for the tile", timeout: 3) { notch.thumbnailForProbe(id) != nil }
+      let thumbMs = (CACurrentMediaTime() - thumbAt) * 1000
+      let picture = notch.thumbnailForProbe(id)
+      print("\(picture != nil ? "PASS" : "FAIL") shelf-glance: the tile has a picture of \(label) (\(picture.map { "\($0.width)x\($0.height)" } ?? "none"), \(Int(thumbMs))ms, screenRecording=\(hasScreenRecordingPermission()))")
+    } else {
+      print("SKIP shelf-glance: the tile is beyond the 8 shown, thumbnail not checked")
+    }
 
     // 4. 停上去：一张“不是实时画面”的静止画面。
     guard let home = notch.homeRectForProbe else { throw EffectError.unavailable("no notch on this Mac") }

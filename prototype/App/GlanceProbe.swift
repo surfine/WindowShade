@@ -48,12 +48,14 @@ final class GlanceProbe {
     let manyWindows = CommandLine.arguments.contains("--strip") || CommandLine.arguments.contains("--wins")
       || CommandLine.arguments.contains("--split") || CommandLine.arguments.contains("--strip-peek")
     let pipRun = CommandLine.arguments.contains("--pip")
-    process.arguments = (single || manyWindows || pipRun ? ["--single"] : [])
-      + (manyWindows ? ["--strip"] : [])
-      + (pipRun ? ["--scroll"] : [])
-      + (CommandLine.arguments.contains("--other-space") ? ["--other-space"] : [])
-      + (CommandLine.arguments.contains("--minimize") ? ["--minimize"] : [])
-      + (CommandLine.arguments.contains("--fullscreen") ? ["--fullscreen"] : [])
+    var fixtureArguments: [String] = []
+    if single || manyWindows || pipRun { fixtureArguments.append("--single") }
+    if manyWindows { fixtureArguments.append("--strip") }
+    if pipRun { fixtureArguments.append("--scroll") }
+    for flag in ["--other-space", "--minimize", "--fullscreen"] where CommandLine.arguments.contains(flag) {
+      fixtureArguments.append(flag)
+    }
+    process.arguments = fixtureArguments
     do {
       try process.run()
       fixture = process

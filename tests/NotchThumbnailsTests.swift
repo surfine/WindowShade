@@ -124,6 +124,7 @@ struct NotchThumbnailsTests {
     static func main() {
         deliversEachRequestedImage()
         freshnessWindow()
+        backwardsClockRefreshes()
         atMostTwoCapturesAtOnce()
         noDuplicateCaptureForIdInFlight()
         invalidateDropsLateResults()
@@ -178,6 +179,25 @@ struct NotchThumbnailsTests {
         thumbnails.request([1])
         expect(spin { probe.count(1) == 2 }, "past the TTL it captures again")
         expect(spin { delivered == 3 }, "and delivers the fresh one")
+    }
+
+    // 2b. 表往回拨（手动改时间、唤醒后校时）：缓存时间晚于此刻，算不新鲜，重抓。
+    static func backwardsClockRefreshes() {
+        let probe = CaptureProbe()
+        probe.gateEverything(false)
+        let (thumbnails, clock) = make(probe)
+        var delivered = 0
+        thumbnails.onImage = { _, _ in delivered += 1 }
+
+        thumbnails.request([1])
+        expect(spin { delivered == 1 }, "the first picture arrives")
+        expect(probe.count(1) == 1, "captured once")
+
+        clock.time -= 5  // 表往回拨：现在早于缓存时刻
+        thumbnails.request([1])
+        expect(spin { probe.count(1) == 2 },
+               "a backwards clock makes the cached picture stale (got \(probe.count(1)))")
+        expect(spin { delivered == 2 }, "and the recaptured picture is delivered")
     }
 
     // 3. 同时最多 2 张在途：6 个 id 一起要，最多两张同时进 capture。

@@ -316,7 +316,9 @@ final class CarryController: GlanceCarrySource {
         for id in order {
             guard let item = carried[id] else { continue }
             guard let frame = frames[id] else {
-                if item.panel.isVisible || owner.glance.hasSession(id) {
+                // 刘海那一格开的看一眼（锚在格子上）不是这条卷帘条的，别拆。
+                let anchoredInNotch = owner.glance.elsewhereSource?.elsewhereAnchorFrame(id) != nil
+                if item.panel.isVisible || (owner.glance.hasSession(id) && !anchoredInNotch) {
                     owner.glance.detach(id: id)
                     item.panel.orderOut(nil)
                 }

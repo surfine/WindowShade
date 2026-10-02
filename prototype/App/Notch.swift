@@ -102,7 +102,8 @@ final class NotchController {
         shelf.onChange = { [weak self] in
             guard let self else { return }
             for panel in self.panels.values where panel.isExpanded { panel.expand(with: self.tiles()) }
-            self.requestThumbnails()
+            // 只在这一排展开着时截格子图（换桌面后在后台重查货架，刘海收着时不截）。
+            if self.panels.values.contains(where: \.isExpanded) { self.requestThumbnails() }
         }
         thumbnails.onImage = { [weak self] id, image in
             guard let self else { return }
@@ -188,7 +189,10 @@ final class NotchController {
             panel.onLongPress = { [weak self, weak panel] in
                 guard let self, let panel else { return }
                 if self.activities.store.visible.isEmpty { self.owner.launchpad.navigate(to: .today) }
-                else { panel.expand(with: self.tiles()) }
+                else {
+                    panel.expand(with: self.tiles())
+                    self.requestThumbnails()
+                }
             }
             panel.onTileClicked = { [weak self] id, rect in self?.open(id, from: rect) }
             panel.onSwipeDown = { [weak self] rect in
@@ -908,8 +912,9 @@ final class NotchController {
                 facts.stripOnActiveSpace = overlay.isVisible && overlay.alphaValue > 0 && overlay.isOnActiveSpace
             }
             if NotchGlancePlan.route(kind, facts) == .held, let overlay = owner.shaded[id]?.overlay {
+                // 只有收进刘海的（卷帘条藏着，透明度 0）要临时显出来；在眼前的卷帘条保持用户设的半透明。
                 let alpha = overlay.alphaValue
-                overlay.alphaValue = 1
+                if kind == .tucked { overlay.alphaValue = 1 }
                 if owner.glance.showHeld(id) {
                     glancePeek = id
                     return
@@ -919,11 +924,13 @@ final class NotchController {
             showStoredPeek(id)
             return
         }
+        // 设置里关掉了看一眼：从格子里长出来的那几种（实时、静止）一律不给，也不截图。
+        guard GlanceController.isEnabled else { return }
         if owner.slideOver.isSlideOver(id), let info = owner.slideOver.notchInfo {
             facts.slideOverHidden = owner.slideOver.isHidden
             guard NotchGlancePlan.route(.slideOver, facts) == .liveFromTile,
                   let frame = owner.slideOver.dockedFrame else { return }
-            startTileGlance(id, tile: tileRect, glance: .live(window: frame), pid: info.pid,
+            startTileGlance(id, tile: tileRect, glance: .live(window: frame, fallback: nil), pid: info.pid,
                             title: NSRunningApplication(processIdentifier: info.pid)?.localizedName ?? "")
             return
         }
@@ -934,7 +941,9 @@ final class NotchController {
                 if owner.glance.showHeld(id) { glancePeek = id }
             case .liveFromTile:
                 guard let info = owner.carry.notchInfo(id), let frame = cgWindowInfo(id).flatMap(cgWindowBounds) else { return }
-                startTileGlance(id, tile: tileRect, glance: .live(window: frame), pid: info.pid, title: info.title)
+                // 最小化、被隐藏的窗口开不了流：先给带到每张桌面时留的那张画面。
+                startTileGlance(id, tile: tileRect, glance: .live(window: frame, fallback: info.snapshot), pid: info.pid,
+                                title: info.title)
             default:
                 break
             }
@@ -944,7 +953,7 @@ final class NotchController {
         switch item.kind {
         case .elsewhere:
             guard NotchGlancePlan.route(.elsewhere, facts) == .liveFromTile else { return }
-            startTileGlance(id, tile: tileRect, glance: .live(window: item.bounds), pid: item.pid, title: item.title)
+            startTileGlance(id, tile: tileRect, glance: .live(window: item.bounds, fallback: nil), pid: item.pid, title: item.title)
         case .minimized, .hiddenApp:
             guard NotchGlancePlan.route(item.kind == .minimized ? .minimized : .hiddenApp, facts) == .stillFromTile else { return }
             showStill(item, tile: tileRect)
@@ -963,7 +972,8 @@ final class NotchController {
 
     /// 从格子里长出来的看一眼：实时（窗口的位置）或一张静止画面（窗口的位置；不知道位置就挂在格子下面）。
     enum TileGlance {
-        case live(window: CGRect)
+        /// fallback：开流拿到第一帧之前（或一直拿不到时）先给的画面。
+        case live(window: CGRect, fallback: CGImage?)
         case still(CGImage, window: CGRect)
     }
 
@@ -976,7 +986,8 @@ final class NotchController {
     /// 10 秒内截过的直接用。
     private func showStill(_ item: NotchShelfItem, tile: NSRect) {
         let id = item.id
-        if let cached = stills[id], NotchThumbnailPolicy.isFresh(capturedAt: cached.at, now: CFAbsoluteTimeGetCurrent()) {
+        if let cached = stills[id], cached.at <= CACurrentMediaTime(),
+           NotchThumbnailPolicy.isFresh(capturedAt: cached.at, now: CACurrentMediaTime()) {
             startTileGlance(id, tile: tile, glance: .still(cached.image, window: item.bounds), pid: item.pid, title: item.title)
             return
         }
@@ -994,7 +1005,7 @@ final class NotchController {
             if self.stills.count >= 2, let oldest = self.stills.min(by: { $0.value.at < $1.value.at })?.key {
                 self.stills.removeValue(forKey: oldest)
             }
-            self.stills[id] = (image, CFAbsoluteTimeGetCurrent())
+            self.stills[id] = (image, CACurrentMediaTime())
             self.startTileGlance(id, tile: tile, glance: .still(image, window: item.bounds), pid: item.pid, title: item.title)
             self.stillLatencyForProbe = ms
             wlog("notch: still id=\(id) \(image.width)x\(image.height) after \(ms)ms")
@@ -1237,13 +1248,16 @@ extension NotchController: GlanceElsewhereSource {
                 ?? NSScreen.main else { return nil }
         let windowAX: CGRect
         let still: CGImage?
+        let live: Bool
         switch anchor.glance {
-        case .live(let window):
+        case .live(let window, let fallback):
             windowAX = window
-            still = nil
+            still = fallback
+            live = true
         case .still(let image, let window):
             windowAX = window
             still = image
+            live = false
         }
         let card: CGRect
         let windowWidth: CGFloat
@@ -1268,7 +1282,7 @@ extension NotchController: GlanceElsewhereSource {
         return GlanceTarget(
             strip: anchor.tile, panel: panel, card: card.offsetBy(dx: -panel.minX, dy: -panel.minY),
             picture: NSRect(origin: .zero, size: card.size), backdropArea: nil, cornerRadius: radius,
-            source: still == nil ? .stream : .snapshotOnly, snapshot: still, pid: anchor.pid,
+            source: live ? .stream : .snapshotOnly, snapshot: still, pid: anchor.pid,
             bundleID: app?.bundleIdentifier ?? "", accessibilityTitle: anchor.title, staleText: "不是实时画面",
             growFrom: anchor.tile.offsetBy(dx: -panel.minX, dy: -panel.minY))
     }
