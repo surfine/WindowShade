@@ -610,6 +610,65 @@ final class NotchController {
         return true
     }
 
+    // MARK: 等刘海空下来再说
+
+    /// 排队中的一句话。同一个 key 只留最新的；过期作废；优先级高的先说。
+    private struct PendingAnnouncement {
+        let key: String, text: String, detail: String, tone: NotchPanel.Tone, symbol: String?
+        let priority: Int, expiresAt: TimeInterval
+    }
+    private var pendingAnnouncements: [PendingAnnouncement] = []
+    private var pendingTimer: Timer?
+    /// 这个队列最近说出的那一句（key 和标题）：它还在屏幕上时，同一个 key 的更新（比如电量到了）原位替换，
+    /// 不排到后面再弹一次。屏幕上已经换成别人的话时不替换。
+    private var shownAnnouncement: (key: String, title: String)?
+
+    /// 和 announce 一样，但刘海正忙（展开、拖放、认证、正在说别的）时不放弃：按 key 合并、到期作废，
+    /// 空下来后按优先级说（以前忙的时候直接丢掉）。返回值没有意义上的“失败”：要么现在说，要么排上了。
+    func announceWhenFree(key: String, text: String, detail: String = "", tone: NotchPanel.Tone = .info,
+                          symbol: String? = nil, priority: Int = 0, ttl: TimeInterval = 10) {
+        pendingAnnouncements.removeAll { $0.key == key }
+        if let shown = shownAnnouncement, shown.key == key, let panel = pointerPanel(), !panel.isAuthenticating,
+           panel.alertForProbe?.title == shown.title, announce(text, detail: detail, tone: tone, symbol: symbol) {
+            shownAnnouncement = (key, text)
+            return
+        }
+        let item = PendingAnnouncement(key: key, text: text, detail: detail, tone: tone, symbol: symbol,
+                                       priority: priority, expiresAt: ProcessInfo.processInfo.systemUptime + ttl)
+        if pendingAnnouncements.isEmpty, isFreeToAnnounce(), announce(text, detail: detail, tone: tone, symbol: symbol) {
+            shownAnnouncement = (key, text)
+            return
+        }
+        pendingAnnouncements.append(item)
+        wlog("notch: queued \(key) (\(pendingAnnouncements.count) waiting)")
+        guard pendingTimer == nil else { return }
+        pendingTimer = Timer.scheduledTimer(withTimeInterval: 0.4, repeats: true) { [weak self] _ in
+            MainActor.assumeIsolated { self?.drainPendingAnnouncements() }
+        }
+    }
+
+    private func isFreeToAnnounce() -> Bool {
+        guard let panel = pointerPanel() else { return false }
+        return !panel.isAlerting && !panel.isAuthenticating && !panel.isExpanded && panel.dropState == .none
+    }
+
+    private func drainPendingAnnouncements() {
+        let now = ProcessInfo.processInfo.systemUptime
+        pendingAnnouncements.removeAll { $0.expiresAt <= now }
+        if let index = pendingAnnouncements.indices.max(by: {
+            (pendingAnnouncements[$0].priority, -$0) < (pendingAnnouncements[$1].priority, -$1)
+        }), isFreeToAnnounce() {
+            let item = pendingAnnouncements[index]
+            if announce(item.text, detail: item.detail, tone: item.tone, symbol: item.symbol) {
+                pendingAnnouncements.remove(at: index)
+                shownAnnouncement = (item.key, item.text)
+            }
+        }
+        if pendingAnnouncements.isEmpty {
+            pendingTimer?.invalidate(); pendingTimer = nil
+        }
+    }
+
     /// 看准时机教一下（规则见 GestureCoach）：岛里演一遍手指怎么动，旁边一句话；点一下这条就不再出。
     @discardableResult
     func teach(_ tip: CoachTip, on target: NotchPanel? = nil) -> Bool {
