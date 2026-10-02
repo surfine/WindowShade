@@ -4,15 +4,21 @@
 // 先用窗口列表挑出有“不在屏幕上”的窗口的 App，只问这几个 App 的辅助功能哪些窗口是最小化的；隐藏的 App 直接看
 // NSRunningApplication。WindowShade 自己收起、侧拉、收进刘海的窗口已经在那一排里，不重复算；
 // 收起时 WindowShade 临时藏起来的 App 也不算。
+//
+// 别的桌面上的窗口也在这一排里（docs/direction.md「回到窗口」第 1 步）：停在那一格上，从那张桌面实时抓画面、
+// 在原处看一眼；点一下带着这扇窗切过去。挑哪几扇、写“桌面几”见 Core/ElsewhereWindows.swift。
 
 import Cocoa
 
 struct NotchShelfItem: Equatable {
-    enum Kind { case minimized, hiddenApp }
+    enum Kind { case minimized, hiddenApp, elsewhere }
     let id: CGWindowID
     let pid: pid_t
     let kind: Kind
     let title: String
+    /// 别的桌面上的窗口：在哪张桌面、窗口的位置和大小（窗口列表的坐标，左上角为原点）。
+    var place: ElsewhereWindow.Place? = nil
+    var bounds: CGRect = .zero
 }
 
 @MainActor
@@ -39,8 +45,9 @@ final class NotchShelf {
         let hidden = apps.filter { $0.isHidden && !ownHidden.contains($0.processIdentifier) }
             .map { ($0.processIdentifier, $0.localizedName ?? "") }
         let shown = Set(apps.filter { !$0.isHidden }.map(\.processIdentifier))
+        let names = Dictionary(apps.map { ($0.processIdentifier, $0.localizedName ?? "") }, uniquingKeysWith: { a, _ in a })
         DispatchQueue.global(qos: .userInitiated).async {
-            let found = Self.scan(shown: shown, hidden: hidden, exclude: exclude)
+            let found = Self.scan(shown: shown, hidden: hidden, exclude: exclude, names: names)
             DispatchQueue.main.async {
                 MainActor.assumeIsolated { [weak self] in
                     guard let self else { return }
@@ -48,7 +55,7 @@ final class NotchShelf {
                     self.scannedAt = CFAbsoluteTimeGetCurrent()
                     guard found != self.items else { return }
                     self.items = found
-                    wlog("notch: shelf minimized=\(found.filter { $0.kind == .minimized }.count) hidden=\(found.filter { $0.kind == .hiddenApp }.count)")
+                    wlog("notch: shelf minimized=\(found.filter { $0.kind == .minimized }.count) hidden=\(found.filter { $0.kind == .hiddenApp }.count) elsewhere=\(found.filter { $0.kind == .elsewhere }.count)")
                     self.onChange?()
                 }
             }
@@ -57,7 +64,7 @@ final class NotchShelf {
 
     /// 后台：窗口列表挑人，辅助功能核对。
     nonisolated private static func scan(shown: Set<pid_t>, hidden: [(pid_t, String)],
-                                         exclude: Set<CGWindowID>) -> [NotchShelfItem] {
+                                         exclude: Set<CGWindowID>, names: [pid_t: String]) -> [NotchShelfItem] {
         let list = CGWindowListCopyWindowInfo([.optionAll, .excludeDesktopElements], kCGNullWindowID) as? [[String: Any]] ?? []
         var offscreen = Set<pid_t>()
         var firstWindow: [pid_t: CGWindowID] = [:]
@@ -79,15 +86,50 @@ final class NotchShelf {
             guard let id = firstWindow[pid], !exclude.contains(id) else { continue }
             found.append(NotchShelfItem(id: id, pid: pid, kind: .hiddenApp, title: name))
         }
+        found += elsewhere(list: list, shown: shown, exclude: exclude.union(found.map(\.id)), names: names)
         return found
     }
 
-    /// 点了一格：最小化的窗口从程序坞里还原、放到最前；隐藏的 App 显示出来。
+    /// 别的桌面上的窗口：只问不在屏幕上、够大的普通窗口在哪张桌面（每扇一次私有调用，几十扇也就几毫秒）。
+    /// 隐藏的 App 已经有自己那一格，不再按窗口列。
+    nonisolated private static func elsewhere(list: [[String: Any]], shown: Set<pid_t>, exclude: Set<CGWindowID>,
+                                              names: [pid_t: String]) -> [NotchShelfItem] {
+        let sls = PrivateSLSWindowMover.shared
+        let desktops = sls.desktopRows()
+        guard !desktops.isEmpty else { return [] }
+        var titles: [CGWindowID: String] = [:]
+        var candidates: [ElsewhereCandidate] = []
+        for info in list where (info[kCGWindowLayer as String] as? Int) == 0
+            && (info[kCGWindowIsOnscreen as String] as? Bool) != true {
+            guard let pid = info[kCGWindowOwnerPID as String] as? pid_t, shown.contains(pid),
+                  let number = info[kCGWindowNumber as String] as? NSNumber,
+                  let bounds = cgWindowBounds(info),
+                  bounds.width >= ElsewhereWindows.minimumSize.width,
+                  bounds.height >= ElsewhereWindows.minimumSize.height else { continue }
+            let id = CGWindowID(number.uint32Value)
+            guard !exclude.contains(id) else { continue }
+            titles[id] = info[kCGWindowName as String] as? String
+            candidates.append(ElsewhereCandidate(
+                id: id, pid: pid, layer: 0, bounds: bounds,
+                alpha: (info[kCGWindowAlpha as String] as? NSNumber)?.doubleValue ?? 1,
+                isOnScreen: false, spaces: sls.windowSpaces(id: id)))
+        }
+        let plan = ElsewhereWindows.plan(windows: candidates, desktops: desktops, exclude: exclude, ownPID: getpid())
+        return plan.map { window in
+            let title = titles[window.id].flatMap { $0.isEmpty ? nil : $0 } ?? names[window.pid] ?? ""
+            return NotchShelfItem(id: window.id, pid: window.pid, kind: .elsewhere, title: title,
+                                  place: window.place, bounds: window.bounds)
+        }
+    }
+
+    /// 点了一格：最小化的窗口从程序坞里还原、放到最前；隐藏的 App 显示出来；别的桌面上的窗口，带着它切过去。
     func restore(_ item: NotchShelfItem) {
         items.removeAll { $0 == item }
         scannedAt = 0
         let app = NSRunningApplication(processIdentifier: item.pid)
         switch item.kind {
+        case .elsewhere:
+            Self.goTo(id: item.id, pid: item.pid)
         case .hiddenApp:
             app?.unhide()
             app?.activate()
@@ -103,6 +145,34 @@ final class NotchShelf {
                 }
             }
             wlog("notch: shelf unminimize id=\(item.id)")
+        }
+    }
+
+    /// 去那扇窗所在的桌面，并让它在最前。私有入口带着窗口切桌面；切过去以后辅助功能才看得见这扇窗，
+    /// 再把它提到最前（一个 App 在那张桌面上有好几扇时，要的是这一扇）。
+    nonisolated static func goTo(id: CGWindowID, pid: pid_t) {
+        let app = NSRunningApplication(processIdentifier: pid)
+        if !PrivateSLSWindowMover.shared.bringToFront(pid: pid, windowID: id) {
+            app?.activate()
+            wlog("notch: elsewhere go id=\(id) via activate")
+        } else {
+            wlog("notch: elsewhere go id=\(id)")
+        }
+        raiseWhenReachable(id: id, pid: pid, attempt: 0)
+    }
+
+    nonisolated private static func raiseWhenReachable(id: CGWindowID, pid: pid_t, attempt: Int) {
+        DispatchQueue.main.asyncAfter(deadline: .now() + 0.15) {
+            DispatchQueue.global(qos: .userInitiated).async {
+                guard let win = appWindows(pid: pid).first(where: { windowID(of: $0) == id }) else {
+                    if attempt < 10 { raiseWhenReachable(id: id, pid: pid, attempt: attempt + 1) }
+                    else { wlog("notch: elsewhere id=\(id) not reachable after switching") }
+                    return
+                }
+                AXUIElementPerformAction(win, kAXRaiseAction as CFString)
+                AXUIElementSetAttributeValue(win, kAXMainAttribute as CFString, kCFBooleanTrue)
+                wlog("notch: elsewhere raised id=\(id) after \(attempt + 1) tries")
+            }
         }
     }
 }

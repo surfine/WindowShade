@@ -95,6 +95,7 @@ final class NotchController {
             self.owner.launchpad.updateActivities(values, selected: selected)
         }
         watcher.onTitleSettled = { [weak self] id, title in self?.titleSettled(id, title: title) }
+        owner.glance.elsewhereSource = self
         menuRoom.onChange = { [weak self] in self?.refresh() }
         shelf.onChange = { [weak self] in
             guard let self else { return }
@@ -211,8 +212,8 @@ final class NotchController {
             panel.canPull = { [weak self] in
                 return self != nil
             }
-            panel.onTileHover = { [weak self] id, inside in
-                if inside { self?.showPeek(id) } else { self?.endPeek() }
+            panel.onTileHover = { [weak self] id, inside, rect in
+                if inside { self?.showPeek(id, tile: rect) } else { self?.endPeek() }
             }
         }
         for (id, panel) in panels where !alive.contains(id) {
@@ -845,8 +846,14 @@ final class NotchController {
 
     /// 停在展开后的某一格上：在它原来的位置看一眼，不拿出来。和卷帘条上的看一眼是同一件事——原处先显出它的卷帘条，
     /// 下面挂出实时画面（被隐藏的 App 也照常先盖住再临时显示）；看一眼关着或放不下时，退回收起时的截图。
-    private func showPeek(_ id: CGWindowID) {
+    private func showPeek(_ id: CGWindowID, tile: NSRect? = nil) {
         endPeek()
+        // 别的桌面上的窗口：从那张桌面实时抓画面，在它的位置、按它的大小，从这一格里长出来。
+        if let item = shelf.item(id), item.kind == .elsewhere {
+            elsewhereAnchor = (id, tile ?? notchPanel?.frame ?? .zero)
+            if owner.glance.showHeld(id) { glancePeek = id } else { elsewhereAnchor = nil }
+            return
+        }
         if tucked.contains(where: { $0.id == id }), let overlay = owner.shaded[id]?.overlay {
             overlay.alphaValue = 1
             if owner.glance.showHeld(id) {
@@ -872,6 +879,13 @@ final class NotchController {
         guard let id = glancePeek else { return }
         glancePeek = nil
         owner.glance.releaseHeld(id)
+        if elsewhereAnchor?.id == id {
+            // 画面收回（缩回那一格）要用到这一格的位置，收完再忘。
+            DispatchQueue.main.asyncAfter(deadline: .now() + 0.5) { [weak self] in
+                if self?.glancePeek != id, self?.elsewhereAnchor?.id == id { self?.elsewhereAnchor = nil }
+            }
+            return
+        }
         hideStripAfterGlance(id, attempts: 0)
     }
 
@@ -887,8 +901,12 @@ final class NotchController {
         }
     }
 
+    /// 正在看一眼的别的桌面上的窗口，和它那一格在屏幕上的位置。
+    private var elsewhereAnchor: (id: CGWindowID, tile: NSRect)?
+
     /// 探针用。
     var isPeeking: Bool { peek != nil || glancePeek != nil }
+    func peekForProbe(_ id: CGWindowID, tile: NSRect) { showPeek(id, tile: tile) }
     func peekForProbe(_ id: CGWindowID) { showPeek(id) }
     func endPeekForProbe() { endPeek() }
 
@@ -925,7 +943,8 @@ final class NotchController {
         changed = changed.filter { owner.shaded[$0.key] != nil }
     }
 
-    /// 展开后的一排：收进刘海的（最近的在前）、侧拉、卷帘条、带到每张桌面的，再是系统里最小化的窗口、隐藏的 App。
+    /// 展开后的一排：收进刘海的（最近的在前）、侧拉、卷帘条、带到每张桌面的，再是系统里最小化的窗口、隐藏的 App，
+    /// 最后是别的桌面上的窗口（最近用过的在前）。
     /// 最多 8 格，窄屏上按屏幕宽度少放几格。
     private func tiles() -> [NotchTile] {
         var list: [NotchTile] = tucked.reversed().map {
@@ -950,8 +969,14 @@ final class NotchController {
                                   title: info.title, changed: false))
         }
         for item in shelf.items where !list.contains(where: { $0.id == item.id }) {
-            list.append(NotchTile(id: item.id, kind: item.kind == .minimized ? .minimized : .hiddenApp, snapshot: nil,
-                                  icon: icon(item.pid), title: item.title, changed: false))
+            let kind: NotchTile.Kind
+            switch item.kind {
+            case .minimized: kind = .minimized
+            case .hiddenApp: kind = .hiddenApp
+            case .elsewhere: kind = .elsewhere
+            }
+            list.append(NotchTile(id: item.id, kind: kind, snapshot: nil, icon: icon(item.pid), title: item.title,
+                                  changed: false, place: item.place.map(ElsewhereWindows.label)))
         }
         return Array(list.prefix(8))
     }
@@ -1052,14 +1077,52 @@ final class NotchController {
     }
 }
 
+// MARK: - 别的桌面上的窗口：停在那一格上看一眼
+
+extension NotchController: GlanceElsewhereSource {
+    func elsewhereAnchorFrame(_ id: CGWindowID) -> NSRect? {
+        guard let anchor = elsewhereAnchor, anchor.id == id else { return nil }
+        return anchor.tile
+    }
+
+    /// 画面在窗口自己的位置、按它自己的大小（Core/ElsewhereWindows.cardFrame），从指着的那一格里长出来、缩回去。
+    /// 面板把那一格也包进去（长出来的动画画在面板里）；刘海在它上面，不挡指针。
+    func glanceTarget(forElsewhere id: CGWindowID) -> GlanceTarget? {
+        guard let anchor = elsewhereAnchor, anchor.id == id, let item = shelf.item(id), item.kind == .elsewhere,
+              hasScreenRecordingPermission(),
+              let screen = NSScreen.screens.first(where: { $0.frame.contains(NSPoint(x: anchor.tile.midX, y: anchor.tile.midY)) })
+                ?? NSScreen.main else { return nil }
+        let window = cocoaFrame(fromAXPosition: item.bounds.origin, size: item.bounds.size)
+        let card = ElsewhereWindows.cardFrame(window: window, visible: screen.visibleFrame, screen: screen.frame,
+                                              tile: anchor.tile)
+        guard card.width >= 80, card.height >= 60 else { return nil }
+        let margin = GlanceContentView.shadowMargin
+        let panel = card.insetBy(dx: -margin, dy: -margin).union(anchor.tile).intersection(screen.frame)
+        let scale = card.width / max(1, window.width)
+        let radius = owner.glance.windowCornerRadius(id, snapshot: nil, windowWidth: window.width) * scale
+        let app = NSRunningApplication(processIdentifier: item.pid)
+        return GlanceTarget(
+            strip: anchor.tile, panel: panel, card: card.offsetBy(dx: -panel.minX, dy: -panel.minY),
+            picture: NSRect(origin: .zero, size: card.size), backdropArea: nil, cornerRadius: radius,
+            source: .stream, snapshot: nil, pid: item.pid, bundleID: app?.bundleIdentifier ?? "",
+            accessibilityTitle: item.title, staleText: "不是实时画面",
+            growFrom: anchor.tile.offsetBy(dx: -panel.minX, dy: -panel.minY))
+    }
+
+    /// 单击画面：和点那一格一样，带着这扇窗切到它的桌面。
+    func openElsewhereWindow(_ id: CGWindowID) { open(id) }
+}
+
 struct NotchTile {
-    enum Kind { case tucked, strip, slideOver, carried, minimized, hiddenApp }
+    enum Kind { case tucked, strip, slideOver, carried, minimized, hiddenApp, elsewhere }
     let id: CGWindowID
     let kind: Kind
     let snapshot: CGImage?
     let icon: NSImage?
     let title: String
     var changed: Bool = false
+    /// 别的桌面上的窗口：左上角写它在哪（“桌面 3”“全屏”）。
+    var place: String? = nil
 }
 
 /// 刘海上的面板：平时和刘海一样大（刘海里没有像素，看不见）；收着窗口时往下长出一截带点的“下巴”；
@@ -1168,7 +1231,8 @@ final class NotchPanel: NSPanel {
     /// 两指往下拉出最近那扇窗：带上拉出来的图标在屏幕上的位置。
     var onSwipeDown: ((NSRect?) -> Void)?
     var onNavigation: ((LaunchpadController.Destination) -> Void)?
-    var onTileHover: ((CGWindowID, Bool) -> Void)?
+    /// 指针停到某一格上 / 离开：带上这一格在屏幕上的位置（别的桌面的窗口从这里长出来）。
+    var onTileHover: ((CGWindowID, Bool, NSRect?) -> Void)?
     /// 点刘海（不在某一格上）：点了几下、刘海在屏幕上的位置。
     var onPress: ((Int, NSRect) -> Void)?
     /// 拖着文件停在刘海上（或者丢进刘海）。
@@ -1260,7 +1324,7 @@ final class NotchPanel: NSPanel {
         contentView = canvas
         canvas.onHover = { [weak self] inside in self?.hover(inside) }
         canvas.onTileClicked = { [weak self] id, rect in self?.onTileClicked?(id, rect) }
-        canvas.onTileHover = { [weak self] id, inside in self?.onTileHover?(id, inside) }
+        canvas.onTileHover = { [weak self] id, inside, rect in self?.onTileHover?(id, inside, rect) }
         canvas.onActivitySelect = { [weak self] id in self?.onActivitySelect?(id) }
         canvas.onActivityAction = { [weak self] action in self?.onActivityAction?(action) }
         canvas.canSwipeActivities = { [weak self] in self?.canSwipeActivities?() ?? false }
@@ -1897,7 +1961,7 @@ final class NotchCanvasView: NSView {
     var onHover: ((Bool) -> Void)?
     var onPointerMoved: (() -> Void)?
     var onTileClicked: ((CGWindowID, NSRect?) -> Void)?
-    var onTileHover: ((CGWindowID, Bool) -> Void)?
+    var onTileHover: ((CGWindowID, Bool, NSRect?) -> Void)?
     /// 两指在刘海上往下拉：拉了多少（点，往下为正）、手指是不是还在上面、此刻速度（点/秒）。
     var onPull: ((CGFloat, Bool, CGFloat) -> Void)?
     var onNavigation: ((LaunchpadController.Destination) -> Void)?
@@ -2088,7 +2152,7 @@ final class NotchCanvasView: NSView {
         incoming.onTileClicked = { [weak self] id, rect in self?.onTileClicked?(id, rect) }
         incoming.activityView.onSelect = { [weak self] id in self?.onActivitySelect?(id) }
         incoming.activityView.onAction = { [weak self] action in self?.onActivityAction?(action) }
-        incoming.onTileHover = { [weak self] id, inside in self?.onTileHover?(id, inside) }
+        incoming.onTileHover = { [weak self] id, inside, rect in self?.onTileHover?(id, inside, rect) }
         clipHost.addSubview(incoming)
         if let authenticationView { clipHost.addSubview(authenticationView, positioned: .above, relativeTo: incoming) }
         incoming.place(in: rect, content: content)
@@ -2575,7 +2639,7 @@ final class NotchShoulders: NSPanel {
 final class NotchContentView: NSView {
     var inert = false
     var onTileClicked: ((CGWindowID, NSRect?) -> Void)?
-    var onTileHover: ((CGWindowID, Bool) -> Void)?
+    var onTileHover: ((CGWindowID, Bool, NSRect?) -> Void)?
     let activityView = NotchActivityView(frame: .zero)
     private let hint = NSTextField(labelWithString: "")
     private let dots = NotchDotsView()
@@ -2625,7 +2689,10 @@ final class NotchContentView: NSView {
         tileViews = content.tiles.map { tile in
             let view = NotchTileView(tile: tile)
             view.onClick = { [weak self] rect in self?.onTileClicked?(tile.id, rect) }
-            view.onHover = { [weak self] inside in self?.onTileHover?(tile.id, inside) }
+            view.onHover = { [weak self, weak view] inside in
+                let rect = view.flatMap { view in view.window.map { $0.convertToScreen(view.convert(view.bounds, to: nil)) } }
+                self?.onTileHover?(tile.id, inside, rect)
+            }
             addSubview(view)
             return view
         }
@@ -2875,7 +2942,7 @@ final class NotchTileView: NSView {
         self.tile = tile
         super.init(frame: .zero)
         wantsLayer = true
-        toolTip = "\(tile.title)\n\(Self.kindName(tile.kind))"
+        toolTip = "\(tile.title)\n\(tile.place ?? Self.kindName(tile.kind))"
         setAccessibilityRole(.button)
         setAccessibilityLabel("\(Self.verb(tile.kind)) \(tile.title)")
     }
@@ -2890,6 +2957,7 @@ final class NotchTileView: NSView {
         case .slideOver: return "拉出"
         case .carried: return "回到"
         case .minimized, .hiddenApp: return "还原"
+        case .elsewhere: return "去"
         }
     }
 
@@ -2901,13 +2969,14 @@ final class NotchTileView: NSView {
         case .carried: return "带到每张桌面"
         case .minimized: return "已最小化"
         case .hiddenApp: return "已隐藏"
+        case .elsewhere: return "在别的桌面"
         }
     }
 
     private static func badge(_ kind: NotchTile.Kind) -> NSImage? {
         let name: String
         switch kind {
-        case .tucked: return nil
+        case .tucked, .elsewhere: return nil
         case .strip: name = "rectangle.topthird.inset.filled"
         case .slideOver: name = "rectangle.rightthird.inset.filled"
         case .carried: name = "rectangle.stack"
@@ -2976,6 +3045,17 @@ final class NotchTileView: NSView {
             let size = badge.size
             badge.draw(in: NSRect(x: circle.midX - size.width / 2, y: circle.midY - size.height / 2,
                                   width: size.width, height: size.height))
+        }
+        if let place = tile.place {
+            // 别的桌面上的窗口：左上角一枚小签，写它在哪张桌面。
+            let text = NSAttributedString(string: place, attributes: [
+                .font: NSFont.systemFont(ofSize: 10, weight: .semibold), .foregroundColor: NSColor.white,
+            ])
+            let size = text.size()
+            let pill = NSRect(x: card.minX + 6, y: card.maxY - 24, width: ceil(size.width) + 12, height: 18)
+            NSColor.black.withAlphaComponent(0.6).setFill()
+            NSBezierPath(roundedRect: pill, xRadius: 9, yRadius: 9).fill()
+            text.draw(at: NSPoint(x: pill.minX + 6, y: pill.midY - size.height / 2))
         }
         if tile.changed {
             let ring = NSRect(x: card.maxX - 16, y: card.maxY - 16, width: 12, height: 12)
