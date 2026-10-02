@@ -825,6 +825,24 @@ final class NotchController {
         wlog("notch: home key x\(clicks)")
     }
 
+    /// 换了桌面：别的桌面上的窗口变了（刚离开的那张上的成了“别处”，刚到的这张上的不再是）。
+    /// 让货架作废，等切换动画停下来（0.3 秒防抖）只重查“别处”那一段（不问 App 的辅助功能），
+    /// 下次指针停上来时那一段已经是新的，不会在指针下重排。
+    func activeSpaceChanged() {
+        guard Self.isEnabled, !panels.isEmpty else { return }
+        shelf.invalidate()
+        spaceRefresh?.cancel()
+        let item = DispatchWorkItem { [weak self] in
+            MainActor.assumeIsolated {
+                guard let self else { return }
+                self.shelf.refreshElsewhere(exclude: self.rowExclude())
+            }
+        }
+        spaceRefresh = item
+        DispatchQueue.main.asyncAfter(deadline: .now() + 0.3, execute: item)
+    }
+    private var spaceRefresh: DispatchWorkItem?
+
     /// 探针用：按主屏幕键几下（带刘海那块屏）、重新查一遍收着的最小化窗口、点一排里的某一格。
     func pressForProbe(_ clicks: Int) {
         guard let rect = notchPanel?.notch ?? panels.values.first?.notch else { return }
@@ -837,11 +855,20 @@ final class NotchController {
 
     /// 指针停到刘海上：在后台查一遍最小化的窗口、隐藏的 App。已经在那一排里的不重复算。
     private func refreshShelf() {
+        shelf.refresh(exclude: rowExclude(), ownHidden: Set(owner.shaded.values.map(\.pid)))
+    }
+
+    /// 已经以别的身份在那一排里的窗口（收起的、收进刘海的、带到每张桌面的、侧拉的）。
+    private func rowExclude() -> Set<CGWindowID> {
         var exclude = Set(owner.shaded.keys)
         exclude.formUnion(tucked.map(\.id))
         exclude.formUnion(owner.carry.carriedIDs)
         if let slide = owner.slideOver.notchInfo { exclude.insert(slide.id) }
-        shelf.refresh(exclude: exclude, ownHidden: Set(owner.shaded.values.map(\.pid)))
+        // 画中画让开的原窗口、卷轴停在屏幕外的列：它们在原来那张桌面上，只是挪出了屏幕。换到别的桌面后
+        // 不能当成“桌面 N 上的窗口”列出来——点过去也看不见它们。
+        exclude.formUnion(owner.pip.activeIDs)
+        exclude.formUnion(owner.gestures.strips.allParkedIDs)
+        return exclude
     }
 
     /// 停在展开后的某一格上：在它原来的位置看一眼，不拿出来。和卷帘条上的看一眼是同一件事——原处先显出它的卷帘条，
@@ -849,7 +876,10 @@ final class NotchController {
     private func showPeek(_ id: CGWindowID, tile: NSRect? = nil) {
         endPeek()
         // 别的桌面上的窗口：从那张桌面实时抓画面，在它的位置、按它的大小，从这一格里长出来。
-        if let item = shelf.item(id), item.kind == .elsewhere {
+        // 只认确实还在别的桌面上的：货架是后台查的、一秒内不重查，这扇可能已经被收起、收进刘海或带到每张桌面，
+        // 那样走原有的那几条路（和 open()、tiles() 的先后一致）。
+        if let item = shelf.item(id), item.kind == .elsewhere, !isTucked(id), owner.shaded[id] == nil,
+           !owner.carry.isCarried(id) {
             elsewhereAnchor = (id, tile ?? notchPanel?.frame ?? .zero)
             if owner.glance.showHeld(id) { glancePeek = id } else { elsewhereAnchor = nil }
             return
@@ -1941,6 +1971,7 @@ final class NotchCanvasView: NSView {
         /// 是不是同一份内容（只是岛的大小、位置变了）：同一份就原地挪，不淡出淡入。
         func same(as other: Content) -> Bool {
             tiles.map(\.id) == other.tiles.map(\.id) && tiles.map(\.changed) == other.tiles.map(\.changed)
+                && tiles.map(\.place) == other.tiles.map(\.place) && tiles.map(\.kind) == other.tiles.map(\.kind)
                 && activities.isEmpty == other.activities.isEmpty && activitiesExpanded == other.activitiesExpanded
                 && dots == other.dots && dotsChanged == other.dotsChanged
                 && (compact?.same(as: other.compact) ?? (other.compact == nil))

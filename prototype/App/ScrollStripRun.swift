@@ -313,6 +313,9 @@ final class ScrollStripController {
     /// 此刻能不能看一眼边上那一条：卷轴停稳了、概览没开。
     var canPeek: Bool { strip != nil && !motionActive && overview == nil }
 
+    /// 停在两边屏幕外的所有窗口：刘海列“别的桌面上的窗口”时不算它们（它们在这张桌面上，只是挪出了屏幕）。
+    var allParkedIDs: Set<CGWindowID> { parkedIDs(on: .left).union(parkedIDs(on: .right)) }
+
     /// 停在这一边的所有窗口（叠在屏幕边上的几列都算）。
     func parkedIDs(on side: ScrollStrip.Side) -> Set<CGWindowID> {
         guard let strip else { return [] }

@@ -1031,6 +1031,7 @@ extension AppDelegate {
         MainActor.assumeIsolated {
             glance.cancelAll(reason: "space-changed")
             carry.activeSpaceChanged()
+            notch.activeSpaceChanged()
             gestures.cancel(reason: "space-changed")
         }
         menuPreviewHoverID = nil

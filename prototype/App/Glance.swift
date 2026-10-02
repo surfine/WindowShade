@@ -589,6 +589,11 @@ final class GlanceController {
             if existing.stage == .closing, existing.rehiddenAt != nil {
                 // 真窗口已藏回、视频流已停：旧画面不能再当作实时会话复用。
                 finish(existing, reason: "reenter-after-rehide")
+            } else if existing.stage == .closing,
+                      let frame = stripFrame(id), !framesAlmostEqual(frame, existing.stripFrame) {
+                // 收回途中，它的起点换了地方（刘海那一排重排过，同一扇窗的格子挪了）：旧画面的位置不对，
+                // 不能接着用，否则下一拍就被当成“卷帘条被拖走”撤掉。卷帘条的外框不会这样变，原有行为不受影响。
+                finish(existing, reason: "reenter-moved")
             } else {
                 if existing.stage == .closing {
                     // 卷上途中指针回来了：接着用同一路画面。
