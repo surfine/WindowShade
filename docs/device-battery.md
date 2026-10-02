@@ -1,0 +1,42 @@
+# 设备电量
+
+2026-10-01 起（交接 v2 的里程碑 B）。Aaron 定：按 v2，设备**连上**和**电量低**这两个时刻在刘海里说一句；
+平时不常驻，不和系统菜单栏的电量抢位置（`ideas-switchers.md` 提案①“电量永远不进刘海”这一项作废）。
+第一条真实来源是妙控键盘 / 鼠标 / 触控板；独立实现，不复制 AirBattery（AGPLv3）的代码。
+
+## 规则
+
+全部在 `prototype/Core/DeviceBattery.swift`，测试 `tests/run-device-battery-tests.sh`（对应 BATTERY-ISLAND-ACCEPTANCE 的
+ID-01/02、DATA-01…04/07/10/12、ALERT-01…05/09/11、EVENT-02…04）。
+
+- **身份**：按稳定 ID 区分（蓝牙地址，没有就序列号；都没有就不建档）。名字只用来显示，两台同名是两台，改名不算新设备。
+- **读数**：读不到就是未知，合法的 0% 才是零；范围外当未知。“看见设备还连着”只更新 lastSeen，不给电量续期。
+  来源不给采样时间时只记本机收到的时间，不冒充“刚采样”。旧一轮采集的晚到读数、空读数都不覆盖有效值。
+- **低电量**：20% / 10% / 5% 三档，同一设备、同一组件、同一放电周期每档最多一次，更严重一档可以再提醒；
+  确认在充电或回升 5 个点以上才重新武装；断开重连、程序重启不清空提醒记录（存在偏好 `DeviceBattery.alerted.v1`）。
+  这三档是本项目的候选参数，不是 Apple 的阈值。充电状态未知时只说“电量低”，不断言没插电；超过 15 分钟的读数不发新提醒。
+- **连接**：启动时已经连着的只建档、不播报；新连上的立刻说一句，电量到了在同一处补上；
+  0.6 秒内连上好几台（例如唤醒）合成一句“N 个设备已连接”。断开不说。
+
+## 来源：妙控外设（`App/PeripheralBatterySource.swift`）
+
+公开 IOKit 注册表里每个带电池的 Apple HID 外设有一个 `AppleDeviceManagementHIDEventService`，带 `BatteryPercent`、
+`DeviceAddress`、`ProductID`、`Transport`。连上 / 断开用 IOKit 匹配通知（不扫描），连着时每 2 分钟读一次电量
+（读系统驱动维护的数，不发起连接，没有副作用）。枚举到的每个对象本轮释放，保留的服务对象在断开或停止时释放。
+
+本机实测（2026-10-01）：妙控鼠标（ProductID 0x0323，蓝牙）`BatteryPercent = 100`，`Product` 是空串
+（所以名字按型号表给，见 `App/DeviceBatteryCopy.swift`）。`BatteryStatusFlags = 4` 含义没有公开定义，不拿它猜充电状态。
+
+## 刘海忙的时候（`NotchController.announceWhenFree`）
+
+刘海展开、拖放、Touch ID 确认中、或者正在说另一句时，电量这句不丢，进一个小队列，空下来再说：
+
+- 同一件事只留最新一句（key 相同就替换），“妙控鼠标已连接”正显示时补上电量是原地更新，不重新弹一次。
+- 低电量优先于“已连接”；“已连接”10 秒内没机会说就作废，低电量 60 秒内都还说。
+- 每 0.4 秒看一次刘海是否空下来；不打断正在进行的事，也不抢 Touch ID 确认。
+
+## 还没做
+
+- 完整的活动协调器：现在只排“说一句”的提醒；实时活动之间的打断与恢复仍是 `NotchPanel.baseTarget()` 的优先级链。
+- 电量概览（刘海展开后、负一屏）、AirPods 左右耳与充电盒、iPhone / iPad / Apple Watch / Vision Pro、本机电池。
+- 设置里的开关（现在是偏好 `Notch.deviceBattery.enabled`，默认开）。

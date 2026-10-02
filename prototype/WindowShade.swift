@@ -272,6 +272,8 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSMenuDelegate {
     lazy var carry = MainActor.assumeIsolated { CarryController(owner: self) }
     lazy var slideOver = MainActor.assumeIsolated { SlideOverController(owner: self) }
     lazy var notch = MainActor.assumeIsolated { NotchController(owner: self) }
+    /// 妙控外设连上、电量低时在刘海上说一句（App/DeviceBatteryController.swift）。
+    lazy var deviceBattery = MainActor.assumeIsolated { DeviceBatteryController() }
     lazy var launchpad = MainActor.assumeIsolated { LaunchpadController(owner: self) }
     lazy var gestures = MainActor.assumeIsolated { TrackpadGestureController(owner: self) }
     /// 再点一下 Dock 图标让开这个 App（见 DockClickHide.swift）。
@@ -399,6 +401,10 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSMenuDelegate {
                 return true
             }
             UpdaterController.shared.start()
+            deviceBattery.announce = { [weak self] key, text, detail, symbol, priority, ttl in
+                self?.notch.announceWhenFree(key: key, text: text, detail: detail, symbol: symbol, priority: priority, ttl: ttl)
+            }
+            deviceBattery.start()
         }
     }
 
