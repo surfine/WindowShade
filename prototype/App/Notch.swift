@@ -62,6 +62,8 @@ final class NotchController {
     private var syncTimer: Timer?
     /// 系统里最小化的窗口、隐藏的 App（见 NotchShelf.swift）。
     let shelf = NotchShelf()
+    /// 格子上的画面（最小化、隐藏、别的桌面、侧拉的窗口），展开时在后台按需截。
+    let thumbnails = NotchThumbnails()
     let activities = NotchActivityController()
     lazy var authentication = NotchAuthenticationController(owner: self)
     lazy var faceObservations = NotchFaceObservationController(owner: self)
@@ -100,6 +102,11 @@ final class NotchController {
         shelf.onChange = { [weak self] in
             guard let self else { return }
             for panel in self.panels.values where panel.isExpanded { panel.expand(with: self.tiles()) }
+            self.requestThumbnails()
+        }
+        thumbnails.onImage = { [weak self] id, image in
+            guard let self else { return }
+            for panel in self.panels.values where panel.isExpanded { panel.updateTileSnapshot(id: id, image: image) }
         }
         // 收起的窗口来来去去（双击、快捷键、菜单），每 2 秒对一次账：只加减观察者，不问任何 App。
         // 刘海上有东西时顺便看看两边的菜单栏空位是不是该重新量了（量在后台）。
@@ -526,8 +533,10 @@ final class NotchController {
         if inside, !(panel.isVirtual && tucked.isEmpty && changed.isEmpty && activities.store.visible.isEmpty) {
             if !panel.isExpanded { wlog("notch: expand on hover at \(NSEvent.mouseLocation)") }
             panel.expand(with: tiles())
+            requestThumbnails()
         } else if !inside {
             endPeek()
+            stills.removeAll()
             let wasOpen = panel.isExpanded
             panel.collapse()
             // 展开过，一排格子上的点就算看过了。
@@ -858,6 +867,14 @@ final class NotchController {
         shelf.refresh(exclude: rowExclude(), ownHidden: Set(owner.shaded.values.map(\.pid)))
     }
 
+    /// 展开的那一排里，格子上还没有画面（或画面旧了）的几种窗口：在后台各截一张小图，截到一张换上一张。
+    private func requestThumbnails() {
+        let row = tiles().filter { [.slideOver, .minimized, .hiddenApp, .elsewhere].contains($0.kind) }
+        // 货架那几格在后台查完之前不在这一排里：它们的图也留着，免得每次展开都重截。
+        thumbnails.prune(keeping: Set(row.map(\.id)).union(shelf.items.map(\.id)))
+        thumbnails.request(row.map(\.id))
+    }
+
     /// 已经以别的身份在那一排里的窗口（收起的、收进刘海的、带到每张桌面的、侧拉的）。
     private func rowExclude() -> Set<CGWindowID> {
         var exclude = Set(owner.shaded.keys)
@@ -873,25 +890,69 @@ final class NotchController {
 
     /// 停在展开后的某一格上：在它原来的位置看一眼，不拿出来。和卷帘条上的看一眼是同一件事——原处先显出它的卷帘条，
     /// 下面挂出实时画面（被隐藏的 App 也照常先盖住再临时显示）；看一眼关着或放不下时，退回收起时的截图。
+    /// 停在一格上：每种格子都给看一眼（docs/notch.md「每一格都能看一眼」，判断在 Core/NotchGlancePlan）。
+    /// 先后和 open() 一致：收进刘海的 → 侧拉 → 带到每张桌面 → 卷帘条 → 货架里的（别的桌面、最小化、隐藏）。
+    /// - 收进刘海的、在眼前的卷帘条、看得见的带到每张桌面的卷帘条：用它们自己那一套看一眼（按住）。
+    /// - 收在边上的侧拉、卷帘条不在眼前的带到每张桌面、别的桌面：实时画面从格子里长到窗口自己的位置。
+    /// - 最小化、隐藏的：截一张当前画面（不取消最小化、不取消隐藏），从格子里长出来，标“不是实时画面”。
+    /// - 卷帘条不在眼前：退回原处那张“收起时的画面”。
     private func showPeek(_ id: CGWindowID, tile: NSRect? = nil) {
         endPeek()
-        // 别的桌面上的窗口：从那张桌面实时抓画面，在它的位置、按它的大小，从这一格里长出来。
-        // 只认确实还在别的桌面上的：货架是后台查的、一秒内不重查，这扇可能已经被收起、收进刘海或带到每张桌面，
-        // 那样走原有的那几条路（和 open()、tiles() 的先后一致）。
-        if let item = shelf.item(id), item.kind == .elsewhere, !isTucked(id), owner.shaded[id] == nil,
-           !owner.carry.isCarried(id) {
-            elsewhereAnchor = (id, tile ?? notchPanel?.frame ?? .zero)
-            if owner.glance.showHeld(id) { glancePeek = id } else { elsewhereAnchor = nil }
+        let tileRect = tile ?? notchPanel?.frame ?? .zero
+        var facts = NotchGlancePlan.Facts(permission: hasScreenRecordingPermission(), stripOnActiveSpace: false,
+                                          slideOverHidden: false, windowOnScreen: windowIsOnScreenNow(id),
+                                          carriedStripVisible: false, snapshotAvailable: WindowSnapshot.isAvailable)
+        if isTucked(id) || owner.shaded[id] != nil {
+            let kind: NotchGlancePlan.Kind = isTucked(id) ? .tucked : .strip
+            if let overlay = owner.shaded[id]?.overlay {
+                facts.stripOnActiveSpace = overlay.isVisible && overlay.alphaValue > 0 && overlay.isOnActiveSpace
+            }
+            if NotchGlancePlan.route(kind, facts) == .held, let overlay = owner.shaded[id]?.overlay {
+                let alpha = overlay.alphaValue
+                overlay.alphaValue = 1
+                if owner.glance.showHeld(id) {
+                    glancePeek = id
+                    return
+                }
+                overlay.alphaValue = alpha
+            }
+            showStoredPeek(id)
             return
         }
-        if tucked.contains(where: { $0.id == id }), let overlay = owner.shaded[id]?.overlay {
-            overlay.alphaValue = 1
-            if owner.glance.showHeld(id) {
-                glancePeek = id
-                return
-            }
-            overlay.alphaValue = 0
+        if owner.slideOver.isSlideOver(id), let info = owner.slideOver.notchInfo {
+            facts.slideOverHidden = owner.slideOver.isHidden
+            guard NotchGlancePlan.route(.slideOver, facts) == .liveFromTile,
+                  let frame = owner.slideOver.dockedFrame else { return }
+            startTileGlance(id, tile: tileRect, glance: .live(window: frame), pid: info.pid,
+                            title: NSRunningApplication(processIdentifier: info.pid)?.localizedName ?? "")
+            return
         }
+        if owner.carry.isCarried(id) {
+            facts.carriedStripVisible = owner.carry.carriedStripFrame(id) != nil
+            switch NotchGlancePlan.route(.carried, facts) {
+            case .held:
+                if owner.glance.showHeld(id) { glancePeek = id }
+            case .liveFromTile:
+                guard let info = owner.carry.notchInfo(id), let frame = cgWindowInfo(id).flatMap(cgWindowBounds) else { return }
+                startTileGlance(id, tile: tileRect, glance: .live(window: frame), pid: info.pid, title: info.title)
+            default:
+                break
+            }
+            return
+        }
+        guard let item = shelf.item(id) else { return }
+        switch item.kind {
+        case .elsewhere:
+            guard NotchGlancePlan.route(.elsewhere, facts) == .liveFromTile else { return }
+            startTileGlance(id, tile: tileRect, glance: .live(window: item.bounds), pid: item.pid, title: item.title)
+        case .minimized, .hiddenApp:
+            guard NotchGlancePlan.route(item.kind == .minimized ? .minimized : .hiddenApp, facts) == .stillFromTile else { return }
+            showStill(item, tile: tileRect)
+        }
+    }
+
+    /// 原处那张“收起时的画面”（卷帘条不在眼前、或者看一眼开不了时）。
+    private func showStoredPeek(_ id: CGWindowID) {
         let item = tucked.first(where: { $0.id == id })
         let state = owner.shaded[id]
         guard let snapshot = item?.snapshot ?? state?.previewImage?.cgImage(forProposedRect: nil, context: nil, hints: nil),
@@ -900,19 +961,67 @@ final class NotchController {
         peek = NotchPeek(image: snapshot, frame: cocoaFrame(fromAXPosition: frame.origin, size: frame.size))
     }
 
+    /// 从格子里长出来的看一眼：实时（窗口的位置）或一张静止画面（窗口的位置；不知道位置就挂在格子下面）。
+    enum TileGlance {
+        case live(window: CGRect)
+        case still(CGImage, window: CGRect)
+    }
+
+    private func startTileGlance(_ id: CGWindowID, tile: NSRect, glance: TileGlance, pid: pid_t, title: String) {
+        tileAnchor = (id, tile, glance, pid, title)
+        if owner.glance.showHeld(id) { glancePeek = id } else { tileAnchor = nil }
+    }
+
+    /// 最小化、隐藏的：截一张（排在格子小图前面）；指针还停在这一格、它还是那一种，才显示。截不到什么都不出。
+    /// 10 秒内截过的直接用。
+    private func showStill(_ item: NotchShelfItem, tile: NSRect) {
+        let id = item.id
+        if let cached = stills[id], NotchThumbnailPolicy.isFresh(capturedAt: cached.at, now: CFAbsoluteTimeGetCurrent()) {
+            startTileGlance(id, tile: tile, glance: .still(cached.image, window: item.bounds), pid: item.pid, title: item.title)
+            return
+        }
+        let token = peekToken
+        let started = CACurrentMediaTime()
+        let quality = NotchThumbnailPolicy.stillQuality(windowPoints: item.bounds.size)
+        thumbnails.still(id, quality: quality) { [weak self] image in
+            guard let self, token == self.peekToken, self.shelf.item(id)?.kind == item.kind else { return }
+            let ms = Int((CACurrentMediaTime() - started) * 1000)
+            guard let image, NotchThumbnailPolicy.acceptsPicture(pixelWidth: image.width, pixelHeight: image.height,
+                                                                 expectedPoints: item.bounds.size) else {
+                wlog("notch: still id=\(id) none after \(ms)ms")
+                return
+            }
+            if self.stills.count >= 2, let oldest = self.stills.min(by: { $0.value.at < $1.value.at })?.key {
+                self.stills.removeValue(forKey: oldest)
+            }
+            self.stills[id] = (image, CFAbsoluteTimeGetCurrent())
+            self.startTileGlance(id, tile: tile, glance: .still(image, window: item.bounds), pid: item.pid, title: item.title)
+            self.stillLatencyForProbe = ms
+            wlog("notch: still id=\(id) \(image.width)x\(image.height) after \(ms)ms")
+        }
+    }
+
+    /// 刚截的静止画面（最多两张，一排收起就清掉）。
+    private var stills: [CGWindowID: (image: CGImage, at: CFAbsoluteTime)] = [:]
+    /// 每次换一格、离开就加一：晚到的截图对不上号就不显示。
+    private var peekToken = 0
+    /// 探针用：最近一张静止画面从停上去到截到用了多久。
+    private(set) var stillLatencyForProbe: Int?
+
     /// 从刘海开的实时看一眼（窗口 id）：收回时它的卷帘条要等画面卷上、真窗口藏回之后再藏起来。
     private var glancePeek: CGWindowID?
 
     private func endPeek() {
+        peekToken += 1
         peek?.close()
         peek = nil
         guard let id = glancePeek else { return }
         glancePeek = nil
         owner.glance.releaseHeld(id)
-        if elsewhereAnchor?.id == id {
+        if tileAnchor?.id == id {
             // 画面收回（缩回那一格）要用到这一格的位置，收完再忘。
             DispatchQueue.main.asyncAfter(deadline: .now() + 0.5) { [weak self] in
-                if self?.glancePeek != id, self?.elsewhereAnchor?.id == id { self?.elsewhereAnchor = nil }
+                if self?.glancePeek != id, self?.tileAnchor?.id == id { self?.tileAnchor = nil }
             }
             return
         }
@@ -931,13 +1040,17 @@ final class NotchController {
         }
     }
 
-    /// 正在看一眼的别的桌面上的窗口，和它那一格在屏幕上的位置。
-    private var elsewhereAnchor: (id: CGWindowID, tile: NSRect)?
+    /// 正从格子里长出来的那一眼：哪扇窗、那一格在屏幕上的位置、看什么、谁的、叫什么。
+    private var tileAnchor: (id: CGWindowID, tile: NSRect, glance: TileGlance, pid: pid_t, title: String)?
 
     /// 探针用。
     var isPeeking: Bool { peek != nil || glancePeek != nil }
     func peekForProbe(_ id: CGWindowID, tile: NSRect) { showPeek(id, tile: tile) }
     func peekForProbe(_ id: CGWindowID) { showPeek(id) }
+    /// 探针用：这一格此刻缓存的小图（没截到是 nil）。
+    func thumbnailForProbe(_ id: CGWindowID) -> CGImage? { thumbnails.image(id) }
+    /// 探针用：一排展开后要格子图（和指针停上来时一样）。
+    func requestThumbnailsForProbe() { requestThumbnails() }
     func endPeekForProbe() { endPeek() }
 
     private func refresh() {
@@ -984,7 +1097,7 @@ final class NotchController {
         func icon(_ pid: pid_t) -> NSImage? { NSRunningApplication(processIdentifier: pid)?.icon }
         if let slide = owner.slideOver.notchInfo, !list.contains(where: { $0.id == slide.id }) {
             let app = NSRunningApplication(processIdentifier: slide.pid)
-            list.append(NotchTile(id: slide.id, kind: .slideOver, snapshot: nil, icon: app?.icon,
+            list.append(NotchTile(id: slide.id, kind: .slideOver, snapshot: thumbnails.image(slide.id), icon: app?.icon,
                                   title: app?.localizedName ?? "", changed: false))
         }
         for (id, state) in owner.sortedShadedEntries() where !isTucked(id) && !list.contains(where: { $0.id == id }) {
@@ -1005,7 +1118,7 @@ final class NotchController {
             case .hiddenApp: kind = .hiddenApp
             case .elsewhere: kind = .elsewhere
             }
-            list.append(NotchTile(id: item.id, kind: kind, snapshot: nil, icon: icon(item.pid), title: item.title,
+            list.append(NotchTile(id: item.id, kind: kind, snapshot: thumbnails.image(item.id), icon: icon(item.pid), title: item.title,
                                   changed: false, place: item.place.map(ElsewhereWindows.label)))
         }
         return Array(list.prefix(8))
@@ -1111,35 +1224,56 @@ final class NotchController {
 
 extension NotchController: GlanceElsewhereSource {
     func elsewhereAnchorFrame(_ id: CGWindowID) -> NSRect? {
-        guard let anchor = elsewhereAnchor, anchor.id == id else { return nil }
+        guard let anchor = tileAnchor, anchor.id == id else { return nil }
         return anchor.tile
     }
 
-    /// 画面在窗口自己的位置、按它自己的大小（Core/ElsewhereWindows.cardFrame），从指着的那一格里长出来、缩回去。
-    /// 面板把那一格也包进去（长出来的动画画在面板里）；刘海在它上面，不挡指针。
+    /// 画面从指着的那一格里长出来、缩回去：落在窗口自己的位置、按它自己的大小（Core/ElsewhereWindows.cardFrame），
+    /// 不知道窗口在哪的静止画面挂在格子下面。面板把那一格也包进去（长出来的动画画在面板里）；刘海在它上面，不挡指针。
+    /// 实时的从窗口所在的桌面、屏幕边外开流；静止的只给那一张，右下角一直写“不是实时画面”。
     func glanceTarget(forElsewhere id: CGWindowID) -> GlanceTarget? {
-        guard let anchor = elsewhereAnchor, anchor.id == id, let item = shelf.item(id), item.kind == .elsewhere,
-              hasScreenRecordingPermission(),
+        guard let anchor = tileAnchor, anchor.id == id, hasScreenRecordingPermission(),
               let screen = NSScreen.screens.first(where: { $0.frame.contains(NSPoint(x: anchor.tile.midX, y: anchor.tile.midY)) })
                 ?? NSScreen.main else { return nil }
-        let window = cocoaFrame(fromAXPosition: item.bounds.origin, size: item.bounds.size)
-        let card = ElsewhereWindows.cardFrame(window: window, visible: screen.visibleFrame, screen: screen.frame,
-                                              tile: anchor.tile)
+        let windowAX: CGRect
+        let still: CGImage?
+        switch anchor.glance {
+        case .live(let window):
+            windowAX = window
+            still = nil
+        case .still(let image, let window):
+            windowAX = window
+            still = image
+        }
+        let card: CGRect
+        let windowWidth: CGFloat
+        if windowAX.width > 0, windowAX.height > 0 {
+            let window = cocoaFrame(fromAXPosition: windowAX.origin, size: windowAX.size)
+            card = ElsewhereWindows.cardFrame(window: window, visible: screen.visibleFrame, screen: screen.frame, tile: anchor.tile)
+            windowWidth = window.width
+        } else if let still {
+            let size = CGSize(width: CGFloat(still.width) / screen.backingScaleFactor,
+                              height: CGFloat(still.height) / screen.backingScaleFactor)
+            card = ElsewhereWindows.cardFrame(size: size, visible: screen.visibleFrame, tile: anchor.tile)
+            windowWidth = size.width
+        } else {
+            return nil
+        }
         guard card.width >= 80, card.height >= 60 else { return nil }
         let margin = GlanceContentView.shadowMargin
         let panel = card.insetBy(dx: -margin, dy: -margin).union(anchor.tile).intersection(screen.frame)
-        let scale = card.width / max(1, window.width)
-        let radius = owner.glance.windowCornerRadius(id, snapshot: nil, windowWidth: window.width) * scale
-        let app = NSRunningApplication(processIdentifier: item.pid)
+        let scale = card.width / max(1, windowWidth)
+        let radius = owner.glance.windowCornerRadius(id, snapshot: still, windowWidth: windowWidth) * scale
+        let app = NSRunningApplication(processIdentifier: anchor.pid)
         return GlanceTarget(
             strip: anchor.tile, panel: panel, card: card.offsetBy(dx: -panel.minX, dy: -panel.minY),
             picture: NSRect(origin: .zero, size: card.size), backdropArea: nil, cornerRadius: radius,
-            source: .stream, snapshot: nil, pid: item.pid, bundleID: app?.bundleIdentifier ?? "",
-            accessibilityTitle: item.title, staleText: "不是实时画面",
+            source: still == nil ? .stream : .snapshotOnly, snapshot: still, pid: anchor.pid,
+            bundleID: app?.bundleIdentifier ?? "", accessibilityTitle: anchor.title, staleText: "不是实时画面",
             growFrom: anchor.tile.offsetBy(dx: -panel.minX, dy: -panel.minY))
     }
 
-    /// 单击画面：和点那一格一样，带着这扇窗切到它的桌面。
+    /// 单击画面：和点那一格一样（回到它该在的地方）。
     func openElsewhereWindow(_ id: CGWindowID) { open(id) }
 }
 
@@ -1147,7 +1281,8 @@ struct NotchTile {
     enum Kind { case tucked, strip, slideOver, carried, minimized, hiddenApp, elsewhere }
     let id: CGWindowID
     let kind: Kind
-    let snapshot: CGImage?
+    /// 格子上的画面。最小化、隐藏、别的桌面、侧拉的格子起初没有，后台截到后原地换上（NotchPanel.updateTileSnapshot）。
+    var snapshot: CGImage?
     let icon: NSImage?
     let title: String
     var changed: Bool = false
@@ -1573,6 +1708,13 @@ final class NotchPanel: NSPanel {
         apply(animated: true)
     }
 
+    /// 某一格的画面到了（后台截的）：只换这一格的图，不走 expand（那会清掉提醒、重算整个岛）。
+    func updateTileSnapshot(id: CGWindowID, image: CGImage?) {
+        guard let index = tiles.firstIndex(where: { $0.id == id }) else { return }
+        tiles[index].snapshot = image
+        canvas.updateTileSnapshot(id: id, image: image)
+    }
+
     func collapse() {
         guard !isAuthenticating else { return }
         guard isExpanded else { return }
@@ -1969,6 +2111,7 @@ final class NotchCanvasView: NSView {
         var activitiesExpanded: Bool = false
 
         /// 是不是同一份内容（只是岛的大小、位置变了）：同一份就原地挪，不淡出淡入。
+        /// 故意不比较格子的画面：画面是后台截到后原地换的（updateTileSnapshot），换图不该让整排淡出淡入。
         func same(as other: Content) -> Bool {
             tiles.map(\.id) == other.tiles.map(\.id) && tiles.map(\.changed) == other.tiles.map(\.changed)
                 && tiles.map(\.place) == other.tiles.map(\.place) && tiles.map(\.kind) == other.tiles.map(\.kind)
@@ -2028,6 +2171,12 @@ final class NotchCanvasView: NSView {
     }
     private var shown: Content?
     private var morphs = 0
+
+    /// 某一格的画面到了：记进当前内容（下次比较、重排时用得上），再交给那一格的视图原地换上。
+    func updateTileSnapshot(id: CGWindowID, image: CGImage?) {
+        if let index = shown?.tiles.firstIndex(where: { $0.id == id }) { shown?.tiles[index].snapshot = image }
+        current?.updateSnapshot(id: id, image: image)
+    }
     private var pull: (distance: CGFloat, samples: [(TimeInterval, CGFloat)])?
     /// 两个肩所在的那层窗口（NotchPanel 给，不知道硬件形状时是 nil）：岛变形时肩跟着岛的上角走。
     var shoulders: NotchShoulders?
@@ -2731,6 +2880,11 @@ final class NotchContentView: NSView {
 
     required init?(coder: NSCoder) { fatalError("init(coder:) is not used") }
 
+    /// 这一格的画面到了：原地换。
+    func updateSnapshot(id: CGWindowID, image: CGImage?) {
+        tileViews.first { $0.tileID == id }?.setSnapshot(image)
+    }
+
     override func hitTest(_ point: NSPoint) -> NSView? { inert ? nil : super.hitTest(point) }
 
     /// 按岛的终点排好（rect：画布坐标里岛的外框）。
@@ -2964,8 +3118,24 @@ final class NotchTileView: NSView {
     /// 点一下：带上画面此刻在屏幕上的位置（窗口从这里飞回去）。
     var onClick: ((NSRect?) -> Void)?
     var onHover: ((Bool) -> Void)?
-    private let tile: NotchTile
+    private var tile: NotchTile
+    var tileID: CGWindowID { tile.id }
     var changed: Bool { tile.changed }
+
+    /// 后台截到这一格的画面：原地换上，不重建格子（指针正停在上面时，停留计时和悬停都不受影响）。
+    /// 从没有画面换成有画面时淡入 0.15 秒；减弱动态效果时直接换。
+    func setSnapshot(_ image: CGImage?) {
+        guard image !== tile.snapshot else { return }
+        let fadeIn = tile.snapshot == nil && image != nil && !NSWorkspace.shared.accessibilityDisplayShouldReduceMotion
+        tile.snapshot = image
+        if fadeIn {
+            let fade = CATransition()
+            fade.type = .fade
+            fade.duration = 0.15
+            layer?.add(fade, forKey: "snapshot")
+        }
+        needsDisplay = true
+    }
     private var hovering = false { didSet { needsDisplay = true } }
     private var dwell: Timer?
 

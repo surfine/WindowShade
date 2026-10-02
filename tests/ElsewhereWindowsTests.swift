@@ -132,6 +132,41 @@ struct ElsewhereWindowsTests {
              "a rebound shortcut is followed as the user set it")
     }
 
+    do {  // 藏起来的 App 叫哪一扇：跳过太小的、透明的，取第一扇够大的；都不够大就退回第一扇普通层的
+      func row(_ id: CGWindowID, layer: Int = 0, alpha: Double = 1, size: CGSize = CGSize(width: 800, height: 600),
+               pid: pid_t = 7) -> ElsewhereWindows.WindowRow {
+        ElsewhereWindows.WindowRow(id: id, pid: pid, layer: layer, bounds: CGRect(origin: .zero, size: size), alpha: alpha)
+      }
+      let rows = [row(1, alpha: 0), row(2, size: CGSize(width: 200, height: 30)),
+                  row(3, size: CGSize(width: 90, height: 300)), row(4, layer: 3), row(5), row(6)]
+      expect(ElsewhereWindows.hiddenAppWindow(rows, pid: 7) == 5,
+             "the hidden app's first window big enough is picked (skipping tiny, toolbar and transparent ones)")
+      expect(ElsewhereWindows.hiddenAppWindow([row(1), row(2, size: CGSize(width: 119, height: 400))], pid: 7) == 1,
+             "the first normal-layer window is picked when none is big enough")
+      expect(ElsewhereWindows.hiddenAppWindow([row(2, pid: 9), row(3, layer: 1)], pid: 7) == nil,
+             "a pid with no normal-layer window gets nothing")
+      expect(ElsewhereWindows.hiddenAppWindow([row(1, pid: 9), row(2, pid: 9)], pid: 7) == nil,
+             "another app's windows are not used")
+    }
+
+    do {  // 挂在格子下面：等比缩小、压在格子下边、整张留在可用区域里
+      let visible = CGRect(x: 0, y: 70, width: 1470, height: 849)
+      let tile = CGRect(x: 600, y: 780, width: 124, height: 120)
+      let size = CGSize(width: 1600, height: 1000)
+      let card = ElsewhereWindows.cardFrame(size: size, visible: visible, tile: tile)
+      expect(card.maxY <= tile.minY - 7.9 && abs(card.midX - tile.midX) < 1 && visible.contains(card),
+             "the card hangs under the tile, centred on it and inside the usable area")
+      expect(abs(card.width / card.height - 1.6) < 0.01 && card.width <= visible.width * 0.72 + 0.5,
+             "the card keeps its shape and stays within 72% of the usable width")
+      let shallow = CGRect(x: 0, y: 70, width: 800, height: 100)
+      // 格子下边离可用区域底边不到 8 + 10 点：放不下。
+      expect(ElsewhereWindows.cardFrame(size: size, visible: shallow, tile: CGRect(x: 300, y: 85, width: 124, height: 20)) == .zero,
+             "with no room below the tile there is no card")
+      expect(ElsewhereWindows.cardFrame(size: .zero, visible: visible, tile: tile) == .zero
+             && ElsewhereWindows.cardFrame(size: size, visible: .zero, tile: tile) == .zero,
+             "an empty size or an empty usable area gives no card")
+    }
+
     print(failures == 0 ? "all elsewhere window tests passed" : "\(failures) failure(s)")
     if failures > 0 { exit(1) }
   }

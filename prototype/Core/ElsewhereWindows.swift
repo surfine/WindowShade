@@ -104,13 +104,44 @@ enum ElsewhereWindows {
             let y = min(max(window.midY - size.height / 2, visible.minY), visible.maxY - size.height)
             return CGRect(origin: CGPoint(x: x, y: y), size: size)
         }
+        return cardFrame(size: window.size, visible: visible, tile: tile)
+    }
+
+    /// 挂在那一格下面的画面放在哪：等比缩小，最宽占可用区域的七成，横向对着那一格居中、离可用区域两边各留 8pt，
+    /// 上边压在 min(那一格的下边, 可用区域的上边) 下面 8pt。size 或 visible 是空的就返回 .zero。
+    static func cardFrame(size: CGSize, visible: CGRect, tile: CGRect) -> CGRect {
+        guard size.width > 0, size.height > 0, visible.width > 0, visible.height > 0 else { return .zero }
         let gap: CGFloat = 8
         let room = CGSize(width: visible.width * 0.72, height: min(tile.minY, visible.maxY) - gap - (visible.minY + 10))
         guard room.width > 0, room.height > 0 else { return .zero }
-        let scale = min(1, room.width / window.width, room.height / window.height)
-        let size = CGSize(width: floor(window.width * scale), height: floor(window.height * scale))
-        let x = min(max(tile.midX - size.width / 2, visible.minX + 8), visible.maxX - 8 - size.width)
-        return CGRect(x: x, y: min(tile.minY, visible.maxY) - gap - size.height, width: size.width, height: size.height)
+        let scale = min(1, room.width / size.width, room.height / size.height)
+        let scaled = CGSize(width: floor(size.width * scale), height: floor(size.height * scale))
+        let x = min(max(tile.midX - scaled.width / 2, visible.minX + 8), visible.maxX - 8 - scaled.width)
+        return CGRect(x: x, y: min(tile.minY, visible.maxY) - gap - scaled.height,
+                      width: scaled.width, height: scaled.height)
+    }
+
+    /// 窗口列表里的一扇（藏起来的 App 要点名激活一扇时用）。
+    struct WindowRow: Equatable, Sendable {
+        let id: CGWindowID
+        let pid: pid_t
+        let layer: Int
+        let bounds: CGRect
+        let alpha: Double
+    }
+
+    /// 藏起来的 App 该叫出哪一扇：列表最前的在前，取那个 App 第一扇够大的普通窗口；
+    /// 都不够大（只剩工具条、浮动面板）就退回第一扇普通层的，和今天一样；它一扇普通层的都没有就返回 nil。
+    static func hiddenAppWindow(_ rows: [WindowRow], pid: pid_t) -> CGWindowID? {
+        var fallback: CGWindowID?
+        for row in rows where row.pid == pid && row.layer == 0 {
+            if fallback == nil { fallback = row.id }
+            guard row.alpha > 0, row.bounds.width >= minimumSize.width, row.bounds.height >= minimumSize.height else {
+                continue
+            }
+            return row.id
+        }
+        return fallback
     }
 
     /// 系统设置里“调度中心”的一组快捷键（往左 / 往右移动一个空间）：按键码和修饰键（CGEventFlags 的原始值）。

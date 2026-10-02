@@ -80,6 +80,11 @@ final class FixtureDelegate: NSObject, NSApplicationDelegate, NSWindowDelegate {
     }
     NSApp.activate()
     window.makeKeyAndOrderFront(nil)
+    if CommandLine.arguments.contains("--minimize") {
+      // 刘海「系统里最小化的窗口」探针：窗口显示约 2 秒后自己最小化那扇 640 宽的参考窗
+      // （探针先取得 AX 句柄，再等它变成最小化）。
+      DispatchQueue.main.asyncAfter(deadline: .now() + 2) { window.miniaturize(nil) }
+    }
     if CommandLine.arguments.contains("--habits") { addHabitsWindow() }
     if CommandLine.arguments.contains("--other-space") {
       // 把“参考”窗挪到另一张普通桌面（自己的窗口可以这样挪），模拟“资料在别的桌面”。

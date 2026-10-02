@@ -52,6 +52,7 @@ final class GlanceProbe {
       + (manyWindows ? ["--strip"] : [])
       + (pipRun ? ["--scroll"] : [])
       + (CommandLine.arguments.contains("--other-space") ? ["--other-space"] : [])
+      + (CommandLine.arguments.contains("--minimize") ? ["--minimize"] : [])
       + (CommandLine.arguments.contains("--fullscreen") ? ["--fullscreen"] : [])
     do {
       try process.run()
@@ -185,6 +186,11 @@ final class GlanceProbe {
     // 别的包写的探针：还没写的那个由 ProbeEntries.swift 里的默认实现报“还没写”（算失败）。
     if CommandLine.arguments.contains("--elsewhere") {
       try await exerciseElsewhere(pid: process.processIdentifier)
+      finish(nil)
+      return
+    }
+    if CommandLine.arguments.contains("--shelf-glance") {
+      try await exerciseShelfGlance(pid: process.processIdentifier)
       finish(nil)
       return
     }
