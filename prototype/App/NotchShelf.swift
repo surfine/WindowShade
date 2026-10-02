@@ -16,8 +16,9 @@ struct NotchShelfItem: Equatable {
     let pid: pid_t
     let kind: Kind
     let title: String
-    /// 别的桌面上的窗口：在哪张桌面、窗口的位置和大小（窗口列表的坐标，左上角为原点）。
+    /// 别的桌面上的窗口：在哪张桌面。
     var place: ElsewhereWindow.Place? = nil
+    /// 窗口的位置和大小（窗口列表的坐标，左上角为原点）：别的桌面、隐藏的取自窗口列表，最小化的取自辅助功能；不知道是 .zero。
     var bounds: CGRect = .zero
 }
 
@@ -108,11 +109,13 @@ final class NotchShelf {
                                          exclude: Set<CGWindowID>, names: [pid_t: String]) -> [NotchShelfItem] {
         let list = CGWindowListCopyWindowInfo([.optionAll, .excludeDesktopElements], kCGNullWindowID) as? [[String: Any]] ?? []
         var offscreen = Set<pid_t>()
-        var firstWindow: [pid_t: CGWindowID] = [:]
+        var rows: [ElsewhereWindows.WindowRow] = []
         for info in list where (info[kCGWindowLayer as String] as? Int) == 0 {
             guard let pid = info[kCGWindowOwnerPID as String] as? pid_t,
                   let number = info[kCGWindowNumber as String] as? NSNumber else { continue }
-            if firstWindow[pid] == nil { firstWindow[pid] = CGWindowID(number.uint32Value) }
+            rows.append(ElsewhereWindows.WindowRow(
+                id: CGWindowID(number.uint32Value), pid: pid, layer: 0, bounds: cgWindowBounds(info) ?? .zero,
+                alpha: (info[kCGWindowAlpha as String] as? NSNumber)?.doubleValue ?? 1))
             if (info[kCGWindowIsOnscreen as String] as? Bool) != true { offscreen.insert(pid) }
         }
         let candidates = shown.filter(offscreen.contains).sorted()
@@ -120,12 +123,16 @@ final class NotchShelf {
         for (pid, windows) in zip(candidates, concurrentAppWindows(candidates)) {
             for win in windows where axBoolAttribute(win, kAXMinimizedAttribute as String) {
                 guard let id = windowID(of: win), !exclude.contains(id) else { continue }
-                found.append(NotchShelfItem(id: id, pid: pid, kind: .minimized, title: axTitle(win)))
+                // 最小化的窗口不在窗口列表里，位置和大小只能问辅助功能（最小化之前的那个框）；问不到是 .zero。
+                let bounds = axPosition(win).flatMap { origin in axSize(win).map { CGRect(origin: origin, size: $0) } } ?? .zero
+                found.append(NotchShelfItem(id: id, pid: pid, kind: .minimized, title: axTitle(win), bounds: bounds))
             }
         }
         for (pid, name) in hidden {
-            guard let id = firstWindow[pid], !exclude.contains(id) else { continue }
-            found.append(NotchShelfItem(id: id, pid: pid, kind: .hiddenApp, title: name))
+            // 这个 App 最前面那扇够大的窗口（格子上的画面、看一眼都用它），没有才退回最前面那扇。
+            guard let id = ElsewhereWindows.hiddenAppWindow(rows, pid: pid), !exclude.contains(id) else { continue }
+            let bounds = rows.first { $0.id == id }?.bounds ?? .zero
+            found.append(NotchShelfItem(id: id, pid: pid, kind: .hiddenApp, title: name, bounds: bounds))
         }
         found += elsewhere(list: list, shown: shown, exclude: exclude.union(found.map(\.id)), names: names)
         return found
