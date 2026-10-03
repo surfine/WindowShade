@@ -2,10 +2,12 @@ import Cocoa
 import QuartzCore
 
 /// A separate renderer with generated pixels only. No SCK source, image argument or desktop reuse.
+@MainActor
 final class LockOverlaySession {
     let panel: EffectPanel
     let renderer: FoldRenderer
-    private let clock = EffectDisplayClock()
+    // 只在主线程用；nonisolated(unsafe) 只为让 deinit 兜底停掉它，那时已没有别的引用。
+    nonisolated(unsafe) private let clock = EffectDisplayClock()
     private var spring = FoldSpring()
     private var lastTime = 0.0
     private var startedAt = 0.0

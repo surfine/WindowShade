@@ -209,14 +209,14 @@ func movePointerVisibly(to axPoint: CGPoint, reason: String) -> CGPoint {
 }
 
 @discardableResult
-func clickAXButton(_ win: AXUIElement, _ attr: String) -> Bool {
+@MainActor func clickAXButton(_ win: AXUIElement, _ attr: String) -> Bool {
     guard let frame = axButtonFrame(win, attr) else { return false }
     let axPoint = CGPoint(x: frame.midX, y: frame.midY)
     return clickAXPoint(axPoint, reason: "click-\(attr)", logLabel: "attr=\(attr)")
 }
 
 @discardableResult
-func clickAXPoint(_ axPoint: CGPoint, reason: String, logLabel: String) -> Bool {
+@MainActor func clickAXPoint(_ axPoint: CGPoint, reason: String, logLabel: String) -> Bool {
     let eventPoint = movePointerVisibly(to: axPoint, reason: reason)
     let source = CGEventSource(stateID: .hidSystemState)
     CGEvent(mouseEventSource: source, mouseType: .mouseMoved,
@@ -243,7 +243,7 @@ func clickAXPoint(_ axPoint: CGPoint, reason: String, logLabel: String) -> Bool 
 }
 
 @discardableResult
-func humanClickAXPoint(_ axPoint: CGPoint, reason: String, logLabel: String,
+@MainActor func humanClickAXPoint(_ axPoint: CGPoint, reason: String, logLabel: String,
                        hoverDelay: TimeInterval = 0.18,
                        pressDuration: TimeInterval = 0.09) -> Bool {
     let eventPoint = movePointerVisibly(to: axPoint, reason: reason)

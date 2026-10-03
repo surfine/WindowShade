@@ -268,13 +268,13 @@ final class TrackpadGestureController {
         }
         guard pinchTapRetry == nil else { return }
         pinchTapRetry = Timer.scheduledTimer(withTimeInterval: 3, repeats: true) { [weak self] timer in
-            MainActor.assumeIsolated {
-                guard let self, Self.isEnabled else { timer.invalidate(); return }
-                if self.pinchTap.start() {
-                    timer.invalidate()
-                    self.pinchTapRetry = nil
-                }
+            let keepRetrying = MainActor.assumeIsolated { () -> Bool in
+                guard let self, Self.isEnabled else { return false }
+                guard self.pinchTap.start() else { return true }
+                self.pinchTapRetry = nil
+                return false
             }
+            if !keepRetrying { timer.invalidate() }
         }
     }
 
@@ -599,7 +599,7 @@ final class TrackpadGestureController {
     /// 辅助功能确认：指针下是这扇窗的标题栏/工具栏，而且不是能滚动的内容。
     /// 查询都在后台线程上做（到目标 App 的同步往返，它卡住时要等满 2 秒的消息超时），结果回主线程交给 done。
     private func resolveTitleBar(windowID: CGWindowID, location: CGPoint,
-                                 then done: @escaping (TitleBarHit?) -> Void) {
+                                 then done: @escaping @MainActor (TitleBarHit?) -> Void) {
         DispatchQueue.global(qos: .userInteractive).async { [weak self] in
             let facts = Self.titleBarFacts(expected: windowID, location: location)
             DispatchQueue.main.async {
@@ -614,7 +614,7 @@ final class TrackpadGestureController {
     /// 已经回到主线程：把后台查到的结果翻成结论，必要时再量一次标题栏高度。
     /// 单独成方法，好让 settle / reject 这两个嵌套函数确实落主线程的隔离域里。
     private func deliverTitleBarFacts(_ facts: TitleBarFacts, windowID: CGWindowID, location: CGPoint,
-                                      done: @escaping (TitleBarHit?) -> Void) {
+                                      done: @escaping @MainActor (TitleBarHit?) -> Void) {
         func reject(_ why: String) {
             wlog("gesture: not a title bar (\(why)) id=\(windowID) at=(\(Int(location.x)),\(Int(location.y)))")
             done(nil)
@@ -1116,7 +1116,7 @@ final class TrackpadGestureController {
     private static let flickBand: CGFloat = 80
 
     /// 正在被拖着的一扇标题栏。
-    private final class FlickDrag {
+    @MainActor private final class FlickDrag {
         let id: CGWindowID
         let pid: pid_t
         /// 按下时窗口在哪（AX 坐标）：梯子按它算，撤销也回到这里。

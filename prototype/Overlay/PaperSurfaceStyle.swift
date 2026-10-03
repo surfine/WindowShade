@@ -72,7 +72,8 @@ private final class PaperWindowShadow: NSObject {
     private weak var parent: NSWindow?
     private let panel: NSPanel
     private let shadowView: PaperShadowView
-    private var resizeObserver: NSObjectProtocol?
+    // 只在主线程写；deinit 里移除时已没有别的引用。
+    nonisolated(unsafe) private var resizeObserver: NSObjectProtocol?
     private var alphaObservation: NSKeyValueObservation?
     private var levelObservation: NSKeyValueObservation?
 

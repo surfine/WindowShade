@@ -11,7 +11,9 @@ import QuartzCore
 /// https://github.com/olvvier/apple-silicon-accelerometer.
 /// The feature is deliberately optional: failure to open the device never
 /// affects the existing hinge sensor or desktop effect.
-final class AppleSPUAccelerometer {
+/// @unchecked Sendable：wanted、epoch、published、statusTicks 在 `lock` 里；HID 管理器、滤波和计时只在 `queue` 上动；
+/// `onStatus` / `onStatusTick` 在主线程设好，也只在主线程调用。
+final class AppleSPUAccelerometer: @unchecked Sendable {
   enum Status {
     case searching
     case connected

@@ -26,7 +26,7 @@ final class EffectPanel: NSPanel {
 final class EffectDisplayClock: NSObject {
   private var link: CADisplayLink?
   var tick: ((CFTimeInterval) -> Void)?
-  func start(window: NSWindow) {
+  @MainActor func start(window: NSWindow) {
     stop()
     let link = window.displayLink(target: self, selector: #selector(step(_:)))
     link.preferredFrameRateRange = CAFrameRateRange(minimum: 60, maximum: 60, preferred: 60)
@@ -42,11 +42,12 @@ final class EffectDisplayClock: NSObject {
 }
 
 /// Owns the frame source and overlay. Readiness, visibility and presentation are distinct states.
-final class EffectSession {
+@MainActor final class EffectSession {
   let panel: EffectPanel
   let renderer: FoldRenderer
   let source = EffectFrameSource()
-  private let clock = EffectDisplayClock()
+  // 只在主线程用；nonisolated(unsafe) 只为让 deinit 兜底停掉它，那时已没有别的引用。
+  nonisolated(unsafe) private let clock = EffectDisplayClock()
   private(set) var stopped = false
   var tick: ((CFTimeInterval) -> Void)?
   var onFailure: (() -> Void)?

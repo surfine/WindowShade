@@ -11,7 +11,8 @@ import Cocoa
     private var epoch: UInt64 = 0
     private var tracker: FaceGestureTracker?
     private var previous: NSRunningApplication?
-    private var observers: [(NotificationCenter, NSObjectProtocol)] = []
+    // 只在主线程写；deinit 里移除时已没有别的引用。
+    nonisolated(unsafe) private var observers: [(NotificationCenter, NSObjectProtocol)] = []
 
     init(owner: NotchController) {
         self.owner = owner

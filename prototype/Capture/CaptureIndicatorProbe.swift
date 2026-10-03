@@ -7,6 +7,7 @@ import Cocoa
 import ScreenCaptureKit
 import VideoToolbox
 
+@MainActor
 final class CaptureIndicatorProbe {
     private var window: NSWindow?
     private let source = EffectFrameSource()

@@ -50,6 +50,8 @@ final class IdentityProbeBackend: WindowBrowserActionBackend {
     /// 仍然有效，再按完整身份解析真实 AX 窗口。
     func validate(target: WindowKey,
                   completion: @escaping (WindowBrowserTargetValidation) -> Void) {
+        // 协调器在主线程交来 completion，这里只是带着它去后台核对、再回主线程调用，后台不碰它。
+        nonisolated(unsafe) let completion = completion
         queue.async { [self] in
             let validation: WindowBrowserTargetValidation
             if !allocator.isCurrent(target) {
@@ -74,6 +76,7 @@ final class IdentityProbeBackend: WindowBrowserActionBackend {
     }
 }
 
+@MainActor
 final class WindowBrowserIdentityProbe {
     private var window: NSWindow?
     private var twin: NSWindow?
@@ -384,7 +387,7 @@ final class WindowBrowserIdentityProbe {
 
     /// 轮询真实系统直到窗口从 AX 里消失，不用固定 sleep 掩盖异步结果。
     private func waitForWindowGone(key: WindowKey, attempt: Int = 0,
-                                   completion: @escaping (Bool) -> Void) {
+                                   completion: @escaping @MainActor (Bool) -> Void) {
         queue.async { [self] in
             let gone = WindowBrowserTargetResolver.enumerate(key: key) == nil
             DispatchQueue.main.async { [self] in

@@ -554,7 +554,7 @@ final class PictureInPictureController {
     }
 
     /// 面板走到 target：带着松手的速度（Cocoa 坐标，点/秒），临界阻尼的弹簧；和窗口滑行同一套路径。
-    private func animate(_ panel: NSPanel, to target: NSRect, velocity: CGVector, duration: TimeInterval? = nil, done: (() -> Void)? = nil) {
+    private func animate(_ panel: NSPanel, to target: NSRect, velocity: CGVector, duration: TimeInterval? = nil, done: (@MainActor () -> Void)? = nil) {
         let session = sessions.values.first { $0.panel === panel }
         session?.animation?.invalidate()
         let fromAX = CGRect(origin: axPosition(fromCocoaFrame: panel.frame), size: panel.frame.size)
@@ -563,7 +563,7 @@ final class PictureInPictureController {
         let length = Motion.reduced ? 0.12 : (duration ?? min(path.duration, 0.6))
         let began = CACurrentMediaTime()
         let timer = Timer(timeInterval: 1.0 / 120, repeats: true) { timer in
-            MainActor.assumeIsolated {
+            let finished = MainActor.assumeIsolated { () -> Bool in
                 let t = CACurrentMediaTime() - began
                 let finished = t >= length
                 let frameAX: CGRect
@@ -577,11 +577,12 @@ final class PictureInPictureController {
                 }
                 panel.setFrame(cocoaFrame(fromAXPosition: frameAX.origin, size: frameAX.size), display: true)
                 if finished {
-                    timer.invalidate()
                     panel.setFrame(target, display: true)
                     done?()
                 }
+                return finished
             }
+            if finished { timer.invalidate() }
         }
         RunLoop.main.add(timer, forMode: .common)
         session?.animation = timer

@@ -105,12 +105,12 @@ final class UpdaterMove {
     }
 
     /// 欢迎窗口的主按钮：“移到‘应用程序’”或“打开它”。
-    func performPrimary(completion: @escaping (UpdaterMoveResult) -> Void) {
+    func performPrimary(completion: @escaping @MainActor (UpdaterMoveResult) -> Void) {
         moveToApplications(completion: completion)
     }
 
     /// 欢迎窗口和更新小窗共用。“应用程序”里已有的那一份不比自己旧，就打开它，不移动。
-    func moveToApplications(completion: @escaping (UpdaterMoveResult) -> Void) {
+    func moveToApplications(completion: @escaping @MainActor (UpdaterMoveResult) -> Void) {
         if let (url, info) = installedCopy(), !UpdateVersion.isNewer(UpdateLaunch.myBuild, than: info.build) {
             UpdateLog.write("move: \(url.path) already has \(info.build); opening it")
             relaunch(at: url, afterMove: false)

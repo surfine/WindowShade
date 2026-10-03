@@ -4,7 +4,7 @@ import Accelerate
 import MetalKit
 
 /// Main-thread presentation. Capture buffers are retained through GPU completion, one submission at a time.
-final class FoldRenderer: NSObject, MTKViewDelegate {
+@MainActor final class FoldRenderer: NSObject, MTKViewDelegate {
   struct Parameters: Equatable {
     var progress: Float = 0
     var titleFraction: Float = 0
@@ -367,6 +367,7 @@ final class FoldRenderer: NSObject, MTKViewDelegate {
     let token = epoch.value
     let revision = self.revision
     let retainedFrame = frame
+    let frameTiming = frame.map { (id: $0.id, origin: $0.displayTime ?? $0.presentationTime.seconds) }
     let gpu = FoldGPUInFlight(wrapper: wrapped, source: source, opticalSurface: opticalSurface,
                               readback: readback)
     let space = colorSpace
@@ -381,9 +382,9 @@ final class FoldRenderer: NSObject, MTKViewDelegate {
           append(time - previous, to: &intervals)
         }
         lastPresentedTime = time
-        if let frame = retainedFrame, measuredFrame != frame.id {
+        if let frame = frameTiming, measuredFrame != frame.id {
           measuredFrame = frame.id
-          let origin = frame.displayTime ?? frame.presentationTime.seconds
+          let origin = frame.origin
           if origin.isFinite, origin > 0, time >= origin {
             append((time - origin) * 1000, to: &latencies)
           }
@@ -397,12 +398,14 @@ final class FoldRenderer: NSObject, MTKViewDelegate {
     command.addCompletedHandler { [weak self] result in
       withExtendedLifetime((retainedFrame, gpu)) {}
       let gpuMilliseconds = (result.gpuEndTime - result.gpuStartTime) * 1000
+      let completed = result.status == .completed
+      let failure = result.error
       DispatchQueue.main.async { [weak self] in
         guard let self else { return }
         busy = false
         guard epoch.accepts(token), !cleared else { return }
-        guard result.status == .completed else {
-          onFailure?(result.error ?? EffectError.unavailable("GPU 呈现失败"))
+        guard completed else {
+          onFailure?(failure ?? EffectError.unavailable("GPU 呈现失败"))
           return
         }
         append(gpuMilliseconds, to: &gpuTimes)
