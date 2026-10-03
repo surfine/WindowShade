@@ -419,6 +419,33 @@ WWDC25 356、WWDC23 10158 和 HIG 是其他讲者或文档给的补充来源。�
 
 ---
 
+### 4.11 符号（SF Symbols）
+
+Aaron 2026-10-03：“整个 app 多用 SF Symbols，不要大段大段文字。”规则见 copy-guide 第 7 条。下表的符号名都在这台 Mac 上用
+`NSImage(systemSymbolName:)` 核对过（`trackpad` 不存在，用 `rectangle.and.hand.point.up.left`）。设置行的符号放在系统设置那样的圆角色块里，
+用 hierarchical 渲染；刘海里用单色白。
+
+| 概念 | 符号 |
+| --- | --- |
+| 收起窗口 / 展开窗口 | `rectangle.compress.vertical` / `rectangle.expand.vertical` |
+| 收进刘海 / 刘海那一排 | `rectangle.topthird.inset.filled` / `macwindow.on.rectangle` |
+| 看一眼 | `eye` |
+| 置顶 / 取消置顶 | `pin` / `pin.slash` |
+| 左半屏 / 右半屏 / 铺满 / 分屏 | `rectangle.lefthalf.inset.filled` / `rectangle.righthalf.inset.filled` / `rectangle.inset.filled` / `rectangle.split.2x1` |
+| 网格 / 魔法平铺 / 卷轴 | `rectangle.split.3x3` / `wand.and.stars` / `scroll` |
+| 侧拉 / 画中画 | `sidebar.right` / `pip` |
+| 启动台 / 调度中心 / 窗口浏览 | `square.grid.3x3` / `rectangle.3.group` / `rectangle.on.rectangle` |
+| 快捷键 / 卡住时提示 | `command` / `lightbulb` |
+| 实时活动：音乐 / 耳机 / 录音 | `music.note` / `airpods` / `waveform` |
+| 番茄钟 / 休息 | `timer` / `cup.and.saucer` |
+| 设备：妙控鼠标 / 触控板 / 键盘 / Siri 遥控器 / 手柄 / iPhone | `magicmouse` / `rectangle.and.hand.point.up.left` / `keyboard` / `appletvremote.gen4` / `gamecontroller` / `iphone` |
+| 电量 | `battery.75percent`（按实际电量取 0/25/50/75/100） |
+| 刷脸解锁 / Touch ID / 隐私 | `viewfinder` / `touchid` / `lock.shield` |
+| 指挥模式 / 说话 | 自绘指挥棒（`wand.and.stars` 已经给了魔法平铺）/ `mic.fill` |
+| 更多说明 | `info.circle` |
+
+`faceid` 只能指 Apple 的 Face ID，刷脸解锁不用它；`touchid` 只在真的调用 Touch ID 时用。
+
 ## 5. 组件
 
 每个组件写五项：结构、令牌、状态与动效、贴合硬件、价值观。

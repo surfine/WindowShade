@@ -1,5 +1,7 @@
 # 项目约定
 
+**接手前先读 [`docs/blueprint.md`](docs/blueprint.md)**：WindowShade 的总图、刘海仲裁顺序、做的顺序和十二条硬要求。
+
 ## 文案（产品与官网共用）
 
 面向用户的每一句文案都按 [`docs/copy-guide.md`](docs/copy-guide.md) 写：说用户遇到的事、不说实现，

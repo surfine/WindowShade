@@ -1,5 +1,7 @@
 # 指挥模式（Apple TV 遥控器选思考档位）
 
+> **2026-10-03 起交互以 [conductor-v2.md](conductor-v2.md) 为准**（按 iOS 遥控器真实键位重排，作为 WindowShade 2 发布）。本文保留识别器说明。
+
 2026-10-02 起（交接 v3，规格 `WindowShade-Conductor-Remote-Voice-SPEC.md`，验收 `CONDUCTOR-ACCEPTANCE.json`）。
 想法：在遥控器触控区里画声调或打拍子选 effort，按住说话出草稿，再由新的确认动作提交。
 现在只有识别器的纯逻辑；遥控器连接、录音、刘海界面、Codex / Claude 后端都还没有接。

@@ -26,6 +26,12 @@ final class NotchActivitySources {
     private var workToken = ActivitySourceToken()
     private var musicApp: String?
     static let musicKey = "Notch.activities.musicEnabled"
+    /// 音乐：问播放器要启动一次 osascript（几十毫秒），所以只在播放器发通知（换曲、播放、暂停）、
+    /// 播放器开关、点了控制、或 30 秒兜底时才问；其余时候进度条按上次读到的位置和经过的时间推算。
+    private var musicDirty = true
+    private var musicRead: (snapshot: NotchSourceSnapshot, position: Double?, duration: Double, at: TimeInterval)?
+    private var musicReadAt: TimeInterval = 0
+    private var musicObservers: [NSObjectProtocol] = []
     /// 设备列表与 AirPods 那段结果：CoreAudio 枚举一次 1.74ms（2026-10-01 实测，100 次平均），
     /// 每 2 秒问一次就是常驻约 0.11% 单核——锁屏下量到的 0.100% 基本就是它。
     /// 现在只在「设备/默认输出变了」或 30 秒兜底时才重新枚举。
@@ -37,13 +43,51 @@ final class NotchActivitySources {
         epoch += 1
         workToken = ActivitySourceToken()
         installAudioListeners()
+        installMusicObservers()
         timer = Timer(timeInterval: 2, repeats: true) { [weak self] _ in
             MainActor.assumeIsolated { self?.poll() }
         }
         if let timer { RunLoop.main.add(timer, forMode: .common) }
         poll()
     }
-    func stop() { workToken.cancel(); epoch += 1; timer?.invalidate(); timer = nil; musicApp = nil }
+    func stop() {
+        workToken.cancel(); epoch += 1; timer?.invalidate(); timer = nil; musicApp = nil
+        musicRead = nil; musicDirty = true
+    }
+
+    /// Music、Spotify 换曲、播放、暂停时会发分布式通知；播放器开关看 NSWorkspace。都只是把“该重新问一次”标上。
+    private func installMusicObservers() {
+        guard musicObservers.isEmpty else { return }
+        let distributed = DistributedNotificationCenter.default()
+        for name in ["com.apple.Music.playerInfo", "com.spotify.client.PlaybackStateChanged"] {
+            musicObservers.append(distributed.addObserver(forName: .init(name), object: nil, queue: .main) { [weak self] _ in
+                MainActor.assumeIsolated { self?.musicChanged() }
+            })
+        }
+        let workspace = NSWorkspace.shared.notificationCenter
+        for name in [NSWorkspace.didLaunchApplicationNotification, NSWorkspace.didTerminateApplicationNotification] {
+            musicObservers.append(workspace.addObserver(forName: name, object: nil, queue: .main) { [weak self] note in
+                let id = (note.userInfo?[NSWorkspace.applicationUserInfoKey] as? NSRunningApplication)?.bundleIdentifier
+                guard id == "com.apple.Music" || id == "com.spotify.client" else { return }
+                MainActor.assumeIsolated { self?.musicChanged() }
+            })
+        }
+    }
+
+    private func musicChanged() {
+        musicDirty = true
+        if timer != nil { poll() }
+    }
+
+    /// 没去问播放器时，用上次读到的结果推算现在的进度（播放中才往前走）。
+    private func extrapolatedMusic(now: TimeInterval) -> NotchSourceSnapshot? {
+        guard let read = musicRead else { return nil }
+        let s = read.snapshot
+        guard !s.isPaused, let position = read.position, read.duration > 0 else { return s }
+        let progress = min(1, max(0, (position + now - read.at) / read.duration))
+        return NotchSourceSnapshot(kind: s.kind, title: s.title, subtitle: s.subtitle, symbol: s.symbol,
+                                   progress: progress, isPaused: s.isPaused, detail: s.detail)
+    }
     func enableMusic() {
         UserDefaults.standard.set(true, forKey: Self.musicKey)
         guard !commandBusy else { return }
@@ -51,7 +95,7 @@ final class NotchActivitySources {
         let ids = runningPlayers(), token = workToken
         worker.async { [weak self] in
             for id in ids where token.valid { _ = Self.authorized(id, prompt: true) }
-            DispatchQueue.main.async { self?.commandBusy = false; self?.poll() }
+            DispatchQueue.main.async { self?.commandBusy = false; self?.musicChanged() }
         }
     }
     func musicCommand(_ command: NotchMusicCommand) {
@@ -60,7 +104,7 @@ final class NotchActivitySources {
         let token = workToken
         worker.async { [weak self] in
             if token.valid && Self.authorized(id, prompt: false) { _ = Self.script(id, mode: command.rawValue, token: token) }
-            DispatchQueue.main.async { self?.commandBusy = false; self?.poll() }
+            DispatchQueue.main.async { self?.commandBusy = false; self?.musicChanged() }
         }
     }
     private func runningPlayers() -> [String] {
@@ -71,10 +115,20 @@ final class NotchActivitySources {
         guard timer != nil, !busy else { return }
         busy = true
         let token = epoch, work = workToken
-        let players = UserDefaults.standard.bool(forKey: Self.musicKey) ? runningPlayers() : []
+        let now = ProcessInfo.processInfo.systemUptime
+        let enabledPlayers = UserDefaults.standard.bool(forKey: Self.musicKey) ? runningPlayers() : []
+        // 只有该问的时候才启动 osascript；不问就用推算的结果。
+        let askPlayers = !enabledPlayers.isEmpty && (musicDirty || now - musicReadAt > 30)
+        let players = askPlayers ? enabledPlayers : []
+        let kept = enabledPlayers.isEmpty ? nil : (askPlayers ? nil : extrapolatedMusic(now: now))
+        if askPlayers { musicDirty = false; musicReadAt = now }
+        if enabledPlayers.isEmpty { musicRead = nil }
+        // 语音备忘录没开着，就不用把系统里所有音频进程列一遍（每 2 秒列一次约占一个核的 1.7%）。
+        let voiceMemos = !NSRunningApplication.runningApplications(withBundleIdentifier: "com.apple.VoiceMemos").isEmpty
         worker.async { [weak self] in
             var result: [NotchSourceSnapshot] = []
-            var music: NotchSourceSnapshot?
+            var music: NotchSourceSnapshot? = kept
+            var raw: (position: Double?, duration: Double)?
             for id in players where work.valid && Self.authorized(id, prompt: false) {
                 guard let data = Self.script(id, mode: "read", token: work),
                       let obj = try? JSONSerialization.jsonObject(with: data) as? [String: Any],
@@ -87,15 +141,20 @@ final class NotchActivitySources {
                 let candidate = NotchSourceSnapshot(kind: .music, title: title,
                     subtitle: obj["artist"] as? String ?? "", symbol: "music.note",
                     progress: progress, isPaused: state == "paused", detail: id)
-                if music == nil || (music!.isPaused && !candidate.isPaused) { music = candidate }
+                if music == nil || (music!.isPaused && !candidate.isPaused) { music = candidate; raw = (position, duration) }
             }
             if let music { result.append(music) }
-            result.append(contentsOf: self?.audioSnapshot() ?? [])
+            result.append(contentsOf: self?.audioSnapshot(voiceMemos: voiceMemos) ?? [])
             let snapshots = result
+            let readMusic = players.isEmpty ? nil : music
+            let readRaw = raw
             DispatchQueue.main.async {
                 guard let self else { return }
                 self.busy = false
                 guard self.epoch == token, self.timer != nil else { self.poll(); return }
+                if !players.isEmpty {
+                    self.musicRead = readMusic.map { ($0, readRaw?.position, readRaw?.duration ?? 0, now) }
+                }
                 self.musicApp = snapshots.first(where: { $0.kind == .music })?.detail
                 self.onSnapshot?(snapshots)
             }
@@ -135,10 +194,12 @@ final class NotchActivitySources {
         task.executableURL = URL(fileURLWithPath: "/usr/bin/osascript")
         task.arguments = ["-l", "JavaScript", "-e", script, id, mode]
         task.standardOutput = out; task.standardError = FileHandle.nullDevice
+        // 等它结束：用结束回调和信号量，不再每 25 毫秒醒一次来查。
+        let finished = DispatchSemaphore(value: 0)
+        task.terminationHandler = { _ in finished.signal() }
         do { try task.run() } catch { return nil }
-        let deadline = ProcessInfo.processInfo.systemUptime + 2.5
-        while task.isRunning && token.valid && ProcessInfo.processInfo.systemUptime < deadline { Thread.sleep(forTimeInterval: 0.025) }
-        if task.isRunning { task.terminate(); if task.isRunning { kill(task.processIdentifier, SIGKILL) }; return nil }
+        _ = finished.wait(timeout: .now() + 2.5)
+        if task.isRunning || !token.valid { task.terminate(); if task.isRunning { kill(task.processIdentifier, SIGKILL) }; return nil }
         guard task.terminationStatus == 0 else { return nil }
         let data = out.fileHandleForReading.readDataToEndOfFile()
         return data.count <= 4096 ? data : nil
@@ -205,7 +266,7 @@ final class NotchActivitySources {
         }
     }
 
-    nonisolated private func audioSnapshot() -> [NotchSourceSnapshot] {
+    nonisolated private func audioSnapshot(voiceMemos: Bool) -> [NotchSourceSnapshot] {
         var result: [NotchSourceSnapshot] = []
         let systemObject = AudioObjectID(kAudioObjectSystemObject)
         // AirPods 那段只在缓存脏了或超过 30 秒兜底时重算（枚举设备要 1.74ms，见 audioCache 的注释）。
@@ -240,7 +301,7 @@ final class NotchActivitySources {
             audioCache.store(airPods)
             result.append(contentsOf: airPods)
         }
-        if #available(macOS 14.2, *) {
+        if #available(macOS 14.2, *), voiceMemos {
             var address = AudioObjectPropertyAddress(mSelector: kAudioHardwarePropertyProcessObjectList,
                 mScope: kAudioObjectPropertyScopeGlobal, mElement: kAudioObjectPropertyElementMain)
             var size: UInt32 = 0

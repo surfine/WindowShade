@@ -437,3 +437,25 @@ CoreAudio 的属性监听，只有真的变了（或 30 秒兜底）才重新枚
 每次卡在不同的 WindowServer 调用上：`MTKView.currentDrawable`（还在往正在熄灭的屏画最后一帧，347/308ms）、
 `orderOut` 里的 `_updateWMWindowPresentationMode`（444ms）、屏幕参数变化回调里的 `isOnActiveSpace`（482ms）。
 这是 WindowServer 重排显示器期间任何同步调用都会等，不是单点 bug；那一刻内建屏已黑，外接屏上 Aaron 没注意到卡，暂不处理。
+
+## 七、2026-10-03：常驻唤醒与实时活动来源
+
+**测量**（Aaron 日常用的 build 16，他正在用电脑，`top -l 31 -s 1 -stats cpu,idlew,power`）：CPU 平均 2.16%，
+**空闲唤醒约 4549 次/秒**，物理占用 140 MB。5 秒 `sample`：主线程几乎都在等事件；`com.windowshade.activities.sources`
+队列占 86 毫秒（约一个核的 1.7%），全在 `NotchActivitySources.poll()` 里读 CoreAudio。
+**没人碰电脑时（空闲 36 秒起量 30 秒）一样：CPU 3.31%、空闲唤醒约 4551 次/秒**，所以唤醒不是输入带来的。10 秒 `sample`
+里这个队列忙了 1605 毫秒（约一个核的 16%），几乎全在列音频进程、逐个读 bundle ID（`HALC_Object_GetPropertyData_DCFString`，
+每次一个到 coreaudiod 的 mach 消息）。单独量：这台 Mac 上有 33 个音频进程，列一遍约 27 毫秒（机器负载高时）。
+
+**24. 语音备忘录没开着，就不列系统里的音频进程。** 认“正在录音”要列出 `kAudioHardwarePropertyProcessObjectList` 再逐个读
+bundle ID（每个都是一次到 coreaudiod 的 IPC），原来每 2 秒做一次。现在先看语音备忘录在不在运行，不在就整段跳过；
+它在运行时照旧，行为不变。
+
+**25. 音乐来源改成事件驱动。** 打开“音乐”后，原来每 2 秒启动一次 `osascript` 子进程问播放器，并用每 25 毫秒睡一下的循环等它。
+现在只在播放器发分布式通知（`com.apple.Music.playerInfo`、`com.spotify.client.PlaybackStateChanged`）、播放器开关、点了控制、
+或 30 秒兜底时才问一次；其余时候进度条按上次读到的位置加经过的时间推算。等子进程改用结束回调加信号量。
+
+**下一步（量过再改）：输入事件的扇出。** 现在一次指针移动或滚动会分别叫醒多处监听：Dock 悬停的回退检测（全局 mouseMoved，
+Dock 悬停打开时常驻）、标题栏手势（全局 scrollWheel、左键拖动）、捏合（手势事件 tap 线程）、卷轴边上那一条（有卷轴时）、
+Dock 留在一块屏（打开时）。方向是合成一个只听不拦的输入线程，在那里先按位置和状态过滤，只有真正相关的事件才回到主线程。
+先量“没人碰”和“正常使用”两种情况下的唤醒次数，再决定改哪几处；改的时候守住已发布的手势手感（帕累托）。

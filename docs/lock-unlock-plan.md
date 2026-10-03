@@ -1,5 +1,7 @@
 # 锁屏翻盖、注视与多因素解锁
 
+> **2026-10-03 起以 [刷脸解锁：接手者必读](face-unlock.md) 为准。**Aaron 定为吸收 Glance、不做手机和手表端 App；本文与之冲突处作废。
+
 2026-09-30。Glance 源码基线 `b97f521397ec1197ba17768ba797cae1e628848d`；WindowShade
 `27880b5`，工作树 `.claude/worktrees/windowshade-marvin-discussion-15d18f`。
 Aaron 要求先求有再求好，优先原生框架与官方 API，允许私有 API；Apple Watch 和 iPhone 都在手边。
