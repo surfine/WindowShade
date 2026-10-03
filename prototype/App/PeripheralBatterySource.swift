@@ -11,6 +11,7 @@
 import Foundation
 import IOKit
 
+/// 注册表对象、迭代器和计时器只在 queue 上碰；主线程只收到已经拷好的值。
 final class PeripheralBatterySource: @unchecked Sendable {
   struct Peripheral: Sendable {
     let registryID: UInt64
@@ -23,6 +24,7 @@ final class PeripheralBatterySource: @unchecked Sendable {
   var onReading: (@MainActor (BatteryReading) -> Void)?
 
   static let providerName = "iokit.hid"
+  static let sampleMethod = "IOKit.BatteryPercent"
   static let refreshInterval: TimeInterval = 120
   private let queue = DispatchQueue(label: "WindowShade.peripheral-battery", qos: .utility)
   private var port: IONotificationPortRef?
@@ -121,7 +123,7 @@ final class PeripheralBatterySource: @unchecked Sendable {
     let reading = BatteryReading(
       deviceID: identity.id, component: .main, provider: Self.providerName, providerEpoch: epoch,
       percent: BatteryReading.validPercent(raw), charging: .unknown, sourceObservedAt: nil,
-      receivedAt: ProcessInfo.processInfo.systemUptime)
+      receivedAt: ProcessInfo.processInfo.systemUptime, sampleMethod: Self.sampleMethod)
     let deliver = onReading
     DispatchQueue.main.async { MainActor.assumeIsolated { deliver?(reading) } }
   }
