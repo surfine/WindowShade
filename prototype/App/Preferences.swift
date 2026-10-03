@@ -351,6 +351,15 @@ static func noticeTone(_ message: String) -> NotchPanel.Tone {
     }
 
     private func makeUnifiedLabels(name: String, subtitle: String?) -> NSStackView {
+        // 设置页在主线程上搭；符号表与气泡按钮是 MainActor 上的东西，照本文件既有写法显式声明。
+        let symbol = MainActor.assumeIsolated { WS2SettingsCopy.symbol(for: name) }
+        let icon = NSImageView(image: NSImage(systemSymbolName: symbol, accessibilityDescription: nil) ?? NSImage())
+        icon.symbolConfiguration = NSImage.SymbolConfiguration(hierarchicalColor: .controlAccentColor)
+        icon.wantsLayer = true
+        icon.layer?.backgroundColor = NSColor.controlAccentColor.withAlphaComponent(0.10).cgColor
+        icon.layer?.cornerRadius = 7
+        icon.widthAnchor.constraint(equalToConstant: 28).isActive = true
+        icon.heightAnchor.constraint(equalToConstant: 28).isActive = true
         let labels = NSStackView()
         labels.orientation = .vertical
         labels.alignment = .leading
@@ -359,14 +368,24 @@ static func noticeTone(_ message: String) -> NotchPanel.Tone {
         title.font = SystemAppearancePolicy.font(relativeToBody: 0)
         labels.addArrangedSubview(title)
         if let subtitle {
-            let detail = NSTextField(wrappingLabelWithString: subtitle)
+            let short = WS2SettingsCopy.short[subtitle] ?? String(subtitle.prefix(16))
+            let detail = NSTextField(labelWithString: short)
             detail.font = SystemAppearancePolicy.font(relativeToBody: -2)
             detail.textColor = .secondaryLabelColor
-            detail.maximumNumberOfLines = 2
+            detail.lineBreakMode = .byTruncatingTail
+            detail.maximumNumberOfLines = 1
+            detail.toolTip = subtitle
             labels.addArrangedSubview(detail)
-            detail.widthAnchor.constraint(equalTo: labels.widthAnchor).isActive = true
         }
-        return labels
+        let content = NSStackView(views: [icon, labels])
+        content.orientation = .horizontal
+        content.alignment = .centerY
+        content.spacing = 10
+        if let subtitle {
+            content.addArrangedSubview(MainActor.assumeIsolated { WS2SettingsInfoButton(text: subtitle, name: name) })
+        }
+        labels.setContentCompressionResistancePriority(.defaultLow, for: .horizontal)
+        return content
     }
 
     private func makeUnifiedToggleRow(name: String, subtitle: String?, isOn: Bool,

@@ -12,6 +12,8 @@ import Foundation
 /// 活动卡片上能点的动作。纯数据，放在 Core 里：刘海和负一屏都发它，单测也不用带 App 那一层。
 enum NotchActivityAction: String {
     case enableMusic, playPause, previous, next, airDrop, route, voiceMemos, open, end
+    /// 番茄钟：开始 / 暂停、跳过、结束。动作由宿主转给唯一的 FocusTimerHost。
+    case focusStart, focusPause, focusSkip, focusEnd
 }
 
 /// 活动的种类，决定默认排序权重。
@@ -21,11 +23,14 @@ enum NotchActivityKind: String, Codable, Sendable, CaseIterable {
     case airDrop
     case route
     case recording
+    /// 番茄钟：用户自己开的计时，排在录音之后、隔空投送之前。
+    case focus
 
     /// 权重数字越大越显眼，排在越前。
     var priority: Int {
         switch self {
         case .recording: return 90
+        case .focus: return 85
         case .airDrop: return 80
         case .route: return 60
         case .music: return 40

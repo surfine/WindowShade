@@ -64,11 +64,13 @@ struct SettingsNavigationTests {
           .first(where: { $0.stringValue == name
             && ($0.superview?.superview as? NSStackView)?.orientation == .horizontal }),
           let labels = title.superview as? NSStackView,
-          let row = labels.superview as? NSStackView,
+          // S1 起每一行是「圆角图标 + 文字（+ 说明气泡）」：真正的一行在再外面一层。
+          let content = labels.superview as? NSStackView,
+          let row = content.superview as? NSStackView,
           let control = row.arrangedSubviews.last else {
           preconditionFailure("Missing settings row: \(name)")
         }
-        let rect = labels.convert(labels.bounds, to: row)
+        let rect = content.convert(content.bounds, to: row)
         let controlRect = control.convert(control.bounds, to: row)
         precondition(rect.minY >= 7.5 && row.bounds.maxY - rect.maxY >= 7.5,
                      "Multiline labels need vertical clearance: \(name)")
