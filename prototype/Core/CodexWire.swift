@@ -134,9 +134,10 @@ struct CodexWire: Sendable {
     private mutating func receive(_ v: WireJSON, now: WS2.Instant) throws -> [Event] {
         guard case .object = v else { throw Failure.malformed }
         if let method = v["method"]?.text {
-            guard state == .ready else { throw Failure.notReady }
             let params = v["params"] ?? .object([:])
             if let rawID = v["id"] {
+                // 审批请求必须已经 ready：它要带 thread/turn 才能绑定。
+                guard state == .ready else { throw Failure.notReady }
                 guard let id = rawID.requestID else { throw Failure.malformed }
                 let supported = ["item/commandExecution/requestApproval", "item/fileChange/requestApproval"]
                 guard supported.contains(method), approvals.count < 128, approvals[id] == nil,

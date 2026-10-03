@@ -9,6 +9,8 @@ import Cocoa
     private weak var focusCard: FocusTimerCard?
     /// T3 的窗口执行器：只动这一轮自己收起来、且没有被别人动过的窗口。
     private var focusExecutor: WS2FocusExecutor!
+    /// owned Codex 的唯一启动闭环：本地选项目、预检可执行文件、按票据启动与停止。
+    private(set) var launch: WS2OwnedLaunchController!
     private var defaultsObserver: NSObjectProtocol?
     private var lastMenuTitle = ""
     private var lockReasons = Set<String>()
@@ -32,6 +34,17 @@ import Cocoa
         focusExecutor = WS2FocusExecutor(owner: owner)
         // T3：把计时器的窗口效果接到真实窗口上（收聊天那一半还没有私人 App 名单）。
         focusWindowEffects = { [weak self] effects in self?.focusExecutor.handle(effects) }
+        launch = WS2OwnedLaunchController(owner: owner, clock: clock, island: island,
+            authentication: owner.notch.authentication,
+            environment: {
+                // 明确的 allowlist：只给 CLI 需要的路径与本地配置位置，不传远端载荷或 shell 拼接。
+                // PATH 沿用 App 自己的环境（真机上 codex 是 node 脚本，node 不在 /usr/bin）。
+                var values = ["PATH": ProcessInfo.processInfo.environment["PATH"]
+                    ?? "/usr/bin:/bin:/usr/sbin:/sbin:/opt/homebrew/bin:/usr/local/bin"]
+                if let home = ProcessInfo.processInfo.environment["HOME"] { values["HOME"] = home }
+                if let lang = ProcessInfo.processInfo.environment["LANG"] { values["LANG"] = lang }
+                return values
+            })
         focus.onChange = { [weak self] model,now in
             self?.focusCard?.render(model,at:now); self?.publish()
         }
@@ -57,7 +70,11 @@ import Cocoa
                     case .locked: self.setLockReason("session", locked: true)
                     case .unlocked: self.setLockReason("session", locked: false)
                     default:
-                        if case .sleep = event { self.island.invalidate(.sleeping) }
+                        if case .sleep = event {
+                            // 先撤 owned 会话与它的票据，再撤岛；锁中回调不会再落到新项目上。
+                            self.launch?.invalidate(reason: "sleep")
+                            self.island.invalidate(.sleeping)
+                        }
                         self.focus.handle(event)
                     }
                 }
@@ -82,6 +99,7 @@ import Cocoa
         if lockReasons.isEmpty && AuthorizationService.shared.lockState() == .unlocked {
             focus.handle(.unlocked)
         } else {
+            launch?.invalidate(reason: "locked")
             island.invalidate(.locked)
             focus.handle(.locked)
         }
@@ -130,6 +148,10 @@ import Cocoa
         view.onAction = action
         return island.show(view,ownerID:"conductor")
     }
+    /// 用户从设置或菜单打开会话列表：显示既有 store，不反向启动或停止进程。
+    @discardableResult func showOwnedSessions() -> Bool {
+        showSessions(launch.storeSnapshot(), open: { _ in }, stop: { _ in })
+    }
     private func publish() {
         guard let owner else { return }
         let m = focus.model,now = clock.now()
@@ -142,6 +164,7 @@ import Cocoa
         if title != lastMenuTitle { lastMenuTitle = title; owner.rebuildMenu() }
     }
     func stop() {
+        launch?.stop()
         island?.stop(); focus?.stop()
         if let defaultsObserver { NotificationCenter.default.removeObserver(defaultsObserver) }; defaultsObserver = nil
         workspaceObservers.forEach { NSWorkspace.shared.notificationCenter.removeObserver($0) }
