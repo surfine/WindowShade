@@ -130,17 +130,22 @@ private final class ThumbnailWindowShadow: NSObject {
         panel.contentView = ThumbnailShadowView(frame: NSRect(origin: .zero, size: frame.size))
         parent.addChildWindow(panel, ordered: .below)
         alphaObservation = parent.observe(\.alphaValue, options: [.initial, .new]) { [weak self] _, _ in
-            self?.sync()
+            // AppKit 在修改这个属性的线程上回调；窗口属性只在主线程改。
+            MainActor.assumeIsolated { self?.sync() }
         }
         levelObservation = parent.observe(\.level, options: [.new]) { [weak self] window, _ in
-            self?.panel.level = window.level
+            // AppKit 在修改这个属性的线程上回调；窗口属性只在主线程改。
+            MainActor.assumeIsolated { self?.panel.level = window.level }
         }
         // 大小不会变；只防万一有人改了外框。
         moveObserver = NotificationCenter.default.addObserver(
             forName: NSWindow.didResizeNotification, object: parent, queue: .main
         ) { [weak self] _ in
-            guard let self, let parent = self.parent else { return }
-            self.panel.setFrame(parent.frame.insetBy(dx: -margin, dy: -margin), display: true)
+            // 观察者指定了主队列，回调在主线程。
+            MainActor.assumeIsolated {
+                guard let self, let parent = self.parent else { return }
+                self.panel.setFrame(parent.frame.insetBy(dx: -margin, dy: -margin), display: true)
+            }
         }
     }
 
@@ -154,9 +159,12 @@ private final class ThumbnailWindowShadow: NSObject {
     }
 
     deinit {
-        if let moveObserver { NotificationCenter.default.removeObserver(moveObserver) }
-        parent?.removeChildWindow(panel)
-        panel.orderOut(nil)
+        // 这个影子只挂在主线程的缩略图窗口上，最后一次释放也在主线程。
+        MainActor.assumeIsolated {
+            if let moveObserver { NotificationCenter.default.removeObserver(moveObserver) }
+            parent?.removeChildWindow(panel)
+            panel.orderOut(nil)
+        }
     }
 }
 
@@ -734,7 +742,8 @@ extension AppDelegate {
                 context.timingFunction = CAMediaTimingFunction(controlPoints: 0.23, 1, 0.32, 1)
                 for move in moves { move.window.animator().setFrame(move.frame, display: true) }
             } completionHandler: { [weak self] in
-                self?.isProgrammaticOverlayArrangement = false
+                // 动画完成回调在主线程。
+                MainActor.assumeIsolated { self?.isProgrammaticOverlayArrangement = false }
             }
         }
         for (_, _, overlay) in entries { applyOverlayPresentation(overlay, bringForward: true) }
