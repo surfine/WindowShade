@@ -272,10 +272,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSMenuDelegate {
     lazy var carry = MainActor.assumeIsolated { CarryController(owner: self) }
     lazy var slideOver = MainActor.assumeIsolated { SlideOverController(owner: self) }
     lazy var notch = MainActor.assumeIsolated { NotchController(owner: self) }
-    /// 番茄钟：全 App 唯一一份宿主，刘海那一排、卡片与以后的设置都读它（见 App/FocusTimerWiring.swift）。
-    lazy var focusTimer = MainActor.assumeIsolated { FocusTimerRuntime() }
-    /// 番茄钟看系统锁屏与睡眠用的观察者；退出时一起摘掉。
-    var focusObservers: [NSObjectProtocol] = []
+    lazy var ws2Runtime = MainActor.assumeIsolated { WS2AppRuntime(owner: self) }
     /// 妙控外设连上、电量低时在刘海上说一句（App/DeviceBatteryController.swift）。
     lazy var deviceBattery = MainActor.assumeIsolated { DeviceBatteryController() }
     lazy var launchpad = MainActor.assumeIsolated { LaunchpadController(owner: self) }
@@ -341,7 +338,8 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSMenuDelegate {
         }
         MainActor.assumeIsolated { installStripKeyForwarding() }
         MainActor.assumeIsolated { SlideOverRecovery.recoverAbandoned(); notch.install() }
-        MainActor.assumeIsolated { startFocusTimerWiring() }
+        // 番茄钟的唯一宿主：在这里点一次，让观察者和唯一 FocusTimerHost 建起来。
+        MainActor.assumeIsolated { _ = ws2Runtime }
         // 卡住时刘海开口：跟着来处、刘海和教学的开关装上或拆掉只听的钩子（见 App/HabitContext.swift）。
         MainActor.assumeIsolated { HabitCenter.shared.start(owner: self) }
         MainActor.assumeIsolated { launchpad.warmUp() }
@@ -802,6 +800,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSMenuDelegate {
 
 
     func applicationWillTerminate(_ note: Notification) {
+        MainActor.assumeIsolated { ws2Runtime.stop() }
         MainActor.assumeIsolated { UpdaterController.shared.applicationWillTerminate() }
         MainActor.assumeIsolated { pip.shutdown(); slideOver.shutdown() }
         MainActor.assumeIsolated { HabitCenter.shared.stop() }

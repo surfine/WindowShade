@@ -1,0 +1,226 @@
+--- a/prototype/App/MenuBarController.swift
++++ b/prototype/App/MenuBarController.swift
+@@ -59,135 +59,52 @@
+ 
+     let menuState = makeMenuState()
+ 
+-    // 开合角度只对用合盖效果的人有意义；没开这个效果（或台式 Mac 根本没有盖子）时
+-    // 不占菜单第一行。效果的配置在设置里，菜单只管窗口。
+-    if let hingeAngleText = menuState.hingeAngleText {
+-      let angle = NSMenuItem(title: hingeAngleText, action: nil, keyEquivalent: "")
+-      angle.image = NSImage(systemSymbolName: "angle", accessibilityDescription: nil)
+-      angle.isEnabled = false
+-      statusMenu.addItem(angle)
+-      statusMenu.addItem(.separator())
+-    }
+-
+-    statusMenu.addItem(.sectionHeader(title: "当前窗口"))
+-
+-    let toggle = NSMenuItem(
+-      title: foldToggleMenuTitle(), action: #selector(toggleAction), keyEquivalent: "")
+-    applyShortcut(.toggleShade, to: toggle)
+-    statusMenu.addItem(toggle)
+-
++    statusMenu.addItem(.sectionHeader(title: pinnedPreviewController.ws2CachedMenuTitle()))
++    func action(_ title: String, _ symbol: String, _ selector: Selector,
++                _ shortcut: GlobalShortcut? = nil, enabled: Bool = true, menu: NSMenu? = nil) {
++      let item = NSMenuItem(title: title, action: selector, keyEquivalent: "")
++      item.target = self; item.image = NSImage(systemSymbolName: symbol, accessibilityDescription: nil)
++      item.isEnabled = enabled
++      if let shortcut { applyShortcut(shortcut, to: item) }
++      (menu ?? statusMenu).addItem(item)
++    }
++    let ax = AXIsProcessTrusted(), screen = hasScreenRecordingPermission()
++    action(foldToggleMenuTitle().replacingOccurrences(of: "当前窗口", with: "窗口"),
++           "rectangle.compress.vertical", #selector(toggleAction), .toggleShade)
++    action("收进刘海", "rectangle.topthird.inset.filled", #selector(tuckCurrentAction), .tuckCurrent,
++           enabled: ax && NotchController.isEnabled)
++    action(pinnedPreviewMenuTitle().replacingOccurrences(of: "当前窗口", with: "窗口"),
++           "pin", #selector(togglePinnedPreviewAction), .pinPreview, enabled: ax && screen)
++    let arrangement = NSMenu()
++    let arrangeItem = NSMenuItem(title: "排列", action: nil, keyEquivalent: "")
++    arrangeItem.image = NSImage(systemSymbolName: "rectangle.split.2x1", accessibilityDescription: nil)
++    arrangeItem.submenu = arrangement; statusMenu.addItem(arrangeItem)
++    action(MainActor.assumeIsolated { slideOver.menuTitle }, "sidebar.right", #selector(toggleSlideOverAction), .slideOver, enabled: ax && screen, menu: arrangement)
++    if MainActor.assumeIsolated({ slideOver.dockedWindowID != nil }) {
++      action("退出侧拉", "sidebar.right", #selector(exitSlideOverAction), menu: arrangement)
++    }
++    action("画中画", "pip", #selector(pictureInPictureAction), .pictureInPicture, enabled: ax && screen, menu: arrangement)
++    action("魔法平铺", "wand.and.stars", #selector(magicTileAction), .magicTile, enabled: ax, menu: arrangement)
++    if NSScreen.screens.count > 1 { action("移到另一块屏幕", "display", #selector(nextDisplayAction), .nextDisplay, enabled: ax, menu: arrangement) }
++    action("带到每张桌面", "square.on.square", #selector(toggleCarryAction), .carry, enabled: ax, menu: arrangement)
+     if appearanceMode == .proxyTitleBar {
+-      let focus = NSMenuItem(
+-        title: focusMenuTitle(), action: #selector(focusCurrentAppAction), keyEquivalent: "")
+-      applyShortcut(.arrangeOrFocus, to: focus)
+-      focus.isEnabled = AXIsProcessTrusted()
+-      statusMenu.addItem(focus)
++      action(focusMenuTitle(), "macwindow", #selector(focusCurrentAppAction), .arrangeOrFocus, enabled: ax, menu: arrangement)
+     } else {
+-      // 屏幕上留的是缩略图时，说“缩略图”（见 Thumbnail.swift）。
+-      let arrangeTitle = thumbnailsInUse
+-        ? (hasArrangedOverlayFrames ? "恢复缩略图原位" : "整理缩略图")
+-        : (hasArrangedOverlayFrames ? "恢复卷帘条原位" : "整理卷帘条")
+-      let arrange = NSMenuItem(
+-        title: arrangeTitle, action: #selector(arrangeShadedWindows), keyEquivalent: "")
+-      applyShortcut(.arrangeOrFocus, to: arrange)
+-      arrange.isEnabled = menuState.canArrangeShades
+-      statusMenu.addItem(arrange)
+-    }
+-
+-    let doubleClick = NSMenuItem(
+-      title: "双击标题栏收起窗口", action: #selector(toggleTitlebarDoubleClick(_:)), keyEquivalent: "")
+-    doubleClick.state = menuState.titlebarDoubleClickEnabled ? .on : .off
+-    statusMenu.addItem(doubleClick)
+-
+-    let pinnedPreview = NSMenuItem(
+-      title: pinnedPreviewMenuTitle(),
+-      action: #selector(togglePinnedPreviewAction),
+-      keyEquivalent: "")
+-    applyShortcut(.pinPreview, to: pinnedPreview)
+-    pinnedPreview.isEnabled =
+-      AXIsProcessTrusted()
+-      && hasScreenRecordingPermission()
+-    statusMenu.addItem(pinnedPreview)
++      let title = thumbnailsInUse ? (hasArrangedOverlayFrames ? "恢复缩略图原位" : "整理缩略图")
++                                : (hasArrangedOverlayFrames ? "恢复卷帘条原位" : "整理卷帘条")
++      action(title, "rectangle.grid.1x2", #selector(arrangeShadedWindows), .arrangeOrFocus,
++             enabled: menuState.canArrangeShades, menu: arrangement)
++    }
++    statusMenu.addItem(.separator())
++    action("全部收进刘海", "macwindow.on.rectangle", #selector(tuckAllAction), .tuckAll, enabled: ax && NotchController.isEnabled)
++    action("启动台", "square.grid.3x3", #selector(toggleLaunchpadAction), .launchpad)
++    action("选择窗口…", "rectangle.on.rectangle", #selector(openWindowBrowserPanel), .windowBrowser,
++           enabled: WindowBrowserSettings.keyboardPanelEnabled)
++    // 动态窗口段不计入 9 个常驻项；保留老板键、逐窗取消和全部取消。
+     addPinnedPreviewMenuSection(menuState.pinnedPreviews)
+-
+-    let carryItem = NSMenuItem(
+-      title: "带到每张桌面", action: #selector(toggleCarryAction), keyEquivalent: "")
+-    applyShortcut(.carry, to: carryItem)
+-    carryItem.isEnabled = AXIsProcessTrusted()
+-    statusMenu.addItem(carryItem)
+-
+-    let slideOverTitle = MainActor.assumeIsolated { slideOver.menuTitle }
+-    let slideOverItem = NSMenuItem(title: slideOverTitle, action: #selector(toggleSlideOverAction), keyEquivalent: "")
+-    applyShortcut(.slideOver, to: slideOverItem)
+-    slideOverItem.isEnabled = AXIsProcessTrusted() && hasScreenRecordingPermission()
+-    statusMenu.addItem(slideOverItem)
+-    if MainActor.assumeIsolated({ slideOver.dockedWindowID != nil }) {
+-      statusMenu.addItem(NSMenuItem(title: "退出侧拉", action: #selector(exitSlideOverAction), keyEquivalent: ""))
+-    }
+-
+-    let pipItem = NSMenuItem(title: "画中画当前窗口", action: #selector(pictureInPictureAction), keyEquivalent: "")
+-    applyShortcut(.pictureInPicture, to: pipItem)
+-    pipItem.isEnabled = AXIsProcessTrusted() && hasScreenRecordingPermission()
+-    statusMenu.addItem(pipItem)
+-
+-    let magicItem = NSMenuItem(title: "魔法平铺", action: #selector(magicTileAction), keyEquivalent: "")
+-    applyShortcut(.magicTile, to: magicItem)
+-    magicItem.isEnabled = AXIsProcessTrusted()
+-    statusMenu.addItem(magicItem)
+-
+-    if NSScreen.screens.count > 1 {
+-      let displayItem = NSMenuItem(title: "移到另一块屏幕", action: #selector(nextDisplayAction), keyEquivalent: "")
+-      applyShortcut(.nextDisplay, to: displayItem)
+-      displayItem.isEnabled = AXIsProcessTrusted()
+-      statusMenu.addItem(displayItem)
+-    }
+-    if NotchController.isEnabled {
+-      let tuckCurrentItem = NSMenuItem(title: "收进刘海", action: #selector(tuckCurrentAction), keyEquivalent: "")
+-      applyShortcut(.tuckCurrent, to: tuckCurrentItem)
+-      tuckCurrentItem.isEnabled = AXIsProcessTrusted()
+-      statusMenu.addItem(tuckCurrentItem)
+-      let tuckAllItem = NSMenuItem(title: "全部收进刘海", action: #selector(tuckAllAction), keyEquivalent: "")
+-      applyShortcut(.tuckAll, to: tuckAllItem)
+-      tuckAllItem.isEnabled = AXIsProcessTrusted()
+-      statusMenu.addItem(tuckAllItem)
+-    }
+-
+-    let launchpadItem = NSMenuItem(title: "启动台", action: #selector(toggleLaunchpadAction), keyEquivalent: "")
+-    applyShortcut(.launchpad, to: launchpadItem)
+-    statusMenu.addItem(launchpadItem)
+-
+-    let activitiesItem = NSMenuItem(title: "实时活动", action: #selector(openActivitiesAction), keyEquivalent: "")
+-    activitiesItem.isEnabled = NotchActivityController.isEnabled
+-    statusMenu.addItem(activitiesItem)
+-
+-    let touchIDItem = NSMenuItem(title: "验证 Touch ID…", action: #selector(verifyTouchIDAction), keyEquivalent: "")
+-    touchIDItem.isEnabled = MainActor.assumeIsolated { NotchController.isEnabled && !notch.authentication.isPresenting }
+-    statusMenu.addItem(touchIDItem)
+-
+-    let lockOverlayItem = NSMenuItem(title: "锁屏开合效果", action: #selector(toggleLockOverlayAction), keyEquivalent: "")
+-    lockOverlayItem.state = duoController.lockOverlay.enabled ? .on : .off
+-    statusMenu.addItem(lockOverlayItem)
+-
+-    let faceItem = NSMenuItem(title: "检测面部动作", action: nil, keyEquivalent: "")
+-    let cameras = NSMenu()
+-    MainActor.assumeIsolated {
+-      for camera in FaceObservationSource.devices() {
+-        let item = NSMenuItem(title: camera.name, action: #selector(observeFaceAction(_:)), keyEquivalent: "")
+-        item.representedObject = camera.id
+-        cameras.addItem(item)
+-      }
+-    }
+-    faceItem.submenu = cameras
+-    faceItem.isEnabled = NotchController.isEnabled && !cameras.items.isEmpty
+-    statusMenu.addItem(faceItem)
+-
+-    let windowBrowser = NSMenuItem(
+-      title: "选择窗口…", action: #selector(openWindowBrowserPanel), keyEquivalent: "")
+-    applyShortcut(.windowBrowser, to: windowBrowser)
+-    windowBrowser.image = NSImage(systemSymbolName: "rectangle.on.rectangle",
+-                                  accessibilityDescription: nil)
+-    windowBrowser.isEnabled = WindowBrowserSettings.keyboardPanelEnabled
+-    statusMenu.addItem(windowBrowser)
++    if MainActor.assumeIsolated({ ws2Runtime.focus.model.phase != .idle }) {
++      action(MainActor.assumeIsolated { ws2Runtime.menuTitle }, "timer", #selector(ws2OpenFocus))
++    }
+ 
+     if !menuState.foldedWindows.isEmpty {
+       statusMenu.addItem(.separator())
+@@ -214,14 +131,36 @@
+     }
+ 
+     statusMenu.addItem(.separator())
+-    statusMenu.addItem(withTitle: "欢迎使用 WindowShade…", action: #selector(showWelcomeGuide), keyEquivalent: "")
+-    statusMenu.addItem(withTitle: "设置…", action: #selector(showPreferences), keyEquivalent: ",")
+-    // 代理应用没有菜单栏，“关于”按惯例放在状态栏菜单里，用系统标准面板。
+-    statusMenu.addItem(withTitle: "关于 WindowShade",
+-                       action: #selector(showAboutPanel),
+-                       keyEquivalent: "")
+-    statusMenu.addItem(MainActor.assumeIsolated { UpdaterController.shared.makeMenuItem() })
+-    statusMenu.addItem(withTitle: "退出 WindowShade", action: #selector(quit), keyEquivalent: "q")
++    let settings = NSMenuItem(title: "设置…", action: #selector(showPreferences), keyEquivalent: ",")
++    settings.image = NSImage(systemSymbolName: "gearshape", accessibilityDescription: nil)
++    statusMenu.addItem(settings)
++    let about = NSMenuItem(title: "关于 WindowShade", action: #selector(showAboutPanel), keyEquivalent: ",")
++    about.isAlternate = true; about.keyEquivalentModifierMask = [.command, .option]
++    about.image = NSImage(systemSymbolName: "info.circle", accessibilityDescription: nil)
++    statusMenu.addItem(about)
++    if NSEvent.modifierFlags.contains(.option) {
++      action("欢迎使用 WindowShade…", "hand.wave", #selector(showWelcomeGuide))
++      statusMenu.addItem(MainActor.assumeIsolated { UpdaterController.shared.makeMenuItem() })
++      // 与原工程的发行 feed 约定一致；设置 SUFeedURL 的构建不得展示诊断入口。
++      if Bundle.main.object(forInfoDictionaryKey: "SUFeedURL") == nil {
++        let developer = NSMenuItem(title: "开发", action: nil, keyEquivalent: "")
++        developer.image = NSImage(systemSymbolName: "hammer", accessibilityDescription: nil)
++        let tools = NSMenu(); developer.submenu = tools
++        if let text = menuState.hingeAngleText { tools.addItem(.sectionHeader(title: text)) }
++        action("验证 Touch ID…", "touchid", #selector(verifyTouchIDAction), menu: tools)
++        let cameras = NSMenuItem(title: "检测面部动作", action: nil, keyEquivalent: "")
++        cameras.submenu = NSMenu()
++        MainActor.assumeIsolated {
++          for camera in FaceObservationSource.devices() {
++            let item = NSMenuItem(title: camera.name, action: #selector(observeFaceAction(_:)), keyEquivalent: "")
++            item.target = self; item.representedObject = camera.id; cameras.submenu?.addItem(item)
++          }
++        }
++        tools.addItem(cameras); statusMenu.addItem(developer)
++      }
++    }
++    let quitItem = NSMenuItem(title: "退出 WindowShade", action: #selector(quit), keyEquivalent: "q")
++    quitItem.image = NSImage(systemSymbolName: "power", accessibilityDescription: nil); statusMenu.addItem(quitItem)
+     updateReconcileTimer()
+     // 折叠/置顶状态也可能由原有菜单或快捷键改变：面板打开时同步刷新投影。
+     windowBrowserController?.managedWindowsDidChange()

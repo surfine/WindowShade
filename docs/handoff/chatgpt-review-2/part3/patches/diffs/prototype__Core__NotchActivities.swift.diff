@@ -1,0 +1,25 @@
+--- a/prototype/Core/NotchActivities.swift
++++ b/prototype/Core/NotchActivities.swift
+@@ -11,7 +11,7 @@
+ 
+ /// 活动卡片上能点的动作。纯数据，放在 Core 里：刘海和负一屏都发它，单测也不用带 App 那一层。
+ enum NotchActivityAction: String {
+-    case enableMusic, playPause, previous, next, airDrop, route, voiceMemos, open, end
++    case enableMusic, playPause, previous, next, airDrop, route, voiceMemos, open, end, focusTogglePause, focusSkip
+ }
+ 
+ /// 活动的种类，决定默认排序权重。
+@@ -21,11 +21,13 @@
+     case airDrop
+     case route
+     case recording
++    case focus
+ 
+     /// 权重数字越大越显眼，排在越前。
+     var priority: Int {
+         switch self {
+         case .recording: return 90
++        case .focus: return 85
+         case .airDrop: return 80
+         case .route: return 60
+         case .music: return 40

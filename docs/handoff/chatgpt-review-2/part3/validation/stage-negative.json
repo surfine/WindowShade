@@ -1,0 +1,37 @@
+[
+  {
+    "case": "existing-output-rejected",
+    "command": [
+      "/opt/pyvenv/bin/python",
+      "/mnt/data/WindowShade2-round2-part3/tools/stage-all.py",
+      "--repo",
+      "/mnt/data/ws2-r3-input/WindowShade2-review-round2/repo",
+      "--part1",
+      "/mnt/data/ws2-r3-input/WindowShade2-round2-part1",
+      "--part2",
+      "/mnt/data/ws2-r3-input/WindowShade2-round2-part2",
+      "--out",
+      "/mnt/data/ws2-r3-stage"
+    ],
+    "exitCode": 2,
+    "stderr": "ERROR: 输出已存在，拒绝覆盖\n"
+  },
+  {
+    "case": "changed-source-rejected",
+    "command": [
+      "/opt/pyvenv/bin/python",
+      "/mnt/data/WindowShade2-round2-part3/tools/stage-all.py",
+      "--repo",
+      "/tmp/ws2-r3-stage-negative-x3ctn_ug/changed-repo",
+      "--part1",
+      "/mnt/data/ws2-r3-input/WindowShade2-round2-part1",
+      "--part2",
+      "/mnt/data/ws2-r3-input/WindowShade2-round2-part2",
+      "--out",
+      "/tmp/ws2-r3-stage-negative-x3ctn_ug/must-not-exist"
+    ],
+    "exitCode": 2,
+    "stderr": "ERROR: 源文件校验失败: README.md\n",
+    "outputCreated": false
+  }
+]

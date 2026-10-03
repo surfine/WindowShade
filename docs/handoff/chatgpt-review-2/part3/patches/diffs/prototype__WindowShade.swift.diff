@@ -1,0 +1,18 @@
+--- a/prototype/WindowShade.swift
++++ b/prototype/WindowShade.swift
+@@ -272,6 +272,7 @@
+     lazy var carry = MainActor.assumeIsolated { CarryController(owner: self) }
+     lazy var slideOver = MainActor.assumeIsolated { SlideOverController(owner: self) }
+     lazy var notch = MainActor.assumeIsolated { NotchController(owner: self) }
++    lazy var ws2Runtime = MainActor.assumeIsolated { WS2AppRuntime(owner: self) }
+     /// 妙控外设连上、电量低时在刘海上说一句（App/DeviceBatteryController.swift）。
+     lazy var deviceBattery = MainActor.assumeIsolated { DeviceBatteryController() }
+     lazy var launchpad = MainActor.assumeIsolated { LaunchpadController(owner: self) }
+@@ -797,6 +798,7 @@
+ 
+ 
+     func applicationWillTerminate(_ note: Notification) {
++        MainActor.assumeIsolated { ws2Runtime.stop() }
+         MainActor.assumeIsolated { UpdaterController.shared.applicationWillTerminate() }
+         MainActor.assumeIsolated { pip.shutdown(); slideOver.shutdown() }
+         MainActor.assumeIsolated { HabitCenter.shared.stop() }

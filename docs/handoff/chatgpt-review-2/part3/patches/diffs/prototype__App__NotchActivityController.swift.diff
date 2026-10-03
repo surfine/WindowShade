@@ -1,0 +1,40 @@
+--- a/prototype/App/NotchActivityController.swift
++++ b/prototype/App/NotchActivityController.swift
+@@ -10,6 +10,17 @@
+         set { UserDefaults.standard.set(newValue, forKey: enabledKey) }
+     }
+     var onChange: (([NotchActivity], String?) -> Void)?
++    var ws2FocusAction: ((NotchActivityAction) -> Void)?
++    func ws2PublishFocus(title: String?, subtitle: String = "", paused: Bool = false) {
++        guard Self.isEnabled, !suspended else { return }
++        configure()
++        if let title {
++            put(id: "ws2.focus", kind: .focus, title: title, subtitle: subtitle, symbol: "timer", paused: paused)
++        } else if let old = store.activities.first(where: { $0.id == "ws2.focus" }) {
++            store.end(id: old.id, generation: old.generation, now: ProcessInfo.processInfo.systemUptime)
++        }
++        publish()
++    }
+     private(set) var store = NotchActivityStore()
+     private let sources = NotchActivitySources()
+     private var generation: UInt64 = 0
+@@ -117,7 +128,11 @@
+     func perform(_ action: NotchActivityAction) {
+         guard Self.isEnabled, !suspended else { return }
+         configure()
++        if store.selected?.kind == .focus && [.open, .end, .focusTogglePause, .focusSkip].contains(action) {
++            ws2FocusAction?(action); return
++        }
+         switch action {
++        case .focusTogglePause, .focusSkip: return
+         case .enableMusic: sources.enableMusic()
+         case .playPause: sources.musicCommand(.playPause)
+         case .previous: sources.musicCommand(.previous)
+@@ -133,6 +148,7 @@
+         case .open:
+             guard let selected = store.selected else { return }
+             switch selected.kind {
++            case .focus: return
+             case .music: openApp(selected.detail)
+             case .recording: openApp("com.apple.VoiceMemos")
+             case .route: if !routeItems.isEmpty { MKMapItem.openMaps(with: routeItems, launchOptions: [MKLaunchOptionsDirectionsModeKey: MKLaunchOptionsDirectionsModeDriving]) }

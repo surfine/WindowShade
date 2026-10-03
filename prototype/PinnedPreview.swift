@@ -145,6 +145,9 @@ private final class PinnedPreviewSession {
 struct PinnedPreviewTarget {
     let windowID: CGWindowID
     let axWindow: AXUIElement
+    var ws2Caption = ""
+    var ws2CaptionPID: pid_t = 0
+    var ws2CaptionTime: Double = 0
 }
 
 
@@ -170,6 +173,12 @@ final class PinnedPreviewController {
     private let sessionsDidChange: () -> Void
     private var sessions: [CGWindowID: PinnedPreviewSession] = [:]
     private var currentTarget: PinnedPreviewTarget?
+    func ws2CachedMenuTitle() -> String {
+        guard let currentTarget, !currentTarget.ws2Caption.isEmpty,
+              currentTarget.ws2CaptionPID == NSWorkspace.shared.frontmostApplication?.processIdentifier,
+              ProcessInfo.processInfo.systemUptime - currentTarget.ws2CaptionTime < 3 else { return "当前窗口" }
+        return currentTarget.ws2Caption
+    }
     // 目标窗口解析会触发多次同步 AX IPC（忙 app 单次可卡到全局 2s timeout）。
     // 绝不能在主线程或菜单更新路径上执行。多个触发源合并到一个后台请求；用户
     // 显式点击“置顶”时会强制追加一次最新解析，保证不对陈旧 target 操作。
@@ -441,7 +450,7 @@ final class PinnedPreviewController {
         let excludedBundleIDs = self.excludedBundleIDs
         axWorkQueue.async { [weak self] in
             let startedAt = CFAbsoluteTimeGetCurrent()
-            let target: PinnedPreviewTarget?
+            var target: PinnedPreviewTarget?
             let stage: String
 
             // 快速路径：前台应用最上层的普通窗口仍是上一次完整解析出的那扇窗，
@@ -470,9 +479,20 @@ final class PinnedPreviewController {
                 stage = "no-focused-window"
             }
 
+            if var resolved = target {
+                let info = CGWindowListCopyWindowInfo(.optionIncludingWindow, resolved.windowID) as? [[String: Any]]
+                let row = info?.first
+                let title = (row?[kCGWindowName as String] as? String ?? "").replacingOccurrences(of: "\n", with: " ")
+                let app = row?[kCGWindowOwnerName as String] as? String ?? ""
+                resolved.ws2Caption = String((title.isEmpty ? app : app + " · " + title).prefix(80))
+                resolved.ws2CaptionPID = pid
+                resolved.ws2CaptionTime = ProcessInfo.processInfo.systemUptime
+                target = resolved
+            }
             let elapsedMilliseconds = Int((CFAbsoluteTimeGetCurrent() - startedAt) * 1000)
+            let completedTarget = target
             DispatchQueue.main.async { [weak self] in
-                self?.finishTargetRefresh(target: target, reason: reason, pid: pid,
+                self?.finishTargetRefresh(target: completedTarget, reason: reason, pid: pid,
                                           stage: stage, elapsedMilliseconds: elapsedMilliseconds)
             }
         }

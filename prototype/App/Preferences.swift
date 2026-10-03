@@ -246,6 +246,10 @@ static func noticeTone(_ message: String) -> NotchPanel.Tone {
         appearance.widthAnchor.constraint(equalTo: stack.widthAnchor).isActive = true
         stack.setCustomSpacing(18, after: stack.arrangedSubviews.last!)
 
+        let ws2Pane = MainActor.assumeIsolated { WS2SupplementPane(owner: self) }
+        stack.addArrangedSubview(ws2Pane)
+        ws2Pane.widthAnchor.constraint(equalTo: stack.widthAnchor).isActive = true
+
         stack.addArrangedSubview(makePrefGroupLabel("声音"))
         let sound = makeUnifiedSettingsCard([
             makeUnifiedToggleRow(name: "收起和展开时播放音效", subtitle: nil,

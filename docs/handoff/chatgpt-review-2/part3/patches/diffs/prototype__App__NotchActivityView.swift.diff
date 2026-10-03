@@ -1,0 +1,14 @@
+--- a/prototype/App/NotchActivityView.swift
++++ b/prototype/App/NotchActivityView.swift
+@@ -199,7 +199,10 @@
+         reportedProgress = item.progress
+         buttons.forEach { $0.removeFromSuperview() }
+         let actions: [(String, String, NotchActivityAction)]
+-        if item.kind == .music {
++        if item.kind == .focus {
++            actions = [(item.isPaused ? "继续" : "暂停", item.isPaused ? "play.fill" : "pause.fill", .focusTogglePause),
++                       ("跳过", "forward.end.fill", .focusSkip), ("结束", "xmark", .end)]
++        } else if item.kind == .music {
+             actions = [("上一首", "backward.end.fill", .previous), (item.isPaused ? "播放" : "暂停", item.isPaused ? "play.fill" : "pause.fill", .playPause), ("下一首", "forward.end.fill", .next)]
+         } else if item.kind == .route {
+             actions = [("地图", "arrow.up.forward.app", .open), ("移除路线", "xmark", .end)]

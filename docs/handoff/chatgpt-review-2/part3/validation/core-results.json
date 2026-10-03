@@ -1,0 +1,282 @@
+{
+  "assertions" : 147,
+  "cases" : [
+    {
+      "assertions" : 2,
+      "name" : "gamepad-default-off",
+      "passed" : true
+    },
+    {
+      "assertions" : 3,
+      "name" : "gamepad-radial-deadzone-and-finite",
+      "passed" : true
+    },
+    {
+      "assertions" : 3,
+      "name" : "gamepad-first-sample-no-jump",
+      "passed" : true
+    },
+    {
+      "assertions" : 1,
+      "name" : "gamepad-sleep-gap-is-capped",
+      "passed" : true
+    },
+    {
+      "assertions" : 3,
+      "name" : "gamepad-trigger-hysteresis",
+      "passed" : true
+    },
+    {
+      "assertions" : 3,
+      "name" : "gamepad-game-and-disconnect-reset",
+      "passed" : true
+    },
+    {
+      "assertions" : 4,
+      "name" : "pin-fixed-window",
+      "passed" : true
+    },
+    {
+      "assertions" : 3,
+      "name" : "pin-invalid-inputs",
+      "passed" : true
+    },
+    {
+      "assertions" : 1,
+      "name" : "pin-no-overlapping-window",
+      "passed" : true
+    },
+    {
+      "assertions" : 3,
+      "name" : "pin-three-failures-cooldown",
+      "passed" : true
+    },
+    {
+      "assertions" : 2,
+      "name" : "pin-restart-and-success",
+      "passed" : true
+    },
+    {
+      "assertions" : 8,
+      "name" : "tlv-roundtrip-fragment-boundaries",
+      "passed" : true
+    },
+    {
+      "assertions" : 5,
+      "name" : "tlv-reject-malformed",
+      "passed" : true
+    },
+    {
+      "assertions" : 3,
+      "name" : "tlv-bounds-and-duplicate-encoding",
+      "passed" : true
+    },
+    {
+      "assertions" : 1,
+      "name" : "router-no-session",
+      "passed" : true
+    },
+    {
+      "assertions" : 3,
+      "name" : "router-events-and-sequence",
+      "passed" : true
+    },
+    {
+      "assertions" : 3,
+      "name" : "router-replay-revokes",
+      "passed" : true
+    },
+    {
+      "assertions" : 2,
+      "name" : "router-gap-revokes",
+      "passed" : true
+    },
+    {
+      "assertions" : 2,
+      "name" : "router-malformed-touch",
+      "passed" : true
+    },
+    {
+      "assertions" : 2,
+      "name" : "router-stale-peer",
+      "passed" : true
+    },
+    {
+      "assertions" : 10,
+      "name" : "input-every-required-gate",
+      "passed" : true
+    },
+    {
+      "assertions" : 2,
+      "name" : "hid-unique-match-required",
+      "passed" : true
+    },
+    {
+      "assertions" : 4,
+      "name" : "hid-write-readback-restore",
+      "passed" : true
+    },
+    {
+      "assertions" : 2,
+      "name" : "hid-third-party-change-preserved",
+      "passed" : true
+    },
+    {
+      "assertions" : 6,
+      "name" : "lock-url-exact-only",
+      "passed" : true
+    },
+    {
+      "assertions" : 1,
+      "name" : "lock-origin-not-authentication",
+      "passed" : true
+    },
+    {
+      "assertions" : 2,
+      "name" : "lock-proved-current-presence",
+      "passed" : true
+    },
+    {
+      "assertions" : 3,
+      "name" : "lock-late-or-foreign-ack",
+      "passed" : true
+    },
+    {
+      "assertions" : 3,
+      "name" : "hook-preview-preserves-third-party",
+      "passed" : true
+    },
+    {
+      "assertions" : 1,
+      "name" : "hook-preview-idempotence",
+      "passed" : true
+    },
+    {
+      "assertions" : 2,
+      "name" : "hook-remove-only-owned",
+      "passed" : true
+    },
+    {
+      "assertions" : 2,
+      "name" : "hook-codex-unsupported-and-path-validation",
+      "passed" : true
+    },
+    {
+      "assertions" : 4,
+      "name" : "config-real-write-backup-rollback",
+      "passed" : true
+    },
+    {
+      "assertions" : 2,
+      "name" : "config-stale-preview-does-not-overwrite",
+      "passed" : true
+    },
+    {
+      "assertions" : 2,
+      "name" : "config-no-consent",
+      "passed" : true
+    },
+    {
+      "assertions" : 1,
+      "name" : "config-symlink-rejected",
+      "passed" : true
+    },
+    {
+      "assertions" : 2,
+      "name" : "config-hardlink-rejected",
+      "passed" : true
+    },
+    {
+      "assertions" : 3,
+      "name" : "config-new-does-not-replace-existing",
+      "passed" : true
+    },
+    {
+      "assertions" : 3,
+      "name" : "socket-real-request-reply-and-cleanup",
+      "passed" : true
+    },
+    {
+      "assertions" : 2,
+      "name" : "socket-occupied-not-unlinked",
+      "passed" : true
+    },
+    {
+      "assertions" : 2,
+      "name" : "socket-timeout-bounded",
+      "passed" : true
+    },
+    {
+      "assertions" : 4,
+      "name" : "socket-multiple-lines-and-size",
+      "passed" : true
+    },
+    {
+      "assertions" : 2,
+      "name" : "socket-parent-mode-and-path-length",
+      "passed" : true
+    },
+    {
+      "assertions" : 1,
+      "name" : "stdin-bounded-read-and-eof",
+      "passed" : true
+    },
+    {
+      "assertions" : 1,
+      "name" : "stdin-size-limit",
+      "passed" : true
+    },
+    {
+      "assertions" : 2,
+      "name" : "process-actual-fragmented-fake-response",
+      "passed" : true
+    },
+    {
+      "assertions" : 3,
+      "name" : "process-timeout-and-stop-idempotence",
+      "passed" : true
+    },
+    {
+      "assertions" : 3,
+      "name" : "codex-resume-pinned-field",
+      "passed" : true
+    },
+    {
+      "assertions" : 2,
+      "name" : "codex-resume-wrong-thread-closes",
+      "passed" : true
+    },
+    {
+      "assertions" : 2,
+      "name" : "codex-thread-start-resume-exclusion",
+      "passed" : true
+    },
+    {
+      "assertions" : 3,
+      "name" : "codex-early-turn-started-allows-current-approval",
+      "passed" : true
+    },
+    {
+      "assertions" : 3,
+      "name" : "codex-completion-clears-approval-and-late-start-reply",
+      "passed" : true
+    },
+    {
+      "assertions" : 2,
+      "name" : "codex-announcement-reply-mismatch-closes",
+      "passed" : true
+    },
+    {
+      "assertions" : 1,
+      "name" : "pin-cancel-reopen-retains-failures",
+      "passed" : true
+    },
+    {
+      "assertions" : 2,
+      "name" : "multitouch-symbols-not-enough",
+      "passed" : true
+    }
+  ],
+  "failures" : 0,
+  "scenarios" : 55
+}

@@ -48,6 +48,8 @@ struct CodexWire: Sendable {
     private(set) var pending: [WS2.RequestID:Pending] = [:]
     private(set) var approvals: [WS2.RequestID:WireJSON] = [:]
     private var buffer = Data()
+    private var expectedResumeID: String?
+    private var completedTurnIDs = Set<String>()
     private var serial: Int64 = 0
     private var time = WS2.TimeGate()
     private var cursors = Set<String>()
@@ -73,9 +75,16 @@ struct CodexWire: Sendable {
         state = .initializing
     }
     mutating func startThread(cwd: String, model: String, now: WS2.Instant) throws {
-        guard state == .ready, threadID == nil, !pending.values.contains(where:{$0.method == "thread/start"}),
+        guard state == .ready, threadID == nil, !pending.values.contains(where:{$0.method == "thread/start" || $0.method == "thread/resume"}),
               cwd.hasPrefix("/"), models[model] != nil, time.accept(now) else { throw Failure.notReady }
         _ = try request("thread/start",["cwd":.string(cwd),"model":.string(model)],now:now)
+    }
+    mutating func resumeThread(id: String, now: WS2.Instant) throws {
+        guard state == .ready, threadID == nil, !id.isEmpty, id.utf8.count <= 512,
+              !pending.values.contains(where: { $0.method == "thread/start" || $0.method == "thread/resume" }),
+              time.accept(now) else { throw Failure.notReady }
+        _ = try request("thread/resume",["threadId":.string(id)],now:now)
+        expectedResumeID = id
     }
     mutating func startTurn(text: String, model: String, effort: String, now: WS2.Instant) throws {
         guard state == .ready, let threadID, turnID == nil,
@@ -130,8 +139,17 @@ struct CodexWire: Sendable {
                 approvals[id] = params
                 return [.approval(id,method,params)]
             }
+            if method == "turn/started", params["threadId"]?.text == threadID,
+               pending.values.contains(where: { $0.method == "turn/start" }),
+               let id = params["turn"]?["id"]?.text, !id.isEmpty, !completedTurnIDs.contains(id) {
+                guard turnID == nil || turnID == id else { throw Failure.stale }
+                turnID = id
+            }
             if method == "turn/completed", params["threadId"]?.text == threadID,
-               let id = params["turn"]?["id"]?.text, id == turnID { turnID = nil }
+               let id = params["turn"]?["id"]?.text, id == turnID {
+                guard completedTurnIDs.count < 4096 else { throw Failure.capacity }
+                completedTurnIDs.insert(id); turnID = nil; approvals.removeAll()
+            }
             return [.notification(method,params)]
         }
         guard let id = v["id"]?.requestID else { throw Failure.malformed }
@@ -159,10 +177,16 @@ struct CodexWire: Sendable {
                 guard cursors.count < 100, cursors.insert(cursor).inserted else { throw Failure.capacity }
                 _ = try request("model/list",["cursor":.string(cursor),"limit":.integer(100)],now:now)
             } else { state = .ready }
-        case "thread/start":
-            guard let id = value["thread"]?["id"]?.text, !id.isEmpty else { throw Failure.malformed }; threadID = id
+        case "thread/start", "thread/resume":
+            guard let id = value["thread"]?["id"]?.text, !id.isEmpty else { throw Failure.malformed }
+            if p.method == "thread/resume" {
+                guard id == expectedResumeID else { throw Failure.stale }; expectedResumeID = nil
+            }
+            threadID = id
         case "turn/start":
-            guard let id = value["turn"]?["id"]?.text, !id.isEmpty else { throw Failure.malformed }; turnID = id
+            guard let id = value["turn"]?["id"]?.text, !id.isEmpty else { throw Failure.malformed }
+            guard turnID == nil || turnID == id else { throw Failure.stale }
+            if !completedTurnIDs.contains(id) { turnID = id }
         default: break
         }
         return [.result(id,value)]
@@ -184,5 +208,6 @@ struct CodexWire: Sendable {
     mutating func close() {
         state = .closed; buffer.removeAll(); pending.removeAll(); approvals.removeAll()
         outbound.removeAll(); models.removeAll(); threadID = nil; turnID = nil
+        expectedResumeID = nil; completedTurnIDs.removeAll()
     }
 }

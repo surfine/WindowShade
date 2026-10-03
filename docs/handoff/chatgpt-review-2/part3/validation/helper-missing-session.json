@@ -1,0 +1,10 @@
+{
+  "command": [
+    "/mnt/data/ws2-r3-helper.tzx1DR/ws-hook",
+    "--provider",
+    "claude"
+  ],
+  "exitCode": 0,
+  "stdout": "{}\n",
+  "stderr": ""
+}

@@ -1,0 +1,138 @@
+[
+  {
+    "package": "M1",
+    "path": "prototype/App/MenuBarController.swift",
+    "sha256": "9278d725fa4b96ba0d555e36007d4bed24ac16307438f679405bc0b43d49bf9d",
+    "line": 62,
+    "old": "    // 开合角度只对用合盖效果的人有意义；没开这个效果（或台式 Mac 根本没有盖子）时\n    // 不占菜单第一行。效果的配置在设置里，菜单只管窗口。\n    if let hingeAngleText = menuState.hingeAngleText {\n      let angle = NSMenuItem(title: hingeAngleText, action: nil, keyEquivalent: \"\")\n      angle.image = NSImage(systemSymbolName: \"angle\", accessibilityDescription: nil)\n      angle.isEnabled = false\n      statusMenu.addItem(angle)\n      statusMenu.addItem(.separator())\n    }\n\n    statusMenu.addItem(.sectionHeader(title: \"当前窗口\"))\n\n    let toggle = NSMenuItem(\n      title: foldToggleMenuTitle(), action: #selector(toggleAction), keyEquivalent: \"\")\n    applyShortcut(.toggleShade, to: toggle)\n    statusMenu.addItem(toggle)\n\n    if appearanceMode == .proxyTitleBar {\n      let focus = NSMenuItem(\n        title: focusMenuTitle(), action: #selector(focusCurrentAppAction), keyEquivalent: \"\")\n      applyShortcut(.arrangeOrFocus, to: focus)\n      focus.isEnabled = AXIsProcessTrusted()\n      statusMenu.addItem(focus)\n    } else {\n      // 屏幕上留的是缩略图时，说“缩略图”（见 Thumbnail.swift）。\n      let arrangeTitle = thumbnailsInUse\n        ? (hasArrangedOverlayFrames ? \"恢复缩略图原位\" : \"整理缩略图\")\n        : (hasArrangedOverlayFrames ? \"恢复卷帘条原位\" : \"整理卷帘条\")\n      let arrange = NSMenuItem(\n        title: arrangeTitle, action: #selector(arrangeShadedWindows), keyEquivalent: \"\")\n      applyShortcut(.arrangeOrFocus, to: arrange)\n      arrange.isEnabled = menuState.canArrangeShades\n      statusMenu.addItem(arrange)\n    }\n\n    let doubleClick = NSMenuItem(\n      title: \"双击标题栏收起窗口\", action: #selector(toggleTitlebarDoubleClick(_:)), keyEquivalent: \"\")\n    doubleClick.state = menuState.titlebarDoubleClickEnabled ? .on : .off\n    statusMenu.addItem(doubleClick)\n\n    let pinnedPreview = NSMenuItem(\n      title: pinnedPreviewMenuTitle(),\n      action: #selector(togglePinnedPreviewAction),\n      keyEquivalent: \"\")\n    applyShortcut(.pinPreview, to: pinnedPreview)\n    pinnedPreview.isEnabled =\n      AXIsProcessTrusted()\n      && hasScreenRecordingPermission()\n    statusMenu.addItem(pinnedPreview)\n    addPinnedPreviewMenuSection(menuState.pinnedPreviews)\n\n    let carryItem = NSMenuItem(\n      title: \"带到每张桌面\", action: #selector(toggleCarryAction), keyEquivalent: \"\")\n    applyShortcut(.carry, to: carryItem)\n    carryItem.isEnabled = AXIsProcessTrusted()\n    statusMenu.addItem(carryItem)\n\n    let slideOverTitle = MainActor.assumeIsolated { slideOver.menuTitle }\n    let slideOverItem = NSMenuItem(title: slideOverTitle, action: #selector(toggleSlideOverAction), keyEquivalent: \"\")\n    applyShortcut(.slideOver, to: slideOverItem)\n    slideOverItem.isEnabled = AXIsProcessTrusted() && hasScreenRecordingPermission()\n    statusMenu.addItem(slideOverItem)\n    if MainActor.assumeIsolated({ slideOver.dockedWindowID != nil }) {\n      statusMenu.addItem(NSMenuItem(title: \"退出侧拉\", action: #selector(exitSlideOverAction), keyEquivalent: \"\"))\n    }\n\n    let pipItem = NSMenuItem(title: \"画中画当前窗口\", action: #selector(pictureInPictureAction), keyEquivalent: \"\")\n    applyShortcut(.pictureInPicture, to: pipItem)\n    pipItem.isEnabled = AXIsProcessTrusted() && hasScreenRecordingPermission()\n    statusMenu.addItem(pipItem)\n\n    let magicItem = NSMenuItem(title: \"魔法平铺\", action: #selector(magicTileAction), keyEquivalent: \"\")\n    applyShortcut(.magicTile, to: magicItem)\n    magicItem.isEnabled = AXIsProcessTrusted()\n    statusMenu.addItem(magicItem)\n\n    if NSScreen.screens.count > 1 {\n      let displayItem = NSMenuItem(title: \"移到另一块屏幕\", action: #selector(nextDisplayAction), keyEquivalent: \"\")\n      applyShortcut(.nextDisplay, to: displayItem)\n      displayItem.isEnabled = AXIsProcessTrusted()\n      statusMenu.addItem(displayItem)\n    }\n    if NotchController.isEnabled {\n      let tuckCurrentItem = NSMenuItem(title: \"收进刘海\", action: #selector(tuckCurrentAction), keyEquivalent: \"\")\n      applyShortcut(.tuckCurrent, to: tuckCurrentItem)\n      tuckCurrentItem.isEnabled = AXIsProcessTrusted()\n      statusMenu.addItem(tuckCurrentItem)\n      let tuckAllItem = NSMenuItem(title: \"全部收进刘海\", action: #selector(tuckAllAction), keyEquivalent: \"\")\n      applyShortcut(.tuckAll, to: tuckAllItem)\n      tuckAllItem.isEnabled = AXIsProcessTrusted()\n      statusMenu.addItem(tuckAllItem)\n    }\n\n    let launchpadItem = NSMenuItem(title: \"启动台\", action: #selector(toggleLaunchpadAction), keyEquivalent: \"\")\n    applyShortcut(.launchpad, to: launchpadItem)\n    statusMenu.addItem(launchpadItem)\n\n    let activitiesItem = NSMenuItem(title: \"实时活动\", action: #selector(openActivitiesAction), keyEquivalent: \"\")\n    activitiesItem.isEnabled = NotchActivityController.isEnabled\n    statusMenu.addItem(activitiesItem)\n\n    let touchIDItem = NSMenuItem(title: \"验证 Touch ID…\", action: #selector(verifyTouchIDAction), keyEquivalent: \"\")\n    touchIDItem.isEnabled = MainActor.assumeIsolated { NotchController.isEnabled && !notch.authentication.isPresenting }\n    statusMenu.addItem(touchIDItem)\n\n    let lockOverlayItem = NSMenuItem(title: \"锁屏开合效果\", action: #selector(toggleLockOverlayAction), keyEquivalent: \"\")\n    lockOverlayItem.state = duoController.lockOverlay.enabled ? .on : .off\n    statusMenu.addItem(lockOverlayItem)\n\n    let faceItem = NSMenuItem(title: \"检测面部动作\", action: nil, keyEquivalent: \"\")\n    let cameras = NSMenu()\n    MainActor.assumeIsolated {\n      for camera in FaceObservationSource.devices() {\n        let item = NSMenuItem(title: camera.name, action: #selector(observeFaceAction(_:)), keyEquivalent: \"\")\n        item.representedObject = camera.id\n        cameras.addItem(item)\n      }\n    }\n    faceItem.submenu = cameras\n    faceItem.isEnabled = NotchController.isEnabled && !cameras.items.isEmpty\n    statusMenu.addItem(faceItem)\n\n    let windowBrowser = NSMenuItem(\n      title: \"选择窗口…\", action: #selector(openWindowBrowserPanel), keyEquivalent: \"\")\n    applyShortcut(.windowBrowser, to: windowBrowser)\n    windowBrowser.image = NSImage(systemSymbolName: \"rectangle.on.rectangle\",\n                                  accessibilityDescription: nil)\n    windowBrowser.isEnabled = WindowBrowserSettings.keyboardPanelEnabled\n    statusMenu.addItem(windowBrowser)\n\n",
+    "new": "    statusMenu.addItem(.sectionHeader(title: pinnedPreviewController.ws2CachedMenuTitle()))\n    func action(_ title: String, _ symbol: String, _ selector: Selector,\n                _ shortcut: GlobalShortcut? = nil, enabled: Bool = true, menu: NSMenu? = nil) {\n      let item = NSMenuItem(title: title, action: selector, keyEquivalent: \"\")\n      item.target = self; item.image = NSImage(systemSymbolName: symbol, accessibilityDescription: nil)\n      item.isEnabled = enabled\n      if let shortcut { applyShortcut(shortcut, to: item) }\n      (menu ?? statusMenu).addItem(item)\n    }\n    let ax = AXIsProcessTrusted(), screen = hasScreenRecordingPermission()\n    action(foldToggleMenuTitle().replacingOccurrences(of: \"当前窗口\", with: \"窗口\"),\n           \"rectangle.compress.vertical\", #selector(toggleAction), .toggleShade)\n    action(\"收进刘海\", \"rectangle.topthird.inset.filled\", #selector(tuckCurrentAction), .tuckCurrent,\n           enabled: ax && NotchController.isEnabled)\n    action(pinnedPreviewMenuTitle().replacingOccurrences(of: \"当前窗口\", with: \"窗口\"),\n           \"pin\", #selector(togglePinnedPreviewAction), .pinPreview, enabled: ax && screen)\n    let arrangement = NSMenu()\n    let arrangeItem = NSMenuItem(title: \"排列\", action: nil, keyEquivalent: \"\")\n    arrangeItem.image = NSImage(systemSymbolName: \"rectangle.split.2x1\", accessibilityDescription: nil)\n    arrangeItem.submenu = arrangement; statusMenu.addItem(arrangeItem)\n    action(MainActor.assumeIsolated { slideOver.menuTitle }, \"sidebar.right\", #selector(toggleSlideOverAction), .slideOver, enabled: ax && screen, menu: arrangement)\n    if MainActor.assumeIsolated({ slideOver.dockedWindowID != nil }) {\n      action(\"退出侧拉\", \"sidebar.right\", #selector(exitSlideOverAction), menu: arrangement)\n    }\n    action(\"画中画\", \"pip\", #selector(pictureInPictureAction), .pictureInPicture, enabled: ax && screen, menu: arrangement)\n    action(\"魔法平铺\", \"wand.and.stars\", #selector(magicTileAction), .magicTile, enabled: ax, menu: arrangement)\n    if NSScreen.screens.count > 1 { action(\"移到另一块屏幕\", \"display\", #selector(nextDisplayAction), .nextDisplay, enabled: ax, menu: arrangement) }\n    action(\"带到每张桌面\", \"square.on.square\", #selector(toggleCarryAction), .carry, enabled: ax, menu: arrangement)\n    if appearanceMode == .proxyTitleBar {\n      action(focusMenuTitle(), \"macwindow\", #selector(focusCurrentAppAction), .arrangeOrFocus, enabled: ax, menu: arrangement)\n    } else {\n      let title = thumbnailsInUse ? (hasArrangedOverlayFrames ? \"恢复缩略图原位\" : \"整理缩略图\")\n                                : (hasArrangedOverlayFrames ? \"恢复卷帘条原位\" : \"整理卷帘条\")\n      action(title, \"rectangle.grid.1x2\", #selector(arrangeShadedWindows), .arrangeOrFocus,\n             enabled: menuState.canArrangeShades, menu: arrangement)\n    }\n    statusMenu.addItem(.separator())\n    action(\"全部收进刘海\", \"macwindow.on.rectangle\", #selector(tuckAllAction), .tuckAll, enabled: ax && NotchController.isEnabled)\n    action(\"启动台\", \"square.grid.3x3\", #selector(toggleLaunchpadAction), .launchpad)\n    action(\"选择窗口…\", \"rectangle.on.rectangle\", #selector(openWindowBrowserPanel), .windowBrowser,\n           enabled: WindowBrowserSettings.keyboardPanelEnabled)\n    // 动态窗口段不计入 9 个常驻项；保留老板键、逐窗取消和全部取消。\n    addPinnedPreviewMenuSection(menuState.pinnedPreviews)\n    if MainActor.assumeIsolated({ ws2Runtime.focus.model.phase != .idle }) {\n      action(MainActor.assumeIsolated { ws2Runtime.menuTitle }, \"timer\", #selector(ws2OpenFocus))\n    }\n\n"
+  },
+  {
+    "package": "M1",
+    "path": "prototype/App/MenuBarController.swift",
+    "sha256": "9278d725fa4b96ba0d555e36007d4bed24ac16307438f679405bc0b43d49bf9d",
+    "line": 217,
+    "old": "    statusMenu.addItem(withTitle: \"欢迎使用 WindowShade…\", action: #selector(showWelcomeGuide), keyEquivalent: \"\")\n    statusMenu.addItem(withTitle: \"设置…\", action: #selector(showPreferences), keyEquivalent: \",\")\n    // 代理应用没有菜单栏，“关于”按惯例放在状态栏菜单里，用系统标准面板。\n    statusMenu.addItem(withTitle: \"关于 WindowShade\",\n                       action: #selector(showAboutPanel),\n                       keyEquivalent: \"\")\n    statusMenu.addItem(MainActor.assumeIsolated { UpdaterController.shared.makeMenuItem() })\n    statusMenu.addItem(withTitle: \"退出 WindowShade\", action: #selector(quit), keyEquivalent: \"q\")\n",
+    "new": "    let settings = NSMenuItem(title: \"设置…\", action: #selector(showPreferences), keyEquivalent: \",\")\n    settings.image = NSImage(systemSymbolName: \"gearshape\", accessibilityDescription: nil)\n    statusMenu.addItem(settings)\n    let about = NSMenuItem(title: \"关于 WindowShade\", action: #selector(showAboutPanel), keyEquivalent: \",\")\n    about.isAlternate = true; about.keyEquivalentModifierMask = [.command, .option]\n    about.image = NSImage(systemSymbolName: \"info.circle\", accessibilityDescription: nil)\n    statusMenu.addItem(about)\n    if NSEvent.modifierFlags.contains(.option) {\n      action(\"欢迎使用 WindowShade…\", \"hand.wave\", #selector(showWelcomeGuide))\n      statusMenu.addItem(MainActor.assumeIsolated { UpdaterController.shared.makeMenuItem() })\n      // 与原工程的发行 feed 约定一致；设置 SUFeedURL 的构建不得展示诊断入口。\n      if Bundle.main.object(forInfoDictionaryKey: \"SUFeedURL\") == nil {\n        let developer = NSMenuItem(title: \"开发\", action: nil, keyEquivalent: \"\")\n        developer.image = NSImage(systemSymbolName: \"hammer\", accessibilityDescription: nil)\n        let tools = NSMenu(); developer.submenu = tools\n        if let text = menuState.hingeAngleText { tools.addItem(.sectionHeader(title: text)) }\n        action(\"验证 Touch ID…\", \"touchid\", #selector(verifyTouchIDAction), menu: tools)\n        let cameras = NSMenuItem(title: \"检测面部动作\", action: nil, keyEquivalent: \"\")\n        cameras.submenu = NSMenu()\n        MainActor.assumeIsolated {\n          for camera in FaceObservationSource.devices() {\n            let item = NSMenuItem(title: camera.name, action: #selector(observeFaceAction(_:)), keyEquivalent: \"\")\n            item.target = self; item.representedObject = camera.id; cameras.submenu?.addItem(item)\n          }\n        }\n        tools.addItem(cameras); statusMenu.addItem(developer)\n      }\n    }\n    let quitItem = NSMenuItem(title: \"退出 WindowShade\", action: #selector(quit), keyEquivalent: \"q\")\n    quitItem.image = NSImage(systemSymbolName: \"power\", accessibilityDescription: nil); statusMenu.addItem(quitItem)\n"
+  },
+  {
+    "package": "M1",
+    "path": "prototype/PinnedPreview.swift",
+    "sha256": "87fa41e40226bcf8e819fdf833c075d8a7e32f346255de4a8cd38463f393b8a1",
+    "line": 147,
+    "old": "    let axWindow: AXUIElement\n}\n",
+    "new": "    let axWindow: AXUIElement\n    var ws2Caption = \"\"\n    var ws2CaptionPID: pid_t = 0\n    var ws2CaptionTime: Double = 0\n}\n"
+  },
+  {
+    "package": "M1",
+    "path": "prototype/PinnedPreview.swift",
+    "sha256": "87fa41e40226bcf8e819fdf833c075d8a7e32f346255de4a8cd38463f393b8a1",
+    "line": 444,
+    "old": "            let target: PinnedPreviewTarget?\n",
+    "new": "            var target: PinnedPreviewTarget?\n"
+  },
+  {
+    "package": "M1",
+    "path": "prototype/PinnedPreview.swift",
+    "sha256": "87fa41e40226bcf8e819fdf833c075d8a7e32f346255de4a8cd38463f393b8a1",
+    "line": 473,
+    "old": "            let elapsedMilliseconds = Int((CFAbsoluteTimeGetCurrent() - startedAt) * 1000)",
+    "new": "            if var resolved = target {\n                let info = CGWindowListCopyWindowInfo(.optionIncludingWindow, resolved.windowID) as? [[String: Any]]\n                let row = info?.first\n                let title = (row?[kCGWindowName as String] as? String ?? \"\").replacingOccurrences(of: \"\\n\", with: \" \")\n                let app = row?[kCGWindowOwnerName as String] as? String ?? \"\"\n                resolved.ws2Caption = String((title.isEmpty ? app : app + \" · \" + title).prefix(80))\n                resolved.ws2CaptionPID = pid\n                resolved.ws2CaptionTime = ProcessInfo.processInfo.systemUptime\n                target = resolved\n            }\n            let elapsedMilliseconds = Int((CFAbsoluteTimeGetCurrent() - startedAt) * 1000)"
+  },
+  {
+    "package": "M1",
+    "path": "prototype/PinnedPreview.swift",
+    "sha256": "87fa41e40226bcf8e819fdf833c075d8a7e32f346255de4a8cd38463f393b8a1",
+    "line": 172,
+    "old": "    private var currentTarget: PinnedPreviewTarget?\n",
+    "new": "    private var currentTarget: PinnedPreviewTarget?\n    func ws2CachedMenuTitle() -> String {\n        guard let currentTarget, !currentTarget.ws2Caption.isEmpty,\n              currentTarget.ws2CaptionPID == NSWorkspace.shared.frontmostApplication?.processIdentifier,\n              ProcessInfo.processInfo.systemUptime - currentTarget.ws2CaptionTime < 3 else { return \"当前窗口\" }\n        return currentTarget.ws2Caption\n    }\n"
+  },
+  {
+    "package": "T2",
+    "path": "prototype/Core/NotchActivities.swift",
+    "sha256": "38392fccf4d517c420f768938ff923c821a8c2a5d0e4a7f3a454182dc99644f7",
+    "line": 14,
+    "old": "    case enableMusic, playPause, previous, next, airDrop, route, voiceMemos, open, end",
+    "new": "    case enableMusic, playPause, previous, next, airDrop, route, voiceMemos, open, end, focusTogglePause, focusSkip"
+  },
+  {
+    "package": "T2",
+    "path": "prototype/Core/NotchActivities.swift",
+    "sha256": "38392fccf4d517c420f768938ff923c821a8c2a5d0e4a7f3a454182dc99644f7",
+    "line": 23,
+    "old": "    case recording\n",
+    "new": "    case recording\n    case focus\n"
+  },
+  {
+    "package": "T2",
+    "path": "prototype/Core/NotchActivities.swift",
+    "sha256": "38392fccf4d517c420f768938ff923c821a8c2a5d0e4a7f3a454182dc99644f7",
+    "line": 28,
+    "old": "        case .recording: return 90",
+    "new": "        case .recording: return 90\n        case .focus: return 85"
+  },
+  {
+    "package": "T2",
+    "path": "prototype/App/NotchActivityController.swift",
+    "sha256": "ff97464d04d2dd340b4e67374bbfc70612b96e1d00be310b8b343b2108770e4e",
+    "line": 12,
+    "old": "    var onChange: (([NotchActivity], String?) -> Void)?",
+    "new": "    var onChange: (([NotchActivity], String?) -> Void)?\n    var ws2FocusAction: ((NotchActivityAction) -> Void)?\n    func ws2PublishFocus(title: String?, subtitle: String = \"\", paused: Bool = false) {\n        guard Self.isEnabled, !suspended else { return }\n        configure()\n        if let title {\n            put(id: \"ws2.focus\", kind: .focus, title: title, subtitle: subtitle, symbol: \"timer\", paused: paused)\n        } else if let old = store.activities.first(where: { $0.id == \"ws2.focus\" }) {\n            store.end(id: old.id, generation: old.generation, now: ProcessInfo.processInfo.systemUptime)\n        }\n        publish()\n    }"
+  },
+  {
+    "package": "T2",
+    "path": "prototype/App/NotchActivityController.swift",
+    "sha256": "ff97464d04d2dd340b4e67374bbfc70612b96e1d00be310b8b343b2108770e4e",
+    "line": 120,
+    "old": "        switch action {\n",
+    "new": "        if store.selected?.kind == .focus && [.open, .end, .focusTogglePause, .focusSkip].contains(action) {\n            ws2FocusAction?(action); return\n        }\n        switch action {\n        case .focusTogglePause, .focusSkip: return\n"
+  },
+  {
+    "package": "T2",
+    "path": "prototype/App/NotchActivityController.swift",
+    "sha256": "ff97464d04d2dd340b4e67374bbfc70612b96e1d00be310b8b343b2108770e4e",
+    "line": 135,
+    "old": "            switch selected.kind {\n",
+    "new": "            switch selected.kind {\n            case .focus: return\n"
+  },
+  {
+    "package": "T2",
+    "path": "prototype/App/NotchActivityView.swift",
+    "sha256": "379dfda895ff8e20ee91483fa0d7922bc130c747b91418a462245d68f4a3643a",
+    "line": 202,
+    "old": "        if item.kind == .music {\n",
+    "new": "        if item.kind == .focus {\n            actions = [(item.isPaused ? \"继续\" : \"暂停\", item.isPaused ? \"play.fill\" : \"pause.fill\", .focusTogglePause),\n                       (\"跳过\", \"forward.end.fill\", .focusSkip), (\"结束\", \"xmark\", .end)]\n        } else if item.kind == .music {\n"
+  },
+  {
+    "package": "T2",
+    "path": "prototype/WindowShade.swift",
+    "sha256": "5240330a49adb17a480c4a51cb79e10f349762e99e69382291daee490b104200",
+    "line": 274,
+    "old": "    lazy var notch = MainActor.assumeIsolated { NotchController(owner: self) }",
+    "new": "    lazy var notch = MainActor.assumeIsolated { NotchController(owner: self) }\n    lazy var ws2Runtime = MainActor.assumeIsolated { WS2AppRuntime(owner: self) }"
+  },
+  {
+    "package": "T2",
+    "path": "prototype/WindowShade.swift",
+    "sha256": "5240330a49adb17a480c4a51cb79e10f349762e99e69382291daee490b104200",
+    "line": 799,
+    "old": "    func applicationWillTerminate(_ note: Notification) {",
+    "new": "    func applicationWillTerminate(_ note: Notification) {\n        MainActor.assumeIsolated { ws2Runtime.stop() }"
+  },
+  {
+    "package": "S1",
+    "path": "prototype/App/Preferences.swift",
+    "sha256": "a507ab4aaaedf06cc940b5f6be1dcf755a41ee642bb92a237a3bb807870d6762",
+    "line": 249,
+    "old": "        stack.addArrangedSubview(makePrefGroupLabel(\"声音\"))",
+    "new": "        let ws2Pane = MainActor.assumeIsolated { WS2SupplementPane(owner: self) }\n        stack.addArrangedSubview(ws2Pane)\n        ws2Pane.widthAnchor.constraint(equalTo: stack.widthAnchor).isActive = true\n\n        stack.addArrangedSubview(makePrefGroupLabel(\"声音\"))"
+  },
+  {
+    "package": "M1",
+    "path": "prototype/PinnedPreview.swift",
+    "sha256": "87fa41e40226bcf8e819fdf833c075d8a7e32f346255de4a8cd38463f393b8a1",
+    "line": 474,
+    "old": "            DispatchQueue.main.async { [weak self] in\n                self?.finishTargetRefresh(target: target, reason: reason, pid: pid,",
+    "new": "            let completedTarget = target\n            DispatchQueue.main.async { [weak self] in\n                self?.finishTargetRefresh(target: completedTarget, reason: reason, pid: pid,"
+  }
+]

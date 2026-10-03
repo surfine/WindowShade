@@ -1,0 +1,9 @@
+{
+  "command": [
+    "swiftc",
+    "--version"
+  ],
+  "exitCode": 0,
+  "stdout": "Swift version 6.2.1 (swift-6.2.1-RELEASE)\nTarget: x86_64-unknown-linux-gnu\n",
+  "stderr": ""
+}

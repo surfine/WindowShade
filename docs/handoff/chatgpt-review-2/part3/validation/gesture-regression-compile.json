@@ -1,0 +1,16 @@
+{
+  "command": [
+    "swiftc",
+    "-swift-version",
+    "6",
+    "-strict-concurrency=complete",
+    "-warnings-as-errors",
+    "/mnt/data/ws2-r3-input/WindowShade2-review-round2/repo/prototype/Core/ConductorGesture.swift",
+    "/mnt/data/ws2-r3-input/WindowShade2-review-round2/repo/tests/ConductorGestureTests.swift",
+    "-o",
+    "/tmp/ws2-r3-validate-78o5fsui/gesture-regression"
+  ],
+  "exitCode": 0,
+  "stdout": "",
+  "stderr": ""
+}

@@ -1,0 +1,167 @@
+{
+  "M1": {
+    "title": "菜单收拢与标题缓存",
+    "status": "SDK_CANDIDATE",
+    "existingPaths": [
+      "prototype/App/MenuBarController.swift",
+      "prototype/PinnedPreview.swift"
+    ]
+  },
+  "S1": {
+    "title": "设置文案与原生补充页",
+    "status": "SDK_CANDIDATE",
+    "existingPaths": [
+      "prototype/App/Preferences.swift"
+    ]
+  },
+  "T2": {
+    "title": "唯一番茄钟宿主与活动接线",
+    "status": "SDK_CANDIDATE",
+    "existingPaths": [
+      "prototype/WindowShade.swift",
+      "prototype/Core/NotchActivities.swift",
+      "prototype/App/NotchActivityController.swift",
+      "prototype/App/NotchActivityView.swift",
+      "prototype/App/Notch.swift"
+    ]
+  },
+  "T4": {
+    "title": "番茄钟设置、快捷键和负一屏",
+    "status": "SPEC_WITH_EXISTING_CORE",
+    "existingPaths": [
+      "prototype/App/GlobalShortcuts.swift",
+      "prototype/App/Preferences.swift",
+      "prototype/App/NotchActivityController.swift"
+    ]
+  },
+  "A3": {
+    "title": "编程会话原生视图",
+    "status": "VIEW_SOURCE_ONLY",
+    "existingPaths": [
+      "prototype/App/Notch.swift",
+      "prototype/App/NotchAuthentication.swift"
+    ]
+  },
+  "D3": {
+    "title": "指挥模式原生视图",
+    "status": "VIEW_SOURCE_ONLY",
+    "existingPaths": [
+      "prototype/App/Notch.swift",
+      "prototype/App/NotchAuthentication.swift",
+      "prototype/Core/ConductorGesture.swift"
+    ]
+  },
+  "D4": {
+    "title": "指挥设置与撤销",
+    "status": "SPEC_WITH_EXISTING_CORE",
+    "existingPaths": [
+      "prototype/App/Preferences.swift",
+      "prototype/App/AuthorizationService.swift"
+    ]
+  },
+  "A2a": {
+    "title": "本机 socket 与 ws-hook",
+    "status": "LINUX_RUNTIME_TESTED",
+    "existingPaths": [
+      "prototype/App/AuthorizationService.swift",
+      "prototype/Core/AuthorizationModels.swift"
+    ]
+  },
+  "A2b": {
+    "title": "配置预览、备份、写入与回滚",
+    "status": "LINUX_RUNTIME_TESTED",
+    "existingPaths": [
+      "prototype/App/Preferences.swift"
+    ]
+  },
+  "L2": {
+    "title": "在场检测蓝牙来源",
+    "status": "PROBE_AND_DEADLINE_CORE",
+    "existingPaths": [
+      "prototype/App/DeviceBatteryController.swift",
+      "prototype/Core/SessionLockState.swift"
+    ]
+  },
+  "L4": {
+    "title": "本地锁屏请求与归属",
+    "status": "POLICY_CORE_TESTED",
+    "existingPaths": [
+      "prototype/Core/SessionLockState.swift",
+      "prototype/App/NotchAuthentication.swift"
+    ]
+  },
+  "I2": {
+    "title": "多触点 ABI 准入",
+    "status": "PROBE_AND_QUALIFICATION_ONLY",
+    "existingPaths": [
+      "prototype/App/TrackpadGestures.swift",
+      "prototype/Core/ConductorGesture.swift"
+    ]
+  },
+  "I3": {
+    "title": "主动滚轮桥",
+    "status": "SPEC_WITH_EXISTING_CORE",
+    "existingPaths": [
+      "prototype/App/TrackpadGestures.swift"
+    ]
+  },
+  "I5a": {
+    "title": "Siri Remote 设备与 usage 桥",
+    "status": "PROBE_ONLY",
+    "existingPaths": [
+      "prototype/App/DeviceBatteryController.swift"
+    ]
+  },
+  "I5b": {
+    "title": "设备级 HID 映射事务",
+    "status": "POLICY_CORE_TESTED",
+    "existingPaths": [
+      "prototype/App/Preferences.swift"
+    ]
+  },
+  "I8": {
+    "title": "手柄意图映射",
+    "status": "PURE_MAPPING_TESTED",
+    "existingPaths": [
+      "prototype/App/Preferences.swift"
+    ]
+  },
+  "I7": {
+    "title": "输入偏好与准入联动",
+    "status": "ELIGIBILITY_CORE_TESTED",
+    "existingPaths": [
+      "prototype/App/Preferences.swift",
+      "prototype/App/GlobalShortcuts.swift"
+    ]
+  },
+  "D5a": {
+    "title": "配对窗口与发现",
+    "status": "LIMITER_TESTED",
+    "existingPaths": [
+      "prototype/App/AuthorizationService.swift"
+    ]
+  },
+  "D5b": {
+    "title": "配对验证与密码学边界",
+    "status": "TLV_ONLY_NO_TRANSPORT",
+    "existingPaths": [
+      "prototype/Core/AuthorizationModels.swift",
+      "prototype/App/AuthorizationService.swift"
+    ]
+  },
+  "D5c": {
+    "title": "认证后事件路由",
+    "status": "ROUTER_CORE_TESTED",
+    "existingPaths": [
+      "prototype/Core/ConductorGesture.swift"
+    ]
+  },
+  "D6": {
+    "title": "Codex流、resume和进程通道",
+    "status": "LINUX_CORE_AND_FAKE_PROCESS_TESTED",
+    "existingPaths": [
+      "prototype/App/AuthorizationService.swift",
+      "prototype/Core/AuthorizationModels.swift"
+    ]
+  }
+}

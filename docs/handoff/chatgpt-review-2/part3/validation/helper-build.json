@@ -1,0 +1,10 @@
+{
+  "command": [
+    "bash",
+    "/mnt/data/ws2-r3-stage/tools/ws2-hook/build.sh",
+    "/tmp/ws2-r3-helper-check-rlq0two5/ws-hook"
+  ],
+  "exitCode": 0,
+  "stdout": "",
+  "stderr": ""
+}
