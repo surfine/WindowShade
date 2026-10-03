@@ -48,7 +48,7 @@ Apple 仍会在第一次打开时查已知恶意内容
 
 ```text
 identifier "com.windowshade.prototype" and anchor apple generic
-  and certificate leaf[subject.CN] = "Apple Development: <账号> (G3TN2MBQ2Q)"
+  and certificate leaf[subject.CN] = "Apple Development: <账号> (<CERTIFICATE_ID>)"
   and certificate 1[field.1.2.840.113635.100.6.2.1] /* exists */
 ```
 
@@ -57,7 +57,7 @@ identifier "com.windowshade.prototype" and anchor apple generic
 残余风险：我们比的是“新版满足当前这一版的 DR、且 DR 字符串相同”，授权数据库里存的那条要求（csreq）读不到。当前这一版能用，说明它满足 csreq；
 字符串相同时可以推出新版也满足，但没法直接验证。所以界面上不写“保证”。
 
-**开发证书一年一张。** 本机唯一的签名身份是 Apple Development，团队 `FVGLY6W6S4`，有效期 2026-06-14 到 2027-06-14，签名没有 Apple 安全时间戳。
+**开发证书一年一张。** 本机唯一的签名身份是 Apple Development，团队 `<TEAM_ID>`，有效期 2026-06-14 到 2027-06-14，签名没有 Apple 安全时间戳。
 “证书过期后已签名的版本仍能运行”这句 Apple 只写给了 Developer ID（[Certificates](https://developer.apple.com/support/certificates/)），
 所以开发证书过期后会怎样按**未知**处理。续期后 CN 会不会变，Apple 没写，只能靠发布关拦。
 

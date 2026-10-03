@@ -111,7 +111,7 @@ bash scripts/check-standard-menu.sh       # 关于面板 + ⌘V 对照全部 PAS
 #    zip：3,702,219 字节，sha256 620bb348e0d1379189d5f9ec823c17557e260d4eae3b5de2e32ed5e4d7390852
 
 # 3) 原地替换本机应用（会短暂停止并重启 WindowShade）
-cd prototype && WINDOWSHADE_CODESIGN_IDENTITY="Apple Development: openkams@gmail.com (G3TN2MBQ2Q)" \
+cd prototype && WINDOWSHADE_CODESIGN_IDENTITY="Apple Development: Your Name (<CERTIFICATE_ID>)" \
   ./build.sh && open WindowShade.app        # pid 20543 → 14370，bundle 1.0.14 / build 14
 
 # 4) 站点：site/scripts/content.mjs 增补空格大图预览与 1.0.14 设置说明，npm run deploy

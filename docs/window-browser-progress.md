@@ -5,7 +5,7 @@ Dock 悬停窗口面板与独立快捷键窗口选择面板。
 
 ## 基线
 
-- 仓库 `surfine/WindowShade`，实际工作区 `/Users/aaron/Documents/WindowShade`。
+- 仓库 `surfine/WindowShade`，实际工作区 `.`。
 - 设计核对基线 `2e107cf841f153c9f07de02d0ec554f5da36aa8e`；本工作区 HEAD
   `2abd49b`（`main`，比 origin/main 落后 1 个站点提交）。`prototype/`、`tests/`、
   `docs/` 与该基线一致，未回退。
@@ -133,7 +133,7 @@ Dock 悬停窗口面板与独立快捷键窗口选择面板。
   同步恢复契约与会话/捕获排除接线。
 - `git diff --check` → 通过（无空白错误）。
 - 隔离构建（未替换正在运行的应用）：
-  `WINDOWSHADE_CODESIGN_IDENTITY="Apple Development: …(G3TN2MBQ2Q)" bash prototype/build.sh --stage`
+  `WINDOWSHADE_CODESIGN_IDENTITY="Apple Development: …(<TEAM_ID>)" bash prototype/build.sh --stage`
   → `.build/duo-validation/WindowShade.app` 签名验证通过；运行中的 WindowShade
   进程保持运行。
 - 真实只读 Dock 探针
@@ -1878,7 +1878,7 @@ hover-live: pointerRestored=true
 ### 实际运行的命令与结果
 
 - 隔离 stage 构建（未替换正在使用的应用）：
-  `WINDOWSHADE_CODESIGN_IDENTITY="Apple Development: openkams@gmail.com (G3TN2MBQ2Q)" bash prototype/build.sh --stage`
+  `WINDOWSHADE_CODESIGN_IDENTITY="Apple Development: Your Name (<TEAM_ID>)" bash prototype/build.sh --stage`
   → 签名验证通过。
 - `.build/duo-validation/WindowShade.app/Contents/MacOS/WindowShade --window-browser-identity-probe`
   连续两次运行，均为 `checks=25 failures=0 result=pass`：
@@ -1945,11 +1945,11 @@ identity-probe: checks=25 failures=0 result=pass
 
 ### 真实部署（用户确认“现在是一个合适的时机”后执行）
 
-- 命令：`cd prototype && WINDOWSHADE_CODESIGN_IDENTITY="Apple Development: openkams@gmail.com (G3TN2MBQ2Q)" bash build.sh`
+- 命令：`cd prototype && WINDOWSHADE_CODESIGN_IDENTITY="Apple Development: Your Name (<TEAM_ID>)" bash build.sh`
   （默认路径：`pkill -x WindowShade` → 优化整模块编译 → 原地替换 Mach-O → 同一身份签名）。
 - 结果：`prototype/WindowShade.app/Contents/MacOS/WindowShade` 由
   `d41d0a35…`（2,178,752 B，Sep 13 04:59）换成 `a19255ac…`（3,152,592 B，06:47）；
-  TeamIdentifier 仍为 `FVGLY6W6S4`，签名身份未变，TCC 授权未重置。
+  TeamIdentifier 仍为 `<TEAM_ID>`，签名身份未变，TCC 授权未重置。
 - 重启：`open prototype/WindowShade.app` → pid 3342 → **22802**。
   `/tmp/windowshade.log` 记录 `=== session start pid=22802 ===`、
   `status item visible=true`、`reconcile: timer started`、
@@ -2144,7 +2144,7 @@ window-browser-fixture: records=20 panel=720x560 style=list … searchTop=60 lis
 - 版本号只改 `prototype/Info.plist` 两行（PlistBuddy 会把整个文件的缩进从空格改成 tab，
   所以改回原格式后用补丁只动版本字段，最终 diff 是 2 行）。
 - `bash build.sh --stage` → `.build/duo-validation/WindowShade.app`：
-  `codesign --verify --deep --strict` 通过、TeamIdentifier `FVGLY6W6S4`、
+  `codesign --verify --deep --strict` 通过、TeamIdentifier `<TEAM_ID>`、
   版本 1.0.12 / build 12、`lipo -archs` = arm64。
 - 打包 `prototype/dist/WindowShade-v1.0.12.zip`（3,534,079 B）+ `.sha256`
   （`0e067102072936a886dec645c1dcb187f1cc341cf62eb3f3021a4a05d9fc6edd`）；
@@ -2270,7 +2270,7 @@ window-browser-fixture: records=20 panel=720x560 style=list … searchTop=60 lis
 | 提交 | `0b1b240` 窗口浏览改版；`fe394e3` Release 1.0.13（版本号 + 发布说明 + README） |
 | 推送 | `git push origin main`（05e5472 → fe394e3） |
 | 发版 | tag `v1.0.13` + `gh release create`，附件 zip（3,652,589 字节）与 sha256 已上传，标记 Latest |
-| 本机替换 | `./build.sh`（同一 Apple Development 身份，TeamIdentifier FVGLY6W6S4）替换 `prototype/WindowShade.app` 并 `open`；进程 40843 → 20543 |
+| 本机替换 | `./build.sh`（同一 Apple Development 身份，TeamIdentifier <TEAM_ID>）替换 `prototype/WindowShade.app` 并 `open`；进程 40843 → 20543 |
 | 校验 | bundle 版本 1.0.13 / build 13，签名身份未变；启动日志出现 `dock-hover: observer rebuilt ... lists=1` 与 `perf-summary:` |
 
 同一已授权 bundle 的只读实机探针（1.0.13）：`--window-browser-catalog-probe`
@@ -2291,7 +2291,7 @@ mainThreadMaxGap=6ms`，身份/几何/能力解析各 0 ms。`--window-browser-h
 | 推送 | `git push origin main`（4406db3 → 08dab48） |
 | 发版 | tag `v1.0.14` + `gh release create`，附件 `WindowShade-v1.0.14.zip`（首发 3,702,219 字节，sha256 `620bb348…0852`），标记 Latest |
 | 站点 | `site/scripts/content.mjs` 增补“空格大图预览”与 1.0.14 设置说明，`npm run deploy` → 生产域名已核验中英文页面包含新文案 |
-| 本机替换 | `./build.sh`（同一 Apple Development 身份，TeamIdentifier FVGLY6W6S4）替换 `prototype/WindowShade.app` 并 `open`；进程 20543 → 14370，bundle 1.0.14 / build 14 |
+| 本机替换 | `./build.sh`（同一 Apple Development 身份，TeamIdentifier <TEAM_ID>）替换 `prototype/WindowShade.app` 并 `open`；进程 20543 → 14370，bundle 1.0.14 / build 14 |
 
 发版前的完整回归：窗口浏览 **589 项断言**、纸质与双屏测试、`build.sh --check`、
 `build.sh --stage` 隔离构建与签名、五页设置外观检查（浅深亮度差 0.744–0.842）、
@@ -2345,7 +2345,7 @@ mainThreadMaxGap=6ms`，身份/几何/能力解析各 0 ms。`--window-browser-h
 （3,706,089 字节，sha256
 `77aa0ebc014b88bcfe79f418cfd969c5fdca561aa323eb8a2db91af565748f55`）与校验文件已
 覆盖，Release Notes 增补圆角条目与“本次一并修好的问题”；本机应用用同一身份
-（TeamIdentifier FVGLY6W6S4）重新构建替换，pid 24486 → 73939，bundle 1.0.14 / build 14。
+（TeamIdentifier <TEAM_ID>）重新构建替换，pid 24486 → 73939，bundle 1.0.14 / build 14。
 线上附件 sha256 与本地打包结果一致；隔离构建的 `--window-browser-idle-probe` 干净。
 
 ## 2026-09-18：面板不再留“下巴”（A+C）
@@ -2396,7 +2396,7 @@ Liquid Glass 的理解。于是回到 HIG 原文（`apple-design` 语料里的�
 tag 从 `6c744cc` 移到 `480a7fd`，附件 `WindowShade-v1.0.14.zip`（3,715,311 字节，
 sha256 `ed82d3a6d3f7f3fc28c1a5e09b0754f03a86f6b3d9e68353656479dbdfcd160e`）与校验文件
 已覆盖；Release Notes 增补“面板贴着内容收口”与“液态玻璃按 HIG 只用一层”两条中英文；
-本机应用用同一身份（TeamIdentifier FVGLY6W6S4）重新构建替换，pid 73939 → 20707，
+本机应用用同一身份（TeamIdentifier <TEAM_ID>）重新构建替换，pid 73939 → 20707，
 bundle 1.0.14 / build 14。线上附件 sha256 与本地打包结果一致；隔离构建的
 `--window-browser-idle-probe`、`--window-browser-shots`（`classic-strip-palette PASS`）干净。
 
@@ -2503,7 +2503,7 @@ bundle 1.0.14 / build 14。线上附件 sha256 与本地打包结果一致；隔
 `WindowShade-v1.0.14.zip`（3,729,620 字节，
 sha256 `25af12cea07ae44aa4ed8bdf20672e270e5e3c1e139d43a03be4dc8aeb6b8e31`）与校验文件用
 `--clobber` 覆盖，Release Notes 增补“内容挂进玻璃的 contentView / 卡片只用系统填充色”
-与面板几何、内容、交互、状态四条中英文；本机应用用同一身份（TeamIdentifier FVGLY6W6S4）
+与面板几何、内容、交互、状态四条中英文；本机应用用同一身份（TeamIdentifier <TEAM_ID>）
 重新构建替换，bundle 1.0.14 / build 14 / arm64。发布前的隔离构建检查：
 `--window-browser-shots`（`classic-strip-palette PASS`，16 张 PNG 与文档归档逐字节一致）、
 `--window-browser-idle-probe`（`axQueries=0 settingsRestored=true`）、
@@ -2564,7 +2564,7 @@ bundle，直接用系统 WebKit 会因 `_WKBrowserContext` 符号缺失而崩）
 验证：`build.sh --check`、`build.sh --stage`、`--settings-shots`（10 张归档图重出）、
 `scripts/check-settings-appearance.sh`（浅深亮度 0.547–0.796 全 PASS，侧栏材质 alpha 1.000）、
 `tests/run-window-browser-tests.sh`（663 项）通过；`prototype/WindowShade.app` 用同一身份
-（FVGLY6W6S4）原地重建，重新打包 `WindowShade-v1.0.14.zip`（3,736,666 字节，
+（<TEAM_ID>）原地重建，重新打包 `WindowShade-v1.0.14.zip`（3,736,666 字节，
 sha256 `84e7f581ae949d96caa86cc977abe14ab3c715ef0348b8c72e1c10579b21a678`）。
 
 ## 2026-09-22：切换侧栏不再改变窗口尺寸
