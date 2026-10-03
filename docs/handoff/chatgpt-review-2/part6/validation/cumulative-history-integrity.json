@@ -1,0 +1,3532 @@
+{
+  "status": "PASS",
+  "preservedHistoricalFiles": 705,
+  "method": "Compared each copied non-candidate file to its bytes in the attached v5 ZIP. Old root index/manifest relocated under history.",
+  "files": [
+    {
+      "archivePath": "WindowShade2-round2-handoff-v5/00-先读我.md",
+      "v6Path": "history/v5-00-先读我.md",
+      "sha256": "b1cc8f8e970907ae710c28650c84d29d168d028afbc7894598648c8b26a7cfe1"
+    },
+    {
+      "archivePath": "WindowShade2-round2-handoff-v5/MANIFEST.sha256.json",
+      "v6Path": "history/v5-MANIFEST.sha256.json",
+      "sha256": "30231a99c009aef2c6f48225e0ec5ebea95f97d96c760250ec5f0df1296b4f96"
+    },
+    {
+      "archivePath": "WindowShade2-round2-handoff-v5/history/part3-handoff/00-先读我.md",
+      "v6Path": "history/part3-handoff/00-先读我.md",
+      "sha256": "29c5d5a788c3e02589748c0e49de7004c7960528998eee97d720fe8d24a3f9e7"
+    },
+    {
+      "archivePath": "WindowShade2-round2-handoff-v5/history/part3-handoff/MANIFEST.sha256.json",
+      "v6Path": "history/part3-handoff/MANIFEST.sha256.json",
+      "sha256": "92052758e82ed063fbc1c70fb235a4b47661f3b02a766f19926b8d29948c307f"
+    },
+    {
+      "archivePath": "WindowShade2-round2-handoff-v5/history/part3-handoff/tools/stage-all.py",
+      "v6Path": "history/part3-handoff/tools/stage-all.py",
+      "sha256": "6ce1996b26c1c523bb104ca13795fc6c19f3931c3cb7ad24914cf173121a45f5"
+    },
+    {
+      "archivePath": "WindowShade2-round2-handoff-v5/part1/CHANGELOG.md",
+      "v6Path": "part1/CHANGELOG.md",
+      "sha256": "5a49db2b69317bbadfff02aaf3afdfd04ab14460d695c0d4dccb44a0ba0d8d68"
+    },
+    {
+      "archivePath": "WindowShade2-round2-handoff-v5/part1/README.md",
+      "v6Path": "part1/README.md",
+      "sha256": "dc644d537c52ac707ec22eeaa8765fc6b16d6cb99861b5cd8324a27feda053fd"
+    },
+    {
+      "archivePath": "WindowShade2-round2-handoff-v5/part1/SHA256SUMS.txt",
+      "v6Path": "part1/SHA256SUMS.txt",
+      "sha256": "65868e4b96ff81b95c5174f6b2e0411f7e7f0c9003dbc9cdafadc75a18232e22"
+    },
+    {
+      "archivePath": "WindowShade2-round2-handoff-v5/part1/VALIDATION.md",
+      "v6Path": "part1/VALIDATION.md",
+      "sha256": "11fbba02de611721c23807dc1945096f9938cfbd6288f7102fb59e8c470375e7"
+    },
+    {
+      "archivePath": "WindowShade2-round2-handoff-v5/part1/answers.md",
+      "v6Path": "part1/answers.md",
+      "sha256": "1683dada9a2cba9a67f5a709e7e9a5836014386ae769c59805d1efa0cc5bd201"
+    },
+    {
+      "archivePath": "WindowShade2-round2-handoff-v5/part1/baseline/ConductorGesture.swift",
+      "v6Path": "part1/baseline/ConductorGesture.swift",
+      "sha256": "98802f88fa95985e05a46e75582016e60692725c75c84af0e74cb2248b867393"
+    },
+    {
+      "archivePath": "WindowShade2-round2-handoff-v5/part1/baseline/energy-template.csv",
+      "v6Path": "part1/baseline/energy-template.csv",
+      "sha256": "89a2c4a11b59367d035902dbfca47f1eba5052417dc5a0ffcf89505fb4921713"
+    },
+    {
+      "archivePath": "WindowShade2-round2-handoff-v5/part1/contracts/BuildBaseline.md",
+      "v6Path": "part1/contracts/BuildBaseline.md",
+      "sha256": "f77b1c5b60c447da7cf7f9f8960f224b9b3508594920258fb1714c2fef91c5a9"
+    },
+    {
+      "archivePath": "WindowShade2-round2-handoff-v5/part1/contracts/Contracts.swift",
+      "v6Path": "part1/contracts/Contracts.swift",
+      "sha256": "12fffc2e5cf207aa0ca6b4c371f28b9eec8c2b374b5e1a06d8943878891b2420"
+    },
+    {
+      "archivePath": "WindowShade2-round2-handoff-v5/part1/contracts/InteractionLease.md",
+      "v6Path": "part1/contracts/InteractionLease.md",
+      "sha256": "7d9184ba2a806ed48e3b302522f03e82a30090c3892af5820e3b24cdcca5164b"
+    },
+    {
+      "archivePath": "WindowShade2-round2-handoff-v5/part1/contracts/PrivacyRegistry.md",
+      "v6Path": "part1/contracts/PrivacyRegistry.md",
+      "sha256": "ca60aa6e6a2da212958c6dcb765b7934badc14d2c720a7b0f18780a8d5ade6f2"
+    },
+    {
+      "archivePath": "WindowShade2-round2-handoff-v5/part1/contracts/VALIDATION.txt",
+      "v6Path": "part1/contracts/VALIDATION.txt",
+      "sha256": "89594374660bbf1eef10437ad9e09f40f15822f963a6b188e226ba3101e6eb80"
+    },
+    {
+      "archivePath": "WindowShade2-round2-handoff-v5/part1/contracts/existing-symbols.md",
+      "v6Path": "part1/contracts/existing-symbols.md",
+      "sha256": "96f08929397a638de1b2c1b8f0d2f017aea08c1d9638e238e2b76688989a0a85"
+    },
+    {
+      "archivePath": "WindowShade2-round2-handoff-v5/part1/contracts/privacy/SecureLogFile.swift",
+      "v6Path": "part1/contracts/privacy/SecureLogFile.swift",
+      "sha256": "ed1cfa426af7f9bd4d21a9376ed3da21338c11a1e2d9f79a3e99ee3ceadde4a0"
+    },
+    {
+      "archivePath": "WindowShade2-round2-handoff-v5/part1/contracts/privacy/SecureLogFileTests.swift",
+      "v6Path": "part1/contracts/privacy/SecureLogFileTests.swift",
+      "sha256": "f43a39fad901bc0306293ded9870b19250b87886043b1b9e62dc6d9606699987"
+    },
+    {
+      "archivePath": "WindowShade2-round2-handoff-v5/part1/contracts/privacy/VALIDATION.txt",
+      "v6Path": "part1/contracts/privacy/VALIDATION.txt",
+      "sha256": "26020e1baee05a71bc12b1267fffceba60df620efa7daaf7d6734313627ce337"
+    },
+    {
+      "archivePath": "WindowShade2-round2-handoff-v5/part1/contracts/privacy/WindowShadeLogger.replacement.swift.txt",
+      "v6Path": "part1/contracts/privacy/WindowShadeLogger.replacement.swift.txt",
+      "sha256": "134b220245889f83f4e3fc5724143d5ce8e923a0d9f0d05eaa64cf10b3adae75"
+    },
+    {
+      "archivePath": "WindowShade2-round2-handoff-v5/part1/contracts/privacy/check-registry.py",
+      "v6Path": "part1/contracts/privacy/check-registry.py",
+      "sha256": "0aa4e0179e49fc4f469f3c60134160eb7dd44dca06256a301193bb81c2ab0be3"
+    },
+    {
+      "archivePath": "WindowShade2-round2-handoff-v5/part1/contracts/privacy/log-replacements.json",
+      "v6Path": "part1/contracts/privacy/log-replacements.json",
+      "sha256": "b860910fd5d456bf9a46bc821af8ed2255eebbc38bfd8b5e5ebde58d81b85387"
+    },
+    {
+      "archivePath": "WindowShade2-round2-handoff-v5/part1/contracts/privacy/logger-source.json",
+      "v6Path": "part1/contracts/privacy/logger-source.json",
+      "sha256": "4e1a42d72a12d5b0e185577ad81a4c3e0dfec4d6b483af0329e8797d5d6860be"
+    },
+    {
+      "archivePath": "WindowShade2-round2-handoff-v5/part1/contracts/privacy/patch-logs.py",
+      "v6Path": "part1/contracts/privacy/patch-logs.py",
+      "sha256": "9ee7f3252efc01b272f28a67199a3b3bf9960d5ae5e5ebf6336c3813b6b20d6f"
+    },
+    {
+      "archivePath": "WindowShade2-round2-handoff-v5/part1/contracts/privacy/registry.json",
+      "v6Path": "part1/contracts/privacy/registry.json",
+      "sha256": "8fa0d00d8ef6fff08b6f94cd436278aadb511fe9b37e23a50d2f376e609cb806"
+    },
+    {
+      "archivePath": "WindowShade2-round2-handoff-v5/part1/contracts/privacy/run-secure-log-tests.sh",
+      "v6Path": "part1/contracts/privacy/run-secure-log-tests.sh",
+      "sha256": "c5fd66a5b83f4614c6fb6141cb76b50b76220f9a3ed0c5f9fbfdae4b8a1df69f"
+    },
+    {
+      "archivePath": "WindowShade2-round2-handoff-v5/part1/packages/A1/COPY.md",
+      "v6Path": "part1/packages/A1/COPY.md",
+      "sha256": "2ab9add4d6994c23b7e5721b44fece9f4484f72c7c8e06f8b9d1321d3bc3e4a4"
+    },
+    {
+      "archivePath": "WindowShade2-round2-handoff-v5/part1/packages/A1/TEST-CASES.md",
+      "v6Path": "part1/packages/A1/TEST-CASES.md",
+      "sha256": "d2c582970f1cd51de8606d9b73922881bb503b688d16a42a9dc8cdfed2696f26"
+    },
+    {
+      "archivePath": "WindowShade2-round2-handoff-v5/part1/packages/A1/VALIDATION.txt",
+      "v6Path": "part1/packages/A1/VALIDATION.txt",
+      "sha256": "4cbc479c31058385d1bd66b4efa075d235477b5a2a883419a0b2fa28cda99c7b"
+    },
+    {
+      "archivePath": "WindowShade2-round2-handoff-v5/part1/packages/A1/WORKORDER.md",
+      "v6Path": "part1/packages/A1/WORKORDER.md",
+      "sha256": "95ed98ab19d3f54be3c8034ad07219d363e6bd65bdd9fe65d92d200bbac66eb9"
+    },
+    {
+      "archivePath": "WindowShade2-round2-handoff-v5/part1/packages/A1/prototype/Core/AgentSessions.swift",
+      "v6Path": "part1/packages/A1/prototype/Core/AgentSessions.swift",
+      "sha256": "218b3910959c810d5662d608b8ab9560d5232cf5e69930c330b400c940c65d7c"
+    },
+    {
+      "archivePath": "WindowShade2-round2-handoff-v5/part1/packages/A1/tests/AgentSessionsTests.swift",
+      "v6Path": "part1/packages/A1/tests/AgentSessionsTests.swift",
+      "sha256": "c8de32b96ddb5908a1e4fd3b46810df229fb5f14a8699a3ec5f7dba70f4adf2c"
+    },
+    {
+      "archivePath": "WindowShade2-round2-handoff-v5/part1/packages/A1/tests/run-agent-sessions-tests.sh",
+      "v6Path": "part1/packages/A1/tests/run-agent-sessions-tests.sh",
+      "sha256": "b876d76352c2e065caf9dfc68e4eb350dc5749b719f1f114ea54c10ef281af30"
+    },
+    {
+      "archivePath": "WindowShade2-round2-handoff-v5/part1/packages/D1/COPY.md",
+      "v6Path": "part1/packages/D1/COPY.md",
+      "sha256": "9b158062713cff692189a5ccb3c2e7d1ca9eff4ccf55cc702eaa2c6ded8909ee"
+    },
+    {
+      "archivePath": "WindowShade2-round2-handoff-v5/part1/packages/D1/TEST-CASES.md",
+      "v6Path": "part1/packages/D1/TEST-CASES.md",
+      "sha256": "f421ea10af341c43346b31f9df4af8045cbd55768a9099ea039f4edbe5666a4a"
+    },
+    {
+      "archivePath": "WindowShade2-round2-handoff-v5/part1/packages/D1/VALIDATION.txt",
+      "v6Path": "part1/packages/D1/VALIDATION.txt",
+      "sha256": "7c8817bb806b09b9af42114a09b6886cca53bf9c3341d4b5fcbbdce7e1254e3f"
+    },
+    {
+      "archivePath": "WindowShade2-round2-handoff-v5/part1/packages/D1/WORKORDER.md",
+      "v6Path": "part1/packages/D1/WORKORDER.md",
+      "sha256": "220c622b35f564d6746c49fae4b75ce65bd578e09c4c8d307a3e2e0bf57b15e3"
+    },
+    {
+      "archivePath": "WindowShade2-round2-handoff-v5/part1/packages/D1/prototype/Core/ConductorSession.swift",
+      "v6Path": "part1/packages/D1/prototype/Core/ConductorSession.swift",
+      "sha256": "e426c0b1a19fd8bea29528f707371decf0ac65459e3c85dbd6d6e2f94e7f2e7d"
+    },
+    {
+      "archivePath": "WindowShade2-round2-handoff-v5/part1/packages/D1/tests/ConductorSessionTests.swift",
+      "v6Path": "part1/packages/D1/tests/ConductorSessionTests.swift",
+      "sha256": "b1dcb1a54a10521d5c5bb3d04d34f31b5a5c4c27e604e5a91767c2ff20522d00"
+    },
+    {
+      "archivePath": "WindowShade2-round2-handoff-v5/part1/packages/D1/tests/run-conductor-session-tests.sh",
+      "v6Path": "part1/packages/D1/tests/run-conductor-session-tests.sh",
+      "sha256": "4c7fccffe6b643833ab5e2308ea500b0df29ab26fd27b6201373ef84307fee0c"
+    },
+    {
+      "archivePath": "WindowShade2-round2-handoff-v5/part1/packages/D2/COPY.md",
+      "v6Path": "part1/packages/D2/COPY.md",
+      "sha256": "550a811db688fed5d085324bd2426f0fabbf18f3a35d852fcaf275ac0c36b71d"
+    },
+    {
+      "archivePath": "WindowShade2-round2-handoff-v5/part1/packages/D2/TEST-CASES.md",
+      "v6Path": "part1/packages/D2/TEST-CASES.md",
+      "sha256": "bd89a74cd5c7f6080e407f1e081f7b1f09ac284686ec4a82149d2cfa4d140898"
+    },
+    {
+      "archivePath": "WindowShade2-round2-handoff-v5/part1/packages/D2/VALIDATION.txt",
+      "v6Path": "part1/packages/D2/VALIDATION.txt",
+      "sha256": "91fa1d1b37a64353bec0817649248824267823d6a86348d80afa3ad1536c85cb"
+    },
+    {
+      "archivePath": "WindowShade2-round2-handoff-v5/part1/packages/D2/WORKORDER.md",
+      "v6Path": "part1/packages/D2/WORKORDER.md",
+      "sha256": "cfe8330c9cb40d88a6a20a167d7eca2d6728f64ad616ae769a322bb9c7299396"
+    },
+    {
+      "archivePath": "WindowShade2-round2-handoff-v5/part1/packages/D2/prototype/Core/ConductorCapabilities.swift",
+      "v6Path": "part1/packages/D2/prototype/Core/ConductorCapabilities.swift",
+      "sha256": "4494697451f96b08ea1c1bf92fbb83ec9539055ac06937edef392558c20c9af0"
+    },
+    {
+      "archivePath": "WindowShade2-round2-handoff-v5/part1/packages/D2/tests/ConductorCapabilitiesTests.swift",
+      "v6Path": "part1/packages/D2/tests/ConductorCapabilitiesTests.swift",
+      "sha256": "204e245efdfe35eed35d9779cd6666dfcf47f71cc348102511ae1a100843127d"
+    },
+    {
+      "archivePath": "WindowShade2-round2-handoff-v5/part1/packages/D2/tests/run-conductor-capabilities-tests.sh",
+      "v6Path": "part1/packages/D2/tests/run-conductor-capabilities-tests.sh",
+      "sha256": "fff550064813bed4604a8e601764df646dea1e06c8fb3772622ab06288f413c0"
+    },
+    {
+      "archivePath": "WindowShade2-round2-handoff-v5/part1/packages/I1a/COPY.md",
+      "v6Path": "part1/packages/I1a/COPY.md",
+      "sha256": "c93a616fa36a64cea7acdbc4749616d0731bcb84687edfa10ba056b922a8cc0b"
+    },
+    {
+      "archivePath": "WindowShade2-round2-handoff-v5/part1/packages/I1a/TEST-CASES.md",
+      "v6Path": "part1/packages/I1a/TEST-CASES.md",
+      "sha256": "2181ddea27f287adffbce32c3562ada5fec83f2229378e0ab7a697c59bf254eb"
+    },
+    {
+      "archivePath": "WindowShade2-round2-handoff-v5/part1/packages/I1a/VALIDATION.txt",
+      "v6Path": "part1/packages/I1a/VALIDATION.txt",
+      "sha256": "b6138caf50e75c35046de770594d4328c4812a013ebdc2e808ddc7fb170e9f0f"
+    },
+    {
+      "archivePath": "WindowShade2-round2-handoff-v5/part1/packages/I1a/WORKORDER.md",
+      "v6Path": "part1/packages/I1a/WORKORDER.md",
+      "sha256": "287190da771e11335471c97c08efbb10a8614b82993d6e3895447c10fb4f64f1"
+    },
+    {
+      "archivePath": "WindowShade2-round2-handoff-v5/part1/packages/I1a/prototype/Core/SmoothScroll.swift",
+      "v6Path": "part1/packages/I1a/prototype/Core/SmoothScroll.swift",
+      "sha256": "8bcd292317a0be05903e2c2fa68c7a3c5a6a7b5662179b438dc03c8fd1b633f6"
+    },
+    {
+      "archivePath": "WindowShade2-round2-handoff-v5/part1/packages/I1a/tests/SmoothScrollTests.swift",
+      "v6Path": "part1/packages/I1a/tests/SmoothScrollTests.swift",
+      "sha256": "9c34191a84278e3fa63f321c3683f65cf6614436c5f6d2a0857d019b842e79dc"
+    },
+    {
+      "archivePath": "WindowShade2-round2-handoff-v5/part1/packages/I1a/tests/run-smooth-scroll-tests.sh",
+      "v6Path": "part1/packages/I1a/tests/run-smooth-scroll-tests.sh",
+      "sha256": "6fe177505a8fe77aeead64e9a26f17bcbd57829fe981ce55b55e90498109418a"
+    },
+    {
+      "archivePath": "WindowShade2-round2-handoff-v5/part1/packages/I1b/COPY.md",
+      "v6Path": "part1/packages/I1b/COPY.md",
+      "sha256": "f7f63adcb3c282da9c3a655f2dd98a579ca8d73e2be08cd2682be0d1a5e0bdeb"
+    },
+    {
+      "archivePath": "WindowShade2-round2-handoff-v5/part1/packages/I1b/TEST-CASES.md",
+      "v6Path": "part1/packages/I1b/TEST-CASES.md",
+      "sha256": "aad57453e90d5cc5347cdf055f3f5406428274b411294a43fce2d6b3e5e3bb8e"
+    },
+    {
+      "archivePath": "WindowShade2-round2-handoff-v5/part1/packages/I1b/VALIDATION.txt",
+      "v6Path": "part1/packages/I1b/VALIDATION.txt",
+      "sha256": "c8f8b434addf52817ac1cc2e20072eb335356d6f427ea40ea8a14c41cd8ed8bc"
+    },
+    {
+      "archivePath": "WindowShade2-round2-handoff-v5/part1/packages/I1b/WORKORDER.md",
+      "v6Path": "part1/packages/I1b/WORKORDER.md",
+      "sha256": "2e7cab9f741a3ea4a4ea62065463add1abd99763a47f030754a3bd16c8ad268e"
+    },
+    {
+      "archivePath": "WindowShade2-round2-handoff-v5/part1/packages/I1b/prototype/Core/InputDeviceKind.swift",
+      "v6Path": "part1/packages/I1b/prototype/Core/InputDeviceKind.swift",
+      "sha256": "bfee009b5bc3fb1031a4cebbfa871bd770145e424cc8d9343eae3787d5c88233"
+    },
+    {
+      "archivePath": "WindowShade2-round2-handoff-v5/part1/packages/I1b/tests/InputDeviceKindTests.swift",
+      "v6Path": "part1/packages/I1b/tests/InputDeviceKindTests.swift",
+      "sha256": "f32665fceaedd441a864638d5574154ba6246fe50eff3dbe81b237d5ca8ebf03"
+    },
+    {
+      "archivePath": "WindowShade2-round2-handoff-v5/part1/packages/I1b/tests/run-input-device-kind-tests.sh",
+      "v6Path": "part1/packages/I1b/tests/run-input-device-kind-tests.sh",
+      "sha256": "130fe0cec1294a04ab8eb28be587afd88fb486a1bbce4e9281de5aec83c0d7ed"
+    },
+    {
+      "archivePath": "WindowShade2-round2-handoff-v5/part1/packages/I1c/COPY.md",
+      "v6Path": "part1/packages/I1c/COPY.md",
+      "sha256": "e135e3bc59feb26e24e40e37bf1b1ceb414b03f26b1fc587c7fd8595306f66d4"
+    },
+    {
+      "archivePath": "WindowShade2-round2-handoff-v5/part1/packages/I1c/TEST-CASES.md",
+      "v6Path": "part1/packages/I1c/TEST-CASES.md",
+      "sha256": "0607e4c2b6e9d54e2386b2a9a58822439adae8e4bc58a789097b85c15d870e69"
+    },
+    {
+      "archivePath": "WindowShade2-round2-handoff-v5/part1/packages/I1c/VALIDATION.txt",
+      "v6Path": "part1/packages/I1c/VALIDATION.txt",
+      "sha256": "adacd205255c8bf7bdf9904aab33ca300ecf9e915576f60eae41ee6108a220f8"
+    },
+    {
+      "archivePath": "WindowShade2-round2-handoff-v5/part1/packages/I1c/WORKORDER.md",
+      "v6Path": "part1/packages/I1c/WORKORDER.md",
+      "sha256": "a9f0698f3a68e24704bc7a535ff430b67cdcf82698fe0a9b0b1fbfe7f7e40023"
+    },
+    {
+      "archivePath": "WindowShade2-round2-handoff-v5/part1/packages/I1c/prototype/Core/MiddleDrag.swift",
+      "v6Path": "part1/packages/I1c/prototype/Core/MiddleDrag.swift",
+      "sha256": "c375a2e23e964890a9d5f691b44aaeecee889670e5aa1641eb6bdfa99a138e46"
+    },
+    {
+      "archivePath": "WindowShade2-round2-handoff-v5/part1/packages/I1c/tests/MiddleDragTests.swift",
+      "v6Path": "part1/packages/I1c/tests/MiddleDragTests.swift",
+      "sha256": "7feaec526496f48b156059e352a5f6b395fe2a586f3a205997e54590ed57d38a"
+    },
+    {
+      "archivePath": "WindowShade2-round2-handoff-v5/part1/packages/I1c/tests/run-middle-drag-tests.sh",
+      "v6Path": "part1/packages/I1c/tests/run-middle-drag-tests.sh",
+      "sha256": "9542d8b6e66ed497cc61fc7568b8857cf3126af907a60b9b33455960965b1f04"
+    },
+    {
+      "archivePath": "WindowShade2-round2-handoff-v5/part1/packages/I1d/COPY.md",
+      "v6Path": "part1/packages/I1d/COPY.md",
+      "sha256": "05ec6149cba1b5374c5ad5418fb021407310f21c81f3bddef3eb7eb3f8d5c2b5"
+    },
+    {
+      "archivePath": "WindowShade2-round2-handoff-v5/part1/packages/I1d/TEST-CASES.md",
+      "v6Path": "part1/packages/I1d/TEST-CASES.md",
+      "sha256": "5f41a94fd6a5862fe364e8e39c2256a996c16d2bc948a23f1378d9913c7bf37c"
+    },
+    {
+      "archivePath": "WindowShade2-round2-handoff-v5/part1/packages/I1d/VALIDATION.txt",
+      "v6Path": "part1/packages/I1d/VALIDATION.txt",
+      "sha256": "8888c368f0a087a6a9b791a9cbccd6976e5089be9563ba0394a434717f683f1f"
+    },
+    {
+      "archivePath": "WindowShade2-round2-handoff-v5/part1/packages/I1d/WORKORDER.md",
+      "v6Path": "part1/packages/I1d/WORKORDER.md",
+      "sha256": "4c6fce92493aed03f4081de437286f1a46fb9fa33abcd1ccdc595e88b49c8765"
+    },
+    {
+      "archivePath": "WindowShade2-round2-handoff-v5/part1/packages/I1d/prototype/Core/TouchTap.swift",
+      "v6Path": "part1/packages/I1d/prototype/Core/TouchTap.swift",
+      "sha256": "60e6818723846479f637e26a7236998f85003ac329709f01ea3ca6a7efc72c30"
+    },
+    {
+      "archivePath": "WindowShade2-round2-handoff-v5/part1/packages/I1d/tests/TouchTapTests.swift",
+      "v6Path": "part1/packages/I1d/tests/TouchTapTests.swift",
+      "sha256": "732625b899854f1320bfaab50e7d2eec3cd8d6291b22d22e7e341e8d88a88edf"
+    },
+    {
+      "archivePath": "WindowShade2-round2-handoff-v5/part1/packages/I1d/tests/run-touch-tap-tests.sh",
+      "v6Path": "part1/packages/I1d/tests/run-touch-tap-tests.sh",
+      "sha256": "a3f64db3cfe4bca892a0b3c7b26e928d22473c2117ff0fc9bfbd9d610a646f29"
+    },
+    {
+      "archivePath": "WindowShade2-round2-handoff-v5/part1/packages/I1e/COPY.md",
+      "v6Path": "part1/packages/I1e/COPY.md",
+      "sha256": "afb170b6d62c79241010c1a2d8ce7a34ad7f012e8f796c81aee0b8ee7745560b"
+    },
+    {
+      "archivePath": "WindowShade2-round2-handoff-v5/part1/packages/I1e/TEST-CASES.md",
+      "v6Path": "part1/packages/I1e/TEST-CASES.md",
+      "sha256": "e7a4cbf1122eb6a81e170e941a822921d58328957fe6beaaa061d18891156ede"
+    },
+    {
+      "archivePath": "WindowShade2-round2-handoff-v5/part1/packages/I1e/VALIDATION.txt",
+      "v6Path": "part1/packages/I1e/VALIDATION.txt",
+      "sha256": "fe137674a1afbb1228740c5d036001ca075133fefebd5b6ba359400c411a7d48"
+    },
+    {
+      "archivePath": "WindowShade2-round2-handoff-v5/part1/packages/I1e/WORKORDER.md",
+      "v6Path": "part1/packages/I1e/WORKORDER.md",
+      "sha256": "4af104ae69753a4a147301e43ce607ec809e277c00bc8c5003a19721c1f05d21"
+    },
+    {
+      "archivePath": "WindowShade2-round2-handoff-v5/part1/packages/I1e/prototype/Core/SiriRemoteButtons.swift",
+      "v6Path": "part1/packages/I1e/prototype/Core/SiriRemoteButtons.swift",
+      "sha256": "be2b7b7d83b28f575eee5b086885b250d4da6b1fd93b4774e02ff6c11b26eef4"
+    },
+    {
+      "archivePath": "WindowShade2-round2-handoff-v5/part1/packages/I1e/tests/SiriRemoteButtonsTests.swift",
+      "v6Path": "part1/packages/I1e/tests/SiriRemoteButtonsTests.swift",
+      "sha256": "3c4cf619e91a534382edddd1a76f9d3675b70b7aea7e906b0cac8092bcd8e3a0"
+    },
+    {
+      "archivePath": "WindowShade2-round2-handoff-v5/part1/packages/I1e/tests/run-siri-remote-buttons-tests.sh",
+      "v6Path": "part1/packages/I1e/tests/run-siri-remote-buttons-tests.sh",
+      "sha256": "27ed9faf15d953027ca6c712d171e20d0d76381beea7cce6c1779db71415c9fe"
+    },
+    {
+      "archivePath": "WindowShade2-round2-handoff-v5/part1/packages/I1f/COPY.md",
+      "v6Path": "part1/packages/I1f/COPY.md",
+      "sha256": "9b919d1391135b604b83529f172ac89f1aaeb85848964658d421e146a91941ce"
+    },
+    {
+      "archivePath": "WindowShade2-round2-handoff-v5/part1/packages/I1f/TEST-CASES.md",
+      "v6Path": "part1/packages/I1f/TEST-CASES.md",
+      "sha256": "7f0f5e3ce3f39a70890f3ef00ceb1301a4fa65d8fa27ad20aecee221401357d8"
+    },
+    {
+      "archivePath": "WindowShade2-round2-handoff-v5/part1/packages/I1f/VALIDATION.txt",
+      "v6Path": "part1/packages/I1f/VALIDATION.txt",
+      "sha256": "6bc54e6f5bf681fadc01c1a01372bae90f8867626a7b952a00b0dd396aed59da"
+    },
+    {
+      "archivePath": "WindowShade2-round2-handoff-v5/part1/packages/I1f/WORKORDER.md",
+      "v6Path": "part1/packages/I1f/WORKORDER.md",
+      "sha256": "f43395f8871da7cbce864317a8c80bcb987cb8f349020bc9b9b6a951259c5773"
+    },
+    {
+      "archivePath": "WindowShade2-round2-handoff-v5/part1/packages/I1f/prototype/Core/RemoteMode.swift",
+      "v6Path": "part1/packages/I1f/prototype/Core/RemoteMode.swift",
+      "sha256": "559d83d94615574613c9ec13a92ddf9395a55157c21f3eaff0e60b61bb48b3d7"
+    },
+    {
+      "archivePath": "WindowShade2-round2-handoff-v5/part1/packages/I1f/tests/RemoteModeTests.swift",
+      "v6Path": "part1/packages/I1f/tests/RemoteModeTests.swift",
+      "sha256": "ce2a05f4a79a680313e22e85a36a57c08179666a4a3c9ed332bd212790ed114f"
+    },
+    {
+      "archivePath": "WindowShade2-round2-handoff-v5/part1/packages/I1f/tests/run-remote-mode-tests.sh",
+      "v6Path": "part1/packages/I1f/tests/run-remote-mode-tests.sh",
+      "sha256": "fd1c4fc6da87d9b9437207fc6c7caf0de5773ba4fb53f5e86e94f1d840242d3f"
+    },
+    {
+      "archivePath": "WindowShade2-round2-handoff-v5/part1/packages/I9/COPY.md",
+      "v6Path": "part1/packages/I9/COPY.md",
+      "sha256": "be6dfe89cf9808a819dc9d7a9734b8ac1821152f2982bf98957d450e8dc719bf"
+    },
+    {
+      "archivePath": "WindowShade2-round2-handoff-v5/part1/packages/I9/TEST-CASES.md",
+      "v6Path": "part1/packages/I9/TEST-CASES.md",
+      "sha256": "fd10ca274009ab04d3cae34e493b087a68eedc01bf0ff57c02fc9b1d774c6a16"
+    },
+    {
+      "archivePath": "WindowShade2-round2-handoff-v5/part1/packages/I9/VALIDATION.txt",
+      "v6Path": "part1/packages/I9/VALIDATION.txt",
+      "sha256": "0237d87eb2c3b42b45fb4af3a30375c8d22c8f82f6c38aaf164b74d815b13a03"
+    },
+    {
+      "archivePath": "WindowShade2-round2-handoff-v5/part1/packages/I9/WORKORDER.md",
+      "v6Path": "part1/packages/I9/WORKORDER.md",
+      "sha256": "8118c4d1c6192bf6996311a7b0cc1fa97517311a83ceccac8f2c72c0ad7eb5a2"
+    },
+    {
+      "archivePath": "WindowShade2-round2-handoff-v5/part1/packages/I9/prototype/Core/FocusNavigator.swift",
+      "v6Path": "part1/packages/I9/prototype/Core/FocusNavigator.swift",
+      "sha256": "372caeb9b2b2318d8b15dc8e014a69ec6e2ddc305d5731754f2810edfc5578bc"
+    },
+    {
+      "archivePath": "WindowShade2-round2-handoff-v5/part1/packages/I9/tests/FocusNavigatorTests.swift",
+      "v6Path": "part1/packages/I9/tests/FocusNavigatorTests.swift",
+      "sha256": "f8714270486f2465d8e73791c92cf74ad78106d8d35ff0b989cca7bb263ab043"
+    },
+    {
+      "archivePath": "WindowShade2-round2-handoff-v5/part1/packages/I9/tests/run-focus-navigator-tests.sh",
+      "v6Path": "part1/packages/I9/tests/run-focus-navigator-tests.sh",
+      "sha256": "5229cbe6826991ec8a8a03803b1c6ebbe430eb0e9750c3a881e64e03a57edc55"
+    },
+    {
+      "archivePath": "WindowShade2-round2-handoff-v5/part1/packages/L1/COPY.md",
+      "v6Path": "part1/packages/L1/COPY.md",
+      "sha256": "0817be2edcd82ea0a53cc529dc79451d016e7352033a6f3c13f5c7b412754be8"
+    },
+    {
+      "archivePath": "WindowShade2-round2-handoff-v5/part1/packages/L1/TEST-CASES.md",
+      "v6Path": "part1/packages/L1/TEST-CASES.md",
+      "sha256": "f57b6c97b66c4ce4648401bc1c266d33a813f114047f6ee01cc2639dba3d89c5"
+    },
+    {
+      "archivePath": "WindowShade2-round2-handoff-v5/part1/packages/L1/VALIDATION.txt",
+      "v6Path": "part1/packages/L1/VALIDATION.txt",
+      "sha256": "df40e3da2463ccca57fe8acbeb4dfab1b790cfb8342681313659289d854f05b1"
+    },
+    {
+      "archivePath": "WindowShade2-round2-handoff-v5/part1/packages/L1/WORKORDER.md",
+      "v6Path": "part1/packages/L1/WORKORDER.md",
+      "sha256": "db5a7f6f7de3e246f271a762cc041180559243247130eb162d9bd3dfb85c54be"
+    },
+    {
+      "archivePath": "WindowShade2-round2-handoff-v5/part1/packages/L1/prototype/Core/PresenceLock.swift",
+      "v6Path": "part1/packages/L1/prototype/Core/PresenceLock.swift",
+      "sha256": "7099b9f42bc09683ac35dd345020a58429bd2e9e19db4823082df19ad7540188"
+    },
+    {
+      "archivePath": "WindowShade2-round2-handoff-v5/part1/packages/L1/tests/PresenceLockTests.swift",
+      "v6Path": "part1/packages/L1/tests/PresenceLockTests.swift",
+      "sha256": "64c2d48348a78ddfb42d1ac793a220246eb7afd6abf36244e05a382df0e07f92"
+    },
+    {
+      "archivePath": "WindowShade2-round2-handoff-v5/part1/packages/L1/tests/run-presence-lock-tests.sh",
+      "v6Path": "part1/packages/L1/tests/run-presence-lock-tests.sh",
+      "sha256": "5d039bcfbeceaf72c17d5d7d4cfe016dd4fb1a62e1e707bef5f396f31abcf15f"
+    },
+    {
+      "archivePath": "WindowShade2-round2-handoff-v5/part1/packages/T1/COPY.md",
+      "v6Path": "part1/packages/T1/COPY.md",
+      "sha256": "dec09c03df6aea480d4e194f6e0cafabf1e7fa4384fe46d90492d5c0c8e8c5a2"
+    },
+    {
+      "archivePath": "WindowShade2-round2-handoff-v5/part1/packages/T1/TEST-CASES.md",
+      "v6Path": "part1/packages/T1/TEST-CASES.md",
+      "sha256": "8a99905a410fe7bdb05536dc2a4b420c7f8ba172af4b424021405fde3a970e35"
+    },
+    {
+      "archivePath": "WindowShade2-round2-handoff-v5/part1/packages/T1/VALIDATION.txt",
+      "v6Path": "part1/packages/T1/VALIDATION.txt",
+      "sha256": "dbfb12d8d95bee6bd280f31d070123ef149f0e4b4899149cd2bd38610f026581"
+    },
+    {
+      "archivePath": "WindowShade2-round2-handoff-v5/part1/packages/T1/WORKORDER.md",
+      "v6Path": "part1/packages/T1/WORKORDER.md",
+      "sha256": "55b6cb80e7ce8259eb07e0ebf61ba0cef90da4bf7c508347e6e0e3e765851cbc"
+    },
+    {
+      "archivePath": "WindowShade2-round2-handoff-v5/part1/packages/T1/prototype/Core/FocusTimer.swift",
+      "v6Path": "part1/packages/T1/prototype/Core/FocusTimer.swift",
+      "sha256": "10a6c89164cea89d8cbb4a3af1f9bc32d63793bd337303fbec337355fd063af0"
+    },
+    {
+      "archivePath": "WindowShade2-round2-handoff-v5/part1/packages/T1/tests/FocusTimerTests.swift",
+      "v6Path": "part1/packages/T1/tests/FocusTimerTests.swift",
+      "sha256": "eda199ab5c8b4b6ef87e58c67e014908eac8356286262d95ab82f0179ce80325"
+    },
+    {
+      "archivePath": "WindowShade2-round2-handoff-v5/part1/packages/T1/tests/run-focus-timer-tests.sh",
+      "v6Path": "part1/packages/T1/tests/run-focus-timer-tests.sh",
+      "sha256": "46ea77a70746479f578af4d4ea5e0568f1be6906f596bcb50d4fa8e75daa0486"
+    },
+    {
+      "archivePath": "WindowShade2-round2-handoff-v5/part1/sources.md",
+      "v6Path": "part1/sources.md",
+      "sha256": "d05746e73f578efed3f01d6d81c5523e5f717849a0d79f8b9723ec175a1da767"
+    },
+    {
+      "archivePath": "WindowShade2-round2-handoff-v5/part1/tests/ContractsTests.swift",
+      "v6Path": "part1/tests/ContractsTests.swift",
+      "sha256": "9887bb1f6c20ca642cc67e39d0f5cee1bffea0eb8870d65b52af85f26899ec35"
+    },
+    {
+      "archivePath": "WindowShade2-round2-handoff-v5/part1/tests/run-all.sh",
+      "v6Path": "part1/tests/run-all.sh",
+      "sha256": "b94cb39e145847aea5f8d301301c3096da8f6f6d3223751a605cad6fa4f3e1c3"
+    },
+    {
+      "archivePath": "WindowShade2-round2-handoff-v5/part1/tests/run-contracts-tests.sh",
+      "v6Path": "part1/tests/run-contracts-tests.sh",
+      "sha256": "0500b23ac3262ec6298e7bc875afe1da92b4ddca818effc8df7d897bbb636a94"
+    },
+    {
+      "archivePath": "WindowShade2-round2-handoff-v5/part1/tests/support/WS2TestSupport.swift",
+      "v6Path": "part1/tests/support/WS2TestSupport.swift",
+      "sha256": "124adc2ab90b2622b985ec03b6b4461470e3b96ea00aa6499d419d06d653ef3e"
+    },
+    {
+      "archivePath": "WindowShade2-round2-handoff-v5/part1/tools/check-pinned-schema.py",
+      "v6Path": "part1/tools/check-pinned-schema.py",
+      "sha256": "ab6d1f348691aff9516d5b8d7c33877ed0415d8cdb9f8513f3d5f0a7cdeedbee"
+    },
+    {
+      "archivePath": "WindowShade2-round2-handoff-v5/part1/tools/package-map.json",
+      "v6Path": "part1/tools/package-map.json",
+      "sha256": "b3ec3943c9089d987c869e72e84a0d43aa7f0c297c90b32e4cb781f22919d8b9"
+    },
+    {
+      "archivePath": "WindowShade2-round2-handoff-v5/part1/tools/stage.py",
+      "v6Path": "part1/tools/stage.py",
+      "sha256": "631954f1c2da7b91b748e995457767cb4154fe18cefb9c65dbf198fcc549c865"
+    },
+    {
+      "archivePath": "WindowShade2-round2-handoff-v5/part1/tools/validate.py",
+      "v6Path": "part1/tools/validate.py",
+      "sha256": "c5dec7504cdb44f84ac2a7598b0e113a99b0e7600f6cbd7bbf052aabc976fcf8"
+    },
+    {
+      "archivePath": "WindowShade2-round2-handoff-v5/part1/tools/verify-bundle.py",
+      "v6Path": "part1/tools/verify-bundle.py",
+      "sha256": "8a732417d77ca02ef962fcd42d40eb7dad041aa31a7d1096b6d6d1eda3d287bc"
+    },
+    {
+      "archivePath": "WindowShade2-round2-handoff-v5/part1/validation/combined-typecheck.txt",
+      "v6Path": "part1/validation/combined-typecheck.txt",
+      "sha256": "ab2cc5dad833b8f338115e37c686277c9238aeee0993c958d0534230af138274"
+    },
+    {
+      "archivePath": "WindowShade2-round2-handoff-v5/part1/validation/d1-optimized-build.txt",
+      "v6Path": "part1/validation/d1-optimized-build.txt",
+      "sha256": "0b62ccef6167174b5fcf5fb23274d81c8a188074dc7f950aa38614676cb13fde"
+    },
+    {
+      "archivePath": "WindowShade2-round2-handoff-v5/part1/validation/d1-optimized-run.txt",
+      "v6Path": "part1/validation/d1-optimized-run.txt",
+      "sha256": "f1661f1d5877bacad6feea234973d8fe90185dcf94f1ae1fe0868e8c76674359"
+    },
+    {
+      "archivePath": "WindowShade2-round2-handoff-v5/part1/validation/delivery-qa.json",
+      "v6Path": "part1/validation/delivery-qa.json",
+      "sha256": "f4d0a9185f791209db349f82f968bb577c3350771c100b078f15975949485321"
+    },
+    {
+      "archivePath": "WindowShade2-round2-handoff-v5/part1/validation/development/final-edge-I9.txt",
+      "v6Path": "part1/validation/development/final-edge-I9.txt",
+      "sha256": "8fad201c49dabd82dc43397a80c6258e0d1e610ed1d40bacc9c32f6567545a6a"
+    },
+    {
+      "archivePath": "WindowShade2-round2-handoff-v5/part1/validation/development/final-edge-L1.txt",
+      "v6Path": "part1/validation/development/final-edge-L1.txt",
+      "sha256": "32f65588a23e2bb1b588c87056d2ae4a6dbe6df705b5a5906ea104757e9d732f"
+    },
+    {
+      "archivePath": "WindowShade2-round2-handoff-v5/part1/validation/development/fixed-A1.txt",
+      "v6Path": "part1/validation/development/fixed-A1.txt",
+      "sha256": "33d511dbb1ae8f9da3638a501fda0fc62c20ad0ed798db18cd1c3c3c9f198408"
+    },
+    {
+      "archivePath": "WindowShade2-round2-handoff-v5/part1/validation/development/fixed-L1.txt",
+      "v6Path": "part1/validation/development/fixed-L1.txt",
+      "sha256": "f7bd4d2ef53a8d36d791326ad08993a5f89394900ba87b4639e06e0a9fa28f3c"
+    },
+    {
+      "archivePath": "WindowShade2-round2-handoff-v5/part1/validation/development/initial-A1.txt",
+      "v6Path": "part1/validation/development/initial-A1.txt",
+      "sha256": "37fe46529b409272808266eb52bb77ddeb878eb19b39c9584f91f840474f8e21"
+    },
+    {
+      "archivePath": "WindowShade2-round2-handoff-v5/part1/validation/development/initial-D1.txt",
+      "v6Path": "part1/validation/development/initial-D1.txt",
+      "sha256": "b31e572c62bbf1f32c9abc8f9e8eee937e277c3a844f9dedf296f62a4754a003"
+    },
+    {
+      "archivePath": "WindowShade2-round2-handoff-v5/part1/validation/development/initial-D2.txt",
+      "v6Path": "part1/validation/development/initial-D2.txt",
+      "sha256": "d48c2cc87ce80a1b2a1a864086625be1900fc9fe5021e90f031744b242a51f54"
+    },
+    {
+      "archivePath": "WindowShade2-round2-handoff-v5/part1/validation/development/initial-I1a.txt",
+      "v6Path": "part1/validation/development/initial-I1a.txt",
+      "sha256": "dc9ed76d6a9555d5e3bf0e3824cfe1fe8e0b80f4a02bd25fb2b1adc5f0f0bd29"
+    },
+    {
+      "archivePath": "WindowShade2-round2-handoff-v5/part1/validation/development/initial-I1b.txt",
+      "v6Path": "part1/validation/development/initial-I1b.txt",
+      "sha256": "b9afad96abca70633cce751d85d8f5d3b1a2e1668e87dee53099c63f2af16fc5"
+    },
+    {
+      "archivePath": "WindowShade2-round2-handoff-v5/part1/validation/development/initial-I1c.txt",
+      "v6Path": "part1/validation/development/initial-I1c.txt",
+      "sha256": "3cd8cf773ac3d4eda97f585576eba7ec0382c938adaf1209e0f4e15c253e580b"
+    },
+    {
+      "archivePath": "WindowShade2-round2-handoff-v5/part1/validation/development/initial-I1d.txt",
+      "v6Path": "part1/validation/development/initial-I1d.txt",
+      "sha256": "6209d896e0c6f299fa19aefe783283a8e0ed5749ae11f73bf1c54331934775c8"
+    },
+    {
+      "archivePath": "WindowShade2-round2-handoff-v5/part1/validation/development/initial-I1e.txt",
+      "v6Path": "part1/validation/development/initial-I1e.txt",
+      "sha256": "39571f4b48117fc66fa5851b267ae9fdef95d75245b30275e604ee8a60865ec0"
+    },
+    {
+      "archivePath": "WindowShade2-round2-handoff-v5/part1/validation/development/initial-I1f.txt",
+      "v6Path": "part1/validation/development/initial-I1f.txt",
+      "sha256": "7728a6f357e73c6c669a92f863ade955c2b77f672a75ba47af324128c6841086"
+    },
+    {
+      "archivePath": "WindowShade2-round2-handoff-v5/part1/validation/development/initial-I9.txt",
+      "v6Path": "part1/validation/development/initial-I9.txt",
+      "sha256": "db61214458847aea80e707a670862be8b612f49aba067444b63fa1a7f81502e7"
+    },
+    {
+      "archivePath": "WindowShade2-round2-handoff-v5/part1/validation/development/initial-L1.txt",
+      "v6Path": "part1/validation/development/initial-L1.txt",
+      "sha256": "382cccf23cf8a5c46a4a5500073c99d492456edb5d0ee1aa26dd8eeea3cb04fc"
+    },
+    {
+      "archivePath": "WindowShade2-round2-handoff-v5/part1/validation/development/initial-T1.txt",
+      "v6Path": "part1/validation/development/initial-T1.txt",
+      "sha256": "3f5b5c1d014cd1dec258a05fa8358b7f2bde4c9a09e1cd84ae0374cd5284850e"
+    },
+    {
+      "archivePath": "WindowShade2-round2-handoff-v5/part1/validation/development/privacy-initial.txt",
+      "v6Path": "part1/validation/development/privacy-initial.txt",
+      "sha256": "90f19ebc637aab325a888f7b3aeeec04f3ec85262067c10951a5ba993a6d6ec3"
+    },
+    {
+      "archivePath": "WindowShade2-round2-handoff-v5/part1/validation/development/privacy-retest.txt",
+      "v6Path": "part1/validation/development/privacy-retest.txt",
+      "sha256": "b5ca8e8e5805fc14b8549699a9a8c6bfe631af290401f3d264d18e8fe29d002e"
+    },
+    {
+      "archivePath": "WindowShade2-round2-handoff-v5/part1/validation/development/retest-A1.txt",
+      "v6Path": "part1/validation/development/retest-A1.txt",
+      "sha256": "be229c0a0ed1f94fa73ad032b66607be6a59099344f7408da451bb930f602177"
+    },
+    {
+      "archivePath": "WindowShade2-round2-handoff-v5/part1/validation/development/retest-D1.txt",
+      "v6Path": "part1/validation/development/retest-D1.txt",
+      "sha256": "c02c84a074e0ac2a009b268aa7fcc3cc26f50c02a0e1becac87e3de5d4e8c285"
+    },
+    {
+      "archivePath": "WindowShade2-round2-handoff-v5/part1/validation/development/retest-D2.txt",
+      "v6Path": "part1/validation/development/retest-D2.txt",
+      "sha256": "b25c5e0ce1732908180dbe902dc5374a172bd8ca7d66e63f2eabb22c0a4cec37"
+    },
+    {
+      "archivePath": "WindowShade2-round2-handoff-v5/part1/validation/development/retest-I1a.txt",
+      "v6Path": "part1/validation/development/retest-I1a.txt",
+      "sha256": "15f74445995e3c61d5d8c21491ece0adff5b1e2dc67acac1a7654e067632debd"
+    },
+    {
+      "archivePath": "WindowShade2-round2-handoff-v5/part1/validation/development/retest-I1b.txt",
+      "v6Path": "part1/validation/development/retest-I1b.txt",
+      "sha256": "099382d3560c0697e2da1b7807c49e870dc092975d493458b69b4b24b10fbf21"
+    },
+    {
+      "archivePath": "WindowShade2-round2-handoff-v5/part1/validation/development/retest-L1.txt",
+      "v6Path": "part1/validation/development/retest-L1.txt",
+      "sha256": "765850198e48882849ee2a481bc53dcc38a982c72ed27165bff708f7c7bcc051"
+    },
+    {
+      "archivePath": "WindowShade2-round2-handoff-v5/part1/validation/input-integrity.json",
+      "v6Path": "part1/validation/input-integrity.json",
+      "sha256": "050b748a17206ab642104209deb09b20d99f41d3080ae61df5f582dbd440ed5e"
+    },
+    {
+      "archivePath": "WindowShade2-round2-handoff-v5/part1/validation/log-parse-AXHelpers.txt",
+      "v6Path": "part1/validation/log-parse-AXHelpers.txt",
+      "sha256": "7426590a201e7ac664a426f3b0781d42e2b7c0239ed323d2dbd3d0c32def4f11"
+    },
+    {
+      "archivePath": "WindowShade2-round2-handoff-v5/part1/validation/log-parse-Diagnostics.txt",
+      "v6Path": "part1/validation/log-parse-Diagnostics.txt",
+      "sha256": "166e6245d5a5a7dc8b1284bd2919c759a95cfb636734d8000c3aac9a44058348"
+    },
+    {
+      "archivePath": "WindowShade2-round2-handoff-v5/part1/validation/log-parse-FoldExit.txt",
+      "v6Path": "part1/validation/log-parse-FoldExit.txt",
+      "sha256": "1618d03c6887f1bde00a07bad582c63d97e731c08f8e4764078c47eeda4d0ea4"
+    },
+    {
+      "archivePath": "WindowShade2-round2-handoff-v5/part1/validation/log-parse-Notch.txt",
+      "v6Path": "part1/validation/log-parse-Notch.txt",
+      "sha256": "609cc76329fea396b776d0c74b55c4d15959b644ac832be6f70add09266fcfa1"
+    },
+    {
+      "archivePath": "WindowShade2-round2-handoff-v5/part1/validation/log-parse-PinnedPreview.txt",
+      "v6Path": "part1/validation/log-parse-PinnedPreview.txt",
+      "sha256": "6910ec6064f108fd6f4e11db610601244bb8dfa1b10a4766ad78fda6807150cc"
+    },
+    {
+      "archivePath": "WindowShade2-round2-handoff-v5/part1/validation/log-parse-SecureLogFile.txt",
+      "v6Path": "part1/validation/log-parse-SecureLogFile.txt",
+      "sha256": "5c894d9254ae203de439fe33f2cf19e6a8cdd327e32e4db55294219dcac1fe38"
+    },
+    {
+      "archivePath": "WindowShade2-round2-handoff-v5/part1/validation/log-parse-ShadeController.txt",
+      "v6Path": "part1/validation/log-parse-ShadeController.txt",
+      "sha256": "5f0447a0c5c1c1b1f375b3d0bec7625e6e952ef8d2fbe84f117bb8f59c817eb9"
+    },
+    {
+      "archivePath": "WindowShade2-round2-handoff-v5/part1/validation/log-patch-readonly.txt",
+      "v6Path": "part1/validation/log-patch-readonly.txt",
+      "sha256": "1f94d5674daaff0434036076d8e9885cab0cac6836d646b394ea61d747440684"
+    },
+    {
+      "archivePath": "WindowShade2-round2-handoff-v5/part1/validation/log-patch-staged.txt",
+      "v6Path": "part1/validation/log-patch-staged.txt",
+      "sha256": "1bb311105fc1fbad5abb2acf03e47f4bb8f37b3b225f440afcdfac7dc1cadc15"
+    },
+    {
+      "archivePath": "WindowShade2-round2-handoff-v5/part1/validation/original-conductor-compile.txt",
+      "v6Path": "part1/validation/original-conductor-compile.txt",
+      "sha256": "05bc9faae3c36bd123206e5cd8d16caef836c9c9e128bc9a366a2ace03735be0"
+    },
+    {
+      "archivePath": "WindowShade2-round2-handoff-v5/part1/validation/original-conductor-run.txt",
+      "v6Path": "part1/validation/original-conductor-run.txt",
+      "sha256": "41f6cdbe81cd53eeec223179e17e426e31e5560b4b62b65c10b6e9a8b31cdbe2"
+    },
+    {
+      "archivePath": "WindowShade2-round2-handoff-v5/part1/validation/original-notches-compile.txt",
+      "v6Path": "part1/validation/original-notches-compile.txt",
+      "sha256": "1f5af13852a0b2893d05ec7a8fb0163203706156df9f880ad331aacc8aaf767c"
+    },
+    {
+      "archivePath": "WindowShade2-round2-handoff-v5/part1/validation/original-notches-run.txt",
+      "v6Path": "part1/validation/original-notches-run.txt",
+      "sha256": "fe8fc40c9940b92a3e059f68115d66d7321c610487da8f8da298b405552137de"
+    },
+    {
+      "archivePath": "WindowShade2-round2-handoff-v5/part1/validation/pinned-schema.txt",
+      "v6Path": "part1/validation/pinned-schema.txt",
+      "sha256": "9f8eef0190f4319af0205823068177af3c2eb461215dd15fcf9f60745ddaf0c3"
+    },
+    {
+      "archivePath": "WindowShade2-round2-handoff-v5/part1/validation/registry-baseline.txt",
+      "v6Path": "part1/validation/registry-baseline.txt",
+      "sha256": "42e1e087ac3727da5b3afe2f0b4c62cefe45530f350c77ee2fb25d9885fbe186"
+    },
+    {
+      "archivePath": "WindowShade2-round2-handoff-v5/part1/validation/registry-negative.txt",
+      "v6Path": "part1/validation/registry-negative.txt",
+      "sha256": "987b096ede56740ded4aca3ed9d0ef141b9f53874478a8c05785131215cd3d37"
+    },
+    {
+      "archivePath": "WindowShade2-round2-handoff-v5/part1/validation/regression-and-stage.json",
+      "v6Path": "part1/validation/regression-and-stage.json",
+      "sha256": "f9c55dc651bc0b02dbc28135a1016d92aff3ea6d2e3650bd3d97a23215fc859d"
+    },
+    {
+      "archivePath": "WindowShade2-round2-handoff-v5/part1/validation/schema-evidence.json",
+      "v6Path": "part1/validation/schema-evidence.json",
+      "sha256": "d1b096872c6c1c630030b969b5856c07fd9a529d04cfd737785e141d56308d00"
+    },
+    {
+      "archivePath": "WindowShade2-round2-handoff-v5/part1/validation/schema-input-sha256.json",
+      "v6Path": "part1/validation/schema-input-sha256.json",
+      "sha256": "46ff62e5c3d51110fc60a47587d970c8c484d3af2af8b956e2db05558a436566"
+    },
+    {
+      "archivePath": "WindowShade2-round2-handoff-v5/part1/validation/source-sha256.json",
+      "v6Path": "part1/validation/source-sha256.json",
+      "sha256": "c683790e1c3b47e76a1ac5463383cdc022267e67bd9dbd95c8cb13a11f9a24c0"
+    },
+    {
+      "archivePath": "WindowShade2-round2-handoff-v5/part1/validation/stage.txt",
+      "v6Path": "part1/validation/stage.txt",
+      "sha256": "c3edf1d782f829b24a9651bfdec72275114723194d4318836185e5f4cab90220"
+    },
+    {
+      "archivePath": "WindowShade2-round2-handoff-v5/part1/validation/staged-conductor-session.txt",
+      "v6Path": "part1/validation/staged-conductor-session.txt",
+      "sha256": "51b5421fe5193fa3ab7c3ea8c62ef8c457727ab96846a0eb2bb05b7589b5697e"
+    },
+    {
+      "archivePath": "WindowShade2-round2-handoff-v5/part1/validation/staged-focus-timer.txt",
+      "v6Path": "part1/validation/staged-focus-timer.txt",
+      "sha256": "5af0a50e07c6e1fe9ef0499ef827c399a728ba7cf21d4268fc852b4905428757"
+    },
+    {
+      "archivePath": "WindowShade2-round2-handoff-v5/part1/validation/staged-remote-mode.txt",
+      "v6Path": "part1/validation/staged-remote-mode.txt",
+      "sha256": "14ea243f2260a0a21b9d2122f62ba5611c65bcf922aa4c0c5f835fa9d8a8994f"
+    },
+    {
+      "archivePath": "WindowShade2-round2-handoff-v5/part1/validation/summary.json",
+      "v6Path": "part1/validation/summary.json",
+      "sha256": "3eca76e8160c89eba8602540f2ac267d36123b314035f7173ad7a1740e8d97e1"
+    },
+    {
+      "archivePath": "WindowShade2-round2-handoff-v5/part1/validation/tested-source-sha256.json",
+      "v6Path": "part1/validation/tested-source-sha256.json",
+      "sha256": "6b64542a59a9b204e325484a2e1eaa169ba5248a60e87b544e839ec74805891e"
+    },
+    {
+      "archivePath": "WindowShade2-round2-handoff-v5/part1/validation/tool-checks.json",
+      "v6Path": "part1/validation/tool-checks.json",
+      "sha256": "52630196d894b6e0015f162c93719d0a2ae25d95455b10369150b719bfa6ceb9"
+    },
+    {
+      "archivePath": "WindowShade2-round2-handoff-v5/part2/CHANGELOG.md",
+      "v6Path": "part2/CHANGELOG.md",
+      "sha256": "b170aac91b31726f2f1ee168f0e308917195c6bd170dbf38237947e49adef873"
+    },
+    {
+      "archivePath": "WindowShade2-round2-handoff-v5/part2/MANIFEST-SHA256.json",
+      "v6Path": "part2/MANIFEST-SHA256.json",
+      "sha256": "a1fd09ab243fc4392a68f2e3cdf689c0ce4b9069a738a57c27fe9067a161ed61"
+    },
+    {
+      "archivePath": "WindowShade2-round2-handoff-v5/part2/README.md",
+      "v6Path": "part2/README.md",
+      "sha256": "9eb4710c353012cb5f61c68f10a628596ad232bf9a36b24d529b8f3bccf5d5ef"
+    },
+    {
+      "archivePath": "WindowShade2-round2-handoff-v5/part2/REMAINING.md",
+      "v6Path": "part2/REMAINING.md",
+      "sha256": "91280581c8dbf652ada417107d94d64005d6a76fc41ba4dcf3f8628ada434dd0"
+    },
+    {
+      "archivePath": "WindowShade2-round2-handoff-v5/part2/VALIDATION.md",
+      "v6Path": "part2/VALIDATION.md",
+      "sha256": "77d64334121a757e9db991027295e0afda956165c760ac71a25a1086d51bb53c"
+    },
+    {
+      "archivePath": "WindowShade2-round2-handoff-v5/part2/answers.md",
+      "v6Path": "part2/answers.md",
+      "sha256": "5b497831aa3b611bd4482c2094462f2920185473c33181e39a7687f132185c4c"
+    },
+    {
+      "archivePath": "WindowShade2-round2-handoff-v5/part2/contracts/Contracts.swift",
+      "v6Path": "part2/contracts/Contracts.swift",
+      "sha256": "12fffc2e5cf207aa0ca6b4c371f28b9eec8c2b374b5e1a06d8943878891b2420"
+    },
+    {
+      "archivePath": "WindowShade2-round2-handoff-v5/part2/contracts/InteractionCoordinator-WORKORDER.md",
+      "v6Path": "part2/contracts/InteractionCoordinator-WORKORDER.md",
+      "sha256": "40e394dd7950b9e92f69c9b34ebd40286a9f4abcc53e91cf9d46822127562872"
+    },
+    {
+      "archivePath": "WindowShade2-round2-handoff-v5/part2/contracts/InteractionCoordinator.swift",
+      "v6Path": "part2/contracts/InteractionCoordinator.swift",
+      "sha256": "dc81452cb37713666a55b31e86484635bcea45d8095093025a70e9af182e881d"
+    },
+    {
+      "archivePath": "WindowShade2-round2-handoff-v5/part2/dependencies/FocusTimer.swift",
+      "v6Path": "part2/dependencies/FocusTimer.swift",
+      "sha256": "10a6c89164cea89d8cbb4a3af1f9bc32d63793bd337303fbec337355fd063af0"
+    },
+    {
+      "archivePath": "WindowShade2-round2-handoff-v5/part2/dependencies/README.md",
+      "v6Path": "part2/dependencies/README.md",
+      "sha256": "639a4b5ebb78427b00742cbd16101b8a67b364e877ac6b355d7e3d658cd20447"
+    },
+    {
+      "archivePath": "WindowShade2-round2-handoff-v5/part2/film/.gitignore",
+      "v6Path": "part2/film/.gitignore",
+      "sha256": "9ae8e02462ff393bb40e787f0a65e79d241ed4f74b32cc57c64acb4ac18fa3fc"
+    },
+    {
+      "archivePath": "WindowShade2-round2-handoff-v5/part2/film/AUDIO-CUES.md",
+      "v6Path": "part2/film/AUDIO-CUES.md",
+      "sha256": "6b556db9f93436774118a30cc7fa6a91df8cf663ca244baf33cc7418c21d5f32"
+    },
+    {
+      "archivePath": "WindowShade2-round2-handoff-v5/part2/film/BRIEF.md",
+      "v6Path": "part2/film/BRIEF.md",
+      "sha256": "617df393e847b4a92a2a6b39a993aedf003b401f3d730e9c47b7bad3c2149439"
+    },
+    {
+      "archivePath": "WindowShade2-round2-handoff-v5/part2/film/DIGEST.md",
+      "v6Path": "part2/film/DIGEST.md",
+      "sha256": "1b74350777e94f81fb7dda50a092c9036ff465abf79750b44604c432d3c3a5cf"
+    },
+    {
+      "archivePath": "WindowShade2-round2-handoff-v5/part2/film/QA.md",
+      "v6Path": "part2/film/QA.md",
+      "sha256": "f751c4ad8bac48081bf3ba5c50e320d89bd445a3581c6d7112290b0e9c82fa60"
+    },
+    {
+      "archivePath": "WindowShade2-round2-handoff-v5/part2/film/REVIEW.md",
+      "v6Path": "part2/film/REVIEW.md",
+      "sha256": "bd3ac2ea94585d87d85eac5a1137f2f02c96a744b80b5716f7dc5956c6d82b17"
+    },
+    {
+      "archivePath": "WindowShade2-round2-handoff-v5/part2/film/audio-cues.json",
+      "v6Path": "part2/film/audio-cues.json",
+      "sha256": "66c171b05c5ff64ede95760922f77a4ce7c91f511d9ad92c0030805982bc3d11"
+    },
+    {
+      "archivePath": "WindowShade2-round2-handoff-v5/part2/film/out/WS2-animatic-landscape.mp4",
+      "v6Path": "part2/film/out/WS2-animatic-landscape.mp4",
+      "sha256": "447d65f57203bc2d2da4dc45198993ad7b89c7fedeef39b6e36784ca69f9c50d"
+    },
+    {
+      "archivePath": "WindowShade2-round2-handoff-v5/part2/film/out/WS2-animatic-portrait.mp4",
+      "v6Path": "part2/film/out/WS2-animatic-portrait.mp4",
+      "sha256": "fc3928d87d0334df5eed4471d0cf1cc28f75da2a7d4b71e898438e4a98b9edc3"
+    },
+    {
+      "archivePath": "WindowShade2-round2-handoff-v5/part2/film/out/check-0510.png",
+      "v6Path": "part2/film/out/check-0510.png",
+      "sha256": "245f4f34204cae32f31676d9b9f028e040bdd1114e9a0437c85e50a53fc59556"
+    },
+    {
+      "archivePath": "WindowShade2-round2-handoff-v5/part2/film/package-lock.json",
+      "v6Path": "part2/film/package-lock.json",
+      "sha256": "89819b15ca1e71e9af46b6dc766db1c181b5b4dc14d1f2ecd0630c164dad86c9"
+    },
+    {
+      "archivePath": "WindowShade2-round2-handoff-v5/part2/film/package.json",
+      "v6Path": "part2/film/package.json",
+      "sha256": "d5995794b12e1c924bb339a401fb426063ff6fd0a0d641b48b007e772ec6caa1"
+    },
+    {
+      "archivePath": "WindowShade2-round2-handoff-v5/part2/film/preview.html",
+      "v6Path": "part2/film/preview.html",
+      "sha256": "6b214c2feb6929accdc0113c248f00dff8aeaa3c2581a75f648b8fd017151129"
+    },
+    {
+      "archivePath": "WindowShade2-round2-handoff-v5/part2/film/public/footage/SHOTLIST.md",
+      "v6Path": "part2/film/public/footage/SHOTLIST.md",
+      "sha256": "a10154e0ef8db5ff09ec6f35d1d2b182229a25e0dfd75b0028b908f6b937fac0"
+    },
+    {
+      "archivePath": "WindowShade2-round2-handoff-v5/part2/film/public/footage/capture-registry.json",
+      "v6Path": "part2/film/public/footage/capture-registry.json",
+      "sha256": "1f8815fb55ab6d9005ff6b882c64a0badf9076e05807fa1baec289199f1b5b22"
+    },
+    {
+      "archivePath": "WindowShade2-round2-handoff-v5/part2/film/public/footage/manifest.json",
+      "v6Path": "part2/film/public/footage/manifest.json",
+      "sha256": "48793c6bb3ed0dea0fcfe54eb2c936e3fa0d3bff5499ba6954b704b3325da9a2"
+    },
+    {
+      "archivePath": "WindowShade2-round2-handoff-v5/part2/film/reference/LICENSE-video-shotcraft",
+      "v6Path": "part2/film/reference/LICENSE-video-shotcraft",
+      "sha256": "b2ce9877a55547ada9b870150664d1468ff777e67cc9888806a73927d31c5771"
+    },
+    {
+      "archivePath": "WindowShade2-round2-handoff-v5/part2/film/reference/aesthetic-rules.md",
+      "v6Path": "part2/film/reference/aesthetic-rules.md",
+      "sha256": "4b5f3efd84d10d3d0e1af742a2ee16cecbd1c9aee8e982ed5ac1b7c9f14de78a"
+    },
+    {
+      "archivePath": "WindowShade2-round2-handoff-v5/part2/film/reference/cards/ai-stream-response.md",
+      "v6Path": "part2/film/reference/cards/ai-stream-response.md",
+      "sha256": "a44dc2f57dcc3e367e21ecd71669f6550262e5746be0af87e95309ed40308e65"
+    },
+    {
+      "archivePath": "WindowShade2-round2-handoff-v5/part2/film/reference/cards/circle-match-iris.md",
+      "v6Path": "part2/film/reference/cards/circle-match-iris.md",
+      "sha256": "5c5e46f211f90fdb437865a863144abba7867eea34d7c19b34d5bc0e5e063f14"
+    },
+    {
+      "archivePath": "WindowShade2-round2-handoff-v5/part2/film/reference/cards/crash-zoom-punch.md",
+      "v6Path": "part2/film/reference/cards/crash-zoom-punch.md",
+      "sha256": "7ff7214d17dc305718683ae15b308ab6704a2cc82ee82a6afe9db5cbe7a417f4"
+    },
+    {
+      "archivePath": "WindowShade2-round2-handoff-v5/part2/film/reference/cards/dataviz-landscape-open.md",
+      "v6Path": "part2/film/reference/cards/dataviz-landscape-open.md",
+      "sha256": "40318d4903ce1aecf1b39a0beb7738e7ec9b41f35ce49978eafe875efa402439"
+    },
+    {
+      "archivePath": "WindowShade2-round2-handoff-v5/part2/film/reference/cards/deck-deal-flyin.md",
+      "v6Path": "part2/film/reference/cards/deck-deal-flyin.md",
+      "sha256": "1341d0ae4728efa49ee47ee5715eb11c19155ba695d15b79ac5f986c180f71ad"
+    },
+    {
+      "archivePath": "WindowShade2-round2-handoff-v5/part2/film/reference/cards/depth-layer-moves.md",
+      "v6Path": "part2/film/reference/cards/depth-layer-moves.md",
+      "sha256": "3caa8ebc9c5ae5af8dfe3932f43bc88c1f1bd5d4e6980a0c0461be121bcf1acc"
+    },
+    {
+      "archivePath": "WindowShade2-round2-handoff-v5/part2/film/reference/cards/draw-svg-trace.md",
+      "v6Path": "part2/film/reference/cards/draw-svg-trace.md",
+      "sha256": "efafcc9abd8cd7dee3e22036b98dc7fcc1c5d122ba7630af622f0714675a335d"
+    },
+    {
+      "archivePath": "WindowShade2-round2-handoff-v5/part2/film/reference/cards/fui-hud-moves.md",
+      "v6Path": "part2/film/reference/cards/fui-hud-moves.md",
+      "sha256": "480e920e376e8f18529142d06c4de84544406b0e5f2dd37062dfe274b3f51305"
+    },
+    {
+      "archivePath": "WindowShade2-round2-handoff-v5/part2/film/reference/cards/glass-pill-dictation-typing.md",
+      "v6Path": "part2/film/reference/cards/glass-pill-dictation-typing.md",
+      "sha256": "fd41dce82df9de936d958fee0640d0b411f13a5e0f71711280076a848e639036"
+    },
+    {
+      "archivePath": "WindowShade2-round2-handoff-v5/part2/film/reference/cards/icon-performance-moves.md",
+      "v6Path": "part2/film/reference/cards/icon-performance-moves.md",
+      "sha256": "e643217134fe454c5049a4bf02ece3a2c0d066a4bf7f2c92e3d2c17daed351fe"
+    },
+    {
+      "archivePath": "WindowShade2-round2-handoff-v5/part2/film/reference/cards/input-trigger-moves.md",
+      "v6Path": "part2/film/reference/cards/input-trigger-moves.md",
+      "sha256": "4ad36f963da66a7b1c9315da7f80ff75fe3e44d687036c876aebdc1b7484a992"
+    },
+    {
+      "archivePath": "WindowShade2-round2-handoff-v5/part2/film/reference/cards/letterspace-materialize.md",
+      "v6Path": "part2/film/reference/cards/letterspace-materialize.md",
+      "sha256": "f6632e8da2ab2bef13248514617e3e636c79d9140de4605997312b01060ddd4a"
+    },
+    {
+      "archivePath": "WindowShade2-round2-handoff-v5/part2/film/reference/cards/light-play-moves.md",
+      "v6Path": "part2/film/reference/cards/light-play-moves.md",
+      "sha256": "e45f10c67bca8d9bf20af879f60328182ba71a67fa0f90c082f8c8feedb42328"
+    },
+    {
+      "archivePath": "WindowShade2-round2-handoff-v5/part2/film/reference/cards/list-stack-press.md",
+      "v6Path": "part2/film/reference/cards/list-stack-press.md",
+      "sha256": "fcf031f506570e4838c9313e4957c8c290a048a35321156ed61874685e8110ba"
+    },
+    {
+      "archivePath": "WindowShade2-round2-handoff-v5/part2/film/reference/cards/logo-shrink-wordmark-lockup.md",
+      "v6Path": "part2/film/reference/cards/logo-shrink-wordmark-lockup.md",
+      "sha256": "1f76c5434a85bf2e5b8867142419577348adfe265fb215e460ec2b7e239b189b"
+    },
+    {
+      "archivePath": "WindowShade2-round2-handoff-v5/part2/film/reference/cards/morph-from-primitive.md",
+      "v6Path": "part2/film/reference/cards/morph-from-primitive.md",
+      "sha256": "c338f6d3639b65bea1edff3c5749e530daa9a6ce70c8f44e6bbffbcfe86a6456"
+    },
+    {
+      "archivePath": "WindowShade2-round2-handoff-v5/part2/film/reference/cards/odometer-digit-roll.md",
+      "v6Path": "part2/film/reference/cards/odometer-digit-roll.md",
+      "sha256": "8f8b356fc57d914d4b324244fe437b232fe10030d212482a31b19a932c56513c"
+    },
+    {
+      "archivePath": "WindowShade2-round2-handoff-v5/part2/film/reference/cards/outro-group-photo-launch.md",
+      "v6Path": "part2/film/reference/cards/outro-group-photo-launch.md",
+      "sha256": "6cb64b674b8bded5f08a39aceac73de2b957c7a6fdaf559921c4421b6c27d46f"
+    },
+    {
+      "archivePath": "WindowShade2-round2-handoff-v5/part2/film/reference/cards/paper-title-card.md",
+      "v6Path": "part2/film/reference/cards/paper-title-card.md",
+      "sha256": "a474a2d6f5563239be6fabd33e0e6d9002f57623bc49ddf57ea0020cfeffc458"
+    },
+    {
+      "archivePath": "WindowShade2-round2-handoff-v5/part2/film/reference/cards/pill-slot-cycle.md",
+      "v6Path": "part2/film/reference/cards/pill-slot-cycle.md",
+      "sha256": "32cddebfe7bb0869057e0f81f66c6d6044ea152b381f402a26707e9d4274ff62"
+    },
+    {
+      "archivePath": "WindowShade2-round2-handoff-v5/part2/film/reference/cards/quad-split-parallel-scenes.md",
+      "v6Path": "part2/film/reference/cards/quad-split-parallel-scenes.md",
+      "sha256": "22b9e42c9d136c29710ea9371728205198be2ec73a90322107ce92223ea18fcb"
+    },
+    {
+      "archivePath": "WindowShade2-round2-handoff-v5/part2/film/reference/cards/scan-bracket-sweep.md",
+      "v6Path": "part2/film/reference/cards/scan-bracket-sweep.md",
+      "sha256": "e80d67b51792b6355baca5f0547d8b9255675ec3fc6b935b43b57f44917cc686"
+    },
+    {
+      "archivePath": "WindowShade2-round2-handoff-v5/part2/film/reference/cards/shot-transitions.md",
+      "v6Path": "part2/film/reference/cards/shot-transitions.md",
+      "sha256": "2cdb68da4060b519d4b0545db17ebc5ca000f04c814f40b0de4d4082756bc216"
+    },
+    {
+      "archivePath": "WindowShade2-round2-handoff-v5/part2/film/reference/cards/speed-ramp-freeze.md",
+      "v6Path": "part2/film/reference/cards/speed-ramp-freeze.md",
+      "sha256": "7d365e36082978b66ec5bca6623b9dbe57c7898b472f031a84d2bbbd09c3f56f"
+    },
+    {
+      "archivePath": "WindowShade2-round2-handoff-v5/part2/film/reference/cards/spotlight-hero-card.md",
+      "v6Path": "part2/film/reference/cards/spotlight-hero-card.md",
+      "sha256": "fbbd603a71ff0a472f37d4ea5647506da2c06dcef2f2d4687d3bc20c2484d989"
+    },
+    {
+      "archivePath": "WindowShade2-round2-handoff-v5/part2/film/reference/cards/svg-shape-morph.md",
+      "v6Path": "part2/film/reference/cards/svg-shape-morph.md",
+      "sha256": "ddc54c05b5c397adfe9c9fe458cf1f9ec62232d8162eb82ca3dca00090250f71"
+    },
+    {
+      "archivePath": "WindowShade2-round2-handoff-v5/part2/film/reference/cards/tension-camera-moves.md",
+      "v6Path": "part2/film/reference/cards/tension-camera-moves.md",
+      "sha256": "6612ba598559261d2bb556bd536eeb1659490102a48b57e034fe053e10774631"
+    },
+    {
+      "archivePath": "WindowShade2-round2-handoff-v5/part2/film/reference/cards/terminal-3d.md",
+      "v6Path": "part2/film/reference/cards/terminal-3d.md",
+      "sha256": "956b483a20e9bf49c192b53ed060fa9690cc5eee771e0d3ca29758768836bb4c"
+    },
+    {
+      "archivePath": "WindowShade2-round2-handoff-v5/part2/film/reference/cards/transition-hidden-cut.md",
+      "v6Path": "part2/film/reference/cards/transition-hidden-cut.md",
+      "sha256": "3e6b872df779eef27a4ec0304d04a02d49ba5a3ad7bf6744020c1de94c64d22e"
+    },
+    {
+      "archivePath": "WindowShade2-round2-handoff-v5/part2/film/reference/cards/transition-travel.md",
+      "v6Path": "part2/film/reference/cards/transition-travel.md",
+      "sha256": "7e1d46357459532c97dde76cf2631770dd21580978f13437a0c4eefd647653eb"
+    },
+    {
+      "archivePath": "WindowShade2-round2-handoff-v5/part2/film/reference/cards/type-and-filter.md",
+      "v6Path": "part2/film/reference/cards/type-and-filter.md",
+      "sha256": "05da1b7e16fe652d2f5868485e913d08caaf87febb5512bd27b71d6b6c964fef"
+    },
+    {
+      "archivePath": "WindowShade2-round2-handoff-v5/part2/film/reference/cards/voice-waveform-live.md",
+      "v6Path": "part2/film/reference/cards/voice-waveform-live.md",
+      "sha256": "d5835944532b621f55fef1894bbf6e7ade6c453402a8a9a01133626b81708d98"
+    },
+    {
+      "archivePath": "WindowShade2-round2-handoff-v5/part2/film/reference/cards/wall-reveal-moves.md",
+      "v6Path": "part2/film/reference/cards/wall-reveal-moves.md",
+      "sha256": "e0783733037425ca97c48fce97fd10fbd1c104855d59faf8b50115f54f72d91d"
+    },
+    {
+      "archivePath": "WindowShade2-round2-handoff-v5/part2/film/reference/demos/_fixtures/Fixtures.tsx",
+      "v6Path": "part2/film/reference/demos/_fixtures/Fixtures.tsx",
+      "sha256": "e06a6edce67ba854c46b897c11575d487ab265a2b3edf2b480be85dbe29bb5a0"
+    },
+    {
+      "archivePath": "WindowShade2-round2-handoff-v5/part2/film/reference/demos/_fixtures/Motion.tsx",
+      "v6Path": "part2/film/reference/demos/_fixtures/Motion.tsx",
+      "sha256": "961a9ce2401e38b5fe22fce7f44d84fc656d76aad0b178082e447feb01494421"
+    },
+    {
+      "archivePath": "WindowShade2-round2-handoff-v5/part2/film/reference/demos/_fixtures/PageCam2D.tsx",
+      "v6Path": "part2/film/reference/demos/_fixtures/PageCam2D.tsx",
+      "sha256": "36b3b90680df7e99f0ced02f135181d7037f74c33a4f425cc01f7a110d20f69a"
+    },
+    {
+      "archivePath": "WindowShade2-round2-handoff-v5/part2/film/reference/demos/ai-stream-response/StreamResponse.tsx",
+      "v6Path": "part2/film/reference/demos/ai-stream-response/StreamResponse.tsx",
+      "sha256": "017726ea7fd92256de50a1c5018391b88efc9920abb7d0cf42dce0e2c0db3df5"
+    },
+    {
+      "archivePath": "WindowShade2-round2-handoff-v5/part2/film/reference/demos/ai-stream-response/agent-stream.jpg",
+      "v6Path": "part2/film/reference/demos/ai-stream-response/agent-stream.jpg",
+      "sha256": "8a6683ac0348347f941aaf5f396d48e70086e61ef0667626cb77e74b48d076f2"
+    },
+    {
+      "archivePath": "WindowShade2-round2-handoff-v5/part2/film/reference/demos/circle-match-iris/CircleMatchIris.tsx",
+      "v6Path": "part2/film/reference/demos/circle-match-iris/CircleMatchIris.tsx",
+      "sha256": "0c2afbb49d65aa15241396fb2343ba3cb046d0958cd80a9eac1925e4f93efd20"
+    },
+    {
+      "archivePath": "WindowShade2-round2-handoff-v5/part2/film/reference/demos/crash-zoom-punch/CrashImpactReal.tsx",
+      "v6Path": "part2/film/reference/demos/crash-zoom-punch/CrashImpactReal.tsx",
+      "sha256": "6150253befeb22cff49492dcf3a5b56c01d667e3df6136466e480d7b3b92789d"
+    },
+    {
+      "archivePath": "WindowShade2-round2-handoff-v5/part2/film/reference/demos/crash-zoom-punch/CrashZoomReal.tsx",
+      "v6Path": "part2/film/reference/demos/crash-zoom-punch/CrashZoomReal.tsx",
+      "sha256": "495a5afc91a4c93424d15edf35c8767d1ff90f4d9515bb9194f68d7f355a181f"
+    },
+    {
+      "archivePath": "WindowShade2-round2-handoff-v5/part2/film/reference/demos/dataviz-landscape-open/DatavizLandscapeOpen.tsx",
+      "v6Path": "part2/film/reference/demos/dataviz-landscape-open/DatavizLandscapeOpen.tsx",
+      "sha256": "f575d1387ed5fe5bd1172ab50cdda20fe0562d44bfb469ec6d199b97bacd024a"
+    },
+    {
+      "archivePath": "WindowShade2-round2-handoff-v5/part2/film/reference/demos/deck-deal-flyin/DeckDealFlyin.tsx",
+      "v6Path": "part2/film/reference/demos/deck-deal-flyin/DeckDealFlyin.tsx",
+      "sha256": "4738e54d707a82847d1a5081af88876a872465eb3ead94f1c7682acf8e5a251a"
+    },
+    {
+      "archivePath": "WindowShade2-round2-handoff-v5/part2/film/reference/demos/depth-layer-moves/DollyZoomReal.tsx",
+      "v6Path": "part2/film/reference/demos/depth-layer-moves/DollyZoomReal.tsx",
+      "sha256": "47d44cad258e8a3c7b7bfd7c5e5b3535360b486f21621e6fb25d210c7e4797b0"
+    },
+    {
+      "archivePath": "WindowShade2-round2-handoff-v5/part2/film/reference/demos/depth-layer-moves/MultiplaneReal.tsx",
+      "v6Path": "part2/film/reference/demos/depth-layer-moves/MultiplaneReal.tsx",
+      "sha256": "b67c6ab37f02f1df6033b54fdb08d1fa0aa85300404578be50715285d16d2124"
+    },
+    {
+      "archivePath": "WindowShade2-round2-handoff-v5/part2/film/reference/demos/draw-svg-trace/DrawSvgTrace.tsx",
+      "v6Path": "part2/film/reference/demos/draw-svg-trace/DrawSvgTrace.tsx",
+      "sha256": "654e26eef7357c64a828a6cbbd790331f9865e0e9c18768de15de46c281aacf5"
+    },
+    {
+      "archivePath": "WindowShade2-round2-handoff-v5/part2/film/reference/demos/fui-hud-moves/LineUnfoldPanel.tsx",
+      "v6Path": "part2/film/reference/demos/fui-hud-moves/LineUnfoldPanel.tsx",
+      "sha256": "87329b62b3dfe20b6c08c9f3a559b2f77ee4841b4860cc2be1a00ddf2d5d0122"
+    },
+    {
+      "archivePath": "WindowShade2-round2-handoff-v5/part2/film/reference/demos/fui-hud-moves/ReticleLockOn.tsx",
+      "v6Path": "part2/film/reference/demos/fui-hud-moves/ReticleLockOn.tsx",
+      "sha256": "46bf287a5de1fde17d34e3725ed6cf66d443a90cff63ebcc907293cf0c31fdf5"
+    },
+    {
+      "archivePath": "WindowShade2-round2-handoff-v5/part2/film/reference/demos/glass-pill-dictation-typing/GlassPillDictationTyping.tsx",
+      "v6Path": "part2/film/reference/demos/glass-pill-dictation-typing/GlassPillDictationTyping.tsx",
+      "sha256": "b3d70491d046eb645ea594e5e2a5f9d24d40dd0cf3860d7e65496e528e47f688"
+    },
+    {
+      "archivePath": "WindowShade2-round2-handoff-v5/part2/film/reference/demos/icon-performance-moves/AttentionBounce.tsx",
+      "v6Path": "part2/film/reference/demos/icon-performance-moves/AttentionBounce.tsx",
+      "sha256": "c467057383f91a4433be617db40d92d03f5f53f47e4cbcedb66091492f50cb87"
+    },
+    {
+      "archivePath": "WindowShade2-round2-handoff-v5/part2/film/reference/demos/icon-performance-moves/PopBurstConfirm.tsx",
+      "v6Path": "part2/film/reference/demos/icon-performance-moves/PopBurstConfirm.tsx",
+      "sha256": "cca22774f4d75754795f96e0060f727a8b062c3005b7bab5cf45fce86f02b80f"
+    },
+    {
+      "archivePath": "WindowShade2-round2-handoff-v5/part2/film/reference/demos/input-trigger-moves/CursorPerformancePunchIn.tsx",
+      "v6Path": "part2/film/reference/demos/input-trigger-moves/CursorPerformancePunchIn.tsx",
+      "sha256": "a2970990b385856cd9e176757eebdcd778fca864f7bf979c976b8fd4cfab53d3"
+    },
+    {
+      "archivePath": "WindowShade2-round2-handoff-v5/part2/film/reference/demos/input-trigger-moves/KeycapSmashCut.tsx",
+      "v6Path": "part2/film/reference/demos/input-trigger-moves/KeycapSmashCut.tsx",
+      "sha256": "cd995c264dd139a0e6c161d59bb9b5cff17d92fc2ac4efba2e7003e329d53904"
+    },
+    {
+      "archivePath": "WindowShade2-round2-handoff-v5/part2/film/reference/demos/letterspace-materialize/LetterspaceMaterialize.tsx",
+      "v6Path": "part2/film/reference/demos/letterspace-materialize/LetterspaceMaterialize.tsx",
+      "sha256": "c66c6a726608e8de3584afd8ff25406eecd387edcf313c701a14d577cf7c9341"
+    },
+    {
+      "archivePath": "WindowShade2-round2-handoff-v5/part2/film/reference/demos/light-play-moves/HalationBloom.tsx",
+      "v6Path": "part2/film/reference/demos/light-play-moves/HalationBloom.tsx",
+      "sha256": "515567c881a3b18c8ae92d001b0b656b506f3bbadea32d75a82a476c6ea47096"
+    },
+    {
+      "archivePath": "WindowShade2-round2-handoff-v5/part2/film/reference/demos/light-play-moves/SheenSweepRetry.tsx",
+      "v6Path": "part2/film/reference/demos/light-play-moves/SheenSweepRetry.tsx",
+      "sha256": "c411aedec951a84afcf1722c93e8d9bec2864752610c652cc8a7d9e862f5e799"
+    },
+    {
+      "archivePath": "WindowShade2-round2-handoff-v5/part2/film/reference/demos/light-play-moves/SpotlightSweepReveal.tsx",
+      "v6Path": "part2/film/reference/demos/light-play-moves/SpotlightSweepReveal.tsx",
+      "sha256": "2abd85f00e8221f6a6b67c89d0be24fea3dc661a1f00d68e3dc954567cb4b438"
+    },
+    {
+      "archivePath": "WindowShade2-round2-handoff-v5/part2/film/reference/demos/list-stack-press/ListStackPress.tsx",
+      "v6Path": "part2/film/reference/demos/list-stack-press/ListStackPress.tsx",
+      "sha256": "6649fa6321663c6b54c9ca326147917d89a2dfd61d582954b996c7dd83c878db"
+    },
+    {
+      "archivePath": "WindowShade2-round2-handoff-v5/part2/film/reference/demos/logo-shrink-wordmark-lockup/LogoShrinkWordmarkLockup.tsx",
+      "v6Path": "part2/film/reference/demos/logo-shrink-wordmark-lockup/LogoShrinkWordmarkLockup.tsx",
+      "sha256": "d8581f081b037f36954214276aefed9039ebe8d76aadbe91ffdf7c6ff3d4a4df"
+    },
+    {
+      "archivePath": "WindowShade2-round2-handoff-v5/part2/film/reference/demos/morph-from-primitive/MorphFromPrimitive.tsx",
+      "v6Path": "part2/film/reference/demos/morph-from-primitive/MorphFromPrimitive.tsx",
+      "sha256": "f18d82ce6675be5c0b097969285a973c122633f2844fd1c4a81cc1c6a97a0d5e"
+    },
+    {
+      "archivePath": "WindowShade2-round2-handoff-v5/part2/film/reference/demos/odometer-digit-roll/OdometerDigitRoll.tsx",
+      "v6Path": "part2/film/reference/demos/odometer-digit-roll/OdometerDigitRoll.tsx",
+      "sha256": "e91c46c1c80f68f83fbed2c1c39e5ad22d6be5799f3541978f56b9e61ee73af2"
+    },
+    {
+      "archivePath": "WindowShade2-round2-handoff-v5/part2/film/reference/demos/outro-group-photo-launch/OutroGroupPhotoLaunch.tsx",
+      "v6Path": "part2/film/reference/demos/outro-group-photo-launch/OutroGroupPhotoLaunch.tsx",
+      "sha256": "af4bbbf21570b65bc8e33b6ed679700089315bd17dffaf17864e4a8ac1e39830"
+    },
+    {
+      "archivePath": "WindowShade2-round2-handoff-v5/part2/film/reference/demos/paper-title-card/PaperTitleCard.tsx",
+      "v6Path": "part2/film/reference/demos/paper-title-card/PaperTitleCard.tsx",
+      "sha256": "5ab4b473e631c2863d6033be22231a07afce2b29d08322d5ba821607c2642a16"
+    },
+    {
+      "archivePath": "WindowShade2-round2-handoff-v5/part2/film/reference/demos/pill-slot-cycle/PillSlotCycle.tsx",
+      "v6Path": "part2/film/reference/demos/pill-slot-cycle/PillSlotCycle.tsx",
+      "sha256": "a8db19162d267d107904fd8e46573e9b74854bcbf871dd604fac56ff58b87f2f"
+    },
+    {
+      "archivePath": "WindowShade2-round2-handoff-v5/part2/film/reference/demos/quad-split-parallel-scenes/QuadSplitParallelScenes.tsx",
+      "v6Path": "part2/film/reference/demos/quad-split-parallel-scenes/QuadSplitParallelScenes.tsx",
+      "sha256": "0ef89104610b5a00fc7bb89367957fa8b42df0b616a6c98ed535af6984f07c8e"
+    },
+    {
+      "archivePath": "WindowShade2-round2-handoff-v5/part2/film/reference/demos/scan-bracket-sweep/ScanBracketSweep.tsx",
+      "v6Path": "part2/film/reference/demos/scan-bracket-sweep/ScanBracketSweep.tsx",
+      "sha256": "e96046d8b393545fc17a5b6c5d0158aae95d2f2285b6d2a997232a6595e6686e"
+    },
+    {
+      "archivePath": "WindowShade2-round2-handoff-v5/part2/film/reference/demos/shot-transitions/BlackCardTransition.tsx",
+      "v6Path": "part2/film/reference/demos/shot-transitions/BlackCardTransition.tsx",
+      "sha256": "4e4698247bb6bdd489ff34b46db292da07e616e575681eb13624b4f21d883561"
+    },
+    {
+      "archivePath": "WindowShade2-round2-handoff-v5/part2/film/reference/demos/shot-transitions/DarkTunnelTransition.tsx",
+      "v6Path": "part2/film/reference/demos/shot-transitions/DarkTunnelTransition.tsx",
+      "sha256": "526fd36c73b2aebbf01164900bc30e953bfa1361e76835d4efbfe47f7980ca67"
+    },
+    {
+      "archivePath": "WindowShade2-round2-handoff-v5/part2/film/reference/demos/shot-transitions/FocusHandoffTransition.tsx",
+      "v6Path": "part2/film/reference/demos/shot-transitions/FocusHandoffTransition.tsx",
+      "sha256": "00662137985de0d86b86cb882544189e6cf69276e8d849f45c7b2c23a84b679f"
+    },
+    {
+      "archivePath": "WindowShade2-round2-handoff-v5/part2/film/reference/demos/shot-transitions/MaskWipeReal.tsx",
+      "v6Path": "part2/film/reference/demos/shot-transitions/MaskWipeReal.tsx",
+      "sha256": "92eb6e2a34f4f075b286e03fa4ee000fda8369ff5f3b2bd3a02964e2efff3713"
+    },
+    {
+      "archivePath": "WindowShade2-round2-handoff-v5/part2/film/reference/demos/shot-transitions/PortalWipeV2.tsx",
+      "v6Path": "part2/film/reference/demos/shot-transitions/PortalWipeV2.tsx",
+      "sha256": "037b4f5bdd9b5c3d73a11d2932acddc471127e7051c122aee0f6423b77f511c1"
+    },
+    {
+      "archivePath": "WindowShade2-round2-handoff-v5/part2/film/reference/demos/shot-transitions/WhipBrakeReal.tsx",
+      "v6Path": "part2/film/reference/demos/shot-transitions/WhipBrakeReal.tsx",
+      "sha256": "87c84d66f0675d921ca4cfd55a9fd9c5a5ba9a7717870d4b44c4c391c81ad063"
+    },
+    {
+      "archivePath": "WindowShade2-round2-handoff-v5/part2/film/reference/demos/shot-transitions/WhipPanReal.tsx",
+      "v6Path": "part2/film/reference/demos/shot-transitions/WhipPanReal.tsx",
+      "sha256": "eda7132e8c2e142be87995b50a30e48c60c925872a9047c6bb8f54a8406be37f"
+    },
+    {
+      "archivePath": "WindowShade2-round2-handoff-v5/part2/film/reference/demos/speed-ramp-freeze/FreezeAnnotateReal.tsx",
+      "v6Path": "part2/film/reference/demos/speed-ramp-freeze/FreezeAnnotateReal.tsx",
+      "sha256": "5ea9848eb760ed76123ab152d4e2b60bb3b1df9472c3b0ca12e6723fb64f35c7"
+    },
+    {
+      "archivePath": "WindowShade2-round2-handoff-v5/part2/film/reference/demos/speed-ramp-freeze/SpeedRampReal.tsx",
+      "v6Path": "part2/film/reference/demos/speed-ramp-freeze/SpeedRampReal.tsx",
+      "sha256": "f3f9e54385f0920aad4071d6f85bf9c878946ddb7908894d5802ab2ecd5f11b8"
+    },
+    {
+      "archivePath": "WindowShade2-round2-handoff-v5/part2/film/reference/demos/spotlight-hero-card/SpotlightHeroCard.tsx",
+      "v6Path": "part2/film/reference/demos/spotlight-hero-card/SpotlightHeroCard.tsx",
+      "sha256": "9dcc839d8953ff930ade91c82a7da178a31afdaa1e81b1b7ff59820e4b6cb04c"
+    },
+    {
+      "archivePath": "WindowShade2-round2-handoff-v5/part2/film/reference/demos/svg-shape-morph/SvgShapeMorph.tsx",
+      "v6Path": "part2/film/reference/demos/svg-shape-morph/SvgShapeMorph.tsx",
+      "sha256": "9e6bfaca697bd36837b3c31163d607863942570daaa0b5abda0c0c5f131172ed"
+    },
+    {
+      "archivePath": "WindowShade2-round2-handoff-v5/part2/film/reference/demos/tension-camera-moves/BulletTimeFreezeOrbit.tsx",
+      "v6Path": "part2/film/reference/demos/tension-camera-moves/BulletTimeFreezeOrbit.tsx",
+      "sha256": "975f02697f579905a6d83461727f7e258f285fa4738d783ac96b3e6f997413bb"
+    },
+    {
+      "archivePath": "WindowShade2-round2-handoff-v5/part2/film/reference/demos/tension-camera-moves/DutchRollToLevel.tsx",
+      "v6Path": "part2/film/reference/demos/tension-camera-moves/DutchRollToLevel.tsx",
+      "sha256": "de3f0848a382c77d5f1d7824041fce6a371cef804be592845fba981dd83564d0"
+    },
+    {
+      "archivePath": "WindowShade2-round2-handoff-v5/part2/film/reference/demos/tension-camera-moves/PullBackIsolation.tsx",
+      "v6Path": "part2/film/reference/demos/tension-camera-moves/PullBackIsolation.tsx",
+      "sha256": "93e36a2f42e96497627fb6aac92854d914f70037239a772e5cb3830e7f1a9844"
+    },
+    {
+      "archivePath": "WindowShade2-round2-handoff-v5/part2/film/reference/demos/tension-camera-moves/SlowPushIn.tsx",
+      "v6Path": "part2/film/reference/demos/tension-camera-moves/SlowPushIn.tsx",
+      "sha256": "db43d1d0d52b27cba3a97f17bf2999bcbb8750f5c4aee460889285d7c2647446"
+    },
+    {
+      "archivePath": "WindowShade2-round2-handoff-v5/part2/film/reference/demos/terminal-3d/Terminal3D.tsx",
+      "v6Path": "part2/film/reference/demos/terminal-3d/Terminal3D.tsx",
+      "sha256": "810807a14ff6a7f813fe2ef999a40364734043428d34d9e272b24e7df18280d4"
+    },
+    {
+      "archivePath": "WindowShade2-round2-handoff-v5/part2/film/reference/demos/transition-hidden-cut/InvisibleCut.tsx",
+      "v6Path": "part2/film/reference/demos/transition-hidden-cut/InvisibleCut.tsx",
+      "sha256": "41e68ca391f37c1ca10288407283c38f71844ab7f796b36a37056d7c56f43ad5"
+    },
+    {
+      "archivePath": "WindowShade2-round2-handoff-v5/part2/film/reference/demos/transition-hidden-cut/LightLeakBurn.tsx",
+      "v6Path": "part2/film/reference/demos/transition-hidden-cut/LightLeakBurn.tsx",
+      "sha256": "31e4be432a84e13d6fa233ef3aff4a40646d67b949e16e9a5bea2a8f7b62b5fb"
+    },
+    {
+      "archivePath": "WindowShade2-round2-handoff-v5/part2/film/reference/demos/transition-hidden-cut/VersusSlam.tsx",
+      "v6Path": "part2/film/reference/demos/transition-hidden-cut/VersusSlam.tsx",
+      "sha256": "ec0f28e508e4c3706a642798ed8516d90ef1b39c7350e1af15e0f5e9f4cb481a"
+    },
+    {
+      "archivePath": "WindowShade2-round2-handoff-v5/part2/film/reference/demos/transition-travel/LetterformZoom.tsx",
+      "v6Path": "part2/film/reference/demos/transition-travel/LetterformZoom.tsx",
+      "sha256": "272b01d64d73252aab1b70b8f6214656d046704266ca06e5306edb66fc75da13"
+    },
+    {
+      "archivePath": "WindowShade2-round2-handoff-v5/part2/film/reference/demos/transition-travel/SharedElementMorph.tsx",
+      "v6Path": "part2/film/reference/demos/transition-travel/SharedElementMorph.tsx",
+      "sha256": "fe5d3a1071e71cce96470939bb6f4b4e7dc52e61058697ffa010c3e17e3521f3"
+    },
+    {
+      "archivePath": "WindowShade2-round2-handoff-v5/part2/film/reference/demos/type-and-filter/TypeAndFilter.tsx",
+      "v6Path": "part2/film/reference/demos/type-and-filter/TypeAndFilter.tsx",
+      "sha256": "95ab942c3e7f0416fbab7563ff326724123cc2a4ddc9fea478aebc8901cdf3b8"
+    },
+    {
+      "archivePath": "WindowShade2-round2-handoff-v5/part2/film/reference/demos/voice-waveform-live/VoiceWaveformLive.tsx",
+      "v6Path": "part2/film/reference/demos/voice-waveform-live/VoiceWaveformLive.tsx",
+      "sha256": "77ab5983344687d7d591e2101febe8f80bd72fcef2043b470fa24fb95ee9f833"
+    },
+    {
+      "archivePath": "WindowShade2-round2-handoff-v5/part2/film/reference/demos/wall-reveal-moves/BentoLightUp.tsx",
+      "v6Path": "part2/film/reference/demos/wall-reveal-moves/BentoLightUp.tsx",
+      "sha256": "eccb4c2211af30cb26b391ea734c326599958906411e9a3c019acfeceb87fd69"
+    },
+    {
+      "archivePath": "WindowShade2-round2-handoff-v5/part2/film/reference/demos/wall-reveal-moves/GridWaveFlip.tsx",
+      "v6Path": "part2/film/reference/demos/wall-reveal-moves/GridWaveFlip.tsx",
+      "sha256": "c39a5cabdca00167d3354667442b4de477b76a36576815abc483609f1198f481"
+    },
+    {
+      "archivePath": "WindowShade2-round2-handoff-v5/part2/film/reference/demos/wall-reveal-moves/WireframeDrawOn.tsx",
+      "v6Path": "part2/film/reference/demos/wall-reveal-moves/WireframeDrawOn.tsx",
+      "sha256": "18d2fc4192a67dbfdcfca390d753eb52f6bcb50be316b71480e54ed32208558f"
+    },
+    {
+      "archivePath": "WindowShade2-round2-handoff-v5/part2/film/reference/lib-tests/__tests__/helpers.test.ts",
+      "v6Path": "part2/film/reference/lib-tests/__tests__/helpers.test.ts",
+      "sha256": "65617872abe7a728cd19f12707fb456225d27ca0bab30863277d3b47e0a834ee"
+    },
+    {
+      "archivePath": "WindowShade2-round2-handoff-v5/part2/film/reference/promo-energy-arc.md",
+      "v6Path": "part2/film/reference/promo-energy-arc.md",
+      "sha256": "72f5be431d97c04395f3f02cbc5968922a906bcba808d511ddb5d9922b936190"
+    },
+    {
+      "archivePath": "WindowShade2-round2-handoff-v5/part2/film/reference/sound-design.md",
+      "v6Path": "part2/film/reference/sound-design.md",
+      "sha256": "cac6f23c0b360cef7c7d04655f3009cf5e45f79e5f775594a622e680b0301521"
+    },
+    {
+      "archivePath": "WindowShade2-round2-handoff-v5/part2/film/remotion.config.ts",
+      "v6Path": "part2/film/remotion.config.ts",
+      "sha256": "dc2560488ec68013be8dfaf6995d8aa6ef12ee1e64253d7ed3ef2f9a28dd3eb8"
+    },
+    {
+      "archivePath": "WindowShade2-round2-handoff-v5/part2/film/scripts/check-timeline.mjs",
+      "v6Path": "part2/film/scripts/check-timeline.mjs",
+      "sha256": "e113cf33d84b35504a39a704e9fdccbe4d52256fccb56a142ef11791185a82f5"
+    },
+    {
+      "archivePath": "WindowShade2-round2-handoff-v5/part2/film/scripts/render-offline.py",
+      "v6Path": "part2/film/scripts/render-offline.py",
+      "sha256": "7e2cf54d4862c70cad0bbee9377064c3325f9925a03f38af476daa8722e9698d"
+    },
+    {
+      "archivePath": "WindowShade2-round2-handoff-v5/part2/film/shot-source-map.json",
+      "v6Path": "part2/film/shot-source-map.json",
+      "sha256": "9c9239cb024a922921c5ea95cc2cf9bf47f8000632b4ea8dfdf1284f85421790"
+    },
+    {
+      "archivePath": "WindowShade2-round2-handoff-v5/part2/film/shots/ch0.md",
+      "v6Path": "part2/film/shots/ch0.md",
+      "sha256": "074b28fb9d6a96d620f22ee31145bc063f02066ea3ec4a6b620f9bd88ac9e639"
+    },
+    {
+      "archivePath": "WindowShade2-round2-handoff-v5/part2/film/shots/ch1.md",
+      "v6Path": "part2/film/shots/ch1.md",
+      "sha256": "37e49cc8521613efdbf47b68615b31d5f9ec098b27004555cd0fe9ff05ed07dd"
+    },
+    {
+      "archivePath": "WindowShade2-round2-handoff-v5/part2/film/shots/ch2.md",
+      "v6Path": "part2/film/shots/ch2.md",
+      "sha256": "96ca7c335458a5f616dce00bd97e90f2fd79c2eba1375929cc08ab405213674f"
+    },
+    {
+      "archivePath": "WindowShade2-round2-handoff-v5/part2/film/shots/ch3.md",
+      "v6Path": "part2/film/shots/ch3.md",
+      "sha256": "d93c0e8aa2b678a96425262739d7fa211e9ecd1e10ed87c3a494504aa311b22e"
+    },
+    {
+      "archivePath": "WindowShade2-round2-handoff-v5/part2/film/shots/ch4.md",
+      "v6Path": "part2/film/shots/ch4.md",
+      "sha256": "3249223d0a81afa608b6d0b3251473e81a7d544cca69479680fbcd454ba5817a"
+    },
+    {
+      "archivePath": "WindowShade2-round2-handoff-v5/part2/film/shots/ch5.md",
+      "v6Path": "part2/film/shots/ch5.md",
+      "sha256": "dc3eb762ed0a82a5c3bfaefa97c3f52862d6ce7227b5310ffed4e46db76180c7"
+    },
+    {
+      "archivePath": "WindowShade2-round2-handoff-v5/part2/film/shots/ch6.md",
+      "v6Path": "part2/film/shots/ch6.md",
+      "sha256": "cfaa0b017ff3c780cbc92193cd9665ecea0f6abcc283826583e1f6e8e7cd5e29"
+    },
+    {
+      "archivePath": "WindowShade2-round2-handoff-v5/part2/film/shots/ch7.md",
+      "v6Path": "part2/film/shots/ch7.md",
+      "sha256": "ade411f15b71ecabdf47c530dcfb28f72805ea785aecf1c30998c8727dcdc8d8"
+    },
+    {
+      "archivePath": "WindowShade2-round2-handoff-v5/part2/film/shots/ch8.md",
+      "v6Path": "part2/film/shots/ch8.md",
+      "sha256": "f8bd818794a93a1d4d89bbcbf667736a1cb2cdb386c985fbd03865a09f876948"
+    },
+    {
+      "archivePath": "WindowShade2-round2-handoff-v5/part2/film/src/Film.tsx",
+      "v6Path": "part2/film/src/Film.tsx",
+      "sha256": "8d0e2cc92bed9f2eb54b0abfab4987cccaca46f1ad6c086ff5044153a72171f2"
+    },
+    {
+      "archivePath": "WindowShade2-round2-handoff-v5/part2/film/src/Root.tsx",
+      "v6Path": "part2/film/src/Root.tsx",
+      "sha256": "b6ba970593373ef0ca28c53da90500ce1492036e22a521b2f5473e43d90de84e"
+    },
+    {
+      "archivePath": "WindowShade2-round2-handoff-v5/part2/film/src/index.ts",
+      "v6Path": "part2/film/src/index.ts",
+      "sha256": "98b03b1da7aa397e0fc89cb4600c418d3572b389cb1831b1e72e9b4400a5a34e"
+    },
+    {
+      "archivePath": "WindowShade2-round2-handoff-v5/part2/film/src/lib/Caption.tsx",
+      "v6Path": "part2/film/src/lib/Caption.tsx",
+      "sha256": "e5be094d9c4321296da5078e51a83147aa39e4d95c95dccc2bf53b9f7d280d04"
+    },
+    {
+      "archivePath": "WindowShade2-round2-handoff-v5/part2/film/src/lib/ClipCard.tsx",
+      "v6Path": "part2/film/src/lib/ClipCard.tsx",
+      "sha256": "3532788285cfe52fef4e836979832054c41885b238f4055fd84b40c8de44670b"
+    },
+    {
+      "archivePath": "WindowShade2-round2-handoff-v5/part2/film/src/lib/DigitRoll.tsx",
+      "v6Path": "part2/film/src/lib/DigitRoll.tsx",
+      "sha256": "aeb03c74d481a238dcd413af3054c264f9b4f91d5c745620e10a361fa4cbc20b"
+    },
+    {
+      "archivePath": "WindowShade2-round2-handoff-v5/part2/film/src/lib/FlashCut.tsx",
+      "v6Path": "part2/film/src/lib/FlashCut.tsx",
+      "sha256": "2e8d9e6319f99970be839f05bc869467b3d580aaa40809efb04b5dc02dd84c7f"
+    },
+    {
+      "archivePath": "WindowShade2-round2-handoff-v5/part2/film/src/lib/FlatPanel.tsx",
+      "v6Path": "part2/film/src/lib/FlatPanel.tsx",
+      "sha256": "e5dff9388d24376db383873ce8ce32e3264ab5ef35c959733fbc568efef6acdd"
+    },
+    {
+      "archivePath": "WindowShade2-round2-handoff-v5/part2/film/src/lib/PageCam.tsx",
+      "v6Path": "part2/film/src/lib/PageCam.tsx",
+      "sha256": "1679bfc0c15973d5a51f6b600ae17d4d8c06c2fa3f8513e5110f9d0b9b3271de"
+    },
+    {
+      "archivePath": "WindowShade2-round2-handoff-v5/part2/film/src/lib/VerticalTicker.tsx",
+      "v6Path": "part2/film/src/lib/VerticalTicker.tsx",
+      "sha256": "e4f90b838559beae465c6bb08736c00097bb0107d6dd4a378f64308e2acf1bae"
+    },
+    {
+      "archivePath": "WindowShade2-round2-handoff-v5/part2/film/src/lib/helpers/camera.tsx",
+      "v6Path": "part2/film/src/lib/helpers/camera.tsx",
+      "sha256": "8e5fc4e0ccfaa258fcbcc362761803d2c3e548cbf2e461d157cb42a134caf22d"
+    },
+    {
+      "archivePath": "WindowShade2-round2-handoff-v5/part2/film/src/lib/helpers/motion.ts",
+      "v6Path": "part2/film/src/lib/helpers/motion.ts",
+      "sha256": "9123bacf8078982a903bb565923974902212f93ebe265e24d188e4362a8e251f"
+    },
+    {
+      "archivePath": "WindowShade2-round2-handoff-v5/part2/film/src/lib/helpers/rand.ts",
+      "v6Path": "part2/film/src/lib/helpers/rand.ts",
+      "sha256": "0c64fcd062f1fcd7547e3da96cfa8430c2502eaf2e3f09fb2323392f8a5493ef"
+    },
+    {
+      "archivePath": "WindowShade2-round2-handoff-v5/part2/film/src/lib/helpers/shake.ts",
+      "v6Path": "part2/film/src/lib/helpers/shake.ts",
+      "sha256": "bbee393468a944df5ae85261e9ffee3c78fd78de0087e057cf96ee36e569054e"
+    },
+    {
+      "archivePath": "WindowShade2-round2-handoff-v5/part2/film/src/picture.d.mts",
+      "v6Path": "part2/film/src/picture.d.mts",
+      "sha256": "65915ab8cf036ff8385e9bcda70766938c0d072d3cfc4d696e348a224e578f86"
+    },
+    {
+      "archivePath": "WindowShade2-round2-handoff-v5/part2/film/src/picture.mjs",
+      "v6Path": "part2/film/src/picture.mjs",
+      "sha256": "ab805739de1e6621b704fc9c9952c8351aff194e259c496b20fb78178e042f3f"
+    },
+    {
+      "archivePath": "WindowShade2-round2-handoff-v5/part2/film/src/scenes/Camera.tsx",
+      "v6Path": "part2/film/src/scenes/Camera.tsx",
+      "sha256": "2e973cb71ac6a12e9b1c0e0b62a281482ec6000dc91b64cfa0b10a4a9872d296"
+    },
+    {
+      "archivePath": "WindowShade2-round2-handoff-v5/part2/film/src/scenes/Ch0Unlock.tsx",
+      "v6Path": "part2/film/src/scenes/Ch0Unlock.tsx",
+      "sha256": "ccc19bc3a49b5e96d0fbadc3ef51921ff217a9715a06b7568adc71695b3ac903"
+    },
+    {
+      "archivePath": "WindowShade2-round2-handoff-v5/part2/film/src/scenes/Ch1Island.tsx",
+      "v6Path": "part2/film/src/scenes/Ch1Island.tsx",
+      "sha256": "e97dbcefc831f7a2033a2dcb2de947b88a94ffbc0a521ea2477ea09ecf3fe9d5"
+    },
+    {
+      "archivePath": "WindowShade2-round2-handoff-v5/part2/film/src/scenes/Ch2Windows.tsx",
+      "v6Path": "part2/film/src/scenes/Ch2Windows.tsx",
+      "sha256": "87f831f84501185041760651d54085ab31d05eafbeb7a448ca858153fbb0e085"
+    },
+    {
+      "archivePath": "WindowShade2-round2-handoff-v5/part2/film/src/scenes/Ch3Launchpad.tsx",
+      "v6Path": "part2/film/src/scenes/Ch3Launchpad.tsx",
+      "sha256": "eb24862aab6f042eee93341165d228bd52f8cd60b566dfdd802e2ddd68928344"
+    },
+    {
+      "archivePath": "WindowShade2-round2-handoff-v5/part2/film/src/scenes/Ch4Inputs.tsx",
+      "v6Path": "part2/film/src/scenes/Ch4Inputs.tsx",
+      "sha256": "bd27379509f5259555f6dd35702443b492df56ff890f528798e089f434563bcb"
+    },
+    {
+      "archivePath": "WindowShade2-round2-handoff-v5/part2/film/src/scenes/Ch5Conduct.tsx",
+      "v6Path": "part2/film/src/scenes/Ch5Conduct.tsx",
+      "sha256": "4d44c90b879cb16972b60aa9d4df63d83b52f90721f56a65d7913119fcf7113a"
+    },
+    {
+      "archivePath": "WindowShade2-round2-handoff-v5/part2/film/src/scenes/Ch6CarPlay.tsx",
+      "v6Path": "part2/film/src/scenes/Ch6CarPlay.tsx",
+      "sha256": "6834be7459502237cc7f0f44781f3f7d9f60356043d2fdac03607704a1be794f"
+    },
+    {
+      "archivePath": "WindowShade2-round2-handoff-v5/part2/film/src/scenes/Ch7Focus.tsx",
+      "v6Path": "part2/film/src/scenes/Ch7Focus.tsx",
+      "sha256": "9d0cc0f14282c43812ea7755cafaf36d0c871bf5eb235ad2d2ca81f1e0344726"
+    },
+    {
+      "archivePath": "WindowShade2-round2-handoff-v5/part2/film/src/scenes/Ch8Outro.tsx",
+      "v6Path": "part2/film/src/scenes/Ch8Outro.tsx",
+      "sha256": "ddb7dd6b0fa4eb31e30b2312a6c0ba071f10c6408dcfa2b274b3d433e6e4204b"
+    },
+    {
+      "archivePath": "WindowShade2-round2-handoff-v5/part2/film/src/scenes/Footage.tsx",
+      "v6Path": "part2/film/src/scenes/Footage.tsx",
+      "sha256": "e315d930fb313ef6e8b97b4684213a84a02a791dda6deb5ad999afd1c7cd57d1"
+    },
+    {
+      "archivePath": "WindowShade2-round2-handoff-v5/part2/film/src/scenes/Notch.tsx",
+      "v6Path": "part2/film/src/scenes/Notch.tsx",
+      "sha256": "2643ec675175254afa720562833ac90a15f1f1c1548314ee4cd5a7c1f37eb15c"
+    },
+    {
+      "archivePath": "WindowShade2-round2-handoff-v5/part2/film/src/scenes/Stage.tsx",
+      "v6Path": "part2/film/src/scenes/Stage.tsx",
+      "sha256": "9bad2201d2fd4fe2ac81afe3ac8dbf3cc0d366f33036efb391e7aa26eabab22f"
+    },
+    {
+      "archivePath": "WindowShade2-round2-handoff-v5/part2/film/src/scenes/wsSpring.ts",
+      "v6Path": "part2/film/src/scenes/wsSpring.ts",
+      "sha256": "81bd981c4018e45b575b1db671307c6f09fff86bc965e1b9f552da8ce44b6c89"
+    },
+    {
+      "archivePath": "WindowShade2-round2-handoff-v5/part2/film/src/timeline.json",
+      "v6Path": "part2/film/src/timeline.json",
+      "sha256": "1ec7ae533a300405a1b9a15f65dcfdb37a767c7b8c4cea37ea59663b35b7d18b"
+    },
+    {
+      "archivePath": "WindowShade2-round2-handoff-v5/part2/film/tsconfig.json",
+      "v6Path": "part2/film/tsconfig.json",
+      "sha256": "4c1e3cf27dafa9dca603da9d50806a4cc91bd6c4a98de49cc7ccd2e171a39c87"
+    },
+    {
+      "archivePath": "WindowShade2-round2-handoff-v5/part2/packages/D5a/WORKORDER.md",
+      "v6Path": "part2/packages/D5a/WORKORDER.md",
+      "sha256": "9af5a9e368519101581e862a4c62e7cc042e005e9e8f6bb00a878eda5497e50e"
+    },
+    {
+      "archivePath": "WindowShade2-round2-handoff-v5/part2/packages/D5a/prototype/Core/RemoteSessionGate.swift",
+      "v6Path": "part2/packages/D5a/prototype/Core/RemoteSessionGate.swift",
+      "sha256": "a48f690ce3db11c93563402a6e27601ce33cf6293b20985efb4bbecc2e1d23f6"
+    },
+    {
+      "archivePath": "WindowShade2-round2-handoff-v5/part2/packages/D6/WORKORDER.md",
+      "v6Path": "part2/packages/D6/WORKORDER.md",
+      "sha256": "ac9358c6996856616ecdeae9ac25c1488da86a58a7011742e4c9d5881b3ce4fe"
+    },
+    {
+      "archivePath": "WindowShade2-round2-handoff-v5/part2/packages/D6/prototype/Core/CodexWire.swift",
+      "v6Path": "part2/packages/D6/prototype/Core/CodexWire.swift",
+      "sha256": "0ebd44a4e53c6ddacc5bb3ac18a9240e21db3ddc2657af2795f6402bced81894"
+    },
+    {
+      "archivePath": "WindowShade2-round2-handoff-v5/part2/packages/L2/WORKORDER.md",
+      "v6Path": "part2/packages/L2/WORKORDER.md",
+      "sha256": "d9a0dfb7fd46d99d8056c65102e653680c51d7ccb8a717d5db947321aac22a41"
+    },
+    {
+      "archivePath": "WindowShade2-round2-handoff-v5/part2/packages/L2/prototype/Core/PresenceReadDeadline.swift",
+      "v6Path": "part2/packages/L2/prototype/Core/PresenceReadDeadline.swift",
+      "sha256": "1fbe0aecaaeb279525bc7a5b37de6ffc7b5b48107df0fe84e9524399a287086a"
+    },
+    {
+      "archivePath": "WindowShade2-round2-handoff-v5/part2/packages/S1/SUBTITLES.md",
+      "v6Path": "part2/packages/S1/SUBTITLES.md",
+      "sha256": "53423cd40714cd34e38aa12d8c7ee53f87306f3c58a706129902604cef0eb623"
+    },
+    {
+      "archivePath": "WindowShade2-round2-handoff-v5/part2/packages/S1/WORKORDER.md",
+      "v6Path": "part2/packages/S1/WORKORDER.md",
+      "sha256": "7e78d83a99698d3680ee56a6e02a20ecbd6fd9fbc0c59b846e88d044965fa626"
+    },
+    {
+      "archivePath": "WindowShade2-round2-handoff-v5/part2/packages/S1/prototype/App/WS2SettingsInfo.swift",
+      "v6Path": "part2/packages/S1/prototype/App/WS2SettingsInfo.swift",
+      "sha256": "c73bb4d2152117572fbdfd332ae00bbebe784839868830aa2933821195b7fece"
+    },
+    {
+      "archivePath": "WindowShade2-round2-handoff-v5/part2/packages/S1/subtitles.json",
+      "v6Path": "part2/packages/S1/subtitles.json",
+      "sha256": "74a66b1b960526eb0fd423fab28194ca954fbfb856f1c9d87fe43f6ac73abb25"
+    },
+    {
+      "archivePath": "WindowShade2-round2-handoff-v5/part2/packages/T2/WORKORDER.md",
+      "v6Path": "part2/packages/T2/WORKORDER.md",
+      "sha256": "1df5019612593f0967bf09de7e3683ca7117aae8ed9f4c4ac1a5581e9caf85d4"
+    },
+    {
+      "archivePath": "WindowShade2-round2-handoff-v5/part2/packages/T2/prototype/App/FocusTimerCard.swift",
+      "v6Path": "part2/packages/T2/prototype/App/FocusTimerCard.swift",
+      "sha256": "c50a49ca830c491579a99fee50b3bc54d5c8254239401abcf509b53852719add"
+    },
+    {
+      "archivePath": "WindowShade2-round2-handoff-v5/part2/packages/T2/prototype/App/FocusTimerHost.swift",
+      "v6Path": "part2/packages/T2/prototype/App/FocusTimerHost.swift",
+      "sha256": "71347ef9d5c90ee95a590ed85e91f5f399e12c2040d70a8cd062c3b3dc6e5c17"
+    },
+    {
+      "archivePath": "WindowShade2-round2-handoff-v5/part2/patches/S1.diff",
+      "v6Path": "part2/patches/S1.diff",
+      "sha256": "a2000bac6bf70b0208b8dcd87aa58ce2d59d9da52c388a304b148745d2c54609"
+    },
+    {
+      "archivePath": "WindowShade2-round2-handoff-v5/part2/patches/edits.json",
+      "v6Path": "part2/patches/edits.json",
+      "sha256": "f13bd3ffc24a87258fcdde0c5138e3d6c2a11842f6ca7494cb0745a08d7f412b"
+    },
+    {
+      "archivePath": "WindowShade2-round2-handoff-v5/part2/probes/BLEReadProbe.swift",
+      "v6Path": "part2/probes/BLEReadProbe.swift",
+      "sha256": "2eab49fb2aee375f211baf96b38d18b8fb6befc8535384a12a885f5aa50225ff"
+    },
+    {
+      "archivePath": "WindowShade2-round2-handoff-v5/part2/probes/IdentityBoundaryProbe.swift",
+      "v6Path": "part2/probes/IdentityBoundaryProbe.swift",
+      "sha256": "590ba59faf1ad3a1c6f40f7257af3e58d62a0d4398ef876f66780dc3a2fb82f4"
+    },
+    {
+      "archivePath": "WindowShade2-round2-handoff-v5/part2/probes/LockStateProbe.swift",
+      "v6Path": "part2/probes/LockStateProbe.swift",
+      "sha256": "46e465de44391c50ed5ac9b8f42206d3fa0494eac00ab2fd5042a024050ab848"
+    },
+    {
+      "archivePath": "WindowShade2-round2-handoff-v5/part2/probes/MultitouchSymbolProbe.swift",
+      "v6Path": "part2/probes/MultitouchSymbolProbe.swift",
+      "sha256": "f66b1dcecd95923edcf54d27daf9bc3458a424fb3b9e7dd73de9303e70e37cee"
+    },
+    {
+      "archivePath": "WindowShade2-round2-handoff-v5/part2/probes/README.md",
+      "v6Path": "part2/probes/README.md",
+      "sha256": "e29b4170e913d1554d70dba5219ab87eb0de0bc2bb696ef10c64e361a9e8448d"
+    },
+    {
+      "archivePath": "WindowShade2-round2-handoff-v5/part2/probes/RemoteHIDProbe.swift",
+      "v6Path": "part2/probes/RemoteHIDProbe.swift",
+      "sha256": "e035a129208ce6c5de6203a7eebd118569bfa88d5e66b2712c03f3deceb6d3ae"
+    },
+    {
+      "archivePath": "WindowShade2-round2-handoff-v5/part2/probes/results-template.csv",
+      "v6Path": "part2/probes/results-template.csv",
+      "sha256": "4a979a8c1f69e08ec82c84d7cc5f9006281776ec0c8674c17a9d2fa3fa738781"
+    },
+    {
+      "archivePath": "WindowShade2-round2-handoff-v5/part2/probes/run-probe.sh",
+      "v6Path": "part2/probes/run-probe.sh",
+      "sha256": "9a1306dc248973a3fcad8aabe12cbfb4bae7008d2b2407968660d0e0637ea080"
+    },
+    {
+      "archivePath": "WindowShade2-round2-handoff-v5/part2/sources.md",
+      "v6Path": "part2/sources.md",
+      "sha256": "1219e76f708ca09b6fc87c20f1eba68d3e68b5f5300a0d0694567c0cf7dcd28e"
+    },
+    {
+      "archivePath": "WindowShade2-round2-handoff-v5/part2/tests/Part2CoreTests.swift",
+      "v6Path": "part2/tests/Part2CoreTests.swift",
+      "sha256": "7fd6c4cb7051e40e40f5dea95d10a102418dbb47e7dacf687f2e5a1d72186438"
+    },
+    {
+      "archivePath": "WindowShade2-round2-handoff-v5/part2/tests/check-schema.py",
+      "v6Path": "part2/tests/check-schema.py",
+      "sha256": "5dc3866f0fb746712acc37cb75c94226ecd77db46854c9b08cc11151c09ff780"
+    },
+    {
+      "archivePath": "WindowShade2-round2-handoff-v5/part2/tests/run-core.sh",
+      "v6Path": "part2/tests/run-core.sh",
+      "sha256": "81a500e0e20d1b2d030c26583c61440fdef8863d9e3a47f0092c7adcfb8b42f6"
+    },
+    {
+      "archivePath": "WindowShade2-round2-handoff-v5/part2/tools/stage.py",
+      "v6Path": "part2/tools/stage.py",
+      "sha256": "f9da6575f3430fb512ab5d3ab1711a6f7ad61d12f4e96cac3bd169fb0dbd77b3"
+    },
+    {
+      "archivePath": "WindowShade2-round2-handoff-v5/part2/validation/codex-outbound.ndjson",
+      "v6Path": "part2/validation/codex-outbound.ndjson",
+      "sha256": "d95756dbf8419f21deb20e2ed396f72b140254d587c063da662ffd3eca484116"
+    },
+    {
+      "archivePath": "WindowShade2-round2-handoff-v5/part2/validation/codex-schema.json",
+      "v6Path": "part2/validation/codex-schema.json",
+      "sha256": "75c61bb6d9410bcb34039413504aae67eeab92091d769ebf1be13774402da000"
+    },
+    {
+      "archivePath": "WindowShade2-round2-handoff-v5/part2/validation/contact-landscape.jpg",
+      "v6Path": "part2/validation/contact-landscape.jpg",
+      "sha256": "0d307f6152d55ce4a21452efe7021b1b76c4c6eb0a962c8a82929d329e2bb9a5"
+    },
+    {
+      "archivePath": "WindowShade2-round2-handoff-v5/part2/validation/contact-portrait.jpg",
+      "v6Path": "part2/validation/contact-portrait.jpg",
+      "sha256": "e5bcd6b5b06177328808f82169ae359a773bfc129a27cfeba778740ed4d35ac8"
+    },
+    {
+      "archivePath": "WindowShade2-round2-handoff-v5/part2/validation/core-tests.txt",
+      "v6Path": "part2/validation/core-tests.txt",
+      "sha256": "b3403417763700e46a435192cf952cffc3c36d3bacd203283182bcaa0fdb4adb"
+    },
+    {
+      "archivePath": "WindowShade2-round2-handoff-v5/part2/validation/core-typecheck.txt",
+      "v6Path": "part2/validation/core-typecheck.txt",
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    {
+      "archivePath": "WindowShade2-round2-handoff-v5/part2/validation/environment.json",
+      "v6Path": "part2/validation/environment.json",
+      "sha256": "7c92890145928778c345296c3a4f7d17f8f363016530b0a1adea0e07a061178c"
+    },
+    {
+      "archivePath": "WindowShade2-round2-handoff-v5/part2/validation/film-timeline.json",
+      "v6Path": "part2/validation/film-timeline.json",
+      "sha256": "9dfb8edf5df30c2bde3355b680dc7752c12b5801f864324ceb4394b50a1cc54d"
+    },
+    {
+      "archivePath": "WindowShade2-round2-handoff-v5/part2/validation/focus-host-typecheck.txt",
+      "v6Path": "part2/validation/focus-host-typecheck.txt",
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    {
+      "archivePath": "WindowShade2-round2-handoff-v5/part2/validation/input-integrity.json",
+      "v6Path": "part2/validation/input-integrity.json",
+      "sha256": "2ebfd2b448d5beb496f29d669dd99d9d21c06514a7111a1b1238c79f90d2f9c4"
+    },
+    {
+      "archivePath": "WindowShade2-round2-handoff-v5/part2/validation/mac-source-parse.json",
+      "v6Path": "part2/validation/mac-source-parse.json",
+      "sha256": "9c5ef4c001a24f06ca45e0647b3f218e870f3fb1c04da6d462f91beacca092a2"
+    },
+    {
+      "archivePath": "WindowShade2-round2-handoff-v5/part2/validation/media-probe.json",
+      "v6Path": "part2/validation/media-probe.json",
+      "sha256": "7d40a1917e35f9bb3fd9b0e64a9396586a05592ac7f323b7c9e7990eb760d4b2"
+    },
+    {
+      "archivePath": "WindowShade2-round2-handoff-v5/part2/validation/npm-ci.txt",
+      "v6Path": "part2/validation/npm-ci.txt",
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    {
+      "archivePath": "WindowShade2-round2-handoff-v5/part2/validation/npm-network-check.txt",
+      "v6Path": "part2/validation/npm-network-check.txt",
+      "sha256": "47a669901f602587bbbd3f60a320fe531e27432ab5b78c99c132390938bce5ab"
+    },
+    {
+      "archivePath": "WindowShade2-round2-handoff-v5/part2/validation/offline-render-landscape.txt",
+      "v6Path": "part2/validation/offline-render-landscape.txt",
+      "sha256": "9410bfc135da1364dae81e3117d6c821c1f228fc229c5e4c23ad80f83c5545c9"
+    },
+    {
+      "archivePath": "WindowShade2-round2-handoff-v5/part2/validation/offline-render-portrait.txt",
+      "v6Path": "part2/validation/offline-render-portrait.txt",
+      "sha256": "86012b9051cc36bc936cd2670d8630218027aec7470ac375b06d7fd575eaa9bf"
+    },
+    {
+      "archivePath": "WindowShade2-round2-handoff-v5/part2/validation/qa-landscape-0.png",
+      "v6Path": "part2/validation/qa-landscape-0.png",
+      "sha256": "339605549cb3e50565b56ac81207ece6d8b85cc9efb55df1e58c35c08cb1c26c"
+    },
+    {
+      "archivePath": "WindowShade2-round2-handoff-v5/part2/validation/qa-landscape-1.png",
+      "v6Path": "part2/validation/qa-landscape-1.png",
+      "sha256": "e82de1974b918bec548dcf8274501b4c6a44a9d6ada28f6254d7c5bba033ce28"
+    },
+    {
+      "archivePath": "WindowShade2-round2-handoff-v5/part2/validation/qa-landscape-2.png",
+      "v6Path": "part2/validation/qa-landscape-2.png",
+      "sha256": "87c68f3a3256b315f6d6f6aff5176dbfefc0843a07e0d5b1c7c3953381c87adf"
+    },
+    {
+      "archivePath": "WindowShade2-round2-handoff-v5/part2/validation/qa-landscape-3.png",
+      "v6Path": "part2/validation/qa-landscape-3.png",
+      "sha256": "8e0a5df2aba194eb98f28c72eddd87ab445ac9451d1e9bbc380d36a0bd7156a8"
+    },
+    {
+      "archivePath": "WindowShade2-round2-handoff-v5/part2/validation/qa-landscape-4.png",
+      "v6Path": "part2/validation/qa-landscape-4.png",
+      "sha256": "123b87281a3d0e2e0fd80e3013f677d35cc64916ed6bd1f53d7f2b510bdd4330"
+    },
+    {
+      "archivePath": "WindowShade2-round2-handoff-v5/part2/validation/qa-landscape-5.png",
+      "v6Path": "part2/validation/qa-landscape-5.png",
+      "sha256": "65dc242d279f56f403b682e4ace099cb6001be5751424d5bfb3ca40a380b244f"
+    },
+    {
+      "archivePath": "WindowShade2-round2-handoff-v5/part2/validation/qa-landscape-6.png",
+      "v6Path": "part2/validation/qa-landscape-6.png",
+      "sha256": "70a0976c21a1d7d587dbef17cff3b0b3fb0040a1bcafd81cdd7539868c85456a"
+    },
+    {
+      "archivePath": "WindowShade2-round2-handoff-v5/part2/validation/qa-landscape-7.png",
+      "v6Path": "part2/validation/qa-landscape-7.png",
+      "sha256": "19c8cda5b91b951c4c31b0775eea19c3d658e1c08f1d5b2a41a1236e12ed5521"
+    },
+    {
+      "archivePath": "WindowShade2-round2-handoff-v5/part2/validation/qa-landscape-8.png",
+      "v6Path": "part2/validation/qa-landscape-8.png",
+      "sha256": "03bc0d1d5c4c85f3e606f6e7ce9e6d44ea1257095e23e0a0de781ff1163d4c87"
+    },
+    {
+      "archivePath": "WindowShade2-round2-handoff-v5/part2/validation/qa-portrait-0.png",
+      "v6Path": "part2/validation/qa-portrait-0.png",
+      "sha256": "8e280754f1a9151be8b15838392c2c6a57127551f16464dbbe7fb634c9983c92"
+    },
+    {
+      "archivePath": "WindowShade2-round2-handoff-v5/part2/validation/qa-portrait-1.png",
+      "v6Path": "part2/validation/qa-portrait-1.png",
+      "sha256": "51d904a662c41568dbbe76c2ffb8d8ea143f2e55126dc4d0d0efbd9b8872d389"
+    },
+    {
+      "archivePath": "WindowShade2-round2-handoff-v5/part2/validation/qa-portrait-2.png",
+      "v6Path": "part2/validation/qa-portrait-2.png",
+      "sha256": "3268babd72497f290bdf0680036e2b84c19f7abdc2a05384e56ae616638eedc1"
+    },
+    {
+      "archivePath": "WindowShade2-round2-handoff-v5/part2/validation/qa-portrait-3.png",
+      "v6Path": "part2/validation/qa-portrait-3.png",
+      "sha256": "8a5065229ed56cc859d6aa0e69a7ee3206b82ad248b1f17670fd7cc4ed1057ae"
+    },
+    {
+      "archivePath": "WindowShade2-round2-handoff-v5/part2/validation/qa-portrait-4.png",
+      "v6Path": "part2/validation/qa-portrait-4.png",
+      "sha256": "b1ebc7e7a6679970baace7c0c64654827562627f9355baf709394ffd72d144d2"
+    },
+    {
+      "archivePath": "WindowShade2-round2-handoff-v5/part2/validation/qa-portrait-5.png",
+      "v6Path": "part2/validation/qa-portrait-5.png",
+      "sha256": "3b3bef8f10e2a8792261dfe3cfa3dd028fcf847a2ae5726243633414018e0ea0"
+    },
+    {
+      "archivePath": "WindowShade2-round2-handoff-v5/part2/validation/qa-portrait-6.png",
+      "v6Path": "part2/validation/qa-portrait-6.png",
+      "sha256": "0a768be20496bca729b78c399575fba0ca7a66a21c44802802cf14d2401925b5"
+    },
+    {
+      "archivePath": "WindowShade2-round2-handoff-v5/part2/validation/qa-portrait-7.png",
+      "v6Path": "part2/validation/qa-portrait-7.png",
+      "sha256": "8b3aaf6229ead3c16c7532a0e4124bb8fa102ffa1ce09707dc340af7aae77c38"
+    },
+    {
+      "archivePath": "WindowShade2-round2-handoff-v5/part2/validation/qa-portrait-8.png",
+      "v6Path": "part2/validation/qa-portrait-8.png",
+      "sha256": "13224014c62dadb38a402a91877e4dc2a35d24a736df88a3a425f73b749cbb94"
+    },
+    {
+      "archivePath": "WindowShade2-round2-handoff-v5/part2/validation/staging.txt",
+      "v6Path": "part2/validation/staging.txt",
+      "sha256": "cfbb112bde0f932cbe75c93c035cabdaab2a22922b596a7570494b4790efc697"
+    },
+    {
+      "archivePath": "WindowShade2-round2-handoff-v5/part2/validation/typescript-syntax.json",
+      "v6Path": "part2/validation/typescript-syntax.json",
+      "sha256": "33acdb25f7cecab0351a7bae6afd168a29a53150c9ac1afb3e9f7f58a9c50b42"
+    },
+    {
+      "archivePath": "WindowShade2-round2-handoff-v5/part3/CHANGELOG.md",
+      "v6Path": "part3/CHANGELOG.md",
+      "sha256": "af83b35e8a8191d0d4df539ced69d21253c03be5640859737d3a7ffc4f5f73f5"
+    },
+    {
+      "archivePath": "WindowShade2-round2-handoff-v5/part3/MANIFEST.sha256.json",
+      "v6Path": "part3/MANIFEST.sha256.json",
+      "sha256": "511b351c76abf5756a7ec4a2b341ff28f79613f065d480fdc122d00cff24cabe"
+    },
+    {
+      "archivePath": "WindowShade2-round2-handoff-v5/part3/README.md",
+      "v6Path": "part3/README.md",
+      "sha256": "5596e4355783d6a39ef55113e13f3167c8926a7d1c1c155fe142705a184b4977"
+    },
+    {
+      "archivePath": "WindowShade2-round2-handoff-v5/part3/SOURCES.md",
+      "v6Path": "part3/SOURCES.md",
+      "sha256": "2007d5258ef4bca08823be564f11f50338fa271e68b84344580a39c9c0e87aab"
+    },
+    {
+      "archivePath": "WindowShade2-round2-handoff-v5/part3/VALIDATION.md",
+      "v6Path": "part3/VALIDATION.md",
+      "sha256": "7bb58f57f818866b89a09b85f4773b65dcb4820c4b3c5ffa81970bc2b33182db"
+    },
+    {
+      "archivePath": "WindowShade2-round2-handoff-v5/part3/answers.md",
+      "v6Path": "part3/answers.md",
+      "sha256": "f6dbbcfed1461ace690c11021c5bda08460e59d6fdfecb342c6c5aafbc10b4d7"
+    },
+    {
+      "archivePath": "WindowShade2-round2-handoff-v5/part3/contracts/Contracts.swift",
+      "v6Path": "part3/contracts/Contracts.swift",
+      "sha256": "12fffc2e5cf207aa0ca6b4c371f28b9eec8c2b374b5e1a06d8943878891b2420"
+    },
+    {
+      "archivePath": "WindowShade2-round2-handoff-v5/part3/contracts/PRIVACY-ADDENDUM.md",
+      "v6Path": "part3/contracts/PRIVACY-ADDENDUM.md",
+      "sha256": "bdbac23298c2253b47b5d8e5a826aef78535f8d2f54cd57f1f4e71456f7ab9f4"
+    },
+    {
+      "archivePath": "WindowShade2-round2-handoff-v5/part3/film/FINALISE.md",
+      "v6Path": "part3/film/FINALISE.md",
+      "sha256": "dd713b016dac115da15a4cb8bde707640fca194df600e787f859373ca6165c33"
+    },
+    {
+      "archivePath": "WindowShade2-round2-handoff-v5/part3/film/release-gate.py",
+      "v6Path": "part3/film/release-gate.py",
+      "sha256": "fb22880a772731e9a8b68390a46ab7db83f6c464da1fc585b1347dd2dfc0963f"
+    },
+    {
+      "archivePath": "WindowShade2-round2-handoff-v5/part3/integration/CLOSURE.md",
+      "v6Path": "part3/integration/CLOSURE.md",
+      "sha256": "1603bd6e8cbe4ad96d501673db30173673d434c104570f7f220b77f7014500bc"
+    },
+    {
+      "archivePath": "WindowShade2-round2-handoff-v5/part3/integration/FOCUS-ADAPTER.md",
+      "v6Path": "part3/integration/FOCUS-ADAPTER.md",
+      "sha256": "b4120c77c122cb2f5fc484fcc3f74b1af24390b99115eff30cdfa2c028cb05fe"
+    },
+    {
+      "archivePath": "WindowShade2-round2-handoff-v5/part3/integration/MAC-ACCEPTANCE.md",
+      "v6Path": "part3/integration/MAC-ACCEPTANCE.md",
+      "sha256": "1f029cfed05d6279bb2fc6504bf6a607fb1b00dbcd40a1d8014e841e52fe9f21"
+    },
+    {
+      "archivePath": "WindowShade2-round2-handoff-v5/part3/integration/input-sha256.json",
+      "v6Path": "part3/integration/input-sha256.json",
+      "sha256": "bbc495032e0d9d409c828288d0f3b25ef7261a7342b25103296fb35da86027bd"
+    },
+    {
+      "archivePath": "WindowShade2-round2-handoff-v5/part3/integration/package-status.json",
+      "v6Path": "part3/integration/package-status.json",
+      "sha256": "60b13bc04d3220cf395f2451e5d7e726702aaf22084cc23a2eeeea819b89048c"
+    },
+    {
+      "archivePath": "WindowShade2-round2-handoff-v5/part3/packages/A2a/WORKORDER.md",
+      "v6Path": "part3/packages/A2a/WORKORDER.md",
+      "sha256": "27ef95738ecf05907ddd792e8526fd99a30f285ed012b7ec77160545c146c31e"
+    },
+    {
+      "archivePath": "WindowShade2-round2-handoff-v5/part3/packages/A2a/prototype/Support/WS2BoundedInput.swift",
+      "v6Path": "part3/packages/A2a/prototype/Support/WS2BoundedInput.swift",
+      "sha256": "57de90c5ff273ddfe189d3ffb03b501e6a90cdd837082971ca56924be380fa75"
+    },
+    {
+      "archivePath": "WindowShade2-round2-handoff-v5/part3/packages/A2a/prototype/Support/WS2UnixSocket.swift",
+      "v6Path": "part3/packages/A2a/prototype/Support/WS2UnixSocket.swift",
+      "sha256": "686ea433270bef26a8a1ef5e8eea3b70fb399d9d5d3ce89d65b18da454f64129"
+    },
+    {
+      "archivePath": "WindowShade2-round2-handoff-v5/part3/packages/A2a/tools/ws-hook/main.swift",
+      "v6Path": "part3/packages/A2a/tools/ws-hook/main.swift",
+      "sha256": "bb23445b862a087c1d2fdf105324426b4b21ac30e920744f89fe3e0b95b68c1c"
+    },
+    {
+      "archivePath": "WindowShade2-round2-handoff-v5/part3/packages/A2b/WORKORDER.md",
+      "v6Path": "part3/packages/A2b/WORKORDER.md",
+      "sha256": "82bd7be725213d82546e0d0f0b3274ce486839bc1405df06114738199a4f382b"
+    },
+    {
+      "archivePath": "WindowShade2-round2-handoff-v5/part3/packages/A2b/prototype/Support/WS2AtomicConfiguration.swift",
+      "v6Path": "part3/packages/A2b/prototype/Support/WS2AtomicConfiguration.swift",
+      "sha256": "49ca64b48ceb7d2717fcf2e56256c4fc3819bccd6b4cb67e1e369147fb3d0754"
+    },
+    {
+      "archivePath": "WindowShade2-round2-handoff-v5/part3/packages/A2b/prototype/Support/WS2HookConfiguration.swift",
+      "v6Path": "part3/packages/A2b/prototype/Support/WS2HookConfiguration.swift",
+      "sha256": "a02f22b49a684d2c74aa385776c31d91b39cc5f6a4cec81eadbf457e8951ba54"
+    },
+    {
+      "archivePath": "WindowShade2-round2-handoff-v5/part3/packages/A3/WORKORDER.md",
+      "v6Path": "part3/packages/A3/WORKORDER.md",
+      "sha256": "253e004af66710113746459e998e72b2f1384ca778497e44cc2c82f0112adb8f"
+    },
+    {
+      "archivePath": "WindowShade2-round2-handoff-v5/part3/packages/A3/prototype/App/WS2AgentSessionView.swift",
+      "v6Path": "part3/packages/A3/prototype/App/WS2AgentSessionView.swift",
+      "sha256": "253d8ba017b138f95c7db891fbfa55f8bcd33e42c1bfdf7738258fe0736848c9"
+    },
+    {
+      "archivePath": "WindowShade2-round2-handoff-v5/part3/packages/D3/WORKORDER.md",
+      "v6Path": "part3/packages/D3/WORKORDER.md",
+      "sha256": "488eb1cbce691fc72488a8e096d707d26331045925dd6ccfe293857435118490"
+    },
+    {
+      "archivePath": "WindowShade2-round2-handoff-v5/part3/packages/D3/prototype/App/WS2ConductorView.swift",
+      "v6Path": "part3/packages/D3/prototype/App/WS2ConductorView.swift",
+      "sha256": "9fbbe60aeb03cef4d9d9ba58ff19f8f0727ed6f39c3977fda8b532369b3c903b"
+    },
+    {
+      "archivePath": "WindowShade2-round2-handoff-v5/part3/packages/D4/WORKORDER.md",
+      "v6Path": "part3/packages/D4/WORKORDER.md",
+      "sha256": "c3069d3801df69a40caa25e3c9921b9bc22d52cbdbfbaa2070503e57441cb720"
+    },
+    {
+      "archivePath": "WindowShade2-round2-handoff-v5/part3/packages/D5a/WORKORDER.md",
+      "v6Path": "part3/packages/D5a/WORKORDER.md",
+      "sha256": "fea944dc20d1a6582a3a4035c589ab865fc4bfa869aaba6f081e95517f688717"
+    },
+    {
+      "archivePath": "WindowShade2-round2-handoff-v5/part3/packages/D5a/prototype/Core/PairingAttemptWindow.swift",
+      "v6Path": "part3/packages/D5a/prototype/Core/PairingAttemptWindow.swift",
+      "sha256": "262dc840763d31105c16f5edda749a2e11ea15064158884c825109fbcd3450e3"
+    },
+    {
+      "archivePath": "WindowShade2-round2-handoff-v5/part3/packages/D5b/WORKORDER.md",
+      "v6Path": "part3/packages/D5b/WORKORDER.md",
+      "sha256": "08f615b3cc866cef03b05df9634b8ce0cbaed123a1815aa676529125fabc2b4a"
+    },
+    {
+      "archivePath": "WindowShade2-round2-handoff-v5/part3/packages/D5b/prototype/Core/PairingTLV.swift",
+      "v6Path": "part3/packages/D5b/prototype/Core/PairingTLV.swift",
+      "sha256": "32495002c85cc927a8c31cd5699ff517f070107120c111919e9b35c1df2f3845"
+    },
+    {
+      "archivePath": "WindowShade2-round2-handoff-v5/part3/packages/D5c/WORKORDER.md",
+      "v6Path": "part3/packages/D5c/WORKORDER.md",
+      "sha256": "427a71edf51119f1435e172482f1e3bdf3705434aa7316a2110cf88ce0fe9849"
+    },
+    {
+      "archivePath": "WindowShade2-round2-handoff-v5/part3/packages/D5c/prototype/Core/RemoteEventRouter.swift",
+      "v6Path": "part3/packages/D5c/prototype/Core/RemoteEventRouter.swift",
+      "sha256": "7d025693b62af9d3a537e0f71fdbc5312f0773b53d6a51008f1f441dab4b3e19"
+    },
+    {
+      "archivePath": "WindowShade2-round2-handoff-v5/part3/packages/D6/WORKORDER.md",
+      "v6Path": "part3/packages/D6/WORKORDER.md",
+      "sha256": "4c9879c2a564c54aae5347bca4724e7818ec42905c5bc68201e056d64516a862"
+    },
+    {
+      "archivePath": "WindowShade2-round2-handoff-v5/part3/packages/D6/prototype/Core/CodexWire.swift",
+      "v6Path": "part3/packages/D6/prototype/Core/CodexWire.swift",
+      "sha256": "7c507cbbc3014aa41bb8615e5d43ab9bad0dc1163c306c6a2f07ce042bcabb10"
+    },
+    {
+      "archivePath": "WindowShade2-round2-handoff-v5/part3/packages/D6/prototype/Support/WS2ProcessChannel.swift",
+      "v6Path": "part3/packages/D6/prototype/Support/WS2ProcessChannel.swift",
+      "sha256": "a87b82db462cd9fa4e0bd132153482a6c1c9d9859a4434048829443bf821cf6b"
+    },
+    {
+      "archivePath": "WindowShade2-round2-handoff-v5/part3/packages/I2/WORKORDER.md",
+      "v6Path": "part3/packages/I2/WORKORDER.md",
+      "sha256": "b68161cfead6061382326921a35f974ca50f7646a93ff1aa25fe96e51330bdb9"
+    },
+    {
+      "archivePath": "WindowShade2-round2-handoff-v5/part3/packages/I2/prototype/Core/MultitouchQualification.swift",
+      "v6Path": "part3/packages/I2/prototype/Core/MultitouchQualification.swift",
+      "sha256": "dd4bf29aa1cef3fca706c8d9781a84da40f2174623ead5cbeb406132e967dd91"
+    },
+    {
+      "archivePath": "WindowShade2-round2-handoff-v5/part3/packages/I3/WORKORDER.md",
+      "v6Path": "part3/packages/I3/WORKORDER.md",
+      "sha256": "ff85f63341dcccc0ba2e89ceba442d1ff964fa189c9d07aacd0ee67df755cff2"
+    },
+    {
+      "archivePath": "WindowShade2-round2-handoff-v5/part3/packages/I5a/WORKORDER.md",
+      "v6Path": "part3/packages/I5a/WORKORDER.md",
+      "sha256": "ff27557d8f43a8f92547981202875154e69237453f50832c70ffe13f61d92131"
+    },
+    {
+      "archivePath": "WindowShade2-round2-handoff-v5/part3/packages/I5b/WORKORDER.md",
+      "v6Path": "part3/packages/I5b/WORKORDER.md",
+      "sha256": "386e8a6f0c02cc3048054855ba1ad04afdf11fab9a36adb51c06020e97853001"
+    },
+    {
+      "archivePath": "WindowShade2-round2-handoff-v5/part3/packages/I5b/prototype/Core/HIDMappingTransaction.swift",
+      "v6Path": "part3/packages/I5b/prototype/Core/HIDMappingTransaction.swift",
+      "sha256": "48edb2bb043ddd6cf18285f422ae90e4f75b258ee75efd9c6976fd7ef973a3d6"
+    },
+    {
+      "archivePath": "WindowShade2-round2-handoff-v5/part3/packages/I7/WORKORDER.md",
+      "v6Path": "part3/packages/I7/WORKORDER.md",
+      "sha256": "5df27b9733264c2db6855d17e1ed4ece4dc24138ed63141adb6a3c44e301bfae"
+    },
+    {
+      "archivePath": "WindowShade2-round2-handoff-v5/part3/packages/I7/prototype/Core/WS2InputEligibility.swift",
+      "v6Path": "part3/packages/I7/prototype/Core/WS2InputEligibility.swift",
+      "sha256": "d88deec0bf2c6224710e90bf106e23a60cee3535cab06e3bf48c8bb027163597"
+    },
+    {
+      "archivePath": "WindowShade2-round2-handoff-v5/part3/packages/I8/WORKORDER.md",
+      "v6Path": "part3/packages/I8/WORKORDER.md",
+      "sha256": "b317c1ffd86402bd6d04abe005df564e10290285499eb5871e5825c24d6c512f"
+    },
+    {
+      "archivePath": "WindowShade2-round2-handoff-v5/part3/packages/I8/prototype/Core/GamepadMapping.swift",
+      "v6Path": "part3/packages/I8/prototype/Core/GamepadMapping.swift",
+      "sha256": "672cf04922a50acca6eecd2727b135f07a05acae74ab285e9fb92a23ea39a855"
+    },
+    {
+      "archivePath": "WindowShade2-round2-handoff-v5/part3/packages/L2/WORKORDER.md",
+      "v6Path": "part3/packages/L2/WORKORDER.md",
+      "sha256": "fe59077cef6e734b5d7d5ac09a1a8b435fbaef316809179f90cb912fb351f50d"
+    },
+    {
+      "archivePath": "WindowShade2-round2-handoff-v5/part3/packages/L4/WORKORDER.md",
+      "v6Path": "part3/packages/L4/WORKORDER.md",
+      "sha256": "cc5a63a1cbd7e9d971c145a16acd59eadcaf1ce4c2b6d7d8939fdb59748f9abd"
+    },
+    {
+      "archivePath": "WindowShade2-round2-handoff-v5/part3/packages/L4/prototype/Core/WS2LockRequestPolicy.swift",
+      "v6Path": "part3/packages/L4/prototype/Core/WS2LockRequestPolicy.swift",
+      "sha256": "900c77a7fda12d50eeaf345bac99e8ba57ae7eb044023f0beb45ab1aa0f616d5"
+    },
+    {
+      "archivePath": "WindowShade2-round2-handoff-v5/part3/packages/M1/WORKORDER.md",
+      "v6Path": "part3/packages/M1/WORKORDER.md",
+      "sha256": "7e8d06acc5ab96f1d299ba988277e716caf28e9b8089ccbe4746cd10b7f98b84"
+    },
+    {
+      "archivePath": "WindowShade2-round2-handoff-v5/part3/packages/S1/WORKORDER.md",
+      "v6Path": "part3/packages/S1/WORKORDER.md",
+      "sha256": "2a75ee56f771962d09ae74999466b4fe6098100d86f9dc528227e16c7ee0d81b"
+    },
+    {
+      "archivePath": "WindowShade2-round2-handoff-v5/part3/packages/S1/prototype/App/WS2SupplementPane.swift",
+      "v6Path": "part3/packages/S1/prototype/App/WS2SupplementPane.swift",
+      "sha256": "bc7f6412863703900a2d0b8341ef0f4c3333d92c1fa3be41aec61f17f98a6110"
+    },
+    {
+      "archivePath": "WindowShade2-round2-handoff-v5/part3/packages/T2/WORKORDER.md",
+      "v6Path": "part3/packages/T2/WORKORDER.md",
+      "sha256": "05550d90e33dbc2ac33e04bf933dab25b9075cebdaeb3a274ac46f0c64284f3e"
+    },
+    {
+      "archivePath": "WindowShade2-round2-handoff-v5/part3/packages/T2/prototype/App/WS2AppRuntime.swift",
+      "v6Path": "part3/packages/T2/prototype/App/WS2AppRuntime.swift",
+      "sha256": "62450895b64d590c50ed71d4580fae2716ffb36f6d91aa092f261bd7b3f2e172"
+    },
+    {
+      "archivePath": "WindowShade2-round2-handoff-v5/part3/packages/T4/WORKORDER.md",
+      "v6Path": "part3/packages/T4/WORKORDER.md",
+      "sha256": "ec7876b323791bf88213e78b68922c9f064d93b156e0283aed95bf8f9a7e40d3"
+    },
+    {
+      "archivePath": "WindowShade2-round2-handoff-v5/part3/patches/diffs/prototype__App__MenuBarController.swift.diff",
+      "v6Path": "part3/patches/diffs/prototype__App__MenuBarController.swift.diff",
+      "sha256": "de5f093aa2ddb75bf560587358b9d182850bab1bf340dc0031e372b57c3d79d2"
+    },
+    {
+      "archivePath": "WindowShade2-round2-handoff-v5/part3/patches/diffs/prototype__App__NotchActivityController.swift.diff",
+      "v6Path": "part3/patches/diffs/prototype__App__NotchActivityController.swift.diff",
+      "sha256": "41a8dc727aa5b2763d87a6cbd0a8b0a9b24e7fcc99a9a1b0589f7c72f6e9f914"
+    },
+    {
+      "archivePath": "WindowShade2-round2-handoff-v5/part3/patches/diffs/prototype__App__NotchActivityView.swift.diff",
+      "v6Path": "part3/patches/diffs/prototype__App__NotchActivityView.swift.diff",
+      "sha256": "6cf3ca03c9520c8a7661ab63f3948ebf0c67ece5d0ca80fca927a9dbd0b7e471"
+    },
+    {
+      "archivePath": "WindowShade2-round2-handoff-v5/part3/patches/diffs/prototype__App__Preferences.swift.diff",
+      "v6Path": "part3/patches/diffs/prototype__App__Preferences.swift.diff",
+      "sha256": "54b19a5e5f9763a48998f9c8c8349dd2e0e81cf0a126f88f63c9415b5950eb79"
+    },
+    {
+      "archivePath": "WindowShade2-round2-handoff-v5/part3/patches/diffs/prototype__Core__NotchActivities.swift.diff",
+      "v6Path": "part3/patches/diffs/prototype__Core__NotchActivities.swift.diff",
+      "sha256": "e4755b03e0d93515a5e4464273e5ef8cbf2b170a52e0bfea05d43b3d76514a92"
+    },
+    {
+      "archivePath": "WindowShade2-round2-handoff-v5/part3/patches/diffs/prototype__PinnedPreview.swift.diff",
+      "v6Path": "part3/patches/diffs/prototype__PinnedPreview.swift.diff",
+      "sha256": "7ea11d6123e74e493a0666c6c0d3a31207956166a1ba504deda95332ebb1ded0"
+    },
+    {
+      "archivePath": "WindowShade2-round2-handoff-v5/part3/patches/diffs/prototype__WindowShade.swift.diff",
+      "v6Path": "part3/patches/diffs/prototype__WindowShade.swift.diff",
+      "sha256": "0ef9916a5d39f9905716eef336307dd58b88a4b9392b7e727710461ecc414e6b"
+    },
+    {
+      "archivePath": "WindowShade2-round2-handoff-v5/part3/patches/edits.json",
+      "v6Path": "part3/patches/edits.json",
+      "sha256": "318fa6496e1b541f4c7824aad012021101ba23c5a3d701dbb281c0ff1939f176"
+    },
+    {
+      "archivePath": "WindowShade2-round2-handoff-v5/part3/patches/files/prototype/App/MenuBarController.swift",
+      "v6Path": "part3/patches/files/prototype/App/MenuBarController.swift",
+      "sha256": "6c48edc1f260204ce5a5abd7d212b22c225bbf1219688573958ea3ed2c294e9d"
+    },
+    {
+      "archivePath": "WindowShade2-round2-handoff-v5/part3/patches/files/prototype/App/NotchActivityController.swift",
+      "v6Path": "part3/patches/files/prototype/App/NotchActivityController.swift",
+      "sha256": "36a1872d5a3e2fe2131fc3330c65c7db11380b571977cfc3d1413ee24f32df0f"
+    },
+    {
+      "archivePath": "WindowShade2-round2-handoff-v5/part3/patches/files/prototype/App/NotchActivityView.swift",
+      "v6Path": "part3/patches/files/prototype/App/NotchActivityView.swift",
+      "sha256": "697e921dc3852e578419402db2840e987d272034c8c4563ab6c6440e250b7526"
+    },
+    {
+      "archivePath": "WindowShade2-round2-handoff-v5/part3/patches/files/prototype/App/Preferences.swift",
+      "v6Path": "part3/patches/files/prototype/App/Preferences.swift",
+      "sha256": "14f089dfcf8b95949a98a835fc624d126e676d80fa85aefa6c68feeda7046cb7"
+    },
+    {
+      "archivePath": "WindowShade2-round2-handoff-v5/part3/patches/files/prototype/Core/NotchActivities.swift",
+      "v6Path": "part3/patches/files/prototype/Core/NotchActivities.swift",
+      "sha256": "343c66181295ec35201f5abe408eaf7d3b83fb9a69c60ec2ab6dacb86d15b433"
+    },
+    {
+      "archivePath": "WindowShade2-round2-handoff-v5/part3/patches/files/prototype/PinnedPreview.swift",
+      "v6Path": "part3/patches/files/prototype/PinnedPreview.swift",
+      "sha256": "028688ff16cdea9ad92c04e367ba1638428a3b03f9606690ce472f873e9c707e"
+    },
+    {
+      "archivePath": "WindowShade2-round2-handoff-v5/part3/patches/files/prototype/WindowShade.swift",
+      "v6Path": "part3/patches/files/prototype/WindowShade.swift",
+      "sha256": "e5e60ad49adca1273a2a67e2c339ecd53200519d7c340116affaefe2e015e54f"
+    },
+    {
+      "archivePath": "WindowShade2-round2-handoff-v5/part3/probes/BLEReadProbe.swift",
+      "v6Path": "part3/probes/BLEReadProbe.swift",
+      "sha256": "2eab49fb2aee375f211baf96b38d18b8fb6befc8535384a12a885f5aa50225ff"
+    },
+    {
+      "archivePath": "WindowShade2-round2-handoff-v5/part3/probes/DECISIONS.md",
+      "v6Path": "part3/probes/DECISIONS.md",
+      "sha256": "8dd7a97713dee7aae83bf738ecf68922531ed4eb109ae3632ad064e7720f556b"
+    },
+    {
+      "archivePath": "WindowShade2-round2-handoff-v5/part3/probes/IdentityBoundaryProbe.swift",
+      "v6Path": "part3/probes/IdentityBoundaryProbe.swift",
+      "sha256": "590ba59faf1ad3a1c6f40f7257af3e58d62a0d4398ef876f66780dc3a2fb82f4"
+    },
+    {
+      "archivePath": "WindowShade2-round2-handoff-v5/part3/probes/LockStateProbe.swift",
+      "v6Path": "part3/probes/LockStateProbe.swift",
+      "sha256": "46e465de44391c50ed5ac9b8f42206d3fa0494eac00ab2fd5042a024050ab848"
+    },
+    {
+      "archivePath": "WindowShade2-round2-handoff-v5/part3/probes/MultitouchSymbolProbe.swift",
+      "v6Path": "part3/probes/MultitouchSymbolProbe.swift",
+      "sha256": "f66b1dcecd95923edcf54d27daf9bc3458a424fb3b9e7dd73de9303e70e37cee"
+    },
+    {
+      "archivePath": "WindowShade2-round2-handoff-v5/part3/probes/README.md",
+      "v6Path": "part3/probes/README.md",
+      "sha256": "e29b4170e913d1554d70dba5219ab87eb0de0bc2bb696ef10c64e361a9e8448d"
+    },
+    {
+      "archivePath": "WindowShade2-round2-handoff-v5/part3/probes/RemoteHIDProbe.swift",
+      "v6Path": "part3/probes/RemoteHIDProbe.swift",
+      "sha256": "e035a129208ce6c5de6203a7eebd118569bfa88d5e66b2712c03f3deceb6d3ae"
+    },
+    {
+      "archivePath": "WindowShade2-round2-handoff-v5/part3/probes/results-template.csv",
+      "v6Path": "part3/probes/results-template.csv",
+      "sha256": "4a979a8c1f69e08ec82c84d7cc5f9006281776ec0c8674c17a9d2fa3fa738781"
+    },
+    {
+      "archivePath": "WindowShade2-round2-handoff-v5/part3/probes/run-probe.sh",
+      "v6Path": "part3/probes/run-probe.sh",
+      "sha256": "9a1306dc248973a3fcad8aabe12cbfb4bae7008d2b2407968660d0e0637ea080"
+    },
+    {
+      "archivePath": "WindowShade2-round2-handoff-v5/part3/tests/Part3Tests.swift",
+      "v6Path": "part3/tests/Part3Tests.swift",
+      "sha256": "c06eca41ce870ac7f7d110d49ca202534f54986845b20b9696b62e454ea809c1"
+    },
+    {
+      "archivePath": "WindowShade2-round2-handoff-v5/part3/tests/TEST-CASES.md",
+      "v6Path": "part3/tests/TEST-CASES.md",
+      "sha256": "8116b558c454c2745b8ad130ab3c437b3f0120d39aaadeff5e65fb58cbc3f421"
+    },
+    {
+      "archivePath": "WindowShade2-round2-handoff-v5/part3/tests/fake-backend.py",
+      "v6Path": "part3/tests/fake-backend.py",
+      "sha256": "f50a1dcdc6061d00689ef4f9f0e378d9cbe5059c1d78f9d2302db65aa05626bf"
+    },
+    {
+      "archivePath": "WindowShade2-round2-handoff-v5/part3/tests/run-core.sh",
+      "v6Path": "part3/tests/run-core.sh",
+      "sha256": "2406cc69cdeaf77b0808da05cf39b3fc9def554f0da0e648c237b8f6e8020b4d"
+    },
+    {
+      "archivePath": "WindowShade2-round2-handoff-v5/part3/tools/stage-all.py",
+      "v6Path": "part3/tools/stage-all.py",
+      "sha256": "e53fbc83108592abb4a2ad7ef216f3842a88bfaa56d81080ab39e350d3ef94c1"
+    },
+    {
+      "archivePath": "WindowShade2-round2-handoff-v5/part3/validation/bundle-stage.json",
+      "v6Path": "part3/validation/bundle-stage.json",
+      "sha256": "2fa465f3864d0567583324802cc3e4152a02eee5d9c6e5dade7d479c0c78e7b5"
+    },
+    {
+      "archivePath": "WindowShade2-round2-handoff-v5/part3/validation/combined-foundation-typecheck.json",
+      "v6Path": "part3/validation/combined-foundation-typecheck.json",
+      "sha256": "7c1b26921f738ffb3631bdd89aa82324016be74895f093da30bb19989e8a28a5"
+    },
+    {
+      "archivePath": "WindowShade2-round2-handoff-v5/part3/validation/core-results.json",
+      "v6Path": "part3/validation/core-results.json",
+      "sha256": "2c49b65382536bbc190364c9a08acbeb0c65ed9bd9e5ffbae602abbcb2bea810"
+    },
+    {
+      "archivePath": "WindowShade2-round2-handoff-v5/part3/validation/core-tests.txt",
+      "v6Path": "part3/validation/core-tests.txt",
+      "sha256": "183f50c02e513144e29f583ffd5b359aa30ef2139927249031d18a2da936188d"
+    },
+    {
+      "archivePath": "WindowShade2-round2-handoff-v5/part3/validation/development/test-compile-1.txt",
+      "v6Path": "part3/validation/development/test-compile-1.txt",
+      "sha256": "006572544d2cf5ffac8f21c02d52e01634cf642db58a6aba02456b5bfc6b370b"
+    },
+    {
+      "archivePath": "WindowShade2-round2-handoff-v5/part3/validation/environment.json",
+      "v6Path": "part3/validation/environment.json",
+      "sha256": "e1d2ba90fc2298b508486bc6571b32ada9ab62be96a27ce699e302ba73bd2f90"
+    },
+    {
+      "archivePath": "WindowShade2-round2-handoff-v5/part3/validation/film-gate.json",
+      "v6Path": "part3/validation/film-gate.json",
+      "sha256": "01bbf2f3bf833182fb2178bad3b94b1022e2b3cd3312b0d4591fb37d7fbf5848"
+    },
+    {
+      "archivePath": "WindowShade2-round2-handoff-v5/part3/validation/gesture-regression-compile.json",
+      "v6Path": "part3/validation/gesture-regression-compile.json",
+      "sha256": "cef69ac97a855eaa7abb77051753a447e94878701983d985e6a635db4c98b0f5"
+    },
+    {
+      "archivePath": "WindowShade2-round2-handoff-v5/part3/validation/gesture-regression.json",
+      "v6Path": "part3/validation/gesture-regression.json",
+      "sha256": "a1628e81edb8cd4a963764c265b2d8609a64737218a30988d21b36057079cfb5"
+    },
+    {
+      "archivePath": "WindowShade2-round2-handoff-v5/part3/validation/helper-bad-json.json",
+      "v6Path": "part3/validation/helper-bad-json.json",
+      "sha256": "71613034ffb7db6ae32f23f5f73d87ebe79f7843788d29299e40ef6876df11d6"
+    },
+    {
+      "archivePath": "WindowShade2-round2-handoff-v5/part3/validation/helper-bad-provider.json",
+      "v6Path": "part3/validation/helper-bad-provider.json",
+      "sha256": "34b503ca51748fed82b81f6e10c55596d794095ab7732e66b95fa100e2cc30da"
+    },
+    {
+      "archivePath": "WindowShade2-round2-handoff-v5/part3/validation/helper-build.json",
+      "v6Path": "part3/validation/helper-build.json",
+      "sha256": "59e9199dcdfb495a1e3e21cb45f94be72424234053be5452901e8e9f1263b798"
+    },
+    {
+      "archivePath": "WindowShade2-round2-handoff-v5/part3/validation/helper-missing-session.json",
+      "v6Path": "part3/validation/helper-missing-session.json",
+      "sha256": "71613034ffb7db6ae32f23f5f73d87ebe79f7843788d29299e40ef6876df11d6"
+    },
+    {
+      "archivePath": "WindowShade2-round2-handoff-v5/part3/validation/helper-too-large.json",
+      "v6Path": "part3/validation/helper-too-large.json",
+      "sha256": "71613034ffb7db6ae32f23f5f73d87ebe79f7843788d29299e40ef6876df11d6"
+    },
+    {
+      "archivePath": "WindowShade2-round2-handoff-v5/part3/validation/input-integrity.json",
+      "v6Path": "part3/validation/input-integrity.json",
+      "sha256": "9dea8834a5a1507c0cfa3aad6d402cf94913ffbf8e330db1ccdde35a16fe1b41"
+    },
+    {
+      "archivePath": "WindowShade2-round2-handoff-v5/part3/validation/notch-regression-compile.json",
+      "v6Path": "part3/validation/notch-regression-compile.json",
+      "sha256": "155c5823701fca0249e60c81330d7c83364b9dc858cf3d430b60ba06f42ee23b"
+    },
+    {
+      "archivePath": "WindowShade2-round2-handoff-v5/part3/validation/notch-regression.json",
+      "v6Path": "part3/validation/notch-regression.json",
+      "sha256": "7319918d447d5e663ffea149858380a35cf5b27fc2b31e886f17929b5ba193b2"
+    },
+    {
+      "archivePath": "WindowShade2-round2-handoff-v5/part3/validation/part2-compat-compile.json",
+      "v6Path": "part3/validation/part2-compat-compile.json",
+      "sha256": "ad24d07c6b0cb7f480383562437b7ff821a78a30a989c2461e17d7fcd31495af"
+    },
+    {
+      "archivePath": "WindowShade2-round2-handoff-v5/part3/validation/part2-compat-outbound.ndjson",
+      "v6Path": "part3/validation/part2-compat-outbound.ndjson",
+      "sha256": "d95756dbf8419f21deb20e2ed396f72b140254d587c063da662ffd3eca484116"
+    },
+    {
+      "archivePath": "WindowShade2-round2-handoff-v5/part3/validation/part2-compat.json",
+      "v6Path": "part3/validation/part2-compat.json",
+      "sha256": "26f41f6ded4c65f5f4dea3627d16884b0db59a396ef0d3796f90115b1a012b15"
+    },
+    {
+      "archivePath": "WindowShade2-round2-handoff-v5/part3/validation/resume-request.ndjson",
+      "v6Path": "part3/validation/resume-request.ndjson",
+      "sha256": "423aacbb5017b1e5bc63e2d7d1892dbea16d44eb8e50e656fad8ea08dfecd677"
+    },
+    {
+      "archivePath": "WindowShade2-round2-handoff-v5/part3/validation/resume-schema.json",
+      "v6Path": "part3/validation/resume-schema.json",
+      "sha256": "9f5c461da43b97072a32de0e840fab4994259d5c4552022c9558b17f69c85be7"
+    },
+    {
+      "archivePath": "WindowShade2-round2-handoff-v5/part3/validation/stage-all.json",
+      "v6Path": "part3/validation/stage-all.json",
+      "sha256": "ca56a27b387b33f1944588db5d4f3215462a468b41e06f1197dc332749406b22"
+    },
+    {
+      "archivePath": "WindowShade2-round2-handoff-v5/part3/validation/stage-negative.json",
+      "v6Path": "part3/validation/stage-negative.json",
+      "sha256": "da0310078f9a03d6a5c65f4e104ff843cc7655901e5b32b736140bd2bfe86c04"
+    },
+    {
+      "archivePath": "WindowShade2-round2-handoff-v5/part3/validation/syntax-only.json",
+      "v6Path": "part3/validation/syntax-only.json",
+      "sha256": "d45336c1d7b2e5b3153597ec18d3ba552404640566126dc54ecd1d3e76ad8a38"
+    },
+    {
+      "archivePath": "WindowShade2-round2-handoff-v5/part4/00-交给执行模型.md",
+      "v6Path": "part4/00-交给执行模型.md",
+      "sha256": "33a37cc8be7d2b9c839179f502c4846f6b267502f342233bc4bfccb485dbcdbf"
+    },
+    {
+      "archivePath": "WindowShade2-round2-handoff-v5/part4/CHANGELOG.md",
+      "v6Path": "part4/CHANGELOG.md",
+      "sha256": "a6b417faacb0337994d3a134bfbc086cc4329b39f3eb67313a69e887d36c72b6"
+    },
+    {
+      "archivePath": "WindowShade2-round2-handoff-v5/part4/CONTENTS.sha256.json",
+      "v6Path": "part4/CONTENTS.sha256.json",
+      "sha256": "2a9e38c96834221168b7129812228880573690c7dc1d18706585fbd67981637b"
+    },
+    {
+      "archivePath": "WindowShade2-round2-handoff-v5/part4/FILE-MAP.md",
+      "v6Path": "part4/FILE-MAP.md",
+      "sha256": "2eb209b92dd82a3488616ed205f65aac6b03820b93ddb11cdfd20e4369666fcc"
+    },
+    {
+      "archivePath": "WindowShade2-round2-handoff-v5/part4/MAC-RESULT-TEMPLATE.md",
+      "v6Path": "part4/MAC-RESULT-TEMPLATE.md",
+      "sha256": "b3a6e4acac2322cf9564833e29c6a83ed02d9047f8da338e2bff3f9bbd9d8153"
+    },
+    {
+      "archivePath": "WindowShade2-round2-handoff-v5/part4/README.md",
+      "v6Path": "part4/README.md",
+      "sha256": "d2aa25ca9d6156225dd3f9d68ba13e941ccaa4c63b5f0dbd233db377392684d9"
+    },
+    {
+      "archivePath": "WindowShade2-round2-handoff-v5/part4/REMAINING.md",
+      "v6Path": "part4/REMAINING.md",
+      "sha256": "ee630e8b5af6fc345a068c5e85dcf53a82274ccb3b5790c984f5a1f7119376f5"
+    },
+    {
+      "archivePath": "WindowShade2-round2-handoff-v5/part4/SOURCES.md",
+      "v6Path": "part4/SOURCES.md",
+      "sha256": "22eeeed44f748fa17405ba4b5041b53a6057ff8ebfac4c930bb052a45375ef41"
+    },
+    {
+      "archivePath": "WindowShade2-round2-handoff-v5/part4/VALIDATION.md",
+      "v6Path": "part4/VALIDATION.md",
+      "sha256": "082a5c63c06a5f17aba6c88e0b1706f5ccb61c353e9e098419d481db25154405"
+    },
+    {
+      "archivePath": "WindowShade2-round2-handoff-v5/part4/answers.md",
+      "v6Path": "part4/answers.md",
+      "sha256": "96098b98778451799b66a49d973c224f4aa90775cd36d02f1ed516a2b941f33d"
+    },
+    {
+      "archivePath": "WindowShade2-round2-handoff-v5/part4/decisions/00-总决策.md",
+      "v6Path": "part4/decisions/00-总决策.md",
+      "sha256": "32134bbf9bb3a46ce82899f041ab01e9bc0faa0722ff53bab5e5f20f8fd32ca8"
+    },
+    {
+      "archivePath": "WindowShade2-round2-handoff-v5/part4/decisions/01-配对与加密.md",
+      "v6Path": "part4/decisions/01-配对与加密.md",
+      "sha256": "5008233b85c638a50b39c5fcd3e37467ba1d5406197305c6aac885a702153f8e"
+    },
+    {
+      "archivePath": "WindowShade2-round2-handoff-v5/part4/decisions/02-审批与执行边界.md",
+      "v6Path": "part4/decisions/02-审批与执行边界.md",
+      "sha256": "bd367894a3be051d2259429c5f9953d60d0e2344592d9707090cd79f568e8427"
+    },
+    {
+      "archivePath": "WindowShade2-round2-handoff-v5/part4/decisions/03-输入与设备生命周期.md",
+      "v6Path": "part4/decisions/03-输入与设备生命周期.md",
+      "sha256": "5967aa7e8c30bd22c437ff15c7a14f482369f630f36a4c4d7709579c1434b01f"
+    },
+    {
+      "archivePath": "WindowShade2-round2-handoff-v5/part4/decisions/04-界面宿主与交互.md",
+      "v6Path": "part4/decisions/04-界面宿主与交互.md",
+      "sha256": "a7247852c42371ca178af9e193b599a456e63695571ec548b8425fb5370e833e"
+    },
+    {
+      "archivePath": "WindowShade2-round2-handoff-v5/part4/decisions/05-番茄钟与窗口所有权.md",
+      "v6Path": "part4/decisions/05-番茄钟与窗口所有权.md",
+      "sha256": "1bd2d73619d48156502c9c3585e42ef66e349f869edc322db697023ebb120d7b"
+    },
+    {
+      "archivePath": "WindowShade2-round2-handoff-v5/part4/fixtures/companion-crypto-vectors.json",
+      "v6Path": "part4/fixtures/companion-crypto-vectors.json",
+      "sha256": "e860d245e327b0dfad40a26311c291aa3e50565a10e2d61191335c0dd9917cf6"
+    },
+    {
+      "archivePath": "WindowShade2-round2-handoff-v5/part4/manifest.json",
+      "v6Path": "part4/manifest.json",
+      "sha256": "5ad5fb6934c45c80e9fa4fcb03e250904d6662c5a2ab2afb0bc294829a2d39f5"
+    },
+    {
+      "archivePath": "WindowShade2-round2-handoff-v5/part4/overlay/prototype/App/EventTap.swift",
+      "v6Path": "part4/overlay/prototype/App/EventTap.swift",
+      "sha256": "3c8cb6ff1897f0e5a4ade26240955a747462e65654e3567abe7c91dfa535fb8b"
+    },
+    {
+      "archivePath": "WindowShade2-round2-handoff-v5/part4/overlay/prototype/App/FocusTimerCard.swift",
+      "v6Path": "part4/overlay/prototype/App/FocusTimerCard.swift",
+      "sha256": "f6dfab112513a28dd52b7d01990a9940c9ad9aaa64a37f54d77a85e0645fe996"
+    },
+    {
+      "archivePath": "WindowShade2-round2-handoff-v5/part4/overlay/prototype/App/FocusTimerHost.swift",
+      "v6Path": "part4/overlay/prototype/App/FocusTimerHost.swift",
+      "sha256": "7aa01c91cb3abf4503ff8eb92a8060efcdfca907b295caa3ab0fde88d264b666"
+    },
+    {
+      "archivePath": "WindowShade2-round2-handoff-v5/part4/overlay/prototype/App/GlobalShortcuts.swift",
+      "v6Path": "part4/overlay/prototype/App/GlobalShortcuts.swift",
+      "sha256": "f73921fa76cadded66d9986ec55a7d5a0b2edf2ae6935abc0860178ec09083b6"
+    },
+    {
+      "archivePath": "WindowShade2-round2-handoff-v5/part4/overlay/prototype/App/InteractionCoordinator.swift",
+      "v6Path": "part4/overlay/prototype/App/InteractionCoordinator.swift",
+      "sha256": "30c08c2813e02e374dde69cbff0f5078c4cccc6443b55377da4aace1dda349f7"
+    },
+    {
+      "archivePath": "WindowShade2-round2-handoff-v5/part4/overlay/prototype/App/LaunchpadToday.swift",
+      "v6Path": "part4/overlay/prototype/App/LaunchpadToday.swift",
+      "sha256": "b049a50d0d3df00e200de75734178b35cd9abdaa7b676dcba4b45f8df854d8ec"
+    },
+    {
+      "archivePath": "WindowShade2-round2-handoff-v5/part4/overlay/prototype/App/Notch.swift",
+      "v6Path": "part4/overlay/prototype/App/Notch.swift",
+      "sha256": "354a6045d7221d33a2c16f849a34a910c969fce7acc58fbf7e958be6fb6b5d43"
+    },
+    {
+      "archivePath": "WindowShade2-round2-handoff-v5/part4/overlay/prototype/App/NotchActivityController.swift",
+      "v6Path": "part4/overlay/prototype/App/NotchActivityController.swift",
+      "sha256": "4ee8833f2e4d198fac9eef2c086c0e2bd53a1fce66927f9b42cfbcf42e37bc48"
+    },
+    {
+      "archivePath": "WindowShade2-round2-handoff-v5/part4/overlay/prototype/App/NotchActivityView.swift",
+      "v6Path": "part4/overlay/prototype/App/NotchActivityView.swift",
+      "sha256": "2b622c8cfa4ccac64c4c0b2ea70f66263b8d71e545ec6330c22d9067206a08cf"
+    },
+    {
+      "archivePath": "WindowShade2-round2-handoff-v5/part4/overlay/prototype/App/NotchAuthentication.swift",
+      "v6Path": "part4/overlay/prototype/App/NotchAuthentication.swift",
+      "sha256": "e2db024c1161ab3157018670c80aa14da701ac5473668a5defa246375797d627"
+    },
+    {
+      "archivePath": "WindowShade2-round2-handoff-v5/part4/overlay/prototype/App/Preferences.swift",
+      "v6Path": "part4/overlay/prototype/App/Preferences.swift",
+      "sha256": "7e7f3c3623de1e5a955c552fd8117bcfd2c9ee2ce8f8839f1950a241d78c72c4"
+    },
+    {
+      "archivePath": "WindowShade2-round2-handoff-v5/part4/overlay/prototype/App/WS2AgentSessionView.swift",
+      "v6Path": "part4/overlay/prototype/App/WS2AgentSessionView.swift",
+      "sha256": "2eb4cc0b0ffd80413aeb0375a2b4973039174218273be6988b5fc1a8f730e53d"
+    },
+    {
+      "archivePath": "WindowShade2-round2-handoff-v5/part4/overlay/prototype/App/WS2AppRuntime.swift",
+      "v6Path": "part4/overlay/prototype/App/WS2AppRuntime.swift",
+      "sha256": "4860048055a951fd637dba2f5f5a2456ced84b234f5034273e8432e3abb3f820"
+    },
+    {
+      "archivePath": "WindowShade2-round2-handoff-v5/part4/overlay/prototype/App/WS2CodexApprovalHost.swift",
+      "v6Path": "part4/overlay/prototype/App/WS2CodexApprovalHost.swift",
+      "sha256": "751cfd0b416ce57cf350b18780cc95d3523628b4ac93b693747e88c81a9bbb9d"
+    },
+    {
+      "archivePath": "WindowShade2-round2-handoff-v5/part4/overlay/prototype/App/WS2ConductorView.swift",
+      "v6Path": "part4/overlay/prototype/App/WS2ConductorView.swift",
+      "sha256": "35e1bb2d5b14f59c381aba5969009add1be93e97eb3eeb2005fd1d9607e6e225"
+    },
+    {
+      "archivePath": "WindowShade2-round2-handoff-v5/part4/overlay/prototype/App/WS2FocusSettings.swift",
+      "v6Path": "part4/overlay/prototype/App/WS2FocusSettings.swift",
+      "sha256": "5c2dd1877beacb8a5e09b8ffc9ae687924068e791a0224484308a28e1aabff60"
+    },
+    {
+      "archivePath": "WindowShade2-round2-handoff-v5/part4/overlay/prototype/App/WS2GameControllerBridge.swift",
+      "v6Path": "part4/overlay/prototype/App/WS2GameControllerBridge.swift",
+      "sha256": "dfdb66e861c4a9906df6584fcca07182e0d4f6c0311bf4924b8bcb5941154387"
+    },
+    {
+      "archivePath": "WindowShade2-round2-handoff-v5/part4/overlay/prototype/App/WS2IslandCoordinator.swift",
+      "v6Path": "part4/overlay/prototype/App/WS2IslandCoordinator.swift",
+      "sha256": "596a69bc216154e1e6add3b8678db752a775d3697d9575786403f6e893dfeda5"
+    },
+    {
+      "archivePath": "WindowShade2-round2-handoff-v5/part4/overlay/prototype/App/WS2SupplementPane.swift",
+      "v6Path": "part4/overlay/prototype/App/WS2SupplementPane.swift",
+      "sha256": "223df7148a746cb7e6a7664c012b269dc0c7d515ae5d1fe698962e75aa5e517c"
+    },
+    {
+      "archivePath": "WindowShade2-round2-handoff-v5/part4/overlay/prototype/Core/CodexWire.swift",
+      "v6Path": "part4/overlay/prototype/Core/CodexWire.swift",
+      "sha256": "25faf949ec1fea7d07715aadb67d72246604cc10eb4be3c9baa312ef1c69597d"
+    },
+    {
+      "archivePath": "WindowShade2-round2-handoff-v5/part4/overlay/prototype/Core/FocusTimer.swift",
+      "v6Path": "part4/overlay/prototype/Core/FocusTimer.swift",
+      "sha256": "f8d5760f92ad924c1727717938e84bc456f84967c931faec36d9554e243bf462"
+    },
+    {
+      "archivePath": "WindowShade2-round2-handoff-v5/part4/overlay/prototype/Core/NotchActivities.swift",
+      "v6Path": "part4/overlay/prototype/Core/NotchActivities.swift",
+      "sha256": "e5c6c6fc339b58175672abea1322b5aeaa0c526ab850a4a0b0d7c48280f5c10b"
+    },
+    {
+      "archivePath": "WindowShade2-round2-handoff-v5/part4/overlay/prototype/Core/WS2ApprovalReview.swift",
+      "v6Path": "part4/overlay/prototype/Core/WS2ApprovalReview.swift",
+      "sha256": "382ba5ed147027f63d3707ca865e79c7a38183cfa7e7216979472f0a42e4a149"
+    },
+    {
+      "archivePath": "WindowShade2-round2-handoff-v5/part4/overlay/prototype/Core/WS2CompanionFrame.swift",
+      "v6Path": "part4/overlay/prototype/Core/WS2CompanionFrame.swift",
+      "sha256": "2ecb698bdf16965242836f132a7bc801d0ac7db7b488abc0d5a1b878a4c0fabd"
+    },
+    {
+      "archivePath": "WindowShade2-round2-handoff-v5/part4/overlay/prototype/Core/WS2DeviceInputGate.swift",
+      "v6Path": "part4/overlay/prototype/Core/WS2DeviceInputGate.swift",
+      "sha256": "60c5be94786910c4719bcc4b56ff7ff217708e3981591922f33bbe9b384ae662"
+    },
+    {
+      "archivePath": "WindowShade2-round2-handoff-v5/part4/overlay/prototype/Core/WS2FocusWindowOwnership.swift",
+      "v6Path": "part4/overlay/prototype/Core/WS2FocusWindowOwnership.swift",
+      "sha256": "69a0b9a82fd67c318d92b4bcedebd6f980b094f24b37197758fe1cf85f5ab3c7"
+    },
+    {
+      "archivePath": "WindowShade2-round2-handoff-v5/part4/overlay/prototype/Support/WS2CompanionCrypto.swift",
+      "v6Path": "part4/overlay/prototype/Support/WS2CompanionCrypto.swift",
+      "sha256": "d50a35fcb45ba1905fb26a6c3c4f14a7dd450bb8413b13bfcf8429b0a7eed8e8"
+    },
+    {
+      "archivePath": "WindowShade2-round2-handoff-v5/part4/overlay/prototype/build.sh",
+      "v6Path": "part4/overlay/prototype/build.sh",
+      "sha256": "5de4c8d199eff86561ea1e1f708fad8e3f631026e3002758bb2191b498929d15"
+    },
+    {
+      "archivePath": "WindowShade2-round2-handoff-v5/part4/patches/part4.patch",
+      "v6Path": "part4/patches/part4.patch",
+      "sha256": "23c603092e6b43b0943650abf3279101ebf78323812a131119484f3897bdb081"
+    },
+    {
+      "archivePath": "WindowShade2-round2-handoff-v5/part4/privacy-delta.csv",
+      "v6Path": "part4/privacy-delta.csv",
+      "sha256": "22c92b1cdc0d4743308cd871df23d5b6fea499e82c2b8ca582b3fdc949e98811"
+    },
+    {
+      "archivePath": "WindowShade2-round2-handoff-v5/part4/reference/CommandExecutionRequestApprovalResponse.json",
+      "v6Path": "part4/reference/CommandExecutionRequestApprovalResponse.json",
+      "sha256": "6d0767113e22f311381809b6b236b0dde2b99b01992879c26bf7b1ea0e003cb7"
+    },
+    {
+      "archivePath": "WindowShade2-round2-handoff-v5/part4/reference/prototype/Core/CodexWire.swift",
+      "v6Path": "part4/reference/prototype/Core/CodexWire.swift",
+      "sha256": "7c507cbbc3014aa41bb8615e5d43ab9bad0dc1163c306c6a2f07ce042bcabb10"
+    },
+    {
+      "archivePath": "WindowShade2-round2-handoff-v5/part4/reference/prototype/Core/Contracts.swift",
+      "v6Path": "part4/reference/prototype/Core/Contracts.swift",
+      "sha256": "12fffc2e5cf207aa0ca6b4c371f28b9eec8c2b374b5e1a06d8943878891b2420"
+    },
+    {
+      "archivePath": "WindowShade2-round2-handoff-v5/part4/reference/prototype/Core/GamepadMapping.swift",
+      "v6Path": "part4/reference/prototype/Core/GamepadMapping.swift",
+      "sha256": "672cf04922a50acca6eecd2727b135f07a05acae74ab285e9fb92a23ea39a855"
+    },
+    {
+      "archivePath": "WindowShade2-round2-handoff-v5/part4/reference/prototype/Core/PairingTLV.swift",
+      "v6Path": "part4/reference/prototype/Core/PairingTLV.swift",
+      "sha256": "32495002c85cc927a8c31cd5699ff517f070107120c111919e9b35c1df2f3845"
+    },
+    {
+      "archivePath": "WindowShade2-round2-handoff-v5/part4/requirements-tests.txt",
+      "v6Path": "part4/requirements-tests.txt",
+      "sha256": "1b2b5bdc68c0835d1cf733b030a42d6d24464f13ab9248d2c544331f554c78de"
+    },
+    {
+      "archivePath": "WindowShade2-round2-handoff-v5/part4/tests/CoreTests.swift",
+      "v6Path": "part4/tests/CoreTests.swift",
+      "sha256": "c3c887caa75c8d149b9e9b1307addb241ed9fc7994d25fcaecd38a09874743cc"
+    },
+    {
+      "archivePath": "WindowShade2-round2-handoff-v5/part4/tests/MacCryptoTests.swift",
+      "v6Path": "part4/tests/MacCryptoTests.swift",
+      "sha256": "064b5b770b7d67c412c8a363a20556642535f04f1bf944fc571fc12e65b5cc44"
+    },
+    {
+      "archivePath": "WindowShade2-round2-handoff-v5/part4/tests/check-approval-schema.py",
+      "v6Path": "part4/tests/check-approval-schema.py",
+      "sha256": "d6dca607dabc760d839ccc907a3af9c7276c62db666453db9f1622e83a3237f7"
+    },
+    {
+      "archivePath": "WindowShade2-round2-handoff-v5/part4/tests/crypto-reference.py",
+      "v6Path": "part4/tests/crypto-reference.py",
+      "sha256": "7f2618f25649333978f75ac4adf750f5750ad3dc01c5969545316f46fe1d2cff"
+    },
+    {
+      "archivePath": "WindowShade2-round2-handoff-v5/part4/tests/run-core.sh",
+      "v6Path": "part4/tests/run-core.sh",
+      "sha256": "9b549678bf7708429584440ac112ec2505203fc448c6eae63d4fcdd5d668ac3b"
+    },
+    {
+      "archivePath": "WindowShade2-round2-handoff-v5/part4/tests/run-mac-crypto.sh",
+      "v6Path": "part4/tests/run-mac-crypto.sh",
+      "sha256": "3a8128d6b444825ddad4f61907d84980d4cb79633dfc8f8df294ad6288d3a7e1"
+    },
+    {
+      "archivePath": "WindowShade2-round2-handoff-v5/part4/tools/stage.py",
+      "v6Path": "part4/tools/stage.py",
+      "sha256": "0839527e812082f46eb8c62ea614e089325fa09bd146199241faec0a815d378b"
+    },
+    {
+      "archivePath": "WindowShade2-round2-handoff-v5/part4/validation/approval-accept.ndjson",
+      "v6Path": "part4/validation/approval-accept.ndjson",
+      "sha256": "e7a0f4f1cdf4f38fa49f75690ec0c345761eaf909378b101f88ffa8f6d1d6ab6"
+    },
+    {
+      "archivePath": "WindowShade2-round2-handoff-v5/part4/validation/approval-schema.json",
+      "v6Path": "part4/validation/approval-schema.json",
+      "sha256": "c4bc63d6f1a2e16365bda10ab5bbcb50ecb92ee35490eb07d7bb23ffcb0d355b"
+    },
+    {
+      "archivePath": "WindowShade2-round2-handoff-v5/part4/validation/base-integrity.json",
+      "v6Path": "part4/validation/base-integrity.json",
+      "sha256": "b87ad2086800108ba2dca28e75f24ed7bdbb45e9c1fb68af5f3827f7bb3e9ac2"
+    },
+    {
+      "archivePath": "WindowShade2-round2-handoff-v5/part4/validation/core-results.json",
+      "v6Path": "part4/validation/core-results.json",
+      "sha256": "7404d5a581405deb4d37bbb30d0978b7e364a2df9a1207054fdbc4aece30fe3c"
+    },
+    {
+      "archivePath": "WindowShade2-round2-handoff-v5/part4/validation/core-tests.txt",
+      "v6Path": "part4/validation/core-tests.txt",
+      "sha256": "dda234c04b3819d4ede8292373fd3fae479fd9b1dfeb75d4ae74129bafd8babc"
+    },
+    {
+      "archivePath": "WindowShade2-round2-handoff-v5/part4/validation/crypto-reference.json",
+      "v6Path": "part4/validation/crypto-reference.json",
+      "sha256": "98dd0df36a4896594134028ab8777bd2da373ce1bff67b23cf571eac3b247d21"
+    },
+    {
+      "archivePath": "WindowShade2-round2-handoff-v5/part4/validation/crypto-reference.txt",
+      "v6Path": "part4/validation/crypto-reference.txt",
+      "sha256": "b1fbcd53b51912b85110e9f30d2ad764f48a5464547ddce7f50de15451048528"
+    },
+    {
+      "archivePath": "WindowShade2-round2-handoff-v5/part4/validation/environment.json",
+      "v6Path": "part4/validation/environment.json",
+      "sha256": "18d9a38489017e3046d7ff652f06e1d967dd39e95cca1767d0a649cd7e1c5bc1"
+    },
+    {
+      "archivePath": "WindowShade2-round2-handoff-v5/part4/validation/final-audit.json",
+      "v6Path": "part4/validation/final-audit.json",
+      "sha256": "890d2daf6d5dfed15549b888c32eaa87162ecbc81713723a128ab254f6ffa36e"
+    },
+    {
+      "archivePath": "WindowShade2-round2-handoff-v5/part4/validation/focus-host-typecheck.json",
+      "v6Path": "part4/validation/focus-host-typecheck.json",
+      "sha256": "c2f53b2f10cf88560656b8bb08965329e9fd2a5b337d703bf25c20669858a020"
+    },
+    {
+      "archivePath": "WindowShade2-round2-handoff-v5/part4/validation/mac-crypto-not-run.json",
+      "v6Path": "part4/validation/mac-crypto-not-run.json",
+      "sha256": "c0b89d13462a7f0f4ffab84ae44967b07562562313c11ab0861e44704ede345b"
+    },
+    {
+      "archivePath": "WindowShade2-round2-handoff-v5/part4/validation/original-input-integrity.json",
+      "v6Path": "part4/validation/original-input-integrity.json",
+      "sha256": "718d79c638b35086bec426716a982f614fe9c86a4256deb39d4b3aa290246893"
+    },
+    {
+      "archivePath": "WindowShade2-round2-handoff-v5/part4/validation/part2-outbound.ndjson",
+      "v6Path": "part4/validation/part2-outbound.ndjson",
+      "sha256": "d95756dbf8419f21deb20e2ed396f72b140254d587c063da662ffd3eca484116"
+    },
+    {
+      "archivePath": "WindowShade2-round2-handoff-v5/part4/validation/part2-regression-compile.json",
+      "v6Path": "part4/validation/part2-regression-compile.json",
+      "sha256": "9345d8b9afb23c5579ac6b568e6a6bfeea8c0ef2416915310d968572215b0d61"
+    },
+    {
+      "archivePath": "WindowShade2-round2-handoff-v5/part4/validation/part2-regression-run.json",
+      "v6Path": "part4/validation/part2-regression-run.json",
+      "sha256": "08b05c265dfcc5f62be3300bbe99c4afe8cb1cbaa20259fe9e43c11107c89745"
+    },
+    {
+      "archivePath": "WindowShade2-round2-handoff-v5/part4/validation/python-packages.json",
+      "v6Path": "part4/validation/python-packages.json",
+      "sha256": "63cd3381a9879ac621b07cb9adb4e453d3e95df495d7fe8c576da38cf156df06"
+    },
+    {
+      "archivePath": "WindowShade2-round2-handoff-v5/part4/validation/schema-recheck.json",
+      "v6Path": "part4/validation/schema-recheck.json",
+      "sha256": "5205623b1463ff19ad2c5ec0d89d19db7cf7725f7eacb343722d555dfa8871eb"
+    },
+    {
+      "archivePath": "WindowShade2-round2-handoff-v5/part4/validation/stage-reject-existing.json",
+      "v6Path": "part4/validation/stage-reject-existing.json",
+      "sha256": "9b01c8eb8d6561fcb06a5a3c54d16e480da8e222a12bf0dafdd79da0cf16d014"
+    },
+    {
+      "archivePath": "WindowShade2-round2-handoff-v5/part4/validation/stage-reject-wrong-base.json",
+      "v6Path": "part4/validation/stage-reject-wrong-base.json",
+      "sha256": "040ad13fab3fd003e1883a795d70c1597f9fa5851ead112ea1a6f82d1c8b9221"
+    },
+    {
+      "archivePath": "WindowShade2-round2-handoff-v5/part4/validation/stage.json",
+      "v6Path": "part4/validation/stage.json",
+      "sha256": "7664eed10c08a3b456af40ae36cd7cd90799cb01d05d531569eec5c568f73997"
+    },
+    {
+      "archivePath": "WindowShade2-round2-handoff-v5/part4/validation/syntax-only.json",
+      "v6Path": "part4/validation/syntax-only.json",
+      "sha256": "df32b8b27813622c44a805df86487de012e7903cd497d3140d607aeeffbe965e"
+    },
+    {
+      "archivePath": "WindowShade2-round2-handoff-v5/part4/validation/t1-regression-compile.json",
+      "v6Path": "part4/validation/t1-regression-compile.json",
+      "sha256": "a4e595e35da17fdac6446340329327595dc13cad167f05667a25827001c45989"
+    },
+    {
+      "archivePath": "WindowShade2-round2-handoff-v5/part4/validation/t1-regression-run.json",
+      "v6Path": "part4/validation/t1-regression-run.json",
+      "sha256": "33a7c9aa7ba2613c333b5a2ddd825ea0fc59530fe5f91c9120afa885774dcf0f"
+    },
+    {
+      "archivePath": "WindowShade2-round2-handoff-v5/part4/workorders/01-配对与传输.md",
+      "v6Path": "part4/workorders/01-配对与传输.md",
+      "sha256": "532408afe26a28e646f9b52f955e5e580ad42666950e855677bcc33cd223d514"
+    },
+    {
+      "archivePath": "WindowShade2-round2-handoff-v5/part4/workorders/02-审批与进程.md",
+      "v6Path": "part4/workorders/02-审批与进程.md",
+      "sha256": "3ef55ef7fdb51ba745ea3a8cdddf5e96cda180012336dfe8c504df7e3f591e9b"
+    },
+    {
+      "archivePath": "WindowShade2-round2-handoff-v5/part4/workorders/03-输入设备.md",
+      "v6Path": "part4/workorders/03-输入设备.md",
+      "sha256": "c8814e51698b1f855fdef01b2d2ffa934dfea6f837204961e1a4d36b53ec9c01"
+    },
+    {
+      "archivePath": "WindowShade2-round2-handoff-v5/part4/workorders/04-界面宿主.md",
+      "v6Path": "part4/workorders/04-界面宿主.md",
+      "sha256": "128e01b96b76f8578a19b94828717248b2966feb8d79432149194084df136149"
+    },
+    {
+      "archivePath": "WindowShade2-round2-handoff-v5/part4/workorders/05-番茄钟.md",
+      "v6Path": "part4/workorders/05-番茄钟.md",
+      "sha256": "46c8fddbe78d1a4dd90db24e07ee551e8d3806a73b455e406712ea195e8f6da1"
+    },
+    {
+      "archivePath": "WindowShade2-round2-handoff-v5/part5/00-交给执行模型.md",
+      "v6Path": "part5/00-交给执行模型.md",
+      "sha256": "be34fa913d25c50191eabe44b5d1cadb6f3f695bd33a7c9018957ba3e2d3a7b2"
+    },
+    {
+      "archivePath": "WindowShade2-round2-handoff-v5/part5/ARTIFACTS.sha256.json",
+      "v6Path": "part5/ARTIFACTS.sha256.json",
+      "sha256": "c98dbd6468bd41931f959f2123cb11f48b1121481d51b26f39a2e5a11d308c39"
+    },
+    {
+      "archivePath": "WindowShade2-round2-handoff-v5/part5/CHANGELOG.md",
+      "v6Path": "part5/CHANGELOG.md",
+      "sha256": "16f25ecff1ff7735ed8f84d3d7479eae8944da3bf55c190f4a39c116eb220eb9"
+    },
+    {
+      "archivePath": "WindowShade2-round2-handoff-v5/part5/README.md",
+      "v6Path": "part5/README.md",
+      "sha256": "18345bc1dde6f20e9ce172d045e63f33f83cdeaf1df33951735c276cb089a92f"
+    },
+    {
+      "archivePath": "WindowShade2-round2-handoff-v5/part5/REMAINING.md",
+      "v6Path": "part5/REMAINING.md",
+      "sha256": "1b378cea5cc13e67e4077176861e01013ba17da4064921fdd0a4cb6c9b36cc31"
+    },
+    {
+      "archivePath": "WindowShade2-round2-handoff-v5/part5/VALIDATION.md",
+      "v6Path": "part5/VALIDATION.md",
+      "sha256": "1819c23294d9c8cc5fa9b67d8a9fd6dbc4960eaa58929858a2ee73e50e608458"
+    },
+    {
+      "archivePath": "WindowShade2-round2-handoff-v5/part5/docs/01-首次配对.md",
+      "v6Path": "part5/docs/01-首次配对.md",
+      "sha256": "1037906d138fcc38ab29019040e6987884b9bdc57ce122358a38f93ee9096dc8"
+    },
+    {
+      "archivePath": "WindowShade2-round2-handoff-v5/part5/docs/02-身份与网络.md",
+      "v6Path": "part5/docs/02-身份与网络.md",
+      "sha256": "06afd4f225e5fe70bf14139cf97a060d2eead7c8b6ea08e76d2bf918e7daf78f"
+    },
+    {
+      "archivePath": "WindowShade2-round2-handoff-v5/part5/docs/03-进程与审批.md",
+      "v6Path": "part5/docs/03-进程与审批.md",
+      "sha256": "2fd97e042bebfd038a5b1461e095faedd420bea809736efdc73489bfcf4b7863"
+    },
+    {
+      "archivePath": "WindowShade2-round2-handoff-v5/part5/docs/04-设备输入.md",
+      "v6Path": "part5/docs/04-设备输入.md",
+      "sha256": "55db2b4201a647ef5935c94c01259060fce1593fb65057971a9ea9eaeec4c42d"
+    },
+    {
+      "archivePath": "WindowShade2-round2-handoff-v5/part5/docs/05-窗口事务.md",
+      "v6Path": "part5/docs/05-窗口事务.md",
+      "sha256": "1e0fbe0d501d9f4543322c3f43ef2cbe7d34d19778512c03094af5cbd3ec8f7d"
+    },
+    {
+      "archivePath": "WindowShade2-round2-handoff-v5/part5/docs/06-统一生命周期与取舍.md",
+      "v6Path": "part5/docs/06-统一生命周期与取舍.md",
+      "sha256": "bf68753d4bfa53e6019ef1ad9c43134cbe90f2fdd47b43dfb151c66e3460aa84"
+    },
+    {
+      "archivePath": "WindowShade2-round2-handoff-v5/part5/manifest.json",
+      "v6Path": "part5/manifest.json",
+      "sha256": "79749667950706b57810b1f8290a3444bd0251d89d4378d8d3709d79265ca971"
+    },
+    {
+      "archivePath": "WindowShade2-round2-handoff-v5/part5/optional-srp/Sources/WS2SRPAdapter/WS2SRPAdapter.swift",
+      "v6Path": "part5/optional-srp/Sources/WS2SRPAdapter/WS2SRPAdapter.swift",
+      "sha256": "a8bb9e47748a693a1a0725b209a104aaa1baa24e5b281e1a59c88958d94efa97"
+    },
+    {
+      "archivePath": "WindowShade2-round2-handoff-v5/part5/overlay/prototype/App/WS2CodexApprovalHost.swift",
+      "v6Path": "part5/overlay/prototype/App/WS2CodexApprovalHost.swift",
+      "sha256": "e08fbdcab085bfda8db45e5a01797b9ef173cc87c52f47ae040353af2863b3bf"
+    },
+    {
+      "archivePath": "WindowShade2-round2-handoff-v5/part5/overlay/prototype/App/WS2DeviceActionHost.swift",
+      "v6Path": "part5/overlay/prototype/App/WS2DeviceActionHost.swift",
+      "sha256": "9bad067f8333d54084cb88f2bffa4dd50307d1bb3db4d34aef501b01daa50011"
+    },
+    {
+      "archivePath": "WindowShade2-round2-handoff-v5/part5/overlay/prototype/App/WS2GameControllerBridge.swift",
+      "v6Path": "part5/overlay/prototype/App/WS2GameControllerBridge.swift",
+      "sha256": "e8ff240ac2a42ae32eda28fa656c41ecd4ba3e88ad6f763f97af1e1815690a23"
+    },
+    {
+      "archivePath": "WindowShade2-round2-handoff-v5/part5/overlay/prototype/App/WS2OwnedCodexSession.swift",
+      "v6Path": "part5/overlay/prototype/App/WS2OwnedCodexSession.swift",
+      "sha256": "211a2a4a5024547723634142eb60825b43eb6dfbea3a7710d4ab54bb37653572"
+    },
+    {
+      "archivePath": "WindowShade2-round2-handoff-v5/part5/overlay/prototype/Core/WS2BoundedOutbox.swift",
+      "v6Path": "part5/overlay/prototype/Core/WS2BoundedOutbox.swift",
+      "sha256": "80fb7f58123a2f9df5c0d7b94c206277427e269273be595ac25e4d554c68e326"
+    },
+    {
+      "archivePath": "WindowShade2-round2-handoff-v5/part5/overlay/prototype/Core/WS2FocusEffectPlan.swift",
+      "v6Path": "part5/overlay/prototype/Core/WS2FocusEffectPlan.swift",
+      "sha256": "60ccb717e3641f20e1fc499dc1e432ba37493e3c4abe8e28c73b2ebc19419829"
+    },
+    {
+      "archivePath": "WindowShade2-round2-handoff-v5/part5/overlay/prototype/Core/WS2SemanticInputRouter.swift",
+      "v6Path": "part5/overlay/prototype/Core/WS2SemanticInputRouter.swift",
+      "sha256": "7055bb6994681ac67dd6b166374ab00923a8e1d76b9133021d922925ef2ac3c6"
+    },
+    {
+      "archivePath": "WindowShade2-round2-handoff-v5/part5/overlay/prototype/Support/WS2CompanionTCPTransport.swift",
+      "v6Path": "part5/overlay/prototype/Support/WS2CompanionTCPTransport.swift",
+      "sha256": "78bccef841039bf2d4fb5058ae21e01633da6f2e00435eb1a17b9ca2cd273266"
+    },
+    {
+      "archivePath": "WindowShade2-round2-handoff-v5/part5/overlay/prototype/Support/WS2DuplexProcess.swift",
+      "v6Path": "part5/overlay/prototype/Support/WS2DuplexProcess.swift",
+      "sha256": "06e886dc237b1c69b7525aa52eaf3ebbb06ee22867eacd3fa1bbdf10d3d74f09"
+    },
+    {
+      "archivePath": "WindowShade2-round2-handoff-v5/part5/overlay/prototype/Support/WS2FocusEffectExecutor.swift",
+      "v6Path": "part5/overlay/prototype/Support/WS2FocusEffectExecutor.swift",
+      "sha256": "674a8760579e1eccf401f6c949d6fcf69b74257943fe795b043f255b7c3887bf"
+    },
+    {
+      "archivePath": "WindowShade2-round2-handoff-v5/part5/overlay/prototype/Support/WS2KeychainPeerStorage.swift",
+      "v6Path": "part5/overlay/prototype/Support/WS2KeychainPeerStorage.swift",
+      "sha256": "ffe7ecc5a1bbd58497156c645a074506371039f49ceb92bfc2d9b2c6f36a395f"
+    },
+    {
+      "archivePath": "WindowShade2-round2-handoff-v5/part5/overlay/prototype/Support/WS2PairSetupCrypto.swift",
+      "v6Path": "part5/overlay/prototype/Support/WS2PairSetupCrypto.swift",
+      "sha256": "6345ec9ff7339c0845f4140beac96577ee1310968d71dab941a0266d315e6fda"
+    },
+    {
+      "archivePath": "WindowShade2-round2-handoff-v5/part5/overlay/prototype/Support/WS2PairSetupServer.swift",
+      "v6Path": "part5/overlay/prototype/Support/WS2PairSetupServer.swift",
+      "sha256": "56ba109e6d1f63c8771cb0788c6c3af4796eed38cea5fe9880f744651c6516b1"
+    },
+    {
+      "archivePath": "WindowShade2-round2-handoff-v5/part5/overlay/prototype/Support/WS2PeerRepository.swift",
+      "v6Path": "part5/overlay/prototype/Support/WS2PeerRepository.swift",
+      "sha256": "1ee4290d4151defac9a50b741c1128dbd8d6bcb7514cd4535ce39ac84f740b42"
+    },
+    {
+      "archivePath": "WindowShade2-round2-handoff-v5/part5/reference/pair-setup-vectors.json",
+      "v6Path": "part5/reference/pair-setup-vectors.json",
+      "sha256": "943f26d7b6dc0cf6aac5050fa675862d486495f7094ff1786c189d64ef5ab539"
+    },
+    {
+      "archivePath": "WindowShade2-round2-handoff-v5/part5/reference/srp_reference.py",
+      "v6Path": "part5/reference/srp_reference.py",
+      "sha256": "8633ed52fc9d3875615ef7b00aaacc3ca1059ed5fa01987ed7acaa99d7302e84"
+    },
+    {
+      "archivePath": "WindowShade2-round2-handoff-v5/part5/sources/README.md",
+      "v6Path": "part5/sources/README.md",
+      "sha256": "dd533f292349dae96f72efa83521451de097f18e3d284af1f79c59aa869bf222"
+    },
+    {
+      "archivePath": "WindowShade2-round2-handoff-v5/part5/sources/code-map.json",
+      "v6Path": "part5/sources/code-map.json",
+      "sha256": "80146da3035eea42cfc6539eb1f6a023ad6e7f81af59ceb2973bfc761b2d5996"
+    },
+    {
+      "archivePath": "WindowShade2-round2-handoff-v5/part5/tests/ACCEPTANCE.md",
+      "v6Path": "part5/tests/ACCEPTANCE.md",
+      "sha256": "e35f58df941948ac7881f0aa3d8eaf03b280cdf19a166cad7d5a2c6f209e2904"
+    },
+    {
+      "archivePath": "WindowShade2-round2-handoff-v5/part5/tests/CoreTests.swift",
+      "v6Path": "part5/tests/CoreTests.swift",
+      "sha256": "9c0e295f8a0b0e560968b553bd7fb08f3aef439105ca80b67bf38b50e6946b51"
+    },
+    {
+      "archivePath": "WindowShade2-round2-handoff-v5/part5/tests/MacPairCryptoTests.swift",
+      "v6Path": "part5/tests/MacPairCryptoTests.swift",
+      "sha256": "be8d7f4e12af0fc8633d2815aedbe1ea87a022fffb29b7975fb66b172e956299"
+    },
+    {
+      "archivePath": "WindowShade2-round2-handoff-v5/part5/tests/ProcessTests.swift",
+      "v6Path": "part5/tests/ProcessTests.swift",
+      "sha256": "c8893654bd27c4b86276a7c68d9860bcebee2855bd5fee63a184ee7627e9ac27"
+    },
+    {
+      "archivePath": "WindowShade2-round2-handoff-v5/part5/tests/check-foundation.sh",
+      "v6Path": "part5/tests/check-foundation.sh",
+      "sha256": "4b647776e06b1777ee79023b13d40ffd824872416f968ef4500c77d1e1c454c5"
+    },
+    {
+      "archivePath": "WindowShade2-round2-handoff-v5/part5/tests/crypto-reference.py",
+      "v6Path": "part5/tests/crypto-reference.py",
+      "sha256": "2f7c8b7e9debbcbaafc835bdc683b09e833aed9cd2d18cb3ae18586b6ec3956f"
+    },
+    {
+      "archivePath": "WindowShade2-round2-handoff-v5/part5/tests/fake-child.py",
+      "v6Path": "part5/tests/fake-child.py",
+      "sha256": "f428e9914e111e9f082b7e5888fa6993b03a35ddac8bf3e697dd55ea5dbb0368"
+    },
+    {
+      "archivePath": "WindowShade2-round2-handoff-v5/part5/tests/run-core.sh",
+      "v6Path": "part5/tests/run-core.sh",
+      "sha256": "6bc0cd8c7b64f868f206213a940bea8fccd63596a20676927ab8d5dd4d8afcae"
+    },
+    {
+      "archivePath": "WindowShade2-round2-handoff-v5/part5/tests/run-mac-crypto.sh",
+      "v6Path": "part5/tests/run-mac-crypto.sh",
+      "sha256": "ef0eaa6a9a5fe934f3c42321edb9946a2edc00536dde94bc02774bfc5b16c1ef"
+    },
+    {
+      "archivePath": "WindowShade2-round2-handoff-v5/part5/tests/run-process.sh",
+      "v6Path": "part5/tests/run-process.sh",
+      "sha256": "b55f407e6a851dbd9e2d2cd73d65f28289849ebfb211123655dc03adf623e30f"
+    },
+    {
+      "archivePath": "WindowShade2-round2-handoff-v5/part5/tests/run-regressions.sh",
+      "v6Path": "part5/tests/run-regressions.sh",
+      "sha256": "f1043ee8e52efa835bde51bdfaae6050c9bcd446b7c7b714255b37f03635fb78"
+    },
+    {
+      "archivePath": "WindowShade2-round2-handoff-v5/part5/tools/prepare-srp-probe.py",
+      "v6Path": "part5/tools/prepare-srp-probe.py",
+      "sha256": "afc100f02e229ff2dcc9f85d51b91a0eb24bd7e33ce39294dd75a8aacd0ec184"
+    },
+    {
+      "archivePath": "WindowShade2-round2-handoff-v5/part5/tools/stage.py",
+      "v6Path": "part5/tools/stage.py",
+      "sha256": "459a3c3ad525c42b4afa418a721da48d4e114d314baa653eb73c079d207d6dc7"
+    },
+    {
+      "archivePath": "WindowShade2-round2-handoff-v5/part5/tools/verify-sources.py",
+      "v6Path": "part5/tools/verify-sources.py",
+      "sha256": "7bf7619388ef89cf576b648235133b495bdceab868f3f38ee69f4b1fe37e421a"
+    },
+    {
+      "archivePath": "WindowShade2-round2-handoff-v5/part5/validation/artifact-preflight.json",
+      "v6Path": "part5/validation/artifact-preflight.json",
+      "sha256": "191046afae40f1ecbbea89ebdbb3403b2d11d16ea80fd6dbd8690d1d153b2df4"
+    },
+    {
+      "archivePath": "WindowShade2-round2-handoff-v5/part5/validation/base-integrity.json",
+      "v6Path": "part5/validation/base-integrity.json",
+      "sha256": "692456b6642e497cb7cbd8b9f02782e971020fb754404d0e79e3fcebe395a267"
+    },
+    {
+      "archivePath": "WindowShade2-round2-handoff-v5/part5/validation/combined-foundation-typecheck.txt",
+      "v6Path": "part5/validation/combined-foundation-typecheck.txt",
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    {
+      "archivePath": "WindowShade2-round2-handoff-v5/part5/validation/commands.json",
+      "v6Path": "part5/validation/commands.json",
+      "sha256": "c0deec058467ff6f903890ae23bcd444694ba9b993afdad4e76a7613434a5d4a"
+    },
+    {
+      "archivePath": "WindowShade2-round2-handoff-v5/part5/validation/core-final.txt",
+      "v6Path": "part5/validation/core-final.txt",
+      "sha256": "fb3c20f9e6b2baa0a092269a688a7e98d1702c5154473f95d7791f2d5cc96ed2"
+    },
+    {
+      "archivePath": "WindowShade2-round2-handoff-v5/part5/validation/core-results.json",
+      "v6Path": "part5/validation/core-results.json",
+      "sha256": "c2d5df1e06abc308433de73d697a1255f3e57f4a806736939e595b67b455ff88"
+    },
+    {
+      "archivePath": "WindowShade2-round2-handoff-v5/part5/validation/crypto-final.txt",
+      "v6Path": "part5/validation/crypto-final.txt",
+      "sha256": "36d8454c644906d734c357d369a730f2ced3d1873c15983c064fddbcf547dda1"
+    },
+    {
+      "archivePath": "WindowShade2-round2-handoff-v5/part5/validation/crypto-reference.json",
+      "v6Path": "part5/validation/crypto-reference.json",
+      "sha256": "19c82b19a5cf95cf7172800694e8ec4eb52486909d413dfc985721500e447ec1"
+    },
+    {
+      "archivePath": "WindowShade2-round2-handoff-v5/part5/validation/development/core-first.txt",
+      "v6Path": "part5/validation/development/core-first.txt",
+      "sha256": "fb3c20f9e6b2baa0a092269a688a7e98d1702c5154473f95d7791f2d5cc96ed2"
+    },
+    {
+      "archivePath": "WindowShade2-round2-handoff-v5/part5/validation/development/crypto-first.txt",
+      "v6Path": "part5/validation/development/crypto-first.txt",
+      "sha256": "36d8454c644906d734c357d369a730f2ced3d1873c15983c064fddbcf547dda1"
+    },
+    {
+      "archivePath": "WindowShade2-round2-handoff-v5/part5/validation/development/process-first.txt",
+      "v6Path": "part5/validation/development/process-first.txt",
+      "sha256": "71f5d7274a88fa96f238a6dc4ec2d4db8c553707279f6c1ba71558e5db20dcaa"
+    },
+    {
+      "archivePath": "WindowShade2-round2-handoff-v5/part5/validation/development/process-second.txt",
+      "v6Path": "part5/validation/development/process-second.txt",
+      "sha256": "9d07d06f854218844a498141d29392a09ccf0d419ee57ad9104956387d96ab2c"
+    },
+    {
+      "archivePath": "WindowShade2-round2-handoff-v5/part5/validation/development/process-with-bindings.txt",
+      "v6Path": "part5/validation/development/process-with-bindings.txt",
+      "sha256": "9d07d06f854218844a498141d29392a09ccf0d419ee57ad9104956387d96ab2c"
+    },
+    {
+      "archivePath": "WindowShade2-round2-handoff-v5/part5/validation/development/typecheck-first.txt",
+      "v6Path": "part5/validation/development/typecheck-first.txt",
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    {
+      "archivePath": "WindowShade2-round2-handoff-v5/part5/validation/development/typecheck-pairing-fixed.txt",
+      "v6Path": "part5/validation/development/typecheck-pairing-fixed.txt",
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    {
+      "archivePath": "WindowShade2-round2-handoff-v5/part5/validation/development/typecheck-pairing.txt",
+      "v6Path": "part5/validation/development/typecheck-pairing.txt",
+      "sha256": "50444d65bf28cec3a74fcb77986cae759267329cf63d3d59696d33d6b5130630"
+    },
+    {
+      "archivePath": "WindowShade2-round2-handoff-v5/part5/validation/environment.json",
+      "v6Path": "part5/validation/environment.json",
+      "sha256": "8bb4f1bb130dd00b701b62f461f266d9efaf4d4a1b0efa3a0ea3b6edd3f7c969"
+    },
+    {
+      "archivePath": "WindowShade2-round2-handoff-v5/part5/validation/final-test-summary.json",
+      "v6Path": "part5/validation/final-test-summary.json",
+      "sha256": "d0d766d162ab56bd77a7a319c405dcdc8d35b9d7e3e729c0e6ab55f1c5ecea14"
+    },
+    {
+      "archivePath": "WindowShade2-round2-handoff-v5/part5/validation/foundation-script-final.txt",
+      "v6Path": "part5/validation/foundation-script-final.txt",
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    {
+      "archivePath": "WindowShade2-round2-handoff-v5/part5/validation/gesture-regression-compile.txt",
+      "v6Path": "part5/validation/gesture-regression-compile.txt",
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    {
+      "archivePath": "WindowShade2-round2-handoff-v5/part5/validation/gesture-regression-run.txt",
+      "v6Path": "part5/validation/gesture-regression-run.txt",
+      "sha256": "b1c223ab3be82a19bad2d7045fca062b892f9d208a5fe2327a750631d6e03fc9"
+    },
+    {
+      "archivePath": "WindowShade2-round2-handoff-v5/part5/validation/mac-crypto-not-run.txt",
+      "v6Path": "part5/validation/mac-crypto-not-run.txt",
+      "sha256": "2da7aac428e694f42caf6c33dfee8a107f0ec07ba61d946b485d0bdf2814ce61"
+    },
+    {
+      "archivePath": "WindowShade2-round2-handoff-v5/part5/validation/original-input-integrity.json",
+      "v6Path": "part5/validation/original-input-integrity.json",
+      "sha256": "8feba783c4daabd66e19079889cdb12735e2870c831d49286965580b8d1d76d8"
+    },
+    {
+      "archivePath": "WindowShade2-round2-handoff-v5/part5/validation/part4-regression-compile.txt",
+      "v6Path": "part5/validation/part4-regression-compile.txt",
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    {
+      "archivePath": "WindowShade2-round2-handoff-v5/part5/validation/part4-regression-run.txt",
+      "v6Path": "part5/validation/part4-regression-run.txt",
+      "sha256": "dda234c04b3819d4ede8292373fd3fae479fd9b1dfeb75d4ae74129bafd8babc"
+    },
+    {
+      "archivePath": "WindowShade2-round2-handoff-v5/part5/validation/prepare-isolated-srp.txt",
+      "v6Path": "part5/validation/prepare-isolated-srp.txt",
+      "sha256": "bcb01648260011696ac477427bc8e43c59c41f80f577659a7d228130e1043d4b"
+    },
+    {
+      "archivePath": "WindowShade2-round2-handoff-v5/part5/validation/process-final.txt",
+      "v6Path": "part5/validation/process-final.txt",
+      "sha256": "ca87a50581dec64b289592177408b435a368d835212127a10d285395570734fe"
+    },
+    {
+      "archivePath": "WindowShade2-round2-handoff-v5/part5/validation/process-results.json",
+      "v6Path": "part5/validation/process-results.json",
+      "sha256": "c034da8ed2e9759657c5f7b2efeab740c07a25437780ee5577df6c46e8bdb1b5"
+    },
+    {
+      "archivePath": "WindowShade2-round2-handoff-v5/part5/validation/regression-part4-approval-accept.ndjson",
+      "v6Path": "part5/validation/regression-part4-approval-accept.ndjson",
+      "sha256": "e7a0f4f1cdf4f38fa49f75690ec0c345761eaf909378b101f88ffa8f6d1d6ab6"
+    },
+    {
+      "archivePath": "WindowShade2-round2-handoff-v5/part5/validation/regression-part4-core-results.json",
+      "v6Path": "part5/validation/regression-part4-core-results.json",
+      "sha256": "7404d5a581405deb4d37bbb30d0978b7e364a2df9a1207054fdbc4aece30fe3c"
+    },
+    {
+      "archivePath": "WindowShade2-round2-handoff-v5/part5/validation/regressions-script-final.txt",
+      "v6Path": "part5/validation/regressions-script-final.txt",
+      "sha256": "7d9592d2405d7e15049a6f9f6f394a7a50b8ee242ce7569558bf25391e4019bc"
+    },
+    {
+      "archivePath": "WindowShade2-round2-handoff-v5/part5/validation/shell-syntax-run-core.txt",
+      "v6Path": "part5/validation/shell-syntax-run-core.txt",
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    {
+      "archivePath": "WindowShade2-round2-handoff-v5/part5/validation/shell-syntax-run-mac-crypto.txt",
+      "v6Path": "part5/validation/shell-syntax-run-mac-crypto.txt",
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    {
+      "archivePath": "WindowShade2-round2-handoff-v5/part5/validation/shell-syntax-run-process.txt",
+      "v6Path": "part5/validation/shell-syntax-run-process.txt",
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    {
+      "archivePath": "WindowShade2-round2-handoff-v5/part5/validation/source-map-check.txt",
+      "v6Path": "part5/validation/source-map-check.txt",
+      "sha256": "8a1f38258ed86321a128be0642674981ae679bf3cd9174c65ce23127ae567a2f"
+    },
+    {
+      "archivePath": "WindowShade2-round2-handoff-v5/part5/validation/srp-manifest-dump.txt",
+      "v6Path": "part5/validation/srp-manifest-dump.txt",
+      "sha256": "e2b053a6e1505ed04ac5055d6d43f389641ee09261d19eccd7abdc6eae21fd8b"
+    },
+    {
+      "archivePath": "WindowShade2-round2-handoff-v5/part5/validation/srp-probe-Package.swift",
+      "v6Path": "part5/validation/srp-probe-Package.swift",
+      "sha256": "35fa9af6f7111468179bde0948f524e8d9ec59679f9acdc8a033ae3108837844"
+    },
+    {
+      "archivePath": "WindowShade2-round2-handoff-v5/part5/validation/srp-probe-input-hashes.json",
+      "v6Path": "part5/validation/srp-probe-input-hashes.json",
+      "sha256": "35d2cc4b0e5c93962e134203d0d31b5e52ba56f45768f6f4a2974c93d510ea91"
+    },
+    {
+      "archivePath": "WindowShade2-round2-handoff-v5/part5/validation/stage-reject-existing.txt",
+      "v6Path": "part5/validation/stage-reject-existing.txt",
+      "sha256": "3ca3272b66b295d946424f9ca40fc0ba856a487242eedca0a3213d18fd579a27"
+    },
+    {
+      "archivePath": "WindowShade2-round2-handoff-v5/part5/validation/stage-reject-nested.txt",
+      "v6Path": "part5/validation/stage-reject-nested.txt",
+      "sha256": "3ca3272b66b295d946424f9ca40fc0ba856a487242eedca0a3213d18fd579a27"
+    },
+    {
+      "archivePath": "WindowShade2-round2-handoff-v5/part5/validation/stage-reject-wrong-base.txt",
+      "v6Path": "part5/validation/stage-reject-wrong-base.txt",
+      "sha256": "c6d34c9dd736e1dc677de908157ac431ad86f0323716f6999d5990fa8140376b"
+    },
+    {
+      "archivePath": "WindowShade2-round2-handoff-v5/part5/validation/stage.json",
+      "v6Path": "part5/validation/stage.json",
+      "sha256": "6969a17c9e086601250271ac45aa5b8a057d920211b280561db0e76d72e6c56f"
+    },
+    {
+      "archivePath": "WindowShade2-round2-handoff-v5/part5/validation/syntax-only.json",
+      "v6Path": "part5/validation/syntax-only.json",
+      "sha256": "7e987f9da976045058e919f4415046f565f4929f08c583bda3a043dd254392ec"
+    },
+    {
+      "archivePath": "WindowShade2-round2-handoff-v5/part5/validation/t1-regression-compile.txt",
+      "v6Path": "part5/validation/t1-regression-compile.txt",
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    {
+      "archivePath": "WindowShade2-round2-handoff-v5/part5/validation/t1-regression-run.txt",
+      "v6Path": "part5/validation/t1-regression-run.txt",
+      "sha256": "3f5b5c1d014cd1dec258a05fa8358b7f2bde4c9a09e1cd84ae0374cd5284850e"
+    },
+    {
+      "archivePath": "WindowShade2-round2-handoff-v5/part5/workorders/01-首次配对.md",
+      "v6Path": "part5/workorders/01-首次配对.md",
+      "sha256": "a7ea0a6fb67f71c51c2c0681c28365e275776c3c5f6e2eb7dcee6bfa4d13a199"
+    },
+    {
+      "archivePath": "WindowShade2-round2-handoff-v5/part5/workorders/02-持久身份与网络.md",
+      "v6Path": "part5/workorders/02-持久身份与网络.md",
+      "sha256": "82285425c42a4eac24234cd8f0b41ad285c42de0e52deb52b9a626a6f7e38f42"
+    },
+    {
+      "archivePath": "WindowShade2-round2-handoff-v5/part5/workorders/03-真实助手进程.md",
+      "v6Path": "part5/workorders/03-真实助手进程.md",
+      "sha256": "d772dd6aefaf12883077bba8bdf0c67e3e7cd10a8a22eebc1fa3e2b88e7166ce"
+    },
+    {
+      "archivePath": "WindowShade2-round2-handoff-v5/part5/workorders/04-生产输入.md",
+      "v6Path": "part5/workorders/04-生产输入.md",
+      "sha256": "af08e20eb0d4279b8b9b0e91e852e61cf5ccb67574dcd80279c977dddcfdc0fe"
+    },
+    {
+      "archivePath": "WindowShade2-round2-handoff-v5/part5/workorders/05-窗口执行器.md",
+      "v6Path": "part5/workorders/05-窗口执行器.md",
+      "sha256": "2693b04f04b66599a0663912658d7054e182f2a6a4fe6484712ffbdfe985b41e"
+    }
+  ]
+}

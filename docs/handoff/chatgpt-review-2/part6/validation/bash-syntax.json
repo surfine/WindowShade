@@ -1,0 +1,82 @@
+[
+  {
+    "path": "tests/check-foundation.sh",
+    "command": [
+      "bash",
+      "-n",
+      "/mnt/data/WindowShade2-round2-part6/tests/check-foundation.sh"
+    ],
+    "exitCode": 0,
+    "stderr": ""
+  },
+  {
+    "path": "tests/run-core.sh",
+    "command": [
+      "bash",
+      "-n",
+      "/mnt/data/WindowShade2-round2-part6/tests/run-core.sh"
+    ],
+    "exitCode": 0,
+    "stderr": ""
+  },
+  {
+    "path": "tests/run-exit-probe.sh",
+    "command": [
+      "bash",
+      "-n",
+      "/mnt/data/WindowShade2-round2-part6/tests/run-exit-probe.sh"
+    ],
+    "exitCode": 0,
+    "stderr": ""
+  },
+  {
+    "path": "tests/run-mac-check.sh",
+    "command": [
+      "bash",
+      "-n",
+      "/mnt/data/WindowShade2-round2-part6/tests/run-mac-check.sh"
+    ],
+    "exitCode": 0,
+    "stderr": ""
+  },
+  {
+    "path": "tests/run-process.sh",
+    "command": [
+      "bash",
+      "-n",
+      "/mnt/data/WindowShade2-round2-part6/tests/run-process.sh"
+    ],
+    "exitCode": 0,
+    "stderr": ""
+  },
+  {
+    "path": "tests/run-regressions.sh",
+    "command": [
+      "bash",
+      "-n",
+      "/mnt/data/WindowShade2-round2-part6/tests/run-regressions.sh"
+    ],
+    "exitCode": 0,
+    "stderr": ""
+  },
+  {
+    "path": "tests/run-wire.sh",
+    "command": [
+      "bash",
+      "-n",
+      "/mnt/data/WindowShade2-round2-part6/tests/run-wire.sh"
+    ],
+    "exitCode": 0,
+    "stderr": ""
+  },
+  {
+    "path": "overlay/prototype/build.sh",
+    "command": [
+      "bash",
+      "-n",
+      "/mnt/data/WindowShade2-round2-part6/overlay/prototype/build.sh"
+    ],
+    "exitCode": 0,
+    "stderr": ""
+  }
+]

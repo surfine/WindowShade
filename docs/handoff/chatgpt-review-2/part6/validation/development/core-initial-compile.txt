@@ -1,0 +1,223 @@
+/mnt/data/WindowShade2-round2-part6/tests/CoreTests.swift:120:21: error: 'WS2OwnedScope' initializer is inaccessible due to 'private' protection level
+118 |         let root = WS2OwnedScope.Directory(canonicalPath: "/tmp/project", device: 1, inode: 2)
+119 |         t.run("SCP01 cannot begin before local enable and unlock") {
+120 |             var s = WS2OwnedScope(boot: UUID()); t.check(s.select(.init(id: UUID(), root: root)),"selected")
+    |                     `- error: 'WS2OwnedScope' initializer is inaccessible due to 'private' protection level
+121 |             t.check(s.begin(connection: UUID(), liveRoot: root) == nil,"closed environment")
+122 |             s.environment(unlocked: true, enabled: true)
+
+/mnt/data/WindowShade2-round2-part6/overlay/prototype/Core/WS2OwnedScope.swift:5:8: note: 'init(boot:revision:project:active:unlocked:enabled:exhausted:)' declared here
+ 3 | /// Local project/connection binding, NOT a sandbox and NOT an authorization grant.
+ 4 | /// Only the local picker and Runtime may populate identities; never trust a wire-supplied root.
+ 5 | struct WS2OwnedScope: Sendable {
+   |        `- note: 'init(boot:revision:project:active:unlocked:enabled:exhausted:)' declared here
+ 6 |     struct Directory: Hashable, Sendable {
+ 7 |         let canonicalPath: String
+
+/mnt/data/WindowShade2-round2-part6/tests/CoreTests.swift:126:21: error: 'WS2OwnedScope' initializer is inaccessible due to 'private' protection level
+124 |         }
+125 |         t.run("SCP02 project switch invalidates queued work") {
+126 |             var s = WS2OwnedScope(boot: UUID()); _ = s.select(.init(id: UUID(), root: root)); s.environment(unlocked: true, enabled: true)
+    |                     `- error: 'WS2OwnedScope' initializer is inaccessible due to 'private' protection level
+127 |             let ticket = try unwrap(s.begin(connection: UUID(), liveRoot: root)); _ = s.select(.init(id: UUID(), root: root))
+128 |             t.check(!s.accepts(ticket, liveRoot: root),"same path new selection still invalidates")
+
+/mnt/data/WindowShade2-round2-part6/overlay/prototype/Core/WS2OwnedScope.swift:5:8: note: 'init(boot:revision:project:active:unlocked:enabled:exhausted:)' declared here
+ 3 | /// Local project/connection binding, NOT a sandbox and NOT an authorization grant.
+ 4 | /// Only the local picker and Runtime may populate identities; never trust a wire-supplied root.
+ 5 | struct WS2OwnedScope: Sendable {
+   |        `- note: 'init(boot:revision:project:active:unlocked:enabled:exhausted:)' declared here
+ 6 |     struct Directory: Hashable, Sendable {
+ 7 |         let canonicalPath: String
+
+/mnt/data/WindowShade2-round2-part6/tests/CoreTests.swift:131:21: error: 'WS2OwnedScope' initializer is inaccessible due to 'private' protection level
+129 |         }
+130 |         t.run("SCP03 relock and unlock never restores old ticket") {
+131 |             var s = WS2OwnedScope(boot: UUID()); _ = s.select(.init(id: UUID(), root: root)); s.environment(unlocked: true, enabled: true)
+    |                     `- error: 'WS2OwnedScope' initializer is inaccessible due to 'private' protection level
+132 |             let ticket = try unwrap(s.begin(connection: UUID(), liveRoot: root))
+133 |             s.environment(unlocked: false, enabled: true); s.environment(unlocked: true, enabled: true)
+
+/mnt/data/WindowShade2-round2-part6/overlay/prototype/Core/WS2OwnedScope.swift:5:8: note: 'init(boot:revision:project:active:unlocked:enabled:exhausted:)' declared here
+ 3 | /// Local project/connection binding, NOT a sandbox and NOT an authorization grant.
+ 4 | /// Only the local picker and Runtime may populate identities; never trust a wire-supplied root.
+ 5 | struct WS2OwnedScope: Sendable {
+   |        `- note: 'init(boot:revision:project:active:unlocked:enabled:exhausted:)' declared here
+ 6 |     struct Directory: Hashable, Sendable {
+ 7 |         let canonicalPath: String
+
+/mnt/data/WindowShade2-round2-part6/tests/CoreTests.swift:137:21: error: 'WS2OwnedScope' initializer is inaccessible due to 'private' protection level
+135 |         }
+136 |         t.run("SCP04 path replacement and connection restart rejected") {
+137 |             var s = WS2OwnedScope(boot: UUID()); _ = s.select(.init(id: UUID(), root: root)); s.environment(unlocked: true, enabled: true)
+    |                     `- error: 'WS2OwnedScope' initializer is inaccessible due to 'private' protection level
+138 |             let old = try unwrap(s.begin(connection: UUID(), liveRoot: root))
+139 |             t.check(!s.accepts(old, liveRoot: .init(canonicalPath: root.canonicalPath, device: 1, inode: 3)),"inode checked")
+
+/mnt/data/WindowShade2-round2-part6/overlay/prototype/Core/WS2OwnedScope.swift:5:8: note: 'init(boot:revision:project:active:unlocked:enabled:exhausted:)' declared here
+ 3 | /// Local project/connection binding, NOT a sandbox and NOT an authorization grant.
+ 4 | /// Only the local picker and Runtime may populate identities; never trust a wire-supplied root.
+ 5 | struct WS2OwnedScope: Sendable {
+   |        `- note: 'init(boot:revision:project:active:unlocked:enabled:exhausted:)' declared here
+ 6 |     struct Directory: Hashable, Sendable {
+ 7 |         let canonicalPath: String
+
+/mnt/data/WindowShade2-round2-part6/tests/CoreTests.swift:143:21: error: 'WS2OwnedScope' initializer is inaccessible due to 'private' protection level
+141 |         }
+142 |         t.run("SCP05 backend session validation and epoch binding") {
+143 |             var s = WS2OwnedScope(boot: UUID()); _ = s.select(.init(id: UUID(), root: root)); s.environment(unlocked: true, enabled: true)
+    |                     `- error: 'WS2OwnedScope' initializer is inaccessible due to 'private' protection level
+144 |             let ticket = try unwrap(s.begin(connection: UUID(), liveRoot: root))
+145 |             t.check(s.context(ticket, session: .init(provider: .codex, id: ""), liveRoot: root) == nil,"empty backend ID rejected")
+
+/mnt/data/WindowShade2-round2-part6/overlay/prototype/Core/WS2OwnedScope.swift:5:8: note: 'init(boot:revision:project:active:unlocked:enabled:exhausted:)' declared here
+ 3 | /// Local project/connection binding, NOT a sandbox and NOT an authorization grant.
+ 4 | /// Only the local picker and Runtime may populate identities; never trust a wire-supplied root.
+ 5 | struct WS2OwnedScope: Sendable {
+   |        `- note: 'init(boot:revision:project:active:unlocked:enabled:exhausted:)' declared here
+ 6 |     struct Directory: Hashable, Sendable {
+ 7 |         let canonicalPath: String
+
+/mnt/data/WindowShade2-round2-part6/tests/CoreTests.swift:151:21: error: 'WS2OwnedScope' initializer is inaccessible due to 'private' protection level
+149 |         }
+150 |         t.run("SCP06 disabled state and explicit clear reject") {
+151 |             var s = WS2OwnedScope(boot: UUID()); _ = s.select(.init(id: UUID(), root: root)); s.environment(unlocked: true, enabled: true)
+    |                     `- error: 'WS2OwnedScope' initializer is inaccessible due to 'private' protection level
+152 |             let ticket = try unwrap(s.begin(connection: UUID(), liveRoot: root)); s.environment(unlocked: true, enabled: false)
+153 |             t.check(!s.accepts(ticket, liveRoot: root),"disabled")
+
+/mnt/data/WindowShade2-round2-part6/overlay/prototype/Core/WS2OwnedScope.swift:5:8: note: 'init(boot:revision:project:active:unlocked:enabled:exhausted:)' declared here
+ 3 | /// Local project/connection binding, NOT a sandbox and NOT an authorization grant.
+ 4 | /// Only the local picker and Runtime may populate identities; never trust a wire-supplied root.
+ 5 | struct WS2OwnedScope: Sendable {
+   |        `- note: 'init(boot:revision:project:active:unlocked:enabled:exhausted:)' declared here
+ 6 |     struct Directory: Hashable, Sendable {
+ 7 |         let canonicalPath: String
+
+/mnt/data/WindowShade2-round2-part6/tests/CoreTests.swift:230:21: error: 'WS2ConnectionBudget' initializer is inaccessible due to 'private' protection level
+228 |         func instant(_ seconds: UInt64) -> WS2.Instant { .init(nanoseconds:seconds * WS2.Duration.second) }
+229 |         t.run("NET01 unauthenticated connections globally bounded") {
+230 |             var b = WS2ConnectionBudget(generation: UUID())
+    |                     `- error: 'WS2ConnectionBudget' initializer is inaccessible due to 'private' protection level
+231 |             t.check(b.admit(.pairVerify,at:.zero,locallyOpenedPairing:false) != nil,"first")
+232 |             t.check(b.admit(.pairVerify,at:.zero,locallyOpenedPairing:false) != nil,"second")
+
+/mnt/data/WindowShade2-round2-part6/overlay/prototype/Core/WS2ConnectionBudget.swift:4:8: note: 'init(generation:entries:serial:last:halted:)' declared here
+ 2 | 
+ 3 | /// Aggregate resource policy for a future single listener. Not a listener or an identity verifier.
+ 4 | struct WS2ConnectionBudget: Sendable {
+   |        `- note: 'init(generation:entries:serial:last:halted:)' declared here
+ 5 |     struct Handle: Hashable, Sendable { let generation: UUID; let serial: UInt64 }
+ 6 |     enum Handshake: Sendable { case pairSetup, pairVerify }
+
+/mnt/data/WindowShade2-round2-part6/tests/CoreTests.swift:236:21: error: 'WS2ConnectionBudget' initializer is inaccessible due to 'private' protection level
+234 |         }
+235 |         t.run("NET02 pair setup requires local window and cannot extend deadline") {
+236 |             var b = WS2ConnectionBudget(generation: UUID())
+    |                     `- error: 'WS2ConnectionBudget' initializer is inaccessible due to 'private' protection level
+237 |             t.check(b.admit(.pairSetup,at:.zero,locallyOpenedPairing:false) == nil,"remote cannot open pairing")
+238 |             let h = try unwrap(b.admit(.pairSetup,at:.zero,locallyOpenedPairing:true))
+
+/mnt/data/WindowShade2-round2-part6/overlay/prototype/Core/WS2ConnectionBudget.swift:4:8: note: 'init(generation:entries:serial:last:halted:)' declared here
+ 2 | 
+ 3 | /// Aggregate resource policy for a future single listener. Not a listener or an identity verifier.
+ 4 | struct WS2ConnectionBudget: Sendable {
+   |        `- note: 'init(generation:entries:serial:last:halted:)' declared here
+ 5 |     struct Handle: Hashable, Sendable { let generation: UUID; let serial: UInt64 }
+ 6 |     enum Handshake: Sendable { case pairSetup, pairVerify }
+
+/mnt/data/WindowShade2-round2-part6/tests/CoreTests.swift:243:21: error: 'WS2ConnectionBudget' initializer is inaccessible due to 'private' protection level
+241 |         }
+242 |         t.run("NET03 one connection per verified peer") {
+243 |             var b = WS2ConnectionBudget(generation: UUID()), peer = WS2ConnectionBudget.Peer(id:"p",revision:1)
+    |                     `- error: 'WS2ConnectionBudget' initializer is inaccessible due to 'private' protection level
+244 |             let a = try unwrap(b.admit(.pairVerify,at:.zero,locallyOpenedPairing:false))
+245 |             let c = try unwrap(b.admit(.pairVerify,at:.zero,locallyOpenedPairing:false))
+
+/mnt/data/WindowShade2-round2-part6/overlay/prototype/Core/WS2ConnectionBudget.swift:4:8: note: 'init(generation:entries:serial:last:halted:)' declared here
+ 2 | 
+ 3 | /// Aggregate resource policy for a future single listener. Not a listener or an identity verifier.
+ 4 | struct WS2ConnectionBudget: Sendable {
+   |        `- note: 'init(generation:entries:serial:last:halted:)' declared here
+ 5 |     struct Handle: Hashable, Sendable { let generation: UUID; let serial: UInt64 }
+ 6 |     enum Handshake: Sendable { case pairSetup, pairVerify }
+
+/mnt/data/WindowShade2-round2-part6/tests/CoreTests.swift:252:21: error: 'WS2ConnectionBudget' initializer is inaccessible due to 'private' protection level
+250 |         }
+251 |         t.run("NET04 deadline rejects promotion and stale generation") {
+252 |             var b = WS2ConnectionBudget(generation: UUID()), other = WS2ConnectionBudget(generation: UUID())
+    |                     `- error: 'WS2ConnectionBudget' initializer is inaccessible due to 'private' protection level
+253 |             let h = try unwrap(b.admit(.pairVerify,at:.zero,locallyOpenedPairing:false))
+254 |             _ = other.admit(.pairVerify,at:.zero,locallyOpenedPairing:false)
+
+/mnt/data/WindowShade2-round2-part6/overlay/prototype/Core/WS2ConnectionBudget.swift:4:8: note: 'init(generation:entries:serial:last:halted:)' declared here
+ 2 | 
+ 3 | /// Aggregate resource policy for a future single listener. Not a listener or an identity verifier.
+ 4 | struct WS2ConnectionBudget: Sendable {
+   |        `- note: 'init(generation:entries:serial:last:halted:)' declared here
+ 5 |     struct Handle: Hashable, Sendable { let generation: UUID; let serial: UInt64 }
+ 6 |     enum Handshake: Sendable { case pairSetup, pairVerify }
+
+/mnt/data/WindowShade2-round2-part6/tests/CoreTests.swift:259:21: error: 'WS2ConnectionBudget' initializer is inaccessible due to 'private' protection level
+257 |         }
+258 |         t.run("NET05 per-connection and aggregate queue bounds") {
+259 |             var b = WS2ConnectionBudget(generation: UUID())
+    |                     `- error: 'WS2ConnectionBudget' initializer is inaccessible due to 'private' protection level
+260 |             let a = try unwrap(b.admit(.pairVerify,at:.zero,locallyOpenedPairing:false)); _ = b.promote(a,peer:.init(id:"a",revision:1),at:.zero)
+261 |             let c = try unwrap(b.admit(.pairVerify,at:.zero,locallyOpenedPairing:false)); _ = b.promote(c,peer:.init(id:"b",revision:1),at:.zero)
+
+/mnt/data/WindowShade2-round2-part6/overlay/prototype/Core/WS2ConnectionBudget.swift:4:8: note: 'init(generation:entries:serial:last:halted:)' declared here
+ 2 | 
+ 3 | /// Aggregate resource policy for a future single listener. Not a listener or an identity verifier.
+ 4 | struct WS2ConnectionBudget: Sendable {
+   |        `- note: 'init(generation:entries:serial:last:halted:)' declared here
+ 5 |     struct Handle: Hashable, Sendable { let generation: UUID; let serial: UInt64 }
+ 6 |     enum Handshake: Sendable { case pairSetup, pairVerify }
+
+/mnt/data/WindowShade2-round2-part6/tests/CoreTests.swift:270:21: error: 'WS2ConnectionBudget' initializer is inaccessible due to 'private' protection level
+268 |         }
+269 |         t.run("NET06 total connection cap includes authenticated sessions") {
+270 |             var b = WS2ConnectionBudget(generation: UUID())
+    |                     `- error: 'WS2ConnectionBudget' initializer is inaccessible due to 'private' protection level
+271 |             for n in 0..<8 {
+272 |                 let h = try unwrap(b.admit(.pairVerify,at:.zero,locallyOpenedPairing:false))
+
+/mnt/data/WindowShade2-round2-part6/overlay/prototype/Core/WS2ConnectionBudget.swift:4:8: note: 'init(generation:entries:serial:last:halted:)' declared here
+ 2 | 
+ 3 | /// Aggregate resource policy for a future single listener. Not a listener or an identity verifier.
+ 4 | struct WS2ConnectionBudget: Sendable {
+   |        `- note: 'init(generation:entries:serial:last:halted:)' declared here
+ 5 |     struct Handle: Hashable, Sendable { let generation: UUID; let serial: UInt64 }
+ 6 |     enum Handshake: Sendable { case pairSetup, pairVerify }
+
+/mnt/data/WindowShade2-round2-part6/tests/CoreTests.swift:278:21: error: 'WS2ConnectionBudget' initializer is inaccessible due to 'private' protection level
+276 |         }
+277 |         t.run("NET07 clock rollback halts and clears buffers") {
+278 |             var b = WS2ConnectionBudget(generation: UUID())
+    |                     `- error: 'WS2ConnectionBudget' initializer is inaccessible due to 'private' protection level
+279 |             let h = try unwrap(b.admit(.pairVerify,at:instant(5),locallyOpenedPairing:false)); _ = b.reserve(16,for:h,at:instant(5))
+280 |             t.check(b.expire(at:instant(4)) == [h] && b.queuedBytes == 0,"rollback closes all")
+
+/mnt/data/WindowShade2-round2-part6/overlay/prototype/Core/WS2ConnectionBudget.swift:4:8: note: 'init(generation:entries:serial:last:halted:)' declared here
+ 2 | 
+ 3 | /// Aggregate resource policy for a future single listener. Not a listener or an identity verifier.
+ 4 | struct WS2ConnectionBudget: Sendable {
+   |        `- note: 'init(generation:entries:serial:last:halted:)' declared here
+ 5 |     struct Handle: Hashable, Sendable { let generation: UUID; let serial: UInt64 }
+ 6 |     enum Handshake: Sendable { case pairSetup, pairVerify }
+
+/mnt/data/WindowShade2-round2-part6/tests/CoreTests.swift:284:21: error: 'WS2ConnectionBudget' initializer is inaccessible due to 'private' protection level
+282 |         }
+283 |         t.run("NET08 close releases allocation and stale handle fails") {
+284 |             var b = WS2ConnectionBudget(generation: UUID())
+    |                     `- error: 'WS2ConnectionBudget' initializer is inaccessible due to 'private' protection level
+285 |             let h = try unwrap(b.admit(.pairVerify,at:.zero,locallyOpenedPairing:false)); _ = b.reserve(50,for:h,at:.zero); b.close(h)
+286 |             t.check(b.queuedBytes == 0 && !b.reserve(1,for:h,at:.zero),"closed stale")
+
+/mnt/data/WindowShade2-round2-part6/overlay/prototype/Core/WS2ConnectionBudget.swift:4:8: note: 'init(generation:entries:serial:last:halted:)' declared here
+ 2 | 
+ 3 | /// Aggregate resource policy for a future single listener. Not a listener or an identity verifier.
+ 4 | struct WS2ConnectionBudget: Sendable {
+   |        `- note: 'init(generation:entries:serial:last:halted:)' declared here
+ 5 |     struct Handle: Hashable, Sendable { let generation: UUID; let serial: UInt64 }
+ 6 |     enum Handshake: Sendable { case pairSetup, pairVerify }

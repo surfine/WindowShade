@@ -77,14 +77,18 @@ struct CodexWire: Sendable {
     }
     mutating func startThread(cwd: String, model: String, now: WS2.Instant) throws {
         guard state == .ready, threadID == nil, !pending.values.contains(where:{$0.method == "thread/start" || $0.method == "thread/resume"}),
-              cwd.hasPrefix("/"), models[model] != nil, time.accept(now) else { throw Failure.notReady }
-        _ = try request("thread/start",["cwd":.string(cwd),"model":.string(model)],now:now)
+              cwd.hasPrefix("/"), !cwd.utf8.contains(0), cwd.utf8.count <= 4096, models[model] != nil, time.accept(now) else { throw Failure.notReady }
+        // V1 profile is explicit: never inherit a broad local config or an automatic reviewer.
+        _ = try request("thread/start",["cwd":.string(cwd),"model":.string(model),
+            "sandbox":.string("read-only"),"approvalPolicy":.string("on-request"),
+            "approvalsReviewer":.string("user")],now:now)
     }
     mutating func resumeThread(id: String, now: WS2.Instant) throws {
         guard state == .ready, threadID == nil, !id.isEmpty, id.utf8.count <= 512,
               !pending.values.contains(where: { $0.method == "thread/start" || $0.method == "thread/resume" }),
               time.accept(now) else { throw Failure.notReady }
-        _ = try request("thread/resume",["threadId":.string(id)],now:now)
+        _ = try request("thread/resume",["threadId":.string(id),"sandbox":.string("read-only"),
+            "approvalPolicy":.string("on-request"),"approvalsReviewer":.string("user")],now:now)
         expectedResumeID = id
     }
     mutating func startTurn(text: String, model: String, effort: String, now: WS2.Instant) throws {
@@ -92,6 +96,8 @@ struct CodexWire: Sendable {
               !pending.values.contains(where:{$0.method == "turn/start"}), models[model]?.contains(effort) == true,
               !text.isEmpty, text.utf8.count <= 65_536, time.accept(now) else { throw Failure.unsupported }
         _ = try request("turn/start",["threadId":.string(threadID),"model":.string(model),"effort":.string(effort),
+              "approvalPolicy":.string("on-request"),"approvalsReviewer":.string("user"),
+              "sandboxPolicy":.object(["type":.string("readOnly"),"networkAccess":.bool(false)]),
               "input":.array([.object(["type":.string("text"),"text":.string(text),"text_elements":.array([])])])],now:now)
     }
     mutating func steer(text: String, expectedTurnID: String, now: WS2.Instant) throws {
@@ -176,7 +182,7 @@ struct CodexWire: Sendable {
             }
             if let cursor = value["nextCursor"]?.text {
                 guard cursors.count < 100, cursors.insert(cursor).inserted else { throw Failure.capacity }
-                _ = try request("model/list",["cursor":.string(cursor),"limit":.integer(100)],now:now)
+                _ = try request("model/list",["cursor":.string(cursor),"limit":.integer(100),"includeHidden":.bool(false)],now:now)
             } else { state = .ready }
         case "thread/start", "thread/resume":
             guard let id = value["thread"]?["id"]?.text, !id.isEmpty else { throw Failure.malformed }

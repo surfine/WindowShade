@@ -1,0 +1,93 @@
+{
+  "status": "BLOCKED",
+  "candidateRevision": "b7258719288a4c937eea1a56e82e14c9454188f5868a6296c5383e271a34f25c",
+  "scope": "supplied capabilities only; no semantic, identity or release certification",
+  "errors": [
+    "owned-cli: source: partial",
+    "owned-cli: build: not-run",
+    "owned-cli: runtime: not-run",
+    "owned-cli: manual reviewer acceptance missing",
+    "native-list-input: source: partial",
+    "native-list-input: build: not-run",
+    "native-list-input: runtime: not-run",
+    "native-list-input: manual reviewer acceptance missing",
+    "focus-window-effects: source: partial",
+    "focus-window-effects: build: not-run",
+    "focus-window-effects: runtime: not-run",
+    "focus-window-effects: manual reviewer acceptance missing",
+    "remote-pairing: source: partial",
+    "remote-pairing: build: not-run",
+    "remote-pairing: runtime: not-run",
+    "remote-pairing: manual reviewer acceptance missing",
+    "process-supervision: source: partial",
+    "process-supervision: build: not-run",
+    "process-supervision: runtime: failed",
+    "process-supervision: manual reviewer acceptance missing",
+    "release: source: partial",
+    "release: build: not-run",
+    "release: runtime: not-run",
+    "release: manual reviewer acceptance missing"
+  ],
+  "capabilities": [
+    {
+      "id": "owned-cli",
+      "status": "BLOCKED",
+      "errors": [
+        "source: partial",
+        "build: not-run",
+        "runtime: not-run",
+        "manual reviewer acceptance missing"
+      ]
+    },
+    {
+      "id": "native-list-input",
+      "status": "BLOCKED",
+      "errors": [
+        "source: partial",
+        "build: not-run",
+        "runtime: not-run",
+        "manual reviewer acceptance missing"
+      ]
+    },
+    {
+      "id": "focus-window-effects",
+      "status": "BLOCKED",
+      "errors": [
+        "source: partial",
+        "build: not-run",
+        "runtime: not-run",
+        "manual reviewer acceptance missing"
+      ]
+    },
+    {
+      "id": "remote-pairing",
+      "status": "BLOCKED",
+      "errors": [
+        "source: partial",
+        "build: not-run",
+        "runtime: not-run",
+        "manual reviewer acceptance missing"
+      ]
+    },
+    {
+      "id": "process-supervision",
+      "status": "BLOCKED",
+      "errors": [
+        "source: partial",
+        "build: not-run",
+        "runtime: failed",
+        "manual reviewer acceptance missing"
+      ]
+    },
+    {
+      "id": "release",
+      "status": "BLOCKED",
+      "errors": [
+        "source: partial",
+        "build: not-run",
+        "runtime: not-run",
+        "manual reviewer acceptance missing"
+      ]
+    }
+  ]
+}

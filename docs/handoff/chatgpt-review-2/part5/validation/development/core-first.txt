@@ -1,0 +1,41 @@
+SCENE Q01 atomic batch and FIFO partial write
+SCENE Q02 rejected batch does not keep prefix
+SCENE Q03 expired partial write closes connection
+SCENE Q04 old generation denied
+SCENE Q05 clock and invalid completion checks
+SCENE Q06 zero record and record limit
+SCENE Q07 later earlier-deadline frame poisons whole stream
+SCENE K01 missing snapshot does not create identity
+SCENE K02 durable enroll and reload
+SCENE K03 revoke persists and invalidates old revision
+SCENE K04 write failure is not successful persistent revocation
+SCENE K05 malformed snapshot blocks instead of resetting
+SCENE K06 enrolled identifier never silently overwritten
+SCENE K07 peer cap and attempts marker survive reload
+SCENE K08 read failure does not look like no saved peers
+SCENE P01 M1 through M6 commits before return, no crypto claim
+SCENE P02 cannot pair without local PIN window
+SCENE P03 wrong sequence closes session
+SCENE P04 three failures enforce five minute cooldown across new connections
+SCENE P05 restart incomplete imposes fresh cooldown
+SCENE P06 persistence failure never releases M6
+SCENE P07 concurrent setup not admitted
+SCENE P08 expired M3 closes and clears
+SCENE P09 malformed TLV and invalid PIN
+SCENE P10 cancellation/reopening does not reset failure count
+SCENE F01 phase barrier restores before retucking same window
+SCENE F02 cancelled late tuck compensates before anything new
+SCENE F03 manual user change relinquishes ownership
+SCENE F04 unknown completion blocks future phases
+SCENE F05 locked completion waits for verified unlock
+SCENE F06 duplicate completion cannot mutate new transaction
+SCENE F07 restored revision must advance
+SCENE F08 duplicate window identity is rejected
+SCENE F09 failed restore blocks rest tucks
+SCENE I01 semantic ticket consumed once
+SCENE I02 stale lease cannot dispatch
+SCENE I03 approval domain has no remote confirm
+SCENE I04 final lock recheck
+SCENE I05 interrupt not accepted in desktop
+SCENE I06 forged intent does not reuse reserved press
+RESULT scenarios=40 assertions=97 failures=0

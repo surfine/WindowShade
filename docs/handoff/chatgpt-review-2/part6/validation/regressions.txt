@@ -1,0 +1,231 @@
+SCENE Q01 atomic batch and FIFO partial write
+SCENE Q02 rejected batch does not keep prefix
+SCENE Q03 expired partial write closes connection
+SCENE Q04 old generation denied
+SCENE Q05 clock and invalid completion checks
+SCENE Q06 zero record and record limit
+SCENE Q07 later earlier-deadline frame poisons whole stream
+SCENE K01 missing snapshot does not create identity
+SCENE K02 durable enroll and reload
+SCENE K03 revoke persists and invalidates old revision
+SCENE K04 write failure is not successful persistent revocation
+SCENE K05 malformed snapshot blocks instead of resetting
+SCENE K06 enrolled identifier never silently overwritten
+SCENE K07 peer cap and attempts marker survive reload
+SCENE K08 read failure does not look like no saved peers
+SCENE P01 M1 through M6 commits before return, no crypto claim
+SCENE P02 cannot pair without local PIN window
+SCENE P03 wrong sequence closes session
+SCENE P04 three failures enforce five minute cooldown across new connections
+SCENE P05 restart incomplete imposes fresh cooldown
+SCENE P06 persistence failure never releases M6
+SCENE P07 concurrent setup not admitted
+SCENE P08 expired M3 closes and clears
+SCENE P09 malformed TLV and invalid PIN
+SCENE P10 cancellation/reopening does not reset failure count
+SCENE F01 phase barrier restores before retucking same window
+SCENE F02 cancelled late tuck compensates before anything new
+SCENE F03 manual user change relinquishes ownership
+SCENE F04 unknown completion blocks future phases
+SCENE F05 locked completion waits for verified unlock
+SCENE F06 duplicate completion cannot mutate new transaction
+SCENE F07 restored revision must advance
+SCENE F08 duplicate window identity is rejected
+SCENE F09 failed restore blocks rest tucks
+SCENE I01 semantic ticket consumed once
+SCENE I02 stale lease cannot dispatch
+SCENE I03 approval domain has no remote confirm
+SCENE I04 final lock recheck
+SCENE I05 interrupt not accepted in desktop
+SCENE I06 forged intent does not reuse reserved press
+RESULT scenarios=40 assertions=97 failures=0
+SCENE IO01 split response, simultaneous write, stderr burst
+SCENE IO02 pipe backpressure deadline closes without retry
+SCENE IO03 truncated EOF rejected
+SCENE IO04 EPIPE does not kill parent with SIGPIPE
+SCENE IO05 multiple coalesced lines delivered in order
+SCENE IO06 oversized incoming line rejected
+SCENE IO07 final write gate and stale epoch
+SCENE IO08 per-batch context gate checked after admission
+RESULT scenarios=8 assertions=26 failures=0
+PASS LEASE01 single global input owner
+PASS LEASE02 privileged owner table
+PASS LEASE03 authorization preempts synchronously
+PASS LEASE04 old key-down never confirms new approval
+PASS LEASE05 obscured reminder not replayed
+PASS LEASE06 lock barrier clears sensitive state
+PASS LEASE07 display removal cancels only owner
+PASS LEASE08 exact expiry and future request
+PASS LEASE09 reminder four seconds and no endless refresh
+PASS LEASE10 backward-time security invalidation
+PASS BLE01 five-second reads are not two-second age timeouts
+PASS BLE02 exact read deadline and stale callbacks
+PASS REMOTE01 discovery never means paired
+PASS REMOTE02 verified capability replay and revocation
+PASS CODEX01 initialize and two-phase handshake
+PASS CODEX02 thread then turn with actual field names
+PASS CODEX03 steer precondition and interrupt does not finish turn
+PASS CODEX04 approval IDs retain number versus string
+PASS CODEX05 unrelated completion and late reply ignored
+PASS CODEX06 every possible single split boundary
+PASS CODEX07 malformed, oversized and EOF safety
+PASS CODEX08 timeout makes outcome uncertain not retry
+PASS part2 core: 22 scenarios, 86 assertions
+PASS FOC-01 pending-preset-keeps-current-deadline
+PASS FOC-02 next-start-uses-pending-values
+PASS FOC-03 changing-tuck-does-not-lose-restore
+PASS FOC-04 enabling-tuck-does-not-invent-ownership
+PASS FOC-05-pause-configuration-does-not-resume
+PASS FOC-06-locked-and-manual-pause-independent
+PASS FOC-07-rest-continues-through-lock
+PASS FOC-08-no-automatic-next-focus
+PASS FOC-09-visibility-wake-budget
+PASS FOC-10-progress-uses-active-duration
+PASS FOC-11-backwards-clock-refused
+PASS FOC-12-next-run-retains-daily-count-and-token-sequence
+PASS FRM-01-fragmented-at-every-boundary
+PASS FRM-02-multiple-frames-one-read
+PASS FRM-03-big-endian-length
+PASS FRM-04-oversized-header-terminates
+PASS FRM-05-unknown-type-terminates
+PASS FRM-06-truncated-tag-terminates
+PASS FRM-07-local-payload-limit
+PASS FRM-08-bounded-read-batch
+PASS FRM-09-bounded-frame-count
+PASS FRM-10-data-slice-safe
+PASS NON-01-little-endian-prefix
+PASS NON-02-no-repeat
+PASS NON-03-no-wrap
+PASS NON-04-terminal-close
+PASS APR-01-complete-command-review
+PASS APR-02-wrong-thread
+PASS APR-03-empty-command
+PASS APR-04-relative-cwd
+PASS APR-05-stdin-kind
+PASS APR-06-unknown-field
+PASS APR-07-network-request
+PASS APR-08-policy-upgrade
+PASS APR-09-remote-environment
+PASS APR-10-missing-time
+PASS APR-11-long-command
+PASS APR-12-file-without-diff-not-reviewable
+PASS APR-13-request-id-type-bound
+PASS APR-14-whitespace-in-command-bound
+PASS APR-15-bidi-is-visible-not-silently-dropped
+PASS APR-16-cannot-confirm-before-layout
+PASS APR-17-preheld-input-refused
+PASS APR-18-old-sequence-refused
+PASS APR-19-fresh-confirm-then-grant-still-required
+PASS APR-20-target-change-invalidates-confirmation
+PASS APR-21-duplicate-confirmation-refused
+PASS APR-22-clear-revokes-review
+PASS WIRE-01-accept-once-actual-encoded-response
+PASS WIRE-02-no-duplicate-accept
+PASS WIRE-03-wrong-payload-refused
+PASS WIRE-04-file-not-allowed-by-command-path
+PASS WIRE-05-turn-complete-clears-approval
+PASS WIRE-06-string-id-preserved
+PASS DEV-01-default-disabled
+PASS DEV-02-neutral-required-after-enable
+PASS DEV-03-fresh-press-release-pair
+PASS DEV-04-reconnect-requires-new-consent
+PASS DEV-05-lock-revokes
+PASS DEV-06-review-domain-cannot-begin-control
+PASS DEV-08-domain-change-cancels-and-requires-neutral
+PASS DEV-09-unannounced-domain-change-suspends
+PASS APR-23-visible-context-escapes-bidi
+PASS DEV-07-replay-suspends
+PASS HID-01-exact-device-and-known-usage
+PASS HID-02-unknown-and-nonbinary-pass-through
+PASS OWN-01-only-completed-effects-recorded
+PASS OWN-02-exact-owner-one-use
+PASS OWN-03-manual-change-excludes-window
+PASS OWN-04-live-revision-change-refuses-restore
+PASS OWN-05-pid-reuse-cannot-match
+PASS OWN-06-other-run-cannot-consume
+SCENARIOS=72 ASSERTIONS=188 FAILURES=0
+CASE T1-01 | 空闲开始 25+5 → 截止时刻 1500 秒，聊天收起一次
+ok   空闲不排刷新
+ok   开始不是累计 tick
+ok   重复开始无重复窗口动作
+CASE T1-02 | 紧凑/展开/隐藏 → 分别排分钟、秒、截止唤醒
+ok   紧凑整分钟
+ok   展开一秒
+ok   隐藏只有到点
+ok   18 分原文
+ok   最后一分钟秒数
+ok   秒显示与截止对齐
+CASE T1-03 | 专注自然到点再休息到点 → 计数一次，不自动下一轮
+ok   完整专注才计数
+ok   真实到点提示音
+ok   休息完空闲
+ok   重复 tick 无补发
+CASE T1-04 | 手动暂停叠加锁屏 → 单独继续不解除锁屏暂停
+ok   暂停原因独立
+ok   暂停不醒来
+ok   正确顺延剩余时间
+CASE T1-05 | 睡眠叠加锁屏，先唤醒后解锁 → 最后一个原因解除才计时
+ok   唤醒不能解锁
+ok   睡眠期间无扣秒
+CASE T1-06 | 休息睡两小时 → 已结束，不补播开始或结束音
+ok   休息不因睡眠冻结
+CASE T1-07 | 专注到点同刻锁屏 → 结算次数，但不收全桌面、不响铃
+ok   已完成专注仍计数
+ok   锁屏先于可见效果
+CASE T1-08 | 专注跳过和主动结束 → 都不增加完成数
+ok   跳过不算完成
+ok   结束清理
+ok   明确结束优先于同刻自然结束
+CASE T1-09 | 休息关掉收起的窗口 → 计时继续，恢复只发一次
+ok   只撤销本轮窗口归属
+ok   重复关闭无动作
+CASE T1-10 | 旧日期的 deadline 晚到新日期 → 不记到今天，不闪过已过去的休息
+ok   晚到不补播
+CASE T1-11 | 50+10，关闭聊天收起 → 3000 秒专注、600 秒休息
+ok   关闭选项不收聊天
+ok   十分钟休息
+CASE T1-12 | 时间倒流/无效日期/锁屏开始 → 拒绝，不启动第二轮
+ok   拒绝倒流
+ok   锁着不开始
+ok   日期不可伪空
+PASS T1: 12 cases, 32 assertions, 0 failures
+ok   C-011 flat line with natural wobble is tone 1 → low
+ok   C-012 rising stroke is tone 2 → medium
+ok   C-012 raw y-down coordinates are flipped first, so tone 2 stays tone 2
+ok   C-012 (control) forgetting the flip would swap tones 2 and 4
+ok   C-013 one rounded valley is tone 3 → high
+ok   C-014 falling stroke is tone 4 → xhigh, never max
+ok   C-013 a broken zigzag with several valleys is rejected, not tone 3
+ok   C-013 a dip below the jitter band is still a flat tone 1, not tone 3
+ok   C-013 a valley without a real rise afterwards is rejected, not tone 3
+ok   between tone 1 and tone 2 slopes is rejected, not rounded to the nearest
+ok   C-015 a small tremor is rejected, not scaled up into a tone
+ok   contact shorter than the settle period counts as an accidental touch
+ok   C-016 vertical swipes select no effort
+ok   C-016 right-to-left strokes are not mirrored into tones
+ok   C-016 a stroke that doubles back is not a tone
+ok   C-017 a narrow V reads as both tone 3 and one beat, so it is rejected
+ok   C-017 three beats drifting right are rejected, not tone 3 and not 3 beats
+ok   C-018 a full five-beat phrase requests max
+ok   C-018 after the fourth beat the preview shows 4
+ok   C-019 a full six-beat phrase requests ultra
+ok   C-019 after the fifth beat the preview shows 5
+ok   C-019 lifting in the middle of the sixth beat is rejected, not taken as 5 beats (max)
+ok   1 beats request the matching level
+ok   2 beats request the matching level
+ok   3 beats request the matching level
+ok   4 beats request the matching level
+ok   seven beats are rejected, not clamped to six
+ok   C-020 a wobble at the bottom of a beat does not count as an extra beat
+ok   C-020 a drop without a real rebound is not a beat
+ok   C-021 fast and slow five-beat phrases both request max
+ok   C-021 beats faster than 150ms apart are rejected
+ok   C-021 a long pause inside a phrase breaks it instead of counting on
+ok   C-022 a phrase longer than 6 seconds is dropped
+ok   a NaN coordinate rejects the whole stroke
+ok   an out-of-range coordinate rejects the whole stroke
+ok   time going backwards rejects the whole stroke
+ok   an empty stroke is safe
+ok   out-of-range gestures map to no effort
+ok   no tone ever requests max or ultra
+all conductor gesture tests passed

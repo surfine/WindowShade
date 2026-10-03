@@ -1,0 +1,119 @@
+[
+  {
+    "path": "overlay/prototype/App/InteractionCoordinator.swift",
+    "command": [
+      "swiftc",
+      "-frontend",
+      "-parse",
+      "/mnt/data/WindowShade2-round2-part6/overlay/prototype/App/InteractionCoordinator.swift"
+    ],
+    "exitCode": 0,
+    "stdout": "",
+    "stderr": "",
+    "classification": "syntax only; no macOS SDK loaded"
+  },
+  {
+    "path": "overlay/prototype/App/WS2IslandCoordinator.swift",
+    "command": [
+      "swiftc",
+      "-frontend",
+      "-parse",
+      "/mnt/data/WindowShade2-round2-part6/overlay/prototype/App/WS2IslandCoordinator.swift"
+    ],
+    "exitCode": 0,
+    "stdout": "",
+    "stderr": "",
+    "classification": "syntax only; no macOS SDK loaded"
+  },
+  {
+    "path": "overlay/prototype/Core/CodexWire.swift",
+    "command": [
+      "swiftc",
+      "-frontend",
+      "-parse",
+      "/mnt/data/WindowShade2-round2-part6/overlay/prototype/Core/CodexWire.swift"
+    ],
+    "exitCode": 0,
+    "stdout": "",
+    "stderr": "",
+    "classification": "syntax only; no macOS SDK loaded"
+  },
+  {
+    "path": "overlay/prototype/Core/WS2ConnectionBudget.swift",
+    "command": [
+      "swiftc",
+      "-frontend",
+      "-parse",
+      "/mnt/data/WindowShade2-round2-part6/overlay/prototype/Core/WS2ConnectionBudget.swift"
+    ],
+    "exitCode": 0,
+    "stdout": "",
+    "stderr": "",
+    "classification": "syntax only; no macOS SDK loaded"
+  },
+  {
+    "path": "overlay/prototype/Core/WS2DiagnosticTail.swift",
+    "command": [
+      "swiftc",
+      "-frontend",
+      "-parse",
+      "/mnt/data/WindowShade2-round2-part6/overlay/prototype/Core/WS2DiagnosticTail.swift"
+    ],
+    "exitCode": 0,
+    "stdout": "",
+    "stderr": "",
+    "classification": "syntax only; no macOS SDK loaded"
+  },
+  {
+    "path": "overlay/prototype/Core/WS2OwnedScope.swift",
+    "command": [
+      "swiftc",
+      "-frontend",
+      "-parse",
+      "/mnt/data/WindowShade2-round2-part6/overlay/prototype/Core/WS2OwnedScope.swift"
+    ],
+    "exitCode": 0,
+    "stdout": "",
+    "stderr": "",
+    "classification": "syntax only; no macOS SDK loaded"
+  },
+  {
+    "path": "overlay/prototype/Core/WS2SelectionModel.swift",
+    "command": [
+      "swiftc",
+      "-frontend",
+      "-parse",
+      "/mnt/data/WindowShade2-round2-part6/overlay/prototype/Core/WS2SelectionModel.swift"
+    ],
+    "exitCode": 0,
+    "stdout": "",
+    "stderr": "",
+    "classification": "syntax only; no macOS SDK loaded"
+  },
+  {
+    "path": "overlay/prototype/Support/WS2DuplexProcess.swift",
+    "command": [
+      "swiftc",
+      "-frontend",
+      "-parse",
+      "/mnt/data/WindowShade2-round2-part6/overlay/prototype/Support/WS2DuplexProcess.swift"
+    ],
+    "exitCode": 0,
+    "stdout": "",
+    "stderr": "",
+    "classification": "syntax only; no macOS SDK loaded"
+  },
+  {
+    "path": "overlay/prototype/Support/WS2ProjectDirectory.swift",
+    "command": [
+      "swiftc",
+      "-frontend",
+      "-parse",
+      "/mnt/data/WindowShade2-round2-part6/overlay/prototype/Support/WS2ProjectDirectory.swift"
+    ],
+    "exitCode": 0,
+    "stdout": "",
+    "stderr": "",
+    "classification": "syntax only; no macOS SDK loaded"
+  }
+]

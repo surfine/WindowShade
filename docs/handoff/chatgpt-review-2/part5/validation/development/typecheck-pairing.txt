@@ -1,0 +1,47 @@
+/mnt/data/WindowShade2-round2-part5/overlay/prototype/Support/WS2PairSetupServer.swift:24:88: error: extra argument 'now' in call
+ 22 |         let snapshot = repository.snapshot
+ 23 |         let incomplete = snapshot?.pairingIncomplete == true || (snapshot?.failedAttempts ?? 0) > 0
+ 24 |         window = PairingAttemptWindow(restartedWithIncompleteAttempt: incomplete, now: clock())
+    |                                                                                        `- error: extra argument 'now' in call
+ 25 |     }
+ 26 |     func openByLocalUser(makePIN: () -> String = PairingAttemptWindow.randomPIN) throws -> String {
+
+/mnt/data/WindowShade2-round2-part5/overlay/prototype/Support/WS2PairSetupServer.swift:39:64: error: 'pin' is inaccessible due to 'private' protection level
+ 37 |     func claim(_ connection: UUID) throws -> String {
+ 38 |         guard owner == nil, !repository.blocked else { throw Failure.busy }
+ 39 |         guard window.mayAttempt(at: clock()), let pin = window.pin else { throw Failure.expired }
+    |                                                                `- error: 'pin' is inaccessible due to 'private' protection level
+ 40 |         owner = connection; return pin
+ 41 |     }
+
+/mnt/data/ws5-input/WindowShade2-round2-handoff-v4/WindowShade2-round2-handoff-v4/candidate-repo/prototype/Core/PairingAttemptWindow.swift:9:17: note: 'pin' declared here
+ 7 |     private(set) var failures = 0
+ 8 |     private var lastTime = 0.0
+ 9 |     private var pin: String?
+   |                 `- note: 'pin' declared here
+10 |     static let lifetime = 60.0
+11 |     static let cooldown = 300.0
+
+/mnt/data/WindowShade2-round2-part5/overlay/prototype/Support/WS2PairSetupServer.swift:47:9: error: call can throw, but it is not marked with 'try' and the error is not handled
+ 45 |     func failed(_ connection: UUID) {
+ 46 |         guard owner == connection else { return }
+ 47 |         window.failed(at: clock()); owner = nil
+    |         `- error: call can throw, but it is not marked with 'try' and the error is not handled
+ 48 |         do { try repository.recordFailedAttempt() } catch { repository.suspend() }
+ 49 |     }
+
+/mnt/data/WindowShade2-round2-part5/overlay/prototype/Support/WS2PairSetupServer.swift:51:66: error: missing argument for parameter 'at' in call
+ 49 |     }
+ 50 |     func succeeded(_ connection: UUID) {
+ 51 |         guard owner == connection else { return }; window.finish(); owner = nil
+    |                                                                  `- error: missing argument for parameter 'at' in call
+ 52 |     }
+ 53 |     func cancel() { window.cancel(); owner = nil /* persistent incomplete marker intentionally survives */ }
+
+/mnt/data/ws5-input/WindowShade2-round2-handoff-v4/WindowShade2-round2-handoff-v4/candidate-repo/prototype/Core/PairingAttemptWindow.swift:34:19: note: 'finish(at:)' declared here
+32 |         if failures == 3 { cooldownUntil = now + Self.cooldown; deadline = nil; pin = nil }
+33 |     }
+34 |     mutating func finish(at now: Double) throws {
+   |                   `- note: 'finish(at:)' declared here
+35 |         guard mayAttempt(at:now) else { throw Failure.unavailable }; lastTime = now; failures = 0; deadline = nil; pin = nil
+36 |     }

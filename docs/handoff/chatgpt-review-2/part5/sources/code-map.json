@@ -1,0 +1,3685 @@
+{
+  "note": "Line anchors are from actual uploaded v4 source and actual part5 overlay. Future workspace changes require re-location by symbol and hash.",
+  "files": [
+    {
+      "path": "prototype/App/AuthorizationService.swift",
+      "sha256": "b2787dc3bb4369d687fbcde86e444cedc752f30d0629a2c5468ae646328a2ba8",
+      "lines": 37,
+      "symbols": [
+        {
+          "line": 7,
+          "text": "@MainActor final class AuthorizationService {"
+        },
+        {
+          "line": 28,
+          "text": "func consume(_ grant: AuthorizationGrant, purpose: AuthPurpose, currentTarget: AuthTarget) -> AuthFailure? {"
+        },
+        {
+          "line": 32,
+          "text": "private func observe(_ center: NotificationCenter, _ name: Notification.Name) {"
+        }
+      ]
+    },
+    {
+      "path": "prototype/App/FoldCompletion.swift",
+      "sha256": "1147a93b8ab37828e0dd4be225e879ea3a4636283aaa5d7202369b926ec850f5",
+      "lines": 48,
+      "symbols": [
+        {
+          "line": 8,
+          "text": "func registerFoldWaiter(id: CGWindowID,"
+        },
+        {
+          "line": 11,
+          "text": "foldWaiters[id, default: [:]][token] = completion"
+        },
+        {
+          "line": 20,
+          "text": "func settleFoldWaiter(id: CGWindowID, token: UUID, success: Bool) {"
+        },
+        {
+          "line": 21,
+          "text": "guard var waiters = foldWaiters[id],"
+        },
+        {
+          "line": 24,
+          "text": "foldWaiters.removeValue(forKey: id)"
+        },
+        {
+          "line": 26,
+          "text": "foldWaiters[id] = waiters"
+        },
+        {
+          "line": 33,
+          "text": "func settleFoldWaiters(id: CGWindowID, success: Bool) {"
+        },
+        {
+          "line": 34,
+          "text": "guard let waiters = foldWaiters.removeValue(forKey: id) else { return }"
+        },
+        {
+          "line": 40,
+          "text": "func cancelFoldWaiters(id: CGWindowID, tokens: [UUID]) {"
+        },
+        {
+          "line": 44,
+          "text": "func settleFoldWaiters(id: CGWindowID, tokens: [UUID], success: Bool) {"
+        }
+      ]
+    },
+    {
+      "path": "prototype/App/FoldExit.swift",
+      "sha256": "02318b36ed4b257e1709818527db5aaa25f18e4d74ed3f08dfcc5865953bbb6b",
+      "lines": 426,
+      "symbols": [
+        {
+          "line": 7,
+          "text": "func unshadeReturningElement(_ id: CGWindowID, playSound: Bool = true,"
+        },
+        {
+          "line": 21,
+          "text": "let interruptedWaiters = foldWaiters[id].map { Array($0.keys) } ?? []"
+        },
+        {
+          "line": 90,
+          "text": "func unshade(_ id: CGWindowID) -> Bool {"
+        },
+        {
+          "line": 102,
+          "text": "func forceCleanup(_ id: CGWindowID, preserveFocusEntry: Bool = false, preserveRecovery: Bool = false) {"
+        },
+        {
+          "line": 108,
+          "text": "let interruptedWaiters = foldWaiters[id].map { Array($0.keys) } ?? []"
+        },
+        {
+          "line": 134,
+          "text": "func removeProxyForAction(_ id: CGWindowID, state: ShadeState,"
+        },
+        {
+          "line": 136,
+          "text": "let interruptedWaiters = foldWaiters[id].map { Array($0.keys) } ?? []"
+        },
+        {
+          "line": 160,
+          "text": "func removeProxyForForwardedAction(_ id: CGWindowID, state: ShadeState) {"
+        },
+        {
+          "line": 163,
+          "text": "func quickLookProcessHint(pid: pid_t) -> Bool {"
+        },
+        {
+          "line": 175,
+          "text": "func windowLooksLikeQuickLookTarget(_ win: AXUIElement, pid: pid_t,"
+        },
+        {
+          "line": 195,
+          "text": "func quickLookWindowCandidates(preferredPID: pid_t, title: String) -> [(pid: pid_t, win: AXUIElement)] {"
+        },
+        {
+          "line": 245,
+          "text": "func reopenQuickLookForProxyFullScreen(state: ShadeState, id: CGWindowID) -> Bool {"
+        },
+        {
+          "line": 257,
+          "text": "func clickQuickLookVisualFullScreenButton(_ win: AXUIElement, pid: pid_t,"
+        },
+        {
+          "line": 279,
+          "text": "func triggerQuickLookFullScreen(_ win: AXUIElement, pid: pid_t,"
+        },
+        {
+          "line": 307,
+          "text": "func verifyQuickLookFullScreenOrSendShortcut(_ win: AXUIElement, pid: pid_t,"
+        },
+        {
+          "line": 339,
+          "text": "func openQuickLookFullScreenFromProxy(state: ShadeState, id: CGWindowID) {"
+        },
+        {
+          "line": 342,
+          "text": "func attempt(_ index: Int) {"
+        },
+        {
+          "line": 368,
+          "text": "func handleQuickLookTrafficLight(_ action: TrafficAction, id: CGWindowID, state: ShadeState) {"
+        },
+        {
+          "line": 382,
+          "text": "func handleTrafficLight(_ action: TrafficAction, _ id: CGWindowID) {"
+        },
+        {
+          "line": 409,
+          "text": "func handleClassicAction(_ action: ClassicAction, _ id: CGWindowID) {"
+        }
+      ]
+    },
+    {
+      "path": "prototype/App/FoldTransaction.swift",
+      "sha256": "0cdb6083d236e72e193df9db07c672893c10f279be8f53b939be1a1f4cbd0733",
+      "lines": 1053,
+      "symbols": [
+        {
+          "line": 7,
+          "text": "func parkFocusForInactiveCapture() {"
+        },
+        {
+          "line": 22,
+          "text": "func releaseFocusParking(reactivate pid: pid_t?) {"
+        },
+        {
+          "line": 41,
+          "text": "func handOffFocusBeforeHiding(win: AXUIElement, pid: pid_t, id: CGWindowID) -> Bool {"
+        },
+        {
+          "line": 104,
+          "text": "func hideTookEffect(_ hide: HideMethod, win: AXUIElement, pid: pid_t,"
+        },
+        {
+          "line": 125,
+          "text": "func scheduleFoldVerification(id: CGWindowID) {"
+        },
+        {
+          "line": 126,
+          "text": "guard let transactionID = shaded[id]?.foldTransactionID else { return }"
+        },
+        {
+          "line": 133,
+          "text": "return state.foldTransactionID == transactionID && state.lifecycleStage == .folded"
+        },
+        {
+          "line": 148,
+          "text": "if hidden, self.shaded[id]?.foldTransactionID == transactionID {"
+        },
+        {
+          "line": 174,
+          "text": "func revealOverlayAfterVerification(id: CGWindowID, state: ShadeState) {"
+        },
+        {
+          "line": 187,
+          "text": "func rollbackFoldTransaction(id: CGWindowID) {"
+        },
+        {
+          "line": 210,
+          "text": "func activateApp(pid: pid_t) {"
+        },
+        {
+          "line": 216,
+          "text": "func bringRestoredWindowToFront(_ win: AXUIElement, pid: pid_t, reason: String) {"
+        },
+        {
+          "line": 219,
+          "text": "func attempt(_ label: String) {"
+        },
+        {
+          "line": 243,
+          "text": "func prepareForwardedTrafficAction(_ win: AXUIElement, pid: pid_t, reason: String) {"
+        },
+        {
+          "line": 250,
+          "text": "func restoredWindowIsGeometryReady(_ win: AXUIElement) -> Bool {"
+        },
+        {
+          "line": 255,
+          "text": "func buttonIsReady(_ win: AXUIElement, _ attr: String) -> Bool {"
+        },
+        {
+          "line": 271,
+          "text": "func forwardedTrafficActionSucceeded(state: ShadeState, id: CGWindowID,"
+        },
+        {
+          "line": 294,
+          "text": "func performForwardedTrafficAction(state: ShadeState, pos: CGPoint,"
+        },
+        {
+          "line": 308,
+          "text": "func retryOrFallback(_ index: Int, note: String) {"
+        },
+        {
+          "line": 332,
+          "text": "func verifyAfterAXPress(_ win: AXUIElement, index: Int, attr: String) {"
+        },
+        {
+          "line": 344,
+          "text": "func verifyAfterPointerClick(_ win: AXUIElement, index: Int, attr: String) {"
+        },
+        {
+          "line": 361,
+          "text": "func attempt(_ index: Int) {"
+        },
+        {
+          "line": 392,
+          "text": "func schedule(_ index: Int, note: String) {"
+        },
+        {
+          "line": 407,
+          "text": "func showRealWindowManagementPopover(_ id: CGWindowID) {"
+        },
+        {
+          "line": 420,
+          "text": "func attempt(_ index: Int) {"
+        },
+        {
+          "line": 450,
+          "text": "func windowIsParkedOffscreen(id: CGWindowID, win: AXUIElement, size: CGSize) -> Bool {"
+        },
+        {
+          "line": 458,
+          "text": "func privateSLSOffscreenHide(_ win: AXUIElement, id: CGWindowID,"
+        },
+        {
+          "line": 494,
+          "text": "func privateSLSAlphaHide(id: CGWindowID, pid: pid_t, reason: String) -> HideMethod? {"
+        },
+        {
+          "line": 526,
+          "text": "func axOffscreenHide(_ win: AXUIElement,"
+        },
+        {
+          "line": 550,
+          "text": "func ownWindow(id: CGWindowID?) -> NSWindow? {"
+        },
+        {
+          "line": 557,
+          "text": "func orderOutOwnWindowIfNeeded(id: CGWindowID?, pid: pid_t, reason: String) -> HideMethod? {"
+        },
+        {
+          "line": 568,
+          "text": "func hideWindow(_ win: AXUIElement, pid: pid_t, originalPosition pos: CGPoint,"
+        },
+        {
+          "line": 629,
+          "text": "func fallbackHide(_ win: AXUIElement, pid: pid_t, id: CGWindowID?,"
+        },
+        {
+          "line": 659,
+          "text": "func safeRestorePosition(for state: ShadeState, desired pos: CGPoint) -> CGPoint {"
+        },
+        {
+          "line": 678,
+          "text": "func refreshedWindowElement(id: CGWindowID, fallback: AXUIElement,"
+        },
+        {
+          "line": 686,
+          "text": "func resolvedWindowElement(for state: ShadeState) -> AXUIElement {"
+        },
+        {
+          "line": 714,
+          "text": "func applyRestoredGeometry(_ state: ShadeState, to pos: CGPoint,"
+        },
+        {
+          "line": 747,
+          "text": "func restoreWindow(_ state: ShadeState, to pos: CGPoint) -> AXUIElement {"
+        },
+        {
+          "line": 787,
+          "text": "func cancelRestorePin(for id: CGWindowID) {"
+        },
+        {
+          "line": 791,
+          "text": "func pinRestoredWindow(_ state: ShadeState, to pos: CGPoint, reason: String) {"
+        },
+        {
+          "line": 799,
+          "text": "func attempt(_ label: String, focus: Bool, verify: Bool = true) {"
+        },
+        {
+          "line": 842,
+          "text": "func resizeShadedWindowFromProxy(_ id: CGWindowID, proxyFrame: NSRect) {"
+        },
+        {
+          "line": 881,
+          "text": "func makeRevealObserver(pid: pid_t, win: AXUIElement, id: CGWindowID) -> AXObserver? {"
+        },
+        {
+          "line": 893,
+          "text": "func removeObserver(_ state: ShadeState) {"
+        },
+        {
+          "line": 899,
+          "text": "func handleAXNotification(_ id: CGWindowID, _ notification: String) {"
+        },
+        {
+          "line": 938,
+          "text": "@objc func appTerminated(_ note: Notification) {"
+        },
+        {
+          "line": 948,
+          "text": "@objc func frontmostApplicationChanged(_ note: Notification) {"
+        },
+        {
+          "line": 978,
+          "text": "@objc func screenParametersChanged(_ note: Notification) {"
+        },
+        {
+          "line": 1023,
+          "text": "@objc func activeSpaceChanged(_ note: Notification) {"
+        }
+      ]
+    },
+    {
+      "path": "prototype/App/Notch.swift",
+      "sha256": "354a6045d7221d33a2c16f849a34a910c969fce7acc58fbf7e958be6fb6b5d43",
+      "lines": 3351,
+      "symbols": [
+        {
+          "line": 29,
+          "text": "final class NotchController {"
+        },
+        {
+          "line": 30,
+          "text": "private struct Tucked {"
+        },
+        {
+          "line": 47,
+          "text": "func refreshAppearance() {"
+        },
+        {
+          "line": 68,
+          "text": "lazy var authentication = NotchAuthenticationController(owner: self)"
+        },
+        {
+          "line": 71,
+          "text": "func authenticationPanel() -> NotchPanel? {"
+        },
+        {
+          "line": 126,
+          "text": "static func notchScreen() -> NSScreen? {"
+        },
+        {
+          "line": 131,
+          "text": "static func notchRect(on screen: NSScreen) -> NSRect? {"
+        },
+        {
+          "line": 139,
+          "text": "static func slotRect(on screen: NSScreen) -> (rect: NSRect, virtual: Bool) {"
+        },
+        {
+          "line": 145,
+          "text": "private static func displayID(_ screen: NSScreen) -> CGDirectDisplayID? {"
+        },
+        {
+          "line": 149,
+          "text": "private func panel(for screen: NSScreen) -> NotchPanel? {"
+        },
+        {
+          "line": 153,
+          "text": "private func panel(containing point: CGPoint) -> NotchPanel? {"
+        },
+        {
+          "line": 161,
+          "text": "func isTucked(_ id: CGWindowID) -> Bool { tucked.contains { $0.id == id } }"
+        },
+        {
+          "line": 171,
+          "text": "func install() {"
+        },
+        {
+          "line": 247,
+          "text": "private func applyShapes() {"
+        },
+        {
+          "line": 255,
+          "text": "func prepareForLaunchpad() {"
+        },
+        {
+          "line": 261,
+          "text": "func setEnabled(_ enabled: Bool) {"
+        },
+        {
+          "line": 276,
+          "text": "func setAlertsEnabled(_ enabled: Bool) {"
+        },
+        {
+          "line": 288,
+          "text": "func aims(from release: CGPoint, velocity: CGVector) -> Bool {"
+        },
+        {
+          "line": 299,
+          "text": "func dragMoved(to point: CGPoint) {"
+        },
+        {
+          "line": 314,
+          "text": "func cancelDrag() {"
+        },
+        {
+          "line": 320,
+          "text": "func dragEnded(at point: CGPoint) -> NotchPanel.DropChoice? {"
+        },
+        {
+          "line": 329,
+          "text": "func screen(containing point: CGPoint) -> NSScreen? {"
+        },
+        {
+          "line": 337,
+          "text": "func tuck(_ win: AXUIElement, id: CGWindowID, pid: pid_t, landed: CGRect, home: CGRect, velocity: CGVector,"
+        },
+        {
+          "line": 373,
+          "text": "private func finishTuck(_ win: AXUIElement, id: CGWindowID, pid: pid_t, landed: CGRect, home: CGRect,"
+        },
+        {
+          "line": 411,
+          "text": "private func coverUntilHidden(_ plate: BackgroundPlate, id: CGWindowID, attempts: Int) {"
+        },
+        {
+          "line": 423,
+          "text": "private func hideStripWhenReady(_ id: CGWindowID, attempts: Int, since: Int? = nil) {"
+        },
+        {
+          "line": 450,
+          "text": "func releaseLatest(reason: String, from origin: NSRect? = nil) {"
+        },
+        {
+          "line": 469,
+          "text": "func release(_ id: CGWindowID, reason: String, from origin: NSRect? = nil) {"
+        },
+        {
+          "line": 492,
+          "text": "private func restore(_ item: Tucked, landing: CGRect) {"
+        },
+        {
+          "line": 502,
+          "text": "private func slideHome(_ item: Tucked, attempts: Int) {"
+        },
+        {
+          "line": 528,
+          "text": "private func hoverChanged(_ inside: Bool, panel: NotchPanel) {"
+        },
+        {
+          "line": 555,
+          "text": "private func open(_ id: CGWindowID, from origin: NSRect? = nil) {"
+        },
+        {
+          "line": 590,
+          "text": "private func saveCoach() {"
+        },
+        {
+          "line": 596,
+          "text": "private func pointerPanel() -> NotchPanel? {"
+        },
+        {
+          "line": 603,
+          "text": "func announce(_ text: String, detail: String = \"\", tone: NotchPanel.Tone = .info, symbol: String? = nil,"
+        },
+        {
+          "line": 630,
+          "text": "private struct PendingAnnouncement {"
+        },
+        {
+          "line": 642,
+          "text": "func announceWhenFree(key: String, text: String, detail: String = \"\", tone: NotchPanel.Tone = .info,"
+        },
+        {
+          "line": 664,
+          "text": "private func isFreeToAnnounce() -> Bool {"
+        },
+        {
+          "line": 669,
+          "text": "private func drainPendingAnnouncements() {"
+        },
+        {
+          "line": 688,
+          "text": "func teach(_ tip: CoachTip, on target: NotchPanel? = nil) -> Bool {"
+        },
+        {
+          "line": 710,
+          "text": "func coachUsed(_ tip: CoachTip) {"
+        },
+        {
+          "line": 717,
+          "text": "func resetCoachForProbe() { coach = GestureCoach() }"
+        },
+        {
+          "line": 718,
+          "text": "func tapAnnouncementForProbe() { panels.values.first { $0.isAlerting }?.tapForProbe() }"
+        },
+        {
+          "line": 729,
+          "text": "func tuckFocused() -> Bool {"
+        },
+        {
+          "line": 749,
+          "text": "func tuckAll(on screen: NSScreen? = nil) -> Int {"
+        },
+        {
+          "line": 777,
+          "text": "func switchApp(back: Bool, panel: NotchPanel? = nil) {"
+        },
+        {
+          "line": 801,
+          "text": "static func recentWindows() -> [(id: CGWindowID, pid: pid_t)] {"
+        },
+        {
+          "line": 817,
+          "text": "private func homeKey(_ clicks: Int, from rect: NSRect) {"
+        },
+        {
+          "line": 844,
+          "text": "func activeSpaceChanged() {"
+        },
+        {
+          "line": 860,
+          "text": "func pressForProbe(_ clicks: Int) {"
+        },
+        {
+          "line": 866,
+          "text": "func refreshShelfForProbe() { shelf.invalidate(); refreshShelf() }"
+        },
+        {
+          "line": 867,
+          "text": "func openTileForProbe(_ id: CGWindowID) { open(id) }"
+        },
+        {
+          "line": 870,
+          "text": "private func refreshShelf() {"
+        },
+        {
+          "line": 875,
+          "text": "private func requestThumbnails() {"
+        },
+        {
+          "line": 883,
+          "text": "private func rowExclude() -> Set<CGWindowID> {"
+        },
+        {
+          "line": 903,
+          "text": "private func showPeek(_ id: CGWindowID, tile: NSRect? = nil) {"
+        },
+        {
+          "line": 964,
+          "text": "private func showStoredPeek(_ id: CGWindowID) {"
+        },
+        {
+          "line": 974,
+          "text": "enum TileGlance {"
+        },
+        {
+          "line": 980,
+          "text": "private func startTileGlance(_ id: CGWindowID, tile: NSRect, glance: TileGlance, pid: pid_t, title: String) {"
+        },
+        {
+          "line": 987,
+          "text": "private func showStill(_ item: NotchShelfItem, tile: NSRect) {"
+        },
+        {
+          "line": 1025,
+          "text": "private func endPeek() {"
+        },
+        {
+          "line": 1042,
+          "text": "private func hideStripAfterGlance(_ id: CGWindowID, attempts: Int) {"
+        },
+        {
+          "line": 1059,
+          "text": "func peekForProbe(_ id: CGWindowID, tile: NSRect) { showPeek(id, tile: tile) }"
+        },
+        {
+          "line": 1060,
+          "text": "func peekForProbe(_ id: CGWindowID) { showPeek(id) }"
+        },
+        {
+          "line": 1062,
+          "text": "func thumbnailForProbe(_ id: CGWindowID) -> CGImage? { thumbnails.image(id) }"
+        },
+        {
+          "line": 1064,
+          "text": "func requestThumbnailsForProbe() { requestThumbnails() }"
+        },
+        {
+          "line": 1065,
+          "text": "func endPeekForProbe() { endPeek() }"
+        },
+        {
+          "line": 1067,
+          "text": "private func refresh() {"
+        },
+        {
+          "line": 1076,
+          "text": "private func room(for panel: NotchPanel, display: CGDirectDisplayID) -> MenuBarRoom.Sides? {"
+        },
+        {
+          "line": 1085,
+          "text": "private func compactInfo() -> NotchPanel.Compact? {"
+        },
+        {
+          "line": 1094,
+          "text": "private func forgetGone() {"
+        },
+        {
+          "line": 1103,
+          "text": "private func tiles() -> [NotchTile] {"
+        },
+        {
+          "line": 1108,
+          "text": "func icon(_ pid: pid_t) -> NSImage? { NSRunningApplication(processIdentifier: pid)?.icon }"
+        },
+        {
+          "line": 1141,
+          "text": "private func syncWatchers() {"
+        },
+        {
+          "line": 1155,
+          "text": "private func titleSettled(_ id: CGWindowID, title: String) {"
+        },
+        {
+          "line": 1195,
+          "text": "func clearChange(_ id: CGWindowID) {"
+        },
+        {
+          "line": 1204,
+          "text": "func simulateTitleChange(_ id: CGWindowID, title: String) {"
+        },
+        {
+          "line": 1209,
+          "text": "func syncWatchersForProbe() { syncWatchers() }"
+        },
+        {
+          "line": 1210,
+          "text": "func isWatchingTitle(_ id: CGWindowID) -> Bool { watcher.isWatching(id) }"
+        },
+        {
+          "line": 1216,
+          "text": "private enum FlightStyle { case intoNotch, intoVirtualNotch, out }"
+        },
+        {
+          "line": 1218,
+          "text": "private func fly(_ image: CGImage, from: NSRect, to: NSRect, velocity: CGVector, style: FlightStyle,"
+        },
+        {
+          "line": 1237,
+          "text": "func elsewhereAnchorFrame(_ id: CGWindowID) -> NSRect? {"
+        },
+        {
+          "line": 1245,
+          "text": "func glanceTarget(forElsewhere id: CGWindowID) -> GlanceTarget? {"
+        },
+        {
+          "line": 1291,
+          "text": "func openElsewhereWindow(_ id: CGWindowID) { open(id) }"
+        },
+        {
+          "line": 1294,
+          "text": "struct NotchTile {"
+        },
+        {
+          "line": 1295,
+          "text": "enum Kind { case tucked, strip, slideOver, carried, minimized, hiddenApp, elsewhere }"
+        },
+        {
+          "line": 1314,
+          "text": "final class NotchPanel: NSPanel {"
+        },
+        {
+          "line": 1315,
+          "text": "enum DropState { case none, offered, armed, confirmed }"
+        },
+        {
+          "line": 1324,
+          "text": "func refreshAppearance() { apply(animated: false) }"
+        },
+        {
+          "line": 1328,
+          "text": "enum DropChoice: Int, CaseIterable {"
+        },
+        {
+          "line": 1350,
+          "text": "struct IslandStyle {"
+        },
+        {
+          "line": 1360,
+          "text": "struct Compact {"
+        },
+        {
+          "line": 1365,
+          "text": "func same(as other: Compact?) -> Bool {"
+        },
+        {
+          "line": 1372,
+          "text": "struct Alert {"
+        },
+        {
+          "line": 1385,
+          "text": "enum Tone { case info, done, problem, tip }"
+        },
+        {
+          "line": 1427,
+          "text": "func isShowingInteraction(_ view: NSView) -> Bool { authenticationView === view }"
+        },
+        {
+          "line": 1432,
+          "text": "func setAuthentication(_ view: NotchAuthenticationView?, animated: Bool = true) {"
+        },
+        {
+          "line": 1435,
+          "text": "func setInteraction(_ view: (NSView & NotchInteractiveContent)?, animated: Bool = true) {"
+        },
+        {
+          "line": 1444,
+          "text": "func setActivities(_ items: [NotchActivity], selected: String?) {"
+        },
+        {
+          "line": 1471,
+          "text": "func tapForProbe() { pressed(1) }"
+        },
+        {
+          "line": 1489,
+          "text": "func choice(at point: CGPoint) -> DropChoice {"
+        },
+        {
+          "line": 1540,
+          "text": "private func showActivityMenu(_ event: NSEvent) {"
+        },
+        {
+          "line": 1549,
+          "text": "@objc private func activityMenuAction(_ item: NSMenuItem) {"
+        },
+        {
+          "line": 1557,
+          "text": "override func orderOut(_ sender: Any?) {"
+        },
+        {
+          "line": 1566,
+          "text": "private func refitShoulders() {"
+        },
+        {
+          "line": 1583,
+          "text": "private func pressed(_ clicks: Int) {"
+        },
+        {
+          "line": 1628,
+          "text": "private func updateVisibility() {"
+        },
+        {
+          "line": 1637,
+          "text": "func setCompact(_ value: Compact?, room newRoom: MenuBarRoom.Sides?) {"
+        },
+        {
+          "line": 1680,
+          "text": "static func alertWidth(notch: NSRect, teaching: Bool) -> CGFloat {"
+        },
+        {
+          "line": 1685,
+          "text": "static func alertCoverSpans(notch: NSRect, virtual: Bool, screen: NSRect) -> MenuBarRoom.Spans {"
+        },
+        {
+          "line": 1692,
+          "text": "private enum CompactShape { case sides, pill, chin, pending }"
+        },
+        {
+          "line": 1700,
+          "text": "func alert(_ info: Alert, duration: TimeInterval = 2.6) {"
+        },
+        {
+          "line": 1716,
+          "text": "func expand(with tiles: [NotchTile]) {"
+        },
+        {
+          "line": 1730,
+          "text": "func updateTileSnapshot(id: CGWindowID, image: CGImage?) {"
+        },
+        {
+          "line": 1736,
+          "text": "func collapse() {"
+        },
+        {
+          "line": 1745,
+          "text": "func confirmDrop() {"
+        },
+        {
+          "line": 1760,
+          "text": "func setDropState(_ state: DropState, choice: DropChoice? = nil) {"
+        },
+        {
+          "line": 1773,
+          "text": "private func hover(_ inside: Bool) {"
+        },
+        {
+          "line": 1803,
+          "text": "private func pull(_ distance: CGFloat, touching: Bool, velocity: CGFloat) {"
+        },
+        {
+          "line": 1827,
+          "text": "static func rubberBand(_ x: CGFloat, limit d: CGFloat) -> CGFloat {"
+        },
+        {
+          "line": 1831,
+          "text": "static func rubberBandSlope(_ x: CGFloat, limit d: CGFloat) -> CGFloat {"
+        },
+        {
+          "line": 1836,
+          "text": "private struct Target {"
+        },
+        {
+          "line": 1850,
+          "text": "private func target() -> Target {"
+        },
+        {
+          "line": 1887,
+          "text": "private func baseTarget() -> (rect: NSRect, style: IslandStyle) {"
+        },
+        {
+          "line": 1965,
+          "text": "private func spring() -> NotchCanvasView.Spring {"
+        },
+        {
+          "line": 1975,
+          "text": "private func apply(animated: Bool, spring custom: NotchCanvasView.Spring? = nil, roomOnly: Bool = false) {"
+        },
+        {
+          "line": 2043,
+          "text": "private func shoulderMotion(to target: Target, from now: NSRect) -> (scale: (leading: CGFloat, trailing: CGFloat),"
+        },
+        {
+          "line": 2047,
+          "text": "func side(from edge: CGFloat, to goal: CGFloat, hardware: CGFloat, scale: CGFloat, was: CGFloat) -> (CGFloat, Bool) {"
+        },
+        {
+          "line": 2059,
+          "text": "func swallow() {"
+        },
+        {
+          "line": 2084,
+          "text": "private func compactSlots(in size: NSSize, shape: CompactShape, side: CGFloat) -> (leading: NSRect, trailing: NSRect) {"
+        },
+        {
+          "line": 2093,
+          "text": "private func hintText() -> String? {"
+        },
+        {
+          "line": 2113,
+          "text": "final class NotchCanvasView: NSView {"
+        },
+        {
+          "line": 2114,
+          "text": "struct Content {"
+        },
+        {
+          "line": 2138,
+          "text": "func same(as other: Content) -> Bool {"
+        },
+        {
+          "line": 2152,
+          "text": "struct Spring {"
+        },
+        {
+          "line": 2185,
+          "text": "func setAuthentication(_ view: (NSView & NotchInteractiveContent)?) {"
+        },
+        {
+          "line": 2191,
+          "text": "func placeAuthentication(in rect: NSRect) {"
+        },
+        {
+          "line": 2201,
+          "text": "func updateTileSnapshot(id: CGWindowID, image: CGImage?) {"
+        },
+        {
+          "line": 2238,
+          "text": "func setBare(_ bare: Bool) {"
+        },
+        {
+          "line": 2247,
+          "text": "func islandOnScreen(panelOrigin: NSPoint) -> NSRect? {"
+        },
+        {
+          "line": 2254,
+          "text": "func shift(by delta: CGVector) {"
+        },
+        {
+          "line": 2267,
+          "text": "func morph(to rect: NSRect, style: NotchPanel.IslandStyle, content: Content, spring: Spring?,"
+        },
+        {
+          "line": 2317,
+          "text": "private func add(_ spring: Spring, key: String, to layer: CALayer, position: CGVector, size: CGSize, radius: CGFloat) {"
+        },
+        {
+          "line": 2318,
+          "text": "func animate(_ keyPath: String, from: Any, zero: Any) {"
+        },
+        {
+          "line": 2338,
+          "text": "private func present(_ content: Content, in rect: NSRect, animated: Bool) {"
+        },
+        {
+          "line": 2376,
+          "text": "func settle() {"
+        },
+        {
+          "line": 2382,
+          "text": "func pullIconOnScreen() -> NSRect? {"
+        },
+        {
+          "line": 2388,
+          "text": "func pulse(width: CGFloat, height: CGFloat) {"
+        },
+        {
+          "line": 2390,
+          "text": "func bump(_ layer: CALayer) {"
+        },
+        {
+          "line": 2415,
+          "text": "override func updateTrackingAreas() {"
+        },
+        {
+          "line": 2422,
+          "text": "override func mouseEntered(with event: NSEvent) { onHover?(true) }"
+        },
+        {
+          "line": 2423,
+          "text": "override func mouseExited(with event: NSEvent) { holdTimer?.invalidate(); holdTimer = nil; if mouseDragAxis == nil { pressedAt = nil }; onHover?(false) }"
+        },
+        {
+          "line": 2424,
+          "text": "override func mouseMoved(with event: NSEvent) { onPointerMoved?() }"
+        },
+        {
+          "line": 2425,
+          "text": "override func acceptsFirstMouse(for event: NSEvent?) -> Bool { true }"
+        },
+        {
+          "line": 2432,
+          "text": "private func mouseScreenPoint(_ event: NSEvent) -> NSPoint { window?.convertPoint(toScreen: event.locationInWindow) ?? event.locationInWindow }"
+        },
+        {
+          "line": 2433,
+          "text": "override func mouseDown(with event: NSEvent) {"
+        },
+        {
+          "line": 2449,
+          "text": "override func mouseUp(with event: NSEvent) {"
+        },
+        {
+          "line": 2479,
+          "text": "override func mouseDragged(with event: NSEvent) {"
+        },
+        {
+          "line": 2490,
+          "text": "func cancelHold() { holdTimer?.invalidate(); holdTimer = nil; pressedAt = nil; mouseDragAxis = nil }"
+        },
+        {
+          "line": 2491,
+          "text": "func resetInteractions() {"
+        },
+        {
+          "line": 2496,
+          "text": "override func cancelOperation(_ sender: Any?) {"
+        },
+        {
+          "line": 2502,
+          "text": "override func rightMouseDown(with event: NSEvent) { if authenticationView == nil { onAuxiliaryClick?(event) } }"
+        },
+        {
+          "line": 2503,
+          "text": "override func smartMagnify(with event: NSEvent) { if authenticationView == nil { onSmartExpand?() } }"
+        },
+        {
+          "line": 2504,
+          "text": "override func swipe(with event: NSEvent) {"
+        },
+        {
+          "line": 2518,
+          "text": "override func draggingEntered(_ sender: NSDraggingInfo) -> NSDragOperation {"
+        },
+        {
+          "line": 2532,
+          "text": "override func draggingExited(_ sender: NSDraggingInfo?) {"
+        },
+        {
+          "line": 2536,
+          "text": "override func performDragOperation(_ sender: NSDraggingInfo) -> Bool {"
+        },
+        {
+          "line": 2551,
+          "text": "override func scrollWheel(with event: NSEvent) {"
+        },
+        {
+          "line": 2604,
+          "text": "private func currentActivitySwipe(_ distance: CGFloat, touching: Bool, velocity: CGFloat, cancelled: Bool = false) -> Bool {"
+        },
+        {
+          "line": 2608,
+          "text": "override func magnify(with event: NSEvent) {"
+        },
+        {
+          "line": 2633,
+          "text": "final class NotchShoulders: NSPanel {"
+        },
+        {
+          "line": 2635,
+          "text": "struct Probe {"
+        },
+        {
+          "line": 2681,
+          "text": "func fit(screen: NSRect, top: CGFloat, radius: CGFloat) {"
+        },
+        {
+          "line": 2697,
+          "text": "func m(_ p: CGPoint) -> CGPoint { CGPoint(x: p.x * sign, y: p.y) }"
+        },
+        {
+          "line": 2718,
+          "text": "func place(leading a: NSPoint, trailing b: NSPoint, scale: (leading: CGFloat, trailing: CGFloat),"
+        },
+        {
+          "line": 2732,
+          "text": "func settle(_ scale: (leading: CGFloat, trailing: CGFloat)) {"
+        },
+        {
+          "line": 2742,
+          "text": "private func move(_ layer: CAShapeLayer, to point: NSPoint, from old: CGFloat, to new: CGFloat, snap: Bool,"
+        },
+        {
+          "line": 2790,
+          "text": "private func animate(_ layer: CALayer, _ keyPath: String, from: Any, zero: Any, spring: NotchCanvasView.Spring, key: String) {"
+        },
+        {
+          "line": 2802,
+          "text": "func setBare(_ bare: Bool) {"
+        },
+        {
+          "line": 2811,
+          "text": "func pulse(width: CGFloat, keyTimes: [NSNumber], duration: CFTimeInterval, timing: [CAMediaTimingFunction]) {"
+        },
+        {
+          "line": 2824,
+          "text": "func attached(leading a: NSPoint, trailing b: NSPoint) -> Bool {"
+        },
+        {
+          "line": 2826,
+          "text": "func at(_ layer: CALayer, _ p: NSPoint) -> Bool {"
+        },
+        {
+          "line": 2844,
+          "text": "final class NotchContentView: NSView {"
+        },
+        {
+          "line": 2909,
+          "text": "func updateSnapshot(id: CGWindowID, image: CGImage?) {"
+        },
+        {
+          "line": 2913,
+          "text": "override func hitTest(_ point: NSPoint) -> NSView? { inert ? nil : super.hitTest(point) }"
+        },
+        {
+          "line": 2916,
+          "text": "func place(in rect: NSRect, content: NotchCanvasView.Content) {"
+        },
+        {
+          "line": 2993,
+          "text": "final class NotchDotsView: NSView {"
+        },
+        {
+          "line": 2998,
+          "text": "func update(count: Int, changed: Bool, y: CGFloat) {"
+        },
+        {
+          "line": 3006,
+          "text": "override func hitTest(_ point: NSPoint) -> NSView? { nil }"
+        },
+        {
+          "line": 3008,
+          "text": "override func draw(_ dirtyRect: NSRect) {"
+        },
+        {
+          "line": 3022,
+          "text": "final class NotchCompactView: NSView {"
+        },
+        {
+          "line": 3026,
+          "text": "func update(_ compact: NotchPanel.Compact?, slots: (leading: NSRect, trailing: NSRect)?) {"
+        },
+        {
+          "line": 3037,
+          "text": "override func hitTest(_ point: NSPoint) -> NSView? { nil }"
+        },
+        {
+          "line": 3039,
+          "text": "override func draw(_ dirtyRect: NSRect) {"
+        },
+        {
+          "line": 3068,
+          "text": "final class NotchAlertView: NSView {"
+        },
+        {
+          "line": 3073,
+          "text": "func update(_ alert: NotchPanel.Alert?) {"
+        },
+        {
+          "line": 3088,
+          "text": "override func hitTest(_ point: NSPoint) -> NSView? { nil }"
+        },
+        {
+          "line": 3090,
+          "text": "override func layout() {"
+        },
+        {
+          "line": 3096,
+          "text": "override func draw(_ dirtyRect: NSRect) {"
+        },
+        {
+          "line": 3142,
+          "text": "final class NotchTileView: NSView {"
+        },
+        {
+          "line": 3152,
+          "text": "func setSnapshot(_ image: CGImage?) {"
+        },
+        {
+          "line": 3179,
+          "text": "static func verb(_ kind: NotchTile.Kind) -> String {"
+        },
+        {
+          "line": 3190,
+          "text": "static func kindName(_ kind: NotchTile.Kind) -> String {"
+        },
+        {
+          "line": 3202,
+          "text": "private static func badge(_ kind: NotchTile.Kind) -> NSImage? {"
+        },
+        {
+          "line": 3217,
+          "text": "override func updateTrackingAreas() {"
+        },
+        {
+          "line": 3225,
+          "text": "override func mouseEntered(with event: NSEvent) {"
+        },
+        {
+          "line": 3232,
+          "text": "override func mouseExited(with event: NSEvent) {"
+        },
+        {
+          "line": 3237,
+          "text": "override func mouseDown(with event: NSEvent) {"
+        },
+        {
+          "line": 3241,
+          "text": "override func acceptsFirstMouse(for event: NSEvent?) -> Bool { true }"
+        },
+        {
+          "line": 3254,
+          "text": "override func draw(_ dirtyRect: NSRect) {"
+        },
+        {
+          "line": 3308,
+          "text": "final class NotchPeek {"
+        },
+        {
+          "line": 3344,
+          "text": "func close() {"
+        }
+      ]
+    },
+    {
+      "path": "prototype/App/NotchAuthentication.swift",
+      "sha256": "e2db024c1161ab3157018670c80aa14da701ac5473668a5defa246375797d627",
+      "lines": 258,
+      "symbols": [
+        {
+          "line": 6,
+          "text": "@MainActor protocol NotchInteractiveContent: AnyObject { var onCancel: (() -> Void)? { get set } }"
+        },
+        {
+          "line": 15,
+          "text": "final class NotchAuthenticationController {"
+        },
+        {
+          "line": 66,
+          "text": "func selfCheck() {"
+        },
+        {
+          "line": 77,
+          "text": "func authorize(_ target: AuthTarget, completion: @escaping (AuthorizationGrant?) -> Void) {"
+        },
+        {
+          "line": 117,
+          "text": "private func evaluateIfReady() {"
+        },
+        {
+          "line": 128,
+          "text": "private func evaluated(_ success: Bool, transaction: Int) {"
+        },
+        {
+          "line": 139,
+          "text": "private func signed(_ result: Result<Data, Error>, transaction: Int) {"
+        },
+        {
+          "line": 166,
+          "text": "private func isCurrent(_ transaction: Int) -> Bool {"
+        },
+        {
+          "line": 174,
+          "text": "private func fail(_ message: (AuthTarget) -> String) {"
+        },
+        {
+          "line": 180,
+          "text": "private func alert(_ title: String, on host: NotchPanel? = nil) {"
+        },
+        {
+          "line": 185,
+          "text": "func cancel(animated: Bool = true, restoreFocus: Bool = true) {"
+        },
+        {
+          "line": 203,
+          "text": "func reconcile(panels: [NotchPanel]) {"
+        },
+        {
+          "line": 209,
+          "text": "private struct SigningJob: @unchecked Sendable {"
+        },
+        {
+          "line": 217,
+          "text": "final class NotchAuthenticationView: NSView, NotchInteractiveContent {"
+        },
+        {
+          "line": 243,
+          "text": "override func layout() {"
+        },
+        {
+          "line": 250,
+          "text": "func confirm() {"
+        },
+        {
+          "line": 256,
+          "text": "@objc private func cancelRequest() { onCancel?() }"
+        },
+        {
+          "line": 257,
+          "text": "override func cancelOperation(_ sender: Any?) { onCancel?() }"
+        }
+      ]
+    },
+    {
+      "path": "prototype/App/ShadeController.swift",
+      "sha256": "b33f4f48c3b13e0aba198daa0282719a03f7dc0843bccd1c77d1e4971318e663",
+      "lines": 847,
+      "symbols": [
+        {
+          "line": 8,
+          "text": "func retargetToActiveSpaceWindow(pid: pid_t) -> (AXUIElement, CGWindowID)? {"
+        },
+        {
+          "line": 35,
+          "text": "func toggle() {"
+        },
+        {
+          "line": 87,
+          "text": "func performNativeStickiesShade(_ win: AXUIElement) {"
+        },
+        {
+          "line": 104,
+          "text": "func makeShadePlan(win: AXUIElement, pos: CGPoint, size: CGSize,"
+        },
+        {
+          "line": 157,
+          "text": "func resolvedSourceSpaceID(windowID id: CGWindowID,"
+        },
+        {
+          "line": 169,
+          "text": "func shade(_ win: AXUIElement, _ id: CGWindowID,"
+        },
+        {
+          "line": 174,
+          "text": "let completionTokens = foldWaiters[id].map { Array($0.keys) } ?? []"
+        },
+        {
+          "line": 175,
+          "text": "func completeFold(success: Bool) {"
+        },
+        {
+          "line": 176,
+          "text": "settleFoldWaiters(id: id, tokens: completionTokens, success: success)"
+        },
+        {
+          "line": 283,
+          "text": "func installOverlay(_ overlay: NSWindow, mode: ShadeAppearanceMode, previewImage: NSImage?) {"
+        },
+        {
+          "line": 445,
+          "text": "func installInteractiveNativeCollapse(barH: CGFloat) -> Bool {"
+        },
+        {
+          "line": 717,
+          "text": "func captureWindow(id: CGWindowID, axPos: CGPoint, size: CGSize,"
+        },
+        {
+          "line": 756,
+          "text": "func fastWindowCapture(_ id: CGWindowID) async -> CGImage? {"
+        },
+        {
+          "line": 763,
+          "text": "func captureWindowWithTimeout(id: CGWindowID, axPos: CGPoint, size: CGSize,"
+        },
+        {
+          "line": 814,
+          "text": "private func raceCaptureWithTimeout(id: CGWindowID, axPos: CGPoint, size: CGSize,"
+        }
+      ]
+    },
+    {
+      "path": "prototype/App/WS2AgentSessionView.swift",
+      "sha256": "2eb4cc0b0ffd80413aeb0375a2b4973039174218273be6988b5fc1a8f730e53d",
+      "lines": 47,
+      "symbols": [
+        {
+          "line": 3,
+          "text": "@MainActor final class WS2AgentSessionView: NSView, WS2LeaseContent {"
+        },
+        {
+          "line": 20,
+          "text": "func render(_ sessions:[AgentSessions.Session]) {"
+        },
+        {
+          "line": 41,
+          "text": "@objc private func pressed(_ sender:NSButton) {"
+        },
+        {
+          "line": 45,
+          "text": "override func cancelOperation(_ sender:Any?) { onCancel?() }"
+        },
+        {
+          "line": 46,
+          "text": "func revoke() { inputIsCurrent = { false }; render([]); bindings.removeAll() }"
+        }
+      ]
+    },
+    {
+      "path": "prototype/App/WS2AppRuntime.swift",
+      "sha256": "4860048055a951fd637dba2f5f5a2456ced84b234f5034273e8432e3abb3f820",
+      "lines": 139,
+      "symbols": [
+        {
+          "line": 3,
+          "text": "@MainActor final class WS2AppRuntime {"
+        },
+        {
+          "line": 21,
+          "text": "func day(_ date: Date) -> String {"
+        },
+        {
+          "line": 73,
+          "text": "private func setLockReason(_ reason: String, locked: Bool) {"
+        },
+        {
+          "line": 84,
+          "text": "func open() {"
+        },
+        {
+          "line": 97,
+          "text": "func refreshFocusSettings() {"
+        },
+        {
+          "line": 102,
+          "text": "func toggleFocus() {"
+        },
+        {
+          "line": 109,
+          "text": "@discardableResult func showSessions(_ sessions:[AgentSessions.Session], open:@escaping(WS2.Context)->Void,"
+        },
+        {
+          "line": 114,
+          "text": "@discardableResult func showConductor(_ state:ConductorNotch, action:@escaping(WS2ConductorView.Action)->Void) -> Bool {"
+        },
+        {
+          "line": 120,
+          "text": "private func publish() {"
+        },
+        {
+          "line": 128,
+          "text": "func stop() {"
+        },
+        {
+          "line": 138,
+          "text": "@objc func ws2OpenFocus() { MainActor.assumeIsolated { ws2Runtime.open() } }"
+        }
+      ]
+    },
+    {
+      "path": "prototype/App/WS2CodexApprovalHost.swift",
+      "sha256": "751cfd0b416ce57cf350b18780cc95d3523628b4ac93b693747e88c81a9bbb9d",
+      "lines": 204,
+      "symbols": [
+        {
+          "line": 5,
+          "text": "@MainActor final class WS2CodexApprovalHost {"
+        },
+        {
+          "line": 32,
+          "text": "func receive(_ bytes: Data) {"
+        },
+        {
+          "line": 56,
+          "text": "@discardableResult func present(_ id: WS2.RequestID) -> Bool {"
+        },
+        {
+          "line": 83,
+          "text": "private func confirm(beganAt: WS2.Instant, sequence: UInt64) {"
+        },
+        {
+          "line": 111,
+          "text": "private func target(_ review: WS2ApprovalReview) throws -> AuthTarget {"
+        },
+        {
+          "line": 114,
+          "text": "private func isCurrent(_ review: WS2ApprovalReview) -> Bool {"
+        },
+        {
+          "line": 119,
+          "text": "func tick() {"
+        },
+        {
+          "line": 129,
+          "text": "private func flush(deadline: WS2.Instant) {"
+        },
+        {
+          "line": 133,
+          "text": "private func abandonCurrent(decline: Bool) {"
+        },
+        {
+          "line": 142,
+          "text": "func invalidate() {"
+        },
+        {
+          "line": 148,
+          "text": "@MainActor private final class WS2ReviewButton: NSButton {"
+        },
+        {
+          "line": 158,
+          "text": "private func begin() -> Bool {"
+        },
+        {
+          "line": 161,
+          "text": "override func mouseDown(with event:NSEvent) { guard begin() else { return }; defer { press = nil }; super.mouseDown(with:event) }"
+        },
+        {
+          "line": 162,
+          "text": "override func keyDown(with event:NSEvent) {"
+        },
+        {
+          "line": 166,
+          "text": "override func accessibilityPerformPress() -> Bool {"
+        },
+        {
+          "line": 169,
+          "text": "@objc private func fire() { guard let press else { return }; freshAction?(press.0,press.1) }"
+        },
+        {
+          "line": 171,
+          "text": "@MainActor final class WS2CommandReviewView: NSView, WS2LeaseContent {"
+        },
+        {
+          "line": 200,
+          "text": "func enableConfirmation(){approval.isEnabled=inputIsCurrent()}"
+        },
+        {
+          "line": 201,
+          "text": "func revoke(){inputIsCurrent = { false };approval.isEnabled=false;text.string=\"\";confirm=nil;decline=nil}"
+        },
+        {
+          "line": 202,
+          "text": "@objc private func refuse(){guard inputIsCurrent() else{return};decline?()}"
+        },
+        {
+          "line": 203,
+          "text": "override func cancelOperation(_ sender:Any?){onCancel?()}"
+        }
+      ]
+    },
+    {
+      "path": "prototype/App/WS2ConductorView.swift",
+      "sha256": "35e1bb2d5b14f59c381aba5969009add1be93e97eb3eeb2005fd1d9607e6e225",
+      "lines": 78,
+      "symbols": [
+        {
+          "line": 3,
+          "text": "@MainActor final class WS2ConductorView: NSView, WS2LeaseContent {"
+        },
+        {
+          "line": 5,
+          "text": "enum Action { case sendDraft(String), discardDraft, confirmCost, stopTurn, leave, session(Int) }"
+        },
+        {
+          "line": 32,
+          "text": "@discardableResult func render(_ state: ConductorNotch) -> Bool {"
+        },
+        {
+          "line": 63,
+          "text": "private func button(_ label:String,_ action:Action) {"
+        },
+        {
+          "line": 67,
+          "text": "@objc private func pressed(_ sender:NSButton) {"
+        },
+        {
+          "line": 76,
+          "text": "override func cancelOperation(_ sender:Any?) { onCancel?() }"
+        },
+        {
+          "line": 77,
+          "text": "func revoke() { buttons.removeAll(); inputIsCurrent = { false }; editor.stringValue = \"\"; title.stringValue = \"\"; detail.stringValue = \"\"; path.path=nil }"
+        }
+      ]
+    },
+    {
+      "path": "prototype/App/WS2GameControllerBridge.swift",
+      "sha256": "dfdb66e861c4a9906df6584fcca07182e0d4f6c0311bf4924b8bcb5941154387",
+      "lines": 174,
+      "symbols": [
+        {
+          "line": 5,
+          "text": "@MainActor final class WS2GameControllerBridge {"
+        },
+        {
+          "line": 6,
+          "text": "struct Environment { let unlocked: Bool; let sinkReady: Bool; let gameOrUnknownInFront: Bool; let domain: WS2DeviceInputGate.Domain }"
+        },
+        {
+          "line": 7,
+          "text": "struct Device { let attachment: UUID; let label: String; let enabled: Bool }"
+        },
+        {
+          "line": 8,
+          "text": "enum Input {"
+        },
+        {
+          "line": 13,
+          "text": "@MainActor private final class Entry {"
+        },
+        {
+          "line": 35,
+          "text": "func start() {"
+        },
+        {
+          "line": 55,
+          "text": "@discardableResult func setEnabled(_ enabled: Bool, attachment: UUID) -> Bool {"
+        },
+        {
+          "line": 69,
+          "text": "func environmentChanged() {"
+        },
+        {
+          "line": 82,
+          "text": "func suspendAll() { for e in entries.values { suspend(e) }; publish() }"
+        },
+        {
+          "line": 83,
+          "text": "private func reconcile() {"
+        },
+        {
+          "line": 104,
+          "text": "private func sample(_ e: Entry) {"
+        },
+        {
+          "line": 142,
+          "text": "@discardableResult func feedback(attachment:UUID,start:Float,strength:Float) -> Bool {"
+        },
+        {
+          "line": 152,
+          "text": "private func clearFeedback(_ e:Entry) {"
+        },
+        {
+          "line": 156,
+          "text": "private func suspend(_ e:Entry) {"
+        },
+        {
+          "line": 161,
+          "text": "private func publish() {"
+        },
+        {
+          "line": 167,
+          "text": "func stop() {"
+        }
+      ]
+    },
+    {
+      "path": "prototype/App/WS2IslandCoordinator.swift",
+      "sha256": "596a69bc216154e1e6add3b8678db752a775d3697d9575786403f6e893dfeda5",
+      "lines": 94,
+      "symbols": [
+        {
+          "line": 3,
+          "text": "@MainActor protocol WS2LeaseContent: NotchInteractiveContent {"
+        },
+        {
+          "line": 6,
+          "text": "func revoke()"
+        },
+        {
+          "line": 8,
+          "text": "@MainActor final class WS2IslandCoordinator {"
+        },
+        {
+          "line": 32,
+          "text": "private static func displayID(_ screen: NSScreen) -> WS2.DisplayID? {"
+        },
+        {
+          "line": 35,
+          "text": "@discardableResult func show(_ content: NSView & WS2LeaseContent, ownerID: String, layer: WS2.Layer = .opened,"
+        },
+        {
+          "line": 59,
+          "text": "func handOffToAuthorization() { dismissed = nil; dismiss() }"
+        },
+        {
+          "line": 60,
+          "text": "func dismiss() { if let handle { leases.release(handle, at: clock.now()) } }"
+        },
+        {
+          "line": 61,
+          "text": "func dismiss(ifShowing content: NSView) { if view === content { dismiss() } }"
+        },
+        {
+          "line": 62,
+          "text": "func handOffToAuthorization(ifShowing content: NSView) -> Bool {"
+        },
+        {
+          "line": 65,
+          "text": "private func revoked(_ lease: WS2.LeaseHandle, reason: WS2.LeaseRevocation) {"
+        },
+        {
+          "line": 78,
+          "text": "private func beginAuthorization(on panel: NotchPanel) -> Bool {"
+        },
+        {
+          "line": 85,
+          "text": "private func endAuthorization() { if let authHandle { leases.release(authHandle,at:clock.now()) }; authHandle = nil }"
+        },
+        {
+          "line": 86,
+          "text": "func invalidate(_ reason: WS2.LeaseRevocation) { leases.invalidate(reason,at:clock.now()) }"
+        },
+        {
+          "line": 87,
+          "text": "private func reconcileDisplays() { _ = leases.snapshots(at:clock.now()) }"
+        },
+        {
+          "line": 88,
+          "text": "func stop() {"
+        }
+      ]
+    },
+    {
+      "path": "prototype/Core/CodexWire.swift",
+      "sha256": "25faf949ec1fea7d07715aadb67d72246604cc10eb4be3c9baa312ef1c69597d",
+      "lines": 229,
+      "symbols": [
+        {
+          "line": 3,
+          "text": "indirect enum WireJSON: Codable, Equatable, Sendable {"
+        },
+        {
+          "line": 15,
+          "text": "func encode(to encoder: any Encoder) throws {"
+        },
+        {
+          "line": 33,
+          "text": "struct CodexWire: Sendable {"
+        },
+        {
+          "line": 34,
+          "text": "enum Failure: Error { case oversized, closed, malformed, notReady, unsupported, stale, capacity }"
+        },
+        {
+          "line": 35,
+          "text": "enum State: Equatable, Sendable { case fresh, initializing, listingModels, ready, closed }"
+        },
+        {
+          "line": 36,
+          "text": "struct Pending: Sendable { let method: String; let deadline: WS2.Instant }"
+        },
+        {
+          "line": 37,
+          "text": "enum Event: Equatable, Sendable {"
+        },
+        {
+          "line": 42,
+          "text": "static let maximumFrame = 1_048_576 // Recommendation: bounded metadata stream; not a measured protocol maximum."
+        },
+        {
+          "line": 59,
+          "text": "mutating func drain() -> [Data] { defer { outbound.removeAll(keepingCapacity:true) }; return outbound }"
+        },
+        {
+          "line": 60,
+          "text": "private mutating func send(_ value: WireJSON) throws {"
+        },
+        {
+          "line": 66,
+          "text": "private mutating func request(_ method: String, _ params: [String:WireJSON], now: WS2.Instant) throws -> WS2.RequestID {"
+        },
+        {
+          "line": 73,
+          "text": "mutating func initialize(now: WS2.Instant) throws {"
+        },
+        {
+          "line": 78,
+          "text": "mutating func startThread(cwd: String, model: String, now: WS2.Instant) throws {"
+        },
+        {
+          "line": 83,
+          "text": "mutating func resumeThread(id: String, now: WS2.Instant) throws {"
+        },
+        {
+          "line": 90,
+          "text": "mutating func startTurn(text: String, model: String, effort: String, now: WS2.Instant) throws {"
+        },
+        {
+          "line": 97,
+          "text": "mutating func steer(text: String, expectedTurnID: String, now: WS2.Instant) throws {"
+        },
+        {
+          "line": 103,
+          "text": "mutating func interrupt(now: WS2.Instant) throws {"
+        },
+        {
+          "line": 108,
+          "text": "mutating func ingest(_ chunk: Data, now: WS2.Instant) throws -> [Event] {"
+        },
+        {
+          "line": 128,
+          "text": "private mutating func receive(_ v: WireJSON, now: WS2.Instant) throws -> [Event] {"
+        },
+        {
+          "line": 195,
+          "text": "mutating func denyApproval(_ id: WS2.RequestID) throws {"
+        },
+        {
+          "line": 204,
+          "text": "enum ApprovalWireDecision { case acceptOnce, decline }"
+        },
+        {
+          "line": 205,
+          "text": "mutating func enqueueApprovalResponse(_ id: WS2.RequestID, expectedMethod: String,"
+        },
+        {
+          "line": 218,
+          "text": "mutating func tick(now: WS2.Instant) -> [Event] {"
+        },
+        {
+          "line": 224,
+          "text": "mutating func close() {"
+        }
+      ]
+    },
+    {
+      "path": "prototype/Core/Contracts.swift",
+      "sha256": "12fffc2e5cf207aa0ca6b4c371f28b9eec8c2b374b5e1a06d8943878891b2420",
+      "lines": 327,
+      "symbols": [
+        {
+          "line": 6,
+          "text": "enum WS2 {"
+        },
+        {
+          "line": 8,
+          "text": "struct Instant: Hashable, Comparable, Sendable, Codable {"
+        },
+        {
+          "line": 18,
+          "text": "static func < (a: Self, b: Self) -> Bool { a.nanoseconds < b.nanoseconds }"
+        },
+        {
+          "line": 20,
+          "text": "func adding(_ duration: UInt64) -> Self {"
+        },
+        {
+          "line": 25,
+          "text": "func elapsed(since earlier: Self) -> UInt64 {"
+        },
+        {
+          "line": 32,
+          "text": "enum Duration {"
+        },
+        {
+          "line": 39,
+          "text": "struct TimeGate: Sendable {"
+        },
+        {
+          "line": 41,
+          "text": "mutating func accept(_ now: Instant) -> Bool {"
+        },
+        {
+          "line": 50,
+          "text": "struct EventGate: Sendable {"
+        },
+        {
+          "line": 53,
+          "text": "mutating func accept(sequence: UInt64, at now: Instant) -> Bool {"
+        },
+        {
+          "line": 62,
+          "text": "enum TokenDomain: String, Hashable, Sendable, Codable { case unspecified, focusTimer, presenceLock, conductor, interaction }"
+        },
+        {
+          "line": 66,
+          "text": "struct Token: Hashable, Sendable, Codable {"
+        },
+        {
+          "line": 76,
+          "text": "struct TokenSource: Sendable {"
+        },
+        {
+          "line": 80,
+          "text": "mutating func next() -> Token? {"
+        },
+        {
+          "line": 88,
+          "text": "enum Provider: String, Hashable, Sendable, Codable, CaseIterable {"
+        },
+        {
+          "line": 94,
+          "text": "struct SessionKey: Hashable, Sendable, Codable {"
+        },
+        {
+          "line": 101,
+          "text": "struct Context: Hashable, Sendable, Codable {"
+        },
+        {
+          "line": 114,
+          "text": "struct Envelope<Payload: Sendable>: Sendable {"
+        },
+        {
+          "line": 124,
+          "text": "struct Digest: Hashable, Sendable, Codable {"
+        },
+        {
+          "line": 138,
+          "text": "func encode(to encoder: Encoder) throws {"
+        },
+        {
+          "line": 145,
+          "text": "struct ModelID: Hashable, Sendable, Codable {"
+        },
+        {
+          "line": 151,
+          "text": "struct ExecutionConfig: Hashable, Sendable, Codable {"
+        },
+        {
+          "line": 159,
+          "text": "struct CostBinding: Hashable, Sendable, Codable {"
+        },
+        {
+          "line": 167,
+          "text": "enum Risk: String, Sendable, Codable { case normal, high, unknown }"
+        },
+        {
+          "line": 170,
+          "text": "enum RequestID: Hashable, Sendable, Codable {"
+        },
+        {
+          "line": 176,
+          "text": "struct ApprovalKey: Hashable, Sendable, Codable {"
+        },
+        {
+          "line": 183,
+          "text": "struct ApprovalRequest: Equatable, Sendable {"
+        },
+        {
+          "line": 200,
+          "text": "enum ApprovalChoice: Sendable { case confirm, deny, returnToHost }"
+        },
+        {
+          "line": 203,
+          "text": "struct AuthorizationIntent: Equatable, Sendable {"
+        },
+        {
+          "line": 211,
+          "text": "enum AuthorizationOutcome: Sendable {"
+        },
+        {
+          "line": 218,
+          "text": "enum ApprovalDisposition: String, Equatable, Sendable { case deny, deferToHost }"
+        },
+        {
+          "line": 221,
+          "text": "enum Button: String, Hashable, Sendable, CaseIterable {"
+        },
+        {
+          "line": 226,
+          "text": "enum ButtonPhase: String, Sendable { case down, up, cancel, heldHalfSecond, heldOneSecond, clickOnly }"
+        },
+        {
+          "line": 229,
+          "text": "struct ButtonEvent: Equatable, Sendable {"
+        },
+        {
+          "line": 238,
+          "text": "struct Point: Equatable, Sendable {"
+        },
+        {
+          "line": 245,
+          "text": "enum Action: String, Equatable, Sendable {"
+        },
+        {
+          "line": 254,
+          "text": "enum Layer: Int, Comparable, Sendable, CaseIterable {"
+        },
+        {
+          "line": 256,
+          "text": "static func < (a: Self, b: Self) -> Bool { a.rawValue < b.rawValue }"
+        },
+        {
+          "line": 260,
+          "text": "struct DisplayID: Hashable, Comparable, Sendable, Codable {"
+        },
+        {
+          "line": 262,
+          "text": "static func < (a: Self, b: Self) -> Bool { a.value < b.value }"
+        },
+        {
+          "line": 266,
+          "text": "enum Fault: String, Equatable, Sendable {"
+        },
+        {
+          "line": 273,
+          "text": "protocol WS2Clock: Sendable {"
+        },
+        {
+          "line": 274,
+          "text": "func now() -> WS2.Instant"
+        },
+        {
+          "line": 278,
+          "text": "struct WS2ContinuousClock: WS2Clock, Sendable {"
+        },
+        {
+          "line": 281,
+          "text": "func now() -> WS2.Instant {"
+        },
+        {
+          "line": 296,
+          "text": "struct LeaseRequest: Sendable {"
+        },
+        {
+          "line": 304,
+          "text": "struct LeaseHandle: Hashable, Sendable {"
+        },
+        {
+          "line": 310,
+          "text": "enum LeaseRevocation: Sendable {"
+        },
+        {
+          "line": 313,
+          "text": "enum LeaseDecision: Sendable {"
+        },
+        {
+          "line": 319,
+          "text": "struct VisibilitySnapshot: Sendable {"
+        }
+      ]
+    },
+    {
+      "path": "prototype/Core/FocusTimer.swift",
+      "sha256": "f8d5760f92ad924c1727717938e84bc456f84967c931faec36d9554e243bf462",
+      "lines": 180,
+      "symbols": [
+        {
+          "line": 5,
+          "text": "struct FocusTimer: Sendable {"
+        },
+        {
+          "line": 6,
+          "text": "enum Phase: String, Sendable { case idle, focus, rest }"
+        },
+        {
+          "line": 7,
+          "text": "enum PauseReason: String, Hashable, Sendable { case manual, locked, sleeping }"
+        },
+        {
+          "line": 8,
+          "text": "enum Preset: Sendable {"
+        },
+        {
+          "line": 13,
+          "text": "enum Presentation: Sendable { case hidden, compact, expanded }"
+        },
+        {
+          "line": 14,
+          "text": "enum Sound: Sendable { case restStarted, restFinished }"
+        },
+        {
+          "line": 15,
+          "text": "enum Event: Sendable {"
+        },
+        {
+          "line": 19,
+          "text": "enum Effect: Equatable, Sendable {"
+        },
+        {
+          "line": 26,
+          "text": "struct CalendarSample: Sendable {"
+        },
+        {
+          "line": 47,
+          "text": "mutating func configure(preset: Preset, tuckChatEnabled: Bool) {"
+        },
+        {
+          "line": 53,
+          "text": "func progress(at now: WS2.Instant) -> Double {"
+        },
+        {
+          "line": 64,
+          "text": "func count(on today: String) -> Int { today == day ? completedToday : 0 }"
+        },
+        {
+          "line": 65,
+          "text": "func remaining(at now: WS2.Instant) -> UInt64 {"
+        },
+        {
+          "line": 70,
+          "text": "func compactText(at now: WS2.Instant) -> String {"
+        },
+        {
+          "line": 75,
+          "text": "func expandedText(at now: WS2.Instant) -> String {"
+        },
+        {
+          "line": 80,
+          "text": "func nextWake(at now: WS2.Instant, presentation: Presentation) -> WS2.Instant? {"
+        },
+        {
+          "line": 91,
+          "text": "mutating func handle(_ event: Event, at now: WS2.Instant, calendar: CalendarSample) -> [Effect] {"
+        },
+        {
+          "line": 132,
+          "text": "private func ceilingSeconds(_ ns: UInt64) -> UInt64 {"
+        },
+        {
+          "line": 135,
+          "text": "private mutating func setPause(_ reason: PauseReason, on: Bool, at now: WS2.Instant) {"
+        },
+        {
+          "line": 146,
+          "text": "private mutating func advance(at now: WS2.Instant, calendar: CalendarSample) -> [Effect] {"
+        },
+        {
+          "line": 160,
+          "text": "private mutating func beginRest(at start: WS2.Instant, now: WS2.Instant, audible: Bool) -> [Effect] {"
+        },
+        {
+          "line": 171,
+          "text": "private mutating func finish() -> [Effect] {"
+        }
+      ]
+    },
+    {
+      "path": "prototype/Core/GamepadMapping.swift",
+      "sha256": "672cf04922a50acca6eecd2727b135f07a05acae74ab285e9fb92a23ea39a855",
+      "lines": 52,
+      "symbols": [
+        {
+          "line": 3,
+          "text": "struct GamepadMapping: Sendable {"
+        },
+        {
+          "line": 4,
+          "text": "struct Vector: Equatable, Sendable { var x: Double; var y: Double; static let zero = Vector(x: 0, y: 0) }"
+        },
+        {
+          "line": 5,
+          "text": "enum Effect: Equatable, Sendable { case pointer(Vector), scroll(Vector), desktop(Int), releaseTriggers }"
+        },
+        {
+          "line": 15,
+          "text": "mutating func configure(enabled: Bool, gameInFront: Bool) -> [Effect] {"
+        },
+        {
+          "line": 21,
+          "text": "static func axis(_ v: Vector) -> Vector {"
+        },
+        {
+          "line": 29,
+          "text": "mutating func sample(left: Vector, right: Vector, at now: Double) -> [Effect] {"
+        },
+        {
+          "line": 41,
+          "text": "mutating func trigger(left: Bool, value: Double, desktopEnabled: Bool) -> [Effect] {"
+        },
+        {
+          "line": 51,
+          "text": "mutating func disconnect() -> [Effect] { configure(enabled:false,gameInFront:false) }"
+        }
+      ]
+    },
+    {
+      "path": "prototype/Core/MagicTiling.swift",
+      "sha256": "6aeeb96aac653d1eb587c2a12c3d31194fb55bffb196a6849257f593ffedd8b9",
+      "lines": 222,
+      "symbols": [
+        {
+          "line": 14,
+          "text": "struct MagicWindow: Equatable {"
+        },
+        {
+          "line": 26,
+          "text": "struct MagicPlan: Equatable {"
+        },
+        {
+          "line": 27,
+          "text": "struct Placement: Equatable {"
+        },
+        {
+          "line": 42,
+          "text": "enum MagicTiling {"
+        },
+        {
+          "line": 43,
+          "text": "enum Role: Int, Equatable, Comparable {"
+        },
+        {
+          "line": 45,
+          "text": "static func < (a: Role, b: Role) -> Bool { a.rawValue < b.rawValue }"
+        },
+        {
+          "line": 50,
+          "text": "private static let chat: Set<String> = ["
+        },
+        {
+          "line": 82,
+          "text": "static func role(bundleID: String?, category: String?) -> Role {"
+        },
+        {
+          "line": 102,
+          "text": "static func demand(_ role: Role) -> CGFloat {"
+        },
+        {
+          "line": 114,
+          "text": "static func share(main: CGFloat, side: CGFloat, extent: CGFloat, minSide: CGFloat) -> CGFloat {"
+        },
+        {
+          "line": 125,
+          "text": "static func plan(_ windows: [MagicWindow], area: CGRect, preferredMain: CGWindowID? = nil,"
+        },
+        {
+          "line": 130,
+          "text": "func score(_ w: MagicWindow) -> CGFloat {"
+        },
+        {
+          "line": 201,
+          "text": "static func summary(_ plan: MagicPlan, names: [CGWindowID: String]) -> String {"
+        }
+      ]
+    },
+    {
+      "path": "prototype/Core/PairingAttemptWindow.swift",
+      "sha256": "262dc840763d31105c16f5edda749a2e11ea15064158884c825109fbcd3450e3",
+      "lines": 39,
+      "symbols": [
+        {
+          "line": 3,
+          "text": "struct PairingAttemptWindow: Sendable {"
+        },
+        {
+          "line": 4,
+          "text": "enum Failure: Error { case badTime, coolingDown, alreadyOpen, invalidPIN, unavailable }"
+        },
+        {
+          "line": 17,
+          "text": "mutating func open(at now: Double, makePIN: () -> String) throws -> String {"
+        },
+        {
+          "line": 26,
+          "text": "func mayAttempt(at now: Double) -> Bool {"
+        },
+        {
+          "line": 29,
+          "text": "mutating func failed(at now: Double) throws {"
+        },
+        {
+          "line": 34,
+          "text": "mutating func finish(at now: Double) throws {"
+        },
+        {
+          "line": 37,
+          "text": "mutating func cancel() { deadline = nil; pin = nil } // 取消不能抹去冷却。"
+        },
+        {
+          "line": 38,
+          "text": "static func randomPIN() -> String { String(format:\"%04d\",Int.random(in:0...9999)) }"
+        }
+      ]
+    },
+    {
+      "path": "prototype/Core/PairingTLV.swift",
+      "sha256": "32495002c85cc927a8c31cd5699ff517f070107120c111919e9b35c1df2f3845",
+      "lines": 39,
+      "symbols": [
+        {
+          "line": 3,
+          "text": "enum PairingTLV {"
+        },
+        {
+          "line": 4,
+          "text": "enum Failure: Error { case oversized, truncated, duplicate, invalidFragment, invalidType }"
+        },
+        {
+          "line": 6,
+          "text": "static func decode(_ data: Data, allowed: Set<UInt8>) throws -> [UInt8:Data] {"
+        },
+        {
+          "line": 24,
+          "text": "static func encode(_ entries: [(UInt8,Data)]) throws -> Data {"
+        }
+      ]
+    },
+    {
+      "path": "prototype/Core/ShadeModels.swift",
+      "sha256": "49550836c173cdefb98bf1a2db924a9dc8c6ebf9b8f60428592a21c43eca1c22",
+      "lines": 154,
+      "symbols": [
+        {
+          "line": 5,
+          "text": "enum ClassicAction { case close, zoom, expand }"
+        },
+        {
+          "line": 6,
+          "text": "enum HideMethod: String { case none, offscreen, privateOffscreen, privateAlpha, hidden, minimized, ownWindowOrderedOut, quickLookClosed }   // 真窗口的隐藏方式"
+        },
+        {
+          "line": 7,
+          "text": "enum ShadeLifecycleStage: String {"
+        },
+        {
+          "line": 14,
+          "text": "enum ShadeAppearanceMode: String {"
+        },
+        {
+          "line": 27,
+          "text": "enum ShadePolicy {"
+        },
+        {
+          "line": 34,
+          "text": "enum AdobeChromeKind: String {"
+        },
+        {
+          "line": 42,
+          "text": "struct AdobeChromeProfile {"
+        },
+        {
+          "line": 56,
+          "text": "struct WindowChromeProfile {"
+        },
+        {
+          "line": 81,
+          "text": "enum FocusSessionStage {"
+        },
+        {
+          "line": 86,
+          "text": "struct FocusSessionEntry {"
+        },
+        {
+          "line": 94,
+          "text": "struct FocusSession {"
+        },
+        {
+          "line": 102,
+          "text": "func shadePolicyDescription(_ policy: ShadePolicy) -> String {"
+        },
+        {
+          "line": 120,
+          "text": "struct ShadeState {"
+        },
+        {
+          "line": 121,
+          "text": "let foldTransactionID = UUID()"
+        },
+        {
+          "line": 143,
+          "text": "struct ShadePlan {"
+        },
+        {
+          "line": 149,
+          "text": "struct ShadeInvocationOptions {"
+        }
+      ]
+    },
+    {
+      "path": "prototype/Core/WS2ApprovalReview.swift",
+      "sha256": "382ba5ed147027f63d3707ca865e79c7a38183cfa7e7216979472f0a42e4a149",
+      "lines": 97,
+      "symbols": [
+        {
+          "line": 3,
+          "text": "struct WS2ApprovalReview: Equatable, Sendable {"
+        },
+        {
+          "line": 4,
+          "text": "enum Failure: Error { case unsupported, malformed, ambiguous, stale, notShown, oldInput, duplicate, full }"
+        },
+        {
+          "line": 17,
+          "text": "static func command(connection: UUID, id: WS2.RequestID, method: String, params: WireJSON,"
+        },
+        {
+          "line": 45,
+          "text": "func targetBytes() throws -> Data {"
+        },
+        {
+          "line": 48,
+          "text": "func field(_ data: Data) {"
+        },
+        {
+          "line": 61,
+          "text": "static func visible(_ value: String) -> String {"
+        },
+        {
+          "line": 72,
+          "text": "struct WS2ApprovalReviewGate: Sendable {"
+        },
+        {
+          "line": 77,
+          "text": "mutating func replace(with review: WS2ApprovalReview) {"
+        },
+        {
+          "line": 80,
+          "text": "mutating func didPresent(at now: WS2.Instant, after sequence: UInt64) throws {"
+        },
+        {
+          "line": 85,
+          "text": "mutating func beginConfirmation(beganAt: WS2.Instant, sequence: UInt64, now: WS2.Instant,"
+        },
+        {
+          "line": 93,
+          "text": "func mayConsume(current review: WS2ApprovalReview, now: WS2.Instant, unlocked: Bool) -> Bool {"
+        },
+        {
+          "line": 96,
+          "text": "mutating func clear() { current = nil; shownAt = nil; confirmationStarted = false; sequenceFloor = 0 }"
+        }
+      ]
+    },
+    {
+      "path": "prototype/Core/WS2CompanionFrame.swift",
+      "sha256": "2ecb698bdf16965242836f132a7bc801d0ac7db7b488abc0d5a1b878a4c0fabd",
+      "lines": 59,
+      "symbols": [
+        {
+          "line": 3,
+          "text": "struct WS2CompanionFrame: Equatable, Sendable {"
+        },
+        {
+          "line": 4,
+          "text": "enum Failure: Error { case closed, oversized, unsupportedType, invalidLength, exhausted }"
+        },
+        {
+          "line": 5,
+          "text": "static let maximumPayload = 65_536 // local cap, NOT the 24-bit protocol maximum"
+        },
+        {
+          "line": 9,
+          "text": "static func header(type: UInt8, count: Int) throws -> Data {"
+        },
+        {
+          "line": 14,
+          "text": "func encoded() throws -> Data { try Self.header(type: type, count: payload.count) + payload }"
+        },
+        {
+          "line": 15,
+          "text": "struct Decoder: Sendable {"
+        },
+        {
+          "line": 18,
+          "text": "mutating func close() { closed = true; bytes.removeAll(keepingCapacity: false) }"
+        },
+        {
+          "line": 20,
+          "text": "mutating func feed(_ input: Data) throws -> [WS2CompanionFrame] {"
+        },
+        {
+          "line": 48,
+          "text": "struct WS2CompanionCounter: Sendable {"
+        },
+        {
+          "line": 52,
+          "text": "mutating func take() throws -> Data {"
+        },
+        {
+          "line": 58,
+          "text": "mutating func close() { closed = true }"
+        }
+      ]
+    },
+    {
+      "path": "prototype/Core/WS2DeviceInputGate.swift",
+      "sha256": "60c5be94786910c4719bcc4b56ff7ff217708e3981591922f33bbe9b384ae662",
+      "lines": 66,
+      "symbols": [
+        {
+          "line": 3,
+          "text": "struct WS2DeviceInputGate: Sendable {"
+        },
+        {
+          "line": 4,
+          "text": "enum Domain: Sendable { case desktop, conductor, review }"
+        },
+        {
+          "line": 5,
+          "text": "enum Outcome: Equatable, Sendable { case ignored, began(UInt64), ended(UInt64), cancelled(UInt64) }"
+        },
+        {
+          "line": 14,
+          "text": "mutating func connect(_ id: UUID) { attachment = id; enabled = false; neutralSeen.removeAll(); down.removeAll(); sequence = nil; time = .init(); currentDomain = nil }"
+        },
+        {
+          "line": 15,
+          "text": "mutating func enable(_ id: UUID) -> Bool {"
+        },
+        {
+          "line": 19,
+          "text": "mutating func suspend() -> [UInt64] {"
+        },
+        {
+          "line": 22,
+          "text": "mutating func disconnect() -> [UInt64] { let ids = suspend(); attachment = nil; currentDomain = nil; return ids }"
+        },
+        {
+          "line": 24,
+          "text": "mutating func changeDomain(to domain: Domain) -> [UInt64] {"
+        },
+        {
+          "line": 30,
+          "text": "mutating func button(attachment id: UUID, name: String, pressed: Bool, sequence: UInt64,"
+        },
+        {
+          "line": 49,
+          "text": "struct WS2HIDButtonMap: Sendable {"
+        },
+        {
+          "line": 50,
+          "text": "struct Identity: Equatable, Sendable { let registryID: UInt64; let vendor: Int; let product: Int }"
+        },
+        {
+          "line": 52,
+          "text": "func button(from actual: Identity, page: Int, usage: Int, value: Int) -> (WS2.Button, Bool)? {"
+        }
+      ]
+    },
+    {
+      "path": "prototype/Core/WS2FocusWindowOwnership.swift",
+      "sha256": "69a0b9a82fd67c318d92b4bcedebd6f980b094f24b37197758fe1cf85f5ab3c7",
+      "lines": 27,
+      "symbols": [
+        {
+          "line": 3,
+          "text": "struct WS2FocusWindowOwnership: Sendable {"
+        },
+        {
+          "line": 4,
+          "text": "struct Identity: Hashable, Sendable { let pid: Int32; let processStart: UInt64; let windowID: UInt32; let windowGeneration: UInt64 }"
+        },
+        {
+          "line": 5,
+          "text": "struct Receipt: Equatable, Sendable {"
+        },
+        {
+          "line": 13,
+          "text": "mutating func record(_ receipt: Receipt, didComplete: Bool) -> Bool {"
+        },
+        {
+          "line": 18,
+          "text": "mutating func takeForRestore(_ id: Identity, run: WS2.Token, effectGeneration: UInt64, liveRevision: UInt64) -> Receipt? {"
+        },
+        {
+          "line": 24,
+          "text": "mutating func manualChange(_ id: Identity) { owned[id] = nil }"
+        },
+        {
+          "line": 25,
+          "text": "mutating func clear() { owned.removeAll() }"
+        }
+      ]
+    },
+    {
+      "path": "prototype/Recovery/DurableShadeJournal.swift",
+      "sha256": "5dbcd013cc44573bfef4b028dae0ca44c75c963d7df131cf20b946a737c366c8",
+      "lines": 34,
+      "symbols": [
+        {
+          "line": 4,
+          "text": "struct DurableShadeJournal {"
+        },
+        {
+          "line": 11,
+          "text": "func load() throws -> [[String: Any]]? {"
+        },
+        {
+          "line": 22,
+          "text": "func save(_ entries: [[String: Any]]) throws {"
+        }
+      ]
+    },
+    {
+      "path": "prototype/Support/WS2CompanionCrypto.swift",
+      "sha256": "d50a35fcb45ba1905fb26a6c3c4f14a7dd450bb8413b13bfcf8429b0a7eed8e8",
+      "lines": 120,
+      "symbols": [
+        {
+          "line": 2,
+          "text": "// See decisions/01-配对与加密.md for the observed protocol and the missing enrollment gate."
+        },
+        {
+          "line": 6,
+          "text": "@MainActor final class WS2CompanionCrypto {"
+        },
+        {
+          "line": 7,
+          "text": "enum Failure: Error { case state, expired, malformed, unknownPeer, signature, revoked, closed }"
+        },
+        {
+          "line": 8,
+          "text": "struct Peer: Equatable {"
+        },
+        {
+          "line": 14,
+          "text": "struct Identity {"
+        },
+        {
+          "line": 19,
+          "text": "@MainActor final class VerifiedSession {"
+        },
+        {
+          "line": 31,
+          "text": "func close() { transmit = nil; receive = nil; tx.close(); rx.close() }"
+        },
+        {
+          "line": 32,
+          "text": "func seal(_ plaintext: Data) throws -> Data {"
+        },
+        {
+          "line": 42,
+          "text": "func open(_ frame: WS2CompanionFrame) throws -> Data {"
+        },
+        {
+          "line": 52,
+          "text": "private enum State { case fresh, proving, finished, closed }"
+        },
+        {
+          "line": 68,
+          "text": "func close() { state = .closed; ephemeral = nil; shared = nil; proofKey = nil; clientEphemeral = nil }"
+        },
+        {
+          "line": 69,
+          "text": "private func checkTime() throws { guard clock.now() < deadline else { close(); throw Failure.expired } }"
+        },
+        {
+          "line": 70,
+          "text": "private static func derive(_ shared: SharedSecret, salt: String, info: String) -> SymmetricKey {"
+        },
+        {
+          "line": 73,
+          "text": "private static func proofNonce(_ value: String) throws -> ChaChaPoly.Nonce {"
+        },
+        {
+          "line": 78,
+          "text": "func answerM1(_ tlv: Data) throws -> Data {"
+        },
+        {
+          "line": 97,
+          "text": "func answerM3(_ tlv: Data) throws -> (m4: Data, session: VerifiedSession) {"
+        }
+      ]
+    },
+    {
+      "path": "prototype/WindowBrowser/WindowBrowserAppDelegate.swift",
+      "sha256": "7578e4ad88f967a0c4fc6b18dabf97100fffd86d1bb7437c254131f55147bf8f",
+      "lines": 144,
+      "symbols": [
+        {
+          "line": 11,
+          "text": "func windowBrowserManagedSnapshots() -> [ManagedWindowDescriptor] {"
+        },
+        {
+          "line": 100,
+          "text": "func windowBrowserBeginFold(key: WindowKey, element: AXUIElement,"
+        },
+        {
+          "line": 126,
+          "text": "func windowBrowserTargetCandidate(key: WindowKey) -> AXUIElement? {"
+        },
+        {
+          "line": 134,
+          "text": "func windowBrowserIsWindowStillPresent(key: WindowKey) -> Bool {"
+        }
+      ]
+    },
+    {
+      "path": "prototype/WindowBrowser/WindowBrowserTargetResolver.swift",
+      "sha256": "2fc395871767c42537f7fe79a565c1837ef56c82654b5f08fab8c5b4f7b83ab8",
+      "lines": 75,
+      "symbols": [
+        {
+          "line": 11,
+          "text": "struct WindowBrowserResolvedTarget {"
+        },
+        {
+          "line": 20,
+          "text": "enum WindowBrowserTargetResolver {"
+        },
+        {
+          "line": 23,
+          "text": "struct Options: OptionSet {"
+        },
+        {
+          "line": 30,
+          "text": "static func inspect(_ element: AXUIElement, key: WindowKey,"
+        },
+        {
+          "line": 65,
+          "text": "static func enumerate(key: WindowKey) -> AXUIElement? {"
+        },
+        {
+          "line": 70,
+          "text": "static func candidates(pid: pid_t) -> [(CGWindowID, AXUIElement)] {"
+        }
+      ]
+    },
+    {
+      "path": "prototype/WindowShade.swift",
+      "sha256": "e5e60ad49adca1273a2a67e2c339ecd53200519d7c340116affaefe2e015e54f",
+      "lines": 914,
+      "symbols": [
+        {
+          "line": 79,
+          "text": "func framesAlmostEqual(_ a: NSRect, _ b: NSRect, tolerance: CGFloat = 0.5) -> Bool {"
+        },
+        {
+          "line": 86,
+          "text": "func cgWindowID(for window: NSWindow) -> CGWindowID? {"
+        },
+        {
+          "line": 94,
+          "text": "final class AppDelegate: NSObject, NSApplicationDelegate, NSMenuDelegate {"
+        },
+        {
+          "line": 96,
+          "text": "final class PendingTitlebarTripleClick {"
+        },
+        {
+          "line": 101,
+          "text": "var foldTransactionID: UUID?"
+        },
+        {
+          "line": 110,
+          "text": "struct PendingSpaceReturn {"
+        },
+        {
+          "line": 118,
+          "text": "struct ReconcileAXTarget {"
+        },
+        {
+          "line": 125,
+          "text": "struct ReconcileAXSnapshot {"
+        },
+        {
+          "line": 207,
+          "text": "var foldWaiters: [CGWindowID: [UUID: (Bool) -> Void]] = [:]"
+        },
+        {
+          "line": 301,
+          "text": "func applicationDidFinishLaunching(_ note: Notification) {"
+        },
+        {
+          "line": 415,
+          "text": "func applicationShouldTerminate(_ sender: NSApplication) -> NSApplication.TerminateReply {"
+        },
+        {
+          "line": 420,
+          "text": "@objc func systemAppearanceOptionsChanged(_ note: Notification) {"
+        },
+        {
+          "line": 451,
+          "text": "func installStandardMainMenu() {"
+        },
+        {
+          "line": 461,
+          "text": "private func migrateDistractingDefaultSounds() {"
+        },
+        {
+          "line": 490,
+          "text": "func refreshPinnedPreviewTarget(reason: String) {"
+        },
+        {
+          "line": 497,
+          "text": "private func setupPinnedPreviewFocusTracking() {"
+        },
+        {
+          "line": 510,
+          "text": "private func scheduleTitlebarPrefetch() {"
+        },
+        {
+          "line": 531,
+          "text": "private func schedulePinnedPreviewTargetRefresh() {"
+        },
+        {
+          "line": 551,
+          "text": "func focusSizedFrame(pos: CGPoint, size: CGSize,"
+        },
+        {
+          "line": 590,
+          "text": "func configureShadedAccessibility(for overlay: NSWindow, id: CGWindowID,"
+        },
+        {
+          "line": 616,
+          "text": "func currentShadedOverlayID() -> CGWindowID? {"
+        },
+        {
+          "line": 634,
+          "text": "@objc func finishOnboarding() {"
+        },
+        {
+          "line": 638,
+          "text": "@objc func dismissOnboarding() {"
+        },
+        {
+          "line": 649,
+          "text": "private func runTool(_ path: String, _ args: [String]) -> Int32? {"
+        },
+        {
+          "line": 666,
+          "text": "private func readTool(_ path: String, _ args: [String]) -> String? {"
+        },
+        {
+          "line": 682,
+          "text": "private func runDefaults(_ args: [String]) { runTool(\"/usr/bin/defaults\", args) }"
+        },
+        {
+          "line": 683,
+          "text": "private func readDefaults(_ args: [String]) -> String? { readTool(\"/usr/bin/defaults\", args) }"
+        },
+        {
+          "line": 684,
+          "text": "private func killDock() { runTool(\"/usr/bin/killall\", [\"Dock\"]) }   // 让 Dock 重读 mineffect"
+        },
+        {
+          "line": 686,
+          "text": "private func writeDockMinimizeEffect(_ value: String, reason: String) -> Bool {"
+        },
+        {
+          "line": 699,
+          "text": "private func persistDockMinimizeEffectSession(original: String?) {"
+        },
+        {
+          "line": 710,
+          "text": "private func clearDockMinimizeEffectSession() {"
+        },
+        {
+          "line": 717,
+          "text": "private func restoreDockMinimizeEffect(original: String?) {"
+        },
+        {
+          "line": 725,
+          "text": "private func recoverStaleDockMinimizeEffectSessionIfNeeded() {"
+        },
+        {
+          "line": 736,
+          "text": "private func enableScaleMinimizeEffectForSession() {"
+        },
+        {
+          "line": 764,
+          "text": "private func restoreDockMinimizeEffect() {"
+        },
+        {
+          "line": 781,
+          "text": "func currentOperationState(_ id: CGWindowID) -> WindowShadeState {"
+        },
+        {
+          "line": 787,
+          "text": "func transitionOperationState(id: CGWindowID, to next: WindowShadeState,"
+        },
+        {
+          "line": 800,
+          "text": "func applicationWillTerminate(_ note: Notification) {"
+        },
+        {
+          "line": 827,
+          "text": "func ensureAccessibility() -> Bool {"
+        },
+        {
+          "line": 834,
+          "text": "@objc func toggleAction() { toggle() }"
+        },
+        {
+          "line": 845,
+          "text": "@objc func focusCurrentAppAction() {"
+        },
+        {
+          "line": 859,
+          "text": "@objc func unshadeFromMenu(_ sender: NSMenuItem) {"
+        },
+        {
+          "line": 864,
+          "text": "@objc func quit() {"
+        },
+        {
+          "line": 877,
+          "text": "func setupEventTapWhenTrusted() {"
+        },
+        {
+          "line": 893,
+          "text": "func setupEventTap() -> Bool {"
+        }
+      ]
+    },
+    {
+      "path": "overlay/prototype/App/WS2CodexApprovalHost.swift",
+      "sha256": "e08fbdcab085bfda8db45e5a01797b9ef173cc87c52f47ae040353af2863b3bf",
+      "lines": 235,
+      "symbols": [
+        {
+          "line": 5,
+          "text": "@MainActor final class WS2CodexApprovalHost {"
+        },
+        {
+          "line": 36,
+          "text": "func beginProtocol() throws {"
+        },
+        {
+          "line": 40,
+          "text": "func startThread(cwd: String, model: String) throws {"
+        },
+        {
+          "line": 45,
+          "text": "func resumeThread(_ id: String) throws {"
+        },
+        {
+          "line": 49,
+          "text": "func startTurn(text: String, model: String, effort: String) throws {"
+        },
+        {
+          "line": 54,
+          "text": "func steer(text: String, expectedTurn: String) throws {"
+        },
+        {
+          "line": 59,
+          "text": "func interruptTurn() throws {"
+        },
+        {
+          "line": 63,
+          "text": "func receive(_ bytes: Data) {"
+        },
+        {
+          "line": 87,
+          "text": "@discardableResult func present(_ id: WS2.RequestID) -> Bool {"
+        },
+        {
+          "line": 114,
+          "text": "private func confirm(beganAt: WS2.Instant, sequence: UInt64) {"
+        },
+        {
+          "line": 142,
+          "text": "private func target(_ review: WS2ApprovalReview) throws -> AuthTarget {"
+        },
+        {
+          "line": 145,
+          "text": "private func isCurrent(_ review: WS2ApprovalReview) -> Bool {"
+        },
+        {
+          "line": 150,
+          "text": "func tick() {"
+        },
+        {
+          "line": 160,
+          "text": "private func flush(deadline: WS2.Instant) {"
+        },
+        {
+          "line": 164,
+          "text": "private func abandonCurrent(decline: Bool) {"
+        },
+        {
+          "line": 173,
+          "text": "func invalidate() {"
+        },
+        {
+          "line": 179,
+          "text": "@MainActor private final class WS2ReviewButton: NSButton {"
+        },
+        {
+          "line": 189,
+          "text": "private func begin() -> Bool {"
+        },
+        {
+          "line": 192,
+          "text": "override func mouseDown(with event:NSEvent) { guard begin() else { return }; defer { press = nil }; super.mouseDown(with:event) }"
+        },
+        {
+          "line": 193,
+          "text": "override func keyDown(with event:NSEvent) {"
+        },
+        {
+          "line": 197,
+          "text": "override func accessibilityPerformPress() -> Bool {"
+        },
+        {
+          "line": 200,
+          "text": "@objc private func fire() { guard let press else { return }; freshAction?(press.0,press.1) }"
+        },
+        {
+          "line": 202,
+          "text": "@MainActor final class WS2CommandReviewView: NSView, WS2LeaseContent {"
+        },
+        {
+          "line": 231,
+          "text": "func enableConfirmation(){approval.isEnabled=inputIsCurrent()}"
+        },
+        {
+          "line": 232,
+          "text": "func revoke(){inputIsCurrent = { false };approval.isEnabled=false;text.string=\"\";confirm=nil;decline=nil}"
+        },
+        {
+          "line": 233,
+          "text": "@objc private func refuse(){guard inputIsCurrent() else{return};decline?()}"
+        },
+        {
+          "line": 234,
+          "text": "override func cancelOperation(_ sender:Any?){onCancel?()}"
+        }
+      ]
+    },
+    {
+      "path": "overlay/prototype/App/WS2DeviceActionHost.swift",
+      "sha256": "9bad067f8333d54084cb88f2bffa4dd50307d1bb3db4d34aef501b01daa50011",
+      "lines": 100,
+      "symbols": [
+        {
+          "line": 3,
+          "text": "@MainActor protocol WS2DeviceActionSink: AnyObject {"
+        },
+        {
+          "line": 8,
+          "text": "func execute(_ ticket: WS2SemanticInputRouter.Ticket) -> Bool"
+        },
+        {
+          "line": 9,
+          "text": "func move(_ effect: GamepadMapping.Effect, context: WS2SemanticInputRouter.Context) -> Bool"
+        },
+        {
+          "line": 12,
+          "text": "@MainActor final class WS2DeviceActionHost {"
+        },
+        {
+          "line": 41,
+          "text": "func start() { bridge.start() }"
+        },
+        {
+          "line": 43,
+          "text": "@discardableResult func enable(_ id: UUID) -> Bool {"
+        },
+        {
+          "line": 52,
+          "text": "func disable(_ id: UUID) {"
+        },
+        {
+          "line": 57,
+          "text": "func environmentChanged() {"
+        },
+        {
+          "line": 61,
+          "text": "private func receive(_ input: WS2GameControllerBridge.Input) {"
+        },
+        {
+          "line": 90,
+          "text": "private static func intent(_ button:String) -> WS2SemanticInputRouter.Intent? {"
+        },
+        {
+          "line": 99,
+          "text": "func stop() { bridge.stop(); contexts.removeAll(); routers.removeAll(); held.removeAll() }"
+        }
+      ]
+    },
+    {
+      "path": "overlay/prototype/App/WS2GameControllerBridge.swift",
+      "sha256": "e8ff240ac2a42ae32eda28fa656c41ecd4ba3e88ad6f763f97af1e1815690a23",
+      "lines": 182,
+      "symbols": [
+        {
+          "line": 5,
+          "text": "@MainActor final class WS2GameControllerBridge {"
+        },
+        {
+          "line": 6,
+          "text": "struct Environment {"
+        },
+        {
+          "line": 15,
+          "text": "struct Device { let attachment: UUID; let label: String; let enabled: Bool }"
+        },
+        {
+          "line": 16,
+          "text": "enum Input {"
+        },
+        {
+          "line": 21,
+          "text": "@MainActor private final class Entry {"
+        },
+        {
+          "line": 43,
+          "text": "func start() {"
+        },
+        {
+          "line": 63,
+          "text": "@discardableResult func setEnabled(_ enabled: Bool, attachment: UUID) -> Bool {"
+        },
+        {
+          "line": 77,
+          "text": "func environmentChanged() {"
+        },
+        {
+          "line": 90,
+          "text": "func suspendAll() { for e in entries.values { suspend(e) }; publish() }"
+        },
+        {
+          "line": 91,
+          "text": "private func reconcile() {"
+        },
+        {
+          "line": 112,
+          "text": "private func sample(_ e: Entry) {"
+        },
+        {
+          "line": 150,
+          "text": "@discardableResult func feedback(attachment:UUID,start:Float,strength:Float) -> Bool {"
+        },
+        {
+          "line": 160,
+          "text": "private func clearFeedback(_ e:Entry) {"
+        },
+        {
+          "line": 164,
+          "text": "private func suspend(_ e:Entry) {"
+        },
+        {
+          "line": 169,
+          "text": "private func publish() {"
+        },
+        {
+          "line": 175,
+          "text": "func stop() {"
+        }
+      ]
+    },
+    {
+      "path": "overlay/prototype/App/WS2OwnedCodexSession.swift",
+      "sha256": "211a2a4a5024547723634142eb60825b43eb6dfbea3a7710d4ab54bb37653572",
+      "lines": 70,
+      "symbols": [
+        {
+          "line": 5,
+          "text": "@MainActor final class WS2OwnedCodexSession {"
+        },
+        {
+          "line": 44,
+          "text": "func start() throws {"
+        },
+        {
+          "line": 49,
+          "text": "func startThread(cwd: String, model: String) throws { try approval.startThread(cwd:cwd,model:model); scheduleExpiry() }"
+        },
+        {
+          "line": 50,
+          "text": "func resumeThread(_ id: String) throws { try approval.resumeThread(id); scheduleExpiry() }"
+        },
+        {
+          "line": 51,
+          "text": "func startTurn(text: String, model: String, effort: String) throws { try approval.startTurn(text:text,model:model,effort:effort); scheduleExpiry() }"
+        },
+        {
+          "line": 52,
+          "text": "func steer(text: String, expectedTurn: String) throws { try approval.steer(text:text,expectedTurn:expectedTurn); scheduleExpiry() }"
+        },
+        {
+          "line": 53,
+          "text": "func interrupt() throws { try approval.interruptTurn(); scheduleExpiry() }"
+        },
+        {
+          "line": 54,
+          "text": "private func scheduleExpiry() {"
+        },
+        {
+          "line": 65,
+          "text": "func stop() {"
+        }
+      ]
+    },
+    {
+      "path": "overlay/prototype/Core/WS2BoundedOutbox.swift",
+      "sha256": "80fb7f58123a2f9df5c0d7b94c206277427e269273be595ac25e4d554c68e326",
+      "lines": 72,
+      "symbols": [
+        {
+          "line": 4,
+          "text": "struct WS2BoundedOutbox: Sendable {"
+        },
+        {
+          "line": 5,
+          "text": "enum Failure: Error, Equatable { case closed, stale, invalid, capacity, expired, mismatchedCompletion }"
+        },
+        {
+          "line": 6,
+          "text": "struct Slice: Sendable { let ticket: UInt64; let bytes: Data; let deadline: Double }"
+        },
+        {
+          "line": 7,
+          "text": "private struct Entry: Sendable { let ticket: UInt64; let bytes: Data; let deadline: Double; var offset: Int }"
+        },
+        {
+          "line": 23,
+          "text": "private mutating func validate(_ epoch: UUID, _ now: Double) throws {"
+        },
+        {
+          "line": 31,
+          "text": "mutating func admit(_ records: [Data], connection: UUID, now: Double, deadline: Double) throws -> [UInt64] {"
+        },
+        {
+          "line": 51,
+          "text": "mutating func peek(connection: UUID, now: Double, limit: Int = 65_536) throws -> Slice? {"
+        },
+        {
+          "line": 59,
+          "text": "@discardableResult mutating func advance(ticket: UInt64, bytesWritten: Int, connection: UUID, now: Double) throws -> Bool {"
+        },
+        {
+          "line": 71,
+          "text": "mutating func close() { closed = true; queue.removeAll(); retainedBytes = 0 }"
+        }
+      ]
+    },
+    {
+      "path": "overlay/prototype/Core/WS2FocusEffectPlan.swift",
+      "sha256": "60ccb717e3641f20e1fc499dc1e432ba37493e3c4abe8e28c73b2ebc19419829",
+      "lines": 85,
+      "symbols": [
+        {
+          "line": 4,
+          "text": "struct WS2FocusEffectPlan: Sendable {"
+        },
+        {
+          "line": 7,
+          "text": "struct Window: Equatable, Sendable { let identity: Identity; let revision: UInt64 }"
+        },
+        {
+          "line": 8,
+          "text": "enum Kind: Equatable, Sendable { case tuck(Window, WS2.Token, UInt64), restore(Receipt) }"
+        },
+        {
+          "line": 9,
+          "text": "struct Operation: Equatable, Sendable { let id: UUID; let kind: Kind }"
+        },
+        {
+          "line": 10,
+          "text": "enum Outcome: Sendable { case completed(revision: UInt64), unchanged, userChanged, unknown }"
+        },
+        {
+          "line": 11,
+          "text": "enum Failure: Error { case invalid, capacity, overflow, unexpectedCompletion }"
+        },
+        {
+          "line": 24,
+          "text": "mutating func transition(run: WS2.Token?, windows: [Window]) throws {"
+        },
+        {
+          "line": 31,
+          "text": "mutating func setSuspended(_ value: Bool) { suspended = value }"
+        },
+        {
+          "line": 32,
+          "text": "mutating func manualChange(_ identity: Identity) {"
+        },
+        {
+          "line": 38,
+          "text": "private static func identity(_ kind: Kind) -> Identity {"
+        },
+        {
+          "line": 41,
+          "text": "mutating func next() -> Operation? {"
+        },
+        {
+          "line": 51,
+          "text": "func mayCommit(_ operation: Operation) -> Bool {"
+        },
+        {
+          "line": 60,
+          "text": "mutating func complete(_ operation: Operation, _ outcome: Outcome) throws {"
+        }
+      ]
+    },
+    {
+      "path": "overlay/prototype/Core/WS2SemanticInputRouter.swift",
+      "sha256": "7055bb6994681ac67dd6b166374ab00923a8e1d76b9133021d922925ef2ac3c6",
+      "lines": 43,
+      "symbols": [
+        {
+          "line": 4,
+          "text": "struct WS2SemanticInputRouter: Sendable {"
+        },
+        {
+          "line": 5,
+          "text": "enum Intent: Equatable, Sendable { case previous, next, cancel, openSelection, interruptTurn }"
+        },
+        {
+          "line": 6,
+          "text": "struct Context: Equatable, Sendable {"
+        },
+        {
+          "line": 10,
+          "text": "struct Ticket: Equatable, Sendable { let context: Context; let press: UInt64; let intent: Intent }"
+        },
+        {
+          "line": 11,
+          "text": "enum Failure: Error { case invalid, replay, unavailable, stale, forbidden, capacity }"
+        },
+        {
+          "line": 16,
+          "text": "@discardableResult mutating func enable(_ context: Context) -> Bool {"
+        },
+        {
+          "line": 20,
+          "text": "mutating func revoke() { active = nil; seen.removeAll(); reserved.removeAll(); enabled = false }"
+        },
+        {
+          "line": 23,
+          "text": "mutating func reserve(press: UInt64, intent: Intent, context: Context, unlocked: Bool, sinkReady: Bool) throws -> Ticket {"
+        },
+        {
+          "line": 36,
+          "text": "func isCurrent(_ ticket: Ticket, live: Context, unlocked: Bool, sinkReady: Bool) -> Bool {"
+        },
+        {
+          "line": 39,
+          "text": "@discardableResult mutating func consume(_ ticket: Ticket, live: Context, unlocked: Bool, sinkReady: Bool) -> Bool {"
+        }
+      ]
+    },
+    {
+      "path": "overlay/prototype/Support/WS2CompanionTCPTransport.swift",
+      "sha256": "78bccef841039bf2d4fb5058ae21e01633da6f2e00435eb1a17b9ca2cd273266",
+      "lines": 109,
+      "symbols": [
+        {
+          "line": 7,
+          "text": "@MainActor final class WS2CompanionTCPTransport {"
+        },
+        {
+          "line": 24,
+          "text": "func start() {"
+        },
+        {
+          "line": 41,
+          "text": "@discardableResult func enqueue(_ bytes: Data, deadline: Double) -> Bool {"
+        },
+        {
+          "line": 47,
+          "text": "private func receive() {"
+        },
+        {
+          "line": 65,
+          "text": "private func sendNext() {"
+        },
+        {
+          "line": 85,
+          "text": "func setProtocolDeadline(_ deadline: Double) {"
+        },
+        {
+          "line": 90,
+          "text": "private func scheduleTimeout() {"
+        },
+        {
+          "line": 102,
+          "text": "func close() {"
+        }
+      ]
+    },
+    {
+      "path": "overlay/prototype/Support/WS2DuplexProcess.swift",
+      "sha256": "06e886dc237b1c69b7525aa52eaf3ebbb06ee22867eacd3fa1bbdf10d3d74f09",
+      "lines": 184,
+      "symbols": [
+        {
+          "line": 11,
+          "text": "@MainActor final class WS2DuplexProcess {"
+        },
+        {
+          "line": 12,
+          "text": "enum Failure: Error { case invalid, io(Int32), notRunning }"
+        },
+        {
+          "line": 13,
+          "text": "enum End: Equatable { case localStop, eof, processExit, io(Int32), framing, timeout, revoked }"
+        },
+        {
+          "line": 48,
+          "text": "func start() throws {"
+        },
+        {
+          "line": 69,
+          "text": "@discardableResult func admit(_ lines: [Data], connection: UUID, deadline: Double,"
+        },
+        {
+          "line": 80,
+          "text": "@discardableResult func admitWireFrames(_ frames: [Data], connection: UUID, deadline: Double,"
+        },
+        {
+          "line": 92,
+          "text": "private func armWrite() { if !writeArmed, !stopped { writeArmed = true; writer?.resume() } }"
+        },
+        {
+          "line": 93,
+          "text": "private func disarmWrite() { if writeArmed { writeArmed = false; writer?.suspend() } }"
+        },
+        {
+          "line": 94,
+          "text": "private func scheduleDeadline() {"
+        },
+        {
+          "line": 106,
+          "text": "private func writeReady() {"
+        },
+        {
+          "line": 131,
+          "text": "private func readReady() {"
+        },
+        {
+          "line": 152,
+          "text": "private static func writeWithoutSIGPIPE(_ fd: Int32, _ bytes: Data) -> Int {"
+        },
+        {
+          "line": 167,
+          "text": "func stop(_ reason: End = .localStop) {"
+        }
+      ]
+    },
+    {
+      "path": "overlay/prototype/Support/WS2FocusEffectExecutor.swift",
+      "sha256": "674a8760579e1eccf401f6c949d6fcf69b74257943fe795b043f255b7c3887bf",
+      "lines": 35,
+      "symbols": [
+        {
+          "line": 3,
+          "text": "@MainActor protocol WS2FocusMutationPort: AnyObject {"
+        },
+        {
+          "line": 6,
+          "text": "func perform(_ operation: WS2FocusEffectPlan.Operation,"
+        },
+        {
+          "line": 10,
+          "text": "@MainActor final class WS2FocusEffectExecutor {"
+        },
+        {
+          "line": 16,
+          "text": "func transition(run: WS2.Token?, windows: [WS2FocusEffectPlan.Window]) throws {"
+        },
+        {
+          "line": 19,
+          "text": "func suspend() { plan.setSuspended(true) }"
+        },
+        {
+          "line": 20,
+          "text": "func resumeAfterVerifiedUnlock() { plan.setSuspended(false); pump() }"
+        },
+        {
+          "line": 21,
+          "text": "func manualChange(_ identity: WS2FocusEffectPlan.Identity) { plan.manualChange(identity); pump() }"
+        },
+        {
+          "line": 23,
+          "text": "func end() throws { try transition(run: nil, windows: []) }"
+        },
+        {
+          "line": 24,
+          "text": "private func pump() {"
+        }
+      ]
+    },
+    {
+      "path": "overlay/prototype/Support/WS2KeychainPeerStorage.swift",
+      "sha256": "ffe7ecc5a1bbd58497156c645a074506371039f49ceb92bfc2d9b2c6f36a395f",
+      "lines": 46,
+      "symbols": [
+        {
+          "line": 7,
+          "text": "@MainActor final class WS2KeychainPeerStorage: WS2PeerStorage {"
+        },
+        {
+          "line": 8,
+          "text": "struct Failure: Error { let status: OSStatus }"
+        },
+        {
+          "line": 20,
+          "text": "func read() throws -> Data? {"
+        },
+        {
+          "line": 31,
+          "text": "func replace(_ bytes: Data, creating: Bool) throws {"
+        }
+      ]
+    },
+    {
+      "path": "overlay/prototype/Support/WS2PairSetupCrypto.swift",
+      "sha256": "6345ec9ff7339c0845f4140beac96577ee1310968d71dab941a0266d315e6fda",
+      "lines": 71,
+      "symbols": [
+        {
+          "line": 3,
+          "text": "@MainActor protocol WS2SRPPrimitive: AnyObject {"
+        },
+        {
+          "line": 4,
+          "text": "func begin(pin: String) throws -> (salt: Data, publicKey: Data)"
+        },
+        {
+          "line": 6,
+          "text": "func verify(publicKey: Data, proof: Data) throws -> (serverProof: Data, key: Data)"
+        },
+        {
+          "line": 7,
+          "text": "func clear()"
+        },
+        {
+          "line": 14,
+          "text": "@MainActor final class WS2PairSetupCrypto: WS2PairSetupEngine {"
+        },
+        {
+          "line": 15,
+          "text": "enum Failure: Error { case state, malformed, signature }"
+        },
+        {
+          "line": 16,
+          "text": "private enum Phase { case fresh, started, proven, finished }"
+        },
+        {
+          "line": 27,
+          "text": "func begin(pin: String) throws -> (salt: Data, publicKey: Data) {"
+        },
+        {
+          "line": 31,
+          "text": "func verify(clientPublicKey: Data, proof: Data) throws -> Data {"
+        },
+        {
+          "line": 38,
+          "text": "private func derive(_ suffix: String) throws -> SymmetricKey {"
+        },
+        {
+          "line": 43,
+          "text": "private func nonce(_ name: String) throws -> ChaChaPoly.Nonce {"
+        },
+        {
+          "line": 47,
+          "text": "func finish(encryptedM5: Data) throws -> (identifier: Data, publicKey: Data, encryptedM6: Data) {"
+        },
+        {
+          "line": 69,
+          "text": "func clear() { srp.clear(); sessionKey = nil; phase = .finished }"
+        }
+      ]
+    },
+    {
+      "path": "overlay/prototype/Support/WS2PairSetupServer.swift",
+      "sha256": "56ba109e6d1f63c8771cb0788c6c3af4796eed38cea5fe9880f744651c6516b1",
+      "lines": 117,
+      "symbols": [
+        {
+          "line": 5,
+          "text": "@MainActor protocol WS2PairSetupEngine: AnyObject {"
+        },
+        {
+          "line": 6,
+          "text": "func begin(pin: String) throws -> (salt: Data, publicKey: Data)"
+        },
+        {
+          "line": 7,
+          "text": "func verify(clientPublicKey: Data, proof: Data) throws -> Data"
+        },
+        {
+          "line": 10,
+          "text": "func finish(encryptedM5: Data) throws -> (identifier: Data, publicKey: Data, encryptedM6: Data)"
+        },
+        {
+          "line": 11,
+          "text": "func clear()"
+        },
+        {
+          "line": 14,
+          "text": "@MainActor final class WS2PairingAdmission {"
+        },
+        {
+          "line": 15,
+          "text": "enum Failure: Error { case unavailable, busy, expired }"
+        },
+        {
+          "line": 27,
+          "text": "func openByLocalUser(makePIN: () -> String = PairingAttemptWindow.randomPIN) throws -> String {"
+        },
+        {
+          "line": 38,
+          "text": "func claim(_ connection: UUID) throws -> String {"
+        },
+        {
+          "line": 43,
+          "text": "func isCurrent(_ connection: UUID) -> Bool {"
+        },
+        {
+          "line": 46,
+          "text": "func failed(_ connection: UUID) {"
+        },
+        {
+          "line": 53,
+          "text": "func succeeded(_ connection: UUID) throws {"
+        },
+        {
+          "line": 56,
+          "text": "func cancel() { window.cancel(); displayedPIN = nil; owner = nil /* persistent incomplete marker intentionally survives */ }"
+        },
+        {
+          "line": 59,
+          "text": "@MainActor final class WS2PairSetupServer {"
+        },
+        {
+          "line": 60,
+          "text": "enum Failure: Error { case sequence, malformed, expired, closed }"
+        },
+        {
+          "line": 61,
+          "text": "enum State { case fresh, awaitingM3, awaitingM5, finished, closed }"
+        },
+        {
+          "line": 72,
+          "text": "func receive(_ tlv: Data) throws -> Data {"
+        },
+        {
+          "line": 113,
+          "text": "func cancel() {"
+        }
+      ]
+    },
+    {
+      "path": "overlay/prototype/Support/WS2PeerRepository.swift",
+      "sha256": "1ee4290d4151defac9a50b741c1128dbd8d6bcb7514cd4535ce39ac84f740b42",
+      "lines": 127,
+      "symbols": [
+        {
+          "line": 4,
+          "text": "@MainActor protocol WS2PeerStorage: AnyObject {"
+        },
+        {
+          "line": 5,
+          "text": "func read() throws -> Data?"
+        },
+        {
+          "line": 6,
+          "text": "func replace(_ bytes: Data, creating: Bool) throws"
+        },
+        {
+          "line": 9,
+          "text": "@MainActor final class WS2PeerRepository {"
+        },
+        {
+          "line": 10,
+          "text": "enum Failure: Error { case unavailable, malformed, conflict, capacity, overflow, denied }"
+        },
+        {
+          "line": 11,
+          "text": "struct Peer: Codable, Equatable, Sendable {"
+        },
+        {
+          "line": 18,
+          "text": "struct Snapshot: Codable, Equatable, Sendable {"
+        },
+        {
+          "line": 34,
+          "text": "func load() throws {"
+        },
+        {
+          "line": 44,
+          "text": "func provision(identifier: Data, signingSeed: Data) throws {"
+        },
+        {
+          "line": 55,
+          "text": "private static func validate(_ value: Snapshot) throws {"
+        },
+        {
+          "line": 65,
+          "text": "private func encode(_ value: Snapshot) throws -> Data {"
+        },
+        {
+          "line": 70,
+          "text": "private func mutate(_ body: (inout Snapshot, UInt64) throws -> Void) throws {"
+        },
+        {
+          "line": 83,
+          "text": "func beginPairing() throws {"
+        },
+        {
+          "line": 86,
+          "text": "func recordFailedAttempt() throws {"
+        },
+        {
+          "line": 90,
+          "text": "func clearAttemptsAfterCooldown() throws {"
+        },
+        {
+          "line": 93,
+          "text": "func enroll(identifier: Data, publicKey: Data) throws -> Peer {"
+        },
+        {
+          "line": 106,
+          "text": "func markVerified(identifier: Data, revision: UInt64) throws {"
+        },
+        {
+          "line": 113,
+          "text": "func revoke(identifier: Data) throws {"
+        },
+        {
+          "line": 122,
+          "text": "func current(identifier: Data, publicKey: Data, revision: UInt64) -> Bool {"
+        },
+        {
+          "line": 126,
+          "text": "func suspend() { blocked = true; onInvalidateAll?() }"
+        }
+      ]
+    }
+  ]
+}

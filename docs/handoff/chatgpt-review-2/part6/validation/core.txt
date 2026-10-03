@@ -1,0 +1,43 @@
+SCENE ARB01 opened page cannot evict review
+SCENE ARB02 exact opened lease replacement cancels once
+SCENE ARB03 same priority without explicit navigation busy
+SCENE ARB04 stale replacement cannot evict newer page
+SCENE ARB05 authorization preempts opened page
+SCENE ARB06 equal authorization never replaces review
+SCENE ARB07 synchronous disable barrier aborts replacement
+SCENE ARB08 reentrant acquire in cancellation refused
+SCENE ARB09 invalid request does not remove existing page
+SCENE ARB10 clock rollback safety invalidation still works
+SCENE ARB11 display removal during callback aborts replacement
+SCENE ARB12 expired expected handle is not resurrected
+SCENE SCP01 cannot begin before local enable and unlock
+SCENE SCP02 project switch invalidates queued work
+SCENE SCP03 relock and unlock never restores old ticket
+SCENE SCP04 path replacement and connection restart rejected
+SCENE SCP05 backend session validation and epoch binding
+SCENE SCP06 disabled state and explicit clear reject
+SCENE DIR01 actual symlink and directory replacement observations
+SCENE DIR02 containment uses path boundary not string prefix
+SCENE DIR03 non-directory and missing path fail
+SCENE SEL01 stable selection survives reorder
+SCENE SEL02 disabled rows skipped and no wrap
+SCENE SEL03 stale events rejected after snapshot
+SCENE SEL04 activation consumed exactly once
+SCENE SEL05 selection movement invalidates activation
+SCENE SEL06 duplicate snapshot fails closed
+SCENE SEL07 disabled selection chooses enabled row and empty is valid
+SCENE SEL08 revoke invalidates queued activation
+SCENE SEL09 snapshot size and identifier bounds
+SCENE NET01 unauthenticated connections globally bounded
+SCENE NET02 pair setup requires local window and cannot extend deadline
+SCENE NET03 one connection per verified peer
+SCENE NET04 deadline rejects promotion and stale generation
+SCENE NET05 per-connection and aggregate queue bounds
+SCENE NET06 total connection cap includes authenticated sessions
+SCENE NET07 clock rollback halts and clears buffers
+SCENE NET08 close releases allocation and stale handle fails
+SCENE DIAG01 bounded suffix and observed versus retained bytes
+SCENE DIAG02 control sequences cannot act as terminal escapes
+SCENE DIAG03 invalid UTF8 and clear bounded memory
+SCENE DIAG04 large append never retains more than capacity
+RESULT scenarios=42 assertions=95 failures=0

@@ -1,0 +1,1 @@
+NOT RUN: requires macOS CryptoKit; exit 78

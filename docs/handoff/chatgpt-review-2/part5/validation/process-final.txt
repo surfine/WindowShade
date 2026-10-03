@@ -1,0 +1,9 @@
+SCENE IO01 split response, simultaneous write, stderr burst
+SCENE IO02 pipe backpressure deadline closes without retry
+SCENE IO03 truncated EOF rejected
+SCENE IO04 EPIPE does not kill parent with SIGPIPE
+SCENE IO05 multiple coalesced lines delivered in order
+SCENE IO06 oversized incoming line rejected
+SCENE IO07 final write gate and stale epoch
+SCENE IO08 per-batch context gate checked after admission
+RESULT scenarios=8 assertions=26 failures=0

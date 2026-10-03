@@ -1,0 +1,2 @@
+RESULT scenarios=5 assertions=11 failures=0
+Pinned schema: 4 actual outbound params passed

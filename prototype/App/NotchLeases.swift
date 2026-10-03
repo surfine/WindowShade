@@ -92,12 +92,14 @@ final class NotchLeaseHub {
               let screen = panel.screen ?? NSScreen.main,
               let display = NotchController.displayID(screen).map({ WS2.DisplayID(value: $0) }),
               let owner = Owner(rawValue: ownerID) else { return false }
-        dismiss()
+        // 由协调器原子决定换页：绝不能先关掉审阅来腾地方，申请失败时旧页必须原样留着。
+        let previous = contentHandle
         let now = clock.now()
         let request = WS2.LeaseRequest(ownerID: owner.rawValue, display: display, layer: layer,
                                        requestedAt: now, deadline: now.adding(120 * WS2.Duration.second),
                                        containsPrivateContent: true)
-        guard case .acquired(let lease) = coordinator.acquire(request) else { return false }
+        guard case .acquired(let lease) = coordinator.acquire(request, replacing: previous),
+              coordinator.isCurrent(lease) else { return false }
         held[display] = (owner, lease)
         contentView = content; contentPanel = panel; contentHandle = lease; contentDismissed = onDismiss
         content.inputIsCurrent = { [weak self] in self?.coordinator.isCurrent(lease) == true }
@@ -145,7 +147,8 @@ final class NotchLeaseHub {
         let request = WS2.LeaseRequest(ownerID: Owner.authorization.rawValue, display: display, layer: .authorization,
                                        requestedAt: now, deadline: now.adding(31 * WS2.Duration.second),
                                        containsPrivateContent: true)
-        guard case .acquired(let lease) = coordinator.acquire(request) else { return false }
+        guard case .acquired(let lease) = coordinator.acquire(request),
+              coordinator.isCurrent(lease) else { return false }
         held[display] = (.authorization, lease)
         authHandle = lease
         return true

@@ -1,0 +1,21 @@
+{
+  "assertions" : 30,
+  "boundary" : "Real Python child\/pipe\/one short-lived fork fixture, no CLI service, Mac SDK, network, or process-tree kill",
+  "cases" : [
+    "PROC01 explicit bounded diagnostic tail does not block stdout",
+    "PROC02 default diagnostics stays disabled",
+    "PROC03 direct child exit status is separate from protocol outcome",
+    "PROC04 inherited stdout is bounded after direct child exit",
+    "PROC05 partial final frame rejected",
+    "PROC06 coalesced trailing frames retain ordering",
+    "PROC07 stop closes transport once and waits for independent exit evidence",
+    "PROC08 diagnostic buffer can be explicitly cleared",
+    "PROC09 invalid diagnostic limit rejected before spawning",
+    "PROC10 late scope change blocks an admitted frame"
+  ],
+  "failures" : [
+    "PROC04 inherited stdout is bounded after direct child exit: did not wait for descendant's late write",
+    "PROC04 inherited stdout is bounded after direct child exit: late descendant not delivered as owned result"
+  ],
+  "scenarios" : 10
+}

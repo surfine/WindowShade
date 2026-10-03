@@ -41,18 +41,26 @@ final class InteractionCoordinator {
         if let a = active, now >= a.deadline { withdraw(.expired) }
         alerts = alerts.filter { now < $0.value.deadline }
     }
-    func acquire(_ r: WS2.LeaseRequest) -> WS2.LeaseDecision {
+    // Explicit navigation may replace only the exact current opened-page lease.
+    // Authorization and active-interaction leases still enforce strict priority.
+    func acquire(_ r: WS2.LeaseRequest, replacing expected: WS2.LeaseHandle? = nil) -> WS2.LeaseDecision {
         guard !inTransition, !exhausted else { return .unavailable }
         inTransition = true; defer { inTransition = false }
         let now = clock.now(), env = environment()
         guard now >= last else { return .unavailable }; last = now
         guard env.unlocked else { barrier(.locked); return .unavailable }
+        let entryEpoch = epoch
         expire(now)
+        guard epoch == entryEpoch, !exhausted else { return .unavailable }
+        if let expected, active?.handle != expected { return .unavailable }
         guard permits(r), env.displays.contains(r.display), r.requestedAt <= now,
               r.deadline > now else { return .unavailable }
         if let old = active {
-            guard r.layer < old.layer else { return .busy }
+            let explicitPageSwitch = expected == old.handle && old.layer == .opened && r.layer == .opened
+            guard r.layer < old.layer || explicitPageSwitch else { return .busy }
             withdraw(.preempted)
+            // Synchronous cancellation can disable/lock the app. Never lose that barrier.
+            guard epoch == entryEpoch, !exhausted else { return .unavailable }
         }
         let refreshed = environment(), sampled = clock.now()
         guard refreshed.unlocked, refreshed.displays.contains(r.display), sampled >= now,
@@ -81,12 +89,15 @@ final class InteractionCoordinator {
     }
     func invalidate(_ reason: WS2.LeaseRevocation, at now: WS2.Instant) {
         // Safety barriers must still invalidate when a broken clock goes backwards.
-        guard !inTransition else { return }
+        if inTransition {
+            last = max(now,last); barrier(reason); return
+        }
         inTransition = true; defer { inTransition = false }; last = max(now,last)
         barrier(reason)
     }
     func removeDisplay(_ id: WS2.DisplayID, at now: WS2.Instant) {
-        guard !inTransition else { return }
+        // A display-change callback during replacement aborts the whole transition.
+        if inTransition { invalidate(.displayRemoved, at: now); return }
         inTransition = true; defer { inTransition = false }; last = max(now,last)
         ongoing[id] = nil; alerts[id] = nil; dots.remove(id)
         if active?.handle.display == id { withdraw(.displayRemoved) }
@@ -112,7 +123,9 @@ final class InteractionCoordinator {
         let env = environment()
         if !env.unlocked { barrier(.locked) }
         if let h = active?.handle, !env.displays.contains(h.display) { withdraw(.displayRemoved) }
+        let sampledEpoch = epoch
         expire(now)
+        guard epoch == sampledEpoch else { return [] }
         return env.displays.sorted().map { d in
             let a = active?.handle.display == d ? active : nil
             let ids = env.unlocked ? ongoing[d,default:[]] : []

@@ -3,14 +3,14 @@
 #
 # 用法：
 #   ./build.sh            构建 + 签名（需要签名身份，见下）
-#   ./build.sh --check    仅编译验证（swiftc typecheck），不签名、不修改 app bundle
+#   ./build.sh --check    隔离优化编译与链接验证，不签名、不修改 app bundle
 #   ./build.sh --stage    隔离构建到 .build/duo-validation/（发布包从这里打），写入更新清单地址 SUFeedURL
 #   ./build.sh --local-parallel  本地全模块优化，使用四个后端线程；发布仍用 --stage
 #
 # 应用内更新（docs/update.md）：主程序链接 prototype/Vendor/Sparkle.framework（2.10.0，已删 XPCServices），
 # 包里另有 Contents/Helpers/WindowShadeUpdateGuard.app（看护，源码在 Watchdog/）。嵌套代码从里往外逐个签，
-# 全部用同一个身份，不用 --deep。--check 找得到框架就带 -F 一起类型检查 Sparkle 接口层；
-# 找不到时 App/UpdaterSparkle.swift 靠 #if canImport(Sparkle) 跳过，其余代码不依赖 Sparkle。
+# 全部用同一个身份，不用 --deep。--check 与应用一样编译并链接 Sparkle；
+# 缺少该依赖时检查失败，不能把条件编译跳过接口误写成完整链接通过。
 # 日常 ./build.sh 出来的开发版不写 SUFeedURL，更新器不启动，不会被线上版本换掉。
 #
 # 签名身份（二选一）：
@@ -105,6 +105,7 @@ fi
 ARCH="${WINDOWSHADE_ARCH:-$(uname -m)}"
 # Compile one coherent source snapshot. Edits made while a long optimized build runs
 # cannot invalidate Swift inputs or mix newer shaders into the signed bundle.
+mkdir -p "$(cd .. && pwd)/.build"
 WORK="$(mktemp -d "$(cd .. && pwd)/.build/duo-build.XXXXXX")"
 trap 'rm -rf "$WORK"' EXIT
 COMPILE_SOURCES=()

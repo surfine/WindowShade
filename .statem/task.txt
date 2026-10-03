@@ -1,37 +1,30 @@
-# 可见契约（由 statem-run begin 生成，请在 frame 状态填实）
+# 可见契约（第五、六份接入）
 
-目标: 把 ChatGPT 第二回合陆续交回的四份材料逐处并进 WindowShade 主仓库，
-在这次会话里继续补齐能在本机闭合的缺口（宿主接线、隐私一栏、番茄钟闭环与 T3 窗口执行器），
-每一处都在 Mac 上真编译、真跑测试，并留下证据。
+目标: 把 ChatGPT 第二回合第五、六份一起并进 main，按第六份规定的顺序把六条路径接到真实结果：
+仲裁与构建修正 → owned CLI 本地闭环 → 进程监督与诊断 → 监听配对装配 → 窗口真实端口 → 证据门禁；
+设备输入只做代码侧。单岛沿用 NotchLeaseHub（R6-002），不新增第二套协调器。
 
 交付物:
-- 四份材料（part1–part4）的源码/测试/施工单归档在 docs/handoff/chatgpt-review-2/ 下；
-- 新增或更新的验证入口：tests/run-part4-core-tests.sh、tests/run-mac-crypto-tests.sh、
-  tests/run-privacy-registry-check.sh、tests/run-privacy-page-sync.sh、tests/NotchLeaseHostTests.swift；
-- 设置里的「隐私」一栏（由 tools/privacy/registry.json 生成）、番茄钟闭环（设置/快捷键/工具/卡片/负一屏）、
-  T3 窗口执行器（prototype/App/WS2FocusExecutor.swift）；
-- 台账与总图更新：docs/releases/v1.0.16-ledger.md、docs/blueprint.md、docs/handoff/START-HERE-deepseek.md。
+- 第五份 overlay（Core/Support/App 共 14 份）与第六份 overlay（5 改 5 增）合入 prototype/；
+- 新调用者：WS2OwnedLaunchController（本地启动闭环）、WS2FocusWindowPort（真实窗口事务）；
+- 验证入口：tests/run-part5-core-tests.sh、run-part6-{core,process,wire,regressions,exit-probe,mac-check}、
+  python3 tests/crypto-reference.py、tools/readiness.py + fixtures/readiness-current.json；
+- SRP 隔离探针：许可审核、resolve/build 输出、Package.resolved、与 Python 向量互测；
+- 台账：docs/releases/v1.0.16-ledger.md、docs/blueprint.md、docs/handoff/START-HERE-deepseek.md，
+  第六份 44 项决策与第五份 C01–C10 更正记账。
 
-输出/格式约束:
-- 中文提交信息与文档；代码沿用仓库既有风格与命名；不发布、不签名、不推送、不动 Aaron 日常用的 app；
-- 每个新测试脚本自己建 .build 目录，证据写在 .build 或 docs/handoff 下，不写进用户 home；
-- 第四份未完成项按它自己的 REMAINING.md 记账，不把“代码合进来了”写成“功能完成”。
+输出/格式约束: 中文提交信息；不改 home/hook/更新源；不签名不发布不推送；
+真机项（Touch ID 允许路径、手柄、原生 Remote、窗口实际隐藏恢复、能耗）留在未验证栏。
 
-验收方式（要跑的对照检查）:
-- cd prototype && ./build.sh --check（整 App 类型检查，含 GameController）；
-- bash tests/run-part4-core-tests.sh（72 场景/188 断言）、bash tests/run-mac-crypto-tests.sh（CryptoKit 向量）、
-  python3 tests/crypto-reference.py（18 例）、python3 tests/check-approval-schema.py（1 条合成响应）；
-- bash tests/run-privacy-registry-check.sh（458 个词法点）、bash tests/run-privacy-page-sync.sh（页面数据同源）；
-- bash tests/run-appkit-tests.sh all（八套，含 LEASE-H01…08 与设置里的隐私栏断言）；
-- 前三份纯核回归：contracts/part2/part3 与第一份十二个包各自 runner 全绿。
+验收方式:
+- cd prototype && ./build.sh --check；bash tests/run-appkit-tests.sh all；隐私两件门禁；
+- tests/run-part6-core-tests.sh（56 场景/133 断言）、run-part6-process-tests.sh（9/27）、
+  run-part6-wire-tests.sh、python3 tests/crypto-reference.py（14 例）、run-part5-core-tests.sh（40/97）、
+  run-mac-crypto-tests.sh（MacPairCryptoTests）；
+- 真实 CLI 阶段一：/opt/homebrew/bin/codex 0.153.0 在隔离目录 initialize→model/list→thread/start→turn/start→stop；
+- SRP：swift package resolve/build 输出 + 许可哈希 + 向量互测。
 
-明确不做 / 不能改:
-- 不发布 1.0.16、不改更新源、不签名、不替换 /Applications 里的应用；
-- 不安装 hook、不改 ~/.claude 或 ~/.codex 配置、不写用户 home；
-- owned Codex 进程与允许路径、首次 Pair-Setup、Keychain、HID/鼠标/手柄生产桥、
-  会话与指挥的 live 订阅，按第四份 REMAINING 保持未接；
-- 不动 Aaron 的真实窗口：T3 执行器只在用户自己开始番茄钟后动作，本机不做真实收窗验证。
+明确不做 / 不能改: 不接 allow 生产路径、不起 NWListener、不写真实 Keychain 凭证、
+不启用设备桥、不动真实窗口做自动隐藏恢复验证。
 
-保底与回滚: 工作区已有 git 历史（本轮六笔提交），任何一处合并都可按提交回退；
-registry.json / WS2PrivacyData.swift 由生成脚本再生成，可随时重算；
-真机探针与窗口动作不做破坏性操作，探针只跑只读项。
+保底与回滚: 一切按提交分段落盘，可逐笔回退；探针与构建只在隔离目录写。

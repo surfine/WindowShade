@@ -1,0 +1,68 @@
+{
+  "status": "STAGED",
+  "inputFiles": 1140,
+  "outputFiles": 1145,
+  "changes": [
+    {
+      "path": "prototype/App/InteractionCoordinator.swift",
+      "kind": "modify",
+      "baseSHA256": "30c08c2813e02e374dde69cbff0f5078c4cccc6443b55377da4aace1dda349f7",
+      "newSHA256": "5524bd61193c8e7ca5090b7c38c498f094bdc13a3e48971f3f084b2fb7a0c5b2"
+    },
+    {
+      "path": "prototype/App/WS2IslandCoordinator.swift",
+      "kind": "modify",
+      "baseSHA256": "596a69bc216154e1e6add3b8678db752a775d3697d9575786403f6e893dfeda5",
+      "newSHA256": "6499c0c6d5b798b909d6546e8ab5c8c081b234c61cff852a6670cc8ed216ba98"
+    },
+    {
+      "path": "prototype/Core/CodexWire.swift",
+      "kind": "modify",
+      "baseSHA256": "25faf949ec1fea7d07715aadb67d72246604cc10eb4be3c9baa312ef1c69597d",
+      "newSHA256": "71e73c2b2bb2c5bda0aec0d94ad0d4f7dd6d3c218373de510da8007edc64c497"
+    },
+    {
+      "path": "prototype/Core/WS2ConnectionBudget.swift",
+      "kind": "add",
+      "baseSHA256": null,
+      "newSHA256": "f225317ecabd3143c7c40603ed7a1c2bb93f19f083c59722a6bddfc409be9cd2"
+    },
+    {
+      "path": "prototype/Core/WS2DiagnosticTail.swift",
+      "kind": "add",
+      "baseSHA256": null,
+      "newSHA256": "fef7ffb8b3191d594e2c9e5e8521fba1ff8271975ddd653c9ae2185281c12fc5"
+    },
+    {
+      "path": "prototype/Core/WS2OwnedScope.swift",
+      "kind": "add",
+      "baseSHA256": null,
+      "newSHA256": "20102a3fbab321958f7dde9a24d69453f3a7d45d2f537fd5957a9a4df4a9d6f2"
+    },
+    {
+      "path": "prototype/Core/WS2SelectionModel.swift",
+      "kind": "add",
+      "baseSHA256": null,
+      "newSHA256": "c8fb3c0ac6564970d2daedee4d4708799ef0014a94a7bb22b99f18a85d86cf4c"
+    },
+    {
+      "path": "prototype/Support/WS2DuplexProcess.swift",
+      "kind": "modify",
+      "baseSHA256": "06e886dc237b1c69b7525aa52eaf3ebbb06ee22867eacd3fa1bbdf10d3d74f09",
+      "newSHA256": "e85ba57a74110f0f4163eac840c65eed8bc9bd6fa08ce4f802098e5a159deaff"
+    },
+    {
+      "path": "prototype/Support/WS2ProjectDirectory.swift",
+      "kind": "add",
+      "baseSHA256": null,
+      "newSHA256": "7a9c30764d3199652eccc46265c4d7afae6c05cf65e1ee2a5be65c73bbd628a2"
+    },
+    {
+      "path": "prototype/build.sh",
+      "kind": "modify",
+      "baseSHA256": "5de4c8d199eff86561ea1e1f708fad8e3f631026e3002758bb2191b498929d15",
+      "newSHA256": "e9f87cc96478257d129e8d16c85d0697e97f25ace0ffa8bbe08573cb4fc72f01"
+    }
+  ],
+  "baseUnchanged": true
+}

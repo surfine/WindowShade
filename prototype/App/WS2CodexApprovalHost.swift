@@ -29,6 +29,37 @@ import Cocoa
         self.authentication = authentication; self.service = service ?? .shared
         self.currentContext = currentContext; self.scopeStillValid = scopeStillValid; self.deliver = deliver; self.closeTransport = closeTransport
     }
+    // The owned process uses THIS wire; never construct a second wire for request IDs or initialization.
+    var nextDeadline: WS2.Instant? {
+        (wire.pending.values.map(\.deadline) + reviews.values.map(\.deadline)).min()
+    }
+    func beginProtocol() throws {
+        guard !closed else { throw CodexWire.Failure.closed }
+        try wire.initialize(now: clock.now()); flush(deadline: clock.now().adding(WS2.Duration.second))
+    }
+    func startThread(cwd: String, model: String) throws {
+        guard !closed else { throw CodexWire.Failure.closed }
+        try wire.startThread(cwd: cwd, model: model, now: clock.now())
+        flush(deadline: clock.now().adding(WS2.Duration.second))
+    }
+    func resumeThread(_ id: String) throws {
+        guard !closed else { throw CodexWire.Failure.closed }
+        try wire.resumeThread(id: id, now: clock.now()); flush(deadline: clock.now().adding(WS2.Duration.second))
+    }
+    func startTurn(text: String, model: String, effort: String) throws {
+        guard !closed else { throw CodexWire.Failure.closed }
+        try wire.startTurn(text: text, model: model, effort: effort, now: clock.now())
+        flush(deadline: clock.now().adding(WS2.Duration.second))
+    }
+    func steer(text: String, expectedTurn: String) throws {
+        guard !closed else { throw CodexWire.Failure.closed }
+        try wire.steer(text: text, expectedTurnID: expectedTurn, now: clock.now())
+        flush(deadline: clock.now().adding(WS2.Duration.second))
+    }
+    func interruptTurn() throws {
+        guard !closed else { throw CodexWire.Failure.closed }
+        try wire.interrupt(now: clock.now()); flush(deadline: clock.now().adding(WS2.Duration.second))
+    }
     func receive(_ bytes: Data) {
         guard !closed else { return }
         do {
