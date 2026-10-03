@@ -874,6 +874,8 @@ final class NotchController {
     /// 刘海是 Mac 的主屏幕键（iPad 的主屏幕按钮）：点一下回主屏幕（启动台），两下调度中心，三下当前 App 的所有窗口。
     private func homeKey(_ clicks: Int, from rect: NSRect) {
         endPeek()
+        // 休息时点一下刘海：先把番茄钟收起来的窗口放回来，计时照走（docs/pomodoro.md）。
+        if clicks == 1, owner.ws2Runtime.restoreFocusWindowsForUser() { return }
         coachUsed(.notchHome)
         let pad = owner.launchpad
         switch clicks {
