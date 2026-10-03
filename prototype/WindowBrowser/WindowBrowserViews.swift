@@ -15,7 +15,7 @@ import Cocoa
 import UniformTypeIdentifiers
 
 /// 卡片/列表行动作回传。控件只持弱引用，闭包不参与生命周期。
-protocol WindowBrowserItemDelegate: AnyObject {
+@MainActor protocol WindowBrowserItemDelegate: AnyObject {
     func browserItemDidActivate(_ sender: NSView, key: WindowKey)
     func browserItem(_ sender: NSView, perform action: WindowBrowserAction, key: WindowKey)
     func browserItem(_ sender: NSView, contextMenu key: WindowKey, event: NSEvent)
@@ -61,7 +61,7 @@ enum WindowBrowserLiveMountTarget: Equatable {
 
 /// 统一的外观刷新入口：动态 NSColor → CGColor 的写入集中在这里，
 /// 浅深色、强调色、提高对比度变化时由 `viewDidChangeEffectiveAppearance` 重算。
-protocol WindowBrowserAppearanceRefreshable: AnyObject {
+@MainActor protocol WindowBrowserAppearanceRefreshable: AnyObject {
     func refreshAppearance()
     /// 卡片该用实色还是系统内容层材质。面板本身是玻璃时用材质（HIG：玻璃只做一层，
     /// 内容层用标准材质），纸面与旧系统仍然是实色卡片。
@@ -80,6 +80,8 @@ extension WindowBrowserAppearanceRefreshable {
 
 /// 卡片背景的来源：读取这个属性的是共享的卡片样式函数，因此各视图不需要在每个
 /// `applyCard` 调用点重复传参。
+/// 只在主线程读。`applyCard` 所在的工具类型还没标 @MainActor，所以视图用 `@preconcurrency`
+/// 遵循（运行时检查线程）；调用方迁过去后再把协议标成 @MainActor。
 protocol WindowBrowserCardSurfaceHosting: AnyObject {
     var cardSurface: WindowBrowserCardSurface { get }
 }

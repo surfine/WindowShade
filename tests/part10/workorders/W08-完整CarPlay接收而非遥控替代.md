@@ -14,6 +14,9 @@
 
 `prototype/App/WS2IslandCoordinator.swift`
 
+> 本仓库没有这个文件：并入第九份时决定沿用现有的单一刘海仲裁器 `NotchLeaseHub`（`prototype/App/NotchLeases.swift`），
+> 不要为本单新建它。媒体 surface 接进 `NotchLeaseHub`，见 `tests/part10/DRIFT.md`。
+
 `prototype/Core/RemoteMode.swift`
 
 

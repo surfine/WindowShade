@@ -172,7 +172,7 @@ private final class FaceObservationWorker: NSObject, AVCaptureVideoDataOutputSam
         lastSample = now
         let request = VNDetectFaceLandmarksRequest()
         // 钉在神经引擎上：默认偶尔退回 GPU/CPU；实测钉住后结果一致（IoU 0.995）、不占 GPU、延迟低 15–30%。没有神经引擎就用默认。
-        if let ane = FaceLandmarkComputeDevice.ane { try? request.setComputeDevice(ane, for: .main) }
+        if let ane = FaceLandmarkComputeDevice.ane { request.setComputeDevice(ane, for: .main) }
         do { try VNImageRequestHandler(cvPixelBuffer: buffer, orientation: .up).perform([request]) }
         catch { return }
         let faces = request.results ?? []

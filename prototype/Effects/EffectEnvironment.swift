@@ -28,7 +28,8 @@ enum EffectEnvironment {
     }
 
     private static let mutex = NSLock()
-    private static var state = State()
+    /// 只经由下面持有 `mutex` 的 read/write 访问。
+    nonisolated(unsafe) private static var state = State()
 
     private static func read<T>(_ body: (State) -> T) -> T { mutex.withLock { body(state) } }
     private static func write(_ body: (inout State) -> Void) { mutex.withLock { body(&state) } }

@@ -9,6 +9,9 @@
 #include <time.h>
 #include <unistd.h>
 #include <sys/wait.h>
+#if defined(__APPLE__)
+#include <libproc.h>
+#endif
 
 // All calls for an instance must use one serial executor. No global SIGCHLD handler.
 // Keeping the leader unreaped until the last group signal pins its PID against reuse.
@@ -142,6 +145,34 @@ static int observe(WS2Child *c) {
     }
     return 0;
 }
+// macOS：组里只剩一个僵尸组长时，kill(-pgid) 回 EPERM（Linux 回 ESRCH）；可组里还有收不到信号的
+// 成员时回的也是 EPERM。只有组长确已退出、且组里列不出组长以外的任何进程，才算“已空”。
+// 列举失败一律当作不空：宁可报监督失败，也不把真正的权限问题当成已经清干净。
+static int group_left_only_exited_leader(WS2Child *c, pid_t group) {
+    if (observe(c) != 0 || !c->state.direct_exited) return 0;
+#if defined(__APPLE__)
+    for (int attempt = 0; attempt < 3; ++attempt) {
+        int bytes = proc_listpids(PROC_PGRP_ONLY, (uint32_t)group, NULL, 0);
+        if (bytes < 0) return 0;
+        if (bytes == 0) return 1;
+        int capacity = bytes / (int)sizeof(pid_t) + 16;
+        pid_t *pids = calloc((size_t)capacity, sizeof(pid_t));
+        if (!pids) return 0;
+        int filled = proc_listpids(PROC_PGRP_ONLY, (uint32_t)group, pids, capacity * (int)sizeof(pid_t));
+        if (filled < 0) { free(pids); return 0; }
+        int count = filled / (int)sizeof(pid_t);
+        if (count >= capacity) { free(pids); continue; }
+        int others = 0;
+        for (int i = 0; i < count; ++i) if (pids[i] > 0 && pids[i] != c->pid) others = 1;
+        free(pids);
+        return !others;
+    }
+    return 0;
+#else
+    (void)group;
+    return 0;
+#endif
+}
 static int signal_owned_group(WS2Child *c, int signo) {
     if (c->state.reaped || c->state.supervision_error) return ECHILD;
     // macOS：leader 一退出，getpgid() 直接 ESRCH（Linux 的僵尸还锚着 PID），
@@ -153,14 +184,8 @@ static int signal_owned_group(WS2Child *c, int signo) {
     }
     if (kill(-group, signo) != 0) {
         int saved = errno;
-        if (saved != ESRCH) {
-            // macOS：组里只剩一个僵尸组长时，kill(-pgid) 回 EPERM（Linux 回 ESRCH）。
-            // 用 0 号信号探一次：连探测都收不到成员，就说明组里已没有能收信号的对象，
-            // 照常进入回收；其他情况仍按监督失败处理，绝不放过真正的权限问题。
-            int probe = kill(-group, 0);
-            int probe_errno = errno;
-            int empty = (saved == EPERM && probe != 0 && (probe_errno == ESRCH || probe_errno == EPERM));
-            if (!empty) { c->state.supervision_error = saved; return saved; }
+        if (saved != ESRCH && !(saved == EPERM && group_left_only_exited_leader(c, group))) {
+            c->state.supervision_error = saved; return saved;
         }
     }
     if (signo == SIGTERM) c->state.term_sent = 1;

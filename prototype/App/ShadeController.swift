@@ -172,8 +172,9 @@ extension AppDelegate {
                        preparedProfile: WindowChromeProfile? = nil,
                        recordedPosition: CGPoint? = nil, evidence: WS2FoldEvidence.Ticket? = nil) {
         let completionTokens = foldWaiters[id].map { Array($0.keys) } ?? []
-        let admissionBoot = AuthorizationService.shared.ledger.bootID
-        let admissionEpoch = MainActor.assumeIsolated { AuthorizationService.shared.ledger.sessionEpoch }
+        let (admissionBoot, admissionEpoch) = MainActor.assumeIsolated {
+            (AuthorizationService.shared.ledger.bootID, AuthorizationService.shared.ledger.sessionEpoch)
+        }
         let admissionPresentation = foldPresentationID
         func admissionCurrent() -> Bool {
             MainActor.assumeIsolated {

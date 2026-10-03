@@ -6,6 +6,7 @@ import Cocoa
 import ApplicationServices
 import ScreenCaptureKit
 
+@MainActor
 final class DockHoverProbe {
     private var observer: AXObserver?
     private var retained: Unmanaged<DockHoverProbe>?
@@ -1061,6 +1062,7 @@ final class WindowBrowserPanelProbe {
 
 /// 真实入口探针：直接构建设置页与状态栏菜单（不运行 AppDelegate 的启动序列，
 /// 不启动传感器、不写 Dock 偏好、不触发救援）。菜单开关在结束时原样恢复。
+@MainActor
 final class WindowBrowserUIRouteProbe {
     func run() {
         let delegate = AppDelegate()
@@ -1116,6 +1118,7 @@ final class WindowBrowserUIRouteProbe {
 
 /// 空闲成本探针：临时关闭 Dock 开关、启动窗口浏览控制器并观察一秒，
 /// 验证“功能关闭时新增常驻系统查询为零”，然后把设置原样恢复并停止控制器。
+@MainActor
 final class WindowBrowserIdleProbe {
     func run() {
         let dockWasEnabled = WindowBrowserSettings.dockEnabled

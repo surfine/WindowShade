@@ -244,7 +244,6 @@ func axTitle(_ e: AXUIElement) -> String {
 // 把窗口及其直接子元素的 role/frame 全部打印出来，用于定位标题栏边界
 func dumpWindow(_ win: AXUIElement) {
     let pos = axPosition(win) ?? .zero
-    let size = axSize(win) ?? .zero
     wlog("ax-window: diagnostic title=[redacted]")
     for c in axChildren(win) {
         let cp = axPosition(c) ?? .zero

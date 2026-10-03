@@ -74,7 +74,8 @@ let shadeSoundChoices: [(label: String, name: String)] = [
     ("玻璃（Glass）", "Glass"),
     ("弹开（Pop）", "Pop")
 ]
-var appDelegate: AppDelegate?
+/// main.swift 启动时在主线程写一次，之后只读。
+nonisolated(unsafe) var appDelegate: AppDelegate?
 
 func framesAlmostEqual(_ a: NSRect, _ b: NSRect, tolerance: CGFloat = 0.5) -> Bool {
     abs(a.minX - b.minX) <= tolerance &&
@@ -91,6 +92,7 @@ func cgWindowID(for window: NSWindow) -> CGWindowID? {
 
 // MARK: - App 主体
 
+@MainActor
 final class AppDelegate: NSObject, NSApplicationDelegate, NSMenuDelegate {
     let duoController = DuoController()
     final class PendingTitlebarTripleClick {
@@ -298,7 +300,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSMenuDelegate {
     /// 画中画：任意窗口缩成实时画面浮在角落（见 PictureInPicture.swift）。
     lazy var pip = MainActor.assumeIsolated { PictureInPictureController(owner: self) }
     /// 调度中心里按 ⌘W 关窗、⌘Q 退出 App（见 MissionControlKeys.swift）。
-    lazy var missionControlKeys = MainActor.assumeIsolated { MissionControlKeys() }
+    lazy var missionControlKeys = MissionControlKeys()
     lazy var pinnedPreviewController = PinnedPreviewController(
         notice: { [weak self] message, log in
             self?.quietNotice(message, log: log)
@@ -838,7 +840,8 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSMenuDelegate {
 
     @discardableResult
     func ensureAccessibility() -> Bool {
-        let opts = [kAXTrustedCheckOptionPrompt.takeUnretainedValue() as String: true] as CFDictionary
+        // kAXTrustedCheckOptionPrompt 的值；系统把那个常量导入成了可变全局变量，并发检查下不能直接读。
+        let opts = ["AXTrustedCheckOptionPrompt": true] as CFDictionary
         return AXIsProcessTrustedWithOptions(opts)
     }
 

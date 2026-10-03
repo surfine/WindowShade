@@ -433,11 +433,40 @@ enum UpdateRestorer {
 
 // MARK: - launchd 任务（看护、Sparkle 的安装器）
 
+/// SMJob* 自 10.10 起弃用，但仍是同步提交一次性 launchd 任务的接口（Sparkle 的安装器也这么提交）。
+/// 换成 SMAppService 会改变看护的生命周期，要另立工单；这里只把弃用调用收在一处，经协议转发，
+/// 免得警告视为错误时挡住整个构建。
+private protocol LegacyLaunchdJobCalls {
+    static func copyDictionary(_ domain: CFString, _ label: CFString) -> Unmanaged<CFDictionary>?
+    static func remove(_ domain: CFString, _ label: CFString,
+                       _ error: UnsafeMutablePointer<Unmanaged<CFError>?>) -> Bool
+    static func submit(_ domain: CFString, _ job: CFDictionary,
+                       _ error: UnsafeMutablePointer<Unmanaged<CFError>?>) -> Bool
+}
+
+private enum SMJobCalls: LegacyLaunchdJobCalls {
+    @available(macOS, deprecated: 10.10)
+    static func copyDictionary(_ domain: CFString, _ label: CFString) -> Unmanaged<CFDictionary>? {
+        SMJobCopyDictionary(domain, label)
+    }
+    @available(macOS, deprecated: 10.10)
+    static func remove(_ domain: CFString, _ label: CFString,
+                       _ error: UnsafeMutablePointer<Unmanaged<CFError>?>) -> Bool {
+        SMJobRemove(domain, label, nil, true, error)
+    }
+    @available(macOS, deprecated: 10.10)
+    static func submit(_ domain: CFString, _ job: CFDictionary,
+                       _ error: UnsafeMutablePointer<Unmanaged<CFError>?>) -> Bool {
+        SMJobSubmit(domain, job, nil, error)
+    }
+}
+
 enum UpdateJobs {
     private static var domain: CFString { kSMDomainUserLaunchd }
+    private static let calls: any LegacyLaunchdJobCalls.Type = SMJobCalls.self
 
     static func dictionary(label: String) -> [String: Any]? {
-        guard let unmanaged = SMJobCopyDictionary(domain, label as CFString) else { return nil }
+        guard let unmanaged = calls.copyDictionary(domain, label as CFString) else { return nil }
         return unmanaged.takeRetainedValue() as? [String: Any]
     }
 
@@ -450,7 +479,7 @@ enum UpdateJobs {
     static func remove(label: String) -> Bool {
         guard exists(label: label) else { return true }
         var error: Unmanaged<CFError>?
-        let ok = SMJobRemove(domain, label as CFString, nil, true, &error)
+        let ok = calls.remove(domain, label as CFString, &error)
         if !ok { UpdateLog.write("SMJobRemove \(label) failed: \(error.map { "\($0.takeRetainedValue())" } ?? "?")") }
         return ok || !exists(label: label)
     }
@@ -467,7 +496,7 @@ enum UpdateJobs {
             "ProcessType": "Interactive",
         ]
         var error: Unmanaged<CFError>?
-        let ok = SMJobSubmit(domain, job as CFDictionary, nil, &error)
+        let ok = calls.submit(domain, job as CFDictionary, &error)
         if !ok { UpdateLog.write("SMJobSubmit \(label) failed: \(error.map { "\($0.takeRetainedValue())" } ?? "?")") }
         return ok
     }
@@ -600,7 +629,8 @@ enum UpdateFacts {
         var buffer = [CChar](repeating: 0, count: Int(MAXPATHLEN) * 4)
         let length = proc_pidpath(pid, &buffer, UInt32(buffer.count))
         guard length > 0 else { return nil }
-        return String(cString: buffer)
+        let bytes = buffer.prefix(Int(length)).prefix { $0 != 0 }.map { UInt8(bitPattern: $0) }
+        return String(decoding: bytes, as: UTF8.self)
     }
 
     /// 别的用户开着同一路径的 WindowShade（按进程表查，uid 不同）。读不到路径时按“开着”算。

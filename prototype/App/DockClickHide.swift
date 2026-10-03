@@ -81,7 +81,7 @@ final class DockClickHide {
         // 普通窗口都在屏上、也没有停在屏幕外的时不用问（通常就是这样）。
         let outside = !DockClickGuard.outsideScreens(windows: windows, screens: screens, managed: managed).isEmpty
         let askAX = outside || windows.contains { !$0.onScreen && DockClickGuard.isRegular($0) && !managed.contains($0.id) }
-        DispatchQueue.global(qos: .userInitiated).async { [weak self] in
+        DispatchQueue.global(qos: .userInitiated).async { [weak self, spaces] in
             let listed = askAX ? Self.axListing(pid: pid, standard: outside) : (minimized: [], standard: [])
             let survey = DockClickGuard.survey(windows: windows, screens: screens, managed: managed,
                                                minimized: listed.minimized, standard: listed.standard,
