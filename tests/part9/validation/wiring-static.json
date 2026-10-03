@@ -1,0 +1,128 @@
+{
+  "checks": [
+    {
+      "name": "production uses three-state verification",
+      "passed": true,
+      "level": "source-level only"
+    },
+    {
+      "name": "no screen-absence quick success",
+      "passed": true,
+      "level": "source-level only"
+    },
+    {
+      "name": "no cross-strategy rescue",
+      "passed": true,
+      "level": "source-level only"
+    },
+    {
+      "name": "unknown keeps original recovery entry",
+      "passed": true,
+      "level": "source-level only"
+    },
+    {
+      "name": "shared strict Boolean decoding",
+      "passed": true,
+      "level": "source-level only"
+    },
+    {
+      "name": "old id-only success method removed",
+      "passed": true,
+      "level": "source-level only"
+    },
+    {
+      "name": "batch drained before queued callbacks",
+      "passed": true,
+      "level": "source-level only"
+    },
+    {
+      "name": "queued result is revalidated",
+      "passed": true,
+      "level": "source-level only"
+    },
+    {
+      "name": "callback refcon is registration not window ID",
+      "passed": true,
+      "level": "source-level only"
+    },
+    {
+      "name": "callback main runloop premise is guarded",
+      "passed": true,
+      "level": "source-level only"
+    },
+    {
+      "name": "observer registration never wraps",
+      "passed": true,
+      "level": "source-level only"
+    },
+    {
+      "name": "destroyed event requires fresh absence",
+      "passed": true,
+      "level": "source-level only"
+    },
+    {
+      "name": "shown event requires current unhidden app",
+      "passed": true,
+      "level": "source-level only"
+    },
+    {
+      "name": "snapshot carries transaction/context",
+      "passed": true,
+      "level": "source-level only"
+    },
+    {
+      "name": "no shared mutable snapshot accumulator",
+      "passed": true,
+      "level": "source-level only"
+    },
+    {
+      "name": "independent app batch identity checked",
+      "passed": true,
+      "level": "source-level only"
+    },
+    {
+      "name": "onscreen membership not sampled before async batch",
+      "passed": true,
+      "level": "source-level only"
+    },
+    {
+      "name": "ordinary source write has admission check",
+      "passed": true,
+      "level": "source-level only"
+    },
+    {
+      "name": "native path does not pump nested runloop",
+      "passed": true,
+      "level": "source-level only"
+    },
+    {
+      "name": "native and proxy bind request tokens",
+      "passed": true,
+      "level": "source-level only"
+    },
+    {
+      "name": "frame helper inherits caller isolation",
+      "passed": true,
+      "level": "source-level only"
+    },
+    {
+      "name": "no new unchecked Sendable in changed helpers",
+      "passed": true,
+      "level": "source-level only"
+    },
+    {
+      "name": "read-only entry still refuses elevation",
+      "passed": true,
+      "level": "source-level only"
+    },
+    {
+      "name": "old timer window executor still unavailable unless actually connected",
+      "passed": true,
+      "level": "source-level only"
+    }
+  ],
+  "checks_count": 24,
+  "failures": 0,
+  "sdk_executed": false,
+  "hardware_executed": false
+}

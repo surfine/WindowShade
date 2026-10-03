@@ -1,0 +1,16 @@
+[
+  {
+    "argv": [
+      "/opt/homebrew/opt/python@3.14/bin/python3.14",
+      "/var/folders/l6/4_mrt4s51rv4sjb29v6x9n000000gn/T/ws2-r9-regression-2epp28ud/part8/tests/run.py",
+      "--repo",
+      ".",
+      "--suite",
+      "flow"
+    ],
+    "exit_code": 0,
+    "stdout": "PASS IFLOW01 real pipe catalogue supplies selection rows [7]\nPASS IFLOW02 device chooses model without sending work [3]\nPASS IFLOW03 separate local send uses selected model [6]\nPASS IFLOW04 late release after local capability loss cannot change model [3]\nPASS IFLOW05 reconnect uses a new backend epoch [5]\nPASS IFLOW06 project replacement rejected by actual model selector [3]\nTOTAL 6 scenarios, 27 assertions\n",
+    "stderr": "",
+    "seconds": 25.037983041984262
+  }
+]

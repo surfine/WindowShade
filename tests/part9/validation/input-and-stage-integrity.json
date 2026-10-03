@@ -1,0 +1,43 @@
+{
+  "input_archive": "WindowShade2-round2-handoff-v8.zip",
+  "archive_file_count": 2163,
+  "all_original_files_byte_identical": true,
+  "baseline_files": 1164,
+  "candidate_files": 1168,
+  "staged_equals_candidate": true,
+  "history": {
+    "part1": {
+      "files": 173,
+      "unchanged": true
+    },
+    "part2": {
+      "files": 233,
+      "unchanged": true
+    },
+    "part3": {
+      "files": 109,
+      "unchanged": true
+    },
+    "part4": {
+      "files": 89,
+      "unchanged": true
+    },
+    "part5": {
+      "files": 96,
+      "unchanged": true
+    },
+    "part6": {
+      "files": 95,
+      "unchanged": true
+    },
+    "part7": {
+      "files": 92,
+      "unchanged": true
+    },
+    "part8": {
+      "files": 108,
+      "unchanged": true
+    }
+  },
+  "semantic_application_validation": false
+}

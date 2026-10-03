@@ -1,0 +1,68 @@
+{
+  "assertions" : 15,
+  "cases" : [
+    {
+      "id" : "FRAME01-main-actor-nonsendable-value",
+      "passed" : true
+    },
+    {
+      "id" : "FRAME02-independent-actor",
+      "passed" : true
+    },
+    {
+      "id" : "FRAME03-unisolated-caller",
+      "passed" : true
+    },
+    {
+      "id" : "FRAME04-replaced-inside-getter",
+      "passed" : true
+    },
+    {
+      "id" : "FRAME05-deadline-inside-getter",
+      "passed" : true
+    },
+    {
+      "id" : "FRAME06-revoked-during-pause",
+      "passed" : true
+    },
+    {
+      "id" : "FRAME07-timeout-zero",
+      "passed" : true
+    },
+    {
+      "id" : "FRAME07-timeout-negative",
+      "passed" : true
+    },
+    {
+      "id" : "FRAME07-timeout-nan",
+      "passed" : true
+    },
+    {
+      "id" : "FRAME07-timeout-infinite",
+      "passed" : true
+    },
+    {
+      "id" : "FRAME08-nonfinite-clock",
+      "passed" : true
+    },
+    {
+      "id" : "FRAME09-clock-goes-backward",
+      "passed" : true
+    },
+    {
+      "id" : "FRAME10-deadline-overflow",
+      "passed" : true
+    },
+    {
+      "id" : "FRAME11-deadline-does-not-advance",
+      "passed" : true
+    },
+    {
+      "id" : "FRAME12-task-cancelled",
+      "passed" : true
+    }
+  ],
+  "failures" : 0,
+  "scenarios" : 15,
+  "suite" : "FrameAwaiter"
+}

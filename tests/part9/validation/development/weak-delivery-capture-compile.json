@@ -1,0 +1,21 @@
+[
+  {
+    "argv": [
+      "swiftc",
+      "-swift-version",
+      "6",
+      "-strict-concurrency=complete",
+      "-warnings-as-errors",
+      "/mnt/data/WindowShade2-round2-handoff-v9/candidate-repo/prototype/Core/FoldVerifier.swift",
+      "/mnt/data/WindowShade2-round2-handoff-v9/candidate-repo/prototype/Core/WS2FoldCallbackStamp.swift",
+      "/mnt/data/WindowShade2-round2-handoff-v9/candidate-repo/prototype/App/FoldCompletion.swift",
+      "/mnt/data/WindowShade2-round2-part9/tests/RegressionTests.swift",
+      "-o",
+      "/tmp/ws2-r9-2sol90bo/tests"
+    ],
+    "exit_code": 1,
+    "seconds": 0.3904932010000266,
+    "stdout": "",
+    "stderr": "/mnt/data/WindowShade2-round2-handoff-v9/candidate-repo/prototype/App/FoldCompletion.swift:57:54: error: sending 'self' risks causing data races [#SendingRisksDataRace]\n55 |         DispatchQueue.main.async { [weak self] in\n56 |             for delivery in callbacks {\n57 |                 let fresh = delivery.stamp.map { self?.foldCallbackIsCurrent($0) == true } ?? false\n   |                                                |     |- error: sending 'self' risks causing data races [#SendingRisksDataRace]\n   |                                                |     `- note: 'self' is captured by a main actor-isolated closure. main actor-isolated uses in closure may race against later nonisolated uses\n   |                                                `- note: access can happen concurrently\n58 |                 delivery.callback(success && fresh)\n59 |             }\n\n[#SendingRisksDataRace]: <https://docs.swift.org/compiler/documentation/diagnostics/sending-risks-data-race>\n"
+  }
+]

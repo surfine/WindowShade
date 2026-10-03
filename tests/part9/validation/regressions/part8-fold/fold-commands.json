@@ -1,0 +1,30 @@
+[
+  {
+    "argv": [
+      "swiftc",
+      "-swift-version",
+      "6",
+      "-strict-concurrency=complete",
+      "-warnings-as-errors",
+      "/Users/aaron/Documents/WindowShade/prototype/Core/WS2FoldEvidence.swift",
+      "/private/var/folders/l6/4_mrt4s51rv4sjb29v6x9n000000gn/T/ws2-r9-regression-xvi__zrm/part8/tests/TestLog.swift",
+      "/private/var/folders/l6/4_mrt4s51rv4sjb29v6x9n000000gn/T/ws2-r9-regression-xvi__zrm/part8/tests/FoldTests.swift",
+      "-o",
+      "/var/folders/l6/4_mrt4s51rv4sjb29v6x9n000000gn/T/ws2-r8-ru_yncrc/tests"
+    ],
+    "exit_code": 0,
+    "elapsed_seconds": 3.55186804101686,
+    "stdout": "",
+    "stderr": ""
+  },
+  {
+    "argv": [
+      "/var/folders/l6/4_mrt4s51rv4sjb29v6x9n000000gn/T/ws2-r8-ru_yncrc/tests",
+      "/private/var/folders/l6/4_mrt4s51rv4sjb29v6x9n000000gn/T/ws2-r9-regression-xvi__zrm/part8/validation/fold-results.json"
+    ],
+    "exit_code": 0,
+    "elapsed_seconds": 0.24505745901842602,
+    "stdout": "PASS FOLD01 admission is not evidence [2]\nPASS FOLD02 hidden needs physical attempt and bound transaction [2]\nPASS FOLD03 exactly one ordinary completion [4]\nPASS FOLD04 wrong transaction cannot complete [2]\nPASS FOLD05 deadline before hide proves not started [2]\nPASS FOLD06 deadline after hide remains unknown [2]\nPASS FOLD07 late success is marked separately [2]\nPASS FOLD08 early failure means no hiding attempt [2]\nPASS FOLD09 failure after mutation not called cancelled [2]\nPASS FOLD10 error cannot turn into notStarted after write [2]\nPASS FOLD11 visible observation can later confirm hidden [2]\nPASS FOLD12 repeated unknown is silent [2]\nPASS FOLD13 window-id reuse cannot consume old ticket [2]\nPASS FOLD14 duplicate live window refused [2]\nPASS FOLD15 bounded observer capacity [2]\nPASS FOLD16 bad time and identifiers refused [5]\nPASS FOLD17 exact deadline prevents mutation [3]\nPASS FOLD18 second transaction cannot overwrite binding [3]\nPASS FOLD19 callback after bounded release is inert [2]\nPASS FOLD20 forged ticket cannot use matching request UUID [2]\nPASS FOLD21 backward time cannot start mutation [2]\nTOTAL 21 scenarios, 49 assertions\n",
+    "stderr": ""
+  }
+]

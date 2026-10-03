@@ -96,7 +96,8 @@ extension AppDelegate {
 
     /// 返回 token 表示折叠已经进入原有事务；返回 nil 表示窗口当前不处于可折叠的
     /// 稳定状态（忙/已折叠/恢复中），调用方应回 busy 或已完成。completion 只在
-    /// 原折叠事务的真实终态（验证成功或回滚）到达时调用一次。
+    /// 原事务结算后排队调用一次。true 还要求交付时事务/会话仍有效；false 也可能
+    /// 表示读取未知、请求过期或已被替代，不能据此认定窗口从未改变或已经恢复。
     func windowBrowserBeginFold(key: WindowKey, element: AXUIElement,
                                 completion: @escaping (Bool) -> Void) -> UUID? {
         dispatchPrecondition(condition: .onQueue(.main))
@@ -114,7 +115,7 @@ extension AppDelegate {
               elementPID == key.application.pid else {
             return nil
         }
-        let token = registerFoldWaiter(id: id, completion: completion)
+        let token = MainActor.assumeIsolated { registerFoldWaiter(id: id, completion: completion) }
         shade(element, id, trustElement: true)
         return token
     }

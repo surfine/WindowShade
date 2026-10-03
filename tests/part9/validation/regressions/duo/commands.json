@@ -1,0 +1,45 @@
+[
+  {
+    "argv": [
+      "swiftc",
+      "-swift-version",
+      "6",
+      "-strict-concurrency=complete",
+      "-warnings-as-errors",
+      "prototype/Effects/FoldDriver.swift",
+      "prototype/Effects/EffectFrameAwaiter.swift",
+      "prototype/Effects/LatestEffectFrame.swift",
+      "prototype/Effects/RestoreVerifier.swift",
+      "prototype/Core/FoldVerifier.swift",
+      "prototype/Core/MotionTilt.swift",
+      "prototype/Core/TitlebarTripleClickIntent.swift",
+      "prototype/Recovery/DurableShadeJournal.swift",
+      "tests/DuoCoreTests.swift",
+      "-o",
+      "/var/folders/l6/4_mrt4s51rv4sjb29v6x9n000000gn/T/ws2-r9-regression-3dwztsdx/duo-tests"
+    ],
+    "exit_code": 0,
+    "stdout": "",
+    "stderr": "",
+    "seconds": 9.518265124992467
+  },
+  {
+    "argv": [
+      "/var/folders/l6/4_mrt4s51rv4sjb29v6x9n000000gn/T/ws2-r9-regression-3dwztsdx/duo-tests"
+    ],
+    "exit_code": 0,
+    "stdout": "PASS: tilt filter matches the main-thread version bit for bit; sub-pixel hold is bounded\nPASS: angle endpoints, bounded spring, held position, duplicate/reverse transitions, report decoding, latest-only frames, stale producer isolation, injected restore clock, timeout/retry/cancellation, durable restart/write failure\n",
+    "stderr": "",
+    "seconds": 0.8616493750014342
+  },
+  {
+    "argv": [
+      "/opt/homebrew/opt/python@3.14/bin/python3.14",
+      "tests/duo-integration-check.py"
+    ],
+    "exit_code": 0,
+    "stdout": "PASS: recovery intent precedes hiding, animation follows verification, synchronous restore contract, session teardown and capture exclusion are wired\n",
+    "stderr": "",
+    "seconds": 0.07067474999348633
+  }
+]

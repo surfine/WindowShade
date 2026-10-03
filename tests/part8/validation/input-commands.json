@@ -6,32 +6,32 @@
       "6",
       "-strict-concurrency=complete",
       "-warnings-as-errors",
-      "/Users/aaron/Documents/WindowShade/prototype/Core/Contracts.swift",
-      "/Users/aaron/Documents/WindowShade/prototype/Core/GamepadMapping.swift",
-      "/Users/aaron/Documents/WindowShade/prototype/Core/WS2DeviceInputGate.swift",
-      "/Users/aaron/Documents/WindowShade/prototype/Core/WS2SelectionModel.swift",
-      "/Users/aaron/Documents/WindowShade/prototype/Core/WS2SemanticInputRouter.swift",
-      "/Users/aaron/Documents/WindowShade/prototype/Core/WS2DeviceActionContracts.swift",
-      "/Users/aaron/Documents/WindowShade/prototype/Core/WS2VisibleListInput.swift",
-      "/Users/aaron/Documents/WindowShade/prototype/App/WS2DeviceActionHost.swift",
+      "/private/tmp/p9cand/prototype/Core/Contracts.swift",
+      "/private/tmp/p9cand/prototype/Core/GamepadMapping.swift",
+      "/private/tmp/p9cand/prototype/Core/WS2DeviceInputGate.swift",
+      "/private/tmp/p9cand/prototype/Core/WS2SelectionModel.swift",
+      "/private/tmp/p9cand/prototype/Core/WS2SemanticInputRouter.swift",
+      "/private/tmp/p9cand/prototype/Core/WS2DeviceActionContracts.swift",
+      "/private/tmp/p9cand/prototype/Core/WS2VisibleListInput.swift",
+      "/private/tmp/p9cand/prototype/App/WS2DeviceActionHost.swift",
       "/Users/aaron/Documents/WindowShade/tests/part8/tests/TestLog.swift",
       "/Users/aaron/Documents/WindowShade/tests/part8/tests/InputHarness.swift",
       "/Users/aaron/Documents/WindowShade/tests/part8/tests/InputTests.swift",
       "-o",
-      "/var/folders/l6/4_mrt4s51rv4sjb29v6x9n000000gn/T/ws2-r8-ml4hg3rs/tests"
+      "/var/folders/l6/4_mrt4s51rv4sjb29v6x9n000000gn/T/ws2-r8-1pa4uuqo/tests"
     ],
     "exit_code": 0,
-    "elapsed_seconds": 7.8489600000029895,
+    "elapsed_seconds": 4.390062708000187,
     "stdout": "",
     "stderr": ""
   },
   {
     "argv": [
-      "/var/folders/l6/4_mrt4s51rv4sjb29v6x9n000000gn/T/ws2-r8-ml4hg3rs/tests",
+      "/var/folders/l6/4_mrt4s51rv4sjb29v6x9n000000gn/T/ws2-r8-1pa4uuqo/tests",
       "/Users/aaron/Documents/WindowShade/tests/part8/validation/input-results.json"
     ],
     "exit_code": 0,
-    "elapsed_seconds": 0.32700049999402836,
+    "elapsed_seconds": 0.2534406670019962,
     "stdout": "PASS INPUT01 discovery does not enable or install [2]\nPASS INPUT02 explicit enable and fresh release [2]\nPASS INPUT03 held A before enable must become neutral [2]\nPASS INPUT04 navigation uses stable item [1]\nPASS INPUT05 previous at beginning is not failure [2]\nPASS INPUT06 next at end is not failure [2]\nPASS INPUT07 hold A then navigate does not activate new row [2]\nPASS INPUT08 mouse change invalidates pending A [1]\nPASS INPUT09 same-row click invalidates pending A [1]\nPASS INPUT10 list reorder revokes context [2]\nPASS INPUT11 page lease change cancels [1]\nPASS INPUT12 backend epoch change cancels [1]\nPASS INPUT13 lock revokes without auto reenabling [1]\nPASS INPUT14 foreground loss revokes [1]\nPASS INPUT15 sink unavailable or IME guard revokes [1]\nPASS INPUT16 approvals cannot reuse list device [2]\nPASS INPUT17 detach invalidates pending target [1]\nPASS INPUT18 identical label is not attachment identity [2]\nPASS INPUT19 enabling second device disables first [3]\nPASS INPUT20 replayed end cannot select twice [1]\nPASS INPUT21 repeated down does not duplicate [1]\nPASS INPUT22 unknown controls cannot activate [1]\nPASS INPUT23 cancel opens no model [1]\nPASS INPUT24 mismatched release control fails closed [1]\nPASS INPUT25 stop releases all resources [2]\nPASS INPUT26 reentrant model action may stop host [1]\nPASS INPUT27 duplicate ids revoke selection [2]\nPASS INPUT28 disabled rows skipped [1]\nPASS INPUT29 absent attachment cannot enable [2]\nPASS INPUT30 cancelled press cannot activate [1]\nPASS INPUT31 armed indication tracks captured target [3]\nPASS INPUT32 reentrant revoke while preparing is safe [1]\nPASS INPUT33 chosen model invalidation during prepare fails closed [1]\nTOTAL 33 scenarios, 49 assertions\n",
     "stderr": ""
   }

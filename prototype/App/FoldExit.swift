@@ -20,7 +20,7 @@ extension AppDelegate {
         let thumbnailHome = state.appearanceMode == .thumbnail
             ? state.overlay.map { restoreReferenceFrame(id: id, overlay: $0) } : nil
         let interruptedWaiters = foldWaiters[id].map { Array($0.keys) } ?? []
-        defer { cancelFoldWaiters(id: id, tokens: interruptedWaiters) }
+        defer { MainActor.assumeIsolated { cancelFoldWaiters(id: id, tokens: interruptedWaiters) } }
         let shouldRememberFocusRejoin = focusPulledOutOverlayIDs.contains(id) && focusSession?.stage == .arrangedAway
         let rejoinEntry = shouldRememberFocusRejoin ? focusSession?.entries[id] : nil
         let rejoinStackFrame = shouldRememberFocusRejoin ? focusSideStackFrames[id] : nil
@@ -108,7 +108,7 @@ extension AppDelegate {
         guard let state = shaded.removeValue(forKey: id) else { return }
         cancelFoldEvidence(id: id, transaction: state.foldTransactionID)
         let interruptedWaiters = foldWaiters[id].map { Array($0.keys) } ?? []
-        defer { cancelFoldWaiters(id: id, tokens: interruptedWaiters) }
+        defer { MainActor.assumeIsolated { cancelFoldWaiters(id: id, tokens: interruptedWaiters) } }
         transitionOperationState(id: id, to: .normal, reason: "forceCleanup")
         hideHoverPreview(id: id)
         hideMenuHoverPreview(id: id)
@@ -138,7 +138,7 @@ extension AppDelegate {
         guard shaded[id]?.foldTransactionID == state.foldTransactionID else { return }
         cancelFoldEvidence(id: id, transaction: state.foldTransactionID)
         let interruptedWaiters = foldWaiters[id].map { Array($0.keys) } ?? []
-        defer { cancelFoldWaiters(id: id, tokens: interruptedWaiters) }
+        defer { MainActor.assumeIsolated { cancelFoldWaiters(id: id, tokens: interruptedWaiters) } }
         markShadeLifecycle(id: id, stage, reason: reason)
         transitionOperationState(id: id, to: .normal, reason: "removeProxy")
         hideHoverPreview(id: id)

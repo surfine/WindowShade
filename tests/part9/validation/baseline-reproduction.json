@@ -1,0 +1,35 @@
+{
+  "source_sha256": "1147a93b8ab37828e0dd4be225e879ea3a4636283aaa5d7202369b926ec850f5",
+  "only_source_change": "import Cocoa replaced with import Foundation to compile field-only host",
+  "commands": [
+    {
+      "argv": [
+        "swiftc",
+        "-swift-version",
+        "6",
+        "-strict-concurrency=complete",
+        "-warnings-as-errors",
+        "/tmp/ws2-baseline-repro-am653tli/Completion.swift",
+        "/tmp/ws2-baseline-repro-am653tli/Repro.swift",
+        "-o",
+        "/tmp/ws2-baseline-repro-am653tli/repro"
+      ],
+      "exit_code": 0,
+      "stdout": "",
+      "stderr": "",
+      "seconds": 0.3762506780001331
+    },
+    {
+      "argv": [
+        "/tmp/ws2-baseline-repro-am653tli/repro"
+      ],
+      "exit_code": 0,
+      "stdout": "BASELINE_REPLACEMENT_ACK=true\nBASELINE_SUCCESS_BATCH_REENTERED=true\n",
+      "stderr": "",
+      "seconds": 0.007368192000058116
+    }
+  ],
+  "baseline_defects_reproduced": true,
+  "mac_ui_executed": false,
+  "meaning": "Two reproduced bookkeeping defects, not two fixed tests or a live window reproduction"
+}

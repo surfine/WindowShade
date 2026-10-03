@@ -1,0 +1,45 @@
+[
+  {
+    "argv": [
+      "swiftc",
+      "-swift-version",
+      "6",
+      "-strict-concurrency=complete",
+      "-warnings-as-errors",
+      "/mnt/data/WindowShade2-round2-handoff-v9/candidate-repo/prototype/Effects/FoldDriver.swift",
+      "/mnt/data/WindowShade2-round2-handoff-v9/candidate-repo/prototype/Effects/EffectFrameAwaiter.swift",
+      "/mnt/data/WindowShade2-round2-handoff-v9/candidate-repo/prototype/Effects/LatestEffectFrame.swift",
+      "/mnt/data/WindowShade2-round2-handoff-v9/candidate-repo/prototype/Effects/RestoreVerifier.swift",
+      "/mnt/data/WindowShade2-round2-handoff-v9/candidate-repo/prototype/Core/FoldVerifier.swift",
+      "/mnt/data/WindowShade2-round2-handoff-v9/candidate-repo/prototype/Core/MotionTilt.swift",
+      "/mnt/data/WindowShade2-round2-handoff-v9/candidate-repo/prototype/Core/TitlebarTripleClickIntent.swift",
+      "/mnt/data/WindowShade2-round2-handoff-v9/candidate-repo/prototype/Recovery/DurableShadeJournal.swift",
+      "/mnt/data/WindowShade2-round2-handoff-v9/candidate-repo/tests/DuoCoreTests.swift",
+      "-o",
+      "/tmp/ws2-r9-regression-e5jfb244/duo-tests"
+    ],
+    "exit_code": 0,
+    "stdout": "",
+    "stderr": "",
+    "seconds": 1.881887149000022
+  },
+  {
+    "argv": [
+      "/tmp/ws2-r9-regression-e5jfb244/duo-tests"
+    ],
+    "exit_code": 0,
+    "stdout": "PASS: tilt filter matches the main-thread version bit for bit; sub-pixel hold is bounded\nPASS: angle endpoints, bounded spring, held position, duplicate/reverse transitions, report decoding, latest-only frames, stale producer isolation, injected restore clock, timeout/retry/cancellation, durable restart/write failure\n",
+    "stderr": "",
+    "seconds": 0.23734994000005827
+  },
+  {
+    "argv": [
+      "/opt/pyvenv/bin/python3",
+      "/mnt/data/WindowShade2-round2-handoff-v9/candidate-repo/tests/duo-integration-check.py"
+    ],
+    "exit_code": 1,
+    "stdout": "",
+    "stderr": "Traceback (most recent call last):\n  File \"/mnt/data/WindowShade2-round2-handoff-v9/candidate-repo/tests/duo-integration-check.py\", line 12, in <module>\n    assert 'completeFold(success: true)' in native, 'Verified native collapse must complete explicitly'\n           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\nAssertionError: Verified native collapse must complete explicitly\n",
+    "seconds": 0.5487517019998904
+  }
+]

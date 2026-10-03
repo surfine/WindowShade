@@ -1,0 +1,15 @@
+{
+  "argv": [
+    "/opt/pyvenv/bin/python3",
+    "-B",
+    "/mnt/data/WindowShade2-round2-part9/tools/stage.py",
+    "--base",
+    "/mnt/data/ws2-v8-baseline/WindowShade2-round2-handoff-v8/candidate-repo",
+    "--out",
+    "/mnt/data/ws2-r9-stage-validation"
+  ],
+  "exit_code": 2,
+  "stdout": "",
+  "stderr": "REFUSED: output already exists\n",
+  "output_unchanged": true
+}

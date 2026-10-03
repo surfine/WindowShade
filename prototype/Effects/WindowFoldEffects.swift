@@ -609,7 +609,7 @@ final class WindowFoldEffects {
       : owner?.foldWaiters[job.id].map { Array($0.keys) } ?? []
     dispose(job)
     for token in tokens {
-      owner?.settleFoldWaiter(id: job.id, token: token, success: false)
+      MainActor.assumeIsolated { owner?.settleFoldWaiter(id: job.id, token: token, success: false) }
     }
   }
   private func dispose(_ job: Job) {

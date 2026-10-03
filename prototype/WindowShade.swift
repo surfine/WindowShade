@@ -120,10 +120,12 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSMenuDelegate {
         let pid: pid_t
         let element: AXUIElement
         let needsMinimizedState: Bool
+        let stamp: WS2FoldCallbackStamp
     }
 
-    struct ReconcileAXSnapshot {
-        let id: CGWindowID
+    struct ReconcileAXSnapshot: Sendable {
+        let stamp: WS2FoldCallbackStamp
+        var id: CGWindowID { stamp.window }
         let position: CGPoint?
         let size: CGSize?
         let isMinimized: Bool?
@@ -171,7 +173,8 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSMenuDelegate {
     private var tapSetupTimer: Timer?
     var reconcileTimer: Timer?
     var isReconcilingShadedWindows = false
-    let reconcileAXWorkQueue = DispatchQueue(label: "WindowShade.reconcile-ax", qos: .utility)
+    var reconcileBatchID: UUID?
+    var reconcilePendingApplications = 0
     var reconcileInvalidCounts: [CGWindowID: Int] = [:]
     var privateAlphaOriginalValues: [CGWindowID: Float] = [:]
     // 本机的跨进程 SkyLight alpha 写入是否已被确认无效（SIP 限制）。
@@ -205,6 +208,10 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSMenuDelegate {
     // 折叠事务是异步的（立即验证 / 延迟验证 / 回滚），浏览器动作只在真实终态
     // 到达时才完成；token 保证旧请求不会误结算新请求。
     var foldWaiters: [CGWindowID: [UUID: (Bool) -> Void]] = [:]
+    var foldWaiterTransactions: [UUID: UUID] = [:]
+    var foldObserverSerial: UInt = 0
+    var foldObserverRoutes: [UInt: WS2FoldObserverRoute] = [:]
+    var foldPresentationID = UUID()
     var foldEvidence = WS2FoldEvidence()
     var foldEvidenceMayCommit: [UUID: () -> Bool] = [:]
     var foldEvidenceCallbacks: [UUID: (WS2FoldEvidence.Event) -> Void] = [:]

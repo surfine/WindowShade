@@ -43,17 +43,18 @@ extension AppDelegate {
             return Date() >= state.ignoreAppRevealUntil
         case .privateAlpha:
             guard Date() >= state.ignoreAppRevealUntil else { return false }
-            let alpha = PrivateSLSWindowMover.shared.windowAlpha(id: state.sourceWindowID)
-                ?? Float((cgWindowInfo(state.sourceWindowID)?[kCGWindowAlpha as String] as? NSNumber)?.doubleValue ?? 1)
+            let sampledAlpha = PrivateSLSWindowMover.shared.windowAlpha(id: state.sourceWindowID)
+                ?? (cgWindowInfo(state.sourceWindowID)?[kCGWindowAlpha as String] as? NSNumber).map { $0.floatValue }
+            guard let alpha = sampledAlpha, alpha.isFinite, (0...1).contains(alpha) else { return false }
             return alpha > 0.05
         case .hidden:
             guard Date() >= state.ignoreAppRevealUntil else { return false }
             // 看一眼在画面下面临时取消隐藏：那不是用户唤回。
             guard !MainActor.assumeIsolated({ glance.holdsReveal(state.sourceWindowID) }) else { return false }
-            guard let app = runningApp(pid: state.pid) else { return true }
+            guard let app = runningApp(pid: state.pid), !app.isTerminated else { return false }
             return !app.isHidden
         case .minimized:
-            // AX 快照读取在 reconcileAXWorkQueue；没有快照时保守地认为仍不可见，
+            // AX 快照读取在后台工作队列；没有快照时保守地认为仍不可见，
             // 不能为了确认菜单/定时器状态回到主线程同步 IPC。
             return sourceIsMinimized.map { !$0 } ?? false
         case .ownWindowOrderedOut:
@@ -80,17 +81,21 @@ extension AppDelegate {
             }
             return false
         case .none:
-            let shouldCleanup = count >= 3
-            if shouldCleanup {
-                wlog("reconcile: source invalid repeatedly id=\(id) app=\(state.appName) count=\(count)")
+            // Repeated AX failure still does not prove that a live app's window closed.
+            if shouldLogReconcileInvalidCount(count) {
+                wlog("reconcile: native source unknown id=\(id) count=\(count); recovery retained")
             }
-            return shouldCleanup
+            return false
         }
     }
     func reconcileShadedWindows(reason: String) {
         guard !isReconcilingShadedWindows else { return }
         isReconcilingShadedWindows = true
 
+        guard MainActor.assumeIsolated({ AuthorizationService.shared.lockState() == .unlocked }) else {
+            finishReconcileShadedWindows()
+            return
+        }
         pruneShadeJournal(reason: "reconcile-\(reason)")
 
         guard AXIsProcessTrusted() else {
@@ -111,70 +116,65 @@ extension AppDelegate {
             return
         }
 
-        let onScreenIDs = currentOnScreenWindowIDs()
         let targets = shaded.map { id, state in
             ReconcileAXTarget(id: id, pid: state.pid, element: state.element,
-                              needsMinimizedState: state.hide == .minimized)
+                              needsMinimizedState: state.hide == .minimized,
+                              stamp: foldCallbackStamp(id: id, state: state))
         }
-        reconcileAXWorkQueue.async { [weak self] in
-            let startedAt = CFAbsoluteTimeGetCurrent()
-            // 按 app 分组：不同 app 的 AX IPC 互不阻塞，可以并行采集；同 app 的
-            // 窗口串行读取，避免对忙 app 并发轰炸。忙 app 单次 2s 超时不再拖住
-            // 其他 app 的快照（旧实现串行累加，3 个忙 app 就是 6s+）。
-            let grouped = Dictionary(grouping: targets, by: { $0.pid })
-            let group = DispatchGroup()
-            let resultLock = NSLock()
-            var snapshots: [ReconcileAXSnapshot] = []
-            for pidTargets in grouped.values {
-                group.enter()
-                DispatchQueue.global(qos: .utility).async {
-                    let local = pidTargets.map { target -> ReconcileAXSnapshot in
-                        guard let size = axSize(target.element) else {
-                            return ReconcileAXSnapshot(id: target.id, position: nil,
-                                                       size: nil, isMinimized: nil)
-                        }
-                        return ReconcileAXSnapshot(id: target.id,
-                                                   position: axPosition(target.element),
-                                                   size: size,
-                                                   isMinimized: target.needsMinimizedState
-                                                       ? axBoolAttribute(target.element, kAXMinimizedAttribute as String)
-                                                       : nil)
+        let grouped = Dictionary(grouping: targets, by: { $0.pid })
+        guard !grouped.isEmpty else { finishReconcileShadedWindows(); return }
+        let batch = UUID()
+        reconcileBatchID = batch
+        reconcilePendingApplications = grouped.count
+        // Each app is sampled serially; independent apps may finish independently.
+        // No captured mutable array, group.wait, or caller-owned NSLock crosses queues.
+        for pidTargets in grouped.values {
+            DispatchQueue.global(qos: .utility).async { [weak self] in
+                let startedAt = ProcessInfo.processInfo.systemUptime
+                let snapshots = pidTargets.map { target -> ReconcileAXSnapshot in
+                    guard let size = axSize(target.element) else {
+                        return ReconcileAXSnapshot(stamp: target.stamp, position: nil, size: nil, isMinimized: nil)
                     }
-                    resultLock.lock()
-                    snapshots.append(contentsOf: local)
-                    resultLock.unlock()
-                    group.leave()
+                    return ReconcileAXSnapshot(stamp: target.stamp, position: axPosition(target.element), size: size,
+                        isMinimized: target.needsMinimizedState
+                            ? axObservedBoolAttribute(target.element, kAXMinimizedAttribute as String) : nil)
                 }
-            }
-            group.wait()
-            let elapsedMilliseconds = Int((CFAbsoluteTimeGetCurrent() - startedAt) * 1000)
-            DispatchQueue.main.async { [weak self] in
-                self?.applyReconcileAXSnapshots(snapshots, onScreenIDs: onScreenIDs,
-                                                reason: reason, elapsedMilliseconds: elapsedMilliseconds)
+                let elapsed = Int((ProcessInfo.processInfo.systemUptime - startedAt) * 1000)
+                DispatchQueue.main.async { [weak self] in
+                    guard let self, self.reconcileBatchID == batch else { return }
+                    self.applyReconcileAXSnapshots(snapshots, reason: reason, elapsedMilliseconds: elapsed)
+                    guard self.reconcileBatchID == batch else { return }
+                    self.reconcilePendingApplications -= 1
+                    if self.reconcilePendingApplications == 0 { self.finishReconcileShadedWindows() }
+                }
             }
         }
     }
-    func applyReconcileAXSnapshots(_ snapshots: [ReconcileAXSnapshot], onScreenIDs: Set<CGWindowID>,
-                                           reason: String, elapsedMilliseconds: Int) {
-        defer { finishReconcileShadedWindows() }
+    func applyReconcileAXSnapshots(_ snapshots: [ReconcileAXSnapshot],
+                                   reason: String, elapsedMilliseconds: Int) {
         if elapsedMilliseconds >= 50 {
             wlog("slow: reconcile-ax reason=\(reason) took \(elapsedMilliseconds)ms windows=\(snapshots.count)")
         }
+        guard MainActor.assumeIsolated({ AuthorizationService.shared.lockState() == .unlocked }) else { return }
+        // Observe screen membership at application time, not before a possibly slow AX batch.
+        let onScreenIDs = currentOnScreenWindowIDs()
         for snapshot in snapshots {
-            // 异步 AX 读取期间用户可能已展开/关闭窗口，只按仍存在的当前 state 应用。
-            guard let state = shaded[snapshot.id] else { continue }
-            guard let size = snapshot.size else {
-                if sourceWindowMissingShouldCleanup(id: snapshot.id, state: state) {
+            guard foldCallbackIsCurrent(snapshot.stamp), let state = shaded[snapshot.id] else { continue }
+            guard let size = snapshot.size, size.width.isFinite, size.height.isFinite,
+                  size.width > 0, size.height > 0 else {
+                if sourceWindowMissingShouldCleanup(id: snapshot.id, state: state),
+                   foldCallbackIsCurrent(snapshot.stamp) {
                     forceCleanup(snapshot.id)
                 }
                 continue
             }
             reconcileInvalidCounts.removeValue(forKey: snapshot.id)
 
-            if let pos = snapshot.position,
+            if let pos = snapshot.position, pos.x.isFinite, pos.y.isFinite,
                sourceWindowLooksUserVisible(state: state, pos: pos, size: size,
                                             onScreenWindowIDs: onScreenIDs,
-                                            sourceIsMinimized: snapshot.isMinimized) {
+                                            sourceIsMinimized: snapshot.isMinimized),
+               foldCallbackIsCurrent(snapshot.stamp) {
                 if isFocusShelfMember(id: snapshot.id) {
                     revealFocusShelfMemberFromOutside(id: snapshot.id, state: state, reason: "reconcile-\(reason)")
                     continue
@@ -184,7 +184,7 @@ extension AppDelegate {
                 continue
             }
 
-            guard let overlay = state.overlay else { continue }
+            guard foldCallbackIsCurrent(snapshot.stamp), let overlay = state.overlay else { continue }
             if let overlayID = state.overlayID, !onScreenIDs.contains(overlayID) {
                 continue
             }
@@ -193,7 +193,7 @@ extension AppDelegate {
             if !framesAlmostEqual(oldFrame, newFrame) {
                 overlay.setFrame(newFrame, display: true)
                 applyOverlayPresentation(overlay, bringForward: false)
-                if arrangedOverlayFrames[snapshot.id] == nil {
+                if foldCallbackIsCurrent(snapshot.stamp), arrangedOverlayFrames[snapshot.id] == nil {
                     syncRestoreJournal(id: snapshot.id, fromOverlayFrame: newFrame)
                 }
                 wlog("reconcile: clamped overlay id=\(snapshot.id) frame=(\(Int(newFrame.minX)),\(Int(newFrame.minY)) \(Int(newFrame.width))x\(Int(newFrame.height)))")
@@ -201,6 +201,8 @@ extension AppDelegate {
         }
     }
     func finishReconcileShadedWindows() {
+        reconcileBatchID = nil
+        reconcilePendingApplications = 0
         isReconcilingShadedWindows = false
         updateReconcileTimer()
     }

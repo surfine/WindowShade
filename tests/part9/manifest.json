@@ -1,0 +1,103 @@
+{
+  "part": 9,
+  "base": "WindowShade2-round2-handoff-v8/candidate-repo",
+  "base_file_count": 1164,
+  "result_file_count": 1168,
+  "replaced": 11,
+  "added": 4,
+  "changes": [
+    {
+      "path": "docs/handoff/round2-part9/INTEGRATION.md",
+      "operation": "add",
+      "base_sha256": null,
+      "sha256": "31097cbe2651ed47c377cf4d4918d61ca3d18b25b9da693da8e9710b37753f29"
+    },
+    {
+      "path": "docs/handoff/round2-part9/privacy-signals.json",
+      "operation": "add",
+      "base_sha256": null,
+      "sha256": "fb4881b9604d88b04452a791eb3d780e5a34294125816678fc20df8022300b18"
+    },
+    {
+      "path": "prototype/App/FoldCompletion.swift",
+      "operation": "replace",
+      "base_sha256": "1147a93b8ab37828e0dd4be225e879ea3a4636283aaa5d7202369b926ec850f5",
+      "sha256": "18559db591375242d83406a083b9a18e4bf5dc69de7b8c32c8f3494c31054982"
+    },
+    {
+      "path": "prototype/App/FoldTransaction.swift",
+      "operation": "replace",
+      "base_sha256": "482e8b46ad1aec8d169653d75d0c3976379104191c2e53bbe3ecab05bb98e06c",
+      "sha256": "f353846ee708e80dc81e78636f24dd3976d5ec77f1c0f9db0e38f2f675519c3b"
+    },
+    {
+      "path": "prototype/App/Reconcile.swift",
+      "operation": "replace",
+      "base_sha256": "a24b56d18ee50914538f3581f59fd0c496e29babe7a424ed6613657f785bb2b1",
+      "sha256": "290d8fb4dcb1b14e79620279ff9e30b42e81fbaa86c68678808a5073bd333f04"
+    },
+    {
+      "path": "prototype/App/ShadeController.swift",
+      "operation": "replace",
+      "base_sha256": "f22cc7af4a270af54422820beea2807235198ba823b8bb42adf098b52f85a198",
+      "sha256": "ffe5d474a28aa43ac12baf5e4a85b1d795494be0df928980fe6b4e69d8bb813f"
+    },
+    {
+      "path": "prototype/App/WS2FoldCallbackGuard.swift",
+      "operation": "add",
+      "base_sha256": null,
+      "sha256": "9f8d8cc688955c493ac17ebde396f59f70892e32c0b78250c78589c007fc63db"
+    },
+    {
+      "path": "prototype/App/WS2FoldEvidenceAdapter.swift",
+      "operation": "replace",
+      "base_sha256": "cb7f57c8020aeda4aca842a4a48a58b5e4a70acacc02cff63a2682d426a0c264",
+      "sha256": "56606957ca290794e0450d6199aa4e3d85fc954e4c472a9e6158bb06cdb7013d"
+    },
+    {
+      "path": "prototype/Core/FoldVerifier.swift",
+      "operation": "replace",
+      "base_sha256": "90a4d023619d31706672da91a52ab721023662591b5ab3f72cda05e32fabc086",
+      "sha256": "8391bca46e6af68e0ae1942edd2e9bd106f5ea83e237ffa9ba0b58e5b878c597"
+    },
+    {
+      "path": "prototype/Core/WS2FoldCallbackStamp.swift",
+      "operation": "add",
+      "base_sha256": null,
+      "sha256": "50e53418e04733bbe0421c49533bd7e87943f25707f7404bedf188a4ed4543de"
+    },
+    {
+      "path": "prototype/Effects/EffectFrameAwaiter.swift",
+      "operation": "replace",
+      "base_sha256": "634182d48f845ebec9887544b2d1aea0fdeb53e614af3c66e1070b4907f1f68f",
+      "sha256": "9c7a967621855e6add53c5ee4cd405249142d018eea497e5301ebae72e0e42c8"
+    },
+    {
+      "path": "prototype/Window/AXHelpers.swift",
+      "operation": "replace",
+      "base_sha256": "ccf1a2c35600cf6471db354ee1fbb3f417a60907be1446f6ee9e393a2b5b8ccf",
+      "sha256": "b679b85d9e4e31f1a2f4594a048fba885c89b46bd25395e3fab768c880ab71b6"
+    },
+    {
+      "path": "prototype/WindowBrowser/WindowBrowserAppDelegate.swift",
+      "operation": "replace",
+      "base_sha256": "7578e4ad88f967a0c4fc6b18dabf97100fffd86d1bb7437c254131f55147bf8f",
+      "sha256": "47a44ee7dd3717a71545ca192da753f650a75ca9a538a8ceeb0fd895583937c8"
+    },
+    {
+      "path": "prototype/WindowShade.swift",
+      "operation": "replace",
+      "base_sha256": "0c489c4b721315ef147f7b3898aa388377eac8b766ada421fda395716f16828a",
+      "sha256": "2c95d5d27a9f4649461e330e590da4bf0afdacee1fb0a2bfdb4897b32f570aed"
+    },
+    {
+      "path": "tests/duo-integration-check.py",
+      "operation": "replace",
+      "base_sha256": "1614f812d80321117c4ecb43c3e649c4f0033092653ffbbd8026c45a0b127916",
+      "sha256": "77baca7e632b420b099a9af21b6462d826b6f9f2eb97c9c5d90f5906e002bb6d"
+    }
+  ],
+  "mac_sdk_build": "NOT RUN",
+  "runtime_hardware": "NOT RUN",
+  "release_authorized": false
+}

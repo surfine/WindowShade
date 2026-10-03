@@ -1,0 +1,221 @@
+{
+  "assertions" : 93,
+  "cases" : [
+    {
+      "assertions" : 1,
+      "failed" : 0,
+      "id" : "FENCE01-current"
+    },
+    {
+      "assertions" : 1,
+      "failed" : 0,
+      "id" : "FENCE02-replaced-transaction"
+    },
+    {
+      "assertions" : 2,
+      "failed" : 0,
+      "id" : "FENCE03-reused-pid-or-window"
+    },
+    {
+      "assertions" : 1,
+      "failed" : 0,
+      "id" : "FENCE04-strategy-changed"
+    },
+    {
+      "assertions" : 2,
+      "failed" : 0,
+      "id" : "FENCE05-lock-unlock-epoch"
+    },
+    {
+      "assertions" : 2,
+      "failed" : 0,
+      "id" : "FENCE06-boot-and-display"
+    },
+    {
+      "assertions" : 3,
+      "failed" : 0,
+      "id" : "FENCE07-expiry-boundary"
+    },
+    {
+      "assertions" : 2,
+      "failed" : 0,
+      "id" : "FENCE08-clock-regression"
+    },
+    {
+      "assertions" : 12,
+      "failed" : 0,
+      "id" : "FENCE09-nonfinite"
+    },
+    {
+      "assertions" : 2,
+      "failed" : 0,
+      "id" : "FENCE10-invalid-budget"
+    },
+    {
+      "assertions" : 2,
+      "failed" : 0,
+      "id" : "BOOL01-explicit-true-false"
+    },
+    {
+      "assertions" : 1,
+      "failed" : 0,
+      "id" : "BOOL02-absence-not-false"
+    },
+    {
+      "assertions" : 3,
+      "failed" : 0,
+      "id" : "BOOL03-numbers-not-booleans"
+    },
+    {
+      "assertions" : 2,
+      "failed" : 0,
+      "id" : "BOOL04-strings-not-booleans"
+    },
+    {
+      "assertions" : 3,
+      "failed" : 0,
+      "id" : "VERIFY01-hidden"
+    },
+    {
+      "assertions" : 3,
+      "failed" : 0,
+      "id" : "VERIFY02-unknown-then-hidden"
+    },
+    {
+      "assertions" : 3,
+      "failed" : 0,
+      "id" : "VERIFY03-stays-unknown"
+    },
+    {
+      "assertions" : 3,
+      "failed" : 0,
+      "id" : "VERIFY04-visible-then-unknown"
+    },
+    {
+      "assertions" : 3,
+      "failed" : 0,
+      "id" : "VERIFY05-visible-retry-succeeds"
+    },
+    {
+      "assertions" : 3,
+      "failed" : 0,
+      "id" : "VERIFY06-visible-retry-unknown"
+    },
+    {
+      "assertions" : 3,
+      "failed" : 0,
+      "id" : "VERIFY07-visible-retry-visible"
+    },
+    {
+      "assertions" : 3,
+      "failed" : 0,
+      "id" : "VERIFY08-no-cross-strategy-write"
+    },
+    {
+      "assertions" : 2,
+      "failed" : 0,
+      "id" : "VERIFY-cancel-at-0.0"
+    },
+    {
+      "assertions" : 2,
+      "failed" : 0,
+      "id" : "VERIFY-cancel-at-0.2"
+    },
+    {
+      "assertions" : 2,
+      "failed" : 0,
+      "id" : "VERIFY-cancel-at-0.7"
+    },
+    {
+      "assertions" : 1,
+      "failed" : 0,
+      "id" : "VERIFY12-revoke-inside-observe"
+    },
+    {
+      "assertions" : 1,
+      "failed" : 0,
+      "id" : "VERIFY13-revoke-inside-write"
+    },
+    {
+      "assertions" : 1,
+      "failed" : 0,
+      "id" : "VERIFY14-revoke-inside-final-read"
+    },
+    {
+      "assertions" : 2,
+      "failed" : 0,
+      "id" : "VERIFY15-no-fast-screen-shortcut"
+    },
+    {
+      "assertions" : 4,
+      "failed" : 0,
+      "id" : "WAIT01-replacement-keeps-new-waiter"
+    },
+    {
+      "assertions" : 2,
+      "failed" : 0,
+      "id" : "WAIT02-first-settlement-wins"
+    },
+    {
+      "assertions" : 2,
+      "failed" : 0,
+      "id" : "WAIT03-unbound-token-not-acknowledged"
+    },
+    {
+      "assertions" : 2,
+      "failed" : 0,
+      "id" : "WAIT04-rebind-refused"
+    },
+    {
+      "assertions" : 1,
+      "failed" : 0,
+      "id" : "WAIT05-whole-batch-drained-before-callback"
+    },
+    {
+      "assertions" : 2,
+      "failed" : 0,
+      "id" : "WAIT06-reentrant-register-preserved"
+    },
+    {
+      "assertions" : 2,
+      "failed" : 0,
+      "id" : "WAIT07-duplicates-and-wrong-window"
+    },
+    {
+      "assertions" : 1,
+      "failed" : 0,
+      "id" : "WAIT08-deleted-before-bind"
+    },
+    {
+      "assertions" : 2,
+      "failed" : 0,
+      "id" : "WAIT09-many-generations"
+    },
+    {
+      "assertions" : 1,
+      "failed" : 0,
+      "id" : "WAIT10-context-changes-before-delivery"
+    },
+    {
+      "assertions" : 1,
+      "failed" : 0,
+      "id" : "WAIT11-lock-cycle-before-delivery"
+    },
+    {
+      "assertions" : 1,
+      "failed" : 0,
+      "id" : "WAIT12-cross-cancel-after-batch-drained"
+    },
+    {
+      "assertions" : 1,
+      "failed" : 0,
+      "id" : "WAIT13-delivery-deadline"
+    }
+  ],
+  "failures" : [
+
+  ],
+  "scenarios" : 42,
+  "scope" : "Actual Foundation stamp\/verifier and production FoldCompletion extension with explicit field\/current-context host; no AX\/AppKit execution",
+  "suite" : "part9-regression"
+}

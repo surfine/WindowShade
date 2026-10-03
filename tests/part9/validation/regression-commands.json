@@ -1,0 +1,31 @@
+[
+  {
+    "argv": [
+      "swiftc",
+      "-swift-version",
+      "6",
+      "-strict-concurrency=complete",
+      "-warnings-as-errors",
+      "prototype/Core/FoldVerifier.swift",
+      "prototype/Core/WS2FoldCallbackStamp.swift",
+      "prototype/App/FoldCompletion.swift",
+      "/Users/aaron/Documents/WindowShade/tests/part9/tests/RegressionTests.swift",
+      "-o",
+      "/var/folders/l6/4_mrt4s51rv4sjb29v6x9n000000gn/T/ws2-r9-m7jw5gg2/tests"
+    ],
+    "exit_code": 0,
+    "seconds": 8.32266645799973,
+    "stdout": "",
+    "stderr": ""
+  },
+  {
+    "argv": [
+      "/var/folders/l6/4_mrt4s51rv4sjb29v6x9n000000gn/T/ws2-r9-m7jw5gg2/tests",
+      "/Users/aaron/Documents/WindowShade/tests/part9/validation/regression-results.json"
+    ],
+    "exit_code": 0,
+    "seconds": 0.346111958991969,
+    "stdout": "SCENARIOS 42 ASSERTIONS 93 FAILURES 0\n",
+    "stderr": ""
+  }
+]

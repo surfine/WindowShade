@@ -1,40 +1,38 @@
+#if canImport(Cocoa)
 import Cocoa
+#else
+import Foundation
+#endif
 
-// Shared by window-browser actions and titlebar gestures. Main-thread owned.
-extension AppDelegate {
-    // MARK: 折叠终态等待
-
+// Shared by browser/gesture requests. Mutations are MainActor-owned. Test hosts
+// supply only the actual dictionaries below, not an AppKit implementation.
+@MainActor extension AppDelegate {
     @discardableResult
-    func registerFoldWaiter(id: CGWindowID,
-                                         completion: @escaping (Bool) -> Void) -> UUID {
+    func registerFoldWaiter(id: CGWindowID, completion: @escaping (Bool) -> Void) -> UUID {
         let token = UUID()
         foldWaiters[id, default: [:]][token] = completion
-        // 兜底：折叠事务异常中止且没有走到任何结算点时，避免等待闭包长期驻留。
         DispatchQueue.main.asyncAfter(deadline: .now() + 30) { [weak self] in
             self?.settleFoldWaiter(id: id, token: token, success: false)
         }
         return token
     }
 
-    /// 只结算指定 token，避免同一窗口后来的一次折叠被旧超时误结算。
-    func settleFoldWaiter(id: CGWindowID, token: UUID, success: Bool) {
-        guard var waiters = foldWaiters[id],
-              let completion = waiters.removeValue(forKey: token) else { return }
-        if waiters.isEmpty {
-            foldWaiters.removeValue(forKey: id)
-        } else {
-            foldWaiters[id] = waiters
+    /// Only the request's captured tokens may be bound to its newly installed state.
+    func bindFoldWaiters(id: CGWindowID, tokens: [UUID], transaction: UUID) {
+        for token in tokens where foldWaiters[id]?[token] != nil {
+            guard foldWaiterTransactions[token] == nil else { continue }
+            foldWaiterTransactions[token] = transaction
         }
-        completion(success)
     }
 
-    /// 折叠事务的终态结算点：立即验证成功、延迟验证成功、回滚失败与中止。
-    /// 第一个到达的结算生效；之后的结算不会再次调用回调。
-    func settleFoldWaiters(id: CGWindowID, success: Bool) {
-        guard let waiters = foldWaiters.removeValue(forKey: id) else { return }
-        for (_, completion) in waiters {
-            completion(success)
-        }
+    func settleFoldWaiter(id: CGWindowID, token: UUID, success: Bool) {
+        settleFoldWaiters(id: id, tokens: [token], success: success)
+    }
+
+    /// No window-ID-only success path: a completion must name the exact transaction.
+    func settleFoldWaiters(id: CGWindowID, transaction: UUID, success: Bool) {
+        let tokens = (foldWaiters[id] ?? [:]).keys.filter { foldWaiterTransactions[$0] == transaction }
+        settleFoldWaiters(id: id, tokens: tokens, success: success)
     }
 
     func cancelFoldWaiters(id: CGWindowID, tokens: [UUID]) {
@@ -42,7 +40,27 @@ extension AppDelegate {
     }
 
     func settleFoldWaiters(id: CGWindowID, tokens: [UUID], success: Bool) {
-        for token in tokens { settleFoldWaiter(id: id, token: token, success: success) }
+        guard var waiting = foldWaiters[id] else { return }
+        var callbacks: [(callback: (Bool) -> Void, stamp: WS2FoldCallbackStamp?)] = []
+        for token in tokens {
+            guard let callback = waiting.removeValue(forKey: token) else { continue }
+            let transaction = foldWaiterTransactions.removeValue(forKey: token)
+            let stamp = success ? transaction.flatMap { foldWaiterDeliveryStamp(id: id, transaction: $0) } : nil
+            callbacks.append((callback, stamp))
+        }
+        foldWaiters[id] = waiting.isEmpty ? nil : waiting
+        // Drain the entire captured batch before any client callback. Delivery is
+        // queued so a client cannot reenter a half-finished install or cleanup.
+        guard !callbacks.isEmpty else { return }
+        DispatchQueue.main.async { [weak self] in
+            for delivery in callbacks {
+                let fresh: Bool
+                if let stamp = delivery.stamp, let owner = self {
+                    fresh = owner.foldCallbackIsCurrent(stamp)
+                } else { fresh = false }
+                delivery.callback(success && fresh)
+            }
+        }
     }
 
     /// 番茄钟端口用的等待：先登记再发起动作，只等这一次的真实终态。
