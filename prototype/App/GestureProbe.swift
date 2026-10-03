@@ -822,7 +822,7 @@ extension GlanceProbe {
     }
     try await wait("fixture windows", timeout: 6) { !appWindows(pid: pid).isEmpty }
     guard let element = appWindows(pid: pid).first, let id = windowID(of: element),
-          let frame = bounds(id) else {
+          bounds(id) != nil else {
       throw EffectError.unavailable("mc-keys fixture window")
     }
     let savedPointer = CGEvent(source: nil)?.location ?? .zero

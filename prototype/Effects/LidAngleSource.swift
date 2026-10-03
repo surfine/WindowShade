@@ -4,7 +4,9 @@ import QuartzCore
 
 /// Hinge angle reader. Device operations are confined to `queue`; delivery tokens
 /// invalidate queued callbacks immediately. Report formats live in `LidReport`.
-final class LidAngleSource {
+/// @unchecked Sendable：wanted、epoch 在 `lock` 里；HID 设备、定时器、推送计时只在 `queue` 上动；
+/// `onReading` / `onStatus` 在主线程设好，也只在主线程调用。
+final class LidAngleSource: @unchecked Sendable {
   struct Reading {
     let angle: Double
     let time: CFTimeInterval

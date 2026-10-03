@@ -12,6 +12,7 @@ enum WindowBrowserNotification {
     static let didChangeSettings = Notification.Name("WindowBrowserDidChangeSettings")
 }
 
+@MainActor
 final class WindowBrowserController: NSObject {
     struct Session {
         let requestID: WindowBrowserRequestID
@@ -163,12 +164,16 @@ final class WindowBrowserController: NSObject {
     private var streamStopFailureUntil: CFAbsoluteTime = 0
     /// 基本排布：预览、执行与撤销。后端就是本控制器（复用真实身份解析）。
     private var placementPreviewWindow: WindowPlacementPreviewWindow?
-    private lazy var placement: WindowPlacementController = {
+    private var placementStorage: WindowPlacementController?
+    private var placement: WindowPlacementController {
+        if let placementStorage { return placementStorage }
         let presenter = WindowPlacementPreviewWindow()
         placementPreviewWindow = presenter
-        return WindowPlacementController(backend: self, scheduler: scheduler,
-                                         previewPresenter: presenter)
-    }()
+        let made = WindowPlacementController(backend: self, scheduler: scheduler,
+                                             previewPresenter: presenter)
+        placementStorage = made
+        return made
+    }
 
     /// 兼容旧探针：AX 真实调用次数（不是包装函数调用次数）。
     var axQueryCount: Int {
@@ -485,14 +490,14 @@ final class WindowBrowserController: NSObject {
     /// completion 回到主线程。解析不唯一或身份不匹配时返回 nil（拒绝操作）。
     func resolveBrowserTarget(_ key: WindowKey,
                               options: WindowBrowserTargetResolver.Options = [],
-                              completion: @escaping (WindowBrowserResolvedTarget?) -> Void) {
+                              completion: @escaping @MainActor (WindowBrowserResolvedTarget?) -> Void) {
         resolveTarget(key, options: options, batch: nil, completion: completion)
     }
 
     private func resolveTarget(_ key: WindowKey,
                                options: WindowBrowserTargetResolver.Options,
                                batch: WindowBrowserTargetBatch<AXUIElement>?,
-                               completion: @escaping (WindowBrowserResolvedTarget?) -> Void) {
+                               completion: @escaping @MainActor (WindowBrowserResolvedTarget?) -> Void) {
         dispatchPrecondition(condition: .onQueue(.main))
         guard hasAccessibilityPermission(), let owner else {
             completion(nil)
@@ -523,7 +528,7 @@ final class WindowBrowserController: NSObject {
     }
 
     func resolveThumbnailTarget(_ key: WindowKey,
-                                completion: @escaping (WindowBrowserResolvedTarget?) -> Void) {
+                                completion: @escaping @MainActor (WindowBrowserResolvedTarget?) -> Void) {
         resolveTarget(key, options: .geometry, batch: thumbnailResolutionBatch,
                       completion: completion)
     }
@@ -2657,7 +2662,7 @@ final class WindowBrowserController: NSObject {
 
 // MARK: - 真实动作后端
 
-extension WindowBrowserController: WindowBrowserActionBackend {
+extension WindowBrowserController: @preconcurrency WindowBrowserActionBackend {
     func validate(target: WindowKey,
                   completion: @escaping (WindowBrowserTargetValidation) -> Void) {
         DispatchQueue.main.async { [weak self] in
@@ -2689,7 +2694,8 @@ extension WindowBrowserController: WindowBrowserActionBackend {
     }
 
     func perform(action: WindowBrowserAction, target: WindowKey,
-                 completion: @escaping (WindowBrowserActionOutcome) -> Void) {
+                 completion reply: @escaping (WindowBrowserActionOutcome) -> Void) {
+        let completion: @MainActor (WindowBrowserActionOutcome) -> Void = { reply($0) }
         DispatchQueue.main.async { [weak self] in
             guard let self, let owner = self.owner else {
                 completion(.failed(reason: "控制器已释放"))
@@ -2778,7 +2784,7 @@ extension WindowBrowserController: WindowBrowserActionBackend {
     /// 读取目标应用当前报告的焦点窗口，判断是否就是这次操作的真实目标。
     /// AX 读取在专用串行队列执行，主线程不阻塞。
     private func resolveFocusedWindowMatches(key: WindowKey,
-                                             completion: @escaping (Bool) -> Void) {
+                                             completion: @escaping @MainActor (Bool) -> Void) {
         axResolverQueue.async { [weak self] in
             self?.noteAXCall()
             let app = AXUIElementCreateApplication(key.application.pid)
@@ -2916,7 +2922,7 @@ extension WindowBrowserController: WindowBrowserActionBackend {
     /// AX 读写都在专用串行队列执行，主线程不阻塞；结果只在主线程回调。
     private func performFullScreen(target: WindowKey,
                                    resolved: WindowBrowserResolvedTarget,
-                                   completion: @escaping (WindowBrowserActionOutcome) -> Void) {
+                                   completion: @escaping @MainActor (WindowBrowserActionOutcome) -> Void) {
         guard hasAccessibilityPermission() else {
             completion(.permissionRequired(kind: .accessibility))
             return
@@ -2971,7 +2977,7 @@ extension WindowBrowserController: WindowBrowserActionBackend {
     /// （不把让开或隐藏的 App 翻出来）。等 2.5 秒内出现一扇新的普通窗口才算完成。
     /// 辅助进程的窗口（小程序）算在所属 App 上。
     private func performNewWindow(target: WindowKey,
-                                  completion: @escaping (WindowBrowserActionOutcome) -> Void) {
+                                  completion: @escaping @MainActor (WindowBrowserActionOutcome) -> Void) {
         let pid = helperParents[target.application.pid]?.pid ?? target.application.pid
         guard NSRunningApplication(processIdentifier: pid)?.isTerminated == false else {
             completion(.failed(reason: "找不到这个 App"))
@@ -3002,7 +3008,7 @@ extension WindowBrowserController: WindowBrowserActionBackend {
 
     /// 定下了要按的那一项：把 App 带到前面（新窗口要出现在前面），回到后台队列按下，再等新窗口出来。
     private func pressNewWindow(item: AXUIElement, pid: pid_t,
-                                completion: @escaping (WindowBrowserActionOutcome) -> Void) {
+                                completion: @escaping @MainActor (WindowBrowserActionOutcome) -> Void) {
         dispatchPrecondition(condition: .onQueue(.main))
         guard running, NSRunningApplication(processIdentifier: pid)?.isTerminated == false else {
             completion(.failed(reason: "找不到这个 App"))
@@ -3225,7 +3231,7 @@ extension WindowBrowserController: WindowBrowserActionBackend {
 
 // MARK: - 排布后端
 
-extension WindowBrowserController: WindowPlacementBackend {
+extension WindowBrowserController: @preconcurrency WindowPlacementBackend {
     /// 读取目标窗口当前 frame。复用明确目标的身份核对，不按焦点或标题猜测。
     func readFrame(of target: WindowKey, completion: @escaping (CGRect?) -> Void) {
         DispatchQueue.main.async { [weak self] in
@@ -3266,7 +3272,9 @@ extension WindowBrowserController: WindowPlacementBackend {
     }
 }
 
-final class WindowBrowserThumbnailBackend: WindowThumbnailBackend {
+/// 缩略图服务没有自己的队列，App 里只在主线程调用后端；@preconcurrency 让违反这一点时在执行期报出来。
+@MainActor
+final class WindowBrowserThumbnailBackend: @preconcurrency WindowThumbnailBackend {
     weak var controller: WindowBrowserController?
 
     func capture(request: WindowThumbnailRequest,

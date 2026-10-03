@@ -436,7 +436,7 @@ final class WindowBrowserCardView: NSView {
 }
 
 extension WindowBrowserCardView: WindowBrowserAppearanceRefreshable,
-                                 WindowBrowserCardSurfaceHosting {
+                                 @preconcurrency WindowBrowserCardSurfaceHosting {
     func adoptCardSurface(_ surface: WindowBrowserCardSurface) {
         guard surface != cardSurface else { return }
         cardSurface = surface

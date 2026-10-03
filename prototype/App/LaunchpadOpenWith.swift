@@ -258,18 +258,24 @@ extension LaunchpadView {
         dropSpring = nil
         dropSpringKey = key
         guard let key else { return }
+        var folderID: String?
+        var closesFolder = false
+        switch hit {
+        case .folder(let id): folderID = id
+        case .outsideFolder: closesFolder = true
+        default: break
+        }
         dropSpring = Timer.scheduledTimer(withTimeInterval: edge != 0 && key.hasPrefix("page") ? 0.5 : 0.6,
-                                          repeats: false) { [weak self] _ in
+                                          repeats: false) { [weak self, folderID, closesFolder] _ in
             MainActor.assumeIsolated {
                 guard let self, self.dropSpringKey == key, !self.isDismissing else { return }
                 self.dropSpringKey = nil
-                switch hit {
-                case .folder(let id):
-                    self.openFolder(id)
+                if let folderID {
+                    self.openFolder(folderID)
                     self.applyOpenable()
-                case .outsideFolder:
+                } else if closesFolder {
                     self.closeFolder()
-                default:
+                } else {
                     self.settle(to: min(max(self.pager.page + edge, 0), self.pageCount - 1))
                 }
             }

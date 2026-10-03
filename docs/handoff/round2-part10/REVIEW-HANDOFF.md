@@ -4,7 +4,56 @@
 我做的偏离，以及最值得你去攻击的地方**放在一张纸上。包里第十份带来的通用复核提示在
 `docs/handoff/FINAL-HANDOFF.md` 末尾，那份讲原则；这一份讲这台机器上的具体事实。
 
-## 一句话结论
+## 复核之后的最新状态（分支 `w00-swift6-strict`，先读这一节）
+
+**W00 的编译门槛已在分支上达成：`prototype/build.sh --check` 退出 0（「编译验证通过」），四条编译命令的
+`-swift-version 6 -strict-concurrency=complete -warnings-as-errors` 一条没撤。** 没有并回 `main`，没推送，
+没签名、没跑普通构建（普通构建要签名，未授权），没在真机上运行过新二进制。
+
+本机复跑（每次全新报告目录）：九套 run-final 套件全部退出 0；`tests/run-appkit-tests.sh all` 退出 0
+（含 `WindowFoldEffectsTests`）；`tests/part10/tests/test-handoff-tools.py` 16/16。
+
+**原先说的 98 处只是第一批。** region isolation（跨线程传值是否安全）要等类型检查全部通过才跑，
+98 处清零后又冒出 420 处。最后的收法，按用到的次数：
+
+| 写法 | 新增处数 | 用在哪 |
+| --- | --- | --- |
+| `@MainActor`（类、方法、闭包类型） | 82 | `AppDelegate`、各控制器、探针、只在主线程跑的回调类型 |
+| `nonisolated(unsafe)` | 28 | 可变全局量、deinit 里要兜底清理的观察者和时钟、两处只读跨线程的值 |
+| `@unchecked Sendable` | 23 | 靠锁或串行队列保护的类（捕获、传感器、缓存）和系统句柄 |
+| `@retroactive`（系统类型担保） | 8 | `AXUIElement`、`CFMachPort`、ScreenCaptureKit 的快照、过滤器和 `SCStream`，集中在 `prototype/Support/SendableSystemHandles.swift` |
+| `@preconcurrency` 遵循 | 12 | 协议本身不隔离、遵循方是主线程类型；执行期会检查线程 |
+| 新增 `MainActor.assumeIsolated` | 14 | 已知在主线程的回调入口 |
+
+每一处都写了理由注释；**没有任何 `@preconcurrency import`**（实测它会让错误整个消失，等于关检查）。
+
+**最该攻击的风险：** 把 `AppDelegate`、`PinnedPreviewController`、`DockHoverObserver`、
+`WindowBrowserThumbnailBackend` 等标成主线程隔离，加上 `@preconcurrency` 遵循和 `assumeIsolated`，
+等于在系统回调入口加了执行期线程检查。哪个回调其实从后台线程进来，App 会直接崩溃，而不是像以前那样
+悄悄跑下去。测试里没碰到，但没在真机上跑过，这一点是**未知**。
+
+**剩下的债：** 有一类主线程隔离警告 `-warnings-as-errors` 升不上去（AppKit 的 @preconcurrency 降级诊断），
+现在还有 204 处（去重后，最初约 1732 条输出），清单在 `evidence/w00-remaining-warnings.txt`。
+主要是 `ActorIsolatedCall` 和 `SendableClosureCaptures`。
+
+**复核议程的结论（七条）：**
+
+1. W00：如上，分支上已收；要不要并回 `main` 等用户定。
+2. `build.sh` 是收紧：普通构建仍按「环境变量 → `local-codesign.env`」读签名，只有 `--check` 跳过签名。
+3. `Journal.journalID` 与 overlay 一致；另发现 JSON 里的 `1.0` 会被当成窗口 1，没改，记在这里。
+4. 漂移清单：本轮改动没被掩盖，但交接提交漏登过 `AGENTS.md`（已补，现共 26 条）。漂移里藏着更早的放宽，
+   不是本轮改的：`CodexWire` 初始化期间接受任何不带 id 的通知；`WS2Child.c` 把 EPERM 当成组已空（**已修**，
+   见下）；`WS2LocalLaunchProfile` 沿用 App 自己的 PATH，从 Finder 启动可能无效，未经真机验证。
+5. 第九份那 23 处 `MainActor.assumeIsolated`：抽查的都在主线程，没逐处证明。
+6. `WindowFoldEffectsTests` 的原有断言都在，本机实跑通过，没改软。
+7. 三个 part10 适配脚本：负面案例仍被拒绝，没有改成静默通过。
+
+**复核时顺手修的四件（用户批准）：** 漂移清单补登 `AGENTS.md`；`WS2IslandCoordinator` 的理由改成
+「本仓库沿用 `NotchLeaseHub`，不为 W08 新建」并在 W08 工单注明；`WS2Child.c` 遇 EPERM 时先用
+`proc_listpids(PROC_PGRP_ONLY)` 确认组里只剩已退出的组长才当作已空（实测 macOS 此时确实回 EPERM）；
+测试脚本编 C 文件时补上 `-mmacosx-version-min=14.0`。
+
+## 一句话结论（合并当时的状态，已过时，留作对照）
 
 第九、十份都已并入 `main`（本轮提交 `4f276ea`，其上还有第九份的 `af0437c`、`38bb231`；本地提交、
 没推送）。**第十份的构建口径改动让整 App 在当前 SDK 下第一次真编译，结果编译不过：98 处诊断。**

@@ -27,7 +27,7 @@ extension AppDelegate {
     }
 
     @objc func magicTileAction() {
-        MainActor.assumeIsolated { gestures.magicTile() }
+        MainActor.assumeIsolated { _ = gestures.magicTile() }
     }
 
     @objc func tuckAllAction() {

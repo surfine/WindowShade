@@ -1,6 +1,7 @@
 import Cocoa
 import ScreenCaptureKit
 
+@MainActor
 final class DuoController: NSObject {
   weak var owner: AppDelegate?
   var isDesignPreview = false

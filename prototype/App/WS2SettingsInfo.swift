@@ -1,6 +1,6 @@
 import Cocoa
 @MainActor enum WS2SettingsCopy {
-    static let short: [String:String] = [
+    nonisolated static let short: [String:String] = [
         "设置怎么收起窗口、收起后什么样、要不要提示音。": "窗口的收起方式与外观",
         "指针停在卷帘条上，窗口在原处出现，移开就收回": "停在卷帘条上看一眼",
         "朝刘海甩一下标题栏，窗口就收进刘海；指针停在刘海上，点一下放回": "甩进刘海，点一下放回",

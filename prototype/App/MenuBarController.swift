@@ -140,7 +140,7 @@ extension AppDelegate {
     statusMenu.addItem(about)
     if NSEvent.modifierFlags.contains(.option) {
       action("欢迎使用 WindowShade…", "hand.wave", #selector(showWelcomeGuide))
-      statusMenu.addItem(MainActor.assumeIsolated { UpdaterController.shared.makeMenuItem() })
+      MainActor.assumeIsolated { statusMenu.addItem(UpdaterController.shared.makeMenuItem()) }
       // 与原工程的发行 feed 约定一致；设置 SUFeedURL 的构建不得展示诊断入口。
       if Bundle.main.object(forInfoDictionaryKey: "SUFeedURL") == nil {
         let developer = NSMenuItem(title: "开发", action: nil, keyEquivalent: "")

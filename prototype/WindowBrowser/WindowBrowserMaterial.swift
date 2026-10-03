@@ -96,7 +96,7 @@ enum WindowBrowserAnimationPolicy {
 }
 
 /// 材质宿主内部表面的圆角更新入口（玻璃与旧系统材质共用）。
-protocol WindowBrowserCornerRadiusUpdatable: AnyObject {
+@MainActor protocol WindowBrowserCornerRadiusUpdatable: AnyObject {
     var cornerRadius: CGFloat { get set }
 }
 

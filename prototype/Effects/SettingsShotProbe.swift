@@ -9,6 +9,7 @@
 
 import Cocoa
 
+@MainActor
 final class SettingsShotProbe {
     private let owner: AppDelegate
     private let outputDirectory: URL

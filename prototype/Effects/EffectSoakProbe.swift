@@ -3,6 +3,7 @@ import ScreenCaptureKit
 
 /// Opt-in development diagnostic. Never entered during ordinary application startup.
 /// Captures a moving test window or display and reports counters; no captured images are saved.
+@MainActor
 final class EffectSoakProbe {
   private final class MotionView: NSView {
     var time = 0.0
@@ -57,7 +58,7 @@ final class EffectSoakProbe {
       if sensorTimes.count > 3600 { sensorTimes.removeFirst(sensorTimes.count - 3600) }
     }
     sensor.start()
-    Task { @MainActor in
+    Task { @MainActor [self] in
       do {
         let content = try await SCShareableContent.excludingDesktopWindows(
           false, onScreenWindowsOnly: false)

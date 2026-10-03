@@ -4,7 +4,7 @@ import Accelerate
 import MetalKit
 
 /// Main-thread presentation. Capture buffers are retained through GPU completion, one submission at a time.
-final class FoldRenderer: NSObject, MTKViewDelegate {
+@MainActor final class FoldRenderer: NSObject, MTKViewDelegate {
   struct Parameters: Equatable {
     var progress: Float = 0
     var titleFraction: Float = 0
@@ -367,8 +367,9 @@ final class FoldRenderer: NSObject, MTKViewDelegate {
     let token = epoch.value
     let revision = self.revision
     let retainedFrame = frame
-    let retainedWrapper = wrapped
-    let output = readback
+    let frameTiming = frame.map { (id: $0.id, origin: $0.displayTime ?? $0.presentationTime.seconds) }
+    let gpu = FoldGPUInFlight(wrapper: wrapped, source: source, opticalSurface: opticalSurface,
+                              readback: readback)
     let space = colorSpace
     let size = (drawable.texture.width, drawable.texture.height)
     // Presentation time is separate from GPU completion, and counted once per fresh captured frame.
@@ -381,9 +382,9 @@ final class FoldRenderer: NSObject, MTKViewDelegate {
           append(time - previous, to: &intervals)
         }
         lastPresentedTime = time
-        if let frame = retainedFrame, measuredFrame != frame.id {
+        if let frame = frameTiming, measuredFrame != frame.id {
           measuredFrame = frame.id
-          let origin = frame.displayTime ?? frame.presentationTime.seconds
+          let origin = frame.origin
           if origin.isFinite, origin > 0, time >= origin {
             append((time - origin) * 1000, to: &latencies)
           }
@@ -395,17 +396,19 @@ final class FoldRenderer: NSObject, MTKViewDelegate {
     busy = true
     dirty = false
     command.addCompletedHandler { [weak self] result in
-      withExtendedLifetime((retainedFrame, retainedWrapper, source, opticalSurface)) {}
-      let gpu = (result.gpuEndTime - result.gpuStartTime) * 1000
+      withExtendedLifetime((retainedFrame, gpu)) {}
+      let gpuMilliseconds = (result.gpuEndTime - result.gpuStartTime) * 1000
+      let completed = result.status == .completed
+      let failure = result.error
       DispatchQueue.main.async { [weak self] in
         guard let self else { return }
         busy = false
         guard epoch.accepts(token), !cleared else { return }
-        guard result.status == .completed else {
-          onFailure?(result.error ?? EffectError.unavailable("GPU 呈现失败"))
+        guard completed else {
+          onFailure?(failure ?? EffectError.unavailable("GPU 呈现失败"))
           return
         }
-        append(gpu, to: &gpuTimes)
+        append(gpuMilliseconds, to: &gpuTimes)
         onFrameReady?()
         // The first command may complete while the panel is still transparent.
         // onFrameReady can then invalidate the view, but a paused MTKView is not
@@ -413,7 +416,7 @@ final class FoldRenderer: NSObject, MTKViewDelegate {
         // deadline. Submit the newly dirty frame from the completion callback,
         // after busy is cleared, so visibility is proven by a real drawable.
         if dirty { render() }
-        if let output,
+        if let output = gpu.readback,
           let provider = CGDataProvider(
             data: Data(bytes: output.contents(), count: output.length) as CFData),
           let image = CGImage(
@@ -437,4 +440,13 @@ enum EffectError: LocalizedError {
     if case .unavailable(let message) = self { return message }
     return nil
   }
+}
+
+/// 一帧在 GPU 做完之前必须活着的资源。编码完成后谁都不再改它们：GPU 完成回调只负责持有到结束，
+/// 主队列只读一次 readback。Metal 资源对象本身可以跨线程持有（编码器不在这里）。
+private struct FoldGPUInFlight: @unchecked Sendable {
+  let wrapper: CVMetalTexture?
+  let source: any MTLTexture
+  let opticalSurface: any MTLTexture
+  let readback: (any MTLBuffer)?
 }

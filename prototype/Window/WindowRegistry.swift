@@ -5,7 +5,8 @@
 
 import Cocoa
 
-final class WindowRegistry {
+/// `apps` 只在持有 `lock` 时读写，可以从任意线程调用。
+final class WindowRegistry: @unchecked Sendable {
     static let shared = WindowRegistry()
 
     private struct AppEntry {

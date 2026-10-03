@@ -118,7 +118,7 @@ final class WindowBrowserSelectionDetailView: NSView {
 }
 
 extension WindowBrowserSelectionDetailView: WindowBrowserAppearanceRefreshable,
-                                            WindowBrowserCardSurfaceHosting {
+                                            @preconcurrency WindowBrowserCardSurfaceHosting {
     /// 详情区自己重算层颜色（图片区域与卡片共享同一套规则）。
     func refreshAppearance() {
         WindowBrowserSurfaceStyle.applyCard(self, selected: false, params: params)
