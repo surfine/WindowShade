@@ -1,0 +1,98 @@
+App/DockClickHide.swift:88:59: error: reference to captured var 'spaces' in concurrently-executing code [#SendableClosureCaptures]
+App/EventTap.swift:183:23: error: result of call to 'assumeIsolated(_:file:line:)' is unused [#NoUsage]
+App/EventTap.swift:621:27: error: result of call to 'assumeIsolated(_:file:line:)' is unused [#NoUsage]
+App/FaceObservationSource.swift:175:54: error: no calls to throwing functions occur within 'try' expression [#UnnecessaryEffectMarker]
+App/FoldTransaction.swift:126:17: error: using '_' to ignore the result of a Void-returning function is redundant
+App/GestureProbe.swift:825:15: error: immutable value 'frame' was never used; consider replacing with '_' or removing it [#NoUsage]
+App/GlobalShortcuts.swift:184:16: error: static property 'defaults' is not concurrency-safe because it is nonisolated global shared mutable state [#MutableGlobalVariable]
+App/HabitContext.swift:12:1: error: add '@preconcurrency' to treat 'Sendable'-related errors from module 'ApplicationServices' as warnings [#AddPreconcurrencyImport]
+App/HabitKeys.swift:14:1: error: add '@preconcurrency' to treat 'Sendable'-related errors from module 'CoreFoundation' as warnings [#AddPreconcurrencyImport]
+App/MenuBarController.swift:143:36: error: conformance of 'NSMenuItem' to 'Sendable' is unavailable
+App/MissionControlKeys.swift:12:1: error: add '@preconcurrency' to treat 'Sendable'-related errors from module 'CoreFoundation' as warnings [#AddPreconcurrencyImport]
+App/MissionControlKeys.swift:172:13: error: using '_' to ignore the result of a Void-returning function is redundant
+App/Notch.swift:26:1: error: add '@preconcurrency' to treat 'Sendable'-related errors from module 'ApplicationServices' as warnings [#AddPreconcurrencyImport]
+App/NotchShelf.swift:192:31: error: result of call to 'assumeIsolated(_:file:line:)' is unused [#NoUsage]
+App/NotchWatch.swift:165:87: error: 'weak' ownership of capture 'self' differs from implicitly-captured strong reference in outer scope [#ImplicitStrongCapture]
+App/NotchWatch.swift:8:1: error: add '@preconcurrency' to treat 'Sendable'-related errors from module 'ApplicationServices' as warnings [#AddPreconcurrencyImport]
+App/PictureInPicture.swift:14:1: error: add '@preconcurrency' to treat 'Sendable'-related errors from module 'ApplicationServices' as warnings [#AddPreconcurrencyImport]
+App/Preferences.swift:30:19: error: result of call to 'assumeIsolated(_:file:line:)' is unused [#NoUsage]
+App/Preferences.swift:382:41: error: main actor-isolated static property 'short' can not be referenced from a nonisolated context
+App/RectangleImport.swift:6:1: error: add '@preconcurrency' to treat 'Sendable'-related errors from module 'ObjectiveC' as warnings [#AddPreconcurrencyImport]
+App/ShadeController.swift:175:50: error: main actor-isolated static property 'shared' can not be referenced from a nonisolated context
+App/ShadeController.swift:4:1: error: add '@preconcurrency' to treat 'Sendable'-related errors from module 'ApplicationServices' as warnings [#AddPreconcurrencyImport]
+App/SlideOver.swift:17:1: error: add '@preconcurrency' to treat 'Sendable'-related errors from module 'ApplicationServices' as warnings [#AddPreconcurrencyImport]
+App/Thumbnail.swift:130:45: error: cannot form key path to main actor-isolated property 'alphaValue'
+App/Thumbnail.swift:133:45: error: cannot form key path to main actor-isolated property 'level'
+App/TrackpadGestures.swift:1669:30: error: conformance of 'NSEvent' to 'Sendable' is unavailable
+App/TrackpadGestures.swift:16:1: error: add '@preconcurrency' to treat 'Sendable'-related errors from module 'ApplicationServices' as warnings [#AddPreconcurrencyImport]
+App/TrackpadGestures.swift:23:52: error: main actor-isolated static property 'enabledDefaultsKey' can not be referenced from a nonisolated context
+App/TrackpadGestures.swift:24:59: error: main actor-isolated static property 'enabledDefaultsKey' can not be referenced from a nonisolated context
+App/UpdaterSystem.swift:440:31: error: 'SMJobCopyDictionary' was deprecated in macOS 10.10 [#DeprecatedDeclaration]
+App/UpdaterSystem.swift:453:18: error: 'SMJobRemove' was deprecated in macOS 10.10 [#DeprecatedDeclaration]
+App/UpdaterSystem.swift:470:18: error: 'SMJobSubmit' was deprecated in macOS 10.10 [#DeprecatedDeclaration]
+App/UpdaterSystem.swift:603:16: error: 'init(cString:)' is deprecated: Use String(decoding: array, as: UTF8.self) instead, after truncating the null termination. [#DeprecatedDeclaration]
+App/WS2FoldCallbackGuard.swift:6:43: error: main actor-isolated static property 'shared' can not be referenced from a nonisolated context
+App/Welcome.swift:392:44: error: converting function value of type '@MainActor (SwitcherOrigin) -> WelcomeChoice' to '(SwitcherOrigin) -> WelcomeChoice' loses global actor 'MainActor'
+App/WindowProxy.swift:9:1: error: add '@preconcurrency' to treat 'Sendable'-related errors from module 'ApplicationServices' as warnings [#AddPreconcurrencyImport]
+App/WindowSwitcher.swift:10:1: error: add '@preconcurrency' to treat 'Sendable'-related errors from module 'CoreFoundation' as warnings [#AddPreconcurrencyImport]
+Capture/PreviewRenderer.swift:451:24: error: static property 'reported' is not concurrency-safe because it is nonisolated global shared mutable state [#MutableGlobalVariable]
+Capture/ShareableContentCache.swift:18:17: error: type 'SCShareableContent' does not conform to the 'Sendable' protocol
+Capture/ShareableContentCache.swift:33:51: error: non-Sendable type 'Task<SCShareableContent, any Error>' cannot exit main actor-isolated context in call to nonisolated property 'value' [#NonSendableExitingActor]
+Capture/ShareableContentCache.swift:33:60: error: non-Sendable type 'SCShareableContent' of nonisolated property 'value' cannot be sent to main actor-isolated context
+Capture/ShareableContentCache.swift:33:60: error: type 'SCShareableContent' does not conform to the 'Sendable' protocol
+Capture/ShareableContentCache.swift:48:36: error: type 'SCShareableContent' does not conform to the 'Sendable' protocol
+Capture/ShareableContentCache.swift:4:1: error: add '@preconcurrency' to treat 'Sendable'-related errors from module 'ScreenCaptureKit' as warnings [#AddPreconcurrencyImport]
+Capture/ShareableContentCache.swift:68:13: error: type 'SCShareableContent' does not conform to the 'Sendable' protocol
+Capture/ShareableContentCache.swift:68:20: error: type 'SCShareableContent' does not conform to the 'Sendable' protocol
+Capture/ShareableContentCache.swift:68:25: error: type 'SCShareableContent' does not conform to the 'Sendable' protocol
+Capture/ShareableContentCache.swift:72:34: error: non-Sendable type 'Task<SCShareableContent, any Error>' cannot exit main actor-isolated context in call to nonisolated property 'value' [#NonSendableExitingActor]
+Capture/ShareableContentCache.swift:72:39: error: non-Sendable type 'SCShareableContent' of nonisolated property 'value' cannot be sent to main actor-isolated context
+Capture/ShareableContentCache.swift:72:39: error: type 'SCShareableContent' does not conform to the 'Sendable' protocol
+Capture/WindowSnapshotCache.swift:68:16: error: static property 'shared' is not concurrency-safe because non-'Sendable' type 'WindowSnapshotCache' may have shared mutable state [#MutableGlobalVariable]
+Effects/EffectEnvironment.swift:31:24: error: static property 'state' is not concurrency-safe because it is nonisolated global shared mutable state [#MutableGlobalVariable]
+Effects/EffectInspector.swift:10:15: error: main actor-isolated default value in a nonisolated context
+Effects/EffectInspector.swift:9:15: error: main actor-isolated default value in a nonisolated context
+Effects/EffectSoakProbe.swift:100:32: error: 'weak' ownership of capture 'self' differs from implicitly-captured strong reference in outer scope [#ImplicitStrongCapture]
+Effects/EffectSoakProbe.swift:28:15: error: main actor-isolated default value in a nonisolated context
+Effects/EffectSoakProbe.swift:93:37: error: 'weak' ownership of capture 'self' differs from implicitly-captured strong reference in outer scope [#ImplicitStrongCapture]
+Effects/EffectSoakProbe.swift:94:41: error: 'weak' ownership of capture 'self' differs from implicitly-captured strong reference in outer scope [#ImplicitStrongCapture]
+Effects/EffectSoakProbe.swift:97:55: error: 'weak' ownership of capture 'self' differs from implicitly-captured strong reference in outer scope [#ImplicitStrongCapture]
+Effects/FoldRenderer.swift:1:1: error: add '@preconcurrency' to treat 'Sendable'-related errors from module 'Metal' as warnings [#AddPreconcurrencyImport]
+Overlay/PaperSurfaceStyle.swift:102:45: error: cannot form key path to main actor-isolated property 'level'
+Overlay/PaperSurfaceStyle.swift:120:13: error: var 'paperShadowAssociation' is not concurrency-safe because it is nonisolated global shared mutable state [#MutableGlobalVariable]
+Overlay/PaperSurfaceStyle.swift:99:45: error: cannot form key path to main actor-isolated property 'alphaValue'
+Overlay/ShadeStripPool.swift:11:16: error: static property 'shared' is not concurrency-safe because non-'Sendable' type 'ShadeStripPool' may have shared mutable state [#MutableGlobalVariable]
+PinnedPreview.swift:3:1: error: add '@preconcurrency' to treat 'Sendable'-related errors from module 'ApplicationServices' as warnings [#AddPreconcurrencyImport]
+Private/SkyLightBridge.swift:30:16: error: static property 'shared' is not concurrency-safe because non-'Sendable' type 'PrivateSLSWindowMover' may have shared mutable state [#MutableGlobalVariable]
+Support/Diagnostics.swift:128:16: error: static property 'shared' is not concurrency-safe because non-'Sendable' type 'MainThreadStallSentinel' may have shared mutable state [#MutableGlobalVariable]
+Support/Diagnostics.swift:63:24: error: static property 'stack' is not concurrency-safe because it is nonisolated global shared mutable state [#MutableGlobalVariable]
+Support/Diagnostics.swift:64:24: error: static property 'recent' is not concurrency-safe because it is nonisolated global shared mutable state [#MutableGlobalVariable]
+Window/AXHelpers.swift:247:9: error: initialization of immutable value 'size' was never used; consider replacing with assignment to '_' or removing it [#NoUsage]
+Window/AppWindows.swift:3:1: error: add '@preconcurrency' to treat 'Sendable'-related errors from module 'ApplicationServices' as warnings [#AddPreconcurrencyImport]
+Window/ChromeProfile.swift:174:16: error: static property 'shared' is not concurrency-safe because non-'Sendable' type 'ChromeProfileCache' may have shared mutable state [#MutableGlobalVariable]
+Window/ChromeProfile.swift:3:1: error: add '@preconcurrency' to treat 'Sendable'-related errors from module 'ApplicationServices' as warnings [#AddPreconcurrencyImport]
+Window/WindowListCache.swift:14:16: error: static property 'shared' is not concurrency-safe because non-'Sendable' type 'WindowListCache' may have shared mutable state [#MutableGlobalVariable]
+Window/WindowRegistry.swift:9:16: error: static property 'shared' is not concurrency-safe because non-'Sendable' type 'WindowRegistry' may have shared mutable state [#MutableGlobalVariable]
+WindowBrowser/DockHoverObserver.swift:12:1: error: add '@preconcurrency' to treat 'Sendable'-related errors from module 'ApplicationServices' as warnings [#AddPreconcurrencyImport]
+WindowBrowser/WindowBrowserCardView.swift:438:34: error: conformance of 'WindowBrowserCardView' to protocol 'WindowBrowserAppearanceRefreshable' crosses into main actor-isolated code and can cause data races [#ConformanceIsolation]
+WindowBrowser/WindowBrowserCardView.swift:439:34: error: conformance of 'WindowBrowserCardView' to protocol 'WindowBrowserCardSurfaceHosting' crosses into main actor-isolated code and can cause data races [#ConformanceIsolation]
+WindowBrowser/WindowBrowserContentView.swift:14:39: error: conformance of 'WindowBrowserContentView' to protocol 'WindowBrowserItemDelegate' crosses into main actor-isolated code and can cause data races [#ConformanceIsolation]
+WindowBrowser/WindowBrowserController.swift:166:22: error: main actor-isolated default value in a nonisolated context
+WindowBrowser/WindowBrowserController.swift:8:1: error: add '@preconcurrency' to treat 'Sendable'-related errors from module 'ApplicationServices' as warnings [#AddPreconcurrencyImport]
+WindowBrowser/WindowBrowserGeometry.swift:651:24: error: static property 'titleWidthCache' is not concurrency-safe because it is nonisolated global shared mutable state [#MutableGlobalVariable]
+WindowBrowser/WindowBrowserIdentityProbe.swift:15:1: error: add '@preconcurrency' to treat 'Sendable'-related errors from module 'ApplicationServices' as warnings [#AddPreconcurrencyImport]
+WindowBrowser/WindowBrowserListRowView.swift:296:37: error: conformance of 'WindowBrowserListRowView' to protocol 'WindowBrowserAppearanceRefreshable' crosses into main actor-isolated code and can cause data races [#ConformanceIsolation]
+WindowBrowser/WindowBrowserListRowView.swift:297:37: error: conformance of 'WindowBrowserListRowView' to protocol 'WindowBrowserCardSurfaceHosting' crosses into main actor-isolated code and can cause data races [#ConformanceIsolation]
+WindowBrowser/WindowBrowserMaterial.swift:258:59: error: conformance of 'WindowBrowserGlassSurface' to protocol 'WindowBrowserCornerRadiusUpdatable' crosses into main actor-isolated code and can cause data races [#ConformanceIsolation]
+WindowBrowser/WindowBrowserMetadataQueue.swift:31:27: error: capture of 'self' with non-Sendable type 'WindowBrowserMetadataQueue?' in a '@Sendable' closure [#SendableClosureCaptures]
+WindowBrowser/WindowBrowserNewWindow.swift:13:1: error: add '@preconcurrency' to treat 'Sendable'-related errors from module 'CoreFoundation' as warnings [#AddPreconcurrencyImport]
+WindowBrowser/WindowBrowserNewWindow.swift:81:24: error: static property 'itemAttributes' is not concurrency-safe because non-'Sendable' type 'CFArray' may have shared mutable state [#MutableGlobalVariable]
+WindowBrowser/WindowBrowserSelectionDetailView.swift:120:45: error: conformance of 'WindowBrowserSelectionDetailView' to protocol 'WindowBrowserAppearanceRefreshable' crosses into main actor-isolated code and can cause data races [#ConformanceIsolation]
+WindowBrowser/WindowBrowserSelectionDetailView.swift:121:45: error: conformance of 'WindowBrowserSelectionDetailView' to protocol 'WindowBrowserCardSurfaceHosting' crosses into main actor-isolated code and can cause data races [#ConformanceIsolation]
+WindowBrowser/WindowPlacement.swift:292:84: error: 'weak' ownership of capture 'self' differs from implicitly-captured strong reference in outer scope [#ImplicitStrongCapture]
+WindowBrowser/WindowPlacement.swift:337:84: error: 'weak' ownership of capture 'self' differs from implicitly-captured strong reference in outer scope [#ImplicitStrongCapture]
+WindowBrowser/WindowPlacement.swift:362:52: error: conformance of 'WindowPlacementPreviewWindow' to protocol 'WindowPlacementPreviewPresenting' crosses into main actor-isolated code and can cause data races [#ConformanceIsolation]
+WindowShade.swift:16:1: error: add '@preconcurrency' to treat 'Sendable'-related errors from module 'CoreFoundation' as warnings [#AddPreconcurrencyImport]
+WindowShade.swift:301:45: error: type 'MissionControlKeys' does not conform to the 'Sendable' protocol
+WindowShade.swift:77:5: error: var 'appDelegate' is not concurrency-safe because it is nonisolated global shared mutable state [#MutableGlobalVariable]
+WindowShade.swift:841:21: error: reference to var 'kAXTrustedCheckOptionPrompt' is not concurrency-safe because it involves shared mutable state

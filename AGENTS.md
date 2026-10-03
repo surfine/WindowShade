@@ -1,4 +1,6 @@
 > 最终交接入口：先读 [docs/handoff/FINAL-HANDOFF.md](docs/handoff/FINAL-HANDOFF.md)。第十份保留原蓝图全部目标，覆盖旧派工顺序；不覆盖用户在实际工作区的新改动。不要再从第一份顺次套补丁，也不要默认直接在 main 上修改。
+>
+> 第九、十份并入后的实际状态、本机证据与复核议程见 [docs/handoff/round2-part10/REVIEW-HANDOFF.md](docs/handoff/round2-part10/REVIEW-HANDOFF.md)：**当前 `main` 在显式 Swift 6 严格并发下编不过（98 处，W00 未完成）**。
 
 # 项目约定
 
