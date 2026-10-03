@@ -112,6 +112,13 @@ import Cocoa
         focus.handle(focus.model.phase == .idle ? .start : focus.model.isPaused ? .resume : .pause)
         if focusCard == nil { focus.presentation = .compact }
     }
+    /// 休息时点一下刘海：把这一轮收起来的窗口放回来，休息照走。返回是否真的做了这件事。
+    @discardableResult
+    func restoreFocusWindowsForUser() -> Bool {
+        guard focus.model.phase == .rest else { return false }
+        focus.handle(.dismissRestWindows)
+        return true
+    }
     @discardableResult func showSessions(_ sessions:[AgentSessions.Session], open:@escaping(WS2.Context)->Void,
                                          stop:@escaping(WS2.Context)->Void) -> Bool {
         let view = WS2AgentSessionView(frame:.zero); view.render(sessions); view.open = open; view.stop = stop
