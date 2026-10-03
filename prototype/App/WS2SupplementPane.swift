@@ -16,6 +16,11 @@ import Cocoa
         coding.bezelStyle = .rounded;coding.isEnabled=NotchController.isEnabled
         coding.toolTip="本地选择项目和 Codex，登录后进行只读查询。打开页面不会启动程序。"
         addArrangedSubview(coding)
+        let conductor = NSButton(title: "指挥…", target: owner, action: #selector(AppDelegate.ws2OpenConductor))
+        conductor.bezelStyle = .rounded
+        conductor.isEnabled = NotchController.isEnabled
+        conductor.toolTip = "看当前会话、模型和草稿。不会发送，也不会连接遥控器。"
+        addArrangedSubview(conductor)
         for (title,reason) in [("指挥模式","需要已核准的输入设备和助手连接"),("平滑滚动","需要确认每条事件的设备来源"),
                                 ("Apple TV 遥控器","需要通过当前设备的按钮与触点探针"),("游戏手柄","需要完成当前连接的映射与阻力归零检查"),
                                 ("在场检测","需要已绑定身份的蓝牙读回来源")] {
