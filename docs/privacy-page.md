@@ -48,7 +48,7 @@ Newlearner 这样的人推荐一个要辅助功能和屏幕录制的工具之前
 | P1 | 修日志：换位置、改权限、去掉窗口标题 | 另一个账户读不到；日志里搜不到窗口标题 |
 | P2 | 联网实测：“自动检查更新”开、关各跑一天 | `nettop` 记录里只有更新地址；关掉后为零 |
 | P3 | 登记表 + 构建检查 | **已做**：`tools/privacy/registry.json` 458 个词法点，`tests/run-privacy-registry-check.sh` 对新增读取点直接失败；页面数据由同一份生成，`tests/run-privacy-page-sync.sh` 防止跑偏 |
-| P4 | 设置里的“隐私”一栏 | **已做（待真机看外观）**：替换原“权限与启动”，四组 20 行（只列 current），private 值默认隐藏、点开看值，两项授权、登录时启动与更新并进同一页；`bash tests/run-appkit-tests.sh SettingsNavigationTests` 覆盖分组、行、隐藏值与深浅色截图 |
+| P4 | 设置里的“隐私”一栏 | **已做（待真机看外观）**：替换原“权限与启动”。current 行显示现有快照，private 值默认隐藏。planned 行也列出，灰色，值固定「还没读」，不取快照。两项授权、登录时启动与更新并进同一页；`bash tests/run-appkit-tests.sh SettingsNavigationTests` 覆盖分组、行、隐藏值、还没读与深浅色截图 |
 | P5 | 逐句核对 | 核对表每行都是“已核” |
 | P6 | 官网同一份 | 从登记表生成，和 App 里一字不差 |
 
