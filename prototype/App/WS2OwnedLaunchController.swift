@@ -1,273 +1,309 @@
-import Cocoa
+import Foundation
 
-/// owned Codex 的本地启动闭环：本地选项目 → 预检可执行文件与版本 → 先建会话（不启动）→
-/// `WS2OwnedScope.begin` 拿下与本次 connection 绑定的票据 → 才 `start()`。
-///
-/// Scope 只防跨会话错配，不是文件沙盒，也不是授权：允许一次命令仍然要走
-/// 完整 review → 原生认证 → 授权账 consume → 一次性编码 → 同代 writer。锁态未知一律不启动。
-@MainActor
-final class WS2OwnedLaunchController {
-    enum Phase: Equatable {
-        case idle
-        case connecting
-        case ready(thread: String)
-        case failed(String)
+/// Actual composition root for the local user flow. Phase is a UI projection; CodexWire and
+/// AgentSessions remain the authorities for protocol state and backend sessions respectively.
+@MainActor final class WS2OwnedLaunchController {
+    enum Phase: Equatable { case idle, checkingVersion, connecting, checkingConfig, signedOut, ready, creatingThread, sending, running, interrupting, completed, failed, stopping, stopped }
+    private enum Query { case config, account, login, cancelLogin, logout }
+    private struct Submission { let text:String;let model:String;let effort:String }
+    private struct Association { let project:WS2OwnedScope.Project;let thread:String }
+    private let clock:any WS2Clock
+    private let profileRoot:URL
+    private let mayUse:()->Bool
+    private var scope=WS2OwnedScope(boot:UUID())
+    private var profile:WS2LocalLaunchProfile?
+    private var probe:WS2VersionProbe?
+    private var retiringProbe:WS2VersionProbe?
+    private var launchID:UUID?
+    private var ticket:WS2OwnedScope.Ticket?
+    private var queries:[WS2.RequestID:Query]=[:]
+    private var configured=false, authenticated=false
+    private var loginID:String?
+    private var loginDeadline:Task<Void,Never>?
+    private var submission:Submission?
+    private var sequence:UInt64=0
+    private var context:WS2.Context?
+    private var activeTurn:String?
+    private var projectIDs:[WS2OwnedScope.Directory:UUID]=[:]
+    private var associations:[Association]=[]
+    private var output=WS2DiagnosticTail(capacity:65_536)
+    private var diagnosticSnapshot=""
+    private(set) var session:WS2OwnedCodexSession?
+    private(set) var store=AgentSessions()
+    private(set) var phase:Phase = .idle
+    private(set) var status="尚未启动"
+    private(set) var notice=""
+    private(set) var draft=""
+    private(set) var projectURL:URL?
+    private(set) var executableURL:URL?
+    private(set) var model:String?
+    private(set) var effort:String?
+    private(set) var models:[String:Set<String>]=[:]
+    private(set) var observedReaps=0
+    var onQuiescent:(()->Void)?
+    var onChange:(()->Void)?
+    var onBrowserURL:((URL)->Void)?
+    var text:String { output.visibleText() }
+    var isBusy:Bool { probe != nil || retiringProbe != nil || session != nil }
+    var canLaunch:Bool { !isBusy && projectURL != nil && executableURL != nil && mayUse() }
+    var canLogin:Bool { phase == .signedOut && loginID == nil && !queries.values.contains(where:{ switch $0 { case .login,.cancelLogin:return true;default:return false } }) }
+    var canSend:Bool { authenticated && configured && currentIsValid() && submission == nil && activeTurn == nil && ![.creatingThread,.sending,.interrupting].contains(phase) && model != nil && effort != nil }
+    var canInterrupt:Bool { activeTurn != nil && phase == .running }
+    var canResume:Bool { canSend && session?.approval.wire.threadID == nil && lastAssociation != nil }
+    var canLogout:Bool { authenticated && activeTurn == nil && submission == nil && ![.creatingThread,.sending,.interrupting].contains(phase) }
+    var diagnostics:String { session?.diagnostics?.visibleText() ?? diagnosticSnapshot }
+    init(profileRoot:URL,clock:any WS2Clock = WS2ContinuousClock(),mayUse:@escaping()->Bool) {
+        self.profileRoot=profileRoot;self.clock=clock;self.mayUse=mayUse
     }
-
-    /// 协议适配钉在 0.153.0；版本不同先记为差异，不假设向后兼容。
-    static let pinnedVersion = "0.153.0"
-
-    private weak var owner: AppDelegate?
-    private let clock: any WS2Clock
-    private let island: NotchLeaseHub
-    private let authentication: NotchAuthenticationController
-    private let environment: () -> [String: String]
-    private var scope: WS2OwnedScope
-    private var ticket: WS2OwnedScope.Ticket?
-    private var session: WS2OwnedCodexSession?
-    private var store = AgentSessions()
-
-    private(set) var phase: Phase = .idle
-    private(set) var projectURL: URL?
-    private(set) var executableURL: URL?
-    private(set) var executableVersion: String?
-    private(set) var models: [String] = []
-    private(set) var threadID: String?
-    var onChange: (() -> Void)?
-    /// 会话状态要显示到刘海/负一屏时由运行时接上（不在这里建第二个岛）。
-    var onSessions: (([AgentSessions.Session]) -> Void)?
-
-    init(owner: AppDelegate, clock: any WS2Clock, island: NotchLeaseHub,
-         authentication: NotchAuthenticationController,
-         environment: @escaping () -> [String: String],
-         executable: URL? = WS2OwnedLaunchController.defaultExecutable) {
-        self.owner = owner; self.clock = clock; self.island = island; self.authentication = authentication
-        self.environment = environment
-        scope = WS2OwnedScope(boot: UUID())
-        executableURL = executable
+    @discardableResult func editDraft(_ value:String) -> Bool {
+        guard value.utf8.count<=65_536 else { return false };draft=value;return true
     }
-
-    nonisolated static var defaultExecutable: URL? {
-        let path = "/opt/homebrew/bin/codex"
-        return FileManager.default.isExecutableFile(atPath: path) ? URL(fileURLWithPath: path) : nil
-    }
-
-    var statusText: String {
-        switch phase {
-        case .idle: return projectURL == nil ? "尚未选择项目" : "尚未启动"
-        case .connecting: return "正在连接"
-        case .ready(let thread): return "已连接 · 会话 \(thread.prefix(8))"
-        case .failed(let reason): return "启动失败：\(reason)"
-        }
-    }
-
-    /// 现有 store 的快照；视图只读它，显示的入口不反向启动或停止进程。
-    func storeSnapshot() -> [AgentSessions.Session] { Array(store.sessions.values) }
-
-    // MARK: - 本地选择与预检
-
-    /// 只接受本地目录；记下 canonicalPath、device、inode，目录被换掉就失效。
-    @discardableResult
-    func chooseProject() -> Bool {
-        let panel = NSOpenPanel()
-        panel.canChooseDirectories = true
-        panel.canChooseFiles = false
-        panel.allowsMultipleSelection = false
-        panel.prompt = "选择"
-        panel.message = "选一个本地目录作为这次会话的项目范围"
-        guard panel.runModal() == .OK, let url = panel.url else { return false }
-        return selectProject(url)
-    }
-
-    @discardableResult
-    func selectProject(_ url: URL) -> Bool {
+    @discardableResult func selectProject(_ url:URL) -> Bool {
+        guard !isBusy,mayUse() else { return false }
         do {
-            let directory = try WS2ProjectDirectory.read(url)
-            guard scope.select(.init(id: UUID(), root: directory)) else { throw WS2ProjectDirectory.Failure.missingIdentity }
-            projectURL = URL(fileURLWithPath: directory.canonicalPath)
-            invalidateSession(reason: "project changed")
-            phase = .idle
-            onChange?()
-            return true
-        } catch {
-            phase = .failed("这个目录不能用")
-            onChange?()
-            return false
-        }
+            let root=try WS2ProjectDirectory.read(url)
+            guard projectIDs[root] != nil || projectIDs.count<64 else { throw CodexWire.Failure.capacity }
+            let id=projectIDs[root] ?? UUID();projectIDs[root]=id
+            guard scope.select(.init(id:id,root:root)) else { return false }
+            projectURL=URL(fileURLWithPath:root.canonicalPath,isDirectory:true)
+            status="项目已选择";notice="";changed();return true
+        } catch { notice="无法使用这个项目目录。";changed();return false }
     }
-
-    /// 一次性的 `--version`，不建立会话；版本不同只记录差异，不猜兼容。
-    @discardableResult
-    func checkExecutable(_ url: URL? = nil) -> String? {
-        guard let url = url ?? executableURL, FileManager.default.isExecutableFile(atPath: url.path) else {
-            executableVersion = nil; return nil
-        }
-        executableURL = url
-        let process = Process()
-        process.executableURL = url
-        process.arguments = ["--version"]
-        process.environment = environment()
-        let pipe = Pipe(); process.standardOutput = pipe; process.standardError = FileHandle.nullDevice
-        do { try process.run() } catch { executableVersion = nil; return nil }
-        let data = pipe.fileHandleForReading.readDataToEndOfFile()
-        process.waitUntilExit()
-        let text = String(data: data, encoding: .utf8)?.trimmingCharacters(in: .whitespacesAndNewlines)
-        executableVersion = text
-        return text
+    @discardableResult func selectExecutable(_ url:URL) -> Bool {
+        guard !isBusy,mayUse(),url.isFileURL,FileManager.default.isExecutableFile(atPath:url.path) else { return false }
+        executableURL=url.resolvingSymlinksInPath().standardizedFileURL;notice="";changed();return true
     }
-
-    var versionMatchesPinned: Bool {
-        guard let version = executableVersion else { return false }
-        return version.contains(Self.pinnedVersion)
+    @discardableResult func launch(consent:Bool,diagnostics:Bool=false) -> Bool {
+        guard consent,canLaunch,let projectURL,let executableURL,let project=scope.project else { return false }
+        let request=UUID();launchID=request;status="正在核对 Codex 版本";phase = .checkingVersion
+        output.clear();diagnosticSnapshot="";notice="";model=nil;effort=nil;models=[:]
+        do {
+            let prepared=try WS2LocalLaunchProfile.prepare(projectURL:projectURL,projectID:project.id,executableURL:executableURL,root:profileRoot)
+            profile=prepared
+            let p=try WS2VersionProbe(profile:prepared,mayContinue:{ [weak self] in self?.launchID==request && self?.mayUse()==true },completion:{ [weak self] ok in
+                guard let self,self.launchID==request else { return }
+                self.probe=nil
+                guard ok,self.mayUse() else { self.fail("需要 codex-cli 0.153.0 的可执行文件；其他版本不会自动升级或继续启动。");return }
+                self.begin(prepared,diagnostics:diagnostics)
+            })
+            probe=p;try p.start();changed();return true
+        } catch { probe=nil;fail("启动检查未通过。请检查可执行文件、目录权限和项目内的 .codex／.agents 配置。");return false }
     }
-
-    // MARK: - 启动与停止
-
-    /// 顺序固定：先构造（不启动）→ Scope.begin → 保存票据与强引用 → start。
-    func start() throws {
-        guard !isLockedKnown, AuthorizationService.shared.lockState() == .unlocked else { throw Failure.locked }
-        guard let projectURL, let root = try? WS2ProjectDirectory.read(projectURL) else { throw Failure.noProject }
-        guard let executableURL, FileManager.default.isExecutableFile(atPath: executableURL.path) else { throw Failure.noExecutable }
-        invalidateSession(reason: "restart")
-
-        let candidate = try WS2OwnedCodexSession(
-            executable: executableURL, workingDirectory: projectURL, environment: environment(), clock: clock,
-            island: island, authentication: authentication,
-            currentContext: { [weak self] in self?.currentContext() },
-            scopeStillValid: { [weak self] review in self?.scopeStillValid(review) ?? false },
-            mayOperate: { [weak self] in self?.mayOperate() ?? false })
-        // 先拿到 connectionID，再用它开票据；拿不到票据就不启动。
-        guard let newTicket = scope.begin(connection: candidate.connectionID, liveRoot: root) else {
-            candidate.stop()
-            phase = .failed("项目范围已失效，请重新选择")
-            onChange?()
-            throw Failure.scope
-        }
-        ticket = newTicket
-        session = candidate
-        candidate.onEvent = { [weak self] event in self?.receive(event) }
-        candidate.onEnd = { [weak self, weak candidate] in
-            guard let self, let candidate, self.session === candidate else { return }
-            self.sessionStopped()
-        }
-        phase = .connecting
-        onChange?()
-        do { try candidate.start() } catch {
-            sessionStopped()
-            phase = .failed("无法启动这个可执行文件")
-            onChange?()
-            throw error
-        }
-    }
-
-    /// 用户明确发一条草稿：线程没就绪、没有模型、锁态未知都拒绝，草稿留在调用方。
-    func sendDraft(_ text: String) throws {
-        guard case .ready = phase, let session, let threadID else { throw Failure.notReady }
-        guard let model = models.first else { throw Failure.noModel }
-        guard mayOperate() else { throw Failure.notReady }
-        _ = threadID
-        try session.startTurn(text: text, model: model, effort: Self.defaultEffort)
-    }
-
-    func interrupt() { try? session?.interrupt() }
-
-    /// 停止：先撤票据与待批准，再断通道，最后放掉强引用。
-    func stop() {
-        invalidateSession(reason: "stop")
-        phase = .idle
-        onChange?()
-    }
-
-    /// 锁屏、睡眠、功能关闭、换项目都走这条：先让 Scope 失效，再停会话。
-    func invalidate(reason: String) {
-        invalidateSession(reason: reason)
-        if case .failed = phase {} else { phase = .idle }
-        onChange?()
-    }
-
-    private func invalidateSession(reason: String) {
-        scope.invalidate()
-        ticket = nil
-        session?.stop()
-        session = nil
-        threadID = nil
-        models = []
-        wlog("owned codex: invalidated (\(reason))")
-    }
-
-    // MARK: - 三个回调都读真实状态
-
-    private var isLockedKnown: Bool { AuthorizationService.shared.lockState() != .unlocked }
-
-    private func mayOperate() -> Bool {
-        guard let projectURL, let root = try? WS2ProjectDirectory.read(projectURL), let ticket else { return false }
-        return NotchController.isEnabled && scope.accepts(ticket, liveRoot: root)
-    }
-
-    private func currentContext() -> WS2.Context? {
-        guard let projectURL, let root = try? WS2ProjectDirectory.read(projectURL), let ticket,
-              let thread = session?.approval.wire.threadID else { return nil }
-        return scope.context(ticket, session: WS2.SessionKey(provider: .codex, id: thread), liveRoot: root)
-    }
-
-    private func scopeStillValid(_ review: WS2ApprovalReview) -> Bool {
-        guard mayOperate(), let projectURL, let root = try? WS2ProjectDirectory.read(projectURL),
-              let context = currentContext(), context == review.context,
-              review.thread == session?.approval.wire.threadID, review.turn == session?.approval.wire.turnID,
-              clock.now() < review.deadline else { return false }
-        // 命令的工作目录必须落在用户选的目录里；符号链接解析后仍要按路径边界核对。
-        guard let cwdDirectory = try? WS2ProjectDirectory.read(URL(fileURLWithPath: review.cwd)) else { return false }
-        return WS2ProjectDirectory.contains(canonicalRoot: root.canonicalPath,
-                                            canonicalCandidate: cwdDirectory.canonicalPath)
-    }
-
-    // MARK: - 事件 → 既有 store
-
-    private func receive(_ event: CodexWire.Event) {
-        switch event {
-        case .notification(let method, let params):
-            if method == "thread/started", let id = params["thread"]?["id"]?.text {
-                threadID = id; refreshModelsFromWire(); phase = .ready(thread: id)
+    private func begin(_ prepared:WS2LocalLaunchProfile,diagnostics:Bool) {
+        do {
+            try prepared.revalidate()
+            scope.environment(unlocked:mayUse(),enabled:true)
+            let s=try WS2OwnedCodexSession(executable:prepared.executable,workingDirectory:URL(fileURLWithPath:prepared.project.root.canonicalPath),
+                environment:prepared.environment,clock:clock,diagnosticByteLimit:diagnostics ? 65_536:nil,
+                currentContext:{[weak self] in self?.context},mayOperate:{[weak self] in self?.currentIsValid()==true})
+            guard let t=scope.begin(connection:s.connectionID,liveRoot:prepared.project.root) else { s.stop();throw CodexWire.Failure.stale }
+            ticket=t;session=s;_ = store.resume(at:clock.now());configured=false;authenticated=false;queries=[:];context=nil;activeTurn=nil;submission=nil
+            let id=s.connectionID
+            s.onEvent={ [weak self] event in self?.receive(event,connection:id) }
+            s.onUnavailable={ [weak self] text in guard let self,self.session?.connectionID==id else { return };self.notice=text;self.changed() }
+            s.onEnd={ [weak self] in self?.ended(connection:id) }
+            s.onReaped={ [weak self] fact in
+                guard let self,self.session?.connectionID==id else { return }
+                self.observedReaps += 1;self.diagnosticSnapshot=self.session?.diagnostics?.visibleText() ?? ""
+                self.session=nil;self.phase = .stopped
+                self.status=fact.wasSignalled ? "已断开，直属进程已终止" : "已断开，直属进程已回收"
+                self.changed()
             }
-            onChange?()
-        case .approval:
-            onChange?()
-        default:
-            break
+            phase = .connecting;status="正在连接助手";changed();try s.start()
+        } catch {
+            if session?.launched != true { session=nil }
+            fail("助手未能启动。没有发送工作请求。")
         }
     }
-
-    private func sessionStopped() {
-        ticket = nil; session = nil; threadID = nil; models = []
-        if case .failed = phase { return }
-        phase = .idle
-        onChange?()
+    private func currentIsValid() -> Bool {
+        guard mayUse(),let s=session,!s.closed,let t=ticket,let profile,
+              let live=try? WS2ProjectDirectory.read(URL(fileURLWithPath:profile.project.root.canonicalPath)) else { return false }
+        return s.connectionID==t.connection && scope.accepts(t,liveRoot:live)
     }
-
-    /// 模型与 effort 只信后端实际报回来的列表（CodexWire 已解析 model/list），不硬编码模型名。
-    private func refreshModelsFromWire() {
-        models = session?.approval.wire.models.keys.sorted() ?? []
+    private func revalidate() -> Bool {
+        guard currentIsValid(),let profile,(try? profile.revalidate()) != nil else { stop(reason:"项目或配置已改变，已断开。");return false }
+        return true
     }
-
-    enum Failure: Error { case locked, noProject, noExecutable, scope, notReady, noModel }
-    static let defaultEffort = "medium"
-}
-
-extension AppDelegate {
-    @objc func ws2ChooseProject() {
-        MainActor.assumeIsolated { _ = ws2Runtime.launch.chooseProject(); refreshPreferencesWindowIfOpen() }
+    @discardableResult func chooseModel(_ value:String) -> Bool {
+        guard authenticated,configured,activeTurn==nil,submission==nil,let choices=models[value],!choices.isEmpty else { return false }
+        model=value;effort=choices.contains("medium") ? "medium":choices.sorted().first;changed();return true
     }
-    @objc func ws2OwnedStart() {
-        MainActor.assumeIsolated {
-            _ = ws2Runtime.launch.checkExecutable()
-            do { try ws2Runtime.launch.start() } catch { wlog("owned codex: start failed") }
-            refreshPreferencesWindowIfOpen()
+    @discardableResult func chooseEffort(_ value:String) -> Bool {
+        guard activeTurn==nil,submission==nil,let model,models[model]?.contains(value)==true else { return false }
+        effort=value;changed();return true
+    }
+    @discardableResult func send(_ draft:String,hasMarkedText:Bool) -> Bool {
+        guard !hasMarkedText,revalidate(),canSend,!draft.trimmingCharacters(in:.whitespacesAndNewlines).isEmpty,
+              draft.utf8.count<=65_536,let model,let effort,let s=session,let profile else { return false }
+        submission=Submission(text:draft,model:model,effort:effort)
+        do {
+            if s.approval.wire.threadID == nil {
+                phase = .creatingThread;status="正在建立会话"
+                try s.startThread(cwd:profile.project.root.canonicalPath,model:model)
+            } else { try deliverSubmission() }
+            changed();return true
+        } catch { submission=nil;fail("请求未能发送。文字保留在输入框中。");return false }
+    }
+    private func deliverSubmission() throws {
+        guard let value=submission,let s=session,revalidate() else { throw CodexWire.Failure.stale }
+        phase = .sending;status="正在发送，等待助手响应"
+        try s.startTurn(text:value.text,model:value.model,effort:value.effort)
+        submission=nil
+    }
+    @discardableResult func resumeLast() -> Bool {
+        guard canResume,revalidate(),let association=lastAssociation else { return false }
+        do { phase = .creatingThread;status="正在恢复本项目的会话";try session?.resumeThread(association.thread);changed();return true }
+        catch { fail("无法恢复这条会话。可在当前项目新建会话。");return false }
+    }
+    private var lastAssociation:Association? { guard let project=scope.project else { return nil };return associations.last(where:{$0.project==project}) }
+    @discardableResult func interrupt() -> Bool {
+        guard canInterrupt,revalidate() else { return false }
+        do { phase = .interrupting;status="正在请求停止，等待助手确认";try session?.interrupt();changed();return true }
+        catch { stop(reason:"停止结果未知，已断开连接。");return false }
+    }
+    @discardableResult func login() -> Bool {
+        guard canLogin,revalidate(),let s=session else { return false }
+        do { let id=try s.account(.login);queries[id] = .login;status="正在准备登录";changed();return true }
+        catch { fail("无法开始登录。");return false }
+    }
+    @discardableResult func logout() -> Bool {
+        guard canLogout,revalidate(),let s=session else { return false }
+        do { authenticated=false;let id=try s.account(.logout);queries[id] = .logout;status="正在退出登录";changed();return true }
+        catch { stop(reason:"退出登录结果未知；本地连接已关闭。");return false }
+    }
+    func cancelLogin() {
+        loginDeadline?.cancel();loginDeadline=nil
+        if let loginID,let s=session,currentIsValid() {
+            if let id=try? s.account(.cancel(loginID)) { queries[id] = .cancelLogin }
+        }
+        loginID=nil;status="登录已取消";phase = .signedOut;changed()
+    }
+    static func browserLoginURL(_ text:String) -> URL? {
+        guard text.utf8.count<=8192,let c=URLComponents(string:text),c.scheme=="https",
+              let host=c.host,["auth.openai.com","chatgpt.com"].contains(host.lowercased()),
+              c.user==nil,c.password==nil,c.port==nil || c.port==443,c.fragment==nil else { return nil }
+        return c.url
+    }
+    private func receive(_ event:CodexWire.Event,connection:UUID) {
+        guard session?.connectionID==connection,currentIsValid(),let s=session else { return }
+        do {
+            switch event {
+            case .result(let id,let value):
+                if let query=queries.removeValue(forKey:id) {
+                    switch query {
+                    case .config:
+                        guard WS2LocalLaunchProfile.admitsEffectiveConfig(value) else { stop(reason:"助手配置不符合当前只读入口要求，已断开。");return }
+                        configured=true;try readAccount()
+                    case .account:
+                        guard let needed=value["requiresOpenaiAuth"],case .bool = needed else { throw CodexWire.Failure.malformed }
+                        authenticated = ["chatgpt","apiKey"].contains(value["account"]?["type"]?.text ?? "")
+                        phase=authenticated ? .ready:.signedOut;status=authenticated ? "已连接，请选择模型":"需要登录 ChatGPT"
+                    case .login:
+                        guard value["type"]?.text=="chatgpt",let login=value["loginId"]?.text,!login.isEmpty,login.utf8.count<=512,
+                              let raw=value["authUrl"]?.text,let url=Self.browserLoginURL(raw) else { throw CodexWire.Failure.malformed }
+                        loginID=login;status="请在浏览器中完成登录";onBrowserURL?(url)
+                        loginDeadline?.cancel();loginDeadline=Task { [weak self] in
+                            do { try await Task.sleep(nanoseconds:300_000_000_000) } catch { return }
+                            guard let self,self.session?.connectionID==connection,self.loginID==login else { return };self.cancelLogin()
+                        }
+                    case .cancelLogin:stop(reason:"已结束登录流程；重新连接后可核对账号状态。");return
+                    case .logout:stop(reason:"已退出登录");return
+                    }
+                }
+                if s.approval.wire.state == .ready && phase == .connecting {
+                    models=s.approval.wire.models;phase = .checkingConfig;status="正在核对当前配置"
+                    let id=try s.account(.config(profile!.project.root.canonicalPath));queries[id] = .config
+                }
+                try synchronizeThreadAndTurn()
+            case .notification(let method,let p):
+                if method == "account/login/completed",let expected=loginID,p["loginId"]?.text==expected {
+                    loginDeadline?.cancel();loginDeadline=nil;loginID=nil
+                    if p["success"] == .bool(true) { try readAccount() }
+                    else { phase = .signedOut;status="登录未完成" }
+                } else if method == "account/updated",configured,loginID==nil,
+                          !queries.values.contains(where:{switch $0 {case .logout,.cancelLogin:return true;default:return false}}) {
+                    if activeTurn != nil || submission != nil { stop(reason:"账号状态变化，已断开。");return }
+                    authenticated=false;try readAccount()
+                } else if p["threadId"]?.text == context?.session.id,context != nil {
+                    if method == "turn/started" { try synchronizeThreadAndTurn() }
+                    if method == "item/agentMessage/delta",p["turnId"]?.text==activeTurn,activeTurn != nil,
+                       let delta=p["delta"]?.text,delta.utf8.count<=65_536 { output.append(Data(delta.utf8)) }
+                    if method == "turn/completed",let id=p["turn"]?["id"]?.text,id==activeTurn {
+                        let result=p["turn"]?["status"]?.text
+                        switch result {
+                        case "completed":emit(.turnFinished(summary:"已完成"),turn:id);phase = .completed;status="助手已完成"
+                        case "interrupted":emit(.failed(summary:"已停止"),turn:id);phase = .ready;status="助手已停止"
+                        case "failed":emit(.failed(summary:"助手执行失败"),turn:id);phase = .failed;status="助手执行失败"
+                        default:throw CodexWire.Failure.malformed
+                        }
+                        activeTurn=nil
+                    }
+                }
+            case .failed(let id):
+                let query=queries.removeValue(forKey:id)
+                if query != nil { stop(reason:"登录或配置检查失败，已断开。");return }
+                submission=nil;notice="助手拒绝了这次请求。"
+                phase=activeTurn==nil ? .failed:.running;status=activeTurn==nil ? "请求未完成":"助手仍在运行"
+            case .ambiguousCompletion:stop(reason:"请求超时，结果未知；已断开。");return
+            case .approval:break // The sole default host already sent decline.
+            case .ignoredLateReply:break
+            }
+            changed()
+        } catch { stop(reason:"助手返回的状态不完整，已断开。");notice="没有把缺失状态当成成功。";changed() }
+    }
+    private func readAccount() throws {
+        guard configured,let s=session,!queries.values.contains(where:{if case .account=$0{return true};return false}) else { return }
+        let id=try s.account(.read);queries[id] = .account
+    }
+    private func synchronizeThreadAndTurn() throws {
+        guard let s=session,let thread=s.approval.wire.threadID else { return }
+        if context?.session.id != thread {
+            guard let profile,let ticket,let c=scope.context(ticket,session:.init(provider:.codex,id:thread),liveRoot:profile.project.root) else { throw CodexWire.Failure.stale }
+            context=c;emit(.opened(.owned))
+            associations.removeAll(where:{$0.thread==thread});associations.append(.init(project:profile.project,thread:thread))
+            if associations.count>64 { associations.removeFirst() }
+            if submission != nil { try deliverSubmission() }
+            else { phase = .ready;status="会话已恢复" }
+        }
+        if let turn=s.approval.wire.turnID,activeTurn != turn {
+            guard activeTurn == nil else { throw CodexWire.Failure.stale }
+            activeTurn=turn;emit(.turnStarted(turn),turn:turn);phase = .running;status="助手正在运行"
         }
     }
-    @objc func ws2OwnedStop() {
-        MainActor.assumeIsolated { ws2Runtime.launch.stop(); refreshPreferencesWindowIfOpen() }
+    private func emit(_ event:AgentSessions.Event,turn:String?=nil) {
+        guard let context,sequence<UInt64.max else { return };sequence += 1
+        _=store.receive(.init(context:context,sequence:sequence,receivedAt:clock.now(),commandID:nil,turnID:turn,payload:event))
     }
-    @objc func ws2OwnedOpenSessions() {
-        MainActor.assumeIsolated { _ = ws2Runtime.showOwnedSessions(); refreshPreferencesWindowIfOpen() }
+    private func ended(connection:UUID) {
+        guard session?.connectionID==connection else { return }
+        emit(.processExited);scope.invalidate();ticket=nil;context=nil;activeTurn=nil;submission=nil
+        configured=false;authenticated=false;queries=[:];loginID=nil;loginDeadline?.cancel();loginDeadline=nil
+        phase = .stopping;status="已断开，正在回收直属进程";changed()
     }
+    func stop(reason:String="已断开连接",clearPrivate:Bool=false) {
+        launchID=nil
+        let oldProbe=probe;probe=nil
+        if let oldProbe,oldProbe.launched,!oldProbe.reaped {
+            retiringProbe=oldProbe
+            oldProbe.onReaped={ [weak self,weak oldProbe] in
+                guard let self,self.retiringProbe === oldProbe else { return };self.retiringProbe=nil;self.changed()
+            }
+        }
+        oldProbe?.cancel()
+        // Revoke before closing the writer, including synchronous callbacks caused by stop.
+        scope.invalidate();ticket=nil;loginDeadline?.cancel();loginDeadline=nil;loginID=nil
+        session?.stop()
+        if session == nil { phase = .stopped }
+        status=reason;submission=nil;authenticated=false;configured=false
+        if clearPrivate { draft="";output.clear();diagnosticSnapshot="";session?.clearDiagnostics();_ = store.suspend(at:clock.now());notice="" }
+        changed()
+    }
+    func environmentChanged() {
+        guard !mayUse() else { return }
+        stop(reason:"当前不能使用助手，请解锁并重新启动。",clearPrivate:true)
+    }
+    private func fail(_ message:String) {
+        launchID=nil;phase = .failed;status=message;notice=message;changed()
+    }
+    private func changed() { onChange?();if !isBusy { onQuiescent?() } }
 }

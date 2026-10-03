@@ -9,6 +9,7 @@ mkdir -p "$BUILD"
   "$ROOT/prototype/Core/Contracts.swift" \
   "$ROOT/prototype/Core/InteractionCoordinator.swift" \
   "$ROOT/prototype/Core/CodexWire.swift" \
+  "$ROOT/prototype/Core/WS2StrictJSON.swift" \
   "$ROOT/prototype/Core/RemoteSessionGate.swift" \
   "$ROOT/prototype/Core/PresenceReadDeadline.swift" \
   "$ROOT/tests/Part2CoreTests.swift" -o "$BUILD/part2-core-tests"

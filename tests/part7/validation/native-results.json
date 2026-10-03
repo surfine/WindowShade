@@ -1,0 +1,17 @@
+[
+  {
+    "assertions" : 6,
+    "name" : "NATIVE01 direct child ignores TERM then owned group KILL",
+    "result" : "PASS"
+  },
+  {
+    "assertions" : 5,
+    "name" : "NATIVE02 inherited descriptor descendant cannot delay direct exit",
+    "result" : "PASS"
+  },
+  {
+    "assertions" : 3,
+    "name" : "NATIVE03 unrelated descriptors do not reach child",
+    "result" : "PASS"
+  }
+]

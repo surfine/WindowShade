@@ -1,0 +1,23 @@
+{
+  "schema_version": "0.153.0",
+  "messages_sha256": "134600f8c998c93ce276a6732b8bfb0fcfe69b6539a9d39ffcd6ddfdcb1d20b3",
+  "counts": {
+    "ClientRequest": 71,
+    "ClientNotification": 13,
+    "CommandExecutionRequestApprovalResponse": 1
+  },
+  "schema_sha256": {
+    "ClientRequest": "25bc001b5dfe3b35785597b8f9ad9e5aaf7e437331fa9921f041c9e0e03fc9f3",
+    "ClientNotification": "706cf248d75027c84a3c63348d0ed507182e8eba40069dd17541793de029145a",
+    "CommandExecutionRequestApprovalResponse": "6d0767113e22f311381809b6b236b0dde2b99b01992879c26bf7b1ea0e003cb7"
+  },
+  "failures": [
+    {
+      "line": 70,
+      "kind": "ClientRequest",
+      "message": "{'id': 7, 'method': 'account/logout', 'params': {}} is not valid under any of the given schemas",
+      "path": []
+    }
+  ],
+  "meaning": "synthetic backend, real candidate outbound bytes; not live CLI, sandbox or authentication proof"
+}

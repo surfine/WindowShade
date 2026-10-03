@@ -1,0 +1,23 @@
+{
+  "local_query": {
+    "source": "candidate-wired",
+    "linux_synthetic_flow": "pass",
+    "mac_sdk": "not-run",
+    "mac_ui": "not-run",
+    "real_cli": "not-run",
+    "privacy_energy": "unverified",
+    "release": "blocked"
+  },
+  "elevated_approval": "not-enabled-by-new-entry",
+  "original_goals_retained": [
+    "windows",
+    "live-activities",
+    "energy",
+    "remote-receiver",
+    "conductor-input",
+    "identity-lock",
+    "privacy-release"
+  ],
+  "film": "historical-animatic-only",
+  "time_estimate": null
+}

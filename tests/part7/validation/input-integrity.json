@@ -1,0 +1,11 @@
+{
+  "baseline_archive": "WindowShade2-round2-handoff-v6.zip",
+  "baseline_files": 1145,
+  "archive_matches_extracted_baseline": true,
+  "baseline_unchanged": true,
+  "candidate_files": 1157,
+  "staged_copy_matches_candidate": true,
+  "changes": 21,
+  "markdown_broken_local_links": [],
+  "meaning": "byte integrity, not functional verification"
+}

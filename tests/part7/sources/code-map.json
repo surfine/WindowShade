@@ -1,0 +1,1516 @@
+[
+  {
+    "path": "docs/handoff/round2-part7/privacy-signals.json",
+    "baseSHA256": null,
+    "sha256": "511294f40bd1dd8231178d9906ac9748889a74c2001b3e02cc8a3c3987298499",
+    "operation": "add",
+    "lines": 85,
+    "symbols": [
+      {
+        "line": 49,
+        "declaration": "\"purpose\": \"Display actual current reply and protocol state\","
+      }
+    ]
+  },
+  {
+    "path": "prototype/App/Updater.swift",
+    "baseSHA256": "54d1148098cff28aad517f49c79092bde185ae36cea3ef81932cb0c05b105253",
+    "sha256": "d2f0aa355acde29b729d0a05fdf41b33269599bf7d5405df64e8117a9c0f2c03",
+    "operation": "modify",
+    "lines": 942,
+    "symbols": [
+      {
+        "line": 16,
+        "declaration": "struct UpdateOffer: Equatable {"
+      },
+      {
+        "line": 25,
+        "declaration": "enum UpdateOfferStage { case notDownloaded, downloaded, installing }"
+      },
+      {
+        "line": 26,
+        "declaration": "enum UpdateReply { case install, skip, dismiss }"
+      },
+      {
+        "line": 29,
+        "declaration": "@MainActor protocol UpdaterBackend: AnyObject {"
+      },
+      {
+        "line": 30,
+        "declaration": "func start() throws"
+      },
+      {
+        "line": 31,
+        "declaration": "func checkForUpdates()"
+      },
+      {
+        "line": 37,
+        "declaration": "@MainActor func makeSparkleBackend(controller: UpdaterController) -> UpdaterBackend? { nil }"
+      },
+      {
+        "line": 40,
+        "declaration": "enum UpdateSettingsKeys {"
+      },
+      {
+        "line": 56,
+        "declaration": "final class UpdaterController: NSObject, NSMenuItemValidation {"
+      },
+      {
+        "line": 68,
+        "declaration": "private enum Session {"
+      },
+      {
+        "line": 102,
+        "declaration": "func start() {"
+      },
+      {
+        "line": 118,
+        "declaration": "private func scheduleLaunchFollowUps() {"
+      },
+      {
+        "line": 143,
+        "declaration": "private func markHealthyIfSelfCheckPasses() {"
+      },
+      {
+        "line": 163,
+        "declaration": "private func showLaunchNotice(_ notice: UpdateLaunchNotice) {"
+      },
+      {
+        "line": 199,
+        "declaration": "func makeMenuItem() -> NSMenuItem {"
+      },
+      {
+        "line": 205,
+        "declaration": "func validateMenuItem(_ menuItem: NSMenuItem) -> Bool {"
+      },
+      {
+        "line": 213,
+        "declaration": "@objc func checkForUpdatesAction(_ sender: Any?) {"
+      },
+      {
+        "line": 217,
+        "declaration": "func checkForUpdates() {"
+      },
+      {
+        "line": 274,
+        "declaration": "func setSettingsStatus(_ text: String?) {"
+      },
+      {
+        "line": 280,
+        "declaration": "func bindSettings(statusLabel: NSTextField, frequency: NSSegmentedControl) {"
+      },
+      {
+        "line": 285,
+        "declaration": "private func refreshSettings() {"
+      },
+      {
+        "line": 290,
+        "declaration": "func rollBackToPrevious() {"
+      },
+      {
+        "line": 309,
+        "declaration": "private func blocker(for offer: UpdateOffer, ignoreRefused: Bool) -> UpdateBlocker? {"
+      },
+      {
+        "line": 323,
+        "declaration": "func backendIsUserInitiatedCheck() -> Bool { manualCheckInFlight }"
+      },
+      {
+        "line": 325,
+        "declaration": "func backendIsRefused(_ build: String) -> Bool { store.isRefused(build: build) }"
+      },
+      {
+        "line": 327,
+        "declaration": "func backendShowChecking() {"
+      },
+      {
+        "line": 332,
+        "declaration": "func backendFound(_ offer: UpdateOffer, stage: UpdateOfferStage, userInitiated: Bool,"
+      },
+      {
+        "line": 347,
+        "declaration": "func backendNotFound() {"
+      },
+      {
+        "line": 358,
+        "declaration": "func backendError(_ description: String, isNetwork: Bool) {"
+      },
+      {
+        "line": 387,
+        "declaration": "func backendFeedLoaded() {"
+      },
+      {
+        "line": 391,
+        "declaration": "func backendDownloadStarted(cancel: @escaping () -> Void) {"
+      },
+      {
+        "line": 400,
+        "declaration": "func backendDownloadExpected(_ length: UInt64) {"
+      },
+      {
+        "line": 405,
+        "declaration": "func backendDownloadReceived(_ length: UInt64) {"
+      },
+      {
+        "line": 411,
+        "declaration": "func backendExtracting() {"
+      },
+      {
+        "line": 419,
+        "declaration": "func backendReadyToInstall(reply: @escaping (UpdateReply) -> Void) {"
+      },
+      {
+        "line": 429,
+        "declaration": "func backendInstalling(applicationTerminated: Bool, retry: @escaping () -> Void) {"
+      },
+      {
+        "line": 438,
+        "declaration": "func backendDismissed() {"
+      },
+      {
+        "line": 461,
+        "declaration": "func backendFocus() {"
+      },
+      {
+        "line": 468,
+        "declaration": "func backendCycleFinished() {"
+      },
+      {
+        "line": 486,
+        "declaration": "private func presentOffer(_ offer: UpdateOffer, stage: UpdateOfferStage, reply: @escaping (UpdateReply) -> Void) {"
+      },
+      {
+        "line": 514,
+        "declaration": "private func finishOffer(_ reply: (UpdateReply) -> Void, _ choice: UpdateReply) {"
+      },
+      {
+        "line": 520,
+        "declaration": "private func showBlocker(_ blocker: UpdateBlocker, offer: UpdateOffer?,"
+      },
+      {
+        "line": 563,
+        "declaration": "private func showMoveFailed() {"
+      },
+      {
+        "line": 575,
+        "declaration": "private func beginInstall(_ offer: UpdateOffer, stage: UpdateOfferStage, reply: @escaping (UpdateReply) -> Void,"
+      },
+      {
+        "line": 615,
+        "declaration": "private func didPrepare(_ offer: UpdateOffer, stage: UpdateOfferStage, result: Result<UpdateBackupInfo, Error>,"
+      },
+      {
+        "line": 655,
+        "declaration": "private func resumeInstallation(_ offer: UpdateOffer, reply: @escaping (UpdateReply) -> Void) {"
+      },
+      {
+        "line": 669,
+        "declaration": "private func runGate(_ offer: UpdateOffer, journal: UpdateJournal, reply: @escaping (UpdateReply) -> Void) {"
+      },
+      {
+        "line": 690,
+        "declaration": "private func finishGate(_ offer: UpdateOffer, verdict: UpdateGate.Verdict, reply: @escaping (UpdateReply) -> Void) {"
+      },
+      {
+        "line": 733,
+        "declaration": "private func veto(_ offer: UpdateOffer, phase: UpdatePhase, reason: UpdateRestoreReason?, message: String?,"
+      },
+      {
+        "line": 753,
+        "declaration": "private func windDown(_ offer: UpdateOffer, message: String?) {"
+      },
+      {
+        "line": 766,
+        "declaration": "private func stopBeforeGate(_ offer: UpdateOffer, message: String?) {"
+      },
+      {
+        "line": 777,
+        "declaration": "private func settleApproved(_ offer: UpdateOffer, waited: TimeInterval = 0) {"
+      },
+      {
+        "line": 791,
+        "declaration": "private func proceedVeto() {"
+      },
+      {
+        "line": 797,
+        "declaration": "private func confirmInstallerStopped(offer: UpdateOffer, message: String?, openDownloadPage: Bool) {"
+      },
+      {
+        "line": 841,
+        "declaration": "private func abandon(_ offer: UpdateOffer, phase: UpdatePhase, message: String?) {"
+      },
+      {
+        "line": 851,
+        "declaration": "private func cleanUpAfterStop(_ offer: UpdateOffer, phase: UpdatePhase?) {"
+      },
+      {
+        "line": 860,
+        "declaration": "private func markThisUpdate(_ offer: UpdateOffer, phase: UpdatePhase, reason: UpdateRestoreReason?) {"
+      },
+      {
+        "line": 876,
+        "declaration": "func applicationShouldTerminate() -> NSApplication.TerminateReply {"
+      },
+      {
+        "line": 909,
+        "declaration": "private func startTerminateSafetyTimer() {"
+      },
+      {
+        "line": 931,
+        "declaration": "private func releaseTerminateIfPending() {"
+      },
+      {
+        "line": 939,
+        "declaration": "func applicationWillTerminate() {"
+      }
+    ]
+  },
+  {
+    "path": "prototype/App/WS2AppRuntime.swift",
+    "baseSHA256": "4860048055a951fd637dba2f5f5a2456ced84b234f5034273e8432e3abb3f820",
+    "sha256": "ae496e5fafe758ced14f91fa8ca9d042699e0b8a68062b51fae88073d7b4fe83",
+    "operation": "modify",
+    "lines": 205,
+    "symbols": [
+      {
+        "line": 3,
+        "declaration": "@MainActor final class WS2AppRuntime {"
+      },
+      {
+        "line": 29,
+        "declaration": "func day(_ date: Date) -> String {"
+      },
+      {
+        "line": 102,
+        "declaration": "private func setLockReason(_ reason: String, locked: Bool) {"
+      },
+      {
+        "line": 113,
+        "declaration": "func applicationShouldTerminate() -> NSApplication.TerminateReply {"
+      },
+      {
+        "line": 132,
+        "declaration": "private func finishQuit(updaterReply:Bool?=nil,childrenReady:Bool=false,failed:Bool=false) {"
+      },
+      {
+        "line": 138,
+        "declaration": "func openOwned() {"
+      },
+      {
+        "line": 147,
+        "declaration": "func open() {"
+      },
+      {
+        "line": 160,
+        "declaration": "func refreshFocusSettings() {"
+      },
+      {
+        "line": 165,
+        "declaration": "func toggleFocus() {"
+      },
+      {
+        "line": 172,
+        "declaration": "@discardableResult func showSessions(_ sessions:[AgentSessions.Session], open:@escaping(WS2.Context)->Void,"
+      },
+      {
+        "line": 177,
+        "declaration": "@discardableResult func showConductor(_ state:ConductorNotch, action:@escaping(WS2ConductorView.Action)->Void) -> Bool {"
+      },
+      {
+        "line": 183,
+        "declaration": "private func publish() {"
+      },
+      {
+        "line": 191,
+        "declaration": "func stop() {"
+      },
+      {
+        "line": 203,
+        "declaration": "@objc func ws2OpenOwned() { MainActor.assumeIsolated { ws2Runtime.openOwned() } }"
+      },
+      {
+        "line": 204,
+        "declaration": "@objc func ws2OpenFocus() { MainActor.assumeIsolated { ws2Runtime.open() } }"
+      }
+    ]
+  },
+  {
+    "path": "prototype/App/WS2CodexApprovalHost.swift",
+    "baseSHA256": "e08fbdcab085bfda8db45e5a01797b9ef173cc87c52f47ae040353af2863b3bf",
+    "sha256": "f400c3354906b3ddb97f7651388468520d91f5eb6796417d014d7753266bf03b",
+    "operation": "modify",
+    "lines": 250,
+    "symbols": [
+      {
+        "line": 5,
+        "declaration": "@MainActor final class WS2CodexApprovalHost: WS2OwnedProtocolHost {"
+      },
+      {
+        "line": 36,
+        "declaration": "func beginProtocol() throws {"
+      },
+      {
+        "line": 40,
+        "declaration": "func startThread(cwd: String, model: String) throws {"
+      },
+      {
+        "line": 45,
+        "declaration": "func resumeThread(_ id: String) throws {"
+      },
+      {
+        "line": 49,
+        "declaration": "func startTurn(text: String, model: String, effort: String) throws {"
+      },
+      {
+        "line": 54,
+        "declaration": "func steer(text: String, expectedTurn: String) throws {"
+      },
+      {
+        "line": 59,
+        "declaration": "func interruptTurn() throws {"
+      },
+      {
+        "line": 63,
+        "declaration": "func receive(_ bytes: Data) {"
+      },
+      {
+        "line": 87,
+        "declaration": "@discardableResult func present(_ id: WS2.RequestID) -> Bool {"
+      },
+      {
+        "line": 114,
+        "declaration": "private func confirm(beganAt: WS2.Instant, sequence: UInt64) {"
+      },
+      {
+        "line": 142,
+        "declaration": "private func target(_ review: WS2ApprovalReview) throws -> AuthTarget {"
+      },
+      {
+        "line": 145,
+        "declaration": "private func isCurrent(_ review: WS2ApprovalReview) -> Bool {"
+      },
+      {
+        "line": 150,
+        "declaration": "func tick() {"
+      },
+      {
+        "line": 160,
+        "declaration": "private func flush(deadline: WS2.Instant) {"
+      },
+      {
+        "line": 164,
+        "declaration": "private func abandonCurrent(decline: Bool) {"
+      },
+      {
+        "line": 173,
+        "declaration": "func invalidate() {"
+      },
+      {
+        "line": 179,
+        "declaration": "@MainActor private final class WS2ReviewButton: NSButton {"
+      },
+      {
+        "line": 189,
+        "declaration": "private func begin() -> Bool {"
+      },
+      {
+        "line": 192,
+        "declaration": "override func mouseDown(with event:NSEvent) { guard begin() else { return }; defer { press = nil }; super.mouseDown(with:event) }"
+      },
+      {
+        "line": 193,
+        "declaration": "override func keyDown(with event:NSEvent) {"
+      },
+      {
+        "line": 197,
+        "declaration": "override func accessibilityPerformPress() -> Bool {"
+      },
+      {
+        "line": 200,
+        "declaration": "@objc private func fire() { guard let press else { return }; freshAction?(press.0,press.1) }"
+      },
+      {
+        "line": 202,
+        "declaration": "@MainActor final class WS2CommandReviewView: NSView, WS2LeaseContent {"
+      },
+      {
+        "line": 231,
+        "declaration": "func enableConfirmation(){approval.isEnabled=inputIsCurrent()}"
+      },
+      {
+        "line": 232,
+        "declaration": "func revoke(){inputIsCurrent = { false };approval.isEnabled=false;text.string=\"\";confirm=nil;decline=nil}"
+      },
+      {
+        "line": 233,
+        "declaration": "@objc private func refuse(){guard inputIsCurrent() else{return};decline?()}"
+      },
+      {
+        "line": 234,
+        "declaration": "override func cancelOperation(_ sender:Any?){onCancel?()}"
+      },
+      {
+        "line": 239,
+        "declaration": "func account(_ action:WS2AccountAction) throws -> WS2.RequestID {"
+      }
+    ]
+  },
+  {
+    "path": "prototype/App/WS2OwnedCodexSession+Authorization.swift",
+    "baseSHA256": null,
+    "sha256": "cd619ed648b81d55565ecf519777681ab4419bd2374eecb1f793c7bf29538266",
+    "operation": "add",
+    "lines": 18,
+    "symbols": []
+  },
+  {
+    "path": "prototype/App/WS2OwnedCodexSession.swift",
+    "baseSHA256": "211a2a4a5024547723634142eb60825b43eb6dfbea3a7710d4ab54bb37653572",
+    "sha256": "b05f1a6d7aeafd72f5e8d5dea6cd8a460737d57cbf319b1c242b01a5f09d2ef8",
+    "operation": "modify",
+    "lines": 86,
+    "symbols": [
+      {
+        "line": 3,
+        "declaration": "/// One engine for the real App and the process-backed protocol tests. It owns exactly one"
+      },
+      {
+        "line": 4,
+        "declaration": "/// child channel and one protocol host. The host factory cannot create a second transport."
+      },
+      {
+        "line": 5,
+        "declaration": "@MainActor final class WS2OwnedCodexSession {"
+      },
+      {
+        "line": 57,
+        "declaration": "func start() throws {"
+      },
+      {
+        "line": 62,
+        "declaration": "func startThread(cwd:String,model:String) throws { try approval.startThread(cwd:cwd,model:model);scheduleExpiry() }"
+      },
+      {
+        "line": 63,
+        "declaration": "func resumeThread(_ id:String) throws { try approval.resumeThread(id);scheduleExpiry() }"
+      },
+      {
+        "line": 64,
+        "declaration": "func startTurn(text:String,model:String,effort:String) throws { try approval.startTurn(text:text,model:model,effort:effort);scheduleExpiry() }"
+      },
+      {
+        "line": 65,
+        "declaration": "func steer(text:String,expectedTurn:String) throws { try approval.steer(text:text,expectedTurn:expectedTurn);scheduleExpiry() }"
+      },
+      {
+        "line": 66,
+        "declaration": "func interrupt() throws { try approval.interruptTurn();scheduleExpiry() }"
+      },
+      {
+        "line": 67,
+        "declaration": "func account(_ action:WS2AccountAction) throws -> WS2.RequestID {"
+      },
+      {
+        "line": 70,
+        "declaration": "func clearDiagnostics() { channel.clearDiagnostics() }"
+      },
+      {
+        "line": 71,
+        "declaration": "private func scheduleExpiry() {"
+      },
+      {
+        "line": 80,
+        "declaration": "func stop() {"
+      }
+    ]
+  },
+  {
+    "path": "prototype/App/WS2OwnedLaunchController.swift",
+    "baseSHA256": null,
+    "sha256": "631d6e462822fd75a3becc290c7b84492c7baacdc4b8adcbbd418dd125de3c07",
+    "operation": "add",
+    "lines": 309,
+    "symbols": [
+      {
+        "line": 4,
+        "declaration": "/// AgentSessions remain the authorities for protocol state and backend sessions respectively."
+      },
+      {
+        "line": 5,
+        "declaration": "@MainActor final class WS2OwnedLaunchController {"
+      },
+      {
+        "line": 6,
+        "declaration": "enum Phase: Equatable { case idle, checkingVersion, connecting, checkingConfig, signedOut, ready, creatingThread, sending, running, interrupting, completed, failed, stopping, stopped }"
+      },
+      {
+        "line": 7,
+        "declaration": "private enum Query { case config, account, login, cancelLogin, logout }"
+      },
+      {
+        "line": 8,
+        "declaration": "private struct Submission { let text:String;let model:String;let effort:String }"
+      },
+      {
+        "line": 9,
+        "declaration": "private struct Association { let project:WS2OwnedScope.Project;let thread:String }"
+      },
+      {
+        "line": 58,
+        "declaration": "@discardableResult func editDraft(_ value:String) -> Bool {"
+      },
+      {
+        "line": 61,
+        "declaration": "@discardableResult func selectProject(_ url:URL) -> Bool {"
+      },
+      {
+        "line": 72,
+        "declaration": "@discardableResult func selectExecutable(_ url:URL) -> Bool {"
+      },
+      {
+        "line": 76,
+        "declaration": "@discardableResult func launch(consent:Bool,diagnostics:Bool=false) -> Bool {"
+      },
+      {
+        "line": 92,
+        "declaration": "private func begin(_ prepared:WS2LocalLaunchProfile,diagnostics:Bool) {"
+      },
+      {
+        "line": 118,
+        "declaration": "private func currentIsValid() -> Bool {"
+      },
+      {
+        "line": 123,
+        "declaration": "private func revalidate() -> Bool {"
+      },
+      {
+        "line": 127,
+        "declaration": "@discardableResult func chooseModel(_ value:String) -> Bool {"
+      },
+      {
+        "line": 131,
+        "declaration": "@discardableResult func chooseEffort(_ value:String) -> Bool {"
+      },
+      {
+        "line": 135,
+        "declaration": "@discardableResult func send(_ draft:String,hasMarkedText:Bool) -> Bool {"
+      },
+      {
+        "line": 147,
+        "declaration": "private func deliverSubmission() throws {"
+      },
+      {
+        "line": 153,
+        "declaration": "@discardableResult func resumeLast() -> Bool {"
+      },
+      {
+        "line": 159,
+        "declaration": "@discardableResult func interrupt() -> Bool {"
+      },
+      {
+        "line": 164,
+        "declaration": "@discardableResult func login() -> Bool {"
+      },
+      {
+        "line": 169,
+        "declaration": "@discardableResult func logout() -> Bool {"
+      },
+      {
+        "line": 174,
+        "declaration": "func cancelLogin() {"
+      },
+      {
+        "line": 181,
+        "declaration": "static func browserLoginURL(_ text:String) -> URL? {"
+      },
+      {
+        "line": 187,
+        "declaration": "private func receive(_ event:CodexWire.Event,connection:UUID) {"
+      },
+      {
+        "line": 254,
+        "declaration": "private func readAccount() throws {"
+      },
+      {
+        "line": 258,
+        "declaration": "private func synchronizeThreadAndTurn() throws {"
+      },
+      {
+        "line": 273,
+        "declaration": "private func emit(_ event:AgentSessions.Event,turn:String?=nil) {"
+      },
+      {
+        "line": 277,
+        "declaration": "private func ended(connection:UUID) {"
+      },
+      {
+        "line": 283,
+        "declaration": "func stop(reason:String=\"已断开连接\",clearPrivate:Bool=false) {"
+      },
+      {
+        "line": 301,
+        "declaration": "func environmentChanged() {"
+      },
+      {
+        "line": 305,
+        "declaration": "private func fail(_ message:String) {"
+      },
+      {
+        "line": 308,
+        "declaration": "private func changed() { onChange?();if !isBusy { onQuiescent?() } }"
+      }
+    ]
+  },
+  {
+    "path": "prototype/App/WS2OwnedSessionView.swift",
+    "baseSHA256": null,
+    "sha256": "ca1e124b84fd3f2138ee243eb2f3a0c175a03b9087f7eb1adc882fb727fe4ce8",
+    "operation": "add",
+    "lines": 143,
+    "symbols": [
+      {
+        "line": 4,
+        "declaration": "@MainActor final class WS2OwnedSessionView: NSView, WS2LeaseContent, NSTextViewDelegate {"
+      },
+      {
+        "line": 43,
+        "declaration": "func row(_ views:[NSView]) -> NSStackView { let r=NSStackView(views:views);r.orientation = .horizontal;r.spacing=8;return r }"
+      },
+      {
+        "line": 70,
+        "declaration": "private func configure(_ text:NSTextView,editable:Bool) {"
+      },
+      {
+        "line": 77,
+        "declaration": "func scheduleRender() {"
+      },
+      {
+        "line": 84,
+        "declaration": "func render() {"
+      },
+      {
+        "line": 111,
+        "declaration": "func textDidChange(_ notification:Notification) {"
+      },
+      {
+        "line": 115,
+        "declaration": "private func choose(directory:Bool) {"
+      },
+      {
+        "line": 126,
+        "declaration": "@objc private func pickProject() { choose(directory:true) }"
+      },
+      {
+        "line": 127,
+        "declaration": "@objc private func pickExecutable() { choose(directory:false) }"
+      },
+      {
+        "line": 128,
+        "declaration": "@objc private func consentChanged() { render() }"
+      },
+      {
+        "line": 129,
+        "declaration": "@objc private func start() { guard inputIsCurrent() else { return };_=controller.launch(consent:consent.state == .on,diagnostics:diagnostic.state == .on);render() }"
+      },
+      {
+        "line": 130,
+        "declaration": "@objc private func logIn() { guard inputIsCurrent() else { return };_=controller.login() }"
+      },
+      {
+        "line": 131,
+        "declaration": "@objc private func cancelLogIn() { guard inputIsCurrent() else { return };controller.cancelLogin() }"
+      },
+      {
+        "line": 132,
+        "declaration": "@objc private func logOut() { guard inputIsCurrent() else { return };_=controller.logout() }"
+      },
+      {
+        "line": 133,
+        "declaration": "@objc private func resumeSession() { guard inputIsCurrent() else { return };_=controller.resumeLast() }"
+      },
+      {
+        "line": 134,
+        "declaration": "@objc private func selectModel() { guard inputIsCurrent(),model.indexOfSelectedItem>0 else { return };_=controller.chooseModel(modelIDs[model.indexOfSelectedItem-1]) }"
+      },
+      {
+        "line": 135,
+        "declaration": "@objc private func selectEffort() { guard inputIsCurrent(),effort.indexOfSelectedItem>0 else { return };_=controller.chooseEffort(effortIDs[effort.indexOfSelectedItem-1]) }"
+      },
+      {
+        "line": 136,
+        "declaration": "@objc private func sendDraft() { guard inputIsCurrent() else { return };_=controller.send(draft.string,hasMarkedText:draft.hasMarkedText()) }"
+      },
+      {
+        "line": 137,
+        "declaration": "@objc private func interruptTurn() { guard inputIsCurrent() else { return };_=controller.interrupt() }"
+      },
+      {
+        "line": 138,
+        "declaration": "@objc private func stopSession() { guard inputIsCurrent() else { return };controller.stop() }"
+      },
+      {
+        "line": 139,
+        "declaration": "@objc private func toggleDiagnostics() { guard inputIsCurrent() else { return };displayingDiagnostics.toggle();diagnostics.title=displayingDiagnostics ? \"返回回复\":\"查看诊断\";render() }"
+      },
+      {
+        "line": 140,
+        "declaration": "func revoke() { renderTask?.cancel();renderTask=nil;inputIsCurrent={false};draft.inputContext?.discardMarkedText();draft.string=\"\";output.string=\"\";onCancel?() }"
+      },
+      {
+        "line": 143,
+        "declaration": "@MainActor private final class WS2OwnedDocumentView:NSView { override var isFlipped:Bool { true } }"
+      }
+    ]
+  },
+  {
+    "path": "prototype/App/WS2SupplementPane.swift",
+    "baseSHA256": "223df7148a746cb7e6a7664c012b269dc0c7d515ae5d1fe698962e75aa5e517c",
+    "sha256": "eb49bb23eda0c267d0c169dc4ef4040dd462ae3ed71f75aa341e2bfd96c39fcd",
+    "operation": "modify",
+    "lines": 36,
+    "symbols": [
+      {
+        "line": 3,
+        "declaration": "@MainActor final class WS2SupplementPane: NSStackView {"
+      }
+    ]
+  },
+  {
+    "path": "prototype/Core/CodexWire.swift",
+    "baseSHA256": "71e73c2b2bb2c5bda0aec0d94ad0d4f7dd6d3c218373de510da8007edc64c497",
+    "sha256": "ed2e3e209bb3ff42c6ba8273b323f2b6f70bdf48daa4cc21f91060d9bfebecf3",
+    "operation": "modify",
+    "lines": 271,
+    "symbols": [
+      {
+        "line": 3,
+        "declaration": "indirect enum WireJSON: Codable, Equatable, Sendable {"
+      },
+      {
+        "line": 15,
+        "declaration": "func encode(to encoder: any Encoder) throws {"
+      },
+      {
+        "line": 33,
+        "declaration": "struct CodexWire: Sendable {"
+      },
+      {
+        "line": 34,
+        "declaration": "enum Failure: Error { case oversized, closed, malformed, notReady, unsupported, stale, capacity }"
+      },
+      {
+        "line": 35,
+        "declaration": "enum State: Equatable, Sendable { case fresh, initializing, listingModels, ready, closed }"
+      },
+      {
+        "line": 36,
+        "declaration": "struct Pending: Sendable { let method: String; let deadline: WS2.Instant }"
+      },
+      {
+        "line": 37,
+        "declaration": "enum Event: Equatable, Sendable {"
+      },
+      {
+        "line": 42,
+        "declaration": "static let maximumFrame = 1_048_576 // Recommendation: bounded metadata stream; not a measured protocol maximum."
+      },
+      {
+        "line": 59,
+        "declaration": "mutating func drain() -> [Data] { defer { outbound.removeAll(keepingCapacity:true) }; return outbound }"
+      },
+      {
+        "line": 60,
+        "declaration": "private mutating func send(_ value: WireJSON) throws {"
+      },
+      {
+        "line": 66,
+        "declaration": "private mutating func request(_ method: String, _ params: [String:WireJSON]?, now: WS2.Instant) throws -> WS2.RequestID {"
+      },
+      {
+        "line": 74,
+        "declaration": "mutating func initialize(now: WS2.Instant) throws {"
+      },
+      {
+        "line": 79,
+        "declaration": "mutating func startThread(cwd: String, model: String, now: WS2.Instant) throws {"
+      },
+      {
+        "line": 87,
+        "declaration": "mutating func resumeThread(id: String, now: WS2.Instant) throws {"
+      },
+      {
+        "line": 95,
+        "declaration": "mutating func startTurn(text: String, model: String, effort: String, now: WS2.Instant) throws {"
+      },
+      {
+        "line": 104,
+        "declaration": "mutating func steer(text: String, expectedTurnID: String, now: WS2.Instant) throws {"
+      },
+      {
+        "line": 110,
+        "declaration": "mutating func interrupt(now: WS2.Instant) throws {"
+      },
+      {
+        "line": 115,
+        "declaration": "mutating func readConfig(cwd:String,now:WS2.Instant) throws -> WS2.RequestID {"
+      },
+      {
+        "line": 119,
+        "declaration": "mutating func readAccount(now: WS2.Instant) throws -> WS2.RequestID {"
+      },
+      {
+        "line": 123,
+        "declaration": "mutating func beginBrowserLogin(now: WS2.Instant) throws -> WS2.RequestID {"
+      },
+      {
+        "line": 127,
+        "declaration": "mutating func cancelLogin(id: String, now: WS2.Instant) throws -> WS2.RequestID {"
+      },
+      {
+        "line": 131,
+        "declaration": "mutating func logout(now: WS2.Instant) throws -> WS2.RequestID {"
+      },
+      {
+        "line": 135,
+        "declaration": "mutating func ingest(_ chunk: Data, now: WS2.Instant) throws -> [Event] {"
+      },
+      {
+        "line": 156,
+        "declaration": "private mutating func receive(_ v: WireJSON, now: WS2.Instant) throws -> [Event] {"
+      },
+      {
+        "line": 237,
+        "declaration": "mutating func denyApproval(_ id: WS2.RequestID) throws {"
+      },
+      {
+        "line": 246,
+        "declaration": "enum ApprovalWireDecision { case acceptOnce, decline }"
+      },
+      {
+        "line": 247,
+        "declaration": "mutating func enqueueApprovalResponse(_ id: WS2.RequestID, expectedMethod: String,"
+      },
+      {
+        "line": 260,
+        "declaration": "mutating func tick(now: WS2.Instant) -> [Event] {"
+      },
+      {
+        "line": 266,
+        "declaration": "mutating func close() {"
+      }
+    ]
+  },
+  {
+    "path": "prototype/Core/WS2OwnedProtocolHost.swift",
+    "baseSHA256": null,
+    "sha256": "11defe55b4723986cdcd10cea154dfcc10f205dbb8d45eb1265c9dc84fe5b765",
+    "operation": "add",
+    "lines": 85,
+    "symbols": [
+      {
+        "line": 3,
+        "declaration": "enum WS2AccountAction { case read, login, cancel(String), logout, config(String) }"
+      },
+      {
+        "line": 6,
+        "declaration": "@MainActor protocol WS2OwnedProtocolHost: AnyObject {"
+      },
+      {
+        "line": 11,
+        "declaration": "func beginProtocol() throws"
+      },
+      {
+        "line": 12,
+        "declaration": "func startThread(cwd:String,model:String) throws"
+      },
+      {
+        "line": 13,
+        "declaration": "func resumeThread(_ id:String) throws"
+      },
+      {
+        "line": 14,
+        "declaration": "func startTurn(text:String,model:String,effort:String) throws"
+      },
+      {
+        "line": 15,
+        "declaration": "func steer(text:String,expectedTurn:String) throws"
+      },
+      {
+        "line": 16,
+        "declaration": "func interruptTurn() throws"
+      },
+      {
+        "line": 17,
+        "declaration": "func account(_ action:WS2AccountAction) throws -> WS2.RequestID"
+      },
+      {
+        "line": 18,
+        "declaration": "func receive(_ data:Data)"
+      },
+      {
+        "line": 19,
+        "declaration": "func tick()"
+      },
+      {
+        "line": 20,
+        "declaration": "func invalidate()"
+      },
+      {
+        "line": 25,
+        "declaration": "@MainActor final class WS2ReadOnlyProtocolHost: WS2OwnedProtocolHost {"
+      },
+      {
+        "line": 39,
+        "declaration": "private func check() throws { guard !closed else { throw CodexWire.Failure.closed } }"
+      },
+      {
+        "line": 40,
+        "declaration": "private func flush() {"
+      },
+      {
+        "line": 44,
+        "declaration": "func beginProtocol() throws { try check();try wire.initialize(now:clock.now());flush() }"
+      },
+      {
+        "line": 45,
+        "declaration": "func startThread(cwd:String,model:String) throws { try check();try wire.startThread(cwd:cwd,model:model,now:clock.now());flush() }"
+      },
+      {
+        "line": 46,
+        "declaration": "func resumeThread(_ id:String) throws { try check();try wire.resumeThread(id:id,now:clock.now());flush() }"
+      },
+      {
+        "line": 47,
+        "declaration": "func startTurn(text:String,model:String,effort:String) throws { try check();try wire.startTurn(text:text,model:model,effort:effort,now:clock.now());flush() }"
+      },
+      {
+        "line": 48,
+        "declaration": "func steer(text:String,expectedTurn:String) throws { try check();try wire.steer(text:text,expectedTurnID:expectedTurn,now:clock.now());flush() }"
+      },
+      {
+        "line": 49,
+        "declaration": "func interruptTurn() throws { try check();try wire.interrupt(now:clock.now());flush() }"
+      },
+      {
+        "line": 50,
+        "declaration": "func account(_ action:WS2AccountAction) throws -> WS2.RequestID {"
+      },
+      {
+        "line": 61,
+        "declaration": "func receive(_ data:Data) {"
+      },
+      {
+        "line": 79,
+        "declaration": "func tick() {"
+      },
+      {
+        "line": 84,
+        "declaration": "func invalidate() { guard !closed else { return };closed=true;wire.close();closeTransport() }"
+      }
+    ]
+  },
+  {
+    "path": "prototype/Core/WS2QuitBarrier.swift",
+    "baseSHA256": null,
+    "sha256": "2a80a0409cee77c4a117844ac1192084ab922a1073b405d26909a6fd8a39754e",
+    "operation": "add",
+    "lines": 20,
+    "symbols": [
+      {
+        "line": 5,
+        "declaration": "struct WS2QuitBarrier: Sendable {"
+      },
+      {
+        "line": 6,
+        "declaration": "struct Token:Hashable,Sendable { let value:UUID }"
+      },
+      {
+        "line": 9,
+        "declaration": "mutating func begin(updaterReady:Bool,childrenReady:Bool) -> Token? {"
+      },
+      {
+        "line": 13,
+        "declaration": "mutating func update(_ expected:Token,updaterReply:Bool?=nil,childrenReady:Bool=false,failed:Bool=false) -> Bool? {"
+      }
+    ]
+  },
+  {
+    "path": "prototype/Core/WS2StrictJSON.swift",
+    "baseSHA256": null,
+    "sha256": "3c1edb48065c85d7b0fbed12ac8299df4d1931abecfe53019f9ea9cabdc9bb0d",
+    "operation": "add",
+    "lines": 99,
+    "symbols": [
+      {
+        "line": 5,
+        "declaration": "struct WS2StrictJSON {"
+      },
+      {
+        "line": 6,
+        "declaration": "enum Failure: Error, Equatable { case syntax, duplicateKey, depth, nodes, size }"
+      },
+      {
+        "line": 7,
+        "declaration": "static func validate(_ data: Data, maximumBytes: Int = 1_048_576,"
+      },
+      {
+        "line": 15,
+        "declaration": "private struct Parser {"
+      },
+      {
+        "line": 19,
+        "declaration": "mutating func whitespace() { while let c=current, [9,10,13,32].contains(c) { index += 1 } }"
+      },
+      {
+        "line": 20,
+        "declaration": "mutating func expect(_ c:UInt8) throws { guard current == c else { throw Failure.syntax }; index += 1 }"
+      },
+      {
+        "line": 21,
+        "declaration": "mutating func node() throws { guard remaining > 0 else { throw Failure.nodes }; remaining -= 1 }"
+      },
+      {
+        "line": 22,
+        "declaration": "mutating func value(_ depth:Int) throws {"
+      },
+      {
+        "line": 53,
+        "declaration": "mutating func literal(_ text:[UInt8]) throws { for byte in text { try expect(byte) } }"
+      },
+      {
+        "line": 54,
+        "declaration": "func digit(_ c:UInt8?) -> Bool { c.map { (48...57).contains($0) } ?? false }"
+      },
+      {
+        "line": 55,
+        "declaration": "mutating func number() throws {"
+      },
+      {
+        "line": 65,
+        "declaration": "mutating func hex() throws -> UInt16 {"
+      },
+      {
+        "line": 74,
+        "declaration": "mutating func string() throws -> String {"
+      }
+    ]
+  },
+  {
+    "path": "prototype/Native/WS2Child.c",
+    "baseSHA256": null,
+    "sha256": "134368aa12dfbbb9ec5a6f60a121c44b52b46bb303d55d73b18d78326d875f47",
+    "operation": "add",
+    "lines": 167,
+    "symbols": [
+      {
+        "line": 16,
+        "declaration": "struct WS2Child {"
+      },
+      {
+        "line": 23,
+        "declaration": "struct timespec value;"
+      },
+      {
+        "line": 46,
+        "declaration": "int ws2_child_spawn(const char *executable, char *const argv[], char *const envp[],"
+      },
+      {
+        "line": 140,
+        "declaration": "int ws2_child_poll(WS2Child *c, WS2ChildState *state) {"
+      },
+      {
+        "line": 156,
+        "declaration": "int ws2_child_stop(WS2Child *c) {"
+      },
+      {
+        "line": 161,
+        "declaration": "int ws2_child_destroy(WS2Child *c) {"
+      },
+      {
+        "line": 167,
+        "declaration": "pid_t ws2_child_pid(const WS2Child *c) { return c ? c->pid : -1; }"
+      }
+    ]
+  },
+  {
+    "path": "prototype/Native/WS2Child.h",
+    "baseSHA256": null,
+    "sha256": "95380850f4cbd24d868fc785978cda939307f3962640b091200068a17ea1a9da",
+    "operation": "add",
+    "lines": 27,
+    "symbols": [
+      {
+        "line": 7,
+        "declaration": "typedef struct WS2Child WS2Child;"
+      },
+      {
+        "line": 17,
+        "declaration": "int ws2_child_spawn(const char *executable, char *const argv[], char *const envp[],"
+      },
+      {
+        "line": 21,
+        "declaration": "int ws2_child_poll(WS2Child *child, WS2ChildState *state);"
+      },
+      {
+        "line": 22,
+        "declaration": "int ws2_child_stop(WS2Child *child);"
+      },
+      {
+        "line": 25,
+        "declaration": "int ws2_child_destroy(WS2Child *child);"
+      },
+      {
+        "line": 26,
+        "declaration": "pid_t ws2_child_pid(const WS2Child *child);"
+      }
+    ]
+  },
+  {
+    "path": "prototype/Native/module.modulemap",
+    "baseSHA256": null,
+    "sha256": "9cac42ba9402e4324e393d07c155c9375e20846e3bca84117460fdd0e6a0db8e",
+    "operation": "add",
+    "lines": 4,
+    "symbols": []
+  },
+  {
+    "path": "prototype/Support/WS2DuplexProcess.swift",
+    "baseSHA256": "e85ba57a74110f0f4163eac840c65eed8bc9bd6fa08ce4f802098e5a159deaff",
+    "sha256": "1efe08a7d6987fdac80d87f345f1d2ce212e6a5dddac3a71e086e247d8ab579a",
+    "operation": "modify",
+    "lines": 248,
+    "symbols": [
+      {
+        "line": 11,
+        "declaration": "@MainActor final class WS2DuplexProcess {"
+      },
+      {
+        "line": 12,
+        "declaration": "enum Failure: Error { case invalid, io(Int32), notRunning }"
+      },
+      {
+        "line": 13,
+        "declaration": "enum End: Equatable { case localStop, eof, processExit, io(Int32), framing, timeout, revoked }"
+      },
+      {
+        "line": 14,
+        "declaration": "struct Termination: Equatable, Sendable { let status: Int32; let wasSignalled: Bool }"
+      },
+      {
+        "line": 57,
+        "declaration": "func start() throws {"
+      },
+      {
+        "line": 96,
+        "declaration": "private func pollChild() {"
+      },
+      {
+        "line": 120,
+        "declaration": "@discardableResult func admit(_ lines: [Data], connection: UUID, deadline: Double,"
+      },
+      {
+        "line": 131,
+        "declaration": "@discardableResult func admitWireFrames(_ frames: [Data], connection: UUID, deadline: Double,"
+      },
+      {
+        "line": 143,
+        "declaration": "private func armWrite() { if !writeArmed, !stopped { writeArmed = true; writer?.resume() } }"
+      },
+      {
+        "line": 144,
+        "declaration": "private func disarmWrite() { if writeArmed { writeArmed = false; writer?.suspend() } }"
+      },
+      {
+        "line": 145,
+        "declaration": "private func scheduleDeadline() {"
+      },
+      {
+        "line": 157,
+        "declaration": "private func writeReady() {"
+      },
+      {
+        "line": 183,
+        "declaration": "private func readReady(checkChild: Bool = true) {"
+      },
+      {
+        "line": 205,
+        "declaration": "private func readDiagnosticReady() {"
+      },
+      {
+        "line": 220,
+        "declaration": "func clearDiagnostics() { diagnostics?.clear() }"
+      },
+      {
+        "line": 221,
+        "declaration": "private static func writeWithoutSIGPIPE(_ fd: Int32, _ bytes: Data) -> Int {"
+      },
+      {
+        "line": 236,
+        "declaration": "func stop(_ reason: End = .localStop) {"
+      },
+      {
+        "line": 246,
+        "declaration": "// The reaper timer survives protocol closure. A stopped pipe is not reaping evidence."
+      }
+    ]
+  },
+  {
+    "path": "prototype/Support/WS2LocalLaunchProfile.swift",
+    "baseSHA256": null,
+    "sha256": "34a52b15e0a183c0e0f8d45d999ab15e0f8d1b1998b7fa467fe15a4b1c843a27",
+    "operation": "add",
+    "lines": 131,
+    "symbols": [
+      {
+        "line": 10,
+        "declaration": "struct WS2LocalLaunchProfile: Sendable {"
+      },
+      {
+        "line": 11,
+        "declaration": "enum Failure: Error { case unsafePath, configurationChanged, externalConfiguration, executableChanged }"
+      },
+      {
+        "line": 12,
+        "declaration": "struct FileIdentity: Equatable, Sendable {"
+      },
+      {
+        "line": 38,
+        "declaration": "static func prepare(projectURL:URL,projectID:UUID,executableURL:URL,root:URL) throws -> Self {"
+      },
+      {
+        "line": 73,
+        "declaration": "func revalidate() throws {"
+      },
+      {
+        "line": 84,
+        "declaration": "private static func identify(_ url:URL) throws -> FileIdentity {"
+      },
+      {
+        "line": 91,
+        "declaration": "private static func privateDirectory(_ url:URL) throws {"
+      },
+      {
+        "line": 102,
+        "declaration": "private static func rejectExternalConfiguration(_ project:WS2OwnedScope.Directory) throws {"
+      },
+      {
+        "line": 118,
+        "declaration": "static func admitsEffectiveConfig(_ response:WireJSON) -> Bool {"
+      }
+    ]
+  },
+  {
+    "path": "prototype/Support/WS2VersionProbe.swift",
+    "baseSHA256": null,
+    "sha256": "8b77c9a8ce4ec1d66f5106736783ad5581572e45d761ebb7ec92c68756d7bd8f",
+    "operation": "add",
+    "lines": 48,
+    "symbols": [
+      {
+        "line": 4,
+        "declaration": "@MainActor final class WS2VersionProbe {"
+      },
+      {
+        "line": 35,
+        "declaration": "func start() throws {"
+      },
+      {
+        "line": 43,
+        "declaration": "func cancel() { invalid=true;channel.stop();finish(false) }"
+      },
+      {
+        "line": 44,
+        "declaration": "private func finish(_ ok:Bool) {"
+      }
+    ]
+  },
+  {
+    "path": "prototype/WindowShade.swift",
+    "baseSHA256": "e5e60ad49adca1273a2a67e2c339ecd53200519d7c340116affaefe2e015e54f",
+    "sha256": "4cbf3342bc01d1df701c23151617ad5df76bfe9a2b27c14f5149828c1242e228",
+    "operation": "modify",
+    "lines": 914,
+    "symbols": [
+      {
+        "line": 79,
+        "declaration": "func framesAlmostEqual(_ a: NSRect, _ b: NSRect, tolerance: CGFloat = 0.5) -> Bool {"
+      },
+      {
+        "line": 86,
+        "declaration": "func cgWindowID(for window: NSWindow) -> CGWindowID? {"
+      },
+      {
+        "line": 94,
+        "declaration": "final class AppDelegate: NSObject, NSApplicationDelegate, NSMenuDelegate {"
+      },
+      {
+        "line": 96,
+        "declaration": "final class PendingTitlebarTripleClick {"
+      },
+      {
+        "line": 110,
+        "declaration": "struct PendingSpaceReturn {"
+      },
+      {
+        "line": 118,
+        "declaration": "struct ReconcileAXTarget {"
+      },
+      {
+        "line": 125,
+        "declaration": "struct ReconcileAXSnapshot {"
+      },
+      {
+        "line": 301,
+        "declaration": "func applicationDidFinishLaunching(_ note: Notification) {"
+      },
+      {
+        "line": 415,
+        "declaration": "func applicationShouldTerminate(_ sender: NSApplication) -> NSApplication.TerminateReply {"
+      },
+      {
+        "line": 420,
+        "declaration": "@objc func systemAppearanceOptionsChanged(_ note: Notification) {"
+      },
+      {
+        "line": 451,
+        "declaration": "func installStandardMainMenu() {"
+      },
+      {
+        "line": 461,
+        "declaration": "private func migrateDistractingDefaultSounds() {"
+      },
+      {
+        "line": 490,
+        "declaration": "func refreshPinnedPreviewTarget(reason: String) {"
+      },
+      {
+        "line": 497,
+        "declaration": "private func setupPinnedPreviewFocusTracking() {"
+      },
+      {
+        "line": 510,
+        "declaration": "private func scheduleTitlebarPrefetch() {"
+      },
+      {
+        "line": 531,
+        "declaration": "private func schedulePinnedPreviewTargetRefresh() {"
+      },
+      {
+        "line": 551,
+        "declaration": "func focusSizedFrame(pos: CGPoint, size: CGSize,"
+      },
+      {
+        "line": 590,
+        "declaration": "func configureShadedAccessibility(for overlay: NSWindow, id: CGWindowID,"
+      },
+      {
+        "line": 616,
+        "declaration": "func currentShadedOverlayID() -> CGWindowID? {"
+      },
+      {
+        "line": 634,
+        "declaration": "@objc func finishOnboarding() {"
+      },
+      {
+        "line": 638,
+        "declaration": "@objc func dismissOnboarding() {"
+      },
+      {
+        "line": 649,
+        "declaration": "private func runTool(_ path: String, _ args: [String]) -> Int32? {"
+      },
+      {
+        "line": 666,
+        "declaration": "private func readTool(_ path: String, _ args: [String]) -> String? {"
+      },
+      {
+        "line": 682,
+        "declaration": "private func runDefaults(_ args: [String]) { runTool(\"/usr/bin/defaults\", args) }"
+      },
+      {
+        "line": 683,
+        "declaration": "private func readDefaults(_ args: [String]) -> String? { readTool(\"/usr/bin/defaults\", args) }"
+      },
+      {
+        "line": 684,
+        "declaration": "private func killDock() { runTool(\"/usr/bin/killall\", [\"Dock\"]) }   // 让 Dock 重读 mineffect"
+      },
+      {
+        "line": 686,
+        "declaration": "private func writeDockMinimizeEffect(_ value: String, reason: String) -> Bool {"
+      },
+      {
+        "line": 699,
+        "declaration": "private func persistDockMinimizeEffectSession(original: String?) {"
+      },
+      {
+        "line": 710,
+        "declaration": "private func clearDockMinimizeEffectSession() {"
+      },
+      {
+        "line": 717,
+        "declaration": "private func restoreDockMinimizeEffect(original: String?) {"
+      },
+      {
+        "line": 725,
+        "declaration": "private func recoverStaleDockMinimizeEffectSessionIfNeeded() {"
+      },
+      {
+        "line": 736,
+        "declaration": "private func enableScaleMinimizeEffectForSession() {"
+      },
+      {
+        "line": 764,
+        "declaration": "private func restoreDockMinimizeEffect() {"
+      },
+      {
+        "line": 781,
+        "declaration": "func currentOperationState(_ id: CGWindowID) -> WindowShadeState {"
+      },
+      {
+        "line": 787,
+        "declaration": "func transitionOperationState(id: CGWindowID, to next: WindowShadeState,"
+      },
+      {
+        "line": 800,
+        "declaration": "func applicationWillTerminate(_ note: Notification) {"
+      },
+      {
+        "line": 827,
+        "declaration": "func ensureAccessibility() -> Bool {"
+      },
+      {
+        "line": 834,
+        "declaration": "@objc func toggleAction() { toggle() }"
+      },
+      {
+        "line": 845,
+        "declaration": "@objc func focusCurrentAppAction() {"
+      },
+      {
+        "line": 859,
+        "declaration": "@objc func unshadeFromMenu(_ sender: NSMenuItem) {"
+      },
+      {
+        "line": 864,
+        "declaration": "@objc func quit() {"
+      },
+      {
+        "line": 877,
+        "declaration": "func setupEventTapWhenTrusted() {"
+      },
+      {
+        "line": 893,
+        "declaration": "func setupEventTap() -> Bool {"
+      }
+    ]
+  },
+  {
+    "path": "prototype/build.sh",
+    "baseSHA256": "e9f87cc96478257d129e8d16c85d0697e97f25ace0ffa8bbe08573cb4fc72f01",
+    "sha256": "e6db6c9f3499fcdcb4f28c065199f4f87aa64aeb0c5a46b098164dc761ad588c",
+    "operation": "modify",
+    "lines": 358,
+    "symbols": []
+  }
+]

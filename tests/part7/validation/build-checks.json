@@ -1,0 +1,548 @@
+[
+  {
+    "argv": [
+      "swiftc",
+      "--version"
+    ],
+    "exit_code": 0,
+    "stdout": "Apple Swift version 6.4 (swiftlang-6.4.0.34.1 clang-2100.3.34.1)\nTarget: arm64-apple-macosx27.0.0\n",
+    "stderr": "swift-driver version: 1.168.6 ",
+    "elapsed_seconds": 0.4093858340056613
+  },
+  {
+    "argv": [
+      "cc",
+      "--version"
+    ],
+    "exit_code": 0,
+    "stdout": "Apple clang version 21.0.0 (clang-2100.3.34.2)\nTarget: arm64-apple-darwin27.0.0\nThread model: posix\nInstalledDir: /Applications/Xcode.app/Contents/Developer/Toolchains/XcodeDefault.xctoolchain/usr/bin\n",
+    "stderr": "",
+    "elapsed_seconds": 0.04598699999041855
+  },
+  {
+    "argv": [
+      "uname",
+      "-a"
+    ],
+    "exit_code": 0,
+    "stdout": "Darwin Aarons-MacBook-Air.local 27.0.0 Darwin Kernel Version 27.0.0: Tue Aug 11 21:02:59 PDT 2026; root:xnu-13432.1.9~1/RELEASE_ARM64_T8142 arm64\n",
+    "stderr": "",
+    "elapsed_seconds": 0.0421293749823235
+  },
+  {
+    "argv": [
+      "bash",
+      "-n",
+      "/Users/aaron/Documents/WindowShade/prototype/build.sh"
+    ],
+    "exit_code": 0,
+    "stdout": "",
+    "stderr": "",
+    "elapsed_seconds": 0.01021612499607727
+  },
+  {
+    "argv": [
+      "swiftc",
+      "-swift-version",
+      "6",
+      "-strict-concurrency=complete",
+      "-warnings-as-errors",
+      "-I",
+      "/Users/aaron/Documents/WindowShade/prototype/Native",
+      "-typecheck",
+      "/Users/aaron/Documents/WindowShade/prototype/Core/Contracts.swift",
+      "/Users/aaron/Documents/WindowShade/prototype/Core/WS2FocusWindowOwnership.swift",
+      "/Users/aaron/Documents/WindowShade/prototype/Core/WS2DeviceInputGate.swift",
+      "/Users/aaron/Documents/WindowShade/prototype/Core/PairingAttemptWindow.swift",
+      "/Users/aaron/Documents/WindowShade/prototype/Core/PairingTLV.swift",
+      "/Users/aaron/Documents/WindowShade/prototype/Core/CodexWire.swift",
+      "/Users/aaron/Documents/WindowShade/prototype/Core/WS2CompanionFrame.swift",
+      "/Users/aaron/Documents/WindowShade/prototype/Core/WS2ApprovalReview.swift",
+      "/Users/aaron/Documents/WindowShade/prototype/Core/FocusTimer.swift",
+      "/Users/aaron/Documents/WindowShade/prototype/Core/GamepadMapping.swift",
+      "/Users/aaron/Documents/WindowShade/prototype/Core/WS2BoundedOutbox.swift",
+      "/Users/aaron/Documents/WindowShade/prototype/Core/WS2FocusEffectPlan.swift",
+      "/Users/aaron/Documents/WindowShade/prototype/Core/WS2SemanticInputRouter.swift",
+      "/Users/aaron/Documents/WindowShade/prototype/Core/WS2DiagnosticTail.swift",
+      "/Users/aaron/Documents/WindowShade/prototype/Core/WS2OwnedScope.swift",
+      "/Users/aaron/Documents/WindowShade/prototype/Core/WS2SelectionModel.swift",
+      "/Users/aaron/Documents/WindowShade/prototype/Core/WS2ConnectionBudget.swift",
+      "/Users/aaron/Documents/WindowShade/prototype/Core/WS2StrictJSON.swift",
+      "/Users/aaron/Documents/WindowShade/prototype/Core/WS2OwnedProtocolHost.swift",
+      "/Users/aaron/Documents/WindowShade/prototype/Core/WS2QuitBarrier.swift",
+      "/Users/aaron/Documents/WindowShade/prototype/Core/AgentSessions.swift",
+      "/Users/aaron/Documents/WindowShade/prototype/Support/WS2PeerRepository.swift",
+      "/Users/aaron/Documents/WindowShade/prototype/Support/WS2PairSetupServer.swift",
+      "/Users/aaron/Documents/WindowShade/prototype/Support/WS2PairSetupCrypto.swift",
+      "/Users/aaron/Documents/WindowShade/prototype/Support/WS2FocusEffectExecutor.swift",
+      "/Users/aaron/Documents/WindowShade/prototype/Support/WS2DuplexProcess.swift",
+      "/Users/aaron/Documents/WindowShade/prototype/Support/WS2ProjectDirectory.swift",
+      "/Users/aaron/Documents/WindowShade/prototype/Support/WS2LocalLaunchProfile.swift",
+      "/Users/aaron/Documents/WindowShade/prototype/Support/WS2VersionProbe.swift",
+      "/Users/aaron/Documents/WindowShade/prototype/Core/InteractionCoordinator.swift",
+      "/Users/aaron/Documents/WindowShade/prototype/App/FocusTimerHost.swift",
+      "/Users/aaron/Documents/WindowShade/prototype/App/WS2OwnedCodexSession.swift",
+      "/Users/aaron/Documents/WindowShade/prototype/App/WS2OwnedLaunchController.swift"
+    ],
+    "exit_code": 0,
+    "stdout": "",
+    "stderr": "",
+    "elapsed_seconds": 13.638216916995589
+  },
+  {
+    "argv": [
+      "swiftc",
+      "-frontend",
+      "-parse",
+      "/Users/aaron/Documents/WindowShade/prototype/App/FoldCompletion.swift"
+    ],
+    "exit_code": 0,
+    "stdout": "",
+    "stderr": "",
+    "elapsed_seconds": 0.13585300001432188
+  },
+  {
+    "argv": [
+      "swiftc",
+      "-frontend",
+      "-parse",
+      "/Users/aaron/Documents/WindowShade/prototype/App/LaunchpadActivities.swift"
+    ],
+    "exit_code": 0,
+    "stdout": "",
+    "stderr": "",
+    "elapsed_seconds": 0.1491785410034936
+  },
+  {
+    "argv": [
+      "swiftc",
+      "-frontend",
+      "-parse",
+      "/Users/aaron/Documents/WindowShade/prototype/App/LaunchpadController.swift"
+    ],
+    "exit_code": 0,
+    "stdout": "",
+    "stderr": "",
+    "elapsed_seconds": 0.11947345899534412
+  },
+  {
+    "argv": [
+      "swiftc",
+      "-frontend",
+      "-parse",
+      "/Users/aaron/Documents/WindowShade/prototype/App/Notch.swift"
+    ],
+    "exit_code": 0,
+    "stdout": "",
+    "stderr": "",
+    "elapsed_seconds": 0.10790462500881404
+  },
+  {
+    "argv": [
+      "swiftc",
+      "-frontend",
+      "-parse",
+      "/Users/aaron/Documents/WindowShade/prototype/App/NotchActivityView.swift"
+    ],
+    "exit_code": 0,
+    "stdout": "",
+    "stderr": "",
+    "elapsed_seconds": 0.1123222500027623
+  },
+  {
+    "argv": [
+      "swiftc",
+      "-frontend",
+      "-parse",
+      "/Users/aaron/Documents/WindowShade/prototype/App/NotchLeases.swift"
+    ],
+    "exit_code": 0,
+    "stdout": "",
+    "stderr": "",
+    "elapsed_seconds": 0.14236800000071526
+  },
+  {
+    "argv": [
+      "swiftc",
+      "-frontend",
+      "-parse",
+      "/Users/aaron/Documents/WindowShade/prototype/App/Preferences.swift"
+    ],
+    "exit_code": 0,
+    "stdout": "",
+    "stderr": "",
+    "elapsed_seconds": 0.11611737500061281
+  },
+  {
+    "argv": [
+      "swiftc",
+      "-frontend",
+      "-parse",
+      "/Users/aaron/Documents/WindowShade/prototype/App/Updater.swift"
+    ],
+    "exit_code": 0,
+    "stdout": "",
+    "stderr": "",
+    "elapsed_seconds": 0.12119891599286348
+  },
+  {
+    "argv": [
+      "swiftc",
+      "-frontend",
+      "-parse",
+      "/Users/aaron/Documents/WindowShade/prototype/App/UpdaterSettings.swift"
+    ],
+    "exit_code": 0,
+    "stdout": "",
+    "stderr": "",
+    "elapsed_seconds": 0.12282512499950826
+  },
+  {
+    "argv": [
+      "swiftc",
+      "-frontend",
+      "-parse",
+      "/Users/aaron/Documents/WindowShade/prototype/App/WS2AppRuntime.swift"
+    ],
+    "exit_code": 0,
+    "stdout": "",
+    "stderr": "",
+    "elapsed_seconds": 0.12125249998643994
+  },
+  {
+    "argv": [
+      "swiftc",
+      "-frontend",
+      "-parse",
+      "/Users/aaron/Documents/WindowShade/prototype/App/WS2CodexApprovalHost.swift"
+    ],
+    "exit_code": 0,
+    "stdout": "",
+    "stderr": "",
+    "elapsed_seconds": 0.12805875000776723
+  },
+  {
+    "argv": [
+      "swiftc",
+      "-frontend",
+      "-parse",
+      "/Users/aaron/Documents/WindowShade/prototype/App/WS2FocusSettings.swift"
+    ],
+    "exit_code": 0,
+    "stdout": "",
+    "stderr": "",
+    "elapsed_seconds": 0.12059474998386577
+  },
+  {
+    "argv": [
+      "swiftc",
+      "-frontend",
+      "-parse",
+      "/Users/aaron/Documents/WindowShade/prototype/App/WS2FocusWindowPort.swift"
+    ],
+    "exit_code": 0,
+    "stdout": "",
+    "stderr": "",
+    "elapsed_seconds": 0.14615791698452085
+  },
+  {
+    "argv": [
+      "swiftc",
+      "-frontend",
+      "-parse",
+      "/Users/aaron/Documents/WindowShade/prototype/App/WS2GameControllerBridge.swift"
+    ],
+    "exit_code": 0,
+    "stdout": "",
+    "stderr": "",
+    "elapsed_seconds": 0.15690258401446044
+  },
+  {
+    "argv": [
+      "swiftc",
+      "-frontend",
+      "-parse",
+      "/Users/aaron/Documents/WindowShade/prototype/App/WS2OwnedCodexSession+Authorization.swift"
+    ],
+    "exit_code": 0,
+    "stdout": "",
+    "stderr": "",
+    "elapsed_seconds": 0.18546549999155104
+  },
+  {
+    "argv": [
+      "swiftc",
+      "-frontend",
+      "-parse",
+      "/Users/aaron/Documents/WindowShade/prototype/App/WS2OwnedCodexSession.swift"
+    ],
+    "exit_code": 0,
+    "stdout": "",
+    "stderr": "",
+    "elapsed_seconds": 0.13229020798462443
+  },
+  {
+    "argv": [
+      "swiftc",
+      "-frontend",
+      "-parse",
+      "/Users/aaron/Documents/WindowShade/prototype/App/WS2OwnedLaunchController.swift"
+    ],
+    "exit_code": 0,
+    "stdout": "",
+    "stderr": "",
+    "elapsed_seconds": 0.1525295829924289
+  },
+  {
+    "argv": [
+      "swiftc",
+      "-frontend",
+      "-parse",
+      "/Users/aaron/Documents/WindowShade/prototype/App/WS2OwnedSessionView.swift"
+    ],
+    "exit_code": 0,
+    "stdout": "",
+    "stderr": "",
+    "elapsed_seconds": 0.13080862499191426
+  },
+  {
+    "argv": [
+      "swiftc",
+      "-frontend",
+      "-parse",
+      "/Users/aaron/Documents/WindowShade/prototype/App/WS2PrivacyData.swift"
+    ],
+    "exit_code": 0,
+    "stdout": "",
+    "stderr": "",
+    "elapsed_seconds": 0.12959566598874517
+  },
+  {
+    "argv": [
+      "swiftc",
+      "-frontend",
+      "-parse",
+      "/Users/aaron/Documents/WindowShade/prototype/App/WS2PrivacyPane.swift"
+    ],
+    "exit_code": 0,
+    "stdout": "",
+    "stderr": "",
+    "elapsed_seconds": 0.1632715830055531
+  },
+  {
+    "argv": [
+      "swiftc",
+      "-frontend",
+      "-parse",
+      "/Users/aaron/Documents/WindowShade/prototype/App/WS2SettingsInfo.swift"
+    ],
+    "exit_code": 0,
+    "stdout": "",
+    "stderr": "",
+    "elapsed_seconds": 0.24843933299416676
+  },
+  {
+    "argv": [
+      "swiftc",
+      "-frontend",
+      "-parse",
+      "/Users/aaron/Documents/WindowShade/prototype/App/WS2SupplementPane.swift"
+    ],
+    "exit_code": 0,
+    "stdout": "",
+    "stderr": "",
+    "elapsed_seconds": 0.11995729201589711
+  },
+  {
+    "argv": [
+      "swiftc",
+      "-frontend",
+      "-parse",
+      "/Users/aaron/Documents/WindowShade/prototype/Core/CodexWire.swift"
+    ],
+    "exit_code": 0,
+    "stdout": "",
+    "stderr": "",
+    "elapsed_seconds": 0.15509350001229905
+  },
+  {
+    "argv": [
+      "swiftc",
+      "-frontend",
+      "-parse",
+      "/Users/aaron/Documents/WindowShade/prototype/Core/InteractionCoordinator.swift"
+    ],
+    "exit_code": 0,
+    "stdout": "",
+    "stderr": "",
+    "elapsed_seconds": 0.16553216701140627
+  },
+  {
+    "argv": [
+      "swiftc",
+      "-frontend",
+      "-parse",
+      "/Users/aaron/Documents/WindowShade/prototype/Core/PairingTLV.swift"
+    ],
+    "exit_code": 0,
+    "stdout": "",
+    "stderr": "",
+    "elapsed_seconds": 0.13972137501696125
+  },
+  {
+    "argv": [
+      "swiftc",
+      "-frontend",
+      "-parse",
+      "/Users/aaron/Documents/WindowShade/prototype/Core/WS2OwnedProtocolHost.swift"
+    ],
+    "exit_code": 0,
+    "stdout": "",
+    "stderr": "",
+    "elapsed_seconds": 0.14189616599469446
+  },
+  {
+    "argv": [
+      "swiftc",
+      "-frontend",
+      "-parse",
+      "/Users/aaron/Documents/WindowShade/prototype/Core/WS2QuitBarrier.swift"
+    ],
+    "exit_code": 0,
+    "stdout": "",
+    "stderr": "",
+    "elapsed_seconds": 0.14067300001624972
+  },
+  {
+    "argv": [
+      "swiftc",
+      "-frontend",
+      "-parse",
+      "/Users/aaron/Documents/WindowShade/prototype/Core/WS2StrictJSON.swift"
+    ],
+    "exit_code": 0,
+    "stdout": "",
+    "stderr": "",
+    "elapsed_seconds": 0.12115708299097605
+  },
+  {
+    "argv": [
+      "swiftc",
+      "-frontend",
+      "-parse",
+      "/Users/aaron/Documents/WindowShade/prototype/Effects/DuoSettingsWindow.swift"
+    ],
+    "exit_code": 0,
+    "stdout": "",
+    "stderr": "",
+    "elapsed_seconds": 0.12902795898844488
+  },
+  {
+    "argv": [
+      "swiftc",
+      "-frontend",
+      "-parse",
+      "/Users/aaron/Documents/WindowShade/prototype/Support/WS2AtomicConfiguration.swift"
+    ],
+    "exit_code": 0,
+    "stdout": "",
+    "stderr": "",
+    "elapsed_seconds": 0.11146304200519808
+  },
+  {
+    "argv": [
+      "swiftc",
+      "-frontend",
+      "-parse",
+      "/Users/aaron/Documents/WindowShade/prototype/Support/WS2DuplexProcess.swift"
+    ],
+    "exit_code": 0,
+    "stdout": "",
+    "stderr": "",
+    "elapsed_seconds": 0.1285280000010971
+  },
+  {
+    "argv": [
+      "swiftc",
+      "-frontend",
+      "-parse",
+      "/Users/aaron/Documents/WindowShade/prototype/Support/WS2KeychainPeerStorage.swift"
+    ],
+    "exit_code": 0,
+    "stdout": "",
+    "stderr": "",
+    "elapsed_seconds": 0.14054225001018494
+  },
+  {
+    "argv": [
+      "swiftc",
+      "-frontend",
+      "-parse",
+      "/Users/aaron/Documents/WindowShade/prototype/Support/WS2LocalLaunchProfile.swift"
+    ],
+    "exit_code": 0,
+    "stdout": "",
+    "stderr": "",
+    "elapsed_seconds": 0.16670491700642742
+  },
+  {
+    "argv": [
+      "swiftc",
+      "-frontend",
+      "-parse",
+      "/Users/aaron/Documents/WindowShade/prototype/Support/WS2ProcessChannel.swift"
+    ],
+    "exit_code": 0,
+    "stdout": "",
+    "stderr": "",
+    "elapsed_seconds": 0.14982458399026655
+  },
+  {
+    "argv": [
+      "swiftc",
+      "-frontend",
+      "-parse",
+      "/Users/aaron/Documents/WindowShade/prototype/Support/WS2UnixSocket.swift"
+    ],
+    "exit_code": 0,
+    "stdout": "",
+    "stderr": "",
+    "elapsed_seconds": 0.15993466699728742
+  },
+  {
+    "argv": [
+      "swiftc",
+      "-frontend",
+      "-parse",
+      "/Users/aaron/Documents/WindowShade/prototype/Support/WS2VersionProbe.swift"
+    ],
+    "exit_code": 0,
+    "stdout": "",
+    "stderr": "",
+    "elapsed_seconds": 0.14860449999105185
+  },
+  {
+    "argv": [
+      "swiftc",
+      "-frontend",
+      "-parse",
+      "/Users/aaron/Documents/WindowShade/prototype/Window/AXWindow.swift"
+    ],
+    "exit_code": 0,
+    "stdout": "",
+    "stderr": "",
+    "elapsed_seconds": 0.156060792010976
+  },
+  {
+    "argv": [
+      "swiftc",
+      "-frontend",
+      "-parse",
+      "/Users/aaron/Documents/WindowShade/prototype/WindowShade.swift"
+    ],
+    "exit_code": 0,
+    "stdout": "",
+    "stderr": "",
+    "elapsed_seconds": 0.13322908300324343
+  }
+]

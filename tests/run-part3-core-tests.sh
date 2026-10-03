@@ -10,7 +10,7 @@ mkdir -p "$BUILD"
 CORE=(
   Contracts ConductorGesture AgentSessions ConductorSession ConductorCapabilities SmoothScroll InputDeviceKind
   MiddleDrag TouchTap SiriRemoteButtons RemoteMode FocusNavigator PresenceLock FocusTimer
-  RemoteSessionGate PresenceReadDeadline InteractionCoordinator CodexWire PairingAttemptWindow
+  RemoteSessionGate PresenceReadDeadline InteractionCoordinator CodexWire WS2StrictJSON PairingAttemptWindow
   PairingTLV RemoteEventRouter MultitouchQualification HIDMappingTransaction WS2InputEligibility
   GamepadMapping WS2LockRequestPolicy
 )
