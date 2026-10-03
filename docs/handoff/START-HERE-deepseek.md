@@ -67,6 +67,15 @@
 > 原件和逐包施工单在 [chatgpt-review-2/part1/](chatgpt-review-2/part1/)。往后派工以那里的 `packages/<编号>/WORKORDER.md` 为准；共享类型只用 `WS2` 命名空间里的，不另造。
 > 下面的表保留作历史对照：第一波不再派给 DeepSeek，第二、三波等 ChatGPT 第二轮后续几份交回再派。
 
+> **2026-10-03 晚更新：第二份也已接入。**第二回合第 2 份（协调器实现、D5a/D6/L2 纯核、S1 设置补丁、T2 番茄钟宿主与卡片、5 个真机探针、九章概念片）已进 `main`，
+> 原件在 [chatgpt-review-2/part2/](chatgpt-review-2/part2/)。主模型在本机复核并修了三处它自己没跑出来的问题：
+> `src/scenes/wsSpring.ts` 的元组展开过不了 `tsc`；S1 补丁在 Swift 6 严格并发下有两处隔离错误；协调器接入时撤销顺序会让收尾回调拿不到主人。
+> 现在：纯核 22 场景/86 断言、合同 9 用例/24 断言、租约宿主 8 场景全过，`./build.sh --check` 通过，概念片横竖两版在本机渲染。
+>
+> **还没做的（等 ChatGPT 再交或等 Aaron 上机）：** M1 菜单收拢、T3/T4 番茄钟接线与设置两项、A3/D3 刘海视图、A2a/A2b agent hook、
+> L2 的 BLE 生产来源、I2/I3/I5/I8 的输入接管、D5b/D6 真实协议与 CLI 通道、F1/L3 人脸与系统锁、概念片 17 项真机素材。
+> 其中要 Aaron 在场上机的部分见 [part2/REMAINING.md](chatgpt-review-2/part2/REMAINING.md) 与 `tools/probes/RESULTS-2026-10-03.md`。
+
 
 **第一波：纯逻辑。**互不依赖，最安全，可以并行派。
 

@@ -6,7 +6,9 @@
     "typecheck": "tsc -p tsconfig.json",
     "still": "remotion still src/index.ts WS2Concept",
     "render:draft": "remotion render src/index.ts WS2Concept out/draft.mp4 --scale=0.5 --fps=30",
-    "render": "remotion render src/index.ts WS2Concept out/ws2-concept.mp4"
+    "render": "remotion render src/index.ts WS2Concept out/ws2-concept.mp4",
+    "render:portrait": "remotion render src/index.ts WS2ConceptPortrait out/ws2-concept-portrait.mp4",
+    "check:timeline": "node scripts/check-timeline.mjs"
   },
   "dependencies": {
     "@remotion/cli": "4.0.484",
