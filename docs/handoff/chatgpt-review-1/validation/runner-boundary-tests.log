@@ -1,0 +1,55 @@
+PASS 1 manual pause removes active deadline
+PASS 2 wake/unlock preserves manual pause
+PASS 3 duplicate pause does not subtract time twice
+PASS 4 invalid time does not pause
+PASS 5 read starts with own deadline
+PASS 6 one pending read at a time
+PASS 7 old epoch reply rejected
+PASS 8 wrong request reply rejected
+PASS 9 read does not expire before deadline
+PASS 10 reply at deadline not fresh
+PASS 11 read expires at deadline
+PASS 12 reply within new request window accepted
+PASS 13 invalidated request rejects reply
+PASS 14 same id in other provider not approved
+PASS 15 changed action not approved
+PASS 16 matching pending request consumed
+PASS 17 UI request consumed once only
+PASS 18 approval deadline exclusive
+PASS 19 old conductor epoch rejected
+PASS 20 current conductor event accepted
+PASS 21 duplicate conductor sequence rejected
+PASS 22 other conductor session rejected
+PASS 23 changed draft invalidates effort confirmation
+PASS 24 new connection invalidates effort confirmation
+PASS 25 changed effective effort invalidates ticket
+PASS 26 matching effort ticket consumed
+PASS 27 effort ticket consumed once
+PASS 28 effort ticket expiry
+PASS 29 scroll input equals output plus settled residual
+PASS 30 analytic spring invariant across equal total time
+PASS 31 nonfinite scroll sample rejected
+PASS 32 signed total displacement conserved through reversal
+PASS 33 focus tie-break stable id ignores disabled
+PASS 34 focus edge does not wrap
+PASS 35 non-cardinal direction rejected
+PASS 36 input disabled by default
+PASS 37 no selected device cannot install
+PASS 38 all consent prerequisites permit install
+PASS 39 lock revokes install condition
+PASS 40 no-decision hook payload contains no allow
+PASS 41 allow encodes correct event-specific structure
+PASS 42 hook response newline
+PASS 43 partial frame buffered
+PASS 44 split plus coalesced frames
+PASS 45 exact frame size permitted
+PASS 46 oversized frame rejected
+PASS 47 pair window expiry
+PASS 48 three failed attempts close window
+PASS 49 PIN has four ASCII decimal digits; not a randomness proof
+PASS 50 lock effect not early
+PASS 51 lock effect at deadline
+PASS 52 lock effect exactly once
+PASS 53 cancel wins at deadline
+PASS 54 cancellation remains terminal for this lock session
+ALL 54 BOUNDARY CHECKS PASSED

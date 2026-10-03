@@ -1,0 +1,8 @@
+{"id": 1, "method": "initialize", "params": {"clientInfo": {"name": "windowshade", "title": "WindowShade", "version": "review-fixture"}}}
+{"method": "initialized", "params": {}}
+{"id": 2, "method": "model/list", "params": {"limit": 20, "includeHidden": false}}
+{"id": 3, "method": "thread/start", "params": {"cwd": "/tmp/ws-fixture-project", "model": "fixture-model"}}
+{"id": 4, "method": "turn/start", "params": {"threadId": "thread-fixture", "input": [{"type": "text", "text": "仅描述，不执行。"}], "model": "fixture-model", "effort": "medium"}}
+{"id": 5, "method": "turn/steer", "params": {"threadId": "thread-fixture", "expectedTurnId": "turn-fixture", "input": [{"type": "text", "text": "仅只读。"}]}}
+{"id": 6, "method": "turn/interrupt", "params": {"threadId": "thread-fixture", "turnId": "turn-fixture"}}
+{"id": "server-approval-fixture", "result": {"decision": "accept"}}

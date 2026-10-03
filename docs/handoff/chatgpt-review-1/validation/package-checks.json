@@ -1,0 +1,22 @@
+{
+  "24_cheatsheets_exact": true,
+  "24_examples_exact": true,
+  "json_and_jsonl_parse": true,
+  "local_markdown_links": true,
+  "broken_links": [],
+  "embedded_code_matches_examples": true,
+  "input_files_unchanged": true,
+  "input_manifest_count": 638,
+  "changed_input_files": [],
+  "input_archive_hash_matches": true,
+  "example_typecheck_status_counts": {
+    "passed": 14,
+    "not_run": 10
+  },
+  "boundary_checks_passed": 54,
+  "boundary_runner_same_output": true,
+  "original_conductor_assertions_ok": 39,
+  "review_findings": 53,
+  "format": "Markdown, Swift, JSON, shell, text logs only; no executables or third-party implementation sources",
+  "only_expected_file_types": true
+}

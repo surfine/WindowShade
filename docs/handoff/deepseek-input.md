@@ -137,7 +137,7 @@ DeepSeek 的沙箱是从 git 克隆仓库的，没提交的文件它看不到。
 ## I8：DualSense（App 层）
 
 - 新文件 `prototype/App/GamepadSource.swift`。只用 GameController 公开接口：`GCController` 的连接与断开通知、`GCDualSenseGamepad`
-  （按键、摇杆、`touchpadPrimary` / `touchpadSecondary` / `touchpadButton`、`adaptiveTriggers`）、`GCDeviceLight`、`GCDeviceHaptics`、`GCDeviceBattery`。
+  （按键、摇杆、`touchpadPrimary` / `touchpadSecondary` / `touchpadButton`，以及 `leftTrigger` / `rightTrigger`：它们的类型是 `GCDualSenseAdaptiveTrigger`，用 `setModeWeapon(startPosition:endPosition:resistiveStrength:)` 做那道“咔”，用 `setModeOff()` 复原；没有 `adaptiveTriggers` 这个属性）、`GCDeviceLight`、`GCDeviceHaptics`、`GCDeviceBattery`。
   设 `GCController.shouldMonitorBackgroundEvents = true`，WindowShade 在后台也能收到输入。不用私有接口，不用 IOHID 读手柄。
 - 纯逻辑放 `prototype/Core/GamepadMapping.swift`，配测试：
   - 摇杆：死区、加速度曲线，输出指针速度；

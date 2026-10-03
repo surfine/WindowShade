@@ -1,0 +1,16 @@
+{
+  "hooks": {
+    "PermissionRequest": [
+      {
+        "matcher": ".*",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "'/ABSOLUTE/TEST/PATH/ws-hook' --provider codex",
+            "timeout": 125
+          }
+        ]
+      }
+    ]
+  }
+}
