@@ -646,9 +646,12 @@ static func noticeTone(_ message: String) -> NotchPanel.Tone {
             // 走的是“缺权限”这条判断，不受这个标记影响。
             NotificationCenter.default.addObserver(forName: NSWindow.willCloseNotification,
                                                    object: window, queue: .main) { [weak self] _ in
-                UserDefaults.standard.set(true, forKey: shadeOnboardingShownDefaultsKey)
-                self?.onboardingRefreshTimer?.invalidate()
-                self?.onboardingRefreshTimer = nil
+                // 观察者指定了主队列，回调在主线程。
+                MainActor.assumeIsolated {
+                    UserDefaults.standard.set(true, forKey: shadeOnboardingShownDefaultsKey)
+                    self?.onboardingRefreshTimer?.invalidate()
+                    self?.onboardingRefreshTimer = nil
+                }
             }
             // 整个被挡住、在别的桌面上时授权页不再每秒查；又看得见了马上刷新一次、接着查。
             NotificationCenter.default.addObserver(forName: NSWindow.didChangeOcclusionStateNotification,
