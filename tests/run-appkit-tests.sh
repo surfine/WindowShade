@@ -50,7 +50,7 @@ import Cocoa
     switch CommandLine.arguments.dropFirst().first {
     case "SettingsNavigationTests": await SettingsNavigationTests.main()
     case "ClassicStripTests": ClassicStripTests.main()
-    case "WindowFoldEffectsTests": WindowFoldEffectsTests.main()
+    case "WindowFoldEffectsTests": await WindowFoldEffectsTests.main()
     case "GlanceLifecycleTests": GlanceLifecycleTests.main()
     case "CarryControllerTests": CarryControllerTests.main()
     case "NotchActivityViewTests": await NotchActivityViewTests.main()

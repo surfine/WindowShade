@@ -1,0 +1,36 @@
+#!/usr/bin/env python3
+"""Source-level regression guards; no assertion here proves an AX or AppKit behavior."""
+import argparse,pathlib,json
+p=argparse.ArgumentParser();p.add_argument('--repo',required=True,type=pathlib.Path);a=p.parse_args();r=a.repo/'prototype';here=pathlib.Path(__file__).resolve().parent.parent;items=[]
+def text(path):return (r/path).read_text()
+def ck(name,condition):items.append(dict(name=name,passed=bool(condition),level='source-level only'))
+f=text('App/FoldTransaction.swift');v=f.split('func scheduleFoldVerification',1)[1].split('func revealOverlayAfterVerification',1)[0]
+g=text('App/WS2FoldCallbackGuard.swift');c=text('App/FoldCompletion.swift');s=text('App/ShadeController.swift');re=text('App/Reconcile.swift');ax=text('Window/AXHelpers.swift')
+ck('production uses three-state verification','observation:' in v and 'result:' in v)
+ck('no screen-absence quick success','quickObserve:' not in v and 'quickObservation:' not in v)
+ck('no cross-strategy rescue','state.hide == .minimized' in v and 'shaded[id]?.hide = .minimized' not in v)
+ck('unknown keeps original recovery entry','retainUnconfirmedFold' in v and 'clearShadeJournal' not in g)
+ck('shared strict Boolean decoding','ws2ObservedBoolean(raw)' in g and 'axObservedBoolAttribute' in re)
+ck('old id-only success method removed','func settleFoldWaiters(id: CGWindowID, success:' not in c)
+ck('batch drained before queued callbacks',c.index('foldWaiters[id] = waiting.isEmpty') < c.index('DispatchQueue.main.async { [weak self]'))
+ck('queued result is revalidated','owner.foldCallbackIsCurrent(stamp)' in c)
+ck('callback refcon is registration not window ID','receiveFoldAXNotification(routeID:' in ax and 'CGWindowID(Int(bitPattern:' not in ax)
+ck('callback main runloop premise is guarded','Thread.isMainThread' in ax and 'CFRunLoopAddSource(CFRunLoopGetMain()' in f)
+ck('observer registration never wraps','foldObserverSerial < UInt(Int.max)' in f and 'foldObserverRoutes[serial] = route' in f)
+ck('destroyed event requires fresh absence','windows.isEmpty, foldCallbackIsCurrent(expected)' in f)
+ck('shown event requires current unhidden app','!app.isTerminated, !app.isHidden' in f)
+ck('snapshot carries transaction/context','ReconcileAXSnapshot(stamp: target.stamp' in re and 'foldCallbackIsCurrent(snapshot.stamp)' in re)
+ck('no shared mutable snapshot accumulator','snapshots.append(contentsOf:' not in re and 'group.wait()' not in re)
+ck('independent app batch identity checked','self.reconcileBatchID == batch' in re and 'self.reconcilePendingApplications -= 1' in re)
+ck('onscreen membership not sampled before async batch',re.index('let onScreenIDs = currentOnScreenWindowIDs()') > re.index('func applyReconcileAXSnapshots'))
+ck('ordinary source write has admission check','finalPID != pid || windowID(of: win) != id || !admissionCurrent()' in s)
+ck('native path does not pump nested runloop','RunLoop.current.run(' not in s.split('func installInteractiveNativeCollapse',1)[1].split('if mode == .interactiveNative',1)[0])
+ck('native and proxy bind request tokens',s.count('bindFoldWaiters(id: id, tokens: completionTokens, transaction:') == 2)
+ck('frame helper inherits caller isolation','isolated (any Actor)? = #isolation' in text('Effects/EffectFrameAwaiter.swift'))
+ck('no new unchecked Sendable in changed helpers',all('@unchecked Sendable' not in x for x in [g,c,text('Core/WS2FoldCallbackStamp.swift'),text('Effects/EffectFrameAwaiter.swift')]))
+ck('read-only entry still refuses elevation','WS2ReadOnlyProtocolHost' in text('App/WS2OwnedCodexSession.swift'))
+ck('old timer window executor still unavailable unless actually connected','focusWindowEffects' in text('App/WS2AppRuntime.swift'))
+report={'checks':items,'checks_count':len(items),'failures':sum(not i['passed'] for i in items),'sdk_executed':False,'hardware_executed':False}
+(here/'validation/wiring-static.json').write_text(json.dumps(report,ensure_ascii=False,indent=2)+'\n')
+for i in items:print('PASS' if i['passed'] else 'FAIL',i['name'])
+raise SystemExit(bool(report['failures']))

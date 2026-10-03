@@ -1,0 +1,241 @@
+[
+  {
+    "argv": [
+      "cc",
+      "-std=c11",
+      "-O2",
+      "-Wall",
+      "-Wextra",
+      "-Werror",
+      "-c",
+      "/mnt/data/WindowShade2-round2-handoff-v9/candidate-repo/prototype/Native/WS2Child.c",
+      "-o",
+      "/tmp/ws2-v7-regression-6bp8puv9/child.o"
+    ],
+    "exit_code": 0,
+    "elapsed_seconds": 0.08192532099974414,
+    "stdout": "",
+    "stderr": ""
+  },
+  {
+    "argv": [
+      "swiftc",
+      "-swift-version",
+      "6",
+      "-strict-concurrency=complete",
+      "-warnings-as-errors",
+      "/mnt/data/WindowShade2-round2-handoff-v9/candidate-repo/prototype/Core/Contracts.swift",
+      "/mnt/data/WindowShade2-round2-handoff-v9/candidate-repo/prototype/Core/WS2DiagnosticTail.swift",
+      "/mnt/data/WindowShade2-round2-handoff-v9/candidate-repo/prototype/Core/WS2OwnedScope.swift",
+      "/mnt/data/WindowShade2-round2-handoff-v9/candidate-repo/prototype/Core/WS2SelectionModel.swift",
+      "/mnt/data/WindowShade2-round2-handoff-v9/candidate-repo/prototype/Core/WS2ConnectionBudget.swift",
+      "/mnt/data/WindowShade2-round2-handoff-v9/candidate-repo/prototype/App/InteractionCoordinator.swift",
+      "/mnt/data/WindowShade2-round2-handoff-v9/candidate-repo/prototype/Support/WS2ProjectDirectory.swift",
+      "/mnt/data/ws2-v8-baseline/WindowShade2-round2-handoff-v8/part6/tests/CoreTests.swift",
+      "-o",
+      "/tmp/ws2-v7-regression-6bp8puv9/part6-core"
+    ],
+    "exit_code": 0,
+    "elapsed_seconds": 2.7317566880001323,
+    "stdout": "",
+    "stderr": ""
+  },
+  {
+    "argv": [
+      "/tmp/ws2-v7-regression-6bp8puv9/part6-core",
+      "/mnt/data/WindowShade2-round2-part9/validation/regressions/legacy-foundation/regression-part6-core-results.json"
+    ],
+    "exit_code": 0,
+    "elapsed_seconds": 0.011198446999969747,
+    "stdout": "SCENE ARB01 opened page cannot evict review\nSCENE ARB02 exact opened lease replacement cancels once\nSCENE ARB03 same priority without explicit navigation busy\nSCENE ARB04 stale replacement cannot evict newer page\nSCENE ARB05 authorization preempts opened page\nSCENE ARB06 equal authorization never replaces review\nSCENE ARB07 synchronous disable barrier aborts replacement\nSCENE ARB08 reentrant acquire in cancellation refused\nSCENE ARB09 invalid request does not remove existing page\nSCENE ARB10 clock rollback safety invalidation still works\nSCENE ARB11 display removal during callback aborts replacement\nSCENE ARB12 expired expected handle is not resurrected\nSCENE SCP01 cannot begin before local enable and unlock\nSCENE SCP02 project switch invalidates queued work\nSCENE SCP03 relock and unlock never restores old ticket\nSCENE SCP04 path replacement and connection restart rejected\nSCENE SCP05 backend session validation and epoch binding\nSCENE SCP06 disabled state and explicit clear reject\nSCENE DIR01 actual symlink and directory replacement observations\nSCENE DIR02 containment uses path boundary not string prefix\nSCENE DIR03 non-directory and missing path fail\nSCENE SEL01 stable selection survives reorder\nSCENE SEL02 disabled rows skipped and no wrap\nSCENE SEL03 stale events rejected after snapshot\nSCENE SEL04 activation consumed exactly once\nSCENE SEL05 selection movement invalidates activation\nSCENE SEL06 duplicate snapshot fails closed\nSCENE SEL07 disabled selection chooses enabled row and empty is valid\nSCENE SEL08 revoke invalidates queued activation\nSCENE SEL09 snapshot size and identifier bounds\nSCENE NET01 unauthenticated connections globally bounded\nSCENE NET02 pair setup requires local window and cannot extend deadline\nSCENE NET03 one connection per verified peer\nSCENE NET04 deadline rejects promotion and stale generation\nSCENE NET05 per-connection and aggregate queue bounds\nSCENE NET06 total connection cap includes authenticated sessions\nSCENE NET07 clock rollback halts and clears buffers\nSCENE NET08 close releases allocation and stale handle fails\nSCENE DIAG01 bounded suffix and observed versus retained bytes\nSCENE DIAG02 control sequences cannot act as terminal escapes\nSCENE DIAG03 invalid UTF8 and clear bounded memory\nSCENE DIAG04 large append never retains more than capacity\nRESULT scenarios=42 assertions=95 failures=0\n",
+    "stderr": ""
+  },
+  {
+    "argv": [
+      "swiftc",
+      "-swift-version",
+      "6",
+      "-strict-concurrency=complete",
+      "-warnings-as-errors",
+      "/mnt/data/WindowShade2-round2-handoff-v9/candidate-repo/prototype/Core/Contracts.swift",
+      "/mnt/data/WindowShade2-round2-handoff-v9/candidate-repo/prototype/Core/CodexWire.swift",
+      "/mnt/data/WindowShade2-round2-handoff-v9/candidate-repo/prototype/Core/WS2StrictJSON.swift",
+      "/mnt/data/ws2-v8-baseline/WindowShade2-round2-handoff-v8/part6/tests/WireProfileTests.swift",
+      "-o",
+      "/tmp/ws2-v7-regression-6bp8puv9/part6-wire"
+    ],
+    "exit_code": 0,
+    "elapsed_seconds": 2.001879280999674,
+    "stdout": "",
+    "stderr": ""
+  },
+  {
+    "argv": [
+      "/tmp/ws2-v7-regression-6bp8puv9/part6-wire",
+      "/mnt/data/WindowShade2-round2-part9/validation/regressions/legacy-foundation/regression-part6-wire-results.json",
+      "/mnt/data/WindowShade2-round2-part9/validation/regressions/legacy-foundation/regression-part6-wire-outbound.ndjson"
+    ],
+    "exit_code": 0,
+    "elapsed_seconds": 0.01164863800022431,
+    "stdout": "RESULT scenarios=5 assertions=11 failures=0\n",
+    "stderr": ""
+  },
+  {
+    "argv": [
+      "swiftc",
+      "-swift-version",
+      "6",
+      "-strict-concurrency=complete",
+      "-warnings-as-errors",
+      "/mnt/data/WindowShade2-round2-handoff-v9/candidate-repo/prototype/Core/Contracts.swift",
+      "/mnt/data/WindowShade2-round2-handoff-v9/candidate-repo/prototype/Core/WS2FocusWindowOwnership.swift",
+      "/mnt/data/WindowShade2-round2-handoff-v9/candidate-repo/prototype/Core/WS2DeviceInputGate.swift",
+      "/mnt/data/WindowShade2-round2-handoff-v9/candidate-repo/prototype/Core/PairingAttemptWindow.swift",
+      "/mnt/data/WindowShade2-round2-handoff-v9/candidate-repo/prototype/Core/PairingTLV.swift",
+      "/mnt/data/WindowShade2-round2-handoff-v9/candidate-repo/prototype/Core/WS2BoundedOutbox.swift",
+      "/mnt/data/WindowShade2-round2-handoff-v9/candidate-repo/prototype/Core/WS2FocusEffectPlan.swift",
+      "/mnt/data/WindowShade2-round2-handoff-v9/candidate-repo/prototype/Core/WS2SemanticInputRouter.swift",
+      "/mnt/data/WindowShade2-round2-handoff-v9/candidate-repo/prototype/Support/WS2PeerRepository.swift",
+      "/mnt/data/WindowShade2-round2-handoff-v9/candidate-repo/prototype/Support/WS2PairSetupServer.swift",
+      "/mnt/data/ws2-v8-baseline/WindowShade2-round2-handoff-v8/part5/tests/CoreTests.swift",
+      "-o",
+      "/tmp/ws2-v7-regression-6bp8puv9/part5-core"
+    ],
+    "exit_code": 0,
+    "elapsed_seconds": 3.744188457999826,
+    "stdout": "",
+    "stderr": ""
+  },
+  {
+    "argv": [
+      "/tmp/ws2-v7-regression-6bp8puv9/part5-core",
+      "/mnt/data/WindowShade2-round2-part9/validation/regressions/legacy-foundation/regression-part5-core-results.json"
+    ],
+    "exit_code": 0,
+    "elapsed_seconds": 0.014487797000128921,
+    "stdout": "SCENE Q01 atomic batch and FIFO partial write\nSCENE Q02 rejected batch does not keep prefix\nSCENE Q03 expired partial write closes connection\nSCENE Q04 old generation denied\nSCENE Q05 clock and invalid completion checks\nSCENE Q06 zero record and record limit\nSCENE Q07 later earlier-deadline frame poisons whole stream\nSCENE K01 missing snapshot does not create identity\nSCENE K02 durable enroll and reload\nSCENE K03 revoke persists and invalidates old revision\nSCENE K04 write failure is not successful persistent revocation\nSCENE K05 malformed snapshot blocks instead of resetting\nSCENE K06 enrolled identifier never silently overwritten\nSCENE K07 peer cap and attempts marker survive reload\nSCENE K08 read failure does not look like no saved peers\nSCENE P01 M1 through M6 commits before return, no crypto claim\nSCENE P02 cannot pair without local PIN window\nSCENE P03 wrong sequence closes session\nSCENE P04 three failures enforce five minute cooldown across new connections\nSCENE P05 restart incomplete imposes fresh cooldown\nSCENE P06 persistence failure never releases M6\nSCENE P07 concurrent setup not admitted\nSCENE P08 expired M3 closes and clears\nSCENE P09 malformed TLV and invalid PIN\nSCENE P10 cancellation/reopening does not reset failure count\nSCENE F01 phase barrier restores before retucking same window\nSCENE F02 cancelled late tuck compensates before anything new\nSCENE F03 manual user change relinquishes ownership\nSCENE F04 unknown completion blocks future phases\nSCENE F05 locked completion waits for verified unlock\nSCENE F06 duplicate completion cannot mutate new transaction\nSCENE F07 restored revision must advance\nSCENE F08 duplicate window identity is rejected\nSCENE F09 failed restore blocks rest tucks\nSCENE I01 semantic ticket consumed once\nSCENE I02 stale lease cannot dispatch\nSCENE I03 approval domain has no remote confirm\nSCENE I04 final lock recheck\nSCENE I05 interrupt not accepted in desktop\nSCENE I06 forged intent does not reuse reserved press\nRESULT scenarios=40 assertions=97 failures=0\n",
+    "stderr": ""
+  },
+  {
+    "argv": [
+      "swiftc",
+      "-swift-version",
+      "6",
+      "-strict-concurrency=complete",
+      "-warnings-as-errors",
+      "/mnt/data/WindowShade2-round2-handoff-v9/candidate-repo/prototype/Core/Contracts.swift",
+      "/mnt/data/WindowShade2-round2-handoff-v9/candidate-repo/prototype/Core/CodexWire.swift",
+      "/mnt/data/WindowShade2-round2-handoff-v9/candidate-repo/prototype/Core/WS2StrictJSON.swift",
+      "/mnt/data/WindowShade2-round2-handoff-v9/candidate-repo/prototype/Core/FocusTimer.swift",
+      "/mnt/data/WindowShade2-round2-handoff-v9/candidate-repo/prototype/Core/WS2CompanionFrame.swift",
+      "/mnt/data/WindowShade2-round2-handoff-v9/candidate-repo/prototype/Core/WS2ApprovalReview.swift",
+      "/mnt/data/WindowShade2-round2-handoff-v9/candidate-repo/prototype/Core/WS2DeviceInputGate.swift",
+      "/mnt/data/WindowShade2-round2-handoff-v9/candidate-repo/prototype/Core/WS2FocusWindowOwnership.swift",
+      "/mnt/data/ws2-v8-baseline/WindowShade2-round2-handoff-v8/part4/tests/CoreTests.swift",
+      "-o",
+      "/tmp/ws2-v7-regression-6bp8puv9/part4-core"
+    ],
+    "exit_code": 0,
+    "elapsed_seconds": 3.8313869030002934,
+    "stdout": "",
+    "stderr": ""
+  },
+  {
+    "argv": [
+      "/tmp/ws2-v7-regression-6bp8puv9/part4-core",
+      "/mnt/data/WindowShade2-round2-part9/validation/regressions/legacy-foundation"
+    ],
+    "exit_code": 0,
+    "elapsed_seconds": 0.017978138999751536,
+    "stdout": "PASS FOC-01 pending-preset-keeps-current-deadline\nPASS FOC-02 next-start-uses-pending-values\nPASS FOC-03 changing-tuck-does-not-lose-restore\nPASS FOC-04 enabling-tuck-does-not-invent-ownership\nPASS FOC-05-pause-configuration-does-not-resume\nPASS FOC-06-locked-and-manual-pause-independent\nPASS FOC-07-rest-continues-through-lock\nPASS FOC-08-no-automatic-next-focus\nPASS FOC-09-visibility-wake-budget\nPASS FOC-10-progress-uses-active-duration\nPASS FOC-11-backwards-clock-refused\nPASS FOC-12-next-run-retains-daily-count-and-token-sequence\nPASS FRM-01-fragmented-at-every-boundary\nPASS FRM-02-multiple-frames-one-read\nPASS FRM-03-big-endian-length\nPASS FRM-04-oversized-header-terminates\nPASS FRM-05-unknown-type-terminates\nPASS FRM-06-truncated-tag-terminates\nPASS FRM-07-local-payload-limit\nPASS FRM-08-bounded-read-batch\nPASS FRM-09-bounded-frame-count\nPASS FRM-10-data-slice-safe\nPASS NON-01-little-endian-prefix\nPASS NON-02-no-repeat\nPASS NON-03-no-wrap\nPASS NON-04-terminal-close\nPASS APR-01-complete-command-review\nPASS APR-02-wrong-thread\nPASS APR-03-empty-command\nPASS APR-04-relative-cwd\nPASS APR-05-stdin-kind\nPASS APR-06-unknown-field\nPASS APR-07-network-request\nPASS APR-08-policy-upgrade\nPASS APR-09-remote-environment\nPASS APR-10-missing-time\nPASS APR-11-long-command\nPASS APR-12-file-without-diff-not-reviewable\nPASS APR-13-request-id-type-bound\nPASS APR-14-whitespace-in-command-bound\nPASS APR-15-bidi-is-visible-not-silently-dropped\nPASS APR-16-cannot-confirm-before-layout\nPASS APR-17-preheld-input-refused\nPASS APR-18-old-sequence-refused\nPASS APR-19-fresh-confirm-then-grant-still-required\nPASS APR-20-target-change-invalidates-confirmation\nPASS APR-21-duplicate-confirmation-refused\nPASS APR-22-clear-revokes-review\nPASS WIRE-01-accept-once-actual-encoded-response\nPASS WIRE-02-no-duplicate-accept\nPASS WIRE-03-wrong-payload-refused\nPASS WIRE-04-file-not-allowed-by-command-path\nPASS WIRE-05-turn-complete-clears-approval\nPASS WIRE-06-string-id-preserved\nPASS DEV-01-default-disabled\nPASS DEV-02-neutral-required-after-enable\nPASS DEV-03-fresh-press-release-pair\nPASS DEV-04-reconnect-requires-new-consent\nPASS DEV-05-lock-revokes\nPASS DEV-06-review-domain-cannot-begin-control\nPASS DEV-08-domain-change-cancels-and-requires-neutral\nPASS DEV-09-unannounced-domain-change-suspends\nPASS APR-23-visible-context-escapes-bidi\nPASS DEV-07-replay-suspends\nPASS HID-01-exact-device-and-known-usage\nPASS HID-02-unknown-and-nonbinary-pass-through\nPASS OWN-01-only-completed-effects-recorded\nPASS OWN-02-exact-owner-one-use\nPASS OWN-03-manual-change-excludes-window\nPASS OWN-04-live-revision-change-refuses-restore\nPASS OWN-05-pid-reuse-cannot-match\nPASS OWN-06-other-run-cannot-consume\nSCENARIOS=72 ASSERTIONS=188 FAILURES=0\n",
+    "stderr": ""
+  },
+  {
+    "argv": [
+      "swiftc",
+      "-swift-version",
+      "6",
+      "-strict-concurrency=complete",
+      "-warnings-as-errors",
+      "/mnt/data/WindowShade2-round2-handoff-v9/candidate-repo/prototype/Core/Contracts.swift",
+      "/mnt/data/WindowShade2-round2-handoff-v9/candidate-repo/prototype/Core/CodexWire.swift",
+      "/mnt/data/WindowShade2-round2-handoff-v9/candidate-repo/prototype/Core/WS2StrictJSON.swift",
+      "/mnt/data/WindowShade2-round2-handoff-v9/candidate-repo/prototype/Core/RemoteSessionGate.swift",
+      "/mnt/data/WindowShade2-round2-handoff-v9/candidate-repo/prototype/Core/PresenceReadDeadline.swift",
+      "/mnt/data/WindowShade2-round2-handoff-v9/candidate-repo/prototype/App/InteractionCoordinator.swift",
+      "/mnt/data/ws2-v8-baseline/WindowShade2-round2-handoff-v8/part2/tests/Part2CoreTests.swift",
+      "-o",
+      "/tmp/ws2-v7-regression-6bp8puv9/part2"
+    ],
+    "exit_code": 0,
+    "elapsed_seconds": 2.7534033140000247,
+    "stdout": "",
+    "stderr": ""
+  },
+  {
+    "argv": [
+      "/tmp/ws2-v7-regression-6bp8puv9/part2",
+      "/mnt/data/WindowShade2-round2-part9/validation/regressions/legacy-foundation/regression-part2-outbound.ndjson"
+    ],
+    "exit_code": 0,
+    "elapsed_seconds": 0.09782731799987232,
+    "stdout": "PASS LEASE01 single global input owner\nPASS LEASE02 privileged owner table\nPASS LEASE03 authorization preempts synchronously\nPASS LEASE04 old key-down never confirms new approval\nPASS LEASE05 obscured reminder not replayed\nPASS LEASE06 lock barrier clears sensitive state\nPASS LEASE07 display removal cancels only owner\nPASS LEASE08 exact expiry and future request\nPASS LEASE09 reminder four seconds and no endless refresh\nPASS LEASE10 backward-time security invalidation\nPASS BLE01 five-second reads are not two-second age timeouts\nPASS BLE02 exact read deadline and stale callbacks\nPASS REMOTE01 discovery never means paired\nPASS REMOTE02 verified capability replay and revocation\nPASS CODEX01 initialize and two-phase handshake\nPASS CODEX02 thread then turn with actual field names\nPASS CODEX03 steer precondition and interrupt does not finish turn\nPASS CODEX04 approval IDs retain number versus string\nPASS CODEX05 unrelated completion and late reply ignored\nPASS CODEX06 every possible single split boundary\nPASS CODEX07 malformed, oversized and EOF safety\nPASS CODEX08 timeout makes outcome uncertain not retry\nPASS part2 core: 22 scenarios, 86 assertions\n",
+    "stderr": ""
+  },
+  {
+    "argv": [
+      "swiftc",
+      "-swift-version",
+      "6",
+      "-strict-concurrency=complete",
+      "-warnings-as-errors",
+      "-parse-as-library",
+      "/mnt/data/WindowShade2-round2-handoff-v9/candidate-repo/prototype/Core/Contracts.swift",
+      "/mnt/data/WindowShade2-round2-handoff-v9/candidate-repo/prototype/Core/FocusTimer.swift",
+      "/mnt/data/ws2-v8-baseline/WindowShade2-round2-handoff-v8/part1/tests/support/WS2TestSupport.swift",
+      "/mnt/data/ws2-v8-baseline/WindowShade2-round2-handoff-v8/part1/packages/T1/tests/FocusTimerTests.swift",
+      "-o",
+      "/tmp/ws2-v7-regression-6bp8puv9/focus"
+    ],
+    "exit_code": 0,
+    "elapsed_seconds": 1.7676681219995771,
+    "stdout": "",
+    "stderr": ""
+  },
+  {
+    "argv": [
+      "/tmp/ws2-v7-regression-6bp8puv9/focus"
+    ],
+    "exit_code": 0,
+    "elapsed_seconds": 0.01020072999972399,
+    "stdout": "CASE T1-01 | 空闲开始 25+5 → 截止时刻 1500 秒，聊天收起一次\nok   空闲不排刷新\nok   开始不是累计 tick\nok   重复开始无重复窗口动作\nCASE T1-02 | 紧凑/展开/隐藏 → 分别排分钟、秒、截止唤醒\nok   紧凑整分钟\nok   展开一秒\nok   隐藏只有到点\nok   18 分原文\nok   最后一分钟秒数\nok   秒显示与截止对齐\nCASE T1-03 | 专注自然到点再休息到点 → 计数一次，不自动下一轮\nok   完整专注才计数\nok   真实到点提示音\nok   休息完空闲\nok   重复 tick 无补发\nCASE T1-04 | 手动暂停叠加锁屏 → 单独继续不解除锁屏暂停\nok   暂停原因独立\nok   暂停不醒来\nok   正确顺延剩余时间\nCASE T1-05 | 睡眠叠加锁屏，先唤醒后解锁 → 最后一个原因解除才计时\nok   唤醒不能解锁\nok   睡眠期间无扣秒\nCASE T1-06 | 休息睡两小时 → 已结束，不补播开始或结束音\nok   休息不因睡眠冻结\nCASE T1-07 | 专注到点同刻锁屏 → 结算次数，但不收全桌面、不响铃\nok   已完成专注仍计数\nok   锁屏先于可见效果\nCASE T1-08 | 专注跳过和主动结束 → 都不增加完成数\nok   跳过不算完成\nok   结束清理\nok   明确结束优先于同刻自然结束\nCASE T1-09 | 休息关掉收起的窗口 → 计时继续，恢复只发一次\nok   只撤销本轮窗口归属\nok   重复关闭无动作\nCASE T1-10 | 旧日期的 deadline 晚到新日期 → 不记到今天，不闪过已过去的休息\nok   晚到不补播\nCASE T1-11 | 50+10，关闭聊天收起 → 3000 秒专注、600 秒休息\nok   关闭选项不收聊天\nok   十分钟休息\nCASE T1-12 | 时间倒流/无效日期/锁屏开始 → 拒绝，不启动第二轮\nok   拒绝倒流\nok   锁着不开始\nok   日期不可伪空\nPASS T1: 12 cases, 32 assertions, 0 failures\n",
+    "stderr": ""
+  },
+  {
+    "argv": [
+      "swiftc",
+      "-swift-version",
+      "6",
+      "-strict-concurrency=complete",
+      "-warnings-as-errors",
+      "-parse-as-library",
+      "/mnt/data/WindowShade2-round2-handoff-v9/candidate-repo/prototype/Core/ConductorGesture.swift",
+      "/mnt/data/WindowShade2-round2-handoff-v9/candidate-repo/tests/ConductorGestureTests.swift",
+      "-o",
+      "/tmp/ws2-v7-regression-6bp8puv9/gesture"
+    ],
+    "exit_code": 0,
+    "elapsed_seconds": 0.8693172489997778,
+    "stdout": "",
+    "stderr": ""
+  },
+  {
+    "argv": [
+      "/tmp/ws2-v7-regression-6bp8puv9/gesture"
+    ],
+    "exit_code": 0,
+    "elapsed_seconds": 0.010020877999977529,
+    "stdout": "ok   C-011 flat line with natural wobble is tone 1 → low\nok   C-012 rising stroke is tone 2 → medium\nok   C-012 raw y-down coordinates are flipped first, so tone 2 stays tone 2\nok   C-012 (control) forgetting the flip would swap tones 2 and 4\nok   C-013 one rounded valley is tone 3 → high\nok   C-014 falling stroke is tone 4 → xhigh, never max\nok   C-013 a broken zigzag with several valleys is rejected, not tone 3\nok   C-013 a dip below the jitter band is still a flat tone 1, not tone 3\nok   C-013 a valley without a real rise afterwards is rejected, not tone 3\nok   between tone 1 and tone 2 slopes is rejected, not rounded to the nearest\nok   C-015 a small tremor is rejected, not scaled up into a tone\nok   contact shorter than the settle period counts as an accidental touch\nok   C-016 vertical swipes select no effort\nok   C-016 right-to-left strokes are not mirrored into tones\nok   C-016 a stroke that doubles back is not a tone\nok   C-017 a narrow V reads as both tone 3 and one beat, so it is rejected\nok   C-017 three beats drifting right are rejected, not tone 3 and not 3 beats\nok   C-018 a full five-beat phrase requests max\nok   C-018 after the fourth beat the preview shows 4\nok   C-019 a full six-beat phrase requests ultra\nok   C-019 after the fifth beat the preview shows 5\nok   C-019 lifting in the middle of the sixth beat is rejected, not taken as 5 beats (max)\nok   1 beats request the matching level\nok   2 beats request the matching level\nok   3 beats request the matching level\nok   4 beats request the matching level\nok   seven beats are rejected, not clamped to six\nok   C-020 a wobble at the bottom of a beat does not count as an extra beat\nok   C-020 a drop without a real rebound is not a beat\nok   C-021 fast and slow five-beat phrases both request max\nok   C-021 beats faster than 150ms apart are rejected\nok   C-021 a long pause inside a phrase breaks it instead of counting on\nok   C-022 a phrase longer than 6 seconds is dropped\nok   a NaN coordinate rejects the whole stroke\nok   an out-of-range coordinate rejects the whole stroke\nok   time going backwards rejects the whole stroke\nok   an empty stroke is safe\nok   out-of-range gestures map to no effort\nok   no tone ever requests max or ultra\nall conductor gesture tests passed\n",
+    "stderr": ""
+  }
+]

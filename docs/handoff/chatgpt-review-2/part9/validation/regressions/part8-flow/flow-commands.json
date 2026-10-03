@@ -1,0 +1,74 @@
+[
+  {
+    "argv": [
+      "cc",
+      "-std=c11",
+      "-O2",
+      "-Wall",
+      "-Wextra",
+      "-Werror",
+      "-c",
+      "/mnt/data/WindowShade2-round2-handoff-v9/candidate-repo/prototype/Native/WS2Child.c",
+      "-o",
+      "/tmp/ws2-r8-y0rwpx78/child.o"
+    ],
+    "exit_code": 0,
+    "elapsed_seconds": 0.10547311100003753,
+    "stdout": "",
+    "stderr": ""
+  },
+  {
+    "argv": [
+      "swiftc",
+      "-swift-version",
+      "6",
+      "-strict-concurrency=complete",
+      "-warnings-as-errors",
+      "-I",
+      "/mnt/data/WindowShade2-round2-handoff-v9/candidate-repo/prototype/Native",
+      "/tmp/ws2-r8-y0rwpx78/child.o",
+      "/mnt/data/WindowShade2-round2-handoff-v9/candidate-repo/prototype/Core/Contracts.swift",
+      "/mnt/data/WindowShade2-round2-handoff-v9/candidate-repo/prototype/Core/GamepadMapping.swift",
+      "/mnt/data/WindowShade2-round2-handoff-v9/candidate-repo/prototype/Core/WS2DeviceInputGate.swift",
+      "/mnt/data/WindowShade2-round2-handoff-v9/candidate-repo/prototype/Core/WS2SelectionModel.swift",
+      "/mnt/data/WindowShade2-round2-handoff-v9/candidate-repo/prototype/Core/WS2SemanticInputRouter.swift",
+      "/mnt/data/WindowShade2-round2-handoff-v9/candidate-repo/prototype/Core/WS2DeviceActionContracts.swift",
+      "/mnt/data/WindowShade2-round2-handoff-v9/candidate-repo/prototype/Core/WS2VisibleListInput.swift",
+      "/mnt/data/WindowShade2-round2-handoff-v9/candidate-repo/prototype/App/WS2DeviceActionHost.swift",
+      "/mnt/data/WindowShade2-round2-handoff-v9/candidate-repo/prototype/Core/WS2QuitBarrier.swift",
+      "/mnt/data/WindowShade2-round2-handoff-v9/candidate-repo/prototype/Core/WS2StrictJSON.swift",
+      "/mnt/data/WindowShade2-round2-handoff-v9/candidate-repo/prototype/Core/CodexWire.swift",
+      "/mnt/data/WindowShade2-round2-handoff-v9/candidate-repo/prototype/Core/WS2OwnedProtocolHost.swift",
+      "/mnt/data/WindowShade2-round2-handoff-v9/candidate-repo/prototype/Core/WS2BoundedOutbox.swift",
+      "/mnt/data/WindowShade2-round2-handoff-v9/candidate-repo/prototype/Core/WS2DiagnosticTail.swift",
+      "/mnt/data/WindowShade2-round2-handoff-v9/candidate-repo/prototype/Core/WS2OwnedScope.swift",
+      "/mnt/data/WindowShade2-round2-handoff-v9/candidate-repo/prototype/Core/AgentSessions.swift",
+      "/mnt/data/WindowShade2-round2-handoff-v9/candidate-repo/prototype/Support/WS2ProjectDirectory.swift",
+      "/mnt/data/WindowShade2-round2-handoff-v9/candidate-repo/prototype/Support/WS2LocalLaunchProfile.swift",
+      "/mnt/data/WindowShade2-round2-handoff-v9/candidate-repo/prototype/Support/WS2VersionProbe.swift",
+      "/mnt/data/WindowShade2-round2-handoff-v9/candidate-repo/prototype/Support/WS2DuplexProcess.swift",
+      "/mnt/data/WindowShade2-round2-handoff-v9/candidate-repo/prototype/App/WS2OwnedCodexSession.swift",
+      "/mnt/data/WindowShade2-round2-handoff-v9/candidate-repo/prototype/App/WS2OwnedLaunchController.swift",
+      "/tmp/ws2-r9-regression-ecaqqo7a/part8/tests/TestLog.swift",
+      "/tmp/ws2-r9-regression-ecaqqo7a/part8/tests/InputHarness.swift",
+      "/tmp/ws2-r9-regression-ecaqqo7a/part8/tests/InputFlowTests.swift",
+      "-o",
+      "/tmp/ws2-r8-y0rwpx78/tests"
+    ],
+    "exit_code": 0,
+    "elapsed_seconds": 6.643719160000046,
+    "stdout": "",
+    "stderr": ""
+  },
+  {
+    "argv": [
+      "/tmp/ws2-r8-y0rwpx78/tests",
+      "/tmp/ws2-r9-regression-ecaqqo7a/part8/validation/flow-results.json",
+      "/tmp/ws2-r8-y0rwpx78/fake-codex.py"
+    ],
+    "exit_code": 0,
+    "elapsed_seconds": 2.138569512999993,
+    "stdout": "PASS IFLOW01 real pipe catalogue supplies selection rows [7]\nPASS IFLOW02 device chooses model without sending work [3]\nPASS IFLOW03 separate local send uses selected model [6]\nPASS IFLOW04 late release after local capability loss cannot change model [3]\nPASS IFLOW05 reconnect uses a new backend epoch [5]\nPASS IFLOW06 project replacement rejected by actual model selector [3]\nTOTAL 6 scenarios, 27 assertions\n",
+    "stderr": ""
+  }
+]

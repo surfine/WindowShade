@@ -190,12 +190,13 @@ func realWindowManagementCapability(_ win: AXUIElement) -> WindowManagementCapab
     return .none
 }
 
-// 窗口被外部（⌘Tab / Dock）唤回或销毁时的回调：refcon 里编码了 CGWindowID
+// Refcon is a never-reused registration number, not a window ID or heap pointer.
 let axWindowCallback: AXObserverCallback = { _, _, notification, refcon in
-    guard let refcon = refcon else { return }
-    let id = CGWindowID(Int(bitPattern: refcon))
+    guard let refcon, Thread.isMainThread else { return }
+    let routeID = UInt(bitPattern: refcon)
     let note = notification as String
-    DispatchQueue.main.async { appDelegate?.handleAXNotification(id, note) }
+    // The only installation site attaches this source to CFRunLoopGetMain.
+    MainActor.assumeIsolated { appDelegate?.receiveFoldAXNotification(routeID: routeID, notification: note) }
 }
 
 // 取窗口某个标准按钮（关闭/最小化/缩放）的屏幕坐标 frame

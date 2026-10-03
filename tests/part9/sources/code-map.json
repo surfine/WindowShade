@@ -1,0 +1,1758 @@
+{
+  "candidate": "v9",
+  "files": [
+    {
+      "path": "prototype/App/FocusTimerHost.swift",
+      "sha256": "7aa01c91cb3abf4503ff8eb92a8060efcdfca907b295caa3ab0fde88d264b666",
+      "base_sha256": "7aa01c91cb3abf4503ff8eb92a8060efcdfca907b295caa3ab0fde88d264b666",
+      "changed": false,
+      "line_count": 39,
+      "symbols": [
+        {
+          "name": "FocusTimerHost",
+          "line": 2,
+          "declaration": "@MainActor final class FocusTimerHost {"
+        },
+        {
+          "name": "handle",
+          "line": 16,
+          "declaration": "func handle(_ event: FocusTimer.Event) {"
+        },
+        {
+          "name": "configure",
+          "line": 21,
+          "declaration": "func configure(preset: FocusTimer.Preset, tuckChatEnabled: Bool) {"
+        },
+        {
+          "name": "stop",
+          "line": 26,
+          "declaration": "func stop() { wake?.cancel(); wake = nil; if revision < .max { revision += 1 } }"
+        },
+        {
+          "name": "schedule",
+          "line": 27,
+          "declaration": "private func schedule() {"
+        }
+      ]
+    },
+    {
+      "path": "prototype/App/FoldCompletion.swift",
+      "sha256": "18559db591375242d83406a083b9a18e4bf5dc69de7b8c32c8f3494c31054982",
+      "base_sha256": "1147a93b8ab37828e0dd4be225e879ea3a4636283aaa5d7202369b926ec850f5",
+      "changed": true,
+      "line_count": 65,
+      "symbols": [
+        {
+          "name": "registerFoldWaiter",
+          "line": 11,
+          "declaration": "func registerFoldWaiter(id: CGWindowID, completion: @escaping (Bool) -> Void) -> UUID {"
+        },
+        {
+          "name": "bindFoldWaiters",
+          "line": 21,
+          "declaration": "func bindFoldWaiters(id: CGWindowID, tokens: [UUID], transaction: UUID) {"
+        },
+        {
+          "name": "settleFoldWaiter",
+          "line": 28,
+          "declaration": "func settleFoldWaiter(id: CGWindowID, token: UUID, success: Bool) {"
+        },
+        {
+          "name": "settleFoldWaiters",
+          "line": 33,
+          "declaration": "func settleFoldWaiters(id: CGWindowID, transaction: UUID, success: Bool) {"
+        },
+        {
+          "name": "cancelFoldWaiters",
+          "line": 38,
+          "declaration": "func cancelFoldWaiters(id: CGWindowID, tokens: [UUID]) {"
+        },
+        {
+          "name": "settleFoldWaiters",
+          "line": 42,
+          "declaration": "func settleFoldWaiters(id: CGWindowID, tokens: [UUID], success: Bool) {"
+        }
+      ]
+    },
+    {
+      "path": "prototype/App/FoldTransaction.swift",
+      "sha256": "f353846ee708e80dc81e78636f24dd3976d5ec77f1c0f9db0e38f2f675519c3b",
+      "base_sha256": "482e8b46ad1aec8d169653d75d0c3976379104191c2e53bbe3ecab05bb98e06c",
+      "changed": true,
+      "line_count": 1059,
+      "symbols": [
+        {
+          "name": "parkFocusForInactiveCapture",
+          "line": 7,
+          "declaration": "func parkFocusForInactiveCapture() {"
+        },
+        {
+          "name": "releaseFocusParking",
+          "line": 22,
+          "declaration": "func releaseFocusParking(reactivate pid: pid_t?) {"
+        },
+        {
+          "name": "handOffFocusBeforeHiding",
+          "line": 41,
+          "declaration": "func handOffFocusBeforeHiding(win: AXUIElement, pid: pid_t, id: CGWindowID) -> Bool {"
+        },
+        {
+          "name": "hideTookEffect",
+          "line": 103,
+          "declaration": "func hideTookEffect(_ hide: HideMethod, win: AXUIElement, pid: pid_t,"
+        },
+        {
+          "name": "scheduleFoldVerification",
+          "line": 108,
+          "declaration": "func scheduleFoldVerification(id: CGWindowID) {"
+        },
+        {
+          "name": "revealOverlayAfterVerification",
+          "line": 147,
+          "declaration": "func revealOverlayAfterVerification(id: CGWindowID, state: ShadeState) {"
+        },
+        {
+          "name": "rollbackFoldTransaction",
+          "line": 165,
+          "declaration": "func rollbackFoldTransaction(id: CGWindowID, expectedTransaction: UUID? = nil) {"
+        },
+        {
+          "name": "activateApp",
+          "line": 190,
+          "declaration": "func activateApp(pid: pid_t) {"
+        },
+        {
+          "name": "bringRestoredWindowToFront",
+          "line": 196,
+          "declaration": "func bringRestoredWindowToFront(_ win: AXUIElement, pid: pid_t, reason: String) {"
+        },
+        {
+          "name": "attempt",
+          "line": 199,
+          "declaration": "func attempt(_ label: String) {"
+        },
+        {
+          "name": "prepareForwardedTrafficAction",
+          "line": 223,
+          "declaration": "func prepareForwardedTrafficAction(_ win: AXUIElement, pid: pid_t, reason: String) {"
+        },
+        {
+          "name": "restoredWindowIsGeometryReady",
+          "line": 230,
+          "declaration": "func restoredWindowIsGeometryReady(_ win: AXUIElement) -> Bool {"
+        },
+        {
+          "name": "buttonIsReady",
+          "line": 235,
+          "declaration": "func buttonIsReady(_ win: AXUIElement, _ attr: String) -> Bool {"
+        },
+        {
+          "name": "forwardedTrafficActionSucceeded",
+          "line": 251,
+          "declaration": "func forwardedTrafficActionSucceeded(state: ShadeState, id: CGWindowID,"
+        },
+        {
+          "name": "performForwardedTrafficAction",
+          "line": 274,
+          "declaration": "func performForwardedTrafficAction(state: ShadeState, pos: CGPoint,"
+        },
+        {
+          "name": "retryOrFallback",
+          "line": 288,
+          "declaration": "func retryOrFallback(_ index: Int, note: String) {"
+        },
+        {
+          "name": "verifyAfterAXPress",
+          "line": 312,
+          "declaration": "func verifyAfterAXPress(_ win: AXUIElement, index: Int, attr: String) {"
+        },
+        {
+          "name": "verifyAfterPointerClick",
+          "line": 324,
+          "declaration": "func verifyAfterPointerClick(_ win: AXUIElement, index: Int, attr: String) {"
+        },
+        {
+          "name": "attempt",
+          "line": 341,
+          "declaration": "func attempt(_ index: Int) {"
+        },
+        {
+          "name": "schedule",
+          "line": 372,
+          "declaration": "func schedule(_ index: Int, note: String) {"
+        },
+        {
+          "name": "showRealWindowManagementPopover",
+          "line": 387,
+          "declaration": "func showRealWindowManagementPopover(_ id: CGWindowID) {"
+        },
+        {
+          "name": "attempt",
+          "line": 400,
+          "declaration": "func attempt(_ index: Int) {"
+        },
+        {
+          "name": "windowIsParkedOffscreen",
+          "line": 430,
+          "declaration": "func windowIsParkedOffscreen(id: CGWindowID, win: AXUIElement, size: CGSize) -> Bool {"
+        },
+        {
+          "name": "privateSLSOffscreenHide",
+          "line": 438,
+          "declaration": "func privateSLSOffscreenHide(_ win: AXUIElement, id: CGWindowID,"
+        },
+        {
+          "name": "privateSLSAlphaHide",
+          "line": 474,
+          "declaration": "func privateSLSAlphaHide(id: CGWindowID, pid: pid_t, reason: String) -> HideMethod? {"
+        },
+        {
+          "name": "axOffscreenHide",
+          "line": 506,
+          "declaration": "func axOffscreenHide(_ win: AXUIElement,"
+        },
+        {
+          "name": "ownWindow",
+          "line": 530,
+          "declaration": "func ownWindow(id: CGWindowID?) -> NSWindow? {"
+        },
+        {
+          "name": "orderOutOwnWindowIfNeeded",
+          "line": 537,
+          "declaration": "func orderOutOwnWindowIfNeeded(id: CGWindowID?, pid: pid_t, reason: String) -> HideMethod? {"
+        },
+        {
+          "name": "hideWindow",
+          "line": 548,
+          "declaration": "func hideWindow(_ win: AXUIElement, pid: pid_t, originalPosition pos: CGPoint,"
+        },
+        {
+          "name": "fallbackHide",
+          "line": 609,
+          "declaration": "func fallbackHide(_ win: AXUIElement, pid: pid_t, id: CGWindowID?,"
+        },
+        {
+          "name": "safeRestorePosition",
+          "line": 639,
+          "declaration": "func safeRestorePosition(for state: ShadeState, desired pos: CGPoint) -> CGPoint {"
+        },
+        {
+          "name": "refreshedWindowElement",
+          "line": 658,
+          "declaration": "func refreshedWindowElement(id: CGWindowID, fallback: AXUIElement,"
+        },
+        {
+          "name": "resolvedWindowElement",
+          "line": 666,
+          "declaration": "func resolvedWindowElement(for state: ShadeState) -> AXUIElement {"
+        },
+        {
+          "name": "applyRestoredGeometry",
+          "line": 694,
+          "declaration": "func applyRestoredGeometry(_ state: ShadeState, to pos: CGPoint,"
+        },
+        {
+          "name": "restoreWindow",
+          "line": 727,
+          "declaration": "func restoreWindow(_ state: ShadeState, to pos: CGPoint) -> AXUIElement {"
+        },
+        {
+          "name": "cancelRestorePin",
+          "line": 767,
+          "declaration": "func cancelRestorePin(for id: CGWindowID) {"
+        },
+        {
+          "name": "pinRestoredWindow",
+          "line": 771,
+          "declaration": "func pinRestoredWindow(_ state: ShadeState, to pos: CGPoint, reason: String) {"
+        },
+        {
+          "name": "attempt",
+          "line": 779,
+          "declaration": "func attempt(_ label: String, focus: Bool, verify: Bool = true) {"
+        },
+        {
+          "name": "resizeShadedWindowFromProxy",
+          "line": 822,
+          "declaration": "func resizeShadedWindowFromProxy(_ id: CGWindowID, proxyFrame: NSRect) {"
+        },
+        {
+          "name": "makeRevealObserver",
+          "line": 861,
+          "declaration": "func makeRevealObserver(pid: pid_t, win: AXUIElement, id: CGWindowID, transaction: UUID) -> AXObserver? {"
+        },
+        {
+          "name": "removeObserver",
+          "line": 884,
+          "declaration": "func removeObserver(_ state: ShadeState) {"
+        },
+        {
+          "name": "handleAXNotification",
+          "line": 894,
+          "declaration": "func handleAXNotification(_ id: CGWindowID, _ notification: String, expected: WS2FoldCallbackStamp) {"
+        },
+        {
+          "name": "appTerminated",
+          "line": 942,
+          "declaration": "@objc func appTerminated(_ note: Notification) {"
+        },
+        {
+          "name": "frontmostApplicationChanged",
+          "line": 952,
+          "declaration": "@objc func frontmostApplicationChanged(_ note: Notification) {"
+        },
+        {
+          "name": "screenParametersChanged",
+          "line": 982,
+          "declaration": "@objc func screenParametersChanged(_ note: Notification) {"
+        },
+        {
+          "name": "activeSpaceChanged",
+          "line": 1028,
+          "declaration": "@objc func activeSpaceChanged(_ note: Notification) {"
+        }
+      ]
+    },
+    {
+      "path": "prototype/App/InteractionCoordinator.swift",
+      "sha256": "5524bd61193c8e7ca5090b7c38c498f094bdc13a3e48971f3f084b2fb7a0c5b2",
+      "base_sha256": "5524bd61193c8e7ca5090b7c38c498f094bdc13a3e48971f3f084b2fb7a0c5b2",
+      "changed": false,
+      "line_count": 142,
+      "symbols": [
+        {
+          "name": "InteractionCoordinator",
+          "line": 5,
+          "declaration": "final class InteractionCoordinator {"
+        },
+        {
+          "name": "Environment",
+          "line": 6,
+          "declaration": "struct Environment { var unlocked: Bool; var displays: Set<WS2.DisplayID> }"
+        },
+        {
+          "name": "Active",
+          "line": 7,
+          "declaration": "private struct Active { let handle: WS2.LeaseHandle; let layer: WS2.Layer; let deadline: WS2.Instant }"
+        },
+        {
+          "name": "Alert",
+          "line": 8,
+          "declaration": "private struct Alert { let first: WS2.Instant; var last: WS2.Instant; let deadline: WS2.Instant }"
+        },
+        {
+          "name": "permits",
+          "line": 27,
+          "declaration": "private func permits(_ r: WS2.LeaseRequest) -> Bool {"
+        },
+        {
+          "name": "withdraw",
+          "line": 35,
+          "declaration": "private func withdraw(_ reason: WS2.LeaseRevocation) {"
+        },
+        {
+          "name": "expire",
+          "line": 40,
+          "declaration": "private func expire(_ now: WS2.Instant) {"
+        },
+        {
+          "name": "acquire",
+          "line": 46,
+          "declaration": "func acquire(_ r: WS2.LeaseRequest, replacing expected: WS2.LeaseHandle? = nil) -> WS2.LeaseDecision {"
+        },
+        {
+          "name": "isCurrent",
+          "line": 75,
+          "declaration": "func isCurrent(_ lease: WS2.LeaseHandle) -> Bool {"
+        },
+        {
+          "name": "release",
+          "line": 81,
+          "declaration": "func release(_ lease: WS2.LeaseHandle, at now: WS2.Instant) {"
+        },
+        {
+          "name": "barrier",
+          "line": 86,
+          "declaration": "private func barrier(_ reason: WS2.LeaseRevocation) {"
+        },
+        {
+          "name": "invalidate",
+          "line": 90,
+          "declaration": "func invalidate(_ reason: WS2.LeaseRevocation, at now: WS2.Instant) {"
+        },
+        {
+          "name": "removeDisplay",
+          "line": 98,
+          "declaration": "func removeDisplay(_ id: WS2.DisplayID, at now: WS2.Instant) {"
+        },
+        {
+          "name": "publishOngoing",
+          "line": 105,
+          "declaration": "func publishOngoing(_ ids: [String], on display: WS2.DisplayID) {"
+        },
+        {
+          "name": "remind",
+          "line": 110,
+          "declaration": "func remind(on display: WS2.DisplayID, at now: WS2.Instant) {"
+        },
+        {
+          "name": "snapshots",
+          "line": 119,
+          "declaration": "func snapshots(at now: WS2.Instant) -> [WS2.VisibilitySnapshot] {"
+        },
+        {
+          "name": "confirmationIsFresh",
+          "line": 137,
+          "declaration": "func confirmationIsFresh(lease: WS2.LeaseHandle, beganAt: WS2.Instant, sequence: UInt64,"
+        }
+      ]
+    },
+    {
+      "path": "prototype/App/Reconcile.swift",
+      "sha256": "290d8fb4dcb1b14e79620279ff9e30b42e81fbaa86c68678808a5073bd333f04",
+      "base_sha256": "a24b56d18ee50914538f3581f59fd0c496e29babe7a424ed6613657f785bb2b1",
+      "changed": true,
+      "line_count": 209,
+      "symbols": [
+        {
+          "name": "updateReconcileTimer",
+          "line": 7,
+          "declaration": "func updateReconcileTimer() {"
+        },
+        {
+          "name": "shouldRetryJournalRescue",
+          "line": 25,
+          "declaration": "func shouldRetryJournalRescue(now: Date) -> Bool {"
+        },
+        {
+          "name": "sourceWindowLooksUserVisible",
+          "line": 30,
+          "declaration": "func sourceWindowLooksUserVisible(state: ShadeState, pos: CGPoint, size: CGSize,"
+        },
+        {
+          "name": "shouldLogReconcileInvalidCount",
+          "line": 65,
+          "declaration": "func shouldLogReconcileInvalidCount(_ count: Int) -> Bool {"
+        },
+        {
+          "name": "sourceWindowMissingShouldCleanup",
+          "line": 68,
+          "declaration": "func sourceWindowMissingShouldCleanup(id: CGWindowID, state: ShadeState) -> Bool {"
+        },
+        {
+          "name": "reconcileShadedWindows",
+          "line": 91,
+          "declaration": "func reconcileShadedWindows(reason: String) {"
+        },
+        {
+          "name": "applyReconcileAXSnapshots",
+          "line": 153,
+          "declaration": "func applyReconcileAXSnapshots(_ snapshots: [ReconcileAXSnapshot],"
+        },
+        {
+          "name": "finishReconcileShadedWindows",
+          "line": 203,
+          "declaration": "func finishReconcileShadedWindows() {"
+        }
+      ]
+    },
+    {
+      "path": "prototype/App/ShadeController.swift",
+      "sha256": "ffe5d474a28aa43ac12baf5e4a85b1d795494be0df928980fe6b4e69d8bb813f",
+      "base_sha256": "f22cc7af4a270af54422820beea2807235198ba823b8bb42adf098b52f85a198",
+      "changed": true,
+      "line_count": 891,
+      "symbols": [
+        {
+          "name": "retargetToActiveSpaceWindow",
+          "line": 8,
+          "declaration": "func retargetToActiveSpaceWindow(pid: pid_t) -> (AXUIElement, CGWindowID)? {"
+        },
+        {
+          "name": "toggle",
+          "line": 35,
+          "declaration": "func toggle() {"
+        },
+        {
+          "name": "performNativeStickiesShade",
+          "line": 87,
+          "declaration": "func performNativeStickiesShade(_ win: AXUIElement) {"
+        },
+        {
+          "name": "makeShadePlan",
+          "line": 104,
+          "declaration": "func makeShadePlan(win: AXUIElement, pos: CGPoint, size: CGSize,"
+        },
+        {
+          "name": "resolvedSourceSpaceID",
+          "line": 157,
+          "declaration": "func resolvedSourceSpaceID(windowID id: CGWindowID,"
+        },
+        {
+          "name": "shade",
+          "line": 169,
+          "declaration": "func shade(_ win: AXUIElement, _ id: CGWindowID,"
+        },
+        {
+          "name": "admissionCurrent",
+          "line": 178,
+          "declaration": "func admissionCurrent() -> Bool {"
+        },
+        {
+          "name": "completeFold",
+          "line": 184,
+          "declaration": "func completeFold(success: Bool, transaction: UUID? = nil) {"
+        },
+        {
+          "name": "installOverlay",
+          "line": 303,
+          "declaration": "func installOverlay(_ overlay: NSWindow, mode: ShadeAppearanceMode, previewImage: NSImage?) {"
+        },
+        {
+          "name": "installInteractiveNativeCollapse",
+          "line": 482,
+          "declaration": "func installInteractiveNativeCollapse(barH: CGFloat) -> Bool {"
+        },
+        {
+          "name": "captureWindow",
+          "line": 761,
+          "declaration": "func captureWindow(id: CGWindowID, axPos: CGPoint, size: CGSize,"
+        },
+        {
+          "name": "fastWindowCapture",
+          "line": 800,
+          "declaration": "func fastWindowCapture(_ id: CGWindowID) async -> CGImage? {"
+        },
+        {
+          "name": "captureWindowWithTimeout",
+          "line": 807,
+          "declaration": "func captureWindowWithTimeout(id: CGWindowID, axPos: CGPoint, size: CGSize,"
+        },
+        {
+          "name": "raceCaptureWithTimeout",
+          "line": 858,
+          "declaration": "private func raceCaptureWithTimeout(id: CGWindowID, axPos: CGPoint, size: CGSize,"
+        }
+      ]
+    },
+    {
+      "path": "prototype/App/WS2AppRuntime.swift",
+      "sha256": "99205e90fd9d99278da55fbfe88924e2100c4ada4223c6d35136da67cf5b6db2",
+      "base_sha256": "99205e90fd9d99278da55fbfe88924e2100c4ada4223c6d35136da67cf5b6db2",
+      "changed": false,
+      "line_count": 251,
+      "symbols": [
+        {
+          "name": "WS2AppRuntime",
+          "line": 3,
+          "declaration": "@MainActor final class WS2AppRuntime {"
+        },
+        {
+          "name": "day",
+          "line": 31,
+          "declaration": "func day(_ date: Date) -> String {"
+        },
+        {
+          "name": "setLockReason",
+          "line": 108,
+          "declaration": "private func setLockReason(_ reason: String, locked: Bool) {"
+        },
+        {
+          "name": "applicationShouldTerminate",
+          "line": 119,
+          "declaration": "func applicationShouldTerminate() -> NSApplication.TerminateReply {"
+        },
+        {
+          "name": "finishQuit",
+          "line": 138,
+          "declaration": "private func finishQuit(updaterReply:Bool?=nil,childrenReady:Bool=false,failed:Bool=false) {"
+        },
+        {
+          "name": "openOwned",
+          "line": 144,
+          "declaration": "func openOwned() {"
+        },
+        {
+          "name": "openModelPicker",
+          "line": 153,
+          "declaration": "private func openModelPicker() {"
+        },
+        {
+          "name": "open",
+          "line": 192,
+          "declaration": "func open() {"
+        },
+        {
+          "name": "refreshFocusSettings",
+          "line": 205,
+          "declaration": "func refreshFocusSettings() {"
+        },
+        {
+          "name": "toggleFocus",
+          "line": 210,
+          "declaration": "func toggleFocus() {"
+        },
+        {
+          "name": "showSessions",
+          "line": 217,
+          "declaration": "@discardableResult func showSessions(_ sessions:[AgentSessions.Session], open:@escaping(WS2.Context)->Void,"
+        },
+        {
+          "name": "showConductor",
+          "line": 222,
+          "declaration": "@discardableResult func showConductor(_ state:ConductorNotch, action:@escaping(WS2ConductorView.Action)->Void) -> Bool {"
+        },
+        {
+          "name": "publish",
+          "line": 228,
+          "declaration": "private func publish() {"
+        },
+        {
+          "name": "stop",
+          "line": 236,
+          "declaration": "func stop() {"
+        },
+        {
+          "name": "ws2OpenOwned",
+          "line": 249,
+          "declaration": "@objc func ws2OpenOwned() { MainActor.assumeIsolated { ws2Runtime.openOwned() } }"
+        },
+        {
+          "name": "ws2OpenFocus",
+          "line": 250,
+          "declaration": "@objc func ws2OpenFocus() { MainActor.assumeIsolated { ws2Runtime.open() } }"
+        }
+      ]
+    },
+    {
+      "path": "prototype/App/WS2FoldCallbackGuard.swift",
+      "sha256": "9f8d8cc688955c493ac17ebde396f59f70892e32c0b78250c78589c007fc63db",
+      "base_sha256": null,
+      "changed": true,
+      "line_count": 100,
+      "symbols": [
+        {
+          "name": "foldCallbackStamp",
+          "line": 5,
+          "declaration": "func foldCallbackStamp(id: CGWindowID, state: ShadeState) -> WS2FoldCallbackStamp {"
+        },
+        {
+          "name": "foldWaiterDeliveryStamp",
+          "line": 13,
+          "declaration": "func foldWaiterDeliveryStamp(id: CGWindowID, transaction: UUID) -> WS2FoldCallbackStamp? {"
+        },
+        {
+          "name": "foldCallbackIsCurrent",
+          "line": 21,
+          "declaration": "func foldCallbackIsCurrent(_ expected: WS2FoldCallbackStamp,"
+        },
+        {
+          "name": "observeFoldHide",
+          "line": 30,
+          "declaration": "func observeFoldHide(_ hide: HideMethod, win: AXUIElement, pid: pid_t,"
+        },
+        {
+          "name": "retainUnconfirmedFold",
+          "line": 68,
+          "declaration": "func retainUnconfirmedFold(id: CGWindowID, state: ShadeState) {"
+        },
+        {
+          "name": "receiveFoldAXNotification",
+          "line": 84,
+          "declaration": "func receiveFoldAXNotification(routeID: UInt, notification: String) {"
+        },
+        {
+          "name": "axObservedBoolAttribute",
+          "line": 96,
+          "declaration": "func axObservedBoolAttribute(_ win: AXUIElement, _ attribute: String) -> Bool? {"
+        }
+      ]
+    },
+    {
+      "path": "prototype/App/WS2FoldEvidenceAdapter.swift",
+      "sha256": "56606957ca290794e0450d6199aa4e3d85fc954e4c472a9e6158bb06cdb7013d",
+      "base_sha256": "cb7f57c8020aeda4aca842a4a48a58b5e4a70acacc02cff63a2682d426a0c264",
+      "changed": true,
+      "line_count": 75,
+      "symbols": [
+        {
+          "name": "shadeWithEvidence",
+          "line": 7,
+          "declaration": "func shadeWithEvidence(_ win:AXUIElement,id:CGWindowID,pid:pid_t,recordedPosition:CGPoint?,"
+        },
+        {
+          "name": "deliverFoldEvidence",
+          "line": 27,
+          "declaration": "func deliverFoldEvidence(_ event:WS2FoldEvidence.Event?){"
+        },
+        {
+          "name": "mayCommitObservedFold",
+          "line": 33,
+          "declaration": "func mayCommitObservedFold(_ ticket:WS2FoldEvidence.Ticket)->Bool {"
+        },
+        {
+          "name": "finishFoldEvidence",
+          "line": 37,
+          "declaration": "func finishFoldEvidence(_ ticket:WS2FoldEvidence.Ticket?,success:Bool){"
+        },
+        {
+          "name": "publishFoldObservation",
+          "line": 44,
+          "declaration": "func publishFoldObservation(id:CGWindowID,state:ShadeState){"
+        },
+        {
+          "name": "strictFoldObservation",
+          "line": 61,
+          "declaration": "func strictFoldObservation(id: CGWindowID, state: ShadeState) -> WS2FoldEvidence.Observation {"
+        },
+        {
+          "name": "cancelFoldEvidence",
+          "line": 70,
+          "declaration": "func cancelFoldEvidence(id:CGWindowID,transaction:UUID){"
+        }
+      ]
+    },
+    {
+      "path": "prototype/Core/FoldVerifier.swift",
+      "sha256": "8391bca46e6af68e0ae1942edd2e9bd106f5ea83e237ffa9ba0b58e5b878c597",
+      "base_sha256": "90a4d023619d31706672da91a52ab721023662591b5ab3f72cda05e32fabc086",
+      "changed": true,
+      "line_count": 88,
+      "symbols": [
+        {
+          "name": "FoldVerifier",
+          "line": 4,
+          "declaration": "final class FoldVerifier {"
+        },
+        {
+          "name": "Observation",
+          "line": 5,
+          "declaration": "enum Observation: Equatable, Sendable { case hidden, visible, unknown }"
+        },
+        {
+          "name": "start",
+          "line": 44,
+          "declaration": "func start() {"
+        },
+        {
+          "name": "pollQuickly",
+          "line": 50,
+          "declaration": "private func pollQuickly(until deadline: TimeInterval, elapsed: TimeInterval) {"
+        },
+        {
+          "name": "check",
+          "line": 62,
+          "declaration": "private func check(attempt: Int) {"
+        },
+        {
+          "name": "finish",
+          "line": 83,
+          "declaration": "private func finish(_ value: Observation) {"
+        }
+      ]
+    },
+    {
+      "path": "prototype/Core/WS2FocusEffectPlan.swift",
+      "sha256": "60ccb717e3641f20e1fc499dc1e432ba37493e3c4abe8e28c73b2ebc19419829",
+      "base_sha256": "60ccb717e3641f20e1fc499dc1e432ba37493e3c4abe8e28c73b2ebc19419829",
+      "changed": false,
+      "line_count": 85,
+      "symbols": [
+        {
+          "name": "WS2FocusEffectPlan",
+          "line": 4,
+          "declaration": "struct WS2FocusEffectPlan: Sendable {"
+        },
+        {
+          "name": "Window",
+          "line": 7,
+          "declaration": "struct Window: Equatable, Sendable { let identity: Identity; let revision: UInt64 }"
+        },
+        {
+          "name": "Kind",
+          "line": 8,
+          "declaration": "enum Kind: Equatable, Sendable { case tuck(Window, WS2.Token, UInt64), restore(Receipt) }"
+        },
+        {
+          "name": "Operation",
+          "line": 9,
+          "declaration": "struct Operation: Equatable, Sendable { let id: UUID; let kind: Kind }"
+        },
+        {
+          "name": "Outcome",
+          "line": 10,
+          "declaration": "enum Outcome: Sendable { case completed(revision: UInt64), unchanged, userChanged, unknown }"
+        },
+        {
+          "name": "Failure",
+          "line": 11,
+          "declaration": "enum Failure: Error { case invalid, capacity, overflow, unexpectedCompletion }"
+        },
+        {
+          "name": "transition",
+          "line": 24,
+          "declaration": "mutating func transition(run: WS2.Token?, windows: [Window]) throws {"
+        },
+        {
+          "name": "setSuspended",
+          "line": 31,
+          "declaration": "mutating func setSuspended(_ value: Bool) { suspended = value }"
+        },
+        {
+          "name": "manualChange",
+          "line": 32,
+          "declaration": "mutating func manualChange(_ identity: Identity) {"
+        },
+        {
+          "name": "identity",
+          "line": 38,
+          "declaration": "private static func identity(_ kind: Kind) -> Identity {"
+        },
+        {
+          "name": "next",
+          "line": 41,
+          "declaration": "mutating func next() -> Operation? {"
+        },
+        {
+          "name": "mayCommit",
+          "line": 51,
+          "declaration": "func mayCommit(_ operation: Operation) -> Bool {"
+        },
+        {
+          "name": "complete",
+          "line": 60,
+          "declaration": "mutating func complete(_ operation: Operation, _ outcome: Outcome) throws {"
+        }
+      ]
+    },
+    {
+      "path": "prototype/Core/WS2FoldCallbackStamp.swift",
+      "sha256": "50e53418e04733bbe0421c49533bd7e87943f25707f7404bedf188a4ed4543de",
+      "base_sha256": null,
+      "changed": true,
+      "line_count": 39,
+      "symbols": [
+        {
+          "name": "WS2FoldCallbackStamp",
+          "line": 5,
+          "declaration": "struct WS2FoldCallbackStamp: Equatable, Sendable {"
+        },
+        {
+          "name": "accepts",
+          "line": 15,
+          "declaration": "func accepts(current: Self, now: TimeInterval, unlocked: Bool,"
+        },
+        {
+          "name": "WS2FoldObserverRoute",
+          "line": 29,
+          "declaration": "struct WS2FoldObserverRoute: Equatable, Sendable {"
+        },
+        {
+          "name": "ws2ObservedBoolean",
+          "line": 36,
+          "declaration": "func ws2ObservedBoolean(_ raw: CFTypeRef?) -> Bool? {"
+        }
+      ]
+    },
+    {
+      "path": "prototype/Core/WS2FoldEvidence.swift",
+      "sha256": "3d1dd3583a1e6f93a4d721e6b4587a0cd700c993722fee2f7a03428919f420dd",
+      "base_sha256": "3d1dd3583a1e6f93a4d721e6b4587a0cd700c993722fee2f7a03428919f420dd",
+      "changed": false,
+      "line_count": 58,
+      "symbols": [
+        {
+          "name": "WS2FoldEvidence",
+          "line": 5,
+          "declaration": "struct WS2FoldEvidence: Sendable {"
+        },
+        {
+          "name": "Ticket",
+          "line": 6,
+          "declaration": "struct Ticket: Equatable, Sendable { let request:UUID;let window:UInt32;let pid:Int32 }"
+        },
+        {
+          "name": "Observation",
+          "line": 7,
+          "declaration": "enum Observation:String,Sendable,Codable { case verifiedHidden, stillVisible, unknown, notStarted }"
+        },
+        {
+          "name": "Event",
+          "line": 8,
+          "declaration": "struct Event:Equatable,Sendable { let ticket:Ticket;let transaction:UUID?;let observation:Observation;let late:Bool }"
+        },
+        {
+          "name": "Entry",
+          "line": 9,
+          "declaration": "private struct Entry:Sendable { let ticket:Ticket;let issuedAt:Double;let deadline:Double;var attempted=false;var transaction:UUID?;var last:Observation? }"
+        },
+        {
+          "name": "contains",
+          "line": 12,
+          "declaration": "func contains(_ ticket:Ticket)->Bool{entries[ticket.request]?.ticket == ticket}"
+        },
+        {
+          "name": "begin",
+          "line": 13,
+          "declaration": "mutating func begin(request:UUID,window:UInt32,pid:Int32,at now:Double,timeout:Double=30)->Ticket?{"
+        },
+        {
+          "name": "mayStart",
+          "line": 19,
+          "declaration": "func mayStart(_ t:Ticket,at now:Double)->Bool {"
+        },
+        {
+          "name": "markMutation",
+          "line": 23,
+          "declaration": "mutating func markMutation(_ t:Ticket,at now:Double)->Bool{"
+        },
+        {
+          "name": "bind",
+          "line": 26,
+          "declaration": "mutating func bind(_ t:Ticket,transaction:UUID)->Bool{"
+        },
+        {
+          "name": "ticket",
+          "line": 30,
+          "declaration": "func ticket(window:UInt32,transaction:UUID)->Ticket?{"
+        },
+        {
+          "name": "observe",
+          "line": 33,
+          "declaration": "mutating func observe(_ t:Ticket,transaction:UUID,observation:Observation)->Event?{"
+        },
+        {
+          "name": "failed",
+          "line": 38,
+          "declaration": "mutating func failed(_ t:Ticket)->Event?{"
+        },
+        {
+          "name": "expire",
+          "line": 42,
+          "declaration": "mutating func expire(_ t:Ticket,at now:Double)->Event?{"
+        },
+        {
+          "name": "forget",
+          "line": 48,
+          "declaration": "mutating func forget(_ t:Ticket){if contains(t){entries[t.request]=nil}}"
+        },
+        {
+          "name": "emit",
+          "line": 49,
+          "declaration": "private mutating func emit(_ t:Ticket,observation:Observation)->Event?{"
+        }
+      ]
+    },
+    {
+      "path": "prototype/Effects/EffectFrameAwaiter.swift",
+      "sha256": "9c7a967621855e6add53c5ee4cd405249142d018eea497e5301ebae72e0e42c8",
+      "base_sha256": "634182d48f845ebec9887544b2d1aea0fdeb53e614af3c66e1070b4907f1f68f",
+      "changed": true,
+      "line_count": 32,
+      "symbols": [
+        {
+          "name": "EffectFrameAwaiter",
+          "line": 3,
+          "declaration": "enum EffectFrameAwaiter<Value> {"
+        },
+        {
+          "name": "first",
+          "line": 6,
+          "declaration": "static func first("
+        }
+      ]
+    },
+    {
+      "path": "prototype/Effects/EffectFrameSource.swift",
+      "sha256": "c63cc6885d42278bf8ce30ae05cfc63e3f209d9490524fbd73ddbfb5087990ab",
+      "base_sha256": "c63cc6885d42278bf8ce30ae05cfc63e3f209d9490524fbd73ddbfb5087990ab",
+      "changed": false,
+      "line_count": 286,
+      "symbols": [
+        {
+          "name": "EffectColorSpace",
+          "line": 7,
+          "declaration": "enum EffectColorSpace: String {"
+        },
+        {
+          "name": "display",
+          "line": 11,
+          "declaration": "static func display(_ screen: NSScreen?) -> EffectColorSpace {"
+        },
+        {
+          "name": "EffectFrame",
+          "line": 15,
+          "declaration": "struct EffectFrame {"
+        },
+        {
+          "name": "stillImage",
+          "line": 30,
+          "declaration": "func stillImage() -> CGImage? {"
+        },
+        {
+          "name": "EffectFrameSource",
+          "line": 46,
+          "declaration": "final class EffectFrameSource: NSObject, SCStreamOutput, SCStreamDelegate {"
+        },
+        {
+          "name": "frame",
+          "line": 62,
+          "declaration": "func frame() -> EffectFrame? { lock.withLock { slot.value } }"
+        },
+        {
+          "name": "configuration",
+          "line": 71,
+          "declaration": "private static func configuration(size: CGSize, fps: Int, color: EffectColorSpace)"
+        },
+        {
+          "name": "start",
+          "line": 88,
+          "declaration": "func start(filter: SCContentFilter, size: CGSize, fps: Int = 60, color: EffectColorSpace = .sRGB)"
+        },
+        {
+          "name": "stop",
+          "line": 126,
+          "declaration": "@discardableResult func stop() -> UInt64 {"
+        },
+        {
+          "name": "stopLocked",
+          "line": 129,
+          "declaration": "private func stopLocked() -> UInt64 {"
+        },
+        {
+          "name": "stopAndWait",
+          "line": 158,
+          "declaration": "func stopAndWait() async throws {"
+        },
+        {
+          "name": "waitForStop",
+          "line": 162,
+          "declaration": "private func waitForStop() async throws {"
+        },
+        {
+          "name": "updateFPS",
+          "line": 167,
+          "declaration": "func updateFPS(_ fps: Int) {"
+        },
+        {
+          "name": "waitForFrame",
+          "line": 191,
+          "declaration": "func waitForFrame(timeout: TimeInterval = 0.6) async -> EffectFrame? {"
+        },
+        {
+          "name": "contentUV",
+          "line": 199,
+          "declaration": "static func contentUV(_ raw: Any?, scaleFactor: CGFloat, buffer: CVPixelBuffer) -> CGRect {"
+        },
+        {
+          "name": "stream",
+          "line": 224,
+          "declaration": "func stream("
+        },
+        {
+          "name": "fail",
+          "line": 273,
+          "declaration": "private func fail(_ candidate: SCStream, error: Error) {"
+        },
+        {
+          "name": "stream",
+          "line": 285,
+          "declaration": "func stream(_ stream: SCStream, didStopWithError error: Error) { fail(stream, error: error) }"
+        }
+      ]
+    },
+    {
+      "path": "prototype/Effects/RestoreVerifier.swift",
+      "sha256": "a0ed730ff532106fdde2eaa64fd8905d5aeddaf9a1ec1e28c293b26ff7dc7052",
+      "base_sha256": "a0ed730ff532106fdde2eaa64fd8905d5aeddaf9a1ec1e28c293b26ff7dc7052",
+      "changed": false,
+      "line_count": 53,
+      "symbols": [
+        {
+          "name": "RestoreObservation",
+          "line": 3,
+          "declaration": "enum RestoreObservation { case pending, visible, closed }"
+        },
+        {
+          "name": "RestoreVerifier",
+          "line": 7,
+          "declaration": "final class RestoreVerifier {"
+        },
+        {
+          "name": "start",
+          "line": 31,
+          "declaration": "func start() {"
+        },
+        {
+          "name": "check",
+          "line": 35,
+          "declaration": "private func check() {"
+        }
+      ]
+    },
+    {
+      "path": "prototype/Native/WS2Child.c",
+      "sha256": "134368aa12dfbbb9ec5a6f60a121c44b52b46bb303d55d73b18d78326d875f47",
+      "base_sha256": "134368aa12dfbbb9ec5a6f60a121c44b52b46bb303d55d73b18d78326d875f47",
+      "changed": false,
+      "line_count": 167,
+      "symbols": [
+        {
+          "name": "WS2Child",
+          "line": 16,
+          "declaration": "struct WS2Child {"
+        },
+        {
+          "name": "timespec",
+          "line": 23,
+          "declaration": "struct timespec value;"
+        }
+      ]
+    },
+    {
+      "path": "prototype/Recovery/DurableShadeJournal.swift",
+      "sha256": "5dbcd013cc44573bfef4b028dae0ca44c75c963d7df131cf20b946a737c366c8",
+      "base_sha256": "5dbcd013cc44573bfef4b028dae0ca44c75c963d7df131cf20b946a737c366c8",
+      "changed": false,
+      "line_count": 34,
+      "symbols": [
+        {
+          "name": "DurableShadeJournal",
+          "line": 4,
+          "declaration": "struct DurableShadeJournal {"
+        },
+        {
+          "name": "load",
+          "line": 11,
+          "declaration": "func load() throws -> [[String: Any]]? {"
+        },
+        {
+          "name": "save",
+          "line": 22,
+          "declaration": "func save(_ entries: [[String: Any]]) throws {"
+        }
+      ]
+    },
+    {
+      "path": "prototype/Support/WS2DuplexProcess.swift",
+      "sha256": "1efe08a7d6987fdac80d87f345f1d2ce212e6a5dddac3a71e086e247d8ab579a",
+      "base_sha256": "1efe08a7d6987fdac80d87f345f1d2ce212e6a5dddac3a71e086e247d8ab579a",
+      "changed": false,
+      "line_count": 248,
+      "symbols": [
+        {
+          "name": "WS2DuplexProcess",
+          "line": 11,
+          "declaration": "@MainActor final class WS2DuplexProcess {"
+        },
+        {
+          "name": "Failure",
+          "line": 12,
+          "declaration": "enum Failure: Error { case invalid, io(Int32), notRunning }"
+        },
+        {
+          "name": "End",
+          "line": 13,
+          "declaration": "enum End: Equatable { case localStop, eof, processExit, io(Int32), framing, timeout, revoked }"
+        },
+        {
+          "name": "Termination",
+          "line": 14,
+          "declaration": "struct Termination: Equatable, Sendable { let status: Int32; let wasSignalled: Bool }"
+        },
+        {
+          "name": "start",
+          "line": 57,
+          "declaration": "func start() throws {"
+        },
+        {
+          "name": "pollChild",
+          "line": 96,
+          "declaration": "private func pollChild() {"
+        },
+        {
+          "name": "admit",
+          "line": 120,
+          "declaration": "@discardableResult func admit(_ lines: [Data], connection: UUID, deadline: Double,"
+        },
+        {
+          "name": "admitWireFrames",
+          "line": 131,
+          "declaration": "@discardableResult func admitWireFrames(_ frames: [Data], connection: UUID, deadline: Double,"
+        },
+        {
+          "name": "armWrite",
+          "line": 143,
+          "declaration": "private func armWrite() { if !writeArmed, !stopped { writeArmed = true; writer?.resume() } }"
+        },
+        {
+          "name": "disarmWrite",
+          "line": 144,
+          "declaration": "private func disarmWrite() { if writeArmed { writeArmed = false; writer?.suspend() } }"
+        },
+        {
+          "name": "scheduleDeadline",
+          "line": 145,
+          "declaration": "private func scheduleDeadline() {"
+        },
+        {
+          "name": "writeReady",
+          "line": 157,
+          "declaration": "private func writeReady() {"
+        },
+        {
+          "name": "readReady",
+          "line": 183,
+          "declaration": "private func readReady(checkChild: Bool = true) {"
+        },
+        {
+          "name": "readDiagnosticReady",
+          "line": 205,
+          "declaration": "private func readDiagnosticReady() {"
+        },
+        {
+          "name": "clearDiagnostics",
+          "line": 220,
+          "declaration": "func clearDiagnostics() { diagnostics?.clear() }"
+        },
+        {
+          "name": "writeWithoutSIGPIPE",
+          "line": 221,
+          "declaration": "private static func writeWithoutSIGPIPE(_ fd: Int32, _ bytes: Data) -> Int {"
+        },
+        {
+          "name": "stop",
+          "line": 236,
+          "declaration": "func stop(_ reason: End = .localStop) {"
+        }
+      ]
+    },
+    {
+      "path": "prototype/Support/WS2FocusEffectExecutor.swift",
+      "sha256": "674a8760579e1eccf401f6c949d6fcf69b74257943fe795b043f255b7c3887bf",
+      "base_sha256": "674a8760579e1eccf401f6c949d6fcf69b74257943fe795b043f255b7c3887bf",
+      "changed": false,
+      "line_count": 35,
+      "symbols": [
+        {
+          "name": "WS2FocusMutationPort",
+          "line": 3,
+          "declaration": "@MainActor protocol WS2FocusMutationPort: AnyObject {"
+        },
+        {
+          "name": "perform",
+          "line": 6,
+          "declaration": "func perform(_ operation: WS2FocusEffectPlan.Operation,"
+        },
+        {
+          "name": "WS2FocusEffectExecutor",
+          "line": 10,
+          "declaration": "@MainActor final class WS2FocusEffectExecutor {"
+        },
+        {
+          "name": "transition",
+          "line": 16,
+          "declaration": "func transition(run: WS2.Token?, windows: [WS2FocusEffectPlan.Window]) throws {"
+        },
+        {
+          "name": "suspend",
+          "line": 19,
+          "declaration": "func suspend() { plan.setSuspended(true) }"
+        },
+        {
+          "name": "resumeAfterVerifiedUnlock",
+          "line": 20,
+          "declaration": "func resumeAfterVerifiedUnlock() { plan.setSuspended(false); pump() }"
+        },
+        {
+          "name": "manualChange",
+          "line": 21,
+          "declaration": "func manualChange(_ identity: WS2FocusEffectPlan.Identity) { plan.manualChange(identity); pump() }"
+        },
+        {
+          "name": "end",
+          "line": 23,
+          "declaration": "func end() throws { try transition(run: nil, windows: []) }"
+        },
+        {
+          "name": "pump",
+          "line": 24,
+          "declaration": "private func pump() {"
+        }
+      ]
+    },
+    {
+      "path": "prototype/Window/AXHelpers.swift",
+      "sha256": "b679b85d9e4e31f1a2f4594a048fba885c89b46bd25395e3fab768c880ab71b6",
+      "base_sha256": "ccf1a2c35600cf6471db354ee1fbb3f417a60907be1446f6ee9e393a2b5b8ccf",
+      "changed": true,
+      "line_count": 255,
+      "symbols": [
+        {
+          "name": "TrafficAction",
+          "line": 9,
+          "declaration": "enum TrafficAction { case close, minimize, zoom, fullScreen }"
+        },
+        {
+          "name": "ProxyTrafficLightStyle",
+          "line": 11,
+          "declaration": "enum ProxyTrafficLightStyle {"
+        },
+        {
+          "name": "ProxyTrafficLightConfiguration",
+          "line": 16,
+          "declaration": "struct ProxyTrafficLightConfiguration {"
+        },
+        {
+          "name": "proxyTrafficLightConfiguration",
+          "line": 40,
+          "declaration": "func proxyTrafficLightConfiguration(of win: AXUIElement, pid: pid_t) -> ProxyTrafficLightConfiguration {"
+        },
+        {
+          "name": "urlFromAXAttribute",
+          "line": 73,
+          "declaration": "func urlFromAXAttribute(_ win: AXUIElement, _ attr: String) -> URL? {"
+        },
+        {
+          "name": "quickLookReopenURL",
+          "line": 90,
+          "declaration": "func quickLookReopenURL(for win: AXUIElement) -> URL? {"
+        },
+        {
+          "name": "reopenQuickLookPreview",
+          "line": 102,
+          "declaration": "func reopenQuickLookPreview(url: URL) -> Bool {"
+        },
+        {
+          "name": "postSpacebarKey",
+          "line": 116,
+          "declaration": "func postSpacebarKey() {"
+        },
+        {
+          "name": "reopenQuickLookFromFinderSelection",
+          "line": 125,
+          "declaration": "func reopenQuickLookFromFinderSelection(pid: pid_t) -> Bool {"
+        },
+        {
+          "name": "SystemTitlebarDoubleClickAction",
+          "line": 149,
+          "declaration": "enum SystemTitlebarDoubleClickAction: Equatable {"
+        },
+        {
+          "name": "systemTitlebarDoubleClickAction",
+          "line": 155,
+          "declaration": "func systemTitlebarDoubleClickAction() -> SystemTitlebarDoubleClickAction {"
+        },
+        {
+          "name": "systemTitlebarTripleClickDescription",
+          "line": 163,
+          "declaration": "func systemTitlebarTripleClickDescription() -> String? {"
+        },
+        {
+          "name": "WindowManagementCapability",
+          "line": 174,
+          "declaration": "enum WindowManagementCapability {"
+        },
+        {
+          "name": "realWindowManagementCapability",
+          "line": 182,
+          "declaration": "func realWindowManagementCapability(_ win: AXUIElement) -> WindowManagementCapability {"
+        },
+        {
+          "name": "trafficLightRects",
+          "line": 203,
+          "declaration": "func trafficLightRects(_ win: AXUIElement, winTopLeft pos: CGPoint, barH: CGFloat) -> [(CGRect, TrafficAction)] {"
+        },
+        {
+          "name": "trafficLightRects",
+          "line": 216,
+          "declaration": "func trafficLightRects(_ rects: [(CGRect, TrafficAction)],"
+        },
+        {
+          "name": "axTitle",
+          "line": 238,
+          "declaration": "func axTitle(_ e: AXUIElement) -> String {"
+        },
+        {
+          "name": "dumpWindow",
+          "line": 245,
+          "declaration": "func dumpWindow(_ win: AXUIElement) {"
+        }
+      ]
+    },
+    {
+      "path": "prototype/WindowBrowser/WindowBrowserAppDelegate.swift",
+      "sha256": "47a44ee7dd3717a71545ca192da753f650a75ca9a538a8ceeb0fd895583937c8",
+      "base_sha256": "7578e4ad88f967a0c4fc6b18dabf97100fffd86d1bb7437c254131f55147bf8f",
+      "changed": true,
+      "line_count": 145,
+      "symbols": [
+        {
+          "name": "windowBrowserManagedSnapshots",
+          "line": 11,
+          "declaration": "func windowBrowserManagedSnapshots() -> [ManagedWindowDescriptor] {"
+        },
+        {
+          "name": "windowBrowserBeginFold",
+          "line": 101,
+          "declaration": "func windowBrowserBeginFold(key: WindowKey, element: AXUIElement,"
+        },
+        {
+          "name": "windowBrowserTargetCandidate",
+          "line": 127,
+          "declaration": "func windowBrowserTargetCandidate(key: WindowKey) -> AXUIElement? {"
+        },
+        {
+          "name": "windowBrowserIsWindowStillPresent",
+          "line": 135,
+          "declaration": "func windowBrowserIsWindowStillPresent(key: WindowKey) -> Bool {"
+        }
+      ]
+    },
+    {
+      "path": "prototype/WindowShade.swift",
+      "sha256": "2c95d5d27a9f4649461e330e590da4bf0afdacee1fb0a2bfdb4897b32f570aed",
+      "base_sha256": "0c489c4b721315ef147f7b3898aa388377eac8b766ada421fda395716f16828a",
+      "changed": true,
+      "line_count": 924,
+      "symbols": [
+        {
+          "name": "framesAlmostEqual",
+          "line": 79,
+          "declaration": "func framesAlmostEqual(_ a: NSRect, _ b: NSRect, tolerance: CGFloat = 0.5) -> Bool {"
+        },
+        {
+          "name": "cgWindowID",
+          "line": 86,
+          "declaration": "func cgWindowID(for window: NSWindow) -> CGWindowID? {"
+        },
+        {
+          "name": "AppDelegate",
+          "line": 94,
+          "declaration": "final class AppDelegate: NSObject, NSApplicationDelegate, NSMenuDelegate {"
+        },
+        {
+          "name": "PendingTitlebarTripleClick",
+          "line": 96,
+          "declaration": "final class PendingTitlebarTripleClick {"
+        },
+        {
+          "name": "PendingSpaceReturn",
+          "line": 110,
+          "declaration": "struct PendingSpaceReturn {"
+        },
+        {
+          "name": "ReconcileAXTarget",
+          "line": 118,
+          "declaration": "struct ReconcileAXTarget {"
+        },
+        {
+          "name": "ReconcileAXSnapshot",
+          "line": 126,
+          "declaration": "struct ReconcileAXSnapshot: Sendable {"
+        },
+        {
+          "name": "applicationDidFinishLaunching",
+          "line": 311,
+          "declaration": "func applicationDidFinishLaunching(_ note: Notification) {"
+        },
+        {
+          "name": "applicationShouldTerminate",
+          "line": 425,
+          "declaration": "func applicationShouldTerminate(_ sender: NSApplication) -> NSApplication.TerminateReply {"
+        },
+        {
+          "name": "systemAppearanceOptionsChanged",
+          "line": 430,
+          "declaration": "@objc func systemAppearanceOptionsChanged(_ note: Notification) {"
+        },
+        {
+          "name": "installStandardMainMenu",
+          "line": 461,
+          "declaration": "func installStandardMainMenu() {"
+        },
+        {
+          "name": "migrateDistractingDefaultSounds",
+          "line": 471,
+          "declaration": "private func migrateDistractingDefaultSounds() {"
+        },
+        {
+          "name": "refreshPinnedPreviewTarget",
+          "line": 500,
+          "declaration": "func refreshPinnedPreviewTarget(reason: String) {"
+        },
+        {
+          "name": "setupPinnedPreviewFocusTracking",
+          "line": 507,
+          "declaration": "private func setupPinnedPreviewFocusTracking() {"
+        },
+        {
+          "name": "scheduleTitlebarPrefetch",
+          "line": 520,
+          "declaration": "private func scheduleTitlebarPrefetch() {"
+        },
+        {
+          "name": "schedulePinnedPreviewTargetRefresh",
+          "line": 541,
+          "declaration": "private func schedulePinnedPreviewTargetRefresh() {"
+        },
+        {
+          "name": "focusSizedFrame",
+          "line": 561,
+          "declaration": "func focusSizedFrame(pos: CGPoint, size: CGSize,"
+        },
+        {
+          "name": "configureShadedAccessibility",
+          "line": 600,
+          "declaration": "func configureShadedAccessibility(for overlay: NSWindow, id: CGWindowID,"
+        },
+        {
+          "name": "currentShadedOverlayID",
+          "line": 626,
+          "declaration": "func currentShadedOverlayID() -> CGWindowID? {"
+        },
+        {
+          "name": "finishOnboarding",
+          "line": 644,
+          "declaration": "@objc func finishOnboarding() {"
+        },
+        {
+          "name": "dismissOnboarding",
+          "line": 648,
+          "declaration": "@objc func dismissOnboarding() {"
+        },
+        {
+          "name": "runTool",
+          "line": 659,
+          "declaration": "private func runTool(_ path: String, _ args: [String]) -> Int32? {"
+        },
+        {
+          "name": "readTool",
+          "line": 676,
+          "declaration": "private func readTool(_ path: String, _ args: [String]) -> String? {"
+        },
+        {
+          "name": "runDefaults",
+          "line": 692,
+          "declaration": "private func runDefaults(_ args: [String]) { runTool(\"/usr/bin/defaults\", args) }"
+        },
+        {
+          "name": "readDefaults",
+          "line": 693,
+          "declaration": "private func readDefaults(_ args: [String]) -> String? { readTool(\"/usr/bin/defaults\", args) }"
+        },
+        {
+          "name": "killDock",
+          "line": 694,
+          "declaration": "private func killDock() { runTool(\"/usr/bin/killall\", [\"Dock\"]) }   // 让 Dock 重读 mineffect"
+        },
+        {
+          "name": "writeDockMinimizeEffect",
+          "line": 696,
+          "declaration": "private func writeDockMinimizeEffect(_ value: String, reason: String) -> Bool {"
+        },
+        {
+          "name": "persistDockMinimizeEffectSession",
+          "line": 709,
+          "declaration": "private func persistDockMinimizeEffectSession(original: String?) {"
+        },
+        {
+          "name": "clearDockMinimizeEffectSession",
+          "line": 720,
+          "declaration": "private func clearDockMinimizeEffectSession() {"
+        },
+        {
+          "name": "restoreDockMinimizeEffect",
+          "line": 727,
+          "declaration": "private func restoreDockMinimizeEffect(original: String?) {"
+        },
+        {
+          "name": "recoverStaleDockMinimizeEffectSessionIfNeeded",
+          "line": 735,
+          "declaration": "private func recoverStaleDockMinimizeEffectSessionIfNeeded() {"
+        },
+        {
+          "name": "enableScaleMinimizeEffectForSession",
+          "line": 746,
+          "declaration": "private func enableScaleMinimizeEffectForSession() {"
+        },
+        {
+          "name": "restoreDockMinimizeEffect",
+          "line": 774,
+          "declaration": "private func restoreDockMinimizeEffect() {"
+        },
+        {
+          "name": "currentOperationState",
+          "line": 791,
+          "declaration": "func currentOperationState(_ id: CGWindowID) -> WindowShadeState {"
+        },
+        {
+          "name": "transitionOperationState",
+          "line": 797,
+          "declaration": "func transitionOperationState(id: CGWindowID, to next: WindowShadeState,"
+        },
+        {
+          "name": "applicationWillTerminate",
+          "line": 810,
+          "declaration": "func applicationWillTerminate(_ note: Notification) {"
+        },
+        {
+          "name": "ensureAccessibility",
+          "line": 837,
+          "declaration": "func ensureAccessibility() -> Bool {"
+        },
+        {
+          "name": "toggleAction",
+          "line": 844,
+          "declaration": "@objc func toggleAction() { toggle() }"
+        },
+        {
+          "name": "focusCurrentAppAction",
+          "line": 855,
+          "declaration": "@objc func focusCurrentAppAction() {"
+        },
+        {
+          "name": "unshadeFromMenu",
+          "line": 869,
+          "declaration": "@objc func unshadeFromMenu(_ sender: NSMenuItem) {"
+        },
+        {
+          "name": "quit",
+          "line": 874,
+          "declaration": "@objc func quit() {"
+        },
+        {
+          "name": "setupEventTapWhenTrusted",
+          "line": 887,
+          "declaration": "func setupEventTapWhenTrusted() {"
+        },
+        {
+          "name": "setupEventTap",
+          "line": 903,
+          "declaration": "func setupEventTap() -> Bool {"
+        }
+      ]
+    },
+    {
+      "path": "prototype/build.sh",
+      "sha256": "e6db6c9f3499fcdcb4f28c065199f4f87aa64aeb0c5a46b098164dc761ad588c",
+      "base_sha256": "e6db6c9f3499fcdcb4f28c065199f4f87aa64aeb0c5a46b098164dc761ad588c",
+      "changed": false,
+      "line_count": 358,
+      "symbols": []
+    },
+    {
+      "path": "tests/DuoCoreTests.swift",
+      "sha256": "580fbdfa753b6fba4941f67abc0ce7fe58d182d37cb3409880647a5ea6d748f5",
+      "base_sha256": "580fbdfa753b6fba4941f67abc0ce7fe58d182d37cb3409880647a5ea6d748f5",
+      "changed": false,
+      "line_count": 404,
+      "symbols": [
+        {
+          "name": "DuoCoreTests",
+          "line": 3,
+          "declaration": "@main struct DuoCoreTests {"
+        },
+        {
+          "name": "Clock",
+          "line": 4,
+          "declaration": "final class Clock {"
+        },
+        {
+          "name": "schedule",
+          "line": 7,
+          "declaration": "func schedule(_ delay: Double, _ action: @escaping () -> Void) {"
+        },
+        {
+          "name": "advance",
+          "line": 10,
+          "declaration": "func advance(_ delta: Double) {"
+        },
+        {
+          "name": "main",
+          "line": 22,
+          "declaration": "static func main() async throws {"
+        },
+        {
+          "name": "titlebarIntentTests",
+          "line": 110,
+          "declaration": "static func titlebarIntentTests() {"
+        },
+        {
+          "name": "foldVerificationTests",
+          "line": 134,
+          "declaration": "static func foldVerificationTests() {"
+        },
+        {
+          "name": "Scenario",
+          "line": 135,
+          "declaration": "final class Scenario {"
+        },
+        {
+          "name": "deferredRestoreCompletionTests",
+          "line": 222,
+          "declaration": "static func deferredRestoreCompletionTests() {"
+        },
+        {
+          "name": "restorationTests",
+          "line": 253,
+          "declaration": "static func restorationTests() throws {"
+        },
+        {
+          "name": "verifier",
+          "line": 266,
+          "declaration": "func verifier() -> RestoreVerifier {"
+        },
+        {
+          "name": "LegacyMotion",
+          "line": 307,
+          "declaration": "struct LegacyMotion {"
+        },
+        {
+          "name": "receive",
+          "line": 312,
+          "declaration": "mutating func receive(_ acceleration: SIMD3<Double>, time: Double) {"
+        },
+        {
+          "name": "motionTiltTests",
+          "line": 334,
+          "declaration": "static func motionTiltTests() throws {"
+        }
+      ]
+    },
+    {
+      "path": "tests/duo-integration-check.py",
+      "sha256": "77baca7e632b420b099a9af21b6462d826b6f9f2eb97c9c5d90f5906e002bb6d",
+      "base_sha256": "1614f812d80321117c4ecb43c3e649c4f0033092653ffbbd8026c45a0b127916",
+      "changed": true,
+      "line_count": 34,
+      "symbols": [
+        {
+          "name": "installOverlay",
+          "line": 5,
+          "declaration": "transaction = shade.split('func installOverlay(', 1)[1].split('func installInteractiveNativeCollapse', 1)[0]"
+        },
+        {
+          "name": "installInteractiveNativeCollapse",
+          "line": 11,
+          "declaration": "native = shade.split('func installInteractiveNativeCollapse', 1)[1].split('if mode == .interactiveNative', 1)[0]"
+        },
+        {
+          "name": "unshadeReturningElement",
+          "line": 15,
+          "declaration": "sync = exit_code.split('func unshadeReturningElement(', 1)[1].split('@discardableResult', 1)[0]"
+        },
+        {
+          "name": "suspend",
+          "line": 20,
+          "declaration": "suspend = controller.split('private func suspend()', 1)[1].split('private func resume()', 1)[0]"
+        },
+        {
+          "name": "MenuState",
+          "line": 25,
+          "declaration": "assert 'struct MenuState' in menu"
+        }
+      ]
+    }
+  ]
+}

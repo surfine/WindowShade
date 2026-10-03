@@ -1,6 +1,6 @@
 {
  "version": 1,
- "basis": "round2 uploaded repo snapshot; main model must approve additions; 主模型逐点补登 2026-10-03：番茄钟专注时长三个 UserDefaults 读写点归 settings，另有一条注释里的 LAContext 字样改成中文说明（注释不是读取点）；2026-10-03 主模型补登第四份：番茄钟设置归 settings 并新增 focus-preferences/focus-window-receipts/手柄/审批/配对身份五行（未上线的标 planned，不进隐私页）；2026-10-03 主模型补登第五、六份：Companion TCP 的 NWConnection 三点归 cross-device，Keychain 适配器的 LAContext/SecItem 四点归 pair-verify-identity（都仍是候选，未接生产来源）；2026-10-03 主模型补登第八份：窗口收起证据适配器读 kAXMinimizedAttribute 归 window-ax（只观察本次收起，不新存截图/标题）",
+ "basis": "round2 uploaded repo snapshot; main model must approve additions; 主模型逐点补登 2026-10-03：番茄钟专注时长三个 UserDefaults 读写点归 settings，另有一条注释里的 LAContext 字样改成中文说明（注释不是读取点）；2026-10-03 主模型补登第四份：番茄钟设置归 settings 并新增 focus-preferences/focus-window-receipts/手柄/审批/配对身份五行（未上线的标 planned，不进隐私页）；2026-10-03 主模型补登第五、六份：Companion TCP 的 NWConnection 三点归 cross-device，Keychain 适配器的 LAContext/SecItem 四点归 pair-verify-identity（都仍是候选，未接生产来源）；2026-10-03 主模型补登第八份：窗口收起证据适配器读 kAXMinimizedAttribute 归 window-ax（只观察本次收起，不新存截图/标题）；2026-10-03 主模型补登第九份：收起完成回调守卫读一条 AX 布尔属性归 window-ax（只作三态观察与旧回调复核），新增的事务戳/routeID/批次号只在该次操作的内存里，不新存也不外发",
  "scanner_pattern": "AXUIElementCopyAttributeValue|CGEvent\\.tapCreate|SCShareableContent|SCScreenshotManager|SCStream\\b|AVCaptureDevice|AVCaptureSession|NSAppleScript|osascript|IOServiceMatching|CGSessionCopyCurrentDictionary|bezelPath|\\b(?:SLS|CGS)[A-Z][A-Za-z0-9_]*|URLSession|NWConnection|NWListener|SecItem(?:Add|CopyMatching|Update|Delete)|\\bMT(?:Device|Register|Unregister)[A-Za-z0-9_]+|\\bIOHID[A-Za-z0-9_]+|AVAudioEngine|SFSpeechRecognizer|\\bVNDetect[A-Za-z0-9_]+|SMAppService|UserDefaults|RecoveryJournal|kAudioHardwarePropertyProcessObjectList|\\bSecureEnclave\\b|\\bLAContext\\b|SecAccessControlCreateWithFlags|\\bbiometryState\\b|evaluatedPolicyDomainState|stateHash",
  "signals": [
   {
@@ -3857,10 +3857,10 @@
    "signal": "pair-verify-identity"
   },
   {
-   "path": "prototype/App/WS2FoldEvidenceAdapter.swift",
+   "path": "prototype/App/WS2FoldCallbackGuard.swift",
    "line": 0,
    "symbol": "AXUIElementCopyAttributeValue",
-   "source": "guard AXUIElementCopyAttributeValue(state.element,kAXMinimizedAttribute as CFString,&raw) == .success,",
+   "source": "guard AXUIElementCopyAttributeValue(win, attribute as CFString, &raw) == .success else { return nil }",
    "signal": "window-ax"
   }
  ]

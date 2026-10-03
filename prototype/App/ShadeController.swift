@@ -172,10 +172,29 @@ extension AppDelegate {
                        preparedProfile: WindowChromeProfile? = nil,
                        recordedPosition: CGPoint? = nil, evidence: WS2FoldEvidence.Ticket? = nil) {
         let completionTokens = foldWaiters[id].map { Array($0.keys) } ?? []
-        func completeFold(success: Bool) {
-            finishFoldEvidence(evidence, success: success)
-            settleFoldWaiters(id: id, tokens: completionTokens, success: success)
+        let admissionBoot = AuthorizationService.shared.ledger.bootID
+        let admissionEpoch = MainActor.assumeIsolated { AuthorizationService.shared.ledger.sessionEpoch }
+        let admissionPresentation = foldPresentationID
+        func admissionCurrent() -> Bool {
+            MainActor.assumeIsolated {
+                AuthorizationService.shared.lockState() == .unlocked &&
+                AuthorizationService.shared.ledger.bootID == admissionBoot &&
+                AuthorizationService.shared.ledger.sessionEpoch == admissionEpoch &&
+                foldPresentationID == admissionPresentation
+            }
         }
+        func completeFold(success: Bool, transaction: UUID? = nil) {
+            if success {
+                guard let transaction, shaded[id]?.foldTransactionID == transaction else { return }
+                let ownedTokens = completionTokens.filter { foldWaiterTransactions[$0] == transaction }
+                finishFoldEvidence(evidence, success: true)
+                MainActor.assumeIsolated { settleFoldWaiters(id: id, tokens: ownedTokens, success: true) }
+            } else {
+                finishFoldEvidence(evidence, success: false)
+                MainActor.assumeIsolated { settleFoldWaiters(id: id, tokens: completionTokens, success: false) }
+            }
+        }
+        guard admissionCurrent() else { completeFold(success: false); return }
         MainThreadActivity.push("fold: 折叠窗口")
         defer { MainThreadActivity.pop() }
         // 单窗口折叠不像专注会话那样有阶段汇总：这里记一个起点，安装阶段慢的时候补一行
@@ -284,7 +303,7 @@ extension AppDelegate {
         // 整体包住安装阶段：它与已知子项（隐藏窗口/建 overlay/落盘…）的差额
         // 直接指出剩下的时间是在安装之内还是之外，比继续逐个猜要快。
         func installOverlay(_ overlay: NSWindow, mode: ShadeAppearanceMode, previewImage: NSImage?) {
-            if let evidence, !mayCommitObservedFold(evidence) {
+            if !admissionCurrent() || evidence.map({ !mayCommitObservedFold($0) }) == true {
                 shadeOperationIDs.remove(id); dismissOverlay(overlay)
                 transitionOperationState(id: id, to: .failed, reason: "expired-fold-evidence")
                 completeFold(success: false); return
@@ -336,7 +355,7 @@ extension AppDelegate {
             // 源码顺序断言守卫崩溃一致性，包装会让它认不出来。改成手工计时，
             // 既保留分段数据，也不动那道守卫认的文本。
             var finalPID: pid_t = 0
-            if let evidence, AXUIElementGetPid(win, &finalPID) != .success || finalPID != evidence.pid || windowID(of: win) != id {
+            if AXUIElementGetPid(win, &finalPID) != .success || finalPID != pid || windowID(of: win) != id || !admissionCurrent() {
                 dismissOverlay(overlay); transitionOperationState(id: id, to: .failed, reason: "changed-before-hide")
                 completeFold(success: false); return
             }
@@ -408,6 +427,9 @@ extension AppDelegate {
                                    ignoreAppRevealUntil: Date().addingTimeInterval(1.0),
                                    observer: observer)
             shaded[id] = state
+            MainActor.assumeIsolated {
+                bindFoldWaiters(id: id, tokens: completionTokens, transaction: state.foldTransactionID)
+            }
             if let evidence { _ = foldEvidence.bind(evidence, transaction: state.foldTransactionID) }
             MainActor.assumeIsolated {
                 // 收起一扇带到每张桌面的窗口：它不再需要别处的卷帘条。
@@ -425,13 +447,13 @@ extension AppDelegate {
                     guard let current = self.shaded[id], current.observer == nil,
                           current.foldTransactionID == state.foldTransactionID, CFEqual(current.element, win) else { return }
                     guard let registered = foldPhase("观察者注册", {
-                        self.makeRevealObserver(pid: pid, win: win, id: id)
+                        self.makeRevealObserver(pid: pid, win: win, id: id, transaction: state.foldTransactionID)
                     }) else { return }
                     self.shaded[id]?.observer = registered
                 }
             }
             foldPhase("Space 回归调度") { scheduleSourceSpaceReturnIfNeeded(id: id, state: state) }
-            if hideVerifiedNow {
+            if hideVerifiedNow, shaded[id]?.foldTransactionID == state.foldTransactionID, admissionCurrent() {
                 let spaceInvariantHeld = foldPhase("Space 不变量") {
                     enforceOverlaySpaceInvariant(id: id, state: state, reason: "install")
                 }
@@ -440,10 +462,15 @@ extension AppDelegate {
                     duoController.windowEffects.didVerifyFold(id: id, state: state)
                 }
                 // Hiding is committed even if the user switched away from its Space.
-                completeFold(success: true)
+                completeFold(success: true, transaction: state.foldTransactionID)
             } else {
                 wlog("shade: hide not yet verified; deferring overlay reveal id=\(id) hide=\(hide)")
-                scheduleFoldVerification(id: id)
+                if admissionCurrent() { scheduleFoldVerification(id: id) }
+                else {
+                    MainActor.assumeIsolated {
+                        settleFoldWaiters(id: id, transaction: state.foldTransactionID, success: false)
+                    }
+                }
             }
             hoverPreviewSuppressedUntil[id] = Date().addingTimeInterval(0.7)
             foldPhase("重回专注栈") { rejoinFocusStackAfterShadeIfNeeded(id: id, overlay: overlay) }
@@ -463,6 +490,7 @@ extension AppDelegate {
         func installInteractiveNativeCollapse(barH: CGFloat) -> Bool {
             let targetH = min(max(barH, titleBarHeight), min(size.height, 300))
             let target = CGSize(width: size.width, height: targetH)
+            guard admissionCurrent() else { return false }
             if let evidence, !mayCommitObservedFold(evidence) || !foldEvidence.markMutation(evidence, at: ProcessInfo.processInfo.systemUptime) { return false }
             let err = setAXSize(win, target)
             guard err == .success else {
@@ -470,7 +498,8 @@ extension AppDelegate {
                 return false
             }
 
-            RunLoop.current.run(until: Date().addingTimeInterval(0.03))
+            // Do not pump a nested run loop inside a half-installed transaction.
+            // Delayed-size apps fall back to the existing proxy path instead of reentering shade.
             guard let actual = axSize(win) else {
                 setAXSize(win, size)
                 setAXPosition(win, pos)
@@ -487,7 +516,6 @@ extension AppDelegate {
             }
 
             setAXPosition(win, pos)
-            let observer = makeRevealObserver(pid: pid, win: win, id: id)
             clearShadeJournal(id: id)
             shaded[id] = ShadeState(element: win, sourceWindowID: id,
                                     originalPosition: recordedPosition ?? pos, originalSize: size,
@@ -500,11 +528,17 @@ extension AppDelegate {
                                     previewImage: nil,
                                     quickLookReopenURL: nil,
                                     ignoreAppRevealUntil: Date().addingTimeInterval(1.0),
-                                    observer: observer)
+                                    observer: nil)
+            if let installed = shaded[id] {
+                MainActor.assumeIsolated {
+                    bindFoldWaiters(id: id, tokens: completionTokens, transaction: installed.foldTransactionID)
+                }
+                shaded[id]?.observer = makeRevealObserver(pid: pid, win: win, id: id, transaction: installed.foldTransactionID)
+            }
             if let evidence, let installed = shaded[id] { _ = foldEvidence.bind(evidence, transaction: installed.foldTransactionID) }
             wlog("    interactive native finalBarH=\(Int(targetH)) actualH=\(Int(actual.height))")
             transitionOperationState(id: id, to: .folded, reason: "interactive-native")
-            completeFold(success: true)
+            completeFold(success: true, transaction: shaded[id]?.foldTransactionID)
             if options.rebuildMenuAfterInstall {
                 rebuildMenu()
             }

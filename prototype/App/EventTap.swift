@@ -617,14 +617,17 @@ extension AppDelegate {
                     if pendingTitlebarTripleClick === pending { pendingTitlebarTripleClick = nil }
                     return
                 }
-                registerFoldWaiter(id: id) { [weak self, pending] success in
-                    guard let self else { return }
-                    if success { pending.foldTransactionID = self.shaded[id]?.foldTransactionID }
-                    if pending.intent.completeFold(success: success && pending.foldTransactionID != nil) {
-                        self.enqueuePendingTitlebarTripleClick(pending)
-                    }
-                    if !success, self.pendingTitlebarTripleClick === pending {
-                        self.pendingTitlebarTripleClick = nil
+                // 这段闭包在事件 tap 回调里同步执行（registerFoldWaiter 是 MainActor 方法）。
+                MainActor.assumeIsolated {
+                    registerFoldWaiter(id: id) { [weak self, pending] success in
+                        guard let self else { return }
+                        if success { pending.foldTransactionID = self.shaded[id]?.foldTransactionID }
+                        if pending.intent.completeFold(success: success && pending.foldTransactionID != nil) {
+                            self.enqueuePendingTitlebarTripleClick(pending)
+                        }
+                        if !success, self.pendingTitlebarTripleClick === pending {
+                            self.pendingTitlebarTripleClick = nil
+                        }
                     }
                 }
             }

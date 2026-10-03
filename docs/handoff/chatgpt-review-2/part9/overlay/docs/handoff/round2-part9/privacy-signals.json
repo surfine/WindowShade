@@ -1,0 +1,55 @@
+{
+  "part": 9,
+  "baseline": "round2-handoff-v8",
+  "new_network_destinations": [],
+  "new_permissions": [],
+  "new_persistent_user_data": [],
+  "changes": [
+    {
+      "signal": "AX geometry/minimized plus app/window observation",
+      "existing_source": true,
+      "use": "tri-state verification and reconcile; successful reads must match current context",
+      "retention": "existing runtime state only; existing recovery journal retained, not newly expanded"
+    },
+    {
+      "signal": "fold callback stamp",
+      "fields": [
+        "windowID",
+        "pid",
+        "transaction",
+        "hide",
+        "boot",
+        "sessionEpoch",
+        "presentation",
+        "capturedAt"
+      ],
+      "retention": "transient process memory",
+      "authorization": "none; does not consume or create grants"
+    },
+    {
+      "signal": "observer routeID and batchID",
+      "retention": "current observer/current reconcile batch",
+      "cleanup": "route removed before run-loop source; batch cleared at finish",
+      "limitation": "already issued AX call is not cancelled"
+    },
+    {
+      "signal": "diagnostic status messages",
+      "new_channel": false,
+      "use": "existing wlog/quiet notice; unknown outcome and stale callback rejection",
+      "retention": "existing project logging policy; no new exports or automatic model upload"
+    }
+  ],
+  "did_not_collect": [
+    "real window samples",
+    "gamepad input",
+    "camera",
+    "microphone",
+    "BLE",
+    "biometric templates",
+    "real CLI credentials"
+  ],
+  "notes": [
+    "Hash and transient UUID are not anonymization claims.",
+    "This delta must be reviewed with the prior signal registry."
+  ]
+}

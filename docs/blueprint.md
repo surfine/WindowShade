@@ -133,6 +133,21 @@
 - **真机修掉 4 处**（见 `part8/MAC-EVIDENCE.md`），并给单岛补了 `inputHandle(for:)`。
 - **仍缺**：真实手柄/AX/焦点/布局实测、完整 T3、Touch ID 允许路径、配对与原生 Remote、能耗、影片与发布。
 
+#### 2026-10-03 深夜（第九份接入后）
+
+- **阶段 1 的未知语义收干净了**：刘海收起结果分 hidden / visible / unknown，缺 AX 属性、类型不符、
+  身份不符或锁态未知都不报告成功，unknown 不换策略继续写、保留原 journal 与人工恢复入口；
+  完成通知绑定具体 transaction 与捕获的 waiter tokens，投递前重查事务/启动与锁态代次/显示上下文/有效期；
+  后台巡检按每应用不可变快照 + 批次与事务代次应用；AX observer 按本次注册的单调 routeID 路由。
+  证据：`tests/part9/tests/run.py --suite regression`（42/93）、`check-wiring.py`（24 项）。
+- **阶段 5c 的首帧等待也过严格并发了**：`EffectFrameAwaiter` 继承调用者隔离，原生 resize 去掉安装中的嵌套 RunLoop；
+  证据：`--suite frame` 15/15。番茄钟的 T3 恢复授权仍未接（`admitted=false`），慢应用 fallback 的视觉差异待真机。
+- **真机修掉 23 处 Swift 6 隔离错误**（8 个文件，都是本就在主线程的调用点，按仓库既有写法
+  `MainActor.assumeIsolated` 显式声明）和 4 处仓库入口差异，见 `docs/handoff/chatgpt-review-2/part9/MAC-EVIDENCE.md`。
+- **仍缺**：受控真机观察（工单 02/03 那部分，等 Aaron 指定可动窗口）、真实 AX 收起/恢复与人工恢复、
+  慢 AX 与强制取消、真实 SCK capture graph、完整 T3、Touch ID 允许端到端、配对接收、系统身份后端、
+  能耗、影片与发布。
+
 ## 硬要求
 
 做不到就停下来写明卡在哪，不要换一个更容易的东西交差。

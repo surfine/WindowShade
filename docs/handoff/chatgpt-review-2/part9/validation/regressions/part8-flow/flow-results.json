@@ -1,0 +1,32 @@
+[
+  {
+    "assertions" : 7,
+    "name" : "IFLOW01 real pipe catalogue supplies selection rows",
+    "result" : "PASS"
+  },
+  {
+    "assertions" : 3,
+    "name" : "IFLOW02 device chooses model without sending work",
+    "result" : "PASS"
+  },
+  {
+    "assertions" : 6,
+    "name" : "IFLOW03 separate local send uses selected model",
+    "result" : "PASS"
+  },
+  {
+    "assertions" : 3,
+    "name" : "IFLOW04 late release after local capability loss cannot change model",
+    "result" : "PASS"
+  },
+  {
+    "assertions" : 5,
+    "name" : "IFLOW05 reconnect uses a new backend epoch",
+    "result" : "PASS"
+  },
+  {
+    "assertions" : 3,
+    "name" : "IFLOW06 project replacement rejected by actual model selector",
+    "result" : "PASS"
+  }
+]

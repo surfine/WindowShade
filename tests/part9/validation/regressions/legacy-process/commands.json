@@ -1,0 +1,20 @@
+[
+  {
+    "argv": [
+      "/opt/homebrew/opt/python@3.14/bin/python3.14",
+      "/Users/aaron/Documents/WindowShade/tests/part7/tests/regressions.py",
+      "--repo",
+      ".",
+      "--history",
+      "docs/handoff/chatgpt-review-2",
+      "--batch",
+      "process",
+      "--report-dir",
+      "/Users/aaron/Documents/WindowShade/tests/part9/validation/regressions/legacy-process"
+    ],
+    "exit_code": 0,
+    "stdout": "SCENE PROC01 explicit bounded diagnostic tail does not block stdout\nSCENE PROC02 default diagnostics stays disabled\nSCENE PROC03 direct child exit status is separate from protocol outcome\nSCENE PROC05 partial final frame rejected\nSCENE PROC06 coalesced trailing frames retain ordering\nSCENE PROC07 stop closes transport once and waits for independent exit evidence\nSCENE PROC08 diagnostic buffer can be explicitly cleared\nSCENE PROC09 invalid diagnostic limit rejected before spawning\nSCENE PROC10 late scope change blocks an admitted frame\nRESULT scenarios=9 assertions=27 failures=0\nSCENE IO01 split response, simultaneous write, stderr burst\nSCENE IO02 pipe backpressure deadline closes without retry\nSCENE IO03 truncated EOF rejected\nSCENE IO04 EPIPE does not kill parent with SIGPIPE\nSCENE IO05 multiple coalesced lines delivered in order\nSCENE IO06 oversized incoming line rejected\nSCENE IO07 final write gate and stale epoch\nSCENE IO08 per-batch context gate checked after admission\nRESULT scenarios=8 assertions=26 failures=0\nPROC04 OBSERVED_PASS elapsed=0.17186599998967722\n",
+    "stderr": "",
+    "seconds": 20.39443008301896
+  }
+]

@@ -1,0 +1,9 @@
+{"id":1,"method":"initialize","params":{"clientInfo":{"name":"windowshade","version":"2-probe"}}}
+{"method":"initialized"}
+{"id":2,"method":"model/list","params":{"includeHidden":false,"limit":100}}
+{"id":3,"method":"thread/start","params":{"approvalPolicy":"on-request","approvalsReviewer":"user","cwd":"/fixture","model":"test-model","sandbox":"read-only"}}
+{"id":4,"method":"turn/start","params":{"approvalPolicy":"on-request","approvalsReviewer":"user","effort":"high","input":[{"text":"Hello","text_elements":[],"type":"text"}],"model":"test-model","sandboxPolicy":{"networkAccess":false,"type":"readOnly"},"threadId":"thread-one"}}
+{"id":5,"method":"turn/steer","params":{"expectedTurnId":"turn-one","input":[{"text":"x","text_elements":[],"type":"text"}],"threadId":"thread-one"}}
+{"id":6,"method":"turn/interrupt","params":{"threadId":"thread-one","turnId":"turn-one"}}
+{"id":7,"result":{"decision":"decline"}}
+{"id":"7","result":{"decision":"decline"}}

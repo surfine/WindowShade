@@ -154,6 +154,30 @@
 > 仍没做：真实手柄与 GameController 实测、AppKit 焦点/布局实测、真实 AX 收起恢复、完整 T3、
 > Touch ID 允许路径、配对与原生 Remote、能耗、影片与发布。自动窗口效果仍然关闭（`admitted=false`）。
 
+> **2026-10-03 深夜（再后段）：第九份已并入。**它把原窗口收起的**未知状态**这条老问题收干净：
+> 收起结果分 hidden / visible / unknown，缺 AX 属性、类型不符、身份不符、锁态未知都不算隐藏成功，
+> unknown 不换策略继续写、保留原 journal 与人工恢复入口；完成通知绑定具体 transaction 与捕获的
+> waiter tokens，先整批取出再排队，投递前重查事务、启动与锁态代次、显示上下文与有效期；
+> 后台巡检按每应用不可变快照 + 批次/事务代次应用；AX observer 按本次注册的单调 routeID 路由；
+> `EffectFrameAwaiter` 继承调用者隔离；原生 resize 去掉安装中的嵌套 RunLoop。原件在
+> [part9/](chatgpt-review-2/part9/)，本机结果在 [part9/MAC-EVIDENCE.md](chatgpt-review-2/part9/MAC-EVIDENCE.md)。
+>
+> 真机跑通：regression 42/93、frame 15/15；check-build 40 份类型检查 + 43 份语法；check-wiring 24 项；
+> test-tools 18 项；旧回归 duo 三套 + part8 input 33/49、fold 21/49、flow 6/27 + part7 core 27/51、
+> native 3/14、flow 18/145 + legacy 两批全过；part2–part6 各 runner、PROC04（0.086s）、Mac 配对加密全过；
+> 整 App 类型检查与八套 AppKit 全过；隐私登记表 466 点、页面数据同源。
+>
+> 这一份在 Mac 上修掉 23 处它自己看不到的 Swift 6 隔离错误（`FoldCompletion` 变成 `@MainActor`
+> 后，非隔离调用点读 `lockState`/`sessionEpoch` 或调用等待器结算的那些地方，全部按仓库既有写法
+> `MainActor.assumeIsolated` 显式声明在主线程上；逐点见 MAC-EVIDENCE）。还改了四处仓库入口差异
+> （check-build 找 `Core/InteractionCoordinator.swift`、stage.py 的 `/var` 与 `resolve()`、
+> run-previous 的 legacy history、`WindowFoldEffectsTests` 改到「绑事务再结算」的新 API）。
+>
+> 仍没做：受控真机观察（工单 02/03 那部分，等 Aaron 指定可动窗口，动手前再确认一次）；
+> 真实 AX 收起/恢复与人工恢复、慢 AX 与强制取消、真实 SCK capture graph、完整 T3、
+> Touch ID 允许端到端、配对接收、系统身份后端、能耗、影片、签名与发布。
+> 自动窗口效果仍然关闭（`WS2FocusWindowPort.admitted=false`）。
+
 
 **第一波：纯逻辑。**互不依赖，最安全，可以并行派。
 

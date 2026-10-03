@@ -29,7 +29,7 @@ extension AppDelegate {
         guard let event else{return}
         let callback=foldEvidenceCallbacks[event.ticket.request]
         if !foldEvidence.contains(event.ticket){foldEvidenceCallbacks[event.ticket.request]=nil;foldEvidenceMayCommit[event.ticket.request]=nil}
-        callback?(event)
+        DispatchQueue.main.async { callback?(event) }
     }
     func mayCommitObservedFold(_ ticket:WS2FoldEvidence.Ticket)->Bool {
         foldEvidence.mayStart(ticket,at:ProcessInfo.processInfo.systemUptime) &&
@@ -59,28 +59,14 @@ extension AppDelegate {
             }
         }
     }
-    /// Missing AX values, a disappeared process, native resizing, or Quick Look reopening are not proof of hiding.
-    func strictFoldObservation(id:CGWindowID,state:ShadeState)->WS2FoldEvidence.Observation{
-        guard shaded[id]?.foldTransactionID==state.foldTransactionID,state.sourceWindowID==id,
-              let app=NSRunningApplication(processIdentifier:state.pid),!app.isTerminated,
-              windowID(of:state.element)==id else{return .unknown}
-        var pid:pid_t=0
-        guard AXUIElementGetPid(state.element,&pid) == .success,pid==state.pid else{return .unknown}
-        switch state.hide {
-        case .offscreen,.privateOffscreen:
-            guard let pos=axPosition(state.element),let size=axSize(state.element),
-                  pos.x.isFinite,pos.y.isFinite,size.width.isFinite,size.height.isFinite,size.width>0,size.height>0 else{return .unknown}
-            return windowIsVisible(pos:pos,size:size) ? .stillVisible:.verifiedHidden
-        case .hidden: return app.isHidden ? .verifiedHidden:.stillVisible
-        case .minimized:
-            var raw:CFTypeRef?
-            guard AXUIElementCopyAttributeValue(state.element,kAXMinimizedAttribute as CFString,&raw) == .success,
-                  let value=raw as? NSNumber,value.doubleValue==0 || value.doubleValue==1 else{return .unknown}
-            return value.boolValue ? .verifiedHidden:.stillVisible
-        case .privateAlpha:
-            guard let value=PrivateSLSWindowMover.shared.windowAlpha(id:id),value.isFinite,(0...1).contains(value) else{return .unknown}
-            return value<=0.05 ? .verifiedHidden:.stillVisible
-        case .none,.ownWindowOrderedOut,.quickLookClosed: return .unknown
+    /// Native resizing/intentional close never become timer restoration ownership.
+    func strictFoldObservation(id: CGWindowID, state: ShadeState) -> WS2FoldEvidence.Observation {
+        guard shaded[id]?.foldTransactionID == state.foldTransactionID,
+              state.hide != .none, state.hide != .ownWindowOrderedOut, state.hide != .quickLookClosed else { return .unknown }
+        switch observeFoldHide(state.hide, win: state.element, pid: state.pid, id: id) {
+        case .hidden: return .verifiedHidden
+        case .visible: return .stillVisible
+        case .unknown: return .unknown
         }
     }
     func cancelFoldEvidence(id:CGWindowID,transaction:UUID){

@@ -1,77 +1,88 @@
 import Foundation
 
-/// Verifies one hide transaction, including its last-resort minimize attempt.
-/// A replaced session must never rescue or roll back the newer session.
+/// Verification of one installed fold. Unknown readings never license a new mutation.
 final class FoldVerifier {
+    enum Observation: Equatable, Sendable { case hidden, visible, unknown }
     typealias Schedule = (TimeInterval, @escaping () -> Void) -> Void
     private let schedule: Schedule
     private let isCurrent: () -> Bool
-    private let observe: () -> Bool
-    private let minimize: () -> Void
-    private let observeMinimized: () -> Bool
-    private let completion: (Bool) -> Void
-    /// 便宜的实时信号（WindowServer 说窗口已不在屏幕上）：两次正式检查之间每 30ms 看一次，
-    /// 一旦成立就不必等到正式检查点。正式检查（observe，可能是对忙 App 的同步 IPC）次数不变。
-    private let quickObserve: () -> Bool
+    private let observation: () -> Observation
+    private let salvage: () -> Bool
+    private let salvagedObservation: () -> Observation
+    private let quickObservation: (() -> Observation)?
+    private let result: (Observation) -> Void
     private var started = false
     private var finished = false
     private static let quickInterval: TimeInterval = 0.03
 
     init(schedule: @escaping Schedule, isCurrent: @escaping () -> Bool,
-         observe: @escaping () -> Bool, minimize: @escaping () -> Void,
-         observeMinimized: @escaping () -> Bool,
-         quickObserve: @escaping () -> Bool = { false },
-         completion: @escaping (Bool) -> Void) {
-        self.schedule = schedule
-        self.isCurrent = isCurrent
-        self.observe = observe
-        self.minimize = minimize
-        self.observeMinimized = observeMinimized
-        self.quickObserve = quickObserve
-        self.completion = completion
+         observation: @escaping () -> Observation, salvage: @escaping () -> Bool,
+         salvagedObservation: @escaping () -> Observation,
+         quickObservation: (() -> Observation)? = nil,
+         result: @escaping (Observation) -> Void) {
+        self.schedule = schedule; self.isCurrent = isCurrent
+        self.observation = observation; self.salvage = salvage
+        self.salvagedObservation = salvagedObservation
+        self.quickObservation = quickObservation; self.result = result
+    }
+
+    // Compatibility for the existing standalone Bool clients/tests. Production uses
+    // the three-state initializer above and supplies no screen-absence shortcut.
+    convenience init(schedule: @escaping Schedule, isCurrent: @escaping () -> Bool,
+                     observe: @escaping () -> Bool, minimize: @escaping () -> Void,
+                     observeMinimized: @escaping () -> Bool,
+                     quickObserve: @escaping () -> Bool = { false },
+                     completion: @escaping (Bool) -> Void) {
+        self.init(schedule: schedule, isCurrent: isCurrent,
+                  observation: { observe() ? .hidden : .visible },
+                  salvage: { minimize(); return true },
+                  salvagedObservation: { observeMinimized() ? .hidden : .visible },
+                  quickObservation: { quickObserve() ? .hidden : .unknown },
+                  result: { completion($0 == .hidden) })
     }
 
     func start() {
-        guard !started else { return }
-        started = true
+        guard !started else { return }; started = true
         pollQuickly(until: 0.15, elapsed: 0)
         schedule(0.15) { self.check(attempt: 1) }
     }
 
-    /// 在下一个正式检查点之前，按 30ms 间隔看便宜信号。
     private func pollQuickly(until deadline: TimeInterval, elapsed: TimeInterval) {
+        guard quickObservation != nil else { return }
         let next = elapsed + Self.quickInterval
         guard next < deadline - 0.001 else { return }
         schedule(Self.quickInterval) {
             guard !self.finished, self.isCurrent() else { return }
-            if self.quickObserve() {
-                self.finish(success: true)
-                return
-            }
+            if self.quickObservation?() == .hidden { self.finish(.hidden); return }
+            guard self.isCurrent() else { return }
             self.pollQuickly(until: deadline, elapsed: next)
         }
     }
 
     private func check(attempt: Int) {
         guard !finished, isCurrent() else { return }
-        if observe() {
-            finish(success: true)
-        } else if attempt == 1 {
+        let seen = observation()
+        guard !finished, isCurrent() else { return }
+        if seen == .hidden { finish(.hidden) }
+        else if attempt == 1 {
             pollQuickly(until: 0.45, elapsed: 0)
             schedule(0.45) { self.check(attempt: 2) }
-        } else {
-            guard isCurrent() else { return }
-            minimize()
+        } else if seen == .unknown { finish(.unknown) }
+        else {
+            // The port must check identity and permission again before its physical write.
+            let attempted = salvage()
+            guard !finished, isCurrent() else { return }
+            guard attempted else { finish(.visible); return }
             schedule(0.35) {
                 guard !self.finished, self.isCurrent() else { return }
-                self.finish(success: self.observeMinimized())
+                self.finish(self.salvagedObservation())
             }
         }
     }
 
-    private func finish(success: Bool) {
+    private func finish(_ value: Observation) {
         guard !finished, isCurrent() else { return }
         finished = true
-        completion(success)
+        result(value)
     }
 }

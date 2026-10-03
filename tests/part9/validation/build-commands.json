@@ -1,0 +1,615 @@
+[
+  {
+    "argv": [
+      "swiftc",
+      "--version"
+    ],
+    "exit_code": 0,
+    "stdout": "Apple Swift version 6.4 (swiftlang-6.4.0.34.1 clang-2100.3.34.1)\nTarget: arm64-apple-macosx27.0.0\n",
+    "stderr": "swift-driver version: 1.168.6 ",
+    "seconds": 0.3026627090002876
+  },
+  {
+    "argv": [
+      "cc",
+      "--version"
+    ],
+    "exit_code": 0,
+    "stdout": "Apple clang version 21.0.0 (clang-2100.3.34.2)\nTarget: arm64-apple-darwin27.0.0\nThread model: posix\nInstalledDir: /Applications/Xcode.app/Contents/Developer/Toolchains/XcodeDefault.xctoolchain/usr/bin\n",
+    "stderr": "",
+    "seconds": 0.033604291995288804
+  },
+  {
+    "argv": [
+      "uname",
+      "-a"
+    ],
+    "exit_code": 0,
+    "stdout": "Darwin Aarons-MacBook-Air.local 27.0.0 Darwin Kernel Version 27.0.0: Tue Aug 11 21:02:59 PDT 2026; root:xnu-13432.1.9~1/RELEASE_ARM64_T8142 arm64\n",
+    "stderr": "",
+    "seconds": 0.010818750015459955
+  },
+  {
+    "argv": [
+      "bash",
+      "-n",
+      "prototype/build.sh"
+    ],
+    "exit_code": 0,
+    "stdout": "",
+    "stderr": "",
+    "seconds": 0.010593416984193027
+  },
+  {
+    "argv": [
+      "swiftc",
+      "-swift-version",
+      "6",
+      "-strict-concurrency=complete",
+      "-warnings-as-errors",
+      "-I",
+      "prototype/Native",
+      "-typecheck",
+      "prototype/Core/Contracts.swift",
+      "prototype/Core/WS2FocusWindowOwnership.swift",
+      "prototype/Core/WS2DeviceInputGate.swift",
+      "prototype/Core/PairingAttemptWindow.swift",
+      "prototype/Core/PairingTLV.swift",
+      "prototype/Core/CodexWire.swift",
+      "prototype/Core/WS2CompanionFrame.swift",
+      "prototype/Core/WS2ApprovalReview.swift",
+      "prototype/Core/FocusTimer.swift",
+      "prototype/Core/GamepadMapping.swift",
+      "prototype/Core/WS2BoundedOutbox.swift",
+      "prototype/Core/WS2FocusEffectPlan.swift",
+      "prototype/Core/WS2SemanticInputRouter.swift",
+      "prototype/Core/WS2DiagnosticTail.swift",
+      "prototype/Core/WS2OwnedScope.swift",
+      "prototype/Core/WS2SelectionModel.swift",
+      "prototype/Core/WS2ConnectionBudget.swift",
+      "prototype/Core/WS2StrictJSON.swift",
+      "prototype/Core/WS2OwnedProtocolHost.swift",
+      "prototype/Core/WS2QuitBarrier.swift",
+      "prototype/Core/AgentSessions.swift",
+      "prototype/Core/WS2DeviceActionContracts.swift",
+      "prototype/Core/WS2VisibleListInput.swift",
+      "prototype/Core/WS2FoldEvidence.swift",
+      "prototype/Core/FoldVerifier.swift",
+      "prototype/Core/WS2FoldCallbackStamp.swift",
+      "prototype/Support/WS2PeerRepository.swift",
+      "prototype/Support/WS2PairSetupServer.swift",
+      "prototype/Support/WS2PairSetupCrypto.swift",
+      "prototype/Support/WS2FocusEffectExecutor.swift",
+      "prototype/Support/WS2DuplexProcess.swift",
+      "prototype/Support/WS2ProjectDirectory.swift",
+      "prototype/Support/WS2LocalLaunchProfile.swift",
+      "prototype/Support/WS2VersionProbe.swift",
+      "prototype/Core/InteractionCoordinator.swift",
+      "prototype/App/FocusTimerHost.swift",
+      "prototype/App/WS2OwnedCodexSession.swift",
+      "prototype/App/WS2OwnedLaunchController.swift",
+      "prototype/App/WS2DeviceActionHost.swift",
+      "prototype/Effects/EffectFrameAwaiter.swift"
+    ],
+    "exit_code": 0,
+    "stdout": "",
+    "stderr": "",
+    "seconds": 16.10417529201368
+  },
+  {
+    "argv": [
+      "swiftc",
+      "-frontend",
+      "-parse",
+      "prototype/App/EventTap.swift"
+    ],
+    "exit_code": 0,
+    "stdout": "",
+    "stderr": "",
+    "seconds": 0.17764695797814056
+  },
+  {
+    "argv": [
+      "swiftc",
+      "-frontend",
+      "-parse",
+      "prototype/App/FoldCompletion.swift"
+    ],
+    "exit_code": 0,
+    "stdout": "",
+    "stderr": "",
+    "seconds": 0.15771550001227297
+  },
+  {
+    "argv": [
+      "swiftc",
+      "-frontend",
+      "-parse",
+      "prototype/App/FoldExit.swift"
+    ],
+    "exit_code": 0,
+    "stdout": "",
+    "stderr": "",
+    "seconds": 0.14125995800714009
+  },
+  {
+    "argv": [
+      "swiftc",
+      "-frontend",
+      "-parse",
+      "prototype/App/FoldTransaction.swift"
+    ],
+    "exit_code": 0,
+    "stdout": "",
+    "stderr": "",
+    "seconds": 0.12766212501446716
+  },
+  {
+    "argv": [
+      "swiftc",
+      "-frontend",
+      "-parse",
+      "prototype/App/LaunchpadActivities.swift"
+    ],
+    "exit_code": 0,
+    "stdout": "",
+    "stderr": "",
+    "seconds": 0.14305308301118203
+  },
+  {
+    "argv": [
+      "swiftc",
+      "-frontend",
+      "-parse",
+      "prototype/App/LaunchpadController.swift"
+    ],
+    "exit_code": 0,
+    "stdout": "",
+    "stderr": "",
+    "seconds": 0.14279625000199303
+  },
+  {
+    "argv": [
+      "swiftc",
+      "-frontend",
+      "-parse",
+      "prototype/App/Notch.swift"
+    ],
+    "exit_code": 0,
+    "stdout": "",
+    "stderr": "",
+    "seconds": 0.1413902080093976
+  },
+  {
+    "argv": [
+      "swiftc",
+      "-frontend",
+      "-parse",
+      "prototype/App/NotchActivityView.swift"
+    ],
+    "exit_code": 0,
+    "stdout": "",
+    "stderr": "",
+    "seconds": 0.1574182079930324
+  },
+  {
+    "argv": [
+      "swiftc",
+      "-frontend",
+      "-parse",
+      "prototype/App/NotchLeases.swift"
+    ],
+    "exit_code": 0,
+    "stdout": "",
+    "stderr": "",
+    "seconds": 0.17373037501238286
+  },
+  {
+    "argv": [
+      "swiftc",
+      "-frontend",
+      "-parse",
+      "prototype/App/Preferences.swift"
+    ],
+    "exit_code": 0,
+    "stdout": "",
+    "stderr": "",
+    "seconds": 0.19619404201512225
+  },
+  {
+    "argv": [
+      "swiftc",
+      "-frontend",
+      "-parse",
+      "prototype/App/Reconcile.swift"
+    ],
+    "exit_code": 0,
+    "stdout": "",
+    "stderr": "",
+    "seconds": 0.16985533299157396
+  },
+  {
+    "argv": [
+      "swiftc",
+      "-frontend",
+      "-parse",
+      "prototype/App/ShadeController.swift"
+    ],
+    "exit_code": 0,
+    "stdout": "",
+    "stderr": "",
+    "seconds": 0.18464791600126773
+  },
+  {
+    "argv": [
+      "swiftc",
+      "-frontend",
+      "-parse",
+      "prototype/App/Updater.swift"
+    ],
+    "exit_code": 0,
+    "stdout": "",
+    "stderr": "",
+    "seconds": 0.15297774999635294
+  },
+  {
+    "argv": [
+      "swiftc",
+      "-frontend",
+      "-parse",
+      "prototype/App/UpdaterSettings.swift"
+    ],
+    "exit_code": 0,
+    "stdout": "",
+    "stderr": "",
+    "seconds": 0.16748420801013708
+  },
+  {
+    "argv": [
+      "swiftc",
+      "-frontend",
+      "-parse",
+      "prototype/App/WS2AppRuntime.swift"
+    ],
+    "exit_code": 0,
+    "stdout": "",
+    "stderr": "",
+    "seconds": 0.20054712501587346
+  },
+  {
+    "argv": [
+      "swiftc",
+      "-frontend",
+      "-parse",
+      "prototype/App/WS2CodexApprovalHost.swift"
+    ],
+    "exit_code": 0,
+    "stdout": "",
+    "stderr": "",
+    "seconds": 0.15617970799212344
+  },
+  {
+    "argv": [
+      "swiftc",
+      "-frontend",
+      "-parse",
+      "prototype/App/WS2FocusSettings.swift"
+    ],
+    "exit_code": 0,
+    "stdout": "",
+    "stderr": "",
+    "seconds": 0.14388241700362414
+  },
+  {
+    "argv": [
+      "swiftc",
+      "-frontend",
+      "-parse",
+      "prototype/App/WS2FocusWindowPort.swift"
+    ],
+    "exit_code": 0,
+    "stdout": "",
+    "stderr": "",
+    "seconds": 0.1959055420011282
+  },
+  {
+    "argv": [
+      "swiftc",
+      "-frontend",
+      "-parse",
+      "prototype/App/WS2FoldCallbackGuard.swift"
+    ],
+    "exit_code": 0,
+    "stdout": "",
+    "stderr": "",
+    "seconds": 0.16067495799507014
+  },
+  {
+    "argv": [
+      "swiftc",
+      "-frontend",
+      "-parse",
+      "prototype/App/WS2FoldEvidenceAdapter.swift"
+    ],
+    "exit_code": 0,
+    "stdout": "",
+    "stderr": "",
+    "seconds": 0.1208465000090655
+  },
+  {
+    "argv": [
+      "swiftc",
+      "-frontend",
+      "-parse",
+      "prototype/App/WS2GameControllerBridge.swift"
+    ],
+    "exit_code": 0,
+    "stdout": "",
+    "stderr": "",
+    "seconds": 0.12038700000266545
+  },
+  {
+    "argv": [
+      "swiftc",
+      "-frontend",
+      "-parse",
+      "prototype/App/WS2OwnedCodexSession+Authorization.swift"
+    ],
+    "exit_code": 0,
+    "stdout": "",
+    "stderr": "",
+    "seconds": 0.11442724999506027
+  },
+  {
+    "argv": [
+      "swiftc",
+      "-frontend",
+      "-parse",
+      "prototype/App/WS2PrivacyData.swift"
+    ],
+    "exit_code": 0,
+    "stdout": "",
+    "stderr": "",
+    "seconds": 0.13206179201370105
+  },
+  {
+    "argv": [
+      "swiftc",
+      "-frontend",
+      "-parse",
+      "prototype/App/WS2PrivacyPane.swift"
+    ],
+    "exit_code": 0,
+    "stdout": "",
+    "stderr": "",
+    "seconds": 0.1962290419905912
+  },
+  {
+    "argv": [
+      "swiftc",
+      "-frontend",
+      "-parse",
+      "prototype/App/WS2SettingsInfo.swift"
+    ],
+    "exit_code": 0,
+    "stdout": "",
+    "stderr": "",
+    "seconds": 0.20395674998871982
+  },
+  {
+    "argv": [
+      "swiftc",
+      "-frontend",
+      "-parse",
+      "prototype/Core/CodexWire.swift"
+    ],
+    "exit_code": 0,
+    "stdout": "",
+    "stderr": "",
+    "seconds": 0.4785307909769472
+  },
+  {
+    "argv": [
+      "swiftc",
+      "-frontend",
+      "-parse",
+      "prototype/Core/FoldVerifier.swift"
+    ],
+    "exit_code": 0,
+    "stdout": "",
+    "stderr": "",
+    "seconds": 0.22145783400628716
+  },
+  {
+    "argv": [
+      "swiftc",
+      "-frontend",
+      "-parse",
+      "prototype/Core/InteractionCoordinator.swift"
+    ],
+    "exit_code": 0,
+    "stdout": "",
+    "stderr": "",
+    "seconds": 0.1419456250150688
+  },
+  {
+    "argv": [
+      "swiftc",
+      "-frontend",
+      "-parse",
+      "prototype/Core/PairingTLV.swift"
+    ],
+    "exit_code": 0,
+    "stdout": "",
+    "stderr": "",
+    "seconds": 0.12716649999492802
+  },
+  {
+    "argv": [
+      "swiftc",
+      "-frontend",
+      "-parse",
+      "prototype/Core/WS2FoldCallbackStamp.swift"
+    ],
+    "exit_code": 0,
+    "stdout": "",
+    "stderr": "",
+    "seconds": 0.12679033301537856
+  },
+  {
+    "argv": [
+      "swiftc",
+      "-frontend",
+      "-parse",
+      "prototype/Effects/DuoSettingsWindow.swift"
+    ],
+    "exit_code": 0,
+    "stdout": "",
+    "stderr": "",
+    "seconds": 0.13724358301260509
+  },
+  {
+    "argv": [
+      "swiftc",
+      "-frontend",
+      "-parse",
+      "prototype/Effects/EffectFrameAwaiter.swift"
+    ],
+    "exit_code": 0,
+    "stdout": "",
+    "stderr": "",
+    "seconds": 0.11715458400431089
+  },
+  {
+    "argv": [
+      "swiftc",
+      "-frontend",
+      "-parse",
+      "prototype/Effects/WindowFoldEffects.swift"
+    ],
+    "exit_code": 0,
+    "stdout": "",
+    "stderr": "",
+    "seconds": 0.1182465830061119
+  },
+  {
+    "argv": [
+      "swiftc",
+      "-frontend",
+      "-parse",
+      "prototype/Support/WS2AtomicConfiguration.swift"
+    ],
+    "exit_code": 0,
+    "stdout": "",
+    "stderr": "",
+    "seconds": 0.11303629202302545
+  },
+  {
+    "argv": [
+      "swiftc",
+      "-frontend",
+      "-parse",
+      "prototype/Support/WS2DuplexProcess.swift"
+    ],
+    "exit_code": 0,
+    "stdout": "",
+    "stderr": "",
+    "seconds": 0.12103754101553932
+  },
+  {
+    "argv": [
+      "swiftc",
+      "-frontend",
+      "-parse",
+      "prototype/Support/WS2KeychainPeerStorage.swift"
+    ],
+    "exit_code": 0,
+    "stdout": "",
+    "stderr": "",
+    "seconds": 0.1264769580157008
+  },
+  {
+    "argv": [
+      "swiftc",
+      "-frontend",
+      "-parse",
+      "prototype/Support/WS2LocalLaunchProfile.swift"
+    ],
+    "exit_code": 0,
+    "stdout": "",
+    "stderr": "",
+    "seconds": 0.10697595801320858
+  },
+  {
+    "argv": [
+      "swiftc",
+      "-frontend",
+      "-parse",
+      "prototype/Support/WS2ProcessChannel.swift"
+    ],
+    "exit_code": 0,
+    "stdout": "",
+    "stderr": "",
+    "seconds": 0.1401547080022283
+  },
+  {
+    "argv": [
+      "swiftc",
+      "-frontend",
+      "-parse",
+      "prototype/Support/WS2UnixSocket.swift"
+    ],
+    "exit_code": 0,
+    "stdout": "",
+    "stderr": "",
+    "seconds": 0.11464987500221469
+  },
+  {
+    "argv": [
+      "swiftc",
+      "-frontend",
+      "-parse",
+      "prototype/Window/AXHelpers.swift"
+    ],
+    "exit_code": 0,
+    "stdout": "",
+    "stderr": "",
+    "seconds": 0.12132333402405493
+  },
+  {
+    "argv": [
+      "swiftc",
+      "-frontend",
+      "-parse",
+      "prototype/Window/AXWindow.swift"
+    ],
+    "exit_code": 0,
+    "stdout": "",
+    "stderr": "",
+    "seconds": 0.11350379200302996
+  },
+  {
+    "argv": [
+      "swiftc",
+      "-frontend",
+      "-parse",
+      "prototype/WindowBrowser/WindowBrowserAppDelegate.swift"
+    ],
+    "exit_code": 0,
+    "stdout": "",
+    "stderr": "",
+    "seconds": 0.11004566701012664
+  },
+  {
+    "argv": [
+      "swiftc",
+      "-frontend",
+      "-parse",
+      "prototype/WindowShade.swift"
+    ],
+    "exit_code": 0,
+    "stdout": "",
+    "stderr": "",
+    "seconds": 0.11278808300266974
+  }
+]

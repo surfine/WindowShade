@@ -1,0 +1,15 @@
+{
+  "argv": [
+    "/opt/pyvenv/bin/python3",
+    "-B",
+    "/mnt/data/WindowShade2-round2-part9/tools/stage.py",
+    "--base",
+    "/mnt/data/ws2-v8-baseline/WindowShade2-round2-handoff-v8/candidate-repo",
+    "--out",
+    "/mnt/data/ws2-r9-stage-validation"
+  ],
+  "exit_code": 0,
+  "stdout": "{\n  \"status\": \"STAGED\",\n  \"base_file_count\": 1164,\n  \"result_file_count\": 1168,\n  \"replaced\": 11,\n  \"added\": 4,\n  \"out\": \"/mnt/data/ws2-r9-stage-validation\",\n  \"application_build\": \"NOT RUN\",\n  \"runtime\": \"NOT RUN\"\n}\n",
+  "stderr": "",
+  "seconds": 0.7960685060002106
+}

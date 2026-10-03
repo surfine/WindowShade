@@ -99,73 +99,46 @@ extension AppDelegate {
         return false
     }
 
-    // 折叠事务：隐藏生效验证。reveal overlay 之前必须确认真实窗口确实不可见，
-    // 否则会出现 proxy 与真实窗口同框。
+    // Compatibility Bool now reports only a positive observation, never an AX read failure.
     func hideTookEffect(_ hide: HideMethod, win: AXUIElement, pid: pid_t,
-                                id: CGWindowID, size: CGSize) -> Bool {
-        switch hide {
-        case .offscreen, .privateOffscreen:
-            guard let p = axPosition(win) else { return true }   // 读不到几何按已隐藏处理
-            return !windowIsVisible(pos: p, size: size)
-        case .hidden:
-            return runningApp(pid: pid)?.isHidden ?? true
-        case .minimized:
-            return axBoolAttribute(win, kAXMinimizedAttribute as String)
-        case .privateAlpha:
-            let alpha = PrivateSLSWindowMover.shared.windowAlpha(id: id) ?? 1
-            return alpha <= 0.05
-        case .none, .ownWindowOrderedOut, .quickLookClosed:
-            return true
-        }
+                       id: CGWindowID, size: CGSize) -> Bool {
+        observeFoldHide(hide, win: win, pid: pid, id: id) == .hidden
     }
 
-    // 延迟验证链：+0.15s / +0.45s 重查隐藏是否生效；通过 → reveal overlay；
-    // 两次失败 → 补救 minimize（焦点已交接，无级联副作用）；补救仍失败 → 回滚。
-    // overlay 在验证通过前保持隐形，保证 proxy 与真实窗口永不同框。
     func scheduleFoldVerification(id: CGWindowID) {
-        guard let transactionID = shaded[id]?.foldTransactionID else { return }
+        guard let installed = shaded[id] else { return }
+        let expected = foldCallbackStamp(id: id, state: installed)
         FoldVerifier(
-            schedule: { delay, action in
-                DispatchQueue.main.asyncAfter(deadline: .now() + delay, execute: action)
+            schedule: { delay, action in DispatchQueue.main.asyncAfter(deadline: .now() + delay, execute: action) },
+            isCurrent: { [weak self] in self?.foldCallbackIsCurrent(expected) == true },
+            observation: { [weak self] in
+                guard let self, self.foldCallbackIsCurrent(expected), let state = self.shaded[id] else { return .unknown }
+                return self.observeFoldHide(state.hide, win: state.element, pid: state.pid, id: id)
             },
-            isCurrent: { [weak self] in
-                guard let state = self?.shaded[id], state.foldTransactionID == transactionID else { return false }
-                return state.foldTransactionID == transactionID && state.lifecycleStage == .folded
+            salvage: { [weak self] in
+                guard let self, self.foldCallbackIsCurrent(expected), let state = self.shaded[id],
+                      state.hide == .minimized, windowID(of: state.element) == id else { return false }
+                var pid: pid_t = 0
+                guard AXUIElementGetPid(state.element, &pid) == .success, pid == state.pid,
+                      self.foldCallbackIsCurrent(expected) else { return false }
+                // Retry only the SAME strategy. Crossing from hidden/offscreen/alpha to
+                // minimized would need a restore record for both attempted mutations.
+                _ = setAXMinimized(state.element, true)
+                return true
             },
-            observe: { [weak self] in
-                guard let self, let state = self.shaded[id], state.foldTransactionID == transactionID else { return false }
-                return self.hideTookEffect(state.hide, win: state.element, pid: state.pid,
-                                          id: id, size: state.originalSize)
+            salvagedObservation: { [weak self] in
+                guard let self, self.foldCallbackIsCurrent(expected), let state = self.shaded[id] else { return .unknown }
+                return self.observeFoldHide(.minimized, win: state.element, pid: state.pid, id: id)
             },
-            minimize: { [weak self] in
-                guard let state = self?.shaded[id], state.foldTransactionID == transactionID else { return }
-                setAXMinimized(state.element, true)
-            },
-            observeMinimized: { [weak self] in
-                guard let self, let state = self.shaded[id], state.foldTransactionID == transactionID else { return false }
-                let hidden = self.hideTookEffect(.minimized, win: state.element, pid: state.pid,
-                                                id: id, size: state.originalSize)
-                if hidden, self.shaded[id]?.foldTransactionID == transactionID {
-                    self.shaded[id]?.hide = .minimized
-                    wlog("shade: hide salvaged via minimize id=\(id) app=\(state.appName)")
-                }
-                return hidden
-            },
-            // 隐藏或最小化生效后窗口立刻离开屏幕（实测整体隐藏约 13ms），而 isHidden /
-            // kAXMinimized 的读回会滞后：WindowServer 说它已不在屏幕上，就可以亮出卷帘条。
-            quickObserve: { [weak self] in
-                guard let self, let state = self.shaded[id], state.foldTransactionID == transactionID,
-                      state.hide == .hidden || state.hide == .minimized else { return false }
-                return cgWindowInfo(id) != nil && !windowIsOnScreenNow(id)
-            },
-            completion: { [weak self] success in
-                guard let self, let state = self.shaded[id], state.foldTransactionID == transactionID else { return }
-                if success {
-                    wlog("shade: hide verified id=\(id) hide=\(state.hide)")
+            result: { [weak self] result in
+                guard let self, self.foldCallbackIsCurrent(expected), let state = self.shaded[id] else { return }
+                switch result {
+                case .hidden:
                     self.revealOverlayAfterVerification(id: id, state: state)
-                } else {
-                    wlog("shade: hide failed after salvage; rolling back id=\(id) app=\(state.appName)")
-                    self.rollbackFoldTransaction(id: id, expectedTransaction: transactionID)
+                case .unknown:
+                    self.retainUnconfirmedFold(id: id, state: state)
+                case .visible:
+                    self.rollbackFoldTransaction(id: id, expectedTransaction: expected.transaction)
                 }
             }
         ).start()
@@ -174,14 +147,18 @@ extension AppDelegate {
     func revealOverlayAfterVerification(id: CGWindowID, state: ShadeState) {
         guard shaded[id]?.foldTransactionID == state.foldTransactionID else { return }
         publishFoldObservation(id: id, state: state)
-        guard shaded[id]?.foldTransactionID == state.foldTransactionID else { return }
-        guard let overlay = state.overlay else { return }
-        if enforceOverlaySpaceInvariant(id: id, state: state, reason: "hide-verified") {
+        guard shaded[id]?.foldTransactionID == state.foldTransactionID,
+              MainActor.assumeIsolated({ AuthorizationService.shared.lockState() == .unlocked }) else { return }
+        if let overlay = state.overlay,
+           enforceOverlaySpaceInvariant(id: id, state: state, reason: "hide-verified") {
+            overlay.contentView?.toolTip = nil
             revealPreparedOverlay(overlay)
             duoController.windowEffects.didVerifyFold(id: id, state: state)
         }
-        // Visibility on the active Space is presentation, not hide completion.
-        settleFoldWaiters(id: id, success: true)
+        // The exact transaction settles even when its proxy is on another Space.
+        MainActor.assumeIsolated {
+            settleFoldWaiters(id: id, transaction: state.foldTransactionID, success: true)
+        }
     }
 
     // 回滚折叠事务：按已尝试的隐藏方式逐项逆操作（此前的回滚漏了这步，
@@ -883,36 +860,58 @@ extension AppDelegate {
 
     // 监听窗口被外部唤回：app 显示(⌘Tab 取消隐藏) / 取消最小化(点 Dock)。
     // app activated 只说明应用拿到焦点，不代表真实窗口已经回到用户可见位置；不能据此展开。
-    func makeRevealObserver(pid: pid_t, win: AXUIElement, id: CGWindowID) -> AXObserver? {
+    func makeRevealObserver(pid: pid_t, win: AXUIElement, id: CGWindowID, transaction: UUID) -> AXObserver? {
+        guard shaded[id]?.foldTransactionID == transaction, foldObserverSerial < UInt(Int.max) else { return nil }
         var observer: AXObserver?
         guard AXObserverCreate(pid, axWindowCallback, &observer) == .success, let obs = observer else { return nil }
+        foldObserverSerial += 1
+        let serial = foldObserverSerial
+        let route = WS2FoldObserverRoute(window: id, pid: pid, transaction: transaction)
+        foldObserverRoutes[serial] = route
         let app = AXUIElementCreateApplication(pid)
-        let refcon = UnsafeMutableRawPointer(bitPattern: Int(id))
-        AXObserverAddNotification(obs, app, kAXApplicationShownNotification as CFString, refcon)
-        AXObserverAddNotification(obs, win, kAXWindowDeminiaturizedNotification as CFString, refcon)
-        AXObserverAddNotification(obs, win, kAXUIElementDestroyedNotification as CFString, refcon)
+        let refcon = UnsafeMutableRawPointer(bitPattern: serial)
+        let results = [
+            AXObserverAddNotification(obs, app, kAXApplicationShownNotification as CFString, refcon),
+            AXObserverAddNotification(obs, win, kAXWindowDeminiaturizedNotification as CFString, refcon),
+            AXObserverAddNotification(obs, win, kAXUIElementDestroyedNotification as CFString, refcon)
+        ]
+        guard results.contains(.success), shaded[id]?.foldTransactionID == transaction else {
+            foldObserverRoutes.removeValue(forKey: serial)
+            return nil
+        }
         CFRunLoopAddSource(CFRunLoopGetMain(), AXObserverGetRunLoopSource(obs), .defaultMode)
         return obs
     }
 
     func removeObserver(_ state: ShadeState) {
+        // Withdraw routes before removing a source. Old queued notifications remain harmless.
+        for (serial, route) in foldObserverRoutes where route.transaction == state.foldTransactionID {
+            foldObserverRoutes.removeValue(forKey: serial)
+        }
         if let obs = state.observer {
             CFRunLoopRemoveSource(CFRunLoopGetMain(), AXObserverGetRunLoopSource(obs), .defaultMode)
         }
     }
 
-    func handleAXNotification(_ id: CGWindowID, _ notification: String) {
-        guard let state = shaded[id] else { return }
+    func handleAXNotification(_ id: CGWindowID, _ notification: String, expected: WS2FoldCallbackStamp) {
+        guard foldCallbackIsCurrent(expected), let state = shaded[id] else { return }
         if notification == (kAXUIElementDestroyedNotification as String) {
             if state.hide == .quickLookClosed {
                 wlog("quicklook: ignore expected destroyed notification id=\(id)")
                 return
             }
+            // A delayed destruction notification is a hint, not permission to act on
+            // a reused ID. Require a successful full-membership query with no result.
+            guard let windows = CGWindowListCopyWindowInfo(.optionIncludingWindow, id) as? [[String: Any]],
+                  windows.isEmpty, foldCallbackIsCurrent(expected) else { return }
             forceCleanup(id)
             return
         }
         if notification == (kAXWindowDeminiaturizedNotification as String) {
             if state.hide == .minimized {
+                guard windowID(of: state.element) == id,
+                      axObservedBoolAttribute(state.element, kAXMinimizedAttribute as String) == false,
+                      foldCallbackIsCurrent(expected) else { return }
                 if isFocusShelfMember(id: id) {
                     revealFocusShelfMemberFromOutside(id: id, state: state, reason: "deminiaturized")
                     return
@@ -929,6 +928,8 @@ extension AppDelegate {
                 return
             }
             if state.hide == .hidden {
+                guard let app = runningApp(pid: state.pid), !app.isTerminated, !app.isHidden,
+                      windowID(of: state.element) == id, foldCallbackIsCurrent(expected) else { return }
                 if isFocusShelfMember(id: id) {
                     revealFocusShelfMemberFromOutside(id: id, state: state, reason: "app-shown")
                     return
@@ -992,6 +993,7 @@ extension AppDelegate {
         let visibleChanged = visibleFrames != lastVisibleFrames
         lastDisplayLayout = layout
         lastVisibleFrames = visibleFrames
+        if displaysChanged || visibleChanged { foldPresentationID = UUID() }
         if displaysChanged {
             wlog("screen: displays changed count=\(layout.screens.count)")
             windowBrowserController?.screensDidChange()
@@ -1026,6 +1028,7 @@ extension AppDelegate {
     }
 
     @objc func activeSpaceChanged(_ note: Notification) {
+        foldPresentationID = UUID()
         MainThreadActivity.push("system: 切换桌面")
         defer { MainThreadActivity.pop() }
         restorePendingSourceSpacesIfNeeded(reason: "active-space-changed")
