@@ -404,8 +404,11 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSMenuDelegate {
         // 变化时同样只刷新材质与边线。
         appearanceObservation = NSApp.observe(\.effectiveAppearance, options: [.new]) {
             [weak self] _, _ in
-            self?.systemAppearanceOptionsChanged(
-                Notification(name: NSWorkspace.accessibilityDisplayOptionsDidChangeNotification))
+            // AppKit 在修改这个属性的线程上回调；effectiveAppearance 只在主线程改。
+            MainActor.assumeIsolated {
+                self?.systemAppearanceOptionsChanged(
+                    Notification(name: NSWorkspace.accessibilityDisplayOptionsDidChangeNotification))
+            }
         }
         // 应用内更新（App/Updater.swift）：最后启动；装好新版本后两项授权没了，翻到欢迎窗口的授权页请他再打开一次。
         MainActor.assumeIsolated {
@@ -660,8 +663,9 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSMenuDelegate {
 
 
 
+    // 下面这一组只跑 defaults / killall，不读界面状态。Dock 串行队列和退出时的 sync 都直接调用。
     @discardableResult
-    private func runTool(_ path: String, _ args: [String]) -> Int32? {
+    nonisolated private func runTool(_ path: String, _ args: [String]) -> Int32? {
         let p = Process()
         p.executableURL = URL(fileURLWithPath: path)
         p.arguments = args
@@ -678,7 +682,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSMenuDelegate {
         return p.terminationStatus
     }
 
-    private func readTool(_ path: String, _ args: [String]) -> String? {
+    nonisolated private func readTool(_ path: String, _ args: [String]) -> String? {
         let p = Process()
         let pipe = Pipe()
         p.executableURL = URL(fileURLWithPath: path)
@@ -694,11 +698,11 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSMenuDelegate {
         return text?.isEmpty == false ? text : nil
     }
 
-    private func runDefaults(_ args: [String]) { runTool("/usr/bin/defaults", args) }
-    private func readDefaults(_ args: [String]) -> String? { readTool("/usr/bin/defaults", args) }
-    private func killDock() { runTool("/usr/bin/killall", ["Dock"]) }   // 让 Dock 重读 mineffect
+    nonisolated private func runDefaults(_ args: [String]) { runTool("/usr/bin/defaults", args) }
+    nonisolated private func readDefaults(_ args: [String]) -> String? { readTool("/usr/bin/defaults", args) }
+    nonisolated private func killDock() { runTool("/usr/bin/killall", ["Dock"]) }   // 让 Dock 重读 mineffect
 
-    private func writeDockMinimizeEffect(_ value: String, reason: String) -> Bool {
+    nonisolated private func writeDockMinimizeEffect(_ value: String, reason: String) -> Bool {
         for attempt in 1...2 {
             runDefaults(["write", "com.apple.dock", "mineffect", "-string", value])
             let effective = readDefaults(["read", "com.apple.dock", "mineffect"])
@@ -711,7 +715,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSMenuDelegate {
         return false
     }
 
-    private func persistDockMinimizeEffectSession(original: String?) {
+    nonisolated private func persistDockMinimizeEffectSession(original: String?) {
         let defaults = UserDefaults.standard
         defaults.set(true, forKey: dockMineffectSessionActiveDefaultsKey)
         defaults.set(original != nil, forKey: dockMineffectHadOriginalDefaultsKey)
@@ -722,14 +726,14 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSMenuDelegate {
         }
     }
 
-    private func clearDockMinimizeEffectSession() {
+    nonisolated private func clearDockMinimizeEffectSession() {
         let defaults = UserDefaults.standard
         defaults.removeObject(forKey: dockMineffectSessionActiveDefaultsKey)
         defaults.removeObject(forKey: dockMineffectHadOriginalDefaultsKey)
         defaults.removeObject(forKey: dockMineffectOriginalDefaultsKey)
     }
 
-    private func restoreDockMinimizeEffect(original: String?) {
+    nonisolated private func restoreDockMinimizeEffect(original: String?) {
         if let original {
             runDefaults(["write", "com.apple.dock", "mineffect", "-string", original])
         } else {
@@ -737,7 +741,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSMenuDelegate {
         }
     }
 
-    private func recoverStaleDockMinimizeEffectSessionIfNeeded() {
+    nonisolated private func recoverStaleDockMinimizeEffectSessionIfNeeded() {
         let defaults = UserDefaults.standard
         guard defaults.bool(forKey: dockMineffectSessionActiveDefaultsKey) else { return }
         let hadOriginal = defaults.bool(forKey: dockMineffectHadOriginalDefaultsKey)
@@ -896,10 +900,14 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSMenuDelegate {
             return
         }
         tapSetupTimer = Timer.scheduledTimer(withTimeInterval: 2, repeats: true) { [weak self] t in
-            if self?.setupEventTap() == true {
+            // 这个计时器是在主线程方法里挂上当前 run loop 的，到点仍在主线程。
+            // 计时器本身留在闭包原来的隔离域里停掉，不送进主线程闭包。
+            let installed = MainActor.assumeIsolated { () -> Bool in
+                guard self?.setupEventTap() == true else { return false }
                 self?.rescueOffscreenWindows(silent: true)
-                t.invalidate()
+                return true
             }
+            if installed { t.invalidate() }
         }
     }
 
