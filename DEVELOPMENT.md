@@ -151,7 +151,7 @@ cd prototype
 - 经典卷帘条辅助操作与点击边界：`bash tests/run-appkit-tests.sh ClassicStripTests`；直接调用生产视图的事件处理，不注入系统事件，浅深色组件图输出到 `.build/appkit-tests/strip-shots/`。设置测试也复用这个构建入口，保留原命令作为包装。
 - 看一眼与携带窗口生命周期：`bash tests/run-appkit-tests.sh GlanceLifecycleTests`；覆盖临时显示后的用户接管、关闭重入与旧回调隔离，以及返回前取消最小化的成功／失败顺序。使用注入的 AX 操作，不改用户窗口。
 - 窗口动画生命周期：`bash tests/run-appkit-tests.sh WindowFoldEffectsTests`；用无捕获任务检查旧回调隔离、取消、回退移交、隐藏超时代数和重入，不操作真实窗口。测试扩展仅拼入临时源码快照，以访问生产类型的私有生命周期。
-- 日志写在 `/tmp/windowshade.log`，5MB 自动轮转（旧文件为 `.1`）。
+- 日志写在 `~/Library/Logs/WindowShade/windowshade.log`：目录 0700、文件 0600，拒绝符号链接，5MB 轮转（旧文件为 `.1`），不写窗口标题。开发时可用 `WINDOWSHADE_LOG_PATH` 指到一个已存在、只有自己可写的目录；共享的 `/tmp` 不行。
 - 主线程卡顿：日志里搜 `main-thread stall`。
 - 慢操作：日志里搜 `slow:` 前缀。
 - 状态机：日志里搜 `state:` 前缀；非法状态转换会记录 `state: illegal transition`。

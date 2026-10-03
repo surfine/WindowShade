@@ -1161,7 +1161,7 @@ final class NotchController {
         // 收成缩略图、还摆在原处的：缩略图右上角亮点就够了，刘海不开口（缩略图小样 A）。
         let thumbnail = isTucked(id) ? nil : owner.shaded[id]?.overlay?.contentView as? ShadeThumbnailView
         thumbnail?.showsChange = true
-        wlog("notch: title changed id=\(id) → \(thumbnail != nil ? "thumbnail dot" : decision == .alert ? "alert" : "mark") (\(title.count) chars)")
+        wlog("notch: title changed id=\(id) → \(thumbnail != nil ? "thumbnail dot" : decision == .alert ? "alert" : "mark")")
         guard decision == .alert, thumbnail == nil else { return }
         // 在指针所在那块屏的刘海上说（人正看着那里）。
         let pointer = NSEvent.mouseLocation
