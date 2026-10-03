@@ -1,0 +1,13 @@
+{
+  "kind": "self_review",
+  "status": "",
+  "issues_found": null,
+  "needs_evidence": null,
+  "lenses": {
+    "task_contract": "",
+    "evidence_freshness": "",
+    "edge_risk": ""
+  },
+  "findings": [],
+  "updated": "2026-10-03T18:09:42+0800"
+}

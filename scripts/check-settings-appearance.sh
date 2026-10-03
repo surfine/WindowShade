@@ -57,7 +57,7 @@ func meanAlpha(_ path: String, xRange: Range<Int>, yRange: Range<Int>) -> Double
 enum SettingsAppearanceCheck {
     static func main() {
         let directory = CommandLine.arguments[1]
-        let pages = ["效果", "卷帘", "窗口浏览", "权限与启动", "高级"]
+        let pages = ["效果", "卷帘", "窗口浏览", "隐私", "高级"]
         var failures = 0
         print("page           light   dark    delta   result")
         for page in pages {
