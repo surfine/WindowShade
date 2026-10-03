@@ -34,11 +34,6 @@ final class WS2FocusExecutor {
         }
     }
 
-    /// 用户按任意键或点一下就从休息里出来：把这一轮收起来的窗口放回去。
-    func restoreForUser() {
-        for run in snapshots.keys { restoreAll(run) }
-    }
-
     private func tuckAll(_ token: WS2.Token) {
         guard let notch = owner?.notch, NotchController.isEnabled else { return }
         let before = Set(notch.tuckedWindowIDs)
