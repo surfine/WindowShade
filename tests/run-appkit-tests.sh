@@ -10,7 +10,7 @@ mkdir -p .build/appkit-tests
 # 第七份起进程通道走原生 C 监督端口：先编成对象，Swift 侧才能 import WS2ProcessNative。
 NATIVE_DIR=".build/native"
 mkdir -p "$NATIVE_DIR"
-cc -std=c11 -O2 -Wall -Wextra -Werror -c prototype/Native/WS2Child.c -o "$NATIVE_DIR/WS2Child.o"
+cc -std=c11 -O2 -Wall -Wextra -Werror -mmacosx-version-min=14.0 -c prototype/Native/WS2Child.c -o "$NATIVE_DIR/WS2Child.o"
 # Compile the production AppKit views with a separate test entry point.
 WORK="$(mktemp -d "$(pwd)/.build/appkit-tests.XXXXXX")"
 trap 'rm -rf "$WORK"' EXIT

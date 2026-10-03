@@ -169,7 +169,7 @@ final class MissionControlKeys {
 
         let kind: MissionControlActions.Kind = code == 13 ? .closeWindow : .quitApp
         DispatchQueue.main.async {
-            _ = MainActor.assumeIsolated { MissionControlActions.perform(kind, target: target) }
+            MainActor.assumeIsolated { MissionControlActions.perform(kind, target: target) }
         }
         return nil
     }

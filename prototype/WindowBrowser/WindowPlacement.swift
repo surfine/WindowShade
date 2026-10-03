@@ -220,6 +220,8 @@ protocol WindowPlacementBackend: AnyObject {
                     completion: @escaping (Bool) -> Void)
 }
 
+/// 只在主线程调用。调用方 WindowPlacementController 还没标 @MainActor，所以面板用
+/// `@preconcurrency` 遵循（运行时检查线程）；调用方迁过去后再把协议标成 @MainActor。
 protocol WindowPlacementPreviewPresenting: AnyObject {
     func show(plan: WindowPlacementPlan)
     func dismiss()
@@ -284,7 +286,7 @@ final class WindowPlacementController {
                 completion(.unsupported(reason: "窗口已不存在"))
                 return
             }
-            backend.writeFrame(plan.targetFrameAX, to: plan.target) { wrote in
+            backend.writeFrame(plan.targetFrameAX, to: plan.target) { [self] wrote in
                 guard wrote else {
                     completion(.failed(reason: "系统不允许移动这个窗口"))
                     return
@@ -329,7 +331,7 @@ final class WindowPlacementController {
                 completion(.refused(reason: "窗口已被移动，撤销不再适用"))
                 return
             }
-            backend.writeFrame(record.frameBeforeAX, to: record.target) { wrote in
+            backend.writeFrame(record.frameBeforeAX, to: record.target) { [self] wrote in
                 guard wrote else {
                     completion(.failed(reason: "系统拒绝了撤销"))
                     return
@@ -359,7 +361,7 @@ final class WindowPlacementController {
 }
 
 /// 排布预览窗口：只画目标位置轮廓，点击穿透、不激活、不改变任何窗口。
-final class WindowPlacementPreviewWindow: NSPanel, WindowPlacementPreviewPresenting {
+final class WindowPlacementPreviewWindow: NSPanel, @preconcurrency WindowPlacementPreviewPresenting {
     private let outlineLayer = CAShapeLayer()
 
     /// 外观变化时回调窗口重算颜色（动态颜色必须在视图自己的外观下解析）。

@@ -60,8 +60,9 @@ enum MainThreadActivity {
         let end: CFAbsoluteTime
     }
 
-    private static var stack: [(label: String, start: CFAbsoluteTime)] = []
-    private static var recent: [Span] = []
+    /// 只在主线程读写：push/pop 先查 Thread.isMainThread，attribution 只由主线程上的卡顿哨兵调用。
+    nonisolated(unsafe) private static var stack: [(label: String, start: CFAbsoluteTime)] = []
+    nonisolated(unsafe) private static var recent: [Span] = []
     private static let maxSpans = 512
 
     static func push(_ label: String) {
@@ -125,7 +126,8 @@ func logIfSlow<T>(_ label: String, threshold: TimeInterval = 0.05, _ body: () ->
 // 误报，也不依赖任何后台计时器（后台计时器本身会被 App Nap 节流产生假长间隔）。
 // 状态只在主线程访问，无锁；每次 RunLoop 活动仅一次取时和比较。
 final class MainThreadStallSentinel {
-    static let shared = MainThreadStallSentinel()
+    /// 见上：只在主线程访问。
+    nonisolated(unsafe) static let shared = MainThreadStallSentinel()
 
     private var observer: CFRunLoopObserver?
     private var lastActivityAt: CFAbsoluteTime = CFAbsoluteTimeGetCurrent()

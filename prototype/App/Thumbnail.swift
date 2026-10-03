@@ -100,12 +100,14 @@ private final class ThumbnailShadowPanel: NSPanel {
     override var canBecomeMain: Bool { false }
 }
 
+@MainActor
 private final class ThumbnailWindowShadow: NSObject {
     private weak var parent: ShadeThumbnailWindow?
     private let panel: NSPanel
     private var alphaObservation: NSKeyValueObservation?
     private var levelObservation: NSKeyValueObservation?
-    private var moveObserver: NSObjectProtocol?
+    // 只在主线程写；deinit 里移除时已没有别的引用。
+    nonisolated(unsafe) private var moveObserver: NSObjectProtocol?
 
     init(parent: ShadeThumbnailWindow) {
         self.parent = parent
@@ -178,7 +180,8 @@ final class ShadeThumbnailView: NSView {
     /// 有变化时的点：收起后标题变了（编译完成、来了新消息），右上角亮一个强调色的点，刘海不开口（小样 A）。
     private let changeDot = CALayer()
     private var hoverArea: NSTrackingArea?
-    private var displayOptionsObserver: NSObjectProtocol?
+    // 只在主线程写；deinit 里移除时已没有别的引用。
+    nonisolated(unsafe) private var displayOptionsObserver: NSObjectProtocol?
     private var hovered = false
     private var pressLocation: NSPoint?
     private var dragOffset = CGPoint.zero

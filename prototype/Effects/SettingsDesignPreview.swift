@@ -46,6 +46,7 @@ private func recordDesignPointer(_ message: String) {
 
 /// Local design review entry point. It uses production views but never starts
 /// window capture, sensors, recovery or global event handlers.
+@MainActor
 final class SettingsDesignPreview: NSObject {
     private let owner: AppDelegate
     private var samples: [NSWindow] = []

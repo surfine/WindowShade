@@ -10,6 +10,7 @@
 import Cocoa
 import ApplicationServices
 
+@MainActor
 final class WindowBrowserLiveAppProbe {
     private let ownPID = getpid()
     private var targetPID: pid_t = 0

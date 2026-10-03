@@ -2,6 +2,7 @@ import Cocoa
 
 /// Exercises production transactions against a separate, disposable fixture process. AX calls
 /// to the application's own main thread can time out and do not represent an ordinary target app.
+@MainActor
 final class EffectWindowProbe {
   private let owner = AppDelegate()
   private let animated = !CommandLine.arguments.contains("--no-animation")

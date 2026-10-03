@@ -91,7 +91,8 @@ final class WindowBrowserListRowView: NSView {
         actionBar.setEmphasized(emphasized)
     }
 
-    private var keyObservers: [NSObjectProtocol] = []
+    // 只在主线程写；deinit 里移除时已没有别的引用。
+    nonisolated(unsafe) private var keyObservers: [NSObjectProtocol] = []
 
     /// 面板取得/失去 key 状态时，选中行在强调与非强调外观之间切换（与系统列表相同）。
     override func viewDidMoveToWindow() {
@@ -294,7 +295,7 @@ final class WindowBrowserListRowView: NSView {
 }
 
 extension WindowBrowserListRowView: WindowBrowserAppearanceRefreshable,
-                                    WindowBrowserCardSurfaceHosting {
+                                    @preconcurrency WindowBrowserCardSurfaceHosting {
     func adoptCardSurface(_ surface: WindowBrowserCardSurface) {
         guard surface != cardSurface else { return }
         cardSurface = surface

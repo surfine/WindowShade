@@ -70,7 +70,7 @@ final class UpdaterController: NSObject, NSMenuItemValidation {
     private enum Session {
         case idle
         case checking(userInitiated: Bool)
-        case offered(UpdateOffer, UpdateOfferStage, userInitiated: Bool, reply: (UpdateReply) -> Void)
+        case offered(UpdateOffer, UpdateOfferStage, userInitiated: Bool, reply: @MainActor (UpdateReply) -> Void)
         case preparing(UpdateOffer)          // 备份、交出看护，还没回 Sparkle
         case downloading(UpdateOffer, cancel: () -> Void)
         case extracting(UpdateOffer)
@@ -332,7 +332,7 @@ final class UpdaterController: NSObject, NSMenuItemValidation {
     }
 
     func backendFound(_ offer: UpdateOffer, stage: UpdateOfferStage, userInitiated: Bool,
-                      reply: @escaping (UpdateReply) -> Void) {
+                      reply: @escaping @MainActor (UpdateReply) -> Void) {
         manualCheckInFlight = false
         setSettingsStatus(nil)
         UpdateLog.write("found \(offer.version) (\(offer.build)) stage=\(stage) user=\(userInitiated)")
@@ -418,7 +418,7 @@ final class UpdaterController: NSObject, NSMenuItemValidation {
     }
 
     /// Sparkle 第 1 阶段做完、App 还在运行：安装前的关。只回 .install 或 .skip，绝不回 .dismiss。
-    func backendReadyToInstall(reply: @escaping (UpdateReply) -> Void) {
+    func backendReadyToInstall(reply: @escaping @MainActor (UpdateReply) -> Void) {
         guard let offer = currentOffer, let journal = store.loadJournal(), journal.to.build == offer.build else {
             UpdateLog.write("ready to install without a journal: veto")
             let offer = currentOffer ?? UpdateOffer(version: "", build: "", notes: [], informationOnly: false, contentLength: 0)
@@ -485,7 +485,7 @@ final class UpdaterController: NSObject, NSMenuItemValidation {
 
     // MARK: 更新小窗
 
-    private func presentOffer(_ offer: UpdateOffer, stage: UpdateOfferStage, reply: @escaping (UpdateReply) -> Void) {
+    private func presentOffer(_ offer: UpdateOffer, stage: UpdateOfferStage, reply: @escaping @MainActor (UpdateReply) -> Void) {
         let title = UpdateCopy.windowTitle(offer.version)
         if offer.informationOnly {
             window.show(.init(title: title, lines: [UpdateCopy.manualInstall], buttons: [
@@ -513,14 +513,14 @@ final class UpdaterController: NSObject, NSMenuItemValidation {
         ]))
     }
 
-    private func finishOffer(_ reply: (UpdateReply) -> Void, _ choice: UpdateReply) {
+    private func finishOffer(_ reply: @MainActor (UpdateReply) -> Void, _ choice: UpdateReply) {
         session = .idle
         window.close()
         reply(choice)
     }
 
     private func showBlocker(_ blocker: UpdateBlocker, offer: UpdateOffer?,
-                             stage: UpdateOfferStage = .notDownloaded, reply: ((UpdateReply) -> Void)? = nil) {
+                             stage: UpdateOfferStage = .notDownloaded, reply: (@MainActor (UpdateReply) -> Void)? = nil) {
         let title = UpdateCopy.windowTitle(offer?.version ?? currentVersion)
         let dismiss: () -> Void = { [weak self] in
             if let reply { self?.finishOffer(reply, .dismiss) } else { self?.window.close() }
@@ -574,7 +574,7 @@ final class UpdaterController: NSObject, NSMenuItemValidation {
     // MARK: 他点“更新并重新打开”之后
 
     /// 回 .install 之前按顺序：再判断一次、备份、写日志、交出看护。
-    private func beginInstall(_ offer: UpdateOffer, stage: UpdateOfferStage, reply: @escaping (UpdateReply) -> Void,
+    private func beginInstall(_ offer: UpdateOffer, stage: UpdateOfferStage, reply: @escaping @MainActor (UpdateReply) -> Void,
                               resumingFrom existing: UpdateJournal? = nil) {
         let ignoreRefused = retryRefusedBuild == offer.build
         if existing == nil, let blocker = blocker(for: offer, ignoreRefused: ignoreRefused) {
@@ -615,7 +615,7 @@ final class UpdaterController: NSObject, NSMenuItemValidation {
     }
 
     private func didPrepare(_ offer: UpdateOffer, stage: UpdateOfferStage, result: Result<UpdateBackupInfo, Error>,
-                            reply: @escaping (UpdateReply) -> Void) {
+                            reply: @escaping @MainActor (UpdateReply) -> Void) {
         switch result {
         case .failure(let error):
             UpdateLog.write("prepare failed: \(error)")
@@ -654,7 +654,7 @@ final class UpdaterController: NSObject, NSMenuItemValidation {
         }
     }
 
-    private func resumeInstallation(_ offer: UpdateOffer, reply: @escaping (UpdateReply) -> Void) {
+    private func resumeInstallation(_ offer: UpdateOffer, reply: @escaping @MainActor (UpdateReply) -> Void) {
         if let journal = store.loadJournal(), journal.to.build == offer.build,
            [.started, .gating, .approved].contains(journal.phase),
            journal.appPath == Bundle.main.bundleURL.path {
@@ -668,7 +668,7 @@ final class UpdaterController: NSObject, NSMenuItemValidation {
 
     // MARK: 安装前的关
 
-    private func runGate(_ offer: UpdateOffer, journal: UpdateJournal, reply: @escaping (UpdateReply) -> Void) {
+    private func runGate(_ offer: UpdateOffer, journal: UpdateJournal, reply: @escaping @MainActor (UpdateReply) -> Void) {
         session = .gating(offer)
         markThisUpdate(offer, phase: .gating, reason: nil)
         window.show(.progress(UpdateCopy.windowTitle(offer.version), UpdateCopy.preparing, fraction: nil))
@@ -689,7 +689,7 @@ final class UpdaterController: NSObject, NSMenuItemValidation {
         }
     }
 
-    private func finishGate(_ offer: UpdateOffer, verdict: UpdateGate.Verdict, reply: @escaping (UpdateReply) -> Void) {
+    private func finishGate(_ offer: UpdateOffer, verdict: UpdateGate.Verdict, reply: @escaping @MainActor (UpdateReply) -> Void) {
         UpdateLog.write("gate \(offer.build): \(verdict)")
         // 关跑的时候 Sparkle 报错或收掉了这次更新，已经按否决收尾：结论作废。
         guard case .gating(let current) = session, current == offer else {
@@ -733,7 +733,7 @@ final class UpdaterController: NSObject, NSMenuItemValidation {
     /// 否决到底：回 .skip，写 refused 或 cancelled，然后确认 Sparkle 真的停了再放行退出。
     /// `.skip` 只是请求：取消消息没送到而安装器听到 App 退出，照样装。
     private func veto(_ offer: UpdateOffer, phase: UpdatePhase, reason: UpdateRestoreReason?, message: String?,
-                      reply: @escaping (UpdateReply) -> Void, openDownloadPage: Bool = false) {
+                      reply: @escaping @MainActor (UpdateReply) -> Void, openDownloadPage: Bool = false) {
         session = .vetoing(offer)
         if let reason, !offer.build.isEmpty {
             store.addRefused(UpdateRefusedEntry(build: offer.build, version: offer.version, reason: reason, at: Date()))

@@ -181,7 +181,8 @@ enum GlobalShortcutSettings {
         kVK_ANSI_6, kVK_ANSI_7, kVK_ANSI_8, kVK_ANSI_9
     ].map(UInt32.init)
 
-    static var defaults: UserDefaults = .standard
+    /// 只有单线程的测试会在使用前换掉它再换回；App 里从不赋值。
+    nonisolated(unsafe) static var defaults: UserDefaults = .standard
 
     /// 这台 Mac 从哪一版用起（启动第一步认一次、存下来，见下面的 InstallHistory）：决定没动过的快捷键是什么。
     static var history: InstallHistory { InstallHistory.settled(in: defaults) }

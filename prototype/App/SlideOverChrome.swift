@@ -80,12 +80,14 @@ final class SlideOverChrome {
         if !isVisible || onOtherDesktop { show(around: path.from, side: side) } else { self.side = side }
         let began = CACurrentMediaTime()
         let timer = Timer(timeInterval: 1.0 / 120, repeats: true) { [weak self] timer in
-            MainActor.assumeIsolated {
-                guard let self else { timer.invalidate(); return }
+            let ownerGone = MainActor.assumeIsolated { () -> Bool in
+                guard let self else { return true }
                 let t = CACurrentMediaTime() - began
                 self.place(t >= path.duration ? path.to : path.frame(at: t))
                 if t >= path.duration { self.stopFollowing() }
+                return false
             }
+            if ownerGone { timer.invalidate() }
         }
         RunLoop.main.add(timer, forMode: .common)
         following = timer

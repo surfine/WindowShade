@@ -448,7 +448,8 @@ func quickWindowPreviewImage(id: CGWindowID, logicalSize: CGSize,
 /// 快速预览所依赖的旧接口只报一次可用性，便于未来系统移除时定位。
 enum LegacyQuickCapture {
     private static let lock = NSLock()
-    private static var reported = false
+    /// 只在持有 `lock` 时读写。
+    nonisolated(unsafe) private static var reported = false
 
     static func reportUnavailableOnce() {
         lock.lock()

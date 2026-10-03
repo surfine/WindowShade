@@ -23,7 +23,10 @@ enum ShareableContentLoader {
     }
 }
 
-final class WindowStreamCapture: NSObject, SCStreamDelegate, SCStreamOutput {
+/// @unchecked Sendable：流、代数、帧计数、镜像层、交互标记都在 `stateLock` 里；`mirrorFrameIndex` 只在
+/// 串行的 `frameQueue` 上动。`filter`、`configuration`、`pipOutput`、`takesCleanPlate`、`onUnexpectedStop`
+/// 不在锁里，依赖调用方从主线程串行地开流、改尺寸、停流（同一时刻不会有两个 start/restart）。
+final class WindowStreamCapture: NSObject, SCStreamDelegate, SCStreamOutput, @unchecked Sendable {
     let videoLayer = AVSampleBufferDisplayLayer()
 
     // 菜单/面板缩略图的镜像层：同一批采样帧额外喂给它，实现"复用已在跑的流"的实时
@@ -216,7 +219,7 @@ final class WindowStreamCapture: NSObject, SCStreamDelegate, SCStreamOutput {
 
     /// 停止并回报系统调用真实结束；用于新入口在折叠前等待自己创建的临时流停妥。
     /// completion 恰好在主线程调用一次；参数是系统的停止错误（-3808 表示流已自行终止）。
-    func stop(completion: ((Error?) -> Void)?) {
+    func stop(completion: (@MainActor (Error?) -> Void)?) {
         stateLock.lock()
         _isStopped = true
         let generation = _captureGeneration
@@ -409,20 +412,22 @@ final class WindowStreamCapture: NSObject, SCStreamDelegate, SCStreamOutput {
     // 旧系统必须回主线程，但降频后主线程每路最多 ~15fps（镜像 10fps）。
     private func deliver(_ sampleBuffer: CMSampleBuffer, main: Bool, mirror: Bool) {
         if #available(macOS 15.0, *) {
-            if main { Self.enqueue(sampleBuffer, into: videoLayer) }
-            if mirror, let mirrorLayer { Self.enqueue(sampleBuffer, into: mirrorLayer) }
+            if main { videoLayer.sampleBufferRenderer.enqueue(sampleBuffer) }
+            if mirror, let mirrorLayer { mirrorLayer.sampleBufferRenderer.enqueue(sampleBuffer) }
         } else {
+            // 帧到这里已经修完、不再改动；旧系统只能在主线程 enqueue，跨线程的只是这份只读的帧。
+            nonisolated(unsafe) let sampleBuffer = sampleBuffer
             DispatchQueue.main.async { [weak self] in
                 guard let self else { return }
-                if main { Self.enqueue(sampleBuffer, into: self.videoLayer) }
+                if main { Self.enqueueOnMain(sampleBuffer, into: self.videoLayer) }
                 if mirror, let mirrorLayer = self.mirrorLayer {
-                    Self.enqueue(sampleBuffer, into: mirrorLayer)
+                    Self.enqueueOnMain(sampleBuffer, into: mirrorLayer)
                 }
             }
         }
     }
 
-    private static func enqueue(_ buffer: CMSampleBuffer, into layer: AVSampleBufferDisplayLayer) {
+    @MainActor private static func enqueueOnMain(_ buffer: CMSampleBuffer, into layer: AVSampleBufferDisplayLayer) {
         if #available(macOS 15.0, *) {
             layer.sampleBufferRenderer.enqueue(buffer)
         } else {

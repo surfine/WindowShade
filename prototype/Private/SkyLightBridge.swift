@@ -26,7 +26,7 @@ private typealias SLSGetWindowAlphaFunction = @convention(c) (Int32, UInt32, Uns
 private typealias SLSSetWindowAlphaFunction = @convention(c) (Int32, UInt32, Float) -> Int32
 private typealias SLSCopyManagedDisplaySpacesFunction = @convention(c) (Int32) -> Unmanaged<CFArray>?
 
-final class PrivateSLSWindowMover {
+final class PrivateSLSWindowMover: Sendable {
     static let shared = PrivateSLSWindowMover()
 
     private let mainConnectionID: SLSMainConnectionIDFunction?
