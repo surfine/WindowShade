@@ -7,10 +7,10 @@
 
 import Cocoa
 
+@MainActor
 final class ShadeStripPool {
-    /// 只在主线程用（取出、回收都在收起/展开的主线程路径上）。调用方 AppDelegate 还没标 @MainActor，
-    /// 所以这里先不标；它迁过去时一起改成 @MainActor。
-    nonisolated(unsafe) static let shared = ShadeStripPool()
+    /// 取出和回收都要求主队列（下面有 dispatchPrecondition）。类跟这个事实走。
+    static let shared = ShadeStripPool()
 
     private var available: [OverlayWindow] = []
     private let maxPooled = 4
