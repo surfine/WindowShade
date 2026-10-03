@@ -53,10 +53,7 @@ final class WindowBrowserMainQueueScheduler: WindowBrowserScheduler {
                   _ work: @escaping () -> Void) -> WindowBrowserScheduledWork {
         let item = DispatchWorkItem(block: work)
         let scheduled = WindowBrowserScheduledWork(onCancel: { item.cancel() })
-        DispatchQueue.main.asyncAfter(deadline: .now() + max(0, delay)) {
-            guard !item.isCancelled else { return }
-            item.perform()
-        }
+        DispatchQueue.main.asyncAfter(deadline: .now() + max(0, delay), execute: item)
         return scheduled
     }
 }

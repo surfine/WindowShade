@@ -10,6 +10,7 @@ import Cocoa
 import ImageIO
 import UniformTypeIdentifiers
 
+@MainActor
 final class WindowBrowserShotProbe {
     private struct Scenario {
         let name: String

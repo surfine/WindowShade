@@ -109,7 +109,8 @@ final class LaunchpadView: NSView, NSTextFieldDelegate {
     /// 是否使用 App 资料库搜索；主屏幕搜索和页码彼此独立。
     var pillAtTop = false
     var listActive = false
-    private var accessibilityObserver: NSObjectProtocol?
+    // 只在主线程写；deinit 里移除时已没有别的引用。
+    nonisolated(unsafe) private var accessibilityObserver: NSObjectProtocol?
     private var laidOutSize: CGSize = .zero
 
     override var isFlipped: Bool { true }
@@ -1068,12 +1069,14 @@ final class LaunchpadView: NSView, NSTextFieldDelegate {
         stopEditDrag()
         editDragPoint = point
         let timer = Timer(timeInterval: 0.05, repeats: true) { [weak self] timer in
-            MainActor.assumeIsolated {
-                guard let self, let point = self.editDragPoint else { timer.invalidate(); return }
+            let keep = MainActor.assumeIsolated { () -> Bool in
+                guard let self, let point = self.editDragPoint else { return false }
                 if self.reorder != nil { self.moveReorder(to: point) }
                 else if self.folder?.dragging != nil { self.moveFolderDrag(to: point) }
                 else { self.stopEditDrag() }
+                return true
             }
+            if !keep { timer.invalidate() }
         }
         editDragTimer = timer
         RunLoop.main.add(timer, forMode: .common)

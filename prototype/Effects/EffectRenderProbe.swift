@@ -2,6 +2,7 @@ import Cocoa
 import ImageIO
 
 /// Exercises the actual compiled shader with synthetic content only. Does not capture the desktop.
+@MainActor
 final class EffectRenderProbe {
   private var renderer: FoldRenderer?
   private var panel: EffectPanel?

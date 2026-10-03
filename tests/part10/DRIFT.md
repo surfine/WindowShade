@@ -2,7 +2,7 @@
 
 第十份的 `sources/code-map.json` 钉的是统一 v9 候选（1168 个文件）。本仓库是那条线继续往前走的
 工作区：先并入第九份，再并入第十份，并在两轮里都按「只有 Mac 才会暴露」的事实改过源码。
-所以 `drift.json` 的 `code_map_drift` 共 24 条（复核时补登了 `AGENTS.md`，W00 又带进两条，其中一条是「应当不存在」）；另有一条只是路径搬迁。下表是路径或存在性不同的两条。
+所以 `drift.json` 的 `code_map_drift` 共 26 条（复核时补登了 `AGENTS.md`，W00 又带进四条，其中一条是「应当不存在」）；另有一条只是路径搬迁。下表是路径或存在性不同的两条。
 `tests/part10/drift.json` 把这份清单机器可读化；`test-handoff-tools.py` 的 12/14 项按它判定：
 清单外的任何新漂移都会让检查失败，清单本身也必须与实际情况一字不差（多一条少一条都算失败）。
 
@@ -32,7 +32,8 @@ AX routeID、首帧隔离、去嵌套 RunLoop；另有主模型按 Mac 实测修
 
 `prototype/App/FaceObservationSource.swift`（去掉对不再抛错的 `setComputeDevice` 多余的 `try?`）、
 `prototype/Window/AXHelpers.swift`（删掉诊断函数里没用到的 `size`）。都是警告视为错误后必须清的既有警告，
-不改行为。W00 也改了已在清单里的 `ShadeController.swift`、`FoldTransaction.swift`、`WS2FoldCallbackGuard.swift`
+不改行为。`prototype/App/NotchFaceObservations.swift`（观察者句柄标 `nonisolated(unsafe)`，好在 deinit 里移除）、
+`prototype/Recovery/Rescue.swift`（扫描结束的回调标 `@Sendable`，它本来就只是转回主线程）是严格并发的隔离标注，也不改行为。W00 也改了已在清单里的 `ShadeController.swift`、`FoldTransaction.swift`、`WS2FoldCallbackGuard.swift`
 与 `Native/WS2Child.c`（EPERM 判定，见分支提交说明）。
 
 ## 更早几份在这条线上的继续演进

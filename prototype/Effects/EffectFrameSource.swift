@@ -43,7 +43,8 @@ struct EffectFrame {
 }
 
 /// Capture callbacks only write the locked latest-frame slot. Configuration requests are serialized.
-final class EffectFrameSource: NSObject, SCStreamOutput, SCStreamDelegate {
+/// @unchecked Sendable：可变状态都在 `lock` 里；`onStop` / `onContentUnavailable` 在开流前设好，只在主线程读。
+final class EffectFrameSource: NSObject, SCStreamOutput, SCStreamDelegate, @unchecked Sendable {
   private let queue = DispatchQueue(label: "WindowShade.effects.frames", qos: .userInteractive)
   private let lock = NSLock()
   private var slot = LatestEffectFrame<EffectFrame>()

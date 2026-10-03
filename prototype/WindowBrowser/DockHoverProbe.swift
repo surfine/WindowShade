@@ -281,6 +281,7 @@ final class DockHoverProbe {
 
 /// 只读的普通窗口发现探针：对当前运行中的 regular 应用调用生产发现函数，
 /// 只输出 bundle ID 与窗口数量/可见性统计，不输出窗口标题或文档内容。
+@MainActor
 final class WindowCatalogProbe {
     func run() {
         guard AXIsProcessTrusted() else {
@@ -394,6 +395,7 @@ final class WindowCatalogProbe {
 /// 单窗截图探针：只捕获 WindowShade 自己创建的一个探针窗口，测量真实
 /// SCScreenshotManager 单窗捕获的延迟、像素上限与内容，用来验证新缩略图路径。
 /// 不捕获用户窗口、不写盘、不联网。
+@MainActor
 final class WindowBrowserCaptureProbe {
     private var window: NSWindow?
     private var occluder: NSWindow?
@@ -567,7 +569,7 @@ enum DockProbeSupport {
     }
 
     /// 轮询等待异步观察器结果；未满足条件时按 interval 重试，必要时先重发指针事件。
-    static func poll(attempt: Int, maxAttempts: Int, interval: TimeInterval,
+    @MainActor static func poll(attempt: Int, maxAttempts: Int, interval: TimeInterval,
                      condition: @escaping () -> Bool,
                      retry: (() -> Void)? = nil,
                      completion: @escaping () -> Void) {
@@ -583,6 +585,7 @@ enum DockProbeSupport {
     }
 }
 
+@MainActor
 final class DockHoverPathProbe {
     private var observer: DockHoverObserver?
     private var target: DockHoverTarget?
@@ -659,8 +662,9 @@ final class DockHoverPathProbe {
 
 /// 缩略图服务 + 真实单窗截图的端到端探针：只捕获本应用自己的探针窗口。
 /// 验证同 key 共享一次系统截图、缓存命中不重复截图、失效后重新截图。
+@MainActor
 final class WindowThumbnailPathProbe {
-    private final class RealBackend: WindowThumbnailBackend {
+    @MainActor private final class RealBackend: @preconcurrency WindowThumbnailBackend {
         let windowID: CGWindowID
         let logicalSize: CGSize
         let scale: CGFloat
@@ -776,6 +780,7 @@ final class WindowThumbnailPathProbe {
 /// 低帧率实时预览流探针：只对 WindowShade 自己创建的探针窗口建立一路
 /// `WindowStreamCapture(preview: true)`，测量首帧延迟、实测帧率与停止确认。
 /// 用来在真机上验证普通窗口实时预览的捕获配置和折叠前的停流路径。
+@MainActor
 final class WindowStreamPathProbe {
     private var window: NSWindow?
     /// 生产里镜像层由 PinnedLivePreviewView 强持有；探针必须自己持有，
@@ -919,6 +924,7 @@ final class WindowStreamPathProbe {
 
 /// 面板激活语义探针：验证 Dock 面板出现时不抢前台、不成为 key window；
 /// 键盘面板按设计可以获得 key window 并把焦点交给搜索框。
+@MainActor
 final class WindowBrowserPanelProbe {
     func run() {
         let frame = NSRect(x: 320, y: 320, width: 460, height: 340)
@@ -1145,6 +1151,7 @@ final class WindowBrowserIdleProbe {
 
 /// 真实鼠标悬停探针：把指针移到 Dock 图标上约 1.2 秒再**原样放回**，用来验证
 /// AX 选中子项通知是否随真实悬停触发。只做悬停，不点击、不激活、不打开任何东西。
+@MainActor
 final class DockHoverLiveProbe {
     private var observer: DockHoverObserver?
     private var target: DockHoverTarget?

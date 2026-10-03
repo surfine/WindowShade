@@ -21,7 +21,7 @@ struct DockHoverTarget: Equatable {
     let generation: UInt64
 }
 
-final class DockHoverObserver {
+@MainActor final class DockHoverObserver {
     typealias TargetHandler = (DockHoverTarget) -> Void
     typealias ClearHandler = (_ generation: UInt64) -> Void
 
@@ -216,7 +216,7 @@ final class DockHoverObserver {
         retainedSelf = nil
     }
 
-    private func handleAXNotification(element: AXUIElement, notification: String) {
+    nonisolated private func handleAXNotification(element: AXUIElement, notification: String) {
         DispatchQueue.main.async { [weak self] in
             guard let self, self.running else { return }
             if notification == kAXUIElementDestroyedNotification as String {
@@ -329,7 +329,7 @@ final class DockHoverObserver {
     }
 
     /// 用 AX 命中测试找到指针下的 Dock 图标（限定深度与节点数）。
-    private func hitTestResolvedItem(pid: pid_t, axPoint: CGPoint) -> ResolvedDockItem? {
+    nonisolated private func hitTestResolvedItem(pid: pid_t, axPoint: CGPoint) -> ResolvedDockItem? {
         let app = AXUIElementCreateApplication(pid)
         var hit: AXUIElement?
         guard AXUIElementCopyElementAtPosition(app, Float(axPoint.x), Float(axPoint.y),
@@ -347,7 +347,7 @@ final class DockHoverObserver {
     }
 
     /// Dock 列表的选中子项（通知路径）：仍然要求指针在该图标区域内才产出目标。
-    private func selectedChildResolvedItem(lists: [AXUIElement]) -> ResolvedDockItem? {
+    nonisolated private func selectedChildResolvedItem(lists: [AXUIElement]) -> ResolvedDockItem? {
         for list in lists {
             guard let selected = selectedChildren(of: list),
                   let item = selected.first,
@@ -364,7 +364,7 @@ final class DockHoverObserver {
         let frameAX: CGRect
     }
 
-    private func selectedChildren(of element: AXUIElement) -> [AXUIElement]? {
+    nonisolated private func selectedChildren(of element: AXUIElement) -> [AXUIElement]? {
         var value: CFTypeRef?
         guard AXUIElementCopyAttributeValue(element,
                                             kAXSelectedChildrenAttribute as CFString,
@@ -374,7 +374,7 @@ final class DockHoverObserver {
         return array
     }
 
-    private func resolve(item: AXUIElement) -> ResolvedDockItem? {
+    nonisolated private func resolve(item: AXUIElement) -> ResolvedDockItem? {
         guard let url = urlFromAXAttribute(item, kAXURLAttribute as String)
             ?? urlFromAXAttribute(item, kAXDocumentAttribute as String) else { return nil }
         let path = url.path
@@ -528,7 +528,7 @@ final class DockHoverObserver {
         return snapshots
     }
 
-    private func parent(of element: AXUIElement) -> AXUIElement? {
+    nonisolated private func parent(of element: AXUIElement) -> AXUIElement? {
         var value: CFTypeRef?
         guard AXUIElementCopyAttributeValue(element, kAXParentAttribute as CFString,
                                             &value) == .success,
@@ -540,7 +540,7 @@ final class DockHoverObserver {
 
     // MARK: Dock 树遍历
 
-    private func discoverDockLists(in root: AXUIElement) -> [AXUIElement] {
+    nonisolated private func discoverDockLists(in root: AXUIElement) -> [AXUIElement] {
         var lists: [AXUIElement] = []
         var queue: [(AXUIElement, Int)] = [(root, 0)]
         var visited = 0
@@ -561,7 +561,7 @@ final class DockHoverObserver {
         return lists
     }
 
-    private func isDockAppItem(_ element: AXUIElement) -> Bool {
+    nonisolated private func isDockAppItem(_ element: AXUIElement) -> Bool {
         guard let url = urlFromAXAttribute(element, kAXURLAttribute as String) else { return false }
         return url.path.hasSuffix(".app")
     }
@@ -571,7 +571,7 @@ final class DockHoverObserver {
         cocoaFrame(fromAXPosition: frame.origin, size: frame.size)
     }
 
-    private func axFrame(of element: AXUIElement) -> CGRect? {
+    nonisolated private func axFrame(of element: AXUIElement) -> CGRect? {
         guard let position = axPosition(element), let size = axSize(element),
               size.width > 1, size.height > 1 else { return nil }
         return CGRect(origin: position, size: size)

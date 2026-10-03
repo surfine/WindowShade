@@ -74,10 +74,11 @@ final class SettingsGroupBox: NSBox {
 final class DuoSettingsWindow: NSWindowController, NSWindowDelegate, NSTableViewDataSource, NSTableViewDelegate, NSToolbarDelegate {
   private weak var controller: DuoController?
   private var renderer: FoldRenderer?
-  private var source: EffectFrameSource?
-  private var captureTask: Task<Void, Never>?
+  // 这三项只在主线程读写；nonisolated(unsafe) 只为让 deinit 兜底停掉它们，那时已没有别的引用。
+  nonisolated(unsafe) private var source: EffectFrameSource?
+  nonisolated(unsafe) private var captureTask: Task<Void, Never>?
   private var epoch = EffectEpoch()
-  private let clock = EffectDisplayClock()
+  nonisolated(unsafe) private let clock = EffectDisplayClock()
   private let status = NSTextField(wrappingLabelWithString: "")
   private let desktop = NSSwitch()
   private let windows = NSSwitch()

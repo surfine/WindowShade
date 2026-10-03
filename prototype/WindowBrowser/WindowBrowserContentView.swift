@@ -87,7 +87,8 @@ final class WindowBrowserContentView: NSView, NSSearchFieldDelegate, NSTextViewD
     private let permissionButton = NSButton(title: "打开“屏幕录制”设置…", target: nil, action: nil)
     /// 页脚“打开设置”入口的回调（控制器接到现有权限页面）。
     var onOpenScreenRecordingSettings: (() -> Void)?
-    private var boundsObserver: NSObjectProtocol?
+    // 只在主线程写；deinit 里移除时已没有别的引用。
+    nonisolated(unsafe) private var boundsObserver: NSObjectProtocol?
     private var lastVisibleKeys: [WindowKey] = []
     private var lastScrolledSelection: WindowKey?
     private var contextMenuProvider: ((WindowKey) -> NSMenu?)?

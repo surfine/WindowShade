@@ -199,7 +199,7 @@ extension AppDelegate {
         }
         let targetTopLeft = CGPoint(x: screen.visibleFrame.minX + 80,
                                     y: coordinateBaselineY() - (screen.visibleFrame.maxY - 80))
-        let finish: (String?) -> Void = { [weak self] notice in
+        let finish: @Sendable (String?) -> Void = { [weak self] notice in
             DispatchQueue.main.async { [weak self] in
                 guard let self else { return }
                 self.isRescuingOffscreenWindows = false

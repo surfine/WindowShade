@@ -71,6 +71,7 @@ struct PinnedPreviewSessionSnapshot {
     let isSuspended: Bool
 }
 
+@MainActor
 private final class PinnedPreviewSession {
     let windowID: CGWindowID
     let pid: pid_t
@@ -166,6 +167,7 @@ struct PinnedPreviewMenuEntry {
     }
 }
 
+@MainActor
 final class PinnedPreviewController {
     typealias NoticeHandler = (_ message: String, _ log: String?) -> Void
 
@@ -499,7 +501,7 @@ final class PinnedPreviewController {
     }
 
     /// 某个应用在当前屏幕上最靠前的普通窗口（layer 0、不透明）。纯 WindowServer 查询。
-    private static func topmostNormalWindowID(pid: pid_t) -> CGWindowID? {
+    nonisolated private static func topmostNormalWindowID(pid: pid_t) -> CGWindowID? {
         guard pid > 0,
               let windows = CGWindowListCopyWindowInfo([.optionOnScreenOnly, .excludeDesktopElements],
                                                        kCGNullWindowID) as? [[String: Any]] else { return nil }
@@ -874,7 +876,7 @@ final class PinnedPreviewController {
         }
     }
 
-    private static func isUsableTarget(_ axWindow: AXUIElement, id: CGWindowID,
+    nonisolated private static func isUsableTarget(_ axWindow: AXUIElement, id: CGWindowID,
                                        excludedBundleIDs: Set<String>) -> Bool {
         var pid: pid_t = 0
         guard AXUIElementGetPid(axWindow, &pid) == .success, pid > 0, pid != getpid() else {
@@ -1102,7 +1104,7 @@ final class PinnedPreviewController {
 
         // 管线每一跳都校验 epoch/isInteracting；交互被取消（鼠标已离开、会话被停止）
         // 时中止，面板保持不透明的安全侧。只能在主线程调用。
-        let stillValid: () -> Bool = { [weak self] in
+        let stillValid: @MainActor () -> Bool = { [weak self] in
             guard let live = self?.sessions[id] else { return false }
             return live.isInteracting && live.interactionEpoch == epoch
         }
@@ -1503,7 +1505,7 @@ final class PinnedPreviewController {
         return cocoaFrame(fromWindowServerBounds: bounds)
     }
 
-    private static func sourceInfoIsUsable(_ info: [String: Any]) -> Bool {
+    nonisolated private static func sourceInfoIsUsable(_ info: [String: Any]) -> Bool {
         let layer = (info[kCGWindowLayer as String] as? NSNumber)?.intValue ?? 0
         guard layer == 0 else { return false }
         let alpha = (info[kCGWindowAlpha as String] as? NSNumber)?.doubleValue ?? 1

@@ -558,6 +558,7 @@ private final class DisplayLinkProxy: NSObject {
     weak var owner: ScrollStripController?
     init(owner: ScrollStripController) { self.owner = owner }
     @objc func step(_ link: CADisplayLink) {
+        let owner = owner
         MainActor.assumeIsolated { owner?.advanceMotion() }
     }
 }

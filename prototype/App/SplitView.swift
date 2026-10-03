@@ -26,7 +26,7 @@ final class SplitViewController {
     private var observers: [NSObjectProtocol] = []
     /// 拖着一根把手：起点那条缝、缝两边窗口的辅助功能元素和各自写外框的那条链、缝现在在哪。
     private var drag: Drag?
-    private final class Drag {
+    @MainActor private final class Drag {
         let seam: Seam
         let divider: SplitDivider
         var elements: [UInt32: AXUIElement] = [:]
@@ -516,12 +516,13 @@ final class SplitDivider {
         let began = CACurrentMediaTime()
         let duration = Motion.reduced ? 0.12 : 0.32
         let t = Timer(timeInterval: 1.0 / 120, repeats: true) { [weak self] timer in
-            MainActor.assumeIsolated {
+            let finished = MainActor.assumeIsolated { () -> Bool in
                 let p = min(1, (CACurrentMediaTime() - began) / duration)
                 let eased = CGFloat(1 - pow(1 - p, 3))
                 self?.place(at: CGPoint(x: from.x + (to.x - from.x) * eased, y: from.y + (to.y - from.y) * eased), vertical: vertical)
-                if p >= 1 { timer.invalidate() }
+                return p >= 1
             }
+            if finished { timer.invalidate() }
         }
         RunLoop.main.add(t, forMode: .common)
         animation = t

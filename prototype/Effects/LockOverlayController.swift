@@ -1,6 +1,7 @@
 import Cocoa
 
 /// Owns decoration on the actual lock screen; authentication remains a separate transaction.
+@MainActor
 final class LockOverlayController {
     private static let defaultsKey = "lockOverlay.enabled"
     var enabled: Bool { UserDefaults.standard.bool(forKey: Self.defaultsKey) }
