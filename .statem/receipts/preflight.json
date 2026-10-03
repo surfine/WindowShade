@@ -1,8 +1,18 @@
 {
   "classes": [
+    "data-recovery",
     "external-effects"
   ],
   "hazards": [
+    {
+      "class": "data-recovery",
+      "evidence_paths": [],
+      "matched": [
+        "journal"
+      ],
+      "requirement": "同伴文件（WAL/journal）要一起保留；恢复在副本上验证，交付物身份写清楚。",
+      "severity": "high"
+    },
     {
       "class": "external-effects",
       "evidence_paths": [],
@@ -15,6 +25,6 @@
   ],
   "source": "preflight",
   "task_path": "task.txt",
-  "task_sha256": "9e72194a03cc7b96a7d389b347da20061e1184847b36ba02b2bb2651965e04ad",
+  "task_sha256": "7f21346e40300a3d838fcec6c19ffa44469d94f64f6b1956f5decd722a8ea2b2",
   "version": 1
 }

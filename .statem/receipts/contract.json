@@ -1,22 +1,18 @@
 {
   "kind": "contract",
-  "artifact": "第九份已并进 main：收起三态 + 事务绑定完成通知 + 巡检快照 + AX routeID + 首帧隔离 + 去嵌套 RunLoop；归档 docs/handoff/chatgpt-review-2/part9，真机结果在 part9/MAC-EVIDENCE.md；仓库 runner 在 tests/part9/",
+  "artifact": "第十份已并进 main（4f276ea 合并、e3e5b3b 复核交接）：build.sh 四条 swiftc 显式 Swift 6/完整并发检查/警告视为错误、--check 不读本机签名配置；Journal.journalID 精确非零 UInt32；归档 docs/handoff/chatgpt-review-2/part10；runner tests/part10；复核交接 docs/handoff/round2-part10/REVIEW-HANDOFF.md",
   "status": "residual_risk",
   "checks": [
-    {"command": "python3 tests/part9/tests/run.py --repo . --suite regression", "result": "42 场景 / 93 断言 / 0 失败"},
-    {"command": "python3 tests/part9/tests/run.py --repo . --suite frame", "result": "15 场景 / 15 断言 / 0 失败"},
-    {"command": "python3 tests/part9/tests/check-build.py --repo .", "result": "Foundation 40 份类型检查 + 43 份语法，退出 0"},
-    {"command": "python3 tests/part9/tests/check-wiring.py --repo .", "result": "24 项全 PASS（三态、事务绑定、批次代次、routeID、首帧隔离、只读入口）"},
-    {"command": "python3 tests/part9/tests/test-tools.py", "result": "18 项 OK（含 macOS /var 与 resolve() 修正）"},
-    {"command": "python3 tests/part9/tests/run-previous.py --repo . --history tests --suite duo|part8-input|part8-fold|part8-flow|part7-core|part7-native|part7-flow", "result": "duo 三套全过；part8 33/49、21/49、6/27；part7 27/51、3/14、18/145"},
-    {"command": "python3 tests/part9/tests/run-previous.py --repo . --history docs/handoff/chatgpt-review-2 --suite legacy-foundation|legacy-process", "result": "foundation 7 子套件 exit 0；process part6 9/27、part5 8/26、PROC04 OBSERVED_PASS 0.17s"},
-    {"command": "cd prototype && ./build.sh --check", "result": "退出 0，编译验证通过（含 Native C 模块）"},
-    {"command": "bash tests/run-appkit-tests.sh all", "result": "退出 0，八套全过（含 LEASE-H01…08）；需 WindowServer 会话"},
-    {"command": "bash tests/run-privacy-{registry-check,page-sync}.sh", "result": "466 个词法点无未登记新增、页面数据同源"},
-    {"command": "tests/run-{contracts,part2..part6}-*.sh", "result": "contracts 9/24、part2 22/86、part3 55/147、part4 72/188、part5 40/97+8/26、part6 42/95+9/27+wire 4、PROC04 0.086s、T1 12/32、Mac 加密、conductor 手势全过"}
+    {"command": "python3 tests/part10/tests/test-journal-id.py --candidate . --baseline docs/handoff/chatgpt-review-2/part10/base-sources", "result": "25/25 通过；baseline 复现旧实现 NaN/2^32 陷阱（exit -5）与 true/1.5 被当窗口 1"},
+    {"command": "python3 tests/part10/tests/test-build-entry.py --candidate .", "result": "12/12 OK（替身工具链跑真实 shell 控制流；修掉 bash 3.2 空数组 + EXIT trap 的假成功后转绿）"},
+    {"command": "python3 tests/part10/tests/test-handoff-tools.py --candidate .", "result": "16/16 OK（12/14 项按 drift.json 判定漂移清单）"},
+    {"command": "python3 tests/part10/tests/test-stage.py", "result": "18/18 OK（含 macOS /var 与 resolve() 修正）"},
+    {"command": "python3 tests/part10/tools/run-final.py --suite window-core|frame|foundation|native|duo|input|flow|legacy-foundation|legacy-process", "result": "九套全 PASSED（exit 0）"},
+    {"command": "python3 tests/part10/tools/run-final.py --suite mac-build（真 SDK + Sparkle 2.10.0）", "result": "FAILED exit 1：build.sh --check 报 98 处严格并发诊断；证据 docs/handoff/round2-part10/evidence/"},
+    {"command": "cd prototype && ./build.sh --check（同一失败的直接复现）", "result": "退出 1，98 处 error（其中约 20 处为既有 warning 升格）"}
   ],
   "reused_checks": [],
-  "remaining_risk": "受控真机观察（工单 02/03 的 M01/M03/M06/M07/M08/M11/M14/M16/M17/M18）未做：需要 Aaron 先指定允许动的窗口、动手前再确认一次；真实 AX 收起/恢复与人工恢复、慢 AX 与强制取消、真实 SCK capture graph、完整 T3、Touch ID 允许端到端、配对接收、系统身份后端、能耗、影片与发布仍未做",
+  "remaining_risk": "第十份打开构建参数后 main 编不过（98 处，W00 未完成）：AddPreconcurrencyImport 22、MutableGlobalVariable 16、ConformanceIsolation 9、ImplicitStrongCapture 7、NoUsage 6、Deprecated 4、SendableClosureCaptures 2、NonSendableExitingActor 2、UnnecessaryEffectMarker 1、另有 29 处未带类别码。W00 走哪条路（修到绿 / 退回参数 / 保留但标注不可构建）需要用户或复核模型决定。第九份的受控真机观察也仍未做。",
   "next_action": "self_review",
-  "updated": "2026-10-03T23:10:00+0800"
+  "updated": "2026-10-03T23:55:00+0800"
 }

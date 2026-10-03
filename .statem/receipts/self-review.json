@@ -1,21 +1,21 @@
 {
   "kind": "self_review",
-  "artifact": "main 上的第九份合并（收起三态 / 事务绑定完成通知 / 巡检快照 / AX routeID / 首帧隔离 / 去嵌套 RunLoop），真机证据见 docs/handoff/chatgpt-review-2/part9/MAC-EVIDENCE.md",
+  "artifact": "main 上的第十份合并（4f276ea：build.sh 显式 Swift 6/完整并发检查/警告视为错误 + --check 不读签名配置；Journal.journalID 精确非零 UInt32）与复核交接（e3e5b3b）",
   "status": "residual_risk",
   "issues_found": false,
   "needs_evidence": false,
   "findings": [
-    "契约里的交付物都在：三方合并 15 文件、归档、仓库 runner、隔离修复、台账与 MAC-EVIDENCE；隐私登记表 465→466 点且页面同源。",
-    "unknown 语义按第九份定义落地：false 不等于窗口没被改动或已恢复；unknown 不跨策略追加副作用，保留原 journal 与人工恢复入口。",
-    "没有越权动作：没有签名/发布/推送、没有改更新源或 hook、没有动 Aaron 的真实窗口；WS2FocusWindowPort.admitted 仍为 false。",
-    "readiness 如实 BLOCKED（exit 2），没有被改成绿；part3 沙箱内 socket EPERM 与沙箱外通过都记录清楚，没有当回归。",
-    "本轮发现并当场修完（无遗留）：8 文件 23 处 Swift 6 隔离错误按仓库既有写法包 MainActor.assumeIsolated（不降版本、不关检查、不加 @unchecked Sendable）；WindowFoldEffectsTests 改到「先绑事务再按事务结算」的新 API 并走 async 分发；check-build 找 Core/InteractionCoordinator.swift、stage.py 的 /var 与 resolve()、run-previous 的 legacy history 三处入口差异。"
+    "本轮的核对都走真实消费者接口：第十份四套自检跑的是它自己的脚本；九套 run-final 真的编译并运行旧套件；mac-build 在隔离副本里用真 SDK 与真实 Sparkle 2.10.0 跑 build.sh --check。",
+    "发现并当场处理了两处只有 macOS 才会暴露的第十份工具缺陷：bash 3.2 在 set -u 下展开空数组会致命且带 EXIT trap 时以 0 退出（--check 会假成功）；run-final 的报告路径拒绝 macOS 自身的 /tmp、/var 符号链接前缀。两处都是收紧或适配，不是放宽。",
+    "最关键的事实已如实记录、没有粉饰：第十份打开构建参数后 main 编不过（98 处），W00 未完成。没有为了拿绿色撤销参数，也没有把 98 处说成已完成。",
+    "code-map 漂移没有用改哈希的方式凑绿：原始 code-map.json 保持第十份原样，另建 drift.json/DRIFT.md 并做成门禁（清单外新漂移会失败、清单自身也必须与实际一致）。",
+    "没有越权动作：没有推送、打标签、签名、发布、改更新源或替换日用 App；没有启用自动窗口效果。"
   ],
   "lenses": {
-    "task_contract": "task.txt 的五类交付物逐条核过：15 文件合入与归档、tests/part9 runner 五脚本、23 处隔离修复、START-HERE/1.0.16 对照表/blueprint/part9-MAC-EVIDENCE、真机观察记录（未做，见 remaining_risk）。",
-    "evidence_freshness": "全部结论都在当前工作区实跑：run.py regression 42/93、frame 15/15；check-build/check-wiring/test-tools；run-previous 九套；build.sh --check；AppKit 八套（沙箱外）；隐私两件门禁；part2–part6 各 runner 与 PROC04。改动之后再跑的检查包括 build --check（隔离修复后）与 AppKit all（测试宿主改写后）。",
-    "edge_risk": "隔离修复用 assumeIsolated，若某调用点其实不在主线程会在运行时 trap；逐点核对均为主线程（含 WindowBrowserAppDelegate 自带的 dispatchPrecondition(.onQueue(.main))）。受控真机观察尚未做，是本轮最大的残余风险。"
+    "task_contract": "task.txt 的三类交付物都在：第十份 5 替换 + 1 新增与归档、tests/part10 runner（含 drift.json/DRIFT.md）、复核交接 REVIEW-HANDOFF.md + evidence/。",
+    "evidence_freshness": "全部结论都在当前工作区实跑：第十份自检 25/25、12/12、16/16、18/18；run-final 九套 PASSED；mac-build FAILED exit 1 且 candidate_unchanged=true；证据写入 docs/handoff/round2-part10/evidence/。",
+    "edge_risk": "最大风险是 W00 的范围决定（修 98 处 vs 退回参数），已升级为需用户/复核模型拍板；其次是第九份 assumeIsolated 的运行时 trap 风险与受控真机观察未做，都写进 REVIEW-HANDOFF 的复核议程。"
   },
   "next_action": "handoff",
-  "updated": "2026-10-03T23:12:00+0800"
+  "updated": "2026-10-03T23:57:00+0800"
 }

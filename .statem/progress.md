@@ -1,69 +1,44 @@
-# 进度（第九份并入，2026-10-03）
+# 进度（第十份并入 + 复核交接，2026-10-03）
 
 ## 契约摘要
 
-把 ChatGPT 第二回合第九份并进 `main`：收起三态（hidden / visible / unknown）、完成通知绑定
-transaction 与捕获的 waiter tokens、巡检不可变快照 + 批次/事务代次、AX observer 单调 routeID、
-`EffectFrameAwaiter` 继承调用者隔离、原生 resize 去嵌套 RunLoop；按仓库既有写法修掉 macOS 上
-实测出的 Swift 6 隔离错误；跑完全部自动化检查；再做一轮受控真机观察（只动明确允许的窗口，动手前确认）。
-见 `.statem/task.txt`。约束：不签名/发布/推送/改更新源；`WS2FocusWindowPort.admitted=false`；
-unknown 语义优先；中文提交信息。
+三方合并并入第十份：`build.sh` 四条 swiftc 显式 Swift 6 / 完整并发检查 / 警告视为错误、
+`--check` 不读本机签名配置；`Journal.journalID` 精确非零 UInt32；跑第十份自检、现有九套回归与一次
+真实 Mac 构建（W00）；写一份给后续模型的复核交接。见 `.statem/task.txt`。
 
 ## 交付物身份
 
-- 三方合并（base=`base-sources/`、ours=HEAD、theirs=`overlay/`）15 文件：3 新增
-  （`prototype/Core/WS2FoldCallbackStamp.swift`、`prototype/App/WS2FoldCallbackGuard.swift`、
-  `docs/handoff/round2-part9/{INTEGRATION.md,privacy-signals.json}`）＋12 修改。
-  唯一冲突 `prototype/App/FoldCompletion.swift`：保留 `awaitFold(id:)`，接上事务绑定语义。
-- 归档：`docs/handoff/chatgpt-review-2/part9/`（整包）。
-- 仓库 runner：`tests/part9/{tests,tools,sources,validation}/` + `base-files.json` + `manifest.json`。
-- 隔离修复：23 处 / 8 文件，全部用 `MainActor.assumeIsolated`（EventTap 1、FoldExit 3、
-  FoldTransaction 2、Reconcile 2、ShadeController 8、WS2FoldCallbackGuard 5、WindowFoldEffects 1、
-  WindowBrowserAppDelegate 1）。
-- 证据：`docs/handoff/chatgpt-review-2/part9/MAC-EVIDENCE.md`。
+- 提交：`4f276ea`（第十份合并）、`e3e5b3b`（复核交接 + 台账）；上一轮 `af0437c`、`38bb231`（第九份）。未推送。
+- 合并：5 替换 + 1 新增；`START-HERE`、`1.0.16 对照表` 走 `git merge-file` 三方合并（无冲突）。
+- 归档：`docs/handoff/chatgpt-review-2/part10/`；仓库 runner：`tests/part10/`。
+- 复核交接：`docs/handoff/round2-part10/REVIEW-HANDOFF.md`；证据在 `docs/handoff/round2-part10/evidence/`。
+- Mac 适配（主模型补）：bash 3.2 空数组展开（`prototype/build.sh`）、`run-final.py` 报告路径 `/var` 规范化
+  与 legacy 接线、`tests/part10/tools/stage.py` 的 `/var`+`resolve()`、`test-handoff-tools.py` 读 `drift.json`。
 
-## 跑过的检查与结果（全部在本机）
+## 跑过的检查与结果
 
 | 检查 | 结果 |
 | --- | --- |
-| `tests/part9/tests/run.py --repo . --suite regression` | 42 场景 / 93 断言 / 0 失败 |
-| `tests/part9/tests/run.py --repo . --suite frame` | 15 场景 / 15 断言 / 0 失败 |
-| `tests/part9/tests/check-build.py --repo .` | Foundation 40 份类型检查 + 43 份语法，退出 0 |
-| `tests/part9/tests/check-wiring.py --repo .` | 24 项全 PASS |
-| `tests/part9/tests/test-tools.py` | 18 项 OK |
-| `tests/part9/tests/run-previous.py`（duo、part8 input/fold/flow、part7 core/native/flow、legacy 两批） | 九套全过（33/49、21/49、6/27、27/51、3/14、18/145、legacy exit 0） |
-| 仓库自身 runner | contracts 9/24、part2 22/86、part3 55/147、part4 72/188、part5 40/97 + 8/26、part6 42/95 + 9/27 + wire 4、PROC04 0.086s、T1 12/32、Mac 配对加密、conductor 手势全过 |
-| readiness / 归档 | BLOCKED（exit 2，如实）；94 文件哈希全对 |
-| `cd prototype && ./build.sh --check` | 退出 0 |
-| `bash tests/run-appkit-tests.sh all` | 八套全过（含 LEASE-H01…08；需 WindowServer 会话） |
-| 隐私门禁 | 登记表 466 点无未登记新增、页面数据同源 |
+| `test-journal-id.py`（25 个边界） | 25/25；旧实现在 NaN/2^32 触发陷阱，true/1.5 被当窗口 1 |
+| `test-build-entry.py` | 12/12（替身工具链，非 Mac 编译） |
+| `test-handoff-tools.py` | 16/16（含漂移清单门禁） |
+| `test-stage.py` | 18/18 |
+| `run-final.py` 九套 | window-core / frame / foundation / native / duo / input / flow / legacy-foundation / legacy-process 全 PASSED |
+| `run-final.py --suite mac-build`（真 SDK + Sparkle 2.10.0） | **FAILED，exit 1**：`build.sh --check` 报 98 处严格并发诊断 |
 
-## 只有 Mac 才会暴露的问题（已处理）
+## 残余风险 / 关键结论
 
-1. 第九份把 `FoldCompletion` 改成 `@MainActor` 后，23 处非隔离调用点编不过（Linux 纯逻辑没暴露）；
-   逐点核对都在主线程，按仓库既有写法包 `MainActor.assumeIsolated`，不改语义、不降版本、不关并发检查。
-2. `tests/part9/tests/check-build.py` 仍按 `prototype/App/InteractionCoordinator.swift` 找共享仲裁，
-   本仓库在 `Core/`，改成两边都能找到。
-3. `tests/part9/tools/stage.py` 拒绝 macOS 的 `/var`，且 `resolve()` 与 `absolute()` 混用；照第七、八份的
-   做法规范化 `/var`、`/tmp`、`/etc` 并全用 `resolve()`。
-4. `run-previous.py` 的 legacy 两批要 `history/part1..part6`（本仓库平铺在 `tests/`，原件在归档）；改成用
-   本仓库已适配的 `tests/part7/tests/regressions.py`，`--history` 指向 `docs/handoff/chatgpt-review-2`。
-5. `tests/WindowFoldEffectsTests.swift` 用的是第九份已删除的「只按窗口 ID 报成功」API；测试宿主改成
-   「先绑事务再按事务结算」，投递改主队列 flush 对账，成功用例装真实 `folded` 状态并固定未锁屏。
-   `run-appkit-tests.sh` 的 `all` 分发器对 async 的 `main()` 加 `await`。
-6. 隐私登记：`WS2FoldCallbackGuard` 新读一处 AX 布尔属性归 `window-ax`，旧的适配器登记点随实现移动；465 → 466。
-
-## 残余风险
-
-- **受控真机观察还没做**：工单 02/03 里可安全复现的 M01/M03/M06/M07/M08/M11/M14/M16/M17/M18
-  需要动 Aaron 的真实窗口，必须他先指定「允许动」的窗口、动手前再确认一次。这是本轮唯一未完成项。
-- AppKit 回归与读 `NSScreen` 的用例必须在有 WindowServer 会话的上下文跑（沙箱里 `NSScreen.screens` 为 0）。
-- `part3` 的三条 unix socket 用例沙箱里 `bind` 回 `EPERM`，沙箱外通过——沙箱限制，不是回归。
-- 完整 T3、真实 AX 收起/恢复与人工恢复、慢 AX 与强制取消、真实 SCK capture graph、Touch ID 允许端到端、
-  配对接收、系统身份后端、能耗、影片与发布仍未做（以第九份 REMAINING 为准）。
+- **`main` 当前在显式 Swift 6 严格并发下编不过（98 处）**，W00 未完成。这是第十份打开构建参数后的
+  真实结果，不是合并事故；没有为拿绿色撤销参数。三类：约 20 处是既有 warning 被升格
+  （NoUsage / ImplicitStrongCapture / Deprecated / UnnecessaryEffectMarker），约 70 处是 Swift 6 语言模式
+  新暴露的隔离问题（AddPreconcurrencyImport 22、MutableGlobalVariable 16、ConformanceIsolation 9、
+  NonSendableExitingActor 2、SendableClosureCaptures 2、另有 29 处未带类别码）。
+- `code-map` 漂移 21 条 + 1 条路径搬迁 + 1 条应当缺席，全部登记在 `tests/part10/DRIFT.md` / `drift.json`，
+  并做成门禁（清单外新漂移会失败）。
+- 第九份工单矩阵的受控真机观察（M01…M18）仍未做，等用户指定可动窗口。
+- 未做：W01 起的真实验收、能耗、影片、签名发布；没有推送、打标签、改更新源或替换日用 App。
 
 ## 下一步
 
-1. 本轮已提交到 `main`（不推送、不打标签）。
-2. 等 Aaron 指定可动窗口后，按 MAC-EVIDENCE 的矩阵逐例做受控真机观察并补证。
-3. 未完成项按第九份 REMAINING 与工单 02/03/04 继续推进。
+1. 等用户决定 W00 走哪条路（修到绿 / 退回参数 / 保留但标注不可构建）。
+2. 交给后续更高智能的模型按 `REVIEW-HANDOFF.md` 的复核议程逐条复核。

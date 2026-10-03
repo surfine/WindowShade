@@ -1,21 +1,23 @@
-# 可见契约（第九份并入）
+# 可见契约（第十份并入 + 复核交接）
 
-目标: 三方合并并入第九份（收起三态、事务绑定完成通知、巡检快照、AX routeID、首帧隔离、
-去嵌套 RunLoop），按仓库既有写法修掉 macOS 上实测出的约 10 处 Swift 6 隔离错误，
-跑完全部自动化检查，再做一轮受控真机观察（只动明确允许的窗口，动手前确认）。
+目标: 把 ChatGPT 第二回合第十份（最终交接包）并入 main：`build.sh` 四条 swiftc 显式
+Swift 6 / 完整并发检查 / 警告视为错误、`--check` 不再 source local-codesign.env；
+`Journal.journalID` 改成精确非零 UInt32（拒绝布尔/小数/NaN/∞/零/超界）。
+跑第十份自检与现有九套回归、跑一次真实 Mac 构建（W00），
+再写一份交接说明让后续更高智能的模型复核。
 
 交付物:
-- overlay 15 文件合入（3 新增 + 12 修改）；归档 docs/handoff/chatgpt-review-2/part9；
-- 仓库 runner：tests/part9/tests/{run.py,check-build.py,check-wiring.py,test-tools.py,run-previous.py}；
-- 隔离修复：EventTap/FoldExit/FoldTransaction/Reconcile/ShadeController 的调用点按仓库写法包 MainActor.assumeIsolated；
-- 台账：START-HERE / 1.0.16 对照表 / blueprint + part9/MAC-EVIDENCE.md；
-- 真机观察记录（每个用例：环境、哈希、操作、observed 三态、journal 前后）。
+- 三方合并 5 替换 + 1 新增（AGENTS.md、START-HERE、1.0.16 对照表、build.sh、Journal.swift、FINAL-HANDOFF.md）；
+  归档 docs/handoff/chatgpt-review-2/part10；仓库 runner tests/part10（含 workorders/docs/sources/drift.json）；
+- Mac 适配：bash 3.2 空数组展开、run-final 报告路径 /var、legacy 历史脚本接线、stage.py 的 /var 与 resolve()、
+  test-handoff-tools 的漂移门禁；
+- 复核交接：docs/handoff/round2-part10/REVIEW-HANDOFF.md + evidence/（工具链、mac-build 结果、
+  98 处严格并发诊断、九套 run-final 结果）。
 
 验收方式:
-- python3 tests/part9/tests/run.py --repo . --suite {regression,frame}；check-build/check-wiring/test-tools；
-  run-previous 八套（duo、part8 input/fold/flow、part7 core/native/flow、legacy foundation/process）；
-- cd prototype && ./build.sh --check；bash tests/run-appkit-tests.sh all；隐私两件门禁；part2–part8 各 runner；
-- 真机观察按工单矩阵里可安全复现的用例逐条留证。
+- python3 tests/part10/tests/test-{journal-id,build-entry,handoff-tools,stage}.py；
+- python3 tests/part10/tools/run-final.py --candidate . --handoff tests --suite {window-core,frame,foundation,native,duo,input,flow,legacy-foundation,legacy-process}；
+- 同上 --suite mac-build（真 SDK + 真 Sparkle；记录真实结果，不追求绿色）。
 
-输出/格式约束: 中文提交信息；不签名/发布/推送/改更新源；不启用自动窗口效果（admitted=false）；
-真机只动允许的窗口，unknown 语义优先。
+输出/格式约束: 中文提交信息；不签名/发布/推送/改更新源/替换日用 App；不启用自动窗口效果；
+不为拿绿色撤销第十份的构建参数；未知就写未知。
