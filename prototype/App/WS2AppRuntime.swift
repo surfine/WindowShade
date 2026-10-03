@@ -7,6 +7,8 @@ import Cocoa
     /// 共享岛就是刘海那一套租约；这里只持有它，不另建第二套。
     private(set) var island: NotchLeaseHub!
     private weak var focusCard: FocusTimerCard?
+    /// T3 的窗口执行器：只动这一轮自己收起来、且没有被别人动过的窗口。
+    private var focusExecutor: WS2FocusExecutor!
     private var defaultsObserver: NSObjectProtocol?
     private var lastMenuTitle = ""
     private var lockReasons = Set<String>()
@@ -27,6 +29,9 @@ import Cocoa
                 return .init(today:day(date),deadlineDay:day(date.addingTimeInterval(delta)))
             }, effects:{ [weak self] effects in self?.focusWindowEffects?(effects) })
         island = owner.notch.leases
+        focusExecutor = WS2FocusExecutor(owner: owner)
+        // T3：把计时器的窗口效果接到真实窗口上（收聊天那一半还没有私人 App 名单）。
+        focusWindowEffects = { [weak self] effects in self?.focusExecutor.handle(effects) }
         focus.onChange = { [weak self] model,now in
             self?.focusCard?.render(model,at:now); self?.publish()
         }

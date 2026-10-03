@@ -207,6 +207,11 @@ final class NotchController {
 
     var isAvailable: Bool { !panels.isEmpty }
     var tuckedCount: Int { tucked.count }
+    /// 现在收在刘海里的窗口（含别的入口收进来的）。番茄钟按前后差算出“这一轮收了哪些”。
+    var tuckedWindowIDs: [CGWindowID] { tucked.map(\.id) }
+    /// 每次真的收进来就加一：作为窗口状态的 revision，供所有权收据比对。
+    private(set) var tuckRevision: UInt64 = 0
+    func tuckedPID(of id: CGWindowID) -> pid_t? { tucked.first { $0.id == id }?.pid }
     func isTucked(_ id: CGWindowID) -> Bool { tucked.contains { $0.id == id } }
     /// 探针用：带刘海那块屏上的面板现在的外框、是不是展开着。
     var panelFrame: NSRect? { notchPanel?.frame }
@@ -391,6 +396,7 @@ final class NotchController {
         guard !isTucked(id), !pendingTucks.contains(id),
               let screen = screenForAXWindow(pos: landed.origin, size: landed.size) ?? Self.notchScreen() ?? NSScreen.main
         else { return }
+        tuckRevision &+= 1
         let notch = Self.slotRect(on: screen).rect
         if let pictures, let snapshot = pictures.window, let background = pictures.background(covering: landed) {
             let plate = BackgroundPlate(image: background, rect: landed)
