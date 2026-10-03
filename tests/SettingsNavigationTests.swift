@@ -51,9 +51,11 @@ struct SettingsNavigationTests {
     let rowsBySection: [(WindowShadeSettingsSection, [String])] = [
       (.browser, ["在菜单里显示“选择窗口…”", "面板背景", "默认显示方式"]),
       (.shortcuts, ["整理卷帘条", "选择窗口…"]),
+      // 隐私页（原权限与启动）没有“标签 + 右侧控件”的行，这里只为出浅深色截图。
+      (.permissions, []),
     ]
     // 隐私一栏：四组和每一行都在，且和登记表生成的数据源一致。
-    settings.select(section: .privacy)
+    settings.select(section: .permissions)
     await drainLayout()
     let privacyViews = descendants(root)
     let privacyTexts = privacyViews.compactMap { ($0 as? NSTextField)?.stringValue }

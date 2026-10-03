@@ -1,4 +1,4 @@
-// 应用内更新：设置里“更新”一组的行（“权限与启动”页，“启动”下面）。
+// 应用内更新：设置里“更新”一组的行（“隐私”页，“启动”下面）。
 // 行的样子照 Preferences.swift 的 makeUnifiedToggleRow / makeUnifiedControlRow；卡片由设置页自己包。
 //
 // 接线（Preferences.swift 的 makePermissionsSettingsPage，“启动”那张卡片之后）：

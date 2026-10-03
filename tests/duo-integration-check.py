@@ -27,7 +27,7 @@ for title in ['屏幕开合角度：', '当前窗口', '欢迎使用 WindowShade
 for title in ['启用桌面开合效果', '启用窗口卷帘动画', '预览桌面效果…', '停止所有效果']:
     assert title not in menu, f'redundant menu entry still present: {title}'
 assert 'showDuoSettings(section: .effects)' in settings
-for section in ['效果', '卷帘', '权限与启动', '高级']:
+for section in ['效果', '卷帘', '隐私', '高级']:
     assert section in settings, f'unified settings section missing: {section}'
 assert '打开诊断日志' in settings
 print('PASS: recovery intent precedes hiding, animation follows verification, synchronous restore contract, session teardown and capture exclusion are wired')

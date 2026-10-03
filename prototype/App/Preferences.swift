@@ -264,21 +264,16 @@ static func noticeTone(_ message: String) -> NotchPanel.Tone {
         return root
     }
 
-    /// 隐私一栏：内容从 tools/privacy/registry.json 生成，值和开关都引用原设置（见 WS2PrivacyPane）。
-    func makePrivacySettingsPage() -> NSView {
+    /// 隐私一栏（原「权限与启动」）：先摊开读到的每一样（内容从 tools/privacy/registry.json 生成），
+    /// 再把两项系统授权、登录时启动和更新并进同一页——开关全都还是原来那一个，不复制。
+    func makePermissionsSettingsPage() -> NSView {
         let (root, stack) = makeSettingsPageRoot()
         stack.addArrangedSubview(makeSettingsHeader(
             title: "隐私", subtitle: "WindowShade 读到的每一样都列在这里。", symbolName: "hand.raised"))
         let pane = MainActor.assumeIsolated { WS2PrivacyPane(owner: self) }
         stack.addArrangedSubview(pane)
         pane.widthAnchor.constraint(equalTo: stack.widthAnchor).isActive = true
-        return root
-    }
-
-    func makePermissionsSettingsPage() -> NSView {
-        let (root, stack) = makeSettingsPageRoot()
-        stack.addArrangedSubview(makeSettingsHeader(
-            title: "权限与启动", subtitle: "WindowShade 只在需要时使用系统权限。", symbolName: "lock.shield"))
+        stack.setCustomSpacing(18, after: pane)
         stack.addArrangedSubview(makePrefGroupLabel("权限"))
         let permissions = makeUnifiedSettingsCard([
             makeUnifiedPermissionRow(symbol: "accessibility", name: "辅助功能",

@@ -9,7 +9,7 @@
 //   退出    applicationShouldTerminate：return UpdaterController.shared.applicationShouldTerminate()
 //           applicationWillTerminate 开头：UpdaterController.shared.applicationWillTerminate()
 //   菜单    状态栏菜单与应用菜单“关于 WindowShade”下面：menu.addItem(UpdaterController.shared.makeMenuItem())
-//   设置    “权限与启动”页“启动”下面：UpdaterController.shared.makeSettingsRows() 放进一张设置卡片
+//   设置    “隐私”页“启动”下面：UpdaterController.shared.makeSettingsRows() 放进一张设置卡片
 
 import Cocoa
 
