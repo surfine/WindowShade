@@ -133,6 +133,59 @@ struct DeviceBatteryTests {
              "disconnect is announced once")
     }
 
+    do {  // 四态、重连留历史、充电盒不拿左右耳填
+      var book = DeviceBatteryBook()
+      _ = book.connect(mouse, at: 10, initialSnapshot: true)
+      let waiting = book.rows(now: 10)
+      expect(waiting.count == 1 && waiting[0].presence == .noData && waiting[0].percent == nil
+             && waiting[0].unknownReason == "未知" && waiting[0].connectedAt == 10,
+             "a connected device with no reading is no-data, not 0%")
+      _ = book.record(reading(40, at: 11, observed: 11), now: 11)
+      expect(book.rows(now: 11)[0].presence == .connected && book.rows(now: 11)[0].percent == 40
+             && book.rows(now: 11)[0].sampledAt == 11, "a fresh reading is connected")
+      expect(book.rows(now: 11 + DeviceBatteryBook.freshFor + 1)[0].presence == .stale,
+             "an old reading stays on the row but is not current")
+      _ = book.disconnect(mouse.id)
+      let gone = book.rows(now: 12)
+      expect(gone[0].presence == .disconnected && gone[0].percent == 40 && book.connectedAt[mouse.id] == 10,
+             "disconnect keeps the last percent and the connection time")
+      _ = book.connect(mouse, at: 20, initialSnapshot: false)
+      expect(book.readings[.init(deviceID: mouse.id, component: .main)]?.percent == 40
+             && book.connectedAt[mouse.id] == 20, "reconnect keeps the reading and records the new connection")
+      _ = book.connect(mouse, at: 30, initialSnapshot: false)
+      expect(book.connectedAt[mouse.id] == 20, "a repeated connect does not reset the connection time")
+
+      let buds = DeviceIdentity(id: "bt:buds", displayName: "AirPods", kind: .headphones)
+      var ears = DeviceBatteryBook()
+      _ = ears.connect(buds, at: 1, initialSnapshot: true)
+      _ = ears.record(BatteryReading(deviceID: buds.id, component: .left, provider: "test", providerEpoch: 1,
+                                    percent: 10, charging: .unknown, sourceObservedAt: 1, receivedAt: 1), now: 1)
+      _ = ears.record(BatteryReading(deviceID: buds.id, component: .right, provider: "test", providerEpoch: 1,
+                                    percent: 90, charging: .unknown, sourceObservedAt: 1, receivedAt: 1), now: 1)
+      let caseRow = ears.rows(now: 1).first { $0.component == .chargingCase }
+      expect(caseRow?.percent == nil && caseRow?.presence == .noData && caseRow?.unknownReason == "未知",
+             "an unread case is its own unknown row")
+      expect(BatterySources.chargingCasePercent(left: 10, right: 90, read: nil) == nil, "the case is not the average of the buds")
+      expect(BatterySources.chargingCasePercent(left: 10, right: 90, read: 40) == 40, "a real case reading is kept")
+      expect(InternalBattery.percent(InternalBatterySample(current: nil, max: 100, isCharging: nil, name: nil)) == nil,
+             "a missing Mac capacity stays unknown")
+      expect(InternalBattery.percent(InternalBatterySample(current: 0, max: 0, isCharging: false, name: nil)) == nil,
+             "a zero max capacity is not 0%")
+      expect(InternalBattery.percent(InternalBatterySample(current: 50, max: 100, isCharging: true, name: nil)) == 50,
+             "a present Mac battery keeps its percent")
+      expect(InternalBattery.charging(InternalBatterySample(current: 50, max: 100, isCharging: nil, name: nil)) == .unknown,
+             "a missing charging flag stays unknown")
+      expect(InternalBattery.displayName(InternalBatterySample(current: 1, max: 1, isCharging: nil, name: "InternalBattery-0")) == "这台 Mac",
+             "a registry name is not shown")
+      expect(BatterySources.notes.allSatisfy { note in
+        if case .unproven = note.availability { return note.id != "power.internal" && note.id != "hid.apple-peripheral" }
+        return true
+      }, "unproven sources stay unproven")
+      expect(BatterySources.notes.contains { $0.id == "airpods.case" && $0.availability == .unproven },
+             "the case source is listed and unproven")
+      expect(!BatterySources.notes.contains { $0.fact.contains("能耗") }, "battery notes do not include energy")
+    }
+
     if failures == 0 { print("PASS: device battery identity, freshness and low-battery tiers") }
     else { print("FAILED \(failures)"); exit(1) }
   }
