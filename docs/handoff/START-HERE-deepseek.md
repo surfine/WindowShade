@@ -76,6 +76,18 @@
 > L2 的 BLE 生产来源、I2/I3/I5/I8 的输入接管、D5b/D6 真实协议与 CLI 通道、F1/L3 人脸与系统锁、概念片 17 项真机素材。
 > 其中要 Aaron 在场上机的部分见 [part2/REMAINING.md](chatgpt-review-2/part2/REMAINING.md) 与 `tools/probes/RESULTS-2026-10-03.md`。
 
+> **2026-10-03 深夜更新：第三份也合完了。**统一接手包里的第三份（M1 菜单收拢与异步标题缓存、S1 原生补充页、T2 唯一宿主、
+> A3/D3 原生视图、A2 socket 与配置事务、D6 resume 与进程管道、D5 配对限流与 TLV、I8 手柄映射、I5 HID 写入事务、
+> 多触点准入、输入资格、锁来源策略）已逐处合并进 `main`，原件在 [chatgpt-review-2/part3/](chatgpt-review-2/part3/)。
+> **第三份的 Darwin 分支第一次在 Mac 上跑，第一次真编译**，修掉四处它自己看不到的问题：根级 `/var` 是 Apple 的符号链接导致父目录遍历拒绝一切临时路径；
+> `WS2ProcessChannel` 关第二次 FileHandle 抛 ObjC 异常打掉进程、关了以后还读 fileDescriptor；测试把证据写向包布局的 `validation/`。
+> 现在：第三份纯核 55 场景/147 断言、第二份 22 场景/86 断言、`tools/ws2-hook` 四个拒绝 fixture 全过；`./build.sh --check` 与八套 AppKit 回归见台账。
+>
+> 仍然没做完的：T4 设置两项与快捷键、A3/D3 的宿主与租约桥、D4/I7 真实偏好联动、A2 接 A1/A4 的允许路径、L4 系统锁后端、
+> I3 主动事件桥、I5 usage 桥、I8 GameController 桥、D5 真实配对与加密传输、影片 17 项真机素材与声音。逐包状态见
+> [part3/integration/package-status.json](chatgpt-review-2/part3/integration/package-status.json) 与
+> [part3/integration/MAC-ACCEPTANCE.md](chatgpt-review-2/part3/integration/MAC-ACCEPTANCE.md)。
+
 
 **第一波：纯逻辑。**互不依赖，最安全，可以并行派。
 
