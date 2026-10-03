@@ -1,0 +1,23 @@
+test_client_signature (__main__.Tests.test_client_signature) ... ok
+test_directions_are_distinct (__main__.Tests.test_directions_are_distinct) ... ok
+test_expected_next_counter_rejects_replay (__main__.Tests.test_expected_next_counter_rejects_replay) ... ok
+test_fresh_ephemeral_changes_transport (__main__.Tests.test_fresh_ephemeral_changes_transport) ... ok
+test_length_cap (__main__.Tests.test_length_cap) ... ok
+test_nonce_exhaustion (__main__.Tests.test_nonce_exhaustion) ... ok
+test_nonce_layout_is_not_hap_layout (__main__.Tests.test_nonce_layout_is_not_hap_layout) ... ok
+test_proof_and_transport_distinct (__main__.Tests.test_proof_and_transport_distinct) ... ok
+test_proof_nonce_is_distinct (__main__.Tests.test_proof_nonce_is_distinct) ... ok
+test_record_opens (__main__.Tests.test_record_opens) ... ok
+test_reordered_signature_fails (__main__.Tests.test_reordered_signature_fails) ... ok
+test_server_signature (__main__.Tests.test_server_signature) ... ok
+test_shared_secret_agrees (__main__.Tests.test_shared_secret_agrees) ... ok
+test_short_tag_fails (__main__.Tests.test_short_tag_fails) ... ok
+test_tampered_cipher_fails (__main__.Tests.test_tampered_cipher_fails) ... ok
+test_tampered_header_fails (__main__.Tests.test_tampered_header_fails) ... ok
+test_wrong_direction_fails (__main__.Tests.test_wrong_direction_fails) ... ok
+test_wrong_identity_fails (__main__.Tests.test_wrong_identity_fails) ... ok
+
+----------------------------------------------------------------------
+Ran 18 tests in 0.001s
+
+OK

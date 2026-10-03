@@ -1,0 +1,9 @@
+{
+  "command": [
+    "python3",
+    "/mnt/data/WindowShade2-round2-part4/tests/check-approval-schema.py"
+  ],
+  "returncode": 0,
+  "stdout": "{\n  \"result\": \"PASS\",\n  \"responseBodies\": 1,\n  \"schemaSHA256\": \"6d0767113e22f311381809b6b236b0dde2b99b01992879c26bf7b1ea0e003cb7\",\n  \"scope\": \"synthetic body validation; no CLI, no real approval\"\n}\n",
+  "stderr": ""
+}

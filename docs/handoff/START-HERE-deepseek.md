@@ -89,6 +89,20 @@
 > [part3/integration/package-status.json](chatgpt-review-2/part3/integration/package-status.json) 与
 > [part3/integration/MAC-ACCEPTANCE.md](chatgpt-review-2/part3/integration/MAC-ACCEPTANCE.md)。
 
+> **2026-10-03 夜：第四份（接宿主）也合完了。**配对加密的服务端 Pair-Verify 与分方向记录加密、
+> 命令审批 review 与一次性 accept 编码、手柄候选桥、输入准入、番茄钟 pending/active 分离与设置/快捷键/工具/卡片、
+> 共享岛的内容尺寸与摄像头避让都进了 `main`；原件在 [chatgpt-review-2/part4/](chatgpt-review-2/part4/)。
+> 这一份的代码此前只做过语法解析，**这次第一次在 Mac 上真编译、真跑**，修掉三处它自己看不到的问题：
+> `PairingTLV.encode` 假定 Data 从 0 开始索引，而 CryptoKit 的 `rawRepresentation` 是切片，真机一跑就崩；
+> 手柄扳机方法在 SDK 27 里的 Swift 名字是 `setModeFeedbackWithStartPosition(_:resistiveStrength:)`；
+> 共享岛接上以后 `cancelLease` 的 switch 少了两个新主人。
+> 证据：第四份纯核 72 场景/188 断言、CryptoKit 向量、Python 参考 18 例、审批 schema 1 例、
+> 隐私登记表 458 点 + 隐私页数据同源，`./build.sh --check` 与八套 AppKit 回归全过。
+>
+> 第四份自己列出的未完项没有因为“代码合进来了”就算完成：owned Codex 进程与 writer、首次 Pair-Setup、
+> Keychain、HID/鼠标/手柄的生产桥、会话与指挥的 live store 订阅、T3 窗口效果都还没有接；
+> 逐项见 [part4/REMAINING.md](chatgpt-review-2/part4/REMAINING.md)。
+
 
 **第一波：纯逻辑。**互不依赖，最安全，可以并行派。
 

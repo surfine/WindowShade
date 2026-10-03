@@ -2,7 +2,8 @@ import Cocoa
 import ScreenCaptureKit
 
 enum WindowShadeSettingsSection: Int, CaseIterable {
-  case effects, shade, browser, shortcuts, permissions, advanced
+  // privacy 追加在末尾：保住已有各栏的 rawValue，侧栏顺序下一步再调。
+  case effects, shade, browser, shortcuts, permissions, advanced, privacy
 
   private static let lastViewedKey = "WindowShade.Settings.LastViewedSection"
 
@@ -24,6 +25,7 @@ enum WindowShadeSettingsSection: Int, CaseIterable {
     case .shortcuts: return "快捷键"
     case .permissions: return "权限与启动"
     case .advanced: return "高级"
+    case .privacy: return "隐私"
     }
   }
 
@@ -35,6 +37,7 @@ enum WindowShadeSettingsSection: Int, CaseIterable {
     case .shortcuts: return "command"
     case .permissions: return "lock.shield"
     case .advanced: return "slider.horizontal.3"
+    case .privacy: return "hand.raised"
     }
   }
 }
@@ -201,6 +204,7 @@ final class DuoSettingsWindow: NSWindowController, NSWindowDelegate, NSTableView
     pages[.browser] = controller.owner?.makeWindowBrowserSettingsPage()
     pages[.shortcuts] = controller.owner?.makeShortcutsSettingsPage()
     pages[.permissions] = controller.owner?.makePermissionsSettingsPage()
+    pages[.privacy] = controller.owner?.makePrivacySettingsPage()
     select(section: controller.isDesignPreview ? .effects : .lastViewed())
 
     // 时钟只为实时预览的推帧服务。静态示意图不会自己变化，参数一改就已经
@@ -428,6 +432,7 @@ final class DuoSettingsWindow: NSWindowController, NSWindowDelegate, NSTableView
       pages[.browser] = owner.makeWindowBrowserSettingsPage()
       pages[.shortcuts] = owner.makeShortcutsSettingsPage()
       pages[.permissions] = owner.makePermissionsSettingsPage()
+      pages[.privacy] = owner.makePrivacySettingsPage()
       select(section: currentSection)
     }
   }

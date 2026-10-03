@@ -1,0 +1,13 @@
+{
+  "command": [
+    "python3",
+    "/mnt/data/WindowShade2-round2-part4/tools/stage.py",
+    "--base",
+    "/mnt/data/ws2-work4/handoff/WindowShade2-round2-handoff/candidate-repo",
+    "--out",
+    "/mnt/data/ws2-work4/candidate-part4"
+  ],
+  "returncode": 0,
+  "stdout": "{\n  \"status\": \"staged, not built\",\n  \"baseFileCount\": 1119,\n  \"overlayFileCount\": 28,\n  \"modifiedExisting\": 19,\n  \"newFiles\": 9,\n  \"candidateFiles\": 1128,\n  \"output\": \"/mnt/data/ws2-work4/candidate-part4\"\n}\n",
+  "stderr": ""
+}

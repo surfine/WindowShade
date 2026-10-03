@@ -1,0 +1,16 @@
+{
+  "command": [
+    "swiftc",
+    "-swift-version",
+    "6",
+    "-strict-concurrency=complete",
+    "-warnings-as-errors",
+    "-typecheck",
+    "/mnt/data/WindowShade2-round2-part4/reference/prototype/Core/Contracts.swift",
+    "/mnt/data/WindowShade2-round2-part4/overlay/prototype/Core/FocusTimer.swift",
+    "/mnt/data/WindowShade2-round2-part4/overlay/prototype/App/FocusTimerHost.swift"
+  ],
+  "returncode": 0,
+  "stdout": "",
+  "stderr": ""
+}

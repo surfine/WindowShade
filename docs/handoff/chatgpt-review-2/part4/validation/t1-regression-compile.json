@@ -1,0 +1,19 @@
+{
+  "command": [
+    "swiftc",
+    "-swift-version",
+    "6",
+    "-strict-concurrency=complete",
+    "-warnings-as-errors",
+    "-parse-as-library",
+    "/mnt/data/WindowShade2-round2-part4/reference/prototype/Core/Contracts.swift",
+    "/mnt/data/WindowShade2-round2-part4/overlay/prototype/Core/FocusTimer.swift",
+    "/mnt/data/ws2-work4/handoff/WindowShade2-round2-handoff/part1/tests/support/WS2TestSupport.swift",
+    "/mnt/data/ws2-work4/handoff/WindowShade2-round2-handoff/part1/packages/T1/tests/FocusTimerTests.swift",
+    "-o",
+    "/mnt/data/WindowShade2-round2-part4/.build/t1-regression"
+  ],
+  "returncode": 0,
+  "stdout": "",
+  "stderr": ""
+}

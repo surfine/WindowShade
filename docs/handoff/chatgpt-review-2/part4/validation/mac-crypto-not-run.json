@@ -1,0 +1,9 @@
+{
+  "command": [
+    "bash",
+    "/mnt/data/WindowShade2-round2-part4/tests/run-mac-crypto.sh"
+  ],
+  "returncode": 78,
+  "stdout": "",
+  "stderr": "NOT RUN: requires macOS CryptoKit\n"
+}

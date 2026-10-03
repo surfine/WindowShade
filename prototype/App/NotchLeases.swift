@@ -1,5 +1,13 @@
 import Cocoa
 
+/// 由共享岛承载的具体视图：会话、指挥、审批卡、番茄钟卡片都实现它。
+/// 尺寸由视图自己报，岛按它算高度；租约被撤销时先 `revoke()` 再换 UI。
+@MainActor protocol WS2LeaseContent: NotchInteractiveContent {
+    var inputIsCurrent: (() -> Bool) { get set }
+    var interactionSize: NSSize { get }
+    func revoke()
+}
+
 /// 刘海唯一的展示仲裁：一块屏同一时刻只有一个主人。
 ///
 /// 协调器只做准入与撤销；视图怎么收尾由 `cancel` 闭包同步完成，收尾做完协调器才发布新租约。
@@ -9,12 +17,13 @@ final class NotchLeaseHub {
     /// 编译期登记的主人表。层与协调器里的 permits 表一致，不接受表外的名字。
     enum Owner: String {
         case authorization, conductor, notchShelf, launchpad, windowBrowser, pomodoro
+        case agentSessions, agentReview
 
         var layer: WS2.Layer {
             switch self {
-            case .authorization: return .authorization
+            case .authorization, .agentReview: return .authorization
             case .conductor: return .interaction
-            case .notchShelf, .launchpad, .windowBrowser, .pomodoro: return .opened
+            case .notchShelf, .launchpad, .windowBrowser, .pomodoro, .agentSessions: return .opened
             }
         }
     }
@@ -34,6 +43,13 @@ final class NotchLeaseHub {
     private let displays: () -> Set<WS2.DisplayID>
     private let locked: () -> Bool
     private let cancelHandler: (CancelNotice) -> Void
+    private weak var controller: NotchController?
+    private weak var contentPanel: NotchPanel?
+    private var contentView: (NSView & WS2LeaseContent)?
+    private var contentHandle: WS2.LeaseHandle?
+    private var contentDismissed: ((WS2.LeaseRevocation) -> Void)?
+    private var contentDeadline: Task<Void, Never>?
+    private var authHandle: WS2.LeaseHandle?
 
     private lazy var coordinator = InteractionCoordinator(
         bootID: bootID,
@@ -50,6 +66,95 @@ final class NotchLeaseHub {
         self.displays = displays
         self.locked = locked
         self.cancelHandler = cancel
+    }
+
+    /// 接上宿主：内容型展示要知道用哪块屏，授权层要把租约交给认证控制器。
+    func attach(controller: NotchController) {
+        self.controller = controller
+        controller.authentication.acquireInteraction = { [weak self] panel in
+            self?.beginAuthorization(on: panel) ?? false
+        }
+        controller.authentication.releaseInteraction = { [weak self] in self?.endAuthorization() }
+        controller.authentication.isInteractionCurrent = { [weak self] in
+            guard let self, let lease = self.authHandle else { return false }
+            return self.coordinator.isCurrent(lease)
+        }
+    }
+
+    // MARK: - 内容型展示（会话、指挥、审批卡、卡片）
+
+    /// 显式的用户动作换掉我们自己的旧内容，但永远不换掉原生认证。
+    @discardableResult
+    func show(_ content: NSView & WS2LeaseContent, ownerID: String, layer: WS2.Layer = .opened,
+              onDismiss: @escaping (WS2.LeaseRevocation) -> Void = { _ in }) -> Bool {
+        guard !locked(), controller?.authentication.isPresenting != true,
+              let panel = controller?.authenticationPanel(),
+              let screen = panel.screen ?? NSScreen.main,
+              let display = NotchController.displayID(screen).map({ WS2.DisplayID(value: $0) }),
+              let owner = Owner(rawValue: ownerID) else { return false }
+        dismiss()
+        let now = clock.now()
+        let request = WS2.LeaseRequest(ownerID: owner.rawValue, display: display, layer: layer,
+                                       requestedAt: now, deadline: now.adding(120 * WS2.Duration.second),
+                                       containsPrivateContent: true)
+        guard case .acquired(let lease) = coordinator.acquire(request) else { return false }
+        held[display] = (owner, lease)
+        contentView = content; contentPanel = panel; contentHandle = lease; contentDismissed = onDismiss
+        content.inputIsCurrent = { [weak self] in self?.coordinator.isCurrent(lease) == true }
+        content.onCancel = { [weak self, weak content] in
+            guard let content else { return }
+            self?.dismiss(ifShowing: content)
+        }
+        panel.setInteraction(content)
+        panel.makeKeyAndOrderFront(nil)
+        contentDeadline = Task { [weak self] in
+            do { try await Task.sleep(nanoseconds: 120 * WS2.Duration.second) } catch { return }
+            guard let self, self.contentHandle == lease else { return }
+            _ = self.coordinator.snapshots(at: self.clock.now())
+        }
+        return true
+    }
+
+    /// 关掉预览并且不向审批宿主报告取消：下一步交给原生认证。
+    func handOffToAuthorization() { contentDismissed = nil; dismiss() }
+
+    func dismiss() {
+        guard let handle = contentHandle else { return }
+        coordinator.release(handle, at: clock.now())
+    }
+
+    func dismiss(ifShowing content: NSView) {
+        if contentView === content { dismiss() }
+    }
+
+    func handOffToAuthorization(ifShowing content: NSView) -> Bool {
+        guard contentView === content else { return false }
+        handOffToAuthorization(); return true
+    }
+
+    func stop() {
+        invalidate(.disabled)
+        controller?.authentication.acquireInteraction = nil
+        controller?.authentication.releaseInteraction = nil
+        controller?.authentication.isInteractionCurrent = nil
+    }
+
+    private func beginAuthorization(on panel: NotchPanel) -> Bool {
+        guard !locked(), let display = panel.displayID else { return false }
+        let now = clock.now()
+        let request = WS2.LeaseRequest(ownerID: Owner.authorization.rawValue, display: display, layer: .authorization,
+                                       requestedAt: now, deadline: now.adding(31 * WS2.Duration.second),
+                                       containsPrivateContent: true)
+        guard case .acquired(let lease) = coordinator.acquire(request) else { return false }
+        held[display] = (.authorization, lease)
+        authHandle = lease
+        return true
+    }
+
+    private func endAuthorization() {
+        guard let authHandle else { return }
+        coordinator.release(authHandle, at: clock.now())
+        self.authHandle = nil
     }
 
     // MARK: - 申请与释放
@@ -127,6 +232,20 @@ final class NotchLeaseHub {
     }
 
     private func route(_ handle: WS2.LeaseHandle, _ reason: WS2.LeaseRevocation) {
+        if contentHandle == handle {
+            let content = contentView, panel = contentPanel, callback = contentDismissed
+            contentHandle = nil; contentView = nil; contentPanel = nil; contentDismissed = nil
+            contentDeadline?.cancel(); contentDeadline = nil
+            content?.inputIsCurrent = { false }
+            content?.revoke()
+            if let content, panel?.isShowingInteraction(content) == true { panel?.setInteraction(nil) }
+            callback?(reason)
+        }
+        if authHandle == handle {
+            // 先清账：原生 cancel 会再调一次 releaseInteraction。
+            authHandle = nil
+            controller?.authentication.cancel(animated: false, restoreFocus: false)
+        }
         let owner = held[handle.display]?.owner
         held[handle.display] = nil
         guard let owner else { return }

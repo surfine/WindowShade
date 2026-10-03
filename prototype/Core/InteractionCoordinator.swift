@@ -27,7 +27,7 @@ final class InteractionCoordinator {
     private func permits(_ r: WS2.LeaseRequest) -> Bool {
         switch (r.ownerID,r.layer) {
         case ("authorization",.authorization), ("conductor",.interaction),
-             ("conductor",.opened), ("notchShelf",.opened), ("launchpad",.opened),
+             ("conductor",.opened), ("agentSessions",.opened), ("agentReview",.authorization), ("notchShelf",.opened), ("launchpad",.opened),
              ("windowBrowser",.opened), ("pomodoro",.opened): return true
         default: return false
         }

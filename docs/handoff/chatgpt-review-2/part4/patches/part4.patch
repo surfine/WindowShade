@@ -1,0 +1,1518 @@
+--- a/prototype/App/EventTap.swift
++++ b/prototype/App/EventTap.swift
+@@ -138,6 +138,10 @@
+         }
+     }
+     func handleHotKey(id: UInt32) {
++        if id == GlobalShortcut.focusTimer.hotKeyID {
++            MainActor.assumeIsolated { ws2Runtime.toggleFocus() }
++            return
++        }
+         if id == 1 {
+             toggle()
+             return
+--- a/prototype/App/FocusTimerCard.swift
++++ b/prototype/App/FocusTimerCard.swift
+@@ -1,6 +1,11 @@
+ import Cocoa
+ import QuartzCore
+-@MainActor final class FocusTimerCard: NSView {
++@MainActor final class FocusTimerCard: NSView, WS2LeaseContent {
++    var onCancel: (() -> Void)?
++    var inputIsCurrent: (() -> Bool) = { false }
++    var interactionSize: NSSize { NSSize(width: 320, height: 210) }
++    func revoke() { inputIsCurrent = { false }; ring.removeAllAnimations() }
++    override func cancelOperation(_ sender: Any?) { onCancel?() }
+     private let time = NSTextField(labelWithString:"")
+     private let detail = NSTextField(labelWithString:"")
+     private let ring = CAShapeLayer()
+@@ -37,7 +42,7 @@
+         skip.isEnabled = model.phase != .idle; end.isEnabled = model.phase != .idle
+         ring.removeAllAnimations(); ring.fillColor = NSColor.clear.cgColor; ring.lineWidth = 2
+         ring.strokeColor = (model.phase == .rest ? NSColor.systemGreen : NSColor.systemRed).cgColor
+-        let total = model.phase == .rest ? model.preset.rest : model.preset.focus
++        let total = model.phaseDuration
+         let fraction = model.phase == .idle ? 0 : Double(model.remaining(at:now))/Double(total)
+         CATransaction.begin(); CATransaction.setDisableActions(true); ring.strokeEnd = min(1,max(0,fraction)); CATransaction.commit()
+         if !model.isPaused,model.phase != .idle,window != nil {
+@@ -52,7 +57,7 @@
+         setAccessibilityLabel("\(time.stringValue)，\(detail.stringValue)")
+     }
+     override func viewDidMoveToWindow() { super.viewDidMoveToWindow(); if window == nil { ring.removeAllAnimations() } }
+-    @objc private func pauseAction() { host.handle(host.model.phase == .idle ? .start : host.model.isPaused ? .resume : .pause) }
+-    @objc private func skipAction() { host.handle(.skip) }
+-    @objc private func endAction() { host.handle(.end) }
++    @objc private func pauseAction() { guard inputIsCurrent() else { return }; host.handle(host.model.phase == .idle ? .start : host.model.isPaused ? .resume : .pause) }
++    @objc private func skipAction() { guard inputIsCurrent() else { return }; host.handle(.skip) }
++    @objc private func endAction() { guard inputIsCurrent() else { return }; host.handle(.end) }
+ }
+--- a/prototype/App/FocusTimerHost.swift
++++ b/prototype/App/FocusTimerHost.swift
+@@ -18,6 +18,11 @@
+         let result = model.handle(event,at:now,calendar:sample)
+         effects(result); onChange?(model,now); schedule()
+     }
++    func configure(preset: FocusTimer.Preset, tuckChatEnabled: Bool) {
++        model.configure(preset: preset, tuckChatEnabled: tuckChatEnabled)
++        onChange?(model, clock.now())
++        // No new timer, no phase restart, no change to the current deadline.
++    }
+     func stop() { wake?.cancel(); wake = nil; if revision < .max { revision += 1 } }
+     private func schedule() {
+         stop(); guard revision < .max else { return }
+--- a/prototype/App/GlobalShortcuts.swift
++++ b/prototype/App/GlobalShortcuts.swift
+@@ -52,6 +52,7 @@
+     case previousDisplay
+     /// 画中画：当前窗口缩成一张实时画面浮在屏幕角落；再按一下回到原处。默认不占快捷键。
+     case pictureInPicture
++    case focusTimer
+ 
+     typealias HotKey = WindowBrowserSettings.HotKey
+ 
+@@ -93,6 +94,7 @@
+         case .undoPlacement: return 32
+         case .previousDisplay: return 33
+         case .pictureInPicture: return 34
++        case .focusTimer: return 36
+         }
+     }
+ 
+@@ -134,6 +136,7 @@
+         case .undoPlacement: return "撤销上次排布"
+         case .previousDisplay: return "移到上一块屏幕"
+         case .pictureInPicture: return "画中画当前窗口"
++        case .focusTimer: return "开始或暂停番茄钟"
+         }
+     }
+ 
+@@ -157,7 +160,7 @@
+         case .magicTile: return history == .preview ? key(kVK_ANSI_M) : nil
+         case .nextDisplay: return history == .preview ? key(kVK_ANSI_N) : nil
+         case .tuckAll: return history == .preview ? key(kVK_ANSI_H) : nil
+-        case .tuckCurrent: return nil
++        case .tuckCurrent, .focusTimer: return nil
+         case .windowBrowser, .suspendPins, .topHalf, .bottomHalf, .topLeft, .topRight, .bottomLeft, .bottomRight, .leftThird,
+              .centerThird, .rightThird, .leftTwoThirds, .rightTwoThirds, .fill, .fullHeight, .larger, .smaller, .center,
+              .undoPlacement, .previousDisplay, .pictureInPicture: return nil
+--- a/prototype/App/InteractionCoordinator.swift
++++ b/prototype/App/InteractionCoordinator.swift
+@@ -27,7 +27,7 @@
+     private func permits(_ r: WS2.LeaseRequest) -> Bool {
+         switch (r.ownerID,r.layer) {
+         case ("authorization",.authorization), ("conductor",.interaction),
+-             ("conductor",.opened), ("notchShelf",.opened), ("launchpad",.opened),
++             ("conductor",.opened), ("agentSessions",.opened), ("agentReview",.authorization), ("notchShelf",.opened), ("launchpad",.opened),
+              ("windowBrowser",.opened), ("pomodoro",.opened): return true
+         default: return false
+         }
+--- a/prototype/App/LaunchpadToday.swift
++++ b/prototype/App/LaunchpadToday.swift
+@@ -47,9 +47,9 @@
+         let toolsHeight: CGFloat = 30
+         let toolRow = CGRect(x: rightX, y: month.maxY - toolsHeight, width: column, height: toolsHeight)
+         text("实时活动", frame: CGRect(x: rightX + 4, y: y, width: column - 8, height: 28), font: 20, weight: .semibold)
+-        let tools: [(String, NotchActivityAction)] = [("音乐", .enableMusic), ("隔空投送", .airDrop), ("路线", .route), ("语音备忘录", .voiceMemos)]
++        let tools: [(String, NotchActivityAction)] = [("音乐", .enableMusic), ("隔空投送", .airDrop), ("路线", .route), ("语音备忘录", .voiceMemos), ("番茄钟", .focusOpen)]
+         for (index, tool) in tools.enumerated() {
+-            let rect = CGRect(x: toolRow.minX + CGFloat(index) * column / 4, y: toolRow.minY, width: column / 4 - 4, height: toolsHeight)
++            let rect = CGRect(x: toolRow.minX + CGFloat(index) * column / CGFloat(tools.count), y: toolRow.minY, width: column / CGFloat(tools.count) - 4, height: toolsHeight)
+             plate(rect, radius: 15)
+             text(tool.0, frame: rect.insetBy(dx: 4, dy: 6), font: 12, alignment: .center)
+             items.append(Item(frame: rect, title: tool.0, action: .activityTool(tool.1)))
+--- a/prototype/App/Notch.swift
++++ b/prototype/App/Notch.swift
+@@ -1424,6 +1424,10 @@
+     private var activitySelection: String?
+     private var authenticationView: (NSView & NotchInteractiveContent)?
+     var isAuthenticating: Bool { authenticationView != nil }
++    func isShowingInteraction(_ view: NSView) -> Bool { authenticationView === view }
++    private var interactionSize: NSSize {
++        (authenticationView as? any WS2LeaseContent)?.interactionSize ?? NSSize(width:344,height:68)
++    }
+     private var activitiesShown: Bool { !isAuthenticating && !activityItems.isEmpty && dropState == .none && alertInfo == nil }
+     func setAuthentication(_ view: NotchAuthenticationView?, animated: Bool = true) {
+         setInteraction(view, animated: animated)
+@@ -1535,7 +1539,7 @@
+ 
+     private func showActivityMenu(_ event: NSEvent) {
+         let menu = NSMenu()
+-        let destinations: [(String, String)] = [("实时活动", "today"), ("音乐", "enableMusic"), ("隔空投送", "airDrop"), ("路线", "route"), ("语音备忘录", "voiceMemos")]
++        let destinations: [(String, String)] = [("实时活动", "today"), ("音乐", "enableMusic"), ("隔空投送", "airDrop"), ("路线", "route"), ("语音备忘录", "voiceMemos"), ("番茄钟", "focusOpen")]
+         for (title, action) in destinations {
+             let item = NSMenuItem(title: title, action: #selector(activityMenuAction(_:)), keyEquivalent: "")
+             item.representedObject = action; item.target = self; menu.addItem(item)
+@@ -1883,9 +1887,11 @@
+     private func baseTarget() -> (rect: NSRect, style: IslandStyle) {
+         if isAuthenticating {
+             let screenWidth = screen?.frame.width ?? 1000
+-            let width = min(screenWidth - 44, max(notch.width, 344))
++            let width = max(240, min(screenWidth - 44, max(notch.width, min(640, interactionSize.width))))
+             // Actual notch: content below the camera. Other displays: a detached, fully rounded capsule below the menu bar.
+-            let height = isVirtual ? 68 : notch.height + 68
++            let available = max(68, (screen?.visibleFrame.height ?? 600) - 80)
++            let contentHeight = min(available, max(68, min(480, interactionSize.height)))
++            let height = isVirtual ? contentHeight : notch.height + contentHeight
+             let top = isVirtual ? notch.minY - 8 : notch.maxY
+             return (NSRect(x: notch.midX - width / 2, y: top - height, width: width, height: height),
+                     IslandStyle(cornerRadius: isVirtual ? 34 : 24, allCorners: isVirtual, fill: .black, border: 0.5))
+@@ -2024,7 +2030,10 @@
+             self.settledGeneration = generation
+             self.updateVisibility()
+         }
+-        canvas.placeAuthentication(in: local)
++        // The physical camera area is not usable content height.
++        let interactionRect = NSRect(x:local.minX,y:local.minY,width:local.width,
++            height:max(0,local.height - (isVirtual ? 0 : notch.height)))
++        canvas.placeAuthentication(in: interactionRect)
+     }
+ 
+     /// 肩这一次怎么动（§5.1 S3、S5）。肩和硬件的肩重合、或者岛没画时，肩是看不出来的：
+@@ -2180,7 +2189,9 @@
+         current?.isHidden = view != nil
+     }
+     func placeAuthentication(in rect: NSRect) {
+-        authenticationView?.frame = NSRect(x: rect.minX, y: rect.minY, width: rect.width, height: 68)
++        let requested = (authenticationView as? any WS2LeaseContent)?.interactionSize.height ?? 68
++        authenticationView?.frame = NSRect(x: rect.minX, y: rect.minY, width: rect.width,
++                                           height: min(rect.height, max(68, min(480, requested))))
+         authenticationView?.layoutSubtreeIfNeeded()
+     }
+     private var shown: Content?
+--- a/prototype/App/NotchActivityController.swift
++++ b/prototype/App/NotchActivityController.swift
+@@ -11,11 +11,11 @@
+     }
+     var onChange: (([NotchActivity], String?) -> Void)?
+     var ws2FocusAction: ((NotchActivityAction) -> Void)?
+-    func ws2PublishFocus(title: String?, subtitle: String = "", paused: Bool = false) {
++    func ws2PublishFocus(title: String?, subtitle: String = "", paused: Bool = false, progress: Double? = nil) {
+         guard Self.isEnabled, !suspended else { return }
+         configure()
+         if let title {
+-            put(id: "ws2.focus", kind: .focus, title: title, subtitle: subtitle, symbol: "timer", paused: paused)
++            put(id: "ws2.focus", kind: .focus, title: title, subtitle: subtitle, symbol: "timer", progress: progress, paused: paused)
+         } else if let old = store.activities.first(where: { $0.id == "ws2.focus" }) {
+             store.end(id: old.id, generation: old.generation, now: ProcessInfo.processInfo.systemUptime)
+         }
+@@ -132,6 +132,7 @@
+             ws2FocusAction?(action); return
+         }
+         switch action {
++        case .focusOpen: ws2FocusAction?(.focusOpen)
+         case .focusTogglePause, .focusSkip: return
+         case .enableMusic: sources.enableMusic()
+         case .playPause: sources.musicCommand(.playPause)
+--- a/prototype/App/NotchActivityView.swift
++++ b/prototype/App/NotchActivityView.swift
+@@ -31,7 +31,7 @@
+         addSubview(viewport); viewport.addSubview(strip)
+         let actions: [(String, String, NotchActivityAction)] = [
+             ("音乐", "music.note", .enableMusic), ("隔空投送", "airdrop", .airDrop),
+-            ("路线", "map", .route), ("语音备忘录", "waveform", .voiceMemos)]
++            ("路线", "map", .route), ("语音备忘录", "waveform", .voiceMemos), ("番茄钟", "timer", .focusOpen)]
+         tools = actions.map { title, symbol, action in
+             let button = makeButton(title, symbol: symbol)
+             button.identifier = .init(action.rawValue); button.target = self; button.action = #selector(tool(_:))
+--- a/prototype/App/NotchAuthentication.swift
++++ b/prototype/App/NotchAuthentication.swift
+@@ -30,6 +30,10 @@
+     private var observers: [NSObjectProtocol] = []
+     static let lifetime: TimeInterval = 30
+     var isPresenting: Bool { presentation != nil }
++    // Runtime assigns all three together. Nil preserves the legacy standalone diagnostic fixture.
++    var acquireInteraction: ((NotchPanel) -> Bool)?
++    var releaseInteraction: (() -> Void)?
++    var isInteractionCurrent: (() -> Bool)?
+     /// The single native evaluation for a request (KEY-05); replaced in tests.
+     var evaluate: (LAContext, String, @escaping @Sendable (Bool, Error?) -> Void) -> Void = { context, reason, reply in
+         context.evaluatePolicy(.deviceOwnerAuthenticationWithBiometrics, localizedReason: reason, reply: reply)
+@@ -74,6 +78,9 @@
+         if isPresenting && context == nil { cancel(animated: false, restoreFocus: false) }
+         guard !isPresenting else { completion(nil); return }
+         guard let owner, NotchController.isEnabled, let panel = owner.authenticationPanel() else { completion(nil); return }
++        if let acquireInteraction, !acquireInteraction(panel) { completion(nil); return }
++        var adoptedInteraction = false
++        defer { if !adoptedInteraction { releaseInteraction?() } }
+         guard !panel.isAuthenticating else { completion(nil); return }
+         guard let publicKey = try? service.key.prepare() else {
+             alert(AuthorizationCopy.unavailable, on: panel); completion(nil); return
+@@ -92,6 +99,7 @@
+         deadline = ProcessInfo.processInfo.systemUptime + Self.lifetime
+         let view = NotchAuthenticationView(context: context, reason: AuthorizationCopy.action(for: target))
+         view.onCancel = { [weak self] in self?.cancel() }
++        adoptedInteraction = true
+         self.panel = panel; self.context = context; evaluating = false; self.presentation = view; self.completion = completion
+         self.request = request; self.target = target; self.publicKey = publicKey
+         previousApplication = NSWorkspace.shared.frontmostApplication
+@@ -157,6 +165,7 @@
+     /// Still this request, still in time, still on its visible host.
+     private func isCurrent(_ transaction: Int) -> Bool {
+         guard epoch == transaction, context != nil, evaluating else { return false }
++        if let isInteractionCurrent, !isInteractionCurrent() { cancel(animated:false,restoreFocus:false); return false }
+         guard ProcessInfo.processInfo.systemUptime < deadline else { cancel(animated: false); return false }
+         guard let panel, panel.isVisible, presentation?.window === panel else { cancel(animated: false); return false }
+         return true
+@@ -182,6 +191,7 @@
+         let reply = completion; completion = nil
+         panel?.setAuthentication(nil, animated: animated); panel?.resignKey()
+         panel = nil; presentation = nil
++        releaseInteraction?()
+         let previous = previousApplication; previousApplication = nil
+         if restoreFocus, NSWorkspace.shared.frontmostApplication?.processIdentifier == ProcessInfo.processInfo.processIdentifier,
+            let previous, previous.processIdentifier != ProcessInfo.processInfo.processIdentifier, !previous.isTerminated {
+--- a/prototype/App/Preferences.swift
++++ b/prototype/App/Preferences.swift
+@@ -831,6 +831,7 @@
+             recorderRow(.slideOver, subtitle: "窗口靠到屏幕边、浮在前面；再按一次收到屏幕边，或拉出来"),
+             recorderRow(.pictureInPicture, subtitle: "窗口缩成一张实时画面浮在屏幕角落，再按一次回到原处；把标题栏拖到屏幕角落停一下也行"),
+             recorderRow(.launchpad, subtitle: "列出所有 App；把图标拖到屏幕边就侧拉，拖到一边就开在那一半"),
++            recorderRow(.focusTimer, subtitle: "开始、暂停或继续同一个番茄钟；默认不占用任何快捷键"),
+         ])
+         stack.addArrangedSubview(makePrefGroupLabel("当前窗口"))
+         stack.addArrangedSubview(window)
+--- a/prototype/App/WS2AgentSessionView.swift
++++ b/prototype/App/WS2AgentSessionView.swift
+@@ -1,6 +1,7 @@
+ import Cocoa
+ /// 有界原生会话列表；observed 会话没有 Stop 按钮。审批卡由 A4 独占。
+-@MainActor final class WS2AgentSessionView: NSView, NotchInteractiveContent {
++@MainActor final class WS2AgentSessionView: NSView, WS2LeaseContent {
++    var interactionSize: NSSize { NSSize(width:520,height:320) }
+     var onCancel: (() -> Void)?
+     var open: ((WS2.Context) -> Void)?
+     var stop: ((WS2.Context) -> Void)?
+--- a/prototype/App/WS2AppRuntime.swift
++++ b/prototype/App/WS2AppRuntime.swift
+@@ -4,6 +4,10 @@
+     private weak var owner: AppDelegate?
+     let clock = WS2ContinuousClock()
+     private(set) var focus: FocusTimerHost!
++    private(set) var island: WS2IslandCoordinator!
++    private weak var focusCard: FocusTimerCard?
++    private var defaultsObserver: NSObjectProtocol?
++    private var lastMenuTitle = ""
+     private var lockReasons = Set<String>()
+     private var workspaceObservers: [NSObjectProtocol] = []
+     private var distributedObservers: [NSObjectProtocol] = []
+@@ -11,7 +15,7 @@
+     init(owner: AppDelegate) {
+         self.owner = owner
+         let clock = self.clock
+-        focus = FocusTimerHost(model: FocusTimer(bootID: UUID(), tuckChatEnabled: false),clock:clock,
++        focus = FocusTimerHost(model: FocusTimer(bootID: UUID(), preset: WS2FocusSettings.preset, tuckChatEnabled: WS2FocusSettings.tuckChat),clock:clock,
+             calendarSample: { now, deadline in
+                 let date = Date(), calendar = Calendar.current
+                 func day(_ date: Date) -> String {
+@@ -21,10 +25,16 @@
+                 let delta = deadline.map { (Double($0.nanoseconds)-Double(now.nanoseconds))/1_000_000_000 } ?? 0
+                 return .init(today:day(date),deadlineDay:day(date.addingTimeInterval(delta)))
+             }, effects:{ [weak self] effects in self?.focusWindowEffects?(effects) })
+-        focus.onChange = { [weak self] _,_ in self?.publish() }
++        island = WS2IslandCoordinator(owner:owner.notch,clock:clock)
++        focus.onChange = { [weak self] model,now in
++            self?.focusCard?.render(model,at:now); self?.publish()
++        }
++        defaultsObserver = NotificationCenter.default.addObserver(forName:UserDefaults.didChangeNotification,
++            object:nil,queue:.main) { [weak self] _ in MainActor.assumeIsolated { self?.refreshFocusSettings() } }
+         owner.notch.activities.ws2FocusAction = { [weak self] action in
+             guard let self else { return }
+             switch action {
++            case .focusOpen, .open: self.open()
+             case .end: self.focus.handle(.end)
+             case .focusSkip: self.focus.handle(.skip)
+             case .focusTogglePause: self.focus.handle(self.focus.model.isPaused ? .resume : .pause)
+@@ -40,7 +50,9 @@
+                     switch event {
+                     case .locked: self.setLockReason("session", locked: true)
+                     case .unlocked: self.setLockReason("session", locked: false)
+-                    default: self.focus.handle(event)
++                    default:
++                        if case .sleep = event { self.island.invalidate(.sleeping) }
++                        self.focus.handle(event)
+                     }
+                 }
+             })
+@@ -64,25 +76,58 @@
+         if lockReasons.isEmpty && AuthorizationService.shared.lockState() == .unlocked {
+             focus.handle(.unlocked)
+         } else {
++            island.invalidate(.locked)
+             focus.handle(.locked)
+         }
+     }
+     var menuTitle: String { "番茄钟 · " + focus.model.compactText(at:clock.now()) }
+     func open() {
+         guard let owner,NotchController.isEnabled,NotchActivityController.isEnabled, AuthorizationService.shared.lockState() == .unlocked else { return }
++        refreshFocusSettings()
++        let card = FocusTimerCard(host:focus)
++        guard island.show(card,ownerID:"pomodoro",onDismiss:{ [weak self] _ in
++            self?.focusCard = nil; self?.focus.presentation = .compact
++        }) else { return }
++        focusCard = card; focus.presentation = .expanded
+         if focus.model.phase == .idle { focus.handle(.start) }
+-        focus.presentation = .compact
+-        publish(); owner.notch.activities.select("ws2.focus"); owner.openActivitiesAction()
++        card.render(focus.model,at:clock.now())
++        // The explicit timer action starts once, only after a visible host has been acquired.
++        owner.notch.activities.select("ws2.focus")
++    }
++    func refreshFocusSettings() {
++        let preset = WS2FocusSettings.preset, tuck = WS2FocusSettings.tuckChat
++        guard focus.model.preset != preset || focus.model.tuckChatEnabled != tuck else { return }
++        focus.configure(preset:preset,tuckChatEnabled:tuck)
++    }
++    func toggleFocus() {
++        guard NotchController.isEnabled, NotchActivityController.isEnabled,
++              AuthorizationService.shared.lockState() == .unlocked else { return }
++        refreshFocusSettings()
++        focus.handle(focus.model.phase == .idle ? .start : focus.model.isPaused ? .resume : .pause)
++        if focusCard == nil { focus.presentation = .compact }
++    }
++    @discardableResult func showSessions(_ sessions:[AgentSessions.Session], open:@escaping(WS2.Context)->Void,
++                                         stop:@escaping(WS2.Context)->Void) -> Bool {
++        let view = WS2AgentSessionView(frame:.zero); view.render(sessions); view.open = open; view.stop = stop
++        return island.show(view,ownerID:"agentSessions")
++    }
++    @discardableResult func showConductor(_ state:ConductorNotch, action:@escaping(WS2ConductorView.Action)->Void) -> Bool {
++        let view = WS2ConductorView(frame:.zero)
++        guard view.render(state) else { return false }
++        view.onAction = action
++        return island.show(view,ownerID:"conductor")
+     }
+     private func publish() {
+         guard let owner else { return }
+         let m = focus.model,now = clock.now()
+         owner.notch.activities.ws2PublishFocus(title:m.phase == .idle ? nil : (m.phase == .focus ? "专注" : "休息")+" · "+m.compactText(at:now),
+-                                              subtitle:m.isPaused ? "已暂停" : "今天完成 \(m.completedToday) 个",paused:m.isPaused)
+-        owner.rebuildMenu()
++                                              subtitle:m.isPaused ? "已暂停" : "今天完成 \(m.completedToday) 个",paused:m.isPaused,progress:m.phase == .idle ? nil : m.progress(at:now))
++        let title = menuTitle + (m.isPaused ? ":paused" : "") + ":" + m.phase.rawValue
++        if title != lastMenuTitle { lastMenuTitle = title; owner.rebuildMenu() }
+     }
+     func stop() {
+-        focus?.stop()
++        island?.stop(); focus?.stop()
++        if let defaultsObserver { NotificationCenter.default.removeObserver(defaultsObserver) }; defaultsObserver = nil
+         workspaceObservers.forEach { NSWorkspace.shared.notificationCenter.removeObserver($0) }
+         distributedObservers.forEach { DistributedNotificationCenter.default().removeObserver($0) }
+         workspaceObservers=[];distributedObservers=[]
+--- /dev/null
++++ b/prototype/App/WS2CodexApprovalHost.swift
+@@ -0,0 +1,204 @@
++import Cocoa
++/// An owned app-server session's review/allow path. No shell is launched by this type.
++/// `deliver` MUST synchronously admit a bounded write for THIS connection and deadline.
++/// See workorders/02-审批与进程.md: a generic unbounded async closure is not a conforming writer.
++@MainActor final class WS2CodexApprovalHost {
++    private(set) var wire: CodexWire
++    let connectionID: UUID
++    private let clock: any WS2Clock
++    private let island: WS2IslandCoordinator
++    private let authentication: NotchAuthenticationController
++    private let service: AuthorizationService
++    private let scopeStillValid: (WS2ApprovalReview) -> Bool
++    private let currentContext: () -> WS2.Context?
++    private let deliver: (UUID, [Data], WS2.Instant) -> Bool
++    private let closeTransport: () -> Void
++    private var gate = WS2ApprovalReviewGate()
++    private var reviews: [WS2.RequestID:WS2ApprovalReview] = [:]
++    private var authInFlight = false
++    private var closed = false
++    private weak var presentedView: WS2CommandReviewView?
++    private var presentationTask: Task<Void,Never>?
++    var onEvent: ((CodexWire.Event) -> Void)?
++    var onUnavailable: ((String) -> Void)?
++    init(wire: CodexWire, connectionID: UUID, clock: any WS2Clock, island: WS2IslandCoordinator,
++         authentication: NotchAuthenticationController, service: AuthorizationService? = nil,
++         currentContext: @escaping () -> WS2.Context?, scopeStillValid: @escaping (WS2ApprovalReview) -> Bool,
++         deliver: @escaping (UUID,[Data],WS2.Instant) -> Bool, closeTransport: @escaping () -> Void) {
++        self.wire = wire; self.connectionID = connectionID; self.clock = clock; self.island = island
++        self.authentication = authentication; self.service = service ?? .shared
++        self.currentContext = currentContext; self.scopeStillValid = scopeStillValid; self.deliver = deliver; self.closeTransport = closeTransport
++    }
++    func receive(_ bytes: Data) {
++        guard !closed else { return }
++        do {
++            let events = try wire.ingest(bytes,now:clock.now())
++            for event in events {
++                if case .approval(let id,let method,let params) = event {
++                    if let context = currentContext(), let thread = wire.threadID, let turn = wire.turnID,
++                       let review = try? WS2ApprovalReview.command(connection:connectionID,id:id,method:method,params:params,
++                            context:context,thread:thread,turn:turn,now:clock.now()), scopeStillValid(review), reviews.count < 8 {
++                        reviews[id] = review
++                    } else {
++                        // Owned app-server has no guaranteed native UI to hand off to. Decline, do not silently allow.
++                        try wire.denyApproval(id)
++                        onUnavailable?("这项操作无法在这里完整确认，已拒绝这次请求")
++                    }
++                }
++                onEvent?(event)
++            }
++            let removed = reviews.filter { wire.approvals[$0.key] != $0.value.params }.map(\.key)
++            for id in removed { reviews[id] = nil }
++            if let current = gate.current, !isCurrent(current) { abandonCurrent(decline:false) }
++            flush(deadline:clock.now().adding(WS2.Duration.second))
++        } catch { invalidate() }
++    }
++    @discardableResult func present(_ id: WS2.RequestID) -> Bool {
++        guard !closed, gate.current == nil, let review = reviews[id], isCurrent(review), scopeStillValid(review),
++              clock.now() < review.deadline else { return false }
++        gate.replace(with:review)
++        let view = WS2CommandReviewView(review:review,clock:clock)
++        view.confirm = { [weak self] began,sequence in self?.confirm(beganAt:began,sequence:sequence) }
++        view.decline = { [weak self] in self?.abandonCurrent(decline:true) }
++        guard island.show(view,ownerID:"agentReview",layer:.authorization,onDismiss:{ [weak self] _ in
++            self?.abandonCurrent(decline:true)
++        }) else { gate.clear(); return false }
++        presentedView = view
++        presentationTask = Task { [weak self,weak view] in
++            // Wait for the existing island's layout/animation completion, not an assumed fixed animation length.
++            for _ in 0..<100 {
++                do { try await Task.sleep(nanoseconds:10_000_000) } catch { return }
++                guard let self, let view, self.gate.current == review, self.isCurrent(review) else { return }
++                if let panel = view.window as? NotchPanel, panel.isVisible, panel.isSettledForProbe,
++                   view.bounds.width > 0, view.bounds.height > 0, view.inputIsCurrent() {
++                    do { try self.gate.didPresent(at:self.clock.now(),after:0); view.enableConfirmation() }
++                    catch { self.abandonCurrent(decline:true) }
++                    return
++                }
++            }
++            self?.abandonCurrent(decline:true)
++        }
++        return true
++    }
++    private func confirm(beganAt: WS2.Instant, sequence: UInt64) {
++        guard let review = gate.current, isCurrent(review), scopeStillValid(review) else { abandonCurrent(decline:true); return }
++        do { try gate.beginConfirmation(beganAt:beganAt,sequence:sequence,now:clock.now(),current:review,
++                                        unlocked:service.lockState() == .unlocked) }
++        catch { return }
++        guard let target = try? target(review) else { abandonCurrent(decline:true); return }
++        presentationTask?.cancel(); presentationTask = nil
++        guard let view = presentedView, island.handOffToAuthorization(ifShowing:view) else {
++            abandonCurrent(decline:true); return
++        }
++        presentedView = nil; authInFlight = true
++        authentication.authorize(target) { [weak self] grant in
++            guard let self else { return }; self.authInFlight = false
++            guard let grant, self.isCurrent(review), self.scopeStillValid(review),
++                  self.gate.mayConsume(current:review,now:self.clock.now(),unlocked:self.service.lockState() == .unlocked),
++                  let actualTarget = try? self.target(review) else { self.abandonCurrent(decline:true); return }
++            // This call consumes a genuine ledger grant against the exact immutable request. Never replace with a Bool.
++            guard self.service.consume(grant,purpose:.approveAgentAction,currentTarget:actualTarget) == nil else {
++                self.abandonCurrent(decline:true); return
++            }
++            // No await or delayed animation lies between recheck, consume and response admission.
++            do {
++                try self.wire.enqueueApprovalResponse(review.id,expectedMethod:review.method,expectedParams:review.params,decision:.acceptOnce)
++                self.reviews[review.id] = nil; self.gate.clear()
++                self.flush(deadline:min(review.deadline,self.clock.now().adding(WS2.Duration.second)))
++            } catch { self.invalidate() } // consumed grants and ambiguous writes never get retried
++        }
++    }
++    private func target(_ review: WS2ApprovalReview) throws -> AuthTarget {
++        .init(purpose:.approveAgentAction,kind:"agent.command.once.v1",fields:[.init(name:"review",value:Array(try review.targetBytes()))])
++    }
++    private func isCurrent(_ review: WS2ApprovalReview) -> Bool {
++        !closed && review.connection == connectionID && currentContext() == review.context && wire.state == .ready &&
++        wire.threadID == review.thread && wire.turnID == review.turn && wire.approvals[review.id] == review.params &&
++        wire.approvalMethods[review.id] == review.method && clock.now() < review.deadline
++    }
++    func tick() {
++        guard !closed else { return }
++        _ = wire.tick(now:clock.now())
++        if wire.state == .closed { invalidate(); return }
++        for id in reviews.filter({ clock.now() >= $0.value.deadline }).map(\.key) {
++            try? wire.denyApproval(id); reviews[id] = nil
++            if gate.current?.id == id { abandonCurrent(decline:false) }
++        }
++        flush(deadline:clock.now().adding(WS2.Duration.second))
++    }
++    private func flush(deadline: WS2.Instant) {
++        let frames = wire.drain(); guard !frames.isEmpty else { return }
++        if clock.now() >= deadline || !deliver(connectionID,frames,deadline) { invalidate() }
++    }
++    private func abandonCurrent(decline: Bool) {
++        let id = gate.current?.id, oldView = presentedView
++        presentedView = nil
++        gate.clear(); presentationTask?.cancel(); presentationTask = nil
++        // Clearing first prevents a cancel callback from recursively declining the same request.
++        if authInFlight { authInFlight = false; authentication.cancel() }
++        if let oldView { island.dismiss(ifShowing:oldView) }
++        if let id { reviews[id] = nil; if decline { try? wire.denyApproval(id); flush(deadline:clock.now().adding(WS2.Duration.second)) } }
++    }
++    func invalidate() {
++        guard !closed else { return }; closed = true
++        abandonCurrent(decline:false); reviews.removeAll(); wire.close(); closeTransport()
++    }
++}
++
++@MainActor private final class WS2ReviewButton: NSButton {
++    let clock: any WS2Clock
++    private var sequence: UInt64 = 0
++    private var press: (WS2.Instant,UInt64)?
++    var freshAction: ((WS2.Instant,UInt64)->Void)?
++    init(clock: any WS2Clock) {
++        self.clock = clock; super.init(frame:.zero); title = "用 Touch ID 确认"; bezelStyle = .rounded
++        target = self; action = #selector(fire)
++    }
++    required init?(coder:NSCoder) { nil }
++    private func begin() -> Bool {
++        guard isEnabled, sequence < .max else { return false }; sequence += 1; press = (clock.now(),sequence); return true
++    }
++    override func mouseDown(with event:NSEvent) { guard begin() else { return }; defer { press = nil }; super.mouseDown(with:event) }
++    override func keyDown(with event:NSEvent) {
++        guard !event.isARepeat, [" ","\r"].contains(event.charactersIgnoringModifiers ?? ""),begin() else { super.keyDown(with:event);return }
++        defer { press = nil }; super.keyDown(with:event)
++    }
++    override func accessibilityPerformPress() -> Bool {
++        guard begin() else { return false }; defer { press = nil }; performClick(nil); return true
++    }
++    @objc private func fire() { guard let press else { return }; freshAction?(press.0,press.1) }
++}
++@MainActor final class WS2CommandReviewView: NSView, WS2LeaseContent {
++    var onCancel: (() -> Void)?
++    var inputIsCurrent: (() -> Bool) = { false }
++    var interactionSize: NSSize { NSSize(width:600,height:360) }
++    var confirm: ((WS2.Instant,UInt64)->Void)?
++    var decline: (() -> Void)?
++    private let approval: WS2ReviewButton
++    private let text = NSTextView()
++    init(review:WS2ApprovalReview,clock:any WS2Clock) {
++        approval = WS2ReviewButton(clock:clock); super.init(frame:.zero)
++        let stack=NSStackView(); stack.orientation = .vertical; stack.alignment = .leading; stack.spacing=10
++        stack.translatesAutoresizingMaskIntoConstraints=false;addSubview(stack)
++        NSLayoutConstraint.activate([stack.leadingAnchor.constraint(equalTo:leadingAnchor,constant:16),stack.trailingAnchor.constraint(equalTo:trailingAnchor,constant:-16),stack.topAnchor.constraint(equalTo:topAnchor,constant:16),stack.bottomAnchor.constraint(equalTo:bottomAnchor,constant:-16)])
++        let heading=NSTextField(labelWithString:"允许这次命令？");heading.font = .systemFont(ofSize:14,weight:.semibold);stack.addArrangedSubview(heading)
++        let scroll=NSScrollView();scroll.hasVerticalScroller=true;scroll.borderType = .bezelBorder
++        text.isEditable=false;text.isSelectable=true;text.isRichText=false;text.font = .monospacedSystemFont(ofSize:12,weight:.regular)
++        text.string = "项目：" + WS2ApprovalReview.visible(review.context.projectID) +
++            "\n会话：" + WS2ApprovalReview.visible(review.context.session.id) +
++            "\n线程：" + WS2ApprovalReview.visible(review.thread) + "\n轮次：" + WS2ApprovalReview.visible(review.turn) +
++            "\n\n工作目录：\n" + WS2ApprovalReview.visible(review.cwd) + "\n\n命令：\n" + review.visibleCommand
++        text.textContainer?.widthTracksTextView=true;text.isHorizontallyResizable=false;text.isVerticallyResizable=true
++        text.minSize=NSSize(width:0,height:0);text.maxSize=NSSize(width:CGFloat.greatestFiniteMagnitude,height:CGFloat.greatestFiniteMagnitude)
++        text.autoresizingMask=[.width];scroll.documentView=text;stack.addArrangedSubview(scroll)
++        scroll.widthAnchor.constraint(equalTo:stack.widthAnchor).isActive=true;scroll.heightAnchor.constraint(greaterThanOrEqualToConstant:220).isActive=true
++        approval.isEnabled=false;approval.freshAction={ [weak self] began,sequence in guard let self,self.inputIsCurrent() else{return};self.confirm?(began,sequence) }
++        let no=NSButton(title:"拒绝",target:self,action:#selector(refuse));no.bezelStyle = .rounded
++        let row=NSStackView(views:[no,approval]);row.orientation = .horizontal;row.spacing=12;stack.addArrangedSubview(row)
++    }
++    required init?(coder:NSCoder){nil}
++    func enableConfirmation(){approval.isEnabled=inputIsCurrent()}
++    func revoke(){inputIsCurrent = { false };approval.isEnabled=false;text.string="";confirm=nil;decline=nil}
++    @objc private func refuse(){guard inputIsCurrent() else{return};decline?()}
++    override func cancelOperation(_ sender:Any?){onCancel?()}
++}
+--- a/prototype/App/WS2ConductorView.swift
++++ b/prototype/App/WS2ConductorView.swift
+@@ -1,7 +1,8 @@
+ import Cocoa
+ /// 可插入现有 NotchPanel.setInteraction 的原生视图；不创建窗口，不批准助手。
+-@MainActor final class WS2ConductorView: NSView, NotchInteractiveContent {
+-    enum Action { case sendDraft, discardDraft, confirmCost, stopTurn, leave, session(Int) }
++@MainActor final class WS2ConductorView: NSView, WS2LeaseContent {
++    var interactionSize: NSSize { NSSize(width:420,height:280) }
++    enum Action { case sendDraft(String), discardDraft, confirmCost, stopTurn, leave, session(Int) }
+     var onCancel: (() -> Void)?
+     var onAction: ((Action) -> Void)?
+     private let stack = NSStackView(), title = NSTextField(wrappingLabelWithString: "")
+@@ -15,10 +16,13 @@
+     override init(frame:NSRect) {
+         super.init(frame:frame); wantsLayer = true
+         stack.orientation = .vertical; stack.alignment = .leading; stack.spacing = 8
+-        stack.translatesAutoresizingMaskIntoConstraints = false; addSubview(stack)
+-        NSLayoutConstraint.activate([stack.leadingAnchor.constraint(equalTo:leadingAnchor,constant:16),
+-            stack.trailingAnchor.constraint(equalTo:trailingAnchor,constant:-16),stack.topAnchor.constraint(equalTo:topAnchor,constant:12),
+-            stack.bottomAnchor.constraint(lessThanOrEqualTo:bottomAnchor,constant:-12)])
++        let scroll=NSScrollView();scroll.drawsBackground=false;scroll.hasVerticalScroller=true
++        scroll.translatesAutoresizingMaskIntoConstraints=false;addSubview(scroll)
++        NSLayoutConstraint.activate([scroll.leadingAnchor.constraint(equalTo:leadingAnchor,constant:16),
++            scroll.trailingAnchor.constraint(equalTo:trailingAnchor,constant:-16),scroll.topAnchor.constraint(equalTo:topAnchor,constant:12),
++            scroll.bottomAnchor.constraint(equalTo:bottomAnchor,constant:-12)])
++        stack.translatesAutoresizingMaskIntoConstraints=false;scroll.documentView=stack
++        stack.widthAnchor.constraint(equalTo:scroll.contentView.widthAnchor).isActive=true
+         title.font = .systemFont(ofSize:13,weight:.semibold); title.textColor = .white
+         detail.font = .systemFont(ofSize:11); detail.textColor = .secondaryLabelColor
+         editor.setAccessibilityLabel("待发送草稿"); editor.isEditable = true
+@@ -46,7 +50,7 @@
+         case .sessions(let labels,let selected):
+             for (i,label) in labels.prefix(64).enumerated() { button((i == selected ? "✓ " : "")+label,.session(i)) }
+         case .draft(let text):
+-            editor.stringValue = text; stack.addArrangedSubview(editor); button("发送",.sendDraft); button("丢弃",.discardDraft)
++            editor.stringValue = text; stack.addArrangedSubview(editor); button("发送",.sendDraft(text)); button("丢弃",.discardDraft)
+         case .cost: button("确认费用",.confirmCost); button("取消",.leave)
+         case .running, .steering: button("停止这一轮",.stopTurn)
+         case .discardDraft: button("丢弃草稿",.discardDraft)
+@@ -62,7 +66,12 @@
+     }
+     @objc private func pressed(_ sender:NSButton) {
+         guard inputIsCurrent(),let action = buttons[ObjectIdentifier(sender)] else { return }
+-        onAction?(action)
++        if case .sendDraft = action {
++            guard editor.stringValue.utf8.count <= ConductorSession.maximumDraftBytes else {
++                detail.stringValue = "草稿过长，请缩短后发送"; return
++            }
++            onAction?(.sendDraft(editor.stringValue))
++        } else { onAction?(action) }
+     }
+     override func cancelOperation(_ sender:Any?) { onCancel?() }
+     func revoke() { buttons.removeAll(); inputIsCurrent = { false }; editor.stringValue = ""; title.stringValue = ""; detail.stringValue = ""; path.path=nil }
+--- /dev/null
++++ b/prototype/App/WS2FocusSettings.swift
+@@ -0,0 +1,39 @@
++import Cocoa
++@MainActor enum WS2FocusSettings {
++    static let presetKey = "WS2.focus.preset"
++    static let tuckChatKey = "WS2.focus.tuckChat"
++    static var preset: FocusTimer.Preset {
++        UserDefaults.standard.string(forKey: presetKey) == "50/10" ? .minutes50 : .minutes25
++    }
++    static var tuckChat: Bool { UserDefaults.standard.object(forKey: tuckChatKey) as? Bool ?? true }
++    static func set(preset: FocusTimer.Preset) {
++        UserDefaults.standard.set(preset == .minutes50 ? "50/10" : "25/5", forKey: presetKey)
++    }
++    static func set(tuckChat: Bool) { UserDefaults.standard.set(tuckChat, forKey: tuckChatKey) }
++}
++@MainActor final class WS2FocusSettingsRows: NSStackView {
++    private weak var runtime: WS2AppRuntime?
++    private let presets = NSPopUpButton(), tuck = NSButton(checkboxWithTitle: "专注时收起聊天窗口", target: nil, action: nil)
++    init(runtime: WS2AppRuntime) {
++        self.runtime = runtime; super.init(frame: .zero)
++        orientation = .vertical; alignment = .leading; spacing = 10
++        let row = NSStackView(); row.orientation = .horizontal; row.spacing = 12
++        row.addArrangedSubview(NSTextField(labelWithString: "番茄钟"))
++        presets.addItems(withTitles: ["25 分钟 / 5 分钟", "50 分钟 / 10 分钟"])
++        presets.selectItem(at: WS2FocusSettings.preset == .minutes50 ? 1 : 0)
++        presets.target = self; presets.action = #selector(changePreset); row.addArrangedSubview(presets)
++        presets.toolTip = "新的时长从下一轮开始生效。正在进行的一轮保持原时长。"
++        addArrangedSubview(row)
++        tuck.state = WS2FocusSettings.tuckChat ? .on : .off; tuck.target = self; tuck.action = #selector(changeTuck)
++        tuck.toolTip = "沿用隐私窗口清单；只有窗口所有权适配器就绪后才执行。不会关闭聊天 App。"
++        tuck.isEnabled = runtime.focusWindowEffects != nil
++        addArrangedSubview(tuck)
++        if !tuck.isEnabled {
++            let note = NSTextField(wrappingLabelWithString:"窗口收起适配器尚未接入；当前仅运行计时，不移动窗口。")
++            note.textColor = .secondaryLabelColor; note.font = .systemFont(ofSize:11); addArrangedSubview(note)
++        }
++    }
++    required init?(coder: NSCoder) { nil }
++    @objc private func changePreset() { WS2FocusSettings.set(preset: presets.indexOfSelectedItem == 1 ? .minutes50 : .minutes25); runtime?.refreshFocusSettings() }
++    @objc private func changeTuck() { WS2FocusSettings.set(tuckChat: tuck.state == .on); runtime?.refreshFocusSettings() }
++}
+--- /dev/null
++++ b/prototype/App/WS2GameControllerBridge.swift
+@@ -0,0 +1,174 @@
++// Original adapter. Public GameController only; it emits typed intentions, never synthetic keys.
++import Cocoa
++@preconcurrency import GameController
++
++@MainActor final class WS2GameControllerBridge {
++    struct Environment { let unlocked: Bool; let sinkReady: Bool; let gameOrUnknownInFront: Bool; let domain: WS2DeviceInputGate.Domain }
++    struct Device { let attachment: UUID; let label: String; let enabled: Bool }
++    enum Input {
++        case button(attachment: UUID, name: String, outcome: WS2DeviceInputGate.Outcome)
++        case cancel(attachment: UUID, presses: [UInt64])
++        case movement(attachment: UUID, effect: GamepadMapping.Effect)
++    }
++    @MainActor private final class Entry {
++        let controller: GCController; let id = UUID()
++        var gate = WS2DeviceInputGate(), mapping = GamepadMapping(), sequence: UInt64 = 0
++        var buttons: [(String, GCControllerButtonInput)] = []
++        var last: [String:Bool] = [:], domain: WS2DeviceInputGate.Domain?
++        var neutralSticks = false, ownsFeedback = false
++        var movement: Task<Void,Never>?
++        init(_ controller: GCController) { self.controller = controller; gate.connect(id) }
++    }
++    private let clock: any WS2Clock
++    private let environment: () -> Environment
++    private let emit: (Input) -> Void
++    private var entries: [ObjectIdentifier:Entry] = [:]
++    private var observers: [NSObjectProtocol] = []
++    private var workspaceObservers: [NSObjectProtocol] = []
++    private var priorBackground: Bool?
++    private var running = false
++    var devicesChanged: (([Device]) -> Void)?
++    init(clock: any WS2Clock, environment: @escaping () -> Environment, emit: @escaping (Input) -> Void) {
++        self.clock = clock; self.environment = environment; self.emit = emit
++    }
++    // Call only when opening the device feature, not automatically at application launch.
++    func start() {
++        guard !running else { return }; running = true
++        for name in [Notification.Name.GCControllerDidConnect, .GCControllerDidDisconnect] {
++            observers.append(NotificationCenter.default.addObserver(forName:name,object:nil,queue:.main) { [weak self] _ in
++                MainActor.assumeIsolated { self?.reconcile() }
++            })
++        }
++        for name in [NSWorkspace.willSleepNotification, NSWorkspace.sessionDidResignActiveNotification] {
++            workspaceObservers.append(NSWorkspace.shared.notificationCenter.addObserver(forName:name,object:nil,queue:.main) { [weak self] _ in
++                MainActor.assumeIsolated { self?.suspendAll() }
++            })
++        }
++        workspaceObservers.append(NSWorkspace.shared.notificationCenter.addObserver(forName:NSWorkspace.didActivateApplicationNotification,
++            object:nil,queue:.main) { [weak self] _ in MainActor.assumeIsolated { self?.environmentChanged() } })
++        reconcile()
++    }
++    var devices: [Device] {
++        entries.values.map { Device(attachment:$0.id,label:$0.controller.vendorName ?? "游戏手柄",enabled:$0.gate.enabled) }
++            .sorted { $0.attachment.uuidString < $1.attachment.uuidString }
++    }
++    @discardableResult func setEnabled(_ enabled: Bool, attachment: UUID) -> Bool {
++        guard let e = entries.values.first(where:{$0.id == attachment}) else { return false }
++        if !enabled { suspend(e); publish(); return true }
++        let env = environment()
++        guard running, env.unlocked, env.sinkReady, !env.gameOrUnknownInFront, env.domain != .review,
++              e.controller.extendedGamepad != nil else { return false }
++        guard !e.gate.enabled else { return true }
++        _ = e.gate.enable(e.id); e.last.removeAll(); e.neutralSticks = false; e.domain = env.domain
++        _ = e.gate.changeDomain(to:env.domain)
++        if priorBackground == nil { priorBackground = GCController.shouldMonitorBackgroundEvents }
++        GCController.shouldMonitorBackgroundEvents = true
++        sample(e); publish(); return true
++    }
++    // The application lock observer MUST call this too; workspace notifications alone do not prove lock state.
++    func environmentChanged() {
++        let env = environment()
++        for e in entries.values where e.gate.enabled {
++            guard env.unlocked, env.sinkReady, !env.gameOrUnknownInFront else { suspend(e); continue }
++            if e.domain != env.domain {
++                emit(.cancel(attachment:e.id,presses:e.gate.changeDomain(to:env.domain)))
++                e.domain = env.domain; e.last.removeAll(); e.neutralSticks = false
++                e.movement?.cancel(); e.movement = nil; clearFeedback(e)
++            }
++            sample(e)
++        }
++        publish()
++    }
++    func suspendAll() { for e in entries.values { suspend(e) }; publish() }
++    private func reconcile() {
++        let current = GCController.controllers(), present = Set(current.map(ObjectIdentifier.init))
++        for key in Array(entries.keys) where !present.contains(key) {
++            if let e = entries.removeValue(forKey:key) {
++                suspend(e); e.controller.extendedGamepad?.valueChangedHandler = nil; _ = e.gate.disconnect()
++            }
++        }
++        for c in current where entries[ObjectIdentifier(c)] == nil {
++            guard let pad = c.extendedGamepad else { continue }
++            let e = Entry(c); entries[ObjectIdentifier(c)] = e
++            e.buttons = [("a",pad.buttonA),("b",pad.buttonB),("x",pad.buttonX),("y",pad.buttonY),
++                ("menu",pad.buttonMenu),("up",pad.dpad.up),("down",pad.dpad.down),("left",pad.dpad.left),("right",pad.dpad.right),
++                ("leftShoulder",pad.leftShoulder),("rightShoulder",pad.rightShoulder)]
++            // This bridge is the process's sole owner of this handler; do not install a second bridge.
++            c.handlerQueue = .main
++            pad.valueChangedHandler = { [weak self, weak e] _,_ in MainActor.assumeIsolated {
++                guard let self,let e else { return }; self.sample(e)
++            } }
++        }
++        publish()
++    }
++    private func sample(_ e: Entry) {
++        guard e.gate.enabled, let pad=e.controller.extendedGamepad else { return }
++        let env=environment()
++        guard env.unlocked,env.sinkReady,!env.gameOrUnknownInFront else { suspend(e);publish();return }
++        guard env.domain == e.domain else { environmentChanged();return }
++        let now=clock.now()
++        for (name,button) in e.buttons {
++            let pressed=button.isPressed
++            guard e.last[name] != pressed else { continue };e.last[name]=pressed
++            guard e.sequence < .max else { suspend(e);return };e.sequence += 1
++            let outcome=e.gate.button(attachment:e.id,name:name,pressed:pressed,sequence:e.sequence,at:now,
++                                      unlocked:env.unlocked,domain:env.domain)
++            if outcome != .ignored { emit(.button(attachment:e.id,name:name,outcome:outcome)) }
++        }
++        let left=GamepadMapping.Vector(x:Double(pad.leftThumbstick.xAxis.value),y:Double(pad.leftThumbstick.yAxis.value))
++        let right=GamepadMapping.Vector(x:Double(pad.rightThumbstick.xAxis.value),y:Double(pad.rightThumbstick.yAxis.value))
++        let neutral=GamepadMapping.axis(left) == .zero && GamepadMapping.axis(right) == .zero
++        if neutral { e.neutralSticks=true }
++        _ = e.mapping.configure(enabled:env.domain == .desktop && e.neutralSticks,gameInFront:false)
++        guard env.domain == .desktop, e.neutralSticks, !neutral else {
++            e.movement?.cancel();e.movement=nil;_ = e.mapping.disconnect();return
++        }
++        if e.movement == nil { e.movement=Task { [weak self,weak e] in
++            while !Task.isCancelled {
++                guard let self,let e,e.gate.enabled,let pad=e.controller.extendedGamepad else{return}
++                let current=self.environment()
++                guard current.unlocked,current.sinkReady,!current.gameOrUnknownInFront,current.domain == .desktop else {
++                    self.suspend(e);self.publish();return
++                }
++                let l=GamepadMapping.Vector(x:Double(pad.leftThumbstick.xAxis.value),y:Double(pad.leftThumbstick.yAxis.value))
++                let r=GamepadMapping.Vector(x:Double(pad.rightThumbstick.xAxis.value),y:Double(pad.rightThumbstick.yAxis.value))
++                if GamepadMapping.axis(l) == .zero && GamepadMapping.axis(r) == .zero { e.movement=nil;_ = e.mapping.disconnect();return }
++                for effect in e.mapping.sample(left:l,right:r,at:self.clock.now().seconds) { self.emit(.movement(attachment:e.id,effect:effect)) }
++                do { try await Task.sleep(nanoseconds:16_666_667) } catch { return }
++            }
++        } }
++    }
++    // Optional physical feedback, never a proxy for identity. No caller enables it in this patch.
++    @discardableResult func feedback(attachment:UUID,start:Float,strength:Float) -> Bool {
++        let env=environment()
++        guard start.isFinite,strength.isFinite,(0...1).contains(start),(0...0.25).contains(strength),
++              env.unlocked,env.sinkReady,!env.gameOrUnknownInFront,env.domain == .conductor,
++              let e=entries.values.first(where:{$0.id == attachment}),e.gate.enabled,
++              let pad=e.controller.extendedGamepad as? GCDualSenseGamepad else{return false}
++        if strength == 0 { clearFeedback(e);return true }
++        pad.leftTrigger.setModeFeedback(startPosition:start,resistiveStrength:strength)
++        pad.rightTrigger.setModeFeedback(startPosition:start,resistiveStrength:strength);e.ownsFeedback=true;return true
++    }
++    private func clearFeedback(_ e:Entry) {
++        guard e.ownsFeedback else{return};e.ownsFeedback=false
++        if let pad=e.controller.extendedGamepad as? GCDualSenseGamepad { pad.leftTrigger.setModeOff();pad.rightTrigger.setModeOff() }
++    }
++    private func suspend(_ e:Entry) {
++        let active=e.gate.suspend();e.movement?.cancel();e.movement=nil;_ = e.mapping.disconnect();clearFeedback(e)
++        e.last.removeAll();e.neutralSticks=false
++        if !active.isEmpty { emit(.cancel(attachment:e.id,presses:active)) }
++    }
++    private func publish() {
++        if !entries.values.contains(where:{$0.gate.enabled}), let priorBackground {
++            GCController.shouldMonitorBackgroundEvents=priorBackground;self.priorBackground=nil
++        }
++        devicesChanged?(devices)
++    }
++    func stop() {
++        guard running else{return};suspendAll();running=false
++        for token in observers { NotificationCenter.default.removeObserver(token) };observers.removeAll()
++        for token in workspaceObservers { NSWorkspace.shared.notificationCenter.removeObserver(token) };workspaceObservers.removeAll()
++        for e in entries.values { e.controller.extendedGamepad?.valueChangedHandler=nil }
++        entries.removeAll();publish()
++    }
++}
+--- /dev/null
++++ b/prototype/App/WS2IslandCoordinator.swift
+@@ -0,0 +1,94 @@
++import Cocoa
++/// Uses the existing NotchPanel. No overlay window, no parallel authorization UI.
++@MainActor protocol WS2LeaseContent: NotchInteractiveContent {
++    var inputIsCurrent: (() -> Bool) { get set }
++    var interactionSize: NSSize { get }
++    func revoke()
++}
++@MainActor final class WS2IslandCoordinator {
++    private weak var owner: NotchController?
++    private let clock: any WS2Clock
++    private var view: (NSView & WS2LeaseContent)?
++    private weak var panel: NotchPanel?
++    private var handle: WS2.LeaseHandle?
++    private var authHandle: WS2.LeaseHandle?
++    private var dismissed: ((WS2.LeaseRevocation) -> Void)?
++    private var deadlineTask: Task<Void,Never>?
++    private var screenObserver: NSObjectProtocol?
++    private lazy var leases = InteractionCoordinator(bootID: UUID(), clock: clock, environment: { [weak self] in
++        .init(unlocked: self?.unlocked == true, displays: Set(NSScreen.screens.compactMap(Self.displayID)))
++    }, cancel: { [weak self] lease, reason in self?.revoked(lease, reason: reason) })
++    private var unlocked: Bool { NotchController.isEnabled && AuthorizationService.shared.lockState() == .unlocked }
++    init(owner: NotchController, clock: any WS2Clock) {
++        self.owner = owner; self.clock = clock
++        owner.authentication.acquireInteraction = { [weak self] panel in self?.beginAuthorization(on: panel) ?? false }
++        owner.authentication.releaseInteraction = { [weak self] in self?.endAuthorization() }
++        owner.authentication.isInteractionCurrent = { [weak self] in
++            guard let self, let lease = self.authHandle else { return false }; return self.leases.isCurrent(lease)
++        }
++        screenObserver = NotificationCenter.default.addObserver(forName: NSApplication.didChangeScreenParametersNotification,
++            object: nil, queue: .main) { [weak self] _ in MainActor.assumeIsolated { self?.reconcileDisplays() } }
++    }
++    private static func displayID(_ screen: NSScreen) -> WS2.DisplayID? {
++        (screen.deviceDescription[NSDeviceDescriptionKey("NSScreenNumber")] as? NSNumber).map { .init(value:$0.uint32Value) }
++    }
++    @discardableResult func show(_ content: NSView & WS2LeaseContent, ownerID: String, layer: WS2.Layer = .opened,
++                                 onDismiss: @escaping (WS2.LeaseRevocation) -> Void = { _ in }) -> Bool {
++        guard unlocked, owner?.authentication.isPresenting != true, let panel = owner?.authenticationPanel(),
++              let screen = panel.screen ?? NSScreen.main, let display = Self.displayID(screen) else { return false }
++        // Explicit user navigation replaces our old content; it never replaces native authentication.
++        dismiss()
++        let now = clock.now(), end = now.adding(120 * WS2.Duration.second)
++        guard case .acquired(let lease) = leases.acquire(.init(ownerID:ownerID,display:display,layer:layer,
++            requestedAt:now,deadline:end,containsPrivateContent:true)) else { return false }
++        self.view = content; self.panel = panel; handle = lease; dismissed = onDismiss
++        content.inputIsCurrent = { [weak self] in self?.leases.isCurrent(lease) == true }
++        content.onCancel = { [weak self, weak content] in
++            guard let content else { return }; self?.dismiss(ifShowing:content)
++        }
++        panel.setInteraction(content)
++        panel.makeKeyAndOrderFront(nil)
++        deadlineTask = Task { [weak self] in
++            do { try await Task.sleep(nanoseconds:120 * WS2.Duration.second) } catch { return }
++            guard let self, self.handle == lease else { return }
++            _ = self.leases.snapshots(at:self.clock.now())
++        }
++        return true
++    }
++    /// Close the preview without reporting a cancellation to its approval host; Touch ID takes over next.
++    func handOffToAuthorization() { dismissed = nil; dismiss() }
++    func dismiss() { if let handle { leases.release(handle, at: clock.now()) } }
++    func dismiss(ifShowing content: NSView) { if view === content { dismiss() } }
++    func handOffToAuthorization(ifShowing content: NSView) -> Bool {
++        guard view === content else { return false }; handOffToAuthorization(); return true
++    }
++    private func revoked(_ lease: WS2.LeaseHandle, reason: WS2.LeaseRevocation) {
++        if handle == lease {
++            let content = view, oldPanel = panel, callback = dismissed
++            handle = nil; view = nil; panel = nil; dismissed = nil; deadlineTask?.cancel(); deadlineTask = nil
++            content?.inputIsCurrent = { false }; content?.revoke()
++            if let content, oldPanel?.isShowingInteraction(content) == true { oldPanel?.setInteraction(nil) }
++            callback?(reason)
++        }
++        if authHandle == lease {
++            authHandle = nil // clear before native cancel calls releaseInteraction again
++            owner?.authentication.cancel(animated:false,restoreFocus:false)
++        }
++    }
++    private func beginAuthorization(on panel: NotchPanel) -> Bool {
++        guard unlocked, let screen = panel.screen ?? NSScreen.main, let display = Self.displayID(screen) else { return false }
++        let now = clock.now()
++        guard case .acquired(let lease) = leases.acquire(.init(ownerID:"authorization",display:display,layer:.authorization,
++            requestedAt:now,deadline:now.adding(31 * WS2.Duration.second),containsPrivateContent:true)) else { return false }
++        authHandle = lease; return true
++    }
++    private func endAuthorization() { if let authHandle { leases.release(authHandle,at:clock.now()) }; authHandle = nil }
++    func invalidate(_ reason: WS2.LeaseRevocation) { leases.invalidate(reason,at:clock.now()) }
++    private func reconcileDisplays() { _ = leases.snapshots(at:clock.now()) }
++    func stop() {
++        invalidate(.disabled)
++        if let screenObserver { NotificationCenter.default.removeObserver(screenObserver) }; screenObserver = nil
++        owner?.authentication.acquireInteraction = nil; owner?.authentication.releaseInteraction = nil
++        owner?.authentication.isInteractionCurrent = nil
++    }
++}
+--- a/prototype/App/WS2SupplementPane.swift
++++ b/prototype/App/WS2SupplementPane.swift
+@@ -9,8 +9,9 @@
+         heading.font = .systemFont(ofSize:13,weight:.semibold); addArrangedSubview(heading)
+         let focus = NSButton(title:"开始番茄钟",target:owner,action:#selector(AppDelegate.ws2OpenFocus))
+         focus.bezelStyle = .rounded; focus.isEnabled = NotchController.isEnabled && NotchActivityController.isEnabled
+-        focus.toolTip = "25 分钟专注，5 分钟休息。窗口收起动作等待 T3 接线。"
++        focus.toolTip = "打开番茄钟。快捷键可在快捷键设置中录制。"
+         addArrangedSubview(focus)
++        addArrangedSubview(WS2FocusSettingsRows(runtime: owner.ws2Runtime))
+         for (title,reason) in [("指挥模式","需要已核准的输入设备和助手连接"),("平滑滚动","需要确认每条事件的设备来源"),
+                                 ("Apple TV 遥控器","需要通过当前设备的按钮与触点探针"),("游戏手柄","需要完成当前连接的映射与阻力归零检查"),
+                                 ("在场检测","需要已绑定身份的蓝牙读回来源")] {
+--- a/prototype/Core/CodexWire.swift
++++ b/prototype/Core/CodexWire.swift
+@@ -47,6 +47,7 @@
+     private(set) var turnID: String?
+     private(set) var pending: [WS2.RequestID:Pending] = [:]
+     private(set) var approvals: [WS2.RequestID:WireJSON] = [:]
++    private(set) var approvalMethods: [WS2.RequestID:String] = [:]
+     private var buffer = Data()
+     private var expectedResumeID: String?
+     private var completedTurnIDs = Set<String>()
+@@ -136,7 +137,7 @@
+                       !sentApprovalIDs.contains(id), sentApprovalIDs.count < 4096,
+                       params["itemId"]?.text?.isEmpty == false, params["threadId"]?.text == threadID,
+                       params["turnId"]?.text == turnID, turnID != nil else { throw Failure.stale }
+-                approvals[id] = params
++                approvals[id] = params; approvalMethods[id] = method
+                 return [.approval(id,method,params)]
+             }
+             if method == "turn/started", params["threadId"]?.text == threadID,
+@@ -148,7 +149,7 @@
+             if method == "turn/completed", params["threadId"]?.text == threadID,
+                let id = params["turn"]?["id"]?.text, id == turnID {
+                 guard completedTurnIDs.count < 4096 else { throw Failure.capacity }
+-                completedTurnIDs.insert(id); turnID = nil; approvals.removeAll()
++                completedTurnIDs.insert(id); turnID = nil; approvals.removeAll(); approvalMethods.removeAll()
+             }
+             return [.notification(method,params)]
+         }
+@@ -196,9 +197,24 @@
+         let raw: WireJSON
+         switch id { case .integer(let n): raw = .integer(n); case .string(let s): raw = .string(s) }
+         try send(.object(["id":raw,"result":.object(["decision":.string("decline")])]))
+-        approvals[id] = nil; sentApprovalIDs.insert(id)
+-    }
+-    // Deliberately NO allow/accept API: A4's real AuthorizationService must own that path.
++        approvals[id] = nil; approvalMethods[id] = nil; sentApprovalIDs.insert(id)
++    }
++    // Serialization only. The sole production caller for acceptOnce is WS2CodexApprovalHost,
++    // after native AuthorizationService.consume. This method does not establish permission.
++    enum ApprovalWireDecision { case acceptOnce, decline }
++    mutating func enqueueApprovalResponse(_ id: WS2.RequestID, expectedMethod: String,
++                                         expectedParams: WireJSON, decision: ApprovalWireDecision) throws {
++        guard state == .ready, approvals[id] == expectedParams, approvalMethods[id] == expectedMethod,
++              expectedParams["threadId"]?.text == threadID, expectedParams["turnId"]?.text == turnID,
++              !sentApprovalIDs.contains(id), sentApprovalIDs.count < 4096 else { throw Failure.stale }
++        if decision == .acceptOnce {
++            guard expectedMethod == "item/commandExecution/requestApproval" else { throw Failure.unsupported }
++        }
++        let raw: WireJSON
++        switch id { case .integer(let n): raw = .integer(n); case .string(let s): raw = .string(s) }
++        try send(.object(["id":raw,"result":.object(["decision":.string(decision == .acceptOnce ? "accept" : "decline")])]))
++        approvals[id] = nil; approvalMethods[id] = nil; sentApprovalIDs.insert(id)
++    }
+     mutating func tick(now: WS2.Instant) -> [Event] {
+         guard time.accept(now) else { return [] }
+         let expired = pending.filter { now >= $0.value.deadline }.map(\.key)
+@@ -206,7 +222,7 @@
+         return expired.map { .ambiguousCompletion($0) }
+     }
+     mutating func close() {
+-        state = .closed; buffer.removeAll(); pending.removeAll(); approvals.removeAll()
++        state = .closed; buffer.removeAll(); pending.removeAll(); approvals.removeAll(); approvalMethods.removeAll()
+         outbound.removeAll(); models.removeAll(); threadID = nil; turnID = nil
+         expectedResumeID = nil; completedTurnIDs.removeAll()
+     }
+--- a/prototype/Core/FocusTimer.swift
++++ b/prototype/Core/FocusTimer.swift
+@@ -39,8 +39,21 @@
+     private var tokenSource: WS2.TokenSource
+     private var time = WS2.TimeGate()
+     private var restWindowsRequested = false
+-    let preset: Preset
+-    let tuckChatEnabled: Bool
++    // Settings are pending choices. A running focus+rest pair keeps its original duration.
++    private(set) var preset: Preset
++    private(set) var tuckChatEnabled: Bool
++    private var activePreset: Preset = .minutes25
++    private var activeTuckChat = false
++    mutating func configure(preset: Preset, tuckChatEnabled: Bool) {
++        self.preset = preset; self.tuckChatEnabled = tuckChatEnabled
++    }
++    var phaseDuration: UInt64 {
++        switch phase { case .idle: return preset.focus; case .focus: return activePreset.focus; case .rest: return activePreset.rest }
++    }
++    func progress(at now: WS2.Instant) -> Double {
++        guard phase != .idle, phaseDuration > 0 else { return 0 }
++        return min(1, max(0, 1 - Double(remaining(at: now)) / Double(phaseDuration)))
++    }
+ 
+     init(bootID: UUID, preset: Preset = .minutes25, tuckChatEnabled: Bool = true) {
+         tokenSource = WS2.TokenSource(bootID: bootID, domain: .focusTimer)
+@@ -90,8 +103,9 @@
+             guard phase == .idle, !isLocked, !isSleeping else { return out }
+             guard let id = tokenSource.next() else { return out + [.fault(.generationExhausted)] }
+             runID = id; phase = .focus; pauses.removeAll(); pausedRemaining = 0
+-            deadline = now.adding(preset.focus)
+-            if tuckChatEnabled { out.append(.tuckChat(id)) }
++            activePreset = preset; activeTuckChat = tuckChatEnabled
++            deadline = now.adding(activePreset.focus)
++            if activeTuckChat { out.append(.tuckChat(id)) }
+         case .pause: setPause(.manual, on: true, at: now)
+         case .resume: setPause(.manual, on: false, at: now)
+         case .locked:
+@@ -145,9 +159,9 @@
+     }
+     private mutating func beginRest(at start: WS2.Instant, now: WS2.Instant, audible: Bool) -> [Effect] {
+         guard let id = runID else { return [] }
+-        var out: [Effect] = tuckChatEnabled ? [.restoreChat(id)] : []
++        var out: [Effect] = activeTuckChat ? [.restoreChat(id)] : []
+         phase = .rest; pauses.removeAll(); pausedRemaining = 0
+-        deadline = start.adding(preset.rest)
++        deadline = start.adding(activePreset.rest)
+         // 晚到时跳过已经过去的休息，不瞬间收一次窗口、补播声音。
+         if let end = deadline, end <= now { out += finish(); return out }
+         if !isLocked && !isSleeping { restWindowsRequested = true; out.append(.tuckAll(id)) }
+@@ -157,7 +171,7 @@
+     private mutating func finish() -> [Effect] {
+         guard let id = runID else { return [] }
+         var out: [Effect] = []
+-        if phase == .focus && tuckChatEnabled { out.append(.restoreChat(id)) }
++        if phase == .focus && activeTuckChat { out.append(.restoreChat(id)) }
+         if restWindowsRequested { out.append(.restoreAll(id)) }
+         restWindowsRequested = false; phase = .idle; deadline = nil
+         pauses.removeAll(); pausedRemaining = 0; runID = nil
+--- a/prototype/Core/NotchActivities.swift
++++ b/prototype/Core/NotchActivities.swift
+@@ -11,7 +11,7 @@
+ 
+ /// 活动卡片上能点的动作。纯数据，放在 Core 里：刘海和负一屏都发它，单测也不用带 App 那一层。
+ enum NotchActivityAction: String {
+-    case enableMusic, playPause, previous, next, airDrop, route, voiceMemos, open, end, focusTogglePause, focusSkip
++    case enableMusic, playPause, previous, next, airDrop, route, voiceMemos, open, end, focusTogglePause, focusSkip, focusOpen
+ }
+ 
+ /// 活动的种类，决定默认排序权重。
+--- /dev/null
++++ b/prototype/Core/WS2ApprovalReview.swift
+@@ -0,0 +1,97 @@
++// Original review gate. It can refuse a confirmation; it CANNOT mint an authorization grant.
++import Foundation
++struct WS2ApprovalReview: Equatable, Sendable {
++    enum Failure: Error { case unsupported, malformed, ambiguous, stale, notShown, oldInput, duplicate, full }
++    let connection: UUID
++    let id: WS2.RequestID
++    let method: String
++    let params: WireJSON
++    let context: WS2.Context
++    let thread: String
++    let turn: String
++    let command: String
++    let cwd: String
++    let createdAt: WS2.Instant
++    let deadline: WS2.Instant
++    // V1 deliberately supports ordinary command approval only. File patches require authoritative diff evidence.
++    static func command(connection: UUID, id: WS2.RequestID, method: String, params: WireJSON,
++                        context: WS2.Context, thread: String, turn: String, now: WS2.Instant) throws -> Self {
++        guard method == "item/commandExecution/requestApproval" else { throw Failure.unsupported }
++        guard context.isValid, !thread.isEmpty, !turn.isEmpty,
++              params["threadId"]?.text == thread, params["turnId"]?.text == turn,
++              let item = params["itemId"]?.text, !item.isEmpty,
++              let command = params["command"]?.text, !command.isEmpty, command.utf8.count <= 65_536,
++              let cwd = params["cwd"]?.text, cwd.hasPrefix("/"), cwd.utf8.count <= 4096,
++              !cwd.unicodeScalars.contains(where: { $0.value < 32 || $0.value == 127 }),
++              case .integer = params["startedAtMs"] else { throw Failure.malformed }
++        switch id { case .integer: break; case .string(let s): guard !s.isEmpty, s.utf8.count <= 512 else { throw Failure.malformed } }
++        guard case .object(let fields) = params else { throw Failure.malformed }
++        let known: Set<String> = ["threadId","turnId","itemId","startedAtMs","command","cwd","kind",
++            "reason","commandActions","approvalId","environmentId","networkApprovalContext",
++            "proposedExecpolicyAmendment","proposedNetworkPolicyAmendments"]
++        guard Set(fields.keys).isSubset(of: known) else { throw Failure.unsupported }
++        if let kind = fields["kind"], kind != .string("command") { throw Failure.unsupported }
++        // These need their own review wording; never silently enlarge a one-command approval.
++        for key in ["environmentId", "networkApprovalContext", "proposedExecpolicyAmendment", "proposedNetworkPolicyAmendments"] {
++            if let value = fields[key], value != .null { throw Failure.unsupported }
++        }
++        let encoder = JSONEncoder(); encoder.outputFormatting = [.sortedKeys]
++        guard try encoder.encode(params).count <= 131_072 else { throw Failure.malformed }
++        return Self(connection: connection, id: id, method: method, params: params, context: context,
++                    thread: thread, turn: turn, command: command, cwd: cwd, createdAt: now,
++                    deadline: now.adding(30 * WS2.Duration.second))
++    }
++    // This encoding is an internal immutable target, not claimed to be RFC8785 or an interoperable wire format.
++    func targetBytes() throws -> Data {
++        let encoder = JSONEncoder(); encoder.outputFormatting = [.sortedKeys]
++        var fields = Data("WindowShade.review.command.v1\0".utf8)
++        func field(_ data: Data) {
++            let n = UInt64(data.count)
++            for shift in stride(from: 56, through: 0, by: -8) { fields.append(UInt8((n >> shift) & 255)) }
++            fields.append(data)
++        }
++        field(Data(connection.uuidString.utf8)); field(Data(method.utf8))
++        switch id { case .integer(let i): field(Data("integer".utf8)); field(Data(String(i).utf8))
++        case .string(let s): field(Data("string".utf8)); field(Data(s.utf8)) }
++        for s in [context.peerID, context.projectID, context.session.provider.rawValue,
++                  context.session.id, String(context.epoch), thread, turn] { field(Data(s.utf8)) }
++        field(try encoder.encode(params)); return fields
++    }
++    var visibleCommand: String { Self.visible(command) }
++    static func visible(_ value: String) -> String {
++        value.unicodeScalars.map { scalar in
++            let v = scalar.value
++            if (v < 32 && v != 9 && v != 10) || v == 127 || (0x202A...0x202E).contains(v) ||
++                (0x2066...0x2069).contains(v) || v == 0x200E || v == 0x200F {
++                return String(format: "\\u{%04X}", v)
++            }
++            return String(scalar)
++        }.joined()
++    }
++}
++struct WS2ApprovalReviewGate: Sendable {
++    private(set) var current: WS2ApprovalReview?
++    private var shownAt: WS2.Instant?
++    private var sequenceFloor: UInt64 = 0
++    private var confirmationStarted = false
++    mutating func replace(with review: WS2ApprovalReview) {
++        current = review; shownAt = nil; sequenceFloor = 0; confirmationStarted = false
++    }
++    mutating func didPresent(at now: WS2.Instant, after sequence: UInt64) throws {
++        guard let review = current, now >= review.createdAt, now < review.deadline else { throw WS2ApprovalReview.Failure.stale }
++        guard shownAt == nil else { throw WS2ApprovalReview.Failure.duplicate }
++        shownAt = now; sequenceFloor = sequence
++    }
++    mutating func beginConfirmation(beganAt: WS2.Instant, sequence: UInt64, now: WS2.Instant,
++                                    current review: WS2ApprovalReview, unlocked: Bool) throws {
++        guard let shownAt else { throw WS2ApprovalReview.Failure.notShown }
++        guard unlocked, current == review, now >= shownAt, now < review.deadline else { throw WS2ApprovalReview.Failure.stale }
++        guard beganAt >= shownAt, beganAt <= now, sequence > sequenceFloor else { throw WS2ApprovalReview.Failure.oldInput }
++        guard !confirmationStarted else { throw WS2ApprovalReview.Failure.duplicate }
++        confirmationStarted = true
++    }
++    func mayConsume(current review: WS2ApprovalReview, now: WS2.Instant, unlocked: Bool) -> Bool {
++        unlocked && confirmationStarted && current == review && now >= (shownAt ?? review.deadline) && now < review.deadline
++    }
++    mutating func clear() { current = nil; shownAt = nil; confirmationStarted = false; sequenceFloor = 0 }
++}
+--- /dev/null
++++ b/prototype/Core/WS2CompanionFrame.swift
+@@ -0,0 +1,59 @@
++// Original bounded Companion framing. Protocol observations are pinned in SOURCES.md.
++import Foundation
++struct WS2CompanionFrame: Equatable, Sendable {
++    enum Failure: Error { case closed, oversized, unsupportedType, invalidLength, exhausted }
++    static let maximumPayload = 65_536 // local cap, NOT the 24-bit protocol maximum
++    static let supportedTypes: Set<UInt8> = [1, 3, 4, 5, 6, 7, 8]
++    let type: UInt8
++    let payload: Data
++    static func header(type: UInt8, count: Int) throws -> Data {
++        guard supportedTypes.contains(type) else { throw Failure.unsupportedType }
++        guard (0...maximumPayload).contains(count) else { throw Failure.oversized }
++        return Data([type, UInt8((count >> 16) & 255), UInt8((count >> 8) & 255), UInt8(count & 255)])
++    }
++    func encoded() throws -> Data { try Self.header(type: type, count: payload.count) + payload }
++    struct Decoder: Sendable {
++        private var bytes = Data()
++        private(set) var closed = false
++        mutating func close() { closed = true; bytes.removeAll(keepingCapacity: false) }
++        // Bounded per-call batch, and per-frame buffering. No allocation based on a claimed length.
++        mutating func feed(_ input: Data) throws -> [WS2CompanionFrame] {
++            guard !closed else { throw Failure.closed }
++            do {
++                guard input.count <= 262_144 else { throw Failure.oversized }
++                bytes.append(input)
++                var frames: [WS2CompanionFrame] = [], offset = 0
++                while bytes.count - offset >= 4 {
++                    let type = bytes[bytes.startIndex + offset]
++                    let n = Int(bytes[bytes.startIndex+offset+1]) << 16 |
++                            Int(bytes[bytes.startIndex+offset+2]) << 8 | Int(bytes[bytes.startIndex+offset+3])
++                    guard supportedTypes.contains(type) else { throw Failure.unsupportedType }
++                    guard n <= WS2CompanionFrame.maximumPayload else { throw Failure.oversized }
++                    if type == 8 && n < 16 { throw Failure.invalidLength }
++                    guard bytes.count - offset >= 4+n else { break }
++                    guard frames.count < 128 else { throw Failure.oversized }
++                    let start = bytes.startIndex + offset + 4
++                    frames.append(.init(type: type, payload: Data(bytes[start..<start+n])))
++                    offset += 4+n
++                }
++                if offset > 0 { bytes = Data(bytes.dropFirst(offset)) }
++                guard bytes.count <= WS2CompanionFrame.maximumPayload+4 else { throw Failure.oversized }
++                return frames
++            } catch { close(); throw error }
++        }
++    }
++}
++/// Companion main-channel nonce differs from HAP: LE64 counter FIRST, then four zero bytes.
++/// Never persist or restore this counter. A reconnect needs a fresh pair-verify secret.
++struct WS2CompanionCounter: Sendable {
++    private(set) var value: UInt64
++    private(set) var closed = false
++    init(value: UInt64 = 0) { self.value = value }
++    mutating func take() throws -> Data {
++        guard !closed, value < UInt64.max else { closed = true; throw WS2CompanionFrame.Failure.exhausted }
++        var bytes = [UInt8](repeating: 0, count: 12)
++        for i in 0..<8 { bytes[i] = UInt8((value >> (i*8)) & 255) }
++        value += 1; return Data(bytes)
++    }
++    mutating func close() { closed = true }
++}
+--- /dev/null
++++ b/prototype/Core/WS2DeviceInputGate.swift
+@@ -0,0 +1,66 @@
++// Original per-attachment admission. Vendor/product names are NOT cryptographic identity.
++import Foundation
++struct WS2DeviceInputGate: Sendable {
++    enum Domain: Sendable { case desktop, conductor, review }
++    enum Outcome: Equatable, Sendable { case ignored, began(UInt64), ended(UInt64), cancelled(UInt64) }
++    private(set) var attachment: UUID?
++    private(set) var enabled = false
++    private var neutralSeen = Set<String>()
++    private var down: [String:UInt64] = [:]
++    private var serial: UInt64 = 0
++    private var sequence: UInt64?
++    private var currentDomain: Domain?
++    private var time = WS2.TimeGate()
++    mutating func connect(_ id: UUID) { attachment = id; enabled = false; neutralSeen.removeAll(); down.removeAll(); sequence = nil; time = .init(); currentDomain = nil }
++    mutating func enable(_ id: UUID) -> Bool {
++        guard attachment == id else { return false }
++        enabled = true; neutralSeen.removeAll(); down.removeAll(); currentDomain = nil; return true
++    }
++    mutating func suspend() -> [UInt64] {
++        enabled = false; neutralSeen.removeAll(); let active = down.values.sorted(); down.removeAll(); return active
++    }
++    mutating func disconnect() -> [UInt64] { let ids = suspend(); attachment = nil; currentDomain = nil; return ids }
++    // The bridge MUST deliver these cancellations before publishing a new UI domain.
++    mutating func changeDomain(to domain: Domain) -> [UInt64] {
++        guard currentDomain != domain else { return [] }
++        let active = down.values.sorted(); down.removeAll(); neutralSeen.removeAll(); currentDomain = domain
++        return active
++    }
++    // Each control must be observed UP after enable; a held button cannot become a new approval.
++    mutating func button(attachment id: UUID, name: String, pressed: Bool, sequence: UInt64,
++                         at now: WS2.Instant, unlocked: Bool, domain: Domain) -> Outcome {
++        guard attachment == id, enabled else { return .ignored }
++        if let currentDomain, currentDomain != domain { _ = suspend(); return .ignored }
++        if currentDomain == nil { currentDomain = domain }
++        guard unlocked, time.accept(now), self.sequence.map({ sequence > $0 }) ?? true else {
++            _ = suspend(); return .ignored
++        }
++        self.sequence = sequence
++        guard !name.isEmpty, name.utf8.count <= 64 else { _ = suspend(); return .ignored }
++        if !pressed {
++            neutralSeen.insert(name)
++            if let n = down.removeValue(forKey: name) { return .ended(n) }; return .ignored
++        }
++        guard domain != .review, neutralSeen.contains(name), down[name] == nil, down.count < 32, serial < .max else { return .ignored }
++        serial += 1; down[name] = serial; return .began(serial)
++    }
++}
++/// Exact, admitted attachment + public HID usage only. Unknown usages are not consumed.
++struct WS2HIDButtonMap: Sendable {
++    struct Identity: Equatable, Sendable { let registryID: UInt64; let vendor: Int; let product: Int }
++    let identity: Identity
++    func button(from actual: Identity, page: Int, usage: Int, value: Int) -> (WS2.Button, Bool)? {
++        guard actual == identity, value == 0 || value == 1 else { return nil }
++        let b: WS2.Button
++        switch (page,usage) {
++        case (0x0C,0x42): b = .up; case (0x0C,0x43): b = .down
++        case (0x0C,0x44): b = .left; case (0x0C,0x45): b = .right
++        case (0x0C,0x80): b = .select; case (0x01,0x86): b = .back
++        case (0x0C,0x60): b = .tv; case (0x0C,0xCD): b = .playPause
++        case (0x0C,0xE2): b = .mute; case (0x0C,0xE9): b = .volumeUp
++        case (0x0C,0xEA): b = .volumeDown; case (0x0C,0x04): b = .side
++        default: return nil
++        }
++        return (b,value == 1)
++    }
++}
+--- /dev/null
++++ b/prototype/Core/WS2FocusWindowOwnership.swift
+@@ -0,0 +1,27 @@
++// Original T3 acceptance helper. It records completed actions, not a wish list of windows.
++import Foundation
++struct WS2FocusWindowOwnership: Sendable {
++    struct Identity: Hashable, Sendable { let pid: Int32; let processStart: UInt64; let windowID: UInt32; let windowGeneration: UInt64 }
++    struct Receipt: Equatable, Sendable {
++        let identity: Identity
++        let run: WS2.Token
++        let effectGeneration: UInt64
++        let beforeRevision: UInt64
++        let afterRevision: UInt64
++    }
++    private var owned: [Identity:Receipt] = [:]
++    mutating func record(_ receipt: Receipt, didComplete: Bool) -> Bool {
++        guard didComplete, receipt.afterRevision > receipt.beforeRevision, owned[receipt.identity] == nil, owned.count < 512 else { return false }
++        owned[receipt.identity] = receipt; return true
++    }
++    // Returns a restoration request only after comparing the live owner/revision. Caller must compare again at mutation.
++    mutating func takeForRestore(_ id: Identity, run: WS2.Token, effectGeneration: UInt64, liveRevision: UInt64) -> Receipt? {
++        guard let receipt = owned[id], receipt.run == run else { return nil }
++        owned[id] = nil // one attempt; a failure is reconciled by the host, never blindly retried
++        guard receipt.effectGeneration == effectGeneration, receipt.afterRevision == liveRevision else { return nil }
++        return receipt
++    }
++    mutating func manualChange(_ id: Identity) { owned[id] = nil }
++    mutating func clear() { owned.removeAll() }
++    var count: Int { owned.count }
++}
+--- /dev/null
++++ b/prototype/Support/WS2CompanionCrypto.swift
+@@ -0,0 +1,120 @@
++// Original server-side pair-verify and record protection; NOT pair-setup or an Apple TV emulator.
++// See decisions/01-配对与加密.md for the observed protocol and the missing enrollment gate.
++import Foundation
++import CryptoKit
++
++@MainActor final class WS2CompanionCrypto {
++    enum Failure: Error { case state, expired, malformed, unknownPeer, signature, revoked, closed }
++    struct Peer: Equatable {
++        let identifier: Data
++        let signingPublicKey: Data
++        let revision: UInt64
++        let enabled: Bool
++    }
++    struct Identity {
++        let identifier: Data
++        let signingKey: Curve25519.Signing.PrivateKey
++    }
++    // Only a successful M3 verification inside this file can construct this object.
++    @MainActor final class VerifiedSession {
++        let peer: Peer
++        let connectionID: UUID
++        fileprivate var transmit: SymmetricKey?
++        fileprivate var receive: SymmetricKey?
++        fileprivate var tx = WS2CompanionCounter(), rx = WS2CompanionCounter()
++        fileprivate let isCurrent: (Peer) -> Bool
++        fileprivate init(peer: Peer, transmit: SymmetricKey, receive: SymmetricKey,
++                         isCurrent: @escaping (Peer) -> Bool) {
++            self.peer = peer; connectionID = UUID(); self.transmit = transmit; self.receive = receive
++            self.isCurrent = isCurrent
++        }
++        func close() { transmit = nil; receive = nil; tx.close(); rx.close() }
++        func seal(_ plaintext: Data) throws -> Data {
++            do {
++                guard let transmit, isCurrent(peer) else { throw Failure.revoked }
++                guard plaintext.count <= WS2CompanionFrame.maximumPayload - 16 else { throw Failure.malformed }
++                let header = try WS2CompanionFrame.header(type: 8, count: plaintext.count + 16)
++                let nonce = try ChaChaPoly.Nonce(data: tx.take())
++                let box = try ChaChaPoly.seal(plaintext, using: transmit, nonce: nonce, authenticating: header)
++                return header + box.ciphertext + box.tag
++            } catch { close(); throw error }
++        }
++        func open(_ frame: WS2CompanionFrame) throws -> Data {
++            do {
++                guard let receive, isCurrent(peer), frame.type == 8, frame.payload.count >= 16 else { throw Failure.closed }
++                let header = try WS2CompanionFrame.header(type: frame.type, count: frame.payload.count)
++                let nonce = try ChaChaPoly.Nonce(data: rx.take())
++                let box = try ChaChaPoly.SealedBox(nonce: nonce, ciphertext: frame.payload.dropLast(16), tag: frame.payload.suffix(16))
++                return try ChaChaPoly.open(box, using: receive, authenticating: header)
++            } catch { close(); throw error }
++        }
++    }
++    private enum State { case fresh, proving, finished, closed }
++    private var state = State.fresh
++    private let identity: Identity
++    private let lookup: (Data) -> Peer?
++    private let isCurrent: (Peer) -> Bool
++    private let clock: any WS2Clock
++    private let deadline: WS2.Instant
++    private var clientEphemeral: Data?
++    private var ephemeral: Curve25519.KeyAgreement.PrivateKey?
++    private var shared: SharedSecret?
++    private var proofKey: SymmetricKey?
++    init(identity: Identity, clock: any WS2Clock, lookup: @escaping (Data) -> Peer?, isCurrent: @escaping (Peer) -> Bool) throws {
++        guard !identity.identifier.isEmpty, identity.identifier.count <= 128 else { throw Failure.malformed }
++        self.identity = identity; self.lookup = lookup; self.isCurrent = isCurrent; self.clock = clock
++        deadline = clock.now().adding(10 * WS2.Duration.second)
++    }
++    func close() { state = .closed; ephemeral = nil; shared = nil; proofKey = nil; clientEphemeral = nil }
++    private func checkTime() throws { guard clock.now() < deadline else { close(); throw Failure.expired } }
++    private static func derive(_ shared: SharedSecret, salt: String, info: String) -> SymmetricKey {
++        shared.hkdfDerivedSymmetricKey(using: SHA512.self, salt: Data(salt.utf8), sharedInfo: Data(info.utf8), outputByteCount: 32)
++    }
++    private static func proofNonce(_ value: String) throws -> ChaChaPoly.Nonce {
++        guard value.utf8.count == 8 else { throw Failure.malformed }
++        return try ChaChaPoly.Nonce(data: Data(repeating: 0, count: 4) + Data(value.utf8))
++    }
++    /// Input/output are the bytes in OPACK `_pd`. OPACK and frame-type validation belong to the network adapter.
++    func answerM1(_ tlv: Data) throws -> Data {
++        do {
++            try checkTime(); guard state == .fresh else { throw Failure.state }
++            let values = try PairingTLV.decode(tlv, allowed: [3,6])
++            guard values[6] == Data([1]), let raw = values[3], raw.count == 32 else { throw Failure.malformed }
++            let client = try Curve25519.KeyAgreement.PublicKey(rawRepresentation: raw)
++            let ephemeral = Curve25519.KeyAgreement.PrivateKey()
++            let shared = try ephemeral.sharedSecretFromKeyAgreement(with: client)
++            let key = Self.derive(shared, salt: "Pair-Verify-Encrypt-Salt", info: "Pair-Verify-Encrypt-Info")
++            let publicBytes = ephemeral.publicKey.rawRepresentation
++            let signature = try identity.signingKey.signature(for: publicBytes + identity.identifier + raw)
++            let proof = try PairingTLV.encode([(1,identity.identifier),(10,signature)])
++            let box = try ChaChaPoly.seal(proof, using: key, nonce: Self.proofNonce("PV-Msg02"))
++            let result = try PairingTLV.encode([(6,Data([2])),(3,publicBytes),(5,box.ciphertext + box.tag)])
++            self.ephemeral = ephemeral; self.clientEphemeral = raw; self.shared = shared; proofKey = key; state = .proving
++            return result
++        } catch { close(); throw error }
++    }
++    /// Send returned M4 before installing the session for encrypted records. A queued M4 is not application authorization.
++    func answerM3(_ tlv: Data) throws -> (m4: Data, session: VerifiedSession) {
++        do {
++            try checkTime()
++            guard state == .proving, let proofKey, let shared, let ephemeral, let clientEphemeral else { throw Failure.state }
++            let values = try PairingTLV.decode(tlv, allowed: [5,6])
++            guard values[6] == Data([3]), let sealed = values[5], (16...1024).contains(sealed.count) else { throw Failure.malformed }
++            let box = try ChaChaPoly.SealedBox(nonce: Self.proofNonce("PV-Msg03"), ciphertext: sealed.dropLast(16), tag: sealed.suffix(16))
++            let plain = try ChaChaPoly.open(box, using: proofKey)
++            let proof = try PairingTLV.decode(plain, allowed: [1,10])
++            guard let id = proof[1], !id.isEmpty, id.count <= 128, let signature = proof[10], signature.count == 64 else { throw Failure.malformed }
++            guard let peer = lookup(id), peer.identifier == id, peer.enabled, peer.revision > 0,
++                  peer.signingPublicKey.count == 32 else { throw Failure.unknownPeer }
++            let publicKey = try Curve25519.Signing.PublicKey(rawRepresentation: peer.signingPublicKey)
++            guard publicKey.isValidSignature(signature, for: clientEphemeral + id + ephemeral.publicKey.rawRepresentation) else { throw Failure.signature }
++            guard isCurrent(peer) else { throw Failure.revoked }
++            let session = VerifiedSession(peer: peer,
++                transmit: Self.derive(shared, salt: "", info: "ServerEncrypt-main"),
++                receive: Self.derive(shared, salt: "", info: "ClientEncrypt-main"), isCurrent: isCurrent)
++            let m4 = try PairingTLV.encode([(6,Data([4]))])
++            state = .finished; self.ephemeral = nil; self.shared = nil; self.proofKey = nil; self.clientEphemeral = nil
++            return (m4, session)
++        } catch { close(); throw error }
++    }
++}
+--- a/prototype/build.sh
++++ b/prototype/build.sh
+@@ -61,6 +61,7 @@
+   -framework MapKit
+   -framework LocalAuthentication
+   -framework LocalAuthenticationEmbeddedUI
++  -framework GameController
+ )
+ 
+ # 自动收集源文件：只扫 prototype/ 与它的模块子目录，顺序稳定（按路径排序）。

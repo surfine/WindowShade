@@ -1,0 +1,9 @@
+{
+  "command": [
+    "/mnt/data/WindowShade2-round2-part4/.build/part2-regression",
+    "/mnt/data/WindowShade2-round2-part4/validation/part2-outbound.ndjson"
+  ],
+  "returncode": 0,
+  "stdout": "PASS LEASE01 single global input owner\nPASS LEASE02 privileged owner table\nPASS LEASE03 authorization preempts synchronously\nPASS LEASE04 old key-down never confirms new approval\nPASS LEASE05 obscured reminder not replayed\nPASS LEASE06 lock barrier clears sensitive state\nPASS LEASE07 display removal cancels only owner\nPASS LEASE08 exact expiry and future request\nPASS LEASE09 reminder four seconds and no endless refresh\nPASS LEASE10 backward-time security invalidation\nPASS BLE01 five-second reads are not two-second age timeouts\nPASS BLE02 exact read deadline and stale callbacks\nPASS REMOTE01 discovery never means paired\nPASS REMOTE02 verified capability replay and revocation\nPASS CODEX01 initialize and two-phase handshake\nPASS CODEX02 thread then turn with actual field names\nPASS CODEX03 steer precondition and interrupt does not finish turn\nPASS CODEX04 approval IDs retain number versus string\nPASS CODEX05 unrelated completion and late reply ignored\nPASS CODEX06 every possible single split boundary\nPASS CODEX07 malformed, oversized and EOF safety\nPASS CODEX08 timeout makes outcome uncertain not retry\nPASS part2 core: 22 scenarios, 86 assertions\n",
+  "stderr": ""
+}

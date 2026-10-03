@@ -32,7 +32,7 @@ final class NotchActivityView: NSView {
         let actions: [(String, String, NotchActivityAction)] = [
             ("音乐", "music.note", .enableMusic), ("隔空投送", "airdrop", .airDrop),
             ("路线", "map", .route), ("语音备忘录", "waveform", .voiceMemos),
-            ("番茄钟", "timer", .focusStart)]
+            ("番茄钟", "timer", .focusOpen)]
         tools = actions.map { title, symbol, action in
             let button = makeButton(title, symbol: symbol)
             button.identifier = .init(action.rawValue); button.target = self; button.action = #selector(tool(_:))
@@ -209,8 +209,8 @@ private final class ActivityCard: NSView {
         if item.kind == .music {
             actions = [("上一首", "backward.end.fill", .previous), (item.isPaused ? "播放" : "暂停", item.isPaused ? "play.fill" : "pause.fill", .playPause), ("下一首", "forward.end.fill", .next)]
         } else if item.kind == .focus {
-            actions = [(item.isPaused ? "继续" : "暂停", item.isPaused ? "play.fill" : "pause.fill", .focusPause),
-                       ("跳过", "forward.end.fill", .focusSkip), ("结束", "stop.fill", .focusEnd)]
+            actions = [(item.isPaused ? "继续" : "暂停", item.isPaused ? "play.fill" : "pause.fill", .focusTogglePause),
+                       ("跳过", "forward.end.fill", .focusSkip), ("结束", "xmark", .end)]
         } else if item.kind == .route {
             actions = [("地图", "arrow.up.forward.app", .open), ("移除路线", "xmark", .end)]
         } else { actions = [("打开", "arrow.up.forward.app", .open)] }

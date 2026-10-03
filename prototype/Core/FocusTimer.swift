@@ -39,8 +39,21 @@ struct FocusTimer: Sendable {
     private var tokenSource: WS2.TokenSource
     private var time = WS2.TimeGate()
     private var restWindowsRequested = false
-    let preset: Preset
-    let tuckChatEnabled: Bool
+    // Settings are pending choices. A running focus+rest pair keeps its original duration.
+    private(set) var preset: Preset
+    private(set) var tuckChatEnabled: Bool
+    private var activePreset: Preset = .minutes25
+    private var activeTuckChat = false
+    mutating func configure(preset: Preset, tuckChatEnabled: Bool) {
+        self.preset = preset; self.tuckChatEnabled = tuckChatEnabled
+    }
+    var phaseDuration: UInt64 {
+        switch phase { case .idle: return preset.focus; case .focus: return activePreset.focus; case .rest: return activePreset.rest }
+    }
+    func progress(at now: WS2.Instant) -> Double {
+        guard phase != .idle, phaseDuration > 0 else { return 0 }
+        return min(1, max(0, 1 - Double(remaining(at: now)) / Double(phaseDuration)))
+    }
 
     init(bootID: UUID, preset: Preset = .minutes25, tuckChatEnabled: Bool = true) {
         tokenSource = WS2.TokenSource(bootID: bootID, domain: .focusTimer)
@@ -90,8 +103,9 @@ struct FocusTimer: Sendable {
             guard phase == .idle, !isLocked, !isSleeping else { return out }
             guard let id = tokenSource.next() else { return out + [.fault(.generationExhausted)] }
             runID = id; phase = .focus; pauses.removeAll(); pausedRemaining = 0
-            deadline = now.adding(preset.focus)
-            if tuckChatEnabled { out.append(.tuckChat(id)) }
+            activePreset = preset; activeTuckChat = tuckChatEnabled
+            deadline = now.adding(activePreset.focus)
+            if activeTuckChat { out.append(.tuckChat(id)) }
         case .pause: setPause(.manual, on: true, at: now)
         case .resume: setPause(.manual, on: false, at: now)
         case .locked:
@@ -145,9 +159,9 @@ struct FocusTimer: Sendable {
     }
     private mutating func beginRest(at start: WS2.Instant, now: WS2.Instant, audible: Bool) -> [Effect] {
         guard let id = runID else { return [] }
-        var out: [Effect] = tuckChatEnabled ? [.restoreChat(id)] : []
+        var out: [Effect] = activeTuckChat ? [.restoreChat(id)] : []
         phase = .rest; pauses.removeAll(); pausedRemaining = 0
-        deadline = start.adding(preset.rest)
+        deadline = start.adding(activePreset.rest)
         // 晚到时跳过已经过去的休息，不瞬间收一次窗口、补播声音。
         if let end = deadline, end <= now { out += finish(); return out }
         if !isLocked && !isSleeping { restWindowsRequested = true; out.append(.tuckAll(id)) }
@@ -157,7 +171,7 @@ struct FocusTimer: Sendable {
     private mutating func finish() -> [Effect] {
         guard let id = runID else { return [] }
         var out: [Effect] = []
-        if phase == .focus && tuckChatEnabled { out.append(.restoreChat(id)) }
+        if phase == .focus && activeTuckChat { out.append(.restoreChat(id)) }
         if restWindowsRequested { out.append(.restoreAll(id)) }
         restWindowsRequested = false; phase = .idle; deadline = nil
         pauses.removeAll(); pausedRemaining = 0; runID = nil

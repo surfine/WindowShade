@@ -264,6 +264,17 @@ static func noticeTone(_ message: String) -> NotchPanel.Tone {
         return root
     }
 
+    /// 隐私一栏：内容从 tools/privacy/registry.json 生成，值和开关都引用原设置（见 WS2PrivacyPane）。
+    func makePrivacySettingsPage() -> NSView {
+        let (root, stack) = makeSettingsPageRoot()
+        stack.addArrangedSubview(makeSettingsHeader(
+            title: "隐私", subtitle: "WindowShade 读到的每一样都列在这里。", symbolName: "hand.raised"))
+        let pane = MainActor.assumeIsolated { WS2PrivacyPane(owner: self) }
+        stack.addArrangedSubview(pane)
+        pane.widthAnchor.constraint(equalTo: stack.widthAnchor).isActive = true
+        return root
+    }
+
     func makePermissionsSettingsPage() -> NSView {
         let (root, stack) = makeSettingsPageRoot()
         stack.addArrangedSubview(makeSettingsHeader(
@@ -303,7 +314,8 @@ static func noticeTone(_ message: String) -> NotchPanel.Tone {
         return field
     }
 
-    private func makeUnifiedSettingsCard(_ rows: [NSView], separatorInset: CGFloat = 16) -> NSView {
+    /// 设置里每一张卡片的外观；隐私页也从同一处拿，别再写第二套样式。
+    func makeUnifiedSettingsCard(_ rows: [NSView], separatorInset: CGFloat = 16) -> NSView {
         let card = SettingsGroupBox()
         card.wantsLayer = true
         card.translatesAutoresizingMaskIntoConstraints = false
@@ -892,7 +904,7 @@ static func noticeTone(_ message: String) -> NotchPanel.Tone {
             recorderRow(.smaller, subtitle: "四边各往里 30 点"),
             recorderRow(.undoPlacement, subtitle: "回到排之前的位置和大小"),
             recorderRow(.previousDisplay, subtitle: "和“移到另一块屏幕”反着转"),
-            recorderRow(.pomodoro, subtitle: "开始或暂停；默认不占快捷键"),
+            recorderRow(.focusTimer, subtitle: "开始、暂停或继续同一个番茄钟；默认不占用任何快捷键"),
         ])
         stack.addArrangedSubview(makePrefGroupLabel("更多排法"))
         stack.addArrangedSubview(more)

@@ -1,0 +1,641 @@
+// 全局快捷键与事件 tap：注册全局快捷键、标题栏双击/三击处理、
+// 事件 tap 生命周期与退避重启用。作为 AppDelegate 扩展实现。
+
+import Cocoa
+import Carbon.HIToolbox
+
+extension AppDelegate {
+    func registerHotKey() {
+        installHotKeyHandler()
+        // 新装还是升级：启动第一步已经认过、存下了（见 GlobalShortcuts.swift 的 InstallHistory），这里只读出来记一笔。
+        // 新装的 ⌃⌘ 一个都不占，升级上来的照他原来在用的。
+        let history = GlobalShortcutSettings.history
+        wlog("hotkey: install history=\(history) factory ⌃⌘ shortcuts \(history.hadFactoryShortcuts ? "kept" : "off")")
+        registerGlobalShortcuts()
+        // Dock 图标上的两指上下滑（默认关，见 DockSwipe.swift）：开着的话随启动装上监听；设置里开关时再装、拆。
+        MainActor.assumeIsolated { DockSwipeController.shared.apply(owner: self) }
+    }
+
+    private func installHotKeyHandler() {
+        var eventType = EventTypeSpec(eventClass: OSType(kEventClassKeyboard),
+                                      eventKind: UInt32(kEventHotKeyPressed))
+        InstallEventHandler(GetApplicationEventTarget(), { _, event, _ -> OSStatus in
+            var id = EventHotKeyID()
+            if let event,
+               GetEventParameter(event,
+                                 EventParamName(kEventParamDirectObject),
+                                 EventParamType(typeEventHotKeyID),
+                                 nil,
+                                 MemoryLayout<EventHotKeyID>.size,
+                                 nil,
+                                 &id) == noErr {
+                DispatchQueue.main.async { appDelegate?.handleHotKey(id: id.id) }
+            }
+            return noErr
+        }, 1, &eventType, nil, nil)
+    }
+
+    /// 按当前设置（重新）注册全部全局快捷键。设置页改键后也走这里。
+    /// 被其他应用占用的组合提示一次，并且不再显示在菜单里（按了没反应比没有更糟）。
+    func registerGlobalShortcuts() {
+        for ref in hotKeyRefs.values { UnregisterEventHotKey(ref) }
+        hotKeyRefs.removeAll()
+        var failed: [UInt32: (name: String, status: OSStatus)] = [:]
+        func register(_ hotKey: GlobalShortcutSettings.HotKey, id: UInt32, name: String) {
+            var ref: EventHotKeyRef?
+            let hkID = EventHotKeyID(signature: OSType(0x57534844), id: id) // 'WSHD'
+            let status = RegisterEventHotKey(hotKey.keyCode, hotKey.modifiers,
+                                             hkID, GetApplicationEventTarget(), 0, &ref)
+            if status == noErr, let ref {
+                hotKeyRefs[id] = ref
+            } else {
+                failed[id] = (name, status)
+            }
+        }
+        // 窗口浏览的快捷键由窗口浏览自己注册。
+        for shortcut in GlobalShortcut.allCases where shortcut != .windowBrowser {
+            guard let hotKey = GlobalShortcutSettings.hotKey(for: shortcut) else { continue }
+            register(hotKey, id: shortcut.hotKeyID,
+                     name: WindowBrowserSettings.displayName(for: hotKey))
+        }
+        if GlobalShortcutSettings.numberedExpandEnabled {
+            for (index, keyCode) in GlobalShortcutSettings.numberedKeyCodes.enumerated() {
+                register(GlobalShortcutSettings.HotKey(keyCode: keyCode,
+                                                       modifiers: GlobalShortcutSettings.numberedModifiers),
+                         id: UInt32(101 + index), name: "⌃⌘\(index + 1)")
+            }
+        }
+        unavailableHotKeyIDs = Set(failed.keys)
+        if !failed.isEmpty {
+            func names(_ group: [UInt32: (name: String, status: OSStatus)]) -> String {
+                let numbered = group.keys.filter { $0 >= 101 }
+                var names = group.filter { $0.key < 101 }.sorted { $0.key < $1.key }.map(\.value.name)
+                names += numbered.count == 9
+                    ? [GlobalShortcutSettings.numberedDisplayName]
+                    : numbered.sorted().compactMap { group[$0]?.name }
+                return names.joined(separator: "、")
+            }
+            // 同一个组合在本应用里注册第二次会得到 eventHotKeyExistsErr：占着它的是我们自己的另一个快捷键，不是别的应用。
+            let duplicated = failed.filter { $0.value.status == OSStatus(eventHotKeyExistsErr) }
+            let taken = failed.filter { $0.value.status != OSStatus(eventHotKeyExistsErr) }
+            var parts: [String] = []
+            if !taken.isEmpty { parts.append("\(names(taken)) 被其他应用占用") }
+            if !duplicated.isEmpty { parts.append("\(names(duplicated)) 被 WindowShade 里的另一个快捷键占用") }
+            quietNotice(parts.joined(separator: "；"),
+                        log: "hotkey: registration failed "
+                            + failed.sorted { $0.key < $1.key }.map { "\($0.key)=\($0.value.status)" }
+                                .joined(separator: ","))
+        }
+        registerWindowBrowserHotKey()
+    }
+
+    /// 菜单项上要不要显示这个快捷键：设置里开着，而且注册没失败。
+    func menuHotKey(for shortcut: GlobalShortcut) -> GlobalShortcutSettings.HotKey? {
+        guard !unavailableHotKeyIDs.contains(shortcut.hotKeyID) else { return nil }
+        return GlobalShortcutSettings.hotKey(for: shortcut)
+    }
+
+    func isNumberedShortcutActive(index: Int) -> Bool {
+        GlobalShortcutSettings.numberedExpandEnabled
+            && !unavailableHotKeyIDs.contains(UInt32(101 + index))
+    }
+
+    /// 独立快捷键：默认不注册。注册失败时保留旧的有效组合并提示。
+    @discardableResult
+    func registerWindowBrowserHotKey() -> Bool {
+        unregisterWindowBrowserHotKey()
+        guard let config = WindowBrowserSettings.hotKey else { return true }
+        guard !WindowBrowserSettings.isReserved(config) else {
+            // 旧版本可能存下现在被拒绝的组合（例如纯 ⌘ 系列）：清掉，避免每次启动
+            // 都重复提示；用户重新录制即可。
+            WindowBrowserSettings.hotKey = nil
+            quietNotice("这个快捷键被保留，已忽略",
+                        log: "window-browser: refused reserved hotkey \(config.keyCode)")
+            return false
+        }
+        var ref: EventHotKeyRef?
+        let hkID = EventHotKeyID(signature: OSType(0x57534844), id: 4)
+        let status = RegisterEventHotKey(config.keyCode, config.modifiers, hkID,
+                                         GetApplicationEventTarget(), 0, &ref)
+        guard status == noErr, let ref else {
+            unavailableHotKeyIDs.insert(GlobalShortcut.windowBrowser.hotKeyID)
+            let name = WindowBrowserSettings.displayName(for: config)
+            quietNotice(status == OSStatus(eventHotKeyExistsErr)
+                            ? "\(name) 被 WindowShade 里的另一个快捷键占用" : "快捷键 \(name) 注册失败",
+                        log: "window-browser: hotkey registration failed status=\(status)")
+            return false
+        }
+        windowBrowserHotKeyRef = ref
+        unavailableHotKeyIDs.remove(GlobalShortcut.windowBrowser.hotKeyID)
+        wlog("window-browser: hotkey registered \(WindowBrowserSettings.displayName(for: config))")
+        return true
+    }
+
+    func unregisterWindowBrowserHotKey() {
+        if let ref = windowBrowserHotKeyRef {
+            UnregisterEventHotKey(ref)
+            windowBrowserHotKeyRef = nil
+        }
+    }
+    func handleHotKey(id: UInt32) {
+        if id == GlobalShortcut.focusTimer.hotKeyID {
+            MainActor.assumeIsolated { ws2Runtime.toggleFocus() }
+            return
+        }
+        if id == 1 {
+            toggle()
+            return
+        }
+        if id == 2 {
+            focusCurrentAppCycle()
+            return
+        }
+        if id == 3 {
+            pinnedPreviewController.pinCurrentTargetPreview()
+            return
+        }
+        if id == GlobalShortcut.pictureInPicture.hotKeyID {
+            MainActor.assumeIsolated { pip.toggleCurrentWindow() }
+            return
+        }
+        if id == 4 {
+            windowBrowserController?.toggleKeyboardPanel()
+            return
+        }
+        if id == GlobalShortcut.carry.hotKeyID {
+            MainActor.assumeIsolated { carry.toggleCurrentWindow() }
+            return
+        }
+        if id == GlobalShortcut.slideOver.hotKeyID {
+            MainActor.assumeIsolated { slideOver.toggleCurrentWindow() }
+            return
+        }
+        if id == GlobalShortcut.suspendPins.hotKeyID {
+            pinnedPreviewController.toggleSuspendAll()
+            rebuildMenu()
+            return
+        }
+        if id == GlobalShortcut.launchpad.hotKeyID {
+            MainActor.assumeIsolated { launchpad.toggle() }
+            return
+        }
+        if id == GlobalShortcut.magicTile.hotKeyID {
+            MainActor.assumeIsolated { gestures.magicTile() }
+            return
+        }
+        if id == GlobalShortcut.nextDisplay.hotKeyID {
+            MainActor.assumeIsolated { _ = gestures.moveToNextDisplay() }
+            return
+        }
+        if id == GlobalShortcut.previousDisplay.hotKeyID {
+            MainActor.assumeIsolated { _ = gestures.moveToNextDisplay(backward: true) }
+            return
+        }
+        if let action = GlobalShortcut.allCases.first(where: { $0.hotKeyID == id })?.placement {
+            MainActor.assumeIsolated { gestures.keyPlace(action) }
+            return
+        }
+        if id == GlobalShortcut.tuckAll.hotKeyID {
+            MainActor.assumeIsolated { _ = notch.tuckAll() }
+            return
+        }
+        if id == GlobalShortcut.tuckCurrent.hotKeyID {
+            MainActor.assumeIsolated { _ = notch.tuckFocused() }
+            return
+        }
+        // 排布这一组：和手势同向，往上变小、往下变大。
+        let steps: [UInt32: GestureDirection] = [
+            GlobalShortcut.stepSmaller.hotKeyID: .up, GlobalShortcut.stepLarger.hotKeyID: .down,
+            GlobalShortcut.leftHalf.hotKeyID: .left, GlobalShortcut.rightHalf.hotKeyID: .right,
+        ]
+        if let step = steps[id] {
+            MainActor.assumeIsolated { gestures.keyStep(step) }
+            return
+        }
+        guard id >= 101, id <= 109 else { return }
+        expandShadedWindow(atMenuIndex: Int(id - 101))
+    }
+    func expandShadedWindow(atMenuIndex index: Int) {
+        let entries = sortedShadedEntries()
+        guard entries.indices.contains(index) else {
+            quietNotice("没有对应窗口", log: "hotkey: no shaded window at index=\(index)")
+            return
+        }
+        unshade(entries[index].0)
+    }
+    func scheduleEventTapReenable(delay: TimeInterval) {
+        eventTapReenableWorkItem?.cancel()
+        let work = DispatchWorkItem { [weak self] in
+            self?.eventTapReenableWorkItem = nil
+            if let tap = self?.eventTap { CGEvent.tapEnable(tap: tap, enable: true) }
+        }
+        eventTapReenableWorkItem = work
+        DispatchQueue.main.asyncAfter(deadline: .now() + delay, execute: work)
+    }
+    func handleTitleBarDoubleClick(at point: CGPoint) -> Bool {
+        let startedAt = CFAbsoluteTimeGetCurrent()
+        defer {
+            let elapsedMilliseconds = Int((CFAbsoluteTimeGetCurrent() - startedAt) * 1000)
+            if elapsedMilliseconds >= 50 {
+                wlog("slow: titlebar-double-click took \(elapsedMilliseconds)ms")
+            }
+        }
+        guard titlebarDoubleClickEnabled else { return false }
+        guard AXIsProcessTrusted() else { return false }
+        // 先用 WindowServer 廉价排除内容区双击（选词等高频操作），
+        // 避免在 tap 回调里对目标 app 做同步 AX 命中测试。
+        guard pointMayLieInTitlebarBand(point) else { return false }
+        // Chrome profiles describe crop geometry, not the absence of controls.
+        // Even a standard titlebar can contain an editable accessory view.
+        // 过了带内预过滤的点击都是"疑似标题栏双击"，低频且用户可感——
+        // 此后的每个拒绝分支都要留日志，否则"有时候折叠不了"无从排查。
+        let sysWide = AXUIElementCreateSystemWide()
+        var elRef: AXUIElement?
+        let hitErr = AXUIElementCopyElementAtPosition(sysWide, Float(point.x), Float(point.y), &elRef)
+        if hitErr == .success, let el = elRef {
+            // 交通灯、地址栏、搜索框、工具栏按钮等控件不抢；标签放行（见谓词注释）。
+            let role = axRole(el)
+            if stealsTitlebarDoubleClick(role) {
+                wlog("titlebar-double-click: refused control role=\(role ?? "?") at=(\(Int(point.x)),\(Int(point.y)))")
+                return false
+            }
+            if let win = containingWindow(el) {
+                return handleTitleBarDoubleClick(win: win, point: point, source: "ax-hit")
+            }
+            // After Effects 等 Adobe 自绘窗口的 AX 命中元素是 AXUnknown 且没有
+            // 窗口祖先（AX 树残缺）——几何回退，titlebarContains 仍会校验标题栏带。
+            wlog("titlebar-double-click: no containing window role=\(role ?? "?") at=(\(Int(point.x)),\(Int(point.y))); trying geometry fallback")
+            if let win = frontmostWindowContaining(point: point, requireCompatProfile: false) {
+                return handleTitleBarDoubleClick(win: win, point: point, source: "geometry-after-orphan-hit")
+            }
+        } else if hitErr != .success {
+            // 目标 app 忙时 AX 命中测试会超时/出错（此前静默死掉，正是"有时候
+            // 双击没反应"的一类来源）。降级用几何回退判定标题栏。
+            wlog("titlebar-double-click: ax hit-test failed err=\(hitErr.rawValue); trying geometry fallback")
+            if let win = frontmostWindowContaining(point: point, requireCompatProfile: false) {
+                return handleTitleBarDoubleClick(win: win, point: point, source: "geometry-after-ax-error")
+            }
+        }
+
+        if let win = frontmostWindowContaining(point: point) {
+            return handleTitleBarDoubleClick(win: win, point: point, source: "frontmost-geometry")
+        }
+
+        return false
+    }
+
+    func clearExpiredPendingTitlebarTripleClick() {
+        if let pending = pendingTitlebarTripleClick, pending.deadline < Date() {
+            pendingTitlebarTripleClick = nil
+        }
+    }
+    func squaredDistance(_ a: CGPoint, _ b: CGPoint) -> CGFloat {
+        let dx = a.x - b.x
+        let dy = a.y - b.y
+        return dx * dx + dy * dy
+    }
+    func pendingTitlebarTripleClickMatches(_ pending: PendingTitlebarTripleClick,
+                                                   point: CGPoint) -> Bool {
+        if squaredDistance(point, pending.point) <= 96 * 96 { return true }
+        guard let overlay = shaded[pending.id]?.overlay else { return false }
+        let cocoaPoint = cocoaMousePoint(fromAXPoint: point)
+        return overlay.frame.insetBy(dx: -28, dy: -28).contains(cocoaPoint)
+    }
+    var shouldBypassTitlebarEventTap: Bool {
+        if let deadline = titlebarEventTapBypassUntil, deadline >= Date() {
+            return true
+        }
+        titlebarEventTapBypassUntil = nil
+        return false
+    }
+    func titlebarContains(point: CGPoint, in win: AXUIElement) -> (CGWindowID, pid_t)? {
+        guard let id = windowID(of: win), !isDesktopWidgetWindow(id: id) else { return nil }
+        if overlayIDs.contains(id) { return nil }
+        guard let pos = axPosition(win), let size = axSize(win) else { return nil }
+        var pid: pid_t = 0
+        AXUIElementGetPid(win, &pid)
+        if isStickies(pid: pid) { return nil }
+        let barH = titlebarHitHeight(of: win, id: id, winTop: pos.y, winSize: size, pid: pid)
+        guard point.y >= pos.y, point.y <= pos.y + barH,
+              point.x >= pos.x, point.x <= pos.x + size.width else { return nil }
+        return (id, pid)
+    }
+    func handleTitleBarTripleClick(at point: CGPoint, clickCount: Int64 = 3) -> Bool {
+        let startedAt = CFAbsoluteTimeGetCurrent()
+        defer {
+            let elapsedMilliseconds = Int((CFAbsoluteTimeGetCurrent() - startedAt) * 1000)
+            if elapsedMilliseconds >= 50 {
+                wlog("slow: titlebar-triple-click took \(elapsedMilliseconds)ms")
+            }
+        }
+        guard titlebarDoubleClickEnabled else { return false }
+        guard AXIsProcessTrusted() else { return false }
+        guard systemTitlebarDoubleClickAction() != .none else {
+            pendingTitlebarTripleClick = nil
+            return false
+        }
+        clearExpiredPendingTitlebarTripleClick()
+
+        if let pending = pendingTitlebarTripleClick,
+           pending.deadline >= Date(),
+           pendingTitlebarTripleClickMatches(pending, point: point) {
+            pending.deadline = Date().addingTimeInterval(max(0.65, NSEvent.doubleClickInterval))
+            // The third click can arrive before capture or hide verification.
+            // Record it now; only the verified fold may begin restoration.
+            if clickCount == 3, pending.intent.request() { enqueuePendingTitlebarTripleClick(pending) }
+            return true
+        }
+
+        // A fourth click must not bypass a consumed triple's completion gate.
+        guard clickCount == 3 else { return false }
+
+        // pending 分支之后才预过滤：三击补系统动作的 pending 匹配不依赖 AX。
+        guard pointMayLieInTitlebarBand(point) else { return false }
+
+        let sysWide = AXUIElementCreateSystemWide()
+        var elRef: AXUIElement?
+        if AXUIElementCopyElementAtPosition(sysWide, Float(point.x), Float(point.y), &elRef) == .success,
+           let el = elRef {
+            // A rejected control is conclusive. Geometry must not turn a text
+            // selection or button click into a window action.
+            guard !stealsTitlebarDoubleClick(axRole(el)) else { return false }
+            if let win = containingWindow(el) {
+                guard let (id, _) = titlebarContains(point: point, in: win) else { return false }
+                enqueueSystemTitlebarDoubleClickAction(on: win, id: id,
+                                                       originalClickPoint: point,
+                                                       source: "ax-hit")
+                return true
+            }
+        }
+
+        if let win = frontmostWindowContaining(point: point),
+           let (id, _) = titlebarContains(point: point, in: win) {
+            enqueueSystemTitlebarDoubleClickAction(on: win, id: id,
+                                                   originalClickPoint: point,
+                                                   source: "frontmost-geometry")
+            return true
+        }
+
+        return false
+    }
+    private func enqueuePendingTitlebarTripleClick(_ pending: PendingTitlebarTripleClick) {
+        DispatchQueue.main.async { [weak self] in
+            guard let self, self.titlebarDoubleClickEnabled,
+                  systemTitlebarDoubleClickAction() != .none,
+                  let transaction = pending.foldTransactionID,
+                  self.shaded[pending.id]?.foldTransactionID == transaction else { return }
+            // The verifier schedules completion after this call returns its element.
+            var restored: AXUIElement?
+            restored = self.unshadeReturningElement(
+                pending.id, playSound: false, pinAfterRestore: false,
+                onVerified: { [weak self] success in
+                    guard success, let self, let restored else { return }
+                    self.completeTitlebarTripleClick(on: restored, pending: pending)
+                })
+        }
+    }
+    func titlebarFoldCanBegin(id: CGWindowID) -> Bool {
+        let state = currentOperationState(id)
+        return shaded[id] == nil && !shadeOperationIDs.contains(id)
+            && !duoController.windowEffects.hasActiveTransition(for: id)
+            && (state == .normal || state == .failed)
+    }
+    private func completeTitlebarTripleClick(on win: AXUIElement,
+                                            pending: PendingTitlebarTripleClick) {
+        // A new fold may have started while restoration was being verified.
+        guard shaded[pending.id] == nil, !shadeOperationIDs.contains(pending.id),
+              !duoController.windowEffects.hasActiveTransition(for: pending.id),
+              currentOperationState(pending.id) == .normal else { return }
+        performSystemTitlebarDoubleClickAction(on: win, id: pending.id,
+                                               originalClickPoint: pending.point,
+                                               source: "pending")
+    }
+    private func enqueueSystemTitlebarDoubleClickAction(on win: AXUIElement, id: CGWindowID,
+                                                       originalClickPoint: CGPoint, source: String) {
+        DispatchQueue.main.async { [weak self] in
+            self?.performSystemTitlebarDoubleClickAction(on: win, id: id,
+                                                        originalClickPoint: originalClickPoint,
+                                                        source: source)
+        }
+    }
+    func titlebarSystemDoubleClickPoint(for win: AXUIElement, id: CGWindowID,
+                                                originalClickPoint: CGPoint) -> CGPoint? {
+        guard let pos = axPosition(win), let size = axSize(win) else { return nil }
+        var pid: pid_t = 0
+        AXUIElementGetPid(win, &pid)
+        let barH = titlebarHitHeight(of: win, id: id, winTop: pos.y, winSize: size, pid: pid)
+        let safeLeft = pos.x + min(max(size.width * 0.18, 120), max(120, size.width - 40))
+        let safeRight = pos.x + max(40, size.width - 40)
+        let x: CGFloat
+        if originalClickPoint.x >= safeLeft, originalClickPoint.x <= safeRight {
+            x = originalClickPoint.x
+        } else {
+            x = min(max(pos.x + size.width * 0.5, safeLeft), safeRight)
+        }
+        return CGPoint(x: x, y: pos.y + max(8, min(barH * 0.5, barH - 4)))
+    }
+    func postSystemTitlebarDoubleClick(at axPoint: CGPoint, id: CGWindowID, source: String) {
+        let eventPoint = movePointerVisibly(to: axPoint, reason: "titlebar-triple-double-click")
+        let eventSource = CGEventSource(stateID: .hidSystemState)
+        titlebarEventTapBypassUntil = Date().addingTimeInterval(0.35)
+        let schedule: [(TimeInterval, CGEventType, Int64)] = [
+            (0.000, .leftMouseDown, 1),
+            (0.026, .leftMouseUp, 1),
+            (0.078, .leftMouseDown, 2),
+            (0.104, .leftMouseUp, 2),
+        ]
+        for (delay, type, clickState) in schedule {
+            DispatchQueue.main.asyncAfter(deadline: .now() + delay) {
+                let event = CGEvent(mouseEventSource: eventSource,
+                                    mouseType: type,
+                                    mouseCursorPosition: eventPoint,
+                                    mouseButton: .left)
+                event?.setIntegerValueField(.mouseEventClickState, value: clickState)
+                event?.post(tap: .cghidEventTap)
+            }
+        }
+        DispatchQueue.main.asyncAfter(deadline: .now() + 0.22) { [weak self] in
+            if self?.titlebarEventTapBypassUntil ?? .distantPast < Date() {
+                self?.titlebarEventTapBypassUntil = nil
+            }
+        }
+        wlog("titlebar-triple-click: posted system double-click source=\(source) id=\(id) ax=(\(Int(axPoint.x)),\(Int(axPoint.y))) event=(\(Int(eventPoint.x)),\(Int(eventPoint.y)))")
+    }
+    func performAXZoomForTitlebarTripleClick(on win: AXUIElement,
+                                                     id: CGWindowID,
+                                                     source: String) -> Bool {
+        switch realWindowManagementCapability(win) {
+        case .zoom, .none:
+            let ok = pressAXButton(win, kAXZoomButtonAttribute as String)
+            wlog("titlebar-triple-click: AX zoom source=\(source) id=\(id) ok=\(ok)")
+            return ok
+        case .fullScreen:
+            wlog("titlebar-triple-click: exact zoom fallback required source=\(source) id=\(id) reason=fullscreen-capability")
+            return false
+        }
+    }
+    func performSystemTitlebarDoubleClickAction(on win: AXUIElement, id: CGWindowID,
+                                                        originalClickPoint: CGPoint,
+                                                        source: String) {
+        guard titlebarDoubleClickEnabled, systemTitlebarDoubleClickAction() != .none,
+              windowID(of: win) == id else { return }
+        cancelRestorePin(for: id)
+        var pid: pid_t = 0
+        AXUIElementGetPid(win, &pid)
+        let beforePos = axPosition(win)
+        let beforeSize = axSize(win)
+        switch systemTitlebarDoubleClickAction() {
+        case .zoom:
+            if performAXZoomForTitlebarTripleClick(on: win, id: id, source: source) {
+                break
+            }
+            raiseAXWindow(win)
+            focusAXWindow(win, pid: pid)
+            if let target = titlebarSystemDoubleClickPoint(for: win, id: id,
+                                                           originalClickPoint: originalClickPoint) {
+                postSystemTitlebarDoubleClick(at: target, id: id, source: source)
+            } else {
+                let ok = pressAXButton(win, kAXZoomButtonAttribute as String)
+                wlog("titlebar-triple-click: fallback AX zoom source=\(source) id=\(id) ok=\(ok)")
+            }
+        case .minimize:
+            let err = setAXMinimizedReturningError(win, true)
+            if err == .success {
+                wlog("titlebar-triple-click: AX minimize source=\(source) id=\(id)")
+                break
+            }
+            raiseAXWindow(win)
+            focusAXWindow(win, pid: pid)
+            if let target = titlebarSystemDoubleClickPoint(for: win, id: id,
+                                                           originalClickPoint: originalClickPoint) {
+                postSystemTitlebarDoubleClick(at: target, id: id, source: source)
+            } else {
+                wlog("titlebar-triple-click: fallback AX minimize failed source=\(source) id=\(id) err=\(err)")
+            }
+        case .none:
+            wlog("titlebar-triple-click: system none source=\(source) id=\(id)")
+        }
+        DispatchQueue.main.asyncAfter(deadline: .now() + 0.35) {
+            let afterPos = axPosition(win)
+            let afterSize = axSize(win)
+            let before = beforePos.flatMap { p in beforeSize.map { s in "(\(Int(p.x)),\(Int(p.y)) \(Int(s.width))x\(Int(s.height)))" } } ?? "<unavailable>"
+            let after = afterPos.flatMap { p in afterSize.map { s in "(\(Int(p.x)),\(Int(p.y)) \(Int(s.width))x\(Int(s.height)))" } } ?? "<unavailable>"
+            wlog("titlebar-triple-click: frame source=\(source) id=\(id) before=\(before) after=\(after)")
+        }
+    }
+    func frontmostWindowContaining(point: CGPoint,
+                                           requireCompatProfile: Bool = true) -> AXUIElement? {
+        guard let app = NSWorkspace.shared.frontmostApplication else { return nil }
+        // 常规路径只对已知需要几何回退的兼容 app 生效；AX 命中测试出错的
+        // 降级路径（requireCompatProfile=false）对任何前台 app 生效。
+        if requireCompatProfile {
+            guard needsControlPaddedChrome(pid: app.processIdentifier) else { return nil }
+        }
+        // Avoid AXWindows when the focused element is demonstrably the window
+        // under the pointer. Crop geometry and title matching cannot prove this.
+        if let info = WindowListCache.shared.onScreenWindows().first(where: { info in
+            guard let bounds = cgWindowBounds(info), bounds.contains(point) else { return false }
+            return (info[kCGWindowLayer as String] as? NSNumber)?.intValue == 0
+                && ((info[kCGWindowAlpha as String] as? NSNumber)?.doubleValue ?? 1) > 0
+        }),
+           (info[kCGWindowOwnerPID as String] as? NSNumber)?.int32Value == app.processIdentifier,
+           let number = info[kCGWindowNumber as String] as? NSNumber,
+           let focused = focusedWindow() {
+            var focusedID: CGWindowID = 0
+            var focusedPID: pid_t = 0
+            if AXUIElementGetPid(focused, &focusedPID) == .success,
+               focusedPID == app.processIdentifier,
+               _AXUIElementGetWindow(focused, &focusedID) == .success,
+               focusedID == number.uint32Value,
+               let position = axPosition(focused), let size = axSize(focused),
+               size.width > 1, size.height > 1,
+               CGRect(origin: position, size: size).contains(point) {
+                return focused
+            }
+        }
+        func distanceSquared(_ a: CGPoint, _ b: CGPoint) -> CGFloat {
+            let dx = a.x - b.x
+            let dy = a.y - b.y
+            return dx * dx + dy * dy
+        }
+        let candidates = appWindows(pid: app.processIdentifier).compactMap { win -> (AXUIElement, CGPoint, CGSize)? in
+            guard let pos = axPosition(win), let size = axSize(win),
+                  size.width > 1, size.height > 1 else { return nil }
+            let rect = CGRect(origin: pos, size: size)
+            guard rect.contains(point) else { return nil }
+            return (win, pos, size)
+        }
+        return candidates.min {
+            let a = distanceSquared($0.1, point)
+            let b = distanceSquared($1.1, point)
+            return a < b
+        }?.0
+    }
+    func handleTitleBarDoubleClick(win: AXUIElement, point: CGPoint, source: String) -> Bool {
+        guard let (id, pid) = titlebarContains(point: point, in: win) else {
+            // 该分支仍在 event tap 回调中；失败诊断不能再额外读一次 AXTitle，
+            // 否则忙 app 的一次“未命中”会平白多消耗一个同步 IPC timeout。
+            wlog("titlebar-double-click: miss source=\(source) at=(\(Int(point.x)),\(Int(point.y)))")
+            return false
+        }
+
+        pendingTitlebarTripleClick?.intent.cancel()
+        let pending: PendingTitlebarTripleClick?
+        if titlebarFoldCanBegin(id: id), systemTitlebarDoubleClickAction() != .none {
+            pending = PendingTitlebarTripleClick(id: id, point: point,
+                deadline: Date().addingTimeInterval(max(0.65, NSEvent.doubleClickInterval)))
+        } else {
+            pending = nil
+        }
+        pendingTitlebarTripleClick = pending
+        // Register the gesture before leaving the tap, but defer all window work.
+        DispatchQueue.main.async { [weak self] in
+            self?.performTitleBarDoubleClickAction(win: win, id: id, pid: pid,
+                                                   point: point, source: source, pending: pending)
+        }
+        return true
+    }
+    private func performTitleBarDoubleClickAction(win: AXUIElement, id: CGWindowID, pid: pid_t,
+                                                  point: CGPoint, source: String,
+                                                  pending: PendingTitlebarTripleClick?) {
+        guard titlebarDoubleClickEnabled else { pending?.intent.cancel(); return }
+        var currentPID: pid_t = 0
+        guard AXUIElementGetPid(win, &currentPID) == .success, currentPID == pid,
+              windowID(of: win) == id, axRole(win) == (kAXWindowRole as String),
+              let info = cgWindowInfo(id),
+              (info[kCGWindowOwnerPID as String] as? NSNumber)?.int32Value == pid else {
+            pending?.intent.cancel()
+            if pendingTitlebarTripleClick === pending { pendingTitlebarTripleClick = nil }
+            return
+        }
+        logIfSlow("titlebar-double-click action id=\(id)", threshold: 0.05) {
+            wlog("titlebar-double-click: source=\(source) app=\(appDisplayName(pid: pid)) id=\(id)")
+            if let pending {
+                // Another action may have changed this window since the tap returned.
+                guard titlebarFoldCanBegin(id: id) else {
+                    pending.intent.cancel()
+                    if pendingTitlebarTripleClick === pending { pendingTitlebarTripleClick = nil }
+                    return
+                }
+                registerFoldWaiter(id: id) { [weak self, pending] success in
+                    guard let self else { return }
+                    if success { pending.foldTransactionID = self.shaded[id]?.foldTransactionID }
+                    if pending.intent.completeFold(success: success && pending.foldTransactionID != nil) {
+                        self.enqueuePendingTitlebarTripleClick(pending)
+                    }
+                    if !success, self.pendingTitlebarTripleClick === pending {
+                        self.pendingTitlebarTripleClick = nil
+                    }
+                }
+            }
+            if shaded[id] != nil {
+                unshade(id)
+            } else {
+                let options = focusRejoinEntries[id] != nil ? focusShadeOptions : nil
+                // 收起了就是顺利：刘海不开口（docs/direction.md，顺利的时候一声不吐）。
+                // 想要的其实是铺满的人，由卡住时的提示接（HabitContext 的双击标题栏那一条）。
+                shade(win, id, options: options, trustElement: true)
+            }
+        }
+    }
+}

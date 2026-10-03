@@ -1,7 +1,8 @@
 import Cocoa
 /// 可插入现有 NotchPanel.setInteraction 的原生视图；不创建窗口，不批准助手。
-@MainActor final class WS2ConductorView: NSView, NotchInteractiveContent {
-    enum Action { case sendDraft, discardDraft, confirmCost, stopTurn, leave, session(Int) }
+@MainActor final class WS2ConductorView: NSView, WS2LeaseContent {
+    var interactionSize: NSSize { NSSize(width:420,height:280) }
+    enum Action { case sendDraft(String), discardDraft, confirmCost, stopTurn, leave, session(Int) }
     var onCancel: (() -> Void)?
     var onAction: ((Action) -> Void)?
     private let stack = NSStackView(), title = NSTextField(wrappingLabelWithString: "")
@@ -15,10 +16,13 @@ import Cocoa
     override init(frame:NSRect) {
         super.init(frame:frame); wantsLayer = true
         stack.orientation = .vertical; stack.alignment = .leading; stack.spacing = 8
-        stack.translatesAutoresizingMaskIntoConstraints = false; addSubview(stack)
-        NSLayoutConstraint.activate([stack.leadingAnchor.constraint(equalTo:leadingAnchor,constant:16),
-            stack.trailingAnchor.constraint(equalTo:trailingAnchor,constant:-16),stack.topAnchor.constraint(equalTo:topAnchor,constant:12),
-            stack.bottomAnchor.constraint(lessThanOrEqualTo:bottomAnchor,constant:-12)])
+        let scroll=NSScrollView();scroll.drawsBackground=false;scroll.hasVerticalScroller=true
+        scroll.translatesAutoresizingMaskIntoConstraints=false;addSubview(scroll)
+        NSLayoutConstraint.activate([scroll.leadingAnchor.constraint(equalTo:leadingAnchor,constant:16),
+            scroll.trailingAnchor.constraint(equalTo:trailingAnchor,constant:-16),scroll.topAnchor.constraint(equalTo:topAnchor,constant:12),
+            scroll.bottomAnchor.constraint(equalTo:bottomAnchor,constant:-12)])
+        stack.translatesAutoresizingMaskIntoConstraints=false;scroll.documentView=stack
+        stack.widthAnchor.constraint(equalTo:scroll.contentView.widthAnchor).isActive=true
         title.font = .systemFont(ofSize:13,weight:.semibold); title.textColor = .white
         detail.font = .systemFont(ofSize:11); detail.textColor = .secondaryLabelColor
         editor.setAccessibilityLabel("待发送草稿"); editor.isEditable = true
@@ -46,7 +50,7 @@ import Cocoa
         case .sessions(let labels,let selected):
             for (i,label) in labels.prefix(64).enumerated() { button((i == selected ? "✓ " : "")+label,.session(i)) }
         case .draft(let text):
-            editor.stringValue = text; stack.addArrangedSubview(editor); button("发送",.sendDraft); button("丢弃",.discardDraft)
+            editor.stringValue = text; stack.addArrangedSubview(editor); button("发送",.sendDraft(text)); button("丢弃",.discardDraft)
         case .cost: button("确认费用",.confirmCost); button("取消",.leave)
         case .running, .steering: button("停止这一轮",.stopTurn)
         case .discardDraft: button("丢弃草稿",.discardDraft)
@@ -62,7 +66,12 @@ import Cocoa
     }
     @objc private func pressed(_ sender:NSButton) {
         guard inputIsCurrent(),let action = buttons[ObjectIdentifier(sender)] else { return }
-        onAction?(action)
+        if case .sendDraft = action {
+            guard editor.stringValue.utf8.count <= ConductorSession.maximumDraftBytes else {
+                detail.stringValue = "草稿过长，请缩短后发送"; return
+            }
+            onAction?(.sendDraft(editor.stringValue))
+        } else { onAction?(action) }
     }
     override func cancelOperation(_ sender:Any?) { onCancel?() }
     func revoke() { buttons.removeAll(); inputIsCurrent = { false }; editor.stringValue = ""; title.stringValue = ""; detail.stringValue = ""; path.path=nil }

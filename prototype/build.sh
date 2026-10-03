@@ -61,6 +61,7 @@ FRAMEWORKS=(
   -framework MapKit
   -framework LocalAuthentication
   -framework LocalAuthenticationEmbeddedUI
+  -framework GameController
 )
 
 # 自动收集源文件：只扫 prototype/ 与它的模块子目录，顺序稳定（按路径排序）。

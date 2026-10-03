@@ -30,6 +30,10 @@ final class NotchAuthenticationController {
     private var observers: [NSObjectProtocol] = []
     static let lifetime: TimeInterval = 30
     var isPresenting: Bool { presentation != nil }
+    // Runtime assigns all three together. Nil preserves the legacy standalone diagnostic fixture.
+    var acquireInteraction: ((NotchPanel) -> Bool)?
+    var releaseInteraction: (() -> Void)?
+    var isInteractionCurrent: (() -> Bool)?
     /// The single native evaluation for a request (KEY-05); replaced in tests.
     var evaluate: (LAContext, String, @escaping @Sendable (Bool, Error?) -> Void) -> Void = { context, reason, reply in
         context.evaluatePolicy(.deviceOwnerAuthenticationWithBiometrics, localizedReason: reason, reply: reply)
@@ -74,6 +78,9 @@ final class NotchAuthenticationController {
         if isPresenting && context == nil { cancel(animated: false, restoreFocus: false) }
         guard !isPresenting else { completion(nil); return }
         guard let owner, NotchController.isEnabled, let panel = owner.authenticationPanel() else { completion(nil); return }
+        if let acquireInteraction, !acquireInteraction(panel) { completion(nil); return }
+        var adoptedInteraction = false
+        defer { if !adoptedInteraction { releaseInteraction?() } }
         guard !panel.isAuthenticating else { completion(nil); return }
         guard let publicKey = try? service.key.prepare() else {
             alert(AuthorizationCopy.unavailable, on: panel); completion(nil); return
@@ -92,12 +99,7 @@ final class NotchAuthenticationController {
         deadline = ProcessInfo.processInfo.systemUptime + Self.lifetime
         let view = NotchAuthenticationView(context: context, reason: AuthorizationCopy.action(for: target))
         view.onCancel = { [weak self] in self?.cancel() }
-        // 授权层先占这块屏：占不到就不露面，也不降级成别的提示。
-        guard panel.acquireLease(.authorization) else {
-            context.invalidate()
-            alert(AuthorizationCopy.unavailable, on: panel)
-            completion(nil); return
-        }
+        adoptedInteraction = true
         self.panel = panel; self.context = context; evaluating = false; self.presentation = view; self.completion = completion
         self.request = request; self.target = target; self.publicKey = publicKey
         previousApplication = NSWorkspace.shared.frontmostApplication
@@ -163,6 +165,7 @@ final class NotchAuthenticationController {
     /// Still this request, still in time, still on its visible host.
     private func isCurrent(_ transaction: Int) -> Bool {
         guard epoch == transaction, context != nil, evaluating else { return false }
+        if let isInteractionCurrent, !isInteractionCurrent() { cancel(animated:false,restoreFocus:false); return false }
         guard ProcessInfo.processInfo.systemUptime < deadline else { cancel(animated: false); return false }
         guard let panel, panel.isVisible, presentation?.window === panel else { cancel(animated: false); return false }
         return true
@@ -187,8 +190,8 @@ final class NotchAuthenticationController {
         request = nil; target = nil; publicKey = nil
         let reply = completion; completion = nil
         panel?.setAuthentication(nil, animated: animated); panel?.resignKey()
-        panel?.releaseLease(.authorization)
         panel = nil; presentation = nil
+        releaseInteraction?()
         let previous = previousApplication; previousApplication = nil
         if restoreFocus, NSWorkspace.shared.frontmostApplication?.processIdentifier == ProcessInfo.processInfo.processIdentifier,
            let previous, previous.processIdentifier != ProcessInfo.processInfo.processIdentifier, !previous.isTerminated {
