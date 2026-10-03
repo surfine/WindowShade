@@ -5,7 +5,7 @@
     "prototype/App/InteractionCoordinator.swift": "prototype/Core/InteractionCoordinator.swift"
   },
   "intentionally_absent": {
-    "prototype/App/WS2IslandCoordinator.swift": "本仓库的单一刘海仲裁器是 NotchLeaseHub（prototype/App/NotchLeases.swift）；第九/十份都明确不新增第二套岛管理器，所以这个文件应当不存在。"
+    "prototype/App/WS2IslandCoordinator.swift": "本仓库从未有过这个文件。第十份候选里有它，W08 也把它列为来源；但本仓库并入第九份时决定沿用现有的单一刘海仲裁器 NotchLeaseHub（prototype/App/NotchLeases.swift，见 part9/MAC-EVIDENCE.md），WS2AppRuntime 与 WS2CodexApprovalHost 都已改接它。第十份只要求『不额外建立第二套全局活动仲裁』；在本仓库再加 WS2IslandCoordinator 就会成为第二套，所以这里断言它不存在。"
   },
   "code_map_drift": [
     "prototype/App/WS2IslandCoordinator.swift",
@@ -25,6 +25,9 @@
     "prototype/Support/WS2KeychainPeerStorage.swift",
     "prototype/Support/WS2LocalLaunchProfile.swift",
     "prototype/build.sh",
+    "prototype/App/FaceObservationSource.swift",
+    "prototype/Window/AXHelpers.swift",
+    "AGENTS.md",
     "docs/blueprint.md",
     "docs/handoff/START-HERE-deepseek.md",
     "docs/privacy-page.md",

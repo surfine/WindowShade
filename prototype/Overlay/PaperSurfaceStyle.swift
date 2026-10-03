@@ -67,6 +67,7 @@ private final class PaperShadowPanel: NSPanel {
     override var canBecomeMain: Bool { false }
 }
 
+@MainActor
 private final class PaperWindowShadow: NSObject {
     private weak var parent: NSWindow?
     private let panel: NSPanel
@@ -117,16 +118,19 @@ private final class PaperWindowShadow: NSObject {
     }
 }
 
-private var paperShadowAssociation: UInt8 = 0
+/// 只取它的地址当关联对象的键，从不读写它的值。
+nonisolated(unsafe) private var paperShadowAssociation: UInt8 = 0
 extension PaperSurfaceStyle {
     /// `corners` 决定阴影轮廓：面板用 `.all`，卷帘条用 `.top`。
     static func installShadow(on window: NSWindow,
                               corners: SystemCornerPath.Corners = .all) {
         window.hasShadow = false
         guard objc_getAssociatedObject(window, &paperShadowAssociation) == nil else { return }
-        objc_setAssociatedObject(window, &paperShadowAssociation,
-                                 PaperWindowShadow(parent: window, corners: corners),
-                                 .OBJC_ASSOCIATION_RETAIN_NONATOMIC)
+        MainActor.assumeIsolated {
+            objc_setAssociatedObject(window, &paperShadowAssociation,
+                                     PaperWindowShadow(parent: window, corners: corners),
+                                     .OBJC_ASSOCIATION_RETAIN_NONATOMIC)
+        }
     }
 }
 

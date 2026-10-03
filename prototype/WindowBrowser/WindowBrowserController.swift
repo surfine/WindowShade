@@ -12,6 +12,7 @@ enum WindowBrowserNotification {
     static let didChangeSettings = Notification.Name("WindowBrowserDidChangeSettings")
 }
 
+@MainActor
 final class WindowBrowserController: NSObject {
     struct Session {
         let requestID: WindowBrowserRequestID
@@ -163,12 +164,16 @@ final class WindowBrowserController: NSObject {
     private var streamStopFailureUntil: CFAbsoluteTime = 0
     /// 基本排布：预览、执行与撤销。后端就是本控制器（复用真实身份解析）。
     private var placementPreviewWindow: WindowPlacementPreviewWindow?
-    private lazy var placement: WindowPlacementController = {
+    private var placementStorage: WindowPlacementController?
+    private var placement: WindowPlacementController {
+        if let placementStorage { return placementStorage }
         let presenter = WindowPlacementPreviewWindow()
         placementPreviewWindow = presenter
-        return WindowPlacementController(backend: self, scheduler: scheduler,
-                                         previewPresenter: presenter)
-    }()
+        let made = WindowPlacementController(backend: self, scheduler: scheduler,
+                                             previewPresenter: presenter)
+        placementStorage = made
+        return made
+    }
 
     /// 兼容旧探针：AX 真实调用次数（不是包装函数调用次数）。
     var axQueryCount: Int {
@@ -2657,7 +2662,7 @@ final class WindowBrowserController: NSObject {
 
 // MARK: - 真实动作后端
 
-extension WindowBrowserController: WindowBrowserActionBackend {
+extension WindowBrowserController: @preconcurrency WindowBrowserActionBackend {
     func validate(target: WindowKey,
                   completion: @escaping (WindowBrowserTargetValidation) -> Void) {
         DispatchQueue.main.async { [weak self] in
@@ -3225,7 +3230,7 @@ extension WindowBrowserController: WindowBrowserActionBackend {
 
 // MARK: - 排布后端
 
-extension WindowBrowserController: WindowPlacementBackend {
+extension WindowBrowserController: @preconcurrency WindowPlacementBackend {
     /// 读取目标窗口当前 frame。复用明确目标的身份核对，不按焦点或标题猜测。
     func readFrame(of target: WindowKey, completion: @escaping (CGRect?) -> Void) {
         DispatchQueue.main.async { [weak self] in

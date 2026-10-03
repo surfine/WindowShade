@@ -148,7 +148,7 @@ final class MenuBarRoom {
             let hit = Self.hitTest(spans, baseline: baseline)
             let menus = owner.map { Self.menuRoom(spans, owner: $0, screens: screens, baseline: baseline) }
                 ?? Sides(leading: spans.reach, trailing: spans.reach)
-            DispatchQueue.main.async {
+            DispatchQueue.main.async { [self] in
                 MainActor.assumeIsolated {
                     self.measuring.remove(display)
                     // 被自己盖着（nil）的一边沿用上一次量到的；从没量到过的一边算没有空位，稍后再量。

@@ -3,6 +3,7 @@ import ScreenCaptureKit
 
 /// Opt-in UI for the real window entry points against explicitly selected test windows.
 /// No hotkeys, event tap, startup rescue, login items or persistent effect preferences.
+@MainActor
 final class EffectInspector: NSObject, NSWindowDelegate {
   private let owner = AppDelegate()
   private var window: NSWindow?

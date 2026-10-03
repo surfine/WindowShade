@@ -3,7 +3,9 @@ import Foundation
 /// Bounded AX work: two background applications plus one interactive Dock target.
 /// Dependencies serialize a PID even across queues and controller stop/start cycles.
 /// Submission and tail bookkeeping belong to the main queue; work never does.
-final class WindowBrowserMetadataQueue {
+/// `tails` is only touched on the main queue (submit asserts it; completion hops back),
+/// and the two OperationQueues are thread-safe, so the queue object may cross threads.
+final class WindowBrowserMetadataQueue: @unchecked Sendable {
     private let background: OperationQueue
     private let interactive: OperationQueue
     private var tails: [pid_t: Operation] = [:]

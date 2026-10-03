@@ -78,9 +78,10 @@ enum WindowBrowserNewWindow {
         AXUIElementPerformAction(element, kAXPressAction as CFString) == .success
     }
 
-    private static let itemAttributes = [kAXMenuItemCmdCharAttribute, kAXMenuItemCmdModifiersAttribute,
-                                         kAXEnabledAttribute, kAXTitleAttribute,
-                                         kAXChildrenAttribute] as CFArray
+    private static var itemAttributes: CFArray {
+        [kAXMenuItemCmdCharAttribute, kAXMenuItemCmdModifiersAttribute,
+         kAXEnabledAttribute, kAXTitleAttribute, kAXChildrenAttribute] as CFArray
+    }
 
     /// 读一项的属性。读不到的属性会以 AXValue 错误占位：只接受真正的字符串 / 数字 / 数组。
     private static func read(_ item: AXUIElement)

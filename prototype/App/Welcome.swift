@@ -389,7 +389,7 @@ final class WelcomeDots: NSView {
 
 /// “你之前常用哪个？”的三个选项，一组单选。点了就存；键盘上 Tab 进来、← → 换、空格选（和系统的单选组一样）。
 final class WelcomeChoices: NSView {
-    let items = SwitcherOrigin.answers.map(WelcomeChoice.init(origin:))
+    let items = SwitcherOrigin.answers.map { WelcomeChoice(origin: $0) }
     var onPick: ((SwitcherOrigin) -> Void)?
     var selected: SwitcherOrigin = .unanswered {
         didSet {

@@ -10,7 +10,8 @@ import Cocoa
 // 不作为动作提交、移动或隐藏完成的实时证明。
 // 单窗口查询 cgWindowInfo(id:) 不经过这里：watchdog 和折叠验证必须看到实时值。
 // 线程安全：PinnedPreview 的后台 AX 队列也会走 windowID(of:)，缓存读写用锁保护。
-final class WindowListCache {
+// 可变状态只在持有 `lock` 时读写；`provider` 构造后不变。
+final class WindowListCache: @unchecked Sendable {
     static let shared = WindowListCache()
 
     private struct Snapshot {

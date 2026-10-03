@@ -2,6 +2,7 @@ import Cocoa
 import ScreenCaptureKit
 
 /// Owns one explicit desired state per window. The legacy transaction still owns all window mutations.
+@MainActor
 final class WindowFoldEffects {
   /// tracking：标题栏手势跟手中。盖板已经盖在窗口上，进度由手指给，松手之前不碰真窗口。
   enum Phase { case preparing, tracking, hiding, folding, restoring, unfolding }

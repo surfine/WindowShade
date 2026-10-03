@@ -100,6 +100,7 @@ private final class ThumbnailShadowPanel: NSPanel {
     override var canBecomeMain: Bool { false }
 }
 
+@MainActor
 private final class ThumbnailWindowShadow: NSObject {
     private weak var parent: ShadeThumbnailWindow?
     private let panel: NSPanel

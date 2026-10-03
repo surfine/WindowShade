@@ -17,7 +17,7 @@ import Cocoa
 
 @MainActor
 final class TrackpadGestureController {
-    static let enabledDefaultsKey = "TrackpadGesturesEnabled"
+    nonisolated static let enabledDefaultsKey = "TrackpadGesturesEnabled"
 
     nonisolated static var isEnabled: Bool {
         get { UserDefaults.standard.object(forKey: enabledDefaultsKey) as? Bool ?? true }
@@ -1666,7 +1666,8 @@ final class TrackpadGestureController {
         pressureMonitor = NSEvent.addLocalMonitorForEvents(matching: [.pressure, .leftMouseDragged, .leftMouseUp]) {
             [weak self] event in
             guard let self else { return event }
-            return MainActor.assumeIsolated { self.handlePressure(event) }
+            let passThrough = MainActor.assumeIsolated { self.handlePressure(event) != nil }
+            return passThrough ? event : nil
         }
     }
 

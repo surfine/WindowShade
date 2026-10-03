@@ -64,7 +64,8 @@ final class WindowSnapshotInFlightSlot {
     }
 }
 
-final class WindowSnapshotCache {
+/// `entries`/`totalCost` 只在持有 `lock` 时读写，`inFlight` 只在持有 `inFlightLock` 时读写。
+final class WindowSnapshotCache: @unchecked Sendable {
     static let shared = WindowSnapshotCache()
 
     private struct Entry {

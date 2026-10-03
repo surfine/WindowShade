@@ -180,7 +180,7 @@ extension AppDelegate {
             return
         }
         if id == GlobalShortcut.magicTile.hotKeyID {
-            MainActor.assumeIsolated { gestures.magicTile() }
+            MainActor.assumeIsolated { _ = gestures.magicTile() }
             return
         }
         if id == GlobalShortcut.nextDisplay.hotKeyID {
@@ -619,7 +619,7 @@ extension AppDelegate {
                 }
                 // 这段闭包在事件 tap 回调里同步执行（registerFoldWaiter 是 MainActor 方法）。
                 MainActor.assumeIsolated {
-                    registerFoldWaiter(id: id) { [weak self, pending] success in
+                    _ = registerFoldWaiter(id: id) { [weak self, pending] success in
                         guard let self else { return }
                         if success { pending.foldTransactionID = self.shaded[id]?.foldTransactionID }
                         if pending.intent.completeFold(success: success && pending.foldTransactionID != nil) {

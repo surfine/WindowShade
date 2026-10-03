@@ -5,6 +5,11 @@
 
 import Cocoa
 
+/// 等 Rectangle 退出的一次性观察者。`token` 只在主队列读写：注册发生在主线程，回调也投在 `.main`。
+private final class RectangleExitObserver: @unchecked Sendable {
+    var token: NSObjectProtocol?
+}
+
 enum RectangleImport {
     enum Source { case preferences, config, recommended }
 
@@ -96,12 +101,13 @@ extension AppDelegate {
         wlog("rectangle-import: \(result.count) shortcuts from \(source), yielded=\(result.yielded)")
         if RectangleImport.isRectangleRunning {
             notch.announce("退出 Rectangle 后就能用", detail: "它还开着，这些快捷键暂时归它", tone: .info)
-            var token: NSObjectProtocol?
-            token = NSWorkspace.shared.notificationCenter.addObserver(
+            let observer = RectangleExitObserver()
+            observer.token = NSWorkspace.shared.notificationCenter.addObserver(
                 forName: NSWorkspace.didTerminateApplicationNotification, object: nil, queue: .main) { [weak self] note in
                 let app = note.userInfo?[NSWorkspace.applicationUserInfoKey] as? NSRunningApplication
                 guard app?.bundleIdentifier == RectangleKeymap.domain else { return }
-                if let token { NSWorkspace.shared.notificationCenter.removeObserver(token) }
+                if let token = observer.token { NSWorkspace.shared.notificationCenter.removeObserver(token) }
+                observer.token = nil
                 MainActor.assumeIsolated {
                     self?.registerGlobalShortcuts()
                     self?.rebuildMenu()

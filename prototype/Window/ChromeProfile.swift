@@ -171,7 +171,8 @@ func windowLooksToolbarlessStandardTitleBar(_ win: AXUIElement,
 // 失效条件：ID 被复用、元素被重建、窗口被拖拽改尺寸都立即重算。
 // 只能在主线程访问（事件 tap 回调、shade、双击判定全部在主线程执行）。
 final class ChromeProfileCache {
-    static let shared = ChromeProfileCache()
+    /// 见上：只在主线程访问。调用方 AppDelegate 迁到 @MainActor 时一起改成 @MainActor。
+    nonisolated(unsafe) static let shared = ChromeProfileCache()
 
     private struct Entry {
         let element: AXUIElement

@@ -3,11 +3,12 @@ import ApplicationServices
 
 extension AppDelegate {
     func foldCallbackStamp(id: CGWindowID, state: ShadeState) -> WS2FoldCallbackStamp {
-        let ledger = AuthorizationService.shared.ledger
-        let sessionEpoch = MainActor.assumeIsolated { ledger.sessionEpoch }
+        let (boot, sessionEpoch) = MainActor.assumeIsolated {
+            (AuthorizationService.shared.ledger.bootID, AuthorizationService.shared.ledger.sessionEpoch)
+        }
         return WS2FoldCallbackStamp(window: id, pid: state.pid,
             transaction: state.foldTransactionID, hide: state.hide.rawValue,
-            boot: ledger.bootID, sessionEpoch: sessionEpoch,
+            boot: boot, sessionEpoch: sessionEpoch,
             presentation: foldPresentationID, capturedAt: ProcessInfo.processInfo.systemUptime)
     }
 

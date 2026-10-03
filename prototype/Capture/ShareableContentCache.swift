@@ -8,6 +8,12 @@ import ScreenCaptureKit
 // 大头（超时还会把原貌卷帘降级成代理条）。短 TTL 缓存 + 标题栏点击预热之后，
 // 双击的第二下落地时内容通常已就绪。缓存未命中目标窗口时强制刷新，
 // 正确性不受 TTL 影响（新建窗口永远走强制刷新）。
+/// 系统一次性产出的只读快照：只在后台枚举任务里生成，交给主 actor 一次，之后谁都不改它。
+/// SCShareableContent 没标 Sendable，只用这个本文件私有的壳子跨这一次边界，不对整个类型担保。
+private struct ShareableSnapshot: @unchecked Sendable {
+    let content: SCShareableContent
+}
+
 @available(macOS 14.0, *)
 @MainActor
 final class ShareableContentCache {
@@ -15,7 +21,7 @@ final class ShareableContentCache {
 
     private var cached: SCShareableContent?
     private var fetchedAt: CFAbsoluteTime = 0
-    private var inFlight: Task<SCShareableContent, Error>?
+    private var inFlight: Task<ShareableSnapshot, Error>?
     private let ttl: TimeInterval = 1.5
     private var lastFailureAt: CFAbsoluteTime = 0
     private var lastFailureLogAt: CFAbsoluteTime = 0
@@ -30,7 +36,7 @@ final class ShareableContentCache {
         if isFresh(), let cached, cached.windows.contains(where: { $0.windowID == windowID }) {
             return cached
         }
-        if let inFlight, let content = try? await inFlight.value,
+        if let inFlight, let content = try? await inFlight.value.content,
            content.windows.contains(where: { $0.windowID == windowID }) {
             return content
         }
@@ -66,10 +72,10 @@ final class ShareableContentCache {
         // 不继承 MainActor：窗口枚举可能持续数秒，cache 状态仍在主 actor 串行化，
         // 但系统枚举及其完成回调不会占用主线程执行器。
         let task = Task.detached(priority: .userInitiated) {
-            try await SCShareableContent.current
+            ShareableSnapshot(content: try await SCShareableContent.current)
         }
         inFlight = task
-        let content = try? await task.value
+        let content = try? await task.value.content
         guard refreshGeneration == generation else {
             // 已被更新的刷新取代：缓存状态由新代数负责，这里只把结果交还调用方。
             return content

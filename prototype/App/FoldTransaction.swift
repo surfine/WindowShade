@@ -123,7 +123,7 @@ extension AppDelegate {
                       self.foldCallbackIsCurrent(expected) else { return false }
                 // Retry only the SAME strategy. Crossing from hidden/offscreen/alpha to
                 // minimized would need a restore record for both attempted mutations.
-                _ = setAXMinimized(state.element, true)
+                setAXMinimized(state.element, true)
                 return true
             },
             salvagedObservation: { [weak self] in

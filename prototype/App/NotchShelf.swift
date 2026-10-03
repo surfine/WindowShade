@@ -189,7 +189,7 @@ final class NotchShelf {
                 AXUIElementSetAttributeValue(win, kAXMinimizedAttribute as CFString, kCFBooleanFalse)
                 AXUIElementPerformAction(win, kAXRaiseAction as CFString)
                 DispatchQueue.main.async {
-                    MainActor.assumeIsolated { app?.activate() }
+                    MainActor.assumeIsolated { _ = app?.activate() }
                 }
             }
             wlog("notch: shelf unminimize id=\(item.id)")

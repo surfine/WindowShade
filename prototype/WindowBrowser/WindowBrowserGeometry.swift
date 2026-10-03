@@ -648,7 +648,7 @@ enum WindowBrowserGeometry {
     /// 标题测宽缓存：窗口标题在一次会话里很少变，而 `size(withAttributes:)` 每次约
     /// 0.01–0.2 ms（200 条要 2.4 ms）。缓存后同一批标题的重复刷新只花一次测量。
     /// 只在主线程（面板刷新与截图探针）访问。
-    private static var titleWidthCache: [String: CGFloat] = [:]
+    nonisolated(unsafe) private static var titleWidthCache: [String: CGFloat] = [:]
     private static let titleWidthCacheLimit = 4096
 
     static func titleWidth(_ title: String, font: NSFont) -> CGFloat {
