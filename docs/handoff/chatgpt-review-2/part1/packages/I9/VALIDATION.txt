@@ -1,0 +1,32 @@
+UTC: 2026-10-03T05:48:21.364341+00:00
+Platform: macOS-27.0-arm64-arm-64bit-Mach-O
+Compiler: Apple Swift version 6.4 (swiftlang-6.4.0.34.1 clang-2100.3.34.1)
+Target: arm64-apple-macosx27.0.0
+Command: bash /private/tmp/claude-501/-Users-aaron-Documents-WindowShade--claude-worktrees-windowshade-marvin-discussion-15d18f/d74fa5fd-eb4f-44ee-8dd1-5723403fe657/scratchpad/r2p1/WindowShade2-round2-part1/packages/I9/tests/run-focus-navigator-tests.sh
+Exit: 0
+
+CASE I9-01 | 规则网格左右上下 → 正确下一格，到边不绕回
+ok   向右
+ok   向下
+ok   边缘保持
+ok   向上
+CASE I9-02 | 参差行含洞、隐藏/禁用/其他屏 → 只找可见可用本屏格
+ok   投影重叠优先于斜向近格
+CASE I9-03 | 同组尚有右侧目标 → 不先跳进更近的别组
+ok   组内优先
+CASE I9-04 | 离组再回组 → 回到该方向上仍可聚焦的记忆格
+ok   回到上次 b
+ok   记忆格被删除时重算
+CASE I9-05 | 空、一格、失去旧焦点 → none、留原处、按稳定顺序起步
+ok   空数组
+ok   单格
+ok   按位置起步不看输入次序
+CASE I9-06 | 重复 ID、无效矩形、超容量 → 报错，不猜一个
+ok   重复 ID
+ok   非法数值
+ok   容量上限
+CASE I9-07 | 对称距离、不同输入排序 → 用稳定 ID 决定，不抖动
+ok   稳定 tie-break
+CASE I9-08 | 投影只重叠一点与重叠整边 → 同组中选重叠更多的格
+ok   不把1点和10点重叠当成一样
+PASS I9: 8 cases, 16 assertions, 0 failures

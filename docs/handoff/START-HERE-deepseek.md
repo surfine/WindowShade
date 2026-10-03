@@ -63,6 +63,11 @@
 
 ## 开工顺序
 
+> **2026-10-03 更新：第一波已完成。**ChatGPT 第二轮交回了 T1、L1、A1、D1、D2、I1a–I1f、I9 的完整实现与测试，以及共享合同 `prototype/Core/Contracts.swift`。主模型已在 Mac（macOS 27、Swift 6.4）上跑通全部测试（121 个用例、334 条断言），并放进 `main`。
+> 原件和逐包施工单在 [chatgpt-review-2/part1/](chatgpt-review-2/part1/)。往后派工以那里的 `packages/<编号>/WORKORDER.md` 为准；共享类型只用 `WS2` 命名空间里的，不另造。
+> 下面的表保留作历史对照：第一波不再派给 DeepSeek，第二、三波等 ChatGPT 第二轮后续几份交回再派。
+
+
 **第一波：纯逻辑。**互不依赖，最安全，可以并行派。
 
 | 包 | 内容 | 在哪份提示词 |

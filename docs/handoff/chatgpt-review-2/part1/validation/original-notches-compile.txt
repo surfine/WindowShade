@@ -1,0 +1,3 @@
+UTC 2026-10-03T05:35:13.444234+00:00
+COMMAND ['swiftc', '-swift-version', '6', '-parse-as-library', '/mnt/data/WindowShade2-review-round2/repo/prototype/Core/NotchActivities.swift', '/mnt/data/WindowShade2-review-round2/repo/tests/NotchActivityTests.swift', '-o', '/mnt/data/WindowShade2-round2-part1/.build/regression/original-notches']
+EXIT 0

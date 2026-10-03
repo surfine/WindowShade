@@ -1,0 +1,41 @@
+UTC: 2026-10-03T05:48:21.364341+00:00
+Platform: macOS-27.0-arm64-arm-64bit-Mach-O
+Compiler: Apple Swift version 6.4 (swiftlang-6.4.0.34.1 clang-2100.3.34.1)
+Target: arm64-apple-macosx27.0.0
+Command: bash /private/tmp/claude-501/-Users-aaron-Documents-WindowShade--claude-worktrees-windowshade-marvin-discussion-15d18f/d74fa5fd-eb4f-44ee-8dd1-5723403fe657/scratchpad/r2p1/WindowShade2-round2-part1/tests/run-contracts-tests.sh
+Exit: 0
+
+CASE C-01 | 时间单位转换拒绝负数/NaN/无穷/溢出，最大加法不回绕
+ok   拒绝非法秒
+ok   拒绝溢出秒
+ok   明确纳秒
+ok   饱和而不回绕
+CASE C-02 | 同刻事件允许，时间倒流拒绝而不更新上次时间
+ok   同刻可处理多个事件
+ok   失败不回写时钟
+CASE C-03 | 共享总线序号可有空洞，不允许重放、零或新序号配旧时间
+ok   零序号无效
+ok   空洞与同刻合法
+ok   重放和倒流拒绝
+ok   拒绝不污染下一条
+CASE C-04 | 同一boot不同组件的1号token不得相等，源内编号递增
+ok   组件编号域隔离
+ok   源内递增
+ok   令牌往返不丢domain
+CASE C-05 | 摘要只接受32字节，JSON解码也不能绕过
+ok   长度检查
+ok   恶意decode拒绝
+ok   正确摘要往返
+CASE C-06 | RPC整数7和字符串7、不同provider的同session分别存储
+ok   请求号不转字符串
+ok   提供商属于会话身份
+CASE C-07 | 空标识、超长字节、审批上下文错配与空摘要展示拒绝
+ok   实际UTF8字节上限
+ok   错epoch不接受
+ok   零期限拒绝
+CASE C-08 | 六层顺序固定、展示快照不含私密正文
+ok   小数字优先
+ok   静态ID快照，不传秘密全文
+CASE C-09 | 真实连续时钟只验证同进程不倒流，不声称测过睡眠
+ok   同一实例时钟单调
+PASS CONTRACTS: 9 cases, 24 assertions, 0 failures

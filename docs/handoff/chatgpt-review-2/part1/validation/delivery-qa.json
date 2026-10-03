@@ -1,0 +1,15 @@
+{
+  "utc": "2026-10-03T05:40:57.312031+00:00",
+  "python_syntax_checked": 6,
+  "shell_syntax_checked": 15,
+  "package_count": 12,
+  "markdown_missing_links": [],
+  "zip_excludes": [
+    ".build",
+    "__pycache__",
+    "*.pyc",
+    "fonts",
+    "compiled executables"
+  ],
+  "input_files_unchanged": 1079
+}

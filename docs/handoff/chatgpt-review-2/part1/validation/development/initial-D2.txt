@@ -1,0 +1,7 @@
+/mnt/data/WindowShade2-round2-part1/packages/D2/tests/ConductorCapabilitiesTests.swift:32:62: error: '==' is not a postfix unary operator
+30 |         } else { t.expect(false,"Claude 绑定") }
+31 |         let wrongProvider=ConductorCapabilities(model:model,supportedEfforts:["xhigh"],revision:1,ultracodeWorkflowID:"user.workflow.ultracode")
+32 |         t.expect(wrongProvider.resolve(.ultra,keeping:"high")==.unavailable("没有 ultra，保持原设置"),"Codex 不冒充 Claude 工作流")
+   |                                                              `- error: '==' is not a postfix unary operator
+33 |         t.section("D2-04", "固定四个位置、能力重排/消失/重复 → 位置稳定或明确不可用")
+34 |         let slots=ConductorModelSlots([model,claude.model,nil,nil])!

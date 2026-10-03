@@ -1,0 +1,74 @@
+[
+  {
+    "name": "log-patch-readonly",
+    "exit": 0,
+    "expected_exit": 0,
+    "log": "validation/log-patch-readonly.txt"
+  },
+  {
+    "name": "log-patch-staged",
+    "exit": 0,
+    "expected_exit": 0,
+    "log": "validation/log-patch-staged.txt"
+  },
+  {
+    "name": "log-parse-PinnedPreview",
+    "exit": 0,
+    "expected_exit": 0,
+    "log": "validation/log-parse-PinnedPreview.txt"
+  },
+  {
+    "name": "log-parse-Diagnostics",
+    "exit": 0,
+    "expected_exit": 0,
+    "log": "validation/log-parse-Diagnostics.txt"
+  },
+  {
+    "name": "log-parse-SecureLogFile",
+    "exit": 0,
+    "expected_exit": 0,
+    "log": "validation/log-parse-SecureLogFile.txt"
+  },
+  {
+    "name": "log-parse-FoldExit",
+    "exit": 0,
+    "expected_exit": 0,
+    "log": "validation/log-parse-FoldExit.txt"
+  },
+  {
+    "name": "log-parse-Notch",
+    "exit": 0,
+    "expected_exit": 0,
+    "log": "validation/log-parse-Notch.txt"
+  },
+  {
+    "name": "log-parse-ShadeController",
+    "exit": 0,
+    "expected_exit": 0,
+    "log": "validation/log-parse-ShadeController.txt"
+  },
+  {
+    "name": "log-parse-AXHelpers",
+    "exit": 0,
+    "expected_exit": 0,
+    "log": "validation/log-parse-AXHelpers.txt"
+  },
+  {
+    "name": "registry-baseline",
+    "exit": 0,
+    "expected_exit": 0,
+    "log": "validation/registry-baseline.txt"
+  },
+  {
+    "name": "registry-negative",
+    "exit": 1,
+    "expected_exit": 1,
+    "log": "validation/registry-negative.txt"
+  },
+  {
+    "name": "stage",
+    "exit": 0,
+    "expected_exit": 0,
+    "log": "validation/stage.txt"
+  }
+]

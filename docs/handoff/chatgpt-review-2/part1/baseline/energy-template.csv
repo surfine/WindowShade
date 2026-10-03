@@ -1,0 +1,1 @@
+sample_id,scene,variant,repeat,order,head,binary_sha256,os_build,hardware,display_mode,power_source,battery_percent,low_power_mode,thermal_state,settings_hash,target_pid,helper_pids,warmup_seconds,window_seconds,cpu_mean_percent,cpu_median_percent,cpu_p95_percent,idlew_raw_mean,idlew_raw_p95,memory_MiB,raw_top_path,raw_sample_path,valid,invalid_reason

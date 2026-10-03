@@ -1,0 +1,4 @@
+UTC 2026-10-03T05:34:56.415834+00:00
+COMMAND ['swiftc', '-frontend', '-parse', '/mnt/data/ws2-part1-log-stage/prototype/Window/AXHelpers.swift']
+EXPECTED 0
+EXIT 0

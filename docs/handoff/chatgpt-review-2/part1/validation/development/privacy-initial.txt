@@ -1,0 +1,23 @@
+/mnt/data/WindowShade2-round2-part1/contracts/privacy/SecureLogFileTests.swift:22:22: error: call can throw, but it is executed in a non-throwing autoclosure
+20 |         try writer.append(Data("hello\n".utf8))
+21 |         t.expect(mode(a)==0o700 && mode(ap)==0o600,"专用目录与文件权限")
+22 |         t.expect(try String(contentsOf:ap,encoding:.utf8)=="hello\n","内容一致")
+   |                      `- error: call can throw, but it is executed in a non-throwing autoclosure
+23 |         t.section("LOG-02", "既有文件权限0644 → 写前收紧为0600")
+24 |         let b=try leaf("b");let bp=b.appendingPathComponent("log");try Data("old\n".utf8).write(to:bp);_=chmod(bp.path,0o644)
+
+/mnt/data/WindowShade2-round2-part1/contracts/privacy/SecureLogFileTests.swift:30:22: error: call can throw, but it is executed in a non-throwing autoclosure
+28 |         try writer.append(Data(repeating:65,count:30));t.expect(writer.rotationCount==1,"真的发生轮转")
+29 |         t.expect(mode(a.appendingPathComponent("windowshade.log.1"))==0o600,"备份保持0600")
+30 |         t.expect(try Data(contentsOf:ap).count==30,"新文件只含当前记录")
+   |                      `- error: call can throw, but it is executed in a non-throwing autoclosure
+31 |         writer.closeFiles()
+32 |         t.section("LOG-04", "日志名为符号链接 → 拒绝，不改链接目标")
+
+/mnt/data/WindowShade2-round2-part1/contracts/privacy/SecureLogFileTests.swift:36:22: error: call can throw, but it is executed in a non-throwing autoclosure
+34 |         let c=try leaf("c");let cp=c.appendingPathComponent("log");try FileManager.default.createSymbolicLink(at:cp,withDestinationURL:outside)
+35 |         t.expect(fails { _=try SecureLogFile(path:cp.path) },"拒绝末级链接")
+36 |         t.expect(try String(contentsOf:outside,encoding:.utf8)=="secret","目标未被写入")
+   |                      `- error: call can throw, but it is executed in a non-throwing autoclosure
+37 |         t.section("LOG-05", "父目录为链接 → 拒绝，不沿链接创建日志")
+38 |         let parentLink=root.appendingPathComponent("linked");try FileManager.default.createSymbolicLink(at:parentLink,withDestinationURL:a)

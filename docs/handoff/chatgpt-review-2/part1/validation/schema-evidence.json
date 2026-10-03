@@ -1,0 +1,759 @@
+[
+  {
+    "file": "docs/handoff/reference/codex-app-server-schema-0.153.0/v2/ModelListResponse.json",
+    "pointer": "/definitions/Model/properties/model",
+    "first_key_line": 86,
+    "sha256": "c7b58b332f6cf18fd64235409a6daf27bb9e6c09d12dcd0daa2f3dc628b55f6f",
+    "value": {
+      "type": "string"
+    },
+    "conclusion": "用 model 作为提交值；id/displayName 不是可互换的 wire 字段。"
+  },
+  {
+    "file": "docs/handoff/reference/codex-app-server-schema-0.153.0/v2/ModelListResponse.json",
+    "pointer": "/definitions/Model/properties/supportedReasoningEfforts",
+    "first_key_line": 114,
+    "sha256": "c7b58b332f6cf18fd64235409a6daf27bb9e6c09d12dcd0daa2f3dc628b55f6f",
+    "value": {
+      "items": {
+        "$ref": "#/definitions/ReasoningEffortOption"
+      },
+      "type": "array"
+    },
+    "conclusion": "数组元素是 ReasoningEffortOption 对象，不是字符串。"
+  },
+  {
+    "file": "docs/handoff/reference/codex-app-server-schema-0.153.0/v2/ModelListResponse.json",
+    "pointer": "/definitions/ReasoningEffortOption",
+    "first_key_line": 234,
+    "sha256": "c7b58b332f6cf18fd64235409a6daf27bb9e6c09d12dcd0daa2f3dc628b55f6f",
+    "value": {
+      "properties": {
+        "description": {
+          "type": "string"
+        },
+        "reasoningEffort": {
+          "$ref": "#/definitions/ReasoningEffort"
+        }
+      },
+      "required": [
+        "description",
+        "reasoningEffort"
+      ],
+      "type": "object"
+    },
+    "conclusion": "逐项取 reasoningEffort；保留 description 作说明。"
+  },
+  {
+    "file": "docs/handoff/reference/codex-app-server-schema-0.153.0/v2/ModelListResponse.json",
+    "pointer": "/definitions/ReasoningEffort",
+    "first_key_line": 229,
+    "sha256": "c7b58b332f6cf18fd64235409a6daf27bb9e6c09d12dcd0daa2f3dc628b55f6f",
+    "value": {
+      "description": "A non-empty reasoning effort value advertised by the model.",
+      "minLength": 1,
+      "type": "string"
+    },
+    "conclusion": "非空字符串，不能把 UI 六档当成后端完整封闭枚举。"
+  },
+  {
+    "file": "docs/handoff/reference/codex-app-server-schema-0.153.0/v2/ModelListResponse.json",
+    "pointer": "/properties/nextCursor",
+    "first_key_line": 257,
+    "sha256": "c7b58b332f6cf18fd64235409a6daf27bb9e6c09d12dcd0daa2f3dc628b55f6f",
+    "value": {
+      "description": "Opaque cursor to pass to the next call to continue after the last item. If None, there are no more items to return.",
+      "type": [
+        "string",
+        "null"
+      ]
+    },
+    "conclusion": "按 nextCursor 分页；未取完不得声称完整能力目录。"
+  },
+  {
+    "file": "docs/handoff/reference/codex-app-server-schema-0.153.0/v2/TurnStartParams.json",
+    "pointer": "/required",
+    "first_key_line": 17,
+    "sha256": "a3835e8c1e942e4b358e1a670939b89918b16c4d13105a579899892b7ade6dea",
+    "value": [
+      "input",
+      "threadId"
+    ],
+    "conclusion": "发送 input 和 threadId；其余行为不能凭方便开启。"
+  },
+  {
+    "file": "docs/handoff/reference/codex-app-server-schema-0.153.0/v2/TurnStartParams.json",
+    "pointer": "/properties/effort",
+    "first_key_line": 740,
+    "sha256": "a3835e8c1e942e4b358e1a670939b89918b16c4d13105a579899892b7ade6dea",
+    "value": {
+      "anyOf": [
+        {
+          "$ref": "#/definitions/ReasoningEffort"
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "description": "Override the reasoning effort for this turn and subsequent turns."
+    },
+    "conclusion": "nullable；明确选择时才写实际支持值。"
+  },
+  {
+    "file": "docs/handoff/reference/codex-app-server-schema-0.153.0/v2/TurnSteerParams.json",
+    "pointer": "/required",
+    "first_key_line": 13,
+    "sha256": "4a52eb76e7a717bb388484ccd7538737fca0df35481fc30a21e259f1bfe96e37",
+    "value": [
+      "expectedTurnId",
+      "input",
+      "threadId"
+    ],
+    "conclusion": "必须含 expectedTurnId、input、threadId。"
+  },
+  {
+    "file": "docs/handoff/reference/codex-app-server-schema-0.153.0/v2/TurnSteerParams.json",
+    "pointer": "/properties/expectedTurnId",
+    "first_key_line": 267,
+    "sha256": "4a52eb76e7a717bb388484ccd7538737fca0df35481fc30a21e259f1bfe96e37",
+    "value": {
+      "description": "Required active turn id precondition. The request fails when it does not match the currently active turn.",
+      "type": "string"
+    },
+    "conclusion": "当前 turn 的前置条件；不能用最新 thread 随便替换目标。"
+  },
+  {
+    "file": "docs/handoff/reference/codex-app-server-schema-0.153.0/v2/TurnInterruptParams.json",
+    "pointer": "/required",
+    "first_key_line": 11,
+    "sha256": "6dff382dae73d1dbc58406ed045605f647e7a49660e2540fbd2c6c24d60c5f2b",
+    "value": [
+      "threadId",
+      "turnId"
+    ],
+    "conclusion": "中断精确 threadId+turnId。"
+  },
+  {
+    "file": "docs/handoff/reference/codex-app-server-schema-0.153.0/v2/TurnStartedNotification.json",
+    "pointer": "/definitions/Turn",
+    "first_key_line": 1764,
+    "sha256": "d4b59fd396cadfc2377f60c9f9f4c9367dca95362baadf7817c74e1b9c910c4d",
+    "value": {
+      "properties": {
+        "completedAt": {
+          "description": "Unix timestamp (in seconds) when the turn completed.",
+          "format": "int64",
+          "type": [
+            "integer",
+            "null"
+          ]
+        },
+        "durationMs": {
+          "description": "Duration between turn start and completion in milliseconds, if known.",
+          "format": "int64",
+          "type": [
+            "integer",
+            "null"
+          ]
+        },
+        "error": {
+          "anyOf": [
+            {
+              "$ref": "#/definitions/TurnError"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "description": "Only populated when the Turn's status is failed."
+        },
+        "id": {
+          "description": "Identifier for this turn. Codex-generated turn IDs are UUIDv7.",
+          "type": "string"
+        },
+        "items": {
+          "description": "Thread items currently included in this turn payload.",
+          "items": {
+            "$ref": "#/definitions/ThreadItem"
+          },
+          "type": "array"
+        },
+        "itemsView": {
+          "allOf": [
+            {
+              "$ref": "#/definitions/TurnItemsView"
+            }
+          ],
+          "default": "full",
+          "description": "Describes how much of `items` has been loaded for this turn."
+        },
+        "startedAt": {
+          "description": "Unix timestamp (in seconds) when the turn started.",
+          "format": "int64",
+          "type": [
+            "integer",
+            "null"
+          ]
+        },
+        "status": {
+          "$ref": "#/definitions/TurnStatus"
+        }
+      },
+      "required": [
+        "id",
+        "items",
+        "status"
+      ],
+      "type": "object"
+    },
+    "conclusion": "没有实际 model/effort 字段；startedAt/completedAt 为秒，durationMs 为毫秒。"
+  },
+  {
+    "file": "docs/handoff/reference/codex-app-server-schema-0.153.0/v2/ModelReroutedNotification.json",
+    "pointer": "/required",
+    "first_key_line": 28,
+    "sha256": "37cd3c1b3a3560b85b01d4061a07d830fc9ed93b80e4663f975f9197cdb501ef",
+    "value": [
+      "fromModel",
+      "reason",
+      "threadId",
+      "toModel",
+      "turnId"
+    ],
+    "conclusion": "可知指定 turn 的模型重路由；不能据此推导实际 effort。"
+  },
+  {
+    "file": "docs/handoff/reference/codex-app-server-schema-0.153.0/RequestId.json",
+    "pointer": "/anyOf",
+    "first_key_line": 3,
+    "sha256": "9c72d59a306d827113020c6d31a14c326d55210d9bd6954f825196a52009f1c7",
+    "value": [
+      {
+        "type": "string"
+      },
+      {
+        "format": "int64",
+        "type": "integer"
+      }
+    ],
+    "conclusion": "保留字符串或 Int64 的类型；回复不得改成另一个类型。"
+  },
+  {
+    "file": "docs/handoff/reference/codex-app-server-schema-0.153.0/CommandExecutionRequestApprovalResponse.json",
+    "pointer": "/definitions/CommandExecutionApprovalDecision",
+    "first_key_line": 4,
+    "sha256": "6d0767113e22f311381809b6b236b0dde2b99b01992879c26bf7b1ea0e003cb7",
+    "value": {
+      "oneOf": [
+        {
+          "description": "User approved the command.",
+          "enum": [
+            "accept"
+          ],
+          "type": "string"
+        },
+        {
+          "description": "User approved the command and future prompts in the same session-scoped approval cache should run without prompting.",
+          "enum": [
+            "acceptForSession"
+          ],
+          "type": "string"
+        },
+        {
+          "additionalProperties": false,
+          "description": "User approved the command, and wants to apply the proposed execpolicy amendment so future matching commands can run without prompting.",
+          "properties": {
+            "acceptWithExecpolicyAmendment": {
+              "properties": {
+                "execpolicy_amendment": {
+                  "items": {
+                    "type": "string"
+                  },
+                  "type": "array"
+                }
+              },
+              "required": [
+                "execpolicy_amendment"
+              ],
+              "type": "object"
+            }
+          },
+          "required": [
+            "acceptWithExecpolicyAmendment"
+          ],
+          "title": "AcceptWithExecpolicyAmendmentCommandExecutionApprovalDecision",
+          "type": "object"
+        },
+        {
+          "additionalProperties": false,
+          "description": "User chose a persistent network policy rule (allow/deny) for this host.",
+          "properties": {
+            "applyNetworkPolicyAmendment": {
+              "properties": {
+                "network_policy_amendment": {
+                  "$ref": "#/definitions/NetworkPolicyAmendment"
+                }
+              },
+              "required": [
+                "network_policy_amendment"
+              ],
+              "type": "object"
+            }
+          },
+          "required": [
+            "applyNetworkPolicyAmendment"
+          ],
+          "title": "ApplyNetworkPolicyAmendmentCommandExecutionApprovalDecision",
+          "type": "object"
+        },
+        {
+          "description": "User denied the command. The agent will continue the turn.",
+          "enum": [
+            "decline"
+          ],
+          "type": "string"
+        },
+        {
+          "description": "User denied the command. The turn will also be immediately interrupted.",
+          "enum": [
+            "cancel"
+          ],
+          "type": "string"
+        }
+      ]
+    },
+    "conclusion": "accept、decline、cancel 不同；持久批准/策略修改不是一次批准。"
+  },
+  {
+    "file": "docs/handoff/reference/codex-app-server-schema-0.153.0/FileChangeRequestApprovalResponse.json",
+    "pointer": "/definitions/FileChangeApprovalDecision",
+    "first_key_line": 4,
+    "sha256": "b95b03ee6be674e25cee2e863cc135a28620e1070addd2f34685aadee27cde08",
+    "value": {
+      "oneOf": [
+        {
+          "description": "User approved the file changes.",
+          "enum": [
+            "accept"
+          ],
+          "type": "string"
+        },
+        {
+          "description": "User approved the file changes and future changes to the same files should run without prompting.",
+          "enum": [
+            "acceptForSession"
+          ],
+          "type": "string"
+        },
+        {
+          "description": "User denied the file changes. The agent will continue the turn.",
+          "enum": [
+            "decline"
+          ],
+          "type": "string"
+        },
+        {
+          "description": "User denied the file changes. The turn will also be immediately interrupted.",
+          "enum": [
+            "cancel"
+          ],
+          "type": "string"
+        }
+      ]
+    },
+    "conclusion": "文件审批独立响应类型。"
+  },
+  {
+    "file": "docs/handoff/reference/codex-app-server-schema-0.153.0/PermissionsRequestApprovalResponse.json",
+    "pointer": "/required",
+    "first_key_line": 80,
+    "sha256": "23f3f24e9dbf35db3e0b85703f0d934da5a1cff3cbb611fba8bcd41f3b4a04b0",
+    "value": [
+      "permissions"
+    ],
+    "conclusion": "required permissions；不能使用 decision 包装。"
+  },
+  {
+    "file": "docs/handoff/reference/codex-app-server-schema-0.153.0/PermissionsRequestApprovalResponse.json",
+    "pointer": "/definitions/PermissionGrantScope",
+    "first_key_line": 289,
+    "sha256": "23f3f24e9dbf35db3e0b85703f0d934da5a1cff3cbb611fba8bcd41f3b4a04b0",
+    "value": {
+      "enum": [
+        "turn",
+        "session"
+      ],
+      "type": "string"
+    },
+    "conclusion": "turn/session 两种；首版不代用户扩大为 session。"
+  },
+  {
+    "file": "docs/handoff/reference/codex-app-server-schema-0.153.0/PermissionsRequestApprovalResponse.json",
+    "pointer": "/properties/strictAutoReview",
+    "first_key_line": 309,
+    "sha256": "23f3f24e9dbf35db3e0b85703f0d934da5a1cff3cbb611fba8bcd41f3b4a04b0",
+    "value": {
+      "description": "Review every subsequent command in this turn before normal sandboxed execution.",
+      "type": [
+        "boolean",
+        "null"
+      ]
+    },
+    "conclusion": "后续命令审核字段；不因普通批准而主动关闭。"
+  },
+  {
+    "file": "docs/handoff/reference/codex-app-server-schema-0.153.0/ClientRequest.json",
+    "pointer": "/oneOf/25/properties",
+    "first_key_line": 6320,
+    "sha256": "25bc001b5dfe3b35785597b8f9ad9e5aaf7e437331fa9921f041c9e0e03fc9f3",
+    "value": {
+      "id": {
+        "$ref": "#/definitions/RequestId"
+      },
+      "method": {
+        "enum": [
+          "thread/read"
+        ],
+        "title": "Thread/readRequestMethod",
+        "type": "string"
+      },
+      "params": {
+        "$ref": "#/definitions/ThreadReadParams"
+      }
+    },
+    "conclusion": "ClientRequest.json: thread/read"
+  },
+  {
+    "file": "docs/handoff/reference/codex-app-server-schema-0.153.0/ClientRequest.json",
+    "pointer": "/oneOf/60/properties",
+    "first_key_line": 7161,
+    "sha256": "25bc001b5dfe3b35785597b8f9ad9e5aaf7e437331fa9921f041c9e0e03fc9f3",
+    "value": {
+      "id": {
+        "$ref": "#/definitions/RequestId"
+      },
+      "method": {
+        "enum": [
+          "turn/start"
+        ],
+        "title": "Turn/startRequestMethod",
+        "type": "string"
+      },
+      "params": {
+        "$ref": "#/definitions/TurnStartParams"
+      }
+    },
+    "conclusion": "ClientRequest.json: turn/start"
+  },
+  {
+    "file": "docs/handoff/reference/codex-app-server-schema-0.153.0/ClientRequest.json",
+    "pointer": "/oneOf/61/properties",
+    "first_key_line": 7185,
+    "sha256": "25bc001b5dfe3b35785597b8f9ad9e5aaf7e437331fa9921f041c9e0e03fc9f3",
+    "value": {
+      "id": {
+        "$ref": "#/definitions/RequestId"
+      },
+      "method": {
+        "enum": [
+          "turn/steer"
+        ],
+        "title": "Turn/steerRequestMethod",
+        "type": "string"
+      },
+      "params": {
+        "$ref": "#/definitions/TurnSteerParams"
+      }
+    },
+    "conclusion": "ClientRequest.json: turn/steer"
+  },
+  {
+    "file": "docs/handoff/reference/codex-app-server-schema-0.153.0/ClientRequest.json",
+    "pointer": "/oneOf/62/properties",
+    "first_key_line": 7209,
+    "sha256": "25bc001b5dfe3b35785597b8f9ad9e5aaf7e437331fa9921f041c9e0e03fc9f3",
+    "value": {
+      "id": {
+        "$ref": "#/definitions/RequestId"
+      },
+      "method": {
+        "enum": [
+          "turn/interrupt"
+        ],
+        "title": "Turn/interruptRequestMethod",
+        "type": "string"
+      },
+      "params": {
+        "$ref": "#/definitions/TurnInterruptParams"
+      }
+    },
+    "conclusion": "ClientRequest.json: turn/interrupt"
+  },
+  {
+    "file": "docs/handoff/reference/codex-app-server-schema-0.153.0/ClientRequest.json",
+    "pointer": "/oneOf/64/properties",
+    "first_key_line": 7257,
+    "sha256": "25bc001b5dfe3b35785597b8f9ad9e5aaf7e437331fa9921f041c9e0e03fc9f3",
+    "value": {
+      "id": {
+        "$ref": "#/definitions/RequestId"
+      },
+      "method": {
+        "enum": [
+          "model/list"
+        ],
+        "title": "Model/listRequestMethod",
+        "type": "string"
+      },
+      "params": {
+        "$ref": "#/definitions/ModelListParams"
+      }
+    },
+    "conclusion": "ClientRequest.json: model/list"
+  },
+  {
+    "file": "docs/handoff/reference/codex-app-server-schema-0.153.0/ServerRequest.json",
+    "pointer": "/oneOf/0/properties",
+    "first_key_line": 1857,
+    "sha256": "31f580ad468fbd18766eb7adb12744be4e3790e3357b58bd4413c0108c4f65d0",
+    "value": {
+      "id": {
+        "$ref": "#/definitions/RequestId"
+      },
+      "method": {
+        "enum": [
+          "item/commandExecution/requestApproval"
+        ],
+        "title": "Item/commandExecution/requestApprovalRequestMethod",
+        "type": "string"
+      },
+      "params": {
+        "$ref": "#/definitions/CommandExecutionRequestApprovalParams"
+      }
+    },
+    "conclusion": "ServerRequest.json: item/commandExecution/requestApproval"
+  },
+  {
+    "file": "docs/handoff/reference/codex-app-server-schema-0.153.0/ServerRequest.json",
+    "pointer": "/oneOf/1/properties",
+    "first_key_line": 1882,
+    "sha256": "31f580ad468fbd18766eb7adb12744be4e3790e3357b58bd4413c0108c4f65d0",
+    "value": {
+      "id": {
+        "$ref": "#/definitions/RequestId"
+      },
+      "method": {
+        "enum": [
+          "item/fileChange/requestApproval"
+        ],
+        "title": "Item/fileChange/requestApprovalRequestMethod",
+        "type": "string"
+      },
+      "params": {
+        "$ref": "#/definitions/FileChangeRequestApprovalParams"
+      }
+    },
+    "conclusion": "ServerRequest.json: item/fileChange/requestApproval"
+  },
+  {
+    "file": "docs/handoff/reference/codex-app-server-schema-0.153.0/ServerRequest.json",
+    "pointer": "/oneOf/4/properties",
+    "first_key_line": 1957,
+    "sha256": "31f580ad468fbd18766eb7adb12744be4e3790e3357b58bd4413c0108c4f65d0",
+    "value": {
+      "id": {
+        "$ref": "#/definitions/RequestId"
+      },
+      "method": {
+        "enum": [
+          "item/permissions/requestApproval"
+        ],
+        "title": "Item/permissions/requestApprovalRequestMethod",
+        "type": "string"
+      },
+      "params": {
+        "$ref": "#/definitions/PermissionsRequestApprovalParams"
+      }
+    },
+    "conclusion": "ServerRequest.json: item/permissions/requestApproval"
+  },
+  {
+    "file": "docs/handoff/reference/codex-app-server-schema-0.153.0/ServerNotification.json",
+    "pointer": "/oneOf/19/properties",
+    "first_key_line": 7092,
+    "sha256": "b3e76cf11842f3e8b3270c05e000212b56eabafb0152fc38e8f920e2ef902991",
+    "value": {
+      "method": {
+        "enum": [
+          "turn/started"
+        ],
+        "title": "Turn/startedNotificationMethod",
+        "type": "string"
+      },
+      "params": {
+        "$ref": "#/definitions/TurnStartedNotification"
+      }
+    },
+    "conclusion": "ServerNotification.json: turn/started"
+  },
+  {
+    "file": "docs/handoff/reference/codex-app-server-schema-0.153.0/ServerNotification.json",
+    "pointer": "/oneOf/21/properties",
+    "first_key_line": 7132,
+    "sha256": "b3e76cf11842f3e8b3270c05e000212b56eabafb0152fc38e8f920e2ef902991",
+    "value": {
+      "method": {
+        "enum": [
+          "turn/completed"
+        ],
+        "title": "Turn/completedNotificationMethod",
+        "type": "string"
+      },
+      "params": {
+        "$ref": "#/definitions/TurnCompletedNotification"
+      }
+    },
+    "conclusion": "ServerNotification.json: turn/completed"
+  },
+  {
+    "file": "docs/handoff/reference/codex-app-server-schema-0.153.0/ServerNotification.json",
+    "pointer": "/oneOf/55/properties",
+    "first_key_line": 7818,
+    "sha256": "b3e76cf11842f3e8b3270c05e000212b56eabafb0152fc38e8f920e2ef902991",
+    "value": {
+      "method": {
+        "enum": [
+          "model/rerouted"
+        ],
+        "title": "Model/reroutedNotificationMethod",
+        "type": "string"
+      },
+      "params": {
+        "$ref": "#/definitions/ModelReroutedNotification"
+      }
+    },
+    "conclusion": "ServerNotification.json: model/rerouted"
+  },
+  {
+    "file": "docs/handoff/reference/codex-app-server-schema-0.153.0/ServerRequest.json",
+    "pointer": "/definitions/CommandExecutionRequestApprovalParams",
+    "first_key_line": 353,
+    "sha256": "31f580ad468fbd18766eb7adb12744be4e3790e3357b58bd4413c0108c4f65d0",
+    "value": {
+      "properties": {
+        "approvalId": {
+          "description": "Unique identifier for this specific approval callback.\n\nFor regular shell/unified_exec approvals, this is null.\n\nFor zsh-exec-bridge subcommand approvals, multiple callbacks can belong to one parent `itemId`, so `approvalId` is a distinct opaque callback id (a UUID) used to disambiguate routing. Stdin approvals also use a distinct callback id; inspect `kind` to distinguish them.",
+          "type": [
+            "string",
+            "null"
+          ]
+        },
+        "command": {
+          "description": "The command to be executed.",
+          "type": [
+            "string",
+            "null"
+          ]
+        },
+        "commandActions": {
+          "description": "Best-effort parsed command actions for friendly display.",
+          "items": {
+            "$ref": "#/definitions/CommandAction"
+          },
+          "type": [
+            "array",
+            "null"
+          ]
+        },
+        "cwd": {
+          "anyOf": [
+            {
+              "$ref": "#/definitions/LegacyAppPathString"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "description": "The command's working directory."
+        },
+        "environmentId": {
+          "default": null,
+          "description": "Environment in which the command will run.",
+          "type": [
+            "string",
+            "null"
+          ]
+        },
+        "itemId": {
+          "type": "string"
+        },
+        "kind": {
+          "allOf": [
+            {
+              "$ref": "#/definitions/CommandExecutionApprovalKind"
+            }
+          ],
+          "default": "command",
+          "description": "Kind of action under review. Defaults to `command` for older servers."
+        },
+        "networkApprovalContext": {
+          "anyOf": [
+            {
+              "$ref": "#/definitions/NetworkApprovalContext"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "description": "Optional context for a managed-network approval prompt."
+        },
+        "proposedExecpolicyAmendment": {
+          "description": "Optional proposed execpolicy amendment to allow similar commands without prompting.",
+          "items": {
+            "type": "string"
+          },
+          "type": [
+            "array",
+            "null"
+          ]
+        },
+        "proposedNetworkPolicyAmendments": {
+          "description": "Optional proposed network policy amendments (allow/deny host) for future requests.",
+          "items": {
+            "$ref": "#/definitions/NetworkPolicyAmendment"
+          },
+          "type": [
+            "array",
+            "null"
+          ]
+        },
+        "reason": {
+          "description": "Optional explanatory reason (e.g. request for network access).",
+          "type": [
+            "string",
+            "null"
+          ]
+        },
+        "startedAtMs": {
+          "description": "Unix timestamp (in milliseconds) when this approval request started.",
+          "format": "int64",
+          "type": "integer"
+        },
+        "threadId": {
+          "type": "string"
+        },
+        "turnId": {
+          "type": "string"
+        }
+      },
+      "required": [
+        "itemId",
+        "startedAtMs",
+        "threadId",
+        "turnId"
+      ],
+      "type": "object"
+    },
+    "conclusion": "审批载荷字段与 request id 不混为一谈；item/turn/thread 及可选 approvalId 均须绑定。"
+  }
+]

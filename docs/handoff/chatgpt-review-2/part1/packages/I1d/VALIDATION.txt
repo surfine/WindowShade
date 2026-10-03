@@ -1,0 +1,36 @@
+UTC: 2026-10-03T05:48:21.364341+00:00
+Platform: macOS-27.0-arm64-arm-64bit-Mach-O
+Compiler: Apple Swift version 6.4 (swiftlang-6.4.0.34.1 clang-2100.3.34.1)
+Target: arm64-apple-macosx27.0.0
+Command: bash /private/tmp/claude-501/-Users-aaron-Documents-WindowShade--claude-worktrees-windowshade-marvin-discussion-15d18f/d74fa5fd-eb4f-44ee-8dd1-5723403fe657/scratchpad/r2p1/WindowShade2-round2-part1/packages/I1d/tests/run-touch-tap-tests.sh
+Exit: 0
+
+CASE I1d-01 | 三指与四指同时落下，200ms 全抬起 → 各仅一次轻点
+ok   三/四指完整组
+ok   空帧不重复
+ok   三/四指完整组
+ok   空帧不重复
+CASE I1d-02 | 先三指，100ms 加第四指 → 不预报三指，最终四指
+ok   先落三指不触发
+ok   第四指入组
+ok   最终四指
+CASE I1d-03 | 三指移动达到 1.5mm 或掌面 → 整组失效
+ok   拖移/掌面拒绝
+ok   失效后不复活
+ok   拖移/掌面拒绝
+ok   失效后不复活
+CASE I1d-04 | 两指落下一指抬起、快照静默丢点 → 都不算三指
+ok   部分抬手不结束整组
+ok   丢点不冒充 ended
+CASE I1d-05 | 150ms/250ms 精确边界与超时 → 边界接受，超出拒绝
+ok   250ms 包含边界
+ok   迟到第四指拒绝
+CASE I1d-06 | 妙控鼠标两指持续 3 秒 → 仍为两指按下，不套轻点时限
+ok   持续弦键
+ok   抬起解除
+CASE I1d-07 | 重复编号、超上限、序号重放、取消 → 不产出轻点
+ok   触点编号去重
+ok   固定容量
+ok   序号不能重用
+ok   取消后先等全空帧
+PASS I1d: 7 cases, 21 assertions, 0 failures

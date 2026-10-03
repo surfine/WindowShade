@@ -1,0 +1,3708 @@
+{
+  "version": 1,
+  "basis": "round2 uploaded repo snapshot; main model must approve additions",
+  "scanner_pattern": "AXUIElementCopyAttributeValue|CGEvent\\.tapCreate|SCShareableContent|SCScreenshotManager|SCStream\\b|AVCaptureDevice|AVCaptureSession|NSAppleScript|osascript|IOServiceMatching|CGSessionCopyCurrentDictionary|bezelPath|\\b(?:SLS|CGS)[A-Z][A-Za-z0-9_]*|URLSession|NWConnection|NWListener|SecItem(?:Add|CopyMatching|Update|Delete)|\\bMT(?:Device|Register|Unregister)[A-Za-z0-9_]+|\\bIOHID[A-Za-z0-9_]+|AVAudioEngine|SFSpeechRecognizer|\\bVNDetect[A-Za-z0-9_]+|SMAppService|UserDefaults|RecoveryJournal|kAudioHardwarePropertyProcessObjectList|\\bSecureEnclave\\b|\\bLAContext\\b|SecAccessControlCreateWithFlags|\\bbiometryState\\b|evaluatedPolicyDomainState|stateHash",
+  "signals": [
+    {
+      "id": "screen-shape",
+      "label": "屏幕和刘海的形状",
+      "sensitivity": "public",
+      "group": "不用问就能读",
+      "reads": "显示器编号、尺寸、菜单栏与安全区",
+      "purpose": "把控件放在所属屏幕",
+      "destination": "内存；不发送",
+      "activation": "布局启用时；隐私页仅取现有快照",
+      "toggle": "无独立开关，跟随刘海功能",
+      "status": "current",
+      "rule": "SCREEN",
+      "verification": "source-inventory-only",
+      "retention": "see destination; no new polling or telemetry",
+      "log_policy": "no raw private values"
+    },
+    {
+      "id": "lock-state",
+      "label": "是否锁屏",
+      "sensitivity": "sensitive",
+      "group": "不用问就能读",
+      "reads": "锁定/未锁定/未知、当前控制台会话",
+      "purpose": "阻止锁屏时显示或执行敏感动作",
+      "destination": "内存；不发送",
+      "activation": "会话通知与授权边界复核",
+      "toggle": "安全边界不可单独关闭",
+      "status": "current",
+      "rule": "SESSION",
+      "verification": "source-inventory-only",
+      "retention": "see destination; no new polling or telemetry",
+      "log_policy": "no raw private values"
+    },
+    {
+      "id": "battery",
+      "label": "配件电量",
+      "sensitivity": "sensitive",
+      "group": "不用问就能读",
+      "reads": "已连接配件型号、电量、连接状态",
+      "purpose": "显示现有配件状态",
+      "destination": "内存；不发送",
+      "activation": "现有活动来源；页面不再轮询",
+      "toggle": "跟随实时活动；不新增重复开关",
+      "status": "current",
+      "rule": "HID",
+      "verification": "source-inventory-only",
+      "retention": "see destination; no new polling or telemetry",
+      "log_policy": "no raw private values"
+    },
+    {
+      "id": "recording-app",
+      "label": "哪个 App 在录音",
+      "sensitivity": "sensitive",
+      "group": "不用问就能读",
+      "reads": "音频进程标识、bundle ID、录音状态",
+      "purpose": "录音活动提示，不读取录音内容",
+      "destination": "内存；不发送",
+      "activation": "现有来源激活时",
+      "toggle": "实时活动",
+      "status": "current",
+      "rule": "AUDIO",
+      "verification": "source-inventory-only",
+      "retention": "see destination; no new polling or telemetry",
+      "log_policy": "no raw private values"
+    },
+    {
+      "id": "window-ax",
+      "label": "窗口的标题、位置和大小",
+      "sensitivity": "private",
+      "group": "你同意后才读",
+      "reads": "AX 标题、窗口ID、角色、几何、所属进程",
+      "purpose": "找到并收起或恢复目标窗口",
+      "destination": "内存；已收起窗口的恢复日志存本机",
+      "activation": "执行动作或既有缓存刷新",
+      "toggle": "辅助功能授权；关闭功能停止新增读取",
+      "status": "current",
+      "rule": "AX",
+      "verification": "source-inventory-only",
+      "retention": "see destination; no new polling or telemetry",
+      "log_policy": "no raw private values"
+    },
+    {
+      "id": "key-position",
+      "label": "按了哪个键",
+      "sensitivity": "sensitive",
+      "group": "你同意后才读",
+      "reads": "键码、修饰键、按下/松开、点击/滚动位置",
+      "purpose": "快捷键、惯用键和手势；不读输入文字",
+      "destination": "内存；不持久按键序列",
+      "activation": "功能启用且未锁定",
+      "toggle": "既有惯用键/手势开关；一直用Mac时关闭相应钩子",
+      "status": "current",
+      "rule": "EVENT",
+      "verification": "source-inventory-only",
+      "retention": "see destination; no new polling or telemetry",
+      "log_policy": "no raw private values"
+    },
+    {
+      "id": "window-image",
+      "label": "窗口的画面",
+      "sensitivity": "private",
+      "group": "你同意后才读",
+      "reads": "授权目标窗口的像素帧与缩略图",
+      "purpose": "动画、预览和窗口浏览",
+      "destination": "目标为仅内存；磁盘行为待P1-FS验证",
+      "activation": "只有可见动画/预览",
+      "toggle": "屏幕录制授权；对应功能",
+      "status": "current",
+      "rule": "CAPTURE",
+      "verification": "source-inventory-only",
+      "retention": "see destination; no new polling or telemetry",
+      "log_policy": "no raw private values"
+    },
+    {
+      "id": "camera-frame",
+      "label": "摄像头",
+      "sensitivity": "private",
+      "group": "你同意后才读",
+      "reads": "临时视频帧、动作/是否有人结果",
+      "purpose": "用户触发的眨眼转头；离席检测另按L1合同",
+      "destination": "只在内存；无主动上传；需真机文件检查",
+      "activation": "功能显式开启且当前状态允许",
+      "toggle": "摄像头及对应功能；锁屏不自动重开一般摄像头源",
+      "status": "current",
+      "rule": "CAMERA",
+      "verification": "source-inventory-only",
+      "retention": "see destination; no new polling or telemetry",
+      "log_policy": "no raw private values"
+    },
+    {
+      "id": "music",
+      "label": "正在播放的歌",
+      "sensitivity": "private",
+      "group": "你同意后才读",
+      "reads": "曲目、艺人、封面入口、进度、播放状态",
+      "purpose": "显示音乐并控制本次暂停的播放器",
+      "destination": "进程间自动化；内存；不把标题写日志",
+      "activation": "通知触发，现有兜底计时不在本轮更改",
+      "toggle": "实时活动/音乐控制和系统自动化授权",
+      "status": "current",
+      "rule": "AUTOMATION",
+      "verification": "source-inventory-only",
+      "retention": "see destination; no new polling or telemetry",
+      "log_policy": "no raw private values"
+    },
+    {
+      "id": "notch-private",
+      "label": "刘海的精确轮廓",
+      "sensitivity": "public",
+      "group": "系统未公开的方法",
+      "reads": "bezelPath、轮廓和圆角数据",
+      "purpose": "贴合硬件边缘",
+      "destination": "内存",
+      "activation": "显示变化时缓存",
+      "toggle": "关闭自适应外形用公开安全区",
+      "status": "current",
+      "rule": "BEZEL",
+      "verification": "source-inventory-only",
+      "retention": "see destination; no new polling or telemetry",
+      "log_policy": "no raw private values"
+    },
+    {
+      "id": "spaces-private",
+      "label": "其他桌面和最小化窗口的画面",
+      "sensitivity": "private",
+      "group": "系统未公开的方法",
+      "reads": "私有窗口/Space关系、位置和透明度，以及可用的窗口像素",
+      "purpose": "已授权的跨桌面预览及窗口控制；枚举或控制调用不一定读取像素",
+      "destination": "内存；磁盘行为待验证",
+      "activation": "用户动作时",
+      "toggle": "私有截图退回公开可用窗口/关闭预览",
+      "status": "current",
+      "rule": "SKYLIGHT",
+      "verification": "source-inventory-only",
+      "retention": "see destination; no new polling or telemetry",
+      "log_policy": "no raw private values"
+    },
+    {
+      "id": "hinge",
+      "label": "屏幕开合的角度",
+      "sensitivity": "sensitive",
+      "group": "系统未公开的方法",
+      "reads": "HID 铰链角度",
+      "purpose": "桌面开合效果",
+      "destination": "内存",
+      "activation": "现有运动分档采样，锁屏按现有边界",
+      "toggle": "桌面开合",
+      "status": "current",
+      "rule": "HID",
+      "verification": "source-inventory-only",
+      "retention": "see destination; no new polling or telemetry",
+      "log_policy": "no raw private values"
+    },
+    {
+      "id": "tilt",
+      "label": "机身的倾斜",
+      "sensitivity": "sensitive",
+      "group": "系统未公开的方法",
+      "reads": "加速度计样本、移动状态",
+      "purpose": "桌面倾斜及铰链采样分档",
+      "destination": "内存",
+      "activation": "驱动推送，停用后拆回调",
+      "toggle": "倾斜效果",
+      "status": "current",
+      "rule": "IOKIT",
+      "verification": "source-inventory-only",
+      "retention": "see destination; no new polling or telemetry",
+      "log_policy": "no raw private values"
+    },
+    {
+      "id": "update",
+      "label": "检查更新",
+      "sensitivity": "sensitive",
+      "group": "去了哪里",
+      "reads": "应用版本、Sparkle更新请求及服务端可见网络元数据",
+      "purpose": "取得更新目录和下载",
+      "destination": "更新服务；实际主机从构建配置和P2流量核验",
+      "activation": "仅自动更新开关或用户检查更新",
+      "toggle": "自动检查更新；关后仍可手动检查",
+      "status": "current",
+      "rule": "NETWORK",
+      "verification": "source-inventory-only",
+      "retention": "see destination; no new polling or telemetry",
+      "log_policy": "no raw private values"
+    },
+    {
+      "id": "settings",
+      "label": "设置",
+      "sensitivity": "sensitive",
+      "group": "去了哪里",
+      "reads": "本应用用户选择、已授权开关、模型槽位标识及被查询的系统偏好",
+      "purpose": "保留选择和适应当前系统设置",
+      "destination": "本机偏好文件；不存临时审批票据",
+      "activation": "原控制器需要查询时；页面只读已有快照",
+      "toggle": "各原有设置；重置只清本应用值",
+      "status": "current",
+      "rule": "PREFS",
+      "verification": "source-inventory-only",
+      "retention": "see destination; no new polling or telemetry",
+      "log_policy": "no raw private values"
+    },
+    {
+      "id": "recovery",
+      "label": "恢复记录",
+      "sensitivity": "private",
+      "group": "去了哪里",
+      "reads": "收起窗口目标、标题和位置等恢复字段",
+      "purpose": "崩溃后放回用户窗口",
+      "destination": "本机 RecoveryJournal.plist；恢复后的删减需单独核验",
+      "activation": "收起/恢复事务",
+      "toggle": "无删除其他App数据行为",
+      "status": "current",
+      "rule": "FILES",
+      "verification": "source-inventory-only",
+      "retention": "see destination; no new polling or telemetry",
+      "log_policy": "no raw private values"
+    },
+    {
+      "id": "diagnostics",
+      "label": "运行记录",
+      "sensitivity": "sensitive",
+      "group": "去了哪里",
+      "reads": "固定事件码、技术状态、耗时；禁止窗口标题和提示词",
+      "purpose": "排错与性能核验",
+      "destination": "本机专用目录0700/文件0600及一个备份",
+      "activation": "事件发生时；不开新轮询",
+      "toggle": "开发路径覆盖受同样安全规则限制",
+      "status": "current",
+      "rule": "FILES",
+      "verification": "source-inventory-only",
+      "retention": "see destination; no new polling or telemetry",
+      "log_policy": "no raw private values"
+    },
+    {
+      "id": "login-item",
+      "label": "登录时自动启动",
+      "sensitivity": "sensitive",
+      "group": "去了哪里",
+      "reads": "本应用登录项状态",
+      "purpose": "按用户选择启动",
+      "destination": "本机系统登录项服务",
+      "activation": "打开设置读取既有状态，修改时提交",
+      "toggle": "既有登录时自动启动",
+      "status": "current",
+      "rule": "LOGIN",
+      "verification": "source-inventory-only",
+      "retention": "see destination; no new polling or telemetry",
+      "log_policy": "no raw private values"
+    },
+    {
+      "id": "agent-hooks",
+      "label": "编程助手的事件",
+      "sensitivity": "private",
+      "group": "你同意后才读",
+      "reads": "provider、session/turn/tool/request ID、进程身份、状态及最小摘要",
+      "purpose": "A2把已选择助手的状态放到刘海",
+      "destination": "本机受保护IPC；不存完整hook输入；上游CLI自身可能联网",
+      "activation": "A2a/A2b用户启用后；先备份并合并配置",
+      "toggle": "编程助手活动；撤销只删除本应用配置块",
+      "status": "planned",
+      "rule": "A2",
+      "verification": "not-implemented",
+      "retention": "see destination; no new polling or telemetry",
+      "log_policy": "no raw private values"
+    },
+    {
+      "id": "conductor-ipc",
+      "label": "指挥连接",
+      "sensitivity": "private",
+      "group": "你同意后才读",
+      "reads": "同账户对端凭据、项目/会话ID、单调序号、请求摘要",
+      "purpose": "D5a/b绑定输入与本机助手会话",
+      "destination": "Swift本机IPC；默认不监听局域网；跨设备传输另列下行",
+      "activation": "显式绑定，锁屏/睡眠/撤销关闭控制",
+      "toggle": "指挥模式及项目绑定",
+      "status": "planned",
+      "rule": "D5",
+      "verification": "not-implemented",
+      "retention": "see destination; no new polling or telemetry",
+      "log_policy": "no raw private values"
+    },
+    {
+      "id": "cross-device",
+      "label": "跨设备语音或控制",
+      "sensitivity": "private",
+      "group": "你同意后才读",
+      "reads": "已配对对端身份、按键或音频流及认证握手",
+      "purpose": "明确选中的设备输入",
+      "destination": "可能经过本地网络/系统连续互通；实际路径须探针记录，不能称从不离开本机",
+      "activation": "显式选源并建立可信通道后",
+      "toggle": "来源选择和连接撤销",
+      "status": "planned",
+      "rule": "D5",
+      "verification": "not-implemented",
+      "retention": "see destination; no new polling or telemetry",
+      "log_policy": "no raw private values"
+    },
+    {
+      "id": "codex-server",
+      "label": "Codex 会话和审批",
+      "sensitivity": "private",
+      "group": "你同意后才读",
+      "reads": "model/list能力、thread/turn/item状态、服务端审批请求、最小输入文本",
+      "purpose": "D6发送用户明确提交并显示真实回执",
+      "destination": "本机app-server；后续Codex服务调用可能上传用户提交给提供商",
+      "activation": "仅绑定会话；初次连接先snapshot",
+      "toggle": "指挥模式/会话绑定；不读取任意历史全文",
+      "status": "planned",
+      "rule": "D6",
+      "verification": "not-implemented",
+      "retention": "see destination; no new polling or telemetry",
+      "log_policy": "no raw private values"
+    },
+    {
+      "id": "speech-input",
+      "label": "语音输入",
+      "sensitivity": "private",
+      "group": "你同意后才读",
+      "reads": "选定麦克风的音频、临时转写、所选识别器",
+      "purpose": "生成草稿，用户再次按播放才提交",
+      "destination": "默认本机识别；不具备本机识别则停用并说明，云路径必须另获同意",
+      "activation": "D1/D4有真实录音回执后，最长60秒",
+      "toggle": "麦克风来源；松手/取消即停止",
+      "status": "planned",
+      "rule": "D4",
+      "verification": "not-implemented",
+      "retention": "see destination; no new polling or telemetry",
+      "log_policy": "no raw private values"
+    },
+    {
+      "id": "bluetooth-presence",
+      "label": "随身设备是否在场",
+      "sensitivity": "sensitive",
+      "group": "你同意后才读",
+      "reads": "配对设备标识、明确连接/断开、被证实可读特征的请求回执、RSSI",
+      "purpose": "L2给L1离席和返回候选；RSSI不作身份授权",
+      "destination": "内存；不持久轨迹；设备名称不算可信身份",
+      "activation": "功能开启且蓝牙能力探针通过",
+      "toggle": "自动锁定/返回流程，停用拆监听",
+      "status": "planned",
+      "rule": "L2",
+      "verification": "not-implemented",
+      "retention": "see destination; no new polling or telemetry",
+      "log_policy": "no raw private values"
+    },
+    {
+      "id": "face-identity",
+      "label": "人脸特征与身份结果",
+      "sensitivity": "private",
+      "group": "你同意后才读",
+      "reads": "已登记模板、活体挑战结果、匹配结果",
+      "purpose": "用户已批准的身份验证，Vision检测人脸不等于识别身份",
+      "destination": "模板仅保护存储；原帧不存；身份后端待F1/L3证明",
+      "activation": "身份功能实际可用且已启用时才显示本行",
+      "toggle": "刷脸功能及删除登记；不标成Face ID",
+      "status": "planned",
+      "rule": "FACE",
+      "verification": "not-implemented",
+      "retention": "see destination; no new polling or telemetry",
+      "log_policy": "no raw private values"
+    },
+    {
+      "id": "unlock-secret",
+      "label": "解锁凭据",
+      "sensitivity": "private",
+      "group": "你同意后才读",
+      "reads": "仅经用户明确建立的受保护系统凭据",
+      "purpose": "拟定锁屏返回后端；尚未证明可安全实现",
+      "destination": "必须Keychain/现有保护服务；不进日志/JSON/助手上下文",
+      "activation": "后端探针通过后另行启用；当前不得采集",
+      "toggle": "删除登记；无可用后端就不显示已支持",
+      "status": "planned",
+      "rule": "SECRET",
+      "verification": "not-implemented",
+      "retention": "see destination; no new polling or telemetry",
+      "log_policy": "no raw private values"
+    },
+    {
+      "id": "private-contact",
+      "label": "触控板和鼠标触点",
+      "sensitivity": "sensitive",
+      "group": "系统未公开的方法",
+      "reads": "设备句柄、触点ID、经实测换算的坐标/面积、帧时间",
+      "purpose": "I2给I1d点击和I1c拖动判定",
+      "destination": "内存当前接触组；不录制长期手势轨迹",
+      "activation": "符号、ABI、单位、停止回调均验证后",
+      "toggle": "输入增强；未知设备或ABI停用该路径",
+      "status": "planned",
+      "rule": "I2",
+      "verification": "not-implemented",
+      "retention": "see destination; no new polling or telemetry",
+      "log_policy": "no raw private values"
+    },
+    {
+      "id": "remote-hid",
+      "label": "遥控器按钮",
+      "sensitivity": "sensitive",
+      "group": "你同意后才读",
+      "reads": "I5a每设备HID page/usage、down/up、连接代次",
+      "purpose": "I1e/I1f在模式内映射动作",
+      "destination": "内存；映射归属账本仅本机",
+      "activation": "启用且已绑定来源；断线取消所有按键",
+      "toggle": "遥控器模式；退出恢复自己占用的映射",
+      "status": "planned",
+      "rule": "I5",
+      "verification": "not-implemented",
+      "retention": "see destination; no new polling or telemetry",
+      "log_policy": "no raw private values"
+    },
+    {
+      "id": "remote-touch",
+      "label": "遥控器触控区域",
+      "sensitivity": "sensitive",
+      "group": "系统未公开的方法",
+      "reads": "被探针证实的触控坐标与时间，不从普通键码臆造",
+      "purpose": "指挥模式轨迹输入",
+      "destination": "仅当前轨迹；最多2048采样点",
+      "activation": "I5a坐标来源探针通过后；无坐标仅按钮",
+      "toggle": "指挥模式",
+      "status": "planned",
+      "rule": "I5",
+      "verification": "not-implemented",
+      "retention": "see destination; no new polling or telemetry",
+      "log_policy": "no raw private values"
+    },
+    {
+      "id": "hid-remapping",
+      "label": "遥控器按键映射",
+      "sensitivity": "sensitive",
+      "group": "去了哪里",
+      "reads": "hidutil当前映射和仅由本应用新增的条目",
+      "purpose": "I5b避免系统动作与本应用重复响应",
+      "destination": "本机系统映射；归属记录不含输入历史",
+      "activation": "用户开启时保存/差分应用，撤销差分恢复",
+      "toggle": "遥控器模式；不覆盖其他工具新增映射",
+      "status": "planned",
+      "rule": "I5",
+      "verification": "not-implemented",
+      "retention": "see destination; no new polling or telemetry",
+      "log_policy": "no raw private values"
+    },
+    {
+      "id": "game-controller",
+      "label": "手柄输入和反馈",
+      "sensitivity": "sensitive",
+      "group": "你同意后才读",
+      "reads": "已连接手柄ID、方向/按钮/触控输入、输出扳机阻力",
+      "purpose": "I8复用同一动作与交互租约",
+      "destination": "输入内存，反馈发回选定手柄；不跨会话缓存指令",
+      "activation": "显式功能开启，锁屏/断线/抢占立刻清扳机",
+      "toggle": "手柄输入；不抢全局无关控制器",
+      "status": "planned",
+      "rule": "I8",
+      "verification": "not-implemented",
+      "retention": "see destination; no new polling or telemetry",
+      "log_policy": "no raw private values"
+    },
+    {
+      "id": "authorization-key",
+      "label": "设备授权密钥",
+      "sensitivity": "private",
+      "group": "你同意后才读",
+      "reads": "Secure Enclave 包裹的句柄、公钥、指纹集合状态摘要、一次性挑战及签名结果；不导出私钥",
+      "purpose": "用途和目标绑定的一次性授权账",
+      "destination": "~/Library/Application Support/WindowShade/Authorization/ 下的 device-key.v1、.pub、.biometry 文件及内存；当前源码没有把句柄写入 Keychain",
+      "activation": "每次明确授权；锁屏等推进代次",
+      "toggle": "删除登记；安全校验不可跳过",
+      "status": "current",
+      "rule": "SECURITY",
+      "verification": "source-inventory-only",
+      "retention": "登记期间保留；指纹确实改变导致失效时删除三文件；目录与文件权限和删除需真机核验",
+      "log_policy": "no raw private values"
+    },
+    {
+      "id": "agent-voice-proof",
+      "label": "审批口令和声纹辅助证据",
+      "sensitivity": "private",
+      "group": "你同意后才读",
+      "reads": "一次随机口令的转写和辅助匹配结果",
+      "purpose": "D1高风险挑战的辅助证据；不是allow权限",
+      "destination": "短期内存；绑定请求摘要、代次、挑战ID；不写完整音频日志",
+      "activation": "已展示审批且新确认后才挑战",
+      "toggle": "不具备可靠声纹证明则用现有主身份路径",
+      "status": "planned",
+      "rule": "VOICE",
+      "verification": "not-implemented",
+      "retention": "see destination; no new polling or telemetry",
+      "log_policy": "no raw private values"
+    }
+  ],
+  "sites": [
+    {
+      "path": "prototype/App/AXLatencyBench.swift",
+      "line": 31,
+      "symbol": "AXUIElementCopyAttributeValue",
+      "source": "_ = AXUIElementCopyAttributeValue(application, kAXWindowsAttribute as CFString, &value)",
+      "signal": "window-ax"
+    },
+    {
+      "path": "prototype/App/DeviceAuthorizationKey.swift",
+      "line": 8,
+      "symbol": "LAContext",
+      "source": "// 签名必须用刘海里那块原生 Touch ID 控件刚刚认证过的同一个 LAContext，并且不允许它再弹任何界面：",
+      "signal": "authorization-key"
+    },
+    {
+      "path": "prototype/App/DeviceAuthorizationKey.swift",
+      "line": 23,
+      "symbol": "LAContext",
+      "source": "func sign(_ message: [UInt8], context: LAContext) throws -> Data",
+      "signal": "authorization-key"
+    },
+    {
+      "path": "prototype/App/DeviceAuthorizationKey.swift",
+      "line": 39,
+      "symbol": "SecAccessControlCreateWithFlags",
+      "source": "SecAccessControlCreateWithFlags(nil, kSecAttrAccessibleWhenUnlockedThisDeviceOnly, flags, nil)",
+      "signal": "authorization-key"
+    },
+    {
+      "path": "prototype/App/DeviceAuthorizationKey.swift",
+      "line": 73,
+      "symbol": "SecureEnclave",
+      "source": "guard SecureEnclave.isAvailable else { throw DeviceKeyError.secureEnclaveUnavailable }",
+      "signal": "authorization-key"
+    },
+    {
+      "path": "prototype/App/DeviceAuthorizationKey.swift",
+      "line": 75,
+      "symbol": "SecureEnclave",
+      "source": "let key = try SecureEnclave.P256.Signing.PrivateKey(accessControl: control)",
+      "signal": "authorization-key"
+    },
+    {
+      "path": "prototype/App/DeviceAuthorizationKey.swift",
+      "line": 80,
+      "symbol": "biometryState",
+      "source": "if let state = Self.biometryState() { try write(state, to: stateFile) }",
+      "signal": "authorization-key"
+    },
+    {
+      "path": "prototype/App/DeviceAuthorizationKey.swift",
+      "line": 85,
+      "symbol": "LAContext",
+      "source": "func sign(_ message: [UInt8], context: LAContext) throws -> Data {",
+      "signal": "authorization-key"
+    },
+    {
+      "path": "prototype/App/DeviceAuthorizationKey.swift",
+      "line": 90,
+      "symbol": "SecureEnclave",
+      "source": "let key = try SecureEnclave.P256.Signing.PrivateKey(dataRepresentation: blob, authenticationContext: context)",
+      "signal": "authorization-key"
+    },
+    {
+      "path": "prototype/App/DeviceAuthorizationKey.swift",
+      "line": 100,
+      "symbol": "biometryState",
+      "source": "static func biometryState() -> Data? {",
+      "signal": "authorization-key"
+    },
+    {
+      "path": "prototype/App/DeviceAuthorizationKey.swift",
+      "line": 101,
+      "symbol": "LAContext",
+      "source": "let context = LAContext()",
+      "signal": "authorization-key"
+    },
+    {
+      "path": "prototype/App/DeviceAuthorizationKey.swift",
+      "line": 105,
+      "symbol": "stateHash",
+      "source": "if #available(macOS 15.0, *) { raw = context.domainState.biometry.stateHash }",
+      "signal": "authorization-key"
+    },
+    {
+      "path": "prototype/App/DeviceAuthorizationKey.swift",
+      "line": 106,
+      "symbol": "evaluatedPolicyDomainState",
+      "source": "else { raw = context.evaluatedPolicyDomainState }",
+      "signal": "authorization-key"
+    },
+    {
+      "path": "prototype/App/DeviceAuthorizationKey.swift",
+      "line": 111,
+      "symbol": "biometryState",
+      "source": "guard let stored = try? Data(contentsOf: stateFile), let current = Self.biometryState() else { return false }",
+      "signal": "authorization-key"
+    },
+    {
+      "path": "prototype/App/DeviceBatteryController.swift",
+      "line": 12,
+      "symbol": "UserDefaults",
+      "source": "UserDefaults.standard.object(forKey: enabledKey) as? Bool ?? true",
+      "signal": "settings"
+    },
+    {
+      "path": "prototype/App/DeviceBatteryController.swift",
+      "line": 32,
+      "symbol": "UserDefaults",
+      "source": "if let data = UserDefaults.standard.data(forKey: Self.alertedKey),",
+      "signal": "settings"
+    },
+    {
+      "path": "prototype/App/DeviceBatteryController.swift",
+      "line": 116,
+      "symbol": "UserDefaults",
+      "source": "UserDefaults.standard.set(data, forKey: Self.alertedKey)",
+      "signal": "settings"
+    },
+    {
+      "path": "prototype/App/DockClickHide.swift",
+      "line": 20,
+      "symbol": "UserDefaults",
+      "source": "if let stored = UserDefaults.standard.object(forKey: key) as? Bool { return stored }",
+      "signal": "settings"
+    },
+    {
+      "path": "prototype/App/DockClickHide.swift",
+      "line": 24,
+      "symbol": "UserDefaults",
+      "source": "set { UserDefaults.standard.set(newValue, forKey: key) }",
+      "signal": "settings"
+    },
+    {
+      "path": "prototype/App/DockLock.swift",
+      "line": 12,
+      "symbol": "UserDefaults",
+      "source": "get { UserDefaults.standard.bool(forKey: enabledKey) }",
+      "signal": "settings"
+    },
+    {
+      "path": "prototype/App/DockLock.swift",
+      "line": 13,
+      "symbol": "UserDefaults",
+      "source": "set { UserDefaults.standard.set(newValue, forKey: enabledKey) }",
+      "signal": "settings"
+    },
+    {
+      "path": "prototype/App/DockLock.swift",
+      "line": 24,
+      "symbol": "UserDefaults",
+      "source": "if UserDefaults.standard.object(forKey: Self.displayKey) == nil, let screen = Self.dockScreen() {",
+      "signal": "settings"
+    },
+    {
+      "path": "prototype/App/DockLock.swift",
+      "line": 25,
+      "symbol": "UserDefaults",
+      "source": "UserDefaults.standard.set(Int(Self.displayID(screen)), forKey: Self.displayKey)",
+      "signal": "settings"
+    },
+    {
+      "path": "prototype/App/DockLock.swift",
+      "line": 36,
+      "symbol": "UserDefaults",
+      "source": "UserDefaults.standard.removeObject(forKey: Self.displayKey)",
+      "signal": "settings"
+    },
+    {
+      "path": "prototype/App/DockLock.swift",
+      "line": 41,
+      "symbol": "UserDefaults",
+      "source": "guard (UserDefaults(suiteName: \"com.apple.dock\")?.string(forKey: \"orientation\") ?? \"bottom\") == \"bottom\",",
+      "signal": "settings"
+    },
+    {
+      "path": "prototype/App/DockLock.swift",
+      "line": 43,
+      "symbol": "UserDefaults",
+      "source": "let lockedID = CGDirectDisplayID(UserDefaults.standard.integer(forKey: Self.displayKey))",
+      "signal": "settings"
+    },
+    {
+      "path": "prototype/App/DockSwipe.swift",
+      "line": 18,
+      "symbol": "UserDefaults",
+      "source": "get { UserDefaults.standard.object(forKey: key) as? Bool ?? false }",
+      "signal": "settings"
+    },
+    {
+      "path": "prototype/App/DockSwipe.swift",
+      "line": 19,
+      "symbol": "UserDefaults",
+      "source": "set { UserDefaults.standard.set(newValue, forKey: key) }",
+      "signal": "settings"
+    },
+    {
+      "path": "prototype/App/DockSwipe.swift",
+      "line": 183,
+      "symbol": "AXUIElementCopyAttributeValue",
+      "source": "guard AXUIElementCopyAttributeValue(element, kAXParentAttribute as CFString, &value) == .success,",
+      "signal": "window-ax"
+    },
+    {
+      "path": "prototype/App/ElsewhereProbe.swift",
+      "line": 106,
+      "symbol": "UserDefaults",
+      "source": "let hotkeys = UserDefaults(suiteName: \"com.apple.symbolichotkeys\")?.dictionary(forKey: \"AppleSymbolicHotKeys\") ?? [:]",
+      "signal": "settings"
+    },
+    {
+      "path": "prototype/App/FaceObservationSource.swift",
+      "line": 33,
+      "symbol": "AVCaptureDevice",
+      "source": "static var authorizationStatus: AVAuthorizationStatus { AVCaptureDevice.authorizationStatus(for: .video) }",
+      "signal": "camera-frame"
+    },
+    {
+      "path": "prototype/App/FaceObservationSource.swift",
+      "line": 43,
+      "symbol": "AVCaptureDevice",
+      "source": "await AVCaptureDevice.requestAccess(for: .video)",
+      "signal": "camera-frame"
+    },
+    {
+      "path": "prototype/App/FaceObservationSource.swift",
+      "line": 85,
+      "symbol": "AVCaptureSession",
+      "source": "private var session: AVCaptureSession?",
+      "signal": "camera-frame"
+    },
+    {
+      "path": "prototype/App/FaceObservationSource.swift",
+      "line": 96,
+      "symbol": "AVCaptureDevice",
+      "source": "static func devices() -> [AVCaptureDevice] {",
+      "signal": "camera-frame"
+    },
+    {
+      "path": "prototype/App/FaceObservationSource.swift",
+      "line": 97,
+      "symbol": "AVCaptureDevice",
+      "source": "AVCaptureDevice.DiscoverySession(deviceTypes: [.builtInWideAngleCamera, .external, .continuityCamera],",
+      "signal": "camera-frame"
+    },
+    {
+      "path": "prototype/App/FaceObservationSource.swift",
+      "line": 110,
+      "symbol": "AVCaptureSession",
+      "source": "let session = AVCaptureSession()",
+      "signal": "camera-frame"
+    },
+    {
+      "path": "prototype/App/FaceObservationSource.swift",
+      "line": 113,
+      "symbol": "AVCaptureDevice",
+      "source": "let input = try AVCaptureDeviceInput(device: device)",
+      "signal": "camera-frame"
+    },
+    {
+      "path": "prototype/App/FaceObservationSource.swift",
+      "line": 133,
+      "symbol": "AVCaptureSession",
+      "source": "for name in [AVCaptureSession.runtimeErrorNotification, AVCaptureSession.wasInterruptedNotification] {",
+      "signal": "camera-frame"
+    },
+    {
+      "path": "prototype/App/FaceObservationSource.swift",
+      "line": 133,
+      "symbol": "AVCaptureSession",
+      "source": "for name in [AVCaptureSession.runtimeErrorNotification, AVCaptureSession.wasInterruptedNotification] {",
+      "signal": "camera-frame"
+    },
+    {
+      "path": "prototype/App/FaceObservationSource.swift",
+      "line": 135,
+      "symbol": "AVCaptureSession",
+      "source": "let description = (note.userInfo?[AVCaptureSessionErrorKey] as? Error)?.localizedDescription",
+      "signal": "camera-frame"
+    },
+    {
+      "path": "prototype/App/FaceObservationSource.swift",
+      "line": 173,
+      "symbol": "VNDetectFaceLandmarksRequest",
+      "source": "let request = VNDetectFaceLandmarksRequest()",
+      "signal": "camera-frame"
+    },
+    {
+      "path": "prototype/App/FaceObservationSource.swift",
+      "line": 221,
+      "symbol": "VNDetectFaceLandmarksRequest",
+      "source": "guard let devices = try? VNDetectFaceLandmarksRequest().supportedComputeStageDevices[.main] else { return nil }",
+      "signal": "camera-frame"
+    },
+    {
+      "path": "prototype/App/FaceObservationSource.swift",
+      "line": 247,
+      "symbol": "AVCaptureDevice",
+      "source": "for name in [AVCaptureDevice.wasConnectedNotification, AVCaptureDevice.wasDisconnectedNotification] {",
+      "signal": "camera-frame"
+    },
+    {
+      "path": "prototype/App/FaceObservationSource.swift",
+      "line": 247,
+      "symbol": "AVCaptureDevice",
+      "source": "for name in [AVCaptureDevice.wasConnectedNotification, AVCaptureDevice.wasDisconnectedNotification] {",
+      "signal": "camera-frame"
+    },
+    {
+      "path": "prototype/App/FoldTransaction.swift",
+      "line": 264,
+      "symbol": "AXUIElementCopyAttributeValue",
+      "source": "if AXUIElementCopyAttributeValue(button, kAXEnabledAttribute as CFString, &ref) == .success,",
+      "signal": "window-ax"
+    },
+    {
+      "path": "prototype/App/GapProbesRecovery.swift",
+      "line": 216,
+      "symbol": "RecoveryJournal",
+      "source": "&& self.gapRecoveryRecords(mentioning: self.id).contains(\"RecoveryJournal.plist\")",
+      "signal": "recovery"
+    },
+    {
+      "path": "prototype/App/GapProbesSlideOver.swift",
+      "line": 157,
+      "symbol": "UserDefaults",
+      "source": "let savedTip = UserDefaults.standard.object(forKey: tipKey)",
+      "signal": "settings"
+    },
+    {
+      "path": "prototype/App/GapProbesSlideOver.swift",
+      "line": 161,
+      "symbol": "UserDefaults",
+      "source": "if let savedTip { UserDefaults.standard.set(savedTip, forKey: tipKey) } else { UserDefaults.standard.removeObject(forKey: tipKey) }",
+      "signal": "settings"
+    },
+    {
+      "path": "prototype/App/GapProbesSlideOver.swift",
+      "line": 161,
+      "symbol": "UserDefaults",
+      "source": "if let savedTip { UserDefaults.standard.set(savedTip, forKey: tipKey) } else { UserDefaults.standard.removeObject(forKey: tipKey) }",
+      "signal": "settings"
+    },
+    {
+      "path": "prototype/App/GapProbesSupport.swift",
+      "line": 39,
+      "symbol": "AXUIElementCopyAttributeValue",
+      "source": "guard AXUIElementCopyAttributeValue(app, kAXMenuBarAttribute as CFString, &bar) == .success, let bar,",
+      "signal": "window-ax"
+    },
+    {
+      "path": "prototype/App/GapProbesSupport.swift",
+      "line": 66,
+      "symbol": "SLSMainConnectionID",
+      "source": "let mainSym = dlsym(handle, \"SLSMainConnectionID\"),",
+      "signal": "spaces-private"
+    },
+    {
+      "path": "prototype/App/GapProbesSupport.swift",
+      "line": 67,
+      "symbol": "SLSCopyManagedDisplaySpaces",
+      "source": "let spacesSym = dlsym(handle, \"SLSCopyManagedDisplaySpaces\") else { return [] }",
+      "signal": "spaces-private"
+    },
+    {
+      "path": "prototype/App/GapProbesSupport.swift",
+      "line": 87,
+      "symbol": "RecoveryJournal",
+      "source": "found.append(\"RecoveryJournal.plist\")",
+      "signal": "recovery"
+    },
+    {
+      "path": "prototype/App/GestureProbe.swift",
+      "line": 909,
+      "symbol": "AXUIElementCopyAttributeValue",
+      "source": "guard AXUIElementCopyAttributeValue(long, kAXChildrenAttribute as CFString, &children) == .success,",
+      "signal": "window-ax"
+    },
+    {
+      "path": "prototype/App/GestureProbe.swift",
+      "line": 913,
+      "symbol": "AXUIElementCopyAttributeValue",
+      "source": "guard AXUIElementCopyAttributeValue(child, kAXVerticalScrollBarAttribute as CFString, &bar) == .success,",
+      "signal": "window-ax"
+    },
+    {
+      "path": "prototype/App/GestureProbe.swift",
+      "line": 916,
+      "symbol": "AXUIElementCopyAttributeValue",
+      "source": "guard AXUIElementCopyAttributeValue(barElement as! AXUIElement, kAXValueAttribute as CFString, &value) == .success else { continue }",
+      "signal": "window-ax"
+    },
+    {
+      "path": "prototype/App/GestureProbe.swift",
+      "line": 1249,
+      "symbol": "AXUIElementCopyAttributeValue",
+      "source": "guard AXUIElementCopyAttributeValue(app, kAXChildrenAttribute as CFString, &children) == .success,",
+      "signal": "window-ax"
+    },
+    {
+      "path": "prototype/App/GestureProbe.swift",
+      "line": 1253,
+      "symbol": "AXUIElementCopyAttributeValue",
+      "source": "guard AXUIElementCopyAttributeValue(list, kAXChildrenAttribute as CFString, &items) == .success,",
+      "signal": "window-ax"
+    },
+    {
+      "path": "prototype/App/GestureProbe.swift",
+      "line": 1351,
+      "symbol": "AXUIElementCopyAttributeValue",
+      "source": "if AXUIElementCopyAttributeValue(window, kAXCloseButtonAttribute as CFString, &ref) == .success, let button = ref {",
+      "signal": "window-ax"
+    },
+    {
+      "path": "prototype/App/GestureProbe.swift",
+      "line": 1554,
+      "symbol": "UserDefaults",
+      "source": "let savedLayout = UserDefaults.standard.data(forKey: layoutKey)",
+      "signal": "settings"
+    },
+    {
+      "path": "prototype/App/GestureProbe.swift",
+      "line": 1676,
+      "symbol": "UserDefaults",
+      "source": "guard UserDefaults.standard.data(forKey: layoutKey) == savedLayout else {",
+      "signal": "settings"
+    },
+    {
+      "path": "prototype/App/GestureProbe.swift",
+      "line": 1705,
+      "symbol": "UserDefaults",
+      "source": "guard UserDefaults.standard.data(forKey: layoutKey) == savedLayout else {",
+      "signal": "settings"
+    },
+    {
+      "path": "prototype/App/GestureProbe.swift",
+      "line": 1841,
+      "symbol": "UserDefaults",
+      "source": "let savedSetting = UserDefaults.standard.object(forKey: NotchController.enabledKey)",
+      "signal": "settings"
+    },
+    {
+      "path": "prototype/App/GestureProbe.swift",
+      "line": 1852,
+      "symbol": "UserDefaults",
+      "source": "if let savedSetting { UserDefaults.standard.set(savedSetting, forKey: NotchController.enabledKey) } else {",
+      "signal": "settings"
+    },
+    {
+      "path": "prototype/App/GestureProbe.swift",
+      "line": 1853,
+      "symbol": "UserDefaults",
+      "source": "UserDefaults.standard.removeObject(forKey: NotchController.enabledKey)",
+      "signal": "settings"
+    },
+    {
+      "path": "prototype/App/Glance.swift",
+      "line": 189,
+      "symbol": "UserDefaults",
+      "source": "let defaults = UserDefaults.standard",
+      "signal": "settings"
+    },
+    {
+      "path": "prototype/App/Glance.swift",
+      "line": 193,
+      "symbol": "UserDefaults",
+      "source": "set { UserDefaults.standard.set(newValue, forKey: glanceEnabledDefaultsKey) }",
+      "signal": "settings"
+    },
+    {
+      "path": "prototype/App/GlanceProbe.swift",
+      "line": 78,
+      "symbol": "AXUIElementCopyAttributeValue",
+      "source": "let err = AXUIElementCopyAttributeValue(app, kAXWindowsAttribute as CFString, &ref)",
+      "signal": "window-ax"
+    },
+    {
+      "path": "prototype/App/GlanceProbe.swift",
+      "line": 85,
+      "symbol": "AXUIElementCopyAttributeValue",
+      "source": "let posErr = windows.first.map { AXUIElementCopyAttributeValue($0, kAXPositionAttribute as CFString, &posRef).rawValue } ?? 1",
+      "signal": "window-ax"
+    },
+    {
+      "path": "prototype/App/GlobalShortcuts.swift",
+      "line": 181,
+      "symbol": "UserDefaults",
+      "source": "static var defaults: UserDefaults = .standard",
+      "signal": "settings"
+    },
+    {
+      "path": "prototype/App/GlobalShortcuts.swift",
+      "line": 284,
+      "symbol": "UserDefaults",
+      "source": "/// 纯逻辑，只碰 UserDefaults，可单测。",
+      "signal": "settings"
+    },
+    {
+      "path": "prototype/App/GlobalShortcuts.swift",
+      "line": 308,
+      "symbol": "UserDefaults",
+      "source": "static func detect(in defaults: UserDefaults) -> InstallHistory {",
+      "signal": "settings"
+    },
+    {
+      "path": "prototype/App/GlobalShortcuts.swift",
+      "line": 317,
+      "symbol": "UserDefaults",
+      "source": "static func settled(in defaults: UserDefaults) -> InstallHistory {",
+      "signal": "settings"
+    },
+    {
+      "path": "prototype/App/HabitContext.swift",
+      "line": 27,
+      "symbol": "AXUIElementCopyAttributeValue",
+      "source": "guard AXUIElementCopyAttributeValue(element, attribute as CFString, &value) == .success else { return nil }",
+      "signal": "window-ax"
+    },
+    {
+      "path": "prototype/App/HabitContext.swift",
+      "line": 1026,
+      "symbol": "UserDefaults",
+      "source": "memory = UserDefaults.standard.data(forKey: Self.memoryKey)",
+      "signal": "settings"
+    },
+    {
+      "path": "prototype/App/HabitContext.swift",
+      "line": 1049,
+      "symbol": "UserDefaults",
+      "source": "defaultsObserver = NotificationCenter.default.addObserver(forName: UserDefaults.didChangeNotification, object: nil,",
+      "signal": "settings"
+    },
+    {
+      "path": "prototype/App/HabitContext.swift",
+      "line": 1105,
+      "symbol": "UserDefaults",
+      "source": "settings.natural = UserDefaults.standard.object(forKey: \"com.apple.swipescrolldirection\") as? Bool ?? true",
+      "signal": "settings"
+    },
+    {
+      "path": "prototype/App/HabitContext.swift",
+      "line": 1157,
+      "symbol": "UserDefaults",
+      "source": "Set((UserDefaults.standard.stringArray(forKey: Self.deviceCheckedKey) ?? []).compactMap(HabitRule.init(rawValue:)))",
+      "signal": "settings"
+    },
+    {
+      "path": "prototype/App/HabitContext.swift",
+      "line": 1229,
+      "symbol": "UserDefaults",
+      "source": "UserDefaults.standard.data(forKey: NotchController.coachKey).flatMap { try? JSONDecoder().decode(GestureCoach.self, from: $0) }",
+      "signal": "settings"
+    },
+    {
+      "path": "prototype/App/HabitContext.swift",
+      "line": 1409,
+      "symbol": "UserDefaults",
+      "source": "UserDefaults.standard.set(data, forKey: Self.memoryKey)",
+      "signal": "settings"
+    },
+    {
+      "path": "prototype/App/HabitKeys.swift",
+      "line": 128,
+      "symbol": "CGEvent.tapCreate",
+      "source": "guard let port = CGEvent.tapCreate(tap: .cgSessionEventTap, place: .tailAppendEventTap,",
+      "signal": "key-position"
+    },
+    {
+      "path": "prototype/App/HabitProbe.swift",
+      "line": 130,
+      "symbol": "AXUIElementCopyAttributeValue",
+      "source": "return AXUIElementCopyAttributeValue(text, kAXFocusedAttribute as CFString, &value) == .success",
+      "signal": "window-ax"
+    },
+    {
+      "path": "prototype/App/HabitProbe.swift",
+      "line": 141,
+      "symbol": "AXUIElementCopyAttributeValue",
+      "source": "AXUIElementCopyAttributeValue(child, kAXDescriptionAttribute as CFString, &value) == .success,",
+      "signal": "window-ax"
+    },
+    {
+      "path": "prototype/App/LaunchpadController.swift",
+      "line": 238,
+      "symbol": "UserDefaults",
+      "source": "if let hotkeys = UserDefaults(suiteName: \"com.apple.symbolichotkeys\")?.dictionary(forKey: \"AppleSymbolicHotKeys\"),",
+      "signal": "settings"
+    },
+    {
+      "path": "prototype/App/LaunchpadController.swift",
+      "line": 270,
+      "symbol": "UserDefaults",
+      "source": "let saved = loaded ? nil : UserDefaults.standard.data(forKey: Self.layoutKey)",
+      "signal": "settings"
+    },
+    {
+      "path": "prototype/App/LaunchpadController.swift",
+      "line": 304,
+      "symbol": "UserDefaults",
+      "source": "UserDefaults.standard.set(data, forKey: Self.layoutKey)",
+      "signal": "settings"
+    },
+    {
+      "path": "prototype/App/LaunchpadController.swift",
+      "line": 354,
+      "symbol": "AXUIElementCopyAttributeValue",
+      "source": "if AXUIElementCopyAttributeValue(app, attribute as CFString, &value) == .success, let value,",
+      "signal": "window-ax"
+    },
+    {
+      "path": "prototype/App/LaunchpadKeysProbe.swift",
+      "line": 34,
+      "symbol": "UserDefaults",
+      "source": "let savedLayout = UserDefaults.standard.data(forKey: layoutKey)",
+      "signal": "settings"
+    },
+    {
+      "path": "prototype/App/LaunchpadKeysProbe.swift",
+      "line": 373,
+      "symbol": "UserDefaults",
+      "source": "guard UserDefaults.standard.data(forKey: layoutKey) == savedLayout else {",
+      "signal": "settings"
+    },
+    {
+      "path": "prototype/App/MenuBarController.swift",
+      "line": 304,
+      "symbol": "UserDefaults",
+      "source": "UserDefaults.standard.set(appearanceMode.rawValue, forKey: shadeAppearanceModeDefaultsKey)",
+      "signal": "settings"
+    },
+    {
+      "path": "prototype/App/MissionControlKeys.swift",
+      "line": 60,
+      "symbol": "AXUIElementCopyAttributeValue",
+      "source": "guard AXUIElementCopyAttributeValue(app, kAXWindowsAttribute as CFString, &value) == .success,",
+      "signal": "window-ax"
+    },
+    {
+      "path": "prototype/App/MissionControlKeys.swift",
+      "line": 86,
+      "symbol": "UserDefaults",
+      "source": "let defaults = UserDefaults.standard",
+      "signal": "settings"
+    },
+    {
+      "path": "prototype/App/MissionControlKeys.swift",
+      "line": 100,
+      "symbol": "CGEvent.tapCreate",
+      "source": "guard let port = CGEvent.tapCreate(tap: .cgSessionEventTap, place: .headInsertEventTap,",
+      "signal": "key-position"
+    },
+    {
+      "path": "prototype/App/Notch.swift",
+      "line": 79,
+      "symbol": "UserDefaults",
+      "source": "get { UserDefaults.standard.object(forKey: enabledKey) as? Bool ?? true }",
+      "signal": "settings"
+    },
+    {
+      "path": "prototype/App/Notch.swift",
+      "line": 80,
+      "symbol": "UserDefaults",
+      "source": "set { UserDefaults.standard.set(newValue, forKey: enabledKey) }",
+      "signal": "settings"
+    },
+    {
+      "path": "prototype/App/Notch.swift",
+      "line": 84,
+      "symbol": "UserDefaults",
+      "source": "get { UserDefaults.standard.object(forKey: alertsKey) as? Bool ?? true }",
+      "signal": "settings"
+    },
+    {
+      "path": "prototype/App/Notch.swift",
+      "line": 85,
+      "symbol": "UserDefaults",
+      "source": "set { UserDefaults.standard.set(newValue, forKey: alertsKey) }",
+      "signal": "settings"
+    },
+    {
+      "path": "prototype/App/Notch.swift",
+      "line": 235,
+      "symbol": "bezelPath",
+      "source": "// 刘海底角和肩按每块屏的形状画（DisplayShape：bezelPath → 机型表）；还没算好的屏先照现版本画，算好了再换上。",
+      "signal": "notch-private"
+    },
+    {
+      "path": "prototype/App/Notch.swift",
+      "line": 581,
+      "symbol": "UserDefaults",
+      "source": "get { UserDefaults.standard.object(forKey: teachKey) as? Bool ?? true }",
+      "signal": "settings"
+    },
+    {
+      "path": "prototype/App/Notch.swift",
+      "line": 582,
+      "symbol": "UserDefaults",
+      "source": "set { UserDefaults.standard.set(newValue, forKey: teachKey) }",
+      "signal": "settings"
+    },
+    {
+      "path": "prototype/App/Notch.swift",
+      "line": 588,
+      "symbol": "UserDefaults",
+      "source": "private lazy var coach: GestureCoach = UserDefaults.standard.data(forKey: Self.coachKey)",
+      "signal": "settings"
+    },
+    {
+      "path": "prototype/App/Notch.swift",
+      "line": 592,
+      "symbol": "UserDefaults",
+      "source": "if let data = try? JSONEncoder().encode(coach) { UserDefaults.standard.set(data, forKey: Self.coachKey) }",
+      "signal": "settings"
+    },
+    {
+      "path": "prototype/App/Notch.swift",
+      "line": 1396,
+      "symbol": "bezelPath",
+      "source": "/// 这块屏刘海的硬件曲线（DisplayShape：bezelPath → 机型表）。nil 是不知道：岛照现版本画，底角 10 / 12、不画肩。",
+      "signal": "notch-private"
+    },
+    {
+      "path": "prototype/App/NotchActivityController.swift",
+      "line": 9,
+      "symbol": "UserDefaults",
+      "source": "get { UserDefaults.standard.object(forKey: enabledKey) as? Bool ?? true }",
+      "signal": "settings"
+    },
+    {
+      "path": "prototype/App/NotchActivityController.swift",
+      "line": 10,
+      "symbol": "UserDefaults",
+      "source": "set { UserDefaults.standard.set(newValue, forKey: enabledKey) }",
+      "signal": "settings"
+    },
+    {
+      "path": "prototype/App/NotchActivitySources.swift",
+      "line": 29,
+      "symbol": "osascript",
+      "source": "/// 音乐：问播放器要启动一次 osascript（几十毫秒），所以只在播放器发通知（换曲、播放、暂停）、",
+      "signal": "music"
+    },
+    {
+      "path": "prototype/App/NotchActivitySources.swift",
+      "line": 92,
+      "symbol": "UserDefaults",
+      "source": "UserDefaults.standard.set(true, forKey: Self.musicKey)",
+      "signal": "settings"
+    },
+    {
+      "path": "prototype/App/NotchActivitySources.swift",
+      "line": 119,
+      "symbol": "UserDefaults",
+      "source": "let enabledPlayers = UserDefaults.standard.bool(forKey: Self.musicKey) ? runningPlayers() : []",
+      "signal": "settings"
+    },
+    {
+      "path": "prototype/App/NotchActivitySources.swift",
+      "line": 120,
+      "symbol": "osascript",
+      "source": "// 只有该问的时候才启动 osascript；不问就用推算的结果。",
+      "signal": "music"
+    },
+    {
+      "path": "prototype/App/NotchActivitySources.swift",
+      "line": 194,
+      "symbol": "osascript",
+      "source": "task.executableURL = URL(fileURLWithPath: \"/usr/bin/osascript\")",
+      "signal": "music"
+    },
+    {
+      "path": "prototype/App/NotchActivitySources.swift",
+      "line": 230,
+      "symbol": "AXUIElementCopyAttributeValue",
+      "source": "AXUIElementCopyAttributeValue(node, name as CFString, &value) == .success else { return nil }",
+      "signal": "window-ax"
+    },
+    {
+      "path": "prototype/App/NotchActivitySources.swift",
+      "line": 305,
+      "symbol": "kAudioHardwarePropertyProcessObjectList",
+      "source": "var address = AudioObjectPropertyAddress(mSelector: kAudioHardwarePropertyProcessObjectList,",
+      "signal": "recording-app"
+    },
+    {
+      "path": "prototype/App/NotchAuthentication.swift",
+      "line": 11,
+      "symbol": "LAContext",
+      "source": "/// own LAContext, the Secure Enclave device key signed this request's canonical bytes with that same context",
+      "signal": "authorization-key"
+    },
+    {
+      "path": "prototype/App/NotchAuthentication.swift",
+      "line": 19,
+      "symbol": "LAContext",
+      "source": "private var context: LAContext?",
+      "signal": "authorization-key"
+    },
+    {
+      "path": "prototype/App/NotchAuthentication.swift",
+      "line": 34,
+      "symbol": "LAContext",
+      "source": "var evaluate: (LAContext, String, @escaping @Sendable (Bool, Error?) -> Void) -> Void = { context, reason, reply in",
+      "signal": "authorization-key"
+    },
+    {
+      "path": "prototype/App/NotchAuthentication.swift",
+      "line": 55,
+      "symbol": "LAContext",
+      "source": "let probe = LAContext()",
+      "signal": "authorization-key"
+    },
+    {
+      "path": "prototype/App/NotchAuthentication.swift",
+      "line": 81,
+      "symbol": "LAContext",
+      "source": "let context = LAContext()",
+      "signal": "authorization-key"
+    },
+    {
+      "path": "prototype/App/NotchAuthentication.swift",
+      "line": 202,
+      "symbol": "LAContext",
+      "source": "let context: LAContext",
+      "signal": "authorization-key"
+    },
+    {
+      "path": "prototype/App/NotchAuthentication.swift",
+      "line": 215,
+      "symbol": "LAContext",
+      "source": "init(context: LAContext, reason: String) {",
+      "signal": "authorization-key"
+    },
+    {
+      "path": "prototype/App/NotchShapeProbe.swift",
+      "line": 3,
+      "symbol": "bezelPath",
+      "source": "// 先把每块屏的形状记下来：从哪来（bezelPath / 机型表 / 现版本）、pxPerPt、刘海底角和肩、屏幕的角、和机型表差多少面板像素；",
+      "signal": "notch-private"
+    },
+    {
+      "path": "prototype/App/NotchShapeProbe.swift",
+      "line": 29,
+      "symbol": "bezelPath",
+      "source": "print(String(format: \"INFO notch-shape: bezelPath vs table on %@: bottom %+.2f px, shoulder %+.2f px\",",
+      "signal": "notch-private"
+    },
+    {
+      "path": "prototype/App/NotchShapeProbe.swift",
+      "line": 163,
+      "symbol": "bezelPath",
+      "source": "/// 亲眼校准（--notch-calibrate，设计系统 §7.3）：自动测试只能证明“和 bezelPath 一致”，这一步看它和实物是不是一致。",
+      "signal": "notch-private"
+    },
+    {
+      "path": "prototype/App/NotchShapeProbe.swift",
+      "line": 164,
+      "symbol": "bezelPath",
+      "source": "/// 只在面板像素和屏幕像素一一对应时画（内建屏切到 1440×932，pxPerPt = 2 = backingScaleFactor），而且要读到了 bezelPath。",
+      "signal": "notch-private"
+    },
+    {
+      "path": "prototype/App/NotchShapeProbe.swift",
+      "line": 165,
+      "symbol": "bezelPath",
+      "source": "/// 在屏幕最上面盖一条不接指针的窗口：bezelPath 算出的刘海左右竖边、底边各画 5 列（行）1 像素宽、红青交替的线，",
+      "signal": "notch-private"
+    },
+    {
+      "path": "prototype/App/NotchShapeProbe.swift",
+      "line": 166,
+      "symbol": "bezelPath",
+      "source": "/// 正中那一列（行）是 bezelPath 说的最靠边的一列（行）刘海像素，画成红的：bezelPath 和实物一致时，贴着刘海露出来的那一列（行）是青的。",
+      "signal": "notch-private"
+    },
+    {
+      "path": "prototype/App/NotchShapeProbe.swift",
+      "line": 166,
+      "symbol": "bezelPath",
+      "source": "/// 正中那一列（行）是 bezelPath 说的最靠边的一列（行）刘海像素，画成红的：bezelPath 和实物一致时，贴着刘海露出来的那一列（行）是青的。",
+      "signal": "notch-private"
+    },
+    {
+      "path": "prototype/App/NotchShapeProbe.swift",
+      "line": 176,
+      "symbol": "bezelPath",
+      "source": "print(\"INFO notch-calibrate: switch the built-in display to 1440×932 first (panel px must equal screen px) and read bezelPath \"",
+      "signal": "notch-private"
+    },
+    {
+      "path": "prototype/App/NotchShapeProbe.swift",
+      "line": 194,
+      "symbol": "bezelPath",
+      "source": "// 竖边：以 bezelPath 说的最靠边的一列刘海像素为正中（红），左右各两列，从刘海底往上 40 行画到往下 20 行。",
+      "signal": "notch-private"
+    },
+    {
+      "path": "prototype/App/NotchShapeProbe.swift",
+      "line": 200,
+      "symbol": "bezelPath",
+      "source": "// 底边：以 bezelPath 说的最下面一行刘海像素为正中（红），上下各两行，画在刘海平直的那一段下面。",
+      "signal": "notch-private"
+    },
+    {
+      "path": "prototype/App/NotchShapeProbe.swift",
+      "line": 231,
+      "symbol": "bezelPath",
+      "source": "print(\"INFO notch-calibrate: bezelPath puts the notch's edge columns at \\(left) and \\(right - 1) and its bottom row at \\(bottom - 1) (drawn red); \"",
+      "signal": "notch-private"
+    },
+    {
+      "path": "prototype/App/NotchShelf.swift",
+      "line": 251,
+      "symbol": "UserDefaults",
+      "source": "let hotkeys = UserDefaults(suiteName: \"com.apple.symbolichotkeys\")?",
+      "signal": "settings"
+    },
+    {
+      "path": "prototype/App/NotchShelf.swift",
+      "line": 269,
+      "symbol": "UserDefaults",
+      "source": "let global = UserDefaults(suiteName: UserDefaults.globalDomain)?.object(forKey: \"AppleSpacesSwitchOnActivate\") as? Bool",
+      "signal": "settings"
+    },
+    {
+      "path": "prototype/App/NotchShelf.swift",
+      "line": 269,
+      "symbol": "UserDefaults",
+      "source": "let global = UserDefaults(suiteName: UserDefaults.globalDomain)?.object(forKey: \"AppleSpacesSwitchOnActivate\") as? Bool",
+      "signal": "settings"
+    },
+    {
+      "path": "prototype/App/NotchShelf.swift",
+      "line": 270,
+      "symbol": "UserDefaults",
+      "source": "let dock = UserDefaults(suiteName: \"com.apple.dock\")?.object(forKey: \"workspaces-auto-swoosh\") as? Bool",
+      "signal": "settings"
+    },
+    {
+      "path": "prototype/App/NotchWatch.swift",
+      "line": 196,
+      "symbol": "AXUIElementCopyAttributeValue",
+      "source": "AXUIElementCopyAttributeValue(element, kAXRoleAttribute as CFString, &role)",
+      "signal": "window-ax"
+    },
+    {
+      "path": "prototype/App/NotchWatch.swift",
+      "line": 217,
+      "symbol": "AXUIElementCopyAttributeValue",
+      "source": "guard AXUIElementCopyAttributeValue(app, kAXMenuBarAttribute as CFString, &bar) == .success, let bar,",
+      "signal": "window-ax"
+    },
+    {
+      "path": "prototype/App/NotchWatch.swift",
+      "line": 219,
+      "symbol": "AXUIElementCopyAttributeValue",
+      "source": "AXUIElementCopyAttributeValue(bar as! AXUIElement, kAXChildrenAttribute as CFString, &children) == .success,",
+      "signal": "window-ax"
+    },
+    {
+      "path": "prototype/App/OverlayPresentation.swift",
+      "line": 68,
+      "symbol": "SLSManagedDisplay",
+      "source": "// 检测必须快于 Space 滑动动画（~300ms）：密集轮询 + SLSManagedDisplay-",
+      "signal": "spaces-private"
+    },
+    {
+      "path": "prototype/App/PeripheralBatterySource.swift",
+      "line": 46,
+      "symbol": "IOServiceMatching",
+      "source": "guard let matching = IOServiceMatching(\"AppleDeviceManagementHIDEventService\"),",
+      "signal": "battery"
+    },
+    {
+      "path": "prototype/App/PeripheralBatterySource.swift",
+      "line": 78,
+      "symbol": "IOServiceMatching",
+      "source": "private static let matched: IOServiceMatchingCallback = { context, iterator in",
+      "signal": "battery"
+    },
+    {
+      "path": "prototype/App/PeripheralBatterySource.swift",
+      "line": 82,
+      "symbol": "IOServiceMatching",
+      "source": "private static let terminated: IOServiceMatchingCallback = { context, iterator in",
+      "signal": "battery"
+    },
+    {
+      "path": "prototype/App/PictureInPicture.swift",
+      "line": 708,
+      "symbol": "AXUIElementCopyAttributeValue",
+      "source": "guard AXUIElementCopyAttributeValue(element, kAXChildrenAttribute as CFString, &children) == .success,",
+      "signal": "window-ax"
+    },
+    {
+      "path": "prototype/App/PictureInPicture.swift",
+      "line": 720,
+      "symbol": "AXUIElementCopyAttributeValue",
+      "source": "guard AXUIElementCopyAttributeValue(area, kAXVerticalScrollBarAttribute as CFString, &bar) == .success, let bar else { return nil }",
+      "signal": "window-ax"
+    },
+    {
+      "path": "prototype/App/PictureInPicture.swift",
+      "line": 726,
+      "symbol": "AXUIElementCopyAttributeValue",
+      "source": "AXUIElementCopyAttributeValue(area, kAXContentsAttribute as CFString, &contents)",
+      "signal": "window-ax"
+    },
+    {
+      "path": "prototype/App/PictureInPicture.swift",
+      "line": 734,
+      "symbol": "AXUIElementCopyAttributeValue",
+      "source": "AXUIElementCopyAttributeValue(element, kAXRoleAttribute as CFString, &value)",
+      "signal": "window-ax"
+    },
+    {
+      "path": "prototype/App/PictureInPicture.swift",
+      "line": 740,
+      "symbol": "AXUIElementCopyAttributeValue",
+      "source": "AXUIElementCopyAttributeValue(element, attribute as CFString, &value)",
+      "signal": "window-ax"
+    },
+    {
+      "path": "prototype/App/PictureInPicture.swift",
+      "line": 746,
+      "symbol": "AXUIElementCopyAttributeValue",
+      "source": "guard AXUIElementCopyAttributeValue(element, kAXPositionAttribute as CFString, &position) == .success,",
+      "signal": "window-ax"
+    },
+    {
+      "path": "prototype/App/PictureInPicture.swift",
+      "line": 747,
+      "symbol": "AXUIElementCopyAttributeValue",
+      "source": "AXUIElementCopyAttributeValue(element, kAXSizeAttribute as CFString, &size) == .success,",
+      "signal": "window-ax"
+    },
+    {
+      "path": "prototype/App/Preferences.swift",
+      "line": 11,
+      "symbol": "UserDefaults",
+      "source": "UserDefaults.standard.set(titlebarDoubleClickEnabled, forKey: shadeTitlebarDoubleClickDefaultsKey)",
+      "signal": "settings"
+    },
+    {
+      "path": "prototype/App/Preferences.swift",
+      "line": 74,
+      "symbol": "UserDefaults",
+      "source": "let name = UserDefaults.standard.string(forKey: defaultsKey) ?? fallback",
+      "signal": "settings"
+    },
+    {
+      "path": "prototype/App/Preferences.swift",
+      "line": 477,
+      "symbol": "SMAppService",
+      "source": "return SMAppService.mainApp.status == .enabled",
+      "signal": "login-item"
+    },
+    {
+      "path": "prototype/App/Preferences.swift",
+      "line": 484,
+      "symbol": "SMAppService",
+      "source": "switch SMAppService.mainApp.status {",
+      "signal": "login-item"
+    },
+    {
+      "path": "prototype/App/Preferences.swift",
+      "line": 502,
+      "symbol": "UserDefaults",
+      "source": "UserDefaults.standard.set(titlebarDoubleClickEnabled, forKey: shadeTitlebarDoubleClickDefaultsKey)",
+      "signal": "settings"
+    },
+    {
+      "path": "prototype/App/Preferences.swift",
+      "line": 541,
+      "symbol": "UserDefaults",
+      "source": "UserDefaults.standard.set(floatingOnTop, forKey: shadeFloatingOnTopDefaultsKey)",
+      "signal": "settings"
+    },
+    {
+      "path": "prototype/App/Preferences.swift",
+      "line": 548,
+      "symbol": "UserDefaults",
+      "source": "UserDefaults.standard.set(soundEnabled, forKey: shadeSoundEnabledDefaultsKey)",
+      "signal": "settings"
+    },
+    {
+      "path": "prototype/App/Preferences.swift",
+      "line": 559,
+      "symbol": "SMAppService",
+      "source": "try SMAppService.mainApp.register()",
+      "signal": "login-item"
+    },
+    {
+      "path": "prototype/App/Preferences.swift",
+      "line": 560,
+      "symbol": "SMAppService",
+      "source": "wlog(\"launch-at-login: register status=\\(SMAppService.mainApp.status)\")",
+      "signal": "login-item"
+    },
+    {
+      "path": "prototype/App/Preferences.swift",
+      "line": 562,
+      "symbol": "SMAppService",
+      "source": "try SMAppService.mainApp.unregister()",
+      "signal": "login-item"
+    },
+    {
+      "path": "prototype/App/Preferences.swift",
+      "line": 563,
+      "symbol": "SMAppService",
+      "source": "wlog(\"launch-at-login: unregister status=\\(SMAppService.mainApp.status)\")",
+      "signal": "login-item"
+    },
+    {
+      "path": "prototype/App/Preferences.swift",
+      "line": 574,
+      "symbol": "UserDefaults",
+      "source": "UserDefaults.standard.set(foldSoundName, forKey: shadeFoldSoundDefaultsKey)",
+      "signal": "settings"
+    },
+    {
+      "path": "prototype/App/Preferences.swift",
+      "line": 580,
+      "symbol": "UserDefaults",
+      "source": "UserDefaults.standard.set(unfoldSoundName, forKey: shadeUnfoldSoundDefaultsKey)",
+      "signal": "settings"
+    },
+    {
+      "path": "prototype/App/Preferences.swift",
+      "line": 599,
+      "symbol": "UserDefaults",
+      "source": "let shouldShowFirstRun = !UserDefaults.standard.bool(forKey: shadeOnboardingShownDefaultsKey)",
+      "signal": "settings"
+    },
+    {
+      "path": "prototype/App/Preferences.swift",
+      "line": 601,
+      "symbol": "UserDefaults",
+      "source": "if !force && UserDefaults.standard.bool(forKey: shadeOnboardingShownDefaultsKey) { return }",
+      "signal": "settings"
+    },
+    {
+      "path": "prototype/App/Preferences.swift",
+      "line": 663,
+      "symbol": "UserDefaults",
+      "source": "UserDefaults.standard.set(true, forKey: shadeOnboardingShownDefaultsKey)",
+      "signal": "settings"
+    },
+    {
+      "path": "prototype/App/Preferences.swift",
+      "line": 1106,
+      "symbol": "UserDefaults",
+      "source": "UserDefaults.standard.set(Double(value), forKey: ArrangeGap.defaultsKey)",
+      "signal": "settings"
+    },
+    {
+      "path": "prototype/App/Preferences.swift",
+      "line": 1135,
+      "symbol": "UserDefaults",
+      "source": "UserDefaults.standard.set(sender.state == .on, forKey: MissionControlKeys.defaultsKey)",
+      "signal": "settings"
+    },
+    {
+      "path": "prototype/App/QuietDefaultsProbe.swift",
+      "line": 21,
+      "symbol": "UserDefaults",
+      "source": "$0 != .windowBrowser && UserDefaults.standard.object(forKey: \"GlobalShortcut.\\($0.rawValue)\") == nil",
+      "signal": "settings"
+    },
+    {
+      "path": "prototype/App/QuietDefaultsProbe.swift",
+      "line": 28,
+      "symbol": "UserDefaults",
+      "source": "let stored = UserDefaults.standard.object(forKey: DockClickHide.key) as? Bool",
+      "signal": "settings"
+    },
+    {
+      "path": "prototype/App/ScrollStripPeek.swift",
+      "line": 103,
+      "symbol": "UserDefaults",
+      "source": "forName: UserDefaults.didChangeNotification, object: nil, queue: .main) { [weak self] _ in",
+      "signal": "settings"
+    },
+    {
+      "path": "prototype/App/ShadeController.swift",
+      "line": 251,
+      "symbol": "UserDefaults",
+      "source": "if UserDefaults.standard.bool(forKey: shadeDebugWindowDumpDefaultsKey) {",
+      "signal": "settings"
+    },
+    {
+      "path": "prototype/App/ShadeController.swift",
+      "line": 744,
+      "symbol": "SCScreenshotManager",
+      "source": "guard let image = try? await SCScreenshotManager.captureImage(contentFilter: filter,",
+      "signal": "window-image"
+    },
+    {
+      "path": "prototype/App/SlideOver.swift",
+      "line": 443,
+      "symbol": "UserDefaults",
+      "source": "guard !UserDefaults.standard.bool(forKey: key) else { return }",
+      "signal": "settings"
+    },
+    {
+      "path": "prototype/App/SlideOver.swift",
+      "line": 444,
+      "symbol": "UserDefaults",
+      "source": "UserDefaults.standard.set(true, forKey: key)",
+      "signal": "settings"
+    },
+    {
+      "path": "prototype/App/SlideOver.swift",
+      "line": 1095,
+      "symbol": "SCShareableContent",
+      "source": "let shareable: SCShareableContent?",
+      "signal": "window-image"
+    },
+    {
+      "path": "prototype/App/SlideOverChrome.swift",
+      "line": 184,
+      "symbol": "SCScreenshotManager",
+      "source": "guard let image = try? await SCScreenshotManager.captureImage(contentFilter: filter, configuration: config) else { return nil }",
+      "signal": "window-image"
+    },
+    {
+      "path": "prototype/App/SplitView.swift",
+      "line": 18,
+      "symbol": "UserDefaults",
+      "source": "get { UserDefaults.standard.object(forKey: enabledKey) as? Bool ?? true }",
+      "signal": "settings"
+    },
+    {
+      "path": "prototype/App/SplitView.swift",
+      "line": 19,
+      "symbol": "UserDefaults",
+      "source": "set { UserDefaults.standard.set(newValue, forKey: enabledKey) }",
+      "signal": "settings"
+    },
+    {
+      "path": "prototype/App/Thumbnail.swift",
+      "line": 562,
+      "symbol": "UserDefaults",
+      "source": "let raw = UserDefaults.standard.string(forKey: shadeAppearanceModeDefaultsKey)",
+      "signal": "settings"
+    },
+    {
+      "path": "prototype/App/ThumbnailProbe.swift",
+      "line": 25,
+      "symbol": "UserDefaults",
+      "source": "let defaults = UserDefaults.standard",
+      "signal": "settings"
+    },
+    {
+      "path": "prototype/App/TrackpadGestures.swift",
+      "line": 23,
+      "symbol": "UserDefaults",
+      "source": "get { UserDefaults.standard.object(forKey: enabledDefaultsKey) as? Bool ?? true }",
+      "signal": "settings"
+    },
+    {
+      "path": "prototype/App/TrackpadGestures.swift",
+      "line": 24,
+      "symbol": "UserDefaults",
+      "source": "set { UserDefaults.standard.set(newValue, forKey: enabledDefaultsKey) }",
+      "signal": "settings"
+    },
+    {
+      "path": "prototype/App/TrackpadGestures.swift",
+      "line": 196,
+      "symbol": "bezelPath",
+      "source": "/// 两指手势还没结束、甩出去的窗口还在滑：这时主线程上别做慢事（见 ScreenBezel.swift 第一次读 bezelPath）。",
+      "signal": "notch-private"
+    },
+    {
+      "path": "prototype/App/TrackpadGestures.swift",
+      "line": 1986,
+      "symbol": "AXUIElementCopyAttributeValue",
+      "source": "guard AXUIElementCopyAttributeValue(element, kAXParentAttribute as CFString, &ref) == .success,",
+      "signal": "window-ax"
+    },
+    {
+      "path": "prototype/App/TrackpadGestures.swift",
+      "line": 2063,
+      "symbol": "CGEvent.tapCreate",
+      "source": "guard let port = CGEvent.tapCreate(tap: .cgSessionEventTap, place: .tailAppendEventTap,",
+      "signal": "key-position"
+    },
+    {
+      "path": "prototype/App/Updater.swift",
+      "line": 239,
+      "symbol": "UserDefaults",
+      "source": "if UserDefaults.standard.object(forKey: UpdateSettingsKeys.automaticChecks) != nil {",
+      "signal": "settings"
+    },
+    {
+      "path": "prototype/App/Updater.swift",
+      "line": 240,
+      "symbol": "UserDefaults",
+      "source": "return UserDefaults.standard.bool(forKey: UpdateSettingsKeys.automaticChecks)",
+      "signal": "settings"
+    },
+    {
+      "path": "prototype/App/Updater.swift",
+      "line": 245,
+      "symbol": "UserDefaults",
+      "source": "UserDefaults.standard.set(newValue, forKey: UpdateSettingsKeys.automaticChecks)",
+      "signal": "settings"
+    },
+    {
+      "path": "prototype/App/Updater.swift",
+      "line": 254,
+      "symbol": "UserDefaults",
+      "source": "let stored = UserDefaults.standard.double(forKey: UpdateSettingsKeys.checkInterval)",
+      "signal": "settings"
+    },
+    {
+      "path": "prototype/App/Updater.swift",
+      "line": 258,
+      "symbol": "UserDefaults",
+      "source": "UserDefaults.standard.set(newValue, forKey: UpdateSettingsKeys.checkInterval)",
+      "signal": "settings"
+    },
+    {
+      "path": "prototype/App/Updater.swift",
+      "line": 360,
+      "symbol": "UserDefaults",
+      "source": "if isNetwork { UserDefaults.standard.set(true, forKey: UpdateSettingsKeys.useFallbackFeed) }",
+      "signal": "settings"
+    },
+    {
+      "path": "prototype/App/Updater.swift",
+      "line": 388,
+      "symbol": "UserDefaults",
+      "source": "UserDefaults.standard.removeObject(forKey: UpdateSettingsKeys.useFallbackFeed)",
+      "signal": "settings"
+    },
+    {
+      "path": "prototype/App/UpdaterLaunch.swift",
+      "line": 211,
+      "symbol": "RecoveryJournal",
+      "source": "/// 样例只写进给定目录：RecoveryJournal.plist（停车日志，格式同 Recovery/Journal.swift）、Preferences.plist（这一版偏好的快照）、",
+      "signal": "recovery"
+    },
+    {
+      "path": "prototype/App/UpdaterLaunch.swift",
+      "line": 214,
+      "symbol": "RecoveryJournal",
+      "source": "static let recoveryFile = \"RecoveryJournal.plist\"",
+      "signal": "recovery"
+    },
+    {
+      "path": "prototype/App/UpdaterLaunch.swift",
+      "line": 242,
+      "symbol": "UserDefaults",
+      "source": "let preferences = UserDefaults.standard.persistentDomain(forName: bundleID) ?? [:]",
+      "signal": "settings"
+    },
+    {
+      "path": "prototype/App/UpdaterLaunch.swift",
+      "line": 276,
+      "symbol": "UserDefaults",
+      "source": "let mine = UserDefaults.standard.persistentDomain(forName: bundleID) ?? [:]",
+      "signal": "settings"
+    },
+    {
+      "path": "prototype/App/UpdaterMove.swift",
+      "line": 91,
+      "symbol": "UserDefaults",
+      "source": "guard !UserDefaults.standard.bool(forKey: UpdateSettingsKeys.moveDeclined) else { return nil }",
+      "signal": "settings"
+    },
+    {
+      "path": "prototype/App/UpdaterMove.swift",
+      "line": 98,
+      "symbol": "UserDefaults",
+      "source": "guard !UserDefaults.standard.bool(forKey: UpdateSettingsKeys.moveDeclined) else { return nil }",
+      "signal": "settings"
+    },
+    {
+      "path": "prototype/App/UpdaterMove.swift",
+      "line": 104,
+      "symbol": "UserDefaults",
+      "source": "UserDefaults.standard.set(true, forKey: UpdateSettingsKeys.moveDeclined)",
+      "signal": "settings"
+    },
+    {
+      "path": "prototype/App/UpdaterSparkle.swift",
+      "line": 181,
+      "symbol": "UserDefaults",
+      "source": "UserDefaults.standard.bool(forKey: UpdateSettingsKeys.useFallbackFeed) ? UpdateLinks.fallbackFeed : nil",
+      "signal": "settings"
+    },
+    {
+      "path": "prototype/App/UpdaterSparkle.swift",
+      "line": 187,
+      "symbol": "UserDefaults",
+      "source": "guard let channel = UserDefaults.standard.string(forKey: UpdateSettingsKeys.channel), !channel.isEmpty else { return [] }",
+      "signal": "settings"
+    },
+    {
+      "path": "prototype/App/WindowSwitcher.swift",
+      "line": 19,
+      "symbol": "UserDefaults",
+      "source": "get { Trigger(rawValue: UserDefaults.standard.string(forKey: defaultsKey) ?? \"\") ?? .option }",
+      "signal": "settings"
+    },
+    {
+      "path": "prototype/App/WindowSwitcher.swift",
+      "line": 20,
+      "symbol": "UserDefaults",
+      "source": "set { UserDefaults.standard.set(newValue.rawValue, forKey: defaultsKey) }",
+      "signal": "settings"
+    },
+    {
+      "path": "prototype/App/WindowSwitcher.swift",
+      "line": 47,
+      "symbol": "CGEvent.tapCreate",
+      "source": "guard let port = CGEvent.tapCreate(tap: .cgSessionEventTap, place: .headInsertEventTap, options: .defaultTap,",
+      "signal": "key-position"
+    },
+    {
+      "path": "prototype/App/WindowSwitcher.swift",
+      "line": 197,
+      "symbol": "AXUIElementCopyAttributeValue",
+      "source": "if AXUIElementCopyAttributeValue(element, kAXCloseButtonAttribute as CFString, &button) == .success, let button {",
+      "signal": "window-ax"
+    },
+    {
+      "path": "prototype/App/WinsSwitcherProbe.swift",
+      "line": 17,
+      "symbol": "UserDefaults",
+      "source": "let savedTrigger = UserDefaults.standard.string(forKey: WindowSwitcherKeys.defaultsKey)",
+      "signal": "settings"
+    },
+    {
+      "path": "prototype/App/WinsSwitcherProbe.swift",
+      "line": 22,
+      "symbol": "UserDefaults",
+      "source": "UserDefaults.standard.set(savedTrigger, forKey: WindowSwitcherKeys.defaultsKey)",
+      "signal": "settings"
+    },
+    {
+      "path": "prototype/App/WinsSwitcherProbe.swift",
+      "line": 24,
+      "symbol": "UserDefaults",
+      "source": "UserDefaults.standard.removeObject(forKey: WindowSwitcherKeys.defaultsKey)",
+      "signal": "settings"
+    },
+    {
+      "path": "prototype/App/WinsSwitcherProbe.swift",
+      "line": 147,
+      "symbol": "AXUIElementCopyAttributeValue",
+      "source": "guard AXUIElementCopyAttributeValue(AXUIElementCreateApplication(pid), kAXFocusedWindowAttribute as CFString, &ref) == .success,",
+      "signal": "window-ax"
+    },
+    {
+      "path": "prototype/Capture/CaptureIndicatorProbe.swift",
+      "line": 56,
+      "symbol": "SCShareableContent",
+      "source": "let content = try? await SCShareableContent.current,",
+      "signal": "window-image"
+    },
+    {
+      "path": "prototype/Capture/CaptureIndicatorProbe.swift",
+      "line": 105,
+      "symbol": "SCScreenshotManager",
+      "source": "if let image = try? await SCScreenshotManager.captureImage(contentFilter: filter, configuration: config) {",
+      "signal": "window-image"
+    },
+    {
+      "path": "prototype/Capture/FastCapture.swift",
+      "line": 3,
+      "symbol": "SCScreenshotManager",
+      "source": "// ScreenCaptureKit 的单张截图（SCScreenshotManager）每次要临时起一条流，实测 200–584ms，",
+      "signal": "window-image"
+    },
+    {
+      "path": "prototype/Capture/ShareableContentCache.swift",
+      "line": 1,
+      "symbol": "SCShareableContent",
+      "source": "// SCShareableContent 短 TTL 缓存。",
+      "signal": "window-image"
+    },
+    {
+      "path": "prototype/Capture/ShareableContentCache.swift",
+      "line": 6,
+      "symbol": "SCShareableContent",
+      "source": "// SCShareableContent.current 每次调用都要枚举全系统窗口，在部分机器上耗时数百",
+      "signal": "window-image"
+    },
+    {
+      "path": "prototype/Capture/ShareableContentCache.swift",
+      "line": 16,
+      "symbol": "SCShareableContent",
+      "source": "private var cached: SCShareableContent?",
+      "signal": "window-image"
+    },
+    {
+      "path": "prototype/Capture/ShareableContentCache.swift",
+      "line": 18,
+      "symbol": "SCShareableContent",
+      "source": "private var inFlight: Task<SCShareableContent, Error>?",
+      "signal": "window-image"
+    },
+    {
+      "path": "prototype/Capture/ShareableContentCache.swift",
+      "line": 29,
+      "symbol": "SCShareableContent",
+      "source": "func content(requiring windowID: CGWindowID) async -> SCShareableContent? {",
+      "signal": "window-image"
+    },
+    {
+      "path": "prototype/Capture/ShareableContentCache.swift",
+      "line": 62,
+      "symbol": "SCShareableContent",
+      "source": "private func refresh() async -> SCShareableContent? {",
+      "signal": "window-image"
+    },
+    {
+      "path": "prototype/Capture/ShareableContentCache.swift",
+      "line": 69,
+      "symbol": "SCShareableContent",
+      "source": "try await SCShareableContent.current",
+      "signal": "window-image"
+    },
+    {
+      "path": "prototype/Capture/WindowSnapshot.swift",
+      "line": 1,
+      "symbol": "CGSHWCaptureWindowList",
+      "source": "// 窗口快照：CGSHWCaptureWindowList。",
+      "signal": "spaces-private"
+    },
+    {
+      "path": "prototype/Capture/WindowSnapshot.swift",
+      "line": 28,
+      "symbol": "CGSHWCaptureWindowList",
+      "source": "// CGSHWCaptureWindowList 的选项位。ignoreGlobalClipShape 让它不管窗口当前被裁剪成什么样，",
+      "signal": "spaces-private"
+    },
+    {
+      "path": "prototype/Capture/WindowSnapshot.swift",
+      "line": 37,
+      "symbol": "CGSHWCaptureWindowList",
+      "source": "let captureSymbol = dlsym(handle, \"CGSHWCaptureWindowList\"),",
+      "signal": "spaces-private"
+    },
+    {
+      "path": "prototype/Capture/WindowSnapshot.swift",
+      "line": 39,
+      "symbol": "CGSMainConnectionID",
+      "source": "// 连接函数先试 CGSMainConnectionID，没有再退回旧的 _CGSDefaultConnection。",
+      "signal": "spaces-private"
+    },
+    {
+      "path": "prototype/Capture/WindowSnapshot.swift",
+      "line": 40,
+      "symbol": "CGSMainConnectionID",
+      "source": "guard let connectionSymbol = dlsym(handle, \"CGSMainConnectionID\")",
+      "signal": "spaces-private"
+    },
+    {
+      "path": "prototype/Core/DisplayShape.swift",
+      "line": 5,
+      "symbol": "bezelPath",
+      "source": "//   这里只收它算好的矩形）。bezelPath 和机型表都只补曲线，不决定有没有刘海。",
+      "signal": "notch-private"
+    },
+    {
+      "path": "prototype/Core/DisplayShape.swift",
+      "line": 6,
+      "symbol": "bezelPath",
+      "source": "// - 曲线：① 系统私有的 NSScreen.bezelPath，先过一遍校验（外框和 frame 对得上；刘海的竖边、底边和公开矩形差 ≤1 点；",
+      "signal": "notch-private"
+    },
+    {
+      "path": "prototype/Core/DisplayShape.swift",
+      "line": 11,
+      "symbol": "bezelPath",
+      "source": "// 坐标：Cocoa（原点左下、y 向上）。bezelPath 是全局坐标，先和全局 frame 比，再换成屏内坐标量曲线。",
+      "signal": "notch-private"
+    },
+    {
+      "path": "prototype/Core/DisplayShape.swift",
+      "line": 217,
+      "symbol": "bezelPath",
+      "source": "// MARK: - bezelPath 的校验",
+      "signal": "notch-private"
+    },
+    {
+      "path": "prototype/Core/DisplayShape.swift",
+      "line": 229,
+      "symbol": "bezelPath",
+      "source": "/// 从 bezelPath 读出来、过了校验的形状（pt，屏内坐标）。",
+      "signal": "notch-private"
+    },
+    {
+      "path": "prototype/Core/DisplayShape.swift",
+      "line": 385,
+      "symbol": "bezelPath",
+      "source": "/// Air 的刘海按本机 Air 15″ 的 bezelPath 拟合（底角 10.71 点、肩 5.06 点 × 1.684），Air 13″ 同一模组；",
+      "signal": "notch-private"
+    },
+    {
+      "path": "prototype/Core/DisplayShape.swift",
+      "line": 418,
+      "symbol": "bezelPath",
+      "source": "/// 私有的 bezelPath（全局坐标）；没有这个方法、类型不对是 nil。",
+      "signal": "notch-private"
+    },
+    {
+      "path": "prototype/Core/DisplayShape.swift",
+      "line": 430,
+      "symbol": "bezelPath",
+      "source": "/// bezelPath 里的刘海主体（屏内坐标，比公开的矩形每边宽 0.125、深 0.24 点）：只给诊断和亲眼校准用，排版不用它。",
+      "signal": "notch-private"
+    },
+    {
+      "path": "prototype/Core/DisplayShape.swift",
+      "line": 460,
+      "symbol": "bezelPath",
+      "source": "// ① bezelPath，过了校验才用。",
+      "signal": "notch-private"
+    },
+    {
+      "path": "prototype/Core/DisplayShape.swift",
+      "line": 466,
+      "symbol": "bezelPath",
+      "source": "note: \"bezelPath fits within \\(round2(max(reading.worstNotch, reading.worstCorner))) pt\")",
+      "signal": "notch-private"
+    },
+    {
+      "path": "prototype/Core/DisplayShape.swift",
+      "line": 468,
+      "symbol": "bezelPath",
+      "source": "notes.append(\"bezelPath refused: \\(check.problem ?? \"?\")\")",
+      "signal": "notch-private"
+    },
+    {
+      "path": "prototype/Core/DisplayShape.swift",
+      "line": 470,
+      "symbol": "bezelPath",
+      "source": "notes.append(\"no bezelPath\")",
+      "signal": "notch-private"
+    },
+    {
+      "path": "prototype/Core/ShadeTranslucency.swift",
+      "line": 21,
+      "symbol": "UserDefaults",
+      "source": "static func fraction(in defaults: UserDefaults = .standard) -> Double {",
+      "signal": "settings"
+    },
+    {
+      "path": "prototype/Core/ShadeTranslucency.swift",
+      "line": 32,
+      "symbol": "UserDefaults",
+      "source": "static func set(_ value: Double, in defaults: UserDefaults = .standard) -> Double {",
+      "signal": "settings"
+    },
+    {
+      "path": "prototype/Core/ShadeTranslucency.swift",
+      "line": 40,
+      "symbol": "UserDefaults",
+      "source": "static func opacity(in defaults: UserDefaults = .standard) -> Double {",
+      "signal": "settings"
+    },
+    {
+      "path": "prototype/Core/SwitcherOrigin.swift",
+      "line": 4,
+      "symbol": "UserDefaults",
+      "source": "// 只存在 UserDefaults 里一个字符串；没答就是没有这个键（老用户升级后也是没答）。纯逻辑，不碰界面，可单测。",
+      "signal": "settings"
+    },
+    {
+      "path": "prototype/Core/SwitcherOrigin.swift",
+      "line": 43,
+      "symbol": "UserDefaults",
+      "source": "static func stored(in defaults: UserDefaults) -> SwitcherOrigin {",
+      "signal": "settings"
+    },
+    {
+      "path": "prototype/Core/SwitcherOrigin.swift",
+      "line": 49,
+      "symbol": "UserDefaults",
+      "source": "static func store(_ origin: SwitcherOrigin, in defaults: UserDefaults,",
+      "signal": "settings"
+    },
+    {
+      "path": "prototype/Effects/AppleSPUAccelerometer.swift",
+      "line": 52,
+      "symbol": "IOHIDManager",
+      "source": "private var manager: IOHIDManager?",
+      "signal": "tilt"
+    },
+    {
+      "path": "prototype/Effects/AppleSPUAccelerometer.swift",
+      "line": 80,
+      "symbol": "IOHIDManagerCancel",
+      "source": "IOHIDManagerCancel(manager)",
+      "signal": "tilt"
+    },
+    {
+      "path": "prototype/Effects/AppleSPUAccelerometer.swift",
+      "line": 119,
+      "symbol": "IOHIDManagerOpen",
+      "source": "// for reports. IOHIDManagerOpen alone succeeds while producing no input",
+      "signal": "tilt"
+    },
+    {
+      "path": "prototype/Effects/AppleSPUAccelerometer.swift",
+      "line": 126,
+      "symbol": "IOHIDManagerCreate",
+      "source": "let manager = IOHIDManagerCreate(kCFAllocatorDefault, IOOptionBits(0))",
+      "signal": "tilt"
+    },
+    {
+      "path": "prototype/Effects/AppleSPUAccelerometer.swift",
+      "line": 128,
+      "symbol": "IOHIDManagerSetDeviceMatching",
+      "source": "IOHIDManagerSetDeviceMatching(",
+      "signal": "tilt"
+    },
+    {
+      "path": "prototype/Effects/AppleSPUAccelerometer.swift",
+      "line": 137,
+      "symbol": "IOHIDManagerSetDispatchQueue",
+      "source": "IOHIDManagerSetDispatchQueue(manager, queue)",
+      "signal": "tilt"
+    },
+    {
+      "path": "prototype/Effects/AppleSPUAccelerometer.swift",
+      "line": 138,
+      "symbol": "IOHIDManagerRegisterInputReportCallback",
+      "source": "IOHIDManagerRegisterInputReportCallback(",
+      "signal": "tilt"
+    },
+    {
+      "path": "prototype/Effects/AppleSPUAccelerometer.swift",
+      "line": 147,
+      "symbol": "IOHIDManagerOpen",
+      "source": "let result = IOHIDManagerOpen(manager, IOOptionBits(0))",
+      "signal": "tilt"
+    },
+    {
+      "path": "prototype/Effects/AppleSPUAccelerometer.swift",
+      "line": 152,
+      "symbol": "IOHIDManagerActivate",
+      "source": "IOHIDManagerActivate(manager)",
+      "signal": "tilt"
+    },
+    {
+      "path": "prototype/Effects/AppleSPUAccelerometer.swift",
+      "line": 154,
+      "symbol": "IOHIDDevice",
+      "source": "let devices = (IOHIDManagerCopyDevices(manager) as? Set<IOHIDDevice>) ?? []",
+      "signal": "tilt"
+    },
+    {
+      "path": "prototype/Effects/AppleSPUAccelerometer.swift",
+      "line": 154,
+      "symbol": "IOHIDManagerCopyDevices",
+      "source": "let devices = (IOHIDManagerCopyDevices(manager) as? Set<IOHIDDevice>) ?? []",
+      "signal": "tilt"
+    },
+    {
+      "path": "prototype/Effects/AppleSPUAccelerometer.swift",
+      "line": 178,
+      "symbol": "IOServiceMatching",
+      "source": "guard let matching = IOServiceMatching(Self.driverClass) else { return false }",
+      "signal": "tilt"
+    },
+    {
+      "path": "prototype/Effects/AppleSPUAccelerometer.swift",
+      "line": 258,
+      "symbol": "IOHIDManagerCancel",
+      "source": "IOHIDManagerCancel(manager)",
+      "signal": "tilt"
+    },
+    {
+      "path": "prototype/Effects/AppleSPUAccelerometer.swift",
+      "line": 259,
+      "symbol": "IOHIDManagerClose",
+      "source": "IOHIDManagerClose(manager, IOOptionBits(0))",
+      "signal": "tilt"
+    },
+    {
+      "path": "prototype/Effects/DuoController.swift",
+      "line": 272,
+      "symbol": "SCShareableContent",
+      "source": "let content = try await SCShareableContent.excludingDesktopWindows(",
+      "signal": "window-image"
+    },
+    {
+      "path": "prototype/Effects/DuoController.swift",
+      "line": 285,
+      "symbol": "SCShareableContent",
+      "source": "let refreshed = try await SCShareableContent.excludingDesktopWindows(",
+      "signal": "window-image"
+    },
+    {
+      "path": "prototype/Effects/DuoController.swift",
+      "line": 296,
+      "symbol": "SCShareableContent",
+      "source": "// Ordered-out high-level panels can be absent from SCShareableContent.",
+      "signal": "window-image"
+    },
+    {
+      "path": "prototype/Effects/DuoSettingsWindow.swift",
+      "line": 9,
+      "symbol": "UserDefaults",
+      "source": "static func lastViewed(in defaults: UserDefaults = .standard) -> Self {",
+      "signal": "settings"
+    },
+    {
+      "path": "prototype/Effects/DuoSettingsWindow.swift",
+      "line": 15,
+      "symbol": "UserDefaults",
+      "source": "func remember(in defaults: UserDefaults = .standard) {",
+      "signal": "settings"
+    },
+    {
+      "path": "prototype/Effects/DuoSettingsWindow.swift",
+      "line": 922,
+      "symbol": "SCShareableContent",
+      "source": "let content = try await SCShareableContent.excludingDesktopWindows(",
+      "signal": "window-image"
+    },
+    {
+      "path": "prototype/Effects/EffectEnvironment.swift",
+      "line": 3,
+      "symbol": "CGSessionCopyCurrentDictionary",
+      "source": "// 为什么要有这一层：**CGSessionCopyCurrentDictionary 是一次同步的 WindowServer 往返**（机器忙时单次",
+      "signal": "lock-state"
+    },
+    {
+      "path": "prototype/Effects/EffectFrameSource.swift",
+      "line": 50,
+      "symbol": "SCStream",
+      "source": "private var stream: SCStream?",
+      "signal": "window-image"
+    },
+    {
+      "path": "prototype/Effects/EffectFrameSource.swift",
+      "line": 96,
+      "symbol": "SCStream",
+      "source": "let candidate = SCStream(",
+      "signal": "window-image"
+    },
+    {
+      "path": "prototype/Effects/EffectFrameSource.swift",
+      "line": 168,
+      "symbol": "SCStream",
+      "source": "let request = lock.withLock { () -> (SCStream, UInt64, UInt64, CGSize, EffectColorSpace)? in",
+      "signal": "window-image"
+    },
+    {
+      "path": "prototype/Effects/EffectFrameSource.swift",
+      "line": 213,
+      "symbol": "SCStream",
+      "source": "// SCStream.h: contentRect is in surface points; scaleFactor converts points to pixels.",
+      "signal": "window-image"
+    },
+    {
+      "path": "prototype/Effects/EffectFrameSource.swift",
+      "line": 225,
+      "symbol": "SCStream",
+      "source": "_ candidate: SCStream, didOutputSampleBuffer sample: CMSampleBuffer, of type: SCStreamOutputType",
+      "signal": "window-image"
+    },
+    {
+      "path": "prototype/Effects/EffectFrameSource.swift",
+      "line": 273,
+      "symbol": "SCStream",
+      "source": "private func fail(_ candidate: SCStream, error: Error) {",
+      "signal": "window-image"
+    },
+    {
+      "path": "prototype/Effects/EffectFrameSource.swift",
+      "line": 285,
+      "symbol": "SCStream",
+      "source": "func stream(_ stream: SCStream, didStopWithError error: Error) { fail(stream, error: error) }",
+      "signal": "window-image"
+    },
+    {
+      "path": "prototype/Effects/EffectInspector.swift",
+      "line": 61,
+      "symbol": "SCShareableContent",
+      "source": "let content = try await SCShareableContent.excludingDesktopWindows(",
+      "signal": "window-image"
+    },
+    {
+      "path": "prototype/Effects/EffectSession.swift",
+      "line": 203,
+      "symbol": "UserDefaults",
+      "source": "static func load(_ defaults: UserDefaults = .standard) -> DuoSettings {",
+      "signal": "settings"
+    },
+    {
+      "path": "prototype/Effects/EffectSession.swift",
+      "line": 209,
+      "symbol": "UserDefaults",
+      "source": "func save(_ defaults: UserDefaults = .standard) {",
+      "signal": "settings"
+    },
+    {
+      "path": "prototype/Effects/EffectSession.swift",
+      "line": 219,
+      "symbol": "CGSessionCopyCurrentDictionary",
+      "source": "let state = CGSessionCopyCurrentDictionary() as? [String: Any]",
+      "signal": "lock-state"
+    },
+    {
+      "path": "prototype/Effects/EffectSession.swift",
+      "line": 220,
+      "symbol": "CGSSessionScreenIsLocked",
+      "source": "return .resolve(locked: state?[\"CGSSessionScreenIsLocked\"] as? Bool,",
+      "signal": "lock-state"
+    },
+    {
+      "path": "prototype/Effects/EffectSoakProbe.swift",
+      "line": 62,
+      "symbol": "SCShareableContent",
+      "source": "let content = try await SCShareableContent.excludingDesktopWindows(",
+      "signal": "window-image"
+    },
+    {
+      "path": "prototype/Effects/LidAngleSource.swift",
+      "line": 28,
+      "symbol": "IOHIDDevice",
+      "source": "private var device: IOHIDDevice?",
+      "signal": "hinge"
+    },
+    {
+      "path": "prototype/Effects/LidAngleSource.swift",
+      "line": 29,
+      "symbol": "IOHIDManager",
+      "source": "private var manager: IOHIDManager?",
+      "signal": "hinge"
+    },
+    {
+      "path": "prototype/Effects/LidAngleSource.swift",
+      "line": 87,
+      "symbol": "IOHIDManagerCreate",
+      "source": "let manager = IOHIDManagerCreate(kCFAllocatorDefault, 0)",
+      "signal": "hinge"
+    },
+    {
+      "path": "prototype/Effects/LidAngleSource.swift",
+      "line": 89,
+      "symbol": "IOHIDManagerSetDeviceMatching",
+      "source": "IOHIDManagerSetDeviceMatching(",
+      "signal": "hinge"
+    },
+    {
+      "path": "prototype/Effects/LidAngleSource.swift",
+      "line": 91,
+      "symbol": "IOHIDManagerOpen",
+      "source": "if IOHIDManagerOpen(manager, 0) == kIOReturnSuccess,",
+      "signal": "hinge"
+    },
+    {
+      "path": "prototype/Effects/LidAngleSource.swift",
+      "line": 92,
+      "symbol": "IOHIDDevice",
+      "source": "let devices = IOHIDManagerCopyDevices(manager) as? Set<IOHIDDevice>",
+      "signal": "hinge"
+    },
+    {
+      "path": "prototype/Effects/LidAngleSource.swift",
+      "line": 92,
+      "symbol": "IOHIDManagerCopyDevices",
+      "source": "let devices = IOHIDManagerCopyDevices(manager) as? Set<IOHIDDevice>",
+      "signal": "hinge"
+    },
+    {
+      "path": "prototype/Effects/LidAngleSource.swift",
+      "line": 95,
+      "symbol": "IOHIDDeviceOpen",
+      "source": "guard IOHIDDeviceOpen(candidate, 0) == kIOReturnSuccess else { continue }",
+      "signal": "hinge"
+    },
+    {
+      "path": "prototype/Effects/LidAngleSource.swift",
+      "line": 101,
+      "symbol": "IOHIDDeviceClose",
+      "source": "IOHIDDeviceClose(candidate, 0)",
+      "signal": "hinge"
+    },
+    {
+      "path": "prototype/Effects/LidAngleSource.swift",
+      "line": 112,
+      "symbol": "IOHIDManagerSetDispatchQueue",
+      "source": "IOHIDManagerSetDispatchQueue(manager, queue)",
+      "signal": "hinge"
+    },
+    {
+      "path": "prototype/Effects/LidAngleSource.swift",
+      "line": 113,
+      "symbol": "IOHIDManagerRegisterInputReportCallback",
+      "source": "IOHIDManagerRegisterInputReportCallback(",
+      "signal": "hinge"
+    },
+    {
+      "path": "prototype/Effects/LidAngleSource.swift",
+      "line": 121,
+      "symbol": "IOHIDManagerActivate",
+      "source": "IOHIDManagerActivate(manager)",
+      "signal": "hinge"
+    },
+    {
+      "path": "prototype/Effects/LidAngleSource.swift",
+      "line": 132,
+      "symbol": "IOHIDDevice",
+      "source": "private func read(_ device: IOHIDDevice, _ report: LidReport) -> Double? {",
+      "signal": "hinge"
+    },
+    {
+      "path": "prototype/Effects/LidAngleSource.swift",
+      "line": 136,
+      "symbol": "IOHIDDeviceGetReport",
+      "source": "IOHIDDeviceGetReport(device, kIOHIDReportTypeFeature, report.rawValue, &bytes, &length)",
+      "signal": "hinge"
+    },
+    {
+      "path": "prototype/Effects/LidAngleSource.swift",
+      "line": 200,
+      "symbol": "IOHIDDeviceClose",
+      "source": "if let device { IOHIDDeviceClose(device, 0) }",
+      "signal": "hinge"
+    },
+    {
+      "path": "prototype/Effects/LidAngleSource.swift",
+      "line": 205,
+      "symbol": "IOHIDManagerClose",
+      "source": "// \"Invalid dispatch state\" ← IOHIDManagerExtRelease ← IOHIDManagerClose）。",
+      "signal": "hinge"
+    },
+    {
+      "path": "prototype/Effects/LidAngleSource.swift",
+      "line": 205,
+      "symbol": "IOHIDManagerExtRelease",
+      "source": "// \"Invalid dispatch state\" ← IOHIDManagerExtRelease ← IOHIDManagerClose）。",
+      "signal": "hinge"
+    },
+    {
+      "path": "prototype/Effects/LidAngleSource.swift",
+      "line": 206,
+      "symbol": "IOHIDManagerCancel",
+      "source": "if activated { IOHIDManagerCancel(manager) }",
+      "signal": "hinge"
+    },
+    {
+      "path": "prototype/Effects/LidAngleSource.swift",
+      "line": 207,
+      "symbol": "IOHIDManagerClose",
+      "source": "IOHIDManagerClose(manager, 0)",
+      "signal": "hinge"
+    },
+    {
+      "path": "prototype/Effects/LidAngleSource.swift",
+      "line": 214,
+      "symbol": "IOHIDDeviceClose",
+      "source": "if let device { IOHIDDeviceClose(device, 0) }",
+      "signal": "hinge"
+    },
+    {
+      "path": "prototype/Effects/LidAngleSource.swift",
+      "line": 217,
+      "symbol": "IOHIDManagerCancel",
+      "source": "if activated { IOHIDManagerCancel(manager) }",
+      "signal": "hinge"
+    },
+    {
+      "path": "prototype/Effects/LidAngleSource.swift",
+      "line": 218,
+      "symbol": "IOHIDManagerClose",
+      "source": "IOHIDManagerClose(manager, 0)",
+      "signal": "hinge"
+    },
+    {
+      "path": "prototype/Effects/LockOverlayController.swift",
+      "line": 6,
+      "symbol": "UserDefaults",
+      "source": "var enabled: Bool { UserDefaults.standard.bool(forKey: Self.defaultsKey) }",
+      "signal": "settings"
+    },
+    {
+      "path": "prototype/Effects/LockOverlayController.swift",
+      "line": 42,
+      "symbol": "UserDefaults",
+      "source": "UserDefaults.standard.set(value, forKey: Self.defaultsKey)",
+      "signal": "settings"
+    },
+    {
+      "path": "prototype/Effects/RestoreVerification.swift",
+      "line": 14,
+      "symbol": "AXUIElementCopyAttributeValue",
+      "source": "let error = AXUIElementCopyAttributeValue(state.element, kAXRoleAttribute as CFString, &role)",
+      "signal": "window-ax"
+    },
+    {
+      "path": "prototype/Effects/SettingsDesignPreview.swift",
+      "line": 225,
+      "symbol": "SCShareableContent",
+      "source": "let content = try await SCShareableContent.current",
+      "signal": "window-image"
+    },
+    {
+      "path": "prototype/Effects/SettingsDesignPreview.swift",
+      "line": 251,
+      "symbol": "SCScreenshotManager",
+      "source": "image = try await SCScreenshotManager.captureImage(",
+      "signal": "window-image"
+    },
+    {
+      "path": "prototype/Effects/SettingsDesignPreview.swift",
+      "line": 268,
+      "symbol": "SCShareableContent",
+      "source": "let overlays = try await SCShareableContent.current",
+      "signal": "window-image"
+    },
+    {
+      "path": "prototype/Effects/SettingsDesignPreview.swift",
+      "line": 275,
+      "symbol": "SCScreenshotManager",
+      "source": "let result = try await SCScreenshotManager.captureImage(",
+      "signal": "window-image"
+    },
+    {
+      "path": "prototype/Effects/SettingsDesignPreview.swift",
+      "line": 293,
+      "symbol": "SCScreenshotManager",
+      "source": "_ = try await SCScreenshotManager.captureImage(",
+      "signal": "window-image"
+    },
+    {
+      "path": "prototype/Effects/SettingsDesignPreview.swift",
+      "line": 314,
+      "symbol": "SCShareableContent",
+      "source": "let content = try await SCShareableContent.excludingDesktopWindows(false, onScreenWindowsOnly: true)",
+      "signal": "window-image"
+    },
+    {
+      "path": "prototype/Effects/SettingsDesignPreview.swift",
+      "line": 321,
+      "symbol": "SCScreenshotManager",
+      "source": "let image = try await SCScreenshotManager.captureImage(",
+      "signal": "window-image"
+    },
+    {
+      "path": "prototype/Effects/WindowFoldEffects.swift",
+      "line": 108,
+      "symbol": "SCShareableContent",
+      "source": "var content: SCShareableContent?",
+      "signal": "window-image"
+    },
+    {
+      "path": "prototype/Effects/WindowFoldEffects.swift",
+      "line": 167,
+      "symbol": "SCShareableContent",
+      "source": "for job: Job, content: SCShareableContent?, screen: NSScreen, position: CGPoint, size: CGSize",
+      "signal": "window-image"
+    },
+    {
+      "path": "prototype/Effects/WindowFoldEffects.swift",
+      "line": 193,
+      "symbol": "SCShareableContent",
+      "source": "let shareable: SCShareableContent",
+      "signal": "window-image"
+    },
+    {
+      "path": "prototype/Effects/WindowFoldEffects.swift",
+      "line": 197,
+      "symbol": "SCShareableContent",
+      "source": "shareable = try await SCShareableContent.excludingDesktopWindows(false, onScreenWindowsOnly: false)",
+      "signal": "window-image"
+    },
+    {
+      "path": "prototype/Effects/WindowFoldEffects.swift",
+      "line": 210,
+      "symbol": "SCScreenshotManager",
+      "source": "image = try await SCScreenshotManager.captureImage(",
+      "signal": "window-image"
+    },
+    {
+      "path": "prototype/Effects/WindowFoldEffects.swift",
+      "line": 302,
+      "symbol": "SCShareableContent",
+      "source": "guard let content = try? await SCShareableContent.excludingDesktopWindows(",
+      "signal": "window-image"
+    },
+    {
+      "path": "prototype/PinnedPreview.swift",
+      "line": 324,
+      "symbol": "SCShareableContent",
+      "source": "let content: SCShareableContent",
+      "signal": "window-image"
+    },
+    {
+      "path": "prototype/PinnedPreview.swift",
+      "line": 820,
+      "symbol": "SCShareableContent",
+      "source": "let content: SCShareableContent",
+      "signal": "window-image"
+    },
+    {
+      "path": "prototype/Private/DockBridge.swift",
+      "line": 45,
+      "symbol": "UserDefaults",
+      "source": "if let hotkeys = UserDefaults(suiteName: \"com.apple.symbolichotkeys\")?.dictionary(forKey: \"AppleSymbolicHotKeys\"),",
+      "signal": "settings"
+    },
+    {
+      "path": "prototype/Private/LockSpaceBridge.swift",
+      "line": 28,
+      "symbol": "SLSHideSpaces",
+      "source": "let names = [\"SLSMainConnectionID\", \"SLSSpaceCreate\", \"SLSSpaceSetAbsoluteLevel\", \"SLSShowSpaces\", \"SLSHideSpaces\", \"SLSSpaceAddWindowsAndRemoveFromSpaces\", \"SLSRemoveWindowsFromSpaces\"]",
+      "signal": "spaces-private"
+    },
+    {
+      "path": "prototype/Private/LockSpaceBridge.swift",
+      "line": 28,
+      "symbol": "SLSMainConnectionID",
+      "source": "let names = [\"SLSMainConnectionID\", \"SLSSpaceCreate\", \"SLSSpaceSetAbsoluteLevel\", \"SLSShowSpaces\", \"SLSHideSpaces\", \"SLSSpaceAddWindowsAndRemoveFromSpaces\", \"SLSRemoveWindowsFromSpaces\"]",
+      "signal": "spaces-private"
+    },
+    {
+      "path": "prototype/Private/LockSpaceBridge.swift",
+      "line": 28,
+      "symbol": "SLSRemoveWindowsFromSpaces",
+      "source": "let names = [\"SLSMainConnectionID\", \"SLSSpaceCreate\", \"SLSSpaceSetAbsoluteLevel\", \"SLSShowSpaces\", \"SLSHideSpaces\", \"SLSSpaceAddWindowsAndRemoveFromSpaces\", \"SLSRemoveWindowsFromSpaces\"]",
+      "signal": "spaces-private"
+    },
+    {
+      "path": "prototype/Private/LockSpaceBridge.swift",
+      "line": 28,
+      "symbol": "SLSShowSpaces",
+      "source": "let names = [\"SLSMainConnectionID\", \"SLSSpaceCreate\", \"SLSSpaceSetAbsoluteLevel\", \"SLSShowSpaces\", \"SLSHideSpaces\", \"SLSSpaceAddWindowsAndRemoveFromSpaces\", \"SLSRemoveWindowsFromSpaces\"]",
+      "signal": "spaces-private"
+    },
+    {
+      "path": "prototype/Private/LockSpaceBridge.swift",
+      "line": 28,
+      "symbol": "SLSSpaceAddWindowsAndRemoveFromSpaces",
+      "source": "let names = [\"SLSMainConnectionID\", \"SLSSpaceCreate\", \"SLSSpaceSetAbsoluteLevel\", \"SLSShowSpaces\", \"SLSHideSpaces\", \"SLSSpaceAddWindowsAndRemoveFromSpaces\", \"SLSRemoveWindowsFromSpaces\"]",
+      "signal": "spaces-private"
+    },
+    {
+      "path": "prototype/Private/LockSpaceBridge.swift",
+      "line": 28,
+      "symbol": "SLSSpaceCreate",
+      "source": "let names = [\"SLSMainConnectionID\", \"SLSSpaceCreate\", \"SLSSpaceSetAbsoluteLevel\", \"SLSShowSpaces\", \"SLSHideSpaces\", \"SLSSpaceAddWindowsAndRemoveFromSpaces\", \"SLSRemoveWindowsFromSpaces\"]",
+      "signal": "spaces-private"
+    },
+    {
+      "path": "prototype/Private/LockSpaceBridge.swift",
+      "line": 28,
+      "symbol": "SLSSpaceSetAbsoluteLevel",
+      "source": "let names = [\"SLSMainConnectionID\", \"SLSSpaceCreate\", \"SLSSpaceSetAbsoluteLevel\", \"SLSShowSpaces\", \"SLSHideSpaces\", \"SLSSpaceAddWindowsAndRemoveFromSpaces\", \"SLSRemoveWindowsFromSpaces\"]",
+      "signal": "spaces-private"
+    },
+    {
+      "path": "prototype/Private/ScreenBezel.swift",
+      "line": 3,
+      "symbol": "bezelPath",
+      "source": "// - 私有的 -[NSScreen bezelPath]：只在 macOS 27 上验证过（Aaron 2026-09-29 定：读，带守卫和校验，失败退回机型表）。",
+      "signal": "notch-private"
+    },
+    {
+      "path": "prototype/Private/ScreenBezel.swift",
+      "line": 11,
+      "symbol": "bezelPath",
+      "source": "//   一次也不读 bezelPath。探针用 shape(for:) 可以看任何一块屏。",
+      "signal": "notch-private"
+    },
+    {
+      "path": "prototype/Private/ScreenBezel.swift",
+      "line": 12,
+      "symbol": "bezelPath",
+      "source": "// - 进程里第一次读 bezelPath 要几十到几百毫秒（命令行实测 50–800，之后 0.2 毫秒），量曲线还要二十几毫秒：",
+      "signal": "notch-private"
+    },
+    {
+      "path": "prototype/Private/ScreenBezel.swift",
+      "line": 21,
+      "symbol": "bezelPath",
+      "source": "/// 私有的 bezelPath（全局坐标）。没有这个方法、返回的不是对象或不是 NSBezierPath 时是 nil。",
+      "signal": "notch-private"
+    },
+    {
+      "path": "prototype/Private/ScreenBezel.swift",
+      "line": 24,
+      "symbol": "bezelPath",
+      "source": "let selector = NSSelectorFromString(\"bezelPath\")",
+      "signal": "notch-private"
+    },
+    {
+      "path": "prototype/Private/ScreenBezel.swift",
+      "line": 80,
+      "symbol": "bezelPath",
+      "source": "/// 读过一次 bezelPath 了：之后再读很快，不用再往后挪、也不用等人停手。",
+      "signal": "notch-private"
+    },
+    {
+      "path": "prototype/Private/ScreenBezel.swift",
+      "line": 166,
+      "symbol": "bezelPath",
+      "source": "// 记下花了多久：第一次读 bezelPath 最慢，这一行能看出它在 App 里实际卡了主线程多久。",
+      "signal": "notch-private"
+    },
+    {
+      "path": "prototype/Private/ScreenBezel.swift",
+      "line": 170,
+      "symbol": "bezelPath",
+      "source": "+ String(format: \"(computed %d; bezelPath %.0f ms, the rest %.0f ms)\", computed,",
+      "signal": "notch-private"
+    },
+    {
+      "path": "prototype/Private/ScreenBezel.swift",
+      "line": 175,
+      "symbol": "bezelPath",
+      "source": "/// 探针用：只按机型表算（不读 bezelPath），和实际用的对照。",
+      "signal": "notch-private"
+    },
+    {
+      "path": "prototype/Private/SkyLightBridge.swift",
+      "line": 17,
+      "symbol": "SLSMainConnectionIDFunction",
+      "source": "private typealias SLSMainConnectionIDFunction = @convention(c) () -> Int32",
+      "signal": "spaces-private"
+    },
+    {
+      "path": "prototype/Private/SkyLightBridge.swift",
+      "line": 18,
+      "symbol": "SLSMoveWindowWithGroupFunction",
+      "source": "private typealias SLSMoveWindowWithGroupFunction = @convention(c) (Int32, UInt32, UnsafeMutablePointer<CGPoint>) -> Int32",
+      "signal": "spaces-private"
+    },
+    {
+      "path": "prototype/Private/SkyLightBridge.swift",
+      "line": 19,
+      "symbol": "SLSReassociateWindowsSpacesByGeometryFunction",
+      "source": "private typealias SLSReassociateWindowsSpacesByGeometryFunction = @convention(c) (Int32, CFArray) -> Int32",
+      "signal": "spaces-private"
+    },
+    {
+      "path": "prototype/Private/SkyLightBridge.swift",
+      "line": 21,
+      "symbol": "SLSCopySpacesForWindowsFunction",
+      "source": "private typealias SLSCopySpacesForWindowsFunction = @convention(c) (Int32, Int32, CFArray) -> Unmanaged<CFArray>?",
+      "signal": "spaces-private"
+    },
+    {
+      "path": "prototype/Private/SkyLightBridge.swift",
+      "line": 22,
+      "symbol": "SLSMoveWindowsToManagedSpaceFunction",
+      "source": "private typealias SLSMoveWindowsToManagedSpaceFunction = @convention(c) (Int32, CFArray, UInt64) -> Void",
+      "signal": "spaces-private"
+    },
+    {
+      "path": "prototype/Private/SkyLightBridge.swift",
+      "line": 23,
+      "symbol": "SLSManagedDisplayGetCurrentSpaceFunction",
+      "source": "private typealias SLSManagedDisplayGetCurrentSpaceFunction = @convention(c) (Int32, CFString) -> UInt64",
+      "signal": "spaces-private"
+    },
+    {
+      "path": "prototype/Private/SkyLightBridge.swift",
+      "line": 24,
+      "symbol": "SLSManagedDisplaySetCurrentSpaceFunction",
+      "source": "private typealias SLSManagedDisplaySetCurrentSpaceFunction = @convention(c) (Int32, CFString, UInt64) -> Int32",
+      "signal": "spaces-private"
+    },
+    {
+      "path": "prototype/Private/SkyLightBridge.swift",
+      "line": 25,
+      "symbol": "SLSGetWindowAlphaFunction",
+      "source": "private typealias SLSGetWindowAlphaFunction = @convention(c) (Int32, UInt32, UnsafeMutablePointer<Float>) -> Int32",
+      "signal": "spaces-private"
+    },
+    {
+      "path": "prototype/Private/SkyLightBridge.swift",
+      "line": 26,
+      "symbol": "SLSSetWindowAlphaFunction",
+      "source": "private typealias SLSSetWindowAlphaFunction = @convention(c) (Int32, UInt32, Float) -> Int32",
+      "signal": "spaces-private"
+    },
+    {
+      "path": "prototype/Private/SkyLightBridge.swift",
+      "line": 27,
+      "symbol": "SLSCopyManagedDisplaySpacesFunction",
+      "source": "private typealias SLSCopyManagedDisplaySpacesFunction = @convention(c) (Int32) -> Unmanaged<CFArray>?",
+      "signal": "spaces-private"
+    },
+    {
+      "path": "prototype/Private/SkyLightBridge.swift",
+      "line": 32,
+      "symbol": "SLSMainConnectionIDFunction",
+      "source": "private let mainConnectionID: SLSMainConnectionIDFunction?",
+      "signal": "spaces-private"
+    },
+    {
+      "path": "prototype/Private/SkyLightBridge.swift",
+      "line": 33,
+      "symbol": "SLSMoveWindowWithGroupFunction",
+      "source": "private let moveWindowWithGroup: SLSMoveWindowWithGroupFunction?",
+      "signal": "spaces-private"
+    },
+    {
+      "path": "prototype/Private/SkyLightBridge.swift",
+      "line": 34,
+      "symbol": "SLSReassociateWindowsSpacesByGeometryFunction",
+      "source": "private let reassociateWindowsSpacesByGeometry: SLSReassociateWindowsSpacesByGeometryFunction?",
+      "signal": "spaces-private"
+    },
+    {
+      "path": "prototype/Private/SkyLightBridge.swift",
+      "line": 35,
+      "symbol": "SLSCopySpacesForWindowsFunction",
+      "source": "private let copySpacesForWindows: SLSCopySpacesForWindowsFunction?",
+      "signal": "spaces-private"
+    },
+    {
+      "path": "prototype/Private/SkyLightBridge.swift",
+      "line": 36,
+      "symbol": "SLSMoveWindowsToManagedSpaceFunction",
+      "source": "private let moveWindowsToManagedSpace: SLSMoveWindowsToManagedSpaceFunction?",
+      "signal": "spaces-private"
+    },
+    {
+      "path": "prototype/Private/SkyLightBridge.swift",
+      "line": 37,
+      "symbol": "SLSManagedDisplayGetCurrentSpaceFunction",
+      "source": "private let managedDisplayGetCurrentSpace: SLSManagedDisplayGetCurrentSpaceFunction?",
+      "signal": "spaces-private"
+    },
+    {
+      "path": "prototype/Private/SkyLightBridge.swift",
+      "line": 38,
+      "symbol": "SLSManagedDisplaySetCurrentSpaceFunction",
+      "source": "private let managedDisplaySetCurrentSpace: SLSManagedDisplaySetCurrentSpaceFunction?",
+      "signal": "spaces-private"
+    },
+    {
+      "path": "prototype/Private/SkyLightBridge.swift",
+      "line": 39,
+      "symbol": "SLSGetWindowAlphaFunction",
+      "source": "private let getWindowAlpha: SLSGetWindowAlphaFunction?",
+      "signal": "spaces-private"
+    },
+    {
+      "path": "prototype/Private/SkyLightBridge.swift",
+      "line": 40,
+      "symbol": "SLSSetWindowAlphaFunction",
+      "source": "private let setWindowAlpha: SLSSetWindowAlphaFunction?",
+      "signal": "spaces-private"
+    },
+    {
+      "path": "prototype/Private/SkyLightBridge.swift",
+      "line": 41,
+      "symbol": "SLSCopyManagedDisplaySpacesFunction",
+      "source": "private let copyManagedDisplaySpaces: SLSCopyManagedDisplaySpacesFunction?",
+      "signal": "spaces-private"
+    },
+    {
+      "path": "prototype/Private/SkyLightBridge.swift",
+      "line": 56,
+      "symbol": "SLSMainConnectionID",
+      "source": "let mainSymbol = dlsym(handle, \"SLSMainConnectionID\"),",
+      "signal": "spaces-private"
+    },
+    {
+      "path": "prototype/Private/SkyLightBridge.swift",
+      "line": 57,
+      "symbol": "SLSMoveWindowWithGroup",
+      "source": "let moveSymbol = dlsym(handle, \"SLSMoveWindowWithGroup\") else {",
+      "signal": "spaces-private"
+    },
+    {
+      "path": "prototype/Private/SkyLightBridge.swift",
+      "line": 70,
+      "symbol": "SLSMainConnectionIDFunction",
+      "source": "mainConnectionID = unsafeBitCast(mainSymbol, to: SLSMainConnectionIDFunction.self)",
+      "signal": "spaces-private"
+    },
+    {
+      "path": "prototype/Private/SkyLightBridge.swift",
+      "line": 71,
+      "symbol": "SLSMoveWindowWithGroupFunction",
+      "source": "moveWindowWithGroup = unsafeBitCast(moveSymbol, to: SLSMoveWindowWithGroupFunction.self)",
+      "signal": "spaces-private"
+    },
+    {
+      "path": "prototype/Private/SkyLightBridge.swift",
+      "line": 72,
+      "symbol": "SLSReassociateWindowsSpacesByGeometry",
+      "source": "if let reassociateSymbol = dlsym(handle, \"SLSReassociateWindowsSpacesByGeometry\") {",
+      "signal": "spaces-private"
+    },
+    {
+      "path": "prototype/Private/SkyLightBridge.swift",
+      "line": 74,
+      "symbol": "SLSReassociateWindowsSpacesByGeometryFunction",
+      "source": "to: SLSReassociateWindowsSpacesByGeometryFunction.self)",
+      "signal": "spaces-private"
+    },
+    {
+      "path": "prototype/Private/SkyLightBridge.swift",
+      "line": 78,
+      "symbol": "SLSCopySpacesForWindows",
+      "source": "if let copySpacesSymbol = dlsym(handle, \"SLSCopySpacesForWindows\") {",
+      "signal": "spaces-private"
+    },
+    {
+      "path": "prototype/Private/SkyLightBridge.swift",
+      "line": 79,
+      "symbol": "SLSCopySpacesForWindowsFunction",
+      "source": "copySpacesForWindows = unsafeBitCast(copySpacesSymbol, to: SLSCopySpacesForWindowsFunction.self)",
+      "signal": "spaces-private"
+    },
+    {
+      "path": "prototype/Private/SkyLightBridge.swift",
+      "line": 83,
+      "symbol": "SLSMoveWindowsToManagedSpace",
+      "source": "if let moveSpacesSymbol = dlsym(handle, \"SLSMoveWindowsToManagedSpace\") {",
+      "signal": "spaces-private"
+    },
+    {
+      "path": "prototype/Private/SkyLightBridge.swift",
+      "line": 84,
+      "symbol": "SLSMoveWindowsToManagedSpaceFunction",
+      "source": "moveWindowsToManagedSpace = unsafeBitCast(moveSpacesSymbol, to: SLSMoveWindowsToManagedSpaceFunction.self)",
+      "signal": "spaces-private"
+    },
+    {
+      "path": "prototype/Private/SkyLightBridge.swift",
+      "line": 88,
+      "symbol": "SLSManagedDisplayGetCurrentSpace",
+      "source": "if let currentSpaceSymbol = dlsym(handle, \"SLSManagedDisplayGetCurrentSpace\") {",
+      "signal": "spaces-private"
+    },
+    {
+      "path": "prototype/Private/SkyLightBridge.swift",
+      "line": 90,
+      "symbol": "SLSManagedDisplayGetCurrentSpaceFunction",
+      "source": "to: SLSManagedDisplayGetCurrentSpaceFunction.self)",
+      "signal": "spaces-private"
+    },
+    {
+      "path": "prototype/Private/SkyLightBridge.swift",
+      "line": 94,
+      "symbol": "SLSManagedDisplaySetCurrentSpace",
+      "source": "if let setCurrentSpaceSymbol = dlsym(handle, \"SLSManagedDisplaySetCurrentSpace\") {",
+      "signal": "spaces-private"
+    },
+    {
+      "path": "prototype/Private/SkyLightBridge.swift",
+      "line": 96,
+      "symbol": "SLSManagedDisplaySetCurrentSpaceFunction",
+      "source": "to: SLSManagedDisplaySetCurrentSpaceFunction.self)",
+      "signal": "spaces-private"
+    },
+    {
+      "path": "prototype/Private/SkyLightBridge.swift",
+      "line": 100,
+      "symbol": "SLSGetWindowAlpha",
+      "source": "if let getAlphaSymbol = dlsym(handle, \"SLSGetWindowAlpha\") {",
+      "signal": "spaces-private"
+    },
+    {
+      "path": "prototype/Private/SkyLightBridge.swift",
+      "line": 101,
+      "symbol": "SLSGetWindowAlphaFunction",
+      "source": "getWindowAlpha = unsafeBitCast(getAlphaSymbol, to: SLSGetWindowAlphaFunction.self)",
+      "signal": "spaces-private"
+    },
+    {
+      "path": "prototype/Private/SkyLightBridge.swift",
+      "line": 105,
+      "symbol": "SLSSetWindowAlpha",
+      "source": "if let setAlphaSymbol = dlsym(handle, \"SLSSetWindowAlpha\") {",
+      "signal": "spaces-private"
+    },
+    {
+      "path": "prototype/Private/SkyLightBridge.swift",
+      "line": 106,
+      "symbol": "SLSSetWindowAlphaFunction",
+      "source": "setWindowAlpha = unsafeBitCast(setAlphaSymbol, to: SLSSetWindowAlphaFunction.self)",
+      "signal": "spaces-private"
+    },
+    {
+      "path": "prototype/Private/SkyLightBridge.swift",
+      "line": 110,
+      "symbol": "SLSCopyManagedDisplaySpaces",
+      "source": "copyManagedDisplaySpaces = dlsym(handle, \"SLSCopyManagedDisplaySpaces\")",
+      "signal": "spaces-private"
+    },
+    {
+      "path": "prototype/Private/SkyLightBridge.swift",
+      "line": 111,
+      "symbol": "SLSCopyManagedDisplaySpacesFunction",
+      "source": ".map { unsafeBitCast($0, to: SLSCopyManagedDisplaySpacesFunction.self) }",
+      "signal": "spaces-private"
+    },
+    {
+      "path": "prototype/Recovery/DurableShadeJournal.swift",
+      "line": 9,
+      "symbol": "RecoveryJournal",
+      "source": "url: base.appendingPathComponent(\"WindowShade/RecoveryJournal.plist\"))",
+      "signal": "recovery"
+    },
+    {
+      "path": "prototype/Recovery/Journal.swift",
+      "line": 16,
+      "symbol": "UserDefaults",
+      "source": "return UserDefaults.standard.array(forKey: shadeJournalDefaultsKey) as? [[String: Any]] ?? []",
+      "signal": "settings"
+    },
+    {
+      "path": "prototype/Recovery/Journal.swift",
+      "line": 25,
+      "symbol": "UserDefaults",
+      "source": "UserDefaults.standard.removeObject(forKey: shadeJournalDefaultsKey)",
+      "signal": "settings"
+    },
+    {
+      "path": "prototype/Recovery/Journal.swift",
+      "line": 27,
+      "symbol": "UserDefaults",
+      "source": "UserDefaults.standard.set(entries, forKey: shadeJournalDefaultsKey)",
+      "signal": "settings"
+    },
+    {
+      "path": "prototype/Recovery/Rescue.swift",
+      "line": 67,
+      "symbol": "AXUIElementCopyAttributeValue",
+      "source": "guard AXUIElementCopyAttributeValue(appEl, kAXWindowsAttribute as CFString, &ref) == .success,",
+      "signal": "window-ax"
+    },
+    {
+      "path": "prototype/Recovery/Rescue.swift",
+      "line": 169,
+      "symbol": "AXUIElementCopyAttributeValue",
+      "source": "guard AXUIElementCopyAttributeValue(appEl, kAXWindowsAttribute as CFString, &ref) == .success,",
+      "signal": "window-ax"
+    },
+    {
+      "path": "prototype/ScreenCaptureBridge.swift",
+      "line": 6,
+      "symbol": "SCShareableContent",
+      "source": "static func current() async throws -> SCShareableContent {",
+      "signal": "window-image"
+    },
+    {
+      "path": "prototype/ScreenCaptureBridge.swift",
+      "line": 8,
+      "symbol": "SCShareableContent",
+      "source": "return try await SCShareableContent.current",
+      "signal": "window-image"
+    },
+    {
+      "path": "prototype/ScreenCaptureBridge.swift",
+      "line": 12,
+      "symbol": "SCShareableContent",
+      "source": "SCShareableContent.getExcludingDesktopWindows(false, onScreenWindowsOnly: true) {",
+      "signal": "window-image"
+    },
+    {
+      "path": "prototype/ScreenCaptureBridge.swift",
+      "line": 49,
+      "symbol": "SCStream",
+      "source": "// 降回 15fps。改动通过 SCStream.updateConfiguration 调整 minimumFrameInterval，",
+      "signal": "window-image"
+    },
+    {
+      "path": "prototype/ScreenCaptureBridge.swift",
+      "line": 71,
+      "symbol": "SCStream",
+      "source": "private var stream: SCStream?",
+      "signal": "window-image"
+    },
+    {
+      "path": "prototype/ScreenCaptureBridge.swift",
+      "line": 164,
+      "symbol": "SCScreenshotManager",
+      "source": "guard let image = try? await SCScreenshotManager.captureImage(",
+      "signal": "window-image"
+    },
+    {
+      "path": "prototype/ScreenCaptureBridge.swift",
+      "line": 262,
+      "symbol": "SCStream",
+      "source": "let newStream = SCStream(filter: filter, configuration: configuration, delegate: self)",
+      "signal": "window-image"
+    },
+    {
+      "path": "prototype/ScreenCaptureBridge.swift",
+      "line": 377,
+      "symbol": "SCStream",
+      "source": "_ stream: SCStream, didOutputSampleBuffer sampleBuffer: CMSampleBuffer,",
+      "signal": "window-image"
+    },
+    {
+      "path": "prototype/ScreenCaptureBridge.swift",
+      "line": 433,
+      "symbol": "SCStream",
+      "source": "func stream(_ stream: SCStream, didStopWithError error: Error) {",
+      "signal": "window-image"
+    },
+    {
+      "path": "prototype/Window/AXHelpers.swift",
+      "line": 75,
+      "symbol": "AXUIElementCopyAttributeValue",
+      "source": "guard AXUIElementCopyAttributeValue(win, attr as CFString, &value) == .success,",
+      "signal": "window-ax"
+    },
+    {
+      "path": "prototype/Window/AXHelpers.swift",
+      "line": 156,
+      "symbol": "UserDefaults",
+      "source": "let raw = (UserDefaults.standard.string(forKey: \"AppleActionOnDoubleClick\") ?? \"Zoom\")",
+      "signal": "settings"
+    },
+    {
+      "path": "prototype/Window/AXHelpers.swift",
+      "line": 239,
+      "symbol": "AXUIElementCopyAttributeValue",
+      "source": "guard AXUIElementCopyAttributeValue(e, kAXTitleAttribute as CFString, &v) == .success else { return \"?\" }",
+      "signal": "window-ax"
+    },
+    {
+      "path": "prototype/Window/AXWindow.swift",
+      "line": 11,
+      "symbol": "AXUIElementCopyAttributeValue",
+      "source": "guard AXUIElementCopyAttributeValue(element, attr as CFString, &value) == .success,",
+      "signal": "window-ax"
+    },
+    {
+      "path": "prototype/Window/AXWindow.swift",
+      "line": 78,
+      "symbol": "AXUIElementCopyAttributeValue",
+      "source": "guard AXUIElementCopyAttributeValue(e, attr as CFString, &ref) == .success,",
+      "signal": "window-ax"
+    },
+    {
+      "path": "prototype/Window/AXWindow.swift",
+      "line": 106,
+      "symbol": "AXUIElementCopyAttributeValue",
+      "source": "guard AXUIElementCopyAttributeValue(win, attr as CFString, &ref) == .success,",
+      "signal": "window-ax"
+    },
+    {
+      "path": "prototype/Window/AXWindow.swift",
+      "line": 120,
+      "symbol": "AXUIElementCopyAttributeValue",
+      "source": "if AXUIElementCopyAttributeValue(button, kAXEnabledAttribute as CFString, &ref) == .success,",
+      "signal": "window-ax"
+    },
+    {
+      "path": "prototype/Window/AXWindow.swift",
+      "line": 340,
+      "symbol": "AXUIElementCopyAttributeValue",
+      "source": "guard AXUIElementCopyAttributeValue(appEl, kAXFocusedWindowAttribute as CFString, &win) == .success,",
+      "signal": "window-ax"
+    },
+    {
+      "path": "prototype/Window/AXWindow.swift",
+      "line": 406,
+      "symbol": "AXUIElementCopyAttributeValue",
+      "source": "guard AXUIElementCopyAttributeValue(e, kAXRoleAttribute as CFString, &v) == .success else { return nil }",
+      "signal": "window-ax"
+    },
+    {
+      "path": "prototype/Window/AXWindow.swift",
+      "line": 412,
+      "symbol": "AXUIElementCopyAttributeValue",
+      "source": "guard AXUIElementCopyAttributeValue(e, kAXSubroleAttribute as CFString, &v) == .success else { return nil }",
+      "signal": "window-ax"
+    },
+    {
+      "path": "prototype/Window/AXWindow.swift",
+      "line": 420,
+      "symbol": "AXUIElementCopyAttributeValue",
+      "source": "if AXUIElementCopyAttributeValue(el, kAXWindowAttribute as CFString, &winRef) == .success,",
+      "signal": "window-ax"
+    },
+    {
+      "path": "prototype/Window/AXWindow.swift",
+      "line": 430,
+      "symbol": "AXUIElementCopyAttributeValue",
+      "source": "guard AXUIElementCopyAttributeValue(el, kAXChildrenAttribute as CFString, &ref) == .success,",
+      "signal": "window-ax"
+    },
+    {
+      "path": "prototype/Window/AppWindows.swift",
+      "line": 71,
+      "symbol": "AXUIElementCopyAttributeValue",
+      "source": "guard AXUIElementCopyAttributeValue(app, kAXWindowsAttribute as CFString, &ref) == .success,",
+      "signal": "window-ax"
+    },
+    {
+      "path": "prototype/WindowBrowser/DockHoverObserver.swift",
+      "line": 369,
+      "symbol": "AXUIElementCopyAttributeValue",
+      "source": "guard AXUIElementCopyAttributeValue(element,",
+      "signal": "window-ax"
+    },
+    {
+      "path": "prototype/WindowBrowser/DockHoverObserver.swift",
+      "line": 533,
+      "symbol": "AXUIElementCopyAttributeValue",
+      "source": "guard AXUIElementCopyAttributeValue(element, kAXParentAttribute as CFString,",
+      "signal": "window-ax"
+    },
+    {
+      "path": "prototype/WindowBrowser/DockHoverProbe.swift",
+      "line": 66,
+      "symbol": "AXUIElementCopyAttributeValue",
+      "source": "if AXUIElementCopyAttributeValue(root, kAXSelectedChildrenAttribute as CFString,",
+      "signal": "window-ax"
+    },
+    {
+      "path": "prototype/WindowBrowser/DockHoverProbe.swift",
+      "line": 257,
+      "symbol": "AXUIElementCopyAttributeValue",
+      "source": "guard AXUIElementCopyAttributeValue(element,",
+      "signal": "window-ax"
+    },
+    {
+      "path": "prototype/WindowBrowser/DockHoverProbe.swift",
+      "line": 266,
+      "symbol": "AXUIElementCopyAttributeValue",
+      "source": "guard AXUIElementCopyAttributeValue(element, kAXParentAttribute as CFString,",
+      "signal": "window-ax"
+    },
+    {
+      "path": "prototype/WindowBrowser/DockHoverProbe.swift",
+      "line": 394,
+      "symbol": "SCScreenshotManager",
+      "source": "/// SCScreenshotManager 单窗捕获的延迟、像素上限与内容，用来验证新缩略图路径。",
+      "signal": "window-image"
+    },
+    {
+      "path": "prototype/WindowBrowser/DockHoverProbe.swift",
+      "line": 450,
+      "symbol": "SCShareableContent",
+      "source": "guard let shareable = try? await SCShareableContent.current else {",
+      "signal": "window-image"
+    },
+    {
+      "path": "prototype/WindowBrowser/DockHoverProbe.swift",
+      "line": 473,
+      "symbol": "SCScreenshotManager",
+      "source": "guard let image = try? await SCScreenshotManager.captureImage(",
+      "signal": "window-image"
+    },
+    {
+      "path": "prototype/WindowBrowser/DockHoverProbe.swift",
+      "line": 678,
+      "symbol": "SCShareableContent",
+      "source": "guard let shareable = try? await SCShareableContent.current,",
+      "signal": "window-image"
+    },
+    {
+      "path": "prototype/WindowBrowser/DockHoverProbe.swift",
+      "line": 693,
+      "symbol": "SCScreenshotManager",
+      "source": "if let image = try? await SCScreenshotManager.captureImage(",
+      "signal": "window-image"
+    },
+    {
+      "path": "prototype/WindowBrowser/DockHoverProbe.swift",
+      "line": 834,
+      "symbol": "SCShareableContent",
+      "source": "guard let shareable = try? await SCShareableContent.current,",
+      "signal": "window-image"
+    },
+    {
+      "path": "prototype/WindowBrowser/WindowBrowserController.swift",
+      "line": 2787,
+      "symbol": "AXUIElementCopyAttributeValue",
+      "source": "if AXUIElementCopyAttributeValue(app, kAXFocusedWindowAttribute as CFString,",
+      "signal": "window-ax"
+    },
+    {
+      "path": "prototype/WindowBrowser/WindowBrowserController.swift",
+      "line": 3335,
+      "symbol": "SCScreenshotManager",
+      "source": "// SCScreenshotManager 无法真正取消已经开始的一次截图；服务端保持在途计数，",
+      "signal": "window-image"
+    },
+    {
+      "path": "prototype/WindowBrowser/WindowBrowserDiscovery.swift",
+      "line": 29,
+      "symbol": "AXUIElementCopyAttributeValue",
+      "source": "let error = AXUIElementCopyAttributeValue(appElement, kAXWindowsAttribute as CFString, &ref)",
+      "signal": "window-ax"
+    },
+    {
+      "path": "prototype/WindowBrowser/WindowBrowserIdentityProbe.swift",
+      "line": 136,
+      "symbol": "AXUIElementCopyAttributeValue",
+      "source": "_ = AXUIElementCopyAttributeValue(AXUIElementCreateApplication(pid),",
+      "signal": "window-ax"
+    },
+    {
+      "path": "prototype/WindowBrowser/WindowBrowserLiveAppProbe.swift",
+      "line": 320,
+      "symbol": "AXUIElementCopyAttributeValue",
+      "source": "if AXUIElementCopyAttributeValue(child, kAXEnabledAttribute as CFString, &ref) == .success,",
+      "signal": "window-ax"
+    },
+    {
+      "path": "prototype/WindowBrowser/WindowBrowserLiveAppProbe.swift",
+      "line": 352,
+      "symbol": "AXUIElementCopyAttributeValue",
+      "source": "guard AXUIElementCopyAttributeValue(element, attribute as CFString, &ref) == .success,",
+      "signal": "window-ax"
+    },
+    {
+      "path": "prototype/WindowBrowser/WindowBrowserMaterial.swift",
+      "line": 21,
+      "symbol": "UserDefaults",
+      "source": "let raw = UserDefaults.standard.string(forKey: defaultsKey) ?? \"\"",
+      "signal": "settings"
+    },
+    {
+      "path": "prototype/WindowBrowser/WindowBrowserMaterial.swift",
+      "line": 24,
+      "symbol": "UserDefaults",
+      "source": "set { UserDefaults.standard.set(newValue.rawValue, forKey: defaultsKey) }",
+      "signal": "settings"
+    },
+    {
+      "path": "prototype/WindowBrowser/WindowBrowserNewWindow.swift",
+      "line": 48,
+      "symbol": "AXUIElementCopyAttributeValue",
+      "source": "if AXUIElementCopyAttributeValue(app, kAXMenuBarAttribute as CFString, &barRef) == .success,",
+      "signal": "window-ax"
+    },
+    {
+      "path": "prototype/WindowBrowser/WindowBrowserSettings.swift",
+      "line": 19,
+      "symbol": "UserDefaults",
+      "source": "get { UserDefaults.standard.bool(forKey: firstRunHintShownKey) }",
+      "signal": "settings"
+    },
+    {
+      "path": "prototype/WindowBrowser/WindowBrowserSettings.swift",
+      "line": 20,
+      "symbol": "UserDefaults",
+      "source": "set { UserDefaults.standard.set(newValue, forKey: firstRunHintShownKey) }",
+      "signal": "settings"
+    },
+    {
+      "path": "prototype/WindowBrowser/WindowBrowserSettings.swift",
+      "line": 47,
+      "symbol": "UserDefaults",
+      "source": "let raw = UserDefaults.standard.string(forKey: preferredStyleKey) ?? \"\"",
+      "signal": "settings"
+    },
+    {
+      "path": "prototype/WindowBrowser/WindowBrowserSettings.swift",
+      "line": 50,
+      "symbol": "UserDefaults",
+      "source": "set { UserDefaults.standard.set(newValue.rawValue, forKey: preferredStyleKey) }",
+      "signal": "settings"
+    },
+    {
+      "path": "prototype/WindowBrowser/WindowBrowserSettings.swift",
+      "line": 68,
+      "symbol": "UserDefaults",
+      "source": "get { UserDefaults.standard.bool(forKey: dockEnabledKey) }",
+      "signal": "settings"
+    },
+    {
+      "path": "prototype/WindowBrowser/WindowBrowserSettings.swift",
+      "line": 69,
+      "symbol": "UserDefaults",
+      "source": "set { UserDefaults.standard.set(newValue, forKey: dockEnabledKey) }",
+      "signal": "settings"
+    },
+    {
+      "path": "prototype/WindowBrowser/WindowBrowserSettings.swift",
+      "line": 74,
+      "symbol": "UserDefaults",
+      "source": "if UserDefaults.standard.object(forKey: keyboardPanelEnabledKey) == nil { return true }",
+      "signal": "settings"
+    },
+    {
+      "path": "prototype/WindowBrowser/WindowBrowserSettings.swift",
+      "line": 75,
+      "symbol": "UserDefaults",
+      "source": "return UserDefaults.standard.bool(forKey: keyboardPanelEnabledKey)",
+      "signal": "settings"
+    },
+    {
+      "path": "prototype/WindowBrowser/WindowBrowserSettings.swift",
+      "line": 77,
+      "symbol": "UserDefaults",
+      "source": "set { UserDefaults.standard.set(newValue, forKey: keyboardPanelEnabledKey) }",
+      "signal": "settings"
+    },
+    {
+      "path": "prototype/WindowBrowser/WindowBrowserSettings.swift",
+      "line": 81,
+      "symbol": "UserDefaults",
+      "source": "get { UserDefaults.standard.bool(forKey: livePreviewEnabledKey) }",
+      "signal": "settings"
+    },
+    {
+      "path": "prototype/WindowBrowser/WindowBrowserSettings.swift",
+      "line": 82,
+      "symbol": "UserDefaults",
+      "source": "set { UserDefaults.standard.set(newValue, forKey: livePreviewEnabledKey) }",
+      "signal": "settings"
+    },
+    {
+      "path": "prototype/WindowBrowser/WindowBrowserSettings.swift",
+      "line": 86,
+      "symbol": "UserDefaults",
+      "source": "get { Set(UserDefaults.standard.stringArray(forKey: excludedBundleIDsKey) ?? []) }",
+      "signal": "settings"
+    },
+    {
+      "path": "prototype/WindowBrowser/WindowBrowserSettings.swift",
+      "line": 88,
+      "symbol": "UserDefaults",
+      "source": "UserDefaults.standard.set(Array(newValue).sorted(), forKey: excludedBundleIDsKey)",
+      "signal": "settings"
+    },
+    {
+      "path": "prototype/WindowBrowser/WindowBrowserSettings.swift",
+      "line": 99,
+      "symbol": "UserDefaults",
+      "source": "let defaults = UserDefaults.standard",
+      "signal": "settings"
+    },
+    {
+      "path": "prototype/WindowBrowser/WindowBrowserSettings.swift",
+      "line": 106,
+      "symbol": "UserDefaults",
+      "source": "let defaults = UserDefaults.standard",
+      "signal": "settings"
+    },
+    {
+      "path": "prototype/WindowShade.swift",
+      "line": 5,
+      "symbol": "SCShareableContent",
+      "source": "//   Capture/    截图缓存、图像分析、SCShareableContent 缓存",
+      "signal": "window-image"
+    },
+    {
+      "path": "prototype/WindowShade.swift",
+      "line": 235,
+      "symbol": "UserDefaults",
+      "source": "if UserDefaults.standard.object(forKey: shadeSoundEnabledDefaultsKey) == nil { return true }",
+      "signal": "settings"
+    },
+    {
+      "path": "prototype/WindowShade.swift",
+      "line": 236,
+      "symbol": "UserDefaults",
+      "source": "return UserDefaults.standard.bool(forKey: shadeSoundEnabledDefaultsKey)",
+      "signal": "settings"
+    },
+    {
+      "path": "prototype/WindowShade.swift",
+      "line": 239,
+      "symbol": "UserDefaults",
+      "source": "UserDefaults.standard.string(forKey: shadeFoldSoundDefaultsKey) ?? shadeDefaultFoldSound",
+      "signal": "settings"
+    },
+    {
+      "path": "prototype/WindowShade.swift",
+      "line": 242,
+      "symbol": "UserDefaults",
+      "source": "UserDefaults.standard.string(forKey: shadeUnfoldSoundDefaultsKey) ?? shadeDefaultUnfoldSound",
+      "signal": "settings"
+    },
+    {
+      "path": "prototype/WindowShade.swift",
+      "line": 245,
+      "symbol": "UserDefaults",
+      "source": "let raw = UserDefaults.standard.string(forKey: shadeAppearanceModeDefaultsKey) ?? \"\"",
+      "signal": "settings"
+    },
+    {
+      "path": "prototype/WindowShade.swift",
+      "line": 250,
+      "symbol": "UserDefaults",
+      "source": "if UserDefaults.standard.object(forKey: shadeTitlebarDoubleClickDefaultsKey) == nil { return true }",
+      "signal": "settings"
+    },
+    {
+      "path": "prototype/WindowShade.swift",
+      "line": 251,
+      "symbol": "UserDefaults",
+      "source": "return UserDefaults.standard.bool(forKey: shadeTitlebarDoubleClickDefaultsKey)",
+      "signal": "settings"
+    },
+    {
+      "path": "prototype/WindowShade.swift",
+      "line": 254,
+      "symbol": "UserDefaults",
+      "source": "if UserDefaults.standard.object(forKey: shadeFloatingOnTopDefaultsKey) == nil { return true }",
+      "signal": "settings"
+    },
+    {
+      "path": "prototype/WindowShade.swift",
+      "line": 255,
+      "symbol": "UserDefaults",
+      "source": "return UserDefaults.standard.bool(forKey: shadeFloatingOnTopDefaultsKey)",
+      "signal": "settings"
+    },
+    {
+      "path": "prototype/WindowShade.swift",
+      "line": 257,
+      "symbol": "UserDefaults",
+      "source": "var translucent: Bool = UserDefaults.standard.bool(forKey: shadeTranslucentDefaultsKey)",
+      "signal": "settings"
+    },
+    {
+      "path": "prototype/WindowShade.swift",
+      "line": 353,
+      "symbol": "UserDefaults",
+      "source": "ArrangeGap.points = CGFloat(UserDefaults.standard.double(forKey: ArrangeGap.defaultsKey))",
+      "signal": "settings"
+    },
+    {
+      "path": "prototype/WindowShade.swift",
+      "line": 461,
+      "symbol": "UserDefaults",
+      "source": "let defaults = UserDefaults.standard",
+      "signal": "settings"
+    },
+    {
+      "path": "prototype/WindowShade.swift",
+      "line": 638,
+      "symbol": "UserDefaults",
+      "source": "UserDefaults.standard.set(true, forKey: shadeOnboardingShownDefaultsKey)",
+      "signal": "settings"
+    },
+    {
+      "path": "prototype/WindowShade.swift",
+      "line": 699,
+      "symbol": "UserDefaults",
+      "source": "let defaults = UserDefaults.standard",
+      "signal": "settings"
+    },
+    {
+      "path": "prototype/WindowShade.swift",
+      "line": 710,
+      "symbol": "UserDefaults",
+      "source": "let defaults = UserDefaults.standard",
+      "signal": "settings"
+    },
+    {
+      "path": "prototype/WindowShade.swift",
+      "line": 725,
+      "symbol": "UserDefaults",
+      "source": "let defaults = UserDefaults.standard",
+      "signal": "settings"
+    },
+    {
+      "path": "prototype/WindowShade.swift",
+      "line": 894,
+      "symbol": "CGEvent.tapCreate",
+      "source": "guard let tap = CGEvent.tapCreate(tap: .cgSessionEventTap, place: .headInsertEventTap,",
+      "signal": "key-position"
+    }
+  ]
+}

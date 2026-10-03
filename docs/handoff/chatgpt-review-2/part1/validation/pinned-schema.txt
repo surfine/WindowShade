@@ -1,0 +1,1 @@
+PASS pinned-schema: 304 files, 30 pointers; no live protocol test

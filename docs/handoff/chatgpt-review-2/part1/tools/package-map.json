@@ -1,0 +1,64 @@
+{
+  "T1": [
+    "FocusTimer",
+    "focus-timer",
+    []
+  ],
+  "L1": [
+    "PresenceLock",
+    "presence-lock",
+    []
+  ],
+  "A1": [
+    "AgentSessions",
+    "agent-sessions",
+    []
+  ],
+  "D1": [
+    "ConductorSession",
+    "conductor-session",
+    [
+      "D2"
+    ]
+  ],
+  "D2": [
+    "ConductorCapabilities",
+    "conductor-capabilities",
+    []
+  ],
+  "I1a": [
+    "SmoothScroll",
+    "smooth-scroll",
+    []
+  ],
+  "I1b": [
+    "InputDeviceKind",
+    "input-device-kind",
+    []
+  ],
+  "I1c": [
+    "MiddleDrag",
+    "middle-drag",
+    []
+  ],
+  "I1d": [
+    "TouchTap",
+    "touch-tap",
+    []
+  ],
+  "I1e": [
+    "SiriRemoteButtons",
+    "siri-remote-buttons",
+    []
+  ],
+  "I1f": [
+    "RemoteMode",
+    "remote-mode",
+    []
+  ],
+  "I9": [
+    "FocusNavigator",
+    "focus-navigator",
+    []
+  ]
+}

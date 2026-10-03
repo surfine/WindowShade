@@ -1,0 +1,98 @@
+[
+  {
+    "path": "prototype/PinnedPreview.swift",
+    "line": 928,
+    "old": "        wlog(\"pin-preview: start id=\\(id) app=\\(appName) title=\\(title) frame=\\(format(frame))\")",
+    "new": "        wlog(\"pin-preview: start id=\\(id) frame=\\(format(frame))\")",
+    "source_sha256": "87fa41e40226bcf8e819fdf833c075d8a7e32f346255de4a8cd38463f393b8a1",
+    "kind": "window-title-content"
+  },
+  {
+    "path": "prototype/App/FoldExit.swift",
+    "line": 63,
+    "old": "                wlog(\"quicklook: reopened via Finder Space fallback id=\\(id) title=\\(state.title)\")",
+    "new": "                wlog(\"quicklook: reopened via Finder Space fallback id=\\(id)\")",
+    "source_sha256": "cf08c4991ff60261f965f2aedf7506b6abebf34de63a4f61d9d19918fe9a4248",
+    "kind": "window-title-content"
+  },
+  {
+    "path": "prototype/App/FoldExit.swift",
+    "line": 65,
+    "old": "                wlog(\"quicklook: reopen unavailable id=\\(id) title=\\(state.title)\")",
+    "new": "                wlog(\"quicklook: reopen unavailable id=\\(id)\")",
+    "source_sha256": "cf08c4991ff60261f965f2aedf7506b6abebf34de63a4f61d9d19918fe9a4248",
+    "kind": "window-title-content"
+  },
+  {
+    "path": "prototype/App/FoldExit.swift",
+    "line": 251,
+    "old": "            wlog(\"quicklook fullscreen: reopen via Finder Space id=\\(id) title=\\(state.title)\")",
+    "new": "            wlog(\"quicklook fullscreen: reopen via Finder Space id=\\(id)\")",
+    "source_sha256": "cf08c4991ff60261f965f2aedf7506b6abebf34de63a4f61d9d19918fe9a4248",
+    "kind": "window-title-content"
+  },
+  {
+    "path": "prototype/App/FoldExit.swift",
+    "line": 254,
+    "old": "        wlog(\"quicklook fullscreen: reopen unavailable id=\\(id) title=\\(state.title)\")",
+    "new": "        wlog(\"quicklook fullscreen: reopen unavailable id=\\(id)\")",
+    "source_sha256": "cf08c4991ff60261f965f2aedf7506b6abebf34de63a4f61d9d19918fe9a4248",
+    "kind": "window-title-content"
+  },
+  {
+    "path": "prototype/App/ShadeController.swift",
+    "line": 272,
+    "old": "            wlog(\"quicklook: no direct reopen URL; will use Finder Space fallback title=\\(title)\")",
+    "new": "            wlog(\"quicklook: no direct reopen URL; will use Finder Space fallback\")",
+    "source_sha256": "0d8ef42bdfceb051d9d8abd1010cfc6314f06bde25e0bb881d9edaf178dc4751",
+    "kind": "window-title-content"
+  },
+  {
+    "path": "prototype/App/ShadeController.swift",
+    "line": 512,
+    "old": "            wlog(\"    classic finalBarH=\\(Int(barH)) appTitle=\\\"\\(appName)\\\" windowTitle=\\\"\\(title)\\\"\")",
+    "new": "            wlog(\"    classic finalBarH=\\(Int(barH))\")",
+    "source_sha256": "0d8ef42bdfceb051d9d8abd1010cfc6314f06bde25e0bb881d9edaf178dc4751",
+    "kind": "window-title-content"
+  },
+  {
+    "path": "prototype/App/ShadeController.swift",
+    "line": 527,
+    "old": "                wlog(\"    proxy finalBarH=\\(Int(barH)) canResize=\\(canProxyResize) windowManagement=\\(windowManagementCapability) appTitle=\\\"\\(appName)\\\" windowTitle=\\\"\\(title)\\\" preview=-\")",
+    "new": "                wlog(\"    proxy finalBarH=\\(Int(barH)) canResize=\\(canProxyResize) windowManagement=\\(windowManagementCapability) preview=-\")",
+    "source_sha256": "0d8ef42bdfceb051d9d8abd1010cfc6314f06bde25e0bb881d9edaf178dc4751",
+    "kind": "window-title-content"
+  },
+  {
+    "path": "prototype/App/ShadeController.swift",
+    "line": 543,
+    "old": "                wlog(\"    proxy immediate finalBarH=\\(Int(barH)) canResize=\\(canProxyResize) windowManagement=\\(windowManagementCapability) appTitle=\\\"\\(appName)\\\" windowTitle=\\\"\\(title)\\\" preview=\\(quickPreview == nil ? \"-\" : \"quick\") capture=\\(options.capturePreview)\")",
+    "new": "                wlog(\"    proxy immediate finalBarH=\\(Int(barH)) canResize=\\(canProxyResize) windowManagement=\\(windowManagementCapability) preview=\\(quickPreview == nil ? \"-\" : \"quick\") capture=\\(options.capturePreview)\")",
+    "source_sha256": "0d8ef42bdfceb051d9d8abd1010cfc6314f06bde25e0bb881d9edaf178dc4751",
+    "kind": "window-title-content"
+  },
+  {
+    "path": "prototype/App/ShadeController.swift",
+    "line": 570,
+    "old": "                wlog(\"    proxy pre-hide-capture finalBarH=\\(Int(barH)) canResize=\\(canProxyResize) windowManagement=\\(windowManagementCapability) appTitle=\\\"\\(appName)\\\" windowTitle=\\\"\\(title)\\\" preview=\\(capturedImage == nil ? \"-\" : \"sck\")\")",
+    "new": "                wlog(\"    proxy pre-hide-capture finalBarH=\\(Int(barH)) canResize=\\(canProxyResize) windowManagement=\\(windowManagementCapability) preview=\\(capturedImage == nil ? \"-\" : \"sck\")\")",
+    "source_sha256": "0d8ef42bdfceb051d9d8abd1010cfc6314f06bde25e0bb881d9edaf178dc4751",
+    "kind": "window-title-content"
+  },
+  {
+    "path": "prototype/Window/AXHelpers.swift",
+    "line": 247,
+    "old": "    wlog(\"--- WINDOW role=\\(axRole(win) ?? \"?\") title=\\(axTitle(win)) pos=(\\(Int(pos.x)),\\(Int(pos.y))) size=(\\(Int(size.width))x\\(Int(size.height)))\")",
+    "new": "    wlog(\"ax-window: diagnostic title=[redacted]\")",
+    "source_sha256": "6579ec46b39e2e4071209e6fcb562de227fd73c8be6d3c275a148e647e457f03",
+    "kind": "window-title-content"
+  },
+  {
+    "path": "prototype/App/Notch.swift",
+    "line": 1164,
+    "old": "        wlog(\"notch: title changed id=\\(id) → \\(thumbnail != nil ? \"thumbnail dot\" : decision == .alert ? \"alert\" : \"mark\") (\\(title.count) chars)\")",
+    "new": "        wlog(\"notch: title changed id=\\(id) → \\(thumbnail != nil ? \"thumbnail dot\" : decision == .alert ? \"alert\" : \"mark\")\")",
+    "source_sha256": "f63095255d7996020cad759674a62368bb549354e0038fb5f0bcb4b9ca1195a9",
+    "kind": "title-length-only"
+  }
+]

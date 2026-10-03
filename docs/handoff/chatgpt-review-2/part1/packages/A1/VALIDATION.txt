@@ -1,0 +1,47 @@
+UTC: 2026-10-03T05:48:21.364341+00:00
+Platform: macOS-27.0-arm64-arm-64bit-Mach-O
+Compiler: Apple Swift version 6.4 (swiftlang-6.4.0.34.1 clang-2100.3.34.1)
+Target: arm64-apple-macosx27.0.0
+Command: bash /private/tmp/claude-501/-Users-aaron-Documents-WindowShade--claude-worktrees-windowshade-marvin-discussion-15d18f/d74fa5fd-eb4f-44ee-8dd1-5723403fe657/scratchpad/r2p1/WindowShade2-round2-part1/packages/A1/tests/run-agent-sessions-tests.sh
+Exit: 0
+
+CASE A1-01 | 同项目不同会话、不同助手同 ID → 三条独立记录
+ok   不按目录或显示名合并
+CASE A1-02 | 工具前后、停止 → 在跑、完成；工具重放不累积
+ok   工具幂等
+ok   完成归档
+CASE A1-03 | 普通审批新点按 → 只发授权意图；重复确认和错摘要结果不清请求
+ok   旧 down 不能放行
+ok   请求唯一授权服务
+ok   不重复申请
+ok   错目标通知无效
+ok   已由服务应答，不再回第二次
+CASE A1-04 | 整数7与字符串7 → 两次独立审批；返回只否定眼前一件
+ok   ID 类型不能转字符串混合
+ok   只拒绝当前 ID
+CASE A1-05 | 两分钟期限/更短宿主期限/迟到确认 → 到点交回，不默许
+ok   120秒上限
+ok   到期交回
+ok   迟到不批准
+ok   较短宿主期限优先
+CASE A1-06 | 600秒没事件 → 信息已久；明确进程退出 → 断开
+ok   无消息不是断线
+ok   明确退出才断
+ok   旧进程不能复活
+CASE A1-07 | 乱序和重连旧 epoch → 不更改当前会话，不保留旧审批
+ok   重复序号拒绝
+ok   重连撤旧审批
+ok   旧代次拒绝
+CASE A1-08 | 同请求号换摘要 → 撤旧请求并交回，不能沿用已确认动作
+ok   碰撞不覆盖旧目标
+CASE A1-09 | 锁屏后事件到来 → 展示为空，敏感摘要清掉，审批交回
+ok   锁屏撤销审批
+ok   不在锁屏留标题摘要
+ok   解锁查询现状，不重播审批
+CASE A1-10 | 超出会话/请求容量 → 报容量并交回，不能挤掉待审批项目
+ok   会话上限
+ok   不驱逐已有审批
+CASE A1-11 | 风险类型明确或 shell 未知 → 高风险/未知不降成普通
+ok   明确声明的普通动作
+ok   不靠 shell 前缀
+PASS A1: 11 cases, 28 assertions, 0 failures

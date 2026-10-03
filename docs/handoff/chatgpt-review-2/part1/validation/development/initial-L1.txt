@@ -1,0 +1,15 @@
+/mnt/data/WindowShade2-round2-part1/packages/L1/tests/PresenceLockTests.swift:42:37: error: '==' is not a postfix unary operator
+ 40 |         t.expect(c.phase == .idle && c.status(of:.phone) == .connecting,"旧代次丢弃")
+ 41 |         _=c.handle(.readStarted(.phone,generation:2,request:1),at:sec(2.2)); _=c.handle(.readSucceeded(.phone,generation:2,request:1),at:sec(2.3))
+ 42 |         t.expect(c.status(of:.phone)==.present,"新读证实存活")
+    |                                     `- error: '==' is not a postfix unary operator
+ 43 |         t.section("L1-04", "倒数到点与用户输入同批 → 输入先取消；其后每次输入重置60秒静默期")
+ 44 |         var d=ready(); _=d.handle(.disconnected(.phone,generation:1),at:sec(1)); _=d.handle(.tick,at:sec(2.5))
+
+/mnt/data/WindowShade2-round2-part1/packages/L1/tests/PresenceLockTests.swift:60:37: error: '==' is not a postfix unary operator
+ 58 |         t.expect(f.phase == .idle,"RSSI 不锁")
+ 59 |         _=f.handle(.sensorUnavailable,at:sec(2)); _=f.handle(.disconnected(.phone,generation:1),at:sec(3)); _=f.handle(.tick,at:sec(30))
+ 60 |         t.expect(f.status(of:.phone)==.unknown && f.phase == .idle,"失能后的旧断线不触发")
+    |                                     `- error: '==' is not a postfix unary operator
+ 61 |         t.section("L1-07", "摄像头无首个健康有人帧或回调停了 → 不算人已离开")
+ 62 |         cfg=PresenceLock.Configuration();cfg.cameraEnabled=true
