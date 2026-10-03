@@ -1,0 +1,17 @@
+test_01_check_does_not_source_signing (__main__.Test.test_01_check_does_not_source_signing) ... ok
+test_02_main_and_guard_strict (__main__.Test.test_02_main_and_guard_strict) ... ok
+test_03_both_normal_invocations_use_same_flags (__main__.Test.test_03_both_normal_invocations_use_same_flags) ... ok
+test_04_no_sign_or_launch_or_bundle (__main__.Test.test_04_no_sign_or_launch_or_bundle) ... ok
+test_05_c_failure_propagates (__main__.Test.test_05_c_failure_propagates) ... ok
+test_06_metal_failure_propagates (__main__.Test.test_06_metal_failure_propagates) ... ok
+test_07_metallib_failure_propagates (__main__.Test.test_07_metallib_failure_propagates) ... ok
+test_08_main_failure_skips_guard (__main__.Test.test_08_main_failure_skips_guard) ... ok
+test_09_guard_failure_no_success_message (__main__.Test.test_09_guard_failure_no_success_message) ... ok
+test_10_native_and_main_same_target (__main__.Test.test_10_native_and_main_same_target) ... ok
+test_11_temporary_sources_cleaned (__main__.Test.test_11_temporary_sources_cleaned) ... ok
+test_12_glass_checks_header_not_version (__main__.Test.test_12_glass_checks_header_not_version) ... ok
+
+----------------------------------------------------------------------
+Ran 12 tests in 1.676s
+
+OK

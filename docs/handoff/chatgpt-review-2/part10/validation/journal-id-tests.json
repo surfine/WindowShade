@@ -1,0 +1,212 @@
+{
+  "kind": "EXACT_PRODUCTION_FUNCTIONS_FOUNDATION_HOST",
+  "appkit": "NOT_RUN",
+  "cases": [
+    {
+      "name": "one",
+      "status": "PASSED"
+    },
+    {
+      "name": "max",
+      "status": "PASSED"
+    },
+    {
+      "name": "integer_double",
+      "status": "PASSED"
+    },
+    {
+      "name": "NSNumber",
+      "status": "PASSED"
+    },
+    {
+      "name": "missing",
+      "status": "PASSED"
+    },
+    {
+      "name": "zero",
+      "status": "PASSED"
+    },
+    {
+      "name": "negative",
+      "status": "PASSED"
+    },
+    {
+      "name": "fractional",
+      "status": "PASSED"
+    },
+    {
+      "name": "nan",
+      "status": "PASSED"
+    },
+    {
+      "name": "positive_infinity",
+      "status": "PASSED"
+    },
+    {
+      "name": "negative_infinity",
+      "status": "PASSED"
+    },
+    {
+      "name": "above_uint32",
+      "status": "PASSED"
+    },
+    {
+      "name": "large_finite",
+      "status": "PASSED"
+    },
+    {
+      "name": "bool_true",
+      "status": "PASSED"
+    },
+    {
+      "name": "bool_false",
+      "status": "PASSED"
+    },
+    {
+      "name": "string",
+      "status": "PASSED"
+    },
+    {
+      "name": "array",
+      "status": "PASSED"
+    },
+    {
+      "name": "dictionary",
+      "status": "PASSED"
+    },
+    {
+      "name": "int64_max",
+      "status": "PASSED"
+    },
+    {
+      "name": "uint64_max",
+      "status": "PASSED"
+    },
+    {
+      "name": "negative_fraction",
+      "status": "PASSED"
+    },
+    {
+      "name": "leading_zero_string",
+      "status": "PASSED"
+    },
+    {
+      "name": "decimal_valid",
+      "status": "PASSED"
+    },
+    {
+      "name": "empty",
+      "status": "PASSED"
+    },
+    {
+      "name": "absent_key",
+      "status": "PASSED"
+    }
+  ],
+  "baseline": [
+    {
+      "input": "nan",
+      "exit_code": -4,
+      "stdout": "",
+      "trap_observed": true
+    },
+    {
+      "input": "over",
+      "exit_code": -4,
+      "stdout": "",
+      "trap_observed": true
+    },
+    {
+      "input": "bool",
+      "exit_code": 0,
+      "stdout": "Optional(1)\n",
+      "trap_observed": false
+    },
+    {
+      "input": "fraction",
+      "exit_code": 0,
+      "stdout": "Optional(1)\n",
+      "trap_observed": false
+    }
+  ],
+  "commands": [
+    {
+      "argv": [
+        "swiftc",
+        "-swift-version",
+        "6",
+        "-strict-concurrency=complete",
+        "-warnings-as-errors",
+        "-parse-as-library",
+        "/tmp/ws2-journal-id-dk_7hmik/test.swift",
+        "-o",
+        "/tmp/ws2-journal-id-dk_7hmik/test"
+      ],
+      "exit_code": 0,
+      "stdout": "",
+      "stderr": ""
+    },
+    {
+      "argv": [
+        "/tmp/ws2-journal-id-dk_7hmik/test"
+      ],
+      "exit_code": 0,
+      "stdout": "PASS one\nPASS max\nPASS integer_double\nPASS NSNumber\nPASS missing\nPASS zero\nPASS negative\nPASS fractional\nPASS nan\nPASS positive_infinity\nPASS negative_infinity\nPASS above_uint32\nPASS large_finite\nPASS bool_true\nPASS bool_false\nPASS string\nPASS array\nPASS dictionary\nPASS int64_max\nPASS uint64_max\nPASS negative_fraction\nPASS leading_zero_string\nPASS decimal_valid\nPASS empty\nPASS absent_key\n",
+      "stderr": ""
+    },
+    {
+      "argv": [
+        "swiftc",
+        "-swift-version",
+        "6",
+        "-strict-concurrency=complete",
+        "-warnings-as-errors",
+        "/tmp/ws2-journal-id-dk_7hmik/old.swift",
+        "-o",
+        "/tmp/ws2-journal-id-dk_7hmik/old"
+      ],
+      "exit_code": 0,
+      "stdout": "",
+      "stderr": ""
+    },
+    {
+      "argv": [
+        "/tmp/ws2-journal-id-dk_7hmik/old",
+        "nan"
+      ],
+      "exit_code": -4,
+      "stdout": "",
+      "stderr": "Swift/IntegerTypes.swift:8835: Fatal error: Double value cannot be converted to Int because it is either infinite or NaN\nCurrent stack trace:\n0    libswiftCore.so                    0x00007fd166971500 swift_reportError + 197\n1    libswiftCore.so                    0x00007fd166d054c0 _swift_stdlib_reportFatalErrorInFile + 109\n2    libswiftCore.so                    0x00007fd166af68f0 _assertionFailure(_:_:file:line:flags:) + 434\n3    old                                0x000056285f2e66be <unavailable> + 9918\n4    old                                0x000056285f2e717a <unavailable> + 12666\n5    libc.so.6                          0x00007fd165393ca8 <unavailable> + 171176\n6    libc.so.6                          0x00007fd165393ce0 __libc_start_main + 133\n7    old                                0x000056285f2e61b1 <unavailable> + 8625\n"
+    },
+    {
+      "argv": [
+        "/tmp/ws2-journal-id-dk_7hmik/old",
+        "over"
+      ],
+      "exit_code": -4,
+      "stdout": "",
+      "stderr": "Swift/Integers.swift:3053: Fatal error: Not enough bits to represent the passed value\nCurrent stack trace:\n0    libswiftCore.so                    0x00007ffb29493500 swift_reportError + 197\n1    libswiftCore.so                    0x00007ffb298274c0 _swift_stdlib_reportFatalErrorInFile + 109\n2    libswiftCore.so                    0x00007ffb296188f0 _assertionFailure(_:_:file:line:flags:) + 434\n3    old                                0x00005635338da8a4 <unavailable> + 10404\n4    old                                0x00005635338db17a <unavailable> + 12666\n5    libc.so.6                          0x00007ffb27eb5ca8 <unavailable> + 171176\n6    libc.so.6                          0x00007ffb27eb5ce0 __libc_start_main + 133\n7    old                                0x00005635338da1b1 <unavailable> + 8625\n"
+    },
+    {
+      "argv": [
+        "/tmp/ws2-journal-id-dk_7hmik/old",
+        "bool"
+      ],
+      "exit_code": 0,
+      "stdout": "Optional(1)\n",
+      "stderr": ""
+    },
+    {
+      "argv": [
+        "/tmp/ws2-journal-id-dk_7hmik/old",
+        "fraction"
+      ],
+      "exit_code": 0,
+      "stdout": "Optional(1)\n",
+      "stderr": ""
+    }
+  ],
+  "test_count": 25,
+  "passed": true,
+  "source_sha256": "5ffdb659b88cba3b72a346192fef9ba0c6a0eb22fad68aebd0681c09eb5b85aa"
+}

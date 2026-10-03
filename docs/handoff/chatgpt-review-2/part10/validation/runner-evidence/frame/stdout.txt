@@ -1,0 +1,16 @@
+PASS FRAME01-main-actor-nonsendable-value
+PASS FRAME02-independent-actor
+PASS FRAME03-unisolated-caller
+PASS FRAME04-replaced-inside-getter
+PASS FRAME05-deadline-inside-getter
+PASS FRAME06-revoked-during-pause
+PASS FRAME07-timeout-zero
+PASS FRAME07-timeout-negative
+PASS FRAME07-timeout-nan
+PASS FRAME07-timeout-infinite
+PASS FRAME08-nonfinite-clock
+PASS FRAME09-clock-goes-backward
+PASS FRAME10-deadline-overflow
+PASS FRAME11-deadline-does-not-advance
+PASS FRAME12-task-cancelled
+SCENARIOS 15 ASSERTIONS 15 FAILURES 0

@@ -1,0 +1,11 @@
+# 开发与中止记录
+
+第一次构建入口测试在外层20秒调用限时到达时停在第10例，未生成完整结果。保留当时stdout；随后让假的Python工具以-S启动，避免本机site启动成本，整套重跑12例通过，未改变测试断言。
+
+一次将flow与foundation串在同一外层45秒调用中，flow完成，foundation未写最终报告。保留空目录与INTERRUPTED说明，随后foundation单独重跑通过。
+
+工单路径检查拒绝了误写的App/AXHelpers.swift和App/NotchActivities.swift；使用实际Window/AXHelpers.swift及Core/NotchActivities.swift重建清单，85个实际路径最终全部校验。
+
+旧journal函数的两次运行时陷阱是刻意隔离的缺陷复现，不算新测试通过，不是实际用户文件或窗口故障。
+
+第一次打包前的内部完整性核对错误地在逐项循环中重复计算全树SHA，触及外层45秒限时。改成只计算一次快照再逐项比较后完整通过；比较标准未放宽，生产源码未因此改变。

@@ -1,0 +1,33 @@
+{
+  "kind": "repo_drift_vs_part10_baseline",
+  "baseline": "v9 candidate (part10 base-sources / sources/code-map.json)",
+  "code_map_remap": {
+    "prototype/App/InteractionCoordinator.swift": "prototype/Core/InteractionCoordinator.swift"
+  },
+  "intentionally_absent": {
+    "prototype/App/WS2IslandCoordinator.swift": "本仓库的单一刘海仲裁器是 NotchLeaseHub（prototype/App/NotchLeases.swift）；第九/十份都明确不新增第二套岛管理器，所以这个文件应当不存在。"
+  },
+  "code_map_drift": [
+    "prototype/App/WS2IslandCoordinator.swift",
+    "prototype/App/FoldCompletion.swift",
+    "prototype/App/FoldTransaction.swift",
+    "prototype/App/Reconcile.swift",
+    "prototype/App/ShadeController.swift",
+    "prototype/App/WS2AppRuntime.swift",
+    "prototype/App/WS2CodexApprovalHost.swift",
+    "prototype/App/WS2FoldCallbackGuard.swift",
+    "prototype/App/WS2GameControllerBridge.swift",
+    "prototype/App/WS2OwnedCodexSession+Authorization.swift",
+    "prototype/Core/CodexWire.swift",
+    "prototype/Core/PairingTLV.swift",
+    "prototype/Native/WS2Child.c",
+    "prototype/Support/WS2DuplexProcess.swift",
+    "prototype/Support/WS2KeychainPeerStorage.swift",
+    "prototype/Support/WS2LocalLaunchProfile.swift",
+    "prototype/build.sh",
+    "docs/blueprint.md",
+    "docs/handoff/START-HERE-deepseek.md",
+    "docs/privacy-page.md",
+    "docs/releases/v1.0.16-ledger.md"
+  ]
+}

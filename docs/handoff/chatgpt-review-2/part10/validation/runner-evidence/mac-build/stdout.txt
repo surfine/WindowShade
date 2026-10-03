@@ -1,0 +1,1 @@
+{"environment": "Linux-6.18.44-x86_64-with-glibc2.41", "sdk_build": "NOT_RUN", "signing": "NOT_RUN", "application_launch": "NOT_RUN", "candidate_unchanged": true, "commands": [], "exit_code": 78, "reason": "NOT RUN: requires a real macOS SDK and host"}

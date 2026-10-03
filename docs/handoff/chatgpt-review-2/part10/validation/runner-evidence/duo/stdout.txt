@@ -1,0 +1,3 @@
+PASS: tilt filter matches the main-thread version bit for bit; sub-pixel hold is bounded
+PASS: angle endpoints, bounded spring, held position, duplicate/reverse transitions, report decoding, latest-only frames, stale producer isolation, injected restore clock, timeout/retry/cancellation, durable restart/write failure
+PASS: recovery intent precedes hiding, animation follows verification, synchronous restore contract, session teardown and capture exclusion are wired

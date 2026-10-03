@@ -1,0 +1,23 @@
+test_bad_overlay (__main__.Tests.test_bad_overlay) ... ok
+test_base_symlink (__main__.Tests.test_base_symlink) ... ok
+test_duplicate_manifest_path (__main__.Tests.test_duplicate_manifest_path) ... ok
+test_existing_directory (__main__.Tests.test_existing_directory) ... ok
+test_existing_file (__main__.Tests.test_existing_file) ... ok
+test_extra_base (__main__.Tests.test_extra_base) ... ok
+test_extra_overlay (__main__.Tests.test_extra_overlay) ... ok
+test_missing_base (__main__.Tests.test_missing_base) ... ok
+test_missing_overlay (__main__.Tests.test_missing_overlay) ... ok
+test_nested_output (__main__.Tests.test_nested_output) ... ok
+test_overlay_symlink (__main__.Tests.test_overlay_symlink) ... ok
+test_package_output (__main__.Tests.test_package_output) ... ok
+test_success_and_original (__main__.Tests.test_success_and_original) ... ok
+test_symlink_parent (__main__.Tests.test_symlink_parent) ... ok
+test_traversal (__main__.Tests.test_traversal) ... ok
+test_wrong_base (__main__.Tests.test_wrong_base) ... ok
+test_wrong_base_sha (__main__.Tests.test_wrong_base_sha) ... ok
+test_wrong_count (__main__.Tests.test_wrong_count) ... ok
+
+----------------------------------------------------------------------
+Ran 18 tests in 0.014s
+
+OK

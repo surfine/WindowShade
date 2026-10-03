@@ -1,0 +1,10 @@
+{
+  "status": "STAGED",
+  "base_file_count": 1168,
+  "result_file_count": 1169,
+  "replaced": 5,
+  "added": 1,
+  "out": "/mnt/data/ws2-part10-stage-check",
+  "application_build": "NOT RUN",
+  "runtime": "NOT RUN"
+}
