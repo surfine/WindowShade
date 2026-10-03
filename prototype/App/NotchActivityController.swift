@@ -10,6 +10,8 @@ final class NotchActivityController: NSObject, NSSharingServiceDelegate {
         set { UserDefaults.standard.set(newValue, forKey: enabledKey) }
     }
     var onChange: (([NotchActivity], String?) -> Void)?
+    /// 番茄钟的动作转给 App 里唯一的宿主；这一层不自己算时间。
+    var onFocusAction: ((NotchActivityAction) -> Void)?
     private(set) var store = NotchActivityStore()
     private let sources = NotchActivitySources()
     private var generation: UInt64 = 0
@@ -74,6 +76,19 @@ final class NotchActivityController: NSObject, NSSharingServiceDelegate {
     func select(_ id: String) { if store.select(id: id) { publish() } }
     func move(_ delta: Int) { store.moveSelection(by: delta); publish() }
 
+    /// 番茄钟是持续活动的一种。宿主每次状态变化推一条；空闲时传 nil 结束它。
+    func setFocus(_ item: NotchActivity?) {
+        guard Self.isEnabled, !suspended else { return }
+        let now = ProcessInfo.processInfo.systemUptime
+        if let item {
+            guard store.upsert(item, now: now) else { return }
+        } else {
+            guard let current = store.activities.first(where: { $0.kind == .focus }) else { return }
+            guard store.end(id: current.id, generation: current.generation, now: now) else { return }
+        }
+        publish()
+    }
+
     private func receive(_ items: [NotchSourceSnapshot]) {
         guard running else { return }
         let now = ProcessInfo.processInfo.systemUptime
@@ -125,6 +140,8 @@ final class NotchActivityController: NSObject, NSSharingServiceDelegate {
         case .airDrop: chooseFiles()
         case .route: chooseRoute()
         case .voiceMemos: openApp("com.apple.VoiceMemos")
+        case .focusStart, .focusPause, .focusSkip, .focusEnd:
+            onFocusAction?(action)
         case .end:
             guard let selected = store.selected, selected.kind == .route else { return }
             routeEpoch += 1; routeTask?.cancel(); routeTask = nil; routeItems = []
@@ -140,6 +157,7 @@ final class NotchActivityController: NSObject, NSSharingServiceDelegate {
             case .airDrop:
                 let app = URL(fileURLWithPath: "/System/Library/CoreServices/Finder.app/Contents/Applications/AirDrop.app")
                 NSWorkspace.shared.openApplication(at: app, configuration: .init())
+            case .focus: break
             }
         }
     }

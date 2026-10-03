@@ -58,6 +58,8 @@ final class NotchController {
     private var changed: [CGWindowID: TimeInterval] = [:]
     private var alertPolicy = ChangeAlertPolicy()
     private let watcher = WindowTitleWatcher()
+    /// 锁屏、睡眠、换用户的观察者：收到就先撤销展示权。
+    private var leaseObservers: [NSObjectProtocol] = []
     private let menuRoom = MenuBarRoom()
     private var syncTimer: Timer?
     /// 系统里最小化的窗口、隐藏的 App（见 NotchShelf.swift）。
@@ -67,6 +69,31 @@ final class NotchController {
     let activities = NotchActivityController()
     lazy var authentication = NotchAuthenticationController(owner: self)
     lazy var faceObservations = NotchFaceObservationController(owner: self)
+
+    /// 一块屏同时只有一个主人：授权、指挥、那一排、启动台、窗口浏览、番茄钟都从这里拿展示权。
+    /// 收尾（停看一眼、撤审批输入、收启动台）在撤销回调里同步做完，协调器才发布下一份租约。
+    lazy var leases = NotchLeaseHub(
+        displays: { [weak self] in
+            guard let self else { return [] }
+            return Set(self.panels.keys.map { WS2.DisplayID(value: $0) })
+        },
+        cancel: { [weak self] notice in self?.handleLeaseCancel(notice) })
+
+    private func handleLeaseCancel(_ notice: NotchLeaseHub.CancelNotice) {
+        switch notice.owner {
+        case .authorization:
+            // 授权那条路的收尾归认证控制器：它还要撤 LAContext、退掉授权账。
+            authentication.cancel(animated: false, restoreFocus: false)
+        case .launchpad:
+            if owner.launchpad.isShowing { owner.launchpad.hide(reason: "lease") }
+        case .notchShelf:
+            // 看一眼与缩略图预览先停，再收那一排；不等动画。
+            endPeek()
+            panels[notice.display.value]?.cancelLease(notice.owner)
+        default:
+            panels[notice.display.value]?.cancelLease(notice.owner)
+        }
+    }
 
     func authenticationPanel() -> NotchPanel? {
         panel(containing: NSEvent.mouseLocation) ?? NSScreen.main.flatMap { panel(for: $0) } ?? notchPanel
@@ -91,9 +118,26 @@ final class NotchController {
             forName: NSApplication.didChangeScreenParametersNotification, object: nil, queue: .main) { [weak self] _ in
             MainActor.assumeIsolated { self?.install() }
         }
+        // 锁屏、睡眠、换用户：先撤销展示权再做别的，可见内容和输入一起停下。
+        let workspace = NSWorkspace.shared.notificationCenter
+        for (name, reason) in [(NSWorkspace.willSleepNotification, WS2.LeaseRevocation.sleeping),
+                               (NSWorkspace.sessionDidResignActiveNotification, WS2.LeaseRevocation.sessionChanged)] {
+            leaseObservers.append(workspace.addObserver(forName: name, object: nil, queue: .main) { [weak self] _ in
+                MainActor.assumeIsolated { self?.leases.invalidate(reason) }
+            })
+        }
+        leaseObservers.append(DistributedNotificationCenter.default().addObserver(
+            forName: .init("com.apple.screenIsLocked"), object: nil, queue: .main) { [weak self] _ in
+            MainActor.assumeIsolated { self?.leases.invalidate(.locked) }
+        })
         activities.onChange = { [weak self] values, selected in
             guard let self else { return }
-            for panel in self.panels.values { panel.setActivities(values, selected: selected) }
+            let ids = values.map(\.id)
+            for (display, panel) in self.panels {
+                // 持续活动只登记在这里，不会顶掉上面的层；超过三条由协调器自己去重截断。
+                self.leases.publishOngoing(ids, on: WS2.DisplayID(value: display))
+                panel.setActivities(values, selected: selected)
+            }
             self.owner.launchpad.updateActivities(values, selected: selected)
         }
         watcher.onTitleSettled = { [weak self] id, title in self?.titleSettled(id, title: title) }
@@ -114,6 +158,7 @@ final class NotchController {
         syncTimer = Timer.scheduledTimer(withTimeInterval: 2, repeats: true) { [weak self] _ in
             MainActor.assumeIsolated {
                 guard let self else { return }
+                self.leases.tick()
                 self.syncWatchers()
                 if !self.tucked.isEmpty || !self.changed.isEmpty { self.refresh() }
             }
@@ -142,7 +187,7 @@ final class NotchController {
         return (NSRect(x: screen.frame.midX - 95, y: screen.frame.maxY - menuBar, width: 190, height: menuBar), true)
     }
 
-    private static func displayID(_ screen: NSScreen) -> CGDirectDisplayID? {
+    static func displayID(_ screen: NSScreen) -> CGDirectDisplayID? {
         (screen.deviceDescription[NSDeviceDescriptionKey("NSScreenNumber")] as? NSNumber)?.uint32Value
     }
 
@@ -177,6 +222,8 @@ final class NotchController {
             let slot = Self.slotRect(on: screen)
             let panel = panels[id] ?? NotchPanel(notch: slot.rect, virtual: slot.virtual)
             panels[id] = panel
+            panel.leases = leases
+            panel.displayID = WS2.DisplayID(value: id)
             panel.notch = slot.rect
             panel.onHoverChanged = { [weak self, weak panel] inside in
                 guard let panel else { return }
@@ -229,6 +276,7 @@ final class NotchController {
         }
         for (id, panel) in panels where !alive.contains(id) {
             authentication.reconcile(panels: panels.filter { alive.contains($0.key) }.map(\.value))
+            leases.removeDisplay(WS2.DisplayID(value: id))
             panel.orderOut(nil)
             panels.removeValue(forKey: id)
         }
@@ -1420,6 +1468,38 @@ final class NotchPanel: NSPanel {
     var onActivityAction: ((NotchActivityAction) -> Void)?
     var canSwipeActivities: (() -> Bool)?
     var onLongPress: (() -> Void)?
+    /// 这块屏的展示权表。nil 表示还没接上（探针与单独搭的面板），这时不拦任何东西。
+    var leases: NotchLeaseHub?
+    var displayID: WS2.DisplayID?
+
+    /// 拿展示权。被上面的层占着就返回 false，调用方不要抢、也不要换一种更显眼的方式露出来。
+    func acquireLease(_ owner: NotchLeaseHub.Owner) -> Bool {
+        guard let leases, let displayID else { return true }
+        return leases.acquire(owner, on: displayID)
+    }
+
+    func releaseLease(_ owner: NotchLeaseHub.Owner) {
+        guard let leases, let displayID else { return }
+        leases.release(owner, on: displayID)
+    }
+
+    /// 被撤销时的同步收尾：先停下输入和画面，不等动画。
+    func cancelLease(_ owner: NotchLeaseHub.Owner) {
+        switch owner {
+        case .notchShelf:
+            alertTimer?.invalidate(); alertInfo = nil
+            guard isExpanded else { return }
+            isExpanded = false; tiles = []
+            updateVisibility(); apply(animated: false)
+        case .authorization:
+            canvas.resetInteractions()
+            authenticationView = nil
+            canvas.setAuthentication(nil)
+            updateVisibility(); apply(animated: false)
+        case .launchpad, .windowBrowser, .conductor, .pomodoro:
+            break
+        }
+    }
     private var activityItems: [NotchActivity] = []
     private var activitySelection: String?
     private var authenticationView: (NSView & NotchInteractiveContent)?
@@ -1695,6 +1775,8 @@ final class NotchPanel: NSPanel {
     /// 提醒：短暂展开说一句，2.6 秒后收回（指针停在上面时展开的是一排，不插提醒）。
     func alert(_ info: Alert, duration: TimeInterval = 2.6) {
         guard !isAuthenticating, !isExpanded, dropState == .none else { return }
+        // 被上面的层挡着：进次区域留个小点，按规则以后也不重播这条提醒。
+        if let leases, let displayID, !leases.remind(on: displayID) { return }
         alertInfo = info
         pointerWhenGrown = NSEvent.mouseLocation
         updateVisibility()
@@ -1711,6 +1793,7 @@ final class NotchPanel: NSPanel {
 
     func expand(with tiles: [NotchTile]) {
         guard !isAuthenticating else { return }
+        guard acquireLease(.notchShelf) else { return }
         alertTimer?.invalidate()
         alertInfo = nil
         isExpanded = true
@@ -1735,6 +1818,7 @@ final class NotchPanel: NSPanel {
         isExpanded = false
         tiles = []
         apply(animated: true)
+        releaseLease(.notchShelf)
     }
 
     /// 收下了：托盘换成对勾，触控板轻轻一下；0.55 秒后收回（刘海两边这时已经露出图标和个数）。

@@ -16,6 +16,8 @@ final class LaunchpadController {
     private var wallpapers: [String: CGImage] = [:]
     private var panel: LaunchpadPanel?
     private var previousApp: NSRunningApplication?
+    /// 启动台这次开在哪块屏；收起时按它释放展示权。
+    private var shownDisplay: WS2.DisplayID?
     private var scanning = false
     private var scanCompletions: [() -> Void] = []
     private var activation: NSObjectProtocol?
@@ -148,6 +150,12 @@ final class LaunchpadController {
         owner.gestures.cancel(reason: "launchpad")
         owner.glance.cancelAll(reason: "launchpad")
         owner.notch.prepareForLaunchpad()
+        // 启动台层先占这块屏；占不到（授权、指挥正占着）就不开。
+        if let id = NotchController.displayID(screen) {
+            let display = WS2.DisplayID(value: id)
+            guard owner.notch.leases.acquire(.launchpad, on: display) else { return }
+            shownDisplay = display
+        }
         previousApp = NSWorkspace.shared.frontmostApplication
         let panel = LaunchpadPanel(screen: screen)
         self.panel = panel
@@ -256,6 +264,10 @@ final class LaunchpadController {
         }
         navigationGeneration &+= 1
         self.panel = nil
+        if let shownDisplay {
+            owner.notch.leases.release(.launchpad, on: shownDisplay)
+            self.shownDisplay = nil
+        }
         hideReasonForProbe = reason
         panel.dismiss(launching: launched && reason == "launch")
         if !launched, let previousApp, !previousApp.isTerminated { previousApp.activate() }

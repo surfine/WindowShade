@@ -31,7 +31,8 @@ final class NotchActivityView: NSView {
         addSubview(viewport); viewport.addSubview(strip)
         let actions: [(String, String, NotchActivityAction)] = [
             ("音乐", "music.note", .enableMusic), ("隔空投送", "airdrop", .airDrop),
-            ("路线", "map", .route), ("语音备忘录", "waveform", .voiceMemos)]
+            ("路线", "map", .route), ("语音备忘录", "waveform", .voiceMemos),
+            ("番茄钟", "timer", .focusStart)]
         tools = actions.map { title, symbol, action in
             let button = makeButton(title, symbol: symbol)
             button.identifier = .init(action.rawValue); button.target = self; button.action = #selector(tool(_:))
@@ -91,7 +92,8 @@ final class NotchActivityView: NSView {
         }
         for (n, button) in tools.enumerated() {
             button.isHidden = !expanded
-            button.frame = NSRect(x: 12 + CGFloat(n) * width / 4, y: 4, width: width / 4, height: 24)
+            let slot = width / CGFloat(max(1, tools.count))
+            button.frame = NSRect(x: 12 + CGFloat(n) * slot, y: 4, width: slot, height: 24)
         }
         if !expanded {
             for card in cards { card.compactTrailing = CGFloat(tabs.count) * tabWidth + 8; card.needsLayout = true }
@@ -176,6 +178,7 @@ private final class ActivityCard: NSView {
     private let track = CALayer()
     private var buttons: [NSButton] = []
     private var expanded = false
+    private var focusStyle = false
     override init(frame: NSRect) {
         super.init(frame: frame); wantsLayer = true
         for field in [title, subtitle] {
@@ -197,10 +200,17 @@ private final class ActivityCard: NSView {
         subtitle.stringValue = item.isPaused && item.kind == .music ? "已暂停 · \(item.subtitle)" : item.subtitle
         icon.image = NotchActivitySymbol.image(item.symbol)
         reportedProgress = item.progress
+        focusStyle = item.kind == .focus
+        // 番茄钟用大字和番茄红：展开时一眼看得到还剩多久。
+        title.font = focusStyle ? .monospacedDigitSystemFont(ofSize: 20, weight: .medium) : .systemFont(ofSize: 12, weight: .semibold)
+        progress.backgroundColor = (focusStyle ? NSColor.systemRed : NSColor.systemGreen).cgColor
         buttons.forEach { $0.removeFromSuperview() }
         let actions: [(String, String, NotchActivityAction)]
         if item.kind == .music {
             actions = [("上一首", "backward.end.fill", .previous), (item.isPaused ? "播放" : "暂停", item.isPaused ? "play.fill" : "pause.fill", .playPause), ("下一首", "forward.end.fill", .next)]
+        } else if item.kind == .focus {
+            actions = [(item.isPaused ? "继续" : "暂停", item.isPaused ? "play.fill" : "pause.fill", .focusPause),
+                       ("跳过", "forward.end.fill", .focusSkip), ("结束", "stop.fill", .focusEnd)]
         } else if item.kind == .route {
             actions = [("地图", "arrow.up.forward.app", .open), ("移除路线", "xmark", .end)]
         } else { actions = [("打开", "arrow.up.forward.app", .open)] }
@@ -216,7 +226,9 @@ private final class ActivityCard: NSView {
         super.layout()
         let reserved = expanded ? CGFloat(buttons.count) * 30 + 6 : compactTrailing
         icon.frame = NSRect(x: 2, y: expanded ? 31 : 3, width: 20, height: 20)
-        title.frame = NSRect(x: 30, y: expanded ? 39 : 4, width: max(0, bounds.width - 32 - reserved), height: 18)
+        let titleHeight: CGFloat = focusStyle ? 26 : 18
+        let titleY: CGFloat = focusStyle ? 32 : (expanded ? 39 : 4)
+        title.frame = NSRect(x: 30, y: titleY, width: max(0, bounds.width - 32 - reserved), height: titleHeight)
         subtitle.isHidden = !expanded
         subtitle.frame = NSRect(x: 30, y: 21, width: max(0, bounds.width - 32 - reserved), height: 16)
         for (n, button) in buttons.enumerated() {

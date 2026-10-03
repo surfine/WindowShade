@@ -92,6 +92,12 @@ final class NotchAuthenticationController {
         deadline = ProcessInfo.processInfo.systemUptime + Self.lifetime
         let view = NotchAuthenticationView(context: context, reason: AuthorizationCopy.action(for: target))
         view.onCancel = { [weak self] in self?.cancel() }
+        // 授权层先占这块屏：占不到就不露面，也不降级成别的提示。
+        guard panel.acquireLease(.authorization) else {
+            context.invalidate()
+            alert(AuthorizationCopy.unavailable, on: panel)
+            completion(nil); return
+        }
         self.panel = panel; self.context = context; evaluating = false; self.presentation = view; self.completion = completion
         self.request = request; self.target = target; self.publicKey = publicKey
         previousApplication = NSWorkspace.shared.frontmostApplication
@@ -181,6 +187,7 @@ final class NotchAuthenticationController {
         request = nil; target = nil; publicKey = nil
         let reply = completion; completion = nil
         panel?.setAuthentication(nil, animated: animated); panel?.resignKey()
+        panel?.releaseLease(.authorization)
         panel = nil; presentation = nil
         let previous = previousApplication; previousApplication = nil
         if restoreFocus, NSWorkspace.shared.frontmostApplication?.processIdentifier == ProcessInfo.processInfo.processIdentifier,
