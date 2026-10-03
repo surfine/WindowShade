@@ -94,7 +94,7 @@
 | I2、I3、I5、I8、I7 | 触点、滚动钩子、Siri 遥控器、手柄、设置 | deepseek-input.md |
 | D5、D6 | 遥控协议、Codex 适配器 | deepseek-conductor.md |
 
-**随时可做，不碰 App：概念片。**F1 → F2 → F3，见 [deepseek-film.md](deepseek-film.md)；项目在 `film/ws2-concept/`。录真机画面、渲染、验收、配声音由主模型做。
+**随时可做，不碰 App：概念片。**F1 → F5，见 [deepseek-film.md](deepseek-film.md)；Remotion 工程在 `film/ws2-concept/`，派活时用 setup 把主仓库的 `node_modules` 链接进去。录真机画面、渲染、验收、配声音由主模型做。
 
 **不交给 DeepSeek，由主模型做**：刷脸解锁核心（face-unlock.md F2–F5）、L3 身份实验、L5 回来就开的代填密码、A4 批准接授权账、A5 会话与指挥模式合流、I4 中键接标题栏手势、I6 遥控器麦克风、T3 番茄钟接收进刘海、语音与声纹。
 

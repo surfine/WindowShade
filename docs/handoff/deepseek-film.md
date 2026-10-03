@@ -1,107 +1,120 @@
 # 交给 DeepSeek：WindowShade 2 概念片
 
-这支片子由 DeepSeek 写合成代码；主模型负责录真机画面、渲染、出片验收和配声音。
-片子的一切都在 `film/ws2-concept/`：
+片子在 `film/ws2-concept/`，是一个已经装好、能渲染的 Remotion 4.0.484 工程。
 
 | 文件 | 内容 |
 | --- | --- |
-| `BRIEF.md` | 脚本和分镜，**以它为准** |
-| `DIGEST.md` | 必须遵守的规则摘要 |
-| `footage/SHOTLIST.md` | 真机镜头清单 |
+| `BRIEF.md` | 脚本、五处 wow、分镜，**以它为准** |
+| `DIGEST.md` | 写法规则 |
+| `reference/` | 33 张镜头卡、调好参数的示例源码、审美准则、声音设计（来自 video-shotcraft，Apache 2.0） |
+| `public/footage/` | 真机镜头清单 `SHOTLIST.md` 和登记表 `manifest.json` |
 
-一次交一个包：F1 → F2 → F3。用 `deepseek_agent`，后两个包用 `deepseek_agent_continue` 接着做，让它记得前面的上下文。
+一次交一个包：F1 → F2 → F3 → F4 → F5。第一个包用 `deepseek_agent`，后面的用 `deepseek_agent_continue` 接着做。
 
----
+## 派活参数（主模型照抄）
+
+- `repo`：`/Users/aaron/Documents/WindowShade`（先确认概念片已经提交到 `main`）。
+- `setup`：把主仓库已经装好的依赖链接进克隆：
+
+  ```
+  ["ln", "-s", "/Users/aaron/Documents/WindowShade/film/ws2-concept/node_modules", "film/ws2-concept/node_modules"]
+  ```
+
+  主仓库里没有 `node_modules` 时，主模型先在 `/Users/aaron/Documents/WindowShade/film/ws2-concept` 里跑一次 `npm install`。
+- `checks`：`["npm", "--prefix", "film/ws2-concept", "run", "typecheck"]`
+- 交回后，主模型在自己的检出里：
+  1. `git apply --3way` 打上补丁；
+  2. 用 `npx remotion still` 抽 BRIEF 里每章中段的帧，**自己看图**；
+  3. 按问题写带时间码的修改单，用 continue 发回去。
 
 ## 总则（每个包都贴）
 
-你在 WindowShade 仓库里做一支 80 秒的概念片，用 HyperFrames（HTML + GSAP 的确定性视频合成）。项目已经建好，在 `film/ws2-concept/`。
+你在做 WindowShade 2 的概念片：126 秒，Remotion 工程，在 `film/ws2-concept/`。动手前必须读完：
 
-动手前必须读完：
+1. `film/ws2-concept/BRIEF.md`：脚本、Aaron 点名的五处 wow、分镜；
+2. `film/ws2-concept/DIGEST.md`：写法规则。最重要的是第一节：**照示例源码改，不要凭印象重写**；
+3. 你这个包要用到的每张镜头卡（`reference/cards/<卡名>.md`）和它的示例源码（`reference/demos/<卡名>/*.tsx`），全文读。
 
-1. `film/ws2-concept/BRIEF.md`：脚本、分镜、视觉语言；
-2. `film/ws2-concept/DIGEST.md`：HyperFrames 契约、动效总纲、WindowShade 的弹簧、沙箱限制；
-3. 能读到的话，再读 DIGEST.md 开头列的几份原文（`~/.claude/skills/` 下）。读不到就以 DIGEST 为准，不要凭印象写 HyperFrames 的 API。
-
-目标不是“动起来”。观众在每一秒都要知道：该看哪、为什么在看、它从哪来、要去哪。做出来要像 Apple 发布会里的一段，不像幻灯片。
+目标不是“动起来”，是让人看了喊 wow。观众每一秒都要知道：该看哪、为什么在看、它从哪来、要去哪。像 Apple 发布会里的一段，不像幻灯片。
 
 ### 硬规则
 
-- **刘海是主角，也是唯一的衔接。**每个章节的出口，都照 BRIEF 表里“出口衔接”那一列做：刘海变形，或者从刘海里长出下一章。不许用淡入淡出、硬切代替；全片只有片尾一次纯淡出。
-- **不画假界面。**还没做的功能只用抽象图形：刘海轮廓、几何形、设备线稿、轨迹、点、环。不画 macOS 的窗口内容、按钮、设置页。第 1 章只放灰色占位块，写“真机画面：……· 秒数”，等主模型换成真录屏。
-- **弹簧和刘海尺寸照 DIGEST 第三节**，不自己发明缓动。
-- **文字照 BRIEF**，一屏一句，≤ 12 个字，`system-ui, sans-serif`，主句 ≥ 56 px。
-- **确定性**：每帧只取决于时间；没有 `Date.now()`、没设种子的随机数、网络请求。
-- **静止是设计的一部分**：BRIEF 里每段“停”的秒数都要真静止，相机也不动；片尾最后 1.5 秒完全静止。
-- **每章一个子合成**：`compositions/chN-名字.html`，id 前缀 `chN-`；`index.html` 只做宿主、舞台底和屏幕轮廓。
+- **刘海是主角，也是唯一的衔接。**全片只有一个刘海组件，章节边界照 BRIEF 的“出口”一列做；不用淡入淡出、硬切代替。
+- **不画假界面。**
+  - 已做的功能用 `Footage` 组件：有真机素材就放素材，没有就放占位块；
+  - 没做的功能只用抽象图形：刘海、几何形、设备线稿、轨迹、点、环、光；
+  - 不画 CarPlay 的界面和标志，不用 Face ID 图形。
+- **照示例源码改。**每个镜头都从对应卡的示例源码复制起，“已知坑 / 命门”的参数不降档；示例里的粒子、彩纸、碎屑删掉。
+- **弹簧和刘海尺寸照 DIGEST 第四节**，不自己发明缓动。
+- **文字照 BRIEF**：一屏一句，≤ 12 个字。
+- **确定性**：每帧只取决于帧号。
 - **写文件分块，每块 ≤ 3000 字节**；命令 ≤ 3500 字节；命令里不出现感叹号；不写 shebang。
-- **只改 `film/ws2-concept/` 里的文件**；不改 App 代码，不提交，不推送，不渲染成片（渲染由主模型做）。
-- 不假装成功：`npm run check` 跑不起来（沙箱拦了网络或浏览器）时，原样贴出错误，在报告里说明。
+- **只改 `film/ws2-concept/src/` 里本包点名的文件**；不碰 `public/footage/manifest.json`（由主模型改）；不改 App 代码；不跑 `npm install`；不提交，不推送。
+- 不假装成功：类型检查或抽帧失败就原样贴出来。
 
 ### 交付报告
 
 ```text
 做了什么：（一段话）
 改了哪些文件：（列表）
-检查：npm run check 的结果（原样贴末尾；跑不起来就贴错误）
-时间轴：每个子合成的 data-start / data-duration，与 BRIEF 对照表
-每个章节边界：什么活下来、怎么变成下一章（一句话一条）
-静止段：起止秒列表
-不确定或没做到的：（列表）
+用了哪些镜头卡、各从哪个示例文件复制、改了什么参数：（表）
+检查：npm run typecheck 的结果；抽了哪些帧、是否渲染成功
+时间轴：每章的起止帧，与 BRIEF 对照
+每个章节边界：什么活下来、怎么变成下一章
+静止段：起止帧列表
+没做到或拿不准的：（列表）
 ```
 
 ---
 
-## F1：舞台、刘海、第 0–1 章
+## F1：骨架、刘海、舞台、真机素材组件、第 0 章
 
-- `index.html`：
-  - 根合成 80 秒，1920×1080；
-  - 舞台底 `#0B0D12`，屏幕上沿细线和屏幕区域（1600 宽，居中）；
-  - 一个**全片共用的刘海元素**，放在宿主里，各章都去动它，不是每章各画一个；
-  - 八个子合成槽位，时间照 BRIEF。
-- 刘海形状写成几个具名状态（安静、紧凑、提醒、展开）和一个 `morphNotch(to, at, springName)` 帮手函数，用 DIGEST 的弹簧。
-- `ch0-cold.html`：照 BRIEF 第 0 章。
-- `ch1-windows.html`：四个灰色占位块，依次出现在屏幕区域里，写清“真机画面：A1 甩一下收进刘海 · 3.5 秒”等。另外预留四个 `<video>`，指向 `footage/A1-…mov` 到 `A4`，先加 `data-hidden`，主模型录好后去掉。
-- 第 1→2 章的出口：那一排里的一格亮起，相机推进。
-- 跑 `npm run check`。
+- `src/scenes/Stage.tsx`：舞台底色、MacBook 屏幕轮廓（1600 宽居中）、全片共用的相机（缓推和几次大动作的接口）。
+- `src/scenes/Notch.tsx`：全片唯一的刘海。用 DIGEST 的 `wsSpring` 在四种形状之间变形；内容区由各章传入。
+  形状插值参考 `svg-shape-morph` 和 `morph-from-primitive` 的示例。
+- `src/scenes/Footage.tsx`：读 `public/footage/manifest.json`，有素材用 `ClipCard`，没有就放占位块。
+- `src/Film.tsx`：用 `<Series>` 按 BRIEF 的时间排九章，先放空的章节组件。
+- `src/scenes/Ch0Unlock.tsx`：照 BRIEF 第 0 章做，用 `tension-camera-moves`（SlowPushIn）、`light-play-moves`（HalationBloom）、
+  `fui-hud-moves`（ReticleLockOn）、`morph-from-primitive`。开盖用 3D `rotateX`，铰链在下沿。
+- 抽帧：60、240、420、600、780、840。
 
-## F2：第 2–4 章
+## F2：第 1–2 章（灵动岛、窗口）
 
-- `ch2-inputs.html`：
-  - 五件设备线稿（触控板、滚轮鼠标、Siri 遥控器、PS5 手柄、iPhone）用 SVG 自己画，线宽一致、只用描边，不用品牌标志；
-  - 发牌式入场，一件比一件快；每件“按一下”时，焦点框右移一格，并伴随一个 pop 弹簧。
-- `ch3-conduct.html`：
-  - 手指轨迹用 SVG path 按时间描出来（`stroke-dashoffset`），画三声 ˇ；
-  - 刘海里同步画出缩小的同一条轨迹；
-  - 五拍：手指原地落、弹五次（3+2 的节奏），刘海里五个点逐拍亮起；
-  - 文案照 BRIEF。
-- `ch4-approve.html`：Touch ID 环被光填满，这是全片唯一一次“最贵的光”；其余时间都不发光。
-- 跑 `npm run check`。
+- `Ch1Island.tsx`：`spotlight-hero-card`、`svg-shape-morph`、`odometer-digit-roll`、`pill-slot-cycle`、`icon-performance-moves`（AttentionBounce）。
+  真机素材 N1–N3 有了就换上。
+- `Ch2Windows.tsx`：`crash-zoom-punch`、`spotlight-hero-card`、`quad-split-parallel-scenes`，真机素材都走 `Footage`。
+- 抽帧：章内每 3 秒一帧。
 
-## F3：第 5–7 章与整片
+## F3：第 3–4 章（启动台、任何输入）
 
-- `ch5-focus.html`：
-  - 红环倒数的数字用等宽数字；
-  - 时间加速用一条 ease-in 的映射，2.5 秒内从 25:00 走到 0:00；
-  - 窗口块飞进刘海越来越快（glide 弹簧加递减的间隔）；
-  - 呼吸光环的周期 5.5 秒，只在这一段呼吸。
-- `ch6-away.html`：手机线稿走远、10 → 1 的倒数压在 2.0 秒内、整屏朝刘海折进去、锁屏、回来、两点变绿、密码点填满、桌面展开。
-- `ch7-seal.html`：图标依次飞进刘海，最后一个落下时刘海一弹（pop），出现字标和副标；最后 1.5 秒完全静止，底部小字“概念演示 · 部分功能开发中”。
-- 整片过一遍：
-  - 每个边界都有“活下来的东西”；
-  - 静止段总时长占比 ≥ 25%；
-  - 没有任何一屏超过一句主文字。
-- 跑 `npm run check`，把报告交回。
+- `Ch3Launchpad.tsx`：`deck-deal-flyin`（图标用 `L1-icons/` 的真图标，没有就用灰色圆角方块占位）、`type-and-filter`、`transition-travel`（SharedElementMorph）。
+- `Ch4Inputs.tsx`：`list-stack-press`、`input-trigger-moves`（KeycapSmashCut 改成扳机）。六件设备线稿用 SVG 自己画：只描边，线宽一致，不用品牌标志。
+  平滑滚动对比用 DIGEST 的弹簧。
+
+## F4：第 5 章（vibe coding）
+
+- `Ch5Conduct.tsx`：`draw-svg-trace`（三声轨迹，刘海里同步画缩小版）、`voice-waveform-live`、`glass-pill-dictation-typing`、
+  `terminal-3d`（三扇终端放真机素材 T1–T3）、`ai-stream-response`、`light-play-moves`（SheenSweepRetry，全片只这一次）、`crash-zoom-punch`。
+- 五拍要有 3+2 的节奏：前三拍等距，停半拍，后两拍。
+
+## F5：第 6–8 章与整片
+
+- `Ch6CarPlay.tsx`：`circle-match-iris`（光圈改成刘海的形状，从刘海张开）、`dataviz-landscape-open`（路线光束，蓝 `#4AA3FF`）、`tension-camera-moves`（PullBackIsolation）。
+- `Ch7Focus.tsx`：`speed-ramp-freeze`。
+- `Ch8Outro.tsx`：`outro-group-photo-launch`（去掉金尘和彩纸）、`logo-shrink-wordmark-lockup`（刘海收成字标）。
+- 整片过一遍：每个边界都有活下来的东西；静止段 ≥ 25%；一屏不超过一句主文字；片尾 1.5 秒全静止。
+- 抽帧：每章中段一帧，加 7560 帧前最后一秒的三帧。
 
 ---
 
-## 主模型在 F3 之后做的（不交给 DeepSeek）
+## 主模型在 F5 之后做的（不交给 DeepSeek）
 
-1. 在 Aaron 空闲时，照 `footage/SHOTLIST.md` 录 A1–A4，替换占位块。
-2. 草稿渲染（720p30）：`cd film/ws2-concept && npm run render`。
+1. 在 Aaron 空闲时，照 `public/footage/SHOTLIST.md` 录素材，改 `manifest.json`。
+2. 草稿：`npm run render:draft`。
 3. 验收：
-   - `~/.venvs/onetake/bin/python ~/.claude/skills/motion-doctrine/scripts/qc_gate.py out.mp4`；
-   - `~/.venvs/onetake/bin/python ~/.claude/skills/onetake-plus/scripts/carry_flow.py out.mp4`；
-   - 抽四个时间点截图看画面。
-4. 按问题给 DeepSeek 带时间码的修改单（用 `deepseek_agent_continue`），最多两轮；仍不行就主模型自己改。
-5. 画面定了再做声音，终渲 1080p60，交给 Aaron 看。
+   - `~/.venvs/onetake/bin/python ~/.claude/skills/motion-doctrine/scripts/qc_gate.py out/draft.mp4`；
+   - `~/.venvs/onetake/bin/python ~/.claude/skills/onetake-plus/scripts/carry_flow.py out/draft.mp4`；
+   - 照 `reference/aesthetic-rules.md` 和 shotcraft 的 `final-review.md` 过一遍；
+   - 看抽帧。
+4. 修改单最多两轮，仍不行主模型自己改。
+5. 声音照 `reference/sound-design.md`；终渲 1080p60，两版（带 BGM / 不带 BGM），交给 Aaron。

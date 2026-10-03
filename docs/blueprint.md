@@ -66,7 +66,7 @@
 | 2b 离开就锁 | 学 Windows 动态锁、Near Lock、blue-lock-mac：手机断开 → 1.5 秒宽限 → 刘海倒数 10 秒 → 收起私人 App → 锁；回来四样都对才开；见 [dynamic-lock.md](dynamic-lock.md) | face-unlock F1、F6 | 真机：关掉手机蓝牙约 11.5 秒内锁；握着手机不误锁 |
 | 5d 看与指挥、菜单收拢 | 从 Open Island 只取会话状态、刘海里批准、一点就过去，只接 Claude Code 和 Codex；菜单 24 项收到 9 项；见 [agents-in-notch.md](agents-in-notch.md)、[menu-bar.md](menu-bar.md) | Aaron 10-03 | 菜单一级 ≤ 12；hook 在 App 没开时照常放行 |
 | 6 CarPlay | 接收器本体，**全屏体验**：长按刘海进入，再长按或 Esc 回桌面；短按刘海仍是启动台；会话事件交给协调器 | v1、v2 B5 | 进出跟手；回桌面窗口都在原处；停 CarPlay 不清电量；电量失败不断视频 |
-| 6b 概念片 | 80 秒“一个入口”：刘海做主角和唯一的衔接；已做的功能用真机录屏，没做的用抽象图形，不画假界面；DeepSeek 写 HyperFrames 合成，主模型录屏、渲染、验收；见 `film/ws2-concept/BRIEF.md`、[提示词](handoff/deepseek-film.md) | 被看见 | qc_gate、carry_flow 通过；Aaron 看过 |
+| 6b 概念片 | 126 秒“一个入口”，Remotion + video-shotcraft 镜头卡；五处 wow：刷脸解锁、灵动岛、启动台、vibe coding 伴侣、CarPlay；已做的用真机画面，没做的用抽象图形；DeepSeek 照示例源码写，主模型录屏、渲染、验收；见 `film/ws2-concept/BRIEF.md`、[提示词](handoff/deepseek-film.md) | 被看见 | qc_gate、carry_flow、shotcraft 终检通过；Aaron 看过 |
 | 7 资格 | 独立攻防、恢复、能耗、许可；官网、README、宣传片 | v4 A6、v2 B6 | Marvin、Newlearner 这样的人看得过去 |
 
 ## 硬要求
