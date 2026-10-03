@@ -33,7 +33,7 @@ enum WindowShadeSettingsSection: Int, CaseIterable {
     case .shade: return "rectangle.compress.vertical"
     case .browser: return "rectangle.on.rectangle"
     case .shortcuts: return "command"
-    case .permissions: return "hand.raised"
+    case .permissions: return "lock.shield"
     case .advanced: return "slider.horizontal.3"
     }
   }
@@ -443,13 +443,14 @@ final class DuoSettingsWindow: NSWindowController, NSWindowDelegate, NSTableView
   }
 
   // 页内不再重复一次大标题：分节名已经在侧边栏和标题栏副标题里出现过两次。
-  // 只保留一行说明，页首因此省下约 62pt 竖向空间。
+  // 只保留一行说明。符号只使用 §4.11 里有的名字。
   private func makePageHeader(title: String, subtitle: String, symbolName: String?) -> NSView {
-    let caption = NSTextField(wrappingLabelWithString: subtitle)
-    caption.font = SystemAppearancePolicy.font(relativeToBody: -1)
-    caption.textColor = .secondaryLabelColor
-    caption.maximumNumberOfLines = 2
-    return caption
+    _ = title
+    return WS2SettingsCopy.content(name: nil, subtitle: subtitle, symbol: WS2SettingsCopy.tableSymbol(symbolName)).view
+  }
+
+  private func settingsContent(title: String, subtitle: String) -> NSStackView {
+    WS2SettingsCopy.content(name: title, subtitle: subtitle, symbol: WS2SettingsCopy.symbol(for: title)).view
   }
 
   private func makeSectionLabel(_ title: String) -> NSView {
@@ -519,19 +520,7 @@ final class DuoSettingsWindow: NSWindowController, NSWindowDelegate, NSTableView
     control.action = action
     control.setAccessibilityLabel(title)
 
-    let labels = NSStackView()
-    labels.orientation = .vertical
-    labels.alignment = .leading
-    labels.spacing = 4
-    let titleLabel = NSTextField(labelWithString: title)
-    titleLabel.font = SystemAppearancePolicy.font(relativeToBody: 0)
-    let subtitleLabel = NSTextField(wrappingLabelWithString: subtitle)
-    subtitleLabel.font = SystemAppearancePolicy.font(relativeToBody: -2)
-    subtitleLabel.textColor = .secondaryLabelColor
-    subtitleLabel.maximumNumberOfLines = 2
-    labels.addArrangedSubview(titleLabel)
-    labels.addArrangedSubview(subtitleLabel)
-    subtitleLabel.widthAnchor.constraint(equalTo: labels.widthAnchor).isActive = true
+    let labels = settingsContent(title: title, subtitle: subtitle)
 
     let row = NSStackView(views: [labels, control])
     NSLayoutConstraint.activate([
@@ -549,19 +538,7 @@ final class DuoSettingsWindow: NSWindowController, NSWindowDelegate, NSTableView
   }
 
   private func makeControlRow(title: String, subtitle: String, control: NSView) -> NSView {
-    let labels = NSStackView()
-    labels.orientation = .vertical
-    labels.alignment = .leading
-    labels.spacing = 4
-    let titleLabel = NSTextField(labelWithString: title)
-    titleLabel.font = SystemAppearancePolicy.font(relativeToBody: 0)
-    let subtitleLabel = NSTextField(wrappingLabelWithString: subtitle)
-    subtitleLabel.font = SystemAppearancePolicy.font(relativeToBody: -2)
-    subtitleLabel.textColor = .secondaryLabelColor
-    subtitleLabel.maximumNumberOfLines = 2
-    labels.addArrangedSubview(titleLabel)
-    labels.addArrangedSubview(subtitleLabel)
-    subtitleLabel.widthAnchor.constraint(equalTo: labels.widthAnchor).isActive = true
+    let labels = settingsContent(title: title, subtitle: subtitle)
 
     let row = NSStackView(views: [labels, control])
     NSLayoutConstraint.activate([
@@ -581,19 +558,7 @@ final class DuoSettingsWindow: NSWindowController, NSWindowDelegate, NSTableView
 
   private func makeActionRow(title: String, subtitle: String, button: NSButton) -> NSView {
     button.font = SystemAppearancePolicy.font(relativeToBody: -1)
-    let labels = NSStackView()
-    labels.orientation = .vertical
-    labels.alignment = .leading
-    labels.spacing = 4
-    let titleLabel = NSTextField(labelWithString: title)
-    titleLabel.font = SystemAppearancePolicy.font(relativeToBody: 0)
-    let subtitleLabel = NSTextField(wrappingLabelWithString: subtitle)
-    subtitleLabel.font = SystemAppearancePolicy.font(relativeToBody: -2)
-    subtitleLabel.textColor = .secondaryLabelColor
-    subtitleLabel.maximumNumberOfLines = 2
-    labels.addArrangedSubview(titleLabel)
-    labels.addArrangedSubview(subtitleLabel)
-    subtitleLabel.widthAnchor.constraint(equalTo: labels.widthAnchor).isActive = true
+    let labels = settingsContent(title: title, subtitle: subtitle)
 
     button.controlSize = .regular
     button.setContentHuggingPriority(.required, for: .horizontal)

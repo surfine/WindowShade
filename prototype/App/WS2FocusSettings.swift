@@ -29,7 +29,7 @@ import Cocoa
         tuck.isEnabled = WS2FocusWindowPort.admitted
         addArrangedSubview(tuck)
         if !tuck.isEnabled {
-            let note = NSTextField(wrappingLabelWithString:"窗口收起适配器尚未接入；当前仅运行计时，不移动窗口。")
+            let note = NSTextField(wrappingLabelWithString:"现在只计时，还不会收起窗口。")
             note.textColor = .secondaryLabelColor; note.font = .systemFont(ofSize:11); addArrangedSubview(note)
         }
     }

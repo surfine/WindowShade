@@ -176,11 +176,8 @@ static func noticeTone(_ message: String) -> NotchPanel.Tone {
 
     // 与效果页一致：页内不重复大标题，只留一行说明。
     private func makeSettingsHeader(title: String, subtitle: String, symbolName: String? = nil) -> NSView {
-        let caption = NSTextField(wrappingLabelWithString: subtitle)
-        caption.font = SystemAppearancePolicy.font(relativeToBody: -1)
-        caption.textColor = .secondaryLabelColor
-        caption.maximumNumberOfLines = 2
-        return caption
+        _ = title
+        return WS2SettingsCopy.content(name: nil, subtitle: subtitle, symbol: WS2SettingsCopy.tableSymbol(symbolName)).view
     }
 
     func makeShadeSettingsPage() -> NSView {
@@ -269,7 +266,7 @@ static func noticeTone(_ message: String) -> NotchPanel.Tone {
     func makePermissionsSettingsPage() -> NSView {
         let (root, stack) = makeSettingsPageRoot()
         stack.addArrangedSubview(makeSettingsHeader(
-            title: "隐私", subtitle: "WindowShade 读到的每一样都列在这里。", symbolName: "hand.raised"))
+            title: "隐私", subtitle: "WindowShade 读到的每一样都列在这里。", symbolName: "lock.shield"))
         let pane = MainActor.assumeIsolated { WS2PrivacyPane(owner: self) }
         stack.addArrangedSubview(pane)
         pane.widthAnchor.constraint(equalTo: stack.widthAnchor).isActive = true
@@ -282,7 +279,7 @@ static func noticeTone(_ message: String) -> NotchPanel.Tone {
             makeUnifiedPermissionRow(symbol: "rectangle.inset.filled.and.person.filled",
                                      name: "屏幕录制", subtitle: "截取窗口画面做预览",
                                      granted: hasScreenRecordingPermission(), action: #selector(openScreenRecordingSettingsAction)),
-        ], separatorInset: 46)
+        ])
         stack.addArrangedSubview(permissions)
         permissions.widthAnchor.constraint(equalTo: stack.widthAnchor).isActive = true
         stack.setCustomSpacing(18, after: stack.arrangedSubviews.last!)
@@ -358,45 +355,11 @@ static func noticeTone(_ message: String) -> NotchPanel.Tone {
             makeUnifiedPermissionRow(symbol: "rectangle.inset.filled.and.person.filled", name: "屏幕录制",
                 subtitle: "截取窗口画面做预览", granted: true,
                 action: #selector(openScreenRecordingSettingsAction)),
-        ], separatorInset: 46)
+        ])
     }
 
-    private func makeUnifiedLabels(name: String, subtitle: String?) -> NSStackView {
-        // 设置页在主线程上搭；符号表与气泡按钮是 MainActor 上的东西，照本文件既有写法显式声明。
-        let symbol = MainActor.assumeIsolated { WS2SettingsCopy.symbol(for: name) }
-        let icon = NSImageView(image: NSImage(systemSymbolName: symbol, accessibilityDescription: nil) ?? NSImage())
-        icon.symbolConfiguration = NSImage.SymbolConfiguration(hierarchicalColor: .controlAccentColor)
-        icon.wantsLayer = true
-        icon.layer?.backgroundColor = NSColor.controlAccentColor.withAlphaComponent(0.10).cgColor
-        icon.layer?.cornerRadius = 7
-        icon.widthAnchor.constraint(equalToConstant: 28).isActive = true
-        icon.heightAnchor.constraint(equalToConstant: 28).isActive = true
-        let labels = NSStackView()
-        labels.orientation = .vertical
-        labels.alignment = .leading
-        labels.spacing = 4
-        let title = NSTextField(labelWithString: name)
-        title.font = SystemAppearancePolicy.font(relativeToBody: 0)
-        labels.addArrangedSubview(title)
-        if let subtitle {
-            let short = WS2SettingsCopy.short[subtitle] ?? String(subtitle.prefix(16))
-            let detail = NSTextField(labelWithString: short)
-            detail.font = SystemAppearancePolicy.font(relativeToBody: -2)
-            detail.textColor = .secondaryLabelColor
-            detail.lineBreakMode = .byTruncatingTail
-            detail.maximumNumberOfLines = 1
-            detail.toolTip = subtitle
-            labels.addArrangedSubview(detail)
-        }
-        let content = NSStackView(views: [icon, labels])
-        content.orientation = .horizontal
-        content.alignment = .centerY
-        content.spacing = 10
-        if let subtitle {
-            content.addArrangedSubview(MainActor.assumeIsolated { WS2SettingsInfoButton(text: subtitle, name: name) })
-        }
-        labels.setContentCompressionResistancePriority(.defaultLow, for: .horizontal)
-        return content
+    private func makeUnifiedLabels(name: String, subtitle: String?, symbol: String? = nil) -> NSStackView {
+        WS2SettingsCopy.content(name: name, subtitle: subtitle, symbol: symbol ?? WS2SettingsCopy.symbol(for: name)).view
     }
 
     private func makeUnifiedToggleRow(name: String, subtitle: String?, isOn: Bool,
@@ -451,13 +414,7 @@ static func noticeTone(_ message: String) -> NotchPanel.Tone {
 
     private func makeUnifiedPermissionRow(symbol: String, name: String, subtitle: String,
                                            granted: Bool, action: Selector) -> NSView {
-        let icon = NSImageView(image: NSImage(systemSymbolName: symbol, accessibilityDescription: name) ?? NSImage())
-        icon.contentTintColor = .secondaryLabelColor
-        icon.imageScaling = .scaleProportionallyDown
-        icon.widthAnchor.constraint(equalToConstant: 18).isActive = true
-        icon.heightAnchor.constraint(equalToConstant: 18).isActive = true
-
-        let labels = makeUnifiedLabels(name: name, subtitle: subtitle)
+        let labels = makeUnifiedLabels(name: name, subtitle: subtitle, symbol: symbol)
         labels.setContentHuggingPriority(.defaultLow, for: .horizontal)
         labels.setContentCompressionResistancePriority(.defaultLow, for: .horizontal)
 
@@ -469,10 +426,9 @@ static func noticeTone(_ message: String) -> NotchPanel.Tone {
         chip.setAccessibilityLabel("\(name)，\(granted ? "已授权，打开设置" : "去授权")")
         chip.setContentHuggingPriority(.required, for: .horizontal)
         let trailing = chip
-        let row = NSStackView(views: [icon, labels, trailing])
+        let row = NSStackView(views: [labels, trailing])
         NSLayoutConstraint.activate([
-            icon.leadingAnchor.constraint(equalTo: row.leadingAnchor),
-            labels.leadingAnchor.constraint(equalTo: icon.trailingAnchor, constant: 12),
+            labels.leadingAnchor.constraint(equalTo: row.leadingAnchor),
             labels.trailingAnchor.constraint(equalTo: trailing.leadingAnchor, constant: -12),
             trailing.trailingAnchor.constraint(equalTo: row.trailingAnchor),
         ])
@@ -766,7 +722,7 @@ static func noticeTone(_ message: String) -> NotchPanel.Tone {
             makeUnifiedPermissionRow(symbol: "rectangle.inset.filled.and.person.filled", name: "屏幕录制",
                 subtitle: "截取窗口画面做预览", granted: screen,
                 action: #selector(openScreenRecordingSettingsAction)),
-        ], separatorInset: 46)
+        ])
         permissionStack.addArrangedSubview(card)
         card.widthAnchor.constraint(equalToConstant: onboardingContentWidth).isActive = true
 
@@ -1102,7 +1058,7 @@ static func noticeTone(_ message: String) -> NotchPanel.Tone {
                 subtitle: "窗口缩略图与实时预览；缺失时显示图标和文字列表",
                 granted: hasScreenRecordingPermission(),
                 action: #selector(openScreenRecordingSettingsAction)),
-        ], separatorInset: 46)
+        ])
         stack.addArrangedSubview(makePrefGroupLabel("权限"))
         stack.addArrangedSubview(permissions)
         permissions.widthAnchor.constraint(equalTo: stack.widthAnchor).isActive = true

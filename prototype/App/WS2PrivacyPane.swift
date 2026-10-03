@@ -22,12 +22,8 @@ final class WS2PrivacyPane: NSStackView {
     required init?(coder: NSCoder) { nil }
 
     private func build() {
-        let lead = NSTextField(wrappingLabelWithString:
-            "这里列出 WindowShade 读到的每一样，以及为什么读、去了哪里。值和开关都来自原来的设置。")
-        lead.font = SystemAppearancePolicy.font(relativeToBody: -1)
-        lead.textColor = .secondaryLabelColor
-        lead.maximumNumberOfLines = 2
-        addArrangedSubview(lead)
+        let leadText = "这里列出 WindowShade 读到的每一样，以及为什么读、去了哪里。值和开关都来自原来的设置。"
+        addArrangedSubview(WS2SettingsCopy.content(name: nil, subtitle: leadText, symbol: "lock.shield").view)
 
         let details = NSButton(checkboxWithTitle: "显示技术细节", target: self, action: #selector(toggleDetails(_:)))
         details.state = showDetails ? .on : .off
@@ -80,13 +76,19 @@ private final class PrivacyRowView: NSView {
         translatesAutoresizingMaskIntoConstraints = false
         self.onToggle = onToggle
 
-        let symbol = NSImageView(image: NSImage(systemSymbolName: WS2SettingsCopy.symbol(for: row.label), accessibilityDescription: nil) ?? NSImage())
-        symbol.symbolConfiguration = NSImage.SymbolConfiguration(hierarchicalColor: .controlAccentColor)
-        symbol.wantsLayer = true
-        symbol.layer?.backgroundColor = NSColor.controlAccentColor.withAlphaComponent(0.10).cgColor
-        symbol.layer?.cornerRadius = 7
-        symbol.widthAnchor.constraint(equalToConstant: 28).isActive = true
-        symbol.heightAnchor.constraint(equalToConstant: 28).isActive = true
+        let symbolName = WS2SettingsCopy.symbol(for: row.label)
+        let symbolView: NSView? = {
+            guard let symbolName,
+                  let image = NSImage(systemSymbolName: symbolName, accessibilityDescription: row.label) else { return nil }
+            let symbol = NSImageView(image: image)
+            symbol.symbolConfiguration = NSImage.SymbolConfiguration(hierarchicalColor: .controlAccentColor)
+            symbol.wantsLayer = true
+            symbol.layer?.backgroundColor = NSColor.controlAccentColor.withAlphaComponent(0.10).cgColor
+            symbol.layer?.cornerRadius = 7
+            symbol.widthAnchor.constraint(equalToConstant: 28).isActive = true
+            symbol.heightAnchor.constraint(equalToConstant: 28).isActive = true
+            return symbol
+        }()
 
         let title = NSTextField(labelWithString: row.label)
         title.font = SystemAppearancePolicy.font(relativeToBody: 0)
@@ -109,7 +111,10 @@ private final class PrivacyRowView: NSView {
         labels.orientation = .vertical
         labels.alignment = .leading
         labels.spacing = 3
-        let header = NSStackView(views: [symbol, labels, chevron])
+        var headerViews: [NSView] = []
+        if let symbolView { headerViews.append(symbolView) }
+        headerViews.append(contentsOf: [labels, chevron])
+        let header = NSStackView(views: headerViews)
         header.orientation = .horizontal
         header.alignment = .centerY
         header.spacing = 10
