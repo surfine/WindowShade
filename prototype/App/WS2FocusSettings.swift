@@ -26,7 +26,7 @@ import Cocoa
         addArrangedSubview(row)
         tuck.state = WS2FocusSettings.tuckChat ? .on : .off; tuck.target = self; tuck.action = #selector(changeTuck)
         tuck.toolTip = "需要私人 App 名单才能只收聊天窗口；名单没接好之前这项不可用，也不会拿“收起全部窗口”顶替。"
-        tuck.isEnabled = runtime.focusWindowEffects != nil && WS2FocusExecutor.chatTuckingReady
+        tuck.isEnabled = WS2FocusWindowPort.admitted
         addArrangedSubview(tuck)
         if !tuck.isEnabled {
             let note = NSTextField(wrappingLabelWithString:"窗口收起适配器尚未接入；当前仅运行计时，不移动窗口。")
