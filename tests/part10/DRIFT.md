@@ -2,7 +2,7 @@
 
 第十份的 `sources/code-map.json` 钉的是统一 v9 候选（1168 个文件）。本仓库是那条线继续往前走的
 工作区：先并入第九份，再并入第十份，并在两轮里都按「只有 Mac 才会暴露」的事实改过源码。
-所以 `drift.json` 的 `code_map_drift` 共 26 条（复核时补登了 `AGENTS.md`，W00 又带进四条，其中一条是「应当不存在」）；另有一条只是路径搬迁。下表是路径或存在性不同的两条。
+所以 `drift.json` 的 `code_map_drift` 共 28 条（复核时补登了 `AGENTS.md`，W00 又带进四条，其中一条是「应当不存在」，G3 补了 `docs/copy-guide.md` 和 `prototype/App/WS2ConductorView.swift`）；另有一条只是路径搬迁。下表是路径或存在性不同的两条。
 `tests/part10/drift.json` 把这份清单机器可读化；`test-handoff-tools.py` 的 12/14 项按它判定：
 清单外的任何新漂移都会让检查失败，清单本身也必须与实际情况一字不差（多一条少一条都算失败）。
 
@@ -50,6 +50,10 @@ AX routeID、首帧隔离、去嵌套 RunLoop；另有主模型按 Mac 实测修
 `AGENTS.md` 顶部在复核交接时多了一行指向 `docs/handoff/round2-part10/REVIEW-HANDOFF.md`（第一次提交时漏登，
 门禁因此失败过一次，复核时补上）。`docs/blueprint.md`、`docs/handoff/START-HERE-deepseek.md`、`docs/releases/v1.0.16-ledger.md`、
 `docs/privacy-page.md` 都随每份接入追加了台账段落，行数比 v9 基线多。
+
+## G3 补了指挥页用词
+
+`docs/copy-guide.md` 的固定词汇表补了指挥模式。`prototype/App/WS2ConductorView.swift` 的会话列表不再用数组下标当动作，选择改到带稳定会话身份的指挥页。
 
 ## 复核者要做的判断
 
