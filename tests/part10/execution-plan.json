@@ -1,0 +1,440 @@
+{
+  "schema": 1,
+  "baseline": "v9-candidate",
+  "purpose": "handoff work assignment, not a product readiness engine",
+  "original_axes": [
+    "窗口",
+    "实时活动",
+    "电量",
+    "CarPlay",
+    "指挥模式",
+    "刷脸解锁",
+    "隐私"
+  ],
+  "tasks": [
+    {
+      "id": "W00",
+      "title": "冻结候选与真实构建",
+      "owner": "集成人；主模型复核",
+      "dependencies": [],
+      "workorder": "workorders/W00-冻结候选与真实构建.md",
+      "source_paths": [
+        "AGENTS.md",
+        "docs/handoff/START-HERE-deepseek.md",
+        "prototype/build.sh",
+        "prototype/Native/WS2Child.c",
+        "prototype/Native/module.modulemap"
+      ],
+      "original_packages": [
+        "M1",
+        "S1",
+        "共享合同"
+      ],
+      "axes": [
+        "窗口",
+        "实时活动",
+        "电量",
+        "CarPlay",
+        "指挥模式",
+        "刷脸解锁",
+        "隐私"
+      ],
+      "status": "OPEN",
+      "status_meaning": "execution/acceptance remains; not a claim that all listed source is missing"
+    },
+    {
+      "id": "W01",
+      "title": "已有功能的三条真实验收",
+      "owner": "主模型与获准的 Mac 执行者",
+      "dependencies": [
+        "W00"
+      ],
+      "workorder": "workorders/W01-已有功能的三条真实验收.md",
+      "source_paths": [
+        "prototype/App/WS2OwnedLaunchController.swift",
+        "prototype/App/WS2OwnedSessionView.swift",
+        "prototype/App/WS2AppRuntime.swift",
+        "prototype/App/WS2DeviceActionHost.swift",
+        "prototype/App/WS2ModelPickerView.swift",
+        "prototype/App/FoldCompletion.swift",
+        "prototype/App/FoldTransaction.swift",
+        "prototype/Recovery/Journal.swift"
+      ],
+      "original_packages": [
+        "D6",
+        "T2",
+        "T4",
+        "I8",
+        "I9",
+        "M1"
+      ],
+      "axes": [
+        "窗口",
+        "实时活动",
+        "指挥模式"
+      ],
+      "status": "OPEN",
+      "status_meaning": "execution/acceptance remains; not a claim that all listed source is missing"
+    },
+    {
+      "id": "W02",
+      "title": "番茄钟实际窗口效果与恢复",
+      "owner": "主模型负责设计与复核；执行者按端口施工",
+      "dependencies": [
+        "W01"
+      ],
+      "workorder": "workorders/W02-番茄钟实际窗口效果与恢复.md",
+      "source_paths": [
+        "prototype/Core/WS2FocusEffectPlan.swift",
+        "prototype/Core/WS2FocusWindowOwnership.swift",
+        "prototype/Support/WS2FocusEffectExecutor.swift",
+        "prototype/App/WS2AppRuntime.swift",
+        "prototype/App/FocusTimerHost.swift",
+        "prototype/App/FocusSession.swift",
+        "prototype/App/ShadeController.swift",
+        "prototype/App/FoldCompletion.swift",
+        "prototype/Recovery/Journal.swift",
+        "prototype/Recovery/Rescue.swift"
+      ],
+      "original_packages": [
+        "T3"
+      ],
+      "axes": [
+        "窗口",
+        "实时活动",
+        "隐私"
+      ],
+      "status": "OPEN",
+      "status_meaning": "execution/acceptance remains; not a claim that all listed source is missing"
+    },
+    {
+      "id": "W03",
+      "title": "慢AX与过期回调的最后治理",
+      "owner": "窗口执行者；主模型审查并发与私有接口",
+      "dependencies": [
+        "W01"
+      ],
+      "workorder": "workorders/W03-慢AX与过期回调的最后治理.md",
+      "source_paths": [
+        "prototype/App/Reconcile.swift",
+        "prototype/Window/AXHelpers.swift",
+        "prototype/App/WS2FoldCallbackGuard.swift",
+        "prototype/Core/WS2FoldCallbackStamp.swift",
+        "prototype/App/FoldTransaction.swift",
+        "prototype/Effects/EffectFrameAwaiter.swift",
+        "docs/performance.md"
+      ],
+      "original_packages": [
+        "窗口巡检",
+        "性能"
+      ],
+      "axes": [
+        "窗口",
+        "隐私"
+      ],
+      "status": "OPEN",
+      "status_meaning": "execution/acceptance remains; not a claim that all listed source is missing"
+    },
+    {
+      "id": "W04",
+      "title": "原生批准与外部hook分别接通",
+      "owner": "主模型独占授权策略；执行者不改安全决定",
+      "dependencies": [
+        "W01"
+      ],
+      "workorder": "workorders/W04-原生批准与外部hook分别接通.md",
+      "source_paths": [
+        "prototype/App/AuthorizationService.swift",
+        "prototype/Core/AuthorizationLedger.swift",
+        "prototype/App/WS2CodexApprovalHost.swift",
+        "prototype/App/WS2OwnedCodexSession+Authorization.swift",
+        "prototype/App/WS2OwnedLaunchController.swift",
+        "prototype/Core/CodexWire.swift",
+        "prototype/Support/WS2DuplexProcess.swift",
+        "docs/agents-in-notch.md",
+        "docs/handoff/deepseek-menu-agents.md"
+      ],
+      "original_packages": [
+        "A1",
+        "A2a",
+        "A2b",
+        "A4",
+        "A5",
+        "D6"
+      ],
+      "axes": [
+        "指挥模式",
+        "隐私"
+      ],
+      "status": "OPEN",
+      "status_meaning": "execution/acceptance remains; not a claim that all listed source is missing"
+    },
+    {
+      "id": "W05",
+      "title": "指挥页面和其余输入的实线接入",
+      "owner": "执行者；A5/I4/I6及敏感动作由主模型复核",
+      "dependencies": [
+        "W01"
+      ],
+      "workorder": "workorders/W05-指挥页面和其余输入的实线接入.md",
+      "source_paths": [
+        "prototype/App/WS2ConductorView.swift",
+        "prototype/App/WS2AgentSessionView.swift",
+        "prototype/App/WS2AppRuntime.swift",
+        "prototype/App/WS2DeviceActionHost.swift",
+        "prototype/App/WS2GameControllerBridge.swift",
+        "prototype/Core/WS2VisibleListInput.swift",
+        "prototype/Core/WS2SelectionModel.swift",
+        "prototype/Core/ConductorSession.swift",
+        "prototype/Core/ConductorCapabilities.swift",
+        "prototype/Core/HIDMappingTransaction.swift",
+        "docs/input-devices.md",
+        "docs/conductor-v2.md"
+      ],
+      "original_packages": [
+        "A3",
+        "D1",
+        "D2",
+        "D3",
+        "D4",
+        "I1a",
+        "I1b",
+        "I1c",
+        "I1d",
+        "I1e",
+        "I1f",
+        "I2",
+        "I3",
+        "I4",
+        "I5a",
+        "I5b",
+        "I6",
+        "I7",
+        "I8",
+        "I9"
+      ],
+      "axes": [
+        "指挥模式",
+        "实时活动",
+        "窗口"
+      ],
+      "status": "OPEN",
+      "status_meaning": "execution/acceptance remains; not a claim that all listed source is missing"
+    },
+    {
+      "id": "W06",
+      "title": "电量实时活动和全部原入口",
+      "owner": "执行者；主模型审查来源与隐私",
+      "dependencies": [
+        "W00"
+      ],
+      "workorder": "workorders/W06-电量实时活动和全部原入口.md",
+      "source_paths": [
+        "prototype/Core/DeviceBattery.swift",
+        "prototype/App/DeviceBatteryController.swift",
+        "prototype/App/PeripheralBatterySource.swift",
+        "prototype/App/DeviceBatteryCopy.swift",
+        "prototype/Core/NotchActivities.swift",
+        "docs/device-battery.md",
+        "docs/menu-bar.md",
+        "docs/copy-guide.md",
+        "docs/design-system.md"
+      ],
+      "original_packages": [
+        "M1",
+        "S1",
+        "T1",
+        "T2",
+        "T4",
+        "实时活动",
+        "电量"
+      ],
+      "axes": [
+        "电量",
+        "实时活动",
+        "隐私"
+      ],
+      "status": "OPEN",
+      "status_meaning": "execution/acceptance remains; not a claim that all listed source is missing"
+    },
+    {
+      "id": "W07",
+      "title": "配对密钥与接收协议装配",
+      "owner": "主模型主导密码学和身份；执行者按冻结接口接网络",
+      "dependencies": [
+        "W00"
+      ],
+      "workorder": "workorders/W07-配对密钥与接收协议装配.md",
+      "source_paths": [
+        "prototype/Support/WS2PairSetupServer.swift",
+        "prototype/Support/WS2PairSetupCrypto.swift",
+        "prototype/Support/WS2CompanionCrypto.swift",
+        "prototype/Support/WS2KeychainPeerStorage.swift",
+        "prototype/Support/WS2PeerRepository.swift",
+        "prototype/Support/WS2CompanionTCPTransport.swift",
+        "prototype/Core/WS2ConnectionBudget.swift",
+        "prototype/Core/PairingAttemptWindow.swift",
+        "prototype/Core/PairingTLV.swift",
+        "prototype/Core/WS2CompanionFrame.swift",
+        "docs/conductor-v2.md"
+      ],
+      "original_packages": [
+        "D5a",
+        "D5b",
+        "D5c"
+      ],
+      "axes": [
+        "指挥模式",
+        "CarPlay",
+        "隐私"
+      ],
+      "status": "OPEN",
+      "status_meaning": "execution/acceptance remains; not a claim that all listed source is missing"
+    },
+    {
+      "id": "W08",
+      "title": "完整CarPlay接收而非遥控替代",
+      "owner": "主模型先判协议与来源，执行者再接宿主",
+      "dependencies": [
+        "W00"
+      ],
+      "workorder": "workorders/W08-完整CarPlay接收而非遥控替代.md",
+      "source_paths": [
+        "docs/blueprint.md",
+        "docs/direction.md",
+        "docs/conductor-v2.md",
+        "prototype/App/WS2AppRuntime.swift",
+        "prototype/App/WS2IslandCoordinator.swift",
+        "prototype/Core/RemoteMode.swift"
+      ],
+      "original_packages": [
+        "CarPlay接收本体"
+      ],
+      "axes": [
+        "CarPlay",
+        "实时活动",
+        "隐私"
+      ],
+      "status": "OPEN",
+      "status_meaning": "execution/acceptance remains; not a claim that all listed source is missing"
+    },
+    {
+      "id": "W09",
+      "title": "系统锁与身份实验的准确边界",
+      "owner": "主模型，不交普通执行模型自行裁决",
+      "dependencies": [
+        "W00"
+      ],
+      "workorder": "workorders/W09-系统锁与身份实验的准确边界.md",
+      "source_paths": [
+        "docs/face-unlock.md",
+        "docs/dynamic-lock.md",
+        "docs/lock-unlock-plan.md",
+        "prototype/Core/PresenceLock.swift",
+        "prototype/Core/SessionLockState.swift",
+        "prototype/App/AuthorizationService.swift",
+        "prototype/App/FaceObservationSource.swift",
+        "prototype/App/NotchFaceObservations.swift",
+        "prototype/Private/LockSpaceBridge.swift"
+      ],
+      "original_packages": [
+        "FACE-F1",
+        "FACE-F2",
+        "FACE-F3",
+        "FACE-F4",
+        "FACE-F5",
+        "FACE-F6",
+        "FACE-F7",
+        "L1",
+        "L2",
+        "L3",
+        "L4",
+        "L5"
+      ],
+      "axes": [
+        "刷脸解锁",
+        "隐私",
+        "窗口"
+      ],
+      "status": "OPEN",
+      "status_meaning": "execution/acceptance remains; not a claim that all listed source is missing"
+    },
+    {
+      "id": "W10",
+      "title": "隐私恢复数据和安全迁移",
+      "owner": "主模型制定迁移；执行者按固定方案实现",
+      "dependencies": [
+        "W00"
+      ],
+      "workorder": "workorders/W10-隐私恢复数据和安全迁移.md",
+      "source_paths": [
+        "docs/privacy-page.md",
+        "prototype/Recovery/Journal.swift",
+        "prototype/Recovery/DurableShadeJournal.swift",
+        "prototype/Recovery/Rescue.swift",
+        "prototype/Support/WS2LocalLaunchProfile.swift",
+        "prototype/Support/WS2KeychainPeerStorage.swift",
+        "prototype/Support/WS2PeerRepository.swift"
+      ],
+      "original_packages": [
+        "P1",
+        "P2",
+        "P3",
+        "P4",
+        "P5",
+        "P6"
+      ],
+      "axes": [
+        "隐私",
+        "窗口",
+        "指挥模式"
+      ],
+      "status": "OPEN",
+      "status_meaning": "execution/acceptance remains; not a claim that all listed source is missing"
+    },
+    {
+      "id": "W11",
+      "title": "全量验收影片和发行材料",
+      "owner": "主模型统筹；真实发布仅用户授权后",
+      "dependencies": [
+        "W01",
+        "W02",
+        "W03",
+        "W04",
+        "W05",
+        "W06",
+        "W07",
+        "W08",
+        "W09",
+        "W10"
+      ],
+      "workorder": "workorders/W11-全量验收影片和发行材料.md",
+      "source_paths": [
+        "docs/blueprint.md",
+        "docs/performance.md",
+        "docs/releases/v1.0.16-ledger.md",
+        "docs/handoff/deepseek-film.md",
+        "prototype/build.sh"
+      ],
+      "original_packages": [
+        "FILM-F1",
+        "FILM-F2",
+        "FILM-F3",
+        "FILM-F4",
+        "FILM-F5",
+        "资格与发行"
+      ],
+      "axes": [
+        "窗口",
+        "实时活动",
+        "电量",
+        "CarPlay",
+        "指挥模式",
+        "刷脸解锁",
+        "隐私"
+      ],
+      "status": "OPEN",
+      "status_meaning": "execution/acceptance remains; not a claim that all listed source is missing"
+    }
+  ]
+}

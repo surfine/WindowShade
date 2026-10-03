@@ -41,8 +41,12 @@ extension AppDelegate {
     }
 
     func journalID(_ entry: [String: Any]) -> CGWindowID? {
-        guard let raw = journalNumber(entry, "id") else { return nil }
-        return CGWindowID(max(0, Int(raw)))
+        // Persisted values are untrusted data: do not truncate, clamp, or trap.
+        if let value = entry["id"] as? NSNumber,
+           CFGetTypeID(value) == CFBooleanGetTypeID() { return nil }
+        guard let raw = journalNumber(entry, "id"),
+              let exact = CGWindowID(exactly: raw), exact != 0 else { return nil }
+        return exact
     }
 
     func pruneShadeJournal(reason: String) {

@@ -1,0 +1,79 @@
+{
+  "tests_run": 18,
+  "failures": 0,
+  "errors": 0,
+  "cases": [
+    {
+      "name": "__main__.Tests.test_bad_overlay",
+      "result": "PASS"
+    },
+    {
+      "name": "__main__.Tests.test_base_symlink",
+      "result": "PASS"
+    },
+    {
+      "name": "__main__.Tests.test_duplicate_manifest_path",
+      "result": "PASS"
+    },
+    {
+      "name": "__main__.Tests.test_existing_directory",
+      "result": "PASS"
+    },
+    {
+      "name": "__main__.Tests.test_existing_file",
+      "result": "PASS"
+    },
+    {
+      "name": "__main__.Tests.test_extra_base",
+      "result": "PASS"
+    },
+    {
+      "name": "__main__.Tests.test_extra_overlay",
+      "result": "PASS"
+    },
+    {
+      "name": "__main__.Tests.test_missing_base",
+      "result": "PASS"
+    },
+    {
+      "name": "__main__.Tests.test_missing_overlay",
+      "result": "PASS"
+    },
+    {
+      "name": "__main__.Tests.test_nested_output",
+      "result": "PASS"
+    },
+    {
+      "name": "__main__.Tests.test_overlay_symlink",
+      "result": "PASS"
+    },
+    {
+      "name": "__main__.Tests.test_package_output",
+      "result": "PASS"
+    },
+    {
+      "name": "__main__.Tests.test_success_and_original",
+      "result": "PASS"
+    },
+    {
+      "name": "__main__.Tests.test_symlink_parent",
+      "result": "PASS"
+    },
+    {
+      "name": "__main__.Tests.test_traversal",
+      "result": "PASS"
+    },
+    {
+      "name": "__main__.Tests.test_wrong_base",
+      "result": "PASS"
+    },
+    {
+      "name": "__main__.Tests.test_wrong_base_sha",
+      "result": "PASS"
+    },
+    {
+      "name": "__main__.Tests.test_wrong_count",
+      "result": "PASS"
+    }
+  ]
+}

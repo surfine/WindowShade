@@ -1,0 +1,4055 @@
+{
+  "baseline": "v10 candidate",
+  "files": [
+    {
+      "path": "AGENTS.md",
+      "sha256": "0793c499259866d9afac64dec032649fc4f8dad9341db0f4caec4477edc7ae70",
+      "line_count": 19,
+      "symbols": []
+    },
+    {
+      "path": "docs/agents-in-notch.md",
+      "sha256": "98664f72fa7279b8ecac4674574fa4063a4457f5a286b82cf4faf7ddf44b3b78",
+      "line_count": 95,
+      "symbols": []
+    },
+    {
+      "path": "docs/blueprint.md",
+      "sha256": "c9f10268752be9c75d6d269de73e58309c94d409a9b7f64233f595a40ff11de9",
+      "line_count": 88,
+      "symbols": []
+    },
+    {
+      "path": "docs/conductor-v2.md",
+      "sha256": "5c435d7e17bbdec2ba828718d5830721b77dd2e73d21e63c585f92d8a62d0494",
+      "line_count": 149,
+      "symbols": []
+    },
+    {
+      "path": "docs/copy-guide.md",
+      "sha256": "029858deb8ef6823440e3df738c1e96c0b47b55a8dd5150313c82db1af1ff2b6",
+      "line_count": 106,
+      "symbols": []
+    },
+    {
+      "path": "docs/design-system.md",
+      "sha256": "65b56799b1c169d2c1b6424ee00e22e5726acfa9253f353142e64bcbec491c62",
+      "line_count": 829,
+      "symbols": []
+    },
+    {
+      "path": "docs/device-battery.md",
+      "sha256": "655de0eacca269fdf91a946404ccafc493b2cc5fed5cffe925cd002491997358",
+      "line_count": 42,
+      "symbols": []
+    },
+    {
+      "path": "docs/direction.md",
+      "sha256": "513e4f42d4d9ace6226f112144b6c4bddfa8af9eb32764111ed852bda48c8d60",
+      "line_count": 200,
+      "symbols": []
+    },
+    {
+      "path": "docs/dynamic-lock.md",
+      "sha256": "1b355f08a3f3cb02b41f4667a64c259cd30e1ea33001a5dd1af6b24c3f70a85b",
+      "line_count": 117,
+      "symbols": []
+    },
+    {
+      "path": "docs/face-unlock.md",
+      "sha256": "9c191b9a39e43932e0bf8c587a8e0f8d849752bb6f6ef52fe4078322e8c4f59f",
+      "line_count": 64,
+      "symbols": []
+    },
+    {
+      "path": "docs/handoff/START-HERE-deepseek.md",
+      "sha256": "a0d8c8e82c23678451ad777b844816faaf2c43b5e4c9ebd6cd1d59de821ae5d7",
+      "line_count": 103,
+      "symbols": []
+    },
+    {
+      "path": "docs/handoff/deepseek-film.md",
+      "sha256": "f935b56ffbb3986db04f9d4489e8dcabe5c3c164e4aa8779d535a95ca34df965",
+      "line_count": 120,
+      "symbols": []
+    },
+    {
+      "path": "docs/handoff/deepseek-menu-agents.md",
+      "sha256": "f1d69f88f3c1dc6204389ceba794df9a3f1295cc86a6b6043153e599860c34bf",
+      "line_count": 56,
+      "symbols": []
+    },
+    {
+      "path": "docs/input-devices.md",
+      "sha256": "02bf83893ca3125232a8dcd80ebab1fd265ab6bfe1d96fa949174dee68fcd6ee",
+      "line_count": 217,
+      "symbols": []
+    },
+    {
+      "path": "docs/lock-unlock-plan.md",
+      "sha256": "59e782cecea525c98dda7033b07c4873bd9be678c244587059a7edcf9e82735d",
+      "line_count": 282,
+      "symbols": []
+    },
+    {
+      "path": "docs/menu-bar.md",
+      "sha256": "6ba87eb72d428ad59b853cf3e029acde5f3edfa2c4f06cdc056f1b226d778158",
+      "line_count": 72,
+      "symbols": []
+    },
+    {
+      "path": "docs/performance.md",
+      "sha256": "03a3bd2918a1f58e3bc4ce3dc7d79d74e88ecbbbc620cc2e91576dc3bd5833db",
+      "line_count": 461,
+      "symbols": []
+    },
+    {
+      "path": "docs/privacy-page.md",
+      "sha256": "f0d41966695d89e893ce3a315e177e1460f414548de16a1d2988a19b1ec78770",
+      "line_count": 66,
+      "symbols": []
+    },
+    {
+      "path": "docs/releases/v1.0.16-ledger.md",
+      "sha256": "c3b034007fd4b99da063998ee08ba15d1baab3c05e9a46109ef0c5cf9a879323",
+      "line_count": 70,
+      "symbols": []
+    },
+    {
+      "path": "prototype/App/AuthorizationService.swift",
+      "sha256": "b2787dc3bb4369d687fbcde86e444cedc752f30d0629a2c5468ae646328a2ba8",
+      "line_count": 37,
+      "symbols": [
+        {
+          "line": 7,
+          "text": "@MainActor final class AuthorizationService {"
+        },
+        {
+          "line": 28,
+          "text": "func consume(_ grant: AuthorizationGrant, purpose: AuthPurpose, currentTarget: AuthTarget) -> AuthFailure? {"
+        },
+        {
+          "line": 32,
+          "text": "private func observe(_ center: NotificationCenter, _ name: Notification.Name) {"
+        }
+      ]
+    },
+    {
+      "path": "prototype/App/DeviceBatteryController.swift",
+      "sha256": "f91d842f704003420bc783ec477158f66c722c5a09213bd5c6bf7469dff629a3",
+      "line_count": 119,
+      "symbols": [
+        {
+          "line": 9,
+          "text": "@MainActor final class DeviceBatteryController {"
+        },
+        {
+          "line": 42,
+          "text": "func start() {"
+        },
+        {
+          "line": 48,
+          "text": "func stop() { source.stop() }"
+        },
+        {
+          "line": 52,
+          "text": "private func connect(_ identity: DeviceIdentity, initial: Bool) {"
+        },
+        {
+          "line": 57,
+          "text": "private func disconnect(_ id: String) {"
+        },
+        {
+          "line": 62,
+          "text": "private func record(_ reading: BatteryReading) {"
+        },
+        {
+          "line": 67,
+          "text": "private func handle(_ events: [DeviceBatteryEvent]) {"
+        },
+        {
+          "line": 92,
+          "text": "private func scheduleFlush() {"
+        },
+        {
+          "line": 100,
+          "text": "private func flushConnected() {"
+        },
+        {
+          "line": 114,
+          "text": "private func persist() {"
+        }
+      ]
+    },
+    {
+      "path": "prototype/App/DeviceBatteryCopy.swift",
+      "sha256": "d8b91913cb5175d3730b1d4e2dd6673613330b68b44fcf9210feaccc78849f37",
+      "line_count": 42,
+      "symbols": [
+        {
+          "line": 6,
+          "text": "enum DeviceBatteryCopy {"
+        },
+        {
+          "line": 7,
+          "text": "struct Model {"
+        },
+        {
+          "line": 13,
+          "text": "static func model(productID: Int?) -> Model {"
+        },
+        {
+          "line": 22,
+          "text": "static func connected(_ name: String) -> String { \"\\(name)已连接\" }"
+        },
+        {
+          "line": 23,
+          "text": "static func connected(count: Int) -> String { \"\\(count) 个设备已连接\" }"
+        },
+        {
+          "line": 24,
+          "text": "static func percent(_ value: Int) -> String { \"电量 \\(value)%\" }"
+        },
+        {
+          "line": 26,
+          "text": "static func low(_ name: String) -> String { \"\\(name)电量低\" }"
+        },
+        {
+          "line": 27,
+          "text": "static func lowDetail(_ percent: Int, battery: BatteryKind) -> String {"
+        },
+        {
+          "line": 32,
+          "text": "static func symbol(percent: Int?) -> String {"
+        }
+      ]
+    },
+    {
+      "path": "prototype/App/FaceObservationSource.swift",
+      "sha256": "fe1e1aa7bff0578030af1652c348b0396882037c2d267d439ae97172e9c24a2e",
+      "line_count": 259,
+      "symbols": [
+        {
+          "line": 6,
+          "text": "struct FaceCameraDescriptor: Sendable, Hashable { let id: String; let name: String }"
+        },
+        {
+          "line": 8,
+          "text": "struct FaceObservation: Sendable, Equatable {"
+        },
+        {
+          "line": 22,
+          "text": "enum FaceObservationSourceError: Error {"
+        },
+        {
+          "line": 28,
+          "text": "@MainActor final class FaceObservationSource {"
+        },
+        {
+          "line": 36,
+          "text": "static func devices() -> [FaceCameraDescriptor] {"
+        },
+        {
+          "line": 41,
+          "text": "static func startWatchingCameras() { CameraList.shared.start() }"
+        },
+        {
+          "line": 42,
+          "text": "func requestAuthorization() async -> Bool {"
+        },
+        {
+          "line": 45,
+          "text": "func start(deviceID: String, onObservation: @escaping @MainActor (FaceObservation) -> Void) async throws {"
+        },
+        {
+          "line": 73,
+          "text": "private func stopCapture() {"
+        },
+        {
+          "line": 78,
+          "text": "func stop() { stopCapture(); onFailure = nil }"
+        },
+        {
+          "line": 83,
+          "text": "private final class FaceObservationWorker: NSObject, AVCaptureVideoDataOutputSampleBufferDelegate, @unchecked Sendable {"
+        },
+        {
+          "line": 96,
+          "text": "static func devices() -> [AVCaptureDevice] {"
+        },
+        {
+          "line": 100,
+          "text": "func start(deviceID: String, token: UInt64,"
+        },
+        {
+          "line": 155,
+          "text": "func stop() { queue.async { self.tearDown() } }"
+        },
+        {
+          "line": 156,
+          "text": "private func tearDown() {"
+        },
+        {
+          "line": 164,
+          "text": "func captureOutput(_ output: AVCaptureOutput, didOutput sample: CMSampleBuffer, from connection: AVCaptureConnection) {"
+        },
+        {
+          "line": 182,
+          "text": "func eye(_ region: VNFaceLandmarkRegion2D?) -> Double? {"
+        },
+        {
+          "line": 187,
+          "text": "func finite(_ number: NSNumber?) -> Double? {"
+        },
+        {
+          "line": 198,
+          "text": "enum FaceEyeGeometry {"
+        },
+        {
+          "line": 199,
+          "text": "static func openness(_ points: [CGPoint], scale: CGSize) -> Double? {"
+        },
+        {
+          "line": 219,
+          "text": "private enum FaceLandmarkComputeDevice {"
+        },
+        {
+          "line": 227,
+          "text": "private final class CameraList: @unchecked Sendable {"
+        },
+        {
+          "line": 234,
+          "text": "func current() -> [FaceCameraDescriptor] {"
+        },
+        {
+          "line": 240,
+          "text": "func start() {"
+        },
+        {
+          "line": 252,
+          "text": "private func refresh() {"
+        }
+      ]
+    },
+    {
+      "path": "prototype/App/FocusSession.swift",
+      "sha256": "6a8feaa47356c9e6827eb41f3aa81cc972b0f884c518ef5c80716160f3cd8673",
+      "line_count": 562,
+      "symbols": [
+        {
+          "line": 7,
+          "text": "func focusSizedWorkSize(originalSize: CGSize, visible: NSRect,"
+        },
+        {
+          "line": 14,
+          "text": "func focusCenteredFrame(pos: CGPoint, size: CGSize,"
+        },
+        {
+          "line": 26,
+          "text": "func focusShelfReservedFrame(on screen: NSScreen) -> NSRect? {"
+        },
+        {
+          "line": 34,
+          "text": "func centerFocusedWindowForFocusMode(_ win: AXUIElement, pid: pid_t) {"
+        },
+        {
+          "line": 57,
+          "text": "func pulledOutFocusFrames(state: ShadeState, draggedFrame: NSRect) -> (overlay: NSRect, restore: NSRect) {"
+        },
+        {
+          "line": 87,
+          "text": "func focusRestoreFrame(fromOverlayFrame frame: NSRect, restoredSize: CGSize) -> NSRect {"
+        },
+        {
+          "line": 94,
+          "text": "func shouldReturnPulledOutOverlayToStack(id: CGWindowID, frame: NSRect) -> Bool {"
+        },
+        {
+          "line": 100,
+          "text": "func restorePulledOutOverlayToStack(id: CGWindowID) -> Bool {"
+        },
+        {
+          "line": 125,
+          "text": "func maybeStageFocusPullOut(id: CGWindowID, frame: NSRect) -> Bool {"
+        },
+        {
+          "line": 173,
+          "text": "func rejoinFocusStackAfterShadeIfNeeded(id: CGWindowID, overlay: NSWindow) {"
+        },
+        {
+          "line": 201,
+          "text": "func shouldAutoJoinFocusShelf(id: CGWindowID, pid: pid_t) -> Bool {"
+        },
+        {
+          "line": 210,
+          "text": "func isFocusShelfMember(id: CGWindowID) -> Bool {"
+        },
+        {
+          "line": 217,
+          "text": "func focusTemporaryRevealFrame(for state: ShadeState) -> NSRect {"
+        },
+        {
+          "line": 235,
+          "text": "func revealFocusShelfMemberFromOutside(id: CGWindowID, state: ShadeState, reason: String) {"
+        },
+        {
+          "line": 255,
+          "text": "func joinFocusShelfAfterShadeIfNeeded(id: CGWindowID, overlay: NSWindow) {"
+        },
+        {
+          "line": 287,
+          "text": "func noteUserMovedOverlay(id: CGWindowID, frame: NSRect) {"
+        },
+        {
+          "line": 312,
+          "text": "func removeFocusSessionEntry(_ id: CGWindowID) {"
+        },
+        {
+          "line": 317,
+          "text": "func focusCurrentAppCycle() {"
+        },
+        {
+          "line": 342,
+          "text": "func focusedApplicationForFocusSession() -> NSRunningApplication? {"
+        },
+        {
+          "line": 357,
+          "text": "func startFocusCurrentAppSession() {"
+        },
+        {
+          "line": 434,
+          "text": "func foldOne(_ item: (pid: pid_t, win: AXUIElement, id: CGWindowID)) {"
+        },
+        {
+          "line": 461,
+          "text": "func foldFrom(_ start: Int) {"
+        },
+        {
+          "line": 479,
+          "text": "func finishFocusCascade() {"
+        },
+        {
+          "line": 517,
+          "text": "func bringFocusedAppToFront(_ app: NSRunningApplication) {"
+        },
+        {
+          "line": 521,
+          "text": "func restoreFocusBarsHome(_ session: FocusSession) {"
+        },
+        {
+          "line": 532,
+          "text": "func restoreFocusSession(_ session: FocusSession) {"
+        }
+      ]
+    },
+    {
+      "path": "prototype/App/FocusTimerHost.swift",
+      "sha256": "7aa01c91cb3abf4503ff8eb92a8060efcdfca907b295caa3ab0fde88d264b666",
+      "line_count": 39,
+      "symbols": [
+        {
+          "line": 2,
+          "text": "@MainActor final class FocusTimerHost {"
+        },
+        {
+          "line": 16,
+          "text": "func handle(_ event: FocusTimer.Event) {"
+        },
+        {
+          "line": 21,
+          "text": "func configure(preset: FocusTimer.Preset, tuckChatEnabled: Bool) {"
+        },
+        {
+          "line": 26,
+          "text": "func stop() { wake?.cancel(); wake = nil; if revision < .max { revision += 1 } }"
+        },
+        {
+          "line": 27,
+          "text": "private func schedule() {"
+        }
+      ]
+    },
+    {
+      "path": "prototype/App/FoldCompletion.swift",
+      "sha256": "18559db591375242d83406a083b9a18e4bf5dc69de7b8c32c8f3494c31054982",
+      "line_count": 65,
+      "symbols": [
+        {
+          "line": 11,
+          "text": "func registerFoldWaiter(id: CGWindowID, completion: @escaping (Bool) -> Void) -> UUID {"
+        },
+        {
+          "line": 21,
+          "text": "func bindFoldWaiters(id: CGWindowID, tokens: [UUID], transaction: UUID) {"
+        },
+        {
+          "line": 28,
+          "text": "func settleFoldWaiter(id: CGWindowID, token: UUID, success: Bool) {"
+        },
+        {
+          "line": 33,
+          "text": "func settleFoldWaiters(id: CGWindowID, transaction: UUID, success: Bool) {"
+        },
+        {
+          "line": 38,
+          "text": "func cancelFoldWaiters(id: CGWindowID, tokens: [UUID]) {"
+        },
+        {
+          "line": 42,
+          "text": "func settleFoldWaiters(id: CGWindowID, tokens: [UUID], success: Bool) {"
+        }
+      ]
+    },
+    {
+      "path": "prototype/App/FoldTransaction.swift",
+      "sha256": "f353846ee708e80dc81e78636f24dd3976d5ec77f1c0f9db0e38f2f675519c3b",
+      "line_count": 1059,
+      "symbols": [
+        {
+          "line": 7,
+          "text": "func parkFocusForInactiveCapture() {"
+        },
+        {
+          "line": 22,
+          "text": "func releaseFocusParking(reactivate pid: pid_t?) {"
+        },
+        {
+          "line": 41,
+          "text": "func handOffFocusBeforeHiding(win: AXUIElement, pid: pid_t, id: CGWindowID) -> Bool {"
+        },
+        {
+          "line": 103,
+          "text": "func hideTookEffect(_ hide: HideMethod, win: AXUIElement, pid: pid_t,"
+        },
+        {
+          "line": 108,
+          "text": "func scheduleFoldVerification(id: CGWindowID) {"
+        },
+        {
+          "line": 147,
+          "text": "func revealOverlayAfterVerification(id: CGWindowID, state: ShadeState) {"
+        },
+        {
+          "line": 165,
+          "text": "func rollbackFoldTransaction(id: CGWindowID, expectedTransaction: UUID? = nil) {"
+        },
+        {
+          "line": 190,
+          "text": "func activateApp(pid: pid_t) {"
+        },
+        {
+          "line": 196,
+          "text": "func bringRestoredWindowToFront(_ win: AXUIElement, pid: pid_t, reason: String) {"
+        },
+        {
+          "line": 199,
+          "text": "func attempt(_ label: String) {"
+        },
+        {
+          "line": 223,
+          "text": "func prepareForwardedTrafficAction(_ win: AXUIElement, pid: pid_t, reason: String) {"
+        },
+        {
+          "line": 230,
+          "text": "func restoredWindowIsGeometryReady(_ win: AXUIElement) -> Bool {"
+        },
+        {
+          "line": 235,
+          "text": "func buttonIsReady(_ win: AXUIElement, _ attr: String) -> Bool {"
+        },
+        {
+          "line": 251,
+          "text": "func forwardedTrafficActionSucceeded(state: ShadeState, id: CGWindowID,"
+        },
+        {
+          "line": 274,
+          "text": "func performForwardedTrafficAction(state: ShadeState, pos: CGPoint,"
+        },
+        {
+          "line": 288,
+          "text": "func retryOrFallback(_ index: Int, note: String) {"
+        },
+        {
+          "line": 312,
+          "text": "func verifyAfterAXPress(_ win: AXUIElement, index: Int, attr: String) {"
+        },
+        {
+          "line": 324,
+          "text": "func verifyAfterPointerClick(_ win: AXUIElement, index: Int, attr: String) {"
+        },
+        {
+          "line": 341,
+          "text": "func attempt(_ index: Int) {"
+        },
+        {
+          "line": 372,
+          "text": "func schedule(_ index: Int, note: String) {"
+        },
+        {
+          "line": 387,
+          "text": "func showRealWindowManagementPopover(_ id: CGWindowID) {"
+        },
+        {
+          "line": 400,
+          "text": "func attempt(_ index: Int) {"
+        },
+        {
+          "line": 430,
+          "text": "func windowIsParkedOffscreen(id: CGWindowID, win: AXUIElement, size: CGSize) -> Bool {"
+        },
+        {
+          "line": 438,
+          "text": "func privateSLSOffscreenHide(_ win: AXUIElement, id: CGWindowID,"
+        },
+        {
+          "line": 474,
+          "text": "func privateSLSAlphaHide(id: CGWindowID, pid: pid_t, reason: String) -> HideMethod? {"
+        },
+        {
+          "line": 506,
+          "text": "func axOffscreenHide(_ win: AXUIElement,"
+        },
+        {
+          "line": 530,
+          "text": "func ownWindow(id: CGWindowID?) -> NSWindow? {"
+        },
+        {
+          "line": 537,
+          "text": "func orderOutOwnWindowIfNeeded(id: CGWindowID?, pid: pid_t, reason: String) -> HideMethod? {"
+        },
+        {
+          "line": 548,
+          "text": "func hideWindow(_ win: AXUIElement, pid: pid_t, originalPosition pos: CGPoint,"
+        },
+        {
+          "line": 609,
+          "text": "func fallbackHide(_ win: AXUIElement, pid: pid_t, id: CGWindowID?,"
+        },
+        {
+          "line": 639,
+          "text": "func safeRestorePosition(for state: ShadeState, desired pos: CGPoint) -> CGPoint {"
+        },
+        {
+          "line": 658,
+          "text": "func refreshedWindowElement(id: CGWindowID, fallback: AXUIElement,"
+        },
+        {
+          "line": 666,
+          "text": "func resolvedWindowElement(for state: ShadeState) -> AXUIElement {"
+        },
+        {
+          "line": 694,
+          "text": "func applyRestoredGeometry(_ state: ShadeState, to pos: CGPoint,"
+        },
+        {
+          "line": 727,
+          "text": "func restoreWindow(_ state: ShadeState, to pos: CGPoint) -> AXUIElement {"
+        },
+        {
+          "line": 767,
+          "text": "func cancelRestorePin(for id: CGWindowID) {"
+        },
+        {
+          "line": 771,
+          "text": "func pinRestoredWindow(_ state: ShadeState, to pos: CGPoint, reason: String) {"
+        },
+        {
+          "line": 779,
+          "text": "func attempt(_ label: String, focus: Bool, verify: Bool = true) {"
+        },
+        {
+          "line": 822,
+          "text": "func resizeShadedWindowFromProxy(_ id: CGWindowID, proxyFrame: NSRect) {"
+        },
+        {
+          "line": 861,
+          "text": "func makeRevealObserver(pid: pid_t, win: AXUIElement, id: CGWindowID, transaction: UUID) -> AXObserver? {"
+        },
+        {
+          "line": 884,
+          "text": "func removeObserver(_ state: ShadeState) {"
+        },
+        {
+          "line": 894,
+          "text": "func handleAXNotification(_ id: CGWindowID, _ notification: String, expected: WS2FoldCallbackStamp) {"
+        },
+        {
+          "line": 942,
+          "text": "@objc func appTerminated(_ note: Notification) {"
+        },
+        {
+          "line": 952,
+          "text": "@objc func frontmostApplicationChanged(_ note: Notification) {"
+        },
+        {
+          "line": 982,
+          "text": "@objc func screenParametersChanged(_ note: Notification) {"
+        },
+        {
+          "line": 1028,
+          "text": "@objc func activeSpaceChanged(_ note: Notification) {"
+        }
+      ]
+    },
+    {
+      "path": "prototype/App/InteractionCoordinator.swift",
+      "sha256": "5524bd61193c8e7ca5090b7c38c498f094bdc13a3e48971f3f084b2fb7a0c5b2",
+      "line_count": 142,
+      "symbols": [
+        {
+          "line": 5,
+          "text": "final class InteractionCoordinator {"
+        },
+        {
+          "line": 6,
+          "text": "struct Environment { var unlocked: Bool; var displays: Set<WS2.DisplayID> }"
+        },
+        {
+          "line": 7,
+          "text": "private struct Active { let handle: WS2.LeaseHandle; let layer: WS2.Layer; let deadline: WS2.Instant }"
+        },
+        {
+          "line": 8,
+          "text": "private struct Alert { let first: WS2.Instant; var last: WS2.Instant; let deadline: WS2.Instant }"
+        },
+        {
+          "line": 27,
+          "text": "private func permits(_ r: WS2.LeaseRequest) -> Bool {"
+        },
+        {
+          "line": 35,
+          "text": "private func withdraw(_ reason: WS2.LeaseRevocation) {"
+        },
+        {
+          "line": 40,
+          "text": "private func expire(_ now: WS2.Instant) {"
+        },
+        {
+          "line": 46,
+          "text": "func acquire(_ r: WS2.LeaseRequest, replacing expected: WS2.LeaseHandle? = nil) -> WS2.LeaseDecision {"
+        },
+        {
+          "line": 75,
+          "text": "func isCurrent(_ lease: WS2.LeaseHandle) -> Bool {"
+        },
+        {
+          "line": 81,
+          "text": "func release(_ lease: WS2.LeaseHandle, at now: WS2.Instant) {"
+        },
+        {
+          "line": 86,
+          "text": "private func barrier(_ reason: WS2.LeaseRevocation) {"
+        },
+        {
+          "line": 90,
+          "text": "func invalidate(_ reason: WS2.LeaseRevocation, at now: WS2.Instant) {"
+        },
+        {
+          "line": 98,
+          "text": "func removeDisplay(_ id: WS2.DisplayID, at now: WS2.Instant) {"
+        },
+        {
+          "line": 105,
+          "text": "func publishOngoing(_ ids: [String], on display: WS2.DisplayID) {"
+        },
+        {
+          "line": 110,
+          "text": "func remind(on display: WS2.DisplayID, at now: WS2.Instant) {"
+        },
+        {
+          "line": 119,
+          "text": "func snapshots(at now: WS2.Instant) -> [WS2.VisibilitySnapshot] {"
+        },
+        {
+          "line": 137,
+          "text": "func confirmationIsFresh(lease: WS2.LeaseHandle, beganAt: WS2.Instant, sequence: UInt64,"
+        }
+      ]
+    },
+    {
+      "path": "prototype/App/NotchFaceObservations.swift",
+      "sha256": "f7f541e11cd13467409c555cae89714bd2017f14033100d9012f5982692aafd2",
+      "line_count": 133,
+      "symbols": [
+        {
+          "line": 4,
+          "text": "@MainActor final class NotchFaceObservationController {"
+        },
+        {
+          "line": 29,
+          "text": "func start(cameraID: String) {"
+        },
+        {
+          "line": 71,
+          "text": "private func finish(title: String, detail: String = \"可稍后重试\", token: UInt64) {"
+        },
+        {
+          "line": 82,
+          "text": "func cancel(restoreFocus: Bool = true) {"
+        },
+        {
+          "line": 100,
+          "text": "@MainActor final class NotchFaceObservationView: NSView, NotchInteractiveContent {"
+        },
+        {
+          "line": 123,
+          "text": "override func layout() {"
+        },
+        {
+          "line": 130,
+          "text": "func update(title: String, detail: String) { self.title.stringValue = title; self.detail.stringValue = detail }"
+        },
+        {
+          "line": 131,
+          "text": "@objc private func cancelRequest() { onCancel?() }"
+        },
+        {
+          "line": 132,
+          "text": "override func cancelOperation(_ sender: Any?) { onCancel?() }"
+        }
+      ]
+    },
+    {
+      "path": "prototype/App/PeripheralBatterySource.swift",
+      "sha256": "149935ed50964a0c77b69551a56551aa2d26ee84e9194e098f3cf61f4ece8d36",
+      "line_count": 159,
+      "symbols": [
+        {
+          "line": 14,
+          "text": "final class PeripheralBatterySource: @unchecked Sendable {"
+        },
+        {
+          "line": 15,
+          "text": "struct Peripheral: Sendable {"
+        },
+        {
+          "line": 35,
+          "text": "func start() {"
+        },
+        {
+          "line": 62,
+          "text": "func stop() {"
+        },
+        {
+          "line": 87,
+          "text": "private func drainMatched(_ iterator: io_iterator_t, initialSnapshot: Bool) {"
+        },
+        {
+          "line": 102,
+          "text": "private func drainTerminated(_ iterator: io_iterator_t) {"
+        },
+        {
+          "line": 115,
+          "text": "private func refreshAll() {"
+        },
+        {
+          "line": 119,
+          "text": "private func read(_ service: io_object_t, identity: DeviceIdentity) {"
+        },
+        {
+          "line": 133,
+          "text": "static func identity(of service: io_object_t) -> DeviceIdentity? {"
+        },
+        {
+          "line": 150,
+          "text": "static func intProperty(_ service: io_object_t, _ key: String) -> Int? {"
+        },
+        {
+          "line": 156,
+          "text": "static func stringProperty(_ service: io_object_t, _ key: String) -> String? {"
+        }
+      ]
+    },
+    {
+      "path": "prototype/App/Reconcile.swift",
+      "sha256": "290d8fb4dcb1b14e79620279ff9e30b42e81fbaa86c68678808a5073bd333f04",
+      "line_count": 209,
+      "symbols": [
+        {
+          "line": 7,
+          "text": "func updateReconcileTimer() {"
+        },
+        {
+          "line": 25,
+          "text": "func shouldRetryJournalRescue(now: Date) -> Bool {"
+        },
+        {
+          "line": 30,
+          "text": "func sourceWindowLooksUserVisible(state: ShadeState, pos: CGPoint, size: CGSize,"
+        },
+        {
+          "line": 65,
+          "text": "func shouldLogReconcileInvalidCount(_ count: Int) -> Bool {"
+        },
+        {
+          "line": 68,
+          "text": "func sourceWindowMissingShouldCleanup(id: CGWindowID, state: ShadeState) -> Bool {"
+        },
+        {
+          "line": 91,
+          "text": "func reconcileShadedWindows(reason: String) {"
+        },
+        {
+          "line": 153,
+          "text": "func applyReconcileAXSnapshots(_ snapshots: [ReconcileAXSnapshot],"
+        },
+        {
+          "line": 203,
+          "text": "func finishReconcileShadedWindows() {"
+        }
+      ]
+    },
+    {
+      "path": "prototype/App/ShadeController.swift",
+      "sha256": "ffe5d474a28aa43ac12baf5e4a85b1d795494be0df928980fe6b4e69d8bb813f",
+      "line_count": 891,
+      "symbols": [
+        {
+          "line": 8,
+          "text": "func retargetToActiveSpaceWindow(pid: pid_t) -> (AXUIElement, CGWindowID)? {"
+        },
+        {
+          "line": 35,
+          "text": "func toggle() {"
+        },
+        {
+          "line": 87,
+          "text": "func performNativeStickiesShade(_ win: AXUIElement) {"
+        },
+        {
+          "line": 104,
+          "text": "func makeShadePlan(win: AXUIElement, pos: CGPoint, size: CGSize,"
+        },
+        {
+          "line": 157,
+          "text": "func resolvedSourceSpaceID(windowID id: CGWindowID,"
+        },
+        {
+          "line": 169,
+          "text": "func shade(_ win: AXUIElement, _ id: CGWindowID,"
+        },
+        {
+          "line": 178,
+          "text": "func admissionCurrent() -> Bool {"
+        },
+        {
+          "line": 184,
+          "text": "func completeFold(success: Bool, transaction: UUID? = nil) {"
+        },
+        {
+          "line": 303,
+          "text": "func installOverlay(_ overlay: NSWindow, mode: ShadeAppearanceMode, previewImage: NSImage?) {"
+        },
+        {
+          "line": 482,
+          "text": "func installInteractiveNativeCollapse(barH: CGFloat) -> Bool {"
+        },
+        {
+          "line": 761,
+          "text": "func captureWindow(id: CGWindowID, axPos: CGPoint, size: CGSize,"
+        },
+        {
+          "line": 800,
+          "text": "func fastWindowCapture(_ id: CGWindowID) async -> CGImage? {"
+        },
+        {
+          "line": 807,
+          "text": "func captureWindowWithTimeout(id: CGWindowID, axPos: CGPoint, size: CGSize,"
+        },
+        {
+          "line": 858,
+          "text": "private func raceCaptureWithTimeout(id: CGWindowID, axPos: CGPoint, size: CGSize,"
+        }
+      ]
+    },
+    {
+      "path": "prototype/App/WS2AgentSessionView.swift",
+      "sha256": "2eb4cc0b0ffd80413aeb0375a2b4973039174218273be6988b5fc1a8f730e53d",
+      "line_count": 47,
+      "symbols": [
+        {
+          "line": 3,
+          "text": "@MainActor final class WS2AgentSessionView: NSView, WS2LeaseContent {"
+        },
+        {
+          "line": 20,
+          "text": "func render(_ sessions:[AgentSessions.Session]) {"
+        },
+        {
+          "line": 41,
+          "text": "@objc private func pressed(_ sender:NSButton) {"
+        },
+        {
+          "line": 45,
+          "text": "override func cancelOperation(_ sender:Any?) { onCancel?() }"
+        },
+        {
+          "line": 46,
+          "text": "func revoke() { inputIsCurrent = { false }; render([]); bindings.removeAll() }"
+        }
+      ]
+    },
+    {
+      "path": "prototype/App/WS2AppRuntime.swift",
+      "sha256": "99205e90fd9d99278da55fbfe88924e2100c4ada4223c6d35136da67cf5b6db2",
+      "line_count": 251,
+      "symbols": [
+        {
+          "line": 3,
+          "text": "@MainActor final class WS2AppRuntime {"
+        },
+        {
+          "line": 31,
+          "text": "func day(_ date: Date) -> String {"
+        },
+        {
+          "line": 108,
+          "text": "private func setLockReason(_ reason: String, locked: Bool) {"
+        },
+        {
+          "line": 119,
+          "text": "func applicationShouldTerminate() -> NSApplication.TerminateReply {"
+        },
+        {
+          "line": 138,
+          "text": "private func finishQuit(updaterReply:Bool?=nil,childrenReady:Bool=false,failed:Bool=false) {"
+        },
+        {
+          "line": 144,
+          "text": "func openOwned() {"
+        },
+        {
+          "line": 153,
+          "text": "private func openModelPicker() {"
+        },
+        {
+          "line": 192,
+          "text": "func open() {"
+        },
+        {
+          "line": 205,
+          "text": "func refreshFocusSettings() {"
+        },
+        {
+          "line": 210,
+          "text": "func toggleFocus() {"
+        },
+        {
+          "line": 217,
+          "text": "@discardableResult func showSessions(_ sessions:[AgentSessions.Session], open:@escaping(WS2.Context)->Void,"
+        },
+        {
+          "line": 222,
+          "text": "@discardableResult func showConductor(_ state:ConductorNotch, action:@escaping(WS2ConductorView.Action)->Void) -> Bool {"
+        },
+        {
+          "line": 228,
+          "text": "private func publish() {"
+        },
+        {
+          "line": 236,
+          "text": "func stop() {"
+        },
+        {
+          "line": 249,
+          "text": "@objc func ws2OpenOwned() { MainActor.assumeIsolated { ws2Runtime.openOwned() } }"
+        },
+        {
+          "line": 250,
+          "text": "@objc func ws2OpenFocus() { MainActor.assumeIsolated { ws2Runtime.open() } }"
+        }
+      ]
+    },
+    {
+      "path": "prototype/App/WS2CodexApprovalHost.swift",
+      "sha256": "f400c3354906b3ddb97f7651388468520d91f5eb6796417d014d7753266bf03b",
+      "line_count": 250,
+      "symbols": [
+        {
+          "line": 5,
+          "text": "@MainActor final class WS2CodexApprovalHost: WS2OwnedProtocolHost {"
+        },
+        {
+          "line": 36,
+          "text": "func beginProtocol() throws {"
+        },
+        {
+          "line": 40,
+          "text": "func startThread(cwd: String, model: String) throws {"
+        },
+        {
+          "line": 45,
+          "text": "func resumeThread(_ id: String) throws {"
+        },
+        {
+          "line": 49,
+          "text": "func startTurn(text: String, model: String, effort: String) throws {"
+        },
+        {
+          "line": 54,
+          "text": "func steer(text: String, expectedTurn: String) throws {"
+        },
+        {
+          "line": 59,
+          "text": "func interruptTurn() throws {"
+        },
+        {
+          "line": 63,
+          "text": "func receive(_ bytes: Data) {"
+        },
+        {
+          "line": 87,
+          "text": "@discardableResult func present(_ id: WS2.RequestID) -> Bool {"
+        },
+        {
+          "line": 114,
+          "text": "private func confirm(beganAt: WS2.Instant, sequence: UInt64) {"
+        },
+        {
+          "line": 142,
+          "text": "private func target(_ review: WS2ApprovalReview) throws -> AuthTarget {"
+        },
+        {
+          "line": 145,
+          "text": "private func isCurrent(_ review: WS2ApprovalReview) -> Bool {"
+        },
+        {
+          "line": 150,
+          "text": "func tick() {"
+        },
+        {
+          "line": 160,
+          "text": "private func flush(deadline: WS2.Instant) {"
+        },
+        {
+          "line": 164,
+          "text": "private func abandonCurrent(decline: Bool) {"
+        },
+        {
+          "line": 173,
+          "text": "func invalidate() {"
+        },
+        {
+          "line": 179,
+          "text": "@MainActor private final class WS2ReviewButton: NSButton {"
+        },
+        {
+          "line": 189,
+          "text": "private func begin() -> Bool {"
+        },
+        {
+          "line": 192,
+          "text": "override func mouseDown(with event:NSEvent) { guard begin() else { return }; defer { press = nil }; super.mouseDown(with:event) }"
+        },
+        {
+          "line": 193,
+          "text": "override func keyDown(with event:NSEvent) {"
+        },
+        {
+          "line": 197,
+          "text": "override func accessibilityPerformPress() -> Bool {"
+        },
+        {
+          "line": 200,
+          "text": "@objc private func fire() { guard let press else { return }; freshAction?(press.0,press.1) }"
+        },
+        {
+          "line": 202,
+          "text": "@MainActor final class WS2CommandReviewView: NSView, WS2LeaseContent {"
+        },
+        {
+          "line": 231,
+          "text": "func enableConfirmation(){approval.isEnabled=inputIsCurrent()}"
+        },
+        {
+          "line": 232,
+          "text": "func revoke(){inputIsCurrent = { false };approval.isEnabled=false;text.string=\"\";confirm=nil;decline=nil}"
+        },
+        {
+          "line": 233,
+          "text": "@objc private func refuse(){guard inputIsCurrent() else{return};decline?()}"
+        },
+        {
+          "line": 234,
+          "text": "override func cancelOperation(_ sender:Any?){onCancel?()}"
+        },
+        {
+          "line": 239,
+          "text": "func account(_ action:WS2AccountAction) throws -> WS2.RequestID {"
+        }
+      ]
+    },
+    {
+      "path": "prototype/App/WS2ConductorView.swift",
+      "sha256": "35e1bb2d5b14f59c381aba5969009add1be93e97eb3eeb2005fd1d9607e6e225",
+      "line_count": 78,
+      "symbols": [
+        {
+          "line": 3,
+          "text": "@MainActor final class WS2ConductorView: NSView, WS2LeaseContent {"
+        },
+        {
+          "line": 5,
+          "text": "enum Action { case sendDraft(String), discardDraft, confirmCost, stopTurn, leave, session(Int) }"
+        },
+        {
+          "line": 32,
+          "text": "@discardableResult func render(_ state: ConductorNotch) -> Bool {"
+        },
+        {
+          "line": 63,
+          "text": "private func button(_ label:String,_ action:Action) {"
+        },
+        {
+          "line": 67,
+          "text": "@objc private func pressed(_ sender:NSButton) {"
+        },
+        {
+          "line": 76,
+          "text": "override func cancelOperation(_ sender:Any?) { onCancel?() }"
+        },
+        {
+          "line": 77,
+          "text": "func revoke() { buttons.removeAll(); inputIsCurrent = { false }; editor.stringValue = \"\"; title.stringValue = \"\"; detail.stringValue = \"\"; path.path=nil }"
+        }
+      ]
+    },
+    {
+      "path": "prototype/App/WS2DeviceActionHost.swift",
+      "sha256": "e969db6f1d29d4dc2af25afb99a58e90281b395480a704193de53e3b5cf2e5a7",
+      "line_count": 106,
+      "symbols": [
+        {
+          "line": 4,
+          "text": "@MainActor final class WS2DeviceActionHost {"
+        },
+        {
+          "line": 35,
+          "text": "func start() { bridge.start() }"
+        },
+        {
+          "line": 37,
+          "text": "private func clear(_ id: UUID) {"
+        },
+        {
+          "line": 41,
+          "text": "@discardableResult func enable(_ id: UUID) -> Bool {"
+        },
+        {
+          "line": 51,
+          "text": "func disable(_ id: UUID) { clear(id); _ = bridge.setEnabled(false, attachment: id) }"
+        },
+        {
+          "line": 52,
+          "text": "func environmentChanged() {"
+        },
+        {
+          "line": 56,
+          "text": "private func receive(_ input: WS2ControllerInput) {"
+        },
+        {
+          "line": 96,
+          "text": "private static func intent(_ name: String) -> WS2SemanticInputRouter.Intent? {"
+        },
+        {
+          "line": 105,
+          "text": "func stop() { for id in Array(contexts.keys) { clear(id) }; bridge.stop() }"
+        }
+      ]
+    },
+    {
+      "path": "prototype/App/WS2FoldCallbackGuard.swift",
+      "sha256": "9f8d8cc688955c493ac17ebde396f59f70892e32c0b78250c78589c007fc63db",
+      "line_count": 100,
+      "symbols": [
+        {
+          "line": 5,
+          "text": "func foldCallbackStamp(id: CGWindowID, state: ShadeState) -> WS2FoldCallbackStamp {"
+        },
+        {
+          "line": 13,
+          "text": "func foldWaiterDeliveryStamp(id: CGWindowID, transaction: UUID) -> WS2FoldCallbackStamp? {"
+        },
+        {
+          "line": 21,
+          "text": "func foldCallbackIsCurrent(_ expected: WS2FoldCallbackStamp,"
+        },
+        {
+          "line": 30,
+          "text": "func observeFoldHide(_ hide: HideMethod, win: AXUIElement, pid: pid_t,"
+        },
+        {
+          "line": 68,
+          "text": "func retainUnconfirmedFold(id: CGWindowID, state: ShadeState) {"
+        },
+        {
+          "line": 84,
+          "text": "func receiveFoldAXNotification(routeID: UInt, notification: String) {"
+        },
+        {
+          "line": 96,
+          "text": "func axObservedBoolAttribute(_ win: AXUIElement, _ attribute: String) -> Bool? {"
+        }
+      ]
+    },
+    {
+      "path": "prototype/App/WS2GameControllerBridge.swift",
+      "sha256": "cf257e4e8233d7030b96e5b317d02043024d25f2d03dc27824dd9976394881ee",
+      "line_count": 186,
+      "symbols": [
+        {
+          "line": 5,
+          "text": "@MainActor final class WS2GameControllerBridge: WS2ControllerBridge {"
+        },
+        {
+          "line": 9,
+          "text": "@MainActor private final class Entry {"
+        },
+        {
+          "line": 32,
+          "text": "func start() {"
+        },
+        {
+          "line": 52,
+          "text": "@discardableResult func setEnabled(_ enabled: Bool, attachment: UUID) -> Bool {"
+        },
+        {
+          "line": 67,
+          "text": "func environmentChanged() {"
+        },
+        {
+          "line": 80,
+          "text": "func suspendAll() { for e in entries.values { suspend(e) }; publish() }"
+        },
+        {
+          "line": 81,
+          "text": "private func reconcile() {"
+        },
+        {
+          "line": 97,
+          "text": "private func installHandler(_ e: Entry) -> Bool {"
+        },
+        {
+          "line": 108,
+          "text": "private func releaseHandler(_ e: Entry) {"
+        },
+        {
+          "line": 117,
+          "text": "private func sample(_ e: Entry) {"
+        },
+        {
+          "line": 157,
+          "text": "@discardableResult func feedback(attachment:UUID,start:Float,strength:Float) -> Bool {"
+        },
+        {
+          "line": 167,
+          "text": "private func clearFeedback(_ e:Entry) {"
+        },
+        {
+          "line": 171,
+          "text": "private func suspend(_ e:Entry) {"
+        },
+        {
+          "line": 177,
+          "text": "private func publish() {"
+        },
+        {
+          "line": 180,
+          "text": "func stop() {"
+        }
+      ]
+    },
+    {
+      "path": "prototype/App/WS2IslandCoordinator.swift",
+      "sha256": "315bf8f9b76ead7600c8829b69c4609bf89d919f3421631b3154aedd13acd91f",
+      "line_count": 101,
+      "symbols": [
+        {
+          "line": 3,
+          "text": "@MainActor protocol WS2LeaseContent: NotchInteractiveContent {"
+        },
+        {
+          "line": 6,
+          "text": "func revoke()"
+        },
+        {
+          "line": 8,
+          "text": "@MainActor final class WS2IslandCoordinator {"
+        },
+        {
+          "line": 32,
+          "text": "private static func displayID(_ screen: NSScreen) -> WS2.DisplayID? {"
+        },
+        {
+          "line": 35,
+          "text": "@discardableResult func show(_ content: NSView & WS2LeaseContent, ownerID: String, layer: WS2.Layer = .opened,"
+        },
+        {
+          "line": 60,
+          "text": "func inputHandle(for content: NSView) -> WS2.LeaseHandle? {"
+        },
+        {
+          "line": 65,
+          "text": "func handOffToAuthorization() { dismissed = nil; dismiss() }"
+        },
+        {
+          "line": 66,
+          "text": "func dismiss() { if let handle { leases.release(handle, at: clock.now()) } }"
+        },
+        {
+          "line": 67,
+          "text": "func dismiss(ifShowing content: NSView) { if view === content { dismiss() } }"
+        },
+        {
+          "line": 68,
+          "text": "func handOffToAuthorization(ifShowing content: NSView) -> Bool {"
+        },
+        {
+          "line": 71,
+          "text": "private func revoked(_ lease: WS2.LeaseHandle, reason: WS2.LeaseRevocation) {"
+        },
+        {
+          "line": 84,
+          "text": "private func beginAuthorization(on panel: NotchPanel) -> Bool {"
+        },
+        {
+          "line": 92,
+          "text": "private func endAuthorization() { if let authHandle { leases.release(authHandle,at:clock.now()) }; authHandle = nil }"
+        },
+        {
+          "line": 93,
+          "text": "func invalidate(_ reason: WS2.LeaseRevocation) { leases.invalidate(reason,at:clock.now()) }"
+        },
+        {
+          "line": 94,
+          "text": "private func reconcileDisplays() { _ = leases.snapshots(at:clock.now()) }"
+        },
+        {
+          "line": 95,
+          "text": "func stop() {"
+        }
+      ]
+    },
+    {
+      "path": "prototype/App/WS2ModelPickerView.swift",
+      "sha256": "1da4c59ec557195a5b03760eb038b2d8fe1ecabb2f733f2c29ab554d8790f73c",
+      "line_count": 179,
+      "symbols": [
+        {
+          "line": 4,
+          "text": "@MainActor final class WS2ModelPickerView: NSView, WS2LeaseContent, NSTableViewDataSource, NSTableViewDelegate {"
+        },
+        {
+          "line": 79,
+          "text": "override func viewDidMoveToWindow() {"
+        },
+        {
+          "line": 96,
+          "text": "func sync() {"
+        },
+        {
+          "line": 112,
+          "text": "func renderDevices(_ devices: [WS2ControllerDevice]) {"
+        },
+        {
+          "line": 128,
+          "text": "private func renderHint() {"
+        },
+        {
+          "line": 132,
+          "text": "private func showSelection() {"
+        },
+        {
+          "line": 137,
+          "text": "func numberOfRows(in tableView: NSTableView) -> Int { rows.count }"
+        },
+        {
+          "line": 138,
+          "text": "func tableView(_ tableView: NSTableView, viewFor tableColumn: NSTableColumn?, row: Int) -> NSView? {"
+        },
+        {
+          "line": 145,
+          "text": "func tableViewSelectionDidChange(_ notification: Notification) {"
+        },
+        {
+          "line": 149,
+          "text": "@objc private func toggleDevice() {"
+        },
+        {
+          "line": 159,
+          "text": "@objc private func useSelection() {"
+        },
+        {
+          "line": 164,
+          "text": "@objc private func goBack() { if inputIsCurrent() { navigateBack?() } }"
+        },
+        {
+          "line": 165,
+          "text": "func revoke() {"
+        },
+        {
+          "line": 175,
+          "text": "func prepare(_ ticket: WS2SemanticInputRouter.Ticket) -> Bool { input.ready = isInputReady; return input.prepare(ticket) }"
+        },
+        {
+          "line": 176,
+          "text": "func cancelPrepared(context: WS2SemanticInputRouter.Context, presses: [UInt64]) { input.cancel(context: context, presses: presses) }"
+        },
+        {
+          "line": 177,
+          "text": "func execute(_ ticket: WS2SemanticInputRouter.Ticket) -> Bool { input.ready = isInputReady; return input.execute(ticket) }"
+        },
+        {
+          "line": 178,
+          "text": "func move(_ effect: GamepadMapping.Effect, context: WS2SemanticInputRouter.Context) -> Bool { false }"
+        }
+      ]
+    },
+    {
+      "path": "prototype/App/WS2OwnedCodexSession+Authorization.swift",
+      "sha256": "cd619ed648b81d55565ecf519777681ab4419bd2374eecb1f793c7bf29538266",
+      "line_count": 18,
+      "symbols": []
+    },
+    {
+      "path": "prototype/App/WS2OwnedLaunchController.swift",
+      "sha256": "302f4b8ad841610a8a471caf79af657a5c8bc5d10e9c0e0a8d954363160a4ed2",
+      "line_count": 311,
+      "symbols": [
+        {
+          "line": 4,
+          "text": "/// AgentSessions remain the authorities for protocol state and backend sessions respectively."
+        },
+        {
+          "line": 5,
+          "text": "@MainActor final class WS2OwnedLaunchController {"
+        },
+        {
+          "line": 6,
+          "text": "enum Phase: Equatable { case idle, checkingVersion, connecting, checkingConfig, signedOut, ready, creatingThread, sending, running, interrupting, completed, failed, stopping, stopped }"
+        },
+        {
+          "line": 7,
+          "text": "private enum Query { case config, account, login, cancelLogin, logout }"
+        },
+        {
+          "line": 8,
+          "text": "private struct Submission { let text:String;let model:String;let effort:String }"
+        },
+        {
+          "line": 9,
+          "text": "private struct Association { let project:WS2OwnedScope.Project;let thread:String }"
+        },
+        {
+          "line": 60,
+          "text": "@discardableResult func editDraft(_ value:String) -> Bool {"
+        },
+        {
+          "line": 63,
+          "text": "@discardableResult func selectProject(_ url:URL) -> Bool {"
+        },
+        {
+          "line": 74,
+          "text": "@discardableResult func selectExecutable(_ url:URL) -> Bool {"
+        },
+        {
+          "line": 78,
+          "text": "@discardableResult func launch(consent:Bool,diagnostics:Bool=false) -> Bool {"
+        },
+        {
+          "line": 94,
+          "text": "private func begin(_ prepared:WS2LocalLaunchProfile,diagnostics:Bool) {"
+        },
+        {
+          "line": 120,
+          "text": "private func currentIsValid() -> Bool {"
+        },
+        {
+          "line": 125,
+          "text": "private func revalidate() -> Bool {"
+        },
+        {
+          "line": 129,
+          "text": "@discardableResult func chooseModel(_ value:String) -> Bool {"
+        },
+        {
+          "line": 133,
+          "text": "@discardableResult func chooseEffort(_ value:String) -> Bool {"
+        },
+        {
+          "line": 137,
+          "text": "@discardableResult func send(_ draft:String,hasMarkedText:Bool) -> Bool {"
+        },
+        {
+          "line": 149,
+          "text": "private func deliverSubmission() throws {"
+        },
+        {
+          "line": 155,
+          "text": "@discardableResult func resumeLast() -> Bool {"
+        },
+        {
+          "line": 161,
+          "text": "@discardableResult func interrupt() -> Bool {"
+        },
+        {
+          "line": 166,
+          "text": "@discardableResult func login() -> Bool {"
+        },
+        {
+          "line": 171,
+          "text": "@discardableResult func logout() -> Bool {"
+        },
+        {
+          "line": 176,
+          "text": "func cancelLogin() {"
+        },
+        {
+          "line": 183,
+          "text": "static func browserLoginURL(_ text:String) -> URL? {"
+        },
+        {
+          "line": 189,
+          "text": "private func receive(_ event:CodexWire.Event,connection:UUID) {"
+        },
+        {
+          "line": 256,
+          "text": "private func readAccount() throws {"
+        },
+        {
+          "line": 260,
+          "text": "private func synchronizeThreadAndTurn() throws {"
+        },
+        {
+          "line": 275,
+          "text": "private func emit(_ event:AgentSessions.Event,turn:String?=nil) {"
+        },
+        {
+          "line": 279,
+          "text": "private func ended(connection:UUID) {"
+        },
+        {
+          "line": 285,
+          "text": "func stop(reason:String=\"已断开连接\",clearPrivate:Bool=false) {"
+        },
+        {
+          "line": 303,
+          "text": "func environmentChanged() {"
+        },
+        {
+          "line": 307,
+          "text": "private func fail(_ message:String) {"
+        },
+        {
+          "line": 310,
+          "text": "private func changed() { onChange?();if !isBusy { onQuiescent?() } }"
+        }
+      ]
+    },
+    {
+      "path": "prototype/App/WS2OwnedSessionView.swift",
+      "sha256": "d3360e975925f28b112b32d4c51b9a75d195a507629793e5e5b3d3eed006434f",
+      "line_count": 154,
+      "symbols": [
+        {
+          "line": 4,
+          "text": "@MainActor final class WS2OwnedSessionView: NSView, WS2LeaseContent, NSTextViewDelegate {"
+        },
+        {
+          "line": 45,
+          "text": "func row(_ views:[NSView]) -> NSStackView { let r=NSStackView(views:views);r.orientation = .horizontal;r.spacing=8;return r }"
+        },
+        {
+          "line": 75,
+          "text": "private func configure(_ text:NSTextView,editable:Bool) {"
+        },
+        {
+          "line": 82,
+          "text": "func scheduleRender() {"
+        },
+        {
+          "line": 89,
+          "text": "func render() {"
+        },
+        {
+          "line": 117,
+          "text": "func textDidChange(_ notification:Notification) {"
+        },
+        {
+          "line": 121,
+          "text": "private func choose(directory:Bool) {"
+        },
+        {
+          "line": 132,
+          "text": "@objc private func pickProject() { choose(directory:true) }"
+        },
+        {
+          "line": 133,
+          "text": "@objc private func pickExecutable() { choose(directory:false) }"
+        },
+        {
+          "line": 134,
+          "text": "@objc private func consentChanged() { render() }"
+        },
+        {
+          "line": 135,
+          "text": "@objc private func start() { guard inputIsCurrent() else { return };_=controller.launch(consent:consent.state == .on,diagnostics:diagnostic.state == .on);render() }"
+        },
+        {
+          "line": 136,
+          "text": "@objc private func logIn() { guard inputIsCurrent() else { return };_=controller.login() }"
+        },
+        {
+          "line": 137,
+          "text": "@objc private func cancelLogIn() { guard inputIsCurrent() else { return };controller.cancelLogin() }"
+        },
+        {
+          "line": 138,
+          "text": "@objc private func logOut() { guard inputIsCurrent() else { return };_=controller.logout() }"
+        },
+        {
+          "line": 139,
+          "text": "@objc private func resumeSession() { guard inputIsCurrent() else { return };_=controller.resumeLast() }"
+        },
+        {
+          "line": 140,
+          "text": "@objc private func showModelPicker() {"
+        },
+        {
+          "line": 145,
+          "text": "@objc private func selectModel() { guard inputIsCurrent(),model.indexOfSelectedItem>0 else { return };_=controller.chooseModel(modelIDs[model.indexOfSelectedItem-1]) }"
+        },
+        {
+          "line": 146,
+          "text": "@objc private func selectEffort() { guard inputIsCurrent(),effort.indexOfSelectedItem>0 else { return };_=controller.chooseEffort(effortIDs[effort.indexOfSelectedItem-1]) }"
+        },
+        {
+          "line": 147,
+          "text": "@objc private func sendDraft() { guard inputIsCurrent() else { return };_=controller.send(draft.string,hasMarkedText:draft.hasMarkedText()) }"
+        },
+        {
+          "line": 148,
+          "text": "@objc private func interruptTurn() { guard inputIsCurrent() else { return };_=controller.interrupt() }"
+        },
+        {
+          "line": 149,
+          "text": "@objc private func stopSession() { guard inputIsCurrent() else { return };controller.stop() }"
+        },
+        {
+          "line": 150,
+          "text": "@objc private func toggleDiagnostics() { guard inputIsCurrent() else { return };displayingDiagnostics.toggle();diagnostics.title=displayingDiagnostics ? \"返回回复\":\"查看诊断\";render() }"
+        },
+        {
+          "line": 151,
+          "text": "func revoke() { renderTask?.cancel();renderTask=nil;inputIsCurrent={false};draft.inputContext?.discardMarkedText();draft.string=\"\";output.string=\"\";onCancel?() }"
+        },
+        {
+          "line": 154,
+          "text": "@MainActor private final class WS2OwnedDocumentView:NSView { override var isFlipped:Bool { true } }"
+        }
+      ]
+    },
+    {
+      "path": "prototype/Core/AgentSessions.swift",
+      "sha256": "218b3910959c810d5662d608b8ab9560d5232cf5e69930c330b400c940c65d7c",
+      "line_count": 260,
+      "symbols": [
+        {
+          "line": 4,
+          "text": "struct AgentSessions: Sendable {"
+        },
+        {
+          "line": 5,
+          "text": "enum Control: Sendable { case observed, owned }"
+        },
+        {
+          "line": 6,
+          "text": "enum Status: Equatable, Sendable { case idle, running, waiting, completed, failed, stale, disconnected }"
+        },
+        {
+          "line": 7,
+          "text": "struct Session: Sendable {"
+        },
+        {
+          "line": 17,
+          "text": "enum Event: Sendable {"
+        },
+        {
+          "line": 23,
+          "text": "enum Effect: Equatable, Sendable {"
+        },
+        {
+          "line": 28,
+          "text": "private struct Pending: Sendable {"
+        },
+        {
+          "line": 33,
+          "text": "enum TypedAction: Sendable {"
+        },
+        {
+          "line": 37,
+          "text": "static func risk(of action: TypedAction) -> WS2.Risk {"
+        },
+        {
+          "line": 64,
+          "text": "func request(for key: WS2.ApprovalKey) -> WS2.ApprovalRequest? { suspended ? nil : pending[key]?.request }"
+        },
+        {
+          "line": 65,
+          "text": "mutating func receive(_ envelope: WS2.Envelope<Event>) -> [Effect] {"
+        },
+        {
+          "line": 151,
+          "text": "mutating func choose(_ key: WS2.ApprovalKey, choice: WS2.ApprovalChoice,"
+        },
+        {
+          "line": 173,
+          "text": "mutating func authorizationFinished(_ outcome: WS2.AuthorizationOutcome, now: WS2.Instant) -> [Effect] {"
+        },
+        {
+          "line": 189,
+          "text": "mutating func tick(at now: WS2.Instant) -> [Effect] {"
+        },
+        {
+          "line": 200,
+          "text": "mutating func suspend(at now: WS2.Instant) -> [Effect] {"
+        },
+        {
+          "line": 210,
+          "text": "mutating func resume(at now: WS2.Instant) -> [Effect] {"
+        },
+        {
+          "line": 223,
+          "text": "private mutating func expire(at now: WS2.Instant) -> [Effect] {"
+        },
+        {
+          "line": 233,
+          "text": "private mutating func clearApprovals(for session: WS2.SessionKey) -> [Effect] {"
+        },
+        {
+          "line": 240,
+          "text": "private mutating func restoreStatus(for key: WS2.SessionKey, fallback: Status) {"
+        },
+        {
+          "line": 244,
+          "text": "private func orderedKeys() -> [WS2.SessionKey] {"
+        },
+        {
+          "line": 247,
+          "text": "private func approvalOrder(_ a: WS2.ApprovalKey, _ b: WS2.ApprovalKey) -> Bool {"
+        },
+        {
+          "line": 258,
+          "text": "private func valid(_ summary: String) -> Bool { !summary.isEmpty && summary.utf8.count <= 16_384 }"
+        },
+        {
+          "line": 259,
+          "text": "private func validID(_ id: String) -> Bool { !id.isEmpty && id.utf8.count <= 512 }"
+        }
+      ]
+    },
+    {
+      "path": "prototype/Core/AuthorizationLedger.swift",
+      "sha256": "495d1ce534fe560c8c0fe43ee6fd2bb5e9e24b7f82b172978ffdd62143985676",
+      "line_count": 157,
+      "symbols": [
+        {
+          "line": 16,
+          "text": "enum AuthFailure: Error, Equatable, Sendable {"
+        },
+        {
+          "line": 21,
+          "text": "protocol AuthRandomSource {"
+        },
+        {
+          "line": 22,
+          "text": "func bytes(_ count: Int) -> [UInt8]?"
+        },
+        {
+          "line": 25,
+          "text": "struct SystemAuthRandom: AuthRandomSource {"
+        },
+        {
+          "line": 26,
+          "text": "func bytes(_ count: Int) -> [UInt8]? {"
+        },
+        {
+          "line": 33,
+          "text": "@MainActor final class AuthorizationGrant {"
+        },
+        {
+          "line": 34,
+          "text": "enum State: Equatable { case live, consumed, revoked(AuthFailure) }"
+        },
+        {
+          "line": 53,
+          "text": "@MainActor final class AuthorizationLedger {"
+        },
+        {
+          "line": 55,
+          "text": "nonisolated static func monotonicNow() -> UInt64 { clock_gettime_nsec_np(CLOCK_MONOTONIC_RAW) }"
+        },
+        {
+          "line": 83,
+          "text": "func begin(target: AuthTarget, ttl: UInt64) -> Result<AuthRequest, AuthFailure> {"
+        },
+        {
+          "line": 99,
+          "text": "func complete(_ request: AuthRequest, signature: Data, publicKey: P256.Signing.PublicKey,"
+        },
+        {
+          "line": 119,
+          "text": "func cancel(requestID: UUID) {"
+        },
+        {
+          "line": 124,
+          "text": "func consume(_ grant: AuthorizationGrant, expectedPurpose: AuthPurpose, currentTarget: AuthTarget,"
+        },
+        {
+          "line": 151,
+          "text": "func advanceSessionEpoch() {"
+        }
+      ]
+    },
+    {
+      "path": "prototype/Core/CodexWire.swift",
+      "sha256": "ed2e3e209bb3ff42c6ba8273b323f2b6f70bdf48daa4cc21f91060d9bfebecf3",
+      "line_count": 271,
+      "symbols": [
+        {
+          "line": 3,
+          "text": "indirect enum WireJSON: Codable, Equatable, Sendable {"
+        },
+        {
+          "line": 15,
+          "text": "func encode(to encoder: any Encoder) throws {"
+        },
+        {
+          "line": 33,
+          "text": "struct CodexWire: Sendable {"
+        },
+        {
+          "line": 34,
+          "text": "enum Failure: Error { case oversized, closed, malformed, notReady, unsupported, stale, capacity }"
+        },
+        {
+          "line": 35,
+          "text": "enum State: Equatable, Sendable { case fresh, initializing, listingModels, ready, closed }"
+        },
+        {
+          "line": 36,
+          "text": "struct Pending: Sendable { let method: String; let deadline: WS2.Instant }"
+        },
+        {
+          "line": 37,
+          "text": "enum Event: Equatable, Sendable {"
+        },
+        {
+          "line": 42,
+          "text": "static let maximumFrame = 1_048_576 // Recommendation: bounded metadata stream; not a measured protocol maximum."
+        },
+        {
+          "line": 59,
+          "text": "mutating func drain() -> [Data] { defer { outbound.removeAll(keepingCapacity:true) }; return outbound }"
+        },
+        {
+          "line": 60,
+          "text": "private mutating func send(_ value: WireJSON) throws {"
+        },
+        {
+          "line": 66,
+          "text": "private mutating func request(_ method: String, _ params: [String:WireJSON]?, now: WS2.Instant) throws -> WS2.RequestID {"
+        },
+        {
+          "line": 74,
+          "text": "mutating func initialize(now: WS2.Instant) throws {"
+        },
+        {
+          "line": 79,
+          "text": "mutating func startThread(cwd: String, model: String, now: WS2.Instant) throws {"
+        },
+        {
+          "line": 87,
+          "text": "mutating func resumeThread(id: String, now: WS2.Instant) throws {"
+        },
+        {
+          "line": 95,
+          "text": "mutating func startTurn(text: String, model: String, effort: String, now: WS2.Instant) throws {"
+        },
+        {
+          "line": 104,
+          "text": "mutating func steer(text: String, expectedTurnID: String, now: WS2.Instant) throws {"
+        },
+        {
+          "line": 110,
+          "text": "mutating func interrupt(now: WS2.Instant) throws {"
+        },
+        {
+          "line": 115,
+          "text": "mutating func readConfig(cwd:String,now:WS2.Instant) throws -> WS2.RequestID {"
+        },
+        {
+          "line": 119,
+          "text": "mutating func readAccount(now: WS2.Instant) throws -> WS2.RequestID {"
+        },
+        {
+          "line": 123,
+          "text": "mutating func beginBrowserLogin(now: WS2.Instant) throws -> WS2.RequestID {"
+        },
+        {
+          "line": 127,
+          "text": "mutating func cancelLogin(id: String, now: WS2.Instant) throws -> WS2.RequestID {"
+        },
+        {
+          "line": 131,
+          "text": "mutating func logout(now: WS2.Instant) throws -> WS2.RequestID {"
+        },
+        {
+          "line": 135,
+          "text": "mutating func ingest(_ chunk: Data, now: WS2.Instant) throws -> [Event] {"
+        },
+        {
+          "line": 156,
+          "text": "private mutating func receive(_ v: WireJSON, now: WS2.Instant) throws -> [Event] {"
+        },
+        {
+          "line": 237,
+          "text": "mutating func denyApproval(_ id: WS2.RequestID) throws {"
+        },
+        {
+          "line": 246,
+          "text": "enum ApprovalWireDecision { case acceptOnce, decline }"
+        },
+        {
+          "line": 247,
+          "text": "mutating func enqueueApprovalResponse(_ id: WS2.RequestID, expectedMethod: String,"
+        },
+        {
+          "line": 260,
+          "text": "mutating func tick(now: WS2.Instant) -> [Event] {"
+        },
+        {
+          "line": 266,
+          "text": "mutating func close() {"
+        }
+      ]
+    },
+    {
+      "path": "prototype/Core/ConductorCapabilities.swift",
+      "sha256": "4494697451f96b08ea1c1bf92fbb83ec9539055ac06937edef392558c20c9af0",
+      "line_count": 101,
+      "symbols": [
+        {
+          "line": 5,
+          "text": "struct ConductorCapabilities: Equatable, Sendable {"
+        },
+        {
+          "line": 17,
+          "text": "enum Resolution: Equatable, Sendable {"
+        },
+        {
+          "line": 21,
+          "text": "func resolve(_ requested: ConductorEffort, keeping current: String) -> Resolution {"
+        },
+        {
+          "line": 37,
+          "text": "func accepts(_ config: WS2.ExecutionConfig) -> Bool {"
+        },
+        {
+          "line": 49,
+          "text": "struct ConductorModelSlots: Sendable {"
+        },
+        {
+          "line": 55,
+          "text": "enum Selection: Equatable, Sendable {"
+        },
+        {
+          "line": 59,
+          "text": "func select(_ number: Int, in completeSnapshot: [ConductorCapabilities]) -> Selection {"
+        },
+        {
+          "line": 69,
+          "text": "struct ConductorCostCandidate: Equatable, Sendable {"
+        },
+        {
+          "line": 76,
+          "text": "struct ConductorCostVault: Sendable {"
+        },
+        {
+          "line": 77,
+          "text": "struct Ticket: Equatable, Sendable {"
+        },
+        {
+          "line": 84,
+          "text": "mutating func confirm(_ candidate: ConductorCostCandidate, beganAt: WS2.Instant,"
+        },
+        {
+          "line": 94,
+          "text": "mutating func consume(for current: WS2.CostBinding, now: WS2.Instant) -> Bool {"
+        },
+        {
+          "line": 100,
+          "text": "mutating func invalidate() { ticket = nil }"
+        }
+      ]
+    },
+    {
+      "path": "prototype/Core/ConductorSession.swift",
+      "sha256": "e426c0b1a19fd8bea29528f707371decf0ac65459e3c85dbd6d6e2f94e7f2e7d",
+      "line_count": 646,
+      "symbols": [
+        {
+          "line": 5,
+          "text": "enum ConductorNotch: Equatable, Sendable {"
+        },
+        {
+          "line": 50,
+          "text": "struct ConductorSession: Sendable {"
+        },
+        {
+          "line": 51,
+          "text": "struct SessionChoice: Equatable, Sendable { let context: WS2.Context; let label: String; let running: Bool }"
+        },
+        {
+          "line": 52,
+          "text": "enum TouchPhase: Sendable { case begin, move, end, cancel }"
+        },
+        {
+          "line": 53,
+          "text": "enum Reconciliation: Sendable {"
+        },
+        {
+          "line": 56,
+          "text": "enum Event: Sendable {"
+        },
+        {
+          "line": 80,
+          "text": "enum Effect: Equatable, Sendable {"
+        },
+        {
+          "line": 93,
+          "text": "struct Draft: Equatable, Sendable { let text: String; let digest: WS2.Digest; let revision: UInt64; let owner: WS2.Context }"
+        },
+        {
+          "line": 94,
+          "text": "private struct Press: Sendable { let id: UInt64; let beganAt: WS2.Instant; let sequence: UInt64; var consumed = false }"
+        },
+        {
+          "line": 95,
+          "text": "private struct Stroke: Sendable { let beganAt: WS2.Instant; let sequence: UInt64; var points: [ConductorPoint] }"
+        },
+        {
+          "line": 96,
+          "text": "private struct Capture: Sendable {"
+        },
+        {
+          "line": 101,
+          "text": "private enum CommandKind: Sendable { case submit, steer, interrupt }"
+        },
+        {
+          "line": 102,
+          "text": "private struct Command: Sendable {"
+        },
+        {
+          "line": 107,
+          "text": "private struct Confirmation: Sendable { let beganAt: WS2.Instant; let sequence: UInt64 }"
+        },
+        {
+          "line": 108,
+          "text": "private struct Challenge: Sendable { let id: WS2.Token; let confirmation: Confirmation; let deadline: WS2.Instant }"
+        },
+        {
+          "line": 165,
+          "text": "mutating func setEnabled(_ value: Bool, at now: WS2.Instant) -> [Effect] {"
+        },
+        {
+          "line": 171,
+          "text": "mutating func setLocked(_ value: Bool, at now: WS2.Instant) -> [Effect] {"
+        },
+        {
+          "line": 182,
+          "text": "mutating func cancelInput(at now: WS2.Instant) -> [Effect] {"
+        },
+        {
+          "line": 186,
+          "text": "mutating func receive(_ envelope: WS2.Envelope<Event>) -> [Effect] {"
+        },
+        {
+          "line": 330,
+          "text": "private mutating func handleButton(_ b: WS2.ButtonEvent, sequence: UInt64, now: WS2.Instant) -> [Effect] {"
+        },
+        {
+          "line": 369,
+          "text": "private mutating func short(_ button: WS2.Button, confirmation: Confirmation, now: WS2.Instant) -> [Effect] {"
+        },
+        {
+          "line": 385,
+          "text": "private mutating func touch(_ phase: TouchPhase, point: WS2.Point, sequence: UInt64, now: WS2.Instant) -> [Effect] {"
+        },
+        {
+          "line": 455,
+          "text": "private mutating func tap(_ confirmation: Confirmation, now: WS2.Instant) -> [Effect] {"
+        },
+        {
+          "line": 481,
+          "text": "private mutating func play(now: WS2.Instant) -> [Effect] {"
+        },
+        {
+          "line": 518,
+          "text": "private mutating func startCapture(at now: WS2.Instant) -> [Effect] {"
+        },
+        {
+          "line": 525,
+          "text": "private mutating func stopCapture(now: WS2.Instant, discard: Bool = false) -> [Effect] {"
+        },
+        {
+          "line": 534,
+          "text": "private mutating func replaceDraft(_ text: String, digest: WS2.Digest, sequence: UInt64, now: WS2.Instant) -> [Effect] {"
+        },
+        {
+          "line": 542,
+          "text": "private mutating func proposeCost(_ config: WS2.ExecutionConfig, label: String, sequence: UInt64, now: WS2.Instant) -> [Effect] {"
+        },
+        {
+          "line": 550,
+          "text": "private mutating func back(now: WS2.Instant) -> [Effect] {"
+        },
+        {
+          "line": 566,
+          "text": "private mutating func toggleDomain() -> [Effect] {"
+        },
+        {
+          "line": 571,
+          "text": "private mutating func openSessions() -> [Effect] {"
+        },
+        {
+          "line": 578,
+          "text": "private mutating func showSessionList() -> [Effect] {"
+        },
+        {
+          "line": 582,
+          "text": "private mutating func expire(sequence: UInt64, at now: WS2.Instant) -> [Effect] {"
+        },
+        {
+          "line": 614,
+          "text": "private mutating func clearTransient(at now: WS2.Instant) -> [Effect] {"
+        },
+        {
+          "line": 622,
+          "text": "private func approvalEffect(_ request: WS2.ApprovalRequest, confirmation: Confirmation, confirm: Bool, deny: Bool, voice: Bool) -> Effect {"
+        },
+        {
+          "line": 626,
+          "text": "private mutating func clearSubmittedDraft(_ item: Command) {"
+        },
+        {
+          "line": 629,
+          "text": "private mutating func recoverDraft(_ item: Command) {"
+        },
+        {
+          "line": 632,
+          "text": "private mutating func show(_ value: ConductorNotch) -> [Effect] {"
+        },
+        {
+          "line": 641,
+          "text": "private func sound(_ name: String) -> [Effect] { muted ? [] : [.sound(name)] }"
+        },
+        {
+          "line": 642,
+          "text": "private func validID(_ text: String) -> Bool { !text.isEmpty && text.utf8.count <= 512 }"
+        },
+        {
+          "line": 643,
+          "text": "private func validCapabilities(_ caps: [ConductorCapabilities]) -> Bool {"
+        }
+      ]
+    },
+    {
+      "path": "prototype/Core/Contracts.swift",
+      "sha256": "12fffc2e5cf207aa0ca6b4c371f28b9eec8c2b374b5e1a06d8943878891b2420",
+      "line_count": 327,
+      "symbols": [
+        {
+          "line": 6,
+          "text": "enum WS2 {"
+        },
+        {
+          "line": 8,
+          "text": "struct Instant: Hashable, Comparable, Sendable, Codable {"
+        },
+        {
+          "line": 20,
+          "text": "func adding(_ duration: UInt64) -> Self {"
+        },
+        {
+          "line": 25,
+          "text": "func elapsed(since earlier: Self) -> UInt64 {"
+        },
+        {
+          "line": 32,
+          "text": "enum Duration {"
+        },
+        {
+          "line": 39,
+          "text": "struct TimeGate: Sendable {"
+        },
+        {
+          "line": 41,
+          "text": "mutating func accept(_ now: Instant) -> Bool {"
+        },
+        {
+          "line": 50,
+          "text": "struct EventGate: Sendable {"
+        },
+        {
+          "line": 53,
+          "text": "mutating func accept(sequence: UInt64, at now: Instant) -> Bool {"
+        },
+        {
+          "line": 62,
+          "text": "enum TokenDomain: String, Hashable, Sendable, Codable { case unspecified, focusTimer, presenceLock, conductor, interaction }"
+        },
+        {
+          "line": 66,
+          "text": "struct Token: Hashable, Sendable, Codable {"
+        },
+        {
+          "line": 76,
+          "text": "struct TokenSource: Sendable {"
+        },
+        {
+          "line": 80,
+          "text": "mutating func next() -> Token? {"
+        },
+        {
+          "line": 88,
+          "text": "enum Provider: String, Hashable, Sendable, Codable, CaseIterable {"
+        },
+        {
+          "line": 94,
+          "text": "struct SessionKey: Hashable, Sendable, Codable {"
+        },
+        {
+          "line": 101,
+          "text": "struct Context: Hashable, Sendable, Codable {"
+        },
+        {
+          "line": 114,
+          "text": "struct Envelope<Payload: Sendable>: Sendable {"
+        },
+        {
+          "line": 124,
+          "text": "struct Digest: Hashable, Sendable, Codable {"
+        },
+        {
+          "line": 138,
+          "text": "func encode(to encoder: Encoder) throws {"
+        },
+        {
+          "line": 145,
+          "text": "struct ModelID: Hashable, Sendable, Codable {"
+        },
+        {
+          "line": 151,
+          "text": "struct ExecutionConfig: Hashable, Sendable, Codable {"
+        },
+        {
+          "line": 159,
+          "text": "struct CostBinding: Hashable, Sendable, Codable {"
+        },
+        {
+          "line": 167,
+          "text": "enum Risk: String, Sendable, Codable { case normal, high, unknown }"
+        },
+        {
+          "line": 170,
+          "text": "enum RequestID: Hashable, Sendable, Codable {"
+        },
+        {
+          "line": 176,
+          "text": "struct ApprovalKey: Hashable, Sendable, Codable {"
+        },
+        {
+          "line": 183,
+          "text": "struct ApprovalRequest: Equatable, Sendable {"
+        },
+        {
+          "line": 200,
+          "text": "enum ApprovalChoice: Sendable { case confirm, deny, returnToHost }"
+        },
+        {
+          "line": 203,
+          "text": "struct AuthorizationIntent: Equatable, Sendable {"
+        },
+        {
+          "line": 211,
+          "text": "enum AuthorizationOutcome: Sendable {"
+        },
+        {
+          "line": 218,
+          "text": "enum ApprovalDisposition: String, Equatable, Sendable { case deny, deferToHost }"
+        },
+        {
+          "line": 221,
+          "text": "enum Button: String, Hashable, Sendable, CaseIterable {"
+        },
+        {
+          "line": 226,
+          "text": "enum ButtonPhase: String, Sendable { case down, up, cancel, heldHalfSecond, heldOneSecond, clickOnly }"
+        },
+        {
+          "line": 229,
+          "text": "struct ButtonEvent: Equatable, Sendable {"
+        },
+        {
+          "line": 238,
+          "text": "struct Point: Equatable, Sendable {"
+        },
+        {
+          "line": 245,
+          "text": "enum Action: String, Equatable, Sendable {"
+        },
+        {
+          "line": 254,
+          "text": "enum Layer: Int, Comparable, Sendable, CaseIterable {"
+        },
+        {
+          "line": 260,
+          "text": "struct DisplayID: Hashable, Comparable, Sendable, Codable {"
+        },
+        {
+          "line": 266,
+          "text": "enum Fault: String, Equatable, Sendable {"
+        },
+        {
+          "line": 273,
+          "text": "protocol WS2Clock: Sendable {"
+        },
+        {
+          "line": 274,
+          "text": "func now() -> WS2.Instant"
+        },
+        {
+          "line": 278,
+          "text": "struct WS2ContinuousClock: WS2Clock, Sendable {"
+        },
+        {
+          "line": 281,
+          "text": "func now() -> WS2.Instant {"
+        },
+        {
+          "line": 296,
+          "text": "struct LeaseRequest: Sendable {"
+        },
+        {
+          "line": 304,
+          "text": "struct LeaseHandle: Hashable, Sendable {"
+        },
+        {
+          "line": 310,
+          "text": "enum LeaseRevocation: Sendable {"
+        },
+        {
+          "line": 313,
+          "text": "enum LeaseDecision: Sendable {"
+        },
+        {
+          "line": 319,
+          "text": "struct VisibilitySnapshot: Sendable {"
+        }
+      ]
+    },
+    {
+      "path": "prototype/Core/DeviceBattery.swift",
+      "sha256": "7777539671486437ff4e26398663d7187b31401405d866362efde3caadc473e3",
+      "line_count": 177,
+      "symbols": [
+        {
+          "line": 16,
+          "text": "enum DeviceKind: String, Codable, Sendable {"
+        },
+        {
+          "line": 20,
+          "text": "enum BatteryComponent: String, Codable, Sendable {"
+        },
+        {
+          "line": 25,
+          "text": "enum ChargingState: String, Codable, Sendable {"
+        },
+        {
+          "line": 29,
+          "text": "enum BatteryKind: String, Codable, Sendable {"
+        },
+        {
+          "line": 33,
+          "text": "struct DeviceIdentity: Equatable, Sendable {"
+        },
+        {
+          "line": 41,
+          "text": "struct BatteryReading: Equatable, Sendable {"
+        },
+        {
+          "line": 56,
+          "text": "static func validPercent(_ raw: Int?) -> Int? {"
+        },
+        {
+          "line": 62,
+          "text": "enum BatteryFreshness: Equatable, Sendable { case currentEnough, aged, unknown }"
+        },
+        {
+          "line": 64,
+          "text": "enum DeviceBatteryEvent: Equatable, Sendable {"
+        },
+        {
+          "line": 74,
+          "text": "struct DeviceBatteryBook: Sendable {"
+        },
+        {
+          "line": 80,
+          "text": "struct Key: Hashable, Codable, Sendable {"
+        },
+        {
+          "line": 99,
+          "text": "mutating func connect(_ identity: DeviceIdentity, at now: Double, initialSnapshot: Bool) -> [DeviceBatteryEvent] {"
+        },
+        {
+          "line": 109,
+          "text": "mutating func disconnect(_ deviceID: String) -> [DeviceBatteryEvent] {"
+        },
+        {
+          "line": 116,
+          "text": "mutating func seen(_ deviceID: String, at now: Double) {"
+        },
+        {
+          "line": 123,
+          "text": "mutating func record(_ reading: BatteryReading, now: Double) -> [DeviceBatteryEvent] {"
+        },
+        {
+          "line": 148,
+          "text": "func freshness(_ key: Key, now: Double) -> BatteryFreshness {"
+        },
+        {
+          "line": 158,
+          "text": "static func level(for percent: Int) -> Int? {"
+        },
+        {
+          "line": 162,
+          "text": "private mutating func lowAlert(key: Key, reading: BatteryReading, now: Double) -> Int? {"
+        }
+      ]
+    },
+    {
+      "path": "prototype/Core/HIDMappingTransaction.swift",
+      "sha256": "48edb2bb043ddd6cf18285f422ae90e4f75b258ee75efd9c6976fd7ef973a3d6",
+      "line_count": 30,
+      "symbols": [
+        {
+          "line": 3,
+          "text": "struct HIDMappingTransaction: Sendable {"
+        },
+        {
+          "line": 4,
+          "text": "enum Failure: Error { case nonUniqueDevice, stale, notOwned, malformed }"
+        },
+        {
+          "line": 5,
+          "text": "struct Device: Equatable, Sendable { let registryID: UInt64; let vendor: Int; let product: Int }"
+        },
+        {
+          "line": 6,
+          "text": "struct Write: Equatable, Sendable { let device: Device; let expected: Data; let replacement: Data }"
+        },
+        {
+          "line": 8,
+          "text": "mutating func prepare(device: Device, matches: [Device], current: Data, replacement: Data) throws -> Write {"
+        },
+        {
+          "line": 16,
+          "text": "mutating func commit(_ write: Write, readback: Data) throws {"
+        },
+        {
+          "line": 20,
+          "text": "func restore(device: Device, current: Data) throws -> Write {"
+        },
+        {
+          "line": 25,
+          "text": "mutating func restored(_ write: Write, readback: Data) throws {"
+        }
+      ]
+    },
+    {
+      "path": "prototype/Core/NotchActivities.swift",
+      "sha256": "e5c6c6fc339b58175672abea1322b5aeaa0c526ab850a4a0b0d7c48280f5c10b",
+      "line_count": 266,
+      "symbols": [
+        {
+          "line": 13,
+          "text": "enum NotchActivityAction: String {"
+        },
+        {
+          "line": 18,
+          "text": "enum NotchActivityKind: String, Codable, Sendable, CaseIterable {"
+        },
+        {
+          "line": 40,
+          "text": "struct NotchActivity: Equatable, Sendable {"
+        },
+        {
+          "line": 88,
+          "text": "struct NotchActivityStore {"
+        },
+        {
+          "line": 137,
+          "text": "mutating func upsert(_ activity: NotchActivity, now: Double) -> Bool {"
+        },
+        {
+          "line": 170,
+          "text": "mutating func end(id: String, generation: UInt64, now: Double) -> Bool {"
+        },
+        {
+          "line": 182,
+          "text": "mutating func prune(now: Double) {"
+        },
+        {
+          "line": 196,
+          "text": "mutating func select(id: String) -> Bool {"
+        },
+        {
+          "line": 203,
+          "text": "mutating func moveSelection(by delta: Int) {"
+        },
+        {
+          "line": 218,
+          "text": "private static func validNow(_ now: Double) -> Bool {"
+        },
+        {
+          "line": 223,
+          "text": "private static func isValid(_ activity: NotchActivity) -> Bool {"
+        },
+        {
+          "line": 238,
+          "text": "private static func order(_ a: NotchActivity, _ b: NotchActivity) -> Bool {"
+        },
+        {
+          "line": 245,
+          "text": "private static func reconcileSelection(_ selection: inout String?, storage: [String: NotchActivity]) {"
+        },
+        {
+          "line": 254,
+          "text": "private mutating func registerTombstone(id: String, generation: UInt64) {"
+        }
+      ]
+    },
+    {
+      "path": "prototype/Core/PairingAttemptWindow.swift",
+      "sha256": "262dc840763d31105c16f5edda749a2e11ea15064158884c825109fbcd3450e3",
+      "line_count": 39,
+      "symbols": [
+        {
+          "line": 3,
+          "text": "struct PairingAttemptWindow: Sendable {"
+        },
+        {
+          "line": 4,
+          "text": "enum Failure: Error { case badTime, coolingDown, alreadyOpen, invalidPIN, unavailable }"
+        },
+        {
+          "line": 17,
+          "text": "mutating func open(at now: Double, makePIN: () -> String) throws -> String {"
+        },
+        {
+          "line": 26,
+          "text": "func mayAttempt(at now: Double) -> Bool {"
+        },
+        {
+          "line": 29,
+          "text": "mutating func failed(at now: Double) throws {"
+        },
+        {
+          "line": 34,
+          "text": "mutating func finish(at now: Double) throws {"
+        },
+        {
+          "line": 37,
+          "text": "mutating func cancel() { deadline = nil; pin = nil } // 取消不能抹去冷却。"
+        },
+        {
+          "line": 38,
+          "text": "static func randomPIN() -> String { String(format:\"%04d\",Int.random(in:0...9999)) }"
+        }
+      ]
+    },
+    {
+      "path": "prototype/Core/PairingTLV.swift",
+      "sha256": "32495002c85cc927a8c31cd5699ff517f070107120c111919e9b35c1df2f3845",
+      "line_count": 39,
+      "symbols": [
+        {
+          "line": 3,
+          "text": "enum PairingTLV {"
+        },
+        {
+          "line": 4,
+          "text": "enum Failure: Error { case oversized, truncated, duplicate, invalidFragment, invalidType }"
+        },
+        {
+          "line": 6,
+          "text": "static func decode(_ data: Data, allowed: Set<UInt8>) throws -> [UInt8:Data] {"
+        },
+        {
+          "line": 24,
+          "text": "static func encode(_ entries: [(UInt8,Data)]) throws -> Data {"
+        }
+      ]
+    },
+    {
+      "path": "prototype/Core/PresenceLock.swift",
+      "sha256": "7099b9f42bc09683ac35dd345020a58429bd2e9e19db4823082df19ad7540188",
+      "line_count": 295,
+      "symbols": [
+        {
+          "line": 4,
+          "text": "struct PresenceLock: Sendable {"
+        },
+        {
+          "line": 5,
+          "text": "enum Device: String, Hashable, Sendable { case phone, watch }"
+        },
+        {
+          "line": 6,
+          "text": "enum Status: Equatable, Sendable { case unknown, connecting, present, away }"
+        },
+        {
+          "line": 7,
+          "text": "enum LockState: Sendable { case unknown, unlocked, locked }"
+        },
+        {
+          "line": 8,
+          "text": "enum Reason: Equatable, Sendable { case devices, camera }"
+        },
+        {
+          "line": 9,
+          "text": "enum Phase: Equatable, Sendable {"
+        },
+        {
+          "line": 13,
+          "text": "struct Configuration: Sendable {"
+        },
+        {
+          "line": 20,
+          "text": "enum Event: Sendable {"
+        },
+        {
+          "line": 36,
+          "text": "enum Effect: Equatable, Sendable {"
+        },
+        {
+          "line": 43,
+          "text": "private struct Probe: Sendable { let id: UInt64; let deadline: WS2.Instant }"
+        },
+        {
+          "line": 44,
+          "text": "private struct Link: Sendable {"
+        },
+        {
+          "line": 84,
+          "text": "func status(of device: Device) -> Status { links[device]?.status ?? .unknown }"
+        },
+        {
+          "line": 86,
+          "text": "mutating func handleBatch(_ events: [Event], at now: WS2.Instant) -> [Effect] {"
+        },
+        {
+          "line": 93,
+          "text": "mutating func handle(_ event: Event, at now: WS2.Instant) -> [Effect] {"
+        },
+        {
+          "line": 219,
+          "text": "private mutating func reconcile(at now: WS2.Instant, allowReturn: Bool) -> [Effect] {"
+        },
+        {
+          "line": 258,
+          "text": "private func absence(at now: WS2.Instant) -> Reason? {"
+        },
+        {
+          "line": 267,
+          "text": "private mutating func prepare() -> [Effect] {"
+        },
+        {
+          "line": 272,
+          "text": "private mutating func cancelCountdown() -> [Effect] {"
+        },
+        {
+          "line": 278,
+          "text": "private mutating func forgetSignals() {"
+        },
+        {
+          "line": 285,
+          "text": "private func seconds(to deadline: WS2.Instant, from now: WS2.Instant) -> Int {"
+        },
+        {
+          "line": 288,
+          "text": "private func priority(_ event: Event) -> Int {"
+        }
+      ]
+    },
+    {
+      "path": "prototype/Core/RemoteMode.swift",
+      "sha256": "559d83d94615574613c9ec13a92ddf9395a55157c21f3eaff0e60b61bb48b3d7",
+      "line_count": 89,
+      "symbols": [
+        {
+          "line": 4,
+          "text": "struct RemoteMode: Sendable {"
+        },
+        {
+          "line": 5,
+          "text": "enum Mode: String, Equatable, Sendable { case remote, conductor }"
+        },
+        {
+          "line": 6,
+          "text": "enum Effect: Equatable, Sendable {"
+        },
+        {
+          "line": 13,
+          "text": "private struct Press: Sendable { let id: UInt64; var consumed = false }"
+        },
+        {
+          "line": 20,
+          "text": "mutating func setEnabled(_ value: Bool) -> [Effect] {"
+        },
+        {
+          "line": 26,
+          "text": "mutating func handle(_ event: WS2.ButtonEvent) -> [Effect] {"
+        },
+        {
+          "line": 72,
+          "text": "private func short(_ button: WS2.Button) -> [Effect] {"
+        }
+      ]
+    },
+    {
+      "path": "prototype/Core/SessionLockState.swift",
+      "sha256": "1f92f697f9a7c1b5add7c4842496b86d4e65b93f2985e10f08ba3662a82ebe75",
+      "line_count": 16,
+      "symbols": [
+        {
+          "line": 5,
+          "text": "enum SessionLockState: Equatable {"
+        },
+        {
+          "line": 8,
+          "text": "static func resolve(locked: Bool?, onConsole: Bool?, loginDone: Bool?, dictionaryPresent: Bool) -> Self {"
+        }
+      ]
+    },
+    {
+      "path": "prototype/Core/WS2CompanionFrame.swift",
+      "sha256": "2ecb698bdf16965242836f132a7bc801d0ac7db7b488abc0d5a1b878a4c0fabd",
+      "line_count": 59,
+      "symbols": [
+        {
+          "line": 3,
+          "text": "struct WS2CompanionFrame: Equatable, Sendable {"
+        },
+        {
+          "line": 4,
+          "text": "enum Failure: Error { case closed, oversized, unsupportedType, invalidLength, exhausted }"
+        },
+        {
+          "line": 5,
+          "text": "static let maximumPayload = 65_536 // local cap, NOT the 24-bit protocol maximum"
+        },
+        {
+          "line": 9,
+          "text": "static func header(type: UInt8, count: Int) throws -> Data {"
+        },
+        {
+          "line": 14,
+          "text": "func encoded() throws -> Data { try Self.header(type: type, count: payload.count) + payload }"
+        },
+        {
+          "line": 15,
+          "text": "struct Decoder: Sendable {"
+        },
+        {
+          "line": 18,
+          "text": "mutating func close() { closed = true; bytes.removeAll(keepingCapacity: false) }"
+        },
+        {
+          "line": 20,
+          "text": "mutating func feed(_ input: Data) throws -> [WS2CompanionFrame] {"
+        },
+        {
+          "line": 48,
+          "text": "struct WS2CompanionCounter: Sendable {"
+        },
+        {
+          "line": 52,
+          "text": "mutating func take() throws -> Data {"
+        },
+        {
+          "line": 58,
+          "text": "mutating func close() { closed = true }"
+        }
+      ]
+    },
+    {
+      "path": "prototype/Core/WS2ConnectionBudget.swift",
+      "sha256": "f225317ecabd3143c7c40603ed7a1c2bb93f19f083c59722a6bddfc409be9cd2",
+      "line_count": 74,
+      "symbols": [
+        {
+          "line": 4,
+          "text": "struct WS2ConnectionBudget: Sendable {"
+        },
+        {
+          "line": 5,
+          "text": "struct Handle: Hashable, Sendable { let generation: UUID; let serial: UInt64 }"
+        },
+        {
+          "line": 6,
+          "text": "enum Handshake: Sendable { case pairSetup, pairVerify }"
+        },
+        {
+          "line": 7,
+          "text": "struct Peer: Hashable, Sendable { let id: String; let revision: UInt64 }"
+        },
+        {
+          "line": 8,
+          "text": "private struct Entry: Sendable { let deadline: WS2.Instant; var peer: Peer?; var queued: Int = 0 }"
+        },
+        {
+          "line": 23,
+          "text": "mutating func expire(at now: WS2.Instant) -> [Handle] {"
+        },
+        {
+          "line": 31,
+          "text": "mutating func admit(_ mode: Handshake, at now: WS2.Instant, locallyOpenedPairing: Bool) -> Handle? {"
+        },
+        {
+          "line": 43,
+          "text": "@discardableResult mutating func promote(_ handle: Handle, peer: Peer, at now: WS2.Instant) -> Bool {"
+        },
+        {
+          "line": 49,
+          "text": "func isCurrent(_ handle: Handle, peer: Peer?, at now: WS2.Instant) -> Bool {"
+        },
+        {
+          "line": 53,
+          "text": "@discardableResult mutating func reserve(_ bytes: Int, for handle: Handle, at now: WS2.Instant) -> Bool {"
+        },
+        {
+          "line": 61,
+          "text": "@discardableResult mutating func release(_ bytes: Int, for handle: Handle) -> Bool {"
+        },
+        {
+          "line": 65,
+          "text": "mutating func close(_ handle: Handle) { entries[handle] = nil }"
+        },
+        {
+          "line": 66,
+          "text": "mutating func revoke(peerID: String) -> [Handle] {"
+        },
+        {
+          "line": 71,
+          "text": "@discardableResult mutating func halt() -> [Handle] {"
+        }
+      ]
+    },
+    {
+      "path": "prototype/Core/WS2FocusEffectPlan.swift",
+      "sha256": "60ccb717e3641f20e1fc499dc1e432ba37493e3c4abe8e28c73b2ebc19419829",
+      "line_count": 85,
+      "symbols": [
+        {
+          "line": 4,
+          "text": "struct WS2FocusEffectPlan: Sendable {"
+        },
+        {
+          "line": 7,
+          "text": "struct Window: Equatable, Sendable { let identity: Identity; let revision: UInt64 }"
+        },
+        {
+          "line": 8,
+          "text": "enum Kind: Equatable, Sendable { case tuck(Window, WS2.Token, UInt64), restore(Receipt) }"
+        },
+        {
+          "line": 9,
+          "text": "struct Operation: Equatable, Sendable { let id: UUID; let kind: Kind }"
+        },
+        {
+          "line": 10,
+          "text": "enum Outcome: Sendable { case completed(revision: UInt64), unchanged, userChanged, unknown }"
+        },
+        {
+          "line": 11,
+          "text": "enum Failure: Error { case invalid, capacity, overflow, unexpectedCompletion }"
+        },
+        {
+          "line": 24,
+          "text": "mutating func transition(run: WS2.Token?, windows: [Window]) throws {"
+        },
+        {
+          "line": 31,
+          "text": "mutating func setSuspended(_ value: Bool) { suspended = value }"
+        },
+        {
+          "line": 32,
+          "text": "mutating func manualChange(_ identity: Identity) {"
+        },
+        {
+          "line": 38,
+          "text": "private static func identity(_ kind: Kind) -> Identity {"
+        },
+        {
+          "line": 41,
+          "text": "mutating func next() -> Operation? {"
+        },
+        {
+          "line": 51,
+          "text": "func mayCommit(_ operation: Operation) -> Bool {"
+        },
+        {
+          "line": 60,
+          "text": "mutating func complete(_ operation: Operation, _ outcome: Outcome) throws {"
+        }
+      ]
+    },
+    {
+      "path": "prototype/Core/WS2FocusWindowOwnership.swift",
+      "sha256": "69a0b9a82fd67c318d92b4bcedebd6f980b094f24b37197758fe1cf85f5ab3c7",
+      "line_count": 27,
+      "symbols": [
+        {
+          "line": 3,
+          "text": "struct WS2FocusWindowOwnership: Sendable {"
+        },
+        {
+          "line": 4,
+          "text": "struct Identity: Hashable, Sendable { let pid: Int32; let processStart: UInt64; let windowID: UInt32; let windowGeneration: UInt64 }"
+        },
+        {
+          "line": 5,
+          "text": "struct Receipt: Equatable, Sendable {"
+        },
+        {
+          "line": 13,
+          "text": "mutating func record(_ receipt: Receipt, didComplete: Bool) -> Bool {"
+        },
+        {
+          "line": 18,
+          "text": "mutating func takeForRestore(_ id: Identity, run: WS2.Token, effectGeneration: UInt64, liveRevision: UInt64) -> Receipt? {"
+        },
+        {
+          "line": 24,
+          "text": "mutating func manualChange(_ id: Identity) { owned[id] = nil }"
+        },
+        {
+          "line": 25,
+          "text": "mutating func clear() { owned.removeAll() }"
+        }
+      ]
+    },
+    {
+      "path": "prototype/Core/WS2FoldCallbackStamp.swift",
+      "sha256": "50e53418e04733bbe0421c49533bd7e87943f25707f7404bedf188a4ed4543de",
+      "line_count": 39,
+      "symbols": [
+        {
+          "line": 5,
+          "text": "struct WS2FoldCallbackStamp: Equatable, Sendable {"
+        },
+        {
+          "line": 15,
+          "text": "func accepts(current: Self, now: TimeInterval, unlocked: Bool,"
+        },
+        {
+          "line": 29,
+          "text": "struct WS2FoldObserverRoute: Equatable, Sendable {"
+        },
+        {
+          "line": 36,
+          "text": "func ws2ObservedBoolean(_ raw: CFTypeRef?) -> Bool? {"
+        }
+      ]
+    },
+    {
+      "path": "prototype/Core/WS2SelectionModel.swift",
+      "sha256": "c8fb3c0ac6564970d2daedee4d4708799ef0014a94a7bb22b99f18a85d86cf4c",
+      "line_count": 50,
+      "symbols": [
+        {
+          "line": 4,
+          "text": "struct WS2SelectionModel: Sendable {"
+        },
+        {
+          "line": 5,
+          "text": "struct Item: Equatable, Sendable { let id: String; let enabled: Bool }"
+        },
+        {
+          "line": 6,
+          "text": "struct Activation: Equatable, Sendable { let revision: UInt64; let serial: UInt64; let itemID: String }"
+        },
+        {
+          "line": 7,
+          "text": "enum Failure: Error { case invalidSnapshot, exhausted }"
+        },
+        {
+          "line": 14,
+          "text": "mutating func replace(_ next: [Item]) throws {"
+        },
+        {
+          "line": 25,
+          "text": "@discardableResult mutating func move(_ direction: Int, expectedRevision: UInt64) -> Bool {"
+        },
+        {
+          "line": 34,
+          "text": "@discardableResult mutating func select(id: String, expectedRevision: UInt64) -> Bool {"
+        },
+        {
+          "line": 38,
+          "text": "mutating func reserveActivation(expectedRevision: UInt64) -> Activation? {"
+        },
+        {
+          "line": 44,
+          "text": "mutating func consume(_ value: Activation) -> String? {"
+        },
+        {
+          "line": 49,
+          "text": "mutating func revoke() { pending = nil; items = []; selectedID = nil; if revision < .max { revision += 1 } else { exhausted = true } }"
+        }
+      ]
+    },
+    {
+      "path": "prototype/Core/WS2StrictJSON.swift",
+      "sha256": "3c1edb48065c85d7b0fbed12ac8299df4d1931abecfe53019f9ea9cabdc9bb0d",
+      "line_count": 99,
+      "symbols": [
+        {
+          "line": 5,
+          "text": "struct WS2StrictJSON {"
+        },
+        {
+          "line": 6,
+          "text": "enum Failure: Error, Equatable { case syntax, duplicateKey, depth, nodes, size }"
+        },
+        {
+          "line": 7,
+          "text": "static func validate(_ data: Data, maximumBytes: Int = 1_048_576,"
+        },
+        {
+          "line": 15,
+          "text": "private struct Parser {"
+        },
+        {
+          "line": 19,
+          "text": "mutating func whitespace() { while let c=current, [9,10,13,32].contains(c) { index += 1 } }"
+        },
+        {
+          "line": 20,
+          "text": "mutating func expect(_ c:UInt8) throws { guard current == c else { throw Failure.syntax }; index += 1 }"
+        },
+        {
+          "line": 21,
+          "text": "mutating func node() throws { guard remaining > 0 else { throw Failure.nodes }; remaining -= 1 }"
+        },
+        {
+          "line": 22,
+          "text": "mutating func value(_ depth:Int) throws {"
+        },
+        {
+          "line": 53,
+          "text": "mutating func literal(_ text:[UInt8]) throws { for byte in text { try expect(byte) } }"
+        },
+        {
+          "line": 54,
+          "text": "func digit(_ c:UInt8?) -> Bool { c.map { (48...57).contains($0) } ?? false }"
+        },
+        {
+          "line": 55,
+          "text": "mutating func number() throws {"
+        },
+        {
+          "line": 65,
+          "text": "mutating func hex() throws -> UInt16 {"
+        },
+        {
+          "line": 74,
+          "text": "mutating func string() throws -> String {"
+        }
+      ]
+    },
+    {
+      "path": "prototype/Core/WS2VisibleListInput.swift",
+      "sha256": "919b37b1add050fa65660fa70127a8dc131e659675ebedf791b86277d5acf425",
+      "line_count": 70,
+      "symbols": [
+        {
+          "line": 4,
+          "text": "@MainActor final class WS2VisibleListInput {"
+        },
+        {
+          "line": 14,
+          "text": "func replace(_ items: [WS2SelectionModel.Item], selectedID: String?) throws {"
+        },
+        {
+          "line": 20,
+          "text": "func bind(_ context: WS2SemanticInputRouter.Context?) {"
+        },
+        {
+          "line": 24,
+          "text": "@discardableResult func select(_ id: String) -> Bool {"
+        },
+        {
+          "line": 30,
+          "text": "@discardableResult func prepare(_ ticket: WS2SemanticInputRouter.Ticket) -> Bool {"
+        },
+        {
+          "line": 39,
+          "text": "func cancel(context: WS2SemanticInputRouter.Context, presses: [UInt64]) {"
+        },
+        {
+          "line": 43,
+          "text": "func cancelAll() {"
+        },
+        {
+          "line": 48,
+          "text": "@discardableResult func execute(_ ticket: WS2SemanticInputRouter.Ticket) -> Bool {"
+        },
+        {
+          "line": 69,
+          "text": "func revoke() { ready = false; context = nil; prepared = nil; selection.revoke(); onArmed?(nil) }"
+        }
+      ]
+    },
+    {
+      "path": "prototype/Effects/EffectFrameAwaiter.swift",
+      "sha256": "9c7a967621855e6add53c5ee4cd405249142d018eea497e5301ebae72e0e42c8",
+      "line_count": 32,
+      "symbols": [
+        {
+          "line": 3,
+          "text": "enum EffectFrameAwaiter<Value> {"
+        },
+        {
+          "line": 6,
+          "text": "static func first("
+        }
+      ]
+    },
+    {
+      "path": "prototype/Native/WS2Child.c",
+      "sha256": "134368aa12dfbbb9ec5a6f60a121c44b52b46bb303d55d73b18d78326d875f47",
+      "line_count": 167,
+      "symbols": [
+        {
+          "line": 16,
+          "text": "struct WS2Child {"
+        },
+        {
+          "line": 23,
+          "text": "struct timespec value;"
+        }
+      ]
+    },
+    {
+      "path": "prototype/Native/module.modulemap",
+      "sha256": "9cac42ba9402e4324e393d07c155c9375e20846e3bca84117460fdd0e6a0db8e",
+      "line_count": 4,
+      "symbols": []
+    },
+    {
+      "path": "prototype/Private/LockSpaceBridge.swift",
+      "sha256": "d16128cca2e5b893900e5d5165353724a780e76beddc5ffa79f4ac4a2bf8978f",
+      "line_count": 75,
+      "symbols": [
+        {
+          "line": 6,
+          "text": "final class LockSpaceBridge {"
+        },
+        {
+          "line": 41,
+          "text": "func attach(_ panel: NSWindow) -> Bool {"
+        },
+        {
+          "line": 67,
+          "text": "func detach(_ panel: NSWindow) {"
+        }
+      ]
+    },
+    {
+      "path": "prototype/Recovery/DurableShadeJournal.swift",
+      "sha256": "5dbcd013cc44573bfef4b028dae0ca44c75c963d7df131cf20b946a737c366c8",
+      "line_count": 34,
+      "symbols": [
+        {
+          "line": 4,
+          "text": "struct DurableShadeJournal {"
+        },
+        {
+          "line": 11,
+          "text": "func load() throws -> [[String: Any]]? {"
+        },
+        {
+          "line": 22,
+          "text": "func save(_ entries: [[String: Any]]) throws {"
+        }
+      ]
+    },
+    {
+      "path": "prototype/Recovery/Journal.swift",
+      "sha256": "5ffdb659b88cba3b72a346192fef9ba0c6a0eb22fad68aebd0681c09eb5b85aa",
+      "line_count": 235,
+      "symbols": [
+        {
+          "line": 12,
+          "text": "func shadeJournalEntries() -> [[String: Any]] {"
+        },
+        {
+          "line": 20,
+          "text": "func saveShadeJournalEntries(_ entries: [[String: Any]]) -> Bool {"
+        },
+        {
+          "line": 32,
+          "text": "func journalNumber(_ entry: [String: Any], _ key: String) -> Double? {"
+        },
+        {
+          "line": 39,
+          "text": "func journalString(_ entry: [String: Any], _ key: String) -> String {"
+        },
+        {
+          "line": 43,
+          "text": "func journalID(_ entry: [String: Any]) -> CGWindowID? {"
+        },
+        {
+          "line": 52,
+          "text": "func pruneShadeJournal(reason: String) {"
+        },
+        {
+          "line": 66,
+          "text": "func recordShadeJournal(id: CGWindowID, win: AXUIElement, hide: HideMethod,"
+        },
+        {
+          "line": 124,
+          "text": "func recordShadeRecoveryIntent(id: CGWindowID, pid: pid_t, bundleID: String,"
+        },
+        {
+          "line": 157,
+          "text": "func updateShadeJournal(id: CGWindowID, reason: String,"
+        },
+        {
+          "line": 169,
+          "text": "func markShadeJournalStage(id: CGWindowID, _ stage: ShadeLifecycleStage,"
+        },
+        {
+          "line": 177,
+          "text": "func markShadeLifecycle(id: CGWindowID, _ stage: ShadeLifecycleStage,"
+        },
+        {
+          "line": 193,
+          "text": "func clearShadeJournal(id: CGWindowID) {"
+        },
+        {
+          "line": 202,
+          "text": "func syncRestoreJournal(id: CGWindowID, fromOverlayFrame frame: NSRect,"
+        },
+        {
+          "line": 221,
+          "text": "func journalMatches(_ entry: [String: Any], app: NSRunningApplication,"
+        }
+      ]
+    },
+    {
+      "path": "prototype/Recovery/Rescue.swift",
+      "sha256": "26cc2ce87db65aa2b49a134cbac248a1c69740bb0aadd042ad45631ff1ce2428",
+      "line_count": 277,
+      "symbols": [
+        {
+          "line": 10,
+          "text": "struct OffscreenRescueAction {"
+        },
+        {
+          "line": 20,
+          "text": "struct JournalAlphaRestore {"
+        },
+        {
+          "line": 25,
+          "text": "struct JournalRescueResult {"
+        },
+        {
+          "line": 39,
+          "text": "func isAtWindowShadeParkingSpot(_ pos: CGPoint) -> Bool {"
+        },
+        {
+          "line": 40,
+          "text": "func onParkingBand(_ v: CGFloat) -> Bool {"
+        },
+        {
+          "line": 43,
+          "text": "func looksLikeWindowAxis(_ v: CGFloat) -> Bool {"
+        },
+        {
+          "line": 53,
+          "text": "func collectJournalRescueActions(targetTopLeft: CGPoint,"
+        },
+        {
+          "line": 124,
+          "text": "func rescueActionVerified(_ action: OffscreenRescueAction) -> Bool {"
+        },
+        {
+          "line": 137,
+          "text": "func alphaRestoreVerified(_ restore: JournalAlphaRestore) -> Bool {"
+        },
+        {
+          "line": 142,
+          "text": "func pruneRescuedJournalEntries(rescuedIDs: Set<CGWindowID>) {"
+        },
+        {
+          "line": 154,
+          "text": "func collectParkedWindowRescueActions(targetTopLeft: CGPoint,"
+        },
+        {
+          "line": 188,
+          "text": "func rescueOffscreenWindows(silent: Bool) {"
+        }
+      ]
+    },
+    {
+      "path": "prototype/Support/WS2CompanionCrypto.swift",
+      "sha256": "d50a35fcb45ba1905fb26a6c3c4f14a7dd450bb8413b13bfcf8429b0a7eed8e8",
+      "line_count": 120,
+      "symbols": [
+        {
+          "line": 2,
+          "text": "// See decisions/01-配对与加密.md for the observed protocol and the missing enrollment gate."
+        },
+        {
+          "line": 6,
+          "text": "@MainActor final class WS2CompanionCrypto {"
+        },
+        {
+          "line": 7,
+          "text": "enum Failure: Error { case state, expired, malformed, unknownPeer, signature, revoked, closed }"
+        },
+        {
+          "line": 8,
+          "text": "struct Peer: Equatable {"
+        },
+        {
+          "line": 14,
+          "text": "struct Identity {"
+        },
+        {
+          "line": 19,
+          "text": "@MainActor final class VerifiedSession {"
+        },
+        {
+          "line": 31,
+          "text": "func close() { transmit = nil; receive = nil; tx.close(); rx.close() }"
+        },
+        {
+          "line": 32,
+          "text": "func seal(_ plaintext: Data) throws -> Data {"
+        },
+        {
+          "line": 42,
+          "text": "func open(_ frame: WS2CompanionFrame) throws -> Data {"
+        },
+        {
+          "line": 52,
+          "text": "private enum State { case fresh, proving, finished, closed }"
+        },
+        {
+          "line": 68,
+          "text": "func close() { state = .closed; ephemeral = nil; shared = nil; proofKey = nil; clientEphemeral = nil }"
+        },
+        {
+          "line": 69,
+          "text": "private func checkTime() throws { guard clock.now() < deadline else { close(); throw Failure.expired } }"
+        },
+        {
+          "line": 70,
+          "text": "private static func derive(_ shared: SharedSecret, salt: String, info: String) -> SymmetricKey {"
+        },
+        {
+          "line": 73,
+          "text": "private static func proofNonce(_ value: String) throws -> ChaChaPoly.Nonce {"
+        },
+        {
+          "line": 78,
+          "text": "func answerM1(_ tlv: Data) throws -> Data {"
+        },
+        {
+          "line": 97,
+          "text": "func answerM3(_ tlv: Data) throws -> (m4: Data, session: VerifiedSession) {"
+        }
+      ]
+    },
+    {
+      "path": "prototype/Support/WS2CompanionTCPTransport.swift",
+      "sha256": "78bccef841039bf2d4fb5058ae21e01633da6f2e00435eb1a17b9ca2cd273266",
+      "line_count": 109,
+      "symbols": [
+        {
+          "line": 7,
+          "text": "@MainActor final class WS2CompanionTCPTransport {"
+        },
+        {
+          "line": 24,
+          "text": "func start() {"
+        },
+        {
+          "line": 41,
+          "text": "@discardableResult func enqueue(_ bytes: Data, deadline: Double) -> Bool {"
+        },
+        {
+          "line": 47,
+          "text": "private func receive() {"
+        },
+        {
+          "line": 65,
+          "text": "private func sendNext() {"
+        },
+        {
+          "line": 85,
+          "text": "func setProtocolDeadline(_ deadline: Double) {"
+        },
+        {
+          "line": 90,
+          "text": "private func scheduleTimeout() {"
+        },
+        {
+          "line": 102,
+          "text": "func close() {"
+        }
+      ]
+    },
+    {
+      "path": "prototype/Support/WS2DuplexProcess.swift",
+      "sha256": "1efe08a7d6987fdac80d87f345f1d2ce212e6a5dddac3a71e086e247d8ab579a",
+      "line_count": 248,
+      "symbols": [
+        {
+          "line": 11,
+          "text": "@MainActor final class WS2DuplexProcess {"
+        },
+        {
+          "line": 12,
+          "text": "enum Failure: Error { case invalid, io(Int32), notRunning }"
+        },
+        {
+          "line": 13,
+          "text": "enum End: Equatable { case localStop, eof, processExit, io(Int32), framing, timeout, revoked }"
+        },
+        {
+          "line": 14,
+          "text": "struct Termination: Equatable, Sendable { let status: Int32; let wasSignalled: Bool }"
+        },
+        {
+          "line": 57,
+          "text": "func start() throws {"
+        },
+        {
+          "line": 96,
+          "text": "private func pollChild() {"
+        },
+        {
+          "line": 120,
+          "text": "@discardableResult func admit(_ lines: [Data], connection: UUID, deadline: Double,"
+        },
+        {
+          "line": 131,
+          "text": "@discardableResult func admitWireFrames(_ frames: [Data], connection: UUID, deadline: Double,"
+        },
+        {
+          "line": 143,
+          "text": "private func armWrite() { if !writeArmed, !stopped { writeArmed = true; writer?.resume() } }"
+        },
+        {
+          "line": 144,
+          "text": "private func disarmWrite() { if writeArmed { writeArmed = false; writer?.suspend() } }"
+        },
+        {
+          "line": 145,
+          "text": "private func scheduleDeadline() {"
+        },
+        {
+          "line": 157,
+          "text": "private func writeReady() {"
+        },
+        {
+          "line": 183,
+          "text": "private func readReady(checkChild: Bool = true) {"
+        },
+        {
+          "line": 205,
+          "text": "private func readDiagnosticReady() {"
+        },
+        {
+          "line": 220,
+          "text": "func clearDiagnostics() { diagnostics?.clear() }"
+        },
+        {
+          "line": 221,
+          "text": "private static func writeWithoutSIGPIPE(_ fd: Int32, _ bytes: Data) -> Int {"
+        },
+        {
+          "line": 236,
+          "text": "func stop(_ reason: End = .localStop) {"
+        },
+        {
+          "line": 246,
+          "text": "// The reaper timer survives protocol closure. A stopped pipe is not reaping evidence."
+        }
+      ]
+    },
+    {
+      "path": "prototype/Support/WS2FocusEffectExecutor.swift",
+      "sha256": "674a8760579e1eccf401f6c949d6fcf69b74257943fe795b043f255b7c3887bf",
+      "line_count": 35,
+      "symbols": [
+        {
+          "line": 3,
+          "text": "@MainActor protocol WS2FocusMutationPort: AnyObject {"
+        },
+        {
+          "line": 6,
+          "text": "func perform(_ operation: WS2FocusEffectPlan.Operation,"
+        },
+        {
+          "line": 10,
+          "text": "@MainActor final class WS2FocusEffectExecutor {"
+        },
+        {
+          "line": 16,
+          "text": "func transition(run: WS2.Token?, windows: [WS2FocusEffectPlan.Window]) throws {"
+        },
+        {
+          "line": 19,
+          "text": "func suspend() { plan.setSuspended(true) }"
+        },
+        {
+          "line": 20,
+          "text": "func resumeAfterVerifiedUnlock() { plan.setSuspended(false); pump() }"
+        },
+        {
+          "line": 21,
+          "text": "func manualChange(_ identity: WS2FocusEffectPlan.Identity) { plan.manualChange(identity); pump() }"
+        },
+        {
+          "line": 23,
+          "text": "func end() throws { try transition(run: nil, windows: []) }"
+        },
+        {
+          "line": 24,
+          "text": "private func pump() {"
+        }
+      ]
+    },
+    {
+      "path": "prototype/Support/WS2KeychainPeerStorage.swift",
+      "sha256": "ffe7ecc5a1bbd58497156c645a074506371039f49ceb92bfc2d9b2c6f36a395f",
+      "line_count": 46,
+      "symbols": [
+        {
+          "line": 7,
+          "text": "@MainActor final class WS2KeychainPeerStorage: WS2PeerStorage {"
+        },
+        {
+          "line": 8,
+          "text": "struct Failure: Error { let status: OSStatus }"
+        },
+        {
+          "line": 20,
+          "text": "func read() throws -> Data? {"
+        },
+        {
+          "line": 31,
+          "text": "func replace(_ bytes: Data, creating: Bool) throws {"
+        }
+      ]
+    },
+    {
+      "path": "prototype/Support/WS2LocalLaunchProfile.swift",
+      "sha256": "34a52b15e0a183c0e0f8d45d999ab15e0f8d1b1998b7fa467fe15a4b1c843a27",
+      "line_count": 131,
+      "symbols": [
+        {
+          "line": 10,
+          "text": "struct WS2LocalLaunchProfile: Sendable {"
+        },
+        {
+          "line": 11,
+          "text": "enum Failure: Error { case unsafePath, configurationChanged, externalConfiguration, executableChanged }"
+        },
+        {
+          "line": 12,
+          "text": "struct FileIdentity: Equatable, Sendable {"
+        },
+        {
+          "line": 38,
+          "text": "static func prepare(projectURL:URL,projectID:UUID,executableURL:URL,root:URL) throws -> Self {"
+        },
+        {
+          "line": 73,
+          "text": "func revalidate() throws {"
+        },
+        {
+          "line": 84,
+          "text": "private static func identify(_ url:URL) throws -> FileIdentity {"
+        },
+        {
+          "line": 91,
+          "text": "private static func privateDirectory(_ url:URL) throws {"
+        },
+        {
+          "line": 102,
+          "text": "private static func rejectExternalConfiguration(_ project:WS2OwnedScope.Directory) throws {"
+        },
+        {
+          "line": 118,
+          "text": "static func admitsEffectiveConfig(_ response:WireJSON) -> Bool {"
+        }
+      ]
+    },
+    {
+      "path": "prototype/Support/WS2PairSetupCrypto.swift",
+      "sha256": "6345ec9ff7339c0845f4140beac96577ee1310968d71dab941a0266d315e6fda",
+      "line_count": 71,
+      "symbols": [
+        {
+          "line": 3,
+          "text": "@MainActor protocol WS2SRPPrimitive: AnyObject {"
+        },
+        {
+          "line": 4,
+          "text": "func begin(pin: String) throws -> (salt: Data, publicKey: Data)"
+        },
+        {
+          "line": 6,
+          "text": "func verify(publicKey: Data, proof: Data) throws -> (serverProof: Data, key: Data)"
+        },
+        {
+          "line": 7,
+          "text": "func clear()"
+        },
+        {
+          "line": 14,
+          "text": "@MainActor final class WS2PairSetupCrypto: WS2PairSetupEngine {"
+        },
+        {
+          "line": 15,
+          "text": "enum Failure: Error { case state, malformed, signature }"
+        },
+        {
+          "line": 16,
+          "text": "private enum Phase { case fresh, started, proven, finished }"
+        },
+        {
+          "line": 27,
+          "text": "func begin(pin: String) throws -> (salt: Data, publicKey: Data) {"
+        },
+        {
+          "line": 31,
+          "text": "func verify(clientPublicKey: Data, proof: Data) throws -> Data {"
+        },
+        {
+          "line": 38,
+          "text": "private func derive(_ suffix: String) throws -> SymmetricKey {"
+        },
+        {
+          "line": 43,
+          "text": "private func nonce(_ name: String) throws -> ChaChaPoly.Nonce {"
+        },
+        {
+          "line": 47,
+          "text": "func finish(encryptedM5: Data) throws -> (identifier: Data, publicKey: Data, encryptedM6: Data) {"
+        },
+        {
+          "line": 69,
+          "text": "func clear() { srp.clear(); sessionKey = nil; phase = .finished }"
+        }
+      ]
+    },
+    {
+      "path": "prototype/Support/WS2PairSetupServer.swift",
+      "sha256": "56ba109e6d1f63c8771cb0788c6c3af4796eed38cea5fe9880f744651c6516b1",
+      "line_count": 117,
+      "symbols": [
+        {
+          "line": 5,
+          "text": "@MainActor protocol WS2PairSetupEngine: AnyObject {"
+        },
+        {
+          "line": 6,
+          "text": "func begin(pin: String) throws -> (salt: Data, publicKey: Data)"
+        },
+        {
+          "line": 7,
+          "text": "func verify(clientPublicKey: Data, proof: Data) throws -> Data"
+        },
+        {
+          "line": 10,
+          "text": "func finish(encryptedM5: Data) throws -> (identifier: Data, publicKey: Data, encryptedM6: Data)"
+        },
+        {
+          "line": 11,
+          "text": "func clear()"
+        },
+        {
+          "line": 14,
+          "text": "@MainActor final class WS2PairingAdmission {"
+        },
+        {
+          "line": 15,
+          "text": "enum Failure: Error { case unavailable, busy, expired }"
+        },
+        {
+          "line": 27,
+          "text": "func openByLocalUser(makePIN: () -> String = PairingAttemptWindow.randomPIN) throws -> String {"
+        },
+        {
+          "line": 38,
+          "text": "func claim(_ connection: UUID) throws -> String {"
+        },
+        {
+          "line": 43,
+          "text": "func isCurrent(_ connection: UUID) -> Bool {"
+        },
+        {
+          "line": 46,
+          "text": "func failed(_ connection: UUID) {"
+        },
+        {
+          "line": 53,
+          "text": "func succeeded(_ connection: UUID) throws {"
+        },
+        {
+          "line": 56,
+          "text": "func cancel() { window.cancel(); displayedPIN = nil; owner = nil /* persistent incomplete marker intentionally survives */ }"
+        },
+        {
+          "line": 59,
+          "text": "@MainActor final class WS2PairSetupServer {"
+        },
+        {
+          "line": 60,
+          "text": "enum Failure: Error { case sequence, malformed, expired, closed }"
+        },
+        {
+          "line": 61,
+          "text": "enum State { case fresh, awaitingM3, awaitingM5, finished, closed }"
+        },
+        {
+          "line": 72,
+          "text": "func receive(_ tlv: Data) throws -> Data {"
+        },
+        {
+          "line": 113,
+          "text": "func cancel() {"
+        }
+      ]
+    },
+    {
+      "path": "prototype/Support/WS2PeerRepository.swift",
+      "sha256": "1ee4290d4151defac9a50b741c1128dbd8d6bcb7514cd4535ce39ac84f740b42",
+      "line_count": 127,
+      "symbols": [
+        {
+          "line": 4,
+          "text": "@MainActor protocol WS2PeerStorage: AnyObject {"
+        },
+        {
+          "line": 5,
+          "text": "func read() throws -> Data?"
+        },
+        {
+          "line": 6,
+          "text": "func replace(_ bytes: Data, creating: Bool) throws"
+        },
+        {
+          "line": 9,
+          "text": "@MainActor final class WS2PeerRepository {"
+        },
+        {
+          "line": 10,
+          "text": "enum Failure: Error { case unavailable, malformed, conflict, capacity, overflow, denied }"
+        },
+        {
+          "line": 11,
+          "text": "struct Peer: Codable, Equatable, Sendable {"
+        },
+        {
+          "line": 18,
+          "text": "struct Snapshot: Codable, Equatable, Sendable {"
+        },
+        {
+          "line": 34,
+          "text": "func load() throws {"
+        },
+        {
+          "line": 44,
+          "text": "func provision(identifier: Data, signingSeed: Data) throws {"
+        },
+        {
+          "line": 55,
+          "text": "private static func validate(_ value: Snapshot) throws {"
+        },
+        {
+          "line": 65,
+          "text": "private func encode(_ value: Snapshot) throws -> Data {"
+        },
+        {
+          "line": 70,
+          "text": "private func mutate(_ body: (inout Snapshot, UInt64) throws -> Void) throws {"
+        },
+        {
+          "line": 83,
+          "text": "func beginPairing() throws {"
+        },
+        {
+          "line": 86,
+          "text": "func recordFailedAttempt() throws {"
+        },
+        {
+          "line": 90,
+          "text": "func clearAttemptsAfterCooldown() throws {"
+        },
+        {
+          "line": 93,
+          "text": "func enroll(identifier: Data, publicKey: Data) throws -> Peer {"
+        },
+        {
+          "line": 106,
+          "text": "func markVerified(identifier: Data, revision: UInt64) throws {"
+        },
+        {
+          "line": 113,
+          "text": "func revoke(identifier: Data) throws {"
+        },
+        {
+          "line": 122,
+          "text": "func current(identifier: Data, publicKey: Data, revision: UInt64) -> Bool {"
+        },
+        {
+          "line": 126,
+          "text": "func suspend() { blocked = true; onInvalidateAll?() }"
+        }
+      ]
+    },
+    {
+      "path": "prototype/Support/WS2ProjectDirectory.swift",
+      "sha256": "7a9c30764d3199652eccc46265c4d7afae6c05cf65e1ee2a5be65c73bbd628a2",
+      "line_count": 26,
+      "symbols": [
+        {
+          "line": 4,
+          "text": "enum WS2ProjectDirectory {"
+        },
+        {
+          "line": 5,
+          "text": "enum Failure: Error { case notAbsoluteFileURL, notDirectory, missingIdentity }"
+        },
+        {
+          "line": 6,
+          "text": "static func read(_ url: URL) throws -> WS2OwnedScope.Directory {"
+        },
+        {
+          "line": 18,
+          "text": "static func contains(canonicalRoot root: String, canonicalCandidate candidate: String) -> Bool {"
+        }
+      ]
+    },
+    {
+      "path": "prototype/Window/AXHelpers.swift",
+      "sha256": "b679b85d9e4e31f1a2f4594a048fba885c89b46bd25395e3fab768c880ab71b6",
+      "line_count": 255,
+      "symbols": [
+        {
+          "line": 9,
+          "text": "enum TrafficAction { case close, minimize, zoom, fullScreen }"
+        },
+        {
+          "line": 11,
+          "text": "enum ProxyTrafficLightStyle {"
+        },
+        {
+          "line": 16,
+          "text": "struct ProxyTrafficLightConfiguration {"
+        },
+        {
+          "line": 40,
+          "text": "func proxyTrafficLightConfiguration(of win: AXUIElement, pid: pid_t) -> ProxyTrafficLightConfiguration {"
+        },
+        {
+          "line": 73,
+          "text": "func urlFromAXAttribute(_ win: AXUIElement, _ attr: String) -> URL? {"
+        },
+        {
+          "line": 90,
+          "text": "func quickLookReopenURL(for win: AXUIElement) -> URL? {"
+        },
+        {
+          "line": 102,
+          "text": "func reopenQuickLookPreview(url: URL) -> Bool {"
+        },
+        {
+          "line": 116,
+          "text": "func postSpacebarKey() {"
+        },
+        {
+          "line": 125,
+          "text": "func reopenQuickLookFromFinderSelection(pid: pid_t) -> Bool {"
+        },
+        {
+          "line": 149,
+          "text": "enum SystemTitlebarDoubleClickAction: Equatable {"
+        },
+        {
+          "line": 155,
+          "text": "func systemTitlebarDoubleClickAction() -> SystemTitlebarDoubleClickAction {"
+        },
+        {
+          "line": 163,
+          "text": "func systemTitlebarTripleClickDescription() -> String? {"
+        },
+        {
+          "line": 174,
+          "text": "enum WindowManagementCapability {"
+        },
+        {
+          "line": 182,
+          "text": "func realWindowManagementCapability(_ win: AXUIElement) -> WindowManagementCapability {"
+        },
+        {
+          "line": 203,
+          "text": "func trafficLightRects(_ win: AXUIElement, winTopLeft pos: CGPoint, barH: CGFloat) -> [(CGRect, TrafficAction)] {"
+        },
+        {
+          "line": 216,
+          "text": "func trafficLightRects(_ rects: [(CGRect, TrafficAction)],"
+        },
+        {
+          "line": 238,
+          "text": "func axTitle(_ e: AXUIElement) -> String {"
+        },
+        {
+          "line": 245,
+          "text": "func dumpWindow(_ win: AXUIElement) {"
+        }
+      ]
+    },
+    {
+      "path": "prototype/build.sh",
+      "sha256": "7059bc9f7cf023359899cb35bcb92b3fa934e06f30bfb2f2737bed28a55c493d",
+      "line_count": 360,
+      "symbols": [
+        {
+          "line": 73,
+          "text": "collect_sources() {"
+        }
+      ]
+    }
+  ]
+}

@@ -1,0 +1,64 @@
+{
+  "tests": 12,
+  "failures": 0,
+  "errors": 0,
+  "kind": "ACTUAL_SHELL_MOCKED_SDK_COMPILER",
+  "mac_build": "NOT_RUN",
+  "cases": [
+    {
+      "test": "__main__.Test.test_01_check_does_not_source_signing",
+      "status": "PASSED"
+    },
+    {
+      "test": "__main__.Test.test_02_main_and_guard_strict",
+      "status": "PASSED"
+    },
+    {
+      "test": "__main__.Test.test_03_both_normal_invocations_use_same_flags",
+      "status": "PASSED"
+    },
+    {
+      "test": "__main__.Test.test_04_no_sign_or_launch_or_bundle",
+      "status": "PASSED"
+    },
+    {
+      "test": "__main__.Test.test_05_c_failure_propagates",
+      "status": "PASSED"
+    },
+    {
+      "test": "__main__.Test.test_06_metal_failure_propagates",
+      "status": "PASSED"
+    },
+    {
+      "test": "__main__.Test.test_07_metallib_failure_propagates",
+      "status": "PASSED"
+    },
+    {
+      "test": "__main__.Test.test_08_main_failure_skips_guard",
+      "status": "PASSED"
+    },
+    {
+      "test": "__main__.Test.test_09_guard_failure_no_success_message",
+      "status": "PASSED"
+    },
+    {
+      "test": "__main__.Test.test_10_native_and_main_same_target",
+      "status": "PASSED"
+    },
+    {
+      "test": "__main__.Test.test_11_temporary_sources_cleaned",
+      "status": "PASSED"
+    },
+    {
+      "test": "__main__.Test.test_12_glass_checks_header_not_version",
+      "status": "PASSED"
+    }
+  ],
+  "baseline": {
+    "exit_code": 97,
+    "signing_config_executed": true,
+    "stdout": "",
+    "stderr": "",
+    "explicit_language_flag_count": 0
+  }
+}

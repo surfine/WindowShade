@@ -25,6 +25,8 @@ cd "$(dirname "$0")"
 stage_only=0
 if [ "${1:-}" = "--stage" ]; then stage_only=1; fi
 OPTIMIZATION_FLAGS=(-O -whole-module-optimization)
+# Toolchain version is not the language mode. Keep all four Swift builds identical.
+SWIFT_LANGUAGE_FLAGS=(-swift-version 6 -strict-concurrency=complete -warnings-as-errors)
 if [ "${1:-}" = "--local-parallel" ]; then OPTIMIZATION_FLAGS+=(-num-threads 4); fi
 APP="WindowShade.app"
 if [ "$stage_only" = "1" ]; then
@@ -38,6 +40,8 @@ MODULE_CACHE="$(cd .. && pwd)/.build/module-cache"
 FEED_URL="https://windowshade.aaronlau.me/appcast.xml"
 EXPECTED_ED_KEY="D/MZytH+oxawqKQsskoXBdwbvoPentrqfaj7Tj2pnkw="
 SPARKLE_FRAMEWORK="$(pwd)/Vendor/Sparkle.framework"
+# macOS 自带 bash 3.2：`set -u` 下展开空数组会直接致命，而且有 EXIT trap 时还会以 0 退出，
+# 让 --check 在缺少 Vendor/Sparkle.framework 时「什么都不编也返回成功」。下面一律用 + 展开形式。
 SPARKLE_FLAGS=()
 if [ -d "$SPARKLE_FRAMEWORK" ]; then SPARKLE_FLAGS=(-F "$(pwd)/Vendor"); fi
 
@@ -85,9 +89,9 @@ if [ "${1:-}" = "--check" ]; then
   check_only=1
 fi
 
-# 签名身份：环境变量优先，其次本机未跟踪配置文件。
+# --check 不执行本机签名配置；普通构建仍按环境变量、配置文件的顺序读取。
 IDENTITY="${WINDOWSHADE_CODESIGN_IDENTITY:-}"
-if [ -z "$IDENTITY" ] && [ -f local-codesign.env ]; then
+if [ "$check_only" != "1" ] && [ -z "$IDENTITY" ] && [ -f local-codesign.env ]; then
   # shellcheck disable=SC1091
   source local-codesign.env
   IDENTITY="${WINDOWSHADE_CODESIGN_IDENTITY:-}"
@@ -148,11 +152,11 @@ if [ "$check_only" = "1" ]; then
   echo "==> 编译验证（--check，和发布构建同样的优化参数；不签名、不修改 app bundle）"
   mkdir -p "$MODULE_CACHE"
   env CLANG_MODULE_CACHE_PATH="$MODULE_CACHE" \
-    swiftc -module-cache-path "$MODULE_CACHE" -target "$ARCH-apple-macosx14.0" -O -whole-module-optimization ${GLASS_DEFINE} -o "$WORK/windowshade-check" \
+    swiftc "${SWIFT_LANGUAGE_FLAGS[@]}" -module-cache-path "$MODULE_CACHE" -target "$ARCH-apple-macosx14.0" -O -whole-module-optimization ${GLASS_DEFINE} -o "$WORK/windowshade-check" \
       "${COMPILE_SOURCES[@]}" "${NATIVE_FLAGS[@]}" "${FRAMEWORKS[@]}" \
-      "${SPARKLE_FLAGS[@]}" -framework Sparkle -Xlinker -rpath -Xlinker @executable_path/../Frameworks
+      "${SPARKLE_FLAGS[@]+"${SPARKLE_FLAGS[@]}"}" -framework Sparkle -Xlinker -rpath -Xlinker @executable_path/../Frameworks
   env CLANG_MODULE_CACHE_PATH="$MODULE_CACHE" \
-    swiftc -module-cache-path "$MODULE_CACHE" -target "$ARCH-apple-macosx14.0" -O -o "$WORK/WindowShadeUpdateGuard-check" \
+    swiftc "${SWIFT_LANGUAGE_FLAGS[@]}" -module-cache-path "$MODULE_CACHE" -target "$ARCH-apple-macosx14.0" -O -o "$WORK/WindowShadeUpdateGuard-check" \
       "${GUARD_SOURCES[@]}" "${GUARD_FRAMEWORKS[@]}"
   echo "==> 编译验证通过"
   exit 0
@@ -193,12 +197,12 @@ echo "==> 编译"
 mkdir -p "$MODULE_CACHE"
 mkdir -p "$WORK/compiler-tmp"
 env TMPDIR="$WORK/compiler-tmp" CLANG_MODULE_CACHE_PATH="$MODULE_CACHE" \
-  swiftc -module-cache-path "$MODULE_CACHE" -target "$ARCH-apple-macosx14.0" "${OPTIMIZATION_FLAGS[@]}" ${GLASS_DEFINE} -o "$TMP_BIN" \
+  swiftc "${SWIFT_LANGUAGE_FLAGS[@]}" -module-cache-path "$MODULE_CACHE" -target "$ARCH-apple-macosx14.0" "${OPTIMIZATION_FLAGS[@]}" ${GLASS_DEFINE} -o "$TMP_BIN" \
     "${COMPILE_SOURCES[@]}" "${NATIVE_FLAGS[@]}" "${FRAMEWORKS[@]}" \
-    "${SPARKLE_FLAGS[@]}" -framework Sparkle -Xlinker -rpath -Xlinker @executable_path/../Frameworks
+    "${SPARKLE_FLAGS[@]+"${SPARKLE_FLAGS[@]}"}" -framework Sparkle -Xlinker -rpath -Xlinker @executable_path/../Frameworks
 echo "==> 编译看护（WindowShadeUpdateGuard）"
 env CLANG_MODULE_CACHE_PATH="$MODULE_CACHE" \
-  swiftc -module-cache-path "$MODULE_CACHE" -target "$ARCH-apple-macosx14.0" -O -o "$WORK/WindowShadeUpdateGuard" \
+  swiftc "${SWIFT_LANGUAGE_FLAGS[@]}" -module-cache-path "$MODULE_CACHE" -target "$ARCH-apple-macosx14.0" -O -o "$WORK/WindowShadeUpdateGuard" \
     "${GUARD_SOURCES[@]}" "${GUARD_FRAMEWORKS[@]}"
 
 if [ "$stage_only" != "1" ]; then

@@ -1,0 +1,212 @@
+{
+  "kind": "EXACT_PRODUCTION_FUNCTIONS_FOUNDATION_HOST",
+  "appkit": "NOT_RUN",
+  "cases": [
+    {
+      "name": "one",
+      "status": "PASSED"
+    },
+    {
+      "name": "max",
+      "status": "PASSED"
+    },
+    {
+      "name": "integer_double",
+      "status": "PASSED"
+    },
+    {
+      "name": "NSNumber",
+      "status": "PASSED"
+    },
+    {
+      "name": "missing",
+      "status": "PASSED"
+    },
+    {
+      "name": "zero",
+      "status": "PASSED"
+    },
+    {
+      "name": "negative",
+      "status": "PASSED"
+    },
+    {
+      "name": "fractional",
+      "status": "PASSED"
+    },
+    {
+      "name": "nan",
+      "status": "PASSED"
+    },
+    {
+      "name": "positive_infinity",
+      "status": "PASSED"
+    },
+    {
+      "name": "negative_infinity",
+      "status": "PASSED"
+    },
+    {
+      "name": "above_uint32",
+      "status": "PASSED"
+    },
+    {
+      "name": "large_finite",
+      "status": "PASSED"
+    },
+    {
+      "name": "bool_true",
+      "status": "PASSED"
+    },
+    {
+      "name": "bool_false",
+      "status": "PASSED"
+    },
+    {
+      "name": "string",
+      "status": "PASSED"
+    },
+    {
+      "name": "array",
+      "status": "PASSED"
+    },
+    {
+      "name": "dictionary",
+      "status": "PASSED"
+    },
+    {
+      "name": "int64_max",
+      "status": "PASSED"
+    },
+    {
+      "name": "uint64_max",
+      "status": "PASSED"
+    },
+    {
+      "name": "negative_fraction",
+      "status": "PASSED"
+    },
+    {
+      "name": "leading_zero_string",
+      "status": "PASSED"
+    },
+    {
+      "name": "decimal_valid",
+      "status": "PASSED"
+    },
+    {
+      "name": "empty",
+      "status": "PASSED"
+    },
+    {
+      "name": "absent_key",
+      "status": "PASSED"
+    }
+  ],
+  "baseline": [
+    {
+      "input": "nan",
+      "exit_code": -5,
+      "stdout": "",
+      "trap_observed": true
+    },
+    {
+      "input": "over",
+      "exit_code": -5,
+      "stdout": "",
+      "trap_observed": true
+    },
+    {
+      "input": "bool",
+      "exit_code": 0,
+      "stdout": "Optional(1)\n",
+      "trap_observed": false
+    },
+    {
+      "input": "fraction",
+      "exit_code": 0,
+      "stdout": "Optional(1)\n",
+      "trap_observed": false
+    }
+  ],
+  "commands": [
+    {
+      "argv": [
+        "swiftc",
+        "-swift-version",
+        "6",
+        "-strict-concurrency=complete",
+        "-warnings-as-errors",
+        "-parse-as-library",
+        "/var/folders/l6/4_mrt4s51rv4sjb29v6x9n000000gn/T/ws2-journal-id-o9au6eq9/test.swift",
+        "-o",
+        "/var/folders/l6/4_mrt4s51rv4sjb29v6x9n000000gn/T/ws2-journal-id-o9au6eq9/test"
+      ],
+      "exit_code": 0,
+      "stdout": "",
+      "stderr": ""
+    },
+    {
+      "argv": [
+        "/var/folders/l6/4_mrt4s51rv4sjb29v6x9n000000gn/T/ws2-journal-id-o9au6eq9/test"
+      ],
+      "exit_code": 0,
+      "stdout": "PASS one\nPASS max\nPASS integer_double\nPASS NSNumber\nPASS missing\nPASS zero\nPASS negative\nPASS fractional\nPASS nan\nPASS positive_infinity\nPASS negative_infinity\nPASS above_uint32\nPASS large_finite\nPASS bool_true\nPASS bool_false\nPASS string\nPASS array\nPASS dictionary\nPASS int64_max\nPASS uint64_max\nPASS negative_fraction\nPASS leading_zero_string\nPASS decimal_valid\nPASS empty\nPASS absent_key\n",
+      "stderr": ""
+    },
+    {
+      "argv": [
+        "swiftc",
+        "-swift-version",
+        "6",
+        "-strict-concurrency=complete",
+        "-warnings-as-errors",
+        "/var/folders/l6/4_mrt4s51rv4sjb29v6x9n000000gn/T/ws2-journal-id-o9au6eq9/old.swift",
+        "-o",
+        "/var/folders/l6/4_mrt4s51rv4sjb29v6x9n000000gn/T/ws2-journal-id-o9au6eq9/old"
+      ],
+      "exit_code": 0,
+      "stdout": "",
+      "stderr": ""
+    },
+    {
+      "argv": [
+        "/var/folders/l6/4_mrt4s51rv4sjb29v6x9n000000gn/T/ws2-journal-id-o9au6eq9/old",
+        "nan"
+      ],
+      "exit_code": -5,
+      "stdout": "",
+      "stderr": "Swift/arm64e-apple-macos.swiftinterface:45309: Fatal error: Double value cannot be converted to Int because it is either infinite or NaN\n"
+    },
+    {
+      "argv": [
+        "/var/folders/l6/4_mrt4s51rv4sjb29v6x9n000000gn/T/ws2-journal-id-o9au6eq9/old",
+        "over"
+      ],
+      "exit_code": -5,
+      "stdout": "",
+      "stderr": "Swift/arm64e-apple-macos.swiftinterface:13743: Fatal error: Not enough bits to represent the passed value\n"
+    },
+    {
+      "argv": [
+        "/var/folders/l6/4_mrt4s51rv4sjb29v6x9n000000gn/T/ws2-journal-id-o9au6eq9/old",
+        "bool"
+      ],
+      "exit_code": 0,
+      "stdout": "Optional(1)\n",
+      "stderr": ""
+    },
+    {
+      "argv": [
+        "/var/folders/l6/4_mrt4s51rv4sjb29v6x9n000000gn/T/ws2-journal-id-o9au6eq9/old",
+        "fraction"
+      ],
+      "exit_code": 0,
+      "stdout": "Optional(1)\n",
+      "stderr": ""
+    }
+  ],
+  "test_count": 25,
+  "passed": true,
+  "source_sha256": "5ffdb659b88cba3b72a346192fef9ba0c6a0eb22fad68aebd0681c09eb5b85aa"
+}
