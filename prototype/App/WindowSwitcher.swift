@@ -250,12 +250,19 @@ final class WindowSwitcher {
         let own = getpid()
         let list = CGWindowListCopyWindowInfo([.optionOnScreenOnly, .excludeDesktopElements], kCGNullWindowID) as? [[String: Any]] ?? []
         var items: [Item] = []
+        var parents: [pid_t: NSRunningApplication]?
         for info in list where (info[kCGWindowLayer as String] as? Int) == 0 {
             guard let pid = info[kCGWindowOwnerPID as String] as? pid_t, pid != own,
                   let number = info[kCGWindowNumber as String] as? NSNumber,
                   let bounds = cgWindowBounds(info), bounds.width >= 160, bounds.height >= 100,
                   ((info[kCGWindowAlpha as String] as? NSNumber)?.doubleValue ?? 1) > 0 else { continue }
-            let app = NSRunningApplication(processIdentifier: pid)
+            var app = NSRunningApplication(processIdentifier: pid)
+            // App 自带、没有 Dock 图标的辅助进程（微信小程序的 WeChatAppEx）：名字和图标用所属 App 的，
+            // 和窗口浏览一样归到它名下（Aaron 9/29 定）。只有碰到这种窗口才去认一次，平时不多做事。
+            if let helper = app, helper.activationPolicy != .regular {
+                if parents == nil { parents = helperParents() }
+                if let parent = parents?[pid] { app = parent }
+            }
             let appName = app?.localizedName ?? (info[kCGWindowOwnerName as String] as? String) ?? ""
             let title = (info[kCGWindowName as String] as? String).flatMap { $0.isEmpty ? nil : $0 } ?? appName
             items.append(Item(id: CGWindowID(number.uint32Value), pid: pid, kind: .window, title: title,
@@ -267,6 +274,20 @@ final class WindowSwitcher {
                               image: state.previewImage?.cgImage(forProposedRect: nil, context: nil, hints: nil)))
         }
         return items
+    }
+
+    /// 辅助进程 → 所属 App（规则见 WindowBrowserHelperApps.isHelper：装在 App 包里、同一家、自己没有 Dock 图标）。
+    private static func helperParents() -> [pid_t: NSRunningApplication] {
+        let apps = NSWorkspace.shared.runningApplications.filter { !$0.isTerminated }
+        let processes = apps.map { app in
+            WindowBrowserAppProcess(
+                pid: app.processIdentifier, bundleIdentifier: app.bundleIdentifier,
+                bundlePath: app.bundleURL?.standardizedFileURL.resolvingSymlinksInPath().path,
+                hasDockIcon: app.activationPolicy == .regular,
+                name: app.localizedName ?? app.bundleIdentifier ?? "")
+        }
+        let byPID = Dictionary(apps.map { ($0.processIdentifier, $0) }, uniquingKeysWith: { a, _ in a })
+        return WindowBrowserHelperApps.parentsByHelper(processes).compactMapValues { byPID[$0.pid] }
     }
 
     /// 窗口画面在后台截，截好一张补一张。

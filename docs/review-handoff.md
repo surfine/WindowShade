@@ -10,7 +10,7 @@
 ## 0. 提示词（可直接粘贴；复检 + 细化设计稿）
 
 > 你是资深 macOS/AppKit 工程师、HIG 评审兼界面设计师。请对
-> `/Users/aaron/Documents/WindowShade` 当前 `main`（`4a0eca1`）上已发布的 WindowShade
+> `.` 当前 `main`（`4a0eca1`）上已发布的 WindowShade
 > 1.0.14（tag `v1.0.14` → `480a7fd`）做**两件事**：
 >
 > **任务一 · 复检**：找出真实缺陷、HIG 违背、自相矛盾与证据不足，不重写功能。
@@ -79,10 +79,10 @@
 
 | 项目 | 值 |
 | --- | --- |
-| 仓库 / 分支 | `/Users/aaron/Documents/WindowShade`，`main` |
+| 仓库 / 分支 | `.`，`main` |
 | HEAD | `868d215`（`ca3f295` 面板贴合内容 → `ac648cf` 液态玻璃单层 → `480a7fd` README → `868d215` 重发记录） |
 | 发布 | tag `v1.0.14` → `480a7fd`；附件 `WindowShade-v1.0.14.zip`（3,715,311 字节，sha256 `ed82d3a6d3f7f3fc28c1a5e09b0754f03a86f6b3d9e68353656479dbdfcd160e`） |
-| 本机运行 | `prototype/WindowShade.app`，bundle 1.0.14 / build 14，pid 20707，签名 `Apple Development: openkams@gmail.com (G3TN2MBQ2Q)`，TeamIdentifier `FVGLY6W6S4`（复核用 `codesign -dv --verbose=2 prototype/WindowShade.app`） |
+| 本机运行 | `prototype/WindowShade.app`，bundle 1.0.14 / build 14，pid 20707，签名 `Apple Development: Your Name (<TEAM_ID>)`，TeamIdentifier `<TEAM_ID>`（复核用 `codesign -dv --verbose=2 prototype/WindowShade.app`） |
 | 工作区 | 干净（`git status --short` 为空） |
 | 基线 | 研究基线 `05e5472`，**只用于对照，不回退** |
 | 构建环境 | macOS 27.0（26A428）、Xcode 26.6、macOS SDK 26.5、arm64、2x |

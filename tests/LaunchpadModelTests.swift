@@ -41,6 +41,24 @@ import Foundation
              "微信 matches the initials wx")
     }
 
+    // 小鹤双拼：每个音节两个键；zh/ch/sh 是 v/i/u；零声母音节按小鹤的写法。
+    do {
+      expect(calculator.shuangpin == "jisrqi", "计算器 is jisrqi in Xiaohe shuangpin")
+      expect(wechat.shuangpin == "wwxb", "微信 is wwxb in Xiaohe shuangpin")
+      expect(LaunchpadSearch.xiaohe("中国") == "vsgo", "zh is v, ong is s, uo is o")
+      expect(LaunchpadSearch.xiaohe("吃茶") == "iiia", "ch is i: chi → ii, cha → ia")
+      expect(LaunchpadSearch.xiaohe("书") == "uu", "sh is u")
+      expect(LaunchpadSearch.xiaohe("爱") == "ai" && LaunchpadSearch.xiaohe("啊") == "aa"
+             && LaunchpadSearch.xiaohe("昂") == "ah", "zero-initial syllables: ai, aa, ah")
+      expect(LaunchpadSearch.xiaohe("绿") == "lv" && LaunchpadSearch.xiaohe("略") == "lt", "ü is v: lü → lv, lüe → lt")
+      expect(LaunchpadSearch.xiaohe("熊猫") == "xsmc", "iong is s, ao is c")
+      let all = [finder, calculator, wechat, keynote]
+      expect(LaunchpadSearch.filter(all, query: "wwxb").map(\.path) == [wechat.path], "微信 matches its shuangpin wwxb")
+      expect(LaunchpadSearch.filter(all, query: "jisr").map(\.path) == [calculator.path], "a shuangpin prefix is enough")
+      expect(LaunchpadSearch.score(calculator, query: "j") == 70,
+             "one letter scores the pinyin prefix 70 (shuangpin needs two keys, so not 65)")
+    }
+
     // 搜索的排序：名字开头的匹配排在名字中间的匹配前面。
     do {
       let prefix = LaunchpadApp(path: "/Applications/Foo.app", name: "Page", bundleID: nil)

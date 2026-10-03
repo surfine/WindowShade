@@ -8,7 +8,7 @@
 
 完整实现与逐项证据见 [设计规范 v1 落地](../design-v1.md)。中英文 README 已使用 assets/windowshade-settings.png 和 assets/windowshade-settings-dark.png，并按主题切换。开发指南已加入隔离验收入口和组件回归命令。
 
-签名验证包：`.build/duo-validation/WindowShade.app`。最后构建 session85687，2026-09-13 00:59:25，50 Swift 文件，原 Apple Development 身份 / Team FVGLY6W6S4。仅保留既有 stopCapture 异步 API 建议警告。原应用 bundle 未替换，未提交或发布。
+签名验证包：`.build/duo-validation/WindowShade.app`。最后构建 session85687，2026-09-13 00:59:25，50 Swift 文件，原 Apple Development 身份 / Team <TEAM_ID>。仅保留既有 stopCapture 异步 API 建议警告。原应用 bundle 未替换，未提交或发布。
 
 ## 验收证据
 
@@ -61,7 +61,7 @@ QA实例 session90372 已结束，原应用 PID41590保持运行。不要再对�
 
 ## 实施补充：2026-09-13 04:50
 
-最终当前 bundle 签名时间04:46:32，Team FVGLY6W6S4；新增无动画事务验证 session8345 exit0，真实隐藏、卷帘显示及原位置恢复通过。QA session85892 已退出，普通版 PID12654 已启动，未留下QA进程。git diff --check 通过。
+最终当前 bundle 签名时间04:46:32，Team <TEAM_ID>；新增无动画事务验证 session8345 exit0，真实隐藏、卷帘显示及原位置恢复通过。QA session85892 已退出，普通版 PID12654 已启动，未留下QA进程。git diff --check 通过。
 
 同一900×680、2x设置窗口六组交错捕获：带framing中位73.19ms，无framing中位67.98ms；无framing一次122.96ms离群。只是单次截图API的小样本，不能据此宣称整体折叠加速或主线程无回归。修复不增加常驻流、轮询或AX扫描。最新actual-overlay.png已查看，完整52pt顶部。
 

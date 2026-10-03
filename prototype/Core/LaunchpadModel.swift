@@ -1,4 +1,4 @@
-// 启动台的纯规则（可单测）：一页排几行几列、翻页停在哪一页、搜索怎么匹配（中文可以打拼音、拼音首字母）。
+// 启动台的纯规则（可单测）：一页排几行几列、翻页停在哪一页、搜索怎么匹配（中文可以打拼音、拼音首字母、小鹤双拼）。
 
 import CoreGraphics
 import Foundation
@@ -16,6 +16,8 @@ struct LaunchpadApp: Hashable {
     /// 全拼（小写、无声调、音节之间不留空）和每个音节的首字母：中文名可以打 “weixin” 或 “wx”。
     let pinyin: String
     let initials: String
+    /// 小鹤双拼：每个音节两个键（“微信”是 wwxb，“计算器”是 jisrqi）。
+    let shuangpin: String
 
     init(path: String, name: String, bundleID: String?, category: String? = nil, added: Date? = nil, lastUsed: Date? = nil) {
         self.path = path
@@ -28,6 +30,7 @@ struct LaunchpadApp: Hashable {
         let syllables = latin.split(whereSeparator: { !$0.isLetter && !$0.isNumber })
         pinyin = syllables.joined()
         initials = String(syllables.compactMap(\.first))
+        shuangpin = LaunchpadSearch.xiaohe(name)
     }
 }
 
@@ -39,7 +42,48 @@ enum LaunchpadSearch {
         return plain.lowercased()
     }
 
-    /// 匹配得多好：0 不匹配；越大越靠前。名字开头 > 词开头 > 拼音开头 > 首字母 > 名字中间 > 拼音中间。
+    /// 小鹤双拼的韵母键（声母 zh / ch / sh 是 v / i / u，其余声母照原字母）。
+    static let xiaoheFinals: [String: String] = [
+        "iu": "q", "ei": "w", "uan": "r", "van": "r", "ue": "t", "ve": "t", "un": "y", "uo": "o", "ie": "p",
+        "ong": "s", "iong": "s", "ai": "d", "en": "f", "eng": "g", "ang": "h", "an": "j", "ing": "k", "uai": "k",
+        "iang": "l", "uang": "l", "ou": "z", "ua": "x", "ia": "x", "ao": "c", "ui": "v", "in": "b", "iao": "n",
+        "ian": "m", "a": "a", "o": "o", "e": "e", "i": "i", "u": "u", "v": "v",
+    ]
+
+    /// 名字转成小鹤双拼，和全拼用同一个系统转换（多音字取它给的读音，和全拼搜索一致）；
+    /// 没有汉字的名字没有双拼；英文单词转不成双拼音节的就跳过。
+    static func xiaohe(_ text: String) -> String {
+        guard text.unicodeScalars.contains(where: { (0x4E00...0x9FFF).contains($0.value) }),
+              let mandarin = text.applyingTransform(.mandarinToLatin, reverse: false) else { return "" }
+        // ü 先记成 v（lǜ → lv），再去声调。
+        let marked = mandarin.lowercased().map { "üǖǘǚǜ".contains($0) ? "v" : String($0) }.joined()
+        let plain = marked.applyingTransform(.stripDiacritics, reverse: false) ?? marked
+        return plain.split(whereSeparator: { !($0.isASCII && $0.isLetter) })
+            .compactMap { xiaoheSyllable(String($0)) }.joined()
+    }
+
+    static func xiaoheSyllable(_ syllable: String) -> String? {
+        guard !syllable.isEmpty else { return nil }
+        var initial = "", rest = Substring(syllable)
+        for (spelled, key) in [("zh", "v"), ("ch", "i"), ("sh", "u")] where syllable.hasPrefix(spelled) {
+            initial = key; rest = syllable.dropFirst(2)
+        }
+        if initial.isEmpty, let first = syllable.first, "bpmfdtnlgkhjqxrzcsyw".contains(first) {
+            initial = String(first); rest = syllable.dropFirst()
+        }
+        let final = String(rest)
+        if initial.isEmpty {
+            // 零声母：一个字母的双写（a → aa），两个字母照写（ai → ai），三个以上是首字母加韵母键（ang → ah）。
+            switch final.count {
+            case 1: return final + final
+            case 2: return final
+            default: return xiaoheFinals[final].map { String(final.prefix(1)) + $0 }
+            }
+        }
+        return xiaoheFinals[final].map { initial + $0 }
+    }
+
+    /// 匹配得多好：0 不匹配；越大越靠前。名字开头 > 词开头 > 拼音开头 > 双拼开头 > 首字母 > 名字中间 > 拼音中间。
     static func score(_ app: LaunchpadApp, query raw: String) -> Int {
         let query = raw.trimmingCharacters(in: .whitespaces).lowercased()
         guard !query.isEmpty else { return 1 }
@@ -48,6 +92,7 @@ enum LaunchpadSearch {
         if name.split(whereSeparator: { $0 == " " || $0 == "-" }).contains(where: { $0.hasPrefix(query) }) { return 80 }
         let compact = query.replacingOccurrences(of: " ", with: "")
         if app.pinyin.hasPrefix(compact) { return 70 }
+        if compact.count >= 2, app.shuangpin.hasPrefix(compact) { return 65 }
         if app.initials.hasPrefix(compact) { return 60 }
         if name.contains(query) { return 40 }
         if app.pinyin.contains(compact) { return 30 }
