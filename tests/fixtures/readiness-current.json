@@ -1,0 +1,153 @@
+{
+  "schemaVersion": 1,
+  "candidateRevision": "b7258719288a4c937eea1a56e82e14c9454188f5868a6296c5383e271a34f25c",
+  "capabilities": [
+    {
+      "id": "owned-cli",
+      "expectedEnvironment": {
+        "source": "source-review",
+        "build": "macos-sdk",
+        "runtime": "macos-cli"
+      },
+      "reviewer": {
+        "name": "",
+        "decision": "pending"
+      },
+      "source": {
+        "status": "partial",
+        "candidateRevision": "b7258719288a4c937eea1a56e82e14c9454188f5868a6296c5383e271a34f25c"
+      },
+      "build": {
+        "status": "not-run",
+        "candidateRevision": "b7258719288a4c937eea1a56e82e14c9454188f5868a6296c5383e271a34f25c"
+      },
+      "runtime": {
+        "status": "not-run",
+        "candidateRevision": "b7258719288a4c937eea1a56e82e14c9454188f5868a6296c5383e271a34f25c"
+      }
+    },
+    {
+      "id": "native-list-input",
+      "expectedEnvironment": {
+        "source": "source-review",
+        "build": "macos-sdk",
+        "runtime": "macos-hardware"
+      },
+      "reviewer": {
+        "name": "",
+        "decision": "pending"
+      },
+      "source": {
+        "status": "partial",
+        "candidateRevision": "b7258719288a4c937eea1a56e82e14c9454188f5868a6296c5383e271a34f25c"
+      },
+      "build": {
+        "status": "not-run",
+        "candidateRevision": "b7258719288a4c937eea1a56e82e14c9454188f5868a6296c5383e271a34f25c"
+      },
+      "runtime": {
+        "status": "not-run",
+        "candidateRevision": "b7258719288a4c937eea1a56e82e14c9454188f5868a6296c5383e271a34f25c"
+      }
+    },
+    {
+      "id": "focus-window-effects",
+      "expectedEnvironment": {
+        "source": "source-review",
+        "build": "macos-sdk",
+        "runtime": "macos-ax"
+      },
+      "reviewer": {
+        "name": "",
+        "decision": "pending"
+      },
+      "source": {
+        "status": "partial",
+        "candidateRevision": "b7258719288a4c937eea1a56e82e14c9454188f5868a6296c5383e271a34f25c"
+      },
+      "build": {
+        "status": "not-run",
+        "candidateRevision": "b7258719288a4c937eea1a56e82e14c9454188f5868a6296c5383e271a34f25c"
+      },
+      "runtime": {
+        "status": "not-run",
+        "candidateRevision": "b7258719288a4c937eea1a56e82e14c9454188f5868a6296c5383e271a34f25c"
+      }
+    },
+    {
+      "id": "remote-pairing",
+      "expectedEnvironment": {
+        "source": "source-review",
+        "build": "macos-sdk",
+        "runtime": "macos-native-remote"
+      },
+      "reviewer": {
+        "name": "",
+        "decision": "pending"
+      },
+      "source": {
+        "status": "partial",
+        "candidateRevision": "b7258719288a4c937eea1a56e82e14c9454188f5868a6296c5383e271a34f25c"
+      },
+      "build": {
+        "status": "not-run",
+        "candidateRevision": "b7258719288a4c937eea1a56e82e14c9454188f5868a6296c5383e271a34f25c"
+      },
+      "runtime": {
+        "status": "not-run",
+        "candidateRevision": "b7258719288a4c937eea1a56e82e14c9454188f5868a6296c5383e271a34f25c"
+      }
+    },
+    {
+      "id": "process-supervision",
+      "expectedEnvironment": {
+        "source": "source-review",
+        "build": "macos-sdk",
+        "runtime": "macos-process"
+      },
+      "reviewer": {
+        "name": "",
+        "decision": "pending"
+      },
+      "source": {
+        "status": "partial",
+        "candidateRevision": "b7258719288a4c937eea1a56e82e14c9454188f5868a6296c5383e271a34f25c"
+      },
+      "build": {
+        "status": "not-run",
+        "candidateRevision": "b7258719288a4c937eea1a56e82e14c9454188f5868a6296c5383e271a34f25c"
+      },
+      "runtime": {
+        "status": "failed",
+        "candidateRevision": "b7258719288a4c937eea1a56e82e14c9454188f5868a6296c5383e271a34f25c",
+        "environment": "linux-probe",
+        "logPath": "validation/exit-inheritance-probe.json",
+        "note": "Linux requirement failed; Mac not tested"
+      }
+    },
+    {
+      "id": "release",
+      "expectedEnvironment": {
+        "source": "source-review",
+        "build": "macos-sdk",
+        "runtime": "macos-release-review"
+      },
+      "reviewer": {
+        "name": "",
+        "decision": "pending"
+      },
+      "source": {
+        "status": "partial",
+        "candidateRevision": "b7258719288a4c937eea1a56e82e14c9454188f5868a6296c5383e271a34f25c"
+      },
+      "build": {
+        "status": "not-run",
+        "candidateRevision": "b7258719288a4c937eea1a56e82e14c9454188f5868a6296c5383e271a34f25c"
+      },
+      "runtime": {
+        "status": "not-run",
+        "candidateRevision": "b7258719288a4c937eea1a56e82e14c9454188f5868a6296c5383e271a34f25c"
+      }
+    }
+  ]
+}

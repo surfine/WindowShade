@@ -1,6 +1,6 @@
 {
  "version": 1,
- "basis": "round2 uploaded repo snapshot; main model must approve additions; 主模型逐点补登 2026-10-03：番茄钟专注时长三个 UserDefaults 读写点归 settings，另有一条注释里的 LAContext 字样改成中文说明（注释不是读取点）；2026-10-03 主模型补登第四份：番茄钟设置归 settings 并新增 focus-preferences/focus-window-receipts/手柄/审批/配对身份五行（未上线的标 planned，不进隐私页）",
+ "basis": "round2 uploaded repo snapshot; main model must approve additions; 主模型逐点补登 2026-10-03：番茄钟专注时长三个 UserDefaults 读写点归 settings，另有一条注释里的 LAContext 字样改成中文说明（注释不是读取点）；2026-10-03 主模型补登第四份：番茄钟设置归 settings 并新增 focus-preferences/focus-window-receipts/手柄/审批/配对身份五行（未上线的标 planned，不进隐私页）；2026-10-03 主模型补登第五、六份：Companion TCP 的 NWConnection 三点归 cross-device，Keychain 适配器的 LAContext/SecItem 四点归 pair-verify-identity（都仍是候选，未接生产来源）",
  "scanner_pattern": "AXUIElementCopyAttributeValue|CGEvent\\.tapCreate|SCShareableContent|SCScreenshotManager|SCStream\\b|AVCaptureDevice|AVCaptureSession|NSAppleScript|osascript|IOServiceMatching|CGSessionCopyCurrentDictionary|bezelPath|\\b(?:SLS|CGS)[A-Z][A-Za-z0-9_]*|URLSession|NWConnection|NWListener|SecItem(?:Add|CopyMatching|Update|Delete)|\\bMT(?:Device|Register|Unregister)[A-Za-z0-9_]+|\\bIOHID[A-Za-z0-9_]+|AVAudioEngine|SFSpeechRecognizer|\\bVNDetect[A-Za-z0-9_]+|SMAppService|UserDefaults|RecoveryJournal|kAudioHardwarePropertyProcessObjectList|\\bSecureEnclave\\b|\\bLAContext\\b|SecAccessControlCreateWithFlags|\\bbiometryState\\b|evaluatedPolicyDomainState|stateHash",
  "signals": [
   {
@@ -3806,6 +3806,55 @@
    "symbol": "UserDefaults",
    "source": "static func set(tuckChat: Bool) { UserDefaults.standard.set(tuckChat, forKey: tuckChatKey) }",
    "signal": "settings"
+  },
+  {
+   "path": "prototype/Support/WS2CompanionTCPTransport.swift",
+   "line": 0,
+   "symbol": "NWConnection",
+   "source": "private let connection: NWConnection",
+   "signal": "cross-device"
+  },
+  {
+   "path": "prototype/Support/WS2CompanionTCPTransport.swift",
+   "line": 0,
+   "symbol": "NWConnection",
+   "source": "init(connection: NWConnection, clock: @escaping () -> Double, isCurrent: @escaping () -> Bool) {",
+   "signal": "cross-device"
+  },
+  {
+   "path": "prototype/Support/WS2CompanionTCPTransport.swift",
+   "line": 0,
+   "symbol": "NWConnection",
+   "source": "// NWConnection is explicitly started on .main below; do not change its queue independently.",
+   "signal": "cross-device"
+  },
+  {
+   "path": "prototype/Support/WS2KeychainPeerStorage.swift",
+   "line": 0,
+   "symbol": "LAContext",
+   "source": "let context = LAContext(); context.interactionNotAllowed = true",
+   "signal": "pair-verify-identity"
+  },
+  {
+   "path": "prototype/Support/WS2KeychainPeerStorage.swift",
+   "line": 0,
+   "symbol": "SecItemCopyMatching",
+   "source": "let status = SecItemCopyMatching(q as CFDictionary, &result)",
+   "signal": "pair-verify-identity"
+  },
+  {
+   "path": "prototype/Support/WS2KeychainPeerStorage.swift",
+   "line": 0,
+   "symbol": "SecItemAdd",
+   "source": "status = SecItemAdd(q as CFDictionary, nil)",
+   "signal": "pair-verify-identity"
+  },
+  {
+   "path": "prototype/Support/WS2KeychainPeerStorage.swift",
+   "line": 0,
+   "symbol": "SecItemUpdate",
+   "source": "status = SecItemUpdate(query as CFDictionary, [kSecValueData as String: bytes] as CFDictionary)",
+   "signal": "pair-verify-identity"
   }
  ]
 }

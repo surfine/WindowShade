@@ -3,7 +3,15 @@ import Cocoa
 @preconcurrency import GameController
 
 @MainActor final class WS2GameControllerBridge {
-    struct Environment { let unlocked: Bool; let sinkReady: Bool; let gameOrUnknownInFront: Bool; let domain: WS2DeviceInputGate.Domain }
+    struct Environment {
+        let unlocked: Bool; let sinkReady: Bool; let gameOrUnknownInFront: Bool
+        let domain: WS2DeviceInputGate.Domain; let motionReady: Bool
+        init(unlocked: Bool, sinkReady: Bool, gameOrUnknownInFront: Bool,
+             domain: WS2DeviceInputGate.Domain, motionReady: Bool = false) {
+            self.unlocked = unlocked; self.sinkReady = sinkReady; self.gameOrUnknownInFront = gameOrUnknownInFront
+            self.domain = domain; self.motionReady = motionReady
+        }
+    }
     struct Device { let attachment: UUID; let label: String; let enabled: Bool }
     enum Input {
         case button(attachment: UUID, name: String, outcome: WS2DeviceInputGate.Outcome)
@@ -119,15 +127,15 @@ import Cocoa
         let right=GamepadMapping.Vector(x:Double(pad.rightThumbstick.xAxis.value),y:Double(pad.rightThumbstick.yAxis.value))
         let neutral=GamepadMapping.axis(left) == .zero && GamepadMapping.axis(right) == .zero
         if neutral { e.neutralSticks=true }
-        _ = e.mapping.configure(enabled:env.domain == .desktop && e.neutralSticks,gameInFront:false)
-        guard env.domain == .desktop, e.neutralSticks, !neutral else {
+        _ = e.mapping.configure(enabled:env.motionReady && env.domain == .desktop && e.neutralSticks,gameInFront:false)
+        guard env.motionReady, env.domain == .desktop, e.neutralSticks, !neutral else {
             e.movement?.cancel();e.movement=nil;_ = e.mapping.disconnect();return
         }
         if e.movement == nil { e.movement=Task { [weak self,weak e] in
             while !Task.isCancelled {
                 guard let self,let e,e.gate.enabled,let pad=e.controller.extendedGamepad else{return}
                 let current=self.environment()
-                guard current.unlocked,current.sinkReady,!current.gameOrUnknownInFront,current.domain == .desktop else {
+                guard current.unlocked,current.sinkReady,!current.gameOrUnknownInFront,current.domain == .desktop,current.motionReady else {
                     self.suspend(e);self.publish();return
                 }
                 let l=GamepadMapping.Vector(x:Double(pad.leftThumbstick.xAxis.value),y:Double(pad.leftThumbstick.yAxis.value))
