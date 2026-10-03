@@ -892,6 +892,7 @@ static func noticeTone(_ message: String) -> NotchPanel.Tone {
             recorderRow(.smaller, subtitle: "四边各往里 30 点"),
             recorderRow(.undoPlacement, subtitle: "回到排之前的位置和大小"),
             recorderRow(.previousDisplay, subtitle: "和“移到另一块屏幕”反着转"),
+            recorderRow(.pomodoro, subtitle: "开始或暂停；默认不占快捷键"),
         ])
         stack.addArrangedSubview(makePrefGroupLabel("更多排法"))
         stack.addArrangedSubview(more)

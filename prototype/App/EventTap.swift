@@ -187,6 +187,10 @@ extension AppDelegate {
             MainActor.assumeIsolated { _ = gestures.moveToNextDisplay(backward: true) }
             return
         }
+        if id == GlobalShortcut.pomodoro.hotKeyID {
+            MainActor.assumeIsolated { ws2Runtime.toggleFocus() }
+            return
+        }
         if let action = GlobalShortcut.allCases.first(where: { $0.hotKeyID == id })?.placement {
             MainActor.assumeIsolated { gestures.keyPlace(action) }
             return
