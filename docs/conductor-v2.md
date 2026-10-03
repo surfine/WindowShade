@@ -106,6 +106,10 @@
 | E4 | 同一台 iPhone 开着遥控器时，连续互通麦克风还能录吗？锁屏、解锁时呢？ | 用 Mac 麦克风或键盘听写 |
 | E5 | 触控区坐标范围、y 方向、多指、边缘 | 按实测改归一化 |
 
+## 看：刘海里的编程会话
+
+坐在 Mac 前不用遥控器时，刘海也能看会话在跑、等你、完成，能批准，点一下就到那扇终端（吸收 Open Island，见 [agents-in-notch.md](agents-in-notch.md)）。指挥模式“选会话”的列表就是这些会话。
+
 ## 结构
 
 > 2026-10-03 补：协议层优先用 Swift，零件取自 itsytv-core（MIT），atv-core 只当参考；实体 Siri 遥控器是第二个输入来源（触控面经 MultitouchSupport、麦克风在 `0xFA`），可能先于 iPhone 那条路跑通。见 [input-devices.md](input-devices.md)。

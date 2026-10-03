@@ -1,6 +1,7 @@
 # 项目约定
 
 **接手前先读 [`docs/blueprint.md`](docs/blueprint.md)**：WindowShade 的总图、刘海仲裁顺序、做的顺序和十二条硬要求。
+交给 DeepSeek 时，从 [`docs/handoff/START-HERE-deepseek.md`](docs/handoff/START-HERE-deepseek.md) 开始。
 
 ## 文案（产品与官网共用）
 
