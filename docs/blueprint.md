@@ -114,6 +114,16 @@
 - **仍缺**：Touch ID 允许路径、恢复旧 thread 的项目关联、诊断开关与设置页、设备桥、窗口真机时序、
   能耗与发布。第六份逐项清单在 `docs/handoff/chatgpt-review-2/part6/REMAINING.md`。
 
+#### 2026-10-03 深夜（第七份接入后）
+
+- **本地只读助手流程有生产调用者了**：唯一 LaunchController + `WS2OwnedSessionView` 进同一刘海宿主，
+  独立 HOME/CODEX_HOME 与 config.toml，进程通道换成自有原生监督端口（posix_spawn + waitid）。
+- **真实 CLI 走到账号边界**：版本 → 独立配置 → `config/read` 投影 → 账号 → 5 个真实模型；
+  隔离 profile 未登录，真实查询要用户先登录（本轮没动他的账号状态）。
+- **真机修掉 6 处**（见 `part7/MAC-EVIDENCE.md`），其中「空进程组 kill 回 EPERM」原本让版本预检永远等不到回收。
+- **仍缺**：登录后的查询、原生界面实测、脱离组子孙全树安全、窗口效果真机时序、配对/设备/能耗/影片与发布；
+  第七份的 `COMPLETION-CONTRACT.md` A/B/C 没有被改写。
+
 ## 硬要求
 
 做不到就停下来写明卡在哪，不要换一个更容易的东西交差。

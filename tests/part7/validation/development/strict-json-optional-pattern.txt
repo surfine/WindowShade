@@ -1,0 +1,1 @@
+Initial typecheck failed: expression pattern ClosedRange<Int> cannot match UInt8? at WS2StrictJSON.swift:48. Corrected by unwrapping the byte before the grammar switch. This is a retained development failure, not a final result.

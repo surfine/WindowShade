@@ -1,0 +1,66 @@
+[
+  {
+    "argv": [
+      "cc",
+      "-std=c11",
+      "-O2",
+      "-Wall",
+      "-Wextra",
+      "-Werror",
+      "-c",
+      "/mnt/data/WindowShade2-round2-handoff-v7/candidate-repo/prototype/Native/WS2Child.c",
+      "-o",
+      "/tmp/ws2-build-88v9rc1a/child.o"
+    ],
+    "exit_code": 0,
+    "elapsed_seconds": 0.11742164099996444,
+    "stdout": "",
+    "stderr": ""
+  },
+  {
+    "argv": [
+      "swiftc",
+      "-swift-version",
+      "6",
+      "-strict-concurrency=complete",
+      "-warnings-as-errors",
+      "-I",
+      "/mnt/data/WindowShade2-round2-handoff-v7/candidate-repo/prototype/Native",
+      "/tmp/ws2-build-88v9rc1a/child.o",
+      "/mnt/data/WindowShade2-round2-handoff-v7/candidate-repo/prototype/Core/Contracts.swift",
+      "/mnt/data/WindowShade2-round2-handoff-v7/candidate-repo/prototype/Core/WS2StrictJSON.swift",
+      "/mnt/data/WindowShade2-round2-handoff-v7/candidate-repo/prototype/Core/CodexWire.swift",
+      "/mnt/data/WindowShade2-round2-handoff-v7/candidate-repo/prototype/Core/WS2OwnedProtocolHost.swift",
+      "/mnt/data/WindowShade2-round2-handoff-v7/candidate-repo/prototype/Core/WS2BoundedOutbox.swift",
+      "/mnt/data/WindowShade2-round2-handoff-v7/candidate-repo/prototype/Core/WS2DiagnosticTail.swift",
+      "/mnt/data/WindowShade2-round2-handoff-v7/candidate-repo/prototype/Core/WS2OwnedScope.swift",
+      "/mnt/data/WindowShade2-round2-handoff-v7/candidate-repo/prototype/Core/AgentSessions.swift",
+      "/mnt/data/WindowShade2-round2-handoff-v7/candidate-repo/prototype/Support/WS2ProjectDirectory.swift",
+      "/mnt/data/WindowShade2-round2-handoff-v7/candidate-repo/prototype/Support/WS2LocalLaunchProfile.swift",
+      "/mnt/data/WindowShade2-round2-handoff-v7/candidate-repo/prototype/Support/WS2VersionProbe.swift",
+      "/mnt/data/WindowShade2-round2-handoff-v7/candidate-repo/prototype/Support/WS2DuplexProcess.swift",
+      "/mnt/data/WindowShade2-round2-handoff-v7/candidate-repo/prototype/App/WS2OwnedCodexSession.swift",
+      "/mnt/data/WindowShade2-round2-handoff-v7/candidate-repo/prototype/App/WS2OwnedLaunchController.swift",
+      "/mnt/data/WindowShade2-round2-part7/tests/TestSupport.swift",
+      "/mnt/data/WindowShade2-round2-part7/tests/NativeTests.swift",
+      "-o",
+      "/tmp/ws2-build-88v9rc1a/suite"
+    ],
+    "exit_code": 0,
+    "elapsed_seconds": 7.128568485999949,
+    "stdout": "",
+    "stderr": ""
+  },
+  {
+    "argv": [
+      "/tmp/ws2-build-88v9rc1a/suite",
+      "/mnt/data/WindowShade2-round2-part7/fixtures/native-child.py",
+      "/opt/pyvenv/bin/python3",
+      "/mnt/data/WindowShade2-round2-part7/validation/native-results.json"
+    ],
+    "exit_code": -4,
+    "elapsed_seconds": 1.945104653000044,
+    "stdout": "",
+    "stderr": "DIAG exited=false termination=nil stopped=false supervision=nil lines=[] elapsed=0.7050373179999951\nsuite/TestSupport.swift:11: Fatal error: FAIL NATIVE02 inherited descriptor descendant cannot delay direct exit: direct exit before descendant's .9 second marker\n\n*** Signal 4: Backtracing from 0x7f944b99a788... done ***\n\n*** Program crashed: Illegal instruction at 0x00007f944b99a788 ***\n\nPlatform: x86_64 Linux (Debian GNU/Linux 13 (trixie))\n\nThread 0 \"suite\":\n\n  0      0x00007f944a29d687 <unknown> in libc.so.6\n  1 [ra] 0x00007f944b401a39 _dispatch_sig_thread + 8 in libdispatch.so\n...\n\nThread 1:\n\n  0      0x00007f944a2a89ee <unknown> in libc.so.6\n  1 [ra] 0x00007f944b400e02 _dispatch_mgr_invoke + 129 in libdispatch.so\n  2 [ra] 0x00007f944b400d6d _dispatch_mgr_thread + 108 in libdispatch.so\n  3 [ra] 0x00007f944b403ee5 _dispatch_worker_thread + 436 in libdispatch.so\n  4 [ra] 0x00007f944a2a0b7b <unknown> in libc.so.6\n...\n\nThread 2:\n\n  0  0x00007f944a2a89ee <unknown> in libc.so.6\n...\n\nThread 3 crashed:\n\n  0                  0x00007f944b99a788 _assertionFailure(_:_:file:line:flags:) + 264 in libswiftCore.so\n  1 [ra]             0x0000560127d1c870 TestLog.check(_:_:) + 799 in suite\n  2 [ra]             0x0000560127d1f808 static NativeTests.main() + 2055 in suite\n  3 [async]          0x0000560127d22be0 static NativeTests.$main() in suite\n  4 [async] [system] 0x0000560127d22da0 async_MainTQ0_ in suite\n  5 [async] [thunk]  0x0000560127d22e60 thunk for @escaping @convention(thin) @async () -> () in suite\n  6 [async] [thunk]  0x0000560127d22f60 partial apply for thunk for @escaping @convention(thin) @async () -> () in suite\n  7 [async] [system] 0x00007f944b6885e0 completeTaskWithClosure(swift::AsyncContext*, swift::SwiftError*) in libswift_Concurrency.so\n...\n\nThread 4:\n\n  0  0x00007f944a2a89ee <unknown> in libc.so.6\n...\n\nThread 5:\n\n  0  0x00007f944a2a89ee <unknown> in libc.so.6\n...\n\n\nRegisters:\n\nrax 0x0000000200000003  8589934595\nrdx 0x0000000000000002  2\nrcx 0xfffffffe00000000  18446744065119617024\nrbx 0x0000000000000003  3\nrsi 0x00007f943c006fd8  03 00 00 00 00 00 00 00 a0 00 00 00 00 00 00 80  ········ ·······\nrdi 0x0000000000000001  1\nrbp 0x00007f9446366750  80 68 36 46 94 7f 00 00 70 c8 d1 27 01 56 00 00  ·h6F····pÈÑ'·V··\nrsp 0x00007f94463666e0  00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00  ················\n r8 0x0000000000000090  144\n r9 0x0000000000000078  120\nr10 0x0000000000000000  0\nr11 0x0000000000000000  0\nr12 0x00007f9446367688  00 00 00 00 00 00 00 00 a0 8d e9 3e 01 56 00 00  ········ ·é>·V··\nr13 0x00007f9446366828  78 00 00 00 00 00 00 f0 d0 6f 00 3c 94 7f 00 00  x······ðÐo·<····\nr14 0x000056013ee99000  b0 8f e9 3e 01 56 00 00 e0 2b d2 27 01 56 00 00  °·é>·V··à+Ò'·V··\nr15 0x000056013ee98da0  20 b9 6a 4b 94 7f 00 00 03 00 00 00 00 00 00 00   ¹jK············\nrip 0x00007f944b99a788  0f 0b 48 8d 35 7f 0c fb ff 48 8d 55 a0 45 31 e4  ··H·5··ûÿH·U E1ä\n\nrflags 0x0000000000010202  \n\ncs 0x0033  fs 0x0000  gs 0x0000\n\n\nImages (15 omitted):\n\n0x0000560127c53000–0x0000560127d232a1 b4c01e970b4ad5061eeaa325941b029fc2a731c0 suite                   /tmp/ws2-build-88v9rc1a/suite\n0x00007f944a20e000–0x00007f944a3988fd c495b62edadd6c356265942ec1282d98058a7b41 libc.so.6               /usr/lib/x86_64-linux-gnu/libc.so.6\n0x00007f944b3cf000–0x00007f944b417240 c6fa65ca766b6c0742ff462bbd97f5f9937651df libdispatch.so          /usr/local/swift/usr/lib/swift/linux/libdispatch.so\n0x00007f944b615000–0x00007f944b6a5080 493a5257250e4963477b8a6d418481e8db54e2c4 libswift_Concurrency.so /usr/local/swift/usr/lib/swift/linux/libswift_Concurrency.so\n0x00007f944b6b8000–0x00007f944bc691e8 fd1782c519b557fc55329e9a457a811e94945645 libswiftCore.so         /usr/local/swift/usr/lib/swift/linux/libswiftCore.so\n\nBacktrace took 0.01s\n\n"
+  }
+]

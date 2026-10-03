@@ -1,0 +1,15 @@
+test_baseline_symlink (__main__.Tests.test_baseline_symlink) ... ok
+test_drift (__main__.Tests.test_drift) ... ok
+test_duplicate_manifest_path (__main__.Tests.test_duplicate_manifest_path) ... ok
+test_exact_output (__main__.Tests.test_exact_output) ... ok
+test_existing_output (__main__.Tests.test_existing_output) ... ok
+test_missing_overlay_entry (__main__.Tests.test_missing_overlay_entry) ... ok
+test_output_inside_base (__main__.Tests.test_output_inside_base) ... ok
+test_overlay_drift (__main__.Tests.test_overlay_drift) ... ok
+test_overlay_symlink (__main__.Tests.test_overlay_symlink) ... ok
+test_traversal (__main__.Tests.test_traversal) ... ok
+
+----------------------------------------------------------------------
+Ran 10 tests in 0.017s
+
+OK

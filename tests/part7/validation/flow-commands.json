@@ -1,0 +1,66 @@
+[
+  {
+    "argv": [
+      "cc",
+      "-std=c11",
+      "-O2",
+      "-Wall",
+      "-Wextra",
+      "-Werror",
+      "-c",
+      "/Users/aaron/Documents/WindowShade/prototype/Native/WS2Child.c",
+      "-o",
+      "/var/folders/l6/4_mrt4s51rv4sjb29v6x9n000000gn/T/ws2-build-2s2fuwsw/child.o"
+    ],
+    "exit_code": 0,
+    "elapsed_seconds": 0.46751025001867674,
+    "stdout": "",
+    "stderr": ""
+  },
+  {
+    "argv": [
+      "swiftc",
+      "-swift-version",
+      "6",
+      "-strict-concurrency=complete",
+      "-warnings-as-errors",
+      "-I",
+      "/Users/aaron/Documents/WindowShade/prototype/Native",
+      "/var/folders/l6/4_mrt4s51rv4sjb29v6x9n000000gn/T/ws2-build-2s2fuwsw/child.o",
+      "/Users/aaron/Documents/WindowShade/prototype/Core/Contracts.swift",
+      "/Users/aaron/Documents/WindowShade/prototype/Core/WS2QuitBarrier.swift",
+      "/Users/aaron/Documents/WindowShade/prototype/Core/WS2StrictJSON.swift",
+      "/Users/aaron/Documents/WindowShade/prototype/Core/CodexWire.swift",
+      "/Users/aaron/Documents/WindowShade/prototype/Core/WS2OwnedProtocolHost.swift",
+      "/Users/aaron/Documents/WindowShade/prototype/Core/WS2BoundedOutbox.swift",
+      "/Users/aaron/Documents/WindowShade/prototype/Core/WS2DiagnosticTail.swift",
+      "/Users/aaron/Documents/WindowShade/prototype/Core/WS2OwnedScope.swift",
+      "/Users/aaron/Documents/WindowShade/prototype/Core/AgentSessions.swift",
+      "/Users/aaron/Documents/WindowShade/prototype/Support/WS2ProjectDirectory.swift",
+      "/Users/aaron/Documents/WindowShade/prototype/Support/WS2LocalLaunchProfile.swift",
+      "/Users/aaron/Documents/WindowShade/prototype/Support/WS2VersionProbe.swift",
+      "/Users/aaron/Documents/WindowShade/prototype/Support/WS2DuplexProcess.swift",
+      "/Users/aaron/Documents/WindowShade/prototype/App/WS2OwnedCodexSession.swift",
+      "/Users/aaron/Documents/WindowShade/prototype/App/WS2OwnedLaunchController.swift",
+      "/Users/aaron/Documents/WindowShade/tests/part7/tests/TestSupport.swift",
+      "/Users/aaron/Documents/WindowShade/tests/part7/tests/FlowTests.swift",
+      "-o",
+      "/var/folders/l6/4_mrt4s51rv4sjb29v6x9n000000gn/T/ws2-build-2s2fuwsw/suite"
+    ],
+    "exit_code": 0,
+    "elapsed_seconds": 16.558473708020756,
+    "stdout": "",
+    "stderr": ""
+  },
+  {
+    "argv": [
+      "/var/folders/l6/4_mrt4s51rv4sjb29v6x9n000000gn/T/ws2-build-2s2fuwsw/suite",
+      "/var/folders/l6/4_mrt4s51rv4sjb29v6x9n000000gn/T/ws2-build-2s2fuwsw/fake-codex.py",
+      "/Users/aaron/Documents/WindowShade/tests/part7/validation/flow-results.json"
+    ],
+    "exit_code": 0,
+    "elapsed_seconds": 25.52074870900833,
+    "stdout": "PASS FLOW01 local launch and actual stream completion [21]\nPASS FLOW02 resume only the locally associated project [8]\nPASS FLOW03 different project cannot reuse old thread [6]\nPASS FLOW04 actual login response and exact login ID [10]\nPASS FLOW05 interrupt RPC is not final completion [12]\nPASS FLOW06 elevation always declined by local entry [9]\nPASS FLOW07 failed turn is not successful completion [7]\nPASS FLOW08 mismatched version [7]\nPASS FLOW09 effective config mismatch [7]\nPASS FLOW10 duplicate raw JSON [7]\nPASS FLOW11 reject arbitrary auth URL [7]\nPASS FLOW12 unrelated login completion cannot authenticate [6]\nPASS FLOW13 project replacement invalidates submission [6]\nPASS FLOW14 actual lock invalidation and no automatic restart [6]\nPASS FLOW15 diagnostics are opt-in and clearable [7]\nPASS FLOW16 version-probe cancellation still awaits reaping [6]\nPASS FLOW17 version timeout does not invent a reap receipt [5]\nPASS FLOW18 login cancellation requires fresh account verification [8]\nTOTAL 18 scenarios, 145 assertions\n",
+    "stderr": ""
+  }
+]

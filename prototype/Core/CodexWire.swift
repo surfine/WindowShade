@@ -63,10 +63,11 @@ struct CodexWire: Sendable {
         guard data.count <= Self.maximumFrame, outbound.count < Self.maximumPending else { throw Failure.capacity }
         data.append(10); outbound.append(data)
     }
-    private mutating func request(_ method: String, _ params: [String:WireJSON], now: WS2.Instant) throws -> WS2.RequestID {
+    private mutating func request(_ method: String, _ params: [String:WireJSON]?, now: WS2.Instant) throws -> WS2.RequestID {
         guard state != .closed, pending.count < Self.maximumPending, serial < .max else { throw Failure.capacity }
         serial += 1; let id = WS2.RequestID.integer(serial)
-        try send(.object(["id":.integer(serial),"method":.string(method),"params":.object(params)]))
+        var envelope:[String:WireJSON] = ["id":.integer(serial),"method":.string(method)]
+        if let params { envelope["params"] = .object(params) };try send(.object(envelope))
         pending[id] = Pending(method:method,deadline:now.adding(30 * WS2.Duration.second))
         return id
     }
@@ -111,6 +112,26 @@ struct CodexWire: Sendable {
         _ = try request("turn/interrupt",["threadId":.string(threadID),"turnId":.string(turnID)],now:now)
         // A successful interrupt response is not a turn/completed event.
     }
+    mutating func readConfig(cwd:String,now:WS2.Instant) throws -> WS2.RequestID {
+        guard state == .ready, cwd.hasPrefix("/"), !cwd.utf8.contains(0), time.accept(now) else { throw Failure.notReady }
+        return try request("config/read",["cwd":.string(cwd),"includeLayers":.bool(true)],now:now)
+    }
+    mutating func readAccount(now: WS2.Instant) throws -> WS2.RequestID {
+        guard state == .ready, time.accept(now) else { throw Failure.notReady }
+        return try request("account/read",["refreshToken":.bool(false)],now:now)
+    }
+    mutating func beginBrowserLogin(now: WS2.Instant) throws -> WS2.RequestID {
+        guard state == .ready, turnID == nil, time.accept(now) else { throw Failure.notReady }
+        return try request("account/login/start",["type":.string("chatgpt")],now:now)
+    }
+    mutating func cancelLogin(id: String, now: WS2.Instant) throws -> WS2.RequestID {
+        guard state == .ready, !id.isEmpty, id.utf8.count <= 512, time.accept(now) else { throw Failure.notReady }
+        return try request("account/login/cancel",["loginId":.string(id)],now:now)
+    }
+    mutating func logout(now: WS2.Instant) throws -> WS2.RequestID {
+        guard state == .ready, turnID == nil, time.accept(now) else { throw Failure.notReady }
+        return try request("account/logout",nil,now:now)
+    }
     mutating func ingest(_ chunk: Data, now: WS2.Instant) throws -> [Event] {
         guard state != .closed, time.accept(now) else { throw Failure.closed }
         guard chunk.count <= 4 * Self.maximumFrame else { close(); throw Failure.oversized }
@@ -120,6 +141,7 @@ struct CodexWire: Sendable {
                 if byte == 10 {
                     if buffer.last == 13 { buffer.removeLast() }
                     guard !buffer.isEmpty else { throw Failure.malformed }
+                    try WS2StrictJSON.validate(buffer,maximumBytes:Self.maximumFrame)
                     let value = try JSONDecoder().decode(WireJSON.self,from:buffer)
                     buffer.removeAll(keepingCapacity:true)
                     result += try receive(value,now:now)
@@ -133,11 +155,25 @@ struct CodexWire: Sendable {
     }
     private mutating func receive(_ v: WireJSON, now: WS2.Instant) throws -> [Event] {
         guard case .object = v else { throw Failure.malformed }
+        if let version=v["jsonrpc"],version != .string("2.0") { throw Failure.malformed }
+        if let raw=v["id"] {
+            guard let id=raw.requestID else { throw Failure.malformed }
+            if case .string(let text)=id, text.isEmpty || text.utf8.count>512 { throw Failure.malformed }
+        }
+        if v["method"] != nil {
+            guard let method=v["method"]?.text,!method.isEmpty,method.utf8.count<=256,
+                  v["result"]==nil,v["error"]==nil else { throw Failure.malformed }
+            if let params=v["params"],case .object = params {} else if v["params"] != nil { throw Failure.malformed }
+        } else {
+            guard (v["result"] != nil) != (v["error"] != nil) else { throw Failure.malformed }
+        }
         if let method = v["method"]?.text {
+            // 真机 0.153.0 会在初始化阶段就发状态通知（remoteControl/status/changed、account/updated…），
+            // 它们不建线程也不授权。通知在任何「未关闭且不是全新」的状态都收；带 id 的审批请求仍必须 ready。
+            let startupNotice = v["id"] == nil
+            guard state == .ready || (state != .fresh && state != .closed && startupNotice) else { throw Failure.notReady }
             let params = v["params"] ?? .object([:])
             if let rawID = v["id"] {
-                // 审批请求必须已经 ready：它要带 thread/turn 才能绑定。
-                guard state == .ready else { throw Failure.notReady }
                 guard let id = rawID.requestID else { throw Failure.malformed }
                 let supported = ["item/commandExecution/requestApproval", "item/fileChange/requestApproval"]
                 guard supported.contains(method), approvals.count < 128, approvals[id] == nil,

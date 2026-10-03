@@ -7,6 +7,10 @@ case "$TEST_NAME" in
   *) echo "Unknown AppKit test: $TEST_NAME" >&2; exit 2 ;;
 esac
 mkdir -p .build/appkit-tests
+# 第七份起进程通道走原生 C 监督端口：先编成对象，Swift 侧才能 import WS2ProcessNative。
+NATIVE_DIR=".build/native"
+mkdir -p "$NATIVE_DIR"
+cc -std=c11 -O2 -Wall -Wextra -Werror -c prototype/Native/WS2Child.c -o "$NATIVE_DIR/WS2Child.o"
 # Compile the production AppKit views with a separate test entry point.
 WORK="$(mktemp -d "$(pwd)/.build/appkit-tests.XXXXXX")"
 trap 'rm -rf "$WORK"' EXIT
@@ -64,6 +68,7 @@ if [ -f "$(xcrun --show-sdk-path --sdk macosx)/System/Library/Frameworks/AppKit.
   GLASS_DEFINE=(-DWINDOWSHADE_SDK_HAS_GLASS)
 fi
 swiftc -module-cache-path "$(pwd)/.build/module-cache" -whole-module-optimization -target "$(uname -m)-apple-macosx14.0" ${GLASS_DEFINE[@]+"${GLASS_DEFINE[@]}"} \
+  -I prototype/Native "$NATIVE_DIR/WS2Child.o" \
   "${SOURCES[@]}" ${TEST_SOURCE[@]+"${TEST_SOURCE[@]}"} \
   -framework Cocoa -framework Carbon -framework ApplicationServices -framework LocalAuthentication -framework LocalAuthenticationEmbeddedUI \
   -framework ScreenCaptureKit -framework QuartzCore -framework CoreText \

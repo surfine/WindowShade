@@ -1,0 +1,85 @@
+{
+  "version": 1,
+  "scope": "part7 delta, not a replacement for the previous registry",
+  "actual_session_data": "synthetic fixtures only",
+  "signals": [
+    {
+      "id": "P7-project",
+      "source": "WS2ProjectDirectory / local chooser",
+      "purpose": "Bind local project identity and prevent stale context",
+      "trigger": "local selection/start/write checks",
+      "retention": "in-memory identifiers and path, up to 64 associations",
+      "destination": "local UI; selected cwd sent to owned CLI"
+    },
+    {
+      "id": "P7-executable",
+      "source": "local executable metadata and --version stdout",
+      "purpose": "Version admission, not executable authenticity proof",
+      "trigger": "explicit local consent and launch",
+      "retention": "metadata in memory; version output <=8192 bytes then cleared",
+      "destination": "local only"
+    },
+    {
+      "id": "P7-config",
+      "source": "own config.toml and effective config/read",
+      "purpose": "Conservative profile admission",
+      "trigger": "explicit launch and work revalidation",
+      "retention": "own disk config; effective projection in memory",
+      "destination": "own CLI and local controller"
+    },
+    {
+      "id": "P7-account",
+      "source": "account/read and matching login notifications",
+      "purpose": "Know whether this connection may submit",
+      "trigger": "explicit launch/login/cancel/logout",
+      "retention": "current connection boolean and bounded login ID; no email display",
+      "destination": "browser only on explicit HTTPS-allowlisted login response"
+    },
+    {
+      "id": "P7-draft",
+      "source": "local NSTextView text",
+      "purpose": "User-explicit model request",
+      "trigger": "editing; transmission only by send button",
+      "retention": "bounded memory 65536 bytes; clear on lock/disable; CLI may persist its own history",
+      "destination": "selected CLI; model-provider service during actual use"
+    },
+    {
+      "id": "P7-output",
+      "source": "owned child stdout",
+      "purpose": "Display actual current reply and protocol state",
+      "trigger": "explicitly launched session",
+      "retention": "reply tail <=65536 bytes in memory; clear on lock/disable",
+      "destination": "local plain-text view; no automatic export"
+    },
+    {
+      "id": "P7-stderr",
+      "source": "owned child stderr",
+      "purpose": "User-requested diagnosis",
+      "trigger": "per-launch opt-in only",
+      "retention": "<=65536-byte memory tail; no cryptographic erase promise",
+      "destination": "local display only, no automatic model submission"
+    },
+    {
+      "id": "P7-credentials",
+      "source": "CLI file credential storage",
+      "purpose": "Independent login profile",
+      "trigger": "actual future user login, not this test run",
+      "retention": "own CODEX_HOME/auth.json and CLI-owned history, persists across view closure",
+      "destination": "managed by actual CLI; this package never reads token values"
+    },
+    {
+      "id": "P7-process",
+      "source": "waitid/waitpid on own spawned child",
+      "purpose": "Close and reap own process lifecycle",
+      "trigger": "only while user-launched child exists",
+      "retention": "ephemeral native supervision state",
+      "destination": "local only"
+    }
+  ],
+  "not_proven": [
+    "live CLI configuration enforcement",
+    "actual macOS permissions and ACL",
+    "actual account data lifecycle",
+    "energy comparison"
+  ]
+}

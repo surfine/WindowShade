@@ -8,6 +8,7 @@ mkdir -p "$OUT"
 "${SWIFTC:-swiftc}" -swift-version 6 -strict-concurrency=complete -warnings-as-errors -parse-as-library \
   "$ROOT/prototype/Core/Contracts.swift" \
   "$ROOT/prototype/Core/CodexWire.swift" \
+  "$ROOT/prototype/Core/WS2StrictJSON.swift" \
   "$ROOT/prototype/Core/FocusTimer.swift" \
   "$ROOT/prototype/Core/WS2CompanionFrame.swift" \
   "$ROOT/prototype/Core/WS2ApprovalReview.swift" \

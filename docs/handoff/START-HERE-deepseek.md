@@ -124,6 +124,20 @@
 > **首次配对仍未准入**：没做固定向量互测（HAP 变体的补零与 proof 布局要逐字节对 `srp_reference.py`），
 > 也没有实例工厂与原生 Remote 互操作。
 
+> **2026-10-03 深夜：第七份已并入。**它把本地助手流程真正接通（唯一 `WS2OwnedLaunchController`、
+> `WS2OwnedSessionView`、严格 JSON、退出屏障、版本预检、独立 HOME/CODEX_HOME 的启动配置），
+> 进程通道改成自有 posix_spawn + waitid 的原生监督端口（`prototype/Native/WS2Child.c`）。
+> 原件在 [part7/](chatgpt-review-2/part7/)，这台 Mac 上的全部结果写在
+> [part7/MAC-EVIDENCE.md](chatgpt-review-2/part7/MAC-EVIDENCE.md)。
+>
+> 真机跑通：第七份 core 27/51、native 3/14、flow 18/145；旧回归与 PROC04 全过；整 App 类型检查与八套 AppKit 全过；
+> **真实 CLI** 走通版本 → 独立配置 → `config/read` 投影 → 账号边界（隔离 profile 里未登录），
+> 并列出 5 个真实模型。又抓到 6 处只有 Mac 才会暴露的问题（`addchdir_np` 弃用、退出后 `getpgid` ESRCH、
+> 空组 `kill(-pgid)` 回 EPERM 导致永不回收、Swift 6 异步迭代、隔离 PATH 缺 node、
+> 真实 `config/read` 的 hooks 形状），全部按证据修掉。
+>
+> 仍没做：真实登录后的查询、Touch ID 允许路径、原生界面实测、脱离组子孙的全树安全、配对/设备/窗口/能耗/影片与发布。
+
 
 **第一波：纯逻辑。**互不依赖，最安全，可以并行派。
 

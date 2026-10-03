@@ -1,17 +1,22 @@
 import Cocoa
-/// 本轮新增唯一计时宿主。运行时通知不构成系统解锁事实；T3 窗口动作由主模型另行授权。
+/// 单一计时、刘海和 owned 助手运行时。通知不证明系统解锁；T3 仍需真实窗口端口。
 @MainActor final class WS2AppRuntime {
     private weak var owner: AppDelegate?
     let clock = WS2ContinuousClock()
     private(set) var focus: FocusTimerHost!
-    /// 共享岛就是刘海那一套租约；这里只持有它，不另建第二套。
     private(set) var island: NotchLeaseHub!
     private weak var focusCard: FocusTimerCard?
     /// T3 的窗口事务：串行计划 + 真实端口（端口未准入时只计时，不动窗口）。
     private var focusPort: WS2FocusWindowPort!
     private var focusEffects: WS2FocusEffectExecutor!
-    /// owned Codex 的唯一启动闭环：本地选项目、预检可执行文件、按票据启动与停止。
-    private(set) var launch: WS2OwnedLaunchController!
+    private(set) var owned:WS2OwnedLaunchController!
+    private weak var ownedView:WS2OwnedSessionView?
+    private var sleeping=false
+    private var quitBarrier=WS2QuitBarrier()
+    private var quitToken:WS2QuitBarrier.Token?
+    private var quitDeadline:Task<Void,Never>?
+    private var evaluatingQuit=false
+    private var earlyUpdaterReply:Bool?
     private var defaultsObserver: NSObjectProtocol?
     private var lastMenuTitle = ""
     private var lockReasons = Set<String>()
@@ -36,22 +41,31 @@ import Cocoa
         focusEffects = WS2FocusEffectExecutor(port: focusPort)
         // T3：窗口效果先走串行计划；端口未准入时只计时，不移动任何窗口。
         focusWindowEffects = { [weak self] effects in self?.handleFocusEffects(effects) }
-        launch = WS2OwnedLaunchController(owner: owner, clock: clock, island: island,
-            authentication: owner.notch.authentication,
-            environment: {
-                // 明确的 allowlist：只给 CLI 需要的路径与本地配置位置，不传远端载荷或 shell 拼接。
-                // PATH 沿用 App 自己的环境（真机上 codex 是 node 脚本，node 不在 /usr/bin）。
-                var values = ["PATH": ProcessInfo.processInfo.environment["PATH"]
-                    ?? "/usr/bin:/bin:/usr/sbin:/sbin:/opt/homebrew/bin:/usr/local/bin"]
-                if let home = ProcessInfo.processInfo.environment["HOME"] { values["HOME"] = home }
-                if let lang = ProcessInfo.processInfo.environment["LANG"] { values["LANG"] = lang }
-                return values
-            })
+        let storage=FileManager.default.homeDirectoryForCurrentUser
+            .appendingPathComponent("Library/Application Support/WindowShade/OwnedCodex-v1",isDirectory:true)
+        owned=WS2OwnedLaunchController(profileRoot:storage,clock:clock,mayUse:{[weak self] in
+            guard let self else { return false }
+            return !self.sleeping && self.lockReasons.isEmpty && NotchController.isEnabled &&
+                AuthorizationService.shared.lockState() == .unlocked
+        })
+        owned.onChange={ [weak self] in self?.ownedView?.scheduleRender() }
+        owned.onQuiescent={ [weak self] in self?.finishQuit(childrenReady:true) }
+        UpdaterController.shared.terminationResponse={ [weak self] approved in
+            guard let self else { NSApp.reply(toApplicationShouldTerminate:approved);return }
+            if self.evaluatingQuit { self.earlyUpdaterReply=approved;return }
+            if self.quitToken != nil { self.finishQuit(updaterReply:approved) }
+            else { return } // Ignore a late reply after this quit request was cancelled.
+        }
+        owned.onBrowserURL={ [weak self] url in
+            guard let self,!self.sleeping,AuthorizationService.shared.lockState() == .unlocked else { return }
+            // URL is from the exact locally requested login response and has an exact HTTPS host allowlist.
+            NSWorkspace.shared.open(url)
+        }
         focus.onChange = { [weak self] model,now in
             self?.focusCard?.render(model,at:now); self?.publish()
         }
         defaultsObserver = NotificationCenter.default.addObserver(forName:UserDefaults.didChangeNotification,
-            object:nil,queue:.main) { [weak self] _ in MainActor.assumeIsolated { self?.refreshFocusSettings() } }
+            object:nil,queue:.main) { [weak self] _ in MainActor.assumeIsolated { self?.refreshFocusSettings(); self?.owned?.environmentChanged() } }
         owner.notch.activities.ws2FocusAction = { [weak self] action in
             guard let self else { return }
             switch action {
@@ -72,11 +86,8 @@ import Cocoa
                     case .locked: self.setLockReason("session", locked: true)
                     case .unlocked: self.setLockReason("session", locked: false)
                     default:
-                        if case .sleep = event {
-                            // 先撤 owned 会话与它的票据，再撤岛；锁中回调不会再落到新项目上。
-                            self.launch?.invalidate(reason: "sleep")
-                            self.island.invalidate(.sleeping)
-                        }
+                        if case .sleep = event { self.sleeping=true;self.owned.environmentChanged();self.island.invalidate(.sleeping) }
+                        if case .wake = event { self.sleeping=false }
                         self.focus.handle(event)
                     }
                 }
@@ -101,10 +112,43 @@ import Cocoa
         if lockReasons.isEmpty && AuthorizationService.shared.lockState() == .unlocked {
             focus.handle(.unlocked)
         } else {
-            launch?.invalidate(reason: "locked")
+            owned?.environmentChanged()
             island.invalidate(.locked)
             focus.handle(.locked)
         }
+    }
+    func applicationShouldTerminate() -> NSApplication.TerminateReply {
+        if quitToken != nil { return .terminateLater }
+        evaluatingQuit=true;earlyUpdaterReply=nil
+        let updater=UpdaterController.shared.applicationShouldTerminate()
+        evaluatingQuit=false
+        if updater == .terminateCancel || earlyUpdaterReply==false { return .terminateCancel }
+        let updaterReady=updater == .terminateNow || earlyUpdaterReply==true
+        guard owned.isBusy || !updaterReady else { return .terminateNow }
+        guard let token=quitBarrier.begin(updaterReady:updaterReady,childrenReady:!owned.isBusy) else { return .terminateCancel }
+        quitToken=token
+        // Keep the runloop alive for our native reaper and the pre-existing updater gate.
+        owned.stop(reason:"正在结束助手后退出",clearPrivate:true)
+        if quitToken==token { quitDeadline=Task { [weak self] in
+            do { try await Task.sleep(nanoseconds:35_000_000_000) } catch { return }
+            guard let self,self.quitToken==token else { return };self.finishQuit(failed:true)
+        } }
+        finishQuit(childrenReady:!owned.isBusy)
+        return .terminateLater
+    }
+    private func finishQuit(updaterReply:Bool?=nil,childrenReady:Bool=false,failed:Bool=false) {
+        guard let token=quitToken,let answer=quitBarrier.update(token,updaterReply:updaterReply,childrenReady:childrenReady,failed:failed) else { return }
+        quitToken=nil;quitDeadline?.cancel();quitDeadline=nil
+        // NSApplication must first receive terminateLater from the delegate.
+        DispatchQueue.main.async { NSApp.reply(toApplicationShouldTerminate:answer) }
+    }
+    func openOwned() {
+        guard NotchController.isEnabled,!sleeping,lockReasons.isEmpty,AuthorizationService.shared.lockState() == .unlocked else { return }
+        let view=WS2OwnedSessionView(controller:owned)
+        guard island.show(view,ownerID:"ownedCodex",onDismiss:{[weak self,weak view] _ in
+            if self?.ownedView === view { self?.ownedView=nil }
+        }) else { return }
+        ownedView=view;view.render()
     }
     var menuTitle: String { "番茄钟 · " + focus.model.compactText(at:clock.now()) }
     func open() {
@@ -132,13 +176,6 @@ import Cocoa
         focus.handle(focus.model.phase == .idle ? .start : focus.model.isPaused ? .resume : .pause)
         if focusCard == nil { focus.presentation = .compact }
     }
-    /// 休息时点一下刘海：把这一轮收起来的窗口放回来，休息照走。返回是否真的做了这件事。
-    @discardableResult
-    func restoreFocusWindowsForUser() -> Bool {
-        guard focus.model.phase == .rest else { return false }
-        focus.handle(.dismissRestWindows)
-        return true
-    }
     @discardableResult func showSessions(_ sessions:[AgentSessions.Session], open:@escaping(WS2.Context)->Void,
                                          stop:@escaping(WS2.Context)->Void) -> Bool {
         let view = WS2AgentSessionView(frame:.zero); view.render(sessions); view.open = open; view.stop = stop
@@ -150,12 +187,34 @@ import Cocoa
         view.onAction = action
         return island.show(view,ownerID:"conductor")
     }
-    /// 用户从设置或菜单打开会话列表：显示既有 store，不反向启动或停止进程。
-    @discardableResult func showOwnedSessions() -> Bool {
-        showSessions(launch.storeSnapshot(), open: { _ in }, stop: { _ in })
+    private func publish() {
+        guard let owner else { return }
+        let m = focus.model,now = clock.now()
+        owner.notch.activities.ws2PublishFocus(title:m.phase == .idle ? nil : (m.phase == .focus ? "专注" : "休息")+" · "+m.compactText(at:now),
+                                              subtitle:m.isPaused ? "已暂停" : "今天完成 \(m.completedToday) 个",paused:m.isPaused,progress:m.phase == .idle ? nil : m.progress(at:now))
+        let title = menuTitle + (m.isPaused ? ":paused" : "") + ":" + m.phase.rawValue
+        if title != lastMenuTitle { lastMenuTitle = title; owner.rebuildMenu() }
+    }
+    func stop() {
+        owned?.stop(reason:"应用正在退出",clearPrivate:true)
+        owned?.onChange=nil;owned?.onBrowserURL=nil
+        island?.stop(); focus?.stop()
+        if let defaultsObserver { NotificationCenter.default.removeObserver(defaultsObserver) }; defaultsObserver = nil
+        workspaceObservers.forEach { NSWorkspace.shared.notificationCenter.removeObserver($0) }
+        distributedObservers.forEach { DistributedNotificationCenter.default().removeObserver($0) }
+        workspaceObservers=[];distributedObservers=[]
+        owner?.notch.activities.ws2FocusAction=nil; focusWindowEffects=nil
     }
 
     /// 番茄钟的窗口效果：只经由串行计划；端口没准入就不动窗口。
+    /// 休息时点一下刘海：把这一轮收起来的窗口放回来，休息照走。返回是否真的做了这件事。
+    @discardableResult
+    func restoreFocusWindowsForUser() -> Bool {
+        guard focus.model.phase == .rest else { return false }
+        focus.handle(.dismissRestWindows)
+        return true
+    }
+
     private func handleFocusEffects(_ effects: [FocusTimer.Effect]) {
         for effect in effects {
             switch effect {
@@ -194,27 +253,8 @@ import Cocoa
         }
         return Array(windows.prefix(512))
     }
-    private func publish() {
-        guard let owner else { return }
-        let m = focus.model,now = clock.now()
-        // 刷新频率跟着真实可见性走：卡片展开→expanded，紧凑条目真在屏幕上→compact，否则 hidden。
-        let visible = owner.notch.activities.store.visible.contains { $0.kind == .focus }
-        focus.presentation = focusCard != nil ? .expanded : (visible ? .compact : .hidden)
-        owner.notch.activities.ws2PublishFocus(title:m.phase == .idle ? nil : (m.phase == .focus ? "专注" : "休息")+" · "+m.compactText(at:now),
-                                              subtitle:m.isPaused ? "已暂停" : "今天完成 \(m.completedToday) 个",paused:m.isPaused,progress:m.phase == .idle ? nil : m.progress(at:now))
-        let title = menuTitle + (m.isPaused ? ":paused" : "") + ":" + m.phase.rawValue
-        if title != lastMenuTitle { lastMenuTitle = title; owner.rebuildMenu() }
-    }
-    func stop() {
-        launch?.stop()
-        island?.stop(); focus?.stop()
-        if let defaultsObserver { NotificationCenter.default.removeObserver(defaultsObserver) }; defaultsObserver = nil
-        workspaceObservers.forEach { NSWorkspace.shared.notificationCenter.removeObserver($0) }
-        distributedObservers.forEach { DistributedNotificationCenter.default().removeObserver($0) }
-        workspaceObservers=[];distributedObservers=[]
-        owner?.notch.activities.ws2FocusAction=nil; focusWindowEffects=nil
-    }
 }
 extension AppDelegate {
+    @objc func ws2OpenOwned() { MainActor.assumeIsolated { ws2Runtime.openOwned() } }
     @objc func ws2OpenFocus() { MainActor.assumeIsolated { ws2Runtime.open() } }
 }

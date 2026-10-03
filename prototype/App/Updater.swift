@@ -62,6 +62,8 @@ final class UpdaterController: NSObject, NSMenuItemValidation {
 
     /// 协调者接到欢迎窗口的授权页，换成“再打开一次这两项”那组文案。
     var onPermissionsLostAfterUpdate: (() -> Void)?
+    /// 第七份：退出放行的联合门槛。设上以后由调用方统一回一次 reply，更新器不再自己回。
+    var terminationResponse: ((Bool) -> Void)?
     /// 菜单文字变了（有新版本 / 回到平时）。状态栏菜单每次打开都重建的话可以不接。
     var onMenuTitleChange: (() -> Void)?
 
@@ -930,7 +932,8 @@ final class UpdaterController: NSObject, NSMenuItemValidation {
         guard pendingTerminate else { return }
         pendingTerminate = false
         terminateSafetyToken += 1
-        NSApp.reply(toApplicationShouldTerminate: true)
+        // 第七份：退出放行交给联合门槛（更新器 + owned 助手），没有再各自回一次。
+        if let terminationResponse { terminationResponse(true) } else { NSApp.reply(toApplicationShouldTerminate: true) }
     }
 
     /// applicationWillTerminate 开头调用：新版写 cleanExit。

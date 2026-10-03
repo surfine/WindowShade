@@ -1,30 +1,24 @@
-# 可见契约（第五、六份接入）
+# 可见契约（第七份并入）
 
-目标: 把 ChatGPT 第二回合第五、六份一起并进 main，按第六份规定的顺序把六条路径接到真实结果：
-仲裁与构建修正 → owned CLI 本地闭环 → 进程监督与诊断 → 监听配对装配 → 窗口真实端口 → 证据门禁；
-设备输入只做代码侧。单岛沿用 NotchLeaseHub（R6-002），不新增第二套协调器。
+目标: 把 ChatGPT 第二回合第七份并进 main：本地只读助手流程的生产调用者（WS2OwnedLaunchController 全量版、
+WS2OwnedSessionView、WS2OwnedCodexSession+Authorization）、原生 C 监督端口、严格 JSON、退出屏障、
+版本预检与独立启动配置，并按第七份的三步推进（先跑它的 core/native/flow 与旧回归，再 Mac 整 App 编译，
+最后按工单 01 用真实 0.153.0 CLI 验收）。
 
 交付物:
-- 第五份 overlay（Core/Support/App 共 14 份）与第六份 overlay（5 改 5 增）合入 prototype/；
-- 新调用者：WS2OwnedLaunchController（本地启动闭环）、WS2FocusWindowPort（真实窗口事务）；
-- 验证入口：tests/run-part5-core-tests.sh、run-part6-{core,process,wire,regressions,exit-probe,mac-check}、
-  python3 tests/crypto-reference.py、tools/readiness.py + fixtures/readiness-current.json；
-- SRP 隔离探针：许可审核、resolve/build 输出、Package.resolved、与 Python 向量互测；
-- 台账：docs/releases/v1.0.16-ledger.md、docs/blueprint.md、docs/handoff/START-HERE-deepseek.md，
-  第六份 44 项决策与第五份 C01–C10 更正记账。
+- overlay 合入（Core 3 新 + App 4 新/5 改 + Support 2 新 + Native 3 + build.sh/WindowShade/Updater 改动）；
+- 本地跑通第七份 core/native/flow 与旧回归；Mac `build.sh --check` 与八套 AppKit；
+- 真实 CLI 只读流程：打开入口 → 选项目/可执行文件 → 版本与配置核对 → 模型列表 → 发送一次查询 →
+  匹配的最终结果 → 停止/断开；锁屏撤销；
+- 归档 docs/handoff/chatgpt-review-2/part7；台账更新（START-HERE / 1.0.16 对照表 / blueprint）。
 
-输出/格式约束: 中文提交信息；不改 home/hook/更新源；不签名不发布不推送；
-真机项（Touch ID 允许路径、手柄、原生 Remote、窗口实际隐藏恢复、能耗）留在未验证栏。
+输出/格式约束: 中文提交信息；不改真实 home 配置、不自动启动工具、不运行真实远端命令、
+不签名、不发布、不改更新源；真机项（Touch ID 允许路径、设备、原生 Remote、窗口效果、能耗）保持未验。
 
 验收方式:
-- cd prototype && ./build.sh --check；bash tests/run-appkit-tests.sh all；隐私两件门禁；
-- tests/run-part6-core-tests.sh（56 场景/133 断言）、run-part6-process-tests.sh（9/27）、
-  run-part6-wire-tests.sh、python3 tests/crypto-reference.py（14 例）、run-part5-core-tests.sh（40/97）、
-  run-mac-crypto-tests.sh（MacPairCryptoTests）；
-- 真实 CLI 阶段一：/opt/homebrew/bin/codex 0.153.0 在隔离目录 initialize→model/list→thread/start→turn/start→stop；
-- SRP：swift package resolve/build 输出 + 许可哈希 + 向量互测。
+- python3 docs/handoff/chatgpt-review-2/part7/tests/run.py --repo . --suite {core,native,flow}（适配到仓库布局）；
+- cd prototype && ./build.sh --check；tests/run-appkit-tests.sh all；隐私登记表与页面同步；
+- 真实 CLI：tests/run-owned-codex-phase1.sh（已通过）→ 按工单补「真实配置投影/登录/查询/停止」一轮；
+- 旧回归：part2/part3/part4/part5/part6 各 runner 全绿。
 
-明确不做 / 不能改: 不接 allow 生产路径、不起 NWListener、不写真实 Keychain 凭证、
-不启用设备桥、不动真实窗口做自动隐藏恢复验证。
-
-保底与回滚: 一切按提交分段落盘，可逐笔回退；探针与构建只在隔离目录写。
+保底与回滚: 每步一次提交；原生 C 端口只在 prototype/Native 下，构建脚本变更可逐笔回退。

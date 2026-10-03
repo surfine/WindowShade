@@ -1,0 +1,284 @@
+[
+  {
+    "argv": [
+      "swiftc",
+      "--version"
+    ],
+    "exit_code": 0,
+    "stdout": "Swift version 6.2.1 (swift-6.2.1-RELEASE)\nTarget: x86_64-unknown-linux-gnu\n",
+    "stderr": "",
+    "elapsed_seconds": 0.08089375600002313
+  },
+  {
+    "argv": [
+      "cc",
+      "--version"
+    ],
+    "exit_code": 0,
+    "stdout": "cc (Debian 14.2.0-19) 14.2.0\nCopyright (C) 2024 Free Software Foundation, Inc.\nThis is free software; see the source for copying conditions.  There is NO\nwarranty; not even for MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.\n\n",
+    "stderr": "",
+    "elapsed_seconds": 0.0022021940003469354
+  },
+  {
+    "argv": [
+      "uname",
+      "-a"
+    ],
+    "exit_code": 0,
+    "stdout": "Linux 5544ed776db5 6.18.44 #1 SMP Sat Sep 26 20:02:31 UTC 2026 x86_64 GNU/Linux\n",
+    "stderr": "",
+    "elapsed_seconds": 0.0016556939999645692
+  },
+  {
+    "argv": [
+      "bash",
+      "-n",
+      "/mnt/data/WindowShade2-round2-handoff-v7/candidate-repo/prototype/build.sh"
+    ],
+    "exit_code": 0,
+    "stdout": "",
+    "stderr": "",
+    "elapsed_seconds": 0.0034265990002495528
+  },
+  {
+    "argv": [
+      "swiftc",
+      "-swift-version",
+      "6",
+      "-strict-concurrency=complete",
+      "-warnings-as-errors",
+      "-I",
+      "/mnt/data/WindowShade2-round2-handoff-v7/candidate-repo/prototype/Native",
+      "-typecheck",
+      "/mnt/data/WindowShade2-round2-handoff-v7/candidate-repo/prototype/Core/Contracts.swift",
+      "/mnt/data/WindowShade2-round2-handoff-v7/candidate-repo/prototype/Core/WS2FocusWindowOwnership.swift",
+      "/mnt/data/WindowShade2-round2-handoff-v7/candidate-repo/prototype/Core/WS2DeviceInputGate.swift",
+      "/mnt/data/WindowShade2-round2-handoff-v7/candidate-repo/prototype/Core/PairingAttemptWindow.swift",
+      "/mnt/data/WindowShade2-round2-handoff-v7/candidate-repo/prototype/Core/PairingTLV.swift",
+      "/mnt/data/WindowShade2-round2-handoff-v7/candidate-repo/prototype/Core/CodexWire.swift",
+      "/mnt/data/WindowShade2-round2-handoff-v7/candidate-repo/prototype/Core/WS2CompanionFrame.swift",
+      "/mnt/data/WindowShade2-round2-handoff-v7/candidate-repo/prototype/Core/WS2ApprovalReview.swift",
+      "/mnt/data/WindowShade2-round2-handoff-v7/candidate-repo/prototype/Core/FocusTimer.swift",
+      "/mnt/data/WindowShade2-round2-handoff-v7/candidate-repo/prototype/Core/GamepadMapping.swift",
+      "/mnt/data/WindowShade2-round2-handoff-v7/candidate-repo/prototype/Core/WS2BoundedOutbox.swift",
+      "/mnt/data/WindowShade2-round2-handoff-v7/candidate-repo/prototype/Core/WS2FocusEffectPlan.swift",
+      "/mnt/data/WindowShade2-round2-handoff-v7/candidate-repo/prototype/Core/WS2SemanticInputRouter.swift",
+      "/mnt/data/WindowShade2-round2-handoff-v7/candidate-repo/prototype/Core/WS2DiagnosticTail.swift",
+      "/mnt/data/WindowShade2-round2-handoff-v7/candidate-repo/prototype/Core/WS2OwnedScope.swift",
+      "/mnt/data/WindowShade2-round2-handoff-v7/candidate-repo/prototype/Core/WS2SelectionModel.swift",
+      "/mnt/data/WindowShade2-round2-handoff-v7/candidate-repo/prototype/Core/WS2ConnectionBudget.swift",
+      "/mnt/data/WindowShade2-round2-handoff-v7/candidate-repo/prototype/Core/WS2StrictJSON.swift",
+      "/mnt/data/WindowShade2-round2-handoff-v7/candidate-repo/prototype/Core/WS2OwnedProtocolHost.swift",
+      "/mnt/data/WindowShade2-round2-handoff-v7/candidate-repo/prototype/Core/WS2QuitBarrier.swift",
+      "/mnt/data/WindowShade2-round2-handoff-v7/candidate-repo/prototype/Core/AgentSessions.swift",
+      "/mnt/data/WindowShade2-round2-handoff-v7/candidate-repo/prototype/Support/WS2PeerRepository.swift",
+      "/mnt/data/WindowShade2-round2-handoff-v7/candidate-repo/prototype/Support/WS2PairSetupServer.swift",
+      "/mnt/data/WindowShade2-round2-handoff-v7/candidate-repo/prototype/Support/WS2PairSetupCrypto.swift",
+      "/mnt/data/WindowShade2-round2-handoff-v7/candidate-repo/prototype/Support/WS2FocusEffectExecutor.swift",
+      "/mnt/data/WindowShade2-round2-handoff-v7/candidate-repo/prototype/Support/WS2DuplexProcess.swift",
+      "/mnt/data/WindowShade2-round2-handoff-v7/candidate-repo/prototype/Support/WS2ProjectDirectory.swift",
+      "/mnt/data/WindowShade2-round2-handoff-v7/candidate-repo/prototype/Support/WS2LocalLaunchProfile.swift",
+      "/mnt/data/WindowShade2-round2-handoff-v7/candidate-repo/prototype/Support/WS2VersionProbe.swift",
+      "/mnt/data/WindowShade2-round2-handoff-v7/candidate-repo/prototype/App/InteractionCoordinator.swift",
+      "/mnt/data/WindowShade2-round2-handoff-v7/candidate-repo/prototype/App/FocusTimerHost.swift",
+      "/mnt/data/WindowShade2-round2-handoff-v7/candidate-repo/prototype/App/WS2OwnedCodexSession.swift",
+      "/mnt/data/WindowShade2-round2-handoff-v7/candidate-repo/prototype/App/WS2OwnedLaunchController.swift"
+    ],
+    "exit_code": 0,
+    "stdout": "",
+    "stderr": "",
+    "elapsed_seconds": 6.28758300499976
+  },
+  {
+    "argv": [
+      "swiftc",
+      "-frontend",
+      "-parse",
+      "/mnt/data/WindowShade2-round2-handoff-v7/candidate-repo/prototype/App/Updater.swift"
+    ],
+    "exit_code": 0,
+    "stdout": "",
+    "stderr": "",
+    "elapsed_seconds": 0.04730605699978696
+  },
+  {
+    "argv": [
+      "swiftc",
+      "-frontend",
+      "-parse",
+      "/mnt/data/WindowShade2-round2-handoff-v7/candidate-repo/prototype/App/WS2AppRuntime.swift"
+    ],
+    "exit_code": 0,
+    "stdout": "",
+    "stderr": "",
+    "elapsed_seconds": 0.04762224400019477
+  },
+  {
+    "argv": [
+      "swiftc",
+      "-frontend",
+      "-parse",
+      "/mnt/data/WindowShade2-round2-handoff-v7/candidate-repo/prototype/App/WS2CodexApprovalHost.swift"
+    ],
+    "exit_code": 0,
+    "stdout": "",
+    "stderr": "",
+    "elapsed_seconds": 0.04683341800000562
+  },
+  {
+    "argv": [
+      "swiftc",
+      "-frontend",
+      "-parse",
+      "/mnt/data/WindowShade2-round2-handoff-v7/candidate-repo/prototype/App/WS2OwnedCodexSession+Authorization.swift"
+    ],
+    "exit_code": 0,
+    "stdout": "",
+    "stderr": "",
+    "elapsed_seconds": 0.04662214600011794
+  },
+  {
+    "argv": [
+      "swiftc",
+      "-frontend",
+      "-parse",
+      "/mnt/data/WindowShade2-round2-handoff-v7/candidate-repo/prototype/App/WS2OwnedCodexSession.swift"
+    ],
+    "exit_code": 0,
+    "stdout": "",
+    "stderr": "",
+    "elapsed_seconds": 0.043705166000108875
+  },
+  {
+    "argv": [
+      "swiftc",
+      "-frontend",
+      "-parse",
+      "/mnt/data/WindowShade2-round2-handoff-v7/candidate-repo/prototype/App/WS2OwnedLaunchController.swift"
+    ],
+    "exit_code": 0,
+    "stdout": "",
+    "stderr": "",
+    "elapsed_seconds": 0.04460348599968711
+  },
+  {
+    "argv": [
+      "swiftc",
+      "-frontend",
+      "-parse",
+      "/mnt/data/WindowShade2-round2-handoff-v7/candidate-repo/prototype/App/WS2OwnedSessionView.swift"
+    ],
+    "exit_code": 0,
+    "stdout": "",
+    "stderr": "",
+    "elapsed_seconds": 0.04238322399987737
+  },
+  {
+    "argv": [
+      "swiftc",
+      "-frontend",
+      "-parse",
+      "/mnt/data/WindowShade2-round2-handoff-v7/candidate-repo/prototype/App/WS2SupplementPane.swift"
+    ],
+    "exit_code": 0,
+    "stdout": "",
+    "stderr": "",
+    "elapsed_seconds": 0.03961514000002353
+  },
+  {
+    "argv": [
+      "swiftc",
+      "-frontend",
+      "-parse",
+      "/mnt/data/WindowShade2-round2-handoff-v7/candidate-repo/prototype/Core/CodexWire.swift"
+    ],
+    "exit_code": 0,
+    "stdout": "",
+    "stderr": "",
+    "elapsed_seconds": 0.04355610599986903
+  },
+  {
+    "argv": [
+      "swiftc",
+      "-frontend",
+      "-parse",
+      "/mnt/data/WindowShade2-round2-handoff-v7/candidate-repo/prototype/Core/WS2OwnedProtocolHost.swift"
+    ],
+    "exit_code": 0,
+    "stdout": "",
+    "stderr": "",
+    "elapsed_seconds": 0.044905485000072076
+  },
+  {
+    "argv": [
+      "swiftc",
+      "-frontend",
+      "-parse",
+      "/mnt/data/WindowShade2-round2-handoff-v7/candidate-repo/prototype/Core/WS2QuitBarrier.swift"
+    ],
+    "exit_code": 0,
+    "stdout": "",
+    "stderr": "",
+    "elapsed_seconds": 0.04340022199994564
+  },
+  {
+    "argv": [
+      "swiftc",
+      "-frontend",
+      "-parse",
+      "/mnt/data/WindowShade2-round2-handoff-v7/candidate-repo/prototype/Core/WS2StrictJSON.swift"
+    ],
+    "exit_code": 0,
+    "stdout": "",
+    "stderr": "",
+    "elapsed_seconds": 0.04393434400026308
+  },
+  {
+    "argv": [
+      "swiftc",
+      "-frontend",
+      "-parse",
+      "/mnt/data/WindowShade2-round2-handoff-v7/candidate-repo/prototype/Support/WS2DuplexProcess.swift"
+    ],
+    "exit_code": 0,
+    "stdout": "",
+    "stderr": "",
+    "elapsed_seconds": 0.04133594399991125
+  },
+  {
+    "argv": [
+      "swiftc",
+      "-frontend",
+      "-parse",
+      "/mnt/data/WindowShade2-round2-handoff-v7/candidate-repo/prototype/Support/WS2LocalLaunchProfile.swift"
+    ],
+    "exit_code": 0,
+    "stdout": "",
+    "stderr": "",
+    "elapsed_seconds": 0.048628458000166574
+  },
+  {
+    "argv": [
+      "swiftc",
+      "-frontend",
+      "-parse",
+      "/mnt/data/WindowShade2-round2-handoff-v7/candidate-repo/prototype/Support/WS2VersionProbe.swift"
+    ],
+    "exit_code": 0,
+    "stdout": "",
+    "stderr": "",
+    "elapsed_seconds": 0.05329983000001448
+  },
+  {
+    "argv": [
+      "swiftc",
+      "-frontend",
+      "-parse",
+      "/mnt/data/WindowShade2-round2-handoff-v7/candidate-repo/prototype/WindowShade.swift"
+    ],
+    "exit_code": 0,
+    "stdout": "",
+    "stderr": "",
+    "elapsed_seconds": 0.05261103099974207
+  }
+]

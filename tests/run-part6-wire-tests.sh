@@ -7,6 +7,7 @@ mkdir -p "$OUT"
 "${SWIFTC:-swiftc}" -swift-version 6 -strict-concurrency=complete -warnings-as-errors -parse-as-library \
   "$ROOT/prototype/Core/Contracts.swift" \
   "$ROOT/prototype/Core/CodexWire.swift" \
+  "$ROOT/prototype/Core/WS2StrictJSON.swift" \
   "$ROOT/tests/WireProfileTests.swift" -o "$OUT/wire-tests"
 "$OUT/wire-tests" "$OUT/wire-results.json" "$OUT/wire-outbound.ndjson"
 if python3 -c 'import jsonschema' 2>/dev/null; then

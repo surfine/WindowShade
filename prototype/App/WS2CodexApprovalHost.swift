@@ -2,7 +2,7 @@ import Cocoa
 /// An owned app-server session's review/allow path. No shell is launched by this type.
 /// `deliver` MUST synchronously admit a bounded write for THIS connection and deadline.
 /// See workorders/02-审批与进程.md: a generic unbounded async closure is not a conforming writer.
-@MainActor final class WS2CodexApprovalHost {
+@MainActor final class WS2CodexApprovalHost: WS2OwnedProtocolHost {
     private(set) var wire: CodexWire
     let connectionID: UUID
     private let clock: any WS2Clock
@@ -232,4 +232,19 @@ import Cocoa
     func revoke(){inputIsCurrent = { false };approval.isEnabled=false;text.string="";confirm=nil;decline=nil}
     @objc private func refuse(){guard inputIsCurrent() else{return};decline?()}
     override func cancelOperation(_ sender:Any?){onCancel?()}
+}
+
+// Uses the same wire and bounded writer as native command reviews.
+extension WS2CodexApprovalHost {
+    func account(_ action:WS2AccountAction) throws -> WS2.RequestID {
+        guard !closed else { throw CodexWire.Failure.closed };let id:WS2.RequestID
+        switch action {
+        case .config(let cwd):id=try wire.readConfig(cwd:cwd,now:clock.now())
+        case .read:id=try wire.readAccount(now:clock.now())
+        case .login:id=try wire.beginBrowserLogin(now:clock.now())
+        case .cancel(let login):id=try wire.cancelLogin(id:login,now:clock.now())
+        case .logout:id=try wire.logout(now:clock.now())
+        }
+        flush(deadline:clock.now().adding(WS2.Duration.second));return id
+    }
 }

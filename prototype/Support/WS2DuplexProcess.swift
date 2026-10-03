@@ -1,7 +1,7 @@
-// Owns one child. All state and source callbacks run on MainActor / DispatchQueue.main.
-// Nonblocking readiness avoids a readLine call preventing an approval write.
+// One owner, one native reaper, one pipe reader/writer; no Foundation.Process reaper races.
 import Foundation
 import Dispatch
+import WS2ProcessNative
 #if canImport(Darwin)
 import Darwin
 #else
@@ -14,83 +14,107 @@ import Glibc
     struct Termination: Equatable, Sendable { let status: Int32; let wasSignalled: Bool }
     private(set) var termination: Termination?
     private(set) var diagnostics: WS2DiagnosticTail?
-    private let errorPipe: Pipe?
-    private var errorReader: (any DispatchSourceRead)?
-    private var exitDrainTask: Task<Void, Never>?
-    // A direct child may exit while a descendant holds stdout open. Bound that drain, not the process tree.
-    private static let exitDrainNanoseconds: UInt64 = 200_000_000
-    let connection: UUID
-    private let process = Process()
-    private let input = Pipe(), output = Pipe()
-    private var reader: (any DispatchSourceRead)?
-    private var writer: (any DispatchSourceWrite)?
+    private(set) var leaderReaped = false
+    private(set) var supervisionError: Int32?
+    private(set) var groupTerminationRequested = false
+    private(set) var groupKillRequested = false
+    private var child: OpaquePointer?
+    private var childTimer: (any DispatchSourceTimer)?
+    private var inputHandle: FileHandle?, outputHandle: FileHandle?, errorHandle: FileHandle?
+    private var reader: (any DispatchSourceRead)?, writer: (any DispatchSourceWrite)?, errorReader: (any DispatchSourceRead)?
     private var writeArmed = false
-    private var deadlineTask: Task<Void, Never>?
+    private var deadlineTask: Task<Void,Never>?
     private var buffer = Data()
     private var outbox: WS2BoundedOutbox
     private var bindings: [UInt64: @MainActor () -> Bool] = [:]
     private var started = false
     private(set) var stopped = false
+    let connection: UUID
     private let clock: () -> Double
     private let mayWrite: () -> Bool
+    private let executable: URL, workingDirectory: URL
+    private let arguments: [String], environment: [String:String]
     var onLine: ((Data) -> Void)?
     var onEnd: ((End) -> Void)?
-    // Called only when all bytes have been handed to the local pipe, NOT when acted upon.
     var onLocallyWritten: ((UInt64) -> Void)?
+    // Separate fact from closing the protocol. Never means all descendants (including escaped groups) exited.
+    var onReaped: ((Termination) -> Void)?
     static let maximumLine = 1_048_576
     init(connection: UUID = UUID(), executable: URL, arguments: [String], workingDirectory: URL,
-         environment: [String: String], clock: @escaping () -> Double = { ProcessInfo.processInfo.systemUptime },
+         environment: [String:String], clock: @escaping () -> Double = { ProcessInfo.processInfo.systemUptime },
          diagnosticByteLimit: Int? = nil, mayWrite: @escaping () -> Bool) throws {
         guard executable.isFileURL, executable.path.hasPrefix("/"), workingDirectory.isFileURL,
-              !arguments.contains(where: { $0.utf8.contains(0) }),
-              !environment.contains(where: { $0.key.contains("=") || $0.key.utf8.contains(0) || $0.value.utf8.contains(0) }),
+              workingDirectory.path.hasPrefix("/"), !executable.path.utf8.contains(0), !workingDirectory.path.utf8.contains(0),
+              arguments.count <= 256, !arguments.contains(where: { $0.utf8.contains(0) || $0.utf8.count > 65_536 }),
+              environment.count <= 256, !environment.contains(where: { $0.key.isEmpty || $0.key.contains("=") || $0.key.utf8.contains(0) || $0.value.utf8.contains(0) }),
               FileManager.default.isExecutableFile(atPath: executable.path) else { throw Failure.invalid }
-        if let limit = diagnosticByteLimit, !(1...65_536).contains(limit) { throw Failure.invalid }
-        errorPipe = diagnosticByteLimit == nil ? nil : Pipe()
-        diagnostics = diagnosticByteLimit.map { WS2DiagnosticTail(capacity: $0) }
-        self.connection = connection; self.clock = clock; self.mayWrite = mayWrite
-        outbox = WS2BoundedOutbox(connection: connection)
-        process.executableURL = executable; process.arguments = arguments
-        process.currentDirectoryURL = workingDirectory; process.environment = environment
-        process.standardInput = input; process.standardOutput = output
-        // Opt-in for this process only. No disk log and no implicit export.
-        if let errorPipe { process.standardError = errorPipe }
-        else { process.standardError = FileHandle.nullDevice }
+        if let n = diagnosticByteLimit, !(1...65_536).contains(n) { throw Failure.invalid }
+        diagnostics = diagnosticByteLimit.map { WS2DiagnosticTail(capacity:$0) }
+        self.connection=connection; self.clock=clock; self.mayWrite=mayWrite
+        self.executable=executable; self.arguments=arguments; self.workingDirectory=workingDirectory; self.environment=environment
+        outbox = WS2BoundedOutbox(connection:connection)
     }
     func start() throws {
         guard !started, !stopped else { throw Failure.invalid }
-        process.terminationHandler = { [weak self] child in
-            let result = Termination(status: child.terminationStatus,
-                                     wasSignalled: child.terminationReason == .uncaughtSignal)
-            Task { @MainActor [weak self] in self?.childExited(result) }
+        var argv = ([executable.path] + arguments).map { strdup($0) }
+        var envp = environment.keys.sorted().map { strdup($0 + "=" + environment[$0]!) }
+        guard argv.allSatisfy({$0 != nil}), envp.allSatisfy({$0 != nil}) else {
+            argv.forEach { free($0) }; envp.forEach { free($0) }; throw Failure.io(ENOMEM)
         }
-        do {
-            try process.run(); started = true
-            try input.fileHandleForReading.close(); try output.fileHandleForWriting.close()
-            for handle in [input.fileHandleForWriting, output.fileHandleForReading] {
-                let fd = handle.fileDescriptor, flags = fcntl(fd, F_GETFL)
-                guard flags >= 0, fcntl(fd, F_SETFL, flags | O_NONBLOCK) == 0 else { throw Failure.io(errno) }
-            }
-            let r = DispatchSource.makeReadSource(fileDescriptor: output.fileHandleForReading.fileDescriptor, queue: .main)
-            let w = DispatchSource.makeWriteSource(fileDescriptor: input.fileHandleForWriting.fileDescriptor, queue: .main)
-            r.setEventHandler { [weak self] in MainActor.assumeIsolated { self?.readReady() } }
-            w.setEventHandler { [weak self] in MainActor.assumeIsolated { self?.writeReady() } }
-            // File descriptors are closed only after all callbacks on that source have returned.
-            let readHandle = output.fileHandleForReading, writeHandle = input.fileHandleForWriting
-            r.setCancelHandler { try? readHandle.close() }
-            w.setCancelHandler { try? writeHandle.close() }
-            reader = r; writer = w; r.resume()
-            if let errorPipe {
-                try errorPipe.fileHandleForWriting.close()
-                let handle = errorPipe.fileHandleForReading, fd = handle.fileDescriptor
-                let flags = fcntl(fd, F_GETFL)
-                guard flags >= 0, fcntl(fd, F_SETFL, flags | O_NONBLOCK) == 0 else { throw Failure.io(errno) }
-                let e = DispatchSource.makeReadSource(fileDescriptor: fd, queue: .main)
-                e.setEventHandler { [weak self] in MainActor.assumeIsolated { self?.readDiagnosticReady() } }
-                e.setCancelHandler { try? handle.close() }
-                errorReader = e; e.resume()
-            }
-        } catch { stop(.io(errno)); throw error }
+        defer { argv.forEach { free($0) }; envp.forEach { free($0) } }
+        argv.append(nil); envp.append(nil)
+        var input: Int32 = -1, output: Int32 = -1, error: Int32 = -1
+        let code = executable.path.withCString { exe in workingDirectory.path.withCString { cwd in
+            argv.withUnsafeMutableBufferPointer { a in envp.withUnsafeMutableBufferPointer { e in
+                ws2_child_spawn(exe,a.baseAddress,e.baseAddress,cwd,diagnostics == nil ? 0 : 1,&child,&input,&output,&error)
+            } }
+        } }
+        guard code == 0, child != nil else { stopped=true; throw Failure.io(code) }
+        started=true
+        inputHandle=FileHandle(fileDescriptor:input,closeOnDealloc:true)
+        outputHandle=FileHandle(fileDescriptor:output,closeOnDealloc:true)
+        if error >= 0 { errorHandle=FileHandle(fileDescriptor:error,closeOnDealloc:true) }
+        let r=DispatchSource.makeReadSource(fileDescriptor:output,queue:.main)
+        let w=DispatchSource.makeWriteSource(fileDescriptor:input,queue:.main)
+        r.setEventHandler { [weak self] in MainActor.assumeIsolated { self?.readReady() } }
+        w.setEventHandler { [weak self] in MainActor.assumeIsolated { self?.writeReady() } }
+        let rh=outputHandle!, wh=inputHandle!
+        r.setCancelHandler { try? rh.close() }; w.setCancelHandler { try? wh.close() }
+        reader=r; writer=w; r.resume()
+        if let eh=errorHandle {
+            let e=DispatchSource.makeReadSource(fileDescriptor:eh.fileDescriptor,queue:.main)
+            e.setEventHandler { [weak self] in MainActor.assumeIsolated { self?.readDiagnosticReady() } }
+            e.setCancelHandler { try? eh.close() }; errorReader=e; e.resume()
+        }
+        // Only active while this explicit CLI session owns a child. No idle-app polling.
+        let timer=DispatchSource.makeTimerSource(queue:.main)
+        timer.schedule(deadline:.now(),repeating:.milliseconds(20),leeway:.milliseconds(5))
+        // Deliberate temporary self-retention until reaping. Runtime may release the closed session earlier.
+        timer.setEventHandler { [self] in MainActor.assumeIsolated { self.pollChild() } }
+        childTimer=timer; timer.resume()
+    }
+    private func pollChild() {
+        guard let child else { return }
+        var state=WS2ChildState()
+        let error=ws2_child_poll(child,&state)
+        groupTerminationRequested=state.term_sent != 0; groupKillRequested=state.kill_sent != 0
+        if state.direct_exited != 0, termination == nil {
+            termination = .init(status:state.exit_status,wasSignalled:state.was_signalled != 0)
+            // One final bounded snapshot; never wait for descendants to close inherited descriptors.
+            if !stopped { readReady(checkChild:false); readDiagnosticReady(); if !stopped { stop(.processExit) } }
+        }
+        if error != 0 {
+            supervisionError=error
+            stop(.io(error)); childTimer?.setEventHandler {}; childTimer?.cancel(); childTimer=nil
+            // Lost ownership must not lead to a signal against a potentially reused PID.
+            _=ws2_child_destroy(child);self.child=nil
+            return
+        }
+        if state.reaped != 0 {
+            leaderReaped=true; _=ws2_child_destroy(child); self.child=nil
+            childTimer?.setEventHandler {}; childTimer?.cancel(); childTimer=nil
+            if let termination { let cb=onReaped; onReaped=nil; cb?(termination) }
+        }
     }
     // Boolean means only "retained by this connection's bounded queue". Never retry false/ambiguous approval.
     @discardableResult func admit(_ lines: [Data], connection: UUID, deadline: Double,
@@ -131,6 +155,7 @@ import Glibc
         }
     }
     private func writeReady() {
+        pollChild()
         guard !stopped else { return }
         guard mayWrite() else { stop(.revoked); return }
         var budget = 65_536
@@ -139,7 +164,7 @@ import Glibc
                   let slice = try outbox.peek(connection: connection, now: clock(), limit: budget) {
                 // Recheck at the final write boundary. Bytes already written cannot be retracted.
                 guard mayWrite(), bindings[slice.ticket]?() ?? true, clock() < slice.deadline else { stop(.revoked); return }
-                let result = Self.writeWithoutSIGPIPE(input.fileHandleForWriting.fileDescriptor, slice.bytes)
+                let result = Self.writeWithoutSIGPIPE(inputHandle!.fileDescriptor, slice.bytes)
                 if result < 0 {
                     if errno == EAGAIN || errno == EWOULDBLOCK { break }
                     if errno == EINTR { continue }
@@ -155,12 +180,13 @@ import Glibc
             scheduleDeadline()
         } catch { stop(.timeout) }
     }
-    private func readReady() {
+    private func readReady(checkChild: Bool = true) {
+        if checkChild { pollChild() }
         guard !stopped else { return }
         var budget = 65_536
         while budget > 0, !stopped {
             var bytes = [UInt8](repeating: 0, count: min(8192, budget))
-            let size = read(output.fileHandleForReading.fileDescriptor, &bytes, bytes.count)
+            let size = read(outputHandle!.fileDescriptor, &bytes, bytes.count)
             if size < 0 {
                 if errno == EAGAIN || errno == EWOULDBLOCK { return }
                 if errno == EINTR { continue }
@@ -176,38 +202,25 @@ import Glibc
             guard buffer.count <= Self.maximumLine else { stop(.framing); return }
         }
     }
-    private func childExited(_ result: Termination) {
-        guard termination == nil else { return }
-        termination = result; process.terminationHandler = nil
-        guard !stopped else { return }
-        readReady(); readDiagnosticReady()
-        guard !stopped else { return }
-        exitDrainTask = Task { [weak self] in
-            do { try await Task.sleep(nanoseconds: Self.exitDrainNanoseconds) } catch { return }
-            guard let self, !self.stopped else { return }
-            self.readReady(); self.readDiagnosticReady()
-            if !self.stopped { self.stop(self.buffer.isEmpty ? .processExit : .framing) }
-        }
-    }
     private func readDiagnosticReady() {
-        guard let pipe = errorPipe, errorReader != nil, !stopped else { return }
-        var budget = 65_536
+        guard let pipe=errorHandle, errorReader != nil, !stopped else { return }
+        var budget=65_536
         while budget > 0 {
-            var chunk = [UInt8](repeating: 0, count: min(8192, budget))
-            let count = read(pipe.fileHandleForReading.fileDescriptor, &chunk, chunk.count)
+            var chunk=[UInt8](repeating:0,count:min(8192,budget))
+            let count=read(pipe.fileDescriptor,&chunk,chunk.count)
             if count < 0 {
                 if errno == EINTR { continue }
                 if errno == EAGAIN || errno == EWOULDBLOCK { return }
-                errorReader?.cancel(); errorReader = nil; return
+                errorReader?.cancel(); errorReader=nil; return
             }
-            if count == 0 { errorReader?.cancel(); errorReader = nil; return }
+            if count == 0 { errorReader?.cancel(); errorReader=nil; return }
             budget -= count; diagnostics?.append(Data(chunk.prefix(count)))
         }
     }
     func clearDiagnostics() { diagnostics?.clear() }
     private static func writeWithoutSIGPIPE(_ fd: Int32, _ bytes: Data) -> Int {
         // 真机发现：只在本线程屏蔽 SIGPIPE 在多线程进程里挡不住它——内核会把信号投给别的线程，
-        // 默认动作直接把 App 杀掉（第五份 IO04 在 Mac 上第一次跑就复现）。这里进程级忽略一次，
+        // 默认动作直接杀掉 App（第五份 IO04 第一次在 Mac 上跑就复现）。这里进程级忽略一次，
         // 写失败仍然如实返回 EPIPE；下面的线程级屏蔽与 sigwait 只作第二层。
         Self.ignoreSIGPIPEOnce
         var signals = sigset_t(), original = sigset_t(), prior = sigset_t()
@@ -227,25 +240,14 @@ import Glibc
     private static let ignoreSIGPIPEOnce: Void = { _ = signal(SIGPIPE, SIG_IGN) }()
     func stop(_ reason: End = .localStop) {
         guard !stopped else { return }
-        // Capture at most one final bounded chunk. It is not a complete stderr transcript.
-        readDiagnosticReady()
-        stopped = true; deadlineTask?.cancel(); deadlineTask = nil
-        exitDrainTask?.cancel(); exitDrainTask = nil
-        if errorReader != nil { errorReader?.cancel(); errorReader = nil }
-        else if let errorPipe { try? errorPipe.fileHandleForReading.close() }
-        try? errorPipe?.fileHandleForWriting.close()
-        outbox.close(); bindings.removeAll(); buffer.removeAll()
-        if reader == nil { try? output.fileHandleForReading.close() }
-        if writer == nil { try? input.fileHandleForWriting.close() }
-        reader?.cancel(); reader = nil
-        if !writeArmed { writer?.resume() }
-        writer?.cancel(); writer = nil; writeArmed = false
-        // The unregistered handles also need closing when start failed before source creation.
-        if !started { try? input.fileHandleForWriting.close(); try? output.fileHandleForReading.close() }
-        try? input.fileHandleForReading.close(); try? output.fileHandleForWriting.close()
-        if started, process.isRunning { process.terminate() }
-        let callback = onEnd; onEnd = nil; onLine = nil; onLocallyWritten = nil
-        callback?(reason)
+        readDiagnosticReady(); stopped=true
+        deadlineTask?.cancel(); deadlineTask=nil; outbox.close(); bindings.removeAll(); buffer.removeAll()
+        reader?.cancel(); reader=nil
+        if writer != nil, !writeArmed { writer?.resume() }
+        writer?.cancel(); writer=nil; writeArmed=false
+        errorReader?.cancel(); errorReader=nil
+        if let child { let error=ws2_child_stop(child); if error != 0 { supervisionError=error } }
+        let cb=onEnd; onEnd=nil; onLine=nil; onLocallyWritten=nil; cb?(reason)
+        // The reaper timer survives protocol closure. A stopped pipe is not reaping evidence.
     }
-    // Runtime must call stop before releasing its sole strong reference. No remote process groups are killed.
 }

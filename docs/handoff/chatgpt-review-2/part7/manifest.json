@@ -1,0 +1,135 @@
+{
+  "version": 7,
+  "base": "WindowShade2-round2-handoff-v6/candidate-repo",
+  "base_file_count": 1145,
+  "output_file_count": 1157,
+  "changes": [
+    {
+      "path": "docs/handoff/round2-part7/privacy-signals.json",
+      "baseSHA256": null,
+      "sha256": "511294f40bd1dd8231178d9906ac9748889a74c2001b3e02cc8a3c3987298499",
+      "operation": "add"
+    },
+    {
+      "path": "prototype/App/Updater.swift",
+      "baseSHA256": "54d1148098cff28aad517f49c79092bde185ae36cea3ef81932cb0c05b105253",
+      "sha256": "d2f0aa355acde29b729d0a05fdf41b33269599bf7d5405df64e8117a9c0f2c03",
+      "operation": "modify"
+    },
+    {
+      "path": "prototype/App/WS2AppRuntime.swift",
+      "baseSHA256": "4860048055a951fd637dba2f5f5a2456ced84b234f5034273e8432e3abb3f820",
+      "sha256": "ae496e5fafe758ced14f91fa8ca9d042699e0b8a68062b51fae88073d7b4fe83",
+      "operation": "modify"
+    },
+    {
+      "path": "prototype/App/WS2CodexApprovalHost.swift",
+      "baseSHA256": "e08fbdcab085bfda8db45e5a01797b9ef173cc87c52f47ae040353af2863b3bf",
+      "sha256": "f400c3354906b3ddb97f7651388468520d91f5eb6796417d014d7753266bf03b",
+      "operation": "modify"
+    },
+    {
+      "path": "prototype/App/WS2OwnedCodexSession+Authorization.swift",
+      "baseSHA256": null,
+      "sha256": "cd619ed648b81d55565ecf519777681ab4419bd2374eecb1f793c7bf29538266",
+      "operation": "add"
+    },
+    {
+      "path": "prototype/App/WS2OwnedCodexSession.swift",
+      "baseSHA256": "211a2a4a5024547723634142eb60825b43eb6dfbea3a7710d4ab54bb37653572",
+      "sha256": "b05f1a6d7aeafd72f5e8d5dea6cd8a460737d57cbf319b1c242b01a5f09d2ef8",
+      "operation": "modify"
+    },
+    {
+      "path": "prototype/App/WS2OwnedLaunchController.swift",
+      "baseSHA256": null,
+      "sha256": "631d6e462822fd75a3becc290c7b84492c7baacdc4b8adcbbd418dd125de3c07",
+      "operation": "add"
+    },
+    {
+      "path": "prototype/App/WS2OwnedSessionView.swift",
+      "baseSHA256": null,
+      "sha256": "ca1e124b84fd3f2138ee243eb2f3a0c175a03b9087f7eb1adc882fb727fe4ce8",
+      "operation": "add"
+    },
+    {
+      "path": "prototype/App/WS2SupplementPane.swift",
+      "baseSHA256": "223df7148a746cb7e6a7664c012b269dc0c7d515ae5d1fe698962e75aa5e517c",
+      "sha256": "eb49bb23eda0c267d0c169dc4ef4040dd462ae3ed71f75aa341e2bfd96c39fcd",
+      "operation": "modify"
+    },
+    {
+      "path": "prototype/Core/CodexWire.swift",
+      "baseSHA256": "71e73c2b2bb2c5bda0aec0d94ad0d4f7dd6d3c218373de510da8007edc64c497",
+      "sha256": "ed2e3e209bb3ff42c6ba8273b323f2b6f70bdf48daa4cc21f91060d9bfebecf3",
+      "operation": "modify"
+    },
+    {
+      "path": "prototype/Core/WS2OwnedProtocolHost.swift",
+      "baseSHA256": null,
+      "sha256": "11defe55b4723986cdcd10cea154dfcc10f205dbb8d45eb1265c9dc84fe5b765",
+      "operation": "add"
+    },
+    {
+      "path": "prototype/Core/WS2QuitBarrier.swift",
+      "baseSHA256": null,
+      "sha256": "2a80a0409cee77c4a117844ac1192084ab922a1073b405d26909a6fd8a39754e",
+      "operation": "add"
+    },
+    {
+      "path": "prototype/Core/WS2StrictJSON.swift",
+      "baseSHA256": null,
+      "sha256": "3c1edb48065c85d7b0fbed12ac8299df4d1931abecfe53019f9ea9cabdc9bb0d",
+      "operation": "add"
+    },
+    {
+      "path": "prototype/Native/WS2Child.c",
+      "baseSHA256": null,
+      "sha256": "134368aa12dfbbb9ec5a6f60a121c44b52b46bb303d55d73b18d78326d875f47",
+      "operation": "add"
+    },
+    {
+      "path": "prototype/Native/WS2Child.h",
+      "baseSHA256": null,
+      "sha256": "95380850f4cbd24d868fc785978cda939307f3962640b091200068a17ea1a9da",
+      "operation": "add"
+    },
+    {
+      "path": "prototype/Native/module.modulemap",
+      "baseSHA256": null,
+      "sha256": "9cac42ba9402e4324e393d07c155c9375e20846e3bca84117460fdd0e6a0db8e",
+      "operation": "add"
+    },
+    {
+      "path": "prototype/Support/WS2DuplexProcess.swift",
+      "baseSHA256": "e85ba57a74110f0f4163eac840c65eed8bc9bd6fa08ce4f802098e5a159deaff",
+      "sha256": "1efe08a7d6987fdac80d87f345f1d2ce212e6a5dddac3a71e086e247d8ab579a",
+      "operation": "modify"
+    },
+    {
+      "path": "prototype/Support/WS2LocalLaunchProfile.swift",
+      "baseSHA256": null,
+      "sha256": "34a52b15e0a183c0e0f8d45d999ab15e0f8d1b1998b7fa467fe15a4b1c843a27",
+      "operation": "add"
+    },
+    {
+      "path": "prototype/Support/WS2VersionProbe.swift",
+      "baseSHA256": null,
+      "sha256": "8b77c9a8ce4ec1d66f5106736783ad5581572e45d761ebb7ec92c68756d7bd8f",
+      "operation": "add"
+    },
+    {
+      "path": "prototype/WindowShade.swift",
+      "baseSHA256": "e5e60ad49adca1273a2a67e2c339ecd53200519d7c340116affaefe2e015e54f",
+      "sha256": "4cbf3342bc01d1df701c23151617ad5df76bfe9a2b27c14f5149828c1242e228",
+      "operation": "modify"
+    },
+    {
+      "path": "prototype/build.sh",
+      "baseSHA256": "e9f87cc96478257d129e8d16c85d0697e97f25ace0ffa8bbe08573cb4fc72f01",
+      "sha256": "e6db6c9f3499fcdcb4f28c065199f4f87aa64aeb0c5a46b098164dc761ad588c",
+      "operation": "modify"
+    }
+  ],
+  "no_deletions": true
+}

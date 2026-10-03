@@ -15,6 +15,6 @@
   ],
   "source": "preflight",
   "task_path": "task.txt",
-  "task_sha256": "c357965678d1be7d07855d36e7c69705c66809a2fbd2663c3a4ee051ebf8c4cf",
+  "task_sha256": "79f7e139295d2af70b6ce81191e917452d837636f1f414b71f1c24196e940ca9",
   "version": 1
 }
