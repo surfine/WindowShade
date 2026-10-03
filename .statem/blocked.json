@@ -1,0 +1,8 @@
+{
+  "kind": "blocked",
+  "reason": "受控真机观察（工单 02/03）需要先拿到明确授权：只能动 Aaron 指定的「允许动」的窗口（建议他自己开着的可恢复测试文档或浏览器窗口，不要有未保存内容），动手前还要再确认一次。这一步不能自行推断范围。",
+  "missing": "Aaron 指定可动窗口（哪些 App/窗口可以收起—展开—重收），并确认现在可以动手；另需确认可以临时切 Space、锁屏再解锁各一次，以复现 M06/M07。",
+  "owner": "Aaron",
+  "resume_state": "solve（拿到窗口授权后按 docs/handoff/chatgpt-review-2/part9/MAC-EVIDENCE.md 的矩阵跑 M01/M03/M06/M07/M08/M11/M14/M16/M17/M18，逐例补证，再回 contract_check）",
+  "updated": "2026-10-03T23:14:00+0800"
+}

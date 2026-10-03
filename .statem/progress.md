@@ -1,129 +1,69 @@
-# 进度（每个状态边界更新一次）
+# 进度（第九份并入，2026-10-03）
 
-契约摘要:
-当前交付物身份（路径 / 服务）:
-试过的命令:
-跑过的检查与结果:
-残余风险:
-下一步:
-# 进展
+## 契约摘要
 
-## solve（进行中）
+把 ChatGPT 第二回合第九份并进 `main`：收起三态（hidden / visible / unknown）、完成通知绑定
+transaction 与捕获的 waiter tokens、巡检不可变快照 + 批次/事务代次、AX observer 单调 routeID、
+`EffectFrameAwaiter` 继承调用者隔离、原生 resize 去嵌套 RunLoop；按仓库既有写法修掉 macOS 上
+实测出的 Swift 6 隔离错误；跑完全部自动化检查；再做一轮受控真机观察（只动明确允许的窗口，动手前确认）。
+见 `.statem/task.txt`。约束：不签名/发布/推送/改更新源；`WS2FocusWindowPort.admitted=false`；
+unknown 语义优先；中文提交信息。
 
-- 四份材料已全部并进 main：part1 纯核与合同、part2 协调器/S1/T2、part3 菜单与配置事务等、
-  part4 配对加密与审批 review。归档在 docs/handoff/chatgpt-review-2/part1…part4。
-- 本轮在 Mac 上真编译、真跑，修掉只有真机才暴露的问题：CryptoKit 切片下标（配对 TLV 一编码就崩）、
-  SDK 27 手柄扳机方法名、协调器接上后 cancelLease 缺分支、S1 的隔离错误、根级 /var 符号链接、
-  FileHandle 重复关闭、wsSpring 元组展开。
-- 新增验证入口：tests/run-part4-core-tests.sh（72/188）、tests/run-mac-crypto-tests.sh、
-  tests/run-privacy-registry-check.sh（458 点）、tests/run-privacy-page-sync.sh、
-  tests/NotchLeaseHostTests.swift（8 场景）。
-- 设置里新增「隐私」一栏（由登记表生成，private 值默认隐藏）；番茄钟闭环（预设/快捷键/工具/卡片/负一屏）；
-  T3 窗口执行器按所有权收据收窗放回，休息时点一下刘海可放回。
+## 交付物身份
+
+- 三方合并（base=`base-sources/`、ours=HEAD、theirs=`overlay/`）15 文件：3 新增
+  （`prototype/Core/WS2FoldCallbackStamp.swift`、`prototype/App/WS2FoldCallbackGuard.swift`、
+  `docs/handoff/round2-part9/{INTEGRATION.md,privacy-signals.json}`）＋12 修改。
+  唯一冲突 `prototype/App/FoldCompletion.swift`：保留 `awaitFold(id:)`，接上事务绑定语义。
+- 归档：`docs/handoff/chatgpt-review-2/part9/`（整包）。
+- 仓库 runner：`tests/part9/{tests,tools,sources,validation}/` + `base-files.json` + `manifest.json`。
+- 隔离修复：23 处 / 8 文件，全部用 `MainActor.assumeIsolated`（EventTap 1、FoldExit 3、
+  FoldTransaction 2、Reconcile 2、ShadeController 8、WS2FoldCallbackGuard 5、WindowFoldEffects 1、
+  WindowBrowserAppDelegate 1）。
+- 证据：`docs/handoff/chatgpt-review-2/part9/MAC-EVIDENCE.md`。
+
+## 跑过的检查与结果（全部在本机）
+
+| 检查 | 结果 |
+| --- | --- |
+| `tests/part9/tests/run.py --repo . --suite regression` | 42 场景 / 93 断言 / 0 失败 |
+| `tests/part9/tests/run.py --repo . --suite frame` | 15 场景 / 15 断言 / 0 失败 |
+| `tests/part9/tests/check-build.py --repo .` | Foundation 40 份类型检查 + 43 份语法，退出 0 |
+| `tests/part9/tests/check-wiring.py --repo .` | 24 项全 PASS |
+| `tests/part9/tests/test-tools.py` | 18 项 OK |
+| `tests/part9/tests/run-previous.py`（duo、part8 input/fold/flow、part7 core/native/flow、legacy 两批） | 九套全过（33/49、21/49、6/27、27/51、3/14、18/145、legacy exit 0） |
+| 仓库自身 runner | contracts 9/24、part2 22/86、part3 55/147、part4 72/188、part5 40/97 + 8/26、part6 42/95 + 9/27 + wire 4、PROC04 0.086s、T1 12/32、Mac 配对加密、conductor 手势全过 |
+| readiness / 归档 | BLOCKED（exit 2，如实）；94 文件哈希全对 |
+| `cd prototype && ./build.sh --check` | 退出 0 |
+| `bash tests/run-appkit-tests.sh all` | 八套全过（含 LEASE-H01…08；需 WindowServer 会话） |
+| 隐私门禁 | 登记表 466 点无未登记新增、页面数据同源 |
+
+## 只有 Mac 才会暴露的问题（已处理）
+
+1. 第九份把 `FoldCompletion` 改成 `@MainActor` 后，23 处非隔离调用点编不过（Linux 纯逻辑没暴露）；
+   逐点核对都在主线程，按仓库既有写法包 `MainActor.assumeIsolated`，不改语义、不降版本、不关并发检查。
+2. `tests/part9/tests/check-build.py` 仍按 `prototype/App/InteractionCoordinator.swift` 找共享仲裁，
+   本仓库在 `Core/`，改成两边都能找到。
+3. `tests/part9/tools/stage.py` 拒绝 macOS 的 `/var`，且 `resolve()` 与 `absolute()` 混用；照第七、八份的
+   做法规范化 `/var`、`/tmp`、`/etc` 并全用 `resolve()`。
+4. `run-previous.py` 的 legacy 两批要 `history/part1..part6`（本仓库平铺在 `tests/`，原件在归档）；改成用
+   本仓库已适配的 `tests/part7/tests/regressions.py`，`--history` 指向 `docs/handoff/chatgpt-review-2`。
+5. `tests/WindowFoldEffectsTests.swift` 用的是第九份已删除的「只按窗口 ID 报成功」API；测试宿主改成
+   「先绑事务再按事务结算」，投递改主队列 flush 对账，成功用例装真实 `folded` 状态并固定未锁屏。
+   `run-appkit-tests.sh` 的 `all` 分发器对 async 的 `main()` 加 `await`。
+6. 隐私登记：`WS2FoldCallbackGuard` 新读一处 AX 布尔属性归 `window-ax`，旧的适配器登记点随实现移动；465 → 466。
+
+## 残余风险
+
+- **受控真机观察还没做**：工单 02/03 里可安全复现的 M01/M03/M06/M07/M08/M11/M14/M16/M17/M18
+  需要动 Aaron 的真实窗口，必须他先指定「允许动」的窗口、动手前再确认一次。这是本轮唯一未完成项。
+- AppKit 回归与读 `NSScreen` 的用例必须在有 WindowServer 会话的上下文跑（沙箱里 `NSScreen.screens` 为 0）。
+- `part3` 的三条 unix socket 用例沙箱里 `bind` 回 `EPERM`，沙箱外通过——沙箱限制，不是回归。
+- 完整 T3、真实 AX 收起/恢复与人工恢复、慢 AX 与强制取消、真实 SCK capture graph、Touch ID 允许端到端、
+  配对接收、系统身份后端、能耗、影片与发布仍未做（以第九份 REMAINING 为准）。
 
 ## 下一步
 
-- contract_check：把契约里的对照检查全跑一遍并留证。
-- 未接项（按第四份 REMAINING）：owned Codex 进程与允许路径、首次 Pair-Setup/Keychain、
-  HID/鼠标/手柄生产桥、会话与指挥 live 订阅、系统锁后端；真机证据仍需 Aaron 在场。
-
-## contract_check 证据（2026-10-03 夜）
-
-| 检查 | 结果 |
-| --- | --- |
-| `cd prototype && ./build.sh --check` | 退出 0，`编译验证通过` |
-| `bash tests/run-appkit-tests.sh all` | 退出 0，八套全过（含 NotchLeaseHostTests 8 场景 0 失败） |
-| `bash tests/run-part4-core-tests.sh` | `SCENARIOS=72 ASSERTIONS=188 FAILURES=0` |
-| `bash tests/run-mac-crypto-tests.sh` | CryptoKit 向量、M1–M4、双向记录、重放关闭会话全过 |
-| `python3 tests/crypto-reference.py` | 18 例 OK |
-| `python3 tests/check-approval-schema.py` | PASS（validator=builtin-constraints，1 条合成响应） |
-| `bash tests/run-privacy-registry-check.sh` | `PASS privacy-registry: 458 lexical sites` |
-| `bash tests/run-privacy-page-sync.sh` | `PASS privacy-page: 生成的数据源与登记表一致` |
-| contracts / part2 / part3 与第一份十二个包 | 全部 PASS（9/24、22/86、55/147、121/334） |
-
-提交：`c9bb354`…`faa4015` 共 9 笔（含第四份合并、隐私页、T3 执行器）。
-
-## 第五、六份接入（当前 run：20261003-p56）
-
-- 合并第五份（进程/身份/窗口中间层）与第六份（仲裁修正 + Scope/Selection/Budget/诊断尾部）：
-  提交 `7c89d6d`；原件归档 `docs/handoff/chatgpt-review-2/part5|part6`。
-- 工单 01：单岛仍是 `NotchLeaseHub`；`show` 改为先 acquire（可带 replacing）→ 挂载 → `isCurrent` 复核，
-  不预先 dismiss；`beginAuthorization` 同样复核新租约。
-- 工单 02：`WS2OwnedLaunchController` + 设置页四项；**真机阶段一通过**（提交 `6e9428f`）：
-  codex-cli 0.153.0，2 个模型，thread/turn/completed/stop，`approvalsSeen=0`。
-- 工单 06：`FoldCompletion.awaitFold(id:)` + `WS2FocusWindowPort`（逐窗收起/放回、先登记等待器、
-  身份与 revision 复核），`admitted=false` 之前只计时（提交 `473ee55`）。
-- 工单 07：`run-part6-archive-integrity.sh`（94 文件哈希全对）、`run-part6-readiness.sh`（如实 BLOCKED）。
-- 工单 05：SRP 隔离探针 resolve + Mac Swift 6 编译通过，许可核过（证据在 part5-mac-probe/）；
-  固定向量互测、实例工厂、原生 Remote 互操作仍未做 → 配对未准入。
-
-### 真机发现（都属“只在 Mac 才暴露”）
-
-1. CryptoKit 的 Ed25519 签名带随机量：不能拿自己产出的 M6 与确定性向量逐字节比；
-   验收改为「对端能验证」+ 两次签名必须不同。
-2. 按线程屏蔽 SIGPIPE 在多线程进程里挡不住：`WS2DuplexProcess` 改进程级忽略，EPIPE 仍如实返回。
-3. codex 0.153.0 在初始化阶段就发 `remoteControl/status/changed`：Wire 原来把 ready 之前的通知
-   当协议错误并自关；现在通知在未关闭状态都收，只有审批请求要求 ready。
-4. codex 是 node 脚本：子进程环境要沿用 App 的 PATH（原先手写 PATH 缺 node）。
-5. PROC04 在 macOS 上 OBSERVED_PASS（0.26–0.30 秒；探针阈值 0.7 秒），Linux 的 BLOCKED 不复现；
-   工单里的 200 ms 目标未达到，记录为已知收尾时延。
-
-### 最终验收（当前 HEAD）
-
-## 第七份接入（run 20261003-p7）
-
-- 合入第七份：完整 `WS2OwnedLaunchController`（本地选项目/可执行文件、版本预检、独立 HOME/CODEX_HOME 与
-  config.toml、模型目录、新建/恢复、一次发送、流式文本、停止、锁态撤销）、`WS2OwnedSessionView`（同一刘海宿主）、
-  `WS2OwnedCodexSession+Authorization`（保留为非默认策略）、`WS2StrictJSON`、`WS2QuitBarrier`、
-  `WS2OwnedProtocolHost`、`WS2LocalLaunchProfile`、`WS2VersionProbe`、以及 `prototype/Native/WS2Child.c`
-  原生监督端口；提交 `50cb7d2`。
-- 真机跑通：part7 core 27/51、native 3/14、flow 18/145；旧回归 foundation/process 全过（PROC04 0.097s）；
-  `check-build.py` 33 份类型检查；`./build.sh --check` 与八套 AppKit 全过；隐私门禁 465 点。
-- 真实 CLI：`tests/run-owned-codex-controller.sh` 走通 版本 → 独立配置 → `config/read` 投影 → 账号边界
-  （隔离 profile 未登录），列出 5 个真实模型；没有发送查询、没有打开登录页。
-- 真机修掉 6 处（记录在 `docs/handoff/chatgpt-review-2/part7/MAC-EVIDENCE.md`）：
-  `addchdir_np` 在 SDK 26+ 弃用；退出后 `getpgid` ESRCH；空组 `kill(-pgid)` 回 EPERM 导致永不回收；
-  Swift 6 异步不能迭代 NSEnumerator；隔离 PATH 缺 node 让真实 CLI 127；真实 `config/read` 的 hooks 形状。
-- 旧 runner 跟着新依赖更新：CodexWire 加 `WS2StrictJSON`，进程通道与 AppKit harness 加原生 C 模块。
-
-### 仍没做（第七份 REMAINING 为准）
-
-## 第八份接入（run 20261003-p8）
-
-- 合入第八份：`WS2DeviceActionContracts`、`WS2VisibleListInput`、`WS2FoldEvidence`（Core）
-  + `WS2ModelPickerView`、`WS2FoldEvidenceAdapter`（App）+ 11 个既有文件改动；
-  单岛仍是 `NotchLeaseHub`，把它们的 `inputHandle(for:)` 需求补进单岛，不新增第二套协调器。提交 `2f115e5`。
-- 真机跑通：input 33/49、fold 21/49、flow 6/27；check-build 37+41；check-wiring 三项；test-tools 18 项；
-  旧回归（part7 三套 + legacy 两批）全过，PROC04 0.117 秒；整 App `build.sh --check` 与八套 AppKit 全过；
-  隐私登记表 466 点。
-- 真机修掉 4 处（记录在 `docs/handoff/chatgpt-review-2/part8/MAC-EVIDENCE.md`）：
-  脚本仍按 `App/InteractionCoordinator.swift` 找共享仲裁（本仓库在 Core/）；
-  `stage.py` 的符号链接链拒绝 Apple 自己的 `/var`；同一脚本 `resolve()` 与 `absolute()` 混用导致
-  「输出在输入内」失配；证据适配器在非隔离上下文读 MainActor 的锁态。
-- 自动窗口效果仍然关闭（`WS2FocusWindowPort.admitted=false`）；本轮 Event 只作瞬时观察，不换成恢复 Receipt。
-
-### 仍没做（第八份 REMAINING 为准）
-
-真实手柄与 GameController 签名、插拔/重映射/共存；AppKit 焦点/布局；真实 AX 收起恢复；
-完整 T3（强身份、用户 revision、run/effect 绑定、幂等恢复、跨重启 journal）；Touch ID 允许路径；
-配对接收与原生 Remote；身份与系统锁；能耗与全菜单回归；影片、签名与发布。
-
-真实登录后的查询、原生界面布局/焦点/输入法实测、脱离组子孙的全树安全、窗口真实端口准入、
-SRP 向量互测与实例工厂、设备桥、原生 Remote、能耗、影片、签名与发布。
-
-| 检查 | 结果 |
-| --- | --- |
-| `cd prototype && ./build.sh --check` | 退出 0 |
-| `bash tests/run-appkit-tests.sh all` | 八套全过（含 LEASE-H01…08） |
-| 纯核 | contracts 9/24、part2 22/86、part3 55/147、part4 72/188、part5 40/97、part6 42/95 |
-| 进程与 Wire | part5 8/26、part6 9/27、Wire 固定 schema 4/4 |
-| 真机 | owned CLI 阶段一通过；PROC04 OBSERVED_PASS 0.26s；Mac 配对加密通过；Python 配对参考 14/14 |
-| 门禁 | 隐私登记表 465 点、页面数据同源、交付归档 94 文件哈希、readiness 如实 BLOCKED |
-
-## self_review（已完成）
-
-- 契约与产物对照：四份材料都在 main 里，新增入口都有测试；未接项按第四份 REMAINING 记账，没有写成完成。
-- 证据新鲜度：发现最后一次清理提交在编译检查之后，已在当前 HEAD（`bbe298d`）重跑 `build.sh --check` 通过。
-- 之后又做了一步范围明确的收口：把「权限与启动」并进「隐私」一栏（`7c86e89`），
-  重新跑了 `build.sh --check` 与八套 AppKit 回归，并看了隐私页浅深色截图（`2 块屏 / 未锁屏 / 未读取 / 已隐藏`）。
-- 残余风险：真实窗口收窗/放回、真机探针、配对与 Keychain、owned Codex 允许路径、设备桥、live 订阅都未验。
+1. 本轮已提交到 `main`（不推送、不打标签）。
+2. 等 Aaron 指定可动窗口后，按 MAC-EVIDENCE 的矩阵逐例做受控真机观察并补证。
+3. 未完成项按第九份 REMAINING 与工单 02/03/04 继续推进。

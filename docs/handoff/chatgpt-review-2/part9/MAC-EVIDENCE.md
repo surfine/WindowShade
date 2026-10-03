@@ -69,8 +69,8 @@ arm64（Apple M5 MacBook Air，T8142）、两块屏（内置 1710×1107@2x + 一
 | `Effects/WindowFoldEffects.swift` | 1 | 释放任务时按捕获 token 的 `settleFoldWaiter` |
 | `WindowBrowser/WindowBrowserAppDelegate.swift` | 1 | `windowBrowserBeginFold` 的 `registerFoldWaiter`（该函数本就有 `dispatchPrecondition(.onQueue(.main))`） |
 
-修完 `./build.sh --check` 通过（日志 `/private/tmp/p9-repo-build.log` 为修前 23 处，
-`p9-repo-build2.log` 为修后「编译验证通过」）。
+修前日志里 23 处诊断逐条如上（本机临时日志，未入库）；修完 `./build.sh --check` 输出
+「==> 编译验证通过」并以 0 退出，本目录与 `tests/part9/validation/` 里的记录是可复核的留存。
 
 ### 二、仓库入口/测试与第九份假设的差异
 

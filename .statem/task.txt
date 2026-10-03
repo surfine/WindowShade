@@ -1,23 +1,21 @@
-# 可见契约（第八份并入）
+# 可见契约（第九份并入）
 
-目标: 把第二回合第八份并进 main：手柄到原生模型列表的真实调用链（WS2VisibleListInput +
-WS2DeviceActionContracts + WS2ModelPickerView + 唯一 Runtime host）、原 Notch 收起的事务证据
-（WS2FoldEvidence + WS2FoldEvidenceAdapter + FoldTransaction/ShadeController/Notch 的 hide 前复核
-与 actual foldTransaction 关联），并按它的顺序先 Mac 整 App 编译、再核对实际页面。
+目标: 三方合并并入第九份（收起三态、事务绑定完成通知、巡检快照、AX routeID、首帧隔离、
+去嵌套 RunLoop），按仓库既有写法修掉 macOS 上实测出的约 10 处 Swift 6 隔离错误，
+跑完全部自动化检查，再做一轮受控真机观察（只动明确允许的窗口，动手前确认）。
 
 交付物:
-- overlay 合入（Core 3 新、App 2 新、11 个既有文件改动）；doc 归档 docs/handoff/chatgpt-review-2/part8；
-- 第七份入口落成仓库 runner：part8 input/fold/flow 三套 + check-build + check-wiring + test-tools；
-- Mac `build.sh --check`、八套 AppKit、隐私门禁与前七份回归全过；
-- 台账更新（START-HERE / 1.0.16 对照表 / blueprint）。
-
-输出/格式约束: 中文提交信息；不发布、不签名、不推送、不改更新源、不动真实手柄/窗口做验收；
-设备与 AX 真机项按第八份 REMAINING 保留未验。
+- overlay 15 文件合入（3 新增 + 12 修改）；归档 docs/handoff/chatgpt-review-2/part9；
+- 仓库 runner：tests/part9/tests/{run.py,check-build.py,check-wiring.py,test-tools.py,run-previous.py}；
+- 隔离修复：EventTap/FoldExit/FoldTransaction/Reconcile/ShadeController 的调用点按仓库写法包 MainActor.assumeIsolated；
+- 台账：START-HERE / 1.0.16 对照表 / blueprint + part9/MAC-EVIDENCE.md；
+- 真机观察记录（每个用例：环境、哈希、操作、observed 三态、journal 前后）。
 
 验收方式:
-- python3 tests/part8/tests/run.py --repo . --suite {input,fold,flow}；
-- python3 tests/part8/tests/check-build.py --repo .；check-wiring.py；test-tools.py；
-- cd prototype && ./build.sh --check；bash tests/run-appkit-tests.sh all；
-- tests/run-part{2..7} 各 runner 与隐私两件门禁全过。
+- python3 tests/part9/tests/run.py --repo . --suite {regression,frame}；check-build/check-wiring/test-tools；
+  run-previous 八套（duo、part8 input/fold/flow、part7 core/native/flow、legacy foundation/process）；
+- cd prototype && ./build.sh --check；bash tests/run-appkit-tests.sh all；隐私两件门禁；part2–part8 各 runner；
+- 真机观察按工单矩阵里可安全复现的用例逐条留证。
 
-保底与回滚: 每步一次提交；overlay 与 base-sources 只读，改动可逐笔回退。
+输出/格式约束: 中文提交信息；不签名/发布/推送/改更新源；不启用自动窗口效果（admitted=false）；
+真机只动允许的窗口，unknown 语义优先。

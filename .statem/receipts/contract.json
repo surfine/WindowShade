@@ -1,19 +1,22 @@
 {
   "kind": "contract",
-  "artifact": "第八份已并进 main（2f115e5）：手柄 → 当前可见模型列表的真实调用链、原 Notch 收起的实际事务证据；归档 docs/handoff/chatgpt-review-2/part8，真机结果在 part8/MAC-EVIDENCE.md",
-  "status": "passed",
+  "artifact": "第九份已并进 main：收起三态 + 事务绑定完成通知 + 巡检快照 + AX routeID + 首帧隔离 + 去嵌套 RunLoop；归档 docs/handoff/chatgpt-review-2/part9，真机结果在 part9/MAC-EVIDENCE.md；仓库 runner 在 tests/part9/",
+  "status": "residual_risk",
   "checks": [
+    {"command": "python3 tests/part9/tests/run.py --repo . --suite regression", "result": "42 场景 / 93 断言 / 0 失败"},
+    {"command": "python3 tests/part9/tests/run.py --repo . --suite frame", "result": "15 场景 / 15 断言 / 0 失败"},
+    {"command": "python3 tests/part9/tests/check-build.py --repo .", "result": "Foundation 40 份类型检查 + 43 份语法，退出 0"},
+    {"command": "python3 tests/part9/tests/check-wiring.py --repo .", "result": "24 项全 PASS（三态、事务绑定、批次代次、routeID、首帧隔离、只读入口）"},
+    {"command": "python3 tests/part9/tests/test-tools.py", "result": "18 项 OK（含 macOS /var 与 resolve() 修正）"},
+    {"command": "python3 tests/part9/tests/run-previous.py --repo . --history tests --suite duo|part8-input|part8-fold|part8-flow|part7-core|part7-native|part7-flow", "result": "duo 三套全过；part8 33/49、21/49、6/27；part7 27/51、3/14、18/145"},
+    {"command": "python3 tests/part9/tests/run-previous.py --repo . --history docs/handoff/chatgpt-review-2 --suite legacy-foundation|legacy-process", "result": "foundation 7 子套件 exit 0；process part6 9/27、part5 8/26、PROC04 OBSERVED_PASS 0.17s"},
     {"command": "cd prototype && ./build.sh --check", "result": "退出 0，编译验证通过（含 Native C 模块）"},
-    {"command": "bash tests/run-appkit-tests.sh all", "result": "退出 0，八套全过（含 NotchLeaseHostTests 8 场景 0 失败）"},
-    {"command": "python3 tests/part8/tests/run.py --repo . --suite input|fold|flow", "result": "33/49、21/49、6/27"},
-    {"command": "python3 tests/part8/tests/check-build.py / check-wiring.py / test-tools.py", "result": "Foundation 37 份类型检查 + 41 份语法；wiring 三项 PASS；文件工具 18 项 OK"},
-    {"command": "python3 tests/part7/tests/{run,regressions}.py 重跑旧用例", "result": "part7 core 27/51、flow 18/145、native 3/14；part6 core 95、wire 11、part5 core 97、part4 188、part2 86、T1 32、手势全过；process 9/27 与 8/26；PROC04 0.117s"},
-    {"command": "bash tests/run-owned-codex-controller.sh", "result": "（上一轮）真实 codex 0.153.0 走到账号边界，列出 5 个真实模型"},
-    {"command": "bash tests/run-privacy-{registry-check,page-sync}.sh", "result": "466 个词法点、页面数据同源"},
-    {"command": "tests/run-part2..part6 各 runner", "result": "全过（part2 22/86、part3 55/147、part4 72/188、part5 40/97、part6 42/95、wire 4/4、process 8/26 与 9/27）"}
+    {"command": "bash tests/run-appkit-tests.sh all", "result": "退出 0，八套全过（含 LEASE-H01…08）；需 WindowServer 会话"},
+    {"command": "bash tests/run-privacy-{registry-check,page-sync}.sh", "result": "466 个词法点无未登记新增、页面数据同源"},
+    {"command": "tests/run-{contracts,part2..part6}-*.sh", "result": "contracts 9/24、part2 22/86、part3 55/147、part4 72/188、part5 40/97+8/26、part6 42/95+9/27+wire 4、PROC04 0.086s、T1 12/32、Mac 加密、conductor 手势全过"}
   ],
   "reused_checks": [],
-  "remaining_risk": "真实手柄与 GameController 签名、AppKit 焦点/布局、真实 AX 收起恢复都未实测；完整 T3 仍缺（端口 admitted=false）；真实登录后的查询、Touch ID 允许路径、配对与原生 Remote、能耗、影片与发布未验",
+  "remaining_risk": "受控真机观察（工单 02/03 的 M01/M03/M06/M07/M08/M11/M14/M16/M17/M18）未做：需要 Aaron 先指定允许动的窗口、动手前再确认一次；真实 AX 收起/恢复与人工恢复、慢 AX 与强制取消、真实 SCK capture graph、完整 T3、Touch ID 允许端到端、配对接收、系统身份后端、能耗、影片与发布仍未做",
   "next_action": "self_review",
-  "updated": "2026-10-03T18:05:16+0800"
+  "updated": "2026-10-03T23:10:00+0800"
 }
