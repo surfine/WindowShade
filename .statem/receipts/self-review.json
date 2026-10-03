@@ -1,13 +1,20 @@
 {
   "kind": "self_review",
-  "status": "",
-  "issues_found": null,
-  "needs_evidence": null,
+  "artifact": "main 上的 7c86e89：四份材料合并 + 隐私一栏（原权限与启动）+ 番茄钟闭环与 T3 窗口执行器",
+  "status": "clean",
+  "issues_found": [
+    "自审开始时交付物还是 bbe298d，随后又做了范围明确的收口（把权限与启动并进隐私，7c86e89）；发现后在当前 HEAD 重跑了 build.sh --check 与八套 AppKit 回归，并看了隐私页浅深色截图，证据属于当前产物"
+  ],
+  "needs_evidence": false,
+  "findings": [
+    "没有发现在契约之外扩范围的改动：没有发布、没有改更新源、没有安装 hook、没有写用户 home",
+    "未接项按第四份 REMAINING 保真：owned Codex 允许路径、首次 Pair-Setup/Keychain、设备桥、live 订阅、系统锁都仍是未接，没有被写成完成"
+  ],
   "lenses": {
-    "task_contract": "",
-    "evidence_freshness": "",
-    "edge_risk": ""
+    "task_contract": "契约要求的四类交付物都在：材料归档（docs/handoff/chatgpt-review-2/part1…part4）、验证入口（tests/run-part4-core-tests.sh 等）、用户可见功能（隐私页 20 行、番茄钟闭环、T3 执行器）、台账（v1.0.16-ledger.md / blueprint.md / START-HERE-deepseek.md）",
+    "evidence_freshness": "当前 HEAD 7c86e89 上实跑：./build.sh --check 退出 0；bash tests/run-appkit-tests.sh all 八套全过；run-part4-core 72/188；run-mac-crypto 全过；crypto-reference 18 例；check-approval-schema PASS；隐私登记表 458 点与页面数据同源；前三份纯核全绿",
+    "edge_risk": "T3 执行器只放回仍然收着且未被别人动过的窗口，进程启动时间与 tuck revision 任一不符就跳过（手动改动不会被回滚）；聊天收窗没有私人 App 名单，效果只记录不执行；隐私页只显示 status=current 的 20 行，planned 行等功能接通"
   },
-  "findings": [],
-  "updated": "2026-10-03T18:09:42+0800"
+  "next_action": "handoff",
+  "updated": "2026-10-03T18:35:00+0800"
 }
