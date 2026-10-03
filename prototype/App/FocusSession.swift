@@ -158,7 +158,10 @@ extension AppDelegate {
             context.timingFunction = CAMediaTimingFunction(name: .easeOut)
             overlay.animator().setFrame(pulled.overlay, display: true)
         } completionHandler: {
-            self.isProgrammaticOverlayArrangement = false
+            // 动画完成回调在主线程。
+            MainActor.assumeIsolated {
+                self.isProgrammaticOverlayArrangement = false
+            }
         }
         overlay.level = max(overlayLevel, .floating)
         overlay.orderFrontRegardless()
