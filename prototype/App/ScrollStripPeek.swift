@@ -345,8 +345,11 @@ final class StripPeek {
             context.duration = 0.12
             panel.animator().alphaValue = 0
         }, completionHandler: {
-            panel.orderOut(nil)
-            panel.contentView = nil
+            // 动画完成回调在主线程。
+            MainActor.assumeIsolated {
+                panel.orderOut(nil)
+                panel.contentView = nil
+            }
         })
         wlog("strip-peek: close id=\(current.sliver.id) reason=\(reason)")
     }
