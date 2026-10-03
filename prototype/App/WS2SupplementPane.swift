@@ -11,12 +11,39 @@ import Cocoa
         focus.bezelStyle = .rounded; focus.isEnabled = NotchController.isEnabled && NotchActivityController.isEnabled
         focus.toolTip = "25 分钟专注，5 分钟休息。窗口收起动作等待 T3 接线。"
         addArrangedSubview(focus)
+        // 专注时长（docs/pomodoro.md 的两档）；进行中改档从下一轮开始。
+        let presetRow = NSStackView(); presetRow.orientation = .horizontal; presetRow.spacing = 10
+        let preset = NSPopUpButton(frame: .zero, pullsDown: false)
+        preset.addItems(withTitles: ["25 分钟（休息 5 分钟）", "50 分钟（休息 10 分钟）"])
+        preset.selectItem(at: WS2AppRuntime.storedPresetIndex())
+        preset.target = owner; preset.action = #selector(AppDelegate.ws2ChangeFocusPreset(_:))
+        preset.setAccessibilityLabel("专注时长")
+        presetRow.addArrangedSubview(NSTextField(labelWithString: "专注时长"))
+        presetRow.addArrangedSubview(preset)
+        addArrangedSubview(presetRow)
         // 同一份宿主驱动的卡片：设置页看得到倒计时，也不再各建一个计时器。
-        let card = FocusTimerCard(host: owner.ws2Runtime.focus)
-        card.render(owner.ws2Runtime.focus.model, at: owner.ws2Runtime.clock.now())
-        card.widthAnchor.constraint(equalToConstant: 260).isActive = true
-        addArrangedSubview(card)
-        owner.ws2Runtime.focusChanged = { [weak card] model, now in card?.render(model, at: now) }
+        let cardHolder = NSStackView()
+        cardHolder.orientation = .vertical; cardHolder.alignment = .leading; cardHolder.spacing = 8
+        addArrangedSubview(cardHolder)
+        func installCard(_ host: FocusTimerHost) {
+            cardHolder.arrangedSubviews.forEach { $0.removeFromSuperview() }
+            let card = FocusTimerCard(host: host)
+            card.render(host.model, at: owner.ws2Runtime.clock.now())
+            card.widthAnchor.constraint(equalToConstant: 260).isActive = true
+            cardHolder.addArrangedSubview(card)
+        }
+        installCard(owner.ws2Runtime.focus)
+        owner.ws2Runtime.focusChanged = { [weak cardHolder] model, now in
+            (cardHolder?.arrangedSubviews.first as? FocusTimerCard)?.render(model, at: now)
+        }
+        owner.ws2Runtime.focusHostChanged = { [weak cardHolder, weak owner] host in
+            guard let owner else { return }
+            cardHolder?.arrangedSubviews.forEach { $0.removeFromSuperview() }
+            let card = FocusTimerCard(host: host)
+            card.render(host.model, at: owner.ws2Runtime.clock.now())
+            card.widthAnchor.constraint(equalToConstant: 260).isActive = true
+            cardHolder?.addArrangedSubview(card)
+        }
         for (title,reason) in [("指挥模式","需要已核准的输入设备和助手连接"),("平滑滚动","需要确认每条事件的设备来源"),
                                 ("Apple TV 遥控器","需要通过当前设备的按钮与触点探针"),("游戏手柄","需要完成当前连接的映射与阻力归零检查"),
                                 ("在场检测","需要已绑定身份的蓝牙读回来源")] {

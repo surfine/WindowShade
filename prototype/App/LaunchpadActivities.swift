@@ -35,6 +35,9 @@ final class LaunchpadActivityCards {
             let primary = CGRect(x: rect.maxX - 52, y: rect.midY - 20, width: 40, height: 40)
             if item.kind == .music {
                 hits.append(Hit(frame: primary, title: item.isPaused ? "播放" : "暂停", id: item.id, action: .playPause))
+            } else if item.kind == .focus {
+                // 番茄钟和刘海共用一份状态：负一屏这张卡也能暂停/继续。
+                hits.append(Hit(frame: primary, title: item.isPaused ? "继续" : "暂停", id: item.id, action: .focusPause))
             }
             hits.append(Hit(frame: rect, title: label, id: item.id, action: .open))
         }
@@ -72,14 +75,21 @@ final class LaunchpadActivityCards {
                 icon.contents = NotchActivitySymbol.whiteImage(symbol)
             }
             icon.frame = CGRect(x: 16, y: 20, width: 26, height: 26)
-            let reserved: CGFloat = value.kind == .music ? 70 : 18
+            let hasButton = value.kind == .music || value.kind == .focus
+            let reserved: CGFloat = hasButton ? 70 : 18
             title.frame = CGRect(x: 54, y: 18, width: max(0, width - 54 - reserved), height: 23)
             subtitle.frame = CGRect(x: 54, y: 44, width: max(0, width - 54 - reserved), height: 20)
             status.frame = CGRect(x: 54, y: 70, width: max(0, width - 72), height: 16)
             status.isHidden = height < 100
-            button.isHidden = value.kind != .music
+            button.isHidden = !hasButton
             button.frame = CGRect(x: width - 48, y: height / 2 - 12, width: 24, height: 24)
-            button.contents = NotchActivitySymbol.whiteImage(value.isPaused ? "play.fill" : "pause.fill")
+            if value.kind == .focus {
+                progress.backgroundColor = NSColor.systemRed.cgColor
+                button.contents = NotchActivitySymbol.whiteImage(value.isPaused ? "play.fill" : "pause.fill")
+            } else {
+                progress.backgroundColor = NSColor.systemGreen.cgColor
+                button.contents = NotchActivitySymbol.whiteImage(value.isPaused ? "play.fill" : "pause.fill")
+            }
             track.isHidden = value.progress == nil || height < 90
             track.frame = CGRect(x: 18, y: height - 14, width: max(0, width - 36), height: 3)
             progress.frame = CGRect(x: 0, y: 0, width: track.bounds.width * CGFloat(value.progress ?? 0), height: 3)

@@ -83,7 +83,8 @@
 > `WS2ProcessChannel` 关第二次 FileHandle 抛 ObjC 异常打掉进程、关了以后还读 fileDescriptor；测试把证据写向包布局的 `validation/`。
 > 现在：第三份纯核 55 场景/147 断言、第二份 22 场景/86 断言、`tools/ws2-hook` 四个拒绝 fixture 全过；`./build.sh --check` 与八套 AppKit 回归见台账。
 >
-> 仍然没做完的：T4 设置两项与快捷键、A3/D3 的宿主与租约桥、D4/I7 真实偏好联动、A2 接 A1/A4 的允许路径、L4 系统锁后端、
+> 番茄钟的 T4 随后补上：专注时长两档、快捷键（默认不占键）、负一屏卡片暂停/继续；只有「专注时把聊天收进刘海」仍等 T3 的私人 App 名单。
+> 仍然没做完的：A3/D3 的宿主与租约桥、D4/I7 真实偏好联动、A2 接 A1/A4 的允许路径、L4 系统锁后端、
 > I3 主动事件桥、I5 usage 桥、I8 GameController 桥、D5 真实配对与加密传输、影片 17 项真机素材与声音。逐包状态见
 > [part3/integration/package-status.json](chatgpt-review-2/part3/integration/package-status.json) 与
 > [part3/integration/MAC-ACCEPTANCE.md](chatgpt-review-2/part3/integration/MAC-ACCEPTANCE.md)。

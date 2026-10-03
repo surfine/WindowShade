@@ -52,6 +52,8 @@ enum GlobalShortcut: String, CaseIterable {
     case previousDisplay
     /// 画中画：当前窗口缩成一张实时画面浮在屏幕角落；再按一下回到原处。默认不占快捷键。
     case pictureInPicture
+    /// 番茄钟：开始或暂停。默认不占快捷键，在设置里录一个。
+    case pomodoro
 
     typealias HotKey = WindowBrowserSettings.HotKey
 
@@ -93,6 +95,7 @@ enum GlobalShortcut: String, CaseIterable {
         case .undoPlacement: return 32
         case .previousDisplay: return 33
         case .pictureInPicture: return 34
+        case .pomodoro: return 35
         }
     }
 
@@ -134,6 +137,7 @@ enum GlobalShortcut: String, CaseIterable {
         case .undoPlacement: return "撤销上次排布"
         case .previousDisplay: return "移到上一块屏幕"
         case .pictureInPicture: return "画中画当前窗口"
+        case .pomodoro: return "开始或暂停番茄钟"
         }
     }
 
@@ -160,7 +164,7 @@ enum GlobalShortcut: String, CaseIterable {
         case .tuckCurrent: return nil
         case .windowBrowser, .suspendPins, .topHalf, .bottomHalf, .topLeft, .topRight, .bottomLeft, .bottomRight, .leftThird,
              .centerThird, .rightThird, .leftTwoThirds, .rightTwoThirds, .fill, .fullHeight, .larger, .smaller, .center,
-             .undoPlacement, .previousDisplay, .pictureInPicture: return nil
+             .undoPlacement, .previousDisplay, .pictureInPicture, .pomodoro: return nil
         }
     }
 

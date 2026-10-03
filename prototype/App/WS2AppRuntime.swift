@@ -10,24 +10,29 @@ import Cocoa
     var focusWindowEffects: (([FocusTimer.Effect]) -> Void)?
     /// 设置页里那张卡片也跟着同一份模型走；宿主只留一个，通知可以分给一处。
     var focusChanged: ((FocusTimer, WS2.Instant) -> Void)?
+    /// 换了专注时长会重建宿主（T1 的 preset 是模型上的常量），设置页据此换掉那张卡片。
+    var focusHostChanged: ((FocusTimerHost) -> Void)?
+
+    /// 专注时长只有两档，照 docs/pomodoro.md；默认 25 + 5。
+    static let presetKey = "WS2.focusPreset"
+    static func storedPreset() -> FocusTimer.Preset {
+        UserDefaults.standard.string(forKey: presetKey) == "50" ? .minutes50 : .minutes25
+    }
+    static func storedPresetLabel() -> String {
+        switch storedPreset() {
+        case .minutes25: return "25 分钟（休息 5 分钟）"
+        case .minutes50: return "50 分钟（休息 10 分钟）"
+        }
+    }
+    static func storedPresetIndex() -> Int {
+        switch storedPreset() {
+        case .minutes25: return 0
+        case .minutes50: return 1
+        }
+    }
     init(owner: AppDelegate) {
         self.owner = owner
-        let clock = self.clock
-        focus = FocusTimerHost(model: FocusTimer(bootID: UUID(), tuckChatEnabled: false),clock:clock,
-            calendarSample: { now, deadline in
-                let date = Date(), calendar = Calendar.current
-                func day(_ date: Date) -> String {
-                    let p = calendar.dateComponents([.era,.year,.month,.day],from:date)
-                    return "\(p.era ?? 0)/\(p.year ?? 0)/\(p.month ?? 0)/\(p.day ?? 0)"
-                }
-                let delta = deadline.map { (Double($0.nanoseconds)-Double(now.nanoseconds))/1_000_000_000 } ?? 0
-                return .init(today:day(date),deadlineDay:day(date.addingTimeInterval(delta)))
-            }, effects:{ [weak self] effects in self?.focusWindowEffects?(effects) })
-        focus.onChange = { [weak self] model, now in
-            guard let self else { return }
-            self.publish()
-            self.focusChanged?(model, now)
-        }
+        focus = makeFocusHost(preset: Self.storedPreset())
         owner.notch.activities.onFocusAction = { [weak self] action in
             guard let self else { return }
             switch action {
@@ -69,6 +74,37 @@ import Cocoa
             })
         }
     }
+    /// 唯一宿主的唯一构造处：init 和换专注时长都走它，接线不会漏。
+    private func makeFocusHost(preset: FocusTimer.Preset) -> FocusTimerHost {
+        let host = FocusTimerHost(model: FocusTimer(bootID: UUID(), preset: preset, tuckChatEnabled: false),clock:clock,
+            calendarSample: { now, deadline in
+                let date = Date(), calendar = Calendar.current
+                func day(_ date: Date) -> String {
+                    let p = calendar.dateComponents([.era,.year,.month,.day],from:date)
+                    return "\(p.era ?? 0)/\(p.year ?? 0)/\(p.month ?? 0)/\(p.day ?? 0)"
+                }
+                let delta = deadline.map { (Double($0.nanoseconds)-Double(now.nanoseconds))/1_000_000_000 } ?? 0
+                return .init(today:day(date),deadlineDay:day(date.addingTimeInterval(delta)))
+            }, effects:{ [weak self] effects in self?.focusWindowEffects?(effects) })
+        host.onChange = { [weak self] model, now in
+            guard let self else { return }
+            self.publish()
+            self.focusChanged?(model, now)
+        }
+        return host
+    }
+    /// 设置里的专注时长：空闲时立刻换成新宿主，跑着的时候下一次开始生效。
+    func setStoredPreset(_ preset: FocusTimer.Preset) {
+        switch preset {
+        case .minutes25: UserDefaults.standard.set("25", forKey: Self.presetKey)
+        case .minutes50: UserDefaults.standard.set("50", forKey: Self.presetKey)
+        }
+        guard focus.model.phase == .idle else { return }
+        focus = makeFocusHost(preset: preset)
+        focusHostChanged?(focus)
+        focusChanged?(focus.model, clock.now())
+        publish()
+    }
     private func setLockReason(_ reason: String, locked: Bool) {
         if locked { lockReasons.insert(reason) } else { lockReasons.remove(reason) }
         // 任一来源仍锁定或系统状态未知时不恢复。通知乱序至多留下暂停，不推断解锁。
@@ -79,6 +115,13 @@ import Cocoa
         }
     }
     var menuTitle: String { "番茄钟 · " + focus.model.compactText(at:clock.now()) }
+    /// 快捷键与设置按钮共用：空闲就开始，暂停就继续，跑着就暂停。
+    func toggleFocus() {
+        switch focus.model.phase {
+        case .idle: open()
+        default: focus.handle(focus.model.isPaused ? .resume : .pause); publish()
+        }
+    }
     func open() {
         guard let owner,NotchController.isEnabled,NotchActivityController.isEnabled, AuthorizationService.shared.lockState() == .unlocked else { return }
         if focus.model.phase == .idle { focus.handle(.start) }
@@ -118,4 +161,10 @@ import Cocoa
 }
 extension AppDelegate {
     @objc func ws2OpenFocus() { MainActor.assumeIsolated { ws2Runtime.open() } }
+    /// 设置里的专注时长：空闲时立即生效，进行中则从下一轮开始。
+    @objc func ws2ChangeFocusPreset(_ sender: NSPopUpButton) {
+        MainActor.assumeIsolated {
+            ws2Runtime.setStoredPreset(sender.indexOfSelectedItem == 1 ? .minutes50 : .minutes25)
+        }
+    }
 }
