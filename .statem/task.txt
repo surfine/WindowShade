@@ -1,24 +1,23 @@
-# 可见契约（第七份并入）
+# 可见契约（第八份并入）
 
-目标: 把 ChatGPT 第二回合第七份并进 main：本地只读助手流程的生产调用者（WS2OwnedLaunchController 全量版、
-WS2OwnedSessionView、WS2OwnedCodexSession+Authorization）、原生 C 监督端口、严格 JSON、退出屏障、
-版本预检与独立启动配置，并按第七份的三步推进（先跑它的 core/native/flow 与旧回归，再 Mac 整 App 编译，
-最后按工单 01 用真实 0.153.0 CLI 验收）。
+目标: 把第二回合第八份并进 main：手柄到原生模型列表的真实调用链（WS2VisibleListInput +
+WS2DeviceActionContracts + WS2ModelPickerView + 唯一 Runtime host）、原 Notch 收起的事务证据
+（WS2FoldEvidence + WS2FoldEvidenceAdapter + FoldTransaction/ShadeController/Notch 的 hide 前复核
+与 actual foldTransaction 关联），并按它的顺序先 Mac 整 App 编译、再核对实际页面。
 
 交付物:
-- overlay 合入（Core 3 新 + App 4 新/5 改 + Support 2 新 + Native 3 + build.sh/WindowShade/Updater 改动）；
-- 本地跑通第七份 core/native/flow 与旧回归；Mac `build.sh --check` 与八套 AppKit；
-- 真实 CLI 只读流程：打开入口 → 选项目/可执行文件 → 版本与配置核对 → 模型列表 → 发送一次查询 →
-  匹配的最终结果 → 停止/断开；锁屏撤销；
-- 归档 docs/handoff/chatgpt-review-2/part7；台账更新（START-HERE / 1.0.16 对照表 / blueprint）。
+- overlay 合入（Core 3 新、App 2 新、11 个既有文件改动）；doc 归档 docs/handoff/chatgpt-review-2/part8；
+- 第七份入口落成仓库 runner：part8 input/fold/flow 三套 + check-build + check-wiring + test-tools；
+- Mac `build.sh --check`、八套 AppKit、隐私门禁与前七份回归全过；
+- 台账更新（START-HERE / 1.0.16 对照表 / blueprint）。
 
-输出/格式约束: 中文提交信息；不改真实 home 配置、不自动启动工具、不运行真实远端命令、
-不签名、不发布、不改更新源；真机项（Touch ID 允许路径、设备、原生 Remote、窗口效果、能耗）保持未验。
+输出/格式约束: 中文提交信息；不发布、不签名、不推送、不改更新源、不动真实手柄/窗口做验收；
+设备与 AX 真机项按第八份 REMAINING 保留未验。
 
 验收方式:
-- python3 docs/handoff/chatgpt-review-2/part7/tests/run.py --repo . --suite {core,native,flow}（适配到仓库布局）；
-- cd prototype && ./build.sh --check；tests/run-appkit-tests.sh all；隐私登记表与页面同步；
-- 真实 CLI：tests/run-owned-codex-phase1.sh（已通过）→ 按工单补「真实配置投影/登录/查询/停止」一轮；
-- 旧回归：part2/part3/part4/part5/part6 各 runner 全绿。
+- python3 tests/part8/tests/run.py --repo . --suite {input,fold,flow}；
+- python3 tests/part8/tests/check-build.py --repo .；check-wiring.py；test-tools.py；
+- cd prototype && ./build.sh --check；bash tests/run-appkit-tests.sh all；
+- tests/run-part{2..7} 各 runner 与隐私两件门禁全过。
 
-保底与回滚: 每步一次提交；原生 C 端口只在 prototype/Native 下，构建脚本变更可逐笔回退。
+保底与回滚: 每步一次提交；overlay 与 base-sources 只读，改动可逐笔回退。

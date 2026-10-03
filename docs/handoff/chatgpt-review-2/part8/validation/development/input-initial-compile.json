@@ -1,0 +1,28 @@
+[
+  {
+    "argv": [
+      "swiftc",
+      "-swift-version",
+      "6",
+      "-strict-concurrency=complete",
+      "-warnings-as-errors",
+      "/mnt/data/WindowShade2-round2-handoff-v8/candidate-repo/prototype/Core/Contracts.swift",
+      "/mnt/data/WindowShade2-round2-handoff-v8/candidate-repo/prototype/Core/GamepadMapping.swift",
+      "/mnt/data/WindowShade2-round2-handoff-v8/candidate-repo/prototype/Core/WS2DeviceInputGate.swift",
+      "/mnt/data/WindowShade2-round2-handoff-v8/candidate-repo/prototype/Core/WS2SelectionModel.swift",
+      "/mnt/data/WindowShade2-round2-handoff-v8/candidate-repo/prototype/Core/WS2SemanticInputRouter.swift",
+      "/mnt/data/WindowShade2-round2-handoff-v8/candidate-repo/prototype/Core/WS2DeviceActionContracts.swift",
+      "/mnt/data/WindowShade2-round2-handoff-v8/candidate-repo/prototype/Core/WS2VisibleListInput.swift",
+      "/mnt/data/WindowShade2-round2-handoff-v8/candidate-repo/prototype/App/WS2DeviceActionHost.swift",
+      "/mnt/data/WindowShade2-round2-part8/tests/TestLog.swift",
+      "/mnt/data/WindowShade2-round2-part8/tests/InputHarness.swift",
+      "/mnt/data/WindowShade2-round2-part8/tests/InputTests.swift",
+      "-o",
+      "/tmp/ws2-r8-r2ljx5y6/tests"
+    ],
+    "exit_code": 1,
+    "elapsed_seconds": 2.4581303209999987,
+    "stdout": "",
+    "stderr": "/mnt/data/WindowShade2-round2-part8/tests/InputHarness.swift:45:45: error: missing argument for parameter 'enabled' in call\n43 |     var chosen:[String]=[],cancelled=0;var host:WS2DeviceActionHost!,bridge:TestBridge!\n44 |     init()throws{\n45 |         try sink.input.replace([.init(id:\"a\"),.init(id:\"b\"),.init(id:\"c\")],selectedID:\"a\")\n   |                                             `- error: missing argument for parameter 'enabled' in call\n46 |         sink.input.ready=true;sink.input.onActivate={[weak self] id in self?.chosen.append(id);return true}\n47 |         sink.input.onCancel={[weak self] in self?.cancelled += 1}\n\n/mnt/data/WindowShade2-round2-handoff-v8/candidate-repo/prototype/Core/WS2SelectionModel.swift:5:12: note: 'init(id:enabled:)' declared here\n 3 | /// Stable-ID selection for existing native lists. Does not synthesize keyboard events.\n 4 | struct WS2SelectionModel: Sendable {\n 5 |     struct Item: Equatable, Sendable { let id: String; let enabled: Bool }\n   |            `- note: 'init(id:enabled:)' declared here\n 6 |     struct Activation: Equatable, Sendable { let revision: UInt64; let serial: UInt64; let itemID: String }\n 7 |     enum Failure: Error { case invalidSnapshot, exhausted }\n\n/mnt/data/WindowShade2-round2-part8/tests/InputHarness.swift:45:59: error: missing argument for parameter 'enabled' in call\n43 |     var chosen:[String]=[],cancelled=0;var host:WS2DeviceActionHost!,bridge:TestBridge!\n44 |     init()throws{\n45 |         try sink.input.replace([.init(id:\"a\"),.init(id:\"b\"),.init(id:\"c\")],selectedID:\"a\")\n   |                                                           `- error: missing argument for parameter 'enabled' in call\n46 |         sink.input.ready=true;sink.input.onActivate={[weak self] id in self?.chosen.append(id);return true}\n47 |         sink.input.onCancel={[weak self] in self?.cancelled += 1}\n\n/mnt/data/WindowShade2-round2-handoff-v8/candidate-repo/prototype/Core/WS2SelectionModel.swift:5:12: note: 'init(id:enabled:)' declared here\n 3 | /// Stable-ID selection for existing native lists. Does not synthesize keyboard events.\n 4 | struct WS2SelectionModel: Sendable {\n 5 |     struct Item: Equatable, Sendable { let id: String; let enabled: Bool }\n   |            `- note: 'init(id:enabled:)' declared here\n 6 |     struct Activation: Equatable, Sendable { let revision: UInt64; let serial: UInt64; let itemID: String }\n 7 |     enum Failure: Error { case invalidSnapshot, exhausted }\n\n/mnt/data/WindowShade2-round2-part8/tests/InputHarness.swift:45:73: error: missing argument for parameter 'enabled' in call\n43 |     var chosen:[String]=[],cancelled=0;var host:WS2DeviceActionHost!,bridge:TestBridge!\n44 |     init()throws{\n45 |         try sink.input.replace([.init(id:\"a\"),.init(id:\"b\"),.init(id:\"c\")],selectedID:\"a\")\n   |                                                                         `- error: missing argument for parameter 'enabled' in call\n46 |         sink.input.ready=true;sink.input.onActivate={[weak self] id in self?.chosen.append(id);return true}\n47 |         sink.input.onCancel={[weak self] in self?.cancelled += 1}\n\n/mnt/data/WindowShade2-round2-handoff-v8/candidate-repo/prototype/Core/WS2SelectionModel.swift:5:12: note: 'init(id:enabled:)' declared here\n 3 | /// Stable-ID selection for existing native lists. Does not synthesize keyboard events.\n 4 | struct WS2SelectionModel: Sendable {\n 5 |     struct Item: Equatable, Sendable { let id: String; let enabled: Bool }\n   |            `- note: 'init(id:enabled:)' declared here\n 6 |     struct Activation: Equatable, Sendable { let revision: UInt64; let serial: UInt64; let itemID: String }\n 7 |     enum Failure: Error { case invalidSnapshot, exhausted }\n"
+  }
+]

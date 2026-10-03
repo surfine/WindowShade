@@ -11,6 +11,8 @@ import Cocoa
     private var focusEffects: WS2FocusEffectExecutor!
     private(set) var owned:WS2OwnedLaunchController!
     private weak var ownedView:WS2OwnedSessionView?
+    private weak var modelPicker: WS2ModelPickerView?
+    private var deviceHost: WS2DeviceActionHost?
     private var sleeping=false
     private var quitBarrier=WS2QuitBarrier()
     private var quitToken:WS2QuitBarrier.Token?
@@ -48,7 +50,11 @@ import Cocoa
             return !self.sleeping && self.lockReasons.isEmpty && NotchController.isEnabled &&
                 AuthorizationService.shared.lockState() == .unlocked
         })
-        owned.onChange={ [weak self] in self?.ownedView?.scheduleRender() }
+        owned.onChange={ [weak self] in
+            self?.ownedView?.scheduleRender()
+            self?.modelPicker?.sync()
+            self?.deviceHost?.environmentChanged()
+        }
         owned.onQuiescent={ [weak self] in self?.finishQuit(childrenReady:true) }
         UpdaterController.shared.terminationResponse={ [weak self] approved in
             guard let self else { NSApp.reply(toApplicationShouldTerminate:approved);return }
@@ -65,7 +71,7 @@ import Cocoa
             self?.focusCard?.render(model,at:now); self?.publish()
         }
         defaultsObserver = NotificationCenter.default.addObserver(forName:UserDefaults.didChangeNotification,
-            object:nil,queue:.main) { [weak self] _ in MainActor.assumeIsolated { self?.refreshFocusSettings(); self?.owned?.environmentChanged() } }
+            object:nil,queue:.main) { [weak self] _ in MainActor.assumeIsolated { self?.refreshFocusSettings(); self?.owned?.environmentChanged(); self?.deviceHost?.environmentChanged() } }
         owner.notch.activities.ws2FocusAction = { [weak self] action in
             guard let self else { return }
             switch action {
@@ -145,10 +151,49 @@ import Cocoa
     func openOwned() {
         guard NotchController.isEnabled,!sleeping,lockReasons.isEmpty,AuthorizationService.shared.lockState() == .unlocked else { return }
         let view=WS2OwnedSessionView(controller:owned)
+        view.openModelPicker={ [weak self] in self?.openModelPicker() }
         guard island.show(view,ownerID:"ownedCodex",onDismiss:{[weak self,weak view] _ in
             if self?.ownedView === view { self?.ownedView=nil }
         }) else { return }
         ownedView=view;view.render()
+    }
+    private func openModelPicker() {
+        guard !sleeping, lockReasons.isEmpty, owned.canChooseModel,
+              AuthorizationService.shared.lockState() == .unlocked else { return }
+        let view = WS2ModelPickerView(controller: owned)
+        guard island.show(view, ownerID: "ownedModelPicker", onDismiss: { [weak self, weak view] _ in
+            guard let self, self.modelPicker === view else { return }
+            self.deviceHost?.stop(); self.deviceHost = nil; self.modelPicker = nil
+        }), let lease = island.inputHandle(for: view) else { return }
+        modelPicker = view; view.expectedLease = lease
+        view.currentLease = { [weak self, weak view] in
+            guard let view else { return nil }; return self?.island.inputHandle(for: view)
+        }
+        let context: (UUID) -> WS2SemanticInputRouter.Context? = { [weak self, weak view] id in
+            guard let self, let view, self.modelPicker === view, view.isInputReady,
+                  let epoch = view.backendEpoch else { return nil }
+            return .init(attachment: id, lease: view.pageID, domain: .conductor,
+                         targetRevision: view.input.selection.revision, backendEpoch: epoch)
+        }
+        let clock = self.clock
+        let host = WS2DeviceActionHost(sink: view, liveContext: context,
+            frontIsGameOrUnknown: { [weak view] in view?.isInputReady != true },
+            unlocked: { AuthorizationService.shared.lockState() == .unlocked },
+            makeBridge: { environment, emit in WS2GameControllerBridge(clock: clock, environment: environment, emit: emit) })
+        deviceHost = host
+        host.devicesChanged = { [weak view] in view?.renderDevices($0) }
+        view.enableDevice = { [weak host, weak view] id in
+            guard let host, let view, let current = context(id) else { return false }
+            view.input.bind(current); view.input.ready = view.isInputReady
+            return host.enable(id)
+        }
+        view.disableDevice = { [weak host] in host?.disable($0) }
+        view.changedEnvironment = { [weak self, weak view] in
+            guard let self, self.modelPicker === view else { return }; self.deviceHost?.environmentChanged()
+        }
+        view.didChoose = { [weak self] in self?.openOwned() }
+        view.navigateBack = { [weak self] in self?.openOwned() }
+        view.sync(); host.start(); view.renderDevices(host.devices)
     }
     var menuTitle: String { "番茄钟 · " + focus.model.compactText(at:clock.now()) }
     func open() {
@@ -196,6 +241,7 @@ import Cocoa
         if title != lastMenuTitle { lastMenuTitle = title; owner.rebuildMenu() }
     }
     func stop() {
+        deviceHost?.stop(); deviceHost=nil; modelPicker=nil
         owned?.stop(reason:"应用正在退出",clearPrivate:true)
         owned?.onChange=nil;owned?.onBrowserURL=nil
         island?.stop(); focus?.stop()

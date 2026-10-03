@@ -1,0 +1,107 @@
+[
+  {
+    "assertions" : 2,
+    "name" : "FOLD01 admission is not evidence",
+    "result" : "PASS"
+  },
+  {
+    "assertions" : 2,
+    "name" : "FOLD02 hidden needs physical attempt and bound transaction",
+    "result" : "PASS"
+  },
+  {
+    "assertions" : 4,
+    "name" : "FOLD03 exactly one ordinary completion",
+    "result" : "PASS"
+  },
+  {
+    "assertions" : 2,
+    "name" : "FOLD04 wrong transaction cannot complete",
+    "result" : "PASS"
+  },
+  {
+    "assertions" : 2,
+    "name" : "FOLD05 deadline before hide proves not started",
+    "result" : "PASS"
+  },
+  {
+    "assertions" : 2,
+    "name" : "FOLD06 deadline after hide remains unknown",
+    "result" : "PASS"
+  },
+  {
+    "assertions" : 2,
+    "name" : "FOLD07 late success is marked separately",
+    "result" : "PASS"
+  },
+  {
+    "assertions" : 2,
+    "name" : "FOLD08 early failure means no hiding attempt",
+    "result" : "PASS"
+  },
+  {
+    "assertions" : 2,
+    "name" : "FOLD09 failure after mutation not called cancelled",
+    "result" : "PASS"
+  },
+  {
+    "assertions" : 2,
+    "name" : "FOLD10 error cannot turn into notStarted after write",
+    "result" : "PASS"
+  },
+  {
+    "assertions" : 2,
+    "name" : "FOLD11 visible observation can later confirm hidden",
+    "result" : "PASS"
+  },
+  {
+    "assertions" : 2,
+    "name" : "FOLD12 repeated unknown is silent",
+    "result" : "PASS"
+  },
+  {
+    "assertions" : 2,
+    "name" : "FOLD13 window-id reuse cannot consume old ticket",
+    "result" : "PASS"
+  },
+  {
+    "assertions" : 2,
+    "name" : "FOLD14 duplicate live window refused",
+    "result" : "PASS"
+  },
+  {
+    "assertions" : 2,
+    "name" : "FOLD15 bounded observer capacity",
+    "result" : "PASS"
+  },
+  {
+    "assertions" : 5,
+    "name" : "FOLD16 bad time and identifiers refused",
+    "result" : "PASS"
+  },
+  {
+    "assertions" : 3,
+    "name" : "FOLD17 exact deadline prevents mutation",
+    "result" : "PASS"
+  },
+  {
+    "assertions" : 3,
+    "name" : "FOLD18 second transaction cannot overwrite binding",
+    "result" : "PASS"
+  },
+  {
+    "assertions" : 2,
+    "name" : "FOLD19 callback after bounded release is inert",
+    "result" : "PASS"
+  },
+  {
+    "assertions" : 2,
+    "name" : "FOLD20 forged ticket cannot use matching request UUID",
+    "result" : "PASS"
+  },
+  {
+    "assertions" : 2,
+    "name" : "FOLD21 backward time cannot start mutation",
+    "result" : "PASS"
+  }
+]

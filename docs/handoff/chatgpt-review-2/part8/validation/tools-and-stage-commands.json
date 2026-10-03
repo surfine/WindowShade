@@ -1,0 +1,38 @@
+[
+  {
+    "argv": [
+      "python3",
+      "/mnt/data/WindowShade2-round2-part8/tests/test-tools.py"
+    ],
+    "exit_code": 0,
+    "stdout": "",
+    "stderr": "test_bad_overlay (__main__.Tests.test_bad_overlay) ... ok\ntest_base_symlink (__main__.Tests.test_base_symlink) ... ok\ntest_duplicate_manifest_path (__main__.Tests.test_duplicate_manifest_path) ... ok\ntest_existing_directory (__main__.Tests.test_existing_directory) ... ok\ntest_existing_file (__main__.Tests.test_existing_file) ... ok\ntest_extra_base (__main__.Tests.test_extra_base) ... ok\ntest_extra_overlay (__main__.Tests.test_extra_overlay) ... ok\ntest_missing_base (__main__.Tests.test_missing_base) ... ok\ntest_missing_overlay (__main__.Tests.test_missing_overlay) ... ok\ntest_nested_output (__main__.Tests.test_nested_output) ... ok\ntest_overlay_symlink (__main__.Tests.test_overlay_symlink) ... ok\ntest_package_output (__main__.Tests.test_package_output) ... ok\ntest_success_and_original (__main__.Tests.test_success_and_original) ... ok\ntest_symlink_parent (__main__.Tests.test_symlink_parent) ... ok\ntest_traversal (__main__.Tests.test_traversal) ... ok\ntest_wrong_base (__main__.Tests.test_wrong_base) ... ok\ntest_wrong_base_sha (__main__.Tests.test_wrong_base_sha) ... ok\ntest_wrong_count (__main__.Tests.test_wrong_count) ... ok\n\n----------------------------------------------------------------------\nRan 18 tests in 0.023s\n\nOK\n",
+    "elapsed_seconds": 0.7589165180002055
+  },
+  {
+    "argv": [
+      "python3",
+      "/mnt/data/WindowShade2-round2-part8/tests/check-wiring.py",
+      "--repo",
+      "/mnt/data/WindowShade2-round2-handoff-v8/candidate-repo"
+    ],
+    "exit_code": 0,
+    "stdout": "PASS discovery does not install handlers\nPASS existing input handler refused\nPASS background setting not assigned\nPASS handler release restores queue\nPASS model page cannot call send or approve\nPASS model adoption uses real controller\nPASS page lease and key window checked\nPASS armed target visibly represented\nPASS refocus refresh does not re-enable\nPASS strict missing-value policy exists\nPASS retries retain transaction not entire state\nPASS physical attempt bound to ledger\nPASS notch uses actual evidence caller\nPASS read-only profile kept\n",
+    "stderr": "",
+    "elapsed_seconds": 0.6423055989998829
+  },
+  {
+    "argv": [
+      "python3",
+      "/mnt/data/WindowShade2-round2-part8/tools/stage.py",
+      "--base",
+      "/mnt/data/ws2-r8-work/v7/WindowShade2-round2-handoff-v7/candidate-repo",
+      "--out",
+      "/mnt/data/ws2-r8-stage-check"
+    ],
+    "exit_code": 0,
+    "stdout": "{\n  \"status\": \"STAGED\",\n  \"base_file_count\": 1157,\n  \"result_file_count\": 1164,\n  \"replaced\": 11,\n  \"added\": 7,\n  \"out\": \"/mnt/data/ws2-r8-stage-check\",\n  \"application_build\": \"NOT RUN\",\n  \"runtime\": \"NOT RUN\"\n}\n",
+    "stderr": "",
+    "elapsed_seconds": 0.8317356679999648
+  }
+]

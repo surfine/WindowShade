@@ -1,0 +1,8 @@
+{
+  "assertions" : 26,
+  "backend" : "owned Python fixture; no real assistant or network",
+  "failures" : [
+
+  ],
+  "scenarios" : 8
+}

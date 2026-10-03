@@ -170,9 +170,10 @@ extension AppDelegate {
                        options: ShadeInvocationOptions? = nil, bypassDuo: Bool = false,
                        preparedImage: CGImage? = nil, trustElement: Bool = false,
                        preparedProfile: WindowChromeProfile? = nil,
-                       recordedPosition: CGPoint? = nil) {
+                       recordedPosition: CGPoint? = nil, evidence: WS2FoldEvidence.Ticket? = nil) {
         let completionTokens = foldWaiters[id].map { Array($0.keys) } ?? []
         func completeFold(success: Bool) {
+            finishFoldEvidence(evidence, success: success)
             settleFoldWaiters(id: id, tokens: completionTokens, success: success)
         }
         MainThreadActivity.push("fold: 折叠窗口")
@@ -205,6 +206,7 @@ extension AppDelegate {
               operationState != .folded,
               operationState != .restoring else {
             wlog("shade: ignore in-flight id=\(id) state=\(operationState.rawValue)")
+            finishFoldEvidence(evidence, success: false)
             return
         }
         shadeOperationIDs.insert(id)
@@ -233,6 +235,7 @@ extension AppDelegate {
         var pid: pid_t = 0
         let readStartedAt = CFAbsoluteTimeGetCurrent()
         AXUIElementGetPid(win, &pid)
+        if let evidence, evidence.pid != pid || evidence.window != id || windowID(of: win) != id { return }
         let role = axRole(win)
         // Adobe AE/Premiere 工作区窗口的 role 是 AXLayoutArea：有 layer-0 真实
         // CGWindow 背书时按窗口放行（见 isWindowLikeRole），其余非窗口角色照旧拒绝。
@@ -281,6 +284,11 @@ extension AppDelegate {
         // 整体包住安装阶段：它与已知子项（隐藏窗口/建 overlay/落盘…）的差额
         // 直接指出剩下的时间是在安装之内还是之外，比继续逐个猜要快。
         func installOverlay(_ overlay: NSWindow, mode: ShadeAppearanceMode, previewImage: NSImage?) {
+            if let evidence, !mayCommitObservedFold(evidence) {
+                shadeOperationIDs.remove(id); dismissOverlay(overlay)
+                transitionOperationState(id: id, to: .failed, reason: "expired-fold-evidence")
+                completeFold(success: false); return
+            }
             let installStartedAt = CFAbsoluteTimeGetCurrent()
             defer {
                 let installMilliseconds = (CFAbsoluteTimeGetCurrent() - installStartedAt) * 1000
@@ -327,6 +335,15 @@ extension AppDelegate {
             // 「recordShadeRecoveryIntent 出现在 let hide = hideWindow( 之前」这条
             // 源码顺序断言守卫崩溃一致性，包装会让它认不出来。改成手工计时，
             // 既保留分段数据，也不动那道守卫认的文本。
+            var finalPID: pid_t = 0
+            if let evidence, AXUIElementGetPid(win, &finalPID) != .success || finalPID != evidence.pid || windowID(of: win) != id {
+                dismissOverlay(overlay); transitionOperationState(id: id, to: .failed, reason: "changed-before-hide")
+                completeFold(success: false); return
+            }
+            if let evidence, !mayCommitObservedFold(evidence) || !foldEvidence.markMutation(evidence, at: ProcessInfo.processInfo.systemUptime) {
+                dismissOverlay(overlay); transitionOperationState(id: id, to: .failed, reason: "expired-before-hide")
+                completeFold(success: false); return
+            }
             let hideStartedAt = CFAbsoluteTimeGetCurrent()
             let hide = hideWindow(win, pid: pid, originalPosition: pos, size: size,
                                   policy: policy, appHideSafe: appHideSafe)
@@ -391,6 +408,7 @@ extension AppDelegate {
                                    ignoreAppRevealUntil: Date().addingTimeInterval(1.0),
                                    observer: observer)
             shaded[id] = state
+            if let evidence { _ = foldEvidence.bind(evidence, transaction: state.foldTransactionID) }
             MainActor.assumeIsolated {
                 // 收起一扇带到每张桌面的窗口：它不再需要别处的卷帘条。
                 carry.stopIfCarried(id, reason: "shaded")
@@ -405,7 +423,7 @@ extension AppDelegate {
                     // 期间被展开、或已经注册过，就不再注册：否则会留下一个没人
                     // 移除的 runloop source。
                     guard let current = self.shaded[id], current.observer == nil,
-                          CFEqual(current.element, win) else { return }
+                          current.foldTransactionID == state.foldTransactionID, CFEqual(current.element, win) else { return }
                     guard let registered = foldPhase("观察者注册", {
                         self.makeRevealObserver(pid: pid, win: win, id: id)
                     }) else { return }
@@ -445,6 +463,7 @@ extension AppDelegate {
         func installInteractiveNativeCollapse(barH: CGFloat) -> Bool {
             let targetH = min(max(barH, titleBarHeight), min(size.height, 300))
             let target = CGSize(width: size.width, height: targetH)
+            if let evidence, !mayCommitObservedFold(evidence) || !foldEvidence.markMutation(evidence, at: ProcessInfo.processInfo.systemUptime) { return false }
             let err = setAXSize(win, target)
             guard err == .success else {
                 wlog("    interactive native rejected size err=\(err) targetH=\(Int(targetH))")
@@ -482,6 +501,7 @@ extension AppDelegate {
                                     quickLookReopenURL: nil,
                                     ignoreAppRevealUntil: Date().addingTimeInterval(1.0),
                                     observer: observer)
+            if let evidence, let installed = shaded[id] { _ = foldEvidence.bind(evidence, transaction: installed.foldTransactionID) }
             wlog("    interactive native finalBarH=\(Int(targetH)) actualH=\(Int(actual.height))")
             transitionOperationState(id: id, to: .folded, reason: "interactive-native")
             completeFold(success: true)

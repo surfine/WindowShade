@@ -1,0 +1,30 @@
+{
+  "new_swift": {
+    "input": {
+      "scenarios": 33,
+      "assertions": 49
+    },
+    "fold": {
+      "scenarios": 21,
+      "assertions": 49
+    },
+    "flow": {
+      "scenarios": 6,
+      "assertions": 27
+    }
+  },
+  "new_swift_total": {
+    "scenarios": 60,
+    "assertions": 125
+  },
+  "python_tool_tests": 18,
+  "static_source_guards": 14,
+  "foundation_typecheck_files": 37,
+  "syntax_only_swift_files": 16,
+  "mac_sdk": "NOT RUN",
+  "hardware": "NOT RUN",
+  "actual_cli_or_account": "NOT RUN",
+  "new_source_files": 7,
+  "modified_source_files": 11,
+  "candidate_file_count": 1164
+}

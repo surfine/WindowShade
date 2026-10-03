@@ -1,0 +1,4 @@
+{
+  "status": "INTERRUPTED",
+  "note": "The container timeout stopped the aggregate invocation after core and flow completed; native results are checked separately. Completed log files retained, not promoted to aggregate PASS."
+}

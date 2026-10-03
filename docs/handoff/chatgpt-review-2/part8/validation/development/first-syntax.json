@@ -1,0 +1,47 @@
+[
+  {
+    "file": "Core/WS2FoldEvidence.swift",
+    "exit_code": 0,
+    "stderr": ""
+  },
+  {
+    "file": "App/WS2FoldEvidenceAdapter.swift",
+    "exit_code": 0,
+    "stderr": ""
+  },
+  {
+    "file": "App/ShadeController.swift",
+    "exit_code": 0,
+    "stderr": ""
+  },
+  {
+    "file": "App/FoldTransaction.swift",
+    "exit_code": 0,
+    "stderr": ""
+  },
+  {
+    "file": "App/FoldExit.swift",
+    "exit_code": 0,
+    "stderr": ""
+  },
+  {
+    "file": "App/Notch.swift",
+    "exit_code": 0,
+    "stderr": ""
+  },
+  {
+    "file": "WindowShade.swift",
+    "exit_code": 0,
+    "stderr": ""
+  },
+  {
+    "file": "App/WS2ModelPickerView.swift",
+    "exit_code": 0,
+    "stderr": ""
+  },
+  {
+    "file": "App/WS2AppRuntime.swift",
+    "exit_code": 0,
+    "stderr": ""
+  }
+]

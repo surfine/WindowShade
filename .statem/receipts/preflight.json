@@ -1,6 +1,7 @@
 {
   "classes": [
-    "external-effects"
+    "external-effects",
+    "bulk-write"
   ],
   "hazards": [
     {
@@ -11,10 +12,19 @@
       ],
       "requirement": "不可逆外部效果先立效果清单；执行后要重新读回实际状态并对账。",
       "severity": "high"
+    },
+    {
+      "class": "bulk-write",
+      "evidence_paths": [],
+      "matched": [
+        "全量"
+      ],
+      "requirement": "批量数据留在工具/文件边界，避免整包进出上下文；对账用计数与聚合结果。",
+      "severity": "normal"
     }
   ],
   "source": "preflight",
   "task_path": "task.txt",
-  "task_sha256": "79f7e139295d2af70b6ce81191e917452d837636f1f414b71f1c24196e940ca9",
+  "task_sha256": "09188d8fbe69f328adda5ca619694a924ca38cd9468912183f892360babf7456",
   "version": 1
 }

@@ -1,0 +1,8 @@
+{
+  "candidate_sha_verified": 1164,
+  "overlay_files_verified": 18,
+  "base_source_files_verified": 11,
+  "code_map_files_verified": 31,
+  "mac_sdk": "NOT RUN",
+  "distribution": "source candidate; not a release"
+}

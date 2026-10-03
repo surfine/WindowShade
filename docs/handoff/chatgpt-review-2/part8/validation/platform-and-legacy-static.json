@@ -1,0 +1,21 @@
+[
+  {
+    "argv": [
+      "bash",
+      "/mnt/data/WindowShade2-round2-part8/tests/run-mac-check.sh",
+      "/mnt/data/WindowShade2-round2-handoff-v8/candidate-repo"
+    ],
+    "exit_code": 78,
+    "stdout": "NOT RUN: requires macOS SDK and Metal tools\n",
+    "stderr": ""
+  },
+  {
+    "argv": [
+      "python3",
+      "/mnt/data/WindowShade2-round2-handoff-v8/candidate-repo/tests/duo-integration-check.py"
+    ],
+    "exit_code": 0,
+    "stdout": "PASS: recovery intent precedes hiding, animation follows verification, synchronous restore contract, session teardown and capture exclusion are wired\n",
+    "stderr": ""
+  }
+]

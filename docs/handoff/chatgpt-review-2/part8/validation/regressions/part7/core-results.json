@@ -1,0 +1,137 @@
+[
+  {
+    "assertions" : 1,
+    "name" : "JSON01 empty object",
+    "result" : "PASS"
+  },
+  {
+    "assertions" : 1,
+    "name" : "JSON02 nested",
+    "result" : "PASS"
+  },
+  {
+    "assertions" : 1,
+    "name" : "JSON03 duplicate",
+    "result" : "PASS"
+  },
+  {
+    "assertions" : 1,
+    "name" : "JSON04 escaped duplicate",
+    "result" : "PASS"
+  },
+  {
+    "assertions" : 1,
+    "name" : "JSON05 nested duplicate",
+    "result" : "PASS"
+  },
+  {
+    "assertions" : 1,
+    "name" : "JSON06 surrogate pair",
+    "result" : "PASS"
+  },
+  {
+    "assertions" : 1,
+    "name" : "JSON07 lone high surrogate",
+    "result" : "PASS"
+  },
+  {
+    "assertions" : 1,
+    "name" : "JSON08 lone low surrogate",
+    "result" : "PASS"
+  },
+  {
+    "assertions" : 1,
+    "name" : "JSON09 leading zero",
+    "result" : "PASS"
+  },
+  {
+    "assertions" : 1,
+    "name" : "JSON10 fraction exponent",
+    "result" : "PASS"
+  },
+  {
+    "assertions" : 1,
+    "name" : "JSON11 trailing data",
+    "result" : "PASS"
+  },
+  {
+    "assertions" : 1,
+    "name" : "JSON12 trailing comma",
+    "result" : "PASS"
+  },
+  {
+    "assertions" : 1,
+    "name" : "JSON13 invalid escape",
+    "result" : "PASS"
+  },
+  {
+    "assertions" : 1,
+    "name" : "JSON14 raw control",
+    "result" : "PASS"
+  },
+  {
+    "assertions" : 1,
+    "name" : "JSON15 unicode",
+    "result" : "PASS"
+  },
+  {
+    "assertions" : 1,
+    "name" : "JSON16 incomplete exponent",
+    "result" : "PASS"
+  },
+  {
+    "assertions" : 1,
+    "name" : "JSON17 deep",
+    "result" : "PASS"
+  },
+  {
+    "assertions" : 1,
+    "name" : "JSON18 whitespace",
+    "result" : "PASS"
+  },
+  {
+    "assertions" : 3,
+    "name" : "JSON19 size and node budgets",
+    "result" : "PASS"
+  },
+  {
+    "assertions" : 8,
+    "name" : "URL01 browser scheme and exact host",
+    "result" : "PASS"
+  },
+  {
+    "assertions" : 2,
+    "name" : "WIRE01 duplicate keys close before RPC interpretation",
+    "result" : "PASS"
+  },
+  {
+    "assertions" : 3,
+    "name" : "QUIT01 both owners must settle",
+    "result" : "PASS"
+  },
+  {
+    "assertions" : 3,
+    "name" : "QUIT02 updater alone cannot release child",
+    "result" : "PASS"
+  },
+  {
+    "assertions" : 2,
+    "name" : "WIRE02 ambiguous result\/error envelope",
+    "result" : "PASS"
+  },
+  {
+    "assertions" : 3,
+    "name" : "QUIT03 veto and double begin",
+    "result" : "PASS"
+  },
+  {
+    "assertions" : 6,
+    "name" : "PROFILE01 creates private state without overwriting changes",
+    "result" : "PASS"
+  },
+  {
+    "assertions" : 3,
+    "name" : "PROFILE02 project configuration and linked state reject",
+    "result" : "PASS"
+  }
+]

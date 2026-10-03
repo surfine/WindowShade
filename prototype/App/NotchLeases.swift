@@ -134,6 +134,12 @@ final class NotchLeaseHub {
         handOffToAuthorization(); return true
     }
 
+    /// 已挂载内容当前持有的租约句柄：视图要在同一租约下路由输入时用它。
+    func inputHandle(for content: NSView) -> WS2.LeaseHandle? {
+        guard contentView === content, let handle = contentHandle, coordinator.isCurrent(handle) else { return nil }
+        return handle
+    }
+
     func stop() {
         invalidate(.disabled)
         controller?.authentication.acquireInteraction = nil

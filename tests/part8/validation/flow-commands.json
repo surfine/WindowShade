@@ -1,0 +1,74 @@
+[
+  {
+    "argv": [
+      "cc",
+      "-std=c11",
+      "-O2",
+      "-Wall",
+      "-Wextra",
+      "-Werror",
+      "-c",
+      "/Users/aaron/Documents/WindowShade/prototype/Native/WS2Child.c",
+      "-o",
+      "/var/folders/l6/4_mrt4s51rv4sjb29v6x9n000000gn/T/ws2-r8-o2b5zgzb/child.o"
+    ],
+    "exit_code": 0,
+    "elapsed_seconds": 0.4607611670217011,
+    "stdout": "",
+    "stderr": ""
+  },
+  {
+    "argv": [
+      "swiftc",
+      "-swift-version",
+      "6",
+      "-strict-concurrency=complete",
+      "-warnings-as-errors",
+      "-I",
+      "/Users/aaron/Documents/WindowShade/prototype/Native",
+      "/var/folders/l6/4_mrt4s51rv4sjb29v6x9n000000gn/T/ws2-r8-o2b5zgzb/child.o",
+      "/Users/aaron/Documents/WindowShade/prototype/Core/Contracts.swift",
+      "/Users/aaron/Documents/WindowShade/prototype/Core/GamepadMapping.swift",
+      "/Users/aaron/Documents/WindowShade/prototype/Core/WS2DeviceInputGate.swift",
+      "/Users/aaron/Documents/WindowShade/prototype/Core/WS2SelectionModel.swift",
+      "/Users/aaron/Documents/WindowShade/prototype/Core/WS2SemanticInputRouter.swift",
+      "/Users/aaron/Documents/WindowShade/prototype/Core/WS2DeviceActionContracts.swift",
+      "/Users/aaron/Documents/WindowShade/prototype/Core/WS2VisibleListInput.swift",
+      "/Users/aaron/Documents/WindowShade/prototype/App/WS2DeviceActionHost.swift",
+      "/Users/aaron/Documents/WindowShade/prototype/Core/WS2QuitBarrier.swift",
+      "/Users/aaron/Documents/WindowShade/prototype/Core/WS2StrictJSON.swift",
+      "/Users/aaron/Documents/WindowShade/prototype/Core/CodexWire.swift",
+      "/Users/aaron/Documents/WindowShade/prototype/Core/WS2OwnedProtocolHost.swift",
+      "/Users/aaron/Documents/WindowShade/prototype/Core/WS2BoundedOutbox.swift",
+      "/Users/aaron/Documents/WindowShade/prototype/Core/WS2DiagnosticTail.swift",
+      "/Users/aaron/Documents/WindowShade/prototype/Core/WS2OwnedScope.swift",
+      "/Users/aaron/Documents/WindowShade/prototype/Core/AgentSessions.swift",
+      "/Users/aaron/Documents/WindowShade/prototype/Support/WS2ProjectDirectory.swift",
+      "/Users/aaron/Documents/WindowShade/prototype/Support/WS2LocalLaunchProfile.swift",
+      "/Users/aaron/Documents/WindowShade/prototype/Support/WS2VersionProbe.swift",
+      "/Users/aaron/Documents/WindowShade/prototype/Support/WS2DuplexProcess.swift",
+      "/Users/aaron/Documents/WindowShade/prototype/App/WS2OwnedCodexSession.swift",
+      "/Users/aaron/Documents/WindowShade/prototype/App/WS2OwnedLaunchController.swift",
+      "/Users/aaron/Documents/WindowShade/tests/part8/tests/TestLog.swift",
+      "/Users/aaron/Documents/WindowShade/tests/part8/tests/InputHarness.swift",
+      "/Users/aaron/Documents/WindowShade/tests/part8/tests/InputFlowTests.swift",
+      "-o",
+      "/var/folders/l6/4_mrt4s51rv4sjb29v6x9n000000gn/T/ws2-r8-o2b5zgzb/tests"
+    ],
+    "exit_code": 0,
+    "elapsed_seconds": 17.50963387498632,
+    "stdout": "",
+    "stderr": ""
+  },
+  {
+    "argv": [
+      "/var/folders/l6/4_mrt4s51rv4sjb29v6x9n000000gn/T/ws2-r8-o2b5zgzb/tests",
+      "/Users/aaron/Documents/WindowShade/tests/part8/validation/flow-results.json",
+      "/var/folders/l6/4_mrt4s51rv4sjb29v6x9n000000gn/T/ws2-r8-o2b5zgzb/fake-codex.py"
+    ],
+    "exit_code": 0,
+    "elapsed_seconds": 3.1493705000029877,
+    "stdout": "PASS IFLOW01 real pipe catalogue supplies selection rows [7]\nPASS IFLOW02 device chooses model without sending work [3]\nPASS IFLOW03 separate local send uses selected model [6]\nPASS IFLOW04 late release after local capability loss cannot change model [3]\nPASS IFLOW05 reconnect uses a new backend epoch [5]\nPASS IFLOW06 project replacement rejected by actual model selector [3]\nTOTAL 6 scenarios, 27 assertions\n",
+    "stderr": ""
+  }
+]

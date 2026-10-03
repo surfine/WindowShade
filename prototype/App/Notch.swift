@@ -28,6 +28,8 @@ import ApplicationServices
 @MainActor
 final class NotchController {
     private struct Tucked {
+        let incarnation = UUID()
+        var foldStatus: String? = nil
         let id: CGWindowID
         let pid: pid_t
         let element: AXUIElement
@@ -432,8 +434,10 @@ final class NotchController {
                             velocity: CGVector, notch: NSRect, snapshot: CGImage?, windowTitle: String) {
         guard !isTucked(id) else { return }
         let app = NSRunningApplication(processIdentifier: pid)
-        let item = Tucked(id: id, pid: pid, element: win, home: home, snapshot: snapshot,
+        var item = Tucked(id: id, pid: pid, element: win, home: home, snapshot: snapshot,
                           icon: app?.icon, title: windowTitle.isEmpty ? (app?.localizedName ?? "") : windowTitle)
+        item.foldStatus = "正在收起"
+        let incarnation = item.incarnation
         tucked.append(item)
         wlog("notch: tuck id=\(id) landed=\(landed) home=\(home)")
         // 窗口缩小、飞进刘海：从它现在的样子出发，接上甩出去的速度。
@@ -454,13 +458,30 @@ final class NotchController {
         // 收进来的这一扇（甩进来的）落点已经被拖离了原处：记下 home（拖之前的位置），
         // 展开时就回到那里——不然展开后的回位校正会把它按到拖到的位置上去。
         marking("notch: shade") {
-            owner.shade(win, id, options: nil, bypassDuo: true, trustElement: true,
-                        recordedPosition: home.origin)
+            let accepted = owner.shadeWithEvidence(win, id: id, pid: pid, recordedPosition: home.origin, mayCommit: { [weak self] in
+                guard let self, Self.isEnabled else { return false }
+                return self.tucked.contains { $0.id == id && $0.incarnation == incarnation }
+            }) { [weak self] event in
+                guard let self, let index = self.tucked.firstIndex(where: { $0.id == id && $0.incarnation == incarnation }) else { return }
+                switch event.observation {
+                case .verifiedHidden: self.tucked[index].foldStatus = nil
+                case .notStarted:
+                    self.tucked.remove(at: index); self.parkOnInstall[id] = nil
+                    self.owner.quietNotice("这个窗口没有收起", log: "notch: fold not started id=\(id)")
+                case .stillVisible: self.tucked[index].foldStatus = "收起状态未确认"
+                case .unknown: self.tucked[index].foldStatus = "收起状态未确认"
+                }
+                self.refresh()
+            }
+            if accepted == nil {
+                tucked.removeAll { $0.id == id && $0.incarnation == incarnation }
+                owner.quietNotice("这个窗口暂时不能收起", log: "notch: evidence admission rejected id=\(id)")
+            }
         }
         // 展开时按（已经看不见的）卷帘条现在的位置算落点：甩进来的这一扇被拖离了原处，
         // 把卷帘条摆到 home（拖之前的位置），窗口就拿回拖之前的地方，而不是停在甩到的位置上。
         // 卷帘条是异步装上的（收起要走截图那一段），交给下面每帧一次的循环在第一次看见它时摆过去。
-        if home.origin != landed.origin { parkOnInstall[id] = home.origin }
+        if isTucked(id), home.origin != landed.origin { parkOnInstall[id] = home.origin }
         hideStripWhenReady(id, attempts: 0)
         refresh()
     }
@@ -479,6 +500,7 @@ final class NotchController {
     /// 收起装好卷帘条后，把它藏起来、不接指针：刘海代替它。卷帘条装好后还有一段 0.12 秒的淡入，
     /// 会把透明度又拉回去，所以出现后的一秒里每帧都再压一次。
     private func hideStripWhenReady(_ id: CGWindowID, attempts: Int, since: Int? = nil) {
+        guard isTucked(id) else { return }
         var seen = since
         if let overlay = owner.shaded[id]?.overlay {
             overlay.alphaValue = 0
@@ -528,6 +550,7 @@ final class NotchController {
         endPeek()
         guard let index = tucked.firstIndex(where: { $0.id == id }) else { return }
         let item = tucked.remove(at: index)
+        parkOnInstall.removeValue(forKey: id)
         changed.removeValue(forKey: id)
         panels.values.forEach { $0.collapse() }
         refresh()
@@ -1163,7 +1186,7 @@ final class NotchController {
     private func tiles() -> [NotchTile] {
         var list: [NotchTile] = tucked.reversed().map {
             NotchTile(id: $0.id, kind: .tucked, snapshot: $0.snapshot, icon: $0.icon, title: $0.title,
-                      changed: changed[$0.id] != nil)
+                      changed: changed[$0.id] != nil, place: $0.foldStatus)
         }
         func icon(_ pid: pid_t) -> NSImage? { NSRunningApplication(processIdentifier: pid)?.icon }
         if let slide = owner.slideOver.notchInfo, !list.contains(where: { $0.id == slide.id }) {
@@ -2192,7 +2215,7 @@ final class NotchPanel: NSPanel {
         switch dropState {
         case .armed: return "松手：\(dropChoice.title)"
         case .offered: return "拖到这里，排好或收进刘海"
-        case .confirmed: return dropChoice == .tuck ? "收进刘海了" : dropChoice.title
+        case .confirmed: return dropChoice == .tuck ? "正在收起" : dropChoice.title
         case .none:
             if pulled > 0, compact == nil { return "启动台" }
             return isExpanded && tiles.isEmpty && activityItems.isEmpty ? "点一下回主屏幕 · 左右滑换 App" : nil

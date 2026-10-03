@@ -2,22 +2,10 @@
 import Cocoa
 @preconcurrency import GameController
 
-@MainActor final class WS2GameControllerBridge {
-    struct Environment {
-        let unlocked: Bool; let sinkReady: Bool; let gameOrUnknownInFront: Bool
-        let domain: WS2DeviceInputGate.Domain; let motionReady: Bool
-        init(unlocked: Bool, sinkReady: Bool, gameOrUnknownInFront: Bool,
-             domain: WS2DeviceInputGate.Domain, motionReady: Bool = false) {
-            self.unlocked = unlocked; self.sinkReady = sinkReady; self.gameOrUnknownInFront = gameOrUnknownInFront
-            self.domain = domain; self.motionReady = motionReady
-        }
-    }
-    struct Device { let attachment: UUID; let label: String; let enabled: Bool }
-    enum Input {
-        case button(attachment: UUID, name: String, outcome: WS2DeviceInputGate.Outcome)
-        case cancel(attachment: UUID, presses: [UInt64])
-        case movement(attachment: UUID, effect: GamepadMapping.Effect)
-    }
+@MainActor final class WS2GameControllerBridge: WS2ControllerBridge {
+    typealias Environment = WS2ControllerEnvironment
+    typealias Device = WS2ControllerDevice
+    typealias Input = WS2ControllerInput
     @MainActor private final class Entry {
         let controller: GCController; let id = UUID()
         var gate = WS2DeviceInputGate(), mapping = GamepadMapping(), sequence: UInt64 = 0
@@ -25,6 +13,8 @@ import Cocoa
         var last: [String:Bool] = [:], domain: WS2DeviceInputGate.Domain?
         var neutralSticks = false, ownsFeedback = false
         var movement: Task<Void,Never>?
+        var ownsHandler = false
+        var previousQueue: DispatchQueue?
         init(_ controller: GCController) { self.controller = controller; gate.connect(id) }
     }
     private let clock: any WS2Clock
@@ -33,7 +23,6 @@ import Cocoa
     private var entries: [ObjectIdentifier:Entry] = [:]
     private var observers: [NSObjectProtocol] = []
     private var workspaceObservers: [NSObjectProtocol] = []
-    private var priorBackground: Bool?
     private var running = false
     var devicesChanged: (([Device]) -> Void)?
     init(clock: any WS2Clock, environment: @escaping () -> Environment, emit: @escaping (Input) -> Void) {
@@ -67,17 +56,18 @@ import Cocoa
         guard running, env.unlocked, env.sinkReady, !env.gameOrUnknownInFront, env.domain != .review,
               e.controller.extendedGamepad != nil else { return false }
         guard !e.gate.enabled else { return true }
+        // Do not replace another subsystem's callback. Discovery alone never installs input handlers.
+        guard installHandler(e) else { return false }
         _ = e.gate.enable(e.id); e.last.removeAll(); e.neutralSticks = false; e.domain = env.domain
         _ = e.gate.changeDomain(to:env.domain)
-        if priorBackground == nil { priorBackground = GCController.shouldMonitorBackgroundEvents }
-        GCController.shouldMonitorBackgroundEvents = true
+        // This production path is foreground-only. Never toggle the process-wide background setting.
         sample(e); publish(); return true
     }
     // The application lock observer MUST call this too; workspace notifications alone do not prove lock state.
     func environmentChanged() {
         let env = environment()
         for e in entries.values where e.gate.enabled {
-            guard env.unlocked, env.sinkReady, !env.gameOrUnknownInFront else { suspend(e); continue }
+            guard env.unlocked, env.sinkReady, !env.gameOrUnknownInFront, env.domain != .review else { suspend(e); continue }
             if e.domain != env.domain {
                 emit(.cancel(attachment:e.id,presses:e.gate.changeDomain(to:env.domain)))
                 e.domain = env.domain; e.last.removeAll(); e.neutralSticks = false
@@ -92,7 +82,7 @@ import Cocoa
         let current = GCController.controllers(), present = Set(current.map(ObjectIdentifier.init))
         for key in Array(entries.keys) where !present.contains(key) {
             if let e = entries.removeValue(forKey:key) {
-                suspend(e); e.controller.extendedGamepad?.valueChangedHandler = nil; _ = e.gate.disconnect()
+                suspend(e); _ = e.gate.disconnect()
             }
         }
         for c in current where entries[ObjectIdentifier(c)] == nil {
@@ -101,21 +91,37 @@ import Cocoa
             e.buttons = [("a",pad.buttonA),("b",pad.buttonB),("x",pad.buttonX),("y",pad.buttonY),
                 ("menu",pad.buttonMenu),("up",pad.dpad.up),("down",pad.dpad.down),("left",pad.dpad.left),("right",pad.dpad.right),
                 ("leftShoulder",pad.leftShoulder),("rightShoulder",pad.rightShoulder)]
-            // This bridge is the process's sole owner of this handler; do not install a second bridge.
-            c.handlerQueue = .main
-            pad.valueChangedHandler = { [weak self, weak e] _,_ in MainActor.assumeIsolated {
-                guard let self,let e else { return }; self.sample(e)
-            } }
         }
         publish()
+    }
+    private func installHandler(_ e: Entry) -> Bool {
+        guard let pad = e.controller.extendedGamepad, !e.ownsHandler, pad.valueChangedHandler == nil else { return false }
+        e.previousQueue = e.controller.handlerQueue
+        e.controller.handlerQueue = .main
+        e.ownsHandler = true
+        pad.valueChangedHandler = { [weak self, weak e] _, _ in MainActor.assumeIsolated {
+            guard let self, let e, e.ownsHandler, e.gate.enabled else { return }
+            self.sample(e)
+        } }
+        return true
+    }
+    private func releaseHandler(_ e: Entry) {
+        guard e.ownsHandler else { return }
+        e.ownsHandler = false
+        // All handler writes in this application are owned by this bridge after admission.
+        // A future subsystem must use this owner rather than overwrite the callback while enabled.
+        e.controller.extendedGamepad?.valueChangedHandler = nil
+        if let queue = e.previousQueue { e.controller.handlerQueue = queue }
+        e.previousQueue = nil
     }
     private func sample(_ e: Entry) {
         guard e.gate.enabled, let pad=e.controller.extendedGamepad else { return }
         let env=environment()
-        guard env.unlocked,env.sinkReady,!env.gameOrUnknownInFront else { suspend(e);publish();return }
+        guard env.unlocked,env.sinkReady,!env.gameOrUnknownInFront,env.domain != .review else { suspend(e);publish();return }
         guard env.domain == e.domain else { environmentChanged();return }
         let now=clock.now()
         for (name,button) in e.buttons {
+            guard e.gate.enabled, e.ownsHandler else { return }
             let pressed=button.isPressed
             guard e.last[name] != pressed else { continue };e.last[name]=pressed
             guard e.sequence < .max else { suspend(e);return };e.sequence += 1
@@ -123,6 +129,7 @@ import Cocoa
                                       unlocked:env.unlocked,domain:env.domain)
             if outcome != .ignored { emit(.button(attachment:e.id,name:name,outcome:outcome)) }
         }
+        guard e.gate.enabled, e.ownsHandler else { return }
         let left=GamepadMapping.Vector(x:Double(pad.leftThumbstick.xAxis.value),y:Double(pad.leftThumbstick.yAxis.value))
         let right=GamepadMapping.Vector(x:Double(pad.rightThumbstick.xAxis.value),y:Double(pad.rightThumbstick.yAxis.value))
         let neutral=GamepadMapping.axis(left) == .zero && GamepadMapping.axis(right) == .zero
@@ -164,20 +171,17 @@ import Cocoa
     }
     private func suspend(_ e:Entry) {
         let active=e.gate.suspend();e.movement?.cancel();e.movement=nil;_ = e.mapping.disconnect();clearFeedback(e)
+        releaseHandler(e)
         e.last.removeAll();e.neutralSticks=false
         if !active.isEmpty { emit(.cancel(attachment:e.id,presses:active)) }
     }
     private func publish() {
-        if !entries.values.contains(where:{$0.gate.enabled}), let priorBackground {
-            GCController.shouldMonitorBackgroundEvents=priorBackground;self.priorBackground=nil
-        }
         devicesChanged?(devices)
     }
     func stop() {
         guard running else{return};suspendAll();running=false
         for token in observers { NotificationCenter.default.removeObserver(token) };observers.removeAll()
         for token in workspaceObservers { NSWorkspace.shared.notificationCenter.removeObserver(token) };workspaceObservers.removeAll()
-        for e in entries.values { e.controller.extendedGamepad?.valueChangedHandler=nil }
         entries.removeAll();publish()
     }
 }

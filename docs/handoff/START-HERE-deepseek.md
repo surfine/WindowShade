@@ -138,6 +138,22 @@
 >
 > 仍没做：真实登录后的查询、Touch ID 允许路径、原生界面实测、脱离组子孙的全树安全、配对/设备/窗口/能耗/影片与发布。
 
+> **2026-10-03 深夜（后段）：第八份已并入。**它做了两条实际接线：手柄 → 当前可见模型列表
+> （`WS2VisibleListInput`、`WS2DeviceActionContracts`、`WS2ModelPickerView`、唯一 Runtime host，
+> 按下预约目标/松开采用/重选失焦断连撤销），以及原 Notch 收起的**实际事务证据**
+> （`WS2FoldEvidence` + `WS2FoldEvidenceAdapter`，`hide` 前复核项目条目的窗口/期限/锁态并按实际
+> foldTransaction 关联）。原件在 [part8/](chatgpt-review-2/part8/)，本机结果在
+> [part8/MAC-EVIDENCE.md](chatgpt-review-2/part8/MAC-EVIDENCE.md)。
+>
+> 真机跑通：input 33/49、fold 21/49、flow 6/27；check-build 37 份类型检查；check-wiring 三项；
+> test-tools 18 项；旧回归全过；整 App 类型检查与八套 AppKit 全过；隐私登记表 466 点。
+> 又修了 4 处只有 Mac 才会暴露的问题（脚本仍按 App/ 找共享仲裁、stage.py 把 macOS 的 `/var`
+> 当不可信链接、`resolve()` 与 `absolute()` 混用让「输出在输入内」失配、证据适配器在非隔离上下文读锁态），
+> 并给单岛补上 `inputHandle(for:)`。
+>
+> 仍没做：真实手柄与 GameController 实测、AppKit 焦点/布局实测、真实 AX 收起恢复、完整 T3、
+> Touch ID 允许路径、配对与原生 Remote、能耗、影片与发布。自动窗口效果仍然关闭（`admitted=false`）。
+
 
 **第一波：纯逻辑。**互不依赖，最安全，可以并行派。
 

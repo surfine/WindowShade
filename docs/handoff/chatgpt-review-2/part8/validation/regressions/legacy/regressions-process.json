@@ -1,0 +1,119 @@
+[
+  {
+    "argv": [
+      "cc",
+      "-std=c11",
+      "-O2",
+      "-Wall",
+      "-Wextra",
+      "-Werror",
+      "-c",
+      "/mnt/data/WindowShade2-round2-handoff-v8/candidate-repo/prototype/Native/WS2Child.c",
+      "-o",
+      "/tmp/ws2-v7-regression-hqvrc8wp/child.o"
+    ],
+    "exit_code": 0,
+    "elapsed_seconds": 0.0798807900000611,
+    "stdout": "",
+    "stderr": ""
+  },
+  {
+    "argv": [
+      "swiftc",
+      "-swift-version",
+      "6",
+      "-strict-concurrency=complete",
+      "-warnings-as-errors",
+      "-I",
+      "/mnt/data/WindowShade2-round2-handoff-v8/candidate-repo/prototype/Native",
+      "/tmp/ws2-v7-regression-hqvrc8wp/child.o",
+      "/mnt/data/WindowShade2-round2-handoff-v8/candidate-repo/prototype/Core/WS2BoundedOutbox.swift",
+      "/mnt/data/WindowShade2-round2-handoff-v8/candidate-repo/prototype/Core/WS2DiagnosticTail.swift",
+      "/mnt/data/WindowShade2-round2-handoff-v8/candidate-repo/prototype/Support/WS2DuplexProcess.swift",
+      "/mnt/data/ws2-r8-work/v7/WindowShade2-round2-handoff-v7/part6/tests/ProcessTests.swift",
+      "-o",
+      "/tmp/ws2-v7-regression-hqvrc8wp/part6-process"
+    ],
+    "exit_code": 0,
+    "elapsed_seconds": 1.3059778120000374,
+    "stdout": "",
+    "stderr": ""
+  },
+  {
+    "argv": [
+      "/tmp/ws2-v7-regression-hqvrc8wp/part6-process",
+      "/mnt/data/ws2-r8-work/v7/WindowShade2-round2-handoff-v7/part6/tests/child.py",
+      "/mnt/data/WindowShade2-round2-part8/validation/regressions/legacy/regression-part6-process-results.json"
+    ],
+    "exit_code": 0,
+    "elapsed_seconds": 0.10709301199995025,
+    "stdout": "SCENE PROC01 explicit bounded diagnostic tail does not block stdout\nSCENE PROC02 default diagnostics stays disabled\nSCENE PROC03 direct child exit status is separate from protocol outcome\nSCENE PROC05 partial final frame rejected\nSCENE PROC06 coalesced trailing frames retain ordering\nSCENE PROC07 stop closes transport once and waits for independent exit evidence\nSCENE PROC08 diagnostic buffer can be explicitly cleared\nSCENE PROC09 invalid diagnostic limit rejected before spawning\nSCENE PROC10 late scope change blocks an admitted frame\nRESULT scenarios=9 assertions=27 failures=0\n",
+    "stderr": ""
+  },
+  {
+    "argv": [
+      "swiftc",
+      "-swift-version",
+      "6",
+      "-strict-concurrency=complete",
+      "-warnings-as-errors",
+      "-I",
+      "/mnt/data/WindowShade2-round2-handoff-v8/candidate-repo/prototype/Native",
+      "/tmp/ws2-v7-regression-hqvrc8wp/child.o",
+      "/mnt/data/WindowShade2-round2-handoff-v8/candidate-repo/prototype/Core/WS2BoundedOutbox.swift",
+      "/mnt/data/WindowShade2-round2-handoff-v8/candidate-repo/prototype/Core/WS2DiagnosticTail.swift",
+      "/mnt/data/WindowShade2-round2-handoff-v8/candidate-repo/prototype/Support/WS2DuplexProcess.swift",
+      "/mnt/data/ws2-r8-work/v7/WindowShade2-round2-handoff-v7/part5/tests/ProcessTests.swift",
+      "-o",
+      "/tmp/ws2-v7-regression-hqvrc8wp/part5-process"
+    ],
+    "exit_code": 0,
+    "elapsed_seconds": 1.385003147000134,
+    "stdout": "",
+    "stderr": ""
+  },
+  {
+    "argv": [
+      "/tmp/ws2-v7-regression-hqvrc8wp/part5-process",
+      "/mnt/data/ws2-r8-work/v7/WindowShade2-round2-handoff-v7/part5/tests/fake-child.py",
+      "/mnt/data/WindowShade2-round2-part8/validation/regressions/legacy/regression-part5-process-results.json"
+    ],
+    "exit_code": 0,
+    "elapsed_seconds": 2.09149079000008,
+    "stdout": "SCENE IO01 split response, simultaneous write, stderr burst\nSCENE IO02 pipe backpressure deadline closes without retry\nSCENE IO03 truncated EOF rejected\nSCENE IO04 EPIPE does not kill parent with SIGPIPE\nSCENE IO05 multiple coalesced lines delivered in order\nSCENE IO06 oversized incoming line rejected\nSCENE IO07 final write gate and stale epoch\nSCENE IO08 per-batch context gate checked after admission\nRESULT scenarios=8 assertions=26 failures=0\n",
+    "stderr": ""
+  },
+  {
+    "argv": [
+      "swiftc",
+      "-swift-version",
+      "6",
+      "-strict-concurrency=complete",
+      "-warnings-as-errors",
+      "-I",
+      "/mnt/data/WindowShade2-round2-handoff-v8/candidate-repo/prototype/Native",
+      "/tmp/ws2-v7-regression-hqvrc8wp/child.o",
+      "/mnt/data/WindowShade2-round2-handoff-v8/candidate-repo/prototype/Core/WS2BoundedOutbox.swift",
+      "/mnt/data/WindowShade2-round2-handoff-v8/candidate-repo/prototype/Core/WS2DiagnosticTail.swift",
+      "/mnt/data/WindowShade2-round2-handoff-v8/candidate-repo/prototype/Support/WS2DuplexProcess.swift",
+      "/mnt/data/ws2-r8-work/v7/WindowShade2-round2-handoff-v7/part6/tests/ExitInheritanceProbe.swift",
+      "-o",
+      "/tmp/ws2-v7-regression-hqvrc8wp/PROC04"
+    ],
+    "exit_code": 0,
+    "elapsed_seconds": 1.1790824340000654,
+    "stdout": "",
+    "stderr": ""
+  },
+  {
+    "argv": [
+      "/tmp/ws2-v7-regression-hqvrc8wp/PROC04",
+      "/mnt/data/ws2-r8-work/v7/WindowShade2-round2-handoff-v7/part6/tests/child.py",
+      "/mnt/data/WindowShade2-round2-part8/validation/regressions/legacy/regression-PROC04-results.json"
+    ],
+    "exit_code": 0,
+    "elapsed_seconds": 0.8832416549998925,
+    "stdout": "PROC04 OBSERVED_PASS elapsed=0.022128783999960433\n",
+    "stderr": ""
+  }
+]
