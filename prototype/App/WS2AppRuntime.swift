@@ -12,7 +12,10 @@ import Cocoa
     private(set) var owned:WS2OwnedLaunchController!
     private weak var ownedView:WS2OwnedSessionView?
     private weak var modelPicker: WS2ModelPickerView?
+    private weak var conductorPage: WS2ConductorPageView?
+    private weak var conductorSample: WS2ConductorView?
     private var deviceHost: WS2DeviceActionHost?
+    private var conductorOwnsDeviceHost = false
     private var sleeping=false
     private var quitBarrier=WS2QuitBarrier()
     private var quitToken:WS2QuitBarrier.Token?
@@ -53,6 +56,7 @@ import Cocoa
         owned.onChange={ [weak self] in
             self?.ownedView?.scheduleRender()
             self?.modelPicker?.sync()
+            self?.conductorPage?.sync()
             self?.deviceHost?.environmentChanged()
         }
         owned.onQuiescent={ [weak self] in self?.finishQuit(childrenReady:true) }
@@ -195,6 +199,59 @@ import Cocoa
         view.navigateBack = { [weak self] in self?.openOwned() }
         view.sync(); host.start(); view.renderDevices(host.devices)
     }
+    @discardableResult func openConductor() -> Bool {
+        guard NotchController.isEnabled, !sleeping, lockReasons.isEmpty,
+              AuthorizationService.shared.lockState() == .unlocked else { return false }
+        let view = WS2ConductorPageView(controller: owned)
+        guard island.show(view, ownerID: "conductor", onDismiss: { [weak self, weak view] _ in
+            guard let self, self.conductorPage === view else { return }
+            if self.conductorOwnsDeviceHost {
+                self.deviceHost?.stop()
+                self.deviceHost = nil
+                self.conductorOwnsDeviceHost = false
+            }
+            self.conductorPage = nil
+        }), let lease = island.inputHandle(for: view) else { return false }
+        conductorPage = view
+        view.expectedLease = lease
+        view.currentLease = { [weak self, weak view] in
+            guard let view else { return nil }
+            return self?.island.inputHandle(for: view)
+        }
+        attachConductorDevices(view)
+        view.sync()
+        return true
+    }
+    private func attachConductorDevices(_ view: WS2ConductorPageView) {
+        guard deviceHost == nil else { view.noteDevicesBusy(); return }
+        conductorOwnsDeviceHost = true
+        let context: (UUID) -> WS2SemanticInputRouter.Context? = { [weak self, weak view] id in
+            guard let self, let view, self.conductorPage === view, view.isInputReady,
+                  let epoch = view.backendEpoch else { return nil }
+            return .init(attachment: id, lease: view.pageID, domain: .conductor,
+                         targetRevision: view.input.selection.revision, backendEpoch: epoch)
+        }
+        let clock = self.clock
+        let host = WS2DeviceActionHost(sink: view, liveContext: context,
+            frontIsGameOrUnknown: { [weak view] in view?.isInputReady != true },
+            unlocked: { AuthorizationService.shared.lockState() == .unlocked },
+            makeBridge: { environment, emit in WS2GameControllerBridge(clock: clock, environment: environment, emit: emit) })
+        deviceHost = host
+        host.devicesChanged = { [weak view] in view?.renderDevices($0) }
+        view.enableDevice = { [weak host, weak view] id in
+            guard let host, let view, let current = context(id) else { return false }
+            view.input.bind(current)
+            view.input.ready = view.isInputReady
+            return host.enable(id)
+        }
+        view.disableDevice = { [weak host] in host?.disable($0) }
+        view.changedEnvironment = { [weak self, weak view] in
+            guard let self, self.conductorPage === view else { return }
+            self.deviceHost?.environmentChanged()
+        }
+        host.start()
+        view.renderDevices(host.devices)
+    }
     var menuTitle: String { "番茄钟 · " + focus.model.compactText(at:clock.now()) }
     func open() {
         guard let owner,NotchController.isEnabled,NotchActivityController.isEnabled, AuthorizationService.shared.lockState() == .unlocked else { return }
@@ -227,10 +284,19 @@ import Cocoa
         return island.show(view,ownerID:"agentSessions")
     }
     @discardableResult func showConductor(_ state:ConductorNotch, action:@escaping(WS2ConductorView.Action)->Void) -> Bool {
+        if let view = conductorSample, view.window != nil {
+            guard view.render(state) else { return false }
+            view.onAction = action
+            return true
+        }
         let view = WS2ConductorView(frame:.zero)
         guard view.render(state) else { return false }
         view.onAction = action
-        return island.show(view,ownerID:"conductor")
+        guard island.show(view, ownerID: "conductor", onDismiss: { [weak self, weak view] _ in
+            if self?.conductorSample === view { self?.conductorSample = nil }
+        }) else { return false }
+        conductorSample = view
+        return true
     }
     private func publish() {
         guard let owner else { return }
@@ -241,7 +307,8 @@ import Cocoa
         if title != lastMenuTitle { lastMenuTitle = title; owner.rebuildMenu() }
     }
     func stop() {
-        deviceHost?.stop(); deviceHost=nil; modelPicker=nil
+        deviceHost?.stop(); deviceHost=nil; modelPicker=nil; conductorPage=nil; conductorSample=nil
+        conductorOwnsDeviceHost=false
         owned?.stop(reason:"应用正在退出",clearPrivate:true)
         owned?.onChange=nil;owned?.onBrowserURL=nil
         island?.stop(); focus?.stop()
@@ -303,4 +370,5 @@ import Cocoa
 extension AppDelegate {
     @objc func ws2OpenOwned() { MainActor.assumeIsolated { ws2Runtime.openOwned() } }
     @objc func ws2OpenFocus() { MainActor.assumeIsolated { ws2Runtime.open() } }
+    @objc func ws2OpenConductor() { MainActor.assumeIsolated { _ = ws2Runtime.openConductor() } }
 }
