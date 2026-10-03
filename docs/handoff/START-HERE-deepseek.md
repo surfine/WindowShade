@@ -103,6 +103,27 @@
 > Keychain、HID/鼠标/手柄的生产桥、会话与指挥的 live store 订阅、T3 窗口效果都还没有接；
 > 逐项见 [part4/REMAINING.md](chatgpt-review-2/part4/REMAINING.md)。
 
+> **2026-10-03 夜（后半）：第五、六份也合完了。**第五份的进程/身份/窗口中间层与第六份的
+> 精确增量（仲裁修正、Scope/Selection/Budget、诊断尾部）都进 `main`，原件在
+> [part5/](chatgpt-review-2/part5/) 与 [part6/](chatgpt-review-2/part6/)。
+> 按第六份的顺序交回的第一条独立闭环已经**真机跑通**：`tests/run-owned-codex-phase1.sh`
+> 用本机 `/opt/homebrew/bin/codex` 0.153.0 走完 initialize → model/list（2 个模型）→ thread/start →
+> turn/start → turn/completed → stop，全程 `approvalsSeen=0`（没有发过一条 allow）。
+> 真机还抓出三处只有 Mac 才会暴露的问题：CryptoKit 的 Ed25519 签名带随机量（不能拿自己产出的 M6
+> 与确定性向量逐字节比，改按“对端能验证”验收）；按线程屏蔽 SIGPIPE 在多线程进程里挡不住（改进程级忽略，
+> EPIPE 仍如实返回）；0.153.0 在初始化阶段就发 `remoteControl/status/changed`，Wire 原来把 ready 之前
+> 的任何通知当协议错误并自关，现在通知在未关闭状态都收，只有审批请求要求 ready。
+>
+> 番茄钟的窗口效果按工单 06 改成「串行计划 + 真实端口」：`WS2FocusWindowPort` 逐窗收起/放回、
+> 先登记等待器再动作、按身份与 revision 复核；`WS2FocusWindowPort.admitted` 仍是 false，
+> 真机时序表没跑完之前只计时、不动窗口，设置里也显示不可用。
+>
+> swift-srp 依赖按你批准的方式做了隔离准入：resolve 成功（swift-srp 1345dfe…、big-num 2.0.3、
+> swift-crypto 4.5.2、swift-asn1 1.7.3），Mac 上 Swift 6 严格并发编译通过，四个包的许可都是
+> Apache-2.0 / MIT，证据在 [part5-mac-probe/](chatgpt-review-2/part5-mac-probe/)。
+> **首次配对仍未准入**：没做固定向量互测（HAP 变体的补零与 proof 布局要逐字节对 `srp_reference.py`），
+> 也没有实例工厂与原生 Remote 互操作。
+
 
 **第一波：纯逻辑。**互不依赖，最安全，可以并行派。
 

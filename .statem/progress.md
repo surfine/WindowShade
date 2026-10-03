@@ -43,6 +43,42 @@
 
 提交：`c9bb354`…`faa4015` 共 9 笔（含第四份合并、隐私页、T3 执行器）。
 
+## 第五、六份接入（当前 run：20261003-p56）
+
+- 合并第五份（进程/身份/窗口中间层）与第六份（仲裁修正 + Scope/Selection/Budget/诊断尾部）：
+  提交 `7c89d6d`；原件归档 `docs/handoff/chatgpt-review-2/part5|part6`。
+- 工单 01：单岛仍是 `NotchLeaseHub`；`show` 改为先 acquire（可带 replacing）→ 挂载 → `isCurrent` 复核，
+  不预先 dismiss；`beginAuthorization` 同样复核新租约。
+- 工单 02：`WS2OwnedLaunchController` + 设置页四项；**真机阶段一通过**（提交 `6e9428f`）：
+  codex-cli 0.153.0，2 个模型，thread/turn/completed/stop，`approvalsSeen=0`。
+- 工单 06：`FoldCompletion.awaitFold(id:)` + `WS2FocusWindowPort`（逐窗收起/放回、先登记等待器、
+  身份与 revision 复核），`admitted=false` 之前只计时（提交 `473ee55`）。
+- 工单 07：`run-part6-archive-integrity.sh`（94 文件哈希全对）、`run-part6-readiness.sh`（如实 BLOCKED）。
+- 工单 05：SRP 隔离探针 resolve + Mac Swift 6 编译通过，许可核过（证据在 part5-mac-probe/）；
+  固定向量互测、实例工厂、原生 Remote 互操作仍未做 → 配对未准入。
+
+### 真机发现（都属“只在 Mac 才暴露”）
+
+1. CryptoKit 的 Ed25519 签名带随机量：不能拿自己产出的 M6 与确定性向量逐字节比；
+   验收改为「对端能验证」+ 两次签名必须不同。
+2. 按线程屏蔽 SIGPIPE 在多线程进程里挡不住：`WS2DuplexProcess` 改进程级忽略，EPIPE 仍如实返回。
+3. codex 0.153.0 在初始化阶段就发 `remoteControl/status/changed`：Wire 原来把 ready 之前的通知
+   当协议错误并自关；现在通知在未关闭状态都收，只有审批请求要求 ready。
+4. codex 是 node 脚本：子进程环境要沿用 App 的 PATH（原先手写 PATH 缺 node）。
+5. PROC04 在 macOS 上 OBSERVED_PASS（0.26–0.30 秒；探针阈值 0.7 秒），Linux 的 BLOCKED 不复现；
+   工单里的 200 ms 目标未达到，记录为已知收尾时延。
+
+### 最终验收（当前 HEAD）
+
+| 检查 | 结果 |
+| --- | --- |
+| `cd prototype && ./build.sh --check` | 退出 0 |
+| `bash tests/run-appkit-tests.sh all` | 八套全过（含 LEASE-H01…08） |
+| 纯核 | contracts 9/24、part2 22/86、part3 55/147、part4 72/188、part5 40/97、part6 42/95 |
+| 进程与 Wire | part5 8/26、part6 9/27、Wire 固定 schema 4/4 |
+| 真机 | owned CLI 阶段一通过；PROC04 OBSERVED_PASS 0.26s；Mac 配对加密通过；Python 配对参考 14/14 |
+| 门禁 | 隐私登记表 465 点、页面数据同源、交付归档 94 文件哈希、readiness 如实 BLOCKED |
+
 ## self_review（已完成）
 
 - 契约与产物对照：四份材料都在 main 里，新增入口都有测试；未接项按第四份 REMAINING 记账，没有写成完成。

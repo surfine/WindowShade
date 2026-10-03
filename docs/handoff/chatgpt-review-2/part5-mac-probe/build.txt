@@ -1,0 +1,7 @@
+Building for debugging...
+[1 / 4]
+warning: language mode was overridden by extra Swift flags and may be inconsistent with code generated during the build
+warning: language mode was overridden by extra Swift flags and may be inconsistent with code generated during the build
+warning: language mode was overridden by extra Swift flags and may be inconsistent with code generated during the build
+warning: language mode was overridden by extra Swift flags and may be inconsistent with code generated during the build
+Build complete! (0.45秒)

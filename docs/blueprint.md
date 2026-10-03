@@ -103,6 +103,17 @@
 - **仍然要写的**：首次 Pair-Setup 与 Keychain、HID/鼠标/手柄生产桥、会话与指挥的 live 订阅、
   A2 的允许路径、L4 系统锁、I3/I5，以及所有真机证据。第四份自己的清单见 `docs/handoff/chatgpt-review-2/part4/REMAINING.md`。
 
+#### 2026-10-03 夜（第五、六份接入后）
+
+- **owned CLI 闭环真机跑通了**：唯一 `WS2OwnedLaunchController` + 设置页四项，真 CLI 0.153.0 走完
+  initialize → model/list → thread → turn → completed → stop，没有发过 allow。
+- **窗口效果改成串行计划 + 真实端口**（逐窗收起/放回、身份与 revision 复核）；`admitted` 仍为 false，
+  真机时序表跑完之前番茄钟只计时，设置里显示不可用——不再用 `tuckAll` 的切换语义。
+- **SRP 依赖可用但配对未准入**：隔离 resolve + Mac 编译 + 许可核过；固定向量互测、实例工厂、
+  原生 Remote 互操作都还没有。
+- **仍缺**：Touch ID 允许路径、恢复旧 thread 的项目关联、诊断开关与设置页、设备桥、窗口真机时序、
+  能耗与发布。第六份逐项清单在 `docs/handoff/chatgpt-review-2/part6/REMAINING.md`。
+
 ## 硬要求
 
 做不到就停下来写明卡在哪，不要换一个更容易的东西交差。
