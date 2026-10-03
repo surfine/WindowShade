@@ -925,7 +925,7 @@ final class PinnedPreviewController {
         ensureWatchdogStarted()
         updatePointerDuckingTimer()
         sessionsDidChange()
-        wlog("pin-preview: start id=\(id) app=\(appName) title=\(title) frame=\(format(frame))")
+        wlog("pin-preview: start id=\(id) frame=\(format(frame))")
 
         Task { @MainActor [weak self] in
             do {

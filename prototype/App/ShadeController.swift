@@ -269,7 +269,7 @@ extension AppDelegate {
         let mode = plan.mode
         let quickLookReopenURL = profile.isQuickLook ? quickLookReopenURL(for: win) : nil
         if profile.isQuickLook, quickLookReopenURL == nil {
-            wlog("quicklook: no direct reopen URL; will use Finder Space fallback title=\(title)")
+            wlog("quicklook: no direct reopen URL; will use Finder Space fallback")
         }
         let sourceDisplayID = displayID(for: screenForAXWindow(pos: pos, size: size))
         let sourceSpaceID = foldPhase("源 Space 解析") {
@@ -509,7 +509,7 @@ extension AppDelegate {
             let barH = min(classicTitleBarHeight, min(size.height, 300))
             let overlay = makeClassicOverlay(axPos: pos, width: size.width, height: barH,
                                              pid: pid, appName: appName, title: title, id: id)
-            wlog("    classic finalBarH=\(Int(barH)) appTitle=\"\(appName)\" windowTitle=\"\(title)\"")
+            wlog("    classic finalBarH=\(Int(barH))")
             installOverlay(overlay, mode: mode, previewImage: nil)
             return
         }
@@ -524,7 +524,7 @@ extension AppDelegate {
                                                canResize: canProxyResize,
                                                windowManagement: windowManagementCapability,
                                                trafficLights: profile.trafficLights)
-                wlog("    proxy finalBarH=\(Int(barH)) canResize=\(canProxyResize) windowManagement=\(windowManagementCapability) appTitle=\"\(appName)\" windowTitle=\"\(title)\" preview=-")
+                wlog("    proxy finalBarH=\(Int(barH)) canResize=\(canProxyResize) windowManagement=\(windowManagementCapability) preview=-")
                 installOverlay(overlay, mode: mode, previewImage: nil)
                 return
             }
@@ -540,7 +540,7 @@ extension AppDelegate {
                                                    windowManagement: windowManagementCapability,
                                                    trafficLights: profile.trafficLights)
                 }
-                wlog("    proxy immediate finalBarH=\(Int(barH)) canResize=\(canProxyResize) windowManagement=\(windowManagementCapability) appTitle=\"\(appName)\" windowTitle=\"\(title)\" preview=\(quickPreview == nil ? "-" : "quick") capture=\(options.capturePreview)")
+                wlog("    proxy immediate finalBarH=\(Int(barH)) canResize=\(canProxyResize) windowManagement=\(windowManagementCapability) preview=\(quickPreview == nil ? "-" : "quick") capture=\(options.capturePreview)")
                 installOverlay(overlay, mode: mode, previewImage: quickPreview)
                 return
             }
@@ -567,7 +567,7 @@ extension AppDelegate {
                                                canResize: canProxyResize,
                                                windowManagement: windowManagementCapability,
                                                trafficLights: profile.trafficLights)
-                wlog("    proxy pre-hide-capture finalBarH=\(Int(barH)) canResize=\(canProxyResize) windowManagement=\(windowManagementCapability) appTitle=\"\(appName)\" windowTitle=\"\(title)\" preview=\(capturedImage == nil ? "-" : "sck")")
+                wlog("    proxy pre-hide-capture finalBarH=\(Int(barH)) canResize=\(canProxyResize) windowManagement=\(windowManagementCapability) preview=\(capturedImage == nil ? "-" : "sck")")
                 installOverlay(overlay, mode: mode,
                                previewImage: capturedImage.map { NSImage(cgImage: $0, size: size) })
             }

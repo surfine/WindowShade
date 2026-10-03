@@ -60,9 +60,9 @@ extension AppDelegate {
             if let url = state.quickLookReopenURL, reopenQuickLookPreview(url: url) {
                 wlog("quicklook: reopened via qlmanage id=\(id) path=\(url.path)")
             } else if reopenQuickLookFromFinderSelection(pid: state.pid) {
-                wlog("quicklook: reopened via Finder Space fallback id=\(id) title=\(state.title)")
+                wlog("quicklook: reopened via Finder Space fallback id=\(id)")
             } else {
-                wlog("quicklook: reopen unavailable id=\(id) title=\(state.title)")
+                wlog("quicklook: reopen unavailable id=\(id)")
             }
             rebuildMenu()
             if playSound && !suppressUnshadeSounds {
@@ -248,10 +248,10 @@ extension AppDelegate {
             return true
         }
         if reopenQuickLookFromFinderSelection(pid: state.pid) {
-            wlog("quicklook fullscreen: reopen via Finder Space id=\(id) title=\(state.title)")
+            wlog("quicklook fullscreen: reopen via Finder Space id=\(id)")
             return true
         }
-        wlog("quicklook fullscreen: reopen unavailable id=\(id) title=\(state.title)")
+        wlog("quicklook fullscreen: reopen unavailable id=\(id)")
         return false
     }
     func clickQuickLookVisualFullScreenButton(_ win: AXUIElement, pid: pid_t,

@@ -766,7 +766,7 @@ final class DuoSettingsWindow: NSWindowController, NSWindowDelegate, NSTableView
         button: reset),
       makeActionRow(
         title: "诊断日志",
-        subtitle: "打开 /tmp/windowshade.log 排查问题。",
+        subtitle: "打开运行记录排查问题。",
         button: diagnostics),
     ])
     stack.addArrangedSubview(actionCard)
@@ -863,7 +863,8 @@ final class DuoSettingsWindow: NSWindowController, NSWindowDelegate, NSTableView
   }
 
   @objc private func openDiagnostics() {
-    let logURL = URL(fileURLWithPath: "/tmp/windowshade.log")
+    let logURL = FileManager.default.homeDirectoryForCurrentUser
+      .appendingPathComponent("Library/Logs/WindowShade/windowshade.log")
     if FileManager.default.fileExists(atPath: logURL.path) {
       NSWorkspace.shared.open(logURL)
     } else {

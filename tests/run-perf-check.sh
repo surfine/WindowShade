@@ -7,7 +7,7 @@
 #   5) 不管成功失败，把 /Applications 的应用重新启动。
 set -euo pipefail
 cd "$(dirname "$0")/.."
-LOG="${WINDOWSHADE_LOG_PATH:-/tmp/windowshade.log}"
+LOG="${WINDOWSHADE_LOG_PATH:-$HOME/Library/Logs/WindowShade/windowshade.log}"
 APP=/Applications/WindowShade.app
 STAGE=.build/duo-validation/WindowShade.app/Contents/MacOS/WindowShade
 

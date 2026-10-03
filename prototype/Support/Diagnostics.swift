@@ -2,68 +2,47 @@
 
 import Cocoa
 
-final class WindowShadeLogger {
+/// @unchecked Sendable 的理由：全部可变成员只在 queue 内访问；write 只捕获不可变字符串和 Date。
+final class WindowShadeLogger: @unchecked Sendable {
     static let shared = WindowShadeLogger()
-
-    private let url = URL(fileURLWithPath: getenv("WINDOWSHADE_LOG_PATH").map { String(cString: $0) } ?? "/tmp/windowshade.log")
     private let queue = DispatchQueue(label: "WindowShade.log", qos: .utility)
-    private var handle: FileHandle?
-    private let maxLogSize: UInt64 = 5 * 1024 * 1024
-
-    // 时间戳在后台队列格式化；Date() 捕获发生在调用线程，保证反映真实记录时刻。
+    private var writer: SecureLogFile?
+    private var disabled = false
     private let timeFormatter: DateFormatter = {
         let f = DateFormatter()
         f.dateFormat = "HH:mm:ss.SSS"
         f.locale = Locale(identifier: "en_US_POSIX")
         return f
     }()
-
     func write(_ s: String) {
         let now = Date()
         queue.async { [weak self] in
-            guard let self else { return }
-            let line = "\(self.timeFormatter.string(from: now)) \(s)\n"
-            guard let data = line.data(using: .utf8) else { return }
-            self.append(data)
+            guard let self, !self.disabled else { return }
+            do {
+                if self.writer == nil { self.writer = try self.openWriter() }
+                let line = "\(self.timeFormatter.string(from: now)) \(s)\n"
+                try self.writer?.append(Data(line.utf8))
+            } catch {
+                // 不递归 wlog；不向公用位置回退，也不把这一行交给统一日志。
+                self.writer?.closeFiles(); self.writer = nil; self.disabled = true
+            }
         }
     }
-
     func flushAndClose() {
-        queue.sync {
-            try? handle?.synchronize()
-            try? handle?.close()
-            handle = nil
-        }
+        // 和旧调用合同相同：只由外部非日志队列调用。关闭后不再开启文件。
+        queue.sync { writer?.closeFiles(); writer = nil; disabled = true }
     }
-
-    private func append(_ data: Data) {
-        if handle == nil {
-            openHandle()
+    private func openWriter() throws -> SecureLogFile {
+        if let override = getenv("WINDOWSHADE_LOG_PATH") {
+            // 开发覆盖仍支持，但必须给专用、受保护、已存在的父目录。
+            return try SecureLogFile(path: String(cString: override))
         }
-        // 超限轮转：当前文件改名 .1（覆盖旧备份）后开新文件，避免长期运行的
-        // 菜单栏工具把 /tmp 日志无限写大、挤占磁盘。
-        if let handle, handle.offsetInFile + UInt64(data.count) > maxLogSize {
-            rotate()
-        }
-        handle?.write(data)
-    }
-
-    private func rotate() {
-        try? handle?.synchronize()
-        try? handle?.close()
-        handle = nil
-        let backup = URL(fileURLWithPath: url.path + ".1")
-        try? FileManager.default.removeItem(at: backup)
-        try? FileManager.default.moveItem(at: url, to: backup)
-        openHandle()
-    }
-
-    private func openHandle() {
-        if !FileManager.default.fileExists(atPath: url.path) {
-            FileManager.default.createFile(atPath: url.path, contents: nil)
-        }
-        handle = try? FileHandle(forWritingTo: url)
-        handle?.seekToEndOfFile()
+        let directory = FileManager.default.homeDirectoryForCurrentUser
+            .appendingPathComponent("Library/Logs/WindowShade", isDirectory: true)
+        // 创建只保证路径存在。SecureLogFile 随后逐级用 descriptor + NOFOLLOW 验证，未验证前不写日志。
+        try FileManager.default.createDirectory(at: directory, withIntermediateDirectories: true,
+                                                 attributes: [.posixPermissions: 0o700])
+        return try SecureLogFile(path: directory.appendingPathComponent("windowshade.log").path)
     }
 }
 

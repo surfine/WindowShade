@@ -244,7 +244,7 @@ func axTitle(_ e: AXUIElement) -> String {
 func dumpWindow(_ win: AXUIElement) {
     let pos = axPosition(win) ?? .zero
     let size = axSize(win) ?? .zero
-    wlog("--- WINDOW role=\(axRole(win) ?? "?") title=\(axTitle(win)) pos=(\(Int(pos.x)),\(Int(pos.y))) size=(\(Int(size.width))x\(Int(size.height)))")
+    wlog("ax-window: diagnostic title=[redacted]")
     for c in axChildren(win) {
         let cp = axPosition(c) ?? .zero
         let cs = axSize(c) ?? .zero

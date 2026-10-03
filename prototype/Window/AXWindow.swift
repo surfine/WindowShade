@@ -665,4 +665,4 @@ func measuredTitlebarHitHeight(of win: AXUIElement, winTop: CGFloat, winSize: CG
     return visualHeight
 }
 
-// MARK: - 诊断日志（写到 /tmp/windowshade.log）
+// MARK: - 诊断日志（写到 ~/Library/Logs/WindowShade/windowshade.log，只有本人可读，不写窗口标题）
