@@ -1,0 +1,9 @@
+{
+  "status": "PASS",
+  "assertions": 186,
+  "frames": 7560,
+  "seconds": 126,
+  "scheduledHoldFrames": 2370,
+  "scheduledHoldFraction": 0.3134920634920635,
+  "warning": "Schedule tests are not pixel QA; real footage freezes must be checked again."
+}
