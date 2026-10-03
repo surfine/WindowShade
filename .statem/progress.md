@@ -70,6 +70,27 @@
 
 ### 最终验收（当前 HEAD）
 
+## 第七份接入（run 20261003-p7）
+
+- 合入第七份：完整 `WS2OwnedLaunchController`（本地选项目/可执行文件、版本预检、独立 HOME/CODEX_HOME 与
+  config.toml、模型目录、新建/恢复、一次发送、流式文本、停止、锁态撤销）、`WS2OwnedSessionView`（同一刘海宿主）、
+  `WS2OwnedCodexSession+Authorization`（保留为非默认策略）、`WS2StrictJSON`、`WS2QuitBarrier`、
+  `WS2OwnedProtocolHost`、`WS2LocalLaunchProfile`、`WS2VersionProbe`、以及 `prototype/Native/WS2Child.c`
+  原生监督端口；提交 `50cb7d2`。
+- 真机跑通：part7 core 27/51、native 3/14、flow 18/145；旧回归 foundation/process 全过（PROC04 0.097s）；
+  `check-build.py` 33 份类型检查；`./build.sh --check` 与八套 AppKit 全过；隐私门禁 465 点。
+- 真实 CLI：`tests/run-owned-codex-controller.sh` 走通 版本 → 独立配置 → `config/read` 投影 → 账号边界
+  （隔离 profile 未登录），列出 5 个真实模型；没有发送查询、没有打开登录页。
+- 真机修掉 6 处（记录在 `docs/handoff/chatgpt-review-2/part7/MAC-EVIDENCE.md`）：
+  `addchdir_np` 在 SDK 26+ 弃用；退出后 `getpgid` ESRCH；空组 `kill(-pgid)` 回 EPERM 导致永不回收；
+  Swift 6 异步不能迭代 NSEnumerator；隔离 PATH 缺 node 让真实 CLI 127；真实 `config/read` 的 hooks 形状。
+- 旧 runner 跟着新依赖更新：CodexWire 加 `WS2StrictJSON`，进程通道与 AppKit harness 加原生 C 模块。
+
+### 仍没做（第七份 REMAINING 为准）
+
+真实登录后的查询、原生界面布局/焦点/输入法实测、脱离组子孙的全树安全、窗口真实端口准入、
+SRP 向量互测与实例工厂、设备桥、原生 Remote、能耗、影片、签名与发布。
+
 | 检查 | 结果 |
 | --- | --- |
 | `cd prototype && ./build.sh --check` | 退出 0 |
