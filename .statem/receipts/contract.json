@@ -1,20 +1,22 @@
 {
   "kind": "contract",
-  "artifact": "四份材料已并进 main（c9bb354…faa4015），隐私一栏、番茄钟闭环、T3 窗口执行器都在；验证入口见 tests/run-part*-core-tests.sh、run-mac-crypto-tests.sh、run-privacy-*.sh、NotchLeaseHostTests",
+  "artifact": "第五、六份已并进 main（7c89d6d…0af9433）：单岛修正、owned CLI 本地闭环（真机阶段一通过）、串行窗口计划 + 未准入的真实端口、SRP 隔离准入、证据门禁；验证入口见 tests/run-part5-*、tests/run-part6-*、run-owned-codex-phase1.sh、run-privacy-*、run-part6-{archive-integrity,readiness}.sh",
   "status": "passed",
   "checks": [
     {"command": "cd prototype && ./build.sh --check", "result": "退出 0，编译验证通过"},
     {"command": "bash tests/run-appkit-tests.sh all", "result": "退出 0，八套全过（含 NotchLeaseHostTests 8 场景 0 失败）"},
-    {"command": "bash tests/run-part4-core-tests.sh", "result": "SCENARIOS=72 ASSERTIONS=188 FAILURES=0"},
-    {"command": "bash tests/run-mac-crypto-tests.sh", "result": "CryptoKit 向量、M1–M4、双向记录、重放关闭会话全过"},
-    {"command": "python3 tests/crypto-reference.py", "result": "18 例 OK"},
-    {"command": "python3 tests/check-approval-schema.py", "result": "PASS，validator=builtin-constraints，1 条合成响应"},
-    {"command": "bash tests/run-privacy-registry-check.sh", "result": "PASS privacy-registry: 458 lexical sites"},
-    {"command": "bash tests/run-privacy-page-sync.sh", "result": "PASS privacy-page: 数据源与登记表一致"},
-    {"command": "contracts/part2/part3 与第一份十二个包 runner", "result": "全部 PASS（9/24、22/86、55/147、121/334）"}
+    {"command": "bash tests/run-owned-codex-phase1.sh", "result": "PASS：codex-cli 0.153.0，2 个模型，thread/turn/completed/stop，approvalsSeen=0"},
+    {"command": "bash tests/run-part6-{core,process,wire}-tests.sh", "result": "42/95、9/27、Wire 固定 schema 4/4"},
+    {"command": "bash tests/run-part5-{core,process,mac-crypto}-tests.sh", "result": "40/97、8/26、CryptoKit 配对分层 PASS"},
+    {"command": "bash tests/run-part6-exit-probe.sh", "result": "PROC04 OBSERVED_PASS elapsed=0.26s"},
+    {"command": "python3 tests/crypto-reference-pairing.py", "result": "14 例 OK（HAP 变体参考）"},
+    {"command": "bash tests/run-part6-archive-integrity.sh", "result": "PASS：交付 94 个文件哈希全对"},
+    {"command": "bash tests/run-part6-readiness.sh", "result": "BLOCKED（exit 2，如实：source partial / build not-run / runtime not-run / reviewer 缺失）"},
+    {"command": "bash tests/run-privacy-{registry-check,page-sync}.sh", "result": "465 个词法点、页面数据同源"},
+    {"command": "contracts/part2/part3/part4 与第一份各 runner", "result": "9/24、22/86、55/147、72/188、121/334 全过"}
   ],
   "reused_checks": [],
-  "remaining_risk": "真实窗口收窗/放回、真机探针、首次配对与 Keychain、owned Codex 允许路径、设备桥与 live 订阅都未验；隐私页只上 current 行，planned 行等功能接通",
+  "remaining_risk": "窗口端口未准入（admitted=false，真机时序表没跑）；owned Codex allow 路径要 Touch ID 在场；SRP 未做固定向量互测与实例工厂；设备桥/原生 Remote/能耗/发布未验；PROC04 的 200ms 目标未达（实测 0.26–0.30s）",
   "next_action": "self_review",
   "updated": "2026-10-03T18:05:16+0800"
 }

@@ -1,19 +1,21 @@
 {
   "kind": "self_review",
-  "artifact": "main 上的 7c86e89：四份材料合并 + 隐私一栏（原权限与启动）+ 番茄钟闭环与 T3 窗口执行器",
+  "artifact": "main 上的 0af9433：第五、六份合并 + owned CLI 本地闭环（真机阶段一通过）+ 串行窗口计划与未准入端口 + SRP 隔离准入 + 证据门禁",
   "status": "clean",
   "issues_found": [
-    "自审开始时交付物还是 bbe298d，随后又做了范围明确的收口（把权限与启动并进隐私，7c86e89）；发现后在当前 HEAD 重跑了 build.sh --check 与八套 AppKit 回归，并看了隐私页浅深色截图，证据属于当前产物"
+    "真机三处失败都不是实现漂移，而是「只在 Mac 才会暴露」的事实：CryptoKit Ed25519 随机化签名、按线程屏蔽 SIGPIPE 无效、0.153.0 初始化期就发通知；都按证据改了实现或验收规则，没有放宽阈值",
+    "工单 06 明确要求「未准入就不要把效果开关呈现为已生效」：WS2FocusWindowPort.admitted 保持 false，设置项不可用，番茄钟只计时"
   ],
   "needs_evidence": false,
   "findings": [
-    "没有发现在契约之外扩范围的改动：没有发布、没有改更新源、没有安装 hook、没有写用户 home",
-    "未接项按第四份 REMAINING 保真：owned Codex 允许路径、首次 Pair-Setup/Keychain、设备桥、live 订阅、系统锁都仍是未接，没有被写成完成"
+    "没有发现越权改动：没有发布/签名/推送，没有改更新源或 hook；真实 CLI 只按你批准的阶段一跑，且 approvalsSeen=0",
+    "第六份 44 项决策与第五份 C01–C10 已按「第五、六份优先」记账；C04 的纠正已落实（番茄钟不再用 tuckAll）",
+    "readiness 如实 BLOCKED，没有被改成绿；交付归档 94 文件哈希逐项核对"
   ],
   "lenses": {
-    "task_contract": "契约要求的四类交付物都在：材料归档（docs/handoff/chatgpt-review-2/part1…part4）、验证入口（tests/run-part4-core-tests.sh 等）、用户可见功能（隐私页 20 行、番茄钟闭环、T3 执行器）、台账（v1.0.16-ledger.md / blueprint.md / START-HERE-deepseek.md）",
-    "evidence_freshness": "当前 HEAD 7c86e89 上实跑：./build.sh --check 退出 0；bash tests/run-appkit-tests.sh all 八套全过；run-part4-core 72/188；run-mac-crypto 全过；crypto-reference 18 例；check-approval-schema PASS；隐私登记表 458 点与页面数据同源；前三份纯核全绿",
-    "edge_risk": "T3 执行器只放回仍然收着且未被别人动过的窗口，进程启动时间与 tuck revision 任一不符就跳过（手动改动不会被回滚）；聊天收窗没有私人 App 名单，效果只记录不执行；隐私页只显示 status=current 的 20 行，planned 行等功能接通"
+    "task_contract": "契约里的三类交付物都在：第五、六份源码与归档（docs/handoff/chatgpt-review-2/part5|part6）、真实调用者（WS2OwnedLaunchController、WS2FocusWindowPort）、验证入口（run-part5-*、run-part6-*、run-owned-codex-phase1.sh、archive-integrity、readiness）与台账更新",
+    "evidence_freshness": "当前 HEAD 0af9433 上实跑：build --check 退出 0；AppKit 八套全过；纯核 contracts 9/24、part2 22/86、part3 55/147、part4 72/188、part5 40/97、part6 42/95；进程 8/26 与 9/27；Wire 4/4；owned CLI 阶段一真机通过；PROC04 0.26s；Mac 配对加密通过；隐私 465 点；归档 94 文件；readiness BLOCKED",
+    "edge_risk": "窗口端口未准入前任何自动收窗都不会发生（只有用户自己的 tuckAll 入口仍在）；Scope 离开锁/换项目即失效、未知锁态一律 false；恢复只消费本轮 receipt 且比对 liveRevision；SRP 未做向量互测前不显示「已支持配对」"
   },
   "next_action": "handoff",
   "updated": "2026-10-03T18:35:00+0800"
