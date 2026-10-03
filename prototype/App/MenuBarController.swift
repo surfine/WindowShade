@@ -69,12 +69,16 @@ extension AppDelegate {
       (menu ?? statusMenu).addItem(item)
     }
     let ax = AXIsProcessTrusted(), screen = hasScreenRecordingPermission()
-    action(foldToggleMenuTitle().replacingOccurrences(of: "当前窗口", with: "窗口"),
-           "rectangle.compress.vertical", #selector(toggleAction), .toggleShade)
+    let foldTitle = foldToggleMenuTitle().replacingOccurrences(of: "当前窗口", with: "窗口")
+    action(foldTitle,
+           foldTitle.contains("展开") ? "rectangle.expand.vertical" : "rectangle.compress.vertical",
+           #selector(toggleAction), .toggleShade)
     action("收进刘海", "rectangle.topthird.inset.filled", #selector(tuckCurrentAction), .tuckCurrent,
            enabled: ax && NotchController.isEnabled)
-    action(pinnedPreviewMenuTitle().replacingOccurrences(of: "当前窗口", with: "窗口"),
-           "pin", #selector(togglePinnedPreviewAction), .pinPreview, enabled: ax && screen)
+    let pinTitle = pinnedPreviewMenuTitle().replacingOccurrences(of: "当前窗口", with: "窗口")
+    action(pinTitle,
+           pinTitle.contains("取消置顶") ? "pin.slash" : "pin",
+           #selector(togglePinnedPreviewAction), .pinPreview, enabled: ax && screen)
     let arrangement = NSMenu()
     let arrangeItem = NSMenuItem(title: "排列", action: nil, keyEquivalent: "")
     arrangeItem.image = NSImage(systemSymbolName: "rectangle.split.2x1", accessibilityDescription: nil)
@@ -102,6 +106,7 @@ extension AppDelegate {
            enabled: WindowBrowserSettings.keyboardPanelEnabled)
     // 动态窗口段不计入 9 个常驻项；保留老板键、逐窗取消和全部取消。
     addPinnedPreviewMenuSection(menuState.pinnedPreviews)
+    // 进行中才出现。番茄钟用真实计时；指挥模式和编程会话没有菜单文案来源，不编一行。
     if MainActor.assumeIsolated({ ws2Runtime.focus.model.phase != .idle }) {
       action(MainActor.assumeIsolated { ws2Runtime.menuTitle }, "timer", #selector(ws2OpenFocus))
     }
