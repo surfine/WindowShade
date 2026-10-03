@@ -32,3 +32,8 @@ prototype/local-codesign.env
 
 # Local Cloudflare deployment state
 /.wrangler/
+
+# StateM 运行：契约、进展与回执留在仓库，机器态（run 记录、runbook、活动指针）不进
+/.statem/runs/
+/.statem/active_run
+/.statem/runbook.yaml
