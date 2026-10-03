@@ -29,6 +29,7 @@
     "prototype/Window/AXHelpers.swift",
     "prototype/App/NotchFaceObservations.swift",
     "prototype/Recovery/Rescue.swift",
+    "prototype/App/FocusSession.swift",
     "AGENTS.md",
     "docs/blueprint.md",
     "docs/handoff/START-HERE-deepseek.md",
