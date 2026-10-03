@@ -13,6 +13,7 @@ struct ClassicPalette {
     let controlFill: NSColor
 }
 
+@MainActor
 func isDarkAppearance() -> Bool {
     NSApp.effectiveAppearance.bestMatch(from: [.darkAqua, .aqua]) == .darkAqua
 }
@@ -68,6 +69,7 @@ func dominantIconColor(pid: pid_t) -> NSColor? {
                    alpha: 1)
 }
 
+@MainActor
 func classicPalette(pid: pid_t) -> ClassicPalette {
     let base = dominantIconColor(pid: pid) ?? NSColor(calibratedHue: 0.60, saturation: 0.32, brightness: 0.96, alpha: 1)
     let rgb = base.usingColorSpace(.deviceRGB) ?? base
