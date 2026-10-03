@@ -116,7 +116,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSMenuDelegate {
     }
 
     // reconcile 需要知道真实窗口是否仍存在/最小化，但这些 AX 读取可能被忙 app
-    // 阻塞数秒。快照在后台按 app 并行采集，主线程仅应用已经完成的结果。
+    // 阻塞数秒。每个 app 最多一个在途读取，全局同时最多 4 个；主线程只应用已经返回的结果。
     struct ReconcileAXTarget {
         let id: CGWindowID
         let pid: pid_t
@@ -175,8 +175,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSMenuDelegate {
     private var tapSetupTimer: Timer?
     var reconcileTimer: Timer?
     var isReconcilingShadedWindows = false
-    var reconcileBatchID: UUID?
-    var reconcilePendingApplications = 0
+    var axReadGate = AXReadGate<pid_t, [WS2FoldCallbackStamp]>()
     var reconcileInvalidCounts: [CGWindowID: Int] = [:]
     var privateAlphaOriginalValues: [CGWindowID: Float] = [:]
     // 本机的跨进程 SkyLight alpha 写入是否已被确认无效（SIP 限制）。
