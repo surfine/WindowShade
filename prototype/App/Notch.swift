@@ -72,17 +72,21 @@ final class NotchController {
 
     /// 一块屏同时只有一个主人：授权、指挥、那一排、启动台、窗口浏览、番茄钟都从这里拿展示权。
     /// 收尾（停看一眼、撤审批输入、收启动台）在撤销回调里同步做完，协调器才发布下一份租约。
-    lazy var leases = NotchLeaseHub(
-        displays: { [weak self] in
-            guard let self else { return [] }
-            return Set(self.panels.keys.map { WS2.DisplayID(value: $0) })
-        },
-        cancel: { [weak self] notice in self?.handleLeaseCancel(notice) })
+    lazy var leases: NotchLeaseHub = {
+        let hub = NotchLeaseHub(
+            displays: { [weak self] in
+                guard let self else { return [] }
+                return Set(self.panels.keys.map { WS2.DisplayID(value: $0) })
+            },
+            cancel: { [weak self] notice in self?.handleLeaseCancel(notice) })
+        hub.attach(controller: self)
+        return hub
+    }()
 
     private func handleLeaseCancel(_ notice: NotchLeaseHub.CancelNotice) {
         switch notice.owner {
         case .authorization:
-            // 授权那条路的收尾归认证控制器：它还要撤 LAContext、退掉授权账。
+            // 授权那条路的收尾归认证控制器：它还要撤掉系统认证上下文、退掉授权账。
             authentication.cancel(animated: false, restoreFocus: false)
         case .launchpad:
             if owner.launchpad.isShowing { owner.launchpad.hide(reason: "lease") }
@@ -1496,7 +1500,7 @@ final class NotchPanel: NSPanel {
             authenticationView = nil
             canvas.setAuthentication(nil)
             updateVisibility(); apply(animated: false)
-        case .launchpad, .windowBrowser, .conductor, .pomodoro:
+        case .launchpad, .windowBrowser, .conductor, .pomodoro, .agentSessions, .agentReview:
             break
         }
     }
@@ -1504,6 +1508,11 @@ final class NotchPanel: NSPanel {
     private var activitySelection: String?
     private var authenticationView: (NSView & NotchInteractiveContent)?
     var isAuthenticating: Bool { authenticationView != nil }
+    func isShowingInteraction(_ view: NSView) -> Bool { authenticationView === view }
+    /// 内容自己报要多大；不报的照旧的 344×68。
+    private var interactionSize: NSSize {
+        (authenticationView as? any WS2LeaseContent)?.interactionSize ?? NSSize(width: 344, height: 68)
+    }
     private var activitiesShown: Bool { !isAuthenticating && !activityItems.isEmpty && dropState == .none && alertInfo == nil }
     func setAuthentication(_ view: NotchAuthenticationView?, animated: Bool = true) {
         setInteraction(view, animated: animated)
@@ -1615,7 +1624,8 @@ final class NotchPanel: NSPanel {
 
     private func showActivityMenu(_ event: NSEvent) {
         let menu = NSMenu()
-        let destinations: [(String, String)] = [("实时活动", "today"), ("音乐", "enableMusic"), ("隔空投送", "airDrop"), ("路线", "route"), ("语音备忘录", "voiceMemos")]
+        let destinations: [(String, String)] = [("实时活动", "today"), ("音乐", "enableMusic"), ("隔空投送", "airDrop"),
+                                                ("路线", "route"), ("语音备忘录", "voiceMemos"), ("番茄钟", "focusOpen")]
         for (title, action) in destinations {
             let item = NSMenuItem(title: title, action: #selector(activityMenuAction(_:)), keyEquivalent: "")
             item.representedObject = action; item.target = self; menu.addItem(item)
@@ -1967,9 +1977,11 @@ final class NotchPanel: NSPanel {
     private func baseTarget() -> (rect: NSRect, style: IslandStyle) {
         if isAuthenticating {
             let screenWidth = screen?.frame.width ?? 1000
-            let width = min(screenWidth - 44, max(notch.width, 344))
+            let width = max(240, min(screenWidth - 44, max(notch.width, min(640, interactionSize.width))))
             // Actual notch: content below the camera. Other displays: a detached, fully rounded capsule below the menu bar.
-            let height = isVirtual ? 68 : notch.height + 68
+            let available = max(68, (screen?.visibleFrame.height ?? 600) - 80)
+            let contentHeight = min(available, max(68, min(480, interactionSize.height)))
+            let height = isVirtual ? contentHeight : notch.height + contentHeight
             let top = isVirtual ? notch.minY - 8 : notch.maxY
             return (NSRect(x: notch.midX - width / 2, y: top - height, width: width, height: height),
                     IslandStyle(cornerRadius: isVirtual ? 34 : 24, allCorners: isVirtual, fill: .black, border: 0.5))
@@ -2108,7 +2120,10 @@ final class NotchPanel: NSPanel {
             self.settledGeneration = generation
             self.updateVisibility()
         }
-        canvas.placeAuthentication(in: local)
+        // 真刘海那块物理摄像头区域不算可用内容高度。
+        let interactionRect = NSRect(x: local.minX, y: local.minY, width: local.width,
+                                     height: max(0, local.height - (isVirtual ? 0 : notch.height)))
+        canvas.placeAuthentication(in: interactionRect)
     }
 
     /// 肩这一次怎么动（§5.1 S3、S5）。肩和硬件的肩重合、或者岛没画时，肩是看不出来的：
@@ -2264,7 +2279,9 @@ final class NotchCanvasView: NSView {
         current?.isHidden = view != nil
     }
     func placeAuthentication(in rect: NSRect) {
-        authenticationView?.frame = NSRect(x: rect.minX, y: rect.minY, width: rect.width, height: 68)
+        let requested = (authenticationView as? any WS2LeaseContent)?.interactionSize.height ?? 68
+        authenticationView?.frame = NSRect(x: rect.minX, y: rect.minY, width: rect.width,
+                                           height: min(rect.height, max(68, min(480, requested))))
         authenticationView?.layoutSubtreeIfNeeded()
     }
     private var shown: Content?

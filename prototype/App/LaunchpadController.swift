@@ -42,7 +42,14 @@ final class LaunchpadController {
 
     var isShowing: Bool { panel != nil }
     func updateActivities(_ values: [NotchActivity], selected: String?) {
-        panel?.view.today.updateActivities(values)
+        var items = values
+        // 空闲时补一张番茄钟卡：显示预设，按一下就开始（负一屏不新增窗口，也不弹设置）。
+        if !items.contains(where: { $0.kind == .focus }), owner.ws2Runtime.focus.model.phase == .idle {
+            let label = WS2FocusSettings.preset == .minutes50 ? "番茄钟 50 / 10" : "番茄钟 25 / 5"
+            items.append(NotchActivity(id: "focus.idle", kind: .focus, title: label, subtitle: "按一下开始",
+                                       symbol: "timer", startedAt: 0))
+        }
+        panel?.view.today.updateActivities(items)
     }
 
     /// 启动时在后台先扫一遍、画好第一页（文件夹里的小图标也画），壁纸也先解码：第一次打开也是立刻出来。

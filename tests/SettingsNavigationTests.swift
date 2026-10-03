@@ -52,6 +52,20 @@ struct SettingsNavigationTests {
       (.browser, ["在菜单里显示“选择窗口…”", "面板背景", "默认显示方式"]),
       (.shortcuts, ["整理卷帘条", "选择窗口…"]),
     ]
+    // 隐私一栏：四组和每一行都在，且和登记表生成的数据源一致。
+    settings.select(section: .privacy)
+    await drainLayout()
+    let privacyViews = descendants(root)
+    let privacyTexts = privacyViews.compactMap { ($0 as? NSTextField)?.stringValue }
+      + privacyViews.compactMap { ($0 as? NSButton)?.title }
+    for group in WS2PrivacyData.groupOrder {
+      precondition(privacyTexts.contains(group), "Missing privacy group: \(group)")
+    }
+    for row in WS2PrivacyData.rows {
+      precondition(privacyTexts.contains(row.label), "Missing privacy row: \(row.label)")
+    }
+    precondition(privacyTexts.contains("显示技术细节"), "Privacy page must offer the technical detail toggle")
+    precondition(privacyTexts.contains("已隐藏"), "private 值默认要藏起来")
     settings.window?.setContentSize(NSSize(width: 820, height: 580))
     for (section, names) in rowsBySection {
     settings.select(section: section)

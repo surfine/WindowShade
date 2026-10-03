@@ -4,46 +4,41 @@ import Cocoa
     private weak var owner: AppDelegate?
     let clock = WS2ContinuousClock()
     private(set) var focus: FocusTimerHost!
+    /// 共享岛就是刘海那一套租约；这里只持有它，不另建第二套。
+    private(set) var island: NotchLeaseHub!
+    private weak var focusCard: FocusTimerCard?
+    private var defaultsObserver: NSObjectProtocol?
+    private var lastMenuTitle = ""
     private var lockReasons = Set<String>()
     private var workspaceObservers: [NSObjectProtocol] = []
     private var distributedObservers: [NSObjectProtocol] = []
     var focusWindowEffects: (([FocusTimer.Effect]) -> Void)?
-    /// 设置页里那张卡片也跟着同一份模型走；宿主只留一个，通知可以分给一处。
-    var focusChanged: ((FocusTimer, WS2.Instant) -> Void)?
-    /// 换了专注时长会重建宿主（T1 的 preset 是模型上的常量），设置页据此换掉那张卡片。
-    var focusHostChanged: ((FocusTimerHost) -> Void)?
-
-    /// 专注时长只有两档，照 docs/pomodoro.md；默认 25 + 5。
-    static let presetKey = "WS2.focusPreset"
-    static func storedPreset() -> FocusTimer.Preset {
-        UserDefaults.standard.string(forKey: presetKey) == "50" ? .minutes50 : .minutes25
-    }
-    static func storedPresetLabel() -> String {
-        switch storedPreset() {
-        case .minutes25: return "25 分钟（休息 5 分钟）"
-        case .minutes50: return "50 分钟（休息 10 分钟）"
-        }
-    }
-    static func storedPresetIndex() -> Int {
-        switch storedPreset() {
-        case .minutes25: return 0
-        case .minutes50: return 1
-        }
-    }
     init(owner: AppDelegate) {
         self.owner = owner
-        focus = makeFocusHost(preset: Self.storedPreset())
-        owner.notch.activities.onFocusAction = { [weak self] action in
+        let clock = self.clock
+        focus = FocusTimerHost(model: FocusTimer(bootID: UUID(), preset: WS2FocusSettings.preset, tuckChatEnabled: WS2FocusSettings.tuckChat),clock:clock,
+            calendarSample: { now, deadline in
+                let date = Date(), calendar = Calendar.current
+                func day(_ date: Date) -> String {
+                    let p = calendar.dateComponents([.era,.year,.month,.day],from:date)
+                    return "\(p.era ?? 0)/\(p.year ?? 0)/\(p.month ?? 0)/\(p.day ?? 0)"
+                }
+                let delta = deadline.map { (Double($0.nanoseconds)-Double(now.nanoseconds))/1_000_000_000 } ?? 0
+                return .init(today:day(date),deadlineDay:day(date.addingTimeInterval(delta)))
+            }, effects:{ [weak self] effects in self?.focusWindowEffects?(effects) })
+        island = owner.notch.leases
+        focus.onChange = { [weak self] model,now in
+            self?.focusCard?.render(model,at:now); self?.publish()
+        }
+        defaultsObserver = NotificationCenter.default.addObserver(forName:UserDefaults.didChangeNotification,
+            object:nil,queue:.main) { [weak self] _ in MainActor.assumeIsolated { self?.refreshFocusSettings() } }
+        owner.notch.activities.ws2FocusAction = { [weak self] action in
             guard let self else { return }
             switch action {
-            case .focusStart:
-                switch self.focus.model.phase {
-                case .idle: self.focus.handle(.start)
-                default: if self.focus.model.isPaused { self.focus.handle(.resume) }
-                }
-            case .focusPause: self.focus.handle(self.focus.model.isPaused ? .resume : .pause)
+            case .focusOpen, .open: self.open()
+            case .end: self.focus.handle(.end)
             case .focusSkip: self.focus.handle(.skip)
-            case .focusEnd: self.focus.handle(.end)
+            case .focusTogglePause: self.focus.handle(self.focus.model.isPaused ? .resume : .pause)
             default: break
             }
         }
@@ -56,7 +51,9 @@ import Cocoa
                     switch event {
                     case .locked: self.setLockReason("session", locked: true)
                     case .unlocked: self.setLockReason("session", locked: false)
-                    default: self.focus.handle(event)
+                    default:
+                        if case .sleep = event { self.island.invalidate(.sleeping) }
+                        self.focus.handle(event)
                     }
                 }
             })
@@ -74,97 +71,73 @@ import Cocoa
             })
         }
     }
-    /// 唯一宿主的唯一构造处：init 和换专注时长都走它，接线不会漏。
-    private func makeFocusHost(preset: FocusTimer.Preset) -> FocusTimerHost {
-        let host = FocusTimerHost(model: FocusTimer(bootID: UUID(), preset: preset, tuckChatEnabled: false),clock:clock,
-            calendarSample: { now, deadline in
-                let date = Date(), calendar = Calendar.current
-                func day(_ date: Date) -> String {
-                    let p = calendar.dateComponents([.era,.year,.month,.day],from:date)
-                    return "\(p.era ?? 0)/\(p.year ?? 0)/\(p.month ?? 0)/\(p.day ?? 0)"
-                }
-                let delta = deadline.map { (Double($0.nanoseconds)-Double(now.nanoseconds))/1_000_000_000 } ?? 0
-                return .init(today:day(date),deadlineDay:day(date.addingTimeInterval(delta)))
-            }, effects:{ [weak self] effects in self?.focusWindowEffects?(effects) })
-        host.onChange = { [weak self] model, now in
-            guard let self else { return }
-            self.publish()
-            self.focusChanged?(model, now)
-        }
-        return host
-    }
-    /// 设置里的专注时长：空闲时立刻换成新宿主，跑着的时候下一次开始生效。
-    func setStoredPreset(_ preset: FocusTimer.Preset) {
-        switch preset {
-        case .minutes25: UserDefaults.standard.set("25", forKey: Self.presetKey)
-        case .minutes50: UserDefaults.standard.set("50", forKey: Self.presetKey)
-        }
-        guard focus.model.phase == .idle else { return }
-        focus = makeFocusHost(preset: preset)
-        focusHostChanged?(focus)
-        focusChanged?(focus.model, clock.now())
-        publish()
-    }
     private func setLockReason(_ reason: String, locked: Bool) {
         if locked { lockReasons.insert(reason) } else { lockReasons.remove(reason) }
         // 任一来源仍锁定或系统状态未知时不恢复。通知乱序至多留下暂停，不推断解锁。
         if lockReasons.isEmpty && AuthorizationService.shared.lockState() == .unlocked {
             focus.handle(.unlocked)
         } else {
+            island.invalidate(.locked)
             focus.handle(.locked)
         }
     }
     var menuTitle: String { "番茄钟 · " + focus.model.compactText(at:clock.now()) }
-    /// 快捷键与设置按钮共用：空闲就开始，暂停就继续，跑着就暂停。
-    func toggleFocus() {
-        switch focus.model.phase {
-        case .idle: open()
-        default: focus.handle(focus.model.isPaused ? .resume : .pause); publish()
-        }
-    }
     func open() {
         guard let owner,NotchController.isEnabled,NotchActivityController.isEnabled, AuthorizationService.shared.lockState() == .unlocked else { return }
+        refreshFocusSettings()
+        let card = FocusTimerCard(host:focus)
+        guard island.show(card,ownerID:"pomodoro",onDismiss:{ [weak self] _ in
+            self?.focusCard = nil; self?.focus.presentation = .compact
+        }) else { return }
+        focusCard = card; focus.presentation = .expanded
         if focus.model.phase == .idle { focus.handle(.start) }
-        focus.presentation = .compact
-        publish(); owner.notch.activities.select("focus"); owner.openActivitiesAction()
+        card.render(focus.model,at:clock.now())
+        // The explicit timer action starts once, only after a visible host has been acquired.
+        owner.notch.activities.select("ws2.focus")
+    }
+    func refreshFocusSettings() {
+        let preset = WS2FocusSettings.preset, tuck = WS2FocusSettings.tuckChat
+        guard focus.model.preset != preset || focus.model.tuckChatEnabled != tuck else { return }
+        focus.configure(preset:preset,tuckChatEnabled:tuck)
+    }
+    func toggleFocus() {
+        guard NotchController.isEnabled, NotchActivityController.isEnabled,
+              AuthorizationService.shared.lockState() == .unlocked else { return }
+        refreshFocusSettings()
+        focus.handle(focus.model.phase == .idle ? .start : focus.model.isPaused ? .resume : .pause)
+        if focusCard == nil { focus.presentation = .compact }
+    }
+    @discardableResult func showSessions(_ sessions:[AgentSessions.Session], open:@escaping(WS2.Context)->Void,
+                                         stop:@escaping(WS2.Context)->Void) -> Bool {
+        let view = WS2AgentSessionView(frame:.zero); view.render(sessions); view.open = open; view.stop = stop
+        return island.show(view,ownerID:"agentSessions")
+    }
+    @discardableResult func showConductor(_ state:ConductorNotch, action:@escaping(WS2ConductorView.Action)->Void) -> Bool {
+        let view = WS2ConductorView(frame:.zero)
+        guard view.render(state) else { return false }
+        view.onAction = action
+        return island.show(view,ownerID:"conductor")
     }
     private func publish() {
         guard let owner else { return }
         let m = focus.model,now = clock.now()
-        guard m.phase != .idle else {
-            owner.notch.activities.setFocus(nil)
-            owner.rebuildMenu()
-            return
-        }
-        let total = m.phase == .rest ? m.preset.rest : m.preset.focus
-        let remaining = m.remaining(at: now)
-        let uptime = ProcessInfo.processInfo.systemUptime
-        let item = NotchActivity(id: "focus", kind: .focus,
-                                 title: (m.phase == .focus ? "专注" : "休息") + " · " + m.compactText(at: now),
-                                 subtitle: m.isPaused ? "已暂停" : "今天完成 \(m.completedToday) 个",
-                                 symbol: "timer",
-                                 startedAt: max(0, uptime - Double(total - remaining) / 1_000_000_000),
-                                 updatedAt: uptime,
-                                 progress: total == 0 ? 0 : min(1, max(0, 1 - Double(remaining) / Double(total))),
-                                 isPaused: m.isPaused,
-                                 detail: m.expandedText(at: now))
-        owner.notch.activities.setFocus(item)
-        owner.rebuildMenu()
+        // 刷新频率跟着真实可见性走：卡片展开→expanded，紧凑条目真在屏幕上→compact，否则 hidden。
+        let visible = owner.notch.activities.store.visible.contains { $0.kind == .focus }
+        focus.presentation = focusCard != nil ? .expanded : (visible ? .compact : .hidden)
+        owner.notch.activities.ws2PublishFocus(title:m.phase == .idle ? nil : (m.phase == .focus ? "专注" : "休息")+" · "+m.compactText(at:now),
+                                              subtitle:m.isPaused ? "已暂停" : "今天完成 \(m.completedToday) 个",paused:m.isPaused,progress:m.phase == .idle ? nil : m.progress(at:now))
+        let title = menuTitle + (m.isPaused ? ":paused" : "") + ":" + m.phase.rawValue
+        if title != lastMenuTitle { lastMenuTitle = title; owner.rebuildMenu() }
     }
     func stop() {
-        focus?.stop()
+        island?.stop(); focus?.stop()
+        if let defaultsObserver { NotificationCenter.default.removeObserver(defaultsObserver) }; defaultsObserver = nil
         workspaceObservers.forEach { NSWorkspace.shared.notificationCenter.removeObserver($0) }
         distributedObservers.forEach { DistributedNotificationCenter.default().removeObserver($0) }
         workspaceObservers=[];distributedObservers=[]
-        owner?.notch.activities.onFocusAction=nil; focusWindowEffects=nil
+        owner?.notch.activities.ws2FocusAction=nil; focusWindowEffects=nil
     }
 }
 extension AppDelegate {
     @objc func ws2OpenFocus() { MainActor.assumeIsolated { ws2Runtime.open() } }
-    /// 设置里的专注时长：空闲时立即生效，进行中则从下一轮开始。
-    @objc func ws2ChangeFocusPreset(_ sender: NSPopUpButton) {
-        MainActor.assumeIsolated {
-            ws2Runtime.setStoredPreset(sender.indexOfSelectedItem == 1 ? .minutes50 : .minutes25)
-        }
-    }
 }

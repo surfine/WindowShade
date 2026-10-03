@@ -1,6 +1,11 @@
 import Cocoa
 import QuartzCore
-@MainActor final class FocusTimerCard: NSView {
+@MainActor final class FocusTimerCard: NSView, WS2LeaseContent {
+    var onCancel: (() -> Void)?
+    var inputIsCurrent: (() -> Bool) = { false }
+    var interactionSize: NSSize { NSSize(width: 320, height: 210) }
+    func revoke() { inputIsCurrent = { false }; ring.removeAllAnimations() }
+    override func cancelOperation(_ sender: Any?) { onCancel?() }
     private let time = NSTextField(labelWithString:"")
     private let detail = NSTextField(labelWithString:"")
     private let ring = CAShapeLayer()
@@ -37,7 +42,7 @@ import QuartzCore
         skip.isEnabled = model.phase != .idle; end.isEnabled = model.phase != .idle
         ring.removeAllAnimations(); ring.fillColor = NSColor.clear.cgColor; ring.lineWidth = 2
         ring.strokeColor = (model.phase == .rest ? NSColor.systemGreen : NSColor.systemRed).cgColor
-        let total = model.phase == .rest ? model.preset.rest : model.preset.focus
+        let total = model.phaseDuration
         let fraction = model.phase == .idle ? 0 : Double(model.remaining(at:now))/Double(total)
         CATransaction.begin(); CATransaction.setDisableActions(true); ring.strokeEnd = min(1,max(0,fraction)); CATransaction.commit()
         if !model.isPaused,model.phase != .idle,window != nil {
@@ -52,7 +57,7 @@ import QuartzCore
         setAccessibilityLabel("\(time.stringValue)，\(detail.stringValue)")
     }
     override func viewDidMoveToWindow() { super.viewDidMoveToWindow(); if window == nil { ring.removeAllAnimations() } }
-    @objc private func pauseAction() { host.handle(host.model.phase == .idle ? .start : host.model.isPaused ? .resume : .pause) }
-    @objc private func skipAction() { host.handle(.skip) }
-    @objc private func endAction() { host.handle(.end) }
+    @objc private func pauseAction() { guard inputIsCurrent() else { return }; host.handle(host.model.phase == .idle ? .start : host.model.isPaused ? .resume : .pause) }
+    @objc private func skipAction() { guard inputIsCurrent() else { return }; host.handle(.skip) }
+    @objc private func endAction() { guard inputIsCurrent() else { return }; host.handle(.end) }
 }

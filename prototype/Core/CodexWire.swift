@@ -47,6 +47,7 @@ struct CodexWire: Sendable {
     private(set) var turnID: String?
     private(set) var pending: [WS2.RequestID:Pending] = [:]
     private(set) var approvals: [WS2.RequestID:WireJSON] = [:]
+    private(set) var approvalMethods: [WS2.RequestID:String] = [:]
     private var buffer = Data()
     private var expectedResumeID: String?
     private var completedTurnIDs = Set<String>()
@@ -136,7 +137,7 @@ struct CodexWire: Sendable {
                       !sentApprovalIDs.contains(id), sentApprovalIDs.count < 4096,
                       params["itemId"]?.text?.isEmpty == false, params["threadId"]?.text == threadID,
                       params["turnId"]?.text == turnID, turnID != nil else { throw Failure.stale }
-                approvals[id] = params
+                approvals[id] = params; approvalMethods[id] = method
                 return [.approval(id,method,params)]
             }
             if method == "turn/started", params["threadId"]?.text == threadID,
@@ -148,7 +149,7 @@ struct CodexWire: Sendable {
             if method == "turn/completed", params["threadId"]?.text == threadID,
                let id = params["turn"]?["id"]?.text, id == turnID {
                 guard completedTurnIDs.count < 4096 else { throw Failure.capacity }
-                completedTurnIDs.insert(id); turnID = nil; approvals.removeAll()
+                completedTurnIDs.insert(id); turnID = nil; approvals.removeAll(); approvalMethods.removeAll()
             }
             return [.notification(method,params)]
         }
@@ -196,9 +197,24 @@ struct CodexWire: Sendable {
         let raw: WireJSON
         switch id { case .integer(let n): raw = .integer(n); case .string(let s): raw = .string(s) }
         try send(.object(["id":raw,"result":.object(["decision":.string("decline")])]))
-        approvals[id] = nil; sentApprovalIDs.insert(id)
+        approvals[id] = nil; approvalMethods[id] = nil; sentApprovalIDs.insert(id)
     }
-    // Deliberately NO allow/accept API: A4's real AuthorizationService must own that path.
+    // Serialization only. The sole production caller for acceptOnce is WS2CodexApprovalHost,
+    // after native AuthorizationService.consume. This method does not establish permission.
+    enum ApprovalWireDecision { case acceptOnce, decline }
+    mutating func enqueueApprovalResponse(_ id: WS2.RequestID, expectedMethod: String,
+                                         expectedParams: WireJSON, decision: ApprovalWireDecision) throws {
+        guard state == .ready, approvals[id] == expectedParams, approvalMethods[id] == expectedMethod,
+              expectedParams["threadId"]?.text == threadID, expectedParams["turnId"]?.text == turnID,
+              !sentApprovalIDs.contains(id), sentApprovalIDs.count < 4096 else { throw Failure.stale }
+        if decision == .acceptOnce {
+            guard expectedMethod == "item/commandExecution/requestApproval" else { throw Failure.unsupported }
+        }
+        let raw: WireJSON
+        switch id { case .integer(let n): raw = .integer(n); case .string(let s): raw = .string(s) }
+        try send(.object(["id":raw,"result":.object(["decision":.string(decision == .acceptOnce ? "accept" : "decline")])]))
+        approvals[id] = nil; approvalMethods[id] = nil; sentApprovalIDs.insert(id)
+    }
     mutating func tick(now: WS2.Instant) -> [Event] {
         guard time.accept(now) else { return [] }
         let expired = pending.filter { now >= $0.value.deadline }.map(\.key)
@@ -206,7 +222,7 @@ struct CodexWire: Sendable {
         return expired.map { .ambiguousCompletion($0) }
     }
     mutating func close() {
-        state = .closed; buffer.removeAll(); pending.removeAll(); approvals.removeAll()
+        state = .closed; buffer.removeAll(); pending.removeAll(); approvals.removeAll(); approvalMethods.removeAll()
         outbound.removeAll(); models.removeAll(); threadID = nil; turnID = nil
         expectedResumeID = nil; completedTurnIDs.removeAll()
     }

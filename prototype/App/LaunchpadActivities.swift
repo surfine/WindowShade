@@ -35,9 +35,11 @@ final class LaunchpadActivityCards {
             let primary = CGRect(x: rect.maxX - 52, y: rect.midY - 20, width: 40, height: 40)
             if item.kind == .music {
                 hits.append(Hit(frame: primary, title: item.isPaused ? "播放" : "暂停", id: item.id, action: .playPause))
+            } else if item.id == "focus.idle" {
+                hits.append(Hit(frame: primary, title: "开始", id: item.id, action: .focusOpen))
             } else if item.kind == .focus {
                 // 番茄钟和刘海共用一份状态：负一屏这张卡也能暂停/继续。
-                hits.append(Hit(frame: primary, title: item.isPaused ? "继续" : "暂停", id: item.id, action: .focusPause))
+                hits.append(Hit(frame: primary, title: item.isPaused ? "继续" : "暂停", id: item.id, action: .focusTogglePause))
             }
             hits.append(Hit(frame: rect, title: label, id: item.id, action: .open))
         }

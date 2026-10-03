@@ -47,9 +47,9 @@ final class LaunchpadTodayPage {
         let toolsHeight: CGFloat = 30
         let toolRow = CGRect(x: rightX, y: month.maxY - toolsHeight, width: column, height: toolsHeight)
         text("实时活动", frame: CGRect(x: rightX + 4, y: y, width: column - 8, height: 28), font: 20, weight: .semibold)
-        let tools: [(String, NotchActivityAction)] = [("音乐", .enableMusic), ("隔空投送", .airDrop), ("路线", .route), ("语音备忘录", .voiceMemos)]
+        let tools: [(String, NotchActivityAction)] = [("音乐", .enableMusic), ("隔空投送", .airDrop), ("路线", .route), ("语音备忘录", .voiceMemos), ("番茄钟", .focusOpen)]
         for (index, tool) in tools.enumerated() {
-            let rect = CGRect(x: toolRow.minX + CGFloat(index) * column / 4, y: toolRow.minY, width: column / 4 - 4, height: toolsHeight)
+            let rect = CGRect(x: toolRow.minX + CGFloat(index) * column / CGFloat(tools.count), y: toolRow.minY, width: column / CGFloat(tools.count) - 4, height: toolsHeight)
             plate(rect, radius: 15)
             text(tool.0, frame: rect.insetBy(dx: 4, dy: 6), font: 12, alignment: .center)
             items.append(Item(frame: rect, title: tool.0, action: .activityTool(tool.1)))

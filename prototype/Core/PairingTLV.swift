@@ -23,7 +23,10 @@ enum PairingTLV {
     }
     static func encode(_ entries: [(UInt8,Data)]) throws -> Data {
         var output = Data(); var seen = Set<UInt8>()
-        for (type,value) in entries {
+        for (type,rawValue) in entries {
+            // CryptoKit 的 rawRepresentation 可能是切片（startIndex 不为 0），
+            // subdata(in:) 用的是绝对下标；先归一化，否则真机上会越界崩。
+            let value = rawValue.startIndex == 0 ? rawValue : Data(rawValue)
             guard seen.insert(type).inserted else { throw Failure.duplicate }
             guard value.count <= maximumBytes else { throw Failure.oversized }
             if value.isEmpty { output.append(contentsOf:[type,0]) }

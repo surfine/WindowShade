@@ -18,6 +18,11 @@ import Foundation
         let result = model.handle(event,at:now,calendar:sample)
         effects(result); onChange?(model,now); schedule()
     }
+    func configure(preset: FocusTimer.Preset, tuckChatEnabled: Bool) {
+        model.configure(preset: preset, tuckChatEnabled: tuckChatEnabled)
+        onChange?(model, clock.now())
+        // No new timer, no phase restart, no change to the current deadline.
+    }
     func stop() { wake?.cancel(); wake = nil; if revision < .max { revision += 1 } }
     private func schedule() {
         stop(); guard revision < .max else { return }

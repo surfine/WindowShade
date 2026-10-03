@@ -1,6 +1,7 @@
 import Cocoa
 /// 有界原生会话列表；observed 会话没有 Stop 按钮。审批卡由 A4 独占。
-@MainActor final class WS2AgentSessionView: NSView, NotchInteractiveContent {
+@MainActor final class WS2AgentSessionView: NSView, WS2LeaseContent {
+    var interactionSize: NSSize { NSSize(width:520,height:320) }
     var onCancel: (() -> Void)?
     var open: ((WS2.Context) -> Void)?
     var stop: ((WS2.Context) -> Void)?

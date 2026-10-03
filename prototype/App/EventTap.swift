@@ -138,6 +138,10 @@ extension AppDelegate {
         }
     }
     func handleHotKey(id: UInt32) {
+        if id == GlobalShortcut.focusTimer.hotKeyID {
+            MainActor.assumeIsolated { ws2Runtime.toggleFocus() }
+            return
+        }
         if id == 1 {
             toggle()
             return
@@ -185,10 +189,6 @@ extension AppDelegate {
         }
         if id == GlobalShortcut.previousDisplay.hotKeyID {
             MainActor.assumeIsolated { _ = gestures.moveToNextDisplay(backward: true) }
-            return
-        }
-        if id == GlobalShortcut.pomodoro.hotKeyID {
-            MainActor.assumeIsolated { ws2Runtime.toggleFocus() }
             return
         }
         if let action = GlobalShortcut.allCases.first(where: { $0.hotKeyID == id })?.placement {
