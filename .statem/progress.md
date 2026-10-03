@@ -88,6 +88,26 @@
 
 ### 仍没做（第七份 REMAINING 为准）
 
+## 第八份接入（run 20261003-p8）
+
+- 合入第八份：`WS2DeviceActionContracts`、`WS2VisibleListInput`、`WS2FoldEvidence`（Core）
+  + `WS2ModelPickerView`、`WS2FoldEvidenceAdapter`（App）+ 11 个既有文件改动；
+  单岛仍是 `NotchLeaseHub`，把它们的 `inputHandle(for:)` 需求补进单岛，不新增第二套协调器。提交 `2f115e5`。
+- 真机跑通：input 33/49、fold 21/49、flow 6/27；check-build 37+41；check-wiring 三项；test-tools 18 项；
+  旧回归（part7 三套 + legacy 两批）全过，PROC04 0.117 秒；整 App `build.sh --check` 与八套 AppKit 全过；
+  隐私登记表 466 点。
+- 真机修掉 4 处（记录在 `docs/handoff/chatgpt-review-2/part8/MAC-EVIDENCE.md`）：
+  脚本仍按 `App/InteractionCoordinator.swift` 找共享仲裁（本仓库在 Core/）；
+  `stage.py` 的符号链接链拒绝 Apple 自己的 `/var`；同一脚本 `resolve()` 与 `absolute()` 混用导致
+  「输出在输入内」失配；证据适配器在非隔离上下文读 MainActor 的锁态。
+- 自动窗口效果仍然关闭（`WS2FocusWindowPort.admitted=false`）；本轮 Event 只作瞬时观察，不换成恢复 Receipt。
+
+### 仍没做（第八份 REMAINING 为准）
+
+真实手柄与 GameController 签名、插拔/重映射/共存；AppKit 焦点/布局；真实 AX 收起恢复；
+完整 T3（强身份、用户 revision、run/effect 绑定、幂等恢复、跨重启 journal）；Touch ID 允许路径；
+配对接收与原生 Remote；身份与系统锁；能耗与全菜单回归；影片、签名与发布。
+
 真实登录后的查询、原生界面布局/焦点/输入法实测、脱离组子孙的全树安全、窗口真实端口准入、
 SRP 向量互测与实例工厂、设备桥、原生 Remote、能耗、影片、签名与发布。
 

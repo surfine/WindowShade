@@ -1,6 +1,6 @@
 {
   "kind": "self_review",
-  "artifact": "main 上的 50cb7d2：第七份合并（本地只读助手流程 + 原生进程监督端口 + 严格 JSON/退出屏障/启动配置），真机证据见 docs/handoff/chatgpt-review-2/part7/MAC-EVIDENCE.md",
+  "artifact": "main 上的 2f115e5：第八份合并（手柄→可见模型列表 + 原 Notch 收起证据），真机证据见 docs/handoff/chatgpt-review-2/part8/MAC-EVIDENCE.md",
   "status": "clean",
   "issues_found": [
     "真机三处失败都不是实现漂移，而是「只在 Mac 才会暴露」的事实：CryptoKit Ed25519 随机化签名、按线程屏蔽 SIGPIPE 无效、0.153.0 初始化期就发通知；都按证据改了实现或验收规则，没有放宽阈值",
