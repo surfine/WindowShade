@@ -100,25 +100,9 @@ extension UpdaterController {
             row.heightAnchor.constraint(greaterThanOrEqualToConstant: 36).isActive = true
             return (row, nil)
         }
-        let labels = NSStackView()
-        labels.orientation = .vertical
-        labels.alignment = .leading
-        labels.spacing = 4
-        if let name {
-            let title = NSTextField(wrappingLabelWithString: name)
-            title.font = SystemAppearancePolicy.font(relativeToBody: 0)
-            labels.addArrangedSubview(title)
-        }
-        var detail: NSTextField?
-        if let subtitle {
-            let field = NSTextField(wrappingLabelWithString: subtitle)
-            field.font = SystemAppearancePolicy.font(relativeToBody: -2)
-            field.textColor = .secondaryLabelColor
-            field.maximumNumberOfLines = 2
-            labels.addArrangedSubview(field)
-            field.widthAnchor.constraint(equalTo: labels.widthAnchor).isActive = true
-            detail = field
-        }
+        let built = WS2SettingsCopy.content(name: name, subtitle: subtitle, symbol: name.flatMap { WS2SettingsCopy.symbol(for: $0) })
+        let labels = built.view
+        let detail = built.detail
         labels.setContentHuggingPriority(.defaultLow, for: .horizontal)
         labels.setContentCompressionResistancePriority(.defaultLow, for: .horizontal)
         let row = NSStackView(views: [labels, control])

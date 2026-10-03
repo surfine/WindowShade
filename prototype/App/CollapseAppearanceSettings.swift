@@ -77,21 +77,7 @@ extension AppDelegate {
         (control as? NSControl)?.sizeToFit()
         control.setContentHuggingPriority(.required, for: .horizontal)
         control.setContentCompressionResistancePriority(.required, for: .horizontal)
-        let labels = NSStackView()
-        labels.orientation = .vertical
-        labels.alignment = .leading
-        labels.spacing = 4
-        let title = NSTextField(labelWithString: name)
-        title.font = SystemAppearancePolicy.font(relativeToBody: 0)
-        labels.addArrangedSubview(title)
-        if let subtitle {
-            let detail = NSTextField(wrappingLabelWithString: subtitle)
-            detail.font = SystemAppearancePolicy.font(relativeToBody: -2)
-            detail.textColor = .secondaryLabelColor
-            detail.maximumNumberOfLines = 2
-            labels.addArrangedSubview(detail)
-            detail.widthAnchor.constraint(equalTo: labels.widthAnchor).isActive = true
-        }
+        let labels = WS2SettingsCopy.content(name: name, subtitle: subtitle, symbol: WS2SettingsCopy.symbol(for: name)).view
         labels.setContentHuggingPriority(.defaultLow, for: .horizontal)
         labels.setContentCompressionResistancePriority(.defaultLow, for: .horizontal)
         let row = NSStackView(views: [labels, control])

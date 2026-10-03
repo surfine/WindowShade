@@ -25,7 +25,7 @@ import Cocoa
         "按原来的排法放到下一块屏幕上；上下摆的显示器也行": "保留排法，移到另一屏",
         "这块屏上的窗口全部收进刘海，再按一下放回来": "整屏收进刘海，再按放回",
         "只把当前窗口收进刘海": "只收进当前窗口",
-        "装过 Rectangle 的照它现在的设置，没装过的用它推荐的那一套（⌃⌥ 加方向键和字母）。下面的名字和 Raycast 的窗口命令一一对应": "沿用 Rectangle 的快捷键",
+        "装过 Rectangle 的照它现在的设置，没装过的用它推荐的那一套（⌃⌥ 加方向键和字母）。下面的名字和 Raycast 的窗口命令一一对应": "沿用 Rectangle 快捷键",
         "变小一级、变大一级、左半屏、右半屏改用 ⌃⌥ 加字母，和 Swish 一样。别的动作在用的组合不抢": "部分排列改用字母快捷键",
         "左右不动，上下占满": "左右不动，上下占满",
         "大小不变，放到正中": "大小不变，放到正中",
@@ -60,17 +60,142 @@ import Cocoa
         "Swish 正在运行，标题栏上的手势交给它；在卷帘条上往下滑仍可展开": "Swish 接管标题栏手势",
         "在标题栏上两指滑动、滚动滚轮或拖着甩一下：往上收起，往下铺满": "标题栏手势：上收下铺",
         "⌃⌘1…9 对应菜单里的前 9 个窗口": "⌃⌘1…9：前 9 个窗口",
+        "开始、暂停或继续同一个番茄钟；默认不占用任何快捷键": "默认不占键，开始或暂停",
+        "卷帘条跟原来一样或用统一标题栏，也可以在原处缩成缩略图": "跟原来一样、统一标题栏或缩略图",
+        "让它更透一些，能看到后面的内容": "更透，能看到后面",
+        "WindowShade 读到的每一样都列在这里。": "读到的都列在这里",
+        "这里列出 WindowShade 读到的每一样，以及为什么读、去了哪里。值和开关都来自原来的设置。": "读到的、为什么、去了哪里",
+        "有新版本时在菜单里告诉你，不会自己装。": "有新版时告诉你，不自动装",
+        "新版本用着不对，可以换回刚才那一版。": "可以换回刚才那一版",
+        "合上或打开盖子时，桌面跟着动一下。": "合上或打开时桌面跟着动",
+        "恢复默认值，或打开诊断日志排查问题。": "恢复默认，或打开诊断日志",
     ]
-    static func symbol(for name:String) -> String {
-        if name.contains("刘海") { return "rectangle.topthird.inset.filled" }
-        if name.contains("窗口") || name.contains("排列") { return "macwindow" }
-        if name.contains("快捷键") { return "keyboard" }
-        if name.contains("外观") { return "paintpalette" }
-        if name.contains("权限") { return "lock.shield" }
-        return "slider.horizontal.3"
+
+    /// design-system §4.11 里出现过的符号。页头只许用这份里的名字。
+    nonisolated static let tableSymbols: Set<String> = [
+        "rectangle.compress.vertical", "rectangle.expand.vertical",
+        "rectangle.topthird.inset.filled", "macwindow.on.rectangle",
+        "eye", "pin", "pin.slash",
+        "rectangle.lefthalf.inset.filled", "rectangle.righthalf.inset.filled",
+        "rectangle.inset.filled", "rectangle.split.2x1", "rectangle.split.3x3",
+        "wand.and.stars", "scroll", "sidebar.right", "pip",
+        "square.grid.3x3", "rectangle.3.group", "rectangle.on.rectangle",
+        "command", "lightbulb", "music.note", "airpods", "waveform",
+        "timer", "cup.and.saucer", "magicmouse", "rectangle.and.hand.point.up.left",
+        "keyboard", "appletvremote.gen4", "gamecontroller", "iphone",
+        "battery.75percent", "viewfinder", "touchid", "lock.shield", "mic.fill", "info.circle",
+    ]
+
+    nonisolated static func tableSymbol(_ name: String?) -> String? {
+        guard let name, tableSymbols.contains(name) else { return nil }
+        return name
+    }
+
+    /// 一行里放得下的短句。全文更长时由气泡保留，不在这里截掉意思。
+    nonisolated static func line(_ subtitle: String) -> String {
+        if let mapped = short[subtitle] { return mapped }
+        if subtitle.count <= 16 { return subtitle }
+        if let range = subtitle.range(of: "个应用") {
+            let head = String(subtitle[..<range.upperBound])
+            if head.count <= 16 { return head }
+        }
+        return String(subtitle.prefix(16))
+    }
+
+    /// 只返回 §4.11 对得上的符号。对不上返回 nil，不另造一个。
+    /// 更具体的名字放前面，避免「取消置顶」被「置顶」先截走。
+    nonisolated static func symbol(for name: String) -> String? {
+        // 「暂时取消全部置顶」是另一个动作，§4.11 没有单独的符号，不用「置顶」顶上。
+        if name.contains("暂时取消") { return nil }
+        let pairs: [(String, String)] = [
+            ("看一眼", "eye"),
+            ("全部收进刘海", "rectangle.topthird.inset.filled"),
+            ("收进刘海", "rectangle.topthird.inset.filled"),
+            ("专注时把聊天收进刘海", "rectangle.topthird.inset.filled"),
+            ("打开启动台", "square.grid.3x3"),
+            ("启动台", "square.grid.3x3"),
+            ("选择窗口", "rectangle.on.rectangle"),
+            ("窗口浏览", "rectangle.on.rectangle"),
+            ("置顶或取消", "pin"),
+            ("取消置顶", "pin.slash"),
+            ("置顶", "pin"),
+            ("侧拉", "sidebar.right"),
+            ("画中画", "pip"),
+            ("魔法平铺", "wand.and.stars"),
+            ("开始或暂停番茄钟", "timer"),
+            ("番茄钟", "timer"),
+            ("专注时长", "timer"),
+            ("左半屏", "rectangle.lefthalf.inset.filled"),
+            ("右半屏", "rectangle.righthalf.inset.filled"),
+            ("铺满屏幕", "rectangle.inset.filled"),
+            ("分屏把手", "rectangle.split.2x1"),
+            ("双击标题栏收起窗口", "rectangle.compress.vertical"),
+            ("收起后的样子", "rectangle.compress.vertical"),
+            ("收起或展开", "rectangle.compress.vertical"),
+            ("收起窗口", "rectangle.compress.vertical"),
+            ("按编号展开", "rectangle.expand.vertical"),
+            ("快捷键", "command"),
+            ("隐私", "lock.shield"),
+        ]
+        for (needle, symbol) in pairs where name.contains(needle) {
+            return symbol
+        }
+        return nil
+    }
+
+    /// 设置行左侧：圆角色块里的符号（有才放）、名字、至多一行副标题，说不完的进 info.circle。
+    /// nonisolated：调用方本来就在搭建 AppKit 视图的地方（设置窗口、主线程的 AppDelegate）。
+    nonisolated static func content(name: String?, subtitle: String?, symbol: String? = nil) -> (view: NSStackView, detail: NSTextField?) {
+        let labels = NSStackView()
+        labels.orientation = .vertical
+        labels.alignment = .leading
+        labels.spacing = 4
+        if let name, !name.isEmpty {
+            let title = NSTextField(labelWithString: name)
+            title.font = SystemAppearancePolicy.font(relativeToBody: 0)
+            labels.addArrangedSubview(title)
+        }
+        var detail: NSTextField?
+        if let subtitle {
+            let shown = line(subtitle)
+            let field = NSTextField(labelWithString: shown)
+            field.font = SystemAppearancePolicy.font(relativeToBody: -2)
+            field.textColor = .secondaryLabelColor
+            field.lineBreakMode = .byTruncatingTail
+            field.maximumNumberOfLines = 1
+            field.toolTip = subtitle
+            labels.addArrangedSubview(field)
+            detail = field
+        }
+        var views: [NSView] = []
+        if let symbol, let image = NSImage(systemSymbolName: symbol, accessibilityDescription: name) {
+            let icon = NSImageView(image: image)
+            icon.symbolConfiguration = NSImage.SymbolConfiguration(hierarchicalColor: .controlAccentColor)
+            icon.wantsLayer = true
+            icon.layer?.backgroundColor = NSColor.controlAccentColor.withAlphaComponent(0.10).cgColor
+            icon.layer?.cornerRadius = 7
+            icon.imageScaling = .scaleProportionallyDown
+            icon.widthAnchor.constraint(equalToConstant: 28).isActive = true
+            icon.heightAnchor.constraint(equalToConstant: 28).isActive = true
+            icon.setContentHuggingPriority(.required, for: .horizontal)
+            views.append(icon)
+        }
+        views.append(labels)
+        let content = NSStackView(views: views)
+        content.orientation = .horizontal
+        content.alignment = .centerY
+        content.spacing = 10
+        if let subtitle, line(subtitle) != subtitle {
+            let caption = (name?.isEmpty == false ? name! : "说明")
+            content.addArrangedSubview(WS2SettingsInfoButton(text: subtitle, name: caption))
+        }
+        labels.setContentCompressionResistancePriority(.defaultLow, for: .horizontal)
+        content.setContentHuggingPriority(.defaultLow, for: .horizontal)
+        content.setContentCompressionResistancePriority(.defaultLow, for: .horizontal)
+        return (content, detail)
     }
 }
-@MainActor final class WS2SettingsInfoButton: NSButton {
+final class WS2SettingsInfoButton: NSButton {
     private let fullText: String
     private var popover: NSPopover?
     init(text:String,name:String) {
