@@ -7,8 +7,9 @@ import Cocoa
     /// 共享岛就是刘海那一套租约；这里只持有它，不另建第二套。
     private(set) var island: NotchLeaseHub!
     private weak var focusCard: FocusTimerCard?
-    /// T3 的窗口执行器：只动这一轮自己收起来、且没有被别人动过的窗口。
-    private var focusExecutor: WS2FocusExecutor!
+    /// T3 的窗口事务：串行计划 + 真实端口（端口未准入时只计时，不动窗口）。
+    private var focusPort: WS2FocusWindowPort!
+    private var focusEffects: WS2FocusEffectExecutor!
     /// owned Codex 的唯一启动闭环：本地选项目、预检可执行文件、按票据启动与停止。
     private(set) var launch: WS2OwnedLaunchController!
     private var defaultsObserver: NSObjectProtocol?
@@ -31,9 +32,10 @@ import Cocoa
                 return .init(today:day(date),deadlineDay:day(date.addingTimeInterval(delta)))
             }, effects:{ [weak self] effects in self?.focusWindowEffects?(effects) })
         island = owner.notch.leases
-        focusExecutor = WS2FocusExecutor(owner: owner)
-        // T3：把计时器的窗口效果接到真实窗口上（收聊天那一半还没有私人 App 名单）。
-        focusWindowEffects = { [weak self] effects in self?.focusExecutor.handle(effects) }
+        focusPort = WS2FocusWindowPort(owner: owner)
+        focusEffects = WS2FocusEffectExecutor(port: focusPort)
+        // T3：窗口效果先走串行计划；端口未准入时只计时，不移动任何窗口。
+        focusWindowEffects = { [weak self] effects in self?.handleFocusEffects(effects) }
         launch = WS2OwnedLaunchController(owner: owner, clock: clock, island: island,
             authentication: owner.notch.authentication,
             environment: {
@@ -151,6 +153,46 @@ import Cocoa
     /// 用户从设置或菜单打开会话列表：显示既有 store，不反向启动或停止进程。
     @discardableResult func showOwnedSessions() -> Bool {
         showSessions(launch.storeSnapshot(), open: { _ in }, stop: { _ in })
+    }
+
+    /// 番茄钟的窗口效果：只经由串行计划；端口没准入就不动窗口。
+    private func handleFocusEffects(_ effects: [FocusTimer.Effect]) {
+        for effect in effects {
+            switch effect {
+            case .tuckAll(let token):
+                guard WS2FocusWindowPort.admitted else {
+                    wlog("focus: window effects not admitted yet; counting only")
+                    continue
+                }
+                do { try focusEffects.transition(run: token, windows: focusTargets()) }
+                catch { wlog("focus: plan rejected the tuck phase") }
+            case .restoreAll:
+                do { try focusEffects.transition(run: nil, windows: []) }
+                catch { wlog("focus: plan rejected the restore phase") }
+            case .sound(.restStarted): owner?.playFoldSound()
+            case .sound(.restFinished): owner?.playUnfoldSound()
+            case .tuckChat(let token), .restoreChat(let token):
+                // 私人 App 名单（T3 的另一半）还不存在：只登记，不用“全部收起”顶替。
+                wlog("focus: chat tucking not wired, token \(token.serial)")
+            case .fault(let fault):
+                wlog("focus executor fault: \(fault.rawValue)")
+            }
+        }
+    }
+
+    /// 进入阶段时的合格窗口快照：明确范围、身份完整；不每秒重扫。
+    private func focusTargets() -> [WS2FocusEffectPlan.Window] {
+        guard let owner, let screen = NSScreen.main else { return [] }
+        let revision = owner.notch.tuckRevision
+        let windows: [WS2FocusEffectPlan.Window] = owner.gestures.arrangeableWindows(on: screen, focused: nil).map { entry in
+            let launch = NSRunningApplication(processIdentifier: entry.window.pid)?.launchDate?.timeIntervalSince1970 ?? 0
+            let identity = WS2FocusWindowOwnership.Identity(pid: entry.window.pid,
+                                                            processStart: UInt64(max(0, launch)),
+                                                            windowID: entry.window.id,
+                                                            windowGeneration: revision)
+            return .init(identity: identity, revision: revision)
+        }
+        return Array(windows.prefix(512))
     }
     private func publish() {
         guard let owner else { return }

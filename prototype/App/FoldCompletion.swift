@@ -45,4 +45,12 @@ extension AppDelegate {
         for token in tokens { settleFoldWaiter(id: id, token: token, success: success) }
     }
 
+    /// 番茄钟端口用的等待：先登记再发起动作，只等这一次的真实终态。
+    /// 30 秒兜底会以 success=false 结算，调用方按“是否已经收起来”区分回滚与未知。
+    func awaitFold(id: CGWindowID) async -> Bool {
+        await withCheckedContinuation { continuation in
+            _ = registerFoldWaiter(id: id) { success in continuation.resume(returning: success) }
+        }
+    }
+
 }
