@@ -17,6 +17,7 @@ import Cocoa
   var announce: ((_ key: String, _ text: String, _ detail: String, _ symbol: String, _ priority: Int, _ ttl: TimeInterval) -> Void)?
   private(set) var book: DeviceBatteryBook
   private let source = PeripheralBatterySource()
+  private let macBattery = MacBatterySource()
   private var pendingConnected: [String] = []
   private var flush: DispatchWorkItem?
   /// 刚说过“已连接”、还在等电量补上的设备，和那句话说出的时间。
@@ -37,15 +38,21 @@ import Cocoa
     source.onConnect = { [weak self] identity, initial in self?.connect(identity, initial: initial) }
     source.onDisconnect = { [weak self] id in self?.disconnect(id) }
     source.onReading = { [weak self] reading in self?.record(reading) }
+    macBattery.onConnect = { [weak self] identity, initial in self?.connect(identity, initial: initial) }
+    macBattery.onReading = { [weak self] reading in self?.record(reading) }
   }
 
   func start() {
     guard Self.isEnabled else { return }
     source.start()
-    wlog("battery: watching Apple peripherals")
+    macBattery.start()
+    wlog("battery: watching Apple peripherals and the internal battery")
   }
 
-  func stop() { source.stop() }
+  func stop() {
+    source.stop()
+    macBattery.stop()
+  }
 
   private var now: TimeInterval { ProcessInfo.processInfo.systemUptime }
 
