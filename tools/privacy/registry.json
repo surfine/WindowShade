@@ -598,6 +598,38 @@
    "destination": "内存会话；Keychain 持久化仍缺",
    "activation": "首次配对准入之后；撤销即关闭会话",
    "toggle": "来源选择和连接撤销"
+  },
+  {
+   "id": "conductor-touch",
+   "label": "遥控器的触摸轨迹",
+   "sensitivity": "sensitive",
+   "group": "你同意后才读",
+   "reads": "遥控器触摸面上的轨迹。这一包不读，也不保存",
+   "purpose": "指挥时看这一笔。还没接遥控器",
+   "destination": "不读取",
+   "activation": "指挥模式打开并且遥控器已核对之后",
+   "toggle": "指挥模式",
+   "status": "planned",
+   "rule": "D3",
+   "verification": "not-implemented",
+   "retention": "see destination; no new polling or telemetry",
+   "log_policy": "no raw private values"
+  },
+  {
+   "id": "conductor-audio",
+   "label": "按住侧边按钮时的声音",
+   "sensitivity": "sensitive",
+   "group": "你同意后才读",
+   "reads": "按住侧边按钮时的声音。转写后丢弃。这一包不录",
+   "purpose": "松开后得到草稿。麦克风不在这一包",
+   "destination": "不读取",
+   "activation": "主模型接上麦克风之后，并且按住侧边按钮",
+   "toggle": "指挥模式",
+   "status": "planned",
+   "rule": "D3",
+   "verification": "not-implemented",
+   "retention": "see destination; no new polling or telemetry",
+   "log_policy": "no raw private values"
   }
  ],
  "sites": [
@@ -3862,6 +3894,41 @@
    "symbol": "AXUIElementCopyAttributeValue",
    "source": "guard AXUIElementCopyAttributeValue(win, attribute as CFString, &raw) == .success else { return nil }",
    "signal": "window-ax"
+  },
+  {
+   "path": "prototype/App/WS2ConductorSettings.swift",
+   "line": 9,
+   "symbol": "UserDefaults",
+   "source": "static func flag(_ key: String, in store: UserDefaults) -> Bool {",
+   "signal": "settings"
+  },
+  {
+   "path": "prototype/App/WS2ConductorSettings.swift",
+   "line": 12,
+   "symbol": "UserDefaults",
+   "source": "static func setFlag(_ on: Bool, _ key: String, in store: UserDefaults) {",
+   "signal": "settings"
+  },
+  {
+   "path": "prototype/App/WS2ConductorSettings.swift",
+   "line": 15,
+   "symbol": "UserDefaults",
+   "source": "static func text(_ key: String, in store: UserDefaults) -> String {",
+   "signal": "settings"
+  },
+  {
+   "path": "prototype/App/WS2ConductorSettings.swift",
+   "line": 18,
+   "symbol": "UserDefaults",
+   "source": "static func setText(_ value: String, _ key: String, in store: UserDefaults) {",
+   "signal": "settings"
+  },
+  {
+   "path": "prototype/App/WS2ConductorSettings.swift",
+   "line": 39,
+   "symbol": "UserDefaults",
+   "source": "let store = UserDefaults.standard",
+   "signal": "settings"
   }
  ]
 }
