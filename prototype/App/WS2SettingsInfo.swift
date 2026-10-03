@@ -144,8 +144,8 @@ import Cocoa
     }
 
     /// 设置行左侧：圆角色块里的符号（有才放）、名字、至多一行副标题，说不完的进 info.circle。
-    /// nonisolated：调用方本来就在搭建 AppKit 视图的地方（设置窗口、主线程的 AppDelegate）。
-    nonisolated static func content(name: String?, subtitle: String?, symbol: String? = nil) -> (view: NSStackView, detail: NSTextField?) {
+    /// 跟着枚举留在主线程：这里建的是 AppKit 视图。调用方都是主线程类型。
+    static func content(name: String?, subtitle: String?, symbol: String? = nil) -> (view: NSStackView, detail: NSTextField?) {
         let labels = NSStackView()
         labels.orientation = .vertical
         labels.alignment = .leading
