@@ -301,6 +301,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSMenuDelegate {
     lazy var pip = MainActor.assumeIsolated { PictureInPictureController(owner: self) }
     /// 调度中心里按 ⌘W 关窗、⌘Q 退出 App（见 MissionControlKeys.swift）。
     lazy var missionControlKeys = MissionControlKeys()
+    let inputController = WS2InputController()
     lazy var pinnedPreviewController = PinnedPreviewController(
         notice: { [weak self] message, log in
             self?.quietNotice(message, log: log)
@@ -365,6 +366,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSMenuDelegate {
             dockClick.start(); switcher.applySetting(); dockLock.apply(); splitView.start()
             missionControlKeys.applySetting()
         }
+        logIfSlow("launch input", threshold: 0.1) { inputController.apply() }
         ArrangeGap.points = CGFloat(UserDefaults.standard.double(forKey: ArrangeGap.defaultsKey))
         logIfSlow("launch pinTracking", threshold: 0.1) { setupPinnedPreviewFocusTracking() }
         logIfSlow("launch windowBrowser", threshold: 0.1) {
@@ -813,6 +815,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSMenuDelegate {
 
 
     func applicationWillTerminate(_ note: Notification) {
+        inputController.shutdown()
         MainActor.assumeIsolated { ws2Runtime.stop() }
         MainActor.assumeIsolated { UpdaterController.shared.applicationWillTerminate() }
         MainActor.assumeIsolated { pip.shutdown(); slideOver.shutdown() }
