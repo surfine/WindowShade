@@ -1,0 +1,27 @@
+[
+  {
+    "url": "https://developer.apple.com/documentation/gamecontroller/gcdevice/handlerqueue.md",
+    "status": "failed",
+    "error": "<urlopen error [Errno -3] Temporary failure in name resolution>"
+  },
+  {
+    "url": "https://developer.apple.com/documentation/gamecontroller/gcextendedgamepad/valuechangedhandler.md",
+    "status": "failed",
+    "error": "<urlopen error [Errno -3] Temporary failure in name resolution>"
+  },
+  {
+    "url": "https://developer.apple.com/documentation/gamecontroller/gccontroller/shouldmonitorbackgroundevents.md",
+    "status": "failed",
+    "error": "<urlopen error [Errno -3] Temporary failure in name resolution>"
+  },
+  {
+    "url": "https://developer.apple.com/documentation/appkit/nstableview/scrollrowtovisible(_:).md",
+    "status": "failed",
+    "error": "<urlopen error [Errno -3] Temporary failure in name resolution>"
+  },
+  {
+    "url": "https://developer.apple.com/documentation/applicationservices/axuielementcopyattributevalue(_:_:_:).md",
+    "status": "failed",
+    "error": "<urlopen error [Errno -3] Temporary failure in name resolution>"
+  }
+]

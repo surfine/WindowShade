@@ -1,0 +1,11 @@
+{
+  "criterion" : "close before the fixture descendant's 0.8s late write; test tolerance <0.7s",
+  "directChildExitObserved" : true,
+  "elapsedSeconds" : 0.1171219166717492,
+  "notProven" : "Mac behavior; tree cleanup; immediate direct-child exit notification",
+  "probe" : "PROC04",
+  "receivedLines" : [
+    "{\"parent\":1}"
+  ],
+  "status" : "OBSERVED_PASS"
+}

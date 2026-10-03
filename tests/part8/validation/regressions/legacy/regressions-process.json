@@ -1,0 +1,119 @@
+[
+  {
+    "argv": [
+      "cc",
+      "-std=c11",
+      "-O2",
+      "-Wall",
+      "-Wextra",
+      "-Werror",
+      "-c",
+      "/Users/aaron/Documents/WindowShade/prototype/Native/WS2Child.c",
+      "-o",
+      "/var/folders/l6/4_mrt4s51rv4sjb29v6x9n000000gn/T/ws2-v7-regression-wggwpdon/child.o"
+    ],
+    "exit_code": 0,
+    "elapsed_seconds": 0.1267652079986874,
+    "stdout": "",
+    "stderr": ""
+  },
+  {
+    "argv": [
+      "swiftc",
+      "-swift-version",
+      "6",
+      "-strict-concurrency=complete",
+      "-warnings-as-errors",
+      "-I",
+      "/Users/aaron/Documents/WindowShade/prototype/Native",
+      "/var/folders/l6/4_mrt4s51rv4sjb29v6x9n000000gn/T/ws2-v7-regression-wggwpdon/child.o",
+      "/Users/aaron/Documents/WindowShade/prototype/Core/WS2BoundedOutbox.swift",
+      "/Users/aaron/Documents/WindowShade/prototype/Core/WS2DiagnosticTail.swift",
+      "/Users/aaron/Documents/WindowShade/prototype/Support/WS2DuplexProcess.swift",
+      "/Users/aaron/Documents/WindowShade/docs/handoff/chatgpt-review-2/part6/tests/ProcessTests.swift",
+      "-o",
+      "/var/folders/l6/4_mrt4s51rv4sjb29v6x9n000000gn/T/ws2-v7-regression-wggwpdon/part6-process"
+    ],
+    "exit_code": 0,
+    "elapsed_seconds": 3.119397916016169,
+    "stdout": "",
+    "stderr": ""
+  },
+  {
+    "argv": [
+      "/var/folders/l6/4_mrt4s51rv4sjb29v6x9n000000gn/T/ws2-v7-regression-wggwpdon/part6-process",
+      "/Users/aaron/Documents/WindowShade/docs/handoff/chatgpt-review-2/part6/tests/child.py",
+      "tests/part8/validation/regressions/legacy/regression-part6-process-results.json"
+    ],
+    "exit_code": 0,
+    "elapsed_seconds": 0.6856560420128517,
+    "stdout": "SCENE PROC01 explicit bounded diagnostic tail does not block stdout\nSCENE PROC02 default diagnostics stays disabled\nSCENE PROC03 direct child exit status is separate from protocol outcome\nSCENE PROC05 partial final frame rejected\nSCENE PROC06 coalesced trailing frames retain ordering\nSCENE PROC07 stop closes transport once and waits for independent exit evidence\nSCENE PROC08 diagnostic buffer can be explicitly cleared\nSCENE PROC09 invalid diagnostic limit rejected before spawning\nSCENE PROC10 late scope change blocks an admitted frame\nRESULT scenarios=9 assertions=27 failures=0\n",
+    "stderr": ""
+  },
+  {
+    "argv": [
+      "swiftc",
+      "-swift-version",
+      "6",
+      "-strict-concurrency=complete",
+      "-warnings-as-errors",
+      "-I",
+      "/Users/aaron/Documents/WindowShade/prototype/Native",
+      "/var/folders/l6/4_mrt4s51rv4sjb29v6x9n000000gn/T/ws2-v7-regression-wggwpdon/child.o",
+      "/Users/aaron/Documents/WindowShade/prototype/Core/WS2BoundedOutbox.swift",
+      "/Users/aaron/Documents/WindowShade/prototype/Core/WS2DiagnosticTail.swift",
+      "/Users/aaron/Documents/WindowShade/prototype/Support/WS2DuplexProcess.swift",
+      "/Users/aaron/Documents/WindowShade/docs/handoff/chatgpt-review-2/part5/tests/ProcessTests.swift",
+      "-o",
+      "/var/folders/l6/4_mrt4s51rv4sjb29v6x9n000000gn/T/ws2-v7-regression-wggwpdon/part5-process"
+    ],
+    "exit_code": 0,
+    "elapsed_seconds": 3.2779459589801263,
+    "stdout": "",
+    "stderr": ""
+  },
+  {
+    "argv": [
+      "/var/folders/l6/4_mrt4s51rv4sjb29v6x9n000000gn/T/ws2-v7-regression-wggwpdon/part5-process",
+      "/Users/aaron/Documents/WindowShade/docs/handoff/chatgpt-review-2/part5/tests/fake-child.py",
+      "tests/part8/validation/regressions/legacy/regression-part5-process-results.json"
+    ],
+    "exit_code": 0,
+    "elapsed_seconds": 3.3055084589868784,
+    "stdout": "SCENE IO01 split response, simultaneous write, stderr burst\nSCENE IO02 pipe backpressure deadline closes without retry\nSCENE IO03 truncated EOF rejected\nSCENE IO04 EPIPE does not kill parent with SIGPIPE\nSCENE IO05 multiple coalesced lines delivered in order\nSCENE IO06 oversized incoming line rejected\nSCENE IO07 final write gate and stale epoch\nSCENE IO08 per-batch context gate checked after admission\nRESULT scenarios=8 assertions=26 failures=0\n",
+    "stderr": ""
+  },
+  {
+    "argv": [
+      "swiftc",
+      "-swift-version",
+      "6",
+      "-strict-concurrency=complete",
+      "-warnings-as-errors",
+      "-I",
+      "/Users/aaron/Documents/WindowShade/prototype/Native",
+      "/var/folders/l6/4_mrt4s51rv4sjb29v6x9n000000gn/T/ws2-v7-regression-wggwpdon/child.o",
+      "/Users/aaron/Documents/WindowShade/prototype/Core/WS2BoundedOutbox.swift",
+      "/Users/aaron/Documents/WindowShade/prototype/Core/WS2DiagnosticTail.swift",
+      "/Users/aaron/Documents/WindowShade/prototype/Support/WS2DuplexProcess.swift",
+      "/Users/aaron/Documents/WindowShade/docs/handoff/chatgpt-review-2/part6/tests/ExitInheritanceProbe.swift",
+      "-o",
+      "/var/folders/l6/4_mrt4s51rv4sjb29v6x9n000000gn/T/ws2-v7-regression-wggwpdon/PROC04"
+    ],
+    "exit_code": 0,
+    "elapsed_seconds": 3.433730791992275,
+    "stdout": "",
+    "stderr": ""
+  },
+  {
+    "argv": [
+      "/var/folders/l6/4_mrt4s51rv4sjb29v6x9n000000gn/T/ws2-v7-regression-wggwpdon/PROC04",
+      "/Users/aaron/Documents/WindowShade/docs/handoff/chatgpt-review-2/part6/tests/child.py",
+      "tests/part8/validation/regressions/legacy/regression-PROC04-results.json"
+    ],
+    "exit_code": 0,
+    "elapsed_seconds": 1.0506527080142405,
+    "stdout": "PROC04 OBSERVED_PASS elapsed=0.1171219166717492\n",
+    "stderr": ""
+  }
+]

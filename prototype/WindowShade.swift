@@ -205,6 +205,9 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSMenuDelegate {
     // 折叠事务是异步的（立即验证 / 延迟验证 / 回滚），浏览器动作只在真实终态
     // 到达时才完成；token 保证旧请求不会误结算新请求。
     var foldWaiters: [CGWindowID: [UUID: (Bool) -> Void]] = [:]
+    var foldEvidence = WS2FoldEvidence()
+    var foldEvidenceMayCommit: [UUID: () -> Bool] = [:]
+    var foldEvidenceCallbacks: [UUID: (WS2FoldEvidence.Event) -> Void] = [:]
     var windowBrowserController: WindowBrowserController?
     var windowBrowserHotKeyRef: EventHotKeyRef?
     var menuRebuildWorkItem: DispatchWorkItem?

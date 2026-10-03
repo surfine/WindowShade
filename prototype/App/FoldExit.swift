@@ -14,6 +14,7 @@ extension AppDelegate {
         markShadeLifecycle(id: id, .restoring, reason: "unshade")
         transitionOperationState(id: id, to: .restoring, reason: "unshade")
         guard let state = shaded.removeValue(forKey: id) else { return nil }
+        cancelFoldEvidence(id: id, transaction: state.foldTransactionID)
         // 缩略图原地展开：整理（⌃⌘0）过的，按整理前的原位放，和飞回去的截图、看一眼的卡片落在同一处。
         // 要在下面清掉整理记录之前取。卷帘条照旧在它现在的位置展开。
         let thumbnailHome = state.appearanceMode == .thumbnail
@@ -105,6 +106,7 @@ extension AppDelegate {
         guard shaded[id] != nil else { return }
         markShadeLifecycle(id: id, .cleaned, reason: "forceCleanup")
         guard let state = shaded.removeValue(forKey: id) else { return }
+        cancelFoldEvidence(id: id, transaction: state.foldTransactionID)
         let interruptedWaiters = foldWaiters[id].map { Array($0.keys) } ?? []
         defer { cancelFoldWaiters(id: id, tokens: interruptedWaiters) }
         transitionOperationState(id: id, to: .normal, reason: "forceCleanup")
@@ -133,6 +135,8 @@ extension AppDelegate {
     }
     func removeProxyForAction(_ id: CGWindowID, state: ShadeState,
                                       stage: ShadeLifecycleStage, reason: String) {
+        guard shaded[id]?.foldTransactionID == state.foldTransactionID else { return }
+        cancelFoldEvidence(id: id, transaction: state.foldTransactionID)
         let interruptedWaiters = foldWaiters[id].map { Array($0.keys) } ?? []
         defer { cancelFoldWaiters(id: id, tokens: interruptedWaiters) }
         markShadeLifecycle(id: id, stage, reason: reason)

@@ -3,6 +3,7 @@ import Cocoa
 /// Mounted exclusively by the existing Island/NotchPanel. No secondary product window.
 @MainActor final class WS2OwnedSessionView: NSView, WS2LeaseContent, NSTextViewDelegate {
     var onCancel:(()->Void)?
+    var openModelPicker: (() -> Void)?
     var inputIsCurrent:()->Bool = { false }
     var interactionSize:NSSize { NSSize(width:620,height:560) }
     private let controller:WS2OwnedLaunchController
@@ -12,6 +13,7 @@ import Cocoa
     private let note=NSTextField(wrappingLabelWithString:"")
     private let model=NSPopUpButton(frame:.zero,pullsDown:false)
     private let effort=NSPopUpButton(frame:.zero,pullsDown:false)
+    private let browseModels=NSButton(title:"选择模型…",target:nil,action:nil)
     private let draft=NSTextView(),output=NSTextView()
     private let outputScroll=NSScrollView()
     private let chooseProject=NSButton(title:"选择项目…",target:nil,action:nil)
@@ -53,7 +55,10 @@ import Cocoa
         stack.addArrangedSubview(row([launch,login,cancelLogin,logout,resume]))
         model.target=self;model.action=#selector(selectModel);effort.target=self;effort.action=#selector(selectEffort)
         model.setAccessibilityLabel("实际可用模型");effort.setAccessibilityLabel("该模型支持的思考程度")
-        stack.addArrangedSubview(row([model,effort,status]));status.font = .systemFont(ofSize:11)
+        browseModels.target=self;browseModels.action=#selector(showModelPicker)
+        browseModels.image=NSImage(systemSymbolName:"gamecontroller",accessibilityDescription:nil)
+        browseModels.toolTip="在列表里选择模型，也能本次启用手柄。不会发送文字。"
+        stack.addArrangedSubview(row([model,effort,browseModels,status]));status.font = .systemFont(ofSize:11)
         outputScroll.hasVerticalScroller=true;outputScroll.borderType = .bezelBorder
         configure(output,editable:false);outputScroll.documentView=output
         stack.addArrangedSubview(outputScroll);outputScroll.widthAnchor.constraint(equalTo:stack.widthAnchor).isActive=true;outputScroll.heightAnchor.constraint(equalToConstant:125).isActive=true
@@ -99,6 +104,7 @@ import Cocoa
         logout.isEnabled=fresh && controller.canLogout;resume.isEnabled=fresh && controller.canResume
         model.isEnabled=fresh && !controller.models.isEmpty && [.ready,.completed,.failed].contains(controller.phase)
         effort.isEnabled=model.isEnabled && controller.model != nil
+        browseModels.isEnabled=fresh && controller.canChooseModel && !draft.hasMarkedText()
         send.isEnabled=fresh && controller.canSend;interrupt.isEnabled=fresh && controller.canInterrupt
         stop.isEnabled=fresh && controller.isBusy;diagnostics.isEnabled=fresh
         let value=displayingDiagnostics ? controller.diagnostics:controller.text
@@ -131,6 +137,11 @@ import Cocoa
     @objc private func cancelLogIn() { guard inputIsCurrent() else { return };controller.cancelLogin() }
     @objc private func logOut() { guard inputIsCurrent() else { return };_=controller.logout() }
     @objc private func resumeSession() { guard inputIsCurrent() else { return };_=controller.resumeLast() }
+    @objc private func showModelPicker() {
+        guard inputIsCurrent(),controller.canChooseModel,!draft.hasMarkedText() else { return }
+        guard controller.editDraft(draft.string) else { return }
+        openModelPicker?()
+    }
     @objc private func selectModel() { guard inputIsCurrent(),model.indexOfSelectedItem>0 else { return };_=controller.chooseModel(modelIDs[model.indexOfSelectedItem-1]) }
     @objc private func selectEffort() { guard inputIsCurrent(),effort.indexOfSelectedItem>0 else { return };_=controller.chooseEffort(effortIDs[effort.indexOfSelectedItem-1]) }
     @objc private func sendDraft() { guard inputIsCurrent() else { return };_=controller.send(draft.string,hasMarkedText:draft.hasMarkedText()) }

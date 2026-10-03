@@ -129,20 +129,20 @@ extension AppDelegate {
                 DispatchQueue.main.asyncAfter(deadline: .now() + delay, execute: action)
             },
             isCurrent: { [weak self] in
-                guard let state = self?.shaded[id] else { return false }
+                guard let state = self?.shaded[id], state.foldTransactionID == transactionID else { return false }
                 return state.foldTransactionID == transactionID && state.lifecycleStage == .folded
             },
             observe: { [weak self] in
-                guard let self, let state = self.shaded[id] else { return false }
+                guard let self, let state = self.shaded[id], state.foldTransactionID == transactionID else { return false }
                 return self.hideTookEffect(state.hide, win: state.element, pid: state.pid,
                                           id: id, size: state.originalSize)
             },
             minimize: { [weak self] in
-                guard let state = self?.shaded[id] else { return }
+                guard let state = self?.shaded[id], state.foldTransactionID == transactionID else { return }
                 setAXMinimized(state.element, true)
             },
             observeMinimized: { [weak self] in
-                guard let self, let state = self.shaded[id] else { return false }
+                guard let self, let state = self.shaded[id], state.foldTransactionID == transactionID else { return false }
                 let hidden = self.hideTookEffect(.minimized, win: state.element, pid: state.pid,
                                                 id: id, size: state.originalSize)
                 if hidden, self.shaded[id]?.foldTransactionID == transactionID {
@@ -154,24 +154,27 @@ extension AppDelegate {
             // 隐藏或最小化生效后窗口立刻离开屏幕（实测整体隐藏约 13ms），而 isHidden /
             // kAXMinimized 的读回会滞后：WindowServer 说它已不在屏幕上，就可以亮出卷帘条。
             quickObserve: { [weak self] in
-                guard let self, let state = self.shaded[id],
+                guard let self, let state = self.shaded[id], state.foldTransactionID == transactionID,
                       state.hide == .hidden || state.hide == .minimized else { return false }
                 return cgWindowInfo(id) != nil && !windowIsOnScreenNow(id)
             },
             completion: { [weak self] success in
-                guard let self, let state = self.shaded[id] else { return }
+                guard let self, let state = self.shaded[id], state.foldTransactionID == transactionID else { return }
                 if success {
                     wlog("shade: hide verified id=\(id) hide=\(state.hide)")
                     self.revealOverlayAfterVerification(id: id, state: state)
                 } else {
                     wlog("shade: hide failed after salvage; rolling back id=\(id) app=\(state.appName)")
-                    self.rollbackFoldTransaction(id: id)
+                    self.rollbackFoldTransaction(id: id, expectedTransaction: transactionID)
                 }
             }
         ).start()
     }
 
     func revealOverlayAfterVerification(id: CGWindowID, state: ShadeState) {
+        guard shaded[id]?.foldTransactionID == state.foldTransactionID else { return }
+        publishFoldObservation(id: id, state: state)
+        guard shaded[id]?.foldTransactionID == state.foldTransactionID else { return }
         guard let overlay = state.overlay else { return }
         if enforceOverlaySpaceInvariant(id: id, state: state, reason: "hide-verified") {
             revealPreparedOverlay(overlay)
@@ -184,9 +187,11 @@ extension AppDelegate {
     // 回滚折叠事务：按已尝试的隐藏方式逐项逆操作（此前的回滚漏了这步，
     // 曾把实际已 app-hide 的 Safari 留在隐藏态、无卷帘条），再恢复几何、
     // 撤 overlay/状态/journal。
-    func rollbackFoldTransaction(id: CGWindowID) {
+    func rollbackFoldTransaction(id: CGWindowID, expectedTransaction: UUID? = nil) {
+        if let expectedTransaction, shaded[id]?.foldTransactionID != expectedTransaction { return }
         duoController.windowEffects.cancel(id)
         guard let state = shaded[id] else { return }
+        if let expectedTransaction, state.foldTransactionID != expectedTransaction { return }
         switch state.hide {
         case .hidden:
             if NSRunningApplication(processIdentifier: state.pid)?.unhide() != true {

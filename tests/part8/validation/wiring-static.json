@@ -1,0 +1,76 @@
+{
+  "checks": [
+    {
+      "name": "discovery does not install handlers",
+      "result": "PASS",
+      "level": "static source guard"
+    },
+    {
+      "name": "existing input handler refused",
+      "result": "PASS",
+      "level": "static source guard"
+    },
+    {
+      "name": "background setting not assigned",
+      "result": "PASS",
+      "level": "static source guard"
+    },
+    {
+      "name": "handler release restores queue",
+      "result": "PASS",
+      "level": "static source guard"
+    },
+    {
+      "name": "model page cannot call send or approve",
+      "result": "PASS",
+      "level": "static source guard"
+    },
+    {
+      "name": "model adoption uses real controller",
+      "result": "PASS",
+      "level": "static source guard"
+    },
+    {
+      "name": "page lease and key window checked",
+      "result": "PASS",
+      "level": "static source guard"
+    },
+    {
+      "name": "armed target visibly represented",
+      "result": "PASS",
+      "level": "static source guard"
+    },
+    {
+      "name": "refocus refresh does not re-enable",
+      "result": "PASS",
+      "level": "static source guard"
+    },
+    {
+      "name": "strict missing-value policy exists",
+      "result": "PASS",
+      "level": "static source guard"
+    },
+    {
+      "name": "retries retain transaction not entire state",
+      "result": "PASS",
+      "level": "static source guard"
+    },
+    {
+      "name": "physical attempt bound to ledger",
+      "result": "PASS",
+      "level": "static source guard"
+    },
+    {
+      "name": "notch uses actual evidence caller",
+      "result": "PASS",
+      "level": "static source guard"
+    },
+    {
+      "name": "read-only profile kept",
+      "result": "PASS",
+      "level": "static source guard"
+    }
+  ],
+  "application_build": "NOT RUN",
+  "hardware": "NOT RUN"
+}

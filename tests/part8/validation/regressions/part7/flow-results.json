@@ -1,0 +1,92 @@
+[
+  {
+    "assertions" : 21,
+    "name" : "FLOW01 local launch and actual stream completion",
+    "result" : "PASS"
+  },
+  {
+    "assertions" : 8,
+    "name" : "FLOW02 resume only the locally associated project",
+    "result" : "PASS"
+  },
+  {
+    "assertions" : 6,
+    "name" : "FLOW03 different project cannot reuse old thread",
+    "result" : "PASS"
+  },
+  {
+    "assertions" : 10,
+    "name" : "FLOW04 actual login response and exact login ID",
+    "result" : "PASS"
+  },
+  {
+    "assertions" : 12,
+    "name" : "FLOW05 interrupt RPC is not final completion",
+    "result" : "PASS"
+  },
+  {
+    "assertions" : 9,
+    "name" : "FLOW06 elevation always declined by local entry",
+    "result" : "PASS"
+  },
+  {
+    "assertions" : 7,
+    "name" : "FLOW07 failed turn is not successful completion",
+    "result" : "PASS"
+  },
+  {
+    "assertions" : 7,
+    "name" : "FLOW08 mismatched version",
+    "result" : "PASS"
+  },
+  {
+    "assertions" : 7,
+    "name" : "FLOW09 effective config mismatch",
+    "result" : "PASS"
+  },
+  {
+    "assertions" : 7,
+    "name" : "FLOW10 duplicate raw JSON",
+    "result" : "PASS"
+  },
+  {
+    "assertions" : 7,
+    "name" : "FLOW11 reject arbitrary auth URL",
+    "result" : "PASS"
+  },
+  {
+    "assertions" : 6,
+    "name" : "FLOW12 unrelated login completion cannot authenticate",
+    "result" : "PASS"
+  },
+  {
+    "assertions" : 6,
+    "name" : "FLOW13 project replacement invalidates submission",
+    "result" : "PASS"
+  },
+  {
+    "assertions" : 6,
+    "name" : "FLOW14 actual lock invalidation and no automatic restart",
+    "result" : "PASS"
+  },
+  {
+    "assertions" : 7,
+    "name" : "FLOW15 diagnostics are opt-in and clearable",
+    "result" : "PASS"
+  },
+  {
+    "assertions" : 6,
+    "name" : "FLOW16 version-probe cancellation still awaits reaping",
+    "result" : "PASS"
+  },
+  {
+    "assertions" : 5,
+    "name" : "FLOW17 version timeout does not invent a reap receipt",
+    "result" : "PASS"
+  },
+  {
+    "assertions" : 8,
+    "name" : "FLOW18 login cancellation requires fresh account verification",
+    "result" : "PASS"
+  }
+]

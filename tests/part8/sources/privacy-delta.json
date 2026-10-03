@@ -1,0 +1,34 @@
+[
+  {
+    "id": "R8-gamecontroller-inventory",
+    "source": "GCController controllers/profile/vendorName",
+    "when": "仅模型选择页开启",
+    "retention": "页面/本次连接内存",
+    "off_device": false,
+    "limitations": "名称不是身份；没有本轮硬件采集"
+  },
+  {
+    "id": "R8-gamecontroller-input",
+    "source": "显式启用附件的button状态",
+    "when": "当前页+key window+前台+本次启用",
+    "retention": "有界held/ticket，关闭和失焦撤销",
+    "off_device": false,
+    "limitations": "采用模型不提交草稿；motion/feedback未启用"
+  },
+  {
+    "id": "R8-model-selection",
+    "source": "既有CLI模型目录",
+    "when": "同一连接可选模型阶段",
+    "retention": "现有控制器与页面内存",
+    "off_device": false,
+    "limitations": "后续用户单独发送仍沿原CLI数据去向"
+  },
+  {
+    "id": "R8-fold-observation",
+    "source": "本次窗口AX/隐藏/alpha状态",
+    "when": "原收起真实事务及有限观察重试",
+    "retention": "临时64项通知账；不新存截图/标题，原journal不变",
+    "off_device": false,
+    "limitations": "30/60秒为主队列调度目标；不是T3所有权"
+  }
+]

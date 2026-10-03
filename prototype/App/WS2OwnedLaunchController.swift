@@ -48,6 +48,8 @@ import Foundation
     var canLaunch:Bool { !isBusy && projectURL != nil && executableURL != nil && mayUse() }
     var canLogin:Bool { phase == .signedOut && loginID == nil && !queries.values.contains(where:{ switch $0 { case .login,.cancelLogin:return true;default:return false } }) }
     var canSend:Bool { authenticated && configured && currentIsValid() && submission == nil && activeTurn == nil && ![.creatingThread,.sending,.interrupting].contains(phase) && model != nil && effort != nil }
+    // Lightweight UI projection; chooseModel still revalidates the directory on the explicit action.
+    var canChooseModel:Bool { authenticated && configured && activeTurn == nil && submission == nil && session != nil && [.ready,.completed,.failed].contains(phase) && mayUse() }
     var canInterrupt:Bool { activeTurn != nil && phase == .running }
     var canResume:Bool { canSend && session?.approval.wire.threadID == nil && lastAssociation != nil }
     var canLogout:Bool { authenticated && activeTurn == nil && submission == nil && ![.creatingThread,.sending,.interrupting].contains(phase) }
@@ -125,7 +127,7 @@ import Foundation
         return true
     }
     @discardableResult func chooseModel(_ value:String) -> Bool {
-        guard authenticated,configured,activeTurn==nil,submission==nil,let choices=models[value],!choices.isEmpty else { return false }
+        guard revalidate(),canChooseModel,let choices=models[value],!choices.isEmpty else { return false }
         model=value;effort=choices.contains("medium") ? "medium":choices.sorted().first;changed();return true
     }
     @discardableResult func chooseEffort(_ value:String) -> Bool {
