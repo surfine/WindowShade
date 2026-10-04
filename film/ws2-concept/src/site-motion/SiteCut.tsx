@@ -38,7 +38,8 @@ export const SiteCut = () => {
   const winY = homeY + (intoY - homeY) * fly;
   const winScale = 1 + (0.12 - 1) * fly;
   const slide = frame >= SLIDE_START ? slideProgress(frame, SLIDE_START) : 0;
-  const slideX = slide * -(screenW * 0.42);
+  const slideHome = screenW * 0.28;
+  const slideX = slide * -(slideHome - 12);
   const showWindow = frame >= 280 && frame < 1400 && fly < 1;
   const showSlide = frame >= SLIDE_START && frame < 1960;
   const caption = captionAt(frame);
@@ -97,7 +98,7 @@ export const SiteCut = () => {
           <div
             style={{
               position: 'absolute',
-              left: screenW * 0.28,
+              left: slideHome,
               top: screenH * 0.22,
               width: portrait ? 280 : 460,
               height: portrait ? 360 : 520,
