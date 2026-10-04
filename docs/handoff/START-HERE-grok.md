@@ -121,9 +121,10 @@ git checkout -- tests/part10/validation/
 | 随时 | G8 | 概念片工程 | W11 影片部分；`deepseek-film.md` FILM-F1–F5 | 不碰 App |
 
 **不交给 Grok，由主模型做**（遇到就停下，写进“需要主模型决定”）。
-2026-10-04 已裁决的项见 [`MAIN-MODEL-DECISIONS-2026-10-04.md`](MAIN-MODEL-DECISIONS-2026-10-04.md)，按那份执行，不要再问同一题。
+2026-10-04 已裁决的项见 [`MAIN-MODEL-DECISIONS-2026-10-04.md`](MAIN-MODEL-DECISIONS-2026-10-04.md)（含第二轮 D13–D24），按那份执行，不要再问同一题。
 仍由主模型亲手做、Grok 只交缺口的：W01 真机（窗口仅 TextEdit）；W02 端口设计复核；W04 授权策略与系统认证；W07 真配对；W08/W09 探针结论；任何发布。
-I4、I6 已改为要做：默認关；未核对的映射只准隔离探针。Option 菜单改为 `isAlternate`。隐私 planned 行进页并标「还没读」。
+下一包可做 **G8**（只动 `film/ws2-concept`）。G2→G7 合入由主模型抽查后本地做。
+已定：指挥页可进租约表但只读／改草稿（D15）；模型槽位先不套用（D16）；枚举进同一 AX 闸门（D18）；新 journal 不写标题（D21）；漏登全补（D22）；G7 能证明线程的继续清（D23）。
 
 ---
 
