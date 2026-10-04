@@ -111,7 +111,7 @@ function Lights({ dim }: { dim?: boolean }) {
   );
 }
 
-function Win({ r, children, z, active, radius = 24 }: { r: { x: number; y: number; w: number; h: number }; children: ReactNode; z: number; active?: boolean; radius?: number }) {
+export function Win({ r, children, z, active, radius = 24 }: { r: { x: number; y: number; w: number; h: number }; children: ReactNode; z: number; active?: boolean; radius?: number }) {
   return (
     <div
       style={{
@@ -142,7 +142,7 @@ function Windows({ f }: { f: number }) {
   );
 }
 
-function Browser({ w, h }: { w: number; h: number }) {
+export function Browser({ w, h }: { w: number; h: number }) {
   return (
     <div style={{ position: 'absolute', inset: 0, background: '#1c1c1e' }}>
       <div style={{ position: 'absolute', left: 0, right: 0, top: 0, height: 52, background: 'linear-gradient(#2a2a2d,#232326)', boxShadow: 'inset 0 -0.5px 0 rgba(0,0,0,.6)' }}>
@@ -176,7 +176,7 @@ function Browser({ w, h }: { w: number; h: number }) {
   );
 }
 
-function Notes() {
+export function Notes() {
   const rows = [['周日', '21:12', '把启动台改成从刘海打开'], ['周六', '18:40', '车上听完那集播客'], ['周五', '23:05', '番茄钟：专注 25 分钟']];
   return (
     <div style={{ position: 'absolute', inset: 0, display: 'flex', fontFamily: CJK }}>
@@ -212,7 +212,7 @@ const TERM = [
   ['#d97757', '⏺ Bash(./tests/run-silent-prep-tests.sh)'],
   ['#30d158', '  ⎿  42 passed, 0 failed'],
 ];
-function Terminal({ f }: { f: number }) {
+export function Terminal({ f }: { f: number }) {
   const n = Math.min(TERM.length, 5 + Math.floor(Math.max(0, f - 150) / 40));
   return (
     <div style={{ position: 'absolute', inset: 0, background: '#151517', padding: '50px 22px 0', fontFamily: MONO, fontSize: 13.2, lineHeight: 1.62 }}>
