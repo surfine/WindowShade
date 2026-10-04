@@ -22,7 +22,7 @@ const place = ({ rect, sw, sh }: Box): CSSProperties => ({
 export function MenuBar({ cqw, h }: { cqw: number; h: number }) {
   const items = ['文本编辑', '文件', '编辑', '格式', '显示', '窗口'];
   return (
-    <div style={{ position: 'absolute', left: 0, top: 0, right: 0, height: h * cqw, display: 'flex', alignItems: 'center', gap: 2.6 * cqw, padding: `0 ${2.8 * cqw}px`, fontFamily: CJK, fontSize: 1.75 * cqw, color: C.ink, background: C.menubar, whiteSpace: 'nowrap' }}>
+    <div style={{ position: 'absolute', left: 0, top: 0, right: 0, height: h * cqw, display: 'flex', alignItems: 'center', gap: 1.5 * cqw, padding: `0 ${1.6 * cqw}px`, fontFamily: CJK, fontSize: 0.56 * h * cqw, color: C.ink, background: C.menubar, whiteSpace: 'nowrap' }}>
       {items.map((m, i) => <span key={m} style={{ fontWeight: i ? 400 : 650, opacity: i ? 0.82 : 1 }}>{m}</span>)}
       <span style={{ marginLeft: 'auto', opacity: 0.9 }}>9:41</span>
     </div>

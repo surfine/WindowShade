@@ -1,6 +1,6 @@
 import type { ReactNode } from 'react';
 import { islandAt, layersAt, type ContentLayer } from '../island';
-import { NOTCH, clamp01 } from '../motion/site';
+import { NOTCH, SITE_NOTCH_H, clamp01 } from '../motion/site';
 import { COUNTDOWN, type Content } from '../timeline';
 import { STROKE } from '../scene';
 
@@ -34,14 +34,17 @@ export function Island({ frame, cqw, drawn }: { frame: number; cqw: number; draw
 
 const line = { fill: 'none', stroke: INK, strokeWidth: SW, strokeLinecap: 'round' as const, strokeLinejoin: 'round' as const };
 
+// 两侧的小图标照官网画，按真机刘海高度和官网 5.4 的比例缩小。
+const EAR = (NOTCH.h / SITE_NOTCH_H) * 1.25;
+
 function ears(l: ContentLayer, w: number, left: ReactNode, right: ReactNode) {
   // compact：内容只在硬件刘海两边露出的那一截里。
   const ear = (w - NOTCH.w) / 2;
   const cy = NOTCH.h / 2;
   return (
     <>
-      <g opacity={l.first} transform={`translate(${ear / 2} ${cy})`}>{left}</g>
-      <g opacity={l.second} transform={`translate(${w - ear / 2} ${cy})`}>{right}</g>
+      <g opacity={l.first} transform={`translate(${ear / 2} ${cy}) scale(${EAR})`}>{left}</g>
+      <g opacity={l.second} transform={`translate(${w - ear / 2} ${cy}) scale(${EAR})`}>{right}</g>
     </>
   );
 }
@@ -98,7 +101,7 @@ function draw(l: ContentLayer, w: number, h: number): ReactNode {
     }
     case 'card': {
       // 一排里的格子：收进去的那扇窗，缩成卡片的位置。
-      const cw = 14, ch = 13, x = w / 2 - cw / 2, y = NOTCH.h + 2.6;
+      const cw = 14, ch = 13, x = w / 2 - cw / 2, y = SITE_NOTCH_H + 2.6;
       return (
         <g>
           <rect x={x} y={y} width={cw} height={ch} rx={1.6} fill="#171a20" stroke="rgba(255,255,255,.35)" strokeWidth={SW} opacity={l.first} />
@@ -109,7 +112,7 @@ function draw(l: ContentLayer, w: number, h: number): ReactNode {
     case 'stroke': {
       // 刚才那一笔，原样落在刘海里；第二层是说话的波形（只是示意）。
       const sx = (x: number) => 6 + ((x - 22) / 56) * (w - 12);
-      const sy = (y: number) => NOTCH.h + 2 + ((y - 30) / 40) * 9;
+      const sy = (y: number) => SITE_NOTCH_H + 2 + ((y - 30) / 40) * 9;
       const d = STROKE.map((p, i) => `${i ? 'L' : 'M'} ${sx(p.x).toFixed(2)} ${sy(p.y).toFixed(2)}`).join(' ');
       const bars = 36;
       return (
@@ -204,7 +207,7 @@ function drawReal(l: ContentLayer, w: number, h: number): ReactNode {
       return alertReal(l, h, <g><circle {...line} r={2} stroke="rgba(255,255,255,.18)" strokeWidth={0.45} />{left > 0.001 && ring}</g>, '手机不在身边', `${Math.ceil(remain / 60)} 秒后锁屏`);
     }
     case 'card': {
-      const cw = 15.8, ch = 11, x = w / 2 - cw / 2, y = NOTCH.h + 1.8;
+      const cw = 15.8, ch = 11, x = w / 2 - cw / 2, y = SITE_NOTCH_H + 1.8;
       return (
         <g>
           <g opacity={l.first}>
