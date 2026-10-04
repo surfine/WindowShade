@@ -46,7 +46,10 @@ export type Content =
 export type IslandEvent = { at: number; mode: IslandMode; content: Content; inAt?: number };
 
 // 起因 → 先等一拍 → 开口。
-const CAUSE_MUSIC = 900, CAUSE_PODS = 1160, CAUSE_MOUSE = 1480;
+export const MUSIC_PLAY = 940, CAUSE_PODS = 1160, CAUSE_MOUSE = 1480;
+const CAUSE_MUSIC = MUSIC_PLAY;
+export const PODS_END = CAUSE_PODS + BEAT + ALERT_HOLD;
+export const MOUSE_END = CAUSE_MOUSE + BEAT + ALERT_HOLD;
 export const TUCK_A = 1899; // 终端窗口飞进刘海
 export const HOVER_A = 2120; // 指针停到刘海上
 export const LEAVE_A = 2300;
