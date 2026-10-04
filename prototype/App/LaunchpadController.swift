@@ -41,6 +41,15 @@ final class LaunchpadController {
     }
 
     var isShowing: Bool { panel != nil }
+
+    /// 面板正在这块屏上。没打开，或开在另一块屏，都不是。
+    func panelIsOn(_ screen: NSScreen) -> Bool {
+        guard let panel, let shown = panel.screen else { return false }
+        if let want = NotchController.displayID(screen), let got = NotchController.displayID(shown) {
+            return want == got
+        }
+        return shown.frame.equalTo(screen.frame)
+    }
     func updateActivities(_ values: [NotchActivity], selected: String?) {
         var items = values
         // 空闲时补一张番茄钟卡：显示预设，按一下就开始（负一屏不新增窗口，也不弹设置）。

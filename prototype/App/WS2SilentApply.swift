@@ -8,6 +8,27 @@ enum WS2SilentApply {
         var id: CGWindowID
         var element: AXUIElement
         var revision: UInt64
+        var pid: pid_t = 0
+    }
+
+    private static func launchpadSeen(
+        _ launchpad: LaunchpadController,
+        on screen: NSScreen,
+        commandID: String
+    ) -> SilentExecutionResult {
+        let onFrozen = launchpad.panelIsOn(screen)
+        return WS2SilentEffectJudge.launchpad(
+            panelVisible: launchpad.isShowing && onFrozen,
+            onFrozenScreen: onFrozen,
+            commandID: commandID)
+    }
+
+    private static func completed(_ command: String, _ target: String) -> SilentExecutionResult {
+        .completed(WS2EffectReceipt(commandID: command, targetID: target, observed: true))
+    }
+
+    private static func notDone() -> SilentExecutionResult {
+        .failed("这一笔没有做成")
     }
 
     @discardableResult
@@ -25,26 +46,26 @@ enum WS2SilentApply {
         cover: inout WS2SilentCover.State,
         allowedModels: Set<String> = [],
         allowedEfforts: Set<String> = []
-    ) -> Bool {
+    ) -> SilentExecutionResult {
         switch request {
         case .showLaunchpad(let destination):
             let presentation = WS2SilentProductPort.launchPresentation(destination)
             if presentation.dismissesIfAlreadyOpen {
                 launchpad.hide(reason: "silent")
-                return true
+                return launchpad.isShowing ? .unknown(0) : completed("launcher.dismiss", "")
             }
-            guard presentation.screen == .caller, let screen else { return false }
+            guard presentation.screen == .caller, let screen else { return .unavailable("没屏幕") }
             switch destination {
             case .nextPage:
                 launchpad.turnPage(by: 1, on: screen)
-                return launchpad.isShowing
+                return launchpadSeen(launchpad, on: screen, commandID: "launcher.nextPage")
             case .previousPage:
                 launchpad.turnPage(by: -1, on: screen)
-                return launchpad.isShowing
+                return launchpadSeen(launchpad, on: screen, commandID: "launcher.previousPage")
             case .home, .today, .library, .spotlight, .back, .dismiss:
-                guard let mapped = launchDestination(destination) else { return false }
+                guard let mapped = launchDestination(destination) else { return notDone() }
                 launchpad.present(mapped, on: screen)
-                return destination == .spotlight || destination == .back || launchpad.isShowing
+                return launchpadSeen(launchpad, on: screen, commandID: destination.rawValue)
             }
         case .placeWindow(let id, let revision, let placement):
             guard let screen, let window,
@@ -54,135 +75,152 @@ enum WS2SilentApply {
                     liveID: String(window.id),
                     liveRevision: window.revision),
                   let action = GestureAction(rawValue: placement.rawValue),
-                  action != .shade, action != .expand, action != .undoPlacement else { return false }
+                  action != .shade, action != .expand, action != .undoPlacement else { return notDone() }
+            guard window.pid != 0, focusedPID(window.element) == window.pid else { return notDone() }
             switch WS2SilentProductPort.windowRoute(placement) {
             case .tileVisibleFrame, .centerKeepingSize:
-                return gestures.placeFromLaunchpad(window.element, id: window.id, action: action, screen: screen)
+                _ = gestures.placeFromLaunchpad(window.element, id: window.id, action: action, screen: screen)
+                let matched = gestures.observedFrameMatches(window.element, action: action, screen: screen)
+                return WS2SilentEffectJudge.placement(frameMatched: matched, commandID: placement.rawValue, targetID: id)
             }
         case .showFocusStatus:
             runtime.showFocusStatus()
-            return true
+            return runtime.showsFocusCard ? .displayed("只看不计时") : .unavailable("没打开")
         case .startFocus:
+            let idle = runtime.focus.model.phase == .idle
             runtime.startFocus()
-            return true
+            if idle && runtime.focus.model.phase != .idle {
+                return completed("focus.start", "")
+            }
+            if !idle && runtime.focus.model.phase != .idle {
+                return .alreadySatisfied("已在专注")
+            }
+            return notDone()
         case .pauseFocus:
             runtime.pauseFocus()
-            return true
+            return runtime.focus.model.isPaused ? completed("focus.pause", "") : notDone()
         case .resumeFocus:
+            let paused = runtime.focus.model.isPaused
             runtime.resumeFocus()
-            return true
+            if paused && !runtime.focus.model.isPaused {
+                return completed("focus.resume", "")
+            }
+            return notDone()
         case .glance(let id, let revision):
-            // 看一眼不打开窗口、不抢走焦点。策略成立才算做完。
-            return !WS2SilentProductPort.glanceActivatesWindow(id: id, revision: revision)
+            guard let window, frozen(id, revision, window) else { return .unavailable("没预览") }
+            let visible = gestures.owner.glance.panelFrame(for: window.id) != nil
+            return WS2SilentEffectJudge.glance(previewVisible: visible)
         case .openLaunchpadFolder(let id):
-            guard let screen, !id.isEmpty else { return false }
-            return launchpad.openFolder(id, on: screen)
+            guard let screen, !id.isEmpty else { return .unavailable("还没选") }
+            guard launchpad.openFolder(id, on: screen) else { return notDone() }
+            return launchpadSeen(launchpad, on: screen, commandID: "launcher.openFolder")
         case .adoptDraft(let id, let revision):
-            return draft.adopt(id: id, revision: revision) == .preview && draft.mark != .sent
+            let adopted = draft.adopt(id: id, revision: revision) == .preview && draft.mark != .sent
+            return adopted ? .displayed("已采用草稿") : notDone()
         case .submitDraft(let id, let revision):
             let result = draft.submit(commandID: "assistant.sendDraft", id: id, revision: revision, boundSessionID: boundSessionID)
             switch result {
-            case .keptLocal, .waitingForAck:
-                return draft.mark != .sent
+            case .keptLocal:
+                return .displayed("还在这台 Mac")
+            case .waitingForAck:
+                return .waiting(1)
             case .preview, .sent, .refused:
-                return false
+                return notDone()
             }
         case .undoWindow(let id, let revision):
-            guard let window,
-                  WS2SilentProductPort.acceptsFrozenWindow(
-                    requestedID: id,
-                    requestedRevision: revision,
-                    liveID: String(window.id),
-                    liveRevision: window.revision) else { return false }
-            return gestures.undoOwnedPlacement(window.element, id: window.id)
+            guard let window, frozen(id, revision, window) else { return notDone() }
+            _ = gestures.undoOwnedPlacement(window.element, id: window.id)
+            return .unknown(0)
         case .moveToCallerDisplay(let id, let revision):
             guard let screen, let window,
                   WS2SilentProductPort.canMoveToCallerDisplay(
                     callerScreenProvided: true,
-                    windowMatches: WS2SilentProductPort.acceptsFrozenWindow(
-                        requestedID: id,
-                        requestedRevision: revision,
-                        liveID: String(window.id),
-                        liveRevision: window.revision)) else { return false }
-            return gestures.moveToCallerScreen(window.element, id: window.id, screen: screen)
-        case .showUsage, .refreshUsage, .showAccountChooser, .showAssistantRead:
-            let allowed = !WS2SilentUsageRead.startsModelTask && !assistant.turnStarted && !assistant.sessionStarted
-            if allowed, case .showAssistantRead = request { runtime.openOwned() }
-            return allowed
+                    windowMatches: frozen(id, revision, window)) else { return notDone() }
+            _ = gestures.moveToCallerScreen(window.element, id: window.id, screen: screen)
+            return gestures.windowIsOn(window.element, screen: screen)
+                ? completed("window.moveToSelectedDisplay", id)
+                : .unknown(0)
+        case .showUsage, .refreshUsage, .showAccountChooser:
+            return WS2SilentEffectJudge.usageRefresh(protocolParsed: false)
+        case .showAssistantRead:
+            guard !assistant.turnStarted, !assistant.sessionStarted else { return notDone() }
+            runtime.openOwned()
+            return .displayed("编程会话")
         case .showActivity:
             let before = activities.present
-            return activities.present == before && !activities.startsPlayback
+            guard activities.present == before, !activities.startsPlayback else { return notDone() }
+            return .displayed(activities.present.isEmpty ? "没有" : "有活动")
         case .showNativeStop(let id, let revision):
             let mark = assistant.showNativeStop(turnID: id, revision: revision)
-            return mark == .showingNativeStop && assistant.stopMark != .stopped && !assistant.turnStarted
+            guard mark == .showingNativeStop, assistant.stopMark != .stopped, !assistant.turnStarted else { return notDone() }
+            return .displayed("已显示停止")
         case .setNextModel(let id, _):
-            return assistant.setNextModel(id, allowed: allowedModels) && !assistant.turnStarted
+            guard assistant.setNextModel(id, allowed: allowedModels), !assistant.turnStarted else { return notDone() }
+            return .displayed("已记下模型")
         case .setNextEffort(let id, _):
-            return assistant.setNextEffort(id, allowed: allowedEfforts) && !assistant.turnStarted
+            guard assistant.setNextEffort(id, allowed: allowedEfforts), !assistant.turnStarted else { return notDone() }
+            return .displayed("已记下档位")
         case .steerDraft(let id, let revision):
             let mark = assistant.steer(id: id, revision: revision, boundSessionID: boundSessionID)
-            return mark == .waitingForAck && assistant.steerMark != .acknowledged && !assistant.turnStarted
+            guard mark == .waitingForAck, assistant.steerMark != .acknowledged, !assistant.turnStarted else { return notDone() }
+            return .waiting(1)
         case .collapseWindow(let id, let revision):
-            guard let window, frozen(id, revision, window) else { return false }
+            guard let window, frozen(id, revision, window) else { return notDone() }
             gestures.owner.shade(window.element, window.id)
-            return true
+            return .unknown(0)
         case .expandWindow(let id, let revision):
-            guard let window, frozen(id, revision, window) else { return false }
-            return gestures.owner.unshade(window.id)
-        case .unlockNoted(let id):
-            var handoff = WS2SilentUnlockHandoff()
-            handoff.hand(id)
-            return !handoff.unlocks && !handoff.synthesizesKeystroke && !handoff.callsPrivateUnlockAPI
-        case .fillRefused(let id):
-            var fill = WS2SilentFillHandoff()
-            fill.refuse(id)
-            return !fill.fillsPassword && !fill.holdsSecret && !fill.typesSecret
-        case .deviceRead(let id):
-            var pairing = WS2SilentDevicePairing()
-            pairing.showStatus()
-            return id == "device.status" && !pairing.bound && !pairing.sessionOpen && !pairing.talksToRadio
-                && pairing.statusLine == "未知"
-        case .carPlayUnavailable(let id):
-            var receiver = WS2SilentCarPlayReceiver()
-            if id == "carplay.exit" { receiver.exit() } else { receiver.enter() }
-            guard !receiver.connected, !receiver.sessionStarted, receiver.line == "还不能接收" else { return false }
-            return false
+            guard let window, frozen(id, revision, window) else { return notDone() }
+            _ = gestures.owner.unshade(window.id)
+            return .unknown(0)
+        case .unlockNoted:
+            return .unavailable("不解锁")
+        case .fillRefused:
+            return .unavailable("不代填")
+        case .deviceRead:
+            return .displayed("未知")
+        case .carPlayUnavailable:
+            return .unavailable("还不能接收")
         case .challengeOnly(let id):
             guard let command = WS2SilentCatalog.lookup(id),
-                  let outcome = WS2SilentChallenge.outcome(for: command) else { return false }
-            return !outcome.unlocks && !outcome.fillsPassword
+                  let outcome = WS2SilentChallenge.outcome(for: command),
+                  !outcome.unlocks, !outcome.fillsPassword else { return notDone() }
+            return .unavailable("要用原来的确认")
         case .showNamed(let id):
             switch WS2SilentSurface.surface(for: id) {
             case .settings(let page):
                 gestures.owner.showSettingsWindow(section: section(page))
+                return .displayed(WS2SilentReadout.sentence(id))
             case .windowBrowser:
                 gestures.owner.openWindowBrowserPanel()
+                return .displayed("已开窗口浏览")
             case .readout:
                 if id == "input.pause" {
                     gestures.owner.inputController.pauseHooks()
-                    return gestures.owner.inputController.hooksPaused
+                    return gestures.owner.inputController.hooksPaused ? .displayed("输入已暂停") : notDone()
                 }
                 if id == "privacy.cover" || id == "scene.conversation" {
-                    return WS2SilentCover.cover(&cover)
+                    return WS2SilentEffectJudge.cover(overlayCreated: false, commandID: id)
                 }
                 if WS2SilentDraftCommand.handles(id) {
-                    return WS2SilentDraftCommand.apply(id, targetID: "", revision: 0, to: &draft)
+                    let applied = WS2SilentDraftCommand.apply(id, targetID: "", revision: 0, to: &draft)
+                    return applied ? .displayed(WS2SilentReadout.sentence(id, draft: draft)) : notDone()
                 }
             }
-            return true
+            return .displayed(WS2SilentReadout.sentence(id))
         case .intent(let id, let revision, let name):
             if WS2SilentDraftCommand.handles(name) {
-                return WS2SilentDraftCommand.apply(name, targetID: id, revision: revision, to: &draft)
+                let applied = WS2SilentDraftCommand.apply(name, targetID: id, revision: revision, to: &draft)
+                return applied ? .displayed(WS2SilentReadout.sentence(name, draft: draft)) : notDone()
             }
             if let effect = WS2SilentWindowEffect.effect(for: name) {
-                guard !effect.unlocks, !effect.entersSystemFullscreen else { return false }
-                guard let window, frozen(id, revision, window) else { return false }
+                guard !effect.unlocks, !effect.entersSystemFullscreen else { return notDone() }
+                guard let window, frozen(id, revision, window) else { return notDone() }
                 return perform(effect, window: window, gestures: gestures)
             }
             _ = WS2SilentSim.record(name: name, target: id, revision: revision)
-            return false
+            return notDone()
         case .waiting, .refused:
-            return false
+            return notDone()
         }
     }
 
@@ -194,37 +232,45 @@ enum WS2SilentApply {
             liveRevision: window.revision)
     }
 
+    private static func focusedPID(_ element: AXUIElement) -> pid_t {
+        var pid: pid_t = 0
+        AXUIElementGetPid(element, &pid)
+        return pid
+    }
+
     private static func perform(
         _ effect: WS2SilentWindowEffect,
         window: WindowTarget,
         gestures: TrackpadGestureController
-    ) -> Bool {
+    ) -> SilentExecutionResult {
         let owner = gestures.owner
         let focused = focusedWindow().flatMap { windowID(of: $0) }
         let same = focused == window.id
         switch effect {
         case .tuck:
-            guard same else { return false }
-            return owner.notch.tuckFocused()
+            guard same else { return notDone() }
+            _ = owner.notch.tuckFocused()
+            return owner.notch.isTucked(window.id) ? completed("window.tuck", String(window.id)) : .unknown(0)
         case .untuck:
-            guard owner.notch.isTucked(window.id) else { return false }
+            guard owner.notch.isTucked(window.id) else { return notDone() }
             owner.notch.release(window.id, reason: "silent")
-            return !owner.notch.isTucked(window.id)
+            return owner.notch.isTucked(window.id) ? .unknown(0) : completed("window.untuck", String(window.id))
         case .magicTile:
-            guard same else { return false }
-            return owner.gestures.magicTile(main: window.id, element: window.element, announce: false)
+            guard same else { return notDone() }
+            _ = gestures.magicTile(main: window.id, element: window.element, announce: false)
+            return .unknown(0)
         case .unpin:
-            guard same, WS2SilentEngineGate.calls("window.unpin") else { return false }
+            guard same, WS2SilentEngineGate.calls("window.unpin") else { return notDone() }
             let preview = owner.pinnedPreviewController
-            guard preview.isPreviewing(id: window.id) else { return false }
+            guard preview.isPreviewing(id: window.id) else { return notDone() }
             preview.stopPreviewFromMenu(id: window.id)
-            return !preview.isPreviewing(id: window.id)
+            return preview.isPreviewing(id: window.id) ? .unknown(0) : completed("window.unpin", String(window.id))
         case .place, .collapse, .expand, .undo, .move, .glance:
-            return false
+            return .unknown(0)
         case .pin, .slideOver, .leaveSlideOver, .pictureInPicture, .leavePictureInPicture,
              .choose, .chooseDisplay, .batchReview, .strip, .stripOverview, .scene:
             _ = WS2SilentSim.record(name: "\(effect)", target: String(window.id), revision: window.revision)
-            return false
+            return notDone()
         }
     }
 

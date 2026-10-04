@@ -1732,6 +1732,34 @@ final class TrackpadGestureController {
         return (target, layout, visibleAX, screen)
     }
 
+    /// 写完之后再读这扇窗的外框。对不上计划中的位置就不算排好。
+    func observedFrameMatches(_ win: AXUIElement, action: GestureAction, screen: NSScreen?) -> Bool {
+        guard let pos = axPosition(win), let size = axSize(win) else { return false }
+        let observed = CGRect(origin: pos, size: size)
+        if action == .center {
+            guard let screen = screen ?? screenForAXWindow(pos: pos, size: size) else { return false }
+            let visible = screen.visibleFrame
+            let area = CGRect(origin: axPosition(fromCocoaFrame: visible), size: visible.size)
+            let inner = ArrangeGap.apply(area, in: area)
+            let target = Self.sizeIsFixed(win)
+                ? Self.centered(observed.size, in: inner, area: inner)
+                : ResizeStep.centered(observed, in: inner)
+            return sameFrame(observed, target)
+        }
+        guard let plan = placementTarget(action, current: observed, screen: screen) else { return false }
+        return sameFrame(observed, plan.target)
+    }
+
+    /// 这扇窗的中心现在是不是在这块屏上。
+    func windowIsOn(_ win: AXUIElement, screen: NSScreen) -> Bool {
+        guard let pos = axPosition(win), let size = axSize(win),
+              let found = screenForAXWindow(pos: pos, size: size) else { return false }
+        if let want = NotchController.displayID(screen), let got = NotchController.displayID(found) {
+            return want == got
+        }
+        return found.frame.equalTo(screen.frame)
+    }
+
     /// 从启动台拖到半屏、四角、顶上打开的窗口：摆到那里（撤销回到它刚打开时的样子）。
     /// 居中不在分格表里，走原来「大小不变、放在可见区域正中」的那一条。
     func placeFromLaunchpad(_ win: AXUIElement, id: CGWindowID, action: GestureAction, screen: NSScreen?) -> Bool {
