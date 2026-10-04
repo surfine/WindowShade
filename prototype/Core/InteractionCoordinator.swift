@@ -28,7 +28,8 @@ final class InteractionCoordinator {
         switch (r.ownerID,r.layer) {
         case ("authorization",.authorization), ("conductor",.interaction),
              ("conductor",.opened), ("agentSessions",.opened), ("agentReview",.authorization), ("notchShelf",.opened), ("launchpad",.opened),
-             ("windowBrowser",.opened), ("pomodoro",.opened): return true
+             ("windowBrowser",.opened), ("pomodoro",.opened),
+             ("ownedCodex",.opened), ("ownedModelPicker",.opened): return true
         default: return false
         }
     }

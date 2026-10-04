@@ -22,9 +22,12 @@ extension AppDelegate {
             inputRow(name: "侧键后退、前进", subtitle: InputStatusCopy.auxiliary(on: prefs.sideButtons, offPhrase: "关着", onPhrase: "后退和前进", decision: inputController.scrollDecision),
                      detail: "侧键 4、5 准备用作这个 App 的后退和前进。要和平滑滚动或鼠标滚动方向一起开。",
                      symbol: nil, control: inputSwitch(on: prefs.sideButtons, enabled: true, action: #selector(prefInputSide(_:)), name: "侧键后退、前进")),
-            inputRow(name: "中键收起窗口", subtitle: "标题栏上的中键还没接",
-                     detail: "标题栏上的中键还没接。开关先不能开。",
-                     symbol: "rectangle.compress.vertical", control: inputSwitch(on: false, enabled: inputController.middleAvailable, action: nil, name: "中键收起窗口")),
+            inputRow(name: "中键收起窗口",
+                     subtitle: middleSubtitle(prefs),
+                     detail: "在标题栏上用中键点一下收起或展开；往上拖也是收起，往下拖展开。默认关，打开才装钩子。",
+                     symbol: "rectangle.compress.vertical",
+                     control: inputSwitch(on: prefs.middleFold, enabled: true,
+                                         action: #selector(prefInputMiddleFold(_:)), name: "中键收起窗口")),
             inputRow(name: "三指轻点是中键", subtitle: "还没核对，先不用",
                      detail: "三指轻点还没核对，先不能开。",
                      symbol: nil, control: inputSwitch(on: false, enabled: inputController.touchAvailable, action: nil, name: "三指轻点是中键")),
@@ -96,6 +99,10 @@ extension AppDelegate {
         updateInput { $0.sideButtons = sender.state == .on }
     }
 
+    @objc func prefInputMiddleFold(_ sender: NSSwitch) {
+        updateInput { $0.middleFold = sender.state == .on }
+    }
+
     @objc func prefInputRemoteMode(_ sender: NSSwitch) {
         updateInput { $0.remoteMode = sender.state == .on }
     }
@@ -136,6 +143,12 @@ extension AppDelegate {
     private func mouseDirectionSubtitle(_ prefs: WS2InputPreferences.Value) -> String {
         guard prefs.mouseInvert else { return "跟系统一样" }
         return inputController.scrollStatus(prefersChange: true)
+    }
+
+    private func middleSubtitle(_ prefs: WS2InputPreferences.Value) -> String {
+        if inputController.middleTap.systemStopped { return "被系统停掉了，先关掉再开" }
+        if prefs.middleFold { return inputController.middleListening ? "开着" : "还没装上" }
+        return "关着"
     }
 
     private func smoothPopup(_ prefs: WS2InputPreferences.Value) -> NSPopUpButton {

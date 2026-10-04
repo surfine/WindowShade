@@ -3,12 +3,14 @@ import Cocoa
 /// 把输入开关接到已有的纯逻辑。关着时不创建事件 tap，也不创建 HID 监听。
 final class WS2InputController {
     let scrollTap = ScrollTap()
+    let middleTap = MiddleTitlebarTap()
     private var remote = RemoteInputRouter()
     private var routerClock = WS2.Instant(nanoseconds: 1)
     private(set) var preferences = WS2InputPreferences.Value.off
     private(set) var scrollDecision = ScrollInstallPolicy.Decision.hold(.off)
     /// 监听没有创建。映射文本不在仓库里，打开开关也不会变成 true。
     private(set) var remoteListening = false
+    private(set) var middleListening = false
 
     private func tick() -> WS2.Instant {
         routerClock = routerClock.adding(1)
@@ -43,6 +45,10 @@ final class WS2InputController {
                          excluded: Set(prefs.exceptions))
         scrollTap.apply(installing: decision == .install, mask: mask)
         scrollTap.setWatchingForeground(decision == .install)
+        let middleOn = InputFeatureGate.middleDragMayInstall(switchOn: prefs.middleFold)
+            && !middleTap.systemStopped
+        middleListening = middleOn
+        middleTap.apply(installing: middleOn)
         // 没有核对过的静音映射，打开遥控模式也不创建遥控器监听。
         remoteListening = false
         _ = remote.setEnabled(false, at: tick())
@@ -52,6 +58,8 @@ final class WS2InputController {
         dispatchPrecondition(condition: .onQueue(.main))
         scrollTap.setWatchingForeground(false)
         scrollTap.apply(installing: false, mask: 0)
+        middleListening = false
+        middleTap.apply(installing: false)
         remoteListening = false
         _ = remote.setEnabled(false, at: tick())
     }

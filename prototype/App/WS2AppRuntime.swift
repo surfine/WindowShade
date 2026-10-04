@@ -156,6 +156,7 @@ import Cocoa
         guard NotchController.isEnabled,!sleeping,lockReasons.isEmpty,AuthorizationService.shared.lockState() == .unlocked else { return }
         let view=WS2OwnedSessionView(controller:owned)
         view.openModelPicker={ [weak self] in self?.openModelPicker() }
+        view.openConductorPage={ [weak self] in _ = self?.openConductor() }
         guard island.show(view,ownerID:"ownedCodex",onDismiss:{[weak self,weak view] _ in
             if self?.ownedView === view { self?.ownedView=nil }
         }) else { return }
