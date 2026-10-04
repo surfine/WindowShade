@@ -54,6 +54,7 @@ export function ScreenView({ m, f }: { m: MachineId; f: number }) {
       {m === 'air' && <Cursor m={m} f={f} />}
       <Island m={m} f={f} />
       {m === 'neo' && <Cursor m={m} f={f} />}
+      {M.notch && <HardwareNotch w={M.pt.w} n={M.notch} />}
       {d > 0 && <div style={{ position: 'absolute', inset: 0, background: '#000', opacity: d }} />}
     </div>
   );
@@ -232,9 +233,21 @@ export function cursorAt(m: MachineId, f: number) {
   const a = Math.min(smooth(seg(f, P.from, P.from + 10)), 1 - smooth(seg(f, P.to - 12, P.to)));
   return { x, y, press, a };
 }
+/** 指针尖进了 Air 的实体刘海就整只拿掉：刘海是机身，不是能点的屏幕。 */
+function inNotch(m: MachineId, x: number, y: number) {
+  const n = MACHINES[m].notch;
+  if (!n) return false;
+  const x0 = (MACHINES[m].pt.w - n.w) / 2;
+  return x >= x0 && x <= x0 + n.w && y < n.h;
+}
+
+function HardwareNotch({ w, n }: { w: number; n: { w: number; h: number; r: number } }) {
+  return <div style={{ position: 'absolute', left: (w - n.w) / 2, top: 0, width: n.w, height: n.h, borderRadius: `0 0 ${n.r}px ${n.r}px`, background: '#000', zIndex: 80 }} />;
+}
+
 function Cursor({ m, f }: { m: MachineId; f: number }) {
   const c = cursorAt(m, f);
-  if (!c) return null;
+  if (!c || inNotch(m, c.x, c.y)) return null;
   return (
     <div style={{ position: 'absolute', left: c.x, top: c.y, zIndex: m === 'neo' ? 50 : 25, opacity: c.a }}>
       {c.press > 0 && <div style={{ position: 'absolute', left: -16, top: -16, width: 32, height: 32, borderRadius: '50%', boxShadow: `0 0 0 2px rgba(255,255,255,${(0.7 * c.press).toFixed(3)})`, transform: `scale(${mix(0.6, 1.2, c.press)})` }} />}

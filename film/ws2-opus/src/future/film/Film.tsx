@@ -18,7 +18,14 @@ const ledOn = (m: MachineId, f: number) => (m === 'neo' ? f < T.faceOk + 30 || (
 
 function machinesAt(f: number): MachineId[] {
   const s = segAt(f);
-  return s.m === 'both' ? ['neo', 'air'] : [s.m];
+  if (s.m === 'both') return ['neo', 'air'];
+  // 交接顶上那几帧岛还盖着画面：底下仍留前一台，边上那一圈才是同一台机器。
+  const h = HANDS.find((t) => f >= t && f < t + 3);
+  if (h !== undefined) {
+    const prev = segAt(h - 1).m;
+    if (prev !== 'both') return [prev];
+  }
+  return [s.m];
 }
 
 function World({ f, W, H }: { f: number; W: number; H: number }) {
@@ -49,7 +56,8 @@ function islandFrame(m: MachineId, f: number, cam: CamState, W: number, H: numbe
 function handover(f: number, W: number, H: number) {
   const Hf = HANDS.find((h) => f >= h - GROW && f < h + SHRINK);
   if (Hf === undefined) return null;
-  const cover = { cx: W / 2, cy: H / 2, w: W * 1.3, h: H * 1.3, r: 0 };
+  // 停在画面的 97%：四边留一圈前一台，不再盖成两帧纯黑。
+  const cover = { cx: W / 2, cy: H / 2, w: W * 0.97, h: H * 0.97, r: 36 };
   const lerp = (a: typeof cover, b: typeof cover, p: number) => ({
     cx: a.cx + (b.cx - a.cx) * p, cy: a.cy + (b.cy - a.cy) * p,
     w: Math.exp(Math.log(a.w) + (Math.log(b.w) - Math.log(a.w)) * p), h: Math.exp(Math.log(a.h) + (Math.log(b.h) - Math.log(a.h)) * p),

@@ -86,13 +86,12 @@ export const XMark = ({ size, color = '#8e8e93' }: P) => (
 );
 
 /**
- * 刷脸：四个角、两只眼、鼻子、笑。scan 0–1 是绕一圈的刻度，ok 0–1 是脸变成勾。
- * 尺寸单位：size 是整个符号的边长。
+ * 刷脸：四个角和一圈刻度，认出来变成勾。不画眼睛、鼻子、嘴。
+ * scan 0–1 是绕一圈的刻度，ok 0–1 是刻度收成勾。
  */
 export function FaceGlyph({ size, scan, ok, sweep }: { size: number; scan: number; ok: number; sweep: number }) {
   const C = 50, ticks = 56;
   const green = '#30D158';
-  const face = 1 - clamp01(ok * 1.6);
   const ink = ok > 0.02 ? green : '#fff';
   const corner = (rot: number) => (
     <path key={rot} d="M 22 8 H 16 A 8 8 0 0 0 8 16 V 22" fill="none" stroke={ink} strokeWidth={3.2} strokeLinecap="round" transform={`rotate(${rot} 50 50) translate(${-ok * 3} ${-ok * 3})`} />
@@ -116,12 +115,6 @@ export function FaceGlyph({ size, scan, ok, sweep }: { size: number; scan: numbe
         );
       })}
       {[0, 90, 180, 270].map(corner)}
-      <g opacity={face}>
-        <line x1={37} y1={36} x2={37} y2={43} stroke="#fff" strokeWidth={3.2} strokeLinecap="round" />
-        <line x1={63} y1={36} x2={63} y2={43} stroke="#fff" strokeWidth={3.2} strokeLinecap="round" />
-        <path d="M 51 36 V 53 Q 51 56 47.5 56" fill="none" stroke="#fff" strokeWidth={3.2} strokeLinecap="round" strokeLinejoin="round" />
-        <path d="M 37 64 Q 50 73 63 64" fill="none" stroke="#fff" strokeWidth={3.2} strokeLinecap="round" />
-      </g>
       <path d="M 33 51 L 45 63 L 68 38" fill="none" stroke={green} strokeWidth={5} strokeLinecap="round" strokeLinejoin="round" pathLength={1} strokeDasharray={1} strokeDashoffset={1 - clamp01((ok - 0.35) / 0.55)} />
     </svg>
   );
