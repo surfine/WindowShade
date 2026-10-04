@@ -4,8 +4,8 @@ import { CAPTION_IN, CAPTION_OUT } from './motion/direction';
 import { NOTCH, TEACH_TUCKED, clamp01, seg } from './motion/site';
 import { CAPTIONS, FADE_TO_BLACK, MUSIC_PLAY, SEGMENTS, WORDMARK_AT } from './timeline';
 import {
-  DRAFT, DRAGGED_APP, DRAG_PRESS, HANDLE_POS, ICON_SIZE, deviceAt, dragIconAt, fingerAt, handleAt, phoneAt, pointerAt,
-  screenDark, slotsAt, trackpadAt,
+  DRAGGED_APP, DRAG_PRESS, HANDLE_POS, ICON_SIZE, chatBackAt, deviceAt, dragIconAt, draftAt, fingerAt, handleAt, headAt, phoneAt,
+  pointerAt, screenDark, slotsAt, termDoneAt, touchKeyAt, trackpadAt,
 } from './scene';
 import { Laptop } from './parts/Laptop';
 import { Island } from './parts/Island';
@@ -47,6 +47,8 @@ export function Film({ L, drawn }: { L: Layout; drawn: boolean }) {
       <Laptop L={L} frame={frame} page={page} over={over} />
       <Trackpad frame={frame} L={L} />
       <Phone frame={frame} L={L} />
+      <TouchKey frame={frame} L={L} />
+      <Head frame={frame} L={L} />
       {drawn && <Device frame={frame} L={L} />}
       <Caption frame={frame} L={L} />
       <ConceptTag frame={frame} L={L} />
@@ -80,21 +82,29 @@ function DrawnDesk({ frame, L }: { frame: number; L: Layout }) {
   const side = slots.filter((s) => s.id === 'P6' || s.id === 'P7');
   const sideOpacity = Math.max(0, ...side.map((s) => s.opacity));
   const icon = dragIconAt(frame);
+  const draft = draftAt(frame);
+  const chat = chatBackAt(frame);
+  const d = draft.rect;
   return (
     <>
       <MenuBar cqw={cqw} h={NOTCH.h} />
-      <DraftWin box={box(DRAFT)} />
+      <DraftWin box={box(d)} marks={draft.marks} />
+      {draft.outline > 0 && (
+        <div style={{ position: 'absolute', left: (d.x / 100) * L.screen.w - 0.4 * cqw, top: (d.y / 100) * L.screen.h - 0.4 * cqw, width: (d.w / 100) * L.screen.w + 0.8 * cqw, height: (d.h / 100) * L.screen.h + 0.8 * cqw, borderRadius: 3 * cqw, boxShadow: `inset 0 0 0 ${0.28 * cqw}px rgba(255,255,255,.85)`, opacity: draft.outline }} />
+      )}
       {slots.map((s) => {
         const b = box(s.rect);
         switch (s.id) {
           case 'P1': return <MusicWin key={s.id} box={b} opacity={s.opacity} playing={frame >= MUSIC_PLAY} />;
           case 'P4': return <TermWin key={s.id} box={b} opacity={s.opacity} scale={s.scale} radius={s.radius} />;
+          case 'P9': return <TermWin key={s.id} box={b} opacity={s.opacity} done={termDoneAt(frame)} />;
           case 'P5': return <HomeScreen key={s.id} cqw={cqw} sw={L.screen.w} sh={L.screen.h} opacity={s.opacity} hide={frame >= DRAG_PRESS ? DRAGGED_APP : undefined} />;
           case 'P8': return <ChatWin key={s.id} box={b} opacity={s.opacity} scale={s.scale} radius={s.radius} />;
           default: return null;
         }
       })}
       {side.length > 0 && <NotesWin box={box(side[0].rect)} opacity={sideOpacity} />}
+      {chat && <ChatWin box={box(chat.rect)} scale={chat.scale} radius={chat.radius} />}
       {icon && (
         <div style={{ position: 'absolute', left: (icon.x / 100) * L.screen.w, top: (icon.y / 100) * L.screen.h, transform: 'translate(-50%,-50%) scale(1.06)' }}>
           <AppIcon k={DRAGGED_APP} cqw={cqw} size={ICON_SIZE} />
@@ -182,6 +192,41 @@ function Phone({ frame, L }: { frame: number; L: Layout }) {
   );
 }
 
+/** 屏外的 Touch ID 键：圆角方键，中间一圈；手指落下按住，解开后圈亮一下就收。 */
+function TouchKey({ frame, L }: { frame: number; L: Layout }) {
+  const k = touchKeyAt(frame);
+  if (!k) return null;
+  const size = Math.min(L.side.w, L.side.h) * 0.42;
+  const cx = L.side.x + L.side.w / 2, cy = L.side.y + L.side.h / 2 + size * 0.25;
+  const r = size * 0.2;
+  const fy = cy - size * 0.95 * (1 - k.reach);
+  return (
+    <svg style={{ position: 'absolute', left: 0, top: 0, opacity: k.opacity, overflow: 'visible' }} width={1} height={1}>
+      <rect x={cx - size / 2} y={cy - size / 2} width={size} height={size} rx={size * 0.16} fill="none" stroke="rgba(255,255,255,.55)" strokeWidth={2} />
+      <circle cx={cx} cy={cy} r={size * 0.3} fill="none" stroke={`rgba(255,255,255,${0.3 + 0.6 * k.lit})`} strokeWidth={2} />
+      {k.reach > 0.001 && (k.down
+        ? <circle cx={cx} cy={fy} r={r} fill="rgba(26,89,184,.66)" />
+        : <circle cx={cx} cy={fy} r={r} fill="rgba(255,255,255,.08)" stroke="rgba(255,255,255,.7)" strokeWidth={1.5} />)}
+    </svg>
+  );
+}
+
+/** 屏外戴着耳机的侧脸线稿，朝着屏幕。只画轮廓和耳机，不画五官细节；点头绕脖子转。 */
+function Head({ frame, L }: { frame: number; L: Layout }) {
+  const h = headAt(frame);
+  if (!h) return null;
+  const size = Math.min(L.side.w, L.side.h) * 0.8;
+  return (
+    <svg style={{ position: 'absolute', left: L.side.x + (L.side.w - size) / 2, top: L.side.y + (L.side.h - size) / 2, opacity: h.opacity, overflow: 'visible' }} width={size} height={size} viewBox="0 0 100 100" fill="none" stroke="rgba(255,255,255,.75)" strokeWidth={2.2} strokeLinecap="round" strokeLinejoin="round">
+      <g transform={`rotate(${-h.tilt} 56 78)`}>
+        <path d="M 62 82 L 62 72 C 74 68 80 56 78 42 C 76 26 64 16 50 16 C 36 16 26 26 25 38 L 20 50 L 25 52 L 25 60 C 25 66 30 68 36 67 L 40 67 L 40 82" />
+        <ellipse cx={29} cy={60.5} rx={2.6} ry={0.3 + 2.2 * h.mouth} />
+        <g stroke="rgba(255,255,255,.95)"><circle cx={60} cy={44} r={3.2} /><line x1={60} y1={47.2} x2={60} y2={56} /></g>
+      </g>
+    </svg>
+  );
+}
+
 function captionOpacity(frame: number, from: number, to: number) {
   return Math.min(clamp01((frame - from) / CAPTION_IN), 1 - clamp01((frame - (to - CAPTION_OUT)) / CAPTION_OUT));
 }
@@ -197,10 +242,18 @@ function Caption({ frame, L }: { frame: number; L: Layout }) {
   );
 }
 
+/** 首尾相接的概念段合成一段，标签不在段落交界闪一下。 */
+const CONCEPT_SPANS = SEGMENTS.flatMap((s) => (s.concept ? [s.concept] : [])).reduce<[number, number][]>((out, [a, b]) => {
+  const last = out[out.length - 1];
+  if (last && a <= last[1]) last[1] = Math.max(last[1], b);
+  else out.push([a, b]);
+  return out;
+}, []);
+
 function ConceptTag({ frame, L }: { frame: number; L: Layout }) {
-  const s = SEGMENTS.find((k) => k.concept && frame >= k.concept[0] && frame < k.concept[1]);
-  if (!s?.concept) return null;
-  const o = captionOpacity(frame, s.concept[0], s.concept[1]);
+  const span = CONCEPT_SPANS.find(([a, b]) => frame >= a && frame < b);
+  if (!span) return null;
+  const o = captionOpacity(frame, span[0], span[1]);
   return (
     <div style={{ position: 'absolute', left: 0, width: L.width, top: L.tag.y - L.tag.size * 0.7, textAlign: L.tag.align, fontFamily: CJK, fontSize: L.tag.size, color: 'rgba(255,255,255,.5)', opacity: o, letterSpacing: '0.1em' }}>
       概念示意，还没做

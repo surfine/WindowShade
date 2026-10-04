@@ -54,35 +54,40 @@ export function Win({ box, title, off, children, opacity = 1, scale = 1, radius 
   );
 }
 
-function Lines({ cqw, widths }: { cqw: number; widths: number[] }) {
+/** marks：每行末尾那处引文改好的程度（0–1），助手改过的地方标一小段强调色。 */
+function Lines({ cqw, widths, marks = [] }: { cqw: number; widths: number[]; marks?: number[] }) {
   return (
     <div style={{ display: 'grid', gap: 1.5 * cqw, marginTop: 3 * cqw }}>
-      {widths.map((w, i) => <i key={i} style={{ height: 0.9 * cqw, width: `${w}%`, borderRadius: cqw, background: C.line }} />)}
+      {widths.map((w, i) => (
+        <i key={i} style={{ position: 'relative', height: 0.9 * cqw, width: `${w}%`, borderRadius: cqw, background: C.line }}>
+          {(marks[i] ?? 0) > 0 && <b style={{ position: 'absolute', right: 0, top: 0, bottom: 0, width: '22%', borderRadius: cqw, background: C.accent, opacity: 0.75 * marks[i] }} />}
+        </i>
+      ))}
     </div>
   );
 }
 
 /** 后面那扇“文章草稿”，不在前台。 */
-export function DraftWin({ box, opacity }: { box: Box; opacity?: number }) {
+export function DraftWin({ box, opacity, marks }: { box: Box; opacity?: number; marks?: number[] }) {
   const { cqw } = box;
   return (
     <Win box={box} title="文章草稿" off opacity={opacity}>
       <div style={{ padding: `${4 * cqw}px ${4.4 * cqw}px` }}>
         <div style={{ fontSize: 1.65 * cqw, fontWeight: 600, color: C.accent, letterSpacing: '.02em' }}>周四 · 专栏</div>
-        <div style={{ fontSize: 4.6 * cqw, fontFamily: '"Songti SC","Noto Serif SC",serif', fontWeight: 500, lineHeight: 1.2, marginTop: 1.4 * cqw, color: C.ink }}>桌面空了，<br />心也静了。</div>
-        <Lines cqw={cqw} widths={[100, 92, 96, 58]} />
+        <div style={{ fontSize: 4.6 * cqw, fontFamily: '"Songti SC","Noto Serif SC",serif', fontWeight: 500, lineHeight: 1.2, marginTop: 1.4 * cqw, color: C.ink, whiteSpace: 'nowrap' }}>桌面空了，<br />心也静了。</div>
+        <Lines cqw={cqw} widths={[100, 92, 96, 58]} marks={marks} />
       </div>
     </Win>
   );
 }
 
-export function TermWin(p: { box: Box; opacity?: number; scale?: number; radius?: number }) {
+export function TermWin(p: { box: Box; opacity?: number; scale?: number; radius?: number; done?: boolean }) {
   const { cqw } = p.box;
-  const rows = ['$ swift build', 'Compiling WindowShade', '[132/186] Notch.swift', '[133/186] SlideOver.swift'];
+  const rows = ['$ swift build', 'Compiling WindowShade', '[132/186] Notch.swift', p.done ? 'Build complete!' : '[133/186] SlideOver.swift'];
   return (
     <Win {...p} title="终端">
       <div style={{ position: 'absolute', inset: 0, background: '#1e1f24', color: '#d7dbe3', font: `${1.75 * cqw}px/1.7 ${MONO}`, padding: `${2.6 * cqw}px ${3 * cqw}px` }}>
-        {rows.map((r, i) => <div key={r} style={{ color: i ? undefined : '#8fd18f' }}>{r}</div>)}
+        {rows.map((r, i) => <div key={r} style={{ color: i && !(p.done && i === 3) ? undefined : '#8fd18f' }}>{r}</div>)}
         <div style={{ width: cqw, height: 2.2 * cqw, background: '#d7dbe3', marginTop: 0.4 * cqw }} />
       </div>
     </Win>

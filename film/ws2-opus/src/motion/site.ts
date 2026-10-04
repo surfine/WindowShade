@@ -41,12 +41,22 @@ export const ISLAND_SHAPES = {
   shelf: { w: 54, h: SITE_NOTCH_H + 21, r: 4.2 },
   // 片子新增的一个目标：长按后铺满整块屏。弹簧沿用展开的 0.96 / 0.38，不另配。
   full: { w: 100, h: (100 * 1864) / 2880, r: 0 },
+  // 落点小岛：prototype/App/Notch.swift 的 dropZone 是刘海下 340 × 84pt（屏宽 1710pt）。
+  // 和提醒、架子一样放大到看得清：宽、垂下的高各乘 2。圆角 3.8 是片子新增。
+  drop: { w: 2 * (340 / 1710) * 100, h: NOTCH.h + 2 * (84 / 1710) * 100, r: 3.8 },
+  // [片子新增] 刘海里问一次放行：比提醒高一行，放两个按钮。
+  ask: { w: 42, h: SITE_NOTCH_H + 13, r: 4 },
 } as const;
 export type IslandMode = keyof typeof ISLAND_SHAPES;
 
-/** 展开、收回：阻尼 0.96、响应 0.38；提醒：阻尼 0.82、响应 0.42。 */
+/**
+ * 展开、收回：阻尼 0.96、响应 0.38；提醒：阻尼 0.82、响应 0.42。
+ * 落点小岛用 motion-direction §2.2 的 catch（0.80 / 0.40），那张表写明给落点小岛。
+ */
 export const islandTuning = (mode: IslandMode) =>
-  mode === 'alert' ? { damping: 0.82, response: 0.42 } : { damping: 0.96, response: 0.38 };
+  mode === 'alert' ? { damping: 0.82, response: 0.42 }
+    : mode === 'drop' ? { damping: 0.8, response: 0.4 }
+      : { damping: 0.96, response: 0.38 };
 
 /** 落进刘海那一下：宽速度 +60、高速度 +18（cqw/s）。 */
 export const TUCK_KICK = { w: 60, h: 18 };
