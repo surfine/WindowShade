@@ -271,7 +271,7 @@ const TRACKS: Track[] = [
   // approve：点“允许”。
   { show: 6200, hide: CLICK_ALLOW + 30, start: { x: 56, y: 48 }, moves: [{ at: 6215, to: ALLOW_PT }], presses: [[CLICK_ALLOW - ms(TEACH.press), CLICK_ALLOW]] },
   // hold：长按刘海；再长按回来。
-  { show: 6680, hide: 6830, start: { x: 50, y: 45 }, moves: [{ at: 6700, to: ON_NOTCH }], presses: [[PRESS_LONG_A, 6830]] },
+  { show: 6700, hide: 6830, start: { x: 50, y: 45 }, moves: [{ at: 6710, to: ON_NOTCH }], presses: [[PRESS_LONG_A, 6830]] },
   { show: 7080, hide: 7210, start: { x: 50, y: 40 }, moves: [{ at: 7090, to: ON_NOTCH }], presses: [[PRESS_LONG_B, 7210]] },
   // back：点“离开期间”里的聊天那一行。
   { show: CLICK_SUMMARY - 120, hide: CLICK_SUMMARY + 30, start: { x: 54, y: 70 }, moves: [{ at: CLICK_SUMMARY - 110, to: ROW_CHAT_PT }], presses: [[CLICK_SUMMARY - ms(TEACH.press), CLICK_SUMMARY]] },
