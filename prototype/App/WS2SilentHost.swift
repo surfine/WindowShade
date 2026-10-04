@@ -15,7 +15,9 @@ final class WS2SilentHost {
     private var cover = WS2SilentCover.State()
     private var pending: WS2SilentSession.Proposal?
     private var frozenID: CGWindowID?
+    private var frozenPID: pid_t = 0
     private var frozenRevision: UInt64 = 1
+    private var frozenScreen: NSScreen?
     private weak var page: WS2SilentPageView?
 
     func attach(runtime: WS2AppRuntime, owner: AppDelegate) {
@@ -27,11 +29,14 @@ final class WS2SilentHost {
     func open() -> Bool {
         guard let runtime, let owner, NotchController.isEnabled,
               AuthorizationService.shared.lockState() == .unlocked else { return false }
+        freezeIfNeeded()
+        frozenScreen = NSScreen.screens.first { $0.frame.contains(NSEvent.mouseLocation) } ?? NSScreen.main
         let view = WS2SilentPageView(host: self)
         guard runtime.island.show(view, ownerID: "silent", onDismiss: { [weak self, weak view] _ in
             guard let self, self.page === view else { return }
             self.page = nil
             self.pending = nil
+            self.session.invalidate()
         }) else { return false }
         page = view
         view.note("看清，再确认。")
@@ -41,6 +46,7 @@ final class WS2SilentHost {
 
     func offer(_ commandID: String) {
         if WS2SilentNav.cancels(commandID) {
+            session.invalidate()
             pending = nil
             page?.setConfirmEnabled(false)
             page?.note(WS2SilentNav.resultLine(commandID) ?? "已取消")
@@ -77,6 +83,7 @@ final class WS2SilentHost {
             return
         }
         if let delta = WS2SilentNav.delta(commandID) {
+            session.invalidate()
             pending = nil
             page?.setConfirmEnabled(false)
             page?.turn(delta)
@@ -92,15 +99,7 @@ final class WS2SilentHost {
         case .shown:
             pending = nil
             let request = WS2SilentProductPort.request(for: step)
-            let ok = apply(request)
-            let paused = owner?.inputController.hooksPaused ?? false
-            let line = WS2SilentReadout.sentence(
-                commandID, activities: activities, cover: cover, assistant: assistant, draft: draft, hooksPaused: paused)
-            if !ok, commandID == "launcher.openFolder" {
-                page?.note("还没选")
-            } else {
-                page?.note(ok ? line : "这次没有做")
-            }
+            page?.note(apply(request).notchLine)
         case .awaiting(let proposal):
             pending = proposal
             page?.note(WS2SilentCopy.line(proposal.command.id) ?? previewLine(proposal))
@@ -121,42 +120,29 @@ final class WS2SilentHost {
         accept(proposal, at: nil)
     }
 
-    /// 没有摄像头时，用一串已经分好的角度模拟一次点头。摇头或开始得太早都作废。
-    func confirmSimulatedNod() {
-        guard let proposal = pending else { return }
-        let start = proposal.displayedAt
-        let samples = [
-            WS2HeadSample(at: start, pitchDown: 0, yaw: 0),
-            WS2HeadSample(at: start.adding(WS2.Duration.millisecond * 100), pitchDown: 12, yaw: 1),
-            WS2HeadSample(at: start.adding(WS2.Duration.millisecond * 200), pitchDown: 22, yaw: 0),
-            WS2HeadSample(at: start.adding(WS2.Duration.millisecond * 300), pitchDown: 4, yaw: 0),
-        ]
-        guard let nod = WS2HeadGesture.recognize(samples),
-              WS2HeadGesture.confirms(nod, displayedAt: proposal.displayedAt) else {
-            pending = nil
-            page?.setConfirmEnabled(false)
-            page?.note("这下不算")
-            return
-        }
-        accept(proposal, at: nod.startedAt)
+    func invalidatePending() {
+        session.invalidate()
+        pending = nil
+        page?.setConfirmEnabled(false)
     }
 
     private func accept(_ proposal: WS2SilentSession.Proposal, at gestureStart: WS2.Instant?) {
         guard let runtime else { return }
         let live = proposal.command.effect == .draft ? proposal.targetRevision : liveRevision()
-        let when = gestureStart ?? runtime.clock.now()
-        let step = session.confirm(proposal, at: when, currentRevision: live)
+        let now = runtime.clock.now()
+        let began = gestureStart ?? now
+        let step = session.confirm(proposal, gestureBeganAt: began, now: now, liveRevision: live)
         pending = nil
         page?.setConfirmEnabled(false)
         switch step {
         case .accepted:
             let request = WS2SilentProductPort.request(for: step)
-            let ok = apply(request)
-            if case .carPlayUnavailable(let id) = request {
-                page?.note(WS2SilentSecurity.outcome(id)?.line ?? "还不能接收")
-            } else {
+            let result = apply(request)
+            if result.isCompleted {
                 page?.note(WS2SilentResultLine.noted(
-                    proposal.command.id, succeeded: ok, draft: draft, assistant: assistant))
+                    proposal.command.id, succeeded: true, draft: draft, assistant: assistant))
+            } else {
+                page?.note(result.notchLine)
             }
         case .rejected:
             page?.note("确认对不上，这一笔作废")
@@ -165,65 +151,17 @@ final class WS2SilentHost {
         }
     }
 
-    func showSimulatedDistance() {
-        let preview = WS2ScreenDistanceSimulation.unknown()
-        guard !preview.cancelsAwayCountdown, preview.centimeters == nil else {
-            page?.note("这次没有做")
-            return
-        }
-        page?.note(preview.line)
-    }
-
-    func showSimulatedCamera() {
-        let preview = WS2CameraSimulation.noCamera()
-        guard !preview.grantsUnlock, !preview.reportsNoPerson, preview.centimeters == nil else {
-            page?.note("这次没有做")
-            return
-        }
-        page?.note(preview.line)
-    }
-
-    func showSimulatedAway() {
-        let preview = WS2AwaySimulation.countdownPreview()
-        page?.note(preview.requestedLock ? "这次没有做" : preview.line)
-    }
-
-    func showSimulatedPhrase() {
-        let id = WS2SilentPhrases.starterCommandIDs[0]
-        let word = WS2SilentCopy.line(id) ?? ""
-        let profile = WS2SilentPhraseProfile(speech: .mandarin, words: [id: word])
-        let seen = WS2SilentPhraseSample(speech: .mandarin, seenWord: word, cameraAvailable: true, microphoneWord: "别的")
-        let heardOnly = WS2SilentPhraseSample(speech: .mandarin, seenWord: nil, cameraAvailable: false, microphoneWord: word)
-        var voice = WS2SilentVoiceEnrollment()
-        let match = WS2SilentPhrases.match(seen, profile: profile)
-        guard case .sameAsTap(let commandID) = match,
-              voice.show(match) == .lineShown,
-              !voice.executes(match),
-              !voice.recordedMicrophone,
-              !voice.hardwareMatched,
-              WS2SilentPhrases.match(heardOnly, profile: profile) == .unknown else {
-            page?.note("还没录过")
-            return
-        }
-        page?.note(WS2SilentCopy.line(commandID) ?? "还没录过")
-    }
-
-    func showSimulatedPosture() {
-        let decision = WS2Posture.decide(WS2PostureInput(eye: .nearSustained, head: .level))
-        page?.note(decision.notchPhrase ?? "没有提醒")
-    }
-
     func sendSeparately() {
         offer("assistant.sendDraft")
     }
 
-    private func apply(_ request: WS2SilentHostRequest) -> Bool {
-        guard let runtime, let owner else { return false }
-        let screen = NSScreen.main
+    private func apply(_ request: WS2SilentHostRequest) -> SilentExecutionResult {
+        guard let runtime, let owner else { return .failed("这一笔没有做成") }
+        let screen = frozenScreen
         let window = frozenWindow()
         var localDraft = draft
         var localAssistant = assistant
-        let ok = WS2SilentApply.perform(
+        let result = WS2SilentApply.perform(
             request,
             launchpad: owner.launchpad,
             runtime: runtime,
@@ -237,13 +175,16 @@ final class WS2SilentHost {
             cover: &cover)
         draft = localDraft
         assistant = localAssistant
-        return ok
+        return result
     }
 
     private func freezeIfNeeded() {
         guard let win = focusedWindow(), let id = windowID(of: win) else { return }
-        if frozenID != id {
+        var pid: pid_t = 0
+        AXUIElementGetPid(win, &pid)
+        if frozenID != id || frozenPID != pid {
             frozenID = id
+            frozenPID = pid
             frozenRevision &+= 1
             if frozenRevision == 0 { frozenRevision = 1 }
         }
@@ -251,7 +192,10 @@ final class WS2SilentHost {
 
     private func frozenWindow() -> WS2SilentApply.WindowTarget? {
         guard let id = frozenID, let win = focusedWindow(), windowID(of: win) == id else { return nil }
-        return .init(id: id, element: win, revision: frozenRevision)
+        var pid: pid_t = 0
+        AXUIElementGetPid(win, &pid)
+        guard pid == frozenPID else { return nil }
+        return .init(id: id, element: win, revision: frozenRevision, pid: pid)
     }
 
     private func targetID(for commandID: String) -> String {
@@ -304,12 +248,6 @@ final class WS2SilentPageView: NSView, WS2LeaseContent {
     func revoke() { inputIsCurrent = { false } }
     private let status = NSTextField(labelWithString: "")
     private let confirm = IslandChip(title: "确认", symbol: "checkmark", style: .solid)
-    private let nod = IslandChip(title: "模拟点头", symbol: "arrow.down", style: .glass)
-    private let posture = IslandChip(title: "离屏幕近了", symbol: "eye", style: .glass)
-    private let phrase = IslandChip(title: "口令", symbol: "text.bubble", style: .glass)
-    private let away = IslandChip(title: "离开", symbol: "iphone", style: .glass)
-    private let camera = IslandChip(title: "镜头", symbol: "web.camera", style: .glass)
-    private let distance = IslandChip(title: "距离", symbol: "ruler", style: .glass)
     private let rowA = NSStackView()
     private let rowB = NSStackView()
     private var pageIndex = 0
@@ -335,21 +273,7 @@ final class WS2SilentPageView: NSView, WS2LeaseContent {
         confirm.action = #selector(tapConfirm)
         confirm.alphaValue = 0
         confirm.isEnabled = false
-        nod.target = self
-        nod.action = #selector(tapNod)
-        nod.alphaValue = 0
-        nod.isEnabled = false
-        posture.target = self
-        posture.action = #selector(tapPosture)
-        phrase.target = self
-        phrase.action = #selector(tapPhrase)
-        away.target = self
-        away.action = #selector(tapAway)
-        camera.target = self
-        camera.action = #selector(tapCamera)
-        distance.target = self
-        distance.action = #selector(tapDistance)
-        let actions = NSStackView(views: [confirm, nod, posture, phrase, away, camera, distance])
+        let actions = NSStackView(views: [confirm])
         actions.orientation = .horizontal
         actions.spacing = 6
         let stack = NSStackView(views: [title, status, rowA, rowB, actions])
@@ -416,23 +340,21 @@ final class WS2SilentPageView: NSView, WS2LeaseContent {
     }
     func setConfirmEnabled(_ on: Bool) {
         confirm.isEnabled = on
-        nod.isEnabled = on
         let show = on ? 1.0 : 0.0
         guard !NSWorkspace.shared.accessibilityDisplayShouldReduceMotion else {
             confirm.alphaValue = show
-            nod.alphaValue = show
             return
         }
         NSAnimationContext.runAnimationGroup { context in
             context.duration = 0.22
             context.timingFunction = CAMediaTimingFunction(name: .easeOut)
             confirm.animator().alphaValue = show
-            nod.animator().alphaValue = show
         }
     }
 
     @objc private func tapMore() {
         showPage(pageIndex + 1)
+        host?.invalidatePending()
         note("第 \(pageIndex + 1) 页")
     }
 
@@ -448,36 +370,6 @@ final class WS2SilentPageView: NSView, WS2LeaseContent {
     @objc private func tapConfirm() {
         guard inputIsCurrent() else { return }
         host?.confirm()
-    }
-
-    @objc private func tapNod() {
-        guard inputIsCurrent() else { return }
-        host?.confirmSimulatedNod()
-    }
-
-    @objc private func tapPosture() {
-        guard inputIsCurrent() else { return }
-        host?.showSimulatedPosture()
-    }
-
-    @objc private func tapPhrase() {
-        guard inputIsCurrent() else { return }
-        host?.showSimulatedPhrase()
-    }
-
-    @objc private func tapAway() {
-        guard inputIsCurrent() else { return }
-        host?.showSimulatedAway()
-    }
-
-    @objc private func tapCamera() {
-        guard inputIsCurrent() else { return }
-        host?.showSimulatedCamera()
-    }
-
-    @objc private func tapDistance() {
-        guard inputIsCurrent() else { return }
-        host?.showSimulatedDistance()
     }
 }
 
