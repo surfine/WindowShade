@@ -40,8 +40,8 @@ npx esbuild scripts/score-events.ts --bundle --platform=node --log-level=warning
 ~/.venvs/onetake/bin/python scripts/score.py /tmp/score-events.json
 ```
 
-- 配乐：上面那首，从曲中 0.523 秒起放；在 `QUIET` 两段真停（读口型点头 52.2–61.5 秒、锁屏 72.8–77.2 秒），
-  片尾 85.6 秒起一拍半淡完，片名在安静里停 2.5 秒。
+- 配乐：上面那首，从曲中 0.523 秒起放；从头到尾不断：`UNDER` 两段（读口型点头 52.2–61.5 秒、锁屏 72.8–77.2 秒）低 4 dB、滤到 1.2 kHz 以下；
+  片尾 86.1 秒起一路淡到最后一帧。不做真静音（Aaron 听成「声音时断时续」）。
 - 音效：13 声（全片 178 拍），一个房间（合成混响 T60 0.9 秒）、四种材质（气流、玻璃、木头、低音），自己合成，无外部素材。
   每一声下配乐让开约 5 dB。
 - 母带：−16 LUFS 整合响度，真峰值 −4 dBTP（loudnorm 两遍）。改了剪辑就重跑上面两行。

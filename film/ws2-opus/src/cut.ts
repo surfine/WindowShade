@@ -25,7 +25,7 @@ const PLANS: Plan[] = [
 ];
 
 const outAt = (k: number) => (k < 0 ? 0 : beatFrame(k));
-/** 片尾：能量落下的那一拍之后，片名再静静停 2.5 秒（声音也是真安静），最后 0.4 秒淡到黑。 */
+/** 片尾：能量落下的那一拍之后，片名再停 2.5 秒，音乐跟着淡完，最后 0.4 秒淡到黑。 */
 const TAIL = 150;
 
 export const SHOTS: Shot[] = PLANS.map((p, i) => {
@@ -74,16 +74,17 @@ export const CAPTIONS: { text: string; from: number; to: number }[] = [
 export const WORDMARK_AT = beatFrame(SECTIONS.lastHit);
 export const FADE_TO_BLACK = [OUT_TOTAL - 24, OUT_TOTAL] as const;
 /**
- * 声音的安静段（成片帧号，都在拍上）：音乐在这里真停，只留一声。scripts/score.py 按它混音，片子只放混好的那一轨。
- * 读口型、点头：「不出声」那一段就不出声，到聊天被收进刘海那一拍（第一次推高）音乐才回来，和冷开场收窗口押韵。
- * 锁屏：屏幕一黑音乐就停，人回来、面容 ID 打勾那一拍（全曲最大的推高）整首回来。
+ * 配乐让到后面的两段（成片帧号，都在拍上）：音乐不停，只低 4 dB、滤掉 1.2 kHz 以上，像隔了一道门。scripts/score.py 按它混音。
+ * 读口型、点头：「不出声」那一段，到聊天被收进刘海那一拍（第一次推高）整首回到前面，和冷开场收窗口押韵。
+ * 锁屏：屏幕一黑音乐退后，人回来、面容 ID 打勾那一拍（全曲最大的推高）整首回来。
+ * 不做真静音：Aaron 听成「声音时断时续」。
  */
-export const QUIET: [number, number][] = [
+export const UNDER: [number, number][] = [
   [beatFrame(107), beatFrame(SECTIONS.surge)],
   [beatFrame(149), beatFrame(SECTIONS.peak)],
 ];
-/** 音乐收尾：最后一个重拍之后一拍开始淡，到能量落下的那一拍为 0，之后片名在安静里停住。 */
-export const MUSIC_TAIL = [beatFrame(SECTIONS.lastHit + 1), beatFrame(SECTIONS.fall)] as const;
+/** 音乐收尾：最后一个重拍之后一拍开始一路淡到片尾最后一帧，中间不留空白。 */
+export const MUSIC_TAIL = [beatFrame(SECTIONS.lastHit + 1), OUT_TOTAL] as const;
 
 export function captionOpacity(out: number, from: number, to: number) {
   const c = (v: number) => Math.max(0, Math.min(1, v));
