@@ -40,18 +40,22 @@ const esbuild = require('esbuild');
 const r = esbuild.buildSync({ entryPoints: ['src/future/sfx.ts'], bundle: true, write: false, format: 'cjs', platform: 'node',
   jsx: 'automatic', loader: { '.jpg': 'empty', '.png': 'empty' }, external: ['remotion', 'react', 'react/jsx-runtime'] });
 const m = { exports: {} }; new Function('module', 'exports', 'require', r.outputFiles[0].text)(m, m.exports, require);
-process.stdout.write(JSON.stringify({ sfx: m.exports.SFX, hush: m.exports.HUSH }));
+process.stdout.write(JSON.stringify({ sfx: m.exports.SFX, dips: m.exports.DIPS, bed: m.exports.BED }));
 """
     return json.loads(subprocess.check_output(['node', '-e', js], cwd=FILM))
 
 
-def hush_gain(hush, n):
+def bed_gain(dips, bed, n):
+    """音乐床：一条不断。头尾淡入淡出，中间只有几处有限深度的让位，最深 -10 dB，绝不到静音。"""
     f = np.arange(n) / SR * FPS
-    g = np.ones(n)
-    for a, b, c, d in hush:
+    g = np.minimum(1, f / bed['fadeIn'])
+    tail = np.clip((bed['total'] - f) / bed['fadeOut'], 0, 1)
+    g = g * (0.5 - 0.5 * np.cos(np.pi * tail))
+    for a, b, c, d, db in dips:
         down = np.clip((f - a) / max(b - a, 1e-6), 0, 1); up = np.clip((f - c) / max(d - c, 1e-6), 0, 1)
-        g = np.minimum(g, 1 - np.minimum(down, 1 - up))
-    return 0.5 - 0.5 * np.cos(np.pi * g)
+        k = np.minimum(down, 1 - up)
+        g = g * (1 - k * (1 - 10 ** (max(db, -10) / 20)))
+    return g
 
 
 def load(name):
@@ -122,7 +126,7 @@ def main():
     music = np.zeros((n, 2)); music[: min(n, m.shape[1])] = m.T[:n]
     t = np.arange(n) / SR
     data = events(); ev = data['sfx']
-    music *= hush_gain(data['hush'], n)[:, None]
+    music *= bed_gain(data['dips'], data['bed'], n)[:, None]
     dry = np.zeros((n + 3 * SR, 2)); wet = np.zeros_like(dry)
     duck = np.zeros(n)
     for e in ev:
@@ -132,7 +136,8 @@ def main():
         dry[i0:i0 + k, 0] += sig * g * L; dry[i0:i0 + k, 1] += sig * g * R
         wet[i0:i0 + k, 0] += sig * g * s * L; wet[i0:i0 + k, 1] += sig * g * s * R
         # 让一下：提前 30 毫秒压下去，声音长度（最多 0.35 秒）里保持，0.45 秒放回。
-        depth = 0.55 if e['kind'] in ('unfold', 'sub', 'lock') else 0.4
+        # 线性增益的减量：0.35 ≈ -3.7 dB，0.45 ≈ -5.2 dB；上限 -6 dB。
+        depth = 0.45 if e['kind'] in ('unfold', 'sub', 'lock') else 0.35
         a, h, r = int(0.03 * SR), int(min(k / SR, 0.35) * SR), int(0.45 * SR)
         env = np.concatenate([np.linspace(0, 1, a), np.ones(h), np.linspace(1, 0, r)])
         j0 = max(0, i0 - a); seg = env[a - (i0 - j0):][: n - j0]
