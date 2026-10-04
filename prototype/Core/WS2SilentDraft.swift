@@ -67,7 +67,8 @@ struct WS2SilentDraftHost: Equatable, Sendable {
         guard Self.isSendCommand(commandID), !id.isEmpty, id == draftID, revision == self.revision else {
             return .refused
         }
-        guard mark == .preview || mark == .waitingForAck || mark == .sent else { return .refused }
+        if mark == .sent { return .refused }
+        guard mark == .preview || mark == .waitingForAck else { return .refused }
         let sessionID = boundSessionID?.trimmingCharacters(in: .whitespacesAndNewlines) ?? ""
         guard !sessionID.isEmpty else {
             pendingRequestID = nil

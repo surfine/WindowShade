@@ -476,6 +476,25 @@ struct SilentPrepTests {
         host.disconnect()
         expect(host.mark == .sent && host.acknowledge(ack) == .refused,
                "after it is sent, disconnect does not send it again")
+        expect(host.submit(commandID: "assistant.sendDraft", id: "draft-1", revision: 2, boundSessionID: "sess") == .refused
+               && host.mark == .sent,
+               "a draft that was already sent is not sent again")
+        var idleDraft = WS2SilentDraftHost()
+        expect(idleDraft.adopt(id: "", revision: 1) == .refused && idleDraft.mark == .idle,
+               "an empty draft id is not adopted")
+        expect(idleDraft.discard() == .refused && idleDraft.mark == .idle,
+               "discarding with no preview does nothing")
+        expect(idleDraft.submit(commandID: "assistant.sendDraft", id: "draft-1", revision: 1, boundSessionID: "sess") == .refused,
+               "sending with no preview is refused")
+        var waitingDraft = WS2SilentDraftHost()
+        expect(waitingDraft.adopt(id: "draft-1", revision: 2) == .preview, "a waiting draft starts as a preview")
+        expect(waitingDraft.submit(commandID: "assistant.sendDraft", id: "draft-1", revision: 9, boundSessionID: "sess") == .refused
+               && waitingDraft.mark == .preview,
+               "a send with the wrong revision does not leave the preview")
+        _ = waitingDraft.submit(commandID: "assistant.sendDraft", id: "draft-1", revision: 2, boundSessionID: "sess")
+        expect(waitingDraft.mark == .waitingForAck && waitingDraft.discard() == .refused
+               && waitingDraft.mark == .waitingForAck,
+               "discarding while waiting for an ack does not drop the draft")
 
         var untouched = WS2SilentSession()
         let model = untouched.propose(commandID: "assistant.setModel", targetID: "draft-1", targetRevision: 2, now: at(8400))
@@ -704,24 +723,286 @@ struct SilentPrepTests {
         expect(WS2SilentDraftCommand.apply("dictation.start", targetID: "", revision: 0, to: &draft)
                && draft.mark == .preview && draft.mark != .sent,
                "starting a draft stays on this Mac and is not sent")
+        expect(WS2SilentReadout.sentence("dictation.start", draft: draft) == "还没发送"
+               && !WS2SilentDraftRead.listens("dictation.start"),
+               "a local draft says it has not been sent and does not listen")
         expect(WS2SilentDraftCommand.apply("dictation.insertPhrase", targetID: draft.draftID, revision: draft.revision, to: &draft)
                && draft.mark == .preview,
                "inserting a phrase does not send")
+        expect(WS2SilentReadout.sentence("dictation.insertPhrase", draft: draft) == "还没发送",
+               "an inserted phrase stays unsent")
         expect(WS2SilentDraftCommand.apply("dictation.discard", targetID: draft.draftID, revision: draft.revision, to: &draft)
                && draft.mark == .idle,
                "discarding a preview clears it and does not send")
+        expect(WS2SilentReadout.sentence("dictation.discard", draft: draft) == "没有草稿",
+               "after discard there is no draft to send")
         expect(!WS2SilentDraftCommand.apply("dictation.discard", targetID: "", revision: 0, to: &draft),
                "discarding when there is no preview does nothing")
+        expect(WS2SilentReadout.sentence("activity.focus") == "只看不计时"
+               && WS2SilentProductPort.showsFocusWithoutStarting(.showFocusStatus),
+               "looking at the timer does not start it")
+        let openedSettings = [
+            "ui.settings": "打开了设置",
+            "settings.appearance": "打开了外观",
+            "settings.windows": "打开窗口设置",
+            "settings.shortcuts": "打开了快捷键",
+            "settings.permissions": "打开了权限",
+            "settings.privacy": "打开了隐私",
+            "settings.silent": "打开静音操作",
+        ]
+        for (id, line) in openedSettings {
+            expect(WS2SilentReadout.sentence(id) == line && line.count <= 8,
+                   "\(id) says the settings section opened")
+            expect(!line.contains("改") && line != "已关闭" && line != "已打开",
+                   "\(id) does not claim a setting value changed")
+        }
+        for id in ["ui.windows", "window.choose", "window.batchReview", "app.showSwitcher"] {
+            let line = WS2SilentReadout.sentence(id)
+            expect(line == "已开窗口浏览" && line.count <= 8, "\(id) says the window browser opened")
+        }
+        var freshCover = WS2SilentCover.State()
+        expect(WS2SilentReadout.sentence("privacy.cover", cover: freshCover) == "没遮住",
+               "cover that has not happened does not say it is covered")
+        expect(WS2SilentCover.cover(&freshCover), "covering the screen succeeds")
+        expect(WS2SilentReadout.sentence("privacy.cover", cover: freshCover) == "已遮住"
+               && WS2SilentReadout.sentence("scene.conversation", cover: freshCover) == "已遮住"
+               && !freshCover.revealed,
+               "a successful cover stays 已遮住 and is not revealed")
+        expect(WS2SilentCover.cover(&freshCover)
+               && WS2SilentReadout.sentence("privacy.cover", cover: freshCover) == "已遮住",
+               "covering again stays 已遮住")
+        expect(WS2SilentReadout.sentence("input.pause", hooksPaused: true) == "输入已暂停"
+               && WS2SilentReadout.sentence("input.pause", hooksPaused: false) == "输入还在",
+               "paused input says it is paused and does not clear preferences")
+        let launchPages = [
+            "launcher.open": "已开主屏幕",
+            "launcher.home": "已开主屏幕",
+            "launcher.library": "已开资料库",
+            "launcher.today": "已开今天",
+            "launcher.search": "已开搜索",
+            "launcher.back": "回到上一层",
+            "launcher.nextPage": "已翻下一页",
+            "launcher.previousPage": "已翻上一页",
+            "launcher.dismiss": "已关掉",
+        ]
+        for (id, line) in launchPages {
+            expect(WS2SilentReadout.sentence(id) == line && line.count <= 8 && !line.contains("App"),
+                   "\(id) names the page and does not claim an app launched")
+        }
+        expect(WS2SilentReadout.sentence("music.pause") == "先不改播放"
+               && WS2SilentReadout.sentence("music.resume") == "先不改播放"
+               && WS2SilentReadout.sentence("music.nextTrack") == "先不改播放",
+               "playback stays unchanged")
+        let doneLines = [
+            "window.left": "已到左半",
+            "window.right": "已到右半",
+            "window.fill": "已铺满屏幕",
+            "window.center": "已居中",
+            "window.topLeft": "已到左上",
+            "window.topRight": "已到右上",
+            "window.bottomLeft": "已到左下",
+            "window.bottomRight": "已到右下",
+            "window.collapse": "已收起",
+            "window.expand": "已展开",
+            "window.tuck": "已收进刘海",
+            "window.untuck": "已放回",
+            "window.undo": "已撤销",
+            "window.restore": "已还原",
+            "window.moveToSelectedDisplay": "已到这屏",
+            "focus.start": "已开始专注",
+            "focus.pause": "已暂停",
+            "focus.resume": "已继续",
+            "window.magicTile": "已魔法平铺",
+        ]
+        for (id, line) in doneLines {
+            expect(WS2SilentResultLine.acceptance(id, succeeded: true) == line && line.count <= 8,
+                   "\(id) names what finished")
+            expect(WS2SilentResultLine.acceptance(id, succeeded: false) == "这一笔没有做成",
+                   "\(id) that did not run says it was not done")
+        }
+        expect(WS2SilentResultLine.acceptance("window.glance", succeeded: true) == nil,
+               "a glance does not get a line that says the window came forward")
+        let glanceLine = WS2SilentReadout.sentence("window.glance")
+        expect(glanceLine == "只看一眼" && glanceLine.count <= 8
+               && glanceLine != WS2SilentCopy.line("window.glance")
+               && !glanceLine.contains("前面") && !glanceLine.contains("打开"),
+               "a glance says it only looked and does not say the window came forward")
+        expect(WS2SilentResultLine.acceptance("window.pin", succeeded: false) == nil
+               && WS2SilentResultLine.acceptance("window.slideOver", succeeded: false) == nil
+               && WS2SilentResultLine.acceptance("window.pip", succeeded: false) == nil
+               && WS2SilentResultLine.acceptance("scene.reading", succeeded: false) == nil,
+               "pin, slide, picture in picture, and scenes stay on the generic not-done line")
+        expect(WS2SilentEngineGate.calls("window.unpin")
+               && WS2SilentResultLine.acceptance("window.unpin", succeeded: true) == "已取消置顶"
+               && WS2SilentResultLine.acceptance("window.unpin", succeeded: false) == "这一笔没有做成",
+               "unpin is the only pinned action with a synchronous result for that window")
+        for id in ["window.pin", "window.slideOver", "window.leaveSlideOver", "window.pip", "window.leavePip",
+                   "scene.reading", "scene.coding", "scene.presentation", "scene.presenter"] {
+            expect(!WS2SilentEngineGate.calls(id) && WS2SilentEngineGate.unobservableFunction(id) != nil,
+                   "\(id) names an engine that cannot be observed for the frozen window")
+            expect(WS2SilentResultLine.noted(id, succeeded: true) == "这一笔没有做成",
+                   "\(id) is not reported as done")
+        }
+        expect(WS2SilentResultLine.acceptance("music.pause", succeeded: true) == "先不改播放",
+               "a playback command does not claim the track changed")
+        let unnamed = WS2SilentResultLine.noted("window.pin", succeeded: true)
+        expect(unnamed == "这一笔没有做成" && unnamed != "已按这一笔做了",
+               "a success without its own result line is not reported as done")
+        let unknownNote = WS2SilentResultLine.noted("not.a.catalog.command", succeeded: true)
+        expect(unknownNote == "这一笔没有做成" && unknownNote != "已按这一笔做了",
+               "an unknown command id is not reported as done")
+        expect(WS2SilentResultLine.noted("window.left", succeeded: true) == "已到左半"
+               && WS2SilentResultLine.noted("window.left", succeeded: false) == "这一笔没有做成"
+               && WS2SilentResultLine.noted("music.pause", succeeded: true) == "先不改播放"
+               && WS2SilentResultLine.noted("launcher.openSelected", succeeded: true) == "还没选",
+               "a command that already has a line keeps that line")
+        if let restore = WS2SilentCatalog.lookup("window.restore") {
+            expect(resolved(restore) == .undoWindow(id: "target", revision: 1),
+                   "restore uses the existing undo for the frozen window")
+        } else {
+            expect(false, "window.restore stays in the catalog")
+        }
+        var adopted = WS2SilentDraftHost()
+        expect(adopted.adopt(id: "draft-1", revision: 2) == .preview && adopted.mark != .sent,
+               "adopting a draft leaves a preview")
+        let adoptedLine = WS2SilentResultLine.acceptance("dictation.adopt", succeeded: true, draft: adopted)
+        expect(adoptedLine == "已采用草稿" && (adoptedLine ?? "").count <= 8
+               && adoptedLine != "已发送" && adoptedLine != "已送出",
+               "adopting names the draft and does not say it was sent")
+        expect(WS2SilentResultLine.acceptance("dictation.adopt", succeeded: false) == "这一笔没有做成",
+               "a refused adopt stays a failure")
+        expect(WS2SilentDraftCommand.apply("dictation.insertPhrase", targetID: adopted.draftID, revision: adopted.revision, to: &adopted)
+               && adopted.mark == .preview,
+               "inserting a phrase keeps the preview")
+        let phraseLine = WS2SilentResultLine.acceptance("dictation.insertPhrase", succeeded: true, draft: adopted)
+        expect(phraseLine == "还没发送" && (phraseLine ?? "").count <= 8 && phraseLine != "已发送",
+               "an inserted phrase stays unsent")
+        expect(WS2SilentDraftCommand.apply("dictation.discard", targetID: adopted.draftID, revision: adopted.revision, to: &adopted)
+               && adopted.mark == .idle,
+               "discarding a preview clears it")
+        expect(WS2SilentResultLine.acceptance("dictation.discard", succeeded: true, draft: adopted) == "已丢掉",
+               "discarding a preview says it was dropped")
+        var idleDraft = WS2SilentDraftHost()
+        expect(!WS2SilentDraftCommand.apply("dictation.discard", targetID: "", revision: 0, to: &idleDraft)
+               && WS2SilentResultLine.acceptance("dictation.discard", succeeded: false) == "这一笔没有做成",
+               "discarding with no preview is a failure")
+        var localSend = WS2SilentDraftHost()
+        expect(localSend.adopt(id: "draft-1", revision: 2) == .preview, "a send needs a preview first")
+        expect(localSend.submit(commandID: "assistant.sendDraft", id: "draft-1", revision: 2, boundSessionID: nil) == .keptLocal
+               && localSend.mark != .sent,
+               "sending without a session stays on this Mac")
+        let localLine = WS2SilentResultLine.acceptance("assistant.sendDraft", succeeded: true, draft: localSend)
+        expect(localLine == "还在这台 Mac" && (localLine ?? "").count <= 8
+               && localLine != "已发送" && localLine != "已送出",
+               "a local send says it stayed here")
+        expect(localSend.submit(commandID: "assistant.sendDraft", id: "draft-1", revision: 2, boundSessionID: "sess") == .waitingForAck(1),
+               "a bound send waits for an ack")
+        let waitingLine = WS2SilentResultLine.acceptance("assistant.sendDraft", succeeded: true, draft: localSend)
+        expect(waitingLine == "还在等" && waitingLine != "已发送" && waitingLine != "已送出",
+               "a send that is still waiting does not say it was sent")
+        if case .sent = localSend.acknowledge(WS2SilentDraftAck(requestID: 1, draftID: "draft-1", sessionID: "sess", revision: 2)) {
+            expect(WS2SilentResultLine.acceptance("assistant.sendDraft", succeeded: true, draft: localSend) == "已送出",
+                   "a matching ack is the only send line that says it went out")
+        } else {
+            expect(false, "a matching ack marks the draft sent")
+        }
+        expect(WS2SilentResultLine.acceptance("assistant.sendDraft", succeeded: false) == "这一笔没有做成",
+               "a refused send stays a failure")
+        var noted = WS2SilentAssistant()
+        expect(noted.setNextModel("example", allowed: ["example"]) && !noted.turnStarted,
+               "the next model is only recorded")
+        let modelLine = WS2SilentResultLine.acceptance("assistant.setModel", succeeded: true, assistant: noted)
+        expect(modelLine == "已记下模型" && (modelLine ?? "").count <= 8
+               && modelLine?.contains("example") != true && modelLine != "已开始",
+               "recording a model does not name it or start it")
+        expect(!noted.setNextModel("other", allowed: ["example"])
+               && WS2SilentResultLine.acceptance("assistant.setModel", succeeded: false) == "这一笔没有做成",
+               "a model outside the allowed list is a failure")
+        expect(noted.setNextEffort("low", allowed: ["low"]) && !noted.turnStarted,
+               "the next effort is only recorded")
+        expect(WS2SilentResultLine.acceptance("assistant.setEffort", succeeded: true, assistant: noted) == "已记下档位"
+               && WS2SilentResultLine.acceptance("assistant.setEffort", succeeded: false) == "这一笔没有做成",
+               "recording an effort does not start the turn")
+        expect(noted.showNativeStop(turnID: "turn-1", revision: 4) == .showingNativeStop && noted.stopMark != .stopped,
+               "interrupt shows the native stop")
+        let stopLine = WS2SilentResultLine.acceptance("assistant.interrupt", succeeded: true, assistant: noted)
+        expect(stopLine == "已显示停止" && (stopLine ?? "").count <= 8 && stopLine != "已停下" && stopLine != "已停止",
+               "showing the stop does not say the turn stopped")
+        if let requestID = noted.stopRequest,
+           noted.acknowledgeStop(WS2SilentAssistantAck(requestID: requestID, targetID: "turn-1", revision: 4)) == .stopped {
+            expect(WS2SilentResultLine.acceptance("assistant.interrupt", succeeded: true, assistant: noted) == "已停下",
+                   "a matching stop ack is the line that says it stopped")
+        } else {
+            expect(false, "a matching stop ack marks the turn stopped")
+        }
+        expect(WS2SilentResultLine.acceptance("assistant.interrupt", succeeded: false) == "这一笔没有做成",
+               "a refused interrupt stays a failure")
+        expect(noted.steer(id: "draft-1", revision: 2, boundSessionID: nil) == .idle,
+               "steering without a session does not leave this Mac")
+        expect(WS2SilentResultLine.acceptance("assistant.steerDraft", succeeded: false) == "这一笔没有做成",
+               "steering that did not wait is a failure")
+        expect(noted.steer(id: "draft-1", revision: 2, boundSessionID: "sess") == .waitingForAck && !noted.turnStarted,
+               "steering with a session waits and does not start a turn")
+        let steerLine = WS2SilentResultLine.acceptance("assistant.steerDraft", succeeded: true, assistant: noted)
+        expect(steerLine == "补充还在等" && (steerLine ?? "").count <= 8 && steerLine != "已开始" && steerLine != "已发送",
+               "a waiting steer does not say the turn started or the draft was sent")
+        var folder = WS2SilentSession()
+        let emptyFolder = folder.propose(commandID: "launcher.openFolder", targetID: "", targetRevision: 1, now: at(9400))
+        expect(WS2SilentProductPort.request(for: emptyFolder) == .refused(.unsupported),
+               "opening a folder without one does not open a folder")
+        let folderLine = WS2SilentReadout.sentence("launcher.openFolder")
+        expect(folderLine == "已开文件夹" && folderLine.count <= 8 && folderLine != "还没选",
+               "a folder that opened does not say nothing was chosen")
         var cover = WS2SilentCover.State()
         expect(WS2SilentCover.cover(&cover) && cover.covered && !cover.revealed, "covering stays covered")
         expect(!WS2SilentCover.reveal(&cover) && cover.covered && !cover.revealed,
                "a silent reveal does not uncover")
+        var uncovered = WS2SilentCover.State()
+        expect(!WS2SilentCover.reveal(&uncovered) && !uncovered.covered && !uncovered.revealed,
+               "revealing before a cover does not uncover or reveal")
+        var sameMode = WS2SilentSession()
+        let held = sameMode.propose(commandID: "window.left", targetID: "win-1", targetRevision: 1, now: at(9500))
+        sameMode.setMode(.command)
+        if case .awaiting(let heldProposal) = held {
+            expect(sameMode.confirm(heldProposal, at: at(9510), currentRevision: 1) == .accepted(heldProposal),
+                   "staying in the same mode keeps the pending command")
+        } else {
+            expect(false, "the window command was waiting")
+        }
+        expect(sameMode.propose(commandID: "missing.command", targetID: "win-1", targetRevision: 1, now: at(9520))
+               == .rejected(.unknownCommand),
+               "an unknown command is rejected")
         expect(WS2SilentNav.delta("nav.next") == 1, "next moves one page forward")
         expect(WS2SilentNav.delta("nav.previous") == -1 && WS2SilentNav.delta("nav.back") == -1,
                "previous and back move one page backward")
         expect(WS2SilentNav.delta("window.left") == nil, "a window command does not turn the page")
         expect(WS2SilentNav.cancels("nav.cancel") && WS2SilentNav.selects("nav.select"),
                "cancel drops the pending line and select confirms it")
+        let navLines = [
+            "nav.next": "已到下一项",
+            "nav.previous": "已到上一项",
+            "nav.back": "已返回",
+            "nav.cancel": "已取消",
+        ]
+        for (id, line) in navLines {
+            expect(WS2SilentNav.resultLine(id) == line && line.count <= 8
+                   && line != WS2SilentCopy.line(id),
+                   "\(id) names the page turn instead of repeating the chip")
+        }
+        expect(WS2SilentReadout.sentence("auth.cancel") == "不解锁"
+               && WS2SilentReadout.sentence("auth.useSystem") == "不解锁"
+               && WS2SilentSecurity.outcome("auth.cancel")?.line == "不解锁"
+               && WS2SilentSecurity.outcome("auth.useSystem")?.line == "不解锁",
+               "cancelling or yielding a challenge does not unlock")
+        expect(WS2SilentSecurity.outcome("credential.secretPhraseLab")?.line == "要用原来的确认"
+               && WS2SilentSecurity.outcome("credential.secretPhraseLab")?.recordedMicrophone == false,
+               "the phrase lab stays on the system confirmation and does not record")
+        for command in WS2SilentCatalog.commands where command.confirmation == .none {
+            let chip = WS2SilentCopy.line(command.id) ?? command.id
+            let outcome = shownOutcome(command.id)
+            expect(outcome != chip && outcome.count <= 8,
+                   "\(command.id) outcome \(outcome) is not only the chip \(chip)")
+        }
 
         var wired = 0
         var refusedCount = 0
@@ -742,6 +1023,19 @@ struct SilentPrepTests {
         }
         expect(wired + refusedCount == WS2SilentCatalog.count && wired > 0 && refusedCount > 0,
                "every catalog command is wired or explicitly refused")
+    }
+
+    /// 不打开 App 时，这条命令展示成功或拒绝后会写出的那一句。
+    static func shownOutcome(_ id: String) -> String {
+        if let line = WS2SilentNav.resultLine(id) { return line }
+        if id == "nav.select" { return "这次没有做" }
+        if WS2SilentActivityNav.delta(id) != nil || WS2SilentActivityNav.showsDetails(id) {
+            return WS2SilentActivityCursor().detail(in: WS2SilentActivityBoard())
+        }
+        if WS2SilentStripNav.delta(id) != nil || WS2SilentStripNav.showsOverview(id) {
+            return "第 0 列"
+        }
+        return WS2SilentReadout.sentence(id)
     }
 
     static func resolved(_ command: WS2SilentCommand) -> WS2SilentHostRequest {
@@ -917,9 +1211,19 @@ struct SilentPrepTests {
         expect(cursor.current == .music, "the activity list starts at music")
         expect(cursor.move(1) == .airPods && cursor.move(-1) == .music, "next and previous stay on the list")
         expect(cursor.move(-1) == .recording, "previous from the first item wraps to the last")
+        expect(cursor.move(1) == .music, "next from the last item wraps to the first")
         expect(cursor.detail(in: quiet) == "没有" && !quiet.startsPlayback, "an empty activity stays 没有 and does not play")
+        var playing = WS2SilentActivityBoard()
+        playing.present = [.music]
+        expect(cursor.detail(in: playing) == "正在播放" && !playing.startsPlayback,
+               "a present activity names itself and does not start playback")
+        expect(WS2SilentActivityNav.delta("activity.next") == 1 && WS2SilentActivityNav.delta("activity.previous") == -1,
+               "activity next and previous move one step")
         var strip = WS2SilentStripCursor()
         expect(strip.move(1) == 1 && strip.move(-1) == 0, "the strip column moves without tiling windows")
+        expect(strip.move(-1) == -1, "the strip column can move before the first column without tiling")
+        expect(WS2SilentStripNav.delta("window.stripNext") == 1 && WS2SilentStripNav.delta("window.stripPrevious") == -1,
+               "strip next and previous only change the column")
         expect(WS2SilentStripNav.showsOverview("window.stripOverview"), "overview reads the column")
         for id in ["launcher.openSelected", "app.activateSelected", "app.previous", "desktop.select", "credential.chooseAlias"] {
             expect(WS2SilentSelection.needsChoice(id), "\(id) needs a chosen item")
@@ -1002,5 +1306,36 @@ struct SilentPrepTests {
                "phrase profiles are not invented")
         expect(WS2SilentReadout.sentence("scene.accessibility") == "不改辅助",
                "accessibility stays on the same path and does not change the system")
+        expect(WS2SilentReadout.sentence("ui.activities", activities: quiet) == "没有",
+               "the activity page with nothing present says 没有")
+        expect(WS2SilentReadout.sentence("ui.usage") == "未提供",
+               "the usage page with no readings stays 未提供")
+        var usagePage = WS2SilentUsageSnapshot()
+        usagePage.accountQuota = .provided(0.25)
+        expect(WS2SilentReadout.sentence("ui.usage", usage: usagePage) == "有用量",
+               "a provided cell is not rewritten as a total")
+        expect(WS2SilentReadout.sentence("window.chooseDisplay") == "还没选",
+               "choosing a display without one stays unchosen")
+        if let chooseDisplay = WS2SilentCatalog.lookup("window.chooseDisplay") {
+            expect(resolved(chooseDisplay) == .showNamed("window.chooseDisplay"),
+                   "choosing a display does not move a window")
+        } else {
+            expect(false, "window.chooseDisplay stays in the catalog")
+        }
+        var idleAssistant = WS2SilentAssistant()
+        for id in ["assistant.show", "assistant.status", "assistant.chooseSession", "assistant.review", "assistant.showDiff"] {
+            let line = WS2SilentReadout.sentence(id, assistant: idleAssistant)
+            expect(line == "没有" && !idleAssistant.sessionStarted && !idleAssistant.turnStarted,
+                   "\(id) with no session says 没有 and does not start one")
+        }
+        expect(WS2SilentReadout.sentence("assistant.models", assistant: idleAssistant) == "未提供"
+               && WS2SilentReadout.sentence("assistant.effort", assistant: idleAssistant) == "未提供",
+               "an unchosen model and effort stay 未提供")
+        expect(WS2SilentReadout.sentence("assistant.source") == "没有来源",
+               "opening a source without one does not name a file")
+        expect(idleAssistant.setNextModel("gpt", allowed: ["gpt"]) && !idleAssistant.turnStarted,
+               "remembering a model does not start a turn")
+        expect(WS2SilentReadout.sentence("assistant.models", assistant: idleAssistant) == "已记下",
+               "a remembered model is noted without printing the id")
     }
 }

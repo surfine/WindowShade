@@ -213,9 +213,15 @@ enum WS2SilentApply {
         case .magicTile:
             guard same else { return false }
             return owner.gestures.magicTile(main: window.id, element: window.element, announce: false)
+        case .unpin:
+            guard same, WS2SilentEngineGate.calls("window.unpin") else { return false }
+            let preview = owner.pinnedPreviewController
+            guard preview.isPreviewing(id: window.id) else { return false }
+            preview.stopPreviewFromMenu(id: window.id)
+            return !preview.isPreviewing(id: window.id)
         case .place, .collapse, .expand, .undo, .move, .glance:
             return false
-        case .pin, .unpin, .slideOver, .leaveSlideOver, .pictureInPicture, .leavePictureInPicture,
+        case .pin, .slideOver, .leaveSlideOver, .pictureInPicture, .leavePictureInPicture,
              .choose, .chooseDisplay, .batchReview, .strip, .stripOverview, .scene:
             _ = WS2SilentSim.record(name: "\(effect)", target: String(window.id), revision: window.revision)
             return false

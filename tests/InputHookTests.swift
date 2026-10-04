@@ -184,6 +184,8 @@ struct InputHookTests {
         expect(InputFeatureGate.middleDragMayInstall(switchOn: true), "middle-button may install when the switch is on")
         expect(!InputFeatureGate.middleDragMayInstall(switchOn: true, paused: true), "a pause removes the middle-button hook")
         expect(!InputFeatureGate.scrollMayInstall(decisionInstalls: true, paused: true), "a pause removes the scroll hook")
+        expect(InputFeatureGate.scrollMayInstall(decisionInstalls: true, paused: false), "scroll may install when it is not paused")
+        expect(!InputFeatureGate.scrollMayInstall(decisionInstalls: false, paused: false), "a scroll that should not install stays off")
         expect(!InputFeatureGate.touchMayInstall(qualification: nil, build: "fixture", architecture: "arm64",
                                                   sourceDigest: String(repeating: "a", count: 64), switchOn: true),
                "missing multitouch review does not install a hook")

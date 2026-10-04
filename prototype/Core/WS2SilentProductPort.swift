@@ -71,6 +71,33 @@ enum WS2SilentWindowEffect: Equatable, Sendable {
     var unlocks: Bool { false }
 }
 
+/// 静音路径只调用能对冻结窗口同步读到结果的引擎。
+enum WS2SilentEngineGate {
+    static func calls(_ id: String) -> Bool {
+        id == "window.unpin"
+    }
+
+    /// 不能观察的入口。静音路径不调用，也不写成已经做成。
+    static func unobservableFunction(_ id: String) -> String? {
+        switch id {
+        case "window.pin":
+            return "pinCurrentTargetPreview"
+        case "window.slideOver":
+            return "SlideOverController.toggleCurrentWindow"
+        case "window.leaveSlideOver":
+            return "SlideOverController.exit"
+        case "window.pip":
+            return "PictureInPictureController.toggleCurrentWindow"
+        case "window.leavePip":
+            return "PictureInPictureController.exit"
+        case "scene.reading", "scene.coding", "scene.presentation", "scene.presenter":
+            return "prepareSavedLayout"
+        default:
+            return nil
+        }
+    }
+}
+
 enum WS2SilentSettingsPage: String, Equatable, Sendable {
     case appearance, windows, shortcuts, permissions, privacy, silent, general
 
@@ -119,6 +146,17 @@ enum WS2SilentNav {
 
     static func cancels(_ id: String) -> Bool { id == "nav.cancel" }
     static func selects(_ id: String) -> Bool { id == "nav.select" }
+
+    /// 翻页或取消已经发生之后的那一句。不重复芯片上的名字。
+    static func resultLine(_ id: String) -> String? {
+        switch id {
+        case "nav.next": return "已到下一项"
+        case "nav.previous": return "已到上一项"
+        case "nav.back": return "已返回"
+        case "nav.cancel": return "已取消"
+        default: return nil
+        }
+    }
 }
 
 enum WS2SilentSurface: Equatable, Sendable {
@@ -330,7 +368,7 @@ enum WS2SilentProductPort {
         case "assistant.sendDraft":
             guard !proposal.targetID.isEmpty else { return .refused(.unsupported) }
             return .submitDraft(id: proposal.targetID, revision: proposal.targetRevision)
-        case "window.undo":
+        case "window.undo", "window.restore":
             return .undoWindow(id: proposal.targetID, revision: proposal.targetRevision)
         case "window.moveToSelectedDisplay":
             return .moveToCallerDisplay(id: proposal.targetID, revision: proposal.targetRevision)
