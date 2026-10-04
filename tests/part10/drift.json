@@ -34,6 +34,7 @@
     "docs/handoff/START-HERE-deepseek.md",
     "docs/privacy-page.md",
     "docs/releases/v1.0.16-ledger.md",
-    "docs/copy-guide.md"
+    "docs/copy-guide.md",
+    "prototype/App/WS2ConductorView.swift"
   ]
 }
