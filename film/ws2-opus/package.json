@@ -1,0 +1,20 @@
+{
+  "name": "windowshade2-opus-film",
+  "private": true,
+  "scripts": {
+    "dev": "remotion studio src/index.ts",
+    "typecheck": "tsc -p tsconfig.json",
+    "still": "remotion still src/index.ts WS2Opus",
+    "still:portrait": "remotion still src/index.ts WS2OpusPortrait"
+  },
+  "dependencies": {
+    "@remotion/cli": "4.0.484",
+    "react": "19.2.7",
+    "react-dom": "19.2.7",
+    "remotion": "4.0.484"
+  },
+  "devDependencies": {
+    "@types/react": "19.2.17",
+    "typescript": "6.0.3"
+  }
+}

@@ -4,6 +4,7 @@ NAME=${1:?supply probe name}; shift
 case "$NAME" in
 BLEReadProbe) FRAMEWORKS="-framework CoreBluetooth";;
 RemoteHIDProbe) FRAMEWORKS="-framework IOKit";;
+WheelAssociationProbe) FRAMEWORKS="-framework IOKit";;
 MultitouchSymbolProbe) FRAMEWORKS="";;
 IdentityBoundaryProbe) FRAMEWORKS="-framework LocalAuthentication -framework CryptoKit";;
 LockStateProbe) FRAMEWORKS="-framework CoreGraphics";;

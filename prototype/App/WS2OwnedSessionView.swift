@@ -4,6 +4,8 @@ import Cocoa
 @MainActor final class WS2OwnedSessionView: NSView, WS2LeaseContent, NSTextViewDelegate {
     var onCancel:(()->Void)?
     var openModelPicker: (() -> Void)?
+    /// D15：进入指挥页（只读／改草稿与模型，不发命令）。
+    var openConductorPage: (() -> Void)?
     var inputIsCurrent:()->Bool = { false }
     var interactionSize:NSSize { NSSize(width:620,height:560) }
     private let controller:WS2OwnedLaunchController
@@ -14,6 +16,7 @@ import Cocoa
     private let model=NSPopUpButton(frame:.zero,pullsDown:false)
     private let effort=NSPopUpButton(frame:.zero,pullsDown:false)
     private let browseModels=NSButton(title:"选择模型…",target:nil,action:nil)
+    private let openConductor=NSButton(title:"指挥模式",target:nil,action:nil)
     private let draft=NSTextView(),output=NSTextView()
     private let outputScroll=NSScrollView()
     private let chooseProject=NSButton(title:"选择项目…",target:nil,action:nil)
@@ -58,7 +61,10 @@ import Cocoa
         browseModels.target=self;browseModels.action=#selector(showModelPicker)
         browseModels.image=NSImage(systemSymbolName:"gamecontroller",accessibilityDescription:nil)
         browseModels.toolTip="在列表里选择模型，也能本次启用手柄。不会发送文字。"
-        stack.addArrangedSubview(row([model,effort,browseModels,status]));status.font = .systemFont(ofSize:11)
+        openConductor.target=self;openConductor.action=#selector(showConductor)
+        openConductor.bezelStyle = .rounded
+        openConductor.toolTip="打开指挥页。只改草稿和模型，不会发送或批准命令。"
+        stack.addArrangedSubview(row([model,effort,browseModels,openConductor,status]));status.font = .systemFont(ofSize:11)
         outputScroll.hasVerticalScroller=true;outputScroll.borderType = .bezelBorder
         configure(output,editable:false);outputScroll.documentView=output
         stack.addArrangedSubview(outputScroll);outputScroll.widthAnchor.constraint(equalTo:stack.widthAnchor).isActive=true;outputScroll.heightAnchor.constraint(equalToConstant:125).isActive=true
@@ -105,6 +111,7 @@ import Cocoa
         model.isEnabled=fresh && !controller.models.isEmpty && [.ready,.completed,.failed].contains(controller.phase)
         effort.isEnabled=model.isEnabled && controller.model != nil
         browseModels.isEnabled=fresh && controller.canChooseModel && !draft.hasMarkedText()
+        openConductor.isEnabled=fresh && openConductorPage != nil
         send.isEnabled=fresh && controller.canSend;interrupt.isEnabled=fresh && controller.canInterrupt
         stop.isEnabled=fresh && controller.isBusy;diagnostics.isEnabled=fresh
         let value=displayingDiagnostics ? controller.diagnostics:controller.text
@@ -141,6 +148,11 @@ import Cocoa
         guard inputIsCurrent(),controller.canChooseModel,!draft.hasMarkedText() else { return }
         guard controller.editDraft(draft.string) else { return }
         openModelPicker?()
+    }
+    @objc private func showConductor() {
+        guard inputIsCurrent() else { return }
+        guard controller.editDraft(draft.string) else { return }
+        openConductorPage?()
     }
     @objc private func selectModel() { guard inputIsCurrent(),model.indexOfSelectedItem>0 else { return };_=controller.chooseModel(modelIDs[model.indexOfSelectedItem-1]) }
     @objc private func selectEffort() { guard inputIsCurrent(),effort.indexOfSelectedItem>0 else { return };_=controller.chooseEffort(effortIDs[effort.indexOfSelectedItem-1]) }
