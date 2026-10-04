@@ -2,17 +2,31 @@
 export type Rect = { x: number; y: number; w: number; h: number };
 
 /**
- * 15 英寸 MacBook Air（Apple 规格页）：机身 340.4 × 237.6 × 11.5 mm；屏 2880 × 1864、224 ppi，
- * 可视区 326.6 × 211.4 mm。上沿和两侧边框按 (340.4 − 326.6) / 2 算；下巴是盖子剩下的高度。
+ * 15 英寸 MacBook Air（M5）正面轮廓，量自 Apple Design Resources 的 Product Bezels（Bezel-MacBook-Air-M5，
+ * 15-inch Silver PNG）。那张图的屏幕洞正好 2880 × 1864，等于面板原生像素（224 ppi），
+ * 所以下面的数都以「屏幕像素」为单位，画的时候乘以 屏宽 / 2880。
+ * 底座比盖子宽，是 Apple 那张正面图本身的透视。
  */
 export const AIR = {
-  bodyW: 340.4,
-  bodyD: 237.6,
-  thick: 11.5,
-  glassW: (2880 / 224) * 25.4,
-  glassH: (1864 / 224) * 25.4,
+  glassW: 2880,
+  glassH: 1864,
+  bezel: 59, // 上沿、两侧一样宽（≈ 6.7 mm）
+  rim: 6, // 盖子外缘露出的一圈铝
+  lidR: 100, // 盖子上角
+  glassR: 42, // 屏幕上角
+  chin: 120, // 屏幕下沿到盖子下沿（≈ 13.6 mm）
+  chinGlass: 43, // 其中上面一截黑玻璃，下面是转轴前那截深色
+  lidBottomR: 12,
+  baseW: 3514, // 底座在正面图里的宽度（盖子 2998）
+  baseH: 78, // 盖子下沿到底座最下面
+  deckH: 41, // 其中上面看得到的键盘面，下面是前沿
+  baseBottomR: 40,
+  scoopW: 520, // 键盘面正中开盖用的凹口
+  footW: 190,
+  footH: 18,
+  footInset: 178, // 底座左沿到脚垫
 } as const;
-export const SCREEN_ASPECT = 2880 / 1864;
+export const SCREEN_ASPECT = AIR.glassW / AIR.glassH;
 
 export type Layout = {
   name: 'landscape' | 'portrait';
@@ -48,8 +62,8 @@ export const PORTRAIT: Layout = {
   name: 'portrait',
   width: 1080,
   height: 1920,
-  // 屏宽 1000：占位块里的字在竖版上还读得清；机身两侧边框各剩 20px 不出画。
-  screen: screenOf(40, 500, 1000),
+  // 屏宽 880：底座（官方正面图里比屏宽 22%）在 1080 宽里刚好不出画。
+  screen: screenOf(100, 520, 880),
   far: 0.74,
   caption: { cx: 540, cy: 1314, size: 64 },
   wordmark: { cx: 540, cy: 1314, size: 92 },

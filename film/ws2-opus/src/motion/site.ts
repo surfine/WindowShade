@@ -30,10 +30,10 @@ export function bezier(x1: number, y1: number, x2: number, y2: number) {
 
 // ---- site/island.js：岛的宽、高、圆角各一根弹簧（单位 cqw，屏宽的百分之一） ----
 // 官网那一幕是屏幕顶端的特写（14.5 × 5.4）。片子画的是整块屏，安静的刘海改用真机比例：
-// 内建屏 1710pt 宽，刘海 185 × 33.5pt（NSScreen.auxiliaryTopLeft/RightArea、safeAreaInsets）。
+// Apple Product Bezels（MacBook Air M5 15-inch）里刘海 306 × 55 像素、下角约 15 像素，屏宽 2880 像素。
 // 提醒和架子的大小照官网原值，好让字看得清。
 export const SITE_NOTCH_H = 5.4;
-export const NOTCH = { w: 10.8, h: 1.96, r: 0.55 };
+export const NOTCH = { w: (306 / 2880) * 100, h: (55 / 2880) * 100, r: (15 / 2880) * 100 };
 export const ISLAND_SHAPES = {
   rest: NOTCH,
   compact: { w: NOTCH.w + 2 * 4.6, h: NOTCH.h, r: 0.6 },
