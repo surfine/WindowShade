@@ -9,6 +9,28 @@ import { clamp01, fade, mix, seg, smooth } from './time';
 
 const SUB = 'rgba(235,235,245,.6)';
 
+/** 「读到的」和「左半屏？」两段在岛上的时间。 */
+export const LISTEN = [1040, 1556] as const;
+/** CarPlay 跟着岛缩到这一帧才开始淡（Esc 后 12 帧开始收，再 14 帧已经很小）。 */
+const CAR_OUT = CP_ESC + 26;
+export const ASK = [1552, 1828] as const;
+/** 嘴在 face.jpg 里的位置（0–1）；嘴动从这一帧开始（镜头里和小画面里同一个嘴）。 */
+export const MOUTH = { x: 518 / 1024, y: 566 / 1024 };
+export const LIPS_T0 = 1120;
+/** 读唇小画面：边长、圆角、左边距、里面那张脸的边长（点）。 */
+export const THUMB = { size: 66, r: 18, pad: 22, img: 300 };
+/** 问话那一行左边的图标格。 */
+export const ICON_BOX = { size: 44, pad: 26, r: 12 };
+
+/** 岛里某个方块此刻在屏幕点坐标里的位置。 */
+export function islandBox(f: number, which: 'thumb' | 'pods') {
+  const s = islandAt(f);
+  const cy = NOTCH_PT.h + (s.h - NOTCH_PT.h) / 2;
+  const left = (PT.w - s.w) / 2;
+  if (which === 'thumb') return { x: left + THUMB.pad, y: cy - THUMB.size / 2, w: THUMB.size, h: THUMB.size, r: THUMB.r };
+  return { x: left + ICON_BOX.pad, y: cy - ICON_BOX.size / 2, w: ICON_BOX.size, h: ICON_BOX.size, r: ICON_BOX.r };
+}
+
 export function Island({ f }: { f: number }) {
   const s = islandAt(f);
   const fil = 7; // 上沿两侧的内凹小圆角
@@ -25,7 +47,7 @@ export function Island({ f }: { f: number }) {
       ))}
       <div style={{ position: 'absolute', inset: 0, background: '#000', borderBottomLeftRadius: s.r, borderBottomRightRadius: s.r, overflow: 'hidden' }}>
         <Content f={f} w={s.w} h={s.h} />
-        {f >= CP_IN && f < CP_ESC + 16 && <Car f={f} w={s.w} />}
+        {f >= CP_IN && f < CAR_OUT + 8 && <Car f={f} w={s.w} />}
       </div>
     </div>
   );
@@ -91,20 +113,20 @@ function Content({ f, w, h }: { f: number; w: number; h: number }) {
     );
   }
   // 读唇：嘴的小画面、读到的字、嘴动的节奏。
-  if (f >= 1326 && f < 1556) {
-    const a = fade(f, 1334, 1550);
+  if (f >= LISTEN[0] && f < LISTEN[1]) {
+    const a = fade(f, LISTEN[0] + 8, LISTEN[1] - 4);
     const chars = ['左', '半', '屏'];
     return (
-      <div style={{ position: 'absolute', left: 0, width: w, ...body(h), opacity: a, display: 'flex', alignItems: 'center', padding: '0 22px', gap: 18 }}>
-        <div style={{ width: 66, height: 66, borderRadius: 18, overflow: 'hidden', flex: 'none', position: 'relative', boxShadow: 'inset 0 0 0 1px rgba(255,255,255,.12)' }}>
-          <Img src={PLATE.face} style={{ position: 'absolute', width: 300, height: 300, left: -120, top: -138, transform: 'scaleX(-1)' }} />
+      <div style={{ position: 'absolute', left: 0, width: w, ...body(h), opacity: a, display: 'flex', alignItems: 'center', padding: `0 ${THUMB.pad}px`, gap: 18 }}>
+        <div style={{ width: THUMB.size, height: THUMB.size, borderRadius: THUMB.r, overflow: 'hidden', flex: 'none', position: 'relative', boxShadow: 'inset 0 0 0 1px rgba(255,255,255,.12)' }}>
+          <Img src={PLATE.face} style={{ position: 'absolute', width: THUMB.img, height: THUMB.img, left: THUMB.size / 2 - MOUTH.x * THUMB.img, top: THUMB.size / 2 - MOUTH.y * THUMB.img }} />
           <LipDots f={f} />
         </div>
         <div style={{ fontFamily: CJK, flex: 1 }}>
           <div style={{ fontSize: 13, color: SUB, letterSpacing: 1 }}>读到的</div>
           <div style={{ fontSize: 30, fontWeight: 650, color: '#fff', display: 'flex', gap: 2, marginTop: 2 }}>
             {chars.map((c, i) => {
-              const t = seg(f, 1346 + i * 16, 1358 + i * 16);
+              const t = seg(f, 1326 + i * 16, 1338 + i * 16);
               return <span key={c} style={{ opacity: t, filter: `blur(${(1 - t) * 6}px)`, transform: `translateY(${(1 - t) * 6}px)` }}>{c}</span>;
             })}
           </div>
@@ -112,15 +134,15 @@ function Content({ f, w, h }: { f: number; w: number; h: number }) {
       </div>
     );
   }
-  // 点头确认：左半屏。
-  if (f >= 1806 && f < 1918) {
-    const a = fade(f, 1814, 1912);
-    const nod = Math.sin(clamp01((f - 1834) / 24) * Math.PI) * 14;
-    const done = seg(f, 1858, 1868);
+  // 点头确认：左半屏。中间镜头钻进 AirPods 看你点头，回来时图标还跟着点一下。
+  if (f >= ASK[0] && f < ASK[1]) {
+    const a = fade(f, ASK[0] + 10, ASK[1] - 6);
+    const nod = Math.sin(clamp01((f - 1734) / 22) * Math.PI) * 14;
+    const done = seg(f, 1752, 1762);
     return (
       <>
         <Row w={w} h={h} a={a * (1 - done)} icon={<AirPods size={40} tilt={nod} />} title="左半屏？" sub="点头确认，摇头取消" />
-        <Row w={w} h={h} a={a * done} icon={<Check size={34} draw={seg(f, 1860, 1878)} />} title="好了" sub="已移到左半屏" />
+        <Row w={w} h={h} a={a * done} icon={<Check size={34} draw={seg(f, 1754, 1772)} />} title="好了" sub="已移到左半屏" />
       </>
     );
   }
@@ -137,8 +159,18 @@ function Content({ f, w, h }: { f: number; w: number; h: number }) {
     );
   }
   // 走开：倒数，然后锁上。
-  if (f >= 2968 && f < 3200) {
-    const a = fade(f, 2976, 3192);
+  if (f >= 3168 && f < 3282) {
+    const a = fade(f, 3174, 3272, 8, 8);
+    const size = 120;
+    const cy = NOTCH_PT.h + (h - NOTCH_PT.h) / 2;
+    return (
+      <div style={{ position: 'absolute', left: w / 2 - size / 2, top: cy - size / 2, width: size, height: size, opacity: a, transform: `scale(${mix(0.9, 1, smooth(seg(f, 3168, 3186)))})` }}>
+        <Lock size={size} open={1 - smooth(seg(f, 3174, 3184))} />
+      </div>
+    );
+  }
+  if (f >= 2968 && f < 3172) {
+    const a = fade(f, 2976, 3170);
     const left = Math.max(1, 3 - Math.floor((f - 3000) / 60));
     const ring = 1 - clamp01((f - 3000) / 180);
     const ear = (w - NOTCH_PT.w) / 2;
@@ -172,14 +204,14 @@ export function mouthOpen(t: number) {
 }
 
 function LipDots({ f }: { f: number }) {
-  const o = mouthOpen((f - 1340) * 0.9);
+  const o = mouthOpen((f - LIPS_T0) * 0.9);
   const pts = Array.from({ length: 14 }, (_, i) => {
     const a = (i / 14) * Math.PI * 2;
     const up = Math.sin(a) < 0;
-    return { x: 33 + Math.cos(a) * 15, y: 40 + Math.sin(a) * (up ? 5 + o * 2 : 5 + o * 7) };
+    return { x: 33 + Math.cos(a) * 15, y: 33 + Math.sin(a) * (up ? 5 + o * 2 : 5 + o * 7) };
   });
   return (
-    <svg width={66} height={66} style={{ position: 'absolute', inset: 0 }}>
+    <svg width={THUMB.size} height={THUMB.size} style={{ position: 'absolute', inset: 0 }}>
       {pts.map((p, i) => <circle key={i} cx={p.x} cy={p.y} r={1.3} fill="#64d2ff" />)}
     </svg>
   );
@@ -188,7 +220,8 @@ function LipDots({ f }: { f: number }) {
 /** 刘海展开成整块屏：刘海下面就是 iPhone 的 CarPlay，跟着岛一起从刘海里长出来。 */
 function Car({ f, w }: { f: number; w: number }) {
   const k = w / PT.w;
-  const a = clamp01((f - CP_IN - 6) / 10) * (1 - clamp01((f - CP_ESC) / 10));
+  // 收回时 CarPlay 跟着岛一起缩进刘海，缩小了才淡掉。
+  const a = clamp01((f - CP_IN - 6) / 10) * (1 - clamp01((f - CAR_OUT) / 8));
   return (
     <div style={{ position: 'absolute', left: (w - PT.w * k) / 2, top: NOTCH_PT.h * k, width: PT.w, height: PT.h, transformOrigin: '0 0', transform: `scale(${k})`, opacity: a }}>
       <CarPlay f={f} />

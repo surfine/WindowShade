@@ -57,9 +57,9 @@ export function CarPlay({ f }: { f: number }) {
 const ROUTE = 'M 400 1100 L 410 470 Q 412 440 444 441 L 760 452 Q 790 453 792 424 L 800 -200';
 
 function MapTile({ f }: { f: number }) {
-  const t = (f - CP_IN) / 60;
   const go = smooth(seg(f, CP_OK + 10, CP_OK + 80));
-  const pan = t * 6 + go * 30;
+  // 没出发时地图不动；出发后才跟着车走。
+  const pan = go * 30 + (Math.max(0, f - CP_OK - 80) / 60) * 6;
   const meters = Math.max(50, 300 - Math.floor(Math.max(0, f - CP_OK - 80) / 60 * 18 / 10) * 10);
   const card = spring(f, CP_OK + 30, 0.88, 0.42);
   const sugg = 1 - smooth(seg(f, CP_OK, CP_OK + 16));

@@ -21,7 +21,7 @@ export function lockedAt(f: number) {
 /** 启动台：512 打开，960 收回（落在第 8 小节的强拍）。 */
 export const LP_OPEN = 512, LP_CLOSE = 960;
 /** 点头之后，最前面那扇窗滑到左半屏。 */
-export const GLIDE_AT = 1890;
+export const GLIDE_AT = 1800;
 const W1 = { x: 168, y: 96, w: 900, h: 630 };
 const LEFT = { x: 8, y: MENU_H + 8, w: PT.w / 2 - 12, h: PT.h - MENU_H - 8 - (DOCK_H + DOCK_BOTTOM + 8) };
 
@@ -285,6 +285,17 @@ export function iconProgress(f: number, i: number) {
   return f >= LP_CLOSE ? go * (1 - back) : go;
 }
 
+/** 启动台图标在 a、b 两个时刻之间最多走了多少点（快门用）。 */
+export function launchpadTravel(a: number, b: number) {
+  if (Math.max(a, b) < LP_OPEN || Math.min(a, b) > LP_CLOSE + 60) return 0;
+  let m = 0;
+  LAUNCH.forEach((_, i) => {
+    const to = iconPos(i);
+    m = Math.max(m, Math.hypot(to.x - ORIGIN.x, to.y - ORIGIN.y) * Math.abs(iconProgress(a, i) - iconProgress(b, i)));
+  });
+  return m;
+}
+
 function Launchpad({ f }: { f: number }) {
   const bg = launchpadBg(f);
   return (
@@ -293,16 +304,14 @@ function Launchpad({ f }: { f: number }) {
         <Search size={13} color="rgba(255,255,255,.62)" /> 搜索
       </div>
       {LAUNCH.map(([k, name], i) => {
-        const p = iconProgress(f, i), pp = iconProgress(f - 1, i);
+        const p = iconProgress(f, i);
         if (p <= 0.001) return null;
         const to = iconPos(i);
         const x = mix(ORIGIN.x, to.x, p), y = mix(ORIGIN.y, to.y, p);
         const s = mix(0.16, 1, Math.min(1.04, p));
-        const speed = Math.hypot(to.x - ORIGIN.x, to.y - ORIGIN.y) * Math.abs(p - pp);
-        const blur = Math.min(5, speed * 0.16);
         const label = clamp01((p - 0.85) / 0.15);
         return (
-          <div key={k} style={{ position: 'absolute', left: x - ICON_PT / 2, top: y - ICON_PT / 2, width: ICON_PT, height: ICON_PT, transform: `scale(${s})`, filter: blur > 0.3 ? `blur(${blur.toFixed(2)}px)` : undefined }}>
+          <div key={k} style={{ position: 'absolute', left: x - ICON_PT / 2, top: y - ICON_PT / 2, width: ICON_PT, height: ICON_PT, transform: `scale(${s})` }}>
             <Img src={ICON[k]} style={{ width: ICON_PT, height: ICON_PT, filter: 'drop-shadow(0 4px 8px rgba(0,0,0,.25))' }} />
             <div style={{ position: 'absolute', top: ICON_PT + 8, left: -40, right: -40, textAlign: 'center', fontFamily: CJK, fontSize: 13.5, color: '#fff', opacity: label, textShadow: '0 1px 3px rgba(0,0,0,.5)', whiteSpace: 'nowrap' }}>{name}</div>
           </div>

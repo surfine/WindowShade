@@ -4,23 +4,26 @@ import { bezier, clamp01, mix } from '../motion/site';
 export const FPS = 60;
 export const TOTAL = 3600;
 
-/** 镜头表。desk 是同一张桌子、同一台 MacBook；face / ear 是实拍板。切点都在拍上（见 beats.ts）。 */
+/**
+ * 段落表。全片没有硬切：desk 是同一张桌子、同一台 MacBook；
+ * face / ear 两块实拍板装在刘海里——从岛上那块小画面 / AirPods 图标展开到整个画面，演完再收回去。
+ */
 export const SHOT = {
   unlock: [0, 420],
-  launch: [420, 1080],
-  lips: [1080, 1320],
-  read: [1320, 1560],
-  ear: [1560, 1800],
-  nod: [1800, 2160],
+  launch: [420, 1060],
+  lips: [1060, 1322],
+  read: [1322, 1584],
+  ear: [1584, 1734],
+  nod: [1734, 2160],
   carplay: [2160, 3000],
   leave: [3000, TOTAL],
 } as const;
-export type ShotName = keyof typeof SHOT;
 
-export function shotAt(f: number): ShotName {
-  for (const k of Object.keys(SHOT) as ShotName[]) if (f >= SHOT[k][0] && f < SHOT[k][1]) return k;
-  return 'leave';
-}
+/** 装在刘海里的镜头：[开始展开, 展开完, 开始收回, 收回完]；t0 是镜头里动作的零点。 */
+export const POCKET = {
+  face: { open: [1060, 1092], close: [1290, 1322], t0: 1080 },
+  ear: { open: [1584, 1614], close: [1702, 1734], t0: 1584 },
+} as const;
 
 /** 屏外一句：≤ 12 字，一屏一句。每句从拍上进来。 */
 export const LINES: { from: number; to: number; text: string }[] = [

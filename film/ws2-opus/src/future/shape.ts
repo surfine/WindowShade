@@ -34,10 +34,10 @@ export const EVENTS: Ev[] = [
   { f: 404, to: 'rest', tune: 'calm' },
   { f: 512, to: 'rest', tune: 'calm', kick: { w: 520, h: 150 } },
   { f: 960, to: 'rest', tune: 'calm', kick: { w: 380, h: 110 } },
-  { f: 1326, to: 'listen', tune: 'bloom' },
-  { f: 1550, to: 'rest', tune: 'calm' },
-  { f: 1806, to: 'confirm', tune: 'bloom' },
-  { f: 1912, to: 'rest', tune: 'calm' },
+  // 读唇：岛先长成「读到的」，镜头钻进那块小画面，再从里面退回来；接着长成问话，钻进 AirPods。
+  { f: 1040, to: 'listen', tune: 'bloom' },
+  { f: 1552, to: 'confirm', tune: 'bloom' },
+  { f: 1822, to: 'rest', tune: 'calm' },
   { f: 1962, to: 'confirm', tune: 'bloom' },
   { f: 2090, to: 'rest', tune: 'calm' },
   // iPhone 连上来；长按刘海，落拍那一下整块屏变成 CarPlay；Esc 收回刘海。
@@ -45,7 +45,9 @@ export const EVENTS: Ev[] = [
   { f: 2268, to: 'full', tune: 'expand' },
   { f: 2880, to: 'rest', tune: 'calm', kick: { w: -900, h: -500 } },
   { f: 2968, to: 'compact', tune: 'expand' },
-  { f: 3196, to: 'rest', tune: 'calm' },
+  // 倒数走完：岛像开场刷脸那样长成方块，锁扣合上，屏幕跟着锁；再收回刘海。
+  { f: 3168, to: 'face', tune: 'auth' },
+  { f: 3270, to: 'rest', tune: 'calm' },
 ];
 
 // 一维阻尼振子精确步进。
@@ -87,6 +89,11 @@ const SHAPE = new Array<IslandShape>(N);
   }
 })();
 
-const idx = (f: number) => Math.max(0, Math.min(N - 1, Math.round(f) - START));
-export const islandAt = (f: number) => ({ w: W[idx(f)], h: H[idx(f)], r: Rr[idx(f)], target: SHAPE[idx(f)] });
+const idx = (f: number) => Math.max(0, Math.min(N - 1, Math.floor(f) - START));
+/** 帧之间线性插值：快门在一帧里取好几个时刻。 */
+export function islandAt(f: number) {
+  const i = idx(f), j = Math.min(N - 1, i + 1), u = Math.max(0, Math.min(1, f - Math.floor(f)));
+  const l = (a: Float64Array) => a[i] + (a[j] - a[i]) * u;
+  return { w: l(W), h: l(H), r: l(Rr), target: SHAPE[i] };
+}
 export const SHAPES = S;
