@@ -3,7 +3,8 @@ import Cocoa
 /// 设置里的「隐私」一栏：WindowShade 读到的每一样，读什么、为什么、去了哪里。
 ///
 /// 内容来自 tools/privacy/registry.json 生成的 WS2PrivacyData；值和开关都引用原设置，
-/// 不新造开关，也不为填一个值去启动摄像头、蓝牙或网络。没读到的写「未读取」。
+/// 不新造开关，也不为填一个值去启动摄像头、蓝牙或网络。当前行没读到写「未读取」。
+/// planned 行只显示「还没读」，不取快照。
 @MainActor
 final class WS2PrivacyPane: NSStackView {
     private weak var owner: AppDelegate?
@@ -22,7 +23,7 @@ final class WS2PrivacyPane: NSStackView {
     required init?(coder: NSCoder) { nil }
 
     private func build() {
-        let leadText = "这里列出 WindowShade 读到的每一样，以及为什么读、去了哪里。值和开关都来自原来的设置。"
+        let leadText = "这里列出 WindowShade 会读的每一样，以及为什么读、去了哪里。还没接通的标着「还没读」。"
         addArrangedSubview(WS2SettingsCopy.content(name: nil, subtitle: leadText, symbol: "lock.shield").view)
 
         let details = NSButton(checkboxWithTitle: "显示技术细节", target: self, action: #selector(toggleDetails(_:)))
@@ -53,7 +54,7 @@ final class WS2PrivacyPane: NSStackView {
     private func rowView(_ row: WS2PrivacyRow) -> NSView {
         PrivacyRowView(
             row: row,
-            value: WS2PrivacyValues.value(for: row.id, owner: owner),
+            value: row.status == "planned" ? nil : WS2PrivacyValues.value(for: row.id, owner: owner),
             expanded: expanded.contains(row.id),
             showDetails: showDetails) { [weak self] in
                 guard let self else { return }
@@ -90,12 +91,14 @@ private final class PrivacyRowView: NSView {
             return symbol
         }()
 
+        let pending = row.status == "planned"
         let title = NSTextField(labelWithString: row.label)
         title.font = SystemAppearancePolicy.font(relativeToBody: 0)
+        title.textColor = pending ? .tertiaryLabelColor : .labelColor
         let shown = shownValue(row: row, value: value, expanded: expanded)
         let valueLabel = NSTextField(labelWithString: shown)
         valueLabel.font = SystemAppearancePolicy.font(relativeToBody: -2)
-        valueLabel.textColor = .secondaryLabelColor
+        valueLabel.textColor = pending ? .tertiaryLabelColor : .secondaryLabelColor
         valueLabel.lineBreakMode = .byTruncatingTail
 
         let chevron = NSButton(image: NSImage(systemSymbolName: expanded ? "chevron.down" : "chevron.right",
@@ -156,8 +159,9 @@ private final class PrivacyRowView: NSView {
     private var onToggle: (() -> Void)?
     @objc private func toggle() { onToggle?() }
 
-    /// private 的值默认不展开；没读到的照实写「未读取」。
+    /// planned 固定「还没读」。当前行里 private 的值默认不展开；没读到的照实写「未读取」。
     private func shownValue(row: WS2PrivacyRow, value: String?, expanded: Bool) -> String {
+        if row.status == "planned" { return "还没读" }
         if row.sensitivity == "private", !expanded { return "已隐藏" }
         return value ?? "未读取"
     }

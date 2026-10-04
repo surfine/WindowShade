@@ -49,7 +49,7 @@ AX routeID、首帧隔离、去嵌套 RunLoop；另有主模型按 Mac 实测修
 
 `AGENTS.md` 顶部在复核交接时多了一行指向 `docs/handoff/round2-part10/REVIEW-HANDOFF.md`（第一次提交时漏登，
 门禁因此失败过一次，复核时补上）。`docs/blueprint.md`、`docs/handoff/START-HERE-deepseek.md`、`docs/releases/v1.0.16-ledger.md`、
-`docs/privacy-page.md` 都随每份接入追加了台账段落，行数比 v9 基线多。
+`docs/privacy-page.md` 都随每份接入追加了台账段落，行数比 v9 基线多。G6 又改了 P4：planned 行进隐私页并标「还没读」。
 
 ## G2 补了输入用词
 
