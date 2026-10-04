@@ -4,9 +4,9 @@ import type { Layout, Rect } from './layout';
 import { CAPTION_IN, dolly } from './motion/direction';
 import { NOTCH, TEACH_TUCKED, clamp01, seg } from './motion/site';
 import { MUSIC_PLAY } from './timeline';
-import { CAPTIONS, FADE_TO_BLACK, MUSIC_FADE, OPEN_PULL, OUT_TOTAL, WORDMARK_AT, captionOpacity, punchAt, srcAt } from './cut';
-import { AUDIO_OFFSET_SEC, MUSIC_FILE } from './music';
-import { FPS } from './motion/site';
+import { CAPTIONS, FADE_TO_BLACK, OPEN_PULL, WORDMARK_AT, captionOpacity, leanAt, punchAt, shotStartAt, srcAt } from './cut';
+import { MIX_FILE } from './music';
+import { shutterSamples } from './shutter';
 import {
   DRAGGED_APP, DRAG_PRESS, HANDLE_POS, ICON_SIZE, chatBackAt, deviceAt, dragIconAt, draftAt, fingerAt, handleAt, headAt, phoneAt,
   pointerAt, screenDark, slotsAt, termDoneAt, trackpadAt, zoomAt,
@@ -19,10 +19,34 @@ import { AppIcon, ChatWin, DraftWin, HomeScreen, MenuBar, MusicWin, NotesWin, Te
 const CJK = '"PingFang SC",-apple-system,system-ui,sans-serif';
 const LATIN = '-apple-system,system-ui,"SF Pro Display",sans-serif';
 
+type FilmProps = { L: Layout; drawn: boolean; blind?: boolean; step?: number };
+
+/**
+ * 成片：混好的声音一轨，加上快门。快的帧在 180° 快门（半帧）里取几个时刻叠成平均，取样不跨剪接点；
+ * 哪些帧快、取几样是 shutter.ts 里事先量好的常数，所以每一帧仍只看帧号。
+ * blind：去掉所有文字，给 onetake 的盲读表用。step 2：30 fps 草稿，每帧走两格，快门也开两倍长。
+ */
+export function Film({ L, drawn, blind, step = 1 }: FilmProps) {
+  const out = useCurrentFrame() * step;
+  const n = shutterSamples(out);
+  const start = shotStartAt(out);
+  const open = 0.5 * step;
+  const times = Array.from({ length: n }, (_, j) => Math.max(start, out - (n > 1 ? (open * (n - 1 - j)) / (n - 1) : 0)));
+  return (
+    <AbsoluteFill className={blind ? 'ws-blind' : undefined} style={{ background: '#0a0b0e' }}>
+      {blind ? <style>{'.ws-blind *{color:transparent!important;-webkit-text-fill-color:transparent!important;text-shadow:none!important}.ws-blind text{fill:transparent!important;stroke:none!important}'}</style> : <Audio src={staticFile(MIX_FILE)} />}
+      {times.map((t, j) => (
+        <AbsoluteFill key={j} style={{ opacity: 1 / (j + 1) }}>
+          <FilmFrame L={L} drawn={drawn} out={t} />
+        </AbsoluteFill>
+      ))}
+    </AbsoluteFill>
+  );
+}
+
 /** drawn：画出来的界面（B 版）；否则是写着要录什么的占位块。两版共用同一条时间线。
- * out 是成片的帧号；frame 是它对应的母带帧号，屏里屏外的东西都按 frame 画，字幕、标签、片名和成片镜头按 out。 */
-export function Film({ L, drawn }: { L: Layout; drawn: boolean }) {
-  const out = useCurrentFrame();
+ * out 是成片的帧号（快门取样时带小数）；frame 是它对应的母带帧号，屏里屏外的东西都按 frame 画，字幕、标签、片名和成片镜头按 out。 */
+function FilmFrame({ L, drawn, out }: { L: Layout; drawn: boolean; out: number }) {
   const frame = srcAt(out);
   const cqw = L.screen.w / 100;
 
@@ -50,7 +74,6 @@ export function Film({ L, drawn }: { L: Layout; drawn: boolean }) {
 
   return (
     <AbsoluteFill style={{ background: '#0a0b0e', overflow: 'hidden' }}>
-      <Audio src={staticFile(MUSIC_FILE)} trimBefore={Math.round(AUDIO_OFFSET_SEC * FPS)} volume={musicVolume} />
       <Camera out={out} frame={frame} L={L}>
         <Laptop L={L} frame={frame} page={page} over={over} />
         <Trackpad frame={frame} L={L} />
@@ -83,18 +106,13 @@ function pushAt(out: number, frame: number, L: Layout) {
 
 function Camera({ out, frame, L, children }: { out: number; frame: number; L: Layout; children: ReactNode }) {
   const { p, scale, y } = pushAt(out, frame, L);
-  const punch = punchAt(out);
+  const punch = punchAt(out) + leanAt(out);
   if (p <= 0 && punch <= 0) return <>{children}</>;
   const cqw = L.screen.w / 100;
   const fx = L.screen.x + L.screen.w / 2, fy = L.screen.y + (NOTCH.h * cqw) / 2;
   const z = (1 + (scale - 1) * p) * (1 + punch);
   const tx = fx + (L.width / 2 - fx) * p, ty = fy + (L.height * y - fy) * p;
   return <div style={{ position: 'absolute', inset: 0, transformOrigin: '0 0', transform: `translate(${tx}px, ${ty}px) scale(${z}) translate(${-fx}px, ${-fy}px)` }}>{children}</div>;
-}
-
-/** 音量只看帧号：开头 3 帧淡入，最后一个重拍之后两拍开始线性淡到片尾。 */
-function musicVolume(f: number) {
-  return Math.min(clamp01(f / MUSIC_FADE.in), 1 - clamp01((f - MUSIC_FADE.outFrom) / (OUT_TOTAL - MUSIC_FADE.outFrom)));
 }
 
 function Pointer({ frame, L }: { frame: number; L: Layout }) {

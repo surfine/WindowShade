@@ -4,6 +4,8 @@
 import { FPS } from './motion/site';
 
 export const MUSIC_FILE = 'music/voxel-revolution.mp3';
+/** 片子实际放的一轨：scripts/score.py 把配乐（按 QUIET 停、在音效下让开）和音效混好、做到 −16 LUFS 的成品。 */
+export const MIX_FILE = 'music/ws2-opus-mix.flac';
 export const BPM = 122;
 const BEAT_SEC = 60 / BPM;
 const FIRST_BEAT_SEC = 0.056;
