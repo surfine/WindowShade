@@ -28,18 +28,15 @@ const LAND: FL = {
   ear: { w: 1920, x: 0, y: 0 },
 };
 
-/** 竖版按画面高度摆：9:16 和 9:19.5（iPhone 全面屏）用同一套比例。 */
+/** 竖版按画面宽高摆：屏宽占画面九成（底座略出画，像镜头贴近桌面），屏幕中心在 0.40 高度。 */
 function portrait(W: number, H: number): FL {
   const k = W / 1080;
-  const base = PORTRAIT.screen;
-  const sw = base.w * k, sh = base.h * k;
-  // 1080 × 1920 时屏幕中心在 0.42 高度；再高的画面把多出来的一半给上面、一半给句子下面。
-  const cy = 0.42 * 1920 * k + (H - 1920 * k) * 0.45;
-  const cap = 1560 * k + (H - 1920 * k) * 0.7;
+  const sw = W * 0.9, sh = sw / (PORTRAIT.screen.w / PORTRAIT.screen.h);
+  const cy = H * 0.4;
   return {
     W, H,
     screen: { x: (W - sw) / 2, y: cy - sh / 2, w: sw, h: sh },
-    caption: { y: cap, size: 62 * k },
+    caption: { y: H * 0.68, size: 62 * k },
     desk: PLATE.deskP,
     face: { size: H, x: W / 2 - H * 0.5 + 0.0104 * H, y: 0 },
     ear: { w: (H * 16) / 9, x: -0.35 * H, y: 0 },
