@@ -15,7 +15,7 @@ const PLANS: Plan[] = [
   { id: 'open', from: -1, to: 5, key: 1899, on: 2, why: '冷开场：终端窗口被吸进刘海，落在第一个小节线' },
   { id: 'peek', from: 5, to: 17, key: 2127, on: 8, why: '停到刘海上，看见收起来的那扇' },
   { id: 'back', from: 17, to: 47, key: 2460, on: 18, why: '构建跑完从刘海开口（小节线）；点格子放回；点刘海回到主屏幕，图标拖成侧拉' },
-  { id: 'drop', from: 47, to: 65, key: 4530, on: 52, why: '拖到刘海，五个落点垂下来', punch: true },
+  { id: 'drop', from: 47, to: 65, key: 4530, on: 52, why: '拖到刘海，五个落点垂下来；镜头跨过剪接点往刘海靠（lean）' },
   { id: 'draw', from: 65, to: 77, key: 5267, on: 75, why: '触控板画一笔，原样落进刘海' },
   { id: 'say', from: 77, to: 87, key: 5532, on: 78, why: '说一句，刘海接着做（小节线）' },
   { id: 'allow', from: 87, to: 107, key: 6166, on: 89, why: '要你放行的，在刘海里问一次' },
@@ -25,8 +25,8 @@ const PLANS: Plan[] = [
 ];
 
 const outAt = (k: number) => (k < 0 ? 0 : beatFrame(k));
-/** 片尾在能量落下的那一拍之后再留半秒，让音乐淡完。 */
-const TAIL = 30;
+/** 片尾：能量落下的那一拍之后，片名再静静停 2.5 秒（声音也是真安静），最后 0.4 秒淡到黑。 */
+const TAIL = 150;
 
 export const SHOTS: Shot[] = PLANS.map((p, i) => {
   const start = outAt(p.from), end = beatFrame(p.to) + (i === PLANS.length - 1 ? TAIL : 0);
@@ -42,6 +42,19 @@ export const OUT_TOTAL = STARTS[STARTS.length - 1] + (SHOTS[SHOTS.length - 1].sr
 export function srcAt(out: number): number {
   for (let i = SHOTS.length - 1; i >= 0; i--) if (out >= STARTS[i]) return SHOTS[i].src[0] + (out - STARTS[i]);
   return SHOTS[0].src[0];
+}
+
+/** 母带第 src 帧在成片里是第几帧（必须落在某一段里）。 */
+export function outOf(src: number): number {
+  const i = SHOTS.findIndex((s) => src >= s.src[0] && src < s.src[1]);
+  if (i < 0) throw new Error(`母带第 ${src} 帧没剪进成片`);
+  return STARTS[i] + (src - SHOTS[i].src[0]);
+}
+
+/** 第 out 帧所在那一段的第一帧：快门取样不能跨过剪接点。 */
+export function shotStartAt(out: number): number {
+  for (let i = STARTS.length - 1; i >= 0; i--) if (out >= STARTS[i]) return STARTS[i];
+  return 0;
 }
 
 // ---- 字幕：一段一句，8 句。照 docs/copy-guide.md，每句不超过 12 个字。进场、出场都在拍上 ----
@@ -60,8 +73,17 @@ export const CAPTIONS: { text: string; from: number; to: number }[] = [
 /** 片名落在能量落下去之前最后一个重拍。 */
 export const WORDMARK_AT = beatFrame(SECTIONS.lastHit);
 export const FADE_TO_BLACK = [OUT_TOTAL - 24, OUT_TOTAL] as const;
-/** 音乐：开头 3 帧淡入（第一个小节线就要满），最后一个重拍之后两拍开始淡出，到片尾为 0。 */
-export const MUSIC_FADE = { in: 3, outFrom: beatFrame(SECTIONS.lastHit + 2) } as const;
+/**
+ * 声音的安静段（成片帧号，都在拍上）：音乐在这里真停，只留一声。scripts/score.py 按它混音，片子只放混好的那一轨。
+ * 读口型、点头：「不出声」那一段就不出声，到聊天被收进刘海那一拍（第一次推高）音乐才回来，和冷开场收窗口押韵。
+ * 锁屏：屏幕一黑音乐就停，人回来、面容 ID 打勾那一拍（全曲最大的推高）整首回来。
+ */
+export const QUIET: [number, number][] = [
+  [beatFrame(107), beatFrame(SECTIONS.surge)],
+  [beatFrame(149), beatFrame(SECTIONS.peak)],
+];
+/** 音乐收尾：最后一个重拍之后一拍开始淡，到能量落下的那一拍为 0，之后片名在安静里停住。 */
+export const MUSIC_TAIL = [beatFrame(SECTIONS.lastHit + 1), beatFrame(SECTIONS.fall)] as const;
 
 export function captionOpacity(out: number, from: number, to: number) {
   const c = (v: number) => Math.max(0, Math.min(1, v));
@@ -74,6 +96,23 @@ export const OPEN_PULL = beatFrame(4);
 /** 剪接点往刘海顶一下：第一帧放大 5%，用 settle（0.38 / 1.0）回到原样。[片子新增] */
 export const PUNCH = { amount: 0.05, response: 0.38 };
 export const PUNCH_AT = SHOTS.flatMap((s, i) => (s.punch ? [STARTS[i]] : []));
+/**
+ * 跨剪接点往刘海靠：剪之前 0.3 秒镜头开始绕刘海放大到 1.14 倍，剪之后 0.3 秒到位，停 0.4 秒再用 0.8 秒退回。
+ * 主屏幕换成桌面时，机身和刘海是跨过这一刀还在动的东西（onetake 的 carry），不然这一刀是换幻灯片。[片子新增]
+ */
+export const LEAN = { amount: 0.14, rise: 18, hold: 24, back: 48 } as const;
+export const LEAN_AT = [STARTS[SHOTS.findIndex((s) => s.id === 'drop')]];
+
+export function leanAt(out: number) {
+  const ease = (v: number) => 0.5 - 0.5 * Math.cos(Math.PI * Math.max(0, Math.min(1, v)));
+  let k = 0;
+  for (const c of LEAN_AT) {
+    const up = ease((out - (c - LEAN.rise)) / (2 * LEAN.rise));
+    const down = ease((out - (c + LEAN.rise + LEAN.hold)) / LEAN.back);
+    k = Math.max(k, up * (1 - down));
+  }
+  return LEAN.amount * k;
+}
 
 export function punchAt(out: number) {
   let k = 0;

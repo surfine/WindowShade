@@ -30,3 +30,18 @@
 ## 拍点公式
 
 曲中第 k 拍 = 0.056 + k × 60/122 秒。WS2Opus B 站版的对位写在 `src/music.ts`（成片第 0 帧 = 曲中 0.523 秒）。
+
+## 片子实际放的一轨：`ws2-opus-mix.flac`
+
+由 `scripts/score.py` 生成（事件表来自 `scripts/score-events.ts`，即 `src/cut.ts` 的常数），不要手改：
+
+```sh
+npx esbuild scripts/score-events.ts --bundle --platform=node --log-level=warning | node > /tmp/score-events.json
+~/.venvs/onetake/bin/python scripts/score.py /tmp/score-events.json
+```
+
+- 配乐：上面那首，从曲中 0.523 秒起放；在 `QUIET` 两段真停（读口型点头 52.2–61.5 秒、锁屏 72.8–77.2 秒），
+  片尾 85.6 秒起一拍半淡完，片名在安静里停 2.5 秒。
+- 音效：13 声（全片 178 拍），一个房间（合成混响 T60 0.9 秒）、四种材质（气流、玻璃、木头、低音），自己合成，无外部素材。
+  每一声下配乐让开约 5 dB。
+- 母带：−16 LUFS 整合响度，真峰值 −4 dBTP（loudnorm 两遍）。改了剪辑就重跑上面两行。
