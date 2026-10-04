@@ -6,16 +6,17 @@ import { CP_ASK, CP_ESC, CP_IN, CP_NEXT, CP_OK } from './CarPlay';
 import { GLIDE_AT, LP_CLOSE, LP_OPEN } from './Desktop';
 import { POCKET, TOTAL } from './time';
 
+
 /**
- * 音乐停下来的地方：[开始收, 收完, 开始回, 回满]（帧）。曲子不暂停，回来时还在原来的拍上。
- * 冷开场等面容 ID 认出才进；读唇那段「不出声」真的没声；长按刘海憋一口气，低音进来时一起回；锁上之后只剩房间。
+ * 音乐从头到尾一条不断。只在落拍前让一口气：[开始压, 压到底, 开始回, 回满, 压多少 dB]（帧）。
+ * 压 10 dB、只有 0.2 秒，低音进来那一下回满——听起来是一下顿挫，不是断了。
+ * （先前把冷开场、读唇、锁后都做成静音，听感是「时断时续」，已拿掉。）
  */
-export const HUSH: [number, number, number, number][] = [
-  [-2, -1, HIT.faceOk - 4, HIT.faceOk],
-  [POCKET.face.open[1], POCKET.face.open[1] + 14, POCKET.face.close[0], POCKET.face.close[0] + 12],
-  [2236, 2244, HIT.drop, HIT.drop],
-  [3186, 3196, TOTAL + 10, TOTAL + 10],
+export const DIPS: [number, number, number, number, number][] = [
+  [HIT.drop - 12, HIT.drop - 6, HIT.drop, HIT.drop, -10],
 ];
+/** 开头 0.2 秒淡入，片尾最后 1.5 秒淡出。 */
+export const BED = { fadeIn: 12, fadeOut: 90, total: TOTAL };
 
 export type Sfx = { f: number; kind: string; gain: number; pan?: number; send?: number };
 
