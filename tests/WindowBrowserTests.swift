@@ -43,9 +43,12 @@ enum WindowBrowserTests {
         discoveryFilter()
         mirrorOwnership()
         foldCacheIsolation()
-        panelAndViews()
+        // 这两项要建主线程上的视图和 delegate。@main 入口就在主线程。
+        MainActor.assumeIsolated {
+            panelAndViews()
+            viewOwnershipAndReuse()
+        }
         thumbnailJobAccounting()
-        viewOwnershipAndReuse()
         livePreviewMounting()
         iconCacheSharedAcrossRows()
         dockRegionAndDetectionQueue()
@@ -61,7 +64,8 @@ enum WindowBrowserTests {
         catalogRevisionIsolation()
         liveLeaseIdentity()
         preferencesRoundTrip()
-        standardMainMenu()
+        // @main 的入口在主线程。菜单测试要安装 NSApp.mainMenu。
+        MainActor.assumeIsolated { standardMainMenu() }
         escapeLayering()
         accessibilityAnnouncements()
         quickLookPolicy()
@@ -1626,6 +1630,7 @@ enum WindowBrowserTests {
     // MARK: 面板与视图事件
 
     /// 生产视图的行为：面板语义、卡片/列表动作、按下-拖出语义、搜索与布局。
+    @MainActor
     static func panelAndViews() {
         _ = NSApplication.shared
         let dockPanel = WindowBrowserPanel(mode: .dock,
@@ -1954,6 +1959,7 @@ enum WindowBrowserTests {
     }
 
     /// 复用与所有权：卡片/列表行不因为闭包自持有而泄漏，集合变化不重建全部单元。
+    @MainActor
     static func viewOwnershipAndReuse() {
         _ = NSApplication.shared
         let record = sampleRecord()
@@ -3549,6 +3555,7 @@ enum WindowBrowserTests {
 
     /// 代理应用的标准主菜单：文本编辑快捷键与 ⌘W 靠它派发。
     /// 这里不是结构断言：直接在真实 NSTextField 上发一次 ⌘V，验证确实粘贴成功。
+    @MainActor
     static func standardMainMenu() {
         _ = NSApplication.shared
         let menu = StandardMenu.make(appName: "WindowShade", settingsTarget: nil,

@@ -2508,7 +2508,10 @@ final class NotchCanvasView: NSView {
                 NSAnimationContext.runAnimationGroup({ context in
                     context.duration = 0.1
                     outgoing.animator().alphaValue = 0
-                }, completionHandler: { outgoing.removeFromSuperview() })
+                }, completionHandler: {
+                    // 动画完成回调在主线程。
+                    MainActor.assumeIsolated { outgoing.removeFromSuperview() }
+                })
             } else {
                 outgoing.removeFromSuperview()
             }
@@ -3507,6 +3510,9 @@ final class NotchPeek {
         NSAnimationContext.runAnimationGroup({ context in
             context.duration = 0.12
             panel.animator().alphaValue = 0
-        }, completionHandler: { panel.orderOut(nil) })
+        }, completionHandler: {
+            // 动画完成回调在主线程。
+            MainActor.assumeIsolated { panel.orderOut(nil) }
+        })
     }
 }

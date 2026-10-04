@@ -99,23 +99,31 @@ private final class PaperWindowShadow: NSObject {
         parent.hasShadow = false
         parent.addChildWindow(panel, ordered: .below)
         alphaObservation = parent.observe(\.alphaValue, options: [.initial, .new]) { [weak self] window, _ in
-            self?.panel.alphaValue = window.alphaValue
+            // AppKit 在修改这个属性的线程上回调；窗口属性只在主线程改。
+            MainActor.assumeIsolated { self?.panel.alphaValue = window.alphaValue }
         }
         levelObservation = parent.observe(\.level, options: [.new]) { [weak self] window, _ in
-            self?.panel.level = window.level
+            // AppKit 在修改这个属性的线程上回调；窗口属性只在主线程改。
+            MainActor.assumeIsolated { self?.panel.level = window.level }
         }
         resizeObserver = NotificationCenter.default.addObserver(
             forName: NSWindow.didResizeNotification, object: parent, queue: .main
         ) { [weak self] _ in
-            guard let self, let parent = self.parent else { return }
-            self.panel.setFrame(parent.frame.insetBy(dx: -24, dy: -24), display: true)
+            // 观察者指定了主队列，回调在主线程。
+            MainActor.assumeIsolated {
+                guard let self, let parent = self.parent else { return }
+                self.panel.setFrame(parent.frame.insetBy(dx: -24, dy: -24), display: true)
+            }
         }
     }
 
     deinit {
-        if let resizeObserver { NotificationCenter.default.removeObserver(resizeObserver) }
-        parent?.removeChildWindow(panel)
-        panel.orderOut(nil)
+        // 这个影子只挂在主线程的窗口上，最后一次释放也在主线程。
+        MainActor.assumeIsolated {
+            if let resizeObserver { NotificationCenter.default.removeObserver(resizeObserver) }
+            parent?.removeChildWindow(panel)
+            panel.orderOut(nil)
+        }
     }
 }
 
@@ -125,9 +133,10 @@ extension PaperSurfaceStyle {
     /// `corners` 决定阴影轮廓：面板用 `.all`，卷帘条用 `.top`。
     static func installShadow(on window: NSWindow,
                               corners: SystemCornerPath.Corners = .all) {
-        window.hasShadow = false
-        guard objc_getAssociatedObject(window, &paperShadowAssociation) == nil else { return }
+        let already = objc_getAssociatedObject(window, &paperShadowAssociation) != nil
         MainActor.assumeIsolated {
+            window.hasShadow = false
+            guard !already else { return }
             objc_setAssociatedObject(window, &paperShadowAssociation,
                                      PaperWindowShadow(parent: window, corners: corners),
                                      .OBJC_ASSOCIATION_RETAIN_NONATOMIC)

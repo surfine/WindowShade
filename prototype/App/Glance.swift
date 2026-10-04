@@ -152,6 +152,8 @@ private final class GlanceSession {
 
     var hasLiveFrame: Bool { firstFrameAt != nil }
 
+    /// 只从主线程的 GlanceController 收画面。
+    @MainActor
     func tearDown() {
         cancelled = true
         startupTask?.cancel()

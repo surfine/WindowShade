@@ -191,7 +191,10 @@ final class SnapshotFlight {
         NSAnimationContext.runAnimationGroup({ context in
             context.duration = 0.08
             panel.animator().alphaValue = 0
-        }, completionHandler: { panel.orderOut(nil) })
+        }, completionHandler: {
+            // 动画完成回调在主线程。
+            MainActor.assumeIsolated { panel.orderOut(nil) }
+        })
     }
 }
 

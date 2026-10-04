@@ -134,6 +134,7 @@ enum WindowBrowserSurfaceStyle {
     ///
     /// 选中始终是强调色描边环（形状 + 颜色），“区分无颜色”下同样可辨。
     /// `restFill == false` 用于列表行：玻璃上的行静止时不铺底，靠行间距分组。
+    @MainActor
     static func applyCard(_ view: NSView, selected: Bool, hovering: Bool = false,
                           pressed: Bool = false, restFill: Bool = true,
                           animated: Bool = false,
@@ -182,6 +183,7 @@ enum WindowBrowserSurfaceStyle {
 
     /// 画面区：圆角落在实际画面矩形上。纸面路径保留 1 px 细线（画面常为白底，需要边界）；
     /// 玻璃路径不描边。占位（无画面）用 quaternary 填充 / 纸面底色。
+    @MainActor
     static func applyImageArea(_ view: NSView, surface: WindowBrowserCardSurface = .solid,
                                placeholder: Bool = false,
                                params: WindowBrowserLayoutParams) {
@@ -199,6 +201,7 @@ enum WindowBrowserSurfaceStyle {
     }
 
     /// 1x/2x 都锐利的细线：按 backing scale 对齐到实际像素。
+    @MainActor
     static func hairlineWidth(for view: NSView) -> CGFloat {
         // 在窗口里用窗口自己的缩放；还没进窗口（离屏构建/复用池）时用启动时读到的主屏缩放，
         // 不在每次刷新里反复查询 NSScreen（它会走窗口服务器，放在逐卡片刷新里有尾延迟）。
@@ -209,6 +212,7 @@ enum WindowBrowserSurfaceStyle {
     private static let fallbackBackingScale: CGFloat = NSScreen.main?.backingScaleFactor ?? 2
 
     /// 状态变化的短淡变（选择强调约 100 ms、首图约 80 ms）；减少动态效果时不动画。
+    @MainActor
     static func fadeTransition(on view: NSView, duration: TimeInterval) {
         let reduceMotion = SystemAppearanceCapabilities.current.reduceMotion
         let resolved = WindowBrowserAnimationPolicy.duration(duration, reduceMotion: reduceMotion)
