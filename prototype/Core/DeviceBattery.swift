@@ -51,6 +51,8 @@ struct BatteryReading: Equatable, Sendable {
   let sourceObservedAt: Double?
   /// 本机收到的时间（单调时钟秒）。
   let receivedAt: Double
+  /// 这次读数用的方法。空字符串表示来源没标明。
+  var sampleMethod: String = ""
 
   /// 原始数值转成有效电量：范围外当未知，不夹到 0 或 100。
   static func validPercent(_ raw: Int?) -> Int? {
@@ -84,8 +86,12 @@ struct DeviceBatteryBook: Sendable {
 
   private(set) var devices: [String: DeviceIdentity] = [:]
   private(set) var connected: Set<String> = []
+  /// 最近一次从未连接变成已连接的时刻。断开和重复连接都不清掉。
+  private(set) var connectedAt: [String: Double] = [:]
   private(set) var lastSeen: [String: Double] = [:]
   private(set) var readings: [Key: BatteryReading] = [:]
+  /// 还没有任何有效读数时的原因。已有读数不被空读数改成这个。
+  private var unknownReason: [Key: String] = [:]
   private var epochs: [String: UInt64] = [:]  // provider → 最新代次
   private var awaitingBattery: Set<String> = []
   /// 这一放电周期已经提醒到的最严重档位。要持久化（断开重连、重启都不清空）。
@@ -101,6 +107,7 @@ struct DeviceBatteryBook: Sendable {
     lastSeen[identity.id] = now
     guard !connected.contains(identity.id) else { return [] }
     connected.insert(identity.id)
+    connectedAt[identity.id] = now
     guard !initialSnapshot else { return [] }
     awaitingBattery.insert(identity.id)
     return [.connected(deviceID: identity.id)]
@@ -128,11 +135,16 @@ struct DeviceBatteryBook: Sendable {
     let key = Key(deviceID: reading.deviceID, component: reading.component)
     if let previous = readings[key], previous.provider == reading.provider,
        previous.providerEpoch == reading.providerEpoch, reading.receivedAt < previous.receivedAt { return [] }
-    guard let percent = BatteryReading.validPercent(reading.percent) else { return [] }  // 未知不覆盖有效旧值
+    guard let percent = BatteryReading.validPercent(reading.percent) else {
+      if readings[key] == nil { unknownReason[key] = "未知" }
+      return []
+    }
+    unknownReason.removeValue(forKey: key)
     let stored = BatteryReading(
       deviceID: reading.deviceID, component: reading.component, provider: reading.provider,
       providerEpoch: reading.providerEpoch, percent: percent, charging: reading.charging,
-      sourceObservedAt: reading.sourceObservedAt, receivedAt: reading.receivedAt)
+      sourceObservedAt: reading.sourceObservedAt, receivedAt: reading.receivedAt,
+      sampleMethod: reading.sampleMethod)
     readings[key] = stored
     lastSeen[reading.deviceID] = max(lastSeen[reading.deviceID] ?? 0, reading.receivedAt)
     var events: [DeviceBatteryEvent] = []
@@ -150,6 +162,53 @@ struct DeviceBatteryBook: Sendable {
     let at = reading.sourceObservedAt ?? reading.receivedAt
     guard at.isFinite, now >= at else { return .unknown }
     return now - at <= Self.freshFor ? .currentEnough : .aged
+  }
+
+  /// 一台设备现在能摆出来的行。没有读数是无数据，不写成 0%。
+  /// 耳机固定左、右、充电盒三行；充电盒没读到就保持无数据，不用左右耳去填。
+  func rows(now: Double) -> [BatterySourceRow] {
+    devices.keys.sorted().flatMap { id in
+      components(for: id).map { row(deviceID: id, component: $0, now: now) }
+    }
+  }
+
+  private func components(for deviceID: String) -> [BatteryComponent] {
+    if devices[deviceID]?.kind == .headphones { return [.left, .right, .chargingCase] }
+    let present = Set(readings.keys.filter { $0.deviceID == deviceID }.map(\.component))
+    if present.isEmpty { return [.main] }
+    return present.sorted { Self.componentOrder($0) < Self.componentOrder($1) }
+  }
+
+  private static func componentOrder(_ component: BatteryComponent) -> Int {
+    switch component {
+    case .main: return 0
+    case .left: return 1
+    case .right: return 2
+    case .chargingCase: return 3
+    }
+  }
+
+  private func row(deviceID: String, component: BatteryComponent, now: Double) -> BatterySourceRow {
+    let key = Key(deviceID: deviceID, component: component)
+    let reading = readings[key]
+    let percent = reading?.percent
+    let presence: BatteryPresence
+    if !connected.contains(deviceID) {
+      presence = percent == nil ? .noData : .disconnected
+    } else if percent == nil {
+      presence = .noData
+    } else {
+      switch freshness(key, now: now) {
+      case .currentEnough: presence = .connected
+      case .aged, .unknown: presence = .stale
+      }
+    }
+    return BatterySourceRow(
+      deviceID: deviceID, component: component, connectedAt: connectedAt[deviceID],
+      lastSeen: lastSeen[deviceID],
+      sampledAt: percent == nil ? nil : reading.flatMap { $0.sourceObservedAt ?? $0.receivedAt },
+      sampleMethod: reading?.sampleMethod ?? "", percent: percent,
+      unknownReason: percent == nil ? (unknownReason[key] ?? "未知") : nil, presence: presence)
   }
 
   // MARK: 低电量
@@ -173,5 +232,90 @@ struct DeviceBatteryBook: Sendable {
     if let done = alerted[key], level >= done { return nil }
     alerted[key] = level
     return level
+  }
+}
+
+/// 一行电量现在处在哪一态。陈旧和无数据都不当成刚才采样的实时值。
+enum BatteryPresence: String, Equatable, Sendable {
+  case connected
+  case disconnected
+  case stale
+  case noData
+}
+
+struct BatterySourceRow: Equatable, Sendable {
+  let deviceID: String
+  let component: BatteryComponent
+  let connectedAt: Double?
+  let lastSeen: Double?
+  let sampledAt: Double?
+  let sampleMethod: String
+  let percent: Int?
+  let unknownReason: String?
+  let presence: BatteryPresence
+}
+
+/// 还没证明能读到的来源保持未证实。这里不记录能耗。
+enum BatterySourceAvailability: Equatable, Sendable {
+  case wired(method: String, cadence: String)
+  case unproven
+}
+
+struct BatterySourceNote: Equatable, Sendable {
+  let id: String
+  let fact: String
+  let availability: BatterySourceAvailability
+}
+
+enum BatterySources {
+  static let notes: [BatterySourceNote] = [
+    BatterySourceNote(id: "hid.apple-peripheral", fact: "外设电量百分数",
+                      availability: .wired(method: "IOKit AppleDeviceManagementHIDEventService BatteryPercent", cadence: "120s")),
+    BatterySourceNote(id: "power.internal", fact: "这台 Mac 的电池百分数",
+                      availability: .wired(method: "IOPSCopyPowerSourcesInfo", cadence: "120s")),
+    BatterySourceNote(id: "airpods.left", fact: "左耳电量", availability: .unproven),
+    BatterySourceNote(id: "airpods.right", fact: "右耳电量", availability: .unproven),
+    BatterySourceNote(id: "airpods.case", fact: "充电盒电量", availability: .unproven),
+    BatterySourceNote(id: "phone", fact: "iPhone 电量", availability: .unproven),
+    BatterySourceNote(id: "tablet", fact: "iPad 电量", availability: .unproven),
+    BatterySourceNote(id: "watch", fact: "Apple Watch 电量", availability: .unproven),
+    BatterySourceNote(id: "vision", fact: "Vision Pro 电量", availability: .unproven),
+  ]
+
+  /// 充电盒只用自己的读数。左右耳再完整也不拿来填盒子。
+  static func chargingCasePercent(left: Int?, right: Int?, read: Int?) -> Int? {
+    BatteryReading.validPercent(read)
+  }
+}
+
+struct InternalBatterySample: Equatable, Sendable {
+  var current: Int?
+  var max: Int?
+  var isCharging: Bool?
+  var name: String?
+}
+
+enum InternalBattery {
+  static let deviceID = "power.internal"
+  static let sampleMethod = "IOPSCopyPowerSourcesInfo"
+
+  static func percent(_ sample: InternalBatterySample) -> Int? {
+    guard let current = sample.current, let max = sample.max, current >= 0, max > 0,
+          current <= 1_000_000, max <= 1_000_000 else { return nil }
+    return BatteryReading.validPercent((current * 100 + max / 2) / max)
+  }
+
+  static func charging(_ sample: InternalBatterySample) -> ChargingState {
+    switch sample.isCharging {
+    case .some(true): return .charging
+    case .some(false): return .notCharging
+    case .none: return .unknown
+    }
+  }
+
+  static func displayName(_ sample: InternalBatterySample) -> String {
+    let name = sample.name?.trimmingCharacters(in: .whitespacesAndNewlines) ?? ""
+    if name.isEmpty || name.hasPrefix("InternalBattery") { return "这台 Mac" }
+    return name
   }
 }

@@ -2,7 +2,7 @@
 
 第十份的 `sources/code-map.json` 钉的是统一 v9 候选（1168 个文件）。本仓库是那条线继续往前走的
 工作区：先并入第九份，再并入第十份，并在两轮里都按「只有 Mac 才会暴露」的事实改过源码。
-所以 `drift.json` 的 `code_map_drift` 共 28 条（复核时补登了 `AGENTS.md`，W00 又带进四条，其中一条是「应当不存在」，G2/G3 补了 `docs/copy-guide.md`，G3 另补 `prototype/App/WS2ConductorView.swift`）；另有一条只是路径搬迁。下表是路径或存在性不同的两条。
+所以 `drift.json` 的 `code_map_drift` 共 32 条（复核时补登了 `AGENTS.md`，W00 又带进四条，其中一条是「应当不存在」，G2/G3 补了 `docs/copy-guide.md` 与指挥页，G5 又带进电量来源）；另有一条只是路径搬迁。下表是路径或存在性不同的两条。
 `tests/part10/drift.json` 把这份清单机器可读化；`test-handoff-tools.py` 的 12/14 项按它判定：
 清单外的任何新漂移都会让检查失败，清单本身也必须与实际情况一字不差（多一条少一条都算失败）。
 
@@ -58,6 +58,13 @@ AX routeID、首帧隔离、去嵌套 RunLoop；另有主模型按 Mac 实测修
 ## G3 补了指挥页用词
 
 `docs/copy-guide.md` 的固定词汇表补了指挥模式。`prototype/App/WS2ConductorView.swift` 的会话列表不再用数组下标当动作，选择改到带稳定会话身份的指挥页。
+
+## G5 补了电量来源
+
+`docs/device-battery.md`、`docs/copy-guide.md`、`prototype/Core/DeviceBattery.swift`、
+`prototype/App/DeviceBatteryController.swift`、`prototype/App/PeripheralBatterySource.swift`
+记下四态、这台 Mac 的内部电池，以及还没证实的耳机和手机电量。`Notch.swift` 和新建的
+`MacBatterySource.swift` 不在 code-map 里。
 
 ## 复核者要做的判断
 

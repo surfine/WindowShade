@@ -35,6 +35,10 @@
     "docs/privacy-page.md",
     "docs/releases/v1.0.16-ledger.md",
     "docs/copy-guide.md",
-    "prototype/App/WS2ConductorView.swift"
+    "prototype/App/WS2ConductorView.swift",
+    "docs/device-battery.md",
+    "prototype/App/DeviceBatteryController.swift",
+    "prototype/App/PeripheralBatterySource.swift",
+    "prototype/Core/DeviceBattery.swift"
   ]
 }
