@@ -91,15 +91,18 @@ extension AppDelegate {
     func reconcileShadedWindows(reason: String) {
         guard !isReconcilingShadedWindows else { return }
         isReconcilingShadedWindows = true
+        defer { isReconcilingShadedWindows = false }
 
         guard MainActor.assumeIsolated({ AuthorizationService.shared.lockState() == .unlocked }) else {
-            finishReconcileShadedWindows()
+            axReadGate.setEnabled(false)
+            updateReconcileTimer()
             return
         }
         pruneShadeJournal(reason: "reconcile-\(reason)")
 
         guard AXIsProcessTrusted() else {
-            finishReconcileShadedWindows()
+            axReadGate.setEnabled(false)
+            updateReconcileTimer()
             return
         }
         if ownsGlobalInput, eventTap == nil, setupEventTap() {
@@ -112,41 +115,102 @@ extension AppDelegate {
                 lastJournalRescueAttempt = now
                 rescueOffscreenWindows(silent: true)
             }
-            finishReconcileShadedWindows()
+            axReadGate.setEnabled(true)
+            axReadGate.replaceWanted([pid_t]())
+            updateReconcileTimer()
             return
         }
 
-        let targets = shaded.map { id, state in
-            ReconcileAXTarget(id: id, pid: state.pid, element: state.element,
-                              needsMinimizedState: state.hide == .minimized,
-                              stamp: foldCallbackStamp(id: id, state: state))
+        pumpReconcileAXReads(reason: reason, refreshWanted: true)
+    }
+
+    func reconcileAXApplicationIDs() -> [pid_t] {
+        var seen: Set<pid_t> = []
+        var ids: [pid_t] = []
+        for state in shaded.values where seen.insert(state.pid).inserted {
+            ids.append(state.pid)
         }
-        let grouped = Dictionary(grouping: targets, by: { $0.pid })
-        guard !grouped.isEmpty else { finishReconcileShadedWindows(); return }
-        let batch = UUID()
-        reconcileBatchID = batch
-        reconcilePendingApplications = grouped.count
-        // Each app is sampled serially; independent apps may finish independently.
-        // No captured mutable array, group.wait, or caller-owned NSLock crosses queues.
-        for pidTargets in grouped.values {
-            DispatchQueue.global(qos: .utility).async { [weak self] in
-                let startedAt = ProcessInfo.processInfo.systemUptime
-                let snapshots = pidTargets.map { target -> ReconcileAXSnapshot in
-                    guard let size = axSize(target.element) else {
-                        return ReconcileAXSnapshot(stamp: target.stamp, position: nil, size: nil, isMinimized: nil)
-                    }
-                    return ReconcileAXSnapshot(stamp: target.stamp, position: axPosition(target.element), size: size,
-                        isMinimized: target.needsMinimizedState
-                            ? axObservedBoolAttribute(target.element, kAXMinimizedAttribute as String) : nil)
+        ids.sort()
+        return ids
+    }
+
+    /// 只发还没在途、且名额还够的 App。一个 App 没回来，不重发，也不挡住别的 App。
+    /// 刚返回的 App 要等下一次巡检才再排队，避免读完立刻再读。
+    func pumpReconcileAXReads(reason: String, refreshWanted: Bool) {
+        let now = ProcessInfo.processInfo.systemUptime
+        guard now.isFinite else { return }
+        let unlocked = MainActor.assumeIsolated({ AuthorizationService.shared.lockState() == .unlocked })
+        guard unlocked, AXIsProcessTrusted() else {
+            axReadGate.setEnabled(false)
+            return
+        }
+        axReadGate.setEnabled(true)
+        let voided = axReadGate.voidExpired(now: now, lifetime: AXReadGate<pid_t, [WS2FoldCallbackStamp]>.resultLifetime)
+        for ticket in voided {
+            let age = Int((now - ticket.admittedAt) * 1000)
+            wlog("reconcile: ax result void pid=\(ticket.app) occupied=\(axReadGate.occupiedCount) remaining=\(axReadGate.occupiedCount) ageMs=\(age) discard=void returned=0")
+        }
+        if refreshWanted {
+            axReadGate.replaceWanted(reconcileAXApplicationIDs())
+        }
+        var byPID: [pid_t: [ReconcileAXTarget]] = [:]
+        for (id, state) in shaded {
+            byPID[state.pid, default: []].append(
+                ReconcileAXTarget(id: id, pid: state.pid, element: state.element,
+                                  needsMinimizedState: state.hide == .minimized,
+                                  stamp: foldCallbackStamp(id: id, state: state)))
+        }
+        let tickets = axReadGate.admit(now: now) { pid in
+            guard let stamps = byPID[pid]?.map(\.stamp), !stamps.isEmpty else { return nil }
+            return stamps
+        }
+        guard !tickets.isEmpty else { return }
+        for ticket in tickets {
+            guard let targets = byPID[ticket.app], !targets.isEmpty else {
+                let occupied = axReadGate.occupiedCount
+                _ = axReadGate.complete(ticket)
+                wlog("reconcile: ax pid=\(ticket.app) elapsedMs=0 occupied=\(occupied) remaining=\(axReadGate.occupiedCount) ageMs=0 discard=absent returned=0")
+                continue
+            }
+            startReconcileAXRead(ticket, targets: targets, reason: reason)
+        }
+    }
+
+    func startReconcileAXRead(_ ticket: AXReadGate<pid_t, [WS2FoldCallbackStamp]>.Ticket,
+                              targets: [ReconcileAXTarget], reason: String) {
+        // 每个已准入的 App 自己读自己的窗口。不在这里等待其他 App，也不提前放开名额。
+        DispatchQueue.global(qos: .utility).async { [weak self] in
+            let startedAt = ProcessInfo.processInfo.systemUptime
+            let snapshots = targets.map { target -> ReconcileAXSnapshot in
+                guard let size = axSize(target.element) else {
+                    return ReconcileAXSnapshot(stamp: target.stamp, position: nil, size: nil, isMinimized: nil)
                 }
-                let elapsed = Int((ProcessInfo.processInfo.systemUptime - startedAt) * 1000)
-                DispatchQueue.main.async { [weak self] in
-                    guard let self, self.reconcileBatchID == batch else { return }
+                return ReconcileAXSnapshot(stamp: target.stamp, position: axPosition(target.element), size: size,
+                    isMinimized: target.needsMinimizedState
+                        ? axObservedBoolAttribute(target.element, kAXMinimizedAttribute as String) : nil)
+            }
+            let endedAt = ProcessInfo.processInfo.systemUptime
+            DispatchQueue.main.async { [weak self] in
+                guard let self else { return }
+                let occupied = self.axReadGate.occupiedCount
+                let decision = self.axReadGate.complete(ticket)
+                let elapsed = Int((endedAt - startedAt) * 1000)
+                let age = endedAt.isFinite && ticket.admittedAt.isFinite
+                    ? Int((endedAt - ticket.admittedAt) * 1000) : -1
+                let discard: String
+                switch decision {
+                case .apply:
+                    discard = "none"
                     self.applyReconcileAXSnapshots(snapshots, reason: reason, elapsedMilliseconds: elapsed)
-                    guard self.reconcileBatchID == batch else { return }
-                    self.reconcilePendingApplications -= 1
-                    if self.reconcilePendingApplications == 0 { self.finishReconcileShadedWindows() }
+                case .discard(_, .resultVoided):
+                    discard = "void"
+                case .discard(_, .unknownTicket):
+                    discard = "unknown"
+                case .absent:
+                    discard = "absent"
                 }
+                wlog("reconcile: ax pid=\(ticket.app) elapsedMs=\(elapsed) occupied=\(occupied) remaining=\(self.axReadGate.occupiedCount) ageMs=\(age) discard=\(discard) returned=1")
+                self.pumpReconcileAXReads(reason: reason, refreshWanted: false)
             }
         }
     }
@@ -199,11 +263,5 @@ extension AppDelegate {
                 wlog("reconcile: clamped overlay id=\(snapshot.id) frame=(\(Int(newFrame.minX)),\(Int(newFrame.minY)) \(Int(newFrame.width))x\(Int(newFrame.height)))")
             }
         }
-    }
-    func finishReconcileShadedWindows() {
-        reconcileBatchID = nil
-        reconcilePendingApplications = 0
-        isReconcilingShadedWindows = false
-        updateReconcileTimer()
     }
 }
