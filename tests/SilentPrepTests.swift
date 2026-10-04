@@ -44,13 +44,21 @@ struct SilentPrepTests {
             print("\(failures) failed")
             exit(1)
         }
-        let tooSoon = session.confirm(waiting, at: at(99), currentRevision: 3)
+        let tooSoon = session.confirm(waiting, gestureBeganAt: at(99), now: at(99), liveRevision: 3)
         expect(tooSoon == .rejected(.confirmationTooEarly), "a nod that starts before the preview does not count")
-        let moved = session.confirm(waiting, at: at(120), currentRevision: 4)
+        let moved = session.confirm(waiting, gestureBeganAt: at(120), now: at(120), liveRevision: 4)
         expect(moved == .rejected(.staleTarget), "a changed window revision voids the old preview")
-        let accepted = session.confirm(waiting, at: at(120), currentRevision: 3)
+        let reused = session.confirm(waiting, gestureBeganAt: at(120), now: at(120), liveRevision: 3)
+        expect(reused == .rejected(.wrongProposal), "the old preview cannot be confirmed after the window changed")
+        let renewed = session.propose(commandID: "window.left", targetID: "win-1", targetRevision: 3, now: at(150))
+        guard case .awaiting(let waitingAgain) = renewed else {
+            expect(false, "a new preview can be proposed after the old one was voided")
+            print("\(failures) failed")
+            exit(1)
+        }
+        let accepted = session.confirm(waitingAgain, gestureBeganAt: at(160), now: at(160), liveRevision: 3)
         guard case .accepted(let placed) = accepted else {
-            expect(false, "a nod after the preview accepts that one placement")
+            expect(false, "a nod after the new preview accepts that one placement")
             print("\(failures) failed")
             exit(1)
         }
@@ -70,13 +78,13 @@ struct SilentPrepTests {
             print("\(failures) failed")
             exit(1)
         }
-        expect(session.confirm(enrollProposal, at: at(301), currentRevision: 1) == .rejected(.nodCannotAuthorize),
-               "a nod cannot enroll or unlock")
+        expect(session.confirm(enrollProposal, gestureBeganAt: at(301), now: at(301), liveRevision: 1) == .rejected(.wrongProposal),
+               "a nod cannot confirm enrollment that was never waiting")
 
         session.setMode(.securityChallenge)
         expect(session.propose(commandID: "window.left", targetID: "win-1", targetRevision: 3, now: at(400)) == .rejected(.wrongMode),
                "a product command is refused during a security challenge")
-        expect(session.confirm(waiting, at: at(400), currentRevision: 3) == .rejected(.staleSession),
+        expect(session.confirm(waiting, gestureBeganAt: at(400), now: at(400), liveRevision: 3) == .rejected(.staleSession),
                "a nod from before the challenge cannot open the window afterward")
         let cancel = session.propose(commandID: "auth.cancel", targetID: "attempt", targetRevision: 1, now: at(410))
         if case .shown = cancel {
@@ -90,7 +98,7 @@ struct SilentPrepTests {
         let send = session.propose(commandID: "assistant.sendDraft", targetID: "draft-1", targetRevision: 2, now: at(510))
         if case .awaiting(let adoptProposal) = adopt, case .awaiting(let sendProposal) = send {
             expect(adoptProposal.command.desired != sendProposal.command.desired, "adopting a draft does not send it")
-            expect(session.confirm(adoptProposal, at: at(520), currentRevision: 2) == .rejected(.wrongProposal),
+            expect(session.confirm(adoptProposal, gestureBeganAt: at(520), now: at(520), liveRevision: 2) == .rejected(.wrongProposal),
                    "confirming the earlier adopt does not accept the later send")
         } else {
             expect(false, "adopt and send each wait for their own confirmation")
@@ -194,7 +202,7 @@ struct SilentPrepTests {
         let preview = usable.propose(commandID: "window.left", targetID: "win-9", targetRevision: 8, now: at(3100))
         expect(WS2SilentProductPort.request(for: preview) == .waiting, "a placement preview is not a move yet")
         if case .awaiting(let previewProposal) = preview {
-            let movedWindow = usable.confirm(previewProposal, at: at(3200), currentRevision: 8)
+            let movedWindow = usable.confirm(previewProposal, gestureBeganAt: at(3200), now: at(3200), liveRevision: 8)
             expect(WS2SilentProductPort.request(for: movedWindow) == .placeWindow(id: "win-9", revision: 8, placement: .leftHalf),
                    "a confirmed left half asks the existing WindowPlacement for leftHalf")
             expect(WS2SilentPlacement.leftHalf.rawValue == "leftHalf"
@@ -235,9 +243,16 @@ struct SilentPrepTests {
                 continue
             }
             expect(proposal.command.desired == desired, "\(commandID) keeps its catalog placement")
-            let changed = placing.confirm(proposal, at: at(4100), currentRevision: 9)
+            let changed = placing.confirm(proposal, gestureBeganAt: at(4100), now: at(4100), liveRevision: 9)
             expect(changed == .rejected(.staleTarget), "\(commandID) is void when the frozen window changes")
-            let confirmed = placing.confirm(proposal, at: at(4100), currentRevision: 8)
+            expect(placing.confirm(proposal, gestureBeganAt: at(4100), now: at(4100), liveRevision: 8) == .rejected(.wrongProposal),
+                   "\(commandID) old preview stays void after the window changes")
+            let renewed = placing.propose(commandID: commandID, targetID: "win-9", targetRevision: 8, now: at(4120))
+            guard case .awaiting(let fresh) = renewed else {
+                expect(false, "\(commandID) can be proposed again after the old preview was voided")
+                continue
+            }
+            let confirmed = placing.confirm(fresh, gestureBeganAt: at(4130), now: at(4130), liveRevision: 8)
             expect(WS2SilentProductPort.request(for: confirmed) == .placeWindow(id: "win-9", revision: 8, placement: placement),
                    "\(commandID) asks for \(placement.rawValue) on the frozen window")
             expect(WS2SilentProductPort.acceptsFrozenWindow(
@@ -288,7 +303,7 @@ struct SilentPrepTests {
         let start = timer.propose(commandID: "focus.start", targetID: "focus", targetRevision: 1, now: at(6000))
         expect(WS2SilentProductPort.request(for: start) == .waiting, "starting the timer waits until it is confirmed")
         if case .awaiting(let startProposal) = start {
-            let started = timer.confirm(startProposal, at: at(6100), currentRevision: 1)
+            let started = timer.confirm(startProposal, gestureBeganAt: at(6100), now: at(6100), liveRevision: 1)
             expect(WS2SilentProductPort.request(for: started) == .startFocus
                    && !WS2SilentProductPort.showsFocusWithoutStarting(WS2SilentProductPort.request(for: started)),
                    "the timer starts only after confirmation")
@@ -399,6 +414,8 @@ struct SilentPrepTests {
         draftAndPages()
         gates()
         posture()
+        proposalLifetime()
+        effectReceipts()
 
         if failures == 0 {
             print("silent prep tests passed")
@@ -416,7 +433,7 @@ struct SilentPrepTests {
             expect(false, "adopt waits for its own nod")
             return
         }
-        let adopted = session.confirm(adoptProposal, at: at(8100), currentRevision: 2)
+        let adopted = session.confirm(adoptProposal, gestureBeganAt: at(8100), now: at(8100), liveRevision: 2)
         expect(WS2SilentProductPort.request(for: adopted) == .adoptDraft(id: "draft-1", revision: 2),
                "a confirmed adopt only asks for a preview")
 
@@ -429,7 +446,7 @@ struct SilentPrepTests {
 
         let sendWait = session.propose(commandID: "assistant.sendDraft", targetID: "draft-1", targetRevision: 2, now: at(8200))
         expect(WS2SilentProductPort.request(for: sendWait) == .waiting, "send waits for a new confirmation")
-        expect(session.confirm(adoptProposal, at: at(8300), currentRevision: 2) == .rejected(.wrongProposal),
+        expect(session.confirm(adoptProposal, gestureBeganAt: at(8300), now: at(8300), liveRevision: 2) == .rejected(.wrongProposal),
                "confirming the adopt proposal does not accept the send")
         guard case .awaiting(let sendProposal) = sendWait else {
             expect(false, "send has its own proposal")
@@ -438,7 +455,7 @@ struct SilentPrepTests {
         expect(sendProposal.command.id == "assistant.sendDraft" && WS2SilentDraftHost.isSendCommand(sendProposal.command.id)
                && !WS2SilentDraftHost.isSendCommand(adoptProposal.command.id),
                "only the send command can leave the preview")
-        let sentStep = session.confirm(sendProposal, at: at(8300), currentRevision: 2)
+        let sentStep = session.confirm(sendProposal, gestureBeganAt: at(8300), now: at(8300), liveRevision: 2)
         expect(WS2SilentProductPort.request(for: sentStep) == .submitDraft(id: "draft-1", revision: 2),
                "the send confirmation asks to submit that draft")
 
@@ -499,7 +516,7 @@ struct SilentPrepTests {
         var untouched = WS2SilentSession()
         let model = untouched.propose(commandID: "assistant.setModel", targetID: "draft-1", targetRevision: 2, now: at(8400))
         if case .awaiting(let modelProposal) = model {
-            expect(WS2SilentProductPort.request(for: untouched.confirm(modelProposal, at: at(8410), currentRevision: 2))
+            expect(WS2SilentProductPort.request(for: untouched.confirm(modelProposal, gestureBeganAt: at(8410), now: at(8410), liveRevision: 2))
                    == .setNextModel(id: "draft-1", revision: 2),
                    "choosing a model only names the next round")
         } else {
@@ -507,7 +524,7 @@ struct SilentPrepTests {
         }
         let interrupt = untouched.propose(commandID: "assistant.interrupt", targetID: "turn-1", targetRevision: 4, now: at(8420))
         if case .awaiting(let interruptProposal) = interrupt {
-            expect(WS2SilentProductPort.request(for: untouched.confirm(interruptProposal, at: at(8430), currentRevision: 4))
+            expect(WS2SilentProductPort.request(for: untouched.confirm(interruptProposal, gestureBeganAt: at(8430), now: at(8430), liveRevision: 4))
                    == .showNativeStop(id: "turn-1", revision: 4),
                    "stop shows the native control and does not mark the turn stopped")
         } else {
@@ -539,9 +556,16 @@ struct SilentPrepTests {
             expect(false, "undo waits for confirmation")
             return
         }
-        expect(placing.confirm(undoProposal, at: at(8610), currentRevision: 9) == .rejected(.staleTarget),
+        expect(placing.confirm(undoProposal, gestureBeganAt: at(8610), now: at(8610), liveRevision: 9) == .rejected(.staleTarget),
                "undo is void when the frozen window changes")
-        let undo = placing.confirm(undoProposal, at: at(8610), currentRevision: 8)
+        expect(placing.confirm(undoProposal, gestureBeganAt: at(8610), now: at(8610), liveRevision: 8) == .rejected(.wrongProposal),
+               "the old undo preview cannot be confirmed after the window changes")
+        let undoRenewed = placing.propose(commandID: "window.undo", targetID: "win-9", targetRevision: 8, now: at(8620))
+        guard case .awaiting(let undoFresh) = undoRenewed else {
+            expect(false, "undo can be proposed again after the old preview was voided")
+            return
+        }
+        let undo = placing.confirm(undoFresh, gestureBeganAt: at(8630), now: at(8630), liveRevision: 8)
         expect(WS2SilentProductPort.request(for: undo) == .undoWindow(id: "win-9", revision: 8),
                "undo asks to roll back the frozen window")
         expect(WS2SilentProductPort.acceptsFrozenWindow(
@@ -558,7 +582,7 @@ struct SilentPrepTests {
             return
         }
         expect(moveProposal.command.desired == "moveToSelectedDisplay", "the move stays move to the selected display")
-        let moved = moving.confirm(moveProposal, at: at(8710), currentRevision: 8)
+        let moved = moving.confirm(moveProposal, gestureBeganAt: at(8710), now: at(8710), liveRevision: 8)
         expect(WS2SilentProductPort.request(for: moved) == .moveToCallerDisplay(id: "win-9", revision: 8),
                "the confirmed move asks for the caller display")
         expect(!WS2SilentProductPort.canMoveToCallerDisplay(callerScreenProvided: false, windowMatches: true)
@@ -646,7 +670,7 @@ struct SilentPrepTests {
         let profile = WS2SilentPhraseProfile(speech: .mandarin, words: ["ui.windows": "窗口"])
         expect(modes.match(profile: profile) == .unknown, "switching into a challenge clears the held phrase")
         if case .awaiting(let proposal) = waiting {
-            expect(modes.confirm(proposal, at: at(9100), currentRevision: 3) == .rejected(.staleSession),
+            expect(modes.confirm(proposal, gestureBeganAt: at(9100), now: at(9100), liveRevision: 3) == .rejected(.staleSession),
                    "a nod from before the challenge cannot place the window")
         } else {
             expect(false, "the window command was waiting before the challenge")
@@ -763,14 +787,16 @@ struct SilentPrepTests {
         var freshCover = WS2SilentCover.State()
         expect(WS2SilentReadout.sentence("privacy.cover", cover: freshCover) == "没遮住",
                "cover that has not happened does not say it is covered")
-        expect(WS2SilentCover.cover(&freshCover), "covering the screen succeeds")
+        expect(!WS2SilentCover.cover(&freshCover) && !freshCover.covered,
+               "covering without an overlay does not mark the screen covered")
+        expect(WS2SilentCover.cover(&freshCover, overlayCreated: true), "an overlay receipt covers the screen")
         expect(WS2SilentReadout.sentence("privacy.cover", cover: freshCover) == "已遮住"
                && WS2SilentReadout.sentence("scene.conversation", cover: freshCover) == "已遮住"
                && !freshCover.revealed,
-               "a successful cover stays 已遮住 and is not revealed")
-        expect(WS2SilentCover.cover(&freshCover)
+               "a cover with an overlay stays 已遮住 and is not revealed")
+        expect(WS2SilentCover.cover(&freshCover, overlayCreated: true)
                && WS2SilentReadout.sentence("privacy.cover", cover: freshCover) == "已遮住",
-               "covering again stays 已遮住")
+               "covering again with an overlay stays 已遮住")
         expect(WS2SilentReadout.sentence("input.pause", hooksPaused: true) == "输入已暂停"
                && WS2SilentReadout.sentence("input.pause", hooksPaused: false) == "输入还在",
                "paused input says it is paused and does not clear preferences")
@@ -954,7 +980,9 @@ struct SilentPrepTests {
         expect(folderLine == "已开文件夹" && folderLine.count <= 8 && folderLine != "还没选",
                "a folder that opened does not say nothing was chosen")
         var cover = WS2SilentCover.State()
-        expect(WS2SilentCover.cover(&cover) && cover.covered && !cover.revealed, "covering stays covered")
+        expect(!WS2SilentCover.cover(&cover) && !cover.covered, "covering without an overlay stays uncovered")
+        expect(WS2SilentCover.cover(&cover, overlayCreated: true) && cover.covered && !cover.revealed,
+               "an overlay receipt stays covered")
         expect(!WS2SilentCover.reveal(&cover) && cover.covered && !cover.revealed,
                "a silent reveal does not uncover")
         var uncovered = WS2SilentCover.State()
@@ -964,7 +992,7 @@ struct SilentPrepTests {
         let held = sameMode.propose(commandID: "window.left", targetID: "win-1", targetRevision: 1, now: at(9500))
         sameMode.setMode(.command)
         if case .awaiting(let heldProposal) = held {
-            expect(sameMode.confirm(heldProposal, at: at(9510), currentRevision: 1) == .accepted(heldProposal),
+            expect(sameMode.confirm(heldProposal, gestureBeganAt: at(9510), now: at(9510), liveRevision: 1) == .accepted(heldProposal),
                    "staying in the same mode keeps the pending command")
         } else {
             expect(false, "the window command was waiting")
@@ -1023,6 +1051,7 @@ struct SilentPrepTests {
         }
         expect(wired + refusedCount == WS2SilentCatalog.count && wired > 0 && refusedCount > 0,
                "every catalog command is wired or explicitly refused")
+        everyCatalogCommandHasASpecificOutcome()
     }
 
     /// 不打开 App 时，这条命令展示成功或拒绝后会写出的那一句。
@@ -1043,9 +1072,119 @@ struct SilentPrepTests {
         var session = WS2SilentSession(mode: mode)
         let step = session.propose(commandID: command.id, targetID: "target", targetRevision: 1, now: at(10000))
         if case .awaiting(let proposal) = step {
-            return WS2SilentProductPort.request(for: session.confirm(proposal, at: at(10100), currentRevision: 1))
+            return WS2SilentProductPort.request(for: session.confirm(proposal, gestureBeganAt: at(10100), now: at(10100), liveRevision: 1))
         }
         return WS2SilentProductPort.request(for: step)
+    }
+
+    /// 142 条各写一句结果。确认前的等待可以是芯片上的名字；做成或拒绝不能只重复那个名字。
+    static func everyCatalogCommandHasASpecificOutcome() {
+        var covered = 0
+        for command in WS2SilentCatalog.commands {
+            covered += 1
+            let id = command.id
+            guard let chip = WS2SilentCopy.line(id) else {
+                expect(false, "\(id) has a notch line")
+                continue
+            }
+            expect(chip.count <= 8, "\(id) notch line stays within eight characters")
+
+            let mode: WS2SilentMode = command.modes.contains(.command) ? .command : (command.modes.first ?? .command)
+            var session = WS2SilentSession(mode: mode)
+            let proposed = session.propose(commandID: id, targetID: "target", targetRevision: 1, now: at(10000))
+            if case .awaiting = proposed {
+                expect(WS2SilentProductPort.request(for: proposed) == .waiting,
+                       "\(id) preview before confirmation is only the waiting chip")
+            } else if case .rejected = proposed {
+                expect(false, "\(id) can be proposed in its own mode")
+                continue
+            }
+
+            let request = resolved(command)
+            expect(!WS2SilentBoundary.unlocksOrFillsPassword(request),
+                   "\(id) does not unlock or fill a password")
+            if case .waiting = request {
+                expect(false, "\(id) confirm step does not stay on the preview")
+                continue
+            }
+
+            let line = settledLine(for: command, request: request)
+            expect(line != chip, "\(id) outcome \(line) is not only the chip \(chip)")
+            expect(line != "已按这一笔做了" && !line.isEmpty && line.count <= 8,
+                   "\(id) outcome \(line) is a short specific line")
+            expect(WS2SilentResultLine.noted(id, succeeded: true) != "已按这一笔做了",
+                   "\(id) is not reportable as 已按这一笔做了")
+            if command.acceptsNodOrClick && isSettledSuccess(request) {
+                let noted = WS2SilentResultLine.noted(id, succeeded: true)
+                if let result = WS2SilentResultLine.acceptance(id, succeeded: true) {
+                    expect(noted == result, "\(id) confirmed success is the result line")
+                } else {
+                    expect(noted != "已按这一笔做了", "\(id) has no result line and is not reported as done")
+                }
+            }
+            if id == "music.pause" || id == "music.resume" || id == "music.nextTrack" {
+                expect(request == .refused(.unsupported), "\(id) is refused as unsupported")
+                expect(WS2SilentReadout.sentence(id) == "先不改播放", "\(id) readout is 先不改播放")
+            }
+            if id == "carplay.enter" || id == "carplay.exit" {
+                expect(request == .carPlayUnavailable(id: id), "\(id) does not start a receiver")
+                expect(WS2SilentReadout.sentence(id) == "还不能接收", "\(id) readout is 还不能接收")
+                var receiver = WS2SilentCarPlayReceiver()
+                if id == "carplay.exit" { receiver.exit() } else { receiver.enter() }
+                expect(!receiver.connected && !receiver.sessionStarted, "\(id) leaves the receiver disconnected")
+            }
+            if command.requiresSystemConfirmation {
+                if case .refused(.needsSystemConfirmation) = request {
+                } else {
+                    expect(false, "\(id) waits for system confirmation")
+                }
+                expect(!WS2SilentBoundary.unlocksOrFillsPassword(request),
+                       "\(id) system confirmation does not unlock or fill a password")
+                if let outcome = WS2SilentSecurity.outcome(id) {
+                    expect(!outcome.unlocks && !outcome.fillsPassword && !outcome.typesSecret,
+                           "\(id) does not unlock or fill a password")
+                }
+            }
+        }
+        expect(covered == 142 && WS2SilentCatalog.count == 142,
+               "the outcome loop covered all 142 commands")
+        print("outcome loop covered \(covered) commands")
+    }
+
+    static func settledLine(for command: WS2SilentCommand, request: WS2SilentHostRequest) -> String {
+        let id = command.id
+        switch request {
+        case .waiting:
+            return WS2SilentCopy.line(id) ?? id
+        case .carPlayUnavailable:
+            return WS2SilentReadout.sentence(id)
+        case .refused(let reason):
+            switch reason {
+            case .needsSystemConfirmation:
+                return WS2SilentSecurity.outcome(id)?.line ?? "要用原来的确认"
+            case .unsupported:
+                if let line = WS2SilentResultLine.acceptance(id, succeeded: false) {
+                    return line
+                }
+                return WS2SilentReadout.sentence(id)
+            case .notReady:
+                return WS2SilentResultLine.noted(id, succeeded: false)
+            }
+        default:
+            if command.confirmation == .none {
+                return shownOutcome(id)
+            }
+            return WS2SilentResultLine.noted(id, succeeded: true)
+        }
+    }
+
+    static func isSettledSuccess(_ request: WS2SilentHostRequest) -> Bool {
+        switch request {
+        case .waiting, .refused, .carPlayUnavailable:
+            return false
+        default:
+            return true
+        }
     }
 
     static func posture() {
@@ -1185,8 +1324,10 @@ struct SilentPrepTests {
             expect(line.count <= 8, "notch line stays within eight characters: \(command.id) \(line)")
         }
         expect(WS2SilentCopy.line("not-a-command") == nil, "an unknown command has no invented line")
-        expect(WS2SilentCopy.line("carplay.enter") == "还不能接收", "CarPlay says it cannot receive")
-        expect(WS2SilentCopy.line("music.pause") == "先不改播放", "playback stays unchanged until an engine exists")
+        expect(WS2SilentCopy.line("carplay.enter") == "进入车载", "CarPlay chip names the request")
+        expect(WS2SilentReadout.sentence("carplay.enter") == "还不能接收", "CarPlay says it cannot receive")
+        expect(WS2SilentCopy.line("music.pause") == "暂停播放", "pause chip names the request")
+        expect(WS2SilentReadout.sentence("music.pause") == "先不改播放", "playback stays unchanged until an engine exists")
         let empty = WS2SilentUsageSnapshot()
         for id in ["usage.quota", "usage.session", "usage.context", "usage.accountActivity", "usage.refresh"] {
             let line = WS2SilentReadout.sentence(id, usage: empty)
@@ -1251,8 +1392,9 @@ struct SilentPrepTests {
             expect(!outcome.carPlayConnected && !outcome.carPlaySessionStarted,
                    "\(id) does not connect a CarPlay receiver")
             expect(outcome.line.count <= 8, "security line stays within eight characters: \(id)")
-            if outcome.handedToSystem, let copy = WS2SilentCopy.line(id), copy == "要用原来的确认" {
-                expect(outcome.line == "要用原来的确认", "\(id) keeps the system-confirmation line")
+            if outcome.handedToSystem {
+                expect(outcome.line == "要用原来的确认" || outcome.line == "只做实验" || outcome.line == "不解锁",
+                       "\(id) hands off without claiming the chip finished it")
             }
         }
         expect(WS2SilentSecurity.outcome("window.left") == nil, "a window command is not an unlock or a fill")
@@ -1296,8 +1438,10 @@ struct SilentPrepTests {
         var cover = WS2SilentCover.State()
         expect(WS2SilentReadout.sentence("privacy.status", cover: cover) == "没遮住",
                "an uncovered screen says it is not covered")
-        expect(WS2SilentCover.cover(&cover) && WS2SilentReadout.sentence("privacy.status", cover: cover) == "已遮住"
-               && !cover.revealed, "covering reports 已遮住 and does not reveal")
+        expect(!WS2SilentCover.cover(&cover) && WS2SilentReadout.sentence("privacy.status", cover: cover) == "没遮住",
+               "covering without an overlay stays 没遮住")
+        expect(WS2SilentCover.cover(&cover, overlayCreated: true) && WS2SilentReadout.sentence("privacy.status", cover: cover) == "已遮住"
+               && !cover.revealed, "an overlay receipt reports 已遮住 and does not reveal")
         expect(WS2SilentReadout.sentence("privacy.awaySummary") == "没有",
                "an away summary with no events stays 没有")
         expect(WS2SilentReadout.sentence("privacy.selectScope") == "还没选",
@@ -1337,5 +1481,95 @@ struct SilentPrepTests {
                "remembering a model does not start a turn")
         expect(WS2SilentReadout.sentence("assistant.models", assistant: idleAssistant) == "已记下",
                "a remembered model is noted without printing the id")
+    }
+
+    static func proposalLifetime() {
+        var sameInstant = WS2SilentSession()
+        let first = sameInstant.propose(commandID: "window.left", targetID: "win-1", targetRevision: 1, now: at(1))
+        let second = sameInstant.propose(commandID: "window.right", targetID: "win-1", targetRevision: 1, now: at(1))
+        guard case .awaiting(let older) = first, case .awaiting(let newer) = second else {
+            expect(false, "two proposals at the same instant both wait")
+            return
+        }
+        expect(older.id != newer.id && older.displayedAt == newer.displayedAt,
+               "two proposals at the same instant have different ids")
+        expect(sameInstant.confirm(older, gestureBeganAt: at(2), now: at(2), liveRevision: 1) == .rejected(.wrongProposal),
+               "the older handle cannot confirm the newer proposal")
+        expect(sameInstant.confirm(newer, gestureBeganAt: at(2), now: at(2), liveRevision: 1) == .accepted(newer),
+               "only the newer proposal can be confirmed")
+
+        var late = WS2SilentSession()
+        let waiting = late.propose(commandID: "window.left", targetID: "win-1", targetRevision: 1, now: at(0))
+        guard case .awaiting(let held) = waiting else {
+            expect(false, "a placement waits before the deadline")
+            return
+        }
+        expect(held.deadline == at(10_000), "a proposal lasts ten seconds")
+        expect(late.confirm(held, gestureBeganAt: at(30_000), now: at(30_000), liveRevision: 1) == .rejected(.expired),
+               "a confirmation thirty seconds later is rejected")
+        expect(late.confirm(held, gestureBeganAt: at(30_001), now: at(30_001), liveRevision: 1) == .rejected(.wrongProposal),
+               "an expired proposal stays void")
+        var boundary = WS2SilentSession()
+        let boundaryStep = boundary.propose(commandID: "window.left", targetID: "win-1", targetRevision: 1, now: at(0))
+        if case .awaiting(let boundaryProposal) = boundaryStep {
+            expect(boundary.confirm(boundaryProposal, gestureBeganAt: at(10_000), now: at(10_000), liveRevision: 1) == .rejected(.expired),
+                   "the ten-second deadline itself rejects the proposal")
+        } else {
+            expect(false, "the deadline probe waits for confirmation")
+        }
+
+        var future = WS2SilentSession()
+        let shown = future.propose(commandID: "window.left", targetID: "win-1", targetRevision: 1, now: at(100))
+        guard case .awaiting(let pending) = shown else {
+            expect(false, "a placement waits before a future nod")
+            return
+        }
+        expect(future.confirm(pending, gestureBeganAt: at(500), now: at(100), liveRevision: 1) == .rejected(.confirmationInFuture),
+               "a nod that starts in the future voids the proposal")
+        expect(future.confirm(pending, gestureBeganAt: at(120), now: at(120), liveRevision: 1) == .rejected(.wrongProposal),
+               "a future nod does not leave the proposal reusable")
+
+        var dropped = WS2SilentSession()
+        let open = dropped.propose(commandID: "window.left", targetID: "win-1", targetRevision: 1, now: at(200))
+        guard case .awaiting(let live) = open else {
+            expect(false, "a placement waits before it is invalidated")
+            return
+        }
+        dropped.invalidate()
+        expect(dropped.confirm(live, gestureBeganAt: at(220), now: at(220), liveRevision: 1) == .rejected(.wrongProposal),
+               "invalidate retires the pending proposal")
+        expect(dropped.propose(commandID: "missing.command", targetID: "win-1", targetRevision: 1, now: at(230))
+               == .rejected(.unknownCommand),
+               "an unknown command is rejected")
+        let afterUnknown = dropped.propose(commandID: "window.left", targetID: "win-1", targetRevision: 1, now: at(240))
+        guard case .awaiting(let after) = afterUnknown else {
+            expect(false, "a known command can wait after an unknown one")
+            return
+        }
+        expect(dropped.propose(commandID: "missing.command", targetID: "win-1", targetRevision: 1, now: at(250))
+               == .rejected(.unknownCommand),
+               "an unknown command is rejected again")
+        expect(dropped.confirm(after, gestureBeganAt: at(260), now: at(260), liveRevision: 1) == .rejected(.wrongProposal),
+               "an unknown command clears the proposal that was waiting")
+    }
+
+    static func effectReceipts() {
+        expect(WS2SilentLab.realEffectCount == 0, "the lab does not hold a real effect port")
+        let glance = WS2SilentEffectJudge.glance(previewVisible: false)
+        expect(!glance.isCompleted && glance.notchLine == "没预览", "a glance without a preview is not completed")
+        let usage = WS2SilentEffectJudge.usageRefresh(protocolParsed: false)
+        expect(!usage.isCompleted && usage == .displayed("未提供"), "usage without a protocol response is not completed")
+        let cover = WS2SilentEffectJudge.cover(overlayCreated: false, commandID: "privacy.cover")
+        expect(!cover.isCompleted && cover == .unavailable("没遮住"), "a cover without an overlay is not completed")
+        let placement = WS2SilentEffectJudge.placement(frameMatched: false, commandID: "window.left", targetID: "win-1")
+        expect(!placement.isCompleted && placement == .unknown(0) && placement.notchLine == "结果未确认",
+               "a placement without a frame readback is not completed")
+        let launchpad = WS2SilentEffectJudge.launchpad(panelVisible: false, onFrozenScreen: false, commandID: "launcher.open")
+        expect(!launchpad.isCompleted && launchpad == .unavailable("没打开"),
+               "a launcher that is not on the frozen screen is not completed")
+        let seen = WS2SilentEffectJudge.launchpad(panelVisible: true, onFrozenScreen: true, commandID: "launcher.open")
+        expect(seen.isCompleted, "a launcher visible on the frozen screen is completed")
+        let pulled = WS2SilentEffectJudge.placement(frameMatched: false, commandID: "window.left", targetID: "win-1")
+        expect(!pulled.isCompleted, "pulling the effect port fails the positive completion check")
     }
 }

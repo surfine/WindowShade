@@ -262,8 +262,9 @@ enum WS2SilentCover {
         var revealed = false
     }
 
-    /// 遮住。不揭开，不解锁。
-    static func cover(_ state: inout State) -> Bool {
+    /// 没有覆盖层回执时不把内存写成已遮住。
+    static func cover(_ state: inout State, overlayCreated: Bool = false) -> Bool {
+        guard overlayCreated else { return false }
         state.covered = true
         state.revealed = false
         return state.covered && !state.revealed
@@ -567,8 +568,13 @@ struct WS2SilentModes: Sendable {
         session.propose(commandID: commandID, targetID: targetID, targetRevision: targetRevision, now: now)
     }
 
-    mutating func confirm(_ proposal: WS2SilentSession.Proposal, at gestureStart: WS2.Instant, currentRevision: UInt64) -> WS2SilentSession.Step {
-        session.confirm(proposal, at: gestureStart, currentRevision: currentRevision)
+    mutating func confirm(
+        _ proposal: WS2SilentSession.Proposal,
+        gestureBeganAt: WS2.Instant,
+        now: WS2.Instant,
+        liveRevision: UInt64
+    ) -> WS2SilentSession.Step {
+        session.confirm(proposal, gestureBeganAt: gestureBeganAt, now: now, liveRevision: liveRevision)
     }
 
     mutating func hold(_ sample: WS2SilentPhraseSample) {

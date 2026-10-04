@@ -6,6 +6,7 @@ import Cocoa
     private(set) var focus: FocusTimerHost!
     private(set) var island: NotchLeaseHub!
     private weak var focusCard: FocusTimerCard?
+    var showsFocusCard: Bool { focusCard != nil }
     /// T3 的窗口事务：串行计划 + 真实端口（端口未准入时只计时，不动窗口）。
     private var focusPort: WS2FocusWindowPort!
     private var focusEffects: WS2FocusEffectExecutor!

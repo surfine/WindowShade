@@ -93,12 +93,13 @@ enum WS2SilentSecurity {
         switch id {
         case "auth.settings", "auth.cancel", "auth.useSystem": return "不解锁"
         case "auth.revokeSession": return "没有许可"
+        case "auth.lab": return "只做实验"
         case "credential.chooseAlias": return "还没选"
         case "credential.secretPhraseLab": return "要用原来的确认"
         case "device.status": return "未知"
         case "carplay.enter", "carplay.exit": return "还不能接收"
         default:
-            return WS2SilentCopy.line(id) ?? "要用原来的确认"
+            return "要用原来的确认"
         }
     }
 }
