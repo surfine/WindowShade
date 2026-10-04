@@ -1,10 +1,12 @@
 import type { ReactNode } from 'react';
-import { AbsoluteFill, useCurrentFrame } from 'remotion';
+import { AbsoluteFill, Audio, staticFile, useCurrentFrame } from 'remotion';
 import type { Layout, Rect } from './layout';
 import { CAPTION_IN, dolly } from './motion/direction';
 import { NOTCH, TEACH_TUCKED, clamp01, seg } from './motion/site';
 import { MUSIC_PLAY } from './timeline';
-import { CAPTIONS, FADE_TO_BLACK, OPEN_PULL, WORDMARK_AT, captionOpacity, punchAt, srcAt } from './cut';
+import { CAPTIONS, FADE_TO_BLACK, MUSIC_FADE, OPEN_PULL, OUT_TOTAL, WORDMARK_AT, captionOpacity, punchAt, srcAt } from './cut';
+import { AUDIO_OFFSET_SEC, MUSIC_FILE } from './music';
+import { FPS } from './motion/site';
 import {
   DRAGGED_APP, DRAG_PRESS, HANDLE_POS, ICON_SIZE, chatBackAt, deviceAt, dragIconAt, draftAt, fingerAt, handleAt, headAt, phoneAt,
   pointerAt, screenDark, slotsAt, termDoneAt, trackpadAt, zoomAt,
@@ -48,6 +50,7 @@ export function Film({ L, drawn }: { L: Layout; drawn: boolean }) {
 
   return (
     <AbsoluteFill style={{ background: '#0a0b0e', overflow: 'hidden' }}>
+      <Audio src={staticFile(MUSIC_FILE)} trimBefore={Math.round(AUDIO_OFFSET_SEC * FPS)} volume={musicVolume} />
       <Camera out={out} frame={frame} L={L}>
         <Laptop L={L} frame={frame} page={page} over={over} />
         <Trackpad frame={frame} L={L} />
@@ -68,8 +71,8 @@ export function Film({ L, drawn }: { L: Layout; drawn: boolean }) {
  * [片子新增] 倍数：读口型、认人两处横版 3.2、竖版 3.1，让紧凑态两边的点和字在 1080p 上看得清、提醒展开也不出画；
  * 冷开场 2.4，刘海贴近画面上沿，下面露出整扇终端窗口的宽度，看得见它被吸上去。
  */
-const PUSH = { landscape: { scale: 3.2, y: 0.36 }, portrait: { scale: 3.1, y: 0.3 } } as const;
-const OPEN = { landscape: { scale: 2.4, y: 0.14 }, portrait: { scale: 2.4, y: 0.2 } } as const;
+const PUSH = { landscape: { scale: 3.2, y: 0.36 }, portrait: { scale: 3.1, y: 0.3 }, phone: { scale: 3.1, y: 0.3 } } as const;
+const OPEN = { landscape: { scale: 2.4, y: 0.14 }, portrait: { scale: 2.4, y: 0.2 }, phone: { scale: 2.4, y: 0.2 } } as const;
 
 /** 此刻推近多少（0–1）、推到几倍、刘海停在画面多高。冷开场按成片帧号，其余按母带帧号。 */
 function pushAt(out: number, frame: number, L: Layout) {
@@ -87,6 +90,11 @@ function Camera({ out, frame, L, children }: { out: number; frame: number; L: La
   const z = (1 + (scale - 1) * p) * (1 + punch);
   const tx = fx + (L.width / 2 - fx) * p, ty = fy + (L.height * y - fy) * p;
   return <div style={{ position: 'absolute', inset: 0, transformOrigin: '0 0', transform: `translate(${tx}px, ${ty}px) scale(${z}) translate(${-fx}px, ${-fy}px)` }}>{children}</div>;
+}
+
+/** 音量只看帧号：开头 3 帧淡入，最后一个重拍之后两拍开始线性淡到片尾。 */
+function musicVolume(f: number) {
+  return Math.min(clamp01(f / MUSIC_FADE.in), 1 - clamp01((f - MUSIC_FADE.outFrom) / (OUT_TOTAL - MUSIC_FADE.outFrom)));
 }
 
 function Pointer({ frame, L }: { frame: number; L: Layout }) {

@@ -29,7 +29,7 @@ export const AIR = {
 export const SCREEN_ASPECT = AIR.glassW / AIR.glassH;
 
 export type Layout = {
-  name: 'landscape' | 'portrait';
+  name: 'landscape' | 'portrait' | 'phone';
   width: number;
   height: number;
   /** 镜头推到底（scale 1）时那块屏的位置。 */
@@ -65,6 +65,22 @@ export const PORTRAIT: Layout = {
   caption: { cx: 540, cy: 1314, size: 64 },
   wordmark: { cx: 540, cy: 1314, size: 92 },
   side: { x: 300, y: 1460, w: 480, h: 380 },
+};
+
+/**
+ * iPhone 18 Pro Max 原生竖屏 1320 × 2868（apple.com/iphone-18-pro/specs：2868‑by‑1320，460 ppi）。
+ * 照 PORTRAIT 的摆法按宽放大 1320/1080 倍，比 9:16 多出来的高度上下分掉，整组（电脑、字幕、屏外物件）稍偏上居中。
+ * 机身比例不变：屏宽 1076，底座（比屏宽 22%）1313，不出画。
+ */
+export const PHONE: Layout = {
+  name: 'phone',
+  width: 1320,
+  height: 2868,
+  screen: screenOf(122, 640, 1076),
+  far: 0.74,
+  caption: { cx: 660, cy: 1610, size: 78 },
+  wordmark: { cx: 660, cy: 1610, size: 112 },
+  side: { x: 367, y: 1790, w: 587, h: 464 },
 };
 
 /** 屏幕坐标（按屏宽、屏高的百分比）→ 屏内像素。 */
