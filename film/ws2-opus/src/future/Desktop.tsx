@@ -159,7 +159,7 @@ export function Browser({ w, h }: { w: number; h: number }) {
       <div style={{ position: 'absolute', left: 0, right: 0, top: 52, bottom: 0, overflow: 'hidden', background: '#141416' }}>
         <div style={{ width: Math.min(680, w - 80), margin: '0 auto', paddingTop: 34, fontFamily: CJK, color: '#e9e9ee' }}>
           <div style={{ fontSize: 13, color: '#d4643f', fontWeight: 600, letterSpacing: 1 }}>效率 · 深度</div>
-          <div style={{ fontSize: 31, fontWeight: 700, lineHeight: 1.32, marginTop: 10 }}>刘海里的那块黑，终于有了用处</div>
+          <div style={{ fontSize: 31, fontWeight: 700, lineHeight: 1.32, marginTop: 10 }}>屏幕顶上那一小块，终于有了用处</div>
           <div style={{ fontSize: 13.5, color: '#8e8e93', marginTop: 12 }}>阿诺 · 2026 年 10 月 4 日 · 8 分钟读完</div>
           <div style={{ height: Math.min(260, h * 0.36), marginTop: 22, borderRadius: 14, overflow: 'hidden', position: 'relative' }}>
             <Img src={PLATE.wall} style={{ width: '100%', height: 560, objectFit: 'cover', marginTop: -160 }} />
