@@ -40,7 +40,7 @@ export const ISLAND_SHAPES = {
   alert: { w: 38, h: SITE_NOTCH_H + 8.6, r: 3.6 },
   shelf: { w: 54, h: SITE_NOTCH_H + 21, r: 4.2 },
   // 片子新增的一个目标：长按后铺满整块屏。弹簧沿用展开的 0.96 / 0.38，不另配。
-  full: { w: 100, h: 62.5, r: 0 },
+  full: { w: 100, h: (100 * 1864) / 2880, r: 0 },
 } as const;
 export type IslandMode = keyof typeof ISLAND_SHAPES;
 
