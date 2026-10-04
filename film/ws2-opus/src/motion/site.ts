@@ -29,12 +29,16 @@ export function bezier(x1: number, y1: number, x2: number, y2: number) {
 }
 
 // ---- site/island.js：岛的宽、高、圆角各一根弹簧（单位 cqw，屏宽的百分之一） ----
-export const NOTCH = { w: 14.5, h: 5.4, r: 1.5 };
+// 官网那一幕是屏幕顶端的特写（14.5 × 5.4）。片子画的是整块屏，安静的刘海改用真机比例：
+// 内建屏 1710pt 宽，刘海 185 × 33.5pt（NSScreen.auxiliaryTopLeft/RightArea、safeAreaInsets）。
+// 提醒和架子的大小照官网原值，好让字看得清。
+export const SITE_NOTCH_H = 5.4;
+export const NOTCH = { w: 10.8, h: 1.96, r: 0.55 };
 export const ISLAND_SHAPES = {
   rest: NOTCH,
-  compact: { w: NOTCH.w + 2 * 4.6, h: NOTCH.h, r: 1.6 },
-  alert: { w: 38, h: NOTCH.h + 8.6, r: 3.6 },
-  shelf: { w: 54, h: NOTCH.h + 21, r: 4.2 },
+  compact: { w: NOTCH.w + 2 * 4.6, h: NOTCH.h, r: 0.6 },
+  alert: { w: 38, h: SITE_NOTCH_H + 8.6, r: 3.6 },
+  shelf: { w: 54, h: SITE_NOTCH_H + 21, r: 4.2 },
   // 片子新增的一个目标：长按后铺满整块屏。弹簧沿用展开的 0.96 / 0.38，不另配。
   full: { w: 100, h: 62.5, r: 0 },
 } as const;

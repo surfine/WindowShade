@@ -51,6 +51,8 @@ export type SlotFrame = {
 const FULL: Rect = { x: 4, y: 12, w: 92, h: 83 };
 const CENTER: Rect = { x: 24, y: 26, w: 52, h: 66 }; // 让开提醒展开后的高度（14cqw ≈ 屏高 22.4%）
 const MUSIC: Rect = { x: 36, y: 26, w: 28, h: 64 };
+// 指针点在刘海上：屏高的百分比，落在真机刘海 1.96cqw 高度的中间。
+const ON_NOTCH = { x: 50, y: 1.6 };
 export const PLAY_BUTTON = { x: 50, y: 80 };
 const TERM: Rect = { x: 30, y: 22, w: 40, h: 56 };
 const CHAT: Rect = { x: 58, y: 20, w: 32, h: 52 };
@@ -164,15 +166,15 @@ const TRACKS: Track[] = [
   { show: 860, hide: 960, start: { x: 62, y: 92 }, moves: [{ at: 870, to: PLAY_BUTTON }], presses: [[MUSIC_PLAY - ms(TEACH.press), MUSIC_PLAY]] },
   // 第 3 段：按住终端的标题栏甩进刘海；停到刘海上；移开；再停上去、点格子放回。
   { show: 1850, hide: TUCK_A, start: { x: 50, y: 25 }, moves: [], presses: [[1880, TUCK_A]] },
-  { show: 2040, hide: 2360, start: { x: 50, y: 58 }, moves: [{ at: 2060, to: { x: 50, y: 4 } }, { at: 2300, to: { x: 50, y: 40 } }], presses: [] },
-  { show: 2640, hide: 2830, start: { x: 50, y: 46 }, moves: [{ at: 2650, to: { x: 50, y: 4 } }, { at: 2725, to: { x: 50, y: 24 } }], presses: [[CLICK_CARD - ms(TEACH.press), CLICK_CARD]] },
+  { show: 2040, hide: 2360, start: { x: 50, y: 58 }, moves: [{ at: 2060, to: ON_NOTCH }, { at: 2300, to: { x: 50, y: 40 } }], presses: [] },
+  { show: 2640, hide: 2830, start: { x: 50, y: 46 }, moves: [{ at: 2650, to: ON_NOTCH }, { at: 2725, to: { x: 50, y: 24 } }], presses: [[CLICK_CARD - ms(TEACH.press), CLICK_CARD]] },
   // 第 4 段：点刘海；按住一个图标拖到左边。
-  { show: 2900, hide: RELEASE_ICON + 10, start: { x: 50, y: 50 }, moves: [{ at: 2930, to: { x: 50, y: 4 } }, { at: 3040, to: DRAG.from }, { at: DRAG.start, to: DRAG.to }], presses: [[3010, 3021], [DRAG.press, RELEASE_ICON]] },
+  { show: 2900, hide: RELEASE_ICON + 10, start: { x: 50, y: 50 }, moves: [{ at: 2930, to: ON_NOTCH }, { at: 3040, to: DRAG.from }, { at: DRAG.start, to: DRAG.to }], presses: [[3010, 3021], [DRAG.press, RELEASE_ICON]] },
   // 第 5 段：点把手。
   { show: 3940, hide: 4060, start: { x: 30, y: 50 }, moves: [{ at: 3950, to: TEACH_HANDLE }], presses: [[4030, HANDLE_CLICK]] },
   // 第 7 段：长按刘海；再长按回来。
-  { show: 5420, hide: 5570, start: { x: 50, y: 45 }, moves: [{ at: 5440, to: { x: 50, y: 4 } }], presses: [[PRESS_LONG_A, 5570]] },
-  { show: 5820, hide: 5950, start: { x: 50, y: 40 }, moves: [{ at: 5830, to: { x: 50, y: 4 } }], presses: [[PRESS_LONG_B, 5950]] },
+  { show: 5420, hide: 5570, start: { x: 50, y: 45 }, moves: [{ at: 5440, to: ON_NOTCH }], presses: [[PRESS_LONG_A, 5570]] },
+  { show: 5820, hide: 5950, start: { x: 50, y: 40 }, moves: [{ at: 5830, to: ON_NOTCH }], presses: [[PRESS_LONG_B, 5950]] },
 ];
 
 export type PointerFrame = Pt & { opacity: number; pressed: number };
