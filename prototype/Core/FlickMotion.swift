@@ -228,6 +228,64 @@ struct FlickSpring: Equatable {
         }
         return v0 * low
     }
+
+    /// 停在终点上被踢一脚（位移从 0 出发）。v0 是离开终点的速度，点/秒。
+    /// 临界阻尼（ζ = 1）时峰值在 t = response / (2π)，位移 = v0 · t / e。
+    func kickDisplacement(velocity v0: Double, at t: Double) -> Double {
+        state(displacement: 0, velocity: v0, at: max(0, t)).x
+    }
+
+    func criticalKickPeak(velocity v0: Double) -> (time: Double, displacement: Double) {
+        let time = response / (2 * Double.pi)
+        return (time, kickDisplacement(velocity: v0, at: time))
+    }
+
+    /// 从踢出那一帧采样到回到终点附近。点与点之间只做线性插值：曲线是弹簧的解，不再套一条贝塞尔。
+    func kickSamples(velocity v0: Double, step: Double = 1.0 / 120, rest: Double = 0.2) -> [(time: Double, displacement: Double)] {
+        var samples: [(time: Double, displacement: Double)] = [(0, 0)]
+        var t = step
+        var passedPeak = false
+        while t <= 1.2 {
+            let x = kickDisplacement(velocity: v0, at: t)
+            let previous = samples[samples.count - 1].displacement
+            if abs(x) < abs(previous) { passedPeak = true }
+            if passedPeak, abs(x) <= rest {
+                samples.append((t, 0))
+                break
+            }
+            samples.append((t, x))
+            t += step
+        }
+        return samples
+    }
+}
+
+/// 收进刘海时岛鼓一下：宽和高各一根 `calm`，在终点上被踢一脚初速度。
+/// 峰值不是关键帧写死的，是这根临界阻尼弹簧自己走到的地方（约 0.05 秒，+14 pt / +6 pt）。
+enum SwellKick {
+    static let widthVelocity = 700.0
+    static let heightVelocity = 300.0
+
+    static var spring: FlickSpring {
+        FlickSpring(dampingRatio: MotionSpring.calm.dampingRatio, response: MotionSpring.calm.response)
+    }
+
+    struct Sample {
+        var time: Double
+        var width: Double
+        var height: Double
+    }
+
+    static func samples(step: Double = 1.0 / 120) -> [Sample] {
+        let width = spring.kickSamples(velocity: widthVelocity, step: step)
+        let height = spring.kickSamples(velocity: heightVelocity, step: step)
+        let count = max(width.count, height.count)
+        return (0..<count).map { i in
+            let w = i < width.count ? width[i] : width.last!
+            let h = i < height.count ? height[i] : height.last!
+            return Sample(time: max(w.time, h.time), width: w.displacement, height: h.displacement)
+        }
+    }
 }
 
 /// 窗口从松手处带着速度滑到目标的整条路径（AX 坐标：y 向下）。

@@ -157,11 +157,16 @@
         return { win: moving, ptr: bar(moving), notch: REST };
       }
       const lifted = off(MID, 0, -6);
-      const grow = e.since > 380 ? spring(e.since - 380, 0.7, 0.36) : 0;
+      const grow = e.since > 380 ? WSMotion.progress((e.since - 380) / 1000, ...WSMotion.named('expand')) : 0;
+      const swellT = Math.max(0, (e.since - 380) / 1000);
+      // 课里的坐标是屏宽、屏高的百分比。Air 15 默认 1710×1107 pt。
+      const bumpW = WSMotion.kick(swellT, 700 * 100 / 1710);
+      const bumpH = WSMotion.kick(swellT, 300 * 100 / 1107);
+      const flyP = WSMotion.progress(e.since / 1000, ...WSMotion.named('settle'));
       return {
         win: { ...lifted, hidden: true }, ptr: bar(lifted),
-        fly: e.since < 600 ? glide(lifted, INTO, spring(e.since, 1, 0.34), spring(e.since, 1, 0.3)) : null,
-        notch: { w: NOTCH.w + 2 * SIDE * grow, h: NOTCH.h + 0.8 * Math.sin(Math.PI * seg(e.since, 380, 700)), compact: grow },
+        fly: e.since < 700 ? glide(lifted, INTO, flyP, flyP) : null,
+        notch: { w: NOTCH.w + 2 * SIDE * grow + bumpW, h: NOTCH.h + bumpH, compact: grow },
       };
     },
   };
@@ -172,8 +177,8 @@
         const extra = rubber(26 * e.p, 14);
         return { win: { ...MID, hidden: true }, notch: { w: NOTCH.w + 2 * SIDE + extra * 0.5, h: NOTCH.h + extra, compact: 1, pull: extra / 10 } };
       }
-      const extra = rubber(26, 14) * (1 - spring(e.since, 1, 0.3));
-      const back = spring(e.since, 1, 0.32);
+      const extra = rubber(26, 14) * (1 - WSMotion.progress(e.since / 1000, ...WSMotion.named('pull')));
+      const back = WSMotion.progress(e.since / 1000, ...WSMotion.named('calm'));
       const from = { x: 50 - 3, y: NOTCH.h + extra * 0.4, w: 6, h: 4.2 };
       return {
         win: e.since > 650 ? MID : { ...MID, hidden: true },

@@ -11,6 +11,7 @@ final class WS2InputController {
     /// 监听没有创建。映射文本不在仓库里，打开开关也不会变成 true。
     private(set) var remoteListening = false
     private(set) var middleListening = false
+    private(set) var hooksPaused = false
 
     private func tick() -> WS2.Instant {
         routerClock = routerClock.adding(1)
@@ -43,9 +44,9 @@ final class WS2InputController {
         scrollTap.update(ScrollSession.Request(smooth: prefs.smooth, invertMouse: prefs.mouseInvert, fine: prefs.fine,
                                                 sideButtons: prefs.sideButtons, foregroundExcluded: false),
                          excluded: Set(prefs.exceptions))
-        scrollTap.apply(installing: decision == .install, mask: mask)
-        scrollTap.setWatchingForeground(decision == .install)
-        let middleOn = InputFeatureGate.middleDragMayInstall(switchOn: prefs.middleFold)
+        scrollTap.apply(installing: InputFeatureGate.scrollMayInstall(decisionInstalls: decision == .install, paused: hooksPaused), mask: hooksPaused ? 0 : mask)
+        scrollTap.setWatchingForeground(decision == .install && !hooksPaused)
+        let middleOn = InputFeatureGate.middleDragMayInstall(switchOn: prefs.middleFold, paused: hooksPaused)
             && !middleTap.systemStopped
         middleListening = middleOn
         middleTap.apply(installing: middleOn)
@@ -62,6 +63,13 @@ final class WS2InputController {
         middleTap.apply(installing: false)
         remoteListening = false
         _ = remote.setEnabled(false, at: tick())
+    }
+
+    /// 静音「先停一下」。偏好还在，钩子先拆掉，再次 apply 也不会装上。
+    func pauseHooks() {
+        dispatchPrecondition(condition: .onQueue(.main))
+        hooksPaused = true
+        apply()
     }
 
     func scrollStatus(prefersChange: Bool) -> String {

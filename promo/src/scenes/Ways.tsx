@@ -1,7 +1,7 @@
 import React from "react";
 import { AbsoluteFill, useCurrentFrame } from "remotion";
 import { WAYS } from "../timeline";
-import { C, FONT, easeInOut, easeOut, easeRoll, mix, pop, tw } from "../theme";
+import { C, FONT, easeOut, mix, motion, pop, tw } from "../theme";
 import { Caption, Canvas, Clicks, Glass, Lines, MacWindow, Rise, tiltIn, useVertical } from "../ui";
 
 // Three ways out of the way, side by side: close, minimize, roll up. Only the last one stays put.
@@ -46,17 +46,17 @@ const Body: React.FC = () => (
 export const Ways: React.FC = () => {
   const frame = useCurrentFrame();
   const v = useVertical();
-  const focus = tw(frame, WAYS.focus, WAYS.focus + 80, 0, 1, easeInOut);
+  const focus = motion(frame, WAYS.focus, "dolly");
 
   // Close: shrink, blur, gone.
   const c = tw(frame, WAYS.close + 2, WAYS.close + 22, 0, 1, easeOut);
   // Minimize: squeeze toward the Dock below.
-  const mz = tw(frame, WAYS.minimize + 4, WAYS.minimize + 34, 0, 1, easeInOut);
+  const mz = motion(frame, WAYS.minimize + 4, "glide");
   // Roll up: in place.
-  const roll = tw(frame, WAYS.shade + 10, WAYS.shade + 40, 0, 1, easeRoll);
+  const roll = motion(frame, WAYS.shade + 10, "settle");
 
   const lampPulse = (at: number) => 1 + 0.5 * Math.sin(Math.PI * tw(frame, at - 8, at + 4, 0, 1));
-  const dock = pop(frame, WAYS.minimize - 24, 18, 160);
+  const dock = pop(frame, WAYS.minimize - 24);
 
   return (
     <Canvas>

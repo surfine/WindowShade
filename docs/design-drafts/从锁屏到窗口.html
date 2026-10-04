@@ -1,0 +1,303 @@
+<!doctype html><html><head><meta charset=utf8><meta name=viewport content="width=device-width,initial-scale=1,viewport-fit=cover"><style>:root{color-scheme:light;box-sizing:border-box;padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}html{scroll-padding-top:env(safe-area-inset-top,0px)}body{margin:0;padding:0;font:14px -apple-system,BlinkMacSystemFont,sans-serif;background:#faf9f5;color:#141413}img{max-width:100%}[hidden]:not([hidden=until-found i]){display:none!important}</style></head><body>
+<title>从锁屏到窗口</title>
+<style>
+@import url("https://fonts.googleapis.com/css2?family=Newsreader:opsz,wght@6..72,400;6..72,600&family=IBM+Plex+Sans:wght@400;500;600&family=IBM+Plex+Mono:wght@400;500&family=Noto+Sans+SC:wght@400;500;600&family=Noto+Serif+SC:wght@600&display=swap");
+:root{
+  --paper:#EEF1F6;--surface:#FFFFFF;--surface-2:#F5F7FB;--ink:#131A25;--ink-2:#46546A;--ink-3:#6F7D93;
+  --line:#D6DDE8;--line-soft:#E5EAF2;--accent:#2F62C4;--accent-soft:#E2EAF9;--good:#2C7350;--good-soft:#E1F0E7;--warn:#A8600F;--warn-soft:#FBF0DF;
+  --doc:"IBM Plex Sans","Noto Sans SC",-apple-system,system-ui,sans-serif;--head:"Newsreader","Noto Serif SC",Georgia,serif;--mono:"IBM Plex Mono",ui-monospace,Menlo,monospace;
+  --mac:-apple-system,"SF Pro Text","PingFang SC","Noto Sans SC",sans-serif;
+}
+@media (prefers-color-scheme:dark){:root:not([data-theme="light"]){color-scheme:dark;
+  --paper:#0E131B;--surface:#151C27;--surface-2:#1A222F;--ink:#E7EDF6;--ink-2:#A7B4C8;--ink-3:#7A889E;--line:#26303F;--line-soft:#1E2733;
+  --accent:#7FA5F0;--accent-soft:#1B2740;--good:#6CC495;--good-soft:#14271D;--warn:#E0A264;--warn-soft:#2A2115;}}
+:root[data-theme="dark"]{color-scheme:dark;
+  --paper:#0E131B;--surface:#151C27;--surface-2:#1A222F;--ink:#E7EDF6;--ink-2:#A7B4C8;--ink-3:#7A889E;--line:#26303F;--line-soft:#1E2733;
+  --accent:#7FA5F0;--accent-soft:#1B2740;--good:#6CC495;--good-soft:#14271D;--warn:#E0A264;--warn-soft:#2A2115;}
+*{box-sizing:border-box}
+body{margin:0;background:var(--paper);color:var(--ink);font:15px/1.72 var(--doc);-webkit-font-smoothing:antialiased}
+.wrap{max-width:1080px;margin:0 auto;padding-inline:20px;padding-block:0 96px}
+header{padding:60px 0 28px}
+.eyebrow{font-family:var(--mono);font-size:11.5px;letter-spacing:.14em;text-transform:uppercase;color:var(--ink-3);margin:0 0 14px}
+h1{font-family:var(--head);font-weight:600;font-size:clamp(34px,5.6vw,52px);line-height:1.08;letter-spacing:-.015em;margin:0 0 16px;text-wrap:balance}
+.lede{font-size:17.5px;color:var(--ink-2);max-width:62ch;margin:0}
+.lede b{color:var(--ink)}
+h2{font-family:var(--head);font-weight:600;font-size:clamp(23px,3.2vw,29px);line-height:1.25;margin:0 0 8px;text-wrap:balance}
+section{padding-top:56px}
+p{max-width:66ch}
+code{font-family:var(--mono);font-size:.86em;background:var(--surface-2);border:1px solid var(--line-soft);border-radius:4px;padding:1px 5px}
+
+/* player */
+.player{display:grid;grid-template-columns:minmax(0,1.55fr) minmax(0,1fr);gap:22px;margin-top:26px;align-items:start}
+@media (max-width:860px){.player{grid-template-columns:1fr}}
+.mac{position:relative;aspect-ratio:16/10.4;max-width:100%;border-radius:18px 18px 6px 6px;background:#0b0b0d;padding:1.6%;box-shadow:0 30px 60px -30px rgba(10,20,40,.55)}
+.screen{position:relative;width:100%;height:100%;border-radius:12px 12px 2px 2px;overflow:hidden;background:#000;container-type:inline-size;font-family:var(--mac)}
+.wall{position:absolute;inset:0;background:radial-gradient(120% 90% at 10% 0%,#7FA0D8 0%,transparent 60%),radial-gradient(90% 80% at 100% 10%,#C9A6CF 0%,transparent 60%),radial-gradient(120% 90% at 60% 120%,#E8B98F 0%,transparent 60%),#5E6F98}
+.menubar{position:absolute;inset:0 0 auto;height:4.4cqw;display:flex;align-items:center;gap:2.6cqw;padding-inline:2.6cqw;font-size:1.55cqw;color:#fff;font-weight:600;background:rgba(20,24,36,.18);backdrop-filter:blur(8px)}
+.menubar span{font-weight:400;opacity:.85}
+.menubar .r{margin-left:auto;opacity:.9;font-variant-numeric:tabular-nums}
+.desk{position:absolute;inset:0;transform-origin:50% 0%;will-change:transform,opacity}
+.win{position:absolute;background:#fff;border-radius:1.4cqw;box-shadow:0 1.2cqw 3cqw rgba(0,0,0,.28);overflow:hidden}
+.win .bar{height:3.6cqw;background:#F1F1F3;border-bottom:1px solid rgba(0,0,0,.08);display:flex;align-items:center;gap:.8cqw;padding-inline:1.3cqw;font-size:1.25cqw;color:#666;font-weight:600}
+.lamp{width:1.1cqw;height:1.1cqw;border-radius:50%;background:#ff5f57}.lamp:nth-child(2){background:#febc2e}.lamp:nth-child(3){background:#28c840}
+.win .t{flex:1;text-align:center;margin-right:4cqw}
+.lines{padding:1.6cqw}.lines i{display:block;height:1cqw;border-radius:.4cqw;background:#E6E8EE;margin-bottom:1.1cqw}
+.lock{position:absolute;inset:0;opacity:0;display:flex;flex-direction:column;align-items:center;color:#fff;pointer-events:none}
+.lock .blur{position:absolute;inset:0;backdrop-filter:blur(18px) saturate(140%);background:rgba(10,14,26,.18)}
+.lock .date{position:relative;margin-top:11cqw;font-size:2cqw;font-weight:500;opacity:.9}
+.lock .time{position:relative;font-size:12cqw;font-weight:600;letter-spacing:-.04em;line-height:1;font-variant-numeric:tabular-nums}
+.lock .user{position:relative;margin-top:auto;margin-bottom:6cqw;display:flex;flex-direction:column;align-items:center;gap:1cqw;font-size:1.6cqw}
+.lock .avatar{width:7cqw;height:7cqw;border-radius:50%;background:linear-gradient(140deg,#D7DEEA,#9AA8C2)}
+.lock .pw{width:16cqw;height:3.2cqw;border-radius:2cqw;background:rgba(255,255,255,.22);border:1px solid rgba(255,255,255,.3);display:flex;align-items:center;justify-content:center;font-size:1.3cqw;color:rgba(255,255,255,.75);transition:box-shadow .2s}
+.lock .pw.hl{box-shadow:0 0 0 .4cqw rgba(255,255,255,.55)}
+/* island */
+.island{position:absolute;left:50%;top:0;transform:translateX(-50%);background:#000;color:#fff;overflow:hidden;z-index:5;will-change:width,height}
+.island .content{position:absolute;inset:0;display:flex;align-items:center;justify-content:center;opacity:0}
+.island .row{position:absolute;left:0;right:0;bottom:2cqw;display:flex;justify-content:center;gap:1.4cqw;opacity:0}
+.tile{width:11cqw;height:7.4cqw;border-radius:1cqw;background:#2a2d34;position:relative;overflow:hidden;cursor:pointer;border:1px solid rgba(255,255,255,.1)}
+.tile i{position:absolute;left:12%;right:12%;height:.7cqw;border-radius:.3cqw;background:rgba(255,255,255,.28)}
+.tile .ic{position:absolute;right:.6cqw;bottom:.6cqw;width:2.4cqw;height:2.4cqw;border-radius:.6cqw}
+.tile .dot{position:absolute;right:.6cqw;top:.6cqw;width:1cqw;height:1cqw;border-radius:50%;background:#0A84FF;border:.2cqw solid #000}
+.tile .tag{position:absolute;left:.6cqw;top:.5cqw;font-size:1cqw;color:rgba(255,255,255,.7)}
+.peek{position:absolute;border-radius:1.4cqw;overflow:hidden;background:#fff;box-shadow:0 1.6cqw 4cqw rgba(0,0,0,.35);opacity:0;pointer-events:none;transform-origin:50% 0}
+.peek .bar{height:3.6cqw;background:#F1F1F3}
+.ring{width:3.6cqw;height:3.6cqw;border-radius:50%;border:.35cqw solid rgba(255,255,255,.25);border-top-color:#fff;animation:spin 1s linear infinite}
+@keyframes spin{to{transform:rotate(360deg)}}
+.check{width:3.6cqw;height:3.6cqw;border-radius:50%;background:#30D158;display:flex;align-items:center;justify-content:center;font-size:2cqw;font-weight:700;color:#000}
+.cap{font-size:1.45cqw;line-height:1.3}
+.cap small{display:block;color:rgba(255,255,255,.6);font-size:1.15cqw}
+
+/* controls */
+.steps{display:grid;gap:8px}
+.step{display:grid;grid-template-columns:2.2em 1fr;gap:10px;align-items:start;text-align:left;width:100%;padding:10px 12px;border-radius:10px;border:1px solid var(--line);background:var(--surface);color:var(--ink);font:inherit;cursor:pointer;transition:transform .12s ease-out,border-color .15s}
+.step:active{transform:scale(.985)}
+.step .n{font-family:var(--mono);font-size:12px;color:var(--ink-3);padding-top:2px}
+.step b{display:block;font-size:14.5px}
+.step span{font-size:13px;color:var(--ink-2)}
+.step[aria-current="step"]{border-color:var(--accent);background:var(--accent-soft)}
+.step[aria-current="step"] .n{color:var(--accent)}
+.toggles{display:flex;flex-wrap:wrap;gap:8px;margin-top:12px}
+.tg{font:13px var(--doc);padding:6px 11px;border-radius:99px;border:1px solid var(--line);background:var(--surface);color:var(--ink-2);cursor:pointer}
+.tg[aria-pressed="true"]{background:var(--ink);color:var(--paper);border-color:var(--ink)}
+.now{margin-top:14px;padding:14px 16px;border-radius:12px;background:var(--surface);border:1px solid var(--line);font-size:14px}
+.now b{display:block;margin-bottom:4px}
+.now .spec{font-family:var(--mono);font-size:12px;color:var(--ink-3);margin-top:6px}
+
+/* tables & cards */
+.scroll{overflow-x:auto;border:1px solid var(--line);border-radius:12px;background:var(--surface);margin-top:16px}
+table{border-collapse:collapse;width:100%;font-size:13.8px}
+th,td{text-align:left;vertical-align:top;padding:10px 14px;border-bottom:1px solid var(--line-soft)}
+tr:last-child td{border-bottom:0}
+th{font-family:var(--mono);font-size:11px;letter-spacing:.08em;text-transform:uppercase;color:var(--ink-3);font-weight:500;background:var(--surface-2);white-space:nowrap}
+td.k{font-weight:600;white-space:nowrap}
+.mono{font-family:var(--mono);font-size:12.5px;color:var(--ink-2);white-space:nowrap}
+.pill{display:inline-block;font-family:var(--mono);font-size:11px;padding:1px 7px;border-radius:4px;white-space:nowrap}
+.pill.done{background:var(--good-soft);color:var(--good)}.pill.part{background:var(--accent-soft);color:var(--accent)}.pill.todo{background:var(--warn-soft);color:var(--warn)}
+.rules{display:grid;grid-template-columns:repeat(auto-fit,minmax(min(100%,300px),1fr));gap:12px;margin-top:16px}
+.rule{background:var(--surface);border:1px solid var(--line);border-radius:12px;padding:14px 16px}
+.rule b{display:block;font-family:var(--head);font-size:18px;margin-bottom:4px}
+.rule p{margin:0;font-size:14px;color:var(--ink-2)}
+.ask{margin-top:16px;padding:16px 18px;border-radius:12px;background:var(--warn-soft);font-size:14.5px}
+footer{margin-top:64px;padding-top:20px;border-top:1px solid var(--line);font-size:13px;color:var(--ink-3)}
+.ringlight{position:absolute;inset:0;pointer-events:none;opacity:0;box-shadow:inset 0 0 0 2.2cqw rgba(255,248,236,.95),inset 0 0 5cqw 3cqw rgba(255,244,226,.55);z-index:4}
+.dots{display:flex;gap:.7cqw}.dots i{width:.9cqw;height:.9cqw;border-radius:50%;background:#fff;opacity:0;transform:scale(.6);transition:opacity .12s,transform .12s}
+.dots i.on{opacity:1;transform:none}
+.fac{display:flex;gap:1cqw;align-items:center}
+.fac span{width:2.6cqw;height:2.6cqw;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:1.3cqw;background:rgba(255,255,255,.12);color:rgba(255,255,255,.7);transition:background .2s,color .2s}
+.fac span.ok{background:#30D158;color:#000}.fac span.no{background:#FF9F0A;color:#000}
+.vf{position:relative;width:12cqw;height:12cqw;border-radius:50%;border:.25cqw solid rgba(255,255,255,.18)}
+.vf i{position:absolute;left:50%;top:50%;width:.35cqw;height:1.6cqw;margin:-.8cqw 0 0 -.175cqw;border-radius:.2cqw;background:rgba(255,255,255,.25);transition:background .2s}
+.vf i.on{background:#30D158}
+.vf .face{position:absolute;inset:22%;border-radius:50%;background:radial-gradient(circle at 50% 40%,#c9b7a5,#7d6a5c)}
+.priv{position:absolute;right:5%;bottom:10%;width:30%;height:40%;background:#fff;border-radius:1.4cqw;box-shadow:0 1.2cqw 3cqw rgba(0,0,0,.28);overflow:hidden;transform-origin:50% 0;will-change:transform,opacity}
+.priv .bar{background:#E9F7EC}
+.count{font-variant-numeric:tabular-nums;font-size:2.2cqw;font-weight:700}
+.mandate{counter-reset:m;display:grid;gap:10px;margin-top:16px}
+.mandate li{list-style:none;counter-increment:m;display:grid;grid-template-columns:2.2em 1fr;gap:10px;background:var(--surface);border:1px solid var(--line);border-radius:12px;padding:12px 14px;font-size:14.5px}
+.mandate li::before{content:counter(m,decimal-leading-zero);font-family:var(--mono);font-size:12px;color:var(--accent);padding-top:3px}
+.mandate b{display:block}
+.mandate span{color:var(--ink-2)}
+</style>
+
+<div class="wrap">
+<header>
+  <p class="eyebrow">WindowShade · 设计稿 v2 · 2026-10-03 · 刷脸解锁（吸收 Glance）</p>
+  <h1>开盖，认出你，窗口都还在原处</h1>
+  <p class="lede">这是 WindowShade 把 Glance 的刷脸解锁吸收进来以后的一整套体验：从第一次在刘海里录脸，到每天开盖、被认出、桌面从刘海展开、在刘海里找回窗口，再到你离开时自己锁上、有人偷看时把私事收起来。<b>一个刘海、一套弹簧、一条路走完。</b>可以一步步点着看，也可以切到光线暗、戴口罩、手机不在、没认出、减少动态效果。</p>
+</header>
+
+<div class="player">
+  <div>
+    <div class="mac" aria-hidden="true">
+      <div class="screen" id="screen">
+        <div class="wall"></div>
+        <div class="desk" id="desk">
+          <div class="menubar"> Xcode <span>文件</span><span>编辑</span><span>窗口</span><span class="r">周六 09:41</span></div>
+          <div class="win" style="left:4%;top:12%;width:55%;height:70%"><div class="bar"><i class="lamp"></i><i class="lamp"></i><i class="lamp"></i><span class="t">ContentView.swift</span></div><div class="lines"><i style="width:70%"></i><i style="width:52%"></i><i style="width:80%"></i><i style="width:44%"></i><i style="width:66%"></i></div></div>
+          <div class="win" id="winB" style="left:46%;top:18%;width:40%;height:52%"><div class="bar"><i class="lamp"></i><i class="lamp"></i><i class="lamp"></i><span class="t">构建日志</span></div><div class="lines"><i style="width:60%"></i><i style="width:75%"></i><i style="width:40%"></i><i style="width:68%"></i></div></div>
+          <div class="priv" id="priv"><div class="bar" style="height:3.6cqw;display:flex;align-items:center;gap:.8cqw;padding-inline:1.3cqw;font-size:1.25cqw;color:#2a7a3e;font-weight:600"><i class="lamp"></i><i class="lamp"></i><i class="lamp"></i><span style="flex:1;text-align:center;margin-right:4cqw">微信</span></div><div class="lines"><i style="width:50%"></i><i style="width:70%"></i><i style="width:38%"></i></div></div>
+        </div>
+        <div class="lock" id="lock">
+          <div class="blur"></div>
+          <div class="date">10月3日 星期六</div>
+          <div class="time">09:41</div>
+          <div class="user"><div class="avatar"></div><div>Aaron</div><div class="pw" id="pw"><span id="pwText">输入密码</span><span class="dots" id="dots" style="display:none"><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i></span></div></div>
+        </div>
+        <div class="peek" id="peek"><div class="bar"></div><div style="padding:1.6cqw"><i style="width:60%;display:block;height:1cqw;background:#E6E8EE;margin-bottom:1.1cqw;border-radius:.4cqw"></i><i style="width:75%;display:block;height:1cqw;background:#E6E8EE;margin-bottom:1.1cqw;border-radius:.4cqw"></i><i style="width:40%;display:block;height:1cqw;background:#E6E8EE;border-radius:.4cqw"></i></div></div>
+        <div class="ringlight" id="ringlight"></div>
+        <div class="island" id="island"><div class="content" id="icontent"></div><div class="row" id="row"></div></div>
+      </div>
+    </div>
+    <div class="toggles">
+      <button class="tg" id="tgDark" aria-pressed="false">光线暗</button>
+      <button class="tg" id="tgMask" aria-pressed="false">戴口罩</button>
+      <button class="tg" id="tgPhone" aria-pressed="false">手机不在</button>
+      <button class="tg" id="tgFail" aria-pressed="false">没认出</button>
+      <button class="tg" id="tgReduce" aria-pressed="false">减少动态效果</button>
+      <button class="tg" id="tgPlay">从头播一遍</button>
+    </div>
+    <div class="now" id="now" aria-live="polite"></div>
+  </div>
+  <div class="steps" id="steps" role="list"></div>
+</div>
+
+<section>
+  <h2>六条原则</h2>
+  <div class="rules">
+    <div class="rule"><b>系统永远是出路</b><p>系统的锁屏、密码框、Touch ID 不被遮挡、不被仿冒。刘海认不出、手机不在、戴口罩、连续 3 次失败，都清清楚楚把人交回系统，不让人对着一颗转圈的岛干等。</p></div>
+    <div class="rule"><b>两样都对才放行</b><p>每次刷脸解锁都要“是你的脸”加“是你的手机或手表”。刘海上两枚小圆点分别亮起，人看得见是哪一样还差。</p></div>
+    <div class="rule"><b>结果不由动画决定</b><p>对勾只在真的认出、真的放行之后出现；密码一个点一个点填进去是真的在输入；桌面展开要等系统确认已解锁，用解锁后的新画面。</p></div>
+    <div class="rule"><b>从哪里去，就从哪里回来</b><p>合盖时桌面折进刘海，解锁后从刘海展开；偷看时私人窗口收进刘海，人走了再从刘海放回。空间关系一路不变。</p></div>
+    <div class="rule"><b>天天用的不加戏</b><p>一天几十次的解锁：短、不回弹。一天上百次的刘海悬停：0.12 秒展开。只有录脸、合盖这种少见时刻，才允许多一点表现。</p></div>
+    <div class="rule"><b>摄像头可见、可控、少开</b><p>只在开盖、唤醒、锁屏、按空格，和你停手 30 秒以后才开；系统绿灯照常亮；每秒 2 帧、在 ANE 上看；图像不落盘。</p></div>
+  </div>
+</section>
+
+<section>
+  <h2>每一刻的规格</h2>
+  <p>弹簧用设计系统的令牌（response 秒 / 阻尼比）。“减少动态效果”时一律换成 0.18 秒交叉淡化，位置不动。“现在”一栏是 2026-10-03 的实际进度。</p>
+  <div class="scroll"><table>
+    <thead><tr><th>时刻</th><th>看到什么</th><th>怎么动</th><th>失败或打断</th><th>现在</th></tr></thead>
+    <tbody id="specRows"></tbody>
+  </table></div>
+</section>
+
+<section>
+  <h2>写给接手的人：照这个方向走，不要绕开</h2>
+  <p>这一页是 Aaron 2026-10-03 四轮问答后的定稿方向（逐项决定在 <code>docs/direction.md</code>“刷脸解锁：吸收 Glance”）。接手的模型或人，先读这一节，再动代码。下面每一条都是硬要求：做不到就停下来说明卡在哪，不要换一个更容易的东西交差。</p>
+  <ol class="mandate">
+    <li><span><b>只有一个刘海宿主。</b>录脸、认你、补光、倒数、偷看提示、窗口那一排，全部长在已有的刘海面板里（<code>App/Notch.swift</code> 一系）。不新建认证窗口、不另起第二套浮层、不再交一个普通预览窗当成果。</span></li>
+    <li><span><b>两样都对才代打密码。</b>ArcFace 特征比对（跑在 ANE 上）+ 严格活体 + 注视 + 手机或手表的蓝牙因素，全部通过才在锁屏上输入密码。任何一样只是“看起来通过”（动画对勾、信号强、名字对得上）都不算。</span></li>
+    <li><span><b>先把最没把握的做掉。</b>第一件事是蓝牙第二因素的可行性实验：Mac 扮成蓝牙配件、和 iPhone 配对一次、之后靠加密重连证明“是那台手机”；Apple Watch 能不能用要实验说话。做不成就如实写下卡在哪一层，再和 Aaron 定替代，不要悄悄去掉这个因素。</span></li>
+    <li><span><b>攻击测试决定说明怎么写。</b>照片、手机屏幕、录像、换人、换手机，每一种都实测；风险说明只写测过的结果。没测过的，一个字都不承诺。</span></li>
+    <li><span><b>系统永远是出路。</b>戴口罩、光线太暗补光也不够、手机不在、连续 3 次失败，都回到 Touch ID 或密码；刘海说清下一步，不挡系统的密码框。</span></li>
+    <li><span><b>耗电写进验收。</b>摄像头常开只在停手 30 秒后、每秒 2 帧、ANE 推理；蓝牙扫描有占空比；空闲时 CPU 和唤醒次数和 1.0.15 比，不许变差。性能文档第七节的测法照用。</span></li>
+    <li><span><b>密码只在授权会话里解开。</b>加密的钥匙由 Touch ID 保护，只在会话期间留在内存，空闲后自己重新上锁；日志里不出现密码、特征、图像、完整设备标识。</span></li>
+    <li><span><b>每一步都要能装上、能试、能撤回。</b>先给 Aaron 能装的构建，再写下一步；每一步附真机探针或攻击测试的实际结果，单元测试和模拟数据不冒充真机。</span></li>
+  </ol>
+</section>
+
+<section>
+  <h2>做的顺序</h2>
+  <div class="scroll"><table>
+    <thead><tr><th>步</th><th>做什么</th><th>算完成</th></tr></thead>
+    <tbody>
+      <tr><td class="mono">F1</td><td>蓝牙第二因素可行性实验（iPhone、Apple Watch 分开）</td><td>写清哪条路能走、走到哪一层；能走的给出配对一次、之后加密重连的真机记录</td></tr>
+      <tr><td class="mono">F2</td><td>把 Glance 的锁屏状态判断、锁屏上抬起面板、按显示器选摄像头，对照接进已有模块</td><td>锁屏、唤醒、睡眠、换屏都撤得干净；和已有锁屏开合效果不打架</td></tr>
+      <tr><td class="mono">F3</td><td>在刘海里录脸（九个方向，可录几种样子）；ArcFace 在 ANE 上；特征加密存本机</td><td>录、删、重录都在刘海里完成；图像不落盘；主线程不卡</td></tr>
+      <tr><td class="mono">F4</td><td>锁屏认你：补光圈、严格活体、注视、手机因素、3 次失败上限，Touch ID 保护的密码会话</td><td>两样都对才输入；每种失败都把人交回系统；实测开盖到桌面的耗时</td></tr>
+      <tr><td class="mono">F5</td><td>攻击测试与风险说明</td><td>照片、屏幕、录像、换人、换手机都有实测结果，说明只写测过的</td></tr>
+      <tr><td class="mono">F6</td><td>离开就锁（手机手表走远、摄像头看不到你）、偷看时收起私人窗口</td><td>倒数可取消；误锁率实测；私人窗口按 App 标、可改</td></tr>
+      <tr><td class="mono">F7</td><td>回来时的“离开期间”摘要，接上窗口那条线</td><td>不补播；摘要里每一项都能点到对应的窗口或设备</td></tr>
+    </tbody>
+  </table></div>
+</section>
+
+<footer>依据：docs/direction.md“刷脸解锁：吸收 Glance”、docs/integration-loupe-glance.md、docs/design-system.md、docs/handoff/chatgpt-2026-10-01.md；Glance（MIT）的公开说明与源码结构；Apple《Designing Fluid Interfaces》、HIG Foundations 与 macOS 平台指南。画面是示意，比例取 MacBook Air 15″。</footer>
+</div>
+
+<script>
+(function(){
+  var $=function(id){return document.getElementById(id)};
+  var screen=$('screen'),desk=$('desk'),lock=$('lock'),island=$('island'),ic=$('icontent'),row=$('row'),peek=$('peek'),pw=$('pw'),now=$('now'),ring=$('ringlight'),priv=$('priv');
+  var reduce=matchMedia('(prefers-reduced-motion: reduce)').matches, opt={dark:false,mask:false,phone:false,fail:false}, cur=0, timers=[];
+  function later(fn,ms){timers.push(setTimeout(fn,reduce?Math.min(ms,200):ms))}
+  function clearLater(){timers.forEach(clearTimeout);timers=[]}
+  function springStep(t,r,z){var w=2*Math.PI/r;if(z>=1)return 1-(1+w*t)*Math.exp(-w*t);var wd=w*Math.sqrt(1-z*z);return 1-Math.exp(-z*w*t)*(Math.cos(wd*t)+z*w/wd*Math.sin(wd*t));}
+  var anims={};
+  function animate(key,from,to,r,z,apply){var start=performance.now(),a={stop:false};if(anims[key])anims[key].stop=true;anims[key]=a;
+    if(reduce){apply(to);return;}
+    (function tick(){if(a.stop)return;var t=(performance.now()-start)/1000,p=springStep(t,r,z);apply(from+(to-from)*p);if(t<r*3)requestAnimationFrame(tick);else apply(to);})();}
+  var isl={w:12.2,h:3.6,r:1.1};
+  function setIsland(w,h,r){isl={w:w,h:h,r:r};island.style.width=w+'cqw';island.style.height=h+'cqw';island.style.borderRadius='0 0 '+r+'cqw '+r+'cqw';}
+  function morph(w,h,r,resp,z){var s=Object.assign({},isl);animate('isl',0,1,resp,z,function(p){setIsland(s.w+(w-s.w)*p,s.h+(h-s.h)*p,s.r+(r-s.r)*p)});}
+  function fade(el,to,ms){el.style.transition='opacity '+(reduce?180:ms)+'ms ease-out';el.style.opacity=to;}
+  function content(html){ic.style.transition='opacity 100ms ease-out';ic.style.opacity=0;setTimeout(function(){ic.innerHTML=html;fade(ic,html?1:0,180)},html?110:0);}
+  function deskFold(p){desk.style.transform=reduce?'none':'perspective(1200px) rotateX('+(p*-62)+'deg) scale('+(1-p*0.55)+')';desk.style.opacity=1-p*0.95;}
+  function shake(){if(reduce)return;var s0=performance.now();(function sh(){var t=(performance.now()-s0)/1000;island.style.transform='translateX(calc(-50% + '+(Math.exp(-6*t)*Math.sin(t*28)*8)+'px))';if(t<0.8)requestAnimationFrame(sh);else island.style.transform='translateX(-50%)'})();}
+  function factors(face,phone){function c(s){return s==='ok'?'ok':s==='no'?'no':''}return '<div class="fac" style="margin-left:auto;margin-right:1.2cqw"><span class="'+c(face)+'" title="脸">◉</span><span class="'+c(phone)+'" title="手机或手表">▮</span></div>';}
+  function pwReset(){$('pwText').style.display='';$('dots').style.display='none';[].forEach.call($('dots').children,function(d){d.classList.remove('on')});pw.classList.remove('hl');}
+  function typePw(){$('pwText').style.display='none';$('dots').style.display='flex';[].forEach.call($('dots').children,function(d,k){later(function(){d.classList.add('on')},60*k)});}
+  var tiles=[{c:'#5E8BE8',d:1,tag:''},{c:'#E07A5F',d:0,tag:'已最小化'},{c:'#34C759',d:0,tag:'私人 · 收着'}];
+  function showRow(on){row.innerHTML='';if(on){tiles.forEach(function(x,i){var el=document.createElement('div');el.className='tile';el.innerHTML='<i style="top:22%"></i><i style="top:40%;right:30%"></i><i style="top:58%;right:20%"></i>'+(x.tag?'<span class="tag">'+x.tag+'</span>':'')+(x.d?'<span class="dot"></span>':'')+'<span class="ic" style="background:'+x.c+'"></span>';el.addEventListener('mouseenter',function(){if(cur===8)go(9)});el.addEventListener('click',function(){go(10)});row.appendChild(el);});}fade(row,on?1:0,on?220:100);}
+  function showPeek(on){var b=$('winB');if(on){var s=screen.getBoundingClientRect(),r=b.getBoundingClientRect();peek.style.left=(r.left-s.left)+'px';peek.style.top=(r.top-s.top)+'px';peek.style.width=r.width+'px';peek.style.height=r.height+'px';
+      if(!reduce){peek.style.transition='none';peek.style.transform='translateY(-40%) scale(.3)';requestAnimationFrame(function(){peek.style.transition='transform 380ms cubic-bezier(.23,1,.32,1), opacity 180ms ease-out';peek.style.transform='none';peek.style.opacity=1});}else peek.style.opacity=1}
+    else{peek.style.transition='opacity 120ms ease-out';peek.style.opacity=0;}}
+  function privFold(p){priv.style.transform=reduce?'none':'translate('+(p*-80)+'%,'+(p*-95)+'%) scale('+(1-p*0.85)+')';priv.style.opacity=1-p;}
+  function base(){clearLater();deskFold(0);fade(lock,0,1);ring.style.opacity=0;setIsland(12.2,3.6,1.1);content('');showRow(false);showPeek(false);pwReset();privFold(0);var b=$('winB');b.style.boxShadow='';}
+
+  var S=[
+    {n:'录脸（一次）',d:'刘海展开成取景框，转头一圈，九格依次亮起',
+     why:'少见的时刻，可以多一点表现：取景框就长在刘海下面，九个方向的刻度随你转头亮起，像 iPhone 录 Face ID。录完可以再录一种样子（眼镜、胡子、光线）。图像不存，只存加密的特征。',
+     spec:'expand 0.40 / 0.92 · 刻度 pop 0.30 / 0.75 · 停在取景时不刷新多余帧', status:['要做（F3）','todo'], fail:'光线太暗：先点亮补光圈；没对准：刻度不亮，提示“再转慢一点”',
+     run:function(){base();morph(30,20,3,0.40,0.92);var h='<div class="vf" id="vf"><div class="face"></div>';for(var k=0;k<9;k++)h+='<i style="transform:rotate('+(k*40)+'deg) translateY(-5.4cqw)"></i>';h+='</div><div class="cap" style="margin-left:2cqw">慢慢转头<small>转一圈就好</small></div>';content(h);
+       for(var k2=0;k2<9;k2++)(function(k){later(function(){var t=document.querySelectorAll('#vf i')[k];t&&t.classList.add('on')},500+k*260)})(k2);
+       later(function(){content('<div class="check">✓</div><div class="cap" style="margin-left:1.2cqw">刷脸解锁已设置<small>还可以再录一种样子</small></div>')},3200);}},
+    {n:'工作中',d:'刘海和实体刘海重合，什么都不画',why:'顺利的时候一声不吐。',spec:'岛 = 实体刘海 · 不刷新',status:['已有','done'],fail:'—',run:function(){base()}},
+    {n:'合上',d:'桌面朝刘海折进去',why:'开了刷脸解锁，合盖效果就一起开：桌面像一页纸折进刘海，跟着铰链走。',spec:'跟手：铰链 1:1 · 松手 settle 0.38 / 1.0',status:['已有（锁屏开合效果）','part'],fail:'合到一半停下：停在一半',run:function(){base();animate('fold',0,1,0.5,1,deskFold)}},
+    {n:'开盖 · 认你',d:'系统锁屏是主角；刘海左边一圈在转，右边两枚小点：脸、手机',
+     why:'开盖、唤醒、刚锁屏、按空格都会开始认。光线暗时屏幕四周点亮一圈暖白补光（像 iPhone 的前置闪光），认完就灭。右边两枚点分别代表“是你的脸”和“是你的手机或手表”，人一眼看得出还差哪样。',
+     spec:'calm 0.34 / 1.0 · 补光 fade 0.18 · 刘海内容在形状到 40% 后淡入',status:['要做（F4）','todo'],fail:'戴口罩：直接说“戴着口罩，用 Touch ID”；摄像头被挡：刘海不出现，系统锁屏照常',
+     run:function(){base();deskFold(1);fade(lock,1,280);if(opt.dark)fade(ring,1,180);morph(24,4.6,1.6,0.34,1);
+       if(opt.mask){content('<div class="cap" style="margin-left:1.2cqw">戴着口罩<small>用 Touch ID</small></div>'+factors('no',''));pw.classList.add('hl');return;}
+       content('<div class="ring" style="margin-left:1.2cqw"></div>'+factors('',''));
+       later(function(){if(!opt.fail)content('<div class="ring" style="margin-left:1.2cqw"></div>'+factors('ok',''))},700);}},
+    {n:'认出你',d:'两样都对：对勾，密码一个点一个点填进去',
+     why:'脸（含严格活体和注视）对了，手机或手表的蓝牙因素也对了，才在锁屏上替你输入密码。点一个个填进去，是真的在输入，不是动画。',
+     spec:'bloom 0.42 / 0.84 · 对勾 pop 0.30 / 0.75 · 停 0.6 s',status:['要做（F4，第二因素先做 F1 实验）','todo'],
+     fail:'没认出：岛左右一摆，“没认出你 · 还可以再试 2 次”；第 3 次后“这次用 Touch ID 或密码”。手机不在：“没找到你的手机”，交回系统',
+     run:function(){fade(ring,0,180);
+       if(opt.fail){morph(30,6,2,0.34,1);content('<div class="cap" style="margin-left:1.2cqw">没认出你<small>还可以再试 2 次 · 或用 Touch ID</small></div>'+factors('no',''));shake();pw.classList.add('hl');return;}
+       if(opt.phone){morph(30,6,2,0.34,1);content('<div class="cap" style="margin-left:1.2cqw">没找到你的手机<small>用 Touch ID 或密码</small></div>'+factors('ok','no'));shake();pw.classList.add('hl');return;}
+       morph(30,6,2,0.42,0.84);content('<div class="check">✓</div><div class="cap" style="margin-left:1.2cqw">欢迎回来</div>'+factors('ok','ok'));later(typePw,350);}},
+    {n:'打开',d:'系统确认已解锁后，桌面从刘海展开',why:'从哪里去就从哪里回来。展开用解锁后的新画面，不用合盖前的旧截图。',spec:'settle 0.38 / 1.0',status:['部分（开盖跟铰链已有，解锁后接手要做）','part'],fail:'系统没确认解锁：不展开，留在锁屏',
+     run:function(){content('');morph(12.2,3.6,1.1,0.34,1);fade(lock,0,220);pwReset();animate('fold',1,0,0.5,1,deskFold)}},
+    {n:'回来了',d:'紧凑的刘海：离开期间的摘要',why:'不补播。左边是收在刘海里的窗口数，右边一个点：有变化、有设备低电。想看再展开。',spec:'calm 0.34 / 1.0 · 8 秒后收成数字',status:['要做（F7）','todo'],fail:'没有积压：刘海不说话',
+     run:function(){base();morph(26,3.6,1.1,0.34,1);content('<div style="display:flex;width:100%;justify-content:space-between;align-items:center;padding-inline:1.2cqw"><span style="font-size:1.4cqw;font-weight:600">3</span><span style="width:1cqw;height:1cqw;border-radius:50%;background:#0A84FF"></span></div>')}},
+    {n:'有人偷看',d:'看到第二张脸：私人窗口收进刘海',why:'只在你停手 30 秒以后、或你自己打开时才看。看到第二张脸，按 App 标为私人的窗口（聊天、邮件、钱包类）沿原路收进刘海，刘海上留一枚眼睛记号。人走了，点一下放回。',
+     spec:'收进刘海：settle 0.38 / 1.0（和收进刘海同一条路）',status:['要做（F6）','todo'],fail:'看错了：点刘海一下全部放回；摄像头关着时这一条不工作',
+     run:function(){base();morph(26,3.6,1.1,0.34,1);later(function(){animate('priv',0,1,0.38,1,privFold);content('<div style="display:flex;width:100%;justify-content:space-between;align-items:center;padding-inline:1.2cqw"><span style="font-size:1.3cqw">👁</span><span style="font-size:1.2cqw;opacity:.75">私人窗口已收起</span></div>')},400)}},
+    {n:'找窗口',d:'指针停到刘海上，展开一排看不见的窗口',why:'停 0.12 秒就展开，不回弹（天天用）。每一格是窗口画面；收着的私人窗口也在这一排里，标明“私人”。',spec:'expand 0.40 / 0.92 · 停留 0.12 s',status:['已有','done'],fail:'只是路过：0.12 秒内移开不展开',
+     run:function(){base();privFold(1);morph(46,15,2.8,0.40,0.92);content('<div class="cap" style="position:absolute;top:4.6cqw;left:0;right:0;text-align:center"><small>离开期间 · 构建日志有变化 · 妙控鼠标 18%</small></div>');later(function(){showRow(true)},120)}},
+    {n:'看一眼',d:'停在一格上，窗口在自己的位置长出来',why:'不离开当前位置：窗口按原位置、原大小出现，最前面的 App 不变；移开就收。',spec:'从格子长到原位 · ease-out 0.38 s · 收 0.16 s',status:['已有','done'],fail:'画面拿不到：给最近一张并标明“不是实时画面”',
+     run:function(){if(cur<8){S[8].run()}showPeek(true)}},
+    {n:'过去',d:'点一下才真的过去',why:'只有点它，你才过去；刘海收回实体刘海。',spec:'calm 收回 · settle 0.38 / 1.0',status:['已有','done'],fail:'窗口在别的桌面：切过去，这扇在最前面',
+     run:function(){showPeek(false);showRow(false);content('');morph(12.2,3.6,1.1,0.34,1);privFold(0);var b=$('winB');b.style.zIndex=3;b.style.boxShadow='0 1.6cqw 4cqw rgba(0,0,0,.4)'}},
+    {n:'离开',d:'手机和手表都走远，或看不到你：刘海倒数，动一下就取消',why:'不突然锁人。刘海先倒数 10 秒，你碰一下键盘或触控板就取消；倒数完才锁，桌面折进刘海。',spec:'calm 0.34 / 1.0 · 倒数数字等宽 · 锁定后接“合上”的折叠',status:['要做（F6）','todo'],fail:'只是去倒杯水又回来：倒数中动一下就取消；数据不可用（蓝牙关了）不触发',
+     run:function(){base();morph(30,4.6,1.6,0.34,1);var n=10;function tick(){content('<div class="cap" style="margin-left:1.2cqw">手机和手表都走远了<small>动一下就取消</small></div><span class="count" style="margin-left:auto;margin-right:1.4cqw">'+n+'</span>');if(n>0){n--;later(tick,reduce?150:450)}else later(function(){content('');morph(12.2,3.6,1.1,0.34,1);animate('fold',0,1,0.5,1,deskFold);fade(lock,1,280)},300)}tick();}}
+  ];
+  var stepsEl=$('steps');
+  S.forEach(function(s,i){var b=document.createElement('button');b.className='step';b.setAttribute('role','listitem');b.innerHTML='<span class="n">'+String(i).padStart(2,'0')+'</span><span><b>'+s.n+'</b><span>'+s.d+'</span></span>';b.addEventListener('click',function(){go(i)});stepsEl.appendChild(b);
+    var tr=document.createElement('tr');tr.innerHTML='<td class="k">'+s.n+'</td><td>'+s.d+'</td><td class="mono">'+s.spec+'</td><td>'+s.fail+'</td><td><span class="pill '+s.status[1]+'">'+s.status[0]+'</span></td>';$('specRows').appendChild(tr);});
+  function go(i){cur=i;S[i].run();[].forEach.call(stepsEl.children,function(b,k){b.setAttribute('aria-current',k===i?'step':'false')});
+    now.innerHTML='<b>'+String(i).padStart(2,'0')+' · '+S[i].n+'</b>'+S[i].why+'<div class="spec">'+S[i].spec+'</div>';}
+  [['tgDark','dark'],['tgMask','mask'],['tgPhone','phone'],['tgFail','fail']].forEach(function(p){$(p[0]).addEventListener('click',function(){opt[p[1]]=!opt[p[1]];this.setAttribute('aria-pressed',opt[p[1]]);if(cur===3||cur===4){go(3);if(!opt.mask)later(function(){go(4)},1500)}})});
+  $('tgReduce').addEventListener('click',function(){reduce=!reduce;this.setAttribute('aria-pressed',reduce)});
+  if(reduce)$('tgReduce').setAttribute('aria-pressed','true');
+  var play=[];
+  $('tgPlay').addEventListener('click',function(){play.forEach(clearTimeout);play=[];var seq=[1,2,3,4,5,6,7,8,9,10,11],d=[0,1000,1300,1900,1500,1300,1500,1300,1300,1300,1200],acc=0;seq.forEach(function(st,k){acc+=d[k];play.push(setTimeout(function(){go(st)},acc))})});
+  setIsland(12.2,3.6,1.1);go(1);
+})();
+</script>
+
+</body></html>

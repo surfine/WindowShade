@@ -1,18 +1,18 @@
 // 整条片子只有一个岛。从第 0 帧按 site/island.js 的积分一帧一帧推到最后一帧，结果按帧号查。
 import { CONTENT_AT, CONTENT_STEP, EXIT_GAP, FADE_IN, FADE_OUT } from './motion/direction';
-import { DT, ISLAND_SHAPES, NOTCH, TUCK_KICK, clamp01, islandTuning, type IslandMode } from './motion/site';
+import { DT, ISLAND_SHAPES, NOTCH, TUCK_KICK, clamp01, islandTuning, solve, type IslandMode } from './motion/site';
 import { ISLAND_EVENTS, KICKS, TOTAL, type Content } from './timeline';
 
-type Spring = { value: number; target: number; velocity: number; k: number; c: number };
-const spring = (v: number): Spring => ({ value: v, target: v, velocity: 0, k: 0, c: 0 });
-function tune(s: Spring, damping: number, response: number) {
-  s.k = (2 * Math.PI / response) ** 2;
-  s.c = (4 * Math.PI * damping) / response;
+type Spring = { value: number; target: number; velocity: number; response: number; zeta: number };
+const spring = (v: number): Spring => ({ value: v, target: v, velocity: 0, response: 0.34, zeta: 1 });
+function tune(s: Spring, zeta: number, response: number) {
+  s.zeta = zeta;
+  s.response = response;
 }
 function step(s: Spring) {
-  const force = -s.k * (s.value - s.target) - s.c * s.velocity;
-  s.velocity += force * DT;
-  s.value += s.velocity * DT;
+  const [d, v] = solve(s.value - s.target, s.velocity, s.response, s.zeta, DT);
+  s.value = s.target + d;
+  s.velocity = v;
 }
 const resting = (s: Spring) => Math.abs(s.value - s.target) < 0.05 && Math.abs(s.velocity) < 0.5;
 
@@ -27,7 +27,7 @@ const retargets: { frame: number; from: { w: number; h: number }; to: IslandMode
 
 (function simulate() {
   const shape = { w: spring(NOTCH.w), h: spring(NOTCH.h), r: spring(NOTCH.r) };
-  for (const s of Object.values(shape)) tune(s, 0.96, 0.38);
+  for (const s of Object.values(shape)) tune(s, 1, 0.34);
   let mode: IslandMode = 'rest';
   const changes = new Map<number, IslandMode>();
   {
@@ -92,9 +92,10 @@ export function layersAt(frame: number): ContentLayer[] {
   const out: ContentLayer[] = [];
   for (const l of LAYERS) {
     if (l.content === 'none') continue;
-    const fadeOut = 1 - clamp01((frame - l.outStart) / FADE_OUT);
-    const first = clamp01((frame - l.inStart) / FADE_IN) * fadeOut;
-    const second = clamp01((frame - l.inStart - CONTENT_STEP) / FADE_IN) * fadeOut;
+    const fade = (p: number) => { const t = clamp01(p); return t * t * (3 - 2 * t); };
+    const fadeOut = 1 - fade((frame - l.outStart) / FADE_OUT);
+    const first = fade((frame - l.inStart) / FADE_IN) * fadeOut;
+    const second = fade((frame - l.inStart - CONTENT_STEP) / FADE_IN) * fadeOut;
     if (first > 0 || second > 0) out.push({ content: l.content, first, second, since: frame - l.inStart });
   }
   return out;

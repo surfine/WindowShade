@@ -73,7 +73,8 @@ const status = document.querySelector('#demo-status');
 if (desk && reference && fold && bar && body && status) {
   let folded = false;
   let touched = false;
-  let rollTimer = 0;
+  let rollNow = 0;
+  let stopRoll = () => {};
   new ResizeObserver(() => desk.style.setProperty('--body-h', `${body.offsetHeight}px`)).observe(body);
   // When the screen changes size (a window resized, a foldable opened or closed), a dragged
   // position measured in pixels no longer means the same place: settle the window back home.
@@ -85,16 +86,22 @@ if (desk && reference && fold && bar && body && status) {
   }).observe(desk);
 
   function setRoll(p) {
+    rollNow = p;
     desk.style.setProperty('--roll', p.toFixed(4));
     desk.style.setProperty('--roller', p > .01 && p < .99 ? '1' : '0');
     desk.classList.toggle('is-folded', p >= .99);
   }
+  function animateRoll(to) {
+    stopRoll();
+    const from = rollNow;
+    desk.classList.add('is-rolling');
+    if (reduceMotion.matches || !window.WSMotion) { setRoll(to); desk.classList.remove('is-rolling'); return; }
+    // 没有动量的收起 / 展开：calm。滚动条直接改 --roll，不走这段。
+    stopRoll = WSMotion.play('calm', p => setRoll(from + (to - from) * p), () => desk.classList.remove('is-rolling'));
+  }
   function setFolded(next, announce = true) {
     folded = next;
-    desk.classList.add('is-rolling', 'is-animating');
-    clearTimeout(rollTimer);
-    rollTimer = setTimeout(() => desk.classList.remove('is-rolling', 'is-animating'), 540);
-    setRoll(folded ? 1 : 0);
+    animateRoll(folded ? 1 : 0);
     fold.textContent = folded ? fold.dataset.unfold : fold.dataset.fold;
     fold.setAttribute('aria-expanded', String(!folded));
     bar.setAttribute('aria-expanded', String(!folded));
@@ -146,11 +153,19 @@ if (desk && reference && fold && bar && body && status) {
     if (!drag || e.pointerId !== drag.id) return;
     if (drag.moving) {
       const { minX, maxX, minY, maxY } = drag.b;
-      offset.x = Math.min(maxX, Math.max(minX, offset.x));
-      offset.y = Math.min(maxY, Math.max(minY, offset.y));
-      reference.style.transition = 'translate .38s var(--ease-out)';
-      place(offset.x, offset.y);
+      const toX = Math.min(maxX, Math.max(minX, offset.x));
+      const toY = Math.min(maxY, Math.max(minY, offset.y));
+      const fromX = offset.x, fromY = offset.y;
+      reference.style.transition = 'none';
       reference.classList.remove('is-dragging');
+      // 松手回到桌面里：calm，不套 0.38 秒的贝塞尔。
+      if (window.WSMotion && !reduceMotion.matches) {
+        WSMotion.play('calm', p => {
+          offset.x = fromX + (toX - fromX) * p;
+          offset.y = fromY + (toY - fromY) * p;
+          place(offset.x, offset.y);
+        });
+      } else { offset.x = toX; offset.y = toY; place(toX, toY); }
       lastDragEnd = performance.now();
     }
     drag = null;
@@ -174,6 +189,7 @@ if (desk && reference && fold && bar && body && status) {
   // drag or press the button, the window is theirs and scrolling leaves it alone.
   const home = (desk.getBoundingClientRect().top + scrollY + desk.offsetHeight / 2) / innerHeight;
   scrubbers.push({ el: desk, from: () => Math.min(.62, home) - .02, span: .3, off: () => touched, apply: p => {
+    stopRoll();
     if (!!folded !== p >= .5) { folded = p >= .5; fold.textContent = folded ? fold.dataset.unfold : fold.dataset.fold; bar.setAttribute('aria-expanded', String(!folded)); fold.setAttribute('aria-expanded', String(!folded)); }
     setRoll(p);
   } });
@@ -203,8 +219,10 @@ if (laptop && lidRange && lidPlay) {
     last = now;
     if (playing) {
       const t = (now - playing.start) / 1000;
-      const ease = x => x < .5 ? 4 * x * x * x : 1 - Math.pow(-2 * x + 2, 3) / 2;
-      lid = t < 1.5 ? .9 * ease(t / 1.5) : t < 2.4 ? .9 : t < 3.6 ? .9 * (1 - ease((t - 2.4) / 1.2)) : 0;
+      // 合盖、开盖的铰链走 dolly（response 1.6、ζ 1）。页面折进去仍是 FoldSpring。
+      const [dollyR, dollyZ] = WSMotion.named('dolly');
+      const hinge = u => WSMotion.progress(u, dollyR, dollyZ);
+      lid = t < 1.5 ? .9 * hinge(t) : t < 2.4 ? .9 : t < 3.6 ? .9 * (1 - hinge(t - 2.4)) : 0;
       lidRange.value = String(Math.round(lid * 100));
       if (t >= 3.6) playing = null;
     }
@@ -306,15 +324,15 @@ if (slideDesk) {
     const from = x, to = tucked ? tuckedX() : 0;
     cancelAnimationFrame(anim);
     if (reduceMotion.matches || Math.abs(to - from) < 0.5) { setX(to); return; }
-    // Spring with initial velocity (px/s) handed over from the drag.
-    const w = (2 * Math.PI) / 0.42, z = 0.88, wd = w * Math.sqrt(1 - z * z);
+    // glide：位置带着松手速度。停在残差里，不切在 1.1 秒。
+    const [response, zeta] = WSMotion.named('glide');
     const v0 = velocity / (to - from);
     const start = performance.now();
     const step = now => {
       const t = (now - start) / 1000;
-      const p = 1 - Math.exp(-z * w * t) * (Math.cos(wd * t) + ((z * w - v0) / wd) * Math.sin(wd * t));
+      const p = WSMotion.progress(t, response, zeta, v0);
       setX(from + (to - from) * p);
-      if (t < 1.1) anim = requestAnimationFrame(step); else setX(to);
+      if (Math.abs(1 - p) > 0.004 && t < 1.6) anim = requestAnimationFrame(step); else setX(to);
     };
     anim = requestAnimationFrame(step);
   }

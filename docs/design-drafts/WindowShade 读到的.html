@@ -1,0 +1,279 @@
+<!doctype html><html><head><meta charset=utf8><meta name=viewport content="width=device-width,initial-scale=1,viewport-fit=cover"><style>:root{color-scheme:light;box-sizing:border-box;padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}html{scroll-padding-top:env(safe-area-inset-top,0px)}body{margin:0;padding:0;font:14px -apple-system,BlinkMacSystemFont,sans-serif;background:#faf9f5;color:#141413}img{max-width:100%}[hidden]:not([hidden=until-found i]){display:none!important}</style></head><body>
+<title>WindowShade 读到的</title>
+<style>
+@import url("https://fonts.googleapis.com/css2?family=Newsreader:opsz,wght@6..72,400;6..72,600&family=IBM+Plex+Sans:wght@400;500;600&family=IBM+Plex+Mono:wght@400;500&family=Noto+Sans+SC:wght@400;500;600&family=Noto+Serif+SC:wght@600&display=swap");
+/* 同“从锁屏到窗口”一套纸面：左读右看；中间一扇照真设置窗口量出来的样子 */
+:root{
+  --paper:#EEF1F6;--surface:#FFFFFF;--surface-2:#F5F7FB;--ink:#131A25;--ink-2:#46546A;--ink-3:#6F7D93;
+  --line:#D6DDE8;--line-soft:#E5EAF2;--accent:#2F62C4;--accent-soft:#E2EAF9;--good:#2C7350;--good-soft:#E1F0E7;--warn:#A8600F;--warn-soft:#FBF0DF;--bad:#B3352B;--bad-soft:#FBE6E3;
+  --win:#ECECEE;--win-side:#E3E3E7;--win-card:#FFFFFF;--win-ink:#1D1D1F;--win-ink-2:#6E6E73;--win-line:rgba(0,0,0,.08);--win-sel:#0A6CFF;
+  --doc:"IBM Plex Sans","Noto Sans SC",-apple-system,system-ui,sans-serif;--head:"Newsreader","Noto Serif SC",Georgia,serif;--mono:"IBM Plex Mono",ui-monospace,Menlo,monospace;
+  --mac:-apple-system,"SF Pro Text","PingFang SC","Noto Sans SC",sans-serif;
+}
+@media (prefers-color-scheme:dark){:root:not([data-theme="light"]){color-scheme:dark;
+  --paper:#0E131B;--surface:#151C27;--surface-2:#1A222F;--ink:#E7EDF6;--ink-2:#A7B4C8;--ink-3:#7A889E;--line:#26303F;--line-soft:#1E2733;
+  --accent:#7FA5F0;--accent-soft:#1B2740;--good:#6CC495;--good-soft:#14271D;--warn:#E0A264;--warn-soft:#2A2115;--bad:#F08C80;--bad-soft:#2C1715;
+  --win:#232326;--win-side:#1C1C1F;--win-card:#2C2C2F;--win-ink:#F2F2F4;--win-ink-2:#A1A1A8;--win-line:rgba(255,255,255,.08);--win-sel:#2D7BFF;}}
+:root[data-theme="dark"]{color-scheme:dark;
+  --paper:#0E131B;--surface:#151C27;--surface-2:#1A222F;--ink:#E7EDF6;--ink-2:#A7B4C8;--ink-3:#7A889E;--line:#26303F;--line-soft:#1E2733;
+  --accent:#7FA5F0;--accent-soft:#1B2740;--good:#6CC495;--good-soft:#14271D;--warn:#E0A264;--warn-soft:#2A2115;--bad:#F08C80;--bad-soft:#2C1715;
+  --win:#232326;--win-side:#1C1C1F;--win-card:#2C2C2F;--win-ink:#F2F2F4;--win-ink-2:#A1A1A8;--win-line:rgba(255,255,255,.08);--win-sel:#2D7BFF;}
+*{box-sizing:border-box}
+body{margin:0;background:var(--paper);color:var(--ink);font:15px/1.72 var(--doc);-webkit-font-smoothing:antialiased}
+.wrap{max-width:1080px;margin:0 auto;padding-inline:20px;padding-block:0 96px}
+header{padding:60px 0 28px}
+.eyebrow{font-family:var(--mono);font-size:11.5px;letter-spacing:.14em;text-transform:uppercase;color:var(--ink-3);margin:0 0 14px}
+h1{font-family:var(--head);font-weight:600;font-size:clamp(34px,5.6vw,52px);line-height:1.08;letter-spacing:-.015em;margin:0 0 16px;text-wrap:balance}
+.lede{font-size:17.5px;color:var(--ink-2);max-width:62ch;margin:0}
+.lede b{color:var(--ink)}
+h2{font-family:var(--head);font-weight:600;font-size:clamp(23px,3.2vw,29px);line-height:1.25;margin:0 0 8px;text-wrap:balance}
+h3{font-size:15px;margin:0 0 4px}
+section{padding-top:56px}
+p{max-width:66ch}
+.sub{color:var(--ink-2);margin:0 0 18px}
+code{font-family:var(--mono);font-size:.86em;background:var(--surface-2);border:1px solid var(--line-soft);border-radius:4px;padding:1px 5px;overflow-wrap:anywhere}
+
+/* ---------- 设置窗口 ---------- */
+.stage{display:grid;grid-template-columns:minmax(0,1.6fr) minmax(0,1fr);gap:22px;margin-top:26px;align-items:start}
+@media (max-width:900px){.stage{grid-template-columns:1fr}}
+.window{background:var(--win);border-radius:12px;box-shadow:0 0 0 .5px rgba(0,0,0,.18),0 24px 50px -24px rgba(10,20,40,.45);overflow:hidden;font-family:var(--mac);color:var(--win-ink);display:grid;grid-template-columns:168px minmax(0,1fr);min-height:620px}
+@media (max-width:620px){.window{grid-template-columns:1fr}.side{display:none}}
+.side{background:var(--win-side);padding:12px 10px;border-right:1px solid var(--win-line)}
+.lights{display:flex;gap:8px;padding:2px 4px 16px}.lights i{width:12px;height:12px;border-radius:50%;background:#ff5f57}.lights i:nth-child(2){background:#febc2e}.lights i:nth-child(3){background:#28c840}
+.nav{display:flex;flex-direction:column;gap:2px;font-size:13px}
+.nav span{display:flex;align-items:center;gap:8px;padding:5px 8px;border-radius:6px}
+.nav span b{width:20px;height:20px;border-radius:5px;display:grid;place-items:center;color:#fff;font-size:11px;font-weight:600}
+.nav .on{background:var(--win-sel);color:#fff}
+.pane{padding:22px 22px 26px;min-width:0;max-height:760px;overflow:auto}
+.ph{display:flex;gap:12px;align-items:flex-start;margin-bottom:16px}
+.ph .sym{width:36px;height:36px;border-radius:9px;background:linear-gradient(160deg,#5C8DF6,#2F62C4);color:#fff;display:grid;place-items:center;flex:none}
+.ph h4{margin:0;font-size:20px;font-weight:700;letter-spacing:-.01em}
+.ph p{margin:2px 0 0;font-size:12.5px;color:var(--win-ink-2);line-height:1.5}
+.when{font-size:11.5px;color:var(--win-ink-2);margin:-6px 0 14px;display:flex;gap:10px;align-items:center;flex-wrap:wrap}
+.when button{font:inherit;color:var(--win-sel);background:none;border:0;padding:0;cursor:pointer}
+.tier{margin-bottom:18px}
+.tier > .tl{font-size:12px;font-weight:600;color:var(--win-ink-2);margin:0 4px 6px;display:flex;justify-content:space-between;gap:8px}
+.tier > .tl small{font-weight:400}
+.card{background:var(--win-card);border-radius:10px;box-shadow:0 0 0 .5px var(--win-line)}
+.row + .row{border-top:1px solid var(--win-line)}
+.rh{display:grid;grid-template-columns:minmax(0,1fr) auto auto;gap:10px;align-items:center;padding:9px 12px;width:100%;background:none;border:0;font:inherit;color:inherit;text-align:left;cursor:pointer;border-radius:10px}
+.rh:focus-visible{outline:2px solid var(--win-sel);outline-offset:-2px}
+.rn{font-size:13px;font-weight:500;line-height:1.35}
+.rs{font-size:11.5px;color:var(--win-ink-2);line-height:1.4;margin-top:1px}
+.val{font-size:12px;color:var(--win-ink-2);font-variant-numeric:tabular-nums;white-space:nowrap;max-width:15ch;overflow:hidden;text-overflow:ellipsis}
+.val.off{color:var(--win-ink-2);opacity:.7}
+.chev{width:8px;height:8px;border-right:1.6px solid var(--win-ink-2);border-bottom:1.6px solid var(--win-ink-2);transform:rotate(-45deg);transition:transform 220ms cubic-bezier(.23,1,.32,1);margin-right:2px}
+.row.open .chev{transform:rotate(45deg)}
+.rb{display:grid;grid-template-rows:0fr;transition:grid-template-rows 260ms cubic-bezier(.23,1,.32,1)}
+.row.open .rb{grid-template-rows:1fr}
+.rb > div{overflow:hidden}
+.three{display:grid;grid-template-columns:4.4em minmax(0,1fr);gap:4px 10px;padding:0 12px 10px;font-size:12px;line-height:1.5}
+.three dt{color:var(--win-ink-2)}
+.three dd{margin:0}
+.tech{grid-column:1/-1;font-family:var(--mono);font-size:10.5px;color:var(--win-ink-2);border-top:1px dashed var(--win-line);padding-top:6px;margin-top:2px;overflow-wrap:anywhere}
+.sw{position:relative;width:34px;height:20px;border-radius:10px;background:#34C759;border:0;cursor:pointer;flex:none;transition:background 160ms ease}
+.sw::after{content:"";position:absolute;top:2px;left:16px;width:16px;height:16px;border-radius:50%;background:#fff;box-shadow:0 1px 2px rgba(0,0,0,.25);transition:left 200ms cubic-bezier(.23,1,.32,1)}
+.sw[aria-checked="false"]{background:rgba(120,120,128,.32)}
+.sw[aria-checked="false"]::after{left:2px}
+.sw:focus-visible{outline:2px solid var(--win-sel);outline-offset:2px}
+.swrow{grid-column:1/-1;display:flex;align-items:center;justify-content:space-between;gap:10px;padding-top:4px}
+.chip{font-size:11px;border-radius:999px;padding:1px 8px;white-space:nowrap}
+.chip.ok{background:var(--good-soft);color:var(--good)}
+.chip.need{background:var(--warn-soft);color:var(--warn)}
+.goes{display:grid;gap:8px}
+.goes .card{padding:10px 12px;font-size:12.5px;line-height:1.5}
+.goes .card b{font-weight:600}
+@media (prefers-reduced-motion:reduce){.rb,.chev,.sw,.sw::after{transition:none}}
+
+/* 右侧说明 */
+.notes{display:flex;flex-direction:column;gap:12px}
+.note{background:var(--surface);border:1px solid var(--line-soft);border-radius:12px;padding:14px 16px}
+.note h3{font-size:14px}
+.note p{margin:0;font-size:13.5px;color:var(--ink-2)}
+.note.alarm{border-color:color-mix(in srgb,var(--bad) 40%,var(--line-soft));background:var(--bad-soft)}
+.note.alarm h3{color:var(--bad)}
+.legend{display:flex;gap:6px;flex-wrap:wrap;margin-top:8px}
+
+/* 表 */
+.tbl{overflow-x:auto;border:1px solid var(--line-soft);border-radius:12px;background:var(--surface)}
+table{border-collapse:collapse;width:100%;min-width:820px;font-size:13px;line-height:1.55}
+th,td{text-align:left;vertical-align:top;padding:9px 12px;border-bottom:1px solid var(--line-soft)}
+th{font-size:11.5px;font-weight:600;color:var(--ink-3);letter-spacing:.04em;background:var(--surface-2)}
+tr:last-child td{border-bottom:0}
+td.t{font-family:var(--mono);font-size:11.5px;color:var(--ink-2)}
+.st{font-size:11.5px;border-radius:999px;padding:1px 8px;white-space:nowrap}
+.st.done{background:var(--good-soft);color:var(--good)}
+.st.todo{background:var(--warn-soft);color:var(--warn)}
+.st.bad{background:var(--bad-soft);color:var(--bad)}
+
+.principles{display:grid;grid-template-columns:repeat(auto-fit,minmax(min(100%,300px),1fr));gap:12px}
+.principles div{background:var(--surface);border:1px solid var(--line-soft);border-radius:12px;padding:14px 16px}
+.principles p{margin:0;font-size:13.5px;color:var(--ink-2)}
+
+.mandate{background:var(--surface);border:1.5px solid var(--ink);border-radius:14px;padding:22px 24px}
+.mandate ol{margin:12px 0 0;padding-left:1.4em;display:grid;gap:10px}
+.mandate li{padding-left:4px}
+.mandate li b{color:var(--ink)}
+.mandate li span{color:var(--ink-2)}
+footer{margin-top:48px;font-size:12.5px;color:var(--ink-3);max-width:80ch}
+</style>
+
+<div class="wrap">
+<header>
+  <p class="eyebrow">WindowShade · 设计稿 · 2026-10-03 · 隐私</p>
+  <h1>读了什么、为什么读、去了哪里</h1>
+  <p class="lede">一个要辅助功能和屏幕录制的工具，值不值得装，先看它读了什么。这一页照 Loupe 的做法，把 WindowShade 读的每一样都摊开：<b>现在读到的值、为什么读、去了哪里</b>，能关的给开关。它放进现有的设置窗口，替换“权限与启动”。</p>
+</header>
+
+<div class="stage">
+  <div class="window" role="group" aria-label="设置窗口示意">
+    <div class="side">
+      <div class="lights"><i></i><i></i><i></i></div>
+      <div class="nav">
+        <span><b style="background:#8E8E93">卷</b>卷帘</span>
+        <span><b style="background:#30B0C7">窗</b>窗口浏览</span>
+        <span><b style="background:#FF9500">键</b>快捷键</span>
+        <span class="on"><b style="background:rgba(255,255,255,.25)">隐</b>隐私</span>
+      </div>
+    </div>
+    <div class="pane" id="pane">
+      <div class="ph">
+        <div class="sym" aria-hidden="true"><svg width="18" height="20" viewBox="0 0 18 20"><path d="M9 1 2 4v5c0 4.6 3 8.4 7 10 4-1.6 7-5.4 7-10V4z" fill="none" stroke="#fff" stroke-width="1.8" stroke-linejoin="round"/></svg></div>
+        <div><h4>隐私</h4><p>WindowShade 读到的每一样都列在这里。除了检查更新，都不离开这台 Mac。</p></div>
+      </div>
+      <div class="when"><span id="readAt">打开这一页时读的 · 10:02</span><button type="button" id="reread">再读一次</button><button type="button" id="techToggle" aria-pressed="false">显示技术细节</button></div>
+      <div id="tiers"></div>
+      <div class="tier">
+        <div class="tl">去了哪里</div>
+        <div class="goes">
+          <div class="card"><b>联网的只有检查更新。</b>问 windowshade.aaronlau.me 有没有新版本，带上现在的版本号；那里不通时改问 GitHub。关掉“自动检查更新”就不联网。</div>
+          <div class="card"><b>存在这台 Mac 上的：</b>你的设置；收起的窗口的标题和位置，出问题时靠它把窗口找回来，放回后就删；运行记录，只有你能读，不写窗口标题。<button type="button" id="showFolder" style="font:inherit;color:var(--win-sel);background:none;border:0;padding:0;cursor:pointer">在访达中显示</button></div>
+          <div class="card"><b>登录时自动启动</b><span style="float:right"><button class="sw" role="switch" aria-checked="true" aria-label="登录时自动启动"></button></span><br><span style="color:var(--win-ink-2);font-size:11.5px">从“权限与启动”挪过来，位置变了，开关是同一个</span></div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div class="notes">
+    <div class="note"><h3>点一行展开</h3><p>每行展开都是同样三件事：读到的、为什么、去了哪里。值只在打开这一页时读一次，关掉这一页就不再读。</p></div>
+    <div class="note"><h3>三层，照 Loupe</h3><p>不用问就能读的、你同意后才读的、用了系统没公开的方法的。第三层 Newlearner 这样的读者最想知道，写得最直白。</p>
+      <div class="legend"><span class="chip ok">已授权</span><span class="chip need">去授权</span></div></div>
+    <div class="note"><h3>“显示技术细节”</h3><p>默认藏着。打开后每行多一行接口名，给想核对的人看。这是 copy-guide“实现不进界面”的唯一例外，要 Aaron 点头。</p></div>
+    <div class="note alarm"><h3>现在还不能这么写</h3><p>运行记录现在写在 <code>/tmp/windowshade.log</code>，这台 Mac 上的其他账户也能读，里面有 12 处会写窗口标题。“只有你能读，不写窗口标题”这句话，要等修好、核过才能上页面。</p></div>
+  </div>
+</div>
+
+<section>
+  <h2>这一页的六条原则</h2>
+  <p class="sub">照 Loupe 的做法，再按 Apple HIG 的隐私原则和我们自己的文案规则收紧。</p>
+  <div class="principles">
+    <div><h3>摊开原值</h3><p>写“妙控鼠标 82%”，不写“读取设备信息”。看到真值的人才会信。</p></div>
+    <div><h3>打开才读</h3><p>这一页不新增任何常驻读取，关掉就停。耗电和现在一样。</p></div>
+    <div><h3>一行三件事</h3><p>读到的、为什么、去了哪里。缺一样就是没写完。</p></div>
+    <div><h3>开关只有一个</h3><p>能关的就在这一行给开关，和原来设置里的是同一个，不复制第二份。</p></div>
+    <div><h3>只写核过的</h3><p>“不存图”“只看键位”“不离开这台 Mac”，每句都要有测过的证据。</p></div>
+    <div><h3>不吓人，也不藏</h3><p>系统没公开的方法照实写在第三层，说清用来做什么、坏了会怎样。</p></div>
+  </div>
+</section>
+
+<section>
+  <h2>逐项规格</h2>
+  <p class="sub">清单来自 2026-10-03 对 <code>prototype/</code> 的检索。“核对”一栏写的是这一句能不能上页面。</p>
+  <div class="tbl"><table>
+    <thead><tr><th>层</th><th>这一行</th><th>为什么读</th><th>代码里用的</th><th>去了哪里</th><th>开关</th><th>核对</th></tr></thead>
+    <tbody id="spec"></tbody>
+  </table></div>
+</section>
+
+<section>
+  <div class="mandate">
+    <h2>写给接手的人：照这个方向走，不要绕开</h2>
+    <p class="sub" style="margin:0">接手的模型或人先读这一节，再动代码。每一条都是硬要求，做不到就停下来写明卡在哪，不要换一个更容易的东西交差。仓库里的同一份在 <code>docs/privacy-page.md</code>。</p>
+    <ol>
+      <li><b>先修日志，再上页面。</b><span>运行记录移到 <code>~/Library/Logs/WindowShade/</code>，权限 0600；12 处写窗口标题的日志改成不写标题。修完用另一个账户实测读不到。</span></li>
+      <li><b>清单从代码里来，不手写。</b><span>每个读取点在一张登记表里登记（照 Loupe 的 <code>SignalProvider</code> 和三层 <code>Sensitivity</code>）；加一个检查：代码里出现名单上的接口却没登记，构建检查就失败。页面和官网都从这张表生成。</span></li>
+      <li><b>只写核过的。</b><span>每一句承诺都在 <code>docs/privacy-page.md</code> 的核对表里有证据：联网用 <code>nettop</code> 实测，“不存图”查磁盘写入，“只看键位”查代码和日志。没核过的句子不上页面。</span></li>
+      <li><b>打开这一页才读。</b><span>不为这一页加轮询、不常驻。空闲 CPU 和唤醒次数照 performance.md 第七节测，不许变差。</span></li>
+      <li><b>不新开窗口，不复制开关。</b><span>“隐私”替换设置里的“权限与启动”，两项授权和“登录时自动启动”都并进来；每个开关仍是原来那一个，改这里那里也变。</span></li>
+      <li><b>文案照 copy-guide。</b><span>一个东西一个名字（实时活动、看一眼、刷脸解锁……）；接口名只出现在“显示技术细节”里，这个例外 Aaron 不同意就删掉。</span></li>
+      <li><b>刷脸解锁的那几行跟着它一起上。</b><span>蓝牙、人脸特征、存的密码，在功能开着时才出现，写法照 face-unlock.md，不提前承诺。</span></li>
+      <li><b>每一步都能装上、能试、能撤回。</b><span>先给 Aaron 能装的构建；Loupe 的代码是 MIT，借结构要带版权声明，它的名字、图标、图片不能用。</span></li>
+    </ol>
+    <h3 style="margin-top:22px">做的顺序</h3>
+    <div class="tbl" style="margin-top:8px"><table style="min-width:600px">
+      <thead><tr><th>步</th><th>做什么</th><th>算完成</th></tr></thead>
+      <tbody>
+        <tr><td>P1</td><td>修日志：换位置、改权限、去掉窗口标题</td><td>另一个账户读不到；日志里搜不到任何窗口标题</td></tr>
+        <tr><td>P2</td><td>联网实测：开、关“自动检查更新”各跑一天</td><td><code>nettop</code> 记录里只有更新地址；关掉后为零</td></tr>
+        <tr><td>P3</td><td>登记表 + 构建检查</td><td>下表每一行都登记；故意加一个没登记的调用，检查会失败</td></tr>
+        <tr><td>P4</td><td>设置里的“隐私”一栏</td><td>照本页做；原值、展开、开关、深色都对；打开这一页前后耗电不变</td></tr>
+        <tr><td>P5</td><td>逐句核对</td><td>核对表每行都是“已核”，才在发布说明和官网写这一页</td></tr>
+        <tr><td>P6</td><td>官网同一份</td><td>从登记表生成，和 App 里一字不差</td></tr>
+      </tbody>
+    </table></div>
+  </div>
+</section>
+
+<footer>依据：Loupe（mysk-research/loupe，代码 MIT）的分层做法；Apple HIG Privacy；docs/integration-loupe-glance.md 第二步；docs/copy-guide.md；对 prototype/ 的检索（Info.plist 的两条用途说明、Permissions.swift、HabitKeys.swift、Support/Diagnostics.swift 等）。窗口按设置窗口现有的分组卡片画，示意用的值是例子。</footer>
+</div>
+
+<script>
+(function(){
+  var T=[
+    {k:'不用问就能读的',n:'系统给每个 App 都开着',rows:[
+      {id:'shape',n:'屏幕和刘海的形状',s:'窗口收进刘海时贴着机身',v:'这块屏有刘海',why:'刘海那一排、收进刘海、落点小岛都要知道刘海在哪、多宽。',go:'只在内存里用。',tech:'NSScreen.safeAreaInsets / auxiliaryTopLeftArea',api:'NSScreen 公开属性',ok:1},
+      {id:'lock',n:'是否锁屏',s:'锁屏时不画刘海、不动窗口',v:'没锁',why:'锁屏期间什么都不做，解锁后再接上。',go:'只在内存里用。',tech:'CGSessionCopyCurrentDictionary',api:'CGSessionCopyCurrentDictionary',ok:1},
+      {id:'battery',n:'配件电量',s:'妙控鼠标、键盘、触控板',v:'妙控鼠标 82%',why:'连上或电量低时刘海说一句。',go:'只在内存里用。',tech:'IOKit · AppleDeviceManagementHIDEventService',api:'IOServiceMatching(AppleDeviceManagementHIDEventService)',ok:0,chk:'现在没有开关，P4 定要不要加'},
+      {id:'audio',n:'哪个 App 在录音',s:'只在语音备忘录开着时看',v:'语音备忘录没开',why:'实时活动里显示正在录音。',go:'只在内存里用。',tech:'CoreAudio 进程对象（macOS 14.2+）',api:'AudioObject kAudioHardwarePropertyProcessObjectList',sw:'实时活动',ok:1}
+    ]},
+    {k:'你同意后才读的',n:'系统会先问你',rows:[
+      {id:'ax',n:'窗口的标题、位置和大小',s:'找到、移动和恢复窗口',v:'',perm:'辅助功能',why:'收起、放回、排窗口都要知道窗口在哪；卡住时看一眼前台 App 的菜单。',go:'只在内存里用；收起的窗口的标题和位置记在恢复记录里，放回后删。',tech:'AXUIElement · kAXTitle / kAXPosition / kAXSize',api:'AXUIElementCopyAttributeValue',ok:0,chk:'恢复记录“放回后删”待核'},
+      {id:'keys',n:'按了哪个键',s:'只看键位和修饰键，不记打的字',v:'只在“之前常用”开着时',perm:'辅助功能',why:'你按了 Windows 或 iPad 上的习惯键，刘海告诉你 Mac 上怎么做。',go:'不存。“之前常用”选“一直用 Mac”时，一个键都不看。',tech:'CGEventTap（会话钩子，原样放行）',api:'CGEvent.tapCreate (HabitKeys, GlobalShortcuts)',ok:1},
+      {id:'screen',n:'窗口的画面',s:'预览、缩略图和看一眼',v:'',perm:'屏幕录制',why:'看一眼、窗口浏览、刘海那一排的画面。',go:'只在内存里；退出就没了。',tech:'ScreenCaptureKit · SCShareableContent',api:'SCShareableContent / SCScreenshotManager',ok:0,chk:'“不落盘”待核'},
+      {id:'cam',n:'摄像头',s:'眨眼和转头',v:'没在用',perm:'摄像头',why:'你在菜单里选“检测面部动作”时才开，检测完就关。只算脸的方向，不存图。',go:'不存图，也不离开这台 Mac。',tech:'AVCaptureDevice + Vision（本机）',api:'AVCaptureDevice / VNDetectFaceLandmarks',ok:0,chk:'“不存图”待核'},
+      {id:'music',n:'正在播放的歌',s:'音乐和 Spotify',v:'音乐 · 暂停',perm:'自动化',why:'刘海和启动台里显示歌名、进度，能暂停和切歌。',go:'只在内存里用。',tech:'Apple 事件（osascript，固定脚本）',api:'osascript + NSAppleEventsUsageDescription',sw:'实时活动',ok:1}
+    ]},
+    {k:'用了系统没公开的方法的',n:'Apple 没写进文档，系统更新后可能失效',rows:[
+      {id:'bezel',n:'刘海的精确轮廓',s:'让刘海里的东西贴着圆角',v:'读到了',why:'公开接口只给矩形；不读就退回矩形，看起来略生硬。',go:'只在内存里用。',tech:'NSScreen.bezelPath（未公开）',api:'Private/ScreenBezel.swift',ok:1},
+      {id:'spaces',n:'别的桌面和已最小化的窗口的画面',s:'刘海那一排能看到每一扇',v:'',perm:'屏幕录制',why:'公开接口拿不到别的桌面和已最小化窗口的画面。失效时显示应用图标。',go:'只在内存里用。',tech:'SkyLight · SLSCopy… / CGSHWCaptureWindowList',api:'Private/SkyLightBridge.swift, Capture/WindowSnapshot.swift',ok:1},
+      {id:'lid',n:'屏幕开合的角度',s:'合盖效果跟着屏幕走',v:'112°',why:'合上时桌面折进刘海，跟手。读不到就不画这个效果。',go:'只在内存里用。',tech:'IOHID 开合角度传感器',api:'Effects/LidAngleSource.swift',sw:'桌面开合',ok:1},
+      {id:'tilt',n:'机身的倾斜',s:'开合效果里的光影',v:'读到了',why:'让开合时的光影跟着机身角度变。',go:'只在内存里用。',tech:'IOHID 传感器中枢加速度计（厂商页 0xFF00）',api:'Effects/AppleSPUAccelerometer.swift',sw:'桌面开合',ok:1}
+    ]}
+  ];
+  var granted={'辅助功能':true,'屏幕录制':true,'摄像头':false,'自动化':true};
+  var tiers=document.getElementById('tiers'),tech=false;
+  function esc(s){return String(s).replace(/[&<>"]/g,function(c){return{'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]})}
+  function render(){
+    tiers.innerHTML=T.map(function(t){
+      return '<div class="tier"><div class="tl">'+t.k+'<small>'+t.n+'</small></div><div class="card">'+t.rows.map(function(r){
+        var on=r.on!==false;
+        var val=r.perm&&!granted[r.perm]&&r.id!=='cam'?'<span class="chip need">去授权</span>':r.perm&&!r.v?'<span class="chip ok">已授权</span>':'<span class="val'+(on?'':' off')+'">'+esc(on?r.v:'关着')+'</span>';
+        return '<div class="row" data-id="'+r.id+'"><button type="button" class="rh" aria-expanded="false"><div style="min-width:0"><div class="rn">'+esc(r.n)+'</div><div class="rs">'+esc(r.s)+(r.perm?' · 要“'+r.perm+'”':'')+'</div></div>'+val+'<span class="chev" aria-hidden="true"></span></button>'+
+          '<div class="rb"><div><dl class="three"><dt>读到的</dt><dd>'+esc(on?(r.v||'有权限，正在用'):'关着，不读')+'</dd><dt>为什么</dt><dd>'+esc(r.why)+'</dd><dt>去了哪里</dt><dd>'+esc(r.go)+'</dd>'+
+          (r.sw?'<div class="swrow"><span>'+esc(r.sw)+'</span><button type="button" class="sw" role="switch" aria-checked="'+on+'" aria-label="'+esc(r.sw)+'" data-sw="'+r.id+'"></button></div>':'')+
+          (tech?'<div class="tech">'+esc(r.tech)+'</div>':'')+'</dl></div></div></div>';
+      }).join('')+'</div></div>';
+    }).join('');
+  }
+  tiers.addEventListener('click',function(e){
+    var sw=e.target.closest('[data-sw]');
+    if(sw){var id=sw.getAttribute('data-sw');T.forEach(function(t){t.rows.forEach(function(r){if(r.id===id)r.on=r.on===false})});
+      var open=[].map.call(tiers.querySelectorAll('.row.open'),function(x){return x.dataset.id});render();open.forEach(function(o){var el=tiers.querySelector('[data-id="'+o+'"]');el.classList.add('open');el.querySelector('.rh').setAttribute('aria-expanded','true')});return;}
+    var h=e.target.closest('.rh');if(!h)return;var row=h.parentNode;var o=row.classList.toggle('open');h.setAttribute('aria-expanded',o);
+  });
+  document.getElementById('techToggle').addEventListener('click',function(){tech=!tech;this.setAttribute('aria-pressed',tech);this.textContent=tech?'隐藏技术细节':'显示技术细节';
+    var open=[].map.call(tiers.querySelectorAll('.row.open'),function(x){return x.dataset.id});render();open.forEach(function(o){var el=tiers.querySelector('[data-id="'+o+'"]');el.classList.add('open');el.querySelector('.rh').setAttribute('aria-expanded','true')});});
+  document.getElementById('reread').addEventListener('click',function(){var d=new Date();document.getElementById('readAt').textContent='打开这一页时读的 · '+String(d.getHours()).padStart(2,'0')+':'+String(d.getMinutes()).padStart(2,'0');});
+  render();
+  var first=tiers.querySelector('[data-id="keys"]');first.classList.add('open');first.querySelector('.rh').setAttribute('aria-expanded','true');
+  // 规格表
+  var spec=document.getElementById('spec'),tierShort=['不用问','要你同意','未公开'];
+  spec.innerHTML=T.map(function(t,i){return t.rows.map(function(r){
+    return '<tr><td>'+tierShort[i]+'</td><td>'+esc(r.n)+'</td><td>'+esc(r.why)+'</td><td class="t">'+esc(r.api)+'</td><td>'+esc(r.go)+'</td><td>'+(r.sw?esc(r.sw):'—')+'</td><td>'+(r.ok?'<span class="st done">可以写</span>':'<span class="st todo">'+esc(r.chk)+'</span>')+'</td></tr>';
+  }).join('')}).join('')+
+  '<tr><td>去处</td><td>联网</td><td>检查更新</td><td class="t">Sparkle · SUFeedURL / 备用 GitHub</td><td>windowshade.aaronlau.me；不通时 GitHub</td><td>自动检查更新</td><td><span class="st todo">nettop 实测待做</span></td></tr>'+
+  '<tr><td>去处</td><td>运行记录</td><td>出问题时查原因</td><td class="t">Support/Diagnostics.swift</td><td>现在：/tmp/windowshade.log，别的账户可读，含窗口标题</td><td>—</td><td><span class="st bad">先修（P1）</span></td></tr>';
+})();
+</script>
+
+</body></html>

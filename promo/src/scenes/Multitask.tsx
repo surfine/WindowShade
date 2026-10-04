@@ -1,6 +1,6 @@
 import React from "react";
 import { useCurrentFrame } from "remotion";
-import { C, FONT, easeInOut, mix, tw } from "../theme";
+import { C, FONT, mix, motion, tw } from "../theme";
 import { Canvas, Caption, Cursor, Lamps, useVertical } from "../ui";
 
 const colors = ["#248af0", "#e5ad2b", "#ee5b54", "#7966d5", "#4ba982", "#6c7e94"];
@@ -22,10 +22,10 @@ export const Multitask: React.FC = () => {
   const folder = tw(f, 48, 80) * (1 - tw(f, 136, 156));
   const library = tw(f, 166, 190) * (1 - tw(f, 240, 258));
   const desktop = tw(f, 274, 330);
-  const travel = tw(f, 270, 330, 0, 1, easeInOut);
+  const travel = motion(f, 270, "glide");
   const windowIn = tw(f, 320, 356);
-  const tuck = tw(f, 409, 446, 0, 1, easeInOut) - tw(f, 472, 502, 0, 1, easeInOut);
-  const fly = tw(f, 535, 572, 0, 1, easeInOut);
+  const tuck = motion(f, 409, "settle") - motion(f, 472, "flyOut");
+  const fly = motion(f, 535, "flyOut");
   const notice = tw(f, 600, 622) * (1 - tw(f, 668, 690));
   const ww = vertical ? 450 : 420;
   const wh = vertical ? 730 : 450;

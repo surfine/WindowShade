@@ -53,6 +53,25 @@ struct MotionTokensTests {
     expect(calm.dampingRatio == Motion.Spring.reducedWindow.dampingRatio && calm.response == Motion.Spring.reducedWindow.response,
            "FlickSpring.calm is the reducedWindow token")
 
+    // 收进刘海时鼓一下：calm 被踢一脚，峰值由临界阻尼解出来，不写死在关键帧上。
+    let swell = SwellKick.spring
+    expect(swell.dampingRatio == 1 && swell.response == 0.34, "the swell uses calm (critical, response 0.34)")
+    let widthPeak = swell.criticalKickPeak(velocity: SwellKick.widthVelocity)
+    let heightPeak = swell.criticalKickPeak(velocity: SwellKick.heightVelocity)
+    expect(abs(widthPeak.time - 0.054) < 0.002 && abs(heightPeak.time - widthPeak.time) < 1e-9,
+           "both axes peak together near 0.05s (got \(widthPeak.time))")
+    expect(abs(widthPeak.displacement - 14) < 0.15,
+           "700 pt/s on calm peaks near 14 pt (got \(widthPeak.displacement))")
+    expect(abs(heightPeak.displacement - 6) < 0.1,
+           "300 pt/s on calm peaks near 6 pt (got \(heightPeak.displacement))")
+    let kick = SwellKick.samples()
+    let sampledWidth = kick.map(\.width).max() ?? 0
+    let sampledHeight = kick.map(\.height).max() ?? 0
+    expect(kick.first?.width == 0 && kick.first?.height == 0 && kick.last?.width == 0 && kick.last?.height == 0,
+           "the swell curve starts and ends at rest")
+    expect(abs(sampledWidth - widthPeak.displacement) < 0.2 && abs(sampledHeight - heightPeak.displacement) < 0.2,
+           "sampled frames reach the analytic peak (got \(sampledWidth), \(sampledHeight))")
+
     if failures == 0 {
       print("PASS: motion tokens match the values they were collected from")
     } else {

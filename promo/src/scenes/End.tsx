@@ -12,9 +12,9 @@ export const End: React.FC = () => {
   const v = useVertical();
   const cx = v ? 540 : 960;
   const dy = v ? 380 : 0;
-  const icon = pop(frame, END.icon, 11, 120);
+  const icon = pop(frame, END.icon);
   const glow = tw(frame, END.cta, END.cta + 40, 0, 1, easeOut);
-  const cta = pop(frame, END.cta, 14, 180);
+  const cta = pop(frame, END.cta);
   const fade = 1 - tw(frame, sceneFrames("End") - 30, sceneFrames("End"));
   return (
     <Canvas>

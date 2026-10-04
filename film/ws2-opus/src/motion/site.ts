@@ -40,41 +40,68 @@ export const ISLAND_SHAPES = {
 } as const;
 export type IslandMode = keyof typeof ISLAND_SHAPES;
 
-/** 展开、收回：阻尼 0.96、响应 0.38；提醒：阻尼 0.82、响应 0.42。 */
+/** 安静 / 收起：calm 0.34、ζ 1。一排：expand 0.40、ζ 0.92。提醒：bloom 0.42、ζ 0.84。 */
 export const islandTuning = (mode: IslandMode) =>
-  mode === 'alert' ? { damping: 0.82, response: 0.42 } : { damping: 0.96, response: 0.38 };
+  mode === 'alert' ? { damping: 0.84, response: 0.42 }
+  : mode === 'shelf' || mode === 'full' ? { damping: 0.92, response: 0.4 }
+  : { damping: 1, response: 0.34 };
 
-/** 落进刘海那一下：宽速度 +60、高速度 +18（cqw/s）。 */
-export const TUCK_KICK = { w: 60, h: 18 };
+/** 落进刘海那一下：calm 被踢。宽 +700 pt/s、高 +300 pt/s。100 cqw = 1710 pt。 */
+export const TUCK_KICK = { w: 700 / 17.1, h: 300 / 17.1 };
 /** 提醒停 2.6 秒；island.js 在 2620ms 时重新取目标。 */
 export const ALERT_HOLD = Math.round(2.62 * FPS);
 /** 指针停 120ms 才展开成一排。 */
 export const HOVER_DELAY = Math.round(0.12 * FPS);
 
-/** 收进刘海：520ms，cubic-bezier(.3,.05,.2,1)。目标：屏宽正中、屏高 3%，宽缩到屏宽 7%，圆角 2.6cqw → 6cqw。 */
-export const TUCK_FRAMES = 0.52 * FPS;
-const tuckCurve = bezier(0.3, 0.05, 0.2, 1);
+function solve(d0: number, v0: number, response: number, zeta: number, t: number): [number, number] {
+  if (t <= 0) return [d0, v0];
+  const w = (2 * Math.PI) / response;
+  if (zeta < 1) {
+    const wd = w * Math.sqrt(1 - zeta * zeta);
+    const e = Math.exp(-zeta * w * t);
+    const c = Math.cos(wd * t);
+    const s = Math.sin(wd * t);
+    const b = (v0 + zeta * w * d0) / wd;
+    const d = e * (d0 * c + b * s);
+    return [d, -zeta * w * d + e * wd * (b * c - d0 * s)];
+  }
+  const e = Math.exp(-w * t);
+  const k = v0 + w * d0;
+  const d = (d0 + k * t) * e;
+  return [d, (k - w * (d0 + k * t)) * e];
+}
+function namedProgress(frame: number, start: number, response: number, zeta: number, v0 = 0) {
+  const t = (frame - start) / FPS;
+  if (t <= 0) return 0;
+  const p = 1 + solve(-1, v0, response, zeta, t)[0];
+  return p < 0 ? 0 : p;
+}
+function restFrames(response: number, zeta: number) {
+  for (let f = 1; f < FPS * 2; f++) if (1 - namedProgress(f, 0, response, zeta) <= 0.004) return f;
+  return Math.round(1.6 * FPS);
+}
+/** 窗口收进刘海：settle。帧数是残差落到 0.004 的那一帧，鼓一下跟在它后面。 */
+export const TUCK_FRAMES = restFrames(0.38, 1);
 export function tuckProgress(frame: number, start: number) {
-  return tuckCurve((frame - start) / TUCK_FRAMES);
+  return Math.min(1, namedProgress(frame, start, 0.38, 1));
 }
-/** 放回：island.js 把同一段动画 reverse()，时间倒着走。 */
+/** 放回是一根新的 flyOut，从收起的位置走向原位。 */
 export function untuckProgress(frame: number, start: number) {
-  const u = (frame - start) / TUCK_FRAMES;
-  if (u <= 0) return 1;
-  if (u >= 1) return 0;
-  return tuckCurve(1 - u);
+  if (frame <= start) return 1;
+  return Math.max(0, 1 - namedProgress(frame, start, 0.38, 0.9));
 }
+export { solve };
 
 // ---- site/app.js：开盖播放与合盖的折叠 ----
-const easeInOutCubic = (x: number) => (x < 0.5 ? 4 * x * x * x : 1 - Math.pow(-2 * x + 2, 3) / 2);
-/** play()：1.5 秒合到 0.9，停到 2.4 秒，1.2 秒打开。0 是开着。 */
+/** play()：铰链走 dolly（1.6 秒、ζ 1）。1.5 秒合到 0.9，停到 2.4 秒，再打开。0 是开着。页面折进去仍是 FoldSpring。 */
 export const LID_PLAY_FRAMES = Math.round(3.6 * FPS);
 export function lidPlay(frame: number, start: number) {
   const t = (frame - start) / FPS;
   if (t <= 0) return 0;
-  if (t < 1.5) return 0.9 * easeInOutCubic(t / 1.5);
+  const hinge = (u: number) => namedProgress(Math.round(u * FPS), 0, 1.6, 1);
+  if (t < 1.5) return 0.9 * hinge(t);
   if (t < 2.4) return 0.9;
-  if (t < 3.6) return 0.9 * (1 - easeInOutCubic((t - 2.4) / 1.2));
+  if (t < 3.6) return 0.9 * (1 - hinge(t - 2.4));
   return 0;
 }
 /** .lid { transform: rotateX(calc(var(--lid) * -62deg)) } */
@@ -119,14 +146,14 @@ export function shadeFold(amount: number, w: number, h: number) {
   };
 }
 
-// ---- site/app.js 侧拉：响应 0.42、阻尼 0.88，带上松手时的速度；1.1 秒后停住 ----
-export const SLIDE_FRAMES = Math.round(1.1 * FPS);
+// ---- site/app.js 侧拉：glide 0.42 / 0.88，带着松手速度。残差落到 0.004 才停在终点。 ----
+export const SLIDE_FRAMES = Math.round(1.6 * FPS);
 export function slideSpring(frame: number, start: number, v0 = 0) {
   const t = (frame - start) / FPS;
   if (t <= 0) return 0;
-  if (t >= 1.1) return 1;
-  const w = (2 * Math.PI) / 0.42, z = 0.88, wd = w * Math.sqrt(1 - z * z);
-  return 1 - Math.exp(-z * w * t) * (Math.cos(wd * t) + ((z * w - v0) / wd) * Math.sin(wd * t));
+  const p = namedProgress(frame, start, 0.42, 0.88, v0);
+  if (Math.abs(1 - p) <= 0.004 || t >= 1.6) return 1;
+  return p;
 }
 
 // ---- site/teach.js：一笔的节奏、移动曲线、窗口落定的弹簧 ----

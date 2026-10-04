@@ -1,0 +1,412 @@
+<!doctype html><html><head><meta charset=utf8><meta name=viewport content="width=device-width,initial-scale=1,viewport-fit=cover"><style>:root{color-scheme:light;box-sizing:border-box;padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}html{scroll-padding-top:env(safe-area-inset-top,0px)}body{margin:0;padding:0;font:14px -apple-system,BlinkMacSystemFont,sans-serif;background:#faf9f5;color:#141413}img{max-width:100%}[hidden]:not([hidden=until-found i]){display:none!important}</style></head><body>
+<title>WindowShade 设计规范</title>
+<style>
+@import url("https://fonts.googleapis.com/css2?family=Newsreader:opsz,wght@6..72,400;6..72,600&family=IBM+Plex+Sans:wght@400;500;600&family=IBM+Plex+Mono:wght@400;500&family=Noto+Serif+SC:wght@500;600&family=Noto+Sans+SC:wght@400;500&display=swap");
+:root{
+  --paper:#EDF1F7;--surface:#FFFFFF;--surface-2:#F6F8FC;
+  --ink:#141B26;--ink-2:#45536B;--ink-3:#6E7C93;
+  --line:#D7DEEA;--line-soft:#E6EBF3;
+  --accent:#2F62C4;--accent-soft:#E3EAF9;
+  --flag:#A8600F;--flag-soft:#FBF0DF;--keep:#2C7350;--keep-soft:#E2F0E8;
+  --hw:#000000;--glass:rgba(255,255,255,.62);--glass-line:rgba(20,32,56,.14);
+  --wall:linear-gradient(150deg,#C9D8F2 0%,#DCE4F2 45%,#EFE3DA 100%);
+  --doc:"IBM Plex Sans","Noto Sans SC",-apple-system,system-ui,sans-serif;
+  --head:"Newsreader","Noto Serif SC",Georgia,serif;
+  --mono:"IBM Plex Mono",ui-monospace,SFMono-Regular,Menlo,monospace;
+}
+@media (prefers-color-scheme:dark){:root:not([data-theme="light"]){
+  color-scheme:dark;
+  --paper:#0E131B;--surface:#151C27;--surface-2:#1A222F;
+  --ink:#E7EDF6;--ink-2:#A7B4C8;--ink-3:#7A889E;
+  --line:#26303F;--line-soft:#1E2733;
+  --accent:#7FA5F0;--accent-soft:#1B2740;
+  --flag:#E0A264;--flag-soft:#2A2115;--keep:#6CC495;--keep-soft:#14271D;
+  --glass:rgba(40,46,58,.62);--glass-line:rgba(255,255,255,.14);
+  --wall:linear-gradient(150deg,#22324F 0%,#1B2536 45%,#3A2C2A 100%);
+}}
+:root[data-theme="dark"]{
+  color-scheme:dark;
+  --paper:#0E131B;--surface:#151C27;--surface-2:#1A222F;
+  --ink:#E7EDF6;--ink-2:#A7B4C8;--ink-3:#7A889E;
+  --line:#26303F;--line-soft:#1E2733;
+  --accent:#7FA5F0;--accent-soft:#1B2740;
+  --flag:#E0A264;--flag-soft:#2A2115;--keep:#6CC495;--keep-soft:#14271D;
+  --glass:rgba(40,46,58,.62);--glass-line:rgba(255,255,255,.14);
+  --wall:linear-gradient(150deg,#22324F 0%,#1B2536 45%,#3A2C2A 100%);
+}
+*{box-sizing:border-box}
+body{margin:0;background:var(--paper);color:var(--ink);font-family:var(--doc);font-size:15px;line-height:1.72;-webkit-font-smoothing:antialiased}
+.wrap{max-width:1040px;margin:0 auto;padding-inline:20px;padding-block:0 96px}
+.masthead{padding:68px 0 36px;border-bottom:1px solid var(--line)}
+.eyebrow{font-family:var(--mono);font-size:11.5px;letter-spacing:.14em;text-transform:uppercase;color:var(--ink-3);margin:0 0 16px}
+h1{font-family:var(--head);font-weight:600;font-size:clamp(36px,6vw,54px);line-height:1.08;letter-spacing:-.015em;margin:0 0 18px;text-wrap:balance}
+.thesis{font-size:18px;line-height:1.7;color:var(--ink-2);max-width:62ch;margin:0}
+.thesis strong{color:var(--ink);font-weight:600}
+.meta{display:flex;flex-wrap:wrap;gap:8px 26px;margin-top:26px;font-family:var(--mono);font-size:12px;color:var(--ink-3)}
+.meta b{color:var(--ink-2);font-weight:500}
+section{padding-top:64px}
+.sec-head{display:flex;align-items:baseline;gap:14px;margin-bottom:10px}
+.sec-num{font-family:var(--mono);font-size:12px;color:var(--accent);letter-spacing:.04em}
+h2{font-family:var(--head);font-weight:600;font-size:clamp(24px,3.4vw,30px);line-height:1.25;letter-spacing:-.01em;margin:0;text-wrap:balance}
+h3{font-size:15px;font-weight:600;margin:32px 0 10px;letter-spacing:.01em}
+.lede{color:var(--ink-2);max-width:64ch;margin:0 0 8px}
+p{max-width:66ch}
+code{font-family:var(--mono);font-size:.86em;background:var(--surface-2);border:1px solid var(--line-soft);border-radius:4px;padding:1px 5px;color:var(--ink-2)}
+.scroll-x{overflow-x:auto}
+table{width:100%;border-collapse:collapse;margin-top:16px;font-size:13.5px}
+th,td{text-align:left;padding:9px 14px 9px 0;border-bottom:1px solid var(--line-soft);vertical-align:top}
+th{font-family:var(--mono);font-size:11px;letter-spacing:.1em;text-transform:uppercase;color:var(--ink-3);font-weight:500;border-bottom-color:var(--line);white-space:nowrap}
+td.num,td.mono{font-family:var(--mono);font-variant-numeric:tabular-nums;color:var(--ink-2);white-space:nowrap}
+.tag{display:inline-block;font-family:var(--mono);font-size:10.5px;letter-spacing:.06em;padding:1px 7px;border-radius:4px;white-space:nowrap}
+.tag.done{background:var(--keep-soft);color:var(--keep)}
+.tag.open{background:var(--flag-soft);color:var(--flag)}
+.tag.src{background:var(--accent-soft);color:var(--accent)}
+
+/* values */
+.values{display:grid;grid-template-columns:repeat(auto-fit,minmax(min(100%,300px),1fr));gap:14px;margin-top:22px}
+.value{background:var(--surface);border:1px solid var(--line);border-radius:10px;padding:16px 18px}
+.value .k{font-family:var(--mono);font-size:11.5px;color:var(--accent)}
+.value b{display:block;font-family:var(--head);font-size:19px;font-weight:600;margin:2px 0 6px;line-height:1.3}
+.value p{margin:0;font-size:14px;color:var(--ink-2)}
+
+/* layers */
+.layers{display:grid;grid-template-columns:1.2fr 1fr;gap:22px;margin-top:22px;align-items:start}
+@media (max-width:820px){.layers{grid-template-columns:1fr}}
+.stage{position:relative;aspect-ratio:16/10;max-width:100%;border-radius:12px;overflow:hidden;background:var(--wall);border:1px solid var(--line)}
+.stage .menubar{position:absolute;inset:0 0 auto;height:7%;background:rgba(255,255,255,.35)}
+.stage .notch{position:absolute;left:50%;top:0;transform:translateX(-50%);width:24%;height:13%;background:var(--hw);border-radius:0 0 14px 14px}
+.stage .win{position:absolute;left:8%;top:20%;width:56%;height:66%;background:var(--surface);border-radius:10px;box-shadow:0 10px 30px rgba(10,20,40,.22)}
+.stage .win i{display:block;height:9%;background:var(--surface-2);border-radius:10px 10px 0 0;border-bottom:1px solid var(--line-soft)}
+.stage .win s{display:block;height:5%;margin:4% 7% 0;border-radius:3px;background:var(--line-soft);text-decoration:none}
+.stage .hud{position:absolute;right:7%;bottom:12%;width:30%;height:16%;border-radius:999px;background:var(--glass);backdrop-filter:blur(14px) saturate(160%);-webkit-backdrop-filter:blur(14px) saturate(160%);border:1px solid var(--glass-line);display:flex;align-items:center;justify-content:center;font-size:12px;color:var(--ink-2)}
+.stage .lbl{position:absolute;font-family:var(--mono);font-size:10.5px;color:var(--ink);background:var(--surface);border:1px solid var(--line);border-radius:4px;padding:1px 6px;white-space:nowrap}
+.layer-list{display:grid;gap:12px}
+.layer{display:grid;grid-template-columns:30px 1fr;gap:12px;align-items:start}
+.sw{width:30px;height:30px;border-radius:7px;border:1px solid var(--line)}
+.layer b{display:block;font-size:14.5px}
+.layer span{font-size:13.5px;color:var(--ink-2)}
+
+/* notch geometry */
+.geo{background:var(--surface);border:1px solid var(--line);border-radius:12px;padding:18px;margin-top:20px}
+.geo svg{display:block;width:100%;height:auto}
+.geo figcaption{font-size:12.5px;color:var(--ink-3);margin-top:10px}
+
+/* states */
+.states{display:grid;grid-template-columns:repeat(auto-fit,minmax(min(100%,290px),1fr));gap:12px;margin-top:20px}
+.state{background:var(--surface);border:1px solid var(--line);border-radius:10px;overflow:hidden}
+.state .pic{height:96px;background:var(--wall);position:relative}
+.state .pic svg{position:absolute;inset:0;width:100%;height:100%}
+.state .txt{padding:10px 14px 12px;font-size:13px;color:var(--ink-2)}
+.state .txt b{display:block;color:var(--ink);font-size:13.5px}
+
+/* springs */
+.springs{display:grid;grid-template-columns:repeat(auto-fit,minmax(min(100%,180px),1fr));gap:12px;margin-top:20px}
+.spring{background:var(--surface);border:1px solid var(--line);border-radius:10px;padding:12px 14px}
+.spring .h{display:flex;flex-direction:column;gap:1px;font-family:var(--mono);font-size:12px}
+.spring .h b{font-weight:500;color:var(--ink);font-size:13px}
+.spring .h span{color:var(--ink-3)}
+.spring svg{display:block;width:100%;height:64px;margin:8px 0 4px}
+.spring p{margin:0;font-size:12.5px;color:var(--ink-2)}
+.spring.except{border-color:color-mix(in srgb,var(--flag) 40%,var(--line))}
+
+.progress td:first-child{font-family:var(--mono);color:var(--ink-3);white-space:nowrap}
+.note{margin-top:18px;padding:14px 16px;border-radius:10px;background:var(--flag-soft);font-size:14px}
+.note b{color:var(--flag)}
+.bounds{display:grid;gap:10px;margin-top:18px}
+.bound{display:grid;grid-template-columns:22px 1fr;gap:10px;font-size:14.5px;color:var(--ink-2)}
+.bound span:first-child{color:var(--flag);font-family:var(--mono)}
+footer{margin-top:72px;padding-top:22px;border-top:1px solid var(--line);color:var(--ink-3);font-size:13px}
+</style>
+
+<div class="wrap">
+
+<header class="masthead">
+  <p class="eyebrow">WindowShade · 设计规范 v2</p>
+  <h1>从刘海长出来</h1>
+  <p class="thesis">v1（9 月 12 日）讲的是“把图标里那张纸的质感延伸到设置窗口”。之后产品的重心搬到了刘海：收进刘海、刘海那一排、卡住时刘海开口。v2 的主张是<strong>形状从硬件来，材质分三层，动作都是弹簧</strong>：贴着刘海的东西接着实体刘海的轮廓长，浮在内容上的控件用系统玻璃，窗口画面本身不加任何材质。目标是一眼就熟悉，像 Mac 自己的一部分。</p>
+  <div class="meta">
+    <span><b>依据</b> docs/design-system.md（9 月 29 日定稿）</span>
+    <span><b>代码</b> 提交 7fa141d · 1.0.16 build 16</span>
+    <span><b>核对</b> 2026-10-03</span>
+    <span><b>机器</b> MacBook Air 15″ M5 · macOS 27</span>
+  </div>
+</header>
+
+<section>
+  <div class="sec-head"><span class="sec-num">01</span><h2>六条价值观</h2></div>
+  <p class="lede">从 Apple 的新设计发布稿、Liquid Glass 的讲座和 HIG 压出来。每个组件都要说得出它怎么满足这六条，说不出的就是差距。</p>
+  <div class="values">
+    <div class="value"><span class="k">V1</span><b>一眼就熟悉</b><p>Mac 已经有的做法优先。新东西从刘海长出来，长得像系统的一部分，不另起窗口。不借 Apple 的功能名和口号。</p></div>
+    <div class="value"><span class="k">V2</span><b>内容优先</b><p>窗口画面、缩略图不加材质。顺利的时候刘海一声不吐，浮层用完就走。</p></div>
+    <div class="value"><span class="k">V3</span><b>玻璃只在控件层</b><p>硬件层纯黑、浮层用系统玻璃、内容层不加材质。浮层里再分块用填充和分隔线，不套第二层玻璃。</p></div>
+    <div class="value"><span class="k">V4</span><b>用系统玻璃，不自己仿</b><p>macOS 26 起用 <code>NSGlassEffectView</code>，14、15 用 <code>NSVisualEffectView</code>。不手画高光和折射。刘海是硬件，永远不是玻璃。</p></div>
+    <div class="value"><span class="k">V5</span><b>无障碍从第一行开始</b><p>每个表面都处理减少动态效果、减少透明度、增强对比度，并有读屏名字。每个手势都有菜单或快捷键代替。</p></div>
+    <div class="value"><span class="k">V6</span><b>Apple 式文案</b><p>一个东西一个名字，能少就少。⌃⌘⌥ 第一次出现时说清是哪个键；提示里的键帽照实物写两行（⌃ 下面是 control）。</p></div>
+  </div>
+</section>
+
+<section>
+  <div class="sec-head"><span class="sec-num">02</span><h2>三层材质</h2></div>
+  <p class="lede">屏幕上的每一样东西都归到这三层之一。层与层之间不混用：刘海旁边不出现玻璃，窗口画面上不盖玻璃条。</p>
+  <div class="layers">
+    <div class="stage" role="img" aria-label="示意：顶部正中是纯黑的刘海，左边是一扇窗口，右下角是一枚玻璃浮窗">
+      <div class="menubar"></div>
+      <div class="notch"></div>
+      <div class="win"><i></i><s></s><s style="width:60%"></s><s style="width:74%"></s><s style="width:52%"></s></div>
+      <div class="hud">右半屏</div>
+      <span class="lbl" style="left:64%;top:4%">硬件层</span>
+      <span class="lbl" style="left:10%;top:89%">内容层</span>
+      <span class="lbl" style="right:7%;bottom:30%">浮层</span>
+    </div>
+    <div class="layer-list">
+      <div class="layer"><div class="sw" style="background:#000"></div><div><b>硬件层：纯黑</b><span>刘海岛的各个样子、下巴、截图飞进刘海的最后一段。不用材质、不加朝上的阴影；增强对比度时细边从白 0.14 升到 0.5。</span></div></div>
+      <div class="layer"><div class="sw" style="background:var(--glass);backdrop-filter:blur(8px)"></div><div><b>浮层：系统玻璃</b><span>手势提示浮窗、窗口浏览面板、侧拉的玻璃边框、启动台的搜索胶囊。一律 Regular，不用 Clear；减少透明度时改成不透明底。</span></div></div>
+      <div class="layer"><div class="sw" style="background:var(--surface)"></div><div><b>内容层：不加材质</b><span>窗口画面、缩略图、画中画、看一眼的卡片。画中画的按钮直接压在画面上，底下一层渐变暗，不垫玻璃条。</span></div></div>
+    </div>
+  </div>
+</section>
+
+<section>
+  <div class="sec-head"><span class="sec-num">03</span><h2>形状从硬件来</h2></div>
+  <p class="lede">贴着刘海的形状，接着实体刘海自己的轮廓长：两侧竖边、底角、肩都取这块屏的真实数值。下图按本机 1710×1107 的点数等比放大，刘海、底角和肩都是连续曲率曲线（<code>.continuous</code>），不是圆弧。</p>
+  <figure class="geo" style="margin-inline:0">
+    <svg id="notchGeo" viewBox="0 0 760 250" role="img" aria-label="刘海几何：主体 185 乘 33.5 点，底角半径 10.7，肩半径 5.06，屏幕顶角半径 20.2"></svg>
+    <figcaption>本机（Air 15″）读系统私有的 <code>NSScreen.bezelPath</code> 拟合；公开接口只给到 0.5 点取整的矩形（185.0×33.5），不含肩和任何曲线。</figcaption>
+  </figure>
+
+  <h3>运行时怎么拿形状</h3>
+  <div class="scroll-x"><table>
+    <thead><tr><th>顺序</th><th>来源</th><th>给什么</th><th>失败时</th></tr></thead>
+    <tbody>
+      <tr><td class="mono">1</td><td>公开接口：<code>safeAreaInsets</code> + 左右辅助区</td><td>刘海有没有、在哪、多大（永远用它定位置）</td><td>没有刘海：顶部正中一颗浮着的胶囊</td></tr>
+      <tr><td class="mono">2</td><td>私有 <code>NSScreen.bezelPath</code>，带守卫</td><td>底角、肩、屏幕顶角的曲线</td><td>和公开矩形对不上、类型不对、读不到：退到第 3 步</td></tr>
+      <tr><td class="mono">3</td><td>机型表（按面板像素存）</td><td>Neo、Air 13/15、Pro 14/16 的曲线</td><td>未知机型：退到第 4 步</td></tr>
+      <tr><td class="mono">4</td><td>现版本几何</td><td>和 1.0.15 一样的数值，不画肩</td><td>—</td></tr>
+    </tbody>
+  </table></div>
+  <p class="lede" style="margin-top:12px">私有接口只在有刘海的内建屏上读；第一次读放在启动 2 秒后、用户停手 1.5 秒时，之后按屏缓存，不轮询、不截图。</p>
+
+  <h3>机型表</h3>
+  <div class="scroll-x"><table>
+    <thead><tr><th>机型</th><th>面板 px</th><th>屏幕顶角 r（px）</th><th>底角</th><th>刘海主体（px）</th><th>刘海底角 / 肩 r（px）</th></tr></thead>
+    <tbody>
+      <tr><td>MacBook Neo</td><td class="num">2408×1506</td><td class="num">33.6</td><td>直角</td><td>无刘海</td><td>—</td></tr>
+      <tr><td>MacBook Air 13″</td><td class="num">2560×1664</td><td class="num">34.8</td><td>直角</td><td class="num">312×56</td><td class="num">18.0 / 8.5</td></tr>
+      <tr><td>MacBook Air 15″</td><td class="num">2880×1864</td><td class="num">34.1</td><td>直角</td><td class="num">312×56</td><td class="num">18.0 / 8.5</td></tr>
+      <tr><td>MacBook Pro 14″</td><td class="num">3024×1964</td><td class="num">39.7</td><td>直角</td><td class="num">370×64</td><td class="num">20.6 / 9.8</td></tr>
+      <tr><td>MacBook Pro 16″</td><td class="num">3456×2234</td><td class="num">40.3</td><td>直角</td><td class="num">370×64</td><td class="num">20.6 / 9.8</td></tr>
+    </tbody>
+  </table></div>
+  <p class="lede" style="margin-top:12px">五款都是“天圆地方”：顶上两个圆角，底下两个直角。数值从 Apple Design Resources 的产品外框图稿量出（素材只用来测量，不进仓库）；Pro 两款还没在真机上核对。换算一律用“原生面板宽 ÷ 屏幕点宽”，不用 <code>backingScaleFactor</code>。</p>
+</section>
+
+<section>
+  <div class="sec-head"><span class="sec-num">04</span><h2>刘海岛的几个样子</h2></div>
+  <p class="lede">岛只有一个形状，在这些样子之间变形，不弹第二个窗口。第一帧和最后一帧都和实体刘海重合；肩只在紧凑、悬停、下巴这几种样子上画，宽的样子先收掉肩再长。</p>
+  <div class="states" id="states"></div>
+</section>
+
+<section>
+  <div class="sec-head"><span class="sec-num">05</span><h2>令牌</h2></div>
+
+  <h3>圆角</h3>
+  <div class="scroll-x"><table>
+    <thead><tr><th>令牌</th><th>值</th><th>用在</th></tr></thead>
+    <tbody>
+      <tr><td class="mono">hw.notchBottom</td><td class="num">本机 10.7</td><td>岛贴着刘海的底角（第一帧、下巴、悬停、紧凑）</td></tr>
+      <tr><td class="mono">hw.notchShoulder</td><td class="num">本机 5.06</td><td>岛的肩，和底角同一族曲线</td></tr>
+      <tr><td class="mono">hw.screenTop</td><td class="num">本机 20.2</td><td>屏幕顶角；靠近角落的表面只挪位置、不改半径</td></tr>
+      <tr><td class="mono">island.drop / alert / expanded</td><td class="num">22 / 24 / 28</td><td>落点小岛、提醒、展开一排</td></tr>
+      <tr><td class="mono">system.window / card / item / control</td><td class="num">13 / 12 / 8 / 6</td><td>浮窗与卷帘条 / 卡片与画中画 / 窗口浏览里的卡片 / 小按钮</td></tr>
+      <tr><td class="mono">capsule</td><td class="num">高 ÷ 2</td><td>只给矮条：隐形刘海、分屏把手、胶囊按钮</td></tr>
+    </tbody>
+  </table></div>
+  <p class="lede" style="margin-top:10px">岛里的东西和岛同心：子半径 = 外层半径 − 边距 14（展开里的格子 14，提醒里的图标台 10）。</p>
+
+  <h3>颜色与文字</h3>
+  <div class="scroll-x"><table>
+    <thead><tr><th>令牌</th><th>值</th><th>用在</th></tr></thead>
+    <tbody>
+      <tr><td class="mono">accent</td><td><code>controlAccentColor</code></td><td>主要操作、落点已对准、教学提示的边</td></tr>
+      <tr><td class="mono">problem</td><td><code>systemOrange</code></td><td>出了问题的提醒（同时换图标，不只靠颜色）</td></tr>
+      <tr><td class="mono">notch.text / textSecondary</td><td>白 1.0 / 白 0.6</td><td>刘海上的主句、次句；刘海永远是深色，不跟随外观</td></tr>
+      <tr><td class="mono">notch.title / detail</td><td>13 semibold / 11 regular</td><td>提醒和教学的两行字</td></tr>
+      <tr><td class="mono">notch.count</td><td>SF Pro Rounded，等宽数字</td><td>紧凑样式右边的个数</td></tr>
+      <tr><td class="mono">inset.island</td><td class="num">14</td><td>岛内四周边距</td></tr>
+    </tbody>
+  </table></div>
+
+  <h3>弹簧</h3>
+  <p class="lede">两个参数：response（秒）和阻尼比 ζ。默认不回弹；只有动作本身带动量、或回弹本身是提示时才回弹，Mac 上回弹不超过 0.2。打断时接着当时的速度走，位置和速度都不跳。下面的曲线按公式现算。</p>
+  <div class="springs" id="springs"></div>
+</section>
+
+<section>
+  <div class="sec-head"><span class="sec-num">06</span><h2>各个表面</h2></div>
+  <div class="scroll-x"><table>
+    <thead><tr><th>表面</th><th>层</th><th>要点</th></tr></thead>
+    <tbody>
+      <tr><td>刘海岛</td><td>硬件</td><td>一个形状、多个样子；接着刘海长；有变化时提醒先让开菜单栏上系统的东西，旁边有系统图标就只标点</td></tr>
+      <tr><td>卡住时的提示</td><td>硬件</td><td>演示一遍手指或按键怎么动，旁边一句话；同一条最多三次，两条之间隔五分钟；点一下替他做成</td></tr>
+      <tr><td>刘海那一排</td><td>硬件 + 内容</td><td>每一格是窗口的画面；停一格，窗口从格子里长出来、落在自己的位置；最小化的标“不是实时画面”</td></tr>
+      <tr><td>没有刘海的屏</td><td>硬件</td><td>平时什么都不画；开口时顶部正中浮出一颗胶囊，四角都圆，不画假刘海</td></tr>
+      <tr><td>手势提示浮窗</td><td>浮层</td><td>照 macOS 音量提示的样子，固定圆角 24；终点图标用 <code>pop</code></td></tr>
+      <tr><td>侧拉</td><td>浮层 + 内容</td><td>窗口外一圈 10 点的玻璃边框，靠里下角一段短弧是把手；照 iPadOS 27 的官方配图量</td></tr>
+      <tr><td>画中画</td><td>内容</td><td>离屏幕边 16；按钮压在画面上，不加控制条</td></tr>
+      <tr><td>缩略图</td><td>内容</td><td>圆角 8，右下角探出 26 点的 App 图标；标题变了右上角亮一个强调色的点</td></tr>
+      <tr><td>启动台</td><td>浮层 + 内容</td><td>搜索是底部正中的玻璃胶囊，落在程序坞上面；负一屏照 iPad 排</td></tr>
+      <tr><td>欢迎窗口</td><td>系统窗口</td><td>三步：一句话说清它是什么（“你熟悉的操作 Mac 上照样有，卡住时刘海告诉你怎么做。”）、问之前常用哪个、授权</td></tr>
+    </tbody>
+  </table></div>
+</section>
+
+<section>
+  <div class="sec-head"><span class="sec-num">07</span><h2>落进代码到哪了</h2></div>
+  <p class="lede">设计系统 §6 列了 19 条差距。照实写：做了的、还没做的，和还没做的为什么。</p>
+  <div class="scroll-x"><table class="progress">
+    <thead><tr><th>条目</th><th>内容</th><th>状态</th></tr></thead>
+    <tbody>
+      <tr><td>§6-1</td><td>建形状模型：来源顺序、<code>bezelPath</code> 守卫、机型表、换算</td><td><span class="tag done">已落</span> 69 项单测；刘海形状探针 10/10</td></tr>
+      <tr><td>§6-3</td><td>刘海岛贴合硬件：底角取硬件值，紧凑、悬停、下巴画肩</td><td><span class="tag done">已落</span> 宽的样子画肩没做（要先出小样）</td></tr>
+      <tr><td>§6-5</td><td>动效令牌收拢，参数逐字不变</td><td><span class="tag done">已落</span> 对照测试通过</td></tr>
+      <tr><td>§6-10</td><td><code>pop</code> 阻尼 0.75、次句白 0.6、次句 11 号、个数等宽</td><td><span class="tag done">已落</span> 没对比截图</td></tr>
+      <tr><td>§6-11</td><td>增强对比度：岛的细边 0.5，提示浮窗的边用 <code>labelColor</code></td><td><span class="tag done">已落</span> 没对比截图</td></tr>
+      <tr><td>§6-13</td><td>欢迎窗口第一句</td><td><span class="tag done">已定</span> Aaron 9/29 选 A，代码就是 A</td></tr>
+      <tr><td>§6-19</td><td>菜单栏里单扇“收进刘海”</td><td><span class="tag done">已落</span></td></tr>
+      <tr><td>§6-2</td><td>“已对准”去掉灰色填充，统一纯黑</td><td><span class="tag open">没做</span> 要先做小样，确认只剩边线时仍一眼分得出</td></tr>
+      <tr><td>§6-4</td><td>提醒和展开不留额头，内容绕着刘海排</td><td><span class="tag open">没做</span> 要先做小样</td></tr>
+      <tr><td>§6-6</td><td>刘海手势全程跟手、中途可以改方向</td><td><span class="tag open">没做</span></td></tr>
+      <tr><td>§6-7 / 8</td><td>玻璃审计：换成系统玻璃，删掉自己仿的灰色玻璃</td><td><span class="tag open">没做</span> 启动台还有一套自绘玻璃</td></tr>
+      <tr><td>§6-9</td><td>启动台的 14 组弹簧、11 条曲线改引用令牌</td><td><span class="tag open">没做</span></td></tr>
+      <tr><td>§6-16</td><td>用 Icon Composer 重做 App 图标</td><td><span class="tag open">没做</span> Aaron 9/29 定了留在 1.0.16；要他先认概念</td></tr>
+    </tbody>
+  </table></div>
+  <div class="note"><b>还要看一眼。</b>已落的几项都没和改前的截图并排比过；1440×932 的刘海校准画面也还没交给 Aaron 用放大镜看。代码过了测试不等于看起来对。</div>
+</section>
+
+<section>
+  <div class="sec-head"><span class="sec-num">08</span><h2>不做的事</h2></div>
+  <div class="bounds">
+    <div class="bound"><span>✕</span><span>不手画玻璃、高光、折射；系统给不了的效果就不做。盒盖和倾斜效果算装饰，默认关。</span></div>
+    <div class="bound"><span>✕</span><span>不在刘海上画假刘海：没有刘海的屏用胶囊。</span></div>
+    <div class="bound"><span>✕</span><span>不用时长描述位移，不用贝塞尔曲线做位移；超过 0.2 的回弹只在提醒和展开两处保留（已上线的手感）。</span></div>
+    <div class="bound"><span>✕</span><span>不为了一件小事造新手势；每个手势都有菜单或快捷键可以代替。</span></div>
+    <div class="bound"><span>✕</span><span>顺利的时候不说话；不推销、不反过来纠正他用系统自己的办法做成的事。</span></div>
+    <div class="bound"><span>✕</span><span>不另造第二套浮层：窗口、实时活动、设备电量、指挥模式、Touch ID 都从同一个刘海宿主长出来，共用同一套活动协调和弹簧。</span></div>
+  </div>
+</section>
+
+<footer>WindowShade 设计规范 v2 · 依据 docs/design-system.md、docs/hardware-fit.md · 代码基线提交 7fa141d（1.0.16 build 16）· 2026-10-03。所有 pt 值按当前显示模式的逻辑点；硬件数值按面板像素存。</footer>
+</div>
+
+<script>
+(function(){
+  var NS='http://www.w3.org/2000/svg';
+  function el(tag,attrs,parent){var e=document.createElementNS(NS,tag);for(var k in attrs)e.setAttribute(k,attrs[k]);if(parent)parent.appendChild(e);return e;}
+  function css(v){return getComputedStyle(document.documentElement).getPropertyValue(v).trim();}
+  // continuous-ish corner via cubic approximation (good enough for an illustration)
+  function notchPath(cx,top,w,h,rb,rs){
+    var l=cx-w/2,r=cx+w/2,k=0.62;
+    return 'M'+(l-rs*1.5)+','+top+
+      ' C'+(l-rs*1.5+rs*k)+','+top+' '+l+','+(top+rs*0.4)+' '+l+','+(top+rs*1.5)+
+      ' L'+l+','+(top+h-rb*1.5)+
+      ' C'+l+','+(top+h-rb*1.5+rb*1.5*k)+' '+(l+rb*1.5-rb*1.5*k)+','+(top+h)+' '+(l+rb*1.5)+','+(top+h)+
+      ' L'+(r-rb*1.5)+','+(top+h)+
+      ' C'+(r-rb*1.5+rb*1.5*k)+','+(top+h)+' '+r+','+(top+h-rb*1.5+rb*1.5*k)+' '+r+','+(top+h-rb*1.5)+
+      ' L'+r+','+(top+rs*1.5)+
+      ' C'+r+','+(top+rs*0.4)+' '+(r+rs*1.5-rs*k)+','+top+' '+(r+rs*1.5)+','+top+' Z';
+  }
+  function drawGeo(){
+    var svg=document.getElementById('notchGeo');while(svg.firstChild)svg.removeChild(svg.firstChild);
+    var ink=css('--ink'),ink3=css('--ink-3'),line=css('--line'),acc=css('--accent');
+    var s=2.6,cx=380,top=30,w=185*s,h=33.5*s,rb=10.7*s,rs=5.06*s;
+    el('rect',{x:20,y:top-14,width:720,height:14,fill:line,opacity:.6},svg);
+    el('text',{x:24,y:top-18,fill:ink3,'font-size':11,'font-family':'IBM Plex Mono, monospace'},svg).textContent='屏幕顶边';
+    el('path',{d:notchPath(cx,top,w,h,rb,rs),fill:'#000'},svg);
+    // dimensions
+    var y=top+h+30;
+    el('line',{x1:cx-w/2,y1:y,x2:cx+w/2,y2:y,stroke:ink3,'stroke-width':1},svg);
+    el('line',{x1:cx-w/2,y1:y-5,x2:cx-w/2,y2:y+5,stroke:ink3},svg);el('line',{x1:cx+w/2,y1:y-5,x2:cx+w/2,y2:y+5,stroke:ink3},svg);
+    var t=el('text',{x:cx,y:y+18,'text-anchor':'middle',fill:ink,'font-size':12,'font-family':'IBM Plex Mono, monospace'},svg);t.textContent='主体 185.25 pt（公开接口 185.0）';
+    var x=cx+w/2+30;
+    el('line',{x1:x,y1:top,x2:x,y2:top+h,stroke:ink3},svg);
+    var t2=el('text',{x:x+8,y:top+h-8,fill:ink,'font-size':12,'font-family':'IBM Plex Mono, monospace'},svg);t2.textContent='深 33.26 pt';
+    function call(px,py,tx,ty,txt,anchor){el('circle',{cx:px,cy:py,r:3,fill:acc},svg);el('line',{x1:px,y1:py,x2:tx,y2:ty,stroke:acc,'stroke-width':1},svg);var q=el('text',{x:anchor==='end'?tx-10:tx+6,y:ty+4,'text-anchor':anchor||'start',fill:ink,'font-size':12,'font-family':'IBM Plex Sans, Noto Sans SC, sans-serif'},svg);q.textContent=txt;}
+    call(cx-w/2+rb*0.45,top+h-rb*0.45,150,top+h-4,'底角 r 10.7','end');
+    call(cx-w/2-rs*0.55,top+rs*0.55,150,top+22,'肩 r 5.06','end');
+    call(cx+w/2+rs*0.55,top+rs*0.55,x+8,top+18,'肩外是边框');
+  }
+  function shape(svg,o){
+    var ink3=css('--ink-3'),acc=css('--accent');
+    var W=230,H=96,cx=W/2,nw=46,nh=9;
+    el('rect',{x:0,y:0,width:W,height:4,fill:'rgba(255,255,255,.35)'},svg);
+    var w=o.w,h=o.h,r=o.r;
+    var p='M'+(cx-w/2)+',0 L'+(cx+w/2)+',0 L'+(cx+w/2)+','+(h-r)+' Q'+(cx+w/2)+','+h+' '+(cx+w/2-r)+','+h+' L'+(cx-w/2+r)+','+h+' Q'+(cx-w/2)+','+h+' '+(cx-w/2)+','+(h-r)+' Z';
+    el('path',{d:p,fill:'#000'},svg);
+    if(o.shoulder){[-1,1].forEach(function(sg){var xx=cx+sg*w/2;el('path',{d:'M'+(xx+sg*5)+',0 Q'+xx+',0 '+xx+',4 L'+xx+',0 Z',fill:'#000'},svg);});}
+    if(o.edge)el('path',{d:p,fill:'none',stroke:acc,'stroke-width':1.5},svg);
+    (o.dots||[]).forEach(function(d){el('rect',{x:cx+d[0],y:d[1],width:d[2],height:d[3],rx:Math.min(d[3]/2,4),fill:d[4]||'rgba(255,255,255,.85)'},svg);});
+    // physical notch outline
+    el('rect',{x:cx-nw/2,y:0,width:nw,height:nh,fill:'none',stroke:'rgba(255,255,255,.35)','stroke-dasharray':'2 2'},svg);
+  }
+  var states=[
+    {n:'静止',d:'和实体刘海重合，什么都不画。',w:46,h:9,r:3},
+    {n:'紧凑',d:'左边一段 App 图标、右边个数，两段紧贴刘海、等宽；肩从两侧扣出来。',w:46+2*30,h:9,r:3,shoulder:1,dots:[[-48,1.5,6,6],[34,2,8,5]]},
+    {n:'下巴',d:'刘海一样宽，往下多 8 点，一个点一扇收着的窗。',w:46,h:13,r:3.5,shoulder:1,dots:[[-6,10,2,2],[-1,10,2,2],[4,10,2,2]]},
+    {n:'落点小岛',d:'拖着标题栏靠近时垂下，五格画的是排好后的样子；对准时边线变强调色。',w:150,h:34,r:7,edge:1,dots:[[-68,13,24,16,'rgba(255,255,255,.2)'],[-40,13,24,16,'rgba(255,255,255,.2)'],[-12,13,24,16,'rgba(255,255,255,.55)'],[16,13,24,16,'rgba(255,255,255,.2)'],[44,13,24,16,'rgba(255,255,255,.2)']]},
+    {n:'提醒 / 教学',d:'一句主句、一句次句，停 2.6 秒收回；卡住时的提示在这里演示按键。',w:170,h:30,r:8,dots:[[-76,14,10,10],[-60,14,72,4],[-60,21,48,3,'rgba(255,255,255,.5)']]},
+    {n:'展开一排',d:'所有看不见的窗口，每一格是窗口画面；停一格看一眼，点一下回去。',w:200,h:44,r:9,dots:[[-92,16,34,22,'rgba(255,255,255,.3)'],[-52,16,34,22,'rgba(255,255,255,.3)'],[-12,16,34,22,'rgba(255,255,255,.3)'],[28,16,34,22,'rgba(255,255,255,.3)'],[68,16,22,22,'rgba(255,255,255,.18)']]}
+  ];
+  function drawStates(){
+    var box=document.getElementById('states');box.innerHTML='';
+    states.forEach(function(s){
+      var c=document.createElement('div');c.className='state';
+      var pic=document.createElement('div');pic.className='pic';
+      var svg=el('svg',{viewBox:'0 0 230 96',preserveAspectRatio:'xMidYMin meet','aria-hidden':'true'});pic.appendChild(svg);shape(svg,s);
+      var t=document.createElement('div');t.className='txt';t.innerHTML='<b>'+s.n+'</b>'+s.d;
+      c.appendChild(pic);c.appendChild(t);box.appendChild(c);
+    });
+  }
+  var springs=[
+    ['calm',.34,1,'没有动量的变化：悬停、收回、换样子'],
+    ['settle',.38,1,'尺寸变化；截图飞进刘海，终点是个口子，不回弹'],
+    ['expand',.40,.92,'展开一排（已上线的手感，例外）'],
+    ['bloom',.42,.84,'有变化时提醒、教学（已上线的手感，例外）'],
+    ['catch',.40,.80,'拖着窗口到刘海时垂下的落点小岛'],
+    ['glide',.42,.88,'甩一下标题栏后的窗口滑行，带松手速度'],
+    ['flyOut',.38,.90,'截图从刘海飞回原处'],
+    ['pull',.36,.86,'刘海下拉松手弹回'],
+    ['pop',.30,.75,'只给小元素的确认：提示浮窗的终点图标'],
+    ['reduced',.25,1,'减少动态效果时替换以上全部，不带速度']
+  ];
+  function step(t,resp,z){
+    var w=2*Math.PI/resp;
+    if(z>=1){return 1-(1+w*t)*Math.exp(-w*t);}
+    var wd=w*Math.sqrt(1-z*z);
+    return 1-Math.exp(-z*w*t)*(Math.cos(wd*t)+z*w/wd*Math.sin(wd*t));
+  }
+  function drawSprings(){
+    var box=document.getElementById('springs');box.innerHTML='';
+    var acc=css('--accent'),line=css('--line'),flag=css('--flag');
+    springs.forEach(function(s){
+      var c=document.createElement('div');c.className='spring'+((s[0]==='expand'||s[0]==='bloom')?' except':'');
+      var bounce=Math.max(0,1-s[2]);
+      c.innerHTML='<div class="h"><b>'+s[0]+'</b><span>'+s[1].toFixed(2)+' s · ζ '+s[2].toFixed(2)+(bounce?' · 回弹 '+bounce.toFixed(2):'')+'</span></div>';
+      var svg=el('svg',{viewBox:'0 0 200 64',preserveAspectRatio:'none','aria-hidden':'true'});
+      el('line',{x1:0,y1:14,x2:200,y2:14,stroke:line,'stroke-dasharray':'3 3'},svg);
+      el('line',{x1:0,y1:60,x2:200,y2:60,stroke:line},svg);
+      var pts=[];for(var i=0;i<=100;i++){var t=i/100*0.8;var v=step(t,s[1],s[2]);pts.push((i*2)+','+(60-v*46).toFixed(2));}
+      el('polyline',{points:pts.join(' '),fill:'none',stroke:(s[0]==='expand'||s[0]==='bloom')?flag:acc,'stroke-width':2,'stroke-linejoin':'round'},svg);
+      c.appendChild(svg);
+      var p=document.createElement('p');p.textContent=s[3];c.appendChild(p);
+      box.appendChild(c);
+    });
+  }
+  function all(){drawGeo();drawStates();drawSprings();}
+  all();
+  try{matchMedia('(prefers-color-scheme: dark)').addEventListener('change',all);}catch(e){}
+  new MutationObserver(all).observe(document.documentElement,{attributes:true,attributeFilter:['data-theme']});
+})();
+</script>
+
+</body></html>

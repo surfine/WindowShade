@@ -1,7 +1,7 @@
 import React from "react";
 import { AbsoluteFill, interpolate, useCurrentFrame } from "remotion";
 import { GESTURES as G } from "../timeline";
-import { C, FONT, easeInOut, easeOut, easeRoll, mix, tw } from "../theme";
+import { C, FONT, easeOut, mix, motion, tw } from "../theme";
 import { Caption, Canvas, Cursor, Glass, Hud, Lines, MacWindow, Mouse, Rise, Trackpad, TypedText, tiltIn, useVertical } from "../ui";
 
 // Title-bar gestures, told the way the app behaves: the window follows the fingers (0.55 of
@@ -37,7 +37,7 @@ const progress = (f: number, g: { down: number; release: number }) =>
 function Easing2(t: number) {
   return t < 0.5 ? 2 * t * t : 1 - Math.pow(-2 * t + 2, 2) / 2;
 }
-const commit = (f: number, g: { release: number }) => tw(f, g.release, g.release + 26, 0, 1, easeRoll);
+const commit = (f: number, g: { release: number }) => motion(f, g.release, "settle");
 const touching = (f: number, g: { down: number; release: number }) => tw(f, g.down - 4, g.down + 4) * (1 - tw(f, g.release, g.release + 8));
 
 type State = {
@@ -250,7 +250,7 @@ export const Gestures: React.FC = () => {
   let cur = { x: 1700, y: 1060 };
   for (const d of downs) {
     const target = barCenter(stateAt(d - 20));
-    const t = tw(frame, d - 34, d - 10, 0, 1, easeInOut);
+    const t = motion(frame, d - 34, "glide");
     cur = { x: mix(cur.x, target.x, t), y: mix(cur.y, target.y, t) };
   }
 

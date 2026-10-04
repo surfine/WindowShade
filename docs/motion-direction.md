@@ -3,6 +3,7 @@
 > 2026-09-29，创意简报，尚未实现。管四样东西：宣传片、官网、README 和产品里的动画（欢迎窗口、教学、各种转场）。
 > 产品方向以 [direction.md](direction.md) 为准，数值以 [design-system.md](design-system.md) 为准，教什么、什么时候教以 [stuck-habits.md](stuck-habits.md) 为准，
 > 对外文字按 [copy-guide.md](copy-guide.md) 写。宣传语（“刚换 Mac？从刘海开始。”这一组）还是候选，由 Aaron 挑。
+> 可交互画面是 [安静的刘海 动效样片](design-drafts/安静的刘海%20动效样片.html)，目录在 [design-drafts](design-drafts/README.md)。
 >
 > **对外发布的门槛**：卡住时开口（HabitKeys 第一批规则）上线并通过真机探针之前，片子、官网 §1–§3、README 动图都只能做分镜和 B 版渲染，不能对外发（copy-guide 规则 6）。
 > 在那之前能发的只有“收进刘海 / 放回”这一版替身，各节都写了替身怎么做。

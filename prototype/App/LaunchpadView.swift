@@ -1850,6 +1850,12 @@ final class LaunchpadView: NSView, NSTextFieldDelegate {
         if pillAtTop { showList(!text.isEmpty) } else { refilter() }
     }
     func pageForwardForProbe() { settle(to: min(pager.page + 1, pageCount - 1)) }
+
+    /// 翻一页。已经在边上就停在这一页，不收起启动台。
+    func turnPage(by step: Int) {
+        guard step != 0 else { return }
+        settle(to: min(max(pager.page + step, pager.minimumPage), pageCount - 1))
+    }
     func libraryForProbe() { settle(to: homePages) }
     func homePageForProbe() { settle(to: 0) }
 }

@@ -33,4 +33,6 @@ node scripts/stills.mjs <目录> 150 1300 2300                                  
 
 文案按 [`docs/copy-guide.md`](../docs/copy-guide.md) 写：动作叫“收起窗口 / 展开窗口”，收起后留下的那条叫“卷帘条”，手势动作名和应用里的提示浮窗一致。
 
+改画面时，收起、卷帘条、刘海以 [`docs/design-drafts/`](../docs/design-drafts/README.md) 为准，不沿用现在画出来的尺寸。
+
 新增镜头标注开发版。官网当前视频链接仍指向已发布的旧片，本轮不替换视频平台上的内容。

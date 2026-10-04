@@ -1,0 +1,1062 @@
+<!doctype html><html><head><meta charset=utf8><meta name=viewport content="width=device-width,initial-scale=1,viewport-fit=cover"><style>:root{color-scheme:light;box-sizing:border-box;padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}html{scroll-padding-top:env(safe-area-inset-top,0px)}body{margin:0;padding:0;font:14px -apple-system,BlinkMacSystemFont,sans-serif;background:#faf9f5;color:#141413}img{max-width:100%}[hidden]:not([hidden=until-found i]){display:none!important}</style></head><body>
+<title>卡住时刘海开口</title>
+<style>
+:root{
+  color-scheme:light;
+  --page:#eceef2; --panel:#fbfbfc; --line:rgba(0,0,0,.09); --line2:rgba(0,0,0,.14);
+  --ink:#1d1d1f; --muted:#5f6068; --faint:#66676e;
+  --accent:#0058cc; --accent-ink:#0058cc; --accent-soft:rgba(10,108,255,.12); --on-accent:#fff;
+  --ok:#0e6436; --ok-soft:rgba(23,134,74,.12); --warn:#a35200; --warn-soft:rgba(214,120,0,.14);
+  --chip:#f1f2f5; --chip-hover:#e6e8ed; --kbd:#fff; --kbd-edge:rgba(0,0,0,.18);
+  --wall:radial-gradient(90% 70% at 12% 8%,#9cc9ff 0%,transparent 62%),radial-gradient(80% 70% at 92% 18%,#b9b3ff 0%,transparent 60%),radial-gradient(110% 80% at 70% 105%,#6fb7e8 0%,transparent 60%),linear-gradient(160deg,#cfe3ff,#8fb4ef);
+  --menu-ink:#101114; --menu-sel:rgba(255,255,255,.55);
+  --win:#fdfdfe; --win-bar:#f4f4f7; --win-ink:#1d1d1f; --win-muted:#8b8c93; --win-line:rgba(0,0,0,.08);
+  --win-shadow:0 22px 48px -18px rgba(18,32,64,.55),0 0 0 .5px rgba(0,0,0,.2);
+  --sel:rgba(10,108,255,.26); --glass:rgba(255,255,255,.3); --glass-rim:rgba(255,255,255,.75); --glass-edge:rgba(0,0,0,.1);
+  --sans:-apple-system,BlinkMacSystemFont,"SF Pro Text","PingFang SC","Hiragino Sans GB","Microsoft YaHei","Helvetica Neue",sans-serif;
+  --mono:ui-monospace,"SF Mono",Menlo,Consolas,monospace;
+}
+@media (prefers-color-scheme:dark){:root:not([data-theme="light"]){
+  color-scheme:dark;
+  --page:#121316; --panel:#1b1c20; --line:rgba(255,255,255,.09); --line2:rgba(255,255,255,.16);
+  --ink:#f2f2f5; --muted:#a4a5ad; --faint:#8e8f97;
+  --accent:#3d8bff; --accent-ink:#5a9cff; --accent-soft:rgba(61,139,255,.18); --on-accent:#fff;
+  --ok:#4cc38a; --ok-soft:rgba(76,195,138,.16); --warn:#ffb35c; --warn-soft:rgba(255,160,60,.16);
+  --chip:#26272c; --chip-hover:#303137; --kbd:#34353b; --kbd-edge:rgba(255,255,255,.14);
+  --wall:radial-gradient(90% 70% at 12% 8%,#23457e 0%,transparent 62%),radial-gradient(80% 70% at 92% 18%,#3b2f78 0%,transparent 60%),radial-gradient(110% 80% at 70% 105%,#0f4a6e 0%,transparent 60%),linear-gradient(160deg,#10192e,#0b1222);
+  --menu-ink:#f4f5f8; --menu-sel:rgba(255,255,255,.18);
+  --win:#26272b; --win-bar:#2e2f34; --win-ink:#ececf0; --win-muted:#8d8e96; --win-line:rgba(255,255,255,.08);
+  --win-shadow:0 22px 48px -18px rgba(0,0,0,.85),0 0 0 .5px rgba(255,255,255,.16);
+  --sel:rgba(61,139,255,.38); --glass:rgba(40,42,50,.38); --glass-rim:rgba(255,255,255,.2); --glass-edge:rgba(255,255,255,.08);
+}}
+:root[data-theme="dark"]{
+  color-scheme:dark;
+  --page:#121316; --panel:#1b1c20; --line:rgba(255,255,255,.09); --line2:rgba(255,255,255,.16);
+  --ink:#f2f2f5; --muted:#a4a5ad; --faint:#8e8f97;
+  --accent:#3d8bff; --accent-ink:#5a9cff; --accent-soft:rgba(61,139,255,.18); --on-accent:#fff;
+  --ok:#4cc38a; --ok-soft:rgba(76,195,138,.16); --warn:#ffb35c; --warn-soft:rgba(255,160,60,.16);
+  --chip:#26272c; --chip-hover:#303137; --kbd:#34353b; --kbd-edge:rgba(255,255,255,.14);
+  --wall:radial-gradient(90% 70% at 12% 8%,#23457e 0%,transparent 62%),radial-gradient(80% 70% at 92% 18%,#3b2f78 0%,transparent 60%),radial-gradient(110% 80% at 70% 105%,#0f4a6e 0%,transparent 60%),linear-gradient(160deg,#10192e,#0b1222);
+  --menu-ink:#f4f5f8; --menu-sel:rgba(255,255,255,.18);
+  --win:#26272b; --win-bar:#2e2f34; --win-ink:#ececf0; --win-muted:#8d8e96; --win-line:rgba(255,255,255,.08);
+  --win-shadow:0 22px 48px -18px rgba(0,0,0,.85),0 0 0 .5px rgba(255,255,255,.16);
+  --sel:rgba(61,139,255,.38); --glass:rgba(40,42,50,.38); --glass-rim:rgba(255,255,255,.2); --glass-edge:rgba(255,255,255,.08);
+}
+*{box-sizing:border-box}
+html{-webkit-text-size-adjust:100%}
+body{margin:0;background:var(--page);color:var(--ink);font:14px/1.55 var(--sans);-webkit-font-smoothing:antialiased;padding-inline:16px;padding-block:24px 40px;overflow-x:hidden}
+button{font:inherit;color:inherit}
+:focus-visible{outline:2px solid var(--accent);outline-offset:2px}
+.wrap{max-width:1180px;margin:0 auto}
+header{margin-bottom:18px;max-width:760px}
+h1{font-size:24px;line-height:1.25;margin:0 0 6px;font-weight:650;letter-spacing:-.01em}
+.lede{margin:0;color:var(--muted)}
+.grid{display:grid;grid-template-columns:minmax(0,1fr) 320px;gap:20px;align-items:start}
+@media (max-width:920px){.grid{grid-template-columns:minmax(0,1fr)}}
+.ctl{display:flex;flex-wrap:wrap;align-items:center;gap:10px 18px;margin-bottom:12px}
+.lbl{font-size:12px;color:var(--faint);margin-right:6px}
+.seg{display:inline-flex;background:var(--chip);border-radius:9px;padding:2px;box-shadow:inset 0 0 0 .5px var(--line)}
+.seg button{border:0;background:none;padding:4px 11px;border-radius:7px;font-size:13px;cursor:pointer;color:var(--muted);white-space:nowrap}
+.seg button[aria-pressed="true"]{background:var(--panel);color:var(--ink);font-weight:600;box-shadow:0 1px 2px rgba(0,0,0,.12),0 0 0 .5px var(--line2)}
+.sw{display:inline-flex;align-items:center;gap:8px;cursor:pointer;font-size:13px;border:0;background:none;padding:2px 0}
+.sw i{width:32px;height:19px;border-radius:10px;background:var(--line2);position:relative;transition:background .2s}
+.sw i::after{content:"";position:absolute;left:2px;top:2px;width:15px;height:15px;border-radius:50%;background:#fff;box-shadow:0 1px 2px rgba(0,0,0,.3);transition:transform .2s}
+.sw[aria-checked="true"] i{background:var(--ok)}
+.sw[aria-checked="true"] i::after{transform:translateX(13px)}
+.card{background:var(--panel);border-radius:14px;box-shadow:0 0 0 .5px var(--line2),0 1px 2px rgba(0,0,0,.04);padding:14px 16px}
+.card h2{font-size:13px;margin:0 0 8px;font-weight:650}
+.card+.card{margin-top:12px}
+.small{font-size:12px;color:var(--muted)}
+kbd{font:600 12px/1 var(--sans);display:inline-block;padding:3px 5px;border-radius:5px;background:var(--kbd);box-shadow:inset 0 -1px 0 var(--kbd-edge),0 0 0 .5px var(--kbd-edge);color:var(--ink)}
+
+/* ── 迷你 Mac ───────────────────────────── */
+.stagewrap{container-type:inline-size;width:100%}
+.desk{--u:min(1px,calc(100cqw / 520));position:relative;aspect-ratio:16/10;border-radius:14px;overflow:hidden;background:var(--wall);box-shadow:0 0 0 .5px var(--line2),0 18px 40px -24px rgba(0,0,0,.5);font-family:var(--sans);user-select:none;-webkit-user-select:none;outline:none;touch-action:manipulation}
+.desk:focus-visible{box-shadow:0 0 0 2px var(--accent),0 18px 40px -24px rgba(0,0,0,.5)}
+.keyhint{position:absolute;right:calc(10*var(--u));bottom:calc(84*var(--u));z-index:30;font-size:calc(11*var(--u));padding:calc(3*var(--u)) calc(8*var(--u));border-radius:99px;background:rgba(0,0,0,.55);color:#fff;pointer-events:none;opacity:.9;transition:opacity .2s}
+.desk:focus .keyhint{opacity:0}
+.desk.pc:focus .keyhint{opacity:.9}
+@media (pointer:coarse){.keyhint{display:none}}
+.menubar{position:absolute;inset:0 0 auto;height:calc(32*var(--u));display:flex;align-items:center;justify-content:space-between;padding-inline:calc(14*var(--u));font-size:calc(13*var(--u));color:var(--menu-ink);z-index:12;transition:transform .3s}
+.menubar .l,.menubar .r{display:flex;align-items:center;gap:calc(15*var(--u));white-space:nowrap;min-width:0}
+.menubar .l{overflow:hidden;max-width:calc(50% - 100*var(--u));flex-wrap:wrap;height:calc(18*var(--u));row-gap:calc(20*var(--u))}
+#menus{display:contents}
+.menubar .apple{font-size:calc(15*var(--u));line-height:1}
+.menubar b{font-weight:700}
+.menubar .m{padding:calc(2*var(--u)) calc(5*var(--u));margin:0 calc(-5*var(--u));border-radius:calc(5*var(--u))}
+.menubar .m.open{background:var(--menu-sel)}
+.menubar .ime{font-size:calc(11*var(--u));font-weight:600;border:calc(1.2*var(--u)) solid currentColor;border-radius:calc(4*var(--u));padding:0 calc(3*var(--u));line-height:1.35}
+.menubar svg{width:calc(16*var(--u));height:calc(16*var(--u));display:block}
+@container (max-width:470px){.menubar .opt,.menubar .date{display:none}}
+.notch{position:absolute;top:0;left:50%;width:calc(185*var(--u));height:calc(32*var(--u));transform:translateX(-50%);background:#000;border-radius:0 0 calc(10*var(--u)) calc(10*var(--u));z-index:20;cursor:pointer;border:0;padding:0}
+.notch::before,.notch::after{content:"";position:absolute;top:0;width:calc(7*var(--u));height:calc(7*var(--u))}
+.notch::before{left:calc(-7*var(--u));background:radial-gradient(circle at 0 100%,transparent calc(7*var(--u)),#000 calc(7.3*var(--u)))}
+.notch::after{right:calc(-7*var(--u));background:radial-gradient(circle at 100% 100%,transparent calc(7*var(--u)),#000 calc(7.3*var(--u)))}
+
+/* 刘海里那一块岛：尺寸、圆角、描边照 Notch.swift */
+.island{position:absolute;top:0;left:50%;transform:translateX(-50%);width:calc(185*var(--u));height:calc(32*var(--u));background:#000;border-radius:0 0 calc(10*var(--u)) calc(10*var(--u));overflow:hidden;z-index:40;visibility:hidden;color:#fff;
+  transition-property:width,height,border-radius;transition-duration:var(--spring-dur,.5s);transition-timing-function:var(--spring-ease,cubic-bezier(.3,1.2,.4,1))}
+.island.on{visibility:visible}
+.island .keyline{position:absolute;inset:calc(-2*var(--u)) 0 0 0;border-radius:inherit;border:calc(var(--bw,1)*var(--u)) solid var(--bc,rgba(255,255,255,.14));pointer-events:none;z-index:3}
+.island .content{position:absolute;left:0;right:0;top:calc(32*var(--u));bottom:0;opacity:0;transition:opacity .1s linear}
+.island .content.in{opacity:1;transition-duration:.18s}
+.island .hit{position:absolute;inset:0;border:0;background:none;cursor:pointer;z-index:4;border-radius:inherit}
+.island .hit:focus-visible{outline:2px solid #fff;outline-offset:-4px}
+.island .x{position:absolute;right:calc(12*var(--u));top:calc(7*var(--u));width:calc(18*var(--u));height:calc(18*var(--u));border-radius:50%;border:0;padding:0;background:rgba(255,255,255,.16);color:rgba(255,255,255,.75);cursor:pointer;z-index:5;display:grid;place-items:center;opacity:0;transition:opacity .18s}
+.island.on .x.show{opacity:1}
+.island .x svg{width:calc(8*var(--u));height:calc(8*var(--u))}
+.island .x:hover{background:rgba(255,255,255,.28);color:#fff}
+.teach{position:absolute;inset:0}
+.demo{position:absolute;left:calc(14*var(--u));top:50%;margin-top:calc(-30*var(--u));width:calc(100*var(--u));height:calc(60*var(--u));border-radius:calc(8*var(--u));background:rgba(255,255,255,.08);box-shadow:inset 0 0 0 calc(1*var(--u)) rgba(255,255,255,.16);overflow:hidden}
+.demo *{position:absolute}
+.teach .txt{position:absolute;left:calc(126*var(--u));right:calc(14*var(--u));top:50%;transform:translateY(-50%)}
+.teach .t{font-size:calc(13*var(--u));font-weight:600;line-height:1.25;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden}
+.teach .s{font-size:calc(10.5*var(--u));color:rgba(255,255,255,.55);margin-top:calc(4*var(--u));line-height:1.25;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.say{position:absolute;inset:0}
+.say .icon{position:absolute;left:calc(14*var(--u));top:50%;margin-top:calc(-15*var(--u));width:calc(30*var(--u));height:calc(30*var(--u))}
+.say .txt{position:absolute;left:calc(54*var(--u));right:calc(14*var(--u));top:50%;transform:translateY(-50%)}
+.say .t{font-size:calc(13*var(--u));font-weight:600;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;line-height:1.25}
+.say .s{font-size:calc(11*var(--u));color:rgba(255,255,255,.6);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;margin-top:calc(1*var(--u));line-height:1.25}
+
+/* 刘海里的小演示（NotchDemoView 100×60，一轮 2.2 秒，演三遍停下） */
+.demo .cap{height:calc(15*var(--u));min-width:calc(15*var(--u));padding:0 calc(3*var(--u));border-radius:calc(3.5*var(--u));background:rgba(255,255,255,.14);box-shadow:inset 0 0 0 calc(1*var(--u)) rgba(255,255,255,.28);font:600 calc(9.5*var(--u))/calc(15*var(--u)) var(--sans);text-align:center;color:#fff;white-space:nowrap}
+.demo .cap.new{background:var(--sys-accent,#0a84ff);box-shadow:none}
+.demo .row{display:flex;gap:calc(2*var(--u));left:0;right:0;justify-content:center;position:absolute}
+.demo .row>*{position:static}
+.demo .old{top:calc(9*var(--u))}
+.demo .nw{top:calc(36*var(--u))}
+.demo .arrow{left:calc(46*var(--u));top:calc(25*var(--u));width:calc(8*var(--u));height:calc(10*var(--u));color:rgba(255,255,255,.7);font:600 calc(9*var(--u))/1 var(--sans)}
+.demo .strike{left:30%;right:30%;top:calc(16*var(--u));height:calc(1.5*var(--u));background:#ff6961;transform-origin:0 50%;transform:scaleX(0)}
+.run .old{animation:dOld 2.2s cubic-bezier(.3,0,.2,1) 3 forwards}
+.run .strike{animation:dStrike 2.2s cubic-bezier(.3,0,.2,1) 3 forwards}
+.run .nw,.run .arrow{animation:dNew 2.2s cubic-bezier(.3,0,.2,1) 3 forwards}
+@keyframes dOld{0%{opacity:0}8%{opacity:1}35%{opacity:1}55%,100%{opacity:.4}}
+@keyframes dStrike{0%,30%{transform:scaleX(0)}45%,100%{transform:scaleX(1)}}
+@keyframes dNew{0%,40%{opacity:0;transform:translateY(calc(3*var(--u)))}58%,100%{opacity:1;transform:none}}
+.demo .mn{left:calc(36*var(--u));top:0;width:calc(28*var(--u));height:calc(7*var(--u));background:#000;box-shadow:inset 0 0 0 calc(1*var(--u)) rgba(255,255,255,.5);border-radius:calc(3*var(--u))}
+.demo .fg{width:calc(8*var(--u));height:calc(8*var(--u));margin:calc(-4*var(--u)) 0 0 calc(-4*var(--u));border-radius:50%;background:var(--sys-accent,#0a84ff);box-shadow:inset 0 0 0 calc(1.5*var(--u)) #fff;opacity:0}
+.demo .ico{width:calc(14*var(--u));height:calc(14*var(--u));border-radius:calc(3.5*var(--u));opacity:0}
+.demo .mw{background:rgba(255,255,255,.92);border-radius:calc(3*var(--u));overflow:hidden}
+.demo .mw::before{content:"";position:absolute;left:0;right:0;top:0;height:calc(6*var(--u));background:#9e9e9e}
+.run.d-home .fg{animation:hFg 2.2s cubic-bezier(.3,0,.2,1) 3 forwards}
+.run.d-home .mn{animation:hNotch 2.2s cubic-bezier(.3,0,.2,1) 3 forwards}
+.run.d-home .ico{animation:hIco 2.2s cubic-bezier(.3,0,.2,1) 3 forwards}
+@keyframes hFg{0%{top:calc(30*var(--u));opacity:0}8%{opacity:1}25%{top:calc(4*var(--u))}40%{opacity:1;top:calc(4*var(--u))}50%,100%{opacity:0;top:calc(4*var(--u))}}
+@keyframes hNotch{0%,28%{transform:scale(1)}33%{transform:scale(.8)}40%,100%{transform:scale(1)}}
+@keyframes hIco{0%,40%{opacity:0}55%,90%{opacity:1}100%{opacity:0}}
+.run.d-fill .mw{animation:fWin 2.2s cubic-bezier(.3,0,.2,1) 3 forwards}
+.run.d-fill .fg{animation:fFg 2.2s cubic-bezier(.3,0,.2,1) 3 forwards}
+.run.d-fill .fg+.fg{animation-name:fFg2}
+@keyframes fWin{0%,42%{left:calc(26*var(--u));top:calc(14*var(--u));width:calc(48*var(--u));height:calc(34*var(--u))}62%,100%{left:calc(4*var(--u));top:calc(4*var(--u));width:calc(92*var(--u));height:calc(52*var(--u))}}
+@keyframes fFg{0%{left:calc(46*var(--u));top:calc(18*var(--u));opacity:0}8%{opacity:1}10%{top:calc(18*var(--u))}40%{top:calc(34*var(--u));opacity:1}60%,100%{top:calc(34*var(--u));opacity:0}}
+@keyframes fFg2{0%{left:calc(56*var(--u));top:calc(18*var(--u));opacity:0}8%{opacity:1}10%{top:calc(18*var(--u))}40%{top:calc(34*var(--u));opacity:1}60%,100%{top:calc(34*var(--u));opacity:0}}
+.demo .mb{left:0;right:0;top:0;height:calc(8*var(--u));background:rgba(255,255,255,.22)}
+.demo .mi{top:calc(2*var(--u));height:calc(4*var(--u));width:calc(12*var(--u));border-radius:calc(2*var(--u));background:rgba(255,255,255,.55)}
+.demo .dd{left:calc(20*var(--u));top:calc(9*var(--u));width:calc(40*var(--u));height:calc(34*var(--u));border-radius:calc(4*var(--u));background:rgba(255,255,255,.85);opacity:0;transform-origin:50% 0}
+.run.d-menu .dd{animation:mDd 2.2s cubic-bezier(.3,0,.2,1) 3 forwards}
+.run.d-menu .fg{animation:mFg 2.2s cubic-bezier(.3,0,.2,1) 3 forwards}
+@keyframes mFg{0%{left:calc(50*var(--u));top:calc(40*var(--u));opacity:0}8%{opacity:1}30%{left:calc(26*var(--u));top:calc(4*var(--u));opacity:1}40%,100%{left:calc(26*var(--u));top:calc(4*var(--u));opacity:0}}
+@keyframes mDd{0%,32%{opacity:0;transform:scaleY(.4)}45%,88%{opacity:1;transform:none}100%{opacity:1;transform:none}}
+/* 窗口（macOS 26 起的大圆角、浮起的红绿灯） */
+.win{position:absolute;background:var(--win);color:var(--win-ink);border-radius:calc(16*var(--u));box-shadow:var(--win-shadow);overflow:hidden;display:flex;flex-direction:column;
+  transition:left .38s cubic-bezier(.3,0,.2,1),top .38s cubic-bezier(.3,0,.2,1),width .38s cubic-bezier(.3,0,.2,1),height .38s cubic-bezier(.3,0,.2,1),transform .38s cubic-bezier(.3,0,.2,1),opacity .25s}
+.win.tb{border-radius:calc(22*var(--u))}
+.win .title{height:calc(30*var(--u));flex:none;display:flex;align-items:center;gap:calc(8*var(--u));padding-inline:calc(13*var(--u));font-size:calc(12.5*var(--u));font-weight:600;color:var(--win-muted);position:relative}
+.win.front .title{color:var(--win-ink)}
+.win .title .name{position:absolute;left:calc(70*var(--u));right:calc(70*var(--u));text-align:center;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.lights{display:flex;gap:calc(8*var(--u));z-index:1}
+.lights button{width:calc(12*var(--u));height:calc(12*var(--u));border-radius:50%;border:0;padding:0;background:var(--win-line);box-shadow:inset 0 0 0 .5px rgba(0,0,0,.12)}
+.win.front .lights button:nth-child(1){background:#ff5f57}.win.front .lights button:nth-child(2){background:#febc2e}.win.front .lights button:nth-child(3){background:#28c840;cursor:pointer}
+.win .body{flex:1;min-height:0;position:relative;overflow:hidden}
+.win.shaded{height:calc(30*var(--u))!important}
+.win.fill{left:calc(6*var(--u))!important;top:calc(38*var(--u))!important;width:calc(100% - 12*var(--u))!important;height:calc(100% - 38*var(--u) - 74*var(--u))!important}
+.win.lhalf{left:calc(6*var(--u))!important;top:calc(38*var(--u))!important;width:calc(50% - 9*var(--u))!important;height:calc(100% - 38*var(--u) - 74*var(--u))!important}
+.win.full{left:0!important;top:0!important;width:100%!important;height:100%!important;border-radius:0;border-top:calc(32*var(--u)) solid #000;z-index:13!important}
+.win.gone{opacity:0;transform:scale(.9);pointer-events:none}
+.win.hidden{opacity:0;transform:scale(.96);pointer-events:none}
+.desk.showdesk .win{transform:translate(var(--dx,-80%),var(--dy,-10%))}
+.desk.mc .win:not(.gone):not(.hidden){transform:scale(.62) translate(var(--mx,0),var(--my,0))}
+.desk.mc::after{content:"";position:absolute;inset:0;background:rgba(10,14,24,.35);z-index:1;pointer-events:none}
+/* 文本编辑 */
+.doc{padding:calc(12*var(--u)) calc(22*var(--u));font-size:calc(12.5*var(--u));line-height:1.65}
+.doc p{margin:0 0 calc(6*var(--u))}
+.doc .sel{background:var(--sel);border-radius:calc(2*var(--u))}
+.doc .caret{display:inline-block;width:calc(1.5*var(--u));height:1.15em;vertical-align:-.2em;background:var(--accent);margin-inline:calc(.5*var(--u));animation:blink 1.1s steps(1) infinite}
+@keyframes blink{50%{opacity:0}}
+.doc .pasted{background:rgba(40,200,64,.25);border-radius:calc(2*var(--u))}
+/* 访达 */
+.finder{display:flex;height:100%}
+.side{width:30%;max-width:calc(140*var(--u));margin:calc(6*var(--u));border-radius:calc(14*var(--u));background:var(--win-bar);padding:calc(8*var(--u));font-size:calc(11*var(--u));color:var(--win-muted);display:grid;align-content:start;gap:calc(5*var(--u))}
+.side b{color:var(--win-ink);font-weight:500}
+.files{flex:1;display:grid;grid-template-columns:repeat(auto-fill,minmax(calc(72*var(--u)),1fr));gap:calc(8*var(--u));padding:calc(10*var(--u));align-content:start}
+.file{display:grid;justify-items:center;gap:calc(4*var(--u));font-size:calc(10.5*var(--u));text-align:center;transition:opacity .3s,transform .4s cubic-bezier(.5,0,.8,.4)}
+.file i{width:calc(34*var(--u));height:calc(42*var(--u));border-radius:calc(4*var(--u));background:linear-gradient(#fff,#e9edf5);box-shadow:0 0 0 .5px rgba(0,0,0,.2),0 1px 2px rgba(0,0,0,.12);display:block;position:relative}
+.file i::after{content:attr(data-k);position:absolute;left:0;right:0;bottom:calc(5*var(--u));font:700 calc(7*var(--u))/1 var(--sans);color:#6b7280;font-style:normal}
+.file span{padding:0 calc(4*var(--u));border-radius:calc(4*var(--u));max-width:100%;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.file.on i{outline:calc(2*var(--u)) solid var(--sel);outline-offset:calc(2*var(--u))}
+.file.on span{background:var(--accent);color:#fff}
+.file.trashed{opacity:0;transform:translate(calc(160*var(--u)),calc(220*var(--u))) scale(.2)}
+/* Safari */
+.url{height:calc(22*var(--u));margin:0 calc(10*var(--u)) calc(6*var(--u));border-radius:99px;background:var(--win-bar);font-size:calc(11*var(--u));color:var(--win-muted);display:flex;align-items:center;justify-content:center}
+.page{position:absolute;inset:calc(28*var(--u)) 0 0;overflow-y:auto;overscroll-behavior:contain;padding:calc(10*var(--u)) calc(24*var(--u));scrollbar-width:thin}
+.page h3{font-size:calc(15*var(--u));margin:0 0 calc(6*var(--u))}
+.page .ln{height:calc(7*var(--u));border-radius:calc(4*var(--u));background:var(--win-line);margin-bottom:calc(9*var(--u))}
+.page .ln:nth-child(3n){width:82%}.page .ln:nth-child(4n){width:64%}
+/* 终端 */
+.win.term{background:#1e1f22;color:#e6e6e6}
+.win.term .title{background:#2a2b2f;color:#bbb}
+.tty{padding:calc(10*var(--u)) calc(12*var(--u));font:calc(11*var(--u))/1.5 var(--mono);white-space:pre-wrap}
+.tty .p{color:#7ee787}
+/* Dock（液态玻璃） */
+.dock{position:absolute;left:50%;bottom:calc(8*var(--u));transform:translateX(-50%);display:flex;align-items:flex-end;gap:calc(6*var(--u));padding:calc(6*var(--u));border-radius:calc(24*var(--u));background:var(--glass);-webkit-backdrop-filter:blur(18px) saturate(1.7);backdrop-filter:blur(18px) saturate(1.7);box-shadow:inset 0 0 0 calc(1*var(--u)) var(--glass-rim),0 0 0 .5px var(--glass-edge),0 8px 24px -10px rgba(0,0,0,.35);z-index:10;transition:transform .3s}
+.dock button{width:calc(46*var(--u));height:calc(46*var(--u));border:0;padding:0;border-radius:calc(11*var(--u));cursor:pointer;position:relative;display:grid;place-items:center;box-shadow:0 1px 3px rgba(0,0,0,.25);transition:transform .15s,opacity .3s,width .3s,margin .3s}
+.dock button:hover{transform:translateY(calc(-3*var(--u)))}
+.dock button svg{width:62%;height:62%}
+.dock button.run::after{content:"";position:absolute;bottom:calc(-5*var(--u));left:50%;width:calc(4*var(--u));height:calc(4*var(--u));margin-left:calc(-2*var(--u));border-radius:50%;background:var(--menu-ink);opacity:.7}
+.dock .sep{width:1px;align-self:stretch;margin:calc(4*var(--u)) calc(2*var(--u));background:var(--glass-rim)}
+.dock button.pulled{width:0;margin-inline:calc(-3*var(--u));opacity:0;transform:translateY(calc(-120*var(--u)))}
+.dock button.full::before{content:"";position:absolute;left:30%;right:30%;top:36%;height:14%;border-radius:2px;background:rgba(255,255,255,.85)}
+.i-finder{background:linear-gradient(135deg,#6ec3ff,#1d74e6)}.i-safari{background:linear-gradient(#fff,#e8eef8)}.i-edit{background:linear-gradient(#fff,#eef0f4)}.i-term{background:linear-gradient(#3a3b40,#16171a)}.i-set{background:linear-gradient(#c9ccd3,#8e939c)}.i-trash{background:rgba(255,255,255,.35);box-shadow:inset 0 0 0 1px rgba(255,255,255,.6)!important}
+/* 叠在桌面上的几样 */
+.ov{position:absolute;z-index:15;opacity:0;visibility:hidden;transition:opacity .22s,visibility .22s,transform .3s cubic-bezier(.2,.8,.2,1)}
+.ov.on{opacity:1;visibility:visible}
+.o-home{inset:0;background:rgba(12,16,28,.28);-webkit-backdrop-filter:blur(14px);backdrop-filter:blur(14px);display:grid;place-items:center;z-index:18;transform:scale(.96);transform-origin:50% 0}
+.o-home.on{transform:none}
+.o-home .g{display:grid;grid-template-columns:repeat(6,calc(48*var(--u)));gap:calc(18*var(--u)) calc(22*var(--u))}
+.o-home .g button{width:calc(48*var(--u));height:calc(48*var(--u));border-radius:calc(12*var(--u));border:0;cursor:pointer;box-shadow:0 2px 6px rgba(0,0,0,.2)}
+.o-spot{left:50%;top:22%;width:min(calc(380*var(--u)),80%);transform:translate(-50%,-6px);height:calc(40*var(--u));border-radius:99px;background:var(--glass);-webkit-backdrop-filter:blur(20px) saturate(1.6);backdrop-filter:blur(20px) saturate(1.6);box-shadow:inset 0 0 0 1px var(--glass-rim),0 10px 30px -10px rgba(0,0,0,.4);display:flex;align-items:center;padding-inline:calc(16*var(--u));font-size:calc(14*var(--u));color:var(--win-muted)}
+.o-spot.on{transform:translate(-50%,0)}
+.o-dlg{left:50%;top:50%;transform:translate(-50%,-46%);width:calc(230*var(--u));padding:calc(14*var(--u));border-radius:calc(18*var(--u));background:var(--win);color:var(--win-ink);box-shadow:var(--win-shadow);font-size:calc(11.5*var(--u));z-index:26}
+.o-dlg.on{transform:translate(-50%,-50%)}
+.o-dlg b{display:block;font-size:calc(12.5*var(--u));margin-bottom:calc(6*var(--u))}
+.o-dlg .li{padding:calc(3*var(--u)) calc(6*var(--u));border-radius:calc(5*var(--u))}
+.o-dlg .li.on{background:var(--accent);color:#fff}
+.o-dlg .btn{margin-top:calc(8*var(--u));text-align:right}
+.o-dlg .btn span{display:inline-block;padding:calc(3*var(--u)) calc(12*var(--u));border-radius:99px;background:var(--accent);color:#fff}
+.o-dd{left:calc(60*var(--u));top:calc(30*var(--u));width:calc(170*var(--u));padding:calc(5*var(--u));border-radius:calc(12*var(--u));background:var(--glass);-webkit-backdrop-filter:blur(24px) saturate(1.7);backdrop-filter:blur(24px) saturate(1.7);box-shadow:inset 0 0 0 1px var(--glass-rim),0 12px 30px -12px rgba(0,0,0,.45);font-size:calc(12*var(--u));color:var(--menu-ink);z-index:19;transform:translateY(-4px)}
+.o-dd.on{transform:none}
+.o-dd div{display:flex;justify-content:space-between;padding:calc(3*var(--u)) calc(8*var(--u));border-radius:calc(6*var(--u))}
+.o-dd div span{opacity:.55}
+.o-emoji{right:calc(20*var(--u));top:calc(60*var(--u));width:calc(170*var(--u));padding:calc(10*var(--u));border-radius:calc(14*var(--u));background:var(--win);box-shadow:var(--win-shadow);font-size:calc(16*var(--u));display:grid;grid-template-columns:repeat(6,1fr);gap:calc(4*var(--u));color:var(--win-ink);z-index:19}
+.o-shot{inset:0;background:rgba(0,0,0,.18);cursor:crosshair;z-index:24}
+.o-shot i{position:absolute;left:30%;top:30%;width:32%;height:30%;border:1px dashed #fff;background:rgba(255,255,255,.12)}
+.o-swt{left:50%;top:50%;transform:translate(-50%,-50%) scale(.96);display:flex;gap:calc(10*var(--u));padding:calc(12*var(--u));border-radius:calc(20*var(--u));background:var(--glass);-webkit-backdrop-filter:blur(24px);backdrop-filter:blur(24px);box-shadow:inset 0 0 0 1px var(--glass-rim),0 12px 30px -12px rgba(0,0,0,.45);z-index:22}
+.o-swt.on{transform:translate(-50%,-50%)}
+.o-swt i{width:calc(70*var(--u));height:calc(48*var(--u));border-radius:calc(8*var(--u));background:var(--win);box-shadow:0 0 0 .5px var(--win-line)}
+.o-swt i.on{box-shadow:0 0 0 calc(3*var(--u)) var(--accent)}
+.clipb{position:absolute;left:calc(12*var(--u));bottom:calc(74*var(--u));z-index:9;font-size:calc(11*var(--u));padding:calc(3*var(--u)) calc(9*var(--u));border-radius:99px;background:var(--glass);-webkit-backdrop-filter:blur(14px);backdrop-filter:blur(14px);box-shadow:inset 0 0 0 1px var(--glass-rim);color:var(--menu-ink);max-width:45%;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.clipb:empty{display:none}
+
+/* ── 按钮、证据、侧栏 ───────────────────── */
+.chips{margin-top:14px;display:grid;gap:10px}
+.cg{display:flex;flex-wrap:wrap;align-items:center;gap:6px}
+.cg h3{font-size:12px;font-weight:600;color:var(--faint);margin:0 4px 0 0;min-width:74px}
+.chip{border:0;background:var(--chip);border-radius:8px;padding:5px 9px;font-size:12.5px;cursor:pointer;box-shadow:inset 0 0 0 .5px var(--line);display:inline-flex;align-items:center;gap:5px;line-height:1.2}
+.chip:hover{background:var(--chip-hover)}
+.chip:active{transform:scale(.97)}
+.chip.mac{background:var(--ok-soft);color:var(--ok)}
+.chip .k{font-weight:650}
+.chip[data-lit]{box-shadow:inset 0 0 0 1.5px var(--accent)}
+.ev{margin-top:14px}
+.ev ol{list-style:none;margin:0;padding:0;display:grid;gap:6px}
+.ev li{display:grid;grid-template-columns:auto 1fr;gap:8px;align-items:start;font-size:13px}
+.ev li .d{width:8px;height:8px;border-radius:50%;margin-top:6px;background:var(--faint)}
+.ev li[data-k="wait"] .d{background:var(--accent)}
+.ev li[data-k="say"] .d{background:#0a84ff;box-shadow:0 0 0 3px var(--accent-soft)}
+.ev li[data-k="ok"] .d{background:var(--ok)}
+.ev li[data-k="off"] .d{background:var(--faint)}
+.ev li .w{color:var(--muted)}
+.ev li b{font-weight:600}
+.ev .bar{height:3px;border-radius:2px;background:var(--line);margin:4px 0 0;overflow:hidden}
+.ev .bar i{display:block;height:100%;background:var(--accent);transform-origin:0 50%;transition:transform var(--bar-ms,0s) linear}
+.ev .empty{color:var(--faint);font-size:13px}
+.rules{list-style:none;margin:0;padding:0;display:grid;gap:2px}
+.rules li{display:grid;grid-template-columns:1fr auto;gap:8px;align-items:center;padding:5px 0;border-top:.5px solid var(--line);font-size:12.5px}
+.rules li:first-child{border-top:0}
+.rules .o{color:var(--ink)}
+.rules .o small{display:block;color:var(--faint);font-size:11.5px}
+.st{font-size:11px;padding:2px 7px;border-radius:99px;background:var(--chip);color:var(--muted);white-space:nowrap}
+.st.ok{background:var(--ok-soft);color:var(--ok)}
+.st.said{background:var(--accent-soft);color:var(--accent-ink)}
+.st.max{background:var(--warn-soft);color:var(--warn)}
+.st.probe{background:none;box-shadow:inset 0 0 0 .5px var(--line2)}
+.rhythm{display:grid;grid-template-columns:auto 1fr;gap:4px 10px;font-size:12.5px}
+.rhythm dt{color:var(--faint)}
+.rhythm dd{margin:0}
+.cool{display:inline-block;min-width:4.5em;font-variant-numeric:tabular-nums}
+.reset{border:0;background:none;color:var(--accent-ink);cursor:pointer;padding:0;font-size:12.5px}
+.sr{position:absolute;width:1px;height:1px;overflow:hidden;clip:rect(0 0 0 0);white-space:nowrap}
+@media (prefers-reduced-motion:reduce){
+  *,*::before,*::after{animation-duration:.001s!important;animation-iteration-count:1!important;transition-duration:.001s!important}
+  .island{transition-duration:var(--spring-dur,.25s)!important}
+  .island .content{transition-duration:.12s!important}
+  .doc .caret{animation:none}
+  .ev .bar i{transition-duration:var(--bar-ms,0s)!important}
+}
+</style>
+<div class="wrap">
+<header>
+  <h1>卡住时刘海开口</h1>
+  <p class="lede">从 Windows、iPad 换过来的人，按了旧习惯、Mac 上没反应时，刘海才说一句 Mac 上怎么做。点一下提示，刘海替你做那一下，这条以后不再说。右上角的小叉只关掉这一次。</p>
+</header>
+<div class="grid">
+<main>
+  <div class="ctl">
+    <div><span class="lbl">之前常用</span><span class="seg" role="group" aria-label="之前常用" id="origin">
+      <button type="button" data-o="win" aria-pressed="true">Windows</button><button type="button" data-o="ipad" aria-pressed="false">iPad</button><button type="button" data-o="mac" aria-pressed="false">一直用 Mac</button><button type="button" data-o="none" aria-pressed="false">没答</button>
+    </span></div>
+    <button type="button" class="sw" role="switch" aria-checked="false" id="termSw"><i></i>前台是终端</button>
+  </div>
+  <div class="stagewrap">
+  <div class="desk" id="desk" tabindex="0" role="application" aria-label="迷你 Mac 桌面：选中后可以直接按键">
+    <div class="menubar" id="menubar">
+      <div class="l"><svg class="apple" viewBox="0 0 16 16" aria-hidden="true"><path fill="currentColor" d="M11.2 8.5c0-1.6 1.3-2.3 1.3-2.4-.7-1-1.8-1.2-2.2-1.2-.9-.1-1.8.6-2.3.6s-1.2-.5-2-.5C4.9 5 3.9 5.6 3.4 6.6c-1.1 1.9-.3 4.6.8 6.1.5.7 1.1 1.6 1.9 1.5.8 0 1.1-.5 2-.5s1.2.5 2 .5c.8 0 1.3-.8 1.8-1.5.6-.8.8-1.6.8-1.7 0 0-1.5-.6-1.5-2.5zM9.7 3.8c.4-.5.7-1.2.6-1.9-.6 0-1.3.4-1.8.9-.4.4-.7 1.1-.6 1.8.7.1 1.4-.3 1.8-.8z"/></svg><b id="appName">文本编辑</b><span id="menus"></span></div>
+      <div class="r"><span class="ime" id="ime">拼</span>
+        <svg class="opt" viewBox="0 0 16 16" aria-hidden="true"><path d="M1.5 6.2a9.5 9.5 0 0 1 13 0M3.7 8.6a6.3 6.3 0 0 1 8.6 0M5.9 11a3.1 3.1 0 0 1 4.2 0" stroke="currentColor" stroke-width="1.5" fill="none" stroke-linecap="round"/><circle cx="8" cy="13.2" r="1.1" fill="currentColor"/></svg>
+        <svg class="opt" viewBox="0 0 22 16" aria-hidden="true"><rect x="1" y="4" width="17" height="8.5" rx="2.6" stroke="currentColor" stroke-width="1.1" fill="none" opacity=".6"/><rect x="2.6" y="5.6" width="10.5" height="5.3" rx="1.4" fill="currentColor"/><path d="M19.5 6.8v2.9" stroke="currentColor" stroke-width="1.3" stroke-linecap="round" opacity=".6"/></svg>
+        <svg viewBox="0 0 16 16" aria-hidden="true"><rect x="2" y="3" width="12" height="4" rx="2" stroke="currentColor" stroke-width="1.3" fill="none"/><circle cx="4.3" cy="5" r="1.2" fill="currentColor"/><rect x="2" y="9" width="12" height="4" rx="2" stroke="currentColor" stroke-width="1.3" fill="none"/><circle cx="11.7" cy="11" r="1.2" fill="currentColor"/></svg>
+        <span class="date">9月29日 周二 15:41</span></div>
+    </div>
+    <button type="button" class="notch" id="notch" aria-label="刘海：点一下回到主屏幕"></button>
+    <div class="island" id="island" aria-hidden="true">
+      <div class="keyline"></div>
+      <div class="content" id="icontent"></div>
+      <button type="button" class="hit" id="ihit" tabindex="-1"></button>
+      <button type="button" class="x" id="ix" aria-label="关掉这条" tabindex="-1"><svg viewBox="0 0 10 10" aria-hidden="true"><path d="M2 2l6 6M8 2l-6 6" stroke="currentColor" stroke-width="1.7" stroke-linecap="round"/></svg></button>
+    </div>
+
+    <div class="win tb" id="w-finder" data-app="finder" style="left:36%;top:17%;width:56%;height:56%;--dx:75%;--dy:-8%;--mx:40%;--my:6%">
+      <div class="title"><span class="lights"><button type="button" tabindex="-1" aria-hidden="true"></button><button type="button" tabindex="-1" aria-hidden="true"></button><button type="button" tabindex="-1" data-green aria-label="绿色按钮"></button></span><span class="name">文稿</span></div>
+      <div class="body"><div class="finder"><div class="side"><span>最近使用</span><span>应用程序</span><span>桌面</span><b>文稿</b><span>下载</span></div>
+        <div class="files" id="files"></div></div></div>
+    </div>
+    <div class="win tb" id="w-safari" data-app="safari" style="left:5%;top:12%;width:58%;height:62%;--dx:-88%;--dy:-6%;--mx:-42%;--my:-6%">
+      <div class="title"><span class="lights"><button type="button" tabindex="-1" aria-hidden="true"></button><button type="button" tabindex="-1" aria-hidden="true"></button><button type="button" tabindex="-1" data-green aria-label="绿色按钮"></button></span><span class="name" style="left:calc(70*var(--u));right:calc(40*var(--u))"><span class="url" style="margin:0">kyoto-trip.example</span></span></div>
+      <div class="body"><div class="page" id="page"><h3>京都三日：怎么走不绕路</h3></div></div>
+    </div>
+    <div class="win" id="w-edit" data-app="edit" style="left:17%;top:21%;width:54%;height:52%;--dx:-30%;--dy:-120%;--mx:0%;--my:34%">
+      <div class="title"><span class="lights"><button type="button" tabindex="-1" aria-hidden="true"></button><button type="button" tabindex="-1" aria-hidden="true"></button><button type="button" tabindex="-1" data-green aria-label="绿色按钮"></button></span><span class="name" id="editTitle">会议记录 — 已编辑</span></div>
+      <div class="body"><div class="doc" id="doc"></div></div>
+    </div>
+    <div class="win term gone" id="w-term" data-app="term" style="left:22%;top:24%;width:52%;height:46%;--dx:0%;--dy:-130%;--mx:0;--my:0">
+      <div class="title"><span class="lights"><button type="button" tabindex="-1" aria-hidden="true"></button><button type="button" tabindex="-1" aria-hidden="true"></button><button type="button" tabindex="-1" data-green aria-label="绿色按钮"></button></span><span class="name">aaron — zsh</span></div>
+      <div class="body"><div class="tty"><span class="p">aaron@MacBook ~ %</span> npm run dev
+  ready on http://localhost:3000
+<span class="p">aaron@MacBook ~ %</span> <span class="caret" style="display:inline-block;width:.55em;height:1.1em;vertical-align:-.2em;background:#e6e6e6"></span></div></div>
+    </div>
+
+    <div class="ov o-home" id="ovHome" aria-hidden="true"><div class="g" id="homeGrid"></div></div>
+    <div class="ov o-spot" id="ovSpot"><svg viewBox="0 0 16 16" width="16" height="16" aria-hidden="true" style="margin-right:8px"><circle cx="7" cy="7" r="4.6" stroke="currentColor" stroke-width="1.6" fill="none"/><path d="M10.4 10.4l3.6 3.6" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"/></svg>聚焦搜索</div>
+    <div class="ov o-dlg" id="ovFq"><b>强制退出 App</b><div class="li on">文本编辑</div><div class="li">访达</div><div class="li">Safari 浏览器</div><div class="btn"><span>强制退出</span></div></div>
+    <div class="ov o-dd" id="ovMenu"><div>新建<span>⌘N</span></div><div>打开…<span>⌘O</span></div><div>关闭<span>⌘W</span></div><div>存储…<span>⌘S</span></div></div>
+    <div class="ov o-emoji" id="ovEmoji" aria-label="表情与符号"><span>©</span><span>®</span><span>™</span><span>°</span><span>€</span><span>✓</span><span>→</span><span>±</span><span>×</span><span>÷</span><span>§</span><span>¥</span></div>
+    <div class="ov o-shot" id="ovShot"><i></i></div>
+    <div class="ov o-swt" id="ovSwt"><i class="on"></i><i></i><i></i></div>
+    <div class="clipb" id="clipb"></div>
+    <div class="dock" id="dock">
+      <button type="button" class="i-finder run" data-app="finder" aria-label="访达"><svg viewBox="0 0 24 24" aria-hidden="true"><rect x="3" y="3" width="18" height="18" rx="5" fill="none"/><path d="M12 3v7l-1.6 3H12v8" stroke="#fff" stroke-width="1.6" fill="none"/><circle cx="7.5" cy="9" r="1.2" fill="#fff"/><circle cx="16.5" cy="9" r="1.2" fill="#fff"/><path d="M6.5 15.5c3.2 2.2 7.8 2.2 11 0" stroke="#fff" stroke-width="1.6" fill="none" stroke-linecap="round"/></svg></button>
+      <button type="button" class="i-safari run" data-app="safari" aria-label="Safari 浏览器"><svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="9" fill="#2b8cff"/><circle cx="12" cy="12" r="7.6" fill="none" stroke="#fff" stroke-width=".8" stroke-dasharray="1 1.4"/><path d="M15.5 8.5L11 11l-2.5 4.5L13 13z" fill="#fff"/><path d="M15.5 8.5L13 13l-2-2z" fill="#ff453a"/></svg></button>
+      <button type="button" class="i-edit run" data-app="edit" aria-label="文本编辑"><svg viewBox="0 0 24 24" aria-hidden="true"><rect x="5" y="3.5" width="14" height="17" rx="1.5" fill="#fff" stroke="#c7c9d1"/><path d="M8 8h8M8 11h8M8 14h5" stroke="#a0a4ae" stroke-width="1.2" stroke-linecap="round"/><path d="M14 19l6-9 1.6 1.1-6 9-2 .6z" fill="#f5a524"/></svg></button>
+      <button type="button" class="i-term" data-app="term" aria-label="终端"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M6 8l4 3.5L6 15" stroke="#e6e6e6" stroke-width="1.8" fill="none" stroke-linecap="round" stroke-linejoin="round"/><path d="M12 16h6" stroke="#e6e6e6" stroke-width="1.8" stroke-linecap="round"/></svg></button>
+      <button type="button" class="i-set" data-app="set" aria-label="系统设置"><svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="6.5" fill="none" stroke="#fff" stroke-width="2.4" stroke-dasharray="2.2 1.6"/><circle cx="12" cy="12" r="3" fill="#fff"/></svg></button>
+      <span class="sep"></span>
+      <button type="button" class="i-trash" id="trash" data-app="trash" aria-label="废纸篓"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M7 8h10l-1 12H8z" fill="rgba(255,255,255,.55)" stroke="rgba(0,0,0,.35)" stroke-width=".8"/><path d="M6 7h12" stroke="rgba(0,0,0,.4)" stroke-width="1.2" stroke-linecap="round"/><path d="M10 11v6M14 11v6" stroke="rgba(0,0,0,.25)"/></svg></button>
+    </div>
+    <div class="keyhint" id="keyhint">点一下这里，再按键</div>
+  </div>
+  </div>
+  <div class="chips" id="chips"></div>
+  <section class="card ev"><h2>刘海在等什么</h2><ol id="log"><li class="empty">按一下旧习惯的快捷键，或者点上面的按钮。</li></ol></section>
+</main>
+<aside>
+  <section class="card"><h2 id="rulesTitle">现在开着的规则</h2><ul class="rules" id="rules"></ul><p class="small" id="rulesNote" style="margin:8px 0 0"></p></section>
+  <section class="card"><h2>节奏</h2>
+    <dl class="rhythm">
+      <dt>次数</dt><dd>同一条最多说 3 次</dd>
+      <dt>间隔</dt><dd>任意两条之间隔 5 分钟，小样压成 10 秒 · <span class="cool" id="cool">现在可以说</span></dd>
+      <dt>会了</dt><dd>自己按过 Mac 那一下，或点过提示，这条不再说</dd>
+      <dt>小叉</dt><dd>只关掉这一次，这条还会再说。待定：要不要改成“这条不再说”</dd>
+    </dl>
+    <p style="margin:10px 0 0"><button type="button" class="reset" id="reset">从头再来</button></p>
+  </section>
+  <section class="card"><h2>这些地方一句不说</h2><p class="small" style="margin:0">终端、写代码的编辑器、Office、设计软件、虚拟机和远程桌面、游戏、密码框、正在组字、VoiceOver 开着、共享屏幕时。打开上面的“前台是终端”试试。</p></section>
+</aside>
+</div>
+</div>
+<div class="sr" aria-live="assertive" id="sr"></div>
+<script>
+(() => {
+"use strict";
+const $ = (s, r = document) => r.querySelector(s);
+const $$ = (s, r = document) => Array.from(r.querySelectorAll(s));
+const now = () => performance.now();
+const reduced = () => matchMedia("(prefers-reduced-motion: reduce)").matches;
+const esc = s => String(s).replace(/[&<>"]/g, c => ({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;"}[c]));
+
+/* ── 规则（出处 docs/stuck-habits.md；主句、副句照表抄） ── */
+const COOLDOWN = 10000;          // 真机 300 秒，小样压成 10 秒
+const MAX_SHOWS = 3;
+const APP = { edit: "文本编辑", finder: "访达", safari: "Safari 浏览器", term: "终端" };
+const MENUS = { edit: ["文件","编辑","格式","显示","窗口","帮助"], finder: ["文件","编辑","显示","前往","窗口","帮助"],
+  safari: ["文件","编辑","显示","历史记录","书签","窗口","帮助"], term: ["Shell","编辑","显示","窗口","帮助"] };
+const CMD_W_TITLE = { edit: "关闭", finder: "关闭窗口", safari: "关闭标签页" };
+const K = (old, nw) => ({ type: "keys", old, nw });
+const RULES = [
+  { id:"cC", from:"win", any:true, fam:true, key:"⌃C", name:"复制", mac:"⌘C", main:"Mac 上拷贝按 ⌘C", sub:"常用快捷键把 ⌃ 换成 ⌘", demo:K(["⌃","C"],["⌘","C"]), act:"copy", p:"0.3 秒后剪贴板没变", hint:"原生 App 第一次就说；浏览器要 4 秒内再按一次" },
+  { id:"cV", from:"win", fam:true, key:"⌃V", name:"粘贴", mac:"⌘V", main:"Mac 上粘贴按 ⌘V", sub:"常用快捷键把 ⌃ 换成 ⌘", demo:K(["⌃","V"],["⌘","V"]), act:"paste", p:"0.3 秒后文字没变", hint:"焦点在文字里，而且刚按过没生效的 ⌃C" },
+  { id:"cZ", from:"win", fam:true, key:"⌃Z", name:"撤销", mac:"⌘Z", main:"Mac 上撤销按 ⌘Z", sub:"重做是 ⇧⌘Z", demo:K(["⌃","Z"],["⌘","Z"]), act:"undo", p:"0.3 秒后文字没变", hint:"焦点在文字里" },
+  { id:"cS", from:"win", any:true, fam:true, key:"⌃S", name:"保存", mac:"⌘S", main:"Mac 上存储按 ⌘S", sub:"常用快捷键把 ⌃ 换成 ⌘", demo:K(["⌃","S"],["⌘","S"]), act:"save", p:"0.3 秒后标题没变，也没出现存储窗口", hint:"只在原生 App，菜单里有 ⌘S" },
+  { id:"sh", from:"win", key:"单按 ⇧", name:"切换中英文", mac:"Caps Lock", main:"切换中英文：轻按 Caps Lock", sub:"按住它才是大写锁定", demo:K(["⇧"],["⇪"]), act:"ime", p:"0.2 秒后输入法没变", hint:"20 秒内第二次", probe:"真机待确认" },
+  { id:"cW", from:"win", fam:true, key:"⌃W", name:"关标签页", mac:"⌘W", main:"关标签页按 ⌘W", sub:"App 不会跟着退出，退出按 ⌘Q", demo:K(["⌃","W"],["⌘","W"]), act:"close", p:"0.3 秒后窗口还在", hint:"焦点不在文字里；浏览器要再按一次" },
+  { id:"cX", from:"win", any:true, fam:true, key:"⌃X", name:"剪切", mac:"⌘X", main:"Mac 上剪切按 ⌘X", sub:"常用快捷键把 ⌃ 换成 ⌘", demo:K(["⌃","X"],["⌘","X"]), act:"cut", p:"0.3 秒后剪贴板没变", hint:"同 ⌃C，还要有选中内容" },
+  { id:"del", from:"win", any:true, key:"Delete", name:"删文件", mac:"⌘⌫", main:"移到废纸篓按 ⌘⌫", sub:"废纸篓就是回收站", demo:K(["delete"],["⌘","delete"]), act:"trash", p:"0.3 秒后文件还在", hint:"访达里有选中的文件" },
+  { id:"home", from:"win", key:"Home / End", name:"行首行尾", mac:"⌘← ⌘→", main:"到行首、行尾按 ⌘← ⌘→", sub:"Home、End 在 Mac 上只滚动页面", demo:K(["home"],["⌘","←"]), tap:"⌘←", act:"lineStart", p:"0.12 秒后光标没到行首，页面也没滚动", hint:"焦点在文字里" },
+  { id:"fq", from:"win", any:true, key:"⌃⇧esc", name:"任务管理器", mac:"⌥⌘esc", main:"强制退出 App 按 ⌥⌘esc", sub:"看谁占资源，打开“活动监视器”", demo:K(["⌃","⇧","esc"],["⌥","⌘","esc"]), act:"forceQuit", p:"0.3 秒后没出现任何窗口", hint:"第一次就说；⌃⌥⌫ 只在焦点不在文字里时" },
+  { id:"a4", from:"win", any:true, key:"⌥F4", name:"关窗", mac:"⌘W", main:"关掉窗口按 ⌘W", sub:"退出整个 App 按 ⌘Q", demo:K(["⌥","F4"],["⌘","W"]), act:"close", p:"0.3 秒后窗口还在", hint:"第一次就说" },
+  { id:"prt", from:"win", key:"PrtSc", name:"截屏", mac:"⇧⌘4", main:"截一块屏幕按 ⇧⌘4", sub:"整屏按 ⇧⌘3；加按 ⌃ 存进剪贴板", demo:K(["PrtSc"],["⇧","⌘","4"]), act:"shot", p:"0.3 秒后没出现截图框", hint:"接着 PC 键盘", probe:"真机待确认" },
+  { id:"an", from:"win", key:"⌥+小键盘", name:"打符号", mac:"⌃⌘空格", main:"打特殊符号按 ⌃⌘空格", sub:"在“表情与符号”里搜名字", demo:K(["⌥","0169"],["⌃","⌘","空格"]), act:"emoji", p:"松开后多了同样多的数字", hint:"焦点在文字里" },
+
+  { id:"i2", from:"ipad", grp:"home", key:"三指上滑", name:"回主屏幕", mac:"点一下刘海", main:"回到主屏幕：点一下刘海", sub:"", demo:{type:"home"}, act:"home", hint:"调度中心开了又马上关，接着去找 App", probe:"等探针" },
+  { id:"i5", from:"ipad", grp:"home", key:"🌐H", name:"回主屏幕", mac:"点一下刘海", main:"这是显示桌面；回到主屏幕点一下刘海", sub:"", demo:{type:"home"}, act:"home", hint:"瞄一眼就叫回来，再去 Dock 开 App；两次", probe:"等探针" },
+  { id:"i6", from:"ipad", grp:"home", key:"⌘H", name:"回主屏幕", mac:"点一下刘海", main:"⌘H 是隐藏 App；回到主屏幕点一下刘海", sub:"", demo:{type:"home"}, act:"home", hint:"藏起来又马上找回来" },
+  { id:"i7", from:"ipad", key:"双击标题栏", name:"想铺满", mac:"往下甩", main:"双击是收起窗口；往下甩是铺满屏幕", sub:"", demo:{type:"fill"}, act:"fill", hint:"收起又马上展开，接着想放大" },
+  { id:"i11", from:"ipad", key:"往上甩标题栏", name:"想铺满", mac:"往下甩", main:"往上甩是收起窗口，往下甩是铺满屏幕", sub:"", demo:{type:"fill"}, act:"fill", hint:"甩上去又撤回，接着想放大" },
+  { id:"i14", from:"ipad", key:"桌面两指下滑", name:"找搜索", mac:"⌘空格", main:"搜索按 ⌘空格，和 iPad 一样", sub:"", demo:K(["两指↓"],["⌘","空格"]), act:"spot", hint:"10 秒内两次" },
+  { id:"i17", from:"ipad", key:"从 Dock 拖出图标", name:"想分屏", mac:"🌐⌃←", main:"图标从 Dock 移除了；并排按 🌐⌃←", sub:"", demo:K(["拖出 Dock"],["🌐","⌃","←"]), act:"lhalf", hint:"图标真的从 Dock 拿掉了" },
+  { id:"i18", from:"ipad", key:"点顶边正中", name:"回页首", mac:"⌘↑", main:"回到页面顶部按 ⌘↑", sub:"", demo:K(["点刘海"],["⌘","↑"]), act:"top", hint:"页面中间点刘海，又往上滚；两次" },
+  { id:"i22", from:"ipad", key:"🌐M", name:"找菜单栏", mac:"菜单栏", main:"菜单栏一直在屏幕最上面", sub:"", demo:{type:"menu"}, act:"menu", hint:"3 秒内没有菜单打开" },
+];
+const R = Object.fromEntries(RULES.map(r => [r.id, r]));
+const MAC_KEYS = { cmdC:["cC"], cmdV:["cV"], cmdX:["cX"], cmdZ:["cZ"], cmdS:["cS"], cmdW:["cW","a4"], cmdDel:["del"], cmdLeft:["home"],
+  optCmdEsc:["fq"], shiftCmd4:["prt"], ctrlCmdSpace:["an"], capsLock:["sh"], cmdSpace:["i14"], globeCtrlLeft:["i17"], cmdUp:["i18"],
+  flickDown:["i7","i11"], notchHome:["i2","i5","i6"], menuClick:["i22"] };
+const CMD_FAMILY = ["cmdC","cmdV","cmdX","cmdZ","cmdS","cmdW"];
+
+/* ── 状态 ── */
+const S = {
+  origin: "win", term: false, front: "edit", prevFront: "edit",
+  shown: {}, learned: new Set(), lastShownAt: -Infinity, cmdUsed: new Set(),
+  pend: {}, asked: {}, guess: { win: 0, ipad: 0 }, lastFailCopy: -Infinity, lastCtrlCWeb: -Infinity,
+  shadeCount: 0, win: {}, clip: "", ime: "拼",
+};
+const DOC0 = () => ({ lines: ["周四的会改到下午三点，地点在三楼会议室。", "要带：投影转接头、上周的数字。", "会后把结论发给大家"],
+  sel: { line: 0, a: 11, b: 19 }, caret: null, pasted: null, saved: false,
+  history: [{ lines: ["周四的会改到下午三点，地点在三楼会议室。", "要带：投影转接头、上周的数字。", "会后把结论"] }] });
+let DOC = DOC0();
+const FILES0 = [["会议记录.rtf","RTF"],["报价单.pdf","PDF"],["照片 01.jpg","JPG"],["预算.xlsx","XLS"],["合同草稿.docx","DOC"]];
+let FILES = { list: FILES0.map(f => ({ name: f[0], k: f[1], gone: false })), sel: 1 };
+
+/* ── 刘海：尺寸、描边、弹簧照 Notch.swift ── */
+function spring(response, bounce) {
+  const w0 = 2 * Math.PI / response, z = 1 - bounce;
+  let T, f;
+  if (z < 1) {
+    const wd = w0 * Math.sqrt(1 - z * z);
+    T = Math.log(1000 / Math.sqrt(1 - z * z)) / (z * w0);
+    f = t => 1 - Math.exp(-z * w0 * t) * (Math.cos(wd * t) + (z * w0 / wd) * Math.sin(wd * t));
+  } else {
+    let x = 1; while ((1 + x) * Math.exp(-x) > 0.001) x += 0.05;
+    T = x / w0; f = t => 1 - Math.exp(-w0 * t) * (1 + w0 * t);
+  }
+  const pts = []; for (let i = 0; i <= 60; i++) pts.push(+f(T * i / 60).toFixed(4));
+  pts[60] = 1;
+  return { ease: `linear(${pts.join(",")})`, dur: T };
+}
+const LINEAR_OK = window.CSS && CSS.supports && CSS.supports("transition-timing-function", "linear(0, 1)");
+function applySpring(el, response, bounce) {
+  if (reduced()) { response = 0.25; bounce = 0; }
+  const s = spring(response, bounce);
+  el.style.setProperty("--spring-dur", s.dur.toFixed(3) + "s");
+  el.style.setProperty("--spring-ease", LINEAR_OK ? s.ease : (bounce > 0 ? "cubic-bezier(.3,1.25,.45,1)" : "cubic-bezier(.25,1,.5,1)"));
+  return s.dur * 1000;
+}
+const island = $("#island"), icontent = $("#icontent"), ihit = $("#ihit"), ix = $("#ix");
+let alertTimer = 0, hideTimer = 0, current = null;
+const NOTCH = { w: 185, h: 32, r: 10 };
+/* 岛的外框按像素算好再设：calc 里带容器单位时，有的浏览器不给补间。 */
+let box = [185, 32, 10];
+function setBox(w, h, r) {
+  box = [w, h, r];
+  const u = $("#notch").getBoundingClientRect().width / 185 || 1;
+  island.style.width = (w * u).toFixed(2) + "px"; island.style.height = (h * u).toFixed(2) + "px";
+  island.style.borderRadius = `0 0 ${(r * u).toFixed(2)}px ${(r * u).toFixed(2)}px`;
+}
+new ResizeObserver(() => { island.style.transition = "none"; setBox(...box); void island.offsetWidth; island.style.transition = ""; }).observe($("#desk"));
+function caps(list, nw) { return list.map(k => `<span class="cap${nw ? " new" : ""}">${esc(k)}</span>`).join(""); }
+function demoHTML(d) {
+  if (d.type === "keys") return `<div class="demo run"><div class="row old">${caps(d.old)}</div><div class="strike"></div><div class="arrow">↓</div><div class="row nw">${caps(d.nw, true)}</div></div>`;
+  if (d.type === "home") {
+    let icons = "";
+    for (let i = 0; i < 6; i++) icons += `<i class="ico" style="left:calc(${22 + (i % 3) * 20}*var(--u));top:calc(${60 - 8 - Math.floor(i / 3) * 18 - 14}*var(--u));background:hsl(${i * 60},83%,71%)"></i>`;
+    return `<div class="demo run d-home"><i class="mn"></i>${icons}<i class="fg" style="left:calc(50*var(--u))"></i></div>`;
+  }
+  if (d.type === "fill") return `<div class="demo run d-fill"><i class="mw" style="left:calc(26*var(--u));top:calc(14*var(--u));width:calc(48*var(--u));height:calc(34*var(--u))"></i><i class="fg"></i><i class="fg"></i></div>`;
+  return `<div class="demo run d-menu"><i class="mb"></i><i class="mi" style="left:calc(6*var(--u))"></i><i class="mi" style="left:calc(22*var(--u))"></i><i class="mi" style="left:calc(38*var(--u))"></i><i class="dd"></i><i class="fg"></i></div>`;
+}
+const TONE = {
+  tip: { c: "rgba(10,132,255,.8)", w: 1.5, svg: `<svg viewBox="0 0 30 30" aria-hidden="true"><path fill="#0a84ff" d="M9.2 5.6c1.3-.7 2.8-.2 3.5 1.1l3.3 6.1.5-.3c1-.5 2.2-.2 2.8.7l.4-.2c1-.5 2.2-.2 2.8.8l.3-.1c1.1-.5 2.4 0 2.9 1.1l1.4 3c1.6 3.5.2 7.6-3.2 9.4l-1.1.6c-3 1.6-6.7.9-8.9-1.7l-5.1-6c-.7-.8-.5-2 .4-2.6.8-.5 1.9-.4 2.6.3l1.6 1.7-4.7-8.7c-.7-1.3-.2-2.8 1-3.4z"/></svg>` },
+  done: { c: "rgba(255,255,255,.14)", w: 1, svg: `<svg viewBox="0 0 30 30" aria-hidden="true"><circle cx="15" cy="15" r="12" fill="#30d158"/><path d="M9.5 15.5l3.8 3.8 7.4-8" stroke="#000" stroke-width="2.6" fill="none" stroke-linecap="round" stroke-linejoin="round"/></svg>` },
+  problem: { c: "rgba(255,159,10,.75)", w: 1.5, svg: `<svg viewBox="0 0 30 30" aria-hidden="true"><path d="M13.2 5.2c.8-1.4 2.8-1.4 3.6 0l10 17.4c.8 1.4-.2 3.1-1.8 3.1H5c-1.6 0-2.6-1.7-1.8-3.1z" fill="#ff9f0a"/><path d="M15 11v6.5" stroke="#000" stroke-width="2.6" stroke-linecap="round"/><circle cx="15" cy="21.6" r="1.6"/></svg>` },
+  info: { c: "rgba(255,255,255,.14)", w: 1, svg: `<svg viewBox="0 0 30 30" aria-hidden="true"><circle cx="15" cy="15" r="12" fill="#fff"/><circle cx="15" cy="9.6" r="1.8"/><path d="M15 13.6v8" stroke="#000" stroke-width="2.8" stroke-linecap="round"/></svg>` },
+};
+/* 教：宽 max(刘海+300, 500)，高 刘海+84，圆角 24，强调色描边 1.5，停 6.6 秒。
+   说：宽 max(刘海+200, 400)，高 刘海+52，停 min(4.5, 1.8+字数×0.05) 秒。 */
+function openIsland(kind, o) {
+  clearTimeout(alertTimer); clearTimeout(hideTimer);
+  const teach = kind === "teach";
+  const w = teach ? Math.max(NOTCH.w + 300, 500) : Math.max(NOTCH.w + 200, 400);
+  const h = NOTCH.h + (teach ? 84 : 52);
+  const tone = TONE[o.tone || "tip"];
+  island.style.setProperty("--bc", tone.c); island.style.setProperty("--bw", tone.w);
+  if (!island.classList.contains("on")) {
+    island.style.transition = "none"; setBox(NOTCH.w, NOTCH.h, NOTCH.r);
+    island.classList.add("on"); void island.offsetWidth; island.style.transition = "";
+  }
+  applySpring(island, 0.42, 0.16);
+  setBox(w, h, 24);
+  icontent.classList.remove("in");
+  icontent.innerHTML = teach
+    ? `<div class="teach">${demoHTML(o.demo)}<div class="txt"><div class="t">${esc(o.title)}</div>${o.sub ? `<div class="s">${esc(o.sub)}</div>` : ""}</div></div>`
+    : `<div class="say"><div class="icon">${tone.svg}</div><div class="txt"><div class="t">${esc(o.title)}</div>${o.sub ? `<div class="s">${esc(o.sub)}</div>` : ""}</div></div>`;
+  requestAnimationFrame(() => requestAnimationFrame(() => icontent.classList.add("in")));
+  current = o;
+  island.setAttribute("aria-hidden", "false");
+  ihit.tabIndex = 0; ix.tabIndex = 0; ix.classList.add("show");
+  ihit.setAttribute("aria-label", o.title + (o.sub ? "。" + o.sub : "") + (o.tap && o.tap !== o.sub ? "。" + o.tap : ""));
+  $("#sr").textContent = o.sub ? `${o.title}。${o.sub}` : o.title;
+  const ms = teach ? 6600 : Math.min(4500, 1800 + (o.title.length + (o.sub || "").length) * 50);
+  alertTimer = setTimeout(() => closeIsland("timeout"), ms);
+}
+function closeIsland(why) {
+  if (!current) return;
+  const o = current; current = null;
+  clearTimeout(alertTimer);
+  icontent.classList.remove("in");
+  const ms = applySpring(island, 0.34, 0);
+  setBox(NOTCH.w, NOTCH.h, NOTCH.r);
+  island.setAttribute("aria-hidden", "true");
+  ihit.tabIndex = -1; ix.tabIndex = -1; ix.classList.remove("show");
+  if (document.activeElement === ihit || document.activeElement === ix) $("#desk").focus({ preventScroll: true });
+  hideTimer = setTimeout(() => { island.classList.remove("on"); icontent.innerHTML = ""; }, ms);
+  if (why === "click" && o.onClick) o.onClick();
+  if (why === "x" && o.onClose) o.onClose();
+}
+ihit.addEventListener("click", e => { e.stopPropagation(); closeIsland("click"); });
+ix.addEventListener("click", e => { e.stopPropagation(); closeIsland("x"); });
+/* ── 迷你桌面 ── */
+const desk = $("#desk");
+const WIN = { edit: $("#w-edit"), finder: $("#w-finder"), safari: $("#w-safari"), term: $("#w-term") };
+function renderDoc() {
+  const d = DOC;
+  $("#doc").innerHTML = d.lines.map((ln, i) => {
+    let h = "";
+    if (d.sel && d.sel.line === i) h = esc(ln.slice(0, d.sel.a)) + `<span class="sel">${esc(ln.slice(d.sel.a, d.sel.b))}</span>` + esc(ln.slice(d.sel.b));
+    else if (d.pasted && d.pasted.line === i) h = esc(ln.slice(0, d.pasted.a)) + `<span class="pasted">${esc(ln.slice(d.pasted.a, d.pasted.b))}</span>` + `<span class="caret"></span>` + esc(ln.slice(d.pasted.b));
+    else if (d.caret && d.caret.line === i) h = esc(ln.slice(0, d.caret.pos)) + `<span class="caret"></span>` + esc(ln.slice(d.caret.pos));
+    else h = esc(ln);
+    return `<p>${h || "&nbsp;"}</p>`;
+  }).join("");
+  $("#editTitle").textContent = d.saved ? "会议记录" : "会议记录 — 已编辑";
+}
+function renderFiles() {
+  $("#files").innerHTML = FILES.list.map((f, i) => `<div class="file${i === FILES.sel && !f.gone ? " on" : ""}${f.gone ? " trashed" : ""}" data-i="${i}"><i data-k="${f.k}"></i><span>${esc(f.name)}</span></div>`).join("");
+}
+$("#files").addEventListener("mousedown", e => { const f = e.target.closest(".file"); if (!f) return; FILES.sel = +f.dataset.i; renderFiles(); });
+(function buildPage() {
+  let h = "<h3>京都三日：怎么走不绕路</h3>";
+  for (let s = 0; s < 6; s++) { h += `<h3 style="margin-top:calc(14*var(--u));font-size:calc(12.5*var(--u))">第 ${s + 1} 段</h3>`; for (let i = 0; i < 7; i++) h += '<div class="ln"></div>'; }
+  $("#page").innerHTML = h;
+})();
+const HOME_COLORS = ["#ff9f0a","#30d158","#0a84ff","#bf5af2","#ff375f","#64d2ff","#ffd60a","#5e5ce6","#ac8e68","#32d74b","#ff6961","#8e8e93"];
+$("#homeGrid").innerHTML = HOME_COLORS.map((c, i) => `<button type="button" tabindex="-1" aria-label="App ${i + 1}" style="background:linear-gradient(160deg,${c},color-mix(in srgb,${c} 70%,#000))"></button>`).join("");
+
+function renderMenus() {
+  const app = S.term ? "term" : S.front;
+  $("#appName").textContent = APP[app] || "访达";
+  $("#menus").innerHTML = (MENUS[app] || MENUS.finder).map((m, i) => `<span class="m${i ? " opt" : ""}" data-menu="${i}" >${m}</span>`).join("");
+}
+function frontApp() { return S.term ? "term" : S.front; }
+function layoutWindows() {
+  const app = frontApp();
+  for (const [k, el] of Object.entries(WIN)) {
+    el.classList.toggle("front", k === app);
+  }
+  S.order = S.order.filter(k => k !== app).concat(app);
+  S.order.forEach((k, i) => { WIN[k].style.zIndex = i + 1; });
+  WIN.term.classList.toggle("gone", !S.term);
+  $$("#dock button[data-app]").forEach(b => b.classList.toggle("run", ["finder","safari","edit"].includes(b.dataset.app) || (b.dataset.app === "term" && S.term)));
+  renderMenus();
+}
+function setFront(app) {
+  if (app === "term") { setTerm(true); return; }
+  if (S.term) setTerm(false, true);
+  S.front = app;
+  const w = S.win[app] || (S.win[app] = {});
+  if (w.hidden) { w.hidden = false; WIN[app].classList.remove("hidden"); }
+  if (w.closed) { w.closed = false; WIN[app].classList.remove("gone"); }
+  layoutWindows();
+}
+function setTerm(on, quiet) {
+  S.term = on;
+  const sw = $("#termSw"); sw.setAttribute("aria-checked", String(on));
+  if (!quiet) log(on ? "off" : "ok", on ? "前台换成了<b>终端</b>：⌃C 在这里是中断，刘海一句不说" : "前台回到<b>" + APP[S.front] + "</b>");
+  layoutWindows();
+}
+const ov = id => $("#" + id);
+let ovTimers = {};
+function flash(id, ms) { const el = ov(id); el.classList.add("on"); clearTimeout(ovTimers[id]); if (ms) ovTimers[id] = setTimeout(() => el.classList.remove("on"), ms); }
+function unflash(id) { ov(id).classList.remove("on"); clearTimeout(ovTimers[id]); }
+function winOf(app) { return WIN[app || frontApp()]; }
+
+/* 点提示时替他做成的那一下 */
+const ACTS = {
+  copy() {
+    const a = frontApp(), f = FILES.list[FILES.sel];
+    if (a === "finder") { if (f && !f.gone) setClip(f.name); return; }
+    if (a === "safari") { setClip("京都三日：怎么走不绕路"); return; }
+    if (a === "edit" && DOC.sel) setClip(DOC.lines[DOC.sel.line].slice(DOC.sel.a, DOC.sel.b));
+  },
+  cut() { const d = DOC; if (frontApp() !== "edit" || !d.sel) return; const ln = d.lines[d.sel.line]; setClip(ln.slice(d.sel.a, d.sel.b)); pushHist(); d.lines[d.sel.line] = ln.slice(0, d.sel.a) + ln.slice(d.sel.b); d.caret = { line: d.sel.line, pos: d.sel.a }; d.sel = null; d.pasted = null; d.saved = false; renderDoc(); },
+  paste() { if (frontApp() !== "edit") return; const d = DOC, t = S.clip || "地点在三楼会议室"; pushHist(); let at = d.caret || (d.sel ? { line: d.sel.line, pos: d.sel.a } : { line: 2, pos: d.lines[2].length }); const ln = d.lines[at.line]; const cut = d.sel && d.sel.line === at.line ? d.sel.b : at.pos; d.lines[at.line] = ln.slice(0, at.pos) + t + ln.slice(cut); d.pasted = { line: at.line, a: at.pos, b: at.pos + t.length }; d.sel = null; d.caret = null; d.saved = false; renderDoc(); },
+  undo() { if (frontApp() !== "edit") return; const d = DOC, h = d.history.pop(); if (!h) return; d.lines = h.lines.slice(); d.sel = null; d.pasted = null; d.caret = { line: d.lines.length - 1, pos: d.lines[d.lines.length - 1].length }; d.saved = false; renderDoc(); },
+  save() { if (frontApp() !== "edit") return; DOC.saved = true; renderDoc(); },
+  close() { const a = frontApp(); if (a === "term") return; (S.win[a] = S.win[a] || {}).closed = true; winOf(a).classList.add("gone"); },
+  trash() { if (frontApp() !== "finder") return; const f = FILES.list[FILES.sel]; if (!f || f.gone) return; f.gone = true; renderFiles(); $("#trash").classList.add("full"); FILES.sel = FILES.list.findIndex(x => !x.gone); setTimeout(renderFiles, 450); },
+  lineStart() { const d = DOC; const line = d.sel ? d.sel.line : d.caret ? d.caret.line : 0; d.sel = null; d.pasted = null; d.caret = { line, pos: 0 }; renderDoc(); },
+  forceQuit() { flash("ovFq", 2600); },
+  shot() { flash("ovShot", 1400); },
+  emoji() { flash("ovEmoji", 2600); },
+  ime() { S.ime = S.ime === "拼" ? "A" : "拼"; $("#ime").textContent = S.ime; },
+  home() { openHome(); },
+  fill() { const el = winOf(); el.classList.remove("shaded", "full", "lhalf"); el.classList.add("fill"); desk.classList.remove("fullscreen"); },
+  spot() { flash("ovSpot", 2600); },
+  lhalf() { const el = winOf(); el.classList.remove("shaded", "full", "fill"); el.classList.add("lhalf"); },
+  top() { $("#page").scrollTo({ top: 0, behavior: reduced() ? "auto" : "smooth" }); },
+  menu() { openMenu(); },
+};
+function pushHist() { DOC.history.push({ lines: DOC.lines.slice() }); }
+function setClip(t) { S.clip = t; $("#clipb").textContent = "剪贴板：" + t; }
+function openMenu() { const m = $('#menus .m[data-menu="0"]'); if (m) m.classList.add("open"); flash("ovMenu", 2400); setTimeout(() => { const n = $('#menus .m[data-menu="0"]'); if (n) n.classList.remove("open"); }, 2400); }
+let homeAt = 0, homeIconClicked = false, homeSrc = "";
+function openHome(src) { homeAt = now(); homeIconClicked = false; homeSrc = src || ""; ov("ovHome").classList.add("on"); }
+function closeHome() { if (!ov("ovHome").classList.contains("on")) return; ov("ovHome").classList.remove("on"); onHomeClosed(now() - homeAt, homeIconClicked, homeSrc); }
+/* 他自己点刘海回到主屏幕：一次就记成会了，回到主屏幕那几条一起不再说 */
+function homeByNotch() {
+  openHome("notch");
+  const r = ["i2", "i5", "i6"].map(k => R[k]).find(x => enabled(x) && !learned(x));
+  if (r) learn(r, "你自己点刘海回到了主屏幕");
+  else log("ok", "<b>点一下刘海</b>：回到主屏幕，刘海不出声");
+}
+
+/* ── 证据记录 ── */
+function log(k, html, ms) {
+  const ol = $("#log"); const empty = ol.querySelector(".empty"); if (empty) empty.remove();
+  const li = document.createElement("li"); li.dataset.k = k;
+  li.innerHTML = `<span class="d"></span><span class="w">${html}${ms ? '<div class="bar"><i></i></div>' : ""}</span>`;
+  ol.prepend(li);
+  while (ol.children.length > 6) ol.lastChild.remove();
+  if (ms) { const i = li.querySelector(".bar i"); i.style.setProperty("--bar-ms", ms + "ms"); requestAnimationFrame(() => requestAnimationFrame(() => { i.style.transform = "scaleX(0)"; })); }
+}
+const ORIGIN_NAME = { win: "Windows", ipad: "iPad", mac: "一直用 Mac", none: "没答" };
+function ctx() { const app = frontApp(); return { app, text: app === "edit", list: app === "finder", browser: app === "safari" }; }
+function enabled(r) {
+  if (S.origin === "win") return r.from === "win";
+  if (S.origin === "ipad") return r.from === "ipad";
+  if (S.origin === "none") return r.from === "win" && !!r.any;
+  return false;
+}
+const learned = r => S.learned.has(r.id) || (r.grp && S.learned.has("grp:" + r.grp));
+const familyQuiet = () => S.cmdUsed.size >= 3;
+function gate(r, guess) {
+  if (S.term) return "前台是终端，一句不说";
+  if (!enabled(r)) {
+    if (S.origin === "mac") return "一直用 Mac：旧习惯提示全关";
+    if (S.origin === "none") { if (guess) setTimeout(() => noteGuess(r.from), 0); return "没答来处：这条可能误报，先不开"; }
+    if (S.origin === "ipad") return "选了 iPad：Windows 那一半不开，iPad 外接键盘的按法和 Mac 一样";
+    return "选了 Windows：iPad 那一半不开";
+  }
+  if (learned(r)) return "你已经会了，这条不再说";
+  if (r.fam && familyQuiet()) return "你已经用过 3 个不同的 ⌘ 快捷键，⌃ 这一家不再说";
+  if ((S.shown[r.id] || 0) >= MAX_SHOWS) return "这条说满 3 次了";
+  return null;
+}
+function coolLeft() { return COOLDOWN - (now() - S.lastShownAt); }
+function noteGuess(from) {
+  if (S.asked[from]) return;
+  S.guess[from]++;
+  if (S.guess[from] < 2) { log("wait", `这是 ${ORIGIN_NAME[from]} 的习惯（第 1 次）。再来一次，刘海问你之前用的是什么`); return; }
+  if (current || coolLeft() > 0) { log("off", "想问你之前用的是什么，但离上一条不到 10 秒，先不问"); return; }
+  S.asked[from] = true; S.lastShownAt = now();
+  const name = ORIGIN_NAME[from];
+  openIsland("say", { tone: "tip", title: `之前常用 ${name}？`, sub: `点一下，以后照 ${name} 的习惯提醒你`,
+    onClick: () => setOrigin(from, true), onClose: () => log("off", "不问了：来处还是“没答”") });
+  log("say", `猜你从 ${name} 来：刘海先问一句，你点了才开那边的规则`);
+}
+/* ⌘W 那两条用前台 App 菜单里 ⌘W 那一项的标题 */
+function titleOf(r) { const t = (r.id === "cW" || r.id === "a4") && CMD_W_TITLE[ctx().app]; return t ? `${t}按 ⌘W` : r.main; }
+/* 访达没有“退出”，前台是访达时不提 ⌘Q */
+function subOf(r) { return (r.id === "cW" || r.id === "a4") && ctx().app === "finder" ? "" : r.sub; }
+/* 点提示替他做的那一下；第二次说起，副句换成这一句 */
+function tapOf(r) { const k = r.tap || (r.demo.type === "keys" ? r.mac : ""); return k ? `点一下，替你按 ${k}` : "点一下，替你做一次"; }
+function speak(r, pre) {
+  if (current || coolLeft() > 0) { log("off", `<b>${r.key}</b>：本该开口，但离上一条不到 10 秒（真机是 5 分钟），这次不说`); return; }
+  S.shown[r.id] = (S.shown[r.id] || 0) + 1; S.lastShownAt = now();
+  const title = titleOf(r), sub = S.shown[r.id] >= 2 ? tapOf(r) : subOf(r);
+  openIsland("teach", { title, sub, tap: tapOf(r), demo: r.demo, tone: "tip",
+    onClick: () => { ACTS[r.act](); learn(r, "点了提示，替你做了一次"); },
+    onClose: () => log("off", `<b>${r.key}</b>：关掉了。这条还会再说，最多 3 次`) });
+  log("say", `${pre ? esc(pre) + "。" : ""}开口：<b>${esc(title)}</b>${sub ? "　" + esc(sub) : ""}`);
+  renderRules();
+}
+function learn(r, how) {
+  if (learned(r)) return;
+  S.learned.add(r.id); if (r.grp) S.learned.add("grp:" + r.grp);
+  log("ok", `<b>${r.key}</b>：${how}，记成会了${r.grp ? "（回到主屏幕那几条一起）" : ""}`);
+  renderRules();
+}
+function needSecond(r, ms, why, label) {
+  const k = "r:" + r.id, p = S.pend[k];
+  if (p && now() - p.t <= ms) { delete S.pend[k]; return true; }
+  S.pend[k] = { t: now() };
+  log("wait", `<b>${label || r.key}</b> · ${APP[ctx().app]}：${why}。要 ${ms / 1000} 秒内再来一次才说`, ms);
+  return false;
+}
+/* 按键：先过公共门，再看这条自己的条件，等 0.8 秒宽限（W），再做事后检查（P） */
+const noSel = c => (c.text && !DOC.sel) || (c.list && (FILES.sel < 0 || FILES.list[FILES.sel].gone));
+const COND = {
+  cC: c => noSel(c) ? { no: "没有选中内容" } : c.browser ? { second: 4000, why: "网页可能自己处理 ⌃C" } : { why: "菜单里有 ⌘C，没有 ⌃C" },
+  cX: c => c.list ? { no: "访达里的文件剪切不了，菜单里 ⌘X 是灰的" } : c.browser || noSel(c) ? { no: "没有选中内容" } : { why: "有选中内容，菜单里有 ⌘X" },
+  cV: c => !c.text ? { no: "焦点不在文字里" } : (S.shown.cC || S.shown.cX) ? { no: "⌃C 那条已经说过“把 ⌃ 换成 ⌘”，⌃V 不再单说" }
+    : now() - S.lastFailCopy > 60000 ? { no: "没有前因：60 秒内没按过没生效的 ⌃C、⌃X" } : { why: "60 秒内按过一次没生效的 ⌃C" },
+  cZ: c => c.text ? { why: "焦点在文字里，菜单里有 ⌘Z，没有 ⌃Z" } : { no: c.browser ? "网页正文不是文字框" : "焦点不在文字里" },
+  cS: c => c.browser ? { no: "第一批先不在浏览器里做" } : c.list ? { no: "访达的菜单里没有 ⌘S" } : { why: "菜单里有 ⌘S，没有 ⌃S" },
+  cW: c => c.text ? { no: "焦点在文字里，⌃W 在这里另有用处" } : c.browser ? { second: 4000, why: "焦点在网页正文上，网页可能自己处理 ⌃W" } : { why: "焦点在文件列表上，菜单里有 ⌘W" },
+  del: c => !c.list ? { no: c.text ? "在文字里退格就是删字，不算卡住" : "不在访达里" } : (FILES.sel < 0 || FILES.list[FILES.sel].gone) ? { no: "没有选中的文件" }
+    : now() - lastLetterAt < 1000 ? { no: "前 1 秒按过字母，像是在按名字找文件" } : { why: "焦点在文件列表上，有选中项" },
+  home: c => c.text ? { why: "焦点在文字里，按之前 1 秒没按 fn" } : { no: "焦点不在文字里" },
+  fq: () => ({ why: "这个组合在 Mac 上没有用处" }),
+  fq2: c => c.text ? { no: "焦点在文字里，⌃⌥⌫ 不算" } : { why: "焦点不在文字里" },
+  a4: () => ({ why: "菜单里没有 ⌥F4，它在 Mac 上没有用处" }),
+  prt: () => ({ why: "假定接着 PC 键盘，F13 没被别的占用" }),
+  sh: () => S.ime !== "拼" ? { no: "输入法不是拼音" } : { second: 20000, why: "单按了一下 ⇧，前后没打字" },
+  an: c => c.text ? { why: "按住 ⌥ 打了 4 个小键盘数字，松开后多了 4 个数字" } : { no: "焦点不在文字里" },
+};
+const KEY_RULE = { ctrlC:"cC", ctrlV:"cV", ctrlX:"cX", ctrlZ:"cZ", ctrlS:"cS", ctrlW:"cW", del:"del", home:"home",
+  ctrlShiftEsc:"fq", ctrlAltDel:"fq", altF4:"a4", prt:"prt", shift:"sh", altNum:"an" };
+const KEY_LABEL = { ctrlAltDel: "⌃⌥⌫" };
+function foreignKey(id) {
+  const r = R[KEY_RULE[id]], label = KEY_LABEL[id] || r.key, c = ctx();
+  if (!S.term && (id === "ctrlC" || id === "ctrlX")) { S.lastFailCopy = now(); if (c.browser && id === "ctrlC") S.lastCtrlCWeb = now(); }
+  if (id === "ctrlV" && c.browser && S.pend["r:cC"] && now() - S.lastCtrlCWeb < 60000 && !gate(R.cC)) {
+    delete S.pend["r:cC"]; return waitGrace(R.cC, "⌃C 没生效，60 秒内又按 ⌃V：算作第二次");
+  }
+  const g = gate(r, true);
+  if (g) return log("off", `<b>${label}</b> · ${APP[c.app]}：${g}`);
+  const res = COND[id === "ctrlAltDel" ? "fq2" : r.id](c);
+  if (res.no) return log("off", `<b>${label}</b> · ${APP[c.app]}：${res.no}`);
+  if (res.second) { if (!needSecond(r, res.second, res.why, label)) return; res.why = `${res.second / 1000} 秒内第二次`; }
+  waitGrace(r, `<b>${label}</b> · ${APP[c.app]}：${res.why}`);
+}
+function waitGrace(r, why) {
+  const k = "w:" + r.id; clearTimeout(S.pend[k]); clearTimeout(S.pend["p:" + r.id]); delete S.pend["p:" + r.id];
+  log("wait", `${why}。等 0.8 秒，看你会不会自己按 ${r.mac}`, 800);
+  S.pend[k] = setTimeout(() => {
+    delete S.pend[k];
+    const pms = r.id === "home" ? 120 : r.id === "sh" ? 200 : 300;
+    S.pend["p:" + r.id] = setTimeout(() => { delete S.pend["p:" + r.id]; if (!gate(r)) speak(r, r.p); }, pms);
+  }, 800);
+}
+/* Mac 的做法：桌面照常做事，刘海不出声；对应的那条记成会了 */
+const MAC_ACT = { cmdC:"copy", cmdV:"paste", cmdX:"cut", cmdZ:"undo", cmdS:"save", cmdW:"close", cmdDel:"trash", cmdLeft:"lineStart",
+  optCmdEsc:"forceQuit", shiftCmd4:"shot", ctrlCmdSpace:"emoji", capsLock:"ime", cmdSpace:"spot", globeCtrlLeft:"lhalf", cmdUp:"top", flickDown:"fill", menuClick:"menu" };
+const MAC_LABEL = { cmdC:"⌘C", cmdV:"⌘V", cmdX:"⌘X", cmdZ:"⌘Z", cmdS:"⌘S", cmdW:"⌘W", cmdDel:"⌘⌫", cmdLeft:"⌘←", optCmdEsc:"⌥⌘esc", shiftCmd4:"⇧⌘4",
+  ctrlCmdSpace:"⌃⌘空格", capsLock:"Caps Lock", cmdSpace:"⌘空格", globeCtrlLeft:"🌐⌃←", cmdUp:"⌘↑", flickDown:"往下甩标题栏", menuClick:"点菜单栏" };
+function macWay(id) {
+  if (id === "notchHome") return homeByNotch();
+  if (id === "cmdX" && frontApp() === "finder") return log("ok", "<b>⌘X</b>：访达里的文件剪切不了，菜单里这一项是灰的。要移动文件，先 ⌘C，再按 ⌥⌘V");
+  if (id === "cmdTab") { const order = ["edit", "finder", "safari"]; setFront(order[(order.indexOf(S.front) + 1) % 3]); return log("ok", "<b>⌘Tab</b>：照常切换 App，刘海不出声"); }
+  if (!S.term && MAC_ACT[id]) ACTS[MAC_ACT[id]]();
+  if (id === "cmdC" || id === "cmdX") S.lastFailCopy = -Infinity;
+  if (id === "menuClick") { clearTimeout(S.pend.i22); delete S.pend.i22; }
+  let any = false;
+  for (const rid of MAC_KEYS[id] || []) {
+    const r = R[rid], k = "w:" + rid, pk = "p:" + rid;
+    if (S.pend[k] || S.pend[pk]) { clearTimeout(S.pend[k]); clearTimeout(S.pend[pk]); delete S.pend[k]; delete S.pend[pk]; S.learned.add(rid); log("ok", `<b>${r.key}</b>：还没开口，你就自己按了 ${r.mac}，不说，记成会了`); any = true; renderRules(); continue; }
+    if (enabled(r) && !learned(r) && !S.term) { learn(r, `你自己用了 ${MAC_LABEL[id]}`); any = true; }
+  }
+  if (CMD_FAMILY.includes(id) && !S.cmdUsed.has(id)) {
+    S.cmdUsed.add(id);
+    if (S.cmdUsed.size === 3 && S.origin !== "mac") log("ok", "用过 3 个不同的 ⌘ 快捷键了：⌃ 这一家不再说");
+  }
+  if (!any) log("ok", `<b>${MAC_LABEL[id]}</b>：${S.term ? "终端里照常" : "照常好用"}，刘海不出声`);
+  renderRules();
+}
+
+/* ── iPad 的习惯：网页收不到的手势，用按钮代替 ── */
+let lastLetterAt = -Infinity;
+function afterShade(r, label) {
+  const g = gate(r, true);
+  if (g) return log("off", `<b>${label}</b>：收起又展开。${g}`);
+  if (S.shadeCount > 3) return log("off", `<b>${label}</b>：已经收起过 3 次以上，不像是卡住`);
+  S.pend.enl = { id: r.id, t: now() };
+  log("wait", `<b>${label}</b>：收起又马上展开。还要：10 秒内试着放大它（点绿色按钮、拖边角）`, 10000);
+}
+function tryEnlarge(how, normal) {
+  const p = S.pend.enl;
+  if (p && now() - p.t < 10000) { delete S.pend.enl; const r = R[p.id]; if (!gate(r)) return speak(r, `10 秒内又${how}想放大`); return; }
+  log("ok", normal);
+}
+function countTop(how) {
+  const g = gate(R.i18, true);
+  if (g) return log("off", `<b>点刘海想回顶部</b>：${g}`);
+  S.i18n = (S.i18n || 0) + 1;
+  if (S.i18n >= 2) { S.i18n = 0; return speak(R.i18, "第二次：页面中间点刘海，没点图标就关，接着往上大幅滚动"); }
+  log("wait", `<b>点刘海想回顶部</b>：主屏幕开了又关，接着${how}。出现两次才说（1/2）`);
+}
+function hideFront() {
+  let a = frontApp();
+  if (a === "term") setTerm(false, true), a = S.front;
+  (S.win[a] = S.win[a] || {}).hidden = true; WIN[a].classList.add("hidden");
+  const next = S.order.slice().reverse().find(k => k !== a && k !== "term" && !(S.win[k] || {}).hidden && !(S.win[k] || {}).closed) || "finder";
+  S.front = next; if ((S.win[next] || {}).hidden) { S.win[next].hidden = false; WIN[next].classList.remove("hidden"); }
+  layoutWindows();
+  return a;
+}
+function scenario(id) {
+  switch (id) {
+    case "three": {
+      desk.classList.add("mc"); setTimeout(() => desk.classList.remove("mc"), 1200);
+      const r = R.i2, g = gate(r, true);
+      if (g) return log("off", `<b>三指上滑</b>：打开了调度中心。${g}`);
+      const p = S.pend.i2;
+      if (p && now() - p.t < 10000) { delete S.pend.i2; return speak(r, "10 秒内又滑了一次"); }
+      S.pend.i2 = { t: now() };
+      return log("wait", "<b>三指上滑</b>：调度中心开了，1.2 秒就关掉，前面的窗口没变。还要：关掉后 8 秒内去 Dock 找 App、停到刘海上，或 10 秒内再滑一次", 9200);
+    }
+    case "globeH": {
+      const on = desk.classList.toggle("showdesk"), r = R.i5;
+      if (on) { S.i5on = now(); const g = gate(r, true); return log(g ? "off" : "wait", `<b>🌐H</b>：显示桌面了。${g || "3 秒内又叫回来才算"}`, g ? 0 : 3000); }
+      const g = gate(r);
+      if (g) return log("off", `<b>🌐H</b>：窗口回来了。${g}`);
+      if (now() - S.i5on > 3000) return log("off", "<b>🌐H</b>：隔了 3 秒以上才叫回来，像是有意看桌面");
+      S.pend.i5 = { t: now() };
+      return log("wait", `<b>🌐H</b>：瞄了一眼又叫回来。还要：10 秒内从 Dock 开别的 App（第 ${(S.i5n || 0) + 1}/2 次）`, 10000);
+    }
+    case "cmdH": {
+      const a = hideFront(), r = R.i6, g = gate(r, true);
+      if (g) return log("off", `<b>⌘H</b>：${APP[a]}藏起来了。${g}`);
+      const p = S.pend.i6;
+      if (p && now() - p.t <= 3000 && p.app !== a) { delete S.pend.i6; return speak(r, "3 秒内藏了两个不同的 App"); }
+      S.pend.i6 = { t: now(), app: a };
+      return log("wait", `<b>⌘H</b>：${APP[a]}藏起来了。还要：8 秒内没做别的就把它找回来，或 3 秒内再藏一个`, 8000);
+    }
+    case "dblShade": case "flickUp": {
+      const el = winOf(); if (!el || el.classList.contains("gone")) return;
+      el.classList.remove("fill", "lhalf", "full"); el.classList.add("shaded"); setTimeout(() => el.classList.remove("shaded"), 700);
+      S.shadeCount++;
+      return afterShade(R[id === "dblShade" ? "i7" : "i11"], id === "dblShade" ? "双击标题栏" : "往上甩标题栏");
+    }
+    case "dragCorner": return tryEnlarge("拖边角", "<b>拖边角</b>：照常改大小，刘海不出声");
+    case "dockDrag": {
+      const b = $('#dock [data-app="set"]');
+      if (b.classList.contains("pulled")) return log("off", "<b>从 Dock 拖出图标</b>：Dock 上已经没有“系统设置”了");
+      b.classList.add("pulled");
+      const r = R.i17, g = gate(r, true);
+      if (g) return log("off", `<b>从 Dock 拖出图标</b>：“系统设置”从 Dock 拿掉了。${g}`);
+      return speak(r, "在屏幕正中松手，图标真的从 Dock 拿掉了");
+    }
+    case "twoDown": {
+      const r = R.i14, g = gate(r, true);
+      if (g) return log("off", `<b>桌面上两指下滑</b>：${g}`);
+      if (needSecond(r, 10000, "没反应", "桌面上两指下滑")) speak(r, "10 秒内第二次");
+      return;
+    }
+    case "notchTop": {
+      if (frontApp() !== "safari") return log("off", "<b>页面中间点刘海</b>：前台不是浏览器，打开主屏幕就是想要的，不算卡住");
+      const pg = $("#page");
+      if (pg.scrollTop < 40) return log("off", "<b>页面中间点刘海</b>：页面已经在顶上了");
+      openHome("sim");
+      S.pend["t:notchTop"] = setTimeout(() => { delete S.pend["t:notchTop"]; closeHome(); pg.scrollBy({ top: -Math.min(180, pg.scrollTop - 10), behavior: reduced() ? "auto" : "smooth" }); countTop("往上滚了一大段"); }, 700);
+      return;
+    }
+    case "globeM": {
+      const r = R.i22, g = gate(r, true);
+      if (g) return log("off", `<b>🌐M</b>：没反应。${g}`);
+      clearTimeout(S.pend.i22);
+      S.pend.i22 = setTimeout(() => { delete S.pend.i22; if (!gate(r)) speak(r, "3 秒内没有菜单打开"); }, 3000);
+      return log("wait", "<b>🌐M</b>：没反应。看 3 秒内有没有菜单打开", 3000);
+    }
+    case "altTab":
+      flash("ovSwt", 1100);
+      return log("ok", "<b>⌥Tab</b>：按窗口切换照常好用，刘海不出声。只有把它改成别的键时，才教 ⌘Tab、⌘`");
+  }
+}
+/* 只用来判断“点刘海想回顶部”：Safari 页面在中间，1.5 秒内没点图标就关 */
+function onHomeClosed(dur, icon, src) {
+  if (src !== "notch" || icon || dur >= 1500) return;
+  const pg = $("#page");
+  if (frontApp() === "safari" && pg.scrollTop > 40) {
+    S.pend.i18 = { t: now(), top: pg.scrollTop };
+    log("wait", "<b>点刘海</b>：主屏幕开了又马上关。看 5 秒内你会不会往上大幅滚动", 5000);
+  }
+}
+function dispatch(id) {
+  if (KEY_RULE[id]) return foreignKey(id);
+  if (MAC_ACT[id] || id === "notchHome" || id === "cmdTab") return macWay(id);
+  scenario(id);
+}
+function pulseChip(id) { const c = $(`.chip[data-id="${id}"]`); if (!c) return; c.dataset.lit = ""; setTimeout(() => delete c.dataset.lit, 400); }
+function closeAll() { closeHome(); ["ovSpot", "ovFq", "ovMenu", "ovEmoji", "ovShot", "ovSwt"].forEach(unflash); desk.classList.remove("showdesk", "mc"); }
+
+/* ── 键盘：只在桌面有焦点时接，接到的才拦下 ── */
+let shiftClean = false, altDigits = 0;
+desk.addEventListener("keydown", e => {
+  if (e.target.closest(".island") && (e.key === "Enter" || e.key === " ")) return;
+  const c = e.ctrlKey, m = e.metaKey, a = e.altKey, s = e.shiftKey, key = e.key, code = e.code || "";
+  if (key === "Shift") { shiftClean = !c && !m && !a; return; }
+  shiftClean = false;
+  if (key === "Control" || key === "Alt" || key === "Meta") return;
+  if (key === "CapsLock") { dispatch("capsLock"); return; }
+  if (e.repeat) return;
+  const L = code.startsWith("Key") ? code.slice(3) : (!code && /^[a-z]$/i.test(key) ? key.toUpperCase() : null);
+  let id = null;
+  if (c && !m && !a && !s && L) id = { C: "ctrlC", V: "ctrlV", X: "ctrlX", Z: "ctrlZ", S: "ctrlS", W: "ctrlW" }[L] || null;
+  else if (m && !c && !a && !s) {
+    if (L) id = { C: "cmdC", V: "cmdV", X: "cmdX", Z: "cmdZ", S: "cmdS" }[L] || null;
+    else if (key === "Backspace") id = "cmdDel";
+    else if (key === "ArrowLeft" || key === "ArrowRight") id = "cmdLeft";
+    else if (key === "ArrowUp") id = "cmdUp";
+  }
+  else if (c && s && !m && !a && key === "Escape") id = "ctrlShiftEsc";
+  else if (c && a && !m && (key === "Backspace" || key === "Delete")) id = "ctrlAltDel";
+  else if (a && !c && !m && key === "F4") id = "altF4";
+  else if (a && !c && !m && key === "Tab") id = "altTab";
+  else if (a && !c && !m && /^Numpad\d$/.test(code)) { altDigits++; e.preventDefault(); return; }
+  else if (!c && !m && !a) {
+    if ((key === "Backspace" || key === "Delete") && !s) id = "del";
+    else if (key === "Home" || key === "End") id = "home";
+    else if (key === "PrintScreen" || key === "F13") id = "prt";
+    else if (key === "Escape") { closeAll(); closeIsland("x"); e.preventDefault(); return; }
+    else if (!s && /^[a-z]$/i.test(key)) lastLetterAt = now();
+  }
+  if (id) { e.preventDefault(); dispatch(id); pulseChip(id); }
+});
+desk.addEventListener("keyup", e => {
+  if (e.key === "Shift" && shiftClean) { shiftClean = false; dispatch("shift"); pulseChip("shift"); }
+  if (e.key === "Alt" && altDigits) { const n = altDigits; altDigits = 0; if (n >= 2) dispatch("altNum"); }
+});
+
+/* ── 桌面上的点按 ── */
+$("#notch").addEventListener("click", e => { e.stopPropagation(); homeByNotch(); });
+$("#notch").addEventListener("pointerenter", () => {
+  const p = S.pend.i2;
+  if (p && now() - p.t < 9200) { delete S.pend.i2; if (!gate(R.i2)) speak(R.i2, "调度中心关掉后，停到了刘海上"); }
+});
+$("#ovHome").addEventListener("click", e => { if (e.target.closest("button")) homeIconClicked = true; closeHome(); });
+$("#menus").addEventListener("click", e => { if (e.target.closest(".m")) macWay("menuClick"); });
+$("#page").addEventListener("scroll", () => {
+  const p = S.pend.i18, pg = $("#page");
+  if (p && now() - p.t < 5000 && p.top - pg.scrollTop >= 150) { delete S.pend.i18; countTop("往上大幅滚动"); }
+}, { passive: true });
+["ovSpot", "ovFq", "ovEmoji", "ovShot"].forEach(id => ov(id).addEventListener("click", () => unflash(id)));
+$("#dock").addEventListener("click", e => {
+  const b = e.target.closest("button[data-app]"); if (!b) return;
+  const app = b.dataset.app;
+  if (S.pend.i2 && now() - S.pend.i2.t < 9200) { delete S.pend.i2; if (!gate(R.i2)) speak(R.i2, "调度中心关掉后，8 秒内去 Dock 找 App"); }
+  else if (S.pend.i5 && now() - S.pend.i5.t < 10000 && app !== "trash") {
+    delete S.pend.i5; S.i5n = (S.i5n || 0) + 1;
+    if (S.i5n >= 2) { S.i5n = 0; if (!gate(R.i5)) speak(R.i5, "第二次：瞄一眼桌面又叫回来，接着去 Dock 开 App；选 iPad 不到 30 天"); }
+    else log("wait", "<b>🌐H</b>：接着去 Dock 开了 App，记下第 1 次。出现两次才说");
+  }
+  else if (S.pend.i6) { const p = S.pend.i6; delete S.pend.i6; if (app === p.app && now() - p.t < 8000 && !gate(R.i6)) speak(R.i6, "8 秒内没做别的，又把它找回来"); }
+  if (["edit", "finder", "safari", "term"].includes(app)) { desk.classList.remove("showdesk"); setFront(app); }
+});
+Object.values(WIN).forEach(el => {
+  el.addEventListener("mousedown", e => { if (!e.target.closest("[data-green]") && el.dataset.app !== frontApp()) setFront(el.dataset.app); });
+  el.querySelector(".title").addEventListener("dblclick", e => {
+    if (e.target.closest(".lights") || el.dataset.app !== frontApp()) return;
+    if (!el.classList.contains("shaded")) {
+      el.classList.remove("fill", "lhalf", "full"); el.classList.add("shaded"); S.shadeCount++; S.shadeAt = now();
+      clearTimeout(S.shadeTimer);
+      S.shadeTimer = setTimeout(() => {
+        if (!el.classList.contains("shaded")) return;
+        const rs = ["i7", "i11"].map(k => R[k]).filter(r => enabled(r) && !learned(r));
+        if (rs.length) { rs.forEach(r => S.learned.add(r.id)); log("ok", "收起后停了 10 秒：会用收起窗口了，双击、往上甩这两条不再说"); renderRules(); }
+      }, 10000);
+      log("ok", "<b>双击标题栏</b>：收起窗口，只留卷帘条");
+    } else {
+      el.classList.remove("shaded"); clearTimeout(S.shadeTimer);
+      if (now() - S.shadeAt <= 3000) afterShade(R.i7, "双击标题栏");
+      else log("ok", "<b>双击卷帘条</b>：展开窗口");
+    }
+  });
+  el.querySelector("[data-green]").addEventListener("click", e => {
+    e.stopPropagation();
+    if (el.dataset.app !== frontApp()) setFront(el.dataset.app);
+    const entering = !el.classList.contains("full");
+    el.classList.remove("shaded", "fill", "lhalf"); el.classList.toggle("full", entering);
+    if (entering) tryEnlarge("点了绿色按钮", "<b>绿色按钮</b>：进入全屏，App 进了单独的空间。再点一下回来");
+    else log("ok", "<b>绿色按钮</b>：退出全屏");
+  });
+});
+
+/* ── 侧栏、按钮、初始化 ── */
+const NOTES = {
+  win: "第一批 13 条；标“真机待确认”的两条要先上真机量过。第二批 17 条（⌃A、Win+D……）等真机验证后再开。⌥Tab 是按窗口切换，照常好用。",
+  ipad: "第一批 6 条，加上“点顶边正中”；标“等探针”的两条要真机确认拿得到信号。另有 13 条（三指横滑、⇧⌘4、按住等菜单……）没放进小样。",
+  none: "没答来处：只开不会误报的 6 条。按了别的系统的习惯两次，刘海先问一句你之前用的是什么，你点了才开。",
+  mac: "一直用 Mac：旧习惯提示全关。",
+};
+function renderRules() {
+  const list = RULES.filter(enabled);
+  $("#rulesTitle").textContent = list.length ? `现在开着的规则 · ${list.length} 条` : "现在开着的规则";
+  $("#rules").innerHTML = list.map(r => {
+    const n = S.shown[r.id] || 0;
+    const [cls, label] = learned(r) ? ["ok", "会了"] : (r.fam && familyQuiet()) ? ["ok", "会了"] : n >= MAX_SHOWS ? ["max", "说满了"] : n ? ["said", `说过 ${n}/3`] : ["", "开着"];
+    return `<li><span class="o">${esc(r.key)} ${esc(r.name)} → ${esc(r.mac)}<small>${esc(r.hint)}${r.probe ? " · " + r.probe : ""}</small></span><span class="st ${cls}">${label}</span></li>`;
+  }).join("");
+  $("#rulesNote").textContent = (S.term ? "前台是终端：这些规则现在都不说。" : "") + NOTES[S.origin];
+}
+const CHIPS = [
+  ["Windows 的习惯", [["ctrlC","⌃C","复制"],["ctrlV","⌃V","粘贴"],["ctrlX","⌃X","剪切"],["ctrlZ","⌃Z","撤销"],["ctrlS","⌃S","保存"],["ctrlW","⌃W","关标签页"],["del","Delete","删文件"],["home","Home","到行首"],["ctrlShiftEsc","⌃⇧esc","任务管理器"],["ctrlAltDel","⌃⌥⌫",""],["altF4","⌥F4","关窗"],["prt","PrtSc","截屏"],["shift","单按 ⇧","切中英文"],["altNum","⌥+0169","打符号"],["altTab","⌥Tab","切窗口"]]],
+  ["iPad 的习惯", [["three","三指上滑",""],["globeH","🌐H",""],["cmdH","⌘H",""],["globeM","🌐M",""],["dblShade","双击标题栏","收起又马上展开"],["flickUp","往上甩标题栏","又撤回"],["dragCorner","拖边角","想放大"],["dockDrag","从 Dock 拖出图标",""],["twoDown","桌面上两指下滑",""],["notchTop","页面中间点刘海","想回顶部"]]],
+  ["Mac 的做法", [["cmdC","⌘C"],["cmdV","⌘V"],["cmdX","⌘X"],["cmdZ","⌘Z"],["cmdS","⌘S"],["cmdW","⌘W"],["cmdDel","⌘⌫"],["cmdLeft","⌘←"],["optCmdEsc","⌥⌘esc"],["shiftCmd4","⇧⌘4"],["ctrlCmdSpace","⌃⌘空格"],["capsLock","轻按 Caps Lock"],["notchHome","点一下刘海"],["flickDown","往下甩标题栏"],["cmdSpace","⌘空格"],["globeCtrlLeft","🌐⌃←"],["cmdUp","⌘↑"],["menuClick","点菜单栏"],["cmdTab","⌘Tab"]], true],
+];
+$("#chips").innerHTML = `<p class="small" style="margin:0">点 Dock 换前台 App，文本编辑、访达、Safari 的规矩不一样。能按的键直接在桌面上按；按不出来的，点下面的按钮。</p>` +
+  CHIPS.map(([title, items, mac]) => `<div class="cg"><h3>${title}</h3>${items.map(([id, k, n]) => `<button type="button" class="chip${mac ? " mac" : ""}" data-id="${id}"><span class="k">${esc(k)}</span>${n ? `<span>${esc(n)}</span>` : ""}</button>`).join("")}</div>`).join("");
+$("#chips").addEventListener("click", e => { const b = e.target.closest(".chip"); if (b) dispatch(b.dataset.id); });
+function clearPend() { for (const v of Object.values(S.pend)) if (typeof v === "number") clearTimeout(v); S.pend = {}; }
+function setOrigin(o, fromAsk) {
+  S.origin = o; clearPend();
+  $$("#origin button").forEach(b => b.setAttribute("aria-pressed", String(b.dataset.o === o)));
+  log("ok", `之前常用：<b>${ORIGIN_NAME[o]}</b>${fromAsk ? "（在刘海上点的）" : ""}`);
+  renderRules();
+}
+$("#origin").addEventListener("click", e => { const b = e.target.closest("button[data-o]"); if (b && b.dataset.o !== S.origin) setOrigin(b.dataset.o); });
+$("#termSw").addEventListener("click", () => { setTerm(!S.term); renderRules(); });
+function midPage() { const pg = $("#page"); pg.scrollTop = Math.round((pg.scrollHeight - pg.clientHeight) * 0.6); }
+function reset() {
+  closeIsland(); closeAll(); clearPend();
+  Object.assign(S, { term: false, front: "edit", shown: {}, learned: new Set(), lastShownAt: -Infinity, cmdUsed: new Set(), asked: {},
+    guess: { win: 0, ipad: 0 }, lastFailCopy: -Infinity, lastCtrlCWeb: -Infinity, shadeCount: 0, win: {}, clip: "", ime: "拼", i5n: 0, i18n: 0,
+    order: ["term", "finder", "safari", "edit"] });
+  DOC = DOC0(); FILES = { list: FILES0.map(f => ({ name: f[0], k: f[1], gone: false })), sel: 1 };
+  Object.values(WIN).forEach(el => el.classList.remove("shaded", "fill", "lhalf", "full", "gone", "hidden"));
+  $$("#dock button").forEach(b => b.classList.remove("pulled", "full"));
+  $("#clipb").textContent = ""; $("#ime").textContent = "拼"; $("#termSw").setAttribute("aria-checked", "false");
+  renderDoc(); renderFiles(); layoutWindows(); midPage(); renderRules();
+  $("#log").innerHTML = '<li class="empty">按一下旧习惯的快捷键，或者点上面的按钮。</li>';
+}
+$("#reset").addEventListener("click", reset);
+setInterval(() => { const l = coolLeft(); $("#cool").textContent = l > 0 ? `${Math.ceil(l / 1000)} 秒后才能再说` : "现在可以说"; }, 250);
+S.order = ["term", "finder", "safari", "edit"];
+renderDoc(); renderFiles(); layoutWindows(); renderRules();
+requestAnimationFrame(midPage);
+/* 不是 Mac 时，⌃W、⌥F4、⌃⇧esc 会先被浏览器或系统接走（关掉标签页、窗口），只能点按钮 */
+if (!/mac/i.test((navigator.userAgentData && navigator.userAgentData.platform) || navigator.platform || "")) {
+  desk.classList.add("pc"); $("#keyhint").textContent = "⌃W、⌥F4、⌃⇧esc 请点下面的按钮";
+}
+})();
+</script>
+
+</body></html>

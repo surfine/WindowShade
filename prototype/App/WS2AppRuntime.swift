@@ -16,6 +16,7 @@ import Cocoa
     private weak var conductorSample: WS2ConductorView?
     private var deviceHost: WS2DeviceActionHost?
     private var conductorOwnsDeviceHost = false
+    private let silent = WS2SilentHost()
     private var sleeping=false
     private var quitBarrier=WS2QuitBarrier()
     private var quitToken:WS2QuitBarrier.Token?
@@ -42,6 +43,7 @@ import Cocoa
                 return .init(today:day(date),deadlineDay:day(date.addingTimeInterval(delta)))
             }, effects:{ [weak self] effects in self?.focusWindowEffects?(effects) })
         island = owner.notch.leases
+        silent.attach(runtime: self, owner: owner)
         focusPort = WS2FocusWindowPort(owner: owner)
         focusEffects = WS2FocusEffectExecutor(port: focusPort)
         // T3：窗口效果先走串行计划；端口未准入时只计时，不移动任何窗口。
@@ -79,7 +81,8 @@ import Cocoa
         owner.notch.activities.ws2FocusAction = { [weak self] action in
             guard let self else { return }
             switch action {
-            case .focusOpen, .open: self.open()
+            case .focusOpen: self.startFocus()
+            case .open: self.open()
             case .end: self.focus.handle(.end)
             case .focusSkip: self.focus.handle(.skip)
             case .focusTogglePause: self.focus.handle(self.focus.model.isPaused ? .resume : .pause)
@@ -223,6 +226,10 @@ import Cocoa
         view.sync()
         return true
     }
+    @discardableResult
+    func openSilent() -> Bool {
+        silent.open()
+    }
     private func attachConductorDevices(_ view: WS2ConductorPageView) {
         guard deviceHost == nil else { view.noteDevicesBusy(); return }
         conductorOwnsDeviceHost = true
@@ -254,18 +261,47 @@ import Cocoa
         view.renderDevices(host.devices)
     }
     var menuTitle: String { "番茄钟 · " + focus.model.compactText(at:clock.now()) }
-    func open() {
-        guard let owner,NotchController.isEnabled,NotchActivityController.isEnabled, AuthorizationService.shared.lockState() == .unlocked else { return }
+    /// 只把番茄钟摆出来。空闲时不开始计时。
+    func showFocusStatus() {
+        guard let owner, NotchController.isEnabled, NotchActivityController.isEnabled, AuthorizationService.shared.lockState() == .unlocked else { return }
         refreshFocusSettings()
-        let card = FocusTimerCard(host:focus)
-        guard island.show(card,ownerID:"pomodoro",onDismiss:{ [weak self] _ in
-            self?.focusCard = nil; self?.focus.presentation = .compact
+        if let card = focusCard {
+            focus.presentation = .expanded
+            card.render(focus.model, at: clock.now())
+            return
+        }
+        let card = FocusTimerCard(host: focus)
+        guard island.show(card, ownerID: "pomodoro", onDismiss: { [weak self] _ in
+            self?.focusCard = nil
+            self?.focus.presentation = .compact
         }) else { return }
-        focusCard = card; focus.presentation = .expanded
-        if focus.model.phase == .idle { focus.handle(.start) }
-        card.render(focus.model,at:clock.now())
-        // The explicit timer action starts once, only after a visible host has been acquired.
+        focusCard = card
+        focus.presentation = .expanded
+        card.render(focus.model, at: clock.now())
         owner.notch.activities.select("ws2.focus")
+    }
+    /// 先摆出番茄钟，空闲时才开始。已经在走就不重开。
+    func startFocus() {
+        showFocusStatus()
+        guard focusCard != nil, focus.model.phase == .idle else { return }
+        focus.handle(.start)
+        focusCard?.render(focus.model, at: clock.now())
+    }
+    func pauseFocus() {
+        guard NotchController.isEnabled, NotchActivityController.isEnabled,
+              AuthorizationService.shared.lockState() == .unlocked else { return }
+        guard focus.model.phase != .idle, !focus.model.isPaused else { return }
+        focus.handle(.pause)
+    }
+    func resumeFocus() {
+        guard NotchController.isEnabled, NotchActivityController.isEnabled,
+              AuthorizationService.shared.lockState() == .unlocked else { return }
+        guard focus.model.isPaused else { return }
+        focus.handle(.resume)
+    }
+    /// 看剩余时间。空闲时只展开卡片，不开始计时。开始走 `startFocus()`。
+    func open() {
+        showFocusStatus()
     }
     func refreshFocusSettings() {
         let preset = WS2FocusSettings.preset, tuck = WS2FocusSettings.tuckChat
@@ -370,6 +406,8 @@ import Cocoa
 }
 extension AppDelegate {
     @objc func ws2OpenOwned() { MainActor.assumeIsolated { ws2Runtime.openOwned() } }
-    @objc func ws2OpenFocus() { MainActor.assumeIsolated { ws2Runtime.open() } }
+    @objc func ws2OpenFocus() { MainActor.assumeIsolated { ws2Runtime.startFocus() } }
+    @objc func ws2ShowFocus() { MainActor.assumeIsolated { ws2Runtime.showFocusStatus() } }
+    @objc func ws2OpenSilent() { MainActor.assumeIsolated { _ = ws2Runtime.openSilent() } }
     @objc func ws2OpenConductor() { MainActor.assumeIsolated { _ = ws2Runtime.openConductor() } }
 }

@@ -14,7 +14,7 @@ const escape = (s) => s.replaceAll('&', '&amp;').replaceAll('"', '&quot;').repla
 await rm(dist, { recursive: true, force: true });
 await mkdir(dist, { recursive: true });
 await cp(path.join(root, 'public'), dist, { recursive: true });
-for (const name of ['style.css', 'app.js', 'teach.js', 'island.js', 'launchpad.js', 'launchpad.css', 'history.css', 'history.js', 'era.css']) await cp(path.join(root, name), path.join(dist, name));
+for (const name of ['style.css', 'motion.js', 'app.js', 'teach.js', 'island.js', 'launchpad.js', 'launchpad.css', 'history.css', 'history.js', 'era.css']) await cp(path.join(root, name), path.join(dist, name));
 const arrow = (d) => `<svg class="glyph" viewBox="0 0 16 16" aria-hidden="true"><path d="${{
   out: 'M5 11 11 5M6.5 5H11v4.5',
   down: 'M8 3.5v9M4 8.5l4 4 4-4',
@@ -50,7 +50,7 @@ function page(c) {
 <title>${c.title}</title>
 ${shareMeta({ origin, path: c.path, title: c.title, description: c.description, image: en ? '/media/og-en.jpg' : '/media/og.jpg', imageAlt: c.shareAlt, en })}
 <link rel="alternate" hreflang="zh-CN" href="${origin}/"><link rel="alternate" hreflang="en" href="${origin}/en/"><link rel="alternate" hreflang="x-default" href="${origin}/">
-<script src="/app.js" defer></script><script src="/teach.js" defer></script><script src="/island.js" defer></script><script src="/launchpad.js" defer></script><link rel="stylesheet" href="/launchpad.css"><link rel="stylesheet" href="/style.css"><link rel="stylesheet" href="/history.css"><link rel="stylesheet" href="/era.css">
+<script src="/motion.js" defer></script><script src="/app.js" defer></script><script src="/teach.js" defer></script><script src="/island.js" defer></script><script src="/launchpad.js" defer></script><link rel="stylesheet" href="/launchpad.css"><link rel="stylesheet" href="/style.css"><link rel="stylesheet" href="/history.css"><link rel="stylesheet" href="/era.css">
 </head>
 <body class="home">
 ${shareFallback}<a class="skip" href="#main">${c.skip}</a>

@@ -1,7 +1,7 @@
 import React from "react";
 import { AbsoluteFill, useCurrentFrame } from "remotion";
 import { OPENER } from "../timeline";
-import { C, FONT, easeInOut, easeOut, mix, tw } from "../theme";
+import { C, FONT, easeOut, mix, motion, tw } from "../theme";
 import { Canvas, Lamps, Lines, MacWindow, Rise, TypedText, tiltIn, useVertical } from "../ui";
 
 // Windows pile up until the words are buried; then black, and the one line that matters.
@@ -41,7 +41,7 @@ export const Opener: React.FC = () => {
   const cx = v ? 540 : 960;
   const cy = v ? 960 : 540;
   const black = frame >= OPENER.black;
-  const zoom = mix(1, 1.07, tw(frame, 40, OPENER.black, 0, 1, easeInOut));
+  const zoom = mix(1, 1.07, motion(frame, 40, "dolly"));
 
   if (!black) {
     return (
@@ -91,9 +91,9 @@ export const Opener: React.FC = () => {
   // Black half: the line, then the caret turns into the bar that opens the next scene.
   const m = OPENER.morph;
   const textOut = tw(frame, m - 10, m, 1, 0);
-  const dot = tw(frame, m, m + 14, 0, 1, easeInOut); // bar → dot
+  const dot = motion(frame, m, "settle"); // bar → dot
   const stretch = tw(frame, m + 14, m + 34, 0, 1, easeOut); // dot → pill
-  const open = tw(frame, m + 36, m + 60, 0, 1, easeInOut); // pill → screen
+  const open = motion(frame, m + 36, "expand"); // pill → screen
   const w = frame < m + 14 ? mix(8, 22, dot) : mix(22, v ? 900 : 980, stretch);
   const h = frame < m + 14 ? mix(120, 22, dot) : mix(22, 72, stretch);
   const W = mix(w, 2600, open);

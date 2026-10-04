@@ -32,14 +32,34 @@
   minimize:t('窗口去了底部。要回来，得先去那里找。','The window went to the bottom. To get it back, you have to look there.'),
   overview:t('两扇窗口都摆出来了，位置也变了。点参考资料的标题栏，恢复原样。','Both windows are laid out, in new places. Click the reference’s title bar to put things back.')
  };
- function arrange(mode) {
-  $('space-desk').dataset.mode = mode;
+ let stopMove = () => {};
+ const posed = mode => mode === 'minimize' || mode === 'overview';
+ function chrome(mode) {
   document.querySelectorAll('[data-arrange]').forEach(b => b.setAttribute('aria-pressed', String(b.dataset.arrange === mode)));
   $('space-content').setAttribute('aria-hidden', String(mode === 'shade' || mode === 'minimize'));
   $('space-bar').setAttribute('aria-expanded', String(mode !== 'shade' && mode !== 'minimize'));
   $('space-window').inert = mode === 'minimize';
   $('dock-target').hidden = mode !== 'minimize';
   $('space-result').textContent = spaceText[mode];
+ }
+ function arrange(mode) {
+  const desk = $('space-desk');
+  const content = $('space-content');
+  const prev = desk.dataset.mode || 'open';
+  stopMove();
+  if (content && window.WSMotion && (prev === 'shade') !== (mode === 'shade')) WSMotion.roll(content, mode === 'shade');
+  const token = mode === 'minimize' || prev === 'minimize' ? 'glide' : 'calm';
+  const setP = p => desk.style.setProperty('--p', String(p));
+  const commit = next => { desk.dataset.mode = next; chrome(next); };
+  if (!window.WSMotion || WSMotion.reduced() || prev === mode || (!posed(prev) && !posed(mode))) {
+   setP(1); commit(mode); return;
+  }
+  const arrive = () => {
+   if (!posed(mode)) { commit(mode); setP(1); return; }
+   setP(0); commit(mode); stopMove = WSMotion.play(token, setP);
+  };
+  if (posed(prev)) stopMove = WSMotion.play(token, p => setP(1 - p), arrive);
+  else { setP(0); commit(mode); stopMove = WSMotion.play(token, setP); }
  }
  document.querySelectorAll('[data-arrange]').forEach(b => b.addEventListener('click', () => arrange(b.dataset.arrange)));
  $('space-reset').addEventListener('click', () => arrange('open'));
@@ -68,6 +88,7 @@
  }
  function toggleGesture() {
   gestureFolded=!gestureFolded;
+  if (window.WSMotion) WSMotion.roll($('gesture-content'), gestureFolded);
   $('gesture-window').classList.toggle('folded',gestureFolded);
   $('gesture-bar').setAttribute('aria-expanded',String(!gestureFolded));
   $('gesture-content').setAttribute('aria-hidden',String(gestureFolded));
@@ -109,7 +130,9 @@
   platinumWindow.style.setProperty('--drag-y',`${Math.round(platinumY)}px`);
  }
  function togglePlatinum(){
-  platinumFolded=!platinumFolded;platinumWindow.classList.toggle('folded',platinumFolded);
+  platinumFolded=!platinumFolded;
+  if (window.WSMotion) WSMotion.roll($('platinum-content'), platinumFolded);
+  platinumWindow.classList.toggle('folded',platinumFolded);
   $('platinum-collapse').setAttribute('aria-expanded',String(!platinumFolded));
   $('platinum-content').setAttribute('aria-hidden',String(platinumFolded));
   platinumSay(t(platinumFolded?'只剩标题栏了。拖到别处，再双击或点方框展开。':'窗口在标题栏现在的位置展开了。',platinumFolded?'Only the title bar is left. Drag it somewhere else, then double-click it or click the box.':'The contents open where the title bar now is.'));
@@ -137,7 +160,7 @@
   const at=platinumOffset();placePlatinum(at.x+step[0],at.y+step[1]);platinumSay(movedText());
  });
  let stickyFolded=false;
- function toggleSticky(){stickyFolded=!stickyFolded;$('sticky-note').classList.toggle('folded',stickyFolded);$('sticky-bar').setAttribute('aria-expanded',String(!stickyFolded));$('sticky-content').setAttribute('aria-hidden',String(stickyFolded));$('sticky-toggle').textContent=t(stickyFolded?'展开这张便笺 ↕':'试着收起这张便笺 ↕',stickyFolded?'Expand this note ↕':'Collapse this note ↕');}
+ function toggleSticky(){stickyFolded=!stickyFolded;if (window.WSMotion) WSMotion.roll($('sticky-content'), stickyFolded);$('sticky-note').classList.toggle('folded',stickyFolded);$('sticky-bar').setAttribute('aria-expanded',String(!stickyFolded));$('sticky-content').setAttribute('aria-hidden',String(stickyFolded));$('sticky-toggle').textContent=t(stickyFolded?'展开这张便笺 ↕':'试着收起这张便笺 ↕',stickyFolded?'Expand this note ↕':'Collapse this note ↕');}
  $('sticky-toggle').addEventListener('click',toggleSticky);
  $('sticky-bar').addEventListener('dblclick',toggleSticky);
  onDoubleTap($('sticky-bar'),toggleSticky);

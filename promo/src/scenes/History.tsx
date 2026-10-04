@@ -1,7 +1,7 @@
 import React from "react";
 import { AbsoluteFill, staticFile, useCurrentFrame } from "remotion";
 import { HISTORY } from "../timeline";
-import { C, FONT, MONO, easeInOut, easeOut, mix, tw } from "../theme";
+import { C, FONT, MONO, easeOut, mix, motion, tw } from "../theme";
 import { Caption, Canvas, Lamps, useVertical } from "../ui";
 
 // Thirty years of the same bar. Each era's title bar lands on a beat; 2001 is the gap.
@@ -168,7 +168,7 @@ const ROWS = [
 export const History: React.FC = () => {
   const frame = useCurrentFrame();
   const v = useVertical();
-  const focus = tw(frame, HISTORY.focus, HISTORY.focus + 70, 0, 1, easeInOut);
+  const focus = motion(frame, HISTORY.focus, "dolly");
   return (
     <Canvas dark>
       <style>{chicago}</style>

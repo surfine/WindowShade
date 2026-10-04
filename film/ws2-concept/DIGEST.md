@@ -8,6 +8,7 @@
 | `~/.claude/skills/remotion-markup/SKILL.md` | Remotion 写法 |
 | `~/.claude/skills/motion-doctrine/references/doctrine.md` §1–§10 | 本机动效总纲 |
 | `~/.claude/skills/emil-design-eng/SKILL.md`、`~/.claude/skills/apple-design/SKILL.md` | 动效判断、Apple 流体界面 |
+| [`docs/design-drafts/README.md`](../../docs/design-drafts/README.md) | 2026-10-04 的十四份可交互画面稿。画界面和刘海动效之前先打开 |
 
 本目录 `reference/` 里放着本片要用的 33 张镜头卡、它们调好参数的示例源码、审美准则和声音设计，都是从 video-shotcraft 复制的
 （Apache 2.0，见 `reference/LICENSE-video-shotcraft`）。

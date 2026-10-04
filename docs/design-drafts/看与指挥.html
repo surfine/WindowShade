@@ -1,0 +1,237 @@
+<!doctype html><html><head><meta charset=utf8><meta name=viewport content="width=device-width,initial-scale=1,viewport-fit=cover"><style>:root{color-scheme:light;box-sizing:border-box;padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}html{scroll-padding-top:env(safe-area-inset-top,0px)}body{margin:0;padding:0;font:14px -apple-system,BlinkMacSystemFont,sans-serif;background:#faf9f5;color:#141413}img{max-width:100%}[hidden]:not([hidden=until-found i]){display:none!important}</style></head><body>
+<title>看与指挥</title>
+<style>
+@import url("https://fonts.googleapis.com/css2?family=Newsreader:opsz,wght@6..72,400;6..72,600&family=IBM+Plex+Sans:wght@400;500;600&family=IBM+Plex+Mono:wght@400;500&family=Noto+Sans+SC:wght@400;500;600&family=Noto+Serif+SC:wght@600&display=swap");
+/* 同一套纸面。上半：刘海里的编程会话，可以点着走；下半：菜单从 24 项收到 9 项，可以按 ⌥ */
+:root{
+  --paper:#EEF1F6;--surface:#FFFFFF;--surface-2:#F5F7FB;--ink:#131A25;--ink-2:#46546A;--ink-3:#6F7D93;
+  --line:#D6DDE8;--line-soft:#E5EAF2;--accent:#B4527A;--accent-soft:#F7E6EE;--good:#2C7350;--good-soft:#E1F0E7;--warn:#A8600F;--warn-soft:#FBF0DF;--bad:#B3352B;--bad-soft:#FBE6E3;
+  --menu-bg:rgba(236,236,238,.92);--menu-ink:#1D1D1F;--menu-ink-2:#8A8A90;--menu-sel:#3478F6;--menu-line:rgba(0,0,0,.1);
+  --doc:"IBM Plex Sans","Noto Sans SC",-apple-system,system-ui,sans-serif;--head:"Newsreader","Noto Serif SC",Georgia,serif;--mono:"IBM Plex Mono",ui-monospace,Menlo,monospace;
+  --mac:-apple-system,"SF Pro Text","PingFang SC","Noto Sans SC",sans-serif;
+}
+@media (prefers-color-scheme:dark){:root:not([data-theme="light"]){color-scheme:dark;
+  --paper:#0E131B;--surface:#151C27;--surface-2:#1A222F;--ink:#E7EDF6;--ink-2:#A7B4C8;--ink-3:#7A889E;--line:#26303F;--line-soft:#1E2733;
+  --accent:#E98BB2;--accent-soft:#2C1822;--good:#6CC495;--good-soft:#14271D;--warn:#E0A264;--warn-soft:#2A2115;--bad:#F08C80;--bad-soft:#2C1715;
+  --menu-bg:rgba(44,44,48,.94);--menu-ink:#F2F2F4;--menu-ink-2:#8E8E95;--menu-line:rgba(255,255,255,.1);}}
+:root[data-theme="dark"]{color-scheme:dark;
+  --paper:#0E131B;--surface:#151C27;--surface-2:#1A222F;--ink:#E7EDF6;--ink-2:#A7B4C8;--ink-3:#7A889E;--line:#26303F;--line-soft:#1E2733;
+  --accent:#E98BB2;--accent-soft:#2C1822;--good:#6CC495;--good-soft:#14271D;--warn:#E0A264;--warn-soft:#2A2115;--bad:#F08C80;--bad-soft:#2C1715;
+  --menu-bg:rgba(44,44,48,.94);--menu-ink:#F2F2F4;--menu-ink-2:#8E8E95;--menu-line:rgba(255,255,255,.1);}
+*{box-sizing:border-box}
+body{margin:0;background:var(--paper);color:var(--ink);font:15px/1.72 var(--doc);-webkit-font-smoothing:antialiased}
+.wrap{max-width:1100px;margin:0 auto;padding-inline:20px;padding-block:0 96px}
+header{padding:60px 0 22px}
+.eyebrow{font-family:var(--mono);font-size:11.5px;letter-spacing:.14em;text-transform:uppercase;color:var(--ink-3);margin:0 0 14px}
+h1{font-family:var(--head);font-weight:600;font-size:clamp(34px,5.6vw,52px);line-height:1.08;letter-spacing:-.015em;margin:0 0 16px;text-wrap:balance}
+.lede{font-size:17.5px;color:var(--ink-2);max-width:64ch;margin:0}
+.lede b{color:var(--ink)}
+h2{font-family:var(--head);font-weight:600;font-size:clamp(23px,3.2vw,30px);line-height:1.25;margin:0 0 8px;text-wrap:balance}
+h3{font-size:15px;margin:0 0 4px}
+section{padding-top:56px}
+p{max-width:68ch}
+.sub{color:var(--ink-2);margin:0 0 20px}
+code{font-family:var(--mono);font-size:.86em;background:var(--surface-2);border:1px solid var(--line-soft);border-radius:4px;padding:1px 5px}
+
+.stage{display:grid;grid-template-columns:minmax(0,1.55fr) minmax(0,1fr);gap:22px;margin-top:22px;align-items:start}
+@media (max-width:860px){.stage{grid-template-columns:1fr}}
+.mac{position:relative;aspect-ratio:16/10.4;max-width:100%;border-radius:18px 18px 6px 6px;background:#0b0b0d;padding:1.6%;box-shadow:0 30px 60px -30px rgba(10,20,40,.55)}
+.screen{position:relative;width:100%;height:100%;border-radius:12px 12px 2px 2px;overflow:hidden;background:#000;container-type:inline-size;font-family:var(--mac)}
+.wall{position:absolute;inset:0;background:radial-gradient(110% 80% at 15% 0%,#6E7FB8 0%,transparent 60%),radial-gradient(90% 80% at 100% 15%,#B57AA0 0%,transparent 60%),radial-gradient(120% 90% at 60% 120%,#3E4C7A 0%,transparent 60%),#2A3354}
+.menubar{position:absolute;inset:0 0 auto;height:4.4cqw;display:flex;align-items:center;gap:2.6cqw;padding-inline:2.6cqw;font-size:1.55cqw;color:#fff;font-weight:600;background:rgba(10,12,24,.25)}
+.menubar span{font-weight:400;opacity:.85}
+.win{position:absolute;background:#1E1F24;border-radius:1.4cqw;box-shadow:0 1.2cqw 3cqw rgba(0,0,0,.4);overflow:hidden;color:#C9CCD6;font-family:var(--mono);transition:transform 420ms cubic-bezier(.23,1,.32,1),opacity 260ms ease-out;transform-origin:50% 0}
+.win .bar{height:3.6cqw;background:#2A2B31;display:flex;align-items:center;gap:.8cqw;padding-inline:1.3cqw;font-size:1.25cqw;color:#9a9ca8;font-family:var(--mac);font-weight:600}
+.lamp{width:1.1cqw;height:1.1cqw;border-radius:50%;background:#ff5f57}.lamp:nth-child(2){background:#febc2e}.lamp:nth-child(3){background:#28c840}
+.win .t{flex:1;text-align:center;margin-right:4cqw}
+.term{padding:1.6cqw;font-size:1.2cqw;line-height:1.7;white-space:pre-wrap}
+.term .p{color:#7FD4A0}.term .d{color:#8890A6}.term .q{color:#FFB35C}
+.win.away{opacity:0;transform:translateY(-60%) scale(.1)}
+.win.front{z-index:3;box-shadow:0 0 0 .3cqw #E98BB2,0 1.2cqw 3cqw rgba(0,0,0,.5)}
+.island{position:absolute;left:50%;top:0;transform:translateX(-50%);background:#000;color:#fff;overflow:hidden;display:flex;align-items:center;justify-content:center;font-size:1.4cqw;line-height:1.3;z-index:5;width:12.2cqw;height:3.6cqw;border-radius:0 0 1.1cqw 1.1cqw}
+.ic{width:100%;height:100%;display:flex;align-items:center;justify-content:space-between;gap:1.1cqw;padding:0 1.6cqw}
+.ic.col{flex-direction:column;justify-content:center;align-items:stretch;padding:1.4cqw 2cqw;gap:.55cqw}
+.t1{font-weight:600}.t2{opacity:.65;font-size:1.2cqw}
+.row{display:flex;align-items:center;justify-content:space-between;gap:1cqw}
+.ico{width:2.3cqw;height:2.3cqw;border-radius:.6cqw;flex:none;display:grid;place-items:center;font-size:1.1cqw;font-weight:700}
+.ico.cc{background:#D97757;color:#fff}.ico.cx{background:#111;border:1px solid #444;color:#fff}.ico.tm{background:#2B2B2B;border:1px solid #555;color:#7FD4A0}
+.dot{width:1cqw;height:1cqw;border-radius:50%;display:inline-block;flex:none}
+.dot.run{border:.25cqw solid rgba(255,255,255,.3);border-top-color:#fff;width:1.6cqw;height:1.6cqw;animation:sp 900ms linear infinite}
+.dot.wait{background:#FFB35C}.dot.done{background:#5FD38A}
+@keyframes sp{to{transform:rotate(360deg)}}
+.cards{display:flex;gap:1cqw}
+.card{flex:1;background:#1c1c20;border-radius:1cqw;padding:1cqw 1.1cqw;min-width:0;cursor:pointer}
+.card:hover{background:#26262c}
+.card .n{font-weight:600;font-size:1.25cqw;display:flex;gap:.6cqw;align-items:center}
+.card .s{opacity:.6;font-size:1.05cqw;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.cmd{font-family:var(--mono);font-size:1.25cqw;background:#1c1c20;border-radius:.8cqw;padding:.6cqw 1cqw}
+.btns{display:flex;gap:1cqw;justify-content:flex-end}
+.btn{background:rgba(255,255,255,.16);border-radius:1cqw;padding:.45cqw 1.2cqw;font-size:1.15cqw;font-weight:600;white-space:nowrap;cursor:pointer;border:0;color:#fff}
+.btn.pri{background:#fff;color:#000}
+.risk{font-size:1.05cqw;border-radius:.6cqw;padding:.1cqw .7cqw;background:rgba(255,179,92,.2);color:#FFB35C}
+.risk.hi{background:rgba(255,99,99,.22);color:#FF8A80}
+@media (prefers-reduced-motion:reduce){.win{transition:none}.dot.run{animation:none}}
+
+.scenes{display:flex;flex-direction:column;gap:6px}
+.scenes button{font:inherit;text-align:left;border:1px solid var(--line-soft);background:var(--surface);color:var(--ink);border-radius:12px;padding:8px 12px;cursor:pointer;display:grid;grid-template-columns:minmax(0,1fr);gap:1px}
+.scenes button b{font-size:14px}.scenes button span{font-size:12.5px;color:var(--ink-2)}
+.scenes button[aria-pressed="true"]{border-color:var(--accent);background:var(--accent-soft)}
+.scenes button:active{transform:scale(.985)}
+.scenes button:focus-visible{outline:2px solid var(--accent);outline-offset:2px}
+.note{margin-top:12px;background:var(--surface);border:1px solid var(--line-soft);border-radius:12px;padding:12px 16px;font-size:13.5px;color:var(--ink-2);min-height:70px}
+
+.tbl{overflow-x:auto;border:1px solid var(--line-soft);border-radius:12px;background:var(--surface)}
+table{border-collapse:collapse;width:100%;min-width:700px;font-size:13px;line-height:1.55}
+th,td{text-align:left;vertical-align:top;padding:9px 12px;border-bottom:1px solid var(--line-soft)}
+th{font-size:11.5px;font-weight:600;color:var(--ink-3);letter-spacing:.04em;background:var(--surface-2)}
+tr:last-child td{border-bottom:0}
+.take{color:var(--good);font-weight:600}.skip{color:var(--ink-3)}
+
+/* 菜单 */
+.menus{display:grid;grid-template-columns:repeat(auto-fit,minmax(min(100%,330px),1fr));gap:22px;align-items:start}
+.menuwrap h3{display:flex;justify-content:space-between;align-items:baseline;gap:8px}
+.menuwrap h3 small{font-weight:400;color:var(--ink-3);font-size:12.5px}
+.menu{background:var(--menu-bg);border-radius:12px;padding:5px;box-shadow:0 0 0 .5px rgba(0,0,0,.25),0 18px 40px -16px rgba(0,0,0,.45);font-family:var(--mac);font-size:13px;color:var(--menu-ink);backdrop-filter:blur(20px)}
+.mi{display:grid;grid-template-columns:18px minmax(0,1fr) auto;align-items:center;gap:8px;padding:3px 10px;border-radius:6px;min-height:24px}
+.mi.hover:hover{background:var(--menu-sel);color:#fff}.mi.hover:hover .k,.mi.hover:hover .ic2{color:#fff;opacity:1}
+.mi .k{color:var(--menu-ink-2);font-size:12.5px;letter-spacing:.04em}
+.mi .ic2{color:var(--menu-ink);opacity:.85;display:grid;place-items:center}
+.mi .ic2 svg{width:14px;height:14px}
+.mi.hd{color:var(--menu-ink-2);font-size:12px;font-weight:600}
+.mi.dim{color:var(--menu-ink-2)}
+.mi.dev{background:repeating-linear-gradient(135deg,transparent 0 6px,rgba(179,53,43,.08) 6px 12px)}
+.mi.live .ic2{color:var(--accent)}
+.sep{height:1px;background:var(--menu-line);margin:4px 10px}
+.sub-arrow{color:var(--menu-ink-2)}
+.legend{display:flex;gap:12px;flex-wrap:wrap;font-size:12px;color:var(--ink-3);margin-top:8px}
+.legend i{display:inline-block;width:14px;height:10px;border-radius:2px;vertical-align:middle;margin-right:4px}
+.optbtn{font:inherit;font-size:13px;border:1px solid var(--line);background:var(--surface);color:var(--ink);border-radius:999px;padding:3px 12px;cursor:pointer}
+.optbtn[aria-pressed="true"]{border-color:var(--accent);background:var(--accent-soft);color:var(--accent)}
+.rules{display:grid;grid-template-columns:repeat(auto-fit,minmax(min(100%,300px),1fr));gap:12px}
+.rules div{background:var(--surface);border:1px solid var(--line-soft);border-radius:12px;padding:14px 16px}
+.rules p{margin:0;font-size:13.5px;color:var(--ink-2)}
+footer{margin-top:48px;font-size:12.5px;color:var(--ink-3);max-width:84ch}
+</style>
+
+<div class="wrap">
+<header>
+  <p class="eyebrow">WindowShade 2 · 设计稿 · 2026-10-03 · 看与指挥</p>
+  <h1>坐在 Mac 前看，躺在沙发上指挥</h1>
+  <p class="lede">从 Open Island 只取三样：<b>会话在跑、等你批准、一点就过去</b>。只接 Claude Code 和 Codex；跳转用 WindowShade 自己找窗口的本事，不为 15 种终端各写一套。看到的会话，就是指挥模式里能选的会话。菜单也一起收：<b>从 24 项收到 9 项</b>。</p>
+</header>
+
+<div class="stage">
+  <div>
+    <div class="mac"><div class="screen">
+      <div class="wall"></div>
+      <div class="menubar"><b>Safari</b><span>文件</span><span>编辑</span><span>显示</span></div>
+      <div class="win" id="wSafari" style="left:4%;top:13%;width:60%;height:70%;background:#fff"><div class="bar" style="background:#F1F1F3;color:#666"><span class="lamp"></span><span class="lamp"></span><span class="lamp"></span><span class="t">developer.apple.com</span></div></div>
+      <div class="win away" id="wTerm" style="left:30%;top:22%;width:56%;height:62%"><div class="bar"><span class="lamp"></span><span class="lamp"></span><span class="lamp"></span><span class="t">WindowShade — claude</span></div><div class="term"><span class="p">›</span> 把侧拉的阴影调淡一点
+<span class="d">  ● 读 SlideOverChrome.swift
+  ● 改 shadowOpacity 0.32 → 0.22
+  ● 跑 swift test … 42 通过</span>
+<span class="q">  ? 允许执行 git push origin main ？</span></div></div>
+      <div class="island" id="island"><div class="ic" id="ic"></div></div>
+    </div></div>
+    <div class="note" id="note" aria-live="polite"></div>
+  </div>
+  <div class="scenes" id="scenes" role="group" aria-label="刘海里的编程会话"></div>
+</div>
+
+<section>
+  <h2>从 Open Island 取什么</h2>
+  <p class="sub">Open Island 是 GPL-3.0，WindowShade 是 MIT：只借思路，一行代码都不拷。</p>
+  <div class="tbl"><table>
+    <thead><tr><th>它有的</th><th></th><th>为什么</th></tr></thead>
+    <tbody>
+      <tr><td>会话状态：在跑、等你、完成</td><td class="take">取</td><td>这是“看”；指挥模式是“指挥”，合起来才完整</td></tr>
+      <tr><td>在刘海里批准</td><td class="take">取</td><td>和指挥模式的放行同一套：普通点一下，高风险 Touch ID</td></tr>
+      <tr><td>一点跳回终端</td><td class="take">取，用自己的</td><td>找窗口、去别的桌面、从刘海放回，本来就是 WindowShade 的本行</td></tr>
+      <tr><td>hook + 小命令行 + 本机 socket，App 没开就放行</td><td class="take">取</td><td>最省事、最稳</td></tr>
+      <tr><td>13 种助手</td><td class="take">只取 2 种</td><td>Claude Code、Codex；同格式的以后几行配置就能加</td></tr>
+      <tr><td>15 种终端的精确跳转</td><td class="skip">不取</td><td>先跳到窗口，够用</td></tr>
+      <tr><td>用量面板、通知模式、自己的设置和更新器</td><td class="skip">不取</td><td>不是窗口的事，或者已经有了</td></tr>
+      <tr><td>扫对话记录文件找会话</td><td class="skip">暂不取</td><td>hook 够用；扫文件要读你的对话内容</td></tr>
+    </tbody>
+  </table></div>
+</section>
+
+<section>
+  <h2>菜单：从 24 项收到 9 项</h2>
+  <p class="sub">菜单只放两种东西：对当前窗口做的事，和进 App 的门。开关进设置，开发用的进开发版的隐藏子菜单。少用的排列动作收进一个“排列”。正在进行的事（番茄钟、指挥模式、等你的会话）才多一行，结束就消失。</p>
+  <div style="display:flex;gap:8px;flex-wrap:wrap;margin-bottom:14px"><button type="button" class="optbtn" id="opt" aria-pressed="false">按住 ⌥</button><button type="button" class="optbtn" id="live" aria-pressed="true">有进行中的事</button><button type="button" class="optbtn" id="folded" aria-pressed="false">收着 2 扇窗</button></div>
+  <div class="menus">
+    <div class="menuwrap"><h3>现在 <small>24 项</small></h3><div class="menu" id="mOld"></div>
+      <div class="legend"><span><i style="background:repeating-linear-gradient(135deg,transparent 0 3px,rgba(179,53,43,.3) 3px 6px)"></i>开发用的</span><span><i style="background:var(--warn-soft)"></i>其实是开关</span></div></div>
+    <div class="menuwrap"><h3>改后 <small id="newCount">9 项</small></h3><div class="menu" id="mNew"></div></div>
+  </div>
+  <div class="rules" style="margin-top:18px">
+    <div><h3>一级不超过 12 项</h3><p>不算“已收起的窗口”那一段。新功能不默认进菜单：要加一项，先拿掉一项。</p></div>
+    <div><h3>名字去掉“当前窗口”</h3><p>标题行已经写了是哪扇窗：“收起当前窗口”变成“收起窗口”，短一半。</p></div>
+    <div><h3>每项都有符号</h3><p>照 design-system §4.11；快捷键不变。</p></div>
+    <div><h3>每个功能仍有入口</h3><p>挪出菜单的，都还在快捷键、刘海或设置里。按住 ⌥ 能看到关于、检查更新。</p></div>
+  </div>
+</section>
+
+<footer>依据：Aaron 给的菜单截图（24 项）；Open Island README（2026-10-03 读取，GPL-3.0）；prototype/App/MenuBarController.swift；docs/conductor-v2.md、docs/copy-guide.md 第 7 条。刘海和终端是示意，项目名和命令是例子。</footer>
+</div>
+
+<script>
+(function(){
+  var $=function(id){return document.getElementById(id)};
+  var reduce=matchMedia('(prefers-reduced-motion: reduce)').matches;
+  var island=$('island'),ic=$('ic');
+  function spring(t,r,z){var w=2*Math.PI/r;if(z>=1)return 1-(1+w*t)*Math.exp(-w*t);var wd=w*Math.sqrt(1-z*z);return 1-Math.exp(-z*w*t)*(Math.cos(wd*t)+z*w/wd*Math.sin(wd*t))}
+  var cur={w:12.2,h:3.6,r:1.1},anim,key='';
+  function shape(w,h,r,sr,sz){if(key===w+'/'+h)return;key=w+'/'+h;var f={w:cur.w,h:cur.h,r:cur.r},t0=performance.now();if(anim)anim.stop=true;var a={};anim=a;
+    function ap(p){cur={w:f.w+(w-f.w)*p,h:f.h+(h-f.h)*p,r:f.r+(r-f.r)*p};island.style.width=cur.w+'cqw';island.style.height=cur.h+'cqw';island.style.borderRadius='0 0 '+cur.r+'cqw '+cur.r+'cqw'}
+    if(reduce){ap(1);return}(function k(){if(a.stop)return;var t=(performance.now()-t0)/1000;ap(spring(t,sr,sz));if(t<1.5)requestAnimationFrame(k);else ap(1)})()}
+  function put(h,col){ic.className='ic'+(col?' col':'');ic.innerHTML=h}
+  var CC='<span class="ico cc">✳</span>',CX='<span class="ico cx">⌘</span>';
+  var timers=[];function later(f,ms){timers.push(setTimeout(f,reduce?Math.min(ms,150):ms))}
+  function term(state){$('wTerm').className='win'+(state==='away'?' away':state==='front'?' front':'')}
+  var SC=[
+    {n:'在跑',d:'紧凑：终端图标 + 转圈 + 项目名',p:'在跑的会话是一项持续活动，和音乐、番茄钟并排，不抢位置。刘海只在状态变化时刷新文字，转圈交给系统动画。',
+     go:function(){term('away');shape(30,3.6,1.1,.38,1);put(CC+'<span class="row"><span class="dot run"></span><span class="t2">WindowShade · 在跑</span></span>')}},
+    {n:'等你（普通）',d:'唯一会主动展开的状态',p:'刘海写清：哪个助手、哪个项目、要做什么、风险。点“允许一次”，或“去看看”跳到终端在那里决定。没有“总是允许”，键盘快捷键不能放行。2 分钟没人管，就退回终端原来的提示。',
+     go:function(){term('away');shape(48,13,2.6,.40,.92);put('<div class="row">'+CC+'<span class="t2" style="flex:1">Claude Code · WindowShade · 等你</span><span class="risk">普通</span></div><div class="cmd">swift test --filter SlideOver</div><div class="btns"><button class="btn" data-a="look">去看看</button><button class="btn">不允许</button><button class="btn pri" data-a="allow">允许一次</button></div>',true)}},
+    {n:'等你（高风险）',d:'推送、删除、联网、改项目外的文件',p:'高风险只有两条路：坐在 Mac 前按 Touch ID；用遥控器时照指挥模式，点一下再念一句随机短语。',
+     go:function(){term('away');shape(48,13,2.6,.40,.92);put('<div class="row">'+CC+'<span class="t2" style="flex:1">Claude Code · WindowShade · 等你</span><span class="risk hi">高风险</span></div><div class="cmd">git push origin main</div><div class="btns"><button class="btn" data-a="look">去看看</button><button class="btn">不允许</button><button class="btn pri" data-a="allow">用 Touch ID 允许</button></div>',true)}},
+    {n:'完成',d:'短暂提醒 4 秒，带“过去”',p:'那扇终端收着、最小化或在别的桌面时，提醒里带一个“过去”。和“有变化时提醒”是同一种感觉：你等的事好了。',
+     go:function(){term('away');shape(40,6.6,1.8,.42,.84);put('<div class="row"><span style="color:#5FD38A;font-size:2cqw">●</span><span class="t1" style="flex:1">WindowShade · 完成</span><button class="btn" data-a="go">过去</button></div><span class="t2">改了 3 个文件 · 42 个测试通过</span>',true)}},
+    {n:'三个会话',d:'紧凑写个数，展开是一排卡片',p:'展开（指针停在刘海上）：每张卡片写项目、助手、状态、最后一句。点一下“过去”，停一下“看一眼”。指挥模式里“选会话”的列表就是这一排。',
+     go:function(){term('away');shape(54,12,2.6,.40,.92);put('<div class="cards"><div class="card" data-a="go"><div class="n">'+CC+'WindowShade <span class="dot wait"></span></div><div class="s">等你：git push origin main</div></div><div class="card"><div class="n">'+CX+'site <span class="dot run"></span></div><div class="s">在跑 · 8 分钟</div></div><div class="card"><div class="n">'+CX+'tests <span class="dot done"></span></div><div class="s">完成 · 改了 2 个文件</div></div></div>',true)}},
+    {n:'过去',d:'WindowShade 找到那扇终端，放到眼前',p:'收着的、最小化的、别的桌面上的都找得回来。不为每种终端写一套跳转：先到窗口，终端里的标签页以后再说。',
+     go:function(){go()}}
+  ];
+  function go(){shape(30,3.6,1.1,.38,1);put(CC+'<span class="row"><span class="dot wait"></span><span class="t2">WindowShade · 等你</span></span>');term('away');later(function(){term('front')},80);$('note').innerHTML='<b>过去：</b>终端从刘海回到眼前，正停在等你批准的那一行。'}
+  var sc=$('scenes');sc.innerHTML=SC.map(function(s,i){return '<button type="button" data-i="'+i+'" aria-pressed="false"><b>'+s.n+'</b><span>'+s.d+'</span></button>'}).join('');
+  function show(i){timers.forEach(clearTimeout);timers=[];[].forEach.call(sc.children,function(b,j){b.setAttribute('aria-pressed',j===i)});$('note').innerHTML=SC[i].p;key='';SC[i].go()}
+  sc.addEventListener('click',function(e){var b=e.target.closest('button');if(b)show(+b.dataset.i)});
+  island.addEventListener('click',function(e){var b=e.target.closest('[data-a]');if(!b)return;var a=b.dataset.a;
+    if(a==='go'||a==='look')go();
+    if(a==='allow'){shape(34,4.6,1.4,.42,.84);put('<span style="color:#5FD38A;font-size:2cqw">●</span><span class="t1">已允许这一次</span>');$('note').innerHTML='<b>只管这一个请求。</b>请求号、命令、范围绑在一起，用一次就作废。'}});
+  show(1);
+  // 菜单
+  var I={c:'<path d="M3 4h10M3 12h10M8 6v4M6 8l2 2 2-2" stroke="currentColor" stroke-width="1.4" fill="none" stroke-linecap="round"/>',n:'<rect x="2" y="2.5" width="12" height="11" rx="2" stroke="currentColor" stroke-width="1.3" fill="none"/><rect x="2" y="2.5" width="12" height="3.2" rx="1" fill="currentColor"/>',
+    p:'<path d="M6 2h4l-.6 4 2.6 2.5H4L6.6 6z M8 8.5V14" stroke="currentColor" stroke-width="1.3" fill="none" stroke-linejoin="round"/>',a:'<rect x="2" y="3" width="12" height="10" rx="1.6" stroke="currentColor" stroke-width="1.3" fill="none"/><path d="M8 3v10" stroke="currentColor" stroke-width="1.3"/>',
+    h:'<rect x="4" y="5" width="10" height="8" rx="1.4" stroke="currentColor" stroke-width="1.3" fill="none"/><rect x="2" y="2.5" width="10" height="2" rx=".8" fill="currentColor"/>',l:'<g fill="currentColor"><rect x="2.5" y="2.5" width="3" height="3" rx=".7"/><rect x="6.5" y="2.5" width="3" height="3" rx=".7"/><rect x="10.5" y="2.5" width="3" height="3" rx=".7"/><rect x="2.5" y="6.5" width="3" height="3" rx=".7"/><rect x="6.5" y="6.5" width="3" height="3" rx=".7"/><rect x="10.5" y="6.5" width="3" height="3" rx=".7"/><rect x="2.5" y="10.5" width="3" height="3" rx=".7"/><rect x="6.5" y="10.5" width="3" height="3" rx=".7"/><rect x="10.5" y="10.5" width="3" height="3" rx=".7"/></g>',
+    w:'<rect x="2" y="4" width="9" height="8" rx="1.4" stroke="currentColor" stroke-width="1.3" fill="none"/><rect x="5" y="2" width="9" height="8" rx="1.4" stroke="currentColor" stroke-width="1.3" fill="none"/>',g:'<circle cx="8" cy="8" r="2.4" stroke="currentColor" stroke-width="1.3" fill="none"/><path d="M8 1.8v2M8 12.2v2M1.8 8h2M12.2 8h2M3.6 3.6l1.4 1.4M11 11l1.4 1.4M3.6 12.4 5 11M11 5l1.4-1.4" stroke="currentColor" stroke-width="1.3" stroke-linecap="round"/>',
+    q:'<path d="M8 2v6M4.5 4.5a5 5 0 1 0 7 0" stroke="currentColor" stroke-width="1.4" fill="none" stroke-linecap="round"/>',t:'<circle cx="8" cy="9" r="5" stroke="currentColor" stroke-width="1.3" fill="none"/><path d="M8 9V6.5M6.5 2h3" stroke="currentColor" stroke-width="1.3" stroke-linecap="round"/>',
+    i:'<circle cx="8" cy="8" r="6" stroke="currentColor" stroke-width="1.3" fill="none"/><path d="M8 7v4M8 5v.1" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/>',u:'<path d="M8 2.5v8M5 7.5l3 3 3-3M3 13h10" stroke="currentColor" stroke-width="1.4" fill="none" stroke-linecap="round"/>'};
+  function svg(k){return k?'<svg viewBox="0 0 16 16">'+I[k]+'</svg>':''}
+  function mi(t,k,o){o=o||{};return '<div class="mi'+(o.cls?' '+o.cls:'')+(o.hover===false?'':' hover')+'"'+(o.bg?' style="background:'+o.bg+'"':'')+'><span class="'+(o.check?'':'ic2')+'">'+(o.check?'✓':svg(o.icon))+'</span><span>'+t+(o.sub?' <span class="sub-arrow">›</span>':'')+'</span><span class="k">'+(k||'')+'</span></div>'}
+  var SEP='<div class="sep"></div>',SW='var(--warn-soft)';
+  $('mOld').innerHTML=[mi('屏幕开合角度：109.0°','',{cls:'dim dev',hover:false}),SEP,mi('当前窗口','',{cls:'hd',hover:false}),mi('收起当前窗口','⌃⌘C'),mi('整理卷帘条','⌃⌘O'),mi('双击标题栏收起窗口','',{check:1,bg:SW}),mi('置顶当前窗口','⌃⌘P'),mi('带到每张桌面','⌃⌘G'),mi('侧拉当前窗口','⌃⌘S'),mi('画中画当前窗口'),mi('魔法平铺','⌃⌘M'),mi('移到另一块屏幕','⌃⌘N'),mi('收进刘海'),mi('全部收进刘海','⌃⌘H'),mi('启动台','⌃⌘L'),mi('实时活动'),mi('验证 Touch ID…','',{cls:'dev'}),mi('锁屏开合效果','',{bg:SW}),mi('检测面部动作','',{cls:'dev',sub:1}),mi('选择窗口…'),SEP,mi('欢迎使用 WindowShade…'),mi('设置…','⌘,'),mi('关于 WindowShade'),mi('检查更新…'),mi('退出 WindowShade','⌘Q')].join('');
+  var st={opt:false,live:true,folded:false};
+  function drawNew(){var L=[mi('Xcode — ContentView.swift','',{cls:'hd',hover:false}),mi('收起窗口','⌃⌘C',{icon:'c'}),mi('收进刘海','',{icon:'n'}),mi('置顶','⌃⌘P',{icon:'p'}),mi('排列','',{icon:'a',sub:1}),SEP,mi('全部收进刘海','⌃⌘H',{icon:'h'}),mi('启动台','⌃⌘L',{icon:'l'}),mi('选择窗口…','',{icon:'w'})],n=9;
+    if(st.live){L.push(SEP,mi('番茄钟 · 18 分','',{icon:'t',cls:'live'}),mi('Claude Code · 等你','',{icon:'i',cls:'live'}))}
+    if(st.folded){L.push(SEP,mi('已收起的窗口','',{cls:'hd',hover:false}),mi('微信'),mi('预览 — 设计稿.pdf'),mi('全部展开'))}
+    L.push(SEP);if(st.opt){L.push(mi('检查更新…','',{icon:'u'}),mi('关于 WindowShade','',{icon:'i'}))}else L.push(mi('设置…','⌘,',{icon:'g'}));L.push(mi('退出 WindowShade','⌘Q',{icon:'q'}));
+    $('mNew').innerHTML=L.join('');$('newCount').textContent=n+' 项常驻'+(st.live?' + 进行中的 2 行':'')+(st.folded?' + 收起的窗口':'')}
+  function tg(id,k){$(id).onclick=function(){st[k]=!st[k];this.setAttribute('aria-pressed',st[k]);drawNew()}}
+  tg('opt','opt');tg('live','live');tg('folded','folded');drawNew();
+})();
+</script>
+
+</body></html>

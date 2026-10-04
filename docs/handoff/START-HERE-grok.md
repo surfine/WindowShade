@@ -199,7 +199,7 @@ git checkout -- tests/part10/validation/
 
 ## G8：概念片工程（不碰 App）
 
-读：`docs/handoff/deepseek-film.md`、W11 的“影片”。工程在 `film/ws2-concept/`。
+读：`docs/handoff/deepseek-film.md`、W11 的“影片”、`docs/design-drafts/README.md`。工程在 `film/ws2-concept/`。
 
 - 只做 Remotion 工程里的分镜、动画和横竖版布局；需要真机画面的地方留占位，标明要录什么。
 - 录真机、配声音、正式渲染、验收观感由主模型做。

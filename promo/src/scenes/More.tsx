@@ -1,7 +1,7 @@
 import React from "react";
 import { AbsoluteFill, useCurrentFrame } from "remotion";
 import { MORE, sceneFrames } from "../timeline";
-import { C, FONT, easeInOut, easeOut, mix, pop, tw } from "../theme";
+import { C, FONT, easeOut, mix, motion, pop, tw } from "../theme";
 import { Caption, Canvas, Cursor, Glass, Keycap, Lamps, tiltIn, useVertical } from "../ui";
 
 // The rest of the app in three cards: pin, carry to every desktop, window browsing.
@@ -59,8 +59,8 @@ const Mini: React.FC<{
 const Pin: React.FC<{ frame: number }> = ({ frame }) => {
   const k = MORE.keys[0];
   const pinned = frame >= k + 12;
-  const slide = tw(frame, MORE.cards[0] + 20, MORE.cards[0] + 60, 0, 1, easeInOut) - tw(frame, k + 16, k + 50, 0, 0.35, easeInOut);
-  const badge = pop(frame, k + 12, 12, 200);
+  const slide = motion(frame, MORE.cards[0] + 20, "glide") - motion(frame, k + 16, "glide") * 0.35;
+  const badge = pop(frame, k + 12);
   return (
     <>
       <Mini
@@ -110,8 +110,8 @@ const Pin: React.FC<{ frame: number }> = ({ frame }) => {
 
 const Carry: React.FC<{ frame: number }> = ({ frame }) => {
   const k = MORE.keys[1];
-  const move = tw(frame, k + 24, k + 60, 0, 1, easeInOut);
-  const bar = pop(frame, k + 12, 16, 200);
+  const move = motion(frame, k + 24, "glide");
+  const bar = pop(frame, k + 12);
   return (
     <>
       <div style={{ position: "absolute", inset: 0, display: "flex", gap: 20, translate: `${-move * (CW + 20)}px 0` }}>
@@ -160,7 +160,7 @@ const Carry: React.FC<{ frame: number }> = ({ frame }) => {
 const Browse: React.FC<{ frame: number }> = ({ frame }) => {
   const k = MORE.keys[2];
   const arrive = tw(frame, k - 40, k - 8, 0, 1, easeOut);
-  const panel = pop(frame, k, 16, 190);
+  const panel = pop(frame, k);
   const icons = ["#3d7bf7", "#ffffff", "#48b865", "#e85d75"];
   return (
     <>
@@ -221,7 +221,7 @@ export const More: React.FC = () => {
   return (
     <Canvas>
       <Caption zh={"老动作之外，\n它还帮你看住每扇窗口。"} en="Beyond the old trick, it keeps track of every window." at={2} size={68} />
-      <AbsoluteFill style={{ scale: String(mix(1, 1.03, tw(frame, 0, sceneFrames("More"), 0, 1, easeInOut))) }}>
+      <AbsoluteFill style={{ scale: String(mix(1, 1.03, motion(frame, 0, "dolly"))) }}>
         {CARDS.map((c, i) => {
           const keyAt = MORE.keys[i];
           const lit = tw(frame, keyAt - 6, keyAt + 6) * (1 - tw(frame, keyAt + 80, keyAt + 100));

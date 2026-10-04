@@ -127,18 +127,19 @@ final class SnapshotFlight {
         let positionX = axis("position.x", from: start.midX, to: end.midX, speed: velocity.dx)
         let positionY = axis("position.y", from: start.midY, to: end.midY, speed: velocity.dy)
         let position = positionX.duration >= positionY.duration ? positionX : positionY
-        let size = CASpringAnimation(perceptualDuration: response * 0.9, bounce: 0)
+        // 尺寸走 settle：不回弹，也不跟着位置那根弹簧把时长乘一个系数。
+        let size = CASpringAnimation(perceptualDuration: Motion.Spring.settle.response, bounce: Motion.Spring.settle.bounce)
         size.keyPath = "bounds.size"
         size.fromValue = NSValue(size: start.size)
         size.toValue = NSValue(size: end.size)
         size.duration = size.settlingDuration
         var animations: [CAAnimation] = [positionX, positionY, size]
         if let cornerRadius {
-            let corner = CABasicAnimation(keyPath: "cornerRadius")
+            let corner = CASpringAnimation(perceptualDuration: Motion.Spring.settle.response, bounce: Motion.Spring.settle.bounce)
+            corner.keyPath = "cornerRadius"
             corner.fromValue = picture.cornerRadius
             corner.toValue = cornerRadius
-            corner.duration = size.duration
-            corner.timingFunction = CAMediaTimingFunction(controlPoints: 0.23, 1, 0.32, 1)
+            corner.duration = corner.settlingDuration
             animations.append(corner)
         }
         if fadeOut {

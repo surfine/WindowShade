@@ -1,0 +1,449 @@
+<!doctype html><html><head><meta charset=utf8><meta name=viewport content="width=device-width,initial-scale=1,viewport-fit=cover"><style>:root{color-scheme:light;box-sizing:border-box;padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}html{scroll-padding-top:env(safe-area-inset-top,0px)}body{margin:0;padding:0;font:14px -apple-system,BlinkMacSystemFont,sans-serif;background:#faf9f5;color:#141413}img{max-width:100%}[hidden]:not([hidden=until-found i]){display:none!important}</style></head><body>
+<title>WindowShade 全景</title>
+<style>
+@import url("https://fonts.googleapis.com/css2?family=Newsreader:opsz,wght@6..72,400;6..72,600&family=IBM+Plex+Sans:wght@400;500;600&family=IBM+Plex+Mono:wght@400;500&family=Noto+Sans+SC:wght@400;500;600&family=Noto+Serif+SC:wght@600&display=swap");
+/* 版式：同一套纸面（从锁屏到窗口、读到的）。上半是一天的样片：左边一块屏、右边时间线；下半是规则与接手要求 */
+:root{
+  --paper:#EEF1F6;--surface:#FFFFFF;--surface-2:#F5F7FB;--ink:#131A25;--ink-2:#46546A;--ink-3:#6F7D93;
+  --line:#D6DDE8;--line-soft:#E5EAF2;--accent:#2F62C4;--accent-soft:#E2EAF9;--good:#2C7350;--good-soft:#E1F0E7;--warn:#A8600F;--warn-soft:#FBF0DF;--bad:#B3352B;--bad-soft:#FBE6E3;
+  --l-win:#2F62C4;--l-island:#7A4FC2;--l-batt:#2C7350;--l-cond:#B4527A;--l-car:#A8600F;--l-auth:#1F7A86;--l-priv:#5B6475;
+  --doc:"IBM Plex Sans","Noto Sans SC",-apple-system,system-ui,sans-serif;--head:"Newsreader","Noto Serif SC",Georgia,serif;--mono:"IBM Plex Mono",ui-monospace,Menlo,monospace;
+  --mac:-apple-system,"SF Pro Text","PingFang SC","Noto Sans SC",sans-serif;
+}
+@media (prefers-color-scheme:dark){:root:not([data-theme="light"]){color-scheme:dark;
+  --paper:#0E131B;--surface:#151C27;--surface-2:#1A222F;--ink:#E7EDF6;--ink-2:#A7B4C8;--ink-3:#7A889E;--line:#26303F;--line-soft:#1E2733;
+  --accent:#7FA5F0;--accent-soft:#1B2740;--good:#6CC495;--good-soft:#14271D;--warn:#E0A264;--warn-soft:#2A2115;--bad:#F08C80;--bad-soft:#2C1715;
+  --l-win:#7FA5F0;--l-island:#B497EE;--l-batt:#6CC495;--l-cond:#E98BB2;--l-car:#E0A264;--l-auth:#62C3CF;--l-priv:#A3ACBD;}}
+:root[data-theme="dark"]{color-scheme:dark;
+  --paper:#0E131B;--surface:#151C27;--surface-2:#1A222F;--ink:#E7EDF6;--ink-2:#A7B4C8;--ink-3:#7A889E;--line:#26303F;--line-soft:#1E2733;
+  --accent:#7FA5F0;--accent-soft:#1B2740;--good:#6CC495;--good-soft:#14271D;--warn:#E0A264;--warn-soft:#2A2115;--bad:#F08C80;--bad-soft:#2C1715;
+  --l-win:#7FA5F0;--l-island:#B497EE;--l-batt:#6CC495;--l-cond:#E98BB2;--l-car:#E0A264;--l-auth:#62C3CF;--l-priv:#A3ACBD;}
+*{box-sizing:border-box}
+body{margin:0;background:var(--paper);color:var(--ink);font:15px/1.72 var(--doc);-webkit-font-smoothing:antialiased}
+.wrap{max-width:1120px;margin:0 auto;padding-inline:20px;padding-block:0 96px}
+header{padding:60px 0 24px}
+.eyebrow{font-family:var(--mono);font-size:11.5px;letter-spacing:.14em;text-transform:uppercase;color:var(--ink-3);margin:0 0 14px}
+h1{font-family:var(--head);font-weight:600;font-size:clamp(34px,5.6vw,54px);line-height:1.08;letter-spacing:-.015em;margin:0 0 16px;text-wrap:balance}
+.lede{font-size:17.5px;color:var(--ink-2);max-width:64ch;margin:0}
+.lede b{color:var(--ink)}
+h2{font-family:var(--head);font-weight:600;font-size:clamp(23px,3.2vw,30px);line-height:1.25;margin:0 0 8px;text-wrap:balance}
+h3{font-size:15px;margin:0 0 4px}
+section{padding-top:60px}
+p{max-width:68ch}
+.sub{color:var(--ink-2);margin:0 0 20px}
+code{font-family:var(--mono);font-size:.86em;background:var(--surface-2);border:1px solid var(--line-soft);border-radius:4px;padding:1px 5px;overflow-wrap:anywhere}
+.tag{display:inline-flex;align-items:center;gap:5px;font-size:11.5px;font-weight:500;border-radius:999px;padding:1px 9px;white-space:nowrap;border:1px solid currentColor}
+.tag::before{content:"";width:6px;height:6px;border-radius:50%;background:currentColor}
+.lines-legend{display:flex;flex-wrap:wrap;gap:6px;margin-top:18px}
+.st{font-size:11.5px;border-radius:999px;padding:1px 8px;white-space:nowrap}
+.st.done{background:var(--good-soft);color:var(--good)}.st.part{background:var(--accent-soft);color:var(--accent)}.st.todo{background:var(--warn-soft);color:var(--warn)}.st.no{background:var(--bad-soft);color:var(--bad)}
+
+/* ---------- 样片 ---------- */
+.player{display:grid;grid-template-columns:minmax(0,1.5fr) minmax(0,1fr);gap:22px;margin-top:24px;align-items:start}
+@media (max-width:900px){.player{grid-template-columns:1fr}}
+.mac{position:relative;aspect-ratio:16/10.4;max-width:100%;border-radius:18px 18px 6px 6px;background:#0b0b0d;padding:1.6%;box-shadow:0 30px 60px -30px rgba(10,20,40,.55)}
+.screen{position:relative;width:100%;height:100%;border-radius:12px 12px 2px 2px;overflow:hidden;background:#000;container-type:inline-size;font-family:var(--mac)}
+.wall{position:absolute;inset:0;background:radial-gradient(120% 90% at 10% 0%,#7FA0D8 0%,transparent 60%),radial-gradient(90% 80% at 100% 10%,#C9A6CF 0%,transparent 60%),radial-gradient(120% 90% at 60% 120%,#E8B98F 0%,transparent 60%),#5E6F98}
+.menubar{position:absolute;inset:0 0 auto;height:4.4cqw;display:flex;align-items:center;gap:2.6cqw;padding-inline:2.6cqw;font-size:1.55cqw;color:#fff;font-weight:600;background:rgba(20,24,36,.18)}
+.menubar span{font-weight:400;opacity:.85}.menubar .r{margin-left:auto;opacity:.9;font-variant-numeric:tabular-nums}
+.win{position:absolute;background:#fff;border-radius:1.4cqw;box-shadow:0 1.2cqw 3cqw rgba(0,0,0,.28);overflow:hidden;transition:transform 380ms cubic-bezier(.23,1,.32,1),opacity 220ms ease-out}
+.win .bar{height:3.6cqw;background:#F1F1F3;border-bottom:1px solid rgba(0,0,0,.08);display:flex;align-items:center;gap:.8cqw;padding-inline:1.3cqw;font-size:1.25cqw;color:#666;font-weight:600}
+.lamp{width:1.1cqw;height:1.1cqw;border-radius:50%;background:#ff5f57}.lamp:nth-child(2){background:#febc2e}.lamp:nth-child(3){background:#28c840}
+.win .t{flex:1;text-align:center;margin-right:4cqw}
+.lns{padding:1.6cqw}.lns i{display:block;height:1cqw;border-radius:.4cqw;background:#E6E8EE;margin-bottom:1.1cqw}
+.carplay{background:#111;color:#fff}.carplay .bar{background:#1d1d1f;color:#bbb;border-color:#000}
+.cp{display:grid;grid-template-columns:14% 1fr}
+.cp .dock{background:#1c1c1e;display:flex;flex-direction:column;gap:1.6cqw;padding:7cqw 1.2cqw 1.2cqw;align-items:center}
+.cp .dock i{width:4.4cqw;height:4.4cqw;border-radius:1.1cqw;display:block}
+.cp .map{background:linear-gradient(135deg,#2b3a2f,#1d2a33);position:relative}
+.cp .map::after{content:"";position:absolute;left:18%;top:20%;width:60%;height:60%;border:.5cqw solid #4AA3FF;border-color:#4AA3FF transparent transparent #4AA3FF;border-radius:2cqw 0 0 0}
+.lock{position:absolute;inset:0;opacity:0;display:flex;flex-direction:column;align-items:center;color:#fff;pointer-events:none;transition:opacity 280ms ease-out}
+.lock .blur{position:absolute;inset:0;backdrop-filter:blur(18px) saturate(140%);-webkit-backdrop-filter:blur(18px);background:rgba(10,14,26,.22)}
+.lock .time{position:relative;margin-top:10cqw;font-size:11cqw;font-weight:600;letter-spacing:-.04em;line-height:1;font-variant-numeric:tabular-nums}
+.lock .user{position:relative;margin-top:auto;margin-bottom:6cqw;display:flex;flex-direction:column;align-items:center;gap:1cqw;font-size:1.6cqw}
+.lock .avatar{width:7cqw;height:7cqw;border-radius:50%;background:linear-gradient(140deg,#D7DEEA,#9AA8C2)}
+.lock .pw{width:16cqw;height:3.2cqw;border-radius:2cqw;background:rgba(255,255,255,.22);display:flex;align-items:center;justify-content:center;gap:.8cqw;font-size:1.3cqw}
+.lock .pw i{width:.9cqw;height:.9cqw;border-radius:50%;background:#fff;opacity:0;transition:opacity 120ms}
+.lock .pw.typed i{opacity:1}
+.island{position:absolute;left:50%;top:0;transform:translateX(-50%);background:#000;color:#fff;overflow:hidden;display:flex;align-items:center;justify-content:center;font-size:1.45cqw;line-height:1.3;z-index:5}
+.ic{width:100%;height:100%;display:flex;align-items:center;justify-content:space-between;gap:1.2cqw;padding:0 1.6cqw;transition:opacity 160ms ease-out}
+.ic.col{flex-direction:column;justify-content:center;align-items:stretch;padding:1.6cqw 2cqw}
+.ic .t1{font-weight:600}.ic .t2{opacity:.7;font-size:1.25cqw}
+.ic .ico{width:2.6cqw;height:2.6cqw;border-radius:.7cqw;flex:none}
+.dot{width:1.2cqw;height:1.2cqw;border-radius:50%;background:#555;display:inline-block}
+.dot.ok{background:#34C759}.dot.wait{background:#888;animation:pulse 1s infinite}.dot.no{background:#FF453A}
+@keyframes pulse{50%{opacity:.35}}
+.spin{width:2.4cqw;height:2.4cqw;border-radius:50%;border:.35cqw solid rgba(255,255,255,.25);border-top-color:#fff;animation:sp 900ms linear infinite;flex:none}
+@keyframes sp{to{transform:rotate(360deg)}}
+.tiles{display:flex;gap:1cqw;margin-top:1cqw}.tiles i{flex:1;height:7cqw;border-radius:.8cqw;background:#2a2a2e;position:relative}
+.tiles i b{position:absolute;left:.6cqw;bottom:.5cqw;font-size:1cqw;font-weight:500;opacity:.8}
+.wave{display:flex;gap:.35cqw;align-items:center;height:3cqw}.wave i{width:.4cqw;background:#fff;border-radius:.2cqw;animation:wv 700ms ease-in-out infinite alternate}
+@keyframes wv{from{height:.6cqw}to{height:2.8cqw}}
+.btn{background:rgba(255,255,255,.16);border-radius:1cqw;padding:.5cqw 1.2cqw;font-size:1.2cqw;font-weight:600;white-space:nowrap}
+.btn.pri{background:#fff;color:#000}
+.trace{display:block;width:100%;height:5cqw}
+.count{font-size:2.6cqw;font-weight:700;font-variant-numeric:tabular-nums}
+.ring{position:absolute;inset:0;box-shadow:inset 0 0 0 2.2cqw rgba(255,244,224,.95);opacity:0;transition:opacity 180ms ease-out;pointer-events:none;z-index:4}
+@media (prefers-reduced-motion:reduce){.win,.lock,.ic{transition:none}.spin,.wave i,.dot.wait{animation:none}}
+
+.timeline{display:flex;flex-direction:column;gap:6px;max-height:560px;overflow:auto;padding-right:4px}
+.mo{display:grid;grid-template-columns:3.6em minmax(0,1fr);gap:10px;text-align:left;font:inherit;color:inherit;background:var(--surface);border:1px solid var(--line-soft);border-radius:12px;padding:8px 12px;cursor:pointer;transition:border-color 140ms ease,transform 120ms ease}
+.mo:active{transform:scale(.985)}
+.mo:focus-visible{outline:2px solid var(--accent);outline-offset:2px}
+.mo[aria-current="step"]{border-color:var(--accent);background:var(--accent-soft)}
+.mo .tm{font-family:var(--mono);font-size:12px;color:var(--ink-3);padding-top:2px;font-variant-numeric:tabular-nums}
+.mo .nm{font-weight:600;font-size:14px;line-height:1.35}
+.mo .ds{font-size:12.5px;color:var(--ink-2);line-height:1.45;margin-top:2px;display:flex;gap:6px;align-items:center;flex-wrap:wrap}
+.controls{display:flex;gap:8px;margin-top:12px;flex-wrap:wrap}
+.controls button{font:inherit;font-size:13px;border:1px solid var(--line);background:var(--surface);color:var(--ink);border-radius:999px;padding:4px 12px;cursor:pointer}
+.controls button:active{transform:scale(.97)}
+.detail{margin-top:14px;background:var(--surface);border:1px solid var(--line-soft);border-radius:14px;padding:16px 18px}
+.detail h3{font-size:16px;display:flex;gap:8px;align-items:center;flex-wrap:wrap}
+.kv{display:grid;grid-template-columns:6em minmax(0,1fr);gap:6px 14px;font-size:13.5px;margin-top:10px}
+.kv dt{color:var(--ink-3)}.kv dd{margin:0;color:var(--ink-2)}
+
+/* ---------- 下半 ---------- */
+.arch{display:grid;gap:10px}
+.layer{display:grid;grid-template-columns:9em minmax(0,1fr);gap:12px;align-items:stretch}
+@media (max-width:640px){.layer{grid-template-columns:1fr}}
+.layer > b{font-size:13px;color:var(--ink-3);font-weight:600;padding-top:8px}
+.boxes{display:flex;flex-wrap:wrap;gap:8px}
+.box{background:var(--surface);border:1px solid var(--line-soft);border-radius:10px;padding:7px 12px;font-size:13.5px;line-height:1.45}
+.box small{display:block;color:var(--ink-3);font-size:11.5px}
+.box.core{border:1.5px solid var(--ink);font-weight:600}
+.cross{margin-top:6px;display:grid;grid-template-columns:repeat(auto-fit,minmax(min(100%,240px),1fr));gap:10px}
+.cross div{border:1px dashed var(--line);border-radius:12px;padding:10px 14px;font-size:13.5px;color:var(--ink-2)}
+.cross div b{color:var(--ink);display:block}
+
+.ladder{counter-reset:l;display:grid;gap:8px}
+.rung{display:grid;grid-template-columns:2.2em minmax(0,1fr);gap:12px;background:var(--surface);border:1px solid var(--line-soft);border-radius:12px;padding:10px 14px}
+.rung::before{counter-increment:l;content:counter(l);font-family:var(--head);font-size:24px;line-height:1;color:var(--ink-3)}
+.rung p{margin:2px 0 0;font-size:13.5px;color:var(--ink-2)}
+
+.shapes{display:grid;grid-template-columns:repeat(auto-fit,minmax(min(100%,200px),1fr));gap:12px}
+.shape{background:var(--surface);border:1px solid var(--line-soft);border-radius:12px;padding:14px}
+.shape .demo{height:64px;display:flex;align-items:flex-start;justify-content:center;background:linear-gradient(#5E6F98,#7FA0D8);border-radius:8px;margin-bottom:10px;overflow:hidden}
+.shape .demo i{display:block;background:#000}
+.shape p{margin:0;font-size:13px;color:var(--ink-2)}
+.shape code{font-size:11px}
+
+.tbl{overflow-x:auto;border:1px solid var(--line-soft);border-radius:12px;background:var(--surface)}
+table{border-collapse:collapse;width:100%;min-width:760px;font-size:13px;line-height:1.55}
+th,td{text-align:left;vertical-align:top;padding:9px 12px;border-bottom:1px solid var(--line-soft)}
+th{font-size:11.5px;font-weight:600;color:var(--ink-3);letter-spacing:.04em;background:var(--surface-2)}
+tr:last-child td{border-bottom:0}
+.two{display:grid;grid-template-columns:repeat(auto-fit,minmax(min(100%,420px),1fr));gap:14px}
+.card{background:var(--surface);border:1px solid var(--line-soft);border-radius:12px;padding:14px 16px}
+.card ul{margin:6px 0 0;padding-left:1.2em;font-size:13.5px;color:var(--ink-2);display:grid;gap:4px}
+.card p{margin:0;font-size:13.5px;color:var(--ink-2)}
+.no-list li::marker{content:"✕  ";color:var(--bad)}
+
+.mandate{background:var(--surface);border:1.5px solid var(--ink);border-radius:14px;padding:24px}
+.mandate ol{margin:12px 0 0;padding-left:1.5em;display:grid;gap:10px}
+.mandate li b{color:var(--ink)}
+.mandate li span{color:var(--ink-2)}
+.read{display:grid;grid-template-columns:repeat(auto-fit,minmax(min(100%,250px),1fr));gap:8px;margin-top:12px}
+.read div{border:1px solid var(--line-soft);border-radius:10px;padding:8px 12px;font-size:13px;background:var(--surface-2)}
+.read div code{background:none;border:0;padding:0}
+footer{margin-top:48px;font-size:12.5px;color:var(--ink-3);max-width:84ch}
+</style>
+
+<div class="wrap">
+<header>
+  <p class="eyebrow">WindowShade · 全景设计稿 · 2026-10-03</p>
+  <h1>一个刘海，接住这台 Mac 的一天</h1>
+  <p class="lede">窗口、实时活动、设备电量、CarPlay、指挥模式、刷脸解锁、隐私，原来是七份规格。它们其实是同一件事：<b>看不见的东西都在刘海里，碰一下就回来；要你放行的事，只在刘海里问你一次。</b>下面是一天里的十三个时刻，后面是让它们长成一个产品的规则，最后是写给接手者的硬要求。</p>
+  <div class="lines-legend" id="legend"></div>
+</header>
+
+<div class="player">
+  <div>
+    <div class="mac"><div class="screen" id="screen">
+      <div class="wall"></div>
+      <div class="menubar"><b>Xcode</b><span>文件</span><span>编辑</span><span>窗口</span><span class="r" id="clock">周六 07:50</span></div>
+      <div class="win" id="wA" style="left:5%;top:16%;width:52%;height:62%"><div class="bar"><span class="lamp"></span><span class="lamp"></span><span class="lamp"></span><span class="t">ContentView.swift</span></div><div class="lns"><i style="width:80%"></i><i style="width:64%"></i><i style="width:72%"></i><i style="width:48%"></i><i style="width:66%"></i></div></div>
+      <div class="win" id="wB" style="left:46%;top:24%;width:38%;height:48%"><div class="bar"><span class="lamp"></span><span class="lamp"></span><span class="lamp"></span><span class="t">终端 — codex</span></div><div class="lns"><i style="width:70%"></i><i style="width:50%"></i><i style="width:62%"></i></div></div>
+      <div class="win" id="wP" style="left:66%;top:52%;width:28%;height:36%"><div class="bar" style="background:#E9F6EC"><span class="lamp"></span><span class="lamp"></span><span class="lamp"></span><span class="t">微信</span></div><div class="lns"><i style="width:60%"></i><i style="width:40%"></i></div></div>
+      <div class="win carplay" id="wC" style="left:0;top:0;width:100%;height:100%;border-radius:0;opacity:0;transform:scale(.96);z-index:3"><div class="cp" style="height:100%"><div class="dock"><i style="background:#34C759"></i><i style="background:#FF3B30"></i><i style="background:#0A84FF"></i></div><div class="map"></div></div></div>
+      <div class="ring" id="ring"></div>
+      <div class="lock" id="lock"><div class="blur"></div><div class="time">07:50</div><div class="user"><div class="avatar"></div>Aaron<div class="pw" id="pw"><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i></div></div></div>
+      <div class="island" id="island"><div class="ic" id="ic"></div></div>
+    </div></div>
+    <div class="controls"><button type="button" id="prev">上一刻</button><button type="button" id="next">下一刻</button><button type="button" id="play">从早到晚播一遍</button></div>
+    <div class="detail" id="detail" aria-live="polite"></div>
+  </div>
+  <div class="timeline" id="timeline" role="list"></div>
+</div>
+
+<section>
+  <h2>七条线，一个结构</h2>
+  <p class="sub">每条线只管把真实发生的事交上来；呈现、仲裁、放行、登记各只有一处。哪条线先做都接在这四处上，不另造第二套。</p>
+  <div class="arch">
+    <div class="layer"><b>来源（各线自己的）</b><div class="boxes">
+      <div class="box">窗口<small>辅助功能、屏幕录制、SkyLight</small></div>
+      <div class="box">播放、隔空投送、路线、录音<small>实时活动</small></div>
+      <div class="box">设备电量<small>妙控外设 IOKit；AirPods 三组件；iPhone / 手表经 iPhone；Vision Pro</small></div>
+      <div class="box">CarPlay 接收<small>长按刘海进全屏；独立生命周期，只交会话事件</small></div>
+      <div class="box">遥控器与语音<small>atv-core 原始轨迹、按钮三阶段、连续互通麦克风</small></div>
+      <div class="box">脸与身边的设备<small>ArcFace（ANE）、活体、注视、蓝牙配件因素</small></div>
+      <div class="box">agent 会话<small>Codex App Server、Claude Agent SDK</small></div>
+    </div></div>
+    <div class="layer"><b>真相层</b><div class="boxes">
+      <div class="box">稳定 ID 与组件 ID<small>名字只用来显示</small></div>
+      <div class="box">新鲜度<small>最后看见 ≠ 最后读到 ≠ 采样时间</small></div>
+      <div class="box">未知就是未知<small>没读到不写 0%，没跑不写通过</small></div>
+      <div class="box">去重与回滞<small>低电量 20/10/5，同周期一档一次</small></div>
+    </div></div>
+    <div class="layer"><b>唯一的协调器</b><div class="boxes"><div class="box core">活动协调器（每块屏一个）<small>按下面的仲裁顺序决定刘海此刻长什么样；状态来自数据，不来自动画回调</small></div></div></div>
+    <div class="layer"><b>唯一的宿主</b><div class="boxes"><div class="box core">刘海面板（无刘海的屏用顶部胶囊）<small>紧凑、最小、展开、短暂提醒、交互五种形状；同一套弹簧</small></div></div></div>
+    <div class="layer"><b>输入</b><div class="boxes">
+      <div class="box">指针与触控板<small>停一下看一眼、点、两指扫</small></div>
+      <div class="box">键盘<small>快捷键、卡住时提示</small></div>
+      <div class="box">遥控器<small>声调、拍子、按钮</small></div>
+      <div class="box">声音<small>出草稿；声纹只作辅助因素</small></div>
+    </div></div>
+  </div>
+  <div class="cross">
+    <div><b>授权账（横穿）</b>只认验证器自己发出、仍有效、用途和目标一致的一次性请求。连接状态、设备名、动画对勾、手势候选都不放行。</div>
+    <div><b>信号登记表（横穿）</b>每个读取点登记一次；设置里的“隐私”和官网都从这张表生成。</div>
+    <div><b>能耗预算（横穿）</b>空闲不比 1.0.15 耗电；采集不进绘制和全局输入回调；动效结束就停刷新。</div>
+  </div>
+</section>
+
+<section>
+  <h2>刘海此刻听谁的</h2>
+  <p class="sub">七条线同时有话说时，从上往下，先到先占。上面的让出位置后，下面的接着原样回来，不补播。</p>
+  <div class="ladder">
+    <div class="rung"><div><h3>要你放行的事</h3><p>刷脸解锁、Touch ID 确认、agent 审批。独占交互，其它活动暂存；一结束就恢复仍有效的那一个。只认进入审批之后的新动作，之前那一下 Select 不算。</p></div></div>
+    <div class="rung"><div><h3>你正在做的事</h3><p>指挥手势画到一半、按住说话、拖着标题栏到刘海（落点小岛）。手离开之前，什么提醒都不进来。</p></div></div>
+    <div class="rung"><div><h3>你主动打开的</h3><p>指针停在刘海上展开的那一排、看一眼、展开的详情。普通更新不能把它顶掉，只能在原处更新数字。</p></div></div>
+    <div class="rung"><div><h3>短暂提醒</h3><p>“妙控鼠标已连接”、电量低、有变化时提醒、卡住时提示。约 4 秒；0.6 秒内的合成一句；遇到上面三层就进次区域，留一个小点，不抖不闪。</p></div></div>
+    <div class="rung"><div><h3>持续活动</h3><p>音乐、CarPlay、录音、隔空投送、路线、agent 在跑。最多三个，两指横扫切换；内容更新不打乱选中项。</p></div></div>
+    <div class="rung"><div><h3>什么都没有</h3><p>刘海和实体刘海重合，一个像素都不画，不刷新。</p></div></div>
+  </div>
+  <p class="sub" style="margin-top:14px">锁屏、切换用户、关掉功能：清掉所有可见内容和输入。解锁后只显示当前状态，并给一条“离开期间”的摘要。</p>
+</section>
+
+<section>
+  <h2>五种形状，一套弹簧</h2>
+  <p class="sub">数值沿用设计规范 v2 的动效记号。形状先动，内容在形状走到四成后淡入；减少动态效果时只淡入淡出。</p>
+  <div class="shapes">
+    <div class="shape"><div class="demo"><i style="width:30%;height:16px;border-radius:0 0 8px 8px"></i></div><h3>最小</h3><p>只露一个点或图标，在刘海一侧。多个活动时其余的退到这里。</p><code>calm 0.34 / 1.0</code></div>
+    <div class="shape"><div class="demo"><i style="width:56%;height:18px;border-radius:0 0 9px 9px"></i></div><h3>紧凑</h3><p>刘海左右各长一段：左边是谁，右边是数（3 扇、12 分钟、82%）。</p><code>settle 0.38 / 1.0</code></div>
+    <div class="shape"><div class="demo"><i style="width:62%;height:30px;border-radius:0 0 14px 14px"></i></div><h3>短暂提醒</h3><p>一句话，约 4 秒。主句说事，副句给数。</p><code>bloom 0.42 / 0.84</code></div>
+    <div class="shape"><div class="demo"><i style="width:78%;height:52px;border-radius:0 0 18px 18px"></i></div><h3>展开</h3><p>指针停住或点开：那一排窗口、详情、摘要、审批。</p><code>expand 0.40 / 0.92</code></div>
+    <div class="shape"><div class="demo"><i style="width:70%;height:44px;border-radius:0 0 16px 16px;box-shadow:0 0 0 2px #fff inset"></i></div><h3>交互</h3><p>正在认你、正在画手势、正在录音、正在倒数。给每一步即时反馈，结果出来前不打对勾。</p><code>pop 0.30 / 0.75 · 逐拍</code></div>
+  </div>
+</section>
+
+<section>
+  <h2>一张输入表</h2>
+  <p class="sub">遥控器这一列照 v3。每个按钮先补齐按下、松开、取消三个阶段；某个遥控器只给点按结果，就明说用“点一下开始、再点一下停止”。</p>
+  <div class="tbl"><table>
+    <thead><tr><th>想做的事</th><th>指针 / 触控板</th><th>键盘</th><th>遥控器（指挥模式）</th></tr></thead>
+    <tbody>
+      <tr><td>打开启动台</td><td>点一下刘海</td><td>⌃⌘L</td><td>—</td></tr>
+      <tr><td>进入 CarPlay / 回到桌面</td><td>长按刘海；再长按一次回来</td><td>Esc 回来</td><td>—</td></tr>
+      <tr><td>看一眼收着的窗口</td><td>停在刘海上，再停在一格上</td><td>按窗口切换</td><td>—</td></tr>
+      <tr><td>拿回窗口</td><td>点一下；两指下拉</td><td>—</td><td>—</td></tr>
+      <tr><td>收进刘海</td><td>朝刘海甩一下标题栏；两指上推全部</td><td>全部收进刘海</td><td>—</td></tr>
+      <tr><td>切换活动</td><td>两指横扫</td><td>—</td><td>—</td></tr>
+      <tr><td>选 effort</td><td>—</td><td>—</td><td>一声 low · 二声 medium · 三声 high · 四声 xhigh；五拍（3+2）max · 六拍（3+3）ultra，只在后端真有时</td></tr>
+      <tr><td>选模型 / 会话</td><td>—</td><td>—</td><td>TV/Home 短按换“模型 / effort”；长按选项目和会话</td></tr>
+      <tr><td>说一句话</td><td>—</td><td>—</td><td>按住 Siri 录音，松开出草稿</td></tr>
+      <tr><td>提交 / 停下</td><td>—</td><td>—</td><td>Play/Pause：有草稿就提交，在跑就请求停下</td></tr>
+      <tr><td>取消</td><td>移开</td><td>Esc</td><td>Back：只取消交互，不撤销文件、不动 git</td></tr>
+      <tr><td>放行</td><td>—</td><td>Touch ID</td><td>审批出现后的新一下 Select，再加 Touch ID</td></tr>
+    </tbody>
+  </table></div>
+</section>
+
+<section>
+  <h2>信任：要做的和不做的</h2>
+  <div class="two">
+    <div class="card"><h3>要做</h3><ul>
+      <li>刷脸解锁照 Glance 的方式真正解锁，开启前写明风险；脸（含严格活体和注视）和手机或手表的蓝牙因素都对，才输入密码。</li>
+      <li>每次放行绑定一件事：用途、目标摘要、随机数、期限、会话代次，用一次就作废；取消后晚到的成功不算。</li>
+      <li>因素算对：脸加指纹是两种生物特征，不自动算两个因素；设备私钥加系统生物识别，才是一个多因素认证器。</li>
+      <li>离开就锁、偷看收私人窗口，都给倒数，碰一下就取消；系统的 Touch ID 和密码永远是出路。</li>
+      <li>声纹作辅助因素：脸的分数落在门槛附近、或放行高风险的事（agent 推送、关安全设置）时，说一句随机短语补一道。只加不减：不单独放行，不顶替手机或手表；随机短语加活体，挡录音重放。</li>
+      <li>私有 API 能达成目的就用（Aaron 定：不走 App Store）；用了就登记到隐私一栏的第三层，系统更新后失效时有退路。</li>
+      <li>设置里的“隐私”把读到的每一样摊开：原值、为什么、去了哪里。</li>
+    </ul></div>
+    <div class="card"><h3>不做，或先过审查再说</h3><ul class="no-list">
+      <li>心率、脸红不当解锁依据：生理反应说明不了是谁、诚不诚实（美国国家研究委员会的测谎审查）。</li>
+      <li>声纹不单独放行：NIST SP 800-63B-4 不把声纹当认证因素，所以它只在脸和手机之外补一道，不能替代它们。</li>
+      <li>健康数据不进放行：Apple 协议限制 HealthKit 的用途，转成蓝牙或 JSON 也不变。</li>
+      <li>atv-core 的“已验证”不当授权：它没验客户端签名就发了 Verified，接 agent 前先补好。</li>
+      <li>不往前台窗口盲发回车；不偷偷开一段空对话冒充接管原会话；不默默降档还写着 xhigh。</li>
+      <li>AirBattery（AGPLv3）只作研究来源，不拷代码；Loupe 的名字、图标、图片不用。</li>
+    </ul>
+    <p style="margin-top:10px"><b>Aaron 定（2026-10-03）：</b>不走 App Store 分发，Apple 协议里 Face Data 的用途限制不作为门槛；私有 API 能达成目的就大胆用。</p></div>
+  </div>
+</section>
+
+<section>
+  <h2>能耗预算</h2>
+  <p class="sub">“M 系芯片用好”的意思是：重活放到合适的单元，闲着就真闲着。数字都要实测，不抄论文。</p>
+  <div class="tbl"><table>
+    <thead><tr><th>线</th><th>什么时候干活</th><th>放在哪</th><th>验收</th></tr></thead>
+    <tbody>
+      <tr><td>窗口画面</td><td>看一眼、那一排展开时</td><td>ScreenCaptureKit + GPU 缩放</td><td>收回后不再截图</td></tr>
+      <tr><td>实时活动</td><td>事件来了才读；播放器只在有变化或 30 秒兜底时问</td><td>后台串行队列，E 核</td><td>空闲时为零查询</td></tr>
+      <tr><td>设备电量</td><td>连上 / 断开靠匹配通知；连着时 2 分钟一读</td><td>后台，不进绘制和输入回调</td><td>待机没有 display-link</td></tr>
+      <tr><td>刷脸解锁</td><td>停手 30 秒后才看；每秒 2 帧</td><td>Vision + ArcFace 在 ANE</td><td>停手一小时的耗电实测</td></tr>
+      <tr><td>蓝牙因素</td><td>认你、离开判断时</td><td>扫描有占空比</td><td>和不开时比，差值实测</td></tr>
+      <tr><td>指挥模式</td><td>打开指挥模式时才连遥控器</td><td>识别器纯计算，输入到反馈 p95 ≤ 50 毫秒（目标，未测）</td><td>关掉后连接也断</td></tr>
+      <tr><td>整体</td><td colspan="2">现在实测：空闲约 3.3% CPU、约 4550 次唤醒/秒（性能文档第七节），已定位并修了音频进程扫描，待换新构建复测</td><td>空闲 CPU 和唤醒都不高于 1.0.15</td></tr>
+    </tbody>
+  </table></div>
+</section>
+
+<section>
+  <h2>做的顺序</h2>
+  <p class="sub">先打地基，再接线。每一步都给 Aaron 一个能装上、能试、能撤回的构建。</p>
+  <div class="tbl"><table>
+    <thead><tr><th>阶段</th><th>做什么</th><th>对应规格</th><th>算完成</th><th>现在</th></tr></thead>
+    <tbody>
+      <tr><td>0 收尾</td><td>换上新构建复测能耗；空闲时重跑探针（看一眼那一排、别的桌面、刘海形状……）；修日志</td><td>performance 七、checklist、P1</td><td>能耗不高于 1.0.15；探针全过；日志只有本人能读、不写标题</td><td><span class="st part">进行中</span></td></tr>
+      <tr><td>1 地基</td><td>活动协调器按上面的仲裁顺序重写；信号登记表 + 构建检查</td><td>v2 B3 · P3</td><td>v2 的多活动、打断恢复、隐私抑制场景跑过；没登记的读取让检查失败</td><td><span class="st part">协调器有雏形</span></td></tr>
+      <tr><td>2 刷脸解锁</td><td>F1 蓝牙因素实验 → F2 锁屏接线 → F3 录脸 → F4 认你 → F5 攻击测试 → F6 离开与偷看 → F7 摘要</td><td>v4 A0–A5 · face-unlock.md</td><td>见 face-unlock.md 每步的完成条件</td><td><span class="st todo">F1 未开始</span></td></tr>
+      <tr><td>3 隐私一栏</td><td>P2 联网实测 → P4 设置页 → P5 逐句核对 → P6 官网</td><td>privacy-page.md</td><td>核对表全是“已核”</td><td><span class="st todo">设计稿</span></td></tr>
+      <tr><td>— 1.0.16</td><td colspan="3">阶段 0–3 都过了，Aaron 说发才发。窗口这条线已经在 1.0.16 里；电量、实时活动等已进 App 的照现在的样子一起发。</td><td><span class="st no">不发</span></td></tr>
+      <tr><td>4 电量全家</td><td>AirPods 左耳、右耳、盒；iPhone、iPad；手表经 iPhone（写“来自 iPhone”）；Vision Pro 单列实测</td><td>v2 B4</td><td>每类设备真机记录；未知不写 0%</td><td><span class="st part">妙控外设已做</span></td></tr>
+      <tr><td>5 指挥模式</td><td>C0 两个阻断实验（空闲态原始轨迹；同一台 iPhone 遥控加麦克风）→ 测试面板 → 只读真实后端 → 提交与停下</td><td>v3 C0–C6</td><td>v3 的 64 个场景逐项有真实结果</td><td><span class="st part">识别器纯逻辑</span></td></tr>
+      <tr><td>6 CarPlay</td><td>接收器本体：长按刘海进全屏，短按仍是启动台；会话事件交给协调器，和电量、音乐汇合</td><td>v1 · v2 B5</td><td>长按进出都跟手；回到桌面窗口都在原处；停掉 CarPlay 不清电量；电量失败不断视频</td><td><span class="st todo">研究与规格</span></td></tr>
+      <tr><td>7 资格</td><td>独立攻防、恢复、能耗、许可审查；官网、README、宣传片</td><td>v4 A6 · v2 B6</td><td>Marvin 和 Newlearner 这样的人看得过去</td><td><span class="st todo">未开始</span></td></tr>
+    </tbody>
+  </table></div>
+</section>
+
+<section>
+  <div class="mandate">
+    <h2>写给接手的人：照这个方向走，不要绕开</h2>
+    <p class="sub" style="margin:0">这一页是 WindowShade 的总图，仓库里的同一份是 <code>docs/blueprint.md</code>，<code>AGENTS.md</code> 第一行指向它。接手的模型或人，先读这一节和下面四份，再动代码。做不到就停下来写明卡在哪，不要换一个更容易的东西交差。</p>
+    <div class="read">
+      <div><code>docs/direction.md</code><br>愿景按线列；Aaron 的逐项决定</div>
+      <div><code>docs/handoff/chatgpt-2026-10-01.md</code><br>v2–v4 规格要点</div>
+      <div><code>docs/face-unlock.md</code><br>刷脸解锁八条硬要求、F1–F7</div>
+      <div><code>docs/privacy-page.md</code><br>隐私一栏、核对表、P1–P6</div>
+    </div>
+    <ol>
+      <li><b>七条线都是目标，没有一条是偏航。</b><span>窗口、实时活动、电量、CarPlay、指挥模式、刷脸解锁、隐私，进度各记各的，谁也不替代谁。觉得哪条“不该做”，先读 direction.md 再说。</span></li>
+      <li><b>一个宿主，一个协调器。</b><span>所有东西都长在已有的刘海面板里，经活动协调器按仲裁顺序出场。不新建浮层、认证窗口、菜单栏小工具，不拿预览窗口当成果。</span></li>
+      <li><b>状态来自数据，不来自动画。</b><span>动画回调不决定连上没有、认出没有、放行没有。结果出来前不打对勾。</span></li>
+      <li><b>未知就是未知。</b><span>没读到不写 0%，没跑的场景不写通过，没核的话不上界面和官网，模拟数据不冒充真机。</span></li>
+      <li><b>放行只走授权账。</b><span>一次性、绑定用途和目标、可撤销；心率、健康数据、atv-core 的 Verified 都不放行；声纹只作辅助因素，不单独放行。</span></li>
+      <li><b>读什么都登记。</b><span>新加一个读取点，先登记到信号登记表，隐私一栏自动多一行。</span></li>
+      <li><b>能耗写进验收，只做纯赚的改动。</b><span>空闲 CPU 和唤醒不高于 1.0.15；已有的行为不许变差。</span></li>
+      <li><b>文案照 copy-guide。</b><span>一个东西一个名字：收起窗口、收进刘海、看一眼、实时活动、刷脸解锁、指挥模式。</span></li>
+      <li><b>不碰 Aaron 的东西。</b><span>不动他的真实窗口，探针只用临时窗口、只在他离开或空闲时跑；不退出他日常用的 WindowShade；不提交、不推送、不发布，除非他说。</span></li>
+      <li><b>许可干净。</b><span>Glance、Loupe 代码 MIT，带版权声明；AirBattery 只读不拷；Loupe 的名字、图标、图片不用；Apple 的机身素材只用来量，不进仓库。</span></li>
+      <li><b>便宜模型交来的东西要复核。</b><span>DeepSeek 等交来的改动和数字，主模型自己看差异、自己复现，再算数。</span></li>
+      <li><b>每一步都留证据。</b><span>改完更新对应文档和 1.0.16 对照表：做了什么、怎么测的、真实结果、还差什么。</span></li>
+    </ol>
+  </div>
+</section>
+
+<footer>依据：Aaron 分享的 ChatGPT 会话（v2 电量与完整灵动岛、v3 遥控器与语音编程、v4 身份认证与 MFA，2026-10-03 重读）；与 Marvin 的讨论；direction.md 的四轮问答；Glance、Loupe、atv-core、AirBattery 的源码与许可；Apple《Designing Fluid Interfaces》、HIG Foundations、macOS 平台指南。屏幕是示意，比例取 MacBook Air 15″；时间线上的数值都是例子。</footer>
+</div>
+
+<script>
+(function(){
+  var L={win:['窗口','--l-win'],island:['实时活动','--l-island'],batt:['设备电量','--l-batt'],cond:['指挥模式','--l-cond'],car:['CarPlay','--l-car'],auth:['刷脸解锁与放行','--l-auth'],priv:['隐私','--l-priv']};
+  function tag(k){return '<span class="tag" style="color:var('+L[k][1]+')">'+L[k][0]+'</span>'}
+  document.getElementById('legend').innerHTML=Object.keys(L).map(tag).join('');
+  var ST={done:['已有','done'],part:['部分','part'],todo:['要做','todo']};
+  var $=function(id){return document.getElementById(id)};
+  var island=$('island'),ic=$('ic'),lock=$('lock'),pw=$('pw'),ring=$('ring');
+  var reduce=matchMedia('(prefers-reduced-motion: reduce)').matches;
+  var timers=[];function later(f,ms){timers.push(setTimeout(f,reduce?Math.min(ms,150):ms))}
+  function spring(t,r,z){var w=2*Math.PI/r;if(z>=1)return 1-(1+w*t)*Math.exp(-w*t);var wd=w*Math.sqrt(1-z*z);return 1-Math.exp(-z*w*t)*(Math.cos(wd*t)+z*w/wd*Math.sin(wd*t))}
+  var cur={w:12.2,h:3.6,r:1.1},anim;
+  function shape(w,h,r,sr,sz){var f={w:cur.w,h:cur.h,r:cur.r},t0=performance.now();if(anim)anim.stop=true;var a={};anim=a;
+    function apply(p){cur={w:f.w+(w-f.w)*p,h:f.h+(h-f.h)*p,r:f.r+(r-f.r)*p};island.style.width=cur.w+'cqw';island.style.height=cur.h+'cqw';island.style.borderRadius='0 0 '+cur.r+'cqw '+cur.r+'cqw';}
+    if(reduce){apply(1);return}
+    (function tick(){if(a.stop)return;var t=(performance.now()-t0)/1000,p=spring(t,sr,sz);apply(p);if(t<1.6)requestAnimationFrame(tick);else apply(1)})();}
+  function content(h){ic.style.opacity=0;later(function(){ic.className='ic';ic.innerHTML=h;if(/class="col/.test(h)){}ic.style.opacity=1},reduce?0:110)}
+  function col(h){ic.style.opacity=0;later(function(){ic.className='ic col';ic.innerHTML=h;ic.style.opacity=1},reduce?0:110)}
+  function setWins(o){['wA','wB','wP','wC'].forEach(function(id){var w=$(id),s=o[id]||(id==='wC'?'hide':'show');
+    if(s==='show'){w.style.opacity=1;w.style.transform='none'}
+    else if(s==='tuck'){w.style.opacity=0;w.style.transform=reduce?'none':'translate('+(id==='wP'?'-60%,-120%':'0,-60%')+') scale(.12)'}
+    else{w.style.opacity=0;w.style.transform='scale(.96)'}});}
+  var music='<span class="ico" style="background:linear-gradient(140deg,#FF5E7E,#FF2D55)"></span><span style="flex:1;text-align:right" class="t2">♪ 2:14</span>';
+  var M=[
+    {t:'07:50',n:'开盖 · 认出你',ln:'auth',st:'todo',sh:'交互',ref:'v4 A3–A4 · F4',
+     what:'系统锁屏是主角。刘海左边一圈在转，右边两枚点：脸、手机。暗时屏幕四周亮一圈补光。',
+     truth:'ArcFace 特征在 ANE 上比对，含严格活体和注视；手机的蓝牙因素靠加密重连证明是那一台。两样都对才代打密码。',
+     fail:'戴口罩、没认出、手机不在、连续 3 次失败：说清缺哪样，交回 Touch ID 或密码。',
+     run:function(){lock.style.opacity=1;ring.style.opacity=1;setWins({});shape(24,4.6,1.6,.34,1);content('<span class="spin"></span><span style="display:flex;gap:1cqw"><span class="dot ok"></span><span class="dot wait"></span></span>');
+       later(function(){content('<span class="t1">✓</span><span style="display:flex;gap:1cqw"><span class="dot ok"></span><span class="dot ok"></span></span>');pw.classList.add('typed');ring.style.opacity=0},1300)}},
+    {t:'07:51',n:'回来了',ln:'auth',st:'todo',sh:'展开',ref:'F7 · v2 隐私抑制',
+     what:'桌面从刘海展开，窗口都在原处。刘海给一条“离开期间”摘要，每项能点过去。',
+     truth:'只列现在仍然成立的事：设备读数带采样时间，不补播离开时积下的提醒。',
+     fail:'系统没确认已解锁，桌面不展开。',
+     run:function(){lock.style.opacity=0;pw.classList.remove('typed');shape(40,10,2.4,.40,.92);col('<span class="t1">离开期间</span><span class="t2">AirPods 左耳电量 8%，记得充电</span><span class="t2">收着 3 扇窗口 · 终端有变化</span>')}},
+    {t:'09:10',n:'窗口都在刘海里',ln:'win',st:'done',sh:'紧凑',ref:'notch.md',
+     what:'朝刘海甩一下标题栏，窗口收进刘海。刘海左边是最近那扇的 App 图标，右边是收着几扇。',
+     truth:'收进去的窗口记在恢复记录里，出问题能找回。',fail:'刘海两边菜单栏不空时只亮一个点。',
+     run:function(){setWins({wB:'tuck',wP:'tuck'});shape(21,3.6,1.1,.38,1);content('<span class="ico" style="background:#1d1d1f;border:1px solid #444"></span><span class="t1">2</span>')}},
+    {t:'09:12',n:'看一眼',ln:'win',st:'done',sh:'展开',ref:'notch.md · scorecard 95',
+     what:'指针停在刘海上，展开一排看不见的窗口：收着的、已最小化、已隐藏、别的桌面上的。停在一格上看大图，点一下才过去。',
+     truth:'别的桌面和已最小化的窗口画面写“不是实时画面”。',fail:'拿不到画面时显示应用图标。',
+     run:function(){shape(46,13,2.6,.40,.92);col('<span class="t2">看不见的窗口</span><div class="tiles"><i><b>终端</b></i><i><b>微信</b></i><i><b>桌面 3</b></i><i><b>已最小化</b></i></div>')}},
+    {t:'09:40',n:'卡住时开口',ln:'win',st:'done',sh:'短暂提醒',ref:'stuck-habits.md',
+     what:'从 Windows 来，按了 Ctrl+C 没反应。刘海说一句 Mac 上怎么做，每样只说一次。',
+     truth:'只看键位和修饰键，不记打的字。',fail:'选了“一直用 Mac”就一个键都不看。',
+     run:function(){setWins({wB:'tuck',wP:'tuck'});shape(34,6.2,1.8,.42,.84);col('<span class="t1">Mac 上用 ⌘C 复制</span><span class="t2">⌘ 在空格键两边</span>')}},
+    {t:'10:30',n:'妙控鼠标连上了',ln:'batt',st:'part',sh:'短暂提醒 → 紧凑',ref:'v2 B2–B3 · device-battery.md',
+     what:'音乐正在紧凑显示。鼠标连上，刘海短暂说“妙控鼠标已连接 · 电量 82%”，4 秒后原样回到音乐。',
+     truth:'按蓝牙地址认设备；先说连上，电量读到了在同一处补上，读不到写“电量暂时读不到”。',fail:'0.6 秒内连上几台合成一句“3 个设备已连接”。',
+     run:function(){shape(22,3.6,1.1,.38,1);content(music);later(function(){shape(34,6.2,1.8,.42,.84);col('<span class="t1">妙控鼠标已连接</span><span class="t2">电量 82%</span>')},700);later(function(){shape(22,3.6,1.1,.38,1);content(music)},3600)}},
+    {t:'11:00',n:'指挥：画一个三声',ln:'cond',st:'part',sh:'交互',ref:'v3 C2–C4 · conductor.md',
+     what:'在 iPhone 的遥控器触控区画一个谷形。刘海显示轨迹，抬手后才出结果：“三声 · high”，下面写目标会话和模型。',
+     truth:'整句结束才判定；五拍的前四拍不先切到 xhigh。后端不支持就写“当前后端不支持”，不默默降档。',fail:'两个候选分不清就保持原设置；普通上下滑动不执行。',
+     run:function(){shape(42,11,2.4,.30,.75);col('<svg class="trace" viewBox="0 0 100 30" preserveAspectRatio="none"><path d="M5 6 Q30 30 50 27 T95 4" fill="none" stroke="#fff" stroke-width="2.4" stroke-linecap="round"/></svg><span style="display:flex;justify-content:space-between"><span class="t1">三声 · high</span><span class="t2">WindowShade · Claude</span></span>')}},
+    {t:'11:01',n:'按住说话',ln:'cond',st:'todo',sh:'交互',ref:'v3 C3',
+     what:'按住 Siri 键。真的收到声音才显示波形；松开出一段可以检查的草稿，按 Play 才发出去。',
+     truth:'来源写清（iPhone 麦克风 / Mac 麦克风）。声音只出草稿，不放行任何事。',fail:'麦克风断了就停，保留草稿，不换别的麦克风，不画假波形。',
+     run:function(){shape(42,9,2.2,.30,.75);col('<span style="display:flex;align-items:center;gap:1.2cqw"><span class="wave"><i></i><i style="animation-delay:.1s"></i><i style="animation-delay:.2s"></i><i style="animation-delay:.3s"></i><i style="animation-delay:.15s"></i></span><span class="t2">iPhone 麦克风</span></span><span class="t1" style="margin-top:.6cqw">“把侧拉的阴影调淡一点”</span>')}},
+    {t:'11:02',n:'Codex 在跑',ln:'island',st:'todo',sh:'紧凑',ref:'v3 C5 · v2 多活动',
+     what:'提交后刘海变成一项持续活动：会话名、第几轮、在跑。这时触控板电量低，只在一侧亮个小点，不盖掉任务。',
+     truth:'状态来自 Codex App Server 的线程和轮次；请求停下先写“正在停止”，后端真的停了才写“已停止”。',fail:'连不上后端就说连不上，不往前台窗口盲发回车。',
+     run:function(){setWins({wB:'tuck',wP:'tuck'});shape(30,3.6,1.1,.38,1);content('<span class="spin" style="width:1.8cqw;height:1.8cqw"></span><span class="t2">WindowShade · 第 3 轮</span><span class="dot" style="background:#FF9F0A;width:.9cqw;height:.9cqw"></span>')}},
+    {t:'13:20',n:'长按刘海：CarPlay',ln:'car',st:'todo',sh:'全屏 · 刘海留最小',ref:'v1 · v2 B5',
+     what:'长按刘海，iPhone 的 CarPlay 从刘海展开、铺满整块屏，像坐进车里。点一下刘海还是启动台，两件事分开。再长按刘海或按 Esc，CarPlay 收回刘海，窗口都在原处；导航和播放留在刘海里当持续活动。',
+     truth:'接收器有自己的生命周期，只把会话事件交给协调器。停掉 CarPlay 不清电量；电量读不到不断视频。',fail:'没连上 iPhone 时全屏里写“连接 iPhone”，不放假画面；连接断了就说断了，留在全屏等你决定。',
+     run:function(){var c=$('wC');c.style.transition='none';c.style.transformOrigin='50% 0';c.style.opacity=0;c.style.transform='scale(.18)';shape(13.4,4.2,1.3,.30,.75);content('');
+       later(function(){c.style.transition='';c.offsetWidth;c.style.opacity=1;c.style.transform='none';shape(17,3.6,1.1,.38,1);content('<span class="dot ok" style="width:.9cqw;height:.9cqw"></span><span class="t2">导航 12 分钟</span>')},380)}},
+    {t:'14:05',n:'要你放行',ln:'auth',st:'part',sh:'展开（独占）',ref:'v4 A1 · 授权账',
+     what:'Codex 想推送到 main。刘海独占展开，写清这一件事；审批出现后的新一下才算数，再按 Touch ID。',
+     truth:'一次性请求绑定用途、目标、期限；用一次就作废。现有的第一个受保护动作是“关闭自动检查更新”。',fail:'没确认就写“没有确认，没有推送”；取消后晚到的成功不算。',
+     run:function(){setWins({wC:'hide',wB:'tuck',wP:'tuck'});shape(46,11.5,2.6,.40,.92);col('<span class="t2">Codex · WindowShade</span><span class="t1">想执行 git push origin main</span><span style="display:flex;gap:1cqw;margin-top:.8cqw"><span class="btn">不允许</span><span class="btn pri">用 Touch ID 确认</span></span>')}},
+    {t:'15:30',n:'有人偷看',ln:'priv',st:'todo',sh:'短暂提醒',ref:'F6 · privacy-page.md',
+     what:'摄像头看到第二张脸：标成私人的 App（聊天、邮件、钱包）收进刘海。你一个人看回来就还原。',
+     truth:'只在停手 30 秒后才看，每秒 2 帧，在 ANE 上算；不存图。设置里的“隐私”写着它读了什么。',fail:'误判时一碰就还原；误收率实测。',
+     run:function(){setWins({wP:'tuck'});shape(30,5.4,1.6,.42,.84);col('<span class="t1">私人窗口已收起</span><span class="t2">你一个人时会放回</span>')}},
+    {t:'17:30',n:'离开',ln:'auth',st:'todo',sh:'交互',ref:'F6 · v4 A5',
+     what:'手机和手表都走远了。刘海倒数 10 秒，碰一下键盘或触控板就取消；倒数完才锁，桌面折进刘海。',
+     truth:'蓝牙因素说“不在”只算一种线索；传感器读不到时是“不知道”，不当成你走了。',fail:'误锁率实测；系统密码永远能进。',
+     run:function(){setWins({});shape(30,5.4,1.6,.34,1);var n=10;col('<span style="display:flex;justify-content:space-between;align-items:center"><span><span class="t1">手机和手表都走远了</span><br><span class="t2">碰一下就取消</span></span><span class="count" id="cd">10</span></span>');
+       (function tick(){later(function(){var c=document.getElementById('cd');if(!c)return;n--;c.textContent=n;if(n>0)tick();else{lock.style.opacity=1;shape(12.2,3.6,1.1,.38,1);content('')}},reduce?120:420)})()}}
+  ];
+  var tl=$('timeline'),i=0,playing=false;
+  tl.innerHTML=M.map(function(m,k){return '<button type="button" class="mo" role="listitem" data-k="'+k+'"><span class="tm">'+m.t+'</span><span><span class="nm">'+m.n+'</span><span class="ds">'+tag(m.ln)+'<span class="st '+ST[m.st][1]+'">'+ST[m.st][0]+'</span></span></span></button>'}).join('');
+  function go(k){i=(k+M.length)%M.length;timers.forEach(clearTimeout);timers=[];var m=M[i];
+    [].forEach.call(tl.children,function(b,j){if(j===i)b.setAttribute('aria-current','step');else b.removeAttribute('aria-current')});
+    $('clock').textContent='周六 '+m.t;if(i!==0&&i!==12){lock.style.opacity=0;ring.style.opacity=0}
+    var T={wB:'tuck',wP:'tuck'};setWins([{},{},T,T,T,T,T,T,T,T,T,{wP:'tuck'},{}][i]);
+    m.run();
+    $('detail').innerHTML='<h3>'+m.t+' · '+m.n+' '+tag(m.ln)+'<span class="st '+ST[m.st][1]+'">'+ST[m.st][0]+'</span></h3><dl class="kv"><dt>看到什么</dt><dd>'+m.what+'</dd><dt>真相从哪来</dt><dd>'+m.truth+'</dd><dt>出岔子时</dt><dd>'+m.fail+'</dd><dt>形状</dt><dd>'+m.sh+'</dd><dt>规格</dt><dd>'+m.ref+'</dd></dl>';
+  }
+  tl.addEventListener('click',function(e){var b=e.target.closest('.mo');if(b){playing=false;go(+b.dataset.k)}});
+  $('prev').onclick=function(){playing=false;go(i-1)};$('next').onclick=function(){playing=false;go(i+1)};
+  $('play').onclick=function(){playing=true;go(0);(function step(){setTimeout(function(){if(!playing)return;if(i<M.length-1){go(i+1);step()}else playing=false},reduce?1500:4200)})()};
+  go(0);
+})();
+</script>
+
+</body></html>

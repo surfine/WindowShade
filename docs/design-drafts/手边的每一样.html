@@ -1,0 +1,313 @@
+<!doctype html><html><head><meta charset=utf8><meta name=viewport content="width=device-width,initial-scale=1,viewport-fit=cover"><style>:root{color-scheme:light;box-sizing:border-box;padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}html{scroll-padding-top:env(safe-area-inset-top,0px)}body{margin:0;padding:0;font:14px -apple-system,BlinkMacSystemFont,sans-serif;background:#faf9f5;color:#141413}img{max-width:100%}[hidden]:not([hidden=until-found i]){display:none!important}</style></head><body>
+<title>手边的每一样</title>
+<style>
+@import url("https://fonts.googleapis.com/css2?family=Newsreader:opsz,wght@6..72,400;6..72,600&family=IBM+Plex+Sans:wght@400;500;600&family=IBM+Plex+Mono:wght@400;500&family=Noto+Sans+SC:wght@400;500;600&family=Noto+Serif+SC:wght@600&display=swap");
+/* 同一套纸面。中间一块“桌面”：左边画设备、手指落点；右边是这台设备上每个动作的去处 */
+:root{
+  --paper:#EEF1F6;--surface:#FFFFFF;--surface-2:#F5F7FB;--ink:#131A25;--ink-2:#46546A;--ink-3:#6F7D93;
+  --line:#D6DDE8;--line-soft:#E5EAF2;--accent:#2F62C4;--accent-soft:#E2EAF9;--good:#2C7350;--good-soft:#E1F0E7;--warn:#A8600F;--warn-soft:#FBF0DF;--bad:#B3352B;--bad-soft:#FBE6E3;
+  --alu:#D9DCE1;--alu-2:#B9BEC6;--dev-ink:#1B1E24;--finger:#E0527E;
+  --doc:"IBM Plex Sans","Noto Sans SC",-apple-system,system-ui,sans-serif;--head:"Newsreader","Noto Serif SC",Georgia,serif;--mono:"IBM Plex Mono",ui-monospace,Menlo,monospace;
+}
+@media (prefers-color-scheme:dark){:root:not([data-theme="light"]){color-scheme:dark;
+  --paper:#0E131B;--surface:#151C27;--surface-2:#1A222F;--ink:#E7EDF6;--ink-2:#A7B4C8;--ink-3:#7A889E;--line:#26303F;--line-soft:#1E2733;
+  --accent:#7FA5F0;--accent-soft:#1B2740;--good:#6CC495;--good-soft:#14271D;--warn:#E0A264;--warn-soft:#2A2115;--bad:#F08C80;--bad-soft:#2C1715;
+  --alu:#3A3F48;--alu-2:#565C67;--dev-ink:#E7EDF6;--finger:#F07AA0;}}
+:root[data-theme="dark"]{color-scheme:dark;
+  --paper:#0E131B;--surface:#151C27;--surface-2:#1A222F;--ink:#E7EDF6;--ink-2:#A7B4C8;--ink-3:#7A889E;--line:#26303F;--line-soft:#1E2733;
+  --accent:#7FA5F0;--accent-soft:#1B2740;--good:#6CC495;--good-soft:#14271D;--warn:#E0A264;--warn-soft:#2A2115;--bad:#F08C80;--bad-soft:#2C1715;
+  --alu:#3A3F48;--alu-2:#565C67;--dev-ink:#E7EDF6;--finger:#F07AA0;}
+*{box-sizing:border-box}
+body{margin:0;background:var(--paper);color:var(--ink);font:15px/1.72 var(--doc);-webkit-font-smoothing:antialiased}
+.wrap{max-width:1100px;margin:0 auto;padding-inline:20px;padding-block:0 96px}
+header{padding:60px 0 22px}
+.eyebrow{font-family:var(--mono);font-size:11.5px;letter-spacing:.14em;text-transform:uppercase;color:var(--ink-3);margin:0 0 14px}
+h1{font-family:var(--head);font-weight:600;font-size:clamp(34px,5.6vw,52px);line-height:1.08;letter-spacing:-.015em;margin:0 0 16px;text-wrap:balance}
+.lede{font-size:17.5px;color:var(--ink-2);max-width:64ch;margin:0}
+.lede b{color:var(--ink)}
+h2{font-family:var(--head);font-weight:600;font-size:clamp(23px,3.2vw,30px);line-height:1.25;margin:0 0 8px;text-wrap:balance}
+h3{font-size:15px;margin:0 0 4px}
+section{padding-top:56px}
+p{max-width:68ch}
+.sub{color:var(--ink-2);margin:0 0 20px}
+code{font-family:var(--mono);font-size:.86em;background:var(--surface-2);border:1px solid var(--line-soft);border-radius:4px;padding:1px 5px;overflow-wrap:anywhere}
+kbd{font-family:-apple-system,system-ui,sans-serif;font-size:.85em;border:1px solid var(--line);border-bottom-width:2px;border-radius:5px;padding:0 5px;background:var(--surface)}
+
+.tabs{display:flex;flex-wrap:wrap;gap:6px;margin-top:22px}
+.tabs button{font:inherit;font-size:14px;border:1px solid var(--line);background:var(--surface);color:var(--ink);border-radius:999px;padding:5px 14px;cursor:pointer;transition:transform 100ms ease-out}
+.tabs button:active{transform:scale(.97)}
+.tabs button[aria-selected="true"]{background:var(--ink);color:var(--paper);border-color:var(--ink)}
+.tabs button:focus-visible{outline:2px solid var(--accent);outline-offset:2px}
+.desk{display:grid;grid-template-columns:minmax(0,.9fr) minmax(0,1.1fr);gap:22px;margin-top:16px;background:var(--surface);border:1px solid var(--line-soft);border-radius:16px;padding:22px;align-items:start}
+@media (max-width:820px){.desk{grid-template-columns:1fr}}
+.dev{display:flex;flex-direction:column;align-items:center;gap:10px}
+.dev svg{width:100%;max-width:360px;height:auto;display:block}
+.dev .cap{font-size:12.5px;color:var(--ink-3);text-align:center;max-width:36ch}
+.modes{display:flex;gap:6px}
+.modes button{font:inherit;font-size:13px;border:1px solid var(--line);background:var(--surface-2);color:var(--ink);border-radius:999px;padding:3px 12px;cursor:pointer}
+.modes button[aria-pressed="true"]{border-color:var(--accent);background:var(--accent-soft);color:var(--accent)}
+.maps{display:flex;flex-direction:column;gap:6px}
+.map{display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1.25fr);gap:12px;align-items:start;padding:9px 12px;border-radius:10px;border:1px solid var(--line-soft);background:var(--surface-2);cursor:default;transition:border-color 120ms ease}
+.map:hover,.map.hl{border-color:var(--accent)}
+.map .in{font-weight:600;font-size:13.5px;line-height:1.4}
+.map .in small{display:block;font-weight:400;color:var(--ink-3);font-size:11.5px}
+.map .out{font-size:13.5px;color:var(--ink-2);line-height:1.45}
+.map .out b{color:var(--ink)}
+.tag{font-size:11px;border-radius:999px;padding:0 7px;margin-left:4px;white-space:nowrap;vertical-align:1px}
+.tag.new{background:var(--accent-soft);color:var(--accent)}
+.tag.have{background:var(--good-soft);color:var(--good)}
+.tag.sys{background:var(--surface);color:var(--ink-3);border:1px solid var(--line-soft)}
+.tag.exp{background:var(--warn-soft);color:var(--warn)}
+.hot{fill:var(--finger);opacity:0;transition:opacity 140ms ease-out}
+.hot.on{opacity:.85}
+
+/* 平滑滚动对比 */
+.scrolldemo{display:grid;grid-template-columns:1fr 1fr;gap:14px}
+@media (max-width:600px){.scrolldemo{grid-template-columns:1fr}}
+.col{background:var(--surface);border:1px solid var(--line-soft);border-radius:14px;overflow:hidden}
+.col h3{padding:10px 14px;margin:0;border-bottom:1px solid var(--line-soft);font-size:14px;display:flex;justify-content:space-between;gap:8px}
+.col h3 small{font-weight:400;color:var(--ink-3)}
+.view{height:240px;overflow:hidden;position:relative}
+.list{position:absolute;left:0;right:0;top:0;will-change:transform}
+.list div{height:40px;display:flex;align-items:center;gap:10px;padding:0 14px;border-bottom:1px solid var(--line-soft);font-size:13.5px}
+.list div i{width:22px;height:22px;border-radius:6px;flex:none}
+.list div span{color:var(--ink-3);margin-left:auto;font-family:var(--mono);font-size:11.5px}
+.sctl{display:flex;gap:8px;flex-wrap:wrap;margin-top:12px;align-items:center}
+.sctl button{font:inherit;font-size:13px;border:1px solid var(--line);background:var(--surface);color:var(--ink);border-radius:999px;padding:4px 12px;cursor:pointer}
+.sctl button:active{transform:scale(.97)}
+.sctl .note{font-size:12.5px;color:var(--ink-3)}
+
+.tbl{overflow-x:auto;border:1px solid var(--line-soft);border-radius:12px;background:var(--surface)}
+table{border-collapse:collapse;width:100%;min-width:760px;font-size:13px;line-height:1.55}
+th,td{text-align:left;vertical-align:top;padding:9px 12px;border-bottom:1px solid var(--line-soft)}
+th{font-size:11.5px;font-weight:600;color:var(--ink-3);letter-spacing:.04em;background:var(--surface-2)}
+tr:last-child td{border-bottom:0}
+.lic{font-size:11.5px;border-radius:999px;padding:1px 8px;white-space:nowrap}
+.lic.ok{background:var(--good-soft);color:var(--good)}.lic.no{background:var(--bad-soft);color:var(--bad)}.lic.look{background:var(--surface-2);color:var(--ink-3);border:1px solid var(--line-soft)}
+.principles{display:grid;grid-template-columns:repeat(auto-fit,minmax(min(100%,300px),1fr));gap:12px}
+.principles div{background:var(--surface);border:1px solid var(--line-soft);border-radius:12px;padding:14px 16px}
+.principles p{margin:0;font-size:13.5px;color:var(--ink-2)}
+.evidence{background:var(--surface);border:1px solid var(--line-soft);border-radius:12px;padding:14px 18px;font-size:13.5px;color:var(--ink-2)}
+.evidence b{color:var(--ink)}
+.mandate{background:var(--surface);border:1.5px solid var(--ink);border-radius:14px;padding:24px}
+.mandate ol{margin:12px 0 0;padding-left:1.5em;display:grid;gap:10px}
+.mandate li b{color:var(--ink)}.mandate li span{color:var(--ink-2)}
+footer{margin-top:48px;font-size:12.5px;color:var(--ink-3);max-width:84ch}
+.layers{display:grid;grid-template-columns:repeat(auto-fit,minmax(min(100%,240px),1fr));gap:12px}
+.layers div{background:var(--surface);border:1px solid var(--line-soft);border-radius:12px;padding:14px 16px}
+.layers p{margin:0;font-size:13.5px;color:var(--ink-2)}
+.focus{margin-top:16px;background:#0E1117;border-radius:16px;padding:26px 22px 18px;color:#E7EDF6;outline:none}
+.focus:focus-visible{box-shadow:0 0 0 2px var(--accent)}
+.fgrid{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:16px;perspective:600px}
+@media (max-width:600px){.fgrid{grid-template-columns:repeat(2,minmax(0,1fr))}}
+.ft{aspect-ratio:16/10;border-radius:12px;background:#1E232D;position:relative;overflow:hidden;transition:transform 260ms cubic-bezier(.23,1,.32,1),box-shadow 260ms ease-out;font-size:12.5px}
+.ft b{position:absolute;left:10px;bottom:8px;font-weight:600}.ft small{position:absolute;right:10px;top:8px;opacity:.6;font-size:11px}
+.ft i{position:absolute;inset:18% 12% 30%;border-radius:6px;opacity:.85}
+.ft.on{transform:scale(1.09) translateY(-4px);box-shadow:0 18px 30px -12px rgba(0,0,0,.7),0 0 0 2px rgba(255,255,255,.85)}
+.fpad{display:flex;gap:6px;justify-content:center;margin-top:16px;flex-wrap:wrap}
+.fpad button{font:inherit;font-size:13px;background:#232936;color:#E7EDF6;border:1px solid #333b4a;border-radius:999px;padding:4px 12px;cursor:pointer}
+.fpad button:active{transform:scale(.96)}
+.fsay{text-align:center;font-size:12.5px;opacity:.7;margin-top:8px;min-height:1.5em}
+@media (prefers-reduced-motion:reduce){.hot,.map,.tabs button,.ft{transition:none}}
+</style>
+
+<div class="wrap">
+<header>
+  <p class="eyebrow">WindowShade 2 · 设计稿 · 2026-10-03 · 鼠标、触控板、遥控器与手柄</p>
+  <h1>手边的每一样，都更顺手一点</h1>
+  <p class="lede">把 Mos 的平滑滚动、Mac Mouse Fix 的“按住拖动”、Remote Buddy 的沙发遥控，按 WindowShade 自己的那一套动作重做一遍。<b>滚轮鼠标像触控板一样顺滑；妙控鼠标和妙控板多出中键和几个不撞车的手势；Siri 遥控器和 PS5 手柄既能在沙发上操作这台 Mac，也能指挥 Codex 和 Claude。</b>像 iPadOS 一样：一个入口，一套动作，任何输入都能用。全部默认关，开了才接管。</p>
+</header>
+
+<div class="tabs" role="tablist" id="tabs"></div>
+<div class="desk">
+  <div class="dev"><div id="art"></div><div class="modes" id="modes" hidden></div><div class="cap" id="cap"></div></div>
+  <div class="maps" id="maps"></div>
+</div>
+
+<section>
+  <h2>自成一体：一个入口，一套动作，任何输入</h2>
+  <p class="sub">博采众长不是把七个工具的功能堆在一起。所有设备最后都落到同一套动作上；没有指针的设备，用和 tvOS、iPadOS 键盘导航一样的焦点在刘海那一排、启动台、窗口浏览里移动。</p>
+  <div class="layers">
+    <div><h3>一个入口</h3><p>刘海：看不见的窗口、实时活动、指挥模式、遥控时的焦点都在这里。</p></div>
+    <div><h3>一套动作</h3><p>收起、收进刘海、看一眼、侧拉、分屏、画中画、启动台、换桌面、指挥模式。设备不同，动作相同。</p></div>
+    <div><h3>指着用，或挪焦点用</h3><p>触控板、鼠标、手柄触控板指着用；方向键、遥控器的环、手柄十字键、iPhone 遥控器挪焦点用。</p></div>
+    <div><h3>不做配置工具</h3><p>默认值好到不用改；能改的只有开 / 关和少数几档。不做宏、脚本、Webhook。</p></div>
+  </div>
+  <div class="focus" id="focus" tabindex="0" aria-label="焦点导航小样：用方向键挪焦点，回车打开">
+    <div class="fgrid" id="fgrid"></div>
+    <div class="fpad"><button type="button" data-d="left">← 左</button><button type="button" data-d="up">↑ 上</button><button type="button" data-d="down">↓ 下</button><button type="button" data-d="right">→ 右</button><button type="button" data-d="ok">× 打开</button></div>
+    <div class="fsay" id="fsay">点一下这块，用键盘方向键、遥控器的环或手柄十字键（这里用按钮代替）挪焦点</div>
+  </div>
+  <div class="tbl" style="margin-top:16px"><table>
+    <thead><tr><th>参考</th><th>取</th><th>不取</th></tr></thead>
+    <tbody>
+      <tr><td>Mos</td><td>平滑滚动、轴向独立、按 App 例外</td><td>通用按键绑定和动作库</td></tr>
+      <tr><td>Mac Mouse Fix</td><td>按住拖动要跟手、点一下照常</td><td>一屏参数</td></tr>
+      <tr><td>Remote Buddy</td><td>按场景换键位、屏幕上的菜单</td><td>100 多个 App 的预设表</td></tr>
+      <tr><td>Itsytv</td><td>Swift 协议零件、文字输入</td><td>—</td></tr>
+      <tr><td>Control Box</td><td>每台设备单独“控制这台 Mac”开关</td><td>显示器、夜览、音量混音这些不相干的面板</td></tr>
+      <tr><td>InputConfig、ControllerKeys</td><td>DualSense 触控板分一指、两指；游戏在前台时让开</td><td>宏、脚本、Webhook</td></tr>
+      <tr><td>iPadOS、tvOS</td><td>焦点导航、指针吸附、一个入口</td><td>—</td></tr>
+    </tbody>
+  </table></div>
+</section>
+
+<section>
+  <h2>一格一格，和顺滑地滑</h2>
+  <p class="sub">普通滚轮一格跳一大段，眼睛要重新找位置。平滑滚动把每一格变成一段带惯性的滑动，方向一变立即跟上。在下面两栏里滚一滚，或者点“滚三格”。</p>
+  <div class="scrolldemo">
+    <div class="col"><h3>现在 <small>一格跳 40 点</small></h3><div class="view" id="vRaw"><div class="list" id="lRaw"></div></div></div>
+    <div class="col"><h3>平滑滚动 · 中 <small>临界阻尼弹簧</small></h3><div class="view" id="vSm"><div class="list" id="lSm"></div></div></div>
+  </div>
+  <div class="sctl"><button type="button" id="down3">滚三格 ↓</button><button type="button" id="up3">滚三格 ↑</button><span class="note">两栏收到同样的“格”。用触控板滚的话，两栏都会是顺的：平滑滚动只改写滚轮来的事件。</span></div>
+</section>
+
+<section>
+  <h2>五条原则</h2>
+  <div class="principles">
+    <div><h3>默认不接管</h3><p>WindowShade 现在对输入只旁听。平滑滚动、改写按键要拦截事件，全部默认关；开了才装钩子，被系统停掉就退回原样。</p></div>
+    <div><h3>按设备认</h3><p>滚轮鼠标、妙控鼠标、妙控板、Siri 遥控器各一组设置；按稳定 ID 认，不按名字。</p></div>
+    <div><h3>一套动作</h3><p>所有设备最后都落到已有的动作上：收起窗口、收进刘海、看一眼、启动台、调度中心、指挥模式。</p></div>
+    <div><h3>让位</h3><p>Mos、Mac Mouse Fix、BetterTouchTool、Logi Options+ 在跑时，对应功能让给它们，设置里写明谁接管。</p></div>
+    <div><h3>许可干净</h3><p>Mos（CC BY-NC）、Mac Mouse Fix（自定义许可）、GPL 项目只借思路；MIT 项目的代码带版权声明再用。</p></div>
+  </div>
+</section>
+
+<section>
+  <h2>找到的开源实作</h2>
+  <p class="sub">2026-10-03 读了各项目的说明和许可。“能拷代码”只限 MIT，而且要带上原作者的版权声明。</p>
+  <div class="tbl"><table>
+    <thead><tr><th>项目</th><th>做什么</th><th>许可</th><th>我们拿什么</th></tr></thead>
+    <tbody>
+      <tr><td><a href="https://github.com/Caldis/Mos">Mos</a></td><td>滚轮平滑滚动、轴向独立反向、按 App 覆盖、按键绑定、罗技 HID++</td><td><span class="lic no">CC BY-NC 4.0</span></td><td>思路：平滑、轴向独立、按 App 例外</td></tr>
+      <tr><td><a href="https://github.com/noah-nuebling/mac-mouse-fix">Mac Mouse Fix</a></td><td>按住按键拖动切桌面和调度中心、惯性滚动、修饰键滚动、按键改写</td><td><span class="lic no">MMF License</span></td><td>思路：按住拖动要跟手、点一下照常</td></tr>
+      <tr><td><a href="https://www.iospirit.com/products/remotebuddy/">Remote Buddy</a></td><td>Siri 遥控器、iPhone、红外遥控器控制 Mac；按 App 预设</td><td><span class="lic look">商业闭源</span></td><td>行为：按场景换键位</td></tr>
+      <tr><td><a href="https://github.com/nickustinov/itsytv-core">itsytv-core</a> / <a href="https://github.com/nickustinov/itsytv-macos">Itsytv</a></td><td>Swift 实现的 Companion、MRP、配对、加密、OPACK、TLV8、文字输入</td><td><span class="lic ok">MIT</span></td><td>代码：iPhone 遥控器那条路改用 Swift，不再需要 Rust</td></tr>
+      <tr><td><a href="https://github.com/JackyLobsterD/siri-remote-keyboard">siri-remote-keyboard</a></td><td>第三代 Siri 遥控器：12 个键的 HID 用法实测；侧边 Siri 键有按下和松开；<code>hidutil</code> 按设备静音系统</td><td><span class="lic ok">MIT</span></td><td>代码与按键表</td></tr>
+      <tr><td><a href="https://github.com/mmmmmmarcus/VibeRemote">VibeRemote</a></td><td>Siri 遥控器当键盘和麦克风；第二、三代的麦克风在 <code>0xFA</code> 音频集合；电量</td><td><span class="lic ok">MIT</span></td><td>代码：麦克风桥、电量、两代差异</td></tr>
+      <tr><td><a href="https://github.com/lauschue/Remotastic">Remotastic</a>、<a href="https://github.com/whitesticker/controlbox">Control Box</a></td><td>遥控器当指针、滚动、键位</td><td><span class="lic ok">MIT</span></td><td>参考</td></tr>
+      <tr><td><a href="https://github.com/ryleighnewman/InputConfig">InputConfig</a>、<a href="https://github.com/sour4bh/mac-dualsense">mac-dualsense</a></td><td>DualSense、Xbox、Switch Pro 映射成键盘鼠标（GameController）</td><td><span class="lic ok">MIT</span></td><td>代码与做法</td></tr>
+      <tr><td><a href="https://github.com/NSEvent/xbox-controller-mapper">ControllerKeys</a>、<a href="https://github.com/aklmans/dualsense-controller-mapper">dualsense-controller-mapper</a></td><td>DualSense 触控板、陀螺仪、滑动打字；手柄 vibe coding</td><td><span class="lic no">非商业 / 非开源</span></td><td>思路</td></tr>
+      <tr><td><a href="https://github.com/corvofeng/atv-core">atv-core</a></td><td>Mac 冒充电视，接 iPhone 控制中心的遥控器</td><td><span class="lic ok">MIT（无 LICENSE 文件）</span></td><td>服务端参考；配对验证有洞</td></tr>
+      <tr><td><a href="https://github.com/HOLODATA-COM/SiriRemoteForge">SiriRemoteForge</a>、<a href="https://github.com/alfred-bot-001/codex-siri-remote-with-pad">codex-siri-remote-with-pad</a></td><td>可编程 Siri 遥控器、按 App 分层、虚拟麦克风；遥控器控制 Codex</td><td><span class="lic no">GPL-3.0</span></td><td>思路</td></tr>
+    </tbody>
+  </table></div>
+  <div class="evidence" style="margin-top:14px"><b>这台 Mac 上实测（只读，没有注册回调）：</b>私有框架 MultitouchSupport 列出 2 台多点触摸设备，内建触控板（表面约 14.3 × 8.5 厘米）和连着的妙控鼠标（约 5.2 × 9.1 厘米，电量 100%）。所以读妙控鼠标表面的手指，在这台 Mac 上走得通。这台 Mac 现在没连滚轮鼠标和 Siri 遥控器，这两类要接上才能验证。</div>
+</section>
+
+<section>
+  <div class="mandate">
+    <h2>写给接手的人</h2>
+    <p class="sub" style="margin:0">完整规格在 <code>docs/input-devices.md</code>，给 DeepSeek 的提示词在 <code>docs/handoff/deepseek-input.md</code>。</p>
+    <ol>
+      <li><b>默认关，开了才拦截。</b><span>主动钩子只在对应功能开着、对应设备连着时装上；回调 O(1)；被系统因超时停掉时退回不改写，并在设置里说一句。</span></li>
+      <li><b>点一下照常。</b><span>中键、两指按下、轻点，都要先分清“点”和“拖”；判不准就按原样放行，不吞用户的点击。</span></li>
+      <li><b>不撞系统手势。</b><span>妙控鼠标两指轻点两下、两指左右扫，妙控板三指拖移、四指扫，一个都不占；占了就是缺陷。</span></li>
+      <li><b>不拷 Mos、Mac Mouse Fix、GPL 项目的代码。</b><span>算法独立写；MIT 代码带版权声明。</span></li>
+      <li><b>落到已有动作。</b><span>不新造“打开脚本、运行 Shell”这类通用动作库。</span></li>
+      <li><b>能耗与延迟写进验收。</b><span>回调耗时、空闲唤醒都要实测；平滑滚动滑完就停。</span></li>
+      <li><b>每一行都登记隐私。</b><span>拦截滚轮、读表面触点、遥控器麦克风，都进隐私一栏。</span></li>
+      <li><b>游戏在前台时，手柄整个让开。</b><span>不读、不改、不震；PS 键永远不占。</span></li>
+      <li><b>真机说了算。</b><span>妙控鼠标、滚轮鼠标、Siri 遥控器、手柄没上手试过的，照写“没在真机上验证”。</span></li>
+    </ol>
+  </div>
+</section>
+
+<footer>依据：Aaron 9 月 25 日“给 Magic Mouse 和 Magic Trackpad 用户一点惊喜……避免误触”；各项目的 README 与许可文件（2026-10-03 读取）；siri-remote-keyboard 公布的按键实测表；这台 Mac 上 MultitouchSupport 的只读枚举；docs/gestures.md、docs/conductor-v2.md。设备画的是示意。</footer>
+</div>
+
+<script>
+(function(){
+  var $=function(id){return document.getElementById(id)};
+  function T(t){return '<span class="tag '+t+'">'+{new:'新',have:'已有',sys:'系统的',exp:'要实验'}[t]+'</span>'}
+  // 设备图：每个热点有 id，映射行 hover 时点亮
+  var ART={
+    wheel:'<svg viewBox="0 0 200 300"><rect x="40" y="20" width="120" height="250" rx="60" fill="var(--alu)" stroke="var(--alu-2)" stroke-width="2"/><path d="M100 20V120M40 120H160" stroke="var(--alu-2)" stroke-width="2"/><rect x="92" y="48" width="16" height="44" rx="8" fill="var(--dev-ink)" opacity=".75"/><rect x="34" y="140" width="10" height="22" rx="4" fill="var(--alu-2)"/><rect x="34" y="168" width="10" height="22" rx="4" fill="var(--alu-2)"/><circle class="hot" data-h="wheel" cx="100" cy="70" r="16"/><circle class="hot" data-h="mid" cx="100" cy="70" r="10"/><circle class="hot" data-h="side" cx="39" cy="165" r="14"/><circle class="hot" data-h="dir" cx="100" cy="70" r="22"/></svg>',
+    mm:'<svg viewBox="0 0 200 300"><rect x="45" y="15" width="110" height="270" rx="55" fill="var(--alu)" stroke="var(--alu-2)" stroke-width="2"/><path d="M60 40Q100 20 140 40V200Q100 215 60 200Z" fill="none" stroke="var(--alu-2)" stroke-dasharray="3 4"/><circle class="hot" data-h="two" cx="82" cy="80" r="11"/><circle class="hot" data-h="two" cx="118" cy="80" r="11"/><circle class="hot" data-h="tb" cx="100" cy="95" r="12"/><circle class="hot" data-h="dir" cx="100" cy="130" r="12"/><circle class="hot" data-h="sys" cx="100" cy="60" r="10"/></svg>',
+    tp:'<svg viewBox="0 0 300 220"><rect x="15" y="15" width="270" height="190" rx="18" fill="var(--alu)" stroke="var(--alu-2)" stroke-width="2"/><g class="hot" data-h="three"><circle cx="120" cy="110" r="11"/><circle cx="150" cy="100" r="11"/><circle cx="180" cy="110" r="11"/></g><g class="hot" data-h="four"><circle cx="105" cy="120" r="10"/><circle cx="135" cy="104" r="10"/><circle cx="165" cy="104" r="10"/><circle cx="195" cy="120" r="10"/></g><g class="hot" data-h="win"><circle cx="120" cy="80" r="10"/><circle cx="150" cy="72" r="10"/><circle cx="180" cy="80" r="10"/><path d="M150 95V160" stroke="var(--finger)" stroke-width="4" stroke-linecap="round"/></g><circle class="hot" data-h="corner" cx="240" cy="60" r="12"/></svg>',
+    siri:'<svg viewBox="0 0 160 380"><rect x="30" y="10" width="100" height="360" rx="22" fill="var(--alu)" stroke="var(--alu-2)" stroke-width="2"/><rect x="128" y="70" width="5" height="34" rx="2" fill="var(--alu-2)"/><circle cx="80" cy="90" r="40" fill="var(--dev-ink)" opacity=".85"/><circle cx="80" cy="90" r="24" fill="#2b2f36"/><rect x="66" y="22" width="28" height="12" rx="6" fill="#2b2f36"/><g fill="#2b2f36"><circle cx="58" cy="160" r="14"/><circle cx="102" cy="160" r="14"/><circle cx="58" cy="200" r="14"/><rect x="88" y="186" width="28" height="70" rx="14"/><circle cx="58" cy="240" r="14"/></g><text x="58" y="164" text-anchor="middle" font-size="11" fill="#cfd3da">‹</text><circle class="hot" data-h="ring" cx="80" cy="90" r="40"/><circle class="hot" data-h="center" cx="80" cy="90" r="22"/><circle class="hot" data-h="back" cx="58" cy="160" r="15"/><circle class="hot" data-h="tv" cx="102" cy="160" r="15"/><circle class="hot" data-h="play" cx="58" cy="200" r="15"/><circle class="hot" data-h="mute" cx="58" cy="240" r="15"/><rect class="hot" data-h="vol" x="88" y="186" width="28" height="70" rx="14"/><circle class="hot" data-h="power" cx="80" cy="28" r="10"/><rect class="hot" data-h="siri" x="126" y="66" width="10" height="42" rx="4"/><circle class="hot" data-h="pad" cx="80" cy="90" r="30"/></svg>',
+    pad:'<svg viewBox="0 0 360 230"><path d="M70 40Q180 18 290 40Q330 50 342 120Q352 200 312 214Q282 222 262 180L240 150H120L98 180Q78 222 48 214Q8 200 18 120Q30 50 70 40Z" fill="var(--alu)" stroke="var(--alu-2)" stroke-width="2"/><rect x="128" y="44" width="104" height="58" rx="10" fill="#2b2f36"/><rect x="128" y="40" width="104" height="4" rx="2" fill="#7FA5F0" opacity=".7"/><circle cx="132" cy="150" r="20" fill="#2b2f36"/><circle cx="228" cy="150" r="20" fill="#2b2f36"/><g fill="#2b2f36"><rect x="62" y="86" width="14" height="40" rx="3"/><rect x="49" y="99" width="40" height="14" rx="3"/><circle cx="290" cy="84" r="9"/><circle cx="290" cy="128" r="9"/><circle cx="268" cy="106" r="9"/><circle cx="312" cy="106" r="9"/><rect x="110" y="58" width="8" height="14" rx="3"/><rect x="242" y="58" width="8" height="14" rx="3"/><rect x="170" y="112" width="20" height="6" rx="3"/><circle cx="180" cy="132" r="6"/></g><text x="290" y="132" text-anchor="middle" font-size="10" fill="#cfd3da">×</text><text x="312" y="110" text-anchor="middle" font-size="10" fill="#cfd3da">○</text><text x="268" y="110" text-anchor="middle" font-size="9" fill="#cfd3da">□</text><text x="290" y="88" text-anchor="middle" font-size="9" fill="#cfd3da">△</text><rect x="60" y="28" width="50" height="10" rx="5" fill="var(--alu-2)"/><rect x="250" y="28" width="50" height="10" rx="5" fill="var(--alu-2)"/><circle class="hot" data-h="ls" cx="132" cy="150" r="22"/><circle class="hot" data-h="rs" cx="228" cy="150" r="22"/><rect class="hot" data-h="tp" x="128" y="44" width="104" height="58" rx="10"/><g class="hot" data-h="dpad"><rect x="62" y="86" width="14" height="40" rx="3"/><rect x="49" y="99" width="40" height="14" rx="3"/></g><circle class="hot" data-h="x" cx="290" cy="128" r="10"/><circle class="hot" data-h="o" cx="312" cy="106" r="10"/><circle class="hot" data-h="sq" cx="268" cy="106" r="10"/><circle class="hot" data-h="tri" cx="290" cy="84" r="10"/><g class="hot" data-h="lr"><rect x="60" y="28" width="50" height="10" rx="5"/><rect x="250" y="28" width="50" height="10" rx="5"/></g><rect class="hot" data-h="opt" x="242" y="58" width="8" height="14" rx="3"/><rect class="hot" data-h="create" x="110" y="58" width="8" height="14" rx="3"/><rect class="hot" data-h="mic" x="170" y="112" width="20" height="6" rx="3"/><circle class="hot" data-h="ps" cx="180" cy="132" r="7"/></svg>',
+    phone:'<svg viewBox="0 0 170 360"><rect x="10" y="5" width="150" height="350" rx="28" fill="#000" stroke="var(--alu-2)" stroke-width="2"/><rect x="18" y="58" width="134" height="200" rx="18" fill="#1d1d1f"/><circle cx="30" cy="35" r="12" fill="#1d1d1f"/><rect x="48" y="24" width="74" height="22" rx="11" fill="#1d1d1f"/><circle cx="140" cy="35" r="12" fill="#1d1d1f"/><circle cx="36" cy="300" r="17" fill="#1d1d1f"/><circle cx="85" cy="300" r="22" fill="#141416"/><circle cx="134" cy="300" r="17" fill="#1d1d1f"/><rect x="160" y="80" width="4" height="40" rx="2" fill="var(--alu-2)"/><circle class="hot" data-h="pad" cx="85" cy="158" r="40"/><circle class="hot" data-h="tv" cx="134" cy="300" r="18"/><circle class="hot" data-h="play" cx="36" cy="300" r="18"/><circle class="hot" data-h="back" cx="85" cy="300" r="23"/><rect class="hot" data-h="siri" x="158" y="76" width="8" height="48" rx="3"/><circle class="hot" data-h="mute" cx="30" cy="35" r="13"/><circle class="hot" data-h="power" cx="140" cy="35" r="13"/></svg>'
+  };
+  var D=[
+    {k:'wheel',n:'滚轮鼠标',cap:'罗技、雷蛇这类带滚轮和侧键的鼠标。功能来自 Mos 和 Mac Mouse Fix 的思路，独立实现。',rows:[
+      ['wheel','平滑滚动','设置里打开','一格变成一段带惯性的滑动；三档：轻、中、像触控板；按 App 例外','new'],
+      ['dir','滚动方向分开','鼠标、触控板各选一个','系统把两者绑在一起；这里只改滚轮来的事件','new'],
+      ['wheel','精细滚动','按住 ⌥ 滚','一格只走一行','new'],
+      ['side','后退 / 前进','侧键 4 / 5','变成该 App 的后退、前进；不认的 App 原样放行','new'],
+      ['mid','标题栏上点中键','点一下','<b>收起窗口</b>，再点展开','new'],
+      ['mid','标题栏上按住中键拖','上推 / 下拉 / 左右','收起、铺满、半屏，和触控板标题栏手势同一套，同一块提示浮窗','new'],
+      ['mid','别处按住中键拖','上 / 下 / 左右','调度中心、App 窗口、换桌面；合成触控板的手势事件，跟手、有过程','new'],
+      ['wheel','标题栏上滚三格','已有','收起、展开','have']]},
+    {k:'mm',n:'妙控鼠标',cap:'表面上的手指经 MultitouchSupport 读取（这台 Mac 上已确认读得到）。',rows:[
+      ['two','中键','两根手指放在表面上时按下','点开链接到新标签、关标签；一根手指照常是左键','new'],
+      ['tb','标题栏上两指按下','按一下','收起窗口（和滚轮鼠标的中键同一个动作）','new'],
+      ['dir','滚动方向分开','鼠标、触控板各选一个','妙控鼠标也能和触控板方向不一样','new'],
+      ['tb','标题栏手势、甩一下收进刘海','单指滑','已有；补真机验证','have'],
+      ['sys','两指轻点两下 / 两指左右扫','—','调度中心 / 全屏 App 之间切换：<b>一个都不占</b>','sys']]},
+    {k:'tp',n:'妙控板',cap:'内建触控板和妙控板都算。轻点只认：几乎同时落下、0.25 秒内抬起、位移小于 1.5 毫米，手掌不算。',rows:[
+      ['three','中键','三指轻点','系统默认不用；“查询与数据检测器”设成三指轻点时让给它','new'],
+      ['four','看不见的窗口','四指轻点','打开刘海那一排；系统没有用四指轻点','new'],
+      ['win','从 Windows 来的三指下滑','三指下滑','Windows 里是显示桌面；刘海提示一次 Mac 上怎么做，不改系统手势','new'],
+      ['corner','拐角占一角、捏合撤销、甩一下收进刘海','两指','已有','have']]},
+    {k:'siri',n:'Siri 遥控器',cap:'实体遥控器，蓝牙连 Mac（连上后会和 Apple TV 解除配对）。按键经 IOHIDManager，用 hidutil 让系统不再处理；触控面经 MultitouchSupport；麦克风在 0xFA 音频集合。',modes:true,rows:{
+      sofa:[['ring','环 上下左右','按一下','在刘海那一排、启动台、窗口浏览里挪焦点','new'],['center','环中心','按一下','打开','new'],['pad','触控面','滑','可选：当指针用','new'],['back','返回','按一下','退一层；收起展开的刘海','new'],['tv','电视键','点一下 / 按住','启动台 / 刘海那一排','new'],['play','播放 / 暂停','点一下 / 按住 1 秒','媒体播放暂停 / <b>换到指挥模式</b>','new'],['siri','侧边 Siri 键','按住','听写到当前输入框','new'],['vol','音量、静音','—','系统音量、静音','sys'],['power','电源','按一下','让显示器睡眠','new']],
+      cond:[['pad','触控面','画','声调、打拍子（原始触点）','new'],['center','环中心 / 点按触控面','按一下','确认','new'],['tv','电视键','点一下 / 按住','换档位与模型 / 选会话','new'],['play','播放 / 暂停','点一下 / 按住 1 秒','发出去或停下 / <b>换到遥控模式</b>','new'],['back','返回','按一下','取消；草稿按两次才丢','new'],['siri','侧边 Siri 键','按住','说话，<b>用遥控器自己的麦克风</b>，松开出草稿','exp'],['mute','静音','按一下','提示音开关','new'],['power','电源','按一下','退出指挥模式','new']]}},
+    {k:'pad',n:'PS5 手柄',cap:'DualSense 全走 Apple 公开的 GameController 框架：触控板两个触点的位置、自适应扳机、灯条、触感、电量、陀螺仪都拿得到。游戏在前台时整个让开。每台手柄单独有“控制这台 Mac”开关，默认关。',modes:true,rows:{
+      sofa:[['ls','左摇杆','推','指针；靠近按钮时吸附','new'],['rs','右摇杆','推','滚动（走平滑滚动）','new'],['tp','触控板','一指 / 两指 / 按下','指针 / 滚动、两指在标题栏上 = 标题栏手势 / 点按','new'],['dpad','十字键','按','挪焦点：刘海那一排、启动台、窗口浏览、按窗口切换','new'],['x','×','按','打开、点按','new'],['o','○','按','返回；收起展开的刘海','new'],['sq','□','按','右键（更多）','new'],['tri','△','按','看不见的窗口（刘海那一排）','new'],['lr','L1 / R1 · L2 / R2','按 / 扣','按窗口切换上一扇、下一扇 / 换桌面：扣到一半有一道“咔”，过了才换','new'],['opt','Options','按','启动台','new'],['create','创建','按','截屏','new'],['mic','静音键','按住','说话（USB 时用手柄麦克风，蓝牙时用 Mac 的）','exp'],['ps','PS 键','—','不占，留给系统','sys']],
+      cond:[['tp','触控板','画','声调、打拍子（公开接口直接给坐标）','new'],['x','× / 按下触控板','按','确认','new'],['o','○','按','取消；草稿按两次才丢','new'],['sq','□','按','换档位与模型','new'],['tri','△','按','选会话','new'],['lr','R2','扣','发出去 / 停下','new'],['mic','静音键','按住','说话','exp'],['opt','Options','按','换到操作 Mac','new']]}},
+    {k:'phone',n:'iPhone 上的遥控器',cap:'控制中心里的遥控器。键位照指挥模式的规格；协议层改用 itsytv-core（Swift、MIT）的零件，不再需要 Rust。',modes:true,rows:{
+      sofa:[['pad','触控区','滑 / 点','挪焦点 / 打开','new'],['tv','电视键','点一下 / 按住','启动台 / 刘海那一排','new'],['play','播放 / 暂停','点一下 / 按住','媒体播放暂停 / 换到指挥模式','exp'],['back','返回','按一下','退一层','new'],['siri','侧边按钮','按住','听写','exp'],['power','电源','按一下','让显示器睡眠','exp']],
+      cond:[['pad','触控区','画 / 点','声调、拍子 / 确认','exp'],['tv','电视键','点一下 / 按住','换档位与模型 / 选会话','exp'],['play','播放 / 暂停','点一下','发出去或停下','new'],['back','返回','按一下','取消','new'],['siri','侧边按钮','按住','说话','exp'],['mute','静音','按一下','提示音开关','exp'],['power','电源','按一下','退出指挥模式','exp']]}}
+  ];
+  var cur=0,mode='sofa';
+  var tabs=$('tabs');tabs.innerHTML=D.map(function(d,i){return '<button type="button" role="tab" aria-selected="'+(i===0)+'" data-i="'+i+'">'+d.n+'</button>'}).join('');
+  function rows(d){return d.modes?d.rows[mode]:d.rows}
+  function draw(){var d=D[cur];$('art').innerHTML=ART[d.k];$('cap').textContent=d.cap;
+    var m=$('modes');m.hidden=!d.modes;if(d.modes)m.innerHTML=['sofa','cond'].map(function(x){return '<button type="button" aria-pressed="'+(x===mode)+'" data-m="'+x+'">'+(x==='sofa'?(d.k==='pad'?'操作 Mac':'遥控模式'):'指挥模式')+'</button>'}).join('');
+    $('maps').innerHTML=rows(d).map(function(r){return '<div class="map" data-h="'+r[0]+'"><div class="in">'+r[1]+'<small>'+r[2]+'</small></div><div class="out">'+r[3]+T(r[4])+'</div></div>'}).join('');
+    [].forEach.call(tabs.children,function(b,j){b.setAttribute('aria-selected',j===cur)})}
+  function hl(h,on){[].forEach.call($('art').querySelectorAll('.hot'),function(e){if(e.getAttribute('data-h')===h)e.classList.toggle('on',on)})}
+  tabs.addEventListener('click',function(e){var b=e.target.closest('button');if(b){cur=+b.dataset.i;draw()}});
+  $('modes').addEventListener('click',function(e){var b=e.target.closest('button');if(b){mode=b.dataset.m;draw()}});
+  $('maps').addEventListener('mouseover',function(e){var r=e.target.closest('.map');if(r){hl(r.dataset.h,true);r.classList.add('hl')}});
+  $('maps').addEventListener('mouseout',function(e){var r=e.target.closest('.map');if(r){hl(r.dataset.h,false);r.classList.remove('hl')}});
+  $('maps').addEventListener('focusin',function(e){var r=e.target.closest('.map');if(r)hl(r.dataset.h,true)});
+  draw();
+  // 焦点导航小样
+  var FT=[['终端','收起',0],['微信','已最小化',1],['设计稿','桌面 3',2],['Xcode','',3],['音乐','实时活动',4],['邮件','已隐藏',5],['预览','',6],['备忘录','侧拉',0]],fi=0,fg=$('fgrid');
+  var COLS=['#5E8BE8','#34C759','#B4527A','#E07A5F','#FF2D55','#62C3CF','#E0A264'];
+  fg.innerHTML=FT.map(function(t,i){return '<div class="ft" data-i="'+i+'"><i style="background:'+COLS[t[2]]+'"></i><b>'+t[0]+'</b>'+(t[1]?'<small>'+t[1]+'</small>':'')+'</div>'}).join('');
+  function cols(){return getComputedStyle(fg).gridTemplateColumns.split(' ').length}
+  function fset(i){fi=i;[].forEach.call(fg.children,function(e,j){e.classList.toggle('on',j===fi)})}
+  function fmove(d){var c=cols(),n=FT.length,r=Math.floor(fi/c),k=fi%c,ni=fi;
+    if(d==='left'&&k>0)ni--;if(d==='right'&&k<c-1&&fi<n-1)ni++;if(d==='up'&&r>0)ni-=c;if(d==='down'&&fi+c<n)ni+=c;
+    if(d==='ok'){$('fsay').textContent='打开“'+FT[fi][0]+'”：窗口从刘海回到原处';return}
+    if(ni===fi){$('fsay').textContent='到边了，不绕回';return}fset(ni);$('fsay').textContent=FT[ni][0]+(FT[ni][1]?' · '+FT[ni][1]:'')}
+  fset(0);
+  $('focus').addEventListener('keydown',function(e){var m={ArrowLeft:'left',ArrowRight:'right',ArrowUp:'up',ArrowDown:'down',Enter:'ok'}[e.key];if(m){e.preventDefault();fmove(m)}});
+  document.querySelector('.fpad').addEventListener('click',function(e){var b=e.target.closest('button');if(b)fmove(b.dataset.d)});
+  // 平滑滚动对比
+  var C=['#5E8BE8','#E07A5F','#34C759','#B4527A','#E0A264','#62C3CF','#7A4FC2'];
+  var names=['Notch.swift','WindowSwitcher.swift','LaunchpadModel.swift','ConductorGesture.swift','DeviceBattery.swift','Preferences.swift','FoldTransaction.swift','SlideOver.swift','PictureInPicture.swift','TrackpadGestures.swift','DockSwipe.swift','GlancePanel.swift','ScreenBezel.swift','Updater.swift','HabitKeys.swift','MagicTiling.swift','ScrollStrip.swift','Thumbnail.swift','Journal.swift','Diagnostics.swift'];
+  var html=names.map(function(n,i){return '<div><i style="background:'+C[i%C.length]+'"></i>'+n+'<span>'+(120+i*37)+' 行</span></div>'}).join('');
+  $('lRaw').innerHTML=html;$('lSm').innerHTML=html;
+  var H=names.length*40-240,raw=0,target=0,pos=0,vel=0,last=0,running=false;
+  var reduce=matchMedia('(prefers-reduced-motion: reduce)').matches;
+  function clamp(v){return Math.max(0,Math.min(H,v))}
+  function step(t){if(!last)last=t;var dt=Math.min(0.032,(t-last)/1000);last=t;
+    // 临界阻尼弹簧，response 0.28 秒
+    var w=2*Math.PI/0.28,a=-w*w*(pos-target)-2*w*vel;vel+=a*dt;pos+=vel*dt;
+    $('lSm').style.transform='translateY('+(-pos)+'px)';
+    if(Math.abs(pos-target)<0.3&&Math.abs(vel)<3){pos=target;vel=0;$('lSm').style.transform='translateY('+(-pos)+'px)';running=false;last=0;return}
+    requestAnimationFrame(step)}
+  function notch(n){raw=clamp(raw+40*n);$('lRaw').style.transform='translateY('+(-raw)+'px)';target=clamp(target+40*n);
+    if(reduce){pos=target;$('lSm').style.transform='translateY('+(-pos)+'px)';return}if(!running){running=true;requestAnimationFrame(step)}}
+  function burst(n){var k=0,dir=n>0?1:-1;(function go(){notch(dir);if(++k<Math.abs(n))setTimeout(go,90)})()}
+  $('down3').onclick=function(){burst(3)};$('up3').onclick=function(){burst(-3)};
+  var acc=0;function wheel(e){e.preventDefault();acc+=e.deltaY;while(Math.abs(acc)>=40){notch(acc>0?1:-1);acc-=acc>0?40:-40}}
+  $('vRaw').addEventListener('wheel',wheel,{passive:false});$('vSm').addEventListener('wheel',wheel,{passive:false});
+})();
+</script>
+
+</body></html>

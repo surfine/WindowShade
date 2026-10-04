@@ -16,6 +16,11 @@ import Cocoa
         coding.bezelStyle = .rounded;coding.isEnabled=NotchController.isEnabled
         coding.toolTip="本地选择项目和 Codex，登录后进行只读查询。打开页面不会启动程序。"
         addArrangedSubview(coding)
+        let silent = NSButton(title: "静音操作…", target: owner, action: #selector(AppDelegate.ws2OpenSilent))
+        silent.bezelStyle = .rounded
+        silent.isEnabled = NotchController.isEnabled
+        silent.toolTip = "在刘海里看清再确认。采用草稿不会发送。"
+        addArrangedSubview(silent)
         let conductor = NSButton(title: "指挥…", target: owner, action: #selector(AppDelegate.ws2OpenConductor))
         conductor.bezelStyle = .rounded
         conductor.isEnabled = NotchController.isEnabled

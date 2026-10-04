@@ -34,6 +34,7 @@
 1. `film/ws2-concept/BRIEF.md`：脚本、Aaron 点名的五处 wow、分镜；
 2. `film/ws2-concept/DIGEST.md`：写法规则。最重要的是第一节：**照示例源码改，不要凭印象重写**；
 3. 你这个包要用到的每张镜头卡（`reference/cards/<卡名>.md`）和它的示例源码（`reference/demos/<卡名>/*.tsx`），全文读。
+4. `docs/design-drafts/README.md`：十四份可交互设计稿。画界面、刘海形状和动效之前先打开对应的稿。
 
 目标不是“动起来”，是让人看了喊 wow。观众每一秒都要知道：该看哪、为什么在看、它从哪来、要去哪。像 Apple 发布会里的一段，不像幻灯片。
 

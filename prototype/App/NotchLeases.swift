@@ -20,13 +20,15 @@ final class NotchLeaseHub {
         case agentSessions, agentReview
         /// 本地只读助手会话与其选模型页（D15）。不是授权账，不能批准命令。
         case ownedCodex, ownedModelPicker
+        /// 静音操作。同一刘海，不另开窗口。
+        case silent
 
         var layer: WS2.Layer {
             switch self {
             case .authorization, .agentReview: return .authorization
             case .conductor: return .interaction
             case .notchShelf, .launchpad, .windowBrowser, .pomodoro, .agentSessions,
-                 .ownedCodex, .ownedModelPicker: return .opened
+                 .ownedCodex, .ownedModelPicker, .silent: return .opened
             }
         }
     }

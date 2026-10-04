@@ -43,7 +43,7 @@ npm run deploy
 - 分享卡片（聊天软件和社交网站的链接预览）：每页一张 1200 × 630 JPEG。`og.jpg` / `og-en.jpg` 是首页首屏，`og-history.jpg` / `og-history-en.jpg` 是窗口往事封面（标题 + 四个年代的标题栏）；改了对应首屏后用无头 Chrome 以 1200 宽重截。元数据集中在 `scripts/chrome.mjs` 的 `shareMeta`（标题、描述、尺寸、替代文字、站点名、Twitter 卡片），`npm run check` 会检查每页的卡片图片存在且是 JPEG。
 - `share-square.jpg`：512 × 512 的不透明图标。有些聊天软件（如微信）不读 og:image，而是取页面里第一张大图，所以每页开头放一张隐藏、延迟加载的它：浏览器不会下载，解析网页的程序能看到。
 - 首页不再使用旧的 `hero.webp`（窗口选择面板渲染）和 `settings.webp`（1.0.12 设置截图）：两张图里还是“窗口选择”“已折叠”“折叠”等旧词，已删除。
-- 合盖彩蛋是网页动画（`app.js` 的 lid 部分），不再用录屏：触发点、弹簧与三种质感的角度 / 模糊 / 变暗取自 `prototype/Effects/FoldDriver.swift`。README 里的 `assets/windowshade-lid*.gif` 就是逐帧截下的这段动画。
+- 合盖彩蛋是网页动画（`app.js` 的 lid 部分），不再用录屏：触发点与三种质感的角度 / 模糊 / 变暗取自 `prototype/Effects/FoldDriver.swift`。铰链走 dolly（response 1.6 秒、ζ 1），页面折进去仍是 FoldSpring。README 里的 `assets/windowshade-lid*.gif` 是这段动画的逐帧截图；仓库里的文件还是改公式之前截的，重截才会跟上。
 
 源码 MIT 许可沿用上级仓库。网页里不添加未经核实的用户量、媒体背书、性能数字或付费计划。
 

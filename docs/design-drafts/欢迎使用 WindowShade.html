@@ -1,0 +1,312 @@
+<!doctype html><html><head><meta charset=utf8><meta name=viewport content="width=device-width,initial-scale=1,viewport-fit=cover"><style>:root{color-scheme:light;box-sizing:border-box;padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}html{scroll-padding-top:env(safe-area-inset-top,0px)}body{margin:0;padding:0;font:14px -apple-system,BlinkMacSystemFont,sans-serif;background:#faf9f5;color:#141413}img{max-width:100%}[hidden]:not([hidden=until-found i]){display:none!important}</style></head><body>
+<title>欢迎使用 WindowShade</title>
+<style>
+:root{
+  --page:#e9ebf0; --win:#f6f6f8; --win-line:rgba(0,0,0,.10); --ink:#1d1d1f; --muted:#6e6e73; --faint:#8e8e93;
+  --accent:#0a7cff; --accent-ink:#fff; --dot:#c7c7cc;
+  --mini-win:#ffffff; --mini-bar:#ededf0; --mini-line:#dcdce1; --mini-text:#c9c9cf;
+  --wall:radial-gradient(120% 100% at 0% 0%,#bcd3ff 0%,transparent 60%),radial-gradient(100% 90% at 100% 0%,#f3cdea 0%,transparent 62%),radial-gradient(120% 100% at 60% 110%,#ffd9b8 0%,transparent 60%),#dfe4ef;
+  --menubar:rgba(255,255,255,.55); --dock:rgba(255,255,255,.45); --glass:rgba(200,200,206,.92); --glass-rim:rgba(255,255,255,.75);
+  --shadow:0 10px 26px -10px rgba(20,30,50,.45),0 0 0 .5px rgba(0,0,0,.22);
+  --hud:rgba(30,30,34,.78); --hud-ink:#fff;
+  --sans:-apple-system,BlinkMacSystemFont,"SF Pro Text","PingFang SC","Hiragino Sans GB","Helvetica Neue",sans-serif;
+  color-scheme:light;
+}
+@media (prefers-color-scheme:dark){:root:not([data-theme="light"]){
+  color-scheme:dark;
+  --page:#141518; --win:#232326; --win-line:rgba(255,255,255,.10); --ink:#f5f5f7; --muted:#a1a1a6; --faint:#7c7c82;
+  --accent:#0a84ff; --dot:#48484e;
+  --mini-win:#2c2c30; --mini-bar:#38383d; --mini-line:#46464c; --mini-text:#55555c;
+  --wall:radial-gradient(120% 100% at 0% 0%,#253e72 0%,transparent 60%),radial-gradient(100% 90% at 100% 0%,#4e2a52 0%,transparent 62%),radial-gradient(120% 100% at 60% 110%,#5c3a22 0%,transparent 60%),#1b1e27;
+  --menubar:rgba(24,24,28,.55); --dock:rgba(40,40,46,.55); --glass:rgba(78,78,84,.92); --glass-rim:rgba(255,255,255,.22);
+  --shadow:0 10px 26px -10px rgba(0,0,0,.8),0 0 0 .5px rgba(255,255,255,.14);
+}}
+:root[data-theme="dark"]{
+  color-scheme:dark;
+  --page:#141518; --win:#232326; --win-line:rgba(255,255,255,.10); --ink:#f5f5f7; --muted:#a1a1a6; --faint:#7c7c82;
+  --accent:#0a84ff; --dot:#48484e;
+  --mini-win:#2c2c30; --mini-bar:#38383d; --mini-line:#46464c; --mini-text:#55555c;
+  --wall:radial-gradient(120% 100% at 0% 0%,#253e72 0%,transparent 60%),radial-gradient(100% 90% at 100% 0%,#4e2a52 0%,transparent 62%),radial-gradient(120% 100% at 60% 110%,#5c3a22 0%,transparent 60%),#1b1e27;
+  --menubar:rgba(24,24,28,.55); --dock:rgba(40,40,46,.55); --glass:rgba(78,78,84,.92); --glass-rim:rgba(255,255,255,.22);
+  --shadow:0 10px 26px -10px rgba(0,0,0,.8),0 0 0 .5px rgba(255,255,255,.14);
+}
+*{box-sizing:border-box}
+body{margin:0;background:var(--page);color:var(--ink);font:14px/1.6 var(--sans);-webkit-font-smoothing:antialiased;padding-inline:16px;padding-block:28px 40px}
+.note{max-width:760px;margin:0 auto 18px;color:var(--muted);font-size:13px}
+.note b{color:var(--ink);font-weight:600}
+
+/* 欢迎窗口本身（照 macOS 的窗口） */
+.window{max-width:760px;margin:0 auto;background:var(--win);border-radius:14px;box-shadow:0 30px 70px -30px rgba(0,0,0,.45),0 0 0 .5px var(--win-line);overflow:hidden}
+.titlebar{height:38px;display:flex;align-items:center;padding-inline:14px;gap:8px}
+.lights{display:flex;gap:8px}.lights i{width:12px;height:12px;border-radius:50%;background:#ff5f57;display:block}.lights i:nth-child(2){background:#febc2e}.lights i:nth-child(3){background:#28c840}
+.body{padding:0 26px 22px}
+.stage{position:relative;aspect-ratio:16/9;max-width:100%;border-radius:12px;background:var(--wall);overflow:hidden;container-type:inline-size;box-shadow:inset 0 0 0 .5px var(--win-line)}
+.copy{margin-top:20px;min-height:98px}
+.eyebrow{font-size:12px;color:var(--faint);letter-spacing:.02em}
+h1{font-size:26px;line-height:1.25;margin:4px 0 6px;font-weight:650;letter-spacing:-.01em;text-wrap:balance}
+.lede{margin:0;color:var(--muted);font-size:15px;max-width:40em}
+.footer{display:flex;align-items:center;justify-content:space-between;gap:12px;margin-top:18px;flex-wrap:wrap}
+.dots{display:flex;gap:7px}
+.dots button{width:7px;height:7px;border-radius:50%;border:0;padding:0;background:var(--dot);cursor:pointer}
+.dots button[aria-current="true"]{background:var(--accent);width:18px;border-radius:4px}
+.btns{display:flex;gap:10px}
+.btn{font:500 13px var(--sans);border-radius:7px;padding:5px 14px;border:0;cursor:pointer;background:var(--mini-bar);color:var(--ink);box-shadow:0 0 0 .5px var(--win-line)}
+.btn.primary{background:var(--accent);color:var(--accent-ink);box-shadow:none}
+.btn:active{transform:scale(.97)}
+.btn:focus-visible,.dots button:focus-visible{outline:2px solid var(--accent);outline-offset:2px}
+.skip{background:none;box-shadow:none;color:var(--muted)}
+
+/* 迷你桌面的零件，全部按舞台宽度（cqw）缩放 */
+.scene{position:absolute;inset:0;opacity:0;visibility:hidden}
+.scene.on{opacity:1;visibility:visible}
+.menubar{position:absolute;inset:0 0 auto;height:4.6cqw;background:var(--menubar);backdrop-filter:blur(8px);display:flex;align-items:center;padding-inline:2.4cqw;gap:2.4cqw;font-size:1.6cqw;font-weight:600;color:var(--ink)}
+.menubar span{font-weight:400;opacity:.75}
+.notch{position:absolute;top:0;left:50%;width:15cqw;height:4.6cqw;margin-left:-7.5cqw;background:#000;border-radius:0 0 1.6cqw 1.6cqw;z-index:6}
+.dock{position:absolute;left:50%;bottom:1.6cqw;width:40cqw;margin-left:-20cqw;height:6cqw;border-radius:2cqw;background:var(--dock);backdrop-filter:blur(8px);box-shadow:0 0 0 .5px var(--win-line);display:flex;align-items:center;justify-content:center;gap:1.4cqw}
+.dock i{width:4.2cqw;height:4.2cqw;border-radius:1.1cqw;display:block}
+.w{position:absolute;background:var(--mini-win);border-radius:1.5cqw;box-shadow:var(--shadow);overflow:hidden}
+.w .bar{height:3.8cqw;background:var(--mini-bar);display:flex;align-items:center;gap:.7cqw;padding-inline:1.3cqw;font-size:1.35cqw;color:var(--faint);font-weight:600;white-space:nowrap;border-bottom:1px solid var(--mini-line)}
+.w .bar b{flex:1;text-align:center;font-weight:600;margin-right:4cqw;overflow:hidden;text-overflow:ellipsis}
+.w .bar .l{display:flex;gap:.55cqw}.w .bar .l i{width:1.15cqw;height:1.15cqw;border-radius:50%;background:#ff5f57;display:block}.w .bar .l i:nth-child(2){background:#febc2e}.w .bar .l i:nth-child(3){background:#28c840}
+.w .txt{padding:1.8cqw 2cqw;display:grid;gap:1.1cqw}
+.w .txt i{display:block;height:1.05cqw;border-radius:.6cqw;background:var(--mini-text)}
+.w .txt i:nth-child(2){width:78%}.w .txt i:nth-child(3){width:88%}.w .txt i:nth-child(4){width:62%}.w .txt i:nth-child(5){width:84%}.w .txt i:nth-child(6){width:70%}
+.cursor{position:absolute;width:2.4cqw;height:2.4cqw;z-index:9;pointer-events:none}
+.cursor svg{width:100%;height:100%;filter:drop-shadow(0 .2cqw .3cqw rgba(0,0,0,.35))}
+.tap{position:absolute;width:5cqw;height:5cqw;margin:-2.5cqw 0 0 -2.5cqw;border-radius:50%;border:.35cqw solid var(--accent);opacity:0;z-index:8}
+.finger{position:absolute;width:2.6cqw;height:2.6cqw;margin:-1.3cqw 0 0 -1.3cqw;border-radius:50%;background:var(--accent);box-shadow:0 0 0 .4cqw rgba(255,255,255,.7);opacity:0;z-index:9}
+.hud{position:absolute;left:50%;bottom:10cqw;transform:translateX(-50%);background:var(--hud);color:var(--hud-ink);border-radius:99px;padding:.8cqw 2.2cqw;font-size:1.7cqw;font-weight:600;opacity:0;white-space:nowrap;z-index:7}
+.chip{position:absolute;left:50%;bottom:2.4cqw;transform:translateX(-50%);background:var(--hud);color:var(--hud-ink);border-radius:99px;padding:.7cqw 2cqw;font-size:1.6cqw;opacity:0;white-space:nowrap;z-index:7}
+
+/* 1 欢迎：一扇窗卷起、放下（卷帘） */
+.s1 .w{left:24%;top:17%;width:52%;height:66%;animation:s1roll 6s cubic-bezier(.65,0,.35,1) infinite}
+.s1 .word{position:absolute;left:0;right:0;top:47%;text-align:center;font-size:4.6cqw;font-weight:700;letter-spacing:-.02em;color:var(--ink);opacity:0;animation:s1word 6s ease-out infinite}
+@keyframes s1roll{0%,18%{height:66%}38%,72%{height:3.8cqw}90%,100%{height:66%}}
+@keyframes s1word{0%,30%{opacity:0;transform:translateY(1.2cqw)}42%,70%{opacity:1;transform:none}80%,100%{opacity:0}}
+
+/* 2 收起与展开 */
+.s2 .w{left:22%;top:18%;width:56%;height:62%;animation:s2roll 8s cubic-bezier(.65,0,.35,1) infinite}
+@keyframes s2roll{0%,24%{height:62%}33%,62%{height:3.8cqw}72%,100%{height:62%}}
+.s2 .cursor{animation:s2cur 8s ease-in-out infinite}
+@keyframes s2cur{0%{left:72%;top:78%}15%,58%{left:47%;top:19.6%}62%,100%{left:47%;top:19.6%}}
+.s2 .tap.a{left:48%;top:21%;animation:tap 8s infinite;animation-delay:1.36s}
+.s2 .tap.b{left:48%;top:21%;animation:tap 8s infinite;animation-delay:1.6s}
+.s2 .tap.c{left:48%;top:21%;animation:tap 8s infinite;animation-delay:4.75s}
+@keyframes tap{0%{opacity:.9;transform:scale(.3)}6%{opacity:0;transform:scale(1.2)}100%{opacity:0}}
+.s2 .chip.a{animation:chip 8s infinite}.s2 .chip.b{animation:chip 8s infinite;animation-delay:4.2s}
+@keyframes chip{0%,8%{opacity:0}12%,40%{opacity:1}46%,100%{opacity:0}}
+
+/* 3 看一眼 */
+.s3 .w.back{left:6%;top:14%;width:62%;height:74%}
+.s3 .w.strip{left:60%;top:22%;width:34%;height:3.8cqw;z-index:3}
+.s3 .card{position:absolute;left:60%;top:calc(22% + 4.6cqw);width:34%;height:44%;z-index:2;border-radius:1.5cqw;background:var(--mini-win);box-shadow:var(--shadow);overflow:hidden;animation:s3peek 7s infinite}
+.s3 .card .log{padding:1.6cqw 1.8cqw;display:grid;gap:.9cqw}
+.s3 .card .log i{display:block;height:.95cqw;border-radius:.5cqw;background:var(--mini-text)}
+.s3 .card .prog{position:absolute;left:1.8cqw;right:1.8cqw;bottom:2cqw;height:1cqw;border-radius:.5cqw;background:var(--mini-line);overflow:hidden}
+.s3 .card .prog b{display:block;height:100%;background:var(--accent);animation:s3prog 7s linear infinite}
+@keyframes s3peek{0%,20%{clip-path:inset(0 0 100% 0 round 1.5cqw)}30%,68%{clip-path:inset(0 0 0 0 round 1.5cqw)}78%,100%{clip-path:inset(0 0 100% 0 round 1.5cqw)}}
+@keyframes s3prog{0%{width:12%}100%{width:96%}}
+.s3 .cursor{animation:s3cur 7s ease-in-out infinite}
+@keyframes s3cur{0%{left:30%;top:70%}16%,66%{left:76%;top:23%}76%,100%{left:40%;top:78%}}
+.s3 .chip{animation:chip 7s infinite;animation-delay:1.2s}
+
+/* 4 标题栏手势 */
+.s4 .w{left:24%;top:22%;width:52%;height:56%;animation:s4win 10s cubic-bezier(.3,0,.2,1) infinite}
+@keyframes s4win{0%,10%{left:24%;top:22%;width:52%;height:56%}20%,34%{left:2%;top:8%;width:47.5%;height:79%}44%,62%{left:2%;top:8%;width:96%;height:79%}72%,100%{left:24%;top:22%;width:52%;height:56%}}
+.s4 .finger.a{animation:s4fa 10s ease-in-out infinite}.s4 .finger.b{animation:s4fb 10s ease-in-out infinite}
+@keyframes s4fa{0%{opacity:0;left:46%;top:25%}3%,10%{opacity:1;left:46%;top:25%}18%{opacity:1;left:32%;top:25%}21%,34%{opacity:0;left:32%;top:25%}
+  36%{opacity:1;left:22%;top:11%}44%{opacity:1;left:22%;top:20%}47%,62%{opacity:0;left:22%;top:20%}
+  64%{opacity:1;left:40%;top:11%}72%{opacity:1;left:47%;top:11%}75%,100%{opacity:0;left:47%;top:11%}}
+@keyframes s4fb{0%{opacity:0;left:52%;top:25%}3%,10%{opacity:1;left:52%;top:25%}18%{opacity:1;left:38%;top:25%}21%,34%{opacity:0;left:38%;top:25%}
+  36%{opacity:1;left:28%;top:11%}44%{opacity:1;left:28%;top:20%}47%,62%{opacity:0;left:28%;top:20%}
+  64%{opacity:1;left:60%;top:11%}72%{opacity:1;left:53%;top:11%}75%,100%{opacity:0;left:53%;top:11%}}
+.s4 .hud.a{animation:hud 10s infinite;animation-delay:1.4s}.s4 .hud.b{animation:hud 10s infinite;animation-delay:4.1s}.s4 .hud.c{animation:hud 10s infinite;animation-delay:6.9s}
+@keyframes hud{0%{opacity:0;transform:translateX(-50%) scale(.96)}3%,16%{opacity:1;transform:translateX(-50%) scale(1)}22%,100%{opacity:0}}
+
+/* 5 刘海 */
+.s5 .w{left:26%;top:30%;width:48%;height:52%;transform-origin:50% 0;animation:s5win 8s cubic-bezier(.3,0,.2,1) infinite}
+@keyframes s5win{0%,12%{opacity:1;transform:none;top:30%}26%{opacity:1;transform:translateY(-14cqw) scale(.18)}30%,88%{opacity:0;transform:translateY(-16cqw) scale(.1)}96%,100%{opacity:1;transform:none;top:30%}}
+.s5 .notch{animation:s5notch 8s cubic-bezier(.3,0,.2,1) infinite}
+@keyframes s5notch{0%,26%{width:15cqw;margin-left:-7.5cqw}32%,46%{width:21cqw;margin-left:-10.5cqw}52%,100%{width:15cqw;margin-left:-7.5cqw}}
+.s5 .tile{position:absolute;top:.9cqw;left:50%;margin-left:6.6cqw;width:2.8cqw;height:2.8cqw;border-radius:.7cqw;background:#5b8cff;z-index:7;opacity:0;animation:s5tile 8s infinite}
+@keyframes s5tile{0%,30%{opacity:0}34%,46%{opacity:1}52%,100%{opacity:0}}
+.s5 .cursor{animation:s5cur 8s ease-in-out infinite}
+@keyframes s5cur{0%{left:50%;top:32%}8%{left:50%;top:32%}22%{left:50%;top:6%}40%{left:62%;top:30%}48%,52%{left:50%;top:1.6%}60%,100%{left:64%;top:44%}}
+.s5 .tap{left:50.8%;top:3%;animation:tap 8s infinite;animation-delay:4.05s}
+.s5 .home{position:absolute;left:14%;right:14%;top:14%;bottom:18%;display:grid;grid-template-columns:repeat(6,1fr);gap:2.4cqw;align-content:center;justify-items:center;opacity:0;transform-origin:50% -20%;animation:s5home 8s cubic-bezier(.2,.8,.2,1) infinite;z-index:5}
+.s5 .home i{width:6.4cqw;height:6.4cqw;border-radius:1.7cqw;display:block;box-shadow:0 .3cqw .8cqw rgba(0,0,0,.18)}
+@keyframes s5home{0%,52%{opacity:0;transform:scale(.2)}62%,84%{opacity:1;transform:none}92%,100%{opacity:0;transform:scale(.96)}}
+.s5 .dim{position:absolute;inset:0;background:rgba(10,12,20,.28);backdrop-filter:blur(6px);opacity:0;animation:s5dim 8s infinite;z-index:4}
+@keyframes s5dim{0%,52%{opacity:0}60%,84%{opacity:1}92%,100%{opacity:0}}
+.s5 .chip.a{animation:chip 8s infinite;animation-delay:.4s}.s5 .chip.b{animation:chip 8s infinite;animation-delay:4.1s}
+
+/* 6 像 iPad 一样多任务：侧拉 → 分屏 → 画中画 */
+.s6 .beat{position:absolute;inset:0;opacity:0;animation:beat 12s infinite}
+.s6 .beat.b{animation-delay:4s}.s6 .beat.c{animation-delay:8s}
+@keyframes beat{0%{opacity:0}3%,30%{opacity:1}34%,100%{opacity:0}}
+.s6 .label{position:absolute;left:2.4cqw;top:6.4cqw;background:var(--hud);color:var(--hud-ink);border-radius:99px;padding:.5cqw 1.6cqw;font-size:1.5cqw;font-weight:600;z-index:9}
+/* 侧拉：玻璃边框 + 角上的弧 */
+.s6 .so{position:absolute;right:2.2%;top:9%;width:29%;height:76%;border-radius:2.6cqw;background:var(--glass);box-shadow:0 1.2cqw 2.6cqw -1cqw rgba(0,0,0,.35),inset 0 0 0 .18cqw var(--glass-rim);animation:s6so 12s cubic-bezier(.3,0,.2,1) infinite}
+.s6 .so .w{position:absolute;inset:1.2cqw;box-shadow:none;border-radius:1.8cqw}
+.s6 .so .arc{position:absolute;left:2.2cqw;bottom:2.2cqw;width:4.6cqw;height:4.6cqw;border-left:.4cqw solid #111;border-bottom:.4cqw solid #111;border-radius:0 0 0 4.6cqw;clip-path:polygon(0 18%,100% 18%,100% 100%,0 100%);opacity:.85}
+@keyframes s6so{0%{transform:translateX(0)}12%,22%{transform:translateX(0)}28%{transform:translateX(34cqw)}31%,100%{transform:translateX(34cqw)}}
+.s6 .edge{position:absolute;right:0;top:40%;width:1.6cqw;height:7.6cqw;border-radius:1.6cqw 0 0 1.6cqw;background:var(--glass);box-shadow:inset 0 0 0 .15cqw var(--glass-rim);display:flex;align-items:center;justify-content:center;color:var(--muted);font-size:1.4cqw;opacity:0;animation:s6edge 12s infinite}
+@keyframes s6edge{0%,26%{opacity:0}29%,33%{opacity:1}34%,100%{opacity:0}}
+/* 分屏：中间的把手，两扇一起变 */
+.s6 .sp1{left:1.5%;top:8%;height:79%;width:48%;animation:s6l 12s cubic-bezier(.3,0,.2,1) infinite;animation-delay:4s}
+.s6 .sp2{right:1.5%;top:8%;height:79%;width:48%;animation:s6r 12s cubic-bezier(.3,0,.2,1) infinite;animation-delay:4s}
+.s6 .grip{position:absolute;left:50%;top:42%;width:.8cqw;height:8cqw;margin-left:-.4cqw;border-radius:.4cqw;background:#fff;box-shadow:0 .2cqw .6cqw rgba(0,0,0,.35);z-index:4;animation:s6g 12s cubic-bezier(.3,0,.2,1) infinite;animation-delay:4s}
+@keyframes s6l{0%,8%{width:48%}18%,28%{width:31.5%}100%{width:31.5%}}
+@keyframes s6r{0%,8%{width:48%}18%,28%{width:64.5%}100%{width:64.5%}}
+@keyframes s6g{0%,8%{left:50%}18%,28%{left:33.4%}100%{left:33.4%}}
+/* 画中画：缩到角落 */
+.s6 .pip{left:24%;top:18%;width:52%;height:60%;transform-origin:100% 100%;animation:s6pip 12s cubic-bezier(.3,0,.2,1) infinite;animation-delay:8s}
+@keyframes s6pip{0%,8%{left:24%;top:18%;width:52%;height:60%;border-radius:1.5cqw}18%,30%{left:70%;top:66%;width:27%;height:19%;border-radius:1.4cqw}100%{left:70%;top:66%;width:27%;height:19%}}
+.s6 .pip .ctl{position:absolute;inset:0;display:flex;align-items:center;justify-content:center;gap:2.6cqw;color:#fff;font-size:1.8cqw;background:rgba(0,0,0,.35);opacity:0;animation:s6ctl 12s infinite;animation-delay:8s}
+@keyframes s6ctl{0%,18%{opacity:0}21%,29%{opacity:1}32%,100%{opacity:0}}
+
+/* 7 开始使用：授权 */
+.s7 .panel{position:absolute;left:50%;top:50%;width:62%;transform:translate(-50%,-46%);background:var(--mini-win);border-radius:1.8cqw;box-shadow:var(--shadow);padding:2.2cqw 2.4cqw;display:grid;gap:1.6cqw}
+.s7 .row{display:flex;align-items:center;gap:1.8cqw;font-size:1.9cqw;color:var(--ink)}
+.s7 .row .ic{width:4.4cqw;height:4.4cqw;border-radius:1.1cqw;background:var(--accent);color:#fff;display:flex;align-items:center;justify-content:center;font-size:2.2cqw;flex:none}
+.s7 .row .t{flex:1}.s7 .row .t small{display:block;color:var(--faint);font-size:1.45cqw}
+.s7 .row .ok{color:#28a745;font-weight:700;font-size:2.2cqw}
+.s7 .row .go{font-size:1.5cqw;border-radius:.8cqw;padding:.4cqw 1.2cqw;background:var(--accent);color:#fff;font-weight:600}
+.s7 .sep{height:1px;background:var(--mini-line)}
+
+@media (prefers-reduced-motion:reduce){.stage *{animation:none!important}.s2 .chip.a,.s3 .card,.s4 .hud.a,.s6 .beat.a{opacity:1;clip-path:none}}
+@media (max-width:520px){h1{font-size:21px}.lede{font-size:14px}.body{padding:0 14px 16px}}
+</style>
+
+<p class="note"><b>这是小样，不是 App 本身。</b>每一页的动画和文字，是准备在 WindowShade 里用系统动画原样做的“欢迎使用 WindowShade…”（首次打开时出现，菜单里随时能再打开）。点“继续”翻页；动画会一直循环。</p>
+
+<div class="window" role="dialog" aria-labelledby="h">
+  <div class="titlebar"><span class="lights"><i></i><i></i><i></i></span></div>
+  <div class="body">
+    <div class="stage" id="stage" aria-hidden="true">
+      <svg width="0" height="0" style="position:absolute"><defs><symbol id="arrow" viewBox="0 0 24 24"><path d="M4 2 L4 19 L8.6 14.8 L11.6 21.6 L14.4 20.4 L11.5 13.8 L17.8 13.8 Z" fill="#fff" stroke="#000" stroke-width="1.2" stroke-linejoin="round"/></symbol></defs></svg>
+
+      <div class="scene s1 on">
+        <div class="menubar">WindowShade <span>文件</span><span>编辑</span><span>窗口</span></div><div class="notch"></div>
+        <div class="w"><div class="bar"><span class="l"><i></i><i></i><i></i></span><b>构建日志</b></div><div class="txt"><i></i><i></i><i></i><i></i><i></i><i></i></div></div>
+        <div class="word">欢迎使用 WindowShade</div>
+      </div>
+
+      <div class="scene s2">
+        <div class="menubar">备忘录 <span>文件</span><span>编辑</span></div><div class="notch"></div>
+        <div class="w"><div class="bar"><span class="l"><i></i><i></i><i></i></span><b>购物清单</b></div><div class="txt"><i></i><i></i><i></i><i></i><i></i><i></i></div></div>
+        <span class="tap a"></span><span class="tap b"></span><span class="tap c"></span>
+        <div class="cursor"><svg><use href="#arrow"/></svg></div>
+        <div class="chip a">双击标题栏：卷成一条，留在原处</div><div class="chip b">点一下卷帘条：展开</div>
+      </div>
+
+      <div class="scene s3">
+        <div class="menubar">Xcode <span>文件</span><span>编辑</span></div><div class="notch"></div>
+        <div class="w back"><div class="bar"><span class="l"><i></i><i></i><i></i></span><b>ContentView.swift</b></div><div class="txt"><i></i><i></i><i></i><i></i><i></i><i></i></div></div>
+        <div class="w strip"><div class="bar"><span class="l"><i></i><i></i><i></i></span><b>构建日志</b></div></div>
+        <div class="card"><div class="log"><i style="width:70%"></i><i style="width:90%"></i><i style="width:60%"></i><i style="width:82%"></i></div><div class="prog"><b></b></div></div>
+        <div class="cursor"><svg><use href="#arrow"/></svg></div>
+        <div class="chip">指针停一下：实时画面；移开就收回</div>
+      </div>
+
+      <div class="scene s4">
+        <div class="menubar">Safari <span>文件</span><span>编辑</span></div><div class="notch"></div>
+        <div class="w"><div class="bar"><span class="l"><i></i><i></i><i></i></span><b>apple.com</b></div><div class="txt"><i></i><i></i><i></i><i></i><i></i><i></i></div></div>
+        <span class="finger a"></span><span class="finger b"></span>
+        <div class="hud a">左半屏</div><div class="hud b">铺满屏幕</div><div class="hud c">撤销上次排布</div>
+      </div>
+
+      <div class="scene s5">
+        <div class="dim"></div>
+        <div class="menubar">访达 <span>文件</span><span>编辑</span></div><div class="notch"></div><span class="tile"></span>
+        <div class="w"><div class="bar"><span class="l"><i></i><i></i><i></i></span><b>下载</b></div><div class="txt"><i></i><i></i><i></i><i></i></div></div>
+        <div class="home">
+          <i style="background:#34c759"></i><i style="background:#0a84ff"></i><i style="background:#ff9f0a"></i><i style="background:#ff375f"></i><i style="background:#5e5ce6"></i><i style="background:#64d2ff"></i>
+          <i style="background:#ffd60a"></i><i style="background:#30d158"></i><i style="background:#bf5af2"></i><i style="background:#ff453a"></i><i style="background:#8e8e93"></i><i style="background:#0a84ff"></i>
+        </div>
+        <span class="tap"></span>
+        <div class="cursor"><svg><use href="#arrow"/></svg></div>
+        <div class="chip a">朝刘海甩一下标题栏：收进刘海</div><div class="chip b">点一下刘海：回到主屏幕</div>
+      </div>
+
+      <div class="scene s6">
+        <div class="menubar">访达 <span>文件</span><span>编辑</span></div><div class="notch"></div>
+        <div class="beat a">
+          <div class="w" style="left:4%;top:12%;width:58%;height:70%"><div class="bar"><span class="l"><i></i><i></i><i></i></span><b>文稿</b></div><div class="txt"><i></i><i></i><i></i><i></i><i></i></div></div>
+          <div class="so"><div class="w"><div class="bar"><span class="l"><i></i><i></i><i></i></span><b>微信</b></div><div class="txt"><i></i><i></i><i></i><i></i></div></div><span class="arc"></span></div>
+          <div class="edge">‹</div>
+          <span class="label">侧拉：靠在边上，推出去就藏起来</span>
+        </div>
+        <div class="beat b">
+          <div class="w sp1"><div class="bar"><span class="l"><i></i><i></i><i></i></span><b>Safari</b></div><div class="txt"><i></i><i></i><i></i><i></i><i></i></div></div>
+          <div class="w sp2"><div class="bar"><span class="l"><i></i><i></i><i></i></span><b>备忘录</b></div><div class="txt"><i></i><i></i><i></i><i></i><i></i></div></div>
+          <span class="grip"></span>
+          <span class="label">分屏：拖中间的把手，两扇一起变</span>
+        </div>
+        <div class="beat c">
+          <div class="w" style="left:4%;top:12%;width:62%;height:72%"><div class="bar"><span class="l"><i></i><i></i><i></i></span><b>文稿</b></div><div class="txt"><i></i><i></i><i></i><i></i><i></i></div></div>
+          <div class="w pip"><div class="bar"><span class="l"><i></i><i></i><i></i></span><b>会议</b></div><div class="txt"><i></i><i></i><i></i></div><div class="ctl">⌃ &nbsp;⏯&nbsp; ⌄</div></div>
+          <span class="label">画中画：拖到角落停一下</span>
+        </div>
+      </div>
+
+      <div class="scene s7">
+        <div class="panel">
+          <div class="row"><span class="ic">♿︎</span><span class="t">辅助功能<small>找到、移动和恢复窗口</small></span><span class="ok">✓</span></div>
+          <div class="sep"></div>
+          <div class="row"><span class="ic">◉</span><span class="t">屏幕录制<small>截取窗口画面做预览</small></span><span class="go">打开设置</span></div>
+        </div>
+      </div>
+    </div>
+
+    <div class="copy" aria-live="polite">
+      <div class="eyebrow" id="eyebrow">1 / 7</div>
+      <h1 id="h">欢迎使用 WindowShade</h1>
+      <p class="lede" id="lede">把挡路的窗口暂时收起来，它还留在原来的地方。下面几页用一分钟看完怎么用。</p>
+    </div>
+    <div class="footer">
+      <div class="dots" id="dots" role="tablist" aria-label="页"></div>
+      <div class="btns">
+        <button class="btn skip" id="skip" type="button">跳过</button>
+        <button class="btn" id="back" type="button">上一步</button>
+        <button class="btn primary" id="next" type="button">继续</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<script>
+(function(){
+  var pages=[
+    ['欢迎使用 WindowShade','把挡路的窗口暂时收起来，它还留在原来的地方。下面几页用一分钟看完怎么用。'],
+    ['收起，留下位置','双击标题栏，或在标题栏上两指往上推：窗口卷成一条卷帘条，留在原处。点一下卷帘条就展开。'],
+    ['看一眼','指针停在卷帘条上，窗口在原处出现，画面是实时的；移开就收回。不用切过去，也不打乱排布。'],
+    ['在标题栏上滑','两指往左、往右滑占半屏，往下拉铺满屏幕，捏合撤销上次排布。拖着标题栏甩一下也行。'],
+    ['刘海是一个入口','朝刘海甩一下标题栏，窗口收进刘海；点一下刘海回到主屏幕，点两下是调度中心。'],
+    ['像 iPad 一样多任务','拖到屏幕边停一下是侧拉；两扇拼满一块屏时，拖中间的把手；拖到屏幕角落停一下是画中画。'],
+    ['最后一步：授权','辅助功能让 WindowShade 能移动窗口，屏幕录制让它能显示实时画面。两项都打开就能用了。']
+  ];
+  var i=0,scenes=document.querySelectorAll('.scene'),dots=document.getElementById('dots');
+  pages.forEach(function(_,k){var b=document.createElement('button');b.type='button';b.setAttribute('aria-label','第 '+(k+1)+' 页');b.addEventListener('click',function(){go(k)});dots.appendChild(b)});
+  function restart(el){el.querySelectorAll('*').forEach(function(n){n.style.animation='none';void n.offsetWidth;n.style.animation=''})}
+  function go(k){
+    i=Math.max(0,Math.min(pages.length-1,k));
+    scenes.forEach(function(s,n){s.classList.toggle('on',n===i)});
+    restart(scenes[i]);
+    document.getElementById('eyebrow').textContent=(i+1)+' / '+pages.length;
+    document.getElementById('h').textContent=pages[i][0];
+    document.getElementById('lede').textContent=pages[i][1];
+    dots.querySelectorAll('button').forEach(function(b,n){b.setAttribute('aria-current',n===i?'true':'false')});
+    document.getElementById('back').hidden=i===0;
+    document.getElementById('skip').hidden=i===pages.length-1;
+    document.getElementById('next').textContent=i===pages.length-1?'开始使用':'继续';
+  }
+  document.getElementById('next').addEventListener('click',function(){go(i===pages.length-1?0:i+1)});
+  document.getElementById('back').addEventListener('click',function(){go(i-1)});
+  document.getElementById('skip').addEventListener('click',function(){go(pages.length-1)});
+  document.addEventListener('keydown',function(e){if(e.key==='ArrowRight')go(i+1);if(e.key==='ArrowLeft')go(i-1)});
+  go(0);
+})();
+</script>
+
+</body></html>

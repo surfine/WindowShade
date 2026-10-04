@@ -15,7 +15,7 @@ const rect=(x,y,w,h,r=24,fill='#151922',extra='')=>`<rect x="${x}" y="${y}" widt
 const circle=(x,y,r,color,w=3,extra='')=>`<circle cx="${x}" cy="${y}" r="${r}" fill="none" stroke="${color}" stroke-width="${w}" ${extra}/>`;
 export const SHAPES={quiet:[195,58,18],compact:[480,58,18],alert:[545,102,28],expanded:[820,260,40]};
 // Every boundary closes to the same quiet contour; the next chapter opens from identical values.
-export function notchGeometry(frame){const c=chapterAt(frame),l=clamp(frame-c.start,0,c.duration-1),target=SHAPES[c.shape];const t=frozenLocal(c,l);const tail=c.duration-heldLocal(c,l);const p=Math.min(clamp(spring(t,12,.4,.92)),ease((tail-1)/72));return SHAPES.quiet.map((v,i)=>lerp(v,target[i],p));}
+export function notchGeometry(frame){const c=chapterAt(frame),l=clamp(frame-c.start,0,c.duration-1),target=SHAPES[c.shape];const t=frozenLocal(c,l);const tail=c.duration-heldLocal(c,l);const open=spring(t,12,.40,.92);const shut=tail<=1?0:1-spring(Math.max(0,48-tail),0,.34,1);const p=Math.min(clamp(open),shut);return SHAPES.quiet.map((v,i)=>lerp(v,target[i],p));}
 export function notchSVG(frame){const c=chapterAt(frame),[w,h,r]=notchGeometry(frame),f=frozenLocal(c,frame-c.start);let inside='';
  if(c.id===0&&f>190){let a=clamp((f-190)/110),b=clamp((f-330)/90);inside=circle(905,185,25,c.color,3,`opacity="${a}"`)+circle(1015,185,25,b>.99?'#5FD38A':'#687078',3)+`<path d="M 941 185 L 980 185" stroke="#687078" stroke-width="2"/>`;}
  else if(c.id===5){const p=ease((f-50)/110);inside=`<path d="M 905 162 L 951 205 L 1020 139" pathLength="1" stroke-dasharray="1" stroke-dashoffset="${1-p}" stroke="${c.color}" stroke-width="4" fill="none" stroke-linecap="round"/>`;}

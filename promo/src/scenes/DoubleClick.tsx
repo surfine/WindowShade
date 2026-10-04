@@ -1,7 +1,7 @@
 import React from "react";
 import { AbsoluteFill, useCurrentFrame } from "remotion";
 import { DOUBLE, sceneFrames } from "../timeline";
-import { C, FONT, SERIF, easeInOut, easeOut, easeRoll, mix, tw } from "../theme";
+import { C, FONT, SERIF, easeOut, mix, motion, tw } from "../theme";
 import { Caption, Canvas, Clicks, Cursor, Glass, Lines, MacWindow, pressAt, tiltIn, useVertical } from "../ui";
 
 // The move itself, big: double-click, the window rolls up into its bar, the draft behind shows.
@@ -19,13 +19,13 @@ export const DoubleClick: React.FC = () => {
   const frame = useCurrentFrame();
   const { REF, DRAFT, from } = LAYOUT[useVertical() ? "v" : "h"];
   const GRAB = { x: REF.x + REF.w / 2 + 70, y: REF.y + BAR / 2 };
-  const roll = tw(frame, DOUBLE.roll, DOUBLE.roll + 32, 0, 1, easeRoll) - tw(frame, DOUBLE.unroll, DOUBLE.unroll + 32, 0, 1, easeRoll);
+  const roll = motion(frame, DOUBLE.roll, "settle") - motion(frame, DOUBLE.unroll, "settle");
   const arrive = tw(frame, 6, DOUBLE.clicks[0] - 4, 0, 1, easeOut);
   const cx = mix(from.x, GRAB.x, arrive);
   const cy = mix(from.y, GRAB.y, arrive);
   const clicks = [...DOUBLE.clicks, ...DOUBLE.clicksBack];
   const tag = tw(frame, DOUBLE.roll + 36, DOUBLE.roll + 50) * (1 - tw(frame, DOUBLE.swap - 6, DOUBLE.swap + 4));
-  const zoom = mix(1, 1.05, tw(frame, 0, sceneFrames("DoubleClick"), 0, 1, easeInOut));
+  const zoom = mix(1, 1.05, motion(frame, 0, "dolly"));
 
   return (
     <Canvas>

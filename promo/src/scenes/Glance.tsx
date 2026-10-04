@@ -1,7 +1,7 @@
 import React from "react";
 import { AbsoluteFill, useCurrentFrame } from "remotion";
 import { GLANCE, sceneFrames } from "../timeline";
-import { C, FONT, SERIF, easeInOut, easeOut, mix, pop, tw } from "../theme";
+import { C, FONT, SERIF, easeOut, mix, motion, pop, tw } from "../theme";
 import { Caption, Canvas, Cursor, Lines, MacWindow, tiltIn, useVertical } from "../ui";
 
 // Rest on a 卷帘条 and a card drops below it, live. Move away and it goes back up.
@@ -47,17 +47,17 @@ export const Glance: React.FC = () => {
   const { STRIP, DRAFT, from, away } = LAYOUT[useVertical() ? "v" : "h"];
   const REST = { x: STRIP.x + STRIP.w / 2 + 90, y: STRIP.y + BAR / 2 + 4 };
   const arrive = tw(frame, 12, GLANCE.arrive, 0, 1, easeOut);
-  const leave = tw(frame, GLANCE.leave, GLANCE.leave + 30, 0, 1, easeInOut);
+  const leave = motion(frame, GLANCE.leave, "flyOut");
   const cx = mix(mix(from[0], REST.x, arrive), away[0], leave);
   const cy = mix(mix(from[1], REST.y, arrive), away[1], leave);
-  const open = frame < GLANCE.leave + 4 ? pop(frame, GLANCE.open, 22, 220) : 1 - tw(frame, GLANCE.leave + 4, GLANCE.leave + 20, 0, 1, easeOut);
+  const open = frame < GLANCE.leave + 4 ? pop(frame, GLANCE.open) : 1 - tw(frame, GLANCE.leave + 4, GLANCE.leave + 20, 0, 1, easeOut);
   const pct = 0.42 + 0.003 * Math.max(0, frame - 20);
 
   return (
     <Canvas>
       <Caption zh="停一下，就看到。" en="Rest on the bar. See the window." at={2} out={GLANCE.second - 14} />
       <Caption zh="不用展开，也不用切过去。" en="No unrolling. No switching apps." at={GLANCE.second} />
-      <AbsoluteFill style={{ scale: String(mix(1, 1.04, tw(frame, 0, sceneFrames("Glance"), 0, 1, easeInOut))), transformOrigin: "30% 45%" }}>
+      <AbsoluteFill style={{ scale: String(mix(1, 1.04, motion(frame, 0, "dolly"))), transformOrigin: "30% 45%" }}>
         <div style={{ position: "absolute", inset: 0, ...tiltIn(frame, 0, { y: 160, rx: 20 }) }}>
           <MacWindow {...DRAFT} title="文章草稿" k={K} active>
             <div style={{ padding: "60px 70px", color: C.winInk }}>

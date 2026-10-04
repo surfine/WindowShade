@@ -1,0 +1,204 @@
+<!doctype html><html><head><meta charset=utf8><meta name=viewport content="width=device-width,initial-scale=1,viewport-fit=cover"><style>:root{color-scheme:light;box-sizing:border-box;padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}html{scroll-padding-top:env(safe-area-inset-top,0px)}body{margin:0;padding:0;font:14px -apple-system,BlinkMacSystemFont,sans-serif;background:#faf9f5;color:#141413}img{max-width:100%}[hidden]:not([hidden=until-found i]){display:none!important}</style></head><body>
+<title>离开就锁</title>
+<style>
+@import url("https://fonts.googleapis.com/css2?family=Newsreader:opsz,wght@6..72,400;6..72,600&family=IBM+Plex+Sans:wght@400;500;600&family=IBM+Plex+Mono:wght@400;500&family=Noto+Sans+SC:wght@400;500;600&family=Noto+Serif+SC:wght@600&display=swap");
+/* 同一套纸面。上面是一块屏和一条实时的信号曲线：两种锁法并排跑，同一份输入 */
+:root{
+  --paper:#EEF1F6;--surface:#FFFFFF;--surface-2:#F5F7FB;--ink:#131A25;--ink-2:#46546A;--ink-3:#6F7D93;
+  --line:#D6DDE8;--line-soft:#E5EAF2;--accent:#1F7A86;--accent-soft:#DDF0F2;--bad:#B3352B;--bad-soft:#FBE6E3;--good:#2C7350;--good-soft:#E1F0E7;--warn:#A8600F;--warn-soft:#FBF0DF;
+  --doc:"IBM Plex Sans","Noto Sans SC",-apple-system,system-ui,sans-serif;--head:"Newsreader","Noto Serif SC",Georgia,serif;--mono:"IBM Plex Mono",ui-monospace,Menlo,monospace;
+  --mac:-apple-system,"SF Pro Text","PingFang SC","Noto Sans SC",sans-serif;
+}
+@media (prefers-color-scheme:dark){:root:not([data-theme="light"]){color-scheme:dark;
+  --paper:#0E131B;--surface:#151C27;--surface-2:#1A222F;--ink:#E7EDF6;--ink-2:#A7B4C8;--ink-3:#7A889E;--line:#26303F;--line-soft:#1E2733;
+  --accent:#62C3CF;--accent-soft:#132A2E;--bad:#F08C80;--bad-soft:#2C1715;--good:#6CC495;--good-soft:#14271D;--warn:#E0A264;--warn-soft:#2A2115;}}
+:root[data-theme="dark"]{color-scheme:dark;
+  --paper:#0E131B;--surface:#151C27;--surface-2:#1A222F;--ink:#E7EDF6;--ink-2:#A7B4C8;--ink-3:#7A889E;--line:#26303F;--line-soft:#1E2733;
+  --accent:#62C3CF;--accent-soft:#132A2E;--bad:#F08C80;--bad-soft:#2C1715;--good:#6CC495;--good-soft:#14271D;--warn:#E0A264;--warn-soft:#2A2115;}
+*{box-sizing:border-box}
+body{margin:0;background:var(--paper);color:var(--ink);font:15px/1.72 var(--doc);-webkit-font-smoothing:antialiased}
+.wrap{max-width:1080px;margin:0 auto;padding-inline:20px;padding-block:0 96px}
+header{padding:60px 0 22px}
+.eyebrow{font-family:var(--mono);font-size:11.5px;letter-spacing:.14em;text-transform:uppercase;color:var(--ink-3);margin:0 0 14px}
+h1{font-family:var(--head);font-weight:600;font-size:clamp(34px,5.6vw,52px);line-height:1.08;letter-spacing:-.015em;margin:0 0 16px;text-wrap:balance}
+.lede{font-size:17.5px;color:var(--ink-2);max-width:62ch;margin:0}
+.lede b{color:var(--ink)}
+h2{font-family:var(--head);font-weight:600;font-size:clamp(23px,3.2vw,30px);line-height:1.25;margin:0 0 8px;text-wrap:balance}
+h3{font-size:15px;margin:0 0 4px}
+section{padding-top:56px}
+p{max-width:66ch}
+.sub{color:var(--ink-2);margin:0 0 20px}
+code{font-family:var(--mono);font-size:.86em;background:var(--surface-2);border:1px solid var(--line-soft);border-radius:4px;padding:1px 5px}
+
+.stage{display:grid;grid-template-columns:minmax(0,1.35fr) minmax(0,1fr);gap:22px;margin-top:22px;align-items:start}
+@media (max-width:860px){.stage{grid-template-columns:1fr}}
+.mac{position:relative;aspect-ratio:16/10.4;max-width:100%;border-radius:18px 18px 6px 6px;background:#0b0b0d;padding:1.6%;box-shadow:0 30px 60px -30px rgba(10,20,40,.55)}
+.screen{position:relative;width:100%;height:100%;border-radius:12px 12px 2px 2px;overflow:hidden;background:#000;container-type:inline-size;font-family:var(--mac)}
+.wall{position:absolute;inset:0;background:radial-gradient(110% 80% at 12% 0%,#8FB3C9 0%,transparent 60%),radial-gradient(90% 80% at 100% 10%,#C9B2D3 0%,transparent 60%),radial-gradient(120% 90% at 55% 120%,#E9C29B 0%,transparent 60%),#5E7B98}
+.win{position:absolute;background:#fff;border-radius:1.4cqw;box-shadow:0 1.2cqw 3cqw rgba(0,0,0,.28);overflow:hidden;transition:opacity 260ms ease-out,transform 420ms cubic-bezier(.23,1,.32,1);transform-origin:50% 0}
+.win .bar{height:3.6cqw;background:#F1F1F3;border-bottom:1px solid rgba(0,0,0,.08);display:flex;align-items:center;gap:.8cqw;padding-inline:1.3cqw;font-size:1.25cqw;color:#666;font-weight:600}
+.lamp{width:1.1cqw;height:1.1cqw;border-radius:50%;background:#ff5f57}.lamp:nth-child(2){background:#febc2e}.lamp:nth-child(3){background:#28c840}
+.win .t{flex:1;text-align:center;margin-right:4cqw}
+.lns{padding:1.6cqw}.lns i{display:block;height:1cqw;border-radius:.4cqw;background:#E6E8EE;margin-bottom:1.1cqw}
+.win.tuck{opacity:0;transform:translate(-50%,-70%) scale(.08)}
+.lock{position:absolute;inset:0;opacity:0;transition:opacity 300ms ease-out;display:flex;flex-direction:column;align-items:center;color:#fff;pointer-events:none;z-index:4}
+.lock .blur{position:absolute;inset:0;backdrop-filter:blur(18px);-webkit-backdrop-filter:blur(18px);background:rgba(10,14,26,.3)}
+.lock .time{position:relative;margin-top:11cqw;font-size:11cqw;font-weight:600;letter-spacing:-.04em;line-height:1}
+.lock .pw{position:relative;margin-top:auto;margin-bottom:7cqw;width:16cqw;height:3.2cqw;border-radius:2cqw;background:rgba(255,255,255,.22);display:flex;align-items:center;justify-content:center;gap:.8cqw;font-size:1.3cqw}
+.lock .pw i{width:.9cqw;height:.9cqw;border-radius:50%;background:#fff;opacity:0;transition:opacity 120ms}
+.lock .pw.typed i{opacity:1}
+.island{position:absolute;left:50%;top:0;transform:translateX(-50%);background:#000;color:#fff;overflow:hidden;display:flex;align-items:center;justify-content:center;font-size:1.45cqw;line-height:1.3;z-index:5;width:12.2cqw;height:3.6cqw;border-radius:0 0 1.1cqw 1.1cqw}
+.ic{width:100%;height:100%;display:flex;align-items:center;justify-content:space-between;gap:1.2cqw;padding:0 1.8cqw}
+.ic svg{width:2.4cqw;height:2.4cqw;flex:none}
+.t1{font-weight:600}.num{font-variant-numeric:tabular-nums;font-weight:700;font-size:2.4cqw}
+@media (prefers-reduced-motion:reduce){.win,.lock{transition:none}}
+
+.panel{display:flex;flex-direction:column;gap:12px}
+.box{background:var(--surface);border:1px solid var(--line-soft);border-radius:14px;padding:14px 16px}
+.box h3{font-size:14px;display:flex;justify-content:space-between;gap:8px}
+.box h3 span{font-family:var(--mono);font-weight:400;color:var(--ink-3);font-size:12px}
+input[type=range]{width:100%;accent-color:var(--accent)}
+.btns{display:flex;flex-wrap:wrap;gap:6px;margin-top:8px}
+.btns button{font:inherit;font-size:13px;border:1px solid var(--line);background:var(--surface-2);color:var(--ink);border-radius:999px;padding:3px 11px;cursor:pointer}
+.btns button:active{transform:scale(.97)}
+.btns button[aria-pressed="true"]{border-color:var(--accent);background:var(--accent-soft);color:var(--accent)}
+.vs{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-top:4px}
+.vs div{border-radius:10px;padding:8px 10px;font-size:12.5px;line-height:1.45}
+.vs .near{background:var(--warn-soft);color:var(--warn)}
+.vs .ours{background:var(--accent-soft);color:var(--accent)}
+.vs b{display:block;font-size:13px}
+.vs .n{font-family:var(--mono);font-size:18px;font-weight:600;display:block}
+canvas{width:100%;height:150px;display:block}
+.legend{font-size:11.5px;color:var(--ink-3);display:flex;gap:14px;flex-wrap:wrap;margin-top:4px}
+.legend i{display:inline-block;width:12px;height:2px;vertical-align:middle;margin-right:4px}
+
+.tbl{overflow-x:auto;border:1px solid var(--line-soft);border-radius:12px;background:var(--surface)}
+table{border-collapse:collapse;width:100%;min-width:720px;font-size:13px;line-height:1.55}
+th,td{text-align:left;vertical-align:top;padding:9px 12px;border-bottom:1px solid var(--line-soft)}
+th{font-size:11.5px;font-weight:600;color:var(--ink-3);letter-spacing:.04em;background:var(--surface-2)}
+tr:last-child td{border-bottom:0}
+.rules{display:grid;grid-template-columns:repeat(auto-fit,minmax(min(100%,300px),1fr));gap:12px}
+.rules div{background:var(--surface);border:1px solid var(--line-soft);border-radius:12px;padding:14px 16px}
+.rules p{margin:0;font-size:13.5px;color:var(--ink-2)}
+.ask{background:var(--warn-soft);border:1px solid color-mix(in srgb,var(--warn) 35%,transparent);border-radius:12px;padding:12px 16px;font-size:13.5px;color:var(--ink-2);margin-top:14px}
+.ask b{color:var(--warn)}
+footer{margin-top:48px;font-size:12.5px;color:var(--ink-3);max-width:84ch}
+</style>
+
+<div class="wrap">
+<header>
+  <p class="eyebrow">WindowShade · 设计稿 · 2026-10-03 · 离开就锁</p>
+  <h1>带着手机走开就锁，走回来就开</h1>
+  <p class="lede">学 Windows 的动态锁，但不等 60 秒，锁之前刘海会先倒数。学 PhoneKey：<b>锁只看手机断开，不看信号强弱</b>；信号强弱只用来判断你回来了没有。不用装手机端 App。</p>
+</header>
+
+<div class="stage">
+  <div>
+    <div class="mac"><div class="screen">
+      <div class="wall"></div>
+      <div class="win" id="wA" style="left:6%;top:15%;width:55%;height:64%"><div class="bar"><span class="lamp"></span><span class="lamp"></span><span class="lamp"></span><span class="t">报表.numbers</span></div><div class="lns"><i style="width:80%"></i><i style="width:62%"></i><i style="width:74%"></i></div></div>
+      <div class="win" id="wP" style="left:63%;top:42%;width:31%;height:42%"><div class="bar" style="background:#E9F6EC"><span class="lamp"></span><span class="lamp"></span><span class="lamp"></span><span class="t">微信</span></div><div class="lns"><i style="width:60%"></i><i style="width:40%"></i></div></div>
+      <div class="lock" id="lock"><div class="blur"></div><div class="time">14:02</div><div class="pw" id="pw"><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i></div></div>
+      <div class="island" id="island"><div class="ic" id="ic"></div></div>
+    </div></div>
+    <div class="box" style="margin-top:14px"><h3>信号强度 <span id="rssiNow">−52 dBm</span></h3><canvas id="cv"></canvas>
+      <div class="legend"><span><i style="background:var(--ink-2)"></i>手机信号</span><span><i style="background:var(--warn)"></i>Near Lock 的锁屏线（3 米）</span><span><i style="background:var(--accent)"></i>回来的阈值 −60</span></div></div>
+  </div>
+  <div class="panel">
+    <div class="box"><h3>手机离 Mac <span id="dv">1.0 米</span></h3><input type="range" id="dist" min="0.5" max="15" step="0.1" value="1" aria-label="手机离 Mac 的距离">
+      <div class="btns"><button type="button" id="grip" aria-pressed="false">双手握着手机</button><button type="button" id="pocket" aria-pressed="false">放进裤兜</button><button type="button" id="btoff" aria-pressed="false">关掉手机蓝牙</button><button type="button" id="touch">碰一下触控板</button><button type="button" id="reset">重来</button></div></div>
+    <div class="box"><h3>同一份输入，两种锁法</h3>
+      <div class="vs"><div class="near"><b>按信号强度锁（Near Lock）</b><span class="n" id="nNear">0</span>次锁屏 <span id="nearWhy"></span></div><div class="ours"><b>按断开锁（WindowShade）</b><span class="n" id="nOurs">0</span>次锁屏 <span id="oursWhy"></span></div></div>
+      <p style="margin:10px 0 0;font-size:12.5px;color:var(--ink-3)">试试：不动距离，点“双手握着手机”。少数派实测，握住手机时显示的距离会从 1 米跳到 6、7 米。</p></div>
+    <div class="box"><h3>现在</h3><p id="now" style="margin:0;font-size:13.5px;color:var(--ink-2)">手机在旁边，连接正常。刘海什么都不画。</p></div>
+  </div>
+</div>
+
+<section>
+  <h2>四条规矩</h2>
+  <div class="rules">
+    <div><h3>锁看断开</h3><p>手机断开、读不到回应 2 秒，才算走了。信号再弱，只要还连着，就不锁。</p></div>
+    <div><h3>先宽限，再倒数</h3><p>静默 1.5 秒挡掉 iOS 的瞬断；再在刘海倒数 10 秒，碰一下或手机回来就取消。碰过之后，停手 1 分钟才会再倒数。最多 11.5 秒，Windows 要 60 秒。</p></div>
+    <div><h3>锁前先收私人 App</h3><p>倒数完：私人 App 收进刘海 → 暂停音乐 → 锁屏。回来解锁后，音乐接着放。</p></div>
+    <div><h3>开要四样都对</h3><p>这次锁是“离开就锁”锁的；手机重新连上并读到回应；信号连续 2 秒够强；刷脸解锁开着时，脸也认出来。</p></div>
+  </div>
+  <div class="ask"><b>待 Aaron 定：</b>没开刷脸解锁的人，能不能只靠手机回来就开？Near Lock 和 PhoneKey 都这样做，方便，但别人拿着你的手机走近也能开。建议做成选项，默认关，打开前先看一页风险说明。</div>
+</section>
+
+<section>
+  <h2>读到的</h2>
+  <div class="tbl"><table>
+    <thead><tr><th>来源</th><th>做法</th><th>我们取</th></tr></thead>
+    <tbody>
+      <tr><td><a href="https://www.sohu.com/a/1064794833_121123771">Windows 11 动态锁</a></td><td>手机蓝牙配对；离开后 60 秒内锁</td><td>一个开关、零配置</td></tr>
+      <tr><td><a href="https://sspai.com/post/27839">Near Lock</a>（少数派，2015）</td><td>双端 App，按信号强度判断远近</td><td>反面教材：握住手机 1 米变 6、7 米</td></tr>
+      <tr><td><a href="https://sspai.com/post/104679">专注模式远程锁</a>（少数派，2025）</td><td>iPhone 开专注模式 → Mac 快捷指令锁屏 → 回写一个专注模式当回执</td><td>WindowShade 提供 <code>windowshade://lock</code>，锁前先收私人 App</td></tr>
+      <tr><td><a href="https://github.com/donghuaxiong/blue-lock-mac">blue-lock-mac（PhoneKey）</a></td><td>无手机 App；Mac 主动连手机；断开 1.5 秒锁；信号只管回来；只解自己锁的屏</td><td>整套判定思路（仓库没有许可文件，只借思路）</td></tr>
+      <tr><td><a href="https://github.com/ts1/BLEUnlock">BLEUnlock</a></td><td>无手机 App；iPhone、Apple Watch 都行；离开暂停播放</td><td>手表、暂停 / 继续播放</td></tr>
+    </tbody>
+  </table></div>
+  <p class="sub" style="margin-top:14px">PhoneKey 证明了不装手机端 App 也连得上 iPhone，这正是刷脸解锁 F1 最没把握的那一半。另一半还要做实验：证明连上的就是你那台手机。办法是读一个需要加密的特性，让连接用配对时的密钥加密。</p>
+</section>
+
+<footer>依据：上面五个来源（2026-10-03 读取）；docs/face-unlock.md 的决定（每次刷脸解锁都要手机；手机和手表都走远才锁；3 次上限）。曲线是模拟的，信号模型取室内常见的衰减，加上握持、裤兜的遮挡和随机抖动，不是实测数据。</footer>
+</div>
+
+<script>
+(function(){
+  var $=function(id){return document.getElementById(id)};
+  var reduce=matchMedia('(prefers-reduced-motion: reduce)').matches;
+  var ic=$('ic'),island=$('island'),lock=$('lock'),pw=$('pw');
+  var SYM={walk:'<svg viewBox="0 0 16 16" fill="none" stroke="#fff" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><circle cx="9" cy="2.6" r="1.4" fill="#fff" stroke="none"/><path d="M8.5 5 6.5 9l2.5 2 1 4M6.5 9 5 14M8.5 5l3 2.5M8.5 5 5.5 6.5 4.5 8.5"/></svg>',
+    hand:'<svg viewBox="0 0 16 16" fill="none" stroke="#fff" stroke-width="1.4" stroke-linecap="round"><path d="M5 8V3.5a1 1 0 0 1 2 0V7M7 7V2.5a1 1 0 0 1 2 0V7M9 7V3.5a1 1 0 0 1 2 0V8M11 8V5.5a1 1 0 0 1 2 0V10a4.5 4.5 0 0 1-4.5 4.5h-1A4.5 4.5 0 0 1 3 10V8.5a1 1 0 0 1 2 0"/></svg>',
+    phone:'<svg viewBox="0 0 16 16" fill="none" stroke="#fff" stroke-width="1.4"><rect x="4.5" y="1.5" width="7" height="13" rx="1.6"/><path d="M7 12.5h2" stroke-linecap="round"/></svg>',
+    ok:'<svg viewBox="0 0 16 16"><circle cx="8" cy="8" r="7" fill="#34C759"/><path d="M5 8.2 7 10.2 11 6" fill="none" stroke="#fff" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/></svg>'};
+  function spring(t,r,z){var w=2*Math.PI/r;if(z>=1)return 1-(1+w*t)*Math.exp(-w*t);var wd=w*Math.sqrt(1-z*z);return 1-Math.exp(-z*w*t)*(Math.cos(wd*t)+z*w/wd*Math.sin(wd*t))}
+  var cur={w:12.2,h:3.6},anim,key='';
+  function shape(w,h,sr,sz){if(key===w+'/'+h)return;key=w+'/'+h;var f={w:cur.w,h:cur.h},t0=performance.now();if(anim)anim.stop=true;var a={};anim=a;
+    function ap(p){cur={w:f.w+(w-f.w)*p,h:f.h+(h-f.h)*p};island.style.width=cur.w+'cqw';island.style.height=cur.h+'cqw'}
+    if(reduce){ap(1);return}(function k(){if(a.stop)return;var t=(performance.now()-t0)/1000;ap(spring(t,sr,sz));if(t<1.5)requestAnimationFrame(k);else ap(1)})()}
+  function notch(html,w,h){if(!html){shape(12.2,3.6,.38,1);ic.innerHTML='';return}shape(w||30,h||4.6,.42,.84);ic.innerHTML=html}
+  // 模型
+  var S={d:1,grip:false,pocket:false,bt:true,connected:true,rssi:-52,hist:[],nearLocks:0,oursLocks:0,nearLocked:false,state:'ok',t0:0,graceUntil:0,countEnd:0,nearOkSince:0,locked:false,cancelUntil:0,lastInput:-1e9,nearPrevAbove:false};
+  var NEAR_LOCK=-45-20*Math.log10(3); // 3 米对应的信号
+  function rssiFor(){var base=-45-20*Math.log10(Math.max(.5,S.d))-(S.grip?16:0)-(S.pocket?10:0);return base+(Math.random()-.5)*6}
+  function tick(){var t=performance.now()/1000;
+    S.connected=S.bt&&S.d<11;
+    S.rssi=S.connected?rssiFor():NaN;S.hist.push(S.rssi);if(S.hist.length>240)S.hist.shift();
+    // Near Lock：信号低于 3 米线就锁，高于就开
+    if(S.connected){var below=S.rssi<NEAR_LOCK;if(below&&!S.nearLocked){S.nearLocked=true;S.nearLocks++;$('nearWhy').textContent=S.d<3?'（误锁：人还在）':''}if(!below&&S.nearLocked){S.nearLocked=false}}else if(!S.nearLocked){S.nearLocked=true;S.nearLocks++}
+    // WindowShade
+    if(S.state==='ok'&&!S.connected&&t-S.lastInput>60){S.state='grace';S.graceUntil=t+1.5}
+    if(S.state==='grace'){if(S.connected){S.state='ok'}else if(t>=S.graceUntil){S.state='count';S.countEnd=t+10}}
+    if(S.state==='count'){if(S.connected){cancel('手机回来了')}else if(t>=S.countEnd){doLock()}}
+    if(S.state==='locked'){if(S.connected&&S.rssi>-60){if(!S.nearOkSince)S.nearOkSince=t;if(t-S.nearOkSince>=2)unlock()}else S.nearOkSince=0}
+    render(t)}
+  function cancel(why){S.state='ok';S.cancelUntil=performance.now()/1000+1.6;$('now').textContent='倒数取消：'+why+'。'}
+  function doLock(){S.state='locked';S.oursLocks++;$('wP').classList.add('tuck');setTimeout(function(){lock.style.opacity=1},reduce?0:350);$('now').textContent='倒数完：微信先收进刘海，再锁屏。走回来试试。';$('oursWhy').textContent='（真的走了）'}
+  function unlock(){S.state='unlocking';$('now').textContent='手机回来了，信号连续 2 秒够强 → 认脸 → 填密码。';notch(SYM.phone+'<span class="t1">手机回来了</span>',30,4.6);
+    setTimeout(function(){pw.classList.add('typed');notch(SYM.ok+'<span class="t1">认出你了</span>',28,4.6)},reduce?100:900);
+    setTimeout(function(){lock.style.opacity=0;pw.classList.remove('typed');$('wP').classList.remove('tuck');S.state='ok';S.nearOkSince=0;notch('');$('now').textContent='解锁了，私人 App 回到原处。'},reduce?200:1900)}
+  function render(t){var r=S.rssi;$('rssiNow').textContent=isNaN(r)?'断开':(Math.round(r)+' dBm').replace('-','−');$('nNear').textContent=S.nearLocks;$('nOurs').textContent=S.oursLocks;$('dv').textContent=S.d.toFixed(1)+' 米';
+    if(S.state==='count'){notch(SYM.walk+'<span class="t1">手机走远了</span><span class="num">'+Math.ceil(S.countEnd-t)+'</span>',32,4.8);$('now').textContent='手机断开 1.5 秒还没回来，刘海开始倒数。碰一下触控板就取消。'}
+    else if(S.state==='grace'){notch('');$('now').textContent='断开了，先静默宽限 1.5 秒（挡掉 iOS 的瞬断）。'}
+    else if(S.state==='ok'){if(t<S.cancelUntil)notch(SYM.hand+'<span class="t1">不锁了</span>',24,4.6);else notch('')}
+    draw()}
+  var cv=$('cv'),ctx=cv.getContext('2d');
+  function draw(){var dpr=devicePixelRatio||1,W=cv.clientWidth,H=cv.clientHeight;if(cv.width!==W*dpr){cv.width=W*dpr;cv.height=H*dpr}ctx.setTransform(dpr,0,0,dpr,0,0);ctx.clearRect(0,0,W,H);
+    var cs=getComputedStyle(document.documentElement),ink=cs.getPropertyValue('--ink-2').trim(),warn=cs.getPropertyValue('--warn').trim(),acc=cs.getPropertyValue('--accent').trim(),ln=cs.getPropertyValue('--line-soft').trim(),ink3=cs.getPropertyValue('--ink-3').trim();
+    var lo=-100,hi=-35,y=function(v){return 8+(hi-v)/(hi-lo)*(H-22)};
+    ctx.font='10px IBM Plex Mono, monospace';ctx.fillStyle=ink3;[-40,-60,-80,-100].forEach(function(v){ctx.strokeStyle=ln;ctx.lineWidth=1;ctx.beginPath();ctx.moveTo(34,y(v));ctx.lineTo(W,y(v));ctx.stroke();ctx.fillText(String(v).replace('-','−'),2,y(v)+3)});
+    function hline(v,c){ctx.strokeStyle=c;ctx.setLineDash([5,4]);ctx.lineWidth=1.5;ctx.beginPath();ctx.moveTo(34,y(v));ctx.lineTo(W,y(v));ctx.stroke();ctx.setLineDash([])}
+    hline(NEAR_LOCK,warn);hline(-60,acc);
+    ctx.strokeStyle=ink;ctx.lineWidth=1.6;ctx.beginPath();var n=S.hist.length,pen=false;for(var i=0;i<n;i++){var v=S.hist[i],x=34+(W-34)*i/239;if(isNaN(v)){pen=false;continue}if(!pen){ctx.moveTo(x,y(v));pen=true}else ctx.lineTo(x,y(v))}ctx.stroke()}
+  $('dist').addEventListener('input',function(){S.d=+this.value});
+  function tog(id,k){$(id).onclick=function(){S[k]=!S[k];this.setAttribute('aria-pressed',S[k])}}
+  tog('grip','grip');tog('pocket','pocket');
+  $('btoff').onclick=function(){S.bt=!S.bt;this.setAttribute('aria-pressed',!S.bt);this.textContent=S.bt?'关掉手机蓝牙':'打开手机蓝牙'};
+  $('touch').onclick=function(){S.lastInput=performance.now()/1000;if(S.state==='count'||S.state==='grace')cancel('你碰了一下触控板。人还在，停手 1 分钟后才会再倒数')};
+  $('reset').onclick=function(){S.d=1;$('dist').value=1;S.grip=S.pocket=false;S.bt=true;S.state='ok';S.nearLocks=S.oursLocks=0;S.nearLocked=false;S.hist=[];lock.style.opacity=0;$('wP').classList.remove('tuck');$('nearWhy').textContent='';$('oursWhy').textContent='';['grip','pocket','btoff'].forEach(function(i){$(i).setAttribute('aria-pressed','false')});$('btoff').textContent='关掉手机蓝牙';$('now').textContent='手机在旁边，连接正常。刘海什么都不画。'};
+  setInterval(tick,reduce?250:125);
+})();
+</script>
+
+</body></html>

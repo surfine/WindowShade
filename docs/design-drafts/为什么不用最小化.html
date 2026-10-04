@@ -1,0 +1,769 @@
+<!doctype html><html><head><meta charset=utf8><meta name=viewport content="width=device-width,initial-scale=1,viewport-fit=cover"><style>:root{color-scheme:light;box-sizing:border-box;padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}html{scroll-padding-top:env(safe-area-inset-top,0px)}body{margin:0;padding:0;font:14px -apple-system,BlinkMacSystemFont,sans-serif;background:#faf9f5;color:#141413}img{max-width:100%}[hidden]:not([hidden=until-found i]){display:none!important}</style></head><body>
+<title>为什么不用最小化</title>
+<style>
+:root{
+  --bg:#f6f7f9;--ink:#1d1f23;--muted:#61656e;--faint:#8b9099;--line:#dfe2e7;--hair:rgba(20,26,38,.1);
+  --surface:#fff;--soft:#eceef2;--paper:#f2efe9;--paper-line:#e2ddd3;
+  --accent:#245eea;--accent-soft:#e9effc;--accent-text:#214884;
+  --good:#17804a;--good-soft:#e3f3ea;--warn:#a2610b;--warn-soft:#fbefdc;--bad:#b42f2a;--bad-soft:#fbe5e3;
+  --win:#fff;--win-bar:#f3f3f5;--win-ink:#24262b;--win-muted:#70747c;--win-line:rgba(0,0,0,.09);
+  --wall:radial-gradient(120% 90% at 0% 0%,#c9dbff 0%,transparent 58%),radial-gradient(90% 80% at 100% 0%,#f1d9ee 0%,transparent 62%),radial-gradient(120% 90% at 70% 110%,#ffe3c9 0%,transparent 62%),#e7eaf3;
+  --shadow:0 18px 40px -18px rgba(30,40,60,.45),0 0 0 .5px rgba(0,0,0,.28);
+  --ease:cubic-bezier(.23,1,.32,1);--roll:cubic-bezier(.65,0,.35,1);
+  --serif:"Iowan Old Style","Palatino Linotype","Songti SC",STSong,serif;
+  --sans:-apple-system,BlinkMacSystemFont,"SF Pro Text","PingFang SC","Hiragino Sans GB","Segoe UI",sans-serif;
+  --mono:ui-monospace,"SF Mono",SFMono-Regular,Menlo,monospace;
+}
+@media (prefers-color-scheme:dark){:root:not([data-theme="light"]){
+  color-scheme:dark;
+  --bg:#111317;--ink:#eef0f3;--muted:#a3a9b4;--faint:#7c828d;--line:#2a2e36;--hair:rgba(255,255,255,.1);
+  --surface:#1b1e24;--soft:#16191e;--paper:#1a1a1e;--paper-line:#2c2c33;
+  --accent:#7ea4ff;--accent-soft:#1d2a44;--accent-text:#cfdcf7;
+  --good:#5fd08f;--good-soft:#153624;--warn:#f0b35a;--warn-soft:#3a2a12;--bad:#ff8a80;--bad-soft:#3d1a18;
+  --win:#26282d;--win-bar:#2d2f35;--win-ink:#eceef2;--win-muted:#a0a5ae;--win-line:rgba(255,255,255,.08);
+  --wall:radial-gradient(120% 90% at 0% 0%,#233a6b 0%,transparent 58%),radial-gradient(90% 80% at 100% 0%,#4a2a4d 0%,transparent 62%),radial-gradient(120% 90% at 70% 110%,#5a3a24 0%,transparent 62%),#1a1d26;
+  --shadow:0 18px 40px -18px rgba(0,0,0,.8),0 0 0 .5px rgba(255,255,255,.14);
+}}
+:root[data-theme="dark"]{
+  color-scheme:dark;
+  --bg:#111317;--ink:#eef0f3;--muted:#a3a9b4;--faint:#7c828d;--line:#2a2e36;--hair:rgba(255,255,255,.1);
+  --surface:#1b1e24;--soft:#16191e;--paper:#1a1a1e;--paper-line:#2c2c33;
+  --accent:#7ea4ff;--accent-soft:#1d2a44;--accent-text:#cfdcf7;
+  --good:#5fd08f;--good-soft:#153624;--warn:#f0b35a;--warn-soft:#3a2a12;--bad:#ff8a80;--bad-soft:#3d1a18;
+  --win:#26282d;--win-bar:#2d2f35;--win-ink:#eceef2;--win-muted:#a0a5ae;--win-line:rgba(255,255,255,.08);
+  --wall:radial-gradient(120% 90% at 0% 0%,#233a6b 0%,transparent 58%),radial-gradient(90% 80% at 100% 0%,#4a2a4d 0%,transparent 62%),radial-gradient(120% 90% at 70% 110%,#5a3a24 0%,transparent 62%),#1a1d26;
+  --shadow:0 18px 40px -18px rgba(0,0,0,.8),0 0 0 .5px rgba(255,255,255,.14);
+}
+*{box-sizing:border-box}
+body{background:var(--bg);color:var(--ink);font:15px/1.7 var(--sans);font-synthesis:none;-webkit-font-smoothing:antialiased;padding-inline:20px;padding-block:0 96px}
+a{color:var(--accent);text-underline-offset:3px}
+a:focus-visible,button:focus-visible,[tabindex]:focus-visible{outline:2px solid var(--accent);outline-offset:3px;border-radius:6px}
+.wrap{max-width:760px;margin-inline:auto}
+.wide{max-width:1060px;margin-inline:auto}
+h1,h2,h3{font-family:var(--serif);font-weight:500;letter-spacing:-.015em;text-wrap:balance;margin:0}
+h1{font-size:clamp(40px,6.4vw,68px);line-height:1.05}
+h2{font-size:clamp(27px,3.4vw,36px);line-height:1.18}
+h3{font-size:19px;line-height:1.35}
+p{margin:0}
+.eyebrow{font-size:12px;letter-spacing:.08em;text-transform:uppercase;color:var(--faint);font-weight:600}
+.lede{font-size:18px;line-height:1.65;color:var(--muted);max-width:40em}
+section{padding-top:88px}
+.sec-head{display:grid;gap:14px;margin-bottom:30px}
+.sec-head p{color:var(--muted);max-width:40em}
+.num{font-variant-numeric:tabular-nums}
+
+/* hero */
+header.hero{padding-top:64px;display:grid;gap:22px}
+.meta{display:flex;flex-wrap:wrap;gap:6px 18px;color:var(--faint);font-size:13px}
+.meta b{color:var(--muted);font-weight:600}
+
+/* demo */
+.demo{margin-top:34px;display:grid;gap:14px}
+.desk{position:relative;aspect-ratio:16/9;max-width:100%;border-radius:14px;background:var(--wall);overflow:hidden;box-shadow:0 0 0 .5px var(--hair);container-type:inline-size;user-select:none;-webkit-user-select:none}
+.menubar{position:absolute;inset:0 0 auto;height:3.2cqw;min-height:16px;background:rgba(255,255,255,.45);backdrop-filter:blur(8px);display:flex;align-items:center;gap:2.2cqw;padding-inline:2cqw;font-size:max(9px,1.35cqw);color:#1d1f23;font-weight:600}
+:root[data-theme="dark"] .menubar{background:rgba(20,22,28,.5);color:#eef0f3}
+@media (prefers-color-scheme:dark){:root:not([data-theme="light"]) .menubar{background:rgba(20,22,28,.5);color:#eef0f3}}
+.menubar span{font-weight:400;opacity:.8}
+.w{position:absolute;background:var(--win);border-radius:1.4cqw;box-shadow:var(--shadow);overflow:hidden;color:var(--win-ink)}
+.bar{height:3.6cqw;min-height:18px;background:var(--win-bar);display:flex;align-items:center;gap:.8cqw;padding-inline:1.3cqw;border-bottom:1px solid var(--win-line);font-size:max(9px,1.3cqw);font-weight:600;color:var(--win-muted);white-space:nowrap}
+.bar .t{flex:1;text-align:center;margin-right:5cqw;overflow:hidden;text-overflow:ellipsis}
+.lamps{display:flex;gap:.6cqw}
+.lamps i{width:1.2cqw;height:1.2cqw;min-width:7px;min-height:7px;border-radius:50%;background:#ea7468;display:block}
+.lamps i:nth-child(2){background:#efbb50}.lamps i:nth-child(3){background:#7cca4a}
+.editor{left:6%;top:13%;width:62%;height:78%}
+.code{padding:1.6cqw 2cqw;font:max(8px,1.25cqw)/1.75 var(--mono);color:var(--win-muted);white-space:pre}
+.code b{color:var(--accent);font-weight:500}.code em{color:#b35c1e;font-style:normal}
+.side{left:57%;top:20%;width:38%;height:62%}
+.strip{position:absolute;left:57%;top:20%;width:38%;height:3.6cqw;min-height:18px;border-radius:1.2cqw;background:var(--win-bar);box-shadow:var(--shadow);display:flex;align-items:center;gap:.8cqw;padding-inline:1.3cqw;font-size:max(9px,1.3cqw);font-weight:600;color:var(--win-muted);cursor:default;z-index:3;border:0;font-family:inherit;white-space:nowrap}
+.strip .t{flex:1;text-align:center;margin-right:3cqw;overflow:hidden;text-overflow:ellipsis}
+.live-dot{width:.9cqw;height:.9cqw;min-width:6px;min-height:6px;border-radius:50%;background:var(--good);box-shadow:0 0 0 0 var(--good);animation:pulse 1.6s infinite}
+@keyframes pulse{0%{box-shadow:0 0 0 0 color-mix(in srgb,var(--good) 55%,transparent)}70%{box-shadow:0 0 0 .8cqw transparent}100%{box-shadow:0 0 0 0 transparent}}
+.peek{position:absolute;left:57%;top:calc(20% + 3.6cqw + .8cqw);width:38%;height:58%;z-index:2;clip-path:inset(0 0 100% 0 round 1.4cqw);transition:clip-path .26s var(--roll);pointer-events:none}
+.peek .bar{display:none}
+.peek .log{height:100%}
+.desk.open .peek{clip-path:inset(0 0 0 0 round 1.4cqw);transition-duration:.32s}
+.log{padding:1.4cqw 1.8cqw;font:max(8px,1.2cqw)/1.7 var(--mono);color:var(--win-muted);height:calc(100% - 3.6cqw);overflow:hidden;display:flex;flex-direction:column;justify-content:flex-end}
+.log div{white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.log .ok{color:var(--good)}.log .hl{color:var(--win-ink)}
+.prog{height:.6cqw;min-height:4px;background:var(--soft);border-radius:99px;margin:1cqw 0 .4cqw;overflow:hidden}
+.prog i{display:block;height:100%;background:var(--accent);width:0;transition:width .5s linear}
+.hud{position:absolute;right:2%;bottom:3.5%;font-size:max(9px,1.2cqw);background:rgba(20,22,28,.72);color:#fff;border-radius:99px;padding:.5cqw 1.4cqw;opacity:0;transition:opacity .2s;z-index:4}
+.desk.open .hud{opacity:1}
+.demo-caption{display:flex;flex-wrap:wrap;gap:8px 22px;font-size:13px;color:var(--muted)}
+.demo-caption kbd{font:600 12px var(--sans);background:var(--surface);border:1px solid var(--line);border-bottom-width:2px;border-radius:6px;padding:1px 7px;color:var(--ink)}
+@media (prefers-reduced-motion:reduce){.peek,.desk.open .peek{transition:none}.live-dot{animation:none}}
+
+/* round trip strip */
+.trips{display:grid;gap:10px;margin-top:26px}
+.trip{display:grid;grid-template-columns:7.5em 1fr auto;gap:14px;align-items:center;padding:14px 16px;background:var(--surface);border:1px solid var(--line);border-radius:12px}
+.trip .name{font-weight:600}
+.steps{display:flex;flex-wrap:wrap;gap:6px;align-items:center;font-size:13px;color:var(--muted)}
+.steps span{background:var(--soft);border-radius:6px;padding:2px 8px}
+.steps .arrow{background:none;padding:0;color:var(--faint)}
+.trip .cost{font-size:13px;color:var(--faint);white-space:nowrap}
+.trip.win{border-color:color-mix(in srgb,var(--accent) 45%,var(--line));background:var(--accent-soft)}
+.trip.win .steps span{background:var(--surface)}
+.trip.win .cost{color:var(--accent-text);font-weight:600}
+@media (max-width:620px){.trip{grid-template-columns:1fr}.trip .cost{white-space:normal}}
+
+/* needs */
+.needs{display:grid;gap:0;border-top:1px solid var(--line)}
+.need{display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1.25fr);gap:28px;padding:26px 0;border-bottom:1px solid var(--line)}
+.need blockquote{margin:0;background:var(--paper);border:1px solid var(--paper-line);border-radius:10px;padding:14px 16px;font-family:var(--serif);font-size:17px;line-height:1.55}
+.need blockquote cite{display:block;margin-top:8px;font:12px var(--sans);color:var(--faint);font-style:normal}
+.need blockquote+blockquote{margin-top:10px}
+.need h3{margin-bottom:8px}
+.need p{color:var(--muted)}
+@media (max-width:700px){.need{grid-template-columns:1fr;gap:14px}}
+.caveat{margin-top:18px;font-size:13px;color:var(--faint)}
+
+/* self */
+.facts{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:26px}
+.fact h3{font-size:17px;margin-bottom:6px;font-family:var(--sans);font-weight:650;letter-spacing:0}
+.fact p{color:var(--muted);font-size:14.5px}
+@media (max-width:760px){.facts{grid-template-columns:1fr}}
+.effort{margin-top:40px;padding:22px;background:var(--surface);border:1px solid var(--line);border-radius:14px}
+.effort-title{display:flex;justify-content:space-between;flex-wrap:wrap;gap:6px;margin-bottom:16px}
+.effort-title b{font-weight:650}
+.effort-title span{font-size:13px;color:var(--faint)}
+.bars{display:grid;gap:12px}
+.brow{display:grid;grid-template-columns:8.5em minmax(0,1fr) 4.2em;gap:12px;align-items:center;font-size:14px}
+.btrack{height:14px;background:var(--soft);border-radius:4px;overflow:hidden}
+.btrack i{display:block;height:100%;background:var(--faint);border-radius:4px}
+.brow.hot .btrack i{background:var(--warn)}
+.brow.core .btrack i{background:var(--accent)}
+.brow .v{text-align:right;color:var(--muted);font-variant-numeric:tabular-nums}
+.effort p{margin-top:14px;font-size:13.5px;color:var(--muted)}
+
+/* matrix */
+.scroll{overflow-x:auto;border:1px solid var(--line);border-radius:14px;background:var(--surface)}
+table{border-collapse:collapse;width:100%;font-size:14px}
+th,td{padding:12px 14px;text-align:left;vertical-align:top;border-bottom:1px solid var(--line)}
+tr:last-child td{border-bottom:0}
+thead th{font-size:12px;letter-spacing:.04em;color:var(--faint);font-weight:600;background:var(--soft);white-space:nowrap}
+.matrix td.c{text-align:center;font-size:17px;line-height:1.2;white-space:nowrap}
+.matrix td.c small{display:block;font-size:11px;color:var(--faint);margin-top:3px;white-space:normal;min-width:6em}
+.matrix th.c{text-align:center}
+.matrix tbody th{font-weight:600;white-space:nowrap}
+.matrix tbody th small{display:block;font-weight:400;color:var(--faint);font-size:12px}
+.matrix tr.us{background:var(--accent-soft)}
+.matrix tr.us th{color:var(--accent-text)}
+.matrix tr.ref th small{color:var(--warn)}
+.full{color:var(--ink)}.part{color:var(--muted)}.none{color:var(--faint)}
+.legend{display:flex;flex-wrap:wrap;gap:6px 20px;margin-top:12px;font-size:13px;color:var(--muted)}
+
+.takes{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:0 34px;margin-top:34px}
+.take{padding:16px 0;border-top:1px solid var(--line)}
+.take b{display:block;margin-bottom:4px}
+.take p{color:var(--muted);font-size:14.5px}
+.take .verb{display:inline-block;font-size:12px;font-weight:650;border-radius:99px;padding:0 8px;margin-right:6px;vertical-align:1px}
+.verb.adopt{background:var(--good-soft);color:var(--good)}
+.verb.keep{background:var(--soft);color:var(--muted)}
+.verb.avoid{background:var(--warn-soft);color:var(--warn)}
+@media (max-width:700px){.takes{grid-template-columns:1fr}}
+
+/* scorecard */
+.score-sum{display:flex;flex-wrap:wrap;gap:10px;margin-bottom:18px}
+.pill{display:inline-flex;align-items:center;gap:6px;font-size:12.5px;font-weight:650;border-radius:99px;padding:2px 10px;white-space:nowrap}
+.pill.lead{background:var(--good-soft);color:var(--good)}
+.pill.tie{background:var(--soft);color:var(--muted)}
+.pill.lag{background:var(--warn-soft);color:var(--warn)}
+.pill.skip{background:transparent;color:var(--faint);box-shadow:inset 0 0 0 1px var(--line)}
+.pill.goal{background:var(--accent-soft);color:var(--accent-text)}
+.score td:first-child{font-weight:600;white-space:nowrap}
+.score td{min-width:10em}
+.score td:last-child{min-width:7em}
+.score .next{display:block;margin-top:6px;font-size:12.5px;color:var(--accent-text)}
+
+/* spec */
+.spec{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:18px}
+.card{background:var(--surface);border:1px solid var(--line);border-radius:14px;padding:20px}
+.card h3{font-family:var(--sans);font-size:16px;font-weight:650;letter-spacing:0;margin-bottom:10px}
+.card ul{margin:0;padding-left:1.1em;color:var(--muted);display:grid;gap:6px;font-size:14.5px}
+.card li::marker{color:var(--faint)}
+@media (max-width:700px){.spec{grid-template-columns:1fr}}
+.phases{margin-top:26px;display:grid;gap:0;border-top:1px solid var(--line)}
+.phase{display:grid;grid-template-columns:5.5em minmax(0,1fr) auto;gap:18px;padding:18px 0;border-bottom:1px solid var(--line);align-items:start}
+.phase .k{font-family:var(--mono);font-size:13px;color:var(--faint);padding-top:2px}
+.phase b{display:block;margin-bottom:3px}
+.phase p{color:var(--muted);font-size:14.5px}
+@media (max-width:620px){.phase{grid-template-columns:1fr;gap:6px}}
+.accept{margin-top:34px}
+.accept table td:first-child{font-weight:650;white-space:nowrap;width:2.5em;color:var(--faint);font-family:var(--mono)}
+.accept table td:last-child{min-width:9em}
+.accept .next{display:block;margin-top:6px;font-size:12.5px;color:var(--muted)}
+
+.note{margin-top:22px;padding:18px 20px;border-radius:12px;background:var(--warn-soft);color:var(--ink);font-size:14.5px}
+.note b{color:var(--warn)}
+.ask{margin-top:18px;font-family:var(--serif);font-size:22px;line-height:1.5;padding:22px 24px;background:var(--paper);border:1px solid var(--paper-line);border-radius:14px}
+.ask small{display:block;margin-top:10px;font:14px/1.6 var(--sans);color:var(--muted)}
+.sources{columns:2;column-gap:34px;font-size:13.5px;color:var(--muted);padding-left:1.2em;margin:0}
+.sources li{break-inside:avoid;margin-bottom:6px}
+@media (max-width:700px){.sources{columns:1}}
+footer{margin-top:72px;padding-top:22px;border-top:1px solid var(--line);font-size:13px;color:var(--faint)}
+</style>
+
+<div class="wrap">
+  <header class="hero">
+    <div class="meta"><span><b>WindowShade</b> 1.0.15（9 月 26 日重新发布）· 1.0.16 build 16 已装进 Aaron 日常用的那一版，未发布</span><span>2026-10-03 修订（第 20 版）</span><span>写给 Aaron，也写给 Marvin 和 Newlearner</span></div>
+    <h1>为什么不用最小化</h1>
+    <p class="lede">Marvin 在 7 月试完 WindowShade 后留下这个问题。1.0.15 给出了答案：看一眼、带到每张桌面、在标题栏上滑一下。这一页写清楚两类人要什么：用触控板、一张桌面一个 App 的 Marvin，和用鼠标、快捷键排窗的 Newlearner；再写 WindowShade 现在做到哪一步，周围的窗口工具各管什么，以及还差什么。</p>
+    <p class="lede"><b>10 月 3 日（第 20 版）。</b>答案说成一句话：<b>你看不见的每一扇窗，都在刘海里。</b>收起的、侧拉的、最小化的、隐藏的，以及别的桌面上的，都排在刘海那一排里；停在一格上，它就在自己的位置、按自己的大小出现，移开就走；只有点它，你才过去。这是 Marvin 那一问最后缺的一块：他一张桌面一个 App，要看另一张桌面上的东西，现在不用先按 ⌃⌘G，停在刘海那一格就行。代码已经提交，build 16 装进了 Aaron 日常用的那一版；9 月 30 日到 10 月 1 日的签名构建上 28 套真机探针全过，但“别的桌面”“每一格都能看一眼”这两步是 10 月 2–3 日做的，还要在 build 16 上重跑，也还没请 Marvin 试。同一时间还有几条线在走：完整灵动岛的实时活动、设备电量、CarPlay 接收、遥控器指挥与语音编程、身份认证与真正解锁。它们是 Aaron 定下的目标，和窗口共用同一个刘海，下面“下一步”里写了各自的进度。</p>
+    <p class="lede">这一版修订按 9 月 26 日重新发布的 1.0.15 改写排窗对照：三分屏、四角、键盘排布、甩一下都已发布，网格已定要做、还没做。新加一节，写本地还没发布的侧拉、刘海、启动台，以及它们各自的对手；周围的工具里加了 Wins。</p>
+    <p class="lede">深夜修订：“下一步”里欠的几件（网格 3×2 和 3×3、暂时取消全部置顶、做不到时说一声、在卷帘条上拉一点就是看一眼）本地都做好了，Wins 修过的坑也按验收用例修了。Aaron 又加了三件：刘海当 Mac 的主屏幕键（点一下回主屏幕，两下调度中心，三下这个 App 的所有窗口，最小化和隐藏的窗口也收在刘海里）、魔法平铺（两指张开把整块屏排好，比例自己定）、晃一晃（Windows 的 Aero Shake）。原则也定下来了：操作简单直觉，能借 Windows、KDE、iPad 的老说法就借，不把简单的事做复杂。以上都还没发布，版本仍是 1.0.15。</p>
+    <p class="lede">9 月 28 日：竞品里加了 niri（Linux 上的卷动平铺，开新窗口不挤别人）。本地做了卷轴，把它最好的那一点接进同一套动作，再补上它没有的，见“对 niri”一节。</p>
+    <p class="lede">9 月 28 日晚：Aaron 要每个领域都到 90 分以上、超过 Wins，还点名 DockDoor、DockMate、Swish、WindowMizer，要 Rectangle、Raycast 的用户换过来不用改习惯，侧拉要和 iPadOS 一模一样（包括角上的把手），并做 iPadOS 27 那样的分屏。本地都做了，新加一节“每个领域的分数”：侧拉照 Apple 官方配图量出玻璃边框和把手；两扇拼满时中间有分屏把手，四角、三分、网格里的每条缝都能拖；一键换上 Rectangle 的快捷键；每个操作在刘海上都有播报，第一次遇到时教一下。后来又加了两样：任意窗口的画中画（对照「神奇画中画」和「PiP」两款 App），以及首次打开时的动画引导“欢迎使用 WindowShade…”。中间 Claude 的额度用完，Codex 接手了一段，它做的调度中心里按 ⌘W 关窗、窗口浏览多三个动作、把加速度计降频都核对过，保留；它把 DockMate 写成“查不到来源”是错的，已更正。</p>
+    <p class="lede">深夜：Aaron 定下，这一批做完备就是 1.0.16。全量真机探针在签名构建上跑了一遍，15 套里 13 套一次全过，另两套各有一项因机器太忙等待超时或按设计中止，重跑都通过。之后又请第二位审查逐行复查这批新代码，每条再派一位专门挑错的复核，确认了 26 处会出错的地方，其中两处严重：画中画退出动画里再按一次快捷键，窗口会回不来；分屏把手吸附后不再刷新，悬在旧位置，拖它会把窗口拉回旧框。26 处都已修完，修后的构建正在重跑全部探针和单元测试。</p>
+  </header>
+</div>
+
+<div class="wide">
+  <div class="demo" aria-label="看一眼的示意">
+    <div class="desk" id="desk">
+      <div class="menubar">Xcode <span>File</span><span>Edit</span><span>View</span></div>
+      <div class="w editor" aria-hidden="true">
+        <div class="bar"><span class="lamps"><i></i><i></i><i></i></span><span class="t">ContentView.swift</span></div>
+<div class="code"><b>struct</b> ContentView: View {
+    @State <b>private var</b> folds = <em>3</em>
+    <b>var</b> body: some View {
+        Canvas { ctx, size <b>in</b>
+            drawDye(ctx, size, folds)
+        }
+        .gesture(DragGesture()
+            .onChanged { tie($0.location) })
+    }
+}</div>
+      </div>
+      <div class="w peek" aria-hidden="true">
+        <div class="bar"><span class="lamps"><i></i><i></i><i></i></span><span class="t">构建日志</span></div>
+        <div class="log" id="log"></div>
+      </div>
+      <button class="strip" id="strip" type="button" aria-describedby="demo-help">
+        <span class="lamps"><i></i><i></i><i></i></span><span class="t">构建日志</span><span class="live-dot" title="画面是实时的"></span>
+      </button>
+      <div class="hud" aria-hidden="true">实时画面 · 移开就收回</div>
+    </div>
+    <div class="demo-caption" id="demo-help">
+      <span>把指针停在右上角的<b>卷帘条</b>上：它下面挂出一张卡片，日志还在往下走。</span>
+      <span>指针移开，它自己收回去。没有点击，也没有切换。</span>
+      <span>手机上轻点卷帘条试试。</span>
+    </div>
+  </div>
+</div>
+
+<div class="wrap">
+  <div class="trips" aria-label="三种做法对比">
+    <div class="trip"><span class="name">最小化</span><span class="steps"><span>⌘M</span><span class="arrow">→</span><span>去 Dock 里认出它</span><span class="arrow">→</span><span>点开</span><span class="arrow">→</span><span>看</span><span class="arrow">→</span><span>再 ⌘M</span></span><span class="cost">窗口离开原处</span></div>
+    <div class="trip"><span class="name">切换桌面</span><span class="steps"><span>四指滑走</span><span class="arrow">→</span><span>找到它</span><span class="arrow">→</span><span>看</span><span class="arrow">→</span><span>四指滑回</span></span><span class="cost">人离开当前桌面</span></div>
+    <div class="trip win"><span class="name">看一眼</span><span class="steps"><span>指针停上去</span><span class="arrow">→</span><span>看</span><span class="arrow">→</span><span>移开</span></span><span class="cost">谁都不离开</span></div>
+  </div>
+  <p class="caveat">前两种都要去了再回来，看一眼只走单程。这就是答案，其余内容都是在证明它，并说明怎么把它做好。</p>
+</div>
+
+<div class="wrap">
+  <section id="notch-row">
+    <div class="sec-head">
+      <p class="eyebrow">10 月 2–3 日，1.0.16 本地</p>
+      <h2>看不见的窗口，都在刘海里</h2>
+      <p>别的工具让你去找窗口：程序坞、调度中心、切桌面、⌘Tab。WindowShade 让窗口在原处给你看一眼，看完自己回去。这两天把“原处看一眼”从卷帘条推到了刘海那一排里的每一格。</p>
+    </div>
+    <div class="scroll">
+      <table class="score">
+        <thead><tr><th>格子</th><th>停上去看到什么</th><th>点一下</th><th>验证到哪一步</th></tr></thead>
+        <tbody>
+          <tr><td>收进刘海的、卷帘条、带到每张桌面的</td><td>实时画面，从格子里长出来，落在窗口自己的位置、按它自己的大小</td><td>回到原处</td><td><span class="pill lead">真机探针</span><span class="next">notch 20、pull 4（9/30–10/1 构建）</span></td></tr>
+          <tr><td>侧拉停在边上的</td><td>实时画面</td><td>拉出来</td><td><span class="pill tie">单测</span><span class="next"><code>--shelf-glance</code> 还没在 build 16 上跑</span></td></tr>
+          <tr><td>系统里最小化的窗口</td><td>窗口的画面，标明“不是实时画面”（系统不给最小化的窗口出新画面）</td><td>还原</td><td><span class="pill tie">单测</span><span class="next">抓画面的工具在屏、最小化、离屏三种都过了</span></td></tr>
+          <tr><td>隐藏的 App</td><td>一张静止画面（原来说要临时显示它；那会把它的几扇窗一起带出来、可能抢焦点，改成静止画面，Aaron 10 月 3 日认可）</td><td>还原</td><td><span class="pill tie">单测</span></td></tr>
+          <tr><td>别的桌面上的窗口<br><small>最近用过的在前，最多 6 扇</small></td><td>从那张桌面实时抓过来，从格子里长出来；最前面的 App 不变，不切桌面</td><td>切到那张桌面，这扇窗在最前面</td><td><span class="pill tie">真机探针一次</span><span class="next"><code>--elsewhere --other-space --switch</code> 通过；之后按复审又改了一轮，要重跑</span></td></tr>
+        </tbody>
+      </table>
+    </div>
+    <p class="caveat">这一节对应“怎样才算 Marvin 满意”里的 D 条：跨桌面看一眼，现在只用触控板、不用先按 ⌃⌘G。还差两件：在 build 16 上重跑，和请他试。</p>
+  </section>
+</div>
+
+<div class="wrap">
+  <section id="marvin">
+    <div class="sec-head">
+      <p class="eyebrow">他问的是什么</p>
+      <h2>Marvin 要的不是一个功能，是一个用得上的时刻</h2>
+      <p>下面四点，左边是他的原话，右边是我们读出来的需求。</p>
+    </div>
+    <div class="needs">
+      <div class="need">
+        <div><blockquote>“我为什么不用最小化，或多个窗口切换，而使用这个？这个问题你需要思考下。”<cite>试用 WindowShade 后，2026-07-04</cite></blockquote></div>
+        <div><h3>说清它在哪一刻比系统自带的好</h3><p>当时的回答是“这是考古”，他没有接话。“90 年代就有”是这个产品的来历，不是用它的理由。答案必须落到一个具体时刻：那一刻，最小化和切换都比它慢。</p></div>
+      </div>
+      <div class="need">
+        <div><blockquote>“目前可用性有点低，交互卡顿。”<cite>同一次，7 月初的版本（1.0.6 之前）</cite></blockquote><blockquote>“好多 bug……还是纯 vibe？”<cite>试你另一个项目时，2026-09-20</cite></blockquote></div>
+        <div><h3>核心操作一碰就灵</h3><p>他评价东西先看稳不稳。点子再好，只要卡一下、错一次，就会被归为“不好用”。所以看一眼必须快，必须可靠，还要有测试兜底。</p></div>
+      </div>
+      <div class="need">
+        <div><blockquote>“把核心的交互留在真正有意思的剪纸上。”<cite>评一个剪纸 App，2026-02</cite></blockquote></div>
+        <div><h3>一个核心交互做透，其余从简</h3><p>他欣赏的做法是：次要步骤用最简单的控件带过，把精力留给唯一有趣的那一下。WindowShade 现在有收起、看一眼、带到每张桌面、置顶、窗口浏览、标题栏手势、专注布局、合盖效果，本地还有侧拉、刘海、启动台。按他的标准，得先认定哪一个是“剪纸”。</p></div>
+      </div>
+      <div class="need">
+        <div><blockquote>“我一般都是直接切换桌面，这样用 TrackPad 比较快。”<cite>2026-07-04</cite></blockquote></div>
+        <div><h3>进入他的工作流，而不是等他改习惯</h3><p>他用 13 寸 MacBook Air 和触控板，一张桌面一个 App，不用置顶，很少切换窗口。7 月的 WindowShade 只在同一张桌面、窗口互相重叠时才有用，所以和他没有交集。唯一的交点是：在一张桌面上干活，想看另一张桌面上的东西。1.0.15 的带到每张桌面就是冲着这一点做的；本地的侧拉也是，它的把手在每张桌面上都有。</p></div>
+      </div>
+    </div>
+    <p class="caveat">证据有限：直接谈 WindowShade 的只有 7 月 4 日那十来分钟，其余是从他评价别的产品时的说法推断出来的。</p>
+  </section>
+
+  <section id="newlearner">
+    <div class="sec-head">
+      <p class="eyebrow">另一类人</p>
+      <h2>Newlearner 要的是可预期，和少动鼠标</h2>
+      <p>Newlearner 频道 7 月介绍过 WindowShade。频道作者 2023 年写过自己的窗口管理方案：罗技鼠标、侧键 ⌘H 隐藏 App，用 Magnet 拖拽吸附，用 Raycast 快捷键铺满和半屏，用 DockMate 找回隐藏的窗口。他列的四个痛点，和我们的对应如下。</p>
+    </div>
+    <div class="needs">
+      <div class="need">
+        <div><blockquote>“光标放在 App 顶栏滚动，即可铺满全屏 / 缩小。”<cite>怀念 HyperDock，并说没找到别的软件能做到，2023-02</cite></blockquote></div>
+        <div><h3>在标题栏上滚一下就铺满，再滚回来</h3><p>HyperDock 早已停止维护。1.0.15 的标题栏手势补上了这一下：两指往下拉铺满菜单栏和 Dock 之间，往上推回到原来的大小；普通鼠标滚轮滚三格算一次。方向跟内容走，关了自然滚动的鼠标往上滚就是铺满，和 HyperDock 同向。</p></div>
+      </div>
+      <div class="need">
+        <div><blockquote>铺满菜单栏和 Dock 之间很难，双击顶栏不知道会缩放成什么样。<cite>痛点②，转述</cite></blockquote></div>
+        <div><h3>结果每次都一样</h3><p>WindowShade 的铺满固定是屏幕可用区域，不看 App 自己的“缩放”尺寸；双击标题栏固定是收起，三击才交给系统原来的缩放。</p></div>
+      </div>
+      <div class="need">
+        <div><blockquote>最小化、隐藏的窗口要去调度中心找，同一个 App 的几扇窗没法挑一扇。<cite>痛点③，转述</cite></blockquote></div>
+        <div><h3>窗口留在原处，找的时候按窗口找</h3><p>收起的窗口不进 Dock，卷帘条就在原处；⌃⌘1…9 直接展开某一扇；窗口浏览停在 Dock 图标上就列出这个 App 的每一扇窗，隐藏的也在。</p></div>
+      </div>
+      <div class="need">
+        <div><blockquote>内屏、外屏切换时，窗口大小不变，要重新调。<cite>痛点④，转述</cite></blockquote></div>
+        <div><h3>排过的窗口自己排回去</h3><p>9 月 26 日重新发布的 1.0.15 里，用手势、快捷键、窗口浏览排过的窗口，换屏后都按原来的排法排到新屏幕上；被人手改过尺寸的窗口不动。真插拔显示器还没测。</p></div>
+      </div>
+    </div>
+    <p class="caveat">这四点来自频道作者 2023 年的一篇推送，不是他对 WindowShade 的评价；他的工具组合也可能已经变了。</p>
+  </section>
+
+
+  <section id="jobs">
+    <div class="wrap sec-head" style="margin-inline:auto">
+      <p class="eyebrow">把需求拆开</p>
+      <h2>一天里，窗口要做的五件事</h2>
+      <p>两个人要的东西不一样，但落到一天里，都绕不开这五件事。次数是按他们的说法推断的，不是测量。</p>
+    </div>
+    <div class="scroll">
+      <table class="score">
+        <thead><tr><th>事情</th><th>一天大概</th><th>Marvin 现在怎么做</th><th>Newlearner 现在怎么做</th><th>什么算做好</th><th>归类</th></tr></thead>
+        <tbody>
+          <tr><td>让开<br><small class="num">窗口挡住了后面的东西</small></td><td>很多次</td><td>切到另一张桌面</td><td>侧键 ⌘H 隐藏整个 App</td><td>一下让开，原处留个记号，一下回来</td><td><span class="pill goal">特色</span><span class="next">收起、卷帘条</span></td></tr>
+          <tr><td>看一眼<br><small>确认进度、对一下内容</small></td><td>很多次</td><td>四指滑过去，再滑回来</td><td>DockMate 里找到它，点开，再藏回去</td><td>人不离开当前位置</td><td><span class="pill goal">特色</span><span class="next">看一眼、带到每张桌面</span></td></tr>
+          <tr><td>摆放<br><small>半屏、铺满、四角</small></td><td>几次</td><td>很少，一张桌面一个 App</td><td>Magnet 拖拽，Raycast 快捷键</td><td>结果每次都一样，排错了能撤回</td><td><span class="pill tie">基础</span><span class="next">三分屏、四角、键盘已发布；网格 3×2、3×3 和魔法平铺本地已做</span></td></tr>
+          <tr><td>找回<br><small>同一个 App 的几扇窗里挑一扇</small></td><td>几次</td><td>很少</td><td>DockMate、调度中心</td><td>按窗口找，不按 App 找</td><td><span class="pill tie">基础</span><span class="next">窗口浏览已经够用</span></td></tr>
+          <tr><td>换屏<br><small>内屏、外屏切换</small></td><td>接显示器时</td><td>不适用，只用 13 寸</td><td>一扇扇重新调</td><td>排过的窗口自己排回去</td><td><span class="pill tie">基础</span><span class="next">9 月 26 日已发布，真插拔未测</span></td></tr>
+        </tbody>
+      </table>
+    </div>
+    <div class="takes">
+      <div class="take"><b>基础功能为什么还要做</b><p>Newlearner 已经有 Magnet 和 Raycast。WindowShade 在摆放上如果差太多，他会把两个都留着，WindowShade 就只剩“收起”这一个小玩具。补到九成的目的，是让人不用为了排窗再多装一个工具，而不是和它们比谁更全。</p></div>
+      <div class="take"><b>精力放在哪里</b><p>让开和看一眼是别人不做、两个人又天天遇到的事，精力主要放在这两件上。摆放、找回、换屏做到“够用、可预期、能撤回”，三分屏和网格也照样补上（本地已做 3×2、3×3）。一直管着窗口的自动平铺仍然不做；Aaron 要的“一下排好、比例自己定”做成了魔法平铺：排一次，之后照常随手挪，捏合整批撤回。</p></div>
+    </div>
+  </section>
+
+  <section id="self">
+    <div class="sec-head">
+      <p class="eyebrow">先认清自己</p>
+      <h2>WindowShade 现在到底是什么</h2>
+    </div>
+    <div class="facts">
+      <div class="fact"><h3>收起是一场替身戏</h3><p>macOS 不允许别的 App 把一扇窗口画成只剩标题栏。WindowShade 的做法是：把真窗口藏起来，再在原处放一条用截图做的卷帘条。怎么藏：那个 App 在这张桌面上只有这一扇窗，就隐藏整个 App，否则最小化。Safari 等少数 App 会先试着挪到屏幕外，但系统通常会把窗口拉回屏幕边上。WindowMizer 也是替身，它一律最小化进 Dock。</p></div>
+      <div class="fact"><h3>快，而且不拖别人</h3><p>收起时的截图改用快速截图，第一眼看到变化从 342 毫秒降到 147 毫秒。把真窗口藏起来仍要靠那个 App 自己配合。标题栏手势只旁听、不拦截，不会让别的 App 的滚动等 WindowShade。</p></div>
+      <div class="fact"><h3>发布了什么，本地还有什么</h3><p>1.0.15 首发看一眼、带到每张桌面和标题栏手势；9 月 25、26 日两次重新发布，加了窗口跟手、左右梯子（三分屏）、拐进角落、甩一下、键盘排布、一本账撤销、换屏排回和卷帘条上的快捷键。本地还有没发布的侧拉、刘海、启动台，也还没装进日常用的那一版。</p></div>
+    </div>
+    <div class="effort">
+      <div class="effort-title"><b>精力花在了哪里</b><span>各模块 Swift / Metal 代码行数，本地工作树（含未发布的侧拉、刘海、启动台），2026-09-27</span></div>
+      <div class="bars" role="img" aria-label="收起本体与其余 18359 行，窗口浏览 14176 行，合盖等效果 5039 行，启动台 5000 行，标题栏手势与甩一下 3254 行，刘海 2076 行，看一眼与带到每张桌面 1885 行，侧拉 1329 行">
+        <div class="brow core"><span>收起本体与其余</span><span class="btrack"><i style="width:100%"></i></span><span class="v">18,359</span></div>
+        <div class="brow hot"><span>窗口浏览</span><span class="btrack"><i style="width:77.2%"></i></span><span class="v">14,176</span></div>
+        <div class="brow"><span>合盖等效果</span><span class="btrack"><i style="width:27.4%"></i></span><span class="v">5,039</span></div>
+        <div class="brow"><span>启动台</span><span class="btrack"><i style="width:27.2%"></i></span><span class="v">5,000</span></div>
+        <div class="brow core"><span>标题栏手势、甩一下</span><span class="btrack"><i style="width:17.7%"></i></span><span class="v">3,254</span></div>
+        <div class="brow core"><span>刘海</span><span class="btrack"><i style="width:11.3%"></i></span><span class="v">2,076</span></div>
+        <div class="brow core"><span>看一眼、带到每张桌面</span><span class="btrack"><i style="width:10.3%"></i></span><span class="v">1,885</span></div>
+        <div class="brow core"><span>侧拉</span><span class="btrack"><i style="width:7.2%"></i></span><span class="v">1,329</span></div>
+      </div>
+      <p>窗口浏览两天里几乎没动（9 月 25 日 14,135 行），照原定的只修 bug。新增的精力主要在两处：标题栏手势从约 1,600 行长到约 3,300 行（三分屏梯子、拐角、甩一下、窗口跟手）；侧拉、刘海、启动台合计约 8,400 行，其中启动台 5,000 行，和合盖效果差不多大。前两样直接管窗口；启动台本身不碰窗口，它和“收起窗口，留下位置”的连接在“把 App 拖出来，直接放到半屏或侧拉”这一步上，这一步要做扎实。</p>
+    </div>
+  </section>
+</div>
+
+<div class="wide">
+  <section id="map">
+    <div class="wrap sec-head" style="margin-inline:auto">
+      <p class="eyebrow">周围的工具</p>
+      <h2>每个工具管哪一段</h2>
+      <p>“原地看一眼”指：窗口在原位置、按原尺寸、显示实时画面，看完自动复原。只能在面板或缩略图里看，算半个。“标题栏手势”指在标题栏上用触控板或滚轮直接收起、铺满、半屏。</p>
+    </div>
+    <div class="scroll">
+      <table class="matrix">
+        <thead><tr><th>工具</th><th class="c">摆放窗口</th><th class="c">找到窗口</th><th class="c">让开窗口</th><th class="c">原地看一眼</th><th class="c">跨桌面</th><th class="c">标题栏手势</th><th>价格</th></tr></thead>
+        <tbody>
+          <tr><th>macOS 27 自带<small>9 月 14 日发布</small></th><td class="c full">●<small>fn⌃ 方向键、拖到边缘；没有三分屏</small></td><td class="c full">●<small>调度中心</small></td><td class="c part">◐<small>最小化会离开原处</small></td><td class="c none">—</td><td class="c full">●</td><td class="c part">◐<small>双击缩放，尺寸看 App</small></td><td>免费</td></tr>
+          <tr><th>Rectangle<small>v2.0.1 · 2026-09-26</small></th><td class="c full">●<small>含六分之一、九分之一；2.0 起能按格子排多扇</small></td><td class="c none">—</td><td class="c none">—</td><td class="c none">—</td><td class="c none">—</td><td class="c none">—</td><td>免费；Pro $9.99</td></tr>
+          <tr><th>Magnet<small>Mac App Store</small></th><td class="c full">●<small>拖拽吸附、快捷键</small></td><td class="c none">—</td><td class="c none">—</td><td class="c none">—</td><td class="c none">—</td><td class="c none">—</td><td>$4.99</td></tr>
+          <tr><th>Raycast 窗口管理<small>启动器里的一组命令</small></th><td class="c full">●<small>快捷键</small></td><td class="c part">◐<small>搜索切换</small></td><td class="c none">—</td><td class="c none">—</td><td class="c none">—</td><td class="c none">—</td><td>窗口管理属 Pro</td></tr>
+          <tr><th>AeroSpace<small>0.21.3 · 2026-07-16</small></th><td class="c full">●<small>自动平铺</small></td><td class="c part">◐<small>按工作区</small></td><td class="c none">—</td><td class="c none">—</td><td class="c full">●<small>自己的工作区</small></td><td class="c none">—</td><td>免费</td></tr>
+          <tr><th>AltTab<small>11.8.0 · 2026-09-26</small></th><td class="c none">—</td><td class="c full">●<small>按窗口切换</small></td><td class="c none">—</td><td class="c part">◐<small>切换器里的缩略图</small></td><td class="c full">●</td><td class="c none">—</td><td>免费</td></tr>
+          <tr><th>DockMate<small>macEnhance</small></th><td class="c none">—</td><td class="c full">●<small>Dock 悬停</small></td><td class="c part">◐<small>预览里的按钮</small></td><td class="c part">◐<small>Dock 旁缩略图</small></td><td class="c none">?<small>未核实</small></td><td class="c none">—</td><td>$14.99</td></tr>
+          <tr><th>DockDoor<small>1.40.1 · 2026-09-03</small></th><td class="c none">—</td><td class="c full">●<small>Dock 悬停</small></td><td class="c part">◐<small>预览里的按钮</small></td><td class="c part">◐<small>Dock 旁缩略图</small></td><td class="c none">?<small>未核实</small></td><td class="c none">—</td><td>免费；Pro $20</td></tr>
+          <tr><th>Wins<small>3.6 · 2026-09-15</small></th><td class="c full">●<small>刘海分屏岛、拖到边缘、快捷键</small></td><td class="c full">●<small>Dock 悬停、Cmd-Tab Plus</small></td><td class="c part">◐<small>隐藏、最小化，会离开原处</small></td><td class="c part">◐<small>Dock 旁缩略图</small></td><td class="c none">?<small>未核实</small></td><td class="c none">—</td><td>¥139 起，一次买断</td></tr>
+          <tr><th>Swish<small>1.13.3 · 2026-09-13</small></th><td class="c full">●<small>手势贴靠</small></td><td class="c part">◐<small>菜单栏切换器</small></td><td class="c part">◐<small>下滑最小化</small></td><td class="c none">—</td><td class="c none">—</td><td class="c full">●<small>标题栏双指</small></td><td>$16</td></tr>
+          <tr class="ref"><th>HyperDock<small>已停止维护，新系统上不能用</small></th><td class="c part">◐<small>拖到边缘</small></td><td class="c full">●<small>Dock 悬停</small></td><td class="c none">—</td><td class="c part">◐<small>Dock 旁缩略图</small></td><td class="c none">—</td><td class="c full">●<small>顶栏滚动铺满 / 缩小</small></td><td>—</td></tr>
+          <tr class="ref"><th>KDE 收起 + 悬停展开<small>Linux，只剩 X11 能用</small></th><td class="c none">—</td><td class="c none">—</td><td class="c full">●<small>原地收起</small></td><td class="c full">●<small>悬停展开</small></td><td class="c none">—</td><td class="c part">◐<small>滚轮收起</small></td><td>免费</td></tr>
+          <tr><th>niri<small>26.04 · Linux（Wayland）</small></th><td class="c full">●<small>卷动平铺：一列挨一列，新窗口不挤别人</small></td><td class="c full">●<small>概览、带画面的 Alt-Tab</small></td><td class="c none">—</td><td class="c none">—</td><td class="c full">●<small>自己的工作区</small></td><td class="c part">◐<small>三指滑卷轴；按住标题栏横拖</small></td><td>免费，GPL-3.0</td></tr>
+          <tr><th>Paneru 等<small>macOS 上照 niri 做的</small></th><td class="c full">●<small>卷轴；屏幕外的窗口露一条边</small></td><td class="c none">—</td><td class="c none">—</td><td class="c none">—</td><td class="c none">?<small>未核实</small></td><td class="c part">◐<small>触控板滑卷轴</small></td><td>Paneru 免费；ChainYourMac $9.99</td></tr>
+          <tr><th>WindowMizer 6<small>6.2.8 · 2026-09-15</small></th><td class="c none">—</td><td class="c part">◐<small>占位条的窗口菜单</small></td><td class="c full">●<small>真窗口进 Dock</small></td><td class="c none">—<small>只有标题提示</small></td><td class="c none">—</td><td class="c none">—</td><td>$25 / 3 台</td></tr>
+          <tr class="us"><th>WindowShade 1.0.15<small>2026-09-26 重新发布</small></th><td class="c full">●<small>半屏、三分之一、四角、铺满、换屏；键盘和甩一下；一本账撤销。网格还没做</small></td><td class="c full">●<small>窗口浏览</small></td><td class="c full">●<small>原地收起</small></td><td class="c full">●<small>原位；隐藏的 App 也实时</small></td><td class="c full">●<small>带到每张桌面；本地的侧拉每张桌面都有把手</small></td><td class="c full">●<small>触控板、滚轮；窗口跟手；Magic Mouse 未真机验证</small></td><td>免费，MIT</td></tr>
+        </tbody>
+      </table>
+    </div>
+    <div class="legend"><span>● 主要能力</span><span>◐ 部分做到</span><span>— 没有</span><span>? 未核实</span></div>
+
+    <div class="takes">
+      <div class="take"><b>KDE 收起 + 悬停展开</b><p><span class="verb adopt">采用</span>看一眼就是 macOS 版的悬停展开。KDE 这个功能在 Wayland 上被放弃了，Plasma 6.8 在 10 月去掉 X11 会话后，它会跟着消失。macOS 上的难点是真窗口藏在屏幕外，所以我们直接显示它的实时画面，不必等 App 把窗口挪回来。</p></div>
+      <div class="take"><b>Swish</b><p><span class="verb adopt">采用并共存</span>它先做成的“拖分屏那条缝、两边一起变”，本地已对上：两扇拼满时中间有把手，四角、三分、网格、魔法平铺带侧栏的每条缝都能拖，推到边上那一扇进侧拉。它还有 Magic Mouse、Dock 和菜单栏上的手势、WASD 键位，我们没有或没验证。它证明了标题栏双指手势有人要。我们的方向跟卷帘一致：往上推收起，往下拉铺满，不放最小化和撤不回来的关闭。Swish 在运行时，标题栏手势让给它；Safari 标签上的左右滑让给 Safari。</p></div>
+      <div class="take"><b>HyperDock</b><p><span class="verb adopt">采用</span>顶栏滚动铺满、再滚回来，是 Newlearner 最怀念、又说找不到替代的那一下。标题栏手势用滚轮三格实现，方向和它一致；它已经停止维护，这块没人接。</p></div>
+      <div class="take"><b>AeroSpace</b><p><span class="verb adopt">采用</span>按桌面组织工作的人，看一眼也要能跨桌面：在这张桌面上，看另一张桌面上的窗口，想操作就点一下跳过去。平铺不做。</p></div>
+      <div class="take"><b>niri</b><p><span class="verb adopt">采用并超过</span>它最好的那一点是开新窗口不挤别人，手指一滑就过去。我们不做第二个合成器，而是放不下时把窗口接成一条卷轴，用的还是标题栏上那一套动作；多出来的是按 App 定宽不用配置、聊天自动侧拉、放得下时不强行卷动、捏合整条撤回，以及收起和看一眼。合成器才做得到的动画、模糊、边框和它自己的工作区不追。</p></div>
+      <div class="take"><b>AltTab</b><p><span class="verb adopt">采用</span>对象是一扇窗口，不是整个 App。看一眼只动你指着的那一扇，同一个 App 的其他窗口原样不动。</p></div>
+      <div class="take"><b>DockDoor、DockMate</b><p><span class="verb adopt">补齐预览里的动作</span>Dock 悬停预览窗口浏览早就有。9 月 28 日按 DockDoor 补上预览里的进入全屏、让开这个 App、退出 App，并按 Wins 的“调度中心 Pro”补上调度中心里 ⌘W 关指着的那扇、⌘Q 退它的 App。DockMate 是 macEnhance 出的，最新 0.8.7 停在 2021 年 3 月；它的日历、正在播放不做，“开新窗口”还没做。</p></div>
+      <div class="take"><b>Wins</b><p><span class="verb avoid">借它的教训</span>国内付费的窗口工具，自述一万三千多用户。3.4 把分屏落点做成从刘海长出的小岛，外形和我们刘海的落点小岛一样，用途不同：它落下去是分屏，我们落下去是收进刘海。它更新日志里修过的坑，直接当我们的验收用例：调整窗口大小时误触发小岛、竖放的外接屏、不能调整大小的窗口、macOS 27 上拖动卡顿；Dock 预览那边也有一串（快速换图标时消失、自动隐藏的 Dock、右键菜单被挡、唤醒后缩略图带红绿灯）。“最小化全部”再按一次能全部召回、前后顺序不乱，正好是“暂时取消全部置顶”要做到的样子。接管 ⌘Tab、调度中心、Dock 的那几样不跟。<br><br>本地已按这几条修过（都未发布）：拖窗口顶边改高度不再冒出落点小岛、不再被当成甩一下；改不了大小的窗口放在正中并说一声；竖放的外接屏上启动台改为 5 列 × 7 行，刘海的一排按屏幕宽度少放几格；拖动时不再每个事件都去打扰 WindowServer；在 Dock 图标上右键、按住 Control 点或长按时，窗口浏览马上让开；唤醒后 3 秒整批重截缩略图；台前调度下实时画面按原比例放进卡片；面板开着时刚关掉的窗口会被移出列表。窗口浏览 703 项纯逻辑检查全过；唤醒、台前调度、刚关掉的窗口这三条还要在真机上各走一遍。<br><br>刘海的用法也借了它一点：从刘海长出来、用完就收回去。不同的是 Wins 的岛只在拖窗口时出现；我们的刘海一直在，点一下就回主屏幕。</p></div>
+      <div class="take"><b>Rectangle、Magnet、Raycast</b><p><span class="verb adopt">补齐，不照搬</span>9 月 28 日起，设置里一键换上 Rectangle 的快捷键：装过的照它现在的设置，没装过的用它推荐的那一套（⌃⌥ 加方向键和字母），21 个动作都有对应，和我们自己撞车的让出来，它还开着就等它退出再接过来；Raycast 的窗口命令名一一对照。上一版这里写的是“不做第四套快捷键”。改判的理由在下一节：不补，Newlearner 这样的人就得两个工具一起开。补的时候只补常用的那几下，而且和手势是同一架梯子，不另起一套。Rectangle 2.0 有一处值得学：App 不肯缩到要的大小时，它浮窗说“达到最小尺寸”，不假装排好了。</p></div>
+      <div class="take"><b>macOS 自带的平铺</b><p><span class="verb keep">让给系统</span>macOS 15 起，拖到屏幕边缘就能半屏、四角，fn⌃ 方向键也能排。拖拽吸附不再重做；我们只补系统没做的：撤回任何一次排布、换屏后排回去、在标题栏上直接滑。</p></div>
+    </div>
+  </section>
+
+
+  <section id="baseline">
+    <div class="wrap sec-head" style="margin-inline:auto">
+      <p class="eyebrow">基础功能</p>
+      <h2>做到九成：逐项看</h2>
+      <p>九成的标准：Marvin 和 Newlearner 这两类人日常排窗会用到的，全都能在 WindowShade 里用同一套动作做完；从别的工具换过来的人“可以不用、但不能没有”的，比如三分屏和网格，照自己的样子补上；只有一直管着窗口的自动平铺这种少数人才用的不做；“一下把整块屏排好”做成魔法平铺。网格本地已做 3×2、3×3，未发布。只列这几家都有、日常真会用到的动作。WindowShade 一列是 9 月 26 日重新发布的 1.0.15。</p>
+    </div>
+    <div class="scroll">
+      <table class="matrix">
+        <thead><tr><th>动作</th><th class="c">macOS 27</th><th class="c">Rectangle</th><th class="c">Magnet</th><th class="c">Raycast</th><th class="c">Swish</th><th class="c">WindowShade 1.0.15</th><th>结论</th></tr></thead>
+        <tbody>
+          <tr><th>左右半屏</th><td class="c full">●<small>fn⌃←→</small></td><td class="c full">●</td><td class="c full">●</td><td class="c full">●</td><td class="c full">●<small>手势</small></td><td class="c full">●<small>⌃⌘←→、手势、甩一下、窗口浏览</small></td><td>已补齐</td></tr>
+          <tr><th>铺满<small>菜单栏与 Dock 之间</small></th><td class="c full">●<small>fn⌃F</small></td><td class="c full">●</td><td class="c full">●</td><td class="c full">●</td><td class="c full">●</td><td class="c full">●<small>⌃⌘↓、手势、甩一下、窗口浏览</small></td><td>已补齐</td></tr>
+          <tr><th>撤回排布</th><td class="c part">◐<small>fn⌃R 回到之前大小</small></td><td class="c full">●<small>恢复</small></td><td class="c full">●<small>恢复</small></td><td class="c full">●<small>恢复</small></td><td class="c none">?</td><td class="c full">●<small>一本账，哪种方式排的都能撤</small></td><td>已补齐并统一</td></tr>
+          <tr><th>四角</th><td class="c full">●<small>拖到角</small></td><td class="c full">●</td><td class="c full">●</td><td class="c full">●</td><td class="c full">●<small>网格</small></td><td class="c full">●<small>左右走满再拐弯；⌃⌘← 接 ⌃⌘↓；斜着甩</small></td><td>已补齐，用自己的手势</td></tr>
+          <tr><th>居中</th><td class="c full">●<small>fn⌃C</small></td><td class="c full">●</td><td class="c full">●</td><td class="c full">●</td><td class="c none">?</td><td class="c part">◐<small>窗口浏览；本地：可录快捷键，换上 Rectangle 那套后是 ⌃⌥C，另有大一点、小一点、高度占满、上半屏、下半屏</small></td><td>本地已补</td></tr>
+          <tr><th>移到另一块屏</th><td class="c part">◐<small>拖过去</small></td><td class="c full">●</td><td class="c full">●</td><td class="c full">●</td><td class="c full">●</td><td class="c full">●<small>梯子走到头再推一次</small></td><td>已补齐，用自己的手势</td></tr>
+          <tr><th>换屏后排回去</th><td class="c none">—</td><td class="c none">?</td><td class="c none">?</td><td class="c none">—</td><td class="c none">?</td><td class="c full">●<small>键盘、手势、窗口浏览排过的都算；真插拔未测</small></td><td>已补齐，多走一步</td></tr>
+          <tr><th>拖到边缘吸附</th><td class="c full">●</td><td class="c full">●</td><td class="c full">●</td><td class="c none">—</td><td class="c none">?</td><td class="c none">—</td><td>让给系统</td></tr>
+          <tr><th>三分屏</th><td class="c none">—</td><td class="c full">●</td><td class="c full">●</td><td class="c full">●</td><td class="c full">●<small>3×2、3×3</small></td><td class="c full">●<small>朝一边接着推：½ → ⅔ → ⅓；本地：⅓ 往里推一格一格走，多了中间三分之一</small></td><td>已补齐，用同一架梯子</td></tr>
+          <tr><th>网格<small>3×2、3×3 的格子</small></th><td class="c none">—</td><td class="c full">●<small>六分之一、九分之一</small></td><td class="c none">?</td><td class="c none">?</td><td class="c full">●<small>3×2、3×3</small></td><td class="c none">—<small>1.0.15 没有；本地已做：在上半或下半一行里左右推走梯子（⅔、六分之一，⅓ 一格一格走）；六分之一再拐弯是九分之一，上下三行一格一格走</small></td><td>本地已做 3×2、3×3，未发布</td></tr>
+          <tr><th>做不到时说一声<small>App 不肯缩到要的大小</small></th><td class="c none">?</td><td class="c full">●<small>“达到最小尺寸”浮窗</small></td><td class="c none">?</td><td class="c none">?</td><td class="c none">?</td><td class="c none">—<small>1.0.15 不看；本地已补：改不了大小的放在目标区域正中，浮窗说“这个窗口不能改大小，放在了正中”，到了最小、最大尺寸也说一声</small></td><td>本地已补，未发布</td></tr>
+          <tr><th>一下排好整块屏<small>好几扇窗一起排</small></th><td class="c part">◐<small>窗口菜单里的左右、上下、四等分（fn⌃⇧ 方向键），都是一半、四分之一</small></td><td class="c part">◐<small>2.0 起按格子排多扇</small></td><td class="c none">?</td><td class="c none">?</td><td class="c none">?</td><td class="c none">—<small>1.0.15 没有；本地的魔法平铺：两指张开或 ⌃⌘M，按 App 要的地方定 5:5、6:4、7:3，竖屏上下分，聊天放侧拉，捏合整批撤回</small></td><td>本地已做，未发布</td></tr>
+          <tr><th>别的窗口一下让开<small>只留手里这扇</small></th><td class="c part">◐<small>⌥⌘H 隐藏其他 App</small></td><td class="c none">—</td><td class="c none">—</td><td class="c none">?</td><td class="c none">?</td><td class="c none">—<small>1.0.15 没有；本地：拖着标题栏晃一晃，别的窗口收进刘海，再晃一下放回来（Windows 的 Aero Shake）</small></td><td>本地已做，借 Windows 的说法</td></tr>
+          <tr><th>甩一下标题栏</th><td class="c none">—<small>iPadOS 26 才有</small></td><td class="c none">—</td><td class="c none">—</td><td class="c none">—</td><td class="c none">?</td><td class="c full">●<small>往上收起、往下铺满、左右走梯子、斜着占一角</small></td><td>特色</td></tr>
+          <tr><th>在标题栏上滑</th><td class="c none">—</td><td class="c none">—</td><td class="c none">—</td><td class="c none">—</td><td class="c full">●</td><td class="c full">●<small>和卷帘同向，窗口跟手，可撤回</small></td><td>特色</td></tr>
+        </tbody>
+      </table>
+    </div>
+    <div class="legend"><span>● 有</span><span>◐ 部分，或只能从别处做</span><span>— 没有</span><span>? 官方页面没写，未核实</span></div>
+    <p class="caveat">macOS 27 的快捷键出自 Apple 的“平铺 App 窗口”说明；Rectangle 出自它 v2.0.1 的说明，Magnet、Swish 出自各自官网，Raycast 出自它的手册，窗口管理标着 Pro。</p>
+
+    <div class="wrap sec-head" style="margin-inline:auto;margin-top:56px">
+      <p class="eyebrow">不做第四个 Rectangle</p>
+      <h2>补齐的时候，照自己的样子补</h2>
+      <p>基础功能谁都有，照搬就是 copycat。区别不在多一个动作，而在这些动作在 WindowShade 里是同一件事的不同入口。</p>
+    </div>
+    <div class="spec">
+      <div class="card"><h3>上下左右都是梯子，不是一排按钮</h3><ul><li>左右：朝一边接着推，½ → ⅔ → ⅓，再推移到那边的屏幕。顺序和 Rectangle 连按一样，换过来不用重学。</li><li>甩一下标题栏（iPadOS 26 的做法）也走这些梯子：往上收起、往下铺满、往角落占一角。</li><li>⌃⌘↓ 变大一级：卷帘条 → 原来大小 → 铺满屏幕。</li><li>⌃⌘↑ 变小一级：铺满 → 回到原来大小 → 收起。</li><li>方向和在标题栏上滑一样。别家的 ↑ 是最大化；WindowShade 的 ↑ 是让开，因为它的底色就是让开。</li><li>刚收起一扇，焦点跑到别的窗口上，紧接着按 ⌃⌘↓，回来的是刚收起的那扇。</li><li>键盘也能拐弯：⌃⌘← 之后马上 ⌃⌘↓ 是左下角，和手势“左右走满再往下拐”一样，不多记一个快捷键。</li><li>网格（本地）也是这架梯子：窗口已经在上半或下半一行时，左右推就在这一行里走——左下角 → 左下三分之二 → 左下六分之一，六分之一再往里一格一格走。六分之一再拐一下是九分之一，上下三行一格一格走。不另起网格模式。</li><li>两指张开（本地）是魔法平铺：这扇当主角，别的窗口按各自要的地方排在旁边；只有它一扇时就是铺满。捏合整批放回。</li></ul></div>
+      <div class="card"><h3>借成熟桌面的老说法</h3><ul><li>双击标题栏收起：KDE、老 Mac OS 的卷帘。</li><li>拖着标题栏晃一晃，别的窗口让开：Windows 7 起的 Aero Shake（本地）。</li><li>拖到屏幕边吸附：Windows 的 Aero Snap，macOS 15 起系统自带，交给系统。</li><li>点一下刘海回主屏幕，两下多任务：iPad 的主屏幕按钮（本地）。</li><li>原则：一个动作只有一个意思，不为一件小事加一个新手势；能借的说法就借，不让人重学。</li></ul></div>
+      <div class="card"><h3>一套动作，三个入口，一本账</h3><ul><li>键盘、标题栏手势、窗口浏览用同一组动作名：左半屏、右半屏、铺满屏幕、撤销上次排布。</li><li>按一下键，浮窗照样出现，和音量提示同一个样子，说清做了什么。</li><li>不管用哪种方式排的，捏合或 ⌃⌘↑ 都能撤回；换了显示器，都会排回去。</li></ul></div>
+      <div class="card"><h3>给触控板和 Magic Mouse 的三个惊喜</h3><ul><li>拐个弯占一角：左右滑走满，再往上或往下拐，半屏变成那一侧的上角、下角。走满之前的上下偏移仍算收起、铺满，不会半路变角。</li><li>走到头再推一次换屏：已经在左三分之一还往左推，窗口过到左边那块屏幕、贴着交界的那一半；左边没有屏幕，就回到左半屏重新开始。</li><li>用力按卷帘条看一眼：按着就看，松手就收，和系统用力点按预览文件同一个习惯。只认自己卷帘条上的深按。</li></ul></div>
+      <div class="card"><h3>“留下位置”延伸到摆放</h3><ul><li>收起不让窗口离开原处；排布也一样：每一次都能回到排之前的样子。</li><li>人手改过尺寸的窗口，换屏后不去动它，那是人的新安排。</li><li>做不了的时候（没有可撤销的排布），浮窗说一句，不假装做了。</li></ul></div>
+      <div class="card"><h3>不做的，和不做的理由</h3><ul><li>拖到边缘吸附：系统从 macOS 15 起就有，再做一套只会两边打架。</li><li>一直管着窗口的自动平铺：AeroSpace 做得好，这两类人都用不上。网格和中间三分之一原来也在这一条里，后来改成要做，本地已做（3×2、3×3）；“一下排好”做成魔法平铺，排一次就放手。</li><li>捏合关闭、下滑最小化：撤不回来，或者让窗口离开原处，和“留下位置”相反。</li><li>公证、Intel 版：不做。公证要开发者账号；Intel 手上没有真机能测，出了问题比不支持更伤。应用内更新不需要公证，9 月 28 日夜里改成要做（见第 8 步）。</li></ul></div>
+    </div>
+    <div class="note"><b>说法也要分开。</b>别叫自己“窗口管理工具”。那是 Rectangle 们的词，一说出口就被拿去逐项比功能。WindowShade 的说法是“收起窗口，留下位置”：先讲让开和看一眼，排窗放在后面，讲成“排错了也能撤回”。B站 视频标题里的“你的下一款窗口管理工具”，建议改成从让开讲起的说法，比如“Mac 丢了 25 年的功能，我把它做回来了”。</div>
+  </section>
+
+  <section id="windowmizer">
+    <div class="wrap sec-head" style="margin-inline:auto">
+      <p class="eyebrow">逐项对照</p>
+      <h2>对 WindowMizer 6，逐项比</h2>
+      <p>WindowMizer 从第 4 版一路做到 6.2.8，是 macOS 上唯一还在维护的收起工具。下表按它的帮助手册逐项对照，落后的地方也照写。</p>
+    </div>
+    <div class="score-sum" id="scoresum"></div>
+    <div class="scroll">
+      <table class="score">
+        <thead><tr><th>项目</th><th>WindowMizer 6</th><th>WindowShade 1.0.15（标“1.0.16”的是本地版）</th><th>结论</th></tr></thead>
+        <tbody>
+          <tr data-v="lead"><td>价格</td><td>$25，3 台；14 天试用；要联网激活</td><td>免费，MIT 开源</td><td><span class="pill lead">领先</span></td></tr>
+          <tr data-v="lead"><td>权限</td><td>三项：辅助功能、自动化、屏幕录制</td><td>两项：辅助功能、屏幕录制</td><td><span class="pill lead">领先</span></td></tr>
+          <tr data-v="lead"><td>系统设置</td><td>必须把系统的“双击标题栏”改成“无操作”</td><td>不用改。双击收起，三击照旧执行系统原来的缩放或最小化</td><td><span class="pill lead">领先</span></td></tr>
+          <tr data-v="lead"><td>系统要求</td><td>macOS 15.3 以上，Apple 芯片</td><td>macOS 14 以上，Apple 芯片</td><td><span class="pill lead">领先</span></td></tr>
+          <tr data-v="tie"><td>收起的做法</td><td>真窗口最小化进 Dock，原处留占位条</td><td>只有一扇窗就隐藏整个 App，否则最小化；原处留卷帘条</td><td><span class="pill tie">持平</span></td></tr>
+          <tr data-v="tie"><td>卷帘条外观</td><td>经典细条 / 动态标题条，可按应用设置，可调透明度</td><td>跟原来一样 / 统一标题栏</td><td><span class="pill tie">持平</span></td></tr>
+          <tr data-v="tie"><td>音效与快捷键</td><td>每个动作可设音效和全局快捷键</td><td>收起、展开有音效；六组快捷键，可改键</td><td><span class="pill tie">持平</span></td></tr>
+          <tr data-v="lead"><td>看一眼</td><td>没有。停在缩略图上只显示窗口名</td><td>停一下就在原处按原尺寸出现，移开收回；隐藏的 App 也给实时画面</td><td><span class="pill lead">领先</span><span class="next">1.0.15 已发布</span></td></tr>
+          <tr data-v="lead"><td>置顶</td><td>没有</td><td>有，实时画面；本地加了“暂时取消全部置顶”，再点一下按原来的前后顺序放回</td><td><span class="pill lead">领先</span></td></tr>
+          <tr data-v="lead"><td>找窗口</td><td>占位条的“窗口”菜单里列出同一 App 的窗口</td><td>窗口浏览：Dock 悬停、键盘面板、大图预览、排布与撤销</td><td><span class="pill lead">领先</span></td></tr>
+          <tr data-v="lead"><td>出事后恢复</td><td>手册只写了正常退出时恢复窗口</td><td>每次收起都先记下来，异常退出后自动把窗口救回来</td><td><span class="pill lead">领先</span></td></tr>
+          <tr data-v="lead"><td>跨桌面</td><td>要求打开“显示器具有单独空间”，没写跨桌面</td><td>⌃⌘G 带到每张桌面，别的桌面上停一下就能看到它此刻的样子</td><td><span class="pill lead">领先</span><span class="next">1.0.15 已发布，卷帘条太多时收进“更多窗口”菜单；全屏 App 的桌面上还没实测</span></td></tr>
+          <tr data-v="lead"><td>手势</td><td>没有，只认双击，还要先改系统设置</td><td>在标题栏上两指往上推收起、往下拉铺满、左右走梯子，张开铺满、捏合撤销，轻点两下切换，甩一下；窗口跟着手指走；鼠标滚轮也能用</td><td><span class="pill lead">领先</span><span class="next">1.0.15 已发布；Magic Mouse 还没在真机上验证</span></td></tr>
+          <tr data-v="lead"><td>缩略图占位</td><td>可以收成缩略图，排成网格、浮在最前</td><td>1.0.16：设置里“收起后的样子”选缩略图，原处缩成小图，透明度是滑块；停上去给实时画面，标题变了亮一个点；⌃⌘0 排到屏幕下边一排</td><td><span class="pill lead">领先</span><span class="next">多了实时画面；签名构建上 thumbnail 13 项全过</span></td></tr>
+          <tr data-v="lead"><td>占位条上的快捷键</td><td>在占位条上按 ⌘N、隐藏、退出，会转给原 App</td><td>卷帘条上按 ⌘N、⌘H、⌘M、⌘W、⌘Q 都转给背后的 App 或窗口；⌘Q 先把窗口放下来再退出，要问“是否保存”时对话框看得见</td><td><span class="pill lead">领先</span><span class="next">9 月 26 日已发布。原来按 ⌘Q 会退出 WindowShade 自己，⌘H 会把卷帘条一起藏起来</span></td></tr>
+          <tr data-v="tie"><td>安装与更新</td><td>已签名，Sparkle 自动更新</td><td>1.0.16：菜单里“检查更新…”，基于 Sparkle；更新不丢授权，新版起不来自动换回上一版，从“下载”里打开时先问要不要放进“应用程序”。仍不公证</td><td><span class="pill tie">持平</span><span class="next">隔离环境 13 项全过；一次真实的下载安装还没走过</span></td></tr>
+          <tr data-v="goal"><td>收纳的去处</td><td>只有原处的占位条，真窗口进 Dock</td><td>原处的卷帘条；1.0.16 还能收进刘海，刘海里一排列出所有看不见的窗口：收着的、侧拉的、带到每张桌面的、最小化的、隐藏的、别的桌面上的，每一格都能看一眼；点一下刘海回到主屏幕</td><td><span class="pill goal">主攻</span><span class="next">已装进 Aaron 的日常版，未发布</span></td></tr>
+          <tr data-v="skip"><td>桌面图标隐藏、Finder 窗口堆叠</td><td>有</td><td>没有</td><td><span class="pill skip">不跟</span><span class="next">跟窗口收起无关</span></td></tr>
+        </tbody>
+      </table>
+    </div>
+  </section>
+
+  <section id="multitask">
+    <div class="wrap sec-head" style="margin-inline:auto">
+      <p class="eyebrow">本地，还没发布</p>
+      <h2>侧拉、分屏、画中画、刘海、启动台</h2>
+      <p>Aaron 在 9 月下旬把方向往前推了一步：参照 iPadOS 的多任务，给 Mac 做侧拉和启动台，并把 MacBook 的刘海用作收纳窗口的地方。都还没发布；10 月 3 日起已装进 Aaron 日常用的那一版（1.0.16 build 16）。下表写它们各自的对手，以及验证做到了哪一步；10 月 1 日在签名构建上又整跑了一遍：侧拉 15、带到每张桌面 5、分屏 6、画中画 10、刘海 20、启动台 13、启动台键盘 18，全过。</p>
+    </div>
+    <div class="scroll">
+      <table class="score">
+        <thead><tr><th>功能</th><th>系统和别家</th><th>WindowShade 本地版</th><th>验证到哪一步</th></tr></thead>
+        <tbody>
+          <tr><td>侧拉<br><small>一扇窗靠在屏幕边，用时拉出</small></td><td>iPadOS 26.1 起有单扇侧拉；macOS 自带没有。Mac 上的同类工具这次没有调研</td><td>样子照 Apple 支持文档里 iPadOS 27 的配图量：窗口外一圈 10 点宽的灰色玻璃边框、靠里的下角一段黑色短弧是改大小的把手、收起后屏幕边留一小片带 ‹ 的玻璃、拖到边上时出现同样的小片和窗口将落下的虚影。拖边框挪、拖把手改大小。⌃⌘S，或把标题栏拖到屏幕左右边的中段停一下。窗口收进屏幕边，从把手拉回，可以中途反向、换边、改大小。把手在每张桌面上都有：在别的桌面拉出的是实时画面，点一下回到窗口所在的桌面</td><td><span class="pill tie">部分</span><span class="next">生产探针通过：中间位置、反向、取消、换边、快速收放、退出与异常恢复，跨桌面的实时画面也通过。真人多指手感、慢 App 还没验收；别的桌面上的画面不能直接编辑。9 月 28 日签名构建上 14 项全过，含新的边框贴着窗口、把手在靠里的下角、拖把手变宽时靠边那侧和顶边不动、收起时边框跟着走。像素级比对要 iPadOS 27 模拟器（约 8GB），等 Aaron 点头再下载</span></td></tr>
+          <tr><td>分屏<br><small>iPadOS 27 的 Split View</small></td><td>iPadOS 26 起：先后把两扇窗甩到两边，中间的条拖了两边一起变；Swish 也能拖分屏的缝</td><td>两扇拼满一块屏时中间出现一根小竖条（竖屏是横条）：拖它两扇一起变，松手按速度吸到 ⅓、½、⅔，推到屏幕边那一扇进侧拉、另一扇铺满。不止两扇：四角、三分、网格、魔法平铺带侧栏的每条缝都有把手，拖一条，这条缝两边的窗口一起变。只认最前面那一层排好的窗口，有别的窗口浮在前面就收起来</td><td><span class="pill tie">部分</span><span class="next">9 月 28 日签名构建上 5 项全过：两扇拼满出把手、拖到 ⅓ 吸附、推到边上那一扇进侧拉另一扇铺满、三扇时每条缝都认得、拖一条缝两边一起变。随后的逐行复查又找出 6 处并已修：吸附后把手不再刷新、会悬在旧位置；换桌面后新桌面上不出现；慢慢推到屏幕边推不出去；App 有最小宽度时两扇压在一起；撤销只回一扇；松手马上再抓用到旧的缝。修后的探针在跑；真触控板手感未验收</span></td></tr>
+          <tr><td>画中画<br><small>任意窗口缩到角落</small></td><td>iPadOS、macOS 的画中画只给视频，同一时间只有一个；「神奇画中画」「PiP」两款 App 把文件、网页画成视频塞进系统画中画，只能看，不能滚</td><td>任意窗口：拖着标题栏到屏幕角落停一下（或菜单、快捷键），缩成一张实时画面浮在角落，原窗口让到屏幕边外。甩到别的角、推出屏幕边藏起来（边上留一小片，藏着时不截画面）、三档大小、同一个角落排成一列、跟着到每张桌面；滚轮和上一页 / 下一页直接滚原窗口；还能只看窗口里的一块；双击回到原处</td><td><span class="pill tie">部分</span><span class="next">9 月 28 日签名构建上 9 项全过：缩到最近的角、甩到对角、推出边藏起来并停掉截取、拉回来、换大一档、“下一页”滚动原窗口且不抢前台、只看一块、同一角落排成一列、两扇都回到原处。逐行复查又找出 7 处并已修：退出动画里再按一次会把让开的位置记成原处（窗口回不来）；从角落拖进来时回到的是落点；侧拉收着时进入；拔掉显示器；旁边有屏幕时往那边让开；同一角落叠在一起；回到原处只复原位置不复原大小。视频、会议窗口的实际观感要 Aaron 看</span></td></tr>
+          <tr><td>刘海<br><small>收纳窗口的地方</small></td><td>NotchNook、Boring Notch、Alcove 等拿刘海放音乐、文件中转、日历；MacNotch、Notchy、Wins 让人把窗口拖到刘海旁边分屏。没找到把窗口收进刘海的</td><td>朝刘海甩一下标题栏，或拖到刘海下面垂下的落点小岛上，窗口就收进刘海。指针停上去，展开一排：收进刘海的、侧拉的、卷帘条、带到每张桌面的窗口，以及系统里最小化的窗口、隐藏的 App，点一下各回各处；停在某一格上，在原处看一眼它此刻的样子。刘海也是主屏幕键：点一下回主屏幕（主屏幕从刘海里长出来，再点一下收回去），两下调度中心，三下这个 App 的所有窗口。把文件拖到刘海上停一下，主屏幕只亮能打开它的 App。收着的窗口改了标题，刘海短暂展开提醒。外接屏顶部正中也有一段看不见的“刘海”</td><td><span class="pill tie">部分</span><span class="next">9 月 28 日凌晨在签名构建上 11 项全过，包括停在格子上的看一眼：这个 App 只剩这一扇窗时是实时画面；还有别的窗口、这扇是最小化藏起来的，给收起时的画面。提醒出现在指针所在那块屏的刘海上。 主屏幕键的探针全过：点一下从刘海打开主屏幕（画面从刘海长出来、停在第一页），再点一下收回；把文本文件交给刘海时文本编辑亮着、计算器暗着，搜索框写着要打开的文件，按一下主屏幕键先退出挑 App、再按一下收起。 调度中心、App 窗口会占满屏幕，探针没按，要 Aaron 点一下试；真人手感没验收</span></td></tr>
+          <tr><td>启动台<br><small>找 App、打开、放好</small></td><td>macOS 26 起去掉了启动台，换成 Spotlight 里的 App 列表，不能自己建文件夹；AppGrid、LaunchOS 等第三方重做了网格和文件夹</td><td>主屏幕、文件夹、最后一页的 App 资料库、负一屏，打字就搜（拼音、首字母都行）。按住图标直接拖出来，放到半屏、四分之一、铺满或侧拉，这是它和窗口的连接</td><td><span class="pill tie">部分</span><span class="next">模型、界面回归和生产探针通过（9 月 28 日凌晨在签名构建上 12 项全过：文件夹、资料库分组和一组展开、全部 App 列表和搜索、翻页、拖出来放到半屏和侧拉、不改写保存的排列），主屏幕、文件夹、资料库、搜索的截图人工核对过。竖屏改成 5 列 × 7 行（模型测试）。往下划找 Spotlight：原来打开 Spotlight.app 调不起来，改成按用户自己设的 Spotlight 快捷键，快捷键关着就留在启动台里搜；真实多指、主屏幕的键盘操作还没单独测</span></td></tr>
+        </tbody>
+      </table>
+    </div>
+    <div class="takes">
+      <div class="take"><b>和“收起窗口，留下位置”是什么关系</b><p>侧拉和刘海是“让开”的另两个去处：侧拉让一扇常用的窗靠在边上，刘海让窗口收进一个固定的地方，都不进 Dock。刘海里那一排把四种收着的窗口放在一个入口里，找回时不用记它在哪种状态。启动台离得最远，它管的是 App，只有“拖出来直接放好”这一步是窗口的事。</p></div>
+      <div class="take"><b>和别家比，差在哪、强在哪</b><p>刘海：别家要么不碰窗口，要么只是换个位置的拖边分屏，收进刘海目前只有我们在做。侧拉：iPad 上是系统能力，Mac 上只能靠移动别的 App 的窗口来模拟，慢 App 的跟手程度要真人试过才算数。启动台：第三方重做的已经不少，我们的不同只在能直接把 App 放到窗口位置。</p></div>
+    </div>
+  </section>
+</div>
+
+<div class="wide">
+  <section id="score">
+    <div class="wrap sec-head" style="margin-inline:auto">
+      <p class="eyebrow">每个领域的分数</p>
+      <h2>目标：每一格都到 90 分以上</h2>
+      <p>分数是我们按同一把尺子自己打的，不是用户评分。90 以上的意思是：这个领域里最强的那家能做的，我们都能做（或者有意让给系统、并说清楚为什么），另外还有它没有的；而且在签名构建上用真机探针走过。真人手感、真插拔显示器没验证的照写，不因此加分。</p>
+    </div>
+    <div class="scroll">
+      <table class="score">
+        <thead><tr><th>领域</th><th>我们</th><th>Wins 3.6</th><th>最强的别家</th><th>真机探针</th><th>凭什么 / 还差什么</th></tr></thead>
+        <tbody>
+          <tr><td>收起本体（卷帘条、让开）</td><td><span class="pill lead">92</span></td><td>70</td><td>WindowMizer 75</td><td>thumbnail 13、notch 20、magic 5、pull 4</td><td>真窗口原地卷起、收进刘海、晃一晃、全部收进刘海再整批拿回；WindowMizer 多的“缩成小图、半透明”也做了，还多实时画面</td></tr>
+          <tr><td>窗口浏览</td><td><span class="pill lead">92</span></td><td>93</td><td>DockDoor 85</td><td>browser-more 4、wins 7、mc-keys 4</td><td>Dock 悬停实时画面、键盘面板、11 个动作、⌥Tab 按窗口切换、调度中心里 ⌘W / ⌘Q、关窗时卡片缩小淡出、新建窗口标 ⌘N；微信小程序在 Dock 悬停、“选择窗口”、⌥Tab 里都归到微信名下（⌥Tab 10 月 3 日补上，没上机）</td></tr>
+          <tr><td>盒盖动画</td><td><span class="pill lag">88</span></td><td>—</td><td>无同类</td><td>duo 套件</td><td>合盖时桌面折起、倾斜视差；传感器降频后 CPU 降了一半多，手感要 Aaron 亲手确认，确认前不到 90</td></tr>
+          <tr><td>启动台</td><td><span class="pill lead">90</span></td><td>—</td><td>LaunchOS 85</td><td>launchpad 13、launchpad-keys 18、home 3</td><td>主屏幕、文件夹、App 资料库、拼音首字母搜索、拖到半屏或侧拉、从刘海长出来；搜索改成底部正中的玻璃胶囊、负一屏照 iPad 排；真实多指没单独测</td></tr>
+          <tr><td>标题栏手势</td><td><span class="pill lead">92</span></td><td>65</td><td>Swish 85</td><td>gesture 31、flick 5、grid 4、magic 5、strip 8、strip-peek 19</td><td>收起、铺满、左右梯子、拐角、3×2 与 3×3 网格、张开魔法平铺、捏合撤销、晃一晃、卷轴跟手；Swish 还有 Magic Mouse、Dock 与菜单栏手势、WASD 键位</td></tr>
+          <tr><td>iPadOS 27 风格的甩一下</td><td><span class="pill lead">94</span></td><td>—</td><td>iPadOS 27</td><td>flick 5</td><td>按速度排好并带着速度滑进去、放慢再松手不甩、三指拖移离开触控板也算、慢 App 用替身滑；朝刘海甩收进去、朝屏幕边甩进侧拉</td></tr>
+          <tr><td>刘海</td><td><span class="pill lead">96</span></td><td>70</td><td>NotchNook 等</td><td>notch 20、home 3、coach 6、habits 7、notch-shape 10</td><td>收进刘海、一排收着所有看不见的窗口（含最小化、隐藏、别的桌面上的）、卡住时开口、形状贴着机身、主屏幕键 1/2/3 下、落点五格、往上推全收、左右滑换 App、有变化提醒、原处看一眼、文件交给刘海挑 App；每个操作都有播报，第一次遇到时有小动画教一下</td></tr>
+          <tr><td>看一眼</td><td><span class="pill lead">95</span></td><td>35</td><td>DockDoor 60</td><td>pull 4、thumbnail 13、strip-peek 19</td><td>原位原尺寸的实时画面、隐藏的 App 也实时、卷帘条上拉一点、缩略图停上去、卷轴边上那一条、刘海每一格（刘海那几种还没在 build 16 上跑）</td></tr>
+          <tr><td>侧拉</td><td><span class="pill lead">93</span></td><td>—</td><td>iPadOS 27</td><td>slide-over 15、带到每张桌面 5</td><td>玻璃边框、角上的把手、边上的箭头小片、拖到边上的虚影，都照官方配图量；拖边框挪、拖把手改大小、每张桌面都有；像素级比对要 iPadOS 27 模拟器，未下载</td></tr>
+          <tr><td>分屏（Split View）</td><td><span class="pill lead">92</span></td><td>—</td><td>Swish 85 / iPadOS 27</td><td>split 6</td><td>两扇拼满时中间有把手，吸到 ⅓½⅔，推到边上进侧拉；每条缝都能拖，多扇一起变；还没有 iPad 从 Dock 直接拖出来分屏的那一下（我们从启动台拖）</td></tr>
+          <tr><td>从 Rectangle / Raycast 换过来</td><td><span class="pill lead">90</span></td><td>—</td><td>Rectangle 90</td><td>rect 5</td><td>一键换上 Rectangle 的快捷键，21 个动作都有对应，撞车的让出来，它还开着就等它退出；Raycast 命令名一一对照，设置读不到，要照着录</td></tr>
+          <tr><td>画中画</td><td><span class="pill lead">90</span></td><td>—</td><td>神奇画中画 / PiP（iOS）</td><td>pip 10</td><td>任意窗口、实时、滚动和翻页落到原窗口、只看一块、可同时几个、推出边藏起来；两款 App 只能把文件和视频画成视频放进系统画中画，只能看</td></tr>
+          <tr><td>性能</td><td><span class="pill lag">89</span></td><td>宣称 <30MB、~0.1%</td><td>—</td><td>60 秒静置</td><td>盒盖和倾斜效果关着约 0.31%，开着从 2.2–2.7% 降到约 0.45%（铰链改成有变化才报）；物理占用约 100MB，仍是 Wins 自称的三倍多</td></tr>
+        </tbody>
+      </table>
+    </div>
+    <p class="caveat">还不到 90 的：盒盖动画（等 Aaron 亲手确认）、性能（物理占用）。Wins 仍略领先的一格是窗口浏览（93 对 92），小程序这件补齐、上机验过后再重打。“真机探针”一栏是 9 月 30 日到 10 月 1 日签名构建上各套探针通过的项数，28 套全过。分数是按同一把尺子自评的，没有一格经过 Aaron 或用户亲手确认。</p>
+  </section>
+</div>
+
+<div class="wrap">
+  <section id="niri">
+    <div class="sec-head">
+      <p class="eyebrow">新竞品</p>
+      <h2>对 niri：把卷轴接进同一套动作</h2>
+      <p>niri 是 Linux 上的 Wayland 合成器，GitHub 约 2.8 万星，一直在更新。它的窗口排成一条横着、没有尽头的卷轴，新开的窗口接在右边，别的不变窄；三指一滑整条跟着走。macOS 上 Paneru、PaperWM.spoon、OmniWM、ChainYourMac 都在照它做。WindowShade 不替别的 App 画窗口，所以不做第二个 niri，而是把它最好的那一点接进已有的动作里：两指张开是魔法平铺，放得下就一屏排好，放不下的每扇一列接在右边，停在屏幕外，只露一条边。</p>
+    </div>
+    <div class="scroll">
+      <table class="score">
+        <thead><tr><th>能力</th><th>niri</th><th>WindowShade（本地）</th></tr></thead>
+        <tbody>
+          <tr><td>窗口不挤</td><td>一直是卷轴</td><td>放得下就一屏排好（5:5、6:4、7:3），放不下才接成卷轴</td></tr>
+          <tr><td>新开的窗口</td><td>接在当前列右边</td><td>同样；关掉、最小化、被人拖走的让出位置</td></tr>
+          <tr><td>手指滑卷轴</td><td>三指，在哪都行</td><td>两指，在卷轴里任何一扇的标题栏上；松手按惯性停在列边上。三指常被三指拖移、切桌面占着</td></tr>
+          <tr><td>列宽几档</td><td>Mod+R：⅓、½、⅔</td><td>上下滑或 ⌃⌘↓↑：⅓、½、⅔、整屏，最窄再往上推收起。还是那架“变大一级、变小一级”的梯子</td></tr>
+          <tr><td>新窗口多宽</td><td>统一默认，按 App 要自己写窗口规则</td><td>按 App 定：浏览器、写代码、做设计 ⅔，写作、笔记、终端 ½，访达这类 ⅓，不用配置</td></tr>
+          <tr><td>聊天窗口</td><td>—</td><td>自动放进侧拉</td></tr>
+          <tr><td>撤回</td><td>—</td><td>捏合整条放回原处</td></tr>
+          <tr><td>收起、看一眼、刘海</td><td>—</td><td>有</td></tr>
+          <tr><td>概览</td><td>缩小所有工作区，能拖放</td><td>点两下刘海是系统的调度中心</td></tr>
+          <tr><td>工作区、标签页式的列</td><td>有</td><td>用 macOS 自己的桌面；标签页不做</td></tr>
+          <tr><td>动画、模糊、边框</td><td>合成器自己画</td><td>做不到，别的 App 的窗口不归我们画</td></tr>
+          <tr><td>平台、配置</td><td>Linux；KDL 配置文件</td><td>macOS 14 起；不用写配置</td></tr>
+        </tbody>
+      </table>
+    </div>
+    <div class="takes">
+      <div class="take"><b>超过在哪</b><p>对 niri：Mac 上能用；放得下时不强行卷动，笔记本小屏上不用来回滑；按 App 定宽和聊天侧拉不用写配置；整条能撤回；还有收起、看一眼、刘海。对 macOS 上照它做的几家：挪窗口放在每个 App 自己的后台队列上，慢 App 跟不上时跳过中间几帧，不拖慢手指；有一边挨着别的显示器时不硬排，放不下的收进刘海。</p></div>
+      <div class="take"><b>还差，和不追</b><p>还差：指针停在屏幕边上那条边时，要能看一眼它此刻的样子；卷轴的概览；竖放的屏幕上下卷。不追：合成器才做得到的动画、模糊、边框、着色器，自己的工作区，标签页式的列，脚本和 IPC。9 月 28 日凌晨在签名构建上的卷轴探针 8 项全过（只动临时 App 的窗口）：五扇放不下，多出来的那扇停在右边外面、露一条边；在标题栏上两指往左滑，整条跟着走，松手停在最后一列贴屏幕右边；⌃⌘← 把第一列滑回来；宽一档从 ½ 到 ⅔；新开的窗口自己一列接进来，别的列宽度不变；关掉它让出位置；捏合一下全部回原处。</p></div>
+    </div>
+  </section>
+</div>
+
+<div class="wrap">
+  <section id="next">
+    <div class="sec-head">
+      <p class="eyebrow">下一步</p>
+      <h2>主攻：不离开当前位置</h2>
+      <p>方向从“把窗口收起来”转向“不离开当前位置，就能看一眼、就能排好别的窗口”。收起只是手段；看一眼和标题栏手势，是 Marvin 和 Newlearner 用它的理由。</p>
+    </div>
+    <div class="spec">
+      <div class="card"><h3>它做什么</h3><ul>
+        <li>指针在卷帘条上停一小会儿，卷帘条下面挂出一张卡片，按原尺寸显示窗口内容，画面是实时的。</li>
+        <li>卷帘条保持原貌，卡片隔一道缝、四角圆角，一眼看得出这是预览，不是窗口本身。</li>
+        <li>指针移开，窗口自动收回。</li>
+        <li>单击卡片才真正展开。触控板轻点一下，效果等于单击。</li>
+        <li>在卷帘条上两指往下拉一点也是看一眼（本地）：卡片跟着手指卷下来，没拉满就松手停在看一眼，拉满才展开。</li>
+        <li>在别的桌面上：先按 ⌃⌘G 把窗口带到每张桌面，右上角那条停一下就能看一眼，单击画面回到它。只用触控板的话（本地）：把标题栏拖到屏幕侧边中段放下变成侧拉，每张桌面都能从边上拉出它的实时画面。</li>
+      </ul></div>
+      <div class="card"><h3>它不做什么</h3><ul>
+        <li>不切换当前 App，不抢键盘焦点。</li>
+        <li>不移动、不缩放任何窗口，不改排列。</li>
+        <li>不进 Dock。标题栏手势不拦截事件：Safari 标签上的左右滑、网页里的滚动都照旧，Swish 在运行时让给它。</li>
+        <li>画面拿不到时，老实显示最后一张截图，并标明是截图。</li>
+      </ul></div>
+    </div>
+
+    <div class="phases">
+      <div class="phase"><span class="k">第 0 步</span><div><b>卡顿：截图这一段修掉了</b><p>收起时给窗口截图改用快速截图，ScreenCaptureKit 只兜底。同一进程连续收起的中位数：默认设置下（不带动画），第一眼看到变化 342 → 147 毫秒，卷帘条出现 499 → 328 毫秒；带动画时 591 → 478 毫秒。剩下的是焦点交接、App 自己藏窗口，以及动画的实时流启动。</p></div><span class="pill tie">大部分</span></div>
+      <div class="phase"><span class="k">第 1 步</span><div><b>同一张桌面，原位看一眼（1.0.15）</b><p>停 0.22 秒出现，约 0.26–0.31 秒显示画面。被隐藏的 App：画面先盖住原处，再在下面临时取消隐藏（23ms 回来、前台不变），约 0.78 秒起变成实时画面，每秒 25–30 帧；收回时先藏回去再卷上。最小化的窗口给收起时的截图，右下角写明。单击画面展开，窗口 40–340ms 回到原处，中间不露空。9 月 25 日起：已有收起时的画面时先显示，不再多等实时首帧。</p></div><span class="pill lead">已发布</span></div>
+      <div class="phase"><span class="k">第 2 步</span><div><b>带到每张桌面（1.0.15，为 Marvin）</b><p>⌃⌘G：窗口留在自己的桌面，别的桌面右上角出现它的卷帘条。停一下，0.27–0.33 秒出画面，从另一张桌面实时抓过来（每秒 25–30 次），不切桌面、不切 App；单击画面回到那扇窗。9 月 25 日起：卷帘条太多时不再叠在一起，放不下的收进“更多窗口”菜单。全屏 App 的桌面上还没实测。</p></div><span class="pill lead">已发布</span></div>
+      <div class="phase"><span class="k">第 3 步</span><div><b>标题栏手势（1.0.15，为两类人）</b><p>往上推收起，往下拉铺满，左右半屏，张开铺满、捏合撤销，轻点两下切换；卷帘条上往下拉展开。滑动时有一块照 macOS 27 音量提示做的小浮窗，告诉你松手会做什么。滚轮三格算一次，Magic Mouse 单指也能用。真触控板上已确认：半屏、铺满、还原、捏合撤销、收起、展开、轻点两下、Safari 标签让出左右。</p></div><span class="pill lead">已发布</span></div>
+      <div class="phase"><span class="k">第 4 步</span><div><b>窗口本体跟手</b><p>窗口跟着手指卷起、放下，松手才真的收起或展开；往回拉，窗口退回原样，真窗口没被碰过。真机探针：走到门槛时卷了 69%，回拉无痕；手指一落到标题栏就开始准备，收起约 140 毫秒、展开约 100 毫秒就能跟手。真触控板上已试过跟手与回拉。9 月 25 日随 1.0.15 重新发布。</p></div><span class="pill lead">已发布</span></div>
+      <div class="phase"><span class="k">第 5 步</span><div><b>换屏后窗口排回去（为 Newlearner）</b><p>内屏、外屏切换后，把排过的窗口按原来的排法（铺满、半屏、四角）排到它现在所在的屏幕上。不管是用键盘、手势还是窗口浏览排的都算。只处理被系统挪过或缩小过的窗口，人手改过尺寸的不动；撤销仍然可用。只在显示器本身变了（接上、拔下、分辨率、排列）时才排：实测接着 Studio Display 的 Mac，外接屏菜单栏时隐时现，每隔几秒就发一次“屏幕参数变了”，那时去排，铺满的窗口会跟着上下跳。探针用模拟换屏验证过，真插拔显示器还没测。9 月 26 日随 1.0.15 重新发布。</p></div><span class="pill lead">已发布</span></div>
+      <div class="phase"><span class="k">第 6 步</span><div><b>键盘排布，和手势同一架梯子（为 Newlearner）</b><p>⌃⌘↓ 变大一级，⌃⌘↑ 变小一级，⌃⌘←→ 占半屏；按一下，浮窗说明做了什么。窗口浏览里排过的窗口也记进同一本账：捏合或 ⌃⌘↑ 能撤回，换屏后排回去。四个快捷键都能在设置里改或关掉。真机探针：左半屏 → 铺满 → 撤回铺满 → 收起 → 立刻放回原处，五步全过。顺带修掉两个旧问题：窗口刚展开的一秒内排布，会被“摆回原位”的校正弹回去；把高窗口缩到屏幕下半部时，高度会被截成错的。9 月 26 日随 1.0.15 重新发布。</p></div><span class="pill lead">已发布</span></div>
+      <div class="phase"><span class="k">第 6.5 步</span><div><b>手势更完备，但不误触</b><p>拐弯占角、左右梯子走到头再推一次换屏（键盘 ⌃⌘←→ 同样适用）、Force Touch 用力按卷帘条看一眼。拐弯要先走满一次才生效，所以不改变已有手势的判定。前两个有单元测试和真机探针（往左走满再往下拐，窗口落在左下角；左边没有屏幕时回到左半屏）；用力按只能在真触控板上验证。拐弯还加了一道防误触：从走满那一刻重新计量，之后要以上下为主，手指划长了带出的弧线不算拐弯。9 月 26 日随 1.0.15 重新发布，甩一下标题栏也在这一次。</p></div><span class="pill lead">已发布</span></div>
+      <div class="phase"><span class="k">第 7 步</span><div><b>打磨特色，而不是加功能</b><p>本地已做：在卷帘条上往下拉一点，看一眼的卡片跟着手指卷下来，窗口还收着；没拉满就松手，停在看一眼，指针移开收回；拉满松手才展开，画面留到窗口回到原处再撤。被隐藏的 App 要等卡片整张盖住原处，才在下面临时显示它拿实时画面，所以拉着的时候先给收起时的画面。9 月 28 日凌晨在签名构建上的探针 3 项全过：慢慢拉一点、停住松手，卡片留着、窗口还收着；指针移开卡片收回；一口气拉满松手，路上看得到卡片，松手就展开。快速的一小下算甩，直接展开。 全屏 App 的桌面：带到每张桌面的卷帘条、侧拉把手、刘海都设了在全屏桌面显示，还没实测（要切到全屏桌面）。（卷帘条上的 ⌘N、⌘H、⌘Q 转给原 App 已在 9 月 26 日重新发布的 1.0.15 里做完。）</p></div><span class="pill goal">本地</span></div>
+      <div class="phase"><span class="k">第 8 步</span><div><b>公证与自动更新</b><p>公证要开发者账号，照旧不做。应用内更新不需要公证，9 月 28 日夜里改成要做，本地已做：借 Sparkle 下载安装，自己补三件事——装之前核对签名、授权不会丢；新版起不来自动换回上一版；不在“应用程序”里时先帮他放进去。隔离环境里 13 项全过；一次真实的下载安装、线上的更新清单还没有。</p></div><span class="pill goal">本地</span></div>
+      <div class="phase"><span class="k">第 9 步</span><div><b>网格</b><p>本地已做，不另起网格模式、不加新手势。3×2：窗口已经在上半或下半一行（四角）时，左右推就在这一行里走同一架梯子——四角 → 三分之二 → 六分之一；六分之一再往里一格一格走到中间、另一边，走到头再推就到相邻屏幕的同一行。整高的三分之一也一格一格走，多了中间三分之一。3×3：六分之一左右走一格再往上或往下拐，就在这一列里按三行走（上面一行往上拐是上面的九分之一，往下一格一格走到中间、下面，再往下回到下面那一行）；只有三分之一宽的格子会变成九分之一，别的拐弯仍然占四角，单纯上下滑仍是收起、铺满。键盘同一个规则，换屏排回、撤销对每一格照常。为此改了一处已发布的手感：左三分之一再往右推，原来跳到右半屏，现在走到中间三分之一（和 Rectangle 连按“下一个三分之一”一致）。9 月 28 日凌晨在签名构建上的探针全过：键盘从左半屏拐到左下角，再走到左下三分之二、左下六分之一、中下六分之一；接着右移一格往下拐是右下九分之一，左移一格往上拐是正中九分之一。</p></div><span class="pill goal">本地</span></div>
+      <div class="phase"><span class="k">第 10 步</span><div><b>暂时取消全部置顶</b><p>本地已做：菜单里“暂时取消全部置顶”一下让开所有置顶的窗口，画面停掉、录屏标识跟着消失，置顶本身还在；菜单项变成“恢复全部置顶”，再点一下按原来的前后顺序放回；暂停期间关掉的窗口，恢复时直接结束那个置顶，不“复活”。可以在设置里录一个快捷键，默认不占。9 月 28 日凌晨在签名构建上的探针 3 项全过。</p></div><span class="pill goal">本地</span></div>
+      <div class="phase"><span class="k">第 11 步</span><div><b>做不到时说一声</b><p>本地已做：排布前先问窗口能不能改大小，不能就按原尺寸放在目标区域正中，浮窗说“这个窗口不能改大小，放在了正中”；甩一下时替身也不先拉伸再跳回。能改大小但有最小、最大尺寸、没长到要的大小时，同样放在正中并说“不能再小了 / 不能再大了”。9 月 28 日凌晨在签名构建上的探针通过：临时 App 那扇改不了大小的小窗排到左半屏，尺寸不变、落在正中，浮窗说了这句话。 计算器、系统设置没测（探针只动临时 App）。</p></div><span class="pill goal">本地</span></div>
+      <div class="phase"><span class="k">第 12 步</span><div><b>侧拉、刘海、启动台交给真人试</b><p>能用的一版已经有了：10 月 3 日起 Aaron 日常用的就是 1.0.16 build 16。还没人试：Magic Mouse、真三指甩、插拔显示器、慢 App、视频和会议窗口，以及请 Marvin 试刘海那一排、侧拉的把手。</p></div><span class="pill goal">待试</span></div>
+      <div class="phase"><span class="k">第 13 步</span><div><b>刘海是 Mac 的主屏幕键</b><p>照 iPad 的主屏幕按钮：点一下回主屏幕（主屏幕从刘海那一小块长满全屏，图标离刘海近的先出来）；在文件夹、搜索、别的页上点一下先回第一页；已经在第一页再点，主屏幕收回刘海。点两下调度中心，点三下这个 App 的所有窗口。刘海的一排也收着系统里最小化的窗口和隐藏的 App，点一下还原（程序坞右边那一段搬到了刘海里）。自己加的一样：把文件拖到刘海上停一下，主屏幕只亮能打开它的 App，放上去就用它打开。主屏幕键的探针全过：点一下从刘海打开主屏幕（画面从刘海长出来、停在第一页），再点一下收回；把文本文件交给刘海时文本编辑亮着、计算器暗着，搜索框写着要打开的文件，按一下主屏幕键先退出挑 App、再按一下收起。</p></div><span class="pill goal">本地</span></div>
+      <div class="phase"><span class="k">第 14 步</span><div><b>魔法平铺、晃一晃</b><p>两指张开（或 ⌃⌘M、菜单）把这块屏上的窗口一次排好：浏览器、写代码、做设计的当主角，写作、笔记、终端作参考，微信、QQ、飞书这类聊天放侧拉；比例在 5:5、6:4、7:3 里自己定，主角留在它原来那一边，竖着放的屏幕上下分，放不下的收进刘海。排一次就放手，捏合整批撤回。拖着标题栏晃一晃（Windows 的 Aero Shake），别的窗口收进刘海，再晃一下放回来。规划和晃一晃的识别有单元测试，23 项全过（浏览器配写作 6:4、两个浏览器 5:5、浏览器配访达 7:3、主角留在原来那一边、竖屏上下分、聊天进侧拉、放不下的收进刘海、慢慢晃不算）。9 月 28 日凌晨在签名构建上的探针只排临时 App 的两扇窗，全过：张开后大的那扇占左边 6、改不了大小的那扇落在右边正中，捏合一下两扇都回原处；晃一晃，另一扇飞进刘海，再晃一下回来；把一扇最小化，刘海的一排里有它，点一下还原。顺带修掉一个问题：窗口刚放回来的一秒内被人最小化，原来会被回位校正又拉出来。</p></div><span class="pill goal">本地</span></div>
+      <div class="phase"><span class="k">第 16 步</span><div><b>对 Wins 补齐，刘海更多花样，每一下都有回应</b><p>按窗口切换（⌥Tab，可换 ⌘Tab，收着的窗口也在里面）；再点一下 Dock 图标让开这个 App；全部收进刘海、往下拉整批回来；移到另一块屏幕；窗口之间留缝；Dock 留在一块屏上。刘海：落点小岛五格、往上推全收、左右滑换 App。每个操作在刘海上都有播报（出问题橙色、做成了打勾）；第一次遇到时刘海里放一段小动画教一下，同一条最多三次、用过就不再教、两条之间隔五分钟、点一下就不再出。签名构建上的探针全过。</p></div><span class="pill goal">本地</span></div>
+      <div class="phase"><span class="k">第 17 步</span><div><b>侧拉照 iPadOS 27、分屏、从 Rectangle 换过来</b><p>侧拉：照 Apple 支持文档里 iPadOS 27 的配图量出玻璃边框（10 点）、靠里下角的把手（半径 27 点的黑色短弧）、收起后边上的箭头小片和拖到边上的虚影；Mac 窗口的圆角各 App 不一样，进侧拉时从实拍里量一次。分屏：两扇拼满时中间出把手，推广到每条缝。Rectangle：一键换上它的快捷键，多了上半屏、下半屏、居中、大一点、小一点、高度占满、移到上一块屏幕。Codex 接手那段补了调度中心里 ⌘W / ⌘Q、窗口浏览三个动作、传感器降频。签名构建上 rect 4 项全过：上半屏、下半屏、居中、大一点、小一点、高度占满、撤销，以及只读取 Rectangle 的设置。复查后修了三处：老用户自己录过 ⌃⌘S / L / M / N 时和新默认撞车（升级时新默认自动让出，并说清楚是和 WindowShade 自己的快捷键重复）；改不了大小的窗口按“大一点 / 小一点”会被挪走；画中画里、收起的窗口会被快捷键拉回屏幕。</p></div><span class="pill goal">本地</span></div>
+      <div class="phase"><span class="k">第 18 步</span><div><b>画中画，和“欢迎使用 WindowShade…”</b><p>画中画：对照「神奇画中画」和「PiP」两款 App（都是把文件、网页画成一段视频塞进 iOS 的系统画中画，只能看）。我们做成任意窗口的实时画面：拖到屏幕角落停一下进去，原窗口让开；甩到别的角、推出边藏起来、三档大小、同一个角落排成一列；滚动和翻页落到原窗口（定向发送的滚动事件会被系统丢掉，改用辅助功能写滚动条位置）；只看一块；双击回到原处。欢迎窗口：七页动画讲收起、看一眼、标题栏手势、刘海、侧拉 / 分屏 / 画中画，最后一页授权；先做了交互小样给 Aaron 看过再做进 App。逐页拍了浅色、深色两组截图核对，修了按钮没对齐、授权卡片没居中、说明气泡压在窗口标题上、看一眼那页窗口裂开一条缝、侧拉角上的弧太短。复查后又改了：缺权限时直接打开授权页，开着时不再被打回第一页；授权页每秒一次的检查只在停在授权页、还没授权时跑；用词对齐词汇表（收起、分屏把手）。</p></div><span class="pill goal">本地</span></div>
+      <div class="phase"><span class="k">第 19 步</span><div><b>逐行复查，和 1.0.16 的完备清单</b><p>Aaron：“这些功能的完备，是进入到 1.0.16 的标志。”本地版本号已改成 1.0.16，发布说明和完备清单写好，每一项列出单元测试、最近一次真机探针、要 Aaron 亲手试的地方。新代码按五块逐行复查：画中画 7 处、欢迎窗口 5 处、分屏 6 处、侧拉的玻璃边框 5 处、键位与排窗 4 处（有一处两块共有），每处都写明怎样一步步出错，再由第二位复核确认、另有 3 处被驳回。修法守住两条：不把用户的窗口留在屏幕外、改了大小或藏起来；不改坏已经发布的手感。修后编译检查通过，签名构建上的全量探针在跑。</p></div><span class="pill goal">本地</span></div>
+      <div class="phase"><span class="k">第 20 步</span><div><b>看不见的窗口，都在刘海里（10 月 2–3 日）</b><p>先让别的桌面上的窗口进刘海那一排（最近用过的在前，最多 6 扇，同一个 App 最多 3 扇，格子上写着在哪张桌面）；停一格从那张桌面实时抓画面、原位出现，点一下切过去、这扇在最前面。再让每一格都能看一眼：最小化的、隐藏的、侧拉的格子也有窗口的画面。实测 macOS 27 上激活 App 只会切到“那扇窗所在的桌面”的情况才可靠，所以别的情况用用户自己的“移到左 / 右边的桌面”快捷键走过去。都已提交；别的桌面那一步的探针过了一次，复审修正后和“每一格都能看一眼”一起待在 build 16 上重跑。</p></div><span class="pill goal">本地</span></div>
+      <div class="phase"><span class="k">并行</span><div><b>刘海上的其它几条线（10 月 1–2 日）</b><p>Aaron 在 ChatGPT 里写了三份交接规格：完整灵动岛与设备电量（连接即显示电量，低电量分档提醒，AirPods 左右耳和盒分开）、遥控器指挥与语音编程（Apple TV 遥控器上画声调和拍子选模型与 effort，按住说话出草稿）、身份认证与真正解锁（刘海里的 Touch ID、绑定具体操作的一次性授权、手机和手表确认、真正解锁 macOS）。已进 App 的有：实时活动（音乐、AirPods、隔空投送）、妙控配件电量提醒、刘海里的 Touch ID 和一次性授权账本、锁屏开合效果、面部动作检测；指挥模式还只有纯逻辑。上一版这里把它们写成“走偏”，写错了：它们和窗口共用一个刘海，都是“刘海是 Mac 的新入口”的一部分，随 1.0.16 发，也要和窗口那条线一样过真机验收。</p></div><span class="pill goal">进行中</span></div>
+      <div class="phase"><span class="k">第 15 步</span><div><b>卷轴（对 niri）</b><p>魔法平铺放不下的窗口，每扇一列、按 App 要的宽度接在右边，停在屏幕外只露一条边。在卷轴里任何一扇的标题栏上两指左右滑，整条跟着走，松手停在列边上；上下滑这一列宽一档、窄一档；⌃⌘←→ 走到左右那一列；新开的窗口接在当前这列右边，谁都不变窄；关掉的让出位置；捏合整条放回。屏幕左右挨着别的显示器、或竖着放时，照旧收进刘海。9 月 28 日凌晨在签名构建上 8 项全过；第一次跑时滑完又被“把有焦点的窗口滑出来”拉回去，改成焦点换了才滑、滑完焦点交给露在屏幕上的那一列之后全过。魔法平铺、网格、甩一下的探针随后重跑，全过。</p></div><span class="pill goal">本地</span></div>
+    </div>
+
+    <div class="accept">
+      <h3 style="margin-bottom:14px">怎样才算 Marvin 满意</h3>
+      <div class="scroll">
+        <table>
+          <tbody>
+            <tr><td>A</td><td>说得清的时刻：看一眼是单程，不切换 App，不改布局，看完自动复原。</td><td><span class="pill lead">达到</span></td></tr>
+            <tr><td>B</td><td>一碰就灵：从停留到出画面的耗时有实测数据；全局鼠标不再被拖慢；画面不闪、不错位。</td><td><span class="pill tie">部分</span><span class="next">看一眼 0.26–0.33 秒出画面；收起第一眼 147 毫秒（原 342）；手势只旁听、不拖慢输入；窗口跟手已发布。把真窗口藏起来仍要靠 App 自己配合</span></td></tr>
+            <tr><td>C</td><td>一个核心交互：装好就能用，不用先去设置里打开。</td><td><span class="pill lead">达到</span><span class="next">默认打开；带到每张桌面要按一次 ⌃⌘G</span></td></tr>
+            <tr><td>D</td><td>进得了他的工作流：跨桌面、全屏也能看一眼；只用触控板就能完成。</td><td><span class="pill tie">部分</span><span class="next">10 月 3 日：别的桌面上的窗口进了刘海那一排，停一格就从那张桌面实时抓画面、原位出现，不用先按 ⌃⌘G（探针过一次，复审修正后待重跑）；全屏 App 的桌面 fullscreen 7 项全过。以下是之前的：收起、展开、铺满、半屏都能只用触控板完成；跨桌面已实测；把窗口带到每张桌面仍要按 ⌃⌘G 或用菜单。本地的侧拉把手在每张桌面上都有，把标题栏拖到屏幕侧边中段就能进侧拉，这样跨桌面看一眼只用触控板就够；卷帘条上拉一点也是看一眼；点一下刘海回主屏幕、两下调度中心。都还没请他试</span></td></tr>
+            <tr><td>E</td><td>稳：看一眼和手势的每个状态、中途取消都有测试；在这台 Mac 上真机跑通。</td><td><span class="pill lead">达到</span><span class="next">10 月 1 日标题栏整套 31 项全过；之前：两套状态机测试、手势探针 30 项全绿（含键盘梯子走到三分之一、键盘和手势拐进角落、甩一下标题栏、卷帘条上 ⌘H）、看一眼与带到每张桌面探针，以及 AppKit 五组回归全部通过</span></td></tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+
+    <div class="accept">
+      <h3 style="margin-bottom:14px">怎样才算 Newlearner 满意</h3>
+      <div class="scroll">
+        <table>
+          <tbody>
+            <tr><td>N1</td><td>在顶栏上滚一下就铺满，再滚回来（HyperDock 那一下）。</td><td><span class="pill tie">部分</span><span class="next">触控板真机已确认；普通鼠标滚轮只在探针里验证过，罗技鼠标真机未测</span></td></tr>
+            <tr><td>N2</td><td>铺满菜单栏和 Dock 之间，结果每次都一样。</td><td><span class="pill lead">达到</span><span class="next">铺满固定是屏幕可用区域；双击标题栏固定是收起</span></td></tr>
+            <tr><td>N3</td><td>隐藏、最小化的窗口不用去调度中心找，能挑其中一扇。</td><td><span class="pill lead">达到</span><span class="next">卷帘条留在原处；⌃⌘1…9；窗口浏览按窗口列出</span></td></tr>
+            <tr><td>N4</td><td>内外屏切换后，窗口自己适配新屏幕。</td><td><span class="pill tie">部分</span><span class="next">9 月 26 日已发布：键盘、手势、窗口浏览排过的窗口，换屏后都排回去；真插拔未测</span></td></tr>
+            <tr><td>N5</td><td>不打乱他已有的 Raycast 快捷键和 Magnet 拖拽。</td><td><span class="pill lead">达到</span><span class="next">Raycast 的窗口命令要自己设快捷键；WindowShade 不拦截拖拽。新的 ⌃⌘ 方向键在 Xcode 里另有用途，冲突时在设置里改或关掉。本地：用 Rectangle 的人一键换上它那套；Raycast 的命令名在设置里一一对照</span></td></tr>
+            <tr><td>N6</td><td>不用为排窗再多装一个工具：半屏、铺满、撤回、换屏排回，键盘和鼠标都能做。</td><td><span class="pill lead">达到</span><span class="next">1.0.15（9 月 26 日重新发布）：半屏、三分之二、三分之一、四角、铺满、撤回、换屏排回，触控板、滚轮、甩一下、键盘都能做；拖到边缘交给系统。网格 3×2、3×3、中间三分之一、魔法平铺本地已做，未发布</span></td></tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+
+    <div class="note"><b>方向变过一次。</b>上一版这里建议避开标题栏手势：Swish 已经占了它，两个 App 同时开着会一起触发。Aaron 后来要求把手势做好，而 Newlearner 的推送也说明，有人一直在找这一下。最后的做法是：方向跟卷帘一致，只旁听、不拦截，Swish 在运行时让给它，Safari 标签上的左右滑让给 Safari。</div>
+    <div class="note"><b>第三次调整。</b>三分屏从“不做”改成补齐：从 Rectangle、Magnet 换过来的人“可以不用、但不能没有”。补法不另起网格模式，而是让左右也成为一架梯子；再加上 iPadOS 26 那样的“甩一下标题栏”，方向跟 WindowShade 自己的梯子走（往上收起），不照搬 iPad 的“往上全屏”。</div>
+    <div class="note"><b>网格也改了。</b>上面那次调整只补了三分屏，网格仍列在不做里。Aaron 的回答是“其实可以做”：有些人是“我可以不用，你不能没有”的心态。所以网格改成要做，本地已做 3×2、3×3（见第 9 步）。</div>
+    <div class="note"><b>自动平铺也改了。</b>“不追自动平铺”指的是 AeroSpace 那种一直管着窗口的平铺，这一条仍然不做。Aaron 要的是“自动帮我排整齐，比例自己定”，所以做成魔法平铺：排一次就放手，窗口之后照常随手挪，捏合整批撤回。入口挂在两指张开上：原来张开和往下拉、轻点两下都是铺满，一件事占了三个手势；现在张开是“把窗口铺开排好”，只有一扇窗时仍然是铺满。</div>
+    <div class="note"><b>中间换过一次手。</b>9 月 28 日白天 Claude 的每周额度用完，Codex 接手了一段。它做的三件事核对后保留：调度中心里按 ⌘W 关指着的那扇（实测调度中心打开时系统报的就是缩略图的位置，按位置认窗是对的）、窗口浏览多三个动作、加速度计从每秒约 800 次降到 62 次（桌面效果本来每秒只画 60 帧，常驻 CPU 从 4.6–5.4% 降到 2.2–2.7%）。它的探针第一次跑时用了伪造的按键坐标，系统按真实指针位置处理，<b>关掉了 Aaron 的一扇 Safari 窗口</b>；之后改成先把光标挪到临时窗口上、指不到就中止。关掉的那扇找不回来了。它写的 DockMate“查不到来源”是找错了网址，已更正。</div>
+    <div class="note"><b>又变了一次。</b>上一版还写着“不做第四套快捷键”。这次改成补齐常用的几下，理由是 Newlearner 那样的人不会为了一个收起功能，同时开着两套排窗工具。补法上守住两条：和手势是同一架梯子；只补系统没做的，拖到边缘这类系统已经有的不重做。</div>
+
+    <p class="ask">“你全屏写代码时，要看另一张桌面上的资料，会怎么做？一天大概几次？”<small>1.0.16 在 build 16 上重跑探针之后给 Marvin 装上，先问他这一句，再请他把指针停到刘海上，挑那张桌面上的窗口停一下。如果他答“滑过去再滑回来，很多次”，带到每张桌面就是给他的；如果答“几乎没有”，他的意见应该当作对定位的质疑来听。</small></p>
+    <p class="ask">“你现在还会想念 HyperDock 那个在顶栏上滚一下就铺满的操作吗？”<small>这一句留给 Newlearner 那样的人。请他用自己的鼠标在标题栏上滚三格，再滚回来；罗技鼠标的手感是我们还没验证过的。</small></p>
+  </section>
+
+  <section id="sources">
+    <div class="sec-head"><p class="eyebrow">来源</p><h2>核对过的资料</h2></div>
+    <ol class="sources">
+      <li><a href="https://windowmizer.com/windowmizer/">WindowMizer 6 产品页</a>与<a href="https://windowmizer.com/wm/help/pages/windowmizer.html">帮助手册</a></li>
+      <li><a href="https://highlyopinionated.co/swish/">Swish</a></li>
+      <li><a href="https://t.me/NewlearnerChannel/15672">Newlearner：WindowShade 介绍</a> · <a href="https://t.me/NewlearnerChannel/10594">Newlearner：搭建一套窗口管理体系</a></li>
+      <li><a href="https://bahoom.com/hyperdock/faq">HyperDock 常见问题</a></li>
+      <li><a href="https://apps.apple.com/us/app/magnet/id441258766">Magnet</a> · <a href="https://manual.raycast.com/window-management">Raycast 窗口管理</a> · <a href="https://www.macenhance.com/dockmate.html">DockMate</a></li>
+      <li><a href="https://github.com/rxhanson/Rectangle">Rectangle</a> · <a href="https://rectangleapp.com/pro">Rectangle Pro</a></li>
+      <li><a href="https://github.com/nikitabobko/AeroSpace">AeroSpace</a></li>
+      <li><a href="https://github.com/niri-wm/niri">niri</a> · <a href="https://github.com/niri-wm/niri/releases">niri 发布记录</a> · <a href="https://niri-wm.github.io/niri/Gestures.html">niri 手势</a> · <a href="https://niri-wm.github.io/niri/Configuration%3A-Layout.html">niri 布局设置</a></li>
+      <li><a href="https://github.com/karinushka/paneru">Paneru</a> · <a href="https://chainyourmac.com/best-scrolling-window-managers-for-mac">macOS 上的卷动平铺工具横评（ChainYourMac 自家页面）</a></li>
+      <li><a href="https://github.com/lwouis/alt-tab-macos">AltTab</a></li>
+      <li><a href="https://github.com/ejbills/DockDoor">DockDoor</a></li>
+      <li><a href="https://macnotch.io/compare/best-mac-notch-apps">MacNotch 的刘海 App 横评</a> · <a href="https://notchy.dev/best-mac-notch-apps/">Notchy 的刘海 App 横评</a></li>
+      <li><a href="https://support.apple.com/en-us/125309">Apple：在 iPad 上多任务处理</a>（侧拉、分屏、配图）</li>
+      <li><a href="https://dockdoor.net">DockDoor 官网</a> · <a href="https://github.com/rxhanson/Rectangle/blob/main/Rectangle/WindowAction.swift">Rectangle 的默认快捷键（源码）</a></li>
+      <li><a href="https://www.phonearena.com/news/launchpad-is-gone-macos-26-tahoe-brings-a-big-change-to-how-you-find-apps-on-your-mac_id171196">macOS 26 去掉启动台</a> · <a href="https://macreports.com/missing-launchpad-in-macos-tahoe-26-what-changed-how-to-get-your-old-flow-back/">找回启动台的办法</a></li>
+      <li><a href="https://wins.cool/zh">Wins</a> · <a href="https://wins.cool/zh/changelog">Wins 更新日志</a> · <a href="https://wins.cool/zh/pricing">Wins 价格</a></li>
+      <li><a href="https://docs.kde.org/trunk_kf6/en/kwin/kcontrol/windowbehaviour/index.html">KWin 窗口行为</a> · <a href="https://bugs.kde.org/show_bug.cgi?id=377162">KDE Bug 377162</a></li>
+      <li><a href="https://9to5linux.com/kde-plasma-6-8-desktop-environment-to-drop-the-x11-session-and-go-wayland-only">Plasma 6.8 去掉 X11 会话</a></li>
+      <li><a href="https://support.apple.com/guide/mac-help/tile-app-windows-mchl9674d0b0/mac">Apple：在 Mac 上平铺 App 窗口</a>（fn⌃ 快捷键）</li>
+      <li><a href="https://manual.raycast.com/window-management">Raycast 手册：窗口管理</a>（标着 Pro）</li>
+      <li><a href="https://9to5mac.com/2026/09/14/macos-27-golden-gate-now-available-here-is-everything-new/">macOS 27 新功能汇总</a></li>
+      <li>WindowShade 仓库：docs/glance.md、docs/gestures.md、docs/performance.md、docs/releases/v1.0.15.md；本地的 docs/slide-over.md、docs/notch.md、docs/launchpad.md</li>
+    </ol>
+  </section>
+
+  <footer>第 20 版的 1.0.16 状态核对于 2026-10-03（提交 7fa141d、build 16）。DockDoor、DockMate、Swish、WindowMizer、Rectangle 的默认快捷键和 iPadOS 27 的侧拉配图核对于 9 月 28 日。竞品版本和日期核对于 2026-09-23 至 25；Wins、Rectangle 2.0.1、AltTab 11.8.0 和 macOS 26 的启动台核对于 9 月 27 日。Marvin 的原话来自你们的 iMessage 聊天，只摘录和产品有关的句子；Newlearner 的内容来自频道公开推送。</footer>
+</div>
+
+<script>
+(function(){
+  var desk=document.getElementById('desk'),strip=document.getElementById('strip'),log=document.getElementById('log');
+  var lines=['Resolve Package Graph','Compile TieDye.swift','Compile Canvas+Folds.swift','Compile ContentView.swift','Link TieDye','Copy Assets.car','Sign TieDye.app','Build succeeded','Install on iPad Air','Launching TieDye…'];
+  var i=0,pct=0,bar;
+  function row(text,cls){var d=document.createElement('div');d.textContent=text;if(cls)d.className=cls;log.insertBefore(d,log.lastChild);while(log.children.length>9)log.removeChild(log.firstChild);}
+  var p=document.createElement('div');p.className='prog';bar=document.createElement('i');p.appendChild(bar);log.appendChild(p);
+  function tick(){
+    var t=lines[i%lines.length];
+    row((t==='Build succeeded'?'✓ ':'› ')+t,t==='Build succeeded'?'ok':(i%lines.length===lines.length-1?'hl':''));
+    i++;pct=Math.round((i%lines.length)/lines.length*100);bar.style.width=(pct||100)+'%';
+  }
+  for(var k=0;k<5;k++)tick();
+  setInterval(tick,900);
+  var timer=null,open=false;
+  function set(v){open=v;desk.classList.toggle('open',v);strip.setAttribute('aria-expanded',v?'true':'false');}
+  strip.addEventListener('pointerenter',function(e){if(e.pointerType==='touch')return;clearTimeout(timer);timer=setTimeout(function(){set(true)},180);});
+  desk.addEventListener('pointermove',function(e){
+    if(e.pointerType==='touch'||!open)return;
+    var r=desk.getBoundingClientRect(),x=(e.clientX-r.left)/r.width,y=(e.clientY-r.top)/r.height;
+    if(!(x>=0.57&&x<=0.95&&y>=0.20&&y<=0.84)){clearTimeout(timer);set(false);}
+  });
+  desk.addEventListener('pointerleave',function(){clearTimeout(timer);set(false);});
+  strip.addEventListener('pointerleave',function(e){if(!open)clearTimeout(timer);});
+  strip.addEventListener('click',function(){set(!open);});
+  strip.addEventListener('keydown',function(e){if(e.key==='Escape')set(false);});
+  document.addEventListener('pointerdown',function(e){if(open&&!desk.contains(e.target))set(false);});
+  set(false);
+  var counts={lead:0,tie:0,lag:0,skip:0,goal:0},names={lead:'领先',tie:'持平',goal:'主攻',lag:'落后',skip:'不跟'};
+  document.querySelectorAll('.score tr[data-v]').forEach(function(r){counts[r.getAttribute('data-v')]++;});
+  var sum=document.getElementById('scoresum');
+  ['lead','tie','goal','lag','skip'].forEach(function(k){if(!counts[k])return;var s=document.createElement('span');s.className='pill '+k;s.textContent=names[k]+' '+counts[k];sum.appendChild(s);});
+})();
+</script>
+
+
+</body></html>

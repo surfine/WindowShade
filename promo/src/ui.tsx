@@ -540,7 +540,7 @@ export const Canvas: React.FC<{ children?: React.ReactNode; dark?: boolean }> = 
 
 /** Entrance: tilted in space, settling flat, the way launch films float UI in. */
 export const tiltIn = (frame: number, at: number, from: { rx?: number; ry?: number; y?: number; x?: number } = {}) => {
-  const p = pop(frame, at, 16, 120);
+  const p = pop(frame, at);
   const o = tw(frame, at, at + 10);
   return {
     opacity: o,
