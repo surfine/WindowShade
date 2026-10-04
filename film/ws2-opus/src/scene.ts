@@ -5,7 +5,10 @@ import {
   slideSpring, teachPos, teachSize, tuckProgress, untuckProgress,
 } from './motion/site';
 import type { Rect } from './layout';
-import { LIFT_DRAW, LOCK_AT, PHONE_GONE, PRESS_LONG_A, PRESS_LONG_B, TUCK_A, TUCK_B, UNTUCK_A, CLICK_CARD } from './timeline';
+import {
+  CAUSE_MOUSE, CAUSE_PODS, CLICK_CARD, LIFT_DRAW, LOCK_AT, MOUSE_END, MUSIC_PLAY, PHONE_GONE, PODS_END, PRESS_LONG_A, PRESS_LONG_B,
+  TUCK_A, TUCK_B, UNTUCK_A,
+} from './timeline';
 
 type Pt = { x: number; y: number };
 
@@ -47,8 +50,20 @@ export type SlotFrame = {
 
 const FULL: Rect = { x: 4, y: 12, w: 92, h: 83 };
 const CENTER: Rect = { x: 24, y: 26, w: 52, h: 66 }; // 让开提醒展开后的高度（14cqw ≈ 屏高 22.4%）
+const MUSIC: Rect = { x: 36, y: 26, w: 28, h: 64 };
+export const PLAY_BUTTON = { x: 50, y: 80 };
 const TERM: Rect = { x: 30, y: 22, w: 40, h: 56 };
 const CHAT: Rect = { x: 58, y: 20, w: 32, h: 52 };
+/** 后面那扇不在前台的“文章草稿”（画出来的那一版才有）。 */
+export const DRAFT: Rect = { x: 27, y: 17, w: 66, h: 72 };
+
+// 主屏幕一排六个图标（文案、图标取自 site/scripts/launchpad.mjs；“笔记”按系统叫法写成“备忘录”）。
+export const LAUNCH_APPS: { key: string; name: string }[] = [
+  { key: 'mail', name: '邮件' }, { key: 'notes', name: '备忘录' }, { key: 'calendar', name: '日历' },
+  { key: 'photos', name: '照片' }, { key: 'reference', name: '参考' }, { key: 'tools', name: '工具' },
+];
+export const iconCenter = (i: number) => ({ x: 50 + (i - 2.5) * 12, y: 46 });
+export const ICON_SIZE = 6; // 屏宽 %
 const WIN_RADIUS = 2.6; // island.js 飞行的起点圆角
 const TUCK_RADIUS = 6;
 
@@ -61,10 +76,10 @@ function tucked(r: Rect, p: number): { rect: Rect; scale: number; radius: number
 }
 
 // 拖图标到左边：teach.js 的移动（1.0 秒，cubic-bezier(.32,0,.67,1)），松手那一刻按最近 6 帧量速度。
-const DRAG = { from: { x: 50, y: 55 }, to: { x: 12, y: 50 }, start: 3191 };
+const DRAG = { from: iconCenter(1), to: { x: 12, y: 50 }, press: 3150, start: 3191 };
 export const RELEASE_ICON = DRAG.start + ms(TEACH.move);
 const dragX = (f: number) => mix(DRAG.from.x, DRAG.to.x, moveCurve(seg(f, DRAG.start, RELEASE_ICON)));
-const ICON = 6; // 图标约屏宽 6%
+const ICON = ICON_SIZE;
 const dockCx = TEACH_DOCKED.x + TEACH_DOCKED.w / 2, dockCy = TEACH_DOCKED.y + TEACH_DOCKED.h / 2;
 const releaseVx = ((dragX(RELEASE_ICON) - dragX(RELEASE_ICON - 6)) / 6) * FPS; // 屏宽 %/秒
 const V0X = releaseVx / (dockCx - DRAG.to.x);
@@ -105,7 +120,7 @@ export function slotsAt(f: number): SlotFrame[] {
     if (opacity > 0.001) out.push({ id, rect, opacity, scale, radius });
   };
   add('P0', FULL, f < 840 ? 1 : 1 - clamp01((f - 840) / CROSSFADE));
-  add('P1', CENTER, fadeWindow(f, 840, CROSSFADE, 1100, CROSSFADE), 1, 1.2);
+  add('P1', MUSIC, fadeWindow(f, 840, CROSSFADE, 1100, CROSSFADE));
   add('P2', CENTER, fadeWindow(f, 1100, CROSSFADE, 1420, CROSSFADE), 1, 1.2);
   add('P3', CENTER, fadeWindow(f, 1420, CROSSFADE, 1740, CROSSFADE), 1, 1.2);
 
@@ -145,12 +160,14 @@ type Move = { at: number; to: Pt; dur?: number };
 type Track = { show: number; hide: number; start: Pt; moves: Move[]; presses: [number, number][] };
 
 const TRACKS: Track[] = [
+  // 第 2 段：在音乐里按播放。
+  { show: 860, hide: 960, start: { x: 62, y: 92 }, moves: [{ at: 870, to: PLAY_BUTTON }], presses: [[MUSIC_PLAY - ms(TEACH.press), MUSIC_PLAY]] },
   // 第 3 段：按住终端的标题栏甩进刘海；停到刘海上；移开；再停上去、点格子放回。
   { show: 1850, hide: TUCK_A, start: { x: 50, y: 25 }, moves: [], presses: [[1880, TUCK_A]] },
   { show: 2040, hide: 2360, start: { x: 50, y: 58 }, moves: [{ at: 2060, to: { x: 50, y: 4 } }, { at: 2300, to: { x: 50, y: 40 } }], presses: [] },
   { show: 2640, hide: 2830, start: { x: 50, y: 46 }, moves: [{ at: 2650, to: { x: 50, y: 4 } }, { at: 2725, to: { x: 50, y: 24 } }], presses: [[CLICK_CARD - ms(TEACH.press), CLICK_CARD]] },
   // 第 4 段：点刘海；按住一个图标拖到左边。
-  { show: 2900, hide: RELEASE_ICON + 10, start: { x: 50, y: 50 }, moves: [{ at: 2930, to: { x: 50, y: 4 } }, { at: 3040, to: DRAG.from }, { at: DRAG.start, to: DRAG.to }], presses: [[3010, 3021], [3150, RELEASE_ICON]] },
+  { show: 2900, hide: RELEASE_ICON + 10, start: { x: 50, y: 50 }, moves: [{ at: 2930, to: { x: 50, y: 4 } }, { at: 3040, to: DRAG.from }, { at: DRAG.start, to: DRAG.to }], presses: [[3010, 3021], [DRAG.press, RELEASE_ICON]] },
   // 第 5 段：点把手。
   { show: 3940, hide: 4060, start: { x: 30, y: 50 }, moves: [{ at: 3950, to: TEACH_HANDLE }], presses: [[4030, HANDLE_CLICK]] },
   // 第 7 段：长按刘海；再长按回来。
@@ -173,6 +190,23 @@ export function pointerAt(f: number): PointerFrame | null {
     const opacity = Math.min(clamp01((f - t.show) / FADE_IN), 1 - clamp01((f - t.hide) / FADE_OUT));
     return { ...p, opacity, pressed };
   }
+  return null;
+}
+
+/** 按住的图标跟着指针走，松手那一帧变成窗口。 */
+export function dragIconAt(f: number): Pt | null {
+  if (f < DRAG.press || f >= RELEASE_ICON) return null;
+  const p = pointerAt(f);
+  return p && { x: p.x, y: p.y };
+}
+export const DRAGGED_APP = 'notes';
+export const DRAG_PRESS = DRAG.press;
+
+// ---- 屏外的实物线稿：耳机、鼠标（只在画出来的那一版） ----
+export function deviceAt(f: number): { kind: 'pods' | 'mouse'; opacity: number; on: number } | null {
+  const show = (cause: number, end: number) => Math.min(clamp01((f - (cause - 50)) / FADE_IN), 1 - clamp01((f - end) / FADE_OUT));
+  if (f >= CAUSE_PODS - 50 && f < PODS_END + FADE_OUT) return { kind: 'pods', opacity: show(CAUSE_PODS, PODS_END), on: clamp01((f - CAUSE_PODS) / FADE_IN) };
+  if (f >= CAUSE_MOUSE - 50 && f < MOUSE_END + FADE_OUT) return { kind: 'mouse', opacity: show(CAUSE_MOUSE, MOUSE_END), on: clamp01((f - CAUSE_MOUSE) / FADE_IN) };
   return null;
 }
 
