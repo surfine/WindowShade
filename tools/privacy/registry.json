@@ -4028,6 +4028,76 @@
    "symbol": "UserDefaults",
    "source": "let store = UserDefaults.standard",
    "signal": "settings"
+  },
+  {
+   "path": "prototype/App/GlobalShortcuts.swift",
+   "line": 185,
+   "symbol": "UserDefaults",
+   "source": "nonisolated(unsafe) static var defaults: UserDefaults = .standard",
+   "signal": "settings"
+  },
+  {
+   "path": "prototype/App/MiddleTitlebarTap.swift",
+   "line": 42,
+   "symbol": "CGEvent.tapCreate",
+   "source": "guard let created = CGEvent.tapCreate(",
+   "signal": "input-scroll"
+  },
+  {
+   "path": "prototype/App/UpdaterSystem.swift",
+   "line": 437,
+   "symbol": "SMAppService",
+   "source": "/// 换成 SMAppService 会改变看护的生命周期，要另立工单；这里只把弃用调用收在一处，经协议转发，",
+   "signal": "login-item"
+  },
+  {
+   "path": "prototype/Capture/ShareableContentCache.swift",
+   "line": 12,
+   "symbol": "SCShareableContent",
+   "source": "/// SCShareableContent 没标 Sendable，只用这个本文件私有的壳子跨这一次边界，不对整个类型担保。",
+   "signal": "window-image"
+  },
+  {
+   "path": "prototype/Capture/ShareableContentCache.swift",
+   "line": 14,
+   "symbol": "SCShareableContent",
+   "source": "let content: SCShareableContent",
+   "signal": "window-image"
+  },
+  {
+   "path": "prototype/Capture/ShareableContentCache.swift",
+   "line": 75,
+   "symbol": "SCShareableContent",
+   "source": "ShareableSnapshot(content: try await SCShareableContent.current)",
+   "signal": "window-image"
+  },
+  {
+   "path": "prototype/Core/WS2CameraChoice.swift",
+   "line": 16,
+   "symbol": "AVCaptureDevice",
+   "source": "/// 本类型不调用 AVCaptureDevice，也不把名字当成屏幕身份。",
+   "signal": "camera-frame"
+  },
+  {
+   "path": "prototype/Support/SendableSystemHandles.swift",
+   "line": 17,
+   "symbol": "SCShareableContent",
+   "source": "extension SCShareableContent: @retroactive @unchecked Sendable {}",
+   "signal": "window-image"
+  },
+  {
+   "path": "prototype/Support/SendableSystemHandles.swift",
+   "line": 24,
+   "symbol": "SCStream",
+   "source": "extension SCStream: @retroactive @unchecked Sendable {}",
+   "signal": "window-image"
+  },
+  {
+   "path": "prototype/Support/SendableSystemHandles.swift",
+   "line": 26,
+   "symbol": "SCStream",
+   "source": "/// 过滤器在本 App 里建好后只读不改（不设 includeMenuBar 之类的可写属性），只交给 SCStream / 截图接口使用。",
+   "signal": "window-image"
   }
  ]
 }

@@ -108,7 +108,7 @@ extension AppDelegate {
     addPinnedPreviewMenuSection(menuState.pinnedPreviews)
     // 进行中才出现。番茄钟用真实计时；指挥模式和编程会话没有菜单文案来源，不编一行。
     if MainActor.assumeIsolated({ ws2Runtime.focus.model.phase != .idle }) {
-      action(MainActor.assumeIsolated { ws2Runtime.menuTitle }, "timer", #selector(ws2OpenFocus))
+      action(MainActor.assumeIsolated { ws2Runtime.menuTitle }, "timer", #selector(ws2ShowFocus))
     }
 
     if !menuState.foldedWindows.isEmpty {

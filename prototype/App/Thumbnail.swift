@@ -308,11 +308,11 @@ final class ShadeThumbnailView: NSView {
             CATransaction.setDisableActions(true)
             changeDot.isHidden = !showsChange
             if showsChange, !Motion.reduced {
-                let pop = CASpringAnimation(keyPath: "transform.scale")
-                pop.fromValue = 0.4
+                // pop：0.9 → 1。小东西确认一下，不从几乎看不见的地方长出来。
+                let pop = CASpringAnimation(perceptualDuration: Motion.Spring.pop.response, bounce: Motion.Spring.pop.bounce)
+                pop.keyPath = "transform.scale"
+                pop.fromValue = 0.9
                 pop.toValue = 1
-                pop.damping = 14
-                pop.stiffness = 260
                 pop.duration = pop.settlingDuration
                 changeDot.add(pop, forKey: "change-pop")
             }

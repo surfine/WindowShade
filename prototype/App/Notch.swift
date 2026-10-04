@@ -1563,7 +1563,7 @@ final class NotchPanel: NSPanel {
             canvas.setAuthentication(nil)
             updateVisibility(); apply(animated: false)
         case .launchpad, .windowBrowser, .conductor, .pomodoro, .agentSessions, .agentReview,
-             .ownedCodex, .ownedModelPicker:
+             .ownedCodex, .ownedModelPicker, .silent:
             break
         }
     }
@@ -2227,7 +2227,7 @@ final class NotchPanel: NSPanel {
         let delta = CGVector(dx: frame.minX - container.minX, dy: frame.minY - container.minY)
         setFrame(container, display: false)
         canvas.shift(by: delta)
-        canvas.pulse(width: 14, height: 6)
+        canvas.pulse()
         settleGeneration += 1
         let generation = settleGeneration
         DispatchQueue.main.asyncAfter(deadline: .now() + 0.5) { [weak self] in
@@ -2549,32 +2549,33 @@ final class NotchCanvasView: NSView {
         return window.convertToScreen(current!.convert(rect, to: nil))
     }
 
-    /// 收进来一扇窗的那一下：岛往外鼓一下再回来（像被塞进去了东西）。顶边不动。
-    func pulse(width: CGFloat, height: CGFloat) {
+    /// 收进来一扇窗的那一下：宽和高各一根 calm，在终点上被踢一脚初速度，再自己回到终点。顶边不动。
+    /// 峰值约 +14 pt / +6 pt，约 0.05 秒到峰，是弹簧解出来的，不是关键帧写死的。
+    func pulse() {
         guard !Motion.reduced else { return }
+        let kick = SwellKick.samples()
+        guard let last = kick.last, last.time > 0 else { return }
+        let keyTimes = kick.map { NSNumber(value: $0.time / last.time) }
         func bump(_ layer: CALayer) {
             let size = CAKeyframeAnimation(keyPath: "bounds.size")
             size.isAdditive = true
-            size.values = [NSValue(size: .zero), NSValue(size: NSSize(width: width, height: height)), NSValue(size: .zero)]
-            size.keyTimes = [0, 0.35, 1]
-            size.timingFunctions = [CAMediaTimingFunction(controlPoints: 0.2, 0.9, 0.3, 1),
-                                    CAMediaTimingFunction(controlPoints: 0.4, 0, 0.2, 1)]
-            size.duration = 0.42
+            size.calculationMode = .linear
+            size.values = kick.map { NSValue(size: NSSize(width: $0.width, height: $0.height)) }
+            size.keyTimes = keyTimes
+            size.duration = last.time
             let position = CAKeyframeAnimation(keyPath: "position")
             position.isAdditive = true
-            position.values = [NSValue(point: .zero), NSValue(point: NSPoint(x: 0, y: -height / 2)), NSValue(point: .zero)]
-            position.keyTimes = size.keyTimes
-            position.timingFunctions = size.timingFunctions
-            position.duration = size.duration
+            position.calculationMode = .linear
+            position.values = kick.map { NSValue(point: NSPoint(x: 0, y: -$0.height / 2)) }
+            position.keyTimes = keyTimes
+            position.duration = last.time
             layer.add(size, forKey: "pulse.size")
             layer.add(position, forKey: "pulse.position")
         }
         bump(island)
         bump(clip)
-        // 岛的两条竖边各往外挪 width / 2（顶边不动）：肩跟着挪。
-        shoulders?.pulse(width: width, keyTimes: [0, 0.35, 1], duration: 0.42,
-                         timing: [CAMediaTimingFunction(controlPoints: 0.2, 0.9, 0.3, 1),
-                                  CAMediaTimingFunction(controlPoints: 0.4, 0, 0.2, 1)])
+        // 两条竖边各往外挪这一帧鼓出的宽度的一半，和岛同一条时间。
+        shoulders?.pulse(widthSamples: kick.map(\.width), keyTimes: keyTimes, duration: last.time)
     }
 
     override func updateTrackingAreas() {
@@ -2608,8 +2609,7 @@ final class NotchCanvasView: NSView {
                 }
             }
         }
-        let clicks = CGFloat(min(event.clickCount, 3))
-        pulse(width: 4 + 4 * clicks, height: 1 + clicks)
+        pulse()
     }
     override func mouseUp(with event: NSEvent) {
         holdTimer?.invalidate(); holdTimer = nil
@@ -2685,7 +2685,7 @@ final class NotchCanvasView: NSView {
         let files = LaunchpadView.fileURLs(sender)
         guard !files.isEmpty else { return [] }
         fileDwell?.invalidate()
-        pulse(width: 14, height: 4)
+        pulse()
         fileDwell = Timer.scheduledTimer(withTimeInterval: 0.35, repeats: false) { [weak self] _ in
             MainActor.assumeIsolated {
                 self?.fileDwell = nil
@@ -2972,14 +2972,14 @@ final class NotchShoulders: NSPanel {
         CATransaction.commit()
     }
 
-    /// 岛鼓一下时，两条竖边各往外挪 width / 2：肩跟着挪，时间曲线和岛一样。
-    func pulse(width: CGFloat, keyTimes: [NSNumber], duration: CFTimeInterval, timing: [CAMediaTimingFunction]) {
-        for (layer, sign) in [(leading, CGFloat(-1)), (trailing, CGFloat(1))] {
+    /// 岛鼓一下时，两条竖边各往外挪这一帧宽度的一半。samples 是弹簧解，点与点之间线性插值。
+    func pulse(widthSamples: [Double], keyTimes: [NSNumber], duration: CFTimeInterval) {
+        for (layer, sign) in [(leading, -1.0), (trailing, 1.0)] {
             let move = CAKeyframeAnimation(keyPath: "position.x")
             move.isAdditive = true
-            move.values = [0, sign * width / 2, 0]
+            move.calculationMode = .linear
+            move.values = widthSamples.map { NSNumber(value: sign * $0 / 2) }
             move.keyTimes = keyTimes
-            move.timingFunctions = timing
             move.duration = duration
             layer.add(move, forKey: "pulse.x")
         }

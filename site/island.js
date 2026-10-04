@@ -18,14 +18,14 @@
   const stateText = document.querySelector('#notch-state');
   const reduce = matchMedia('(prefers-reduced-motion: reduce)');
 
-  // ---- 弹簧：每个量一根，按阻尼比和响应时间（和应用同一套参数），每帧半隐式欧拉积分 ----
+  // ---- 弹簧：每个量一根。换目标时留下速度，这一帧用闭式解走到 dt 之后，不靠欧拉累积误差 ----
   class Spring {
-    constructor(value) { this.value = value; this.target = value; this.velocity = 0; this.set(1, 0.4); }
-    set(damping, response) { this.k = (2 * Math.PI / response) ** 2; this.c = 4 * Math.PI * damping / response; }
+    constructor(value) { this.value = value; this.target = value; this.velocity = 0; this.set(1, 0.34); }
+    set(damping, response) { this.zeta = damping; this.response = response; }
     step(dt) {
-      const force = -this.k * (this.value - this.target) - this.c * this.velocity;
-      this.velocity += force * dt;
-      this.value += this.velocity * dt;
+      const [d, v] = WSMotion.solve(this.value - this.target, this.velocity, this.response, this.zeta, dt);
+      this.value = this.target + d;
+      this.velocity = v;
     }
     get resting() { return Math.abs(this.value - this.target) < 0.05 && Math.abs(this.velocity) < 0.5; }
     snap() { this.value = this.target; this.velocity = 0; }
@@ -52,11 +52,12 @@
   function retarget() {
     const next = target();
     if (next === mode && frame) return;
-    // 没有动量的（展开、收回）不回弹；提醒带一点弹性。
-    const bouncy = next === 'alert';
+    // 收回、换状态 calm；展开一排 expand；提醒 bloom。
+    const token = next === 'alert' ? 'bloom' : next === 'shelf' ? 'expand' : 'calm';
+    const [response, zeta] = WSMotion.named(token);
     for (const key of ['w', 'h', 'r']) {
       shape[key].target = shapes[next][key];
-      shape[key].set(bouncy ? 0.82 : 0.96, bouncy ? 0.42 : 0.38);
+      shape[key].set(zeta, response);
       if (reduce.matches) shape[key].snap();
     }
     mode = next;
@@ -65,9 +66,18 @@
     run();
   }
 
+  let swellAt = 0;
+  function swell() {
+    if (!swellAt) return { w: 0, h: 0 };
+    const t = (performance.now() - swellAt) / 1000;
+    const pt = WSMotion.ptInCqw(stage);
+    // +700 / +300 pt/s 踢在 calm 上。pt 换成这张插图的 cqw。
+    return { w: WSMotion.kick(t, 700 * pt), h: WSMotion.kick(t, 300 * pt) };
+  }
   function draw() {
-    island.style.width = `${shape.w.value.toFixed(3)}cqw`;
-    island.style.height = `${shape.h.value.toFixed(3)}cqw`;
+    const bump = swell();
+    island.style.width = `${(shape.w.value + bump.w).toFixed(3)}cqw`;
+    island.style.height = `${(shape.h.value + bump.h).toFixed(3)}cqw`;
     island.style.borderBottomLeftRadius = island.style.borderBottomRightRadius = `${Math.max(0, shape.r.value).toFixed(3)}cqw`;
   }
 
@@ -76,8 +86,10 @@
     last = now;
     for (const s of Object.values(shape)) s.step(dt);
     draw();
-    const still = Object.values(shape).every(s => s.resting);
+    const bump = swell();
+    const still = Object.values(shape).every(s => s.resting) && Math.abs(bump.w) < 0.02 && Math.abs(bump.h) < 0.02;
     if (still) {
+      swellAt = 0;
       for (const s of Object.values(shape)) s.snap();
       draw();
       frame = 0;
@@ -92,6 +104,14 @@
   }
 
   // ---- 收进刘海：前面那扇窗缩小、飞进刘海（被刘海挡住），刘海鼓一下，两边露出图标和个数 ----
+  let flight = 0;
+  let flightPose = null;
+  function placeFront(p) {
+    if (!flightPose) return;
+    const { dx, dy, scale } = flightPose;
+    front.style.transform = `translate(${dx * p}px, ${dy * p}px) scale(${1 + (scale - 1) * p})`;
+    front.style.borderRadius = `${2.6 + (6 - 2.6) * p}cqw`;
+  }
   function tuck() {
     if (tucked) return release();
     tucked = true;
@@ -99,20 +119,30 @@
     front.classList.add('is-leaving');
     const stageBox = stage.getBoundingClientRect();
     const box = front.getBoundingClientRect();
-    const dx = stageBox.left + stageBox.width / 2 - (box.left + box.width / 2);
-    const dy = stageBox.top + stageBox.height * 0.03 - (box.top + box.height / 2);
-    const scale = (stageBox.width * 0.07) / box.width;
+    flightPose = {
+      dx: stageBox.left + stageBox.width / 2 - (box.left + box.width / 2),
+      dy: stageBox.top + stageBox.height * 0.03 - (box.top + box.height / 2),
+      scale: (stageBox.width * 0.07) / box.width,
+    };
     const done = () => {
       front.hidden = true;
       retarget();
-      // 落进去那一下：刘海鼓一下。
-      if (!reduce.matches) { shape.w.velocity += 60; shape.h.velocity += 18; run(); }
+      // 完全挡住的那一帧：calm 被踢一脚，鼓一下再回到原来的尺寸。
+      if (!reduce.matches) { swellAt = performance.now(); run(); }
     };
-    if (reduce.matches) { done(); } else {
-      front.animate(
-        [{ transform: 'none', borderRadius: '2.6cqw' }, { transform: `translate(${dx}px, ${dy}px) scale(${scale})`, borderRadius: '6cqw' }],
-        { duration: 520, easing: 'cubic-bezier(.3,.05,.2,1)', fill: 'forwards' },
-      ).finished.then(done);
+    cancelAnimationFrame(flight);
+    if (reduce.matches) { placeFront(1); done(); }
+    else {
+      // 飞进刘海：settle，终点是个口子，不回弹。
+      const [response, zeta] = WSMotion.named('settle');
+      const t0 = performance.now();
+      const step = now => {
+        const p = WSMotion.progress((now - t0) / 1000, response, zeta);
+        placeFront(Math.min(1, p));
+        if (1 - p > 0.004) flight = requestAnimationFrame(step);
+        else { placeFront(1); done(); }
+      };
+      flight = requestAnimationFrame(step);
     }
     sync();
   }
@@ -122,12 +152,23 @@
     changed = false;
     alertUntil = 0;
     hovering = false;
+    swellAt = 0;
     retarget();
     front.hidden = false;
     front.classList.remove('is-leaving');
-    const anims = front.getAnimations();
-    if (reduce.matches) { anims.forEach(a => a.cancel()); }
-    else anims.forEach(a => { a.reverse(); a.finished.then(() => a.cancel()); });
+    cancelAnimationFrame(flight);
+    if (reduce.matches || !flightPose) { front.style.transform = ''; front.style.borderRadius = ''; }
+    else {
+      const [response, zeta] = WSMotion.named('flyOut');
+      const t0 = performance.now();
+      const step = now => {
+        const p = WSMotion.progress((now - t0) / 1000, response, zeta);
+        placeFront(1 - Math.min(1, p));
+        if (1 - p > 0.004) flight = requestAnimationFrame(step);
+        else { front.style.transform = ''; front.style.borderRadius = ''; }
+      };
+      flight = requestAnimationFrame(step);
+    }
     sync();
   }
 

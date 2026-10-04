@@ -104,6 +104,34 @@ final class LaunchpadController {
         view.focusSearch()
     }
 
+    /// 下一页或上一页。已经开着就不收起。没开时先在呼叫者指定的这块屏上打开。
+    func turnPage(by step: Int, on screen: NSScreen) {
+        if !isShowing { show(on: screen) }
+        guard isShowing, let view = panel?.view else { return }
+        view.turnPage(by: step)
+    }
+
+    /// 打开这一只文件夹。已经开着别的文件夹就不把它收起。
+    @discardableResult
+    func openFolder(_ id: String, on screen: NSScreen) -> Bool {
+        guard !id.isEmpty else { return false }
+        if !isShowing { show(on: screen) }
+        guard isShowing, let view = panel?.view else { return false }
+        if view.folder == nil { view.openFolder(id) }
+        return view.folder?.folderID == id
+    }
+
+    /// 打开到指定屏幕上的一个目的地。重复打开仍保持打开。
+    func present(_ destination: Destination, on screen: NSScreen) {
+        if destination == .spotlight || (destination == .back && !isShowing) {
+            navigate(to: destination)
+            return
+        }
+        if !isShowing { show(on: screen) }
+        guard isShowing else { return }
+        navigate(to: destination)
+    }
+
     func toggle() {
         if isShowing { hide(reason: "toggle") } else { show() }
     }
@@ -149,11 +177,16 @@ final class LaunchpadController {
     }
 
     func show(from notch: NSRect? = nil) {
+        let pointer = NSEvent.mouseLocation
+        guard let screen = NSScreen.screens.first(where: { $0.frame.contains(pointer) }) ?? NSScreen.main else { return }
+        show(on: screen, from: notch)
+    }
+
+    /// 静音入口传入目标显示器。已经打开就保持打开，不收起。
+    func show(on screen: NSScreen, from notch: NSRect? = nil) {
         guard !isShowing else { return }
         navigationGeneration &+= 1
         placementGeneration &+= 1 // 回到启动台即放弃之前尚在等待的自动排布。
-        let pointer = NSEvent.mouseLocation
-        guard let screen = NSScreen.screens.first(where: { $0.frame.contains(pointer) }) ?? NSScreen.main else { return }
         owner.gestures.cancel(reason: "launchpad")
         owner.glance.cancelAll(reason: "launchpad")
         owner.notch.prepareForLaunchpad()

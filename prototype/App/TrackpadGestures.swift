@@ -1733,8 +1733,42 @@ final class TrackpadGestureController {
     }
 
     /// 从启动台拖到半屏、四角、顶上打开的窗口：摆到那里（撤销回到它刚打开时的样子）。
+    /// 居中不在分格表里，走原来「大小不变、放在可见区域正中」的那一条。
     func placeFromLaunchpad(_ win: AXUIElement, id: CGWindowID, action: GestureAction, screen: NSScreen?) -> Bool {
-        place(win, id: id, action: action, screen: screen)
+        if action == .center {
+            return resize(win, id: id, action: action, screen: screen)
+        }
+        return place(win, id: id, action: action, screen: screen)
+    }
+
+    /// 静音撤销：只撤这扇还停在自己那次排布上的窗口。被人挪过就不覆盖。
+    func undoOwnedPlacement(_ win: AXUIElement, id: CGWindowID) -> Bool {
+        undoPlacement(win, id: id)
+    }
+
+    /// 移到呼叫者给出的这块屏。不另找旁边一块，也不进系统全屏。
+    func moveToCallerScreen(_ win: AXUIElement, id: CGWindowID, screen: NSScreen) -> Bool {
+        if awayStep(id) != nil { return false }
+        glides.removeValue(forKey: id)?.cancelAndWait()
+        guard let pos = axPosition(win), let size = axSize(win) else { return false }
+        let current = CGRect(origin: pos, size: size)
+        guard let source = screenForAXWindow(pos: pos, size: size) else { return false }
+        let sourceVisible = source.visibleFrame
+        let sourceArea = CGRect(origin: axPosition(fromCocoaFrame: sourceVisible), size: sourceVisible.size)
+        let targetVisible = screen.visibleFrame
+        let targetArea = CGRect(origin: axPosition(fromCocoaFrame: targetVisible), size: targetVisible.size)
+        guard let target = WindowPlacementGeometry.targetFrame(
+            action: .moveToDisplay,
+            visibleArea: sourceArea,
+            currentFrame: current,
+            targetArea: targetArea) else { return false }
+        owner.cancelRestorePin(for: id)
+        setFrame(win, target)
+        let observed = CGRect(origin: axPosition(win) ?? target.origin, size: axSize(win) ?? target.size)
+        noteReplaced(id)
+        undoRecords[id] = PlacementUndo(before: current, after: observed, element: win, layout: nil, area: targetArea)
+        wlog("gesture: move to caller screen id=\(id) screen=\(screen.localizedName)")
+        return true
     }
 
     private func place(_ win: AXUIElement, id: CGWindowID, action: GestureAction,

@@ -162,7 +162,6 @@ html[lang=zh-CN] .hero-intro{line-height:1.85}
 .win-ref,.mini-win{filter:none;isolation:isolate}
 .cast{position:absolute;inset:0;z-index:-1;border-radius:2.6cqw;pointer-events:none;box-shadow:0 0 0 .5px var(--win-edge),0 calc(8 * var(--pt)) calc(34 * var(--pt)) var(--win-drop)}
 .win-ref .cast{bottom:calc(var(--body-h,0px) * var(--roll,0))}
-.stage.is-animating .win-ref .cast{transition:bottom .52s var(--ease-roll)}
 .mini-win .cast{border-radius:4.4cqw}
 .way[data-way=shade] .mini-win .cast{bottom:calc(34cqw * var(--p,0))}
 
@@ -179,11 +178,9 @@ html[lang=zh-CN] .hero-intro{line-height:1.85}
 .win-ref h3{font-size:4.3cqw}
 /* --roll (0 open → 1 rolled up) comes from scroll position or a toggle; only a toggle animates. */
 .win-ref .win-body{min-height:38cqw;background:var(--blue-soft);color:var(--blue-text);clip-path:inset(0 0 calc(var(--roll,0) * 100%) 0)}
-.stage.is-animating .win-ref .win-body{transition:clip-path .52s var(--ease-roll)}
 .win-ref .win-body p{color:color-mix(in srgb,var(--blue-text) 78%,transparent)}
 /* The roller is the shade's weight bar: it only shows while the contents travel. */
-.roller{position:absolute;left:-.6cqw;right:-.6cqw;top:calc(100% - 1.1cqw);height:2.2cqw;border-radius:2cqw;background:linear-gradient(#fbfcff 0%,#dfe7f6 45%,#b9c7e2 80%,#e7edf8);box-shadow:0 .6cqw 1.2cqw rgba(30,50,90,.22);opacity:var(--roller,0);transform:translateY(calc(-1 * var(--roll,0) * var(--body-h,0px)));pointer-events:none;transition:opacity .16s}
-.stage.is-animating .roller{transition:transform .52s var(--ease-roll),opacity .16s}
+.roller{position:absolute;left:-.6cqw;right:-.6cqw;top:calc(100% - 1.1cqw);height:2.2cqw;border-radius:2cqw;background:linear-gradient(#fbfcff 0%,#dfe7f6 45%,#b9c7e2 80%,#e7edf8);box-shadow:0 .6cqw 1.2cqw rgba(30,50,90,.22);opacity:var(--roller,0);transform:translateY(calc(-1 * var(--roll,0) * var(--body-h,0px)));pointer-events:none;transition:opacity .1s}
 .stage.is-rolling .roller{opacity:1}
 
 

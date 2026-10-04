@@ -75,6 +75,8 @@ extension AppDelegate {
             clearShadeJournal(id: id)
             return
         }
+        // D21：新写入不再存窗口标题。参数仍留给旧调用方；旧档里已有的 title 继续可读。
+        _ = title
 
         // 折叠事务的正常落点：provisional intent（preparing）已被调用方在隐藏
         // 前写入；这里把同一条 entry 更新为真正的隐藏方式与停车位置，而不是
@@ -94,7 +96,6 @@ extension AppDelegate {
             "pid": Int(pid),
             "bundleID": bundleID,
             "appName": appName,
-            "title": title,
             "hide": hide.rawValue,
             "mode": mode.rawValue,
             "policy": shadePolicyDescription(policy),
@@ -113,7 +114,7 @@ extension AppDelegate {
         ]
         if let displayID = sourceDisplayID { entry["displayID"] = Double(displayID) }
         if let spaceID = sourceSpaceID { entry["spaceID"] = Double(spaceID) }
-        entries.append(entry)
+        entries.append(WS2JournalWrite.omitTitle(entry))
         saveShadeJournalEntries(entries)
         wlog("journal: record \(hide.rawValue) id=\(id) app=\(appName) parked=(\(Int(parked.x)),\(Int(parked.y)))")
     }
@@ -127,6 +128,7 @@ extension AppDelegate {
                                    sourceDisplayID: CGDirectDisplayID?,
                                    sourceSpaceID: UInt64?) -> Bool {
         duoRestoreVerificationTokens.removeValue(forKey: id)
+        _ = title
         let now = Date().timeIntervalSince1970
         var entries = shadeJournalEntries().filter { journalID($0) != id }
         var entry: [String: Any] = [
@@ -135,7 +137,6 @@ extension AppDelegate {
             "pid": Int(pid),
             "bundleID": bundleID,
             "appName": appName,
-            "title": title,
             "hide": HideMethod.none.rawValue,
             "stage": ShadeLifecycleStage.preparing.rawValue,
             "state": ShadeLifecycleStage.preparing.rawValue,
@@ -148,7 +149,7 @@ extension AppDelegate {
         ]
         if let displayID = sourceDisplayID { entry["displayID"] = Double(displayID) }
         if let spaceID = sourceSpaceID { entry["spaceID"] = Double(spaceID) }
-        entries.append(entry)
+        entries.append(WS2JournalWrite.omitTitle(entry))
         guard saveShadeJournalEntries(entries) else { return false }
         wlog("journal: intent id=\(id) app=\(appName) preparing")
         return true
@@ -162,7 +163,7 @@ extension AppDelegate {
         mutate(&entry)
         entry["updatedAt"] = Date().timeIntervalSince1970
         entry["lastReason"] = reason
-        entries[index] = entry
+        entries[index] = WS2JournalWrite.omitTitle(entry)
         saveShadeJournalEntries(entries)
     }
 
