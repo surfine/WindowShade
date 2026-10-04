@@ -1,10 +1,10 @@
-// 一条 60fps 时间线，10140 帧（169 秒）。横版、竖版共用；只有版面不同。
+// 母带：一条 60fps 时间线，10140 帧（169 秒）。横版、竖版共用；只有版面不同。成片从这里剪，见 cut.ts。
 import { BEAT } from './motion/direction';
 import { ALERT_HOLD, HOVER_DELAY, TUCK_FRAMES, ms, TEACH, type IslandMode } from './motion/site';
 
 export const TOTAL = 10140;
 
-export type Segment = { id: string; from: number; to: number; line: string; concept?: [number, number] };
+export type Segment = { id: string; from: number; to: number; line: string };
 
 // 每段一句，照 docs/copy-guide.md：说用户遇到的事，一屏一句，不超过 12 个字。
 // drop / approve / nod / back 是 126 秒版之后插进来的四段，后面的旧段整体往后挪。
@@ -14,34 +14,15 @@ export const SEGMENTS: Segment[] = [
   { id: 'tuck', from: 1800, to: 2880, line: '窗口收进刘海，再放回' },
   { id: 'home', from: 2880, to: 3720, line: '点一下刘海，回到主屏幕' },
   { id: 'side', from: 3720, to: 4320, line: '甩出去，点回来' },
-  // 落点小岛已经在 prototype/App/Notch.swift 里，整段不挂概念标签（Aaron 2026-10-04）。
   { id: 'drop', from: 4320, to: 4980, line: '拖到刘海，选个位置' },
-  { id: 'draw', from: 4980, to: 6060, line: '画一笔，说一句', concept: [4980, 6060] },
-  { id: 'approve', from: 6060, to: 6660, line: '要你放行的，只问一次', concept: [6060, 6660] },
-  { id: 'hold', from: 6660, to: 7380, line: '长按刘海，换一种用法', concept: [6660, 7380] },
-  { id: 'nod', from: 7380, to: 8040, line: '不出声，点头就照做', concept: [7380, 8040] },
-  { id: 'away', from: 8040, to: 9060, line: '专注时安静，走开就锁', concept: [8260, 9060] },
-  { id: 'back', from: 9060, to: 9720, line: '回来，窗口都在原处', concept: [9060, 9720] },
+  { id: 'draw', from: 4980, to: 6060, line: '画一笔，说一句' },
+  { id: 'approve', from: 6060, to: 6660, line: '要你放行的，只问一次' },
+  { id: 'hold', from: 6660, to: 7380, line: '长按刘海，换一种用法' },
+  { id: 'nod', from: 7380, to: 8040, line: '不出声，点头就照做' },
+  { id: 'away', from: 8040, to: 9060, line: '专注时安静，走开就锁' },
+  { id: 'back', from: 9060, to: 9720, line: '回来，窗口都在原处' },
   { id: 'end', from: 9720, to: TOTAL, line: 'WindowShade 2' },
 ];
-
-/** 每句出现的帧（含起、不含止）。 */
-export const CAPTIONS: { text: string; from: number; to: number }[] = [
-  { text: SEGMENTS[0].line, from: 120, to: 660 },
-  { text: SEGMENTS[1].line, from: 990, to: 1740 },
-  { text: SEGMENTS[2].line, from: 2000, to: 2800 },
-  { text: SEGMENTS[3].line, from: 3080, to: 3660 },
-  { text: SEGMENTS[4].line, from: 3800, to: 4260 },
-  { text: SEGMENTS[5].line, from: 4400, to: 4930 },
-  { text: SEGMENTS[6].line, from: 5300, to: 6000 },
-  { text: SEGMENTS[7].line, from: 6180, to: 6620 },
-  { text: SEGMENTS[8].line, from: 6880, to: 7320 },
-  { text: SEGMENTS[9].line, from: 7470, to: 7990 },
-  { text: SEGMENTS[10].line, from: 8220, to: 9000 },
-  { text: SEGMENTS[11].line, from: 9120, to: 9700 },
-];
-export const WORDMARK_AT = 9780;
-export const FADE_TO_BLACK = [10080, TOTAL] as const;
 
 // ---- 第 1 段：开盖 ----
 export const LID_PLAYS = [90, 420];

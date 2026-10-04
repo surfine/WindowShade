@@ -1,9 +1,10 @@
 import type { ReactNode } from 'react';
 import { AbsoluteFill, useCurrentFrame } from 'remotion';
 import type { Layout, Rect } from './layout';
-import { CAPTION_IN, CAPTION_OUT } from './motion/direction';
+import { CAPTION_IN, dolly } from './motion/direction';
 import { NOTCH, TEACH_TUCKED, clamp01, seg } from './motion/site';
-import { CAPTIONS, FADE_TO_BLACK, MUSIC_PLAY, SEGMENTS, WORDMARK_AT } from './timeline';
+import { MUSIC_PLAY } from './timeline';
+import { CAPTIONS, FADE_TO_BLACK, OPEN_PULL, WORDMARK_AT, captionOpacity, punchAt, srcAt } from './cut';
 import {
   DRAGGED_APP, DRAG_PRESS, HANDLE_POS, ICON_SIZE, chatBackAt, deviceAt, dragIconAt, draftAt, fingerAt, handleAt, headAt, phoneAt,
   pointerAt, screenDark, slotsAt, termDoneAt, trackpadAt, zoomAt,
@@ -16,9 +17,11 @@ import { AppIcon, ChatWin, DraftWin, HomeScreen, MenuBar, MusicWin, NotesWin, Te
 const CJK = '"Source Han Sans SC","Noto Sans SC","PingFang SC",sans-serif';
 const LATIN = 'Inter, "Helvetica Neue", sans-serif';
 
-/** drawn：画出来的界面（B 版）；否则是写着要录什么的占位块。两版共用同一条时间线。 */
+/** drawn：画出来的界面（B 版）；否则是写着要录什么的占位块。两版共用同一条时间线。
+ * out 是成片的帧号；frame 是它对应的母带帧号，屏里屏外的东西都按 frame 画，字幕、标签、片名和成片镜头按 out。 */
 export function Film({ L, drawn }: { L: Layout; drawn: boolean }) {
-  const frame = useCurrentFrame();
+  const out = useCurrentFrame();
+  const frame = srcAt(out);
   const cqw = L.screen.w / 100;
 
   const page = drawn ? (
@@ -48,36 +51,44 @@ export function Film({ L, drawn }: { L: Layout; drawn: boolean }) {
 
   return (
     <AbsoluteFill style={{ background: '#0a0b0e', overflow: 'hidden' }}>
-      <Camera frame={frame} L={L}>
+      <Camera out={out} frame={frame} L={L}>
         <Laptop L={L} frame={frame} page={page} over={over} />
         <Trackpad frame={frame} L={L} />
         <Phone frame={frame} L={L} />
         <Head frame={frame} L={L} />
         {drawn && <Device frame={frame} L={L} />}
       </Camera>
-      <CaptionScrim frame={frame} L={L} />
-      <Caption frame={frame} L={L} />
-      <ConceptTag frame={frame} L={L} />
-      <Wordmark frame={frame} L={L} />
-      <AbsoluteFill style={{ background: '#000', opacity: seg(frame, FADE_TO_BLACK[0], FADE_TO_BLACK[1]) }} />
+      <CaptionScrim out={out} frame={frame} L={L} />
+      <Caption out={out} L={L} />
+      <Wordmark out={out} L={L} />
+      <AbsoluteFill style={{ background: '#000', opacity: seg(out, FADE_TO_BLACK[0], FADE_TO_BLACK[1]) }} />
     </AbsoluteFill>
   );
 }
 
 /**
- * 推近刘海：整块画面（机身和屏外线稿）绕刘海放大，刘海移到画面上方三分之一处；字幕和标签在外层，不跟着放大。
- * [片子新增] 倍数：横版 3.2、竖版 3.1，让紧凑态两边的点和字在 1080p 上看得清、提醒展开也不出画。
+ * 推近刘海：整块画面（机身和屏外线稿）绕刘海放大，刘海移到画面上方；字幕在外层，不跟着放大。
+ * [片子新增] 倍数：读口型、认人两处横版 3.2、竖版 3.1，让紧凑态两边的点和字在 1080p 上看得清、提醒展开也不出画；
+ * 冷开场 2.4，刘海贴近画面上沿，下面露出整扇终端窗口的宽度，看得见它被吸上去。
  */
 const PUSH = { landscape: { scale: 3.2, y: 0.36 }, portrait: { scale: 3.1, y: 0.3 } } as const;
+const OPEN = { landscape: { scale: 2.4, y: 0.14 }, portrait: { scale: 2.4, y: 0.2 } } as const;
 
-function Camera({ frame, L, children }: { frame: number; L: Layout; children: ReactNode }) {
-  const p = zoomAt(frame);
-  if (p <= 0) return <>{children}</>;
-  const k = PUSH[L.name];
+/** 此刻推近多少（0–1）、推到几倍、刘海停在画面多高。冷开场按成片帧号，其余按母带帧号。 */
+function pushAt(out: number, frame: number, L: Layout) {
+  const open = 1 - dolly(out, OPEN_PULL);
+  const near = zoomAt(frame);
+  return open >= near ? { p: open, ...OPEN[L.name] } : { p: near, ...PUSH[L.name] };
+}
+
+function Camera({ out, frame, L, children }: { out: number; frame: number; L: Layout; children: ReactNode }) {
+  const { p, scale, y } = pushAt(out, frame, L);
+  const punch = punchAt(out);
+  if (p <= 0 && punch <= 0) return <>{children}</>;
   const cqw = L.screen.w / 100;
   const fx = L.screen.x + L.screen.w / 2, fy = L.screen.y + (NOTCH.h * cqw) / 2;
-  const z = 1 + (k.scale - 1) * p;
-  const tx = fx + (L.width / 2 - fx) * p, ty = fy + (L.height * k.y - fy) * p;
+  const z = (1 + (scale - 1) * p) * (1 + punch);
+  const tx = fx + (L.width / 2 - fx) * p, ty = fy + (L.height * y - fy) * p;
   return <div style={{ position: 'absolute', inset: 0, transformOrigin: '0 0', transform: `translate(${tx}px, ${ty}px) scale(${z}) translate(${-fx}px, ${-fy}px)` }}>{children}</div>;
 }
 
@@ -230,53 +241,33 @@ function Head({ frame, L }: { frame: number; L: Layout }) {
   );
 }
 
-function captionOpacity(frame: number, from: number, to: number) {
-  return Math.min(clamp01((frame - from) / CAPTION_IN), 1 - clamp01((frame - (to - CAPTION_OUT)) / CAPTION_OUT));
-}
-
-/** 推近时画面铺满到字幕后面：字幕和标签底下垫一条暗带，跟推近的程度一起出现。 */
-function CaptionScrim({ frame, L }: { frame: number; L: Layout }) {
-  const p = zoomAt(frame);
+/** 推近时画面铺满到字幕后面：字幕底下垫一条暗带，跟推近的程度、字幕本身一起出现。 */
+function CaptionScrim({ out, frame, L }: { out: number; frame: number; L: Layout }) {
+  const { p } = pushAt(out, frame, L);
   if (p <= 0) return null;
-  const top = L.caption.cy - L.caption.size * 1.6, bottom = L.tag.y + L.tag.size * 1.6;
-  return <div style={{ position: 'absolute', left: 0, right: 0, top, height: bottom - top, opacity: p, background: 'linear-gradient(rgba(10,11,14,0), rgba(10,11,14,.88) 30%, rgba(10,11,14,.88) 70%, rgba(10,11,14,0))' }} />;
+  const c = CAPTIONS.find((k) => out >= k.from && out < k.to);
+  const o = p * (c ? captionOpacity(out, c.from, c.to) : 0);
+  if (o <= 0) return null;
+  const top = L.caption.cy - L.caption.size * 1.6, bottom = L.caption.cy + L.caption.size * 1.6;
+  return <div style={{ position: 'absolute', left: 0, right: 0, top, height: bottom - top, opacity: o, background: 'linear-gradient(rgba(10,11,14,0), rgba(10,11,14,.88) 30%, rgba(10,11,14,.88) 70%, rgba(10,11,14,0))' }} />;
 }
 
-function Caption({ frame, L }: { frame: number; L: Layout }) {
-  const c = CAPTIONS.find((k) => frame >= k.from && frame < k.to);
+function Caption({ out, L }: { out: number; L: Layout }) {
+  const c = CAPTIONS.find((k) => out >= k.from && out < k.to);
   if (!c) return null;
   const { cx, cy, size } = L.caption;
   return (
-    <div style={{ position: 'absolute', left: 0, width: L.width, top: cy - size * 0.7, textAlign: 'center', fontFamily: CJK, fontSize: size, fontWeight: 600, color: '#f2f3f5', opacity: captionOpacity(frame, c.from, c.to), letterSpacing: '0.02em', lineHeight: 1.4, transform: `translateX(${cx - L.width / 2}px)` }}>
+    <div style={{ position: 'absolute', left: 0, width: L.width, top: cy - size * 0.7, textAlign: 'center', fontFamily: CJK, fontSize: size, fontWeight: 600, color: '#f2f3f5', opacity: captionOpacity(out, c.from, c.to), letterSpacing: '0.02em', lineHeight: 1.4, transform: `translateX(${cx - L.width / 2}px)` }}>
       {c.text}
     </div>
   );
 }
 
-/** 首尾相接的概念段合成一段，标签不在段落交界闪一下。 */
-const CONCEPT_SPANS = SEGMENTS.flatMap((s) => (s.concept ? [s.concept] : [])).reduce<[number, number][]>((out, [a, b]) => {
-  const last = out[out.length - 1];
-  if (last && a <= last[1]) last[1] = Math.max(last[1], b);
-  else out.push([a, b]);
-  return out;
-}, []);
-
-function ConceptTag({ frame, L }: { frame: number; L: Layout }) {
-  const span = CONCEPT_SPANS.find(([a, b]) => frame >= a && frame < b);
-  if (!span) return null;
-  const o = captionOpacity(frame, span[0], span[1]);
-  return (
-    <div style={{ position: 'absolute', left: 0, width: L.width, top: L.tag.y - L.tag.size * 0.7, textAlign: L.tag.align, fontFamily: CJK, fontSize: L.tag.size, color: 'rgba(255,255,255,.5)', opacity: o, letterSpacing: '0.1em' }}>
-      概念示意，还没做
-    </div>
-  );
-}
-
-function Wordmark({ frame, L }: { frame: number; L: Layout }) {
-  if (frame < WORDMARK_AT) return null;
+function Wordmark({ out, L }: { out: number; L: Layout }) {
+  if (out < WORDMARK_AT) return null;
   const { cy, size } = L.wordmark;
   return (
-    <div style={{ position: 'absolute', left: 0, width: L.width, top: cy - size * 0.7, textAlign: 'center', fontFamily: LATIN, fontSize: size, fontWeight: 600, color: '#f2f3f5', opacity: clamp01((frame - WORDMARK_AT) / CAPTION_IN), letterSpacing: '-0.01em' }}>
+    <div style={{ position: 'absolute', left: 0, width: L.width, top: cy - size * 0.7, textAlign: 'center', fontFamily: LATIN, fontSize: size, fontWeight: 600, color: '#f2f3f5', opacity: clamp01((out - WORDMARK_AT) / CAPTION_IN), letterSpacing: '-0.01em' }}>
       WindowShade 2
     </div>
   );

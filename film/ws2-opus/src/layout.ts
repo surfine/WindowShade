@@ -40,8 +40,6 @@ export type Layout = {
   wordmark: { cx: number; cy: number; size: number };
   /** 屏外放触控板、手机线稿的地方。 */
   side: Rect;
-  /** “概念示意”标签。 */
-  tag: { x: number; y: number; size: number; align: 'left' | 'center' };
 };
 
 const screenOf = (x: number, y: number, w: number): Rect => ({ x, y, w, h: w / SCREEN_ASPECT });
@@ -55,7 +53,6 @@ export const LANDSCAPE: Layout = {
   caption: { cx: 960, cy: 988, size: 60 },
   wordmark: { cx: 960, cy: 984, size: 84 },
   side: { x: 1636, y: 360, w: 240, h: 300 },
-  tag: { x: 960, y: 1046, size: 22, align: 'center' },
 };
 
 export const PORTRAIT: Layout = {
@@ -68,7 +65,6 @@ export const PORTRAIT: Layout = {
   caption: { cx: 540, cy: 1314, size: 64 },
   wordmark: { cx: 540, cy: 1314, size: 92 },
   side: { x: 300, y: 1460, w: 480, h: 380 },
-  tag: { x: 540, y: 1384, size: 26, align: 'center' },
 };
 
 /** 屏幕坐标（按屏宽、屏高的百分比）→ 屏内像素。 */

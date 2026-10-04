@@ -3,6 +3,7 @@
 import { CONTENT_IN, islandAt, layersAt } from '../src/island';
 import { ISLAND_EVENTS, SEGMENTS, TOTAL } from '../src/timeline';
 import { pointerAt, slotsAt } from '../src/scene';
+import { CAPTIONS, OUT_TOTAL, SHOTS, SHOT_AT, WORDMARK_AT } from '../src/cut';
 
 const r = (v: number) => v.toFixed(2);
 const state = (f: number) => {
@@ -20,6 +21,19 @@ for (const s of SEGMENTS) {
 }
 console.log('\n# 岛的事件（at = 旧内容开始淡出；in = 新内容进场）');
 ISLAND_EVENTS.forEach((e, i) => console.log(`  ${e.at}\t${e.mode}\t${e.content}\tin ${CONTENT_IN[i]}`));
+
+const sec = (f: number) => `${(f / 60).toFixed(1)}s`;
+console.log(`\n# 成片剪接（cut.ts）：${OUT_TOTAL} 帧，${sec(OUT_TOTAL)}`);
+SHOTS.forEach((s, i) => {
+  console.log(`${s.id}${s.punch ? ' [顶一下]' : ''}  成片 ${SHOT_AT[i]}–${SHOT_AT[i] + s.src[1] - s.src[0]}（${sec(SHOT_AT[i])}）  母带 [${s.src[0]}, ${s.src[1]})  ${s.why}`);
+  if (i) {
+    console.log(`  接前 ${SHOTS[i - 1].src[1] - 1}: ${state(SHOTS[i - 1].src[1] - 1)}`);
+    console.log(`  接后 ${s.src[0]}: ${state(s.src[0])}`);
+  }
+});
+console.log('\n# 成片字幕');
+CAPTIONS.forEach((c) => console.log(`  ${c.from}–${c.to}（${sec(c.from)}–${sec(c.to)}）${c.text}`));
+console.log(`  片名 ${WORDMARK_AT}（${sec(WORDMARK_AT)}）`);
 
 let mismatch = 0;
 for (let f = 0; f < TOTAL; f += 7) {
