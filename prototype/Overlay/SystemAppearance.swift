@@ -141,6 +141,7 @@ extension SystemAppearancePolicy {
     /// 直接 `color.cgColor` 会按 `NSAppearance.currentDrawingAppearance` 取值——在
     /// `viewDidChangeEffectiveAppearance` 里那可能仍是旧外观，于是层颜色被“冻”在
     /// 切换前的值上（实测：深色下行背景仍是浅色）。
+    @MainActor
     static func cgColor(_ color: NSColor, for view: NSView) -> CGColor {
         // `.cgColor` 本身也要在块内调用：放在块外会按“当前绘制外观”重新解析，
         // 等于又把颜色冻回旧外观。
@@ -208,7 +209,8 @@ enum SystemCornerRadius {
         max(0, min(window, height / 2))
     }
 
-    /// 给图层套圆角：统一带上连续曲率，和系统窗口的轮廓一致。
+    /// 给图层套圆角：统一带上连续曲率，和系统窗口的轮廓一致。只从主线程的视图调用。
+    @MainActor
     static func apply(to view: NSView, radius: CGFloat, masksToBounds: Bool = false) {
         view.wantsLayer = true
         view.layer?.cornerRadius = radius

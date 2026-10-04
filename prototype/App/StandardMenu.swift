@@ -12,6 +12,8 @@
 import Cocoa
 
 enum StandardMenu {
+    /// 只从主线程安装主菜单：里面要写 `NSApp.servicesMenu`。
+    @MainActor
     static func make(appName: String,
                      settingsTarget: AnyObject?,
                      settingsAction: Selector?,
@@ -76,6 +78,7 @@ enum StandardMenu {
 
     // MARK: 各子菜单
 
+    @MainActor
     private static func applicationMenuItem(appName: String,
                                             settingsTarget: AnyObject?,
                                             settingsAction: Selector?,

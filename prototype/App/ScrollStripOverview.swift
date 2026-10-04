@@ -91,8 +91,11 @@ final class StripOverview {
             context.duration = 0.12
             panel.animator().alphaValue = 0
         }, completionHandler: {
-            panel.orderOut(nil)
-            panel.contentView = nil
+            // 动画完成回调在主线程。
+            MainActor.assumeIsolated {
+                panel.orderOut(nil)
+                panel.contentView = nil
+            }
         })
         wlog("strip: overview closes\(id.map { " → id=\($0)" } ?? "")")
         if let id { onPick?(id) } else { onClose?() }

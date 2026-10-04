@@ -212,7 +212,8 @@ final class ChromeProfileCache {
                       size: CGSize, pid: pid_t, title: String)]
     ) -> [CGWindowID: WindowChromeProfile] {
         guard requests.count > 1 else { return [:] }
-        var resolved = [WindowChromeProfile?](repeating: nil, count: requests.count)
+        // 各次写入都在下面的 NSLock 里；编译器看不见这把锁。
+        nonisolated(unsafe) var resolved = [WindowChromeProfile?](repeating: nil, count: requests.count)
         // Snapshot AppKit geometry before entering the concurrent AX reads.
         let localHeights = requests.map { localWindowChromeHeight(id: $0.id, pid: $0.pid) }
         let lock = NSLock()
@@ -272,13 +273,16 @@ func resolveWindowChromeProfile(win: AXUIElement, id: CGWindowID,
 
 private func localWindowChromeHeight(id: CGWindowID, pid: pid_t) -> CGFloat? {
     dispatchPrecondition(condition: .onQueue(.main))
-    guard pid == ProcessInfo.processInfo.processIdentifier,
-          let window = NSApp.windows.first(where: { $0.windowNumber == Int(id) }),
-          window.styleMask.contains(.titled) else { return nil }
-    // AX can omit our own toolbar and traffic lights. AppKit provides the
-    // actual unobscured content boundary, including a unified toolbar.
-    let content = window.convertToScreen(window.contentLayoutRect)
-    return max(0, window.frame.maxY - content.maxY)
+    // 上面已经要求当前队列是主队列。
+    return MainActor.assumeIsolated {
+        guard pid == ProcessInfo.processInfo.processIdentifier,
+              let window = NSApp.windows.first(where: { $0.windowNumber == Int(id) }),
+              window.styleMask.contains(.titled) else { return nil }
+        // AX can omit our own toolbar and traffic lights. AppKit provides the
+        // actual unobscured content boundary, including a unified toolbar.
+        let content = window.convertToScreen(window.contentLayoutRect)
+        return max(0, window.frame.maxY - content.maxY)
+    }
 }
 
 private func resolveWindowChromeProfileUncached(win: AXUIElement,

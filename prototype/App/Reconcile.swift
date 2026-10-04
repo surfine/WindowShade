@@ -10,7 +10,8 @@ extension AppDelegate {
             guard reconcileTimer == nil else { return }
             let timer = Timer.scheduledTimer(withTimeInterval: shadedWindowReconcileInterval,
                                              repeats: true) { [weak self] _ in
-                self?.reconcileShadedWindows(reason: "timer")
+                // 这个计时器是在主线程方法里挂上当前 run loop 的，到点仍在主线程。
+                MainActor.assumeIsolated { self?.reconcileShadedWindows(reason: "timer") }
             }
             timer.tolerance = 1.5
             reconcileTimer = timer

@@ -973,7 +973,8 @@ final class PinnedPreviewController {
     private func ensureWatchdogStarted() {
         guard watchdogTimer == nil else { return }
         let timer = Timer.scheduledTimer(withTimeInterval: 0.2, repeats: true) { [weak self] _ in
-            self?.watchdogTickAll()
+            // 这个计时器是在主线程方法里挂上当前 run loop 的，到点仍在主线程。
+            MainActor.assumeIsolated { self?.watchdogTickAll() }
         }
         timer.tolerance = 0.05
         watchdogTimer = timer
@@ -1294,7 +1295,8 @@ final class PinnedPreviewController {
             // 30Hz 足够跟手（悬停 ducking 延迟 ~33ms 无感）；120Hz + 零容差会让
             // 多预览场景下主线程持续满频醒来。
             let timer = Timer.scheduledTimer(withTimeInterval: 1.0 / 30.0, repeats: true) { [weak self] _ in
-                self?.pointerDuckingTick()
+                // 这个计时器是在主线程方法里挂上当前 run loop 的，到点仍在主线程。
+                MainActor.assumeIsolated { self?.pointerDuckingTick() }
             }
             timer.tolerance = 1.0 / 120.0
             pointerDuckingTimer = timer
