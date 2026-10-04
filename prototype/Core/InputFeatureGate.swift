@@ -2,10 +2,9 @@ import Foundation
 
 /// 这三项能不能装监听。装不装由调用方再决定；这里只回答资格。
 enum InputFeatureGate: Sendable {
-    /// 中键的按下和效果属于标题栏那一项，这里不装钩子。
+    /// 中键标题栏手势：开关打开才允许装钩子（I4 / D05）。
     static func middleDragMayInstall(switchOn: Bool) -> Bool {
-        guard switchOn else { return false }
-        return false
+        switchOn
     }
 
     /// 没有核对记录，或者记录不许可，都不算能读多触点。

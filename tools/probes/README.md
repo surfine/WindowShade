@@ -7,6 +7,7 @@
 |P-BLE|`bash probes/run-probe.sh BLEReadProbe`|给终端蓝牙权限，带着候选设备停留45秒；只记录发现|没有目标：不能选；发现不等于可读。记录 local identifier 仅用于下一次本机筛选，不提交公开仓库|
 |P-BLE-read|`bash probes/run-probe.sh BLEReadProbe --target UUID --service UUID --characteristic UUID`|先用只指定target的同一程序枚举服务和特征，再把真实UUID填入；走开、关闭蓝牙、返回各跑一次|必须同时有read_requested与read_response_byte_count。退出0只证明一次读回；2不确定。读回不证明身份，仍不允许自动解锁|
 |P-HID|`bash probes/run-probe.sh RemoteHIDProbe VENDOR_DECIMAL PRODUCT_DECIMAL`|从系统设备列表确认目标VID/PID。依次单按中心/方向/返回、长按、触面左上右下、按麦克风。30秒；不按其他键|不同usage/cookie才可定映射。同一变化只代表一维，不能编出二维坐标；无麦克风数据就把microphone能力关掉。输出不含键盘usage page7|
+|P-WHEEL|`bash probes/run-probe.sh WheelAssociationProbe`|只枚举本机鼠标／指针的 VID/PID，不装事件 tap|退出 0 只表示列到了设备。**不能**据此打开平滑滚动。逐事件关联仍缺（D14）|
 |P-MT|`bash probes/run-probe.sh MultitouchSymbolProbe`|保持原系统手势设置，不注册回调|退出3和STOP_ABI_UNVERIFIED是预期的未准入结果。本探针只覆盖符号存在，**没有解决MTTouch布局**。必须由持有确切ABI头文件与目标版本记录的主模型继续，不能让DeepSeek猜stride|
 |P-ID|`bash probes/run-probe.sh IdentityBoundaryProbe --authenticate`|Aaron亲自操作系统生物识别提示；成功、取消、不可用各记录|OS_BIOMETRICS_SUCCESS只证明这次LAContext身份验证。不证明摄像头认识Aaron，不解锁锁屏。模型另用`--model 文件 固定SHA256`；散列匹配也不证明活体与误识率|
 |P-LOCK|`bash probes/run-probe.sh LockStateProbe`|60秒内用Apple菜单手动锁定再手动解锁，另做用户切换、睡眠恢复。不要远程输入密码|private key缺失记unknown而非false。真实操作与字段不一致时后端不可用。该只读探针**没有提供生产锁屏命令**|

@@ -1562,7 +1562,8 @@ final class NotchPanel: NSPanel {
             authenticationView = nil
             canvas.setAuthentication(nil)
             updateVisibility(); apply(animated: false)
-        case .launchpad, .windowBrowser, .conductor, .pomodoro, .agentSessions, .agentReview:
+        case .launchpad, .windowBrowser, .conductor, .pomodoro, .agentSessions, .agentReview,
+             .ownedCodex, .ownedModelPicker:
             break
         }
     }

@@ -36,6 +36,19 @@
 |D23|G7 剩余警告|**能证明线程的都继续清。**|未证明前禁止再堆 `assumeIsolated`；探针对外的生产路径优先。|
 |D24|下一步|**四条并行：**(a) Option `isAlternate`＋TextEdit 截图；(b) Grok 开 G8；(c) 先合分支再真机；(d) 输入／多触点探针与 I4。|主模型负责 a/c/d 中的复核与真机；G8 只动 `film/ws2-concept`。窗口仍仅 TextEdit（D06）。|
 
+## 第三轮开工记录 · 同日 Opus 动手
+
+分支 `opus/main-model-work`（未合 main 前）：
+
+|裁决|落地|
+|---|---|
+|D03|菜单：关于用 `isAlternate`；检查更新／开发预挂并用 `isHidden` 随 ⌥ 显隐，不再 `if option { addItem }`。欢迎使用不进菜单。|
+|D05 / I4|`MiddleTitlebarTap` + 设置「中键收起窗口」可开；默认关。|
+|D14|`tools/probes/WheelAssociationProbe.swift` 只列 VID/PID，不装 tap。|
+|D15|`ownedCodex`／`ownedModelPicker` 进租约表；编程会话页有「指挥模式」入口。|
+
+仍欠：D01 TextEdit 截图；D08 批准；D18 枚举闸门；D20 蓝牙电量探针；D21 新 journal 不写标题；D22 漏登补登。
+
 ## 仍禁止
 
 发布、签名、推 Release、改更新源、替换 `/Applications` 里正在用的 App、对未点名的窗口做试验、把未知写成成功。
