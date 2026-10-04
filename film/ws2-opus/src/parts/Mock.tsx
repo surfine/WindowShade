@@ -116,7 +116,7 @@ export function TermWin(p: { box: Box; opacity?: number; scale?: number; radius?
   );
 }
 
-export function NotesWin(p: { box: Box; opacity?: number }) {
+export function NotesWin(p: { box: Box; opacity?: number; scale?: number; radius?: number }) {
   const { cqw } = p.box;
   const notes = ['采访提纲', '核对三处引文', '周五前交稿'];
   return (
@@ -133,7 +133,7 @@ export function NotesWin(p: { box: Box; opacity?: number }) {
 }
 
 /** 音乐：封面、两行字的位置、播放键。playing 之后播放键换成暂停。 */
-export function MusicWin(p: { box: Box; opacity?: number; playing: boolean }) {
+export function MusicWin(p: { box: Box; opacity?: number; playing: boolean; scale?: number; radius?: number }) {
   const { cqw } = p.box;
   return (
     <Win {...p} title="音乐">

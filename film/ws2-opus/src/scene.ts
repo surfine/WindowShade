@@ -1,5 +1,5 @@
 // 屏里、屏外每一帧有什么。全部是帧号的函数。
-import { CROSSFADE, FADE_IN, FADE_OUT, dolly } from './motion/direction';
+import { CROSSFADE, FADE_IN, FADE_OUT } from './motion/direction';
 import {
   FPS, ISLAND_SHAPES, NOTCH, SITE_NOTCH_H, TEACH, TEACH_DOCKED, TEACH_HANDLE, TEACH_TUCKED, TUCK_FRAMES, clamp01, easeIn, mix,
   moveCurve, ms, seg, slideSpring, teachPos, teachSize, tuckProgress, untuckProgress,
@@ -8,7 +8,7 @@ import { SCREEN_ASPECT, type Rect } from './layout';
 import {
   BUILD_DONE, CAUSE_MOUSE, CAUSE_PODS, CLICK_ALLOW, CLICK_CARD, CLICK_SUMMARY, DRAG_SIDE, DRAG_UP, DROP_OPEN, DROP_RELEASE, EDITS, GRAB,
   LIFT_DRAW, LOCK_AT, MOUSE_END, MUSIC_PLAY, NOD_DEG, NOD_DONE, NOD_DOWN, NOD_FRAMES, PHONE_BACK, PHONE_GONE, PODS_END, PRESS_LONG_A,
-  PRESS_LONG_B, PREVIEW_AT, TUCK_A, TUCK_B, UNLOCK, UNTUCK_A, UNTUCK_C, ZOOM_BACK, ZOOM_LIPS,
+  PRESS_LONG_B, PREVIEW_AT, TUCK_A, TUCK_B, UNLOCK, UNTUCK_A, UNTUCK_C,
 } from './timeline';
 
 type Pt = { x: number; y: number };
@@ -379,22 +379,28 @@ export function phoneAt(f: number) {
   return null;
 }
 
-/** 屏外戴着耳机的侧脸线稿：镜头拉回后出现，点一下头。读口型那一段镜头推在刘海上，看不到它。 */
-export function headAt(f: number) {
-  const show = ZOOM_LIPS[1] + 30, gone = 8000;
-  if (f < show || f >= gone + FADE_OUT) return null;
-  const opacity = Math.min(clamp01((f - show) / FADE_IN), 1 - clamp01((f - gone) / FADE_OUT));
-  const tilt = NOD_DEG * (moveCurve(seg(f, NOD_DOWN, NOD_DOWN + NOD_FRAMES)) - moveCurve(seg(f, NOD_DOWN + NOD_FRAMES, NOD_DONE)));
-  return { opacity, tilt };
+/** 点头的角度（度）：刘海里那对 AirPods 跟着点一下。不画人头。 */
+export const nodTiltAt = (f: number) =>
+  NOD_DEG * (moveCurve(seg(f, NOD_DOWN, NOD_DOWN + NOD_FRAMES)) - moveCurve(seg(f, NOD_DOWN + NOD_FRAMES, NOD_DONE)));
+
+/**
+ * [B 站版] 开场的“桌面挤满了”：终端进场时另外三扇也一扇扇冒出来（0.15 秒淡入，从 96% 长到原大），
+ * 终端被吸进刘海后它们隔 0.17 秒一扇跟进去，走同一条收起（site/island.js tuck）。
+ */
+export const CLUTTER: { kind: 'music' | 'notes' | 'chat'; rect: Rect; show: number; tuck: number }[] = [
+  { kind: 'music', rect: { x: 5, y: 9, w: 24, h: 52 }, show: 1795, tuck: TUCK_A + 10 },
+  { kind: 'notes', rect: { x: 3, y: 46, w: 30, h: 46 }, show: 1822, tuck: TUCK_A + 20 },
+  { kind: 'chat', rect: { x: 66, y: 30, w: 31, h: 56 }, show: 1846, tuck: TUCK_A + 30 },
+];
+export function clutterAt(f: number) {
+  return CLUTTER.flatMap((c) => {
+    if (f < c.show || f >= c.tuck + Math.ceil(TUCK_FRAMES)) return [];
+    const appear = clamp01((f - c.show) / 9);
+    if (f < c.tuck) return [{ kind: c.kind, rect: c.rect, opacity: appear, scale: mix(0.96, 1, teachPos(((f - c.show) / FPS) * 1000)), radius: WIN_RADIUS }];
+    const t = tucked(c.rect, tuckProgress(f, c.tuck));
+    return [{ kind: c.kind, rect: t.rect, opacity: 1, scale: t.scale, radius: t.radius }];
+  });
 }
 
 /** 锁上：屏里的东西叠化成黑；系统确认解开后叠化回来。 */
 export const screenDark = (f: number) => clamp01((f - LOCK_AT) / CROSSFADE) * (1 - clamp01((f - UNLOCK) / CROSSFADE));
-
-// ---- 推近刘海：读口型、回来认人，两处小字要看清 ----
-/** 推近的程度 0–1：motion-direction 的 dolly（1.6 / 1.0）推进，拉回再用同一根。 */
-export function zoomAt(f: number) {
-  let z = 0;
-  for (const [a, b] of [ZOOM_LIPS, ZOOM_BACK]) if (f >= a) z = Math.max(z, dolly(f, a) * (1 - dolly(f, b)));
-  return z;
-}

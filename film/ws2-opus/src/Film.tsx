@@ -1,17 +1,18 @@
 import type { ReactNode } from 'react';
 import { AbsoluteFill, Audio, staticFile, useCurrentFrame } from 'remotion';
-import type { Layout, Rect } from './layout';
-import { CAPTION_IN, dolly } from './motion/direction';
-import { NOTCH, TEACH_TUCKED, clamp01, seg } from './motion/site';
+import { SCREEN_ASPECT, type Layout, type Rect } from './layout';
+import { CAPTION_IN } from './motion/direction';
+import { FPS, NOTCH, TEACH_TUCKED, clamp01, mix, seg, teachPos } from './motion/site';
 import { MUSIC_PLAY } from './timeline';
-import { CAPTIONS, FADE_TO_BLACK, OPEN_PULL, WORDMARK_AT, captionOpacity, leanAt, punchAt, shotStartAt, srcAt } from './cut';
+import { CAPTIONS, FADE_TO_BLACK, WORDMARK_AT, captionOpacity, shotAt, shotStartAt, srcAt, type Framing } from './cut';
 import { MIX_FILE } from './music';
 import { shutterSamples } from './shutter';
 import {
-  DRAGGED_APP, DRAG_PRESS, HANDLE_POS, ICON_SIZE, chatBackAt, deviceAt, dragIconAt, draftAt, fingerAt, handleAt, headAt, phoneAt,
-  pointerAt, screenDark, slotsAt, termDoneAt, trackpadAt, zoomAt,
+  DRAGGED_APP, DRAG_PRESS, HANDLE_POS, ICON_SIZE, chatBackAt, clutterAt, deviceAt, dragIconAt, draftAt, fingerAt, handleAt, phoneAt,
+  pointerAt, screenDark, slotsAt, termDoneAt, trackpadAt,
 } from './scene';
 import { Laptop } from './parts/Laptop';
+import { Hero } from './parts/Hero';
 import { Island } from './parts/Island';
 import { Placeholder } from './parts/Placeholder';
 import { AppIcon, ChatWin, DraftWin, HomeScreen, MenuBar, MusicWin, NotesWin, TermWin, Wallpaper } from './parts/Mock';
@@ -33,7 +34,7 @@ export function Film({ L, drawn, blind, step = 1 }: FilmProps) {
   const open = 0.5 * step;
   const times = Array.from({ length: n }, (_, j) => Math.max(start, out - (n > 1 ? (open * (n - 1 - j)) / (n - 1) : 0)));
   return (
-    <AbsoluteFill className={blind ? 'ws-blind' : undefined} style={{ background: '#0a0b0e' }}>
+    <AbsoluteFill className={blind ? 'ws-blind' : undefined} style={{ background: BACKDROP }}>
       {blind ? <style>{'.ws-blind *{color:transparent!important;-webkit-text-fill-color:transparent!important;text-shadow:none!important}.ws-blind text{fill:transparent!important;stroke:none!important}'}</style> : <Audio src={staticFile(MIX_FILE)} />}
       {times.map((t, j) => (
         <AbsoluteFill key={j} style={{ opacity: 1 / (j + 1) }}>
@@ -44,19 +45,27 @@ export function Film({ L, drawn, blind, step = 1 }: FilmProps) {
   );
 }
 
+/** 机身外面的底色：比第一版亮一档，偏冷的灰蓝，刘海的纯黑在上面看得出轮廓。 */
+const BACKDROP = 'radial-gradient(110% 85% at 50% 32%, #2b303c 0%, #181b23 58%, #0d0f13 100%)';
+/** 屏里整体提亮一点、对比加一点（刘海不在这一层，保持纯黑）。 */
+const SCREEN_LIFT = 'brightness(1.1) contrast(1.06) saturate(1.05)';
+/** 点刘海那一下（scene.ts 里 P5 主屏幕从这一帧进场）：启动台从刘海里长出来，走 teach.js 的位置弹簧。 */
+const LAUNCH_AT = 3021;
+
 /** drawn：画出来的界面（B 版）；否则是写着要录什么的占位块。两版共用同一条时间线。
- * out 是成片的帧号（快门取样时带小数）；frame 是它对应的母带帧号，屏里屏外的东西都按 frame 画，字幕、标签、片名和成片镜头按 out。 */
+ * out 是成片的帧号（快门取样时带小数）；frame 是它对应的母带帧号，屏里屏外的东西都按 frame 画，标题、片名和景别按 out。 */
 function FilmFrame({ L, drawn, out }: { L: Layout; drawn: boolean; out: number }) {
   const frame = srcAt(out);
   const cqw = L.screen.w / 100;
+  const framing = shotAt(out).framing;
 
   const page = drawn ? (
-    <>
+    <div style={{ position: 'absolute', inset: 0, filter: SCREEN_LIFT }}>
       <Wallpaper />
       <DrawnDesk frame={frame} L={L} />
       <Handle frame={frame} L={L} />
       <LockScreen frame={frame} L={L} />
-    </>
+    </div>
   ) : (
     <>
       <div style={{ position: 'absolute', inset: 0, background: 'linear-gradient(160deg,#252a34 0%,#161920 55%,#101217 100%)' }} />
@@ -73,16 +82,14 @@ function FilmFrame({ L, drawn, out }: { L: Layout; drawn: boolean; out: number }
   );
 
   return (
-    <AbsoluteFill style={{ background: '#0a0b0e', overflow: 'hidden' }}>
-      <Camera out={out} frame={frame} L={L}>
-        <Laptop L={L} frame={frame} page={page} over={over} />
-        <Trackpad frame={frame} L={L} />
-        <Phone frame={frame} L={L} />
-        <Head frame={frame} L={L} />
-        {drawn && <Device frame={frame} L={L} />}
+    <AbsoluteFill style={{ background: BACKDROP, overflow: 'hidden' }}>
+      <Camera framing={framing} L={L}>
+        {framing === 'wide' ? <Hero L={L} page={page} over={over} /> : <Laptop L={L} frame={frame} page={page} over={over} />}
+        {framing !== 'wide' && <Trackpad frame={frame} L={L} />}
+        {framing !== 'wide' && <Phone frame={frame} L={L} />}
+        {drawn && framing !== 'wide' && <Device frame={frame} L={L} />}
       </Camera>
-      <CaptionScrim out={out} frame={frame} L={L} />
-      <Caption out={out} L={L} />
+      <Headline out={out} L={L} />
       <Wordmark out={out} L={L} />
       <AbsoluteFill style={{ background: '#000', opacity: seg(out, FADE_TO_BLACK[0], FADE_TO_BLACK[1]) }} />
     </AbsoluteFill>
@@ -90,29 +97,31 @@ function FilmFrame({ L, drawn, out }: { L: Layout; drawn: boolean; out: number }
 }
 
 /**
- * 推近刘海：整块画面（机身和屏外线稿）绕刘海放大，刘海移到画面上方；字幕在外层，不跟着放大。
- * [片子新增] 倍数：读口型、认人两处横版 3.2、竖版 3.1，让紧凑态两边的点和字在 1080p 上看得清、提醒展开也不出画；
- * 冷开场 2.4，刘海贴近画面上沿，下面露出整扇终端窗口的宽度，看得见它被吸上去。
+ * 景别：每一刀换一种，镜头在一个镜头里不动（只在剪接点变）。z 是放大倍数，把机身上的点 (ax, ay) 放到画面的 (tx, ty)。
+ * close：刘海占画面宽 17%（横版屏宽 = 1.6 × 画面宽），停在画面 42% 高，上面留给标题；
+ * near：屏宽 1.18 × 画面宽，刘海靠上，看得见主屏幕那一排图标；medium：屏幕铺满画面宽，从屏幕上沿往下看七成；
+ * desk：整机加右边（竖版是下面）的触控板、手机；wide：Hero 整机。
  */
-const PUSH = { landscape: { scale: 3.2, y: 0.36 }, portrait: { scale: 3.1, y: 0.3 }, phone: { scale: 3.1, y: 0.3 } } as const;
-const OPEN = { landscape: { scale: 2.4, y: 0.14 }, portrait: { scale: 2.4, y: 0.2 }, phone: { scale: 2.4, y: 0.2 } } as const;
-
-/** 此刻推近多少（0–1）、推到几倍、刘海停在画面多高。冷开场按成片帧号，其余按母带帧号。 */
-function pushAt(out: number, frame: number, L: Layout) {
-  const open = 1 - dolly(out, OPEN_PULL);
-  const near = zoomAt(frame);
-  return open >= near ? { p: open, ...OPEN[L.name] } : { p: near, ...PUSH[L.name] };
+function framingOf(framing: Framing, L: Layout) {
+  const { width: W, height: H, screen: S } = L;
+  const cqw = S.w / 100;
+  const notch = { x: S.x + S.w / 2, y: S.y + (NOTCH.h * cqw) / 2 };
+  const top = { x: S.x + S.w / 2, y: S.y };
+  const tall = L.name !== 'landscape';
+  switch (framing) {
+    case 'close': return { z: ((tall ? 1.7 : 1.6) * W) / S.w, a: notch, t: { x: W / 2, y: H * (tall ? 0.36 : 0.42) } };
+    case 'near': return { z: ((tall ? 1.25 : 1.18) * W) / S.w, a: notch, t: { x: W / 2, y: H * (tall ? 0.3 : 0.27) } };
+    case 'medium': return { z: ((tall ? 1.0 : 0.94) * W) / S.w, a: top, t: { x: W / 2, y: H * (tall ? 0.27 : 0.22) } };
+    case 'desk': return tall
+      ? { z: 0.9, a: top, t: { x: W / 2, y: H * 0.24 } }
+      : { z: 0.84, a: { x: W / 2 + 50, y: S.y }, t: { x: W / 2, y: H * 0.2 } };
+    case 'wide': return { z: tall ? 0.82 : 0.7, a: top, t: { x: W / 2, y: H * (tall ? 0.3 : 0.25) } };
+  }
 }
 
-function Camera({ out, frame, L, children }: { out: number; frame: number; L: Layout; children: ReactNode }) {
-  const { p, scale, y } = pushAt(out, frame, L);
-  const punch = punchAt(out) + leanAt(out);
-  if (p <= 0 && punch <= 0) return <>{children}</>;
-  const cqw = L.screen.w / 100;
-  const fx = L.screen.x + L.screen.w / 2, fy = L.screen.y + (NOTCH.h * cqw) / 2;
-  const z = (1 + (scale - 1) * p) * (1 + punch);
-  const tx = fx + (L.width / 2 - fx) * p, ty = fy + (L.height * y - fy) * p;
-  return <div style={{ position: 'absolute', inset: 0, transformOrigin: '0 0', transform: `translate(${tx}px, ${ty}px) scale(${z}) translate(${-fx}px, ${-fy}px)` }}>{children}</div>;
+function Camera({ framing, L, children }: { framing: Framing; L: Layout; children: ReactNode }) {
+  const { z, a, t } = framingOf(framing, L);
+  return <div style={{ position: 'absolute', inset: 0, transformOrigin: '0 0', transform: `translate(${t.x}px, ${t.y}px) scale(${z}) translate(${-a.x}px, ${-a.y}px)` }}>{children}</div>;
 }
 
 function Pointer({ frame, L }: { frame: number; L: Layout }) {
@@ -155,10 +164,21 @@ function DrawnDesk({ frame, L }: { frame: number; L: Layout }) {
           case 'P1': return <MusicWin key={s.id} box={b} opacity={s.opacity} playing={frame >= MUSIC_PLAY} />;
           case 'P4': return <TermWin key={s.id} box={b} opacity={s.opacity} scale={s.scale} radius={s.radius} />;
           case 'P9': return <TermWin key={s.id} box={b} opacity={s.opacity} done={termDoneAt(frame)} />;
-          case 'P5': return <HomeScreen key={s.id} cqw={cqw} sw={L.screen.w} sh={L.screen.h} opacity={s.opacity} hide={frame >= DRAG_PRESS ? DRAGGED_APP : undefined} />;
+          case 'P5': {
+            const grow = teachPos(((frame - LAUNCH_AT) / FPS) * 1000);
+            return (
+              <div key={s.id} style={{ position: 'absolute', inset: 0, transformOrigin: '50% 0', transform: `scale(${mix(0.08, 1, grow)})`, borderRadius: mix(6, 0, grow) * cqw, overflow: 'hidden' }}>
+                <HomeScreen cqw={cqw} sw={L.screen.w} sh={L.screen.h} opacity={s.opacity} hide={frame >= DRAG_PRESS ? DRAGGED_APP : undefined} />
+              </div>
+            );
+          }
           case 'P8': return <ChatWin key={s.id} box={b} opacity={s.opacity} scale={s.scale} radius={s.radius} />;
           default: return null;
         }
+      })}
+      {clutterAt(frame).map((c) => {
+        const p = { key: c.kind, box: box(c.rect), opacity: c.opacity, scale: c.scale, radius: c.radius };
+        return c.kind === 'music' ? <MusicWin {...p} playing /> : c.kind === 'notes' ? <NotesWin {...p} /> : <ChatWin {...p} />;
       })}
       {side.length > 0 && <NotesWin box={box(side[0].rect)} opacity={sideOpacity} />}
       {chat && <ChatWin box={box(chat.rect)} scale={chat.scale} radius={chat.radius} />}
@@ -171,13 +191,17 @@ function DrawnDesk({ frame, L }: { frame: number; L: Layout }) {
   );
 }
 
-/** 画出来的那一版用箭头指针，尖端在 (x, y)。 */
+/** 刘海下沿（屏高 %）再往下一点：真机上指针进不了刘海，点刘海时尖端停在这里。 */
+const BELOW_NOTCH = NOTCH.h * SCREEN_ASPECT + 0.7;
+
+/** 画出来的那一版用箭头指针，尖端在 (x, y)；落在刘海那块里时贴到刘海下沿。 */
 function Arrow({ frame, L }: { frame: number; L: Layout }) {
   const p = pointerAt(frame);
   if (!p) return null;
   const s = L.screen.w * 0.022;
+  const y = Math.abs(p.x - 50) < NOTCH.w / 2 + 1 ? Math.max(p.y, BELOW_NOTCH) : p.y;
   return (
-    <svg style={{ position: 'absolute', left: (p.x / 100) * L.screen.w, top: (p.y / 100) * L.screen.h, opacity: p.opacity, overflow: 'visible', transform: `scale(${1 - 0.1 * p.pressed})`, transformOrigin: '0 0' }} width={s} height={s} viewBox="0 0 20 20">
+    <svg style={{ position: 'absolute', left: (p.x / 100) * L.screen.w, top: (y / 100) * L.screen.h, opacity: p.opacity, overflow: 'visible', transform: `scale(${1 - 0.1 * p.pressed})`, transformOrigin: '0 0' }} width={s} height={s} viewBox="0 0 20 20">
       <path d="M1 1 L1 15.5 L4.8 12 L7.4 18 L10 16.9 L7.5 11 L12.6 11 Z" fill="#000" stroke="#fff" strokeWidth={1.3} strokeLinejoin="round" />
     </svg>
   );
@@ -279,29 +303,6 @@ function Phone({ frame, L }: { frame: number; L: Layout }) {
   );
 }
 
-/** 屏外戴着 AirPods 的侧脸：实心剪影带体积的明暗，朝着屏幕；点头绕脖子转。 */
-function Head({ frame, L }: { frame: number; L: Layout }) {
-  const h = headAt(frame);
-  if (!h) return null;
-  const size = Math.min(L.side.w, L.side.h) * 0.85;
-  return (
-    <svg style={{ position: 'absolute', left: L.side.x + (L.side.w - size) / 2, top: L.side.y + (L.side.h - size) / 2, opacity: h.opacity, overflow: 'visible' }} width={size} height={size} viewBox="0 0 100 100">
-      <defs>
-        <radialGradient id="skin" cx="30%" cy="38%" r="75%"><stop offset="0" stopColor="#d9b49a" /><stop offset="0.55" stopColor="#b98d72" /><stop offset="1" stopColor="#6e4f3e" /></radialGradient>
-        <linearGradient id="hair" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stopColor="#2a2420" /><stop offset="1" stopColor="#0f0d0c" /></linearGradient>
-        <radialGradient id="podH" cx="35%" cy="30%" r="80%"><stop offset="0" stopColor="#fff" /><stop offset="1" stopColor="#c3c6cc" /></radialGradient>
-      </defs>
-      <g transform={`rotate(${-h.tilt} 56 78)`}>
-        <path d="M 64 96 L 63 72 C 75 68 80 56 78 42 C 76 26 64 16 50 16 C 37 16 27 25 25.5 37 C 25 40 24 42 22.5 45 L 19.5 50.5 C 19 51.6 19.8 52.4 21 52.6 L 24.5 53 L 24 56.5 L 25.5 58 L 24.6 60.6 C 24.4 64.5 27 67.5 31 67.2 L 38.5 66.6 L 39.5 96 Z" fill="url(#skin)" />
-        <path d="M 30 30 C 33 18 45 12 56 13 C 70 14 81 24 80.5 41 C 80.3 48 78.5 54 76 58 C 75 50 72 44 66 41 C 60 38 58 33 55 30 C 47 31 38 31 30 30 Z" fill="url(#hair)" />
-        <path d="M 58 44 C 61 41 66 42 66.5 47 C 67 52 63 55 60 53" fill="none" stroke="rgba(90,60,45,.6)" strokeWidth={1.2} />
-        <ellipse cx={61} cy={47} rx={3.6} ry={4.2} fill="url(#podH)" />
-        <rect x={59.6} y={49} width={2.8} height={9} rx={1.4} fill="url(#podH)" />
-      </g>
-    </svg>
-  );
-}
-
 /** 锁屏（macOS Golden Gate）：墙纸照常亮着，上面是日期和大时间，下面头像、名字、Touch ID 或密码的提示。窗口都藏起来。 */
 function LockScreen({ frame, L }: { frame: number; L: Layout }) {
   const o = screenDark(frame);
@@ -321,34 +322,33 @@ function LockScreen({ frame, L }: { frame: number; L: Layout }) {
   );
 }
 
-/** 推近时画面铺满到字幕后面：字幕底下垫一条暗带，跟推近的程度、字幕本身一起出现。 */
-function CaptionScrim({ out, frame, L }: { out: number; frame: number; L: Layout }) {
-  const { p } = pushAt(out, frame, L);
-  if (p <= 0) return null;
-  const c = CAPTIONS.find((k) => out >= k.from && out < k.to);
-  const o = p * (c ? captionOpacity(out, c.from, c.to) : 0);
-  if (o <= 0) return null;
-  const top = L.caption.cy - L.caption.size * 1.6, bottom = L.caption.cy + L.caption.size * 1.6;
-  return <div style={{ position: 'absolute', left: 0, right: 0, top, height: bottom - top, opacity: o, background: 'linear-gradient(rgba(10,11,14,0), rgba(10,11,14,.88) 30%, rgba(10,11,14,.88) 70%, rgba(10,11,14,0))' }} />;
-}
+/** 标题字号：横版按 1920 宽，竖版按 1080 宽等比。 */
+const headSize = (L: Layout) => (L.name === 'landscape' ? { zh: 66, en: 30, top: 0.062 } : { zh: 76 * (L.width / 1080), en: 30 * (L.width / 1080), top: 0.1 });
 
-function Caption({ out, L }: { out: number; L: Layout }) {
+/** 每段一句大标题在画面上方，下面一行英文小字；进场 0.3 秒淡入、往上升一点（正弦缓动），不跟着镜头。 */
+function Headline({ out, L }: { out: number; L: Layout }) {
   const c = CAPTIONS.find((k) => out >= k.from && out < k.to);
   if (!c) return null;
-  const { cx, cy, size } = L.caption;
+  const { zh, en, top } = headSize(L);
+  const o = captionOpacity(out, c.from, c.to);
+  const rise = (1 - Math.sin((Math.PI / 2) * clamp01((out - c.from) / (CAPTION_IN * 1.5)))) * zh * 0.6;
   return (
-    <div style={{ position: 'absolute', left: 0, width: L.width, top: cy - size * 0.7, textAlign: 'center', fontFamily: CJK, fontSize: size, fontWeight: 600, color: '#f2f3f5', opacity: captionOpacity(out, c.from, c.to), letterSpacing: '0.02em', lineHeight: 1.4, transform: `translateX(${cx - L.width / 2}px)` }}>
-      {c.text}
+    <div style={{ position: 'absolute', left: 0, width: L.width, top: L.height * top, textAlign: 'center', opacity: o, transform: `translateY(${rise}px)` }}>
+      <div style={{ fontFamily: CJK, fontSize: zh, fontWeight: 600, color: '#f4f5f7', letterSpacing: '0.02em', lineHeight: 1.25 }}>{c.text}</div>
+      <div style={{ fontFamily: LATIN, fontSize: en, fontWeight: 500, color: 'rgba(244,245,247,.62)', marginTop: en * 0.45, letterSpacing: '0.01em' }}>{c.en}</div>
     </div>
   );
 }
 
+/** 片名落在最后一个重拍，下面一行网址。 */
 function Wordmark({ out, L }: { out: number; L: Layout }) {
   if (out < WORDMARK_AT) return null;
-  const { cy, size } = L.wordmark;
+  const { zh, en, top } = headSize(L);
+  const o = clamp01((out - WORDMARK_AT) / CAPTION_IN);
   return (
-    <div style={{ position: 'absolute', left: 0, width: L.width, top: cy - size * 0.7, textAlign: 'center', fontFamily: LATIN, fontSize: size, fontWeight: 600, color: '#f2f3f5', opacity: clamp01((out - WORDMARK_AT) / CAPTION_IN), letterSpacing: '-0.01em' }}>
-      WindowShade 2
+    <div style={{ position: 'absolute', left: 0, width: L.width, top: L.height * top, textAlign: 'center', opacity: o }}>
+      <div style={{ fontFamily: LATIN, fontSize: zh * 1.15, fontWeight: 600, color: '#f4f5f7', letterSpacing: '-0.01em', lineHeight: 1.15 }}>WindowShade 2</div>
+      <div style={{ fontFamily: LATIN, fontSize: en, fontWeight: 500, color: 'rgba(244,245,247,.62)', marginTop: en * 0.45 }}>windowshade.aaronlau.me</div>
     </div>
   );
 }

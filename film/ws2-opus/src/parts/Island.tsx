@@ -3,7 +3,7 @@ import { islandAt, layersAt, type ContentLayer } from '../island';
 import { FADE_IN } from '../motion/direction';
 import { NOTCH, SITE_NOTCH_H, clamp01 } from '../motion/site';
 import { CLICK_ALLOW, COUNTDOWN, FACE_OK, type Content } from '../timeline';
-import { ASK_UI, DROP_CHOICES, DROP_UI, STROKE, SUMMARY_UI, dropDotAt, dropHoverAt, pointerAt, summaryHoverAt } from '../scene';
+import { ASK_UI, DROP_CHOICES, DROP_UI, STROKE, SUMMARY_UI, dropDotAt, dropHoverAt, nodTiltAt, pointerAt, summaryHoverAt } from '../scene';
 
 const INK = 'rgba(255,255,255,.92)';
 const DIM = 'rgba(255,255,255,.5)';
@@ -88,6 +88,17 @@ function dropGlyph(i: number, ink: string) {
 
 const sessionGlyph = <g><path {...line} d="M 0 -1.4 A 1.4 1.4 0 1 1 -1.21 0.7" /><circle cx={0} cy={0} r={0.35} fill={INK} /></g>;
 const mouthGlyph = <path {...line} d="M -1.6 0 Q 0 -1.1 1.6 0 Q 0 1.3 -1.6 0 Z" />;
+/** 侧面的一只 AirPods Pro，跟着点头转（转轴在耳塞头上），左边一道弧是点头的方向。 */
+const podGlyph = (tilt: number) => (
+  <g>
+    <path {...line} strokeWidth={0.16} opacity={0.5} d="M -2.1 -1.3 A 2.3 2.3 0 0 0 -2.1 1.3" />
+    <g transform={`rotate(${tilt * 1.6} 0.2 -0.6)`}>
+      <ellipse cx={0.2} cy={-0.6} rx={1.15} ry={1.05} fill="#fff" />
+      <ellipse cx={-0.55} cy={-0.75} rx={0.42} ry={0.5} fill="#2b2d31" />
+      <rect x={0.25} y={-0.2} width={0.72} height={2.5} rx={0.36} fill="#fff" transform="rotate(-14 0.6 -0.2)" />
+    </g>
+  </g>
+);
 const mouseGlyph = <g><rect {...line} x={-1.1} y={-1.8} width={2.2} height={3.6} rx={1.1} /><line {...line} x1={0} x2={0} y1={-1.5} y2={-0.7} /></g>;
 const chatGlyph = <path {...line} d="M -1.7 -1.4 H 1.7 A 0.6 0.6 0 0 1 2.3 -0.8 V 0.7 A 0.6 0.6 0 0 1 1.7 1.3 H -0.4 L -1.4 2.1 V 1.3 H -1.7 A 0.6 0.6 0 0 1 -2.3 0.7 V -0.8 A 0.6 0.6 0 0 1 -1.7 -1.4 Z" />;
 
@@ -347,7 +358,7 @@ function drawReal(l: ContentLayer, w: number, h: number, frame: number): ReactNo
     case 'unlocked':
       return alertReal(l, h, tile(<g transform="scale(1.4)">{factorDots(1, 1, '#fff')}</g>), '两样都对上了', '人在 · 手机在身边');
     case 'preview':
-      return alertReal(l, h, tile(dropGlyph(0, INK)), '左半屏', '文章草稿 · 点头确认');
+      return alertReal(l, h, tile(podGlyph(nodTiltAt(frame))), '左半屏', '文章草稿 · 点头确认');
     case 'lips':
       // 读口型：左边是嘴，右边三个点随说出的字一个个亮。
       return ears(l, w,
