@@ -1,12 +1,13 @@
-// 配乐的拍点，离线算好写死（帧，60 fps）。曲子见 public/music/future/README.md。
-// 120 BPM：一拍 30 帧，一小节 120 帧，全曲 30 小节 = 3600 帧。
-// analyze-beatgrid.py 的结果：把速度读成一半（60.1 BPM，拍点在整秒后约 40 毫秒），
-// 能量突增在 8 秒、38 秒、58 秒，正好是第一段、落拍、最后一个强拍。下面以合成时的网格为准。
+// 配乐的拍点，离线算好写死（帧，60 fps）。曲子与混音见 public/music/future/README.md、score.py。
+// Kevin MacLeod《Floating Cities》，120.00 BPM（onset 自相关在 120 处最强，拍点相位 0.036 秒）；
+// 从曲子 110.536 秒的强拍开始取 60 秒，所以片子的拍点就是整半秒：一拍 30 帧，一小节 120 帧。
+// 曲子 148.536 秒低音整段进来（每小节低频能量从 7.5 跳到 11.3），落在片子第 19 小节 = 第 2280 帧。
 
 export const BPM = 120;
 export const BEAT = 30;
 export const BAR = 120;
-export const MUSIC_SRC = 'music/future/ws2-future.mp3';
+/** 配乐 + 音效一次混好的母带（score.py 生成）。 */
+export const MUSIC_SRC = 'music/future/ws2-future-mix.wav';
 
 /** 第 n 拍、第 n 小节在哪一帧。 */
 export const beat = (n: number) => Math.round(n * BEAT);
@@ -19,20 +20,20 @@ export const DOWNBEATS = [
   2400, 2520, 2640, 2760, 2880, 3000, 3120, 3240, 3360, 3480,
 ] as const;
 
-/** 曲子里专门写给画面的落点。 */
+/** 画面里踩在拍上的落点。 */
 export const HIT = {
-  /** 提示音：面容 ID 认出。 */
+  /** 面容 ID 认出。 */
   faceOk: 90,
-  /** 第一段进来，点刘海。 */
+  /** 点刘海。 */
   verse: bar(4),
   notchTap: bar(4, 0.25),
   /** 收回启动台。 */
   lpClose: bar(8),
-  /** 第二段：读唇。 */
+  /** 读唇。 */
   verse2: bar(9),
-  /** 拉升：军鼓滚奏、噪声上扫。 */
+  /** 摇头取消。 */
   build: bar(17),
-  /** 落拍：刘海展开成 CarPlay。 */
+  /** 低音进来：刘海展开成 CarPlay。 */
   drop: bar(19),
   /** Esc：收回刘海。 */
   esc: bar(24),
@@ -43,10 +44,3 @@ export const HIT = {
   /** 最后一个强拍：片名。 */
   last: bar(29),
 } as const;
-
-/** 音量：开头 6 帧淡入，最后 72 帧淡出（曲子自己也收尾）。 */
-export function musicVolume(f: number, total: number) {
-  const inn = Math.min(1, f / 6);
-  const out = Math.min(1, Math.max(0, (total - f) / 72));
-  return 0.9 * inn * out;
-}

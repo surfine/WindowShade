@@ -1,25 +1,33 @@
-# 未来版配乐 `ws2-future.mp3`
+# 未来版的声音
 
-- 来源：本机用 `compose.py` 从零合成（numpy 振荡器、噪声、滤波、卷积混响），没有采样、没有第三方音频，版权归本项目，可自由使用。
-- 重做：`/tmp/wsaudio/bin/python compose.py`（需要 numpy、scipy、soundfile），再
-  `ffmpeg -i ws2-future.wav -c:a libmp3lame -b:a 192k ws2-future.mp3`。随机数种子固定（20261004），每次结果一样。
-- 120 BPM，4/4，30 小节，正好 60.0 秒；响度约 −16 LUFS（integrated）。
-- 片子 60 fps：一拍 30 帧，一小节 120 帧。帧表写在 `src/future/beats.ts`，片子运行时不分析音频。
+`ws2-future-mix.wav`（48 kHz / 24 bit，60.0 秒）是配乐 + 音效一次混好的母带，由 `score.py` 生成，`src/future/Future.tsx` 直接放。
 
-## 段落和画面
+## 配乐
 
-| 小节 | 帧 | 音乐 | 画面 |
-|---|---|---|---|
-| 0–3 | 0–479 | 垫音、心跳底鼓；90 帧一声提示音 | 面容 ID 扫描，90 帧认出 |
-| 4–8 | 480–1079 | 四拍底鼓、反拍镲、八分贝斯；510 帧一声 | 点刘海开启动台；960 收回 |
-| 9–16 | 1080–2039 | 加拍手、十六分拨弦 | 读唇（1080 / 1320 切）、AirPods 点头（1560 / 1800 切） |
-| 17–18 | 2040–2279 | 拉升：军鼓滚奏、噪声上扫，最后半拍留空 | iPhone 已连接、长按刘海 |
-| 19–23 | 2280–2879 | 落拍，全编制 | 刘海展开成 CarPlay；2760 测试跑完 |
-| 24 | 2880–2999 | 落下，只剩垫音 | Esc，收回刘海 |
-| 25–28 | 3000–3479 | 尾声；3000 / 3060 / 3120 三下滴答，3180 落锁 | 走开倒数、锁上 |
-| 29 | 3480–3599 | 最后一个强拍，余音淡出 | 片名 |
+- 曲目：**Floating Cities** — Kevin MacLeod（incompetech.com）
+- 来源：<https://incompetech.com/music/royalty-free/mp3-royaltyfree/Floating%20Cities.mp3>
+- 授权：**Creative Commons: By Attribution 4.0**（<https://creativecommons.org/licenses/by/4.0/>），可商用，须署名。
+- 署名文本（发布时放进简介）：
 
-## 分析器结果（music-to-video 的 analyze-beatgrid.py）
+  > "Floating Cities" Kevin MacLeod (incompetech.com)
+  > Licensed under Creative Commons: By Attribution 4.0 License
+  > http://creativecommons.org/licenses/by/4.0/
 
-- 速度读成 60.1 BPM（120 的一半，四拍底鼓常见的折半），拍点在整秒后约 40 毫秒；帧表以合成网格为准。
-- 能量突增（SURGE）：8 秒、38 秒、58 秒，即 480、2280、3480 帧，和上表一致。
+- 速度：120.00 BPM（`analyze-beatgrid.py` 读成 117.5，是 23 毫秒帧长量化的误差；onset 自相关在 119.9 / 120 / 120.1 BPM 的得分是 52 / 125 / 51，拍点相位 0.036 秒）。
+- 取段：曲子 110.536–170.536 秒（第 55 小节强拍起）。曲子 148.536 秒低音整段进来（每小节 150 Hz 以下能量 7.5 → 11.3），落在片子 38 秒 = 第 2280 帧，刘海展开成 CarPlay。
+- 曲子原文件不入库，`score.py` 缺文件时自己下载到 `/tmp/wsmusic/`。
+
+## 音效
+
+- 材质只有一套：**Kenney Interface Sounds**（CC0，`sfx/License-kenney.txt`）的 14 段录音，加 onetake `sfx_palette` 合成的低音（`sub`）、气流（`air`）、按键木头声（`wood`）。
+- 一个房间：全部过 `sfx_palette.impulse(0.9)`，按距离 12–55 % 送混响。
+- 事件表在 `src/future/sfx.ts`，直接引用画面的常量（`HIT`、`POCKET`、`CP_*`、`LP_*`），`score.py` 用 esbuild 现导，不手抄帧号。
+- 25 个事件对 120 拍；同一个动作同一个声音（三次确认都是 `confirmation_002`）。
+
+## 混音与母带
+
+- 音乐先压到 −20.5 LUFS，每个音效前 30 毫秒开始让 4–5.5 dB，保持到声音结束（最多 0.35 秒），0.45 秒放回。
+- 音效整体按「事件窗口 120 毫秒里比让过之后的音乐响 4 dB（中位数）」定电平。
+- 母带：整合响度 **−16.0 LUFS**，真峰值 **−4.1 dBTP**（4 倍过采样，前视 5 毫秒的限幅）；ffmpeg `ebur128` 复核一致。
+
+重做：在 `film/ws2-opus` 下跑 `/tmp/wsaudio/bin/python public/music/future/score.py`（numpy、scipy、soundfile、librosa）。
