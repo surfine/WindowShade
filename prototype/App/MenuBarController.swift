@@ -136,33 +136,42 @@ extension AppDelegate {
     }
 
     statusMenu.addItem(.separator())
+    // D03 / M1：不在重建时 if option { addItem } 插入行。
+    // 「设置…」↔「关于」用 isAlternate；「检查更新…」「开发」始终挂在菜单上，用 isHidden 随 ⌥ 显隐，这样按住 ⌥ 能同时多出几行。
+    // 「欢迎使用」只在设置里。
+    let optionHeld = NSEvent.modifierFlags.contains(.option)
     let settings = NSMenuItem(title: "设置…", action: #selector(showPreferences), keyEquivalent: ",")
     settings.image = NSImage(systemSymbolName: "gearshape", accessibilityDescription: nil)
     statusMenu.addItem(settings)
     let about = NSMenuItem(title: "关于 WindowShade", action: #selector(showAboutPanel), keyEquivalent: ",")
-    about.isAlternate = true; about.keyEquivalentModifierMask = [.command, .option]
+    about.isAlternate = true
+    about.keyEquivalentModifierMask = [.option]
     about.image = NSImage(systemSymbolName: "info.circle", accessibilityDescription: nil)
     statusMenu.addItem(about)
-    if NSEvent.modifierFlags.contains(.option) {
-      action("欢迎使用 WindowShade…", "hand.wave", #selector(showWelcomeGuide))
-      MainActor.assumeIsolated { statusMenu.addItem(UpdaterController.shared.makeMenuItem()) }
-      // 与原工程的发行 feed 约定一致；设置 SUFeedURL 的构建不得展示诊断入口。
-      if Bundle.main.object(forInfoDictionaryKey: "SUFeedURL") == nil {
-        let developer = NSMenuItem(title: "开发", action: nil, keyEquivalent: "")
-        developer.image = NSImage(systemSymbolName: "hammer", accessibilityDescription: nil)
-        let tools = NSMenu(); developer.submenu = tools
-        if let text = menuState.hingeAngleText { tools.addItem(.sectionHeader(title: text)) }
-        action("验证 Touch ID…", "touchid", #selector(verifyTouchIDAction), menu: tools)
-        let cameras = NSMenuItem(title: "检测面部动作", action: nil, keyEquivalent: "")
-        cameras.submenu = NSMenu()
-        MainActor.assumeIsolated {
-          for camera in FaceObservationSource.devices() {
-            let item = NSMenuItem(title: camera.name, action: #selector(observeFaceAction(_:)), keyEquivalent: "")
-            item.target = self; item.representedObject = camera.id; cameras.submenu?.addItem(item)
-          }
+    let updateItem = UpdaterController.shared.makeMenuItem()
+    updateItem.isHidden = !optionHeld
+    if updateItem.image == nil {
+      updateItem.image = NSImage(systemSymbolName: "arrow.triangle.2.circlepath", accessibilityDescription: nil)
+    }
+    statusMenu.addItem(updateItem)
+    // 与原工程的发行 feed 约定一致；设置 SUFeedURL 的构建不得展示诊断入口。
+    if Bundle.main.object(forInfoDictionaryKey: "SUFeedURL") == nil {
+      let developer = NSMenuItem(title: "开发", action: nil, keyEquivalent: "")
+      developer.isHidden = !optionHeld
+      developer.image = NSImage(systemSymbolName: "hammer", accessibilityDescription: nil)
+      let tools = NSMenu(); developer.submenu = tools
+      if let text = menuState.hingeAngleText { tools.addItem(.sectionHeader(title: text)) }
+      action("验证 Touch ID…", "touchid", #selector(verifyTouchIDAction), menu: tools)
+      let cameras = NSMenuItem(title: "检测面部动作", action: nil, keyEquivalent: "")
+      cameras.submenu = NSMenu()
+      MainActor.assumeIsolated {
+        for camera in FaceObservationSource.devices() {
+          let item = NSMenuItem(title: camera.name, action: #selector(observeFaceAction(_:)), keyEquivalent: "")
+          item.target = self; item.representedObject = camera.id; cameras.submenu?.addItem(item)
         }
-        tools.addItem(cameras); statusMenu.addItem(developer)
       }
+      tools.addItem(cameras)
+      statusMenu.addItem(developer)
     }
     let quitItem = NSMenuItem(title: "退出 WindowShade", action: #selector(quit), keyEquivalent: "q")
     quitItem.image = NSImage(systemSymbolName: "power", accessibilityDescription: nil); statusMenu.addItem(quitItem)
