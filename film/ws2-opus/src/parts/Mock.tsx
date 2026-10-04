@@ -1,40 +1,62 @@
-// 画出来的界面。画法、配色、文案都照官网示意（site/style.css 深色、site/scripts/content.mjs、site/scripts/launchpad.mjs），
-// 不另起一套。尺寸用 cqw（屏宽的百分之一）。
+// 画出来的界面，照 macOS Golden Gate 深色外观：系统字体（SF、苹方）、本机自带的墙纸和 App 图标（public/，从 /System 转出）。
+// 窗口、菜单栏的比例按系统；为了 1080p 上看得清，整套界面放大约 1.6 倍（标题栏 5cqw ≈ 系统 52pt × 1.6）。尺寸用 cqw（屏宽的百分之一）。
 import type { CSSProperties, ReactNode } from 'react';
+import { Img, staticFile } from 'remotion';
 import type { Rect } from '../layout';
 import { ICON_SIZE, LAUNCH_APPS, iconCenter } from '../scene';
 
-export const CJK = '"Source Han Sans SC","Noto Sans SC","PingFang SC",sans-serif';
+export const CJK = '"PingFang SC",-apple-system,system-ui,sans-serif';
 const MONO = 'ui-monospace,"SF Mono",Menlo,monospace';
 const C = {
-  win: '#26282d', bar: '#2d2f35', ink: '#eceef2', muted: '#a0a5ae', line: 'rgba(255,255,255,.08)',
-  accent: '#7ea4ff', menubar: 'rgba(20,22,28,.45)',
+  win: '#1f1f22', bar: '#1f1f22', ink: '#f5f5f7', muted: 'rgba(235,235,245,.55)', line: 'rgba(255,255,255,.09)',
+  accent: '#0a84ff',
 };
-export const WALL =
-  'radial-gradient(120% 90% at 0% 0%,#233a6b 0%,transparent 58%),radial-gradient(90% 80% at 100% 0%,#4a2a55 0%,transparent 62%),radial-gradient(120% 90% at 70% 110%,#5a3a2a 0%,transparent 62%),#171a24';
+/** 墙纸没加载出来时的底色（Radial Sky Blue 的主色）。 */
+export const WALL = '#0b1624';
+
+/** 本机自带的墙纸 Radial Sky Blue（/System/Library/Desktop Pictures）。blur / dim 给锁屏和主屏幕用。 */
+export function Wallpaper({ blur = 0, dim = 0, scale = 1, opacity = 1 }: { blur?: number; dim?: number; scale?: number; opacity?: number }) {
+  return (
+    <div style={{ position: 'absolute', inset: 0, overflow: 'hidden', background: WALL, opacity }}>
+      <Img src={staticFile('wall/radial-sky-blue.jpg')} style={{ position: 'absolute', inset: 0, width: '100%', height: '100%', objectFit: 'cover', filter: blur ? `blur(${blur}px) saturate(1.2)` : undefined, transform: `scale(${scale * (blur ? 1.08 : 1)})` }} />
+      {dim > 0 && <div style={{ position: 'absolute', inset: 0, background: `rgba(0,0,0,${dim})` }} />}
+    </div>
+  );
+}
 
 type Box = { rect: Rect; cqw: number; sw: number; sh: number };
 const place = ({ rect, sw, sh }: Box): CSSProperties => ({
   position: 'absolute', left: (rect.x / 100) * sw, top: (rect.y / 100) * sh, width: (rect.w / 100) * sw, height: (rect.h / 100) * sh,
 });
 
-/** 菜单栏：和刘海一样高，左边 App 菜单，右边时间。 */
+const APPLE = 'M17.05 12.54c-.03-2.6 2.13-3.86 2.23-3.92-1.22-1.78-3.11-2.02-3.78-2.05-1.6-.17-3.13.95-3.95.95-.82 0-2.07-.93-3.41-.9-1.75.03-3.37 1.02-4.27 2.59-1.83 3.17-.47 7.85 1.31 10.42.87 1.26 1.9 2.67 3.25 2.62 1.31-.05 1.8-.84 3.38-.84 1.57 0 2.02.84 3.4.81 1.41-.02 2.3-1.27 3.15-2.54 1-1.46 1.41-2.88 1.43-2.95-.03-.01-2.71-1.04-2.74-4.19zM14.47 4.89c.72-.88 1.21-2.09 1.07-3.3-1.04.04-2.3.69-3.04 1.56-.66.77-1.25 2.01-1.09 3.19 1.15.09 2.33-.59 3.06-1.45z';
+
+/** 菜单栏：和刘海一样高、透明，压在墙纸上；左边苹果和 App 菜单，右边 Wi‑Fi、电池、控制中心、日期时间。 */
 export function MenuBar({ cqw, h }: { cqw: number; h: number }) {
-  const items = ['文本编辑', '文件', '编辑', '格式', '显示', '窗口'];
+  const items = ['文本编辑', '文件', '编辑', '格式', '显示', '窗口', '帮助'];
+  const H = h * cqw, f = 0.5 * H, ic = 0.62 * H;
+  const glyph = (d: ReactNode, w = 1) => <svg width={ic * w} height={ic} viewBox={`0 0 ${24 * w} 24`} fill="#fff">{d}</svg>;
   return (
-    <div style={{ position: 'absolute', left: 0, top: 0, right: 0, height: h * cqw, display: 'flex', alignItems: 'center', gap: 1.5 * cqw, padding: `0 ${1.6 * cqw}px`, fontFamily: CJK, fontSize: 0.56 * h * cqw, color: C.ink, background: C.menubar, whiteSpace: 'nowrap' }}>
-      {items.map((m, i) => <span key={m} style={{ fontWeight: i ? 400 : 650, opacity: i ? 0.82 : 1 }}>{m}</span>)}
-      <span style={{ marginLeft: 'auto', opacity: 0.9 }}>9:41</span>
+    <div style={{ position: 'absolute', left: 0, top: 0, right: 0, height: H, display: 'flex', alignItems: 'center', gap: 1.35 * cqw, padding: `0 ${1.25 * cqw}px 0 ${1.5 * cqw}px`, fontFamily: CJK, fontSize: f, color: '#fff', whiteSpace: 'nowrap', background: 'linear-gradient(rgba(0,0,0,.28), rgba(0,0,0,0))', textShadow: '0 0 6px rgba(0,0,0,.25)' }}>
+      <svg width={ic * 0.9} height={ic} viewBox="0 0 24 24" fill="#fff" style={{ marginRight: 0.3 * cqw }}><path d={APPLE} /></svg>
+      {items.map((m, i) => <span key={m} style={{ fontWeight: i ? 500 : 700 }}>{m}</span>)}
+      <span style={{ marginLeft: 'auto', display: 'flex', alignItems: 'center', gap: 1.15 * cqw }}>
+        {glyph(<g><path d="M12 18.6a1.7 1.7 0 1 1 0 3.4 1.7 1.7 0 0 1 0-3.4z" /><path d="M12 13.2c2 0 3.8.8 5.1 2.1l-1.6 1.6A5 5 0 0 0 12 15.4a5 5 0 0 0-3.5 1.5l-1.6-1.6A7.2 7.2 0 0 1 12 13.2z" /><path d="M12 7.8c3.5 0 6.6 1.4 8.9 3.7l-1.6 1.6A10.3 10.3 0 0 0 12 10a10.3 10.3 0 0 0-7.3 3.1l-1.6-1.6A12.5 12.5 0 0 1 12 7.8z" /><path d="M12 2.4c5 0 9.4 2 12.7 5.3l-1.6 1.6A15.6 15.6 0 0 0 12 4.6 15.6 15.6 0 0 0 .9 9.3L-.7 7.7A17.8 17.8 0 0 1 12 2.4z" /></g>)}
+        {glyph(<g><rect x={1} y={6} width={30} height={13} rx={4} fill="none" stroke="#fff" strokeOpacity={0.55} strokeWidth={1.4} /><rect x={3.2} y={8.2} width={21} height={8.6} rx={2.2} /><rect x={32.4} y={10} width={2} height={5} rx={1} fillOpacity={0.55} /></g>, 1.5)}
+        {glyph(<g><rect x={2} y={4} width={20} height={7} rx={3.5} fill="none" stroke="#fff" strokeWidth={1.7} /><circle cx={17.5} cy={7.5} r={2.2} /><rect x={2} y={13} width={20} height={7} rx={3.5} fill="none" stroke="#fff" strokeWidth={1.7} /><circle cx={6.5} cy={16.5} r={2.2} /></g>)}
+        <span style={{ fontWeight: 500 }}>10月4日 周日 9:41</span>
+      </span>
     </div>
   );
 }
 
+/** 红绿灯：系统 14pt、间距 8pt，放大后 1.45 / 0.85cqw；不在前台的窗口是灰的。 */
 function Lights({ cqw, off }: { cqw: number; off?: boolean }) {
-  const lamps = [['#ea7468', '#e8928b'], ['#efbb50', '#f7d563'], ['#7cca4a', '#a6d989']];
+  const lamps = ['#ff5f57', '#febc2e', '#28c840'];
   return (
-    <span style={{ display: 'flex', gap: 1.2 * cqw }}>
-      {lamps.map(([a, b], i) => (
-        <i key={i} style={{ width: 1.95 * cqw, height: 1.95 * cqw, borderRadius: '50%', background: off ? '#4a4c52' : `linear-gradient(${a} 30%, ${b} 75%)` }} />
+    <span style={{ display: 'flex', gap: 0.85 * cqw }}>
+      {lamps.map((a, i) => (
+        <i key={i} style={{ width: 1.45 * cqw, height: 1.45 * cqw, borderRadius: '50%', background: off ? 'rgba(255,255,255,.16)' : a, boxShadow: off ? 'none' : 'inset 0 0 0 0.5px rgba(0,0,0,.22)' }} />
       ))}
     </span>
   );
@@ -44,8 +66,8 @@ function Lights({ cqw, off }: { cqw: number; off?: boolean }) {
 export function Win({ box, title, off, children, opacity = 1, scale = 1, radius = 2.6 }: { box: Box; title: string; off?: boolean; children?: ReactNode; opacity?: number; scale?: number; radius?: number }) {
   const { cqw } = box;
   return (
-    <div style={{ ...place(box), opacity, transform: `scale(${scale})`, transformOrigin: '50% 50%', borderRadius: radius * cqw, overflow: 'hidden', background: C.win, color: C.ink, fontFamily: CJK, boxShadow: `0 0 0 1px rgba(0,0,0,.85), 0 ${1.1 * cqw}px ${2.4 * cqw}px rgba(0,0,0,${off ? 0.36 : 0.5})` }}>
-      <div style={{ position: 'relative', height: 5 * cqw, display: 'flex', alignItems: 'center', padding: `0 ${1.8 * cqw}px`, background: C.bar, boxShadow: `inset 0 -0.5px 0 ${C.line}`, fontSize: 1.85 * cqw, fontWeight: 600, color: off ? C.muted : C.ink }}>
+    <div style={{ ...place(box), opacity, transform: `scale(${scale})`, transformOrigin: '50% 50%', borderRadius: radius * cqw, overflow: 'hidden', background: C.win, color: C.ink, fontFamily: CJK, boxShadow: `inset 0 0 0 0.5px rgba(255,255,255,.14), 0 0 0 0.5px rgba(0,0,0,.7), 0 ${(off ? 1 : 2) * cqw}px ${(off ? 3 : 6) * cqw}px rgba(0,0,0,${off ? 0.35 : 0.55}), 0 ${0.3 * cqw}px ${0.8 * cqw}px rgba(0,0,0,.3)` }}>
+      <div style={{ position: 'relative', height: 5 * cqw, display: 'flex', alignItems: 'center', padding: `0 ${1.9 * cqw}px`, background: C.bar, fontSize: 1.55 * cqw, fontWeight: 600, color: off ? C.muted : C.ink }}>
         <Lights cqw={cqw} off={off} />
         <span style={{ position: 'absolute', left: '50%', transform: 'translateX(-50%)', whiteSpace: 'nowrap' }}>{title}</span>
       </div>
@@ -85,7 +107,7 @@ export function TermWin(p: { box: Box; opacity?: number; scale?: number; radius?
   const { cqw } = p.box;
   const rows = ['$ swift build', 'Compiling WindowShade', '[132/186] Notch.swift', p.done ? 'Build complete!' : '[133/186] SlideOver.swift'];
   return (
-    <Win {...p} title="终端">
+    <Win {...p} title="WindowShade — zsh — 80×24">
       <div style={{ position: 'absolute', inset: 0, background: '#1e1f24', color: '#d7dbe3', font: `${1.75 * cqw}px/1.7 ${MONO}`, padding: `${2.6 * cqw}px ${3 * cqw}px` }}>
         {rows.map((r, i) => <div key={r} style={{ color: i && !(p.done && i === 3) ? undefined : '#8fd18f' }}>{r}</div>)}
         <div style={{ width: cqw, height: 2.2 * cqw, background: '#d7dbe3', marginTop: 0.4 * cqw }} />
@@ -143,37 +165,18 @@ export function ChatWin(p: { box: Box; opacity?: number; scale?: number; radius?
   );
 }
 
-// 启动台的六个原创图标（site/scripts/launchpad.mjs）与配色（site/launchpad.css）。
-const ICON_PATHS: Record<string, string> = {
-  mail: '<rect x="4" y="8" width="24" height="16" rx="3"/><path d="M5.5 10.5 16 18l10.5-7.5"/>',
-  notes: '<rect x="7" y="5" width="18" height="22" rx="3"/><path d="M11.5 11.5h9M11.5 16h9M11.5 20.5h5"/>',
-  calendar: '<rect x="5" y="7" width="22" height="20" rx="3"/><path d="M5 13h22M11 4.5v5M21 4.5v5"/>',
-  photos: '<rect x="5" y="7" width="22" height="18" rx="3"/><circle cx="12" cy="14" r="2.4"/><path d="M6.5 22.5 14 17l5 4.5 4-3 3.5 3"/>',
-  reference: '<path d="M6.5 6.5h9a3 3 0 0 1 3 3v16H9.5a3 3 0 0 1-3-3z"/><path d="M18.5 9.5h4a3 3 0 0 1 3 3v13h-7"/><path d="M11 12.5h5M11 17h5"/>',
-  tools: Array.from({ length: 9 }, (_, i) => `<rect x="${5 + (i % 3) * 8}" y="${5 + Math.floor(i / 3) * 8}" width="6" height="6" rx="1.5" fill="currentColor" stroke="none"/>`).join(''),
-};
-const ICON_BG: Record<string, [string, string]> = {
-  mail: ['linear-gradient(#5b9bff,#2f6ae0)', '#fff'],
-  notes: ['linear-gradient(#ffd968,#f5b428)', '#7a4d05'],
-  calendar: ['linear-gradient(#fff,#f2f3f7)', '#e0453a'],
-  photos: ['linear-gradient(#ff9ec3,#ffd06a 55%,#7fd0ff)', '#fff'],
-  reference: ['linear-gradient(#a99cff,#6c5ce0)', '#fff'],
-  tools: ['linear-gradient(#9fb4cf,#6c7f9b)', '#fff'],
-};
+// 主屏幕上的图标：本机 /System/Applications 里各 App 自带的图标（public/icons/，sips 转成 PNG）。
 export function AppIcon({ k, cqw, size }: { k: string; cqw: number; size: number }) {
-  const [bg, ink] = ICON_BG[k];
-  return (
-    <div style={{ width: size * cqw, height: size * cqw, borderRadius: '26%', background: bg, color: ink, display: 'grid', placeItems: 'center', boxShadow: `0 ${0.6 * cqw}px ${1.4 * cqw}px -${0.8 * cqw}px rgba(0,0,0,.6)` }}>
-      <svg width="62%" height="62%" viewBox="0 0 32 32" fill="none" stroke="currentColor" strokeWidth={1.8} strokeLinecap="round" strokeLinejoin="round" dangerouslySetInnerHTML={{ __html: ICON_PATHS[k] }} />
-    </div>
-  );
+  // 系统图标四周自带约 10% 的留白和投影，画大一点让图形本身和原来一样大。
+  return <Img src={staticFile(`icons/${k}.png`)} style={{ width: size * 1.18 * cqw, height: size * 1.18 * cqw, display: 'block', margin: -size * 0.09 * cqw }} />;
 }
 
 /** 主屏幕：铺满屏，上面是“主屏幕 / App 资料库”，下面一排图标。拖走的那个不画。 */
 export function HomeScreen({ cqw, sw, sh, opacity, hide }: { cqw: number; sw: number; sh: number; opacity: number; hide?: string }) {
   return (
-    <div style={{ position: 'absolute', inset: 0, opacity, background: 'rgba(14,16,22,.96)', fontFamily: CJK }}>
-      <div style={{ position: 'absolute', top: 9 * cqw, left: '50%', transform: 'translateX(-50%)', display: 'flex', gap: 0.4 * cqw, padding: 0.4 * cqw, borderRadius: 99, background: 'rgba(255,255,255,.12)' }}>
+    <div style={{ position: 'absolute', inset: 0, opacity, fontFamily: CJK }}>
+      <Wallpaper blur={1.6 * cqw} dim={0.32} />
+      <div style={{ position: 'absolute', top: 9 * cqw, left: '50%', transform: 'translateX(-50%)', display: 'flex', gap: 0.4 * cqw, padding: 0.4 * cqw, borderRadius: 99, background: 'rgba(255,255,255,.14)', boxShadow: 'inset 0 0 0 0.5px rgba(255,255,255,.22)' }}>
         {['主屏幕', 'App 资料库'].map((t, i) => (
           <span key={t} style={{ padding: `${0.7 * cqw}px ${1.8 * cqw}px`, borderRadius: 99, fontSize: 1.4 * cqw, fontWeight: 600, color: i ? 'rgba(255,255,255,.7)' : '#171a20', background: i ? 'transparent' : '#fff' }}>{t}</span>
         ))}

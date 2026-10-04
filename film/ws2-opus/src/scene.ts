@@ -63,10 +63,10 @@ export const DRAFT: Rect = { x: 27, y: 17, w: 66, h: 72 };
 /** 左半屏：菜单栏（刘海高 1.96cqw ≈ 屏高 3%）下面，四边留一道窄缝。 */
 const LEFT: Rect = { x: 0.8, y: 3.9, w: 48.8, h: 95.3 };
 
-// 主屏幕一排六个图标（文案、图标取自 site/scripts/launchpad.mjs；“笔记”按系统叫法写成“备忘录”）。
+// 主屏幕一排六个图标：系统自带的 App，名字照系统简体中文。
 export const LAUNCH_APPS: { key: string; name: string }[] = [
   { key: 'mail', name: '邮件' }, { key: 'notes', name: '备忘录' }, { key: 'calendar', name: '日历' },
-  { key: 'photos', name: '照片' }, { key: 'reference', name: '参考' }, { key: 'tools', name: '工具' },
+  { key: 'photos', name: '照片' }, { key: 'music', name: '音乐' }, { key: 'settings', name: '系统设置' },
 ];
 export const iconCenter = (i: number) => ({ x: 50 + (i - 2.5) * 12, y: 46 });
 export const ICON_SIZE = 6; // 屏宽 %
