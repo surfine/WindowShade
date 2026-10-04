@@ -1,13 +1,14 @@
 // 屏里、屏外每一帧有什么。全部是帧号的函数。
 import { CROSSFADE, FADE_IN, FADE_OUT } from './motion/direction';
 import {
-  FPS, TEACH, TEACH_DOCKED, TEACH_HANDLE, TEACH_TUCKED, TUCK_FRAMES, clamp01, easeIn, mix, moveCurve, ms, seg,
-  slideSpring, teachPos, teachSize, tuckProgress, untuckProgress,
+  FPS, ISLAND_SHAPES, NOTCH, SITE_NOTCH_H, TEACH, TEACH_DOCKED, TEACH_HANDLE, TEACH_TUCKED, TUCK_FRAMES, clamp01, easeIn, mix,
+  moveCurve, ms, seg, slideSpring, teachPos, teachSize, tuckProgress, untuckProgress,
 } from './motion/site';
-import type { Rect } from './layout';
+import { SCREEN_ASPECT, type Rect } from './layout';
 import {
-  CAUSE_MOUSE, CAUSE_PODS, CLICK_CARD, LIFT_DRAW, LOCK_AT, MOUSE_END, MUSIC_PLAY, PHONE_GONE, PODS_END, PRESS_LONG_A, PRESS_LONG_B,
-  TUCK_A, TUCK_B, UNTUCK_A,
+  BUILD_DONE, CAUSE_MOUSE, CAUSE_PODS, CLICK_ALLOW, CLICK_CARD, CLICK_SUMMARY, DRAG_SIDE, DRAG_UP, DROP_OPEN, DROP_RELEASE, EDITS, GRAB,
+  LIFT_DRAW, LOCK_AT, MOUSE_END, MUSIC_PLAY, NOD_DEG, NOD_DONE, NOD_DOWN, NOD_FRAMES, PHONE_BACK, PHONE_GONE, PODS_END, PRESS_LONG_A,
+  PRESS_LONG_B, PREVIEW_AT, TOUCH_PRESS, TUCK_A, TUCK_B, UNLOCK, UNTUCK_A, UNTUCK_C,
 } from './timeline';
 
 type Pt = { x: number; y: number };
@@ -37,6 +38,7 @@ export const SLOTS: Record<string, Slot> = {
   P6: { id: 'P6', record: '从主屏幕把一个图标拖到左边，变成侧拉的窗口', seconds: 5, how: '单独录这一扇窗；和 P5 同一次录' },
   P7: { id: 'P7', record: '甩一下标题栏，侧拉的窗口收到边外；点把手拉回', seconds: 5, how: '单独录这一扇窗，再录一遍整屏核对' },
   P8: { id: 'P8', record: '番茄钟开始后，聊天窗口自己收进刘海', seconds: 3, how: '单独录这一扇窗，再录一遍整屏核对' },
+  P9: { id: 'P9', record: '按住终端的标题栏拖到刘海，横移到左半屏那一格松手', seconds: 6, how: '单独录这一扇窗，再录一遍整屏核对落点小岛' },
 };
 
 export type SlotFrame = {
@@ -58,6 +60,8 @@ const TERM: Rect = { x: 30, y: 22, w: 40, h: 56 };
 const CHAT: Rect = { x: 58, y: 20, w: 32, h: 52 };
 /** 后面那扇不在前台的“文章草稿”（画出来的那一版才有）。 */
 export const DRAFT: Rect = { x: 27, y: 17, w: 66, h: 72 };
+/** 左半屏：菜单栏（刘海高 1.96cqw ≈ 屏高 3%）下面，四边留一道窄缝。 */
+const LEFT: Rect = { x: 0.8, y: 3.9, w: 48.8, h: 95.3 };
 
 // 主屏幕一排六个图标（文案、图标取自 site/scripts/launchpad.mjs；“笔记”按系统叫法写成“备忘录”）。
 export const LAUNCH_APPS: { key: string; name: string }[] = [
@@ -116,6 +120,89 @@ function sideRect(f: number): Rect {
   return { ...D, x: mix(TEACH_TUCKED.x, D.x, slideSpring(f, HANDLE_CLICK, 0)) };
 }
 
+// ---- 落点小岛：五格横排在刘海下面（Notch.swift DropChoice 的顺序与名字） ----
+export const DROP_CHOICES = ['左半屏', '铺满屏幕', '收进刘海', '魔法平铺', '右半屏'] as const;
+/** 岛里的格子：左右各留 1.2cqw；竖着从硬件刘海下沿往下 0.6 到岛底上面 1.0（cqw）。 */
+export const DROP_UI = (() => {
+  const { w, h } = ISLAND_SHAPES.drop;
+  const pad = 1.2, pitch = (w - 2 * pad) / DROP_CHOICES.length;
+  return { pad, pitch, top: NOTCH.h + 0.6, bottom: h - 1.0 };
+})();
+const cqwToH = (v: number) => v * SCREEN_ASPECT; // 竖向 cqw → 屏高 %
+const dropCell = (i: number) => ({
+  x: 50 - ISLAND_SHAPES.drop.w / 2 + DROP_UI.pad + DROP_UI.pitch * (i + 0.5),
+  y: cqwToH((DROP_UI.top + DROP_UI.bottom) / 2),
+});
+/** 按住终端标题栏的那一点（标题字的左边，不挡字）。 */
+const GRAB_PT = { x: 44, y: TERM.y + cqwToH(5) / 2 };
+
+/** 指针停在落点小岛的哪一格：0–4；不在岛上是 -1。 */
+export function dropHoverAt(f: number): number {
+  if (f < DROP_OPEN || f >= DROP_RELEASE + FADE_OUT) return -1;
+  const p = pointerAt(f);
+  if (!p) return -1;
+  const left = 50 - ISLAND_SHAPES.drop.w / 2 + DROP_UI.pad;
+  const i = Math.floor((p.x - left) / DROP_UI.pitch);
+  return i >= 0 && i < DROP_CHOICES.length && p.y < cqwToH(ISLAND_SHAPES.drop.h) ? i : -1;
+}
+/** 构建跑完、还没轮到开口时，岛角上那个点。 */
+export const dropDotAt = (f: number) => (f < BUILD_DONE ? 0 : clamp01((f - BUILD_DONE) / FADE_IN));
+
+/** 拖着走：窗口跟着按住的那一点；松手后按 glide（0.42 / 0.88，与 teach.js 窗口位置同一根）滑到左半屏。 */
+function dropTermRect(f: number): Rect {
+  if (f < GRAB) return TERM;
+  const at = (g: number): Rect => {
+    const p = pointerAt(g);
+    return p ? { ...TERM, x: TERM.x + p.x - GRAB_PT.x, y: TERM.y + p.y - GRAB_PT.y } : TERM;
+  };
+  if (f < DROP_RELEASE) return at(f);
+  const from = at(DROP_RELEASE - 1);
+  const p = teachPos(((f - DROP_RELEASE) / FPS) * 1000);
+  return { x: mix(from.x, LEFT.x, p), y: mix(from.y, LEFT.y, p), w: mix(from.w, LEFT.w, p), h: mix(from.h, LEFT.h, p) };
+}
+export const termDoneAt = (f: number) => f >= BUILD_DONE;
+
+// ---- 刘海里问一次放行：两个按钮的位置（cqw，岛内坐标），岛和指针共用 ----
+export const ASK_UI = (() => {
+  const { w, h } = ISLAND_SHAPES.ask;
+  const pillW = 11, pillH = 3.6, pad = 1.8, gap = 1.2;
+  const allow = { x: w - pad - pillW, y: h - pad - pillH, w: pillW, h: pillH };
+  const deny = { ...allow, x: allow.x - gap - pillW };
+  return { allow, deny };
+})();
+const ALLOW_PT = { x: 50 - ISLAND_SHAPES.ask.w / 2 + ASK_UI.allow.x + ASK_UI.allow.w / 2, y: cqwToH(ASK_UI.allow.y + ASK_UI.allow.h / 2) };
+
+// ---- 离开期间：架子里两行（cqw，岛内坐标） ----
+export const SUMMARY_UI = { titleY: SITE_NOTCH_H + 2.6, rowY: SITE_NOTCH_H + 4, rowH: 7, x: 2.4 };
+const ROW2_PT = { x: 50 - ISLAND_SHAPES.shelf.w / 2 + 22, y: cqwToH(SUMMARY_UI.rowY + SUMMARY_UI.rowH * 1.5) };
+/** 指针在第几行上（0、1），不在是 -1。 */
+export function summaryHoverAt(f: number): number {
+  const p = pointerAt(f);
+  if (!p) return -1;
+  const { w } = ISLAND_SHAPES.shelf;
+  const x = p.x - (50 - w / 2), y = p.y / SCREEN_ASPECT;
+  if (x < SUMMARY_UI.x || x > w - SUMMARY_UI.x) return -1;
+  const i = Math.floor((y - SUMMARY_UI.rowY) / SUMMARY_UI.rowH);
+  return i === 0 || i === 1 ? i : -1;
+}
+
+// ---- 文章草稿：放行后三处引文依次改好；静音操作点头后去左半屏 ----
+export function draftAt(f: number) {
+  const moved = NOD_DONE + 2;
+  const p = f < moved ? 0 : teachPos(((f - moved) / FPS) * 1000);
+  const rect: Rect = { x: mix(DRAFT.x, LEFT.x, p), y: mix(DRAFT.y, LEFT.y, p), w: mix(DRAFT.w, LEFT.w, p), h: mix(DRAFT.h, LEFT.h, p) };
+  const marks = EDITS.map((e) => clamp01((f - e) / FADE_IN));
+  // 刘海说明对象：认出“左半屏”后，被冻结的那扇窗描一圈；点头完成就收。
+  const outline = fadeWindow(f, PREVIEW_AT + 6, FADE_IN, NOD_DONE, FADE_OUT);
+  return { rect, marks, outline };
+}
+
+/** 回来后点“聊天”那一行：聊天窗口从刘海放回（island.js 同一段动画倒着走）。只在画出来的那一版。 */
+export function chatBackAt(f: number) {
+  if (f < UNTUCK_C) return null;
+  return tucked(CHAT, untuckProgress(f, UNTUCK_C));
+}
+
 export function slotsAt(f: number): SlotFrame[] {
   const out: SlotFrame[] = [];
   const add = (id: string, rect: Rect, opacity: number, scale = 1, radius = WIN_RADIUS) => {
@@ -140,9 +227,11 @@ export function slotsAt(f: number): SlotFrame[] {
     add('P6', r, Math.min(clamp01((f - RELEASE_ICON) / FADE_IN), 1 - clamp01((f - 3720) / CROSSFADE)));
     add('P7', r, fadeWindow(f, 3720, CROSSFADE, 4330, CROSSFADE));
   }
+  // P9：终端拖到落点小岛，去左半屏。
+  if (f >= 4320 && f < 4980 + CROSSFADE) add('P9', dropTermRect(f), fadeWindow(f, 4320, CROSSFADE, 4980, CROSSFADE));
   // P8：聊天窗口，番茄钟开始后自己收进刘海。
-  if (f >= 6120 && f < TUCK_B + Math.ceil(TUCK_FRAMES)) {
-    const opacity = clamp01((f - 6120) / CROSSFADE);
+  if (f >= 8040 && f < TUCK_B + Math.ceil(TUCK_FRAMES)) {
+    const opacity = clamp01((f - 8040) / CROSSFADE);
     if (f < TUCK_B) add('P8', CHAT, opacity);
     else { const t = tucked(CHAT, tuckProgress(f, TUCK_B)); add('P8', t.rect, opacity, t.scale, t.radius); }
   }
@@ -172,9 +261,19 @@ const TRACKS: Track[] = [
   { show: 2900, hide: RELEASE_ICON + 10, start: { x: 50, y: 50 }, moves: [{ at: 2930, to: ON_NOTCH }, { at: 3040, to: DRAG.from }, { at: DRAG.start, to: DRAG.to }], presses: [[3010, 3021], [DRAG.press, RELEASE_ICON]] },
   // 第 5 段：点把手。
   { show: 3940, hide: 4060, start: { x: 30, y: 50 }, moves: [{ at: 3950, to: TEACH_HANDLE }], presses: [[4030, HANDLE_CLICK]] },
-  // 第 7 段：长按刘海；再长按回来。
-  { show: 5420, hide: 5570, start: { x: 50, y: 45 }, moves: [{ at: 5440, to: ON_NOTCH }], presses: [[PRESS_LONG_A, 5570]] },
-  { show: 5820, hide: 5950, start: { x: 50, y: 40 }, moves: [{ at: 5830, to: ON_NOTCH }], presses: [[PRESS_LONG_B, 5950]] },
+  // drop：按住终端标题栏，往上拖到刘海，横移到左半屏那一格，松手。
+  {
+    show: 4380, hide: DROP_RELEASE + 40, start: { x: 56, y: 52 },
+    moves: [{ at: 4395, to: GRAB_PT }, { at: DRAG_UP, to: dropCell(2) }, { at: DRAG_SIDE, to: dropCell(0) }, { at: DROP_RELEASE + 4, to: { x: 30, y: 40 } }],
+    presses: [[GRAB - ms(TEACH.press), DROP_RELEASE]],
+  },
+  // approve：点“允许”。
+  { show: 6200, hide: CLICK_ALLOW + 30, start: { x: 56, y: 48 }, moves: [{ at: 6215, to: ALLOW_PT }], presses: [[CLICK_ALLOW - ms(TEACH.press), CLICK_ALLOW]] },
+  // hold：长按刘海；再长按回来。
+  { show: 6680, hide: 6830, start: { x: 50, y: 45 }, moves: [{ at: 6700, to: ON_NOTCH }], presses: [[PRESS_LONG_A, 6830]] },
+  { show: 7080, hide: 7210, start: { x: 50, y: 40 }, moves: [{ at: 7090, to: ON_NOTCH }], presses: [[PRESS_LONG_B, 7210]] },
+  // back：点“离开期间”里的聊天那一行。
+  { show: 9340, hide: CLICK_SUMMARY + 30, start: { x: 54, y: 62 }, moves: [{ at: 9350, to: ROW2_PT }], presses: [[CLICK_SUMMARY - ms(TEACH.press), CLICK_SUMMARY]] },
 ];
 
 export type PointerFrame = Pt & { opacity: number; pressed: number };
@@ -214,7 +313,10 @@ export function deviceAt(f: number): { kind: 'pods' | 'mouse'; opacity: number; 
 
 // ---- 屏外的触控板（site/teach.js 的画法与节奏） ----
 export function trackpadAt(f: number) {
-  return Math.min(clamp01((f - SIDE.pad) / FADE_IN), 1 - clamp01((f - 5100) / ms(TEACH.fade)));
+  // 侧拉一段用一次，落点小岛那段用指针，让开；画一笔那段再出来。
+  const side = Math.min(clamp01((f - SIDE.pad) / FADE_IN), 1 - clamp01((f - 4320) / ms(TEACH.fade)));
+  const draw = Math.min(clamp01((f - 4980) / FADE_IN), 1 - clamp01((f - 5760) / ms(TEACH.fade)));
+  return Math.max(side, draw);
 }
 
 /** 画一笔：一条横躺的 S，按触控板宽高的百分比。 */
@@ -263,11 +365,39 @@ export function fingerAt(f: number): FingerFrame | null {
 
 // ---- 屏外的手机线稿：走开 ----
 export function phoneAt(f: number) {
-  if (f < 6340 || f >= PHONE_GONE) return null;
-  const away = moveCurve(seg(f, PHONE_GONE - ms(TEACH.move), PHONE_GONE));
-  const opacity = Math.min(clamp01((f - 6340) / FADE_IN), 1 - clamp01((f - (PHONE_GONE - FADE_OUT)) / FADE_OUT));
-  return { away, opacity };
+  if (f >= 8260 && f < PHONE_GONE) {
+    const away = moveCurve(seg(f, PHONE_GONE - ms(TEACH.move), PHONE_GONE));
+    const opacity = Math.min(clamp01((f - 8260) / FADE_IN), 1 - clamp01((f - (PHONE_GONE - FADE_OUT)) / FADE_OUT));
+    return { away, opacity };
+  }
+  // 回来：同一条路倒着走进来，停一会儿让位给 Touch ID 键。
+  const settle = PHONE_BACK + ms(TEACH.move), leave = TOUCH_PRESS - 40;
+  if (f >= PHONE_BACK && f < leave + FADE_OUT) {
+    return { away: 1 - moveCurve(seg(f, PHONE_BACK, settle)), opacity: 1 - clamp01((f - leave) / FADE_OUT) };
+  }
+  return null;
 }
 
-/** 锁上：屏里的东西叠化成黑。 */
-export const screenDark = (f: number) => clamp01((f - LOCK_AT) / CROSSFADE);
+/** 屏外的 Touch ID 键线稿：手指落下、按住、抬起。解锁走系统，片子不画任何代填。 */
+export function touchKeyAt(f: number) {
+  const show = TOUCH_PRESS - 40, gone = UNLOCK + 60;
+  if (f < show || f >= gone + FADE_OUT) return null;
+  const opacity = Math.min(clamp01((f - show) / FADE_IN), 1 - clamp01((f - gone) / FADE_OUT));
+  const reach = moveCurve(seg(f, TOUCH_PRESS - 26, TOUCH_PRESS)) * (1 - moveCurve(seg(f, UNLOCK + 10, UNLOCK + 10 + ms(TEACH.lift))));
+  const down = f >= TOUCH_PRESS && f < UNLOCK + 10 ? 1 : 0;
+  return { opacity, reach, down, lit: clamp01((f - UNLOCK) / FADE_IN) };
+}
+
+/** 屏外戴着耳机的侧脸线稿：不出声地说一句（嘴动），然后点一下头。 */
+export function headAt(f: number) {
+  const show = 7400, gone = 7980;
+  if (f < show || f >= gone + FADE_OUT) return null;
+  const opacity = Math.min(clamp01((f - show) / FADE_IN), 1 - clamp01((f - gone) / FADE_OUT));
+  const tilt = NOD_DEG * (moveCurve(seg(f, NOD_DOWN, NOD_DOWN + NOD_FRAMES)) - moveCurve(seg(f, NOD_DOWN + NOD_FRAMES, NOD_DONE)));
+  // 嘴型：说“左半屏”三个字，每字 0.25 秒开合一次（[片子新增]，只为看得出在说）。
+  const t = f - 7462, mouth = t >= 0 && t < 45 ? Math.abs(Math.sin((t / 15) * Math.PI)) : 0;
+  return { opacity, tilt, mouth };
+}
+
+/** 锁上：屏里的东西叠化成黑；Touch ID 解开后叠化回来。 */
+export const screenDark = (f: number) => clamp01((f - LOCK_AT) / CROSSFADE) * (1 - clamp01((f - UNLOCK) / CROSSFADE));

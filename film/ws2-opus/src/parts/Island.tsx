@@ -1,8 +1,9 @@
 import type { ReactNode } from 'react';
 import { islandAt, layersAt, type ContentLayer } from '../island';
+import { FADE_IN } from '../motion/direction';
 import { NOTCH, SITE_NOTCH_H, clamp01 } from '../motion/site';
-import { COUNTDOWN, type Content } from '../timeline';
-import { STROKE } from '../scene';
+import { CLICK_ALLOW, COUNTDOWN, type Content } from '../timeline';
+import { ASK_UI, DROP_CHOICES, DROP_UI, STROKE, SUMMARY_UI, dropDotAt, dropHoverAt, pointerAt, summaryHoverAt } from '../scene';
 
 const INK = 'rgba(255,255,255,.92)';
 const DIM = 'rgba(255,255,255,.5)';
@@ -26,7 +27,7 @@ export function Island({ frame, cqw, drawn }: { frame: number; cqw: number; draw
           <linearGradient id="album" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stopColor="#ff9ec3" /><stop offset=".55" stopColor="#ffd06a" /><stop offset="1" stopColor="#7fd0ff" /></linearGradient>
           <linearGradient id="tile" x1="0" y1="0" x2=".4" y2="1"><stop offset="0" stopColor="#3a3d45" /><stop offset="1" stopColor="#15161a" /></linearGradient>
         </defs>
-        {layers.map((l, i) => <g key={`${l.content}-${i}`}>{paint(l, s.w, s.h)}</g>)}
+        {layers.map((l, i) => <g key={`${l.content}-${i}`}>{paint(l, s.w, s.h, frame)}</g>)}
       </svg>
     </div>
   );
@@ -60,9 +61,96 @@ function alertBody(l: ContentLayer, icon: ReactNode) {
   );
 }
 
-function draw(l: ContentLayer, w: number, h: number): ReactNode {
+/** 指针停在哪一格，用最近 fade 入那么多帧的占比做亮度：换格时两格交叉淡化，不跳。 */
+function hoverAmount(at: (f: number) => number, frame: number, i: number) {
+  let n = 0;
+  for (let k = 0; k < FADE_IN; k++) if (at(frame - k) === i) n++;
+  return n / FADE_IN;
+}
+
+// 落点小岛五格的符号：一块屏，按去处涂满一部分（照 Notch.swift DropChoice.symbol 的意思画）。
+function dropGlyph(i: number, ink: string) {
+  const W = 4, H = 2.8, x = -W / 2, y = -H / 2;
+  const fill = [
+    <rect key="l" x={x + 0.45} y={y + 0.45} width={W / 2 - 0.6} height={H - 0.9} rx={0.2} fill={ink} />,
+    <rect key="f" x={x + 0.45} y={y + 0.45} width={W - 0.9} height={H - 0.9} rx={0.2} fill={ink} />,
+    <g key="t"><line {...line} stroke={ink} x1={0} x2={0} y1={y + 0.5} y2={0.45} strokeWidth={0.26} /><path {...line} stroke={ink} strokeWidth={0.26} d={`M -0.7 -0.2 L 0 0.5 L 0.7 -0.2`} /><line {...line} stroke={ink} x1={-1.1} x2={1.1} y1={0.95} y2={0.95} strokeWidth={0.26} /></g>,
+    <g key="m">{[0, 1, 2].map((k) => <rect key={k} x={x + 0.45 + k * 1.07} y={y + 0.45} width={0.85} height={H - 0.9} rx={0.15} fill={ink} />)}</g>,
+    <rect key="r" x={0.15} y={y + 0.45} width={W / 2 - 0.6} height={H - 0.9} rx={0.2} fill={ink} />,
+  ][i];
+  return (
+    <g>
+      {i !== 2 && <rect {...line} stroke={ink} strokeWidth={0.2} x={x} y={y} width={W} height={H} rx={0.45} />}
+      {fill}
+    </g>
+  );
+}
+
+const sessionGlyph = <g><path {...line} d="M 0 -1.4 A 1.4 1.4 0 1 1 -1.21 0.7" /><circle cx={0} cy={0} r={0.35} fill={INK} /></g>;
+const mouthGlyph = <path {...line} d="M -1.6 0 Q 0 -1.1 1.6 0 Q 0 1.3 -1.6 0 Z" />;
+const mouseGlyph = <g><rect {...line} x={-1.1} y={-1.8} width={2.2} height={3.6} rx={1.1} /><line {...line} x1={0} x2={0} y1={-1.5} y2={-0.7} /></g>;
+const chatGlyph = <path {...line} d="M -1.7 -1.4 H 1.7 A 0.6 0.6 0 0 1 2.3 -0.8 V 0.7 A 0.6 0.6 0 0 1 1.7 1.3 H -0.4 L -1.4 2.1 V 1.3 H -1.7 A 0.6 0.6 0 0 1 -2.3 0.7 V -0.8 A 0.6 0.6 0 0 1 -1.7 -1.4 Z" />;
+
+function drawDrop(l: ContentLayer, w: number, frame: number, real: boolean) {
+  const { pad, pitch, top, bottom } = DROP_UI;
+  const dot = dropDotAt(frame);
+  return (
+    <g>
+      {DROP_CHOICES.map((name, i) => {
+        const x = pad + pitch * i, cx = x + pitch / 2, on = hoverAmount(dropHoverAt, frame, i);
+        const ink = `rgba(255,255,255,${0.62 + 0.38 * on})`;
+        return (
+          <g key={name}>
+            <rect opacity={l.first} x={x + 0.3} y={top} width={pitch - 0.6} height={bottom - top} rx={1.6} fill={`rgba(255,255,255,${0.05 + 0.13 * on})`} />
+            <g opacity={l.first} transform={`translate(${cx} ${top + (real ? 3.1 : (bottom - top) / 2)})`}>{dropGlyph(i, ink)}</g>
+            {real && <text opacity={l.second} x={cx} y={bottom - 1.2} textAnchor="middle" fontFamily={CJK} fontSize={1.35} fontWeight={on > 0.5 ? 600 : 400} fill={ink}>{name}</text>}
+          </g>
+        );
+      })}
+      {/* 你正在拖（第 2 层），构建跑完只在次区域留一个点。 */}
+      <circle cx={w / 2 + NOTCH.w / 2 + 1.6} cy={NOTCH.h / 2} r={0.5} fill="#7ea4ff" opacity={dot * l.first} />
+    </g>
+  );
+}
+
+function draw(l: ContentLayer, w: number, h: number, frame = 0): ReactNode {
   const c: Content = l.content;
   switch (c) {
+    case 'drop':
+      return drawDrop(l, w, frame, false);
+    case 'ask': {
+      const { allow, deny } = ASK_UI;
+      return (
+        <>
+          {alertBody(l, sessionGlyph)}
+          {[deny, allow].map((b, i) => <rect key={i} {...line} opacity={l.second} x={b.x} y={b.y} width={b.w} height={b.h} rx={b.h / 2} stroke={i ? INK : DIM} />)}
+        </>
+      );
+    }
+    case 'cited':
+      return alertBody(l, sessionGlyph);
+    case 'preview':
+      return alertBody(l, dropGlyph(0, INK));
+    case 'lips':
+      return ears(l, w, mouthGlyph, <g>{[-0.9, 0, 0.9].map((x, i) => <circle key={i} cx={x} cy={0} r={0.3} fill={INK} opacity={l.since >= i * 15 ? 1 : 0.3} />)}</g>);
+    case 'summary': {
+      const { rowY, rowH, x } = SUMMARY_UI;
+      return (
+        <g>
+          {[0, 1].map((i) => {
+            const y = rowY + rowH * i;
+            return (
+              <g key={i} opacity={i ? l.second : l.first}>
+                <rect x={x} y={y + 0.3} width={w - 2 * x} height={rowH - 0.6} rx={1.8} fill="rgba(255,255,255,.12)" opacity={hoverAmount(summaryHoverAt, frame, i)} />
+                <g transform={`translate(${x + 3.6} ${y + rowH / 2})`}>{i ? chatGlyph : mouseGlyph}</g>
+                <line {...line} x1={x + 7.2} x2={x + 22} y1={y + rowH / 2 - 0.9} y2={y + rowH / 2 - 0.9} strokeWidth={0.8} />
+                <line {...line} x1={x + 7.2} x2={x + 17} y1={y + rowH / 2 + 1.3} y2={y + rowH / 2 + 1.3} strokeWidth={0.55} stroke={DIM} />
+              </g>
+            );
+          })}
+        </g>
+      );
+    }
     case 'music':
       return ears(l, w,
         <circle {...line} r={1.25} />,
@@ -179,8 +267,63 @@ function tile(glyph: ReactNode) {
   );
 }
 
-function drawReal(l: ContentLayer, w: number, h: number): ReactNode {
+function drawReal(l: ContentLayer, w: number, h: number, frame: number): ReactNode {
   switch (l.content) {
+    case 'drop':
+      return drawDrop(l, w, frame, true);
+    case 'ask': {
+      // 要你放行的事：一句问话，两个按钮。只认问话出现之后的那一下点。
+      const { allow, deny } = ASK_UI;
+      const size = 6, x = 2.2, y = SITE_NOTCH_H + 0.6;
+      const p = pointerAt(frame);
+      const pressed = p && frame >= CLICK_ALLOW - 12 && frame <= CLICK_ALLOW ? p.pressed : 0;
+      return (
+        <>
+          <g opacity={l.first} transform={`translate(${x + size / 2} ${y + size / 2})`}>{tile(sessionGlyph)}</g>
+          <text opacity={l.first} x={x + size + 1.6} y={y + 2.9} fontFamily={CJK} fontWeight={600} fontSize={2.3} fill="#fff">允许改文章草稿？</text>
+          <text opacity={l.second} x={x + size + 1.6} y={y + 5.5} fontFamily={CJK} fontSize={1.7} fill="rgba(255,255,255,.62)">Claude · 核对三处引文</text>
+          <g opacity={l.second}>
+            <rect x={deny.x} y={deny.y} width={deny.w} height={deny.h} rx={deny.h / 2} fill="rgba(255,255,255,.12)" />
+            <text x={deny.x + deny.w / 2} y={deny.y + deny.h / 2 + 0.6} textAnchor="middle" fontFamily={CJK} fontSize={1.7} fill="#fff">不允许</text>
+            <rect x={allow.x} y={allow.y} width={allow.w} height={allow.h} rx={allow.h / 2} fill="#7ea4ff" />
+            <rect x={allow.x} y={allow.y} width={allow.w} height={allow.h} rx={allow.h / 2} fill="#fff" opacity={0.28 * pressed} />
+            <text x={allow.x + allow.w / 2} y={allow.y + allow.h / 2 + 0.6} textAnchor="middle" fontFamily={CJK} fontWeight={600} fontSize={1.7} fill="#0b1630">允许</text>
+          </g>
+        </>
+      );
+    }
+    case 'cited':
+      return alertReal(l, h, tile(sessionGlyph), '引文已核对', '改了 3 处 · 文章草稿');
+    case 'preview':
+      return alertReal(l, h, tile(dropGlyph(0, INK)), '左半屏', '文章草稿 · 点头确认');
+    case 'lips':
+      // 读口型：左边是嘴，右边三个点随说出的字一个个亮。
+      return ears(l, w,
+        <g transform="scale(1.1)">{mouthGlyph}</g>,
+        <g>{[-1.1, 0, 1.1].map((x, i) => <circle key={i} cx={x} cy={0} r={0.4} fill="#fff" opacity={l.since >= i * 15 ? 1 : 0.25} />)}</g>);
+    case 'summary': {
+      const { titleY, rowY, rowH, x } = SUMMARY_UI;
+      const rows = [
+        { icon: mouseGlyph, title: '妙控鼠标电量低', detail: '还剩 10%，记得充电' },
+        { icon: chatGlyph, title: '聊天', detail: '3 条新消息' },
+      ];
+      return (
+        <g>
+          <text opacity={l.first} x={x + 0.8} y={titleY} fontFamily={CJK} fontWeight={600} fontSize={1.6} fill="rgba(255,255,255,.62)">离开期间</text>
+          {rows.map((r, i) => {
+            const y = rowY + rowH * i;
+            return (
+              <g key={r.title} opacity={i ? l.second : l.first}>
+                <rect x={x} y={y + 0.3} width={w - 2 * x} height={rowH - 0.6} rx={1.8} fill="rgba(255,255,255,.12)" opacity={hoverAmount(summaryHoverAt, frame, i)} />
+                <g transform={`translate(${x + 3.6} ${y + rowH / 2}) scale(0.85)`}>{tile(r.icon)}</g>
+                <text x={x + 7.6} y={y + rowH / 2 - 0.25} fontFamily={CJK} fontWeight={600} fontSize={2.1} fill="#fff">{r.title}</text>
+                <text x={x + 7.6} y={y + rowH / 2 + 2.15} fontFamily={CJK} fontSize={1.6} fill="rgba(255,255,255,.62)">{r.detail}</text>
+              </g>
+            );
+          })}
+        </g>
+      );
+    }
     case 'music':
       return ears(l, w,
         <rect x={-1.7} y={-1.7} width={3.4} height={3.4} rx={0.7} fill="url(#album)" />,
@@ -221,7 +364,7 @@ function drawReal(l: ContentLayer, w: number, h: number): ReactNode {
       );
     }
     case 'stroke': {
-      const base = draw(l, w, h);
+      const base = draw(l, w, h, frame);
       const said = clamp01((l.since - 260) / 11);
       return (
         <g>
@@ -238,6 +381,6 @@ function drawReal(l: ContentLayer, w: number, h: number): ReactNode {
         <g><circle {...line} r={1.4} stroke="rgba(255,255,255,.18)" strokeWidth={0.4} /><circle {...line} r={1.4} stroke="#ff6b5e" strokeWidth={0.4} /></g>,
         <text x={0} y={0.7} textAnchor="middle" fontFamily={CJK} fontWeight={600} fontSize={1.8} fill="#fff">25 分</text>);
     default:
-      return draw(l, w, h);
+      return draw(l, w, h, frame);
   }
 }
