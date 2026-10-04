@@ -14,8 +14,8 @@ export const SEGMENTS: Segment[] = [
   { id: 'tuck', from: 1800, to: 2880, line: '窗口收进刘海，再放回' },
   { id: 'home', from: 2880, to: 3720, line: '点一下刘海，回到主屏幕' },
   { id: 'side', from: 3720, to: 4320, line: '甩出去，点回来' },
-  // 落点小岛已经在 prototype/App/Notch.swift 里；“提醒等你松手”那一下是概念。
-  { id: 'drop', from: 4320, to: 4980, line: '拖到刘海，选个位置', concept: [4570, 4980] },
+  // 落点小岛已经在 prototype/App/Notch.swift 里，整段不挂概念标签（Aaron 2026-10-04）。
+  { id: 'drop', from: 4320, to: 4980, line: '拖到刘海，选个位置' },
   { id: 'draw', from: 4980, to: 6060, line: '画一笔，说一句', concept: [4980, 6060] },
   { id: 'approve', from: 6060, to: 6660, line: '要你放行的，只问一次', concept: [6060, 6660] },
   { id: 'hold', from: 6660, to: 7380, line: '长按刘海，换一种用法', concept: [6660, 7380] },
@@ -38,7 +38,7 @@ export const CAPTIONS: { text: string; from: number; to: number }[] = [
   { text: SEGMENTS[8].line, from: 6880, to: 7320 },
   { text: SEGMENTS[9].line, from: 7470, to: 7990 },
   { text: SEGMENTS[10].line, from: 8220, to: 9000 },
-  { text: SEGMENTS[11].line, from: 9120, to: 9670 },
+  { text: SEGMENTS[11].line, from: 9120, to: 9700 },
 ];
 export const WORDMARK_AT = 9780;
 export const FADE_TO_BLACK = [10080, TOTAL] as const;
@@ -51,7 +51,7 @@ export const DOLLY_AT = 680;
 export type Content =
   | 'none' | 'music' | 'headphones' | 'mouse' | 'window' | 'windowChanged' | 'card' | 'build'
   | 'stroke' | 'session' | 'road' | 'focus' | 'countdown'
-  | 'drop' | 'ask' | 'cited' | 'lips' | 'preview' | 'summary';
+  | 'drop' | 'ask' | 'cited' | 'lips' | 'preview' | 'verify' | 'unlocked' | 'summary';
 
 /** at：起因确定的那一帧，旧内容从这里开始淡出；形状 exit.gap 之后换目标；新内容在形状走到 40% 时进场。 */
 export type IslandEvent = { at: number; mode: IslandMode; content: Content; inAt?: number };
@@ -90,10 +90,12 @@ export const PRESS_LONG_A = 6780, PRESS_LONG_B = 7160;
 export const LONG_PRESS = 30; // 长按门槛：片子取 0.5 秒，产品值待定
 
 // ---- nod：不出声说“左半屏”，刘海给出对象，点头才换 ----
+/** 推近刘海看读口型：镜头先推稳，界面才换；界面停住，镜头才拉回（motion-direction 原则 6）。 */
+export const ZOOM_LIPS = [7380, 7530] as const;
 export const LIPS_AT = 7460;
-export const PREVIEW_AT = 7560;
+export const PREVIEW_AT = 7620;
 /** 点头：低下 0.33 秒、回正 0.33 秒，低 14°。[片子新增] 2.1 规格只定“回正 → 下点 → 回正”，没给时长和角度。 */
-export const NOD_DOWN = 7680, NOD_FRAMES = 20, NOD_DEG = 14;
+export const NOD_DOWN = 7740, NOD_FRAMES = 20, NOD_DEG = 14;
 export const NOD_DONE = NOD_DOWN + 2 * NOD_FRAMES;
 
 export const FOCUS_START = 8100;
@@ -103,11 +105,16 @@ export const GRACE = 90; // 离开就锁：手机断开后 1.5 秒宽限（docs/
 export const COUNTDOWN = 600; // 刘海倒数 10 秒
 export const LOCK_AT = PHONE_GONE + GRACE + COUNTDOWN;
 
-// ---- back：手机回来，按 Touch ID 解开，刘海给一条“离开期间” ----
+// ---- back：回来就开（dynamic-lock.md）：手机回到身边、相机认出人，两样都对才开；Touch ID 和密码是后备 ----
 export const PHONE_BACK = 9080;
-export const TOUCH_PRESS = 9220;
-export const UNLOCK = TOUCH_PRESS + ms(TEACH.press);
-export const CLICK_SUMMARY = 9460;
+/** 手机重新连上并读到回应，信号连续 2 秒够强（dynamic-lock.md“回来就开”第 2、3 条）。 */
+export const PHONE_OK = PHONE_BACK + ms(TEACH.move) + 120;
+export const ZOOM_BACK = [PHONE_BACK + ms(TEACH.move), 9380] as const;
+export const VERIFY_AT = PHONE_OK; // 锁屏上的刘海只多一条窄的验证状态（2.1 OS-14）
+export const FACE_OK = VERIFY_AT + 50; // 相机认出人：这一刻是示意，没有实测耗时
+export const BOTH_OK = FACE_OK + 20;
+export const UNLOCK = 9470; // 系统确认已解开，桌面才回来（2.1 OS-16）
+export const CLICK_SUMMARY = 9640;
 export const UNTUCK_C = CLICK_SUMMARY + 2;
 
 export const ISLAND_EVENTS: IslandEvent[] = [
@@ -144,7 +151,10 @@ export const ISLAND_EVENTS: IslandEvent[] = [
   { at: FOCUS_START, mode: 'compact', content: 'focus' },
   { at: PHONE_GONE + GRACE, mode: 'alert', content: 'countdown' },
   { at: LOCK_AT, mode: 'rest', content: 'none' },
-  { at: UNLOCK + BEAT, mode: 'shelf', content: 'summary' },
+  { at: VERIFY_AT, mode: 'compact', content: 'verify' },
+  { at: BOTH_OK, mode: 'alert', content: 'unlocked' },
+  // 提醒直接长成“离开期间”，不先收回。
+  { at: UNLOCK + BEAT, mode: 'digest', content: 'summary' },
   { at: CLICK_SUMMARY, mode: 'rest', content: 'none' },
 ];
 

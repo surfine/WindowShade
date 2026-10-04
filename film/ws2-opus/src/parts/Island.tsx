@@ -2,7 +2,7 @@ import type { ReactNode } from 'react';
 import { islandAt, layersAt, type ContentLayer } from '../island';
 import { FADE_IN } from '../motion/direction';
 import { NOTCH, SITE_NOTCH_H, clamp01 } from '../motion/site';
-import { CLICK_ALLOW, COUNTDOWN, type Content } from '../timeline';
+import { CLICK_ALLOW, COUNTDOWN, FACE_OK, type Content } from '../timeline';
 import { ASK_UI, DROP_CHOICES, DROP_UI, STROKE, SUMMARY_UI, dropDotAt, dropHoverAt, pointerAt, summaryHoverAt } from '../scene';
 
 const INK = 'rgba(255,255,255,.92)';
@@ -113,6 +113,27 @@ function drawDrop(l: ContentLayer, w: number, frame: number, real: boolean) {
   );
 }
 
+// 回来就开：右边两枚小点，左是人、右是手机，各自对上就亮（face-unlock.md“开盖·认你”）。不画任何脸的图形。
+function factorDots(person: number, phone: number, ink: string) {
+  return [person, phone].map((on, i) => (
+    <circle key={i} cx={i ? 0.9 : -0.9} cy={0} r={0.55} fill={on > 0 ? '#34c759' : 'none'} fillOpacity={on} stroke={ink} strokeWidth={0.2} strokeOpacity={1 - 0.6 * on} />
+  ));
+}
+/** 锁屏上那一条窄的验证状态：左边一圈在走（交互中的反馈，不是待机），中间是相机的绿灯，右边两点。 */
+function verifyEars(l: ContentLayer, w: number, frame: number, ink: string) {
+  const a = (frame * 6) % 360; // 每秒一圈
+  const person = clamp01((frame - FACE_OK) / FADE_IN);
+  return (
+    <>
+      {ears(l, w,
+        <g transform={`rotate(${a})`}><circle {...line} r={1.25} stroke="rgba(255,255,255,.18)" /><path {...line} stroke={ink} d="M 0 -1.25 A 1.25 1.25 0 0 1 1.25 0" /></g>,
+        <g>{factorDots(person, 1, ink)}</g>)}
+      {/* 相机在硬件刘海正中；用着时亮绿灯，照系统的样子。 */}
+      <circle cx={w / 2} cy={NOTCH.h / 2} r={0.28} fill="#34c759" opacity={l.first} />
+    </>
+  );
+}
+
 function draw(l: ContentLayer, w: number, h: number, frame = 0): ReactNode {
   const c: Content = l.content;
   switch (c) {
@@ -129,6 +150,9 @@ function draw(l: ContentLayer, w: number, h: number, frame = 0): ReactNode {
     }
     case 'cited':
       return alertBody(l, sessionGlyph);
+    case 'verify':
+    case 'unlocked':
+      return c === 'verify' ? verifyEars(l, w, frame, INK) : alertBody(l, <g>{factorDots(1, 1, INK)}</g>);
     case 'preview':
       return alertBody(l, dropGlyph(0, INK));
     case 'lips':
@@ -137,12 +161,12 @@ function draw(l: ContentLayer, w: number, h: number, frame = 0): ReactNode {
       const { rowY, rowH, x } = SUMMARY_UI;
       return (
         <g>
-          {[0, 1].map((i) => {
+          {[0, 1, 2].map((i) => {
             const y = rowY + rowH * i;
             return (
               <g key={i} opacity={i ? l.second : l.first}>
                 <rect x={x} y={y + 0.3} width={w - 2 * x} height={rowH - 0.6} rx={1.8} fill="rgba(255,255,255,.12)" opacity={hoverAmount(summaryHoverAt, frame, i)} />
-                <g transform={`translate(${x + 3.6} ${y + rowH / 2})`}>{i ? chatGlyph : mouseGlyph}</g>
+                <g transform={`translate(${x + 3.6} ${y + rowH / 2})`}>{[sessionGlyph, mouseGlyph, chatGlyph][i]}</g>
                 <line {...line} x1={x + 7.2} x2={x + 22} y1={y + rowH / 2 - 0.9} y2={y + rowH / 2 - 0.9} strokeWidth={0.8} />
                 <line {...line} x1={x + 7.2} x2={x + 17} y1={y + rowH / 2 + 1.3} y2={y + rowH / 2 + 1.3} strokeWidth={0.55} stroke={DIM} />
               </g>
@@ -294,6 +318,10 @@ function drawReal(l: ContentLayer, w: number, h: number, frame: number): ReactNo
     }
     case 'cited':
       return alertReal(l, h, tile(sessionGlyph), '引文已核对', '改了 3 处 · 文章草稿');
+    case 'verify':
+      return verifyEars(l, w, frame, '#fff');
+    case 'unlocked':
+      return alertReal(l, h, tile(<g transform="scale(1.4)">{factorDots(1, 1, '#fff')}</g>), '两样都对上了', '人在 · 手机在身边');
     case 'preview':
       return alertReal(l, h, tile(dropGlyph(0, INK)), '左半屏', '文章草稿 · 点头确认');
     case 'lips':
@@ -303,7 +331,9 @@ function drawReal(l: ContentLayer, w: number, h: number, frame: number): ReactNo
         <g>{[-1.1, 0, 1.1].map((x, i) => <circle key={i} cx={x} cy={0} r={0.4} fill="#fff" opacity={l.since >= i * 15 ? 1 : 0.25} />)}</g>);
     case 'summary': {
       const { titleY, rowY, rowH, x } = SUMMARY_UI;
+      // 两家助手只写名字，不画标志。
       const rows = [
+        { icon: sessionGlyph, title: 'Codex 跑完了', detail: '42 个测试通过 · Claude 还在跑' },
         { icon: mouseGlyph, title: '妙控鼠标电量低', detail: '还剩 10%，记得充电' },
         { icon: chatGlyph, title: '聊天', detail: '3 条新消息' },
       ];

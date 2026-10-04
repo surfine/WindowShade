@@ -46,6 +46,8 @@ export const ISLAND_SHAPES = {
   drop: { w: 2 * (340 / 1710) * 100, h: NOTCH.h + 2 * (84 / 1710) * 100, r: 3.8 },
   // [片子新增] 刘海里问一次放行：比提醒高一行，放两个按钮。
   ask: { w: 42, h: SITE_NOTCH_H + 13, r: 4 },
+  // [片子新增] 回来时的“离开期间”：和架子一样宽，三行。
+  digest: { w: 54, h: SITE_NOTCH_H + 26, r: 4.2 },
 } as const;
 export type IslandMode = keyof typeof ISLAND_SHAPES;
 
