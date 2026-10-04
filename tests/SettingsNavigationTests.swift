@@ -68,6 +68,9 @@ struct SettingsNavigationTests {
     }
     precondition(privacyTexts.contains("显示技术细节"), "Privacy page must offer the technical detail toggle")
     precondition(privacyTexts.contains("已隐藏"), "private 值默认要藏起来")
+    precondition(privacyTexts.contains("还没读"), "planned 行保持还没读")
+    precondition(WS2PrivacyData.rows.contains { $0.id == "agent-voice-proof" && $0.status == "planned" },
+                 "声纹行留在 planned")
     settings.window?.setContentSize(NSSize(width: 820, height: 580))
     for (section, names) in rowsBySection {
     settings.select(section: section)

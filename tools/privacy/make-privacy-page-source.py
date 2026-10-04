@@ -1,8 +1,9 @@
 #!/usr/bin/env python3
-"""把登记表里 status=current 的行生成设置页用的 Swift 数据源。
+"""把登记表生成设置页用的 Swift 数据源。
 
-页面和官网都从 tools/privacy/registry.json 生成；生成的文件要提交，tests/run-privacy-page-sync.sh
-会重跑一次并比对，防止手改数据源和登记表跑偏。planned 行不上页面。
+页面从 tools/privacy/registry.json 生成；生成的文件要提交，tests/run-privacy-page-sync.sh
+会重跑一次并比对，防止手改数据源和登记表跑偏。
+current 行用现有快照。planned 行也进页面，状态保持 planned，页面上固定显示「还没读」。
 """
 import argparse
 import json
@@ -24,7 +25,7 @@ def swift(_value: str) -> str:
 
 groups: list[str] = []
 for signal in data["signals"]:
-    if signal["status"] == "current" and signal["group"] not in groups:
+    if signal["group"] not in groups:
         groups.append(signal["group"])
 
 interfaces: dict[str, list[str]] = {}
@@ -35,7 +36,7 @@ for site in data["sites"]:
 
 lines = [
     "// 由 tools/privacy/make-privacy-page-source.py 从 tools/privacy/registry.json 生成；不要手改。",
-    "// 只有 status=current 的行会出现在设置里；planned 行等对应功能接通再说。",
+    "// current 行显示现有快照。planned 行也列出，值固定为「还没读」，真的读到再改登记状态。",
     "import Foundation",
     "",
     "struct WS2PrivacyRow: Sendable {",
@@ -49,6 +50,8 @@ lines = [
     "    let destination: String",
     "    let activation: String",
     "    let toggle: String",
+    "    /// current 或 planned。planned 的值固定是「还没读」。",
+    "    let status: String",
     "    /// 登记表里这类读取用到的接口名；「显示技术细节」打开后才看得到。",
     "    let interfaces: [String]",
     "}",
@@ -59,10 +62,8 @@ lines = [
     "    static let rows: [WS2PrivacyRow] = [",
 ]
 for signal in data["signals"]:
-    if signal["status"] != "current":
-        continue
     lines.append("        WS2PrivacyRow(")
-    for key in ("id", "label", "sensitivity", "group", "reads", "purpose", "destination", "activation", "toggle"):
+    for key in ("id", "label", "sensitivity", "group", "reads", "purpose", "destination", "activation", "toggle", "status"):
         lines.append(f"            {key}: {swift(signal[key])},")
     symbols = ", ".join(swift(s) for s in sorted(interfaces.get(signal["id"], [])))
     lines.append(f"            interfaces: [{symbols}],")
@@ -70,4 +71,6 @@ for signal in data["signals"]:
 lines += ["    ]", "}", ""]
 
 pathlib.Path(a.out).write_text("\n".join(lines))
-print(f"wrote {a.out}: {sum(1 for s in data['signals'] if s['status'] == 'current')} rows in {len(groups)} groups")
+current = sum(1 for s in data["signals"] if s["status"] == "current")
+planned = sum(1 for s in data["signals"] if s["status"] == "planned")
+print(f"wrote {a.out}: {current} current, {planned} planned, {len(groups)} groups")
