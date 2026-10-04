@@ -598,6 +598,70 @@
    "destination": "内存会话；Keychain 持久化仍缺",
    "activation": "首次配对准入之后；撤销即关闭会话",
    "toggle": "来源选择和连接撤销"
+  },
+  {
+   "id": "input-scroll",
+   "label": "滚轮和鼠标按键",
+   "sensitivity": "sensitive",
+   "group": "你同意后才读",
+   "reads": "滚轮和鼠标按键（开了平滑滚动或改方向时才拦截；不存）",
+   "purpose": "按设置改滚动。这一包还没有确认过的滚轮，所以先不拦截",
+   "destination": "内存；不发送",
+   "activation": "平滑滚动或鼠标滚动方向打开，并且滚轮与逐事件来源都已确认",
+   "toggle": "平滑滚动、鼠标滚动方向",
+   "status": "planned",
+   "rule": "I3",
+   "verification": "not-implemented",
+   "retention": "see destination; no new polling or telemetry",
+   "log_policy": "no raw private values"
+  },
+  {
+   "id": "input-multitouch",
+   "label": "触控板上的手指",
+   "sensitivity": "sensitive",
+   "group": "你同意后才读",
+   "reads": "妙控鼠标、妙控板表面上的手指位置（开了轻点时才读；不存）",
+   "purpose": "三指轻点、四指轻点。结构还没核对，这一包不读",
+   "destination": "内存；不发送",
+   "activation": "主模型核对过多触点布局，并且对应开关打开",
+   "toggle": "三指轻点、四指轻点",
+   "status": "planned",
+   "rule": "I2",
+   "verification": "not-implemented",
+   "retention": "see destination; no new polling or telemetry",
+   "log_policy": "no raw private values"
+  },
+  {
+   "id": "input-siri-remote",
+   "label": "Siri 遥控器的按键",
+   "sensitivity": "sensitive",
+   "group": "你同意后才读",
+   "reads": "Siri 遥控器的按键。触控面和麦克风不在这一包",
+   "purpose": "遥控模式。静音映射还没核对，这一包不听",
+   "destination": "内存；不发送",
+   "activation": "遥控模式打开，并且静音映射已核对",
+   "toggle": "遥控模式",
+   "status": "planned",
+   "rule": "I5",
+   "verification": "not-implemented",
+   "retention": "see destination; no new polling or telemetry",
+   "log_policy": "no raw private values"
+  },
+  {
+   "id": "input-gamepad",
+   "label": "手柄",
+   "sensitivity": "public",
+   "group": "不用问就能读",
+   "reads": "手柄的按键、摇杆、触控板、陀螺仪（控制这台 Mac 开着时；游戏在前台时不读）",
+   "purpose": "用手柄操作这台 Mac。这一包没有接手柄",
+   "destination": "内存；不发送",
+   "activation": "每台手柄自己的开关打开之后",
+   "toggle": "控制这台 Mac",
+   "status": "planned",
+   "rule": "I8",
+   "verification": "not-implemented",
+   "retention": "see destination; no new polling or telemetry",
+   "log_policy": "no raw private values"
   }
  ],
  "sites": [
@@ -3862,6 +3926,41 @@
    "symbol": "AXUIElementCopyAttributeValue",
    "source": "guard AXUIElementCopyAttributeValue(win, attribute as CFString, &raw) == .success else { return nil }",
    "signal": "window-ax"
+  },
+  {
+   "path": "prototype/App/ScrollTap.swift",
+   "line": 104,
+   "symbol": "CGEvent.tapCreate",
+   "source": "guard let created = CGEvent.tapCreate(tap: .cgSessionEventTap, place: .headInsertEventTap, options: .defaultTap, eventsOfInterest: mask, callback: { _, type, event, refcon in",
+   "signal": "input-scroll"
+  },
+  {
+   "path": "prototype/App/WS2InputController.swift",
+   "line": 20,
+   "symbol": "UserDefaults",
+   "source": "let store = UserDefaults.standard",
+   "signal": "settings"
+  },
+  {
+   "path": "prototype/App/WS2InputPreferences.swift",
+   "line": 32,
+   "symbol": "UserDefaults",
+   "source": "static func load(from store: UserDefaults) -> Value {",
+   "signal": "settings"
+  },
+  {
+   "path": "prototype/App/WS2InputPreferences.swift",
+   "line": 45,
+   "symbol": "UserDefaults",
+   "source": "static func save(_ value: Value, to store: UserDefaults) {",
+   "signal": "settings"
+  },
+  {
+   "path": "prototype/App/WS2InputPreferences.swift",
+   "line": 60,
+   "symbol": "UserDefaults",
+   "source": "private static func write(_ on: Bool, key: String, store: UserDefaults) {",
+   "signal": "settings"
   }
  ]
 }
