@@ -113,20 +113,44 @@ function drawDrop(l: ContentLayer, w: number, frame: number, real: boolean) {
   );
 }
 
-// 回来就开：右边两枚小点，左是人、右是手机，各自对上就亮（face-unlock.md“开盖·认你”）。不画任何脸的图形。
+// 回来就开：右边两枚小点，左是人、右是手机，各自对上就亮（face-unlock.md“开盖·认你”）。
 function factorDots(person: number, phone: number, ink: string) {
   return [person, phone].map((on, i) => (
     <circle key={i} cx={i ? 0.9 : -0.9} cy={0} r={0.55} fill={on > 0 ? '#34c759' : 'none'} fillOpacity={on} stroke={ink} strokeWidth={0.2} strokeOpacity={1 - 0.6 * on} />
   ));
 }
-/** 锁屏上那一条窄的验证状态：左边一圈在走（交互中的反馈，不是待机），中间是相机的绿灯，右边两点。 */
+/** 面容 ID 的图形：四个角、两只眼、鼻梁、嘴；认出来后换成绿色的勾（照 iPhone 的样子）。scan 0–1 是扫的进度。 */
+function faceGlyph(person: number, scan: number, ink: string) {
+  const k = 1.35, c = 0.55, sw = 0.2;
+  const corner = (sx: number, sy: number) => <path key={`${sx}${sy}`} d={`M ${sx * k} ${sy * (k - c)} L ${sx * k} ${sy * (k - 0.25)} Q ${sx * k} ${sy * k} ${sx * (k - 0.25)} ${sy * k} L ${sx * (k - c)} ${sy * k}`} fill="none" stroke={ink} strokeWidth={sw} strokeLinecap="round" />;
+  const face = (
+    <g opacity={1 - person}>
+      {[[-1, -1], [1, -1], [-1, 1], [1, 1]].map(([x, y]) => corner(x, y))}
+      <g stroke={ink} strokeWidth={sw} strokeLinecap="round" fill="none">
+        <line x1={-0.45} y1={-0.45} x2={-0.45} y2={-0.2} /><line x1={0.45} y1={-0.45} x2={0.45} y2={-0.2} />
+        <path d="M 0.05 -0.45 L 0.05 0.12 L -0.12 0.12" />
+        <path d="M -0.45 0.42 Q 0 0.75 0.45 0.42" />
+      </g>
+      {/* 扫过去的一道亮线 */}
+      <line x1={-1.1} x2={1.1} y1={-1.1 + 2.2 * scan} y2={-1.1 + 2.2 * scan} stroke="#5ac8fa" strokeWidth={0.12} opacity={0.8 * Math.sin(Math.PI * scan)} />
+    </g>
+  );
+  return (
+    <g>
+      {face}
+      <path d="M -0.8 0.05 L -0.2 0.6 L 0.85 -0.55" fill="none" stroke="#34c759" strokeWidth={0.32} strokeLinecap="round" strokeLinejoin="round" opacity={person} />
+    </g>
+  );
+}
+
+/** 锁屏上那一条窄的验证状态：左边面容 ID 在扫，中间是相机的绿灯，右边两点。 */
 function verifyEars(l: ContentLayer, w: number, frame: number, ink: string) {
-  const a = (frame * 6) % 360; // 每秒一圈
+  const scan = ((frame % 40) / 40); // 每 0.67 秒扫一遍，认出来就停
   const person = clamp01((frame - FACE_OK) / FADE_IN);
   return (
     <>
       {ears(l, w,
-        <g transform={`rotate(${a})`}><circle {...line} r={1.25} stroke="rgba(255,255,255,.18)" /><path {...line} stroke={ink} d="M 0 -1.25 A 1.25 1.25 0 0 1 1.25 0" /></g>,
+        faceGlyph(person, scan, ink),
         <g>{factorDots(person, 1, ink)}</g>)}
       {/* 相机在硬件刘海正中；用着时亮绿灯，照系统的样子。 */}
       <circle cx={w / 2} cy={NOTCH.h / 2} r={0.28} fill="#34c759" opacity={l.first} />
@@ -184,7 +208,7 @@ function draw(l: ContentLayer, w: number, h: number, frame = 0): ReactNode {
       return ears(l, w,
         <rect {...line} x={-1.4} y={-1} width={2.8} height={2} rx={0.4} />,
         <g>
-          <text x={0} y={0.75} textAnchor="middle" fontSize={2} fontFamily="Inter, sans-serif" fontWeight={600} fill={INK}>1</text>
+          <text x={0} y={0.75} textAnchor="middle" fontSize={2} fontFamily="-apple-system,system-ui,sans-serif" fontWeight={600} fill={INK}>1</text>
           {c === 'windowChanged' && <circle cx={1.4} cy={-1.1} r={0.38} fill="#ff9f0a" />}
         </g>);
     case 'session':
@@ -259,7 +283,7 @@ function draw(l: ContentLayer, w: number, h: number, frame = 0): ReactNode {
 }
 
 // ---- 画出来的那一版：照 site/style.css 的岛（图标 3.4cqw / 6cqw、主句 2.3cqw、副句 1.7cqw 白 0.62）----
-const CJK = '"Source Han Sans SC","Noto Sans SC","PingFang SC",sans-serif';
+const CJK = '"PingFang SC",-apple-system,system-ui,sans-serif';
 const MONO = 'ui-monospace,"SF Mono",Menlo,monospace';
 
 function termTile(size: number) {

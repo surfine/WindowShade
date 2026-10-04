@@ -12,10 +12,10 @@ import {
 import { Laptop } from './parts/Laptop';
 import { Island } from './parts/Island';
 import { Placeholder } from './parts/Placeholder';
-import { AppIcon, ChatWin, DraftWin, HomeScreen, MenuBar, MusicWin, NotesWin, TermWin, WALL } from './parts/Mock';
+import { AppIcon, ChatWin, DraftWin, HomeScreen, MenuBar, MusicWin, NotesWin, TermWin, Wallpaper } from './parts/Mock';
 
-const CJK = '"Source Han Sans SC","Noto Sans SC","PingFang SC",sans-serif';
-const LATIN = 'Inter, "Helvetica Neue", sans-serif';
+const CJK = '"PingFang SC",-apple-system,system-ui,sans-serif';
+const LATIN = '-apple-system,system-ui,"SF Pro Display",sans-serif';
 
 /** drawn：画出来的界面（B 版）；否则是写着要录什么的占位块。两版共用同一条时间线。
  * out 是成片的帧号；frame 是它对应的母带帧号，屏里屏外的东西都按 frame 画，字幕、标签、片名和成片镜头按 out。 */
@@ -26,13 +26,10 @@ export function Film({ L, drawn }: { L: Layout; drawn: boolean }) {
 
   const page = drawn ? (
     <>
-      <div style={{ position: 'absolute', inset: 0, background: WALL }} />
+      <Wallpaper />
       <DrawnDesk frame={frame} L={L} />
       <Handle frame={frame} L={L} />
-      {/* 锁屏：窗口都藏起来，只剩压暗的墙纸，刘海的轮廓看得出来。 */}
-      <div style={{ position: 'absolute', inset: 0, background: WALL, opacity: screenDark(frame) }}>
-        <div style={{ position: 'absolute', inset: 0, background: 'rgba(0,0,0,.55)' }} />
-      </div>
+      <LockScreen frame={frame} L={L} />
     </>
   ) : (
     <>
@@ -160,17 +157,38 @@ function Arrow({ frame, L }: { frame: number; L: Layout }) {
   );
 }
 
-/** 屏外的实物线稿：一对耳机、一只鼠标。连上的那一刻线变亮。 */
+/** 屏外的实物：一对 AirPods Pro、一只妙控鼠标，俯视，照真的配色和高光。连上的那一刻亮一圈。 */
 function Device({ frame, L }: { frame: number; L: Layout }) {
   const d = deviceAt(frame);
   if (!d) return null;
-  const size = Math.min(L.side.w, L.side.h) * 0.7;
-  const stroke = `rgba(255,255,255,${0.35 + 0.55 * d.on})`;
+  const size = Math.min(L.side.w, L.side.h) * 0.8;
   return (
-    <svg style={{ position: 'absolute', left: L.side.x + (L.side.w - size) / 2, top: L.side.y + (L.side.h - size) / 2, opacity: d.opacity }} width={size} height={size} viewBox="0 0 100 100" fill="none" stroke={stroke} strokeWidth={2.2} strokeLinecap="round" strokeLinejoin="round">
-      {d.kind === 'pods'
-        ? <g><path d="M30 30 a10 10 0 1 1 0 20 l0 28" /><path d="M70 30 a10 10 0 1 0 0 20 l0 28" /></g>
-        : <g><rect x={34} y={18} width={32} height={64} rx={16} /><line x1={50} y1={24} x2={50} y2={36} /></g>}
+    <svg style={{ position: 'absolute', left: L.side.x + (L.side.w - size) / 2, top: L.side.y + (L.side.h - size) / 2, opacity: d.opacity, overflow: 'visible', filter: `drop-shadow(0 ${size * 0.03}px ${size * 0.05}px rgba(0,0,0,.6))` }} width={size} height={size} viewBox="0 0 100 100">
+      <defs>
+        <radialGradient id="podW" cx="35%" cy="30%" r="80%"><stop offset="0" stopColor="#ffffff" /><stop offset="0.6" stopColor="#e9eaee" /><stop offset="1" stopColor="#b9bcc4" /></radialGradient>
+        <linearGradient id="mouseW" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stopColor="#ffffff" /><stop offset="0.55" stopColor="#eef0f3" /><stop offset="1" stopColor="#c4c7ce" /></linearGradient>
+      </defs>
+      {d.kind === 'pods' ? (
+        <g>
+          {[[33, 1], [67, -1]].map(([x, k]) => (
+            <g key={x} transform={`translate(${x} 44) scale(${k} 1)`}>
+              <rect x={-3.6} y={8} width={7.2} height={26} rx={3.6} fill="url(#podW)" />
+              <ellipse cx={0} cy={4} rx={11} ry={12.5} fill="url(#podW)" />
+              <ellipse cx={4} cy={2} rx={4.6} ry={5.6} fill="#2b2d31" />
+              <ellipse cx={4} cy={2} rx={3.4} ry={4.4} fill="#5b5e64" />
+              <rect x={-1.4} y={28} width={2.8} height={4} rx={1.4} fill="#1c1d20" opacity={0.6} />
+            </g>
+          ))}
+          <circle cx={50} cy={50} r={46} fill="none" stroke="#34c759" strokeWidth={0.8} opacity={0.7 * d.on * (1 - d.on * 0.4)} />
+        </g>
+      ) : (
+        <g>
+          <rect x={32} y={12} width={36} height={76} rx={18} fill="url(#mouseW)" />
+          <rect x={32} y={12} width={36} height={76} rx={18} fill="none" stroke="rgba(0,0,0,.18)" strokeWidth={0.5} />
+          <path d="M 36 30 Q 50 22 64 30" fill="none" stroke="rgba(0,0,0,.06)" strokeWidth={0.6} />
+          <circle cx={50} cy={50} r={46} fill="none" stroke="#34c759" strokeWidth={0.8} opacity={0.7 * d.on * (1 - d.on * 0.4)} />
+        </g>
+      )}
     </svg>
   );
 }
@@ -192,52 +210,88 @@ function Trackpad({ frame, L }: { frame: number; L: Layout }) {
   const at = (p: { x: number; y: number }) => ({ x: (p.x / 100) * w, y: (p.y / 100) * h });
   const r = w * 0.045;
   return (
-    <svg style={{ position: 'absolute', left: x0, top: y0, opacity: o, overflow: 'visible' }} width={w} height={h}>
-      <rect x={0} y={0} width={w} height={h} rx={w * 0.06} fill="none" stroke="rgba(255,255,255,.45)" strokeWidth={2} />
+    <svg style={{ position: 'absolute', left: x0, top: y0, opacity: o, overflow: 'visible', filter: `drop-shadow(0 ${w * 0.03}px ${w * 0.05}px rgba(0,0,0,.55))` }} width={w} height={h}>
+      {/* 妙控板：银色铝面，四边一道倒角的亮边。 */}
+      <defs>
+        <linearGradient id="padAl" x1="0" y1="0" x2="0.4" y2="1"><stop offset="0" stopColor="#e4e6ea" /><stop offset="0.5" stopColor="#cfd2d8" /><stop offset="1" stopColor="#b6bac2" /></linearGradient>
+      </defs>
+      <rect x={0} y={0} width={w} height={h} rx={w * 0.05} fill="url(#padAl)" />
+      <rect x={1} y={1} width={w - 2} height={h - 2} rx={w * 0.05} fill="none" stroke="rgba(255,255,255,.7)" strokeWidth={1.5} />
       {f && f.trail.length > 1 && (
         <polyline
           points={f.trail.map((p) => { const q = at(p); return `${q.x},${q.y}`; }).join(' ')}
-          fill="none" stroke="rgba(26,89,184,.5)" strokeWidth={r * 0.9} strokeLinecap="round" strokeLinejoin="round" opacity={f.opacity}
+          fill="none" stroke="rgba(10,132,255,.45)" strokeWidth={r * 0.9} strokeLinecap="round" strokeLinejoin="round" opacity={f.opacity}
         />
       )}
       {f && (() => {
         const q = at(f);
         return f.down
-          ? <circle cx={q.x} cy={q.y} r={r} fill="rgba(26,89,184,.66)" opacity={f.opacity} />
-          : <circle cx={q.x} cy={q.y} r={r} fill="rgba(255,255,255,.08)" stroke="rgba(255,255,255,.7)" strokeWidth={1.5} opacity={f.opacity} />;
+          ? <circle cx={q.x} cy={q.y} r={r} fill="rgba(10,132,255,.6)" stroke="rgba(255,255,255,.8)" strokeWidth={1.2} opacity={f.opacity} />
+          : <circle cx={q.x} cy={q.y} r={r} fill="rgba(60,64,72,.18)" stroke="rgba(60,64,72,.55)" strokeWidth={1.5} opacity={f.opacity} />;
       })()}
     </svg>
   );
 }
 
+/** 屏外的 iPhone：钛金属边框、黑玻璃、灵动岛，锁屏亮着时间。 */
 function Phone({ frame, L }: { frame: number; L: Layout }) {
   const p = phoneAt(frame);
   if (!p) return null;
-  const h = L.side.h * 0.62, w = h * 0.48;
+  const h = L.side.h * 0.66, w = h * 0.487;
   const cx = L.side.x + L.side.w / 2, cy = L.side.y + L.side.h / 2;
   const dx = p.away * (L.width - L.side.x + w);
+  const r = w * 0.2, bez = w * 0.045;
   return (
-    <div
-      style={{
-        position: 'absolute', left: cx - w / 2 + dx, top: cy - h / 2, width: w, height: h, opacity: p.opacity,
-        borderRadius: w * 0.2, boxShadow: 'inset 0 0 0 2px rgba(255,255,255,.55)',
-      }}
-    />
+    <div style={{ position: 'absolute', left: cx - w / 2 + dx, top: cy - h / 2, width: w, height: h, opacity: p.opacity, borderRadius: r, background: 'linear-gradient(135deg,#8d8a86,#4a4846 30%,#6c6a67 55%,#3a3937 80%,#7a7774)', boxShadow: `0 ${w * 0.06}px ${w * 0.18}px rgba(0,0,0,.6)` }}>
+      <div style={{ position: 'absolute', inset: bez * 0.35, borderRadius: r - bez * 0.35, background: '#050505' }} />
+      <div style={{ position: 'absolute', inset: bez, borderRadius: r - bez, overflow: 'hidden', background: 'radial-gradient(120% 70% at 30% 20%,#1d3b66 0%,#0b1626 55%,#05070b 100%)' }}>
+        <div style={{ position: 'absolute', left: '50%', top: h * 0.018, width: w * 0.32, height: w * 0.09, transform: 'translateX(-50%)', borderRadius: 99, background: '#000' }} />
+        <div style={{ position: 'absolute', top: h * 0.1, width: '100%', textAlign: 'center', fontFamily: CJK, color: 'rgba(255,255,255,.9)', fontSize: w * 0.065, fontWeight: 600 }}>10月4日 星期日</div>
+        <div style={{ position: 'absolute', top: h * 0.125, width: '100%', textAlign: 'center', fontFamily: LATIN, color: 'rgba(255,255,255,.92)', fontSize: w * 0.3, fontWeight: 700, letterSpacing: '-0.02em' }}>9:41</div>
+      </div>
+    </div>
   );
 }
 
-/** 屏外戴着耳机的侧脸线稿，朝着屏幕。只画轮廓和耳机，不画五官细节；点头绕脖子转。 */
+/** 屏外戴着 AirPods 的侧脸：实心剪影带体积的明暗，朝着屏幕；点头绕脖子转。 */
 function Head({ frame, L }: { frame: number; L: Layout }) {
   const h = headAt(frame);
   if (!h) return null;
-  const size = Math.min(L.side.w, L.side.h) * 0.8;
+  const size = Math.min(L.side.w, L.side.h) * 0.85;
   return (
-    <svg style={{ position: 'absolute', left: L.side.x + (L.side.w - size) / 2, top: L.side.y + (L.side.h - size) / 2, opacity: h.opacity, overflow: 'visible' }} width={size} height={size} viewBox="0 0 100 100" fill="none" stroke="rgba(255,255,255,.75)" strokeWidth={2.2} strokeLinecap="round" strokeLinejoin="round">
+    <svg style={{ position: 'absolute', left: L.side.x + (L.side.w - size) / 2, top: L.side.y + (L.side.h - size) / 2, opacity: h.opacity, overflow: 'visible' }} width={size} height={size} viewBox="0 0 100 100">
+      <defs>
+        <radialGradient id="skin" cx="30%" cy="38%" r="75%"><stop offset="0" stopColor="#d9b49a" /><stop offset="0.55" stopColor="#b98d72" /><stop offset="1" stopColor="#6e4f3e" /></radialGradient>
+        <linearGradient id="hair" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stopColor="#2a2420" /><stop offset="1" stopColor="#0f0d0c" /></linearGradient>
+        <radialGradient id="podH" cx="35%" cy="30%" r="80%"><stop offset="0" stopColor="#fff" /><stop offset="1" stopColor="#c3c6cc" /></radialGradient>
+      </defs>
       <g transform={`rotate(${-h.tilt} 56 78)`}>
-        <path d="M 62 82 L 62 72 C 74 68 80 56 78 42 C 76 26 64 16 50 16 C 36 16 26 26 25 38 L 20 50 L 25 52 L 25 60 C 25 66 30 68 36 67 L 40 67 L 40 82" />
-        <g stroke="rgba(255,255,255,.95)"><circle cx={60} cy={44} r={3.2} /><line x1={60} y1={47.2} x2={60} y2={56} /></g>
+        <path d="M 64 96 L 63 72 C 75 68 80 56 78 42 C 76 26 64 16 50 16 C 37 16 27 25 25.5 37 C 25 40 24 42 22.5 45 L 19.5 50.5 C 19 51.6 19.8 52.4 21 52.6 L 24.5 53 L 24 56.5 L 25.5 58 L 24.6 60.6 C 24.4 64.5 27 67.5 31 67.2 L 38.5 66.6 L 39.5 96 Z" fill="url(#skin)" />
+        <path d="M 30 30 C 33 18 45 12 56 13 C 70 14 81 24 80.5 41 C 80.3 48 78.5 54 76 58 C 75 50 72 44 66 41 C 60 38 58 33 55 30 C 47 31 38 31 30 30 Z" fill="url(#hair)" />
+        <path d="M 58 44 C 61 41 66 42 66.5 47 C 67 52 63 55 60 53" fill="none" stroke="rgba(90,60,45,.6)" strokeWidth={1.2} />
+        <ellipse cx={61} cy={47} rx={3.6} ry={4.2} fill="url(#podH)" />
+        <rect x={59.6} y={49} width={2.8} height={9} rx={1.4} fill="url(#podH)" />
       </g>
     </svg>
+  );
+}
+
+/** 锁屏（macOS Golden Gate）：墙纸照常亮着，上面是日期和大时间，下面头像、名字、Touch ID 或密码的提示。窗口都藏起来。 */
+function LockScreen({ frame, L }: { frame: number; L: Layout }) {
+  const o = screenDark(frame);
+  if (o <= 0) return null;
+  const cqw = L.screen.w / 100;
+  return (
+    <div style={{ position: 'absolute', inset: 0, opacity: o, fontFamily: CJK, color: '#fff', textAlign: 'center' }}>
+      <Wallpaper dim={0.12} />
+      <div style={{ position: 'absolute', top: 7.2 * cqw, width: '100%', fontSize: 1.9 * cqw, fontWeight: 600, opacity: 0.85 }}>10月4日 星期日</div>
+      <div style={{ position: 'absolute', top: 8.6 * cqw, width: '100%', fontFamily: LATIN, fontSize: 11 * cqw, fontWeight: 700, letterSpacing: '-0.03em', opacity: 0.88, textShadow: '0 0.3vw 2vw rgba(0,0,0,.15)' }}>9:41</div>
+      <div style={{ position: 'absolute', bottom: 6 * cqw, width: '100%', display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 0.9 * cqw }}>
+        <div style={{ width: 4.6 * cqw, height: 4.6 * cqw, borderRadius: '50%', background: 'linear-gradient(160deg,#a4b0be,#6b7787)', display: 'grid', placeItems: 'center', fontFamily: LATIN, fontSize: 2 * cqw, fontWeight: 600, boxShadow: 'inset 0 0 0 0.5px rgba(255,255,255,.35)' }}>A</div>
+        <div style={{ fontSize: 1.45 * cqw, fontWeight: 600 }}>Aaron</div>
+        <div style={{ fontSize: 1.1 * cqw, opacity: 0.7 }}>触控 ID 或输入密码</div>
+      </div>
+    </div>
   );
 }
 
