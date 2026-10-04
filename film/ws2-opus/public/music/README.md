@@ -1,0 +1,32 @@
+# 配乐
+
+| 项 | 内容 |
+| --- | --- |
+| 曲目 | Voxel Revolution |
+| 作者 | Kevin MacLeod（incompetech.com） |
+| 授权 | Creative Commons Attribution 4.0（CC BY 4.0）。发布时需署名：「Voxel Revolution」Kevin MacLeod (incompetech.com)，Licensed under Creative Commons: By Attribution 4.0 License，http://creativecommons.org/licenses/by/4.0/ |
+| 下载 | https://incompetech.com/music/royalty-free/mp3-royaltyfree/Voxel%20Revolution.mp3（2.6 MB，129.9 秒） |
+| BPM | 122.00（librosa beat_track，tightness 800，再用固定拍距拟合；253 拍平均偏差 3.8 ms、最大 13.5 ms） |
+| 第 0 拍 | 曲中 0.056 秒；拍距 0.4918 秒 = 60fps 下 29.51 帧，一小节 118.0 帧 |
+| 小节线 | 第 2、6、10……拍（k ≡ 2 mod 4），与 audiomap 的乐句起点（1.045、8.916、16.788 秒……）一致 |
+
+`voxel-revolution.audiomap.json` 是 `~/.claude/skills/music-to-video/scripts/analyze-beatgrid.py` 的输出（能量段、乐句、关键时刻）。
+它自带的拍点有约 90 ms 抖动，所以拍子用上面的固定拍距；能量段与乐句照它。
+
+## 段落（曲中秒 → 拍号）
+
+| 曲中 | 拍 | 是什么 |
+| --- | --- | --- |
+| 1.04 | 2 | 第一个小节线，开头就是满的 |
+| 14.8 | 30 | 进入铺垫 |
+| 46.3 | 94 | 第二段铺垫 |
+| 62.0 | 126 | 第一次推高（能量 ×1.39） |
+| 77.8 | 158 | 全曲最大的一次推高（×1.43） |
+| 85.6 | 174 | 落下去之前最后一个重拍 |
+| 87.6 | 178 | 能量落下（analyzer 的 hard stop 87 秒） |
+| 102–103 | — | 一秒静音，之后再起 |
+| 126–130 | — | 尾音静音 |
+
+## 拍点公式
+
+曲中第 k 拍 = 0.056 + k × 60/122 秒。WS2Opus B 站版的对位写在 `src/music.ts`（成片第 0 帧 = 曲中 0.523 秒）。
