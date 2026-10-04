@@ -18,7 +18,7 @@
 
 ## 设计稿
 
-写产品代码、测试、界面、官网、README 或宣传之前，先打开 [`docs/design-drafts/README.md`](docs/design-drafts/README.md)，对上那一张稿。形状、弹簧、开口和收起以稿里的画面为准，不要凭现在画出来的尺寸现编。书面令牌仍是 [`docs/design-system.md`](docs/design-system.md)。稿和令牌不一致时，画面照稿，不顺便改设计系统。稿是画面，不是源码，不嵌进工程。
+写产品代码、测试、界面、官网、README 或宣传之前，先打开 [`docs/design-drafts/README.md`](docs/design-drafts/README.md)，对上那一张稿。形状、弹簧、开口和收起以稿里的画面为准，不要凭现在画出来的尺寸现编。书面令牌仍是 [`docs/design-system.md`](docs/design-system.md)。稿和令牌不一致时，画面照稿，不顺便改设计系统；对不上的记进 [`docs/design-grammar.md`](docs/design-grammar.md) 的对照账。新表面先过那份文法的准入。稿是画面，不是源码，不嵌进工程。
 
 ## 其它
 

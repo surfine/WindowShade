@@ -43,7 +43,7 @@ final class WS2SilentHost {
         if WS2SilentNav.cancels(commandID) {
             pending = nil
             page?.setConfirmEnabled(false)
-            page?.note("取消")
+            page?.note(WS2SilentNav.resultLine(commandID) ?? "已取消")
             return
         }
         if WS2SilentNav.selects(commandID) {
@@ -80,7 +80,7 @@ final class WS2SilentHost {
             pending = nil
             page?.setConfirmEnabled(false)
             page?.turn(delta)
-            page?.note(WS2SilentCopy.line(commandID) ?? "")
+            page?.note(WS2SilentNav.resultLine(commandID) ?? "这次没有做")
             return
         }
         guard let runtime else { return }
@@ -93,8 +93,14 @@ final class WS2SilentHost {
             pending = nil
             let request = WS2SilentProductPort.request(for: step)
             let ok = apply(request)
-            let line = WS2SilentReadout.sentence(commandID, activities: activities, cover: cover)
-            page?.note(ok ? line : "这次没有做")
+            let paused = owner?.inputController.hooksPaused ?? false
+            let line = WS2SilentReadout.sentence(
+                commandID, activities: activities, cover: cover, assistant: assistant, draft: draft, hooksPaused: paused)
+            if !ok, commandID == "launcher.openFolder" {
+                page?.note("还没选")
+            } else {
+                page?.note(ok ? line : "这次没有做")
+            }
         case .awaiting(let proposal):
             pending = proposal
             page?.note(WS2SilentCopy.line(proposal.command.id) ?? previewLine(proposal))
@@ -102,7 +108,7 @@ final class WS2SilentHost {
         case .needsSystemConfirmation:
             pending = nil
             page?.setConfirmEnabled(false)
-            page?.note(WS2SilentCopy.line(commandID) ?? "要用原来的确认")
+            page?.note(WS2SilentSecurity.outcome(commandID)?.line ?? "要用原来的确认")
         case .accepted, .rejected:
             pending = nil
             page?.setConfirmEnabled(false)
@@ -148,12 +154,9 @@ final class WS2SilentHost {
             let ok = apply(request)
             if case .carPlayUnavailable(let id) = request {
                 page?.note(WS2SilentSecurity.outcome(id)?.line ?? "还不能接收")
-            } else if ok {
-                page?.note("已按这一笔做了")
-            } else if WS2SilentSelection.needsChoice(proposal.command.id) {
-                page?.note(WS2SilentSelection.emptyLine)
             } else {
-                page?.note("这一笔没有做成")
+                page?.note(WS2SilentResultLine.noted(
+                    proposal.command.id, succeeded: ok, draft: draft, assistant: assistant))
             }
         case .rejected:
             page?.note("确认对不上，这一笔作废")

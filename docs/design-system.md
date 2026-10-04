@@ -5,6 +5,8 @@
 > 见 [ssc.md](ssc.md)。面向用户的文字一律按 [copy-guide.md](copy-guide.md) 写。
 >
 > 文中的“岛”“肩”“硬件层”“隐形刘海”是给开发看的内部叫法，不进界面。“下巴”按 copy-guide 只在说明里用。
+>
+> 怎么扩充、五种呈现和几何样子怎么分开、和稿对不上的账，见 [design-grammar.md](design-grammar.md)。这份文件仍只管数值；文法不改这里的数字。
 
 **数值标注**
 

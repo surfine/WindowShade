@@ -276,13 +276,134 @@ enum WS2SilentCover {
     }
 }
 
+enum WS2SilentResultLine {
+    static let notDone = "这一笔没有做成"
+
+    /// 确认之后的那一句。没做成一律是「这一笔没有做成」。
+    /// 看一眼不在这里，避免写成已经把窗口叫到前面。
+    /// 发送和停止要看草稿、回执现在停在哪，不能只凭做成与否写成已经送出或已经停下。
+    static func acceptance(
+        _ id: String,
+        succeeded: Bool,
+        draft: WS2SilentDraftHost = WS2SilentDraftHost(),
+        assistant: WS2SilentAssistant = WS2SilentAssistant()
+    ) -> String? {
+        if id == "music.pause" || id == "music.resume" || id == "music.nextTrack" {
+            return "先不改播放"
+        }
+        guard covers(id) else { return nil }
+        guard succeeded else { return notDone }
+        return succeededLine(id, draft: draft, assistant: assistant)
+    }
+
+    /// 确认之后写到刘海上的那一句。有专属结果才用那一句；没有专属结果就不写成已经做成。
+    static func noted(
+        _ id: String,
+        succeeded: Bool,
+        draft: WS2SilentDraftHost = WS2SilentDraftHost(),
+        assistant: WS2SilentAssistant = WS2SilentAssistant()
+    ) -> String {
+        if let line = acceptance(id, succeeded: succeeded, draft: draft, assistant: assistant) {
+            return line
+        }
+        if WS2SilentSelection.needsChoice(id) { return WS2SilentSelection.emptyLine }
+        if id == "assistant.source" { return WS2SilentReadout.sentence(id) }
+        if WS2SilentDraftRead.reports(id) { return WS2SilentReadout.sentence(id, draft: draft) }
+        if id == "carplay.enter" || id == "carplay.exit" { return "还不能接收" }
+        return notDone
+    }
+
+    private static func covers(_ id: String) -> Bool {
+        switch id {
+        case "window.left", "window.right", "window.fill", "window.center",
+             "window.topLeft", "window.topRight", "window.bottomLeft", "window.bottomRight",
+             "window.collapse", "window.expand", "window.tuck", "window.untuck",
+             "window.undo", "window.restore", "window.moveToSelectedDisplay",
+             "focus.start", "focus.pause", "focus.resume", "window.magicTile", "window.unpin",
+             "dictation.adopt", "dictation.discard", "dictation.insertPhrase",
+             "assistant.sendDraft", "assistant.steerDraft", "assistant.interrupt",
+             "assistant.setModel", "assistant.setEffort":
+            return true
+        default:
+            return false
+        }
+    }
+
+    private static func succeededLine(
+        _ id: String,
+        draft: WS2SilentDraftHost,
+        assistant: WS2SilentAssistant
+    ) -> String {
+        switch id {
+        case "window.left": return "已到左半"
+        case "window.right": return "已到右半"
+        case "window.fill": return "已铺满屏幕"
+        case "window.center": return "已居中"
+        case "window.topLeft": return "已到左上"
+        case "window.topRight": return "已到右上"
+        case "window.bottomLeft": return "已到左下"
+        case "window.bottomRight": return "已到右下"
+        case "window.collapse": return "已收起"
+        case "window.expand": return "已展开"
+        case "window.tuck": return "已收进刘海"
+        case "window.untuck": return "已放回"
+        case "window.undo": return "已撤销"
+        case "window.restore": return "已还原"
+        case "window.moveToSelectedDisplay": return "已到这屏"
+        case "focus.start": return "已开始专注"
+        case "focus.pause": return "已暂停"
+        case "focus.resume": return "已继续"
+        case "window.magicTile": return "已魔法平铺"
+        case "window.unpin": return "已取消置顶"
+        case "dictation.adopt": return "已采用草稿"
+        case "dictation.discard": return "已丢掉"
+        case "dictation.insertPhrase": return "还没发送"
+        case "assistant.sendDraft":
+            switch draft.mark {
+            case .waitingForAck: return "还在等"
+            case .sent: return "已送出"
+            case .idle, .preview: return "还在这台 Mac"
+            }
+        case "assistant.steerDraft": return "补充还在等"
+        case "assistant.interrupt":
+            return assistant.stopMark == .stopped ? "已停下" : "已显示停止"
+        case "assistant.setModel": return "已记下模型"
+        case "assistant.setEffort": return "已记下档位"
+        default: return notDone
+        }
+    }
+}
+
+enum WS2SilentDraftRead {
+    static func line(_ draft: WS2SilentDraftHost) -> String {
+        switch draft.mark {
+        case .idle: return "没有草稿"
+        case .preview: return "还没发送"
+        case .waitingForAck: return "还在等"
+        case .sent: return "已送出"
+        }
+    }
+
+    static func listens(_ id: String) -> Bool {
+        _ = id
+        return false
+    }
+
+    static func reports(_ id: String) -> Bool {
+        WS2SilentDraftCommand.handles(id) || id == "dictation.adopt" || id == "assistant.sendDraft"
+    }
+}
+
 enum WS2SilentReadout {
     /// 没有数据就写未提供、没有或未知。不写成 0，也不写成 100%。
     static func sentence(
         _ id: String,
         usage: WS2SilentUsageSnapshot = WS2SilentUsageSnapshot(),
         activities: WS2SilentActivityBoard = WS2SilentActivityBoard(),
-        cover: WS2SilentCover.State = WS2SilentCover.State()
+        cover: WS2SilentCover.State = WS2SilentCover.State(),
+        assistant: WS2SilentAssistant = WS2SilentAssistant(),
+        draft: WS2SilentDraftHost = WS2SilentDraftHost(),
+        hooksPaused: Bool = false
     ) -> String {
         switch id {
         case "usage.quota":
@@ -334,6 +455,76 @@ enum WS2SilentReadout {
             return "还没录过"
         case "scene.accessibility":
             return "不改辅助"
+        case "ui.activities":
+            guard !activities.startsPlayback else { return "没有" }
+            return activities.present.isEmpty ? "没有" : "有活动"
+        case "ui.usage":
+            let any = [usage.accountQuota, usage.selectedThread, usage.selectedContext, usage.accountActivity]
+                .contains { if case .provided = $0 { return true }; return false }
+            return any ? "有用量" : "未提供"
+        case "window.chooseDisplay":
+            return "还没选"
+        case "assistant.show", "assistant.status", "assistant.chooseSession":
+            guard !assistant.sessionStarted, !assistant.turnStarted else { return "没有" }
+            return assistant.showSessions() ? "有会话" : "没有"
+        case "assistant.models":
+            guard !assistant.turnStarted, let model = assistant.nextModel, !model.isEmpty else { return "未提供" }
+            return "已记下"
+        case "assistant.effort":
+            guard !assistant.turnStarted, let effort = assistant.nextEffort, !effort.isEmpty else { return "未提供" }
+            return "已记下"
+        case "assistant.review", "assistant.showDiff":
+            return "没有"
+        case "assistant.source":
+            return "没有来源"
+        case "dictation.start", "dictation.stopCapture", "dictation.nextCandidate", "dictation.retry",
+             "dictation.edit", "dictation.insertPhrase", "dictation.discard", "dictation.adopt",
+             "assistant.sendDraft":
+            return WS2SilentDraftRead.line(draft)
+        case "activity.focus":
+            return "只看不计时"
+        case "window.glance":
+            return "只看一眼"
+        case "auth.cancel", "auth.useSystem":
+            return "不解锁"
+        case "launcher.openFolder":
+            return "已开文件夹"
+        case "ui.settings":
+            return "打开了设置"
+        case "settings.appearance":
+            return "打开了外观"
+        case "settings.windows":
+            return "打开窗口设置"
+        case "settings.shortcuts":
+            return "打开了快捷键"
+        case "settings.permissions":
+            return "打开了权限"
+        case "settings.privacy":
+            return "打开了隐私"
+        case "settings.silent":
+            return "打开静音操作"
+        case "ui.windows", "window.choose", "window.batchReview", "app.showSwitcher":
+            return "已开窗口浏览"
+        case "privacy.cover", "scene.conversation":
+            return cover.covered && !cover.revealed ? "已遮住" : "没遮住"
+        case "input.pause":
+            return hooksPaused ? "输入已暂停" : "输入还在"
+        case "launcher.open", "launcher.home":
+            return "已开主屏幕"
+        case "launcher.library":
+            return "已开资料库"
+        case "launcher.today":
+            return "已开今天"
+        case "launcher.search":
+            return "已开搜索"
+        case "launcher.back":
+            return "回到上一层"
+        case "launcher.nextPage":
+            return "已翻下一页"
+        case "launcher.previousPage":
+            return "已翻上一页"
+        case "launcher.dismiss":
+            return "已关掉"
         default:
             return WS2SilentCopy.line(id) ?? "这次没有做"
         }
