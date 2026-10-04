@@ -2,7 +2,7 @@ import Cocoa
 import ScreenCaptureKit
 
 enum WindowShadeSettingsSection: Int, CaseIterable {
-  case effects, shade, browser, shortcuts, permissions, advanced, pointer, remote
+  case effects, shade, browser, shortcuts, permissions, advanced, pointer, remote, conductor
 
   private static let lastViewedKey = "WindowShade.Settings.LastViewedSection"
 
@@ -26,6 +26,7 @@ enum WindowShadeSettingsSection: Int, CaseIterable {
     case .advanced: return "高级"
     case .pointer: return "鼠标与触控板"
     case .remote: return "遥控器"
+    case .conductor: return "指挥模式"
     }
   }
 
@@ -39,6 +40,7 @@ enum WindowShadeSettingsSection: Int, CaseIterable {
     case .advanced: return "slider.horizontal.3"
     case .pointer: return ""
     case .remote: return "appletvremote.gen4"
+    case .conductor: return ""
     }
   }
 }
@@ -208,6 +210,7 @@ final class DuoSettingsWindow: NSWindowController, NSWindowDelegate, NSTableView
     pages[.permissions] = controller.owner?.makePermissionsSettingsPage()
     pages[.pointer] = controller.owner?.makePointerSettingsPage()
     pages[.remote] = controller.owner?.makeRemoteSettingsPage()
+    pages[.conductor] = controller.owner?.makeConductorSettingsPage()
     select(section: controller.isDesignPreview ? .effects : .lastViewed())
 
     // 时钟只为实时预览的推帧服务。静态示意图不会自己变化，参数一改就已经
@@ -437,6 +440,7 @@ final class DuoSettingsWindow: NSWindowController, NSWindowDelegate, NSTableView
       pages[.permissions] = owner.makePermissionsSettingsPage()
       pages[.pointer] = owner.makePointerSettingsPage()
       pages[.remote] = owner.makeRemoteSettingsPage()
+      pages[.conductor] = owner.makeConductorSettingsPage()
       select(section: currentSection)
     }
   }

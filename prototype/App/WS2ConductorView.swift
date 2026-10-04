@@ -2,7 +2,7 @@ import Cocoa
 /// 可插入现有 NotchPanel.setInteraction 的原生视图；不创建窗口，不批准助手。
 @MainActor final class WS2ConductorView: NSView, WS2LeaseContent {
     var interactionSize: NSSize { NSSize(width:420,height:280) }
-    enum Action { case sendDraft(String), discardDraft, confirmCost, stopTurn, leave, session(Int) }
+    enum Action { case sendDraft(String), discardDraft, confirmCost, stopTurn, leave }
     var onCancel: (() -> Void)?
     var onAction: ((Action) -> Void)?
     private let stack = NSStackView(), title = NSTextField(wrappingLabelWithString: "")
@@ -47,8 +47,16 @@ import Cocoa
             }
             CATransaction.begin(); CATransaction.setDisableActions(true); path.path = p; CATransaction.commit()
             detail.stringValue = "\(beats) 拍 · 抬手后判定"; stack.addArrangedSubview(detail)
-        case .sessions(let labels,let selected):
-            for (i,label) in labels.prefix(64).enumerated() { button((i == selected ? "✓ " : "")+label,.session(i)) }
+        case .sessions(let labels,_):
+            // 名字会变。选择发生在指挥页，那里留下的是会话身份，不是这个下标。
+            if labels.isEmpty { detail.stringValue = "还没有会话" }
+            else { detail.stringValue = "在指挥页里选择" }
+            for label in labels.prefix(64) {
+                let line = NSTextField(labelWithString: label)
+                line.font = .systemFont(ofSize: 12)
+                line.textColor = .white
+                stack.addArrangedSubview(line)
+            }
         case .draft(let text):
             editor.stringValue = text; stack.addArrangedSubview(editor); button("发送",.sendDraft(text)); button("丢弃",.discardDraft)
         case .cost: button("确认费用",.confirmCost); button("取消",.leave)
