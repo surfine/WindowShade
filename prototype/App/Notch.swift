@@ -129,12 +129,27 @@ final class NotchController {
         for (name, reason) in [(NSWorkspace.willSleepNotification, WS2.LeaseRevocation.sleeping),
                                (NSWorkspace.sessionDidResignActiveNotification, WS2.LeaseRevocation.sessionChanged)] {
             leaseObservers.append(workspace.addObserver(forName: name, object: nil, queue: .main) { [weak self] _ in
-                MainActor.assumeIsolated { self?.leases.invalidate(reason) }
+                MainActor.assumeIsolated {
+                    self?.holdAnnouncements()
+                    self?.leases.invalidate(reason)
+                }
+            })
+        }
+        for name in [NSWorkspace.didWakeNotification, NSWorkspace.sessionDidBecomeActiveNotification] {
+            leaseObservers.append(workspace.addObserver(forName: name, object: nil, queue: .main) { [weak self] _ in
+                MainActor.assumeIsolated { self?.releaseAnnouncements() }
             })
         }
         leaseObservers.append(DistributedNotificationCenter.default().addObserver(
             forName: .init("com.apple.screenIsLocked"), object: nil, queue: .main) { [weak self] _ in
-            MainActor.assumeIsolated { self?.leases.invalidate(.locked) }
+            MainActor.assumeIsolated {
+                self?.holdAnnouncements()
+                self?.leases.invalidate(.locked)
+            }
+        })
+        leaseObservers.append(DistributedNotificationCenter.default().addObserver(
+            forName: .init("com.apple.screenIsUnlocked"), object: nil, queue: .main) { [weak self] _ in
+            MainActor.assumeIsolated { self?.releaseAnnouncements() }
         })
         activities.onChange = { [weak self] values, selected in
             guard let self else { return }
@@ -714,14 +729,30 @@ final class NotchController {
     }
     private var pendingAnnouncements: [PendingAnnouncement] = []
     private var pendingTimer: Timer?
+    /// 锁屏、睡眠、换用户期间不说。排队的和已经挂在岛上的都收掉，解锁后不补播。
+    private var announcementsHeld = false
     /// 这个队列最近说出的那一句（key 和标题）：它还在屏幕上时，同一个 key 的更新（比如电量到了）原位替换，
     /// 不排到后面再弹一次。屏幕上已经换成别人的话时不替换。
     private var shownAnnouncement: (key: String, title: String)?
 
     /// 和 announce 一样，但刘海正忙（展开、拖放、认证、正在说别的）时不放弃：按 key 合并、到期作废，
     /// 空下来后按优先级说（以前忙的时候直接丢掉）。返回值没有意义上的“失败”：要么现在说，要么排上了。
+    func holdAnnouncements() {
+        announcementsHeld = true
+        pendingAnnouncements.removeAll()
+        pendingTimer?.invalidate()
+        pendingTimer = nil
+        shownAnnouncement = nil
+        for panel in panels.values { panel.dismissVisibleAlert() }
+    }
+
+    func releaseAnnouncements() {
+        announcementsHeld = false
+    }
+
     func announceWhenFree(key: String, text: String, detail: String = "", tone: NotchPanel.Tone = .info,
                           symbol: String? = nil, priority: Int = 0, ttl: TimeInterval = 10) {
+        guard !announcementsHeld else { return }
         pendingAnnouncements.removeAll { $0.key == key }
         if let shown = shownAnnouncement, shown.key == key, let panel = pointerPanel(), !panel.isAuthenticating,
            panel.alertForProbe?.title == shown.title, announce(text, detail: detail, tone: tone, symbol: symbol) {
@@ -1811,6 +1842,15 @@ final class NotchPanel: NSPanel {
         guard let room else { return roomWaitOver ? .chin : .pending }
         if isVirtual { return room.leading >= 39 && room.trailing >= 39 ? .pill : .chin }
         return sideWidth >= Self.narrowestSide ? .sides : .chin
+    }
+
+    /// 锁屏时把已经挂在岛上的那句收掉，不留到解锁后再说。
+    func dismissVisibleAlert() {
+        alertTimer?.invalidate()
+        alertTimer = nil
+        guard alertInfo != nil else { return }
+        alertInfo = nil
+        apply(animated: false)
     }
 
     /// 提醒：短暂展开说一句，2.6 秒后收回（指针停在上面时展开的是一排，不插提醒）。
