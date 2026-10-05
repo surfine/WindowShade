@@ -890,8 +890,13 @@ struct SilentPrepTests {
                && WS2SilentResultLine.acceptance("window.unpin", succeeded: true) == "已取消置顶"
                && WS2SilentResultLine.acceptance("window.unpin", succeeded: false) == "这一笔没有做成",
                "unpin is the only pinned action with a synchronous result for that window")
-        for id in ["window.pin", "window.slideOver", "window.leaveSlideOver", "window.pip", "window.leavePip",
-                   "scene.reading", "scene.coding", "scene.presentation", "scene.presenter"] {
+        for id in ["window.pin", "window.slideOver", "window.leaveSlideOver", "window.pip", "window.leavePip"] {
+            expect(WS2SilentEngineGate.awaitsObservation(id) && !WS2SilentEngineGate.calls(id),
+                   "\(id) can start and is not a synchronous completion")
+            expect(WS2SilentResultLine.noted(id, succeeded: true) == "这一笔没有做成",
+                   "\(id) is not reported as done")
+        }
+        for id in ["scene.reading", "scene.coding", "scene.presentation", "scene.presenter"] {
             expect(!WS2SilentEngineGate.calls(id) && WS2SilentEngineGate.unobservableFunction(id) != nil,
                    "\(id) names an engine that cannot be observed for the frozen window")
             expect(WS2SilentResultLine.noted(id, succeeded: true) == "这一笔没有做成",

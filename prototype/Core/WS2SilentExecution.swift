@@ -72,6 +72,22 @@ enum WS2SilentEffectJudge {
         return .completed(WS2EffectReceipt(commandID: commandID, targetID: targetID, observed: true))
     }
 
+    /// 看一眼、置顶、侧拉、画中画共用这一层。换成不做事的端口时，正向完成必须失败。
+    static func glance(windowID: UInt64, invoked: Bool, visible: Bool) -> SilentExecutionResult {
+        _ = windowID
+        return glance(invoked: invoked, previewVisible: invoked && visible)
+    }
+
+    static func pin(alreadyPreviewing: Bool, started: Bool) -> SilentExecutionResult {
+        if alreadyPreviewing { return .alreadySatisfied("已在置顶") }
+        return started ? .waiting(1) : .failed("这一笔没有做成")
+    }
+
+    static func asyncWindow(already: Bool, started: Bool, satisfied: String) -> SilentExecutionResult {
+        if already { return .alreadySatisfied(satisfied) }
+        return started ? .waiting(1) : .failed("这一笔没有做成")
+    }
+
     static func launchpad(panelVisible: Bool, onFrozenScreen: Bool, commandID: String) -> SilentExecutionResult {
         guard panelVisible, onFrozenScreen else { return .unavailable("没打开") }
         return .completed(WS2EffectReceipt(commandID: commandID, targetID: "", observed: true))
