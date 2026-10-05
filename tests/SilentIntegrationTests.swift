@@ -128,6 +128,20 @@ struct SilentIntegrationTests {
         moved.invalidate()
         expect(moved.confirmShown(proposal, gestureBeganAt: at(130), now: at(130), liveRevision: 3) == .rejected(.wrongProposal),
                "r02 invalidate keeps the proposal void")
+
+        // R02：方便遮挡退出只清内存，不走需要授权的“揭开”。
+        var cover = WS2SilentCover.State()
+        expect(WS2SilentCover.cover(&cover, overlayCreated: true), "r02 an observed overlay marks covered")
+        expect(cover.covered, "r02 covered flag comes from the observation")
+        expect(!WS2SilentCover.reveal(&cover), "r02 the silent path still cannot reveal")
+        WS2SilentCover.clearConvenience(&cover)
+        expect(!cover.covered && !cover.scopeSelected, "r02 convenience clear resets covered and scope")
+        expect(!WS2SilentCover.cover(&cover, overlayCreated: false), "r02 a bare call cannot re-mark covered")
+        expect(WS2SilentCopy.line("privacy.clearCover") == "撤掉遮挡", "r02 the cover-clear chip has copy")
+        let coverSource = (try? String(contentsOfFile: "prototype/App/WS2SilentPrivacyCover.swift", encoding: .utf8)) ?? ""
+        expect(coverSource.contains("didChangeScreenParametersNotification")
+               && coverSource.contains("addGlobalMonitorForEvents"),
+               "r02 cover reconciles on display change and listens for Esc outside the app")
     }
 
     static func launchpad() {
@@ -137,6 +151,32 @@ struct SilentIntegrationTests {
         expect(!otherScreen.isCompleted, "r03 a panel off the frozen screen is not completed")
         let shown = WS2SilentEffectJudge.launchpad(panelVisible: true, onFrozenScreen: true, commandID: "launcher.open")
         expect(shown.isCompleted, "r03 a panel on the frozen screen is completed")
+
+        // R03：换页后旧回执不能改新页面；当前操作才拥有可见结果。
+        var ledger = WS2SilentOperationLedger()
+        let opA = ledger.begin(commandID: "window.glance", targetID: "9", captureGeneration: 1)
+        expect(ledger.visible == "还在等", "r03 a new operation waits")
+        ledger.turnPage()
+        expect(ledger.finish(id: opA, line: "已完成") == false, "r03 an old page cannot update the new page")
+        expect(ledger.visible.isEmpty, "r03 the new page stays untouched by the old report")
+        let opB = ledger.begin(commandID: "window.pin", targetID: "9", captureGeneration: 2)
+        expect(ledger.visible == "还在等", "r03 the current operation owns the visible line")
+        expect(ledger.finish(id: opB, line: "已完成"), "r03 the current operation updates the visible line")
+        expect(ledger.visible == "已完成", "r03 the visible line reflects the live operation")
+        expect(ledger.finish(id: opA, line: "已完成") == false, "r03 a late finish for a cancelled operation is rejected")
+
+        // R03：置顶派发用代次判新旧；旧代次不能冒领。
+        var pin = WS2PinLaunch()
+        expect(pin.start(pid: 1, window: "9", generation: 7) == "new", "r03 pin launch starts a new generation")
+        expect(pin.start(pid: 1, window: "9", generation: 7) == "join", "r03 a duplicate launch joins the in-flight generation")
+        expect(pin.finish(pid: 1, window: "9", generation: 8) == false, "r03 a stale pin generation cannot claim the launch")
+        expect(pin.finish(pid: 1, window: "9", generation: 7), "r03 the current pin generation completes")
+        expect(pin.start(pid: 1, window: "9", generation: 9) == "already", "r03 an already-previewing window reports already")
+
+        let hostSource = (try? String(contentsOfFile: "prototype/App/WS2SilentHost.swift", encoding: .utf8)) ?? ""
+        expect(hostSource.contains("watchAsyncEnd"), "r03 the host routes async window actions to one terminal watcher")
+        let shadeSource = (try? String(contentsOfFile: "prototype/WindowShade.swift", encoding: .utf8)) ?? ""
+        expect(shadeSource.contains("noteSilentFoldCompletion"), "r03 fold completion is recorded, not dropped")
         liveWindowNote("r03")
     }
 
@@ -145,6 +185,13 @@ struct SilentIntegrationTests {
         expect(!unread.isCompleted && unread.notchLine == "结果未确认", "r04 a placement without readback is not completed")
         let glance = WS2SilentEffectJudge.glance(invoked: false, previewVisible: false)
         expect(!glance.isCompleted, "r04 a glance without a preview is not completed")
+        // R04：授权成功≠采集成功；管线计数必须接上，并出现在里程碑日志里。
+        let faceSource = (try? String(contentsOfFile: "prototype/App/FaceObservationSource.swift", encoding: .utf8)) ?? ""
+        expect(faceSource.contains("struct FacePipelineCounters")
+               && faceSource.contains("func pipelineCounters()"),
+               "r04 the capture pipeline exposes privacy-safe counters")
+        let milestone = (try? String(contentsOfFile: "prototype/App/SilentMilestoneProbe.swift", encoding: .utf8)) ?? ""
+        expect(milestone.contains("head-pipeline"), "r04 the milestone probe prints the pipeline counters")
         liveWindowNote("r04")
     }
 
