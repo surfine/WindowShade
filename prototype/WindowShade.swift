@@ -567,8 +567,6 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSMenuDelegate {
 
 
 
-    let focusMotionDuration: TimeInterval = 0.065
-
     func focusSizedFrame(pos: CGPoint, size: CGSize,
                                  visible: NSRect, areaRatio: CGFloat,
                                  canResize: Bool) -> NSRect {

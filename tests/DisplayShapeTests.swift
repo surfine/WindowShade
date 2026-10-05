@@ -405,6 +405,10 @@ struct DisplayShapeTests {
     static func island() {
         // 不知道硬件形状：一律等于现版本。
         expect(NotchIsland.hug(nil) == 10 && NotchIsland.compactRadius(nil) == 12, "unknown shape: first frame, chin, hover 10; compact 12, as today")
+        expect(NotchIsland.capsuleRadius(height: 12, preferred: nil) == 6
+               && NotchIsland.capsuleRadius(height: 24, preferred: 33.6) == 12
+               && NotchIsland.capsuleRadius(height: 80, preferred: 33.6) == 33.6,
+               "capsule: half-height when no preferred; never exceed half; prefer machine topCorner when smaller")
         var samePull = true
         for extra in stride(from: CGFloat(0), through: 120, by: 0.5) where NotchIsland.pullRadius(nil, extra: extra) != min(22, 10 + extra / 4) {
             samePull = false

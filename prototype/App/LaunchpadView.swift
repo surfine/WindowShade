@@ -1019,10 +1019,11 @@ final class LaunchpadView: NSView, NSTextFieldDelegate {
         let wiggle = CAKeyframeAnimation(keyPath: "transform.rotation.z")
         wiggle.values = [-angle, angle, -angle]
         wiggle.keyTimes = [0, 0.5, 1]
-        wiggle.duration = 0.24 + Double.random(in: 0...0.05)
+        // 编辑晃动是循环相位，不是位移；时长贴近 `pop`，段间线性（不另造 ease）。
+        wiggle.duration = Motion.Spring.pop.response + Double.random(in: 0...0.05)
         wiggle.repeatCount = .infinity
         wiggle.timeOffset = Double.random(in: 0...0.3)
-        wiggle.timingFunctions = [CAMediaTimingFunction(name: .easeInEaseOut), CAMediaTimingFunction(name: .easeInEaseOut)]
+        wiggle.timingFunctions = nil
         layer.add(wiggle, forKey: "jiggle")
     }
 

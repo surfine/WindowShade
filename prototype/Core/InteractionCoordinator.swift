@@ -115,8 +115,13 @@ final class InteractionCoordinator {
         if active != nil { dots.insert(display); return }
         if var a = alerts[display], now < a.deadline,
            now.elapsed(since: a.last) <= 600 * WS2.Duration.millisecond {
-            a.last = now; alerts[display] = a // Merge does not extend the first reminder's four-second deadline.
-        } else { alerts[display] = Alert(first: now,last: now,deadline: now.adding(4 * WS2.Duration.second)) }
+            // 合并刷新不延长第一次提醒的 `alert.hold` 截止。
+            a.last = now
+            alerts[display] = a
+        } else {
+            alerts[display] = Alert(first: now, last: now,
+                                    deadline: now.adding(MotionHold.alertMilliseconds * WS2.Duration.millisecond))
+        }
     }
     func snapshots(at now: WS2.Instant) -> [WS2.VisibilitySnapshot] {
         guard !inTransition else { return [] }

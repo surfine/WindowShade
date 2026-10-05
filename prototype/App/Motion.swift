@@ -29,6 +29,11 @@ enum Motion {
         animation.duration = animation.settlingDuration
         return animation
     }
+
+    /// 设计系统 §4.7 停留时长（与 `MotionHold.alertSeconds` 同值）。
+    enum Hold {
+        static let alert: TimeInterval = 2.6
+    }
 }
 
 extension FlickGlidePath {

@@ -154,7 +154,7 @@ extension AppDelegate {
             : NSSize(width: pulled.overlay.width, height: pulled.overlay.height)
         isProgrammaticOverlayArrangement = true
         NSAnimationContext.runAnimationGroup { context in
-            context.duration = focusMotionDuration
+            context.duration = Motion.reduced ? Motion.Spring.reducedWindow.response : Motion.Spring.settle.response
             overlay.animator().setFrame(pulled.overlay, display: true)
         } completionHandler: {
             // 动画完成回调在主线程。

@@ -325,3 +325,11 @@ extension WS2 {
         let hasSecondaryDot: Bool
     }
 }
+
+/// 设计系统 §4.7 停留时长（位移用弹簧，停多久用 hold）。
+enum MotionHold {
+    /// 短暂提醒：`alert.hold`。
+    static let alertSeconds: TimeInterval = 2.6
+    /// 协调器用：`alertMilliseconds * WS2.Duration.millisecond`。
+    static let alertMilliseconds: UInt64 = 2600
+}
