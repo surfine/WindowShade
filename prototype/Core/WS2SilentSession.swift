@@ -3,11 +3,15 @@
 import Foundation
 
 struct WS2SilentSession: Sendable {
-    static let proposalTTL = WS2.Duration.second * 10
+    /// 普通确认的试用期限。从实际显示的那一刻算，不是从 propose 算。
+    static let proposalTTL = WS2.Duration.second * 8
 
     private(set) var mode: WS2SilentMode
     private(set) var epoch: UInt64
     private var pending: Proposal?
+    private var shownAt: WS2.Instant?
+    private var consumed: Set<UInt64> = []
+    private var sequenceFloor: UInt64 = 0
     private var nextID: UInt64 = 1
 
     init(mode: WS2SilentMode = .command) {
@@ -48,6 +52,7 @@ struct WS2SilentSession: Sendable {
         case confirmationInFuture
         case expired
         case wrongProposal
+        case notShown
         case nodCannotAuthorize
     }
 
@@ -62,12 +67,25 @@ struct WS2SilentSession: Sendable {
 
     /// 换页、关闭、未知命令和目标变化都走这一条。旧提案不能再确认。
     mutating func invalidate() {
+        if let id = pending?.id { consumed.insert(id) }
         pending = nil
+        shownAt = nil
+    }
+
+    /// 页面布局完成、可以接受输入之后才叫。propose 本身不表示已经显示。
+    @discardableResult
+    mutating func noteShown(id: UInt64, at: WS2.Instant) -> Bool {
+        guard pending?.id == id, !consumed.contains(id) else { return false }
+        if shownAt == nil {
+            shownAt = at
+            pending?.deadline = at.adding(Self.proposalTTL)
+        }
+        return true
     }
 
     mutating func propose(commandID: String, targetID: String, targetRevision: UInt64, now: WS2.Instant) -> Step {
         guard let command = WS2SilentCatalog.lookup(commandID) else {
-            pending = nil
+            invalidate()
             return .rejected(.unknownCommand)
         }
         guard command.modes.contains(mode) else {
@@ -91,50 +109,70 @@ struct WS2SilentSession: Sendable {
             nextID = 1
         }
         if command.requiresSystemConfirmation {
-            pending = nil
+            invalidate()
             return .needsSystemConfirmation(proposal)
         }
         if command.confirmation == .none {
-            pending = nil
+            invalidate()
             return .shown(proposal)
         }
+        if let id = pending?.id { consumed.insert(id) }
+        shownAt = nil
         pending = proposal
         return .awaiting(proposal)
     }
 
-    /// 点击或点头只对还没过期的这一笔有效。目标变了、开始在未来、或过了 10 秒，旧提案就作废。
+    /// 点击或点头只对已经显示、还没过期的这一笔有效。
+    /// 开始得比显示早、落在未来、或过了显示后的 8 秒，都不算。
     mutating func confirm(
         _ proposal: Proposal,
         gestureBeganAt: WS2.Instant,
+        gestureEndedAt: WS2.Instant? = nil,
         now: WS2.Instant,
-        liveRevision: UInt64
+        liveRevision: UInt64,
+        sequence: UInt64 = 1
     ) -> Step {
+        let ended = gestureEndedAt ?? gestureBeganAt
         guard proposal.epoch == epoch, proposal.mode == mode else {
             return .rejected(.staleSession)
         }
-        guard pending?.id == proposal.id else {
+        guard let live = pending, live.id == proposal.id, !consumed.contains(proposal.id) else {
             return .rejected(.wrongProposal)
         }
-        if gestureBeganAt > now {
-            pending = nil
+        guard let shownAt else {
+            return .rejected(.notShown)
+        }
+        if gestureBeganAt > now || ended > now || ended < gestureBeganAt {
+            retire(.confirmationInFuture)
             return .rejected(.confirmationInFuture)
         }
-        if now >= proposal.deadline {
-            pending = nil
+        if now >= live.deadline || ended >= live.deadline {
+            retire(.expired)
             return .rejected(.expired)
         }
         guard proposal.targetRevision == liveRevision else {
-            pending = nil
+            retire(.staleTarget)
             return .rejected(.staleTarget)
         }
-        guard gestureBeganAt >= proposal.displayedAt else {
+        guard gestureBeganAt >= shownAt else {
             return .rejected(.confirmationTooEarly)
         }
+        guard sequence > sequenceFloor else {
+            return .rejected(.wrongProposal)
+        }
         guard proposal.command.acceptsNodOrClick else {
-            pending = nil
+            retire(.nodCannotAuthorize)
             return .rejected(.nodCannotAuthorize)
         }
-        pending = nil
+        sequenceFloor = sequence
+        retire(.wrongProposal)
         return .accepted(proposal)
+    }
+
+    private mutating func retire(_ reason: Reason) {
+        _ = reason
+        if let id = pending?.id { consumed.insert(id) }
+        pending = nil
+        shownAt = nil
     }
 }

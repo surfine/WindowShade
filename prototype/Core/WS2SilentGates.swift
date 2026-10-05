@@ -16,6 +16,7 @@ struct WS2SilentUsageSnapshot: Equatable, Sendable {
     var selectedThread: WS2SilentUsageValue = .notProvided
     var selectedContext: WS2SilentUsageValue = .notProvided
     var accountActivity: WS2SilentUsageValue = .notProvided
+    var accountEpoch: UInt64 = 0
 
     func value(for scope: WS2SilentUsageScope) -> WS2SilentUsageValue {
         switch scope {
@@ -34,9 +35,13 @@ enum WS2SilentUsageRead {
         snapshot.value(for: scope)
     }
 
-    /// 刷新仍是只读。缺的格子保持未提供。
+    /// 刷新仍是只读。缺的格子保持未提供。旧账户的回包不能盖住新账户。
     static func refresh(_ snapshot: WS2SilentUsageSnapshot) -> WS2SilentUsageSnapshot {
         snapshot
+    }
+
+    static func merge(current: WS2SilentUsageSnapshot, incoming: WS2SilentUsageSnapshot) -> WS2SilentUsageSnapshot {
+        incoming.accountEpoch >= current.accountEpoch ? incoming : current
     }
 
     static func writtenNumber(_ value: WS2SilentUsageValue) -> Double? {
@@ -58,6 +63,9 @@ enum WS2SilentActivityKind: String, Equatable, Sendable {
 
 struct WS2SilentActivityBoard: Equatable, Sendable {
     var present: Set<WS2SilentActivityKind> = []
+    /// 没接上来源时不能写成“此刻没有”。
+    var sourceConnected = true
+    var cardIDs: [String] = []
 
     func look(_ kind: WS2SilentActivityKind) -> Bool {
         present.contains(kind)
@@ -69,8 +77,20 @@ struct WS2SilentActivityBoard: Equatable, Sendable {
 struct WS2SilentActivityCursor: Equatable, Sendable {
     static let order: [WS2SilentActivityKind] = [.music, .airPods, .airDrop, .route, .recording]
     private(set) var index = 0
+    private(set) var cardID: String?
 
     var current: WS2SilentActivityKind { Self.order[index] }
+
+    /// 有真实卡片时按卡片走。阅读不改播放。
+    mutating func showCard(_ delta: Int, ids: [String]) -> String? {
+        guard !ids.isEmpty else { return nil }
+        let start = cardID.flatMap { ids.firstIndex(of: $0) } ?? 0
+        let count = ids.count
+        let raw = (start + delta) % count
+        let next = raw < 0 ? raw + count : raw
+        cardID = ids[next]
+        return cardID
+    }
 
     mutating func move(_ delta: Int) -> WS2SilentActivityKind {
         let count = Self.order.count
@@ -260,14 +280,13 @@ enum WS2SilentCover {
     struct State: Equatable, Sendable {
         var covered = false
         var revealed = false
+        var scopeSelected = false
     }
 
-    /// 没有覆盖层回执时不把内存写成已遮住。
+    /// 没有真实保护回执时，不把内存写成已遮住。
     static func cover(_ state: inout State, overlayCreated: Bool = false) -> Bool {
-        guard overlayCreated else { return false }
-        state.covered = true
-        state.revealed = false
-        return state.covered && !state.revealed
+        _ = overlayCreated
+        return false
     }
 
     /// 静音路径没有授权，所以不能揭开。
@@ -362,6 +381,7 @@ enum WS2SilentResultLine {
         case "assistant.sendDraft":
             switch draft.mark {
             case .waitingForAck: return "还在等"
+            case .outcomeUnknown: return "结果未确认"
             case .sent: return "已送出"
             case .idle, .preview: return "还在这台 Mac"
             }
@@ -381,6 +401,7 @@ enum WS2SilentDraftRead {
         case .idle: return "没有草稿"
         case .preview: return "还没发送"
         case .waitingForAck: return "还在等"
+        case .outcomeUnknown: return "结果未确认"
         case .sent: return "已送出"
         }
     }
@@ -447,17 +468,19 @@ enum WS2SilentReadout {
         case "auth.revokeSession":
             return "没有许可"
         case "privacy.status":
-            return cover.covered && !cover.revealed ? "已遮住" : "没遮住"
+            return cover.scopeSelected ? "尚未遮住" : "还没选范围"
         case "privacy.awaySummary":
             return "没有"
         case "privacy.selectScope":
-            return "还没选"
+            return "还没选范围"
         case "input.profile":
             return "还没录过"
         case "scene.accessibility":
             return "不改辅助"
         case "ui.activities":
+            guard activities.sourceConnected else { return "未连接" }
             guard !activities.startsPlayback else { return "没有" }
+            if !activities.cardIDs.isEmpty { return "有活动" }
             return activities.present.isEmpty ? "没有" : "有活动"
         case "ui.usage":
             let any = [usage.accountQuota, usage.selectedThread, usage.selectedContext, usage.accountActivity]
@@ -507,7 +530,7 @@ enum WS2SilentReadout {
         case "ui.windows", "window.choose", "window.batchReview", "app.showSwitcher":
             return "已开窗口浏览"
         case "privacy.cover", "scene.conversation":
-            return cover.covered && !cover.revealed ? "已遮住" : "没遮住"
+            return cover.scopeSelected ? "尚未遮住" : "还没选范围"
         case "input.pause":
             return hooksPaused ? "输入已暂停" : "输入还在"
         case "launcher.open", "launcher.home":

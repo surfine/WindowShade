@@ -59,7 +59,8 @@ final class InteractionCoordinator {
         if let old = active {
             let explicitPageSwitch = expected == old.handle && old.layer == .opened && r.layer == .opened
             guard r.layer < old.layer || explicitPageSwitch else { return .busy }
-            withdraw(.preempted)
+            // 更高的层把已打开的那一页挂起。换页仍是抢占：旧页不回来。
+            withdraw(explicitPageSwitch ? .preempted : .suspended)
             // Synchronous cancellation can disable/lock the app. Never lose that barrier.
             guard epoch == entryEpoch, !exhausted else { return .unavailable }
         }

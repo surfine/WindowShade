@@ -136,12 +136,36 @@ final class PictureInPictureController {
                 self.abandon(session, reason: "capture \(error.localizedDescription)")
                 return
             }
-            // 等第一帧再让窗口让开：画面从窗口原来的位置缩到角落，中间不露空。
-            for _ in 0..<40 where session.capture.pixelFrameCount == 0 {
-                try? await Task.sleep(nanoseconds: 15_000_000)
+            let generation = session.capture.captureGeneration
+            var gate = PiPFrameGate(expectedGeneration: generation, windowID: UInt64(id), deadline: ProcessInfo.processInfo.systemUptime + 0.6)
+            let arrival: PiPArrival
+            do {
+                var decided: PiPArrival?
+                while decided == nil {
+                    let now = ProcessInfo.processInfo.systemUptime
+                    decided = gate.evaluate(
+                        now: now,
+                        frameGeneration: session.capture.captureGeneration,
+                        pixelCount: session.capture.pixelFrameCount,
+                        displayReady: session.capture.presentsFrame,
+                        sessionMatches: self.sessions[id] === session,
+                        observedWindow: UInt64(id))
+                    if decided == nil { try await Task.sleep(nanoseconds: 15_000_000) }
+                }
+                arrival = decided ?? .failed
+            } catch is CancellationError {
+                arrival = gate.cancel()
+            } catch {
+                arrival = .failed
             }
-            // 等的时候已经回到原处或收掉了：流可能比那边的停止晚开起来，这里再停一次。
-            guard self.sessions[id] === session else { session.capture.stop(); return }
+            guard arrival == .ready, self.sessions[id] === session else {
+                if self.sessions[id] === session {
+                    self.abandon(session, reason: "frame \(arrival)")
+                } else {
+                    session.capture.stop()
+                }
+                return
+            }
             // 进来到现在显示器变了、两边都挨着别的屏幕了：不让开，画中画收掉。
             guard self.park(session, screen: screen) else {
                 self.abandon(session, reason: "nowhere to step aside")

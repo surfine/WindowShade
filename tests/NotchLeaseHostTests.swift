@@ -14,10 +14,21 @@ import Cocoa
         let other = WS2.DisplayID(value: 72)
         var locked = false
         var panels: [WS2.DisplayID: NotchPanel] = [:]
+        final class LeaseBox { var hub: NotchLeaseHub? }
+        let box = LeaseBox()
         let hub = NotchLeaseHub(
             displays: { [main, other] },
             locked: { locked },
-            cancel: { notice in panels[notice.display]?.cancelLease(notice.owner) })
+            cancel: { notice in
+                let panel = panels[notice.display]
+                if notice.reason == .suspended {
+                    if panel?.suspendShelf() != true { box.hub?.forgetShelfPark(on: notice.display) }
+                    return
+                }
+                panel?.cancelLease(notice.owner)
+            })
+        box.hub = hub
+        hub.resumeShelfHandler = { panels[$0]?.resumeSuspendedShelf() }
         // 面板摆在屏幕外：测试不闪现在人眼前。
         func makePanel(_ display: WS2.DisplayID, x: CGFloat) -> NotchPanel {
             let panel = NotchPanel(notch: NSRect(x: x, y: 900, width: 180, height: 32), virtual: true)
@@ -40,16 +51,16 @@ import Cocoa
         expect(hub.owner(of: main) == nil, "释放授权")
         notch.expand(with: [])
         expect(notch.isExpanded, "那一排展开")
+        let openedShelf = hub.snapshot(main)?.lease
         expect(hub.acquire(.authorization, on: main), "授权随后进来")
         expect(!notch.isExpanded, "被抢占时那一排同步收起")
         expect(hub.owner(of: main) == .authorization, "这块屏只剩新主人")
 
         print("CASE LEASE-H03 | 释放后原样回来，旧租约不复活")
         hub.release(.authorization, on: main)
-        expect(hub.owner(of: main) == nil, "没有主人")
-        expect(hub.snapshot(main)?.lease == nil, "快照里没有租约")
-        notch.expand(with: [])
-        expect(notch.isExpanded, "释放后可以再展开")
+        expect(hub.owner(of: main) == .notchShelf, "让出后那一排拿一份新的展示权")
+        expect(notch.isExpanded && notch.lastShelfChangeAnimated == false, "从挂起处露出，不重播进场")
+        expect(hub.snapshot(main)?.lease != nil && hub.snapshot(main)?.lease != openedShelf, "旧租约没有复活")
 
         print("CASE LEASE-H04 | 锁屏障撤掉一切")
         hub.invalidate(.locked)
@@ -87,7 +98,58 @@ import Cocoa
         hub.invalidate(.disabled)
         expect(hub.owner(of: main) == nil, "关掉功能后清空")
 
-        print(failures == 0 ? "PASS NotchLeaseHostTests: 8 cases, \(failures) failures" : "FAIL NotchLeaseHostTests: \(failures) failures")
+        print("CASE LEASE-H09 | 展开时的提醒只留点，放开后不补说")
+        notch.expand(with: [])
+        expect(notch.isExpanded, "关掉功能之后可以再展开")
+        notch.alert(NotchPanel.Alert(id: 0, icon: nil, title: "构建完成", subtitle: ""))
+        expect(!notch.isAlerting && notch.showsSecondaryDot, "展开着只留一个点")
+        hub.release(.notchShelf, on: main)
+        expect(!notch.isExpanded && !notch.isAlerting && notch.showsSecondaryDot, "放开后不把那一句再说一遍")
+
+        print("CASE LEASE-H10 | 紧凑两耳就是当前这一件")
+        let music = NotchActivity(id: "music", kind: .music, title: "September", subtitle: "Earth, Wind & Fire",
+                                  symbol: "music.note", startedAt: 1, progress: 0.4)
+        let ears = NotchPanel(notch: NSRect(x: -5200, y: 900, width: 180, height: 32), virtual: true)
+        ears.setActivities([music], selected: "music")
+        let earShape = ears.shapeForProbe!.island
+        expect(earShape.width == 200 && abs(earShape.height - 26) < 0.01, "紧凑是一颗胶囊，不是旧的横条")
+        expect(ears.compactForProbe?.leading == "September" && ears.compactForProbe?.trailing == "40%", "左耳是这一件，右耳是进度")
+        ears.expand(with: [])
+        expect(ears.isExpanded && ears.shapeForProbe!.island.height > earShape.height, "展开是同一件事放大")
+
+        print("CASE LEASE-H11 | 分开、半路改方向、再合并")
+        Motion.reducedOverrideForProbe = false
+        ears.collapse()
+        ears.split(showing: "标题变了")
+        let apart = ears.splitForProbe
+        expect(apart.separated && !apart.retargeted && !apart.fades, "从这一颗旁边分开")
+        ears.split(showing: "又一句")
+        let retargeted = ears.splitForProbe
+        expect(retargeted.separated && retargeted.retargeted, "半路改方向从当前位置接上")
+        ears.mergeSplit()
+        expect(!ears.isSplit && !ears.splitForProbe.separated, "再合成一颗")
+
+        print("CASE LEASE-H12 | 减少动态效果只淡入淡出")
+        Motion.reducedOverrideForProbe = true
+        let quiet = NotchPanel(notch: NSRect(x: -5600, y: 900, width: 180, height: 32), virtual: true)
+        quiet.split(showing: "淡入")
+        expect(quiet.splitForProbe.separated && quiet.splitForProbe.fades, "位置不动，只改透明度")
+        Motion.reducedOverrideForProbe = nil
+        expect(NotchCanvasView.contentEntranceDelay(response: 0.34, reduced: false) == 0.34 * 0.22, "形状走到四成再进内容")
+        expect(NotchCanvasView.contentEntranceDelay(response: 0.34, reduced: true) == 0, "减少动态效果不等形状")
+
+        print("CASE LEASE-H13 | 音量长在同一颗岛上，对方的提示在跑就让位")
+        NotchPanel.foreignHUDOverride = true
+        ears.presentLevel(.volume, value: 0.4)
+        expect(ears.yieldedHUD && ears.levelForProbe == nil, "侦测到同类提示就让位")
+        NotchPanel.foreignHUDOverride = false
+        ears.presentLevel(.volume, value: 0.4)
+        expect(ears.levelForProbe?.kind == "音量" && ears.levelForProbe?.value == 0.4, "合成的音量鼓起这一颗")
+        ears.presentLevel(.brightness, value: 0.7)
+        expect(ears.levelForProbe?.kind == "亮度" && ears.levelForProbe?.value == 0.7, "亮度也是这一颗")
+        NotchPanel.foreignHUDOverride = nil
+
+        print(failures == 0 ? "PASS NotchLeaseHostTests: 13 cases, \(failures) failures" : "FAIL NotchLeaseHostTests: \(failures) failures")
         if failures > 0 { exit(1) }
     }
 }

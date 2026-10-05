@@ -28,8 +28,16 @@ enum WS2HeadGesture {
     static let dip: Double = 18
     /// 左右摆要超过的角度。初始值。
     static let shake: Double = 20
+    /// 相邻样本最长间隔。再长就是缺帧，不当成一个动作。
+    static let maxGap: UInt64 = 400 * WS2.Duration.millisecond
+    /// 离开回正之前至少停这么久。探一下不算。
+    static let minDwell: UInt64 = 80 * WS2.Duration.millisecond
+    /// 离开回正到回来，最短和最长。太快或太慢都不是点头、摇头。
+    static let minGesture: UInt64 = 80 * WS2.Duration.millisecond
+    static let maxGesture: UInt64 = 900 * WS2.Duration.millisecond
 
     static func recognize(_ samples: [WS2HeadSample]) -> WS2HeadRecognition? {
+        guard samples.count >= 4, samples.allSatisfy(finite), strictlyIncreasing(samples) else { return nil }
         guard let first = samples.first, inNeutral(first) else { return nil }
         if let nod = nod(samples) { return nod }
         return shake(samples)
@@ -40,6 +48,18 @@ enum WS2HeadGesture {
         recognition.kind == .nod && recognition.startedAt >= displayedAt
     }
 
+    private static func finite(_ sample: WS2HeadSample) -> Bool {
+        sample.pitchDown.isFinite && sample.yaw.isFinite
+    }
+
+    private static func strictlyIncreasing(_ samples: [WS2HeadSample]) -> Bool {
+        for pair in zip(samples, samples.dropFirst()) {
+            if pair.1.at <= pair.0.at { return false }
+            if pair.1.at.elapsed(since: pair.0.at) > maxGap { return false }
+        }
+        return true
+    }
+
     private static func inNeutral(_ sample: WS2HeadSample) -> Bool {
         abs(sample.pitchDown) <= neutral && abs(sample.yaw) <= neutral
     }
@@ -47,39 +67,61 @@ enum WS2HeadGesture {
     private static func nod(_ samples: [WS2HeadSample]) -> WS2HeadRecognition? {
         var started: WS2.Instant?
         var dipped = false
+        var returned = false
         for sample in samples {
             if abs(sample.yaw) > neutral { return nil }
             if started == nil {
-                if sample.pitchDown > neutral { started = sample.at }
+                if sample.pitchDown > neutral {
+                    guard let first = samples.first, sample.at.elapsed(since: first.at) >= minDwell else { return nil }
+                    started = sample.at
+                }
                 continue
             }
+            if sample.pitchDown < -neutral { return nil }
             if sample.pitchDown >= dip { dipped = true }
-            if dipped, sample.pitchDown <= neutral, let started {
-                return WS2HeadRecognition(kind: .nod, startedAt: started)
+            if dipped, inNeutral(sample), let started {
+                if !returned {
+                    if sample.at.elapsed(since: started) < minGesture || sample.at.elapsed(since: started) > maxGesture {
+                        return nil
+                    }
+                    returned = true
+                }
+            } else if returned, sample.pitchDown > neutral {
+                return nil
             }
         }
-        return nil
+        guard returned, let started else { return nil }
+        return WS2HeadRecognition(kind: .nod, startedAt: started)
     }
 
     private static func shake(_ samples: [WS2HeadSample]) -> WS2HeadRecognition? {
         var started: WS2.Instant?
-        var swung = false
-        var sign = 0.0
+        var positive = false
+        var negative = false
+        var returned = false
         for sample in samples {
             if sample.pitchDown >= dip { return nil }
             if started == nil {
                 if abs(sample.yaw) > neutral {
+                    guard let first = samples.first, sample.at.elapsed(since: first.at) >= minDwell else { return nil }
                     started = sample.at
-                    sign = sample.yaw
                 }
                 continue
             }
-            if sample.yaw * sign < 0 { return nil }
-            if abs(sample.yaw) >= shake { swung = true }
-            if swung, abs(sample.yaw) <= neutral, let started {
-                return WS2HeadRecognition(kind: .shake, startedAt: started)
+            if sample.yaw >= shake { positive = true }
+            if sample.yaw <= -shake { negative = true }
+            if positive, negative, inNeutral(sample), let started {
+                if !returned {
+                    if sample.at.elapsed(since: started) < minGesture || sample.at.elapsed(since: started) > maxGesture {
+                        return nil
+                    }
+                    returned = true
+                }
+            } else if returned, abs(sample.yaw) > neutral {
+                return nil
             }
         }
-        return nil
+        guard returned, positive, negative, let started else { return nil }
+        return WS2HeadRecognition(kind: .shake, startedAt: started)
     }
 }
