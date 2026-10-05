@@ -1,6 +1,6 @@
 ==> 源文件：374 个 Swift 文件
 ==> 编译验证（--check，和发布构建同样的优化参数；不签名、不修改 app bundle）
-/Users/aaron/Documents/WindowShade/.build/duo-build.DhycXA/App/ArrangeController.swift:48:41: warning: capture of 'savedHandlers' with non-Sendable type '[(NativeProxyOverlayWindow, ((NSWindow) -> Void)?)]' in a '@Sendable' closure [#SendableClosureCaptures]
+/Users/aaron/Documents/WindowShade/.build/duo-build.U7KX6e/App/ArrangeController.swift:48:41: warning: capture of 'savedHandlers' with non-Sendable type '[(NativeProxyOverlayWindow, ((NSWindow) -> Void)?)]' in a '@Sendable' closure [#SendableClosureCaptures]
  46 |                 for move in moves { move.window.animator().setFrame(move.frame, display: true) }
  47 |             } completionHandler: {
  48 |                 for (proxy, handler) in savedHandlers { proxy.onResize = handler }
@@ -9,7 +9,7 @@
  49 |             }
  50 |         }
 
-/Users/aaron/Documents/WindowShade/.build/duo-build.DhycXA/App/ArrangeController.swift:48:63: warning: main actor-isolated property 'onResize' can not be mutated from a Sendable closure
+/Users/aaron/Documents/WindowShade/.build/duo-build.U7KX6e/App/ArrangeController.swift:48:63: warning: main actor-isolated property 'onResize' can not be mutated from a Sendable closure
  46 |                 for move in moves { move.window.animator().setFrame(move.frame, display: true) }
  47 |             } completionHandler: {
  48 |                 for (proxy, handler) in savedHandlers { proxy.onResize = handler }
@@ -17,7 +17,7 @@
  49 |             }
  50 |         }
 
-/Users/aaron/Documents/WindowShade/.build/duo-build.DhycXA/Overlay/ShadeStrip.swift:164:9: note: mutation of this property is only permitted within the actor
+/Users/aaron/Documents/WindowShade/.build/duo-build.U7KX6e/Overlay/ShadeStrip.swift:164:9: note: mutation of this property is only permitted within the actor
 162 |     var onAction: ((TrafficAction) -> Void)?
 163 |     var onWindowManagementPopover: (() -> Void)?
 164 |     var onResize: ((NSWindow) -> Void)?
@@ -25,7 +25,7 @@
 165 |     var onFrameMoved: ((NSRect) -> Void)?
 166 |     var onDragEnded: ((NSRect) -> Void)?
 
-/Users/aaron/Documents/WindowShade/.build/duo-build.DhycXA/App/FoldTransaction.swift:112:107: warning: passing non-Sendable parameter 'action' to function expecting a '@Sendable' closure
+/Users/aaron/Documents/WindowShade/.build/duo-build.U7KX6e/App/FoldTransaction.swift:112:107: warning: passing non-Sendable parameter 'action' to function expecting a '@Sendable' closure
  110 |         let expected = foldCallbackStamp(id: id, state: installed)
  111 |         FoldVerifier(
  112 |             schedule: { delay, action in DispatchQueue.main.asyncAfter(deadline: .now() + delay, execute: action) },
@@ -34,7 +34,7 @@
  113 |             isCurrent: { [weak self] in self?.foldCallbackIsCurrent(expected) == true },
  114 |             observation: { [weak self] in
 
-/Users/aaron/Documents/WindowShade/.build/duo-build.DhycXA/App/LaunchpadArtwork.swift:96:13: warning: capture of 'completion' with non-Sendable type '([LaunchpadArtwork.Drawing]) -> Void' in a '@Sendable' closure [#SendableClosureCaptures]
+/Users/aaron/Documents/WindowShade/.build/duo-build.U7KX6e/App/LaunchpadArtwork.swift:96:13: warning: capture of 'completion' with non-Sendable type '([LaunchpadArtwork.Drawing]) -> Void' in a '@Sendable' closure [#SendableClosureCaptures]
  94 |                 lock.lock(); results += batch; lock.unlock()
  95 |             }
  96 |             completion(results)
@@ -43,7 +43,7 @@
  97 |         }
  98 |     }
 
-/Users/aaron/Documents/WindowShade/.build/duo-build.DhycXA/App/LaunchpadArtwork.swift:94:30: warning: mutation of captured var 'results' in concurrently-executing code [#SendableClosureCaptures]
+/Users/aaron/Documents/WindowShade/.build/duo-build.U7KX6e/App/LaunchpadArtwork.swift:94:30: warning: mutation of captured var 'results' in concurrently-executing code [#SendableClosureCaptures]
  92 |                     }
  93 |                 }
  94 |                 lock.lock(); results += batch; lock.unlock()
@@ -51,7 +51,7 @@
  95 |             }
  96 |             completion(results)
 
-/Users/aaron/Documents/WindowShade/.build/duo-build.DhycXA/App/MissionControlKeys.swift:114:23: warning: capture of 'self' with non-Sendable type 'MissionControlKeys?' in a '@Sendable' closure [#SendableClosureCaptures]
+/Users/aaron/Documents/WindowShade/.build/duo-build.U7KX6e/App/MissionControlKeys.swift:114:23: warning: capture of 'self' with non-Sendable type 'MissionControlKeys?' in a '@Sendable' closure [#SendableClosureCaptures]
  71 | 
  72 | /// 键盘事件钩子：只关心 ⌘W / ⌘Q，平时一律放行。
  73 | final class MissionControlKeys {
@@ -66,7 +66,7 @@
 115 |             let runLoop = CFRunLoopGetCurrent()
 116 |             self.threadRunLoop = runLoop
 
-/Users/aaron/Documents/WindowShade/.build/duo-build.DhycXA/App/TrackpadGestures.swift:643:71: warning: capture of 'settle' with non-Sendable type '(CGFloat) -> ()' in a '@Sendable' closure [#SendableClosureCaptures]
+/Users/aaron/Documents/WindowShade/.build/duo-build.U7KX6e/App/TrackpadGestures.swift:643:71: warning: capture of 'settle' with non-Sendable type '(CGFloat) -> ()' in a '@Sendable' closure [#SendableClosureCaptures]
  641 |             DispatchQueue.global(qos: .userInteractive).async {
  642 |                 let bar = measuredTitlebarHitHeight(of: win, winTop: pos.y, winSize: size, pid: pid)
  643 |                 DispatchQueue.main.async { MainActor.assumeIsolated { settle(bar) } }
@@ -75,7 +75,7 @@
  644 |             }
  645 |         }
 
-/Users/aaron/Documents/WindowShade/.build/duo-build.DhycXA/App/UpdaterSystem.swift:466:24: warning: static property 'calls' is not concurrency-safe because non-'Sendable' type 'any LegacyLaunchdJobCalls.Type' may have shared mutable state [#MutableGlobalVariable]
+/Users/aaron/Documents/WindowShade/.build/duo-build.U7KX6e/App/UpdaterSystem.swift:466:24: warning: static property 'calls' is not concurrency-safe because non-'Sendable' type 'any LegacyLaunchdJobCalls.Type' may have shared mutable state [#MutableGlobalVariable]
 464 | enum UpdateJobs {
 465 |     private static var domain: CFString { kSMDomainUserLaunchd }
 466 |     private static let calls: any LegacyLaunchdJobCalls.Type = SMJobCalls.self
@@ -85,7 +85,7 @@
 467 | 
 468 |     static func dictionary(label: String) -> [String: Any]? {
 
-/Users/aaron/Documents/WindowShade/.build/duo-build.DhycXA/Effects/DuoController.swift:138:63: warning: call to main actor-isolated instance method 'suspend()' in a synchronous nonisolated context [#ActorIsolatedCall]
+/Users/aaron/Documents/WindowShade/.build/duo-build.U7KX6e/Effects/DuoController.swift:138:63: warning: call to main actor-isolated instance method 'suspend()' in a synchronous nonisolated context [#ActorIsolatedCall]
 136 |         ) { [weak self] note in
 137 |           EffectEnvironment.refresh()
 138 |           if note.name.rawValue.hasSuffix("IsLocked") { self?.suspend() } else { self?.resume() }
@@ -100,7 +100,7 @@
 390 |     wlog("duo: suspend")
 391 |     suspended = true
 
-/Users/aaron/Documents/WindowShade/.build/duo-build.DhycXA/Effects/DuoController.swift:138:88: warning: call to main actor-isolated instance method 'resume()' in a synchronous nonisolated context [#ActorIsolatedCall]
+/Users/aaron/Documents/WindowShade/.build/duo-build.U7KX6e/Effects/DuoController.swift:138:88: warning: call to main actor-isolated instance method 'resume()' in a synchronous nonisolated context [#ActorIsolatedCall]
 136 |         ) { [weak self] note in
 137 |           EffectEnvironment.refresh()
 138 |           if note.name.rawValue.hasSuffix("IsLocked") { self?.suspend() } else { self?.resume() }
@@ -115,7 +115,7 @@
 402 |     guard !EffectSecurityBoundary.isLocked else {
 403 |       if lockOverlay.enabled && !EffectEnvironment.asleep && EffectEnvironment.displayAwake { sensor.start() }
 
-/Users/aaron/Documents/WindowShade/.build/duo-build.DhycXA/Effects/DuoController.swift:164:84: warning: capture of 'action' with non-Sendable type '() -> Void' in a '@Sendable' closure [#SendableClosureCaptures]
+/Users/aaron/Documents/WindowShade/.build/duo-build.U7KX6e/Effects/DuoController.swift:164:84: warning: capture of 'action' with non-Sendable type '() -> Void' in a '@Sendable' closure [#SendableClosureCaptures]
 162 |   ) {
 163 |     observers.append(
 164 |       (center, center.addObserver(forName: name, object: nil, queue: .main) { _ in action() }))
@@ -124,7 +124,7 @@
 165 |   }
 166 | 
 
-/Users/aaron/Documents/WindowShade/.build/duo-build.DhycXA/Effects/FoldRenderer.swift:399:29: warning: capture of 'retainedFrame' with non-Sendable type 'EffectFrame?' in a '@Sendable' closure [#SendableClosureCaptures]
+/Users/aaron/Documents/WindowShade/.build/duo-build.U7KX6e/Effects/FoldRenderer.swift:399:29: warning: capture of 'retainedFrame' with non-Sendable type 'EffectFrame?' in a '@Sendable' closure [#SendableClosureCaptures]
 397 |     dirty = false
 398 |     command.addCompletedHandler { [weak self] result in
 399 |       withExtendedLifetime((retainedFrame, gpu)) {}
@@ -132,7 +132,7 @@
 400 |       let gpuMilliseconds = (result.gpuEndTime - result.gpuStartTime) * 1000
 401 |       let completed = result.status == .completed
 
-/Users/aaron/Documents/WindowShade/.build/duo-build.DhycXA/Effects/EffectFrameSource.swift:15:8: note: consider making struct 'EffectFrame' conform to the 'Sendable' protocol
+/Users/aaron/Documents/WindowShade/.build/duo-build.U7KX6e/Effects/EffectFrameSource.swift:15:8: note: consider making struct 'EffectFrame' conform to the 'Sendable' protocol
  13 |   }
  14 | }
  15 | struct EffectFrame {
@@ -140,7 +140,7 @@
  16 |   let buffer: CVPixelBuffer
  17 |   let presentationTime: CMTime
 
-/Users/aaron/Documents/WindowShade/.build/duo-build.DhycXA/Effects/LockOverlayController.swift:37:27: warning: call to main actor-isolated instance method 'refreshSoon()' in a synchronous nonisolated context [#ActorIsolatedCall]
+/Users/aaron/Documents/WindowShade/.build/duo-build.U7KX6e/Effects/LockOverlayController.swift:37:27: warning: call to main actor-isolated instance method 'refreshSoon()' in a synchronous nonisolated context [#ActorIsolatedCall]
  35 |             distributed.append(DistributedNotificationCenter.default().addObserver(
  36 |                 forName: Notification.Name(name), object: nil, queue: .main) { [weak self] _ in
  37 |                     self?.refreshSoon()
@@ -155,7 +155,7 @@
  68 |         refresh()
  69 |         // The distributed lock notification can precede the authoritative transition.
 
-/Users/aaron/Documents/WindowShade/.build/duo-build.DhycXA/Effects/LockOverlayController.swift:57:103: warning: capture of 'action' with non-Sendable type '() -> Void' in a '@Sendable' closure [#SendableClosureCaptures]
+/Users/aaron/Documents/WindowShade/.build/duo-build.U7KX6e/Effects/LockOverlayController.swift:57:103: warning: capture of 'action' with non-Sendable type '() -> Void' in a '@Sendable' closure [#SendableClosureCaptures]
  55 |     }
  56 |     private func observe(_ center: NotificationCenter, _ name: Notification.Name, action: @escaping () -> Void) {
  57 |         observers.append((center, center.addObserver(forName: name, object: nil, queue: .main) { _ in action() }))
@@ -164,7 +164,7 @@
  58 |     }
  59 |     private func reschedule() {
 
-/Users/aaron/Documents/WindowShade/.build/duo-build.DhycXA/Effects/LockOverlayController.swift:63:101: warning: call to main actor-isolated instance method 'refresh()' in a synchronous nonisolated context [#ActorIsolatedCall]
+/Users/aaron/Documents/WindowShade/.build/duo-build.U7KX6e/Effects/LockOverlayController.swift:63:101: warning: call to main actor-isolated instance method 'refresh()' in a synchronous nonisolated context [#ActorIsolatedCall]
  61 |         timer = nil
  62 |         guard running, enabled else { return }
  63 |         timer = Timer.scheduledTimer(withTimeInterval: 0.5, repeats: true) { [weak self] _ in self?.refresh() }
@@ -179,7 +179,7 @@
  73 |         precondition(Thread.isMainThread)
  74 |         guard running else { return }
 
-/Users/aaron/Documents/WindowShade/.build/duo-build.DhycXA/Effects/RestoreVerification.swift:50:74: warning: passing non-Sendable parameter 'action' to function expecting a '@Sendable' closure
+/Users/aaron/Documents/WindowShade/.build/duo-build.U7KX6e/Effects/RestoreVerification.swift:50:74: warning: passing non-Sendable parameter 'action' to function expecting a '@Sendable' closure
 47 |     RestoreVerifier(
 48 |       now: CACurrentMediaTime,
 49 |       schedule: { delay, action in
@@ -189,7 +189,7 @@
 51 |       }, isCurrent: { [weak self] in self?.duoRestoreVerificationTokens[id] == token },
 52 |       observe: { [weak self] in self?.observeRestoredWindow(state, to: position) ?? .pending },
 
-/Users/aaron/Documents/WindowShade/.build/duo-build.DhycXA/Overlay/GestureHUD.swift:247:31: warning: passing non-Sendable parameter 'completion' to function expecting a '@Sendable' closure
+/Users/aaron/Documents/WindowShade/.build/duo-build.U7KX6e/Overlay/GestureHUD.swift:247:31: warning: passing non-Sendable parameter 'completion' to function expecting a '@Sendable' closure
 240 |     }
 241 | 
 242 |     private func fade(to alpha: CGFloat, duration: TimeInterval, completion: (() -> Void)? = nil) {
@@ -203,7 +203,7 @@
 248 |     }
 249 | 
 
-/Users/aaron/Documents/WindowShade/.build/duo-build.DhycXA/Overlay/ShadeStrip.swift:676:47: warning: main actor-isolated property 'window' can not be referenced from a nonisolated context
+/Users/aaron/Documents/WindowShade/.build/duo-build.U7KX6e/Overlay/ShadeStrip.swift:676:47: warning: main actor-isolated property 'window' can not be referenced from a nonisolated context
 673 |     }
 674 | 
 675 |     func accessibilityFrame() -> NSRect {
@@ -221,7 +221,7 @@
  87 | @property (nullable, readonly, unsafe_unretained) NSView *superview;
  88 | @property (copy) NSArray<__kindof NSView *> *subviews;
 
-/Users/aaron/Documents/WindowShade/.build/duo-build.DhycXA/Overlay/ShadeStrip.swift:677:23: warning: call to main actor-isolated instance method 'convertToScreen' in a synchronous nonisolated context [#ActorIsolatedCall]
+/Users/aaron/Documents/WindowShade/.build/duo-build.U7KX6e/Overlay/ShadeStrip.swift:677:23: warning: call to main actor-isolated instance method 'convertToScreen' in a synchronous nonisolated context [#ActorIsolatedCall]
 673 |     }
 674 | 
 675 |     func accessibilityFrame() -> NSRect {
@@ -241,7 +241,7 @@
  474 | - (NSRect)convertRectFromScreen:(NSRect)rect API_AVAILABLE(macos(10.7));
  475 | - (NSPoint)convertPointToScreen:(NSPoint)point API_AVAILABLE(macos(10.12));
 
-/Users/aaron/Documents/WindowShade/.build/duo-build.DhycXA/Overlay/ShadeStrip.swift:677:46: warning: call to main actor-isolated instance method 'convert(_:to:)' in a synchronous nonisolated context [#ActorIsolatedCall]
+/Users/aaron/Documents/WindowShade/.build/duo-build.U7KX6e/Overlay/ShadeStrip.swift:677:46: warning: call to main actor-isolated instance method 'convert(_:to:)' in a synchronous nonisolated context [#ActorIsolatedCall]
 673 |     }
 674 | 
 675 |     func accessibilityFrame() -> NSRect {
@@ -261,7 +261,7 @@
 155 | 
 156 | /* Uses NSIntegralRectWithOptions() to produce a backing store pixel aligned rectangle from the given input rectangle in local view coordinates.
 
-/Users/aaron/Documents/WindowShade/.build/duo-build.DhycXA/Private/LockSpaceBridge.swift:44:80: warning: main actor-isolated property 'ignoresMouseEvents' can not be referenced from a nonisolated context
+/Users/aaron/Documents/WindowShade/.build/duo-build.U7KX6e/Private/LockSpaceBridge.swift:44:80: warning: main actor-isolated property 'ignoresMouseEvents' can not be referenced from a nonisolated context
 39 |     }
 40 | 
 41 |     func attach(_ panel: NSWindow) -> Bool {
@@ -281,7 +281,7 @@
  796 | @property (readonly) NSPoint mouseLocationOutsideOfEventStream;
  797 | @end
 
-/Users/aaron/Documents/WindowShade/.build/duo-build.DhycXA/Private/LockSpaceBridge.swift:45:22: warning: main actor-isolated property 'canBecomeKey' can not be referenced from a nonisolated context
+/Users/aaron/Documents/WindowShade/.build/duo-build.U7KX6e/Private/LockSpaceBridge.swift:45:22: warning: main actor-isolated property 'canBecomeKey' can not be referenced from a nonisolated context
 39 |     }
 40 | 
 41 |     func attach(_ panel: NSWindow) -> Bool {
@@ -302,7 +302,7 @@
  439 | @property (readonly) BOOL canBecomeMainWindow;
  440 | 
 
-/Users/aaron/Documents/WindowShade/.build/duo-build.DhycXA/Private/LockSpaceBridge.swift:45:43: warning: main actor-isolated property 'canBecomeMain' can not be referenced from a nonisolated context
+/Users/aaron/Documents/WindowShade/.build/duo-build.U7KX6e/Private/LockSpaceBridge.swift:45:43: warning: main actor-isolated property 'canBecomeMain' can not be referenced from a nonisolated context
 39 |     }
 40 | 
 41 |     func attach(_ panel: NSWindow) -> Bool {
@@ -323,7 +323,7 @@
  440 | 
  441 | /*! Makes the window key and main if eligible, updating NSApplication's `-keyWindow` and `-mainWindow` properties.
 
-/Users/aaron/Documents/WindowShade/.build/duo-build.DhycXA/Private/LockSpaceBridge.swift:55:28: warning: main actor-isolated property 'windowNumber' can not be referenced from a nonisolated context
+/Users/aaron/Documents/WindowShade/.build/duo-build.U7KX6e/Private/LockSpaceBridge.swift:55:28: warning: main actor-isolated property 'windowNumber' can not be referenced from a nonisolated context
 39 |     }
 40 | 
 41 |     func attach(_ panel: NSWindow) -> Bool {
@@ -346,7 +346,7 @@
  340 | 
  341 | /// @note The styleMask can only be set on macOS 10.6 and later. Valid \c styleMask settings have the same restrictions as the \c styleMask passed to `-initWithContentRect:styleMask:backing:defer:`.  Some \c styleMask changes will cause the view hierarchy to be rebuilt, since there is a different subclass for the top level view of a borderless window than for the top level view of a titled window.
 
-/Users/aaron/Documents/WindowShade/.build/duo-build.DhycXA/Private/LockSpaceBridge.swift:68:15: warning: call to main actor-isolated instance method 'orderOut' in a synchronous nonisolated context [#ActorIsolatedCall]
+/Users/aaron/Documents/WindowShade/.build/duo-build.U7KX6e/Private/LockSpaceBridge.swift:68:15: warning: call to main actor-isolated instance method 'orderOut' in a synchronous nonisolated context [#ActorIsolatedCall]
 65 |     }
 66 | 
 67 |     func detach(_ panel: NSWindow) {
@@ -365,7 +365,7 @@
  426 | - (void)orderWindow:(NSWindowOrderingMode)place relativeTo:(NSInteger)otherWin;
  427 | - (void)orderFrontRegardless;
 
-/Users/aaron/Documents/WindowShade/.build/duo-build.DhycXA/Private/LockSpaceBridge.swift:69:36: warning: main actor-isolated property 'windowNumber' can not be referenced from a nonisolated context
+/Users/aaron/Documents/WindowShade/.build/duo-build.U7KX6e/Private/LockSpaceBridge.swift:69:36: warning: main actor-isolated property 'windowNumber' can not be referenced from a nonisolated context
 65 |     }
 66 | 
 67 |     func detach(_ panel: NSWindow) {
@@ -384,7 +384,7 @@
  340 | 
  341 | /// @note The styleMask can only be set on macOS 10.6 and later. Valid \c styleMask settings have the same restrictions as the \c styleMask passed to `-initWithContentRect:styleMask:backing:defer:`.  Some \c styleMask changes will cause the view hierarchy to be rebuilt, since there is a different subclass for the top level view of a borderless window than for the top level view of a titled window.
 
-/Users/aaron/Documents/WindowShade/.build/duo-build.DhycXA/Private/LockSpaceBridge.swift:70:48: warning: main actor-isolated property 'windowNumber' can not be referenced from a nonisolated context
+/Users/aaron/Documents/WindowShade/.build/duo-build.U7KX6e/Private/LockSpaceBridge.swift:70:48: warning: main actor-isolated property 'windowNumber' can not be referenced from a nonisolated context
 65 |     }
 66 | 
 67 |     func detach(_ panel: NSWindow) {
@@ -404,7 +404,7 @@
  340 | 
  341 | /// @note The styleMask can only be set on macOS 10.6 and later. Valid \c styleMask settings have the same restrictions as the \c styleMask passed to `-initWithContentRect:styleMask:backing:defer:`.  Some \c styleMask changes will cause the view hierarchy to be rebuilt, since there is a different subclass for the top level view of a borderless window than for the top level view of a titled window.
 
-/Users/aaron/Documents/WindowShade/.build/duo-build.DhycXA/Recovery/Rescue.swift:247:55: warning: capture of 'journalEntries' with non-Sendable type '[[String : Any]]' in a '@Sendable' closure [#SendableClosureCaptures]
+/Users/aaron/Documents/WindowShade/.build/duo-build.U7KX6e/Recovery/Rescue.swift:247:55: warning: capture of 'journalEntries' with non-Sendable type '[[String : Any]]' in a '@Sendable' closure [#SendableClosureCaptures]
 245 |             var result = JournalRescueResult()
 246 |             // nonisolated 扫描：可从救援队列碰 self，不会踩 MainActor 执行期断言。
 247 |             self.collectJournalRescueActions(entries: journalEntries, targetTopLeft: targetTopLeft, into: &result)
@@ -412,7 +412,7 @@
 248 |             var rescued = result.actions.count + result.alphaRestores.count
 249 |             if rescued == 0 {
 
-/Users/aaron/Documents/WindowShade/.build/duo-build.DhycXA/ScreenCaptureBridge.swift:118:20: warning: main actor-isolated property 'videoGravity' can not be mutated from a nonisolated context
+/Users/aaron/Documents/WindowShade/.build/duo-build.U7KX6e/ScreenCaptureBridge.swift:118:20: warning: main actor-isolated property 'videoGravity' can not be mutated from a nonisolated context
 116 |         }
 117 |         super.init()
 118 |         videoLayer.videoGravity = .resize
@@ -428,7 +428,7 @@
  58 | 
  59 | /// Boolean indicating that the first video frame has been made ready for display. @discusssion Use this property as an indicator of when best to show or animate-in an AVSampleBufferDisplayLayer into view. An AVSampleBufferDisplayLayer may be displayed, or made visible, while this property is NO, however the layer will not have any user-visible content until the value becomes YES. Note that if an animation is added to an AVSampleBufferDisplayLayer before it becomes readyForDisplay the video image displayed inside might not animate with the receiver. readyForDisplay will change to NO when the layer can no longer display frames. readyForDisplay will be YES when the first video frame has been made ready for display. This property is not key-value observable. AVSampleBufferDisplayLayerReadyForDisplayDidChangeNotification is posted when this value changes.
 
-/Users/aaron/Documents/WindowShade/.build/duo-build.DhycXA/ScreenCaptureBridge.swift:150:27: warning: main actor-isolated property 'isReadyForDisplay' can not be referenced from a nonisolated context
+/Users/aaron/Documents/WindowShade/.build/duo-build.U7KX6e/ScreenCaptureBridge.swift:150:27: warning: main actor-isolated property 'isReadyForDisplay' can not be referenced from a nonisolated context
 148 |     var presentsFrame: Bool {
 149 |         guard #available(macOS 14.4, *) else { return false }
 150 |         return videoLayer.isReadyForDisplay
@@ -444,7 +444,7 @@
  61 | 
  62 | @end
 
-/Users/aaron/Documents/WindowShade/.build/duo-build.DhycXA/ScreenCaptureBridge.swift:427:34: warning: main actor-isolated property 'sampleBufferRenderer' can not be referenced from a nonisolated context
+/Users/aaron/Documents/WindowShade/.build/duo-build.U7KX6e/ScreenCaptureBridge.swift:427:34: warning: main actor-isolated property 'sampleBufferRenderer' can not be referenced from a nonisolated context
 423 |     // macOS 15 的 sampleBufferRenderer.enqueue 线程安全，直接在帧队列上投递；
 424 |     // 旧系统必须回主线程，但降频后主线程每路最多 ~15fps（镜像 10fps）。
 425 |     private func deliver(_ sampleBuffer: CMSampleBuffer, main: Bool, mirror: Bool) {
@@ -463,7 +463,7 @@
 247 | 
 248 | @end
 
-/Users/aaron/Documents/WindowShade/.build/duo-build.DhycXA/ScreenCaptureBridge.swift:428:54: warning: main actor-isolated property 'sampleBufferRenderer' can not be referenced from a nonisolated context
+/Users/aaron/Documents/WindowShade/.build/duo-build.U7KX6e/ScreenCaptureBridge.swift:428:54: warning: main actor-isolated property 'sampleBufferRenderer' can not be referenced from a nonisolated context
 423 |     // macOS 15 的 sampleBufferRenderer.enqueue 线程安全，直接在帧队列上投递；
 424 |     // 旧系统必须回主线程，但降频后主线程每路最多 ~15fps（镜像 10fps）。
 425 |     private func deliver(_ sampleBuffer: CMSampleBuffer, main: Bool, mirror: Bool) {
@@ -483,7 +483,7 @@
 247 | 
 248 | @end
 
-/Users/aaron/Documents/WindowShade/.build/duo-build.DhycXA/Window/AppWindows.swift:103:17: warning: mutation of captured var 'discovered' in concurrently-executing code [#SendableClosureCaptures]
+/Users/aaron/Documents/WindowShade/.build/duo-build.U7KX6e/Window/AppWindows.swift:103:17: warning: mutation of captured var 'discovered' in concurrently-executing code [#SendableClosureCaptures]
 101 |             if !windows.isEmpty {
 102 |                 lock.lock()
 103 |                 discovered[index] = windows
@@ -491,7 +491,7 @@
 104 |                 lock.unlock()
 105 |             }
 
-/Users/aaron/Documents/WindowShade/.build/duo-build.DhycXA/Window/AppWindows.swift:126:9: warning: mutation of captured var 'images' in concurrently-executing code [#SendableClosureCaptures]
+/Users/aaron/Documents/WindowShade/.build/duo-build.U7KX6e/Window/AppWindows.swift:126:9: warning: mutation of captured var 'images' in concurrently-executing code [#SendableClosureCaptures]
 124 |         guard let image = quickWindowPreviewCGImage(id: ids[index]) else { return }
 125 |         lock.lock()
 126 |         images[index] = image
@@ -499,7 +499,7 @@
 127 |         lock.unlock()
 128 |     }
 
-/Users/aaron/Documents/WindowShade/.build/duo-build.DhycXA/WindowBrowser/DockHoverObserver.swift:590:50: warning: main actor-isolated property 'dockPID' can not be referenced from a Sendable closure
+/Users/aaron/Documents/WindowShade/.build/duo-build.U7KX6e/WindowBrowser/DockHoverObserver.swift:590:50: warning: main actor-isolated property 'dockPID' can not be referenced from a Sendable closure
  41 | 
  42 |     private var observer: AXObserver?
  43 |     private var dockPID: pid_t = 0
@@ -514,7 +514,7 @@
 591 |                     self.invalidate(reason: "dock-terminated")
 592 |                 }
 
-/Users/aaron/Documents/WindowShade/.build/duo-build.DhycXA/WindowBrowser/DockHoverObserver.swift:591:26: warning: call to main actor-isolated instance method 'invalidate(reason:)' in a synchronous nonisolated context [#ActorIsolatedCall]
+/Users/aaron/Documents/WindowShade/.build/duo-build.U7KX6e/WindowBrowser/DockHoverObserver.swift:591:26: warning: call to main actor-isolated instance method 'invalidate(reason:)' in a synchronous nonisolated context [#ActorIsolatedCall]
 120 | 
 121 |     /// Dock 重启/实例变化/观察对象失效时：递增代数、撤销旧订阅、有界重建。
 122 |     func invalidate(reason: String) {
@@ -529,7 +529,7 @@
 592 |                 }
 593 |             })
 
-/Users/aaron/Documents/WindowShade/.build/duo-build.DhycXA/WindowBrowser/DockHoverObserver.swift:600:67: warning: main actor-isolated property 'running' can not be referenced from a Sendable closure
+/Users/aaron/Documents/WindowShade/.build/duo-build.U7KX6e/WindowBrowser/DockHoverObserver.swift:600:67: warning: main actor-isolated property 'running' can not be referenced from a Sendable closure
  69 |     private var target: DockHoverTarget?
  70 |     private var generation: UInt64 = 1
  71 |     private var running = false
@@ -544,7 +544,7 @@
 601 |                     self.invalidate(reason: "dock-launched")
 602 |                 }
 
-/Users/aaron/Documents/WindowShade/.build/duo-build.DhycXA/WindowBrowser/DockHoverObserver.swift:601:26: warning: call to main actor-isolated instance method 'invalidate(reason:)' in a synchronous nonisolated context [#ActorIsolatedCall]
+/Users/aaron/Documents/WindowShade/.build/duo-build.U7KX6e/WindowBrowser/DockHoverObserver.swift:601:26: warning: call to main actor-isolated instance method 'invalidate(reason:)' in a synchronous nonisolated context [#ActorIsolatedCall]
 120 | 
 121 |     /// Dock 重启/实例变化/观察对象失效时：递增代数、撤销旧订阅、有界重建。
 122 |     func invalidate(reason: String) {
@@ -559,7 +559,7 @@
 602 |                 }
 603 |             })
 
-/Users/aaron/Documents/WindowShade/.build/duo-build.DhycXA/WindowBrowser/DockHoverObserver.swift:622:38: warning: main actor-isolated property 'running' can not be referenced from a Sendable closure
+/Users/aaron/Documents/WindowShade/.build/duo-build.U7KX6e/WindowBrowser/DockHoverObserver.swift:622:38: warning: main actor-isolated property 'running' can not be referenced from a Sendable closure
  69 |     private var target: DockHoverTarget?
  70 |     private var generation: UInt64 = 1
  71 |     private var running = false
@@ -574,7 +574,7 @@
 623 |                 let layout = DisplayLayout.current()
 624 |                 guard layout != self.displayLayout else {
 
-/Users/aaron/Documents/WindowShade/.build/duo-build.DhycXA/WindowBrowser/DockHoverObserver.swift:624:38: warning: main actor-isolated property 'displayLayout' can not be referenced from a Sendable closure
+/Users/aaron/Documents/WindowShade/.build/duo-build.U7KX6e/WindowBrowser/DockHoverObserver.swift:624:38: warning: main actor-isolated property 'displayLayout' can not be referenced from a Sendable closure
  50 |     private var topologyVersion: UInt64 = 1
  51 |     private var screensToken: NSObjectProtocol?
  52 |     private var displayLayout = DisplayLayout(screens: [])
@@ -589,7 +589,7 @@
 625 |                     self.refreshDockAreas()
 626 |                     return
 
-/Users/aaron/Documents/WindowShade/.build/duo-build.DhycXA/WindowBrowser/DockHoverObserver.swift:625:26: warning: call to main actor-isolated instance method 'refreshDockAreas()' in a synchronous nonisolated context [#ActorIsolatedCall]
+/Users/aaron/Documents/WindowShade/.build/duo-build.U7KX6e/WindowBrowser/DockHoverObserver.swift:625:26: warning: call to main actor-isolated instance method 'refreshDockAreas()' in a synchronous nonisolated context [#ActorIsolatedCall]
 623 |                 let layout = DisplayLayout.current()
 624 |                 guard layout != self.displayLayout else {
 625 |                     self.refreshDockAreas()
@@ -604,7 +604,7 @@
 637 |         let lists = dockListElements
 638 |         guard !lists.isEmpty else { return }
 
-/Users/aaron/Documents/WindowShade/.build/duo-build.DhycXA/WindowBrowser/DockHoverObserver.swift:628:22: warning: main actor-isolated property 'displayLayout' can not be mutated from a Sendable closure
+/Users/aaron/Documents/WindowShade/.build/duo-build.U7KX6e/WindowBrowser/DockHoverObserver.swift:628:22: warning: main actor-isolated property 'displayLayout' can not be mutated from a Sendable closure
  50 |     private var topologyVersion: UInt64 = 1
  51 |     private var screensToken: NSObjectProtocol?
  52 |     private var displayLayout = DisplayLayout(screens: [])
@@ -619,7 +619,7 @@
 629 |                 self.topologyVersion &+= 1
 630 |                 self.detection.reset()
 
-/Users/aaron/Documents/WindowShade/.build/duo-build.DhycXA/WindowBrowser/DockHoverObserver.swift:629:22: warning: main actor-isolated property 'topologyVersion' can not be mutated from a Sendable closure
+/Users/aaron/Documents/WindowShade/.build/duo-build.U7KX6e/WindowBrowser/DockHoverObserver.swift:629:22: warning: main actor-isolated property 'topologyVersion' can not be mutated from a Sendable closure
  48 |     /// 所有检测入口共用的排队器：最多一个在途 + 一个最新待处理。
  49 |     private var detection = WindowBrowserDetectionCoordinator()
  50 |     private var topologyVersion: UInt64 = 1
@@ -634,7 +634,7 @@
 630 |                 self.detection.reset()
 631 |                 self.rebuildObserver(reason: "screens-changed")
 
-/Users/aaron/Documents/WindowShade/.build/duo-build.DhycXA/WindowBrowser/DockHoverObserver.swift:630:22: warning: main actor-isolated property 'detection' can not be mutated from a Sendable closure
+/Users/aaron/Documents/WindowShade/.build/duo-build.U7KX6e/WindowBrowser/DockHoverObserver.swift:630:22: warning: main actor-isolated property 'detection' can not be mutated from a Sendable closure
  47 |     private var dockAreas: [NSRect] = []
  48 |     /// 所有检测入口共用的排队器：最多一个在途 + 一个最新待处理。
  49 |     private var detection = WindowBrowserDetectionCoordinator()
@@ -649,7 +649,7 @@
 631 |                 self.rebuildObserver(reason: "screens-changed")
 632 |             }
 
-/Users/aaron/Documents/WindowShade/.build/duo-build.DhycXA/WindowBrowser/DockHoverObserver.swift:631:22: warning: call to main actor-isolated instance method 'rebuildObserver(reason:)' in a synchronous nonisolated context [#ActorIsolatedCall]
+/Users/aaron/Documents/WindowShade/.build/duo-build.U7KX6e/WindowBrowser/DockHoverObserver.swift:631:22: warning: call to main actor-isolated instance method 'rebuildObserver(reason:)' in a synchronous nonisolated context [#ActorIsolatedCall]
 135 |     // MARK: Dock 观察
 136 | 
 137 |     private func rebuildObserver(reason: String) {
@@ -664,7 +664,7 @@
 632 |             }
 633 |     }
 
-/Users/aaron/Documents/WindowShade/.build/duo-build.DhycXA/WindowBrowser/DockHoverProbe.swift:299:13: warning: mutation of captured var 'maxMainGapMilliseconds' in concurrently-executing code [#SendableClosureCaptures]
+/Users/aaron/Documents/WindowShade/.build/duo-build.U7KX6e/WindowBrowser/DockHoverProbe.swift:299:13: warning: mutation of captured var 'maxMainGapMilliseconds' in concurrently-executing code [#SendableClosureCaptures]
  297 |         let heartbeat = Timer.scheduledTimer(withTimeInterval: 0.005, repeats: true) { _ in
  298 |             let now = CFAbsoluteTimeGetCurrent()
  299 |             maxMainGapMilliseconds = max(maxMainGapMilliseconds,
@@ -672,7 +672,7 @@
  300 |                                          Int((now - lastHeartbeat) * 1000))
  301 |             lastHeartbeat = now
 
-/Users/aaron/Documents/WindowShade/.build/duo-build.DhycXA/WindowBrowser/DockHoverProbe.swift:299:42: warning: reference to captured var 'maxMainGapMilliseconds' in concurrently-executing code [#SendableClosureCaptures]
+/Users/aaron/Documents/WindowShade/.build/duo-build.U7KX6e/WindowBrowser/DockHoverProbe.swift:299:42: warning: reference to captured var 'maxMainGapMilliseconds' in concurrently-executing code [#SendableClosureCaptures]
  297 |         let heartbeat = Timer.scheduledTimer(withTimeInterval: 0.005, repeats: true) { _ in
  298 |             let now = CFAbsoluteTimeGetCurrent()
  299 |             maxMainGapMilliseconds = max(maxMainGapMilliseconds,
@@ -680,7 +680,7 @@
  300 |                                          Int((now - lastHeartbeat) * 1000))
  301 |             lastHeartbeat = now
 
-/Users/aaron/Documents/WindowShade/.build/duo-build.DhycXA/WindowBrowser/DockHoverProbe.swift:300:53: warning: reference to captured var 'lastHeartbeat' in concurrently-executing code [#SendableClosureCaptures]
+/Users/aaron/Documents/WindowShade/.build/duo-build.U7KX6e/WindowBrowser/DockHoverProbe.swift:300:53: warning: reference to captured var 'lastHeartbeat' in concurrently-executing code [#SendableClosureCaptures]
  298 |             let now = CFAbsoluteTimeGetCurrent()
  299 |             maxMainGapMilliseconds = max(maxMainGapMilliseconds,
  300 |                                          Int((now - lastHeartbeat) * 1000))
@@ -688,7 +688,7 @@
  301 |             lastHeartbeat = now
  302 |         }
 
-/Users/aaron/Documents/WindowShade/.build/duo-build.DhycXA/WindowBrowser/DockHoverProbe.swift:301:13: warning: mutation of captured var 'lastHeartbeat' in concurrently-executing code [#SendableClosureCaptures]
+/Users/aaron/Documents/WindowShade/.build/duo-build.U7KX6e/WindowBrowser/DockHoverProbe.swift:301:13: warning: mutation of captured var 'lastHeartbeat' in concurrently-executing code [#SendableClosureCaptures]
  299 |             maxMainGapMilliseconds = max(maxMainGapMilliseconds,
  300 |                                          Int((now - lastHeartbeat) * 1000))
  301 |             lastHeartbeat = now
@@ -696,7 +696,7 @@
  302 |         }
  303 |         heartbeat.tolerance = 0.002
 
-/Users/aaron/Documents/WindowShade/.build/duo-build.DhycXA/WindowBrowser/DockHoverProbe.swift:385:13: warning: capture of 'heartbeat' with non-Sendable type 'Timer' in a '@Sendable' closure [#SendableClosureCaptures]
+/Users/aaron/Documents/WindowShade/.build/duo-build.U7KX6e/WindowBrowser/DockHoverProbe.swift:385:13: warning: capture of 'heartbeat' with non-Sendable type 'Timer' in a '@Sendable' closure [#SendableClosureCaptures]
  383 |                 }
  384 |             }
  385 |             heartbeat.invalidate()
@@ -712,7 +712,7 @@
  46 | 
  47 | /// Initializes a timer object with the specified invocation object.
 
-/Users/aaron/Documents/WindowShade/.build/duo-build.DhycXA/WindowBrowser/DockHoverProbe.swift:389:41: warning: reference to captured var 'maxMainGapMilliseconds' in concurrently-executing code [#SendableClosureCaptures]
+/Users/aaron/Documents/WindowShade/.build/duo-build.U7KX6e/WindowBrowser/DockHoverProbe.swift:389:41: warning: reference to captured var 'maxMainGapMilliseconds' in concurrently-executing code [#SendableClosureCaptures]
  387 |                   + "empty=\(emptyApps) failed=\(failedApps) "
  388 |                   + "total=\(Int(totalMilliseconds))ms slowestApp=\(Int(slowest))ms "
  389 |                   + "mainThreadMaxGap=\(maxMainGapMilliseconds)ms")
@@ -720,7 +720,7 @@
  390 |             exit(0)
  391 |         }
 
-/Users/aaron/Documents/WindowShade/.build/duo-build.DhycXA/WindowBrowser/DockHoverProbe.swift:825:23: warning: main actor-isolated property 'tickerFires' can not be mutated from a Sendable closure
+/Users/aaron/Documents/WindowShade/.build/duo-build.U7KX6e/WindowBrowser/DockHoverProbe.swift:825:23: warning: main actor-isolated property 'tickerFires' can not be mutated from a Sendable closure
  788 |     private var mirrorLayer: AVSampleBufferDisplayLayer?
  789 |     private var contentTicker: Timer?
  790 |     private var tickerFires = 0
@@ -735,7 +735,7 @@
  826 |                 phase += 24
  827 |                 if phase > 360 { phase = 0 }
 
-/Users/aaron/Documents/WindowShade/.build/duo-build.DhycXA/WindowBrowser/DockHoverProbe.swift:825:17: warning: reference to captured var 'self' in concurrently-executing code [#SendableClosureCaptures]
+/Users/aaron/Documents/WindowShade/.build/duo-build.U7KX6e/WindowBrowser/DockHoverProbe.swift:825:17: warning: reference to captured var 'self' in concurrently-executing code [#SendableClosureCaptures]
  823 |                                                        repeats: true) { [weak mover] _ in
  824 |                 guard let mover else { return }
  825 |                 self?.tickerFires += 1
@@ -743,7 +743,7 @@
  826 |                 phase += 24
  827 |                 if phase > 360 { phase = 0 }
 
-/Users/aaron/Documents/WindowShade/.build/duo-build.DhycXA/WindowBrowser/DockHoverProbe.swift:826:17: warning: mutation of captured var 'phase' in concurrently-executing code [#SendableClosureCaptures]
+/Users/aaron/Documents/WindowShade/.build/duo-build.U7KX6e/WindowBrowser/DockHoverProbe.swift:826:17: warning: mutation of captured var 'phase' in concurrently-executing code [#SendableClosureCaptures]
  824 |                 guard let mover else { return }
  825 |                 self?.tickerFires += 1
  826 |                 phase += 24
@@ -751,7 +751,7 @@
  827 |                 if phase > 360 { phase = 0 }
  828 |                 mover.frame.origin.x = phase
 
-/Users/aaron/Documents/WindowShade/.build/duo-build.DhycXA/WindowBrowser/DockHoverProbe.swift:827:20: warning: reference to captured var 'phase' in concurrently-executing code [#SendableClosureCaptures]
+/Users/aaron/Documents/WindowShade/.build/duo-build.U7KX6e/WindowBrowser/DockHoverProbe.swift:827:20: warning: reference to captured var 'phase' in concurrently-executing code [#SendableClosureCaptures]
  825 |                 self?.tickerFires += 1
  826 |                 phase += 24
  827 |                 if phase > 360 { phase = 0 }
@@ -759,7 +759,7 @@
  828 |                 mover.frame.origin.x = phase
  829 |             }
 
-/Users/aaron/Documents/WindowShade/.build/duo-build.DhycXA/WindowBrowser/DockHoverProbe.swift:827:34: warning: mutation of captured var 'phase' in concurrently-executing code [#SendableClosureCaptures]
+/Users/aaron/Documents/WindowShade/.build/duo-build.U7KX6e/WindowBrowser/DockHoverProbe.swift:827:34: warning: mutation of captured var 'phase' in concurrently-executing code [#SendableClosureCaptures]
  825 |                 self?.tickerFires += 1
  826 |                 phase += 24
  827 |                 if phase > 360 { phase = 0 }
@@ -767,7 +767,7 @@
  828 |                 mover.frame.origin.x = phase
  829 |             }
 
-/Users/aaron/Documents/WindowShade/.build/duo-build.DhycXA/WindowBrowser/DockHoverProbe.swift:828:23: warning: main actor-isolated property 'frame' can not be mutated from a Sendable closure
+/Users/aaron/Documents/WindowShade/.build/duo-build.U7KX6e/WindowBrowser/DockHoverProbe.swift:828:23: warning: main actor-isolated property 'frame' can not be mutated from a Sendable closure
  826 |                 phase += 24
  827 |                 if phase > 360 { phase = 0 }
  828 |                 mover.frame.origin.x = phase
@@ -783,7 +783,7 @@
 130 | @property CGFloat frameRotation;
 131 | @property CGFloat frameCenterRotation API_AVAILABLE(macos(10.5));
 
-/Users/aaron/Documents/WindowShade/.build/duo-build.DhycXA/WindowBrowser/DockHoverProbe.swift:828:40: warning: reference to captured var 'phase' in concurrently-executing code [#SendableClosureCaptures]
+/Users/aaron/Documents/WindowShade/.build/duo-build.U7KX6e/WindowBrowser/DockHoverProbe.swift:828:40: warning: reference to captured var 'phase' in concurrently-executing code [#SendableClosureCaptures]
  826 |                 phase += 24
  827 |                 if phase > 360 { phase = 0 }
  828 |                 mover.frame.origin.x = phase
@@ -791,7 +791,7 @@
  829 |             }
  830 |             self?.startAndMeasure(window: window)
 
-/Users/aaron/Documents/WindowShade/.build/duo-build.DhycXA/WindowBrowser/DockHoverProbe.swift:1028:32: warning: capture of 'mismatch()' with non-Sendable type '() -> CGFloat' in a '@Sendable' closure [#SendableClosureCaptures]
+/Users/aaron/Documents/WindowShade/.build/duo-build.U7KX6e/WindowBrowser/DockHoverProbe.swift:1028:32: warning: capture of 'mismatch()' with non-Sendable type '() -> CGFloat' in a '@Sendable' closure [#SendableClosureCaptures]
 1026 |         Timer.scheduledTimer(withTimeInterval: 0.02, repeats: true) { timer in
 1027 |             samples += 1
 1028 |             worst = max(worst, mismatch())
@@ -800,7 +800,7 @@
 1029 |             widths.append(panel.frame.width)
 1030 |             if samples < 20 { return }
 
-/Users/aaron/Documents/WindowShade/.build/duo-build.DhycXA/WindowBrowser/DockHoverProbe.swift:1027:13: warning: mutation of captured var 'samples' in concurrently-executing code [#SendableClosureCaptures]
+/Users/aaron/Documents/WindowShade/.build/duo-build.U7KX6e/WindowBrowser/DockHoverProbe.swift:1027:13: warning: mutation of captured var 'samples' in concurrently-executing code [#SendableClosureCaptures]
 1025 |         var widths: [CGFloat] = [panel.frame.width]
 1026 |         Timer.scheduledTimer(withTimeInterval: 0.02, repeats: true) { timer in
 1027 |             samples += 1
@@ -808,7 +808,7 @@
 1028 |             worst = max(worst, mismatch())
 1029 |             widths.append(panel.frame.width)
 
-/Users/aaron/Documents/WindowShade/.build/duo-build.DhycXA/WindowBrowser/DockHoverProbe.swift:1028:13: warning: mutation of captured var 'worst' in concurrently-executing code [#SendableClosureCaptures]
+/Users/aaron/Documents/WindowShade/.build/duo-build.U7KX6e/WindowBrowser/DockHoverProbe.swift:1028:13: warning: mutation of captured var 'worst' in concurrently-executing code [#SendableClosureCaptures]
 1026 |         Timer.scheduledTimer(withTimeInterval: 0.02, repeats: true) { timer in
 1027 |             samples += 1
 1028 |             worst = max(worst, mismatch())
@@ -816,7 +816,7 @@
 1029 |             widths.append(panel.frame.width)
 1030 |             if samples < 20 { return }
 
-/Users/aaron/Documents/WindowShade/.build/duo-build.DhycXA/WindowBrowser/DockHoverProbe.swift:1028:25: warning: reference to captured var 'worst' in concurrently-executing code [#SendableClosureCaptures]
+/Users/aaron/Documents/WindowShade/.build/duo-build.U7KX6e/WindowBrowser/DockHoverProbe.swift:1028:25: warning: reference to captured var 'worst' in concurrently-executing code [#SendableClosureCaptures]
 1026 |         Timer.scheduledTimer(withTimeInterval: 0.02, repeats: true) { timer in
 1027 |             samples += 1
 1028 |             worst = max(worst, mismatch())
@@ -824,7 +824,7 @@
 1029 |             widths.append(panel.frame.width)
 1030 |             if samples < 20 { return }
 
-/Users/aaron/Documents/WindowShade/.build/duo-build.DhycXA/WindowBrowser/DockHoverProbe.swift:1028:32: warning: call to main actor-isolated local function 'mismatch()' in a synchronous nonisolated context [#ActorIsolatedCall]
+/Users/aaron/Documents/WindowShade/.build/duo-build.U7KX6e/WindowBrowser/DockHoverProbe.swift:1028:32: warning: call to main actor-isolated local function 'mismatch()' in a synchronous nonisolated context [#ActorIsolatedCall]
 1012 |         panel.layoutIfNeeded()
 1013 | 
 1014 |         func mismatch() -> CGFloat {
@@ -840,7 +840,7 @@
 1029 |             widths.append(panel.frame.width)
 1030 |             if samples < 20 { return }
 
-/Users/aaron/Documents/WindowShade/.build/duo-build.DhycXA/WindowBrowser/DockHoverProbe.swift:1014:14: warning: concurrently-executed local function 'mismatch()' must be marked as '@Sendable'
+/Users/aaron/Documents/WindowShade/.build/duo-build.U7KX6e/WindowBrowser/DockHoverProbe.swift:1014:14: warning: concurrently-executed local function 'mismatch()' must be marked as '@Sendable'
 1012 |         panel.layoutIfNeeded()
 1013 | 
 1014 |         func mismatch() -> CGFloat {
@@ -848,7 +848,7 @@
 1015 |             let content = panel.browserContentView.frame.size
 1016 |             let windowSize = panel.frame.size
 
-/Users/aaron/Documents/WindowShade/.build/duo-build.DhycXA/WindowBrowser/DockHoverProbe.swift:1029:13: warning: mutation of captured var 'widths' in concurrently-executing code [#SendableClosureCaptures]
+/Users/aaron/Documents/WindowShade/.build/duo-build.U7KX6e/WindowBrowser/DockHoverProbe.swift:1029:13: warning: mutation of captured var 'widths' in concurrently-executing code [#SendableClosureCaptures]
 1027 |             samples += 1
 1028 |             worst = max(worst, mismatch())
 1029 |             widths.append(panel.frame.width)
@@ -856,7 +856,7 @@
 1030 |             if samples < 20 { return }
 1031 |             timer.invalidate()
 
-/Users/aaron/Documents/WindowShade/.build/duo-build.DhycXA/WindowBrowser/DockHoverProbe.swift:1029:33: warning: main actor-isolated property 'frame' can not be referenced from a Sendable closure
+/Users/aaron/Documents/WindowShade/.build/duo-build.U7KX6e/WindowBrowser/DockHoverProbe.swift:1029:33: warning: main actor-isolated property 'frame' can not be referenced from a Sendable closure
 1027 |             samples += 1
 1028 |             worst = max(worst, mismatch())
 1029 |             widths.append(panel.frame.width)
@@ -872,7 +872,7 @@
  360 | 
  361 | /*! Subclasses can override \c animationResizeTime: to control the total time for the frame change.
 
-/Users/aaron/Documents/WindowShade/.build/duo-build.DhycXA/WindowBrowser/DockHoverProbe.swift:1030:16: warning: reference to captured var 'samples' in concurrently-executing code [#SendableClosureCaptures]
+/Users/aaron/Documents/WindowShade/.build/duo-build.U7KX6e/WindowBrowser/DockHoverProbe.swift:1030:16: warning: reference to captured var 'samples' in concurrently-executing code [#SendableClosureCaptures]
 1028 |             worst = max(worst, mismatch())
 1029 |             widths.append(panel.frame.width)
 1030 |             if samples < 20 { return }
@@ -880,7 +880,7 @@
 1031 |             timer.invalidate()
 1032 |             let settled = mismatch()
 
-/Users/aaron/Documents/WindowShade/.build/duo-build.DhycXA/WindowBrowser/DockHoverProbe.swift:1032:27: warning: call to main actor-isolated local function 'mismatch()' in a synchronous nonisolated context [#ActorIsolatedCall]
+/Users/aaron/Documents/WindowShade/.build/duo-build.U7KX6e/WindowBrowser/DockHoverProbe.swift:1032:27: warning: call to main actor-isolated local function 'mismatch()' in a synchronous nonisolated context [#ActorIsolatedCall]
 1012 |         panel.layoutIfNeeded()
 1013 | 
 1014 |         func mismatch() -> CGFloat {
@@ -896,7 +896,7 @@
 1033 |             let frame = panel.frame
 1034 |             let sizeMatches = abs(frame.width - gridFrame.width) < 0.5
 
-/Users/aaron/Documents/WindowShade/.build/duo-build.DhycXA/WindowBrowser/DockHoverProbe.swift:1033:31: warning: main actor-isolated property 'frame' can not be referenced from a Sendable closure
+/Users/aaron/Documents/WindowShade/.build/duo-build.U7KX6e/WindowBrowser/DockHoverProbe.swift:1033:31: warning: main actor-isolated property 'frame' can not be referenced from a Sendable closure
 1031 |             timer.invalidate()
 1032 |             let settled = mismatch()
 1033 |             let frame = panel.frame
@@ -912,7 +912,7 @@
  360 | 
  361 | /*! Subclasses can override \c animationResizeTime: to control the total time for the frame change.
 
-/Users/aaron/Documents/WindowShade/.build/duo-build.DhycXA/WindowBrowser/DockHoverProbe.swift:1036:32: warning: reference to captured var 'widths' in concurrently-executing code [#SendableClosureCaptures]
+/Users/aaron/Documents/WindowShade/.build/duo-build.U7KX6e/WindowBrowser/DockHoverProbe.swift:1036:32: warning: reference to captured var 'widths' in concurrently-executing code [#SendableClosureCaptures]
 1034 |             let sizeMatches = abs(frame.width - gridFrame.width) < 0.5
 1035 |                 && abs(frame.height - gridFrame.height) < 0.5
 1036 |             let interpolated = widths.contains { $0 > gridFrame.width + 1 && $0 < listFrame.width - 1 }
@@ -920,7 +920,7 @@
 1037 |             print("panel-probe: animated-resize before=\(Int(before)) "
 1038 |                   + "immediate=\(Int(immediate)) worst=\(Int(worst)) settled=\(Int(settled)) "
 
-/Users/aaron/Documents/WindowShade/.build/duo-build.DhycXA/WindowBrowser/DockHoverProbe.swift:1038:62: warning: reference to captured var 'worst' in concurrently-executing code [#SendableClosureCaptures]
+/Users/aaron/Documents/WindowShade/.build/duo-build.U7KX6e/WindowBrowser/DockHoverProbe.swift:1038:62: warning: reference to captured var 'worst' in concurrently-executing code [#SendableClosureCaptures]
 1036 |             let interpolated = widths.contains { $0 > gridFrame.width + 1 && $0 < listFrame.width - 1 }
 1037 |             print("panel-probe: animated-resize before=\(Int(before)) "
 1038 |                   + "immediate=\(Int(immediate)) worst=\(Int(worst)) settled=\(Int(settled)) "
@@ -928,7 +928,7 @@
 1039 |                   + "samples=\(samples) finalFrame=(\(Int(frame.width))x\(Int(frame.height))) "
 1040 |                   + "matchesRequestedFrame=\(sizeMatches) interpolatedFrame=\(interpolated)")
 
-/Users/aaron/Documents/WindowShade/.build/duo-build.DhycXA/WindowBrowser/DockHoverProbe.swift:1039:32: warning: reference to captured var 'samples' in concurrently-executing code [#SendableClosureCaptures]
+/Users/aaron/Documents/WindowShade/.build/duo-build.U7KX6e/WindowBrowser/DockHoverProbe.swift:1039:32: warning: reference to captured var 'samples' in concurrently-executing code [#SendableClosureCaptures]
 1037 |             print("panel-probe: animated-resize before=\(Int(before)) "
 1038 |                   + "immediate=\(Int(immediate)) worst=\(Int(worst)) settled=\(Int(settled)) "
 1039 |                   + "samples=\(samples) finalFrame=(\(Int(frame.width))x\(Int(frame.height))) "
@@ -936,7 +936,7 @@
 1040 |                   + "matchesRequestedFrame=\(sizeMatches) interpolatedFrame=\(interpolated)")
 1041 |             panel.orderOut(nil)
 
-/Users/aaron/Documents/WindowShade/.build/duo-build.DhycXA/WindowBrowser/DockHoverProbe.swift:1041:19: warning: call to main actor-isolated instance method 'orderOut' in a synchronous nonisolated context [#ActorIsolatedCall]
+/Users/aaron/Documents/WindowShade/.build/duo-build.U7KX6e/WindowBrowser/DockHoverProbe.swift:1041:19: warning: call to main actor-isolated instance method 'orderOut' in a synchronous nonisolated context [#ActorIsolatedCall]
 1039 |                   + "samples=\(samples) finalFrame=(\(Int(frame.width))x\(Int(frame.height))) "
 1040 |                   + "matchesRequestedFrame=\(sizeMatches) interpolatedFrame=\(interpolated)")
 1041 |             panel.orderOut(nil)
@@ -953,7 +953,7 @@
  426 | - (void)orderWindow:(NSWindowOrderingMode)place relativeTo:(NSInteger)otherWin;
  427 | - (void)orderFrontRegardless;
 
-/Users/aaron/Documents/WindowShade/.build/duo-build.DhycXA/WindowBrowser/DockHoverProbe.swift:1042:19: warning: call to main actor-isolated instance method 'close()' in a synchronous nonisolated context [#ActorIsolatedCall]
+/Users/aaron/Documents/WindowShade/.build/duo-build.U7KX6e/WindowBrowser/DockHoverProbe.swift:1042:19: warning: call to main actor-isolated instance method 'close()' in a synchronous nonisolated context [#ActorIsolatedCall]
 1040 |                   + "matchesRequestedFrame=\(sizeMatches) interpolatedFrame=\(interpolated)")
 1041 |             panel.orderOut(nil)
 1042 |             panel.close()
@@ -970,7 +970,7 @@
  393 | @property (getter=isReleasedWhenClosed) BOOL releasedWhenClosed;
  394 | - (void)miniaturize:(nullable id)sender;
 
-/Users/aaron/Documents/WindowShade/.build/duo-build.DhycXA/WindowBrowser/WindowBrowserActions.swift:49:43: warning: passing non-Sendable parameter 'work' to function expecting a '@Sendable' closure
+/Users/aaron/Documents/WindowShade/.build/duo-build.U7KX6e/WindowBrowser/WindowBrowserActions.swift:49:43: warning: passing non-Sendable parameter 'work' to function expecting a '@Sendable' closure
  46 | 
  47 | final class WindowBrowserMainQueueScheduler: WindowBrowserScheduler {
  48 |     func async(_ work: @escaping () -> Void) {
@@ -980,7 +980,7 @@
  50 |     }
  51 | 
 
-/Users/aaron/Documents/WindowShade/.build/duo-build.DhycXA/WindowBrowser/WindowBrowserContentView.swift:209:23: warning: call to main actor-isolated instance method 'notifyVisibleKeys()' in a synchronous nonisolated context [#ActorIsolatedCall]
+/Users/aaron/Documents/WindowShade/.build/duo-build.U7KX6e/WindowBrowser/WindowBrowserContentView.swift:209:23: warning: call to main actor-isolated instance method 'notifyVisibleKeys()' in a synchronous nonisolated context [#ActorIsolatedCall]
  207 |             forName: NSView.boundsDidChangeNotification,
  208 |             object: scrollView.contentView, queue: .main) { [weak self] _ in
  209 |                 self?.notifyVisibleKeys()
@@ -996,7 +996,7 @@
  742 |         let keys = visibleWindowKeys
  743 |         trimThumbnailsToViewport()
 
-/Users/aaron/Documents/WindowShade/.build/duo-build.DhycXA/WindowBrowser/WindowBrowserContentView.swift:909:31: warning: main actor-isolated property 'isHidden' can not be mutated from a Sendable closure
+/Users/aaron/Documents/WindowShade/.build/duo-build.U7KX6e/WindowBrowser/WindowBrowserContentView.swift:909:31: warning: main actor-isolated property 'isHidden' can not be mutated from a Sendable closure
  907 |         }, completionHandler: { [weak self] in
  908 |             guard let self else { return }
  909 |             self.captionField.isHidden = self.captionField.alphaValue < 0.5
@@ -1012,7 +1012,7 @@
  93 | @property (getter=isHiddenOrHasHiddenAncestor, readonly) BOOL hiddenOrHasHiddenAncestor;
  94 | 
 
-/Users/aaron/Documents/WindowShade/.build/duo-build.DhycXA/WindowBrowser/WindowBrowserContentView.swift:909:60: warning: main actor-isolated property 'alphaValue' can not be referenced from a Sendable closure
+/Users/aaron/Documents/WindowShade/.build/duo-build.U7KX6e/WindowBrowser/WindowBrowserContentView.swift:909:60: warning: main actor-isolated property 'alphaValue' can not be referenced from a Sendable closure
  907 |         }, completionHandler: { [weak self] in
  908 |             guard let self else { return }
  909 |             self.captionField.isHidden = self.captionField.alphaValue < 0.5
@@ -1028,7 +1028,7 @@
 270 | 
 271 | /* If you have set a custom layer on your view, and it (or one of its sublayers) uses CIFilters, you should set this. You do not need to set this if you are using the backgroundFilters, compositingFilter, or contentFilters properties below. See the release notes for more information.
 
-/Users/aaron/Documents/WindowShade/.build/duo-build.DhycXA/WindowBrowser/WindowBrowserController.swift:345:76: warning: capture of 'body' with non-Sendable type '() -> Void' in a '@Sendable' closure [#SendableClosureCaptures]
+/Users/aaron/Documents/WindowShade/.build/duo-build.U7KX6e/WindowBrowser/WindowBrowserController.swift:345:76: warning: capture of 'body' with non-Sendable type '() -> Void' in a '@Sendable' closure [#SendableClosureCaptures]
  343 |                      _ body: @escaping () -> Void) {
  344 |             workspaceTokens.append(center.addObserver(forName: name, object: nil,
  345 |                                                       queue: .main) { _ in body() })
@@ -1037,7 +1037,7 @@
  346 |         }
  347 |         observe(workspace, NSWorkspace.willSleepNotification) { [weak self] in
 
-/Users/aaron/Documents/WindowShade/.build/duo-build.DhycXA/WindowBrowser/WindowBrowserController.swift:371:31: warning: call to main actor-isolated instance method 'environmentDidSuspend(reason:)' in a synchronous nonisolated context [#ActorIsolatedCall]
+/Users/aaron/Documents/WindowShade/.build/duo-build.U7KX6e/WindowBrowser/WindowBrowserController.swift:371:31: warning: call to main actor-isolated instance method 'environmentDidSuspend(reason:)' in a synchronous nonisolated context [#ActorIsolatedCall]
  369 |                 forName: Notification.Name(name), object: nil, queue: .main) { [weak self] note in
  370 |                     if note.name.rawValue.hasSuffix("IsLocked") {
  371 |                         self?.environmentDidSuspend(reason: "screen-locked")
@@ -1052,7 +1052,7 @@
  391 |         dispatchPrecondition(condition: .onQueue(.main))
  392 |         guard !environmentSuspended else { return }
 
-/Users/aaron/Documents/WindowShade/.build/duo-build.DhycXA/WindowBrowser/WindowBrowserController.swift:373:31: warning: call to main actor-isolated instance method 'environmentDidResume(reason:)' in a synchronous nonisolated context [#ActorIsolatedCall]
+/Users/aaron/Documents/WindowShade/.build/duo-build.U7KX6e/WindowBrowser/WindowBrowserController.swift:373:31: warning: call to main actor-isolated instance method 'environmentDidResume(reason:)' in a synchronous nonisolated context [#ActorIsolatedCall]
  371 |                         self?.environmentDidSuspend(reason: "screen-locked")
  372 |                     } else {
  373 |                         self?.environmentDidResume(reason: "screen-unlocked")
@@ -1067,7 +1067,7 @@
  404 |         dispatchPrecondition(condition: .onQueue(.main))
  405 |         guard environmentSuspended else { return }
 
-/Users/aaron/Documents/WindowShade/.build/duo-build.DhycXA/WindowBrowser/WindowBrowserController.swift:514:27: warning: capture of 'batch' with non-Sendable type 'WindowBrowserTargetBatch<AXUIElement>?' in a '@Sendable' closure [#SendableClosureCaptures]
+/Users/aaron/Documents/WindowShade/.build/duo-build.U7KX6e/WindowBrowser/WindowBrowserController.swift:514:27: warning: capture of 'batch' with non-Sendable type 'WindowBrowserTargetBatch<AXUIElement>?' in a '@Sendable' closure [#SendableClosureCaptures]
  512 |                                                                  options: options) {
  513 |                 resolved = checked
  514 |             } else if let batch {
@@ -1075,7 +1075,7 @@
  515 |                 resolved = batch.resolve(key: key,
  516 |                     load: { WindowBrowserTargetResolver.candidates(pid: key.application.pid) },
 
-/Users/aaron/Documents/WindowShade/.build/duo-build.DhycXA/WindowBrowser/WindowBrowserTargetBatch.swift:6:13: note: generic class 'WindowBrowserTargetBatch' does not conform to the 'Sendable' protocol
+/Users/aaron/Documents/WindowShade/.build/duo-build.U7KX6e/WindowBrowser/WindowBrowserTargetBatch.swift:6:13: note: generic class 'WindowBrowserTargetBatch' does not conform to the 'Sendable' protocol
  4 | /// This is not a time-based cache: each viewport request gets a fresh batch, and
  5 | /// actions do not use it. Every reused candidate still undergoes identity checks.
  6 | final class WindowBrowserTargetBatch<Element> {
@@ -1083,7 +1083,7 @@
  7 |     private var snapshots: [ApplicationInstanceKey: [CGWindowID: [Element]]] = [:]
  8 |     private var requestedKeys: [CGWindowID: WindowKey] = [:]
 
-/Users/aaron/Documents/WindowShade/.build/duo-build.DhycXA/WindowBrowser/WindowBrowserController.swift:508:19: warning: call to main actor-isolated instance method 'noteAXCall()' in a synchronous nonisolated context [#ActorIsolatedCall]
+/Users/aaron/Documents/WindowShade/.build/duo-build.U7KX6e/WindowBrowser/WindowBrowserController.swift:508:19: warning: call to main actor-isolated instance method 'noteAXCall()' in a synchronous nonisolated context [#ActorIsolatedCall]
  195 |     }
  196 | 
  197 |     private func noteAXCall() {
@@ -1098,7 +1098,7 @@
  509 |             var resolved: WindowBrowserResolvedTarget?
  510 |             if let candidate,
 
-/Users/aaron/Documents/WindowShade/.build/duo-build.DhycXA/WindowBrowser/WindowBrowserController.swift:1321:19: warning: call to main actor-isolated instance method 'sweepClosedWindows()' in a synchronous nonisolated context [#ActorIsolatedCall]
+/Users/aaron/Documents/WindowShade/.build/duo-build.U7KX6e/WindowBrowser/WindowBrowserController.swift:1321:19: warning: call to main actor-isolated instance method 'sweepClosedWindows()' in a synchronous nonisolated context [#ActorIsolatedCall]
 1319 |         livenessAsked.removeAll()
 1320 |         let timer = Timer(timeInterval: 0.6, repeats: true) { [weak self] _ in
 1321 |             self?.sweepClosedWindows()
@@ -1113,7 +1113,7 @@
 1336 |         guard running, !environmentSuspended, let session, let contentView,
 1337 |               panel?.isVisible == true else { return }
 
-/Users/aaron/Documents/WindowShade/.build/duo-build.DhycXA/WindowBrowser/WindowBrowserController.swift:2789:19: warning: call to main actor-isolated instance method 'noteAXCall()' in a synchronous nonisolated context [#ActorIsolatedCall]
+/Users/aaron/Documents/WindowShade/.build/duo-build.U7KX6e/WindowBrowser/WindowBrowserController.swift:2789:19: warning: call to main actor-isolated instance method 'noteAXCall()' in a synchronous nonisolated context [#ActorIsolatedCall]
  195 |     }
  196 | 
  197 |     private func noteAXCall() {
@@ -1128,7 +1128,7 @@
 2790 |             let app = AXUIElementCreateApplication(key.application.pid)
 2791 |             var value: CFTypeRef?
 
-/Users/aaron/Documents/WindowShade/.build/duo-build.DhycXA/WindowBrowser/WindowBrowserController.swift:2936:18: warning: call to main actor-isolated instance method 'noteAXCall()' in a synchronous nonisolated context [#ActorIsolatedCall]
+/Users/aaron/Documents/WindowShade/.build/duo-build.U7KX6e/WindowBrowser/WindowBrowserController.swift:2936:18: warning: call to main actor-isolated instance method 'noteAXCall()' in a synchronous nonisolated context [#ActorIsolatedCall]
  195 |     }
  196 | 
  197 |     private func noteAXCall() {
@@ -1143,7 +1143,7 @@
 2937 |             // 属性名在 WindowShade.swift 里已经有一份（AXHelpers 的容量判断也用它）。
 2938 |             let before = axBoolAttribute(element, axFullScreenAttribute)
 
-/Users/aaron/Documents/WindowShade/.build/duo-build.DhycXA/WindowBrowser/WindowBrowserController.swift:2939:18: warning: call to main actor-isolated instance method 'noteAXCall()' in a synchronous nonisolated context [#ActorIsolatedCall]
+/Users/aaron/Documents/WindowShade/.build/duo-build.U7KX6e/WindowBrowser/WindowBrowserController.swift:2939:18: warning: call to main actor-isolated instance method 'noteAXCall()' in a synchronous nonisolated context [#ActorIsolatedCall]
  195 |     }
  196 | 
  197 |     private func noteAXCall() {
@@ -1158,7 +1158,7 @@
 2940 |             guard isAXAttributeSettable(element, axFullScreenAttribute) else {
 2941 |                 DispatchQueue.main.async { completion(.unsupported(reason: "这个窗口不能全屏")) }
 
-/Users/aaron/Documents/WindowShade/.build/duo-build.DhycXA/WindowBrowser/WindowBrowserController.swift:2954:22: warning: main actor-isolated property 'scheduler' can not be referenced from a Sendable closure
+/Users/aaron/Documents/WindowShade/.build/duo-build.U7KX6e/WindowBrowser/WindowBrowserController.swift:2954:22: warning: main actor-isolated property 'scheduler' can not be referenced from a Sendable closure
   52 |     let catalog = WindowCatalog()
   53 |     let thumbnails: WindowThumbnailService
   54 |     let scheduler: WindowBrowserScheduler
@@ -1173,7 +1173,7 @@
 2955 |                 guard let self else {
 2956 |                     completion(.uncertain(reason: "全屏状态没变"))
 
-/Users/aaron/Documents/WindowShade/.build/duo-build.DhycXA/WindowBrowser/WindowBrowserController.swift:2956:21: warning: call to main actor-isolated parameter 'completion' in a synchronous nonisolated context [#ActorIsolatedCall]
+/Users/aaron/Documents/WindowShade/.build/duo-build.U7KX6e/WindowBrowser/WindowBrowserController.swift:2956:21: warning: call to main actor-isolated parameter 'completion' in a synchronous nonisolated context [#ActorIsolatedCall]
 2923 |     private func performFullScreen(target: WindowKey,
 2924 |                                    resolved: WindowBrowserResolvedTarget,
 2925 |                                    completion: @escaping @MainActor (WindowBrowserActionOutcome) -> Void) {
@@ -1188,7 +1188,7 @@
 2957 |                     return
 2958 |                 }
 
-/Users/aaron/Documents/WindowShade/.build/duo-build.DhycXA/WindowBrowser/WindowBrowserController.swift:2964:26: warning: call to main actor-isolated instance method 'noteAXCall()' in a synchronous nonisolated context [#ActorIsolatedCall]
+/Users/aaron/Documents/WindowShade/.build/duo-build.U7KX6e/WindowBrowser/WindowBrowserController.swift:2964:26: warning: call to main actor-isolated instance method 'noteAXCall()' in a synchronous nonisolated context [#ActorIsolatedCall]
  195 |     }
  196 | 
  197 |     private func noteAXCall() {
@@ -1203,7 +1203,7 @@
 2965 |                     let after = axBoolAttribute(element, axFullScreenAttribute)
 2966 |                     DispatchQueue.main.async {
 
-/Users/aaron/Documents/WindowShade/.build/duo-build.DhycXA/WindowBrowser/WindowBrowserController.swift:2991:18: warning: call to main actor-isolated instance method 'noteAXCall()' in a synchronous nonisolated context [#ActorIsolatedCall]
+/Users/aaron/Documents/WindowShade/.build/duo-build.U7KX6e/WindowBrowser/WindowBrowserController.swift:2991:18: warning: call to main actor-isolated instance method 'noteAXCall()' in a synchronous nonisolated context [#ActorIsolatedCall]
  195 |     }
  196 | 
  197 |     private func noteAXCall() {
@@ -1218,7 +1218,7 @@
 2992 |             let resolution = WindowBrowserNewWindow.resolve(pid: pid)
 2993 |             DispatchQueue.main.async {
 
-/Users/aaron/Documents/WindowShade/.build/duo-build.DhycXA/WindowBrowser/WindowBrowserController.swift:3024:18: warning: call to main actor-isolated instance method 'noteAXCall()' in a synchronous nonisolated context [#ActorIsolatedCall]
+/Users/aaron/Documents/WindowShade/.build/duo-build.U7KX6e/WindowBrowser/WindowBrowserController.swift:3024:18: warning: call to main actor-isolated instance method 'noteAXCall()' in a synchronous nonisolated context [#ActorIsolatedCall]
  195 |     }
  196 | 
  197 |     private func noteAXCall() {
@@ -1233,7 +1233,7 @@
 3025 |             let pressed = WindowBrowserNewWindow.press(item)
 3026 |             DispatchQueue.main.async {
 
-/Users/aaron/Documents/WindowShade/.build/duo-build.DhycXA/WindowBrowser/WindowBrowserFixture.swift:24:28: warning: main actor-isolated property 'appearance' can not be mutated from a nonisolated context
+/Users/aaron/Documents/WindowShade/.build/duo-build.U7KX6e/WindowBrowser/WindowBrowserFixture.swift:24:28: warning: main actor-isolated property 'appearance' can not be mutated from a nonisolated context
  19 |     }
  20 | 
  21 |     func show() {
@@ -1253,7 +1253,7 @@
 351 | @property (readonly, strong) NSAppearance *effectiveAppearance API_AVAILABLE(macos(10.14));
 352 | #pragma clang diagnostic pop
 
-/Users/aaron/Documents/WindowShade/.build/duo-build.DhycXA/WindowBrowser/WindowBrowserFixture.swift:24:22: warning: main actor-isolated var 'NSApp' can not be referenced from a nonisolated context
+/Users/aaron/Documents/WindowShade/.build/duo-build.U7KX6e/WindowBrowser/WindowBrowserFixture.swift:24:22: warning: main actor-isolated var 'NSApp' can not be referenced from a nonisolated context
  19 |     }
  20 | 
  21 |     func show() {
@@ -1273,7 +1273,7 @@
 197 | 
 198 | @property (class, readonly, strong) __kindof NSApplication *sharedApplication;
 
-/Users/aaron/Documents/WindowShade/.build/duo-build.DhycXA/WindowBrowser/WindowBrowserFixture.swift:25:29: warning: main actor-isolated property 'appearance' can not be mutated from a nonisolated context
+/Users/aaron/Documents/WindowShade/.build/duo-build.U7KX6e/WindowBrowser/WindowBrowserFixture.swift:25:29: warning: main actor-isolated property 'appearance' can not be mutated from a nonisolated context
  19 |     }
  20 | 
  21 |     func show() {
@@ -1294,7 +1294,7 @@
 351 | @property (readonly, strong) NSAppearance *effectiveAppearance API_AVAILABLE(macos(10.14));
 352 | #pragma clang diagnostic pop
 
-/Users/aaron/Documents/WindowShade/.build/duo-build.DhycXA/WindowBrowser/WindowBrowserFixture.swift:25:23: warning: main actor-isolated var 'NSApp' can not be referenced from a nonisolated context
+/Users/aaron/Documents/WindowShade/.build/duo-build.U7KX6e/WindowBrowser/WindowBrowserFixture.swift:25:23: warning: main actor-isolated var 'NSApp' can not be referenced from a nonisolated context
  19 |     }
  20 | 
  21 |     func show() {
@@ -1315,7 +1315,7 @@
 197 | 
 198 | @property (class, readonly, strong) __kindof NSApplication *sharedApplication;
 
-/Users/aaron/Documents/WindowShade/.build/duo-build.DhycXA/WindowBrowser/WindowBrowserFixture.swift:37:21: warning: call to main actor-isolated initializer 'init(mode:frame:params:)' in a synchronous nonisolated context [#ActorIsolatedCall]
+/Users/aaron/Documents/WindowShade/.build/duo-build.U7KX6e/WindowBrowser/WindowBrowserFixture.swift:37:21: warning: call to main actor-isolated initializer 'init(mode:frame:params:)' in a synchronous nonisolated context [#ActorIsolatedCall]
  19 |     }
  20 | 
  21 |     func show() {
@@ -1330,7 +1330,7 @@
  38 |         panel.onCancel = { NSApp.terminate(nil) }
  39 |         let content = panel.browserContentView
 
-/Users/aaron/Documents/WindowShade/.build/duo-build.DhycXA/WindowBrowser/WindowBrowserPanel.swift:24:5: note: calls to initializer 'init(mode:frame:params:)' from outside of its actor context are implicitly asynchronous
+/Users/aaron/Documents/WindowShade/.build/duo-build.U7KX6e/WindowBrowser/WindowBrowserPanel.swift:24:5: note: calls to initializer 'init(mode:frame:params:)' from outside of its actor context are implicitly asynchronous
  22 |     private var animationParams = WindowBrowserLayoutParams.standard
  23 | 
  24 |     init(mode: WindowBrowserPanelMode, frame: NSRect,
@@ -1339,7 +1339,7 @@
  25 |          params: WindowBrowserLayoutParams = .standard) {
  26 |         self.mode = mode
 
-/Users/aaron/Documents/WindowShade/.build/duo-build.DhycXA/WindowBrowser/WindowBrowserFixture.swift:38:15: warning: main actor-isolated property 'onCancel' can not be mutated from a nonisolated context
+/Users/aaron/Documents/WindowShade/.build/duo-build.U7KX6e/WindowBrowser/WindowBrowserFixture.swift:38:15: warning: main actor-isolated property 'onCancel' can not be mutated from a nonisolated context
  19 |     }
  20 | 
  21 |     func show() {
@@ -1354,7 +1354,7 @@
  39 |         let content = panel.browserContentView
  40 |         content.onActivate = { [weak self] key in self?.select(key) }
 
-/Users/aaron/Documents/WindowShade/.build/duo-build.DhycXA/WindowBrowser/WindowBrowserPanel.swift:15:9: note: mutation of this property is only permitted within the actor
+/Users/aaron/Documents/WindowShade/.build/duo-build.U7KX6e/WindowBrowser/WindowBrowserPanel.swift:15:9: note: mutation of this property is only permitted within the actor
  13 |     let mode: WindowBrowserPanelMode
  14 |     let browserContentView: WindowBrowserContentView
  15 |     var onCancel: (() -> Void)?
@@ -1362,7 +1362,7 @@
  16 |     var onBecomeKeyStateChanged: ((Bool) -> Void)?
  17 | 
 
-/Users/aaron/Documents/WindowShade/.build/duo-build.DhycXA/WindowBrowser/WindowBrowserFixture.swift:38:34: warning: call to main actor-isolated instance method 'terminate' in a synchronous nonisolated context [#ActorIsolatedCall]
+/Users/aaron/Documents/WindowShade/.build/duo-build.U7KX6e/WindowBrowser/WindowBrowserFixture.swift:38:34: warning: call to main actor-isolated instance method 'terminate' in a synchronous nonisolated context [#ActorIsolatedCall]
  36 |         } ?? NSRect(x: 200, y: 200, width: size.width, height: size.height)
  37 |         let panel = WindowBrowserPanel(mode: .keyboard, frame: frame)
  38 |         panel.onCancel = { NSApp.terminate(nil) }
@@ -1379,7 +1379,7 @@
 273 | 
 274 | typedef NS_ENUM(NSUInteger, NSRequestUserAttentionType) {
 
-/Users/aaron/Documents/WindowShade/.build/duo-build.DhycXA/WindowBrowser/WindowBrowserFixture.swift:38:28: warning: main actor-isolated var 'NSApp' can not be referenced from a nonisolated context
+/Users/aaron/Documents/WindowShade/.build/duo-build.U7KX6e/WindowBrowser/WindowBrowserFixture.swift:38:28: warning: main actor-isolated var 'NSApp' can not be referenced from a nonisolated context
  36 |         } ?? NSRect(x: 200, y: 200, width: size.width, height: size.height)
  37 |         let panel = WindowBrowserPanel(mode: .keyboard, frame: frame)
  38 |         panel.onCancel = { NSApp.terminate(nil) }
@@ -1395,7 +1395,7 @@
 197 | 
 198 | @property (class, readonly, strong) __kindof NSApplication *sharedApplication;
 
-/Users/aaron/Documents/WindowShade/.build/duo-build.DhycXA/WindowBrowser/WindowBrowserFixture.swift:40:17: warning: main actor-isolated property 'onActivate' can not be mutated from a nonisolated context
+/Users/aaron/Documents/WindowShade/.build/duo-build.U7KX6e/WindowBrowser/WindowBrowserFixture.swift:40:17: warning: main actor-isolated property 'onActivate' can not be mutated from a nonisolated context
  19 |     }
  20 | 
  21 |     func show() {
@@ -1410,7 +1410,7 @@
  41 |         content.onSelect = { [weak self] key in self?.select(key) }
  42 |         content.onPrimary = { [weak self] key in
 
-/Users/aaron/Documents/WindowShade/.build/duo-build.DhycXA/WindowBrowser/WindowBrowserContentView.swift:16:9: note: mutation of this property is only permitted within the actor
+/Users/aaron/Documents/WindowShade/.build/duo-build.U7KX6e/WindowBrowser/WindowBrowserContentView.swift:16:9: note: mutation of this property is only permitted within the actor
   14 |                                       WindowBrowserItemDelegate {
   15 |     var onSelect: ((WindowKey) -> Void)?
   16 |     var onActivate: ((WindowKey) -> Void)?
@@ -1418,7 +1418,7 @@
   17 |     var onPrimary: ((WindowKey) -> Void)?
   18 |     var onPin: ((WindowKey) -> Void)?
 
-/Users/aaron/Documents/WindowShade/.build/duo-build.DhycXA/WindowBrowser/WindowBrowserFixture.swift:41:17: warning: main actor-isolated property 'onSelect' can not be mutated from a nonisolated context
+/Users/aaron/Documents/WindowShade/.build/duo-build.U7KX6e/WindowBrowser/WindowBrowserFixture.swift:41:17: warning: main actor-isolated property 'onSelect' can not be mutated from a nonisolated context
  19 |     }
  20 | 
  21 |     func show() {
@@ -1433,7 +1433,7 @@
  42 |         content.onPrimary = { [weak self] key in
  43 |             guard let self else { return }
 
-/Users/aaron/Documents/WindowShade/.build/duo-build.DhycXA/WindowBrowser/WindowBrowserContentView.swift:15:9: note: mutation of this property is only permitted within the actor
+/Users/aaron/Documents/WindowShade/.build/duo-build.U7KX6e/WindowBrowser/WindowBrowserContentView.swift:15:9: note: mutation of this property is only permitted within the actor
   13 |                                       NSTableViewDataSource, NSTableViewDelegate,
   14 |                                       WindowBrowserItemDelegate {
   15 |     var onSelect: ((WindowKey) -> Void)?
@@ -1441,7 +1441,7 @@
   16 |     var onActivate: ((WindowKey) -> Void)?
   17 |     var onPrimary: ((WindowKey) -> Void)?
 
-/Users/aaron/Documents/WindowShade/.build/duo-build.DhycXA/WindowBrowser/WindowBrowserFixture.swift:42:17: warning: main actor-isolated property 'onPrimary' can not be mutated from a nonisolated context
+/Users/aaron/Documents/WindowShade/.build/duo-build.U7KX6e/WindowBrowser/WindowBrowserFixture.swift:42:17: warning: main actor-isolated property 'onPrimary' can not be mutated from a nonisolated context
  19 |     }
  20 | 
  21 |     func show() {
@@ -1456,7 +1456,7 @@
  43 |             guard let self else { return }
  44 |             self.mutate(key: key) { record in
 
-/Users/aaron/Documents/WindowShade/.build/duo-build.DhycXA/WindowBrowser/WindowBrowserContentView.swift:17:9: note: mutation of this property is only permitted within the actor
+/Users/aaron/Documents/WindowShade/.build/duo-build.U7KX6e/WindowBrowser/WindowBrowserContentView.swift:17:9: note: mutation of this property is only permitted within the actor
   15 |     var onSelect: ((WindowKey) -> Void)?
   16 |     var onActivate: ((WindowKey) -> Void)?
   17 |     var onPrimary: ((WindowKey) -> Void)?
@@ -1464,7 +1464,7 @@
   18 |     var onPin: ((WindowKey) -> Void)?
   19 |     var onClose: ((WindowKey) -> Void)?
 
-/Users/aaron/Documents/WindowShade/.build/duo-build.DhycXA/WindowBrowser/WindowBrowserFixture.swift:48:17: warning: main actor-isolated property 'onPin' can not be mutated from a nonisolated context
+/Users/aaron/Documents/WindowShade/.build/duo-build.U7KX6e/WindowBrowser/WindowBrowserFixture.swift:48:17: warning: main actor-isolated property 'onPin' can not be mutated from a nonisolated context
  19 |     }
  20 | 
  21 |     func show() {
@@ -1479,7 +1479,7 @@
  49 |             guard let self else { return }
  50 |             self.mutate(key: key) { record in
 
-/Users/aaron/Documents/WindowShade/.build/duo-build.DhycXA/WindowBrowser/WindowBrowserContentView.swift:18:9: note: mutation of this property is only permitted within the actor
+/Users/aaron/Documents/WindowShade/.build/duo-build.U7KX6e/WindowBrowser/WindowBrowserContentView.swift:18:9: note: mutation of this property is only permitted within the actor
   16 |     var onActivate: ((WindowKey) -> Void)?
   17 |     var onPrimary: ((WindowKey) -> Void)?
   18 |     var onPin: ((WindowKey) -> Void)?
@@ -1487,7 +1487,7 @@
   19 |     var onClose: ((WindowKey) -> Void)?
   20 |     var onRequestAction: ((WindowKey, WindowBrowserAction) -> Void)?
 
-/Users/aaron/Documents/WindowShade/.build/duo-build.DhycXA/WindowBrowser/WindowBrowserFixture.swift:54:17: warning: main actor-isolated property 'onSearchChanged' can not be mutated from a nonisolated context
+/Users/aaron/Documents/WindowShade/.build/duo-build.U7KX6e/WindowBrowser/WindowBrowserFixture.swift:54:17: warning: main actor-isolated property 'onSearchChanged' can not be mutated from a nonisolated context
  19 |     }
  20 | 
  21 |     func show() {
@@ -1502,7 +1502,7 @@
  55 |         content.onStyleChanged = { _ in }
  56 |         content.onCommit = { [weak self] in self?.render() }
 
-/Users/aaron/Documents/WindowShade/.build/duo-build.DhycXA/WindowBrowser/WindowBrowserContentView.swift:26:9: note: mutation of this property is only permitted within the actor
+/Users/aaron/Documents/WindowShade/.build/duo-build.U7KX6e/WindowBrowser/WindowBrowserContentView.swift:26:9: note: mutation of this property is only permitted within the actor
   24 |     var onQuickLook: ((WindowKey) -> Void)?
   25 |     var onContextMenu: ((WindowKey, NSView, NSEvent) -> Void)?
   26 |     var onSearchChanged: ((String) -> Void)?
@@ -1510,7 +1510,7 @@
   27 |     var onStyleChanged: ((WindowBrowserDisplayStyle) -> Void)?
   28 |     var onVisibleKeysChanged: (([WindowKey]) -> Void)?
 
-/Users/aaron/Documents/WindowShade/.build/duo-build.DhycXA/WindowBrowser/WindowBrowserFixture.swift:55:17: warning: main actor-isolated property 'onStyleChanged' can not be mutated from a nonisolated context
+/Users/aaron/Documents/WindowShade/.build/duo-build.U7KX6e/WindowBrowser/WindowBrowserFixture.swift:55:17: warning: main actor-isolated property 'onStyleChanged' can not be mutated from a nonisolated context
  19 |     }
  20 | 
  21 |     func show() {
@@ -1525,7 +1525,7 @@
  56 |         content.onCommit = { [weak self] in self?.render() }
  57 |         self.panel = panel
 
-/Users/aaron/Documents/WindowShade/.build/duo-build.DhycXA/WindowBrowser/WindowBrowserContentView.swift:27:9: note: mutation of this property is only permitted within the actor
+/Users/aaron/Documents/WindowShade/.build/duo-build.U7KX6e/WindowBrowser/WindowBrowserContentView.swift:27:9: note: mutation of this property is only permitted within the actor
   25 |     var onContextMenu: ((WindowKey, NSView, NSEvent) -> Void)?
   26 |     var onSearchChanged: ((String) -> Void)?
   27 |     var onStyleChanged: ((WindowBrowserDisplayStyle) -> Void)?
@@ -1533,7 +1533,7 @@
   28 |     var onVisibleKeysChanged: (([WindowKey]) -> Void)?
   29 |     var onCancel: (() -> Void)?
 
-/Users/aaron/Documents/WindowShade/.build/duo-build.DhycXA/WindowBrowser/WindowBrowserFixture.swift:56:17: warning: main actor-isolated property 'onCommit' can not be mutated from a nonisolated context
+/Users/aaron/Documents/WindowShade/.build/duo-build.U7KX6e/WindowBrowser/WindowBrowserFixture.swift:56:17: warning: main actor-isolated property 'onCommit' can not be mutated from a nonisolated context
  19 |     }
  20 | 
  21 |     func show() {
@@ -1548,7 +1548,7 @@
  57 |         self.panel = panel
  58 |         render()
 
-/Users/aaron/Documents/WindowShade/.build/duo-build.DhycXA/WindowBrowser/WindowBrowserContentView.swift:30:9: note: mutation of this property is only permitted within the actor
+/Users/aaron/Documents/WindowShade/.build/duo-build.U7KX6e/WindowBrowser/WindowBrowserContentView.swift:30:9: note: mutation of this property is only permitted within the actor
   28 |     var onVisibleKeysChanged: (([WindowKey]) -> Void)?
   29 |     var onCancel: (() -> Void)?
   30 |     var onCommit: (() -> Void)?
@@ -1556,7 +1556,7 @@
   31 |     /// 悬停或键盘选中项的紧凑操作条状态变化（供控制器决定是否保持面板）。
   32 |     var onHoverChanged: ((WindowKey, Bool) -> Void)?
 
-/Users/aaron/Documents/WindowShade/.build/duo-build.DhycXA/WindowBrowser/WindowBrowserFixture.swift:59:15: warning: call to main actor-isolated instance method 'presentKeyboardPanel()' in a synchronous nonisolated context [#ActorIsolatedCall]
+/Users/aaron/Documents/WindowShade/.build/duo-build.U7KX6e/WindowBrowser/WindowBrowserFixture.swift:59:15: warning: call to main actor-isolated instance method 'presentKeyboardPanel()' in a synchronous nonisolated context [#ActorIsolatedCall]
  19 |     }
  20 | 
  21 |     func show() {
@@ -1571,7 +1571,7 @@
  60 |         if let autoexit = ProcessInfo.processInfo.environment["WINDOWSHADE_BROWSER_FIXTURE_AUTOEXIT"],
  61 |            let seconds = Double(autoexit) {
 
-/Users/aaron/Documents/WindowShade/.build/duo-build.DhycXA/WindowBrowser/WindowBrowserPanel.swift:105:10: note: calls to instance method 'presentKeyboardPanel()' from outside of its actor context are implicitly asynchronous
+/Users/aaron/Documents/WindowShade/.build/duo-build.U7KX6e/WindowBrowser/WindowBrowserPanel.swift:105:10: note: calls to instance method 'presentKeyboardPanel()' from outside of its actor context are implicitly asynchronous
 103 |     }
 104 | 
 105 |     func presentKeyboardPanel() {
@@ -1580,7 +1580,7 @@
 106 |         // 用户明确打开（菜单/快捷键）时面板应当获得键盘焦点；菜单栏状态项点击有时
 107 |         // 不构成 app 激活，因此这里显式激活一次，并在激活完成晚于 makeKey 时补一次。
 
-/Users/aaron/Documents/WindowShade/.build/duo-build.DhycXA/WindowBrowser/WindowBrowserFixture.swift:109:29: warning: main actor-isolated property 'searchText' can not be referenced from a nonisolated context
+/Users/aaron/Documents/WindowShade/.build/duo-build.U7KX6e/WindowBrowser/WindowBrowserFixture.swift:109:29: warning: main actor-isolated property 'searchText' can not be referenced from a nonisolated context
 105 |     }
 106 | 
 107 |     private func render() {
@@ -1591,7 +1591,7 @@
 110 |         let visible = records.filter { WindowBrowserSearch.matches(query: query, record: $0) }
 111 |         let status: String
 
-/Users/aaron/Documents/WindowShade/.build/duo-build.DhycXA/WindowBrowser/WindowBrowserContentView.swift:774:9: note: property declared here
+/Users/aaron/Documents/WindowShade/.build/duo-build.U7KX6e/WindowBrowser/WindowBrowserContentView.swift:774:9: note: property declared here
  772 |     var searchFieldAccessibilityLabel: String? { searchField.accessibilityLabel() }
  773 | 
  774 |     var searchText: String { searchField.stringValue }
@@ -1599,7 +1599,7 @@
  775 | 
  776 |     /// 诊断接缝：隔离展示入口设置搜索文本并走真实的过滤回调。
 
-/Users/aaron/Documents/WindowShade/.build/duo-build.DhycXA/WindowBrowser/WindowBrowserFixture.swift:121:17: warning: call to main actor-isolated instance method 'update(mode:records:selection:style:busyKeys:screenRecordingAvailable:hasAccessibility:status:)' in a synchronous nonisolated context [#ActorIsolatedCall]
+/Users/aaron/Documents/WindowShade/.build/duo-build.U7KX6e/WindowBrowser/WindowBrowserFixture.swift:121:17: warning: call to main actor-isolated instance method 'update(mode:records:selection:style:busyKeys:screenRecordingAvailable:hasAccessibility:status:)' in a synchronous nonisolated context [#ActorIsolatedCall]
 105 |     }
 106 | 
 107 |     private func render() {
@@ -1614,7 +1614,7 @@
 122 |                        style: style, busyKeys: [],
 123 |                        screenRecordingAvailable: screenRecordingAvailable,
 
-/Users/aaron/Documents/WindowShade/.build/duo-build.DhycXA/WindowBrowser/WindowBrowserContentView.swift:256:10: note: calls to instance method 'update(mode:records:selection:style:busyKeys:screenRecordingAvailable:hasAccessibility:status:)' from outside of its actor context are implicitly asynchronous
+/Users/aaron/Documents/WindowShade/.build/duo-build.U7KX6e/WindowBrowser/WindowBrowserContentView.swift:256:10: note: calls to instance method 'update(mode:records:selection:style:busyKeys:screenRecordingAvailable:hasAccessibility:status:)' from outside of its actor context are implicitly asynchronous
  254 |     // MARK: 更新
  255 | 
  256 |     func update(mode: WindowBrowserPanelMode,
@@ -1623,7 +1623,7 @@
  257 |                 records: [WindowRecord],
  258 |                 selection: WindowKey?,
 
-/Users/aaron/Documents/WindowShade/.build/duo-build.DhycXA/WindowBrowser/WindowBrowserFixture.swift:127:25: warning: call to main actor-isolated instance method 'applyThumbnail(_:for:note:)' in a synchronous nonisolated context [#ActorIsolatedCall]
+/Users/aaron/Documents/WindowShade/.build/duo-build.U7KX6e/WindowBrowser/WindowBrowserFixture.swift:127:25: warning: call to main actor-isolated instance method 'applyThumbnail(_:for:note:)' in a synchronous nonisolated context [#ActorIsolatedCall]
 105 |     }
 106 | 
 107 |     private func render() {
@@ -1638,7 +1638,7 @@
 128 |             }
 129 |         }
 
-/Users/aaron/Documents/WindowShade/.build/duo-build.DhycXA/WindowBrowser/WindowBrowserContentView.swift:632:10: note: calls to instance method 'applyThumbnail(_:for:note:)' from outside of its actor context are implicitly asynchronous
+/Users/aaron/Documents/WindowShade/.build/duo-build.U7KX6e/WindowBrowser/WindowBrowserContentView.swift:632:10: note: calls to instance method 'applyThumbnail(_:for:note:)' from outside of its actor context are implicitly asynchronous
  630 |     // MARK: 图像
  631 | 
  632 |     func applyThumbnail(_ image: CGImage?, for key: WindowKey, note: String? = nil) {
@@ -1647,7 +1647,7 @@
  633 |         if let image {
  634 |             thumbnailImages[key] = image
 
-/Users/aaron/Documents/WindowShade/.build/duo-build.DhycXA/WindowBrowser/WindowBrowserGeometry.swift:153:44: warning: main actor-isolated property 'intrinsicContentSize' can not be referenced from a nonisolated context
+/Users/aaron/Documents/WindowShade/.build/duo-build.U7KX6e/WindowBrowser/WindowBrowserGeometry.swift:153:44: warning: main actor-isolated property 'intrinsicContentSize' can not be referenced from a nonisolated context
 130 |     /// 由字号推出整套排版：字号变大时标题/状态/行高一起长高，布局跟着调整。
 131 |     /// `titleLines` 是卡片标题实际需要的行数：只有真会换行的标题才占两行高度。
 132 |     static func make(bodySize: CGFloat, detailSize: CGFloat,
@@ -1670,7 +1670,7 @@
 334 | - (void)invalidateIntrinsicContentSize API_AVAILABLE(macos(10.7)); // call this when something changes that affects the intrinsicContentSize.  Otherwise AppKit won't notice that it changed.  
 335 | 
 
-/Users/aaron/Documents/WindowShade/.build/duo-build.DhycXA/WindowBrowser/WindowBrowserGeometry.swift:153:28: warning: call to main actor-isolated initializer 'init()' in a synchronous nonisolated context [#ActorIsolatedCall]
+/Users/aaron/Documents/WindowShade/.build/duo-build.U7KX6e/WindowBrowser/WindowBrowserGeometry.swift:153:28: warning: call to main actor-isolated initializer 'init()' in a synchronous nonisolated context [#ActorIsolatedCall]
 130 |     /// 由字号推出整套排版：字号变大时标题/状态/行高一起长高，布局跟着调整。
 131 |     /// `titleLines` 是卡片标题实际需要的行数：只有真会换行的标题才占两行高度。
 132 |     static func make(bodySize: CGFloat, detailSize: CGFloat,
@@ -1694,7 +1694,7 @@
  24 | - (nullable instancetype)initWithCoder:(NSCoder *)coder NS_DESIGNATED_INITIALIZER;
  25 | 
 
-/Users/aaron/Documents/WindowShade/.build/duo-build.DhycXA/WindowBrowser/WindowBrowserIdentityProbe.swift:57:17: warning: capture of 'self' with non-Sendable type 'IdentityProbeBackend' in a '@Sendable' closure [#SendableClosureCaptures]
+/Users/aaron/Documents/WindowShade/.build/duo-build.U7KX6e/WindowBrowser/WindowBrowserIdentityProbe.swift:57:17: warning: capture of 'self' with non-Sendable type 'IdentityProbeBackend' in a '@Sendable' closure [#SendableClosureCaptures]
  17 | /// 只记录调用的假后端。validate 委托给生产解析函数；perform 只记账，不执行任何
  18 | /// 真实窗口操作，因此“perform 未被调用”可以作为拒绝路径的硬断言。
  19 | final class IdentityProbeBackend: WindowBrowserActionBackend {
@@ -1709,7 +1709,7 @@
  58 |                 validation = .gone
  59 |             } else if let element = WindowBrowserTargetResolver.enumerate(key: target),
 
-/Users/aaron/Documents/WindowShade/.build/duo-build.DhycXA/WindowBrowser/WindowBrowserIdentityProbe.swift:189:62: warning: main actor-isolated property 'fabricatedKey' can not be referenced from a nonisolated context
+/Users/aaron/Documents/WindowShade/.build/duo-build.U7KX6e/WindowBrowser/WindowBrowserIdentityProbe.swift:189:62: warning: main actor-isolated property 'fabricatedKey' can not be referenced from a nonisolated context
  88 |     private var liveKey: WindowKey?
  89 |     private var liveElement: AXUIElement?
  90 |     private var fabricatedKey: WindowKey?
@@ -1724,7 +1724,7 @@
 190 |             } ?? false
 191 |             let wrongPIDRejected = enumerated.map {
 
-/Users/aaron/Documents/WindowShade/.build/duo-build.DhycXA/WindowBrowser/WindowBrowserIdentityProbe.swift:194:81: warning: main actor-isolated property 'fabricatedKey' can not be referenced from a Sendable closure
+/Users/aaron/Documents/WindowShade/.build/duo-build.U7KX6e/WindowBrowser/WindowBrowserIdentityProbe.swift:194:81: warning: main actor-isolated property 'fabricatedKey' can not be referenced from a Sendable closure
  88 |     private var liveKey: WindowKey?
  89 |     private var liveElement: AXUIElement?
  90 |     private var fabricatedKey: WindowKey?
@@ -1739,7 +1739,7 @@
 195 |             let geometry = inspected?.axSize.map {
 196 |                 abs($0.width - expectedSize.width) <= 2 && abs($0.height - expectedSize.height) <= 2
 
-/Users/aaron/Documents/WindowShade/.build/duo-build.DhycXA/WindowBrowser/WindowBrowserIdentityProbe.swift:233:31: warning: main actor-isolated property 'allocator' can not be referenced from a Sendable closure
+/Users/aaron/Documents/WindowShade/.build/duo-build.U7KX6e/WindowBrowser/WindowBrowserIdentityProbe.swift:233:31: warning: main actor-isolated property 'allocator' can not be referenced from a Sendable closure
  81 |     private var window: NSWindow?
  82 |     private var twin: NSWindow?
  83 |     private let allocator = WindowIdentityAllocator()
@@ -1754,7 +1754,7 @@
 234 |                                                   originalWindowID: id)
 235 |                     guard WindowBrowserTargetResolver.enumerate(key: key) != nil else { continue }
 
-/Users/aaron/Documents/WindowShade/.build/duo-build.DhycXA/WindowBrowser/WindowBrowserListRowView.swift:106:42: warning: main actor-isolated property 'isSelected' can not be referenced from a Sendable closure
+/Users/aaron/Documents/WindowShade/.build/duo-build.U7KX6e/WindowBrowser/WindowBrowserListRowView.swift:106:42: warning: main actor-isolated property 'isSelected' can not be referenced from a Sendable closure
   8 |     weak var delegate: WindowBrowserItemDelegate?
   9 |     private(set) var windowKey: WindowKey?
  10 |     private(set) var isSelected = false
@@ -1769,7 +1769,7 @@
 107 |                     self.refreshAppearance(animated: false)
 108 |                 })
 
-/Users/aaron/Documents/WindowShade/.build/duo-build.DhycXA/WindowBrowser/WindowBrowserListRowView.swift:107:26: warning: call to main actor-isolated instance method 'refreshAppearance(animated:)' in a synchronous nonisolated context [#ActorIsolatedCall]
+/Users/aaron/Documents/WindowShade/.build/duo-build.U7KX6e/WindowBrowser/WindowBrowserListRowView.swift:107:26: warning: call to main actor-isolated instance method 'refreshAppearance(animated:)' in a synchronous nonisolated context [#ActorIsolatedCall]
  61 |     }
  62 | 
  63 |     private func refreshAppearance(animated: Bool) {
@@ -1785,7 +1785,7 @@
 108 |                 })
 109 |         }
 
-/Users/aaron/Documents/WindowShade/.build/duo-build.DhycXA/WindowBrowser/WindowBrowserLiveAppProbe.swift:359:74: warning: passing non-Sendable parameter 'work' to function expecting a '@Sendable' closure
+/Users/aaron/Documents/WindowShade/.build/duo-build.U7KX6e/WindowBrowser/WindowBrowserLiveAppProbe.swift:359:74: warning: passing non-Sendable parameter 'work' to function expecting a '@Sendable' closure
 356 |     }
 357 | 
 358 |     private func retry(after delay: TimeInterval, _ work: @escaping () -> Void) {
@@ -1795,7 +1795,7 @@
 360 |     }
 361 | 
 
-/Users/aaron/Documents/WindowShade/.build/duo-build.DhycXA/WindowBrowser/WindowBrowserMetadataQueue.swift:26:47: warning: passing non-Sendable parameter 'work' to function expecting a '@Sendable' closure
+/Users/aaron/Documents/WindowShade/.build/duo-build.U7KX6e/WindowBrowser/WindowBrowserMetadataQueue.swift:26:47: warning: passing non-Sendable parameter 'work' to function expecting a '@Sendable' closure
 22 |     }
 23 | 
 24 |     func submit(pid: pid_t, isInteractive: Bool, work: @escaping () -> Void) {
@@ -1806,7 +1806,7 @@
 27 |         if let previous = tails[pid], !previous.isFinished {
 28 |             operation.addDependency(previous)
 
-/Users/aaron/Documents/WindowShade/.build/duo-build.DhycXA/WindowBrowser/WindowBrowserPanel.swift:153:31: warning: passing non-Sendable parameter 'completion' to function expecting a '@Sendable' closure
+/Users/aaron/Documents/WindowShade/.build/duo-build.U7KX6e/WindowBrowser/WindowBrowserPanel.swift:153:31: warning: passing non-Sendable parameter 'completion' to function expecting a '@Sendable' closure
 139 |     /// 消失约 100–120 ms；减少动态效果时立即关闭，不留下延迟的残留窗口。
 140 |     /// completion 在窗口真正移出屏幕后调用一次（调用方负责关闭与释放）。
 141 |     func dismiss(animated: Bool = true, completion: @escaping () -> Void) {
@@ -1821,7 +1821,7 @@
 154 |     }
 155 | 
 
-/Users/aaron/Documents/WindowShade/.build/duo-build.DhycXA/WindowBrowser/WindowBrowserPanel.swift:187:34: warning: main actor-isolated property 'resizeGeneration' can not be referenced from a Sendable closure
+/Users/aaron/Documents/WindowShade/.build/duo-build.U7KX6e/WindowBrowser/WindowBrowserPanel.swift:187:34: warning: main actor-isolated property 'resizeGeneration' can not be referenced from a Sendable closure
  19 |     private var presentationGeneration: UInt64 = 0
  20 |     /// 换尺寸代数：动画收尾时只认最后一次请求，旧动画不会把新尺寸盖回去。
  21 |     private var resizeGeneration: UInt64 = 0
@@ -1836,7 +1836,7 @@
 188 |             self.settle(to: frame)
 189 |         })
 
-/Users/aaron/Documents/WindowShade/.build/duo-build.DhycXA/WindowBrowser/WindowBrowserPanel.swift:188:18: warning: call to main actor-isolated instance method 'settle(to:)' in a synchronous nonisolated context [#ActorIsolatedCall]
+/Users/aaron/Documents/WindowShade/.build/duo-build.U7KX6e/WindowBrowser/WindowBrowserPanel.swift:188:18: warning: call to main actor-isolated instance method 'settle(to:)' in a synchronous nonisolated context [#ActorIsolatedCall]
 186 |         }, completionHandler: { [weak self] in
 187 |             guard let self, self.resizeGeneration == token else { return }
 188 |             self.settle(to: frame)
@@ -1851,7 +1851,7 @@
 194 |         setFrame(frame, display: true)
 195 |         browserContentView.frame = NSRect(origin: .zero, size: frame.size)
 
-/Users/aaron/Documents/WindowShade/.build/duo-build.DhycXA/WindowShade.swift:88:25: warning: main actor-isolated property 'windowNumber' can not be referenced from a nonisolated context
+/Users/aaron/Documents/WindowShade/.build/duo-build.U7KX6e/WindowShade.swift:88:25: warning: main actor-isolated property 'windowNumber' can not be referenced from a nonisolated context
  85 | }
  86 | 
  87 | func cgWindowID(for window: NSWindow) -> CGWindowID? {
@@ -1872,7 +1872,7 @@
 [#ActorIsolatedCall]: <https://docs.swift.org/compiler/documentation/diagnostics/actor-isolated-call>
 [#MutableGlobalVariable]: <https://docs.swift.org/compiler/documentation/diagnostics/mutable-global-variable>
 [#SendableClosureCaptures]: <https://docs.swift.org/compiler/documentation/diagnostics/sendable-closure-captures>
-/Users/aaron/Documents/WindowShade/.build/duo-build.DhycXA/App/UpdaterSystem.swift:466:24: warning: static property 'calls' is not concurrency-safe because non-'Sendable' type 'any LegacyLaunchdJobCalls.Type' may have shared mutable state [#MutableGlobalVariable]
+/Users/aaron/Documents/WindowShade/.build/duo-build.U7KX6e/App/UpdaterSystem.swift:466:24: warning: static property 'calls' is not concurrency-safe because non-'Sendable' type 'any LegacyLaunchdJobCalls.Type' may have shared mutable state [#MutableGlobalVariable]
 464 | enum UpdateJobs {
 465 |     private static var domain: CFString { kSMDomainUserLaunchd }
 466 |     private static let calls: any LegacyLaunchdJobCalls.Type = SMJobCalls.self

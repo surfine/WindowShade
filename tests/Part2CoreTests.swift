@@ -70,10 +70,10 @@ final class TestClock: WS2Clock, @unchecked Sendable {
             expect(c.snapshots(at:time(4)).allSatisfy{$0.lease == nil},"expired removed")
             if case .unavailable = c.acquire(req("pomodoro",.opened,a,4)) { expect(true,"past rejected") } else { expect(false,"expired request") }
         }
-        test("LEASE09 reminder four seconds and no endless refresh") {
+        test("LEASE09 reminder alert.hold and no endless refresh") {
             c.remind(on:a,at:time(4)); c.remind(on:a,at:.init(nanoseconds:4_500_000_000))
-            expect(c.snapshots(at:time(7)).first?.layer == .alert,"reminder active")
-            expect(c.snapshots(at:time(8)).first?.layer == .idle,"first deadline retained")
+            expect(c.snapshots(at:time(6)).first?.layer == .alert,"reminder active before 2.6s")
+            expect(c.snapshots(at:time(7)).first?.layer == .idle,"alert.hold deadline retained")
         }
         test("LEASE10 backward-time security invalidation") {
             let e = c.epoch; c.invalidate(.sleeping,at:time(0)); expect(c.epoch == e+1,"barrier not skipped")

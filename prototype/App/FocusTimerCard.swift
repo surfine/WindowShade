@@ -47,7 +47,9 @@ import QuartzCore
         CATransaction.begin(); CATransaction.setDisableActions(true); ring.strokeEnd = min(1,max(0,fraction)); CATransaction.commit()
         if !model.isPaused,model.phase != .idle,window != nil {
             let a = CABasicAnimation(keyPath:"strokeEnd"); a.fromValue = ring.strokeEnd; a.toValue = 0
-            a.duration = Double(model.remaining(at:now))/1e9; a.timingFunction = CAMediaTimingFunction(name:.linear)
+            a.duration = Double(model.remaining(at:now))/1e9
+            // 倒计时进度是时间映射，保持线性；位移弹簧不套在这里。
+            a.timingFunction = CAMediaTimingFunction(name: .linear)
             ring.add(a,forKey:"countdown")
             if model.phase == .rest, !NSWorkspace.shared.accessibilityDisplayShouldReduceMotion {
                 let breath = CABasicAnimation(keyPath:"opacity"); breath.fromValue = 0.45; breath.toValue = 1

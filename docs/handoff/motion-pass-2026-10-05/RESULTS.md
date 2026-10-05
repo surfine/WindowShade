@@ -1,4 +1,4 @@
-# 动效验收结果 · 2026-10-05
+# 动效验收结果 · 2026-10-05（含 P2 收口）
 
 ## 自动化
 
@@ -8,23 +8,17 @@
 | SlideOverMotionTests | PASS | `tests/run-slide-over-tests.sh` |
 | LaunchpadViewTests | PASS | `tests/run-launchpad-view-tests.sh` |
 | PaperSurfaceTests | PASS | `tests/run-paper-tests.sh` |
-| DuoCoreTests（含 FoldTransition 弹簧） | PASS | `tests/run-duo-tests.sh`（menu 集成断言与本轮无关） |
-| LockOverlayLifecycleTests | PASS | `tests/run-lock-overlay-lifecycle-tests.sh` |
+| Part2CoreTests（LEASE09 → alert.hold） | PASS | `tests/run-part2-core-tests.sh` |
+| DisplayShapeTests（capsuleRadius） | PASS | `tests/run-display-shape-tests.sh` |
 | `prototype/build.sh --check` | PASS | `build-check.log` |
-| `run-glance-probe.sh --single` | PASS（P0） | `glance-single.log` |
-| `run-glance-probe.sh --fold-timing` | PASS（P0） | `fold-timing.log` |
 
-## 边界（代码层）
+## 本轮收口
 
-1. 进场内容 40%：Notch morph 主线未改（已有）。
-2. 退场先字后形：Notch 仍先淡内容；时长改 `calm` / `reducedNotch`。
-3. 中断：FoldTransition / Glance 从 presentation 或当前值 retarget。
-4. 交接：rollMask / island / fold progress 连续。
-5. 令牌：Glance `calm`/`pull`/`settle`；Fold `settle`/`calm`；auth→`calm`。
-6. Reduce Motion：只淡走 `fadeDuration` / `reducedNotch`。
-7. SlideOver 平移 `glide`/`settle`；Launchpad 槽位 `expand`、落地 `glide`、开文件夹 `flyOut`。
-8. 其余淡入淡出去掉命名 Bézier，时长走 `fadeDuration`。
+1. 胶囊五态 / `island.hug`：真刘海 hug；无刘海 `capsuleRadius` + 展开/提醒 `allCorners`。
+2. 双时钟：协调器 `remind` = `MotionHold.alert` 2.6s。
+3. 启动台玻璃：控件层系统玻璃；内容层磨砂保留（§6-8）。
+4. 编辑晃动 → `pop` 时长；番茄环保持线性；焦点拉出 `settle`；分屏吸附 `FluidMotion`+`settle`。
 
-## 未收
+## 仍并陈
 
-Launchpad 玻璃、胶囊五态、`island.hug`、双时钟；编辑晃动、番茄钟线性、焦点拉出 0.065、分屏吸附仍用 cubic 插值。
+私有接口读时机稿上的 2s/1.5s vs §3.4；减少动态效果稿上 0.18 vs `reduced` 令牌。
