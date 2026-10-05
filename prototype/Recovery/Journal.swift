@@ -29,18 +29,19 @@ extension AppDelegate {
         return true
     }
 
-    func journalNumber(_ entry: [String: Any], _ key: String) -> Double? {
+    // 纯解析：救援后台扫描也会用，必须 nonisolated，不能踩 MainActor 执行期检查。
+    nonisolated func journalNumber(_ entry: [String: Any], _ key: String) -> Double? {
         if let n = entry[key] as? NSNumber { return n.doubleValue }
         if let d = entry[key] as? Double { return d }
         if let i = entry[key] as? Int { return Double(i) }
         return nil
     }
 
-    func journalString(_ entry: [String: Any], _ key: String) -> String {
+    nonisolated func journalString(_ entry: [String: Any], _ key: String) -> String {
         entry[key] as? String ?? ""
     }
 
-    func journalID(_ entry: [String: Any]) -> CGWindowID? {
+    nonisolated func journalID(_ entry: [String: Any]) -> CGWindowID? {
         // Persisted values are untrusted data: do not truncate, clamp, or trap.
         if let value = entry["id"] as? NSNumber,
            CFGetTypeID(value) == CFBooleanGetTypeID() { return nil }
@@ -219,10 +220,12 @@ extension AppDelegate {
         wlog("journal: sync id=\(id) restore=(\(Int(pos.x)),\(Int(pos.y)))")
     }
 
-    func journalMatches(_ entry: [String: Any], app: NSRunningApplication,
-                                win: AXUIElement) -> Bool {
+    nonisolated func journalMatches(_ entry: [String: Any], app: NSRunningApplication,
+                                    win: AXUIElement) -> Bool {
         guard Int(app.processIdentifier) == Int(journalNumber(entry, "pid") ?? -1) else { return false }
-        if let created=journalNumber(entry,"createdAt"), let launched=app.launchDate?.timeIntervalSince1970, created<launched-1 { return false }
+        if let created = journalNumber(entry, "createdAt"),
+           let launched = app.launchDate?.timeIntervalSince1970,
+           created < launched - 1 { return false }
         let expectedBundle = journalString(entry, "bundleID")
         if !expectedBundle.isEmpty, app.bundleIdentifier != expectedBundle { return false }
 

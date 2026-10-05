@@ -1,0 +1,40 @@
+(lldb) target create ".build/duo-validation/WindowShade.app/Contents/MacOS/WindowShade"
+Current executable set to '/Users/aaron/Documents/WindowShade/.build/duo-validation/WindowShade.app/Contents/MacOS/WindowShade' (arm64).
+(lldb) settings set target.process.stop-on-sharedlibrary-events false
+(lldb) breakpoint set -E swift
+Breakpoint 1: no locations (pending).
+(lldb) run --glance-probe --fixture .build/glance-tests/GlanceFixture.app/Contents/MacOS/GlanceFixture --single --fold-timing
+2 locations added to breakpoint 1
+Process 44315 launched: '/Users/aaron/Documents/WindowShade/.build/duo-validation/WindowShade.app/Contents/MacOS/WindowShade' (arm64)
+Process 44315 stopped
+* thread #1, queue = 'com.apple.main-thread', stop reason = breakpoint 1.1
+       frame #0: 0x00000001995b0344 libswiftCore.dylib`swift_willThrow
+libswiftCore.dylib`swift_willThrow:
+->  0x1995b0344 <+0>:  pacibsp 
+    0x1995b0348 <+4>:  str    x19, [sp, #-0x20]!
+    0x1995b034c <+8>:  stp    x29, x30, [sp, #0x10]
+    0x1995b0350 <+12>: add    x29, sp, #0x10
+Target 0: (WindowShade) stopped.
+(lldb) bt
+* thread #1, queue = 'com.apple.main-thread', stop reason = breakpoint 1.1
+   * frame #0: 0x00000001995b0344 libswiftCore.dylib`swift_willThrow
+     frame #1: 0x0000000186f8f3d0 Foundation`specialized readBytesFromFile(path:reportProgress:maxLength:options:attributesToRead:attributes:) + 5036
+     frame #2: 0x0000000186c6d6ac Foundation`specialized readDataFromFile(path:reportProgress:maxLength:options:) + 64
+     frame #3: 0x0000000186c6e7a8 Foundation`Data.init(contentsOf:options:) + 136
+     frame #4: 0x000000010032f7a4 WindowShade`UpdateStore.loadJournal() + 244
+     frame #5: 0x000000010057b0dc WindowShade`specialized static UpdateLaunch.expireStaleBackup(store:now:) + 432
+     frame #6: 0x0000000100006e00 WindowShade`static UpdateLaunch.recordLaunch(store:now:) + 420
+     frame #7: 0x0000000100002840 WindowShade`main + 992
+     frame #8: 0x0000000184c4be80 dyld`start + 6688
+(lldb) thread backtrace all
+* thread #1, queue = 'com.apple.main-thread', stop reason = breakpoint 1.1
+   * frame #0: 0x00000001995b0344 libswiftCore.dylib`swift_willThrow
+     frame #1: 0x0000000186f8f3d0 Foundation`specialized readBytesFromFile(path:reportProgress:maxLength:options:attributesToRead:attributes:) + 5036
+     frame #2: 0x0000000186c6d6ac Foundation`specialized readDataFromFile(path:reportProgress:maxLength:options:) + 64
+     frame #3: 0x0000000186c6e7a8 Foundation`Data.init(contentsOf:options:) + 136
+     frame #4: 0x000000010032f7a4 WindowShade`UpdateStore.loadJournal() + 244
+     frame #5: 0x000000010057b0dc WindowShade`specialized static UpdateLaunch.expireStaleBackup(store:now:) + 432
+     frame #6: 0x0000000100006e00 WindowShade`static UpdateLaunch.recordLaunch(store:now:) + 420
+     frame #7: 0x0000000100002840 WindowShade`main + 992
+     frame #8: 0x0000000184c4be80 dyld`start + 6688
+(lldb) quit

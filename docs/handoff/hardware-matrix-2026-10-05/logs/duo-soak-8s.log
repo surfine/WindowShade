@@ -1,0 +1,5 @@
+METADATA buffer=3420x2214 uv=(0.0, 0.0, 1.0, 1.0) scale=2.0 contentScale=1.0
+START duration=8.0s displayCapture=3420x2214
+["displayTicks": 1, "sensorReadP95ms": 0.07645832374691963, "capturedFrames": 2, "render": "presented=0 fps=0.0 captureToPresentP95=0.0ms gpuP95=0.0ms busySkipped=0 latencySamples=0", "sensorReadings": 9, "elapsed": 0.04933300003176555, "residentBytes": 75022336]
+["elapsed": 8.016005916695576, "render": "presented=282 fps=35.9 captureToPresentP95=82.8ms gpuP95=3.3ms busySkipped=82 latencySamples=282", "sensorReadings": 88, "capturedFrames": 289, "sensorReadP95ms": 0.0009167124517261982, "displayTicks": 428, "residentBytes": 74858496]
+END /Users/aaron/Documents/WindowShade/.build/duo-tests/soak-8.json

@@ -48,8 +48,10 @@ final class GlanceProbe {
     let manyWindows = CommandLine.arguments.contains("--strip") || CommandLine.arguments.contains("--wins")
       || CommandLine.arguments.contains("--split") || CommandLine.arguments.contains("--strip-peek")
     let pipRun = CommandLine.arguments.contains("--pip")
+    // 折叠计时只打一扇：两扇时整 App 隐藏路径和另一扇抢焦点，会在第二三轮踩到 SIGTRAP。
+    let foldTiming = CommandLine.arguments.contains("--fold-timing")
     var fixtureArguments: [String] = []
-    if single || manyWindows || pipRun { fixtureArguments.append("--single") }
+    if single || manyWindows || pipRun || foldTiming { fixtureArguments.append("--single") }
     if manyWindows { fixtureArguments.append("--strip") }
     if pipRun { fixtureArguments.append("--scroll") }
     for flag in ["--other-space", "--minimize", "--fullscreen"] where CommandLine.arguments.contains(flag) {
@@ -543,6 +545,10 @@ final class GlanceProbe {
   /// 同一个进程里连续收起、展开 5 次（第 1 次是冷启动），量用户第一眼看到变化
   /// （带动画：盖板出现；不带动画：真窗口开始藏起来）和卷帘条出现各要多久。
   private func foldTiming(element: AXUIElement) async throws {
+    // 计时探针不需要真出声；连播会撞上「Already playing」与设备唤醒竞态。
+    let previousVolume = shadeSounds.volume
+    shadeSounds.volume = 0
+    defer { shadeSounds.volume = previousVolume }
     var firstChange: [Double] = [], stripShown: [Double] = []
     for round in 0..<5 {
       await ShareableContentCache.shared.prefetch()
@@ -556,13 +562,14 @@ final class GlanceProbe {
       }
       let shown = (CACurrentMediaTime() - started) * 1000
       print(String(format: "ROUND %d: first change %.0fms, strip %.0fms", round, changed, shown))
+      fflush(stdout)
       if round > 0 { firstChange.append(changed); stripShown.append(shown) }
       _ = owner.unshade(id)
-      try await wait("restored") {
+      try await wait("restored", timeout: 8) {
         self.onscreen(self.id) && self.owner.shaded[self.id] == nil
           && self.owner.duoController.windowEffects.activeCount == 0
       }
-      try await Task.sleep(nanoseconds: 700_000_000)
+      try await Task.sleep(nanoseconds: 1_000_000_000)
     }
     func median(_ xs: [Double]) -> Double { xs.sorted()[xs.count / 2] }
     let fast = FastCapture.isAvailable ? "fast capture" : "ScreenCaptureKit only"

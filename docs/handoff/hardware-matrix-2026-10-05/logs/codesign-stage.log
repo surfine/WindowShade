@@ -1,0 +1,16 @@
+/Users/aaron/Documents/WindowShade/.build/duo-validation/WindowShade.app: replacing existing signature
+Executable=/Users/aaron/Documents/WindowShade/.build/duo-validation/WindowShade.app/Contents/MacOS/WindowShade
+Identifier=com.windowshade.prototype
+Format=app bundle with Mach-O thin (arm64)
+CodeDirectory v=20400 size=27005 flags=0x0(none) hashes=837+3 location=embedded
+Signature size=4787
+Authority=Apple Development: openkams@gmail.com (G3TN2MBQ2Q)
+Authority=Apple Worldwide Developer Relations Certification Authority
+Authority=Apple Root CA
+Signed Time=Oct 5, 2026 at 5:57:54 PM
+Info.plist entries=21
+TeamIdentifier=FVGLY6W6S4
+Sealed Resources version=2 rules=13 files=6
+Internal requirements count=1 size=196
+Total signatures=1
+Chosen signature=1

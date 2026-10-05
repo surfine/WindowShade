@@ -1,0 +1,6 @@
+(lldb) target create ".build/duo-validation/WindowShade.app/Contents/MacOS/WindowShade"
+Current executable set to '/Users/aaron/Documents/WindowShade/.build/duo-validation/WindowShade.app/Contents/MacOS/WindowShade' (arm64).
+(lldb) settings set target.process.thread.step-avoid-regexp ''
+(lldb) breakpoint set -n exit -c '$arg1 != 0'
+Breakpoint 1: 11 locations.
+(lldb) run --glance-probe --fixture .build/glance-tests/GlanceFixture.app/Contents/MacOS/GlanceFixture --single --fold-timing

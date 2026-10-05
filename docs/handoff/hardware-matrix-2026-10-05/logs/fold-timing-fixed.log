@@ -1,0 +1,6 @@
+^DINFO glance: accessibility=true screenRecording=true
+ROUND 0: first change 650ms, strip 789ms
+ROUND 1: first change 168ms, strip 349ms
+ROUND 2: first change 177ms, strip 365ms
+tests/run-glance-probe.sh: line 25: 56577 Trace/BPT trap: 5       "$APP" --glance-probe --fixture "$FIX/Contents/MacOS/GlanceFixture" "$@"
+EXIT:133

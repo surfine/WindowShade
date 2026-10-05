@@ -1,0 +1,5 @@
+==> 源文件：374 个 Swift 文件
+==> 编译
+./build.sh: line 202: 27784 Terminated: 15          env TMPDIR="$WORK/compiler-tmp" CLANG_MODULE_CACHE_PATH="$MODULE_CACHE" swiftc "${SWIFT_LANGUAGE_FLAGS[@]}" -module-cache-path "$MODULE_CACHE" -target "$ARCH-apple-macosx14.0" "${OPTIMIZATION_FLAGS[@]}" ${GLASS_DEFINE} -o "$TMP_BIN" "${COMPILE_SOURCES[@]}" "${NATIVE_FLAGS[@]}" "${FRAMEWORKS[@]}" "${SPARKLE_FLAGS[@]+"${SPARKLE_FLAGS[@]}"}" -framework Sparkle -Xlinker -rpath -Xlinker @executable_path/../Frameworks
+NOTE: full ./build.sh --stage hung at swift-driver 0%CPU after ~16m; reused existing .build/duo-validation/windowshade (mtime 2026-10-05 13:22) and re-signed.
+NOTE: ./build.sh --stage hung twice on swift-driver 0%CPU (shared module-cache). Probes used re-signed existing duo-validation binary (2026-10-05 13:22) + Apple Development identity. Full rebuild not_run for this session.

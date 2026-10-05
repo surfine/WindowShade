@@ -1,0 +1,100 @@
+^D(lldb) target create ".build/duo-validation/WindowShade.app/Contents/MacOS/WindowShade"
+Current executable set to '/Users/aaron/Documents/WindowShade/.build/duo-validation/WindowShade.app/Contents/MacOS/WindowShade' (arm64).
+(lldb) breakpoint set -n _dispatch_assert_queue_fail
+Breakpoint 1: where = libdispatch.dylib`_dispatch_assert_queue_fail, address = 0x0000000180702a0c
+(lldb) process handle SIGTRAP -s true -p true -n false
+NAME         PASS     STOP     NOTIFY
+===========  =======  =======  =======
+SIGTRAP      true     true     false  
+(lldb) run --silent-milestone --fixture .build/glance-tests/GlanceFixture.app/Contents/MacOS/GlanceFixture
+INFO silent-milestone accessibility=true screenRecording=true camera=notDetermined
+2026-10-05 18:57:45.982491+0800 WindowShade[66716:26011316] [plugin] AddInstanceForFactory: No factory registered for id <CFUUID 0x759cc6cae0> F8BB1C28-BAE8-11D6-9C31-00039315CD46
+2026-10-05 18:57:46.236419+0800 WindowShade[66716:26011316] [AppKit] Conflicting constraints detected: (
+    "<NSLayoutConstraint:0x759de87570 NSStackView:0x759c4b7c00.width == NSStackView:0x759c4f9b80.width   (active)>",
+    "<NSLayoutConstraint:0x759de87480 H:|-(14)-[NSStackView:0x759c4f9b80]   (active, names: '|':windowshade.WS2SilentPageView:0x759c4b7700 )>",
+    "<NSLayoutConstraint:0x759de874d0 NSStackView:0x759c4f9b80.trailing == windowshade.WS2SilentPageView:0x759c4b7700.trailing - 14   (active)>",
+    "<NSLayoutConstraint:0x759df81c70 'NSStackView.Edge.Min.Leading' H:|-(0)-[launcher.open](LTR)   (active, names: launcher.open:0x759c4f8280, '|':NSStackView:0x759c4b7c00 )>",
+    "<NSLayoutConstraint:0x759df81ea0 'NSStackView.Stack' H:[launcher.open]-(6)-[ui.windows](LTR)   (active, names: ui.windows:0x759c4f8500, launcher.open:0x759c4f8280 )>",
+    "<NSLayoutConstraint:0x759df820d0 'NSStackView.Stack' H:[ui.windows]-(6)-[ui.activities](LTR)   (active, names: ui.activities:0x759c4f8780, ui.windows:0x759c4f8500 )>",
+    "<NSLayoutConstraint:0x759df82300 'NSStackView.Stack' H:[ui.activities]-(6)-[ui.usage](LTR)   (active, names: ui.usage:0x759c4f8a00, ui.activities:0x759c4f8780 )>",
+    "<NSLayoutConstraint:0x759df82530 'NSStackView.Edge.Min.Trailing' H:[ui.usage]-(0)-|(LTR)   (active, names: ui.usage:0x759c4f8a00, '|':NSStackView:0x759c4b7c00 )>",
+    "<NSAutoresizingMaskLayoutConstraint:0x759dfb8230 h=--& v=--& windowshade.WS2SilentPageView:0x759c4b7700.width == 0   (active)>"
+).
+
+Will attempt to recover by breaking <NSLayoutConstraint:0x759df82300 'NSStackView.Stack' H:[ui.activities]-(6)-[ui.usage](LTR)   (active, names: ui.usage:0x759c4f8a00, ui.activities:0x759c4f8780 )>.
+2026-10-05 18:57:46.236657+0800 WindowShade[66716:26011316] [Layout] Unable to simultaneously satisfy constraints:
+(
+    "<NSLayoutConstraint:0x759de87570 NSStackView:0x759c4b7c00.width == NSStackView:0x759c4f9b80.width   (active)>",
+    "<NSLayoutConstraint:0x759de87480 H:|-(14)-[NSStackView:0x759c4f9b80]   (active, names: '|':windowshade.WS2SilentPageView:0x759c4b7700 )>",
+    "<NSLayoutConstraint:0x759de874d0 NSStackView:0x759c4f9b80.trailing == windowshade.WS2SilentPageView:0x759c4b7700.trailing - 14   (active)>",
+    "<NSLayoutConstraint:0x759df81c70 'NSStackView.Edge.Min.Leading' H:|-(0)-[launcher.open](LTR)   (active, names: launcher.open:0x759c4f8280, '|':NSStackView:0x759c4b7c00 )>",
+    "<NSLayoutConstraint:0x759df81ea0 'NSStackView.Stack' H:[launcher.open]-(6)-[ui.windows](LTR)   (active, names: ui.windows:0x759c4f8500, launcher.open:0x759c4f8280 )>",
+    "<NSLayoutConstraint:0x759df820d0 'NSStackView.Stack' H:[ui.windows]-(6)-[ui.activities](LTR)   (active, names: ui.activities:0x759c4f8780, ui.windows:0x759c4f8500 )>",
+    "<NSLayoutConstraint:0x759df82300 'NSStackView.Stack' H:[ui.activities]-(6)-[ui.usage](LTR)   (active, names: ui.usage:0x759c4f8a00, ui.activities:0x759c4f8780 )>",
+    "<NSLayoutConstraint:0x759df82530 'NSStackView.Edge.Min.Trailing' H:[ui.usage]-(0)-|(LTR)   (active, names: ui.usage:0x759c4f8a00, '|':NSStackView:0x759c4b7c00 )>",
+    "<NSAutoresizingMaskLayoutConstraint:0x759dfb8230 h=--& v=--& windowshade.WS2SilentPageView:0x759c4b7700.width == 0   (active)>"
+)
+
+Will attempt to recover by breaking constraint 
+<NSLayoutConstraint:0x759df82300 'NSStackView.Stack' H:[ui.activities]-(6)-[ui.usage](LTR)   (active, names: ui.usage:0x759c4f8a00, ui.activities:0x759c4f8780 )>
+
+Set the NSUserDefault NSConstraintBasedLayoutVisualizeMutuallyExclusiveConstraints to YES to have -[NSWindow visualizeConstraints:] automatically called when this happens.  And/or, set a symbolic breakpoint on LAYOUT_CONSTRAINTS_NOT_SATISFIABLE to catch this in the debugger.
+2026-10-05 18:57:46.237194+0800 WindowShade[66716:26011316] [AppKit] Conflicting constraints detected: (
+    "<NSLayoutConstraint:0x759de875c0 NSStackView:0x759c4f8000.width == NSStackView:0x759c4f9b80.width   (active)>",
+    "<NSLayoutConstraint:0x759de87480 H:|-(14)-[NSStackView:0x759c4f9b80]   (active, names: '|':windowshade.WS2SilentPageView:0x759c4b7700 )>",
+    "<NSLayoutConstraint:0x759de874d0 NSStackView:0x759c4f9b80.trailing == windowshade.WS2SilentPageView:0x759c4b7700.trailing - 14   (active)>",
+    "<NSLayoutConstraint:0x759df82bc0 'NSStackView.Edge.Min.Leading' H:|-(0)-[ui.settings](LTR)   (active, names: ui.settings:0x759c4f8c80, '|':NSStackView:0x759c4f8000 )>",
+    "<NSLayoutConstraint:0x759df82df0 'NSStackView.Stack' H:[ui.settings]-(6)-[windowshade.IslandChip:0x759c4f8f00](LTR)   (active, names: ui.settings:0x759c4f8c80 )>",
+    "<NSLayoutConstraint:0x759df83020 'NSStackView.Edge.Min.Trailing' H:[windowshade.IslandChip:0x759c4f8f00]-(0)-|(LTR)   (active, names: '|':NSStackView:0x759c4f8000 )>",
+    "<NSAutoresizingMaskLayoutConstraint:0x759dfb8230 h=--& v=--& windowshade.WS2SilentPageView:0x759c4b7700.width == 0   (active)>"
+).
+
+Will attempt to recover by breaking <NSLayoutConstraint:0x759df82df0 'NSStackView.Stack' H:[ui.settings]-(6)-[windowshade.IslandChip:0x759c4f8f00](LTR)   (active, names: ui.settings:0x759c4f8c80 )>.
+2026-10-05 18:57:46.237412+0800 WindowShade[66716:26011316] [Layout] Unable to simultaneously satisfy constraints:
+(
+    "<NSLayoutConstraint:0x759de875c0 NSStackView:0x759c4f8000.width == NSStackView:0x759c4f9b80.width   (active)>",
+    "<NSLayoutConstraint:0x759de87480 H:|-(14)-[NSStackView:0x759c4f9b80]   (active, names: '|':windowshade.WS2SilentPageView:0x759c4b7700 )>",
+    "<NSLayoutConstraint:0x759de874d0 NSStackView:0x759c4f9b80.trailing == windowshade.WS2SilentPageView:0x759c4b7700.trailing - 14   (active)>",
+    "<NSLayoutConstraint:0x759df82bc0 'NSStackView.Edge.Min.Leading' H:|-(0)-[ui.settings](LTR)   (active, names: ui.settings:0x759c4f8c80, '|':NSStackView:0x759c4f8000 )>",
+    "<NSLayoutConstraint:0x759df82df0 'NSStackView.Stack' H:[ui.settings]-(6)-[windowshade.IslandChip:0x759c4f8f00](LTR)   (active, names: ui.settings:0x759c4f8c80 )>",
+    "<NSLayoutConstraint:0x759df83020 'NSStackView.Edge.Min.Trailing' H:[windowshade.IslandChip:0x759c4f8f00]-(0)-|(LTR)   (active, names: '|':NSStackView:0x759c4f8000 )>",
+    "<NSAutoresizingMaskLayoutConstraint:0x759dfb8230 h=--& v=--& windowshade.WS2SilentPageView:0x759c4b7700.width == 0   (active)>"
+)
+
+Will attempt to recover by breaking constraint 
+<NSLayoutConstraint:0x759df82df0 'NSStackView.Stack' H:[ui.settings]-(6)-[windowshade.IslandChip:0x759c4f8f00](LTR)   (active, names: ui.settings:0x759c4f8c80 )>
+
+Set the NSUserDefault NSConstraintBasedLayoutVisualizeMutuallyExclusiveConstraints to YES to have -[NSWindow visualizeConstraints:] automatically called when this happens.  And/or, set a symbolic breakpoint on LAYOUT_CONSTRAINTS_NOT_SATISFIABLE to catch this in the debugger.
+2026-10-05 18:57:46.237680+0800 WindowShade[66716:26011316] [AppKit] Conflicting constraints detected: (
+    "<NSLayoutConstraint:0x759de87480 H:|-(14)-[NSStackView:0x759c4f9b80]   (active, names: '|':windowshade.WS2SilentPageView:0x759c4b7700 )>",
+    "<NSLayoutConstraint:0x759de874d0 NSStackView:0x759c4f9b80.trailing == windowshade.WS2SilentPageView:0x759c4b7700.trailing - 14   (active)>",
+    "<NSAutoresizingMaskLayoutConstraint:0x759dfb8230 h=--& v=--& windowshade.WS2SilentPageView:0x759c4b7700.width == 0   (active)>"
+).
+
+Will attempt to recover by breaking <NSLayoutConstraint:0x759de874d0 NSStackView:0x759c4f9b80.trailing == windowshade.WS2SilentPageView:0x759c4b7700.trailing - 14   (active)>.
+2026-10-05 18:57:46.237757+0800 WindowShade[66716:26011316] [Layout] Unable to simultaneously satisfy constraints:
+(
+    "<NSLayoutConstraint:0x759de87480 H:|-(14)-[NSStackView:0x759c4f9b80]   (active, names: '|':windowshade.WS2SilentPageView:0x759c4b7700 )>",
+    "<NSLayoutConstraint:0x759de874d0 NSStackView:0x759c4f9b80.trailing == windowshade.WS2SilentPageView:0x759c4b7700.trailing - 14   (active)>",
+    "<NSAutoresizingMaskLayoutConstraint:0x759dfb8230 h=--& v=--& windowshade.WS2SilentPageView:0x759c4b7700.width == 0   (active)>"
+)
+
+Will attempt to recover by breaking constraint 
+<NSLayoutConstraint:0x759de874d0 NSStackView:0x759c4f9b80.trailing == windowshade.WS2SilentPageView:0x759c4b7700.trailing - 14   (active)>
+
+Set the NSUserDefault NSConstraintBasedLayoutVisualizeMutuallyExclusiveConstraints to YES to have -[NSWindow visualizeConstraints:] automatically called when this happens.  And/or, set a symbolic breakpoint on LAYOUT_CONSTRAINTS_NOT_SATISFIABLE to catch this in the debugger.
+PASS place: completed leftHalf observed=true frame (160,395 640x452) -> (-108,-1410 1280x1410) cg (-108,-1410 1280x1410)
+2026-10-05 18:57:48.412970+0800 WindowShade[66716:26011716] [Render] fence tx observer 18313 timed out after 0.600000
+PASS cancel: 旧的右半屏没有执行 frame (-108,-1410 1280x1410)
+PASS target-change: 焦点换到另一扇临时窗口后，两扇都没动
+2026-10-05 18:57:49.323592+0800 WindowShade[66716:26011768] [logging-persist] cannot open file at line 53009 of [8fa8248e30]
+2026-10-05 18:57:49.323620+0800 WindowShade[66716:26011768] [logging-persist] os_unix.c:53009: (2) open(/private/var/db/DetachedSignatures) - No such file or directory
+INFO pip-zero-frame: 未运行。捕获到 4 帧，超时那条路径没有发生
+INFO head: 未运行。相机状态 notDetermined，没有申请新权限
+INFO hardware: accessibility=true screenRecording=true camera=notDetermined
+INFO qualification: 未运行
+PASS silent-milestone
+Process 66716 launched: '/Users/aaron/Documents/WindowShade/.build/duo-validation/WindowShade.app/Contents/MacOS/WindowShade' (arm64)
+Process 66716 exited with status = 0 (0x00000000)
+(lldb) bt 80
+error: Command requires a process which is currently stopped.
