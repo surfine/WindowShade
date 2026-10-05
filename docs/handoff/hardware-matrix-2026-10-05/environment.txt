@@ -1,3 +1,7 @@
+=== 说明 ===
+本档是 2026-10-05 第一轮当时的机器快照（下面的 commit 属于那一轮）。第二轮的源码、
+二进制与 sha256 记在 round2.json 的 build 段，不要拿本档的 commit 去对应 r2-* 的证据。
+
 === commit ===
 c1cdf1964c9ad52ca16cd6037b05103649ad8c6c
 c1cdf19

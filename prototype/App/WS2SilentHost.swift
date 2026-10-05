@@ -342,11 +342,12 @@ final class WS2SilentHost {
         case "window.glance":
             return owner.glance.isLive(windowID) ? true : nil
         case "window.pin":
-            if let done = owner.pinnedPreviewController.lastSilentCompletion,
-               done.id == windowID, done.at >= watchStarted {
-                return done.ok
-            }
-            return owner.pinnedPreviewController.isPreviewing(id: windowID) ? true : nil
+            // 置顶只有拿到真正的完成回执才算成立。会话一装上 isPreviewing 就为真，但首帧
+            // 可能还没到、之后也可能失败（启动中目标变了），拿它当终态会让一笔没做成的
+            // 置顶报「已完成」，真机探针踩过。已在置顶那一支走 .alreadySatisfied，不经过这里。
+            guard let done = owner.pinnedPreviewController.lastSilentCompletion,
+                  done.id == windowID, done.at >= watchStarted else { return nil }
+            return done.ok
         case "window.slideOver":
             return owner.slideOver.isSlideOver(windowID) ? true : nil
         case "window.leaveSlideOver":

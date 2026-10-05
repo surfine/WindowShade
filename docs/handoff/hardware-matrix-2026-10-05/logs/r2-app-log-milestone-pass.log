@@ -1,45 +1,50 @@
-04:24:51.590 reconcile: timer started
-04:24:51.590 status item visible=true
-04:24:51.891 gesture: placed id=58603 leftHalf target=(-108,-1410 1280x1410) observed=(-108,-1410 1280x1410)
-04:24:51.915 notch: menu bar room display=3 leading=0 trailing=0 (covered, retrying)
-04:24:52.294 notch: menu bar room display=1 leading=34 trailing=34
-04:24:53.773 display shape: display=1 Built-in Retina Display 1710x1107 source=bezel pxPerPt=1.684 notch bottom 10.71 shoulder 5.05 top 20.71 bottom 0.00 — bezelPath fits within 0.17 pt (computed 1; bezelPath 5 ms, the rest 8 ms)
-04:24:54.174 pip: enter id=58603 corner=topLeft frame=(-108.0, -1410.0, 1280.0, 1410.0) home=(-108.0, -1410.0, 1280.0, 1410.0)
-04:24:54.205 notch: menu bar room display=3 leading=40 trailing=40
-04:24:55.155 pip: ended id=58603 reason=frame timedOut
-04:24:55.713 pin-preview: space follow id=58603 from=- to=322 reason=install
-04:24:55.714 pin-preview: start id=58603 frame=(-108,1107 1280x1410)
-04:24:56.127 pin-preview: capture started id=58603 size=1280x1410
-04:24:56.127 pin-preview: silent completion ok id=58603
-04:24:56.254 pin-preview: stop id=58603 reason=menu-item
-04:24:56.347 state: normal -> capturing id=58603 reason=shade
-04:24:56.398 >>> shade id=58603 app=GlanceFixture bundle=com.windowshade.glance-fixture mode=nativeScreenshot plan=user-mode policy=hiddenIfSingleWindowElseMinimized(allowAppHide: true) sourceDisplay=3 sourceSpace=322 sourceSpaceMode=window hasToolbar=false adobe=none:non-adobe standardTitleBarOnly=true toolbarlessStandard=true preciseChrome=false contentBelowTitleBar=false axBarH=32 hitBarH=32
-04:24:57.143     fold-capture timing id=58603 queued=66ms park=43ms capture=578ms prepare=57ms
-04:24:57.143     capture full=1280x1410 scale=1.0 fixedBarH=- visualBarH=- fallbackBarH=32 standardBarH=32.0 finalBarH=32.0 buttons=3 windowManagement=fullScreen cropPxH=32 boundary=standard-titlebar
-04:24:57.173     native strip invalid → proxy fallback id=58603 app=GlanceFixture reason=sparse-alpha 0.00
-04:24:57.188 focus: handoff strategy=same-app heir=58604 id=58603
-04:24:57.192 journal: intent id=58603 app=GlanceFixture preparing
-04:24:57.214     private SLS offscreen did not park id=58603 pid=92629 reason=fallback
-04:24:57.214     private SLS alpha did not apply id=58603 pid=92629 current=1.00 reason=fallback
-04:24:57.214     private SLS alpha 在本机无效（很可能是 SIP 限制），本会话不再尝试
-04:24:57.215     fallback → minimized（pid=92629, allowAppHide=true, currentWindows=2, windows=2）
-04:24:57.219 journal: record minimized id=58603 app=GlanceFixture parked=(-108,-1410)
-04:24:57.222 space: overlay assigned id=58650 source=58603 sid=322
-04:24:57.222 state: capturing -> folded id=58603 reason=install
-04:24:57.222 space: scheduled return guard id=58603 sid=322
-04:24:57.222 shade: hide not yet verified; deferring overlay reveal id=58603 hide=minimized
-04:24:58.053 shade: silent fold completion id=58603 ok=true
-04:24:58.891 lifecycle: id=58603 folded -> restoring reason=unshade
-04:24:58.899 state: folded -> restoring id=58603 reason=unshade
-04:24:58.905 overlay: dismissed window=58650
-04:24:58.914 geometry: restore immediate target=(-108,-1410 1280x1410) err=(size:AXError(rawValue: 0),pos:AXError(rawValue: 0)) actual=(-108,-1410 1280x1410)
-04:24:58.918 front: unshade id=58603 immediate
-04:24:58.922 state: restoring -> normal id=58603 reason=unshade
-04:24:58.948 journal: clear id=58603
-04:24:59.004 front: unshade id=58603 after-80ms
-04:24:59.005 geometry: unshade id=58603 after-80ms target=(-108,-1410 1280x1410) err=(size:AXError(rawValue: 0),pos:AXError(rawValue: 0)) actual=(-108,-1410 1280x1410)
-04:24:59.090 slide-over: enter id=58603 side=left frame=(-90.0, -1392.0, 1024.0, 1374.0)
-04:24:59.201 front: unshade id=58603 after-250ms
-04:24:59.563 slide-over: exit id=58603 reason=silent
-04:24:59.587 slide-over: glide id=58603 took=377ms frames=31 cancelled
-04:25:02.537 rescueOffscreenWindows: rescued=0
+07:14:58.789 reconcile: timer started
+07:14:58.789 status item visible=true
+07:14:59.020 gesture: placed id=67061 leftHalf target=(-108,-1410 1280x1410) observed=(-108,-1410 1280x1410)
+07:14:59.118 notch: menu bar room display=3 leading=0 trailing=0 (covered, retrying)
+07:14:59.371 notch: menu bar room display=1 leading=34 trailing=34
+07:15:00.889 notch: menu bar room display=3 leading=40 trailing=40
+07:15:00.936 display shape: display=1 Built-in Retina Display 1710x1107 source=bezel pxPerPt=1.684 notch bottom 10.71 shoulder 5.05 top 20.71 bottom 0.00 — bezelPath fits within 0.17 pt (computed 1; bezelPath 5 ms, the rest 8 ms)
+07:15:01.353 pip: enter id=67061 corner=topLeft frame=(-108.0, -1410.0, 1280.0, 1410.0) home=(-108.0, -1410.0, 1280.0, 1410.0)
+07:15:02.161 pip: ended id=67061 reason=frame timedOut
+07:15:02.614 pin-preview: space follow id=67061 from=- to=322 reason=install
+07:15:02.614 pin-preview: start id=67061 frame=(-108,1107 1280x1410)
+07:15:02.744 pin-preview: enter interact id=67061 frame=(-108,1107 1280x1410)
+07:15:02.806 pin-preview: capture started id=67061 size=1280x1410
+07:15:02.806 pin-preview: silent completion ok id=67061
+07:15:02.929 pin-preview: stop id=67061 reason=menu-item
+07:15:02.971 state: normal -> capturing id=67061 reason=shade
+07:15:03.002 >>> shade id=67061 app=GlanceFixture bundle=com.windowshade.glance-fixture mode=nativeScreenshot plan=user-mode policy=hiddenIfSingleWindowElseMinimized(allowAppHide: true) sourceDisplay=3 sourceSpace=322 sourceSpaceMode=window hasToolbar=false adobe=none:non-adobe standardTitleBarOnly=true toolbarlessStandard=true preciseChrome=false contentBelowTitleBar=false axBarH=32 hitBarH=32
+07:15:03.326     fold-capture timing id=67061 queued=32ms park=40ms capture=228ms prepare=22ms
+07:15:03.326     capture full=1280x1410 scale=1.0 fixedBarH=- visualBarH=- fallbackBarH=32 standardBarH=32.0 finalBarH=32.0 buttons=3 windowManagement=fullScreen cropPxH=32 boundary=standard-titlebar
+07:15:03.343     native strip invalid → proxy fallback id=67061 app=GlanceFixture reason=sparse-alpha 0.00
+07:15:03.350 focus: handoff strategy=same-app heir=67062 id=67061
+07:15:03.351 journal: intent id=67061 app=GlanceFixture preparing
+07:15:03.363     private SLS offscreen did not park id=67061 pid=14701 reason=fallback
+07:15:03.363     private SLS alpha did not apply id=67061 pid=14701 current=1.00 reason=fallback
+07:15:03.363     private SLS alpha 在本机无效（很可能是 SIP 限制），本会话不再尝试
+07:15:03.364     fallback → minimized（pid=14701, allowAppHide=true, currentWindows=2, windows=2）
+07:15:03.368 journal: record minimized id=67061 app=GlanceFixture parked=(-108,-1410)
+07:15:03.370 space: overlay assigned id=67073 source=67061 sid=322
+07:15:03.370 state: capturing -> folded id=67061 reason=install
+07:15:03.370 space: scheduled return guard id=67061 sid=322
+07:15:03.370 shade: hide not yet verified; deferring overlay reveal id=67061 hide=minimized
+07:15:03.770 shade: silent fold completion id=67061 ok=true
+07:15:03.838 journal: sync id=67061 restore=(-100,-1402)
+07:15:03.845 journal: sync id=67061 restore=(-100,-1402)
+07:15:03.845 reconcile: clamped overlay id=67061 frame=(-100,2475 1280x34)
+07:15:03.845 reconcile: ax pid=14701 elapsedMs=0 occupied=1 remaining=0 ageMs=4 discard=none returned=1
+07:15:04.431 lifecycle: id=67061 folded -> restoring reason=unshade
+07:15:04.442 state: folded -> restoring id=67061 reason=unshade
+07:15:04.444 overlay: dismissed window=67073
+07:15:04.448 geometry: restore immediate target=(-100,-1402 1280x1410) err=(size:AXError(rawValue: 0),pos:AXError(rawValue: 0)) actual=(-100,-1402 1280x1410)
+07:15:04.454 front: unshade id=67061 immediate
+07:15:04.460 state: restoring -> normal id=67061 reason=unshade
+07:15:04.544 journal: clear id=67061
+07:15:04.563 front: unshade id=67061 after-80ms
+07:15:04.571 geometry: unshade id=67061 after-80ms target=(-100,-1402 1280x1410) err=(size:AXError(rawValue: 0),pos:AXError(rawValue: 0)) actual=(-100,-1402 1280x1410)
+07:15:04.679 slide-over: enter id=67061 side=left frame=(-90.0, -1392.0, 1024.0, 1374.0)
+07:15:04.819 front: unshade id=67061 after-250ms
+07:15:05.261 slide-over: glide id=67061 took=446ms frames=45
+07:15:05.419 slide-over: exit id=67061 reason=silent
+07:15:09.373 rescueOffscreenWindows: rescued=0

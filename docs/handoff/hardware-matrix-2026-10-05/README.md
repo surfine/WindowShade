@@ -17,15 +17,17 @@
 
 ## 第二轮 · 2026-10-06（带 R00–R04 的新构建）
 
-逐案状态见 [`round2.json`](round2.json)，原始输出在 `logs/r2-*`。舞台：`cursor/silent-effect-receipts` 工作区新 `--stage`（WMO + Apple Development，二进制 **04:24:41**），TCC 跨重编保留。**同一颗二进制上重跑全部取证**，先前的 02:10:18 那颗由本组取代。
+逐案状态见 [`round2.json`](round2.json)，原始输出在 `logs/r2-*`。舞台：`cursor/silent-effect-receipts` 工作区 `--stage`（WMO + Apple Development），最终一颗二进制 **07:14:41**，`sha256 128b76bd…`，TCC 跨重编保留。**同一颗二进制上重跑全部取证**；02:10:18、04:24:41、06:47:43 三颗都已由本组取代。
 
-- `silent-milestone`：同一颗最终二进制 **3/3 全绿**（负载 4–94 都过）。`R01 place/cancel/target-change`、`R03 pin/unpin/collapse/expand/slideOver/leaveSlideOver/controlled-fail` 全数读完；`R04` 管線计数真机采到。
+- `silent-milestone`：同一颗最终二进制 **9/9 全绿**。`R01 place/cancel/target-change`、`R03 pin/unpin/collapse/expand/slideOver/leaveSlideOver/controlled-fail` 全数读完；`R04` 管線计数真机采到。
   - `pip-zero-frame` **这次真的跑到了**：`sharingType = .none` 实测挡不住 SCK（见 F3），改用探针注入零帧，应用日志出现 `pip: ended reason=frame timedOut`，画中画按设计放弃、窗口留在原处。
-  - `pin` 这次是**真回执** `pin-preview: silent completion ok`（F5：原先探针抢跑把它做成假通过）；`collapse` 的 `FoldCompletion` 为 `ok=true`。
+  - `pin` 这次是**真回执** `pin-preview: silent completion ok`（F5）；`collapse` 的 `FoldCompletion` 为 `ok=true`。
 - `silent-cover`（R02）：全绿——双屏铺满、重复请求复用面板、别的 App 在前台 Esc 也能撤、退出无残留。热插拔要人手，仍 `not_run`。
-- 离线：`run-silent-integration-tests --case r00..r04` 全 ok；`journal-numeric`、`silent-prep` PASS。
-- 根因修复：两个静音探针都漏了 `setupStatusItem()`，收起/置顶触发的菜单重建里 `statusItem!` 解包成 nil → SIGTRAP。**产品侧 `rebuildMenu` 也改成 `guard statusItem != nil`，`Preferences.quietNotice` 改 `statusItem?.`**（F1）。
-- 已知 flake（已裁决）：极重负载（load ~163）那次 `collapse` 的 `FoldCompletion` 读成 `.unknown`（`observeFoldHide(.minimized)`），窗口其实已收起；低负载与最终二进制 3/3 通过。记录在案，不动产品验证语义。
-- 本轮探针侧加固（F4/F5）：`cancel`/`target-change`/`controlled-fail` 的「没动」改以 AX 位置为准并新增 `stableFrame`（CG 会被回位动画污染）；新增 `retryFreeze`，高负载对焦没及时生效时重新对焦再派发。最终二进制在负载 94 下仍 3/3。
+- 离线：`run-silent-integration-tests --case r00..r04` 全 ok；`journal-numeric`、`silent-prep` PASS；`build.sh --check` 退出 0。
+- 产品侧修复（F5）：`window.pin` 原先「会话一装上」就算完成回执——装载不等于首帧到、失败了也不撤回，一笔没做成的置顶会报「已完成」。现在只在 `pinnedPreviewController.lastSilentCompletion` 的真回执（`id` 对得上、`at` 在本次确认之后、`ok=true`）到达后才算完成，探针同步改等 `lastResult` 落定再核对回执与会话三者一致。
+- 产品侧修复（F1）：两个静音探针都漏了 `setupStatusItem()`，收起/置顶触发的菜单重建里 `statusItem!` 解包成 nil → SIGTRAP。**产品侧 `rebuildMenu` 也改成 `guard statusItem != nil`，`Preferences.quietNotice` 改 `statusItem?.`**。
+- 探针侧加固（F4/F8）：`cancel`/`target-change`/`controlled-fail` 的「没动」改以 AX 位置为准并新增 `stableFrame`（CG 会被回位动画污染）；新增 `retryFreeze`，高负载对焦没及时生效时重新对焦再派发。`leaveSlideOver` 原先只查「有没有提案」，冻结落到另一扇临时窗口就假失败（`alreadySatisfied`）并漏收一个置顶会话——补上 `prepare + retryFreeze` 后 9/9 全绿。修前修后的样本都在 `logs/r2-*`，可复查。
+- 已知 flake（已裁决，F2）：极重负载（load ~163）那次 `collapse` 的 `FoldCompletion` 读成 `.unknown`（`observeFoldHide(.minimized)`），窗口其实已收起。记录在案，不动产品验证语义。
+- **待裁决（F7，本轮未动产品语义）**：收起若真的走了 private SLS 离屏停车，隐藏验证读的是 AX 几何，而 SkyLight 的移动不更新 AX 属性 → 判成「还看得见」→ 整支 fold 回滚（应用日志 `hide not yet verified ... hide=privateOffscreen` 紧接 `silent fold completion ok=false`）。本机多数时候 `private SLS ... did not park` 会退回 `minimized`，那条路验证是对的，所以难得复现；06:39 那颗二进制上真的停车成功时整支回滚。方向是 `privateOffscreen` 改读窗口服务器几何或等停车与 AX 同步，属产品验证语义，等裁决。
 - 仍需人手：H07/H10/H11/H13/H15/H16/H17/H18/H19；H14 BLE 证据不足以证明持有。逐案理由见 `matrix.json`，无模糊项。
 

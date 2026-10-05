@@ -1,0 +1,45 @@
+06:54:24.373 reconcile: timer started
+06:54:24.373 status item visible=true
+06:54:24.481 gesture: placed id=66718 leftHalf target=(-108,-1410 1280x1410) observed=(-108,-1410 1280x1410)
+06:54:24.528 notch: menu bar room display=3 leading=0 trailing=0 (covered, retrying)
+06:54:25.160 notch: menu bar room display=1 leading=34 trailing=34
+06:54:26.335 pip: enter id=66718 corner=topLeft frame=(-108.0, -1410.0, 1280.0, 1410.0) home=(-108.0, -1410.0, 1280.0, 1410.0)
+06:54:26.403 notch: menu bar room display=3 leading=40 trailing=40
+06:54:27.153 pip: ended id=66718 reason=frame timedOut
+06:54:27.674 pin-preview: space follow id=66718 from=- to=322 reason=install
+06:54:27.674 pin-preview: start id=66718 frame=(-108,1107 1280x1410)
+06:54:27.942 pin-preview: capture started id=66718 size=1280x1410
+06:54:27.942 pin-preview: silent completion ok id=66718
+06:54:28.051 pin-preview: stop id=66718 reason=menu-item
+06:54:28.170 state: normal -> capturing id=66718 reason=shade
+06:54:28.201 >>> shade id=66718 app=GlanceFixture bundle=com.windowshade.glance-fixture mode=nativeScreenshot plan=user-mode policy=hiddenIfSingleWindowElseMinimized(allowAppHide: true) sourceDisplay=3 sourceSpace=322 sourceSpaceMode=window hasToolbar=false adobe=none:non-adobe standardTitleBarOnly=true toolbarlessStandard=true preciseChrome=false contentBelowTitleBar=false axBarH=32 hitBarH=32
+06:54:28.682     fold-capture timing id=66718 queued=42ms park=44ms capture=361ms prepare=32ms
+06:54:28.682     capture full=1280x1410 scale=1.0 fixedBarH=- visualBarH=- fallbackBarH=32 standardBarH=32.0 finalBarH=32.0 buttons=3 windowManagement=fullScreen cropPxH=32 boundary=standard-titlebar
+06:54:28.887     native strip invalid → proxy fallback id=66718 app=GlanceFixture reason=sparse-alpha 0.00
+06:54:28.892 journal: intent id=66718 app=GlanceFixture preparing
+06:54:28.948     fallback → hidden via AX（pid=78619, currentWindows=1, windows=1）
+06:54:28.952 journal: record hidden id=66718 app=GlanceFixture parked=(-108,-1410)
+06:54:28.954 space: overlay assigned id=66735 source=66718 sid=322
+06:54:28.954 state: capturing -> folded id=66718 reason=install
+06:54:28.954 space: scheduled return guard id=66718 sid=322
+06:54:28.954 shade: hide not yet verified; deferring overlay reveal id=66718 hide=hidden
+06:54:29.172 shade: silent fold completion id=66718 ok=true
+06:54:29.459 lifecycle: id=66718 folded -> restoring reason=unshade
+06:54:29.467 state: folded -> restoring id=66718 reason=unshade
+06:54:29.469 overlay: dismissed window=66735
+06:54:29.475 geometry: restore immediate target=(-108,-1410 1280x1410) err=(size:AXError(rawValue: 0),pos:AXError(rawValue: 0)) actual=(-108,-1410 1280x1410)
+06:54:29.476 front: unshade id=66718 immediate
+06:54:29.484 state: restoring -> normal id=66718 reason=unshade
+06:54:29.560 journal: clear id=66718
+06:54:29.865 front: unshade id=66718 after-80ms
+06:54:29.866 geometry: unshade id=66718 after-80ms target=(-108,-1410 1280x1410) err=(size:AXError(rawValue: 0),pos:AXError(rawValue: 0)) actual=(-108,-1410 1280x1410)
+06:54:30.136 slide-over: enter id=66718 side=left frame=(18.0, 52.0, 684.0, 962.0)
+06:54:30.339 front: unshade id=66718 after-250ms
+06:54:31.239 slide-over: glide id=66718 took=919ms frames=34
+06:54:31.403 pin-preview: space follow id=66718 from=- to=4 reason=install
+06:54:31.403 pin-preview: start id=66718 frame=(18,93 684x962)
+06:54:31.529 rescueOffscreenWindows: rescued=0
+06:54:31.589 pin-preview: capture started id=66718 size=684x962
+06:54:37.726 slide-over: desktop changed id=66718 here=true hidden=false
+06:54:38.579 display shape: display=1 Built-in Retina Display 1710x1107 source=bezel pxPerPt=1.684 notch bottom 10.71 shoulder 5.05 top 20.71 bottom 0.00 — bezelPath fits within 0.17 pt (computed 1; bezelPath 2 ms, the rest 6 ms)
+06:54:39.775 slide-over: desktop changed id=66718 here=false hidden=false
