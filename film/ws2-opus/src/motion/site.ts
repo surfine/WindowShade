@@ -1,5 +1,7 @@
 // 官网动画的数字，原样搬过来，改成只看帧号。每一段都注明出处；没有出处的数字不放在这里。
+// 島的彈簧改走動效樣片的命名彈簧（springs.ts），不再用官網那組 0.96/0.38。
 // dt 固定 1/60。
+import { approach, SPRING, type SpringName } from './springs';
 
 export const FPS = 60;
 export const DT = 1 / FPS;
@@ -28,80 +30,97 @@ export function bezier(x1: number, y1: number, x2: number, y2: number) {
   };
 }
 
-// ---- site/island.js：岛的宽、高、圆角各一根弹簧（单位 cqw，屏宽的百分之一） ----
-export const NOTCH = { w: 14.5, h: 5.4, r: 1.5 };
+// ---- 島的寬、高、底角、肩（單位 cqw，屏寬的百分之一） ----
+// 畫面以動效樣片為準：HW = 312×56 px、底角 18.2、肩 8.6，畫在 2880 寬的 15 吋面板上（K = 1.684 → 185.3×33.3 pt）。
+// 1710 pt 邏輯寬是同一塊屏。書面 10.63%×1.91%（Product Bezels 306×55）讓給這張稿的輪廓。
+/** pt → cqw。15 吋 Air 預設模式寬 1710 pt。 */
+export const pt = (n: number) => (n / 1710) * 100;
+
+// 寬 312、深 56 與網格洞一致。肩 9.9、底角 18.5 是網格折線擬合的相切圓，不是舊的 8.6 / 18.2。
+// 出處：public/mesh/macbook-air-15in-silver.glb 的顯示網格 OQzaQDtbMVhhlAr，見 notchPath.ts。
+export const NOTCH = {
+  w: (312 / 2880) * 100,
+  h: (56 / 2880) * 100,
+  rb: (18.5 / 2880) * 100,
+  rs: (9.9 / 2880) * 100,
+};
+/** 舊欄位：底角。肩另計。 */
+export const NOTCH_R = NOTCH.rb;
+
+export type IslandShape = { w: number; h: number; rb: number; rs: number };
+
+// 大小照 design-system §5.1 的表，和樣片 M3 的像素對得上的地方用稿（展開一排 700×295 px、底角 47.2 px）。
+// 落點：Notch.swift dropZone 是劉海正下方 340×84 pt，圓角 island.drop = 22，不畫肩。
 export const ISLAND_SHAPES = {
-  rest: NOTCH,
-  compact: { w: NOTCH.w + 2 * 4.6, h: NOTCH.h, r: 1.6 },
-  alert: { w: 38, h: NOTCH.h + 8.6, r: 3.6 },
-  shelf: { w: 54, h: NOTCH.h + 21, r: 4.2 },
-  // 片子新增的一个目标：长按后铺满整块屏。弹簧沿用展开的 0.96 / 0.38，不另配。
-  full: { w: 100, h: 62.5, r: 0 },
-} as const;
+  rest: { w: NOTCH.w, h: NOTCH.h, rb: NOTCH.rb, rs: NOTCH.rs },
+  // Compact：尽量窄、贴紧洞（WWDC23 10194）
+  compact: { w: NOTCH.w + 2 * pt(28), h: NOTCH.h, rb: pt(12), rs: NOTCH.rs },
+  // Expanded／半岛：同心厚圆角，高度够排两行，忌空额头
+  alert: { w: pt(388), h: NOTCH.h + pt(56), rb: pt(26), rs: 0 },
+  shelf: { w: (700 / 2880) * 100, h: (295 / 2880) * 100, rb: (47.2 / 2880) * 100, rs: 0 },
+  full: { w: 100, h: (100 * 1864) / 2880, rb: pt(16), rs: 0 },
+  drop: { w: pt(340), h: NOTCH.h + pt(84), rb: pt(22), rs: 0 },
+  ask: { w: pt(420), h: NOTCH.h + pt(86), rb: pt(24), rs: 0 },
+  digest: { w: pt(380), h: NOTCH.h + pt(118), rb: pt(24), rs: 0 },
+} as const satisfies Record<string, IslandShape>;
 export type IslandMode = keyof typeof ISLAND_SHAPES;
 
-/** 安静 / 收起：calm 0.34、ζ 1。一排：expand 0.40、ζ 0.92。提醒：bloom 0.42、ζ 0.84。 */
-export const islandTuning = (mode: IslandMode) =>
-  mode === 'alert' ? { damping: 0.84, response: 0.42 }
-  : mode === 'shelf' || mode === 'full' ? { damping: 0.92, response: 0.4 }
-  : { damping: 1, response: 0.34 };
+/** 進場用這個狀態自己的彈簧；收到更小的狀態（compact / rest）走 calm，不回彈。 */
+export function islandSpring(mode: IslandMode): SpringName {
+  switch (mode) {
+    case 'shelf':
+    case 'full':
+      return 'expand';
+    case 'alert':
+    case 'ask':
+    case 'digest':
+      return 'bloom';
+    case 'drop':
+      return 'catch';
+    default:
+      return 'calm';
+  }
+}
 
-/** 落进刘海那一下：calm 被踢。宽 +700 pt/s、高 +300 pt/s。100 cqw = 1710 pt。 */
-export const TUCK_KICK = { w: 700 / 17.1, h: 300 / 17.1 };
+export const islandTuning = (mode: IslandMode) => {
+  const [response, damping] = SPRING[islandSpring(mode)];
+  return { damping, response };
+};
+
+/**
+ * 窗口完全擋進劉海的那一幀，島用 calm 加一腳初速度鼓一下。
+ * 樣片 M3：bw.kick(700×K px/s)、bh.kick(300×K)。K = 1.684，屏寬 2880 px → cqw/s。
+ */
+export const TUCK_KICK = { w: (700 * 1.684 / 2880) * 100, h: (300 * 1.684 / 2880) * 100 };
 /** 提醒停 2.6 秒；island.js 在 2620ms 时重新取目标。 */
 export const ALERT_HOLD = Math.round(2.62 * FPS);
-/** 指针停 120ms 才展开成一排。 */
+/** 指针停 120ms 才展开成一排。樣片 M3：停 0.12 s 再 expand。 */
 export const HOVER_DELAY = Math.round(0.12 * FPS);
 
-function solve(d0: number, v0: number, response: number, zeta: number, t: number): [number, number] {
-  if (t <= 0) return [d0, v0];
-  const w = (2 * Math.PI) / response;
-  if (zeta < 1) {
-    const wd = w * Math.sqrt(1 - zeta * zeta);
-    const e = Math.exp(-zeta * w * t);
-    const c = Math.cos(wd * t);
-    const s = Math.sin(wd * t);
-    const b = (v0 + zeta * w * d0) / wd;
-    const d = e * (d0 * c + b * s);
-    return [d, -zeta * w * d + e * wd * (b * c - d0 * s)];
-  }
-  const e = Math.exp(-w * t);
-  const k = v0 + w * d0;
-  const d = (d0 + k * t) * e;
-  return [d, (k - w * (d0 + k * t)) * e];
-}
-function namedProgress(frame: number, start: number, response: number, zeta: number, v0 = 0) {
-  const t = (frame - start) / FPS;
-  if (t <= 0) return 0;
-  const p = 1 + solve(-1, v0, response, zeta, t)[0];
-  return p < 0 ? 0 : p;
-}
-function restFrames(response: number, zeta: number) {
-  for (let f = 1; f < FPS * 2; f++) if (1 - namedProgress(f, 0, response, zeta) <= 0.004) return f;
-  return Math.round(1.6 * FPS);
-}
-/** 窗口收进刘海：settle。帧数是残差落到 0.004 的那一帧，鼓一下跟在它后面。 */
-export const TUCK_FRAMES = restFrames(0.38, 1);
+/** settle 收到 0.1% 約 0.56 秒（motion-direction 表）。飛行用這根，不用貝塞爾。 */
+export const TUCK_FRAMES = 0.56 * FPS;
+/** 擋進劉海、鼓一下的時刻：settle 走到大約沒入的時候，比停穩早。 */
+export const TUCK_COVER = Math.round(0.22 * FPS);
+/** 松手時已經在往劉海走。樣片 M3 的 vy 約 −2600 px/s，行程約 440 px → 約 6 個全程/秒。取 4，避免臨界阻尼帶著初速度衝過頭頂。 */
+const TUCK_V0 = 4;
 export function tuckProgress(frame: number, start: number) {
-  return Math.min(1, namedProgress(frame, start, 0.38, 1));
+  return approach(((frame - start) / FPS) * 1000, 'settle', TUCK_V0);
 }
-/** 放回是一根新的 flyOut，从收起的位置走向原位。 */
+/** 放回：flyOut（0.38 / 0.90）。1 是還在劉海里，0 是回到原處。 */
 export function untuckProgress(frame: number, start: number) {
-  if (frame <= start) return 1;
-  return Math.max(0, 1 - namedProgress(frame, start, 0.38, 0.9));
+  return 1 - approach(((frame - start) / FPS) * 1000, 'flyOut');
 }
-export { solve };
 
 // ---- site/app.js：开盖播放与合盖的折叠 ----
-/** play()：铰链走 dolly（1.6 秒、ζ 1）。1.5 秒合到 0.9，停到 2.4 秒，再打开。0 是开着。页面折进去仍是 FoldSpring。 */
+const easeInOutCubic = (x: number) => (x < 0.5 ? 4 * x * x * x : 1 - Math.pow(-2 * x + 2, 3) / 2);
+/** play()：1.5 秒合到 0.9，停到 2.4 秒，1.2 秒打开。0 是开着。 */
 export const LID_PLAY_FRAMES = Math.round(3.6 * FPS);
 export function lidPlay(frame: number, start: number) {
   const t = (frame - start) / FPS;
   if (t <= 0) return 0;
-  const hinge = (u: number) => namedProgress(Math.round(u * FPS), 0, 1.6, 1);
-  if (t < 1.5) return 0.9 * hinge(t);
+  if (t < 1.5) return 0.9 * easeInOutCubic(t / 1.5);
   if (t < 2.4) return 0.9;
-  if (t < 3.6) return 0.9 * (1 - hinge(t - 2.4));
+  if (t < 3.6) return 0.9 * (1 - easeInOutCubic((t - 2.4) / 1.2));
   return 0;
 }
 /** .lid { transform: rotateX(calc(var(--lid) * -62deg)) } */
@@ -146,14 +165,14 @@ export function shadeFold(amount: number, w: number, h: number) {
   };
 }
 
-// ---- site/app.js 侧拉：glide 0.42 / 0.88，带着松手速度。残差落到 0.004 才停在终点。 ----
-export const SLIDE_FRAMES = Math.round(1.6 * FPS);
+// ---- site/app.js 侧拉：响应 0.42、阻尼 0.88，带上松手时的速度；1.1 秒后停住 ----
+export const SLIDE_FRAMES = Math.round(1.1 * FPS);
 export function slideSpring(frame: number, start: number, v0 = 0) {
   const t = (frame - start) / FPS;
   if (t <= 0) return 0;
-  const p = namedProgress(frame, start, 0.42, 0.88, v0);
-  if (Math.abs(1 - p) <= 0.004 || t >= 1.6) return 1;
-  return p;
+  if (t >= 1.1) return 1;
+  const w = (2 * Math.PI) / 0.42, z = 0.88, wd = w * Math.sqrt(1 - z * z);
+  return 1 - Math.exp(-z * w * t) * (Math.cos(wd * t) + ((z * w - v0) / wd) * Math.sin(wd * t));
 }
 
 // ---- site/teach.js：一笔的节奏、移动曲线、窗口落定的弹簧 ----
