@@ -457,11 +457,45 @@ final class LaunchpadCell {
     /// App：图标缩小一点、后面长出一块毛玻璃底板（松手就一起建文件夹）；文件夹：底板放大一点（松手就放进去）。
     func showTarget(_ on: Bool, reduced: Bool) {
         let plate = Self.plateRect(side: side)
-        CATransaction.begin()
-        CATransaction.setAnimationDuration(reduced ? 0 : 0.24)
-        CATransaction.setAnimationTimingFunction(CAMediaTimingFunction(controlPoints: 0.2, 0.9, 0.3, 1))
+        func pop(_ layer: CALayer, transform: CATransform3D? = nil, opacity: Float? = nil) {
+            let bounce = reduced ? 0 : Motion.Spring.pop.bounce
+            if let transform {
+                if reduced {
+                    layer.removeAnimation(forKey: "transform")
+                    layer.transform = transform
+                } else {
+                    let animation = CASpringAnimation(perceptualDuration: Motion.Spring.pop.response, bounce: bounce)
+                    animation.keyPath = "transform"
+                    animation.fromValue = NSValue(caTransform3D: layer.presentation()?.transform ?? layer.transform)
+                    animation.toValue = NSValue(caTransform3D: transform)
+                    animation.duration = animation.settlingDuration
+                    CATransaction.begin()
+                    CATransaction.setDisableActions(true)
+                    layer.add(animation, forKey: "transform")
+                    layer.transform = transform
+                    CATransaction.commit()
+                }
+            }
+            if let opacity {
+                if reduced {
+                    layer.removeAnimation(forKey: "opacity")
+                    layer.opacity = opacity
+                } else {
+                    let animation = CASpringAnimation(perceptualDuration: Motion.Spring.pop.response, bounce: bounce)
+                    animation.keyPath = "opacity"
+                    animation.fromValue = layer.presentation()?.opacity ?? layer.opacity
+                    animation.toValue = opacity
+                    animation.duration = animation.settlingDuration
+                    CATransaction.begin()
+                    CATransaction.setDisableActions(true)
+                    layer.add(animation, forKey: "opacity")
+                    layer.opacity = opacity
+                    CATransaction.commit()
+                }
+            }
+        }
         if glass != nil {
-            icon.transform = on ? CATransform3DMakeScale(1.14, 1.14, 1) : CATransform3DIdentity
+            pop(icon, transform: on ? CATransform3DMakeScale(1.14, 1.14, 1) : CATransform3DIdentity)
         } else if on, target == nil {
             let backing = LaunchpadGlass.make(blur: 14, tint: 0.28)
             backing.bounds = CGRect(origin: .zero, size: plate.size)
@@ -471,21 +505,14 @@ final class LaunchpadCell {
             backing.transform = CATransform3DMakeScale(0.9, 0.9, 1)
             root.insertSublayer(backing, below: icon)
             target = backing
-            CATransaction.commit()
-            CATransaction.begin()
-            CATransaction.setAnimationDuration(reduced ? 0 : 0.24)
-            CATransaction.setAnimationTimingFunction(CAMediaTimingFunction(controlPoints: 0.2, 0.9, 0.3, 1))
-            backing.opacity = 1
-            backing.transform = CATransform3DMakeScale(1.2, 1.2, 1)
-            icon.transform = CATransform3DMakeScale(0.74, 0.74, 1)
+            pop(backing, transform: CATransform3DMakeScale(1.2, 1.2, 1), opacity: 1)
+            pop(icon, transform: CATransform3DMakeScale(0.74, 0.74, 1))
         } else if !on, let backing = target {
             target = nil
-            backing.opacity = 0
-            backing.transform = CATransform3DMakeScale(0.9, 0.9, 1)
-            icon.transform = CATransform3DIdentity
-            DispatchQueue.main.asyncAfter(deadline: .now() + 0.3) { backing.removeFromSuperlayer() }
+            pop(backing, transform: CATransform3DMakeScale(0.9, 0.9, 1), opacity: 0)
+            pop(icon, transform: CATransform3DIdentity)
+            DispatchQueue.main.asyncAfter(deadline: .now() + Motion.Spring.pop.response) { backing.removeFromSuperlayer() }
         }
-        CATransaction.commit()
     }
 }
 
