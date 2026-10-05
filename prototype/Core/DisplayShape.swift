@@ -505,6 +505,12 @@ enum NotchIsland {
     static func hug(_ curves: NotchCurves?) -> CGFloat { curves?.bottomRadius ?? legacyHug }
     /// 紧凑样式两侧的底角：知道硬件时同样是刘海的底角（和刘海读起来是一件事）。
     static func compactRadius(_ curves: NotchCurves?) -> CGFloat { curves?.bottomRadius ?? legacyCompact }
+    /// 无刘海胶囊圆角（S4）：优先机型顶角，否则高度一半（真胶囊）；不画肩。
+    static func capsuleRadius(height: CGFloat, preferred: CGFloat?) -> CGFloat {
+        let half = max(1, height / 2)
+        guard let preferred, preferred > 0.5 else { return half }
+        return min(preferred, half)
+    }
     /// 两指下拉时的底角：从 hug 起，每拉 4 点大 1 点，最大 22。
     static func pullRadius(_ curves: NotchCurves?, extra: CGFloat) -> CGFloat { min(pullCap, hug(curves) + extra / 4) }
 

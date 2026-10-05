@@ -510,19 +510,28 @@ final class SplitDivider {
         (panel.contentView as? SplitDividerView)?.vertical = vertical
     }
 
-    /// 松手后吸到落点：和窗口一起走过去（缓出）。
+    /// 松手后吸到落点：与 `settle` / `reducedWindow` 解析弹簧同口径（可掉帧不走样）。
     func animate(from: CGPoint, to: CGPoint, vertical: Bool) {
         animation?.invalidate()
         let began = CACurrentMediaTime()
-        let duration = Motion.reduced ? Motion.Spring.reducedWindow.response : Motion.Spring.settle.response
+        let token = Motion.reduced ? Motion.Spring.reducedWindow : Motion.Spring.settle
+        let omega = token.angularFrequency
+        let zeta = token.dampingRatio
         let t = Timer(timeInterval: 1.0 / 120, repeats: true) { [weak self] timer in
             let finished = MainActor.assumeIsolated { () -> Bool in
-                let p = min(1, (CACurrentMediaTime() - began) / duration)
-                let eased = CGFloat(1 - pow(1 - p, 3))
-                self?.place(at: CGPoint(x: from.x + (to.x - from.x) * eased, y: from.y + (to.y - from.y) * eased), vertical: vertical)
-                return p >= 1
+                let elapsed = max(0, CACurrentMediaTime() - began)
+                let x = FluidMotion.spring(elapsed, from: Double(from.x), to: Double(to.x),
+                                           velocity: 0, zeta: zeta, omega: omega)
+                let y = FluidMotion.spring(elapsed, from: Double(from.y), to: Double(to.y),
+                                           velocity: 0, zeta: zeta, omega: omega)
+                self?.place(at: CGPoint(x: x, y: y), vertical: vertical)
+                let dx = abs(x - Double(to.x)), dy = abs(y - Double(to.y))
+                return elapsed > token.response * 4 || (dx < 0.25 && dy < 0.25)
             }
-            if finished { timer.invalidate() }
+            if finished {
+                MainActor.assumeIsolated { self?.place(at: to, vertical: vertical) }
+                timer.invalidate()
+            }
         }
         RunLoop.main.add(t, forMode: .common)
         animation = t

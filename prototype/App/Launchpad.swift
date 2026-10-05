@@ -212,6 +212,8 @@ final class LaunchpadPanel: NSPanel {
 
 // MARK: - 毛玻璃
 
+/// 启动台内容层磨砂（§6-8）：文件夹底板、资料库块、遮罩模糊是**内容**，按 HIG 不用 Liquid Glass。
+/// 控件层（搜索胶囊、完成、页码）走 `LaunchpadCapsule` → `NSGlassEffectView` / `NSVisualEffectView`。
 enum LaunchpadGlass {
     /// 毛玻璃：把后面的东西模糊、提一点饱和度，再蒙一层白（iOS 文件夹、App 资料库的底板）。图层的背景滤镜，渲染进程实时算。
     static func make(blur: CGFloat, tint: CGFloat) -> CALayer {

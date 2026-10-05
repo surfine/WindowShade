@@ -175,6 +175,9 @@ struct MotionSpring: Equatable {
     static let reducedNotch = MotionSpring(response: 0.25, dampingRatio: 1, bounce: 0)
     /// 减少动态效果时的窗口滑行。
     static let reducedWindow = MotionSpring(response: 0.3, dampingRatio: 1, bounce: 0)
+
+    /// 临界阻尼角频率：约在 `response` 秒内落到目标 2% 内（与 `FoldSpring` 同口径）。
+    var angularFrequency: Double { 5.83 / response }
 }
 
 /// 一维阻尼弹簧，参数用 Apple 的两个说法：dampingRatio（1 = 不过冲，越小越弹）与 response（秒，越小越快）。

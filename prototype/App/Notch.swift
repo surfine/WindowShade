@@ -335,11 +335,19 @@ final class NotchController {
         // 刘海能做什么，等他自己把指针停到刘海上时再说（hoverChanged）；Rectangle 那一套在设置 → 快捷键 → 更多排法。
     }
 
-    /// 每块真刘海的面板用这块屏的硬件曲线；隐形刘海、还没算好或者不知道形状的，照现版本画。
+    /// 每块真刘海的面板用这块屏的硬件曲线；隐形刘海用机型顶角做胶囊圆角（S4，不画肩）。
     private func applyShapes() {
         for (display, panel) in panels {
             let screen = NSScreen.screens.first { Self.displayID($0) == display }
-            panel.hardware = panel.isVirtual ? nil : screen.flatMap { DisplayShapes.shared.known(for: $0)?.notchCurves }
+            let shape = screen.flatMap { DisplayShapes.shared.known(for: $0) }
+            if panel.isVirtual {
+                panel.hardware = nil
+                let top = shape?.topCorner ?? 0
+                panel.capsuleCorner = top > 0.5 ? top : nil
+            } else {
+                panel.hardware = shape?.notchCurves
+                panel.capsuleCorner = nil
+            }
         }
     }
 
@@ -1379,7 +1387,7 @@ final class NotchController {
         // 飞进刘海不回弹（终点是个口子，没有东西可撞）；飞出来带一点落定的回弹。
         let flightSpring = style == .out ? Motion.Spring.flyOut : Motion.Spring.settle
         flight.fly(to: to, velocity: velocity, response: flightSpring.response, bounce: flightSpring.bounce,
-                   cornerRadius: style == .out ? 10 : 13, fadeOut: style == .intoVirtualNotch) { [weak self, weak flight] in
+                   cornerRadius: style == .out ? NotchIsland.legacyHug : 13, fadeOut: style == .intoVirtualNotch) { [weak self, weak flight] in
             flight?.remove(fade: style == .out)
             self?.flights.removeAll { $0 === flight }
             done()
@@ -1579,6 +1587,13 @@ final class NotchPanel: NSPanel {
         didSet {
             guard hardware != oldValue else { return }
             refitShoulders()
+            apply(animated: false)
+        }
+    }
+    /// 无刘海胶囊优先圆角（机型顶角 pt）；nil 则用高度一半。
+    var capsuleCorner: CGFloat? {
+        didSet {
+            guard capsuleCorner != oldValue else { return }
             apply(animated: false)
         }
     }
@@ -1934,7 +1949,8 @@ final class NotchPanel: NSPanel {
     /// 提醒：短暂展开说一句，2.6 秒后收回。
     /// 那一排已经打开、正在认证或落点进行时，不插进这句，只留一个点，以后也不重播。
     /// 正在播放、岛还没收成一排时，这句话分到旁边那颗岛上，播完再合并。
-    func alert(_ info: Alert, duration: TimeInterval = 2.6) {
+    /// 提醒：短暂展开说一句，`alert.hold` 后收回（指针停在上面时展开的是一排，不插提醒）。
+    func alert(_ info: Alert, duration: TimeInterval = Motion.Hold.alert) {
         let blocked = isAuthenticating || isExpanded || dropState != .none
         if blocked {
             if let leases, let displayID { _ = leases.remind(on: displayID) }
@@ -2240,8 +2256,9 @@ final class NotchPanel: NSPanel {
             let screenWidth = NSScreen.screens.first { $0.frame.contains(NSPoint(x: notch.midX, y: notch.midY)) }?.frame.width ?? 1000
             let width = min(screenWidth - 44, max(activityItems.isEmpty ? notch.width + 120 : 420, CGFloat(min(count, 8)) * 132 + 20))
             let height = notch.height + (activityItems.isEmpty ? (tiles.isEmpty ? 56 : 142) : (tiles.isEmpty ? 144 : 286))
+            // 无刘海：S4 四角全圆、不画肩；真刘海仍从硬件肩长出。
             return (NSRect(x: notch.midX - width / 2, y: notch.maxY - height, width: width, height: height),
-                    IslandStyle(cornerRadius: 28, allCorners: false, fill: .black, border: 1))
+                    IslandStyle(cornerRadius: 28, allCorners: isVirtual, fill: .black, border: 1))
         }
         if let alert = alertInfo {
             let teaching = alert.demo != nil
@@ -2254,7 +2271,7 @@ final class NotchPanel: NSPanel {
             default: border = NotchPanel.hairline
             }
             return (NSRect(x: notch.midX - width / 2, y: notch.maxY - height, width: width, height: height),
-                    IslandStyle(cornerRadius: 24, allCorners: false, fill: .black,
+                    IslandStyle(cornerRadius: 24, allCorners: isVirtual, fill: .black,
                                 border: alert.tone == .problem || alert.tone == .tip ? 1.5 : 1, borderColor: border))
         }
         if let ears = displayCompact(), ears.leading != nil {
@@ -2272,8 +2289,9 @@ final class NotchPanel: NSPanel {
                         IslandStyle(cornerRadius: NotchIsland.compactRadius(hardware), allCorners: false, fill: .black, border: 0))
             case .chin:
                 if isVirtual {
-                    return (NSRect(x: notch.midX - 36, y: notch.minY - 12, width: 72, height: 12),
-                            IslandStyle(cornerRadius: 6, allCorners: false, fill: .black, border: 0))
+                    let rect = NSRect(x: notch.midX - 36, y: notch.minY - 12, width: 72, height: 12)
+                    return (rect, IslandStyle(cornerRadius: NotchIsland.capsuleRadius(height: rect.height, preferred: capsuleCorner),
+                                              allCorners: true, fill: .black, border: 0))
                 }
                 return (NSRect(x: notch.minX, y: notch.minY - 8, width: notch.width, height: notch.height + 8),
                         IslandStyle(cornerRadius: NotchIsland.hug(hardware), allCorners: false, fill: .black, border: 0))
@@ -2282,7 +2300,8 @@ final class NotchPanel: NSPanel {
                 let height = max(22, isVirtual ? notch.height - 6 : notch.height)
                 let y = isVirtual ? notch.minY + 3 : notch.maxY - height
                 return (NSRect(x: notch.midX - width / 2, y: y, width: width, height: height),
-                        IslandStyle(cornerRadius: height / 2, allCorners: true, fill: .black, border: 0))
+                        IslandStyle(cornerRadius: NotchIsland.capsuleRadius(height: height, preferred: capsuleCorner),
+                                    allCorners: true, fill: .black, border: 0))
             }
         }
         if compact != nil {
@@ -2295,12 +2314,14 @@ final class NotchPanel: NSPanel {
             case .pill:
                 // 隐形刘海：菜单栏正中一颗小胶囊，左边图标、右边个数。
                 let rect = NSRect(x: notch.midX - 40, y: notch.minY + 3, width: 80, height: notch.height - 6)
-                return (rect, IslandStyle(cornerRadius: rect.height / 2, allCorners: true, fill: .black, border: 0))
+                return (rect, IslandStyle(cornerRadius: NotchIsland.capsuleRadius(height: rect.height, preferred: capsuleCorner),
+                                          allCorners: true, fill: .black, border: 0))
             case .chin:
                 // 刘海旁边被菜单或菜单栏图标占着：退回刘海下面的下巴，一个点一扇窗。
                 if isVirtual {
-                    return (NSRect(x: notch.midX - 36, y: notch.minY - 12, width: 72, height: 12),
-                            IslandStyle(cornerRadius: 6, allCorners: false, fill: .black, border: 0))
+                    let rect = NSRect(x: notch.midX - 36, y: notch.minY - 12, width: 72, height: 12)
+                    return (rect, IslandStyle(cornerRadius: NotchIsland.capsuleRadius(height: rect.height, preferred: capsuleCorner),
+                                              allCorners: true, fill: .black, border: 0))
                 }
                 return (NSRect(x: notch.minX, y: notch.minY - 8, width: notch.width, height: notch.height + 8),
                         IslandStyle(cornerRadius: NotchIsland.hug(hardware), allCorners: false, fill: .black, border: 0))
@@ -2309,6 +2330,11 @@ final class NotchPanel: NSPanel {
             }
         }
         // 和刘海一样大（变形的第一帧、停稳藏回去的那一下）：底角等于刘海自己的底角（`island.hug`）。
+        // 无刘海静止态：槽位本身也是胶囊（S4）。
+        if isVirtual {
+            return (notch, IslandStyle(cornerRadius: NotchIsland.capsuleRadius(height: notch.height, preferred: capsuleCorner),
+                                       allCorners: true, fill: .black, border: 0))
+        }
         return (notch, IslandStyle(cornerRadius: NotchIsland.hug(hardware), allCorners: false, fill: .black, border: 0))
     }
 
