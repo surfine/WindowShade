@@ -103,8 +103,8 @@ enum WS2SilentApply {
         case .glance(let id, let revision):
             guard let window, frozen(id, revision, window) else { return .unavailable("没预览") }
             let invoked = gestures.owner.glance.showHeld(window.id)
-            let visible = invoked && gestures.owner.glance.panelFrame(for: window.id) != nil
-            return WS2SilentEffectJudge.glance(invoked: invoked, previewVisible: visible)
+            let visible = gestures.owner.glance.panelFrame(for: window.id) != nil
+            return WS2SilentEffectJudge.glance(windowID: UInt64(window.id), invoked: invoked, visible: visible)
         case .openLaunchpadFolder(let id):
             guard let screen, !id.isEmpty else { return .unavailable("还没选") }
             guard launchpad.openFolder(id, on: screen) else { return notDone() }
@@ -203,7 +203,7 @@ enum WS2SilentApply {
             if let effect = WS2SilentWindowEffect.effect(for: name) {
                 guard !effect.unlocks, !effect.entersSystemFullscreen else { return notDone() }
                 guard let window, frozen(id, revision, window) else { return notDone() }
-                return perform(effect, window: window, gestures: gestures)
+                return perform(effect, window: window, gestures: gestures, screen: screen)
             }
             _ = WS2SilentSim.record(name: name, target: id, revision: revision)
             return notDone()
@@ -229,7 +229,8 @@ enum WS2SilentApply {
     private static func perform(
         _ effect: WS2SilentWindowEffect,
         window: WindowTarget,
-        gestures: TrackpadGestureController
+        gestures: TrackpadGestureController,
+        screen: NSScreen?
     ) -> SilentExecutionResult {
         let owner = gestures.owner
         let focused = focusedWindow().flatMap { windowID(of: $0) }
@@ -257,15 +258,45 @@ enum WS2SilentApply {
             return .unknown(0)
         case .pin:
             guard same else { return notDone() }
-            let decision = WS2SilentEffectJudge.pin(
-                alreadyPreviewing: owner.pinnedPreviewController.isPreviewing(id: window.id))
-            if decision.start {
+            let already = owner.pinnedPreviewController.isPreviewing(id: window.id)
+            if !already {
                 owner.pinnedPreviewController.startPreview(
                     targetWindowID: window.id, pid: window.pid, axWindow: window.element) { _ in }
             }
-            return decision.result
-        case .slideOver, .leaveSlideOver, .pictureInPicture, .leavePictureInPicture,
-             .choose, .chooseDisplay, .batchReview, .strip, .stripOverview, .scene:
+            return WS2SilentEffectJudge.pin(alreadyPreviewing: already, started: !already)
+        case .slideOver:
+            guard let screen else { return .unavailable("没屏幕") }
+            let already = owner.slideOver.isSlideOver(window.id)
+            if !already {
+                owner.slideOver.enter(window.element, id: window.id, pid: window.pid, on: screen)
+            }
+            return WS2SilentEffectJudge.asyncWindow(
+                already: already,
+                started: owner.slideOver.isSlideOver(window.id),
+                satisfied: "已在侧拉")
+        case .leaveSlideOver:
+            guard owner.slideOver.isSlideOver(window.id) else {
+                return .alreadySatisfied("没在侧拉")
+            }
+            owner.slideOver.exit(reason: "silent")
+            return .waiting(1)
+        case .pictureInPicture:
+            guard let screen else { return .unavailable("没屏幕") }
+            let already = owner.pip.isInPictureInPicture(window.id)
+            if !already {
+                owner.pip.enter(window.element, id: window.id, pid: window.pid, on: screen)
+            }
+            return WS2SilentEffectJudge.asyncWindow(
+                already: already,
+                started: owner.pip.isInPictureInPicture(window.id),
+                satisfied: "已在画中画")
+        case .leavePictureInPicture:
+            guard owner.pip.isInPictureInPicture(window.id) else {
+                return .alreadySatisfied("没在画中画")
+            }
+            owner.pip.exit(window.id, activate: false)
+            return .waiting(1)
+        case .choose, .chooseDisplay, .batchReview, .strip, .stripOverview, .scene:
             _ = WS2SilentSim.record(name: "\(effect)", target: String(window.id), revision: window.revision)
             return notDone()
         }

@@ -9,6 +9,8 @@ struct WS2SilentSession: Sendable {
     private(set) var mode: WS2SilentMode
     private(set) var epoch: UInt64
     private var pending: Proposal?
+    /// 只有这一份待确认提案。宿主拿它显示，不能另存一份事实。
+    var currentProposal: Proposal? { pending }
     private var shownAt: WS2.Instant?
     private var consumed: Set<UInt64> = []
     private var sequenceFloor: UInt64 = 0

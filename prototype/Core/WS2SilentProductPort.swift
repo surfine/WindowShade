@@ -71,25 +71,24 @@ enum WS2SilentWindowEffect: Equatable, Sendable {
     var unlocks: Bool { false }
 }
 
-/// 静音路径只调用能对冻结窗口同步读到结果的引擎。
+/// 取消置顶能当场读到结果。置顶、侧拉、画中画可以开始，开始本身不是做成。
 enum WS2SilentEngineGate {
     static func calls(_ id: String) -> Bool {
         id == "window.unpin"
     }
 
-    /// 不能观察的入口。静音路径不调用，也不写成已经做成。
+    static func awaitsObservation(_ id: String) -> Bool {
+        switch id {
+        case "window.pin", "window.slideOver", "window.leaveSlideOver", "window.pip", "window.leavePip":
+            return true
+        default:
+            return false
+        }
+    }
+
+    /// 还没有明确对象入口的场景。静音路径不调用，也不写成已经做成。
     static func unobservableFunction(_ id: String) -> String? {
         switch id {
-        case "window.pin":
-            return "pinCurrentTargetPreview"
-        case "window.slideOver":
-            return "SlideOverController.toggleCurrentWindow"
-        case "window.leaveSlideOver":
-            return "SlideOverController.exit"
-        case "window.pip":
-            return "PictureInPictureController.toggleCurrentWindow"
-        case "window.leavePip":
-            return "PictureInPictureController.exit"
         case "scene.reading", "scene.coding", "scene.presentation", "scene.presenter":
             return "prepareSavedLayout"
         default:

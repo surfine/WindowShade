@@ -6,6 +6,12 @@ import Cocoa
     var inputIsCurrent: (() -> Bool) { get set }
     var interactionSize: NSSize { get }
     func revoke()
+    /// 挂起时只撤掉输入权。页面数据留着，旧租约不留。
+    func suspendInput()
+}
+
+extension WS2LeaseContent {
+    func suspendInput() { inputIsCurrent = { false } }
 }
 
 /// 刘海唯一的展示仲裁：一块屏同一时刻只有一个主人。
@@ -304,7 +310,7 @@ final class NotchLeaseHub {
         if contentHandle == handle {
             let content = contentView, panel = contentPanel, callback = contentDismissed
             contentDeadline?.cancel(); contentDeadline = nil
-            content?.inputIsCurrent = { false }
+            content?.suspendInput()
             if reason == .suspended, let content, let owner, owner.layer == .opened {
                 parkedContent = ParkedContent(view: content, owner: owner, display: handle.display, onDismiss: callback ?? { _ in })
                 contentHandle = nil; contentView = nil; contentPanel = nil; contentDismissed = nil
