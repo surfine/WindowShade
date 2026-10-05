@@ -135,8 +135,8 @@ import Cocoa
         quiet.split(showing: "淡入")
         expect(quiet.splitForProbe.separated && quiet.splitForProbe.fades, "位置不动，只改透明度")
         Motion.reducedOverrideForProbe = nil
-        expect(NotchCanvasView.contentEntranceDelay(response: 0.34, reduced: false) == 0.34 * 0.22, "形状走到四成再进内容")
-        expect(NotchCanvasView.contentEntranceDelay(response: 0.34, reduced: true) == 0, "减少动态效果不等形状")
+        expect(!NotchCanvasView.contentHasReachedFourTenths(from: 28, to: 280, now: 28), "起点还没走到四成")
+        expect(NotchCanvasView.contentHasReachedFourTenths(from: 28, to: 280, now: 28 + 0.4 * (280 - 28)), "形状走到四成再进内容")
 
         print("CASE LEASE-H13 | 音量长在同一颗岛上，对方的提示在跑就让位")
         NotchPanel.foreignHUDOverride = true

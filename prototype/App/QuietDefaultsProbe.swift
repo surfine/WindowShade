@@ -36,8 +36,12 @@ extension GlanceProbe {
       let spans = NotchPanel.alertCoverSpans(notch: slot.rect, virtual: slot.virtual, screen: screen.frame)
       let inside = spans.leadingEdge - spans.reach >= screen.frame.minX && spans.trailingEdge + spans.reach <= screen.frame.maxX
       let scan = await withCheckedContinuation { (done: CheckedContinuation<MenuBarRoom.CoverScan, Never>) in
+        let own = NSApp.windows.compactMap { window -> NSRect? in
+          guard window is NotchPanel || window is NotchShoulders else { return nil }
+          return window.frame
+        }
         DispatchQueue.global(qos: .userInitiated).async {
-          done.resume(returning: MenuBarRoom.scanCover(spans, menuOwner: menuOwner, baseline: baseline))
+          done.resume(returning: MenuBarRoom.scanCover(spans, menuOwner: menuOwner, baseline: baseline, own: own))
         }
       }
       let found = scan.system

@@ -819,7 +819,7 @@ final class NotchController {
                                      })
         // 指针正停在刘海上时，先收起一排再说。
         panel.collapse()
-        panel.alert(alert, duration: 6.6)
+        panel.alert(alert)
         NSAccessibility.post(element: NSApp as Any, notification: .announcementRequested,
                              userInfo: [.announcement: tip.text, .priority: NSAccessibilityPriorityLevel.medium.rawValue])
         wlog("notch: teach \(tip.rawValue) (shown \(coach.shown[tip] ?? 0) time(s))")
@@ -1294,8 +1294,12 @@ final class NotchController {
         let spans = NotchPanel.alertCoverSpans(notch: panel.notch, virtual: panel.isVirtual, screen: screen.frame)
         let menuOwner = NSWorkspace.shared.menuBarOwningApplication?.processIdentifier
         let baseline = coordinateBaselineY()
+        let own = NSApp.windows.compactMap { window -> NSRect? in
+            guard window is NotchPanel || window is NotchShoulders else { return nil }
+            return window.frame
+        }
         DispatchQueue.global(qos: .userInitiated).async { [weak self, weak panel] in
-            let system = MenuBarRoom.systemItems(in: spans, menuOwner: menuOwner, baseline: baseline)
+            let system = MenuBarRoom.systemItems(in: spans, menuOwner: menuOwner, baseline: baseline, own: own)
             DispatchQueue.main.async {
                 MainActor.assumeIsolated {
                     guard let self, let panel else { return }
@@ -1966,7 +1970,7 @@ final class NotchPanel: NSPanel {
         updateVisibility()
         apply(animated: true)
         levelTimer?.invalidate()
-        levelTimer = Timer.scheduledTimer(withTimeInterval: 1.4, repeats: false) { [weak self] _ in
+        levelTimer = Timer.scheduledTimer(withTimeInterval: 1.2, repeats: false) { [weak self] _ in
             MainActor.assumeIsolated {
                 guard let self else { return }
                 self.meter = nil
@@ -2226,7 +2230,7 @@ final class NotchPanel: NSPanel {
             case .chin:
                 if isVirtual {
                     return (NSRect(x: notch.midX - 36, y: notch.minY - 12, width: 72, height: 12),
-                            IslandStyle(cornerRadius: 6, allCorners: false, fill: NSColor.black.withAlphaComponent(0.88), border: 0))
+                            IslandStyle(cornerRadius: 6, allCorners: false, fill: .black, border: 0))
                 }
                 return (NSRect(x: notch.minX, y: notch.minY - 8, width: notch.width, height: notch.height + 8),
                         IslandStyle(cornerRadius: NotchIsland.hug(hardware), allCorners: false, fill: .black, border: 0))
@@ -2248,13 +2252,12 @@ final class NotchPanel: NSPanel {
             case .pill:
                 // 隐形刘海：菜单栏正中一颗小胶囊，左边图标、右边个数。
                 let rect = NSRect(x: notch.midX - 40, y: notch.minY + 3, width: 80, height: notch.height - 6)
-                return (rect, IslandStyle(cornerRadius: rect.height / 2, allCorners: true,
-                                          fill: NSColor.black.withAlphaComponent(0.88), border: 0))
+                return (rect, IslandStyle(cornerRadius: rect.height / 2, allCorners: true, fill: .black, border: 0))
             case .chin:
                 // 刘海旁边被菜单或菜单栏图标占着：退回刘海下面的下巴，一个点一扇窗。
                 if isVirtual {
                     return (NSRect(x: notch.midX - 36, y: notch.minY - 12, width: 72, height: 12),
-                            IslandStyle(cornerRadius: 6, allCorners: false, fill: NSColor.black.withAlphaComponent(0.88), border: 0))
+                            IslandStyle(cornerRadius: 6, allCorners: false, fill: .black, border: 0))
                 }
                 return (NSRect(x: notch.minX, y: notch.minY - 8, width: notch.width, height: notch.height + 8),
                         IslandStyle(cornerRadius: NotchIsland.hug(hardware), allCorners: false, fill: .black, border: 0))
@@ -2536,8 +2539,9 @@ final class NotchCanvasView: NSView {
         authenticationView?.layoutSubtreeIfNeeded()
     }
     private var shown: Content?
-    private var morphs = 0
     private var presentGeneration = 0
+    private var contentWatch: Timer?
+    private var morphClock: (time: CFTimeInterval, mid: CGPoint)?
     private let companion = CALayer()
     private let companionLabel = CATextLayer()
     private var companionRetargeted = false
@@ -2564,6 +2568,7 @@ final class NotchCanvasView: NSView {
         companion.cornerCurve = .continuous
         companion.opacity = 0
         companion.isHidden = true
+        companionLabel.font = NSFont.systemFont(ofSize: 12, weight: .semibold)
         companionLabel.fontSize = 12
         companionLabel.alignmentMode = .center
         companionLabel.foregroundColor = NSColor.white.cgColor
@@ -2624,9 +2629,22 @@ final class NotchCanvasView: NSView {
                shoulders scale: (leading: CGFloat, trailing: CGFloat) = (0, 0),
                shoulderSnap snap: (leading: Bool, trailing: Bool) = (false, false), shoulderFade: Bool = false,
                done: @escaping () -> Void) {
-        let old = island.frame
-        let oldRadius = island.cornerRadius
-        let oldKey = keyLine.frame
+        let presented = island.presentation()?.frame ?? island.frame
+        let presentedRadius = CGFloat(island.presentation()?.cornerRadius ?? island.cornerRadius)
+        let presentedKey = keyLine.presentation()?.frame ?? keyLine.frame
+        let presentedClip = clip.presentation()?.frame ?? clip.frame
+        let now = CACurrentMediaTime()
+        var motion = spring
+        if var spring, presented.width > 0 {
+            spring.initialVelocity = morphVelocity(now: now, from: CGPoint(x: presented.midX, y: presented.midY),
+                                                   to: CGPoint(x: rect.midX, y: rect.midY))
+            motion = spring
+        } else {
+            morphClock = (now, CGPoint(x: rect.midX, y: rect.midY))
+        }
+        stripMorph(island)
+        stripMorph(clip)
+        stripMorph(keyLine)
         let corners: CACornerMask = style.allCorners
             ? [.layerMinXMinYCorner, .layerMaxXMinYCorner, .layerMinXMaxYCorner, .layerMaxXMaxYCorner]
             : [.layerMinXMinYCorner, .layerMaxXMinYCorner]
@@ -2646,17 +2664,18 @@ final class NotchCanvasView: NSView {
         keyLine.cornerRadius = style.cornerRadius
         keyLine.borderWidth = style.border
         keyLine.borderColor = style.borderColor.cgColor
-        if let spring, old.width > 0 {
-            morphs += 1
-            let key = "morph\(morphs)"
-            let moved = CGVector(dx: old.midX - rect.midX, dy: old.midY - rect.midY)
-            let resized = CGSize(width: old.width - rect.width, height: old.height - rect.height)
-            let rounded = oldRadius - style.cornerRadius
-            add(spring, key: key, to: island, position: moved, size: resized, radius: rounded)
-            add(spring, key: key, to: clip, position: moved, size: resized, radius: rounded)
-            add(spring, key: key, to: keyLine,
-                position: CGVector(dx: oldKey.midX - keyFrame.midX, dy: oldKey.midY - keyFrame.midY),
-                size: CGSize(width: oldKey.width - keyFrame.width, height: oldKey.height - keyFrame.height),
+        if let motion, presented.width > 0 {
+            let moved = CGVector(dx: presented.midX - rect.midX, dy: presented.midY - rect.midY)
+            let resized = CGSize(width: presented.width - rect.width, height: presented.height - rect.height)
+            let rounded = presentedRadius - style.cornerRadius
+            add(motion, key: "morph", to: island, position: moved, size: resized, radius: rounded)
+            add(motion, key: "morph", to: clip,
+                position: CGVector(dx: presentedClip.midX - rect.midX, dy: presentedClip.midY - rect.midY),
+                size: CGSize(width: presentedClip.width - rect.width, height: presentedClip.height - rect.height),
+                radius: rounded)
+            add(motion, key: "morph", to: keyLine,
+                position: CGVector(dx: presentedKey.midX - keyFrame.midX, dy: presentedKey.midY - keyFrame.midY),
+                size: CGSize(width: presentedKey.width - keyFrame.width, height: presentedKey.height - keyFrame.height),
                 radius: rounded)
         }
         // 肩的尖角 = 岛的两个上角（换成屏幕坐标：肩在另一层窗口里）。肩自己记着上一次的位置和大小，
@@ -2667,8 +2686,24 @@ final class NotchCanvasView: NSView {
                             scale: scale, snap: snap, spring: spring, fade: shoulderFade)
         }
         CATransaction.commit()
-        present(content, in: rect, animated: spring != nil, response: spring?.response ?? 0)
+        present(content, in: rect, from: presented, animated: spring != nil)
         placeCompanion(content.companion, beside: rect, spring: spring)
+    }
+
+    private func stripMorph(_ layer: CALayer) {
+        for key in layer.animationKeys() ?? [] where key.hasPrefix("morph") {
+            layer.removeAnimation(forKey: key)
+        }
+    }
+
+    private func morphVelocity(now: CFTimeInterval, from: CGPoint, to: CGPoint) -> CGFloat {
+        let last = morphClock
+        morphClock = (now, from)
+        guard let last else { return 0 }
+        let dt = now - last.time
+        let travel = hypot(to.x - from.x, to.y - from.y)
+        guard dt > 0.001, travel > 0.5 else { return 0 }
+        return hypot(from.x - last.mid.x, from.y - last.mid.y) / dt / travel
     }
 
     private func add(_ spring: Spring, key: String, to layer: CALayer, position: CGVector, size: CGSize, radius: CGFloat) {
@@ -2691,14 +2726,17 @@ final class NotchCanvasView: NSView {
         if radius != 0 { animate("cornerRadius", from: radius, zero: 0) }
     }
 
-    /// 形状走到四成，内容才淡入。减少动态效果时不等，位置交给 reduced，内容只淡。
-    static func contentEntranceDelay(response: Double, reduced: Bool) -> Double {
-        guard !reduced, response > 0 else { return 0 }
-        return response * 0.22
+    /// 这一段行程的宽度走到四成，内容才淡入。减少动态效果不等形状。
+    static func contentHasReachedFourTenths(from: CGFloat, to: CGFloat, now: CGFloat) -> Bool {
+        let span = abs(to - from)
+        guard span > 0.5 else { return true }
+        return abs(now - from) / span >= 0.4
     }
 
     /// 内容：同一份就原地挪到新位置；换了就旧的一层先淡出，新的一层等形状走到四成再淡入（都被岛裁着）。
-    private func present(_ content: Content, in rect: NSRect, animated: Bool, response: Double) {
+    private func present(_ content: Content, in rect: NSRect, from start: NSRect, animated: Bool) {
+        contentWatch?.invalidate()
+        contentWatch = nil
         if let current, let shown, shown.same(as: content) {
             current.place(in: rect, content: content)
             self.shown = content
@@ -2706,11 +2744,12 @@ final class NotchCanvasView: NSView {
         }
         presentGeneration += 1
         let generation = presentGeneration
+        let reduced = Motion.reduced
         if let outgoing = current {
             outgoing.inert = true
             if animated {
                 NSAnimationContext.runAnimationGroup({ context in
-                    context.duration = Motion.reduced ? 0.18 : 0.10
+                    context.duration = reduced ? Motion.Spring.reducedNotch.response : 0.10
                     outgoing.animator().alphaValue = 0
                 }, completionHandler: {
                     MainActor.assumeIsolated { outgoing.removeFromSuperview() }
@@ -2730,22 +2769,30 @@ final class NotchCanvasView: NSView {
         incoming.place(in: rect, content: content)
         if animated, !incoming.isEmpty {
             incoming.alphaValue = 0
-            let delay = Self.contentEntranceDelay(response: response, reduced: Motion.reduced)
-            let fade = { [weak self, weak incoming] in
+            let fromWidth = start.width
+            let toWidth = rect.width
+            let reveal = { [weak self, weak incoming] in
                 guard let self, let incoming, self.presentGeneration == generation, self.current === incoming else { return }
-                if Motion.reduced {
-                    incoming.alphaValue = 1
-                } else {
-                    NSAnimationContext.runAnimationGroup { context in
-                        context.duration = 0.18
-                        incoming.animator().alphaValue = 1
-                    }
+                NSAnimationContext.runAnimationGroup { context in
+                    context.duration = reduced ? Motion.Spring.reducedNotch.response : 0.18
+                    incoming.animator().alphaValue = 1
                 }
             }
-            if delay <= 0 { fade() }
-            else {
-                DispatchQueue.main.asyncAfter(deadline: .now() + delay) {
-                    MainActor.assumeIsolated { fade() }
+            if reduced || Self.contentHasReachedFourTenths(from: fromWidth, to: toWidth, now: fromWidth) {
+                reveal()
+            } else {
+                contentWatch = Timer.scheduledTimer(withTimeInterval: 1.0 / 60, repeats: true) { [weak self] timer in
+                    MainActor.assumeIsolated {
+                        guard let self, self.presentGeneration == generation else {
+                            timer.invalidate()
+                            return
+                        }
+                        let now = (self.island.presentation() ?? self.island).frame.width
+                        guard Self.contentHasReachedFourTenths(from: fromWidth, to: toWidth, now: now) else { return }
+                        timer.invalidate()
+                        self.contentWatch = nil
+                        reveal()
+                    }
                 }
             }
         }
@@ -2753,42 +2800,57 @@ final class NotchCanvasView: NSView {
         shown = content
     }
 
-    /// 第二颗岛。模型直接到终点，半路改方向时用叠加弹簧接上当前的位置。减少动态效果只改透明度。
+    private func companionSize(for text: String?) -> (width: CGFloat, height: CGFloat) {
+        let height: CGFloat = 28
+        let string = text ?? (companionLabel.string as? String) ?? ""
+        let font = NSFont.systemFont(ofSize: 12, weight: .semibold)
+        let textWidth = (string as NSString).size(withAttributes: [.font: font]).width
+        return (max(36, ceil(textWidth) + 24), height)
+    }
+
+    /// 第二颗岛。半路改方向时从当前外框接上。减少动态效果位置不动，只淡。
     private func placeCompanion(_ text: String?, beside islandRect: NSRect, spring: Spring?) {
         let reduced = Motion.reduced
-        let height = min(36, max(28, islandRect.height * 0.55))
-        let width: CGFloat = 132
+        let size = companionSize(for: text)
+        let height = size.height
+        let width = size.width
         let apart = CGRect(x: islandRect.maxX + 8, y: islandRect.maxY - height, width: width, height: height)
         let together = CGRect(x: islandRect.midX - width / 2, y: islandRect.midY - height / 2, width: width, height: height)
         let destination = text == nil ? together : apart
         CATransaction.begin()
         CATransaction.setDisableActions(true)
         let presented = companion.presentation()?.frame ?? companion.frame
-        let wasVisible = companion.opacity > 0.01 && !companion.isHidden
+        let wasVisible = (companion.presentation()?.opacity ?? companion.opacity) > 0.01 && !companion.isHidden
         let inflight = companion.animation(forKey: "companion.position") != nil
             || companion.animation(forKey: "companion.bounds.size") != nil
         if inflight { companionRetargeted = true }
         companion.isHidden = false
         companion.cornerRadius = height / 2
         if let text { companionLabel.string = text }
-        companionLabel.frame = CGRect(x: 10, y: (height - 16) / 2, width: width - 20, height: 16)
-        companion.frame = destination
+        companionLabel.frame = CGRect(x: 12, y: (height - 16) / 2, width: width - 24, height: 16)
+        let fromOpacity = companion.presentation()?.opacity ?? companion.opacity
+        let toOpacity: Float = text == nil ? 0 : 1
         if reduced {
             companion.removeAnimation(forKey: "companion.position")
             companion.removeAnimation(forKey: "companion.bounds.size")
-            companion.opacity = text == nil ? 0 : 1
-        } else if text != nil || wasVisible {
-            let from = wasVisible ? presented : together
-            let motion = spring ?? Spring(response: Motion.Spring.expand.response, bounce: Motion.Spring.expand.bounce)
-            add(motion, key: "companion", to: companion,
-                position: CGVector(dx: from.midX - destination.midX, dy: from.midY - destination.midY),
-                size: CGSize(width: from.width - destination.width, height: from.height - destination.height),
-                radius: 0)
+            companion.frame = wasVisible ? presented : together
+        } else {
+            companion.frame = destination
+            if text != nil || wasVisible {
+                let from = wasVisible ? presented : together
+                let motion = spring ?? Spring(response: Motion.Spring.expand.response, bounce: Motion.Spring.expand.bounce)
+                add(motion, key: "companion", to: companion,
+                    position: CGVector(dx: from.midX - destination.midX, dy: from.midY - destination.midY),
+                    size: CGSize(width: from.width - destination.width, height: from.height - destination.height),
+                    radius: 0)
+            }
+        }
+        if text != nil || wasVisible || reduced {
             let fade = CABasicAnimation(keyPath: "opacity")
-            fade.fromValue = companion.presentation()?.opacity ?? companion.opacity
-            fade.toValue = text == nil ? 0 : 1
-            fade.duration = text == nil ? 0.10 : 0.18
-            companion.opacity = text == nil ? 0 : 1
+            fade.fromValue = fromOpacity
+            fade.toValue = toOpacity
+            fade.duration = reduced ? Motion.Spring.reducedNotch.response : (text == nil ? 0.10 : 0.18)
+            companion.opacity = toOpacity
             companion.add(fade, forKey: "companion.opacity")
         } else {
             companion.opacity = 0
@@ -2797,10 +2859,12 @@ final class NotchCanvasView: NSView {
     }
 
     var splitForProbe: (separated: Bool, retargeted: Bool, fades: Bool) {
-        let separated = companion.opacity > 0.5 && companion.frame.minX + 1 >= island.frame.maxX
-        let fades = companion.animation(forKey: "companion.position") == nil
-            && companion.animation(forKey: "companion.bounds.size") == nil
-        return (separated, companionRetargeted, fades || Motion.reduced)
+        let showing = companion.opacity > 0.01
+        let apart = companion.frame.minX + 1 >= island.frame.maxX
+        let moving = companion.animation(forKey: "companion.position") != nil
+            || companion.animation(forKey: "companion.bounds.size") != nil
+        let fading = companion.animation(forKey: "companion.opacity") != nil
+        return (Motion.reduced ? showing : apart && showing, companionRetargeted, !moving && (fading || Motion.reduced))
     }
 
     /// 落定：旧的一层都撤掉。
@@ -3080,7 +3144,6 @@ final class NotchShoulders: NSPanel {
     private var placed = false
     /// 两个肩现在的目标大小（模型值，动画的终点）。
     private(set) var scales: (leading: CGFloat, trailing: CGFloat) = (0, 0)
-    private var morphs = 0
 
     init() {
         super.init(contentRect: NSRect(x: 0, y: 0, width: 1, height: 1), styleMask: [.borderless, .nonactivatingPanel],
@@ -3151,7 +3214,6 @@ final class NotchShoulders: NSPanel {
         let origin = frame.origin
         let first = !placed
         placed = true
-        morphs += 1
         move(leading, to: NSPoint(x: a.x - origin.x, y: a.y - origin.y), from: scales.leading, to: scale.leading,
              snap: snap.leading, spring: spring, first: first, fade: fade)
         move(trailing, to: NSPoint(x: b.x - origin.x, y: b.y - origin.y), from: scales.trailing, to: scale.trailing,
@@ -3172,15 +3234,17 @@ final class NotchShoulders: NSPanel {
 
     private func move(_ layer: CAShapeLayer, to point: NSPoint, from old: CGFloat, to new: CGFloat, snap: Bool,
                       spring: NotchCanvasView.Spring?, first: Bool, fade: Bool) {
-        let before = layer.position
+        let presented = layer.presentation()?.position ?? layer.position
+        for key in layer.animationKeys() ?? [] where key.hasPrefix("shoulder") {
+            layer.removeAnimation(forKey: key)
+        }
         layer.position = point
         layer.transform = CATransform3DMakeScale(new, new, 1)
         guard !first else { return }
         if snap {
-            // 看不出来的肩直接收掉：之前没播完的缩放也一起撤掉，免得叠加出来又露一下。位置照常挂弹簧，下一次长出来时接得上。
             for name in layer.animationKeys() ?? [] where name.hasSuffix(".transform.scale") { layer.removeAnimation(forKey: name) }
         }
-        let key = "shoulder\(morphs)"
+        let key = "shoulder"
         guard let spring else {
             // 跟手的时候（岛没有弹簧、立刻到位）：位置跟着到；肩长出、收掉仍走一段不回弹的弹簧，不在一帧里跳没。
             if old != new, !snap {
@@ -3190,8 +3254,8 @@ final class NotchShoulders: NSPanel {
             }
             return
         }
-        if before != point {
-            animate(layer, "position", from: NSValue(point: NSPoint(x: before.x - point.x, y: before.y - point.y)),
+        if presented != point {
+            animate(layer, "position", from: NSValue(point: NSPoint(x: presented.x - point.x, y: presented.y - point.y)),
                     zero: NSValue(point: .zero), spring: spring, key: key)
         }
         if snap { return }
@@ -3344,7 +3408,10 @@ final class NotchContentView: NSView {
         tileViews.first { $0.tileID == id }?.setSnapshot(image)
     }
 
-    override func hitTest(_ point: NSPoint) -> NSView? { inert ? nil : super.hitTest(point) }
+    override func hitTest(_ point: NSPoint) -> NSView? {
+        guard Thread.isMainThread else { return nil }
+        return inert ? nil : super.hitTest(point)
+    }
 
     /// 按岛的终点排好（rect：画布坐标里岛的外框）。
     func place(in rect: NSRect, content: NotchCanvasView.Content) {
@@ -3483,7 +3550,7 @@ final class NotchCompactView: NSView {
             drawEar(compact.trailing ?? "", symbol: nil, in: slots.trailing, align: .right)
             if compact.count > 0 {
                 NSColor.controlAccentColor.setFill()
-                NSBezierPath(ovalIn: NSRect(x: bounds.midX - 2, y: 3, width: 4, height: 4)).fill()
+                NSBezierPath(ovalIn: NSRect(x: bounds.maxX - 14, y: bounds.minY + 8, width: 6, height: 6)).fill()
             }
             return
         }
