@@ -81,11 +81,11 @@ export function Win({ box, title, off, children, opacity = 1, scale = 1, radius 
   );
 }
 
-/** 三处可读引文：短句 + 出处；变蓝时看得出核了对哪一句（审片 B11-02）。 */
-const CITES: { before: string; after: string; src: string }[] = [
+/** 三处可读引文：短句 + 出处；变蓝时看得出核了对哪一句（审片 B11-02）。第三处的出处也在核对中被改对（审片 B13-01）。 */
+const CITES: { before: string; after: string; src: string; srcBefore?: string }[] = [
   { before: '设计就是外观。', after: '设计不是看起来怎样，而是用起来怎样。', src: 'Jobs，2003' },
   { before: '动得越夸张越好。', after: '界面应当跟上手指。', src: 'Karunamuni，Fluid Interfaces' },
-  { before: '刘海只是屏幕上的缺口。', after: '刘海是软件和硬件的接缝。', src: 'WWDC 2022' },
+  { before: '刘海只是屏幕上的缺口。', after: '刘海是硬件和软件合成的同一层。', src: 'WWDC23 · 10194（转述）', srcBefore: 'WWDC 2022' },
 ];
 
 /** 后面那扇“文章草稿”，不在前台。 */
@@ -111,7 +111,7 @@ export function DraftWin({ box, opacity, marks }: { box: Box; opacity?: number; 
             return (
               <div key={c.src} style={{ fontSize: pt(14) * cqw, lineHeight: 1.4, fontWeight: 500, color: on ? C.accent : 'rgba(235,235,245,.78)' }}>
                 {on ? c.after : c.before}
-                <div style={{ fontSize: pt(11) * cqw, fontWeight: 500, color: on ? 'rgba(10,132,255,.75)' : C.muted, marginTop: 0.25 * cqw }}>{c.src}</div>
+                <div style={{ fontSize: pt(11) * cqw, fontWeight: 500, color: on ? 'rgba(10,132,255,.75)' : C.muted, marginTop: 0.25 * cqw }}>{on ? c.src : c.srcBefore ?? c.src}</div>
               </div>
             );
           })}

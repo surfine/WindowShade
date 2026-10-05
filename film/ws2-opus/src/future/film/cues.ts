@@ -48,8 +48,8 @@ export const LIP_TEXT = '放到左半屏';
 export const LINES: { from: number; to: number; text: string; en?: string }[] = [
   // 先收窗进胶囊，再停在没开口的上边框（审片 C11-05）。
   { from: 36, to: 500, text: '看一眼，就解锁' },
-  { from: 520, to: 640, text: '窗口收进刘海' },
-  { from: 642, to: 718, text: '这台没有刘海' },
+  { from: 584, to: 646, text: '窗口收进刘海' },
+  { from: 686, to: 718, text: '这台没有刘海' },
   { from: 780, to: 1040, text: '点一下刘海，回到主屏幕' },
   { from: 1130, to: 1370, text: '静音操作：读口型' },
   { from: 1380, to: 1620, text: '点头确认，再照做' },

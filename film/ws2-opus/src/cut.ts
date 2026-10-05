@@ -21,7 +21,7 @@ export const HEADLINES: Record<Exclude<HeadId, 'end'>, { zh: string; en: string 
   launch: { zh: '点一下刘海，打开启动台', en: 'Tap the notch for Launchpad.' },
   drop: { zh: '拖到刘海，选个位置', en: 'Drag to the notch, pick a spot.' },
   draw: { zh: '画一笔，说一句', en: 'Draw a stroke. Say a line.' },
-  nod: { zh: '静音操作，点头再确认', en: 'Silent confirm with a nod.' },
+  nod: { zh: '静音操作，点头再确认', en: 'Confirm silently with a nod.' },
   away: { zh: '走开就锁', en: 'Walk away. It locks.' },
   face: { zh: '回来看一眼，窗口都在', en: 'Look back. Everything stays put.' },
 };

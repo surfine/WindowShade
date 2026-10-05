@@ -34,8 +34,8 @@ const KEYS: Shot[] = [
   // 解锁：机身上缘低于字幕带（审片 C10-02）。略拉远、略俯，银边不穿标题。
   { f: 400, aim: world('neo', L.neo.screen), dist: 0.52, elev: 15, yaw: -5 },
   { f: 560, aim: world('neo', L.neo.screen), dist: 0.58, elev: 16, yaw: -4 },
-  { f: 620, aim: world('neo', L.neo.island), dist: 0.46, elev: 12, yaw: -10 },
-  { f: 710, aim: world('neo', L.neo.island), dist: 0.46, elev: 12, yaw: -10 },
+  // 露出→收进→结果保持同一参照（审片 C13-01），不平移抢戏：整段停在屏上。
+  { f: 710, aim: world('neo', L.neo.screen), dist: 0.60, elev: 16, yaw: -2 },
   // Air 主屏幕
   { f: 760, aim: world('air', L.air.screen), dist: 0.56, elev: 16, yaw: 12 },
   { f: 960, aim: world('air', L.air.screen), dist: 0.54, elev: 16, yaw: 10 },
