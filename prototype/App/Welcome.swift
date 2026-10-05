@@ -276,20 +276,27 @@ final class WelcomeView: NSView {
     /// 按下去就给回应：图标朝文件夹滑过去、变小、变淡（移动要一两秒）。“减少动态效果”时只变淡。
     private func glideIconIntoFolder() {
         guard let layer = moveIcon.layer else { return }
-        let reduce = NSWorkspace.shared.accessibilityDisplayShouldReduceMotion
+        let reduce = Motion.reduced
         CATransaction.begin()
-        CATransaction.setAnimationDuration(reduce ? 0.2 : 0.45)
-        CATransaction.setAnimationTimingFunction(CAMediaTimingFunction(controlPoints: 0.2, 0.9, 0.3, 1))
+        CATransaction.setDisableActions(true)
+        let fade = CABasicAnimation(keyPath: "opacity")
+        fade.fromValue = layer.opacity
+        fade.toValue = 0.25
+        fade.duration = Motion.fadeDuration
+        layer.opacity = 0.25
+        layer.add(fade, forKey: "move.fade")
         if !reduce {
-            // 图层的锚点在左下角：缩小时补回一半的差，看起来是绕图标中心缩。
             let travel = moveBox.arrangedSubviews.last.map { $0.frame.midX - moveIcon.frame.midX } ?? 0
             let scale: CGFloat = 0.55
             let inset = moveIcon.bounds.width * (1 - scale) / 2
             var t = CATransform3DMakeTranslation(travel + inset, moveIcon.bounds.height * (1 - scale) / 2, 0)
             t = CATransform3DScale(t, scale, scale, 1)
+            let spring = Motion.spring(.settle, keyPath: "transform")
+            spring.fromValue = NSValue(caTransform3D: layer.presentation()?.transform ?? layer.transform)
+            spring.toValue = NSValue(caTransform3D: t)
+            layer.add(spring, forKey: "move.glide")
             layer.transform = t
         }
-        layer.opacity = 0.25
         CATransaction.commit()
     }
 
@@ -885,7 +892,8 @@ final class WelcomeScene {
         a.duration = cycle
         a.repeatCount = .infinity
         a.calculationMode = .linear
-        a.timingFunctions = Array(repeating: CAMediaTimingFunction(controlPoints: 0.4, 0, 0.2, 1), count: max(1, values.count - 1))
+        // 教学循环的节拍写在 keyTimes 里；段与段之间不另造贝塞尔，形变手感见 `calm`（文法欢迎页）。
+        a.timingFunctions = nil
         a.isRemovedOnCompletion = false
         a.fillMode = .both
         layer.add(a, forKey: keyPath)

@@ -60,7 +60,7 @@ final class SlideOverChrome {
             panel.alphaValue = 0
             panel.orderFrontRegardless()
             NSAnimationContext.runAnimationGroup { context in
-                context.duration = Motion.reduced ? 0.12 : 0.18
+                context.duration = Motion.fadeDuration
                 panel.animator().alphaValue = 1
             }
         }

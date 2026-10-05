@@ -3406,8 +3406,7 @@ final class NotchShoulders: NSPanel {
             let appear = CABasicAnimation(keyPath: "opacity")
             appear.fromValue = 0
             appear.toValue = 1
-            appear.duration = Motion.reduced ? Motion.Spring.reducedNotch.response : Motion.Spring.calm.response
-            appear.timingFunction = CAMediaTimingFunction(name: .easeOut)
+            appear.duration = Motion.fadeDuration
             layer.add(appear, forKey: "\(key).fade")
             return
         }
@@ -3868,7 +3867,7 @@ final class NotchTileView: NSView {
         if fadeIn {
             let fade = CATransition()
             fade.type = .fade
-            fade.duration = 0.15
+            fade.duration = Motion.fadeDuration
             layer?.add(fade, forKey: "snapshot")
         }
         needsDisplay = true
@@ -4048,7 +4047,7 @@ final class NotchPeek {
         panel.alphaValue = 0
         panel.orderFrontRegardless()
         NSAnimationContext.runAnimationGroup { context in
-            context.duration = 0.16
+            context.duration = Motion.fadeDuration
             panel.animator().alphaValue = 1
         }
     }
@@ -4056,7 +4055,7 @@ final class NotchPeek {
     func close() {
         let panel = self.panel
         NSAnimationContext.runAnimationGroup({ context in
-            context.duration = 0.12
+            context.duration = Motion.fadeDuration
             panel.animator().alphaValue = 0
         }, completionHandler: {
             // 动画完成回调在主线程。

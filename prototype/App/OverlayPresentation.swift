@@ -214,8 +214,7 @@ extension AppDelegate {
         playThumbnailEntranceIfNeeded(overlay)
         let alpha = overlayAlpha(for: overlay)
         NSAnimationContext.runAnimationGroup { context in
-            context.duration = 0.12
-            context.timingFunction = CAMediaTimingFunction(name: .easeOut)
+            context.duration = Motion.fadeDuration
             overlay.animator().alphaValue = alpha
         }
     }

@@ -155,7 +155,6 @@ extension AppDelegate {
         isProgrammaticOverlayArrangement = true
         NSAnimationContext.runAnimationGroup { context in
             context.duration = focusMotionDuration
-            context.timingFunction = CAMediaTimingFunction(name: .easeOut)
             overlay.animator().setFrame(pulled.overlay, display: true)
         } completionHandler: {
             // 动画完成回调在主线程。

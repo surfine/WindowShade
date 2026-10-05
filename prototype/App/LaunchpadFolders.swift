@@ -179,7 +179,7 @@ final class LaunchpadFolderOverlay {
             if dragging?.path == app.path { continue }
             let target = iconCenter(index)
             if animated, !view.reduced, cell.root.position != target {
-                let move = CASpringAnimation(perceptualDuration: 0.34, bounce: 0.12)
+                let move = Motion.spring(.expand, keyPath: "position")
                 move.keyPath = "position"
                 move.fromValue = NSValue(point: (cell.root.presentation() ?? cell.root).position)
                 move.toValue = NSValue(point: target)
@@ -268,7 +268,7 @@ final class LaunchpadFolderOverlay {
         guard editable else { return }
         // 编辑时标题像一个可以点的输入框：底下垫一块浅色圆角。
         CATransaction.begin()
-        CATransaction.setAnimationDuration(0.2)
+        CATransaction.setAnimationDuration(Motion.fadeDuration)
         titleLayer.backgroundColor = on ? NSColor.white.withAlphaComponent(0.16).cgColor : NSColor.clear.cgColor
         titleLayer.cornerRadius = 14
         titleLayer.cornerCurve = .continuous
@@ -372,17 +372,15 @@ final class LaunchpadFolderOverlay {
                 let fade = CABasicAnimation(keyPath: "opacity")
                 fade.fromValue = 0
                 fade.toValue = 1
-                fade.duration = 0.18
+                fade.duration = Motion.fadeDuration
                 layer.add(fade, forKey: "in")
             }
             return
         }
         let spring = { (keyPath: String, from: Any, to: Any) -> CASpringAnimation in
-            let animation = CASpringAnimation(perceptualDuration: 0.44, bounce: 0.1)
-            animation.keyPath = keyPath
+            let animation = Motion.spring(.flyOut, keyPath: keyPath)
             animation.fromValue = from
             animation.toValue = to
-            animation.duration = animation.settlingDuration
             return animation
         }
         CATransaction.begin()
@@ -403,7 +401,7 @@ final class LaunchpadFolderOverlay {
                 label.fromValue = 0
                 label.toValue = 1
                 label.beginTime = CACurrentMediaTime() + 0.12
-                label.duration = 0.2
+                label.duration = Motion.fadeDuration
                 label.fillMode = .backwards
                 cell.label.add(label, forKey: "open.label")
             } else {
@@ -411,20 +409,20 @@ final class LaunchpadFolderOverlay {
                 let fade = CABasicAnimation(keyPath: "opacity")
                 fade.fromValue = 0
                 fade.toValue = 1
-                fade.duration = 0.24
+                fade.duration = Motion.fadeDuration
                 cell.root.add(fade, forKey: "open.fade")
             }
         }
         let fade = CABasicAnimation(keyPath: "opacity")
         fade.fromValue = 0
         fade.toValue = 1
-        fade.duration = 0.26
+        fade.duration = Motion.fadeDuration
         titleLayer.add(fade, forKey: "open.fade")
         titleLayer.add(spring("transform.scale", 0.9, 1), forKey: "open.scale")
         let dotsFade = CABasicAnimation(keyPath: "opacity")
         dotsFade.fromValue = 0
         dotsFade.toValue = 1
-        dotsFade.duration = 0.3
+        dotsFade.duration = Motion.fadeDuration
         dots.add(dotsFade, forKey: "open.fade")
         CATransaction.commit()
     }
@@ -440,7 +438,7 @@ final class LaunchpadFolderOverlay {
         }
         guard !view.reduced, let plate else {
             CATransaction.begin()
-            CATransaction.setAnimationDuration(view.reduced ? 0.15 : 0.22)
+            CATransaction.setAnimationDuration(view.reduced ? Motion.Spring.reducedNotch.response : Motion.Spring.flyOut.response)
             CATransaction.setCompletionBlock(finish)
             for layer in layers {
                 layer.opacity = 0
@@ -450,11 +448,9 @@ final class LaunchpadFolderOverlay {
             return
         }
         let spring = { (keyPath: String, from: Any, to: Any) -> CASpringAnimation in
-            let animation = CASpringAnimation(perceptualDuration: 0.36, bounce: 0)
-            animation.keyPath = keyPath
+            let animation = Motion.spring(.calm, keyPath: keyPath)
             animation.fromValue = from
             animation.toValue = to
-            animation.duration = animation.settlingDuration
             animation.fillMode = .forwards
             animation.isRemovedOnCompletion = false
             return animation
@@ -483,13 +479,13 @@ final class LaunchpadFolderOverlay {
                 let fade = CABasicAnimation(keyPath: "opacity")
                 fade.fromValue = now.opacity
                 fade.toValue = 0
-                fade.duration = 0.18
+                fade.duration = Motion.fadeDuration
                 cell.root.add(fade, forKey: "close.fade")
             }
         }
         CATransaction.commit()
         CATransaction.begin()
-        CATransaction.setAnimationDuration(0.18)
+        CATransaction.setAnimationDuration(Motion.fadeDuration)
         titleLayer.opacity = 0
         dots.opacity = 0
         CATransaction.commit()
@@ -519,8 +515,8 @@ extension LaunchpadView {
             let blur = CABasicAnimation(keyPath: "backgroundFilters.blur.inputRadius")
             blur.fromValue = from
             blur.toValue = radius
-            blur.duration = on ? 0.34 : 0.28
-            blur.timingFunction = CAMediaTimingFunction(controlPoints: 0.2, 0.8, 0.3, 1)
+            blur.duration = on ? Motion.Spring.calm.response : Motion.Spring.settle.response
+            blur.timingFunction = nil
             veil.add(blur, forKey: "blur")
             let tint = CABasicAnimation(keyPath: "backgroundColor")
             tint.fromValue = fromShade
@@ -530,7 +526,7 @@ extension LaunchpadView {
         }
         CATransaction.commit()
         NSAnimationContext.runAnimationGroup { context in
-            context.duration = 0.2
+            context.duration = Motion.fadeDuration
             // 打开文件夹时小胶囊藏起来；资料库的搜索列表开着时它是搜索框，留着。
             pill.animator().alphaValue = on && (folder != nil || !pillAtTop) ? 0 : 1
         }
@@ -682,8 +678,8 @@ extension LaunchpadView {
     func folderHoverChanged() {
         guard let overlay = folder else { return }
         CATransaction.begin()
-        CATransaction.setAnimationDuration(reduced ? 0 : 0.22)
-        CATransaction.setAnimationTimingFunction(CAMediaTimingFunction(controlPoints: 0.2, 0.9, 0.3, 1))
+        CATransaction.setAnimationDuration(reduced ? 0 : Motion.Spring.expand.response)
+        CATransaction.setAnimationTimingFunction(nil)
         for (path, cell) in overlay.cells where overlay.dragging?.path != path {
             let lifted = path == hovered
             cell.icon.transform = lifted ? CATransform3DMakeScale(1.08, 1.08, 1) : CATransform3DIdentity
@@ -760,7 +756,7 @@ extension LaunchpadView {
         cell.root.zPosition = 10
         cell.showBadge(false, animated: !reduced)
         CATransaction.begin()
-        CATransaction.setAnimationDuration(0.2)
+        CATransaction.setAnimationDuration(Motion.Spring.expand.response)
         cell.icon.transform = CATransform3DMakeScale(1.14, 1.14, 1)
         cell.icon.shadowOpacity = 0.35
         cell.root.opacity = 0.92
@@ -836,7 +832,7 @@ extension LaunchpadView {
             cell.root.zPosition = 0
             CATransaction.commit()
             if !reduced {
-                let land = CASpringAnimation(perceptualDuration: 0.34, bounce: 0.15)
+                let land = Motion.spring(.glide, keyPath: "position")
                 land.keyPath = "position"
                 land.fromValue = NSValue(point: from)
                 land.toValue = NSValue(point: target)
@@ -844,7 +840,7 @@ extension LaunchpadView {
                 cell.root.add(land, forKey: "slot")
             }
             CATransaction.begin()
-            CATransaction.setAnimationDuration(0.2)
+            CATransaction.setAnimationDuration(Motion.Spring.expand.response)
             cell.icon.transform = CATransform3DIdentity
             cell.icon.shadowOpacity = 0
             cell.root.opacity = 1
@@ -888,7 +884,7 @@ extension LaunchpadView {
         moved.root.zPosition = 10
         moved.showBadge(false, animated: false)
         CATransaction.begin()
-        CATransaction.setAnimationDuration(0.2)
+        CATransaction.setAnimationDuration(Motion.Spring.expand.response)
         moved.icon.transform = CATransform3DMakeScale(1.14, 1.14, 1)
         moved.icon.shadowOpacity = 0.35
         moved.root.opacity = 0.92
@@ -910,8 +906,8 @@ extension LaunchpadView {
         cells[current.key] = nil
         let destination = iconCenter(of: index)
         CATransaction.begin()
-        CATransaction.setAnimationDuration(reduced ? 0.1 : 0.26)
-        CATransaction.setAnimationTimingFunction(CAMediaTimingFunction(controlPoints: 0.3, 0, 0.2, 1))
+        CATransaction.setAnimationDuration(reduced ? Motion.Spring.reducedNotch.response : Motion.Spring.settle.response)
+        CATransaction.setAnimationTimingFunction(nil)
         CATransaction.setCompletionBlock { dragged.root.removeFromSuperlayer() }
         dragged.root.position = destination
         dragged.root.transform = CATransform3DMakeScale(0.3, 0.3, 1)
@@ -932,7 +928,7 @@ extension LaunchpadView {
         if creating {
             // 新文件夹在落点那格长出来，稍后自己打开（照 iOS）。
             if !reduced {
-                let grow = CASpringAnimation(perceptualDuration: 0.3, bounce: 0.2)
+                let grow = Motion.spring(.catchDrop, keyPath: "transform.scale")
                 grow.keyPath = "transform.scale"
                 grow.fromValue = 1.2
                 grow.toValue = 1
@@ -943,7 +939,7 @@ extension LaunchpadView {
                 self?.openFolder(model.id)
             }
         } else if !reduced {
-            let bump = CASpringAnimation(perceptualDuration: 0.3, bounce: 0.3)
+            let bump = Motion.spring(.pop, keyPath: "transform.scale")
             bump.keyPath = "transform.scale"
             bump.fromValue = 1.14
             bump.toValue = 1

@@ -1,7 +1,6 @@
 // Render the actual AppKit view with a disposable in-memory layout; no user defaults writes.
 import Cocoa
 func wlog(_ message: String) { print(message) }
-enum Motion { static var reduced = false }
 enum LegacyQuickCapture { static func reportUnavailableOnce() {} }
 @main struct LaunchpadVisualFixture {
     @MainActor static func pause() async { CATransaction.flush(); try? await Task.sleep(nanoseconds: 800_000_000) }

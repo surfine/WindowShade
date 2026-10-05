@@ -243,7 +243,6 @@ final class GestureHUD {
         guard let panel else { completion?(); return }
         NSAnimationContext.runAnimationGroup({ context in
             context.duration = duration
-            context.timingFunction = CAMediaTimingFunction(controlPoints: 0.23, 1, 0.32, 1)
             panel.animator().alphaValue = alpha
         }, completionHandler: completion)
     }
@@ -359,7 +358,7 @@ final class GestureHUDView: NSView {
         if crossfade, !SystemAppearanceCapabilities.current.reduceMotion {
             let transition = CATransition()
             transition.type = .fade
-            transition.duration = 0.12
+            transition.duration = Motion.fadeDuration
             content.layer?.add(transition, forKey: "swap")
         }
         titleField.stringValue = available ? action.hudTitle : action.unavailableTitle
@@ -381,7 +380,7 @@ final class GestureHUDView: NSView {
         displayedProgress = clamped
         CATransaction.begin()
         CATransaction.setDisableActions(!animated)
-        if animated { CATransaction.setAnimationDuration(0.15) }
+        if animated { CATransaction.setAnimationDuration(Motion.fadeDuration) }
         fill.frame = fillFrame(progress: clamped)
         CATransaction.commit()
         if armed != displaysArmed {
@@ -424,7 +423,7 @@ final class GestureHUDView: NSView {
 
     private func refreshColors() {
         CATransaction.begin()
-        CATransaction.setAnimationDuration(0.12)
+        CATransaction.setAnimationDuration(Motion.fadeDuration)
         track.backgroundColor = SystemAppearancePolicy.cgColor(
             NSColor.labelColor.withAlphaComponent(0.14), for: self)
         // 系统音量浮窗的进度是白色（本机实测，浅深色都一样）；走满换成强调色。

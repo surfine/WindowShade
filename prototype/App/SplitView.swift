@@ -486,7 +486,7 @@ final class SplitDivider {
         panel.alphaValue = 0
         panel.orderFrontRegardless()
         NSAnimationContext.runAnimationGroup { context in
-            context.duration = 0.18
+            context.duration = Motion.fadeDuration
             panel.animator().alphaValue = 1
         }
     }
@@ -514,7 +514,7 @@ final class SplitDivider {
     func animate(from: CGPoint, to: CGPoint, vertical: Bool) {
         animation?.invalidate()
         let began = CACurrentMediaTime()
-        let duration = Motion.reduced ? 0.12 : 0.32
+        let duration = Motion.reduced ? Motion.Spring.reducedWindow.response : Motion.Spring.settle.response
         let t = Timer(timeInterval: 1.0 / 120, repeats: true) { [weak self] timer in
             let finished = MainActor.assumeIsolated { () -> Bool in
                 let p = min(1, (CACurrentMediaTime() - began) / duration)
