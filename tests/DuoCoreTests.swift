@@ -43,14 +43,21 @@ import Foundation
     var transition = FoldTransition(value: 0)
     transition.request(folded: true, at: 0)
     transition.advance(at: 0.14)
-    precondition(abs(transition.value - 0.5) < 1e-10)
+    // `settle` 弹簧：0.14s 应在途中（不再要求 smoothstep 半程恰为 0.5）。
+    precondition(transition.value > 0.15 && transition.value < 0.95, "Fold spring mid-flight")
+    let mid = transition.value
     transition.request(folded: true, at: 0.14)
     transition.advance(at: 0.2)
-    precondition(transition.value > 0.75, "Duplicate target must not restart the timeline")
+    precondition(transition.value >= mid, "Duplicate target must not restart the timeline")
     let visible = transition.value
     transition.request(folded: false, at: 0.2)
     precondition(transition.value == visible, "Reversal must start at the visible position")
-    transition.advance(at: 1)
+    // 打开用 `calm`：再推进约 0.8s 应落定。
+    var t = 0.2
+    while t < 1.2 {
+      t += 1.0 / 60
+      transition.advance(at: t)
+    }
     precondition(transition.value == 0 && transition.settled)
     for i in 0..<1000 {
       transition.request(folded: i % 2 == 0, at: Double(i) / 100)

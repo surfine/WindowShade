@@ -241,5 +241,6 @@
 | 提醒的两套时钟 | 全景稿「约 4 秒」，协调器 `remind` 已写成 4 秒 | 面板 `alert` 默认 2.6 秒，即 `alert.hold` | 并陈。这一轮不改面板，也不改协调器 |
 | 窗口数的点 | [一颗岛](design-drafts/一颗岛.html) 右下 6 点，不跟两耳抢字 | 未单列 | 照稿：6 点靠右下，填色用 `controlAccentColor`。旧程式是正中 4 点 |
 | 方便遮一下 | [从锁屏到窗口](design-drafts/从锁屏到窗口.html) 是放行/解锁叙事 | 未单列「防窥遮罩」令牌 | 静音 `privacy.cover` 用逐屏不透明层（`WS2SilentPrivacyCoverController`），Esc 可撤；文案与验收不得写成系统锁屏。验证后显示、离开锁屏仍待独立准入 |
+| Glance / Fold 位移 | 文法：位移写弹簧令牌名，不用贝塞尔 | §4.6 `calm` / `settle` / `pull` / `reduced` | **已收（P0 2026-10-05）**：`GlancePanel` 卷下/长大/缩回走令牌；`FoldTransition` 合盖进度改 `settle`/`calm` 解析弹簧。Launchpad / SlideOver / Welcome / 胶囊五态仍未收 |
 
 `pop` 那一行核对后与令牌一致。ζ / bounce 那一行是同组数的两种写法，不是两套手感。短暂提醒停多久、私有接口何时读、减少动态效果写 0.18 秒还是写 `reduced`、面板 2.6 秒还是协调器 4 秒，这四处仍待 Aaron 点头。点头之前不改令牌，也不改这两处时钟。
