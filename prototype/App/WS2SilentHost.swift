@@ -14,6 +14,7 @@ final class WS2SilentHost {
     private var stripCursor = WS2SilentStripCursor()
     private var cover = WS2SilentCover.State()
     private var pending: WS2SilentSession.Proposal?
+    private var confirmSequence: UInt64 = 0
     private var frozenID: CGWindowID?
     private var frozenPID: pid_t = 0
     private var frozenRevision: UInt64 = 1
@@ -30,7 +31,7 @@ final class WS2SilentHost {
         guard let runtime, let owner, NotchController.isEnabled,
               AuthorizationService.shared.lockState() == .unlocked else { return false }
         freezeIfNeeded()
-        frozenScreen = NSScreen.screens.first { $0.frame.contains(NSEvent.mouseLocation) } ?? NSScreen.main
+        frozenScreen = NSScreen.screens.first { $0.frame.contains(NSEvent.mouseLocation) }
         let view = WS2SilentPageView(host: self)
         guard runtime.island.show(view, ownerID: "silent", onDismiss: { [weak self, weak view] _ in
             guard let self, self.page === view else { return }
@@ -65,20 +66,28 @@ final class WS2SilentHost {
             return
         }
         if let delta = WS2SilentActivityNav.delta(commandID) {
-            _ = activityCursor.move(delta)
+            invalidatePending()
+            if activities.cardIDs.isEmpty {
+                _ = activityCursor.move(delta)
+            } else {
+                _ = activityCursor.showCard(delta, ids: activities.cardIDs)
+            }
             page?.note(activityCursor.detail(in: activities))
             return
         }
         if WS2SilentActivityNav.showsDetails(commandID) {
+            invalidatePending()
             page?.note(activityCursor.detail(in: activities))
             return
         }
         if let delta = WS2SilentStripNav.delta(commandID) {
+            invalidatePending()
             let column = stripCursor.move(delta)
             page?.note("第 \(column) 列")
             return
         }
         if WS2SilentStripNav.showsOverview(commandID) {
+            invalidatePending()
             page?.note("第 \(stripCursor.column) 列")
             return
         }
@@ -102,8 +111,10 @@ final class WS2SilentHost {
             page?.note(apply(request).notchLine)
         case .awaiting(let proposal):
             pending = proposal
+            let shownAt = max(runtime.clock.now(), proposal.displayedAt)
+            let shown = session.noteShown(id: proposal.id, at: shownAt)
             page?.note(WS2SilentCopy.line(proposal.command.id) ?? previewLine(proposal))
-            page?.setConfirmEnabled(true)
+            page?.setConfirmEnabled(shown)
         case .needsSystemConfirmation:
             pending = nil
             page?.setConfirmEnabled(false)
@@ -131,7 +142,10 @@ final class WS2SilentHost {
         let live = proposal.command.effect == .draft ? proposal.targetRevision : liveRevision()
         let now = runtime.clock.now()
         let began = gestureStart ?? now
-        let step = session.confirm(proposal, gestureBeganAt: began, now: now, liveRevision: live)
+        confirmSequence &+= 1
+        if confirmSequence == 0 { confirmSequence = 1 }
+        let step = session.confirm(
+            proposal, gestureBeganAt: began, now: now, liveRevision: live, sequence: confirmSequence)
         pending = nil
         page?.setConfirmEnabled(false)
         switch step {
@@ -169,7 +183,7 @@ final class WS2SilentHost {
             screen: screen,
             window: window,
             draft: &localDraft,
-            boundSessionID: nil,
+            boundSessionID: runtime.owned.session?.approval.wire.threadID,
             activities: activities,
             assistant: &localAssistant,
             cover: &cover)
@@ -243,7 +257,7 @@ final class WS2SilentHost {
 @MainActor
 final class WS2SilentPageView: NSView, WS2LeaseContent {
     var onCancel: (() -> Void)?
-    var inputIsCurrent: (() -> Bool) = { true }
+    var inputIsCurrent: (() -> Bool) = { false }
     var interactionSize: NSSize { NSSize(width: 344, height: 168) }
     func revoke() { inputIsCurrent = { false } }
     private let status = NSTextField(labelWithString: "")
@@ -295,13 +309,15 @@ final class WS2SilentPageView: NSView, WS2LeaseContent {
 
     func note(_ text: String) { status.stringValue = text }
 
+    private static let pages: [[String]] = [
+        ["launcher.open", "ui.windows", "ui.activities", "ui.usage", "ui.settings"],
+        ["window.left", "window.right", "window.glance", "window.pin", "nav.back"],
+    ]
+
     private func showPage(_ index: Int) {
-        let ids = WS2SilentCatalog.commands.map(\.id)
-        let pageSize = 7
-        let pages = max(1, (ids.count + pageSize - 1) / pageSize)
+        let pages = Self.pages.count
         pageIndex = (index % pages + pages) % pages
-        let start = pageIndex * pageSize
-        let slice = Array(ids[start..<min(ids.count, start + pageSize)])
+        let slice = Self.pages[pageIndex]
         for row in [rowA, rowB] {
             for view in row.arrangedSubviews {
                 row.removeArrangedSubview(view)

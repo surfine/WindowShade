@@ -177,6 +177,36 @@ struct WS2SilentDevicePairing: Equatable, Sendable {
     }
 }
 
+/// 这一轮活体。换相机或断流就作废。未知证据不放行系统提交。原生解锁取消这一笔。
+struct WS2LivenessRound: Equatable, Sendable {
+    var cameraID: String
+    var streamOpen: Bool
+    var evidenceKnown: Bool
+    private(set) var valid = true
+    private(set) var cancelled = false
+    private(set) var claimedUnlock = false
+
+    mutating func noteCameraChange(to next: String) {
+        if next != cameraID { valid = false }
+        cameraID = next
+    }
+
+    mutating func noteStreamLoss() {
+        streamOpen = false
+        valid = false
+    }
+
+    mutating func noteNativeUnlock() {
+        cancelled = true
+        valid = false
+        claimedUnlock = false
+    }
+
+    var maySubmitToSystem: Bool {
+        valid && streamOpen && evidenceKnown && !cancelled && !claimedUnlock
+    }
+}
+
 struct WS2SilentCarPlayReceiver: Equatable, Sendable {
     private(set) var connected = false
     private(set) var sessionStarted = false

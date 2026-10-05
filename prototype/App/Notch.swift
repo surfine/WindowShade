@@ -93,12 +93,20 @@ final class NotchController {
         case .launchpad:
             if owner.launchpad.isShowing { owner.launchpad.hide(reason: "lease") }
         case .notchShelf:
-            // 看一眼与缩略图预览先停，再收那一排；不等动画。
+            // 更高的层把这一排挂起：画面留下，让出后不重播进场。
             endPeek()
-            panels[notice.display.value]?.cancelLease(notice.owner)
+            let panel = panels[notice.display.value]
+            if notice.reason == .suspended, panel?.suspendShelf() == true { break }
+            panel?.cancelLease(notice.owner)
+            leases.forgetShelfPark(on: notice.display)
         default:
             panels[notice.display.value]?.cancelLease(notice.owner)
         }
+    }
+
+    /// 更高的层让出后，把挂起的那一排接回来。不重播展开。
+    func resumeShelf(on display: WS2.DisplayID) {
+        panels[display.value]?.resumeSuspendedShelf()
     }
 
     func authenticationPanel() -> NotchPanel? {
@@ -1471,14 +1479,34 @@ final class NotchPanel: NSPanel {
     }
 
     /// 紧凑样式：最近收进去那扇窗的 App 图标、收着几扇、有没有变过的。
+    /// 有实时活动时，左右耳改成那一件本身：左耳是谁，右耳是数或进度。窗口个数退成一个点。
     struct Compact {
         var pid: pid_t?
         var icon: NSImage?
         var count: Int
         var changed: Bool
+        var leading: String? = nil
+        var leadingSymbol: String? = nil
+        var trailing: String? = nil
         func same(as other: Compact?) -> Bool {
             guard let other else { return false }
             return count == other.count && changed == other.changed && pid == other.pid
+                && leading == other.leading && leadingSymbol == other.leadingSymbol && trailing == other.trailing
+        }
+    }
+
+    enum LevelKind { case volume, brightness }
+    struct Level { var kind: LevelKind; var value: Double }
+
+    /// 探针：Alcove 或同类音量提示在不在。nil 时看正在运行的 App。
+    static var foreignHUDOverride: Bool?
+    static func foreignHUDIsRunning() -> Bool {
+        if let foreignHUDOverride { return foreignHUDOverride }
+        return NSWorkspace.shared.runningApplications.contains { app in
+            let name = (app.localizedName ?? "").lowercased()
+            let id = (app.bundleIdentifier ?? "").lowercased()
+            if id.hasPrefix("com.apple.") { return false }
+            return name == "alcove" || name == "mediamate" || id.contains("alcove") || id.contains("mediamate")
         }
     }
 
@@ -1554,6 +1582,7 @@ final class NotchPanel: NSPanel {
         switch owner {
         case .notchShelf:
             alertTimer?.invalidate(); alertInfo = nil
+            suspendedTiles = nil
             guard isExpanded else { return }
             isExpanded = false; tiles = []
             updateVisibility(); apply(animated: false)
@@ -1567,6 +1596,15 @@ final class NotchPanel: NSPanel {
             break
         }
     }
+    private var meter: Level?
+    private var levelTimer: Timer?
+    private(set) var yieldedHUD = false
+    private var companionText: String?
+    private(set) var isSplit = false
+    private var suspendedTiles: [NotchTile]?
+    /// 最近一次展开有没有播进场。挂起后接回来是 false。
+    private(set) var lastShelfChangeAnimated = true
+    private(set) var showsSecondaryDot = false
     private var activityItems: [NotchActivity] = []
     private var activitySelection: String?
     private var authenticationView: (NSView & NotchInteractiveContent)?
@@ -1576,7 +1614,6 @@ final class NotchPanel: NSPanel {
     private var interactionSize: NSSize {
         (authenticationView as? any WS2LeaseContent)?.interactionSize ?? NSSize(width: 344, height: 68)
     }
-    private var activitiesShown: Bool { !isAuthenticating && !activityItems.isEmpty && dropState == .none && alertInfo == nil }
     func setAuthentication(_ view: NotchAuthenticationView?, animated: Bool = true) {
         setInteraction(view, animated: animated)
     }
@@ -1775,7 +1812,8 @@ final class NotchPanel: NSPanel {
     }
 
     private func updateVisibility() {
-        let needed = isAuthenticating || !isVirtual || compact != nil || dropState != .none || isExpanded || alertInfo != nil || !activityItems.isEmpty
+        let needed = isAuthenticating || !isVirtual || compact != nil || dropState != .none || isExpanded
+            || alertInfo != nil || !activityItems.isEmpty || meter != nil || companionText != nil || showsSecondaryDot
         if needed, !isVisible {
             orderFrontRegardless()
             shoulderWindow?.orderFrontRegardless()
@@ -1854,11 +1892,28 @@ final class NotchPanel: NSPanel {
         apply(animated: false)
     }
 
-    /// 提醒：短暂展开说一句，2.6 秒后收回（指针停在上面时展开的是一排，不插提醒）。
+    /// 提醒：短暂展开说一句，2.6 秒后收回。
+    /// 那一排已经打开、正在认证或落点进行时，不插进这句，只留一个点，以后也不重播。
+    /// 正在播放、岛还没收成一排时，这句话分到旁边那颗岛上，播完再合并。
     func alert(_ info: Alert, duration: TimeInterval = 2.6) {
-        guard !isAuthenticating, !isExpanded, dropState == .none else { return }
-        // 被上面的层挡着：进次区域留个小点，按规则以后也不重播这条提醒。
-        if let leases, let displayID, !leases.remind(on: displayID) { return }
+        let blocked = isAuthenticating || isExpanded || dropState != .none
+        if blocked {
+            if let leases, let displayID { _ = leases.remind(on: displayID) }
+            pullSecondaryDot()
+            return
+        }
+        if let leases, let displayID, !leases.remind(on: displayID) {
+            pullSecondaryDot()
+            return
+        }
+        if !activityItems.isEmpty, meter == nil {
+            split(showing: info.title)
+            alertTimer?.invalidate()
+            alertTimer = Timer.scheduledTimer(withTimeInterval: duration, repeats: false) { [weak self] _ in
+                MainActor.assumeIsolated { self?.mergeSplit() }
+            }
+            return
+        }
         alertInfo = info
         pointerWhenGrown = NSEvent.mouseLocation
         updateVisibility()
@@ -1873,18 +1928,92 @@ final class NotchPanel: NSPanel {
         }
     }
 
-    func expand(with tiles: [NotchTile]) {
+    private func pullSecondaryDot() {
+        let dot = displayID.flatMap { leases?.snapshot($0)?.hasSecondaryDot } ?? false
+        guard dot != showsSecondaryDot else { return }
+        showsSecondaryDot = dot
+        apply(animated: false)
+    }
+
+    /// 更高的层进来：那一排从画面上拿掉，格子留着。
+    @discardableResult
+    func suspendShelf() -> Bool {
+        guard isExpanded else { return false }
+        suspendedTiles = tiles
+        isExpanded = false
+        updateVisibility()
+        apply(animated: false)
+        return true
+    }
+
+    /// 让出之后接回挂起的那一排。不重播展开。
+    func resumeSuspendedShelf() {
+        guard let saved = suspendedTiles else { return }
+        suspendedTiles = nil
+        expand(with: saved, animated: false)
+        if !isExpanded { suspendedTiles = saved }
+    }
+
+    /// 合成的音量或亮度。真实按键和隐私登记不在这里。对方的提示在跑就让位。
+    func presentLevel(_ kind: LevelKind, value: Double) {
+        guard !isAuthenticating else { return }
+        if Self.foreignHUDIsRunning() {
+            yieldedHUD = true
+            return
+        }
+        yieldedHUD = false
+        meter = Level(kind: kind, value: min(1, max(0, value)))
+        updateVisibility()
+        apply(animated: true)
+        levelTimer?.invalidate()
+        levelTimer = Timer.scheduledTimer(withTimeInterval: 1.4, repeats: false) { [weak self] _ in
+            MainActor.assumeIsolated {
+                guard let self else { return }
+                self.meter = nil
+                self.apply(animated: true)
+            }
+        }
+    }
+
+    var levelForProbe: (kind: String, value: Double)? {
+        meter.map { ($0.kind == .volume ? "音量" : "亮度", $0.value) }
+    }
+
+    var compactForProbe: (leading: String?, trailing: String?)? {
+        displayCompact().map { ($0.leading, $0.trailing) }
+    }
+
+    /// 第二颗岛：从这一颗旁边长出去。展开着的那一排不拆开。
+    func split(showing text: String) {
+        guard !isAuthenticating, !isExpanded, !text.isEmpty else { return }
+        companionText = text
+        isSplit = true
+        updateVisibility()
+        apply(animated: true)
+    }
+
+    func mergeSplit() {
+        guard isSplit else { return }
+        companionText = nil
+        isSplit = false
+        apply(animated: true)
+    }
+
+    var splitForProbe: (separated: Bool, retargeted: Bool, fades: Bool) { canvas.splitForProbe }
+
+    func expand(with tiles: [NotchTile], animated: Bool = true) {
         guard !isAuthenticating else { return }
         guard acquireLease(.notchShelf) else { return }
         alertTimer?.invalidate()
         alertInfo = nil
         isExpanded = true
+        lastShelfChangeAnimated = animated
         // 竖放的窄屏放不下六张：按这块屏的宽度少放几张，岛不出屏幕边。
         let home = NSScreen.screens.first { $0.frame.contains(NSPoint(x: notch.midX, y: notch.midY)) }
         let room = (home?.frame.width ?? notch.width + 1000) - 44
         self.tiles = Array(tiles.prefix(max(1, Int(room / 132))))
         updateVisibility()
-        apply(animated: true)
+        apply(animated: animated)
     }
 
     /// 某一格的画面到了（后台截的）：只换这一格的图，不走 expand（那会清掉提醒、重算整个岛）。
@@ -2089,11 +2218,25 @@ final class NotchPanel: NSPanel {
                     IslandStyle(cornerRadius: 24, allCorners: false, fill: .black,
                                 border: alert.tone == .problem || alert.tone == .tip ? 1.5 : 1, borderColor: border))
         }
-        if !activityItems.isEmpty {
-            let width = max(notch.width, 240)
-            let height = notch.height + 32
-            return (NSRect(x: notch.midX - width / 2, y: notch.maxY - height, width: width, height: height),
-                    IslandStyle(cornerRadius: 18, allCorners: false, fill: .black, border: 0))
+        if let ears = displayCompact(), ears.leading != nil {
+            switch compactShape {
+            case .sides:
+                return (notch.insetBy(dx: -max(sideWidth, 54), dy: 0),
+                        IslandStyle(cornerRadius: NotchIsland.compactRadius(hardware), allCorners: false, fill: .black, border: 0))
+            case .chin:
+                if isVirtual {
+                    return (NSRect(x: notch.midX - 36, y: notch.minY - 12, width: 72, height: 12),
+                            IslandStyle(cornerRadius: 6, allCorners: false, fill: NSColor.black.withAlphaComponent(0.88), border: 0))
+                }
+                return (NSRect(x: notch.minX, y: notch.minY - 8, width: notch.width, height: notch.height + 8),
+                        IslandStyle(cornerRadius: NotchIsland.hug(hardware), allCorners: false, fill: .black, border: 0))
+            case .pill, .pending:
+                let width: CGFloat = meter == nil ? 200 : 220
+                let height = max(22, isVirtual ? notch.height - 6 : notch.height)
+                let y = isVirtual ? notch.minY + 3 : notch.maxY - height
+                return (NSRect(x: notch.midX - width / 2, y: y, width: width, height: height),
+                        IslandStyle(cornerRadius: height / 2, allCorners: true, fill: .black, border: 0))
+            }
         }
         if compact != nil {
             switch compactShape {
@@ -2129,6 +2272,7 @@ final class NotchPanel: NSPanel {
         if isAuthenticating { return NotchCanvasView.Spring(response: 0.28, bounce: 0.02) }
         if dropState != .none { return NotchCanvasView.Spring(response: Motion.Spring.catchDrop.response, bounce: Motion.Spring.catchDrop.bounce) }
         if alertInfo != nil { return NotchCanvasView.Spring(response: Motion.Spring.bloom.response, bounce: Motion.Spring.bloom.bounce) }
+        if meter != nil { return NotchCanvasView.Spring(response: Motion.Spring.pop.response, bounce: Motion.reduced ? 0 : Motion.Spring.pop.bounce) }
         if isExpanded { return NotchCanvasView.Spring(response: Motion.Spring.expand.response, bounce: Motion.Spring.expand.bounce) }
         return NotchCanvasView.Spring(response: Motion.Spring.calm.response, bounce: Motion.Spring.calm.bounce)
     }
@@ -2143,22 +2287,26 @@ final class NotchPanel: NSPanel {
         let bare = !isVirtual && rect == notch && pulled == 0
         let resting = !isExpanded && dropState == .none && alertInfo == nil
         let shape = compactShape
-        let compactShown = resting && activityItems.isEmpty && compact != nil && (shape == .sides || shape == .pill)
-        let chinShown = resting && activityItems.isEmpty && compact != nil && shape == .chin
+        let visual = displayCompact()
+        let compactShown = resting && visual != nil && (shape != .chin || visual?.leading != nil)
+        let chinShown = resting && visual?.leading == nil && meter == nil && compact != nil && shape == .chin
         let extra = resting && pulled > 0 ? Self.rubberBand(pulled, limit: (canPull?() ?? false) ? 84 : 18) : 0
         let content = NotchCanvasView.Content(
             tiles: isExpanded ? tiles : [],
             dots: chinShown ? (compact?.count ?? 0) : 0,
             dotsChanged: chinShown && (compact?.changed ?? false),
             dotsY: isVirtual ? 4 : 2.5 + extra,
-            compact: compactShown ? compact : nil,
+            compact: compactShown ? visual : nil,
             compactSlots: compactShown ? compactSlots(in: rect.size, shape: shape, side: target.compactSide) : nil,
             alert: (!isExpanded && dropState == .none) ? alertInfo : nil,
             hint: hintText(), notchHeight: notch.height,
             pullIcon: extra > 0 ? compact?.icon : nil, pullExtra: extra, pullProgress: min(1, extra / 50),
             drop: dropState, dropChoice: dropChoice,
-            activities: activitiesShown ? activityItems : [], activitySelection: activitySelection,
-            activitiesExpanded: isExpanded && activitiesShown)
+            activities: (dropState == .none && alertInfo == nil && meter == nil) ? activityItems : [],
+            activitySelection: activitySelection,
+            activitiesExpanded: isExpanded && !activityItems.isEmpty,
+            secondaryDot: showsSecondaryDot,
+            companion: companionText)
         // 面板开到能装下“现在”和“终点”（四周多留一点给回弹），顶边贴着屏幕顶；岛在屏幕上原地不动。
         // 肩在另一层不接指针的窗口里，不占面板（S2）。
         let now = canvas.islandOnScreen(panelOrigin: frame.origin) ?? rect
@@ -2242,9 +2390,36 @@ final class NotchPanel: NSPanel {
         }
     }
 
+    /// 紧凑两耳。有实时活动时左耳是那一件、右耳是进度；窗口个数退成一个点。
+    /// 音量和亮度也走这两耳，不另开一扇窗。
+    private func displayCompact() -> Compact? {
+        if let meter {
+            let percent = "\(Int((meter.value * 100).rounded()))"
+            switch meter.kind {
+            case .volume:
+                return Compact(count: 0, changed: false, leading: "音量", leadingSymbol: "speaker.wave.2.fill", trailing: percent)
+            case .brightness:
+                return Compact(count: 0, changed: false, leading: "亮度", leadingSymbol: "sun.max.fill", trailing: percent)
+            }
+        }
+        if let item = activityItems.first(where: { $0.id == activitySelection }) ?? activityItems.first,
+           !isExpanded, dropState == .none, alertInfo == nil {
+            return Compact(pid: compact?.pid, icon: compact?.icon, count: compact?.count ?? 0, changed: false,
+                           leading: item.title, leadingSymbol: item.symbol.isEmpty ? "circle.fill" : item.symbol,
+                           trailing: Self.earTrailing(item))
+        }
+        return compact
+    }
+
+    static func earTrailing(_ item: NotchActivity) -> String {
+        if let progress = item.progress { return "\(Int((progress * 100).rounded()))%" }
+        if !item.detail.isEmpty { return item.detail }
+        return item.subtitle
+    }
+
     /// 紧凑样式左右两段在岛里的位置。side：每侧主体多宽（画肩时从 sideWidth 里扣掉了肩）。
     private func compactSlots(in size: NSSize, shape: CompactShape, side: CGFloat) -> (leading: NSRect, trailing: NSRect) {
-        if shape == .pill {
+        if shape == .pill || shape == .pending || shape == .chin {
             return (NSRect(x: 4, y: 0, width: size.width / 2 - 4, height: size.height),
                     NSRect(x: size.width / 2, y: 0, width: size.width / 2 - 4, height: size.height))
         }
@@ -2294,6 +2469,10 @@ final class NotchCanvasView: NSView {
         var activities: [NotchActivity] = []
         var activitySelection: String? = nil
         var activitiesExpanded: Bool = false
+        /// 被更高的层挡住的提醒：只留一个点，不把那一句再说一遍。
+        var secondaryDot: Bool = false
+        /// 旁边那颗岛上的一句。空着就是合并。
+        var companion: String? = nil
 
         /// 是不是同一份内容（只是岛的大小、位置变了）：同一份就原地挪，不淡出淡入。
         /// 故意不比较格子的画面：画面是后台截到后原地换的（updateTileSnapshot），换图不该让整排淡出淡入。
@@ -2358,6 +2537,10 @@ final class NotchCanvasView: NSView {
     }
     private var shown: Content?
     private var morphs = 0
+    private var presentGeneration = 0
+    private let companion = CALayer()
+    private let companionLabel = CATextLayer()
+    private var companionRetargeted = false
 
     /// 某一格的画面到了：记进当前内容（下次比较、重排时用得上），再交给那一格的视图原地换上。
     func updateTileSnapshot(id: CGWindowID, image: CGImage?) {
@@ -2377,6 +2560,16 @@ final class NotchCanvasView: NSView {
         island.masksToBounds = true
         island.frame = bounds
         layer?.addSublayer(island)
+        companion.backgroundColor = NSColor.black.cgColor
+        companion.cornerCurve = .continuous
+        companion.opacity = 0
+        companion.isHidden = true
+        companionLabel.fontSize = 12
+        companionLabel.alignmentMode = .center
+        companionLabel.foregroundColor = NSColor.white.cgColor
+        companionLabel.contentsScale = 2
+        companion.addSublayer(companionLabel)
+        layer?.insertSublayer(companion, below: island)
         keyLine.cornerCurve = .continuous
         keyLine.borderWidth = 0
         island.addSublayer(keyLine)
@@ -2419,6 +2612,7 @@ final class NotchCanvasView: NSView {
         CATransaction.setDisableActions(true)
         island.position = CGPoint(x: island.position.x + delta.dx, y: island.position.y + delta.dy)
         clip.position = CGPoint(x: clip.position.x + delta.dx, y: clip.position.y + delta.dy)
+        companion.position = CGPoint(x: companion.position.x + delta.dx, y: companion.position.y + delta.dy)
         CATransaction.commit()
         for view in clipHost.subviews { view.setFrameOrigin(NSPoint(x: view.frame.minX + delta.dx, y: view.frame.minY + delta.dy)) }
     }
@@ -2473,7 +2667,8 @@ final class NotchCanvasView: NSView {
                             scale: scale, snap: snap, spring: spring, fade: shoulderFade)
         }
         CATransaction.commit()
-        present(content, in: rect, animated: spring != nil)
+        present(content, in: rect, animated: spring != nil, response: spring?.response ?? 0)
+        placeCompanion(content.companion, beside: rect, spring: spring)
     }
 
     private func add(_ spring: Spring, key: String, to layer: CALayer, position: CGVector, size: CGSize, radius: CGFloat) {
@@ -2496,21 +2691,28 @@ final class NotchCanvasView: NSView {
         if radius != 0 { animate("cornerRadius", from: radius, zero: 0) }
     }
 
-    /// 内容：同一份就原地挪到新位置；换了就旧的一层淡出、新的一层淡入（都被岛裁着）。
-    private func present(_ content: Content, in rect: NSRect, animated: Bool) {
+    /// 形状走到四成，内容才淡入。减少动态效果时不等，位置交给 reduced，内容只淡。
+    static func contentEntranceDelay(response: Double, reduced: Bool) -> Double {
+        guard !reduced, response > 0 else { return 0 }
+        return response * 0.22
+    }
+
+    /// 内容：同一份就原地挪到新位置；换了就旧的一层先淡出，新的一层等形状走到四成再淡入（都被岛裁着）。
+    private func present(_ content: Content, in rect: NSRect, animated: Bool, response: Double) {
         if let current, let shown, shown.same(as: content) {
             current.place(in: rect, content: content)
             self.shown = content
             return
         }
+        presentGeneration += 1
+        let generation = presentGeneration
         if let outgoing = current {
             outgoing.inert = true
             if animated {
                 NSAnimationContext.runAnimationGroup({ context in
-                    context.duration = 0.1
+                    context.duration = Motion.reduced ? 0.18 : 0.10
                     outgoing.animator().alphaValue = 0
                 }, completionHandler: {
-                    // 动画完成回调在主线程。
                     MainActor.assumeIsolated { outgoing.removeFromSuperview() }
                 })
             } else {
@@ -2528,13 +2730,77 @@ final class NotchCanvasView: NSView {
         incoming.place(in: rect, content: content)
         if animated, !incoming.isEmpty {
             incoming.alphaValue = 0
-            NSAnimationContext.runAnimationGroup { context in
-                context.duration = 0.18
-                incoming.animator().alphaValue = 1
+            let delay = Self.contentEntranceDelay(response: response, reduced: Motion.reduced)
+            let fade = { [weak self, weak incoming] in
+                guard let self, let incoming, self.presentGeneration == generation, self.current === incoming else { return }
+                if Motion.reduced {
+                    incoming.alphaValue = 1
+                } else {
+                    NSAnimationContext.runAnimationGroup { context in
+                        context.duration = 0.18
+                        incoming.animator().alphaValue = 1
+                    }
+                }
+            }
+            if delay <= 0 { fade() }
+            else {
+                DispatchQueue.main.asyncAfter(deadline: .now() + delay) {
+                    MainActor.assumeIsolated { fade() }
+                }
             }
         }
         current = incoming
         shown = content
+    }
+
+    /// 第二颗岛。模型直接到终点，半路改方向时用叠加弹簧接上当前的位置。减少动态效果只改透明度。
+    private func placeCompanion(_ text: String?, beside islandRect: NSRect, spring: Spring?) {
+        let reduced = Motion.reduced
+        let height = min(36, max(28, islandRect.height * 0.55))
+        let width: CGFloat = 132
+        let apart = CGRect(x: islandRect.maxX + 8, y: islandRect.maxY - height, width: width, height: height)
+        let together = CGRect(x: islandRect.midX - width / 2, y: islandRect.midY - height / 2, width: width, height: height)
+        let destination = text == nil ? together : apart
+        CATransaction.begin()
+        CATransaction.setDisableActions(true)
+        let presented = companion.presentation()?.frame ?? companion.frame
+        let wasVisible = companion.opacity > 0.01 && !companion.isHidden
+        let inflight = companion.animation(forKey: "companion.position") != nil
+            || companion.animation(forKey: "companion.bounds.size") != nil
+        if inflight { companionRetargeted = true }
+        companion.isHidden = false
+        companion.cornerRadius = height / 2
+        if let text { companionLabel.string = text }
+        companionLabel.frame = CGRect(x: 10, y: (height - 16) / 2, width: width - 20, height: 16)
+        companion.frame = destination
+        if reduced {
+            companion.removeAnimation(forKey: "companion.position")
+            companion.removeAnimation(forKey: "companion.bounds.size")
+            companion.opacity = text == nil ? 0 : 1
+        } else if text != nil || wasVisible {
+            let from = wasVisible ? presented : together
+            let motion = spring ?? Spring(response: Motion.Spring.expand.response, bounce: Motion.Spring.expand.bounce)
+            add(motion, key: "companion", to: companion,
+                position: CGVector(dx: from.midX - destination.midX, dy: from.midY - destination.midY),
+                size: CGSize(width: from.width - destination.width, height: from.height - destination.height),
+                radius: 0)
+            let fade = CABasicAnimation(keyPath: "opacity")
+            fade.fromValue = companion.presentation()?.opacity ?? companion.opacity
+            fade.toValue = text == nil ? 0 : 1
+            fade.duration = text == nil ? 0.10 : 0.18
+            companion.opacity = text == nil ? 0 : 1
+            companion.add(fade, forKey: "companion.opacity")
+        } else {
+            companion.opacity = 0
+        }
+        CATransaction.commit()
+    }
+
+    var splitForProbe: (separated: Bool, retargeted: Bool, fades: Bool) {
+        let separated = companion.opacity > 0.5 && companion.frame.minX + 1 >= island.frame.maxX
+        let fades = companion.animation(forKey: "companion.position") == nil
+            && companion.animation(forKey: "companion.bounds.size") == nil
+        return (separated, companionRetargeted, fades || Motion.reduced)
     }
 
     /// 落定：旧的一层都撤掉。
@@ -3014,6 +3280,7 @@ final class NotchContentView: NSView {
     private let hint = NSTextField(labelWithString: "")
     private let dots = NotchDotsView()
     private let compactView = NotchCompactView()
+    private let mark = NotchSecondaryMark()
     private let alertView = NotchAlertView()
     private let pullView = NSImageView()
     /// 落点里的符号：托盘，收下后换成对勾（原地换，符号自己的过渡）。
@@ -3028,6 +3295,7 @@ final class NotchContentView: NSView {
     init(content: NotchCanvasView.Content) {
         isEmpty = content.tiles.isEmpty && content.hint == nil && content.compact == nil && content.alert == nil
             && content.activities.isEmpty && content.dots == 0 && !content.dotsChanged && content.pullIcon == nil
+            && !content.secondaryDot
         super.init(frame: .zero)
         wantsLayer = true
         hint.font = .systemFont(ofSize: 12, weight: .medium)
@@ -3038,6 +3306,7 @@ final class NotchContentView: NSView {
         addSubview(hint)
         addSubview(dots)
         addSubview(compactView)
+        addSubview(mark)
         addSubview(alertView)
         addSubview(activityView)
         pullView.imageScaling = .scaleProportionallyUpOrDown
@@ -3086,10 +3355,12 @@ final class NotchContentView: NSView {
         compactView.isHidden = content.compact == nil
         compactView.frame = bounds
         compactView.update(content.compact, slots: content.compactSlots)
+        mark.frame = bounds
+        mark.visible = content.secondaryDot
         alertView.isHidden = content.alert == nil
         alertView.frame = NSRect(x: 0, y: 0, width: rect.width, height: max(0, rect.height - content.notchHeight))
         alertView.update(content.alert)
-        activityView.isHidden = content.activities.isEmpty
+        activityView.isHidden = content.activities.isEmpty || !content.activitiesExpanded
         let activityHeight: CGFloat = content.activitiesExpanded ? 142 : 30
         activityView.frame = NSRect(x: 0, y: max(0, rect.height - content.notchHeight - activityHeight), width: rect.width, height: activityHeight)
         activityView.update(content.activities, selected: content.activitySelection, expanded: content.activitiesExpanded)
@@ -3195,7 +3466,11 @@ final class NotchCompactView: NSView {
         setAccessibilityElement(compact != nil)
         setAccessibilityRole(.staticText)
         if let compact {
-            setAccessibilityLabel(compact.count > 0 ? "刘海里收着 \(compact.count) 扇窗口" : "收起的窗口有变化")
+            if let leading = compact.leading {
+                setAccessibilityLabel(compact.trailing.map { "\(leading)，\($0)" } ?? leading)
+            } else {
+                setAccessibilityLabel(compact.count > 0 ? "刘海里收着 \(compact.count) 扇窗口" : "收起的窗口有变化")
+            }
         }
     }
 
@@ -3203,6 +3478,15 @@ final class NotchCompactView: NSView {
 
     override func draw(_ dirtyRect: NSRect) {
         guard let compact, let slots else { return }
+        if let leading = compact.leading {
+            drawEar(leading, symbol: compact.leadingSymbol, in: slots.leading, align: .left)
+            drawEar(compact.trailing ?? "", symbol: nil, in: slots.trailing, align: .right)
+            if compact.count > 0 {
+                NSColor.controlAccentColor.setFill()
+                NSBezierPath(ovalIn: NSRect(x: bounds.midX - 2, y: 3, width: 4, height: 4)).fill()
+            }
+            return
+        }
         let side = min(20, slots.leading.height - 8)
         if let icon = compact.icon {
             icon.draw(in: NSRect(x: slots.leading.midX - side / 2, y: slots.leading.midY - side / 2, width: side, height: side))
@@ -3226,6 +3510,40 @@ final class NotchCompactView: NSView {
             NSColor.controlAccentColor.setFill()
             NSBezierPath(ovalIn: NSRect(x: startX + size.width + gap, y: slots.trailing.midY - dot / 2, width: dot, height: dot)).fill()
         }
+    }
+
+    private func drawEar(_ text: String, symbol: String?, in slot: NSRect, align: NSTextAlignment) {
+        guard !text.isEmpty || symbol != nil else { return }
+        var x = slot.minX + 6
+        let side: CGFloat = 14
+        if let symbol, let image = NSImage(systemSymbolName: symbol, accessibilityDescription: nil)?
+            .withSymbolConfiguration(.init(pointSize: 12, weight: .semibold)) {
+            image.draw(in: NSRect(x: align == .right ? slot.maxX - side - 6 : x, y: slot.midY - side / 2, width: side, height: side))
+            if align != .right { x += side + 4 }
+        }
+        let font = NSFont.monospacedDigitSystemFont(ofSize: 12, weight: .semibold)
+        let rounded = font.fontDescriptor.withDesign(.rounded).flatMap { NSFont(descriptor: $0, size: font.pointSize) } ?? font
+        let string = NSAttributedString(string: text, attributes: [
+            .font: rounded, .foregroundColor: NSColor.white.withAlphaComponent(0.92),
+        ])
+        let size = string.size()
+        let maxWidth = max(0, slot.width - (x - slot.minX) - 6)
+        let drawX = align == .right ? slot.maxX - min(size.width, maxWidth) - 6 : x
+        string.draw(with: NSRect(x: drawX, y: slot.midY - size.height / 2, width: min(size.width, maxWidth), height: size.height),
+                    options: [.usesLineFragmentOrigin, .truncatesLastVisibleLine])
+    }
+}
+
+/// 被挡住的提醒留下的点。不把那一句补说一遍。
+final class NotchSecondaryMark: NSView {
+    var visible = false {
+        didSet { guard visible != oldValue else { return }; needsDisplay = true }
+    }
+    override func hitTest(_ point: NSPoint) -> NSView? { nil }
+    override func draw(_ dirtyRect: NSRect) {
+        guard visible else { return }
+        NSColor.controlAccentColor.setFill()
+        NSBezierPath(ovalIn: NSRect(x: bounds.maxX - 14, y: bounds.minY + 8, width: 6, height: 6)).fill()
     }
 }
 

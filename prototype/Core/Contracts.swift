@@ -308,7 +308,7 @@ extension WS2 {
         let environmentEpoch: UInt64
     }
     enum LeaseRevocation: Sendable {
-        case preempted, released, expired, locked, sleeping, sessionChanged, disabled, displayRemoved
+        case preempted, suspended, released, expired, locked, sleeping, sessionChanged, disabled, displayRemoved
     }
     enum LeaseDecision: Sendable {
         case acquired(LeaseHandle)

@@ -1,7 +1,7 @@
-# 竞品调研：DockDoor / DockMate / Swish / WindowMizer
+# 竞品调研：DockDoor / DockMate / Swish / WindowMizer / Alcove
 
-更新于 2026-09-29。Wins 单独写在 [竞品调研：Wins](competitive-analysis.md)，各家分数与依据在
-[每个领域的分数](scorecard.md)。这一份补上 Aaron 9/27 深夜点名的另外四家，以及我们对应要补的缺口。
+更新于 2026-10-05。Wins 单独写在 [竞品调研：Wins](competitive-analysis.md)，各家分数与依据在
+[每个领域的分数](scorecard.md)。这一份补上 Aaron 9/27 深夜点名的另外四家，以及 10 月 5 日纳入追赶的 Alcove。
 
 功能清单只取各家自己的页面、仓库和商店页，没有下载试用；取不到一手来源的照写"取不到"，不靠二手描述补。
 
@@ -92,8 +92,26 @@ $14.99 起，一周试用，macOS 10.14 以上，原生支持 Apple 芯片；最
 | 正在播放：封面、播放 / 暂停、切歌 | 不做 |
 | 预览的大小、位置、悬停延迟可调 | 没做成可调：出现的时机和大小是固定的 |
 
+## Alcove
+
+Henrik Ruscon 的菜单栏工具，官网 [tryalcove.com](https://tryalcove.com)，2026-10-05 读取。下载页写 macOS 15、v1.7.7。
+FAQ 写一次买断、最多 3 台同时使用、72 小时试用、14 天内可退、依赖私有 API、不收集资料。价格的 $14.99 只见转述，FAQ 没写数字，这里不采用。
+开发者仓库 [v1.7.0 说明](https://github.com/henrikruscon/alcove-releases/releases/tag/v1.7.0)（2026-04-05）列了 duo、没有刘海时的 pill、波形改成对齐 iOS、AirPods Max、Lossless / Dolby Atmos、日历引导、无障碍引导。日历、锁屏小组件、模拟刘海只见二手页，标未核实。
+
+刘海这一格以它为最强的别家。它强在一颗黑胶囊的连续变形；我们强在把窗口收进同一颗岛。不复制它的私有实现。
+
+| 它有什么 | 我们对应 |
+| --- | --- |
+| 播放、通知、音量、亮度收在一颗会变形的胶囊里 | 同一颗刘海。紧凑左右耳是正在进行的那一件，展开是它的放大；两件同时露面时分开再合并 |
+| v1.7.0 的 duo | 不照它的像素。对的是一颗岛分开、再合并，半路可以改方向 |
+| 没有刘海时用 pill | 外接屏顶部正中的胶囊。不画假刘海 |
+| 音量、亮度提示（v1.7.0 写了亮度页动画和 HUD 切换） | 先用合成事件驱动同一颗岛。真实系统按键和隐私登记分开做。它或同类 HUD 在跑就让位 |
+| 锁屏小组件、日历、天气 | 未核实，不追 |
+| 把窗口收进刘海 | 一手材料里没有。这是我们多出来的 |
+
 ## 参考
 
+- Alcove：[官网](https://tryalcove.com)、[下载](https://tryalcove.com/download)、[FAQ](https://tryalcove.com/faqs)、[v1.7.0 说明](https://github.com/henrikruscon/alcove-releases/releases/tag/v1.7.0)，读取于 2026-10-05
 - DockDoor：[仓库](https://github.com/ejbills/DockDoor)、[官网](https://dockdoor.net)、[Pro](https://pro.dockdoor.net)，读取于 2026-09-28
 - Swish：[官网](https://highlyopinionated.co/swish/)，读取于 2026-09-28
 - WindowMizer 6：[产品页](https://windowmizer.com/windowmizer/)，读取于 2026-09-28

@@ -65,7 +65,7 @@ func lease(_ decision: WS2.LeaseDecision) throws -> WS2.LeaseHandle {
             var reason: WS2.LeaseRevocation?
             let c = InteractionCoordinator(bootID: UUID(), clock: TestClock(), environment: { .init(unlocked: true, displays: [display]) }, cancel: { _,r in reason = r })
             let a = try lease(c.acquire(request("pomodoro"))), b = try lease(c.acquire(request("agentReview", .authorization), replacing: a))
-            t.check(c.isCurrent(b) && !c.isCurrent(a),"review wins"); t.check(reason == .preempted,"explicit preemption reason")
+            t.check(c.isCurrent(b) && !c.isCurrent(a),"review wins"); t.check(reason == .suspended,"higher layer suspends the opened page")
         }
         t.run("ARB06 equal authorization never replaces review") {
             let c = InteractionCoordinator(bootID: UUID(), clock: TestClock(), environment: { .init(unlocked: true, displays: [display]) }, cancel: { _,_ in })

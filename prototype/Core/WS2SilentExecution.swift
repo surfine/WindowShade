@@ -39,13 +39,27 @@ enum SilentExecutionResult: Equatable, Sendable {
 
 enum WS2SilentEffectJudge {
     static func cover(overlayCreated: Bool, commandID: String) -> SilentExecutionResult {
-        guard overlayCreated else { return .unavailable("没遮住") }
-        return .completed(WS2EffectReceipt(commandID: commandID, targetID: "", observed: true))
+        _ = overlayCreated
+        _ = commandID
+        return .unavailable("尚未遮住")
     }
 
-    static func glance(previewVisible: Bool) -> SilentExecutionResult {
-        guard previewVisible else { return .unavailable("没预览") }
+    static func glance(invoked: Bool, previewVisible: Bool) -> SilentExecutionResult {
+        guard invoked, previewVisible else { return .unavailable("没预览") }
         return .completed(WS2EffectReceipt(commandID: "window.glance", targetID: "", observed: true))
+    }
+
+    static func focusStart(wasIdle: Bool, runningAfter: Bool) -> SilentExecutionResult {
+        if wasIdle && runningAfter {
+            return .completed(WS2EffectReceipt(commandID: "focus.start", targetID: "focus", observed: true))
+        }
+        if !wasIdle && runningAfter { return .alreadySatisfied("已在专注") }
+        return .failed("这一笔没有做成")
+    }
+
+    static func pin(alreadyPreviewing: Bool) -> (result: SilentExecutionResult, start: Bool) {
+        if alreadyPreviewing { return (.alreadySatisfied("已在置顶"), false) }
+        return (.waiting(0), true)
     }
 
     static func usageRefresh(protocolParsed: Bool) -> SilentExecutionResult {
@@ -67,4 +81,109 @@ enum WS2SilentEffectJudge {
 /// 开发实验室只记样本。它没有真实效果端口。
 enum WS2SilentLab {
     static var realEffectCount: Int { 0 }
+}
+
+struct WS2SilentLabLog: Equatable, Sendable {
+    var windowCalls = 0
+    var backendCalls = 0
+    var credentialCalls = 0
+
+    mutating func ingestSimulatedNod() {}
+}
+
+/// 一笔操作的回执。晚到的旧操作不能改新页面。
+struct WS2SilentOperationLedger: Equatable, Sendable {
+    struct Record: Equatable, Sendable {
+        var id: UUID
+        var commandID: String
+        var targetID: String
+        var page: UUID
+        var line: String
+    }
+
+    private(set) var page = UUID()
+    private(set) var records: [UUID: Record] = [:]
+    private(set) var visible: String = ""
+
+    mutating func begin(commandID: String, targetID: String) -> UUID {
+        let id = UUID()
+        records[id] = Record(id: id, commandID: commandID, targetID: targetID, page: page, line: "还在等")
+        visible = "还在等"
+        return id
+    }
+
+    mutating func turnPage() {
+        page = UUID()
+        visible = ""
+    }
+
+    /// 页面已经换走时只留下这笔自己的记录，不覆盖新页面。
+    @discardableResult
+    mutating func finish(id: UUID, line: String) -> Bool {
+        guard var record = records[id] else { return false }
+        record.line = line
+        records[id] = record
+        guard record.page == page else { return false }
+        visible = line
+        return true
+    }
+}
+
+struct WS2BoundWindow: Equatable, Sendable {
+    var displayID: UInt32
+    var windowID: String
+    var generation: UInt64
+
+    func affected(pointerDisplay: UInt32, focusedWindow: String) -> String {
+        _ = pointerDisplay
+        _ = focusedWindow
+        return windowID
+    }
+}
+
+struct WS2PinLaunch: Equatable, Sendable {
+    struct Key: Hashable, Sendable {
+        var pid: Int32
+        var window: String
+    }
+
+    var inflight: [Key: UInt64] = [:]
+    var sessions: Set<Key> = []
+
+    mutating func start(pid: Int32, window: String, generation: UInt64) -> String {
+        let key = Key(pid: pid, window: window)
+        if sessions.contains(key) { return "already" }
+        if inflight[key] != nil { return "join" }
+        inflight[key] = generation
+        return "new"
+    }
+
+    mutating func finish(pid: Int32, window: String, generation: UInt64) -> Bool {
+        let key = Key(pid: pid, window: window)
+        guard inflight[key] == generation else { return false }
+        inflight[key] = nil
+        sessions.insert(key)
+        return true
+    }
+}
+
+struct WS2LockedShelf: Equatable, Sendable {
+    var scroll: Double
+    var selectedID: String?
+    var privateLine: String
+
+    func locked() -> WS2LockedShelf {
+        WS2LockedShelf(scroll: scroll, selectedID: nil, privateLine: "")
+    }
+}
+
+struct WS2PageRestore: Equatable, Sendable {
+    var scroll: Double
+    var selectedID: String?
+
+    func apply(ids: [String], oldLease: UInt64, newLease: UInt64) -> (scroll: Double, selected: String?, missing: Bool, leaseChanged: Bool) {
+        let selected = selectedID.flatMap { ids.contains($0) ? $0 : nil }
+        let missing = selectedID != nil && selected == nil
+        return (scroll, selected, missing, oldLease != newLease)
+    }
 }

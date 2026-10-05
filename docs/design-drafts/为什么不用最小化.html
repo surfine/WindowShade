@@ -212,6 +212,7 @@ footer{margin-top:72px;padding-top:22px;border-top:1px solid var(--line);font-si
     <p class="lede">这一版修订按 9 月 26 日重新发布的 1.0.15 改写排窗对照：三分屏、四角、键盘排布、甩一下都已发布，网格已定要做、还没做。新加一节，写本地还没发布的侧拉、刘海、启动台，以及它们各自的对手；周围的工具里加了 Wins。</p>
     <p class="lede">深夜修订：“下一步”里欠的几件（网格 3×2 和 3×3、暂时取消全部置顶、做不到时说一声、在卷帘条上拉一点就是看一眼）本地都做好了，Wins 修过的坑也按验收用例修了。Aaron 又加了三件：刘海当 Mac 的主屏幕键（点一下回主屏幕，两下调度中心，三下这个 App 的所有窗口，最小化和隐藏的窗口也收在刘海里）、魔法平铺（两指张开把整块屏排好，比例自己定）、晃一晃（Windows 的 Aero Shake）。原则也定下来了：操作简单直觉，能借 Windows、KDE、iPad 的老说法就借，不把简单的事做复杂。以上都还没发布，版本仍是 1.0.15。</p>
     <p class="lede">9 月 28 日：竞品里加了 niri（Linux 上的卷动平铺，开新窗口不挤别人）。本地做了卷轴，把它最好的那一点接进同一套动作，再补上它没有的，见“对 niri”一节。</p>
+    <p class="lede">10 月 5 日：刘海的追赶对象改成 Alcove。它强在一颗黑胶囊的连续变形（播放、通知、音量、亮度、手势、duo）。我们强在它没有的事：窗口收进这颗岛，停一格在原处看一眼。尺子换了，原来对 NotchNook 打的 96 不作数，见“对 Alcove”一节。答案没改：看不见的每一扇窗，都在刘海里。</p>
     <p class="lede">9 月 28 日晚：Aaron 要每个领域都到 90 分以上、超过 Wins，还点名 DockDoor、DockMate、Swish、WindowMizer，要 Rectangle、Raycast 的用户换过来不用改习惯，侧拉要和 iPadOS 一模一样（包括角上的把手），并做 iPadOS 27 那样的分屏。本地都做了，新加一节“每个领域的分数”：侧拉照 Apple 官方配图量出玻璃边框和把手；两扇拼满时中间有分屏把手，四角、三分、网格里的每条缝都能拖；一键换上 Rectangle 的快捷键；每个操作在刘海上都有播报，第一次遇到时教一下。后来又加了两样：任意窗口的画中画（对照「神奇画中画」和「PiP」两款 App），以及首次打开时的动画引导“欢迎使用 WindowShade…”。中间 Claude 的额度用完，Codex 接手了一段，它做的调度中心里按 ⌘W 关窗、窗口浏览多三个动作、把加速度计降频都核对过，保留；它把 DockMate 写成“查不到来源”是错的，已更正。</p>
     <p class="lede">深夜：Aaron 定下，这一批做完备就是 1.0.16。全量真机探针在签名构建上跑了一遍，15 套里 13 套一次全过，另两套各有一项因机器太忙等待超时或按设计中止，重跑都通过。之后又请第二位审查逐行复查这批新代码，每条再派一位专门挑错的复核，确认了 26 处会出错的地方，其中两处严重：画中画退出动画里再按一次快捷键，窗口会回不来；分屏把手吸附后不再刷新，悬在旧位置，拖它会把窗口拉回旧框。26 处都已修完，修后的构建正在重跑全部探针和单元测试。</p>
   </header>
@@ -428,6 +429,7 @@ footer{margin-top:72px;padding-top:22px;border-top:1px solid var(--line);font-si
       <div class="take"><b>HyperDock</b><p><span class="verb adopt">采用</span>顶栏滚动铺满、再滚回来，是 Newlearner 最怀念、又说找不到替代的那一下。标题栏手势用滚轮三格实现，方向和它一致；它已经停止维护，这块没人接。</p></div>
       <div class="take"><b>AeroSpace</b><p><span class="verb adopt">采用</span>按桌面组织工作的人，看一眼也要能跨桌面：在这张桌面上，看另一张桌面上的窗口，想操作就点一下跳过去。平铺不做。</p></div>
       <div class="take"><b>niri</b><p><span class="verb adopt">采用并超过</span>它最好的那一点是开新窗口不挤别人，手指一滑就过去。我们不做第二个合成器，而是放不下时把窗口接成一条卷轴，用的还是标题栏上那一套动作；多出来的是按 App 定宽不用配置、聊天自动侧拉、放得下时不强行卷动、捏合整条撤回，以及收起和看一眼。合成器才做得到的动画、模糊、边框和它自己的工作区不追。</p></div>
+      <div class="take"><b>Alcove</b><p><span class="verb adopt">采用并超过</span>它把播放、通知、音量和亮度收成一颗会变形的黑胶囊。我们不另做一颗岛，也不复制它的私有绘制：同一颗刘海分开再合并，紧凑的左右耳就是正在进行的那一件，展开是它的放大。窗口收进刘海、停一格在原处看一眼，是它没有的。模拟刘海、锁屏上的日历和天气不追。见“对 Alcove”。</p></div>
       <div class="take"><b>AltTab</b><p><span class="verb adopt">采用</span>对象是一扇窗口，不是整个 App。看一眼只动你指着的那一扇，同一个 App 的其他窗口原样不动。</p></div>
       <div class="take"><b>DockDoor、DockMate</b><p><span class="verb adopt">补齐预览里的动作</span>Dock 悬停预览窗口浏览早就有。9 月 28 日按 DockDoor 补上预览里的进入全屏、让开这个 App、退出 App，并按 Wins 的“调度中心 Pro”补上调度中心里 ⌘W 关指着的那扇、⌘Q 退它的 App。DockMate 是 macEnhance 出的，最新 0.8.7 停在 2021 年 3 月；它的日历、正在播放不做，“开新窗口”还没做。</p></div>
       <div class="take"><b>Wins</b><p><span class="verb avoid">借它的教训</span>国内付费的窗口工具，自述一万三千多用户。3.4 把分屏落点做成从刘海长出的小岛，外形和我们刘海的落点小岛一样，用途不同：它落下去是分屏，我们落下去是收进刘海。它更新日志里修过的坑，直接当我们的验收用例：调整窗口大小时误触发小岛、竖放的外接屏、不能调整大小的窗口、macOS 27 上拖动卡顿；Dock 预览那边也有一串（快速换图标时消失、自动隐藏的 Dock、右键菜单被挡、唤醒后缩略图带红绿灯）。“最小化全部”再按一次能全部召回、前后顺序不乱，正好是“暂时取消全部置顶”要做到的样子。接管 ⌘Tab、调度中心、Dock 的那几样不跟。<br><br>本地已按这几条修过（都未发布）：拖窗口顶边改高度不再冒出落点小岛、不再被当成甩一下；改不了大小的窗口放在正中并说一声；竖放的外接屏上启动台改为 5 列 × 7 行，刘海的一排按屏幕宽度少放几格；拖动时不再每个事件都去打扰 WindowServer；在 Dock 图标上右键、按住 Control 点或长按时，窗口浏览马上让开；唤醒后 3 秒整批重截缩略图；台前调度下实时画面按原比例放进卡片；面板开着时刚关掉的窗口会被移出列表。窗口浏览 703 项纯逻辑检查全过；唤醒、台前调度、刚关掉的窗口这三条还要在真机上各走一遍。<br><br>刘海的用法也借了它一点：从刘海长出来、用完就收回去。不同的是 Wins 的岛只在拖窗口时出现；我们的刘海一直在，点一下就回主屏幕。</p></div>
@@ -531,14 +533,14 @@ footer{margin-top:72px;padding-top:22px;border-top:1px solid var(--line);font-si
           <tr><td>侧拉<br><small>一扇窗靠在屏幕边，用时拉出</small></td><td>iPadOS 26.1 起有单扇侧拉；macOS 自带没有。Mac 上的同类工具这次没有调研</td><td>样子照 Apple 支持文档里 iPadOS 27 的配图量：窗口外一圈 10 点宽的灰色玻璃边框、靠里的下角一段黑色短弧是改大小的把手、收起后屏幕边留一小片带 ‹ 的玻璃、拖到边上时出现同样的小片和窗口将落下的虚影。拖边框挪、拖把手改大小。⌃⌘S，或把标题栏拖到屏幕左右边的中段停一下。窗口收进屏幕边，从把手拉回，可以中途反向、换边、改大小。把手在每张桌面上都有：在别的桌面拉出的是实时画面，点一下回到窗口所在的桌面</td><td><span class="pill tie">部分</span><span class="next">生产探针通过：中间位置、反向、取消、换边、快速收放、退出与异常恢复，跨桌面的实时画面也通过。真人多指手感、慢 App 还没验收；别的桌面上的画面不能直接编辑。9 月 28 日签名构建上 14 项全过，含新的边框贴着窗口、把手在靠里的下角、拖把手变宽时靠边那侧和顶边不动、收起时边框跟着走。像素级比对要 iPadOS 27 模拟器（约 8GB），等 Aaron 点头再下载</span></td></tr>
           <tr><td>分屏<br><small>iPadOS 27 的 Split View</small></td><td>iPadOS 26 起：先后把两扇窗甩到两边，中间的条拖了两边一起变；Swish 也能拖分屏的缝</td><td>两扇拼满一块屏时中间出现一根小竖条（竖屏是横条）：拖它两扇一起变，松手按速度吸到 ⅓、½、⅔，推到屏幕边那一扇进侧拉、另一扇铺满。不止两扇：四角、三分、网格、魔法平铺带侧栏的每条缝都有把手，拖一条，这条缝两边的窗口一起变。只认最前面那一层排好的窗口，有别的窗口浮在前面就收起来</td><td><span class="pill tie">部分</span><span class="next">9 月 28 日签名构建上 5 项全过：两扇拼满出把手、拖到 ⅓ 吸附、推到边上那一扇进侧拉另一扇铺满、三扇时每条缝都认得、拖一条缝两边一起变。随后的逐行复查又找出 6 处并已修：吸附后把手不再刷新、会悬在旧位置；换桌面后新桌面上不出现；慢慢推到屏幕边推不出去；App 有最小宽度时两扇压在一起；撤销只回一扇；松手马上再抓用到旧的缝。修后的探针在跑；真触控板手感未验收</span></td></tr>
           <tr><td>画中画<br><small>任意窗口缩到角落</small></td><td>iPadOS、macOS 的画中画只给视频，同一时间只有一个；「神奇画中画」「PiP」两款 App 把文件、网页画成视频塞进系统画中画，只能看，不能滚</td><td>任意窗口：拖着标题栏到屏幕角落停一下（或菜单、快捷键），缩成一张实时画面浮在角落，原窗口让到屏幕边外。甩到别的角、推出屏幕边藏起来（边上留一小片，藏着时不截画面）、三档大小、同一个角落排成一列、跟着到每张桌面；滚轮和上一页 / 下一页直接滚原窗口；还能只看窗口里的一块；双击回到原处</td><td><span class="pill tie">部分</span><span class="next">9 月 28 日签名构建上 9 项全过：缩到最近的角、甩到对角、推出边藏起来并停掉截取、拉回来、换大一档、“下一页”滚动原窗口且不抢前台、只看一块、同一角落排成一列、两扇都回到原处。逐行复查又找出 7 处并已修：退出动画里再按一次会把让开的位置记成原处（窗口回不来）；从角落拖进来时回到的是落点；侧拉收着时进入；拔掉显示器；旁边有屏幕时往那边让开；同一角落叠在一起；回到原处只复原位置不复原大小。视频、会议窗口的实际观感要 Aaron 看</span></td></tr>
-          <tr><td>刘海<br><small>收纳窗口的地方</small></td><td>NotchNook、Boring Notch、Alcove 等拿刘海放音乐、文件中转、日历；MacNotch、Notchy、Wins 让人把窗口拖到刘海旁边分屏。没找到把窗口收进刘海的</td><td>朝刘海甩一下标题栏，或拖到刘海下面垂下的落点小岛上，窗口就收进刘海。指针停上去，展开一排：收进刘海的、侧拉的、卷帘条、带到每张桌面的窗口，以及系统里最小化的窗口、隐藏的 App，点一下各回各处；停在某一格上，在原处看一眼它此刻的样子。刘海也是主屏幕键：点一下回主屏幕（主屏幕从刘海里长出来，再点一下收回去），两下调度中心，三下这个 App 的所有窗口。把文件拖到刘海上停一下，主屏幕只亮能打开它的 App。收着的窗口改了标题，刘海短暂展开提醒。外接屏顶部正中也有一段看不见的“刘海”</td><td><span class="pill tie">部分</span><span class="next">9 月 28 日凌晨在签名构建上 11 项全过，包括停在格子上的看一眼：这个 App 只剩这一扇窗时是实时画面；还有别的窗口、这扇是最小化藏起来的，给收起时的画面。提醒出现在指针所在那块屏的刘海上。 主屏幕键的探针全过：点一下从刘海打开主屏幕（画面从刘海长出来、停在第一页），再点一下收回；把文本文件交给刘海时文本编辑亮着、计算器暗着，搜索框写着要打开的文件，按一下主屏幕键先退出挑 App、再按一下收起。 调度中心、App 窗口会占满屏幕，探针没按，要 Aaron 点一下试；真人手感没验收</span></td></tr>
+          <tr><td>刘海<br><small>收纳窗口的地方</small></td><td>追赶对象是 Alcove（Henrik Ruscon）：一颗黑胶囊里放播放、通知、音量、亮度，手势能划，v1.7.0 说明里有 duo。NotchNook、Boring Notch 同类，不管窗口。MacNotch、Notchy、Wins 把窗口拖到刘海旁边分屏。没找到把窗口收进刘海的。日历、锁屏小组件、模拟刘海只见二手页，未核实</td><td>朝刘海甩一下标题栏，或拖到刘海下面垂下的落点小岛上，窗口就收进刘海。指针停上去，展开一排：收进刘海的、侧拉的、卷帘条、带到每张桌面的窗口，以及系统里最小化的窗口、隐藏的 App，点一下各回各处；停在某一格上，在原处看一眼它此刻的样子。刘海也是主屏幕键：点一下回主屏幕（主屏幕从刘海里长出来，再点一下收回去），两下调度中心，三下这个 App 的所有窗口。把文件拖到刘海上停一下，主屏幕只亮能打开它的 App。收着的窗口改了标题，刘海短暂展开提醒。外接屏顶部正中也有一段看不见的“刘海”</td><td><span class="pill tie">部分</span><span class="next">9 月 28 日凌晨在签名构建上 11 项全过，包括停在格子上的看一眼：这个 App 只剩这一扇窗时是实时画面；还有别的窗口、这扇是最小化藏起来的，给收起时的画面。提醒出现在指针所在那块屏的刘海上。 主屏幕键的探针全过：点一下从刘海打开主屏幕（画面从刘海长出来、停在第一页），再点一下收回；把文本文件交给刘海时文本编辑亮着、计算器暗着，搜索框写着要打开的文件，按一下主屏幕键先退出挑 App、再按一下收起。 调度中心、App 窗口会占满屏幕，探针没按，要 Aaron 点一下试；真人手感没验收</span></td></tr>
           <tr><td>启动台<br><small>找 App、打开、放好</small></td><td>macOS 26 起去掉了启动台，换成 Spotlight 里的 App 列表，不能自己建文件夹；AppGrid、LaunchOS 等第三方重做了网格和文件夹</td><td>主屏幕、文件夹、最后一页的 App 资料库、负一屏，打字就搜（拼音、首字母都行）。按住图标直接拖出来，放到半屏、四分之一、铺满或侧拉，这是它和窗口的连接</td><td><span class="pill tie">部分</span><span class="next">模型、界面回归和生产探针通过（9 月 28 日凌晨在签名构建上 12 项全过：文件夹、资料库分组和一组展开、全部 App 列表和搜索、翻页、拖出来放到半屏和侧拉、不改写保存的排列），主屏幕、文件夹、资料库、搜索的截图人工核对过。竖屏改成 5 列 × 7 行（模型测试）。往下划找 Spotlight：原来打开 Spotlight.app 调不起来，改成按用户自己设的 Spotlight 快捷键，快捷键关着就留在启动台里搜；真实多指、主屏幕的键盘操作还没单独测</span></td></tr>
         </tbody>
       </table>
     </div>
     <div class="takes">
       <div class="take"><b>和“收起窗口，留下位置”是什么关系</b><p>侧拉和刘海是“让开”的另两个去处：侧拉让一扇常用的窗靠在边上，刘海让窗口收进一个固定的地方，都不进 Dock。刘海里那一排把四种收着的窗口放在一个入口里，找回时不用记它在哪种状态。启动台离得最远，它管的是 App，只有“拖出来直接放好”这一步是窗口的事。</p></div>
-      <div class="take"><b>和别家比，差在哪、强在哪</b><p>刘海：别家要么不碰窗口，要么只是换个位置的拖边分屏，收进刘海目前只有我们在做。侧拉：iPad 上是系统能力，Mac 上只能靠移动别的 App 的窗口来模拟，慢 App 的跟手程度要真人试过才算数。启动台：第三方重做的已经不少，我们的不同只在能直接把 App 放到窗口位置。</p></div>
+      <div class="take"><b>和别家比，差在哪、强在哪</b><p>刘海：收进刘海目前只有我们在做。Alcove 强在同一颗岛的连续变形，这一格改以它为对手，见“对 Alcove”；原来对 NotchNook 打的 96 待重打。侧拉：iPad 上是系统能力，Mac 上只能靠移动别的 App 的窗口来模拟，慢 App 的跟手程度要真人试过才算数。启动台：第三方重做的已经不少，我们的不同只在能直接把 App 放到窗口位置。</p></div>
     </div>
   </section>
 </div>
@@ -560,7 +562,7 @@ footer{margin-top:72px;padding-top:22px;border-top:1px solid var(--line);font-si
           <tr><td>启动台</td><td><span class="pill lead">90</span></td><td>—</td><td>LaunchOS 85</td><td>launchpad 13、launchpad-keys 18、home 3</td><td>主屏幕、文件夹、App 资料库、拼音首字母搜索、拖到半屏或侧拉、从刘海长出来；搜索改成底部正中的玻璃胶囊、负一屏照 iPad 排；真实多指没单独测</td></tr>
           <tr><td>标题栏手势</td><td><span class="pill lead">92</span></td><td>65</td><td>Swish 85</td><td>gesture 31、flick 5、grid 4、magic 5、strip 8、strip-peek 19</td><td>收起、铺满、左右梯子、拐角、3×2 与 3×3 网格、张开魔法平铺、捏合撤销、晃一晃、卷轴跟手；Swish 还有 Magic Mouse、Dock 与菜单栏手势、WASD 键位</td></tr>
           <tr><td>iPadOS 27 风格的甩一下</td><td><span class="pill lead">94</span></td><td>—</td><td>iPadOS 27</td><td>flick 5</td><td>按速度排好并带着速度滑进去、放慢再松手不甩、三指拖移离开触控板也算、慢 App 用替身滑；朝刘海甩收进去、朝屏幕边甩进侧拉</td></tr>
-          <tr><td>刘海</td><td><span class="pill lead">96</span></td><td>70</td><td>NotchNook 等</td><td>notch 20、home 3、coach 6、habits 7、notch-shape 10</td><td>收进刘海、一排收着所有看不见的窗口（含最小化、隐藏、别的桌面上的）、卡住时开口、形状贴着机身、主屏幕键 1/2/3 下、落点五格、往上推全收、左右滑换 App、有变化提醒、原处看一眼、文件交给刘海挑 App；每个操作都有播报，第一次遇到时有小动画教一下</td></tr>
+          <tr><td>刘海</td><td><span class="pill lag">待重打</span></td><td>70</td><td>Alcove</td><td>notch 20、home 3、coach 6、habits 7、notch-shape 10</td><td>收窗口这条仍领先：一排看不见的窗口、原处看一眼、主屏幕键、落点五格。紧凑两耳、分开再合并、合成的音量亮度已经在这颗岛上；系统按键和隐私登记还没接，也还没在签名构建上重跑，不能沿用对 NotchNook 打的 96</td></tr>
           <tr><td>看一眼</td><td><span class="pill lead">95</span></td><td>35</td><td>DockDoor 60</td><td>pull 4、thumbnail 13、strip-peek 19</td><td>原位原尺寸的实时画面、隐藏的 App 也实时、卷帘条上拉一点、缩略图停上去、卷轴边上那一条、刘海每一格（刘海那几种还没在 build 16 上跑）</td></tr>
           <tr><td>侧拉</td><td><span class="pill lead">93</span></td><td>—</td><td>iPadOS 27</td><td>slide-over 15、带到每张桌面 5</td><td>玻璃边框、角上的把手、边上的箭头小片、拖到边上的虚影，都照官方配图量；拖边框挪、拖把手改大小、每张桌面都有；像素级比对要 iPadOS 27 模拟器，未下载</td></tr>
           <tr><td>分屏（Split View）</td><td><span class="pill lead">92</span></td><td>—</td><td>Swish 85 / iPadOS 27</td><td>split 6</td><td>两扇拼满时中间有把手，吸到 ⅓½⅔，推到边上进侧拉；每条缝都能拖，多扇一起变；还没有 iPad 从 Dock 直接拖出来分屏的那一下（我们从启动台拖）</td></tr>
@@ -570,7 +572,7 @@ footer{margin-top:72px;padding-top:22px;border-top:1px solid var(--line);font-si
         </tbody>
       </table>
     </div>
-    <p class="caveat">还不到 90 的：盒盖动画（等 Aaron 亲手确认）、性能（物理占用）。Wins 仍略领先的一格是窗口浏览（93 对 92），小程序这件补齐、上机验过后再重打。“真机探针”一栏是 9 月 30 日到 10 月 1 日签名构建上各套探针通过的项数，28 套全过。分数是按同一把尺子自评的，没有一格经过 Aaron 或用户亲手确认。</p>
+    <p class="caveat">还不到 90 的：盒盖动画（等 Aaron 亲手确认）、性能（物理占用）。刘海一格 10 月 5 日起待重打：对手从 NotchNook 换成 Alcove。紧凑两耳、分开再合并和合成音量已经接上，系统按键还没接，这一格不维持 96。Wins 仍略领先的一格是窗口浏览（93 对 92），小程序这件补齐、上机验过后再重打。“真机探针”一栏是 9 月 30 日到 10 月 1 日签名构建上各套探针通过的项数，28 套全过。分数是按同一把尺子自评的，没有一格经过 Aaron 或用户亲手确认。</p>
   </section>
 </div>
 
@@ -603,6 +605,35 @@ footer{margin-top:72px;padding-top:22px;border-top:1px solid var(--line);font-si
     <div class="takes">
       <div class="take"><b>超过在哪</b><p>对 niri：Mac 上能用；放得下时不强行卷动，笔记本小屏上不用来回滑；按 App 定宽和聊天侧拉不用写配置；整条能撤回；还有收起、看一眼、刘海。对 macOS 上照它做的几家：挪窗口放在每个 App 自己的后台队列上，慢 App 跟不上时跳过中间几帧，不拖慢手指；有一边挨着别的显示器时不硬排，放不下的收进刘海。</p></div>
       <div class="take"><b>还差，和不追</b><p>还差：指针停在屏幕边上那条边时，要能看一眼它此刻的样子；卷轴的概览；竖放的屏幕上下卷。不追：合成器才做得到的动画、模糊、边框、着色器，自己的工作区，标签页式的列，脚本和 IPC。9 月 28 日凌晨在签名构建上的卷轴探针 8 项全过（只动临时 App 的窗口）：五扇放不下，多出来的那扇停在右边外面、露一条边；在标题栏上两指往左滑，整条跟着走，松手停在最后一列贴屏幕右边；⌃⌘← 把第一列滑回来；宽一档从 ½ 到 ⅔；新开的窗口自己一列接进来，别的列宽度不变；关掉它让出位置；捏合一下全部回原处。</p></div>
+    </div>
+  </section>
+</div>
+
+<div class="wrap">
+  <section id="alcove">
+    <div class="sec-head">
+      <p class="eyebrow">新竞品</p>
+      <h2>对 Alcove：一颗岛，分开再合并</h2>
+      <p>Alcove 是 Henrik Ruscon 做的菜单栏工具，官网自称 Dynamic Island for Mac。2026-10-05 核对的一手材料：<a href="https://tryalcove.com/download">下载页</a>写 macOS 15、v1.7.7；<a href="https://tryalcove.com/faqs">FAQ</a>写一次买断、最多 3 台、72 小时试用、14 天可退、依赖私有 API、不收集资料。开发者仓库 <a href="https://github.com/henrikruscon/alcove-releases/releases/tag/v1.7.0">v1.7.0 说明</a>（2026-04-05）列了 duo、没有刘海时的 pill、波形改成对齐 iOS、AirPods Max、Lossless / Dolby Atmos。日历、锁屏小组件、模拟刘海只见二手页，下表标未核实。价格常见转述是 $14.99，FAQ 页没写数字，也不采用。</p>
+    </div>
+    <div class="scroll">
+      <table class="score">
+        <thead><tr><th>能力</th><th>Alcove（一手）</th><th>WindowShade（本地）</th></tr></thead>
+        <tbody>
+          <tr><td>岛怎么动</td><td>一颗黑胶囊，在播放、通知、音量、亮度之间变形；v1.7.0 有 duo</td><td>同一颗岛。紧凑左右耳是正在进行的那一件，展开是它的放大；两件要同时露面时分开，再合并。对的是 WWDC23 10194，不是 duo 的像素</td></tr>
+          <tr><td>正在播放</td><td>有；波形在 v1.7.0 改成对齐 iOS</td><td>音乐、AirPods、隔空投送、路线、录音已接入。紧凑样式原来是“最近收进的窗口 + 个数”，这一轮改成活动本身长在两耳上</td></tr>
+          <tr><td>音量、亮度</td><td>替换或并排系统的音量、亮度提示（二手页说得更满；一手只在 v1.7.0 里写了亮度页的动画和 HUD 切换）</td><td>先用合成事件让同一颗岛鼓成那一下，连按留住，停手沿 calm 收回。真实系统接线和隐私登记分开做。Alcove 一类的 HUD 在跑就让位</td></tr>
+          <tr><td>没有刘海的屏</td><td>v1.7.0 加了 pill。模拟刘海只见二手页，未核实</td><td>顶部正中一颗胶囊，不画假刘海</td></tr>
+          <tr><td>手势</td><td>官网和目录页写了滑动；具体哪一下未在一手说明里逐条核对</td><td>点一下回主屏幕，两下调度中心，三下这个 App 的所有窗口；两指上下是收进和拿出，左右滑换活动</td></tr>
+          <tr><td>窗口</td><td>一手材料里没有把窗口收进刘海</td><td>甩一下或落到小岛上就收进去；展开一排，停一格在原处看一眼</td></tr>
+          <tr><td>锁屏上的日历、天气</td><td>二手页写了锁屏小组件，未核实</td><td>不追。锁屏这条线是开盖之后窗口还在原处</td></tr>
+          <tr><td>减少动态效果</td><td>v1.7.0 有无障碍引导，没写岛怎么退化</td><td>位置不动，只淡入淡出，弹簧用 reduced</td></tr>
+        </tbody>
+      </table>
+    </div>
+    <div class="takes">
+      <div class="take"><b>超过在哪</b><p>窗口收进这颗岛，停在一格上按它自己的大小出现在原处，移开就走。播放、提醒、音量、亮度不另开一扇窗，也不另开第二套浮层：抢占时你打开的那一排挂起，让出后从挂起处露出来，不重播进场。形状走到四成，内容才进来；退场先收内容。半路改方向，从当时的位置和速度继续。</p></div>
+      <div class="take"><b>还差，和不追</b><p>还差：音量、亮度还没接到系统按键，只走合成事件；波形不照搬它的私有绘制；刘海这一格待重打，不维持 96。不追：模拟刘海、锁屏上的日历和天气、把它的代码或波形样式选项搬进来。界面不叫灵动岛，仍叫刘海、实时活动。画面在<a href="一颗岛.html">一颗岛</a>。</p></div>
     </div>
   </section>
 </div>
@@ -710,6 +741,7 @@ footer{margin-top:72px;padding-top:22px;border-top:1px solid var(--line);font-si
       <li><a href="https://github.com/rxhanson/Rectangle">Rectangle</a> · <a href="https://rectangleapp.com/pro">Rectangle Pro</a></li>
       <li><a href="https://github.com/nikitabobko/AeroSpace">AeroSpace</a></li>
       <li><a href="https://github.com/niri-wm/niri">niri</a> · <a href="https://github.com/niri-wm/niri/releases">niri 发布记录</a> · <a href="https://niri-wm.github.io/niri/Gestures.html">niri 手势</a> · <a href="https://niri-wm.github.io/niri/Configuration%3A-Layout.html">niri 布局设置</a></li>
+      <li><a href="https://tryalcove.com/">Alcove</a> · <a href="https://tryalcove.com/download">下载页</a>（2026-10-05：macOS 15、v1.7.7）· <a href="https://tryalcove.com/faqs">FAQ</a> · <a href="https://github.com/henrikruscon/alcove-releases/releases/tag/v1.7.0">v1.7.0 说明</a>（2026-04-05）</li>
       <li><a href="https://github.com/karinushka/paneru">Paneru</a> · <a href="https://chainyourmac.com/best-scrolling-window-managers-for-mac">macOS 上的卷动平铺工具横评（ChainYourMac 自家页面）</a></li>
       <li><a href="https://github.com/lwouis/alt-tab-macos">AltTab</a></li>
       <li><a href="https://github.com/ejbills/DockDoor">DockDoor</a></li>
