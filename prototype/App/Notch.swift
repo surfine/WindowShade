@@ -2315,7 +2315,8 @@ final class NotchPanel: NSPanel {
     /// 这一下该用的弹簧：没有动量的（指针停上来、收回）不回弹；提醒、落点带一点弹性；减少动态效果时一律不回弹、快一点。
     private func spring() -> NotchCanvasView.Spring {
         if Motion.reduced { return NotchCanvasView.Spring(response: Motion.Spring.reducedNotch.response, bounce: Motion.Spring.reducedNotch.bounce) }
-        if isAuthenticating { return NotchCanvasView.Spring(response: 0.28, bounce: 0.02) }
+        // 解锁短、不回弹 → `calm`（不再硬编 0.28 / 0.02）。
+        if isAuthenticating { return NotchCanvasView.Spring(response: Motion.Spring.calm.response, bounce: Motion.Spring.calm.bounce) }
         if dropState != .none { return NotchCanvasView.Spring(response: Motion.Spring.catchDrop.response, bounce: Motion.Spring.catchDrop.bounce) }
         if alertInfo != nil { return NotchCanvasView.Spring(response: Motion.Spring.bloom.response, bounce: Motion.Spring.bloom.bounce) }
         if meter != nil { return NotchCanvasView.Spring(response: Motion.Spring.pop.response, bounce: Motion.reduced ? 0 : Motion.Spring.pop.bounce) }
@@ -2725,7 +2726,7 @@ final class NotchCanvasView: NSView {
             outgoing.inert = true
             contentExitPending = true
             pendingExitMorph = (rect, style, content, spring, presented, scale, snap, shoulderFade, done)
-            let fade = Motion.reduced ? Motion.Spring.reducedNotch.response : 0.18
+            let fade = Motion.reduced ? Motion.Spring.reducedNotch.response : Motion.Spring.calm.response
             NSAnimationContext.runAnimationGroup({ context in
                 context.duration = fade
                 outgoing.animator().alphaValue = 0
@@ -2886,7 +2887,7 @@ final class NotchCanvasView: NSView {
             outgoing.inert = true
             if animated {
                 NSAnimationContext.runAnimationGroup({ context in
-                    context.duration = reduced ? Motion.Spring.reducedNotch.response : 0.18
+                    context.duration = reduced ? Motion.Spring.reducedNotch.response : Motion.Spring.calm.response
                     outgoing.animator().alphaValue = 0
                 }, completionHandler: {
                     MainActor.assumeIsolated { outgoing.removeFromSuperview() }
@@ -2908,7 +2909,7 @@ final class NotchCanvasView: NSView {
             incoming.alphaValue = 0
             let fromWidth = start.width
             let toWidth = rect.width
-            let fadeDuration = reduced ? Motion.Spring.reducedNotch.response : 0.18
+            let fadeDuration = reduced ? Motion.Spring.reducedNotch.response : Motion.Spring.calm.response
             if reduced || Self.contentHasReachedFourTenths(from: fromWidth, to: toWidth, now: fromWidth) {
                 NSAnimationContext.runAnimationGroup { context in
                     context.duration = fadeDuration
@@ -2989,7 +2990,8 @@ final class NotchCanvasView: NSView {
             let fade = CABasicAnimation(keyPath: "opacity")
             fade.fromValue = fromOpacity
             fade.toValue = toOpacity
-            fade.duration = reduced ? Motion.Spring.reducedNotch.response : (text == nil ? 0.10 : 0.18)
+            // companion 只淡：出现/消失都走令牌时长（减少动态效果用 `reducedNotch`）。
+            fade.duration = reduced ? Motion.Spring.reducedNotch.response : Motion.Spring.calm.response
             companion.opacity = toOpacity
             companion.add(fade, forKey: "companion.opacity")
         } else {
@@ -3400,11 +3402,11 @@ final class NotchShoulders: NSPanel {
         }
         if snap { return }
         if fade, old == 0, new > 0 {
-            // 只是空位变了才长出来的：在终点淡入，不从 0 长。
+            // 只是空位变了才长出来的：在终点淡入，不从 0 长（时长走 `calm` / `reducedNotch`）。
             let appear = CABasicAnimation(keyPath: "opacity")
             appear.fromValue = 0
             appear.toValue = 1
-            appear.duration = 0.18
+            appear.duration = Motion.reduced ? Motion.Spring.reducedNotch.response : Motion.Spring.calm.response
             appear.timingFunction = CAMediaTimingFunction(name: .easeOut)
             layer.add(appear, forKey: "\(key).fade")
             return
@@ -3931,11 +3933,11 @@ final class NotchTileView: NSView {
                                        owner: self, userInfo: nil))
     }
 
-    /// 停 0.2 秒才看：指针从一格划到另一格时不闪。
+    /// 停 `dwell.hoverExpand`（0.12 秒）才看：指针从一格划到另一格时不闪。
     override func mouseEntered(with event: NSEvent) {
         hovering = true
         dwell?.invalidate()
-        dwell = Timer.scheduledTimer(withTimeInterval: 0.2, repeats: false) { [weak self] _ in
+        dwell = Timer.scheduledTimer(withTimeInterval: 0.12, repeats: false) { [weak self] _ in
             MainActor.assumeIsolated { self?.onHover?(true) }
         }
     }

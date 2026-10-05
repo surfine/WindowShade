@@ -21,7 +21,7 @@ with tempfile.TemporaryDirectory(prefix='ws2-r9-regression-') as td:
             if f.is_file():shutil.copy2(f,out/f.name)
     elif a.suite=='duo':
         root=a.repo/'prototype';binary=tmp/'duo-tests'
-        files=['Effects/FoldDriver.swift','Effects/EffectFrameAwaiter.swift','Effects/LatestEffectFrame.swift','Effects/RestoreVerifier.swift','Core/FoldVerifier.swift','Core/MotionTilt.swift','Core/TitlebarTripleClickIntent.swift','Recovery/DurableShadeJournal.swift']
+        files=['Core/FlickMotion.swift','Effects/FoldDriver.swift','Effects/EffectFrameAwaiter.swift','Effects/LatestEffectFrame.swift','Effects/RestoreVerifier.swift','Core/FoldVerifier.swift','Core/MotionTilt.swift','Core/TitlebarTripleClickIntent.swift','Recovery/DurableShadeJournal.swift']
         rc=run(['swiftc','-swift-version','6','-strict-concurrency=complete','-warnings-as-errors',*[root/f for f in files],a.repo/'tests/DuoCoreTests.swift','-o',binary])
         if not rc:rc=run([binary])
         if not rc:rc=run([sys.executable,a.repo/'tests/duo-integration-check.py'])

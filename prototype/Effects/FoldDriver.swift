@@ -38,9 +38,13 @@ enum DuoPreset: String, CaseIterable {
 struct FoldSpring {
   private(set) var value = 0.0
   private(set) var velocity = 0.0
-  /// Angular frequency giving a settle to within 2% of the target in ~0.2s.
+  /// Angular frequency giving a settle to within 2% of the target in ~0.2s（传感器跟手默认）。
   static let frequency = 5.83 / 0.20
-  /// 每个实例自己的角频率（临界阻尼）。默认跟原来一样；合盖的一次性动画用 design-system 的 `settle`。
+  /// 合盖一次性动画：对齐 `MotionSpring.settle` / `calm` 的 response（不改令牌数字）。
+  static func frequency(for token: MotionSpring) -> Double {
+    5.83 / token.response
+  }
+  /// 每个实例自己的角频率（临界阻尼）。默认跟手；`FoldTransition` 用 settle/calm。
   var frequency = FoldSpring.frequency
   mutating func reset(_ value: Double = 0, velocity: Double = 0) {
     self.value = value
@@ -61,31 +65,39 @@ struct FoldSpring {
 }
 
 /// Repeating a desired state is idempotent; reversing starts at the visible position.
+/// 进度用 `settle`（合上）/ `calm`（打开）解析弹簧，可打断、不从零重播。
 struct FoldTransition {
   private(set) var value: Double
   private(set) var target: Double
-  private var origin: Double
-  private var started = 0.0
-  private var duration = 0.0
-  var settled: Bool { value == target }
+  private var spring = FoldSpring()
+  private var lastTime: Double?
+  var settled: Bool { value == target && spring.velocity == 0 }
   init(value: Double) {
     self.value = value
     target = value
-    origin = value
+    spring.reset(value)
   }
   mutating func request(folded: Bool, at time: Double) {
     let next = folded ? 1.0 : 0.0
     guard target != next else { return }
     advance(at: time)
-    origin = value
     target = next
-    started = time
-    duration = (folded ? 0.28 : 0.34) * abs(target - origin)
+    // 合上用 `settle`，打开用 `calm`（设计系统 §4.6；位移写令牌名）。
+    // 频率换掉，位置和速度留在当前可见处，反转可打断。
+    spring.frequency = FoldSpring.frequency(for: folded ? .settle : .calm)
+    lastTime = time
   }
   mutating func advance(at time: Double) {
     guard !settled else { return }
-    let t = duration > 0 ? min(1, max(0, (time - started) / duration)) : 1
-    value = t == 1 ? target : origin + (target - origin) * FoldDriver.ease(t)
+    let dt: Double
+    if let lastTime {
+      dt = max(0, time - lastTime)
+    } else {
+      dt = 1.0 / 60
+    }
+    lastTime = time
+    spring.advance(to: target, dt: dt)
+    value = spring.value
   }
 }
 

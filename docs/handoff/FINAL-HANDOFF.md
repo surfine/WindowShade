@@ -22,7 +22,7 @@
 | WSR-02 真实回执 | glance waiting→首帧；cover 逐屏不透明层 | 双屏 cover-observe PASS（H07 partial：拔插未做）；H06 **pass**：`glance --single` + `fold-timing`（修掉 rescue 队列 MainActor SIGTRAP） |
 | WSR-03 意图准入 | Intent 折入 Session | 逻辑 A10*；真机 milestone cancel/target-change（focus 重试后复跑 PASS） |
 | WSR-04 相机实验 | 部分 | camera **authorized**；milestone head 路径已跑（无点头→提案作废）；H08 partial（未做故意断流）；H09–H13 仍缺夹具 |
-| WSR-05 动效验收 | 部分 | LEASE 15/0；fold-timing warm median first 182ms / strip 353ms；duo-soak 8s ≈35.9 present fps；120Hz `not_run` |
+| WSR-05 动效验收 | 部分 | P0 令牌收口：Glance / Fold / Notch 周边见 [motion-pass-2026-10-05/](motion-pass-2026-10-05/)；LEASE 15/0；duo-soak 8s ≈35.9 present fps；120Hz `not_run`；Launchpad 曲线未动 |
 | WSR-06 蓝牙身份 | 观察 inconclusive | 已配对 11 / 已连接 3（含 Phone）；BLEReadProbe exit 2；**不**标第二因素 |
 | WSR-07 文档分界 | 本指针 + face-unlock / grammar + 本矩阵目录 | 已测 / partial / not_run 分开；H20 系统解锁仍 refused（D11） |
 

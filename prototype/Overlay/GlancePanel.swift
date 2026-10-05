@@ -229,12 +229,24 @@ final class GlanceContentView: NSView {
     }
 
     // MARK: 卷下 / 卷上
+    // 位移一律写 MotionSpring 令牌名；减少动态效果只淡、不动位置。
 
     private var reduceMotion: Bool {
-        NSWorkspace.shared.accessibilityDisplayShouldReduceMotion
+        Motion.reduced
     }
 
-    func rollDown(duration: CFTimeInterval = 0.18) {
+    private func fadeDuration() -> CFTimeInterval {
+        Motion.Spring.reducedNotch.response
+    }
+
+    private func springMove(keyPath: String, token: MotionSpring) -> CASpringAnimation {
+        let spring = CASpringAnimation(perceptualDuration: token.response, bounce: token.bounce)
+        spring.keyPath = keyPath
+        spring.duration = spring.settlingDuration
+        return spring
+    }
+
+    func rollDown() {
         layoutSubtreeIfNeeded()
         let full = bounds.height
         rollMask.removeAllAnimations()
@@ -247,15 +259,14 @@ final class GlanceContentView: NSView {
             let fade = CABasicAnimation(keyPath: "opacity")
             fade.fromValue = 0
             fade.toValue = 1
-            fade.duration = 0.12
+            fade.duration = fadeDuration()
             layer?.add(fade, forKey: "glance-fade")
             return
         }
-        let roll = CABasicAnimation(keyPath: "bounds.size.height")
+        // `calm`：没有动量的卷下（指针停上来）。
+        let roll = springMove(keyPath: "bounds.size.height", token: .calm)
         roll.fromValue = 0
         roll.toValue = full
-        roll.duration = duration
-        roll.timingFunction = CAMediaTimingFunction(controlPoints: 0.23, 1, 0.32, 1)
         rollMask.add(roll, forKey: "glance-roll")
     }
 
@@ -291,14 +302,12 @@ final class GlanceContentView: NSView {
         rollMask.position = CGPoint(x: 0, y: full)
         CATransaction.commit()
         guard !reduceMotion, full > 1, current < full - 0.5 else { return 0 }
-        let duration = 0.18 * Double(max(0.3, (full - current) / full))
-        let roll = CABasicAnimation(keyPath: "bounds.size.height")
+        // `pull`：松手后从手指停下的高度接上，带一点弹性。
+        let roll = springMove(keyPath: "bounds.size.height", token: .pull)
         roll.fromValue = current
         roll.toValue = full
-        roll.duration = duration
-        roll.timingFunction = CAMediaTimingFunction(controlPoints: 0.23, 1, 0.32, 1)
         rollMask.add(roll, forKey: "glance-roll")
-        return duration
+        return min(roll.settlingDuration, Motion.Spring.pull.response * 1.6)
     }
 
     /// 卷上（或缩回缩略图）途中指针又回来了：停在全开，不重播卷下。
@@ -346,7 +355,7 @@ final class GlanceContentView: NSView {
         return CATransform3DConcat(CATransform3DMakeScale(kx, ky, 1), CATransform3DMakeTranslation(tx, ty, 0))
     }
 
-    /// 缩略图上停够了：卡片从缩略图（rect，本视图坐标）长回窗口原来的大小，弹簧 0.3 / 不回弹。
+    /// 缩略图上停够了：卡片从缩略图（rect，本视图坐标）长回窗口原来的大小（`settle`，不回弹）。
     /// 返回多久之后卡片整张盖住原处（被隐藏的 App 要等到那时才在下面取消隐藏）。
     @discardableResult
     func grow(from rect: NSRect) -> CFTimeInterval {
@@ -370,28 +379,26 @@ final class GlanceContentView: NSView {
             let fade = CABasicAnimation(keyPath: "opacity")
             fade.fromValue = 0
             fade.toValue = 1
-            fade.duration = 0.12
+            fade.duration = fadeDuration()
             layer?.add(fade, forKey: "glance-fade")
-            return 0.12
+            return fadeDuration()
         }
         var settle: CFTimeInterval = 0
         for grown in [shadowLayer, cardLayer] {
-            let spring = CASpringAnimation(perceptualDuration: 0.3, bounce: 0)
-            spring.keyPath = "transform"
+            let spring = springMove(keyPath: "transform", token: .settle)
             spring.fromValue = NSValue(caTransform3D: shrunkTransform(for: grown, into: rect))
             spring.toValue = NSValue(caTransform3D: CATransform3DIdentity)
-            spring.duration = spring.settlingDuration
             settle = spring.settlingDuration
             grown.add(spring, forKey: "glance-grow")
         }
-        // 临界阻尼的弹簧到 0.45 秒已差不到 0.1%：千点宽的窗口也露不出一点。
-        let covered = min(settle, 0.45)
+        // 临界阻尼的弹簧到 ~1.2×response 已差不到 0.1%：千点宽的窗口也露不出一点。
+        let covered = min(settle, Motion.Spring.settle.response * 1.2)
         // 右下角“收起时的画面”、正中“画面暂时看不到”不跟着缩放：卡片铺开了再露出来。
         revealNotices(after: covered)
         return covered
     }
 
-    /// 指针移开：卡片缩回缩略图（rect，本视图坐标），0.16 秒，缩完再交回 completion。
+    /// 指针移开：卡片缩回缩略图（`calm`，退场不回弹），缩完再交回 completion。
     func shrink(to rect: NSRect, completion: @escaping () -> Void) {
         rollMask.removeAllAnimations()
         CATransaction.begin()
@@ -402,7 +409,7 @@ final class GlanceContentView: NSView {
             let fade = CABasicAnimation(keyPath: "opacity")
             fade.fromValue = 1
             fade.toValue = 0
-            fade.duration = 0.1
+            fade.duration = fadeDuration()
             layer?.add(fade, forKey: "glance-fade")
         } else {
             for grown in [shadowLayer, cardLayer] {
@@ -410,11 +417,9 @@ final class GlanceContentView: NSView {
                 let to = shrunkTransform(for: grown, into: rect)
                 grown.removeAnimation(forKey: "glance-grow")
                 grown.transform = to
-                let shrink = CABasicAnimation(keyPath: "transform")
+                let shrink = springMove(keyPath: "transform", token: .calm)
                 shrink.fromValue = NSValue(caTransform3D: from)
                 shrink.toValue = NSValue(caTransform3D: to)
-                shrink.duration = 0.16
-                shrink.timingFunction = CAMediaTimingFunction(controlPoints: 0.65, 0, 0.35, 1)
                 grown.add(shrink, forKey: "glance-grow")
             }
             // 画面缩小时右下角“收起时的画面”那块提示不跟着缩：整层先藏起来（各自的状态留着，
@@ -425,7 +430,7 @@ final class GlanceContentView: NSView {
         CATransaction.commit()
     }
 
-    func rollUp(duration: CFTimeInterval = 0.14, completion: @escaping () -> Void) {
+    func rollUp(completion: @escaping () -> Void) {
         let current = rollMask.presentation()?.bounds.height ?? rollMask.bounds.height
         rollMask.removeAllAnimations()
         CATransaction.begin()
@@ -436,15 +441,13 @@ final class GlanceContentView: NSView {
             let fade = CABasicAnimation(keyPath: "opacity")
             fade.fromValue = 1
             fade.toValue = 0
-            fade.duration = 0.1
+            fade.duration = fadeDuration()
             layer?.add(fade, forKey: "glance-fade")
         } else {
             rollMask.bounds.size.height = 0
-            let roll = CABasicAnimation(keyPath: "bounds.size.height")
+            let roll = springMove(keyPath: "bounds.size.height", token: .calm)
             roll.fromValue = current
             roll.toValue = 0
-            roll.duration = duration * Double(max(0.3, current / max(1, bounds.height)))
-            roll.timingFunction = CAMediaTimingFunction(controlPoints: 0.65, 0, 0.35, 1)
             rollMask.add(roll, forKey: "glance-roll")
         }
         CATransaction.commit()
