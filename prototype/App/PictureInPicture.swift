@@ -430,7 +430,7 @@ final class PictureInPictureController {
             (tab.contentView as? PiPTabView)?.side = side == .left ? .left : .right
             tab.alphaValue = 0
             tab.orderFrontRegardless()
-            NSAnimationContext.runAnimationGroup { $0.duration = 0.18; tab.animator().alphaValue = 1 }
+            NSAnimationContext.runAnimationGroup { $0.duration = Motion.fadeDuration; tab.animator().alphaValue = 1 }
             self.restack(corner: s.corner)
         }
         wlog("pip: id=\(s.id) stashed \(side)")

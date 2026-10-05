@@ -103,7 +103,7 @@ final class SlideOverDropHint {
         ghost.alphaValue = 0
         ghost.orderFrontRegardless()
         NSAnimationContext.runAnimationGroup { context in
-            context.duration = Motion.reduced ? 0.1 : 0.16
+            context.duration = Motion.fadeDuration
             ghost.animator().alphaValue = 1
         }
     }

@@ -3,7 +3,6 @@
 import Cocoa
 
 func wlog(_ message: String) { print(message) }
-enum Motion { static var reduced = false }
 enum LegacyQuickCapture { static func reportUnavailableOnce() {} }
 
 @main struct LaunchpadPerfFixture {

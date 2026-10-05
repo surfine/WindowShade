@@ -220,7 +220,6 @@ enum WindowBrowserSurfaceStyle {
         let transition = CATransition()
         transition.type = .fade
         transition.duration = resolved
-        transition.timingFunction = CAMediaTimingFunction(name: .easeInEaseOut)
         layer.add(transition, forKey: "windowBrowserStateFade")
     }
 

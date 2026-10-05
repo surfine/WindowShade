@@ -530,7 +530,6 @@ final class WindowBrowserContentView: NSView, NSSearchFieldDelegate, NSTextViewD
         tableView.reloadData()
         NSAnimationContext.runAnimationGroup { context in
             context.duration = duration
-            context.timingFunction = CAMediaTimingFunction(name: .easeOut)
             context.allowsImplicitAnimation = true
             collectionView.animator().performBatchUpdates({
                 collectionView.deleteItems(at: Set(diff.removals))
@@ -548,7 +547,6 @@ final class WindowBrowserContentView: NSView, NSSearchFieldDelegate, NSTextViewD
         shrink.toValue = WindowBrowserDepartureMotion.centeredScale(
             WindowBrowserDepartureMotion.scale, size: layer.bounds.size, anchor: layer.anchorPoint)
         shrink.duration = duration
-        shrink.timingFunction = CAMediaTimingFunction(name: .easeIn)
         layer.add(shrink, forKey: WindowBrowserFlowLayout.departureAnimationKey)
     }
 

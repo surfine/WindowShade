@@ -66,7 +66,7 @@ final class StripOverview {
         panel.makeFirstResponder(view)
         interruptions.start()
         NSAnimationContext.runAnimationGroup { context in
-            context.duration = NSWorkspace.shared.accessibilityDisplayShouldReduceMotion ? 0.1 : 0.18
+            context.duration = Motion.fadeDuration
             panel.animator().alphaValue = 1
         }
         for item in items {
@@ -88,7 +88,7 @@ final class StripOverview {
         interruptions.stop()
         let panel = self.panel
         NSAnimationContext.runAnimationGroup({ context in
-            context.duration = 0.12
+            context.duration = Motion.fadeDuration
             panel.animator().alphaValue = 0
         }, completionHandler: {
             // 动画完成回调在主线程。

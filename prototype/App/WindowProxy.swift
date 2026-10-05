@@ -100,7 +100,7 @@ final class SnapshotFlight {
     }
 
     /// velocity：点/秒，Cocoa 坐标（y 向上）。fadeOut：一路缩小时最后一段淡掉（飞进刘海）。
-    func fly(to target: NSRect, velocity: CGVector, response: Double = 0.42, bounce: CGFloat = 0.12,
+    func fly(to target: NSRect, velocity: CGVector, response: Double = Motion.Spring.glide.response, bounce: CGFloat = Motion.Spring.glide.bounce,
              cornerRadius: CGFloat? = nil, fadeOut: Bool = false, done: @escaping () -> Void) {
         let end = target.offsetBy(dx: -area.minX, dy: -area.minY)
         if Motion.reduced {
@@ -166,7 +166,7 @@ final class SnapshotFlight {
         let out = CABasicAnimation(keyPath: "opacity")
         out.fromValue = 1
         out.toValue = 0
-        out.duration = 0.2
+        out.duration = Motion.fadeDuration
         picture.opacity = 0
         picture.add(out, forKey: "dissolve")
         if !fadeOut {
@@ -180,7 +180,7 @@ final class SnapshotFlight {
             let fadeIn = CABasicAnimation(keyPath: "opacity")
             fadeIn.fromValue = 0
             fadeIn.toValue = 1
-            fadeIn.duration = 0.2
+            fadeIn.duration = Motion.fadeDuration
             arrival.add(fadeIn, forKey: "dissolve")
         }
         CATransaction.commit()
@@ -190,7 +190,7 @@ final class SnapshotFlight {
         let panel = self.panel
         guard fade else { panel.orderOut(nil); return }
         NSAnimationContext.runAnimationGroup({ context in
-            context.duration = 0.08
+            context.duration = Motion.fadeDuration
             panel.animator().alphaValue = 0
         }, completionHandler: {
             // 动画完成回调在主线程。

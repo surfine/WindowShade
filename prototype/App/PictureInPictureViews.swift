@@ -130,7 +130,7 @@ final class PiPView: NSView {
         let cropped = hasCrop?() ?? false
         buttons["crop"]?.image = Self.symbol(cropped ? "arrow.up.left.and.arrow.down.right" : "crop", size: 12)
         buttons["crop"]?.toolTip = cropped ? "看整扇窗口" : "只看一块"
-        let duration = Motion.reduced ? 0 : 0.15
+        let duration = Motion.fadeDuration
         NSAnimationContext.runAnimationGroup { context in
             context.duration = duration
             for button in buttons.values { button.animator().alphaValue = show ? 1 : 0 }

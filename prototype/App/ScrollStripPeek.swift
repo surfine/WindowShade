@@ -318,7 +318,7 @@ final class StripPeek {
         current.content.setRoll(1)
         current.panel.orderFrontRegardless()
         NSAnimationContext.runAnimationGroup { context in
-            context.duration = 0.16
+            context.duration = Motion.fadeDuration
             current.panel.animator().alphaValue = 1
         }
         DispatchQueue.main.asyncAfter(deadline: .now() + Self.staleNoticeDelay) { [weak current] in
@@ -342,7 +342,7 @@ final class StripPeek {
         current.capture = nil
         let panel = current.panel
         NSAnimationContext.runAnimationGroup({ context in
-            context.duration = 0.12
+            context.duration = Motion.fadeDuration
             panel.animator().alphaValue = 0
         }, completionHandler: {
             // 动画完成回调在主线程。

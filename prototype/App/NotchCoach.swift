@@ -131,7 +131,7 @@ final class NotchDemoView: NSView {
         animation.duration = cycle
         animation.repeatCount = 3
         animation.calculationMode = .linear
-        animation.timingFunctions = Array(repeating: CAMediaTimingFunction(controlPoints: 0.3, 0, 0.2, 1), count: max(1, values.count - 1))
+        animation.timingFunctions = nil
         animation.fillMode = .forwards
         animation.isRemovedOnCompletion = false
         layer.add(animation, forKey: keyPath)

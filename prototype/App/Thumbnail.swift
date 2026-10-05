@@ -341,8 +341,7 @@ final class ShadeThumbnailView: NSView {
             let fade = CABasicAnimation(keyPath: "opacity")
             fade.fromValue = current
             fade.toValue = target
-            fade.duration = 0.12
-            fade.timingFunction = CAMediaTimingFunction(name: .easeOut)
+            fade.duration = Motion.fadeDuration
             layer.add(fade, forKey: "thumbnail-opacity")
         } else {
             layer.removeAnimation(forKey: "thumbnail-opacity")
@@ -738,8 +737,7 @@ extension AppDelegate {
             isProgrammaticOverlayArrangement = false
         } else {
             NSAnimationContext.runAnimationGroup { context in
-                context.duration = 0.3
-                context.timingFunction = CAMediaTimingFunction(controlPoints: 0.23, 1, 0.32, 1)
+                context.duration = Motion.Spring.settle.response
                 for move in moves { move.window.animator().setFrame(move.frame, display: true) }
             } completionHandler: { [weak self] in
                 // 动画完成回调在主线程。
