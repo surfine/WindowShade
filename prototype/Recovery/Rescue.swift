@@ -99,27 +99,32 @@ extension AppDelegate {
                     continue
                 }
 
-                let target = CGPoint(
-                    x: CGFloat(journalNumber(entry, "originalX") ?? Double(targetTopLeft.x + CGFloat(rescued * 24))),
-                    y: CGFloat(journalNumber(entry, "originalY") ?? Double(targetTopLeft.y + CGFloat(rescued * 24)))
+                let fallbackOrigin = CGPoint(
+                    x: targetTopLeft.x + CGFloat(rescued * 24),
+                    y: targetTopLeft.y + CGFloat(rescued * 24)
                 )
-                let originalSize = CGSize(
-                    width: CGFloat(journalNumber(entry, "originalWidth") ?? Double(size.width)),
-                    height: CGFloat(journalNumber(entry, "originalHeight") ?? Double(size.height))
-                )
+                // 坏数字整条隔离：不进 actions、不删 entry，下一轮仍可检查。
+                guard let geometry = JournalNumeric.rescueGeometry(
+                    entry, fallbackOrigin: fallbackOrigin, fallbackSize: size
+                ) else {
+                    wlog("journal: skipped corrupt entry id=\(id) app=\(journalString(entry, "appName"))")
+                    continue
+                }
+                var targetAlpha: Float? = nil
+                if journalString(entry, "hide") == HideMethod.privateAlpha.rawValue {
+                    targetAlpha = geometry.alpha ?? 1
+                }
                 // 屏幕夹紧留到主线程写回：后台不能碰 NSScreen / MainActor clampedFrame。
-                let displayID = journalNumber(entry, "displayID").map { CGDirectDisplayID($0) }
                 result.actions.append(OffscreenRescueAction(
                     id: id, win: win,
-                    target: target, size: originalSize,
+                    target: geometry.origin, size: geometry.size,
                     pid: app.processIdentifier,
                     hide: HideMethod(rawValue: journalString(entry, "hide")),
-                    targetAlpha: journalString(entry, "hide") == HideMethod.privateAlpha.rawValue
-                        ? Float(journalNumber(entry, "originalAlpha") ?? 1) : nil,
-                    preferredDisplayID: displayID
+                    targetAlpha: targetAlpha,
+                    preferredDisplayID: geometry.displayID
                 ))
                 rescued += 1
-                wlog("journal: rescued id=\(id) app=\(journalString(entry, "appName")) target=(\(Int(target.x)),\(Int(target.y)))")
+                wlog("journal: rescued id=\(id) app=\(journalString(entry, "appName")) target=\(JournalNumeric.formatPoint(geometry.origin))")
             }
         }
     }

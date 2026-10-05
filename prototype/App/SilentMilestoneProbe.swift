@@ -273,7 +273,10 @@ final class SilentMilestoneProbe {
             return
         }
         try? await Task.sleep(nanoseconds: 4_000_000_000)
+        let counters = await source.pipelineCounters()
         source.stop()
+        // R04：授权成功≠采集成功；按阶段计数定位零样本。
+        print("INFO head-pipeline: capture=\(counters.captureReceived) warmup=\(counters.warmupSkipped) throttle=\(counters.throttled) invalid=\(counters.invalidBuffer) clock=\(counters.clockConversionRejected) stale=\(counters.staleFrame) vision=\(counters.visionStarted) visionFail=\(counters.visionFailed) noFace=\(counters.noFace) multi=\(counters.multipleFaces) delivered=\(counters.delivered)")
         let recognition = WS2HeadGesture.recognize(bag.samples)
         print("INFO head: samples=\(bag.samples.count) faces=\(bag.faces) maxPitchDown=\(String(format: "%.1f", bag.maxPitch)) maxAbsYaw=\(String(format: "%.1f", bag.maxYaw)) recognition=\(Self.recognition(recognition))")
         if recognition?.kind == .nod, let started = recognition?.startedAt {

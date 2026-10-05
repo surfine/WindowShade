@@ -216,6 +216,8 @@ final class PinnedPreviewController {
     private var startingPreviewIDs: Set<CGWindowID> = []
     private var startingPreviewTokens: [CGWindowID: UUID] = [:]
     private var startPreviewCompletions: [CGWindowID: [(Result<Void, PinnedPreviewError>) -> Void]] = [:]
+    /// 静音路径置顶异步完成（R03）：供宿主/探针读取，不用 `{ _ in }` 丢掉。
+    private(set) var lastSilentCompletion: (id: CGWindowID, ok: Bool, at: CFTimeInterval)?
     // 单槽镜像的 owner token：菜单缩略图与窗口浏览面板共用同一槽位，
     // 旧 owner 的释放只有在 token 仍匹配时才生效。
     private let mirrorSlot = WindowMirrorSlot()
@@ -235,6 +237,18 @@ final class PinnedPreviewController {
 
     func isPreviewing(id: CGWindowID) -> Bool {
         sessions[id] != nil
+    }
+
+    func noteSilentCompletion(id: CGWindowID, result: Result<Void, PinnedPreviewError>) {
+        dispatchPrecondition(condition: .onQueue(.main))
+        switch result {
+        case .success:
+            lastSilentCompletion = (id, true, CACurrentMediaTime())
+            wlog("pin-preview: silent completion ok id=\(id)")
+        case .failure(let error):
+            lastSilentCompletion = (id, false, CACurrentMediaTime())
+            wlog("pin-preview: silent completion failed id=\(id) reason=\(error.localizedDescription)")
+        }
     }
 
     /// 只读快照：窗口目录用，不暴露可修改的会话字典。

@@ -1,0 +1,18 @@
+PASS display-one
+PASS display-max
+PASS display-zero-rejected
+PASS display-negative-rejected
+PASS display-fraction-rejected
+PASS display-overflow-rejected
+PASS display-nan-rejected
+PASS display-infinity-rejected
+PASS display-negative-infinity-rejected
+PASS display-bool-true-rejected
+PASS display-bool-false-rejected
+PASS display-string-rejected
+PASS display-missing-rejected
+PASS coordinate-negative-preserved
+PASS coordinate-fraction-preserved
+PASS coordinate-nan-rejected
+PASS coordinate-bool-rejected
+SUMMARY 17 isolated assertions passed

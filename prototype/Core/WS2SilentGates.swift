@@ -296,6 +296,12 @@ enum WS2SilentCover {
         _ = state
         return false
     }
+
+    /// 方便遮挡退出：只清内存标志，不走验证后显示的揭开策略。
+    static func clearConvenience(_ state: inout State) {
+        state.covered = false
+        state.scopeSelected = false
+    }
 }
 
 enum WS2SilentResultLine {

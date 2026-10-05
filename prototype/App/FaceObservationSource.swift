@@ -4,6 +4,22 @@ import Cocoa
 import CoreML
 
 struct FaceCameraDescriptor: Sendable, Hashable { let id: String; let name: String }
+
+/// 采集→过滤→Vision→投递的隐私安全计数（R04）。不写图像、特征或相机硬件名。
+struct FacePipelineCounters: Sendable, Equatable {
+    var captureReceived: UInt64 = 0
+    var warmupSkipped: UInt64 = 0
+    var throttled: UInt64 = 0
+    var invalidBuffer: UInt64 = 0
+    var clockConversionRejected: UInt64 = 0
+    var staleFrame: UInt64 = 0
+    var visionStarted: UInt64 = 0
+    var visionFailed: UInt64 = 0
+    var noFace: UInt64 = 0
+    var multipleFaces: UInt64 = 0
+    var delivered: UInt64 = 0
+}
+
 /// Geometry only. Head pose is not gaze; no face is not evidence of departure.
 struct FaceObservation: Sendable, Equatable {
     let cameraID: String
@@ -76,6 +92,10 @@ enum FaceObservationSourceError: Error {
         worker.stop()
     }
     func stop() { stopCapture(); onFailure = nil }
+    /// 当前会话的管道计数快照（授权成功≠采集成功）。
+    func pipelineCounters() async -> FacePipelineCounters {
+        await worker.countersSnapshot()
+    }
     deinit { worker.stop() }
 }
 
@@ -90,8 +110,15 @@ private final class FaceObservationWorker: NSObject, AVCaptureVideoDataOutputSam
     private var deviceID = ""
     private var startedAt = 0.0
     private var lastSample = 0.0
+    private var counters = FacePipelineCounters()
     private var deliver: (@Sendable (FaceObservation) -> Void)?
     private var fail: (@Sendable (Error) -> Void)?
+
+    func countersSnapshot() async -> FacePipelineCounters {
+        await withCheckedContinuation { continuation in
+            queue.async { continuation.resume(returning: self.counters) }
+        }
+    }
 
     static func devices() -> [AVCaptureDevice] {
         AVCaptureDevice.DiscoverySession(deviceTypes: [.builtInWideAngleCamera, .external, .continuityCamera],
@@ -128,6 +155,7 @@ private final class FaceObservationWorker: NSObject, AVCaptureVideoDataOutputSam
                     self.token = token
                     self.sequence = 0
                     self.lastSample = 0
+                    self.counters = FacePipelineCounters()
                     self.deliver = deliver
                     self.fail = fail
                     for name in [AVCaptureSession.runtimeErrorNotification, AVCaptureSession.wasInterruptedNotification] {
@@ -164,18 +192,47 @@ private final class FaceObservationWorker: NSObject, AVCaptureVideoDataOutputSam
     func captureOutput(_ output: AVCaptureOutput, didOutput sample: CMSampleBuffer, from connection: AVCaptureConnection) {
         // This delegate queue also owns session configuration; one Vision request at a time.
         let now = CACurrentMediaTime()
-        guard self.output === output, now - startedAt >= 0.5, now - lastSample >= 0.125,
-              sample.isValid, let buffer = sample.imageBuffer, let clock = session?.synchronizationClock else { return }
+        guard self.output === output else { return }
+        counters.captureReceived &+= 1
+        if now - startedAt < 0.5 {
+            counters.warmupSkipped &+= 1
+            return
+        }
+        if now - lastSample < 0.125 {
+            counters.throttled &+= 1
+            return
+        }
+        guard sample.isValid, let buffer = sample.imageBuffer else {
+            counters.invalidBuffer &+= 1
+            return
+        }
+        guard let clock = session?.synchronizationClock else {
+            counters.clockConversionRejected &+= 1
+            return
+        }
         let captured = CMSyncConvertTime(CMSampleBufferGetPresentationTimeStamp(sample), from: clock,
                                           to: CMClockGetHostTimeClock()).seconds
-        guard captured.isFinite, captured > 0, now >= captured, now - captured < 0.5 else { return }
+        guard captured.isFinite, captured > 0, now >= captured else {
+            counters.clockConversionRejected &+= 1
+            return
+        }
+        if now - captured >= 0.5 {
+            counters.staleFrame &+= 1
+            return
+        }
         lastSample = now
         let request = VNDetectFaceLandmarksRequest()
         // 钉在神经引擎上：默认偶尔退回 GPU/CPU；实测钉住后结果一致（IoU 0.995）、不占 GPU、延迟低 15–30%。没有神经引擎就用默认。
         if let ane = FaceLandmarkComputeDevice.ane { request.setComputeDevice(ane, for: .main) }
+        counters.visionStarted &+= 1
         do { try VNImageRequestHandler(cvPixelBuffer: buffer, orientation: .up).perform([request]) }
-        catch { return }
+        catch {
+            counters.visionFailed &+= 1
+            return
+        }
         let faces = request.results ?? []
+        if faces.isEmpty { counters.noFace &+= 1 }
+        else if faces.count > 1 { counters.multipleFaces &+= 1 }
         let face = faces.count == 1 ? faces.first : nil
         sequence &+= 1
         let imageSize = CGSize(width: CVPixelBufferGetWidth(buffer), height: CVPixelBufferGetHeight(buffer))
@@ -191,6 +248,7 @@ private final class FaceObservationWorker: NSObject, AVCaptureVideoDataOutputSam
             observedAt: captured, faceCount: faces.count, yaw: finite(face?.yaw), pitch: finite(face?.pitch),
             leftEyeOpenness: eye(face?.landmarks?.leftEye), rightEyeOpenness: eye(face?.landmarks?.rightEye),
             faceBoundingBox: face?.boundingBox, confidence: face?.confidence))
+        counters.delivered &+= 1
     }
 }
 
