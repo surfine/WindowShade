@@ -138,6 +138,18 @@ final class WindowStreamCapture: NSObject, SCStreamDelegate, SCStreamOutput, @un
         return _pixelFrameCount
     }
 
+    var captureGeneration: UInt64 {
+        stateLock.lock()
+        defer { stateLock.unlock() }
+        return _captureGeneration
+    }
+
+    /// 这一代画面是否已经能显示。计数增加本身不算。14.4 之前没有这个信号，就不当成已经显示。
+    var presentsFrame: Bool {
+        guard #available(macOS 14.4, *) else { return false }
+        return videoLayer.isReadyForDisplay
+    }
+
     var mirroredFrameCount: UInt64 {
         stateLock.lock()
         defer { stateLock.unlock() }

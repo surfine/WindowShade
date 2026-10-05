@@ -2,6 +2,27 @@
 import CoreGraphics
 import Foundation
 
+extension WS2SilentSession {
+    nonisolated(unsafe) static var confirmShownSequence: UInt64 = 0
+
+    mutating func confirmShown(
+        _ proposal: Proposal,
+        gestureBeganAt: WS2.Instant,
+        now: WS2.Instant,
+        liveRevision: UInt64
+    ) -> Step {
+        Self.confirmShownSequence &+= 1
+        if Self.confirmShownSequence == 0 { Self.confirmShownSequence = 1 }
+        _ = noteShown(id: proposal.id, at: proposal.displayedAt)
+        return confirm(
+            proposal,
+            gestureBeganAt: gestureBeganAt,
+            now: now,
+            liveRevision: liveRevision,
+            sequence: Self.confirmShownSequence)
+    }
+}
+
 @main
 struct SilentIntegrationTests {
     nonisolated(unsafe) static var failures = 0
@@ -43,12 +64,12 @@ struct SilentIntegrationTests {
 
     static func receipts() {
         expect(WS2SilentLab.realEffectCount == 0, "r01 lab has no effect port")
-        let glance = WS2SilentEffectJudge.glance(previewVisible: false)
+        let glance = WS2SilentEffectJudge.glance(invoked: false, previewVisible: false)
         expect(!glance.isCompleted && glance == .unavailable("没预览"), "r01 glance without a preview is not completed")
         let usage = WS2SilentEffectJudge.usageRefresh(protocolParsed: false)
         expect(!usage.isCompleted && usage == .displayed("未提供"), "r01 usage without a protocol response is not completed")
         let cover = WS2SilentEffectJudge.cover(overlayCreated: false, commandID: "privacy.cover")
-        expect(!cover.isCompleted && cover == .unavailable("没遮住"), "r01 cover without an overlay is not completed")
+        expect(!cover.isCompleted && cover == .unavailable("尚未遮住"), "r01 cover without an overlay is not completed")
         let pulled = WS2SilentEffectJudge.placement(frameMatched: false, commandID: "window.left", targetID: "win-1")
         expect(!pulled.isCompleted, "r01 pulling the effect port fails the positive check")
     }
@@ -62,7 +83,7 @@ struct SilentIntegrationTests {
             return
         }
         expect(older.id != newer.id, "r02 same-instant proposals have different ids")
-        expect(session.confirm(older, gestureBeganAt: at(2), now: at(2), liveRevision: 1) == .rejected(.wrongProposal),
+        expect(session.confirmShown(older, gestureBeganAt: at(2), now: at(2), liveRevision: 1) == .rejected(.wrongProposal),
                "r02 the old handle cannot accept the new proposal")
         var late = WS2SilentSession()
         let waiting = late.propose(commandID: "window.left", targetID: "win-1", targetRevision: 3, now: at(0))
@@ -70,9 +91,9 @@ struct SilentIntegrationTests {
             expect(false, "r02 a proposal waits")
             return
         }
-        expect(late.confirm(held, gestureBeganAt: at(30_000), now: at(30_000), liveRevision: 3) == .rejected(.expired),
+        expect(late.confirmShown(held, gestureBeganAt: at(30_000), now: at(30_000), liveRevision: 3) == .rejected(.expired),
                "r02 thirty seconds later rejects")
-        expect(late.confirm(held, gestureBeganAt: at(120), now: at(120), liveRevision: 3) == .rejected(.wrongProposal),
+        expect(late.confirmShown(held, gestureBeganAt: at(120), now: at(120), liveRevision: 3) == .rejected(.wrongProposal),
                "r02 an expired proposal cannot be accepted again")
         var moved = WS2SilentSession()
         let preview = moved.propose(commandID: "window.left", targetID: "win-1", targetRevision: 3, now: at(100))
@@ -80,12 +101,12 @@ struct SilentIntegrationTests {
             expect(false, "r02 a placement waits")
             return
         }
-        expect(moved.confirm(proposal, gestureBeganAt: at(120), now: at(120), liveRevision: 4) == .rejected(.staleTarget),
+        expect(moved.confirmShown(proposal, gestureBeganAt: at(120), now: at(120), liveRevision: 4) == .rejected(.staleTarget),
                "r02 a changed target voids the proposal")
-        expect(moved.confirm(proposal, gestureBeganAt: at(120), now: at(120), liveRevision: 3) == .rejected(.wrongProposal),
+        expect(moved.confirmShown(proposal, gestureBeganAt: at(120), now: at(120), liveRevision: 3) == .rejected(.wrongProposal),
                "r02 the old proposal cannot be accepted after the target changes")
         moved.invalidate()
-        expect(moved.confirm(proposal, gestureBeganAt: at(130), now: at(130), liveRevision: 3) == .rejected(.wrongProposal),
+        expect(moved.confirmShown(proposal, gestureBeganAt: at(130), now: at(130), liveRevision: 3) == .rejected(.wrongProposal),
                "r02 invalidate keeps the proposal void")
     }
 
@@ -102,7 +123,7 @@ struct SilentIntegrationTests {
     static func windows() {
         let unread = WS2SilentEffectJudge.placement(frameMatched: false, commandID: "window.left", targetID: "win-1")
         expect(!unread.isCompleted && unread.notchLine == "结果未确认", "r04 a placement without readback is not completed")
-        let glance = WS2SilentEffectJudge.glance(previewVisible: false)
+        let glance = WS2SilentEffectJudge.glance(invoked: false, previewVisible: false)
         expect(!glance.isCompleted, "r04 a glance without a preview is not completed")
         liveWindowNote("r04")
     }

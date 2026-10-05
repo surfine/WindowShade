@@ -6,6 +6,7 @@ enum WS2SilentDraftMark: Equatable, Sendable {
     case idle
     case preview
     case waitingForAck
+    case outcomeUnknown
     case sent
 }
 
@@ -13,6 +14,7 @@ enum WS2SilentDraftResult: Equatable, Sendable {
     case preview
     case keptLocal
     case waitingForAck(UInt64)
+    case alreadySatisfied
     case sent
     case refused
 }
@@ -28,87 +30,99 @@ struct WS2SilentDraftHost: Equatable, Sendable {
     private(set) var mark: WS2SilentDraftMark = .idle
     private(set) var draftID: String = ""
     private(set) var revision: UInt64 = 0
-    private var pendingRequestID: UInt64?
-    private var pendingSessionID: String?
+    private var submission: Submission?
     private var issued: UInt64 = 0
+
+    struct Submission: Equatable, Sendable {
+        var submissionID: UUID
+        var sessionID: String
+        var revision: UInt64
+        var requestID: UInt64
+        var draftID: String
+    }
 
     static func isSendCommand(_ commandID: String) -> Bool {
         commandID == "assistant.sendDraft"
     }
 
-    /// 采用这一条只产生预览。点头本身不是送出。
+    /// 采用这一条只产生预览。点头本身不是送出。已有的提交记录留着。
     @discardableResult
     mutating func adopt(id: String, revision: UInt64) -> WS2SilentDraftResult {
         guard !id.isEmpty else { return .refused }
         draftID = id
         self.revision = revision
-        pendingRequestID = nil
-        pendingSessionID = nil
-        mark = .preview
+        if submission == nil { mark = .preview }
         return .preview
     }
 
-    /// 丢掉预览。正在等回执或已经送出的，不在这里清掉。
+    /// 丢掉预览。正在等回执、结果未知或已经送出的，不在这里清掉。
     @discardableResult
     mutating func discard() -> WS2SilentDraftResult {
-        guard mark == .preview else { return .refused }
+        guard mark == .preview, submission == nil else { return .refused }
         draftID = ""
         revision = 0
-        pendingRequestID = nil
-        pendingSessionID = nil
         mark = .idle
         return .keptLocal
     }
 
     /// 只有送出那一条能离开预览。没有绑定会话就留在这台 Mac 上。
-    /// 还在等回执时不再发一次。没有回执就不标成已送出。
+    /// 同一意图不另发一次。断线之后的未知结果也不自动重试。
     @discardableResult
     mutating func submit(commandID: String, id: String, revision: UInt64, boundSessionID: String?) -> WS2SilentDraftResult {
         guard Self.isSendCommand(commandID), !id.isEmpty, id == draftID, revision == self.revision else {
             return .refused
         }
-        if mark == .sent { return .refused }
-        guard mark == .preview || mark == .waitingForAck else { return .refused }
+        if mark == .sent { return .alreadySatisfied }
+        if mark == .outcomeUnknown { return .refused }
+        if mark == .waitingForAck, let submission {
+            let sessionID = boundSessionID?.trimmingCharacters(in: .whitespacesAndNewlines) ?? ""
+            guard !sessionID.isEmpty, sessionID == submission.sessionID else { return .refused }
+            return .waitingForAck(submission.requestID)
+        }
+        guard mark == .preview else { return .refused }
         let sessionID = boundSessionID?.trimmingCharacters(in: .whitespacesAndNewlines) ?? ""
-        guard !sessionID.isEmpty else {
-            pendingRequestID = nil
-            pendingSessionID = nil
-            mark = .preview
-            return .keptLocal
-        }
-        if mark == .waitingForAck, let pendingRequestID {
-            return .waitingForAck(pendingRequestID)
-        }
+        guard !sessionID.isEmpty else { return .keptLocal }
         issued &+= 1
         if issued == 0 { issued = 1 }
-        pendingRequestID = issued
-        pendingSessionID = sessionID
+        submission = Submission(submissionID: UUID(), sessionID: sessionID, revision: revision, requestID: issued, draftID: id)
         mark = .waitingForAck
         return .waitingForAck(issued)
     }
 
-    /// 回执必须对上这一次送出。对不上就不改成已送出，也不再发一次。
+    /// 回执必须对上这一次送出。对不上就不改成已送出。结果未知时，原回执仍能结算原记录。
     @discardableResult
     mutating func acknowledge(_ ack: WS2SilentDraftAck) -> WS2SilentDraftResult {
-        guard mark == .waitingForAck,
-              ack.requestID == pendingRequestID,
-              ack.draftID == draftID,
-              ack.sessionID == pendingSessionID,
-              ack.revision == revision else {
+        guard let submission,
+              (mark == .waitingForAck || mark == .outcomeUnknown),
+              ack.requestID == submission.requestID,
+              ack.draftID == submission.draftID,
+              ack.sessionID == submission.sessionID,
+              ack.revision == submission.revision else {
             return .refused
         }
-        pendingRequestID = nil
-        pendingSessionID = nil
         mark = .sent
         return .sent
     }
 
-    /// 断线不重发。还在等的那一次回到预览；已经送出的不再发一次。
+    /// 断线不重发。已经交出去的记成结果未知，不退回未发送。
     mutating func disconnect() {
-        pendingRequestID = nil
-        pendingSessionID = nil
         if mark == .waitingForAck {
-            mark = .preview
+            mark = .outcomeUnknown
+        }
+    }
+}
+
+enum WS2SilentDraftReceipt {
+    static func execution(_ result: WS2SilentDraftResult) -> SilentExecutionResult {
+        switch result {
+        case .keptLocal:
+            return .displayed("还在这台 Mac")
+        case .waitingForAck(let id):
+            return .waiting(id)
+        case .alreadySatisfied:
+            return .alreadySatisfied("已送出")
+        case .preview, .sent, .refused:
+            return .failed("这一笔没有做成")
         }
     }
 }

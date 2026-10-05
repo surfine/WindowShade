@@ -89,13 +89,7 @@ enum WS2SilentApply {
         case .startFocus:
             let idle = runtime.focus.model.phase == .idle
             runtime.startFocus()
-            if idle && runtime.focus.model.phase != .idle {
-                return completed("focus.start", "")
-            }
-            if !idle && runtime.focus.model.phase != .idle {
-                return .alreadySatisfied("已在专注")
-            }
-            return notDone()
+            return WS2SilentEffectJudge.focusStart(wasIdle: idle, runningAfter: runtime.focus.model.phase != .idle)
         case .pauseFocus:
             runtime.pauseFocus()
             return runtime.focus.model.isPaused ? completed("focus.pause", "") : notDone()
@@ -108,8 +102,9 @@ enum WS2SilentApply {
             return notDone()
         case .glance(let id, let revision):
             guard let window, frozen(id, revision, window) else { return .unavailable("没预览") }
-            let visible = gestures.owner.glance.panelFrame(for: window.id) != nil
-            return WS2SilentEffectJudge.glance(previewVisible: visible)
+            let invoked = gestures.owner.glance.showHeld(window.id)
+            let visible = invoked && gestures.owner.glance.panelFrame(for: window.id) != nil
+            return WS2SilentEffectJudge.glance(invoked: invoked, previewVisible: visible)
         case .openLaunchpadFolder(let id):
             guard let screen, !id.isEmpty else { return .unavailable("还没选") }
             guard launchpad.openFolder(id, on: screen) else { return notDone() }
@@ -119,14 +114,7 @@ enum WS2SilentApply {
             return adopted ? .displayed("已采用草稿") : notDone()
         case .submitDraft(let id, let revision):
             let result = draft.submit(commandID: "assistant.sendDraft", id: id, revision: revision, boundSessionID: boundSessionID)
-            switch result {
-            case .keptLocal:
-                return .displayed("还在这台 Mac")
-            case .waitingForAck:
-                return .waiting(1)
-            case .preview, .sent, .refused:
-                return notDone()
-            }
+            return WS2SilentDraftReceipt.execution(result)
         case .undoWindow(let id, let revision):
             guard let window, frozen(id, revision, window) else { return notDone() }
             _ = gestures.undoOwnedPlacement(window.element, id: window.id)
@@ -267,7 +255,16 @@ enum WS2SilentApply {
             return preview.isPreviewing(id: window.id) ? .unknown(0) : completed("window.unpin", String(window.id))
         case .place, .collapse, .expand, .undo, .move, .glance:
             return .unknown(0)
-        case .pin, .slideOver, .leaveSlideOver, .pictureInPicture, .leavePictureInPicture,
+        case .pin:
+            guard same else { return notDone() }
+            let decision = WS2SilentEffectJudge.pin(
+                alreadyPreviewing: owner.pinnedPreviewController.isPreviewing(id: window.id))
+            if decision.start {
+                owner.pinnedPreviewController.startPreview(
+                    targetWindowID: window.id, pid: window.pid, axWindow: window.element) { _ in }
+            }
+            return decision.result
+        case .slideOver, .leaveSlideOver, .pictureInPicture, .leavePictureInPicture,
              .choose, .chooseDisplay, .batchReview, .strip, .stripOverview, .scene:
             _ = WS2SilentSim.record(name: "\(effect)", target: String(window.id), revision: window.revision)
             return notDone()

@@ -49,12 +49,23 @@ final class NotchLeaseHub {
     private let locked: () -> Bool
     private let cancelHandler: (CancelNotice) -> Void
     private weak var controller: NotchController?
+    /// 测试里没有 NotchController 时，用它把挂起的那一排接回去。
+    var resumeShelfHandler: ((WS2.DisplayID) -> Void)?
     private weak var contentPanel: NotchPanel?
     private var contentView: (NSView & WS2LeaseContent)?
     private var contentHandle: WS2.LeaseHandle?
     private var contentDismissed: ((WS2.LeaseRevocation) -> Void)?
     private var contentDeadline: Task<Void, Never>?
     private var authHandle: WS2.LeaseHandle?
+    /// 更高的层打断「你打开的」之后留下的那一页。旧租约不复活；让出后另拿一份，进场不重播。
+    private var parkedShelf: [WS2.DisplayID: Owner] = [:]
+    private struct ParkedContent {
+        let view: NSView & WS2LeaseContent
+        let owner: Owner
+        let display: WS2.DisplayID
+        let onDismiss: (WS2.LeaseRevocation) -> Void
+    }
+    private var parkedContent: ParkedContent?
 
     private lazy var coordinator = InteractionCoordinator(
         bootID: bootID,
@@ -91,6 +102,7 @@ final class NotchLeaseHub {
     /// 显式的用户动作换掉我们自己的旧内容，但永远不换掉原生认证。
     @discardableResult
     func show(_ content: NSView & WS2LeaseContent, ownerID: String, layer: WS2.Layer = .opened,
+              animated: Bool = true,
               onDismiss: @escaping (WS2.LeaseRevocation) -> Void = { _ in }) -> Bool {
         guard !locked(), controller?.authentication.isPresenting != true,
               let panel = controller?.authenticationPanel(),
@@ -112,7 +124,7 @@ final class NotchLeaseHub {
             guard let content else { return }
             self?.dismiss(ifShowing: content)
         }
-        panel.setInteraction(content)
+        panel.setInteraction(content, animated: animated)
         panel.makeKeyAndOrderFront(nil)
         contentDeadline = Task { [weak self] in
             do { try await Task.sleep(nanoseconds: 120 * WS2.Duration.second) } catch { return }
@@ -167,8 +179,10 @@ final class NotchLeaseHub {
 
     private func endAuthorization() {
         guard let authHandle else { return }
+        let display = authHandle.display
         coordinator.release(authHandle, at: clock.now())
         self.authHandle = nil
+        resumeParked(on: display)
     }
 
     // MARK: - 申请与释放
@@ -196,6 +210,28 @@ final class NotchLeaseHub {
         // 先让协调器走完撤销与收尾（route 会把这一格账清掉），再兜底清一次。
         coordinator.release(current.handle, at: clock.now())
         held[display] = nil
+        resumeParked(on: display)
+    }
+
+    /// 那一排其实没展开：不要在更高的层让出后把它凭空打开。
+    func forgetShelfPark(on display: WS2.DisplayID) {
+        parkedShelf[display] = nil
+    }
+
+    private func resumeParked(on display: WS2.DisplayID) {
+        guard !locked() else { parkedShelf.removeAll(); parkedContent = nil; return }
+        if let parked = parkedContent, parked.display == display {
+            parkedContent = nil
+            _ = show(parked.view, ownerID: parked.owner.rawValue, animated: false, onDismiss: parked.onDismiss)
+            return
+        }
+        guard parkedShelf[display] == .notchShelf else { return }
+        parkedShelf[display] = nil
+        if let resumeShelfHandler {
+            resumeShelfHandler(display)
+        } else {
+            controller?.resumeShelf(on: display)
+        }
     }
 
     /// 这块屏现在是谁的；没有主人返回 nil。
@@ -227,6 +263,8 @@ final class NotchLeaseHub {
     /// 锁屏、睡眠、失去会话、关掉功能：清掉可见内容和输入，撤销当前租约。
     func invalidate(_ reason: WS2.LeaseRevocation) {
         // 先走屏障：撤销活跃租约、通知收尾，route 会清掉那一格；剩下的记账在这里兜底清空。
+        parkedShelf.removeAll()
+        parkedContent = nil
         coordinator.invalidate(reason, at: clock.now())
         held.removeAll()
     }
@@ -245,22 +283,44 @@ final class NotchLeaseHub {
         coordinator.snapshots(at: clock.now()).first { $0.display == display }
     }
 
+    private func clearParks(for reason: WS2.LeaseRevocation, owner: Owner?, display: WS2.DisplayID) {
+        switch reason {
+        case .locked, .sleeping, .disabled, .sessionChanged:
+            parkedShelf.removeAll(); parkedContent = nil
+        case .displayRemoved:
+            parkedShelf[display] = nil
+            if parkedContent?.display == display { parkedContent = nil }
+        case .suspended where owner == .notchShelf:
+            parkedShelf[display] = .notchShelf
+        case .released, .preempted, .expired, .suspended:
+            if owner == .notchShelf { parkedShelf[display] = nil }
+            if owner == parkedContent?.owner { parkedContent = nil }
+        }
+    }
+
     private func route(_ handle: WS2.LeaseHandle, _ reason: WS2.LeaseRevocation) {
+        let owner = held[handle.display]?.owner
+        clearParks(for: reason, owner: owner, display: handle.display)
         if contentHandle == handle {
             let content = contentView, panel = contentPanel, callback = contentDismissed
-            contentHandle = nil; contentView = nil; contentPanel = nil; contentDismissed = nil
             contentDeadline?.cancel(); contentDeadline = nil
             content?.inputIsCurrent = { false }
-            content?.revoke()
-            if let content, panel?.isShowingInteraction(content) == true { panel?.setInteraction(nil) }
-            callback?(reason)
+            if reason == .suspended, let content, let owner, owner.layer == .opened {
+                parkedContent = ParkedContent(view: content, owner: owner, display: handle.display, onDismiss: callback ?? { _ in })
+                contentHandle = nil; contentView = nil; contentPanel = nil; contentDismissed = nil
+                if panel?.isShowingInteraction(content) == true { panel?.setInteraction(nil, animated: false) }
+            } else {
+                contentHandle = nil; contentView = nil; contentPanel = nil; contentDismissed = nil
+                content?.revoke()
+                if let content, panel?.isShowingInteraction(content) == true { panel?.setInteraction(nil) }
+                callback?(reason)
+            }
         }
         if authHandle == handle {
             // 先清账：原生 cancel 会再调一次 releaseInteraction。
             authHandle = nil
             controller?.authentication.cancel(animated: false, restoreFocus: false)
         }
-        let owner = held[handle.display]?.owner
         held[handle.display] = nil
         guard let owner else { return }
         cancelHandler(CancelNotice(owner: owner, display: handle.display, reason: reason))
