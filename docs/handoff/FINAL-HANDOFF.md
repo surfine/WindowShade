@@ -27,6 +27,8 @@
 
 真机矩阵证据（历史）：[hardware-matrix-2026-10-05/](hardware-matrix-2026-10-05/)（`matrix.json` + `logs/`）。机器：macOS 27.0 / M5 + Studio Display；commit `c1cdf19` 时段。
 
+第二轮真机证据（2026-10-06，全部绑在同一颗已签名 `--stage` 二进制上）：[hardware-matrix-2026-10-05/round2.json](hardware-matrix-2026-10-05/round2.json) 与同目录 `logs/r2-*`。二进制 `2026-10-06 07:14:41`、`sha256 128b76bd…`、Team `FVGLY6W6S4`（Apple Development 签名，TCC 跨重编保留，重跑不需重新授权）；在该颗上 `silent-milestone` 连跑 **9/9**、`silent-cover` 全绿，离线 r00–r04 / journal-numeric / silent-prep 全 PASS、`--check` 0。修前失败样本与修后通过样本都留在同一目录可复查；已关 F1/F3/F4/F5/F8，**F7（private SLS 离屏停车真的成功时，收起验证只读 AX 几何）仍是产品侧待裁决项**。
+
 | 工单 | 状态 | 证据边界 |
 | --- | --- | --- |
 | WSR-01 止血 | 代码已关：无 `confirmSimulatedNod`；glance 要 `Glance.isLive`；cover 无观察不报完成 | `--check` 0；silent / delta / prep；真机 `silent-milestone` PASS（H01–H05） |
