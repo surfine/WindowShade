@@ -113,7 +113,8 @@ import Cocoa
         ears.setActivities([music], selected: "music")
         let earShape = ears.shapeForProbe!.island
         expect(earShape.width == 200 && abs(earShape.height - 26) < 0.01, "紧凑是一颗胶囊，不是旧的横条")
-        expect(ears.compactForProbe?.leading == "September" && ears.compactForProbe?.trailing == "40%", "左耳是这一件，右耳是进度")
+        expect(ears.compactForProbe?.leading == "September" && ears.compactForProbe?.trailing == "40%",
+               "左耳是这一件，右耳是进度")
         ears.expand(with: [])
         expect(ears.isExpanded && ears.shapeForProbe!.island.height > earShape.height, "展开是同一件事放大")
 
@@ -122,9 +123,15 @@ import Cocoa
         ears.collapse()
         ears.split(showing: "标题变了")
         let apart = ears.splitForProbe
+        if !(apart.separated && !apart.retargeted && !apart.fades) {
+            print("INFO H11 apart=\(apart) island=\(ears.shapeForProbe?.island as Any)")
+        }
         expect(apart.separated && !apart.retargeted && !apart.fades, "从这一颗旁边分开")
         ears.split(showing: "又一句")
         let retargeted = ears.splitForProbe
+        if !(retargeted.separated && retargeted.retargeted) {
+            print("INFO H11 retargeted=\(retargeted)")
+        }
         expect(retargeted.separated && retargeted.retargeted, "半路改方向从当前位置接上")
         ears.mergeSplit()
         expect(!ears.isSplit && !ears.splitForProbe.separated, "再合成一颗")
@@ -145,11 +152,42 @@ import Cocoa
         NotchPanel.foreignHUDOverride = false
         ears.presentLevel(.volume, value: 0.4)
         expect(ears.levelForProbe?.kind == "音量" && ears.levelForProbe?.value == 0.4, "合成的音量鼓起这一颗")
+        let levelShape = ears.shapeForProbe!.island
+        if abs(levelShape.width - 210) >= 0.5 || abs(levelShape.height - 36) >= 0.5 {
+            print("INFO H13 level shape=\(levelShape) meter=\(String(describing: ears.levelForProbe))")
+        }
+        expect(abs(levelShape.width - 210) < 0.5 && abs(levelShape.height - 36) < 0.5, "音量鼓成稿上的 210×36 胶囊")
         ears.presentLevel(.brightness, value: 0.7)
         expect(ears.levelForProbe?.kind == "亮度" && ears.levelForProbe?.value == 0.7, "亮度也是这一颗")
         NotchPanel.foreignHUDOverride = nil
 
-        print(failures == 0 ? "PASS NotchLeaseHostTests: 13 cases, \(failures) failures" : "FAIL NotchLeaseHostTests: \(failures) failures")
+        print("CASE LEASE-H14 | 退场字先淡，展开保留两耳锚点")
+        expect(NotchCanvasView.shouldExitContentFirst(
+            from: NotchCanvasView.Content(tiles: [], dots: 0, dotsChanged: false, dotsY: 0, compact: nil,
+                                          compactSlots: nil, alert: NotchPanel.Alert(id: 1, icon: nil, title: "好了", subtitle: ""),
+                                          hint: nil, notchHeight: 32),
+            to: NotchCanvasView.Content(tiles: [], dots: 0, dotsChanged: false, dotsY: 0, compact: nil,
+                                        compactSlots: nil, alert: nil, hint: nil, notchHeight: 32)),
+               "提醒退场先清内容")
+        let shelf = NotchPanel(notch: NSRect(x: -5800, y: 900, width: 180, height: 32), virtual: true)
+        shelf.setCompact(NotchPanel.Compact(pid: nil, icon: nil, count: 2, changed: false), room: nil)
+        shelf.expand(with: [NotchTile(id: 1, kind: .tucked, snapshot: nil, icon: nil, title: "窗口")])
+        expect(shelf.isExpanded && shelf.compactForProbe?.count == 2 && shelf.compactForProbe?.leading == nil,
+               "展开一排仍留着紧凑两耳的个数")
+
+        print("CASE LEASE-H15 | 亮度也是 210×36；曲名变更走旁边那颗岛")
+        let bright = NotchPanel(notch: NSRect(x: -6000, y: 900, width: 180, height: 32), virtual: true)
+        bright.presentLevel(.brightness, value: 0.55)
+        let brightShape = bright.shapeForProbe!.island
+        expect(abs(brightShape.width - 210) < 0.5 && abs(brightShape.height - 36) < 0.5, "亮度鼓成同一颗胶囊")
+        let duo = NotchPanel(notch: NSRect(x: -6200, y: 900, width: 180, height: 32), virtual: true)
+        let tune = NotchActivity(id: "music", kind: .music, title: "September", subtitle: "Earth, Wind & Fire",
+                                 symbol: "music.note", startedAt: 1, progress: 0.4)
+        duo.setActivities([tune], selected: "music")
+        duo.alert(NotchPanel.Alert(id: 0, icon: nil, title: "Boogie Wonderland", subtitle: "标题变了"), duration: 2.6)
+        expect(duo.isSplit && duo.splitForProbe.separated, "曲名变了旁边分开一颗")
+
+        print(failures == 0 ? "PASS NotchLeaseHostTests: 15 cases, \(failures) failures" : "FAIL NotchLeaseHostTests: \(failures) failures")
         if failures > 0 { exit(1) }
     }
 }
