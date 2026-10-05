@@ -43,7 +43,7 @@ type Ev = [number, string, Tune, number?];
 
 /** 每段里岛换目标的时刻：[帧, 形状, 弹簧, 鼓一下的初速度（点/秒）]。每段第一条是起点，直接到位。 */
 const EVENTS: Record<string, Ev[]> = {
-  wake: [[0, 'rest', 'calm'], [T.faceOn, 'face', 'bloom', 220], [560, 'alert', 'bloom', 260], [640, 'rest', 'calm']],
+  wake: [[0, 'rest', 'calm'], [T.faceOn, 'face', 'bloom', 220], [T.unlock + 8, 'rest', 'calm'], [592, 'alert', 'bloom', 240], [690, 'rest', 'calm']],
   home: [[720, 'rest', 'calm'], [T.tap, 'rest', 'calm', 520], [T.lpClose, 'rest', 'calm', 380], [T.listenPre, 'row', 'bloom', 240]],
   lips: [[1080, 'row', 'calm'], [T.ask, 'alert', 'bloom', 280], [T.rest, 'rest', 'calm'], [T.ride, 'alert', 'bloom', 240]],
   live: [[1800, 'compact', 'calm'], [T.rideOpen, 'alert', 'bloom', 300], [T.rideClose, 'compact', 'calm'], [T.foodOpen, 'alert', 'bloom', 300], [T.foodClose, 'compact', 'calm'], [T.livePre, 'row', 'bloom', 220]],

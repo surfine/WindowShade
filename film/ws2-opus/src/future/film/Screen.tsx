@@ -24,8 +24,8 @@ const LAYOUT: Record<MachineId, { browser: R4; notes: R4; term: R4; chat: R4 }> 
 // ---- 状态 ----
 /** 1 是锁屏。 */
 function lockedAt(m: MachineId, f: number) {
-  // 片尾双机：硬切后再是桌面，不在同机连续镜头里叠化自解锁（审片 C10-03）。
-  if (f >= 3298) return 0;
+  // 片尾双机：硬切那一帧才换桌面。前镜最后一源帧（3298–3299，交付第 1649 帧）保持锁屏（审片 C13-02）。
+  if (f >= 3300) return 0;
   if (m === 'neo') return 1 - smooth(seg(f, T.unlock, T.unlock + 36));
   // Air：倒数结束锁上，并停在锁屏上直到硬切片尾（片尾第一帧不得带锁屏钟）。
   return f < 3184 ? 0 : smooth(seg(f, 3184, 3214));
@@ -72,11 +72,19 @@ function tuckP(m: MachineId, f: number, delay: number, which: 'chat' | 'all') {
   return f < T.back + 4 ? inn : 1 - out;
 }
 
-function Tucked({ m, f, r, p, children }: { m: MachineId; f: number; r: R4; p: number; children: ReactNode }) {
+/** 收进胶囊：位移/缩放的弹簧就是设计稿那根 `settle`。`soft` 只把淡出推后——
+ *  开头那一下要在正常速度看清「哪扇窗、从哪里、去了哪里」（审片 C13-01），
+ *  其余场景（番茄钟等）仍用原来的短淡出。 */
+function Tucked({ m, f, r, p, z = 0, soft = false, children }: { m: MachineId; f: number; r: R4; p: number; z?: number; soft?: boolean; children: ReactNode }) {
   if (p >= 0.999) return null;
   const I = islandRect(m, f);
   const tx = I.x + I.w / 2 - (r.x + r.w / 2), ty = I.y + I.h / 2 - (r.y + r.h / 2);
-  return <div style={{ position: 'absolute', inset: 0, transform: `translate(${tx * p}px, ${ty * p}px) scale(${1 - 0.92 * p})`, transformOrigin: `${r.x + r.w / 2}px ${r.y + r.h / 2}px`, opacity: 1 - smooth(clamp01(p * 1.25 - 0.2)) }}>{children}</div>;
+  return <div style={{ position: 'absolute', inset: 0, zIndex: z, transform: `translate(${tx * p}px, ${ty * p}px) scale(${1 - 0.92 * p})`, transformOrigin: `${r.x + r.w / 2}px ${r.y + r.h / 2}px`, opacity: 1 - smooth(clamp01(p * 1.25 - (soft ? 0.55 : 0.2))) }}>{children}</div>;
+}
+
+/** 备忘录窗的标题（本片这扇窗自带，不动共用 Desktop）：收进前要让「哪一扇窗」一眼可辨。 */
+function NoteTitle() {
+  return <div style={{ position: 'absolute', left: 0, right: 0, top: 15, textAlign: 'center', fontFamily: CJK, fontSize: 14, fontWeight: 600, color: '#d8d8dc', pointerEvents: 'none' }}>备忘录</div>;
 }
 
 function Windows({ m, f }: { m: MachineId; f: number }) {
@@ -84,8 +92,11 @@ function Windows({ m, f }: { m: MachineId; f: number }) {
   const LEFT = { x: 8, y: P.menu + 8, w: P.w / 2 - 12, h: P.h - P.menu - 98 };
   // 片尾硬切后再铺桌面，不与锁屏同镜叠化。
   const endK = f >= 3300 ? motion(f, 3300, 'settle') : 0;
-  // 解锁后短收一扇进胶囊，承担开头「窗口收进刘海」（审片 C10-05）。
-  const openTuck = m === 'neo' && f >= 560 && f < 640 ? motion(f, 560, 'settle') : 0;
+  // 解锁后短收一扇进胶囊，承担开头「窗口收进刘海」（审片 C10-05、C13-01）：桌面已清楚显现才收。
+  // 收起后停在胶囊里，直到镜头走到 Air 才复位，不在画内弹回。
+  const openTuck = m === 'neo' && f >= 612 && f < 820 ? motion(f, 612, 'settle') : 0;
+  // 露出出发态时把整扇备忘录抬到浏览器之上（浏览器是后绘的兄弟层，必须抬 Tucked 这层才盖得住）；收走后不再遮挡。
+  const noteZ = m === 'neo' && f >= 590 && f < 656 ? 6 : 0;
   const g = Math.max(m === 'neo' ? motion(f, T.glide, 'catch') : 0, endK);
   const b = Lt.browser;
   const br = { x: mix(b.x, LEFT.x, g), y: mix(b.y, LEFT.y, g), w: mix(b.w, LEFT.w, g), h: mix(b.h, LEFT.h, g) };
@@ -94,7 +105,7 @@ function Windows({ m, f }: { m: MachineId; f: number }) {
   return (
     <>
       <div style={{ position: 'absolute', inset: 0, opacity: side }}>
-        <Tucked m={m} f={f} r={Lt.notes} p={Math.max(all(2), openTuck)}><Win r={Lt.notes} z={1}><Notes /></Win></Tucked>
+        <Tucked m={m} f={f} r={Lt.notes} p={Math.max(all(2), openTuck)} z={noteZ} soft={m === 'neo' && f < 900}><Win r={Lt.notes} z={noteZ}><Notes /><NoteTitle /></Win></Tucked>
         <Tucked m={m} f={f} r={Lt.term} p={all(1)}><Win r={Lt.term} z={2} radius={16}><Terminal f={400} /></Win></Tucked>
         {m === 'neo' && <Tucked m={m} f={f} r={Lt.chat} p={Math.max(tuckP(m, f, 0, 'chat'), all(3))}><Win r={Lt.chat} z={4} active={f >= T.pomoHover}><Chat /></Win></Tucked>}
       </div>
@@ -388,8 +399,8 @@ function IslandContent({ m, f, w, h }: { m: MachineId; f: number; w: number; h: 
       const phone = f >= T.phoneOk ? 'ok' : 'wait';
       return <FadeIn a={inWin(f, T.faceOn + 6, T.unlock + 8, 10, 8)}><div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', height: '100%' }}><Factors face={face} phone={phone} /></div></FadeIn>;
     }
-    if (f >= 560 && f < 640) {
-      return <FadeIn a={inWin(f, 562, 636, 8, 6)}><SoftAlert icon={<Tile color="#163524"><Check size={22} draw={1} /></Tile>} title="备忘录" sub="已收进刘海" accent="#5FD38A" /></FadeIn>;
+    if (f >= 646 && f < 690) {
+      return <FadeIn a={inWin(f, 646, 686, 8, 6)}><SoftAlert icon={<Tile color="#163524"><Check size={22} draw={1} /></Tile>} title="备忘录" sub="已收进刘海" accent="#5FD38A" /></FadeIn>;
     }
     if (f >= 1080 && f < T.ask + 6) {
       return (
