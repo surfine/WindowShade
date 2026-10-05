@@ -66,12 +66,32 @@ struct SilentIntegrationTests {
         expect(WS2SilentLab.realEffectCount == 0, "r01 lab has no effect port")
         let glance = WS2SilentEffectJudge.glance(invoked: false, previewVisible: false)
         expect(!glance.isCompleted && glance == .unavailable("没预览"), "r01 glance without a preview is not completed")
+        let panelOnly = WS2SilentEffectJudge.glance(windowID: 9, invoked: true, visible: false)
+        expect(!panelOnly.isCompleted && panelOnly == .waiting(1),
+               "r01 glance invoked without a live first frame waits, not completed")
+        let liveGlance = WS2SilentEffectJudge.glance(windowID: 9, invoked: true, visible: true)
+        expect(liveGlance.isCompleted, "r01 glance with a live first frame is completed")
         let usage = WS2SilentEffectJudge.usageRefresh(protocolParsed: false)
         expect(!usage.isCompleted && usage == .displayed("未提供"), "r01 usage without a protocol response is not completed")
         let cover = WS2SilentEffectJudge.cover(overlayCreated: false, commandID: "privacy.cover")
         expect(!cover.isCompleted && cover == .unavailable("尚未遮住"), "r01 cover without an overlay is not completed")
+        let coverPartial = WS2SilentEffectJudge.cover(
+            overlayCreated: true, commandID: "privacy.cover", allScreensCovered: false, missingScreens: true)
+        expect(!coverPartial.isCompleted && coverPartial == .displayed("还有屏没遮住"),
+               "r01 cover with missing screens is partial, not completed")
+        let coverDone = WS2SilentEffectJudge.cover(
+            overlayCreated: true, commandID: "privacy.cover", allScreensCovered: true, missingScreens: false)
+        expect(coverDone.isCompleted, "r01 cover observed on every requested screen is completed")
         let pulled = WS2SilentEffectJudge.placement(frameMatched: false, commandID: "window.left", targetID: "win-1")
         expect(!pulled.isCompleted, "r01 pulling the effect port fails the positive check")
+        let hostSource = (try? String(contentsOfFile: "prototype/App/WS2SilentHost.swift", encoding: .utf8)) ?? ""
+        expect(!hostSource.contains("confirmSimulatedNod"),
+               "r01 Host no longer routes diagnostic simulated nods into accept/apply")
+        let applySource = (try? String(contentsOfFile: "prototype/App/WS2SilentApply.swift", encoding: .utf8)) ?? ""
+        expect(applySource.contains("isLive(") && !applySource.contains("panelFrame(for: window.id) != nil"),
+               "r01 Apply.glance requires Glance.isLive, not panelFrame alone")
+        expect(applySource.contains("silentPrivacyCover.coverAllScreens"),
+               "r01 Apply.cover uses the per-screen privacy cover adapter")
     }
 
     static func proposals() {

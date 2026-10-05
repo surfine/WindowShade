@@ -103,8 +103,9 @@ enum WS2SilentApply {
         case .glance(let id, let revision):
             guard let window, frozen(id, revision, window) else { return .unavailable("没预览") }
             let invoked = gestures.owner.glance.showHeld(window.id)
-            let visible = gestures.owner.glance.panelFrame(for: window.id) != nil
-            return WS2SilentEffectJudge.glance(windowID: UInt64(window.id), invoked: invoked, visible: visible)
+            // 面板外框不够：要等到首帧真的挂上视频层（isLive）才算观察到预览。
+            let live = gestures.owner.glance.isLive(window.id)
+            return WS2SilentEffectJudge.glance(windowID: UInt64(window.id), invoked: invoked, visible: live)
         case .openLaunchpadFolder(let id):
             guard let screen, !id.isEmpty else { return .unavailable("还没选") }
             guard launchpad.openFolder(id, on: screen) else { return notDone() }
@@ -187,7 +188,16 @@ enum WS2SilentApply {
                     return gestures.owner.inputController.hooksPaused ? .displayed("输入已暂停") : notDone()
                 }
                 if id == "privacy.cover" || id == "scene.conversation" {
-                    return WS2SilentEffectJudge.cover(overlayCreated: false, commandID: id)
+                    let obs = gestures.owner.silentPrivacyCover.coverAllScreens()
+                    if obs.overlayCreated, obs.allScreensCovered {
+                        cover.scopeSelected = true
+                        _ = WS2SilentCover.cover(&cover, overlayCreated: true)
+                    }
+                    return WS2SilentEffectJudge.cover(
+                        overlayCreated: obs.overlayCreated,
+                        commandID: id,
+                        allScreensCovered: obs.allScreensCovered,
+                        missingScreens: obs.missingScreens)
                 }
                 if WS2SilentDraftCommand.handles(id) {
                     let applied = WS2SilentDraftCommand.apply(id, targetID: "", revision: 0, to: &draft)

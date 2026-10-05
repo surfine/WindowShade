@@ -38,15 +38,31 @@ enum SilentExecutionResult: Equatable, Sendable {
 }
 
 enum WS2SilentEffectJudge {
-    static func cover(overlayCreated: Bool, commandID: String) -> SilentExecutionResult {
-        _ = overlayCreated
-        _ = commandID
+    /// `overlayCreated` / `allScreensCovered` 必须来自遮罩适配器的观察，不能是内存布尔。
+    /// 有遮罩但缺屏时用 displayed 表示 partial，不算 completed。
+    static func cover(
+        overlayCreated: Bool,
+        commandID: String,
+        allScreensCovered: Bool = false,
+        missingScreens: Bool = false
+    ) -> SilentExecutionResult {
+        if overlayCreated, allScreensCovered, !missingScreens {
+            return .completed(WS2EffectReceipt(commandID: commandID, targetID: "", observed: true))
+        }
+        if overlayCreated, missingScreens {
+            return .displayed("还有屏没遮住")
+        }
         return .unavailable("尚未遮住")
     }
 
     static func glance(invoked: Bool, previewVisible: Bool) -> SilentExecutionResult {
-        guard invoked, previewVisible else { return .unavailable("没预览") }
-        return .completed(WS2EffectReceipt(commandID: "window.glance", targetID: "", observed: true))
+        if invoked, previewVisible {
+            return .completed(WS2EffectReceipt(commandID: "window.glance", targetID: "", observed: true))
+        }
+        if invoked {
+            return .waiting(1)
+        }
+        return .unavailable("没预览")
     }
 
     static func focusStart(wasIdle: Bool, runningAfter: Bool) -> SilentExecutionResult {
@@ -72,10 +88,16 @@ enum WS2SilentEffectJudge {
         return .completed(WS2EffectReceipt(commandID: commandID, targetID: targetID, observed: true))
     }
 
-    /// 看一眼、置顶、侧拉、画中画共用这一层。换成不做事的端口时，正向完成必须失败。
+    /// 看一眼：visible 表示首帧已挂上（isLive）。已派发未观察到首帧时 waiting，不报完成。
     static func glance(windowID: UInt64, invoked: Bool, visible: Bool) -> SilentExecutionResult {
-        _ = windowID
-        return glance(invoked: invoked, previewVisible: invoked && visible)
+        if invoked, visible {
+            return .completed(WS2EffectReceipt(
+                commandID: "window.glance", targetID: String(windowID), observed: true))
+        }
+        if invoked {
+            return .waiting(1)
+        }
+        return .unavailable("没预览")
     }
 
     static func pin(alreadyPreviewing: Bool, started: Bool) -> SilentExecutionResult {

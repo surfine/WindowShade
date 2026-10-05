@@ -65,13 +65,17 @@ struct DeltaReviewV4Tests {
     }
 
     static func effects() {
-        let covered = WS2SilentEffectJudge.cover(overlayCreated: true, commandID: "privacy.cover")
+        let covered = WS2SilentEffectJudge.cover(overlayCreated: false, commandID: "privacy.cover")
         expect(!covered.isCompleted && covered.notchLine != "已遮住" && covered == .unavailable("尚未遮住"),
-               "A01 a cover factory never says 已遮住")
+               "A01 a cover without an observed overlay never says 已遮住")
+        let coverDone = WS2SilentEffectJudge.cover(
+            overlayCreated: true, commandID: "privacy.cover", allScreensCovered: true)
+        expect(coverDone.isCompleted, "A01 an observed full-screen cover completes")
         let invoked = WS2SilentEffectJudge.glance(invoked: true, previewVisible: true)
         let skipped = WS2SilentEffectJudge.glance(invoked: false, previewVisible: true)
-        expect(invoked.isCompleted && !skipped.isCompleted,
-               "A02 a visible preview without the glance call is not completed")
+        let waiting = WS2SilentEffectJudge.glance(invoked: true, previewVisible: false)
+        expect(invoked.isCompleted && !skipped.isCompleted && waiting == .waiting(1) && !waiting.isCompleted,
+               "A02 a visible preview without the glance call is not completed; invoked without live waits")
         let refused = WS2SilentEffectJudge.focusStart(wasIdle: true, runningAfter: false)
         expect(!refused.isCompleted && refused.notchLine != "已开始专注",
                "A03 a refused focus start does not say it started")
@@ -154,6 +158,39 @@ struct DeltaReviewV4Tests {
         lab.ingestSimulatedNod()
         expect(lab.windowCalls == 0 && lab.backendCalls == 0 && lab.credentialCalls == 0 && WS2SilentLab.realEffectCount == 0,
                "A10 a simulated nod does not touch a real port")
+
+        var diagnostic = WS2SilentSession()
+        let diag = diagnostic.propose(commandID: "window.left", targetID: "A", targetRevision: 1, now: at(10))
+        guard case .awaiting(let diagProposal) = diag else {
+            expect(false, "A10b diagnostic fixture waits")
+            return
+        }
+        expect(diagnostic.noteShown(id: diagProposal.id, at: at(10)), "A10b diagnostic preview is shown")
+        expect(diagnostic.confirm(
+            diagProposal, gestureBeganAt: at(20), now: at(20), liveRevision: 1,
+            origin: .diagnosticFixture) == .rejected(.diagnosticInput),
+               "A10b diagnostic fixture confirmation never accepts")
+        var camera = WS2SilentSession()
+        let cam = camera.propose(commandID: "window.left", targetID: "A", targetRevision: 1, now: at(10))
+        guard case .awaiting(let camProposal) = cam else {
+            expect(false, "A10c camera-challenge nod waits")
+            return
+        }
+        expect(camera.noteShown(id: camProposal.id, at: at(10)), "A10c camera preview is shown")
+        expect(camera.confirm(
+            camProposal, gestureBeganAt: at(20), now: at(20), liveRevision: 1,
+            origin: .liveCameraGesture) == .rejected(.nodCannotAuthorize),
+               "A10c a camera-challenge nod cannot approve a command")
+        var staleDelivery = WS2SilentSession()
+        let aged = staleDelivery.propose(commandID: "window.left", targetID: "A", targetRevision: 1, now: at(10))
+        guard case .awaiting(let agedProposal) = aged else {
+            expect(false, "A10d delivery-age probe waits")
+            return
+        }
+        expect(staleDelivery.noteShown(id: agedProposal.id, at: at(10)), "A10d preview is shown")
+        expect(staleDelivery.confirm(
+            agedProposal, gestureBeganAt: at(20), now: at(300), liveRevision: 1) == .rejected(.staleInput),
+               "A10d a confirmation delivered more than 250ms after the gesture is rejected")
     }
 
     static func pins() {

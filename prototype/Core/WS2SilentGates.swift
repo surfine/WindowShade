@@ -283,10 +283,12 @@ enum WS2SilentCover {
         var scopeSelected = false
     }
 
-    /// 没有真实保护回执时，不把内存写成已遮住。
+    /// 只有适配器观察到遮罩窗口时才把内存写成已遮住。裸调用或假标志都不算。
     static func cover(_ state: inout State, overlayCreated: Bool = false) -> Bool {
-        _ = overlayCreated
-        return false
+        guard overlayCreated else { return false }
+        state.covered = true
+        state.revealed = false
+        return true
     }
 
     /// 静音路径没有授权，所以不能揭开。
@@ -468,6 +470,7 @@ enum WS2SilentReadout {
         case "auth.revokeSession":
             return "没有许可"
         case "privacy.status":
+            if cover.covered { return "已遮住" }
             return cover.scopeSelected ? "尚未遮住" : "还没选范围"
         case "privacy.awaySummary":
             return "没有"
@@ -530,6 +533,7 @@ enum WS2SilentReadout {
         case "ui.windows", "window.choose", "window.batchReview", "app.showSwitcher":
             return "已开窗口浏览"
         case "privacy.cover", "scene.conversation":
+            if cover.covered { return "已遮住" }
             return cover.scopeSelected ? "尚未遮住" : "还没选范围"
         case "input.pause":
             return hooksPaused ? "输入已暂停" : "输入还在"
