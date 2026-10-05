@@ -2,16 +2,16 @@ INFO silent-milestone accessibility=true screenRecording=true camera=authorized
 PASS place: completed leftHalf observed=true frame (160,395 640x452) -> (-108,-1410 1280x1410) cg (-108,-1410 1280x1410)
 PASS cancel: 旧的右半屏没有执行 frame (-108,-1410 1280x1410)
 PASS target-change: 焦点换到另一扇临时窗口后，两扇都没动
-INFO pip-zero-frame: 未运行。捕获到 4 帧，超时那条路径没有发生
-PASS pin: lastResult completed，首帧会话挂上 id=50201
+PASS pip-zero-frame: 注入零帧后 frames=0，窗口留在原处 (-108,-1410 1280x1410)
+PASS pin: 完成回执 ok，首帧会话挂上 id=58603
 PASS unpin: 读回到未预览
 PASS collapse: FoldCompletion ok，lastResult completed，窗口进卷帘态
 PASS expand: lastResult completed，窗口回到屏幕上
 PASS slideOver: lastResult completed，读回到侧拉态
 PASS leaveSlideOver: lastResult completed，读回到不在侧拉
 PASS controlled-fail: 焦点换了目标，这一笔没有做成（窗口未动=true）
-2026-10-06 02:32:49.252 WindowShade[2162:28063070] FBBA: creating VNFaceBBoxAligner from VNFaceDetectorRevision2: VNFaceDetectorRevision2
-INFO head-pipeline: capture=280 warmup=0 throttle=210 invalid=0 clock=0 stale=0 vision=70 visionFail=0 noFace=1 multi=1 delivered=70
+2026-10-06 04:25:02.979 WindowShade[92610:28894546] FBBA: creating VNFaceBBoxAligner from VNFaceDetectorRevision2: VNFaceDetectorRevision2
+INFO head-pipeline: capture=154 warmup=0 throttle=112 invalid=0 clock=0 stale=2 vision=40 visionFail=0 noFace=40 multi=0 delivered=40
 INFO head: samples=0 faces=0 maxPitchDown=0.0 maxAbsYaw=0.0 recognition=nil
 INFO head: 没有点头，提案已作废，窗口没动
 INFO hardware: accessibility=true screenRecording=true camera=authorized

@@ -2,68 +2,89 @@
   "round": 2,
   "date": "2026-10-06",
   "branch": "cursor/silent-effect-receipts",
-  "commit": "6a51b9cfb1e6db3f722986d4fac598a27186f123",
+  "commit": "b7ffe2270fa604e14e40aa429dd36bc3e534643d",
   "device": "MacBook (Apple M5) + Studio Display",
   "os_build": "macOS 27.0 (26A428)",
   "build": {
     "command": "prototype/build.sh --stage (WMO + Apple Development)",
     "binary": ".build/duo-validation/WindowShade.app/Contents/MacOS/WindowShade",
-    "binary_mtime": "2026-10-06 02:10:18",
+    "binary_mtime": "2026-10-06 04:24:41",
     "sign_identifier": "com.windowshade.prototype",
     "team": "FVGLY6W6S4",
-    "note": "fresh --stage on the working tree of cursor/silent-effect-receipts@6a51b9cfb1; camera / accessibility / screen-recording TCC retained across the re-sign"
+    "note": "同一颗 --stage 二进制上重跑全部取证的最终结果：二进制由本提交的工作区构建，签名后 TCC（相机/辅助功能/屏幕录制）跨重编保留。先前 02:10:18 那颗的取证已由本组取代。"
   },
   "results": {
     "silent-milestone": {
       "status": "pass",
-      "runs": "4 total: 3 pass, 1 collapse-only failure at load average ~163",
+      "runs": "同一颗最终二进制连跑 3/3 全绿（负载 4–94 都过）；早前另一颗、负载 ~163 时仅有 1 次 collapse-only 失败（见 F2）",
       "pass_evidence": [
-        "logs/r2-silent-milestone.log",
         "logs/r2-silent-milestone-run1.log",
-        "logs/r2-silent-milestone-run2.log"
+        "logs/r2-silent-milestone-run2.log",
+        "logs/r2-silent-milestone-run3.log",
+        "logs/r2-app-log-milestone-pass.log"
       ],
       "fail_evidence": [
         "logs/r2-silent-milestone-highload-collapse-fail.log",
         "logs/r2-app-log-highload-collapse-fail.log"
       ],
-      "detail": "R01 place / cancel / target-change PASS; R03 pin / unpin / collapse / expand / slideOver / leaveSlideOver / controlled-fail all reach lastResult.isCompleted; R04 head-pipeline counters captured live; the actor did not nod, so the proposal was invalidated and no window moved"
+      "detail": "R01 place / cancel / target-change PASS；R03 pin / unpin / collapse / expand / slideOver / leaveSlideOver / controlled-fail 全数读完；pip-zero-frame 这次真的走到零帧超时那条路（探针注入，应用日志 pip: ended reason=frame timedOut）且窗口留在原处；R04 head-pipeline 计数真机采到；没有人点头，提案按设计作废、窗口没动。pin 的完成回执为 ok=true，collapse 的 FoldCompletion 为 ok=true。"
     },
     "silent-cover": {
       "status": "pass",
       "evidence": ["logs/r2-silent-cover.log"],
-      "detail": "cover-all covered 2/2 (epoch=1); a repeated request reused the panels (created stayed 2); Esc with a third-party app frontmost cleared the cover; teardown left no panels and no global monitor; hot-plug not_run (needs a manual display change)"
+      "detail": "cover-all 双屏 2/2（epoch=1）；重复请求复用面板（created 仍是 2）；别的 App 在前台时 Esc 也撤掉遮罩；退出不留面板与全局监听；hot-plug not_run（要人手拔插显示器）"
     },
     "offline": {
       "status": "pass",
-      "detail": "run-silent-integration-tests --case r00..r04 all ok; run-journal-numeric-tests PASS; run-silent-prep-tests PASS"
+      "detail": "run-silent-integration-tests --case r00..r04 全 ok；run-journal-numeric-tests PASS；run-silent-prep-tests PASS"
     }
   },
   "findings": [
     {
       "id": "F1",
-      "severity": "probe_fixed",
+      "severity": "fixed",
       "title": "静音探针缺 statusItem 引导，rebuildMenu 强解包 nil 触发 SIGTRAP",
-      "detail": "收起/置顶让会话变化去排一次菜单重建；探针自造的 AppDelegate 从没建状态栏项，rebuildMenu 里 statusItem! 解包成 nil 触发 brk。按 GlanceProbe / EffectWindowProbe / EffectInspector / DockHoverProbe 的做法补 setupStatusItem()。产品侧 rebuildMenu 仍是强解包，未改。"
+      "detail": "收起/置顶让会话变化去排一次菜单重建；探针自造的 AppDelegate 从没建状态栏项，rebuildMenu 里 statusItem! 解包成 nil 触发 brk。探针侧按 GlanceProbe / EffectWindowProbe 的做法补 setupStatusItem()；产品侧 rebuildMenu 也改成 guard statusItem != nil，Preferences.quietNotice 改 statusItem?. 安全取用。两条都进了本提交，--check 通过。"
     },
     {
       "id": "F2",
-      "severity": "flake",
-      "title": "collapse 的 FoldCompletion 在高负载下读成 unknown，R03 的 3 秒看护随之超时",
-      "detail": "极重负载（load average ~163）那次：窗口确实被最小化收起（shaded=true, hide=minimized），但 observeFoldHide(.minimized) 落在 .unknown → retainUnconfirmedFold，静音 waiter 不以成功结算；6 秒后展开把它以 ok=false 结掉，应用日志为 shade: silent fold completion ok=false。低负载 3/3 通过。FoldVerifier 自身预算约 0.95 秒，所以不是「验证得太慢」。"
+      "severity": "flake_known",
+      "title": "collapse 的 FoldCompletion 在极重负载下读成 unknown，R03 看护随之超时",
+      "detail": "极重负载（load average ~163）那次：窗口确实被最小化收起（shaded=true, hide=minimized），但 observeFoldHide(.minimized) 落在 .unknown → retainUnconfirmedFold，静音 waiter 不以成功结算；6 秒后展开把它以 ok=false 结掉，应用日志为 shade: silent fold completion ok=false。FoldVerifier 自身预算约 0.95 秒，所以不是「验证得太慢」。最终二进制在负载 4–94 下 3/3 通过；按既定裁决，记录在案，不动产品验证语义。"
     },
     {
       "id": "F3",
+      "severity": "probe_gap_closed",
+      "title": "sharingType = .none 挡不住 SCK，零帧路径原先跑不到",
+      "detail": "探针本想在捕获前把参考窗设成 sharingType = .none，制造「拿不到画面」。实测 macOS 27 上 SCK 的 desktopIndependentWindow 仍会擷取 .none 的窗口（探针每次都捕到帧，从未走到零帧超时），所以那条路一直记 not_run。最终版在 WindowStreamCapture 加只给探针用的 probeDropAllFrames（生产恒 false），进入画中画前置真，写死零帧。应用日志这次出现 pip: ended id=... reason=frame timedOut，画中画按设计放弃、窗口留在原处。"
+    },
+    {
+      "id": "F4",
+      "severity": "probe_fixed",
+      "title": "探针用 CG bounds 判「没动」会被并行动画污染",
+      "detail": "cancel / target-change / controlled-fail 原先同时要求 CGWindow 位置不变。画中画的回位动画、侧拉滑回还在跑时，CG 读到的是动画中的中间值（如 -2730 / -2156），AX 位置已经落定，于是把「没动」误判成「动了」。改为以 AX 位置为准，并新增 stableFrame（连续两次读数一致才采信）；CG 只留在失败诊断里做参考。"
+    },
+    {
+      "id": "F5",
+      "severity": "probe_fixed",
+      "title": "pin 会假通过：只看 lastResult.isCompleted 是抢跑",
+      "detail": "静音宿主对 window.pin 的 asyncObserved 在「会话已经 previewing」时就判成功，而 preview 之后失败不会撤回——探针看到 isCompleted 就立刻进下一步 unpin，把还在启动中的 preview 拆掉，应用日志随即记 pin-preview: silent completion failed reason=目标窗口在启动过程中已变化。这是探针抢跑造成的自伤，不是产品缺陷。最终版 pin 改为等 pinnedPreviewController.lastSilentCompletion 的真回执（id 对得上且在本次 confirm 之后），PASS 时才要求 ok=true；应用日志这次是 pin-preview: silent completion ok。"
+    },
+    {
+      "id": "F6",
       "severity": "not_run",
-      "title": "pip-zero-frame / hot-plug / 相机点头 未运行",
-      "detail": "pip 每次都捕到帧，没走到零帧超时那条路；拔插要人手；这一步没有人对相机点头，因此提案按设计作废。"
+      "title": "仍需人手的矩阵缺口",
+      "detail": "H07 热插拔、H10 相机拔出、H11 攻击介质（照片/视频）、H13 暗光与遮挡、H15 交互式 LA 取消/超时、H16/H17 真机系统开关、H18 120Hz（本机上限 60）、H19 重启：都要动手或换硬件，探针无法自动化。H14 BLE 证据仍不足以证明持有（要看 RSSI/发现/认证，超出本轮）。逐案状态见 matrix.json，动作与理由都写在案，不留模糊项。"
     }
   ],
   "probe_changes": [
-    "prototype/App/SilentMilestoneProbe.swift: 引导 setupStatusItem；R03 各步改为等 lastResult.isCompleted（R03 终态由 watchAsyncEnd 每 0.05 秒轮询写入，光看效果状态会抢跑）；R04 相机等待延长并打印缓存数与 AVFoundation 直查数；受控失败改用 CGWindow bounds，避免旧 AX 句柄假装没动",
+    "prototype/App/SilentMilestoneProbe.swift: 引导 setupStatusItem；R03 各步改等 lastResult.isCompleted；新增 retryFreeze（高负载对焦没及时生效时重新对焦再派发提案，直到冻结在目标窗口）与 stableFrame（等 AX 位置稳定再量「没动」）；pin 改等 pinnedPreviewController 的真完成回执；controlled-fail 只看 confirm 之后的新成功回执；pip 段用 probeDropAllFrames 注入零帧；R04 相机等待延长并打印缓存数与 AVFoundation 直查数",
     "prototype/App/WS2SilentHost.swift: 探针只读的 operationLineForProbe（操作台账当前那行）",
     "prototype/App/WS2SilentPrivacyCover.swift: 探针只读的 panelsCreated / panelCount / globalMonitor 取数",
     "prototype/App/SilentCoverProbe.swift + tests/run-silent-cover-probe.sh: R02 遮罩探针；复用基线取在第一次铺好之后",
     "prototype/main.swift: 接 --silent-cover-probe",
-    "prototype/App/Notch.swift: peninsulaContentHeight 的 CGFloat 转换修复（解掉 --stage 编译阻塞）"
+    "prototype/App/Notch.swift: peninsulaContentHeight 的 CGFloat 转换修复（解掉 --stage 编译阻塞）",
+    "prototype/ScreenCaptureBridge.swift: 只给探针用的 WindowStreamCapture.probeDropAllFrames（生产恒 false）",
+    "prototype/App/MenuBarController.swift + prototype/App/Preferences.swift: statusItem 改安全取用（F1 产品侧）"
   ]
 }
