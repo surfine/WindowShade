@@ -336,10 +336,11 @@ function Peninsula({ w, h, left, right, title, sub, accent = '#fff' }: { w: numb
   const top = holeH + 4;
   const band = Math.max(40, h - top - 8);
   return (
+    // 图文组贴着走、整组居中：别让主行和右侧之间空出一大片（审片 C13-03）。
     <div style={{ position: 'relative', width: w, height: h, fontFamily: CJK }}>
-      <div style={{ position: 'absolute', left: m, right: m, top, height: band, display: 'flex', alignItems: 'center', gap: 12 }}>
+      <div style={{ position: 'absolute', left: m, right: m, top, height: band, display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 12 }}>
         {left}
-        <div style={{ flex: 1, minWidth: 0 }}>
+        <div style={{ flex: 'none', minWidth: 0, whiteSpace: 'nowrap' }}>
           <div style={{ fontSize: 22, fontWeight: 700, color: accent, lineHeight: 1.08, letterSpacing: 0.2 }}>{title}</div>
           <div style={{ fontSize: 14, fontWeight: 600, color: 'rgba(255,255,255,.72)', marginTop: 3, lineHeight: 1.08 }}>{sub}</div>
         </div>
@@ -369,7 +370,7 @@ function CompactWings({ w, h, left, right }: { w: number; h: number; left: React
 
 function SoftAlert({ icon, title, sub, accent = '#fff' }: { icon: ReactNode; title: string; sub: string; accent?: string }) {
   return (
-    <div style={{ display: 'flex', alignItems: 'center', gap: 12, fontFamily: CJK, whiteSpace: 'nowrap', padding: '0 14px', height: '100%', boxSizing: 'border-box' }}>
+    <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 12, fontFamily: CJK, whiteSpace: 'nowrap', padding: '0 14px', height: '100%', boxSizing: 'border-box' }}>
       {icon}
       <div style={{ minWidth: 0 }}>
         <div style={{ fontSize: 20, fontWeight: 700, color: accent, lineHeight: 1.08 }}>{title}</div>
@@ -388,7 +389,7 @@ function IslandContent({ m, f, w, h }: { m: MachineId; f: number; w: number; h: 
     return (
       <FadeIn a={inWin(f, 3310, 3700, 12, 8)}>
         {m === 'air'
-          ? <Peninsula w={w} h={h} left={<Tile color="#3a2a1a"><Bag size={22} /></Tile>} right={<span style={{ fontFamily: CJK, fontSize: 13, fontWeight: 700, color: '#ffb340' }}>即時</span>} title="外卖到了" sub="iPhone · 放在门口了" accent="#ffb340" />
+          ? <Peninsula w={w} h={h} left={<Tile color="#3a2a1a"><Bag size={22} /></Tile>} right={<span style={{ fontFamily: CJK, fontSize: 13, fontWeight: 700, color: '#ffb340' }}>实时</span>} title="外卖到了" sub="iPhone · 放在门口了" accent="#ffb340" />
           : <SoftAlert icon={<Tile color="#3a2a1a"><Bag size={22} /></Tile>} title="外卖到了" sub="iPhone · 放在门口了" accent="#ffb340" />}
       </FadeIn>
     );
@@ -399,8 +400,10 @@ function IslandContent({ m, f, w, h }: { m: MachineId; f: number; w: number; h: 
       const phone = f >= T.phoneOk ? 'ok' : 'wait';
       return <FadeIn a={inWin(f, T.faceOn + 6, T.unlock + 8, 10, 8)}><div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', height: '100%' }}><Factors face={face} phone={phone} /></div></FadeIn>;
     }
-    if (f >= 646 && f < 690) {
-      return <FadeIn a={inWin(f, 646, 686, 8, 6)}><SoftAlert icon={<Tile color="#163524"><Check size={22} draw={1} /></Tile>} title="备忘录" sub="已收进刘海" accent="#5FD38A" /></FadeIn>;
+    // 窗口收走之后才报结果：窗口到 620 左右已经看不见，结果紧接着 624 起淡入。
+    // 不留一段空胶囊：窗口不见了到结果出现之间，空黑壳最多一两帧（审片 V14-01）。
+    if (f >= 624 && f < 688) {
+      return <FadeIn a={inWin(f, 624, 686, 6, 6)}><SoftAlert icon={<Tile color="#163524"><Check size={22} draw={1} /></Tile>} title="备忘录" sub="已收进刘海" accent="#5FD38A" /></FadeIn>;
     }
     if (f >= 1080 && f < T.ask + 6) {
       return (
@@ -473,15 +476,18 @@ function IslandContent({ m, f, w, h }: { m: MachineId; f: number; w: number; h: 
     if (f >= T.foodOpen && f < T.foodClose + 4) {
       return (
         <FadeIn a={inWin(f, T.foodOpen + 6, T.foodClose + 4, 10, 4)}>
-          <Peninsula w={w} h={h} left={<Tile color="#3a2a1a"><Bag size={20} /></Tile>} right={<span style={{ fontFamily: CJK, fontSize: 15, fontWeight: 700, color: '#ffb340' }}>到了</span>} title="外卖到了" sub="iPhone · 放在门口了" accent="#ffb340" />
+          {/* 主行已经写了「外卖到了」，右边再来一个「到了」是重复（审片 C13-03）；右边留空，胶囊也就跟着窄了。 */}
+          <Peninsula w={w} h={h} left={<Tile color="#3a2a1a"><Bag size={20} /></Tile>} title="外卖到了" sub="iPhone · 放在门口了" accent="#ffb340" />
         </FadeIn>
       );
     }
     const text = f < T.rideOpen ? '2 分' : f < T.foodOpen ? '1 分' : '到了';
     const a = f < T.rideOpen ? inWin(f, 1800, T.rideOpen + 2, 1, 4) : f < T.foodOpen ? inWin(f, T.rideClose + 10, T.foodOpen + 2, 10, 4) : inWin(f, T.foodClose + 10, T.livePre + 4, 10, 4);
+    const foodDone = f >= T.foodOpen;
     return (
       <FadeIn a={a}>
-        <CompactWings w={w} h={h} left={<Car size={18} />} right={<span style={{ fontFamily: CJK, fontSize: 15, fontWeight: 700, color: '#fff', fontVariantNumeric: 'tabular-nums' }}>{text}</span>} />
+        {/* 外卖那一段收起后剩下的也是外卖，不该还挂着车。 */}
+        <CompactWings w={w} h={h} left={foodDone ? <Bag size={18} /> : <Car size={18} />} right={<span style={{ fontFamily: CJK, fontSize: 15, fontWeight: 700, color: '#fff', fontVariantNumeric: 'tabular-nums' }}>{text}</span>} />
       </FadeIn>
     );
   }
@@ -547,7 +553,7 @@ function Factor({ ok, kind, label }: { ok: boolean; kind: 'face' | 'phone'; labe
 function Compact({ color, frac, text }: { color: string; frac: number; text: string }) {
   const c = 2 * Math.PI * 6.5;
   return (
-    <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', width: '100%', padding: '0 20px', fontFamily: CJK }}>
+    <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 12, width: '100%', padding: '0 14px', fontFamily: CJK }}>
       <svg width={30} height={30} viewBox="0 0 16 16">
         <circle cx={8} cy={8} r={6.5} fill="none" stroke="rgba(255,255,255,.18)" strokeWidth={2.2} />
         <circle cx={8} cy={8} r={6.5} fill="none" stroke={color} strokeWidth={2.2} strokeLinecap="round" strokeDasharray={c} strokeDashoffset={c * (1 - clamp01(frac))} transform="rotate(-90 8 8)" />

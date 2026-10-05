@@ -15,13 +15,19 @@ export const SHAPES: Record<MachineId, Record<string, Shape>> = {
     // 认你：一颗胶囊，放下两枚小点。不是圆圈。
     face: { w: 280, h: 68, r: 34 },
     // 半岛：更厚圆角、内容可同心排布（WWDC23 10194）
-    row: { w: 520, h: 108, r: 38 },
-    alert: { w: 400, h: 92, r: 34 },
+    row: { w: 200, h: 100, r: 34 },
+    // 高内容档：留给「已确认＋左半屏」这一档两行字。
+    alert: { w: 200, h: 92, r: 34 },
+    // 矮药丸档：一两行字的提醒。照设计稿「尽量窄，不留空额头」（一颗岛 168 / 300 两档）。
+    notice: { w: 250, h: 88, r: 34 },
     // 番茄钟：照设计稿（cqw × 14.08 点），略加厚圆角
     pomoIdle: { w: 600, h: 112, r: 34 },
-    pomo: { w: 300, h: 52, r: 26 },
+    // 紧凑：设计稿 168 宽，内容贴着走，不留空额头
+    pomo: { w: 168, h: 52, r: 26 },
     pomoAlert: { w: 460, h: 88, r: 34 },
     breath: { w: 400, h: 220, r: 48 },
+    // 片尾两边报同一则活动：Air 是半岛，Neo 没有洞，用矮药丸档，不把 470 宽的半岛搬到 1408 的屏上。
+    share: { w: 250, h: 88, r: 34 },
   },
   air: {
     rest: N_,
@@ -30,10 +36,13 @@ export const SHAPES: Record<MachineId, Record<string, Shape>> = {
     // 走开倒数：可读左右翼，仍同心
     tick: { w: 620, h: Math.max(N_.h + 18, 54), r: 18 },
     face: { w: 236, h: 222, r: 46 },
-    // Expanded／半岛：够高以环抱感测区，无大额头
-    alert: { w: 520, h: 156, r: 38 },
-    share: { w: 520, h: 156, r: 38 },
-    row: { w: 440, h: 100, r: 32 },
+    // Expanded／半岛：够高以环抱感测区，无大额头。宽度收到图文组的实际宽度，
+    // 不再让主行和右侧之间空出一大片（审片 C13-03）。
+    alert: { w: 272, h: 134, r: 36 },
+    // 外卖：主行已经写了「到了」，右边不再重复，内容更短，胶囊也跟着窄。
+    food: { w: 232, h: 132, r: 36 },
+    share: { w: 272, h: 134, r: 36 },
+    row: { w: 340, h: 100, r: 32 },
   },
 };
 
@@ -43,11 +52,12 @@ type Ev = [number, string, Tune, number?];
 
 /** 每段里岛换目标的时刻：[帧, 形状, 弹簧, 鼓一下的初速度（点/秒）]。每段第一条是起点，直接到位。 */
 const EVENTS: Record<string, Ev[]> = {
-  wake: [[0, 'rest', 'calm'], [T.faceOn, 'face', 'bloom', 220], [T.unlock + 8, 'rest', 'calm'], [592, 'alert', 'bloom', 240], [690, 'rest', 'calm']],
+  // 收窗：胶囊跟着窗口一起到（614），不是先凭空鼓一颗空胶囊等在那里（审片 V14-01）。
+  wake: [[0, 'rest', 'calm'], [T.faceOn, 'face', 'bloom', 220], [T.unlock + 8, 'rest', 'calm'], [614, 'notice', 'bloom', 240], [690, 'rest', 'calm']],
   home: [[720, 'rest', 'calm'], [T.tap, 'rest', 'calm', 520], [T.lpClose, 'rest', 'calm', 380], [T.listenPre, 'row', 'bloom', 240]],
-  lips: [[1080, 'row', 'calm'], [T.ask, 'alert', 'bloom', 280], [T.rest, 'rest', 'calm'], [T.ride, 'alert', 'bloom', 240]],
-  live: [[1800, 'compact', 'calm'], [T.rideOpen, 'alert', 'bloom', 300], [T.rideClose, 'compact', 'calm'], [T.foodOpen, 'alert', 'bloom', 300], [T.foodClose, 'compact', 'calm'], [T.livePre, 'row', 'bloom', 220]],
-  pomo: [[2280, 'pomoIdle', 'calm'], [T.pomoTap, 'pomo', 'expand', 200], [T.restAlert, 'pomoAlert', 'bloom', 260], [T.away, 'breath', 'expand', 180], [T.back, 'pomo', 'calm'], [T.pomoPre, 'face', 'bloom', 200]],
+  lips: [[1080, 'row', 'calm'], [T.ask, 'alert', 'bloom', 280], [T.rest, 'rest', 'calm'], [T.ride, 'notice', 'bloom', 240]],
+  live: [[1800, 'compact', 'calm'], [T.rideOpen, 'alert', 'bloom', 300], [T.rideClose, 'compact', 'calm'], [T.foodOpen, 'food', 'bloom', 300], [T.foodClose, 'compact', 'calm'], [T.livePre, 'row', 'bloom', 220]],
+  pomo: [[2280, 'pomoIdle', 'calm'], [T.pomoTap, 'pomo', 'expand', 200], [T.restAlert, 'notice', 'bloom', 260], [T.away, 'breath', 'expand', 180], [T.back, 'pomo', 'calm'], [T.pomoPre, 'face', 'bloom', 200]],
   away: [[2880, 'rest', 'calm'], [T.ticks[0] - 10, 'tick', 'bloom', 240], [T.lock - 4, 'rest', 'calm']],
   // 3300 硬切片尾后再展开同一则活动；away 段停在锁屏，不在同镜叠化回桌面。
   end: [[3300, 'share', 'bloom', 260]],
@@ -68,37 +78,45 @@ function step(x: number, v: number, goal: number, z: number, response: number, d
 }
 
 const N = TOTAL + 2;
-const W = new Float64Array(N), H = new Float64Array(N), R = new Float64Array(N);
-const NAME = new Array<string>(N);
+/** 两台机器各解一遍：片尾那段两边同报一则活动，但 Neo 没有洞，用的形状本来就不一样。 */
+const SERIES: Record<MachineId, { w: Float64Array; h: Float64Array; r: Float64Array; name: string[] }> = {
+  neo: { w: new Float64Array(N), h: new Float64Array(N), r: new Float64Array(N), name: new Array<string>(N) },
+  air: { w: new Float64Array(N), h: new Float64Array(N), r: new Float64Array(N), name: new Array<string>(N) },
+};
 for (const sg of SEGS) {
-  const m: MachineId = sg.m === 'both' ? 'air' : sg.m;
   const evs = EVENTS[sg.id];
-  let cur = evs[0];
-  let { w, h, r } = SHAPES[m][cur[1]];
-  let vw = 0, vh = 0, vr = 0;
-  const end = Math.min(N, sg.to + 1);
-  for (let f = sg.from; f < end; f++) {
-    for (const ev of evs) if (ev[0] === f && ev !== evs[0]) { cur = ev; if (ev[3]) { vw += ev[3]; vh += ev[3] * 0.29; } }
-    if (f > sg.from) {
-      const [z, resp] = TUNE[cur[2]], g = SHAPES[m][cur[1]], dt = 1 / FPS;
-      [w, vw] = step(w, vw, g.w, z, resp, dt);
-      [h, vh] = step(h, vh, g.h, z, resp, dt);
-      [r, vr] = step(r, vr, g.r, z, resp, dt);
+  for (const mm of ['neo', 'air'] as MachineId[]) {
+    if (sg.m !== 'both' && sg.m !== mm) continue;
+    const m: MachineId = sg.m === 'both' ? mm : sg.m;
+    const S = SERIES[mm];
+    let cur = evs[0];
+    let { w, h, r } = SHAPES[m][cur[1]];
+    let vw = 0, vh = 0, vr = 0;
+    const end = Math.min(N, sg.to + 1);
+    for (let f = sg.from; f < end; f++) {
+      for (const ev of evs) if (ev[0] === f && ev !== evs[0]) { cur = ev; if (ev[3]) { vw += ev[3]; vh += ev[3] * 0.29; } }
+      if (f > sg.from) {
+        const [z, resp] = TUNE[cur[2]], g = SHAPES[m][cur[1]], dt = 1 / FPS;
+        [w, vw] = step(w, vw, g.w, z, resp, dt);
+        [h, vh] = step(h, vh, g.h, z, resp, dt);
+        [r, vr] = step(r, vr, g.r, z, resp, dt);
+      }
+      if (f < N) { S.w[f] = Math.max(0, w); S.h[f] = Math.max(0, h); S.r[f] = Math.max(0, r); S.name[f] = cur[1]; }
     }
-    if (f < N) { W[f] = Math.max(0, w); H[f] = Math.max(0, h); R[f] = Math.max(0, r); NAME[f] = cur[1]; }
   }
 }
 
 /** 帧之间线性插值（快门在一帧里取好几个时刻）。 */
-export function islandAt(f: number) {
+export function islandAt(f: number, m: MachineId = 'air') {
+  const S = SERIES[m];
   const a = Math.max(0, Math.min(N - 2, Math.floor(f))), u = Math.max(0, Math.min(1, f - a));
   const l = (x: Float64Array) => x[a] + (x[a + 1] - x[a]) * u;
-  return { w: l(W), h: l(H), r: l(R), name: NAME[a] };
+  return { w: l(S.w), h: l(S.h), r: l(S.r), name: S.name[a] };
 }
 
 /** 岛在屏幕上的位置（点）：Air 贴着顶边从刘海长出来，Neo 浮在顶边下 4 点。 */
 export function islandRect(m: MachineId, f: number) {
-  const s = islandAt(f), P = MACHINES[m].pt;
+  const s = islandAt(f, m), P = MACHINES[m].pt;
   const top = m === 'air' ? 0 : 4;
   return { x: (P.w - s.w) / 2, y: top, w: s.w, h: s.h, r: Math.min(s.r, s.h / 2, s.w / 2) };
 }

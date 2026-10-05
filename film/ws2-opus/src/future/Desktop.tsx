@@ -152,23 +152,28 @@ export function Browser({ w, h }: { w: number; h: number }) {
         <div style={{ ...glassBtn, position: 'absolute', left: 140, top: 11, width: 66, justifyContent: 'space-around', fontSize: 17 }}><span>‹</span><span style={{ opacity: 0.4 }}>›</span></div>
         <div style={{ ...glassBtn, position: 'absolute', left: '50%', top: 11, width: Math.min(420, w * 0.44), transform: 'translateX(-50%)', fontSize: 13.5, gap: 6 }}>
           <svg width={10} height={12} viewBox="0 0 10 12"><path d="M 2.5 5 V 3.6 A 2.5 2.5 0 0 1 7.5 3.6 V 5" fill="none" stroke="currentColor" strokeWidth={1.3} /><rect x={1.2} y={5} width={7.6} height={6} rx={1.4} fill="currentColor" /></svg>
-          <span>sspai.com</span>
+          <span>windowshade.aaronlau.me</span>
         </div>
         <div style={{ ...glassBtn, position: 'absolute', right: 16, top: 11, width: 104, justifyContent: 'space-around', fontSize: 18 }}><span>⇪</span><span>+</span><span>⧉</span></div>
       </div>
       <div style={{ position: 'absolute', left: 0, right: 0, top: 52, bottom: 0, overflow: 'hidden', background: '#141416' }}>
-        <div style={{ width: Math.min(680, w - 80), margin: '0 auto', paddingTop: 34, fontFamily: CJK, color: '#e9e9ee' }}>
-          <div style={{ fontSize: 13, color: '#d4643f', fontWeight: 600, letterSpacing: 1 }}>效率 · 深度</div>
-          <div style={{ fontSize: 31, fontWeight: 700, lineHeight: 1.32, marginTop: 10 }}>屏幕顶上那一小块，终于有了用处</div>
-          <div style={{ fontSize: 13.5, color: '#8e8e93', marginTop: 12 }}>阿诺 · 2026 年 10 月 4 日 · 8 分钟读完</div>
-          <div style={{ height: Math.min(260, h * 0.36), marginTop: 22, borderRadius: 14, overflow: 'hidden', position: 'relative' }}>
+        {/* 官网首页（windowshade.aaronlau.me），文案与 site/dist/index.html 一致。 */}
+        <div style={{ width: Math.min(680, w - 80), margin: '0 auto', paddingTop: 30, fontFamily: CJK, color: '#e9e9ee' }}>
+          <div style={{ fontSize: 13, color: '#d4643f', fontWeight: 600, letterSpacing: 1 }}>Mac 窗口小工具 · 免费开源</div>
+          <div style={{ fontSize: 31, fontWeight: 700, lineHeight: 1.24, marginTop: 10 }}>收起窗口，<br />留下位置。</div>
+          <div style={{ fontSize: 14.5, lineHeight: 1.7, color: '#c7c7cc', marginTop: 12 }}>
+            双击标题栏，窗口收成一条卷帘条，停在原处。<br />再双击，它原样回来。
+          </div>
+          <div style={{ display: 'flex', gap: 18, marginTop: 14, fontSize: 12.5, color: '#8e8e93' }}>
+            {['macOS 14 及以上', 'Apple Silicon', '免费 · MIT 开源'].map((x) => <span key={x}>{x}</span>)}
+          </div>
+          <div style={{ height: Math.min(200, h * 0.30), marginTop: 18, borderRadius: 14, overflow: 'hidden', position: 'relative' }}>
             <Img src={PLATE.wall} style={{ width: '100%', height: 560, objectFit: 'cover', marginTop: -160 }} />
           </div>
-          <p style={{ fontSize: 16, lineHeight: 1.75, color: '#c7c7cc', marginTop: 22 }}>
-            换到 MacBook 的第一周，我总觉得屏幕顶上缺了一块。后来我发现，缺的那一块正是整台电脑最安静的地方：它不抢焦点，只在我需要的时候开口。
-          </p>
-          <p style={{ fontSize: 16, lineHeight: 1.75, color: '#c7c7cc' }}>
-            打开盖子它就认出我；我不想出声的时候，它读得懂我的嘴型；我点一下头，它就照做。
+          <div style={{ fontSize: 12.5, color: '#d4643f', fontWeight: 600, letterSpacing: 1, marginTop: 18 }}>为什么是收起</div>
+          <div style={{ fontSize: 19, fontWeight: 700, lineHeight: 1.34, marginTop: 6 }}>让开的办法有三种，<br />只有一种不用回头找。</div>
+          <p style={{ fontSize: 14.5, lineHeight: 1.75, color: '#c7c7cc', marginTop: 12 }}>
+            窗口挡住了后面的东西，你多半会关掉它，或者最小化。两种都管用，只是回来的时候要费点工夫。
           </p>
         </div>
       </div>
