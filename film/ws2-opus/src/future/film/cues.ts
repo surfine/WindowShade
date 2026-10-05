@@ -47,18 +47,19 @@ export const LIP_TEXT = '放到左半屏';
 /** 字幕：打字出来，后面一个游标（每 4 帧一个字）。英文在中文下面，不进岛。 */
 export const LINES: { from: number; to: number; text: string; en?: string }[] = [
   // 先收窗进胶囊，再停在没开口的上边框（审片 C11-05）。
-  { from: 36, to: 500, text: '看一眼，就解锁' },
+  // 一句一件事、有施事、有受事；一个东西从头到尾一个名字（看、窗口、刘海、Mac）。
+  { from: 36, to: 500, text: '你一看，Mac 就解锁' },
   { from: 584, to: 646, text: '窗口收进刘海' },
-  { from: 686, to: 718, text: '这台没有刘海' },
+  { from: 686, to: 718, text: '这台没有刘海，窗口也收得进' },
   { from: 780, to: 1040, text: '点一下刘海，回到主屏幕' },
-  { from: 1130, to: 1370, text: '静音操作：读口型' },
-  { from: 1380, to: 1620, text: '点头确认，再照做' },
-  { from: 1820, to: 2230, text: '手机上的实时活动，这里也有' },
-  { from: 2300, to: 2580, text: '专注时，聊天收起来' },
-  { from: 2620, to: 2754, text: '休息时，桌面收起来' },
-  { from: 2756, to: 2920, text: '点一下就回来，休息照走' },
-  { from: 2960, to: 3280, text: '人走开，就锁上' },
-  { from: 3330, to: TOTAL, text: '有刘海、没刘海，都一样' },
+  { from: 1130, to: 1370, text: '不用出声，读口型就行' },
+  { from: 1380, to: 1620, text: '点一下头，就算确认' },
+  { from: 1820, to: 2230, text: 'iPhone 上的提醒，Mac 上也看得到' },
+  { from: 2300, to: 2580, text: '开始专注，窗口都收起来' },
+  { from: 2620, to: 2754, text: '休息了，窗口也收起来' },
+  { from: 2756, to: 2920, text: '点一下回来，休息不停表' },
+  { from: 2960, to: 3280, text: '你走开，Mac 就锁上' },
+  { from: 3330, to: TOTAL, text: '有没有刘海，窗口都收进顶部' },
 ];
 export const CHAR_RATE = 4;
 

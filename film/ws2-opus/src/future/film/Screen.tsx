@@ -5,7 +5,7 @@ import type { CSSProperties, ReactNode } from 'react';
 import { Img } from 'remotion';
 import { DOCK, ICON, LAUNCH, PLATE } from '../assets';
 import { Browser, Notes, Terminal, Win } from '../Desktop';
-import { Battery, Check, CJK, ControlCenter, Lock, Pointer, SF, SFD, Search, Wifi } from '../glyphs';
+import { Battery, Check, CJK, ControlCenter, FaceGlyph, IPhone, Lock, Pointer, SF, SFD, Search, Wifi } from '../glyphs';
 import { clamp01, mix, seg, smooth } from '../time';
 import { LIP_TEXT, T } from './cues';
 import { islandRect } from './island';
@@ -15,6 +15,9 @@ import { motion } from './springs';
 
 const RED = '#FF6B5E', GREEN = '#5FD38A';
 type R4 = { x: number; y: number; w: number; h: number };
+
+/** 两台机器各一张桌布。Neo 银机配 Mac Blue，Air 午夜配 Mac Purple。 */
+const WALL: Record<MachineId, string> = { neo: PLATE.wall, air: PLATE.wallAir };
 
 const LAYOUT: Record<MachineId, { browser: R4; notes: R4; term: R4; chat: R4 }> = {
   neo: { browser: { x: 300, y: 70, w: 720, h: 560 }, notes: { x: 820, y: 110, w: 540, h: 420 }, term: { x: 70, y: 420, w: 620, h: 350 }, chat: { x: 960, y: 300, w: 400, h: 470 } },
@@ -41,7 +44,7 @@ export function ScreenView({ m, f, physicalNotch = false }: { m: MachineId; f: n
   const d = dark(m, f);
   return (
     <div style={{ position: 'absolute', left: 0, top: 0, width: M.pt.w, height: M.pt.h, overflow: 'hidden', background: '#000', fontFamily: SF }}>
-      <Img src={PLATE.wall} style={{ position: 'absolute', left: 0, top: (M.pt.h - M.pt.w) / 2, width: M.pt.w, height: M.pt.w, objectFit: 'cover', transform: `scale(${1 + lock * 0.04})` }} />
+      <Img src={WALL[m]} style={{ position: 'absolute', left: 0, top: (M.pt.h - M.pt.w) / 2, width: M.pt.w, height: M.pt.w, objectFit: 'cover', transform: `scale(${1 + lock * 0.04})` }} />
       <div style={{ position: 'absolute', inset: 0, background: 'rgba(4,8,20,.22)' }} />
       {desk > 0.001 && (
         <div style={{ position: 'absolute', inset: 0, opacity: desk * (1 - lp), transform: `scale(${mix(1.025, 1, desk)})`, transformOrigin: '50% 45%' }}>
@@ -50,7 +53,7 @@ export function ScreenView({ m, f, physicalNotch = false }: { m: MachineId; f: n
         </div>
       )}
       {m === 'neo' && <Ghost f={f} />}
-      {lp > 0 && <Launchpad f={f} />}
+      {lp > 0 && <Launchpad m={m} f={f} />}
       {lock > 0.001 && <LockScreen m={m} a={lock} f={f} />}
       <MenuBar m={m} desk={desk} />
       {m === 'air' && <Cursor m={m} f={f} physicalNotch={physicalNotch} />}
@@ -207,12 +210,12 @@ export function iconP(f: number, i: number) {
   const back = motion(f, T.lpClose + 2 + slot * 2.4, 'flyOut');
   return f >= T.lpClose ? go * (1 - back) : go;
 }
-function Launchpad({ f }: { f: number }) {
+function Launchpad({ m, f }: { m: MachineId; f: number }) {
   const bg = lpBg(f);
   return (
     <div style={{ position: 'absolute', inset: 0 }}>
       <div style={{ position: 'absolute', inset: 0, opacity: bg }}>
-        <Img src={PLATE.wall} style={{ position: 'absolute', left: -60, top: (1107 - 1710) / 2 - 60, width: 1830, height: 1830, objectFit: 'cover', filter: 'blur(34px) saturate(140%)' }} />
+        <Img src={WALL[m]} style={{ position: 'absolute', left: -60, top: (1107 - 1710) / 2 - 60, width: 1830, height: 1830, objectFit: 'cover', filter: 'blur(34px) saturate(140%)' }} />
         <div style={{ position: 'absolute', inset: 0, background: 'rgba(0,0,10,.30)' }} />
       </div>
       {LAUNCH.map(([k, name], i) => {
@@ -342,7 +345,7 @@ function Peninsula({ w, h, left, right, title, sub, accent = '#fff' }: { w: numb
         {left}
         <div style={{ flex: 'none', minWidth: 0, whiteSpace: 'nowrap' }}>
           <div style={{ fontSize: 22, fontWeight: 700, color: accent, lineHeight: 1.08, letterSpacing: 0.2 }}>{title}</div>
-          <div style={{ fontSize: 14, fontWeight: 600, color: 'rgba(255,255,255,.72)', marginTop: 3, lineHeight: 1.08 }}>{sub}</div>
+          {sub ? <div style={{ fontSize: 14, fontWeight: 600, color: 'rgba(255,255,255,.72)', marginTop: 3, lineHeight: 1.08 }}>{sub}</div> : null}
         </div>
         {right}
       </div>
@@ -380,17 +383,13 @@ function SoftAlert({ icon, title, sub, accent = '#fff' }: { icon: ReactNode; tit
   );
 }
 
-function TypeLine({ children, size = 28 }: { children: ReactNode; size?: number }) {
-  return <span style={{ fontFamily: CJK, fontSize: size, fontWeight: 700, color: '#fff', whiteSpace: 'nowrap', letterSpacing: 0.2 }}>{children}</span>;
-}
-
 function IslandContent({ m, f, w, h }: { m: MachineId; f: number; w: number; h: number }) {
   if (f >= 3300) {
     return (
       <FadeIn a={inWin(f, 3310, 3700, 12, 8)}>
         {m === 'air'
-          ? <Peninsula w={w} h={h} left={<Tile color="#3a2a1a"><Bag size={22} /></Tile>} right={<span style={{ fontFamily: CJK, fontSize: 13, fontWeight: 700, color: '#ffb340' }}>实时</span>} title="外卖到了" sub="iPhone · 放在门口了" accent="#ffb340" />
-          : <SoftAlert icon={<Tile color="#3a2a1a"><Bag size={22} /></Tile>} title="外卖到了" sub="iPhone · 放在门口了" accent="#ffb340" />}
+          ? <Peninsula w={w} h={h} left={<Tile color="#3a2a1a" size={36}><Bag size={22} /></Tile>} title="外卖到了" sub="放在门口" accent="#ffb340" />
+          : <SoftAlert icon={<Tile color="#3a2a1a"><Bag size={24} /></Tile>} title="外卖到了" sub="放在门口" accent="#ffb340" />}
       </FadeIn>
     );
   }
@@ -398,55 +397,49 @@ function IslandContent({ m, f, w, h }: { m: MachineId; f: number; w: number; h: 
     if (f >= T.faceOn && f < T.unlock + 8) {
       const face = f >= T.faceOk ? 'ok' : 'wait';
       const phone = f >= T.phoneOk ? 'ok' : 'wait';
-      return <FadeIn a={inWin(f, T.faceOn + 6, T.unlock + 8, 10, 8)}><div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', height: '100%' }}><Factors face={face} phone={phone} /></div></FadeIn>;
+      return <FadeIn a={inWin(f, T.faceOn + 6, T.unlock + 8, 10, 8)}><Unlock face={face} phone={phone} /></FadeIn>;
     }
     // 窗口收走之后才报结果：窗口到 620 左右已经看不见，结果紧接着 624 起淡入。
     // 不留一段空胶囊：窗口不见了到结果出现之间，空黑壳最多一两帧（审片 V14-01）。
     if (f >= 624 && f < 688) {
-      return <FadeIn a={inWin(f, 624, 686, 6, 6)}><SoftAlert icon={<Tile color="#163524"><Check size={22} draw={1} /></Tile>} title="备忘录" sub="已收进刘海" accent="#5FD38A" /></FadeIn>;
+      return <FadeIn a={inWin(f, 624, 686, 6, 6)}><SoftAlert icon={<Tile color="#163524"><Check size={24} draw={1} /></Tile>} title="已收进刘海" sub="备忘录" accent={GREEN} /></FadeIn>;
     }
     if (f >= 1080 && f < T.ask + 6) {
       return (
         <FadeIn a={inWin(f, 1110, T.ask + 6, 11, 6)}>
-          <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', height: '100%', gap: 5 }}>
-            <TypeLine size={28}>等你确认</TypeLine>
-            <span style={{ fontFamily: CJK, fontSize: 14, fontWeight: 600, color: 'rgba(255,255,255,.7)' }}>{LIP_TEXT}</span>
-          </div>
+          <SoftAlert icon={<Tile color="#2a2a2e"><Wave size={24} /></Tile>} title="等你确认" sub={LIP_TEXT} />
         </FadeIn>
       );
     }
     if (f >= T.ask && f < T.rest + 10) {
       const ok = seg(f, T.ok, T.ok + 14);
-      const done = ok > 0.5;
       return (
         <FadeIn a={inWin(f, T.ask, T.rest + 10, 10, 10)}>
-          <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', height: '100%', gap: 5 }}>
-            <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
-              <TypeLine size={26}>{done ? '已确认 · 正在落位' : '等你确认'}</TypeLine>
-              {ok > 0 && <Check size={30} draw={ok} />}
-            </div>
-            <span style={{ fontFamily: CJK, fontSize: 14, fontWeight: 600, color: 'rgba(255,255,255,.7)' }}>{done ? '左半屏' : '放到左半屏？'}</span>
-          </div>
+          <SoftAlert icon={<Check size={34} draw={ok} ring={false} />} title="已确认" sub={LIP_TEXT} accent={GREEN} />
         </FadeIn>
       );
     }
-    if (f >= T.ride && f < 1800) return <FadeIn a={inWin(f, T.ride + 6, 1810)}><SoftAlert icon={<Tile color="#1a2f4a"><Car size={22} /></Tile>} title="车快到了" sub="白色轿车 · 2 分钟" accent="#64D2FF" /></FadeIn>;
+    if (f >= T.ride && f < 1800) return <FadeIn a={inWin(f, T.ride + 6, 1810)}><SoftAlert icon={<Tile color="#1a2f4a"><Car size={24} /></Tile>} title="车快到了" sub="2 分钟" accent="#64D2FF" /></FadeIn>;
     if (f >= T.pomoHover && f < T.pomoTap + 4) return <FadeIn a={inWin(f, T.pomoHover, T.pomoTap + 4, 1, 4)}><PomoIdle press={Math.max(0, 1 - Math.abs(f - T.pomoTap) / 6)} /></FadeIn>;
     if (f >= T.pomoTap && f < T.restAlert + 4) {
       const ff = smooth(seg(f, T.ffA, T.ffB));
       const left = 1500 * (1 - ff * 0.9995);
       return <FadeIn a={inWin(f, T.pomoTap + 8, T.restAlert + 4, 10, 4)}><Compact color={RED} frac={1 - left / 1500} text={fmt(left)} /></FadeIn>;
     }
-    if (f >= T.restAlert && f < T.away + 4) return <FadeIn a={inWin(f, T.restAlert + 6, T.away + 4, 10, 4)}><SoftAlert icon={<Tile color="#163524"><Cup size={22} /></Tile>} title="休息 5 分钟" sub="专注完成 · 今天第 3 个" accent={GREEN} /></FadeIn>;
+    if (f >= T.restAlert && f < T.away + 4) return <FadeIn a={inWin(f, T.restAlert + 6, T.away + 4, 10, 4)}><SoftAlert icon={<Tile color="#163524"><Cup size={24} /></Tile>} title="休息 5 分钟" sub="第 3 个" accent={GREEN} /></FadeIn>;
     if (f >= T.away && f < T.back + 4) {
       const left = restLeft(f);
       return (
         <FadeIn a={inWin(f, T.away + 10, T.back + 4, 12, 4)}>
-          <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', height: '100%', gap: 10, fontFamily: CJK }}>
-            <div style={{ width: 132, height: 132, borderRadius: '50%', border: `6px solid ${GREEN}`, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+          <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', height: '100%', gap: 12, fontFamily: CJK }}>
+            <div style={{ width: 128, height: 128, borderRadius: '50%', border: `6px solid ${GREEN}`, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
               <span style={{ color: '#fff', fontFamily: SFD, fontSize: 28, fontWeight: 700, fontVariantNumeric: 'tabular-nums' }}>{fmtClock(left)}</span>
             </div>
-            <span style={{ color: 'rgba(255,255,255,.82)', fontSize: 18, fontWeight: 600 }}>看看远处 · 点一下回来</span>
+            <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+              <Eye size={20} />
+              <span style={{ color: 'rgba(255,255,255,.86)', fontSize: 17, fontWeight: 600 }}>看看远处</span>
+            </div>
+            <span style={{ color: 'rgba(255,255,255,.6)', fontSize: 14, fontWeight: 600 }}>点一下回来</span>
           </div>
         </FadeIn>
       );
@@ -461,7 +454,7 @@ function IslandContent({ m, f, w, h }: { m: MachineId; f: number; w: number; h: 
   if (f >= T.listenPre && f < 1080) {
     return (
       <FadeIn a={inWin(f, T.listenPre + 10, 1100)}>
-        <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', height: '100%' }}><TypeLine>看口型</TypeLine></div>
+        <Peninsula w={w} h={h} left={<Tile color="#2a2a2e" size={36}><Wave size={22} /></Tile>} title="看口型" sub="" />
       </FadeIn>
     );
   }
@@ -469,7 +462,7 @@ function IslandContent({ m, f, w, h }: { m: MachineId; f: number; w: number; h: 
     if (f >= T.rideOpen && f < T.rideClose + 4) {
       return (
         <FadeIn a={inWin(f, T.rideOpen + 6, T.rideClose + 4, 10, 4)}>
-          <Peninsula w={w} h={h} left={<Tile color="#1a2f4a"><Car size={20} /></Tile>} right={<span style={{ fontFamily: CJK, fontSize: 15, fontWeight: 700, color: '#64D2FF', fontVariantNumeric: 'tabular-nums' }}>2 分</span>} title="车快到了" sub="iPhone · 还有 2 分钟" accent="#64D2FF" />
+          <Peninsula w={w} h={h} left={<Tile color="#1a2f4a" size={36}><Car size={22} /></Tile>} title="车快到了" sub="2 分钟" accent="#64D2FF" />
         </FadeIn>
       );
     }
@@ -477,7 +470,7 @@ function IslandContent({ m, f, w, h }: { m: MachineId; f: number; w: number; h: 
       return (
         <FadeIn a={inWin(f, T.foodOpen + 6, T.foodClose + 4, 10, 4)}>
           {/* 主行已经写了「外卖到了」，右边再来一个「到了」是重复（审片 C13-03）；右边留空，胶囊也就跟着窄了。 */}
-          <Peninsula w={w} h={h} left={<Tile color="#3a2a1a"><Bag size={20} /></Tile>} title="外卖到了" sub="iPhone · 放在门口了" accent="#ffb340" />
+          <Peninsula w={w} h={h} left={<Tile color="#3a2a1a" size={36}><Bag size={22} /></Tile>} title="外卖到了" sub="放在门口" accent="#ffb340" />
         </FadeIn>
       );
     }
@@ -487,14 +480,14 @@ function IslandContent({ m, f, w, h }: { m: MachineId; f: number; w: number; h: 
     return (
       <FadeIn a={a}>
         {/* 外卖那一段收起后剩下的也是外卖，不该还挂着车。 */}
-        <CompactWings w={w} h={h} left={foodDone ? <Bag size={18} /> : <Car size={18} />} right={<span style={{ fontFamily: CJK, fontSize: 15, fontWeight: 700, color: '#fff', fontVariantNumeric: 'tabular-nums' }}>{text}</span>} />
+        <CompactWings w={w} h={h} left={foodDone ? <Tile color="#3a2a1a" size={26}><Bag size={17} /></Tile> : <Tile color="#1a2f4a" size={26}><Car size={17} /></Tile>} right={<span style={{ fontFamily: CJK, fontSize: 15, fontWeight: 700, color: '#fff', fontVariantNumeric: 'tabular-nums' }}>{text}</span>} />
       </FadeIn>
     );
   }
   if (f >= T.livePre && f < 2280) {
     return (
       <FadeIn a={inWin(f, T.livePre + 10, 2300)}>
-        <Peninsula w={w} h={h} left={<Tile color="#2a1a1a"><TimerIcon size={20} /></Tile>} right={<span style={{ fontFamily: CJK, fontSize: 13, fontWeight: 700, color: RED }}>专注</span>} title="番茄钟" sub="专注 25 分钟" accent={RED} />
+        <Peninsula w={w} h={h} left={<Tile color="#2a1a1a" size={36}><TimerIcon size={22} /></Tile>} title="番茄钟" sub="25 分钟" accent={RED} />
       </FadeIn>
     );
   }
@@ -502,17 +495,17 @@ function IslandContent({ m, f, w, h }: { m: MachineId; f: number; w: number; h: 
   if (f >= T.ticks[0] - 8 && f < T.lock - 4) {
     const n = Math.max(1, 3 - T.ticks.filter((t) => f >= t).length + 1);
     const holeW = HOLE.w;
-    const wing = Math.max(96, (w - holeW) / 2);
+    const wing = Math.max(52, (w - holeW) / 2);
     return (
       <FadeIn a={inWin(f, T.ticks[0] - 2, T.lock - 4, 8, 4)}>
         <div style={{ display: 'flex', width: '100%', height: '100%', alignItems: 'center', fontFamily: CJK }}>
-          <div style={{ width: wing, height: '100%', display: 'flex', flexDirection: 'row', alignItems: 'center', justifyContent: 'flex-start', gap: 8, paddingLeft: 12, boxSizing: 'border-box' }}>
-            <Lock size={18} />
-            <span style={{ fontSize: 15, fontWeight: 700, color: '#fff', letterSpacing: '0.01em', whiteSpace: 'nowrap', lineHeight: 1 }}>动一下就取消</span>
+          {/* 只留两个符號：左邊一把鎖，右邊剩下的秒數；「動一下就取消」那句交给外面的字幕。 */}
+          <div style={{ width: wing, height: '100%', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+            <Lock size={20} />
           </div>
           <div style={{ width: holeW, height: '100%' }} />
-          <div style={{ width: wing, height: '100%', display: 'flex', alignItems: 'center', justifyContent: 'center', paddingRight: 10, boxSizing: 'border-box' }}>
-            <span style={{ fontFamily: SFD, fontSize: 36, fontWeight: 700, color: '#fff', fontVariantNumeric: 'tabular-nums', lineHeight: 1 }}>{n}</span>
+          <div style={{ width: wing, height: '100%', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+            <span style={{ fontFamily: SFD, fontSize: 32, fontWeight: 700, color: '#fff', fontVariantNumeric: 'tabular-nums', lineHeight: 1 }}>{n}</span>
           </div>
         </div>
       </FadeIn>
@@ -528,24 +521,13 @@ const fmtClock = (s: number) => `${Math.floor(s / 60)}:${String(Math.floor(s % 6
 
 
 
-function Factors({ face, phone }: { face: 'wait' | 'ok'; phone: 'wait' | 'ok' }) {
+/** 看一眼就解鎖：兩個符號就說完了。左邊刷臉、右邊認手機，認到就轉綠收成勾，不寫字。 */
+function Unlock({ face, phone }: { face: 'wait' | 'ok'; phone: 'wait' | 'ok' }) {
+  const ok = face === 'ok' ? 1 : 0;
   return (
-    <div style={{ display: 'flex', alignItems: 'center', gap: 28 }}>
-      <Factor ok={face === 'ok'} kind="face" label="脸" />
-      <Factor ok={phone === 'ok'} kind="phone" label="手机" />
-    </div>
-  );
-}
-
-function Factor({ ok, kind, label }: { ok: boolean; kind: 'face' | 'phone'; label: string }) {
-  return (
-    <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
-      <div style={{ width: 30, height: 30, borderRadius: 15, background: ok ? '#30D158' : 'rgba(255,255,255,.16)', display: 'flex', alignItems: 'center', justifyContent: 'center', flex: 'none' }}>
-        {kind === 'face'
-          ? <span style={{ width: 12, height: 12, borderRadius: 6, background: ok ? '#06210f' : '#fff' }} />
-          : <span style={{ width: 10, height: 16, borderRadius: 3, boxShadow: `inset 0 0 0 1.6px ${ok ? '#06210f' : '#fff'}` }} />}
-      </div>
-      <span style={{ fontFamily: CJK, fontSize: 16, fontWeight: 650, color: ok ? '#fff' : 'rgba(255,255,255,.78)' }}>{label}</span>
+    <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 24, height: '100%' }}>
+      <span style={{ color: ok > 0 ? GREEN : '#fff', display: 'flex' }}><FaceGlyph size={46} scan={1} ok={ok} sweep={0} /></span>
+      <span style={{ color: phone === 'ok' ? GREEN : 'rgba(255,255,255,.72)', display: 'flex' }}><IPhone size={30} /></span>
     </div>
   );
 }
@@ -563,13 +545,15 @@ function Compact({ color, frac, text }: { color: string; frac: number; text: str
   );
 }
 
+/** 番茄钟那一下：聊天收進來的樣子。兩個符號貼著排，整組居中——不留一顆空額頭。
+ *  以前三個灰方塊用 space-between 撐滿，中間全是空的（V16-02）。 */
 function PomoIdle({ press }: { press: number }) {
   return (
-    <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', width: '100%', padding: '0 22px' }}>
-      <div style={{ display: 'flex', gap: 14 }}>
-        {['#2a2a2e', '#2a2a2e', '#2a2a2e'].map((c, i) => <div key={i} style={{ width: 92, height: 59, borderRadius: 10, background: c, boxShadow: 'inset 0 0 0 0.5px rgba(255,255,255,.08)' }} />)}
+    <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 14, width: '100%', height: '100%' }}>
+      <div style={{ width: 40, height: 40, borderRadius: 13, background: '#2a2a2e', boxShadow: 'inset 0 0 0 0.5px rgba(255,255,255,.10)', display: 'flex', alignItems: 'center', justifyContent: 'center', flex: 'none' }}>
+        <Bubble size={21} />
       </div>
-      <div style={{ width: 59, height: 59, borderRadius: 13, background: '#2a2a2e', border: '1.5px solid rgba(255,255,255,.25)', display: 'flex', alignItems: 'center', justifyContent: 'center', color: '#fff', transform: `scale(${1 - press * 0.08})` }}><TimerIcon /></div>
+      <div style={{ width: 40, height: 40, borderRadius: 13, background: '#2a2a2e', border: '1.5px solid rgba(255,255,255,.25)', display: 'flex', alignItems: 'center', justifyContent: 'center', color: '#fff', flex: 'none', transform: `scale(${1 - press * 0.08})` }}><TimerIcon size={23} /></div>
     </div>
   );
 }
@@ -579,3 +563,9 @@ const TimerIcon = ({ size = 30 }: { size?: number }) => <span style={{ color: '#
 const Cup = ({ size = 28 }: { size?: number }) => sv(size, <><path d="M2.5 6h9v4a3 3 0 0 1-3 3h-3a3 3 0 0 1-3-3z" /><path d="M11.5 7h1a1.5 1.5 0 0 1 0 3h-1M1.5 14.5h12" /></>);
 const Car = ({ size = 30 }: { size?: number }) => <span style={{ color: '#fff', display: 'flex' }}>{sv(size, <><path d="M2 10.5V8.6l1.4-3.3A1.6 1.6 0 0 1 4.9 4.3h6.2a1.6 1.6 0 0 1 1.5 1l1.4 3.3v1.9a.8.8 0 0 1-.8.8H2.8a.8.8 0 0 1-.8-.8z" /><path d="M2.3 8.4h11.4" /><circle cx={4.8} cy={11.4} r={1.1} /><circle cx={11.2} cy={11.4} r={1.1} /></>)}</span>;
 const Bag = ({ size = 30 }: { size?: number }) => <span style={{ color: '#fff', display: 'flex' }}>{sv(size, <><path d="M3 5h10l-.8 9H3.8z" /><path d="M5.6 5V4a2.4 2.4 0 0 1 4.8 0v1" /></>)}</span>;
+/** 動口型：五根粗細不一的豎條，像一段聲音。 */
+const Wave = ({ size = 26 }: { size?: number }) => <span style={{ color: '#fff', display: 'flex' }}>{sv(size, <path d="M2.2 7.6v.8M4.8 5v6M8 2.6v10.8M11.2 5v6M13.8 7.6v.8" />)}</span>;
+/** 聊天窗口：一顆對話泡，番茄鐘那一下收進來的東西就是它。 */
+const Bubble = ({ size = 20 }: { size?: number }) => <span style={{ color: '#fff', display: 'flex' }}>{sv(size, <path d="M2.4 4h11.2v6.6H8.4L4.9 13.6v-3H2.4z" />)}</span>;
+/** 看遠處。 */
+const Eye = ({ size = 22 }: { size?: number }) => <span style={{ color: 'rgba(255,255,255,.86)', display: 'flex' }}>{sv(size, <><path d="M1.4 8S4 3.6 8 3.6 14.6 8 14.6 8 12 12.4 8 12.4 1.4 8 1.4 8z" /><circle cx={8} cy={8} r={1.9} /></>)}</span>;
