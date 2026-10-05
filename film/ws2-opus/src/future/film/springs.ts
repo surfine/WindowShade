@@ -6,6 +6,7 @@ const TOKENS = {
   settle: [0.38, 1],
   expand: [0.4, 0.92],
   bloom: [0.42, 0.84],
+  catch: [0.4, 0.8],
   glide: [0.42, 0.88],
   flyOut: [0.38, 0.9],
   pull: [0.36, 0.86],

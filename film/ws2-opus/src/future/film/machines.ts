@@ -6,7 +6,7 @@
 //
 // 没能量到、这里写明的：
 //   摄像头和指示灯的左右位置不在模型里。Neo 放在上边框正中，Air 放在量到的刘海正中，都不偏移。
-//   刘海底角半径不在 USDZ（顶点只有 20 个）。用 Product Bezels 的 15 px，按这块屏的宽度折算。
+//   刘海轮廓对显示网格的洞：宽 312/2880、高 56/2880、底角 18.2，和动效样片同一组。
 //   键帽上的字色不在键帽材质里（材质是一块平色）。浅键用深字、深键用浅字，只为看得清。
 //   屏幕点数不在模型里：Neo 沿用 1408×881；Air 用 15 英寸默认缩放 1710×1107。
 import type { KeyCap } from './measured';
@@ -45,11 +45,11 @@ export type Machine = {
 };
 
 const airPt = { w: 1710, h: 1107 };
-// 刘海 3.8 × 0.592 cm（measured.json air.notch，n=20）折到点数。底角用 Product Bezels 的 15/2880。
+// 洞的淨空：豎邊 312、深 56、底角 18.5，按屏寬 2880 折到 1710。肩 9.9 在輪廓裡，不進這個矩形。
 const airNotch = {
-  w: (3.8 / 32.573) * airPt.w,
-  h: (0.592 / 21.142) * airPt.h,
-  r: (15 / 2880) * airPt.w,
+  w: (312 / 2880) * airPt.w,
+  h: (56 / 2880) * airPt.w,
+  r: (18.5 / 2880) * airPt.w,
 };
 
 export const MACHINES: Record<MachineId, Machine> = {

@@ -5,15 +5,15 @@ import type { CSSProperties, ReactNode } from 'react';
 import { Img } from 'remotion';
 import { DOCK, ICON, LAUNCH, PLATE } from '../assets';
 import { Browser, Notes, Terminal, Win } from '../Desktop';
-import { AirPods, Battery, Check, CJK, ControlCenter, FaceGlyph, Lock, Pointer, SF, SFD, Search, Wifi } from '../glyphs';
-import { LipGlyph } from '../neo/NeoScreen';
+import { Battery, Check, CJK, ControlCenter, Lock, Pointer, SF, SFD, Search, Wifi } from '../glyphs';
 import { clamp01, mix, seg, smooth } from '../time';
 import { LIP_TEXT, T } from './cues';
 import { islandRect } from './island';
 import { MACHINES, type MachineId } from './machines';
+import { HOLE, SCREEN, capsuleD, fusedIslandD } from './notchPath';
 import { motion } from './springs';
 
-const BLUE = '#0a84ff', RED = '#FF6B5E', GREEN = '#5FD38A';
+const RED = '#FF6B5E', GREEN = '#5FD38A';
 type R4 = { x: number; y: number; w: number; h: number };
 
 const LAYOUT: Record<MachineId, { browser: R4; notes: R4; term: R4; chat: R4 }> = {
@@ -24,13 +24,16 @@ const LAYOUT: Record<MachineId, { browser: R4; notes: R4; term: R4; chat: R4 }> 
 // ---- 状态 ----
 /** 1 是锁屏。 */
 function lockedAt(m: MachineId, f: number) {
-  if (m === 'neo') return f >= 3240 ? 1 : 1 - smooth(seg(f, T.unlock, T.unlock + 36));
+  // 片尾双机：硬切后再是桌面，不在同机连续镜头里叠化自解锁（审片 C10-03）。
+  if (f >= 3298) return 0;
+  if (m === 'neo') return 1 - smooth(seg(f, T.unlock, T.unlock + 36));
+  // Air：倒数结束锁上，并停在锁屏上直到硬切片尾（片尾第一帧不得带锁屏钟）。
   return f < 3184 ? 0 : smooth(seg(f, 3184, 3214));
 }
 /** Neo 醒来前屏幕是黑的。 */
 const dark = (m: MachineId, f: number) => (m === 'neo' && f < 400 ? 1 - smooth(seg(f, T.wake, T.wake + 70)) : 0);
 
-export function ScreenView({ m, f }: { m: MachineId; f: number }) {
+export function ScreenView({ m, f, physicalNotch = false }: { m: MachineId; f: number; physicalNotch?: boolean }) {
   const M = MACHINES[m];
   const lock = lockedAt(m, f);
   const lp = m === 'air' ? lpBg(f) : 0;
@@ -46,15 +49,15 @@ export function ScreenView({ m, f }: { m: MachineId; f: number }) {
           <Dock m={m} />
         </div>
       )}
-      {m === 'neo' && <Veil f={f} />}
       {m === 'neo' && <Ghost f={f} />}
       {lp > 0 && <Launchpad f={f} />}
-      {lock > 0.001 && <LockScreen m={m} a={lock} />}
+      {lock > 0.001 && <LockScreen m={m} a={lock} f={f} />}
       <MenuBar m={m} desk={desk} />
-      {m === 'air' && <Cursor m={m} f={f} />}
+      {m === 'air' && <Cursor m={m} f={f} physicalNotch={physicalNotch} />}
       <Island m={m} f={f} />
-      {m === 'neo' && <Cursor m={m} f={f} />}
-      {M.notch && <HardwareNotch w={M.pt.w} n={M.notch} />}
+      {m === 'neo' && <Cursor m={m} f={f} physicalNotch={physicalNotch} />}
+      {/* 展開島已蓋住洞；再疊硬體洞會挡住中央字（倒數「动一下就取消」）。 */}
+      {M.notch && !physicalNotch && !islandCoversHole(m, f) && <HardwareNotch w={M.pt.w} n={M.notch} />}
       {d > 0 && <div style={{ position: 'absolute', inset: 0, background: '#000', opacity: d }} />}
     </div>
   );
@@ -63,8 +66,8 @@ export function ScreenView({ m, f }: { m: MachineId; f: number }) {
 // ---- 窗口：Neo 上点头后浏览器滑到左半屏；番茄钟时聊天、桌面收进岛 ----
 function tuckP(m: MachineId, f: number, delay: number, which: 'chat' | 'all') {
   if (m !== 'neo' || f < T.pomoHover) return 0;
-  const inn = which === 'chat' ? motion(f, T.pomoTap + 6, 'pull') : motion(f, T.away + delay, 'pull');
-  const out = motion(f, T.back + 4 + delay, 'glide');
+  const inn = which === 'chat' ? motion(f, T.pomoTap + 6, 'settle') : motion(f, T.away + delay, 'settle');
+  const out = motion(f, T.back + 4 + delay, 'flyOut');
   if (which === 'chat') return f < T.away ? inn : Math.max(f < T.back + 4 ? 1 : 1 - out, 0);
   return f < T.back + 4 ? inn : 1 - out;
 }
@@ -79,16 +82,23 @@ function Tucked({ m, f, r, p, children }: { m: MachineId; f: number; r: R4; p: n
 function Windows({ m, f }: { m: MachineId; f: number }) {
   const Lt = LAYOUT[m], P = MACHINES[m].pt;
   const LEFT = { x: 8, y: P.menu + 8, w: P.w / 2 - 12, h: P.h - P.menu - 98 };
-  const g = m === 'neo' ? motion(f, T.glide, 'glide') : 0;
+  // 片尾硬切后再铺桌面，不与锁屏同镜叠化。
+  const endK = f >= 3300 ? motion(f, 3300, 'settle') : 0;
+  // 解锁后短收一扇进胶囊，承担开头「窗口收进刘海」（审片 C10-05）。
+  const openTuck = m === 'neo' && f >= 560 && f < 640 ? motion(f, 560, 'settle') : 0;
+  const g = Math.max(m === 'neo' ? motion(f, T.glide, 'catch') : 0, endK);
   const b = Lt.browser;
   const br = { x: mix(b.x, LEFT.x, g), y: mix(b.y, LEFT.y, g), w: mix(b.w, LEFT.w, g), h: mix(b.h, LEFT.h, g) };
   const all = (k: number) => tuckP(m, f, k * 4, 'all');
+  const side = 1 - endK;
   return (
     <>
-      <Tucked m={m} f={f} r={Lt.notes} p={all(2)}><Win r={Lt.notes} z={1}><Notes /></Win></Tucked>
-      <Tucked m={m} f={f} r={Lt.term} p={all(1)}><Win r={Lt.term} z={2} radius={16}><Terminal f={400} /></Win></Tucked>
-      <Tucked m={m} f={f} r={br} p={all(0)}><Win r={br} z={3} active={!(m === 'neo' && f >= T.pomoHover)}><Browser w={br.w} h={br.h} /></Win></Tucked>
-      {m === 'neo' && <Tucked m={m} f={f} r={Lt.chat} p={Math.max(tuckP(m, f, 0, 'chat'), all(3))}><Win r={Lt.chat} z={4} active={f >= T.pomoHover}><Chat /></Win></Tucked>}
+      <div style={{ position: 'absolute', inset: 0, opacity: side }}>
+        <Tucked m={m} f={f} r={Lt.notes} p={Math.max(all(2), openTuck)}><Win r={Lt.notes} z={1}><Notes /></Win></Tucked>
+        <Tucked m={m} f={f} r={Lt.term} p={all(1)}><Win r={Lt.term} z={2} radius={16}><Terminal f={400} /></Win></Tucked>
+        {m === 'neo' && <Tucked m={m} f={f} r={Lt.chat} p={Math.max(tuckP(m, f, 0, 'chat'), all(3))}><Win r={Lt.chat} z={4} active={f >= T.pomoHover}><Chat /></Win></Tucked>}
+      </div>
+      <Tucked m={m} f={f} r={br} p={all(0)}><Win r={br} z={3} active={!(m === 'neo' && f >= T.pomoHover && f < 3300)}><Browser w={br.w} h={br.h} /></Win></Tucked>
     </>
   );
 }
@@ -110,18 +120,12 @@ function Chat() {
   );
 }
 
-function Veil({ f }: { f: number }) {
-  const a = Math.min(smooth(seg(f, T.away, T.away + 30)), 1 - smooth(seg(f, T.back, T.back + 30)));
-  return a > 0 ? <div style={{ position: 'absolute', inset: 0, background: `rgba(8,12,20,${(0.28 * a).toFixed(3)})` }} /> : null;
-}
-
 function Ghost({ f }: { f: number }) {
-  const a = Math.min(smooth(seg(f, T.ghost, T.ghost + 14)), 1 - smooth(seg(f, T.glide + 20, T.glide + 44)));
+  const a = Math.min(smooth(seg(f, T.ok, T.ok + 12)), 1 - smooth(seg(f, T.glide + 28, T.glide + 36)));
   if (a <= 0) return null;
   const P = MACHINES.neo.pt;
-  const g = (1 - motion(f, T.ghost, 'pop')) * 0.015;
   const L = { x: 8, y: P.menu + 8, w: P.w / 2 - 12, h: P.h - P.menu - 98 };
-  return <div style={{ position: 'absolute', left: L.x + L.w * g, top: L.y + L.h * g, width: L.w * (1 - 2 * g), height: L.h * (1 - 2 * g), borderRadius: 22, zIndex: 5, background: `rgba(255,255,255,${(0.08 * a).toFixed(3)})`, boxShadow: `inset 0 0 0 1.5px rgba(255,255,255,${(0.55 * a).toFixed(3)}), 0 20px 50px rgba(0,0,0,${(0.3 * a).toFixed(3)})` }} />;
+  return <div style={{ position: 'absolute', left: L.x, top: L.y, width: L.w, height: L.h, borderRadius: 22, zIndex: 5, background: `rgba(255,255,255,${(0.06 * a).toFixed(3)})`, boxShadow: `inset 0 0 0 1.5px rgba(255,255,255,${(0.45 * a).toFixed(3)})` }} />;
 }
 
 function MenuBar({ m, desk }: { m: MachineId; desk: number }) {
@@ -145,17 +149,24 @@ function MenuBar({ m, desk }: { m: MachineId; desk: number }) {
   );
 }
 
-function LockScreen({ m, a }: { m: MachineId; a: number }) {
+function LockScreen({ m, a, f }: { m: MachineId; a: number; f: number }) {
   const k = MACHINES[m].pt.w / 1408;
   const up = 1 - a;
+  const filling = m === 'neo' && f >= T.pwFill && f < T.unlock + 24;
+  const n = filling ? Math.min(6, Math.floor((f - T.pwFill) / 6) + 1) : 0;
   return (
     <div style={{ position: 'absolute', inset: 0, opacity: a }}>
       <div style={{ position: 'absolute', inset: 0, background: 'linear-gradient(rgba(0,0,0,.18),rgba(0,0,0,0) 40%,rgba(0,0,0,.25))' }} />
-      <div style={{ position: 'absolute', left: 0, right: 0, top: 84 * k - up * 30, textAlign: 'center', color: 'rgba(255,255,255,.86)', fontFamily: CJK, fontSize: 19 * k, fontWeight: 600 }}>10月4日 星期日</div>
-      <div style={{ position: 'absolute', left: 0, right: 0, top: 100 * k - up * 50, textAlign: 'center', fontFamily: SFD, fontSize: 124 * k, fontWeight: 700, letterSpacing: -3, lineHeight: 1, color: 'rgba(255,255,255,.82)', fontVariantNumeric: 'tabular-nums' }}>21:41</div>
-      <div style={{ position: 'absolute', left: 0, right: 0, bottom: 92 * k, display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 9 }}>
+      <div style={{ position: 'absolute', left: 0, right: 0, top: 118 * k - up * 30, textAlign: 'center', color: 'rgba(255,255,255,.86)', fontFamily: CJK, fontSize: 19 * k, fontWeight: 600 }}>10月4日 星期日</div>
+      <div style={{ position: 'absolute', left: 0, right: 0, top: 142 * k - up * 50, textAlign: 'center', fontFamily: SFD, fontSize: 112 * k, fontWeight: 700, letterSpacing: -3, lineHeight: 1, color: 'rgba(255,255,255,.82)', fontVariantNumeric: 'tabular-nums' }}>21:41</div>
+      <div style={{ position: 'absolute', left: 0, right: 0, bottom: 78 * k, display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 9 }}>
         <div style={{ width: 58 * k, height: 58 * k, borderRadius: '50%', background: 'linear-gradient(#9aa3b2,#6b7384)', display: 'flex', alignItems: 'center', justifyContent: 'center', color: '#fff', fontFamily: SFD, fontSize: 26 * k, fontWeight: 600, boxShadow: '0 0 0 1.5px rgba(255,255,255,.3)' }}>A</div>
         <div style={{ color: '#fff', fontSize: 14 * k, fontWeight: 600 }}>Aaron</div>
+        <div style={{ marginTop: 4 * k, width: 196 * k, height: 36 * k, borderRadius: 18 * k, background: 'rgba(255,255,255,.22)', boxShadow: 'inset 0 0 0 1px rgba(255,255,255,.28)', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 8 * k }}>
+          {n > 0
+            ? Array.from({ length: 6 }, (_, i) => <span key={i} style={{ width: 8 * k, height: 8 * k, borderRadius: '50%', background: '#fff', opacity: i < n ? 1 : 0.28 }} />)
+            : <span style={{ fontFamily: CJK, fontSize: 14 * k, color: 'rgba(255,255,255,.78)' }}>输入密码</span>}
+        </div>
       </div>
     </div>
   );
@@ -180,8 +191,9 @@ const lpBg = (f: number) => (f < T.lpOpen || f > T.lpClose + 60 ? 0 : Math.min(s
 const ORDER = LAUNCH.map((_, i) => Math.hypot((i % COLS) - (COLS - 1) / 2, Math.floor(i / COLS) * 1.15));
 export function iconP(f: number, i: number) {
   const d = ORDER[i];
-  const go = motion(f, T.lpOpen + 4 + d * 4.2, 'bloom');
-  const back = motion(f, T.lpClose + (5 - d) * 1.6, 'flyOut');
+  const slot = Math.min(5, Math.round(d));
+  const go = motion(f, T.lpOpen + 7 + slot * 2.4, 'expand');
+  const back = motion(f, T.lpClose + 2 + slot * 2.4, 'flyOut');
   return f >= T.lpClose ? go * (1 - back) : go;
 }
 function Launchpad({ f }: { f: number }) {
@@ -211,7 +223,7 @@ function Launchpad({ f }: { f: number }) {
 // ---- 指针 ----
 type K = [number, number, number];
 const PATHS: Record<MachineId, { from: number; to: number; keys: K[]; press: number[] }[]> = {
-  air: [{ from: T.curIn, to: 1030, keys: [[T.curIn, 1150, 640], [T.curNotch, 858, 8], [800, 858, 8], [900, 1250, 900], [1030, 1250, 900]], press: [T.tap, T.closeTap] }],
+  air: [{ from: T.curIn, to: 1030, keys: [[T.curIn, 1150, 640], [T.curNotch, 858, 8], [860, 858, 8], [960, 1250, 900], [1030, 1250, 900]], press: [T.tap, T.closeTap] }],
   neo: [
     { from: 2236, to: 2420, keys: [[2236, 1100, 420], [2300, 970, 62], [2350, 970, 62], [2420, 1120, 520]], press: [T.pomoTap] },
     { from: 2690, to: 2830, keys: [[2690, 1040, 560], [2748, 720, 480], [2830, 720, 480]], press: [T.back] },
@@ -245,136 +257,278 @@ function HardwareNotch({ w, n }: { w: number; n: { w: number; h: number; r: numb
   return <div style={{ position: 'absolute', left: (w - n.w) / 2, top: 0, width: n.w, height: n.h, borderRadius: `0 0 ${n.r}px ${n.r}px`, background: '#000', zIndex: 80 }} />;
 }
 
-function Cursor({ m, f }: { m: MachineId; f: number }) {
+/** 島已比洞大時，黑島本身就是洞；不要再蓋一層硬體洞。 */
+function islandCoversHole(m: MachineId, f: number) {
+  if (m !== 'air' || !MACHINES.air.notch) return false;
+  const r = islandRect(m, f);
+  const n = MACHINES.air.notch;
+  return r.w > n.w + 0.5 || r.h > n.h + 0.5;
+}
+
+function Cursor({ m, f, physicalNotch }: { m: MachineId; f: number; physicalNotch: boolean }) {
   const c = cursorAt(m, f);
-  if (!c || inNotch(m, c.x, c.y)) return null;
+  // 貼在實體網格上時，指針畫進劉海那一塊，由網格上的缺口把它擋住。
+  if (!c || (!physicalNotch && inNotch(m, c.x, c.y))) return null;
   return (
     <div style={{ position: 'absolute', left: c.x, top: c.y, zIndex: m === 'neo' ? 50 : 25, opacity: c.a }}>
-      {c.press > 0 && <div style={{ position: 'absolute', left: -16, top: -16, width: 32, height: 32, borderRadius: '50%', boxShadow: `0 0 0 2px rgba(255,255,255,${(0.7 * c.press).toFixed(3)})`, transform: `scale(${mix(0.6, 1.2, c.press)})` }} />}
+      {c.press > 0 && <div style={{ position: 'absolute', left: -28, top: -28, width: 56, height: 56, borderRadius: '50%', boxShadow: `0 0 0 3px rgba(255,255,255,${(0.85 * c.press).toFixed(3)})`, transform: `scale(${mix(0.55, 1.15, c.press)})` }} />}
       <div style={{ transform: `scale(${1 - c.press * 0.12})`, transformOrigin: '0 0' }}><Pointer size={17} /></div>
     </div>
   );
 }
 
 // ---- 岛 ----
+// Air：黑就是網格的洞。靜止只畫洞的輪廓；展開從這條輪廓往下長，沒有第二顆膠囊、沒有描邊和影子。
+// Neo：沒有硬體劉海，屏上只有一顆黑，同樣不描邊、不加影子。
+// 排版對齊 WWDC23 10194：Compact 極窄貼洞；Expanded／半島環抱感測區、同心邊距、無大額頭。
 function Island({ m, f }: { m: MachineId; f: number }) {
   const r = islandRect(m, f);
+  if (m === 'air') {
+    const grown = r.w > HOLE.w + 0.5 || r.h > HOLE.h + 0.5;
+    const island = fusedIslandD(r.w, r.h, r.r, grown);
+    return (
+      <>
+        <svg width={SCREEN.w} height={SCREEN.h} viewBox={`0 0 ${SCREEN.w} ${SCREEN.h}`} style={{ position: 'absolute', left: 0, top: 0, zIndex: 30, overflow: 'visible' }}>
+          <path d={island.d} fill="#000" fillRule="nonzero" />
+        </svg>
+        <div style={{ position: 'absolute', left: island.box.x, top: island.box.y, width: island.box.w, height: island.box.h, zIndex: 31, overflow: 'hidden' }}>
+          <IslandContent m={m} f={f} w={island.box.w} h={island.box.h} />
+        </div>
+      </>
+    );
+  }
   if (r.w < 0.5 || r.h < 0.5) return null;
-  const br = m === 'air' ? `0 0 ${r.r}px ${r.r}px` : `${r.r}px`;
   return (
-    <div style={{ position: 'absolute', left: r.x, top: r.y, width: r.w, height: r.h, borderRadius: br, background: '#000', zIndex: 30, overflow: 'hidden', boxShadow: m === 'neo' ? '0 0 0 0.5px rgba(255,255,255,.10), 0 10px 30px rgba(0,0,0,.35)' : 'none' }}>
-      <div style={{ position: 'absolute', left: '50%', top: '50%', width: 0, height: 0 }}>
+    <>
+      <svg width={MACHINES.neo.pt.w} height={MACHINES.neo.pt.h} viewBox={`0 0 ${MACHINES.neo.pt.w} ${MACHINES.neo.pt.h}`} style={{ position: 'absolute', left: 0, top: 0, zIndex: 30, overflow: 'visible' }}>
+        <path d={capsuleD(r.x, r.y, r.w, r.h, r.r)} fill="#000" fillRule="nonzero" />
+      </svg>
+      <div style={{ position: 'absolute', left: r.x, top: r.y, width: r.w, height: r.h, zIndex: 31, overflow: 'hidden', borderRadius: r.r }}>
         <IslandContent m={m} f={f} w={r.w} h={r.h} />
       </div>
-    </div>
+    </>
   );
 }
 
 const inWin = (f: number, a: number, b: number, fi = 8, fo = 6) => Math.min(smooth(seg(f, a, a + fi)), 1 - smooth(seg(f, b - fo, b)));
 
-function Centered({ w, h, a, children }: { w: number; h: number; a: number; children: ReactNode }) {
+/** content-replace：淡入淡出 + 輕微縮放（10194 默認過渡的味道）。 */
+function FadeIn({ a, children }: { a: number; children: ReactNode }) {
   if (a <= 0.001) return null;
-  return <div style={{ position: 'absolute', left: -w / 2, top: -h / 2, width: w, height: h, display: 'flex', alignItems: 'center', justifyContent: 'center', opacity: a }}>{children}</div>;
+  return <div style={{ position: 'absolute', inset: 0, opacity: a, transform: `scale(${0.94 + 0.06 * a})`, transformOrigin: '50% 40%' }}>{children}</div>;
 }
 
-function Row({ icon, label, children }: { icon: ReactNode; label: string; children: ReactNode }) {
+/** Expanded／半島：洞高留給感測蓋板；內容緊貼洞下橫排同心（去額頭）。左右不畫在洞高裡——3D 蓋板會擋。 */
+function Peninsula({ w, h, left, right, title, sub, accent = '#fff' }: { w: number; h: number; left: ReactNode; right?: ReactNode; title: string; sub: string; accent?: string }) {
+  const holeH = HOLE.depth;
+  const m = Math.max(12, Math.min(20, w * 0.04));
+  const top = holeH + 4;
+  const band = Math.max(40, h - top - 8);
   return (
-    <div style={{ display: 'flex', alignItems: 'center', gap: 16, width: '100%', padding: '0 18px 0 14px' }}>
-      <div style={{ width: 66, height: 66, borderRadius: 20, background: '#141416', display: 'flex', alignItems: 'center', justifyContent: 'center', flex: 'none' }}>{icon}</div>
-      <div style={{ fontFamily: CJK, color: '#fff', minWidth: 0, whiteSpace: 'nowrap' }}>
-        <div style={{ fontSize: 13, color: '#8e8e93', fontWeight: 500 }}>{label}</div>
-        <div style={{ fontSize: 24, fontWeight: 600, marginTop: 3, letterSpacing: 0.2 }}>{children}</div>
+    <div style={{ position: 'relative', width: w, height: h, fontFamily: CJK }}>
+      <div style={{ position: 'absolute', left: m, right: m, top, height: band, display: 'flex', alignItems: 'center', gap: 12 }}>
+        {left}
+        <div style={{ flex: 1, minWidth: 0 }}>
+          <div style={{ fontSize: 22, fontWeight: 700, color: accent, lineHeight: 1.08, letterSpacing: 0.2 }}>{title}</div>
+          <div style={{ fontSize: 14, fontWeight: 600, color: 'rgba(255,255,255,.72)', marginTop: 3, lineHeight: 1.08 }}>{sub}</div>
+        </div>
+        {right}
       </div>
     </div>
   );
 }
 
-const mouthOpen = (f: number) => {
-  const t = f - T.charAt;
-  if (t < -10 || t > LIP_TEXT.length * T.charGap) return 0.12;
-  const u = ((t % T.charGap) + T.charGap) % T.charGap / T.charGap;
-  return 0.12 + 0.7 * Math.sin(u * Math.PI) ** 1.5;
-};
-
-function IslandContent({ m, f, w, h }: { m: MachineId; f: number; w: number; h: number }) {
-  if (m === 'neo') {
-    if (f >= T.faceOn && f < 600) {
-      const ok = smooth(seg(f, T.faceOk, T.faceOk + 26));
-      return <Centered w={w} h={h} a={inWin(f, T.faceOn + 8, 700)}><FaceGlyph size={84} scan={seg(f, T.faceOn + 4, T.faceOk - 10)} ok={ok} sweep={((f - T.faceOn) / 48) % 1} /></Centered>;
-    }
-    if (f >= 1080 && f < T.ask + 6) {
-      const n = f < T.charAt ? 0 : Math.min(LIP_TEXT.length, Math.floor((f - T.charAt) / T.charGap) + 1);
-      return <Centered w={400} h={92} a={inWin(f, 1080, T.ask + 6, 1, 6)}><Row icon={<LipGlyph open={mouthOpen(f)} />} label="看口型"><span>{LIP_TEXT.slice(0, n)}<i style={{ display: 'inline-block', width: 2.5, height: 24, marginLeft: 3, verticalAlign: -4, background: BLUE, opacity: Math.floor(f / 16) % 2 === 0 || n < LIP_TEXT.length ? 1 : 0 }} /></span></Row></Centered>;
-    }
-    if (f >= T.ask && f < T.rest + 10) {
-      const nod = f > T.nodA && f < T.nodB ? 16 * Math.sin(((f - T.nodA) / (T.nodB - T.nodA)) * Math.PI * 2) ** 2 : 0;
-      const ok = seg(f, T.ok, T.ok + 24);
-      return <Centered w={400} h={92} a={inWin(f, T.ask, T.rest + 10, 10, 10)}><Row icon={ok > 0 ? <Check size={40} draw={ok} /> : <AirPods size={40} tilt={nod} />} label="点头确认，摇头取消"><span>放到左半屏？</span></Row></Centered>;
-    }
-    if (f >= T.ride && f < 1800) return <Centered w={w} h={h} a={inWin(f, T.ride + 6, 1810)}><Alert icon={<Car />} title="车快到了" sub="白色轿车 · 2 分钟" /></Centered>;
-    if (f >= T.pomoHover && f < T.pomoTap + 4) return <Centered w={620} h={118} a={inWin(f, T.pomoHover, T.pomoTap + 4, 1, 4)}><PomoIdle press={Math.max(0, 1 - Math.abs(f - T.pomoTap) / 6)} /></Centered>;
-    if (f >= T.pomoTap && f < T.restAlert + 4) {
-      const ff = smooth(seg(f, T.ffA, T.ffB));
-      const left = 1500 * (1 - ff * 0.9995);
-      return <Centered w={w} h={h} a={inWin(f, T.pomoTap + 8, T.restAlert + 4, 10, 4)}><Compact color={RED} frac={1 - left / 1500} text={fmt(left)} /></Centered>;
-    }
-    if (f >= T.restAlert && f < T.away + 4) return <Centered w={w} h={h} a={inWin(f, T.restAlert + 6, T.away + 4, 10, 4)}><Alert icon={<Cup />} title="休息 5 分钟" sub="专注完成 · 今天第 3 个" color={GREEN} /></Centered>;
-    if (f >= T.away && f < T.back + 4) {
-      const left = 299 - Math.floor((f - T.away) / 60);
-      const br = 0.5 + 0.5 * Math.sin(((f - T.away) / 330) * Math.PI * 2 - Math.PI / 2);
-      return (
-        <Centered w={w} h={h} a={inWin(f, T.away + 10, T.back + 4, 12, 4)}>
-          <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 12, fontFamily: CJK }}>
-            <div style={{ width: 150, height: 150, borderRadius: '50%', border: `7px solid ${GREEN}`, transform: `scale(${mix(0.86, 1, br)})`, opacity: mix(0.6, 1, br), display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-              <span style={{ color: '#fff', fontFamily: SFD, fontSize: 30, fontWeight: 600, fontVariantNumeric: 'tabular-nums' }}>{fmt(left)}</span>
-            </div>
-            <span style={{ color: 'rgba(255,255,255,.65)', fontSize: 16 }}>看看远处 · 点一下回来</span>
-          </div>
-        </Centered>
-      );
-    }
-    if (f >= T.back && f < T.pomoPre + 4) return <Centered w={w} h={h} a={inWin(f, T.back + 8, T.pomoPre + 4, 10, 4)}><Compact color={GREEN} frac={0.06} text="4 分" /></Centered>;
-    return null;
-  }
-  // Air
-  if (f >= T.listenPre && f < 1080) return <Centered w={470} h={112} a={inWin(f, T.listenPre + 10, 1100)}><Row icon={<LipGlyph open={0.12} />} label="看口型"><span>{' '}</span></Row></Centered>;
-  if (f >= 1800 && f < T.livePre + 4) {
-    if (f >= T.rideOpen && f < T.rideClose + 4) return <Centered w={w} h={h} a={inWin(f, T.rideOpen + 6, T.rideClose + 4, 10, 4)}><Alert icon={<Car />} title="车快到了" sub="白色轿车 · 沪A·D3K21" /></Centered>;
-    if (f >= T.foodOpen && f < T.foodClose + 4) return <Centered w={w} h={h} a={inWin(f, T.foodOpen + 6, T.foodClose + 4, 10, 4)}><Alert icon={<Bag />} title="外卖到了" sub="放在门口了" /></Centered>;
-    const text = f < T.rideOpen ? '2 分钟' : f < T.foodOpen ? '1 分钟' : '到了';
-    const a = f < T.rideOpen ? inWin(f, 1800, T.rideOpen + 2, 1, 4) : f < T.foodOpen ? inWin(f, T.rideClose + 10, T.foodOpen + 2, 10, 4) : inWin(f, T.foodClose + 10, T.livePre + 4, 10, 4);
-    return <Centered w={w} h={h} a={a}><Wings notchW={MACHINES.air.notch!.w} w={w} left={<Car size={22} />} right={<span style={{ fontFamily: CJK, fontSize: 14, fontWeight: 600, color: '#fff' }}>{text}</span>} /></Centered>;
-  }
-  if (f >= T.livePre && f < 2280) return <Centered w={470} h={112} a={inWin(f, T.livePre + 10, 2300)}><Row icon={<TimerIcon />} label="番茄钟"><span>专注 25 分钟</span></Row></Centered>;
-  if (f >= 2880 && f < T.ticks[0]) return <Centered w={w} h={h} a={inWin(f, 2880, T.ticks[0], 1, 8)}><div style={{ opacity: 0.55 }}><FaceGlyph size={124} scan={1} ok={0} sweep={((f - 2880) / 40) % 1} /></div></Centered>;
-  if (f >= T.ticks[0] - 8 && f < T.lock - 4) {
-    const n = 3 - T.ticks.filter((t) => f >= t).length + 1;
-    return <Centered w={w} h={h} a={inWin(f, T.ticks[0] - 2, T.lock - 4, 8, 4)}><Wings notchW={MACHINES.air.notch!.w} w={w} left={<Lock size={18} />} right={<span style={{ fontFamily: SFD, fontSize: 17, fontWeight: 700, color: '#fff' }}>{Math.max(1, n)}</span>} /></Centered>;
-  }
-  if (f >= T.lock - 12 && f < 3250) return <Centered w={w} h={h} a={inWin(f, T.lock - 4, 3250, 8, 14)}><Lock size={74} open={1 - smooth(seg(f, T.lock, T.lock + 12))} /></Centered>;
-  return null;
+function Tile({ children, color = '#1c1c1e', size = 40 }: { children: ReactNode; color?: string; size?: number }) {
+  const r = Math.round(size * 0.32);
+  return (
+    <div style={{ width: size, height: size, borderRadius: r, background: color, display: 'flex', alignItems: 'center', justifyContent: 'center', flex: 'none', color: '#fff', boxShadow: 'inset 0 0 0 0.5px rgba(255,255,255,.12)' }}>{children}</div>
+  );
 }
 
-const fmt = (s: number) => (s > 60 ? `${Math.ceil(s / 60)} 分` : `${Math.floor(s / 60)}:${String(Math.ceil(s % 60)).padStart(2, '0')}`);
-
-function Wings({ notchW, w, left, right }: { notchW: number; w: number; left: ReactNode; right: ReactNode }) {
-  const wing = (w - notchW) / 2;
+function CompactWings({ w, h, left, right }: { w: number; h: number; left: ReactNode; right: ReactNode }) {
+  const holeW = HOLE.w;
+  const wing = Math.max(28, (w - holeW) / 2);
   return (
-    <div style={{ position: 'relative', width: w, height: '100%' }}>
+    <div style={{ position: 'relative', width: w, height: h }}>
       <div style={{ position: 'absolute', left: 0, top: 0, bottom: 0, width: wing, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>{left}</div>
       <div style={{ position: 'absolute', right: 0, top: 0, bottom: 0, width: wing, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>{right}</div>
     </div>
   );
 }
 
-function Alert({ icon, title, sub, color = '#fff' }: { icon: ReactNode; title: string; sub: string; color?: string }) {
+function SoftAlert({ icon, title, sub, accent = '#fff' }: { icon: ReactNode; title: string; sub: string; accent?: string }) {
   return (
-    <div style={{ display: 'flex', alignItems: 'center', gap: 14, fontFamily: CJK, whiteSpace: 'nowrap' }}>
-      <div style={{ width: 52, height: 52, borderRadius: 16, background: '#1c1c1e', display: 'flex', alignItems: 'center', justifyContent: 'center', color }}>{icon}</div>
-      <div>
-        <div style={{ fontSize: 21, fontWeight: 600, color: '#fff' }}>{title}</div>
-        <div style={{ fontSize: 14, color: '#8e8e93', marginTop: 2 }}>{sub}</div>
+    <div style={{ display: 'flex', alignItems: 'center', gap: 12, fontFamily: CJK, whiteSpace: 'nowrap', padding: '0 14px', height: '100%', boxSizing: 'border-box' }}>
+      {icon}
+      <div style={{ minWidth: 0 }}>
+        <div style={{ fontSize: 20, fontWeight: 700, color: accent, lineHeight: 1.08 }}>{title}</div>
+        <div style={{ fontSize: 13, fontWeight: 600, color: 'rgba(255,255,255,.7)', marginTop: 2, lineHeight: 1.08 }}>{sub}</div>
       </div>
+    </div>
+  );
+}
+
+function TypeLine({ children, size = 28 }: { children: ReactNode; size?: number }) {
+  return <span style={{ fontFamily: CJK, fontSize: size, fontWeight: 700, color: '#fff', whiteSpace: 'nowrap', letterSpacing: 0.2 }}>{children}</span>;
+}
+
+function IslandContent({ m, f, w, h }: { m: MachineId; f: number; w: number; h: number }) {
+  if (f >= 3300) {
+    return (
+      <FadeIn a={inWin(f, 3310, 3700, 12, 8)}>
+        {m === 'air'
+          ? <Peninsula w={w} h={h} left={<Tile color="#3a2a1a"><Bag size={22} /></Tile>} right={<span style={{ fontFamily: CJK, fontSize: 13, fontWeight: 700, color: '#ffb340' }}>即時</span>} title="外卖到了" sub="iPhone · 放在门口了" accent="#ffb340" />
+          : <SoftAlert icon={<Tile color="#3a2a1a"><Bag size={22} /></Tile>} title="外卖到了" sub="iPhone · 放在门口了" accent="#ffb340" />}
+      </FadeIn>
+    );
+  }
+  if (m === 'neo') {
+    if (f >= T.faceOn && f < T.unlock + 8) {
+      const face = f >= T.faceOk ? 'ok' : 'wait';
+      const phone = f >= T.phoneOk ? 'ok' : 'wait';
+      return <FadeIn a={inWin(f, T.faceOn + 6, T.unlock + 8, 10, 8)}><div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', height: '100%' }}><Factors face={face} phone={phone} /></div></FadeIn>;
+    }
+    if (f >= 560 && f < 640) {
+      return <FadeIn a={inWin(f, 562, 636, 8, 6)}><SoftAlert icon={<Tile color="#163524"><Check size={22} draw={1} /></Tile>} title="备忘录" sub="已收进刘海" accent="#5FD38A" /></FadeIn>;
+    }
+    if (f >= 1080 && f < T.ask + 6) {
+      return (
+        <FadeIn a={inWin(f, 1110, T.ask + 6, 11, 6)}>
+          <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', height: '100%', gap: 5 }}>
+            <TypeLine size={28}>等你确认</TypeLine>
+            <span style={{ fontFamily: CJK, fontSize: 14, fontWeight: 600, color: 'rgba(255,255,255,.7)' }}>{LIP_TEXT}</span>
+          </div>
+        </FadeIn>
+      );
+    }
+    if (f >= T.ask && f < T.rest + 10) {
+      const ok = seg(f, T.ok, T.ok + 14);
+      const done = ok > 0.5;
+      return (
+        <FadeIn a={inWin(f, T.ask, T.rest + 10, 10, 10)}>
+          <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', height: '100%', gap: 5 }}>
+            <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
+              <TypeLine size={26}>{done ? '已确认 · 正在落位' : '等你确认'}</TypeLine>
+              {ok > 0 && <Check size={30} draw={ok} />}
+            </div>
+            <span style={{ fontFamily: CJK, fontSize: 14, fontWeight: 600, color: 'rgba(255,255,255,.7)' }}>{done ? '左半屏' : '放到左半屏？'}</span>
+          </div>
+        </FadeIn>
+      );
+    }
+    if (f >= T.ride && f < 1800) return <FadeIn a={inWin(f, T.ride + 6, 1810)}><SoftAlert icon={<Tile color="#1a2f4a"><Car size={22} /></Tile>} title="车快到了" sub="白色轿车 · 2 分钟" accent="#64D2FF" /></FadeIn>;
+    if (f >= T.pomoHover && f < T.pomoTap + 4) return <FadeIn a={inWin(f, T.pomoHover, T.pomoTap + 4, 1, 4)}><PomoIdle press={Math.max(0, 1 - Math.abs(f - T.pomoTap) / 6)} /></FadeIn>;
+    if (f >= T.pomoTap && f < T.restAlert + 4) {
+      const ff = smooth(seg(f, T.ffA, T.ffB));
+      const left = 1500 * (1 - ff * 0.9995);
+      return <FadeIn a={inWin(f, T.pomoTap + 8, T.restAlert + 4, 10, 4)}><Compact color={RED} frac={1 - left / 1500} text={fmt(left)} /></FadeIn>;
+    }
+    if (f >= T.restAlert && f < T.away + 4) return <FadeIn a={inWin(f, T.restAlert + 6, T.away + 4, 10, 4)}><SoftAlert icon={<Tile color="#163524"><Cup size={22} /></Tile>} title="休息 5 分钟" sub="专注完成 · 今天第 3 个" accent={GREEN} /></FadeIn>;
+    if (f >= T.away && f < T.back + 4) {
+      const left = restLeft(f);
+      return (
+        <FadeIn a={inWin(f, T.away + 10, T.back + 4, 12, 4)}>
+          <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', height: '100%', gap: 10, fontFamily: CJK }}>
+            <div style={{ width: 132, height: 132, borderRadius: '50%', border: `6px solid ${GREEN}`, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+              <span style={{ color: '#fff', fontFamily: SFD, fontSize: 28, fontWeight: 700, fontVariantNumeric: 'tabular-nums' }}>{fmtClock(left)}</span>
+            </div>
+            <span style={{ color: 'rgba(255,255,255,.82)', fontSize: 18, fontWeight: 600 }}>看看远处 · 点一下回来</span>
+          </div>
+        </FadeIn>
+      );
+    }
+    if (f >= T.back && f < T.pomoPre + 4) {
+      const left = restLeft(f);
+      return <FadeIn a={inWin(f, T.back + 8, T.pomoPre + 4, 10, 4)}><Compact color={GREEN} frac={1 - left / 300} text={`休息 ${fmtClock(left)}`} /></FadeIn>;
+    }
+    return null;
+  }
+  // Air
+  if (f >= T.listenPre && f < 1080) {
+    return (
+      <FadeIn a={inWin(f, T.listenPre + 10, 1100)}>
+        <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', height: '100%' }}><TypeLine>看口型</TypeLine></div>
+      </FadeIn>
+    );
+  }
+  if (f >= 1800 && f < T.livePre + 4) {
+    if (f >= T.rideOpen && f < T.rideClose + 4) {
+      return (
+        <FadeIn a={inWin(f, T.rideOpen + 6, T.rideClose + 4, 10, 4)}>
+          <Peninsula w={w} h={h} left={<Tile color="#1a2f4a"><Car size={20} /></Tile>} right={<span style={{ fontFamily: CJK, fontSize: 15, fontWeight: 700, color: '#64D2FF', fontVariantNumeric: 'tabular-nums' }}>2 分</span>} title="车快到了" sub="iPhone · 还有 2 分钟" accent="#64D2FF" />
+        </FadeIn>
+      );
+    }
+    if (f >= T.foodOpen && f < T.foodClose + 4) {
+      return (
+        <FadeIn a={inWin(f, T.foodOpen + 6, T.foodClose + 4, 10, 4)}>
+          <Peninsula w={w} h={h} left={<Tile color="#3a2a1a"><Bag size={20} /></Tile>} right={<span style={{ fontFamily: CJK, fontSize: 15, fontWeight: 700, color: '#ffb340' }}>到了</span>} title="外卖到了" sub="iPhone · 放在门口了" accent="#ffb340" />
+        </FadeIn>
+      );
+    }
+    const text = f < T.rideOpen ? '2 分' : f < T.foodOpen ? '1 分' : '到了';
+    const a = f < T.rideOpen ? inWin(f, 1800, T.rideOpen + 2, 1, 4) : f < T.foodOpen ? inWin(f, T.rideClose + 10, T.foodOpen + 2, 10, 4) : inWin(f, T.foodClose + 10, T.livePre + 4, 10, 4);
+    return (
+      <FadeIn a={a}>
+        <CompactWings w={w} h={h} left={<Car size={18} />} right={<span style={{ fontFamily: CJK, fontSize: 15, fontWeight: 700, color: '#fff', fontVariantNumeric: 'tabular-nums' }}>{text}</span>} />
+      </FadeIn>
+    );
+  }
+  if (f >= T.livePre && f < 2280) {
+    return (
+      <FadeIn a={inWin(f, T.livePre + 10, 2300)}>
+        <Peninsula w={w} h={h} left={<Tile color="#2a1a1a"><TimerIcon size={20} /></Tile>} right={<span style={{ fontFamily: CJK, fontSize: 13, fontWeight: 700, color: RED }}>专注</span>} title="番茄钟" sub="专注 25 分钟" accent={RED} />
+      </FadeIn>
+    );
+  }
+  if (f >= 2880 && f < T.ticks[0] - 8) return null;
+  if (f >= T.ticks[0] - 8 && f < T.lock - 4) {
+    const n = Math.max(1, 3 - T.ticks.filter((t) => f >= t).length + 1);
+    const holeW = HOLE.w;
+    const wing = Math.max(96, (w - holeW) / 2);
+    return (
+      <FadeIn a={inWin(f, T.ticks[0] - 2, T.lock - 4, 8, 4)}>
+        <div style={{ display: 'flex', width: '100%', height: '100%', alignItems: 'center', fontFamily: CJK }}>
+          <div style={{ width: wing, height: '100%', display: 'flex', flexDirection: 'row', alignItems: 'center', justifyContent: 'flex-start', gap: 8, paddingLeft: 12, boxSizing: 'border-box' }}>
+            <Lock size={18} />
+            <span style={{ fontSize: 15, fontWeight: 700, color: '#fff', letterSpacing: '0.01em', whiteSpace: 'nowrap', lineHeight: 1 }}>动一下就取消</span>
+          </div>
+          <div style={{ width: holeW, height: '100%' }} />
+          <div style={{ width: wing, height: '100%', display: 'flex', alignItems: 'center', justifyContent: 'center', paddingRight: 10, boxSizing: 'border-box' }}>
+            <span style={{ fontFamily: SFD, fontSize: 36, fontWeight: 700, color: '#fff', fontVariantNumeric: 'tabular-nums', lineHeight: 1 }}>{n}</span>
+          </div>
+        </div>
+      </FadeIn>
+    );
+  }
+  if (f >= T.lock - 12 && f < 3300) return null;
+  return null;
+}
+
+const restLeft = (f: number) => Math.max(0, 299 - (f - T.away) / 60);
+const fmt = (s: number) => (s > 90 ? `${Math.ceil(s / 60)} 分` : `${Math.floor(s / 60)}:${String(Math.floor(s % 60)).padStart(2, '0')}`);
+const fmtClock = (s: number) => `${Math.floor(s / 60)}:${String(Math.floor(s % 60)).padStart(2, '0')}`;
+
+
+
+function Factors({ face, phone }: { face: 'wait' | 'ok'; phone: 'wait' | 'ok' }) {
+  return (
+    <div style={{ display: 'flex', alignItems: 'center', gap: 28 }}>
+      <Factor ok={face === 'ok'} kind="face" label="脸" />
+      <Factor ok={phone === 'ok'} kind="phone" label="手机" />
+    </div>
+  );
+}
+
+function Factor({ ok, kind, label }: { ok: boolean; kind: 'face' | 'phone'; label: string }) {
+  return (
+    <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+      <div style={{ width: 30, height: 30, borderRadius: 15, background: ok ? '#30D158' : 'rgba(255,255,255,.16)', display: 'flex', alignItems: 'center', justifyContent: 'center', flex: 'none' }}>
+        {kind === 'face'
+          ? <span style={{ width: 12, height: 12, borderRadius: 6, background: ok ? '#06210f' : '#fff' }} />
+          : <span style={{ width: 10, height: 16, borderRadius: 3, boxShadow: `inset 0 0 0 1.6px ${ok ? '#06210f' : '#fff'}` }} />}
+      </div>
+      <span style={{ fontFamily: CJK, fontSize: 16, fontWeight: 650, color: ok ? '#fff' : 'rgba(255,255,255,.78)' }}>{label}</span>
     </div>
   );
 }

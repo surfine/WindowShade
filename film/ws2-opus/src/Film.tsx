@@ -1,18 +1,19 @@
-import type { ReactNode } from 'react';
-import { AbsoluteFill, Audio, staticFile, useCurrentFrame } from 'remotion';
-import { SCREEN_ASPECT, type Layout, type Rect } from './layout';
+import { useRef, useState, type ReactNode } from 'react';
+import { AbsoluteFill, Audio, staticFile, useCurrentFrame, useDelayRender } from 'remotion';
+import { cameraAt } from './camera';
+import { LANDSCAPE, type Layout, type Rect } from './layout';
 import { CAPTION_IN } from './motion/direction';
-import { FPS, NOTCH, TEACH_TUCKED, clamp01, mix, seg, teachPos } from './motion/site';
-import { MUSIC_PLAY } from './timeline';
-import { CAPTIONS, FADE_TO_BLACK, WORDMARK_AT, captionOpacity, shotAt, shotStartAt, srcAt, type Framing } from './cut';
+import { FPS, NOTCH, TEACH_TUCKED, clamp01, mix, pt, seg } from './motion/site';
+import { approach } from './motion/springs';
+import { CONDUCT_IN, CONDUCT_SEND, CONDUCT_TONE, MUSIC_PLAY } from './timeline';
+import { CAPTIONS, FADE_TO_BLACK, WORDMARK_AT, captionOpacity, shotStartAt, srcAt } from './cut';
 import { MIX_FILE } from './music';
 import { shutterSamples } from './shutter';
 import {
-  DRAGGED_APP, DRAG_PRESS, HANDLE_POS, ICON_SIZE, chatBackAt, clutterAt, deviceAt, dragIconAt, draftAt, fingerAt, handleAt, phoneAt,
-  pointerAt, screenDark, slotsAt, termDoneAt, trackpadAt,
+  DRAGGED_APP, DRAG_PRESS, HANDLE_POS, ICON_SIZE, STROKE, chatBackAt, clutterAt, conductAt, conductStrokeAt, deviceAt, dragIconAt, draftAt, handleAt, phoneAt,
+  pointerAt, screenDark, slotsAt, termDoneAt,
 } from './scene';
-import { Laptop } from './parts/Laptop';
-import { Hero } from './parts/Hero';
+import { Air } from './parts/Air';
 import { Island } from './parts/Island';
 import { Placeholder } from './parts/Placeholder';
 import { AppIcon, ChatWin, DraftWin, HomeScreen, MenuBar, MusicWin, NotesWin, TermWin, Wallpaper } from './parts/Mock';
@@ -35,7 +36,7 @@ export function Film({ L, drawn, blind, step = 1 }: FilmProps) {
   const times = Array.from({ length: n }, (_, j) => Math.max(start, out - (n > 1 ? (open * (n - 1 - j)) / (n - 1) : 0)));
   return (
     <AbsoluteFill className={blind ? 'ws-blind' : undefined} style={{ background: BACKDROP }}>
-      {blind ? <style>{'.ws-blind *{color:transparent!important;-webkit-text-fill-color:transparent!important;text-shadow:none!important}.ws-blind text{fill:transparent!important;stroke:none!important}'}</style> : <Audio src={staticFile(MIX_FILE)} />}
+      {blind ? <style>{'.ws-blind *{color:transparent!important;-webkit-text-fill-color:transparent!important;text-shadow:none!important}.ws-blind text{fill:transparent!important;stroke:none!important}'}</style> : <Audio src={staticFile(MIX_FILE)} volume={0.977} />}
       {times.map((t, j) => (
         <AbsoluteFill key={j} style={{ opacity: 1 / (j + 1) }}>
           <FilmFrame L={L} drawn={drawn} out={t} />
@@ -43,6 +44,18 @@ export function Film({ L, drawn, blind, step = 1 }: FilmProps) {
       ))}
     </AbsoluteFill>
   );
+}
+
+/** 螢幕貼圖：跟成片同一套介面，兩倍像素，給顯示網格的 UV 用。 */
+export const SCREEN_PLATE = {
+  width: Math.round(LANDSCAPE.screen.w * 2),
+  height: Math.round(LANDSCAPE.screen.h * 2),
+};
+
+export function ScreenPlate() {
+  const out = useCurrentFrame();
+  const L: Layout = { ...LANDSCAPE, width: SCREEN_PLATE.width, height: SCREEN_PLATE.height };
+  return <FilmFrame L={L} drawn out={out} plate />;
 }
 
 /** 机身外面的底色：比第一版亮一档，偏冷的灰蓝，刘海的纯黑在上面看得出轮廓。 */
@@ -54,41 +67,62 @@ const LAUNCH_AT = 3021;
 
 /** drawn：画出来的界面（B 版）；否则是写着要录什么的占位块。两版共用同一条时间线。
  * out 是成片的帧号（快门取样时带小数）；frame 是它对应的母带帧号，屏里屏外的东西都按 frame 画，标题、片名和景别按 out。 */
-function FilmFrame({ L, drawn, out }: { L: Layout; drawn: boolean; out: number }) {
+function FilmFrame({ L, drawn, out, plate = false }: { L: Layout; drawn: boolean; out: number; plate?: boolean }) {
   const frame = srcAt(out);
-  const cqw = L.screen.w / 100;
-  const framing = shotAt(out).framing;
+  // 介面按兩倍畫進貼圖，特寫時字才不會糊。相機對位仍用原來的 L.screen。
+  // plate：這塊就是貼圖本身，尺寸已經是整數像素。
+  const HS: Layout = plate
+    ? { ...L, screen: { x: 0, y: 0, w: L.width, h: L.height } }
+    : { ...L, screen: { ...L.screen, w: L.screen.w * 2, h: L.screen.h * 2 } };
+  const cqw = HS.screen.w / 100;
+  const { delayRender, continueRender } = useDelayRender();
+  const [paintHandle] = useState(() => (plate ? 0 : delayRender('screen-ui')));
+  const painted = useRef(false);
+  const ready = () => {
+    if (painted.current) return;
+    painted.current = true;
+    continueRender(paintHandle);
+  };
 
   const page = drawn ? (
     <div style={{ position: 'absolute', inset: 0, filter: SCREEN_LIFT }}>
       <Wallpaper />
-      <DrawnDesk frame={frame} L={L} />
-      <Handle frame={frame} L={L} />
-      <LockScreen frame={frame} L={L} />
+      <DrawnDesk frame={frame} L={HS} />
+      <Handle frame={frame} L={HS} />
+      <LockScreen frame={frame} L={HS} />
     </div>
   ) : (
     <>
       <div style={{ position: 'absolute', inset: 0, background: 'linear-gradient(160deg,#252a34 0%,#161920 55%,#101217 100%)' }} />
-      {slotsAt(frame).map((s) => <Placeholder key={s.id} L={L} slot={s} />)}
-      <Handle frame={frame} L={L} />
+      {slotsAt(frame).map((s) => <Placeholder key={s.id} L={HS} slot={s} />)}
+      <Handle frame={frame} L={HS} />
       <div style={{ position: 'absolute', inset: 0, background: '#000', opacity: screenDark(frame) }} />
     </>
   );
   const over = (
     <>
       <Island frame={frame} cqw={cqw} drawn={drawn} />
-      {drawn ? <Arrow frame={frame} L={L} /> : <Pointer frame={frame} L={L} />}
+      {drawn ? <Arrow frame={frame} L={HS} /> : <Pointer frame={frame} L={HS} />}
     </>
   );
 
+  if (plate) {
+    return (
+      <AbsoluteFill style={{ background: '#000', overflow: 'hidden' }}>
+        {page}
+        {over}
+      </AbsoluteFill>
+    );
+  }
+
   return (
     <AbsoluteFill style={{ background: BACKDROP, overflow: 'hidden' }}>
-      <Camera framing={framing} L={L}>
-        {framing === 'wide' ? <Hero L={L} page={page} over={over} /> : <Laptop L={L} frame={frame} page={page} over={over} />}
-        {framing !== 'wide' && <Trackpad frame={frame} L={L} />}
-        {framing !== 'wide' && <Phone frame={frame} L={L} />}
-        {drawn && framing !== 'wide' && <Device frame={frame} L={L} />}
+      <Air L={L} out={out} frame={frame} onReady={ready} />
+      <Camera out={out} L={L}>
+        <Phone frame={frame} L={L} />
+        {drawn && <Device frame={frame} L={L} />}
       </Camera>
+      {drawn && <Remote frame={frame} L={L} />}
       <Headline out={out} L={L} />
       <Wordmark out={out} L={L} />
       <AbsoluteFill style={{ background: '#000', opacity: seg(out, FADE_TO_BLACK[0], FADE_TO_BLACK[1]) }} />
@@ -96,32 +130,10 @@ function FilmFrame({ L, drawn, out }: { L: Layout; drawn: boolean; out: number }
   );
 }
 
-/**
- * 景别：每一刀换一种，镜头在一个镜头里不动（只在剪接点变）。z 是放大倍数，把机身上的点 (ax, ay) 放到画面的 (tx, ty)。
- * close：刘海占画面宽 17%（横版屏宽 = 1.6 × 画面宽），停在画面 42% 高，上面留给标题；
- * near：屏宽 1.18 × 画面宽，刘海靠上，看得见主屏幕那一排图标；medium：屏幕铺满画面宽，从屏幕上沿往下看七成；
- * desk：整机加右边（竖版是下面）的触控板、手机；wide：Hero 整机。
- */
-function framingOf(framing: Framing, L: Layout) {
-  const { width: W, height: H, screen: S } = L;
-  const cqw = S.w / 100;
-  const notch = { x: S.x + S.w / 2, y: S.y + (NOTCH.h * cqw) / 2 };
-  const top = { x: S.x + S.w / 2, y: S.y };
-  const tall = L.name !== 'landscape';
-  switch (framing) {
-    case 'close': return { z: ((tall ? 1.7 : 1.6) * W) / S.w, a: notch, t: { x: W / 2, y: H * (tall ? 0.36 : 0.42) } };
-    case 'near': return { z: ((tall ? 1.25 : 1.18) * W) / S.w, a: notch, t: { x: W / 2, y: H * (tall ? 0.3 : 0.27) } };
-    case 'medium': return { z: ((tall ? 1.0 : 0.94) * W) / S.w, a: top, t: { x: W / 2, y: H * (tall ? 0.27 : 0.22) } };
-    case 'desk': return tall
-      ? { z: 0.9, a: top, t: { x: W / 2, y: H * 0.24 } }
-      : { z: 0.84, a: { x: W / 2 + 50, y: S.y }, t: { x: W / 2, y: H * 0.2 } };
-    case 'wide': return { z: tall ? 0.82 : 0.7, a: top, t: { x: W / 2, y: H * (tall ? 0.3 : 0.25) } };
-  }
-}
-
-function Camera({ framing, L, children }: { framing: Framing; L: Layout; children: ReactNode }) {
-  const { z, a, t } = framingOf(framing, L);
-  return <div style={{ position: 'absolute', inset: 0, transformOrigin: '0 0', transform: `translate(${t.x}px, ${t.y}px) scale(${z}) translate(${-a.x}px, ${-a.y}px)` }}>{children}</div>;
+/** 鏡頭跟 dolly 走，景別是目標，不是停住的畫幅。 */
+function Camera({ out, L, children }: { out: number; L: Layout; children: ReactNode }) {
+  const { z, ax, ay, tx, ty } = cameraAt(out, L);
+  return <div style={{ position: 'absolute', inset: 0, transformOrigin: '0 0', transform: `translate(${tx}px, ${ty}px) scale(${z}) translate(${-ax}px, ${-ay}px)` }}>{children}</div>;
 }
 
 function Pointer({ frame, L }: { frame: number; L: Layout }) {
@@ -156,7 +168,7 @@ function DrawnDesk({ frame, L }: { frame: number; L: Layout }) {
       <MenuBar cqw={cqw} h={NOTCH.h} />
       <DraftWin box={box(d)} marks={draft.marks} />
       {draft.outline > 0 && (
-        <div style={{ position: 'absolute', left: (d.x / 100) * L.screen.w - 0.4 * cqw, top: (d.y / 100) * L.screen.h - 0.4 * cqw, width: (d.w / 100) * L.screen.w + 0.8 * cqw, height: (d.h / 100) * L.screen.h + 0.8 * cqw, borderRadius: 3 * cqw, boxShadow: `inset 0 0 0 ${0.28 * cqw}px rgba(255,255,255,.85)`, opacity: draft.outline }} />
+        <div style={{ position: 'absolute', left: (d.x / 100) * L.screen.w, top: (d.y / 100) * L.screen.h, width: (d.w / 100) * L.screen.w, height: (d.h / 100) * L.screen.h, borderRadius: pt(22 / 1.684) * cqw, pointerEvents: 'none', boxShadow: `inset 0 0 0 ${0.14 * cqw}px rgba(255,255,255,.4)`, opacity: draft.outline }} />
       )}
       {slots.map((s) => {
         const b = box(s.rect);
@@ -165,7 +177,7 @@ function DrawnDesk({ frame, L }: { frame: number; L: Layout }) {
           case 'P4': return <TermWin key={s.id} box={b} opacity={s.opacity} scale={s.scale} radius={s.radius} />;
           case 'P9': return <TermWin key={s.id} box={b} opacity={s.opacity} done={termDoneAt(frame)} />;
           case 'P5': {
-            const grow = teachPos(((frame - LAUNCH_AT) / FPS) * 1000);
+            const grow = approach(((frame - LAUNCH_AT) / FPS) * 1000, 'expand');
             return (
               <div key={s.id} style={{ position: 'absolute', inset: 0, transformOrigin: '50% 0', transform: `scale(${mix(0.08, 1, grow)})`, borderRadius: mix(6, 0, grow) * cqw, overflow: 'hidden' }}>
                 <HomeScreen cqw={cqw} sw={L.screen.w} sh={L.screen.h} opacity={s.opacity} hide={frame >= DRAG_PRESS ? DRAGGED_APP : undefined} />
@@ -191,17 +203,13 @@ function DrawnDesk({ frame, L }: { frame: number; L: Layout }) {
   );
 }
 
-/** 刘海下沿（屏高 %）再往下一点：真机上指针进不了刘海，点刘海时尖端停在这里。 */
-const BELOW_NOTCH = NOTCH.h * SCREEN_ASPECT + 0.7;
-
-/** 画出来的那一版用箭头指针，尖端在 (x, y)；落在刘海那块里时贴到刘海下沿。 */
+/** 箭头尖端按指针位置画。物理刘海是網格上的洞，尖端走进去就被機身擋住。 */
 function Arrow({ frame, L }: { frame: number; L: Layout }) {
   const p = pointerAt(frame);
   if (!p) return null;
   const s = L.screen.w * 0.022;
-  const y = Math.abs(p.x - 50) < NOTCH.w / 2 + 1 ? Math.max(p.y, BELOW_NOTCH) : p.y;
   return (
-    <svg style={{ position: 'absolute', left: (p.x / 100) * L.screen.w, top: (y / 100) * L.screen.h, opacity: p.opacity, overflow: 'visible', transform: `scale(${1 - 0.1 * p.pressed})`, transformOrigin: '0 0' }} width={s} height={s} viewBox="0 0 20 20">
+    <svg style={{ position: 'absolute', left: (p.x / 100) * L.screen.w, top: (p.y / 100) * L.screen.h, opacity: p.opacity, overflow: 'visible', transform: `scale(${1 - 0.1 * p.pressed})`, transformOrigin: '0 0' }} width={s} height={s} viewBox="0 0 20 20">
       <path d="M1 1 L1 15.5 L4.8 12 L7.4 18 L10 16.9 L7.5 11 L12.6 11 Z" fill="#000" stroke="#fff" strokeWidth={1.3} strokeLinejoin="round" />
     </svg>
   );
@@ -251,38 +259,6 @@ function Handle({ frame, L }: { frame: number; L: Layout }) {
   return <div style={{ position: 'absolute', left: x, top: (HANDLE_POS.y / 100) * L.screen.h - h / 2, width: w, height: h, borderRadius: w, background: 'rgba(255,255,255,.6)', opacity: o }} />;
 }
 
-function Trackpad({ frame, L }: { frame: number; L: Layout }) {
-  const o = trackpadAt(frame);
-  if (o <= 0) return null;
-  const w = L.side.w, h = w / 1.45;
-  const x0 = L.side.x, y0 = L.side.y + (L.side.h - h) / 2;
-  const f = fingerAt(frame);
-  const at = (p: { x: number; y: number }) => ({ x: (p.x / 100) * w, y: (p.y / 100) * h });
-  const r = w * 0.045;
-  return (
-    <svg style={{ position: 'absolute', left: x0, top: y0, opacity: o, overflow: 'visible', filter: `drop-shadow(0 ${w * 0.03}px ${w * 0.05}px rgba(0,0,0,.55))` }} width={w} height={h}>
-      {/* 妙控板：银色铝面，四边一道倒角的亮边。 */}
-      <defs>
-        <linearGradient id="padAl" x1="0" y1="0" x2="0.4" y2="1"><stop offset="0" stopColor="#e4e6ea" /><stop offset="0.5" stopColor="#cfd2d8" /><stop offset="1" stopColor="#b6bac2" /></linearGradient>
-      </defs>
-      <rect x={0} y={0} width={w} height={h} rx={w * 0.05} fill="url(#padAl)" />
-      <rect x={1} y={1} width={w - 2} height={h - 2} rx={w * 0.05} fill="none" stroke="rgba(255,255,255,.7)" strokeWidth={1.5} />
-      {f && f.trail.length > 1 && (
-        <polyline
-          points={f.trail.map((p) => { const q = at(p); return `${q.x},${q.y}`; }).join(' ')}
-          fill="none" stroke="rgba(10,132,255,.45)" strokeWidth={r * 0.9} strokeLinecap="round" strokeLinejoin="round" opacity={f.opacity}
-        />
-      )}
-      {f && (() => {
-        const q = at(f);
-        return f.down
-          ? <circle cx={q.x} cy={q.y} r={r} fill="rgba(10,132,255,.6)" stroke="rgba(255,255,255,.8)" strokeWidth={1.2} opacity={f.opacity} />
-          : <circle cx={q.x} cy={q.y} r={r} fill="rgba(60,64,72,.18)" stroke="rgba(60,64,72,.55)" strokeWidth={1.5} opacity={f.opacity} />;
-      })()}
-    </svg>
-  );
-}
-
 /** 屏外的 iPhone：钛金属边框、黑玻璃、灵动岛，锁屏亮着时间。 */
 function Phone({ frame, L }: { frame: number; L: Layout }) {
   const p = phoneAt(frame);
@@ -311,8 +287,8 @@ function LockScreen({ frame, L }: { frame: number; L: Layout }) {
   return (
     <div style={{ position: 'absolute', inset: 0, opacity: o, fontFamily: CJK, color: '#fff', textAlign: 'center' }}>
       <Wallpaper dim={0.12} />
-      <div style={{ position: 'absolute', top: 7.2 * cqw, width: '100%', fontSize: 1.9 * cqw, fontWeight: 600, opacity: 0.85 }}>10月4日 星期日</div>
-      <div style={{ position: 'absolute', top: 8.6 * cqw, width: '100%', fontFamily: LATIN, fontSize: 11 * cqw, fontWeight: 700, letterSpacing: '-0.03em', opacity: 0.88, textShadow: '0 0.3vw 2vw rgba(0,0,0,.15)' }}>9:41</div>
+      <div style={{ position: 'absolute', top: 8 * cqw, width: '100%', fontSize: 1.15 * cqw, fontWeight: 600, opacity: 0.85 }}>10月4日 星期日</div>
+      <div style={{ position: 'absolute', top: 10 * cqw, width: '100%', fontFamily: LATIN, fontSize: 5.6 * cqw, fontWeight: 600, letterSpacing: '-0.03em', opacity: 0.92 }}>9:41</div>
       <div style={{ position: 'absolute', bottom: 6 * cqw, width: '100%', display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 0.9 * cqw }}>
         <div style={{ width: 4.6 * cqw, height: 4.6 * cqw, borderRadius: '50%', background: 'linear-gradient(160deg,#a4b0be,#6b7787)', display: 'grid', placeItems: 'center', fontFamily: LATIN, fontSize: 2 * cqw, fontWeight: 600, boxShadow: 'inset 0 0 0 0.5px rgba(255,255,255,.35)' }}>A</div>
         <div style={{ fontSize: 1.45 * cqw, fontWeight: 600 }}>Aaron</div>
@@ -325,15 +301,76 @@ function LockScreen({ frame, L }: { frame: number; L: Layout }) {
 /** 标题字号：横版按 1920 宽，竖版按 1080 宽等比。 */
 const headSize = (L: Layout) => (L.name === 'landscape' ? { zh: 66, en: 30, top: 0.062 } : { zh: 76 * (L.width / 1080), en: 30 * (L.width / 1080), top: 0.1 });
 
+/**
+ * 《指挥模式》的 iPhone 遥控器：触控区画一笔，侧边按钮说一句，松开是草稿，播放键发出去。
+ * 摆在暗背景上，不跟镜头走，也不畫在 Mac 觸控板上。
+ */
+function Remote({ frame, L }: { frame: number; L: Layout }) {
+  const phase = conductAt(frame);
+  if (phase === 'off' || phase === 'result') return null;
+  const fadeIn = clamp01((frame - CONDUCT_IN) / 12);
+  const fadeOut = clamp01((frame - (CONDUCT_SEND + 28)) / 16);
+  const opacity = fadeIn * (1 - fadeOut);
+  if (opacity <= 0.01) return null;
+  const h = L.height * (L.name === 'landscape' ? 0.5 : 0.32);
+  const w = h * 0.48;
+  const left = L.name === 'landscape' ? 44 : L.width * 0.06;
+  const top = L.height * (L.name === 'landscape' ? 0.3 : 0.62);
+  const stroke = conductStrokeAt(frame);
+  const n = Math.max(2, Math.round(stroke * (STROKE.length - 1)));
+  const pad = STROKE.slice(0, n + 1);
+  const d = pad.map((p, i) => `${i ? 'L' : 'M'}${p.x.toFixed(1)} ${p.y.toFixed(1)}`).join(' ');
+  const talking = phase === 'talk';
+  const toned = phase === 'tone' || frame >= CONDUCT_TONE;
+  const sent = phase === 'sent' || frame >= CONDUCT_SEND;
+  const showDraft = phase === 'draft' || phase === 'sent';
+  const showTone = toned && !talking && !showDraft;
+  return (
+    <div style={{ position: 'absolute', left, top, width: w, height: h, opacity, borderRadius: w * 0.18, background: 'linear-gradient(160deg,#c8c6c2,#6e6c69 28%,#3a3937 70%,#8d8a86)', boxShadow: `0 ${w * 0.08}px ${w * 0.2}px rgba(0,0,0,.55)` }}>
+      <div style={{ position: 'absolute', top: h * 0.16, bottom: h * 0.22, right: -w * 0.012, width: w * 0.035, borderRadius: w * 0.02, background: talking ? '#f2f2f4' : '#2a2928', boxShadow: talking ? '0 0 12px rgba(255,255,255,.35)' : undefined }} />
+      <div style={{ position: 'absolute', inset: w * 0.045, borderRadius: w * 0.14, background: '#0c0d10', overflow: 'hidden', fontFamily: CJK, color: '#fff' }}>
+        <div style={{ position: 'absolute', left: '50%', top: h * 0.02, width: w * 0.28, height: w * 0.07, transform: 'translateX(-50%)', borderRadius: 99, background: '#000' }} />
+        <div style={{ position: 'absolute', left: w * 0.06, right: w * 0.06, top: h * 0.085, fontSize: w * 0.055, color: 'rgba(255,255,255,.55)', textAlign: 'center', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>WindowShade · Claude</div>
+        <div style={{ position: 'absolute', left: w * 0.08, right: w * 0.08, top: h * 0.14, height: h * 0.36, borderRadius: w * 0.06, background: '#1a1c22' }}>
+          {(stroke > 0.02 || showTone) && (
+            <svg width="100%" height="100%" viewBox="0 0 100 100" preserveAspectRatio="none">
+              <path d={showTone ? STROKE.map((p, i) => `${i ? 'L' : 'M'}${p.x.toFixed(1)} ${p.y.toFixed(1)}`).join(' ') : d} fill="none" stroke="#f5f5f7" strokeWidth={3.2} strokeLinecap="round" strokeLinejoin="round" />
+            </svg>
+          )}
+        </div>
+        {showTone && (
+          <div style={{ position: 'absolute', left: w * 0.08, right: w * 0.08, top: h * 0.54, textAlign: 'center' }}>
+            <div style={{ fontSize: w * 0.08, fontWeight: 700, lineHeight: 1.2 }}>三声 · high</div>
+            <div style={{ marginTop: h * 0.01, fontSize: w * 0.055, color: 'rgba(255,255,255,.62)' }}>下一轮</div>
+          </div>
+        )}
+        {talking && (
+          <div style={{ position: 'absolute', left: 0, right: 0, top: h * 0.55, display: 'flex', justifyContent: 'center', gap: w * 0.025 }}>
+            {[0.35, 0.7, 1, 0.55, 0.8].map((k, i) => <i key={i} style={{ width: w * 0.025, height: h * 0.06 * k, borderRadius: 99, background: 'rgba(255,255,255,.85)', alignSelf: 'center' }} />)}
+          </div>
+        )}
+        {showDraft && (
+          <div style={{ position: 'absolute', left: w * 0.08, right: w * 0.08, top: h * 0.55, textAlign: 'center' }}>
+            <div style={{ fontSize: w * 0.075, fontWeight: 600, lineHeight: 1.25 }}>{sent ? '发出去了' : '核对三处引文'}</div>
+            <div style={{ marginTop: h * 0.012, fontSize: w * 0.058, color: 'rgba(255,255,255,.62)' }}>{sent ? '三声 · high' : '草稿'}</div>
+          </div>
+        )}
+        <div style={{ position: 'absolute', left: '50%', bottom: h * 0.045, width: w * 0.16, height: w * 0.16, transform: 'translateX(-50%)', borderRadius: '50%', background: sent ? '#0a84ff' : 'rgba(255,255,255,.14)', display: 'grid', placeItems: 'center' }}>
+          <div style={{ width: 0, height: 0, borderLeft: `${w * 0.055}px solid #fff`, borderTop: `${w * 0.038}px solid transparent`, borderBottom: `${w * 0.038}px solid transparent`, marginLeft: w * 0.012 }} />
+        </div>
+      </div>
+    </div>
+  );
+}
+
 /** 每段一句大标题在画面上方，下面一行英文小字；进场 0.3 秒淡入、往上升一点（正弦缓动），不跟着镜头。 */
 function Headline({ out, L }: { out: number; L: Layout }) {
   const c = CAPTIONS.find((k) => out >= k.from && out < k.to);
   if (!c) return null;
   const { zh, en, top } = headSize(L);
   const o = captionOpacity(out, c.from, c.to);
-  const rise = (1 - Math.sin((Math.PI / 2) * clamp01((out - c.from) / (CAPTION_IN * 1.5)))) * zh * 0.6;
   return (
-    <div style={{ position: 'absolute', left: 0, width: L.width, top: L.height * top, textAlign: 'center', opacity: o, transform: `translateY(${rise}px)` }}>
+    <div style={{ position: 'absolute', left: 0, width: L.width, top: L.height * top, textAlign: 'center', opacity: o }}>
       <div style={{ fontFamily: CJK, fontSize: zh, fontWeight: 600, color: '#f4f5f7', letterSpacing: '0.02em', lineHeight: 1.25 }}>{c.text}</div>
       <div style={{ fontFamily: LATIN, fontSize: en, fontWeight: 500, color: 'rgba(244,245,247,.62)', marginTop: en * 0.45, letterSpacing: '0.01em' }}>{c.en}</div>
     </div>
@@ -347,8 +384,8 @@ function Wordmark({ out, L }: { out: number; L: Layout }) {
   const o = clamp01((out - WORDMARK_AT) / CAPTION_IN);
   return (
     <div style={{ position: 'absolute', left: 0, width: L.width, top: L.height * top, textAlign: 'center', opacity: o }}>
-      <div style={{ fontFamily: LATIN, fontSize: zh * 1.15, fontWeight: 600, color: '#f4f5f7', letterSpacing: '-0.01em', lineHeight: 1.15 }}>WindowShade 2</div>
-      <div style={{ fontFamily: LATIN, fontSize: en, fontWeight: 500, color: 'rgba(244,245,247,.62)', marginTop: en * 0.45 }}>windowshade.aaronlau.me</div>
+      <div style={{ fontFamily: LATIN, fontSize: zh * 1.45, fontWeight: 600, color: '#f4f5f7', letterSpacing: '-0.02em', lineHeight: 1.05 }}>WindowShade 2</div>
+      <div style={{ fontFamily: LATIN, fontSize: en * 0.62, fontWeight: 500, color: 'rgba(244,245,247,.5)', marginTop: en * 0.7 }}>windowshade.aaronlau.me</div>
     </div>
   );
 }

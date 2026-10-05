@@ -1,14 +1,15 @@
 // 屏里、屏外每一帧有什么。全部是帧号的函数。
 import { CROSSFADE, FADE_IN, FADE_OUT } from './motion/direction';
+import { approach } from './motion/springs';
 import {
-  FPS, ISLAND_SHAPES, NOTCH, SITE_NOTCH_H, TEACH, TEACH_DOCKED, TEACH_HANDLE, TEACH_TUCKED, TUCK_FRAMES, clamp01, easeIn, mix,
-  moveCurve, ms, seg, slideSpring, teachPos, teachSize, tuckProgress, untuckProgress,
+  FPS, ISLAND_SHAPES, NOTCH, TEACH, TEACH_DOCKED, TEACH_HANDLE, TEACH_TUCKED, TUCK_FRAMES, clamp01, easeIn, mix,
+  ms, pt, seg, slideSpring, teachSize, tuckProgress, untuckProgress,
 } from './motion/site';
 import { SCREEN_ASPECT, type Rect } from './layout';
 import {
-  BUILD_DONE, CAUSE_MOUSE, CAUSE_PODS, CLICK_ALLOW, CLICK_CARD, CLICK_SUMMARY, DRAG_SIDE, DRAG_UP, DROP_OPEN, DROP_RELEASE, EDITS, GRAB,
-  LIFT_DRAW, LOCK_AT, MOUSE_END, MUSIC_PLAY, NOD_DEG, NOD_DONE, NOD_DOWN, NOD_FRAMES, PHONE_BACK, PHONE_GONE, PODS_END, PRESS_LONG_A,
-  PRESS_LONG_B, PREVIEW_AT, TUCK_A, TUCK_B, UNLOCK, UNTUCK_A, UNTUCK_C,
+  BUILD_DONE, CAUSE_MOUSE, CAUSE_PODS, CLICK_ALLOW, CLICK_CARD, CLICK_SUMMARY, CONDUCT_DRAFT, CONDUCT_IN, CONDUCT_MARKS, CONDUCT_RESULT, CONDUCT_SEND, CONDUCT_TALK, CONDUCT_TONE, DRAG_SIDE, DRAG_UP, DROP_OPEN, DROP_RELEASE, GRAB,
+  LOCK_AT, MOUSE_END, MUSIC_PLAY, NOD_DEG, NOD_DOWN, NOD_FRAMES, PHONE_BACK, PHONE_GONE, PODS_END, PRESS_LONG_A,
+  PRESS_LONG_B, PREVIEW_AT, TUCK_A, TUCK_B, UNLOCK, UNTUCK_A, UNTUCK_C, WINDOW_MOVE,
 } from './timeline';
 
 type Pt = { x: number; y: number };
@@ -57,6 +58,8 @@ const MUSIC: Rect = { x: 36, y: 26, w: 28, h: 64 };
 const ON_NOTCH = { x: 50, y: 1.6 };
 export const PLAY_BUTTON = { x: 50, y: 80 };
 const TERM: Rect = { x: 30, y: 22, w: 40, h: 56 };
+/** 開場那扇終端：鋪滿左半，跟旁邊幾扇疊在一起，桌面才叫擠。放回也回到這裡。 */
+const OPEN_TERM: Rect = { x: 2, y: 5, w: 56, h: 88 };
 const CHAT: Rect = { x: 58, y: 20, w: 32, h: 52 };
 /** 后面那扇不在前台的“文章草稿”（画出来的那一版才有）。 */
 export const DRAFT: Rect = { x: 27, y: 17, w: 66, h: 72 };
@@ -70,8 +73,9 @@ export const LAUNCH_APPS: { key: string; name: string }[] = [
 ];
 export const iconCenter = (i: number) => ({ x: 50 + (i - 2.5) * 12, y: 46 });
 export const ICON_SIZE = 6; // 屏宽 %
-const WIN_RADIUS = 2.6; // island.js 飞行的起点圆角
-const TUCK_RADIUS = 6;
+/** 樣片窗口圓角 22 px = 13 pt；放回途中圓角收到 10 pt（design-system §5.2）。 */
+const WIN_RADIUS = pt(13);
+const TUCK_RADIUS = pt(10);
 
 /** site/island.js tuck()：窗口中心移到屏宽正中、屏高 3%，宽缩到屏宽 7%。 */
 function tucked(r: Rect, p: number): { rect: Rect; scale: number; radius: number } {
@@ -84,7 +88,7 @@ function tucked(r: Rect, p: number): { rect: Rect; scale: number; radius: number
 // 拖图标到左边：teach.js 的移动（1.0 秒，cubic-bezier(.32,0,.67,1)），松手那一刻按最近 6 帧量速度。
 const DRAG = { from: iconCenter(1), to: { x: 12, y: 50 }, press: 3150, start: 3191 };
 export const RELEASE_ICON = DRAG.start + ms(TEACH.move);
-const dragX = (f: number) => mix(DRAG.from.x, DRAG.to.x, moveCurve(seg(f, DRAG.start, RELEASE_ICON)));
+const dragX = (f: number) => mix(DRAG.from.x, DRAG.to.x, approach(((f - DRAG.start) / FPS) * 1000, 'glide'));
 const ICON = ICON_SIZE;
 const dockCx = TEACH_DOCKED.x + TEACH_DOCKED.w / 2, dockCy = TEACH_DOCKED.y + TEACH_DOCKED.h / 2;
 const releaseVx = ((dragX(RELEASE_ICON) - dragX(RELEASE_ICON - 6)) / 6) * FPS; // 屏宽 %/秒
@@ -114,7 +118,7 @@ function sideRect(f: number): Rect {
   }
   if (f < SIDE.lift) return { ...D, x: D.x - 5 * easeIn(seg(f, SIDE.move0, SIDE.lift)) };
   if (f < HANDLE_CLICK) {
-    const p = teachPos(((f - SIDE.lift) / FPS) * 1000, 2.4);
+    const p = approach(((f - SIDE.lift) / FPS) * 1000, 'glide', 2.4);
     return { ...D, x: mix(D.x - 5, TEACH_TUCKED.x, p) };
   }
   return { ...D, x: mix(TEACH_TUCKED.x, D.x, slideSpring(f, HANDLE_CLICK, 0)) };
@@ -122,11 +126,12 @@ function sideRect(f: number): Rect {
 
 // ---- 落点小岛：五格横排在刘海下面（Notch.swift DropChoice 的顺序与名字） ----
 export const DROP_CHOICES = ['左半屏', '铺满屏幕', '收进刘海', '魔法平铺', '右半屏'] as const;
-/** 岛里的格子：左右各留 1.2cqw；竖着从硬件刘海下沿往下 0.6 到岛底上面 1.0（cqw）。 */
+/** 五格。左右各留 8 pt，底角是島的 22 pt，字在格的下半。 */
 export const DROP_UI = (() => {
   const { w, h } = ISLAND_SHAPES.drop;
-  const pad = 1.2, pitch = (w - 2 * pad) / DROP_CHOICES.length;
-  return { pad, pitch, top: NOTCH.h + 0.6, bottom: h - 1.0 };
+  const pad = pt(8);
+  const pitch = (w - 2 * pad) / DROP_CHOICES.length;
+  return { pad, pitch, top: NOTCH.h + pt(6), bottom: h - pt(6) };
 })();
 const cqwToH = (v: number) => v * SCREEN_ASPECT; // 竖向 cqw → 屏高 %
 const dropCell = (i: number) => ({
@@ -134,7 +139,7 @@ const dropCell = (i: number) => ({
   y: cqwToH((DROP_UI.top + DROP_UI.bottom) / 2),
 });
 /** 按住终端标题栏的那一点（标题字的左边，不挡字）。 */
-const GRAB_PT = { x: 44, y: TERM.y + cqwToH(5) / 2 };
+const GRAB_PT = { x: 44, y: TERM.y + cqwToH(pt(16)) };
 
 /** 指针停在落点小岛的哪一格：0–4；不在岛上是 -1。 */
 export function dropHoverAt(f: number): number {
@@ -157,7 +162,7 @@ function dropTermRect(f: number): Rect {
   };
   if (f < DROP_RELEASE) return at(f);
   const from = at(DROP_RELEASE - 1);
-  const p = teachPos(((f - DROP_RELEASE) / FPS) * 1000);
+  const p = approach(((f - DROP_RELEASE) / FPS) * 1000, 'glide');
   return { x: mix(from.x, LEFT.x, p), y: mix(from.y, LEFT.y, p), w: mix(from.w, LEFT.w, p), h: mix(from.h, LEFT.h, p) };
 }
 export const termDoneAt = (f: number) => f >= BUILD_DONE;
@@ -165,7 +170,7 @@ export const termDoneAt = (f: number) => f >= BUILD_DONE;
 // ---- 刘海里问一次放行：两个按钮的位置（cqw，岛内坐标），岛和指针共用 ----
 export const ASK_UI = (() => {
   const { w, h } = ISLAND_SHAPES.ask;
-  const pillW = 11, pillH = 3.6, pad = 1.8, gap = 1.2;
+  const pillW = pt(72), pillH = pt(26), pad = pt(12), gap = pt(8);
   const allow = { x: w - pad - pillW, y: h - pad - pillH, w: pillW, h: pillH };
   const deny = { ...allow, x: allow.x - gap - pillW };
   return { allow, deny };
@@ -173,9 +178,9 @@ export const ASK_UI = (() => {
 const ALLOW_PT = { x: 50 - ISLAND_SHAPES.ask.w / 2 + ASK_UI.allow.x + ASK_UI.allow.w / 2, y: cqwToH(ASK_UI.allow.y + ASK_UI.allow.h / 2) };
 
 // ---- 离开期间：三行（cqw，岛内坐标）。聊天是第三行 ----
-export const SUMMARY_UI = { titleY: SITE_NOTCH_H + 2.6, rowY: SITE_NOTCH_H + 4, rowH: 7, x: 2.4, rows: 3 };
+export const SUMMARY_UI = { titleY: NOTCH.h * 0.72, rowY: NOTCH.h + pt(4), rowH: pt(36), x: pt(12), rows: 3 };
 const CHAT_ROW = 2;
-const ROW_CHAT_PT = { x: 50 - ISLAND_SHAPES.digest.w / 2 + 22, y: cqwToH(SUMMARY_UI.rowY + SUMMARY_UI.rowH * (CHAT_ROW + 0.5)) };
+const ROW_CHAT_PT = { x: 50 - ISLAND_SHAPES.digest.w / 2 + pt(90), y: cqwToH(SUMMARY_UI.rowY + SUMMARY_UI.rowH * (CHAT_ROW + 0.5)) };
 /** 指针在第几行上，不在是 -1。 */
 export function summaryHoverAt(f: number): number {
   const p = pointerAt(f);
@@ -189,12 +194,13 @@ export function summaryHoverAt(f: number): number {
 
 // ---- 文章草稿：放行后三处引文依次改好；静音操作点头后去左半屏 ----
 export function draftAt(f: number) {
-  const moved = NOD_DONE + 2;
-  const p = f < moved ? 0 : teachPos(((f - moved) / FPS) * 1000);
+  const moved = WINDOW_MOVE;
+  const p = f < moved ? 0 : approach(((f - moved) / FPS) * 1000, 'glide');
   const rect: Rect = { x: mix(DRAFT.x, LEFT.x, p), y: mix(DRAFT.y, LEFT.y, p), w: mix(DRAFT.w, LEFT.w, p), h: mix(DRAFT.h, LEFT.h, p) };
-  const marks = EDITS.map((e) => clamp01((f - e) / FADE_IN));
-  // 刘海说明对象：认出“左半屏”后，被冻结的那扇窗描一圈；点头完成就收。
-  const outline = fadeWindow(f, PREVIEW_AT + 6, FADE_IN, NOD_DONE, FADE_OUT);
+  // 三处引文是「画一笔，说一句」的结果，出现在那一段里，不留到点头。
+  const marks = CONDUCT_MARKS.map((e) => clamp01((f - e) / FADE_IN));
+  // 刘海说明对象：认出“左半屏”后，被冻结的那扇窗描一圈；点头回正、窗口要动了才收。
+  const outline = fadeWindow(f, PREVIEW_AT + 6, FADE_IN, WINDOW_MOVE, FADE_OUT);
   return { rect, marks, outline };
 }
 
@@ -214,13 +220,13 @@ export function slotsAt(f: number): SlotFrame[] {
   add('P2', CENTER, fadeWindow(f, 1100, CROSSFADE, 1420, CROSSFADE), 1, 1.2);
   add('P3', CENTER, fadeWindow(f, 1420, CROSSFADE, 1740, CROSSFADE), 1, 1.2);
 
-  // P4：进场、飞进刘海、点格子后飞回、被主屏幕盖过。
-  if (f >= 1800 && f < 3021 + CROSSFADE) {
+  // P4：开场就已经铺在桌面上，飞进刘海、点格子后飞回同一扇、被主屏幕盖过。
+  if (f >= 1500 && f < 3021 + CROSSFADE) {
     const flyEnd = TUCK_A + Math.ceil(TUCK_FRAMES);
-    const opacity = fadeWindow(f, 1800, CROSSFADE, 3021, CROSSFADE);
-    if (f < TUCK_A) add('P4', TERM, opacity);
-    else if (f < flyEnd) { const t = tucked(TERM, tuckProgress(f, TUCK_A)); add('P4', t.rect, opacity, t.scale, t.radius); }
-    else if (f >= UNTUCK_A) { const t = tucked(TERM, untuckProgress(f, UNTUCK_A)); add('P4', t.rect, opacity, t.scale, t.radius); }
+    const opacity = fadeWindow(f, 1500, CROSSFADE, 3021, CROSSFADE);
+    if (f < TUCK_A) add('P4', OPEN_TERM, opacity);
+    else if (f < flyEnd) { const t = tucked(OPEN_TERM, tuckProgress(f, TUCK_A)); add('P4', t.rect, opacity, t.scale, t.radius); }
+    else if (f >= UNTUCK_A) { const t = tucked(OPEN_TERM, untuckProgress(f, UNTUCK_A)); add('P4', t.rect, opacity, t.scale, t.radius); }
   }
   add('P5', FULL, fadeWindow(f, 3021, CROSSFADE, 3330, CROSSFADE), 1, 1.2);
   if (f >= RELEASE_ICON) {
@@ -284,8 +290,10 @@ export function pointerAt(f: number): PointerFrame | null {
     if (f < t.show || f >= t.hide + FADE_OUT) continue;
     let p = t.start;
     for (const m of t.moves) {
-      const dur = m.dur ?? ms(TEACH.move);
-      if (f >= m.at) p = { x: mix(p.x, m.to.x, moveCurve(seg(f, m.at, m.at + dur))), y: mix(p.y, m.to.y, moveCurve(seg(f, m.at, m.at + dur))) };
+      if (f >= m.at) {
+        const k = approach(((f - m.at) / FPS) * 1000, 'calm');
+        p = { x: mix(p.x, m.to.x, k), y: mix(p.y, m.to.y, k) };
+      }
     }
     let pressed = 0;
     for (const [a, b] of t.presses) if (f >= a && f < b) pressed = Math.max(pressed, clamp01((f - a) / ms(TEACH.press)));
@@ -314,33 +322,22 @@ export function deviceAt(f: number): { kind: 'pods' | 'mouse'; opacity: number; 
 
 // ---- 屏外的触控板（site/teach.js 的画法与节奏） ----
 export function trackpadAt(f: number) {
-  // 侧拉一段用一次，落点小岛那段用指针，让开；画一笔那段再出来。
-  const side = Math.min(clamp01((f - SIDE.pad) / FADE_IN), 1 - clamp01((f - 4320) / ms(TEACH.fade)));
-  const draw = Math.min(clamp01((f - 4980) / FADE_IN), 1 - clamp01((f - 5760) / ms(TEACH.fade)));
-  return Math.max(side, draw);
+  // 侧拉一段用一次。画一笔在 iPhone 遥控器上，不把 Mac 触控板当成输入面。
+  return Math.min(clamp01((f - SIDE.pad) / FADE_IN), 1 - clamp01((f - 4320) / ms(TEACH.fade)));
 }
 
-/** 画一笔：一条横躺的 S，按触控板宽高的百分比。 */
+/** 遥控器触控区上的一笔：三声 ˇ（先下后上，一个谷），按触控区宽高的百分比。 */
 export const STROKE: Pt[] = Array.from({ length: 41 }, (_, i) => {
   const t = i / 40;
-  return { x: 22 + 56 * t, y: 50 - 16 * Math.sin(t * Math.PI * 2) * (0.6 + 0.4 * t) };
+  // 对照《指挥模式》三声：左高 → 中谷 → 右高。
+  const y = 22 + 48 * (4 * t * (1 - t));
+  return { x: 12 + 76 * t, y };
 });
-const strokeAt = (p: number): Pt => {
-  const k = clamp01(p) * (STROKE.length - 1), i = Math.min(STROKE.length - 2, Math.floor(k)), u = k - i;
-  return { x: mix(STROKE[i].x, STROKE[i + 1].x, u), y: mix(STROKE[i].y, STROKE[i + 1].y, u) };
-};
-export const DRAW = (() => {
-  const move1 = LIFT_DRAW;
-  const move0 = move1 - ms(1400);
-  const press = move0 - ms(TEACH.dwell) - ms(TEACH.press);
-  const appear = press - ms(TEACH.settle) - ms(TEACH.appear);
-  return { appear, press, move0, move1, fade: move1 + ms(TEACH.lift) + ms(TEACH.hold) };
-})();
 
-export type FingerFrame = Pt & { opacity: number; down: number; trail: Pt[] };
+export type FingerFrame = Pt & { opacity: number; down: number; trail: Pt[]; ink: boolean };
 
 export function fingerAt(f: number): FingerFrame | null {
-  // 第 5 段：单指往左甩。
+  // 第 5 段：单指往左甩。画一笔不在 Mac 触控板上。
   if (f >= SIDE.appear && f < SIDE.gone) {
     const start = { x: 50, y: 58 };
     const p = easeIn(seg(f, SIDE.move0, SIDE.lift));
@@ -349,17 +346,7 @@ export function fingerAt(f: number): FingerFrame | null {
     const trail: Pt[] = [];
     if (down) for (let k = ms(270); k >= 0; k -= 2) trail.push({ x: start.x - 28 * easeIn(seg(f - k, SIDE.move0, SIDE.lift)), y: start.y });
     const opacity = Math.min(clamp01((f - SIDE.appear) / ms(TEACH.appear)), 1 - clamp01((f - SIDE.fade) / ms(TEACH.fade)));
-    return { ...at, opacity, down, trail };
-  }
-  // 第 6 段：画一笔（teach.js 自己带路径的那种，移动 1.4 秒）。
-  if (f >= DRAW.appear && f < DRAW.fade + ms(TEACH.fade)) {
-    const p = seg(f, DRAW.move0, DRAW.move1);
-    const at = strokeAt(p);
-    const down = f >= DRAW.press && f < DRAW.move1 ? 1 : 0;
-    const trail: Pt[] = [];
-    if (down) for (let k = ms(270); k >= 0; k -= 2) trail.push(strokeAt(seg(f - k, DRAW.move0, DRAW.move1)));
-    const opacity = Math.min(clamp01((f - DRAW.appear) / ms(TEACH.appear)), 1 - clamp01((f - DRAW.fade) / ms(TEACH.fade)));
-    return { ...at, opacity, down, trail };
+    return { ...at, opacity, down, trail, ink: false };
   }
   return null;
 }
@@ -367,36 +354,37 @@ export function fingerAt(f: number): FingerFrame | null {
 // ---- 屏外的手机线稿：走开 ----
 export function phoneAt(f: number) {
   if (f >= 8260 && f < PHONE_GONE) {
-    const away = moveCurve(seg(f, PHONE_GONE - ms(TEACH.move), PHONE_GONE));
+    const away = approach(((f - (PHONE_GONE - ms(TEACH.move))) / FPS) * 1000, 'glide');
     const opacity = Math.min(clamp01((f - 8260) / FADE_IN), 1 - clamp01((f - (PHONE_GONE - FADE_OUT)) / FADE_OUT));
     return { away, opacity };
   }
   // 回来：同一条路倒着走进来，停在身边，是开锁的两样之一；解开后淡出。
-  const settle = PHONE_BACK + ms(TEACH.move), leave = UNLOCK + 20;
+  const leave = UNLOCK + 20;
   if (f >= PHONE_BACK && f < leave + FADE_OUT) {
-    return { away: 1 - moveCurve(seg(f, PHONE_BACK, settle)), opacity: 1 - clamp01((f - leave) / FADE_OUT) };
+    return { away: 1 - approach(((f - PHONE_BACK) / FPS) * 1000, 'glide'), opacity: 1 - clamp01((f - leave) / FADE_OUT) };
   }
   return null;
 }
 
 /** 点头的角度（度）：刘海里那对 AirPods 跟着点一下。不画人头。 */
 export const nodTiltAt = (f: number) =>
-  NOD_DEG * (moveCurve(seg(f, NOD_DOWN, NOD_DOWN + NOD_FRAMES)) - moveCurve(seg(f, NOD_DOWN + NOD_FRAMES, NOD_DONE)));
+  NOD_DEG * (approach(((f - NOD_DOWN) / FPS) * 1000, 'pop') - approach(((f - (NOD_DOWN + NOD_FRAMES)) / FPS) * 1000, 'calm'));
 
 /**
- * [B 站版] 开场的“桌面挤满了”：终端进场时另外三扇也一扇扇冒出来（0.15 秒淡入，从 96% 长到原大），
+ * [B 站版] 开场的“桌面挤满了”：第一帧就已经是几扇大窗叠在一起。
  * 终端被吸进刘海后它们隔 0.17 秒一扇跟进去，走同一条收起（site/island.js tuck）。
  */
 export const CLUTTER: { kind: 'music' | 'notes' | 'chat'; rect: Rect; show: number; tuck: number }[] = [
-  { kind: 'music', rect: { x: 5, y: 9, w: 24, h: 52 }, show: 1795, tuck: TUCK_A + 10 },
-  { kind: 'notes', rect: { x: 3, y: 46, w: 30, h: 46 }, show: 1822, tuck: TUCK_A + 20 },
-  { kind: 'chat', rect: { x: 66, y: 30, w: 31, h: 56 }, show: 1846, tuck: TUCK_A + 30 },
+  // 开场就叠满：比终端还靠前、更大，镜头 wide 时也能读出「挤满了」。
+  { kind: 'notes', rect: { x: 32, y: 1, w: 66, h: 58 }, show: 1500, tuck: TUCK_A + 10 },
+  { kind: 'chat', rect: { x: 40, y: 38, w: 58, h: 60 }, show: 1500, tuck: TUCK_A + 20 },
+  { kind: 'music', rect: { x: 0, y: 42, w: 46, h: 56 }, show: 1500, tuck: TUCK_A + 30 },
 ];
 export function clutterAt(f: number) {
   return CLUTTER.flatMap((c) => {
     if (f < c.show || f >= c.tuck + Math.ceil(TUCK_FRAMES)) return [];
     const appear = clamp01((f - c.show) / 9);
-    if (f < c.tuck) return [{ kind: c.kind, rect: c.rect, opacity: appear, scale: mix(0.96, 1, teachPos(((f - c.show) / FPS) * 1000)), radius: WIN_RADIUS }];
+    if (f < c.tuck) return [{ kind: c.kind, rect: c.rect, opacity: appear, scale: mix(0.96, 1, approach(((f - c.show) / FPS) * 1000, 'settle')), radius: WIN_RADIUS }];
     const t = tucked(c.rect, tuckProgress(f, c.tuck));
     return [{ kind: c.kind, rect: t.rect, opacity: 1, scale: t.scale, radius: t.radius }];
   });
@@ -404,3 +392,21 @@ export function clutterAt(f: number) {
 
 /** 锁上：屏里的东西叠化成黑；系统确认解开后叠化回来。 */
 export const screenDark = (f: number) => clamp01((f - LOCK_AT) / CROSSFADE) * (1 - clamp01((f - UNLOCK) / CROSSFADE));
+
+export type ConductPhase = 'off' | 'draw' | 'tone' | 'talk' | 'draft' | 'sent' | 'result';
+
+/** 《指挥模式》这一段：画 → 三声回馈 → 说 → 草稿 → 发出去 → 文章里的结果。 */
+export function conductAt(f: number): ConductPhase {
+  if (f < CONDUCT_IN || f >= CONDUCT_RESULT + 36) return 'off';
+  if (f < CONDUCT_TONE) return 'draw';
+  if (f < CONDUCT_TALK) return 'tone';
+  if (f < CONDUCT_DRAFT) return 'talk';
+  if (f < CONDUCT_SEND) return 'draft';
+  if (f < CONDUCT_RESULT) return 'sent';
+  return 'result';
+}
+
+/** 遥控器触控区上那一笔的进度。0 还没落笔，1 画完（抬手前）。 */
+export function conductStrokeAt(f: number) {
+  return seg(f, CONDUCT_IN + 8, CONDUCT_TONE - 4);
+}

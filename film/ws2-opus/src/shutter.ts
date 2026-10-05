@@ -1,30 +1,31 @@
-// 快门表：哪几段成片帧有快动作、每帧取几样。scripts/measure-speed.py 在第二稿 30 fps 草稿上量的（读数减半回到 30 fps 口径，帧号乘 2 回到成片帧）（光流 99 分位，
-// 折算成 1920 宽、30 fps 的 px/帧，onetake 曲线腿的口径），超过 40 的段前后各多留 2 帧。
-// 取样数 = 最快速度 / 24，限在 3–8：180° 快门在 60 fps 是半帧，最快那段拖影约 1/4 个速度值，样与样之间不超过十几 px。
-// 渲染时只查这张表，不分析画面。
-const RANGES: [number, number, number][] = [
-  [150, 213, 8], // 2.50s 最快 476 px/帧
-  [326, 343, 8], // 5.43s 最快 401 px/帧
-  [356, 375, 8], // 5.93s 最快 691 px/帧
-  [444, 477, 8], // 7.40s 最快 444 px/帧
-  [594, 607, 4], // 9.90s 最快 84 px/帧
-  [828, 843, 8], // 13.80s 最快 510 px/帧
-  [908, 913, 3], // 15.13s 最快 45 px/帧
-  [996, 1011, 4], // 16.60s 最快 80 px/帧
-  [1028, 1033, 3], // 17.13s 最快 41 px/帧
-  [1080, 1091, 6], // 18.00s 最快 144 px/帧
-  [1360, 1375, 8], // 22.67s 最快 494 px/帧
-  [1890, 1905, 8], // 31.50s 最快 772 px/帧
-  [2018, 2037, 8], // 33.63s 最快 197 px/帧
-  [2390, 2407, 7], // 39.83s 最快 168 px/帧
-  [2618, 2633, 8], // 43.63s 最快 256 px/帧
-  [2812, 2829, 8], // 46.87s 最快 221 px/帧
-  [3194, 3213, 3], // 53.23s 最快 62 px/帧
-];
+// 快門：鏡頭在動，或窗口正在飛的時候多取幾樣。180° 快門，樣數跟速度走。
+import { cameraSpeed } from './camera';
+import { LANDSCAPE } from './layout';
+import { TUCK_A, TUCK_B, UNTUCK_A, UNTUCK_C, DROP_RELEASE } from './timeline';
+import { TUCK_FRAMES } from './motion/site';
+import { outOf } from './cut';
 
-export function shutterSamples(out: number): number {
-  for (const [a, b, n] of RANGES) if (out >= a && out <= b) return n;
-  return 1;
+function covers(src: number) {
+  try {
+    return outOf(src);
+  } catch {
+    return -1;
+  }
 }
 
-export const SHUTTER_FRAMES = RANGES.reduce((k, [a, b]) => k + b - a + 1, 0);
+const FAST: [number, number][] = [
+  [TUCK_A, TUCK_A + TUCK_FRAMES],
+  [UNTUCK_A, UNTUCK_A + TUCK_FRAMES],
+  [TUCK_B, TUCK_B + TUCK_FRAMES],
+  [DROP_RELEASE, DROP_RELEASE + 40],
+  [UNTUCK_C, UNTUCK_C + TUCK_FRAMES],
+].map(([a, b]) => [covers(a), covers(b)] as [number, number]).filter(([a]) => a >= 0);
+
+export function shutterSamples(out: number): number {
+  const v = cameraSpeed(out, LANDSCAPE);
+  let n = v > 36 ? Math.min(8, Math.max(3, Math.round(v / 22))) : 1;
+  for (const [a, b] of FAST) if (out >= a && out <= b) n = Math.max(n, 6);
+  return n;
+}
+
+export const SHUTTER_FRAMES = 0;

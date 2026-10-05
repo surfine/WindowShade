@@ -1,39 +1,44 @@
-// 整条片子只有一个岛。从第 0 帧按 site/island.js 的积分一帧一帧推到最后一帧，结果按帧号查。
+// 整條片子只有一個島。換目標時用動效樣片的閉式彈簧，位置和速度都留下。
 import { CONTENT_AT, CONTENT_STEP, EXIT_GAP, FADE_IN, FADE_OUT } from './motion/direction';
-import { DT, ISLAND_SHAPES, NOTCH, TUCK_KICK, clamp01, islandTuning, type IslandMode } from './motion/site';
+import { FPS, ISLAND_SHAPES, NOTCH, TUCK_KICK, clamp01, islandSpring, type IslandMode, type IslandShape } from './motion/site';
+import { SPRING, solve, type SpringName } from './motion/springs';
 import { ISLAND_EVENTS, KICKS, TOTAL, type Content } from './timeline';
 
-type Spring = { value: number; target: number; velocity: number; k: number; c: number };
-const spring = (v: number): Spring => ({ value: v, target: v, velocity: 0, k: 0, c: 0 });
-function tune(s: Spring, damping: number, response: number) {
-  s.k = (2 * Math.PI / response) ** 2;
-  s.c = (4 * Math.PI * damping) / response;
-}
-function step(s: Spring) {
-  const force = -s.k * (s.value - s.target) - s.c * s.velocity;
-  s.velocity += force * DT;
-  s.value += s.velocity * DT;
-}
-const resting = (s: Spring) => Math.abs(s.value - s.target) < 0.05 && Math.abs(s.velocity) < 0.5;
+type Chan = { x: number; v: number; to: number; spr: SpringName; t: number };
 
-export type IslandFrame = { w: number; h: number; r: number; mode: IslandMode };
+function sample(c: Chan, frame: number) {
+  const [d, v] = solve(c.x - c.to, c.v, SPRING[c.spr], Math.max(0, (frame - c.t) / FPS));
+  return { x: c.to + d, v };
+}
+
+function retarget(c: Chan, frame: number, to: number, spr: SpringName): Chan {
+  const s = sample(c, frame);
+  return { x: s.x, v: s.v, to, spr, t: frame };
+}
+
+export type IslandFrame = { w: number; h: number; rb: number; rs: number; r: number; mode: IslandMode };
 export type ContentLayer = { content: Content; first: number; second: number; since: number };
 
-const W = new Float64Array(TOTAL), H = new Float64Array(TOTAL), R = new Float64Array(TOTAL);
+const W = new Float64Array(TOTAL);
+const H = new Float64Array(TOTAL);
+const RB = new Float64Array(TOTAL);
+const RS = new Float64Array(TOTAL);
 const MODE: IslandMode[] = new Array(TOTAL);
 
-// 每次换目标的帧与起点，用来找“形状走到 40%”的那一帧。
 const retargets: { frame: number; from: { w: number; h: number }; to: IslandMode }[] = [];
 
+function chan(n: number): Chan {
+  return { x: n, v: 0, to: n, spr: 'calm', t: 0 };
+}
+
 (function simulate() {
-  const shape = { w: spring(NOTCH.w), h: spring(NOTCH.h), r: spring(NOTCH.r) };
-  for (const s of Object.values(shape)) tune(s, 0.96, 0.38);
+  const shape = { w: chan(NOTCH.w), h: chan(NOTCH.h), rb: chan(NOTCH.rb), rs: chan(NOTCH.rs) };
   let mode: IslandMode = 'rest';
   const changes = new Map<number, IslandMode>();
   {
     let m: IslandMode = 'rest';
     for (const e of ISLAND_EVENTS) {
-      if (e.mode !== m) changes.set(e.at + EXIT_GAP, e.mode);
+      if (e.mode !== m) changes.set(e.at + (e.mode === 'rest' || e.mode === 'compact' ? EXIT_GAP : 0), e.mode);
       m = e.mode;
     }
   }
@@ -41,28 +46,38 @@ const retargets: { frame: number; from: { w: number; h: number }; to: IslandMode
   for (let f = 0; f < TOTAL; f++) {
     const next = changes.get(f);
     if (next && next !== mode) {
-      retargets.push({ frame: f, from: { w: shape.w.value, h: shape.h.value }, to: next });
-      const { damping, response } = islandTuning(next);
-      for (const key of ['w', 'h', 'r'] as const) {
-        shape[key].target = ISLAND_SHAPES[next][key];
-        tune(shape[key], damping, response);
-      }
+      const now = {
+        w: sample(shape.w, f).x,
+        h: sample(shape.h, f).x,
+      };
+      retargets.push({ frame: f, from: now, to: next });
+      const spr = islandSpring(next);
+      const goal = ISLAND_SHAPES[next];
+      (Object.keys(shape) as (keyof IslandShape)[]).forEach((key) => {
+        shape[key] = retarget(shape[key], f, goal[key], spr);
+      });
       mode = next;
     }
     if (kicks.has(f)) {
-      shape.w.velocity += TUCK_KICK.w;
-      shape.h.velocity += TUCK_KICK.h;
+      const sw = sample(shape.w, f);
+      const sh = sample(shape.h, f);
+      shape.w = { ...shape.w, x: sw.x, v: sw.v + TUCK_KICK.w, t: f, spr: 'calm' };
+      shape.h = { ...shape.h, x: sh.x, v: sh.v + TUCK_KICK.h, t: f, spr: 'calm' };
     }
-    step(shape.w); step(shape.h); step(shape.r);
-    if (resting(shape.w) && resting(shape.h) && resting(shape.r)) {
-      for (const s of Object.values(shape)) { s.value = s.target; s.velocity = 0; }
-    }
-    W[f] = shape.w.value; H[f] = shape.h.value; R[f] = Math.max(0, shape.r.value); MODE[f] = mode;
+    const w = sample(shape.w, f);
+    const h = sample(shape.h, f);
+    const rb = sample(shape.rb, f);
+    const rs = sample(shape.rs, f);
+    W[f] = w.x;
+    H[f] = Math.max(NOTCH.h * 0.85, h.x);
+    RB[f] = Math.max(0, rb.x);
+    RS[f] = Math.max(0, rs.x);
+    MODE[f] = mode;
   }
 })();
 
 function fortyPercentFrame(after: number): number {
-  const rt = retargets.find((r) => r.frame >= after && r.frame <= after + EXIT_GAP + 1);
+  const rt = retargets.find((r) => r.frame >= after && r.frame <= after + EXIT_GAP + 2);
   if (!rt) return after + FADE_OUT;
   const to = ISLAND_SHAPES[rt.to];
   for (let f = rt.frame; f < TOTAL; f++) {
@@ -80,12 +95,11 @@ const LAYERS = ISLAND_EVENTS.map((e, i) => ({
   outStart: i + 1 < ISLAND_EVENTS.length ? ISLAND_EVENTS[i + 1].at : TOTAL,
 }));
 
-/** 每个事件的内容实际进场帧，给说明文档和检查用。 */
 export const CONTENT_IN = LAYERS.map((l) => l.inStart);
 
 export function islandAt(frame: number): IslandFrame {
   const f = Math.max(0, Math.min(TOTAL - 1, Math.floor(frame)));
-  return { w: W[f], h: H[f], r: R[f], mode: MODE[f] };
+  return { w: W[f], h: H[f], rb: RB[f], rs: RS[f], r: RB[f], mode: MODE[f] };
 }
 
 export function layersAt(frame: number): ContentLayer[] {

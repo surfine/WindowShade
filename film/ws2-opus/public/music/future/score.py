@@ -5,9 +5,9 @@
 
 - 配乐：Kevin MacLeod《Floating Cities》（incompetech.com，CC BY 4.0），120.00 BPM。
   从曲子 110.536 秒（第 55 小节强拍）取 60 秒：曲子 148.536 秒低音进来的那一下落在片子 38 秒 = 第 2280 帧（刘海展开）。
-- 音效：src/future/sfx.ts 的表（esbuild 现导，不手抄帧号）。材质只有一套：Kenney Interface Sounds（CC0）的录音，
-  加 onetake sfx_palette 的合成低音 / 气流；全部过同一个房间（sfx_palette.impulse）。
-- 音乐在每个音效下面让一下（duck），母带 −16 LUFS 整合响度、真峰值 ≤ −4.0 dBTP（AAC 编完约 −3.6）。
+- 音效：src/future/sfx.ts 只有 tick 和 settle。短、干、大调，没有低鸣、气流、疑问音。
+  同一个小房间（sfx_palette.impulse），送进去的很少，尾巴不挂着。
+- 音乐在每个音效下面让一下（最多 6 dB），母带 −16 LUFS、真峰值 ≤ −4.0 dBTP。
 依赖：numpy、scipy、soundfile、librosa；sfx_palette 在 ~/.claude/skills/onetake/scripts。
 """
 import json, os, subprocess, sys, urllib.request
@@ -18,7 +18,7 @@ from scipy.ndimage import minimum_filter1d
 HERE = os.path.dirname(os.path.abspath(__file__))
 FILM = os.path.abspath(os.path.join(HERE, '../../..'))
 sys.path.insert(0, os.path.expanduser('~/.claude/skills/onetake/scripts'))
-from sfx_palette import SR, air, impulse, sub, wood, hp  # noqa: E402
+from sfx_palette import SR, impulse, hp  # noqa: E402
 
 FPS, DUR = 60, 60.0
 MUSIC_URL = 'https://incompetech.com/music/royalty-free/mp3-royaltyfree/Floating%20Cities.mp3'
@@ -26,12 +26,12 @@ MUSIC_CACHE = '/tmp/wsmusic/Floating Cities.mp3'
 OFFSET = 110.536
 TARGET_LUFS, CEIL_DBTP = -16.0, -4.0
 
-SAMPLE = {
-    'confirm': 'confirmation_002', 'tap': 'click_002', 'pour': 'maximize_004', 'gather': 'minimize_004',
-    'dive': 'maximize_002', 'fold': 'minimize_002', 'read': 'select_002', 'cancel': 'back_002',
-    'press': 'select_004', 'unfold': 'maximize_008', 'ask': 'question_001', 'key': 'click_005',
-    'tick': 'tick_001', 'lock': 'close_004',
-}
+def tone(freq, dur, decay, gain, attack=0.004):
+    """一段乾的正弦。大調、往上，沒有不和的拖尾。"""
+    n = int(dur * SR)
+    t = np.arange(n) / SR
+    env = np.exp(-t * decay) * (1 - np.exp(-t / max(attack, 1e-4)))
+    return np.sin(2 * np.pi * freq * t) * env * gain
 
 
 def events():
@@ -46,7 +46,7 @@ process.stdout.write(JSON.stringify({ sfx: m.exports.SFX, dips: m.exports.DIPS, 
 
 
 def bed_gain(dips, bed, n):
-    """音乐床：一条不断。头尾淡入淡出，中间只有几处有限深度的让位，最深 -10 dB，绝不到静音。"""
+    """音乐床：一条不断。头尾淡入淡出。中間若有讓位，最深 −6 dB，不到靜音。"""
     f = np.arange(n) / SR * FPS
     g = np.minimum(1, f / bed['fadeIn'])
     tail = np.clip((bed['total'] - f) / bed['fadeOut'], 0, 1)
@@ -54,31 +54,26 @@ def bed_gain(dips, bed, n):
     for a, b, c, d, db in dips:
         down = np.clip((f - a) / max(b - a, 1e-6), 0, 1); up = np.clip((f - c) / max(d - c, 1e-6), 0, 1)
         k = np.minimum(down, 1 - up)
-        g = g * (1 - k * (1 - 10 ** (max(db, -10) / 20)))
+        g = g * (1 - k * (1 - 10 ** (max(db, -6) / 20)))
     return g
 
 
-def load(name):
-    x, sr = sf.read(os.path.join(HERE, 'sfx', name + '.ogg'), always_2d=True)
-    return librosa.resample(x.mean(1), orig_sr=sr, target_sr=SR)
-
-
 def voice(kind):
-    """一个事件的声音（单声道）。录音为主，合成只补低频和气流。"""
-    if kind == 'sub':
-        return sub(48, 1.2) * 0.9
-    if kind == 'slide':
-        return air(0.42, 240, 1900, 1.3, 0.5) * 0.6
-    x = load(SAMPLE[kind])
-    if kind in ('tap', 'key'):
-        w = wood(210 if kind == 'tap' else 170, 0.09) * 0.5
-        n = max(len(x), len(w)); y = np.zeros(n); y[:len(x)] += x; y[:len(w)] += w
+    """輕點一下，或輕輕落下。都在 200 毫秒以內，沒有低音、沒有掃頻。"""
+    if kind == 'settle':
+        # 大三度：E5 + G#5，軟，往上解決。
+        a = tone(659.25, 0.16, 18, 0.55)
+        b = tone(830.61, 0.14, 16, 0.32, 0.008)
+        y = np.zeros(max(len(a), len(b)))
+        y[:len(a)] += a
+        y[:len(b)] += b
         return y
-    if kind == 'unfold':
-        a = air(0.55, 180, 2600, 1.2, 0.35) * 0.55
-        y = np.zeros(max(len(a), len(x) + int(0.05 * SR))); y[:len(a)] += a; y[int(0.05 * SR):int(0.05 * SR) + len(x)] += x
-        return y
-    return x
+    # tick：一聲短的高音點，加上 3 毫秒的乾瞬態。
+    y = tone(2349.32, 0.04, 90, 0.7, 0.0015)
+    n = int(0.003 * SR)
+    rng = np.random.default_rng(7)
+    y[:n] += rng.standard_normal(n) * np.linspace(0.18, 0, n)
+    return y
 
 
 # ---- 响度（ITU-R BS.1770-4，48 kHz K 加权 + 门限）与真峰值（4 倍过采样） ----
@@ -137,8 +132,8 @@ def main():
         wet[i0:i0 + k, 0] += sig * g * s * L; wet[i0:i0 + k, 1] += sig * g * s * R
         # 让一下：提前 30 毫秒压下去，声音长度（最多 0.35 秒）里保持，0.45 秒放回。
         # 线性增益的减量：0.35 ≈ -3.7 dB，0.45 ≈ -5.2 dB；上限 -6 dB。
-        depth = 0.45 if e['kind'] in ('unfold', 'sub', 'lock') else 0.35
-        a, h, r = int(0.03 * SR), int(min(k / SR, 0.35) * SR), int(0.45 * SR)
+        depth = 0.22 if e['kind'] == 'settle' else 0.16
+        a, h, r = int(0.04 * SR), int(min(k / SR, 0.28) * SR), int(0.55 * SR)
         env = np.concatenate([np.linspace(0, 1, a), np.ones(h), np.linspace(1, 0, r)])
         j0 = max(0, i0 - a); seg = env[a - (i0 - j0):][: n - j0]
         duck[j0:j0 + len(seg)] = np.maximum(duck[j0:j0 + len(seg)], seg * depth)
