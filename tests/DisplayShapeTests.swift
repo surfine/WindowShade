@@ -468,5 +468,15 @@ struct DisplayShapeTests {
                "known shape: a tucked window flies into the middle of the notch, no taller than it (\(target))")
         let shallow = CGRect(x: 0, y: 0, width: 150, height: 20)
         expect(NotchIsland.tuckTarget(notch: shallow, curves: air).height == 20, "and shrinks to fit a shallower notch")
+
+        // 半岛高度档：矮药丸 / 高内容，临界带不落在中间。
+        let short = NotchIsland.peninsulaShort
+        let tallFloor = NotchIsland.peninsulaTallFloor
+        expect(NotchIsland.peninsulaContentHeight(56) == short, "peninsula: raw 56 → short")
+        expect(NotchIsland.peninsulaContentHeight(72) == short, "peninsula: raw 72 → short")
+        expect(NotchIsland.peninsulaContentHeight(90) == short, "peninsula: awkward mid 90 → short")
+        expect(NotchIsland.peninsulaContentHeight(100) == tallFloor, "peninsula: awkward mid 100 → tall floor")
+        expect(NotchIsland.peninsulaContentHeight(142) == 142, "peninsula: tall content 142 kept")
+        expect(NotchIsland.peninsulaContentHeight(286) == 286, "peninsula: tall content 286 kept")
     }
 }

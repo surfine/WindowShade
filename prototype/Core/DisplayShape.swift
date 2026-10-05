@@ -537,4 +537,18 @@ enum NotchIsland {
         let width = 40 * height / 26
         return CGRect(x: notch.midX - width / 2, y: notch.midY - height / 2, width: width, height: height)
     }
+
+    /// 半岛（展开下鼓）内容区高度档：矮药丸 / 高内容（WWDC23 10194：避开临界高度）。
+    /// `rawBelowNotch` 是刘海高度以下再鼓出的那一段；总高 = 刘海高 + 返回值。
+    static let peninsulaShort: CGFloat = 72
+    static let peninsulaTallFloor: CGFloat = 118
+    static func peninsulaContentHeight(_ rawBelowNotch: CGFloat) -> CGFloat {
+        let raw = max(0, rawBelowNotch)
+        if raw <= peninsulaShort { return peninsulaShort }
+        if raw < peninsulaTallFloor {
+            let mid = (peninsulaShort + peninsulaTallFloor) / 2
+            return raw < mid ? peninsulaShort : peninsulaTallFloor
+        }
+        return raw
+    }
 }
