@@ -306,15 +306,19 @@ final class SilentMilestoneProbe {
     }
 
     private func focus(_ element: AXUIElement, pid: pid_t, id: CGWindowID) async -> Bool {
-        NSRunningApplication(processIdentifier: pid)?.activate(options: [])
-        AXUIElementPerformAction(element, kAXRaiseAction as CFString)
-        AXUIElementSetAttributeValue(element, kAXMainAttribute as CFString, kCFBooleanTrue)
-        AXUIElementSetAttributeValue(element, kAXFocusedAttribute as CFString, kCFBooleanTrue)
-        return await wait(4) {
-            guard let front = NSWorkspace.shared.frontmostApplication, front.processIdentifier == pid,
-                  let focused = focusedWindow(), self.identity(focused, pid: pid) == id else { return false }
-            return true
+        let deadline = CACurrentMediaTime() + 6
+        while CACurrentMediaTime() < deadline {
+            NSRunningApplication(processIdentifier: pid)?.activate(options: [])
+            AXUIElementPerformAction(element, kAXRaiseAction as CFString)
+            AXUIElementSetAttributeValue(element, kAXMainAttribute as CFString, kCFBooleanTrue)
+            AXUIElementSetAttributeValue(element, kAXFocusedAttribute as CFString, kCFBooleanTrue)
+            if let front = NSWorkspace.shared.frontmostApplication, front.processIdentifier == pid,
+               let focused = focusedWindow(), identity(focused, pid: pid) == id {
+                return true
+            }
+            try? await Task.sleep(nanoseconds: 80_000_000)
         }
+        return false
     }
 
     private func bounds(_ id: CGWindowID) -> CGRect? {

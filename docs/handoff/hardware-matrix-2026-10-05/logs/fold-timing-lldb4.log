@@ -1,0 +1,366 @@
+(lldb) target create ".build/duo-validation/WindowShade.app/Contents/MacOS/WindowShade"
+Current executable set to '/Users/aaron/Documents/WindowShade/.build/duo-validation/WindowShade.app/Contents/MacOS/WindowShade' (arm64).
+(lldb) breakpoint set -E swift -C continue
+Breakpoint 1: no locations (pending).
+(lldb) run --glance-probe --fixture .build/glance-tests/GlanceFixture.app/Contents/MacOS/GlanceFixture --fold-timing
+2 locations added to breakpoint 1
+(lldb)  continue
+Process 51502 resuming
+Command #1 'continue' continued the target.
+(lldb)  continue
+Process 51502 resuming
+Command #1 'continue' continued the target.
+(lldb)  continue
+Process 51502 resuming
+Command #1 'continue' continued the target.
+(lldb)  continue
+Process 51502 resuming
+Command #1 'continue' continued the target.
+(lldb)  continue
+Process 51502 resuming
+Command #1 'continue' continued the target.
+(lldb)  continue
+Process 51502 resuming
+Command #1 'continue' continued the target.
+(lldb)  continue
+Process 51502 resuming
+Command #1 'continue' continued the target.
+(lldb)  continue
+Process 51502 resuming
+Command #1 'continue' continued the target.
+(lldb)  continue
+Process 51502 resuming
+Command #1 'continue' continued the target.
+(lldb)  continue
+Process 51502 resuming
+Command #1 'continue' continued the target.
+(lldb)  continue
+Process 51502 resuming
+Command #1 'continue' continued the target.
+(lldb)  continue
+Process 51502 resuming
+Command #1 'continue' continued the target.
+INFO glance: accessibility=true screenRecording=true
+2026-10-05 18:35:40.524658+0800 WindowShade[51502:25884237] [plugin] AddInstanceForFactory: No factory registered for id <CFUUID 0x7a8816f780> F8BB1C28-BAE8-11D6-9C31-00039315CD46
+(lldb)  continue
+Process 51502 resuming
+Command #1 'continue' continued the target.
+2026-10-05 18:35:40.756826+0800 WindowShade[51502:25884237] [WarnOnce] It's not legal to call -layoutSubtreeIfNeeded on a view which is already being laid out.  If you are implementing the view's -layout method, you can call -[super layout] instead.  Break on void _NSDetectedLayoutRecursion(void) to debug.  This will be logged only once.  This may break in the future.
+2026-10-05 18:35:40.793922+0800 GlanceFixture[51506:25884407] [Connection] Unable to get synchronousRemoteObjectProxy, error: Error Domain=NSCocoaErrorDomain Code=4097 "connection to service named com.apple.linkd.autoShortcut" UserInfo={NSDebugDescription=connection to service named com.apple.linkd.autoShortcut}
+2026-10-05 18:35:40.794962+0800 GlanceFixture[51506:25884412] [Connection] Unable to get synchronousRemoteObjectProxy, error: Error Domain=NSCocoaErrorDomain Code=4097 "connection to service named com.apple.linkd.autoShortcut" UserInfo={NSDebugDescription=connection to service named com.apple.linkd.autoShortcut}
+2026-10-05 18:35:40.795179+0800 GlanceFixture[51506:25884412] [Connection] Unable to re-register with Process Instance Registry, error: Error Domain=NSCocoaErrorDomain Code=4097 "connection to service named com.apple.linkd.autoShortcut" UserInfo={NSDebugDescription=connection to service named com.apple.linkd.autoShortcut}
+2026-10-05 18:35:40.795178+0800 GlanceFixture[51506:25884407] [Application] Error registering app with intents framework: Error Domain=NSCocoaErrorDomain Code=4097 "connection to service named com.apple.linkd.autoShortcut" UserInfo={NSDebugDescription=connection to service named com.apple.linkd.autoShortcut}
+2026-10-05 18:35:40.796191+0800 GlanceFixture[51506:25884390] [Connection] Unable to get synchronousRemoteObjectProxy, error: Error Domain=NSCocoaErrorDomain Code=4097 "connection to service named com.apple.linkd.autoShortcut" UserInfo={NSDebugDescription=connection to service named com.apple.linkd.autoShortcut}
+2026-10-05 18:35:40.796222+0800 GlanceFixture[51506:25884390] [Connection] Unable to re-register with Process Instance Registry, error: Error Domain=NSCocoaErrorDomain Code=4097 "connection to service named com.apple.linkd.autoShortcut" UserInfo={NSDebugDescription=connection to service named com.apple.linkd.autoShortcut}
+2026-10-05 18:35:40.796974+0800 GlanceFixture[51506:25884390] [Connection] Will NOT re-try to establish the connection
+2026-10-05 18:35:40.797024+0800 GlanceFixture[51506:25884412] [Connection] Unable to get synchronousRemoteObjectProxy, error: Error Domain=NSCocoaErrorDomain Code=4097 "connection to service named com.apple.linkd.autoShortcut" UserInfo={NSDebugDescription=connection to service named com.apple.linkd.autoShortcut}
+2026-10-05 18:35:40.797044+0800 GlanceFixture[51506:25884412] [Connection] Unable to re-register with Process Instance Registry, error: Error Domain=NSCocoaErrorDomain Code=4097 "connection to service named com.apple.linkd.autoShortcut" UserInfo={NSDebugDescription=connection to service named com.apple.linkd.autoShortcut}
+(lldb)  continue
+Process 51502 resuming
+Command #1 'continue' continued the target.
+(lldb)  continue
+Process 51502 resuming
+Command #1 'continue' continued the target.
+2026-10-05 18:35:42.470460+0800 WindowShade[51502:25884237] [SceneClient] [com.apple.appkit.status-items:C49F4BF3-0A89-4B3F-B255-C3F54132ACDB-Variant[1]] No matching scene to invalidate for this identity.
+(lldb)  continue
+Process 51502 resuming
+Command #1 'continue' continued the target.
+(lldb)  continue
+Process 51502 resuming
+Command #1 'continue' continued the target.
+2026-10-05 18:35:42.513399+0800 WindowShade[51502:25884237] [Common] [BSBlockSentinel:FBSWorkspaceScenesClient] failed!
+2026-10-05 18:35:42.514149+0800 WindowShade[51502:25884237] [SceneClient] [com.apple.appkit.status-items:C49F4BF3-0A89-4B3F-B255-C3F54132ACDB-Variant[2]] No matching scene to invalidate for this identity.
+(lldb)  continue
+Process 51502 resuming
+Command #1 'continue' continued the target.
+(lldb)  continue
+Process 51502 resuming
+Command #1 'continue' continued the target.
+2026-10-05 18:35:42.555332+0800 WindowShade[51502:25884237] [Common] [BSBlockSentinel:FBSWorkspaceScenesClient] failed!
+2026-10-05 18:35:42.556053+0800 WindowShade[51502:25884237] [SceneClient] [com.apple.appkit.status-items:C49F4BF3-0A89-4B3F-B255-C3F54132ACDB-Variant[3]] No matching scene to invalidate for this identity.
+(lldb)  continue
+Process 51502 resuming
+Command #1 'continue' continued the target.
+(lldb)  continue
+Process 51502 resuming
+Command #1 'continue' continued the target.
+2026-10-05 18:35:42.594610+0800 WindowShade[51502:25884237] [Common] [BSBlockSentinel:FBSWorkspaceScenesClient] failed!
+2026-10-05 18:35:42.668378+0800 GlanceFixture[51506:25884442] [Common] Unable to obtain a task name port right for pid 439: (os/kern) failure (0x5)
+(lldb)  continue
+Process 51502 resuming
+Command #1 'continue' continued the target.
+(lldb)  continue
+Process 51502 resuming
+Command #1 'continue' continued the target.
+(lldb)  continue
+Process 51502 resuming
+Command #1 'continue' continued the target.
+(lldb)  continue
+Process 51502 resuming
+Command #1 'continue' continued the target.
+(lldb)  continue
+Process 51502 resuming
+Command #1 'continue' continued the target.
+(lldb)  continue
+Process 51502 resuming
+Command #1 'continue' continued the target.
+(lldb)  continue
+Process 51502 resuming
+Command #1 'continue' continued the target.
+(lldb)  continue
+Process 51502 resuming
+Command #1 'continue' continued the target.
+ROUND 0: first change 1037ms, strip 1429ms
+(lldb)  continue
+Process 51502 resuming
+Command #1 'continue' continued the target.
+(lldb)  continue
+Process 51502 resuming
+Command #1 'continue' continued the target.
+(lldb)  continue
+Process 51502 resuming
+Command #1 'continue' continued the target.
+(lldb)  continue
+Process 51502 resuming
+Command #1 'continue' continued the target.
+(lldb)  continue
+Process 51502 resuming
+Command #1 'continue' continued the target.
+(lldb)  continue
+Process 51502 resuming
+Command #1 'continue' continued the target.
+(lldb)  continue
+Process 51502 resuming
+Command #1 'continue' continued the target.
+(lldb)  continue
+Process 51502 resuming
+Command #1 'continue' continued the target.
+(lldb)  continue
+Process 51502 resuming
+Command #1 'continue' continued the target.
+(lldb)  continue
+Process 51502 resuming
+Command #1 'continue' continued the target.
+(lldb)  continue
+Process 51502 resuming
+Command #1 'continue' continued the target.
+(lldb)  continue
+Process 51502 resuming
+Command #1 'continue' continued the target.
+(lldb)  continue
+Process 51502 resuming
+Command #1 'continue' continued the target.
+(lldb)  continue
+Process 51502 resuming
+Command #1 'continue' continued the target.
+(lldb)  continue
+Process 51502 resuming
+Command #1 'continue' continued the target.
+(lldb)  continue
+Process 51502 resuming
+Command #1 'continue' continued the target.
+(lldb)  continue
+Process 51502 resuming
+Command #1 'continue' continued the target.
+(lldb)  continue
+Process 51502 resuming
+Command #1 'continue' continued the target.
+(lldb)  continue
+Process 51502 resuming
+Command #1 'continue' continued the target.
+(lldb)  continue
+Process 51502 resuming
+Command #1 'continue' continued the target.
+ROUND 1: first change 851ms, strip 1219ms
+2026-10-05 18:35:46.615563+0800 WindowShade[51502:25884895] [Sound] -[NSSound play] self=0x7a87c5e210: Already playing.
+(lldb)  continue
+Process 51502 resuming
+Command #1 'continue' continued the target.
+(lldb)  continue
+Process 51502 resuming
+Command #1 'continue' continued the target.
+(lldb)  continue
+Process 51502 resuming
+Command #1 'continue' continued the target.
+(lldb)  continue
+Process 51502 resuming
+Command #1 'continue' continued the target.
+(lldb)  continue
+Process 51502 resuming
+Command #1 'continue' continued the target.
+(lldb)  continue
+Process 51502 resuming
+Command #1 'continue' continued the target.
+(lldb)  continue
+Process 51502 resuming
+Command #1 'continue' continued the target.
+(lldb)  continue
+Process 51502 resuming
+Command #1 'continue' continued the target.
+(lldb)  continue
+Process 51502 resuming
+Command #1 'continue' continued the target.
+(lldb)  continue
+Process 51502 resuming
+Command #1 'continue' continued the target.
+(lldb)  continue
+Process 51502 resuming
+Command #1 'continue' continued the target.
+(lldb)  continue
+Process 51502 resuming
+Command #1 'continue' continued the target.
+(lldb)  continue
+Process 51502 resuming
+Command #1 'continue' continued the target.
+(lldb)  continue
+Process 51502 resuming
+Command #1 'continue' continued the target.
+(lldb)  continue
+Process 51502 resuming
+Command #1 'continue' continued the target.
+(lldb)  continue
+Process 51502 resuming
+Command #1 'continue' continued the target.
+(lldb)  continue
+Process 51502 resuming
+Command #1 'continue' continued the target.
+(lldb)  continue
+Process 51502 resuming
+Command #1 'continue' continued the target.
+(lldb)  continue
+Process 51502 resuming
+Command #1 'continue' continued the target.
+(lldb)  continue
+Process 51502 resuming
+Command #1 'continue' continued the target.
+ROUND 2: first change 971ms, strip 1091ms
+(lldb)  continue
+Process 51502 resuming
+Command #1 'continue' continued the target.
+(lldb)  continue
+Process 51502 resuming
+Command #1 'continue' continued the target.
+(lldb)  continue
+Process 51502 resuming
+Command #1 'continue' continued the target.
+(lldb)  continue
+Process 51502 resuming
+Command #1 'continue' continued the target.
+(lldb)  continue
+Process 51502 resuming
+Command #1 'continue' continued the target.
+(lldb)  continue
+Process 51502 resuming
+Command #1 'continue' continued the target.
+(lldb)  continue
+Process 51502 resuming
+Command #1 'continue' continued the target.
+(lldb)  continue
+Process 51502 resuming
+Command #1 'continue' continued the target.
+(lldb)  continue
+Process 51502 resuming
+Command #1 'continue' continued the target.
+(lldb)  continue
+Process 51502 resuming
+Command #1 'continue' continued the target.
+(lldb)  continue
+Process 51502 resuming
+Command #1 'continue' continued the target.
+(lldb)  continue
+Process 51502 resuming
+Command #1 'continue' continued the target.
+(lldb)  continue
+Process 51502 resuming
+Command #1 'continue' continued the target.
+(lldb)  continue
+Process 51502 resuming
+Command #1 'continue' continued the target.
+(lldb)  continue
+Process 51502 resuming
+Command #1 'continue' continued the target.
+(lldb)  continue
+Process 51502 resuming
+Command #1 'continue' continued the target.
+(lldb)  continue
+Process 51502 resuming
+Command #1 'continue' continued the target.
+(lldb)  continue
+Process 51502 resuming
+Command #1 'continue' continued the target.
+(lldb)  continue
+Process 51502 resuming
+Command #1 'continue' continued the target.
+(lldb)  continue
+Process 51502 resuming
+Command #1 'continue' continued the target.
+ROUND 3: first change 333ms, strip 895ms
+2026-10-05 18:35:50.995773+0800 WindowShade[51502:25884444] [Sound] -[NSSound play] self=0x7a87c5e210: Already playing.
+(lldb)  continue
+Process 51502 resuming
+Command #1 'continue' continued the target.
+(lldb)  continue
+Process 51502 resuming
+Command #1 'continue' continued the target.
+(lldb)  continue
+Process 51502 resuming
+Command #1 'continue' continued the target.
+(lldb)  continue
+Process 51502 resuming
+Command #1 'continue' continued the target.
+(lldb)  continue
+Process 51502 resuming
+Command #1 'continue' continued the target.
+(lldb)  continue
+Process 51502 resuming
+Command #1 'continue' continued the target.
+(lldb)  continue
+Process 51502 resuming
+Command #1 'continue' continued the target.
+(lldb)  continue
+Process 51502 resuming
+Command #1 'continue' continued the target.
+(lldb)  continue
+Process 51502 resuming
+Command #1 'continue' continued the target.
+(lldb)  continue
+Process 51502 resuming
+Command #1 'continue' continued the target.
+(lldb)  continue
+Process 51502 resuming
+Command #1 'continue' continued the target.
+(lldb)  continue
+Process 51502 resuming
+Command #1 'continue' continued the target.
+(lldb)  continue
+Process 51502 resuming
+Command #1 'continue' continued the target.
+(lldb)  continue
+Process 51502 resuming
+Command #1 'continue' continued the target.
+(lldb)  continue
+Process 51502 resuming
+Command #1 'continue' continued the target.
+(lldb)  continue
+Process 51502 resuming
+Command #1 'continue' continued the target.
+(lldb)  continue
+Process 51502 resuming
+Command #1 'continue' continued the target.
+(lldb)  continue
+Process 51502 resuming
+Command #1 'continue' continued the target.
+(lldb)  continue
+Process 51502 resuming
+Command #1 'continue' continued the target.
+(lldb)  continue
+Process 51502 resuming
+Command #1 'continue' continued the target.
+ROUND 4: first change 861ms, strip 886ms
+2026-10-05 18:35:53.045703+0800 WindowShade[51502:25884787] [Sound] -[NSSound play] self=0x7a87c5e210: Already playing.
+TIMING (fast capture, no animation, warm rounds): first change median 861ms, strip median 1091ms
+PASS glance: suite
+Process 51502 launched: '/Users/aaron/Documents/WindowShade/.build/duo-validation/WindowShade.app/Contents/MacOS/WindowShade' (arm64)
+Process 51502 exited with status = 0 (0x00000000)
+(lldb) bt 60
+error: Command requires a process which is currently stopped.

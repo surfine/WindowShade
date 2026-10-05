@@ -1,0 +1,4 @@
+^DINFO silent-milestone accessibility=true screenRecording=true camera=authorized
+PASS place: completed leftHalf observed=true frame (160,395 640x452) -> (0,34 855x997) cg (0,34 855x997)
+tests/run-silent-milestone.sh: line 27: 66082 Trace/BPT trap: 5       "$APP" --silent-milestone --fixture "$FIX/Contents/MacOS/GlanceFixture"
+EXIT:133

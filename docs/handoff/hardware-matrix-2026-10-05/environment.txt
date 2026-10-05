@@ -1,0 +1,154 @@
+=== commit ===
+c1cdf1964c9ad52ca16cd6037b05103649ad8c6c
+c1cdf19
+=== sw_vers ===
+ProductName:		macOS
+ProductVersion:		27.0
+BuildVersion:		26A428
+=== uname ===
+arm64
+=== sdk ===
+/Applications/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer/SDKs/MacOSX27.0.sdk
+27.0
+=== displays ===
+Graphics/Displays:
+
+    Apple M5:
+
+      Chipset Model: Apple M5
+      Type: GPU
+      Bus: Built-In
+      Total Number of Cores: 10
+      Vendor: Apple (0x106b)
+      Metal Support: Metal 4
+      Displays:
+        Color LCD:
+          Display Type: Built-in Liquid Retina Display
+          Resolution: 2880 x 1864 Retina
+          Main Display: Yes
+          Mirror: Off
+          Online: Yes
+          Automatically Adjust Brightness: Yes
+          Connection Type: Internal
+        Studio Display:
+          Display Type: Retina LCD
+          Resolution: 5120 x 2880 Retina
+          Display Serial Number: XG0G7VC4XR
+          Display Firmware Version: Version 17.0 (Build 21A329)
+          Mirror: Off
+          Online: Yes
+          Automatically Adjust Brightness: Yes
+
+=== camera ===
+Camera:
+
+    MacBook Air相機:
+
+      Model ID: MacBook Air相機
+      Unique ID: 6C707041-05AC-0011-0004-000000000001
+
+    Studio Display相機:
+
+      Model ID: UVC Camera VendorID_1452 ProductID_4372
+      Unique ID: 0x2114000015bc0000
+
+    Aaron's Phone相機:
+
+      Model ID: iPhone19,2
+      Unique ID: 5A219386-FE66-4E9C-8F58-226D00000001
+
+=== bluetooth (redacted) ===
+Bluetooth:
+
+      Bluetooth Controller:
+          Address: XX:XX:XX:XX:XX:XX
+          State: On
+          Chipset: Apple N1
+          Discoverable: Off
+          Firmware Version: MAC FW Version: 26.72.12.0, PHY FW Version: 3.1.46.0
+          Product ID: 0x4A47
+          Supported services: 0x1390039 < HFP AVRCP A2DP HID LEA AACP GATT SerialPort SCO >
+          Transport: PCIe
+          Vendor ID: 0x004C (Apple)
+      Connected:
+          Aaron's Headset:
+              Address: XX:XX:XX:XX:XX:XX
+              Vendor ID: 0x004C
+              Product ID: 0x200A
+              Firmware Version: 6F25
+              Minor Type: Headphones
+              RSSI: -35
+              Serial Number: H0YN1AZEP3W9
+              Services: 0x980019 < HFP AVRCP A2DP AACP GATT ACL >
+          Aaron's Phone:
+              Address: XX:XX:XX:XX:XX:XX
+              RSSI: -46
+              Services: 0x400000 < BLE >
+          巧控滑鼠:
+              Address: XX:XX:XX:XX:XX:XX
+              Vendor ID: 0x004C
+              Product ID: 0x0323
+              Firmware Version: 3.1.4
+              Minor Type: Mouse
+              Services: 0x800020 < HID ACL >
+      Not Connected:
+          Aaron's Earbuds:
+              Address: XX:XX:XX:XX:XX:XX
+              Vendor ID: 0x004C
+              Product ID: 0x2024
+              Case Battery Level: 83%
+              Left Battery Level: 100%
+              Right Battery Level: 100%
+              Case Version: 9A348
+              Firmware Version: 8B41
+              Minor Type: Headphones
+              Serial Number: GG9F5629H5
+              Serial Number (Left): GX9L7MJT26JY
+              Serial Number (Right): GX8L82GN26K0
+          Aaron's Earbuds Pro:
+              Address: XX:XX:XX:XX:XX:XX
+              Vendor ID: 0x004C
+              Product ID: 0x2027
+              Firmware Version: 0.0.1
+              Minor Type: Headphones
+          Aaron's Notebook:
+              Address: XX:XX:XX:XX:XX:XX
+          Aaron's Watch:
+              Address: XX:XX:XX:XX:XX:XX
+              RSSI: -70
+          Aaron的Magic Trackpad:
+              Address: XX:XX:XX:XX:XX:XX
+              Vendor ID: 0x004C
+              Product ID: 0x0265
+              Firmware Version: 3.1.8
+              Minor Type: Magic Trackpad
+          DualSense Wireless Controller:
+              Address: XX:XX:XX:XX:XX:XX
+              Vendor ID: 0x054C
+              Product ID: 0x0CE6
+              Firmware Version: 1.0.0
+              Minor Type: Gamepad
+          DUALSHOCK 4 Wireless Controller:
+              Address: XX:XX:XX:XX:XX:XX
+              Vendor ID: 0x054C
+              Product ID: 0x0CE6
+              Firmware Version: 1.0.0
+              Minor Type: Gamepad
+          含Touch ID和數字鍵盤的巧控鍵盤:
+              Address: XX:XX:XX:XX:XX:XX
+              Vendor ID: 0x004C
+              Product ID: 0x0322
+=== codesign identities ===
+
+Policy: Code Signing
+  Matching identities
+  1) B3CE57C36B96E887C6594A2C183217EAE0415B47 "Apple Development: openkams@gmail.com (G3TN2MBQ2Q)"
+     1 identities found
+
+  Valid identities only
+  1) B3CE57C36B96E887C6594A2C183217EAE0415B47 "Apple Development: openkams@gmail.com (G3TN2MBQ2Q)"
+     1 valid identities found
+=== screen count via swift ===
+screens=2
+frame=(0.0, 0.0, 1710.0, 1107.0) backing=2.0
+frame=(-108.0, 1107.0, 2560.0, 1440.0) backing=2.0

@@ -14,17 +14,19 @@
 
 审查附件：`WindowShade-remediation-2026-10-05`（基线 `b271fcf`）。工作区已领先该基线；**禁止**套用包内 `make_safety_patch.py` 的 pinned blob。本轮在功能分支落地 **WSR-01→03** 代码与静音测试，不是产品完成声明。
 
+真机矩阵证据：[hardware-matrix-2026-10-05/](hardware-matrix-2026-10-05/)（`matrix.json` + `logs/`）。机器：macOS 27.0 / M5 + Studio Display；commit `c1cdf19` + 未提交的救援/探针修复。当日晚间完整 `--stage` WMO 已成功（二进制 18:55，`Apple Development` / Team `FVGLY6W6S4`）。
+
 | 工单 | 状态 | 证据边界 |
 | --- | --- | --- |
-| WSR-01 止血 | 代码已关：无 `confirmSimulatedNod`；glance 要 `Glance.isLive`；cover 无观察不报完成 | `prototype/build.sh --check` 退出 0；silent / delta-review-v4 / silent-prep 逻辑测试通过 |
-| WSR-02 真实回执 | glance：派发 `waiting` → 首帧 observed；cover：`WS2SilentPrivacyCoverController` 逐屏不透明层，缺屏 partial | 适配器观察级回执；**不是** loginwindow 隔离证明；真机多屏拔插矩阵仍 `not_run` |
-| WSR-03 意图准入 | `WS2SilentIntent` 折入 `WS2SilentSession`；诊断夹具与相机挑战点头拒批准命令；TTL 8s / 送达 250ms | 纯逻辑与 Host 接线；摄像头主动挑战实验仍 `not_run` |
-| WSR-04 相机实验 | 未开工 | 需单独准入；D11：允许人脸实验，**不接系统解锁**；声纹未开 |
-| WSR-05 动效验收 | 未开工 | 60/120Hz、连续中断录屏仍 `not_run`；不把刘海观感分当硬件验收 |
-| WSR-06 蓝牙身份 | 未开工 | 需设备/实验授权；RSSI/名称不算持有因素 |
-| WSR-07 文档分界 | 本指针 + face-unlock / design-grammar 对照 | 已测与 `not_run` 分开写；默认不签名、不安装、不发布 |
+| WSR-01 止血 | 代码已关：无 `confirmSimulatedNod`；glance 要 `Glance.isLive`；cover 无观察不报完成 | `--check` 0；silent / delta / prep；真机 `silent-milestone` PASS（H01–H05） |
+| WSR-02 真实回执 | glance waiting→首帧；cover 逐屏不透明层 | 双屏 cover-observe PASS（H07 partial：拔插未做）；H06 **pass**：`glance --single` + `fold-timing`（修掉 rescue 队列 MainActor SIGTRAP） |
+| WSR-03 意图准入 | Intent 折入 Session | 逻辑 A10*；真机 milestone cancel/target-change（focus 重试后复跑 PASS） |
+| WSR-04 相机实验 | 部分 | camera **authorized**；milestone head 路径已跑（无点头→提案作废）；H08 partial（未做故意断流）；H09–H13 仍缺夹具 |
+| WSR-05 动效验收 | 部分 | LEASE 15/0；fold-timing warm median first 182ms / strip 353ms；duo-soak 8s ≈35.9 present fps；120Hz `not_run` |
+| WSR-06 蓝牙身份 | 观察 inconclusive | 已配对 11 / 已连接 3（含 Phone）；BLEReadProbe exit 2；**不**标第二因素 |
+| WSR-07 文档分界 | 本指针 + face-unlock / grammar + 本矩阵目录 | 已测 / partial / not_run 分开；H20 系统解锁仍 refused（D11） |
 
-下一可派工单：真机矩阵与 WSR-04/05/06 仅在 Aaron 明确准入后进行。系统解锁仍是独立目标，不被本轮「方便遮一下」覆盖。
+下一缺口：H08 故意断流、H09–H13 夹具、可选交互 LA 取消/超时。救援 MainActor 修复与探针改动尚未提交。不发布、不替换日常 App。
 
 ---
 

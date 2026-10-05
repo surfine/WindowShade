@@ -3,6 +3,10 @@
 //
 // 恢复纪律：找到 journal entry → 尝试恢复 → 验证成功 → 才清掉这条 entry。
 // 验证失败的 entry 保留到下一轮 rescue 重试，绝不先删线索再恢复。
+//
+// Swift 6：`AppDelegate` 是 `@MainActor`。后台队列上的扫描绝不能碰主线程隔离
+// 的实例方法（否则执行期 `_dispatch_assert_queue_fail` → SIGTRAP）。journal
+// 条目在 hop 之前于主线程读好；屏幕夹紧在写回主线程时做。
 
 import Cocoa
 
@@ -15,6 +19,7 @@ extension AppDelegate {
         var pid: pid_t? = nil
         var hide: HideMethod? = nil
         var targetAlpha: Float? = nil
+        var preferredDisplayID: CGDirectDisplayID? = nil
     }
 
     struct JournalAlphaRestore {
@@ -36,7 +41,7 @@ extension AppDelegate {
     // - 两轴都在停车带（主点 / (-12000,-12000)），或
     // - 单轴在停车带、另一轴是"像普通窗口坐标"的值（备选点），
     // 避免误救其他 app 自己放到极远坐标（如 -100000）的窗口。
-    func isAtWindowShadeParkingSpot(_ pos: CGPoint) -> Bool {
+    nonisolated func isAtWindowShadeParkingSpot(_ pos: CGPoint) -> Bool {
         func onParkingBand(_ v: CGFloat) -> Bool {
             abs(v + 12000) <= 96 || abs(v + 32000) <= 96
         }
@@ -50,9 +55,12 @@ extension AppDelegate {
             || (yParked && looksLikeWindowAxis(pos.x))
     }
 
-    func collectJournalRescueActions(targetTopLeft: CGPoint,
-                                             into result: inout JournalRescueResult) {
-        let entries = shadeJournalEntries()
+    /// 后台扫描：只吃已快照的 journal，不读 `self` 上的主线程状态。
+    nonisolated func collectJournalRescueActions(
+        entries: [[String: Any]],
+        targetTopLeft: CGPoint,
+        into result: inout JournalRescueResult
+    ) {
         guard !entries.isEmpty else { return }
         var rescued = 0
 
@@ -78,10 +86,10 @@ extension AppDelegate {
 
                 guard let pos = axPosition(win), let size = axSize(win) else { continue }
                 if windowIsVisible(pos: pos, size: size),
-                   journalString(entry,"stage") != ShadeLifecycleStage.restoring.rawValue,
-                   journalString(entry,"hide") != HideMethod.minimized.rawValue,
-                   journalString(entry,"hide") != HideMethod.hidden.rawValue,
-                   journalString(entry,"hide") != HideMethod.privateAlpha.rawValue {
+                   journalString(entry, "stage") != ShadeLifecycleStage.restoring.rawValue,
+                   journalString(entry, "hide") != HideMethod.minimized.rawValue,
+                   journalString(entry, "hide") != HideMethod.hidden.rawValue,
+                   journalString(entry, "hide") != HideMethod.privateAlpha.rawValue {
                     // preparing intent 且窗口仍可见：事务没走到隐藏这一步（进程在
                     // 写 intent 后、隐藏前被杀），窗口完好，无需救援，安全清理。
                     if journalString(entry, "stage") == ShadeLifecycleStage.preparing.rawValue {
@@ -99,22 +107,19 @@ extension AppDelegate {
                     width: CGFloat(journalNumber(entry, "originalWidth") ?? Double(size.width)),
                     height: CGFloat(journalNumber(entry, "originalHeight") ?? Double(size.height))
                 )
-                let safeTarget: CGPoint
-                if windowIsVisible(pos: target, size: originalSize) {
-                    safeTarget = target
-                } else {
-                    let frame = cocoaFrame(fromAXPosition: target, size: originalSize)
-                    // 优先恢复到折叠时所在显示器，避免多显示器布局变化后救错屏。
-                    let displayID = journalNumber(entry, "displayID").map { CGDirectDisplayID($0) }
-                    safeTarget = axPosition(fromCocoaFrame: clampedFrame(frame, margin: 16,
-                                                                          preferredDisplayID: displayID))
-                }
-                result.actions.append(OffscreenRescueAction(id: id, win: win,
-                                                            target: safeTarget, size: originalSize,
-                                                            pid:app.processIdentifier,hide:HideMethod(rawValue:journalString(entry,"hide")),
-                                                            targetAlpha:journalString(entry,"hide") == HideMethod.privateAlpha.rawValue ? Float(journalNumber(entry,"originalAlpha") ?? 1):nil))
+                // 屏幕夹紧留到主线程写回：后台不能碰 NSScreen / MainActor clampedFrame。
+                let displayID = journalNumber(entry, "displayID").map { CGDirectDisplayID($0) }
+                result.actions.append(OffscreenRescueAction(
+                    id: id, win: win,
+                    target: target, size: originalSize,
+                    pid: app.processIdentifier,
+                    hide: HideMethod(rawValue: journalString(entry, "hide")),
+                    targetAlpha: journalString(entry, "hide") == HideMethod.privateAlpha.rawValue
+                        ? Float(journalNumber(entry, "originalAlpha") ?? 1) : nil,
+                    preferredDisplayID: displayID
+                ))
                 rescued += 1
-                wlog("journal: rescued id=\(id) app=\(journalString(entry, "appName")) target=(\(Int(safeTarget.x)),\(Int(safeTarget.y)))")
+                wlog("journal: rescued id=\(id) app=\(journalString(entry, "appName")) target=(\(Int(target.x)),\(Int(target.y)))")
             }
         }
     }
@@ -124,14 +129,15 @@ extension AppDelegate {
     func rescueActionVerified(_ action: OffscreenRescueAction) -> Bool {
         guard let pos = axPosition(action.win), let size = axSize(action.win) else { return false }
         guard pos.x.isFinite, pos.y.isFinite, size.width > 1, size.height > 1 else { return false }
-        guard windowIsVisible(pos: pos, size: size), windowID(of:action.win) == action.id,
-              let info=cgWindowInfo(action.id), (info[kCGWindowIsOnscreen as String] as? Bool) == true,
-              !axBoolAttribute(action.win,kAXMinimizedAttribute as String) else { return false }
-        if let alpha=action.targetAlpha {
-            guard let actual=PrivateSLSWindowMover.shared.windowAlpha(id:action.id), abs(actual-alpha)<0.05 else { return false }
+        guard windowIsVisible(pos: pos, size: size), windowID(of: action.win) == action.id,
+              let info = cgWindowInfo(action.id), (info[kCGWindowIsOnscreen as String] as? Bool) == true,
+              !axBoolAttribute(action.win, kAXMinimizedAttribute as String) else { return false }
+        if let alpha = action.targetAlpha {
+            guard let actual = PrivateSLSWindowMover.shared.windowAlpha(id: action.id),
+                  abs(actual - alpha) < 0.05 else { return false }
         }
-        return abs(pos.x-action.target.x)<=2 && abs(pos.y-action.target.y)<=2 &&
-            abs(size.width-action.size.width)<=2 && abs(size.height-action.size.height)<=2
+        return abs(pos.x - action.target.x) <= 2 && abs(pos.y - action.target.y) <= 2 &&
+            abs(size.width - action.size.width) <= 2 && abs(size.height - action.size.height) <= 2
     }
 
     func alphaRestoreVerified(_ restore: JournalAlphaRestore) -> Bool {
@@ -151,8 +157,11 @@ extension AppDelegate {
             wlog("journal: pruned \(entries.count - filtered.count) rescued entries")
         }
     }
-    func collectParkedWindowRescueActions(targetTopLeft: CGPoint,
-                                                  into actions: inout [OffscreenRescueAction]) -> Int {
+
+    nonisolated func collectParkedWindowRescueActions(
+        targetTopLeft: CGPoint,
+        into actions: inout [OffscreenRescueAction]
+    ) -> Int {
         let allWindows = WindowListCache.shared.allWindows()
         var parkedPIDs: Set<pid_t> = []
         for info in allWindows {
@@ -185,13 +194,24 @@ extension AppDelegate {
         }
         return rescued
     }
+
+    /// 写回前把 journal 坐标夹进可见屏（主线程；可安全用 NSScreen）。
+    func clampedRescueTarget(for action: OffscreenRescueAction) -> CGPoint {
+        let frame = cocoaFrame(fromAXPosition: action.target, size: action.size)
+        if windowIsVisible(pos: action.target, size: action.size) {
+            return action.target
+        }
+        return axPosition(fromCocoaFrame: clampedFrame(frame, margin: 16,
+                                                       preferredDisplayID: action.preferredDisplayID))
+    }
+
     func rescueOffscreenWindows(silent: Bool) {
         guard !isRescuingOffscreenWindows else {
             isRescueQueued = true
             return
         }
         isRescuingOffscreenWindows = true
-        // 屏幕几何在主线程取好（NSScreen 只在主线程访问）；AX 扫描在后台。
+        // 屏幕几何与 journal 快照都在主线程取好；AX 扫描在后台。
         guard let screen = NSScreen.main ?? NSScreen.screens.first else {
             isRescuingOffscreenWindows = false
             if !silent { quietNotice("没有可用屏幕", log: "rescue: no screen") }
@@ -199,6 +219,7 @@ extension AppDelegate {
         }
         let targetTopLeft = CGPoint(x: screen.visibleFrame.minX + 80,
                                     y: coordinateBaselineY() - (screen.visibleFrame.maxY - 80))
+        let journalEntries = shadeJournalEntries()
         let finish: @Sendable (String?) -> Void = { [weak self] notice in
             DispatchQueue.main.async { [weak self] in
                 guard let self else { return }
@@ -215,16 +236,19 @@ extension AppDelegate {
         rescueWorkQueue.async { [weak self] in
             guard let self else { return }
             guard AXIsProcessTrusted() else {
-                DispatchQueue.main.async { self.showPermissionOnboardingIfNeeded(force: true) }
+                DispatchQueue.main.async { [weak self] in
+                    self?.showPermissionOnboardingIfNeeded(force: true)
+                }
                 finish(silent ? nil : "需要权限")
                 return
             }
             var result = JournalRescueResult()
-            self.collectJournalRescueActions(targetTopLeft: targetTopLeft, into: &result)
+            // nonisolated 扫描：可从救援队列碰 self，不会踩 MainActor 执行期断言。
+            self.collectJournalRescueActions(entries: journalEntries, targetTopLeft: targetTopLeft, into: &result)
             var rescued = result.actions.count + result.alphaRestores.count
             if rescued == 0 {
                 rescued += self.collectParkedWindowRescueActions(targetTopLeft: targetTopLeft,
-                                                                 into: &result.actions)
+                                                                into: &result.actions)
             }
             // 写回统一在主线程：若扫描期间用户折了窗口（shaded 非空），放弃这批
             // 写回，避免把刚停车的窗口又挪回可见区；journal 清理也回主线程写，
@@ -240,23 +264,33 @@ extension AppDelegate {
                 // 先恢复、逐条验证，再清理：验证失败的 entry 保留，下一轮重试。
                 var verifiedIDs = result.resolvedIDs
                 for action in result.actions {
-                    guard action.id != 0 else {
-                        setAXSize(action.win, action.size)
-                        setAXPosition(action.win, action.target)
-                        raiseAXWindow(action.win)
+                    let target = action.id == 0 ? action.target : self.clampedRescueTarget(for: action)
+                    let applied = OffscreenRescueAction(
+                        id: action.id, win: action.win, target: target, size: action.size,
+                        pid: action.pid, hide: action.hide, targetAlpha: action.targetAlpha,
+                        preferredDisplayID: action.preferredDisplayID
+                    )
+                    guard applied.id != 0 else {
+                        setAXSize(applied.win, applied.size)
+                        setAXPosition(applied.win, applied.target)
+                        raiseAXWindow(applied.win)
                         continue
                     }
-                    if let alpha=action.targetAlpha { _=PrivateSLSWindowMover.shared.setAlpha(id:action.id,alpha:alpha) }
-                    if action.hide == .hidden,let pid=action.pid { _=NSRunningApplication(processIdentifier:pid)?.unhide() }
-                    if action.hide == .minimized { setAXMinimized(action.win,false) }
-                    setAXSize(action.win, action.size)
-                    setAXPosition(action.win, action.target)
-                    raiseAXWindow(action.win)
-                    if self.rescueActionVerified(action) {
-                        verifiedIDs.insert(action.id)
-                        wlog("journal: rescue verified id=\(action.id)")
+                    if let alpha = applied.targetAlpha {
+                        _ = PrivateSLSWindowMover.shared.setAlpha(id: applied.id, alpha: alpha)
+                    }
+                    if applied.hide == .hidden, let pid = applied.pid {
+                        _ = NSRunningApplication(processIdentifier: pid)?.unhide()
+                    }
+                    if applied.hide == .minimized { setAXMinimized(applied.win, false) }
+                    setAXSize(applied.win, applied.size)
+                    setAXPosition(applied.win, applied.target)
+                    raiseAXWindow(applied.win)
+                    if self.rescueActionVerified(applied) {
+                        verifiedIDs.insert(applied.id)
+                        wlog("journal: rescue verified id=\(applied.id)")
                     } else {
-                        wlog("journal: rescue unverified, keep entry for retry id=\(action.id)")
+                        wlog("journal: rescue unverified, keep entry for retry id=\(applied.id)")
                     }
                 }
                 for restore in result.alphaRestores {

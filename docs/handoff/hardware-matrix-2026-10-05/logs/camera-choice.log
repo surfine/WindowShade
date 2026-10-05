@@ -1,0 +1,40 @@
+ok   one front camera is used
+ok   one front camera does not ask
+ok   one camera auxiliary is unknown
+ok   one camera has no auxiliary score
+ok   one camera does not unlock
+ok   the only on-screen camera can see a face and still writes no centimeters
+ok   the notch on the upper screen uses the camera on that screen
+ok   the matching camera may be tried and still does not unlock
+ok   a matched screen does not ask
+ok   with no notch, the focused window's screen picks its camera
+ok   following the focused window does not ask
+ok   the notch screen wins over the focused window
+ok   the focused window is used only when the notch names no screen
+ok   the only camera is still opened
+ok   the laptop camera does not face-unlock the upper screen
+ok   the laptop camera does not write the upper screen's distance
+ok   an unusable laptop view stays unknown and does not ask
+ok   the upper screen keeps its own camera
+ok   a face on the lower camera does not write the upper screen's distance
+ok   one camera seeing a face leaves auxiliary unknown
+ok   a lower-camera face does not unlock the upper screen
+ok   side by side follows the screen being looked at
+ok   changing screens does not ask
+ok   an uncertain pair reuses the last success and does not ask when the person is recognized
+ok   a reused camera that is not tied to this screen writes no distance
+ok   uncertain and unrecognized asks once while keeping the last camera
+ok   the same arrangement does not ask a second time
+ok   a recognized person does not get the camera question
+ok   unknown distance on an already matched camera does not ask
+ok   aligned cameras produce auxiliary yes and no score
+ok   auxiliary yes does not identify the person or unlock
+ok   the upper screen's face still comes only from its own camera, with no centimeters
+ok   a time mismatch is auxiliary no, not a score
+ok   a mismatch does not unlock
+ok   a camera that just connected does not ask and does not interrupt
+ok   a newly connected camera that matches the screen is adopted quietly
+ok   turning auxiliary off leaves it unknown and does not ask to turn it on
+ok   no camera leaves distance unknown
+ok   no camera is not written as nobody there or as a just-right distance
+PASS camera-choice

@@ -1,0 +1,9 @@
+^DINFO glance: accessibility=true screenRecording=true
+ROUND 0: first change 634ms, strip 812ms
+ROUND 1: first change 182ms, strip 353ms
+ROUND 2: first change 242ms, strip 416ms
+ROUND 3: first change 170ms, strip 339ms
+ROUND 4: first change 178ms, strip 339ms
+TIMING (fast capture, no animation, warm rounds): first change median 182ms, strip median 353ms
+PASS glance: suite
+EXIT:0

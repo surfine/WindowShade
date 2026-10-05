@@ -1,0 +1,29 @@
+{
+  "duration" : 8,
+  "error" : "",
+  "releasedRenderer" : true,
+  "releasedSession" : true,
+  "releasedSource" : true,
+  "reports" : [
+    {
+      "capturedFrames" : 2,
+      "displayTicks" : 1,
+      "elapsed" : 0.04933300003176555,
+      "render" : "presented=0 fps=0.0 captureToPresentP95=0.0ms gpuP95=0.0ms busySkipped=0 latencySamples=0",
+      "residentBytes" : 75022336,
+      "sensorReadings" : 9,
+      "sensorReadP95ms" : 0.076458323746919632
+    },
+    {
+      "capturedFrames" : 289,
+      "displayTicks" : 428,
+      "elapsed" : 8.0160059166955762,
+      "render" : "presented=282 fps=35.9 captureToPresentP95=82.8ms gpuP95=3.3ms busySkipped=82 latencySamples=282",
+      "residentBytes" : 74858496,
+      "sensorReadings" : 88,
+      "sensorReadP95ms" : 0.0009167124517261982
+    }
+  ],
+  "residentAfterStop" : 69238784,
+  "system" : "Version 27.0 (Build 26A428)"
+}

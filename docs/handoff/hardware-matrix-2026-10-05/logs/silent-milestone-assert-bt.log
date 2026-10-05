@@ -1,0 +1,34 @@
+^D(lldb) target create ".build/duo-validation/WindowShade.app/Contents/MacOS/WindowShade"
+Current executable set to '/Users/aaron/Documents/WindowShade/.build/duo-validation/WindowShade.app/Contents/MacOS/WindowShade' (arm64).
+(lldb) breakpoint set -n _dispatch_assert_queue_fail
+Breakpoint 1: where = libdispatch.dylib`_dispatch_assert_queue_fail, address = 0x0000000180702a0c
+(lldb) breakpoint set -n swift_task_dealloc
+Breakpoint 2: where = libswift_Concurrency.dylib`swift_task_dealloc, address = 0x00000002ad18beec
+(lldb) run --silent-milestone --fixture .build/glance-tests/GlanceFixture.app/Contents/MacOS/GlanceFixture
+Process 66597 launched: '/Users/aaron/Documents/WindowShade/.build/duo-validation/WindowShade.app/Contents/MacOS/WindowShade' (arm64)
+Process 66597 stopped
+* thread #6, name = 'Task 1', queue = 'com.apple.root.default-qos.cooperative', stop reason = breakpoint 2.1
+       frame #0: 0x00000002b191feec libswift_Concurrency.dylib`swift_task_dealloc
+libswift_Concurrency.dylib`swift_task_dealloc:
+->  0x2b191feec <+0>:  pacibsp 
+    0x2b191fef0 <+4>:  sub    sp, sp, #0x30
+    0x2b191fef4 <+8>:  stp    x20, x19, [sp, #0x10]
+    0x2b191fef8 <+12>: stp    x29, x30, [sp, #0x20]
+Target 0: (WindowShade) stopped.
+(lldb) bt 60
+* thread #6, name = 'Task 1', queue = 'com.apple.root.default-qos.cooperative', stop reason = breakpoint 2.1
+   * frame #0: 0x00000002b191feec libswift_Concurrency.dylib`swift_task_dealloc
+     frame #1: 0x000000021fc0dbfc AppIntents`___lldb_unnamed_symbol_21b479b54 + 168
+     frame #2: 0x00000002b1913c50 libswift_Concurrency.dylib`swift::runJobInEstablishedExecutorContext(swift::Job*, swift::SerialExecutorRef, swift::TaskExecutorRef) + 328
+     frame #3: 0x00000002b19159d4 libswift_Concurrency.dylib`swift_job_runImpl(swift::Job*, swift::SerialExecutorRef) + 156
+     frame #4: 0x0000000184e72aac libdispatch.dylib`_dispatch_root_queue_drain + 360
+     frame #5: 0x0000000184e73248 libdispatch.dylib`_dispatch_worker_thread2 + 184
+     frame #6: 0x000000018501df60 libsystem_pthread.dylib`_pthread_wqthread + 232
+(lldb) thread list
+Process 66597 stopped
+  thread #1: tid = 0x18ce452, 0x0000000184c1d094 dyld`stat + 8, queue = 'com.apple.main-thread'
+  thread #2: tid = 0x18ce46f, 0x0000000184fde9ec libsystem_kernel.dylib`__workq_kernreturn + 8
+* thread #6: tid = 0xf00000001, 0x00000002b191feec libswift_Concurrency.dylib`swift_task_dealloc, name = 'Task 1', queue = 'com.apple.root.default-qos.cooperative', stop reason = breakpoint 2.1
+  thread #4: tid = 0x18ce47d, 0x000000019965d438 libswiftCore.dylib`swift::Demangle::__runtime::Demangler::demangleOperator() + 3596, queue = 'com.apple.root.utility-qos'
+  thread #5: tid = 0x18ce480, 0x0000000184fdcc20 libsystem_kernel.dylib`mach_msg2_trap + 8, name = 'com.apple.NSEventThread'
+(lldb) quit

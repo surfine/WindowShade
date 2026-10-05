@@ -1,0 +1,90 @@
+ok   A01 a cover without an observed overlay never says 已遮住
+ok   A01 an observed full-screen cover completes
+ok   A02 a visible preview without the glance call is not completed; invoked without live waits
+ok   A03 a refused focus start does not say it started
+ok   A04 an existing pin is already satisfied and does not restart
+ok   A02 replacing the glance port with a no-op fails the positive result
+ok   A13 a pin port that does not start is not completed
+ok   A16-style a window port that does not start is not completed
+ok   A05 a late receipt does not cover the new page
+ok   A06 the preview is shown
+ok   A06 more cancels the old placement
+ok   A07 same-instant proposals have different ids
+ok   A07 the old id is rejected
+ok   A08 a changed target voids the proposal
+ok   A08 the old id stays rejected after the target returns
+ok   A09 a confirmation before the preview is shown is rejected
+ok   A09 a gesture that started before display is rejected
+ok   A09 a future gesture is rejected
+ok   A09 the eight-second deadline rejects the proposal
+ok   A10 a simulated nod does not touch a real port
+ok   A10b diagnostic preview is shown
+ok   A10b diagnostic fixture confirmation never accepts
+ok   A10c camera preview is shown
+ok   A10c a camera-challenge nod cannot approve a command
+ok   A10d preview is shown
+ok   A10d a confirmation delivered more than 250ms after the gesture is rejected
+ok   A11 a pointer on another display does not retarget the bound window
+ok   A12 a newly focused window does not replace the bound target
+ok   A13 the first pin starts one session
+ok   A13 a repeated pin joins the same session
+ok   A13 the same window id on another process is not the same session
+ok   A14 an older completion does not clear the current start
+ok   A16 zero frames before the deadline keep waiting
+ok   A16 zero frames at the deadline time out
+ok   A16 the timeout is the only arrival
+ok   A17 a frame after the deadline is not ready
+ok   A18 cancel settles once
+ok   A18 a later frame does not complete a cancelled wait
+ok   A19 an older capture generation is not ready
+ok   A20 the current generation can become ready
+ok   A20 a later callback does not replace ready
+ok   A21 the matching ack sends once
+ok   A21 sending again is already satisfied and is not a failure
+ok   A22 adopting the same revision does not reset the sent record
+ok   A23 a disconnect stays unknown and does not allocate a new request
+ok   A24 another session does not reuse the in-flight request
+ok   A25 editing and an empty session leave the original ack able to settle
+ok   A26 the old confirmation cannot run after authorization
+ok   A27 scroll and selection return on a new lease
+ok   A28 a removed object stays missing
+ok   A29 lock drops the old lease and the private line
+ok   A30 another display does not bypass the single active input
+ok   A15 launchpad replaces the exact current lease
+ok   A31 the first card is the real id
+ok   A31 reordering follows the card and reading does not start playback
+ok   A31 a disconnected source is not an empty list
+ok   A31 a connected empty list says 没有
+ok   A32 an older account packet does not overwrite the current account
+ok   A33 the next model and effort do not start a turn
+ok   A34 an unsupported camera stays unknown and does not unlock
+not_run A35 real head motion
+ok   A36 a camera change invalidates the round
+ok   A36 a lost stream invalidates the round
+ok   A37 unknown evidence does not grant a system submit
+ok   A38 native unlock cancels this operation
+ok   A39 CarPlay without a protocol does not connect
+ok   H01 head trace
+ok   H02 head trace
+ok   H03 head trace
+ok   H04 head trace
+ok   H19 head trace
+ok   H05 head trace
+ok   H06 head trace
+ok   H07 head trace
+ok   H08 head trace
+ok   H09 head trace
+ok   H10 head trace
+ok   H11 head trace
+ok   H12 head trace
+ok   H13 head trace
+ok   H14 head trace
+ok   H15 head trace
+ok   H16 head trace
+ok   H17
+ok   H18
+A40 source tests: ran
+A40 AppKit: 未运行
+A40 hardware: 未运行
+A40 qualification: 未运行
+A15 live temporary app: 未运行

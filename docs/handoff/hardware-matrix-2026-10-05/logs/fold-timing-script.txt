@@ -1,0 +1,3 @@
+^DINFO glance: accessibility=true screenRecording=true
+ROUND 0: first change 736ms, strip 1089ms
+ROUND 1: first change 256ms, strip 612ms

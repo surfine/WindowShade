@@ -1,0 +1,1 @@
+tests/run-glance-probe.sh: line 24: 51647 Trace/BPT trap: 5       "$APP" --glance-probe --fixture "$FIX/Contents/MacOS/GlanceFixture" "$@"

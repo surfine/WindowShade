@@ -1,0 +1,234 @@
+{
+  "status": "partial",
+  "created": "2026-10-05",
+  "app_commit": "c1cdf1964c9ad52ca16cd6037b05103649ad8c6c",
+  "device": "MacBook (Apple M5) + Studio Display",
+  "os_build": "macOS 27.0 (26A428)",
+  "notes": [
+    "Follow-up same day: fresh WMO --stage with Apple Development (Team FVGLY6W6S4) succeeded after isolating module-cache; binary mtime 2026-10-05 18:55.",
+    "Root cause of glance --fold-timing Trace/BPT: MainActor AppDelegate methods called on WindowShade.rescue queue → _dispatch_assert_queue_fail. Fixed: journal snapshot on main; nonisolated scan; clamp on apply.",
+    "Camera TCC authorized for stage app; silent-milestone head path ran (no nod → proposal invalidated).",
+    "Both displays report maxFPS=60; 120Hz path not_run.",
+    "H20 system unlock refused (D11)."
+  ],
+  "sidecar": {
+    "LEASE": {
+      "status": "pass",
+      "command": ".build/appkit-tests/NotchLeaseHostTests",
+      "result": "15 cases, 0 failures (off-screen host; not matrix H*)",
+      "evidence": ["logs/notch-lease-host.log"]
+    },
+    "stage_sign": {
+      "status": "pass",
+      "result": "fresh --stage WMO + Apple Development sign (18:55); includes rescue MainActor fix",
+      "evidence": ["logs/stage-build-fresh.log", "logs/stage-build-rescue-fix2.log", "logs/codesign-stage.log"]
+    },
+    "fold_timing": {
+      "status": "pass",
+      "result": "warm median first-change 182ms, strip 353ms (5 rounds)",
+      "evidence": ["logs/fold-timing-rescue-fix.log"]
+    }
+  },
+  "cases": [
+    {
+      "id": "H01",
+      "scenario": "模拟输入隔离",
+      "status": "pass",
+      "device": "Mac M5",
+      "os_build": "26A428",
+      "app_commit": "c1cdf19",
+      "evidence": ["logs/silent-integration.log", "logs/delta-review-v4.log"],
+      "result": "r01 Host has no confirmSimulatedNod; A10/A10b diagnostic fixture rejected; silent-milestone PASS"
+    },
+    {
+      "id": "H02",
+      "scenario": "候选前的旧动作",
+      "status": "pass",
+      "device": "Mac M5",
+      "os_build": "26A428",
+      "app_commit": "c1cdf19",
+      "evidence": ["logs/silent-integration.log", "logs/silent-milestone.log"],
+      "result": "r02 old proposal rejected; milestone cancel: 旧的右半屏没有执行"
+    },
+    {
+      "id": "H03",
+      "scenario": "期限和lease变化",
+      "status": "pass",
+      "device": "Mac M5",
+      "os_build": "26A428",
+      "app_commit": "c1cdf19",
+      "evidence": ["logs/silent-integration.log", "logs/delta-review-v4.log"],
+      "result": "r02 expired/stale; A10d delivery >250ms rejected; 8s TTL covered in delta"
+    },
+    {
+      "id": "H04",
+      "scenario": "进程实例/目标/显示变化",
+      "status": "pass",
+      "device": "Mac M5",
+      "os_build": "26A428",
+      "app_commit": "c1cdf19",
+      "evidence": ["logs/silent-milestone.log", "logs/silent-milestone-rerun2.log"],
+      "result": "milestone target-change: 焦点换到另一扇临时窗口后，两扇都没动 (reconfirmed after focus-retry + rescue fix)"
+    },
+    {
+      "id": "H05",
+      "scenario": "折叠被拒或未观察",
+      "status": "pass",
+      "device": "Mac M5",
+      "os_build": "26A428",
+      "app_commit": "c1cdf19",
+      "evidence": ["logs/silent-milestone.log", "logs/silent-integration.log"],
+      "result": "placement without readback not completed; milestone only completes with observed frame"
+    },
+    {
+      "id": "H06",
+      "scenario": "预览首帧迟到",
+      "status": "pass",
+      "device": "Mac M5",
+      "os_build": "26A428",
+      "app_commit": "c1cdf19",
+      "evidence": ["logs/silent-integration.log", "logs/glance-single-rerun.log", "logs/fold-timing-rescue-fix.log"],
+      "result": "Judge waiting-without-live in r01; glance --single PASS (live picture ~683ms, ~28 fps); fold-timing PASS after rescue queue isolation fix (warm median first 182ms / strip 353ms)"
+    },
+    {
+      "id": "H07",
+      "scenario": "遮罩缺屏与拔插",
+      "status": "partial",
+      "device": "Mac M5 + Studio Display",
+      "os_build": "26A428",
+      "app_commit": "c1cdf19",
+      "evidence": ["logs/cover-observe.log"],
+      "result": "PASS cover-observe on 2 screens (requested=2 visible=2); hot-plug not exercised this session → 拔插 not_run"
+    },
+    {
+      "id": "H08",
+      "scenario": "摄像头失效不揭开",
+      "status": "partial",
+      "device": "Mac M5",
+      "os_build": "26A428",
+      "app_commit": "c1cdf19",
+      "evidence": ["logs/silent-milestone-rerun2.log"],
+      "result": "camera=authorized; head path ran samples=0 faces=0 → 没有点头，提案已作废，窗口没动; deliberate camera-disconnect / stream-fail injection still not_run"
+    },
+    {
+      "id": "H09",
+      "scenario": "主体替换与交叉",
+      "status": "not_run",
+      "device": null,
+      "os_build": "26A428",
+      "app_commit": "c1cdf19",
+      "evidence": [],
+      "result": "no live multi-subject capture fixture this session"
+    },
+    {
+      "id": "H10",
+      "scenario": "指定相机断开",
+      "status": "not_run",
+      "device": null,
+      "os_build": "26A428",
+      "app_commit": "c1cdf19",
+      "evidence": ["logs/camera-choice.log"],
+      "result": "camera-choice logic PASS only; no physical disconnect of a granted capture session"
+    },
+    {
+      "id": "H11",
+      "scenario": "照片与预录视频",
+      "status": "not_run",
+      "device": null,
+      "os_build": "26A428",
+      "app_commit": "c1cdf19",
+      "evidence": [],
+      "result": "no attack media fixture; D11 does not unlock"
+    },
+    {
+      "id": "H12",
+      "scenario": "虚拟输入和时间戳异常",
+      "status": "partial",
+      "device": "Mac M5",
+      "os_build": "26A428",
+      "app_commit": "c1cdf19",
+      "evidence": ["logs/delta-review-v4.log"],
+      "result": "diagnostic/camera-challenge origins rejected in session tests; no injected virtual camera stream"
+    },
+    {
+      "id": "H13",
+      "scenario": "暗光/遮挡/动作不便",
+      "status": "not_run",
+      "device": null,
+      "os_build": "26A428",
+      "app_commit": "c1cdf19",
+      "evidence": [],
+      "result": "no controlled lighting/occlusion capture"
+    },
+    {
+      "id": "H14",
+      "scenario": "手机身份非名称RSSI",
+      "status": "inconclusive",
+      "device": "Mac M5; Aaron's Phone connected among 11 paired / 3 connected",
+      "os_build": "26A428",
+      "app_commit": "c1cdf19",
+      "evidence": ["logs/accessory-summary.log", "logs/accessory-list.log", "logs/ble-read.log"],
+      "result": "IOBluetooth enumeration OK; BLEReadProbe exit 2 finished inconclusive readable_is_not_authenticated — discovery/RSSI/name/isConnected insufficient for hold factor; no new pairing"
+    },
+    {
+      "id": "H15",
+      "scenario": "LA取消/超时/旧回调",
+      "status": "partial",
+      "device": "Mac M5",
+      "os_build": "26A428",
+      "app_commit": "c1cdf19",
+      "evidence": ["logs/la-can-evaluate.log", "logs/identity-boundary-help.log"],
+      "result": "biometryType=1 canEvaluate=true; interactive IdentityBoundaryProbe --authenticate not run (would block on UI); cancel/timeout UI paths not_run"
+    },
+    {
+      "id": "H16",
+      "scenario": "动画多阶段中断",
+      "status": "partial",
+      "device": "Mac M5",
+      "os_build": "26A428",
+      "app_commit": "c1cdf19",
+      "evidence": ["logs/notch-lease-host.log"],
+      "result": "LEASE-H11 retarget mid-flight PASS (off-screen); continuous 100-hit App interrupt not run (N=0 App hits)"
+    },
+    {
+      "id": "H17",
+      "scenario": "无障碍动态切换",
+      "status": "partial",
+      "device": "Mac M5",
+      "os_build": "26A428",
+      "app_commit": "c1cdf19",
+      "evidence": ["logs/notch-lease-host.log"],
+      "result": "LEASE-H12 Reduce Motion fade-only PASS (off-screen); live System Settings toggle not exercised"
+    },
+    {
+      "id": "H18",
+      "scenario": "60/120Hz与双屏负载",
+      "status": "partial",
+      "device": "Mac M5 + Studio Display (both maxFPS=60)",
+      "os_build": "26A428",
+      "app_commit": "c1cdf19",
+      "evidence": ["logs/display-fps.log", "logs/duo-soak-8s.log", "logs/soak-8.json"],
+      "result": "duo-soak 8s: presented=282 fps≈35.9 captureToPresentP95=82.8ms on 3420x2214 capture; 120Hz not_run (hardware max 60); dual-screen soak not separated"
+    },
+    {
+      "id": "H19",
+      "scenario": "关闭/重启与模板卸载",
+      "status": "partial",
+      "device": "Mac M5",
+      "os_build": "26A428",
+      "app_commit": "c1cdf19",
+      "evidence": ["logs/cover-observe.log", "logs/silent-milestone.log"],
+      "result": "cover probe cleared panels after observe; milestone process exit left no stuck fixture noted; full machine reboot not_run"
+    },
+    {
+      "id": "H20",
+      "scenario": "系统解锁另行准入",
+      "status": "not_run",
+      "device": null,
+      "os_build": "26A428",
+      "app_commit": "c1cdf19",
+      "evidence": [],
+      "result": "refused: D11 allows face experiment only; no system unlock admission this round"
+    }
+  ]
+}

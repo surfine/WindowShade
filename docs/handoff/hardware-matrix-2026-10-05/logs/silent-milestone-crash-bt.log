@@ -1,0 +1,15 @@
+^D(lldb) target create ".build/duo-validation/WindowShade.app/Contents/MacOS/WindowShade"
+Current executable set to '/Users/aaron/Documents/WindowShade/.build/duo-validation/WindowShade.app/Contents/MacOS/WindowShade' (arm64).
+(lldb) process handle SIGTRAP -s true -p true -n false
+NAME         PASS     STOP     NOTIFY
+===========  =======  =======  =======
+SIGTRAP      true     true     false  
+(lldb) run --silent-milestone --fixture .build/glance-tests/GlanceFixture.app/Contents/MacOS/GlanceFixture
+INFO silent-milestone accessibility=true screenRecording=true camera=notDetermined
+INFO fixture: running=true axErr=0 ax=2 看一眼 · 参考 · 不截取 role=AXWindow get=0#37657 ax=855x997 | 看一眼 · 另一扇 role=AXWindow get=0#37658 ax=320x232 看一眼 · 参考 · 不截取 role=AXWindow get=0#37657 ax=855x997 | 看一眼 · 另一扇 role=AXWindow get=0#37658 ax=320x232
+2026-10-05 18:57:09.982567+0800 WindowShade[66209:26008493] [plugin] AddInstanceForFactory: No factory registered for id <CFUUID 0x77b2c657c0> F8BB1C28-BAE8-11D6-9C31-00039315CD46
+FAIL silent-milestone: 临时窗口没有出现
+Process 66209 launched: '/Users/aaron/Documents/WindowShade/.build/duo-validation/WindowShade.app/Contents/MacOS/WindowShade' (arm64)
+Process 66209 exited with status = 1 (0x00000001)
+(lldb) bt 50
+error: Command requires a process which is currently stopped.
