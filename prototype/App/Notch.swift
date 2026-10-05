@@ -1540,6 +1540,14 @@ final class NotchPanel: NSPanel {
                 && leading == other.leading && leadingSymbol == other.leadingSymbol && trailing == other.trailing
                 && progress == other.progress && progressTone == other.progressTone
         }
+
+        /// 版式相同（谁在左、什么语气）：曲名/进度数字可 content replace，不整岛淡出重建。
+        func layoutSame(as other: Compact?) -> Bool {
+            guard let other else { return false }
+            return count == other.count && pid == other.pid
+                && leadingSymbol == other.leadingSymbol && progressTone == other.progressTone
+                && (leading == nil) == (other.leading == nil)
+        }
     }
 
     enum LevelKind { case volume, brightness }
@@ -2252,10 +2260,13 @@ final class NotchPanel: NSPanel {
                                                                        : NotchPanel.hairline))
         }
         if isExpanded {
+            // 半岛：从刘海顶边往下鼓（y = notch.maxY - height），内容绕传感器，不另加空白额头。
             let count = max(tiles.count, 1)
             let screenWidth = NSScreen.screens.first { $0.frame.contains(NSPoint(x: notch.midX, y: notch.midY)) }?.frame.width ?? 1000
             let width = min(screenWidth - 44, max(activityItems.isEmpty ? notch.width + 120 : 420, CGFloat(min(count, 8)) * 132 + 20))
-            let height = notch.height + (activityItems.isEmpty ? (tiles.isEmpty ? 56 : 142) : (tiles.isEmpty ? 144 : 286))
+            let rawBelow = activityItems.isEmpty ? (tiles.isEmpty ? 56 : 142) : (tiles.isEmpty ? 144 : 286)
+            let below = NotchIsland.peninsulaContentHeight(rawBelow)
+            let height = notch.height + below
             // 无刘海：S4 四角全圆、不画肩；真刘海仍从硬件肩长出。
             return (NSRect(x: notch.midX - width / 2, y: notch.maxY - height, width: width, height: height),
                     IslandStyle(cornerRadius: 28, allCorners: isVirtual, fill: .black, border: 1))
@@ -2263,7 +2274,8 @@ final class NotchPanel: NSPanel {
         if let alert = alertInfo {
             let teaching = alert.demo != nil
             let width = Self.alertWidth(notch: notch, teaching: teaching)
-            let height = notch.height + (teaching ? 84 : 52)
+            // 短暂提醒也可短下鼓；高度走半岛矮档，避开临界带。
+            let height = notch.height + NotchIsland.peninsulaContentHeight(teaching ? 84 : 52)
             let border: NSColor
             switch alert.tone {
             case .problem: border = NSColor.systemOrange.withAlphaComponent(0.75)
@@ -2361,7 +2373,7 @@ final class NotchPanel: NSPanel {
         let resting = !isExpanded && dropState == .none && alertInfo == nil
         let shape = compactShape
         let visual = displayCompact()
-        // 展开一排时保留紧凑左右耳（图标 + 个数），格子绕着刘海排，不留额头（原则 9）。
+        // 半岛展开时保留紧凑左右耳（谁 / 数）在传感器两侧，格子绕着排——相对位置继承，不留额头。
         let shelfEars = isExpanded && activityItems.isEmpty && compact != nil
             && dropState == .none && alertInfo == nil && meter == nil
         let compactShown = (resting && visual != nil && (shape != .chin || visual?.leading != nil)) || shelfEars
@@ -2567,12 +2579,13 @@ final class NotchCanvasView: NSView {
 
         /// 是不是同一份内容（只是岛的大小、位置变了）：同一份就原地挪，不淡出淡入。
         /// 故意不比较格子的画面：画面是后台截到后原地换的（updateTileSnapshot），换图不该让整排淡出淡入。
+        /// 紧凑两耳的曲名/进度用 layoutSame：数字与文案 content replace，不整岛重建。
         func same(as other: Content) -> Bool {
             tiles.map(\.id) == other.tiles.map(\.id) && tiles.map(\.changed) == other.tiles.map(\.changed)
                 && tiles.map(\.place) == other.tiles.map(\.place) && tiles.map(\.kind) == other.tiles.map(\.kind)
                 && activities.isEmpty == other.activities.isEmpty && activitiesExpanded == other.activitiesExpanded
                 && dots == other.dots && dotsChanged == other.dotsChanged
-                && (compact?.same(as: other.compact) ?? (other.compact == nil))
+                && (compact?.layoutSame(as: other.compact) ?? (other.compact == nil))
                 && alert?.id == other.alert?.id && alert?.title == other.alert?.title
                 && (pullIcon == nil) == (other.pullIcon == nil)
                 // 落点的几种样子是同一份内容：原地换符号和字（托盘 → 对勾），不淡出淡入。

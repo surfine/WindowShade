@@ -8,7 +8,7 @@
 :root{
   color-scheme:light;
   --page:#eceef2; --panel:#fbfbfc; --line:rgba(0,0,0,.1); --ink:#1d1d1f; --muted:#5f6068; --faint:#6e6f76;
-  --accent:#0058cc; --ok:#0e6436; --ok-soft:rgba(23,134,74,.12);
+  --accent:#0058cc; --ok:#0e6436; --play:#30d158; --tone:#0a84ff;
   --wall:radial-gradient(90% 70% at 12% 8%,#9cc9ff 0%,transparent 62%),radial-gradient(80% 70% at 92% 18%,#b9b3ff 0%,transparent 60%),linear-gradient(160deg,#cfe3ff,#8fb4ef);
   --menu:#101114; --sans:-apple-system,BlinkMacSystemFont,"SF Pro Text","PingFang SC","Hiragino Sans GB",sans-serif;
   --mono:ui-monospace,"SF Mono",Menlo,monospace;
@@ -16,58 +16,85 @@
 @media (prefers-color-scheme:dark){:root:not([data-theme="light"]){
   color-scheme:dark;
   --page:#121316; --panel:#1b1c20; --line:rgba(255,255,255,.12); --ink:#f2f2f5; --muted:#a4a5ad; --faint:#8e8f97;
-  --accent:#5a9cff; --ok:#4cc38a; --ok-soft:rgba(76,195,138,.16);
+  --accent:#5a9cff; --ok:#4cc38a; --play:#30d158; --tone:#5ac8fa;
   --wall:linear-gradient(160deg,#10192e,#0b1222); --menu:#f4f5f8;
 }}
 *{box-sizing:border-box}
 body{margin:0;background:var(--page);color:var(--ink);font:15px/1.55 var(--sans);padding:28px 16px 64px}
 .wrap{max-width:980px;margin:0 auto}
 h1{font-size:28px;letter-spacing:-.02em;margin:0 0 8px}
-.lede{color:var(--muted);max-width:68ch;margin:0 0 18px}
+.lede{color:var(--muted);max-width:72ch;margin:0 0 18px}
 .row{display:flex;flex-wrap:wrap;gap:8px;align-items:center;margin:0 0 14px}
 button{font:inherit;color:inherit;background:var(--panel);border:0;border-radius:9px;padding:6px 12px;box-shadow:inset 0 0 0 .5px var(--line);cursor:pointer}
 button[aria-pressed="true"]{background:var(--ink);color:var(--page)}
 .sw{display:inline-flex;align-items:center;gap:8px;font-size:13px;color:var(--muted)}
-.stage{position:relative;aspect-ratio:16/10;border-radius:16px;overflow:hidden;background:var(--wall);box-shadow:0 0 0 .5px var(--line)}
-.menu{position:absolute;inset:0 0 auto;height:28px;display:flex;align-items:center;padding:0 12px;font-size:12px;color:var(--menu)}
-.island,.companion{position:absolute;top:0;background:#000;color:#fff;display:flex;align-items:center;justify-content:space-between;overflow:hidden;pointer-events:none}
-.island{left:50%;height:28px;border-radius:0 0 14px 14px;transform:translateX(-50%)}
-.island.pill{border-radius:14px;top:4px;height:22px}
-.ear{font-size:12px;font-weight:600;white-space:nowrap;padding:0 10px;opacity:0}
+.stage{position:relative;aspect-ratio:16/10;border-radius:16px;overflow:hidden;background:var(--wall);box-shadow:0 0 0 .5px var(--line);cursor:pointer}
+.menu{position:absolute;inset:0 0 auto;height:28px;display:flex;align-items:center;padding:0 12px;font-size:12px;color:var(--menu);pointer-events:none}
+.sensor{position:absolute;left:50%;top:0;width:120px;height:28px;transform:translateX(-50%);background:#050505;border-radius:0 0 12px 12px;z-index:2;pointer-events:none}
+.island{position:absolute;left:50%;top:0;background:#000;color:#fff;display:flex;align-items:stretch;justify-content:space-between;overflow:hidden;transform:translateX(-50%);z-index:3;pointer-events:none;border-radius:0 0 18px 18px}
+.island.pill{border-radius:18px;top:4px}
+.island.short{border-radius:0 0 22px 22px}
+.ears{display:flex;width:100%;align-items:center;justify-content:space-between;padding:0 10px;gap:8px;min-height:28px}
+.ear{font-size:12px;font-weight:600;white-space:nowrap;opacity:0;transition:opacity .01s linear}
 .ear b{font-weight:650}
-.dot{width:6px;height:6px;border-radius:50%;background:#0a84ff;position:absolute;right:8px;bottom:6px;opacity:0}
-.companion{height:28px;border-radius:14px;font-size:12px;font-weight:600;padding:0 12px;opacity:0;justify-content:center}
+.peninsula{display:none;flex-direction:column;width:100%;padding:30px 16px 14px;gap:10px;box-sizing:border-box}
+.peninsula.on{display:flex}
+.who{font-size:13px;font-weight:650;letter-spacing:-.01em;opacity:0}
+.meta{display:flex;align-items:center;justify-content:space-between;gap:12px;opacity:0}
+.progress{flex:1;height:4px;border-radius:2px;background:rgba(255,255,255,.18);overflow:hidden}
+.progress>i{display:block;height:100%;width:40%;background:var(--play);border-radius:2px}
+.num{font-size:13px;font-weight:700;font-variant-numeric:tabular-nums;min-width:2.5ch;text-align:right}
+.ctrls{display:flex;gap:18px;justify-content:center;opacity:0;font-size:15px}
+.ctrls span{opacity:.85}
+.dot{position:absolute;width:8px;height:8px;border-radius:50%;right:10px;bottom:8px;background:var(--tone);opacity:0;box-shadow:inset 0 0 0 1.5px rgba(0,0,0,.35)}
+.dot.arc::before{content:"";position:absolute;inset:-3px;border-radius:50%;border:1.5px solid transparent;border-top-color:var(--play);transform:rotate(-40deg)}
+.alert-banner{position:absolute;left:50%;top:0;transform:translateX(-50%);background:#000;color:#fff;border-radius:0 0 20px 20px;padding:30px 18px 12px;font-size:12px;font-weight:600;opacity:0;z-index:4;pointer-events:none;white-space:nowrap}
 .card{margin-top:14px;background:var(--panel);border-radius:14px;padding:14px 16px;box-shadow:inset 0 0 0 .5px var(--line)}
 .card h2{font-size:13px;margin:0 0 6px}
 .card p{margin:0;color:var(--muted);font-size:14px}
 .token{font-family:var(--mono);font-size:12px;color:var(--accent)}
 .note{margin-top:10px;font-size:13px;color:var(--faint)}
+.hint{margin-top:8px;font-size:12px;color:var(--faint)}
 </style>
 </head>
 <body>
 <div class="wrap">
   <h1>一颗岛</h1>
-  <p class="lede">对 Alcove 的那一张画面。还是五种呈现、一颗纯黑的岛，弹簧只用已经有的令牌。紧凑的左右耳是正在进行的那一件，展开是它放大；两件要同时露面时分开，再合并；音量和亮度也长在这颗岛上。不画假刘海，界面不叫灵动岛。</p>
+  <p class="lede">对 Alcove 与 WWDC23 10194 / HIG Live Activities 的那一张画面。贴硬件的是<strong>岛</strong>（紧凑两耳、最小点）；往下鼓出的是<strong>半岛</strong>（展开）——「半岛」只是设计别名，界面仍叫展开、刘海那一排。弹簧只用已有令牌；不画假刘海；界面不叫灵动岛。内容贴传感器、无空白额头；紧凑与半岛相对位置连续。</p>
   <div class="row" role="group" aria-label="看哪一段">
     <button type="button" data-scene="ears" aria-pressed="true">紧凑两耳</button>
-    <button type="button" data-scene="split">分开再合并</button>
-    <button type="button" data-scene="level">音量</button>
-    <button type="button" data-scene="content">内容跟着形状</button>
+    <button type="button" data-scene="peninsula">半岛展开</button>
+    <button type="button" data-scene="minimal">最小点</button>
+    <button type="button" data-scene="alert">提醒再回去</button>
+    <button type="button" data-scene="replace">内容替换</button>
+    <button type="button" data-scene="numeric">数字过渡</button>
     <label class="sw"><input id="reduced" type="checkbox"> 减少动态效果</label>
   </div>
-  <div class="stage" id="stage">
+  <div class="stage" id="stage" role="button" tabindex="0" aria-label="点一下切换本段交互">
     <div class="menu">音乐</div>
+    <div class="sensor" aria-hidden="true"></div>
     <div class="island" id="island">
-      <span class="ear" id="lead"></span>
-      <span class="ear" id="trail"></span>
+      <div class="ears" id="earsRow">
+        <span class="ear" id="lead">September</span>
+        <span class="ear" id="trail"><b>40%</b></span>
+      </div>
+      <div class="peninsula" id="peninsula">
+        <div class="who" id="who">September</div>
+        <div class="meta">
+          <div class="progress"><i id="bar"></i></div>
+          <span class="num" id="pct">40%</span>
+        </div>
+        <div class="ctrls" id="ctrls"><span>⏮</span><span>⏸</span><span>⏭</span></div>
+      </div>
       <i class="dot" id="dot"></i>
     </div>
-    <div class="companion" id="companion">构建完成</div>
+    <div class="alert-banner" id="alertBanner">妙控鼠标已连接</div>
   </div>
   <div class="card">
     <h2 id="title">紧凑就是活动本身</h2>
-    <p id="copy">左耳是谁，右耳是进度。点舞台，展开成同一件事；再点，沿 calm 收回。窗口还收着的时候，只留一个点。</p>
+    <p id="copy">左耳是谁，右耳是进度。内容贴着传感器区，尽量窄。点舞台沿 expand 长成半岛；再点沿 calm 收回。收着的窗口只留带信息的最小点。</p>
     <p class="note">这一下的弹簧：<span class="token" id="token">expand</span></p>
+    <p class="hint" id="hint">点舞台切换展开 / 收回。</p>
   </div>
 </div>
 <script>
@@ -79,29 +106,77 @@ const tokens = {
   reduced: { response: 0.25, zeta: 1 }
 };
 const island = document.getElementById('island');
+const earsRow = document.getElementById('earsRow');
+const peninsula = document.getElementById('peninsula');
 const lead = document.getElementById('lead');
 const trail = document.getElementById('trail');
+const who = document.getElementById('who');
+const pct = document.getElementById('pct');
+const bar = document.getElementById('bar');
+const ctrls = document.getElementById('ctrls');
 const dot = document.getElementById('dot');
-const companion = document.getElementById('companion');
+const alertBanner = document.getElementById('alertBanner');
 const title = document.getElementById('title');
 const copy = document.getElementById('copy');
 const tokenEl = document.getElementById('token');
+const hint = document.getElementById('hint');
 const reducedBox = document.getElementById('reduced');
+
 let scene = 'ears';
 let open = false;
-let split = 0;
 let level = 0.4;
 let levelHold = 0;
+let alertT = 0;
+let track = 0;
+let replaceFlash = 0;
 let contentIn = 0;
 let shape = { w: 168, h: 28, v: 0, hv: 0 };
-let comp = { x: 0, o: 0, v: 0 };
 let last = performance.now();
+
+const tracks = [
+  { title: 'September', artist: 'Earth, Wind & Fire', progress: 0.4 },
+  { title: 'Night Drive', artist: 'Local Demo', progress: 0.18 }
+];
+
 const scenes = {
-  ears: ['紧凑就是活动本身', '左耳是曲名，右耳是进度。点舞台展开，再点沿 calm 收回。收着的窗口只留一个点，不跟播放抢两耳。', 'expand'],
-  split: ['分开，再合并', '正在播放，标题又变了：一颗岛分成两颗。再点，从现在的位置沿 expand 合成回去。半路改方向不跳回起点。', 'expand'],
-  level: ['音量和亮度', '按 ↑ / ↓ 把音量鼓在同一颗岛上，连按留住，停手后沿 calm 收回。这是交互，不是第二扇窗。', 'pop'],
-  content: ['内容跟着形状', '形状先长。走到四成，字才淡入。减少动态效果时位置不动，只淡入淡出，弹簧换成 reduced。', 'bloom']
+  ears: {
+    title: '紧凑就是活动本身',
+    copy: '左耳是谁，右耳是进度。内容贴着传感器区，尽量窄，不留空额头。点舞台沿 expand 长成半岛；再点沿 calm 收回。',
+    token: 'expand',
+    hint: '点舞台切换展开 / 收回。'
+  },
+  peninsula: {
+    title: '半岛：展开往下鼓',
+    copy: '从紧凑长成下鼓。曲名仍在左、进度仍在右，控件在下方——相对位置继承两耳。顶边贴住传感器，禁止空白额头。矮药丸与高内容两档，避开临界高度。',
+    token: 'expand',
+    hint: '点舞台展开或收回半岛。'
+  },
+  minimal: {
+    title: '最小点仍有信息',
+    copy: '多个持续活动时退到旁边：不是空 logo，而是语气色加一点进度弧。读屏仍念正在进行的那一件。',
+    token: 'calm',
+    hint: '点舞台在最小点与紧凑之间切换。'
+  },
+  alert: {
+    title: '提醒变半岛，再回媒体',
+    copy: '配件连上：bloom 鼓成短暂提醒半岛，停 alert.hold（2.6 秒）后收回，回到原来的媒体紧凑，不洗曲目。不另开浮窗。',
+    token: 'bloom',
+    hint: '点舞台触发一次提醒；等它自己回去，或再点打断。'
+  },
+  replace: {
+    title: '内容替换，形状不重置',
+    copy: '切歌时字与进度条做 content replace（淡化换位），岛的外框继续 morph，不整岛重启、不清空状态。',
+    token: 'calm',
+    hint: '点舞台切到下一首。'
+  },
+  numeric: {
+    title: '数字过渡',
+    copy: '音量连按：数字跟手滚动，形状鼓在同一颗岛上；松手后沿 calm 收回。减少动态效果时只淡数值，形状跳切。',
+    token: 'pop',
+    hint: '按 ↑ / ↓ 调音量。'
+  }
 };
+
 function springTo(current, velocity, target, name, dt) {
   const token = reducedBox.checked ? tokens.reduced : tokens[name];
   const k = Math.pow(2 * Math.PI / token.response, 2);
@@ -111,82 +186,192 @@ function springTo(current, velocity, target, name, dt) {
   current += velocity * dt;
   return [current, velocity];
 }
-function render() {
-  const stage = document.getElementById('stage');
-  const mid = stage.clientWidth / 2;
-  if (reducedBox.checked && scene !== 'content') {
-    island.style.transition = 'none';
-  }
-  island.style.width = shape.w + 'px';
-  island.style.height = Math.max(22, shape.h) + 'px';
-  island.classList.toggle('pill', scene === 'level' || scene === 'content');
-  const show = reducedBox.checked ? (contentIn > 0.5 || scene === 'ears' || scene === 'split' || scene === 'level') : contentIn;
-  lead.style.opacity = trail.style.opacity = show;
-  lead.innerHTML = scene === 'level' ? '音量' : (open ? 'September · Earth, Wind & Fire' : 'September');
-  trail.innerHTML = scene === 'level' ? '<b>' + Math.round(level * 100) + '</b>' : (open ? '正在播放' : '<b>40%</b>');
-  dot.style.opacity = scene === 'ears' || scene === 'split' ? 1 : 0;
-  const gap = reducedBox.checked ? (split > 0.5 ? 1 : 0) : split;
-  companion.style.opacity = reducedBox.checked ? gap : comp.o;
-  companion.style.width = (110 * Math.max(gap, 0.2)) + 'px';
-  companion.style.left = (mid + shape.w / 2 + 8 * gap + comp.x) + 'px';
-  companion.style.top = reducedBox.checked ? '0px' : (4 * (1 - gap)) + 'px';
+
+function currentTrack() {
+  return tracks[track % tracks.length];
 }
+
+function applySceneChrome() {
+  const s = scenes[scene];
+  title.textContent = s.title;
+  copy.textContent = s.copy;
+  hint.textContent = s.hint;
+  tokenEl.textContent = reducedBox.checked ? 'reduced' : s.token;
+}
+
+function render() {
+  const reduced = reducedBox.checked;
+  const t = currentTrack();
+  const peninsulaOn = (scene === 'ears' || scene === 'peninsula') && open && shape.h > 56;
+  const alertOn = scene === 'alert' && alertT > 0;
+  const minimalOn = scene === 'minimal' && !open;
+  const levelOn = scene === 'numeric' && levelHold > 0;
+
+  island.classList.toggle('pill', scene === 'numeric' || (scene === 'replace' && !open));
+  island.classList.toggle('short', peninsulaOn && shape.h < 100);
+
+  island.style.width = Math.max(28, shape.w) + 'px';
+  island.style.height = Math.max(22, shape.h) + 'px';
+
+  const showEars = !peninsulaOn && !alertOn && !minimalOn;
+  earsRow.style.display = showEars ? 'flex' : 'none';
+  peninsula.classList.toggle('on', peninsulaOn);
+  peninsula.style.display = peninsulaOn ? 'flex' : 'none';
+
+  const earOpacity = reduced ? (showEars ? 1 : 0) : contentIn;
+  lead.style.opacity = trail.style.opacity = earOpacity;
+  who.style.opacity = peninsulaOn ? earOpacity : 0;
+  ctrls.style.opacity = peninsulaOn ? earOpacity * 0.95 : 0;
+  document.querySelector('.meta').style.opacity = peninsulaOn ? earOpacity : 0;
+
+  if (scene === 'numeric' && levelOn) {
+    lead.textContent = '音量';
+    trail.innerHTML = '<b>' + Math.round(level * 100) + '</b>';
+  } else if (scene === 'replace') {
+    const flash = replaceFlash > 0 ? Math.max(0.25, 1 - replaceFlash * 2) : 1;
+    lead.style.opacity = trail.style.opacity = earOpacity * flash;
+    lead.textContent = t.title;
+    trail.innerHTML = '<b>' + Math.round(t.progress * 100) + '%</b>';
+  } else {
+    lead.textContent = open && scene === 'ears' ? t.title + ' · ' + t.artist : t.title;
+    trail.innerHTML = open && scene === 'ears' ? '正在播放' : '<b>' + Math.round(t.progress * 100) + '%</b>';
+  }
+
+  who.textContent = t.title + ' · ' + t.artist;
+  pct.textContent = Math.round((scene === 'numeric' ? level : t.progress) * 100) + '%';
+  bar.style.width = Math.round((scene === 'numeric' ? level : t.progress) * 100) + '%';
+  bar.style.background = scene === 'numeric' ? 'var(--tone)' : 'var(--play)';
+
+  if (minimalOn) {
+    dot.style.opacity = 1;
+    dot.classList.add('arc');
+    dot.style.right = '50%';
+    dot.style.bottom = '50%';
+    dot.style.transform = 'translate(50%, 50%)';
+  } else if (scene === 'ears' || scene === 'peninsula' || scene === 'replace') {
+    dot.style.opacity = 0.9;
+    dot.classList.remove('arc');
+    dot.style.right = '10px';
+    dot.style.bottom = '8px';
+    dot.style.transform = 'none';
+  } else {
+    dot.style.opacity = 0;
+    dot.classList.remove('arc');
+  }
+
+  alertBanner.style.opacity = alertOn ? (reduced ? 1 : Math.min(1, alertT / 0.2)) : 0;
+  alertBanner.style.width = alertOn ? Math.max(220, shape.w) + 'px' : '0px';
+  alertBanner.style.height = alertOn ? Math.max(64, shape.h) + 'px' : '0px';
+  island.style.opacity = alertOn ? 0.15 : 1;
+}
+
+function targets() {
+  const tallPeninsula = { w: 420, h: 118 }; // 高内容档，避开临界
+  const shortPeninsula = { w: 300, h: 72 };  // 矮药丸档
+  if (scene === 'ears') {
+    return open ? { w: tallPeninsula.w, h: tallPeninsula.h, spring: 'expand' }
+                : { w: 168, h: 28, spring: 'calm' };
+  }
+  if (scene === 'peninsula') {
+    return open ? { w: shortPeninsula.w, h: shortPeninsula.h, spring: 'expand' }
+                : { w: 168, h: 28, spring: 'calm' };
+  }
+  if (scene === 'minimal') {
+    return open ? { w: 168, h: 28, spring: 'calm' } : { w: 36, h: 28, spring: 'calm' };
+  }
+  if (scene === 'alert') {
+    return alertT > 0 ? { w: 260, h: 72, spring: 'bloom' } : { w: 168, h: 28, spring: 'calm' };
+  }
+  if (scene === 'replace') {
+    return { w: 188, h: 28, spring: 'calm' };
+  }
+  if (scene === 'numeric') {
+    return levelHold > 0 ? { w: 210, h: 36, spring: 'pop' } : { w: 168, h: 28, spring: 'calm' };
+  }
+  return { w: 168, h: 28, spring: 'calm' };
+}
+
 function frame(now) {
   const dt = Math.min(0.032, (now - last) / 1000);
   last = now;
   const reduced = reducedBox.checked;
-  let targetW = 168, targetH = 28, spring = 'calm';
-  if (scene === 'ears' && open) { targetW = 420; targetH = 120; spring = 'expand'; }
-  if (scene === 'split') { targetW = 168; spring = 'expand'; }
-  if (scene === 'level') { targetW = 210; targetH = 36; spring = levelHold > 0 ? 'pop' : 'calm'; }
-  if (scene === 'content') { targetW = open ? 280 : 28; targetH = open ? 64 : 28; spring = 'bloom'; }
-  if (reduced && scene !== 'ears') {
+  const { w: targetW, h: targetH, spring } = targets();
+
+  if (reduced) {
     shape.w = targetW; shape.h = targetH; shape.v = 0; shape.hv = 0;
   } else {
     [shape.w, shape.v] = springTo(shape.w, shape.v, targetW, spring, dt);
     [shape.h, shape.hv] = springTo(shape.h, shape.hv, targetH, spring, dt);
   }
-  const progress = targetW === 28 ? 1 : Math.min(1, Math.abs(shape.w - 28) / Math.abs(targetW - 28));
-  const contentTarget = scene === 'content' ? (progress >= 0.4 && open ? 1 : 0) : 1;
-  contentIn += ((reduced ? (open || scene !== 'content' ? 1 : 0) : contentTarget) - contentIn) * Math.min(1, dt / 0.18);
-  const splitTarget = scene === 'split' && open ? 1 : 0;
-  if (reduced) { split = splitTarget; comp.o = splitTarget; comp.v = 0; comp.x = 0; }
-  else {
-    const before = split;
-    [split, comp.v] = springTo(split, comp.v, splitTarget, 'expand', dt);
-    comp.o += ((splitTarget - comp.o) * Math.min(1, dt / (splitTarget ? 0.18 : 0.10)));
-    if (Math.sign(splitTarget - before) !== Math.sign(splitTarget - split) && splitTarget !== before) {
-      /* 半路改目标：速度留在 comp.v 里，不清掉。 */
-    }
+
+  const growing = targetH > 40 || targetW > 200;
+  const progress = growing ? Math.min(1, Math.max(0, (shape.h - 28) / Math.max(1, targetH - 28))) : 1;
+  const contentTarget = growing ? (progress >= 0.4 ? 1 : 0) : 1;
+  const wantContent = reduced ? 1 : contentTarget;
+  contentIn += (wantContent - contentIn) * Math.min(1, dt / 0.16);
+
+  if (scene === 'alert' && alertT > 0) {
+    alertT = Math.max(0, alertT - dt);
   }
-  if (scene === 'level') levelHold = Math.max(0, levelHold - dt);
-  tokenEl.textContent = reduced ? 'reduced' : scenes[scene][2];
+  if (scene === 'numeric') levelHold = Math.max(0, levelHold - dt);
+  if (replaceFlash > 0) replaceFlash = Math.max(0, replaceFlash - dt);
+
+  tokenEl.textContent = reduced ? 'reduced' : (scene === 'alert' && alertT > 0 ? 'bloom' : scenes[scene].token);
+  if (scene === 'ears' || scene === 'peninsula') {
+    tokenEl.textContent = reduced ? 'reduced' : (open ? 'expand' : 'calm');
+  }
+  if (scene === 'numeric' && levelHold > 0) tokenEl.textContent = reduced ? 'reduced' : 'pop';
+
   render();
   requestAnimationFrame(frame);
 }
-document.querySelectorAll('[data-scene]').forEach(button => {
-  button.addEventListener('click', () => {
-    scene = button.dataset.scene;
-    open = scene === 'split' || scene === 'content';
-    document.querySelectorAll('[data-scene]').forEach(other => other.setAttribute('aria-pressed', other === button ? 'true' : 'false'));
-    title.textContent = scenes[scene][0];
-    copy.textContent = scenes[scene][1];
+
+function setScene(name) {
+  scene = name;
+  open = name === 'peninsula';
+  alertT = 0;
+  levelHold = 0;
+  replaceFlash = 0;
+  if (name === 'minimal') open = false;
+  if (name === 'alert') open = false;
+  document.querySelectorAll('[data-scene]').forEach(btn => {
+    btn.setAttribute('aria-pressed', btn.dataset.scene === name ? 'true' : 'false');
   });
-});
-document.getElementById('stage').addEventListener('click', () => {
-  if (scene === 'level') return;
+  applySceneChrome();
+}
+
+function onActivate() {
+  if (scene === 'numeric') return;
+  if (scene === 'replace') {
+    track = (track + 1) % tracks.length;
+    replaceFlash = 0.45;
+    return;
+  }
+  if (scene === 'alert') {
+    if (alertT > 0) { alertT = 0; return; }
+    alertT = 2.6;
+    return;
+  }
   open = !open;
-  if (scene === 'ears') tokenEl.textContent = open ? 'expand' : 'calm';
+}
+
+document.querySelectorAll('[data-scene]').forEach(button => {
+  button.addEventListener('click', () => setScene(button.dataset.scene));
+});
+document.getElementById('stage').addEventListener('click', onActivate);
+document.getElementById('stage').addEventListener('keydown', e => {
+  if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); onActivate(); }
 });
 window.addEventListener('keydown', event => {
-  if (scene !== 'level') return;
+  if (scene !== 'numeric') return;
   if (event.key === 'ArrowUp' || event.key === 'ArrowDown') {
     event.preventDefault();
     level = Math.min(1, Math.max(0, level + (event.key === 'ArrowUp' ? 0.08 : -0.08)));
     levelHold = 1.2;
-    open = true;
   }
 });
+reducedBox.addEventListener('change', applySceneChrome);
+applySceneChrome();
 requestAnimationFrame(frame);
 </script>
 </body>

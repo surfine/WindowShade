@@ -8,7 +8,11 @@ const INK = 'rgba(255,255,255,.92)';
 const DIM = 'rgba(255,255,255,.5)';
 const SW = 0.24; // 线宽，cqw
 
-/** 黑色的岛：上沿贴着屏幕，宽、高、圆角来自同一次模拟。本体不做透明度。里面只放线稿。 */
+/**
+ * 黑色的岛 / 半岛：上沿贴着屏幕（传感器），宽、高、圆角来自同一次模拟。
+ * compact = 岛（两耳）；alert/expanded = 往下鼓（提醒或半岛展开）。无空白额头；不画箭头指刘海。
+ * 本体不做透明度。里面只放线稿。尺寸是影片布局值，见 docs/design-drafts/一颗岛.html。
+ */
 export function Island({ frame, cqw }: { frame: number; cqw: number }) {
   const s = islandAt(frame);
   const layers = layersAt(frame);
@@ -42,7 +46,7 @@ function ears(l: ContentLayer, w: number, left: ReactNode, right: ReactNode) {
 }
 
 function alertBody(l: ContentLayer, icon: ReactNode) {
-  // alert：硬件刘海下面那一条里，左边符号位，右边两行字的位置（只画长短，不写字）。
+  // alert：硬件刘海下面短下鼓（半岛矮档示意）；左边符号、右边两行——相对位置继承紧凑两耳（只画长短，不写字）。
   return (
     <>
       <g opacity={l.first} transform="translate(5 9.7)">{icon}</g>
