@@ -1,6 +1,8 @@
-// 桌布与 App 图标取自这台 Mac（/System/Library/Desktop Pictures/Mac Blue.heic、各 App 的 AppIcon.icns，sips 转成 PNG）。
+// 桌布与 App 图标取自这台 Mac（/System/Library/Desktop Pictures/、各 App 的 AppIcon.icns，sips 转成 PNG）。
+// 两台机器各用自己的桌布：Neo 是 Mac Blue，Air 是 Mac Purple（A16-04：Air 不再借 Neo 的桌布）。
 // 人、耳机、车内、桌面是生成的实拍板。
 import wall from './assets/wall.jpg';
+import wallAir from './assets/wall-air.jpg';
 import face from './assets/face.jpg';
 import desk from './assets/desk.jpg';
 import deskP from './assets/desk_p.jpg';
@@ -49,7 +51,7 @@ import weather from './assets/icons/weather.png';
 import wechat from './assets/icons/wechat.png';
 import xcode from './assets/icons/xcode.png';
 
-export const PLATE = { wall, face, desk, deskP, ear };
+export const PLATE = { wall, wallAir, face, desk, deskP, ear };
 
 export const ICON = {
   appstore, calculator, calendar, chatgpt, claude, clock, contacts, cursor, discord, facetime, finalcutpro, finder, findmy,
