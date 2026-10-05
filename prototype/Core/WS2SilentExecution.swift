@@ -135,6 +135,8 @@ struct WS2SilentOperationLedger: Equatable, Sendable {
         var id: UUID
         var commandID: String
         var targetID: String
+        var targetRevision: UInt64
+        var captureGeneration: UInt64
         var page: UUID
         var line: String
     }
@@ -143,9 +145,13 @@ struct WS2SilentOperationLedger: Equatable, Sendable {
     private(set) var records: [UUID: Record] = [:]
     private(set) var visible: String = ""
 
-    mutating func begin(commandID: String, targetID: String) -> UUID {
+    mutating func begin(commandID: String, targetID: String,
+                        targetRevision: UInt64 = 0, captureGeneration: UInt64 = 0) -> UUID {
         let id = UUID()
-        records[id] = Record(id: id, commandID: commandID, targetID: targetID, page: page, line: "还在等")
+        records[id] = Record(
+            id: id, commandID: commandID, targetID: targetID,
+            targetRevision: targetRevision, captureGeneration: captureGeneration,
+            page: page, line: "还在等")
         visible = "还在等"
         return id
     }

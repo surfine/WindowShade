@@ -311,6 +311,14 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSMenuDelegate {
             self?.scheduleMenuRebuild()
         }
     )
+    /// 静音路径收起异步完成（R03）：FoldCompletion 回执，供宿主读取。
+    private(set) var lastSilentFoldCompletion: (id: CGWindowID, ok: Bool, at: CFTimeInterval)?
+
+    func noteSilentFoldCompletion(id: CGWindowID, ok: Bool) {
+        dispatchPrecondition(condition: .onQueue(.main))
+        lastSilentFoldCompletion = (id, ok, CACurrentMediaTime())
+        wlog("shade: silent fold completion id=\(id) ok=\(ok)")
+    }
 
     func applicationDidFinishLaunching(_ note: Notification) {
         // 新装还是升级：赶在这一次启动写下任何设置之前认一次、存下来（声音迁移每次启动都写，清理收起记录会删键；

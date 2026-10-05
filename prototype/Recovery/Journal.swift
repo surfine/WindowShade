@@ -30,11 +30,9 @@ extension AppDelegate {
     }
 
     // 纯解析：救援后台扫描也会用，必须 nonisolated，不能踩 MainActor 执行期检查。
+    // 有限浮点入口；字段专用解析见 JournalNumeric（R01）。
     nonisolated func journalNumber(_ entry: [String: Any], _ key: String) -> Double? {
-        if let n = entry[key] as? NSNumber { return n.doubleValue }
-        if let d = entry[key] as? Double { return d }
-        if let i = entry[key] as? Int { return Double(i) }
-        return nil
+        JournalNumeric.finite(entry[key])
     }
 
     nonisolated func journalString(_ entry: [String: Any], _ key: String) -> String {
@@ -42,12 +40,17 @@ extension AppDelegate {
     }
 
     nonisolated func journalID(_ entry: [String: Any]) -> CGWindowID? {
-        // Persisted values are untrusted data: do not truncate, clamp, or trap.
-        if let value = entry["id"] as? NSNumber,
-           CFGetTypeID(value) == CFBooleanGetTypeID() { return nil }
-        guard let raw = journalNumber(entry, "id"),
-              let exact = CGWindowID(exactly: raw), exact != 0 else { return nil }
-        return exact
+        JournalNumeric.windowID(entry["id"])
+    }
+
+    nonisolated func journalDisplayID(_ entry: [String: Any]) -> CGDirectDisplayID? {
+        guard entry["displayID"] != nil else { return nil }
+        return JournalNumeric.displayID(entry["displayID"])
+    }
+
+    nonisolated func journalSpaceID(_ entry: [String: Any]) -> UInt64? {
+        guard entry["spaceID"] != nil else { return nil }
+        return JournalNumeric.spaceID(entry["spaceID"])
     }
 
     func pruneShadeJournal(reason: String) {
@@ -55,7 +58,9 @@ extension AppDelegate {
         let entries = shadeJournalEntries()
         let filtered = entries.filter { entry in
             guard journalID(entry) != nil else { return false }
-            let created = journalNumber(entry, "createdAt") ?? journalNumber(entry, "updatedAt") ?? now
+            let created = JournalNumeric.timestamp(entry["createdAt"], now: now)
+                ?? JournalNumeric.timestamp(entry["updatedAt"], now: now)
+                ?? now
             return now - created <= shadeJournalMaxAge
         }
         if filtered.count != entries.count {
@@ -113,11 +118,11 @@ extension AppDelegate {
             "createdAt": existingCreatedAt ?? now,
             "updatedAt": now
         ]
-        if let displayID = sourceDisplayID { entry["displayID"] = Double(displayID) }
-        if let spaceID = sourceSpaceID { entry["spaceID"] = Double(spaceID) }
+        if let displayID = sourceDisplayID { entry["displayID"] = NSNumber(value: displayID) }
+        if let spaceID = sourceSpaceID { entry["spaceID"] = NSNumber(value: spaceID) }
         entries.append(WS2JournalWrite.omitTitle(entry))
         saveShadeJournalEntries(entries)
-        wlog("journal: record \(hide.rawValue) id=\(id) app=\(appName) parked=(\(Int(parked.x)),\(Int(parked.y)))")
+        wlog("journal: record \(hide.rawValue) id=\(id) app=\(appName) parked=\(JournalNumeric.formatPoint(parked))")
     }
 
     // 折叠动作前的 durable intent：在窗口可能被移到屏幕外/设透明之前落盘，
@@ -148,8 +153,8 @@ extension AppDelegate {
             "createdAt": now,
             "updatedAt": now
         ]
-        if let displayID = sourceDisplayID { entry["displayID"] = Double(displayID) }
-        if let spaceID = sourceSpaceID { entry["spaceID"] = Double(spaceID) }
+        if let displayID = sourceDisplayID { entry["displayID"] = NSNumber(value: displayID) }
+        if let spaceID = sourceSpaceID { entry["spaceID"] = NSNumber(value: spaceID) }
         entries.append(WS2JournalWrite.omitTitle(entry))
         guard saveShadeJournalEntries(entries) else { return false }
         wlog("journal: intent id=\(id) app=\(appName) preparing")
@@ -217,13 +222,14 @@ extension AppDelegate {
         entry["updatedAt"] = Date().timeIntervalSince1970
         entries[index] = entry
         saveShadeJournalEntries(entries)
-        wlog("journal: sync id=\(id) restore=(\(Int(pos.x)),\(Int(pos.y)))")
+        wlog("journal: sync id=\(id) restore=\(JournalNumeric.formatPoint(pos))")
     }
 
     nonisolated func journalMatches(_ entry: [String: Any], app: NSRunningApplication,
                                     win: AXUIElement) -> Bool {
-        guard Int(app.processIdentifier) == Int(journalNumber(entry, "pid") ?? -1) else { return false }
-        if let created = journalNumber(entry, "createdAt"),
+        guard let pid = JournalNumeric.finite(entry["pid"]),
+              Int(app.processIdentifier) == Int(pid) else { return false }
+        if let created = JournalNumeric.timestamp(entry["createdAt"]),
            let launched = app.launchDate?.timeIntervalSince1970,
            created < launched - 1 { return false }
         let expectedBundle = journalString(entry, "bundleID")

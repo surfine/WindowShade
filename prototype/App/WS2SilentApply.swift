@@ -155,12 +155,25 @@ enum WS2SilentApply {
             return .waiting(1)
         case .collapseWindow(let id, let revision):
             guard let window, frozen(id, revision, window) else { return notDone() }
+            if gestures.owner.shaded[window.id] != nil {
+                return .alreadySatisfied("已收起")
+            }
+            let foldID = window.id
+            _ = gestures.owner.registerFoldWaiter(id: foldID) { success in
+                MainActor.assumeIsolated {
+                    gestures.owner.noteSilentFoldCompletion(id: foldID, ok: success)
+                }
+            }
             gestures.owner.shade(window.element, window.id)
-            return .unknown(0)
+            return .waiting(1)
         case .expandWindow(let id, let revision):
             guard let window, frozen(id, revision, window) else { return notDone() }
+            guard gestures.owner.shaded[window.id] != nil else {
+                return .alreadySatisfied("已展开")
+            }
             _ = gestures.owner.unshade(window.id)
-            return .unknown(0)
+            // 字典移除不等于原窗已可见；宿主短轮询终态（R03）。
+            return .waiting(1)
         case .unlockNoted:
             return .unavailable("不解锁")
         case .fillRefused:
@@ -270,8 +283,15 @@ enum WS2SilentApply {
             guard same else { return notDone() }
             let already = owner.pinnedPreviewController.isPreviewing(id: window.id)
             if !already {
+                let pinID = window.id
                 owner.pinnedPreviewController.startPreview(
-                    targetWindowID: window.id, pid: window.pid, axWindow: window.element) { _ in }
+                    targetWindowID: window.id, pid: window.pid, axWindow: window.element
+                ) { result in
+                    // R03：不得丢掉异步完成；成败记入置顶控制器供宿主/探针读取。
+                    MainActor.assumeIsolated {
+                        owner.pinnedPreviewController.noteSilentCompletion(id: pinID, result: result)
+                    }
+                }
             }
             return WS2SilentEffectJudge.pin(alreadyPreviewing: already, started: !already)
         case .slideOver:
