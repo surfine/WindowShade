@@ -368,8 +368,7 @@ final class DuoSettingsWindow: NSWindowController, NSWindowDelegate, NSTableView
     if !NSWorkspace.shared.accessibilityDisplayShouldReduceMotion {
       page.alphaValue = 0
       NSAnimationContext.runAnimationGroup { context in
-        context.duration = 0.15
-        context.timingFunction = CAMediaTimingFunction(name: .easeOut)
+        context.duration = Motion.fadeDuration
         page.animator().alphaValue = 1
       }
     } else {

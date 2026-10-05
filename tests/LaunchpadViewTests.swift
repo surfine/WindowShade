@@ -2,7 +2,6 @@
 import Cocoa
 
 func wlog(_ message: String) { print(message) }
-enum Motion { static var reduced = false }
 
 @main
 struct LaunchpadViewTests {

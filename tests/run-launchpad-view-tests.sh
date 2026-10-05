@@ -8,6 +8,7 @@ if [ -f "$(xcrun --show-sdk-path --sdk macosx)/System/Library/Frameworks/AppKit.
   GLASS_DEFINE=(-DWINDOWSHADE_SDK_HAS_GLASS)
 fi
 swiftc ${GLASS_DEFINE[@]+"${GLASS_DEFINE[@]}"} prototype/Core/LaunchpadModel.swift prototype/Core/NotchActivities.swift \
+  prototype/Core/FlickMotion.swift tests/LaunchpadMotionStub.swift \
   prototype/App/Launchpad.swift prototype/App/LaunchpadBackdrop.swift prototype/App/LaunchpadView.swift \
   prototype/App/LaunchpadFolders.swift prototype/App/LaunchpadLibrary.swift prototype/App/LaunchpadArtwork.swift prototype/App/LaunchpadToday.swift prototype/App/LaunchpadActivities.swift prototype/App/NotchActivitySymbol.swift prototype/App/LaunchpadOpenWith.swift \
   tests/LaunchpadViewTests.swift -o .build/launchpad-tests/view

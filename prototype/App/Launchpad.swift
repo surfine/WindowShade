@@ -431,7 +431,7 @@ final class LaunchpadCell {
             root.addSublayer(circle)
             badge = circle
             if animated {
-                let grow = CASpringAnimation(perceptualDuration: 0.3, bounce: 0.2)
+                let grow = Motion.spring(.pop, keyPath: "transform.scale")
                 grow.keyPath = "transform.scale"
                 grow.fromValue = 0.2
                 grow.toValue = 1
@@ -442,7 +442,7 @@ final class LaunchpadCell {
             badge = nil
             guard animated else { circle.removeFromSuperlayer(); return }
             CATransaction.begin()
-            CATransaction.setAnimationDuration(0.16)
+            CATransaction.setAnimationDuration(Motion.fadeDuration)
             CATransaction.setCompletionBlock { circle.removeFromSuperlayer() }
             circle.transform = CATransform3DMakeScale(0.2, 0.2, 1)
             circle.opacity = 0
@@ -694,7 +694,7 @@ final class LaunchpadPager {
         strip.removeAnimation(forKey: "page")
         strip.transform = CATransform3DMakeTranslation(to, 0, 0)
         if animated, !reduced, abs(to - from) > 0.5 {
-            let spring = CASpringAnimation(perceptualDuration: 0.38, bounce: 0)
+            let spring = Motion.spring(.settle, keyPath: "transform.translation.x")
             spring.keyPath = "transform.translation.x"
             spring.fromValue = from
             spring.toValue = to

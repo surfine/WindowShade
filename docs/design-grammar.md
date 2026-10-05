@@ -225,7 +225,7 @@
 - **番茄钟展开占的是「你主动打开的」。** [WS2AppRuntime.swift](../prototype/App/WS2AppRuntime.swift) 的 `showFocusStatus` 用 `island.show(..., ownerID: "pomodoro")`，层是 `.opened`。计时本身应留在持续活动；展开的卡片才是前景。现在这张卡片和那一排、启动台、窗口浏览抢同一个槽。被更高的层打断时和那一排一样挂起，让出后不重播进场。
 - **主人表把很多表面压成同一层。** `NotchLeaseHub.Owner` 里那一排、启动台、窗口浏览、番茄钟、会话、静音操作都是 `.opened`，彼此只能整页换掉。指挥可以是 `.interaction` 或 `.opened`。刷脸解锁、卡住时的提示、离开就锁的倒数、CarPlay 没有各自的主人，仍走旧的刘海路径。
 - **换页会先擦掉下层画面。** `NotchPanel.setInteraction` 清掉提醒计时、落点和悬停，再换上新视图。这是换页，不是挂起。明确从一页换到另一页仍不恢复。
-- **启动台这两处位移已改成 `pop`。** 自绘玻璃 `LaunchpadGlass` 仍留在令牌 §6-8。
+- **启动台位移已收口令牌（§6-9）。** 自绘玻璃 `LaunchpadGlass` 仍留在令牌 §6-8，这一轮不换材质。
 
 ## 对照账
 
@@ -241,6 +241,8 @@
 | 提醒的两套时钟 | 全景稿「约 4 秒」，协调器 `remind` 已写成 4 秒 | 面板 `alert` 默认 2.6 秒，即 `alert.hold` | 并陈。这一轮不改面板，也不改协调器 |
 | 窗口数的点 | [一颗岛](design-drafts/一颗岛.html) 右下 6 点，不跟两耳抢字 | 未单列 | 照稿：6 点靠右下，填色用 `controlAccentColor`。旧程式是正中 4 点 |
 | 方便遮一下 | [从锁屏到窗口](design-drafts/从锁屏到窗口.html) 是放行/解锁叙事 | 未单列「防窥遮罩」令牌 | 静音 `privacy.cover` 用逐屏不透明层（`WS2SilentPrivacyCoverController`），Esc 可撤；文案与验收不得写成系统锁屏。验证后显示、离开锁屏仍待独立准入 |
-| Glance / Fold 位移 | 文法：位移写弹簧令牌名，不用贝塞尔 | §4.6 `calm` / `settle` / `pull` / `reduced` | **已收（P0 2026-10-05）**：`GlancePanel` 卷下/长大/缩回走令牌；`FoldTransition` 合盖进度改 `settle`/`calm` 解析弹簧。Launchpad / SlideOver / Welcome / 胶囊五态仍未收 |
+| Glance / Fold 位移 | 文法：位移写弹簧令牌名，不用贝塞尔 | §4.6 `calm` / `settle` / `pull` / `reduced` | **已收（P0 2026-10-05）**：`GlancePanel` 卷下/长大/缩回走令牌；`FoldTransition` 合盖进度改 `settle`/`calm` 解析弹簧 |
+| SlideOver / Welcome / Launchpad 位移 | 文法：不用贝塞尔；§6-9 启动台引用令牌 | `glide` / `settle` / `expand` / `pull` / `flyOut` / `pop` / `catchDrop` | **已收（2026-10-05）**：侧拉平移、欢迎页图标滑动、启动台弹簧与贝塞尔已映射令牌。`pop` 上限 0.25（原 bounce 0.3 那格） |
+| 其余 App 淡入淡出 / 去掉命名曲线 | 文法：只淡走 `fadeDuration`；位移写令牌名 | `fadeDuration`（`calm` / `reducedNotch`） | **已收（2026-10-05）**：Chrome/DropHint、Overlay、缩略图、刘海快照、分屏把手、画中画、卷帘条、手势 HUD、窗口浏览去掉 easeIn/easeOut。启动台编辑晃动、番茄计时线性、焦点拉出 0.065 仍不是弹簧。胶囊五态、`island.hug`、双时钟、Launchpad 玻璃仍未收 |
 
 `pop` 那一行核对后与令牌一致。ζ / bounce 那一行是同组数的两种写法，不是两套手感。短暂提醒停多久、私有接口何时读、减少动态效果写 0.18 秒还是写 `reduced`、面板 2.6 秒还是协调器 4 秒，这四处仍待 Aaron 点头。点头之前不改令牌，也不改这两处时钟。

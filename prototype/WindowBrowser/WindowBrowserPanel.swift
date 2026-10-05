@@ -149,7 +149,6 @@ final class WindowBrowserPanel: NSPanel {
         }
         NSAnimationContext.runAnimationGroup({ context in
             context.duration = duration
-            context.timingFunction = CAMediaTimingFunction(name: .easeIn)
             animator().alphaValue = 0
         }, completionHandler: completion)
     }
@@ -165,7 +164,6 @@ final class WindowBrowserPanel: NSPanel {
         NSAnimationContext.runAnimationGroup { context in
             context.duration = WindowBrowserAnimationPolicy.duration(
                 animationParams.appearDuration, reduceMotion: reduceMotion)
-            context.timingFunction = CAMediaTimingFunction(name: .easeOut)
             animator().alphaValue = 1
         }
     }
@@ -184,7 +182,6 @@ final class WindowBrowserPanel: NSPanel {
         // 收尾时再对齐一次保证收敛。
         NSAnimationContext.runAnimationGroup({ context in
             context.duration = animationParams.panelResizeDuration
-            context.timingFunction = CAMediaTimingFunction(name: .easeInEaseOut)
             animator().setFrame(frame, display: true)
         }, completionHandler: { [weak self] in
             guard let self, self.resizeGeneration == token else { return }

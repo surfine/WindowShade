@@ -193,8 +193,8 @@ final class LaunchpadLibraryPage {
         }
         guard layer !== hovered else { return }
         CATransaction.begin()
-        CATransaction.setAnimationDuration(reduced ? 0 : 0.22)
-        CATransaction.setAnimationTimingFunction(CAMediaTimingFunction(controlPoints: 0.2, 0.9, 0.3, 1))
+        CATransaction.setAnimationDuration(reduced ? 0 : Motion.Spring.expand.response)
+        CATransaction.setAnimationTimingFunction(nil)
         if let old = hovered {
             old.transform = CATransform3DIdentity
             old.shadowOpacity = 0
@@ -505,11 +505,11 @@ extension LaunchpadView {
             list.isHidden = false
             showVeil(true)
             NSAnimationContext.runAnimationGroup { context in
-                context.duration = reduced ? 0.12 : 0.24
+                context.duration = Motion.fadeDuration
                 list.animator().alphaValue = 1
             }
             CATransaction.begin()
-            CATransaction.setAnimationDuration(reduced ? 0.12 : 0.24)
+            CATransaction.setAnimationDuration(Motion.fadeDuration)
             library.root.opacity = 0
             CATransaction.commit()
         } else {
@@ -518,7 +518,7 @@ extension LaunchpadView {
             if !query.isEmpty { field.stringValue = "" }
             showVeil(false)
             NSAnimationContext.runAnimationGroup({ context in
-                context.duration = reduced ? 0.12 : 0.2
+                context.duration = Motion.fadeDuration
                 list.animator().alphaValue = 0
             }, completionHandler: { [weak self] in
                 MainActor.assumeIsolated {
@@ -527,7 +527,7 @@ extension LaunchpadView {
                 }
             })
             CATransaction.begin()
-            CATransaction.setAnimationDuration(reduced ? 0.12 : 0.24)
+            CATransaction.setAnimationDuration(Motion.fadeDuration)
             library.root.opacity = 1
             CATransaction.commit()
         }

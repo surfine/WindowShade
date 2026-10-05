@@ -297,7 +297,7 @@ final class LaunchpadView: NSView, NSTextFieldDelegate {
 
     func setWallpaper(_ image: CGImage) {
         CATransaction.begin()
-        CATransaction.setAnimationDuration(0.2)
+        CATransaction.setAnimationDuration(Motion.Spring.settle.response)
         wall.contents = image
         CATransaction.commit()
     }
@@ -449,7 +449,7 @@ final class LaunchpadView: NSView, NSTextFieldDelegate {
             if reorder?.key == key { continue }
             let target = iconCenter(of: index)
             if animated, !reduced, cell.root.position != target {
-                let move = CASpringAnimation(perceptualDuration: 0.34, bounce: 0.12)
+                let move = Motion.spring(.expand, keyPath: "position")
                 move.keyPath = "position"
                 move.fromValue = NSValue(point: (cell.root.presentation() ?? cell.root).position)
                 move.toValue = NSValue(point: target)
@@ -552,7 +552,7 @@ final class LaunchpadView: NSView, NSTextFieldDelegate {
             .font: field.font!, .foregroundColor: pillAtTop ? NSColor.secondaryLabelColor : NSColor.white.withAlphaComponent(0.65)])
         if animated, !reduced {
             NSAnimationContext.runAnimationGroup { context in
-                context.duration = 0.3
+                context.duration = Motion.Spring.settle.response
                 pill.animator().frame = frame
                 glyph.animator().frame = glyphFrame
                 field.animator().frame = fieldFrame
@@ -715,8 +715,8 @@ final class LaunchpadView: NSView, NSTextFieldDelegate {
     /// 停在上面的图标浮起来：大一点、底下有影子（iPad 接触控板时的样子），其余落回去。
     func applyHover() {
         CATransaction.begin()
-        CATransaction.setAnimationDuration(reduced ? 0 : 0.22)
-        CATransaction.setAnimationTimingFunction(CAMediaTimingFunction(controlPoints: 0.2, 0.9, 0.3, 1))
+        CATransaction.setAnimationDuration(reduced ? 0 : Motion.Spring.expand.response)
+        CATransaction.setAnimationTimingFunction(nil)
         for (key, cell) in cells where reorder?.key != key && reorder?.merging.map({ LaunchpadCell.key(tiles[$0]) }) != key {
             let lifted = key == hovered
             cell.icon.transform = lifted ? CATransform3DMakeScale(1.08, 1.08, 1) : CATransform3DIdentity
@@ -1039,7 +1039,7 @@ final class LaunchpadView: NSView, NSTextFieldDelegate {
         done.alphaValue = 0
         done.isHidden = false
         NSAnimationContext.runAnimationGroup { context in
-            context.duration = 0.2
+            context.duration = Motion.fadeDuration
             done.animator().alphaValue = 1
         }
     }
@@ -1054,7 +1054,7 @@ final class LaunchpadView: NSView, NSTextFieldDelegate {
         }
         folder?.setJiggling(false, view: self)
         NSAnimationContext.runAnimationGroup({ context in
-            context.duration = 0.18
+            context.duration = Motion.fadeDuration
             done.animator().alphaValue = 0
         }, completionHandler: { [weak self] in
             MainActor.assumeIsolated {
@@ -1100,7 +1100,7 @@ final class LaunchpadView: NSView, NSTextFieldDelegate {
         cell.root.zPosition = 10
         cell.showBadge(false, animated: !reduced)
         CATransaction.begin()
-        CATransaction.setAnimationDuration(0.2)
+        CATransaction.setAnimationDuration(Motion.Spring.expand.response)
         cell.icon.transform = CATransform3DMakeScale(1.14, 1.14, 1)
         cell.icon.shadowOpacity = 0.35
         cell.root.opacity = 0.92
@@ -1234,7 +1234,7 @@ final class LaunchpadView: NSView, NSTextFieldDelegate {
         cell.root.zPosition = 0
         CATransaction.commit()
         if !reduced {
-            let land = CASpringAnimation(perceptualDuration: 0.34, bounce: 0.15)
+            let land = Motion.spring(.glide, keyPath: "position")
             land.keyPath = "position"
             land.fromValue = NSValue(point: from)
             land.toValue = NSValue(point: target)
@@ -1242,7 +1242,7 @@ final class LaunchpadView: NSView, NSTextFieldDelegate {
             cell.root.add(land, forKey: "slot")
         }
         CATransaction.begin()
-        CATransaction.setAnimationDuration(0.2)
+        CATransaction.setAnimationDuration(Motion.Spring.expand.response)
         cell.icon.transform = CATransform3DIdentity
         cell.icon.shadowOpacity = 0
         cell.root.opacity = 1
@@ -1266,7 +1266,7 @@ final class LaunchpadView: NSView, NSTextFieldDelegate {
 
     func vanish(_ layer: CALayer) {
         CATransaction.begin()
-        CATransaction.setAnimationDuration(reduced ? 0.1 : 0.22)
+        CATransaction.setAnimationDuration(reduced ? Motion.Spring.reducedNotch.response : Motion.Spring.flyOut.response)
         CATransaction.setCompletionBlock { layer.removeFromSuperlayer() }
         if !reduced { layer.transform = CATransform3DMakeScale(0.2, 0.2, 1) }
         layer.opacity = 0
@@ -1306,7 +1306,7 @@ final class LaunchpadView: NSView, NSTextFieldDelegate {
         source?.opacity = 0.2
         // 主屏幕让开：图标、壁纸、打开着的文件夹都淡掉，露出后面的桌面和窗口。
         CATransaction.begin()
-        CATransaction.setAnimationDuration(reduced ? 0.1 : 0.24)
+        CATransaction.setAnimationDuration(reduced ? Motion.Spring.reducedNotch.response : Motion.Spring.settle.response)
         content.opacity = 0
         wall.opacity = 0
         dim.opacity = 0.18
@@ -1314,7 +1314,7 @@ final class LaunchpadView: NSView, NSTextFieldDelegate {
         folder?.setVisible(false)
         CATransaction.commit()
         NSAnimationContext.runAnimationGroup { context in
-            context.duration = reduced ? 0.1 : 0.24
+            context.duration = reduced ? Motion.Spring.reducedNotch.response : Motion.Spring.settle.response
             pill.animator().alphaValue = 0
             list.animator().alphaValue = 0
         }
@@ -1348,8 +1348,8 @@ final class LaunchpadView: NSView, NSTextFieldDelegate {
         case .slideOver: size = CGSize(width: 110, height: 230)
         }
         CATransaction.begin()
-        CATransaction.setAnimationDuration(reduced ? 0 : 0.32)
-        CATransaction.setAnimationTimingFunction(CAMediaTimingFunction(controlPoints: 0.2, 0.9, 0.25, 1.05))
+        CATransaction.setAnimationDuration(reduced ? 0 : Motion.Spring.expand.response)
+        CATransaction.setAnimationTimingFunction(nil)
         plate.bounds = CGRect(origin: .zero, size: size)
         plate.cornerRadius = 18
         plate.backgroundColor = NSColor.white.withAlphaComponent(0.2).cgColor
@@ -1368,7 +1368,7 @@ final class LaunchpadView: NSView, NSTextFieldDelegate {
             var on = false
             if case .slideOver(let l) = zone { on = l == left }
             CATransaction.begin()
-            CATransaction.setAnimationDuration(0.2)
+            CATransaction.setAnimationDuration(Motion.fadeDuration)
             tab.opacity = on ? 1 : 0.35
             CATransaction.commit()
         }
@@ -1402,8 +1402,8 @@ final class LaunchpadView: NSView, NSTextFieldDelegate {
             title = ""
         }
         CATransaction.begin()
-        CATransaction.setAnimationDuration(reduced ? 0 : 0.28)
-        CATransaction.setAnimationTimingFunction(CAMediaTimingFunction(controlPoints: 0.2, 0.9, 0.3, 1))
+        CATransaction.setAnimationDuration(reduced ? 0 : Motion.Spring.settle.response)
+        CATransaction.setAnimationTimingFunction(nil)
         if let rect {
             zoneShape.path = CGPath(roundedRect: rect, cornerWidth: 18, cornerHeight: 18, transform: nil)
             zoneShape.opacity = 1
@@ -1426,7 +1426,7 @@ final class LaunchpadView: NSView, NSTextFieldDelegate {
         // 拖着的那块落进标出的地方，淡掉；主屏幕跟着收起。
         if let plate = platter {
             CATransaction.begin()
-            CATransaction.setAnimationDuration(reduced ? 0.08 : 0.24)
+            CATransaction.setAnimationDuration(reduced ? Motion.Spring.reducedNotch.response : Motion.Spring.glide.response)
             if zone != .open, let path = zoneShape.path {
                 let target = path.boundingBox
                 plate.position = CGPoint(x: target.midX, y: target.midY)
@@ -1628,11 +1628,11 @@ final class LaunchpadView: NSView, NSTextFieldDelegate {
         let fade = CABasicAnimation(keyPath: "opacity")
         fade.fromValue = 0
         fade.toValue = 1
-        fade.duration = reduced ? 0.15 : (notchRect != nil ? 0.12 : 0.22)
+        fade.duration = reduced ? Motion.Spring.reducedNotch.response : (notchRect != nil ? Motion.Spring.reducedNotch.response : Motion.Spring.expand.response)
         layer?.add(fade, forKey: "in")
         if !reduced, let notch = notchRect { revealFromNotch(notch) }
         if !reduced {
-            let wallIn = CASpringAnimation(perceptualDuration: 0.5, bounce: 0)
+            let wallIn = Motion.spring(.settle, keyPath: "transform.scale")
             wallIn.keyPath = "transform.scale"
             wallIn.fromValue = 1.06
             wallIn.toValue = 1
@@ -1654,12 +1654,12 @@ final class LaunchpadView: NSView, NSTextFieldDelegate {
                 } else {
                     from = CGPoint(x: at.x + (x - middle.x) * 0.16, y: at.y + (at.y - middle.y) * 0.16)
                 }
-                let move = CASpringAnimation(perceptualDuration: 0.48, bounce: 0.14)
+                let move = Motion.spring(.pull, keyPath: "position")
                 move.keyPath = "position"
                 move.fromValue = NSValue(point: from)
                 move.toValue = NSValue(point: at)
                 move.duration = move.settlingDuration
-                let grow = CASpringAnimation(perceptualDuration: 0.48, bounce: 0.14)
+                let grow = Motion.spring(.pull, keyPath: "transform.scale")
                 grow.keyPath = "transform.scale"
                 grow.fromValue = source == nil ? 1.18 : 0.82
                 grow.toValue = 1
@@ -1693,11 +1693,11 @@ final class LaunchpadView: NSView, NSTextFieldDelegate {
         folder?.dragging = nil
         press = nil
         let backToNotch = intoNotch && !launching && notchRect != nil && !reduced
-        let duration: TimeInterval = reduced ? 0.12 : (launching ? 0.3 : backToNotch ? 0.28 : 0.22)
+        let duration: TimeInterval = reduced ? Motion.Spring.reducedNotch.response : (launching ? Motion.Spring.settle.response : backToNotch ? Motion.Spring.calm.response : Motion.Spring.expand.response)
         if backToNotch, let notch = notchRect { closeIntoNotch(notch, duration: duration) }
         CATransaction.begin()
         CATransaction.setAnimationDuration(duration)
-        CATransaction.setAnimationTimingFunction(CAMediaTimingFunction(controlPoints: 0.3, 0, 0.3, 1))
+        CATransaction.setAnimationTimingFunction(nil)
         layer?.opacity = 0
         if !reduced {
             let middle = CGPoint(x: bounds.midX, y: bounds.midY)

@@ -142,7 +142,7 @@ final class NotchActivityView: NSView {
         layer.removeAllAnimations()
         position(targetX)
         if !Motion.reduced, abs(from - targetX) > 0.1 {
-            let animation = CASpringAnimation(perceptualDuration: 0.34, bounce: 0.05)
+            let animation = CASpringAnimation(perceptualDuration: Motion.Spring.expand.response, bounce: Motion.Spring.expand.bounce)
             animation.keyPath = "transform.translation.x"; animation.isAdditive = true
             animation.fromValue = from - targetX; animation.toValue = 0
             animation.initialVelocity = max(-8, min(8, -velocity / (from - targetX)))

@@ -120,8 +120,7 @@ final class PinnedPreviewContentView: NSView {
 
     private func setTitleVisible(_ visible: Bool) {
         NSAnimationContext.runAnimationGroup { context in
-            context.duration = NSWorkspace.shared.accessibilityDisplayShouldReduceMotion ? 0 : 0.15
-            context.timingFunction = CAMediaTimingFunction(name: .easeOut)
+            context.duration = Motion.fadeDuration
             titleBar.animator().alphaValue = visible ? 1 : 0
         }
     }

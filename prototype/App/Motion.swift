@@ -16,6 +16,19 @@ enum Motion {
     /// 设计系统 §4.6 的弹簧令牌。定义在 `Core/FlickMotion.swift` 的 `MotionSpring`（只编译 FlickMotion
     /// 的单测也要能用），这里只是给 App 里的调用点留一个和文档一致的名字。
     typealias Spring = MotionSpring
+
+    /// 只淡、不挪位置：减少动态效果用 `reducedNotch`，其余用 `calm` 的时长。
+    static var fadeDuration: CFTimeInterval {
+        reduced ? Spring.reducedNotch.response : Spring.calm.response
+    }
+
+    /// 位移动画只从令牌长出来，调用点写令牌名。
+    static func spring(_ token: Spring, keyPath: String) -> CASpringAnimation {
+        let animation = CASpringAnimation(perceptualDuration: token.response, bounce: token.bounce)
+        animation.keyPath = keyPath
+        animation.duration = animation.settlingDuration
+        return animation
+    }
 }
 
 extension FlickGlidePath {

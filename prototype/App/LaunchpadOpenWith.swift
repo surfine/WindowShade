@@ -83,7 +83,7 @@ extension LaunchpadView {
     /// 能打开的照常，打不开的淡下去；文件夹里只要有一个能打开就亮着。App 资料库不淡（点暗的那个会摇头）。
     func applyOpenable() {
         CATransaction.begin()
-        CATransaction.setAnimationDuration(reduced ? 0 : 0.2)
+        CATransaction.setAnimationDuration(reduced ? 0 : Motion.fadeDuration)
         for cell in cells.values { applyOpenable(to: cell) }
         if let folder {
             for (index, app) in folder.apps.enumerated() {
@@ -108,7 +108,7 @@ extension LaunchpadView {
         guard let layer, !reduced else { return }
         let shake = CAKeyframeAnimation(keyPath: "transform.translation.x")
         shake.values = [0, -9, 8, -6, 4, -2, 0]
-        shake.duration = 0.36
+        shake.duration = Motion.Spring.pull.response
         shake.isAdditive = true
         layer.add(shake, forKey: "refuse")
     }
@@ -123,7 +123,7 @@ extension LaunchpadView {
         let start = Self.notchPath(notch)
         let end = Self.wholePath(root.bounds)
         mask.path = end
-        let grow = CASpringAnimation(perceptualDuration: 0.46, bounce: 0)
+        let grow = Motion.spring(.settle, keyPath: "path")
         grow.keyPath = "path"
         grow.fromValue = start
         grow.toValue = end
@@ -137,16 +137,15 @@ extension LaunchpadView {
 
     /// 倒过来：整块画面收回刘海那一小块。
     func closeIntoNotch(_ notch: CGRect, duration: TimeInterval) {
+        _ = duration
         guard let root = layer else { return }
         let mask = CAShapeLayer()
         mask.frame = root.bounds
         let end = Self.notchPath(notch)
         mask.path = end
-        let shrink = CABasicAnimation(keyPath: "path")
+        let shrink = Motion.spring(.calm, keyPath: "path")
         shrink.fromValue = Self.wholePath(root.bounds)
         shrink.toValue = end
-        shrink.duration = duration
-        shrink.timingFunction = CAMediaTimingFunction(controlPoints: 0.4, 0, 0.2, 1)
         mask.add(shrink, forKey: "close")
         root.mask = mask
     }

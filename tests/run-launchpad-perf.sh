@@ -5,6 +5,7 @@ set -euo pipefail
 cd "$(dirname "$0")/.."
 mkdir -p .build/launchpad-perf
 swiftc -DWINDOWSHADE_SDK_HAS_GLASS prototype/Core/LaunchpadModel.swift prototype/Core/NotchActivities.swift \
+ prototype/Core/FlickMotion.swift tests/LaunchpadMotionStub.swift \
  prototype/App/Launchpad.swift prototype/App/LaunchpadBackdrop.swift prototype/App/LaunchpadView.swift \
  prototype/App/LaunchpadFolders.swift prototype/App/LaunchpadLibrary.swift prototype/App/LaunchpadArtwork.swift \
  prototype/App/LaunchpadToday.swift prototype/App/LaunchpadActivities.swift prototype/App/NotchActivitySymbol.swift \

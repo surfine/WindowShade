@@ -435,8 +435,7 @@ final class WS2SilentPageView: NSView, WS2LeaseContent {
             return
         }
         NSAnimationContext.runAnimationGroup { context in
-            context.duration = 0.22
-            context.timingFunction = CAMediaTimingFunction(name: .easeOut)
+            context.duration = Motion.fadeDuration
             confirm.animator().alphaValue = show
         }
     }

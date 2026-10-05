@@ -910,7 +910,7 @@ final class SlideOverTab {
         panel.alphaValue = 0
         panel.orderFrontRegardless()
         NSAnimationContext.runAnimationGroup { context in
-            context.duration = 0.18
+            context.duration = Motion.fadeDuration
             panel.animator().alphaValue = 1
         }
     }
@@ -1088,7 +1088,7 @@ final class SlideOverMirror {
         content.setShift(offscreenShift)
         panel.orderFrontRegardless()
         // 先滑进来（背景和 App 图标垫着），画面到了就接上：不让人等开流的那一两百毫秒。
-        if !interactive { content.animateShift(to: 0, velocity: 0, bounce: 0.12, done: nil) }
+        if !interactive { content.animateShift(to: 0, velocity: 0, token: .glide, done: nil) }
         let id = self.id
         let screenID = (screen.deviceDescription[NSDeviceDescriptionKey("NSScreenNumber")] as? NSNumber)?.uint32Value
         Task { @MainActor [weak self] in
@@ -1124,7 +1124,7 @@ final class SlideOverMirror {
 
     /// 带着速度滑回屏幕边外，然后收掉。velocity：往边外的速度（点/秒）。
     func slideAway(velocity: CGFloat, done: @escaping () -> Void) {
-        content.animateShift(to: offscreenShift, velocity: velocity, bounce: 0, done: { [weak self] in
+        content.animateShift(to: offscreenShift, velocity: velocity, token: .settle, done: { [weak self] in
             self?.close()
             done()
         })
@@ -1166,7 +1166,7 @@ final class SlideOverMirror {
         if projected > docked.width / 2 {
             onDismiss?(max(speed, 0))
         } else {
-            content.animateShift(to: 0, velocity: speed, bounce: 0.12, done: nil)
+            content.animateShift(to: 0, velocity: speed, token: .glide, done: nil)
         }
     }
 }
@@ -1228,7 +1228,7 @@ final class SlideOverMirrorView: NSView {
             let fade = CABasicAnimation(keyPath: "opacity")
             fade.fromValue = 1
             fade.toValue = 0
-            fade.duration = 0.3
+            fade.duration = Motion.fadeDuration
             self?.hintLayer.opacity = 0
             self?.hintLayer.add(fade, forKey: "fade")
         }
@@ -1267,21 +1267,20 @@ final class SlideOverMirrorView: NSView {
         CATransaction.commit()
     }
 
-    /// 弹簧平移到 value；velocity：往边外的速度（点/秒）。
-    func animateShift(to value: CGFloat, velocity: CGFloat, bounce: CGFloat, done: (() -> Void)?) {
+    /// 弹簧平移到 value；velocity：往边外的速度（点/秒）。滑回用 `glide`，收掉用 `settle`。
+    func animateShift(to value: CGFloat, velocity: CGFloat, token: MotionSpring, done: (() -> Void)?) {
         let from = currentShift()
         let distance = value - from
         CATransaction.begin()
         CATransaction.setDisableActions(true)
         CATransaction.setCompletionBlock(done)
         let reduced = Motion.reduced
-        let spring = CASpringAnimation(perceptualDuration: reduced ? 0.3 : 0.42, bounce: reduced ? 0 : bounce)
-        spring.keyPath = "transform.translation.x"
+        let token = reduced ? Motion.Spring.reducedWindow : token
+        let spring = Motion.spring(token, keyPath: "transform.translation.x")
         let sign: CGFloat = side == .right ? 1 : -1
         spring.fromValue = from * sign
         spring.toValue = value * sign
         spring.initialVelocity = !reduced && abs(distance) > 1 ? max(-40, min(40, velocity / distance)) : 0
-        spring.duration = spring.settlingDuration
         shift = value
         holder.setValue(value * sign, forKeyPath: "transform.translation.x")
         holder.add(spring, forKey: "slide")
