@@ -279,6 +279,8 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSMenuDelegate {
                                                            rebuildMenuAfterInstall: false)
     /// 看一眼：指针停在卷帘条上，窗口原样出现，移开就收回。
     lazy var glance = MainActor.assumeIsolated { GlanceController(owner: self) }
+    /// 静音「方便遮一下」：逐屏不透明遮罩，观察可见才回报完成。
+    lazy var silentPrivacyCover = MainActor.assumeIsolated { WS2SilentPrivacyCoverController() }
     /// 带到每张桌面：窗口留在自己的桌面，别的桌面上看得到它的卷帘条。
     lazy var carry = MainActor.assumeIsolated { CarryController(owner: self) }
     lazy var slideOver = MainActor.assumeIsolated { SlideOverController(owner: self) }
@@ -833,6 +835,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSMenuDelegate {
             self.pinnedPreviewFocusMonitor = nil
         }
         pinnedPreviewController.stopAllPreviews(reason: "terminate")
+        MainActor.assumeIsolated { silentPrivacyCover.clear() }
         eventTapReenableWorkItem?.cancel()
         eventTapReenableWorkItem = nil
         // 退出前还原 Dock 偏好：同步等在途子进程排空，再按持久化 session 键

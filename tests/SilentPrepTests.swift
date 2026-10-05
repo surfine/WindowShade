@@ -815,16 +815,18 @@ struct SilentPrepTests {
                "cover without a scope does not say it is covered")
         expect(!WS2SilentCover.cover(&freshCover) && !freshCover.covered,
                "covering without an overlay does not mark the screen covered")
-        expect(!WS2SilentCover.cover(&freshCover, overlayCreated: true) && !freshCover.covered,
-               "an overlay flag is not a cover receipt")
-        freshCover.scopeSelected = true
-        expect(WS2SilentReadout.sentence("privacy.cover", cover: freshCover) == "尚未遮住"
-               && WS2SilentReadout.sentence("scene.conversation", cover: freshCover) == "尚未遮住"
-               && !freshCover.revealed,
+        expect(WS2SilentCover.cover(&freshCover, overlayCreated: true) && freshCover.covered
+               && WS2SilentReadout.sentence("privacy.cover", cover: freshCover) == "已遮住",
+               "an observed overlay marks the screen covered")
+        var scopedOnly = WS2SilentCover.State()
+        scopedOnly.scopeSelected = true
+        expect(WS2SilentReadout.sentence("privacy.cover", cover: scopedOnly) == "尚未遮住"
+               && WS2SilentReadout.sentence("scene.conversation", cover: scopedOnly) == "尚未遮住"
+               && !scopedOnly.revealed,
                "a selected scope without a protector stays 尚未遮住")
-        expect(!WS2SilentCover.cover(&freshCover, overlayCreated: true)
-               && WS2SilentReadout.sentence("privacy.cover", cover: freshCover) == "尚未遮住",
-               "covering again still does not say 已遮住")
+        expect(WS2SilentCover.cover(&scopedOnly, overlayCreated: true)
+               && WS2SilentReadout.sentence("privacy.cover", cover: scopedOnly) == "已遮住",
+               "covering with an observed overlay says 已遮住")
         expect(WS2SilentReadout.sentence("input.pause", hooksPaused: true) == "输入已暂停"
                && WS2SilentReadout.sentence("input.pause", hooksPaused: false) == "输入还在",
                "paused input says it is paused and does not clear preferences")
@@ -1014,9 +1016,9 @@ struct SilentPrepTests {
                "a folder that opened does not say nothing was chosen")
         var cover = WS2SilentCover.State()
         expect(!WS2SilentCover.cover(&cover) && !cover.covered, "covering without an overlay stays uncovered")
-        expect(!WS2SilentCover.cover(&cover, overlayCreated: true) && !cover.covered && !cover.revealed,
-               "an overlay flag does not mark the screen covered")
-        expect(!WS2SilentCover.reveal(&cover) && !cover.covered && !cover.revealed,
+        expect(WS2SilentCover.cover(&cover, overlayCreated: true) && cover.covered && !cover.revealed,
+               "an observed overlay marks the screen covered")
+        expect(!WS2SilentCover.reveal(&cover) && cover.covered && !cover.revealed,
                "a silent reveal does not uncover or invent a cover")
         var uncovered = WS2SilentCover.State()
         expect(!WS2SilentCover.reveal(&uncovered) && !uncovered.covered && !uncovered.revealed,
@@ -1474,8 +1476,9 @@ struct SilentPrepTests {
         expect(!WS2SilentCover.cover(&cover) && WS2SilentReadout.sentence("privacy.status", cover: cover) == "还没选范围",
                "covering without an overlay stays unscoped")
         cover.scopeSelected = true
-        expect(!WS2SilentCover.cover(&cover, overlayCreated: true) && WS2SilentReadout.sentence("privacy.status", cover: cover) == "尚未遮住"
-               && !cover.revealed, "an overlay flag does not report 已遮住 and does not reveal")
+        expect(WS2SilentCover.cover(&cover, overlayCreated: true)
+               && WS2SilentReadout.sentence("privacy.status", cover: cover) == "已遮住"
+               && !cover.revealed, "an observed overlay reports 已遮住 and does not reveal")
         expect(WS2SilentReadout.sentence("privacy.awaySummary") == "没有",
                "an away summary with no events stays 没有")
         expect(WS2SilentReadout.sentence("privacy.selectScope") == "还没选范围",
@@ -1591,10 +1594,16 @@ struct SilentPrepTests {
         expect(WS2SilentLab.realEffectCount == 0, "the lab does not hold a real effect port")
         let glance = WS2SilentEffectJudge.glance(invoked: false, previewVisible: false)
         expect(!glance.isCompleted && glance.notchLine == "没预览", "a glance without a preview is not completed")
+        let glanceWait = WS2SilentEffectJudge.glance(invoked: true, previewVisible: false)
+        expect(!glanceWait.isCompleted && glanceWait == .waiting(1),
+               "a glance that was invoked without a live frame waits")
         let usage = WS2SilentEffectJudge.usageRefresh(protocolParsed: false)
         expect(!usage.isCompleted && usage == .displayed("未提供"), "usage without a protocol response is not completed")
         let cover = WS2SilentEffectJudge.cover(overlayCreated: false, commandID: "privacy.cover")
         expect(!cover.isCompleted && cover == .unavailable("尚未遮住"), "a cover without an overlay is not completed")
+        let coverFull = WS2SilentEffectJudge.cover(
+            overlayCreated: true, commandID: "privacy.cover", allScreensCovered: true)
+        expect(coverFull.isCompleted, "a cover observed on every screen is completed")
         let placement = WS2SilentEffectJudge.placement(frameMatched: false, commandID: "window.left", targetID: "win-1")
         expect(!placement.isCompleted && placement == .unknown(0) && placement.notchLine == "结果未确认",
                "a placement without a frame readback is not completed")

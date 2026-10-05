@@ -22,6 +22,11 @@ final class WS2SilentHost {
     private weak var page: WS2SilentPageView?
     /// 最近一次确认实际交出去的结果。没有待确认的提案时不动它。
     private(set) var lastResult: SilentExecutionResult?
+    private var operations = WS2SilentOperationLedger()
+    private var glanceWatchGeneration: UInt64 = 0
+    /// 本次静音页打开时的意图 lease；关掉页面就作废，不跨页复用。
+    private var intentLease = UUID()
+    private var intentBoot = UUID()
     var frozenWindowIDForProbe: CGWindowID? { frozenID }
     var hasPendingForProbe: Bool { session.currentProposal != nil }
 
@@ -36,12 +41,17 @@ final class WS2SilentHost {
               AuthorizationService.shared.lockState() == .unlocked else { return false }
         freezeIfNeeded()
         frozenScreen = NSScreen.screens.first { $0.frame.contains(NSEvent.mouseLocation) }
+        intentLease = UUID()
+        intentBoot = AuthorizationService.shared.ledger.bootID
         let view = WS2SilentPageView(host: self)
         guard runtime.island.show(view, ownerID: "silent", onDismiss: { [weak self, weak view] _ in
             guard let self, self.page === view else { return }
             self.page = nil
             self.pending = nil
             self.session.invalidate()
+            self.glanceWatchGeneration &+= 1
+            self.operations.turnPage()
+            self.intentLease = UUID()
         }) else { return false }
         page = view
         view.note("看清，再确认。")
@@ -139,6 +149,8 @@ final class WS2SilentHost {
         session.invalidate()
         pending = nil
         page?.setConfirmEnabled(false)
+        glanceWatchGeneration &+= 1
+        operations.turnPage()
     }
 
     private func accept(_ proposal: WS2SilentSession.Proposal, at gestureStart: WS2.Instant?) {
@@ -154,8 +166,19 @@ final class WS2SilentHost {
         let began = gestureStart ?? now
         confirmSequence &+= 1
         if confirmSequence == 0 { confirmSequence = 1 }
+        let target = proposal.targetID.isEmpty ? "none" : proposal.targetID
         let step = session.confirm(
-            proposal, gestureBeganAt: began, now: now, liveRevision: live, sequence: confirmSequence)
+            proposal,
+            gestureBeganAt: began,
+            now: now,
+            liveRevision: live,
+            sequence: confirmSequence,
+            origin: .nativeClick,
+            boot: intentBoot,
+            lease: intentLease,
+            expectedBoot: intentBoot,
+            expectedLease: intentLease,
+            expectedTarget: target)
         pending = nil
         page?.setConfirmEnabled(false)
         switch step {
@@ -168,6 +191,10 @@ final class WS2SilentHost {
                     proposal.command.id, succeeded: true, draft: draft, assistant: assistant))
             } else {
                 page?.note(result.notchLine)
+            }
+            if case .waiting = result, proposal.command.id == "window.glance",
+               let id = frozenID {
+                watchGlanceFirstFrame(windowID: id, commandID: proposal.command.id)
             }
         case .rejected:
             lastResult = .failed("确认对不上，这一笔作废")
@@ -203,6 +230,33 @@ final class WS2SilentHost {
         draft = localDraft
         assistant = localAssistant
         return result
+    }
+
+    /// 看一眼已派发但首帧未到：短轮询 isLive；换页后的旧回执不能改新页面。
+    private func watchGlanceFirstFrame(windowID: CGWindowID, commandID: String) {
+        glanceWatchGeneration &+= 1
+        let generation = glanceWatchGeneration
+        let op = operations.begin(commandID: commandID, targetID: String(windowID))
+        let deadline = Date().addingTimeInterval(1.5)
+        func tick() {
+            guard generation == glanceWatchGeneration else { return }
+            guard let owner else { return }
+            if owner.glance.isLive(windowID) {
+                let line = "已完成"
+                if operations.finish(id: op, line: line) {
+                    lastResult = .completed(WS2EffectReceipt(
+                        commandID: "window.glance", targetID: String(windowID), observed: true))
+                    page?.note(line)
+                }
+                return
+            }
+            guard Date() < deadline else {
+                _ = operations.finish(id: op, line: "结果未确认")
+                return
+            }
+            DispatchQueue.main.asyncAfter(deadline: .now() + 0.05) { tick() }
+        }
+        DispatchQueue.main.asyncAfter(deadline: .now() + 0.05) { tick() }
     }
 
     private func freezeIfNeeded() {

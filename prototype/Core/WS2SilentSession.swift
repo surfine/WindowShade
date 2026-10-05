@@ -56,6 +56,11 @@ struct WS2SilentSession: Sendable {
         case wrongProposal
         case notShown
         case nodCannotAuthorize
+        case diagnosticInput
+        case missingTarget
+        case bindingChanged
+        case invalidLifetime
+        case staleInput
     }
 
     /// 换模式就丢掉还没确认的候选。挑战里的点头不能接着打开应用。
@@ -126,13 +131,20 @@ struct WS2SilentSession: Sendable {
 
     /// 点击或点头只对已经显示、还没过期的这一笔有效。
     /// 开始得比显示早、落在未来、或过了显示后的 8 秒，都不算。
+    /// 意图准入（来源 / boot / epoch / lease / 目标 / 送达年龄）在既有校验之后再查。
     mutating func confirm(
         _ proposal: Proposal,
         gestureBeganAt: WS2.Instant,
         gestureEndedAt: WS2.Instant? = nil,
         now: WS2.Instant,
         liveRevision: UInt64,
-        sequence: UInt64 = 1
+        sequence: UInt64 = 1,
+        origin: WS2SilentIntentOrigin = .nativeClick,
+        boot: UUID = UUID(),
+        lease: UUID = UUID(),
+        expectedBoot: UUID? = nil,
+        expectedLease: UUID? = nil,
+        expectedTarget: String? = nil
     ) -> Step {
         let ended = gestureEndedAt ?? gestureBeganAt
         guard proposal.epoch == epoch, proposal.mode == mode else {
@@ -165,6 +177,33 @@ struct WS2SilentSession: Sendable {
         guard proposal.command.acceptsNodOrClick else {
             retire(.nodCannotAuthorize)
             return .rejected(.nodCannotAuthorize)
+        }
+        let bindBoot = expectedBoot ?? boot
+        let bindLease = expectedLease ?? lease
+        let observedTarget = proposal.targetID.isEmpty ? "none" : proposal.targetID
+        let bindTarget = expectedTarget ?? observedTarget
+        if let failure = WS2SilentIntent.admit(
+            origin: origin,
+            expectedBoot: bindBoot,
+            observedBoot: boot,
+            expectedEpoch: proposal.epoch,
+            observedEpoch: epoch,
+            expectedProposal: proposal.id,
+            observedProposal: live.id,
+            expectedLease: bindLease,
+            observedLease: lease,
+            expectedTarget: bindTarget,
+            observedTarget: observedTarget,
+            expectedRevision: proposal.targetRevision,
+            observedRevision: liveRevision,
+            presented: shownAt,
+            expires: live.deadline,
+            gestureStarted: gestureBeganAt,
+            gestureEnded: ended,
+            received: now
+        ) {
+            retire(failure)
+            return .rejected(failure)
         }
         sequenceFloor = sequence
         retire(.wrongProposal)

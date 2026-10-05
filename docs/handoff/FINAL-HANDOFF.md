@@ -10,6 +10,21 @@
 
 先读“最终判断”和“本次修复”，接着执行W00、W01；再按实际阻断派W02–W10，W11收最终验收。需要直接派给模型时使用文末完整提示。各工单都写明实际文件、职责、缺口和验收，不要求执行者重新发明前九份基础设施。
 
+## 当前整改指针（2026-10-05）
+
+审查附件：`WindowShade-remediation-2026-10-05`（基线 `b271fcf`）。工作区已领先该基线；**禁止**套用包内 `make_safety_patch.py` 的 pinned blob。本轮在功能分支落地 **WSR-01→03** 代码与静音测试，不是产品完成声明。
+
+| 工单 | 状态 | 证据边界 |
+| --- | --- | --- |
+| WSR-01 止血 | 代码已关：无 `confirmSimulatedNod`；glance 要 `Glance.isLive`；cover 无观察不报完成 | `prototype/build.sh --check` 退出 0；silent / delta-review-v4 / silent-prep 逻辑测试通过 |
+| WSR-02 真实回执 | glance：派发 `waiting` → 首帧 observed；cover：`WS2SilentPrivacyCoverController` 逐屏不透明层，缺屏 partial | 适配器观察级回执；**不是** loginwindow 隔离证明；真机多屏拔插矩阵仍 `not_run` |
+| WSR-03 意图准入 | `WS2SilentIntent` 折入 `WS2SilentSession`；诊断夹具与相机挑战点头拒批准命令；TTL 8s / 送达 250ms | 纯逻辑与 Host 接线；摄像头主动挑战实验仍 `not_run` |
+| WSR-04 相机实验 | 未开工 | 需单独准入；D11：允许人脸实验，**不接系统解锁**；声纹未开 |
+| WSR-05 动效验收 | 未开工 | 60/120Hz、连续中断录屏仍 `not_run`；不把刘海观感分当硬件验收 |
+| WSR-06 蓝牙身份 | 未开工 | 需设备/实验授权；RSSI/名称不算持有因素 |
+| WSR-07 文档分界 | 本指针 + face-unlock / design-grammar 对照 | 已测与 `not_run` 分开写；默认不签名、不安装、不发布 |
+
+下一可派工单：真机矩阵与 WSR-04/05/06 仅在 Aaron 明确准入后进行。系统解锁仍是独立目标，不被本轮「方便遮一下」覆盖。
 
 ---
 
