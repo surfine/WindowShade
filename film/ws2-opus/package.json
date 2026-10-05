@@ -8,13 +8,17 @@
     "still:portrait": "remotion still src/index.ts WS2OpusPortrait"
   },
   "dependencies": {
+    "@react-three/fiber": "^9.3.0",
     "@remotion/cli": "4.0.484",
+    "@remotion/three": "^4.0.484",
     "react": "19.2.7",
     "react-dom": "19.2.7",
-    "remotion": "4.0.484"
+    "remotion": "4.0.484",
+    "three": "^0.180.0"
   },
   "devDependencies": {
     "@types/react": "19.2.17",
+    "@types/three": "^0.180.0",
     "typescript": "6.0.3"
   }
 }
