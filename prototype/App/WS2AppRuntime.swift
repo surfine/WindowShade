@@ -231,6 +231,7 @@ import Cocoa
     func openSilent() -> Bool {
         silent.open()
     }
+    func hostForSilentMilestone() -> WS2SilentHost { silent }
     private func attachConductorDevices(_ view: WS2ConductorPageView) {
         guard deviceHost == nil else { view.noteDevicesBusy(); return }
         conductorOwnsDeviceHost = true

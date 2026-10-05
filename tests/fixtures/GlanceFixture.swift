@@ -36,6 +36,24 @@ final class FixtureDelegate: NSObject, NSApplicationDelegate, NSWindowDelegate {
       content.layer?.backgroundColor = NSColor(hue: hue, saturation: 0.25, brightness: 0.96, alpha: 1).cgColor
     }
     windows.append(window)
+    // 只有真機里程碑放進 app 包的標記才關截取。看一眼的其他探針仍要畫面。
+    let markerCandidates = [
+      Bundle.main.bundleURL.appendingPathComponent("Contents/Resources/pip-unshared"),
+      Bundle.main.bundleURL.appendingPathComponent("Resources/pip-unshared"),
+      (Bundle.main.executableURL ?? Bundle.main.bundleURL)
+        .deletingLastPathComponent().deletingLastPathComponent()
+        .appendingPathComponent("Resources/pip-unshared"),
+    ]
+    if let marker = markerCandidates.first(where: { FileManager.default.fileExists(atPath: $0.path) }) {
+      window.sharingType = .none
+      window.title = "看一眼 · 参考 · 不截取"
+      let note = "hit \(marker.path) sharing=\(window.sharingType.rawValue) bundle=\(Bundle.main.bundleURL.path)\n"
+      try? note.write(to: marker.deletingLastPathComponent().appendingPathComponent("share-state.txt"), atomically: true, encoding: .utf8)
+      try? note.write(to: URL(fileURLWithPath: "/Users/aaron/Documents/WindowShade/.build/glance-tests/share-state.txt"), atomically: true, encoding: .utf8)
+    } else {
+      let note = markerCandidates.map { "\($0.path) exists=\(FileManager.default.fileExists(atPath: $0.path)) bundle=\(Bundle.main.bundleURL.path)" }.joined(separator: "\n")
+      try? note.write(to: URL(fileURLWithPath: "/Users/aaron/Documents/WindowShade/.build/glance-tests/share-state.txt"), atomically: true, encoding: .utf8)
+    }
     if !CommandLine.arguments.contains("--single") {
       let other = NSWindow(
         contentRect: NSRect(x: 900, y: 120, width: 320, height: 200),
@@ -80,6 +98,12 @@ final class FixtureDelegate: NSObject, NSApplicationDelegate, NSWindowDelegate {
     }
     NSApp.activate()
     window.makeKeyAndOrderFront(nil)
+    // 畫中畫零幀：這扇窗不進螢幕截取，捕獲拿不到畫面，原窗口必須留在原地。
+    DistributedNotificationCenter.default().addObserver(
+      forName: Notification.Name("com.windowshade.fixture.unshare"), object: nil, queue: .main
+    ) { [weak self] _ in
+      MainActor.assumeIsolated { self?.windows.forEach { $0.sharingType = .none } }
+    }
     if CommandLine.arguments.contains("--minimize") {
       // 刘海「系统里最小化的窗口」探针：窗口显示约 2 秒后自己最小化那扇 640 宽的参考窗
       // （探针先取得 AX 句柄，再等它变成最小化）。

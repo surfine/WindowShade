@@ -78,6 +78,16 @@ struct DeltaReviewV4Tests {
         let pin = WS2SilentEffectJudge.pin(alreadyPreviewing: true)
         expect(pin.result == .alreadySatisfied("已在置顶") && !pin.start,
                "A04 an existing pin is already satisfied and does not restart")
+        let glancePort = WS2SilentEffectJudge.glance(windowID: 4, invoked: true, visible: true)
+        let glanceNoop = WS2SilentEffectJudge.glance(windowID: 4, invoked: false, visible: true)
+        expect(glancePort.isCompleted && !glanceNoop.isCompleted,
+               "A02 replacing the glance port with a no-op fails the positive result")
+        let pinStarted = WS2SilentEffectJudge.pin(alreadyPreviewing: false, started: true)
+        let pinNoop = WS2SilentEffectJudge.pin(alreadyPreviewing: false, started: false)
+        expect(pinStarted == .waiting(1) && !pinStarted.isCompleted && !pinNoop.isCompleted,
+               "A13 a pin port that does not start is not completed")
+        let slideNoop = WS2SilentEffectJudge.asyncWindow(already: false, started: false, satisfied: "已在侧拉")
+        expect(!slideNoop.isCompleted, "A16-style a window port that does not start is not completed")
         var ledger = WS2SilentOperationLedger()
         let id = ledger.begin(commandID: "window.left", targetID: "A")
         ledger.turnPage()

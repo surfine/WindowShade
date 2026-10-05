@@ -20,6 +20,10 @@ final class WS2SilentHost {
     private var frozenRevision: UInt64 = 1
     private var frozenScreen: NSScreen?
     private weak var page: WS2SilentPageView?
+    /// 最近一次确认实际交出去的结果。没有待确认的提案时不动它。
+    private(set) var lastResult: SilentExecutionResult?
+    var frozenWindowIDForProbe: CGWindowID? { frozenID }
+    var hasPendingForProbe: Bool { session.currentProposal != nil }
 
     func attach(runtime: WS2AppRuntime, owner: AppDelegate) {
         self.runtime = runtime
@@ -126,9 +130,9 @@ final class WS2SilentHost {
         }
     }
 
-    func confirm() {
-        guard let proposal = pending else { return }
-        accept(proposal, at: nil)
+    func confirm(gestureBeganAt: WS2.Instant? = nil) {
+        guard let proposal = session.currentProposal else { return }
+        accept(proposal, at: gestureBeganAt)
     }
 
     func invalidatePending() {
@@ -138,7 +142,13 @@ final class WS2SilentHost {
     }
 
     private func accept(_ proposal: WS2SilentSession.Proposal, at gestureStart: WS2.Instant?) {
-        guard let runtime else { return }
+        guard let runtime, session.currentProposal?.id == proposal.id else {
+            pending = nil
+            lastResult = .failed("确认对不上，这一笔作废")
+            page?.setConfirmEnabled(false)
+            page?.note("确认对不上，这一笔作废")
+            return
+        }
         let live = proposal.command.effect == .draft ? proposal.targetRevision : liveRevision()
         let now = runtime.clock.now()
         let began = gestureStart ?? now
@@ -152,6 +162,7 @@ final class WS2SilentHost {
         case .accepted:
             let request = WS2SilentProductPort.request(for: step)
             let result = apply(request)
+            lastResult = result
             if result.isCompleted {
                 page?.note(WS2SilentResultLine.noted(
                     proposal.command.id, succeeded: true, draft: draft, assistant: assistant))
@@ -159,8 +170,10 @@ final class WS2SilentHost {
                 page?.note(result.notchLine)
             }
         case .rejected:
+            lastResult = .failed("确认对不上，这一笔作废")
             page?.note("确认对不上，这一笔作废")
         case .shown, .awaiting, .needsSystemConfirmation:
+            lastResult = .failed("这次没有做")
             page?.note("这次没有做")
         }
     }
@@ -260,6 +273,12 @@ final class WS2SilentPageView: NSView, WS2LeaseContent {
     var inputIsCurrent: (() -> Bool) = { false }
     var interactionSize: NSSize { NSSize(width: 344, height: 168) }
     func revoke() { inputIsCurrent = { false } }
+
+    func suspendInput() {
+        inputIsCurrent = { false }
+        setConfirmEnabled(false)
+        host?.invalidatePending()
+    }
     private let status = NSTextField(labelWithString: "")
     private let confirm = IslandChip(title: "确认", symbol: "checkmark", style: .solid)
     private let rowA = NSStackView()
