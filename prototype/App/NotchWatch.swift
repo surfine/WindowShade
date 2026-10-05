@@ -144,8 +144,12 @@ final class MenuBarRoom {
         let screens = NSScreen.screens.map(\.frame)
         let baseline = coordinateBaselineY()
         let previous = known[display]?.spans == spans ? hits[display] : nil
+        let own = NSApp.windows.compactMap { window -> NSRect? in
+            guard window is NotchPanel || window is NotchShoulders else { return nil }
+            return window.frame
+        }
         DispatchQueue.global(qos: .utility).async {
-            let hit = Self.hitTest(spans, baseline: baseline)
+            let hit = Self.hitTest(spans, baseline: baseline, own: own)
             let menus = owner.map { Self.menuRoom(spans, owner: $0, screens: screens, baseline: baseline) }
                 ?? Sides(leading: spans.reach, trailing: spans.reach)
             DispatchQueue.main.async { [self] in
@@ -173,7 +177,7 @@ final class MenuBarRoom {
 
     /// 每段从刘海的边往外取 6 个点问“这里是什么”，碰到的第一个菜单栏项（或别的东西）之前都算空着。
     /// 返回空着多宽；nil：被自己的面板盖着，不知道。
-    nonisolated private static func hitTest(_ spans: Spans, baseline: CGFloat) -> (leading: CGFloat?, trailing: CGFloat?, found: String) {
+    nonisolated private static func hitTest(_ spans: Spans, baseline: CGFloat, own: [NSRect]) -> (leading: CGFloat?, trailing: CGFloat?, found: String) {
         let system = AXUIElementCreateSystemWide()
         let me = getpid()
         let y = Float(baseline - spans.midY)
@@ -183,6 +187,10 @@ final class MenuBarRoom {
             for step in 0..<steps {
                 let offset = 3 + (spans.reach - 4) * CGFloat(step) / CGFloat(steps - 1)
                 let x = edge + direction * offset
+                let cocoa = CGPoint(x: x, y: spans.midY)
+                if own.contains(where: { $0.insetBy(dx: -1, dy: -1).contains(cocoa) }) {
+                    return nil
+                }
                 var element: AXUIElement?
                 let error = AXUIElementCopyElementAtPosition(system, Float(x), y, &element)
                 guard error == .success, let element else {
@@ -260,11 +268,11 @@ extension MenuBarRoom {
     }
 
     /// 找到的系统的东西（给日志和探针看）；空数组就是可以展开。
-    nonisolated static func systemItems(in spans: Spans, menuOwner: pid_t?, baseline: CGFloat) -> [String] {
-        scanCover(spans, menuOwner: menuOwner, baseline: baseline).system
+    nonisolated static func systemItems(in spans: Spans, menuOwner: pid_t?, baseline: CGFloat, own: [NSRect] = []) -> [String] {
+        scanCover(spans, menuOwner: menuOwner, baseline: baseline, own: own).system
     }
 
-    nonisolated static func scanCover(_ spans: Spans, menuOwner: pid_t?, baseline: CGFloat) -> CoverScan {
+    nonisolated static func scanCover(_ spans: Spans, menuOwner: pid_t?, baseline: CGFloat, own: [NSRect] = []) -> CoverScan {
         let system = AXUIElementCreateSystemWide()
         let me = getpid()
         let y = Float(baseline - spans.midY)
@@ -291,6 +299,7 @@ extension MenuBarRoom {
             while offset <= spans.reach - 2 {
                 defer { offset += 12 }
                 let x = edge + direction * offset
+                if own.contains(where: { $0.insetBy(dx: -1, dy: -1).contains(CGPoint(x: x, y: spans.midY)) }) { continue }
                 var element: AXUIElement?
                 guard AXUIElementCopyElementAtPosition(system, Float(x), y, &element) == .success, let element else { continue }
                 var pid: pid_t = 0
