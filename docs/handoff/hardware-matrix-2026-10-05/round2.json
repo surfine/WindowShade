@@ -1,0 +1,69 @@
+{
+  "round": 2,
+  "date": "2026-10-06",
+  "branch": "cursor/silent-effect-receipts",
+  "commit": "6a51b9cfb1e6db3f722986d4fac598a27186f123",
+  "device": "MacBook (Apple M5) + Studio Display",
+  "os_build": "macOS 27.0 (26A428)",
+  "build": {
+    "command": "prototype/build.sh --stage (WMO + Apple Development)",
+    "binary": ".build/duo-validation/WindowShade.app/Contents/MacOS/WindowShade",
+    "binary_mtime": "2026-10-06 02:10:18",
+    "sign_identifier": "com.windowshade.prototype",
+    "team": "FVGLY6W6S4",
+    "note": "fresh --stage on the working tree of cursor/silent-effect-receipts@6a51b9cfb1; camera / accessibility / screen-recording TCC retained across the re-sign"
+  },
+  "results": {
+    "silent-milestone": {
+      "status": "pass",
+      "runs": "4 total: 3 pass, 1 collapse-only failure at load average ~163",
+      "pass_evidence": [
+        "logs/r2-silent-milestone.log",
+        "logs/r2-silent-milestone-run1.log",
+        "logs/r2-silent-milestone-run2.log"
+      ],
+      "fail_evidence": [
+        "logs/r2-silent-milestone-highload-collapse-fail.log",
+        "logs/r2-app-log-highload-collapse-fail.log"
+      ],
+      "detail": "R01 place / cancel / target-change PASS; R03 pin / unpin / collapse / expand / slideOver / leaveSlideOver / controlled-fail all reach lastResult.isCompleted; R04 head-pipeline counters captured live; the actor did not nod, so the proposal was invalidated and no window moved"
+    },
+    "silent-cover": {
+      "status": "pass",
+      "evidence": ["logs/r2-silent-cover.log"],
+      "detail": "cover-all covered 2/2 (epoch=1); a repeated request reused the panels (created stayed 2); Esc with a third-party app frontmost cleared the cover; teardown left no panels and no global monitor; hot-plug not_run (needs a manual display change)"
+    },
+    "offline": {
+      "status": "pass",
+      "detail": "run-silent-integration-tests --case r00..r04 all ok; run-journal-numeric-tests PASS; run-silent-prep-tests PASS"
+    }
+  },
+  "findings": [
+    {
+      "id": "F1",
+      "severity": "probe_fixed",
+      "title": "静音探针缺 statusItem 引导，rebuildMenu 强解包 nil 触发 SIGTRAP",
+      "detail": "收起/置顶让会话变化去排一次菜单重建；探针自造的 AppDelegate 从没建状态栏项，rebuildMenu 里 statusItem! 解包成 nil 触发 brk。按 GlanceProbe / EffectWindowProbe / EffectInspector / DockHoverProbe 的做法补 setupStatusItem()。产品侧 rebuildMenu 仍是强解包，未改。"
+    },
+    {
+      "id": "F2",
+      "severity": "flake",
+      "title": "collapse 的 FoldCompletion 在高负载下读成 unknown，R03 的 3 秒看护随之超时",
+      "detail": "极重负载（load average ~163）那次：窗口确实被最小化收起（shaded=true, hide=minimized），但 observeFoldHide(.minimized) 落在 .unknown → retainUnconfirmedFold，静音 waiter 不以成功结算；6 秒后展开把它以 ok=false 结掉，应用日志为 shade: silent fold completion ok=false。低负载 3/3 通过。FoldVerifier 自身预算约 0.95 秒，所以不是「验证得太慢」。"
+    },
+    {
+      "id": "F3",
+      "severity": "not_run",
+      "title": "pip-zero-frame / hot-plug / 相机点头 未运行",
+      "detail": "pip 每次都捕到帧，没走到零帧超时那条路；拔插要人手；这一步没有人对相机点头，因此提案按设计作废。"
+    }
+  ],
+  "probe_changes": [
+    "prototype/App/SilentMilestoneProbe.swift: 引导 setupStatusItem；R03 各步改为等 lastResult.isCompleted（R03 终态由 watchAsyncEnd 每 0.05 秒轮询写入，光看效果状态会抢跑）；R04 相机等待延长并打印缓存数与 AVFoundation 直查数；受控失败改用 CGWindow bounds，避免旧 AX 句柄假装没动",
+    "prototype/App/WS2SilentHost.swift: 探针只读的 operationLineForProbe（操作台账当前那行）",
+    "prototype/App/WS2SilentPrivacyCover.swift: 探针只读的 panelsCreated / panelCount / globalMonitor 取数",
+    "prototype/App/SilentCoverProbe.swift + tests/run-silent-cover-probe.sh: R02 遮罩探针；复用基线取在第一次铺好之后",
+    "prototype/main.swift: 接 --silent-cover-probe",
+    "prototype/App/Notch.swift: peninsulaContentHeight 的 CGFloat 转换修复（解掉 --stage 编译阻塞）"
+  ]
+}

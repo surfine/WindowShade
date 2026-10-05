@@ -2264,7 +2264,7 @@ final class NotchPanel: NSPanel {
             let count = max(tiles.count, 1)
             let screenWidth = NSScreen.screens.first { $0.frame.contains(NSPoint(x: notch.midX, y: notch.midY)) }?.frame.width ?? 1000
             let width = min(screenWidth - 44, max(activityItems.isEmpty ? notch.width + 120 : 420, CGFloat(min(count, 8)) * 132 + 20))
-            let rawBelow = activityItems.isEmpty ? (tiles.isEmpty ? 56 : 142) : (tiles.isEmpty ? 144 : 286)
+            let rawBelow: CGFloat = activityItems.isEmpty ? (tiles.isEmpty ? 56 : 142) : (tiles.isEmpty ? 144 : 286)
             let below = NotchIsland.peninsulaContentHeight(rawBelow)
             let height = notch.height + below
             // 无刘海：S4 四角全圆、不画肩；真刘海仍从硬件肩长出。

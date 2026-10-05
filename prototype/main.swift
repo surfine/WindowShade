@@ -4,7 +4,7 @@ import Cocoa
 if let code = UpdateLaunch.handleEarlyArguments() { exit(code) }
 UpdateLaunch.recordLaunch()
 
-if CommandLine.arguments.contains(where:{$0.hasPrefix("--duo-") || $0.hasPrefix("--glance-") || $0 == "--silent-milestone"}) {
+if CommandLine.arguments.contains(where:{$0.hasPrefix("--duo-") || $0.hasPrefix("--glance-") || $0 == "--silent-milestone" || $0 == "--silent-cover-probe"}) {
     let log=FileManager.default.currentDirectoryPath+"/.build/duo-tests/native-\(getpid()).log"
     try? FileManager.default.createDirectory(atPath:URL(fileURLWithPath:log).deletingLastPathComponent().path,withIntermediateDirectories:true)
     setenv("WINDOWSHADE_LOG_PATH",log,1)
@@ -136,6 +136,13 @@ if CommandLine.arguments.contains("--glance-probe") {
 if CommandLine.arguments.contains("--silent-milestone") {
     app.setActivationPolicy(.accessory)
     let probe = MainActor.assumeIsolated { SilentMilestoneProbe() }
+    DispatchQueue.main.async { MainActor.assumeIsolated { probe.run() } }
+    withExtendedLifetime(probe) { app.run() }
+    exit(0)
+}
+if CommandLine.arguments.contains("--silent-cover-probe") {
+    app.setActivationPolicy(.accessory)
+    let probe = MainActor.assumeIsolated { SilentCoverProbe() }
     DispatchQueue.main.async { MainActor.assumeIsolated { probe.run() } }
     withExtendedLifetime(probe) { app.run() }
     exit(0)

@@ -1,0 +1,7 @@
+INFO cover: screens=2 accessibility=true
+PASS cover-all: epoch=1 expected=2 covered=2
+PASS cover-reuse: 面板创建次数仍是 2
+PASS cover-esc-outside: 别的 App 在前台，Esc 也撤掉了
+PASS cover-teardown: 面板和临时监听都拆掉了
+INFO cover-hotplug: 未运行（25 秒内没有检测到显示器变化）
+PASS silent-cover

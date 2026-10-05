@@ -33,6 +33,9 @@ extension AppDelegate {
   }
   func rebuildMenu() {
     guard !duoController.isDesignPreview else { return }
+    // 会话变化可能在 setupStatusItem 之前就排到这里；那时状态栏项还不存在，
+    // 强解包会当场 brk（静音探针真机踩过）。
+    guard statusItem != nil else { return }
     MainThreadActivity.push("menu: 重建")
     defer { MainThreadActivity.pop() }
     if suppressMenuRebuilds {
