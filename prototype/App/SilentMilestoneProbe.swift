@@ -330,19 +330,17 @@ final class SilentMilestoneProbe {
         }
         let pinStartedAt = CACurrentMediaTime()
         host.confirm()
-        // R03：置顶终态看 pinnedPreviewController 的静音完成回执，不能只看 lastResult：
-        // “会话刚建好”就会把 lastResult 标成 completed，而 preview 之后失败不撤回。
-        // 抢跑还会顺手把进行中的 preview 拆掉，弄出假的 .targetChanged 失败。
-        let pinSettled = await wait(6) {
-            guard let done = self.owner.pinnedPreviewController.lastSilentCompletion else { return false }
-            return done.id == targetID && done.at >= pinStartedAt
-        }
+        // R03：产品侧现在只在真完成回执（ok=true）到达后才写 lastResult.completed，
+        // 所以等 lastResult 落定即可；落定后再核对回执 ok 与会话确实挂着。
+        // （只等回执会让探针抢在宿主那条 0.05 秒的 tick 之前读到 waiting。）
+        let pinSettled = await wait(6) { host.lastResult?.isCompleted == true }
         let pinCompletion = owner.pinnedPreviewController.lastSilentCompletion
+        let freshReceipt = pinCompletion.map { $0.id == targetID && $0.at >= pinStartedAt } ?? false
         let pinned = owner.pinnedPreviewController.isPreviewing(id: targetID)
-        if pinSettled, pinCompletion?.ok == true, pinned, host.lastResult?.isCompleted == true {
-            print("PASS pin: 完成回执 ok，首帧会话挂上 id=\(targetID)")
+        if pinSettled, freshReceipt, pinCompletion?.ok == true, pinned {
+            print("PASS pin: completed 与完成回执一致，首帧会话挂上 id=\(targetID)")
         } else {
-            failures.append("pin settled=\(pinSettled) ok=\(pinCompletion?.ok == true) pinned=\(pinned) result=\(Self.describe(host.lastResult) + " ledger=" + host.operationLineForProbe) completion=\(String(describing: pinCompletion))")
+            failures.append("pin settled=\(pinSettled) receipt=\(freshReceipt)/\(pinCompletion?.ok == true) pinned=\(pinned) result=\(Self.describe(host.lastResult) + " ledger=" + host.operationLineForProbe) completion=\(String(describing: pinCompletion))")
         }
 
         // 取消置顶：读回到未预览才算完成。
@@ -425,19 +423,27 @@ final class SilentMilestoneProbe {
         } else {
             failures.append("slideOver settled=\(slid) state=\(inSlideOver) result=\(Self.describe(host.lastResult) + " ledger=" + host.operationLineForProbe)")
         }
+        // 离开侧拉这一步也要先确认提案冻在 target 上（这一步原先只查「有没有提案」）。
+        // 真机踩过：桌布切换通知和侧拉自己的置顶会话同时到，冻结对象落到另一扇临时窗口，
+        // apply 读成 alreadySatisfied("没在侧拉")，六秒等不到终态；留在侧拉那扇的置顶会话
+        // 也就没人收，下一步 controlled-fail 会看到 pinned=true。
+        guard await prepare(runtime, target: target, targetID: targetID, pid: pid) else {
+            failures.append("leaveSlideOver: 没法把临时窗口拉回焦点")
+            return
+        }
         host.offer("window.leaveSlideOver")
-        if host.hasPendingForProbe {
-            host.confirm()
-            let left = await wait(6) { host.lastResult?.isCompleted == true }
-            let stillSlideOver = owner.slideOver.isSlideOver(targetID)
-            if left, !stillSlideOver {
-                print("PASS leaveSlideOver: lastResult completed，读回到不在侧拉")
-            } else {
-                failures.append("leaveSlideOver settled=\(left) state=\(stillSlideOver) result=\(Self.describe(host.lastResult) + " ledger=" + host.operationLineForProbe)")
-            }
-        } else {
+        guard await retryFreeze(host, "window.leaveSlideOver", target: target, targetID: targetID, pid: pid) else {
             host.invalidatePending()
             failures.append("leaveSlideOver: 提案没有冻在临时窗口上")
+            return
+        }
+        host.confirm()
+        let left = await wait(6) { host.lastResult?.isCompleted == true }
+        let stillSlideOver = owner.slideOver.isSlideOver(targetID)
+        if left, !stillSlideOver {
+            print("PASS leaveSlideOver: lastResult completed，读回到不在侧拉")
+        } else {
+            failures.append("leaveSlideOver settled=\(left) state=\(stillSlideOver) result=\(Self.describe(host.lastResult) + " ledger=" + host.operationLineForProbe)")
         }
 
         // 受控失败：提案冻在 A，焦点换到 B 再确认，A 不能被执行，也不能写成功。
