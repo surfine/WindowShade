@@ -73,6 +73,11 @@ final class SilentMilestoneProbe {
         }
         NotchController.probeSilence = true
         owner.ownsGlobalInput = false
+        // 和真实启动、其它探针一样先立好状态栏项：收起/置顶会让会话变化去排一次菜单重建，
+        // 没有这一项时 rebuildMenu 会强解包 nil。探针自己钉的项不留在菜单栏。
+        owner.duoController.persistsSettings = false
+        owner.setupStatusItem()
+        owner.statusItem.isVisible = false
         owner.notch.install()
         let runtime = owner.ws2Runtime
         let host = runtime.hostForSilentMilestone()
@@ -216,6 +221,8 @@ final class SilentMilestoneProbe {
             }
         }
 
+        await asyncTerminals(host: host, runtime: runtime, target: target, targetID: targetID,
+                             other: other, otherID: otherID, pid: pid)
         await head(host: host, runtime: runtime, target: target, targetID: targetID, pid: pid, screen: screen)
         print("INFO hardware: accessibility=\(AXIsProcessTrusted()) screenRecording=\(hasScreenRecordingPermission()) camera=\(Self.cameraLabel(camera))")
         print("INFO qualification: 未运行")
@@ -230,12 +237,16 @@ final class SilentMilestoneProbe {
         }
         FaceObservationSource.startWatchingCameras()
         var device: FaceCameraDescriptor?
-        _ = await wait(2) {
+        // 枚举相机在后台，冷启动或高负载时要几秒；给足时间，读不到再如实记未运行。
+        _ = await wait(12) {
             device = FaceObservationSource.devices().first
             return device != nil
         }
         guard let device else {
-            print("INFO head: 未运行。已授权但没有读到相机")
+            let direct = AVCaptureDevice.DiscoverySession(
+                deviceTypes: [.builtInWideAngleCamera, .external, .continuityCamera],
+                mediaType: .video, position: .unspecified).devices.count
+            print("INFO head: 未运行。已授权但没有读到相机 cached=\(FaceObservationSource.devices().count) avfoundation=\(direct)")
             return
         }
         guard await focus(target, pid: pid, id: targetID) else {
@@ -272,7 +283,7 @@ final class SilentMilestoneProbe {
             print("INFO head: 未运行。相机没有开始 \(error)")
             return
         }
-        try? await Task.sleep(nanoseconds: 4_000_000_000)
+        try? await Task.sleep(nanoseconds: 10_000_000_000)
         let counters = await source.pipelineCounters()
         source.stop()
         // R04：授权成功≠采集成功；按阶段计数定位零样本。
@@ -285,9 +296,9 @@ final class SilentMilestoneProbe {
                 owner.gestures.observedFrameMatches(target, action: .rightHalf, screen: screen)
             }
             if moved, host.lastResult?.isCompleted == true {
-                print("PASS head: 点头确认后右半屏 \(Self.describe(host.lastResult))")
+                print("PASS head: 点头确认后右半屏 \(Self.describe(host.lastResult) + " ledger=" + host.operationLineForProbe)")
             } else {
-                failures.append("head nod did not finish result=\(Self.describe(host.lastResult)) matched=\(moved)")
+                failures.append("head nod did not finish result=\(Self.describe(host.lastResult) + " ledger=" + host.operationLineForProbe) matched=\(moved)")
             }
             return
         }
@@ -298,6 +309,165 @@ final class SilentMilestoneProbe {
         } else {
             failures.append("head: 没有点头但窗口动了 \(Self.rect(before)) -> \(Self.rect(after))")
         }
+    }
+
+    /// R03 真机：置顶、收起、展开、侧拉各有一次真实成功，另有一次受控失败（目标已换）。
+    private func asyncTerminals(host: WS2SilentHost, runtime: WS2AppRuntime, target: AXUIElement,
+                                targetID: CGWindowID, other: AXUIElement, otherID: CGWindowID,
+                                pid: pid_t) async {
+        _ = await wait(3) { !self.owner.pip.isInPictureInPicture(targetID) }
+        guard await prepare(runtime, target: target, targetID: targetID, pid: pid) else {
+            failures.append("async: 没法把临时窗口拉回焦点")
+            return
+        }
+
+        // 置顶：派发之后等首帧会话挂上；完成回调不能丢。
+        host.offer("window.pin")
+        guard host.frozenWindowIDForProbe == targetID, host.hasPendingForProbe else {
+            host.invalidatePending()
+            failures.append("pin: 提案没有冻在临时窗口上")
+            return
+        }
+        host.confirm()
+        // R03：终态由 watchAsyncEnd 轮询写进 lastResult；状态先成立也要等它落定。
+        let pinSettled = await wait(6) { host.lastResult?.isCompleted == true }
+        let pinned = owner.pinnedPreviewController.isPreviewing(id: targetID)
+        if pinSettled, pinned {
+            print("PASS pin: lastResult completed，首帧会话挂上 id=\(targetID)")
+        } else {
+            let completion = owner.pinnedPreviewController.lastSilentCompletion
+            failures.append("pin settled=\(pinSettled) pinned=\(pinned) result=\(Self.describe(host.lastResult) + " ledger=" + host.operationLineForProbe) completion=\(String(describing: completion))")
+        }
+
+        // 取消置顶：读回到未预览才算完成。
+        guard await prepare(runtime, target: target, targetID: targetID, pid: pid) else {
+            failures.append("unpin: 没法把临时窗口拉回焦点")
+            return
+        }
+        host.offer("window.unpin")
+        guard host.hasPendingForProbe else {
+            host.invalidatePending()
+            failures.append("unpin: 提案没有冻在临时窗口上")
+            return
+        }
+        host.confirm()
+        let unpinned = await wait(4) {
+            host.lastResult?.isCompleted == true && !self.owner.pinnedPreviewController.isPreviewing(id: targetID)
+        }
+        if unpinned {
+            print("PASS unpin: 读回到未预览")
+        } else {
+            failures.append("unpin off=\(!self.owner.pinnedPreviewController.isPreviewing(id: targetID)) result=\(Self.describe(host.lastResult) + " ledger=" + host.operationLineForProbe)")
+        }
+
+        // 收起：终态绑 FoldCompletion，不靠字典写了就算。
+        guard await prepare(runtime, target: target, targetID: targetID, pid: pid) else {
+            failures.append("collapse: 没法把临时窗口拉回焦点")
+            return
+        }
+        host.offer("window.collapse")
+        guard host.frozenWindowIDForProbe == targetID, host.hasPendingForProbe else {
+            host.invalidatePending()
+            failures.append("collapse: 提案没有冻在临时窗口上")
+            return
+        }
+        host.confirm()
+        let folded = await wait(6) { host.lastResult?.isCompleted == true }
+        let foldCompletion = owner.lastSilentFoldCompletion
+        if folded, foldCompletion?.id == targetID, foldCompletion?.ok == true, owner.shaded[targetID] != nil {
+            print("PASS collapse: FoldCompletion ok，lastResult completed，窗口进卷帘态")
+        } else {
+            failures.append("collapse settled=\(folded) result=\(Self.describe(host.lastResult) + " ledger=" + host.operationLineForProbe) shaded=\(self.owner.shaded[targetID] != nil) completion=\(foldCompletion?.id ?? 0)/\(foldCompletion?.ok == true)")
+        }
+
+        // 展开：窗口回到屏幕上才算完成。
+        guard await prepare(runtime, target: target, targetID: targetID, pid: pid) else {
+            failures.append("expand: 没法把临时窗口拉回焦点")
+            return
+        }
+        host.offer("window.expand")
+        guard host.frozenWindowIDForProbe == targetID, host.hasPendingForProbe else {
+            host.invalidatePending()
+            failures.append("expand: 提案没有冻在临时窗口上")
+            return
+        }
+        host.confirm()
+        let expanded = await wait(6) { host.lastResult?.isCompleted == true }
+        let backOnScreen = owner.shaded[targetID] == nil && cgWindowIsCurrentlyOnScreen(targetID)
+        if expanded, backOnScreen {
+            print("PASS expand: lastResult completed，窗口回到屏幕上")
+        } else {
+            failures.append("expand settled=\(expanded) onScreen=\(backOnScreen) result=\(Self.describe(host.lastResult) + " ledger=" + host.operationLineForProbe)")
+        }
+
+        // 侧拉：进入和离开各读回一次终态。
+        guard await prepare(runtime, target: target, targetID: targetID, pid: pid) else {
+            failures.append("slideOver: 没法把临时窗口拉回焦点")
+            return
+        }
+        host.offer("window.slideOver")
+        guard host.frozenWindowIDForProbe == targetID, host.hasPendingForProbe else {
+            host.invalidatePending()
+            failures.append("slideOver: 提案没有冻在临时窗口上")
+            return
+        }
+        host.confirm()
+        let slid = await wait(6) { host.lastResult?.isCompleted == true }
+        let inSlideOver = owner.slideOver.isSlideOver(targetID)
+        if slid, inSlideOver {
+            print("PASS slideOver: lastResult completed，读回到侧拉态")
+        } else {
+            failures.append("slideOver settled=\(slid) state=\(inSlideOver) result=\(Self.describe(host.lastResult) + " ledger=" + host.operationLineForProbe)")
+        }
+        host.offer("window.leaveSlideOver")
+        if host.hasPendingForProbe {
+            host.confirm()
+            let left = await wait(6) { host.lastResult?.isCompleted == true }
+            let stillSlideOver = owner.slideOver.isSlideOver(targetID)
+            if left, !stillSlideOver {
+                print("PASS leaveSlideOver: lastResult completed，读回到不在侧拉")
+            } else {
+                failures.append("leaveSlideOver settled=\(left) state=\(stillSlideOver) result=\(Self.describe(host.lastResult) + " ledger=" + host.operationLineForProbe)")
+            }
+        } else {
+            host.invalidatePending()
+            failures.append("leaveSlideOver: 提案没有冻在临时窗口上")
+        }
+
+        // 受控失败：提案冻在 A，焦点换到 B 再确认，A 不能被执行，也不能写成功。
+        guard await prepare(runtime, target: target, targetID: targetID, pid: pid) else {
+            failures.append("controlled-fail: 没法回到临时窗口")
+            return
+        }
+        let guardedBefore = bounds(targetID)
+        host.offer("window.pin")
+        guard host.frozenWindowIDForProbe == targetID, host.hasPendingForProbe else {
+            host.invalidatePending()
+            failures.append("controlled-fail: 提案没有冻在临时窗口上")
+            return
+        }
+        guard await focus(other, pid: pid, id: otherID) else {
+            host.invalidatePending()
+            failures.append("controlled-fail: 第二扇临时窗口没有成为焦点")
+            return
+        }
+        host.confirm()
+        try? await Task.sleep(nanoseconds: 500_000_000)
+        let guardedAfter = bounds(targetID)
+        let didMove = guardedBefore.flatMap { before in guardedAfter.map { Self.close(before, $0) } } ?? true
+        if host.lastResult?.isCompleted != true, !owner.pinnedPreviewController.isPreviewing(id: targetID) {
+            print("PASS controlled-fail: 焦点换了目标，这一笔没有做成（窗口未动=\(didMove)）")
+        } else {
+            failures.append("controlled-fail result=\(Self.describe(host.lastResult) + " ledger=" + host.operationLineForProbe) pinned=\(self.owner.pinnedPreviewController.isPreviewing(id: targetID)) moved=\(didMove)")
+        }
+        _ = await focus(target, pid: pid, id: targetID)
+    }
+
+    /// 把探针自己的临时窗拉回焦点；激活别的 App 可能收掉静音页，重开一次再对焦。
+    private func prepare(_ runtime: WS2AppRuntime, target: AXUIElement, targetID: CGWindowID, pid: pid_t) async -> Bool {
+        guard await focus(target, pid: pid, id: targetID) else { return false }
+        _ = runtime.openSilent()
+        return await focus(target, pid: pid, id: targetID)
     }
 
     private func report(host: WS2SilentHost, runtime: WS2AppRuntime, target: AXUIElement, targetID: CGWindowID, pid: pid_t, screen: NSScreen) {
@@ -416,8 +586,7 @@ final class SilentMilestoneProbe {
         return String(format: "(%.0f,%.0f %.0fx%.0f)", value.minX, value.minY, value.width, value.height)
     }
 
-    private static func describe(_ result: SilentExecutionResult?) -> String {
-        guard let result else { return "nil" }
+    private static func describe(_ result: SilentExecutionResult?) -> String {        guard let result else { return "nil" }
         if case .completed(let receipt) = result {
             return "completed \(receipt.commandID) observed=\(receipt.observed)"
         }

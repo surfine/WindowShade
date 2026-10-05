@@ -36,6 +36,8 @@ final class WS2SilentPrivacyCoverController {
     private var records: [CGDirectDisplayID: PanelRecord] = [:]
     private var expectedDisplays: [ExpectedDisplay] = []
     private var epoch: UInt64 = 0
+    /// 面板真正被创建的次数：重复请求应该复用，不再增长（R02 真机探针读）。
+    private var panelsCreated = 0
     private var escapeLocal: Any?
     private var escapeGlobal: Any?
     private var screenObserver: NSObjectProtocol?
@@ -43,6 +45,11 @@ final class WS2SilentPrivacyCoverController {
     var onClearRequested: (() -> Void)?
 
     var isCovering: Bool { !expectedDisplays.isEmpty }
+
+    // 探针只读（R02 真机）：创建次数证明重复请求复用；监听是否还在，证明退出后没有残留。
+    var probePanelsCreated: Int { panelsCreated }
+    var probePanelCount: Int { records.count }
+    var probeHasGlobalEscapeMonitor: Bool { escapeGlobal != nil }
 
     var observation: Observation {
         reconcile()
@@ -145,6 +152,7 @@ final class WS2SilentPrivacyCoverController {
     }
 
     private func makePanel(matching expected: ExpectedDisplay) -> NSPanel {
+        panelsCreated &+= 1
         let panel = NSPanel(
             contentRect: expected.frame,
             styleMask: [.borderless, .nonactivatingPanel],
