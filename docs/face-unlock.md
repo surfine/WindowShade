@@ -7,9 +7,14 @@
 - 设计稿（可交互，12 步）：[从锁屏到窗口](https://claude.ai/artifact/UepNxvLrJY5WDRANnjubyH)
 - 整合路径：[integration-loupe-glance.md](integration-loupe-glance.md)；历史研究：[lock-unlock-plan.md](lock-unlock-plan.md)、
   [authentication-boundaries.md](authentication-boundaries.md)、[apple-accessory-interoperability.md](apple-accessory-interoperability.md)
+- 本轮准入：[MAIN-MODEL-DECISIONS-2026-10-04.md](handoff/MAIN-MODEL-DECISIONS-2026-10-04.md) **D11**；整改指针见 [FINAL-HANDOFF.md](handoff/FINAL-HANDOFF.md)「当前整改指针」
 
 本文与旧文档冲突时以本文为准。特别是：旧文“Near Lock 式体验需要手机配套 App”作废——Aaron 不做 iPhone / Apple Watch 端 App，
 第二因素只走 iOS、watchOS 自带的蓝牙配件机制。
+
+### 愿景与本轮准入分开（2026-10-05）
+
+本文 10 月 3 日愿景仍是实际刷脸解锁。D11 本轮只允许人脸**实验**，**不接系统解锁**；声纹未开。2026-10-05 整改落地的是静音路径止血、看一眼首帧回执、以及「方便遮一下」逐屏遮罩——**不是**系统解锁，也不把视觉遮挡说成 loginwindow。相机主动挑战、蓝牙持有证明、攻击矩阵与帧率验收仍为 `not_run`，需另准入。
 
 ## 一整套体验
 

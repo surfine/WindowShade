@@ -8,6 +8,7 @@ swiftc -swift-version 6 -strict-concurrency=complete -warnings-as-errors -parse-
   prototype/Core/InteractionCoordinator.swift \
   prototype/Core/PiPFrameGate.swift \
   prototype/Core/WS2SilentCatalog.swift \
+  prototype/Core/WS2SilentIntent.swift \
   prototype/Core/WS2SilentSession.swift \
   prototype/Core/WS2SilentExecution.swift \
   prototype/Core/WS2DeviceEvidence.swift \
