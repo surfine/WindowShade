@@ -1,6 +1,6 @@
 // 母带：一条 60fps 时间线，10140 帧（169 秒）。横版、竖版共用；只有版面不同。成片从这里剪，见 cut.ts。
 import { BEAT } from './motion/direction';
-import { ALERT_HOLD, HOVER_DELAY, TUCK_FRAMES, ms, TEACH, type IslandMode } from './motion/site';
+import { ALERT_HOLD, HOVER_DELAY, TUCK_COVER, ms, TEACH, type IslandMode } from './motion/site';
 
 export const TOTAL = 10140;
 
@@ -60,6 +60,14 @@ export const DROP_RELEASE = 4700; // 松手：窗口去左半屏，等着的提�
 
 export const LIFT_DRAW = 5201; // 画完一笔抬手
 export const SESSION_AT = 5660;
+// 《指挥模式》：触控区画一笔 → 抬手认出「三声 · high」→ 说一句 → 草稿 → 播放发出。结果落在这一段里。
+export const CONDUCT_IN = 4990;
+export const CONDUCT_TONE = 5072; // 抬手判定：三声 · high / 下一轮
+export const CONDUCT_TALK = 5120;
+export const CONDUCT_DRAFT = 5180;
+export const CONDUCT_SEND = 5240;
+export const CONDUCT_RESULT = 5400;
+export const CONDUCT_MARKS = [5424, 5464, 5504] as const;
 
 // ---- approve：助手要改文章草稿，在刘海里问一次 ----
 export const ASK_CAUSE = 6100;
@@ -78,6 +86,8 @@ export const PREVIEW_AT = 7620;
 /** 点头：低下 0.33 秒、回正 0.33 秒，低 14°。[片子新增] 2.1 规格只定“回正 → 下点 → 回正”，没给时长和角度。 */
 export const NOD_DOWN = 7740, NOD_FRAMES = 20, NOD_DEG = 14;
 export const NOD_DONE = NOD_DOWN + 2 * NOD_FRAMES;
+/** 点头回正之后窗口才动。岛上的候选再多留一截，等窗口落到左半屏。 */
+export const WINDOW_MOVE = NOD_DONE + 14;
 
 export const FOCUS_START = 8100;
 export const TUCK_B = FOCUS_START + BEAT;
@@ -105,7 +115,7 @@ export const ISLAND_EVENTS: IslandEvent[] = [
   { at: CAUSE_MOUSE + BEAT, mode: 'alert', content: 'mouse' },
   { at: CAUSE_MOUSE + BEAT + ALERT_HOLD, mode: 'compact', content: 'music' },
   // 窗口落进刘海那一帧，两边换成窗口和个数。
-  { at: TUCK_A, mode: 'compact', content: 'window', inAt: TUCK_A + Math.ceil(TUCK_FRAMES) + 1 },
+  { at: TUCK_A, mode: 'compact', content: 'window', inAt: TUCK_A + TUCK_COVER },
   { at: HOVER_A + HOVER_DELAY, mode: 'shelf', content: 'card' },
   { at: LEAVE_A, mode: 'compact', content: 'window' },
   { at: ALERT_A, mode: 'alert', content: 'build' },
@@ -116,7 +126,9 @@ export const ISLAND_EVENTS: IslandEvent[] = [
   { at: DROP_OPEN, mode: 'drop', content: 'drop' },
   { at: DROP_RELEASE, mode: 'alert', content: 'build' },
   { at: DROP_RELEASE + ALERT_HOLD, mode: 'rest', content: 'none' },
-  { at: LIFT_DRAW + BEAT, mode: 'shelf', content: 'stroke' },
+  // 抬手先出「三声 · high」；再说一句、出草稿、发出去；文章里的三处引文是这一段的结果。
+  { at: CONDUCT_TONE, mode: 'alert', content: 'stroke' },
+  { at: CONDUCT_RESULT, mode: 'alert', content: 'cited' },
   { at: SESSION_AT, mode: 'compact', content: 'session' },
   // 要你放行的事（第 1 层）：外面的事引起的开口，先等一拍。
   { at: ASK_CAUSE + BEAT, mode: 'ask', content: 'ask' },
@@ -125,10 +137,10 @@ export const ISLAND_EVENTS: IslandEvent[] = [
   { at: CITED_CAUSE + BEAT + ALERT_HOLD, mode: 'compact', content: 'session' },
   { at: PRESS_LONG_A + LONG_PRESS, mode: 'full', content: 'road' },
   { at: PRESS_LONG_B + LONG_PRESS, mode: 'compact', content: 'session' },
-  // 静音操作：读口型时两边换内容；认出“左半屏”后给出对象；点头之后窗口真的动了，刘海才收。
-  { at: LIPS_AT, mode: 'compact', content: 'lips' },
+  // 静音操作：先给出可读的候选，点头回正之后窗口才动，岛等窗口落地再收。
+  { at: LIPS_AT, mode: 'alert', content: 'lips' },
   { at: PREVIEW_AT, mode: 'alert', content: 'preview' },
-  { at: NOD_DONE + 2, mode: 'compact', content: 'session' },
+  { at: WINDOW_MOVE + 36, mode: 'compact', content: 'session' },
   { at: FOCUS_START, mode: 'compact', content: 'focus' },
   { at: PHONE_GONE + GRACE, mode: 'alert', content: 'countdown' },
   { at: LOCK_AT, mode: 'rest', content: 'none' },
@@ -140,7 +152,7 @@ export const ISLAND_EVENTS: IslandEvent[] = [
 ];
 
 /** 落进刘海那一下的速度（帧）。 */
-export const KICKS = [TUCK_A + Math.ceil(TUCK_FRAMES) + 1, TUCK_B + Math.ceil(TUCK_FRAMES) + 1];
+export const KICKS = [TUCK_A + TUCK_COVER, TUCK_B + TUCK_COVER];
 
 export const LAND_A = KICKS[0];
 export const LAND_B = KICKS[1];

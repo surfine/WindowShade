@@ -3,6 +3,7 @@
 import type { CSSProperties, ReactNode } from 'react';
 import { Img, staticFile } from 'remotion';
 import type { Rect } from '../layout';
+import { pt } from '../motion/site';
 import { ICON_SIZE, LAUNCH_APPS, iconCenter } from '../scene';
 
 export const CJK = '"PingFang SC",-apple-system,system-ui,sans-serif';
@@ -31,10 +32,10 @@ const place = ({ rect, sw, sh }: Box): CSSProperties => ({
 
 const APPLE = 'M17.05 12.54c-.03-2.6 2.13-3.86 2.23-3.92-1.22-1.78-3.11-2.02-3.78-2.05-1.6-.17-3.13.95-3.95.95-.82 0-2.07-.93-3.41-.9-1.75.03-3.37 1.02-4.27 2.59-1.83 3.17-.47 7.85 1.31 10.42.87 1.26 1.9 2.67 3.25 2.62 1.31-.05 1.8-.84 3.38-.84 1.57 0 2.02.84 3.4.81 1.41-.02 2.3-1.27 3.15-2.54 1-1.46 1.41-2.88 1.43-2.95-.03-.01-2.71-1.04-2.74-4.19zM14.47 4.89c.72-.88 1.21-2.09 1.07-3.3-1.04.04-2.3.69-3.04 1.56-.66.77-1.25 2.01-1.09 3.19 1.15.09 2.33-.59 3.06-1.45z';
 
-/** 菜单栏：和刘海一样高、透明，压在墙纸上；左边苹果和 App 菜单，右边 Wi‑Fi、电池、控制中心、日期时间。 */
+/** 菜单栏：樣片 HW.mb = 57.3 px（34 pt），字 21.9 px（13 pt）。 */
 export function MenuBar({ cqw, h }: { cqw: number; h: number }) {
   const items = ['文本编辑', '文件', '编辑', '格式', '显示', '窗口', '帮助'];
-  const H = h * cqw, f = 0.5 * H, ic = 0.62 * H;
+  const H = Math.max(h, (57.3 / 2880) * 100) * cqw, f = pt(13) * cqw, ic = pt(13) * cqw;
   const glyph = (d: ReactNode, w = 1) => <svg width={ic * w} height={ic} viewBox={`0 0 ${24 * w} 24`} fill="#fff">{d}</svg>;
   return (
     <div style={{ position: 'absolute', left: 0, top: 0, right: 0, height: H, display: 'flex', alignItems: 'center', gap: 1.35 * cqw, padding: `0 ${1.25 * cqw}px 0 ${1.5 * cqw}px`, fontFamily: CJK, fontSize: f, color: '#fff', whiteSpace: 'nowrap', background: 'linear-gradient(rgba(0,0,0,.28), rgba(0,0,0,0))', textShadow: '0 0 6px rgba(0,0,0,.25)' }}>
@@ -50,54 +51,71 @@ export function MenuBar({ cqw, h }: { cqw: number; h: number }) {
   );
 }
 
-/** 红绿灯：系统 14pt、间距 8pt，放大后 1.45 / 0.85cqw；不在前台的窗口是灰的。 */
+/** 紅綠燈：樣片直徑 20 px、圓心距 33.7 px。 */
 function Lights({ cqw, off }: { cqw: number; off?: boolean }) {
   const lamps = ['#ff5f57', '#febc2e', '#28c840'];
+  const d = (20 / 1.684) ;
+  const gap = (33.7 / 1.684) - d;
   return (
-    <span style={{ display: 'flex', gap: 0.85 * cqw }}>
+    <span style={{ display: 'flex', gap: pt(gap) * cqw }}>
       {lamps.map((a, i) => (
-        <i key={i} style={{ width: 1.45 * cqw, height: 1.45 * cqw, borderRadius: '50%', background: off ? 'rgba(255,255,255,.16)' : a, boxShadow: off ? 'none' : 'inset 0 0 0 0.5px rgba(0,0,0,.22)' }} />
+        <i key={i} style={{ width: pt(d) * cqw, height: pt(d) * cqw, borderRadius: '50%', background: off ? 'rgba(255,255,255,.16)' : a, boxShadow: off ? 'none' : 'inset 0 0 0 0.5px rgba(0,0,0,.22)' }} />
       ))}
     </span>
   );
 }
 
-/** 一扇窗：标题栏 5cqw、红绿灯、居中标题，圆角 2.6cqw。 */
-export function Win({ box, title, off, children, opacity = 1, scale = 1, radius = 2.6 }: { box: Box; title: string; off?: boolean; children?: ReactNode; opacity?: number; scale?: number; radius?: number }) {
+/** 一扇窗：樣片標題欄高 52 px、圓角 22 px、字約 13 pt。 */
+const BAR = 52 / 1.684;
+const WIN_R = pt(22 / 1.684);
+export function Win({ box, title, off, children, opacity = 1, scale = 1, radius = WIN_R }: { box: Box; title: string; off?: boolean; children?: ReactNode; opacity?: number; scale?: number; radius?: number }) {
   const { cqw } = box;
   return (
-    <div style={{ ...place(box), opacity, transform: `scale(${scale})`, transformOrigin: '50% 50%', borderRadius: radius * cqw, overflow: 'hidden', background: C.win, color: C.ink, fontFamily: CJK, boxShadow: `inset 0 0 0 0.5px rgba(255,255,255,.14), 0 0 0 0.5px rgba(0,0,0,.7), 0 ${(off ? 1 : 2) * cqw}px ${(off ? 3 : 6) * cqw}px rgba(0,0,0,${off ? 0.35 : 0.55}), 0 ${0.3 * cqw}px ${0.8 * cqw}px rgba(0,0,0,.3)` }}>
-      <div style={{ position: 'relative', height: 5 * cqw, display: 'flex', alignItems: 'center', padding: `0 ${1.9 * cqw}px`, background: C.bar, fontSize: 1.55 * cqw, fontWeight: 600, color: off ? C.muted : C.ink }}>
+    <div style={{ ...place(box), opacity, transform: `scale(${scale})`, transformOrigin: '50% 50%', borderRadius: radius * cqw, overflow: 'hidden', background: C.win, color: C.ink, fontFamily: CJK, boxShadow: `inset 0 0 0 0.5px rgba(255,255,255,.14), 0 0 0 0.5px rgba(0,0,0,.7), 0 ${pt(off ? 8 : 18) * cqw}px ${pt(off ? 16 : 28) * cqw}px rgba(0,0,0,${off ? 0.35 : 0.45})` }}>
+      <div style={{ position: 'relative', height: pt(BAR) * cqw, display: 'flex', alignItems: 'center', padding: `0 ${pt(16) * cqw}px`, background: C.bar, fontSize: pt(13) * cqw, fontWeight: 600, color: off ? C.muted : C.ink }}>
         <Lights cqw={cqw} off={off} />
         <span style={{ position: 'absolute', left: '50%', transform: 'translateX(-50%)', whiteSpace: 'nowrap' }}>{title}</span>
       </div>
-      <div style={{ position: 'absolute', left: 0, right: 0, top: 5 * cqw, bottom: 0 }}>{children}</div>
+      <div style={{ position: 'absolute', left: 0, right: 0, top: pt(BAR) * cqw, bottom: 0 }}>{children}</div>
     </div>
   );
 }
 
-/** marks：每行末尾那处引文改好的程度（0–1），助手改过的地方标一小段强调色。 */
-function Lines({ cqw, widths, marks = [] }: { cqw: number; widths: number[]; marks?: number[] }) {
-  return (
-    <div style={{ display: 'grid', gap: 1.5 * cqw, marginTop: 3 * cqw }}>
-      {widths.map((w, i) => (
-        <i key={i} style={{ position: 'relative', height: 0.9 * cqw, width: `${w}%`, borderRadius: cqw, background: C.line }}>
-          {(marks[i] ?? 0) > 0 && <b style={{ position: 'absolute', right: 0, top: 0, bottom: 0, width: '22%', borderRadius: cqw, background: C.accent, opacity: 0.75 * marks[i] }} />}
-        </i>
-      ))}
-    </div>
-  );
-}
+/** 三处可读引文：短句 + 出处；变蓝时看得出核了对哪一句（审片 B11-02）。 */
+const CITES: { before: string; after: string; src: string }[] = [
+  { before: '设计就是外观。', after: '设计不是看起来怎样，而是用起来怎样。', src: 'Jobs，2003' },
+  { before: '动得越夸张越好。', after: '界面应当跟上手指。', src: 'Karunamuni，Fluid Interfaces' },
+  { before: '刘海只是屏幕上的缺口。', after: '刘海是软件和硬件的接缝。', src: 'WWDC 2022' },
+];
 
 /** 后面那扇“文章草稿”，不在前台。 */
 export function DraftWin({ box, opacity, marks }: { box: Box; opacity?: number; marks?: number[] }) {
   const { cqw } = box;
+  const tool = (label: string) => (
+    <span style={{ fontSize: pt(12) * cqw, fontWeight: 600, color: 'rgba(235,235,245,.55)', padding: `0 ${0.8 * cqw}px` }}>{label}</span>
+  );
   return (
     <Win box={box} title="文章草稿" off opacity={opacity}>
-      <div style={{ padding: `${4 * cqw}px ${4.4 * cqw}px` }}>
-        <div style={{ fontSize: 1.65 * cqw, fontWeight: 600, color: C.accent, letterSpacing: '.02em' }}>周四 · 专栏</div>
-        <div style={{ fontSize: 4.6 * cqw, fontFamily: '"Songti SC","Noto Serif SC",serif', fontWeight: 500, lineHeight: 1.2, marginTop: 1.4 * cqw, color: C.ink, whiteSpace: 'nowrap' }}>桌面空了，<br />心也静了。</div>
-        <Lines cqw={cqw} widths={[100, 92, 96, 58]} marks={marks} />
+      <div style={{ height: pt(28) * cqw, display: 'flex', alignItems: 'center', gap: 0.4 * cqw, padding: `0 ${2.4 * cqw}px`, borderBottom: `0.5px solid ${C.line}`, background: 'rgba(255,255,255,.03)' }}>
+        {tool('B')}{tool('I')}{tool('≡')}{tool('“ ”')}
+        <span style={{ marginLeft: 'auto', fontSize: pt(11) * cqw, color: C.muted }}>核对三处引文</span>
+      </div>
+      <div style={{ padding: `${2.2 * cqw}px ${3.2 * cqw}px` }}>
+        <div style={{ fontSize: pt(12) * cqw, fontWeight: 600, color: C.accent, letterSpacing: '.02em' }}>周四 · 专栏</div>
+        <div style={{ fontSize: pt(22) * cqw, fontFamily: '"Songti SC","Noto Serif SC",serif', fontWeight: 500, lineHeight: 1.3, marginTop: pt(8) * cqw, color: C.ink }}>桌面空了，心也静了。</div>
+        <div style={{ fontSize: pt(13) * cqw, lineHeight: 1.55, marginTop: pt(8) * cqw, color: 'rgba(235,235,245,.62)' }}>窗口收进刘海，不是最小化。下面三处引文要和出处对上。</div>
+        <div style={{ display: 'grid', gap: 1.1 * cqw, marginTop: 2.2 * cqw }}>
+          {CITES.map((c, i) => {
+            const m = marks?.[i] ?? 0;
+            const on = m > 0.55;
+            return (
+              <div key={c.src} style={{ fontSize: pt(14) * cqw, lineHeight: 1.4, fontWeight: 500, color: on ? C.accent : 'rgba(235,235,245,.78)' }}>
+                {on ? c.after : c.before}
+                <div style={{ fontSize: pt(11) * cqw, fontWeight: 500, color: on ? 'rgba(10,132,255,.75)' : C.muted, marginTop: 0.25 * cqw }}>{c.src}</div>
+              </div>
+            );
+          })}
+        </div>
       </div>
     </Win>
   );
@@ -108,7 +126,7 @@ export function TermWin(p: { box: Box; opacity?: number; scale?: number; radius?
   const rows = ['$ swift build', 'Compiling WindowShade', '[132/186] Notch.swift', p.done ? 'Build complete!' : '[133/186] SlideOver.swift'];
   return (
     <Win {...p} title="WindowShade — zsh — 80×24">
-      <div style={{ position: 'absolute', inset: 0, background: '#1e1f24', color: '#d7dbe3', font: `${1.75 * cqw}px/1.7 ${MONO}`, padding: `${2.6 * cqw}px ${3 * cqw}px` }}>
+      <div style={{ position: 'absolute', inset: 0, background: '#1e1f24', color: '#d7dbe3', font: `${pt(13) * cqw}px/1.55 ${MONO}`, padding: `${pt(12) * cqw}px ${pt(14) * cqw}px` }}>
         {rows.map((r, i) => <div key={r} style={{ color: i && !(p.done && i === 3) ? undefined : '#8fd18f' }}>{r}</div>)}
         <div style={{ width: cqw, height: 2.2 * cqw, background: '#d7dbe3', marginTop: 0.4 * cqw }} />
       </div>

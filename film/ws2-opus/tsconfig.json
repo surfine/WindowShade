@@ -2,7 +2,15 @@
   "compilerOptions": {
     "target": "ES2022", "module": "ESNext", "moduleResolution": "Bundler", "jsx": "react-jsx",
     "strict": true, "skipLibCheck": true, "esModuleInterop": true, "resolveJsonModule": true,
-    "noEmit": true, "noUnusedLocals": true, "lib": ["DOM", "ES2022"]
+    "noEmit": true, "noUnusedLocals": true, "lib": ["DOM", "ES2022"], "ignoreDeprecations": "6.0",
+    "baseUrl": ".",
+    "paths": {
+      "three": ["vendor/node_modules/@types/three"],
+      "three/*": ["vendor/node_modules/@types/three/*"],
+      "@react-three/fiber": ["vendor/node_modules/@react-three/fiber"],
+      "@remotion/three": ["vendor/node_modules/@remotion/three"],
+      "html2canvas": ["vendor/node_modules/html2canvas"]
+    }
   },
   "include": ["src"]
 }

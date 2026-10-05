@@ -7,7 +7,7 @@
 照 onetake §7 的做法（方法照搬，代码是这里自己写的）：
 - 一个房间：所有音效送进同一个合成混响（T60 0.9 s），远近只改送多少；
 - 一组材质：气流、玻璃、木头、低音四种，13 声，比 178 拍少得多；不给每个动作配一声；
-- 配乐从头到尾不断：UNDER 两段（「不出声」和锁屏）低 4 dB、滤到 1.2 kHz 以下，像退到门后；每一声音效下让开约 5 dB；
+- 配乐从头到尾不断：UNDER 两段低 2 dB、低通约 4 kHz，进出约半拍；每一声音效下让开约 2.5 dB；
   不做真静音（做过，Aaron 听成「声音时断时续」）；
 - 母带 −16 LUFS、真峰值 −4 dBTP（AAC 320k 编码后仍低于 −3 dBFS）。
 全部确定：噪声用固定种子，同样的事件表混出逐字节相同的文件。
@@ -125,19 +125,19 @@ def main():
     music = decode(os.path.join(PUBLIC, ev["music"]), ev["offsetSec"], dur)
     music *= 10 ** (-20 / 20) / (np.sqrt((music ** 2).mean()) + 1e-9)      # 配乐垫在 −20 dBFS RMS，音效在上面
 
-    w = np.zeros(n)               # 退到门后的程度：剪接点上半拍退下去，回来那一拍之前半拍升回来，正好在拍上满
-    half = int(0.246 * SR)
+    w = np.zeros(n)               # 退到门后的程度：进出约 0.5 s，避免泵感
+    half = int(0.5 * SR)
     for a, b in ev["under"]:
         w = np.maximum(w, np.minimum(ramp(n, s(a), s(a) + half, up=True), ramp(n, s(b) - half, s(b), up=False)))
-    behind = np.stack([lowpass(music[:, c], 1200, 2) for c in (0, 1)], 1) * 10 ** (-4 / 20)
+    behind = np.stack([lowpass(music[:, c], 4000, 2) for c in (0, 1)], 1) * 10 ** (-2 / 20)
     music = music * (1 - w)[:, None] + behind * w[:, None]
     g = np.ones(n)
     a, b = ev["tail"]; g *= ramp(n, s(a), s(b), up=False)
     duck = np.zeros(n)
-    for e in ev["events"]:        # 每一声前 30 ms 让开、400 ms 回来
-        c = s(e["at"]); i = np.arange(max(0, c - int(0.03 * SR)), min(n, c + int(0.4 * SR)))
-        d = np.where(i < c, (i - (c - 0.03 * SR)) / (0.03 * SR), 1 - (i - c) / (0.4 * SR)); duck[i] = np.maximum(duck[i], d)
-    g *= 1 - 0.44 * duck          # −5 dB
+    for e in ev["events"]:        # 每一声前 40 ms 让开、550 ms 回来
+        c = s(e["at"]); i = np.arange(max(0, c - int(0.04 * SR)), min(n, c + int(0.55 * SR)))
+        d = np.where(i < c, (i - (c - 0.04 * SR)) / (0.04 * SR), 1 - (i - c) / (0.55 * SR)); duck[i] = np.maximum(duck[i], d)
+    g *= 1 - 0.25 * duck          # ≈ −2.5 dB
     music *= g[:, None]
 
     bus = Bus(n)

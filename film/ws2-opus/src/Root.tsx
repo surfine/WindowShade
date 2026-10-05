@@ -1,5 +1,5 @@
 import { Composition } from 'remotion';
-import { Film } from './Film';
+import { Film, SCREEN_PLATE, ScreenPlate } from './Film';
 import { LANDSCAPE, PHONE, PORTRAIT } from './layout';
 import { FPS } from './motion/site';
 import { OUT_TOTAL } from './cut';
@@ -26,6 +26,7 @@ export function Root() {
       <Composition id="WS2OpusSlotsPortrait" component={PortraitSlots} {...common} width={PORTRAIT.width} height={PORTRAIT.height} />
       <Composition id="WS2OpusPhone" component={Phone} {...common} width={PHONE.width} height={PHONE.height} />
       <Composition id="WS2OpusDraft" component={Draft} durationInFrames={Math.ceil(OUT_TOTAL / 2)} fps={FPS / 2} width={LANDSCAPE.width} height={LANDSCAPE.height} />
+      <Composition id="WS2Screen" component={ScreenPlate} durationInFrames={OUT_TOTAL} fps={FPS} width={SCREEN_PLATE.width} height={SCREEN_PLATE.height} />
       <FutureCompositions />
     </>
   );

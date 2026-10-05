@@ -21,7 +21,7 @@ export const HEADLINES: Record<Exclude<HeadId, 'end'>, { zh: string; en: string 
   launch: { zh: '点一下刘海，打开启动台', en: 'Tap the notch for Launchpad.' },
   drop: { zh: '拖到刘海，选个位置', en: 'Drag to the notch, pick a spot.' },
   draw: { zh: '画一笔，说一句', en: 'Draw a stroke. Say a line.' },
-  nod: { zh: '不出声，点头就照做', en: 'Mouth it. Nod to confirm.' },
+  nod: { zh: '静音操作，点头再确认', en: 'Silent confirm with a nod.' },
   away: { zh: '走开就锁', en: 'Walk away. It locks.' },
   face: { zh: '回来看一眼，窗口都在', en: 'Look back. Everything stays put.' },
 };
@@ -32,16 +32,17 @@ export type Shot = { id: string; src: [number, number]; why: string; key: number
 /** from / to / on 是片子的拍号；key 是母带里那个动作的帧，落在第 on 拍。 */
 const PLANS: Plan[] = [
   { id: 'open', from: 0, to: 4, key: 1777, on: 0, framing: 'wide', head: 'problem', why: '整机：桌面一扇扇堆满（问题先说）' },
-  { id: 'tuck', from: 4, to: 10, key: 1899, on: 5, framing: 'close', head: 'tuck', why: '特写：终端被吸进刘海，其余几扇跟着进去' },
+  // 收放落位：特写前后保留能看全窗口与目标区的景别（审片 B10-04）；动作时镜头仍停住。
+  { id: 'tuck', from: 4, to: 10, key: 1899, on: 5, framing: 'medium', head: 'tuck', why: '中景：终端被吸进刘海，窗下缘仍在画内' },
   { id: 'peek', from: 10, to: 12, key: 2127, on: 11, framing: 'medium', head: 'tuck', why: '中景：停到刘海上，看见收起来的那扇' },
-  { id: 'back', from: 12, to: 18, key: 2806, on: 15, framing: 'close', head: 'tuck', why: '特写：点格子，终端从刘海飞回原处' },
-  { id: 'launch', from: 18, to: 24, key: 3021, on: 20, framing: 'near', head: 'launch', why: '近景：点刘海，启动台从刘海长出来' },
+  { id: 'back', from: 12, to: 18, key: 2806, on: 15, framing: 'medium', head: 'tuck', why: '中景：点格子，终端从刘海飞回原处' },
+  { id: 'launch', from: 18, to: 24, key: 3021, on: 20, framing: 'medium', head: 'launch', why: '中景：点刘海，启动台从刘海长出来' },
   { id: 'drag', from: 24, to: 28, key: 4470, on: 26, framing: 'medium', head: 'drop', why: '中景：按住标题栏往刘海拖（曲子抬升）' },
-  { id: 'slots', from: 28, to: 36, key: 4530, on: 28, framing: 'close', head: 'drop', why: '特写：五个落点垂下来，选左半屏松手' },
-  { id: 'draw', from: 36, to: 46, key: 5201, on: 44, framing: 'desk', head: 'draw', why: '整机加触控板：画一笔' },
-  { id: 'say', from: 46, to: 58, key: 5532, on: 55, framing: 'medium', head: 'draw', why: '中景：那一笔落进刘海，说一句，刘海接着做' },
-  { id: 'lips', from: 58, to: 66, key: 7620, on: 64, framing: 'close', head: 'nod', why: '特写：读口型，认出“左半屏”' },
-  { id: 'nod', from: 66, to: 72, key: 7740, on: 67, framing: 'medium', head: 'nod', why: '中景：刘海里的 AirPods 点一下头，草稿去左半屏' },
+  { id: 'slots', from: 28, to: 36, key: 4530, on: 28, framing: 'near', head: 'drop', why: '近景：五个落点垂下来，选左半屏松手' },
+  { id: 'draw', from: 36, to: 46, key: 5201, on: 44, framing: 'desk', head: 'draw', why: '整机加手机：画一笔认出三声' },
+  { id: 'say', from: 46, to: 58, key: 5532, on: 55, framing: 'medium', head: 'draw', why: '中景：说一句，草稿发出，文章改三处' },
+  { id: 'lips', from: 58, to: 66, key: 7620, on: 64, framing: 'medium', head: 'nod', why: '中景：静音操作读口型，认出“左半屏”' },
+  { id: 'nod', from: 66, to: 72, key: 7740, on: 67, framing: 'medium', head: 'nod', why: '中景：点头确认后，草稿去左半屏' },
   { id: 'away', from: 72, to: 78, key: 8360, on: 74, framing: 'desk', head: 'away', why: '整机：手机走开' },
   { id: 'count', from: 78, to: 82, key: 9050, on: 81, framing: 'close', head: 'away', why: '特写：倒数走完，锁上' },
   { id: 'return', from: 82, to: 86, key: 9080, on: 82, framing: 'desk', head: 'face', why: '整机：手机回到身边' },
@@ -95,8 +96,8 @@ for (let i = 0; i < SHOTS.length; i++) {
   if (last && last.head === h) last.to = to;
   else CAPTIONS.push({ head: h, text: HEADLINES[h].zh, en: HEADLINES[h].en, from: STARTS[i], to });
 }
-/** 片名落在最后一个重拍。 */
-export const WORDMARK_AT = beatFrame(SECTIONS.lastHit);
+/** 片名从片尾这一镜的第一帧就在（比最后一个重拍早六拍），停到淡出；不压在上一段标题上。网址仍是次要那一行。 */
+export const WORDMARK_AT = beatFrame(SECTIONS.lastHit - 6);
 export const FADE_TO_BLACK = [OUT_TOTAL - 24, OUT_TOTAL] as const;
 
 /** 标题进场：0.3 秒淡入、往上升 0.6 个字高（正弦缓动）；出场 0.1 秒淡出。 */
@@ -107,8 +108,8 @@ export function captionOpacity(out: number, from: number, to: number) {
 }
 
 /**
- * 配乐退到后面的两段（成片帧号，都在拍上）：音乐不停，只低 4 dB、滤掉 1.2 kHz 以上，像隔了一道门。scripts/score.py 按它混音。
- * 读口型（「不出声」）一段；锁上到面容 ID 打勾一段，打勾那一拍整首回来。不做真静音：Aaron 听成「声音时断时续」。
+ * 配乐退到后面的两段（成片帧号，都在拍上）：音乐不停，低 2 dB、低通约 4 kHz。进出拉长。scripts/score.py 按它混音。
+ * 读口型一段；锁上到面容 ID 打勾一段，打勾那一拍整首回来。不做真静音。
  */
 export const UNDER: [number, number][] = [
   [beatFrame(58), beatFrame(66)],

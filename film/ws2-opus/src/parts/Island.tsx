@@ -1,9 +1,10 @@
 import type { ReactNode } from 'react';
 import { islandAt, layersAt, type ContentLayer } from '../island';
 import { FADE_IN } from '../motion/direction';
-import { NOTCH, SITE_NOTCH_H, clamp01 } from '../motion/site';
-import { CLICK_ALLOW, COUNTDOWN, FACE_OK, type Content } from '../timeline';
-import { ASK_UI, DROP_CHOICES, DROP_UI, STROKE, SUMMARY_UI, dropDotAt, dropHoverAt, nodTiltAt, pointerAt, summaryHoverAt } from '../scene';
+import { fusedIslandD } from '../motion/notchPath';
+import { NOTCH, clamp01, pt } from '../motion/site';
+import { CLICK_ALLOW, CONDUCT_SEND, CONDUCT_TALK, COUNTDOWN, FACE_OK, NOD_DOWN, NOD_FRAMES, type Content } from '../timeline';
+import { ASK_UI, DROP_CHOICES, DROP_UI, SUMMARY_UI, dropDotAt, dropHoverAt, nodTiltAt, pointerAt, summaryHoverAt } from '../scene';
 
 const INK = 'rgba(255,255,255,.92)';
 const DIM = 'rgba(255,255,255,.5)';
@@ -14,12 +15,23 @@ export function Island({ frame, cqw, drawn }: { frame: number; cqw: number; draw
   const s = islandAt(frame);
   const layers = layersAt(frame);
   const paint = drawn ? drawReal : draw;
+  // 靜止時不另畫一顆藥丸。展開後設計稿的形狀和網格洞是同一條路徑、同一個黑。
+  const grown = s.w > NOTCH.w + 0.05 || s.h > NOTCH.h + 0.05;
+  const screenH = (1864 / 2880) * 100;
   return (
+    <>
+    <svg
+      width="100%"
+      height="100%"
+      viewBox={`0 0 100 ${screenH}`}
+      style={{ position: 'absolute', left: 0, top: 0, overflow: 'visible' }}
+    >
+      <path d={fusedIslandD(s.w, s.h, s.rb, s.rs, grown)} fill="#000" />
+    </svg>
     <div
       style={{
         position: 'absolute', top: 0, left: '50%', width: s.w * cqw, height: s.h * cqw,
-        transform: 'translateX(-50%)', background: '#000', overflow: 'hidden',
-        borderBottomLeftRadius: s.r * cqw, borderBottomRightRadius: s.r * cqw,
+        transform: 'translateX(-50%)',
       }}
     >
       <svg width={s.w * cqw} height={s.h * cqw} viewBox={`0 0 ${s.w} ${s.h}`} style={{ position: 'absolute', inset: 0 }}>
@@ -30,22 +42,24 @@ export function Island({ frame, cqw, drawn }: { frame: number; cqw: number; draw
         {layers.map((l, i) => <g key={`${l.content}-${i}`}>{paint(l, s.w, s.h, frame)}</g>)}
       </svg>
     </div>
+    </>
   );
 }
 
 const line = { fill: 'none', stroke: INK, strokeWidth: SW, strokeLinecap: 'round' as const, strokeLinejoin: 'round' as const };
 
 // 两侧的小图标照官网画，按真机刘海高度和官网 5.4 的比例缩小。
-const EAR = (NOTCH.h / SITE_NOTCH_H) * 1.25;
+const EAR = 0.42;
 
 function ears(l: ContentLayer, w: number, left: ReactNode, right: ReactNode) {
-  // compact：内容只在硬件刘海两边露出的那一截里。
+  // Compact：贴紧洞两侧，尽量窄、装满（WWDC23 10194）。
   const ear = (w - NOTCH.w) / 2;
   const cy = NOTCH.h / 2;
+  const s = EAR * 1.08;
   return (
     <>
-      <g opacity={l.first} transform={`translate(${ear / 2} ${cy}) scale(${EAR})`}>{left}</g>
-      <g opacity={l.second} transform={`translate(${w - ear / 2} ${cy}) scale(${EAR})`}>{right}</g>
+      <g opacity={l.first} transform={`translate(${ear / 2} ${cy}) scale(${s})`}>{left}</g>
+      <g opacity={l.second} transform={`translate(${w - ear / 2} ${cy}) scale(${s})`}>{right}</g>
     </>
   );
 }
@@ -87,7 +101,6 @@ function dropGlyph(i: number, ink: string) {
 }
 
 const sessionGlyph = <g><path {...line} d="M 0 -1.4 A 1.4 1.4 0 1 1 -1.21 0.7" /><circle cx={0} cy={0} r={0.35} fill={INK} /></g>;
-const mouthGlyph = <path {...line} d="M -1.6 0 Q 0 -1.1 1.6 0 Q 0 1.3 -1.6 0 Z" />;
 /** 侧面的一只 AirPods Pro，跟着点头转（转轴在耳塞头上），左边一道弧是点头的方向。 */
 const podGlyph = (tilt: number) => (
   <g>
@@ -112,9 +125,9 @@ function drawDrop(l: ContentLayer, w: number, frame: number, real: boolean) {
         const ink = `rgba(255,255,255,${0.62 + 0.38 * on})`;
         return (
           <g key={name}>
-            <rect opacity={l.first} x={x + 0.3} y={top} width={pitch - 0.6} height={bottom - top} rx={1.6} fill={`rgba(255,255,255,${0.05 + 0.13 * on})`} />
-            <g opacity={l.first} transform={`translate(${cx} ${top + (real ? 3.1 : (bottom - top) / 2)})`}>{dropGlyph(i, ink)}</g>
-            {real && <text opacity={l.second} x={cx} y={bottom - 1.2} textAnchor="middle" fontFamily={CJK} fontSize={1.35} fontWeight={on > 0.5 ? 600 : 400} fill={ink}>{name}</text>}
+            <rect opacity={l.first} x={x + pt(2)} y={top} width={pitch - pt(4)} height={bottom - top} rx={pt(8)} fill={`rgba(255,255,255,${0.05 + 0.13 * on})`} />
+            <g opacity={l.first} transform={`translate(${cx} ${top + pt(16)}) scale(0.36)`}>{dropGlyph(i, ink)}</g>
+            {real && <text opacity={l.second} x={cx} y={bottom - pt(8)} textAnchor="middle" fontFamily={CJK} fontSize={pt(11)} fontWeight={on > 0.5 ? 600 : 400} fill={ink}>{name}</text>}
           </g>
         );
       })}
@@ -190,8 +203,10 @@ function draw(l: ContentLayer, w: number, h: number, frame = 0): ReactNode {
       return c === 'verify' ? verifyEars(l, w, frame, INK) : alertBody(l, <g>{factorDots(1, 1, INK)}</g>);
     case 'preview':
       return alertBody(l, dropGlyph(0, INK));
-    case 'lips':
-      return ears(l, w, mouthGlyph, <g>{[-0.9, 0, 0.9].map((x, i) => <circle key={i} cx={x} cy={0} r={0.3} fill={INK} opacity={l.since >= i * 15 ? 1 : 0.3} />)}</g>);
+    case 'lips': {
+      const y = NOTCH.h + Math.max(1.2, (h - NOTCH.h) * 0.55);
+      return <line {...line} opacity={l.first} x1={w * 0.28} x2={w * 0.72} y1={y} y2={y} strokeWidth={0.45} />;
+    }
     case 'summary': {
       const { rowY, rowH, x } = SUMMARY_UI;
       return (
@@ -247,35 +262,21 @@ function draw(l: ContentLayer, w: number, h: number, frame = 0): ReactNode {
       return alertBody(l, <g><circle {...line} r={1.8} stroke="rgba(255,255,255,.18)" />{left > 0.001 && ring}</g>);
     }
     case 'card': {
-      // 一排里的格子：收进去的那扇窗，缩成卡片的位置。
-      const cw = 14, ch = 13, x = w / 2 - cw / 2, y = SITE_NOTCH_H + 2.6;
+      // 和飞回的终端同一视觉身份（红绿灯 + 编译行），缩在岛里。
+      const cw = (200 / 2880) * 100, ch = (131 / 2880) * 100, x = w / 2 - cw / 2, y = NOTCH.h + (28 / 2880) * 100;
       return (
-        <g>
-          <rect x={x} y={y} width={cw} height={ch} rx={1.6} fill="#171a20" stroke="rgba(255,255,255,.35)" strokeWidth={SW} opacity={l.first} />
-          <line {...line} opacity={l.second} x1={x} x2={x + cw * 0.7} y1={y + ch + 2} y2={y + ch + 2} strokeWidth={0.8} />
+        <g opacity={l.first}>
+          <rect x={x} y={y} width={cw} height={ch} rx={1.2} fill="#1e1f24" stroke="rgba(255,255,255,.28)" strokeWidth={SW * 0.7} />
+          {['#ff5f57', '#febc2e', '#28c840'].map((c, i) => <circle key={c} cx={x + cw * 0.12 + i * cw * 0.1} cy={y + ch * 0.22} r={ch * 0.08} fill={c} />)}
+          <line {...line} opacity={l.second} x1={x + cw * 0.08} x2={x + cw * 0.72} y1={y + ch * 0.48} y2={y + ch * 0.48} strokeWidth={0.55} />
+          <line {...line} opacity={l.second} x1={x + cw * 0.08} x2={x + cw * 0.55} y1={y + ch * 0.68} y2={y + ch * 0.68} strokeWidth={0.45} stroke="rgba(255,255,255,.45)" />
         </g>
       );
     }
     case 'stroke': {
-      // 刚才那一笔，原样落在刘海里；第二层是说话的波形（只是示意）。
-      const sx = (x: number) => 6 + ((x - 22) / 56) * (w - 12);
-      const sy = (y: number) => SITE_NOTCH_H + 2 + ((y - 30) / 40) * 9;
-      const d = STROKE.map((p, i) => `${i ? 'L' : 'M'} ${sx(p.x).toFixed(2)} ${sy(p.y).toFixed(2)}`).join(' ');
-      const bars = 36;
-      return (
-        <g>
-          <path {...line} d={d} strokeWidth={0.5} opacity={l.first} />
-          <g opacity={l.second}>
-            {Array.from({ length: bars }, (_, i) => {
-              const x = 8 + (i / (bars - 1)) * (w - 16);
-              const t = l.since - 24 - i * 1.5;
-              const env = clamp01(t / 20) * (1 - clamp01((t - 200) / 30));
-              const amp = env * (0.5 + 0.5 * Math.abs(Math.sin(i * 1.7 + t * 0.21) * Math.cos(i * 0.6 - t * 0.13))) * 2.4;
-              return <line key={i} {...line} stroke={DIM} x1={x} x2={x} y1={h - 3.6 - amp} y2={h - 3.6 + amp} strokeWidth={0.45} />;
-            })}
-          </g>
-        </g>
-      );
+      const y = NOTCH.h + (h - NOTCH.h) * 0.56;
+      const half = Math.min(6.2, (w - 4) / 2);
+      return <line {...line} opacity={l.first} x1={w / 2 - half} x2={w / 2 + half} y1={y} y2={y} strokeWidth={0.5} />;
     }
     case 'road': {
       // 另一种用法：只画透视线，不画任何界面和标志。
@@ -307,12 +308,18 @@ function termTile(size: number) {
 }
 
 function alertReal(l: ContentLayer, h: number, icon: ReactNode, title: string, detail: string) {
-  const size = 6, x = 2.2, y = h - 2 - size;
+  // Expanded／半岛：同心边距——图块圆角与岛外轮廓和谐，字不贴侧壁（10194）。
+  const margin = pt(12);
+  const size = pt(28);
+  const x = margin;
+  const band = h - NOTCH.h;
+  const y = NOTCH.h + Math.max(pt(6), (band - size) / 2);
+  const textX = x + size + pt(10);
   return (
     <>
-      <g opacity={l.first} transform={`translate(${x + size / 2} ${y + size / 2})`}>{icon}</g>
-      <text opacity={l.first} x={x + size + 1.6} y={y + 2.9} fontFamily={CJK} fontWeight={600} fontSize={2.3} fill="#fff">{title}</text>
-      <text opacity={l.second} x={x + size + 1.6} y={y + 5.5} fontFamily={CJK} fontSize={1.7} fill="rgba(255,255,255,.62)">{detail}</text>
+      <g opacity={l.first} transform={`translate(${x + size / 2} ${y + size / 2}) scale(${size / 6})`}>{icon}</g>
+      <text opacity={l.first} x={textX} y={y + pt(12)} fontFamily={CJK} fontWeight={700} fontSize={pt(18)} fill="#fff">{title}</text>
+      <text opacity={l.second} x={textX} y={y + pt(32)} fontFamily={CJK} fontWeight={600} fontSize={pt(13)} fill="rgba(255,255,255,.7)">{detail}</text>
     </>
   );
 }
@@ -320,8 +327,8 @@ function alertReal(l: ContentLayer, h: number, icon: ReactNode, title: string, d
 function tile(glyph: ReactNode) {
   return (
     <g>
-      <rect x={-3} y={-3} width={6} height={6} rx={1.44} fill="url(#tile)" stroke="rgba(255,255,255,.18)" strokeWidth={0.12} />
-      <g transform="scale(1.15)">{glyph}</g>
+      <rect x={-3.1} y={-3.1} width={6.2} height={6.2} rx={1.7} fill="url(#tile)" stroke="rgba(255,255,255,.16)" strokeWidth={0.1} />
+      <g transform="scale(1.2)">{glyph}</g>
     </g>
   );
 }
@@ -333,20 +340,20 @@ function drawReal(l: ContentLayer, w: number, h: number, frame: number): ReactNo
     case 'ask': {
       // 要你放行的事：一句问话，两个按钮。只认问话出现之后的那一下点。
       const { allow, deny } = ASK_UI;
-      const size = 6, x = 2.2, y = SITE_NOTCH_H + 0.6;
+      const size = pt(24), x = pt(12), y = NOTCH.h + pt(10);
       const p = pointerAt(frame);
       const pressed = p && frame >= CLICK_ALLOW - 12 && frame <= CLICK_ALLOW ? p.pressed : 0;
       return (
         <>
-          <g opacity={l.first} transform={`translate(${x + size / 2} ${y + size / 2})`}>{tile(sessionGlyph)}</g>
-          <text opacity={l.first} x={x + size + 1.6} y={y + 2.9} fontFamily={CJK} fontWeight={600} fontSize={2.3} fill="#fff">允许改文章草稿？</text>
-          <text opacity={l.second} x={x + size + 1.6} y={y + 5.5} fontFamily={CJK} fontSize={1.7} fill="rgba(255,255,255,.62)">Claude · 核对三处引文</text>
+          <g opacity={l.first} transform={`translate(${x + size / 2} ${y + size / 2}) scale(${size / 6})`}>{tile(sessionGlyph)}</g>
+          <text opacity={l.first} x={x + size + pt(8)} y={y + pt(10)} fontFamily={CJK} fontWeight={600} fontSize={pt(13)} fill="#fff">允许改文章草稿？</text>
+          <text opacity={l.second} x={x + size + pt(8)} y={y + pt(26)} fontFamily={CJK} fontSize={pt(11)} fill="rgba(255,255,255,.62)">Claude · 核对三处引文</text>
           <g opacity={l.second}>
             <rect x={deny.x} y={deny.y} width={deny.w} height={deny.h} rx={deny.h / 2} fill="rgba(255,255,255,.12)" />
-            <text x={deny.x + deny.w / 2} y={deny.y + deny.h / 2 + 0.6} textAnchor="middle" fontFamily={CJK} fontSize={1.7} fill="#fff">不允许</text>
+            <text x={deny.x + deny.w / 2} y={deny.y + deny.h / 2 + pt(4)} textAnchor="middle" fontFamily={CJK} fontSize={pt(12)} fill="#fff">不允许</text>
             <rect x={allow.x} y={allow.y} width={allow.w} height={allow.h} rx={allow.h / 2} fill="#7ea4ff" />
             <rect x={allow.x} y={allow.y} width={allow.w} height={allow.h} rx={allow.h / 2} fill="#fff" opacity={0.28 * pressed} />
-            <text x={allow.x + allow.w / 2} y={allow.y + allow.h / 2 + 0.6} textAnchor="middle" fontFamily={CJK} fontWeight={600} fontSize={1.7} fill="#0b1630">允许</text>
+            <text x={allow.x + allow.w / 2} y={allow.y + allow.h / 2 + pt(4)} textAnchor="middle" fontFamily={CJK} fontWeight={600} fontSize={pt(12)} fill="#0b1630">允许</text>
           </g>
         </>
       );
@@ -357,13 +364,12 @@ function drawReal(l: ContentLayer, w: number, h: number, frame: number): ReactNo
       return verifyEars(l, w, frame, '#fff');
     case 'unlocked':
       return alertReal(l, h, tile(<g transform="scale(1.4)">{factorDots(1, 1, '#fff')}</g>), '两样都对上了', '人在 · 手机在身边');
-    case 'preview':
-      return alertReal(l, h, tile(podGlyph(nodTiltAt(frame))), '左半屏', '文章草稿 · 点头确认');
+    case 'preview': {
+      const confirmed = frame >= NOD_DOWN + NOD_FRAMES;
+      return alertReal(l, h, tile(podGlyph(nodTiltAt(frame))), confirmed ? '已确认 · 正在落位' : '等你确认', confirmed ? '左半屏' : '静音操作 · 点头确认');
+    }
     case 'lips':
-      // 读口型：左边是嘴，右边三个点随说出的字一个个亮。
-      return ears(l, w,
-        <g transform="scale(1.1)">{mouthGlyph}</g>,
-        <g>{[-1.1, 0, 1.1].map((x, i) => <circle key={i} cx={x} cy={0} r={0.4} fill="#fff" opacity={l.since >= i * 15 ? 1 : 0.25} />)}</g>);
+      return alertReal(l, h, tile(sessionGlyph), '等你确认', '放到左半屏');
     case 'summary': {
       const { titleY, rowY, rowH, x } = SUMMARY_UI;
       // 两家助手只写名字，不画标志。
@@ -374,15 +380,15 @@ function drawReal(l: ContentLayer, w: number, h: number, frame: number): ReactNo
       ];
       return (
         <g>
-          <text opacity={l.first} x={x + 0.8} y={titleY} fontFamily={CJK} fontWeight={600} fontSize={1.6} fill="rgba(255,255,255,.62)">离开期间</text>
+          <text opacity={l.first} x={x} y={titleY} fontFamily={CJK} fontWeight={600} fontSize={pt(11)} fill="rgba(255,255,255,.62)">离开期间</text>
           {rows.map((r, i) => {
             const y = rowY + rowH * i;
             return (
               <g key={r.title} opacity={i ? l.second : l.first}>
                 <rect x={x} y={y + 0.3} width={w - 2 * x} height={rowH - 0.6} rx={1.8} fill="rgba(255,255,255,.12)" opacity={hoverAmount(summaryHoverAt, frame, i)} />
-                <g transform={`translate(${x + 3.6} ${y + rowH / 2}) scale(0.85)`}>{tile(r.icon)}</g>
-                <text x={x + 7.6} y={y + rowH / 2 - 0.25} fontFamily={CJK} fontWeight={600} fontSize={2.1} fill="#fff">{r.title}</text>
-                <text x={x + 7.6} y={y + rowH / 2 + 2.15} fontFamily={CJK} fontSize={1.6} fill="rgba(255,255,255,.62)">{r.detail}</text>
+                <g transform={`translate(${x + pt(16)} ${y + rowH / 2}) scale(${pt(18) / 6})`}>{tile(r.icon)}</g>
+                <text x={x + pt(36)} y={y + rowH * 0.42} fontFamily={CJK} fontWeight={600} fontSize={pt(12)} fill="#fff">{r.title}</text>
+                <text x={x + pt(36)} y={y + rowH * 0.78} fontFamily={CJK} fontSize={pt(11)} fill="rgba(255,255,255,.62)">{r.detail}</text>
               </g>
             );
           })}
@@ -415,31 +421,32 @@ function drawReal(l: ContentLayer, w: number, h: number, frame: number): ReactNo
       return alertReal(l, h, <g><circle {...line} r={2} stroke="rgba(255,255,255,.18)" strokeWidth={0.45} />{left > 0.001 && ring}</g>, '手机不在身边', `${Math.ceil(remain / 60)} 秒后锁屏`);
     }
     case 'card': {
-      const cw = 15.8, ch = 11, x = w / 2 - cw / 2, y = SITE_NOTCH_H + 1.8;
+      // 和飛回去的那扇終端是同一扇：紅綠燈、同一句提示符、同一行編譯。縮在島的高度裡。
+      const cw = Math.min(16.2, w - 2.4);
+      const ch = Math.min(7.2, h - NOTCH.h - 1.1);
+      const x = w / 2 - cw / 2;
+      const y = NOTCH.h + 0.55;
+      const rows = ['$ swift build', 'Compiling WindowShade', '[132/186] Notch.swift'];
       return (
-        <g>
-          <g opacity={l.first}>
-            <rect x={x} y={y} width={cw} height={ch} rx={2.8} fill="#1c1d22" stroke="rgba(255,255,255,.1)" strokeWidth={0.12} />
-            <path d={`M ${x} ${y + 2.8} A 2.8 2.8 0 0 1 ${x + 2.8} ${y} L ${x + cw - 2.8} ${y} A 2.8 2.8 0 0 1 ${x + cw} ${y + 2.8} L ${x + cw} ${y + 2.2} L ${x} ${y + 2.2} Z`} fill="#2c2e35" />
-            {[0, 1, 2].map((i) => <rect key={i} x={x + 1.6} y={y + 3.6 + i * 1.7} width={[9, 7, 10][i]} height={0.7} rx={0.35} fill={i ? 'rgba(215,219,227,.4)' : 'rgba(143,209,143,.7)'} />)}
-            <text x={x} y={y + ch + 2.7} fontFamily={CJK} fontWeight={600} fontSize={2} fill="#fff">终端</text>
-          </g>
-          <text opacity={l.second} x={x} y={y + ch + 5} fontFamily={CJK} fontSize={1.5} fill="rgba(255,255,255,.62)">收进刘海</text>
+        <g opacity={l.first}>
+          <rect x={x} y={y} width={cw} height={ch} rx={0.7} fill="#1e1f24" stroke="rgba(255,255,255,.16)" strokeWidth={0.06} />
+          <path d={`M ${x} ${y + 0.7} A 0.7 0.7 0 0 1 ${x + 0.7} ${y} L ${x + cw - 0.7} ${y} A 0.7 0.7 0 0 1 ${x + cw} ${y + 0.7} L ${x + cw} ${y + 1.45} L ${x} ${y + 1.45} Z`} fill="#2a2c33" />
+          {['#ff5f57', '#febc2e', '#28c840'].map((c, i) => <circle key={c} cx={x + 0.7 + i * 0.72} cy={y + 0.74} r={0.2} fill={c} />)}
+          <text x={x + cw - 0.45} y={y + 0.98} textAnchor="end" fontFamily={CJK} fontWeight={600} fontSize={0.62} fill="#f5f5f7">终端</text>
+          {rows.map((r, i) => (
+            <text key={r} x={x + 0.45} y={y + 2.35 + i * 1.15} fontFamily={MONO} fontSize={0.7} fill={i ? '#d7dbe3' : '#8fd18f'}>{r}</text>
+          ))}
+          <rect x={x + 0.45} y={y + ch - 1.15} width={0.34} height={0.72} fill="#d7dbe3" />
         </g>
       );
     }
     case 'stroke': {
-      const base = draw(l, w, h, frame);
-      const said = clamp01((l.since - 260) / 11);
-      return (
-        <g>
-          <g opacity={1 - said}>{base}</g>
-          <g opacity={said * l.second}>
-            {draw({ ...l, second: 0 }, w, h)}
-            <text x={w / 2} y={h - 2.6} textAnchor="middle" fontFamily={CJK} fontSize={2.3} fontWeight={600} fill="#fff">核对三处引文</text>
-          </g>
-        </g>
-      );
+      // 抬手先出三声；再说一句出草稿；播放键发出去。笔画在 iPhone 上。
+      if (frame < CONDUCT_TALK) return alertReal(l, h, tile(sessionGlyph), '三声 · high', '下一轮 · WindowShade · Claude');
+      const sent = frame >= CONDUCT_SEND;
+      const title = sent ? '发出去了' : '核对三处引文';
+      const detail = sent ? '三声 · high · 文章草稿' : '草稿 · 播放键发出去';
+      return alertReal(l, h, tile(sessionGlyph), title, detail);
     }
     case 'focus':
       return ears(l, w,
