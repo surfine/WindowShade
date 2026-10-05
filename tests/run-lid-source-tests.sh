@@ -5,6 +5,7 @@ set -euo pipefail
 cd "$(dirname "$0")/.."
 mkdir -p .build/lid-source-tests
 swiftc -parse-as-library -O prototype/Support/Diagnostics.swift \
+  prototype/Core/FlickMotion.swift \
   prototype/Effects/FoldDriver.swift prototype/Effects/LidAngleSource.swift tests/LidSourceTests.swift \
   -o .build/lid-source-tests/lid-source
 .build/lid-source-tests/lid-source

@@ -741,7 +741,10 @@ final class GlanceController {
             coverDuration = content.grow(from: growFrom)
         } else {
             content.rollDown()
-            coverDuration = NSWorkspace.shared.accessibilityDisplayShouldReduceMotion ? 0.12 : 0.18
+            // 卷下用 `calm`；减少动态效果只淡，时长跟 `reducedNotch`。
+            coverDuration = Motion.reduced
+                ? Motion.Spring.reducedNotch.response
+                : Motion.Spring.calm.response
         }
         diagnostics.opens += 1
         diagnostics.lastID = session.id

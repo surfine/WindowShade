@@ -4,5 +4,6 @@ set -euo pipefail
 cd "$(dirname "$0")/.."
 mkdir -p .build/lock-overlay-lifecycle-tests
 swiftc -parse-as-library prototype/Core/SessionLockState.swift prototype/Core/LockOverlayLifecycle.swift \
-  prototype/Effects/FoldDriver.swift tests/LockOverlayLifecycleTests.swift -o .build/lock-overlay-lifecycle-tests/lifecycle
+  prototype/Core/FlickMotion.swift prototype/Effects/FoldDriver.swift tests/LockOverlayLifecycleTests.swift \
+  -o .build/lock-overlay-lifecycle-tests/lifecycle
 .build/lock-overlay-lifecycle-tests/lifecycle
