@@ -75,6 +75,7 @@ enum WS2SilentCopy {
         "assistant.source": "打开来源",
         "assistant.interrupt": "停止这一轮",
         "privacy.cover": "先遮住",
+        "privacy.clearCover": "撤掉遮挡",
         "privacy.reveal": "揭开遮挡",
         "privacy.status": "遮住没遮住",
         "input.pause": "先停一下",

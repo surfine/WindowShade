@@ -1,0 +1,56 @@
+{
+  "scope": "Extracted numeric conversion only; NOT a macOS or AppKit run.",
+  "source_commit_reviewed": "713d3884e31d4d6e698a7dc81df99219db1518b3",
+  "swift": "Swift version 6.2.1 (swift-6.2.1-RELEASE)\nTarget: x86_64-unknown-linux-gnu\n",
+  "assertions_passed": 17,
+  "unsafe_conversion_cases": [
+    {
+      "input": "1",
+      "exit_code": 0,
+      "stdout": "1",
+      "diagnostic_prefix": []
+    },
+    {
+      "input": "-1",
+      "exit_code": -4,
+      "stdout": "",
+      "diagnostic_prefix": [
+        "Swift/IntegerTypes.swift:4027: Fatal error: Double value cannot be converted to UInt32 because the result would be less than UInt32.min",
+        "",
+        "*** Signal 4: Backtracing from 0x7faffe0b2aa6... done ***"
+      ]
+    },
+    {
+      "input": "nan",
+      "exit_code": -4,
+      "stdout": "",
+      "diagnostic_prefix": [
+        "Swift/IntegerTypes.swift:4024: Fatal error: Double value cannot be converted to UInt32 because it is either infinite or NaN",
+        "",
+        "*** Signal 4: Backtracing from 0x7f6794adbaa6... done ***"
+      ]
+    },
+    {
+      "input": "inf",
+      "exit_code": -4,
+      "stdout": "",
+      "diagnostic_prefix": [
+        "Swift/IntegerTypes.swift:4024: Fatal error: Double value cannot be converted to UInt32 because it is either infinite or NaN",
+        "",
+        "*** Signal 4: Backtracing from 0x7fed94106aa6... done ***"
+      ]
+    },
+    {
+      "input": "4294967296",
+      "exit_code": -4,
+      "stdout": "",
+      "diagnostic_prefix": [
+        "Swift/IntegerTypes.swift:4030: Fatal error: Double value cannot be converted to UInt32 because the result would be greater than UInt32.max",
+        "",
+        "*** Signal 4: Backtracing from 0x7f94838d3aa6... done ***"
+      ]
+    }
+  ],
+  "app_build_run": false,
+  "camera_or_lock_or_bluetooth_run": false
+}

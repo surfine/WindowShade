@@ -1,0 +1,346 @@
+{
+  "schema_version": 1,
+  "reviewed_commit": "713d3884e31d4d6e698a7dc81df99219db1518b3",
+  "branch": "cursor/silent-effect-receipts",
+  "main_commit": "b271fcfb843e5caeb89c4e4960c9c8524f232ed6",
+  "scope": "Review and proposed work only; no repository mutation.",
+  "rules": [
+    "沿用现有runtime、授权账本、刘海宿主和恢复机制。",
+    "不直接应用上轮旧基线补丁。",
+    "任务状态只代表本轮交付，不得删除其余原承诺。",
+    "正向可用性、异常与能效共同验收。"
+  ],
+  "tasks": [
+    {
+      "id": "R00",
+      "title": "冻结证据基线",
+      "priority": "P0",
+      "status": "proposed_not_implemented_by_this_review",
+      "depends_on": [],
+      "files": [
+        "docs/handoff/FINAL-HANDOFF.md",
+        "AGENTS.md",
+        "docs/handoff/hardware-matrix-2026-10-05/matrix.json"
+      ],
+      "actions": [
+        "保留用户修改，固定当前审查分支；旧b271补丁不得直接套用。",
+        "当前源码、构建、二进制哈希和测试开关一一对应。"
+      ],
+      "acceptance": [
+        "干净源树与实际测试二进制一致。",
+        "历史失败/未运行保留，文档当前状态无矛盾。"
+      ]
+    },
+    {
+      "id": "R01",
+      "title": "恢复日志数值边界",
+      "priority": "P0",
+      "status": "proposed_not_implemented_by_this_review",
+      "depends_on": [
+        "R00"
+      ],
+      "files": [
+        "prototype/Recovery/Journal.swift",
+        "prototype/Recovery/Rescue.swift"
+      ],
+      "actions": [
+        "字段专用精确解析；坏条目隔离；保留负坐标。",
+        "UInt64编号不再经过Double；日志格式化也做安全处理。"
+      ],
+      "acceptance": [
+        "非法编号/坐标不崩溃；正常条目继续恢复。",
+        "真实Journal测试通过，独立数值实验不得冒充整应用回归。"
+      ]
+    },
+    {
+      "id": "R02",
+      "title": "遮罩热插拔与退出",
+      "priority": "P0",
+      "status": "proposed_not_implemented_by_this_review",
+      "depends_on": [
+        "R00"
+      ],
+      "files": [
+        "prototype/App/WS2SilentPrivacyCover.swift"
+      ],
+      "actions": [
+        "期望显示器集合与实际覆盖集合按ID/几何对账。",
+        "复用面板，更新显示器变化；外部App前台也能退出方便遮挡。"
+      ],
+      "acceptance": [
+        "插拔/缩放/镜像后没有误报全覆盖。",
+        "外部App前台Esc与刘海清除可用；关闭无资源残留。"
+      ]
+    },
+    {
+      "id": "R03",
+      "title": "完整异步回执",
+      "priority": "P0",
+      "status": "proposed_not_implemented_by_this_review",
+      "depends_on": [
+        "R00"
+      ],
+      "files": [
+        "prototype/App/WS2SilentHost.swift",
+        "prototype/App/WS2SilentApply.swift",
+        "prototype/App/Glance.swift",
+        "prototype/App/FoldCompletion.swift",
+        "prototype/Effects/RestoreVerifier.swift"
+      ],
+      "actions": [
+        "operation在派发前创建；终态接真实效果回调。",
+        "取消/新候选/挂起撤销旧UI更新权；单调期限先检查，超时同步更新可见状态。",
+        "置顶/侧拉/PiP接相同终态纪律，不丢异步完成回调。"
+      ],
+      "acceptance": [
+        "A→B→A晚到不改B；取消/过期/复用窗口编号不冒领。",
+        "收起/预览/放回/置顶/侧拉/PiP各有成功与故障回执。"
+      ]
+    },
+    {
+      "id": "R04",
+      "title": "相机真实成功链",
+      "priority": "P0",
+      "status": "proposed_not_implemented_by_this_review",
+      "depends_on": [
+        "R00",
+        "R03"
+      ],
+      "files": [
+        "prototype/App/FaceObservationSource.swift",
+        "prototype/App/WS2SilentHost.swift"
+      ],
+      "actions": [
+        "增加采集→过滤→Vision→消费者的隐私安全计数。",
+        "修复零样本具体原因，再完成真实头动、嘴部挑战与用户确认分离。",
+        "录入/模板/模型权重版本和校准有记录；不静默换识别后端。"
+      ],
+      "acceptance": [
+        "10秒正常单脸取得有效观察；一个真实动作能完成指定低风险操作。",
+        "遮挡/断流/换人取消有效；不把许可通过算采集通过。"
+      ]
+    },
+    {
+      "id": "R05",
+      "title": "性能能效基线",
+      "priority": "P1",
+      "status": "proposed_not_implemented_by_this_review",
+      "depends_on": [
+        "R00"
+      ],
+      "files": [
+        "prototype/Effects/EffectSoakProbe.swift",
+        "prototype/Effects/FoldRenderer.swift",
+        "prototype/Effects/EffectSession.swift",
+        "docs/performance.md"
+      ],
+      "actions": [
+        "逐操作关联采集、预处理、提交、GPU完成、呈现与最终效果。",
+        "测试跨过反转段；短测60秒，稳定性和热状态单独长测。",
+        "功能全关/单项/组合负载分开；计入WindowServer和coreaudiod。"
+      ],
+      "acceptance": [
+        "M5有当前构建的冷/热、空闲/活跃数据；A18未测明确列出。",
+        "成功退出不替代帧预算/能耗门槛；无法采集的硬件计数不是0。"
+      ]
+    },
+    {
+      "id": "R06",
+      "title": "CPU和GPU数据路径",
+      "priority": "P1",
+      "status": "proposed_not_implemented_by_this_review",
+      "depends_on": [
+        "R01",
+        "R03",
+        "R05"
+      ],
+      "files": [
+        "prototype/App/FocusSession.swift",
+        "prototype/Effects/FoldRenderer.swift",
+        "prototype/Effects/EffectFrameSource.swift",
+        "prototype/Effects/EffectSession.swift",
+        "prototype/Effects/Duo.metal",
+        "prototype/App/NotchActivitySources.swift"
+      ],
+      "actions": [
+        "主线程等待的发现/大图预处理移到有界worker，回主线程验证提交。",
+        "源图不变时复用page mipmaps；状态静止停钟；按宿主能力支持高刷新。",
+        "已有通知/缓存保留，源不活跃时取消无必要timer；双在途只作有数据支撑的独立实验。"
+      ],
+      "acceptance": [
+        "同样画质/行为下p95和能耗改善；无恢复/取消退化。",
+        "真实60/120刷新与相机/录屏不同速率组合通过。"
+      ]
+    },
+    {
+      "id": "R07",
+      "title": "ANE和A18能力适配",
+      "priority": "P1",
+      "status": "proposed_not_implemented_by_this_review",
+      "depends_on": [
+        "R04",
+        "R05"
+      ],
+      "files": [
+        "prototype/App/FaceObservationSource.swift",
+        "prototype/App/DeviceAuthorizationKey.swift"
+      ],
+      "actions": [
+        "原生相机像素格式与实际帧率协商，固定模型/输入做后端比较。",
+        "无Touch ID机型显式策略分支，保留旧Touch-ID-only密钥与访问控制。",
+        "根据可用内存/热状态限制可丢弃缓存和非关键视觉工作。"
+      ],
+      "acceptance": [
+        "A18与M5分别给准确率不变的延迟/能量/内存报告。",
+        "无Touch ID、缺ANE、新API不可用时基础功能可用且不弱化授权。"
+      ]
+    },
+    {
+      "id": "R08A",
+      "title": "实时活动和电量真实来源",
+      "priority": "P1",
+      "status": "proposed_not_implemented_by_this_review",
+      "depends_on": [
+        "R00"
+      ],
+      "files": [
+        "docs/blueprint.md",
+        "docs/face-unlock.md",
+        "prototype/Core/PresenceLock.swift",
+        "prototype/App/WS2SilentApply.swift"
+      ],
+      "actions": [
+        "音乐、录音和审批抢占/恢复逐入口验证。",
+        "按设备与组件核对真实电量、采样时间和未知态，不拿电量读取证明身份。"
+      ],
+      "acceptance": [
+        "活动可恢复且过期提醒不重播。",
+        "至少每个对外支持设备有真机来源证据。"
+      ]
+    },
+    {
+      "id": "R08B",
+      "title": "助手和指挥真实回执",
+      "priority": "P1",
+      "status": "proposed_not_implemented_by_this_review",
+      "depends_on": [
+        "R03"
+      ],
+      "files": [
+        "docs/blueprint.md",
+        "docs/face-unlock.md",
+        "prototype/Core/PresenceLock.swift",
+        "prototype/App/WS2SilentApply.swift"
+      ],
+      "actions": [
+        "真实模型/effort能力列表接入；草稿采用与发送分开。",
+        "一个真实输入完成一个已授权的助手动作，取得原协议回执。"
+      ],
+      "acceptance": [
+        "正常成功、取消、拒绝、断连、旧回执场景均通过。"
+      ]
+    },
+    {
+      "id": "R08C",
+      "title": "原生设备身份可行性",
+      "priority": "P1",
+      "status": "proposed_not_implemented_by_this_review",
+      "depends_on": [
+        "R00"
+      ],
+      "files": [
+        "docs/blueprint.md",
+        "docs/face-unlock.md",
+        "prototype/Core/PresenceLock.swift",
+        "prototype/App/WS2SilentApply.swift"
+      ],
+      "actions": [
+        "保留无额外手机App约束；先证明应用能取得何种受保护配对/重连证据。",
+        "同名未配对设备、RSSI近、缓存连接不得冒充持有证明。"
+      ],
+      "acceptance": [
+        "配对身份/密码学证明/距离各自有实测等级，未知保持未知。"
+      ]
+    },
+    {
+      "id": "R08D",
+      "title": "系统解锁最终链路",
+      "priority": "P1",
+      "status": "proposed_not_implemented_by_this_review",
+      "depends_on": [
+        "R03",
+        "R04",
+        "R08C"
+      ],
+      "files": [
+        "docs/blueprint.md",
+        "docs/face-unlock.md",
+        "prototype/Core/PresenceLock.swift",
+        "prototype/App/WS2SilentApply.swift"
+      ],
+      "actions": [
+        "先获得明确的高风险测试准入，再把合格生物与设备证据接有限用途系统后端。",
+        "区分FileVault、loginwindow锁屏和应用内揭示，不更改普通授权账本的全局锁态守卫。"
+      ],
+      "acceptance": [
+        "真实系统锁态确认后才播放桌面返回；错误、用户切换、取消都可退回系统。"
+      ]
+    },
+    {
+      "id": "R08E",
+      "title": "CarPlay真实全屏接收",
+      "priority": "P1",
+      "status": "proposed_not_implemented_by_this_review",
+      "depends_on": [
+        "R00"
+      ],
+      "files": [
+        "docs/blueprint.md",
+        "docs/face-unlock.md",
+        "prototype/Core/PresenceLock.swift",
+        "prototype/App/WS2SilentApply.swift"
+      ],
+      "actions": [
+        "独立验证真实配对/会话、首张解码帧与音频；无需等待人脸路线完成才能研究协议。",
+        "随后连接全屏、输入、退出与桌面恢复，媒体使用原生硬件路径并有界缓存。"
+      ],
+      "acceptance": [
+        "真实设备连接、音画、全屏进退和断连恢复；不得用本地播放demo冒充接收。"
+      ]
+    },
+    {
+      "id": "R09",
+      "title": "完整交付复核",
+      "priority": "P1",
+      "status": "proposed_not_implemented_by_this_review",
+      "depends_on": [
+        "R01",
+        "R02",
+        "R03",
+        "R04",
+        "R05",
+        "R06",
+        "R07",
+        "R08A",
+        "R08B",
+        "R08C",
+        "R08D",
+        "R08E"
+      ],
+      "files": [
+        "docs/handoff/FINAL-HANDOFF.md",
+        "README.md",
+        "README_CN.md",
+        "docs/performance.md"
+      ],
+      "actions": [
+        "逐项核对全部七条目标、旧Mac/Intel兼容及模型/素材许可证。",
+        "真实影片只展示已验能力；隐私声明匹配实际采集、保存、删除。"
+      ],
+      "acceptance": [
+        "剩余项未完成则产品总状态仍partial，已验功能可独立受控试用。",
+        "合并、发布、签名或替换用户在用应用仍需明确授权。"
+      ]
+    }
+  ]
+}

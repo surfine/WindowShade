@@ -33,6 +33,17 @@ final class WS2SilentHost {
     func attach(runtime: WS2AppRuntime, owner: AppDelegate) {
         self.runtime = runtime
         self.owner = owner
+        // 方便遮挡清除：Esc / 刘海按钮共用；不与验证后显示混用。
+        owner.silentPrivacyCover.onClearRequested = { [weak self] in
+            self?.noteConvenienceCoverCleared()
+        }
+    }
+
+    /// 方便遮挡已撤：只同步静音页内存态与文案。
+    func noteConvenienceCoverCleared() {
+        WS2SilentCover.clearConvenience(&cover)
+        page?.note("已撤掉遮挡")
+        page?.refreshCoverClearChip(covering: false)
     }
 
     @discardableResult
@@ -55,11 +66,19 @@ final class WS2SilentHost {
         }) else { return false }
         page = view
         view.note("看清，再确认。")
-        _ = owner
+        view.refreshCoverClearChip(covering: owner.silentPrivacyCover.isCovering)
         return true
     }
 
     func offer(_ commandID: String) {
+        if commandID == "privacy.clearCover" {
+            guard let owner, owner.silentPrivacyCover.isCovering else {
+                page?.note("没有遮挡")
+                return
+            }
+            owner.silentPrivacyCover.requestClear()
+            return
+        }
         if WS2SilentNav.cancels(commandID) {
             session.invalidate()
             pending = nil
@@ -122,7 +141,11 @@ final class WS2SilentHost {
         case .shown:
             pending = nil
             let request = WS2SilentProductPort.request(for: step)
-            page?.note(apply(request).notchLine)
+            let shownResult = apply(request)
+            page?.note(shownResult.notchLine)
+            if commandID == "privacy.cover" || commandID == "scene.conversation" {
+                page?.refreshCoverClearChip(covering: owner?.silentPrivacyCover.isCovering == true)
+            }
         case .awaiting(let proposal):
             pending = proposal
             let shownAt = max(runtime.clock.now(), proposal.displayedAt)
@@ -192,9 +215,11 @@ final class WS2SilentHost {
             } else {
                 page?.note(result.notchLine)
             }
-            if case .waiting = result, proposal.command.id == "window.glance",
-               let id = frozenID {
-                watchGlanceFirstFrame(windowID: id, commandID: proposal.command.id)
+            if proposal.command.id == "privacy.cover" || proposal.command.id == "scene.conversation" {
+                page?.refreshCoverClearChip(covering: owner?.silentPrivacyCover.isCovering == true)
+            }
+            if case .waiting = result, let id = frozenID {
+                watchAsyncEnd(commandID: proposal.command.id, windowID: id)
             }
         case .rejected:
             lastResult = .failed("确认对不上，这一笔作废")
@@ -232,31 +257,116 @@ final class WS2SilentHost {
         return result
     }
 
-    /// 看一眼已派发但首帧未到：短轮询 isLive；换页后的旧回执不能改新页面。
-    private func watchGlanceFirstFrame(windowID: CGWindowID, commandID: String) {
+    /// 异步窗口动作终态：短轮询作迁移路径；换页/新候选作废旧 UI 更新权（R03）。
+    /// 先校验期限与代次，再读效果；超时必须更新可见状态。
+    private func watchAsyncEnd(commandID: String, windowID: CGWindowID) {
         glanceWatchGeneration &+= 1
         let generation = glanceWatchGeneration
-        let op = operations.begin(commandID: commandID, targetID: String(windowID))
-        let deadline = Date().addingTimeInterval(1.5)
+        let revision = frozenRevision
+        let watchStarted = CACurrentMediaTime()
+        let op = operations.begin(
+            commandID: commandID,
+            targetID: String(windowID),
+            targetRevision: revision,
+            captureGeneration: generation)
+        let deadline = watchStarted + Self.asyncWatchTimeout(commandID)
         func tick() {
             guard generation == glanceWatchGeneration else { return }
             guard let owner else { return }
-            if owner.glance.isLive(windowID) {
-                let line = "已完成"
-                if operations.finish(id: op, line: line) {
-                    lastResult = .completed(WS2EffectReceipt(
-                        commandID: "window.glance", targetID: String(windowID), observed: true))
-                    page?.note(line)
+            let now = CACurrentMediaTime()
+            if now >= deadline {
+                if operations.finish(id: op, line: "结果未确认") {
+                    lastResult = .failed(Self.asyncTimeoutLine(commandID))
+                    page?.note("结果未确认")
                 }
                 return
             }
-            guard Date() < deadline else {
-                _ = operations.finish(id: op, line: "结果未确认")
+            guard frozenID == windowID, frozenRevision == revision else {
+                _ = operations.finish(id: op, line: "目标已变")
+                return
+            }
+            if let outcome = Self.asyncObserved(
+                commandID: commandID, windowID: windowID, owner: owner, watchStarted: watchStarted
+            ) {
+                let line = outcome ? "已完成" : "结果未确认"
+                if operations.finish(id: op, line: line) {
+                    if outcome {
+                        lastResult = .completed(WS2EffectReceipt(
+                            commandID: commandID, targetID: String(windowID), observed: true))
+                        let noted = WS2SilentResultLine.noted(
+                            commandID, succeeded: true, draft: draft, assistant: assistant)
+                        // 看一眼/置顶等故意不写“已叫到前面”；无专属句时用中性「已完成」。
+                        page?.note(noted == WS2SilentResultLine.notDone ? "已完成" : noted)
+                    } else {
+                        lastResult = .failed(Self.asyncTimeoutLine(commandID))
+                        page?.note(line)
+                    }
+                }
                 return
             }
             DispatchQueue.main.asyncAfter(deadline: .now() + 0.05) { tick() }
         }
         DispatchQueue.main.asyncAfter(deadline: .now() + 0.05) { tick() }
+    }
+
+    private static func asyncWatchTimeout(_ commandID: String) -> CFTimeInterval {
+        switch commandID {
+        case "window.collapse", "window.expand": return 3.0
+        case "window.pin": return 2.5
+        default: return 1.5
+        }
+    }
+
+    private static func asyncTimeoutLine(_ commandID: String) -> String {
+        switch commandID {
+        case "window.glance": return "看一眼没有等到画面"
+        case "window.pin": return "置顶没有等到画面"
+        case "window.collapse": return "收起没有确认"
+        case "window.expand": return "展开没有确认"
+        case "window.slideOver", "window.leaveSlideOver": return "侧拉没有确认"
+        case "window.pip", "window.leavePip": return "画中画没有确认"
+        default: return "这一笔没有做成"
+        }
+    }
+
+    /// `nil` = 继续等；`true`/`false` = 终态成功/失败。
+    private static func asyncObserved(
+        commandID: String,
+        windowID: CGWindowID,
+        owner: AppDelegate,
+        watchStarted: CFTimeInterval
+    ) -> Bool? {
+        switch commandID {
+        case "window.glance":
+            return owner.glance.isLive(windowID) ? true : nil
+        case "window.pin":
+            if let done = owner.pinnedPreviewController.lastSilentCompletion,
+               done.id == windowID, done.at >= watchStarted {
+                return done.ok
+            }
+            return owner.pinnedPreviewController.isPreviewing(id: windowID) ? true : nil
+        case "window.slideOver":
+            return owner.slideOver.isSlideOver(windowID) ? true : nil
+        case "window.leaveSlideOver":
+            return owner.slideOver.isSlideOver(windowID) ? nil : true
+        case "window.pip":
+            return owner.pip.isInPictureInPicture(windowID) ? true : nil
+        case "window.leavePip":
+            return owner.pip.isInPictureInPicture(windowID) ? nil : true
+        case "window.collapse":
+            if let done = owner.lastSilentFoldCompletion,
+               done.id == windowID, done.at >= watchStarted {
+                return done.ok
+            }
+            // 已安装卷帘态可作中间观察，仍等 FoldCompletion 终态；超时走 deadline。
+            return nil
+        case "window.expand":
+            // 字典移除不等于可见；要求不再 shaded 且窗口仍在屏上。
+            guard owner.shaded[windowID] == nil else { return nil }
+            return cgWindowIsCurrentlyOnScreen(windowID) ? true : nil
+        default:
+            return nil
+        }
     }
 
     private func freezeIfNeeded() {
@@ -335,10 +445,13 @@ final class WS2SilentPageView: NSView, WS2LeaseContent {
     }
     private let status = NSTextField(labelWithString: "")
     private let confirm = IslandChip(title: "确认", symbol: "checkmark", style: .solid)
+    /// 方便遮挡生效时显示；与「揭开遮挡」验证路径分开。
+    private let clearCover = IslandChip(title: "撤掉遮挡", symbol: "eye.slash", style: .glass)
     private let rowA = NSStackView()
     private let rowB = NSStackView()
     private var pageIndex = 0
     private weak var host: WS2SilentHost?
+    private weak var actionsRow: NSStackView?
 
     init(host: WS2SilentHost) {
         self.host = host
@@ -360,9 +473,14 @@ final class WS2SilentPageView: NSView, WS2LeaseContent {
         confirm.action = #selector(tapConfirm)
         confirm.alphaValue = 0
         confirm.isEnabled = false
-        let actions = NSStackView(views: [confirm])
+        clearCover.target = self
+        clearCover.action = #selector(tapClearCover)
+        clearCover.isHidden = true
+        clearCover.identifier = NSUserInterfaceItemIdentifier("privacy.clearCover")
+        let actions = NSStackView(views: [clearCover, confirm])
         actions.orientation = .horizontal
         actions.spacing = 6
+        actionsRow = actions
         let stack = NSStackView(views: [title, status, rowA, rowB, actions])
         stack.orientation = .vertical
         stack.alignment = .leading
@@ -381,6 +499,10 @@ final class WS2SilentPageView: NSView, WS2LeaseContent {
     required init?(coder: NSCoder) { nil }
 
     func note(_ text: String) { status.stringValue = text }
+
+    func refreshCoverClearChip(covering: Bool) {
+        clearCover.isHidden = !covering
+    }
 
     private static let pages: [[String]] = [
         ["launcher.open", "ui.windows", "ui.activities", "ui.usage", "ui.settings"],
@@ -458,6 +580,11 @@ final class WS2SilentPageView: NSView, WS2LeaseContent {
     @objc private func tapConfirm() {
         guard inputIsCurrent() else { return }
         host?.confirm()
+    }
+
+    @objc private func tapClearCover() {
+        guard inputIsCurrent() else { return }
+        host?.offer("privacy.clearCover")
     }
 }
 

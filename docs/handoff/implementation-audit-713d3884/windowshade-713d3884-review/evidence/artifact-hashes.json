@@ -1,0 +1,11 @@
+{
+  "sources.json": "1ce708bf2f7d70e7a12ca233862ed5a6cdd7afbef3590b6db2140cb74d79c31c",
+  "README.md": "b674cd87fd1dd79ae858c32f970ec02bc7a29b3046bd5ed468fdea6174d4cb71",
+  "execution-plan.json": "c9524c875107a268499574fae2636af296aa30d88387a1e02c209fb735ea6fdb",
+  "REVIEW-AND-EXECUTION.md": "54beb68038c14c4978eb1d271a559b93bc016c3001c414754794dba9b6903258",
+  "evidence/numeric-report.json": "cdd3b0119463070d8412e8f02e2672e0d23a270c67cd0a6bcb18e4bebcaed298",
+  "evidence/numeric-tests.log": "b630b751b9b0e2ae557944c3593dbf8ee40136c524115874d3a7775d73daf7fc",
+  "evidence/swift-version.txt": "eb9fe405b65bcda75635327f6ca704543098f4e7d882bf5d2541a6fca34725d6",
+  "checks/run.py": "ebe950a09529df9823e411a7a90281cc75fcdbb315cdcd4372816fc017833b06",
+  "checks/NumericBoundaryProbe.swift": "553cb24c3a680e17a65e8f79b7cf0310164a685a1239205068dc9fbef414d7a2"
+}

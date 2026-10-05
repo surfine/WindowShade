@@ -12,9 +12,20 @@
 
 ## 当前整改指针（2026-10-05）
 
-审查附件：`WindowShade-remediation-2026-10-05`（基线 `b271fcf`）。工作区已领先该基线；**禁止**套用包内 `make_safety_patch.py` 的 pinned blob。本轮在功能分支落地 **WSR-01→03** 代码与静音测试，不是产品完成声明。
+### 当前状态（精确构建）
 
-真机矩阵证据：[hardware-matrix-2026-10-05/](hardware-matrix-2026-10-05/)（`matrix.json` + `logs/`）。机器：macOS 27.0 / M5 + Studio Display；commit `c1cdf19` + 未提交的救援/探针修复。当日晚间完整 `--stage` WMO 已成功（二进制 18:55，`Apple Development` / Team `FVGLY6W6S4`）。
+| 项 | 值 |
+| --- | --- |
+| 功能分支 | `cursor/silent-effect-receipts` |
+| 审查快照 | `713d388`（实施审计包） |
+| 已推提交（动效/Alcove 文档） | `dbf5d4b` 及之后工作区改动 |
+| 同期 main | `b271fcf` |
+| 新审计包 | [implementation-audit-713d3884/](implementation-audit-713d3884/)（`REVIEW-AND-EXECUTION.md` + `execution-plan.json`） |
+| 本轮派工 | **R01–R04** 可用性修复；不得套用旧 `b271fcf` pinned-blob 补丁 |
+
+历史矩阵与 WSR 表保留下方，不抹掉失败/partial。矩阵证据仍标当时 commit；**不得**与当前未签名二进制混成同一验收。不发布、不替换日常 App。
+
+真机矩阵证据（历史）：[hardware-matrix-2026-10-05/](hardware-matrix-2026-10-05/)（`matrix.json` + `logs/`）。机器：macOS 27.0 / M5 + Studio Display；commit `c1cdf19` 时段。
 
 | 工单 | 状态 | 证据边界 |
 | --- | --- | --- |
@@ -25,8 +36,14 @@
 | WSR-05 动效验收 | 部分 | P0–P1 + 胶囊五态/`island.hug`/双时钟/`alert.hold`/分屏 settle 见 [motion-pass-2026-10-05/](motion-pass-2026-10-05/)；LEASE 15/0；duo-soak 8s ≈35.9 present fps；120Hz `not_run`；启动台**内容层**磨砂按 §6-8 保留（控件层已系统玻璃） |
 | WSR-06 蓝牙身份 | 观察 inconclusive | 已配对 11 / 已连接 3（含 Phone）；BLEReadProbe exit 2；**不**标第二因素 |
 | WSR-07 文档分界 | 本指针 + face-unlock / grammar + 本矩阵目录 | 已测 / partial / not_run 分开；H20 系统解锁仍 refused（D11） |
+| **R01** 恢复日志数值 | 代码已加 | `JournalNumeric` + `tests/run-journal-numeric-tests.sh` PASS；坏条目隔离 |
+| **R02** 遮罩热插拔/Esc | 代码已加 | display ID/frame/epoch 对账；复用面板；临时 Esc global；屏参重建；刘海「撤掉遮挡」 |
+| **R03** 异步终态 | 代码已加 | Glance/置顶/侧拉/PiP/收起·展开统一 watcher；FoldCompletion + pin completion；超时更新可见态 |
+| **R04** 相机正向样本 | 第一步计数 | `FacePipelineCounters` + milestone `head-pipeline` 日志；真机 10 秒闭环待授 |
 
-下一缺口：H08 故意断流、H09–H13 夹具、可选交互 LA 取消/超时。救援 MainActor 修复与探针改动尚未提交。不发布、不替换日常 App。
+下一缺口：R04 真机正向样本；H08 故意断流、H09–H13 夹具仍缺。Alcove 排期：[alcove-land-plan-2026-10-05.md](alcove-land-plan-2026-10-05.md)（与 R 档并行时不得用演示数据冒充完成）。
+
+旧审查附件：`WindowShade-remediation-2026-10-05`（基线 `b271fcf`）**禁止**套用包内 `make_safety_patch.py` 的 pinned blob。
 
 ---
 
