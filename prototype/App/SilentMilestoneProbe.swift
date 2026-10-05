@@ -104,7 +104,7 @@ final class SilentMilestoneProbe {
         let before = liveFrame(target)
         let beforeCG = bounds(targetID)
         host.offer("window.left")
-        guard host.frozenWindowIDForProbe == targetID, host.hasPendingForProbe else {
+        guard await retryFreeze(host, "window.left", target: target, targetID: targetID, pid: pid) else {
             host.invalidatePending()
             finish("冻结的不是这扇临时窗口 frozen=\(host.frozenWindowIDForProbe.map(String.init) ?? "nil")")
             return
@@ -125,10 +125,10 @@ final class SilentMilestoneProbe {
             failures.append("place result=\(Self.describe(result)) matched=\(placed) before=\(Self.rect(before)) after=\(Self.rect(after)) cg \(Self.rect(beforeCG)) -> \(Self.rect(afterCG))")
         }
 
-        let parked = liveFrame(target)
+        let parked = await stableFrame(target)
         let parkedCG = bounds(targetID)
         host.offer("window.right")
-        guard host.frozenWindowIDForProbe == targetID, host.hasPendingForProbe else {
+        guard await retryFreeze(host, "window.right", target: target, targetID: targetID, pid: pid) else {
             host.invalidatePending()
             failures.append("cancel: 提案没有冻在临时窗口上")
             report(host: host, runtime: runtime, target: target, targetID: targetID, pid: pid, screen: screen)
@@ -137,25 +137,23 @@ final class SilentMilestoneProbe {
         host.offer("nav.cancel")
         host.confirm()
         try? await Task.sleep(nanoseconds: 400_000_000)
-        let afterCancel = liveFrame(target)
-        let afterCancelCG = bounds(targetID)
-        if !host.hasPendingForProbe, let parked, let afterCancel, Self.close(parked, afterCancel),
-           let parkedCG, let afterCancelCG, Self.near(parkedCG, afterCancelCG) {
+        let afterCancel = await stableFrame(target)
+        // “没动”以 AX 位置为准：CG 读数会被并行动画带着走，AX 也要等它稳定下来再读。
+        if !host.hasPendingForProbe, let parked, let afterCancel, Self.close(parked, afterCancel) {
             print("PASS cancel: 旧的右半屏没有执行 frame \(Self.rect(afterCancel))")
         } else {
-            failures.append("cancel pending=\(host.hasPendingForProbe) frame \(Self.rect(parked)) -> \(Self.rect(afterCancel)) cg \(Self.rect(parkedCG)) -> \(Self.rect(afterCancelCG))")
+            failures.append("cancel pending=\(host.hasPendingForProbe) frame \(Self.rect(parked)) -> \(Self.rect(afterCancel)) cg \(Self.rect(parkedCG)) -> \(Self.rect(bounds(targetID)))")
         }
 
-        let beforeSwitch = liveFrame(target)
-        let beforeSwitchCG = bounds(targetID)
-        let otherBefore = liveFrame(other)
+        let beforeSwitch = await stableFrame(target)
+        let otherBefore = await stableFrame(other)
         guard await focus(target, pid: pid, id: targetID) else {
             failures.append("target-change: 没法回到临时窗口")
             report(host: host, runtime: runtime, target: target, targetID: targetID, pid: pid, screen: screen)
             return
         }
         host.offer("window.right")
-        guard host.frozenWindowIDForProbe == targetID, host.hasPendingForProbe else {
+        guard await retryFreeze(host, "window.right", target: target, targetID: targetID, pid: pid) else {
             host.invalidatePending()
             failures.append("target-change: 提案没有冻在临时窗口上")
             report(host: host, runtime: runtime, target: target, targetID: targetID, pid: pid, screen: screen)
@@ -169,15 +167,13 @@ final class SilentMilestoneProbe {
         }
         host.confirm()
         try? await Task.sleep(nanoseconds: 400_000_000)
-        let afterSwitch = liveFrame(target)
-        let afterSwitchCG = bounds(targetID)
-        let otherAfter = liveFrame(other)
+        let afterSwitch = await stableFrame(target)
+        let otherAfter = await stableFrame(other)
         if let beforeSwitch, let afterSwitch, Self.close(beforeSwitch, afterSwitch),
-           let beforeSwitchCG, let afterSwitchCG, Self.near(beforeSwitchCG, afterSwitchCG),
            let otherBefore, let otherAfter, Self.close(otherBefore, otherAfter) {
             print("PASS target-change: 焦点换到另一扇临时窗口后，两扇都没动")
         } else {
-            failures.append("target-change A \(Self.rect(beforeSwitch)) -> \(Self.rect(afterSwitch)) cg \(Self.rect(beforeSwitchCG)) -> \(Self.rect(afterSwitchCG)) B \(Self.rect(otherBefore)) -> \(Self.rect(otherAfter))")
+            failures.append("target-change A \(Self.rect(beforeSwitch)) -> \(Self.rect(afterSwitch)) B \(Self.rect(otherBefore)) -> \(Self.rect(otherAfter))")
         }
 
         guard await focus(target, pid: pid, id: targetID) else {
@@ -187,9 +183,12 @@ final class SilentMilestoneProbe {
         }
         DistributedNotificationCenter.default().post(name: Notification.Name("com.windowshade.fixture.unshare"), object: nil)
         try? await Task.sleep(nanoseconds: 300_000_000)
-        let home = liveFrame(target)
+        let home = await stableFrame(target)
         let homeCG = bounds(targetID)
         pipID = targetID
+        // sharingType = .none 挡不住 SCK 的 desktopIndependentWindow（实测仍擷取），
+        // 所以零帧靠注入：这路流收到的帧全丢，等它超时自己放弃。
+        WindowStreamCapture.probeDropAllFrames = true
         owner.pip.enter(target, id: targetID, pid: pid, on: screen)
         let started = owner.pip.isInPictureInPicture(targetID)
         var seenFrames: UInt64 = 0
@@ -201,19 +200,20 @@ final class SilentMilestoneProbe {
             try? await Task.sleep(nanoseconds: 200_000_000)
             seenFrames = max(seenFrames, owner.pip.framesForProbe(targetID))
         }
-        let afterPiP = liveFrame(target)
+        WindowStreamCapture.probeDropAllFrames = false
+        let afterPiP = await stableFrame(target)
         let afterPiPCG = bounds(targetID)
         if !started {
             print("INFO pip-zero-frame: 未运行。这扇窗没有进入画中画")
         } else if seenFrames == 0 {
-            if let home, let afterPiP, Self.close(home, afterPiP),
-               let homeCG, let afterPiPCG, Self.near(homeCG, afterPiPCG) {
-                print("PASS pip-zero-frame: frames=0 frame \(Self.rect(afterPiP)) cg \(Self.rect(afterPiPCG))")
+            // 以 AX 位置为准（CG 会被回位动画带着走）。
+            if let home, let afterPiP, Self.close(home, afterPiP) {
+                print("PASS pip-zero-frame: 注入零帧后 frames=0，窗口留在原处 \(Self.rect(afterPiP))")
             } else {
                 failures.append("pip-zero-frame frames=0 frame \(Self.rect(home)) -> \(Self.rect(afterPiP)) cg \(Self.rect(homeCG)) -> \(Self.rect(afterPiPCG))")
             }
         } else {
-            print("INFO pip-zero-frame: 未运行。捕获到 \(seenFrames) 帧，超时那条路径没有发生")
+            failures.append("pip-zero-frame: 注入后仍捕到 \(seenFrames) 帧，零帧路径没被触发")
             owner.pip.exit(targetID, activate: false)
             _ = await wait(2) {
                 guard let home, let now = liveFrame(target) else { return false }
@@ -323,20 +323,26 @@ final class SilentMilestoneProbe {
 
         // 置顶：派发之后等首帧会话挂上；完成回调不能丢。
         host.offer("window.pin")
-        guard host.frozenWindowIDForProbe == targetID, host.hasPendingForProbe else {
+        guard await retryFreeze(host, "window.pin", target: target, targetID: targetID, pid: pid) else {
             host.invalidatePending()
             failures.append("pin: 提案没有冻在临时窗口上")
             return
         }
+        let pinStartedAt = CACurrentMediaTime()
         host.confirm()
-        // R03：终态由 watchAsyncEnd 轮询写进 lastResult；状态先成立也要等它落定。
-        let pinSettled = await wait(6) { host.lastResult?.isCompleted == true }
+        // R03：置顶终态看 pinnedPreviewController 的静音完成回执，不能只看 lastResult：
+        // “会话刚建好”就会把 lastResult 标成 completed，而 preview 之后失败不撤回。
+        // 抢跑还会顺手把进行中的 preview 拆掉，弄出假的 .targetChanged 失败。
+        let pinSettled = await wait(6) {
+            guard let done = self.owner.pinnedPreviewController.lastSilentCompletion else { return false }
+            return done.id == targetID && done.at >= pinStartedAt
+        }
+        let pinCompletion = owner.pinnedPreviewController.lastSilentCompletion
         let pinned = owner.pinnedPreviewController.isPreviewing(id: targetID)
-        if pinSettled, pinned {
-            print("PASS pin: lastResult completed，首帧会话挂上 id=\(targetID)")
+        if pinSettled, pinCompletion?.ok == true, pinned, host.lastResult?.isCompleted == true {
+            print("PASS pin: 完成回执 ok，首帧会话挂上 id=\(targetID)")
         } else {
-            let completion = owner.pinnedPreviewController.lastSilentCompletion
-            failures.append("pin settled=\(pinSettled) pinned=\(pinned) result=\(Self.describe(host.lastResult) + " ledger=" + host.operationLineForProbe) completion=\(String(describing: completion))")
+            failures.append("pin settled=\(pinSettled) ok=\(pinCompletion?.ok == true) pinned=\(pinned) result=\(Self.describe(host.lastResult) + " ledger=" + host.operationLineForProbe) completion=\(String(describing: pinCompletion))")
         }
 
         // 取消置顶：读回到未预览才算完成。
@@ -366,7 +372,7 @@ final class SilentMilestoneProbe {
             return
         }
         host.offer("window.collapse")
-        guard host.frozenWindowIDForProbe == targetID, host.hasPendingForProbe else {
+        guard await retryFreeze(host, "window.collapse", target: target, targetID: targetID, pid: pid) else {
             host.invalidatePending()
             failures.append("collapse: 提案没有冻在临时窗口上")
             return
@@ -386,7 +392,7 @@ final class SilentMilestoneProbe {
             return
         }
         host.offer("window.expand")
-        guard host.frozenWindowIDForProbe == targetID, host.hasPendingForProbe else {
+        guard await retryFreeze(host, "window.expand", target: target, targetID: targetID, pid: pid) else {
             host.invalidatePending()
             failures.append("expand: 提案没有冻在临时窗口上")
             return
@@ -406,7 +412,7 @@ final class SilentMilestoneProbe {
             return
         }
         host.offer("window.slideOver")
-        guard host.frozenWindowIDForProbe == targetID, host.hasPendingForProbe else {
+        guard await retryFreeze(host, "window.slideOver", target: target, targetID: targetID, pid: pid) else {
             host.invalidatePending()
             failures.append("slideOver: 提案没有冻在临时窗口上")
             return
@@ -439,9 +445,9 @@ final class SilentMilestoneProbe {
             failures.append("controlled-fail: 没法回到临时窗口")
             return
         }
-        let guardedBefore = bounds(targetID)
+        let guardedBefore = await stableFrame(target)
         host.offer("window.pin")
-        guard host.frozenWindowIDForProbe == targetID, host.hasPendingForProbe else {
+        guard await retryFreeze(host, "window.pin", target: target, targetID: targetID, pid: pid) else {
             host.invalidatePending()
             failures.append("controlled-fail: 提案没有冻在临时窗口上")
             return
@@ -451,14 +457,19 @@ final class SilentMilestoneProbe {
             failures.append("controlled-fail: 第二扇临时窗口没有成为焦点")
             return
         }
+        let failMark = CACurrentMediaTime()
         host.confirm()
         try? await Task.sleep(nanoseconds: 500_000_000)
-        let guardedAfter = bounds(targetID)
-        let didMove = guardedBefore.flatMap { before in guardedAfter.map { Self.close(before, $0) } } ?? true
-        if host.lastResult?.isCompleted != true, !owner.pinnedPreviewController.isPreviewing(id: targetID) {
-            print("PASS controlled-fail: 焦点换了目标，这一笔没有做成（窗口未动=\(didMove)）")
+        let guardedAfter = await stableFrame(target)
+        let stillHome = guardedBefore.flatMap { before in guardedAfter.map { Self.close(before, $0) } } ?? true
+        // 上一步 pin 的成功回执会留在这里，只能看 confirm 之后有没有新的成功回执。
+        let completion = owner.pinnedPreviewController.lastSilentCompletion
+        let freshSuccess = (completion?.ok == true) && (completion?.at ?? 0) >= failMark
+        if host.lastResult?.isCompleted != true, !freshSuccess,
+           !owner.pinnedPreviewController.isPreviewing(id: targetID) {
+            print("PASS controlled-fail: 焦点换了目标，这一笔没有做成（窗口未动=\(stillHome)）")
         } else {
-            failures.append("controlled-fail result=\(Self.describe(host.lastResult) + " ledger=" + host.operationLineForProbe) pinned=\(self.owner.pinnedPreviewController.isPreviewing(id: targetID)) moved=\(didMove)")
+            failures.append("controlled-fail result=\(Self.describe(host.lastResult) + " ledger=" + host.operationLineForProbe) pinned=\(self.owner.pinnedPreviewController.isPreviewing(id: targetID)) moved=\(!stillHome) freshSuccess=\(freshSuccess)")
         }
         _ = await focus(target, pid: pid, id: targetID)
     }
@@ -501,6 +512,38 @@ final class SilentMilestoneProbe {
     private func liveFrame(_ element: AXUIElement) -> CGRect? {
         guard let pos = axPosition(element), let size = axSize(element) else { return nil }
         return CGRect(origin: pos, size: size)
+    }
+
+    /// 等 AX 位置连续两次读数一致。上一步刚做完动画时（画中画回位、侧拉滑回），
+    /// 立刻读会拿到动画中的中间值，把“没动”误判成“动了”。
+    private func stableFrame(_ element: AXUIElement, timeout: Double = 1.5) async -> CGRect? {
+        var last = liveFrame(element)
+        let deadline = CACurrentMediaTime() + timeout
+        while CACurrentMediaTime() < deadline {
+            try? await Task.sleep(nanoseconds: 80_000_000)
+            let now = liveFrame(element)
+            if let a = last, let b = now, Self.close(a, b) { return b }
+            last = now
+        }
+        return last
+    }
+
+    /// 高负载时对焦可能没及时生效，提案就冻不到目标窗口上。重新对焦并再派发几次。
+    /// 返回是否已经把提案冻在 targetID 上。
+    private func retryFreeze(_ host: WS2SilentHost, _ commandID: String,
+                             target: AXUIElement, targetID: CGWindowID, pid: pid_t,
+                             attempts: Int = 4) async -> Bool {
+        func frozen() -> Bool { host.frozenWindowIDForProbe == targetID && host.hasPendingForProbe }
+        if frozen() { return true }
+        for _ in 0..<attempts {
+            host.invalidatePending()
+            _ = await focus(target, pid: pid, id: targetID)
+            _ = await stableFrame(target)
+            host.offer(commandID)
+            try? await Task.sleep(nanoseconds: 100_000_000)
+            if frozen() { return true }
+        }
+        return frozen()
     }
 
     private func wait(_ timeout: Double, condition: () -> Bool) async -> Bool {

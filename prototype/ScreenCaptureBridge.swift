@@ -29,6 +29,12 @@ enum ShareableContentLoader {
 final class WindowStreamCapture: NSObject, SCStreamDelegate, SCStreamOutput, @unchecked Sendable {
     let videoLayer = AVSampleBufferDisplayLayer()
 
+    /// 只给探针用：置真后本路流收到的采样帧一律丢弃，模拟“始终拿不到画面”。
+    /// 真机零帧路径（画中画没等到首帧就不能搬窗口）没法靠 sharingType 造出来——
+    /// 实测 SCK 的 desktopIndependentWindow 仍会擷取 sharingType == .none 的窗口。
+    /// 生产路径永远为 false，不受影响。
+    nonisolated(unsafe) static var probeDropAllFrames = false
+
     // 菜单/面板缩略图的镜像层：同一批采样帧额外喂给它，实现"复用已在跑的流"的实时
     // 缩略图，不新建 capture、不轮询。弱引用，视图销毁后自动断开。
     //
@@ -402,6 +408,8 @@ final class WindowStreamCapture: NSObject, SCStreamDelegate, SCStreamOutput, @un
         let fps = _streamFPS
         stateLock.unlock()
         guard !stopped, isCurrentStream else { return }
+        // 探针的零帧注入：本路流收到的帧全丢，验证“没有首帧就不搬窗口”。
+        guard !Self.probeDropAllFrames else { return }
         // 这扇窗正被我们的流捕获，系统在它的红绿灯处画了录屏胶囊：交给画面之前修掉。
         CaptureIndicatorRemoval.clean(sampleBuffer, plate: stateLock.withLock { cleanPlate })
         mirrorFrameIndex &+= 1
