@@ -2686,6 +2686,12 @@ final class NotchCanvasView: NSView {
     /// 退场淡出还没做完又来了新目标：打断淡出，立刻从当前外框接上。
     private var contentExitGeneration = 0
     private var contentExitPending = false
+    /// 退场淡出完成后要接上的变形。放在 self 上，避免把 Content / done 送进 @Sendable 回调。
+    private var pendingExitMorph: (
+        rect: NSRect, style: NotchPanel.IslandStyle, content: Content, spring: Spring?,
+        presented: NSRect, scale: (leading: CGFloat, trailing: CGFloat),
+        snap: (leading: Bool, trailing: Bool), shoulderFade: Bool, done: () -> Void
+    )?
 
     /// 变到 rect（画布坐标）。spring 为 nil 时立刻到位（跟手的时候）。
     /// shoulders：两个肩各长出多少（0…1），和岛在同一个 transaction 里挂同参数的叠加弹簧；
@@ -2700,6 +2706,7 @@ final class NotchCanvasView: NSView {
         let exitGeneration = contentExitGeneration
         if contentExitPending {
             contentExitPending = false
+            pendingExitMorph = nil
             if let outgoing = current {
                 outgoing.alphaValue = 0
                 outgoing.removeFromSuperview()
@@ -2717,22 +2724,26 @@ final class NotchCanvasView: NSView {
             presentGeneration += 1
             outgoing.inert = true
             contentExitPending = true
+            pendingExitMorph = (rect, style, content, spring, presented, scale, snap, shoulderFade, done)
             let fade = Motion.reduced ? Motion.Spring.reducedNotch.response : 0.18
             NSAnimationContext.runAnimationGroup({ context in
                 context.duration = fade
                 outgoing.animator().alphaValue = 0
-            }, completionHandler: {
+            }, completionHandler: { [weak self] in
                 MainActor.assumeIsolated {
-                    guard self.contentExitGeneration == exitGeneration else { return }
+                    guard let self, self.contentExitGeneration == exitGeneration else { return }
                     self.contentExitPending = false
                     outgoing.removeFromSuperview()
                     if self.current === outgoing {
                         self.current = nil
                         self.shown = nil
                     }
-                    self.performMorph(to: rect, style: style, content: content, spring: spring,
-                                      from: presented, shoulders: scale, shoulderSnap: snap,
-                                      shoulderFade: shoulderFade, done: done)
+                    guard let pending = self.pendingExitMorph else { return }
+                    self.pendingExitMorph = nil
+                    self.performMorph(to: pending.rect, style: pending.style, content: pending.content,
+                                      spring: pending.spring, from: pending.presented,
+                                      shoulders: pending.scale, shoulderSnap: pending.snap,
+                                      shoulderFade: pending.shoulderFade, done: pending.done)
                 }
             })
             return
@@ -2897,27 +2908,30 @@ final class NotchCanvasView: NSView {
             incoming.alphaValue = 0
             let fromWidth = start.width
             let toWidth = rect.width
-            let reveal = { [weak self, weak incoming] in
-                guard let self, let incoming, self.presentGeneration == generation, self.current === incoming else { return }
+            let fadeDuration = reduced ? Motion.Spring.reducedNotch.response : 0.18
+            if reduced || Self.contentHasReachedFourTenths(from: fromWidth, to: toWidth, now: fromWidth) {
                 NSAnimationContext.runAnimationGroup { context in
-                    context.duration = reduced ? Motion.Spring.reducedNotch.response : 0.18
+                    context.duration = fadeDuration
                     incoming.animator().alphaValue = 1
                 }
-            }
-            if reduced || Self.contentHasReachedFourTenths(from: fromWidth, to: toWidth, now: fromWidth) {
-                reveal()
             } else {
-                contentWatch = Timer.scheduledTimer(withTimeInterval: 1.0 / 60, repeats: true) { [weak self] timer in
+                contentWatch = Timer.scheduledTimer(withTimeInterval: 1.0 / 60, repeats: true) { [weak self] _ in
                     MainActor.assumeIsolated {
-                        guard let self, self.presentGeneration == generation else {
-                            timer.invalidate()
+                        guard let self else { return }
+                        guard self.presentGeneration == generation else {
+                            self.contentWatch?.invalidate()
+                            self.contentWatch = nil
                             return
                         }
                         let now = (self.island.presentation() ?? self.island).frame.width
                         guard Self.contentHasReachedFourTenths(from: fromWidth, to: toWidth, now: now) else { return }
-                        timer.invalidate()
+                        self.contentWatch?.invalidate()
                         self.contentWatch = nil
-                        reveal()
+                        guard let view = self.current, self.presentGeneration == generation else { return }
+                        NSAnimationContext.runAnimationGroup { context in
+                            context.duration = fadeDuration
+                            view.animator().alphaValue = 1
+                        }
                     }
                 }
             }
