@@ -29,6 +29,8 @@ final class WS2SilentHost {
     private var intentBoot = UUID()
     var frozenWindowIDForProbe: CGWindowID? { frozenID }
     var hasPendingForProbe: Bool { session.currentProposal != nil }
+    /// 探针只读（R03 真机）：操作台账当前显示的那行。「还在等」说明异步轮询没有落定。
+    var operationLineForProbe: String { operations.visible }
 
     func attach(runtime: WS2AppRuntime, owner: AppDelegate) {
         self.runtime = runtime

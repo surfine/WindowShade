@@ -122,9 +122,9 @@ extension AppDelegate {
         statusNoticeWorkItem?.cancel()
         // 菜单栏标题保持短小（完整文案在 tooltip 与可访问性值里），
         // 否则一句长提示会把状态栏条挤得很宽，顶开旁边的菜单栏项目。
-        statusItem.button?.title = " \(PaperSurfaceAccessibility.statusItemNoticeTitle(message))"
-        statusItem.button?.toolTip = message
-        statusItem.button?.setAccessibilityValue(message)
+        statusItem?.button?.title = " \(PaperSurfaceAccessibility.statusItemNoticeTitle(message))"
+        statusItem?.button?.toolTip = message
+        statusItem?.button?.setAccessibilityValue(message)
         let work = DispatchWorkItem { [weak self] in
             guard let self else { return }
             self.statusNoticeWorkItem = nil
