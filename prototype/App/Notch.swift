@@ -71,6 +71,8 @@ final class NotchController {
     let activities = NotchActivityController()
     lazy var authentication = NotchAuthenticationController(owner: self)
     lazy var faceObservations = NotchFaceObservationController(owner: self)
+    /// 读公开的输出音量标量，鼓在同一颗岛上。不拦系统键。
+    private let levelObserver = NotchLevelObserver()
 
     /// 一块屏同时只有一个主人：授权、指挥、那一排、启动台、窗口浏览、番茄钟都从这里拿展示权。
     /// 收尾（停看一眼、撤审批输入、收启动台）在撤销回调里同步做完，协调器才发布下一份租约。
@@ -159,6 +161,13 @@ final class NotchController {
             forName: .init("com.apple.screenIsUnlocked"), object: nil, queue: .main) { [weak self] _ in
             MainActor.assumeIsolated { self?.releaseAnnouncements() }
         })
+        levelObserver.onVolume = { [weak self] value in
+            self?.presentLevel(.volume, value: value)
+        }
+        levelObserver.onBrightness = { [weak self] value in
+            self?.presentLevel(.brightness, value: value)
+        }
+        levelObserver.start()
         activities.onChange = { [weak self] values, selected in
             guard let self else { return }
             let ids = values.map(\.id)
@@ -168,6 +177,7 @@ final class NotchController {
                 panel.setActivities(values, selected: selected)
             }
             self.owner.launchpad.updateActivities(values, selected: selected)
+            self.noteActivityTitleChange(values, selected: selected)
         }
         watcher.onTitleSettled = { [weak self] id, title in self?.titleSettled(id, title: title) }
         owner.glance.elsewhereSource = self
@@ -699,6 +709,26 @@ final class NotchController {
     /// 指针所在那块屏的刘海（人正看着那里）。
     private func pointerPanel() -> NotchPanel? {
         panel(containing: NSEvent.mouseLocation) ?? notchPanel ?? panels.values.first
+    }
+
+    /// 合成的音量或亮度鼓在指针那块屏的岛上。真实按键仍归系统。
+    func presentLevel(_ kind: NotchPanel.LevelKind, value: Double) {
+        guard Self.isEnabled, !Self.probeSilence else { return }
+        pointerPanel()?.presentLevel(kind, value: value)
+    }
+
+    /// 正在播放时曲名变了：旁边长出第二颗岛说新标题，再合并（稿上的 duo）。
+    private var lastMediaTitle: (id: String, title: String)?
+    private func noteActivityTitleChange(_ values: [NotchActivity], selected: String?) {
+        guard let selected, let item = values.first(where: { $0.id == selected }),
+              item.kind == .music, !item.title.isEmpty else {
+            if selected == nil { lastMediaTitle = nil }
+            return
+        }
+        defer { lastMediaTitle = (item.id, item.title) }
+        guard let last = lastMediaTitle, last.id == item.id, last.title != item.title else { return }
+        guard let panel = pointerPanel(), !panel.isExpanded, panel.dropState == .none, !panel.isAuthenticating else { return }
+        panel.alert(NotchPanel.Alert(id: 0, icon: nil, title: item.title, subtitle: "标题变了", tone: .info), duration: 2.6)
     }
 
     /// 在刘海上说一句：做成了（绿勾）、说明一下（白）、出了问题（橙色三角，说清原因）。
@@ -1485,6 +1515,7 @@ final class NotchPanel: NSPanel {
     /// 紧凑样式：最近收进去那扇窗的 App 图标、收着几扇、有没有变过的。
     /// 有实时活动时，左右耳改成那一件本身：左耳是谁，右耳是数或进度。窗口个数退成一个点。
     struct Compact {
+        enum ProgressTone { case accent, playback, focus }
         var pid: pid_t?
         var icon: NSImage?
         var count: Int
@@ -1492,10 +1523,14 @@ final class NotchPanel: NSPanel {
         var leading: String? = nil
         var leadingSymbol: String? = nil
         var trailing: String? = nil
+        /// 右耳进度 0…1。有值时紧凑态画一条细条，不只写死百分比。
+        var progress: Double? = nil
+        var progressTone: ProgressTone = .accent
         func same(as other: Compact?) -> Bool {
             guard let other else { return false }
             return count == other.count && changed == other.changed && pid == other.pid
                 && leading == other.leading && leadingSymbol == other.leadingSymbol && trailing == other.trailing
+                && progress == other.progress && progressTone == other.progressTone
         }
     }
 
@@ -1983,8 +2018,8 @@ final class NotchPanel: NSPanel {
         meter.map { ($0.kind == .volume ? "音量" : "亮度", $0.value) }
     }
 
-    var compactForProbe: (leading: String?, trailing: String?)? {
-        displayCompact().map { ($0.leading, $0.trailing) }
+    var compactForProbe: (leading: String?, trailing: String?, count: Int)? {
+        displayCompact().map { ($0.leading, $0.trailing, $0.count) }
     }
 
     /// 第二颗岛：从这一颗旁边长出去。展开着的那一排不拆开。
@@ -2194,8 +2229,8 @@ final class NotchPanel: NSPanel {
         if dropState != .none {
             let zone = dropZone
             let rect = NSRect(x: zone.minX, y: zone.minY, width: zone.width, height: notch.maxY - zone.minY)
-            return (rect, IslandStyle(cornerRadius: 22, allCorners: false,
-                                      fill: dropState == .armed ? NSColor(white: 0.12, alpha: 1) : .black,
+            // 硬件层永远纯黑：已对准只靠更粗的强调色边线，不填灰底（§6-2）。
+            return (rect, IslandStyle(cornerRadius: 22, allCorners: false, fill: .black,
                                       border: dropState == .armed ? 2 : 1,
                                       borderColor: dropState == .armed ? NSColor.controlAccentColor.withAlphaComponent(0.9)
                                                                        : NotchPanel.hairline))
@@ -2223,6 +2258,14 @@ final class NotchPanel: NSPanel {
                                 border: alert.tone == .problem || alert.tone == .tip ? 1.5 : 1, borderColor: border))
         }
         if let ears = displayCompact(), ears.leading != nil {
+            // 音量 / 亮度：稿上 210×36 胶囊，真刘海也鼓高，不只是左右加宽。
+            if meter != nil {
+                let width: CGFloat = 210
+                let height: CGFloat = 36
+                let y = isVirtual ? notch.minY + max(0, (notch.height - height) / 2) : notch.maxY - height
+                return (NSRect(x: notch.midX - width / 2, y: y, width: width, height: height),
+                        IslandStyle(cornerRadius: height / 2, allCorners: true, fill: .black, border: 0))
+            }
             switch compactShape {
             case .sides:
                 return (notch.insetBy(dx: -max(sideWidth, 54), dy: 0),
@@ -2235,7 +2278,7 @@ final class NotchPanel: NSPanel {
                 return (NSRect(x: notch.minX, y: notch.minY - 8, width: notch.width, height: notch.height + 8),
                         IslandStyle(cornerRadius: NotchIsland.hug(hardware), allCorners: false, fill: .black, border: 0))
             case .pill, .pending:
-                let width: CGFloat = meter == nil ? 200 : 220
+                let width: CGFloat = 200
                 let height = max(22, isVirtual ? notch.height - 6 : notch.height)
                 let y = isVirtual ? notch.minY + 3 : notch.maxY - height
                 return (NSRect(x: notch.midX - width / 2, y: y, width: width, height: height),
@@ -2291,16 +2334,22 @@ final class NotchPanel: NSPanel {
         let resting = !isExpanded && dropState == .none && alertInfo == nil
         let shape = compactShape
         let visual = displayCompact()
-        let compactShown = resting && visual != nil && (shape != .chin || visual?.leading != nil)
+        // 展开一排时保留紧凑左右耳（图标 + 个数），格子绕着刘海排，不留额头（原则 9）。
+        let shelfEars = isExpanded && activityItems.isEmpty && compact != nil
+            && dropState == .none && alertInfo == nil && meter == nil
+        let compactShown = (resting && visual != nil && (shape != .chin || visual?.leading != nil)) || shelfEars
         let chinShown = resting && visual?.leading == nil && meter == nil && compact != nil && shape == .chin
         let extra = resting && pulled > 0 ? Self.rubberBand(pulled, limit: (canPull?() ?? false) ? 84 : 18) : 0
+        let earShape: CompactShape = shelfEars ? .sides : shape
         let content = NotchCanvasView.Content(
             tiles: isExpanded ? tiles : [],
             dots: chinShown ? (compact?.count ?? 0) : 0,
             dotsChanged: chinShown && (compact?.changed ?? false),
             dotsY: isVirtual ? 4 : 2.5 + extra,
-            compact: compactShown ? visual : nil,
-            compactSlots: compactShown ? compactSlots(in: rect.size, shape: shape, side: target.compactSide) : nil,
+            compact: compactShown ? (shelfEars ? compact : visual) : nil,
+            compactSlots: compactShown
+                ? compactSlots(in: rect.size, shape: earShape, side: target.compactSide, anchorToNotch: shelfEars)
+                : nil,
             alert: (!isExpanded && dropState == .none) ? alertInfo : nil,
             hint: hintText(), notchHeight: notch.height,
             pullIcon: extra > 0 ? compact?.icon : nil, pullExtra: extra, pullProgress: min(1, extra / 50),
@@ -2400,16 +2449,19 @@ final class NotchPanel: NSPanel {
             let percent = "\(Int((meter.value * 100).rounded()))"
             switch meter.kind {
             case .volume:
-                return Compact(count: 0, changed: false, leading: "音量", leadingSymbol: "speaker.wave.2.fill", trailing: percent)
+                return Compact(count: 0, changed: false, leading: "音量", leadingSymbol: "speaker.wave.2.fill",
+                               trailing: percent, progress: meter.value, progressTone: .accent)
             case .brightness:
-                return Compact(count: 0, changed: false, leading: "亮度", leadingSymbol: "sun.max.fill", trailing: percent)
+                return Compact(count: 0, changed: false, leading: "亮度", leadingSymbol: "sun.max.fill",
+                               trailing: percent, progress: meter.value, progressTone: .accent)
             }
         }
         if let item = activityItems.first(where: { $0.id == activitySelection }) ?? activityItems.first,
            !isExpanded, dropState == .none, alertInfo == nil {
+            let tone: Compact.ProgressTone = item.kind == .focus ? .focus : .playback
             return Compact(pid: compact?.pid, icon: compact?.icon, count: compact?.count ?? 0, changed: false,
                            leading: item.title, leadingSymbol: item.symbol.isEmpty ? "circle.fill" : item.symbol,
-                           trailing: Self.earTrailing(item))
+                           trailing: Self.earTrailing(item), progress: item.progress, progressTone: tone)
         }
         return compact
     }
@@ -2421,7 +2473,16 @@ final class NotchPanel: NSPanel {
     }
 
     /// 紧凑样式左右两段在岛里的位置。side：每侧主体多宽（画肩时从 sideWidth 里扣掉了肩）。
-    private func compactSlots(in size: NSSize, shape: CompactShape, side: CGFloat) -> (leading: NSRect, trailing: NSRect) {
+    /// anchorToNotch：展开时两耳贴着硬件刘海左右，不漂到整块岛的外沿。
+    private func compactSlots(in size: NSSize, shape: CompactShape, side: CGFloat,
+                              anchorToNotch: Bool = false) -> (leading: NSRect, trailing: NSRect) {
+        if anchorToNotch {
+            let ear = max(side, Self.narrowestSide)
+            let notchX = (size.width - notch.width) / 2
+            let y = size.height - notch.height
+            return (NSRect(x: max(0, notchX - ear), y: y, width: ear, height: notch.height),
+                    NSRect(x: min(size.width - ear, notchX + notch.width), y: y, width: ear, height: notch.height))
+        }
         if shape == .pill || shape == .pending || shape == .chin {
             return (NSRect(x: 4, y: 0, width: size.width / 2 - 4, height: size.height),
                     NSRect(x: size.width / 2, y: 0, width: size.width / 2 - 4, height: size.height))
@@ -2622,14 +2683,79 @@ final class NotchCanvasView: NSView {
         for view in clipHost.subviews { view.setFrameOrigin(NSPoint(x: view.frame.minX + delta.dx, y: view.frame.minY + delta.dy)) }
     }
 
+    /// 退场淡出还没做完又来了新目标：打断淡出，立刻从当前外框接上。
+    private var contentExitGeneration = 0
+    private var contentExitPending = false
+
     /// 变到 rect（画布坐标）。spring 为 nil 时立刻到位（跟手的时候）。
     /// shoulders：两个肩各长出多少（0…1），和岛在同一个 transaction 里挂同参数的叠加弹簧；
     /// shoulderSnap：这一侧的肩本来就看不出来（和硬件重合、岛没画），直接收掉不动画；shoulderFade：只是空位变了，肩淡入淡出。
+    /// 退场：丰富内容先淡出，形状再收回（稿 / 文法）。半路又改方向则打断淡出。
     func morph(to rect: NSRect, style: NotchPanel.IslandStyle, content: Content, spring: Spring?,
                shoulders scale: (leading: CGFloat, trailing: CGFloat) = (0, 0),
                shoulderSnap snap: (leading: Bool, trailing: Bool) = (false, false), shoulderFade: Bool = false,
                done: @escaping () -> Void) {
         let presented = island.presentation()?.frame ?? island.frame
+        contentExitGeneration += 1
+        let exitGeneration = contentExitGeneration
+        if contentExitPending {
+            contentExitPending = false
+            if let outgoing = current {
+                outgoing.alphaValue = 0
+                outgoing.removeFromSuperview()
+                current = nil
+                shown = nil
+            }
+            performMorph(to: rect, style: style, content: content, spring: spring,
+                         from: presented, shoulders: scale, shoulderSnap: snap,
+                         shoulderFade: shoulderFade, done: done)
+            return
+        }
+        if spring != nil, Self.shouldExitContentFirst(from: shown, to: content), let outgoing = current, !outgoing.isEmpty {
+            contentWatch?.invalidate()
+            contentWatch = nil
+            presentGeneration += 1
+            outgoing.inert = true
+            contentExitPending = true
+            let fade = Motion.reduced ? Motion.Spring.reducedNotch.response : 0.18
+            NSAnimationContext.runAnimationGroup({ context in
+                context.duration = fade
+                outgoing.animator().alphaValue = 0
+            }, completionHandler: {
+                MainActor.assumeIsolated {
+                    guard self.contentExitGeneration == exitGeneration else { return }
+                    self.contentExitPending = false
+                    outgoing.removeFromSuperview()
+                    if self.current === outgoing {
+                        self.current = nil
+                        self.shown = nil
+                    }
+                    self.performMorph(to: rect, style: style, content: content, spring: spring,
+                                      from: presented, shoulders: scale, shoulderSnap: snap,
+                                      shoulderFade: shoulderFade, done: done)
+                }
+            })
+            return
+        }
+        performMorph(to: rect, style: style, content: content, spring: spring,
+                     from: presented, shoulders: scale, shoulderSnap: snap,
+                     shoulderFade: shoulderFade, done: done)
+    }
+
+    /// 展开 / 提醒 / 落点退回紧凑或空手：字先淡，形状再收。
+    static func shouldExitContentFirst(from shown: Content?, to next: Content) -> Bool {
+        guard let shown else { return false }
+        let wasRich = shown.alert != nil || !shown.tiles.isEmpty || shown.activitiesExpanded || shown.drop != .none
+        let nowRich = next.alert != nil || !next.tiles.isEmpty || next.activitiesExpanded || next.drop != .none
+        return wasRich && !nowRich
+    }
+
+    private func performMorph(to rect: NSRect, style: NotchPanel.IslandStyle, content: Content, spring: Spring?,
+                              from presented: NSRect,
+                              shoulders scale: (leading: CGFloat, trailing: CGFloat),
+                              shoulderSnap snap: (leading: Bool, trailing: Bool),
+                              shoulderFade: Bool,
+                              done: @escaping () -> Void) {
         let presentedRadius = CGFloat(island.presentation()?.cornerRadius ?? island.cornerRadius)
         let presentedKey = keyLine.presentation()?.frame ?? keyLine.frame
         let presentedClip = clip.presentation()?.frame ?? clip.frame
@@ -2749,7 +2875,7 @@ final class NotchCanvasView: NSView {
             outgoing.inert = true
             if animated {
                 NSAnimationContext.runAnimationGroup({ context in
-                    context.duration = reduced ? Motion.Spring.reducedNotch.response : 0.10
+                    context.duration = reduced ? Motion.Spring.reducedNotch.response : 0.18
                     outgoing.animator().alphaValue = 0
                 }, completionHandler: {
                     MainActor.assumeIsolated { outgoing.removeFromSuperview() }
@@ -3548,6 +3674,9 @@ final class NotchCompactView: NSView {
         if let leading = compact.leading {
             drawEar(leading, symbol: compact.leadingSymbol, in: slots.leading, align: .left)
             drawEar(compact.trailing ?? "", symbol: nil, in: slots.trailing, align: .right)
+            if let progress = compact.progress {
+                drawProgress(progress, in: slots.trailing)
+            }
             if compact.count > 0 {
                 NSColor.controlAccentColor.setFill()
                 NSBezierPath(ovalIn: NSRect(x: bounds.maxX - 14, y: bounds.minY + 8, width: 6, height: 6)).fill()
@@ -3596,8 +3725,24 @@ final class NotchCompactView: NSView {
         let size = string.size()
         let maxWidth = max(0, slot.width - (x - slot.minX) - 6)
         let drawX = align == .right ? slot.maxX - min(size.width, maxWidth) - 6 : x
-        string.draw(with: NSRect(x: drawX, y: slot.midY - size.height / 2, width: min(size.width, maxWidth), height: size.height),
+        let textY = slot.midY - size.height / 2 + (compact?.progress == nil ? 0 : 2)
+        string.draw(with: NSRect(x: drawX, y: textY, width: min(size.width, maxWidth), height: size.height),
                     options: [.usesLineFragmentOrigin, .truncatesLastVisibleLine])
+    }
+
+    private func drawProgress(_ progress: Double, in slot: NSRect) {
+        let width = min(32, max(18, slot.width - 12))
+        let bar = NSRect(x: slot.maxX - 6 - width, y: slot.minY + 4, width: width, height: 3.5)
+        NSColor.white.withAlphaComponent(0.18).setFill()
+        NSBezierPath(roundedRect: bar, xRadius: 1.75, yRadius: 1.75).fill()
+        var fill = bar
+        fill.size.width = max(3.5, bar.width * CGFloat(min(1, max(0, progress))))
+        switch compact?.progressTone {
+        case .focus: NSColor.systemRed.setFill()
+        case .playback: NSColor.systemGreen.setFill()
+        case .accent, nil: NSColor.controlAccentColor.setFill()
+        }
+        NSBezierPath(roundedRect: fill, xRadius: 1.75, yRadius: 1.75).fill()
     }
 }
 
@@ -3646,7 +3791,8 @@ final class NotchAlertView: NSView {
     override func draw(_ dirtyRect: NSRect) {
         guard let alert else { return }
         let margin: CGFloat = 14
-        let side: CGFloat = 30
+        // §6-4：图标 24，四周 14，不留额头。
+        let side: CGFloat = 24
         let iconRect = NSRect(x: margin, y: (bounds.height - side) / 2, width: side, height: side)
         if alert.demo == nil { alert.icon?.draw(in: iconRect) }
         let textX = alert.demo == nil ? iconRect.maxX + 10 : margin + NotchDemoView.size.width + 12
