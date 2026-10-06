@@ -6,6 +6,7 @@
 - 设计稿：[看与指挥](https://claude.ai/artifact/9mbRLt1QGpsKLKip991Xe3)（同一页里还有菜单的改法）
 - 菜单：[menu-bar.md](menu-bar.md)
 - 指挥模式：[conductor-v2.md](conductor-v2.md)
+- 用量：[usage.md](usage.md)
 
 ## Open Island 是什么
 
@@ -31,7 +32,7 @@ Codex 桌面版另外接了 app-server 的 JSON-RPC。它还有用量面板、�
 | Codex app-server 实时轮次 | **取** | 指挥模式本来就要接 |
 | 13 种助手 | **只取 Claude Code 和 Codex** | Aaron 在用的就这两个；Qoder、Qwen Code 这类和 Claude Code 同格式的，以后几行配置就能加 |
 | 15 种终端的精确跳转 | **不取** | 先跳到窗口；终端 App 自己有标签页的，第二步再说 |
-| 用量面板 | **不取** | 不是窗口的事 |
+| 用量面板 | **取，但收窄成会话卡与恢复提醒** | 原先写「不是窗口的事」。2026-10-06 收窄成有界范围：只做现有会话里的用量卡与恢复提醒，不做独立统计软件，不另开宿主；见 [usage.md](usage.md) |
 | 通知模式、单独的面板 | **不取** | 刘海就是面板 |
 | 自己的设置窗口、更新器、多语言框架 | **不取** | 都已经有了 |
 | 从对话记录文件里扫会话 | **暂不取** | hook 已经够用；扫文件要读你的对话内容 |
@@ -93,3 +94,4 @@ Codex 桌面版另外接了 app-server 的 JSON-RPC。它还有用量面板、�
 | A3 | 刘海里的编程会话活动：紧凑、展开、等你、完成；点一下“过去”接 WindowShade 的找窗口 | DeepSeek 写，主模型复核动效 |
 | A4 | 批准接授权账：普通点一下，高风险 Touch ID | 主模型 |
 | A5 | 和指挥模式共用会话列表 | 主模型 |
+| A6 | 用量卡与恢复提醒（收窄范围见 [usage.md](usage.md)）。待出稿、待进词表后再排；不占 A1–A5 的顺序 | 待定 |

@@ -23,3 +23,5 @@
 | [指挥模式](指挥模式.html) | 手里一部 iPhone，指挥一屏的 Codex 和 Claude | 概念片第 6 章、opus 的 `hold` |
 | [离开就锁](离开就锁.html) | 带着手机走开就锁，走回来就开 | 概念片第 7 章、opus 的 `away` |
 | [番茄钟](番茄钟.html) | 专注时聊天收起来，休息时桌面收起来 | 概念片第 7 章、opus 的 `away` |
+
+待出的稿：**用量**。长在已有的编程会话实时活动里，范围与规则见 [usage.md](../usage.md)。动手做界面前先出这一张，并过 [design-grammar.md](../design-grammar.md) 的准入。
