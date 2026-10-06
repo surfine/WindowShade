@@ -115,6 +115,20 @@ final class WindowStreamCapture: NSObject, SCStreamDelegate, SCStreamOutput, @un
     private var pipOutput: (pixels: CGSize, source: CGRect?)?
     private let defaultSourceRect = SCStreamConfiguration().sourceRect
 
+    /// 旧系统（macOS 15 以前）的呈现必须回主队列，用最新一帧邮箱做有界背压：
+    /// 每路最多一个待呈现帧加一个已排队的消费任务，主线程拥堵时新帧覆盖旧帧。
+    /// macOS 15 的 sampleBufferRenderer.enqueue 线程安全，不走这里。
+    private let mainMailbox = LatestFrameMailbox<ReadOnlyFrame>()
+    private let mirrorMailbox = LatestFrameMailbox<ReadOnlyFrame>()
+
+    /// 跨线程只读传递的采样帧：`CMSampleBuffer` 不是 `Sendable`，但邮箱只在主队列读它、
+    /// 读完不再改动。这个盒子把「只读、只从主队列取用」显式写下来，免得帧本身被当成长寿命
+    /// 共享数据；也让主线程闭包捕获的是盒子而不是帧。
+    private struct ReadOnlyFrame: @unchecked Sendable {
+        let buffer: CMSampleBuffer
+        init(_ buffer: CMSampleBuffer) { self.buffer = buffer }
+    }
+
     init(preview: Bool = false) {
         isPreviewStream = preview
         if preview {
@@ -123,6 +137,16 @@ final class WindowStreamCapture: NSObject, SCStreamDelegate, SCStreamOutput, @un
         super.init()
         videoLayer.videoGravity = .resize
         videoLayer.backgroundColor = NSColor.clear.cgColor
+        // 邮箱的消费任务只排在主队列（见 LatestFrameMailbox.drain），这里断言主线程，
+        // 再显式进入主 actor 碰显示层。
+        mainMailbox.setConsume { [weak self] frame in
+            guard let self, Thread.isMainThread else { return }
+            MainActor.assumeIsolated { Self.enqueueOnMain(frame.buffer, into: self.videoLayer) }
+        }
+        mirrorMailbox.setConsume { [weak self] frame in
+            guard let self, Thread.isMainThread, let layer = self.mirrorLayer else { return }
+            MainActor.assumeIsolated { Self.enqueueOnMain(frame.buffer, into: layer) }
+        }
     }
 
     var deliveredFrameCount: UInt64 {
@@ -202,6 +226,8 @@ final class WindowStreamCapture: NSObject, SCStreamDelegate, SCStreamOutput, @un
             stream = nil
             return old
         }
+        mainMailbox.stop()
+        mirrorMailbox.stop()
         if let oldStream {
             Task { [oldStream] in
                 do {
@@ -244,6 +270,9 @@ final class WindowStreamCapture: NSObject, SCStreamDelegate, SCStreamOutput, @un
         let activeStream = stream
         stream = nil
         stateLock.unlock()
+        // 清空槽位、作废已排队的消费任务：停止后旧帧不会再上屏。
+        mainMailbox.stop()
+        mirrorMailbox.stop()
         let finish: (Error?) -> Void = { error in
             if let error {
                 let nsError = error as NSError
@@ -291,6 +320,9 @@ final class WindowStreamCapture: NSObject, SCStreamDelegate, SCStreamOutput, @un
             _isStopped = false
             return g
         }
+        // 会话开始：邮箱进入可投递状态（旧会话残留的消费任务靠 epoch 自动作废）。
+        mainMailbox.start()
+        mirrorMailbox.start()
         do {
             try await newStream.startCapture()
         } catch {
@@ -436,21 +468,16 @@ final class WindowStreamCapture: NSObject, SCStreamDelegate, SCStreamOutput, @un
     }
 
     // macOS 15 的 sampleBufferRenderer.enqueue 线程安全，直接在帧队列上投递；
-    // 旧系统必须回主线程，但降频后主线程每路最多 ~15fps（镜像 10fps）。
+    // 旧系统必须回主线程：走最新一帧邮箱（每路最多一待呈现帧 + 一消费任务），
+    // 由它覆盖旧帧、复查会话代数，主线程被拖住时也不会堆出一长串待呈现闭包。
     private func deliver(_ sampleBuffer: CMSampleBuffer, main: Bool, mirror: Bool) {
         if #available(macOS 15.0, *) {
             if main { videoLayer.sampleBufferRenderer.enqueue(sampleBuffer) }
             if mirror, let mirrorLayer { mirrorLayer.sampleBufferRenderer.enqueue(sampleBuffer) }
         } else {
-            // 帧到这里已经修完、不再改动；旧系统只能在主线程 enqueue，跨线程的只是这份只读的帧。
-            nonisolated(unsafe) let sampleBuffer = sampleBuffer
-            DispatchQueue.main.async { [weak self] in
-                guard let self else { return }
-                if main { Self.enqueueOnMain(sampleBuffer, into: self.videoLayer) }
-                if mirror, let mirrorLayer = self.mirrorLayer {
-                    Self.enqueueOnMain(sampleBuffer, into: mirrorLayer)
-                }
-            }
+            // 帧到这里已经修完、不再改动；跨线程的只是这份只读的帧。
+            if main { mainMailbox.receive(ReadOnlyFrame(sampleBuffer)) }
+            if mirror { mirrorMailbox.receive(ReadOnlyFrame(sampleBuffer)) }
         }
     }
 
@@ -472,6 +499,10 @@ final class WindowStreamCapture: NSObject, SCStreamDelegate, SCStreamOutput, @un
             _captureGeneration &+= 1
         }
         stateLock.unlock()
+        if isCurrent {
+            mainMailbox.stop()
+            mirrorMailbox.stop()
+        }
         // 永久 stop（stop()/restart() 主动停）不走这条路径；只有系统异常终止
         // 才会到这里。
         if isCurrent {
