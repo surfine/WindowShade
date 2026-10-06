@@ -71,7 +71,8 @@ final class WindowStreamCapture: NSObject, SCStreamDelegate, SCStreamOutput, @un
             let changed = _isInteractive != newValue
             _isInteractive = newValue
             stateLock.unlock()
-            if changed {
+            // 小预览固定 8fps（首帧预算）；通用的 15/30fps 交互重配不能覆盖它。
+            if changed, !isPreviewStream {
                 scheduleFrameRateReconfig()
             }
         }
@@ -106,7 +107,6 @@ final class WindowStreamCapture: NSObject, SCStreamDelegate, SCStreamOutput, @un
     // 普通窗口的临时实时预览配置：初始 8fps、最大 640×400、无音频、无鼠标、
     // queueDepth 2。它不改变原有置顶预览的默认 15/30fps 与分辨率。
     private let isPreviewStream: Bool
-    private let previewMaxPixelSize = CGSize(width: 640, height: 400)
     // 流被系统异常终止（源窗口变化、系统过渡等）时回调；由 PinnedPreviewController
     // 决定刷新 SCWindow、有限次数重启或结束会话。
     var onUnexpectedStop: ((Error) -> Void)?
@@ -307,49 +307,56 @@ final class WindowStreamCapture: NSObject, SCStreamDelegate, SCStreamOutput, @un
     private func configure(window: SCWindow, display: SCDisplay?) {
         configureBase(display: display)
         if #available(macOS 14.0, *), let filter {
-            let scale = max(1, Int(filter.pointPixelScale))
-            configuration.width = max(1, Int(ceil(filter.contentRect.width)) * scale)
-            configuration.height = max(1, Int(ceil(filter.contentRect.height)) * scale)
+            // 用浮点 pointPixelScale：之前 max(1, Int(...)) 会在 1.5× 时压成 1×。
+            applyOutputSize(
+                pointSize: filter.contentRect.size, scale: CGFloat(filter.pointPixelScale))
         } else {
-            configure(width: window.frame.width, height: window.frame.height, display: display)
+            let pointSize = window.frame.size
+            applyOutputSize(
+                pointSize: pointSize,
+                scale: screen(for: display, pointSize: pointSize)?.backingScaleFactor ?? 2)
         }
-        applyPictureInPictureOutput()
     }
 
     /// 画中画改了大小或“只看一块”：下一帧起按新的尺寸和范围出画面。
     func setPictureInPictureOutput(pixels: CGSize, source: CGRect?) {
         pipOutput = (pixels, source)
-        applyPictureInPictureOutput()
+        applyOutputSize(pointSize: .zero, scale: 1)
         stream?.updateConfiguration(configuration) { error in
             if let error { wlog("pip: capture update failed \(error.localizedDescription)") }
         }
     }
 
-    private func applyPictureInPictureOutput() {
-        guard let pip = pipOutput else { return }
-        configuration.width = max(1, Int(pip.pixels.width.rounded()))
-        configuration.height = max(1, Int(pip.pixels.height.rounded()))
-        configuration.sourceRect = pip.source ?? defaultSourceRect
-    }
-
     private func configure(width: CGFloat, height: CGFloat, display: SCDisplay?) {
         configureBase(display: display)
-        let screen =
-            display.flatMap { screenForDisplayID($0.displayID) }
-            ?? screenForCocoaFrame(NSRect(x: 0, y: 0, width: width, height: height))
+        let pointSize = CGSize(width: width, height: height)
+        applyOutputSize(
+            pointSize: pointSize,
+            scale: screen(for: display, pointSize: pointSize)?.backingScaleFactor ?? 2)
+    }
+
+    private func screen(for display: SCDisplay?, pointSize: CGSize) -> NSScreen? {
+        display.flatMap { screenForDisplayID($0.displayID) }
+            ?? screenForCocoaFrame(NSRect(x: 0, y: 0, width: pointSize.width, height: pointSize.height))
             ?? NSScreen.main
-        let scale = screen?.backingScaleFactor ?? 2
-        var pixelWidth = max(1, Int(ceil(width * scale)))
-        var pixelHeight = max(1, Int(ceil(height * scale)))
-        if isPreviewStream {
-            let outputScale = min(previewMaxPixelSize.width / CGFloat(pixelWidth),
-                                  previewMaxPixelSize.height / CGFloat(pixelHeight),
-                                  1)
-            pixelWidth = max(1, Int(ceil(CGFloat(pixelWidth) * outputScale)))
-            pixelHeight = max(1, Int(ceil(CGFloat(pixelHeight) * outputScale)))
+    }
+
+    /// 当前采集模式：画中画最高，其次小预览上限，最后跟随窗口。
+    private var outputMode: CaptureOutputSizing.Mode {
+        if pipOutput != nil { return .pictureInPicture }
+        return isPreviewStream ? .preview : .pinnedPreview
+    }
+
+    /// 初始化、重启、resize、跨屏、画中画都从这一个出口出尺寸（PERF-02）。
+    private func applyOutputSize(pointSize: CGSize, scale: CGFloat) {
+        let mode = outputMode
+        let size = CaptureOutputSizing.pixelSize(
+            mode: mode, pointSize: pointSize, scale: scale, pipPixels: pipOutput?.pixels ?? .zero)
+        configuration.width = Int(size.width)
+        configuration.height = Int(size.height)
+        if mode == .pictureInPicture {
+            configuration.sourceRect = pipOutput?.source ?? defaultSourceRect
         }
-        configuration.width = pixelWidth
-        configuration.height = pixelHeight
     }
 
     private func configureBase(display: SCDisplay?) {
