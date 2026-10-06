@@ -114,24 +114,39 @@ final class MenuBarRoom {
     /// 取点量到的空位（nil：一直被自己的面板盖着，没量到过）。
     private var hits: [CGDirectDisplayID: (leading: CGFloat?, trailing: CGFloat?)] = [:]
     private var measuring: Set<CGDirectDisplayID> = []
+    /// 每块屏已经自己重试了几次（PERF-09，见 MenuBarCoverRetry）。
+    private var retries: [CGDirectDisplayID: Int] = [:]
+    /// 作废令牌：屏没了、功能关了就加一，在途的测量结果与重试一律丢掉（先把自己摘出 measuring，见 measure）。
+    private var generation: UInt64 = 0
     private var activation: NSObjectProtocol?
     static let maxAge: TimeInterval = 20
 
     init() {
-        // 换了前台 App，菜单就换了：重新量。
+        // 换了前台 App，菜单就换了：重新量。这也是「量不到时」要等的真正变化之一，预算一并归零。
         activation = NSWorkspace.shared.notificationCenter.addObserver(
             forName: NSWorkspace.didActivateApplicationNotification, object: nil, queue: .main) { [weak self] _ in
             MainActor.assumeIsolated {
                 guard let self else { return }
                 for key in self.known.keys { self.known[key]?.at = -.infinity }
+                self.retries.removeAll()
                 self.onChange?()
             }
         }
     }
 
+    /// 这块屏没了（或者整个功能关掉了）：它的缓存、在途测量与重试一起作废。
+    func forget(_ display: CGDirectDisplayID) {
+        generation &+= 1
+        known.removeValue(forKey: display)
+        hits.removeValue(forKey: display)
+        retries.removeValue(forKey: display)
+    }
+
     /// 这块屏上两边空着多宽；不知道或者旧了就在后台量一次，量完有变化再回调 onChange。
     func sides(for display: CGDirectDisplayID, spans: Spans) -> Sides? {
         let entry = known[display]
+        // 布局变了：以前量的位置不作数了，重试预算也跟着重来。
+        if let entry, entry.spans != spans { retries[display] = 0 }
         let fresh = entry.map { $0.spans == spans && CACurrentMediaTime() - $0.at < Self.maxAge } ?? false
         if !fresh { measure(display, spans: spans) }
         return entry?.spans == spans ? entry?.sides : nil
@@ -140,6 +155,7 @@ final class MenuBarRoom {
     private func measure(_ display: CGDirectDisplayID, spans: Spans) {
         guard !measuring.contains(display) else { return }
         measuring.insert(display)
+        let measureGeneration = generation
         let owner = NSWorkspace.shared.menuBarOwningApplication?.processIdentifier
         let screens = NSScreen.screens.map(\.frame)
         let baseline = coordinateBaselineY()
@@ -154,21 +170,34 @@ final class MenuBarRoom {
                 ?? Sides(leading: spans.reach, trailing: spans.reach)
             DispatchQueue.main.async { [self] in
                 MainActor.assumeIsolated {
+                    // 先把自己摘出来：屏没了、功能关掉时结果要丢掉，但「在量」的标记不能留下。
                     self.measuring.remove(display)
+                    guard self.generation == measureGeneration else { return }
                     // 被自己盖着（nil）的一边沿用上一次量到的；从没量到过的一边算没有空位，稍后再量。
                     let leadingHit = hit.leading ?? previous?.leading ?? nil
                     let trailingHit = hit.trailing ?? previous?.trailing ?? nil
                     self.hits[display] = (leadingHit, trailingHit)
-                    let free = Sides(leading: min(menus.leading, leadingHit ?? 0), trailing: min(menus.trailing, trailingHit ?? 0))
+                    let free = Sides(leading: MenuBarCoverRetry.freeSide(menuRoom: menus.leading, lastHit: leadingHit),
+                                     trailing: MenuBarCoverRetry.freeSide(menuRoom: menus.trailing, lastHit: trailingHit))
                     let changed = self.known[display]?.sides != free || self.known[display]?.spans != spans
                     let unsure = leadingHit == nil || trailingHit == nil
                     self.known[display] = (free, spans, unsure ? CACurrentMediaTime() - Self.maxAge + 1.5 : CACurrentMediaTime())
-                    wlog("notch: menu bar room display=\(display) leading=\(Int(free.leading)) trailing=\(Int(free.trailing))\(unsure ? " (covered, retrying)" : "")\(hit.found.isEmpty ? "" : " found: \(hit.found)")")
+                    wlog("notch: menu bar room display=\(display) leading=\(Int(free.leading)) trailing=\(Int(free.trailing))\(unsure ? " (covered, will retry)" : "")\(hit.found.isEmpty ? "" : " found: \(hit.found)")")
                     if changed { self.onChange?() }
-                    if unsure {
-                        DispatchQueue.main.asyncAfter(deadline: .now() + 1.6) { [weak self] in
-                            MainActor.assumeIsolated { self?.measure(display, spans: spans) }
+                    if !unsure {
+                        self.retries[display] = 0
+                    } else if MenuBarCoverRetry.shouldRetry(covered: true, attempts: self.retries[display] ?? 0) {
+                        self.retries[display, default: 0] += 1
+                        let expected = self.generation
+                        DispatchQueue.main.asyncAfter(deadline: .now() + MenuBarCoverRetry.delay) {
+                            MainActor.assumeIsolated {
+                                guard self.generation == expected else { return }
+                                self.measure(display, spans: spans)
+                            }
                         }
+                    } else {
+                        // 自己撞够了：保守显示已经生效，等换前台 App 或布局变化再来。
+                        wlog("notch: menu bar room display=\(display) still covered after \(MenuBarCoverRetry.limit) tries; waiting for a real change")
                     }
                 }
             }

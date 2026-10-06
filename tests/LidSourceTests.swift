@@ -14,6 +14,9 @@ struct LidSourceTests {
     }
 
     static func main() {
+        // 先跑不依赖硬件的部分（PERF-09）：找不到传感器的机器上也要能验证退避节奏。
+        backoffTests()
+
         let logPath = NSTemporaryDirectory() + "windowshade-lid-source-\(UUID().uuidString).log"
         setenv("WINDOWSHADE_LOG_PATH", logPath, 1)
 
@@ -43,6 +46,8 @@ struct LidSourceTests {
         expect(!statuses.isEmpty, "the source reports a status (\(statuses.last ?? "none"))")
         // 没有盖角传感器的机器（台式机、外接键盘盖着的 Mac mini…）不该让全量 runner 变红。
         guard statuses.contains(where: { $0.contains("已连接") }) else {
+            // 硬件的部分跳过，但上面那些与硬件无关的断言不能跟着一起放过。
+            if failures > 0 { print("FAILED \(failures)"); exit(1) }
             print("SKIP: 这台机器没有可用的盖角传感器（\(statuses.last ?? "没有任何状态")）")
             exit(0)
         }
@@ -55,5 +60,18 @@ struct LidSourceTests {
 
         if failures == 0 { print("PASS: the app's hinge source reads from the push stream with a 1Hz watchdog") }
         else { print("FAILED \(failures)"); exit(1) }
+    }
+
+    /// PERF-09：找不到传感器时的重连节奏。固定 2 秒一直撞改成有上限的指数退避。
+    private static func backoffTests() {
+        let b = LidReconnectBackoff.self
+        expect(b.delay(afterFailures: 1) == 2, "第一次失败之后 2 秒再来")
+        expect(b.delay(afterFailures: 2) > b.delay(afterFailures: 1), "连续失败要往后拉开")
+        expect(b.delay(afterFailures: 3) > b.delay(afterFailures: 2), "继续拉开")
+        expect(b.delay(afterFailures: 5) == b.cap, "第 5 次就到上限（\(b.cap)s）")
+        expect(b.delay(afterFailures: 50) == b.cap, "再多次也不超过上限")
+        expect(b.delay(afterFailures: 0) == b.delay(afterFailures: 1), "还没失败过时按第一次算，不会更密")
+        expect(b.delay(afterFailures: -3) == b.cap || b.delay(afterFailures: -3) == b.first,
+               "异常输入不放大也不崩")
     }
 }

@@ -321,6 +321,7 @@ final class NotchController {
         for (id, panel) in panels where !alive.contains(id) {
             authentication.reconcile(panels: panels.filter { alive.contains($0.key) }.map(\.value))
             leases.removeDisplay(WS2.DisplayID(value: id))
+            menuRoom.forget(id)
             panel.orderOut(nil)
             panels.removeValue(forKey: id)
         }
