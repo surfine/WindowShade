@@ -6,6 +6,7 @@ import CoreML
 struct FaceCameraDescriptor: Sendable, Hashable { let id: String; let name: String }
 
 /// 采集→过滤→Vision→投递的隐私安全计数（R04）。不写图像、特征或相机硬件名。
+/// PERF-07 扩充：相机实际选中的格式与帧率、像素格式、Vision 次数与用时、连续失败与退路状态。
 struct FacePipelineCounters: Sendable, Equatable {
     var captureReceived: UInt64 = 0
     var warmupSkipped: UInt64 = 0
@@ -18,6 +19,12 @@ struct FacePipelineCounters: Sendable, Equatable {
     var noFace: UInt64 = 0
     var multipleFaces: UInt64 = 0
     var delivered: UInt64 = 0
+    /// 相机与 Vision 的代价（PERF-07）。数值与四字码，不含硬件名。
+    var camera = FaceCameraReport()
+    /// Vision 一次请求的累计与最大用时（毫秒），以及超过预算的次数。
+    var visionTotalMs: Double = 0
+    var visionMaxMs: Double = 0
+    var visionSlow: UInt64 = 0
 }
 
 /// Geometry only. Head pose is not gaze; no face is not evidence of departure.
@@ -111,6 +118,8 @@ private final class FaceObservationWorker: NSObject, AVCaptureVideoDataOutputSam
     private var startedAt = 0.0
     private var lastSample = 0.0
     private var counters = FacePipelineCounters()
+    /// Vision 连续失败的会话级退路（PERF-07）。只在队列上动。
+    private var fallback = FaceVisionFallbackPolicy()
     private var deliver: (@Sendable (FaceObservation) -> Void)?
     private var fail: (@Sendable (Error) -> Void)?
 
@@ -123,6 +132,35 @@ private final class FaceObservationWorker: NSObject, AVCaptureVideoDataOutputSam
     static func devices() -> [AVCaptureDevice] {
         AVCaptureDevice.DiscoverySession(deviceTypes: [.builtInWideAngleCamera, .external, .continuityCamera],
             mediaType: .video, position: .unspecified).devices
+    }
+    /// 在 activeFormat 支援范围内协商源帧率（PERF-07）。只把固定的 min/max frame duration 设成
+    /// 我们真的会处理的那一档；夹不进任何一档就维持相机预设，报表里的 requestedSourceFPS 记 0
+    /// 表示「没协商成」，不假装成功。
+    static func negotiateFrameRate(device: AVCaptureDevice, into report: inout FaceCameraReport) {
+        let format = device.activeFormat
+        let dimensions = CMVideoFormatDescriptionGetDimensions(format.formatDescription)
+        report.activeFormatWidth = Int(dimensions.width)
+        report.activeFormatHeight = Int(dimensions.height)
+        let ranges = format.videoSupportedFrameRateRanges
+        report.activeFormatMinFPS = ranges.map(\.minFrameRate).min() ?? 0
+        report.activeFormatMaxFPS = ranges.map(\.maxFrameRate).max() ?? 0
+        let target = FaceCameraTuning.targetSourceFPS
+        guard let range = ranges.first(where: { target >= $0.minFrameRate && target <= $0.maxFrameRate })
+            ?? ranges.min(by: { $0.maxFrameRate < $1.maxFrameRate })
+        else { return }
+        let clamped = min(max(target, range.minFrameRate), range.maxFrameRate)
+        let timescale = CMTimeScale(clamped.rounded())
+        guard timescale > 0 else { return }
+        let duration = CMTime(value: 1, timescale: timescale)
+        do {
+            try device.lockForConfiguration()
+            device.activeVideoMinFrameDuration = duration
+            device.activeVideoMaxFrameDuration = duration
+            device.unlockForConfiguration()
+            report.requestedSourceFPS = duration.seconds > 0 ? 1 / duration.seconds : 0
+        } catch {
+            report.requestedSourceFPS = 0
+        }
     }
     func start(deviceID: String, token: UInt64,
                deliver: @escaping @Sendable (FaceObservation) -> Void,
@@ -140,13 +178,26 @@ private final class FaceObservationWorker: NSObject, AVCaptureVideoDataOutputSam
                     let input = try AVCaptureDeviceInput(device: device)
                     let output = AVCaptureVideoDataOutput()
                     output.alwaysDiscardsLateVideoFrames = true
-                    output.videoSettings = [kCVPixelBufferPixelFormatTypeKey as String: kCVPixelFormatType_32BGRA]
+                    self.counters = FacePipelineCounters()
+                    // PERF-07：按相机真正支援的像素格式挑，优先原生双平面 YUV（少一次转换），
+                    // 其次 BGRA。都不支援就用系统预设，不硬塞相机不认的格式。
+                    let available = output.availableVideoPixelFormatTypes
+                    let forced = ProcessInfo.processInfo.environment["WINDOWSHADE_CAMERA_PIXEL_FORMAT"]
+                    if let pixelFormat = FaceCameraPixelFormat.preferred(from: available, forced: forced) {
+                        output.videoSettings = [
+                            kCVPixelBufferPixelFormatTypeKey as String: pixelFormat
+                        ]
+                        self.counters.camera.pixelFormat = pixelFormat
+                    }
                     guard session.canAddInput(input), session.canAddOutput(output) else {
                         session.commitConfiguration()
                         throw FaceObservationSourceError.unavailable
                     }
                     session.addInput(input)
                     session.addOutput(output)
+                    // PERF-07：在 activeFormat 支援范围内协商源帧率。只取我们真的会处理的那一档，
+                    // 相机不再产出注定被丢掉的帧（解码是实打实的电）。
+                    Self.negotiateFrameRate(device: device, into: &self.counters.camera)
                     output.setSampleBufferDelegate(self, queue: self.queue)
                     session.commitConfiguration()
                     self.session = session
@@ -155,7 +206,7 @@ private final class FaceObservationWorker: NSObject, AVCaptureVideoDataOutputSam
                     self.token = token
                     self.sequence = 0
                     self.lastSample = 0
-                    self.counters = FacePipelineCounters()
+                    self.fallback = FaceVisionFallbackPolicy()
                     self.deliver = deliver
                     self.fail = fail
                     for name in [AVCaptureSession.runtimeErrorNotification, AVCaptureSession.wasInterruptedNotification] {
@@ -198,7 +249,7 @@ private final class FaceObservationWorker: NSObject, AVCaptureVideoDataOutputSam
             counters.warmupSkipped &+= 1
             return
         }
-        if now - lastSample < 0.125 {
+        if now - lastSample < 1.0 / FaceCameraTuning.targetSourceFPS {
             counters.throttled &+= 1
             return
         }
@@ -222,14 +273,38 @@ private final class FaceObservationWorker: NSObject, AVCaptureVideoDataOutputSam
         }
         lastSample = now
         let request = VNDetectFaceLandmarksRequest()
-        // 钉在神经引擎上：默认偶尔退回 GPU/CPU；实测钉住后结果一致（IoU 0.995）、不占 GPU、延迟低 15–30%。没有神经引擎就用默认。
-        if let ane = FaceLandmarkComputeDevice.ane { request.setComputeDevice(ane, for: .main) }
+        // 钉在神经引擎上（main stage）：默认偶尔退回 GPU/CPU。实测钉住后结果一致（IoU 0.995）、
+        // 不占 GPU、延迟低 15–30%。注意这只决定 main stage 用哪个加速器，前处理与后处理仍会用到
+        // CPU/GPU，不能写成「整条路不用 CPU/GPU」。连续失败会退回系统预设（见下面的 fallback）。
+        if !fallback.usesDefaultComputeDevice, let ane = FaceLandmarkComputeDevice.ane {
+            request.setComputeDevice(ane, for: .main)
+        }
+        counters.camera.pinsNeuralEngine = !fallback.usesDefaultComputeDevice
         counters.visionStarted &+= 1
+        let visionStartedAt = CACurrentMediaTime()
         do { try VNImageRequestHandler(cvPixelBuffer: buffer, orientation: .up).perform([request]) }
         catch {
             counters.visionFailed &+= 1
-            return
+            // PERF-07：先记类别；连续失败才退路，而退路整个会话只有一次。退路后仍失败就停源报不可用。
+            switch fallback.recordFailure(FaceVisionFailureCategory.of(error)) {
+            case .keepRunning:
+                return
+            case .fallBackToDefault:
+                counters.camera.pinsNeuralEngine = false
+                return
+            case .stopUnavailable:
+                let handler = fail
+                tearDown()
+                handler?(
+                    FaceObservationSourceError.runtime("Vision 连续失败后退回系统预设仍不可用"))
+                return
+            }
         }
+        let visionMs = (CACurrentMediaTime() - visionStartedAt) * 1000
+        counters.visionTotalMs += visionMs
+        counters.visionMaxMs = max(counters.visionMaxMs, visionMs)
+        if visionMs > FaceCameraTuning.visionBudgetMs { counters.visionSlow &+= 1 }
+        fallback.recordSuccess()
         let faces = request.results ?? []
         if faces.isEmpty { counters.noFace &+= 1 }
         else if faces.count > 1 { counters.multipleFaces &+= 1 }

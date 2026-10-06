@@ -287,7 +287,10 @@ final class SilentMilestoneProbe {
         let counters = await source.pipelineCounters()
         source.stop()
         // R04：授权成功≠采集成功；按阶段计数定位零样本。
-        print("INFO head-pipeline: capture=\(counters.captureReceived) warmup=\(counters.warmupSkipped) throttle=\(counters.throttled) invalid=\(counters.invalidBuffer) clock=\(counters.clockConversionRejected) stale=\(counters.staleFrame) vision=\(counters.visionStarted) visionFail=\(counters.visionFailed) noFace=\(counters.noFace) multi=\(counters.multipleFaces) delivered=\(counters.delivered)")
+        // PERF-07：一并记相机真正选中的格式／协商到的源帧率／像素格式／神经引擎钉选，以及 Vision 次数与用时。
+        let camera = counters.camera
+        let pixel = camera.pixelFormat == 0 ? "default" : FaceCameraPixelFormat.name(camera.pixelFormat)
+        print("INFO head-pipeline: capture=\(counters.captureReceived) warmup=\(counters.warmupSkipped) throttle=\(counters.throttled) invalid=\(counters.invalidBuffer) clock=\(counters.clockConversionRejected) stale=\(counters.staleFrame) vision=\(counters.visionStarted) visionFail=\(counters.visionFailed) noFace=\(counters.noFace) multi=\(counters.multipleFaces) delivered=\(counters.delivered) format=\(camera.activeFormatWidth)x\(camera.activeFormatHeight) sourceFPS=\(String(format: "%.0f", camera.activeFormatMinFPS))-\(String(format: "%.0f", camera.activeFormatMaxFPS)) wantFPS=\(String(format: "%.1f", camera.requestedSourceFPS)) pixel=\(pixel) ane=\(camera.pinsNeuralEngine ? 1 : 0) visionMs=\(String(format: "%.1f", counters.visionTotalMs)) visionMaxMs=\(String(format: "%.1f", counters.visionMaxMs)) visionSlow=\(counters.visionSlow)")
         let recognition = WS2HeadGesture.recognize(bag.samples)
         print("INFO head: samples=\(bag.samples.count) faces=\(bag.faces) maxPitchDown=\(String(format: "%.1f", bag.maxPitch)) maxAbsYaw=\(String(format: "%.1f", bag.maxYaw)) recognition=\(Self.recognition(recognition))")
         if recognition?.kind == .nod, let started = recognition?.startedAt {
