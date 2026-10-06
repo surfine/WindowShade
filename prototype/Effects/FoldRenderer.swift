@@ -37,6 +37,25 @@ import MetalKit
   private let transparentBackground: MTLTexture
   private var backgroundImage: CGImage?
   private var colorSpace: EffectColorSpace = .sRGB
+  // PERF-05：图像准备（vImage 颜色转换 + 纹理创建）不在主线程做。有界 worker：一次一个任务、
+  // 每个目标至多一个待替换请求；完成时主线程只验证代际再换入，过期结果丢弃。
+  private let prepQueue = DispatchQueue(label: "WindowShade.fold-prep", qos: .userInitiated)
+  private let imageCache = FoldImageCache<MTLTexture>(capacity: 4)
+  private var prepPolicy = FoldPrepPolicy()
+  private var pendingPrimary: PrepRequest?
+  private var pendingBackground: PrepRequest?
+  private var prepRunning = false
+
+  /// 交给 worker 的一次图像准备。只在主线程创建，worker 只读，所以标注 Sendable。
+  private struct PrepRequest: @unchecked Sendable {
+    let image: CGImage
+    let colorSpace: CGColorSpace
+    let device: MTLDevice
+    let target: FoldPrepPolicy.Target
+    let generation: UInt64
+    let key: FoldImageCache<MTLTexture>.Key
+  }
+
   private var dirty = true
   private var busy = false
   private var cleared = false
@@ -111,30 +130,109 @@ import MetalKit
   }
   func setImage(_ image: CGImage, color: EffectColorSpace? = nil) throws {
     guard !cleared, let device = view.device else { return }
-    setColorSpace(color ?? (image.colorSpace?.name == CGColorSpace.displayP3 ? .displayP3 : .sRGB))
-    imageTexture = try texture(from: image, device: device)
+    let space = color ?? (image.colorSpace?.name == CGColorSpace.displayP3 ? .displayP3 : .sRGB)
+    setColorSpace(space)
     frame = nil
-    revision &+= 1
-    dirty = true
+    prepare(image: image, colorSpace: space, device: device, target: .primary)
   }
   func setBackground(_ image: CGImage) throws {
     guard !cleared, let device = view.device else { return }
     backgroundImage = image
-    background = try texture(from: image, device: device)
-    revision &+= 1
-    dirty = true
+    prepare(image: image, colorSpace: colorSpace, device: device, target: .background)
   }
   private func setColorSpace(_ value: EffectColorSpace) {
     guard colorSpace != value else { return }
     colorSpace = value
     view.colorspace = value.cg
-    if let backgroundImage, let device = view.device,
-      let converted = try? texture(from: backgroundImage, device: device)
-    {
-      background = converted
+    if let backgroundImage, let device = view.device {
+      prepare(image: backgroundImage, colorSpace: value, device: device, target: .background)
     }
   }
-  private func texture(from image: CGImage, device: MTLDevice) throws -> MTLTexture {
+
+  /// 图像准备入口：命中缓存就同步换入（只是一次字典查找），否则交给有界 worker。
+  private func prepare(
+    image: CGImage, colorSpace space: EffectColorSpace, device: MTLDevice,
+    target: FoldPrepPolicy.Target
+  ) {
+    guard !cleared else { return }
+    let key = FoldImageCache<MTLTexture>.Key(
+      source: ObjectIdentifier(image), colorSpace: space.rawValue, width: image.width,
+      height: image.height)
+    if let cached = imageCache.value(for: key) {
+      // 换入缓存结果也算一次新请求：作废还在飞的旧结果。
+      _ = prepPolicy.supersede(target)
+      apply(texture: cached, target: target)
+      return
+    }
+    let generation = prepPolicy.supersede(target)
+    let request = PrepRequest(
+      image: image, colorSpace: space.cg, device: device, target: target,
+      generation: generation, key: key)
+    switch target {
+    case .primary: pendingPrimary = request
+    case .background: pendingBackground = request
+    }
+    drainPrepIfNeeded()
+  }
+
+  private func drainPrepIfNeeded() {
+    guard !prepRunning, !cleared else { return }
+    let request: PrepRequest
+    if let next = pendingPrimary {
+      request = next
+      pendingPrimary = nil
+    } else if let next = pendingBackground {
+      request = next
+      pendingBackground = nil
+    } else {
+      return
+    }
+    prepRunning = true
+    // worker 上只做纯准备：不碰 AppKit、不碰主线程状态。
+    prepQueue.async { [weak self] in
+      let result: Result<MTLTexture, Error>
+      do {
+        result = .success(
+          try Self.makeTexture(
+            image: request.image, colorSpace: request.colorSpace, device: request.device))
+      } catch {
+        result = .failure(error)
+      }
+      DispatchQueue.main.async { [weak self] in
+        self?.finishPrep(request, result)
+      }
+    }
+  }
+
+  private func finishPrep(_ request: PrepRequest, _ result: Result<MTLTexture, Error>) {
+    prepRunning = false
+    switch result {
+    case .success(let texture):
+      imageCache.store(texture, for: request.key)
+      if !cleared, prepPolicy.isCurrent(request.target, request.generation) {
+        apply(texture: texture, target: request.target)
+      }
+    case .failure(let error):
+      if !cleared, prepPolicy.isCurrent(request.target, request.generation) {
+        onFailure?(error)
+      }
+    }
+    drainPrepIfNeeded()
+  }
+
+  /// 换入完成的资源并请求一次呈现；键里不含帧号，同一张静图不会被反复重建。
+  private func apply(texture: MTLTexture, target: FoldPrepPolicy.Target) {
+    switch target {
+    case .primary: imageTexture = texture
+    case .background: background = texture
+    }
+    revision &+= 1
+    dirty = true
+    render()
+  }
+  private nonisolated static func makeTexture(
+    image: CGImage, colorSpace space: CGColorSpace, device: MTLDevice
+  ) throws -> MTLTexture {
     let width = image.width
     let height = image.height
     let bitmap =
@@ -142,7 +240,7 @@ import MetalKit
     // 先用 vImage 换色彩空间：它会用上所有核心。实测 5K 屏上 4800×2600 的窗口背景，从显示器的色彩空间
     // 换到 Display P3，CGContext 画一遍要 650ms（单线程，收起动画开头主线程卡住的就是这里），vImage 30ms，
     // 抽样逐字节一致。换不了（少见的格式）再走原来的画法。
-    if let converted = Self.convert(image, to: colorSpace.cg, bitmap: CGBitmapInfo(rawValue: bitmap)) {
+    if let converted = Self.convert(image, to: space, bitmap: CGBitmapInfo(rawValue: bitmap)) {
       defer { converted.free() }
       let descriptor = MTLTextureDescriptor.texture2DDescriptor(
         pixelFormat: .bgra8Unorm, width: width, height: height, mipmapped: false)
@@ -158,7 +256,7 @@ import MetalKit
     guard
       let context = CGContext(
         data: nil, width: width, height: height, bitsPerComponent: 8, bytesPerRow: width * 4,
-        space: colorSpace.cg, bitmapInfo: bitmap),
+        space: space, bitmapInfo: bitmap),
       let data = context.data
     else { throw EffectError.unavailable("图像转换失败") }
     context.draw(image, in: CGRect(x: 0, y: 0, width: width, height: height))
@@ -173,7 +271,7 @@ import MetalKit
       bytesPerRow: width * 4)
     return texture
   }
-  private static func convert(_ image: CGImage, to space: CGColorSpace, bitmap: CGBitmapInfo) -> vImage_Buffer? {
+  private nonisolated static func convert(_ image: CGImage, to space: CGColorSpace, bitmap: CGBitmapInfo) -> vImage_Buffer? {
     guard let source = vImage_CGImageFormat(cgImage: image),
       let target = vImage_CGImageFormat(
         bitsPerComponent: 8, bitsPerPixel: 32, colorSpace: space, bitmapInfo: bitmap),
@@ -212,6 +310,11 @@ import MetalKit
     background = transparentBackground
     opticalSurface = nil
     pageTexture = nil
+    // 作废还在飞或排队的图像准备，并清掉有界缓存。
+    pendingPrimary = nil
+    pendingBackground = nil
+    prepPolicy.reset()
+    imageCache.removeAll()
     dirty = false
     view.isHidden = true
     onFrameReady = nil
@@ -419,9 +522,6 @@ import MetalKit
         busy = false
         guard epoch.accepts(token), !cleared else { return }
         guard completed else {
-          onFailure?(failure ?? EffectError.unavailable("GPU 呈现失败"))
-          return
-        }
         append(gpuMilliseconds, to: &gpuTimes)
         onFrameReady?()
         // The first command may complete while the panel is still transparent.
