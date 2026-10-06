@@ -32,6 +32,8 @@ final class LidAngleSource: @unchecked Sendable {
   private var report: LidReport = .whole
   private var timer: DispatchSourceTimer?
   private var failures = 0
+  /// 连续几次没找到传感器（PERF-09）。退避按它算，找到了或重新 start() 就归零。
+  private var connectFailures = 0
   /// 主路径是设备主动推送的 input report：约 10Hz，静止时也推（2026-10-01 tools/lid-report-probe 实测）。
   /// 合盖效果只看相对角度判断「开始合 / 往回开」（Core/LidGesture.swift，见 docs/lid-effect.md），
   /// 整度推送足够，所以推送一律直接交出去，不再跟 feature 读混用、也不再 60Hz 精细读。
@@ -55,7 +57,10 @@ final class LidAngleSource: @unchecked Sendable {
       return epoch.advance()
     }
     guard let token else { return }
-    queue.async { [weak self] in self?.connect(token) }
+    queue.async { [weak self] in
+      self?.connectFailures = 0
+      self?.connect(token)
+    }
   }
   func stop() {
     lock.withLock {
@@ -123,6 +128,7 @@ final class LidAngleSource: @unchecked Sendable {
     IOHIDManagerActivate(manager)
     activated = true
     failures = 0
+    connectFailures = 0
     deliverStatus(.connected(report), token)
     let timer = DispatchSource.makeTimerSource(queue: queue)
     timer.setEventHandler { [weak self] in self?.poll(token) }
@@ -184,8 +190,12 @@ final class LidAngleSource: @unchecked Sendable {
   }
   private func reconnect(_ token: UInt64) {
     close()
+    // 找不到设备就按有上限的指数退避再来（2、4、8、16、30、30…秒），不再固定 2 秒一直撞。
+    connectFailures += 1
+    let delay = LidReconnectBackoff.delay(afterFailures: connectFailures)
     deliverStatus(.disconnected, token)
-    queue.asyncAfter(deadline: .now() + 2) { [weak self] in self?.connect(token) }
+    wlog(String(format: "lid: reconnect in %.0fs (attempt %d)", delay, connectFailures))
+    queue.asyncAfter(deadline: .now() + delay) { [weak self] in self?.connect(token) }
   }
   private func deliverStatus(_ status: Status, _ token: UInt64) {
     DispatchQueue.main.async { [weak self] in
