@@ -66,12 +66,16 @@ func eventTapCallback(proxy: CGEventTapProxy, type: CGEventType,
     DispatchQueue.main.async {
         // 已被作废说明 tap 已经放行，这次迟到任务不许再折叠。
         guard decision.begin() else { return }
-        let swallow = MainActor.assumeIsolated { () -> Bool in
-            guard let delegate = appDelegate, !delegate.shouldBypassTitlebarEventTap else { return false }
-            if clickState >= 3 {
-                return delegate.handleTitleBarTripleClick(at: location, clickCount: clickState)
+        // 关键输入回调这段要短而可预测：声明「计时器不被合并 / I-O 不被节流」只在
+        // 这一小段里成立（PERF-10），不再像以前那样整条进程一辈子持有。
+        let swallow = appNapActivity.interactive("tap-decision") { () -> Bool in
+            MainActor.assumeIsolated { () -> Bool in
+                guard let delegate = appDelegate, !delegate.shouldBypassTitlebarEventTap else { return false }
+                if clickState >= 3 {
+                    return delegate.handleTitleBarTripleClick(at: location, clickCount: clickState)
+                }
+                return delegate.handleTitleBarDoubleClick(at: location)   // 吞掉，阻止系统「双击缩放」
             }
-            return delegate.handleTitleBarDoubleClick(at: location)   // 吞掉，阻止系统「双击缩放」
         }
         decision.finish(swallow: swallow)
     }
