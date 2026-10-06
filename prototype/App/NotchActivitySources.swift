@@ -20,8 +20,18 @@ final class NotchActivitySources {
     var onSnapshot: (([NotchSourceSnapshot]) -> Void)?
     private let worker = DispatchQueue(label: "com.windowshade.activities.sources", qos: .utility)
     private var timer: Timer?
+    /// 这一轮用的是哪一档、间隔多少（PERF-08）。档位没变就不重建 timer，免得把倒数重置。
+    private(set) var currentTier: NotchActivityTier = .idle
+    private(set) var tickInterval: TimeInterval = 0
+    /// 真的问过几次系统。空闲时这两项应当停住不动，测试和探针都看它。
+    private(set) var polls: UInt64 = 0
+    private var running = false
     private var epoch = 0
     private var busy = false
+    /// 对账途中又来了一次通知：这一轮结束再来一轮，不丢变更也不排队。
+    private var pendingPoll = false
+    /// 上一次交付给宿主的快照条数：画面上有卡片就不算空闲。
+    private var lastSnapshotCount = 0
     private var commandBusy = false
     private var workToken = ActivitySourceToken()
     private var musicApp: String?
@@ -39,20 +49,45 @@ final class NotchActivitySources {
     private var audioListenersInstalled = false
 
     func start() {
-        guard timer == nil else { return }
+        guard !running else { return }
+        running = true
         epoch += 1
         workToken = ActivitySourceToken()
         installAudioListeners()
         installMusicObservers()
-        timer = Timer(timeInterval: 2, repeats: true) { [weak self] _ in
-            MainActor.assumeIsolated { self?.poll() }
-        }
-        if let timer { RunLoop.main.add(timer, forMode: .common) }
+        currentTier = .idle
+        scheduleTick()
         poll()
     }
     func stop() {
-        workToken.cancel(); epoch += 1; timer?.invalidate(); timer = nil; musicApp = nil
-        musicRead = nil; musicDirty = true
+        running = false
+        workToken.cancel(); epoch += 1; timer?.invalidate(); timer = nil; tickInterval = 0
+        musicApp = nil; musicRead = nil; musicDirty = true; lastSnapshotCount = 0
+    }
+
+    /// 按当前档位排下一次 tick。档位没变就什么都不做（现有 timer 继续走）。
+    private func scheduleTick() {
+        let interval = NotchActivityPollPolicy.interval(for: currentTier)
+        guard running, timer == nil || tickInterval != interval else { return }
+        timer?.invalidate()
+        let next = Timer(timeInterval: interval, repeats: true) { [weak self] _ in
+            MainActor.assumeIsolated { self?.poll() }
+        }
+        // 容忍度让系统把这次唤醒并到别的唤醒上；空闲档的 30 秒本来就不急。
+        next.tolerance = NotchActivityPollPolicy.tolerance(for: interval)
+        RunLoop.main.add(next, forMode: .common)
+        timer = next
+        tickInterval = interval
+    }
+
+    /// 一轮问完之后按刚看到的情况换档；换档才重建 timer。
+    private func updateTier(hasPlayer: Bool, hasRecordingSource: Bool) {
+        let tier = NotchActivityPollPolicy.tier(hasPlayer: hasPlayer,
+                                                hasRecordingSource: hasRecordingSource,
+                                                hasVisibleCard: lastSnapshotCount > 0)
+        guard tier != currentTier else { return }
+        currentTier = tier
+        scheduleTick()
     }
 
     /// Music、Spotify 换曲、播放、暂停时会发分布式通知；播放器开关看 NSWorkspace。都只是把“该重新问一次”标上。
@@ -68,6 +103,11 @@ final class NotchActivitySources {
         for name in [NSWorkspace.didLaunchApplicationNotification, NSWorkspace.didTerminateApplicationNotification] {
             musicObservers.append(workspace.addObserver(forName: name, object: nil, queue: .main) { [weak self] note in
                 let id = (note.userInfo?[NSWorkspace.applicationUserInfoKey] as? NSRunningApplication)?.bundleIdentifier
+                // 语音备忘录开没开决定要不要跟录音状态；空闲档的兜底 tick 是 30 秒，等不起。
+                if id == "com.apple.VoiceMemos" {
+                    MainActor.assumeIsolated { self?.sourcesChanged() }
+                    return
+                }
                 guard id == "com.apple.Music" || id == "com.spotify.client" else { return }
                 MainActor.assumeIsolated { self?.musicChanged() }
             })
@@ -76,7 +116,13 @@ final class NotchActivitySources {
 
     private func musicChanged() {
         musicDirty = true
-        if timer != nil { poll() }
+        if running { poll() }
+    }
+
+    /// 设备或来源出现／消失：标脏之后立刻对账一次，不等兜底 tick。
+    private func sourcesChanged() {
+        audioCache.markDirty()
+        if running { poll() }
     }
 
     /// 没去问播放器时，用上次读到的结果推算现在的进度（播放中才往前走）。
@@ -112,8 +158,10 @@ final class NotchActivitySources {
         return ["com.apple.Music", "com.spotify.client"].filter { ids.contains($0) }
     }
     private func poll() {
-        guard timer != nil, !busy else { return }
+        guard running else { return }
+        if busy { pendingPoll = true; return }
         busy = true
+        polls &+= 1
         let token = epoch, work = workToken
         let now = ProcessInfo.processInfo.systemUptime
         let enabledPlayers = UserDefaults.standard.bool(forKey: Self.musicKey) ? runningPlayers() : []
@@ -148,15 +196,19 @@ final class NotchActivitySources {
             let snapshots = result
             let readMusic = players.isEmpty ? nil : music
             let readRaw = raw
+            let hadPlayer = !enabledPlayers.isEmpty
             DispatchQueue.main.async {
                 guard let self else { return }
                 self.busy = false
-                guard self.epoch == token, self.timer != nil else { self.poll(); return }
+                guard self.epoch == token, self.running else { self.poll(); return }
                 if !players.isEmpty {
                     self.musicRead = readMusic.map { ($0, readRaw?.position, readRaw?.duration ?? 0, now) }
                 }
                 self.musicApp = snapshots.first(where: { $0.kind == .music })?.detail
+                self.lastSnapshotCount = snapshots.count
                 self.onSnapshot?(snapshots)
+                self.updateTier(hasPlayer: hadPlayer, hasRecordingSource: voiceMemos)
+                if self.pendingPoll { self.pendingPoll = false; self.poll() }
             }
         }
     }
@@ -244,7 +296,7 @@ final class NotchActivitySources {
         return nil
     }
 
-    /// CoreAudio 的「设备/默认输出」变化监听：变了就把缓存标脏，下一次对账才重新枚举。
+    /// CoreAudio 的「设备/默认输出」变化监听：变了就把缓存标脏并立刻对账一次。
     /// 只装一次，不拆——这台 App 只有一个 `NotchActivitySources` 实例，进程退出时监听自然消失，
     /// 拆的时候还要原样留着 block 才能摘掉，收益不值得那份复杂度。
     private func installAudioListeners() {
@@ -259,9 +311,11 @@ final class NotchActivitySources {
                                        mElement: kAudioObjectPropertyElementMain),
         ]
         for index in addresses.indices {
+            // 监听块排在主队列上：除了置脏，还要立刻对账。空闲档的兜底 tick 是 30 秒，
+            // 不能让 AirPods 插上来等半分钟才出现。
             _ = AudioObjectAddPropertyListenerBlock(
-                AudioObjectID(kAudioObjectSystemObject), &addresses[index], worker) { [audioCache] _, _ in
-                    audioCache.markDirty()
+                AudioObjectID(kAudioObjectSystemObject), &addresses[index], .main) { [weak self] _, _ in
+                    MainActor.assumeIsolated { self?.sourcesChanged() }
                 }
         }
     }
