@@ -50,6 +50,79 @@ func wlog(_ s: String) {
     WindowShadeLogger.shared.write(s)
 }
 
+/// 计时统一走单调时钟。`CFAbsoluteTimeGetCurrent`/`Date` 会随系统时间调整跳变，
+/// 拿它测「主线程卡了多久」会在对时、时区或 NTP 修正时凭空造出一次假卡顿。
+enum MonotonicClock {
+    private static let timebase: mach_timebase_info_data_t = {
+        var info = mach_timebase_info_data_t()
+        mach_timebase_info(&info)
+        if info.denom == 0 { info.numer = 1; info.denom = 1 }
+        return info
+    }()
+    static func now() -> Double {
+        Double(mach_absolute_time()) * Double(timebase.numer) / Double(timebase.denom)
+            / 1_000_000_000
+    }
+}
+
+/// 诊断开关。深度抓栈会暂停主线程、且本身有成本，只有明确要求时才启用；
+/// 普通发布配置下既不建立 `WindowShade.stall-sampler` 线程，也不做周期性检查。
+/// 需要时用 `WINDOWSHADE_STALL_SAMPLER=1`（或启动参数 `--stall-sampler`）打开，
+/// 用 `WINDOWSHADE_STALL_SAMPLER_SECONDS=<秒>` 设总时限（默认 300，0 表示不自动停）。
+enum Diagnostics {
+    static func stallSamplerEnabled(
+        environment: [String: String], arguments: [String]
+    ) -> Bool {
+        if environment["WINDOWSHADE_STALL_SAMPLER"] == "1" { return true }
+        return arguments.contains("--stall-sampler")
+    }
+
+    static func stallSamplerWindow(environment: [String: String]) -> Double {
+        guard let raw = environment["WINDOWSHADE_STALL_SAMPLER_SECONDS"],
+            let value = Double(raw)
+        else { return 300 }
+        return value.isFinite ? max(0, value) : 300
+    }
+
+    static let stallSamplerOn = stallSamplerEnabled(
+        environment: ProcessInfo.processInfo.environment, arguments: CommandLine.arguments)
+    static let stallSamplerSeconds = stallSamplerWindow(
+        environment: ProcessInfo.processInfo.environment)
+}
+
+/// 抓栈判定策略，独立成纯结构以便单测：卡顿超过阈值、且离上次抓栈够久、
+/// 且这一轮还没抓满时，才抓下一张。返回序号（1 起）或 nil。
+struct StallSamplerPolicy {
+    let stallThreshold: Double
+    let minSampleInterval: Double
+    let maxSamples: Int
+    private(set) var samples = 0
+    private(set) var lastSampleAt = 0.0
+    private var hasSampled = false
+
+    init(stallThreshold: Double = 0.25, minSampleInterval: Double = 0.2, maxSamples: Int = 4) {
+        self.stallThreshold = stallThreshold
+        self.minSampleInterval = minSampleInterval
+        self.maxSamples = maxSamples
+    }
+
+    mutating func reset() {
+        samples = 0
+        lastSampleAt = 0
+        hasSampled = false
+    }
+
+    mutating func next(now: Double, stuck: Double) -> Int? {
+        guard stuck > stallThreshold, samples < maxSamples else { return nil }
+        // 第一张立即抓；之后每张之间至少隔 minSampleInterval（不用 0 当哨兵，免得恰好在 t=0 时绕过间隔）。
+        if hasSampled, now - lastSampleAt < minSampleInterval { return nil }
+        samples += 1
+        lastSampleAt = now
+        hasSampled = true
+        return samples
+    }
+}
+
 // 主线程正在做什么。卡顿哨兵只能在阻塞结束之后才拿到控制权，光报时长无法定位；
 // 记下当前活动之后，「stall ≈1054ms」就变成「stall ≈1054ms 期间=duo: desktop show」。
 // 只在主线程记账，因此不需要加锁。
@@ -67,12 +140,12 @@ enum MainThreadActivity {
 
     static func push(_ label: String) {
         guard Thread.isMainThread else { return }
-        stack.append((label, CFAbsoluteTimeGetCurrent()))
+        stack.append((label, MonotonicClock.now()))
     }
 
     static func pop() {
         guard Thread.isMainThread, let item = stack.popLast() else { return }
-        recent.append(Span(label: item.label, start: item.start, end: CFAbsoluteTimeGetCurrent()))
+        recent.append(Span(label: item.label, start: item.start, end: MonotonicClock.now()))
         if recent.count > maxSpans { recent.removeFirst(recent.count - maxSpans) }
     }
 
@@ -109,15 +182,42 @@ func marking<T>(_ label: String, _ body: () throws -> T) rethrows -> T {
 // 包裹疑似昂贵的同步块；超过阈值才记日志，避免刷屏。
 @discardableResult
 func logIfSlow<T>(_ label: String, threshold: TimeInterval = 0.05, _ body: () -> T) -> T {
-    let start = CFAbsoluteTimeGetCurrent()
+    let start = MonotonicClock.now()
     MainThreadActivity.push(label)
     let result = body()
     MainThreadActivity.pop()
-    let elapsed = CFAbsoluteTimeGetCurrent() - start
+    let elapsed = MonotonicClock.now() - start
     if elapsed >= threshold {
         wlog("slow: \(label) took \(Int(elapsed * 1000))ms")
     }
     return result
+}
+
+/// 主线程卡顿判定：把「上次活动的时刻 + 这一次是不是刚从等待回来」变成「报不报、报多久」。
+/// 独立成纯结构，以便用确定性的单测覆盖「空闲休眠不误报、真阻塞要报」。
+struct StallDetector {
+    let threshold: Double
+    private(set) var lastActivityAt: Double
+    /// 上一次活动是不是 `.beforeWaiting`。是的话，接下来的长间隔只可能是休眠。
+    private var previousWasBeforeWaiting: Bool
+
+    init(threshold: Double = 0.5, now: Double) {
+        self.threshold = threshold
+        self.lastActivityAt = now
+        // 启动时按“刚从等待回来”处理，免得把启动序列那段算成卡顿。
+        self.previousWasBeforeWaiting = true
+    }
+
+    /// 每次 RunLoop 活动调用；返回这次要上报的卡顿时长（秒），不报时为 nil。
+    /// 真阻塞（卡在同步调用里）期间 RunLoop 不可能入睡，恢复后首个回调必然不是 `.afterWaiting`；
+    /// 反之，以 `.afterWaiting` 结束的长间隔一律是休眠唤醒，即使没先看到 `.beforeWaiting`。
+    mutating func observe(now: Double, isBeforeWaiting: Bool, isAfterWaiting: Bool) -> Double? {
+        let gap = now - lastActivityAt
+        let reported = (!previousWasBeforeWaiting && !isAfterWaiting && gap > threshold) ? gap : nil
+        lastActivityAt = now
+        previousWasBeforeWaiting = isBeforeWaiting
+        return reported
+    }
 }
 
 // 主线程卡顿哨兵：主 RunLoop 的 observer 在每次活动回调时测量与上次活动的间隔，
@@ -130,30 +230,35 @@ final class MainThreadStallSentinel {
     nonisolated(unsafe) static let shared = MainThreadStallSentinel()
 
     private var observer: CFRunLoopObserver?
-    private var lastActivityAt: CFAbsoluteTime = CFAbsoluteTimeGetCurrent()
-    private var wasWaiting = true
+    private var detector = StallDetector(now: MonotonicClock.now())
+    /// 诊断开关在启动时定下，之后不变；关掉时每次 RunLoop 活动连一次取锁都省掉。
+    private var samplesStacks = false
 
     func start() {
         guard observer == nil else { return }
+        samplesStacks = Diagnostics.stallSamplerOn
         let activities: CFRunLoopActivity = [.beforeTimers, .beforeSources, .beforeWaiting, .afterWaiting]
         let obs = CFRunLoopObserverCreateWithHandler(kCFAllocatorDefault, activities.rawValue, true, 0) { [weak self] _, activity in
             guard let self else { return }
-            let now = CFAbsoluteTimeGetCurrent()
-            // 真阻塞（卡在回调/同步调用里）期间 RunLoop 不可能入睡，恢复后的首个回调
-            // 必然不是 afterWaiting；反之，以 afterWaiting 结束的长间隔一律是休眠唤醒
-            // （即使因回调时序没先看到 beforeWaiting），不是卡顿，不报告。
-            if !self.wasWaiting, activity != .afterWaiting, now - self.lastActivityAt > 0.5 {
-                let blame = MainThreadActivity.attribution(since: self.lastActivityAt, until: now)
-                wlog("main-thread stall ≈\(Int((now - self.lastActivityAt) * 1000))ms 期间=\(blame)")
+            let now = MonotonicClock.now()
+            let isBeforeWaiting = activity == .beforeWaiting
+            let isAfterWaiting = activity == .afterWaiting
+            if let gap = self.detector.observe(
+                now: now, isBeforeWaiting: isBeforeWaiting, isAfterWaiting: isAfterWaiting)
+            {
+                let blame = MainThreadActivity.attribution(since: now - gap, until: now)
+                wlog("main-thread stall ≈\(Int(gap * 1000))ms 期间=\(blame)")
             }
-            self.lastActivityAt = now
-            self.wasWaiting = activity == .beforeWaiting
-            MainThreadSampler.shared.beat(waiting: self.wasWaiting)
+            self.wasWaiting = isBeforeWaiting
+            if self.samplesStacks { MainThreadSampler.shared.beat(waiting: isBeforeWaiting) }
         }
         observer = obs
         CFRunLoopAddObserver(CFRunLoopGetMain(), obs, CFRunLoopMode.commonModes)
         MainThreadSampler.shared.start()
     }
+
+    /// 最近一次观察到的等待状态，仅诊断读取用。
+    private(set) var wasWaiting = true
 }
 
 // 卡顿时抓主线程的调用栈。哨兵只能在卡顿结束后报时长，“期间=未标记”说不出是谁；
@@ -161,41 +266,113 @@ final class MainThreadStallSentinel {
 // 沿帧指针链抄下返回地址，马上放开，再在看门狗线程上查符号写进日志。
 // 一次卡顿最多抓 4 张（每张至少隔 200ms）：一秒多的长卡顿能自己分成几段，
 // 不会像以前那样只留下第一张（2026-10-01：CoreAudio 那张抓到了，同一次卡顿的后半段完全看不见）。
-// 平时每 50ms 只读一次时间戳。自家代码记“镜像+偏移”，用 atos 对着构建出来的程序就能还原到行。
+// 这是一条**只在诊断开关打开时才存在**的线程；平时每 200ms 才读一次时间戳（阈值 250ms，见 StallSamplerPolicy）。
+// 自家代码记“镜像+偏移”，用 atos 对着构建出来的程序就能还原到行。
 final class MainThreadSampler: @unchecked Sendable {
     static let shared = MainThreadSampler()
 
     private var lock = os_unfair_lock()
-    private var beatAt = CFAbsoluteTimeGetCurrent()
+    private var beatAt = MonotonicClock.now()
     private var busy = false
-    private var samples = 0
-    private var lastSampleAt: CFAbsoluteTime = 0
+    private var policy = StallSamplerPolicy()
     private var mainThread: thread_act_t = 0
     private var stackLow: UInt = 0
     private var stackHigh: UInt = 0
-    private var started = false
+    private var running = false
+    private var paused = false
+    /// 抓栈总时限（单调时钟秒；0 表示不自动停）。
+    private var deadline = 0.0
+    /// 抓栈期间写入的固定缓冲：在建立线程之前一次性备好，暂停目标线程时不再分配。
+    private var scratch: [UInt] = []
+    private var sleepObservers: [NSObjectProtocol] = []
 
-    /// 在主线程上调用一次。
+    /// 抓栈缓冲的容量，等于帧指针链的最大步数加程序计数器与链接寄存器。
+    private static let scratchCount = 64
+
+    /// 在主线程上调用一次。只有诊断开关打开时才真的建立看门狗线程。
     func start() {
-        guard Thread.isMainThread, !started else { return }
-        started = true
+        guard Thread.isMainThread, Diagnostics.stallSamplerOn else { return }
+        os_unfair_lock_lock(&lock)
+        guard !running else {
+            os_unfair_lock_unlock(&lock)
+            return
+        }
+        running = true
+        paused = false
+        busy = false
+        policy.reset()
         mainThread = mach_thread_self()
         let top = UInt(bitPattern: pthread_get_stackaddr_np(pthread_self()))
         stackHigh = top
         stackLow = top - UInt(pthread_get_stacksize_np(pthread_self()))
+        let window = Diagnostics.stallSamplerSeconds
+        deadline = window > 0 ? MonotonicClock.now() + window : 0
+        beatAt = MonotonicClock.now()
+        os_unfair_lock_unlock(&lock)
+        // 分配必须在任何 thread_suspend 之前完成：暂停目标线程后再分配，可能正好等它持有的分配器锁。
+        scratch = Array(repeating: 0, count: Self.scratchCount)
+        installSleepObservers()
         let watchdog = Thread { [weak self] in self?.watch() }
         watchdog.name = "WindowShade.stall-sampler"
         watchdog.qualityOfService = .utility
         watchdog.start()
+        wlog("diagnostics: stall sampler on window=\(Int(window))s")
     }
 
-    /// 主线程每次 RunLoop 活动时调用。
+    var isRunning: Bool {
+        os_unfair_lock_lock(&lock)
+        defer { os_unfair_lock_unlock(&lock) }
+        return running
+    }
+
+    /// 停止抓栈并摘掉睡眠观察者；可重复调用。诊断开关关闭时是空操作。
+    func stop() {
+        let observers: [NSObjectProtocol]
+        os_unfair_lock_lock(&lock)
+        guard running else {
+            os_unfair_lock_unlock(&lock)
+            return
+        }
+        running = false
+        observers = sleepObservers
+        sleepObservers = []
+        os_unfair_lock_unlock(&lock)
+        observers.forEach {
+            NSWorkspace.shared.notificationCenter.removeObserver($0)
+        }
+    }
+
+    /// 主线程每次 RunLoop 活动时调用（只有开关打开时才会被调用）。
     func beat(waiting: Bool) {
         os_unfair_lock_lock(&lock)
-        beatAt = CFAbsoluteTimeGetCurrent()
+        beatAt = MonotonicClock.now()
         busy = !waiting
-        samples = 0
-        lastSampleAt = 0
+        policy.reset()
+        os_unfair_lock_unlock(&lock)
+    }
+
+    private func installSleepObservers() {
+        let center = NSWorkspace.shared.notificationCenter
+        let sleep = center.addObserver(
+            forName: NSWorkspace.willSleepNotification, object: nil, queue: .main
+        ) { [weak self] _ in self?.setPaused(true) }
+        let wake = center.addObserver(
+            forName: NSWorkspace.didWakeNotification, object: nil, queue: .main
+        ) { [weak self] _ in self?.setPaused(false) }
+        os_unfair_lock_lock(&lock)
+        sleepObservers = [sleep, wake]
+        os_unfair_lock_unlock(&lock)
+    }
+
+    /// 睡眠期间不抓栈；醒来时把基准时间重新对到现在，避免把睡过去的那段算成卡顿。
+    private func setPaused(_ value: Bool) {
+        os_unfair_lock_lock(&lock)
+        paused = value
+        if !value {
+            beatAt = MonotonicClock.now()
+            busy = false
+            policy.reset()
+        }
         os_unfair_lock_unlock(&lock)
     }
 
@@ -205,15 +382,28 @@ final class MainThreadSampler: @unchecked Sendable {
             // 但唤醒从 20 次/秒降到 5 次/秒——锁屏空闲那 0.1% 里相当一部分就是这类唤醒
             // （2026-10-01 量过：把铰链/AirPods 这些真活儿都拿掉之后，剩下的基本是定时器）。
             usleep(200_000)
-            let now = CFAbsoluteTimeGetCurrent()
             os_unfair_lock_lock(&lock)
+            guard running else {
+                os_unfair_lock_unlock(&lock)
+                return
+            }
+            guard !paused else {
+                os_unfair_lock_unlock(&lock)
+                continue
+            }
+            let now = MonotonicClock.now()
+            if deadline > 0, now >= deadline {
+                running = false
+                os_unfair_lock_unlock(&lock)
+                wlog("diagnostics: stall sampler reached its time limit")
+                return
+            }
             let stuck = busy ? now - beatAt : 0
-            let takeSample = busy && stuck > 0.25 && samples < 4 && now - lastSampleAt >= 0.2
-            if takeSample { samples += 1; lastSampleAt = now }
-            let index = samples
+            let index = policy.next(now: now, stuck: stuck)
+            let mainThread = self.mainThread
             os_unfair_lock_unlock(&lock)
-            guard takeSample else { continue }
-            let frames = captureMainStack()
+            guard let index else { continue }
+            let frames = captureMainStack(mainThread: mainThread)
             guard !frames.isEmpty else { continue }
             let described = frames.prefix(32).map(Self.describe)
             // 主线程其实在等输入：菜单、拖动这类跟踪循环跑在私有的 RunLoop 模式里，看不到它入睡，但它是闲着的，不算卡顿。
@@ -229,11 +419,15 @@ final class MainThreadSampler: @unchecked Sendable {
         }
     }
 
-    /// 暂停主线程，抄下返回地址，立刻放开。暂停期间不做任何可能拿锁的事（查符号放在放开之后）。
-    private func captureMainStack() -> [UInt] {
-        guard mainThread != 0, thread_suspend(mainThread) == KERN_SUCCESS else { return [] }
-        var frames: [UInt] = []
-        frames.reserveCapacity(64)
+    /// 暂停主线程，抄下返回地址，立刻放开。暂停区间只做「读寄存器/读栈 + 写预先备好的缓冲」：
+    /// 不分配、不格式化、不解析符号、不写日志；`defer` 保证一定恢复，查符号与日志都排在放开之后。
+    /// 仅把缓冲预先备好不足以证明整个采样器安全，这一点单独审查，不以「跑十分钟没崩」代替。
+    private func captureMainStack(mainThread: thread_act_t) -> [UInt] {
+        guard mainThread != 0, scratch.count >= Self.scratchCount,
+            thread_suspend(mainThread) == KERN_SUCCESS
+        else { return [] }
+        defer { thread_resume(mainThread) }
+        var written = 0
         var state = arm_thread_state64_t()
         var count = mach_msg_type_number_t(MemoryLayout<arm_thread_state64_t>.size / MemoryLayout<natural_t>.size)
         let result = withUnsafeMutablePointer(to: &state) {
@@ -242,22 +436,25 @@ final class MainThreadSampler: @unchecked Sendable {
             }
         }
         if result == KERN_SUCCESS {
-            frames.append(Self.strip(UInt(state.__pc)))
-            frames.append(Self.strip(UInt(state.__lr)))
+            scratch[written] = Self.strip(UInt(state.__pc))
+            written += 1
+            scratch[written] = Self.strip(UInt(state.__lr))
+            written += 1
             var fp = UInt(state.__fp)
-            for _ in 0..<60 {
+            for _ in 0..<60 where written < Self.scratchCount {
                 guard fp >= stackLow, fp + 16 <= stackHigh, fp % 8 == 0,
                       let slot = UnsafePointer<UInt>(bitPattern: fp) else { break }
                 let next = slot[0]
                 let ret = Self.strip(slot[1])
                 if ret == 0 { break }
-                frames.append(ret)
+                scratch[written] = ret
+                written += 1
                 if next <= fp { break }
                 fp = next
             }
         }
-        thread_resume(mainThread)
-        return frames
+        // 复制发生在 thread_resume 之后（defer 已经生效），此处可以分配。
+        return Array(scratch[0..<written])
     }
 
     /// 去掉指针认证位（系统库的返回地址带签名）。
