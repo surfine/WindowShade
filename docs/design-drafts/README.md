@@ -24,4 +24,4 @@
 | [离开就锁](离开就锁.html) | 带着手机走开就锁，走回来就开 | 概念片第 7 章、opus 的 `away` |
 | [番茄钟](番茄钟.html) | 专注时聊天收起来，休息时桌面收起来 | 概念片第 7 章、opus 的 `away` |
 
-待出的稿：**用量**。长在已有的编程会话实时活动里，范围与规则见 [usage.md](../usage.md)。动手做界面前先出这一张，并过 [design-grammar.md](../design-grammar.md) 的准入。
+待出的稿：**用量**，长在已有的编程会话实时活动里，范围与规则见 [usage.md](../usage.md)；**进度**，拷贝、移动、下载、导出、备份这类有起点有终点的事，长在已有的实时活动里，三种量（百分比 / 第 k / n / 不确定弧）在同一排里怎么变是这一张要证明的，来源分层与准入见 [progress-in-notch.md](../progress-in-notch.md)。两张都先出稿，并过 [design-grammar.md](../design-grammar.md) 的准入。
