@@ -40,7 +40,12 @@ extension AppDelegate {
             return false
         case .none:
             return false
-        case .offscreen, .privateOffscreen:
+        case .offscreen:
+            return Date() >= state.ignoreAppRevealUntil
+        case .privateOffscreen:
+            // 停车是窗口服务器做的：AX 坐标与 kCGWindowIsOnscreen 都不跟着更新，只有外框
+            // 才说明它停好没有。外框仍与某块屏相交，才算它看起来回来了（见 round2 F7）。
+            guard cgWindowIsVisible(id: state.sourceWindowID, fallbackSize: size) == false else { return false }
             return Date() >= state.ignoreAppRevealUntil
         case .privateAlpha:
             guard Date() >= state.ignoreAppRevealUntil else { return false }
