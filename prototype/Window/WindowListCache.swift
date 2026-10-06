@@ -64,6 +64,18 @@ final class WindowListCache: @unchecked Sendable {
         snapshot(.onScreen).windows
     }
 
+    /// 只在快照仍然新鲜时返回在屏窗口；过期或从未取过时返回 nil，**不做任何 IPC**。
+    /// 供全局输入回调这类不能阻塞的热路径做准入判断：拿不到干净数据就交给完整路径，
+    /// 绝不在这里枚举 WindowServer。
+    func freshOnScreenWindows() -> [[String: Any]]? {
+        lock.lock()
+        defer { lock.unlock() }
+        guard let entry = onScreenEntry,
+            CFAbsoluteTimeGetCurrent() - entry.at < ttl
+        else { return nil }
+        return entry.snapshot.windows
+    }
+
     func onScreenWindows(ofPID pid: pid_t) -> [[String: Any]] {
         snapshot(.onScreen).byPID[pid] ?? []
     }
