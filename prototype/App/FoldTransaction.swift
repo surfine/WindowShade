@@ -437,6 +437,22 @@ extension AppDelegate {
         return !windowIsVisible(pos: pos, size: size)
     }
 
+    /// privateOffscreen 的收起验证。停车是私有 SkyLight 做的，确认停车用的也是窗口服务器的
+    /// 外框（见 windowIsParkedOffscreen）；验证必须用同一个传感器。那一次移动既不更新 AX
+    /// 属性、也不落 kCGWindowIsOnscreen：AX 还报着屏上坐标时会把刚停好的窗口判成「可见」，
+    /// 整支收起跟着回滚（真机踩过，见 round2 F7）。窗口服务器的外框读不到才退回 AX。
+    func privateOffscreenObservation(id: CGWindowID, win: AXUIElement,
+                                     fallbackSize: CGSize) -> FoldVerifier.Observation {
+        if let cgVisible = cgWindowIsVisible(id: id, fallbackSize: fallbackSize) {
+            return cgVisible ? .visible : .hidden
+        }
+        guard let axPos = axPosition(win), let observed = axSize(win),
+              axPos.x.isFinite, axPos.y.isFinite,
+              observed.width.isFinite, observed.height.isFinite,
+              observed.width > 0, observed.height > 0 else { return .unknown }
+        return windowIsVisible(pos: axPos, size: observed) ? .visible : .hidden
+    }
+
     func privateSLSOffscreenHide(_ win: AXUIElement, id: CGWindowID,
                                          originalPosition pos: CGPoint,
                                          size: CGSize,
