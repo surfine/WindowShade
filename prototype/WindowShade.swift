@@ -230,7 +230,6 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSMenuDelegate {
     /// 上一次看到的显示器与各屏可用区域，用来分辨“真的换了屏”和“只是菜单栏、Dock 变了”。
     var lastDisplayLayout = DisplayLayout(screens: [])
     var lastVisibleFrames: [CGRect] = []
-    private var appNapActivity: NSObjectProtocol?
     weak var onboardingPermissionStack: NSStackView?
     weak var onboardingProgressLabel: NSTextField?
     weak var onboardingDoneButton: NSButton?
@@ -333,12 +332,12 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSMenuDelegate {
         sessionFormatter.dateFormat = "yyyy-MM-dd HH:mm:ss"
         sessionFormatter.locale = Locale(identifier: "en_US_POSIX")
         wlog("=== session start pid=\(getpid()) at \(sessionFormatter.string(from: Date())) ===")
-        // 永久退出 App Nap：本进程持有全局 CGEventTap（回调在主 RunLoop 执行），
+        // 防 App Nap：本进程持有全局 CGEventTap（回调在主 RunLoop 执行），
         // 被 nap 后每次双击都会拖慢全系统鼠标事件直到 tap 被系统超时禁用；
         // 计时器（reconcile/watchdog/菜单刷新）也会被合并推迟数十秒。
-        appNapActivity = ProcessInfo.processInfo.beginActivity(
-            options: [.userInitiatedAllowingIdleSystemSleep, .latencyCritical],
-            reason: "WindowShade owns a global event tap; App Nap stalls system-wide mouse input")
+        // 只留这一条最小声明，不带 `.latencyCritical`——「计时器不被合并」是交互期间才要的
+        // 待遇（见 AppNapActivity：关键输入路径按作用域拿租约），不是进程一辈子的声明。
+        appNapActivity.holdBase()
         MainThreadStallSentinel.shared.start()
         // 启动序列逐步计时：任何一步超过 100ms 都会记录，用于定位启动期主线程阻塞。
         logIfSlow("launch migrateSounds", threshold: 0.1) { migrateDistractingDefaultSounds() }
@@ -826,6 +825,8 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSMenuDelegate {
 
 
     func applicationWillTerminate(_ note: Notification) {
+        // 声明收尾：手上还剩什么一起还掉，并把这一轮的「取得/释放/超上限」计数留在日志里。
+        appNapActivity.releaseAll()
         inputController.shutdown()
         MainActor.assumeIsolated { ws2Runtime.stop() }
         MainActor.assumeIsolated { UpdaterController.shared.applicationWillTerminate() }
