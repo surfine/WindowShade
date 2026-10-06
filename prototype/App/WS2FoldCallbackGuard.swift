@@ -49,11 +49,15 @@ extension AppDelegate {
         var actualPID: pid_t = 0
         guard AXUIElementGetPid(win, &actualPID) == .success, actualPID == pid else { return .unknown }
         switch hide {
-        case .offscreen, .privateOffscreen:
+        case .offscreen:
             guard let pos = axPosition(win), let size = axSize(win),
                   pos.x.isFinite, pos.y.isFinite, size.width.isFinite, size.height.isFinite,
                   size.width > 0, size.height > 0 else { return .unknown }
             return windowIsVisible(pos: pos, size: size) ? .visible : .hidden
+        case .privateOffscreen:
+            // 停车走私有 SkyLight，AX 属性不跟着更新：判据要和停车确认同一个传感器，
+            // 否则会把自己的手笔当成用户唤回（见 FoldTransaction.privateOffscreenObservation）。
+            return privateOffscreenObservation(id: id, win: win, fallbackSize: axSize(win) ?? .zero)
         case .hidden: return app.isHidden ? .hidden : .visible
         case .minimized:
             guard let value = axObservedBoolAttribute(win, kAXMinimizedAttribute as String) else { return .unknown }
