@@ -224,16 +224,30 @@ import MetalKit
     values.append(value)
     if values.count > 1800 { values.removeFirst(values.count - 1800) }
   }
-  func metrics() -> String {
+  /// 结构化数值字段（PERF-11）：给自动比较与资格门槛用，不再只有一行字符串。
+  func metricFields() -> [String: Double] {
     func p95(_ values: [Double]) -> Double {
       let a = values.sorted()
       return a.isEmpty ? 0 : a[min(a.count - 1, Int(Double(a.count) * 0.95))]
     }
     let fps = intervals.isEmpty ? 0 : Double(intervals.count) / intervals.reduce(0, +)
+    return [
+      "presentedCount": Double(presentedCount),
+      "fps": fps,
+      "captureToPresentP95ms": p95(latencies),
+      "gpuP95ms": p95(gpuTimes),
+      "busySkipped": Double(skippedBusy),
+      "latencySamples": Double(latencies.count),
+    ]
+  }
+  func metrics() -> String {
+    let fields = metricFields()
     return String(
       format:
         "presented=%d fps=%.1f captureToPresentP95=%.1fms gpuP95=%.1fms busySkipped=%d latencySamples=%d",
-      presentedCount, fps, p95(latencies), p95(gpuTimes), skippedBusy, latencies.count)
+      Int(fields["presentedCount"] ?? 0), fields["fps"] ?? 0,
+      fields["captureToPresentP95ms"] ?? 0, fields["gpuP95ms"] ?? 0,
+      Int(fields["busySkipped"] ?? 0), Int(fields["latencySamples"] ?? 0))
   }
   func mtkView(_ view: MTKView, drawableSizeWillChange size: CGSize) { dirty = true }
   func draw(in view: MTKView) {
