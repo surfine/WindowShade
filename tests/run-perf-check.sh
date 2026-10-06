@@ -41,5 +41,14 @@ else
 fi
 
 echo
+echo "== 活动声明（PERF-10；成对才正常：nap: base hold / nap: interactive / nap: released all）"
+echo "   日志里最后 20 行 nap: ——interactive begins 与 ends 应当相等，overCap 应当是 0"
+tail -200 "$LOG" | grep -aE "^[0-9:.]+ nap: " | tail -20 || echo "（还没有这些行：应用没跑过或日志被清过）"
+
+echo
+echo "== system sleep assertion（不该有 WindowShade 名下的残留；空即正常）"
+pmset -g assertions 2>/dev/null | grep -iE "windowshade" || echo "（没有 WindowShade 的 assertion）"
+
+echo
 echo "== 日志里该看的（最近 200 行）"
-tail -200 "$LOG" | grep -aE "lid: poll|perf: fold install|main-thread stall sample|main-thread tracking" | tail -20 || echo "（还没有这些行：先真的折叠/合盖一次）"
+tail -200 "$LOG" | grep -aE "lid: poll|perf: fold install|main-thread stall sample|main-thread tracking|nap: |notch: menu bar room" | tail -20 || echo "（还没有这些行：先真的折叠/合盖一次）"
