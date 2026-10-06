@@ -35,6 +35,8 @@ final class EffectSoakProbe {
   private var reports: [[String: Any]] = []
   private var finished = false
   private var ticks = 0
+  private let script = EffectSoakScript.smoke
+  private var soak = EffectSoakTracker()
   init(duration: Double, output: URL) {
     self.duration = duration
     self.output = output
@@ -111,9 +113,9 @@ final class EffectSoakProbe {
     ticks += 1
     motion.time = elapsed
     motion.needsDisplay = true
-    // Alternate a held half-open position and repeated reversals, without source freezes.
-    session.renderer.parameters.progress = Float(
-      elapsed.truncatingRemainder(dividingBy: 20) < 10 ? 0.5 : 0.5 + 0.45 * sin(elapsed * 2))
+    // 显式阶段脚本：每个阶段都有名字、时长与进度，8 秒就能覆盖一整轮。
+    soak.advance(to: elapsed)
+    session.renderer.parameters.progress = script.progress(at: elapsed)
     if now - lastReport >= 60 || reports.isEmpty {
       report(now)
       lastReport = now
@@ -133,13 +135,15 @@ final class EffectSoakProbe {
   }
   private func report(_ now: Double) {
     let times = sensorTimes.sorted()
-    let row: [String: Any] = [
+    var row: [String: Any] = [
       "elapsed": now - started, "residentBytes": Self.residentBytes(), "sensorReadings": readings,
       "sensorReadP95ms": times.isEmpty
         ? 0 : times[min(times.count - 1, Int(Double(times.count) * 0.95))],
       "displayTicks": ticks, "capturedFrames": session?.source.frame()?.id ?? 0,
-      "render": session?.renderer.metrics() ?? "stopped",
+      "phase": script.phase(at: now - started)?.rawValue ?? "none",
+      "renderFields": session?.renderer.metricFields() ?? [:],
     ]
+    for (key, value) in soak.fields() { row["soak.\(key)"] = value }
     reports.append(row)
     print(row)
     fflush(stdout)
@@ -165,6 +169,10 @@ final class EffectSoakProbe {
         "releasedRenderer": releasedRenderer.value == nil,
         "residentAfterStop": Self.residentBytes(),
         "system": ProcessInfo.processInfo.operatingSystemVersionString,
+        "soak": soak.fields(),
+        "soakFullCoverage": soak.hasFullCoverage,
+        "soakCycleSeconds": script.cycleDuration,
+        "soakMinPhaseSeconds": script.minPhaseDuration,
       ]
       do {
         try FileManager.default.createDirectory(
@@ -179,7 +187,7 @@ final class EffectSoakProbe {
       fflush(stdout)
       exit(
         error == nil && releasedSession.value == nil && releasedSource.value == nil
-          && releasedRenderer.value == nil ? 0 : 1)
+          && releasedRenderer.value == nil && soak.hasFullCoverage ? 0 : 1)
     }
   }
   private final class WeakReference<T: AnyObject> {
