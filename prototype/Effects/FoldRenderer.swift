@@ -60,6 +60,12 @@ import MetalKit
   private var busy = false
   private var cleared = false
   private var epoch = EffectEpoch()
+  /// 静图换入序号（PERF-06）：换一张位图就是一次新的源版本，page 金字塔必须跟着重建。
+  private var stillVersion: UInt64 = 0
+  /// page 金字塔的重建依据与「已被 GPU 证实」的上一份键。只由源内容与采样范围决定，
+  /// 呈现参数变了不会让它重建。
+  private var pageState = FoldPagePyramidState()
+  private var pendingPageKey: FoldPageKey?
   private var latencies: [Double] = []
   private var gpuTimes: [Double] = []
   private var intervals: [Double] = []
@@ -223,13 +229,26 @@ import MetalKit
   /// 换入完成的资源并请求一次呈现；键里不含帧号，同一张静图不会被反复重建。
   private func apply(texture: MTLTexture, target: FoldPrepPolicy.Target) {
     switch target {
-    case .primary: imageTexture = texture
+    case .primary:
+      imageTexture = texture
+      // 换了一张静图：新的源版本，page 金字塔那一份立刻作废。
+      stillVersion &+= 1
     case .background: background = texture
     }
     revision &+= 1
     dirty = true
     render()
   }
+
+  /// 当前源画面的版本号：实时帧按「代际 + 帧号」，静图按换入序号。
+  private func currentSourceVersion() -> UInt64 {
+    if let frame {
+      return FoldPageKey.liveSourceVersion(
+        frameGeneration: frame.generation, frameID: frame.id)
+    }
+    return FoldPageKey.stillSourceVersion(swapCount: stillVersion)
+  }
+
   private nonisolated static func makeTexture(
     image: CGImage, colorSpace space: CGColorSpace, device: MTLDevice
   ) throws -> MTLTexture {
@@ -315,6 +334,9 @@ import MetalKit
     pendingBackground = nil
     prepPolicy.reset()
     imageCache.removeAll()
+    // page 金字塔：纹理没了，键也一起作废。
+    pageState.invalidate()
+    pendingPageKey = nil
     dirty = false
     view.isHidden = true
     onFrameReady = nil
@@ -404,12 +426,16 @@ import MetalKit
       return
     }
     let hasMotion = hypot(parameters.motionX, parameters.motionY) > 0.0001
+    pendingPageKey = nil
     if parameters.progress > 0 || hasMotion {
       // The page pyramid carries the defocus: one base level plus generated mips, so the
       // wide part of the blur is a filtered fetch instead of a disk of taps.
+      // PERF-06：page 与 mipmap 只在源内容或采样范围真的变了时才重建。progress／标题比例／
+      // 透明度只影响呈现，不进键——静态源播一整段动画也只建一次。清晰标题与终点仍从原始
+      // source 采样，行为不变。
       let pageWidth = max(1, Int((Double(source.width) * Double(rect.width)).rounded()))
       let pageHeight = max(1, Int((Double(source.height) * Double(rect.height)).rounded()))
-      if pageTexture?.width != pageWidth || pageTexture?.height != pageHeight {
+      if pageTexture == nil || pageTexture?.width != pageWidth || pageTexture?.height != pageHeight {
         let descriptor = MTLTextureDescriptor.texture2DDescriptor(
           pixelFormat: .bgra8Unorm, width: pageWidth, height: pageHeight, mipmapped: true)
         descriptor.storageMode = .private
@@ -420,23 +446,33 @@ import MetalKit
         onFailure?(EffectError.unavailable("光学纹理分配失败"))
         return
       }
-      let pagePass = MTLRenderPassDescriptor()
-      pagePass.colorAttachments[0].texture = pageTexture
-      pagePass.colorAttachments[0].level = 0
-      pagePass.colorAttachments[0].loadAction = .dontCare
-      pagePass.colorAttachments[0].storeAction = .store
-      guard let pageEncoder = command.makeRenderCommandEncoder(descriptor: pagePass) else {
-        return
-      }
-      pageEncoder.setRenderPipelineState(pagePipeline)
-      pageEncoder.setFragmentTexture(source, index: 0)
-      pageEncoder.setFragmentBytes(
-        &uniforms, length: MemoryLayout<SIMD4<Float>>.stride * uniforms.count, index: 0)
-      pageEncoder.drawPrimitives(type: .triangle, vertexStart: 0, vertexCount: 3)
-      pageEncoder.endEncoding()
-      if let blit = command.makeBlitCommandEncoder() {
-        blit.generateMipmaps(for: pageTexture)
-        blit.endEncoding()
+      let pageKey = FoldPageKey(
+        sourceVersion: currentSourceVersion(), sourceWidth: source.width,
+        sourceHeight: source.height, pixelFormatRawValue: source.pixelFormat.rawValue,
+        colorSpace: colorSpace.rawValue, content: rect, pageWidth: pageWidth,
+        pageHeight: pageHeight)
+      // 源画面没变就跳过 page 通道与 generateMipmaps，直接把上一份金字塔交给光学通道。
+      if pageState.needsRebuild(for: pageKey) {
+        let pagePass = MTLRenderPassDescriptor()
+        pagePass.colorAttachments[0].texture = pageTexture
+        pagePass.colorAttachments[0].level = 0
+        pagePass.colorAttachments[0].loadAction = .dontCare
+        pagePass.colorAttachments[0].storeAction = .store
+        guard let pageEncoder = command.makeRenderCommandEncoder(descriptor: pagePass) else {
+          return
+        }
+        pageEncoder.setRenderPipelineState(pagePipeline)
+        pageEncoder.setFragmentTexture(source, index: 0)
+        pageEncoder.setFragmentBytes(
+          &uniforms, length: MemoryLayout<SIMD4<Float>>.stride * uniforms.count, index: 0)
+        pageEncoder.drawPrimitives(type: .triangle, vertexStart: 0, vertexCount: 3)
+        pageEncoder.endEncoding()
+        if let blit = command.makeBlitCommandEncoder() {
+          blit.generateMipmaps(for: pageTexture)
+          blit.endEncoding()
+        }
+        // GPU 真的完成这一帧后才作数（见完成回调）。
+        pendingPageKey = pageKey
       }
       let opticalPass = MTLRenderPassDescriptor()
       opticalPass.colorAttachments[0].texture = opticalSurface
@@ -522,6 +558,17 @@ import MetalKit
         busy = false
         guard epoch.accepts(token), !cleared else { return }
         guard completed else {
+          // 这一帧没成：page 金字塔可能没画完，作废它，下一帧重建，绝不拿它去离焦。
+          pendingPageKey = nil
+          pageState.invalidate()
+          onFailure?(failure ?? EffectError.unavailable("GPU 呈现失败"))
+          return
+        }
+        // page 渲染和消费它的光学通道在同一个命令缓冲里；到这里才证实金字塔可用。
+        if let promoted = pendingPageKey {
+          pageState.confirm(promoted)
+          pendingPageKey = nil
+        }
         append(gpuMilliseconds, to: &gpuTimes)
         onFrameReady?()
         // The first command may complete while the panel is still transparent.
