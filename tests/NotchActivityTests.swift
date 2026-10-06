@@ -45,6 +45,7 @@ import Foundation
         testMonotonicWatermark()
         testCapacityBounded()
         testLargeStepsNoOverflow()
+        testPollingTiers()
 
         var future = NotchActivityStore()
         expect(!future.upsert(make("future", startedAt: 11), now: 10), "未来时间不能污染排序")
@@ -324,5 +325,23 @@ import Foundation
         // 极端 now 不会崩，且行为可预期（inf 被拒）。
         expect(!store.upsert(make("z", .music, startedAt: 0), now: .infinity), "inf now 拒绝")
         expect(!store.end(id: "a", generation: 1, now: -5), "负 now 结束拒绝")
+    }
+
+    // 14) PERF-08：轮询档位只由「有没有东西要看」决定，和机器状态无关。
+    static func testPollingTiers() {
+        let p = NotchActivityPollPolicy.self
+        expect(p.tier(hasPlayer: true, hasRecordingSource: false, hasVisibleCard: false) == .progress,
+               "有播放器在放：进度档")
+        expect(p.tier(hasPlayer: false, hasRecordingSource: true, hasVisibleCard: false) == .source,
+               "语音备忘录开着：来源档")
+        expect(p.tier(hasPlayer: false, hasRecordingSource: false, hasVisibleCard: true) == .source,
+               "画面上有卡片：来源档")
+        expect(p.tier(hasPlayer: false, hasRecordingSource: false, hasVisibleCard: false) == .idle,
+               "什么都没有：空闲档")
+        expect(p.interval(for: .progress) == 2, "进度档 2 秒")
+        expect(p.interval(for: .source) > p.interval(for: .progress), "来源档比进度档慢")
+        expect(p.interval(for: .idle) > p.interval(for: .source), "空闲档最慢")
+        expect(p.tolerance(for: p.interval(for: .idle)) <= 1, "容忍度有上限，空闲唤醒不会被拖长")
+        expect(p.tolerance(for: p.interval(for: .progress)) > 0, "进度档也允许系统合并唤醒")
     }
 }
