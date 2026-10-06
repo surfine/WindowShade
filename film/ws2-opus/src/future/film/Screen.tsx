@@ -5,7 +5,7 @@ import type { CSSProperties, ReactNode } from 'react';
 import { Img } from 'remotion';
 import { DOCK, ICON, LAUNCH, PLATE } from '../assets';
 import { Browser, Notes, Terminal, Win } from '../Desktop';
-import { Battery, Check, CJK, ControlCenter, FaceGlyph, IPhone, Lock, Pointer, SF, SFD, Search, Wifi } from '../glyphs';
+import { AppleLogo, Battery, Check, CJK, ControlCenter, FaceGlyph, IPhone, Lock, Pointer, SF, SFD, Search, Wifi } from '../glyphs';
 import { clamp01, mix, seg, smooth } from '../time';
 import { LIP_TEXT, T } from './cues';
 import { islandRect } from './island';
@@ -16,7 +16,8 @@ import { motion } from './springs';
 const RED = '#FF6B5E', GREEN = '#5FD38A';
 type R4 = { x: number; y: number; w: number; h: number };
 
-/** 两台机器各一张桌布。Neo 银机配 Mac Blue，Air 午夜配 Mac Purple。 */
+/** 两台机器各一张桌布：Neo 银机配 Mac Blue，Air 午夜深色外观配 Motion Blue（Dark Still）。
+ *  这两套都是各自机型的专属桌布，不能互换——Air 的是 Motion，不是 Mac 那 4 色，也不是 Tahoe 系统默认。 */
 const WALL: Record<MachineId, string> = { neo: PLATE.wall, air: PLATE.wallAir };
 
 const LAYOUT: Record<MachineId, { browser: R4; notes: R4; term: R4; chat: R4 }> = {
@@ -57,10 +58,8 @@ export function ScreenView({ m, f, physicalNotch = false }: { m: MachineId; f: n
       {lock > 0.001 && <LockScreen m={m} a={lock} f={f} />}
       <MenuBar m={m} desk={desk} />
       {m === 'air' && <Cursor m={m} f={f} physicalNotch={physicalNotch} />}
-      <Island m={m} f={f} />
+      <IslandLayers m={m} f={f} physicalNotch={physicalNotch} />
       {m === 'neo' && <Cursor m={m} f={f} physicalNotch={physicalNotch} />}
-      {/* 展開島已蓋住洞；再疊硬體洞會挡住中央字（倒數「动一下就取消」）。 */}
-      {M.notch && !physicalNotch && !islandCoversHole(m, f) && <HardwareNotch w={M.pt.w} n={M.notch} />}
       {d > 0 && <div style={{ position: 'absolute', inset: 0, background: '#000', opacity: d }} />}
     </div>
   );
@@ -144,11 +143,14 @@ function Ghost({ f }: { f: number }) {
 
 function MenuBar({ m, desk }: { m: MachineId; desk: number }) {
   const P = MACHINES[m].pt;
+  // 兩台都跑深色外觀（視窗、鎖屏、島都是深色），所以選單列是深色玻璃＋白字。
+  // 以前只畫了字，沒有列本身，字就浮在桌布上；鎖屏時整列也該收掉（macOS 鎖屏沒有選單列）。
   const t: CSSProperties = { fontSize: 13, color: '#fff', textShadow: '0 0 6px rgba(0,0,0,.28)', whiteSpace: 'nowrap' };
   return (
-    <div style={{ position: 'absolute', left: 0, top: 0, width: P.w, height: P.menu, display: 'flex', alignItems: 'center', padding: '0 12px', gap: 19, zIndex: 20 }}>
-      <div style={{ display: 'flex', gap: 19, alignItems: 'center', opacity: desk }}>
-        <span style={{ ...t, fontSize: 15, marginLeft: 6, marginTop: -2 }}>{''}</span>
+    <div style={{ position: 'absolute', left: 0, top: 0, width: P.w, height: P.menu, display: 'flex', alignItems: 'center', padding: '0 12px', gap: 19, zIndex: 20, opacity: desk,
+      background: 'linear-gradient(rgba(12,12,16,.66),rgba(12,12,16,.58))', backdropFilter: 'blur(30px) saturate(180%)', WebkitBackdropFilter: 'blur(30px) saturate(180%)', boxShadow: 'inset 0 -0.5px 0 rgba(0,0,0,.35)' }}>
+      <div style={{ display: 'flex', gap: 19, alignItems: 'center' }}>
+        <span style={{ ...t, display: 'flex', marginLeft: 6 }}><AppleLogo size={16} /></span>
         <span style={{ ...t, fontWeight: 700 }}>Safari 浏览器</span>
         {['文件', '编辑', '显示', '历史记录', '书签', '窗口', '帮助'].map((x) => <span key={x} style={{ ...t, fontFamily: CJK }}>{x}</span>)}
       </div>
@@ -157,7 +159,7 @@ function MenuBar({ m, desk }: { m: MachineId; desk: number }) {
         <Wifi size={16} />
         <Search size={14} />
         <ControlCenter size={15} />
-        <span style={{ ...t, fontFamily: CJK, fontVariantNumeric: 'tabular-nums', opacity: desk }}>10月4日 周日 21:41</span>
+        <span style={{ ...t, fontFamily: CJK, fontVariantNumeric: 'tabular-nums' }}>10月4日 周日 21:41</span>
       </div>
     </div>
   );
@@ -291,6 +293,19 @@ function Cursor({ m, f, physicalNotch }: { m: MachineId; f: number; physicalNotc
   );
 }
 
+/** 島＋硬體洞這一疊，單獨抽出來：本片用它，`IslandQA` 也用它。
+ *  兩邊共用同一組圖層，才不會出現「QA 好看、片子穿帮」這種事。 */
+export function IslandLayers({ m, f, physicalNotch = false }: { m: MachineId; f: number; physicalNotch?: boolean }) {
+  const M = MACHINES[m];
+  return (
+    <>
+      <Island m={m} f={f} />
+      {/* 展開島已蓋住洞；再疊硬體洞會挡住中央字（倒數「动一下就取消」）。 */}
+      {M.notch && !physicalNotch && !islandCoversHole(m, f) && <HardwareNotch w={M.pt.w} n={M.notch} />}
+    </>
+  );
+}
+
 // ---- 岛 ----
 // Air：黑就是網格的洞。靜止只畫洞的輪廓；展開從這條輪廓往下長，沒有第二顆膠囊、沒有描邊和影子。
 // Neo：沒有硬體劉海，屏上只有一顆黑，同樣不描邊、不加影子。
@@ -371,9 +386,13 @@ function CompactWings({ w, h, left, right }: { w: number; h: number; left: React
   );
 }
 
+/** 提醒／結果：左邊一顆圖磚，右邊主行＋副行。
+ *  `width:'100%'` + `boxSizing:'border-box'` 兩個都要：只寫 height 的話寬度是 auto，
+ *  置中會落在「島寬」而不是「島寬減內距」上，內容就會往一側偏；少了 border-box，
+ *  內距會加上去、右邊被 overflow 切掉。 */
 function SoftAlert({ icon, title, sub, accent = '#fff' }: { icon: ReactNode; title: string; sub: string; accent?: string }) {
   return (
-    <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 12, fontFamily: CJK, whiteSpace: 'nowrap', padding: '0 14px', height: '100%', boxSizing: 'border-box' }}>
+    <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 12, fontFamily: CJK, whiteSpace: 'nowrap', width: '100%', padding: '0 14px', height: '100%', boxSizing: 'border-box' }}>
       {icon}
       <div style={{ minWidth: 0 }}>
         <div style={{ fontSize: 20, fontWeight: 700, color: accent, lineHeight: 1.08 }}>{title}</div>
@@ -424,14 +443,14 @@ function IslandContent({ m, f, w, h }: { m: MachineId; f: number; w: number; h: 
     if (f >= T.pomoTap && f < T.restAlert + 4) {
       const ff = smooth(seg(f, T.ffA, T.ffB));
       const left = 1500 * (1 - ff * 0.9995);
-      return <FadeIn a={inWin(f, T.pomoTap + 8, T.restAlert + 4, 10, 4)}><Compact color={RED} frac={1 - left / 1500} text={fmt(left)} /></FadeIn>;
+      return <FadeIn a={inWin(f, T.pomoTap + 8, T.restAlert + 4, 10, 4)}><Compact color={RED} frac={left / 1500} text={fmt(left)} /></FadeIn>;
     }
     if (f >= T.restAlert && f < T.away + 4) return <FadeIn a={inWin(f, T.restAlert + 6, T.away + 4, 10, 4)}><SoftAlert icon={<Tile color="#163524"><Cup size={24} /></Tile>} title="休息 5 分钟" sub="第 3 个" accent={GREEN} /></FadeIn>;
     if (f >= T.away && f < T.back + 4) {
       const left = restLeft(f);
       return (
         <FadeIn a={inWin(f, T.away + 10, T.back + 4, 12, 4)}>
-          <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', height: '100%', gap: 12, fontFamily: CJK }}>
+          <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', width: '100%', height: '100%', gap: 12, fontFamily: CJK }}>
             <div style={{ width: 128, height: 128, borderRadius: '50%', border: `6px solid ${GREEN}`, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
               <span style={{ color: '#fff', fontFamily: SFD, fontSize: 28, fontWeight: 700, fontVariantNumeric: 'tabular-nums' }}>{fmtClock(left)}</span>
             </div>
@@ -446,7 +465,7 @@ function IslandContent({ m, f, w, h }: { m: MachineId; f: number; w: number; h: 
     }
     if (f >= T.back && f < T.pomoPre + 4) {
       const left = restLeft(f);
-      return <FadeIn a={inWin(f, T.back + 8, T.pomoPre + 4, 10, 4)}><Compact color={GREEN} frac={1 - left / 300} text={`休息 ${fmtClock(left)}`} /></FadeIn>;
+      return <FadeIn a={inWin(f, T.back + 8, T.pomoPre + 4, 10, 4)}><Compact color={GREEN} frac={left / 300} text={`休息 ${fmtClock(left)}`} /></FadeIn>;
     }
     return null;
   }
@@ -525,20 +544,29 @@ const fmtClock = (s: number) => `${Math.floor(s / 60)}:${String(Math.floor(s % 6
 function Unlock({ face, phone }: { face: 'wait' | 'ok'; phone: 'wait' | 'ok' }) {
   const ok = face === 'ok' ? 1 : 0;
   return (
-    <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 24, height: '100%' }}>
+    <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 24, width: '100%', height: '100%' }}>
       <span style={{ color: ok > 0 ? GREEN : '#fff', display: 'flex' }}><FaceGlyph size={46} scan={1} ok={ok} sweep={0} /></span>
       <span style={{ color: phone === 'ok' ? GREEN : 'rgba(255,255,255,.72)', display: 'flex' }}><IPhone size={30} /></span>
     </div>
   );
 }
 
+/** 倒數藥丸：左邊一圈進度環，右邊時間。
+ *  環是**剩餘量**（Apple 的 `ProgressView(timerInterval:)` 就是這樣：一開始整圈滿的，
+ *  時間過去一圈一圈退掉）。以前畫的是「已經過了多少」，所以番茄鐘剛開始那一格
+ *  只剩一小段弧——端點還是圓頭，看起來就是一顆不知道哪裡來的紅點掛在灰圈上。
+ *  端點也改成平頭：平頭在 0 與滿圈兩端都乾淨，不會留一顆圓球。 */
 function Compact({ color, frac, text }: { color: string; frac: number; text: string }) {
   const c = 2 * Math.PI * 6.5;
+  const k = clamp01(frac);
   return (
-    <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 12, width: '100%', padding: '0 14px', fontFamily: CJK }}>
+    // `boxSizing: border-box` 與 `height: '100%'` 缺一不可：少了 border-box，這個 div 的寬度
+    // 會變成「藥丸寬 + 左右各 14」，被外層 overflow:hidden 切掉右邊，置中的圖文組就整整右移 14 點；
+    // 少了 height:100%，整組貼在藥丸上緣，下面留一大塊黑。兩個都是「內容貼邊」的來源。
+    <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 12, width: '100%', height: '100%', boxSizing: 'border-box', padding: '0 14px', fontFamily: CJK }}>
       <svg width={30} height={30} viewBox="0 0 16 16">
-        <circle cx={8} cy={8} r={6.5} fill="none" stroke="rgba(255,255,255,.18)" strokeWidth={2.2} />
-        <circle cx={8} cy={8} r={6.5} fill="none" stroke={color} strokeWidth={2.2} strokeLinecap="round" strokeDasharray={c} strokeDashoffset={c * (1 - clamp01(frac))} transform="rotate(-90 8 8)" />
+        <circle cx={8} cy={8} r={6.5} fill="none" stroke="rgba(255,255,255,.22)" strokeWidth={2.4} />
+        <circle cx={8} cy={8} r={6.5} fill="none" stroke={color} strokeWidth={2.4} strokeDasharray={c} strokeDashoffset={c * (1 - k)} transform="rotate(-90 8 8)" />
       </svg>
       <span style={{ color: '#fff', fontSize: 19, fontWeight: 600, fontVariantNumeric: 'tabular-nums' }}>{text}</span>
     </div>

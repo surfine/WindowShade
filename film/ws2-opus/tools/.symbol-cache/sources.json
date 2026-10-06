@@ -1,0 +1,44 @@
+{
+  "weight": "semibold",
+  "pointSize": 160,
+  "source": "/System/Library/PrivateFrameworks/SFSymbols.framework/Versions/A/Resources/CoreGlyphs.bundle/Contents/Resources/Assets.car",
+  "api": "NSImage(systemSymbolName:) → NSSymbolImageRep.vectorGlyph.CGPath",
+  "symbols": [
+    {
+      "name": "faceid",
+      "why": "刷臉中：iOS 島上解鎖顯示的就是這一顆"
+    },
+    {
+      "name": "checkmark",
+      "why": "認出來之後換成這顆（真機是 faceid → checkmark）"
+    },
+    {
+      "name": "iphone",
+      "why": "旁邊那台手機，跟 faceid 並排站"
+    },
+    {
+      "name": "lock.fill",
+      "why": "關著的鎖"
+    },
+    {
+      "name": "lock.open.fill",
+      "why": "開著的鎖：跟 lock.fill 疊在同一個 viewBox 上交叉淡入，鎖扣繞鎖體轉"
+    },
+    {
+      "name": "checkmark.circle.fill",
+      "why": "實心圓勾（島上的「好了／已收進劉海」）"
+    },
+    {
+      "name": "xmark.circle.fill",
+      "why": "實心圓叉（島上的「已取消」）"
+    }
+  ],
+  "lockFrame": {
+    "minX": 0,
+    "minY": 0,
+    "maxX": 325.35,
+    "maxY": 315.23,
+    "w": 325.35,
+    "h": 315.23
+  }
+}
