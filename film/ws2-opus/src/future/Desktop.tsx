@@ -2,7 +2,7 @@
 import type { CSSProperties, ReactNode } from 'react';
 import { Img } from 'remotion';
 import { DOCK, ICON, LAUNCH, PLATE } from './assets';
-import { Battery, ControlCenter, MONO, Pointer, SF, SFD, Search, Wifi, CJK } from './glyphs';
+import { AppleLogo, Battery, ControlCenter, MONO, Pointer, SF, SFD, Search, Wifi, CJK } from './glyphs';
 import { CP_NEXT, NEXT_BTN } from './CarPlay';
 import { NOTCH_PT, PT } from './shape';
 import { clamp01, fade, mix, seg, smooth, spring } from './time';
@@ -57,9 +57,10 @@ function MenuBar({ f, desk, lp }: { f: number; desk: number; lp: number }) {
   const shadow = '0 0 6px rgba(0,0,0,.28)';
   const t: CSSProperties = { fontSize: 13.5, color: '#fff', textShadow: shadow, whiteSpace: 'nowrap' };
   return (
-    <div style={{ position: 'absolute', left: 0, top: 0, width: PT.w, height: MENU_H, display: 'flex', alignItems: 'center', padding: '0 14px', gap: 21 }}>
-      <div style={{ display: 'flex', gap: 21, alignItems: 'center', opacity: desk * (1 - lp * 0.0) }}>
-        <span style={{ ...t, fontSize: 16, marginLeft: 6, marginTop: -2 }}>{''}</span>
+    <div style={{ position: 'absolute', left: 0, top: 0, width: PT.w, height: MENU_H, display: 'flex', alignItems: 'center', padding: '0 14px', gap: 21, opacity: desk,
+      background: 'linear-gradient(rgba(16,17,22,.46),rgba(16,17,22,.30))', backdropFilter: 'blur(24px) saturate(180%)', WebkitBackdropFilter: 'blur(24px) saturate(180%)', boxShadow: 'inset 0 -0.5px 0 rgba(0,0,0,.35)' }}>
+      <div style={{ display: 'flex', gap: 21, alignItems: 'center', opacity: 1 - lp * 0.0 }}>
+        <span style={{ ...t, display: 'flex', marginLeft: 6 }}><AppleLogo size={17} /></span>
         <span style={{ ...t, fontWeight: 700 }}>{app}</span>
         {menus.slice(0, app === '访达' ? 5 : 7).map((m) => <span key={m} style={{ ...t, fontFamily: CJK }}>{m}</span>)}
       </div>
@@ -68,7 +69,7 @@ function MenuBar({ f, desk, lp }: { f: number; desk: number; lp: number }) {
         <Wifi size={17} />
         <Search size={15} />
         <ControlCenter size={16} />
-        <span style={{ ...t, fontFamily: CJK, fontVariantNumeric: 'tabular-nums', opacity: desk }}>10月4日 周日 21:41</span>
+        <span style={{ ...t, fontFamily: CJK, fontVariantNumeric: 'tabular-nums' }}>10月4日 周日 21:41</span>
       </div>
     </div>
   );
@@ -105,7 +106,7 @@ function LockScreen({ lock }: { lock: number }) {
 function Lights({ dim }: { dim?: boolean }) {
   const c = dim ? ['#5b5b5f', '#5b5b5f', '#5b5b5f'] : ['#ff5f57', '#febc2e', '#28c840'];
   return (
-    <div style={{ position: 'absolute', left: 18, top: 18, display: 'flex', gap: 8 }}>
+    <div style={{ position: 'absolute', left: 18, top: 20, display: 'flex', gap: 8 }}>
       {c.map((x, i) => <i key={i} style={{ width: 12.5, height: 12.5, borderRadius: '50%', background: x, boxShadow: 'inset 0 0 0 0.5px rgba(0,0,0,.22)' }} />)}
     </div>
   );
@@ -150,11 +151,13 @@ export function Browser({ w, h }: { w: number; h: number }) {
           <svg width={16} height={14} viewBox="0 0 16 14"><rect x={1} y={1} width={14} height={12} rx={2.5} fill="none" stroke="currentColor" strokeWidth={1.3} /><line x1={6} y1={1} x2={6} y2={13} stroke="currentColor" strokeWidth={1.3} /></svg>
         </div>
         <div style={{ ...glassBtn, position: 'absolute', left: 140, top: 11, width: 66, justifyContent: 'space-around', fontSize: 17 }}><span>‹</span><span style={{ opacity: 0.4 }}>›</span></div>
-        <div style={{ ...glassBtn, position: 'absolute', left: '50%', top: 11, width: Math.min(420, w * 0.44), transform: 'translateX(-50%)', fontSize: 13.5, gap: 6 }}>
+        {/* Safari 的網址欄是一整條橫貫工具列的欄位，不是懸在中間的小藥丸：
+            左邊留給交通燈與側欄鈕，右邊留給分享／新分頁／分頁總覽。 */}
+        <div style={{ ...glassBtn, position: 'absolute', left: 212, right: 180, top: 11, fontSize: 13.5, gap: 6 }}>
           <svg width={10} height={12} viewBox="0 0 10 12"><path d="M 2.5 5 V 3.6 A 2.5 2.5 0 0 1 7.5 3.6 V 5" fill="none" stroke="currentColor" strokeWidth={1.3} /><rect x={1.2} y={5} width={7.6} height={6} rx={1.4} fill="currentColor" /></svg>
           <span>windowshade.aaronlau.me</span>
         </div>
-        <div style={{ ...glassBtn, position: 'absolute', right: 16, top: 11, width: 104, justifyContent: 'space-around', fontSize: 18 }}><span>⇪</span><span>+</span><span>⧉</span></div>
+        <div style={{ ...glassBtn, position: 'absolute', right: 16, top: 11, width: 148, justifyContent: 'space-around', fontSize: 18 }}><span>⇪</span><span>+</span><span>⧉</span></div>
       </div>
       <div style={{ position: 'absolute', left: 0, right: 0, top: 52, bottom: 0, overflow: 'hidden', background: '#141416' }}>
         {/* 官网首页（windowshade.aaronlau.me），文案与 site/dist/index.html 一致。 */}

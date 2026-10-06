@@ -1,5 +1,14 @@
 // 桌布与 App 图标取自这台 Mac（/System/Library/Desktop Pictures/、各 App 的 AppIcon.icns，sips 转成 PNG）。
-// 两台机器各用自己的桌布：Neo 是 Mac Blue，Air 是 Mac Purple（A16-04：Air 不再借 Neo 的桌布）。
+// 两台机器各用「自己机器」的桌布，不能互换：
+//   Neo  = Mac Blue.heic，MacBook Neo 自己那套彩色桌布（Mac Blue/Pink/Purple/Yellow，
+//          随 MacBook Neo 首发，macOS 26.4 才开放给其它 Mac）。见 MacRumors 2026-03-09 / AppleInsider。
+//   Air  = Motion Blue.heic，MacBook Air 自己那套桌布（Motion Blue/Green/Purple/Yellow）。
+//          注意：苹果内建的那批还有 iMac（7 色）、MacBook Neo（Mac 4 色）、Mac Studio、MacBook Pro 各自一套，
+//          所以「Mac 那 4 色」不是 Air 的；Air 的是 Motion。之前 Air 配过 Mac Purple（Neo 的）和
+//          TahoeDark（全机种系统默认）都是错的。
+//          Air 这台在片中是深色外观，故取 Motion Blue 的 Dark (Still) 那一帧（同一颗 heic 里的第 2 张）。
+//          Motion Blue 在系统里只有 356 点缩图 + 描述档（.madesktop 是空壳），
+//          6016² 原图由 Apple 的 mobile asset 提供，取法见 handoff/FIXES-draft18.md。
 // 人、耳机、车内、桌面是生成的实拍板。
 import wall from './assets/wall.jpg';
 import wallAir from './assets/wall-air.jpg';
