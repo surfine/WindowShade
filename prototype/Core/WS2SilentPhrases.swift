@@ -14,7 +14,7 @@ struct WS2SilentPhraseProfile: Equatable, Sendable {
 
 struct WS2SilentPhraseSample: Equatable, Sendable {
     var speech: WS2SilentSpeech?
-    /// 这一帧摄像头对上的词。没有摄像头时不使用。
+    /// 旧规格测试的词标签；不是识别器输出。真实相机实验走 WS2MouthMatcher。
     var seenWord: String?
     var cameraAvailable: Bool
     /// 麦克风读到的词。静音失败时不拿它来补。

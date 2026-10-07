@@ -1,8 +1,7 @@
 import Cocoa
 
-/// 指挥页读当前助手的会话快照。只切换这一页正在看的会话、改模型或档位、写下草稿。
-/// 不发送、不停止、不恢复另一条后端会话。
-@MainActor final class WS2ConductorPageView: NSView, WS2LeaseContent, WS2DeviceActionSink {
+/// 指挥页复用唯一 owned controller。采用草稿和发送分开，所有动作绑定正在显示的会话。
+@MainActor final class WS2ConductorPageView: NSView, WS2LeaseContent, WS2DeviceActionSink, NSTextFieldDelegate {
     var onCancel: (() -> Void)?
     var inputIsCurrent: () -> Bool = { false }
     var interactionSize: NSSize { NSSize(width: 460, height: 360) }
@@ -20,7 +19,13 @@ import Cocoa
     private let modelMenu = NSPopUpButton(frame: .zero, pullsDown: false)
     private let effortMenu = NSPopUpButton(frame: .zero, pullsDown: false)
     private let editor = NSTextField(string: "")
-    private let write = NSButton(title: "记下草稿", target: nil, action: nil)
+    private let write = NSButton(title: "采用草稿", target: nil, action: nil)
+    private let send = NSButton(title: "发送", target: nil, action: nil)
+    private let interrupt = NSButton(title: "停止本轮", target: nil, action: nil)
+    private let receipt = NSTextField(wrappingLabelWithString: "")
+    private var adoptedDraft: WS2OwnedLaunchController.ConductorDraft?
+    private var displayedTarget: WS2OwnedLaunchController.ConductorTarget?
+    private var displayedTurn: String?
     private let deviceMenu = NSPopUpButton(frame: .zero, pullsDown: false)
     private let enableButton = NSButton(title: "本次启用", target: nil, action: nil)
     private let status = NSTextField(wrappingLabelWithString: "")
@@ -63,26 +68,45 @@ import Cocoa
         sessions.alignment = .leading
         sessions.spacing = 4
         stack.addArrangedSubview(sessions)
-        modelMenu.setAccessibilityLabel("实际可用模型")
-        effortMenu.setAccessibilityLabel("该模型支持的思考程度")
+        modelMenu.setAccessibilityLabel("下一轮模型")
+        effortMenu.setAccessibilityLabel("下一轮思考程度")
+        modelMenu.toolTip = "下一轮使用的模型，不改变正在运行的这一轮。"
+        effortMenu.toolTip = "下一轮使用的思考程度，不改变正在运行的这一轮。"
         modelMenu.target = self
         modelMenu.action = #selector(pickModel)
         effortMenu.target = self
         effortMenu.action = #selector(pickEffort)
-        let menus = NSStackView(views: [modelMenu, effortMenu])
+        let nextLabel = NSTextField(labelWithString: "下一轮")
+        let menus = NSStackView(views: [nextLabel, modelMenu, effortMenu])
         menus.spacing = 8
         stack.addArrangedSubview(menus)
         editor.placeholderString = "草稿"
         editor.setAccessibilityLabel("待记下的草稿")
         editor.isEditable = true
         editor.isBezeled = true
+        editor.delegate = self
         stack.addArrangedSubview(editor)
         editor.widthAnchor.constraint(equalTo: stack.widthAnchor).isActive = true
         write.target = self
         write.action = #selector(commitDraft)
         write.bezelStyle = .rounded
         write.toolTip = "只把现在的文字留在这台 Mac 上。不会发给助手。"
-        stack.addArrangedSubview(write)
+        send.target = self
+        send.action = #selector(sendDraft)
+        send.bezelStyle = .rounded
+        send.toolTip = "只发送已采用的草稿。运行时补进当前这一轮，下一轮的模型和档位不会改动这一轮。"
+        interrupt.target = self
+        interrupt.action = #selector(interruptTurn)
+        interrupt.bezelStyle = .rounded
+        interrupt.toolTip = "请求停止当前这一轮，等助手确认后才显示已停止。"
+        let actions = NSStackView(views: [write, send, interrupt])
+        actions.spacing = 8
+        stack.addArrangedSubview(actions)
+        receipt.font = .systemFont(ofSize: 11)
+        receipt.textColor = .secondaryLabelColor
+        receipt.maximumNumberOfLines = 2
+        stack.addArrangedSubview(receipt)
+        receipt.widthAnchor.constraint(equalTo: stack.widthAnchor).isActive = true
         deviceMenu.setAccessibilityLabel("本次连接的手柄")
         enableButton.target = self
         enableButton.action = #selector(toggleDevice)
@@ -127,15 +151,42 @@ import Cocoa
 
     func sync() {
         let snap = snapshot()
+        let target = controller.conductorTarget
+        if displayedTarget != target {
+            input.cancelAll()
+            displayedTarget = target
+        }
+        displayedTurn = controller.conductorTurn
+        if let target, let row = snap.rows.first(where: { $0.id == target.context.session && $0.revision == target.context.epoch }) {
+            highlighted = .init(id: row.id, revision: row.revision, listRevision: snap.listRevision)
+        }
         if let highlighted, !snap.confirm(highlighted) { self.highlighted = nil }
         renderSessions(snap)
         renderMenus(snap)
         if editor.currentEditor() == nil, editor.stringValue != snap.draft {
             editor.stringValue = snap.draft
         }
-        write.isEnabled = inputIsCurrent()
+        syncActions()
+        receipt.stringValue = controller.status + (controller.notice.isEmpty ? "" : " · " + controller.notice)
         input.ready = isInputReady
         enableButton.isEnabled = isInputReady && !shownDevices.isEmpty
+    }
+
+    private func syncActions() {
+        if let value = adoptedDraft, !controller.acceptsConductorDraft(value) { adoptedDraft = nil }
+        let marked = (editor.currentEditor() as? NSTextView)?.hasMarkedText() == true
+        write.isEnabled = inputIsCurrent() && controller.conductorTarget != nil && !marked
+        send.title = adoptedDraft?.turn == nil ? "发送" : "补进本轮"
+        send.isEnabled = inputIsCurrent() && !marked && adoptedDraft?.text == editor.stringValue && adoptedDraft != nil
+        interrupt.isEnabled = inputIsCurrent() && controller.canInterrupt && displayedTarget != nil && displayedTurn != nil
+    }
+
+    func controlTextDidChange(_ notification: Notification) {
+        guard notification.object as? NSTextField === editor else { return }
+        // Editing after adoption requires a new adoption. Never send a hidden older editor value.
+        adoptedDraft = nil
+        if inputIsCurrent(), controller.conductorTarget != nil { _ = controller.editDraft(editor.stringValue) }
+        syncActions()
     }
 
     func renderDevices(_ devices: [WS2ControllerDevice]) {
@@ -174,6 +225,7 @@ import Cocoa
         focusObservers.forEach { NotificationCenter.default.removeObserver($0) }
         focusObservers.removeAll()
         editor.stringValue = ""
+        adoptedDraft = nil; displayedTarget = nil; displayedTurn = nil
         changedEnvironment?()
         onCancel?()
     }
@@ -194,7 +246,7 @@ import Cocoa
     func move(_ effect: GamepadMapping.Effect, context: WS2SemanticInputRouter.Context) -> Bool { false }
 
     private func snapshot() -> ConductorPageSnapshot {
-        let rows = controller.store.visibleSessions.map { session in
+        let rows = controller.conductorSessions.map { session in
             ConductorPageSnapshot.Row(id: session.context.session, revision: session.context.epoch,
                                       label: label(session))
         }
@@ -208,7 +260,10 @@ import Cocoa
     }
 
     private func label(_ session: AgentSessions.Session) -> String {
-        let name = session.context.session.provider.displayName
+        let tail = String(String.UnicodeScalarView(session.context.session.id.unicodeScalars.filter {
+            $0.properties.generalCategory != .control && $0.properties.generalCategory != .format
+        })).suffix(8)
+        let name = session.context.session.provider.displayName + " · " + tail
         let summary = session.summary.trimmingCharacters(in: .whitespacesAndNewlines)
         if summary.isEmpty { return name }
         return name + " · " + String(summary.prefix(80))
@@ -280,8 +335,8 @@ import Cocoa
         effortMenu.selectItem(at: snap.effort.flatMap { effortIDs.firstIndex(of: $0) }.map { $0 + 1 } ?? 0)
         rendering = false
         let fresh = inputIsCurrent()
-        modelMenu.isEnabled = fresh && !modelIDs.isEmpty && controller.canChooseModel
-        effortMenu.isEnabled = fresh && controller.model != nil && controller.canChooseModel
+        modelMenu.isEnabled = fresh && displayedTarget != nil && !modelIDs.isEmpty && controller.canStageConductorConfig
+        effortMenu.isEnabled = fresh && displayedTarget != nil && controller.model != nil && controller.canStageConductorConfig
     }
 
     @objc private func pickSession(_ sender: NSButton) {
@@ -293,7 +348,12 @@ import Cocoa
             sync()
             return
         }
-        highlighted = selection
+        guard controller.selectConductorSession(selection.id, revision: selection.revision) else {
+            status.stringValue = "这一轮结束后再切换"
+            sync()
+            return
+        }
+        adoptedDraft = nil
         input.cancelAll()
         sync()
     }
@@ -303,7 +363,8 @@ import Cocoa
         let snap = snapshot()
         let selection = ConductorPageSnapshot.Selection(id: row.id, revision: row.revision, listRevision: snap.listRevision)
         guard case .success = snap.acceptSelection(selection) else { return false }
-        highlighted = selection
+        guard controller.selectConductorSession(selection.id, revision: selection.revision) else { return false }
+        adoptedDraft = nil
         sync()
         return true
     }
@@ -312,8 +373,9 @@ import Cocoa
         guard !rendering, inputIsCurrent(), modelMenu.indexOfSelectedItem > 0,
               modelIDs.indices.contains(modelMenu.indexOfSelectedItem - 1) else { return }
         let id = modelIDs[modelMenu.indexOfSelectedItem - 1]
-        guard ConductorPageSnapshot.acceptChoice(id, catalogue: Set(controller.models.keys)),
-              controller.chooseModel(id) else { sync(); return }
+        guard let target = displayedTarget,
+              ConductorPageSnapshot.acceptChoice(id, catalogue: Set(controller.models.keys)),
+              controller.stageConductorModel(id, target: target) else { sync(); return }
     }
 
     @objc private func pickEffort() {
@@ -321,8 +383,9 @@ import Cocoa
               effortIDs.indices.contains(effortMenu.indexOfSelectedItem - 1) else { return }
         let id = effortIDs[effortMenu.indexOfSelectedItem - 1]
         let choices: Set<String> = controller.model.flatMap { controller.models[$0] } ?? []
-        guard ConductorPageSnapshot.acceptChoice(id, catalogue: choices),
-              controller.chooseEffort(id) else { sync(); return }
+        guard let target = displayedTarget,
+              ConductorPageSnapshot.acceptChoice(id, catalogue: choices),
+              controller.stageConductorEffort(id, target: target) else { sync(); return }
     }
 
     @objc private func commitDraft() {
@@ -339,10 +402,12 @@ import Cocoa
             let live = snapshot()
             switch live.acceptDraft(frozen) {
             case .success(let accepted):
-                if controller.editDraft(accepted.text) {
-                    status.stringValue = "记下了。还没有发给助手。"
+                if let target = displayedTarget,
+                   let adopted = controller.adoptConductorDraft(accepted.text, hasMarkedText: marked, target: target) {
+                    adoptedDraft = adopted
+                    status.stringValue = "已采用，还没发送"
                 } else {
-                    status.stringValue = "草稿过长，原来的还在"
+                    status.stringValue = "还不能采用，草稿留着"
                 }
             case .failure(.staleModel), .failure(.staleEffort):
                 status.stringValue = "模型和档位已经变了，草稿留着"
@@ -350,6 +415,23 @@ import Cocoa
                 status.stringValue = "这一条已经变了，草稿留着"
             }
         }
+        sync()
+    }
+
+    @objc private func sendDraft() {
+        guard inputIsCurrent(), let value = adoptedDraft, editor.stringValue == value.text else { return }
+        let marked = (editor.currentEditor() as? NSTextView)?.hasMarkedText() == true
+        let accepted: Bool
+        if value.turn == nil { accepted = controller.sendConductorDraft(value, hasMarkedText: marked) }
+        else { accepted = controller.addConductorDraftToTurn(value, hasMarkedText: marked) }
+        if accepted { adoptedDraft = nil }
+        else { status.stringValue = "会话已经变了，请重新采用草稿" }
+        sync()
+    }
+
+    @objc private func interruptTurn() {
+        guard inputIsCurrent(), let target = displayedTarget, let turn = displayedTurn else { return }
+        _ = controller.interruptConductor(target: target, turn: turn)
         sync()
     }
 

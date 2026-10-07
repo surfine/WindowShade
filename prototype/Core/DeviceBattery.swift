@@ -220,6 +220,8 @@ struct DeviceBatteryBook: Sendable {
 
   private mutating func lowAlert(key: Key, reading: BatteryReading, now: Double) -> Int? {
     guard let percent = reading.percent else { return nil }
+    // 旧的充电/回升事实也不能重新武装，否则下一次新低电读数会重复提醒。
+    guard freshness(key, now: now) == .currentEnough else { return nil }
     // 重新武装：确认在充电，或回升到已提醒档位以上 rearmMargin。
     if reading.charging == .charging || reading.charging == .full {
       alerted[key] = nil
@@ -228,7 +230,7 @@ struct DeviceBatteryBook: Sendable {
     if let done = alerted[key], percent >= done + Self.rearmMargin {
       alerted[key] = Self.level(for: percent)
     }
-    guard freshness(key, now: now) == .currentEnough, let level = Self.level(for: percent) else { return nil }
+    guard let level = Self.level(for: percent) else { return nil }
     if let done = alerted[key], level >= done { return nil }
     alerted[key] = level
     return level

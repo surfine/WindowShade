@@ -37,3 +37,7 @@ prototype/local-codesign.env
 /.statem/runs/
 /.statem/active_run
 /.statem/runbook.yaml
+
+# Python probe caches
+__pycache__/
+*.py[cod]

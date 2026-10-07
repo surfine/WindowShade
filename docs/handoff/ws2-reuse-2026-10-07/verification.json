@@ -1,0 +1,173 @@
+{
+  "date": "2026-10-07",
+  "base": "f6e601f",
+  "appBuild": {
+    "command": "TOOLCHAINS=com.apple.dt.toolchain.Metal.32023.921.5,com.apple.dt.toolchain.XcodeDefault bash prototype/build.sh --check",
+    "exitCode": 0,
+    "mainSwiftFiles": 394,
+    "log": ".build/ws2-reuse/build-remote-profile.log",
+    "logSHA256": "4d749b58684bfc954d6f5a8fe8d117c4927c53e1e9f1a8923682c3c893d5c935",
+    "sourceSnapshot": "396 current Swift files match isolated final compile snapshot byte-for-byte; .build/ws2-reuse/remote-profile-build-source.json",
+    "limitations": [
+      "compiler emitted existing concurrency warnings",
+      "not signed",
+      "not launched",
+      "no performance qualification"
+    ],
+    "sourceSnapshotSHA256": "39990e9c169cfd98851d7293f9188e1ab9575ae4ef265d78768771c9d922dabf",
+    "status": "passed_current_final_source"
+  },
+  "checks": [
+    {
+      "command": "python3 tools/privacy/check-registry.py --repo .",
+      "result": "PASS 494 lexical sites; no unregistered additions"
+    },
+    {
+      "command": "git diff --check",
+      "result": "exit 0"
+    },
+    {
+      "command": "bash tools/probes/companion-pairing/run-native-srp.sh",
+      "result": "main-agent rerun: official v/B/u/S/K/M1/M2 vectors and rejection/clear/replay checks PASS; Swift strict compile PASS"
+    },
+    {
+      "command": "bash tests/run-silent-integration-tests.sh",
+      "result": "PASS; log .build/ws2-reuse/silent-integration.log"
+    },
+    {
+      "command": "bash tests/run-face-observation-sharing-tests.sh",
+      "result": "27 lifecycle cases passed by owning agent; main reviewed implementation and aggregate app compile"
+    },
+    {
+      "command": "bash tests/run-mouth-template-tests.sh",
+      "result": "PASS synthetic boundaries and holdout-session rejection; not personal recognition accuracy"
+    },
+    {
+      "command": "bash tests/run-mouth-recording-tests.sh",
+      "result": "PASS synthetic recording lifecycle; no real camera recording"
+    },
+    {
+      "command": "bash tests/run-notch-activity-tests.sh; bash tests/run-device-battery-tests.sh",
+      "result": "PASS owning agent; main reviewed actual diffs"
+    },
+    {
+      "command": "PlayPort fixed upstream JVM tests",
+      "result": "17/17, zero skipped; main independently parsed JUnit XML; docs/carplay.md for runner"
+    },
+    {
+      "command": "bash tests/run-companion-channel-tests.sh",
+      "result": "PASS final channel-profile.log:13 OPACK vectors,13 channel modes,4 request modes,10 privacy diagnostics,13 compatibility/event cases; probe fallback17requests/event no-delivery and next-known-input verified"
+    },
+    {
+      "command": ".build/remote-device-probe/RemoteDeviceProbe --self-test",
+      "result": "Main final rerun51checksPASS, socketsOpened0; .build/ws2-reuse/remote-final-offline.log; binary63449b6f8f99ff1eab986e1f14ef39366d236849d2accdb856251d187647b2b4"
+    },
+    {
+      "command": "PYTHONPATH=<fixed srptools/six temp deps> python3 tools/probes/remote-device/handshake-interop.py --bridge .build/remote-device-probe/RemoteDeviceProbe",
+      "result": "Main rerun exit0 on final receiver;6realcrypto scenarios in .build/ws2-reuse/remote-final-handshake.json"
+    },
+    {
+      "command": "PYTHONPATH=<fixed srptools/six temp deps> python3 tools/probes/remote-device/session-interop.py --bridge .build/remote-device-probe/RemoteDeviceProbe",
+      "result": "Main rerun exit0:2complete flows each51client/55server records,7protocol negatives andunknown request/event no-delivery thenknownHID; remote-full-session-main.json"
+    }
+  ],
+  "additionalEvidence": [
+    "conductor-evidence.json",
+    "remote-evidence.json",
+    "../../../tools/probes/companion-pairing/evidence/interop-2026-10-07.json",
+    "../../../tools/probes/companion-pairing/evidence/pair-setup-2026-10-07.json",
+    "device-tests.json"
+  ],
+  "sourceSHA256": {
+    "prototype/App/FaceObservationSource.swift": "6e3b04d315f72d7b4da4a61647e30a8765185a60004432c5a346d1b8a3249e96",
+    "prototype/App/NotchLevelObserver.swift": "09c7f8979c3fffb8ec259b1cfeaf575c3ff690d3da90f8a7a88866047a2abb50",
+    "prototype/App/WS2ConductorPage.swift": "2ffee57933b31d5d3c9c93fc5afb23285850deb629d770850d7e1df937fbe65d",
+    "prototype/App/WS2ConductorSettings.swift": "d9f26fcee23ac5f85cd2c80065526ddb0cd1f45fe816c0837a95f33a3024c3c9",
+    "prototype/App/WS2OwnedLaunchController.swift": "b08c6f19934bd73cd371f8565cc10d34256f22c5ee0c3c24c33cd982deb9f83b",
+    "prototype/App/WS2PrivacyData.swift": "8b4031f4650f9260ef3ec9f9eaa59ee7e26c60270da19e016d96e7e8e81ed636",
+    "prototype/App/WS2SilentHost.swift": "21c317c4d8610612b6b17542ef75405698ae216987c68f6929eae6af196d099f",
+    "prototype/Core/CodexWire.swift": "082654e8bb446b86d3ab517e2f61e620cb1f01558d15f44e482abdfebc625e37",
+    "prototype/Core/DeviceBattery.swift": "5d3234c190f946d331540de1cb99e8e99b0808c6add1b62c9e7654aaed1b310a",
+    "prototype/Core/NotchActivities.swift": "4f8f03ab2d3a84518723e9aad7891fdd14da2982c0b7b70f944673688b85b0e5",
+    "prototype/Core/WS2CarPlaySession.swift": "32dc1f9f6de490f487589b681025ef3b4bcfb7a00156b4df642cb1a584cddb9b",
+    "prototype/Core/WS2DeviceEvidence.swift": "916a69acd7eb65a232ccd0a666174722701301f4c3ef5af327c13f8acdb9d9f3",
+    "prototype/Core/WS2MouthTemplates.swift": "bbc7bb670f8f73c81ace72769019ee616027ffbe0370973f7541511f43043f2c",
+    "prototype/Core/WS2OPACK.swift": "7ee687fedd6ccb19898efd74323906d132bd0e49d3af1a1dfcdb05c6bb64ef29",
+    "prototype/Core/WS2SilentPhrases.swift": "0e1052af1f9d7ad18da6eddec59151177981678172db090d5e8a0d1233e9e4af",
+    "prototype/Effects/EffectFrameSource.swift": "341bd3f81e2666826c7a01a005a1fe57e00896fccc22686fd1e5bf6dd3745088",
+    "prototype/Effects/EffectSoakProbe.swift": "3b18e97364139d6b696ba700ce4fe5b24b85d98d2ff42ebbfab3bd9aba510bdd",
+    "prototype/Effects/FoldRenderer.swift": "2fd1a95fe2a480521b1dbe9e3f9b254410f15264e39575444fd05593901c966e",
+    "prototype/Effects/PerfQualification.swift": "70d95055788f50ed9cdb735bade9350e088b25ddbc81cbaae1aec6ce39e40567",
+    "prototype/Support/Diagnostics.swift": "3467010017497426f43f9fbebc9148282dc0d084ff78530d4c819b129c3abf59",
+    "prototype/Support/WS2CompanionChannel.swift": "b1ab4f2e1188bcab7b799eff00778d5c0695658a79ee7b4fe8d41897f384e73e",
+    "prototype/Support/WS2CompanionPairSetupChannel.swift": "26814ab71e6a5b7b22aef2225a261bc8d1852de730e249378b77303f4336e485",
+    "tests/CompanionChannelTests.swift": "069b3e2aa8f4bc143ee9a19b03edfcf6a0687c91987bfaef69d3686c0ab42459",
+    "tests/ConductorOwnedFlowTests.swift": "caa04931f7cdfe45f277085952116ca8fa93a7549b834594b386a3536dcf419b",
+    "tests/FaceObservationSharingTests.swift": "6aebedec6984459c200f194774b1dafef954e06fa1e6d4e2771397a5827baf04",
+    "tests/MouthRecordingProbeTests.swift": "92f56ebbb489f0a92be83842bc6796dd5e6bed5a33aacc2f53001625014d1de2",
+    "tests/PerfQualificationTests.swift": "d4c19496f775eb9fb166d008589b023ed2e5844163edef4e4925dda111372df7",
+    "tests/WS2CarPlaySessionTests.swift": "658d0013dc388abe5d014cfe27907c06ed143c82be1abf534ba0ffa2c81d244e",
+    "tests/WS2MouthTemplatesTests.swift": "32c995b941752876f37918fb9adbc3d2590f3f7098c1d3a6698f2d1ba3e2d334",
+    "tests/fixtures/conductor-backend.py": "3cc79fb3045f3e62a6678c4bd718c017596f80b8f9bfc0bda800204bb5649afb",
+    "tests/fixtures/opack-reference-vectors.json": "5679ba5116aaac318b7a95759acdb0308c1dd4f6892d09f776235a76ea5c34d2",
+    "tests/run-companion-channel-tests.sh": "c46bf501f25b00ff80836d2f4500ad68645323d480ff062a76a3e425f05a0700",
+    "tests/run-conductor-owned-flow-tests.sh": "7aa7ea48306aa22b90baa8fc91c63b20c703002ef41ae5781797f46473ce1ea1",
+    "tests/run-face-observation-sharing-tests.sh": "a68f9b875474f1301ba209e1d3767f1b72638c6db726381dc66bdb87a5e6139f",
+    "tests/run-mouth-recording-tests.sh": "84b6a8a6d75534f73d3dc5b869481cfec0afa1bbf7554fcff4994f4330ca914c",
+    "tests/run-mouth-template-tests.sh": "0c1ecfb9e400bafd78a249a04737e5481164a5073c24b02b23364940a6297953",
+    "tests/run-perf-qualification-tests.sh": "1892e33e36a36637549c9c45e4789b3579161469ab3551ea22fbea35f30892ae",
+    "tools/carplay/check-playport.sh": "29eacd8302ec49edb398846dbcc46a5be88b9d568ac3640961c0bf65e26f0d6c",
+    "tools/carplay/prepare-jdk21.sh": "8e7eaacaf285f316f4fbda318381126c425429bc5b0424f47c3ee69689df2f8f",
+    "tools/carplay/test-session.sh": "dc87d072e2dce3e9323f8f39abf3acee3242a3e51b807765be8a0295bd90b4ca",
+    "tools/privacy/registry.json": "92aaa311aa139998091ee22ecabb68070c5907565d12f6135d72f75d87562631",
+    "tools/probes/BLEReadProbe.swift": "425dd0a42d26adf45fdab36b2bed750eb6282a8ba56ef315607464d1af6823b1",
+    "tools/probes/MouthProfileTool.swift": "894325763d0aa3ac3cf77feb59913a65aa0b92334692c651432cc5c8992df287",
+    "tools/probes/MouthRecordingProbe.swift": "4ce789c248ce62bdbe2ca3f42eefcffabf2e7657dfa6956b1918008cf2078ba9",
+    "tools/probes/PairedRSSIProbe.swift": "ecbcf2faaba6438b3cbc4f6292d091b20bf0a1c23b0f2b5a9b3037a8b7befa4d",
+    "tools/probes/companion-channel/README.md": "0b3d9ff417cdf6b1fd338c850b7b63ac8ee1d7cd1197943f46b5a61ecbe02e00",
+    "tools/probes/companion-channel/run.sh": "8cde7b77f2753c6d6c9a1d58a9ec9ab3a33bd0c11666202f4bfa4e53f9742ca8",
+    "tools/probes/companion-pairing/LICENSE-HomeKitADK.txt": "cfc7749b96f63bd31c3c42b5c471bf756814053e847c10f3eb003417bc523d30",
+    "tools/probes/companion-pairing/NativeSRPTests.c": "bcd8f9c38815c02f5edfee5a30c724b690edd1cf2ef8e313afffb2e8bf66d6e6",
+    "tools/probes/companion-pairing/PairSetupProbe.swift": "d13cb8faaa36ab01311df921e1b33d7734c4b73a4581c944d07375e04cdeb75b",
+    "tools/probes/companion-pairing/README.md": "7faf4d8281a9d3c72fed7a44df78754127dda46a8cc4d86ee3ff73ad32f6a228",
+    "tools/probes/companion-pairing/SRPProbe.swift": "a4a932c910ad25531435a6f773adc783e79966d22c6a56cb204536e683f72429",
+    "tools/probes/companion-pairing/WS2NativeSRPPrimitive.swift": "2b25cb470fa05a43b8b5d8d2e8cf90148ceccdff58a22a43adddcbb69e073d9c",
+    "tools/probes/companion-pairing/WSNativeSRP.c": "de252625b4260a8b37e981f4238a50e58d6273cc44b6a5b2915278756c90b479",
+    "tools/probes/companion-pairing/WSNativeSRP.h": "84a7e9d1f2b347d91ca2a2b27c34037e09fdc0d65699b95bea23996a95ab1ce6",
+    "tools/probes/companion-pairing/__pycache__/pair-setup-interop.cpython-314.pyc": "f0a398ce3d645a4bd4e99fd3e959398496d704baf5b855208e4f3c15ee4dbbc6",
+    "tools/probes/companion-pairing/evidence/interop-2026-10-07.json": "d9a67415db5974de133476a14e8ab76fec611ea7cdb8c243f56d22a9dd16181b",
+    "tools/probes/companion-pairing/evidence/pair-setup-2026-10-07.json": "a0f88ec158320ca8f9bc5f73fcee99d07d23082d4a5cd0a21df65d89e2a9b5e5",
+    "tools/probes/companion-pairing/module.modulemap": "8b80e41b68d6ebd3074eb7dd730d70b11ddffcf40c4fd8a1ec0c7c5896687569",
+    "tools/probes/companion-pairing/pair-setup-interop.py": "cb581c9f0dbe2d57688604c05bac26583b2860ec8abb7f140e95da9a144d2c13",
+    "tools/probes/companion-pairing/requirements-test.txt": "9130992ee526b5b6b2817a3cca4ac301b51afc91b0268c894a4ddf010eae7db2",
+    "tools/probes/companion-pairing/run-native-srp.sh": "d8001bdea075e57c44f83b82f1aba5439c6a703bb59206edabb302257b0fecba",
+    "tools/probes/companion-pairing/run-pair-setup.sh": "00c365a438d61cf8041ef62629493ba5448577313bdb436980aedeccf5131ca6",
+    "tools/probes/companion-pairing/srptools-interop.py": "e2a421931a6d9a29e2806d60650c1dea7f467614f8558c5cf2393d30e5a080e1",
+    "tools/probes/game-controller/GameControllerProbe.swift": "ff4fb7a4703280e626d8bacc46dde386769a6610be8a7212f42d755f60d115fa",
+    "tools/probes/game-controller/README.md": "6a4aea485125e06c190848596f981cfa662368b5e6fa717fa40a521682f4c842",
+    "tools/probes/game-controller/run.sh": "703efb19e6e587735cf88d08afc0c413404f1fdb519505013f83b988dbf72468",
+    "tools/probes/mouth-profile.sh": "59bf72d6f40f11f6706e92d13913e56ebb83d65a96d1aa0f6dcb63019998b61f",
+    "tools/probes/remote-device/DiscoveryProfile.swift": "2fa64d52206014960b3b577ed4292945b09a4b65e08bf1b44f5b82a426ce9fb1",
+    "tools/probes/remote-device/Handshake.swift": "b7efac420f58271058827965e6ce84521f46f3eade29ee762ab5fec0b841a004",
+    "tools/probes/remote-device/OfflineTests.swift": "205ace5cd8247722c0b84c36ae17eaa85d4f1eb6b99c830c5989da60e2313393",
+    "tools/probes/remote-device/README.md": "a8a8c8295e056d488b3c919377267d8cfd28ef4f2d3438f9f252290d70a5aa22",
+    "tools/probes/remote-device/RemoteDeviceProbe.swift": "2f80614362f2d0c7babc50c0a0cd199c5beb9d804a58531691093f505eabff91",
+    "tools/probes/remote-device/SessionProfile.swift": "10acfc7ad911d6e213a695ef60e75004d136c9da8a18dce8b4775fdacb653d4e",
+    "tools/probes/remote-device/WireTest.swift": "bf0ead7a4bcc0d531c1f0e282b9910eb37004a9531f4c312b401911e27ed4a51",
+    "tools/probes/remote-device/handshake-interop.py": "9683da85ac576ed26a1c46701813f1c51beee05292f4b45aebf363143c54e0de",
+    "tools/probes/remote-device/run.sh": "0af9809cbd521e73815f2a3595bf641dba9229f4338caee3a8b4b759abc649d9",
+    "tools/probes/run-ble-evidence.sh": "9f919cb52f014c5b3654617508aef3569dfe5ea9051ace56348f79a0c1ca2e99",
+    "tools/probes/run-mouth-recording.sh": "f7bc6c316e4af892fa8392bafdc9f7e6052350b9929ee932891f417106ce3dcd",
+    "tools/probes/remote-device/session-interop.py": "a1d47db6502562232b34fcf2695b31c4b506c0742acd0d164dfa9133f86650c6",
+    "tools/probes/remote-device/remote-atv-audit.md": "bfeda378ee4ae605e30e593ee00e51eea91e4ebdf8ed9081acee4d978167037c",
+    "tools/probes/remote-device/wire-opack.py": "301d793884843bc9c887d27141719f7f78b56e887cd326d4f0b01b23095b399d"
+  },
+  "note": "Preexisting performance changes included in aggregate compile but not claimed as newly authored. New hardware tests are recorded separately; this is not a release approval.",
+  "remoteFullSessionEvidence": {
+    "agentRun": ".build/ws2-reuse/remote-full-session-interop.json",
+    "mainRun": ".build/ws2-reuse/remote-full-session-main.json",
+    "mainRunSHA256": "b6831266686df454015d9bc9fd2a9e464671ecc697404b133f7eb1b5a93b98c5",
+    "realPhone": "Eighth finalbinary run: user PIN shown butconnection failed;2connections/1verified systemInfo,0controlinput,0listeners. Final compatibility NOT passed.",
+    "binarySHA256": "63449b6f8f99ff1eab986e1f14ef39366d236849d2accdb856251d187647b2b4"
+  }
+}

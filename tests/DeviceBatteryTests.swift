@@ -20,6 +20,14 @@ struct DeviceBatteryTests {
   }
 
   static func main() {
+    for charging in [ChargingState.charging, .notCharging] {
+      var book = DeviceBatteryBook()
+      _ = book.connect(mouse, at: 0, initialSnapshot: true)
+      expect(lows(book.record(reading(8, at: 1), now: 1)) == [10], "initial low recorded")
+      _ = book.record(reading(80, at: 2000, charging: charging, observed: 0), now: 2000)
+      expect(lows(book.record(reading(8, at: 2001), now: 2001)).isEmpty,
+             "stale charging/recovery cannot rearm a repeated low reminder")
+    }
     do {  // ID-01 两台同名；ID-02 改名
       var book = DeviceBatteryBook()
       let other = DeviceIdentity(id: "hid.bt:bb", displayName: "妙控鼠标", kind: .mouse)

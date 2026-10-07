@@ -1,0 +1,6 @@
+{"basis": "pinned-source-format-support", "event": "codec-compatibility", "formats": ["UUID-0x05", "rawTime-0x06", "dictionary-0xF0-0xFF"], "priorFailureTag": "not-captured"}
+{"event": "service-ready", "port": 59661, "service": "_companion-link._tcp"}
+{"event": "service-ready", "port": 59662, "service": "_airplay._tcp"}
+{"event": "service-ready", "port": 59663, "service": "_mediaremotetv._tcp"}
+{"event": "ready", "lifetimeSeconds": 120, "name": "WindowShade Remote Probe", "pairingSeconds": 60, "port": 59661, "profile": "atv-core", "simulatedMediaState": true}
+{"acceptedConnections": 0, "applicationActions": 0, "event": "finished", "persistentCredentials": false, "remainingListeners": 0, "unsupportedConnections": 0}

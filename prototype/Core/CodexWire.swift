@@ -85,15 +85,15 @@ struct CodexWire: Sendable {
             "approvalsReviewer":.string("user")],now:now)
     }
     mutating func resumeThread(id: String, now: WS2.Instant) throws {
-        guard state == .ready, threadID == nil, !id.isEmpty, id.utf8.count <= 512,
-              !pending.values.contains(where: { $0.method == "thread/start" || $0.method == "thread/resume" }),
+        guard state == .ready, turnID == nil, approvals.isEmpty, pending.isEmpty,
+              !id.isEmpty, id.utf8.count <= 512,
               time.accept(now) else { throw Failure.notReady }
         _ = try request("thread/resume",["threadId":.string(id),"sandbox":.string("read-only"),
             "approvalPolicy":.string("on-request"),"approvalsReviewer":.string("user")],now:now)
         expectedResumeID = id
     }
     mutating func startTurn(text: String, model: String, effort: String, now: WS2.Instant) throws {
-        guard state == .ready, let threadID, turnID == nil,
+        guard state == .ready, let threadID, turnID == nil, expectedResumeID == nil,
               !pending.values.contains(where:{$0.method == "turn/start"}), models[model]?.contains(effort) == true,
               !text.isEmpty, text.utf8.count <= 65_536, time.accept(now) else { throw Failure.unsupported }
         _ = try request("turn/start",["threadId":.string(threadID),"model":.string(model),"effort":.string(effort),
@@ -102,13 +102,15 @@ struct CodexWire: Sendable {
               "input":.array([.object(["type":.string("text"),"text":.string(text),"text_elements":.array([])])])],now:now)
     }
     mutating func steer(text: String, expectedTurnID: String, now: WS2.Instant) throws {
-        guard state == .ready, let threadID, turnID == expectedTurnID, !text.isEmpty,
+        guard state == .ready, let threadID, turnID == expectedTurnID, expectedResumeID == nil,
+              !pending.values.contains(where: { $0.method == "turn/steer" }), !text.isEmpty,
               text.utf8.count <= 65_536, time.accept(now) else { throw Failure.stale }
         _ = try request("turn/steer",["threadId":.string(threadID),"expectedTurnId":.string(expectedTurnID),
               "input":.array([.object(["type":.string("text"),"text":.string(text),"text_elements":.array([])])])],now:now)
     }
     mutating func interrupt(now: WS2.Instant) throws {
-        guard state == .ready, let threadID, let turnID, time.accept(now) else { throw Failure.stale }
+        guard state == .ready, let threadID, let turnID, expectedResumeID == nil,
+              !pending.values.contains(where: { $0.method == "turn/interrupt" }), time.accept(now) else { throw Failure.stale }
         _ = try request("turn/interrupt",["threadId":.string(threadID),"turnId":.string(turnID)],now:now)
         // A successful interrupt response is not a turn/completed event.
     }
@@ -200,6 +202,7 @@ struct CodexWire: Sendable {
         guard let p = pending.removeValue(forKey:id) else { return [.ignoredLateReply(id)] }
         guard now < p.deadline else { close(); return [.ambiguousCompletion(id)] }
         if v["error"] != nil {
+            if p.method == "thread/resume" { expectedResumeID = nil }
             if p.method == "initialize" || p.method == "model/list" { close() }
             return [.failed(id)]
         }
