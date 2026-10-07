@@ -1,0 +1,4 @@
+module WSNativeSRP {
+    header "WSNativeSRP.h"
+    export *
+}

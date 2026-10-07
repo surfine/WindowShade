@@ -1,0 +1,57 @@
+{"basis": "pinned-source-format-support", "event": "codec-compatibility", "formats": ["UUID-0x05", "rawTime-0x06", "dictionary-0xF0-0xFF"], "priorFailureTag": "not-captured"}
+{"event": "service-ready", "port": 59658, "service": "_airplay._tcp"}
+{"event": "service-ready", "port": 59659, "service": "_mediaremotetv._tcp"}
+{"event": "service-ready", "port": 59660, "service": "_companion-link._tcp"}
+{"event": "ready", "lifetimeSeconds": 120, "name": "WindowShade Remote Probe", "pairingSeconds": 60, "port": 59660, "profile": "atv-core", "simulatedMediaState": true}
+{"event": "connection", "stage": "initial"}
+{"event": "first-frame", "frameType": 5, "phase": "initial"}
+{"event": "handshake-phase", "phase": "pair-verify"}
+{"event": "handshake-phase", "phase": "pair-setup"}
+{"event": "handshake-phase", "phase": "enrolled"}
+{"categories": {}, "event": "connection-closed", "stage": "enrolled"}
+{"event": "rejected", "frameType": 8, "reason": "state", "stage": "enrolled"}
+{"event": "connection", "stage": "initial"}
+{"event": "first-frame", "frameType": 5, "phase": "initial"}
+{"event": "handshake-phase", "phase": "pair-verify"}
+{"event": "handshake-phase", "phase": "verified"}
+{"category": "_systemInfo", "count": 1, "event": "authenticated-category"}
+{"category": "_sessionStart", "count": 1, "event": "authenticated-category"}
+{"category": "TVRCSessionStart", "count": 1, "event": "authenticated-category"}
+{"category": "FetchAttentionState", "count": 1, "event": "authenticated-category"}
+{"category": "_interest", "count": 1, "event": "authenticated-category"}
+{"category": "FetchSiriRemoteInfo", "count": 1, "event": "authenticated-category"}
+{"category": "_interest", "count": 2, "event": "authenticated-category"}
+{"category": "_interest", "count": 3, "event": "authenticated-category"}
+{"categories": {"_interest": 3, "_sessionStart": 1, "_systemInfo": 1, "FetchAttentionState": 1, "FetchSiriRemoteInfo": 1, "TVRCSessionStart": 1}, "event": "connection-closed", "stage": "verified"}
+{"event": "rejected", "frameType": 8, "reason": "activeEnvelope(code=unsupportedMethod,root=dictionary,_t=uint,_i=string,_c=dictionary,_x=uint,model=missing,modelMethod=redacted,unknownTopLevel=1,method=redacted)", "stage": "verified"}
+{"event": "connection", "stage": "initial"}
+{"event": "first-frame", "frameType": 5, "phase": "initial"}
+{"event": "handshake-phase", "phase": "pair-verify"}
+{"event": "handshake-phase", "phase": "verified"}
+{"category": "_systemInfo", "count": 1, "event": "authenticated-category"}
+{"categories": {"_systemInfo": 1}, "event": "connection-closed", "stage": "verified"}
+{"event": "connection", "stage": "initial"}
+{"event": "first-frame", "frameType": 5, "phase": "initial"}
+{"event": "handshake-phase", "phase": "pair-verify"}
+{"event": "handshake-phase", "phase": "verified"}
+{"category": "_systemInfo", "count": 1, "event": "authenticated-category"}
+{"category": "_sessionStart", "count": 1, "event": "authenticated-category"}
+{"category": "TVRCSessionStart", "count": 1, "event": "authenticated-category"}
+{"category": "FetchAttentionState", "count": 1, "event": "authenticated-category"}
+{"category": "FetchSiriRemoteInfo", "count": 1, "event": "authenticated-category"}
+{"category": "_interest", "count": 1, "event": "authenticated-category"}
+{"category": "_interest", "count": 2, "event": "authenticated-category"}
+{"categories": {"_interest": 2, "_sessionStart": 1, "_systemInfo": 1, "FetchAttentionState": 1, "FetchSiriRemoteInfo": 1, "TVRCSessionStart": 1}, "event": "connection-closed", "stage": "verified"}
+{"event": "rejected", "frameType": 8, "reason": "activeEnvelope(code=unsupportedMethod,root=dictionary,_t=uint,_i=string,_c=dictionary,_x=uint,model=missing,modelMethod=redacted,unknownTopLevel=1,method=redacted)", "stage": "verified"}
+{"event": "connection", "stage": "initial"}
+{"event": "first-frame", "frameType": 5, "phase": "initial"}
+{"event": "handshake-phase", "phase": "pair-verify"}
+{"event": "handshake-phase", "phase": "verified"}
+{"category": "_systemInfo", "count": 1, "event": "authenticated-category"}
+{"category": "_sessionStart", "count": 1, "event": "authenticated-category"}
+{"category": "TVRCSessionStart", "count": 1, "event": "authenticated-category"}
+{"category": "FetchAttentionState", "count": 1, "event": "authenticated-category"}
+{"category": "_interest", "count": 1, "event": "authenticated-category"}
+{"categories": {"_interest": 1, "_sessionStart": 1, "_systemInfo": 1, "FetchAttentionState": 1, "TVRCSessionStart": 1}, "event": "connection-closed", "stage": "verified"}
+{"event": "rejected", "frameType": 8, "reason": "activeEnvelope(code=unsupportedMethod,root=dictionary,_t=uint,_i=string,_c=dictionary,_x=uint,model=missing,modelMethod=redacted,unknownTopLevel=1,method=redacted)", "stage": "verified"}
+{"acceptedConnections": 5, "applicationActions": 0, "event": "finished", "persistentCredentials": false, "remainingListeners": 0, "unsupportedConnections": 0}

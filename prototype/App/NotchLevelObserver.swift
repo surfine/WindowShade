@@ -1,5 +1,5 @@
 // 输出音量、屏幕亮度变化 → 同一颗岛上的合成提示。
-// 不拦系统键，不写隐私登记：音量读 Core Audio 公开标量；亮度经 DisplayServices 读当前屏
+// 不拦系统键，读取点已登记：音量读 Core Audio 公开标量；亮度经 DisplayServices 读当前屏
 //（仓库里其它硬件形状读取同一类私有桥，失败就静默）。
 
 import AudioToolbox

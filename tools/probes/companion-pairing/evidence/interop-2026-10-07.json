@@ -1,0 +1,80 @@
+{
+  "srptools": "1.0.1",
+  "six": "1.17.0",
+  "cases": [
+    {
+      "fixture": "A=05 (383 leading zero bytes at width 384)",
+      "mode": "adk-padded",
+      "public_A_bytes": 1,
+      "native_key_matches_independent_client": true,
+      "expected_M2_formula_matches": true,
+      "raw_srptools_accepts_M2": false,
+      "replay_rejected": true
+    },
+    {
+      "fixture": "A=05 (383 leading zero bytes at width 384)",
+      "mode": "srptools-minimal",
+      "public_A_bytes": 1,
+      "native_key_matches_independent_client": true,
+      "expected_M2_formula_matches": true,
+      "raw_srptools_accepts_M2": true,
+      "replay_rejected": true
+    },
+    {
+      "fixture": "fixed 256-bit a",
+      "mode": "adk-padded",
+      "public_A_bytes": 384,
+      "native_key_matches_independent_client": true,
+      "expected_M2_formula_matches": true,
+      "raw_srptools_accepts_M2": true,
+      "replay_rejected": true
+    },
+    {
+      "fixture": "fixed 256-bit a",
+      "mode": "srptools-minimal",
+      "public_A_bytes": 384,
+      "native_key_matches_independent_client": true,
+      "expected_M2_formula_matches": true,
+      "raw_srptools_accepts_M2": true,
+      "replay_rejected": true
+    },
+    {
+      "fixture": "wrong-pin",
+      "rejected": true,
+      "session_consumed": true
+    },
+    {
+      "fixture": "wrong-proof",
+      "rejected": true,
+      "session_consumed": true
+    },
+    {
+      "fixture": "A-zero",
+      "rejected": true,
+      "session_consumed": true
+    },
+    {
+      "fixture": "A-N",
+      "rejected": true,
+      "session_consumed": true
+    },
+    {
+      "fixture": "clear",
+      "rejected": true,
+      "session_consumed": true
+    },
+    {
+      "fixture": "short-proof",
+      "rejected": true,
+      "session_consumed": true
+    },
+    {
+      "fixture": "oversized-public",
+      "rejected": true,
+      "session_consumed": true
+    }
+  ],
+  "salt_encoding": "raw 16 bytes",
+  "hardware": "not_used",
+  "production_integration": false
+}

@@ -1,0 +1,62 @@
+{
+  "date": "2026-10-07",
+  "scope": "synthetic registered peers; real loopback TCP; no native iPhone Remote or assistant task",
+  "platform": "macOS-27.0-arm64-arm-64bit-Mach-O",
+  "sourceSHA256": {
+    "prototype/Core/WS2OPACK.swift": "b658061b557cfdb2ec4e03b8f1fdd0a00b2c7643d4e5f450d279888849d6605b",
+    "prototype/Support/WS2CompanionChannel.swift": "7ee6f09cec2e1fea97047eb8affbd2d2a755b99908dcaba001ad25e52cbffb17",
+    "prototype/Core/WS2CompanionFrame.swift": "2ecb698bdf16965242836f132a7bc801d0ac7db7b488abc0d5a1b878a4c0fabd",
+    "prototype/Support/WS2CompanionCrypto.swift": "d50a35fcb45ba1905fb26a6c3c4f14a7dd450bb8413b13bfcf8429b0a7eed8e8",
+    "prototype/Support/WS2CompanionTCPTransport.swift": "78bccef841039bf2d4fb5058ae21e01633da6f2e00435eb1a17b9ca2cd273266",
+    "tests/CompanionChannelTests.swift": "3dc050f2c31d4e839887e9508ea7ac780b1c41ff48d24cfa76490ba60ce3f857",
+    "tests/fixtures/opack-reference-vectors.json": "505d8928648d66b93c1395a2828c04ad020e7ea4a07cea06d48ebaf1f7c90ee2",
+    "tests/run-companion-channel-tests.sh": "c46bf501f25b00ff80836d2f4500ad68645323d480ff062a76a3e425f05a0700",
+    "tools/probes/companion-channel/run.sh": "8cde7b77f2753c6d6c9a1d58a9ec9ab3a33bd0c11666202f4bfa4e53f9742ca8"
+  },
+  "binarySHA256": "de179000b3d82b35de75a2be6f9cef1336666fdcdeca25b03957a4d9dd489a60",
+  "offline": {
+    "command": "bash tests/run-companion-channel-tests.sh",
+    "exitCode": 0,
+    "cases": [
+      "six pinned upstream OPACK vectors",
+      "literal vectors and bounds",
+      "success",
+      "badSignature",
+      "revoke",
+      "replay",
+      "unknownMethod",
+      "disconnect",
+      "plaintext",
+      "sendFailure",
+      "m4SendFailure",
+      "handshakeExpired",
+      "sessionExpired",
+      "plaintextAfterVerify",
+      "badOPACK"
+    ]
+  },
+  "loopback": {
+    "command": ".build/companion-channel/companion-channel --loopback-self-test",
+    "exitCode": 0,
+    "output": "PASS real loopback TCP: signed M1\u2013M4, authenticated OPACK delivery, replay closes connection",
+    "execution": "escalated local-loopback permission; initial sandbox attempt returned EPERM"
+  },
+  "notRun": [
+    "native iPhone interoperability",
+    "Pair-Setup PIN/Keychain",
+    "Conductor owned backend end-to-end",
+    "whole App build",
+    "real-device latency and energy"
+  ],
+  "legacyCrypto": {
+    "command": ".build/remote-reuse/legacy-crypto tests/fixtures/companion-crypto-vectors.json",
+    "exitCode": 0,
+    "checks": [
+      "fixed Python/CryptoKit key agreement HKDF signatures",
+      "synthetic M1-M4",
+      "bidirectional records",
+      "replay closes",
+      "closed cannot transmit"
+    ]
+  }
+}

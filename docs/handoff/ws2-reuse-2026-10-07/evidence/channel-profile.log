@@ -1,0 +1,33 @@
+PASS OPACK: 13 pinned pyatv vectors; UUID/raw-time/alias dictionaries, typed references, truncation, error offsets and original bounds
+PASS channel: success
+PASS channel: badSignature
+PASS channel: revoke
+PASS channel: replay
+PASS channel: unknownMethod
+PASS channel: disconnect
+PASS channel: plaintext
+PASS channel: sendFailure
+PASS channel: m4SendFailure
+PASS channel: handshakeExpired
+PASS channel: sessionExpired
+PASS channel: plaintextAfterVerify
+PASS channel: badOPACK
+PASS request: reply
+PASS request: duplicateTransaction
+PASS request: replyAfterClose
+PASS request: replyTwice
+PASS envelope diagnostics: 10 real encrypted rejection cases; allowlisted method-only metadata, private values/unknown keys redacted
+PASS remote compatibility: aliasAndPush
+PASS remote compatibility: invalidAliasType
+PASS remote compatibility: identifierPrecedence
+PASS remote compatibility: missingContent
+PASS remote compatibility: missingTypeEvent
+PASS remote compatibility: unlistedPush
+PASS remote compatibility: foreignTrigger
+PASS remote compatibility: staleTrigger
+PASS remote compatibility: pushBudget
+PASS remote compatibility: revokedPush
+PASS remote compatibility: expiredPush
+PASS remote compatibility: closedPush
+PASS remote compatibility: failedPush
+PASS probe-only no-op fallback: strict rejects configuration; 17 requests ack, event ignored, no delivery, known input resumes

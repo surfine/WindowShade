@@ -1,0 +1,19 @@
+{"basis": "pinned-source-format-support", "event": "codec-compatibility", "formats": ["UUID-0x05", "rawTime-0x06", "dictionary-0xF0-0xFF"], "priorFailureTag": "not-captured"}
+{"event": "service-ready", "port": 59664, "service": "_companion-link._tcp"}
+{"event": "service-ready", "port": 59665, "service": "_mediaremotetv._tcp"}
+{"event": "service-ready", "port": 59666, "service": "_airplay._tcp"}
+{"event": "ready", "lifetimeSeconds": 120, "name": "WindowShade Remote Probe", "pairingSeconds": 60, "port": 59664, "profile": "atv-core", "simulatedMediaState": true}
+{"event": "connection", "stage": "initial"}
+{"event": "first-frame", "frameType": 5, "phase": "initial"}
+{"event": "handshake-phase", "phase": "pair-verify"}
+{"event": "handshake-phase", "phase": "pair-setup"}
+{"event": "handshake-phase", "phase": "enrolled"}
+{"categories": {}, "event": "connection-closed", "stage": "enrolled", "unhandledMethods": 0}
+{"event": "rejected", "frameType": 8, "reason": "state", "stage": "enrolled"}
+{"event": "connection", "stage": "initial"}
+{"event": "first-frame", "frameType": 5, "phase": "initial"}
+{"event": "handshake-phase", "phase": "pair-verify"}
+{"event": "handshake-phase", "phase": "verified"}
+{"category": "_systemInfo", "count": 1, "event": "authenticated-category"}
+{"categories": {"_systemInfo": 1}, "event": "connection-closed", "stage": "verified", "unhandledMethods": 0}
+{"acceptedConnections": 2, "applicationActions": 0, "event": "finished", "persistentCredentials": false, "remainingListeners": 0, "unsupportedConnections": 0}

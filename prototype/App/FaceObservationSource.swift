@@ -40,74 +40,270 @@ struct FaceObservation: Sendable, Equatable {
     let rightEyeOpenness: Double?
     let faceBoundingBox: CGRect?
     let confidence: Float?
+    /// Outer lip points in Vision's face-local normalized coordinates (origin bottom-left).
+    /// Geometry only; never an identity template. No image or crop leaves the capture worker.
+    var mouthLandmarks: [CGPoint]? = nil
+    /// Negotiated physical source rate, not a claim about delivered Vision throughput.
+    /// Nil means the camera did not accept a rate; use observedAt deltas to measure delivery.
+    var sourceFPS: Double? = nil
 }
 
 enum FaceObservationSourceError: Error {
     case authorizationDenied, unknownDevice, unavailable, interrupted, superseded
+    case cameraInUse, invalidLifetime, expired
     case runtime(String)
 }
 
-/// Main-actor callback ownership, with capture and Vision confined to one worker queue.
-@MainActor final class FaceObservationSource {
-    private let worker = FaceObservationWorker()
-    private var epoch: UInt64 = 0
-    private var callback: ((FaceObservation) -> Void)?
-    var onFailure: ((Error) -> Void)?
-    static var authorizationStatus: AVAuthorizationStatus { AVCaptureDevice.authorizationStatus(for: .video) }
-    /// 菜单用的相机列表：读缓存，不在主线程上问系统（冷启动第一次枚举相机在主线程上要 262–390 ms）。
-    /// 缓存在后台填：启动时一次、相机接上或拔掉时再一次；还没填好时是空的（菜单那一项先灰着）。
-    static func devices() -> [FaceCameraDescriptor] {
-        CameraList.shared.current()
-    }
+enum FaceObservationPurpose: Sendable {
+    case geometry, command, securityChallenge
+    var requestedFPS: Double { self == .geometry ? FaceCameraTuning.targetSourceFPS : 25 }
+}
 
-    /// 在后台把相机列表填好，并在相机接上、拔掉时更新。启动时调一次。
-    static func startWatchingCameras() { CameraList.shared.start() }
-    func requestAuthorization() async -> Bool {
-        await AVCaptureDevice.requestAccess(for: .video)
+struct FaceObservationSubscription: Sendable, Hashable {
+    fileprivate let id: UUID
+}
+
+/// The injectable boundary owns exactly one physical capture. Production state stays on its queue.
+protocol FaceCaptureWorker: Sendable {
+    func start(deviceID: String, token: UInt64, requestedFPS: Double,
+               deliver: @escaping @Sendable (FaceObservation) -> Void,
+               fail: @escaping @Sendable (Error) -> Void) async throws
+    func setRequestedFPS(_ fps: Double)
+    func stop()
+    func countersSnapshot() async -> FacePipelineCounters
+}
+
+/// One process-wide physical camera, independently cancellable consumers, monotonic leases.
+@MainActor final class FaceObservationHub {
+    static let shared = FaceObservationHub(worker: FaceObservationWorker())
+    private struct Consumer {
+        let purpose: FaceObservationPurpose
+        let expiresAt: Double?
+        let beganAt: Double
+        let observation: @MainActor (FaceObservation) -> Void
+        let failure: @MainActor (Error) -> Void
+        var lastDelivered: Double?
     }
-    func start(deviceID: String, onObservation: @escaping @MainActor (FaceObservation) -> Void) async throws {
-        guard Self.authorizationStatus == .authorized else { throw FaceObservationSourceError.authorizationDenied }
-        stopCapture()
-        let token = epoch
-        callback = onObservation
-        do {
-            try await worker.start(deviceID: deviceID, token: token, deliver: { [weak self] value in
-                Task { @MainActor in
-                    guard let self, self.epoch == token else { return }
-                    self.callback?(value)
-                }
-            }, fail: { [weak self] error in
-                Task { @MainActor in
-                    guard let self, self.epoch == token else { return }
-                    let handler = self.onFailure
-                    self.stop()
-                    handler?(error)
-                }
-            })
-            guard epoch == token, !Task.isCancelled else {
-                if epoch == token { stopCapture() }
-                throw CancellationError()
+    private let worker: any FaceCaptureWorker
+    private let clock: @MainActor () -> Double
+    private let authorize: @MainActor () async -> Bool
+    private var consumers: [FaceObservationSubscription: Consumer] = [:]
+    private var deviceID: String?
+    private var generation: UInt64 = 0
+    private var startup: Task<Void, Never>?
+    private var ready = false
+    private var waiters: [FaceObservationSubscription: CheckedContinuation<Void, Error>] = [:]
+    private var expiry: Task<Void, Never>?
+    private var lastSequence: UInt64 = 0
+    private var lastObservedAt: Double?
+    init(worker: any FaceCaptureWorker,
+         clock: @escaping @MainActor () -> Double = { CACurrentMediaTime() },
+         authorize: @escaping @MainActor () async -> Bool = {
+             AVCaptureDevice.authorizationStatus(for: .video) == .authorized
+         }) {
+        self.worker = worker; self.clock = clock; self.authorize = authorize
+    }
+    func reserve(token: FaceObservationSubscription = .init(id: UUID()), deviceID: String, purpose: FaceObservationPurpose, validFor: Double?,
+                 observation: @escaping @MainActor (FaceObservation) -> Void,
+                 failure: @escaping @MainActor (Error) -> Void) throws -> FaceObservationSubscription {
+        expireConsumers()
+        guard !deviceID.isEmpty else { throw FaceObservationSourceError.unknownDevice }
+        guard self.deviceID == nil || self.deviceID == deviceID else {
+            throw FaceObservationSourceError.cameraInUse
+        }
+        if let validFor {
+            guard validFor.isFinite, validFor > 0, validFor <= 86_400, (clock() + validFor).isFinite else {
+                throw FaceObservationSourceError.invalidLifetime
             }
+        }
+        consumers[token] = Consumer(purpose: purpose, expiresAt: validFor.map { clock() + $0 }, beganAt: clock(),
+                                    observation: observation, failure: failure)
+        self.deviceID = deviceID
+        scheduleExpiry()
+        return token
+    }
+    func activate(_ token: FaceObservationSubscription) async throws {
+        try Task.checkCancellation()
+        guard consumers[token] != nil else { throw CancellationError() }
+        if startup == nil {
+            generation &+= 1
+            let current = generation
+            let device = deviceID!
+            startup = Task { [weak self] in
+                guard let self else { return }
+                do {
+                    guard await self.authorize() else { throw FaceObservationSourceError.authorizationDenied }
+                    try Task.checkCancellation()
+                    guard self.generation == current, !self.consumers.isEmpty else { throw CancellationError() }
+                    try await self.worker.start(deviceID: device, token: current, requestedFPS: self.requestedFPS,
+                        deliver: { [weak self] value in
+                            Task { @MainActor in self?.receive(value, generation: current) }
+                        }, fail: { [weak self] error in
+                            Task { @MainActor in self?.fail(error, generation: current) }
+                        })
+                    try Task.checkCancellation()
+                    guard self.generation == current else { return }
+                    self.ready = true
+                    let pending = self.waiters
+                    self.waiters.removeAll()
+                    for continuation in pending.values { continuation.resume() }
+                } catch { self.fail(error, generation: current) }
+            }
+        }
+        let current = generation
+        do {
+            try await withTaskCancellationHandler {
+                try await withCheckedThrowingContinuation { (continuation: CheckedContinuation<Void, Error>) in
+                    if Task.isCancelled { continuation.resume(throwing: CancellationError()) }
+                    else if ready { continuation.resume() }
+                    else { waiters[token] = continuation }
+                }
+                try Task.checkCancellation()
+            } onCancel: {
+                Task { @MainActor [weak self] in self?.remove(token) }
+            }
+            expireConsumers()
+            guard generation == current, consumers[token] != nil else { throw CancellationError() }
+            worker.setRequestedFPS(requestedFPS)
         } catch {
-            if epoch == token { stopCapture() }
+            remove(token)
             throw error
         }
     }
-    private func stopCapture() {
-        epoch &+= 1
-        callback = nil
+    private var requestedFPS: Double { consumers.values.map { $0.purpose.requestedFPS }.max() ?? FaceCameraTuning.targetSourceFPS }
+    func remove(_ token: FaceObservationSubscription) {
+        guard consumers.removeValue(forKey: token) != nil else { return }
+        waiters.removeValue(forKey: token)?.resume(throwing: CancellationError())
+        if consumers.isEmpty { endCapture() }
+        else { worker.setRequestedFPS(requestedFPS); scheduleExpiry() }
+    }
+    /// Exposed internally for deterministic monotonic-clock tests; production also schedules expiry.
+    func expireConsumers() {
+        let now = clock()
+        let expired = consumers.filter { $0.value.expiresAt.map { $0 <= now } ?? false }
+        for (token, _) in expired {
+            consumers.removeValue(forKey: token)
+            waiters.removeValue(forKey: token)?.resume(throwing: FaceObservationSourceError.expired)
+        }
+        if !expired.isEmpty {
+            if consumers.isEmpty { endCapture() }
+            else { worker.setRequestedFPS(requestedFPS); scheduleExpiry() }
+            for (_, consumer) in expired { consumer.failure(FaceObservationSourceError.expired) }
+        }
+    }
+    private func scheduleExpiry() {
+        expiry?.cancel(); expiry = nil
+        guard let deadline = consumers.values.compactMap(\.expiresAt).min() else { return }
+        let delay = max(0, deadline - clock())
+        expiry = Task { [weak self] in
+            do { try await Task.sleep(for: .seconds(delay)) } catch { return }
+            self?.expireConsumers()
+        }
+    }
+    private func endCapture() {
+        generation &+= 1
+        startup?.cancel(); startup = nil; ready = false
+        expiry?.cancel(); expiry = nil
+        deviceID = nil; lastSequence = 0; lastObservedAt = nil
         worker.stop()
     }
-    func stop() { stopCapture(); onFailure = nil }
-    /// 当前会话的管道计数快照（授权成功≠采集成功）。
-    func pipelineCounters() async -> FacePipelineCounters {
-        await worker.countersSnapshot()
+    private func fail(_ error: Error, generation: UInt64) {
+        guard generation == self.generation, !consumers.isEmpty else { return }
+        let handlers = consumers.values.map(\.failure)
+        let pending = waiters
+        waiters.removeAll()
+        consumers.removeAll(); endCapture()
+        for continuation in pending.values { continuation.resume(throwing: error) }
+        for handler in handlers { handler(error) }
     }
-    deinit { worker.stop() }
+    private func receive(_ observation: FaceObservation, generation: UInt64) {
+        expireConsumers()
+        let now = clock()
+        guard generation == self.generation, observation.generation == generation,
+              observation.cameraID == deviceID, observation.observedAt.isFinite,
+              observation.observedAt <= now, now - observation.observedAt < 0.5,
+              observation.sequence > lastSequence,
+              lastObservedAt.map({ observation.observedAt > $0 }) ?? true else { return }
+        lastSequence = observation.sequence; lastObservedAt = observation.observedAt
+        // Snapshot IDs, then re-read membership after each callback: a callback may cancel a peer.
+        for token in Array(consumers.keys) {
+            guard var consumer = consumers[token], observation.observedAt >= consumer.beganAt else { continue }
+            if let previous = consumer.lastDelivered,
+               observation.observedAt - previous < 1 / consumer.purpose.requestedFPS - 0.001 { continue }
+            consumer.lastDelivered = observation.observedAt
+            consumers[token] = consumer
+            consumer.observation(observation)
+        }
+    }
+    func countersSnapshot() async -> FacePipelineCounters { await worker.countersSnapshot() }
+}
+
+/// Compatibility facade. Stopping this owner never stops another owner's subscription.
+@MainActor final class FaceObservationSource {
+    private let hub: FaceObservationHub
+    private var subscriptions: Set<FaceObservationSubscription> = []
+    private var legacy: FaceObservationSubscription?
+    var onFailure: ((Error) -> Void)?
+    init(hub: FaceObservationHub = .shared) { self.hub = hub }
+    static var authorizationStatus: AVAuthorizationStatus { AVCaptureDevice.authorizationStatus(for: .video) }
+    static func devices() -> [FaceCameraDescriptor] { CameraList.shared.current() }
+    static func startWatchingCameras() { CameraList.shared.start() }
+    func requestAuthorization() async -> Bool { await AVCaptureDevice.requestAccess(for: .video) }
+    /// Explicit leases last at most one day; callers renew by opening a fresh session.
+    func subscribe(deviceID: String, purpose: FaceObservationPurpose, validFor: Double = 60,
+                   onObservation: @escaping @MainActor (FaceObservation) -> Void,
+                   onFailure: @escaping @MainActor (Error) -> Void = { _ in }) async throws -> FaceObservationSubscription {
+        try await subscribe(deviceID: deviceID, purpose: purpose, lifetime: validFor,
+                            onObservation: onObservation, onFailure: onFailure)
+    }
+    private func subscribe(deviceID: String, purpose: FaceObservationPurpose, lifetime: Double?,
+                           onObservation: @escaping @MainActor (FaceObservation) -> Void,
+                           onFailure: @escaping @MainActor (Error) -> Void) async throws -> FaceObservationSubscription {
+        try Task.checkCancellation()
+        let token = FaceObservationSubscription(id: UUID())
+        _ = try hub.reserve(token: token, deviceID: deviceID, purpose: purpose, validFor: lifetime,
+                            observation: onObservation, failure: { [weak self] error in
+                                self?.subscriptions.remove(token)
+                                if self?.legacy == token { self?.legacy = nil }
+                                onFailure(error)
+                            })
+        subscriptions.insert(token)
+        do { try await hub.activate(token); return token }
+        catch { unsubscribe(token); throw error }
+    }
+    func unsubscribe(_ token: FaceObservationSubscription) {
+        guard subscriptions.remove(token) != nil else { return }
+        if legacy == token { legacy = nil }
+        hub.remove(token)
+    }
+    func start(deviceID: String, onObservation: @escaping @MainActor (FaceObservation) -> Void) async throws {
+        if let legacy { unsubscribe(legacy) }
+        try Task.checkCancellation()
+        let token = FaceObservationSubscription(id: UUID())
+        _ = try hub.reserve(token: token, deviceID: deviceID, purpose: .geometry, validFor: nil,
+                            observation: onObservation, failure: { [weak self] error in
+                                guard let self else { return }
+                                self.subscriptions.remove(token)
+                                if self.legacy == token { self.legacy = nil }
+                                self.onFailure?(error)
+                            })
+        subscriptions.insert(token); legacy = token
+        do { try await hub.activate(token) }
+        catch { unsubscribe(token); throw error }
+    }
+    func stop() {
+        for token in subscriptions { hub.remove(token) }
+        subscriptions.removeAll(); legacy = nil; onFailure = nil
+    }
+    func pipelineCounters() async -> FacePipelineCounters { await hub.countersSnapshot() }
+    deinit {
+        let hub = hub, tokens = subscriptions
+        Task { @MainActor in for token in tokens { hub.remove(token) } }
+    }
 }
 
 /// @unchecked Sendable is limited to dispatching work; all mutable state is queue-confined.
-private final class FaceObservationWorker: NSObject, AVCaptureVideoDataOutputSampleBufferDelegate, @unchecked Sendable {
+private final class FaceObservationWorker: NSObject, AVCaptureVideoDataOutputSampleBufferDelegate, FaceCaptureWorker, @unchecked Sendable {
     private let queue = DispatchQueue(label: "WindowShade.face.observations", qos: .userInitiated)
     private var session: AVCaptureSession?
     private var output: AVCaptureVideoDataOutput?
@@ -117,6 +313,9 @@ private final class FaceObservationWorker: NSObject, AVCaptureVideoDataOutputSam
     private var deviceID = ""
     private var startedAt = 0.0
     private var lastSample = 0.0
+    private var lastCaptured = 0.0
+    private var requestedFPS = FaceCameraTuning.targetSourceFPS
+    private var device: AVCaptureDevice?
     private var counters = FacePipelineCounters()
     /// Vision 连续失败的会话级退路（PERF-07）。只在队列上动。
     private var fallback = FaceVisionFallbackPolicy()
@@ -136,7 +335,8 @@ private final class FaceObservationWorker: NSObject, AVCaptureVideoDataOutputSam
     /// 在 activeFormat 支援范围内协商源帧率（PERF-07）。只把固定的 min/max frame duration 设成
     /// 我们真的会处理的那一档；夹不进任何一档就维持相机预设，报表里的 requestedSourceFPS 记 0
     /// 表示「没协商成」，不假装成功。
-    static func negotiateFrameRate(device: AVCaptureDevice, into report: inout FaceCameraReport) {
+    static func negotiateFrameRate(device: AVCaptureDevice, target: Double, into report: inout FaceCameraReport) {
+        report.requestedSourceFPS = 0
         let format = device.activeFormat
         let dimensions = CMVideoFormatDescriptionGetDimensions(format.formatDescription)
         report.activeFormatWidth = Int(dimensions.width)
@@ -144,7 +344,6 @@ private final class FaceObservationWorker: NSObject, AVCaptureVideoDataOutputSam
         let ranges = format.videoSupportedFrameRateRanges
         report.activeFormatMinFPS = ranges.map(\.minFrameRate).min() ?? 0
         report.activeFormatMaxFPS = ranges.map(\.maxFrameRate).max() ?? 0
-        let target = FaceCameraTuning.targetSourceFPS
         guard let range = ranges.first(where: { target >= $0.minFrameRate && target <= $0.maxFrameRate })
             ?? ranges.min(by: { $0.maxFrameRate < $1.maxFrameRate })
         else { return }
@@ -162,7 +361,7 @@ private final class FaceObservationWorker: NSObject, AVCaptureVideoDataOutputSam
             report.requestedSourceFPS = 0
         }
     }
-    func start(deviceID: String, token: UInt64,
+    func start(deviceID: String, token: UInt64, requestedFPS: Double,
                deliver: @escaping @Sendable (FaceObservation) -> Void,
                fail: @escaping @Sendable (Error) -> Void) async throws {
         try await withCheckedThrowingContinuation { (continuation: CheckedContinuation<Void, Error>) in
@@ -197,7 +396,9 @@ private final class FaceObservationWorker: NSObject, AVCaptureVideoDataOutputSam
                     session.addOutput(output)
                     // PERF-07：在 activeFormat 支援范围内协商源帧率。只取我们真的会处理的那一档，
                     // 相机不再产出注定被丢掉的帧（解码是实打实的电）。
-                    Self.negotiateFrameRate(device: device, into: &self.counters.camera)
+                    Self.negotiateFrameRate(device: device, target: requestedFPS, into: &self.counters.camera)
+                    self.requestedFPS = requestedFPS
+                    self.device = device
                     output.setSampleBufferDelegate(self, queue: self.queue)
                     session.commitConfiguration()
                     self.session = session
@@ -206,6 +407,7 @@ private final class FaceObservationWorker: NSObject, AVCaptureVideoDataOutputSam
                     self.token = token
                     self.sequence = 0
                     self.lastSample = 0
+                    self.lastCaptured = 0
                     self.fallback = FaceVisionFallbackPolicy()
                     self.deliver = deliver
                     self.fail = fail
@@ -231,6 +433,13 @@ private final class FaceObservationWorker: NSObject, AVCaptureVideoDataOutputSam
             }
         }
     }
+    func setRequestedFPS(_ fps: Double) {
+        queue.async {
+            guard let device = self.device, fps != self.requestedFPS else { return }
+            self.requestedFPS = fps
+            Self.negotiateFrameRate(device: device, target: fps, into: &self.counters.camera)
+        }
+    }
     func stop() { queue.async { self.tearDown() } }
     private func tearDown() {
         deliver = nil; fail = nil
@@ -239,6 +448,7 @@ private final class FaceObservationWorker: NSObject, AVCaptureVideoDataOutputSam
         output = nil
         session?.stopRunning()
         session = nil
+        device = nil
     }
     func captureOutput(_ output: AVCaptureOutput, didOutput sample: CMSampleBuffer, from connection: AVCaptureConnection) {
         // This delegate queue also owns session configuration; one Vision request at a time.
@@ -249,7 +459,7 @@ private final class FaceObservationWorker: NSObject, AVCaptureVideoDataOutputSam
             counters.warmupSkipped &+= 1
             return
         }
-        if now - lastSample < 1.0 / FaceCameraTuning.targetSourceFPS {
+        if now - lastSample < 1.0 / requestedFPS {
             counters.throttled &+= 1
             return
         }
@@ -267,11 +477,12 @@ private final class FaceObservationWorker: NSObject, AVCaptureVideoDataOutputSam
             counters.clockConversionRejected &+= 1
             return
         }
-        if now - captured >= 0.5 {
+        if now - captured >= 0.5 || captured <= lastCaptured {
             counters.staleFrame &+= 1
             return
         }
         lastSample = now
+        lastCaptured = captured
         let request = VNDetectFaceLandmarksRequest()
         // 钉在神经引擎上（main stage）：默认偶尔退回 GPU/CPU。实测钉住后结果一致（IoU 0.995）、
         // 不占 GPU、延迟低 15–30%。注意这只决定 main stage 用哪个加速器，前处理与后处理仍会用到
@@ -322,7 +533,9 @@ private final class FaceObservationWorker: NSObject, AVCaptureVideoDataOutputSam
         deliver?(.init(cameraID: deviceID, generation: token, sequence: sequence,
             observedAt: captured, faceCount: faces.count, yaw: finite(face?.yaw), pitch: finite(face?.pitch),
             leftEyeOpenness: eye(face?.landmarks?.leftEye), rightEyeOpenness: eye(face?.landmarks?.rightEye),
-            faceBoundingBox: face?.boundingBox, confidence: face?.confidence))
+            faceBoundingBox: face?.boundingBox, confidence: face?.confidence,
+            mouthLandmarks: face?.landmarks?.outerLips?.normalizedPoints,
+            sourceFPS: counters.camera.requestedSourceFPS > 0 ? counters.camera.requestedSourceFPS : nil))
         counters.delivered &+= 1
     }
 }

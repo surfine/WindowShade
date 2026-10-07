@@ -1,0 +1,195 @@
+{
+  "date": "2026-10-07",
+  "results": [
+    {
+      "device": "iPhone",
+      "mode": "connected",
+      "samples": 21,
+      "minimumDBm": -62,
+      "maximumDBm": -43,
+      "observedRunTokens": null,
+      "log": ".build/ws2-reuse/ble-phone-rssi.log",
+      "sha256": "b3b757a5eb45affa83e94abe64d5ce00591f9c59ccfe41de1accc40e04d46a7f",
+      "qualification": "presence_only_not_authenticated_identity",
+      "targetSelection": "user-confirmed local name; names are not identity proof"
+    },
+    {
+      "device": "Apple Watch",
+      "mode": "connected",
+      "samples": 21,
+      "minimumDBm": -52,
+      "maximumDBm": -47,
+      "observedRunTokens": null,
+      "log": ".build/ws2-reuse/ble-watch-rssi.log",
+      "sha256": "c4f0d99592d5d160d9fb6b04366fce7e11be409311672afa2210a518e0e1d40f",
+      "qualification": "presence_only_not_authenticated_identity",
+      "targetSelection": "user-confirmed local name; names are not identity proof"
+    },
+    {
+      "device": "AirPods Max",
+      "mode": "passive",
+      "samples": 41,
+      "minimumDBm": -51,
+      "maximumDBm": -46,
+      "observedRunTokens": 1,
+      "log": ".build/ws2-reuse/passive-max-rssi.log",
+      "sha256": "8d7ecc4fbea0df6cb7e7d68dca0d28b1b0f3cbdc52933e3c777e617a13128c6e",
+      "qualification": "presence_only_not_authenticated_identity",
+      "targetSelection": "user-confirmed local name; names are not identity proof"
+    },
+    {
+      "device": "AirPods Pro 2",
+      "mode": "passive",
+      "samples": 80,
+      "minimumDBm": -63,
+      "maximumDBm": -39,
+      "observedRunTokens": 2,
+      "log": ".build/ws2-reuse/passive-pro2-rssi.log",
+      "sha256": "b881ed471d44ed9fd1fcaef4cc4929ce4a9d6e19076e56ee7f01d2b0b30bb978",
+      "qualification": "presence_only_not_authenticated_identity",
+      "targetSelection": "user-confirmed local name; names are not identity proof"
+    }
+  ],
+  "otherResults": {
+    "airpodsConnectedRSSI": "Both connected; CoreBluetooth and IOBluetooth numeric RSSI unavailable in this session",
+    "siriRemote": "GameController list completed, connectedCount=0; no matching BLE name observed; no pairing change",
+    "iphoneRemote": "Finalreceiver retry: PIN prompt shown but phone connection failed;2connections,1verified systemInfo only,0control input,0remaininglisteners. Finalrealdevice compatibility failed this run; root cause remains open."
+  },
+  "limits": [
+    "No distance ground truth or approach/leave labels",
+    "No pairing revocation or wake/lock matrix",
+    "No credential or biometric qualification",
+    "No password entry, audio routing or application input"
+  ],
+  "secondRemoteProbe": {
+    "sha256": "37aa9596fa9cc7d3699a240f4a5ce3bba51c6ea32000d7a116dad1dc52b7b949",
+    "command": ".build/remote-device-probe/RemoteDeviceProbe --serve 120 --discovery-profile atv-core",
+    "status": "ran_handshake_transition_rejected",
+    "offlineChecks": 37,
+    "localMRPBonjourResolved": true,
+    "userObservation": "手机端显示已连接并已按键",
+    "acceptedConnections": 8,
+    "failure": "Pair-Verify phase received frame type3 (Pair-Setup start); receiver rejected state transition",
+    "authenticatedInputs": 0,
+    "remainingListenersAtExit": 0,
+    "log": ".build/ws2-reuse/iphone-remote-device-atv-core.log",
+    "logSHA256": "06a513eb1baf1ccca9063adf63f6437f0421175e669a29673ef2c8096f664d41"
+  },
+  "thirdRemoteProbe": {
+    "binarySHA256": "3025dd704fb72bf552c7c683dc61b758f020880fc3923016d1e129dde2e80648",
+    "status": "ran_no_connections",
+    "acceptedConnections": 0,
+    "remainingListenersAtExit": 0,
+    "authenticatedInputs": 0,
+    "userObservation": "awaiting reply",
+    "log": ".build/ws2-reuse/iphone-remote-device-handshake.log",
+    "fix": "One pre-auth PairVerify->PairSetup fallback; fresh PairVerify after M6 on same socket; old generation revoked before close",
+    "independentCryptoCases": {
+      "cases": [
+        {
+          "case": "same-socket-success",
+          "passed": true
+        },
+        {
+          "case": "verified-restart",
+          "passed": true
+        },
+        {
+          "case": "invalid-verify-signature",
+          "passed": true
+        },
+        {
+          "case": "setup-key-input",
+          "passed": true
+        },
+        {
+          "case": "expired-admission",
+          "passed": true
+        },
+        {
+          "case": "fallback-repeat",
+          "passed": true
+        }
+      ],
+      "networkListener": false,
+      "realCryptography": true
+    }
+  },
+  "fourthRemoteProbe": {
+    "binarySHA256": "3025dd704fb72bf552c7c683dc61b758f020880fc3923016d1e129dde2e80648",
+    "status": "pair_verify_passed_opack_decode_rejected",
+    "acceptedConnections": 8,
+    "verifiedConnections": 7,
+    "authenticatedInputs": 0,
+    "applicationActions": 0,
+    "remainingListenersAtExit": 0,
+    "userObservation": "无法连接或找不到设备",
+    "log": ".build/ws2-reuse/iphone-remote-device-handshake-ready.log",
+    "logSHA256": "c42c24b67961de63c767ce9be176b0bea8a1dacc488a7a5c48a03bb4269faeac",
+    "failure": "After real PairVerify, encrypted frame8 rejected as unsupportedTag; old diagnostic did not identify tag. Setup-key frame8 also rejected as intended."
+  },
+  "fifthRemoteProbe": {
+    "binarySHA256": "21187b9738f35bf69575c29426361afa491f2e052cb32186d3c8b47a03c9547d",
+    "status": "pair_verify_passed_envelope_rejected",
+    "acceptedConnections": 8,
+    "verifiedConnections": 7,
+    "authenticatedInputs": 0,
+    "applicationActions": 0,
+    "remainingListenersAtExit": 0,
+    "userObservation": "无法连接或找不到设备",
+    "log": ".build/ws2-reuse/iphone-remote-device-opack.log",
+    "logSHA256": "178055b8c2e33cac8691e64deab3a893828b8be7b48d07827e502c1b3eaa4eeb",
+    "failure": "OPACK parsing no longer rejects unknown tag; authenticated envelope rejected as malformed before profile."
+  },
+  "sixthRemoteProbe": {
+    "binarySHA256": "5911c668ca8fbd54efbf884af4d917e0db3626dce6a7d71b4f8897b7bae511ce",
+    "status": "session_initialized_unknown_method_rejected",
+    "acceptedConnections": 5,
+    "verifiedConnections": 4,
+    "authenticatedCategories": {
+      "_interest": 6,
+      "_sessionStart": 3,
+      "_systemInfo": 4,
+      "FetchAttentionState": 3,
+      "FetchSiriRemoteInfo": 2,
+      "TVRCSessionStart": 3
+    },
+    "authenticatedInputs": 0,
+    "applicationActions": 0,
+    "remainingListenersAtExit": 0,
+    "userObservation": "仍然无法连接",
+    "log": ".build/ws2-reuse/iphone-remote-device-full-session.log",
+    "logSHA256": "261f508b9454907e2dd476edb7d8cd1a36b58ff27b5464632eb916161f780da5",
+    "failure": "systemInfo/sessionStart/TVRC/queries/subscriptions passed; extra authenticated method rejected as unsupportedMethod. Probe now being aligned with upstream no-op fallback, without delivering unhandled messages to action/profile code."
+  },
+  "seventhRemoteProbe": {
+    "binarySHA256": "63449b6f8f99ff1eab986e1f14ef39366d236849d2accdb856251d187647b2b4",
+    "status": "ran_no_connections",
+    "acceptedConnections": 0,
+    "authenticatedInputs": 0,
+    "applicationActions": 0,
+    "remainingListenersAtExit": 0,
+    "userObservation": "awaiting reply; PIN expired",
+    "log": ".build/ws2-reuse/iphone-remote-device-final.log",
+    "logSHA256": "73e4caf33f9ae0f1f173b3a80ae7188d71d7b112e114e4cff43c3b1e0e1ed292",
+    "scope": "Final probe-only unhandled-request fallback; final app build and independent multi-packet checks passed before run. No phone connection means final compatibility remains unverified."
+  },
+  "eighthRemoteProbe": {
+    "binarySHA256": "63449b6f8f99ff1eab986e1f14ef39366d236849d2accdb856251d187647b2b4",
+    "status": "pairing_and_verify_passed_no_control_session",
+    "acceptedConnections": 2,
+    "verifiedConnections": 1,
+    "authenticatedCategories": {
+      "_systemInfo": 1
+    },
+    "authenticatedInputs": 0,
+    "applicationActions": 0,
+    "unhandledMethods": 0,
+    "remainingListenersAtExit": 0,
+    "userObservation": "出现PIN框，但连接失败",
+    "log": ".build/ws2-reuse/iphone-remote-device-final-retry.log",
+    "logSHA256": "5a1aabb4bef75cbcd6d4527dc4b44d435ef98a70c0bcb591087bc33e59febf2a",
+    "failure": "First connection enrolled then encrypted frame8 rejected at fresh-PairVerify gate. Second verified, processed systemInfo, then closed without sessionStart/HID; closure cause not established. Requested same-window reselect produced no new connection before expiry; user confirmed reselect still failed.",
+    "reselectObservation": "用户再次选择后仍然连接失败；服务端在到期前没有新增连接"
+  }
+}

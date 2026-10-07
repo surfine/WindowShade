@@ -292,3 +292,9 @@ CarPlay 只保留进入和离开，接到已经准入的接收器。遥控器连
 | 翻页、看一眼、取消挑战、打开文件夹 | implemented。上一项写「已到上一项」，下一项写「已到下一项」，返回写「已返回」，取消写「已取消」。看一眼写「只看一眼」，不写把窗口叫到前面。取消挑战和用系统确认都写「不解锁」。没有选中的文件夹仍拒绝；打开成功写「已开文件夹」。口令实验不打开实验室，写「要用原来的确认」。 |
 | 没有专属结果就不写成做成 | implemented。确认之后有专属句才写那一句，否则写「这一笔没有做成」。不再写「已按这一笔做了」。已经送出的草稿再送一次仍停在已送出，不另发。 |
 | 置顶、侧拉、画中画、场景不能观察 | implemented。取消置顶在冻结窗口仍是焦点、而且 `isPreviewing` 对得上时，调用 `stopPreviewFromMenu`，做成写「已取消置顶」。`pinCurrentTargetPreview`、`SlideOverController.toggleCurrentWindow`、`SlideOverController.exit`、`PictureInPictureController.toggleCurrentWindow`、`PictureInPictureController.exit` 不能对冻结编号同步读到结果，不调用。场景没有 `prepareSavedLayout`。这些仍是「这一笔没有做成」。 |
+
+## 2026-10-07：开源借鉴的实施状态
+
+本轮源码与证据集中在 [实施记录](handoff/ws2-reuse-2026-10-07/README.md)。共享相机按用途租约已实现，最后消费者退出停采集；个人六口令新增真实嘴部几何录入、模板匹配和跨时段留出评估，尚无个人数据准确率。两角色BLE探针已编译，iPhone/Watch主动RSSI与Max/Pro2被动RSSI已现场通过，仍只有在场证据，没有真解锁。遥控新增验签后的受限OPACK接收链、真实SRP和外层M1–M6离线互通；指挥页接入真实owned后端选择会话、下一轮配置、明确发送与停止回执。原生Remote端到端仍未通过。PlayPort固定版本前端构建及17项无凭据协议测试通过，未运行接收器、未取得身份，不改长按行为。
+
+日常部分修复活动选择保持与陈旧电量造成的重复提醒，补齐音量／亮度和低电提醒账的隐私说明。当前检查和硬件资格分列，旧的 simulated_pass 不继承为 hardware_pass。未签名、未发布、未替换日用App；原有未提交性能改动保留。
