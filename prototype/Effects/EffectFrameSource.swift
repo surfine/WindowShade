@@ -58,9 +58,31 @@ final class EffectFrameSource: NSObject, SCStreamOutput, SCStreamDelegate, @unch
   private var teardownTask: Task<Void, Never>?
   private var teardownError: Error?
   private var heartbeat: CFTimeInterval = 0
+  /// 源帧率与交帧间隔（PERF-11）：SCK 交帧的速率和呈现率是两件事，分开记。
+  private var delivered = 0
+  private var firstDeliveredAt: CFTimeInterval = 0
+  private var lastDeliveredAt: CFTimeInterval = 0
+  private var deliveredIntervals: [Double] = []
   var onStop: ((Error) -> Void)?
   var onContentUnavailable: (() -> Void)?
   func frame() -> EffectFrame? { lock.withLock { slot.value } }
+  /// 结构化数值字段（PERF-11）：源帧率、交帧间隔、交帧总数。
+  /// 只交过一帧时帧率算不出来，写 nil（样本不足不填 0）。
+  func metricFields() -> [String: Double?] {
+    lock.withLock {
+      let span = (firstDeliveredAt > 0 && lastDeliveredAt > firstDeliveredAt)
+        ? lastDeliveredAt - firstDeliveredAt : 0
+      let fps: Double? = (delivered >= 2 && span > 0) ? Double(delivered - 1) / span : nil
+      let sorted = deliveredIntervals.sorted()
+      let p95: Double? =
+        sorted.isEmpty ? nil : sorted[min(sorted.count - 1, Int(Double(sorted.count) * 0.95))]
+      return [
+        "deliveredFrames": Double(delivered),
+        "sourceFPS": fps,
+        "sourceIntervalP95ms": p95.map { $0 * 1000 },
+      ]
+    }
+  }
   /// 只对捕获单扇窗口的流打开（整屏捕获里别的窗口的胶囊不归我们管）。开流前设置。
   var removesCaptureIndicator: Bool {
     get { lock.withLock { _removesCaptureIndicator } }
@@ -134,6 +156,11 @@ final class EffectFrameSource: NSObject, SCStreamOutput, SCStreamDelegate, @unch
       _ = slot.reset()
       revision &+= 1
       heartbeat = 0
+      // 源帧率按流算：换流／停流就从零开始，不把上一条流的间隔混进来。
+      delivered = 0
+      firstDeliveredAt = 0
+      lastDeliveredAt = 0
+      deliveredIntervals.removeAll()
       let old = stream
       stream = nil
       let start = startingTask
@@ -247,6 +274,13 @@ final class EffectFrameSource: NSObject, SCStreamOutput, SCStreamDelegate, @unch
       let scale = (info[.scaleFactor] as? NSNumber)?.doubleValue ?? 1
       let contentScale = (info[.contentScale] as? NSNumber)?.doubleValue ?? 1
       sequence &+= 1
+      delivered += 1
+      if firstDeliveredAt == 0 { firstDeliveredAt = now }
+      if lastDeliveredAt > 0, now > lastDeliveredAt {
+        deliveredIntervals.append(now - lastDeliveredAt)
+        if deliveredIntervals.count > 1800 { deliveredIntervals.removeFirst(deliveredIntervals.count - 1800) }
+      }
+      lastDeliveredAt = now
       let ticks = (info[.displayTime] as? NSNumber)?.uint64Value
       let displaySeconds = ticks.map { Double($0) * Self.hostTickSeconds }
       let frame = EffectFrame(
