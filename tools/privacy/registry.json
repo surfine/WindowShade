@@ -1,7 +1,7 @@
 {
  "version": 1,
- "basis": "round2 uploaded repo snapshot; main model must approve additions; 主模型逐点补登 2026-10-03：番茄钟专注时长三个 UserDefaults 读写点归 settings，另有一条注释里的 LAContext 字样改成中文说明（注释不是读取点）；2026-10-03 主模型补登第四份：番茄钟设置归 settings 并新增 focus-preferences/focus-window-receipts/手柄/审批/配对身份五行（未上线的标 planned，不进隐私页）；2026-10-03 主模型补登第五、六份：Companion TCP 的 NWConnection 三点归 cross-device，Keychain 适配器的 LAContext/SecItem 四点归 pair-verify-identity（都仍是候选，未接生产来源）；2026-10-03 主模型补登第八份：窗口收起证据适配器读 kAXMinimizedAttribute 归 window-ax（只观察本次收起，不新存截图/标题）；2026-10-03 主模型补登第九份：收起完成回调守卫读一条 AX 布尔属性归 window-ax（只作三态观察与旧回调复核），新增的事务戳/routeID/批次号只在该次操作的内存里，不新存也不外发",
- "scanner_pattern": "AXUIElementCopyAttributeValue|CGEvent\\.tapCreate|SCShareableContent|SCScreenshotManager|SCStream\\b|AVCaptureDevice|AVCaptureSession|NSAppleScript|osascript|IOServiceMatching|CGSessionCopyCurrentDictionary|bezelPath|\\b(?:SLS|CGS)[A-Z][A-Za-z0-9_]*|URLSession|NWConnection|NWListener|SecItem(?:Add|CopyMatching|Update|Delete)|\\bMT(?:Device|Register|Unregister)[A-Za-z0-9_]+|\\bIOHID[A-Za-z0-9_]+|AVAudioEngine|SFSpeechRecognizer|\\bVNDetect[A-Za-z0-9_]+|SMAppService|UserDefaults|RecoveryJournal|kAudioHardwarePropertyProcessObjectList|\\bSecureEnclave\\b|\\bLAContext\\b|SecAccessControlCreateWithFlags|\\bbiometryState\\b|evaluatedPolicyDomainState|stateHash",
+ "basis": "round2 uploaded repo snapshot; main model must approve additions; 主模型逐点补登 2026-10-03：番茄钟专注时长三个 UserDefaults 读写点归 settings，另有一条注释里的 LAContext 字样改成中文说明（注释不是读取点）；2026-10-03 主模型补登第四份：番茄钟设置归 settings 并新增 focus-preferences/focus-window-receipts/手柄/审批/配对身份五行（未上线的标 planned，不进隐私页）；2026-10-03 主模型补登第五、六份：Companion TCP 的 NWConnection 三点归 cross-device，Keychain 适配器的 LAContext/SecItem 四点归 pair-verify-identity（都仍是候选，未接生产来源）；2026-10-03 主模型补登第八份：窗口收起证据适配器读 kAXMinimizedAttribute 归 window-ax（只观察本次收起，不新存截图/标题）；2026-10-03 主模型补登第九份：收起完成回调守卫读一条 AX 布尔属性归 window-ax（只作三态观察与旧回调复核），新增的事务戳/routeID/批次号只在该次操作的内存里，不新存也不外发；2026-10-07 主模型复核相机订阅/音量亮度与现有探针遗漏读取点，电量提醒持久化如实补记；仅源码登记不代表硬件验证",
+ "scanner_pattern": "AXUIElementCopyAttributeValue|CGEvent\\.tapCreate|SCShareableContent|SCScreenshotManager|SCStream\\b|AVCaptureDevice|AVCaptureSession|NSAppleScript|osascript|IOServiceMatching|CGSessionCopyCurrentDictionary|bezelPath|\\b(?:SLS|CGS)[A-Z][A-Za-z0-9_]*|URLSession|NWConnection|NWListener|SecItem(?:Add|CopyMatching|Update|Delete)|\\bMT(?:Device|Register|Unregister)[A-Za-z0-9_]+|\\bIOHID[A-Za-z0-9_]+|AVAudioEngine|SFSpeechRecognizer|\\bVNDetect[A-Za-z0-9_]+|SMAppService|UserDefaults|RecoveryJournal|kAudioHardwarePropertyProcessObjectList|\\bSecureEnclave\\b|\\bLAContext\\b|SecAccessControlCreateWithFlags|\\bbiometryState\\b|evaluatedPolicyDomainState|stateHash|DisplayServicesGetBrightness|kAudioDevicePropertyVolumeScalar",
  "signals": [
   {
    "id": "screen-shape",
@@ -42,13 +42,13 @@
    "group": "不用问就能读",
    "reads": "已连接配件型号、电量、连接状态",
    "purpose": "显示现有配件状态",
-   "destination": "内存；不发送",
+   "destination": "当前电量在内存；已提醒的低电状态保存在本机设置；不发送",
    "activation": "现有活动来源；页面不再轮询",
-   "toggle": "跟随实时活动；不新增重复开关",
+   "toggle": "配件电量开关",
    "status": "current",
    "rule": "HID",
    "verification": "source-inventory-only",
-   "retention": "see destination; no new polling or telemetry",
+   "retention": "低电提醒记录保存在本机设置，供重新启动后避免重复提醒",
    "log_policy": "no raw private values"
   },
   {
@@ -121,8 +121,8 @@
    "sensitivity": "private",
    "group": "你同意后才读",
    "reads": "临时视频帧、动作/是否有人结果",
-   "purpose": "用户触发的眨眼转头；离席检测另按L1合同",
-   "destination": "只在内存；无主动上传；需真机文件检查",
+   "purpose": "用户触发的眨眼转头；离席检测另按L1合同；显式启用个人口令实验时，嘴部关键点用于本机模板匹配",
+   "destination": "只在内存；无主动上传；需真机文件检查；仅独立录入工具按指定路径导出嘴部关键点，不含图像",
    "activation": "功能显式开启且当前状态允许",
    "toggle": "摄像头及对应功能；锁屏不自动重开一般摄像头源",
    "status": "current",
@@ -693,6 +693,22 @@
    "rule": "D3",
    "verification": "not-implemented",
    "retention": "see destination; no new polling or telemetry",
+   "log_policy": "no raw private values"
+  },
+  {
+   "id": "level-hud",
+   "label": "音量和亮度",
+   "sensitivity": "public",
+   "group": "不用问就能读",
+   "reads": "当前输出音量、指针所在屏幕亮度",
+   "purpose": "在刘海显示音量和亮度变化",
+   "destination": "内存；不发送",
+   "activation": "刘海提示启用时；音量监听变化，亮度每0.2秒读取",
+   "toggle": "跟随刘海功能",
+   "status": "current",
+   "rule": "LEVEL",
+   "verification": "source-inventory-only",
+   "retention": "仅保留上一次数值，停止后不继续读取",
    "log_policy": "no raw private values"
   }
  ],
@@ -4098,6 +4114,90 @@
    "symbol": "SCStream",
    "source": "/// 过滤器在本 App 里建好后只读不改（不设 includeMenuBar 之类的可写属性），只交给 SCStream / 截图接口使用。",
    "signal": "window-image"
+  },
+  {
+   "path": "prototype/App/FaceObservationSource.swift",
+   "line": 102,
+   "symbol": "AVCaptureDevice",
+   "source": "AVCaptureDevice.authorizationStatus(for: .video) == .authorized",
+   "signal": "camera-frame"
+  },
+  {
+   "path": "prototype/App/FaceObservationSource.swift",
+   "line": 251,
+   "symbol": "AVCaptureDevice",
+   "source": "func requestAuthorization() async -> Bool { await AVCaptureDevice.requestAccess(for: .video) }",
+   "signal": "camera-frame"
+  },
+  {
+   "path": "prototype/App/FaceObservationSource.swift",
+   "line": 318,
+   "symbol": "AVCaptureDevice",
+   "source": "private var device: AVCaptureDevice?",
+   "signal": "camera-frame"
+  },
+  {
+   "path": "prototype/App/FaceObservationSource.swift",
+   "line": 338,
+   "symbol": "AVCaptureDevice",
+   "source": "static func negotiateFrameRate(device: AVCaptureDevice, target: Double, into report: inout FaceCameraReport) {",
+   "signal": "camera-frame"
+  },
+  {
+   "path": "prototype/App/NotchActivityPollPolicy.swift",
+   "line": 6,
+   "symbol": "osascript",
+   "source": "/// - `progress`：有播放器在放，进度条要往前走——2 秒一次，靠时间推算，不为画进度条启动 osascript。",
+   "signal": "music"
+  },
+  {
+   "path": "prototype/App/NotchLevelObserver.swift",
+   "line": 39,
+   "symbol": "DisplayServicesGetBrightness",
+   "source": "let symbol = dlsym(handle, \"DisplayServicesGetBrightness\") {",
+   "signal": "level-hud"
+  },
+  {
+   "path": "prototype/App/SLSOffscreenCheckProbe.swift",
+   "line": 19,
+   "symbol": "SLSOffscreenCheckProbe",
+   "source": "final class SLSOffscreenCheckProbe {",
+   "signal": "window-ax"
+  },
+  {
+   "path": "prototype/App/SLSOffscreenCheckProbe.swift",
+   "line": 185,
+   "symbol": "AXUIElementCopyAttributeValue",
+   "source": "guard AXUIElementCopyAttributeValue(app, kAXWindowsAttribute as CFString, &value) == .success,",
+   "signal": "window-ax"
+  },
+  {
+   "path": "prototype/App/SilentMilestoneProbe.swift",
+   "line": 246,
+   "symbol": "AVCaptureDevice",
+   "source": "let direct = AVCaptureDevice.DiscoverySession(",
+   "signal": "camera-frame"
+  },
+  {
+   "path": "prototype/App/SilentMilestoneProbe.swift",
+   "line": 590,
+   "symbol": "AXUIElementCopyAttributeValue",
+   "source": "let err = AXUIElementCopyAttributeValue(app, kAXWindowsAttribute as CFString, &ref)",
+   "signal": "window-ax"
+  },
+  {
+   "path": "prototype/Effects/LidReconnectBackoff.swift",
+   "line": 6,
+   "symbol": "IOHIDManager",
+   "source": "/// IOHIDManager、枚举设备、再关掉，机器开着就一直在撞。",
+   "signal": "battery"
+  },
+  {
+   "path": "prototype/main.swift",
+   "line": 152,
+   "symbol": "SLSOffscreenCheckProbe",
+   "source": "let probe = MainActor.assumeIsolated { SLSOffscreenCheckProbe() }",
+   "signal": "window-ax"
   }
  ]
 }

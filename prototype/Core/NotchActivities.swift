@@ -5,7 +5,7 @@
 // - 时间一律由调用方传入单调 clock（秒），store 只比较、不读系统时钟。
 // - 缓存上限 32，按“信息价值”排序：录制 > 空投 > 路线 > 音乐 > 耳机，
 //   同优先级用 startedAt 升序（先开始的更靠前），再以 id 稳定 tie-break。
-// - 可见列表最多 3 条；选中项在其仍可见时保持粘滞，普通内容更新不跳选、不重排。
+// - 可见列表最多 3 条；仍存在的选中项保留一个位置，新活动不赶走正在看的内容。
 
 import Foundation
 
@@ -113,9 +113,15 @@ struct NotchActivityStore {
         storage.values.sorted(by: Self.order)
     }
 
-    /// 最多 3 条可见的活动（就是排序后的前缀）。
+    /// 最多 3 条：保留当前选择，其余按既有优先级排序。
     var visible: [NotchActivity] {
-        Array(activities.prefix(Self.visibleLimit))
+        let ordered = activities
+        var result = Array(ordered.prefix(Self.visibleLimit))
+        if let selection, let selected = storage[selection],
+           !result.contains(where: { $0.id == selection }) {
+            result = Array(ordered.prefix(Self.visibleLimit - 1)) + [selected]
+        }
+        return result
     }
 
     var selectedID: String? { selection }
@@ -159,8 +165,7 @@ struct NotchActivityStore {
 
         watermark = max(watermark ?? -.infinity, now)
         storage[activity.id] = activity
-        // 选中的条目若被同代普通更新（甚至 content 变化）保持选中；只有它不再
-        // 可见时才由 select 清理。
+        // 普通更新或新来源到来均保持选中；只有结束/过期才清理。
         Self.reconcileSelection(&selection, storage: storage)
         return true
     }
@@ -241,11 +246,10 @@ struct NotchActivityStore {
         return a.id < b.id
     }
 
-    /// 选中项一旦不在可见前三就清掉；仍然可见则原样保留（粘滞）。
+    /// 选择不随其它来源排序变化失效；仅在活动移除后清理。
     private static func reconcileSelection(_ selection: inout String?, storage: [String: NotchActivity]) {
         guard let current = selection else { return }
-        let top = storage.values.sorted(by: order).prefix(visibleLimit).map(\.id)
-        if !top.contains(current) {
+        if storage[current] == nil {
             selection = nil
         }
     }

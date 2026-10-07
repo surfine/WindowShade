@@ -1,0 +1,3 @@
+# Optional independent test client only. Never packaged in WindowShade.
+srptools==1.0.1 --hash=sha256:fccb44c949eb2507ba19f349a3087cb8fed2393014d7f0887b06c3186f19d1e9
+six==1.17.0 --hash=sha256:4721f391ed90541fddacab5acf947aa0d3dc7d27b2e1e8eda2be8970586c3274

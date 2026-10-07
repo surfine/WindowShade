@@ -34,6 +34,7 @@ import Foundation
     static func main() {
         testPriorityOrderingAndCap()
         testSelectionStickyAndContentUpdate()
+        testFourthActivityPreservesSelection()
         testSelectionAfterEnd()
         testMoveSelectionCycles()
         testStaleGenerationAndUpdatedAt()
@@ -114,6 +115,21 @@ import Foundation
         _ = small.upsert(make("r4", .recording, startedAt: 0, title: "4"), now: 0)
         expect(!small.select(id: "r4"), "第四名不可选")
         expect(small.select(id: "r1"), "前三可选")
+    }
+
+    static func testFourthActivityPreservesSelection() {
+        var store = NotchActivityStore()
+        _ = store.upsert(make("music", .music), now: 0)
+        _ = store.upsert(make("route", .route), now: 0)
+        _ = store.upsert(make("drop", .airDrop), now: 0)
+        expect(store.select(id: "music"), "选中正在看的音乐")
+        _ = store.upsert(make("recording", .recording, startedAt: 1), now: 1)
+        expect(store.selectedID == "music", "第四项不赶走当前选择")
+        expect(store.visible.map(\.id) == ["recording", "drop", "music"], "保留选中且最多三项")
+        _ = store.upsert(make("music", .music, updatedAt: 2, progress: 0.5), now: 2)
+        expect(store.selectedID == "music", "进度更新仍保持选择")
+        _ = store.end(id: "music", generation: 1, now: 3)
+        expect(store.selectedID == nil && store.visible.map(\.id) == ["recording", "drop", "route"], "结束才释放位置")
     }
 
     // 3) 选中项结束后清空。

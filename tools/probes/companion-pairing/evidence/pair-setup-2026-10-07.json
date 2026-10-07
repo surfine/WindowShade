@@ -1,0 +1,61 @@
+{
+  "srptools": "1.0.1",
+  "six": "1.17.0",
+  "cryptography": "50.0.1",
+  "proof_convention": "srptools-minimal",
+  "transport": "stdin/stdout fragmented Companion frames",
+  "storage": "ephemeral memory; reloaded through production repository",
+  "private_material_in_report": false,
+  "hardware": false,
+  "network_listener": false,
+  "production_integration": false,
+  "cases": [
+    {
+      "case": "success-leading-zero",
+      "m1_m6_verified": true,
+      "public_A_bytes": 1,
+      "m6_aead_and_ed25519_verified": true,
+      "persisted_peers": 1,
+      "awaiting_pair_verify": true,
+      "persisted_identity_and_key_match": true,
+      "setup_channel_input_rejected": true,
+      "fresh_input_channel_rejected": true,
+      "delivered_inputs": 0
+    },
+    {
+      "case": "success-random",
+      "m1_m6_verified": true,
+      "public_A_bytes": 384,
+      "m6_aead_and_ed25519_verified": true,
+      "persisted_peers": 1,
+      "awaiting_pair_verify": true,
+      "persisted_identity_and_key_match": true,
+      "setup_channel_input_rejected": true,
+      "fresh_input_channel_rejected": true,
+      "delivered_inputs": 0
+    },
+    {
+      "case": "wrong-pin",
+      "rejected": true,
+      "persisted_peers": 0
+    },
+    {
+      "case": "tampered-m5",
+      "rejected": true,
+      "persisted_peers": 0,
+      "retry_rejected": true
+    },
+    {
+      "case": "invalid-signature",
+      "rejected": true,
+      "persisted_peers": 0,
+      "retry_rejected": true
+    },
+    {
+      "case": "cancel-before-m5",
+      "rejected": true,
+      "persisted_peers": 0,
+      "retry_rejected": true
+    }
+  ]
+}

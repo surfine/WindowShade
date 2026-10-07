@@ -37,7 +37,7 @@ extension AppDelegate {
             stack.bottomAnchor.constraint(lessThanOrEqualTo: root.bottomAnchor),
         ])
         let store = UserDefaults.standard
-        let intro = "看当前会话、改模型、写草稿。不会发送，也不会连接。"
+        let intro = "选择已连接的会话、准备下一轮模型和草稿；发送前单独确认。"
         stack.addArrangedSubview(WS2SettingsCopy.content(name: nil, subtitle: intro, symbol: nil).view)
         let enabled = conductorSwitch(on: WS2ConductorSettings.flag(WS2ConductorSettings.enabledKey, in: store),
                                       action: #selector(prefConductorEnabled(_:)), name: "指挥模式")

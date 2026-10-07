@@ -27,6 +27,68 @@ final class WS2SilentHost {
     /// 本次静音页打开时的意图 lease；关掉页面就作废，不跨页复用。
     private var intentLease = UUID()
     private var intentBoot = UUID()
+    private let mouthSource = FaceObservationSource()
+    private var mouthTask: Task<Void, Never>?
+    private var mouthFrames: [WS2MouthFrame] = []
+    private var mouthCandidate: String?
+    private var mouthCandidateAt: Double = 0
+    private var mouthLastFrameAt: Double = 0
+    private var mouthGeneration: UInt64?
+
+    /// Experimental enrollment is explicit, local and bounded; ordinary page opens do not use a camera.
+    private func startPersonalPhrasesIfConfigured() {
+        let env = ProcessInfo.processInfo.environment
+        guard let path = env["WINDOWSHADE_MOUTH_PROFILE"], let camera = env["WINDOWSHADE_MOUTH_CAMERA"],
+              let size = try? URL(fileURLWithPath: path).resourceValues(forKeys: [.fileSizeKey]).fileSize, size <= 2_000_000,
+              let bytes = try? Data(contentsOf: URL(fileURLWithPath: path)), bytes.count <= 2_000_000,
+              let profile = try? JSONDecoder().decode(WS2MouthProfile.self, from: bytes), profile.valid else { return }
+        stopPersonalPhrases()
+        let lease = intentLease
+        mouthTask = Task { [weak self] in
+            guard let self else { return }
+            do {
+                _ = try await self.mouthSource.subscribe(deviceID: camera, purpose: .command, validFor: 60,
+                    onObservation: { [weak self] frame in
+                        guard let self, self.intentLease == lease else { return }
+                        guard self.page != nil, AuthorizationService.shared.lockState() == .unlocked else {
+                            self.stopPersonalPhrases(); return
+                        }
+                        self.consumeMouth(frame, profile: profile)
+                    }, onFailure: { [weak self] _ in
+                        guard let self, self.intentLease == lease else { return }
+                        self.stopPersonalPhrases()
+                    })
+            } catch {
+                if self.intentLease == lease { self.stopPersonalPhrases() }
+            }
+        }
+    }
+    private func stopPersonalPhrases() {
+        mouthTask?.cancel(); mouthTask = nil; mouthSource.stop()
+        mouthFrames.removeAll(); mouthCandidate = nil; mouthGeneration = nil
+    }
+    private func consumeMouth(_ observation: FaceObservation, profile: WS2MouthProfile) {
+        guard observation.faceCount == 1, let points = observation.mouthLandmarks,
+              let frame = WS2MouthFrame.make(time: observation.observedAt, points: points) else {
+            mouthFrames.removeAll(); mouthCandidate = nil; return
+        }
+        if mouthGeneration != observation.generation || mouthFrames.last.map({ frame.time <= $0.time || frame.time - $0.time > 0.25 }) == true {
+            mouthFrames.removeAll(); mouthCandidate = nil
+        }
+        mouthGeneration = observation.generation
+        mouthLastFrameAt = frame.time
+        if mouthCandidate != nil, frame.time - mouthCandidateAt > 5 { mouthCandidate = nil; mouthFrames.removeAll(); page?.setConfirmEnabled(false) }
+        guard mouthCandidate == nil, pending == nil else { return }
+        mouthFrames.append(frame)
+        while mouthFrames.count > 100 || mouthFrames.first.map({ frame.time - $0.time > 2.2 }) == true { mouthFrames.removeFirst() }
+        guard let first = mouthFrames.first, frame.time - first.time >= 1.5 else { return }
+        let sample = WS2MouthRecording(session: intentLease, commandID: nil, frames: mouthFrames)
+        guard let candidate = WS2MouthMatcher.match(sample, speech: profile.speech, profile: profile) else { return }
+        mouthCandidate = candidate
+        mouthCandidateAt = frame.time
+        page?.note((WS2SilentCopy.line(candidate) ?? candidate) + "？点一下确认")
+        page?.setConfirmEnabled(true)
+    }
     var frozenWindowIDForProbe: CGWindowID? { frozenID }
     var hasPendingForProbe: Bool { session.currentProposal != nil }
     /// 探针只读（R03 真机）：操作台账当前显示的那行。「还在等」说明异步轮询没有落定。
@@ -59,6 +121,7 @@ final class WS2SilentHost {
         let view = WS2SilentPageView(host: self)
         guard runtime.island.show(view, ownerID: "silent", onDismiss: { [weak self, weak view] _ in
             guard let self, self.page === view else { return }
+            self.stopPersonalPhrases()
             self.page = nil
             self.pending = nil
             self.session.invalidate()
@@ -67,12 +130,14 @@ final class WS2SilentHost {
             self.intentLease = UUID()
         }) else { return false }
         page = view
+        startPersonalPhrasesIfConfigured()
         view.note("看清，再确认。")
         view.refreshCoverClearChip(covering: owner.silentPrivacyCover.isCovering)
         return true
     }
 
     func offer(_ commandID: String) {
+        mouthCandidate = nil; mouthFrames.removeAll()
         if commandID == "privacy.clearCover" {
             guard let owner, owner.silentPrivacyCover.isCovering else {
                 page?.note("没有遮挡")
@@ -166,6 +231,17 @@ final class WS2SilentHost {
     }
 
     func confirm(gestureBeganAt: WS2.Instant? = nil) {
+        // Experimental visual candidates require a click; they never mint a head-gesture receipt.
+        if let candidate = mouthCandidate {
+            let now = ProcessInfo.processInfo.systemUptime
+            guard gestureBeganAt == nil, now >= mouthLastFrameAt, now - mouthLastFrameAt <= 0.5,
+                  now - mouthCandidateAt <= 5, AuthorizationService.shared.lockState() == .unlocked else {
+                mouthCandidate = nil; mouthFrames.removeAll(); page?.setConfirmEnabled(false); return
+            }
+            mouthCandidate = nil; mouthFrames.removeAll(); page?.setConfirmEnabled(false)
+            offer(candidate)
+            return
+        }
         guard let proposal = session.currentProposal else { return }
         accept(proposal, at: gestureBeganAt)
     }

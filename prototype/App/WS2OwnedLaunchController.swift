@@ -5,7 +5,19 @@ import Foundation
 @MainActor final class WS2OwnedLaunchController {
     enum Phase: Equatable { case idle, checkingVersion, connecting, checkingConfig, signedOut, ready, creatingThread, sending, running, interrupting, completed, failed, stopping, stopped }
     private enum Query { case config, account, login, cancelLogin, logout }
-    private struct Submission { let text:String;let model:String;let effort:String }
+    private struct Submission { let text:String;let model:String;let effort:String;let revision:UInt64 }
+    private struct PendingDraft {
+        let id:WS2.RequestID;let text:String;let revision:UInt64;let context:WS2.Context
+        let expectedTurn:String? // nil = new turn; non-nil = explicitly add to that running turn
+    }
+    struct ConductorTarget: Equatable {
+        let connection:UUID;let context:WS2.Context
+        fileprivate let revision:UInt64
+    }
+    struct ConductorDraft: Equatable {
+        let target:ConductorTarget;let text:String;let model:String;let effort:String;let turn:String?
+        fileprivate let draftRevision:UInt64
+    }
     private struct Association { let project:WS2OwnedScope.Project;let thread:String }
     private let clock:any WS2Clock
     private let profileRoot:URL
@@ -21,6 +33,10 @@ import Foundation
     private var loginID:String?
     private var loginDeadline:Task<Void,Never>?
     private var submission:Submission?
+    private var pendingDraft:PendingDraft?
+    private var draftRevision:UInt64=0,conductorRevision:UInt64=0
+    private var draftOwner:WS2.SessionKey?
+    private var sessionDrafts:[WS2.SessionKey:String]=[:]
     private var sequence:UInt64=0
     private var context:WS2.Context?
     private var activeTurn:String?
@@ -47,10 +63,11 @@ import Foundation
     var isBusy:Bool { probe != nil || retiringProbe != nil || session != nil }
     var canLaunch:Bool { !isBusy && projectURL != nil && executableURL != nil && mayUse() }
     var canLogin:Bool { phase == .signedOut && loginID == nil && !queries.values.contains(where:{ switch $0 { case .login,.cancelLogin:return true;default:return false } }) }
-    var canSend:Bool { authenticated && configured && currentIsValid() && submission == nil && activeTurn == nil && ![.creatingThread,.sending,.interrupting].contains(phase) && model != nil && effort != nil }
+    var canSend:Bool { authenticated && configured && currentIsValid() && submission == nil && pendingDraft == nil && activeTurn == nil && ![.creatingThread,.sending,.interrupting].contains(phase) && model != nil && effort != nil }
     // Lightweight UI projection; chooseModel still revalidates the directory on the explicit action.
     var canChooseModel:Bool { authenticated && configured && activeTurn == nil && submission == nil && session != nil && [.ready,.completed,.failed].contains(phase) && mayUse() }
-    var canInterrupt:Bool { activeTurn != nil && phase == .running }
+    var canStageConductorConfig:Bool { authenticated && configured && submission == nil && session != nil && [.ready,.running,.completed,.failed].contains(phase) && mayUse() }
+    var canInterrupt:Bool { activeTurn != nil && pendingDraft == nil && phase == .running }
     var canResume:Bool { canSend && session?.approval.wire.threadID == nil && lastAssociation != nil }
     var canLogout:Bool { authenticated && activeTurn == nil && submission == nil && ![.creatingThread,.sending,.interrupting].contains(phase) }
     var diagnostics:String { session?.diagnostics?.visibleText() ?? diagnosticSnapshot }
@@ -58,7 +75,9 @@ import Foundation
         self.profileRoot=profileRoot;self.clock=clock;self.mayUse=mayUse
     }
     @discardableResult func editDraft(_ value:String) -> Bool {
-        guard value.utf8.count<=65_536 else { return false };draft=value;return true
+        guard value.utf8.count<=65_536,draftRevision<UInt64.max else { return false }
+        if draft != value { draft=value;draftRevision += 1;bumpConductor();draftOwner=context?.session;changed() }
+        return true
     }
     @discardableResult func selectProject(_ url:URL) -> Bool {
         guard !isBusy,mayUse() else { return false }
@@ -66,8 +85,11 @@ import Foundation
             let root=try WS2ProjectDirectory.read(url)
             guard projectIDs[root] != nil || projectIDs.count<64 else { throw CodexWire.Failure.capacity }
             let id=projectIDs[root] ?? UUID();projectIDs[root]=id
+            let changingProject=scope.project?.id != id
             guard scope.select(.init(id:id,root:root)) else { return false }
             projectURL=URL(fileURLWithPath:root.canonicalPath,isDirectory:true)
+            if changingProject { draft="";draftOwner=nil;sessionDrafts.removeAll() }
+            bumpConductor()
             status="项目已选择";notice="";changed();return true
         } catch { notice="无法使用这个项目目录。";changed();return false }
     }
@@ -99,7 +121,7 @@ import Foundation
                 environment:prepared.environment,clock:clock,diagnosticByteLimit:diagnostics ? 65_536:nil,
                 currentContext:{[weak self] in self?.context},mayOperate:{[weak self] in self?.currentIsValid()==true})
             guard let t=scope.begin(connection:s.connectionID,liveRoot:prepared.project.root) else { s.stop();throw CodexWire.Failure.stale }
-            ticket=t;session=s;_ = store.resume(at:clock.now());configured=false;authenticated=false;queries=[:];context=nil;activeTurn=nil;submission=nil
+            ticket=t;session=s;_ = store.resume(at:clock.now());configured=false;authenticated=false;queries=[:];context=nil;activeTurn=nil;submission=nil;pendingDraft=nil;bumpConductor()
             let id=s.connectionID
             s.onEvent={ [weak self] event in self?.receive(event,connection:id) }
             s.onUnavailable={ [weak self] text in guard let self,self.session?.connectionID==id else { return };self.notice=text;self.changed() }
@@ -127,29 +149,123 @@ import Foundation
         return true
     }
     @discardableResult func chooseModel(_ value:String) -> Bool {
-        guard revalidate(),canChooseModel,let choices=models[value],!choices.isEmpty else { return false }
-        model=value;effort=choices.contains("medium") ? "medium":choices.sorted().first;changed();return true
+        guard revalidate(),canChooseModel else { return false }
+        return setNextModel(value)
+    }
+    private func setNextModel(_ value:String) -> Bool {
+        guard let choices=models[value],!choices.isEmpty else { return false }
+        model=value;effort=choices.contains("medium") ? "medium":choices.sorted().first;bumpConductor();changed();return true
     }
     @discardableResult func chooseEffort(_ value:String) -> Bool {
-        guard activeTurn==nil,submission==nil,let model,models[model]?.contains(value)==true else { return false }
-        effort=value;changed();return true
+        guard revalidate(),canChooseModel,let model,models[model]?.contains(value)==true else { return false }
+        effort=value;bumpConductor();changed();return true
+    }
+    @discardableResult func stageConductorModel(_ value:String,target:ConductorTarget) -> Bool {
+        guard target==conductorTarget,revalidate(),canStageConductorConfig else { return false }
+        return setNextModel(value)
+    }
+    @discardableResult func stageConductorEffort(_ value:String,target:ConductorTarget) -> Bool {
+        guard target==conductorTarget,revalidate(),canStageConductorConfig,
+              let model,models[model]?.contains(value)==true else { return false }
+        effort=value;bumpConductor();changed();return true
+    }
+    /// Only sessions previously returned by this controller for this exact project are selectable.
+    var conductorSessions:[AgentSessions.Session] {
+        guard let project=scope.project,session != nil,authenticated,configured,mayUse() else { return [] }
+        let known=Set(associations.filter{$0.project==project}.map(\.thread))
+        return store.visibleSessions.filter {
+            $0.context.session.provider == .codex && known.contains($0.context.session.id)
+        }
+    }
+    var conductorTarget:ConductorTarget? {
+        guard conductorRevision<UInt64.max,let session,!session.closed,let context,
+              authenticated,configured,mayUse(),![.creatingThread,.stopping,.stopped].contains(phase),
+              session.approval.wire.threadID==context.session.id else { return nil }
+        return .init(connection:session.connectionID,context:context,revision:conductorRevision)
+    }
+    var conductorTurn:String? { activeTurn }
+    @discardableResult func selectConductorSession(_ key:WS2.SessionKey,revision:UInt64) -> Bool {
+        guard revalidate(),conductorSessions.contains(where:{$0.context.session==key && $0.context.epoch==revision}) else { return false }
+        if context?.session==key { return true }
+        guard activeTurn==nil,submission==nil,pendingDraft==nil,
+              [.ready,.completed,.failed].contains(phase),let s=session,
+              s.approval.wire.pending.isEmpty,s.approval.wire.approvals.isEmpty else { return false }
+        do {
+            bumpConductor();phase = .creatingThread;status="正在切换会话";notice=""
+            try s.resumeThread(key.id)
+            guard currentIsValid() else { return false }
+            changed();return true
+        } catch { fail("没有切换会话，草稿留着。");return false }
+    }
+    /// Adopting text creates no RPC. A later explicit send must present this exact snapshot.
+    func adoptConductorDraft(_ text:String,hasMarkedText:Bool,target:ConductorTarget) -> ConductorDraft? {
+        guard !hasMarkedText,target==conductorTarget,revalidate(),editDraft(text) else { return nil }
+        guard conductorTarget?.connection==target.connection,conductorTarget?.context==target.context else { return nil }
+        return prepareConductorDraft()
+    }
+    func prepareConductorDraft() -> ConductorDraft? {
+        guard let target=conductorTarget,let model,let effort,models[model]?.contains(effort)==true,
+              submission==nil,pendingDraft==nil,draftRevision<UInt64.max,
+              !draft.trimmingCharacters(in:.whitespacesAndNewlines).isEmpty,
+              canSend || (activeTurn != nil && phase == .running) else { return nil }
+        return .init(target:target,text:draft,model:model,effort:effort,turn:activeTurn,draftRevision:draftRevision)
+    }
+    func acceptsConductorDraft(_ value:ConductorDraft) -> Bool { prepareConductorDraft()==value }
+    /// A new-turn submission never silently becomes steer if a turn starts after the click was prepared.
+    @discardableResult func sendConductorDraft(_ value:ConductorDraft,hasMarkedText:Bool) -> Bool {
+        guard !hasMarkedText,value.turn==nil,acceptsConductorDraft(value),revalidate() else { return false }
+        return send(value.text,hasMarkedText:false)
+    }
+    @discardableResult func addConductorDraftToTurn(_ value:ConductorDraft,hasMarkedText:Bool) -> Bool {
+        guard !hasMarkedText,let turn=value.turn,turn==activeTurn,acceptsConductorDraft(value),
+              revalidate(),let s=session,let context else { return false }
+        do {
+            notice=""
+            try s.steer(text:value.text,expectedTurn:turn)
+            guard currentIsValid(),let id=s.approval.wire.pending.first(where:{$0.value.method=="turn/steer"})?.key else { throw CodexWire.Failure.stale }
+            pendingDraft=PendingDraft(id:id,text:value.text,revision:value.draftRevision,context:context,expectedTurn:turn)
+            status="正在补进本轮";changed();return true
+        } catch { stop(reason:"补充结果未知，草稿留着。");return false }
+    }
+    @discardableResult func interruptConductor(target:ConductorTarget,turn:String) -> Bool {
+        guard target==conductorTarget,turn==activeTurn else { return false }
+        return interrupt()
+    }
+    private func bumpConductor() { if conductorRevision<UInt64.max { conductorRevision += 1 } }
+    private func acceptDraftReceipt(_ id:WS2.RequestID,value:WireJSON) throws {
+        guard let pending=pendingDraft,pending.id==id else { return }
+        guard pending.context==context else { throw CodexWire.Failure.stale }
+        if let turn=pending.expectedTurn {
+            guard value["turnId"]?.text==turn else { throw CodexWire.Failure.stale }
+            notice="已补进这一轮"
+        } else if notice.isEmpty { notice="助手已接收" }
+        pendingDraft=nil
+        // Preserve edits made after sending; acknowledgements only clear their own draft version.
+        if draftRevision==pending.revision,draft==pending.text {
+            draft="";if draftRevision<UInt64.max { draftRevision += 1 };bumpConductor()
+        }
     }
     @discardableResult func send(_ draft:String,hasMarkedText:Bool) -> Bool {
         guard !hasMarkedText,revalidate(),canSend,!draft.trimmingCharacters(in:.whitespacesAndNewlines).isEmpty,
               draft.utf8.count<=65_536,let model,let effort,let s=session,let profile else { return false }
-        submission=Submission(text:draft,model:model,effort:effort)
+        submission=Submission(text:draft,model:model,effort:effort,revision:draftRevision)
+        notice=""
         do {
             if s.approval.wire.threadID == nil {
                 phase = .creatingThread;status="正在建立会话"
                 try s.startThread(cwd:profile.project.root.canonicalPath,model:model)
             } else { try deliverSubmission() }
+            guard currentIsValid() else { throw CodexWire.Failure.stale }
             changed();return true
         } catch { submission=nil;fail("请求未能发送。文字保留在输入框中。");return false }
     }
     private func deliverSubmission() throws {
-        guard let value=submission,let s=session,revalidate() else { throw CodexWire.Failure.stale }
+        guard let value=submission,let s=session,let context,revalidate() else { throw CodexWire.Failure.stale }
         phase = .sending;status="正在发送，等待助手响应"
         try s.startTurn(text:value.text,model:value.model,effort:value.effort)
+        guard let id=s.approval.wire.pending.first(where:{$0.value.method=="turn/start"})?.key,
+              currentIsValid() else { throw CodexWire.Failure.stale }
+        pendingDraft=PendingDraft(id:id,text:value.text,revision:value.revision,context:context,expectedTurn:nil)
         submission=nil
     }
     @discardableResult func resumeLast() -> Bool {
@@ -160,7 +276,7 @@ import Foundation
     private var lastAssociation:Association? { guard let project=scope.project else { return nil };return associations.last(where:{$0.project==project}) }
     @discardableResult func interrupt() -> Bool {
         guard canInterrupt,revalidate() else { return false }
-        do { phase = .interrupting;status="正在请求停止，等待助手确认";try session?.interrupt();changed();return true }
+        do { phase = .interrupting;status="正在请求停止，等待助手确认";notice="";try session?.interrupt();changed();return true }
         catch { stop(reason:"停止结果未知，已断开连接。");return false }
     }
     @discardableResult func login() -> Bool {
@@ -191,6 +307,7 @@ import Foundation
         do {
             switch event {
             case .result(let id,let value):
+                try acceptDraftReceipt(id,value:value)
                 if let query=queries.removeValue(forKey:id) {
                     switch query {
                     case .config:
@@ -238,13 +355,15 @@ import Foundation
                         case "failed":emit(.failed(summary:"助手执行失败"),turn:id);phase = .failed;status="助手执行失败"
                         default:throw CodexWire.Failure.malformed
                         }
-                        activeTurn=nil
+                        activeTurn=nil;bumpConductor()
                     }
                 }
             case .failed(let id):
                 let query=queries.removeValue(forKey:id)
                 if query != nil { stop(reason:"登录或配置检查失败，已断开。");return }
-                submission=nil;notice="助手拒绝了这次请求。"
+                submission=nil
+                if pendingDraft?.id==id { pendingDraft=nil }
+                notice="助手拒绝了这次请求。"
                 phase=activeTurn==nil ? .failed:.running;status=activeTurn==nil ? "请求未完成":"助手仍在运行"
             case .ambiguousCompletion:stop(reason:"请求超时，结果未知；已断开。");return
             case .approval:break // The sole default host already sent decline.
@@ -261,6 +380,16 @@ import Foundation
         guard let s=session,let thread=s.approval.wire.threadID else { return }
         if context?.session.id != thread {
             guard let profile,let ticket,let c=scope.context(ticket,session:.init(provider:.codex,id:thread),liveRoot:profile.project.root) else { throw CodexWire.Failure.stale }
+            if draftOwner != c.session {
+                let provisionalDraft=submission != nil && draftOwner==nil
+                if let owner=draftOwner { sessionDrafts[owner]=draft }
+                if !provisionalDraft {
+                    draft=sessionDrafts.removeValue(forKey:c.session) ?? ""
+                    if draftRevision<UInt64.max { draftRevision += 1 }
+                }
+                draftOwner=c.session
+            }
+            bumpConductor()
             context=c;emit(.opened(.owned))
             associations.removeAll(where:{$0.thread==thread});associations.append(.init(project:profile.project,thread:thread))
             if associations.count>64 { associations.removeFirst() }
@@ -269,7 +398,7 @@ import Foundation
         }
         if let turn=s.approval.wire.turnID,activeTurn != turn {
             guard activeTurn == nil else { throw CodexWire.Failure.stale }
-            activeTurn=turn;emit(.turnStarted(turn),turn:turn);phase = .running;status="助手正在运行"
+            activeTurn=turn;bumpConductor();emit(.turnStarted(turn),turn:turn);phase = .running;status="助手正在运行"
         }
     }
     private func emit(_ event:AgentSessions.Event,turn:String?=nil) {
@@ -278,7 +407,7 @@ import Foundation
     }
     private func ended(connection:UUID) {
         guard session?.connectionID==connection else { return }
-        emit(.processExited);scope.invalidate();ticket=nil;context=nil;activeTurn=nil;submission=nil
+        emit(.processExited);scope.invalidate();ticket=nil;context=nil;activeTurn=nil;submission=nil;pendingDraft=nil;bumpConductor()
         configured=false;authenticated=false;queries=[:];loginID=nil;loginDeadline?.cancel();loginDeadline=nil
         phase = .stopping;status="已断开，正在回收直属进程";changed()
     }
@@ -293,11 +422,11 @@ import Foundation
         }
         oldProbe?.cancel()
         // Revoke before closing the writer, including synchronous callbacks caused by stop.
-        scope.invalidate();ticket=nil;loginDeadline?.cancel();loginDeadline=nil;loginID=nil
+        scope.invalidate();ticket=nil;bumpConductor();loginDeadline?.cancel();loginDeadline=nil;loginID=nil
         session?.stop()
         if session == nil { phase = .stopped }
-        status=reason;submission=nil;authenticated=false;configured=false
-        if clearPrivate { draft="";output.clear();diagnosticSnapshot="";session?.clearDiagnostics();_ = store.suspend(at:clock.now());notice="" }
+        status=reason;submission=nil;pendingDraft=nil;authenticated=false;configured=false
+        if clearPrivate { draft="";draftOwner=nil;sessionDrafts.removeAll();output.clear();diagnosticSnapshot="";session?.clearDiagnostics();_ = store.suspend(at:clock.now());notice="" }
         changed()
     }
     func environmentChanged() {
