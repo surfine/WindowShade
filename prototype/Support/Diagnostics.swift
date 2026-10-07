@@ -248,6 +248,8 @@ final class MainThreadStallSentinel {
             {
                 let blame = MainThreadActivity.attribution(since: now - gap, until: now)
                 wlog("main-thread stall ≈\(Int(gap * 1000))ms 期间=\(blame)")
+                self.stalls += 1
+                self.longestStall = max(self.longestStall, gap * 1000)
             }
             self.wasWaiting = isBeforeWaiting
             if self.samplesStacks { MainThreadSampler.shared.beat(waiting: isBeforeWaiting) }
@@ -259,6 +261,21 @@ final class MainThreadStallSentinel {
 
     /// 最近一次观察到的等待状态，仅诊断读取用。
     private(set) var wasWaiting = true
+    /// 报过的卡顿次数与最长一次（毫秒）。资格测试读它做门槛，不再只从日志里数。
+    private(set) var stalls = 0
+    private(set) var longestStall = 0.0
+
+    /// observer 装上了没有。没装上时资格测试必须记 `not_available`，不能把「没量」当 0 通过。
+    var isRunning: Bool { observer != nil }
+
+    /// 资格测试用（主线程）：读此刻的累计计数；`reset` 为真时一并归零，
+    /// 让「这一段」的停顿只算这一段，不带上前面启动序列的账。
+    @discardableResult
+    func stallCounters(reset: Bool = false) -> (count: Int, longestMs: Double) {
+        let out = (stalls, longestStall)
+        if reset { stalls = 0; longestStall = 0 }
+        return out
+    }
 }
 
 // 卡顿时抓主线程的调用栈。哨兵只能在卡顿结束后报时长，“期间=未标记”说不出是谁；
