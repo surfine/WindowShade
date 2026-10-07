@@ -73,6 +73,14 @@ import MetalKit
   private var measuredFrame: UInt64?
   private(set) var presentedCount = 0
   private(set) var skippedBusy = 0
+  /// 独立新源帧的呈现（PERF-11）：同一个源帧被重复呈现不算，只有换了源帧的那次才算。
+  private var newSourcePresented = 0
+  private var newSourceIntervals: [Double] = []
+  private var lastNewSourceTime: CFTimeInterval?
+  /// 被更晚的源帧追上的呈现次数（旧帧）。
+  private(set) var stalePresented = 0
+  /// GPU 完成到主线程解除 busy 的延迟（毫秒）：这一段就是主线程被别的事占着。
+  private var gpuToBusy: [Double] = []
   var onFrameReady: (() -> Void)?
   var onPresented: ((UInt64) -> Void)?
   var onFailure: ((Error) -> Void)?
@@ -344,35 +352,51 @@ import MetalKit
     onFailure = nil
     onReadback = nil
     if let cache { CVMetalTextureCacheFlush(cache, 0) }
+    newSourcePresented = 0
+    newSourceIntervals.removeAll()
+    lastNewSourceTime = nil
+    stalePresented = 0
+    gpuToBusy.removeAll()
   }
   private func append(_ value: Double, to values: inout [Double]) {
     values.append(value)
     if values.count > 1800 { values.removeFirst(values.count - 1800) }
   }
   /// 结构化数值字段（PERF-11）：给自动比较与资格门槛用，不再只有一行字符串。
-  func metricFields() -> [String: Double] {
-    func p95(_ values: [Double]) -> Double {
+  /// 缺样本的字段写 nil（= not_available），不填 0。
+  func metricFields() -> [String: Double?] {
+    func p95(_ values: [Double]) -> Double? {
       let a = values.sorted()
-      return a.isEmpty ? 0 : a[min(a.count - 1, Int(Double(a.count) * 0.95))]
+      return a.isEmpty ? nil : a[min(a.count - 1, Int(Double(a.count) * 0.95))]
     }
-    let fps = intervals.isEmpty ? 0 : Double(intervals.count) / intervals.reduce(0, +)
+    func rate(_ count: Int, _ values: [Double]) -> Double? {
+      guard count >= 2 else { return nil }
+      let span = values.reduce(0, +)
+      return span > 0 ? Double(count - 1) / span : nil
+    }
     return [
       "presentedCount": Double(presentedCount),
-      "fps": fps,
+      "fps": rate(intervals.count + 1, intervals),
+      "newSourcePresentedCount": Double(newSourcePresented),
+      "newSourceFPS": rate(newSourcePresented, newSourceIntervals),
+      "stalePresentedFrames": Double(stalePresented),
       "captureToPresentP95ms": p95(latencies),
       "gpuP95ms": p95(gpuTimes),
+      "gpuToBusyP95ms": p95(gpuToBusy),
       "busySkipped": Double(skippedBusy),
       "latencySamples": Double(latencies.count),
+      "gpuToBusySamples": Double(gpuToBusy.count),
     ]
   }
   func metrics() -> String {
     let fields = metricFields()
+    func value(_ key: String) -> Double { fields[key].flatMap { $0 } ?? 0 }
     return String(
       format:
-        "presented=%d fps=%.1f captureToPresentP95=%.1fms gpuP95=%.1fms busySkipped=%d latencySamples=%d",
-      Int(fields["presentedCount"] ?? 0), fields["fps"] ?? 0,
-      fields["captureToPresentP95ms"] ?? 0, fields["gpuP95ms"] ?? 0,
-      Int(fields["busySkipped"] ?? 0), Int(fields["latencySamples"] ?? 0))
+        "presented=%d fps=%.1f newSource=%d newSourceFps=%.1f captureToPresentP95=%.1fms gpuP95=%.1fms gpuToBusyP95=%.1fms busySkipped=%d latencySamples=%d",
+      Int(value("presentedCount")), value("fps"), Int(value("newSourcePresentedCount")),
+      value("newSourceFPS"), value("captureToPresentP95ms"), value("gpuP95ms"),
+      value("gpuToBusyP95ms"), Int(value("busySkipped")), Int(value("latencySamples")))
   }
   func mtkView(_ view: MTKView, drawableSizeWillChange size: CGSize) { dirty = true }
   func draw(in view: MTKView) {
@@ -535,8 +559,18 @@ import MetalKit
           append(time - previous, to: &intervals)
         }
         lastPresentedTime = time
+        // 旧帧：这一帧上屏时，源那边已经有更新的帧了（呈现落后于源）。
+        if let presentedID = frameTiming?.id, let newest = frame?.id, newest > presentedID {
+          stalePresented += 1
+        }
         if let frame = frameTiming, measuredFrame != frame.id {
           measuredFrame = frame.id
+          // 独立新源帧的呈现率：只算「这一帧的源内容和上一帧不同」的那些。
+          newSourcePresented += 1
+          if let previous = lastNewSourceTime, time > previous {
+            append(time - previous, to: &newSourceIntervals)
+          }
+          lastNewSourceTime = time
           let origin = frame.origin
           if origin.isFinite, origin > 0, time >= origin {
             append((time - origin) * 1000, to: &latencies)
@@ -551,10 +585,14 @@ import MetalKit
     command.addCompletedHandler { [weak self] result in
       withExtendedLifetime((retainedFrame, gpu)) {}
       let gpuMilliseconds = (result.gpuEndTime - result.gpuStartTime) * 1000
+      // GPU 完成到主线程解除 busy 的延迟（PERF-11）：这一段就是主线程被别的事占着的时间。
+      let completedAt = CACurrentMediaTime()
       let completed = result.status == .completed
       let failure = result.error
       DispatchQueue.main.async { [weak self] in
         guard let self else { return }
+        let waited = (CACurrentMediaTime() - completedAt) * 1000
+        if waited.isFinite, waited >= 0 { append(waited, to: &gpuToBusy) }
         busy = false
         guard epoch.accepts(token), !cleared else { return }
         guard completed else {
