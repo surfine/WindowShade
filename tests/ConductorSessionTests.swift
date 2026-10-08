@@ -7,18 +7,23 @@ private struct Driver {
     var press:UInt64 = 0
     var now=0.0
     let model=WS2.ModelID(provider:.codex,modelID:"mock-model")
+    let second=WS2.ModelID(provider:.codex,modelID:"mock-model-2")
     var caps:[ConductorCapabilities]
-    init(ready:Bool=true,efforts:Set<String>=["low","medium","high","xhigh","max","ultra"]) {
+    var slots:[WS2.ModelID?]
+    init(ready:Bool=true,efforts:Set<String>=["low","medium","high","xhigh","max","ultra"],twoModels:Bool=false) {
         caps=[ConductorCapabilities(model:.init(provider:.codex,modelID:"mock-model"),supportedEfforts:efforts,revision:1,ultracodeWorkflowID:nil)]
+        slots=[model,nil,nil,nil]
+        if twoModels {
+            caps.append(ConductorCapabilities(model:second,supportedEfforts:efforts,revision:1,ultracodeWorkflowID:nil))
+            slots=[model,second,nil,nil]
+        }
         _=state.setEnabled(true,at:sec(0));_=connect(epoch:1,at:0)
         if ready {_=send(.snapshot(turnID:nil,actual:nil),at:0.01)}
     }
     var config:WS2.ExecutionConfig { .init(model:model,effort:"high",workflowID:nil,capabilityRevision:1) }
     mutating func connect(epoch:UInt64,at time:Double)->[ConductorSession.Effect] {
         context=WS2.Context(peerID:context.peerID,projectID:context.projectID,session:context.session,epoch:epoch)
-        let choices=[ConductorSession.SessionChoice(context:context,label:"测试项目",running:false),
-            .init(context:fixtureContext(epoch:epoch,session:"second"),label:"第二会话",running:true)]
-        return send(.connected(projectLabel:"测试项目",initial:config,capabilities:caps,slots:[model,nil,nil,nil],sessions:choices),at:time)
+        return send(.connected(projectLabel:"测试项目",initial:config,capabilities:caps,slots:slots),at:time)
     }
     @discardableResult mutating func send(_ event:ConductorSession.Event,at time:Double?=nil)->[ConductorSession.Effect] {
         now=time ?? now+0.1;sequence+=1
@@ -66,6 +71,16 @@ private func tone(_ n:Int)->[ConductorPoint] {
     case 3:return [.init(t:0,x:0.2,y:0.7),.init(t:0.3,x:0.5,y:0.3),.init(t:0.6,x:0.8,y:0.7)]
     default:return [.init(t:0,x:0.2,y:0.75),.init(t:0.3,x:0.5,y:0.5),.init(t:0.6,x:0.8,y:0.3)]
     }
+}
+/// 一笔竖滑：x 不动，单向走 0.5。
+private func swipe(down:Bool)->[ConductorPoint] {
+    let ys:[Double]=down ? [0.8,0.55,0.3] : [0.3,0.55,0.8]
+    return ys.enumerated().map{.init(t:Double($0.offset)*0.15,x:0.5,y:$0.element)}
+}
+private let tapStroke=[ConductorPoint(t:0,x:0.5,y:0.5),.init(t:0.1,x:0.5,y:0.5)]
+private func has(_ effects:[ConductorSession.Effect],_ effect:ConductorSession.Effect)->Bool { effects.contains(effect) }
+private func denied(_ effects:[ConductorSession.Effect])->Bool {
+    effects.contains{if case .approvalChoice(_,let confirm,let deny,_,_,_)=$0{return !confirm && deny};return false}
 }
 private func submission(_ effects:[ConductorSession.Effect])->WS2.Token? {
     effects.compactMap{if case .submitDraft(let id,_,_,_,_)=$0{return id};return nil}.first
@@ -118,24 +133,45 @@ struct ConductorSessionTests {
             var x=Driver();_=x.draw(tone(n));t.expect(x.state.nextConfig?.effort==e && x.state.candidate==nil,"声调 \(n)")
         }
         var six=Driver();_=six.draw(beats(6));t.expect(six.state.candidate?.binding.config.effort=="ultra","六拍不提前放行")
-        t.section("D1-07", "切模型域，五拍/空槽/第一槽 → 拒绝、不可用、稳定选择")
-        var model=Driver();_=model.click(.tv);_=model.draw(beats(5))
-        t.expect(model.state.notch.text=="模型只有四个位置","模型域不认五六档")
-        _=model.draw(beats(2));t.expect(model.state.notch.text=="位置 2 的模型不可用","空位置不移位补足")
-        _=model.draw(beats(1));t.expect(model.state.nextConfig?.model==model.model,"按稳定 ID")
-        t.section("D1-08", "电视按住0.5秒、上下选、松开、中心确认 → 只请求切会话，不换域")
-        var list=Driver();let tvStart=list.now+0.1;let tv=list.down(.tv,at:tvStart)
-        _=list.send(.tick,at:tvStart+0.5)
-        if case .sessions=list.state.notch {t.expect(true,"长按开列表")}else{t.expect(false,"列表未打开")}
-        _=list.up(.tv,tv,began:tvStart,at:tvStart+0.6);_=list.click(.down)
-        let choose=list.click(.select)
-        t.expect(!list.state.modelDomain && choose.contains(.requestSession(fixtureContext(session:"second").session)),"长按 release 不切域")
-        t.section("D1-09", "只有 click 的电视键 → 350ms 内双击开列表，单击延迟后切域")
-        var clicks=Driver();_=clicks.only(.tv,at:1);_=clicks.only(.tv,at:1.2)
-        if case .sessions=clicks.state.notch {t.expect(true,"双击开列表")}else{t.expect(false,"双击列表")}
-        t.expect(!clicks.state.modelDomain,"双击不能先切域")
-        _=clicks.click(.back);_=clicks.only(.tv,at:2);_=clicks.send(.tick,at:2.35)
-        t.expect(clicks.state.modelDomain,"单击期满才切域")
+        // 旧 D1-07（电视键切到“模型域”后用手势数位置）、D1-08 / D1-09（电视键按住或双击在状态机里开会话列表）
+        // 随 2026-10-08 定稿删掉：没有域了，选模型是会话里往下滑的第 3 层；会话列表归刘海那一排，由宿主管。
+        t.section("D1-07", "没有档位 / 模型两个域：一到四拍只管 low…xhigh，电视键不再切域")
+        for (n,e) in [(1,"low"),(2,"medium"),(3,"high"),(4,"xhigh")] {
+            var x=Driver();_=x.draw(beats(n));t.expect(x.state.nextConfig?.effort==e && x.state.nextConfig?.model==x.model && x.state.candidate==nil,"\(n) 拍")
+        }
+        var noDomain=Driver(twoModels:true);_=noDomain.click(.tv);_=noDomain.draw(beats(2))
+        t.expect(noDomain.state.nextConfig?.effort=="medium" && noDomain.state.nextConfig?.model==noDomain.model,"点过电视键，两拍仍是 medium，不是第二个模型")
+        var fiveAfterTV=Driver();_=fiveAfterTV.only(.tv);_=fiveAfterTV.draw(beats(5))
+        t.expect(fiveAfterTV.state.candidate?.binding.config.effort=="max" && fiveAfterTV.state.nextConfig?.effort=="high","五拍仍要点一下确认")
+        t.section("D1-08", "会话里往下滑 → 四个模型位置；左右挪、点一下选中、往上滑关掉")
+        var pick=Driver(twoModels:true);let opened=pick.draw(swipe(down:true))
+        t.expect(pick.state.modelPicker==0 && opened.contains(.showNotch(.models(["mock-model","mock-model-2","没有设置","没有设置"],selected:0))),"焦点落在当前模型")
+        _=pick.draw(tone(1));t.expect(pick.state.modelPicker==1 && pick.state.nextConfig?.effort=="high","往右滑挪一格，横线不当一声")
+        let chosen=pick.draw(tapStroke)
+        t.expect(pick.state.modelPicker==nil && pick.state.nextConfig?.model==pick.second && pick.state.nextConfig?.effort=="high","点一下选中，档位不变")
+        t.expect(chosen.contains(where:{if case .stageConfig(let c)=$0{return c.model==pick.second};return false}) && pick.state.notch.text=="下一轮 · mock-model-2","只改下一轮")
+        _=pick.click(.down);t.expect(pick.state.modelPicker==1,"往下键也能打开，焦点在刚选的位置")
+        _=pick.click(.right);_=pick.click(.right);_=pick.click(.right);t.expect(pick.state.modelPicker==3,"右边到头不绕回")
+        _=pick.click(.select);t.expect(pick.state.notch.text=="位置 4 的模型不可用" && pick.state.nextConfig?.model==pick.second,"空位置不移位补足")
+        _=pick.draw(swipe(down:true));_=pick.click(.left);_=pick.draw(swipe(down:false))
+        t.expect(pick.state.modelPicker==nil && pick.state.nextConfig?.model==pick.second && pick.state.context != nil,"往上滑只关掉模型位置，不选、不退出会话")
+        _=pick.draw(swipe(down:true));_=pick.click(.back)
+        t.expect(pick.state.modelPicker==nil && pick.state.notch.text=="已取消","返回同样只关这一层")
+        var costPick=Driver(twoModels:true);_=costPick.draw(beats(5));_=costPick.click(.select)
+        _=costPick.click(.down);_=costPick.click(.right);_=costPick.click(.select)
+        t.expect(costPick.state.candidate?.binding.config.model==costPick.second && costPick.state.nextConfig?.model==costPick.model,"max 下换模型仍要重新确认")
+        var pickApproval=Driver();_=pickApproval.click(.down);let pickReq=pickApproval.request()
+        t.expect(pickApproval.state.modelPicker==nil && pickApproval.state.notch == .approval(pickReq.summary),"审批来了收起模型位置")
+        t.expect(pickApproval.click(.down).isEmpty && pickApproval.state.modelPicker==nil,"审批时不开模型位置")
+        t.section("D1-09", "竖滑不当档位手势：识别器本来就不认，单向竖滑才是往下 / 往上")
+        if case .failure=ConductorRecognizer.recognize(swipe(down:true)) {t.expect(true,"往下滑识别器不认")} else {t.expect(false,"往下滑不该认成手势")}
+        if case .failure=ConductorRecognizer.recognize(swipe(down:false)) {t.expect(true,"往上滑识别器不认")} else {t.expect(false,"往上滑不该认成手势")}
+        var vertical=Driver();let down=vertical.draw(swipe(down:true))
+        t.expect(vertical.state.nextConfig?.effort=="high" && vertical.state.candidate==nil && !down.contains(.sound("未识别")) && !down.contains(where:{if case .stageConfig=$0{return true};return false}),"往下滑不改档、不报没认出")
+        var halfBeat=Driver();_=halfBeat.draw([.init(t:0,x:0.5,y:0.8),.init(t:0.2,x:0.5,y:0.3),.init(t:0.35,x:0.5,y:0.4)])
+        t.expect(halfBeat.state.modelPicker==nil && halfBeat.state.notch.text=="没认出，保持 high","落下又回弹一点的半拍仍是没认出，不打开模型位置")
+        var slanted=Driver();_=slanted.draw([.init(t:0,x:0.3,y:0.8),.init(t:0.3,x:0.4,y:0.55),.init(t:0.6,x:0.5,y:0.3)])
+        t.expect(slanted.state.modelPicker==nil && slanted.state.nextConfig?.effort=="xhigh","识别器认出的斜线（四声）先归档位")
         t.section("D1-10", "侧键无源、有源但无样本、有样本、松开转写 → 不画假波形，不自动提交")
         var audio=Driver();_=audio.click(.side)
         t.expect(audio.state.notch.text=="没有可用的麦克风","无源不伪装在听")
@@ -211,10 +247,13 @@ struct ConductorSessionTests {
         _=lock.connect(epoch:2,at:lock.now+0.1)
         let oldEffects=lock.state.receive(.init(context:oldContext,sequence:999,receivedAt:sec(lock.now+0.1),commandID:nil,turnID:nil,payload:.editDraft(text:"旧秘密",digest:digest())))
         t.expect(oldEffects==[.fault(.staleContext)] && lock.state.draft==nil,"旧回调不能复活内容")
-        t.section("D1-22", "断开/撤销/电源退出 → 不发 interrupt，后端任务照跑")
-        var exitRun=Driver();_=exitRun.send(.snapshot(turnID:"ongoing",actual:nil));let exited=exitRun.click(.power)
-        t.expect(exited.contains(.disconnect) && !exited.contains(where:{if case .interrupt=$0{return true};return false}),"退出不是停止任务")
-        t.expect(exitRun.state.notch.text=="已退出指挥模式 · 任务还在跑","准确退出文案")
+        t.section("D1-22", "电源收工 / 断开 / 撤销 → 不发 interrupt，后端任务照跑")
+        // 旧 D1-22 断言电源“退出指挥模式”并断开遥控器；定稿后电源是收工：收回刘海、遥控器还连着、Mac 不睡。
+        var exitRun=Driver();_=exitRun.send(.snapshot(turnID:"ongoing",actual:nil));_=exitRun.edit("没发的");let exited=exitRun.click(.power)
+        t.expect(exited.contains(.wrapUp) && !exited.contains(.disconnect) && !exited.contains(where:{if case .interrupt=$0{return true};return false}),"收工不是停止任务，也不断开")
+        t.expect(exitRun.state.notch.text=="收工 · 任务还在跑" && exitRun.state.runningTurn=="ongoing" && exitRun.state.context != nil && exitRun.state.draft?.text=="没发的","会话、在跑的轮次和草稿都留着")
+        var idleExit=Driver();_=idleExit.click(.down);_=idleExit.click(.power)
+        t.expect(idleExit.state.notch.text=="收工" && idleExit.state.modelPicker==nil,"空闲收工，打开的一层一起收回")
         var disconnect=Driver();_=disconnect.edit("未发送");_=disconnect.send(.disconnected)
         t.expect(disconnect.state.draft?.text=="未发送" && disconnect.state.context==nil,"断线保留未发草稿")
         _=disconnect.connect(epoch:2,at:disconnect.now+0.1);t.expect(!disconnect.state.backendReady,"重连先查询")
@@ -223,6 +262,14 @@ struct ConductorSessionTests {
         t.expect(back.state.candidate==nil && back.state.draft != nil,"先取消候选")
         _=back.click(.back);t.expect(back.state.notch == .discardDraft && back.state.draft != nil,"第一次仅提示")
         _=back.click(.back);t.expect(back.state.draft==nil,"第二次才丢")
+        let bottom=back.click(.back);t.expect(bottom.contains(.returnToRow) && back.state.context != nil,"什么都没有就回到那一排")
+        var denyBack=Driver();_=denyBack.edit();_=denyBack.request();let denial=denyBack.click(.back)
+        t.expect(denied(denial) && denyBack.state.notch.text=="不允许" && denyBack.state.draft != nil,"审批时返回 = 不允许，草稿不动")
+        var swipeBack=Driver();_=swipeBack.edit();_=swipeBack.draw(swipe(down:false))
+        t.expect(swipeBack.state.notch == .discardDraft,"往上滑等于返回：第一次提示")
+        _=swipeBack.draw(swipe(down:false));t.expect(swipeBack.state.draft==nil,"第二次丢掉")
+        t.expect(swipeBack.draw(swipe(down:false)).contains(.returnToRow),"再往上滑回到那一排")
+        var upKey=Driver();_=upKey.draw(beats(6));_=upKey.click(.up);t.expect(upKey.state.candidate==nil,"往上键取消候选")
         t.section("D1-24", "普通审批前按下、之后松开 → 不确认；新点按只发给 A1 的授权意图")
         var approve=Driver();let oldStart=approve.now+0.1;let oldPress=approve.down(.select,at:oldStart);let request=approve.request()
         t.expect(!confirmed(approve.up(.select,oldPress,began:oldStart,at:approve.now+0.1)),"旧输入不放行")
@@ -246,12 +293,12 @@ struct ConductorSessionTests {
         var priority=Driver();_=priority.edit();let pc=submission(priority.click(.playPause))!;let pr=priority.request(.high)
         _=priority.send(.backendAccepted(command:pc,actual:priority.config));_=priority.send(.turnStarted(command:pc,turnID:"pturn"))
         t.expect(priority.state.notch == .approval(pr.summary),"审批视图优先")
-        t.section("D1-28", "播放长按后松开、相同 up 重发、模式切换取消 → 不发草稿")
+        t.section("D1-28", "播放长按后松开、相同 up 重发、租约撤销 → 不发草稿")
         var hold=Driver();_=hold.edit();let hs=hold.now+0.1;let hp=hold.down(.playPause,at:hs)
         _=hold.send(.button(button(.playPause,.heldOneSecond,hp,hs,hs+1)),at:hs+1)
         t.expect(submission(hold.up(.playPause,hp,began:hs,at:hs+1.1))==nil,"长按抑制短按")
         t.expect(submission(hold.up(.playPause,hp,began:hs,at:hs+1.2))==nil,"重复 up 幂等")
-        t.expect(submission(hold.state.cancelInput(at:sec(hs+1.3)))==nil && hold.state.draft != nil,"切模式只撤交互")
+        t.expect(submission(hold.state.cancelInput(at:sec(hs+1.3)))==nil && hold.state.draft != nil,"撤租约只撤交互")
         t.section("D1-29", "非法坐标、超过2048点、6秒未抬手 → 拒识，不提交或改档")
         var bad=Driver();_=bad.send(.touch(.begin,.init(x:.nan,y:0.5)))
         t.expect(bad.state.nextConfig?.effort=="high","NaN 不改档")
@@ -275,6 +322,24 @@ struct ConductorSessionTests {
         _=stale.send(.backendAccepted(command:wrong,actual:stale.config));t.expect(stale.state.notch == .sent,"错命令不接受")
         _=stale.send(.turnStarted(command:real,turnID:"real"));_=stale.send(.turnEnded(turnID:"wrong",interrupted:true,summary:""))
         t.expect(stale.state.runningTurn=="real","错轮次不结束")
+        t.section("D1-33", "电视键点一下 → 回到刘海那一排，草稿、会话留在原处；只有 click 不接启动台")
+        var tv=Driver();_=tv.edit("留着的草稿");_=tv.draw(beats(5));let row=tv.click(.tv)
+        t.expect(has(row,.returnToRow) && !has(row,.launchpad) && !row.contains(where:{if case .showNotch=$0{return true};return false}),"只发回到那一排，刘海交给宿主画")
+        t.expect(tv.state.draft?.text=="留着的草稿" && tv.state.context != nil && tv.state.candidate==nil,"草稿留在会话里，候选作废")
+        var tvRun=Driver();_=tvRun.edit();let tc2=submission(tvRun.click(.playPause))!;_=tvRun.click(.tv)
+        _=tvRun.send(.turnStarted(command:tc2,turnID:"kept"));t.expect(tvRun.state.runningTurn=="kept","在途命令不因回到那一排丢掉")
+        var tvOnly=Driver();let onlyRow=tvOnly.only(.tv,at:1)
+        t.expect(has(onlyRow,.returnToRow) && !has(tvOnly.send(.tick,at:2),.launchpad),"没有按下 / 松开：不接启动台")
+        var tvPick=Driver();_=tvPick.click(.down);_=tvPick.click(.tv);t.expect(tvPick.state.modelPicker==nil,"模型位置一起收起")
+        t.section("D1-34", "电视键按住 → 启动台；尾随松开不再回到那一排")
+        var hold2=Driver();let h0=hold2.now+0.1;let hid=hold2.down(.tv,at:h0)
+        let held=hold2.send(.button(button(.tv,.heldHalfSecond,hid,h0,h0+0.5)),at:h0+0.5)
+        t.expect(has(held,.launchpad),"按住半秒打开启动台")
+        let release=hold2.up(.tv,hid,began:h0,at:h0+0.7);t.expect(!has(release,.returnToRow) && !has(release,.launchpad),"松开不重复")
+        var tick=Driver();let k0=tick.now+0.1;let kid=tick.down(.tv,at:k0)
+        t.expect(has(tick.send(.tick,at:k0+0.5),.launchpad) && !has(tick.up(.tv,kid,began:k0,at:k0+0.6),.returnToRow),"没有长按事件时按到期判定")
+        var shortTV=Driver();let s0=shortTV.now+0.1;let sid=shortTV.down(.tv,at:s0)
+        t.expect(has(shortTV.up(.tv,sid,began:s0,at:s0+0.2),.returnToRow) && !has(shortTV.send(.tick,at:s0+1),.launchpad),"不到半秒松开是点一下")
 
  t.finish()
  }

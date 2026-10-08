@@ -47,12 +47,10 @@ import Cocoa
             }
             CATransaction.begin(); CATransaction.setDisableActions(true); path.path = p; CATransaction.commit()
             detail.stringValue = "\(beats) 拍 · 抬手后判定"; stack.addArrangedSubview(detail)
-        case .sessions(let labels,_):
-            // 名字会变。选择发生在指挥页，那里留下的是会话身份，不是这个下标。
-            if labels.isEmpty { detail.stringValue = "还没有会话" }
-            else { detail.stringValue = "在指挥页里选择" }
-            for label in labels.prefix(64) {
-                let line = NSTextField(labelWithString: label)
+        case .models(let labels,let selected):
+            // 四个模型位置；焦点由遥控器左右挪，点一下选中。
+            for (index,label) in labels.prefix(4).enumerated() {
+                let line = NSTextField(labelWithString: index == selected ? "● \(label)" : "○ \(label)")
                 line.font = .systemFont(ofSize: 12)
                 line.textColor = .white
                 stack.addArrangedSubview(line)
@@ -62,8 +60,8 @@ import Cocoa
         case .cost: button("确认费用",.confirmCost); button("取消",.leave)
         case .running, .steering: button("停止这一轮",.stopTurn)
         case .discardDraft: button("丢弃草稿",.discardDraft)
-        case .waitingForAudio, .listening, .transcribing, .connected, .domain, .staged, .next, .sent, .accepted,
-             .steered, .stopping, .stopped, .completed, .disconnected, .revoked, .exited, .muted, .message:
+        case .waitingForAudio, .listening, .transcribing, .connected, .staged, .next, .sent, .accepted,
+             .steered, .stopping, .stopped, .completed, .disconnected, .revoked, .wrappedUp, .muted, .message:
             button("返回",.leave)
         }
         isHidden = false; return true
