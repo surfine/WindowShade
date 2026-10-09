@@ -90,6 +90,48 @@ enum WelcomeFlow {
         return max(0, min(1, (height - Layout.heightWithoutStage) / span))
     }
 
+    // MARK: 窗口高度的弹簧
+
+    /// 窗口高度逐帧由 FlickSpring.calm 驱动：不用贝塞尔。中途换目标（连点“继续”）时，
+    /// 从当前位置和当前速度接着走，不重新从零速度起步。停稳（离目标不到半点、速度很小）就该停帧。
+    struct HeightMotion: Equatable {
+        private(set) var target: Double
+        private var displacement: Double
+        private var velocity: Double
+        private var start: Double
+        let spring: FlickSpring
+
+        init(at height: Double, spring: FlickSpring = .calm) {
+            self.target = height; self.displacement = 0; self.velocity = 0; self.start = 0; self.spring = spring
+        }
+
+        func height(at time: Double) -> Double {
+            target + spring.state(displacement: displacement, velocity: velocity, at: max(0, time - start)).x
+        }
+
+        func velocity(at time: Double) -> Double {
+            spring.state(displacement: displacement, velocity: velocity, at: max(0, time - start)).v
+        }
+
+        func isSettled(at time: Double) -> Bool {
+            abs(height(at: time) - target) < 0.5 && abs(velocity(at: time)) < 5
+        }
+
+        /// 换目标：位置、速度都沿用此刻的。
+        mutating func retarget(to newTarget: Double, at time: Double) {
+            let now = height(at: time), v = velocity(at: time)
+            target = newTarget
+            displacement = now - newTarget
+            velocity = v
+            start = time
+        }
+
+        /// 不动画（减少动态效果）：直接落在目标上，速度清零。
+        mutating func jump(to newTarget: Double) {
+            target = newTarget; displacement = 0; velocity = 0; start = 0
+        }
+    }
+
     // MARK: 翻页（同一个窗口里换内容）
 
     struct StepTransition: Equatable {

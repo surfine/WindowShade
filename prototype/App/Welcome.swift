@@ -21,6 +21,17 @@ struct WelcomePreview {
     var notched: Bool? = nil
 }
 
+/// CADisplayLink 强引用 target：代理只弱引用欢迎视图。回调在主线程 run loop。
+final class WelcomeHeightProxy: NSObject {
+    weak var owner: WelcomeView?
+    init(owner: WelcomeView) { self.owner = owner }
+    @objc func step(_ link: CADisplayLink) {
+        guard owner != nil else { link.invalidate(); return }
+        let owner = owner
+        MainActor.assumeIsolated { owner?.advanceHeightMotion() }
+    }
+}
+
 /// 标题、选项、说明行、授权行放在这一块里：翻页时整块淡入、上浮，旧的那一块用截图淡出。
 final class WelcomeContent: NSView {
     override var isFlipped: Bool { true }
@@ -83,6 +94,9 @@ final class WelcomeView: NSView {
     /// 三步之前那一步：放进“应用程序”文件夹。AppDelegate 在从第一步打开时交进来；nil 就没有这一步。
     private var moveStep: UpdaterMoveStep?
     private(set) var onMoveStep = false
+    private var heightMotion: WelcomeFlow.HeightMotion?
+    private var heightLink: CADisplayLink?
+    private lazy var heightProxy = WelcomeHeightProxy(owner: self)
     private var moveFailed = false
     private let moveBox = NSStackView()
     private let moveIcon = NSImageView()
@@ -300,25 +314,56 @@ final class WelcomeView: NSView {
 
     // MARK: 翻页：窗口高度和内容淡入淡出
 
-    /// 窗口变矮（或变高）：上边不动，下边挪。用 calm 的时长和不回弹的缓动；不动画（减少动态效果、窗口还没打开）就直接换。
+    /// 窗口变矮（或变高）：上边不动，下边挪。高度逐帧由 FlickSpring.calm 驱动，不用贝塞尔；
+    /// 中途换目标（连点“继续”）沿用当前位置和速度，停稳就停帧。不动画（减少动态效果、窗口还没打开）就直接换。
     private func resizeWindow(forStep step: Int, animated: Bool) {
         guard let window else { return }
-        let delta = WelcomeFlow.windowHeight(forStep: step) - bounds.height
-        guard abs(delta) > 0.5 else { return }
+        let targetHeight = WelcomeFlow.windowHeight(forStep: step)
+        let running = heightLink != nil
+        let current = running ? CGFloat(heightMotion?.target ?? Double(bounds.height)) : bounds.height
+        guard abs(targetHeight - current) > 0.5 else { return }
+        guard animated, window.isVisible else {
+            stopHeightMotion()
+            setWindowContentHeight(targetHeight)
+            return
+        }
+        let now = CACurrentMediaTime()
+        var motion = running ? (heightMotion ?? WelcomeFlow.HeightMotion(at: Double(bounds.height)))
+                             : WelcomeFlow.HeightMotion(at: Double(bounds.height))
+        motion.retarget(to: Double(targetHeight), at: now)
+        heightMotion = motion
+        guard !running else { return }
+        let link = displayLink(target: heightProxy, selector: #selector(WelcomeHeightProxy.step(_:)))
+        link.preferredFrameRateRange = CAFrameRateRange(minimum: 60, maximum: 120, preferred: 120)
+        link.add(to: .main, forMode: .common)
+        heightLink = link
+    }
+
+    private func setWindowContentHeight(_ height: CGFloat) {
+        guard let window else { return }
+        let delta = height - bounds.height
+        guard abs(delta) > 0.01 else { return }
         var frame = window.frame
         frame.size.height += delta
         frame.origin.y -= delta
-        guard animated, window.isVisible else {
-            window.setFrame(frame, display: window.isVisible)
-            return
+        window.setFrame(frame, display: window.isVisible)
+    }
+
+    fileprivate func advanceHeightMotion() {
+        guard let motion = heightMotion, window != nil else { stopHeightMotion(); return }
+        let now = CACurrentMediaTime()
+        if motion.isSettled(at: now) {
+            let target = CGFloat(motion.target)
+            stopHeightMotion()
+            setWindowContentHeight(target)
+        } else {
+            setWindowContentHeight(CGFloat(motion.height(at: now)))
         }
-        let calm = Motion.spring(.calm, keyPath: "bounds.size.height")
-        NSAnimationContext.runAnimationGroup { context in
-            context.duration = calm.duration
-            // 临界阻尼弹簧的形状：一上来就走得快，慢慢收住，没有回弹。
-            context.timingFunction = CAMediaTimingFunction(controlPoints: 0.2, 0.9, 0.3, 1)
-            window.animator().setFrame(frame, display: true)
-        }
+    }
+
+    fileprivate func stopHeightMotion() {
+        heightLink?.invalidate(); heightLink = nil
+        heightMotion = nil
     }
 
     private func takeContentSnapshot() -> CALayer? {

@@ -38,6 +38,60 @@ private struct StubEmbedder: FaceEmbedder {
 }
 
 @main @MainActor struct FaceObservationSharingTests {
+    /// ID-03：identity 只接传输类型 'bltn' 的内建镜头。四字码与类型串照本机 AVFoundation 实测
+    /// （内建 'bltn'、外接显示器镜头 'usb ' 却报内建广角、另一台外接 'othr'）。
+    static func cameraAdmission() async throws {
+        func fourCC(_ code: String) -> Int32 {
+            Int32(bitPattern: code.utf8.reduce(UInt32(0)) { $0 << 8 | UInt32($1) })
+        }
+        let wide = FaceCameraDescriptor.builtInWideAngleType
+        check(fourCC("bltn") == FaceCameraDescriptor.builtInTransport, "'bltn' four-char code")
+        let internalCamera = FaceCameraDescriptor(id: "internal", name: "FaceTime", transportType: fourCC("bltn"), deviceType: wide)
+        let displayCamera = FaceCameraDescriptor(id: "display", name: "Studio Display", transportType: fourCC("usb "), deviceType: wide)
+        let other = FaceCameraDescriptor(id: "other", name: "Other", transportType: fourCC("othr"),
+                                         deviceType: "AVCaptureDeviceTypeExternal")
+        let phone = FaceCameraDescriptor(id: "phone", name: "iPhone", transportType: fourCC("bltn"),
+                                         deviceType: "AVCaptureDeviceTypeContinuityCamera")
+        let unknown = FaceCameraDescriptor(id: "unknown", name: "Virtual")
+        check(internalCamera.cameraClass == .builtIn, "the built-in camera is admitted")
+        for camera in [displayCamera, other, phone, unknown] {
+            check(camera.cameraClass == .external, "\(camera.id) is not built in")
+        }
+        let cameras = [displayCamera, phone, internalCamera, other, unknown]
+        check(FaceCameraAdmission.identityCamera(among: cameras, configured: nil) == internalCamera,
+              "default is the first built-in camera, not the first in the list")
+        check(FaceCameraAdmission.identityCamera(among: cameras, configured: "") == internalCamera, "empty setting = default")
+        check(FaceCameraAdmission.identityCamera(among: cameras, configured: "internal") == internalCamera, "chosen built-in ok")
+        for refused in ["display", "phone", "other", "unknown", "missing"] {
+            check(FaceCameraAdmission.identityCamera(among: cameras, configured: refused) == nil,
+                  "a chosen non-built-in camera is refused, not swapped")
+        }
+        check(FaceCameraAdmission.identityCamera(among: [displayCamera, other], configured: nil) == nil, "no built-in, no camera")
+        check(FaceCameraAdmission.admitsIdentity(deviceID: "internal", among: cameras), "admits built-in")
+        check(!FaceCameraAdmission.admitsIdentity(deviceID: "display", among: cameras), "refuses display camera")
+        check(!FaceCameraAdmission.admitsIdentity(deviceID: "missing", among: cameras), "refuses unlisted camera")
+
+        // Hub：identity 订阅在外接镜头上被拒，别的用途在同一台外接镜头上照旧。
+        let worker = CaptureDouble()
+        let hub = FaceObservationHub(worker: worker, authorize: { true },
+                                     admitIdentity: { FaceCameraAdmission.admitsIdentity(deviceID: $0, among: cameras) })
+        let watcher = FaceObservationSource(hub: hub), scanner = FaceObservationSource(hub: hub)
+        let watcherToken = try await watcher.subscribe(deviceID: "display", purpose: .bystander, validFor: 20) { _ in }
+        check(worker.snapshot().starts == 1, "bystander still opens the external camera")
+        do {
+            _ = try await scanner.subscribe(deviceID: "display", purpose: .identity, validFor: 6) { _ in }
+            check(false, "identity on an external camera must be refused")
+        } catch FaceObservationSourceError.cameraNotAdmitted {
+            check(true, "identity on an external camera is refused")
+        }
+        check(worker.snapshot().identity.allSatisfy { !$0 } && worker.snapshot().stops == 0,
+              "refusal neither turns on extraction nor disturbs the running consumer")
+        watcher.unsubscribe(watcherToken)
+        let identityToken = try await scanner.subscribe(deviceID: "internal", purpose: .identity, validFor: 6) { _ in }
+        check(worker.snapshot().starts == 2, "identity on the built-in camera opens")
+        scanner.unsubscribe(identityToken)
+    }
+
     static var checks = 0
     static func check(_ value: @autoclosure () -> Bool, _ message: String) {
         precondition(value(), message); checks += 1
@@ -168,7 +222,8 @@ private struct StubEmbedder: FaceEmbedder {
         // 刷脸实验：特征只交给 .identity 订阅者；没有 identity 订阅者时工作队列不算特征。
         let identityWorker = CaptureDouble()
         let identityClock = TestClock()
-        let identityHub = FaceObservationHub(worker: identityWorker, clock: { identityClock.now }, authorize: { true })
+        let identityHub = FaceObservationHub(worker: identityWorker, clock: { identityClock.now }, authorize: { true },
+                                             admitIdentity: { _ in true })
         let plain = FaceObservationSource(hub: identityHub), scanner = FaceObservationSource(hub: identityHub)
         var plainSamples: [FaceObservation] = [], scannerSamples: [FaceObservation] = []
         let plainToken = try await plain.subscribe(deviceID: "camera", purpose: .geometry, validFor: 20) { plainSamples.append($0) }
@@ -188,6 +243,7 @@ private struct StubEmbedder: FaceEmbedder {
               "the last identity consumer leaving turns extraction off without stopping the camera")
         plain.unsubscribe(plainToken)
         scanner.identityEmbedder = nil
+        try await cameraAdmission()
         print("FaceObservationSharingTests: \(checks) checks passed; no camera or model was run")
     }
 }

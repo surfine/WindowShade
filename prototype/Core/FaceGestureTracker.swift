@@ -79,19 +79,23 @@ struct FaceGestureTracker {
             resetProgress(); return .waiting
         }
         let moved: Bool, returned: Bool
+        // usable() 已保证这些值都在；这里仍用 guard let，缺一个就当这帧不可用，不靠强制解包。
         switch action {
         case .blink:
-            moved = sample.leftEyeOpenness! < min(0.08, base.leftEyeOpenness! * 0.45)
-                && sample.rightEyeOpenness! < min(0.08, base.rightEyeOpenness! * 0.45)
-            returned = sample.leftEyeOpenness! >= base.leftEyeOpenness! * 0.75
-                && sample.rightEyeOpenness! >= base.rightEyeOpenness! * 0.75
+            guard let left = sample.leftEyeOpenness, let right = sample.rightEyeOpenness,
+                  let baseLeft = base.leftEyeOpenness, let baseRight = base.rightEyeOpenness
+            else { resetProgress(); return .waiting }
+            moved = left < min(0.08, baseLeft * 0.45) && right < min(0.08, baseRight * 0.45)
+            returned = left >= baseLeft * 0.75 && right >= baseRight * 0.75
         case .nod:
-            guard abs(sample.yaw! - base.yaw!) <= 0.15 else { resetProgress(); return .waiting }
-            moved = abs(sample.pitch! - base.pitch!) >= 0.18
-            returned = abs(sample.pitch! - base.pitch!) <= 0.07
+            guard let yaw = sample.yaw, let pitch = sample.pitch, let baseYaw = base.yaw, let basePitch = base.pitch,
+                  abs(yaw - baseYaw) <= 0.15 else { resetProgress(); return .waiting }
+            moved = abs(pitch - basePitch) >= 0.18
+            returned = abs(pitch - basePitch) <= 0.07
         case .turnLeft, .turnRight:
             // Raw Vision yaw convention; left/right instruction still needs physical validation.
-            let delta = sample.yaw! - base.yaw!
+            guard let yaw = sample.yaw, let baseYaw = base.yaw else { resetProgress(); return .waiting }
+            let delta = yaw - baseYaw
             moved = action == .turnLeft ? delta <= -0.25 : delta >= 0.25
             returned = abs(delta) <= 0.08
         }
@@ -115,15 +119,23 @@ struct FaceGestureTracker {
             guard let yaw = value.yaw else { return false }; return yaw.isFinite && abs(yaw) <= .pi
         }
     }
+    /// 缺值就算不稳（重新攒锚点），不强制解包。
     private func stable(_ a: FaceObservation, _ b: FaceObservation) -> Bool {
         switch action {
-        case .blink: return abs(a.leftEyeOpenness! - b.leftEyeOpenness!) < 0.08 && abs(a.rightEyeOpenness! - b.rightEyeOpenness!) < 0.08
-        case .nod: return abs(a.yaw! - b.yaw!) < 0.07 && abs(a.pitch! - b.pitch!) < 0.07
-        case .turnLeft, .turnRight: return abs(a.yaw! - b.yaw!) < 0.07
+        case .blink:
+            guard let al = a.leftEyeOpenness, let ar = a.rightEyeOpenness,
+                  let bl = b.leftEyeOpenness, let br = b.rightEyeOpenness else { return false }
+            return abs(al - bl) < 0.08 && abs(ar - br) < 0.08
+        case .nod:
+            guard let ay = a.yaw, let ap = a.pitch, let by = b.yaw, let bp = b.pitch else { return false }
+            return abs(ay - by) < 0.07 && abs(ap - bp) < 0.07
+        case .turnLeft, .turnRight:
+            guard let ay = a.yaw, let by = b.yaw else { return false }
+            return abs(ay - by) < 0.07
         }
     }
     private mutating func resetProgress() { anchors.removeAll(); baseline = nil; movedAt = nil }
-    private static func iou(_ a: CGRect, _ b: CGRect) -> Double {
+    static func iou(_ a: CGRect, _ b: CGRect) -> Double {
         let overlap = a.intersection(b)
         guard !overlap.isNull else { return 0 }
         let area = overlap.width * overlap.height
@@ -159,6 +171,10 @@ struct OwnerTurnTuning: Equatable, Sendable {
     var lookingYaw: Double = 0.10
     var lookingPitch: Double = 0.20
     var turnYaw: Double = 0.25
+    /// 相邻两帧人脸框至少重叠这么多（IoU，quietglass），否则当换了一张脸。
+    var minimumBoxOverlap: Double = 0.6
+    /// 转头提示画出来之后不到这么久就已转到位，视为没看提示（人类视觉反应下限的常用估计，待真机看分布）。
+    var minimumReaction: Double = 0.2
 }
 
 struct OwnerTurnChallenge {
@@ -175,10 +191,20 @@ struct OwnerTurnChallenge {
             }
         }
     }
-    enum Failure: Equatable, Sendable { case invalidConfiguration, timedOut, wrongDirection, landmarksLost, cameraChanged }
+    enum Failure: Equatable, Sendable {
+        case invalidConfiguration, timedOut, wrongDirection, landmarksLost, cameraChanged
+        /// 有脸，但认不出是录入的那个人，超过桥接时长。
+        case notRecognized
+        /// 相邻两帧的人脸框几乎不重叠：中途换了一张脸。
+        case faceJumped
+        /// 转头提示画出来之前或之后不到反应下限就已转到位。
+        case tooFast
+    }
     struct Evidence: Equatable, Sendable {
         let direction: OwnerTurnDirection
         let cameraID: String
+        /// 帧来自哪类镜头（ID-03）。
+        let cameraClass: FaceCameraClass
         let generation: UInt64
         let presentedAt: Double
         let completedAt: Double
@@ -189,24 +215,34 @@ struct OwnerTurnChallenge {
     let direction: OwnerTurnDirection
     let enrolledEyeOpenness: Double
     let presentedAt: Double
+    let cameraClass: FaceCameraClass
     let tuning: OwnerTurnTuning
     private(set) var result: Result
     private var remaining: [Step]
     private var holdStart: Double?
-    /// 第一次看清脸之前只受总超时约束；之后丢脸超过桥接时长才失败。
+    /// 当前这一步的提示画出来的时刻；第一步就是 presentedAt，之后默认是上一步完成那一帧，画面可用 promptShown 更新。
+    private var stepShownAt: Double
+    /// 第一次看清并认出本人之前只受总超时约束；之后丢脸或认不出超过桥接时长才失败。
     private var lastGoodAt: Double?
+    /// 最近一段坏帧是不是“有脸但认不出”（决定失败原因）。
+    private var lostRecognition = false
+    /// 上一帧单人脸的框，用来查框是否连续。
+    private var lastBox: CGRect?
     private var lastTime: Double?
     private var lastSequence: UInt64?
     private var cameraID: String?
     private var generation: UInt64?
 
-    /// 必须在提示真正显示出来时创建。
+    /// 必须在提示真正显示出来时创建：presentedAt 是第一句提示画出来的时刻，不是比对那一帧的时刻。
+    /// 镜头类别不明时按外接记（宁严）。
     init(direction: OwnerTurnDirection, enrolledEyeOpenness: Double, presentedAt: Double,
-         tuning: OwnerTurnTuning = OwnerTurnTuning()) {
+         cameraClass: FaceCameraClass = .external, tuning: OwnerTurnTuning = OwnerTurnTuning()) {
         self.direction = direction
         self.enrolledEyeOpenness = enrolledEyeOpenness
         self.presentedAt = presentedAt
+        self.cameraClass = cameraClass
         self.tuning = tuning
+        stepShownAt = presentedAt
         remaining = [.lookAtCamera, .turn(direction), .lookBack]
         result = .inProgress(.lookAtCamera)
         if !presentedAt.isFinite || !enrolledEyeOpenness.isFinite || enrolledEyeOpenness <= 0 {
@@ -214,15 +250,25 @@ struct OwnerTurnChallenge {
         }
     }
 
+    /// 画面真正画出某一步的提示时调用。只对当前这一步有效，时刻只能往后挪。
+    mutating func promptShown(_ step: Step, at time: Double) {
+        guard case .inProgress(let current) = result, current == step, time.isFinite, time >= stepShownAt else { return }
+        stepShownAt = time
+    }
+
     /// 没有新帧时也要能判超时和丢脸过久。
     @discardableResult mutating func tick(now: Double) -> Result {
         guard case .inProgress = result else { return result }
         if !now.isFinite || now - presentedAt >= tuning.timeout { result = .failed(.timedOut) }
-        else if let lastGoodAt, now - lastGoodAt > tuning.landmarkLossBridge { result = .failed(.landmarksLost) }
+        else if let lastGoodAt, now - lastGoodAt > tuning.landmarkLossBridge {
+            result = .failed(lostRecognition ? .notRecognized : .landmarksLost)
+        }
         return result
     }
 
-    @discardableResult mutating func receive(_ sample: FaceObservation) -> Result {
+    /// `identityMatched`：这一帧唯一那张脸和录入模板比对过线（调用方用同一个守卫判）。
+    /// 认不出的帧和丢关键点一样不计保持时间，桥接时长内可续，超出就失败。
+    @discardableResult mutating func receive(_ sample: FaceObservation, identityMatched: Bool) -> Result {
         guard case .inProgress(let step) = result else { return result }
         let time = sample.observedAt
         // 指令前、乱序或重复的帧只丢弃。
@@ -235,11 +281,27 @@ struct OwnerTurnChallenge {
         lastTime = time; lastSequence = sample.sequence
         if case .failed = tick(now: time) { return result }
 
-        guard sample.faceCount == 1, let yaw = sample.yaw, yaw.isFinite,
+        // 框要连续：和上一帧单人脸的框重叠不够，就是中途换了一张脸。
+        if sample.faceCount == 1, let box = sample.faceBoundingBox, Self.validBox(box) {
+            if let lastBox, FaceGestureTracker.iou(lastBox, box) < tuning.minimumBoxOverlap {
+                result = .failed(.faceJumped); return result
+            }
+            lastBox = box
+        }
+        guard sample.faceCount == 1, sample.faceBoundingBox.map(Self.validBox) == true,
+              let yaw = sample.yaw, yaw.isFinite,
               let left = sample.leftEyeOpenness, let right = sample.rightEyeOpenness,
               left.isFinite, right.isFinite else {
             // 丢了关键点：桥接时长内先等，当前这一步的保持重新计时。
-            holdStart = nil; return result
+            holdStart = nil; lostRecognition = false; return result
+        }
+        if case .turn = step, abs(yaw) >= tuning.turnYaw, time - stepShownAt < tuning.minimumReaction {
+            // 提示还没画出来、或画出来不到反应下限就已转到位：没看提示。
+            result = .failed(.tooFast); return result
+        }
+        guard identityMatched else {
+            // 有脸但认不出本人：同丢关键点处理。
+            holdStart = nil; lostRecognition = true; return result
         }
         lastGoodAt = time
         let eyesOpen = min(left, right) >= enrolledEyeOpenness * tuning.eyeOpennessRatio
@@ -263,10 +325,17 @@ struct OwnerTurnChallenge {
         remaining.removeFirst()
         if let next = remaining.first {
             result = .inProgress(next)
+            stepShownAt = time
         } else {
-            result = .passed(Evidence(direction: direction, cameraID: sample.cameraID, generation: sample.generation,
-                                      presentedAt: presentedAt, completedAt: time, finalSequence: sample.sequence))
+            result = .passed(Evidence(direction: direction, cameraID: sample.cameraID, cameraClass: cameraClass,
+                                      generation: sample.generation, presentedAt: presentedAt, completedAt: time,
+                                      finalSequence: sample.sequence))
         }
         return result
+    }
+
+    private static func validBox(_ box: CGRect) -> Bool {
+        box.minX.isFinite && box.minY.isFinite && box.width.isFinite && box.height.isFinite
+            && box.width > 0 && box.height > 0
     }
 }

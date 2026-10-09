@@ -94,6 +94,8 @@ final class ScrollStripController {
     private var spreadSamples: [(time: TimeInterval, offset: CGFloat)] = []
     /// 概览正跟着张开在长（还没松手）：这时 overview 是它，但还不接键盘和鼠标。
     private var overviewTracking = false
+    /// 概览打开那一刻的卷轴：从刘海拖回来的一格按它的蓝条放（卷轴变过就不用概览里的缝）。
+    private var overviewOpened: ScrollStrip?
     /// 按 App 记住的列宽（本机设置）：开卷轴时读一次，你改了宽度时写回去。
     private var widthMemory = StripWidthMemory()
     /// 正在拖的标题栏（卷轴开着、开关开着时才有）。
@@ -148,6 +150,7 @@ final class ScrollStripController {
         }
         RunLoop.main.add(timer, forMode: .common)
         watchTimer = timer
+        wireNotch()
         wlog("strip: start columns=\(strip.columns.map { $0.ids.count }) widths=\(strip.columns.map { Int($0.width) }) offset=\(Int(strip.offset))")
     }
 
@@ -159,6 +162,8 @@ final class ScrollStripController {
         cancelTitleDrag()
         overview?.close(picking: nil)
         overview = nil
+        overviewOpened = nil
+        unwireNotch()
         overviewTracking = false
         spread = nil
         spreadSamples = []
@@ -483,8 +488,118 @@ final class ScrollStripController {
             self?.overviewTracking = false
             self?.moveFromOverview(id, drop, opened: opened)
         }
+        // 拖进刘海（SS-04）：跟着“概览接线开关”走，默认关；关着时一个口子都不接，和从前一样。
+        if Self.notchLinkEnabled() {
+            view.notchLink = owner.notch.stripNotchLink(display: displayID)
+            view.onTuck = { [weak self] id in
+                self?.overview = nil
+                self?.overviewTracking = false
+                self?.tuckFromOverview(id, opened: opened)
+            }
+        }
+        overviewOpened = opened
         overview = view
         return view
+    }
+
+    /// 拖进刘海松手（概览已经收起，真窗口还没动）：这扇收进刘海，卷轴补位；只剩一列时卷轴结束，窗口留在原处。
+    /// 概览开着的时候卷轴变过就作废（那扇回到原位）。
+    private func tuckFromOverview(_ id: CGWindowID, opened: ScrollStrip) {
+        guard var strip, strip.columns == opened.columns, let element = elements[id], let pid = pids[id], let frame = applied[id],
+              !gestures.owner.notch.isTucked(id) else { return }
+        endMotion()
+        peek.dismiss(reason: "overview tuck")
+        gestures.owner.notch.tuck(element, id: id, pid: pid, landed: frame, home: frame, velocity: .zero)
+        let result = StripNotchExchange.tuck(id, from: &strip)
+        guard result != .notInStrip else { return }
+        gestures.noteLeft(id)
+        elements.removeValue(forKey: id); pids.removeValue(forKey: id); applied.removeValue(forKey: id)
+        self.strip = strip
+        wlog("strip: overview tucked window \(id) into the notch → \(strip.columns.count) columns")
+        if result == .endsStrip {
+            apply()
+            stop(reason: "one column left")
+        } else {
+            apply()
+        }
+    }
+
+    // MARK: 刘海那一排和卷轴互通（SS-04）
+
+    /// 概览接线开关：设置里还没有这一行，用 defaults 打开（stripOverviewNotch）。默认关。
+    static let notchLinkKey = "stripOverviewNotch"
+    static func notchLinkEnabled() -> Bool { UserDefaults.standard.bool(forKey: notchLinkKey) }
+
+    private func wireNotch() {
+        guard Self.notchLinkEnabled() else { return }
+        gestures.owner.notch.stripReturn = NotchController.StripReturnSink(
+            isOn: { Self.notchLinkEnabled() },
+            preview: { [weak self] point in
+                guard let self else { return }
+                if let overview = self.overview, let opened = self.overviewOpened, opened.columns == self.strip?.columns {
+                    _ = overview.returnPreview(atScreen: point)
+                }
+            },
+            place: { [weak self] id, point, take in self?.placeReturned(id, at: point, take: take) ?? false },
+            parkedCells: { [weak self] in StripNotchExchange.parkedCells(strip: self?.strip) },
+            slideIn: { [weak self] id in self?.slideInParked(id) ?? false })
+    }
+
+    private func unwireNotch() {
+        gestures.owner.notch.stripReturn = nil
+    }
+
+    /// 点一下刘海那一排里停在屏幕外的格子：把那一列滑进来（不是放回）。这一格不是卷轴列返回 false。
+    private func slideInParked(_ id: CGWindowID) -> Bool {
+        guard let strip, let cell = StripNotchExchange.parkedCells(strip: strip).first(where: { $0.id == id }) else { return false }
+        if let target = StripNotchExchange.slideInOffset(for: cell, strip: strip) {
+            peek.dismiss(reason: "slide in parked")
+            animate(from: strip.offset, to: target, velocity: 0)
+            wlog("strip: slide in parked column \(cell.column) from the notch row")
+        }
+        return true
+    }
+
+    /// 刘海左段收着的一格拖出来松手：概览开着且指针在概览里，放在最近的缝（蓝条那一道）；否则放在指针下那一列旁边。
+    /// 先在副本上试放，放得下才让刘海把窗口交出来；放不下（那一列满了、卷轴变了）窗口留在刘海里。
+    private func placeReturned(_ id: CGWindowID, at screenPoint: CGPoint,
+                               take: (CGWindowID) -> (element: AXUIElement, pid: pid_t)?) -> Bool {
+        guard var strip, strip.column(of: id) == nil, Self.notchLinkEnabled(),
+              let pid = gestures.owner.notch.tuckedPID(of: id) else { return false }
+        var drop: ScrollStrip.Drop?
+        if let overview, let opened = overviewOpened, opened.columns == strip.columns {
+            drop = overview.returnPreview(atScreen: screenPoint)
+        }
+        if drop == nil {
+            drop = StripNotchExchange.besideColumn(pointer: CGPoint(x: screenPoint.x, y: coordinateBaselineY() - screenPoint.y), strip: strip)
+        }
+        let app = NSRunningApplication(processIdentifier: pid)
+        let category = app?.bundleURL.flatMap { Bundle(url: $0)?.object(forInfoDictionaryKey: "LSApplicationCategoryType") as? String }
+        let role = MagicTiling.role(bundleID: app?.bundleIdentifier, category: category)
+        let remembered = StripWidthMemory.isEnabled() ? widthMemory.width(for: app?.bundleIdentifier, in: strip.area) : nil
+        let width = remembered ?? ScrollStrip.width(for: role, in: strip.area)
+        guard let drop else { return false }
+        var trial = strip
+        guard StripNotchExchange.place(id, width: width, at: drop, into: &trial) else {
+            _ = gestures.owner.notch.announce("这一列放不下了", tone: .problem)
+            return false
+        }
+        guard let taken = take(id) else { return false }
+        overview?.close(picking: nil)
+        overview = nil
+        overviewTracking = false
+        endMotion()
+        peek.dismiss(reason: "notch return")
+        StripNotchExchange.place(id, width: width, at: drop, into: &strip)
+        elements[id] = taken.element
+        pids[id] = taken.pid
+        seen.insert(id)
+        lastFocused = id
+        self.strip = strip
+        apply()
+        focus(id)
+        wlog("strip: window \(id) returned from the notch \(drop) → \(strip.columns.count) columns")
+        return true
     }
 
     /// 概览里拖着换了位置（或 VoiceOver 动作）：真窗口只摆一轮。概览开着的时候卷轴变过（开了关了窗口）就作废。

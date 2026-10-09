@@ -886,6 +886,10 @@ struct StripTitleDrag: Equatable {
 
     static func isEnabled(_ defaults: UserDefaults = .standard) -> Bool { defaults.bool(forKey: enabledKey) }
 
+    static func setEnabled(_ on: Bool, _ defaults: UserDefaults = .standard) {
+        if on { defaults.set(true, forKey: enabledKey) } else { defaults.removeObject(forKey: enabledKey) }
+    }
+
     enum Outcome: Equatable {
         /// 留在卷轴里：drop 不为 nil 就换到那道缝，为 nil 回原位。
         case stay(ScrollStrip.Drop?)

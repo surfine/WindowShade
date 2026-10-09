@@ -59,6 +59,19 @@ enum AudioLevelSystem {
         return transport == kAudioDeviceTransportTypeBluetooth || transport == kAudioDeviceTransportTypeBluetoothLE
     }
 
+    /// 默认输出设备此刻静音了没有；设备没有静音开关、读不到都当没静音。
+    static func defaultOutputIsMuted() -> Bool {
+        let system = AudioObjectID(kAudioObjectSystemObject)
+        guard let device = uint(system, kAudioHardwarePropertyDefaultOutputDevice), device != 0 else { return false }
+        var address = AudioObjectPropertyAddress(mSelector: kAudioDevicePropertyMute, mScope: kAudioDevicePropertyScopeOutput,
+                                                 mElement: kAudioObjectPropertyElementMain)
+        guard AudioObjectHasProperty(device, &address) else { return false }
+        var value: UInt32 = 0
+        var size = UInt32(MemoryLayout<UInt32>.size)
+        guard AudioObjectGetPropertyData(device, &address, 0, nil, &size, &value) == noErr else { return false }
+        return value != 0
+    }
+
     /// 播放器（以及同一个 bundle id 的其它实例）的进程号；在主线程上取，交给 tap 认子进程。
     @MainActor
     static func appPIDs(bundleID: String) -> Set<pid_t> {
@@ -306,6 +319,8 @@ final class AudioLevelController {
         var locked: Bool
         var fullScreen: Bool
         var reducedMotion: Bool
+        /// 系统此刻静音（默认输出设备的静音开关）。
+        var systemMuted = false
 
         static let hidden = Context(earVisible: false, bundleID: nil, playing: false, locked: false, fullScreen: false,
                                     reducedMotion: false)
@@ -414,7 +429,8 @@ final class AudioLevelController {
         var facts = AudioLevelGate.Facts(
             followSound: followSound, permission: .unavailable, earVisible: context.earVisible, playing: context.playing,
             pausedFor: pausedAt.map { max(0, at - $0) }, locked: context.locked, fullScreen: context.fullScreen,
-            reducedMotion: context.reducedMotion, bundleID: context.bundleID, bluetoothOutput: false)
+            reducedMotion: context.reducedMotion, bundleID: context.bundleID, bluetoothOutput: false,
+            systemMuted: context.systemMuted)
         let skippable = facts.followSound && facts.earVisible && facts.bundleID.map { AudioLevelGate.bluetoothSkips.contains($0) } == true
         if skippable { facts.bluetoothOutput = bluetoothOutput() }
         // 只有别的条件都满足、或要分“静止点 / 填充色点”时才问授权（跨进程），问过就记着，直到开关或播放状态变。

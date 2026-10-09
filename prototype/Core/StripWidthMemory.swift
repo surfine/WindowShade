@@ -2,7 +2,8 @@
 //
 // 你给某个 App 在卷轴里改过一次宽度，下次它开在卷轴里就用你改的那档，不用写配置。
 // 只存 App 的标识和一个比例（屏幕宽度的几分之几，只取 ⅓ ½ ⅔ 整屏这几档），放在本机设置里；
-// 不记窗口标题、不联网。默认开（稿“权限与隐私”），设置里一键忘掉（forgetAll）。
+// 不记窗口标题、不联网。默认关（会改变调过大小的 App 新窗口的落点，第二十一波起新行为默认关），
+// 设置里“记住每个 App 的列宽”打开才记、才用；老用户已记下的留着但不生效，直到打开。设置里一键忘掉（forgetAll）。
 // 读写点登记在 tools/privacy/registry.json 的 settings 一行。纯逻辑 + 一层本机设置读写，可单测。
 
 import CoreGraphics
@@ -11,7 +12,7 @@ import Foundation
 struct StripWidthMemory: Equatable {
     /// 本机设置里的键：App 标识 → 比例。
     static let storageKey = "ScrollStrip.widthMemory"
-    /// 开关（默认开）：关掉后不再记、也不再用记下的宽度（已记下的留着，等你按“忘掉”）。
+    /// 开关（默认关）：没打开时不记、也不用记下的宽度（已记下的留着，打开后继续生效，或等你按“忘掉”）。
     static let enabledKey = "ScrollStrip.rememberWidths"
     /// 最多记几个 App：够用，又不让这份设置无限长。满了先丢最早记下的那个。
     static let capacity = 64
@@ -70,11 +71,11 @@ struct StripWidthMemory: Equatable {
     }
 
     static func isEnabled(_ defaults: UserDefaults = .standard) -> Bool {
-        defaults.object(forKey: enabledKey) as? Bool ?? true
+        defaults.object(forKey: enabledKey) as? Bool ?? false
     }
 
     static func setEnabled(_ on: Bool, _ defaults: UserDefaults = .standard) {
-        if on { defaults.removeObject(forKey: enabledKey) } else { defaults.set(false, forKey: enabledKey) }
+        if on { defaults.set(true, forKey: enabledKey) } else { defaults.removeObject(forKey: enabledKey) }
     }
 
     static func load(_ defaults: UserDefaults = .standard) -> StripWidthMemory {

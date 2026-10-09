@@ -1,7 +1,7 @@
 import Foundation
 
 // 刷脸实验的模板集合（纯逻辑）：按模型版本分组，编码成钥匙串里的一条数据。
-// 只存特征数字和录入时刻，不存图像；读回时逐项校验，坏数据当没有。
+// 只存特征数字和录入序号，不存图像；读回时逐项校验，坏数据当没有。
 
 enum FaceTemplateSet {
     /// 一个模型版本最多留这么多条，超出丢最早的。
@@ -60,7 +60,14 @@ enum FaceTemplateSet {
         return valid.count == templates.count ? valid : []
     }
 
-    /// 新录入的接在后面；维度和旧的不同就整组换掉旧的。按录入时刻排好，只留最近 capacity 条。
+    /// 下一条录入的序号：接在这个版本已有的最大值后面加 1，不读墙钟（改系统时间改不了谁是最近一次）。
+    /// 旧模板存的是当时的墙钟秒数，新序号接在它后面，仍然比它大。
+    static func nextEnrollmentSequence(after existing: [FaceTemplate], modelVersion: String) -> Double {
+        let latest = existing.filter { $0.modelVersion == modelVersion && $0.enrolledAt.isFinite }.map(\.enrolledAt).max() ?? 0
+        return max(latest, 0).rounded(.down) + 1
+    }
+
+    /// 新录入的接在后面；维度和旧的不同就整组换掉旧的。按录入序号排好，只留最近 capacity 条。
     static func appending(_ new: [FaceTemplate], to existing: [FaceTemplate], modelVersion: String) -> [FaceTemplate] {
         let fresh = sanitized(new, modelVersion: modelVersion)
         guard let dimension = fresh.first?.embedding.count else { return sanitized(existing, modelVersion: modelVersion) }

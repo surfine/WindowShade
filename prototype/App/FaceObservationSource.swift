@@ -3,7 +3,44 @@ import Cocoa
 @preconcurrency import Vision
 import CoreML
 
-struct FaceCameraDescriptor: Sendable, Hashable { let id: String; let name: String }
+struct FaceCameraDescriptor: Sendable, Hashable {
+    let id: String
+    let name: String
+    /// 相机的传输类型（四字码，如 'bltn'、'usb '）；没读到就是 nil。
+    var transportType: Int32? = nil
+    /// 相机类型的原始值（如内建广角、外接、接续互通）；没读到就是 nil。
+    var deviceType: String? = nil
+
+    /// 内建镜头的传输类型 'bltn'。外接显示器的镜头也报 builtInWideAngleCamera，只有传输类型分得开。
+    static let builtInTransport: Int32 = 0x626C_746E
+    static let builtInWideAngleType = AVCaptureDevice.DeviceType.builtInWideAngleCamera.rawValue
+
+    /// 只有传输类型是 'bltn'、类型是内建广角的才算内建；外接、iPhone（接续互通）、虚拟相机、读不到的一律算外接。
+    var cameraClass: FaceCameraClass {
+        transportType == Self.builtInTransport && deviceType == Self.builtInWideAngleType ? .builtIn : .external
+    }
+}
+
+/// 证据里记下帧来自哪类镜头。只分两类：内建，和其余一切。
+enum FaceCameraClass: String, Sendable, Equatable {
+    case builtIn, external
+}
+
+/// 相机准入（ID-03）：刷脸（identity 用途）只接内建镜头；其余用途选相机的规矩不变。
+enum FaceCameraAdmission {
+    /// 这台相机能不能给 identity 用途开订阅。列表里找不到的一律不认。
+    static func admitsIdentity(deviceID: String, among cameras: [FaceCameraDescriptor]) -> Bool {
+        cameras.first { $0.id == deviceID }?.cameraClass == .builtIn
+    }
+
+    /// 刷脸用哪台相机：设置里指定了就只看那一台（不是内建就拒，不悄悄换别的）；没指定就取第一台内建。
+    static func identityCamera(among cameras: [FaceCameraDescriptor], configured: String?) -> FaceCameraDescriptor? {
+        if let configured, !configured.isEmpty {
+            return cameras.first { $0.id == configured && $0.cameraClass == .builtIn }
+        }
+        return cameras.first { $0.cameraClass == .builtIn }
+    }
+}
 
 /// 采集→过滤→Vision→投递的隐私安全计数（R04）。不写图像、特征或相机硬件名。
 /// PERF-07 扩充：相机实际选中的格式与帧率、像素格式、Vision 次数与用时、连续失败与退路状态。
@@ -73,6 +110,8 @@ struct FaceIdentitySample: Sendable, Equatable {
 enum FaceObservationSourceError: Error {
     case authorizationDenied, unknownDevice, unavailable, interrupted, superseded
     case cameraInUse, invalidLifetime, expired
+    /// identity 用途只接内建镜头；外接、iPhone、虚拟相机都在这里被拒。
+    case cameraNotAdmitted
     case runtime(String)
 }
 
@@ -124,6 +163,7 @@ extension FaceCaptureWorker {
     private let worker: any FaceCaptureWorker
     private let clock: @MainActor () -> Double
     private let authorize: @MainActor () async -> Bool
+    private let admitIdentity: @MainActor (String) -> Bool
     private var consumers: [FaceObservationSubscription: Consumer] = [:]
     private var deviceID: String?
     private var generation: UInt64 = 0
@@ -137,14 +177,18 @@ extension FaceCaptureWorker {
          clock: @escaping @MainActor () -> Double = { CACurrentMediaTime() },
          authorize: @escaping @MainActor () async -> Bool = {
              AVCaptureDevice.authorizationStatus(for: .video) == .authorized
+         },
+         admitIdentity: @escaping @MainActor (String) -> Bool = {
+             FaceCameraAdmission.admitsIdentity(deviceID: $0, among: FaceObservationSource.devices())
          }) {
-        self.worker = worker; self.clock = clock; self.authorize = authorize
+        self.worker = worker; self.clock = clock; self.authorize = authorize; self.admitIdentity = admitIdentity
     }
     func reserve(token: FaceObservationSubscription = .init(id: UUID()), deviceID: String, purpose: FaceObservationPurpose, validFor: Double?,
                  observation: @escaping @MainActor (FaceObservation) -> Void,
                  failure: @escaping @MainActor (Error) -> Void) throws -> FaceObservationSubscription {
         expireConsumers()
         guard !deviceID.isEmpty else { throw FaceObservationSourceError.unknownDevice }
+        if purpose == .identity, !admitIdentity(deviceID) { throw FaceObservationSourceError.cameraNotAdmitted }
         guard self.deviceID == nil || self.deviceID == deviceID else {
             throw FaceObservationSourceError.cameraInUse
         }
@@ -701,7 +745,10 @@ private final class CameraList: @unchecked Sendable {
 
     private func refresh() {
         queue.async { [weak self] in
-            let found = FaceObservationWorker.devices().map { FaceCameraDescriptor(id: $0.uniqueID, name: $0.localizedName) }
+            let found = FaceObservationWorker.devices().map {
+                FaceCameraDescriptor(id: $0.uniqueID, name: $0.localizedName,
+                                     transportType: $0.transportType, deviceType: $0.deviceType.rawValue)
+            }
             guard let self else { return }
             self.lock.lock(); self.cameras = found; self.lock.unlock()
         }

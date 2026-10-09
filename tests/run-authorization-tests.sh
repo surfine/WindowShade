@@ -4,6 +4,6 @@ set -euo pipefail
 cd "$(dirname "$0")/.."
 mkdir -p .build/authorization-tests
 swiftc -swift-version 6 -parse-as-library \
-  prototype/Core/SessionLockState.swift prototype/Core/AuthorizationModels.swift prototype/Core/AuthorizationLedger.swift \
+  prototype/Core/SessionLockState.swift prototype/Core/AuthorizationModels.swift prototype/Core/IdentityEvidence.swift prototype/Core/AuthorizationLedger.swift \
   tests/AuthorizationLedgerTests.swift -o .build/authorization-tests/ledger
 .build/authorization-tests/ledger

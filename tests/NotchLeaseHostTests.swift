@@ -144,6 +144,15 @@ import Cocoa
         Motion.reducedOverrideForProbe = nil
         expect(!NotchCanvasView.contentHasReachedFourTenths(from: 28, to: 280, now: 28), "起点还没走到四成")
         expect(NotchCanvasView.contentHasReachedFourTenths(from: 28, to: 280, now: 28 + 0.4 * (280 - 28)), "形状走到四成再进内容")
+        let chinFrom = CGSize(width: 180, height: 32), chinTo = CGSize(width: 180, height: 72)
+        expect(!NotchCanvasView.contentHasReachedFourTenths(from: chinFrom, to: chinTo, now: CGSize(width: 180, height: 32 + 0.39 * 40)),
+               "只变高的转场：高度没到四成就不进内容")
+        expect(NotchCanvasView.contentHasReachedFourTenths(from: chinFrom, to: chinTo, now: CGSize(width: 180, height: 32 + 0.4 * 40)),
+               "只变高的转场：高度到四成就进内容")
+        expect(NotchCanvasView.contentHasReachedFourTenths(from: CGSize(width: 28, height: 32), to: CGSize(width: 280, height: 72),
+                                                           now: CGSize(width: 28, height: 32 + 0.5 * 40)),
+               "宽高两者取走得更远的：宽没动、高到一半也算")
+        expect(NotchCanvasView.contentHasReachedFourTenths(from: chinFrom, to: chinFrom, now: chinFrom), "没有行程就不等")
 
         print("CASE LEASE-H13 | 音量长在同一颗岛上，对方的提示在跑就让位")
         NotchPanel.foreignHUDOverride = true

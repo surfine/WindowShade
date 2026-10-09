@@ -41,6 +41,12 @@ struct NotchTokenTests {
         t.expect(Motion.Fade.exitGap(reduced: false) == 0.04 && Motion.Fade.exitGap(reduced: true) == 0, "减少动态效果没有退场停顿")
         t.expect(Motion.Fade.secondLayerLag(reduced: false) == 0.20 && Motion.Fade.secondLayerLag(reduced: true) == 0, "减少动态效果不分层")
 
+        t.section("C01-02b", "倒数数字原地换字：旧字淡出 0.10 下移 2、新字淡入 0.18 pop 0.9→1；减少动态效果只交叉淡化 0.18")
+        let swap = Motion.DigitSwap.plan(reduced: false)
+        t.expect(swap.outDuration == 0.10 && swap.inDuration == 0.18 && swap.shift == 2 && swap.popFrom == 0.9, "平时按 §5.1 第 7 条")
+        let quiet = Motion.DigitSwap.plan(reduced: true)
+        t.expect(quiet.outDuration == 0.18 && quiet.inDuration == 0.18 && quiet.shift == 0 && quiet.popFrom == 1, "减少动态效果：交叉淡化 0.18、不位移不缩放")
+
         t.section("C01-03", "停留：格子 0.20、指针停在刘海 0.12、卷帘条意图 0.20")
         t.expect(Motion.Hold.tileDwell == 0.20, "格子 0.20")
         t.expect(Motion.Hold.notchDwell == 0.12, "刘海仍是 0.12")

@@ -72,7 +72,7 @@ struct PresenceLockTests {
         t.expect(h.ownedLock==nil,"错编号不成立")
         t.expect(h.handle(.tick,at:sec(15.5)).contains(.fault(.missingDependency)) && h.ownedLock==nil,"三秒无回执只能未知")
         t.section("L1-09", "自己的锁+新连接读取+连续强RSSI → 仅请求现有身份授权，最多三次")
-        cfg=PresenceLock.Configuration();cfg.returnEnabled=true
+        cfg=PresenceLock.Configuration();cfg.returnEnabled=true;cfg.faceEnabled=true
         var r=ready(cfg); _=r.handle(.disconnected(.phone,generation:1),at:sec(1));let owner=prepared(r.handle(.tick,at:sec(12.5)))!
         _=r.handle(.commitLock(owner),at:sec(12.5)); _=r.handle(.lockConfirmed(owner),at:sec(12.6))
         _=r.handle(.connected(.phone,generation:2),at:sec(13)); _=r.handle(.readStarted(.phone,generation:2,request:1),at:sec(13));_=r.handle(.readSucceeded(.phone,generation:2,request:1),at:sec(13.1))
@@ -114,7 +114,7 @@ struct PresenceLockTests {
         func rejoin(_ value:inout PresenceLock) {
             _=value.handle(.connected(.phone,generation:2),at:sec(13));_=value.handle(.readStarted(.phone,generation:2,request:1),at:sec(13));_=value.handle(.readSucceeded(.phone,generation:2,request:1),at:sec(13.1))
         }
-        cfg=PresenceLock.Configuration();cfg.returnEnabled=true
+        cfg=PresenceLock.Configuration();cfg.returnEnabled=true;cfg.faceEnabled=true
         var oldLink=owned(cfg);var oldEffects:[PresenceLock.Effect]=[]
         for i in 0...6 {oldEffects += oldLink.handle(.rssi(generation:1,dbm:-40),at:sec(14+Double(i)/2))}
         t.expect(returnToken(oldEffects)==nil,"旧连接即便强信号也没有返回资格")
@@ -175,7 +175,7 @@ struct PresenceLockTests {
         var noLock=ready();_=noLock.handle(.disconnected(.phone,generation:1),at:sec(1));_=noLock.handle(.sleep,at:sec(2));_=noLock.handle(.wake,at:sec(10))
         t.expect(notes(noLock.handle(.systemUnlocked,at:sec(10.5)))==0,"复查发现本来没锁 → 不是有人解锁")
         t.section("L1-19", "手动锁 → 睡醒后手机走回来、强信号 → 不自动解锁，也不请求返回授权")
-        cfg=PresenceLock.Configuration();cfg.returnEnabled=true
+        cfg=PresenceLock.Configuration();cfg.returnEnabled=true;cfg.faceEnabled=true
         var walk=ready(cfg);_=walk.handle(.systemLocked,at:sec(1));_=walk.handle(.sleep,at:sec(2));_=walk.handle(.wake,at:sec(30))
         var walkEffects=walk.handle(.tick,at:sec(30.5))+walk.handle(.systemLocked,at:sec(30.5))+walk.handle(.tick,at:sec(31))
         _=walk.handle(.connected(.phone,generation:2),at:sec(31.2));_=walk.handle(.readStarted(.phone,generation:2,request:1),at:sec(31.2))

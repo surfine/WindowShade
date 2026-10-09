@@ -36,6 +36,9 @@ struct NotchSmallBehaviourTests {
         check(abs(NotchSmallBehaviour.tileFadeDelay(index: 0) - 0.09) < 1e-9, "first tile at 0.09")
         check(abs(NotchSmallBehaviour.tileFadeDelay(index: 3) - 0.21) < 1e-9, "fourth tile at 0.21")
         check(abs(NotchSmallBehaviour.tileFadeDelay(index: -2) - 0.09) < 1e-9, "negative index clamps")
+        check(abs(NotchSmallBehaviour.tileFadeDelay(index: 4) - 0.25) < 1e-9, "fifth tile at 0.25")
+        check(abs(NotchSmallBehaviour.tileFadeDelay(index: 9) - 0.25) < 1e-9, "stagger is capped at index 4")
+        check(abs(NotchSmallBehaviour.tileFadeDelay(index: 1000) - 0.25) < 1e-9, "huge index stays capped")
 
         // 边线渐变：3 点以内看不见，20 点起全显。
         check(NotchSmallBehaviour.keyLineVisibility(atDepth: 0) == 0, "top edge hidden")

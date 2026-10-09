@@ -25,6 +25,7 @@ import Foundation
         testNoPeekConditions()
         testReopenAfterEnd()
         testAdvertisementRule()
+        testQueuedBehindOtherAlert()
         print("PASS now-playing-peek")
     }
 
@@ -113,5 +114,77 @@ import Foundation
         expect(!NowPlayingCardPolicy.isAdvertisement(duration: 30, artist: "某人"), "有歌手不是广告")
         expect(!NowPlayingCardPolicy.isAdvertisement(duration: nil, artist: ""), "不知道时长不当广告")
         expect(isOpen(tracker.observe(sample("正片", artist: "", ad: false), gates: gates, now: 40)), "广告之后的下一首照常一瞥")
+    }
+
+    /// 别的提醒占着：这一瞥排在后面（稿“排在后面”）。占着的收了且仍在放、仍是同一首才补出；超过 4.5 秒放弃。
+    static func testQueuedBehindOtherAlert() {
+        let free = NowPlayingPeekTracker.Gates()
+        let busy = NowPlayingPeekTracker.Gates(otherAlertShowing: true)
+        expect(NowPlayingPeek.queueLimit == 4.5, "排队最多等 4.5 秒")
+
+        var tracker = NowPlayingPeekTracker()
+        expect(tracker.observe(sample("A"), gates: busy, now: 0) == .none && tracker.hasPending, "占着：不开口，排在后面")
+        expect(tracker.retryPending(sample("A"), gates: busy, now: 1) == .none && tracker.hasPending, "占着的还没收：接着等")
+        guard case let .open(hold) = tracker.retryPending(sample("A"), gates: free, now: 2.6) else { return expect(false, "收了该补出") }
+        expect(abs(hold - NowPlayingPeek.hold(title: "A", artist: "歌手")) < 1e-9, "补出的一瞥照常计时")
+        expect(!tracker.hasPending, "补出后不再排着")
+        expect(tracker.retryPending(sample("A"), gates: free, now: 3) == .none, "只补一次")
+
+        // 刚好 4.5 秒还算数，超过就放弃，而且事后不再补。
+        tracker = NowPlayingPeekTracker()
+        _ = tracker.observe(sample("A"), gates: busy, now: 10)
+        expect(isOpen(tracker.retryPending(sample("A"), gates: free, now: 14.5)), "4.5 秒整：补出")
+        tracker = NowPlayingPeekTracker()
+        _ = tracker.observe(sample("A"), gates: busy, now: 10)
+        expect(tracker.retryPending(sample("A"), gates: free, now: 14.51) == .none && !tracker.hasPending, "超过 4.5 秒：放弃")
+        expect(tracker.retryPending(sample("A"), gates: free, now: 14.6) == .none, "放弃后不补")
+
+        // 占着期间换了歌：排的是新的一首；旧的不补。
+        tracker = NowPlayingPeekTracker()
+        _ = tracker.observe(sample("A"), gates: busy, now: 0)
+        _ = tracker.observe(sample("B"), gates: busy, now: 1)
+        expect(tracker.retryPending(sample("A"), gates: free, now: 2) == .none && !tracker.hasPending, "已经不是排队的那一首：放弃")
+        tracker = NowPlayingPeekTracker()
+        _ = tracker.observe(sample("A"), gates: busy, now: 0)
+        _ = tracker.observe(sample("B"), gates: busy, now: 1)
+        expect(isOpen(tracker.retryPending(sample("B"), gates: free, now: 2)), "新的一首补出")
+
+        // 暂停、播放器退出、广告：放弃。
+        for (name, current) in [("暂停", sample("A", playing: false)), ("播放器退出", nil), ("广告", sample("A", ad: true))] as [(String, NowPlayingPeekTracker.Sample?)] {
+            tracker = NowPlayingPeekTracker()
+            _ = tracker.observe(sample("A"), gates: busy, now: 0)
+            expect(tracker.retryPending(current, gates: free, now: 1) == .none && !tracker.hasPending, "\(name)：放弃")
+        }
+        // 暂停后在占着期间接着放：observe 看到暂停就清掉，同一首接着放不算换歌。
+        tracker = NowPlayingPeekTracker()
+        _ = tracker.observe(sample("A"), gates: busy, now: 0)
+        _ = tracker.observe(sample("A", playing: false), gates: busy, now: 1)
+        expect(!tracker.hasPending, "暂停：不再排着")
+        expect(tracker.observe(sample("A"), gates: free, now: 2) == .none, "暂停后接着放同一首：不一瞥")
+
+        // 更硬的场面（大卡、那一排、全屏、锁屏）来了：放弃，不补。
+        let hard: [(String, NowPlayingPeekTracker.Gates)] = [
+            ("大卡或那一排", .init(shelfOrCardOpen: true)), ("全屏", .init(fullScreen: true)), ("锁屏", .init(locked: true))]
+        for (name, gates) in hard {
+            tracker = NowPlayingPeekTracker()
+            _ = tracker.observe(sample("A"), gates: busy, now: 0)
+            expect(tracker.retryPending(sample("A"), gates: gates, now: 1) == .none && !tracker.hasPending, "\(name)：放弃")
+            expect(tracker.retryPending(sample("A"), gates: free, now: 2) == .none, "\(name)：事后不补")
+        }
+        // 硬场面本身挡着的那一首从一开始就不排。
+        tracker = NowPlayingPeekTracker()
+        _ = tracker.observe(sample("A"), gates: .init(shelfOrCardOpen: true, otherAlertShowing: true), now: 0)
+        expect(!tracker.hasPending, "大卡开着又有提醒：不排")
+
+        // 锁屏清场：排着的也不留。
+        tracker = NowPlayingPeekTracker()
+        _ = tracker.observe(sample("A"), gates: busy, now: 0)
+        tracker.cleared()
+        expect(!tracker.hasPending && tracker.retryPending(sample("A"), gates: free, now: 1) == .none, "清场后不补")
+
+        // 排着的时候占着的提醒收了，开着的一瞥仍可原地换字。
+        tracker = NowPlayingPeekTracker()
+        _ = tracker.observe(sample("A"), gates: free, now: 0)
+        expect(tracker.observe(sample("B"), gates: free, now: 0.5) != .none, "一瞥开着换歌：原地换")
     }
 }

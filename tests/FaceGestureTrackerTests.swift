@@ -27,9 +27,10 @@ import Foundation
     /// 每 50 ms 一帧，从 fromMS 到 toMS（含）。
     @discardableResult
     static func feed(_ challenge: inout OwnerTurnChallenge, _ fromMS: Int, _ toMS: Int, yaw: Double? = 0,
-                     eyes: Double? = enrolledEyes, count: Int = 1) -> OwnerTurnChallenge.Result {
+                     eyes: Double? = enrolledEyes, count: Int = 1, matched: Bool = true,
+                     box: CGRect = CGRect(x: 0.3, y: 0.3, width: 0.4, height: 0.4)) -> OwnerTurnChallenge.Result {
         for ms in stride(from: fromMS, through: toMS, by: 50) {
-            challenge.receive(frame(Double(ms) / 1000, count: count, yaw: yaw, eyes: eyes))
+            challenge.receive(frame(Double(ms) / 1000, count: count, yaw: yaw, eyes: eyes, box: box), identityMatched: matched)
         }
         return challenge.result
     }
@@ -100,9 +101,77 @@ import Foundation
 
         // 换了相机就作废，指令前的帧不算。
         var swapped = OwnerTurnChallenge(direction: .left, enrolledEyeOpenness: enrolledEyes, presentedAt: 1)
-        check(swapped.receive(frame(0.9)) == .inProgress(.lookAtCamera))
-        swapped.receive(frame(1.1))
-        check(swapped.receive(frame(1.2, camera: "other")) == .failed(.cameraChanged))
+        check(swapped.receive(frame(0.9), identityMatched: true) == .inProgress(.lookAtCamera))
+        swapped.receive(frame(1.1), identityMatched: true)
+        check(swapped.receive(frame(1.2, camera: "other"), identityMatched: true) == .failed(.cameraChanged))
+
+        ownerBinding()
+    }
+
+    /// ID-02：每个保持帧都要认出本人、框要连续，转头不能快过反应下限。
+    static func ownerBinding() {
+        // 看镜头那一步由认得出的脸完成，转头换成认不出的脸：转头不计，桥接 1.5 秒后判“认不出”。
+        var swappedPerson = OwnerTurnChallenge(direction: .left, enrolledEyeOpenness: enrolledEyes, presentedAt: 0)
+        check(feed(&swappedPerson, 50, 500) == .inProgress(.turn(.left)))
+        check(feed(&swappedPerson, 550, 1950, yaw: -0.4, matched: false) == .inProgress(.turn(.left)))
+        check(feed(&swappedPerson, 2000, 2100, yaw: -0.4, matched: false) == .failed(.notRecognized))
+        // 没有新帧也一样：tick 判出“认不出”而不是“丢关键点”。
+        var quiet = OwnerTurnChallenge(direction: .right, enrolledEyeOpenness: enrolledEyes, presentedAt: 0)
+        feed(&quiet, 50, 500)
+        feed(&quiet, 550, 600, yaw: 0.4, matched: false)
+        check(quiet.tick(now: 2.1) == .failed(.notRecognized))
+        // 认不出的帧夹在中间只会让保持重新计时；1.5 秒内认回来照常完成。
+        var flicker = OwnerTurnChallenge(direction: .right, enrolledEyeOpenness: enrolledEyes, presentedAt: 0)
+        feed(&flicker, 50, 500)
+        feed(&flicker, 550, 650, yaw: 0.4)
+        feed(&flicker, 700, 700, yaw: 0.4, matched: false)
+        check(feed(&flicker, 750, 900, yaw: 0.4) == .inProgress(.turn(.right)))  // 保持从 0.75 重算，还不满 0.25
+        check(feed(&flicker, 950, 1050, yaw: 0.4) == .inProgress(.lookBack))
+        if case .passed = feed(&flicker, 1100, 1500) { checks += 1 } else { preconditionFailure() }
+        // 从头到尾认不出：一步都不算，最后超时。
+        var stranger = OwnerTurnChallenge(direction: .left, enrolledEyeOpenness: enrolledEyes, presentedAt: 0)
+        check(feed(&stranger, 50, 1500, matched: false) == .inProgress(.lookAtCamera))
+
+        // 框跳开（IoU < 0.6）：中途换了一张脸，直接失败；挪一点（IoU ≥ 0.6）照常。
+        var jumped = OwnerTurnChallenge(direction: .left, enrolledEyeOpenness: enrolledEyes, presentedAt: 0)
+        feed(&jumped, 50, 500)
+        check(feed(&jumped, 550, 550, yaw: -0.4, box: CGRect(x: 0.5, y: 0.3, width: 0.4, height: 0.4)) == .failed(.faceJumped))
+        var drift = OwnerTurnChallenge(direction: .left, enrolledEyeOpenness: enrolledEyes, presentedAt: 0)
+        feed(&drift, 50, 500)
+        check(feed(&drift, 550, 1000, yaw: -0.4, box: CGRect(x: 0.33, y: 0.3, width: 0.4, height: 0.4)) == .inProgress(.lookBack))
+        // 认不出的帧也查框连续：先拿别处的一张脸插进来，同样判失败。
+        var spliced = OwnerTurnChallenge(direction: .left, enrolledEyeOpenness: enrolledEyes, presentedAt: 0)
+        feed(&spliced, 50, 500)
+        check(feed(&spliced, 550, 550, matched: false, box: CGRect(x: 0, y: 0, width: 0.2, height: 0.2)) == .failed(.faceJumped))
+
+        // 反应下限：看镜头一步在 0.30 完成，0.35 就已转到位 → 没看提示。
+        var eager = OwnerTurnChallenge(direction: .left, enrolledEyeOpenness: enrolledEyes, presentedAt: 0)
+        check(feed(&eager, 50, 300) == .inProgress(.turn(.left)))
+        check(feed(&eager, 350, 350, yaw: -0.4) == .failed(.tooFast))
+        // 刚好 0.2 秒算数。
+        var prompt = OwnerTurnChallenge(direction: .left, enrolledEyeOpenness: enrolledEyes, presentedAt: 0)
+        feed(&prompt, 50, 300)
+        check(feed(&prompt, 500, 500, yaw: -0.4) == .inProgress(.turn(.left)))
+        // 提示晚画出来：从画出来的那一刻算；画出来之前就转到位的帧也算太快。
+        var late = OwnerTurnChallenge(direction: .left, enrolledEyeOpenness: enrolledEyes, presentedAt: 0)
+        feed(&late, 50, 300)
+        late.promptShown(.lookBack, at: 0.9)  // 不是当前这一步：忽略
+        late.promptShown(.turn(.left), at: 0.1)  // 往回挪：忽略
+        late.promptShown(.turn(.left), at: 0.6)
+        check(feed(&late, 550, 550, yaw: -0.4) == .failed(.tooFast))
+        var lateOK = OwnerTurnChallenge(direction: .left, enrolledEyeOpenness: enrolledEyes, presentedAt: 0)
+        feed(&lateOK, 50, 300)
+        lateOK.promptShown(.turn(.left), at: 0.6)
+        check(feed(&lateOK, 350, 750) == .inProgress(.turn(.left)))
+        check(feed(&lateOK, 800, 1100, yaw: -0.4) == .inProgress(.lookBack))
+        // 看回镜头那一步没有下限（方向是预料之中的）。
+        guard case .passed(let evidence) = feed(&lateOK, 1150, 1450) else { preconditionFailure() }
+        check(evidence.cameraClass == .external)  // 没说镜头类别就按外接记
+
+        var builtIn = OwnerTurnChallenge(direction: .right, enrolledEyeOpenness: enrolledEyes, presentedAt: 0, cameraClass: .builtIn)
+        feed(&builtIn, 50, 500); feed(&builtIn, 550, 1000, yaw: 0.4)
+        guard case .passed(let tagged) = feed(&builtIn, 1050, 1500) else { preconditionFailure() }
+        check(tagged.cameraClass == .builtIn)
     }
 
     static func main() async {

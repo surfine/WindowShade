@@ -70,7 +70,10 @@ struct ScrollStripFollowTests {
             let suite = "windowshade.tests.stripwidth.\(getpid())"
             let defaults = UserDefaults(suiteName: suite)!
             defaults.removePersistentDomain(forName: suite)
-            expect(StripWidthMemory.isEnabled(defaults), "remembering widths is on by default")
+            expect(!StripWidthMemory.isEnabled(defaults), "remembering widths is off by default")
+            defaults.set(false, forKey: StripWidthMemory.enabledKey)
+            expect(!StripWidthMemory.isEnabled(defaults), "an explicit off from the earlier default-on build stays off")
+            defaults.removeObject(forKey: StripWidthMemory.enabledKey)
             memory.remember(bundleID: "com.example.browser", width: 735, screenWidth: 1470)
             memory.save(defaults)
             let relaunched = StripWidthMemory.load(UserDefaults(suiteName: suite)!)
@@ -82,11 +85,14 @@ struct ScrollStripFollowTests {
             StripWidthMemory.forgetAll(defaults)
             expect(StripWidthMemory.load(defaults).entries.isEmpty && defaults.object(forKey: StripWidthMemory.storageKey) == nil,
                    "forget clears everything in one step")
-            StripWidthMemory.setEnabled(false, defaults)
-            expect(!StripWidthMemory.isEnabled(defaults), "the switch turns it off")
             StripWidthMemory.setEnabled(true, defaults)
-            expect(StripWidthMemory.isEnabled(defaults) && defaults.object(forKey: StripWidthMemory.enabledKey) == nil,
-                   "turning it back on leaves the preference clean")
+            expect(StripWidthMemory.isEnabled(defaults), "the switch turns it on")
+            StripWidthMemory.setEnabled(false, defaults)
+            expect(!StripWidthMemory.isEnabled(defaults) && defaults.object(forKey: StripWidthMemory.enabledKey) == nil,
+                   "turning it back off leaves the preference clean")
+            memory.save(defaults)
+            expect(!StripWidthMemory.isEnabled(defaults) && StripWidthMemory.load(defaults) == memory,
+                   "remembered widths from before stay stored while the switch is off")
             StripWidthMemory().save(defaults)
             expect(defaults.object(forKey: StripWidthMemory.storageKey) == nil, "an empty memory stores nothing")
             defaults.removePersistentDomain(forName: suite)
