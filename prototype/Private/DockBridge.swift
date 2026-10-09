@@ -9,6 +9,25 @@
 import Cocoa
 import Darwin
 
+/// 必崩点的纯函数守卫（S03）：越界键码、AX 类型不符、没有屏幕时不崩，而是退回默认或跳过。
+enum CrashTrap {
+    /// 符号热键的键码：系统给的数字必须装得进 UInt16（0...0xFFFF），否则退回默认键码。
+    static func hotKeyCode(_ raw: Int, fallback: CGKeyCode) -> CGKeyCode {
+        (0...0xFFFF).contains(raw) ? CGKeyCode(raw) : fallback
+    }
+
+    /// AX 返回的任意 CFTypeRef 先按类型 ID 校验；类型不对（CFString、CFNull……）返回 nil，不强转。
+    static func axRef(_ value: CFTypeRef?, typeID: CFTypeID) -> CFTypeRef? {
+        guard let value, CFGetTypeID(value) == typeID else { return nil }
+        return value
+    }
+
+    /// 选屏：指定的屏优先，其次第一块与面板相交的，再次主屏，最后任意一块；屏幕全空时返回 nil。
+    static func pickScreen<S>(preferred: S?, screens: [S], intersects: (S) -> Bool, main: S?) -> S? {
+        preferred ?? screens.first(where: intersects) ?? main ?? screens.first
+    }
+}
+
 enum DockOverview {
     private typealias SendNotification = @convention(c) (CFString, UnsafeMutableRawPointer?) -> Void
 
@@ -50,7 +69,7 @@ enum DockOverview {
             }
             if let value = entry["value"] as? [String: Any], let parameters = value["parameters"] as? [NSNumber],
                parameters.count == 3 {
-                keyCode = CGKeyCode(parameters[1].intValue)
+                keyCode = CrashTrap.hotKeyCode(parameters[1].intValue, fallback: keyCode)
                 flags = CGEventFlags(rawValue: parameters[2].uint64Value)
             }
         }

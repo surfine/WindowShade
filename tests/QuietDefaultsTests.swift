@@ -41,6 +41,8 @@ struct QuietDefaultsTests {
         body(defaults)
     }
 
+    /// 计时器的一键启用组合是 ⌃⌥T（Aaron 2026-10-09 定），但出厂不占键：新装和升级都是没有。
+    static let countdownDefault = HotKey(keyCode: UInt32(kVK_ANSI_T), modifiers: UInt32(controlKey | optionKey))
     static let shipped: [GlobalShortcut: HotKey] = [
         .toggleShade: ctrlCmd(kVK_ANSI_C), .arrangeOrFocus: ctrlCmd(kVK_ANSI_0), .pinPreview: ctrlCmd(kVK_ANSI_P),
         .carry: ctrlCmd(kVK_ANSI_G), .stepSmaller: ctrlCmd(kVK_UpArrow), .stepLarger: ctrlCmd(kVK_DownArrow),
@@ -123,7 +125,13 @@ struct QuietDefaultsTests {
     static func shortcuts() {
         withDefaults { _ in
             expect(GlobalShortcut.allCases.allSatisfy { GlobalShortcutSettings.hotKey(for: $0) == nil },
-                   "a new install occupies no shortcut at all")
+                   "a new install occupies no shortcut at all, the timer included")
+            expect(GlobalShortcutSettings.countdownHotKey == countdownDefault,
+                   "the timer's one-click enable is ⌃⌥T")
+            expect(GlobalShortcut.allCases.allSatisfy { GlobalShortcutSettings.defaultHotKey(for: $0) == nil },
+                   "no action has a default on a new install, so ⌃⌥T is free until someone turns it on")
+            expect(GlobalShortcutSettings.conflictName(for: countdownDefault, excluding: .toggleShade) == nil,
+                   "⌃⌥T is free to use on a new install")
             expect(!GlobalShortcutSettings.numberedExpandEnabled, "a new install does not take ⌃⌘1…9 either")
             expect(GlobalShortcutSettings.isAllDefault, "nothing recorded yet counts as the defaults")
             let ctrlCmd3 = ctrlCmd(kVK_ANSI_3)
@@ -139,6 +147,12 @@ struct QuietDefaultsTests {
             GlobalShortcutSettings.setHotKey(nil, for: .toggleShade)
             expect(GlobalShortcutSettings.hotKey(for: .toggleShade) == nil && GlobalShortcutSettings.isAllDefault,
                    "clearing it on a new install goes back to the default: nothing")
+            // 计时器一键启用成 ⌃⌥T：照常生效，并且冲突时报的是计时器的名字。
+            GlobalShortcutSettings.setHotKey(countdownDefault, for: .countdownTimer)
+            expect(GlobalShortcutSettings.hotKey(for: .countdownTimer) == countdownDefault && !GlobalShortcutSettings.isAllDefault,
+                   "the one-click enable turns the timer on at ⌃⌥T and counts as a change")
+            expect(GlobalShortcutSettings.conflictName(for: countdownDefault, excluding: .toggleShade) == GlobalShortcut.countdownTimer.title,
+                   "⌃⌥T is reported as the timer's once it is on")
             GlobalShortcutSettings.numberedExpandEnabled = true
             expect(GlobalShortcutSettings.numberedExpandEnabled && !GlobalShortcutSettings.isAllDefault,
                    "⌃⌘1…9 can be switched on in Settings")
@@ -146,7 +160,15 @@ struct QuietDefaultsTests {
             GlobalShortcutSettings.resetAll()
             expect(GlobalShortcut.allCases.allSatisfy { GlobalShortcutSettings.hotKey(for: $0) == nil }
                     && !GlobalShortcutSettings.numberedExpandEnabled && GlobalShortcutSettings.isAllDefault,
-                   "restore defaults on a new install clears everything again")
+                   "restore defaults on a new install clears everything again, the timer included")
+            // 计时器的键能改、能关；恢复默认回到没有。
+            GlobalShortcutSettings.setHotKey(countdownDefault, for: .countdownTimer)
+            GlobalShortcutSettings.setHotKey(nil, for: .countdownTimer)
+            expect(GlobalShortcutSettings.hotKey(for: .countdownTimer) == nil && GlobalShortcutSettings.isAllDefault,
+                   "switching the timer off goes back to the default, which is nothing")
+            GlobalShortcutSettings.resetAll()
+            expect(GlobalShortcutSettings.hotKey(for: .countdownTimer) == nil && GlobalShortcutSettings.isAllDefault,
+                   "restore defaults leaves the timer with no shortcut again")
         }
 
         withDefaults({ $0.set(true, forKey: "ShadeOnboardingShown") }) { defaults in

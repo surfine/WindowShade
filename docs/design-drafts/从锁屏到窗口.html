@@ -1,4 +1,11 @@
-<!doctype html><html><head><meta charset=utf8><meta name=viewport content="width=device-width,initial-scale=1,viewport-fit=cover"><style>:root{color-scheme:light;box-sizing:border-box;padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}html{scroll-padding-top:env(safe-area-inset-top,0px)}body{margin:0;padding:0;font:14px -apple-system,BlinkMacSystemFont,sans-serif;background:#faf9f5;color:#141413}img{max-width:100%}[hidden]:not([hidden=until-found i]){display:none!important}</style></head><body>
+<!doctype html><html lang="zh-CN"><head><meta charset=utf8><meta name=viewport content="width=device-width,initial-scale=1,viewport-fit=cover"><style>
+/* 弹簧令牌（response 秒 / 阻尼比 ζ）照 design-system §4.6 现算成 linear()；位移不用贝塞尔曲线 */
+:root{--ws-calm:linear(0, 0.029, 0.099, 0.188, 0.285, 0.38, 0.47, 0.551, 0.623, 0.686, 0.74, 0.786, 0.825, 0.857, 0.883, 0.905, 0.924, 0.938, 0.95, 0.96, 0.968, 0.974, 0.98, 0.984, 0.987, 0.99, 0.992, 0.993, 0.995, 0.996, 0.997, 0.997, 0.998, 0.998, 0.999, 1);--ws-calm-t:0.5s;--ws-settle:linear(0, 0.029, 0.099, 0.189, 0.286, 0.381, 0.471, 0.552, 0.625, 0.687, 0.741, 0.787, 0.825, 0.858, 0.884, 0.906, 0.924, 0.939, 0.951, 0.96, 0.968, 0.975, 0.98, 0.984, 0.987, 0.99, 0.992, 0.994, 0.995, 0.996, 0.997, 0.997, 0.998, 0.998, 0.999, 1);--ws-settle-t:0.56s;--ws-expand:linear(0, 0.016, 0.056, 0.113, 0.18, 0.252, 0.325, 0.397, 0.466, 0.531, 0.59, 0.645, 0.694, 0.738, 0.777, 0.811, 0.841, 0.867, 0.889, 0.908, 0.924, 0.938, 0.95, 0.959, 0.967, 0.974, 0.979, 0.984, 0.988, 0.991, 0.993, 0.995, 0.996, 0.998, 0.998, 1);--ws-expand-t:0.42s;--ws-bloom:linear(0, 0.027, 0.093, 0.182, 0.282, 0.383, 0.481, 0.572, 0.653, 0.724, 0.784, 0.835, 0.876, 0.91, 0.937, 0.958, 0.973, 0.985, 0.994, 1, 1.003, 1.006, 1.007, 1.008, 1.008, 1.007, 1.007, 1.006, 1.005, 1.004, 1.004, 1.003, 1.002, 1.002, 1.001, 1);--ws-bloom-t:0.58s;--ws-pop:linear(0, 0.023, 0.082, 0.164, 0.259, 0.359, 0.457, 0.551, 0.638, 0.715, 0.782, 0.84, 0.887, 0.926, 0.957, 0.981, 0.999, 1.011, 1.02, 1.025, 1.028, 1.028, 1.028, 1.026, 1.023, 1.021, 1.018, 1.015, 1.012, 1.01, 1.008, 1.006, 1.004, 1.003, 1.002, 1);--ws-pop-t:0.38s;--ws-flyout:linear(0, 0.025, 0.087, 0.17, 0.263, 0.357, 0.449, 0.534, 0.611, 0.679, 0.738, 0.789, 0.832, 0.867, 0.896, 0.92, 0.94, 0.955, 0.967, 0.976, 0.983, 0.989, 0.993, 0.996, 0.998, 0.999, 1, 1.001, 1.001, 1.001, 1.002, 1.001, 1.001, 1.001, 1.001, 1);--ws-flyout-t:0.51s;}
+@media (prefers-reduced-motion:reduce){:root{--ws-calm:linear(0,1);--ws-calm-t:.25s;--ws-settle:linear(0,1);--ws-settle-t:.25s;--ws-expand:linear(0,1);--ws-expand-t:.25s;--ws-bloom:linear(0,1);--ws-bloom-t:.25s;--ws-pop:linear(0,1);--ws-pop-t:.25s;--ws-flyout:linear(0,1);--ws-flyout-t:.25s;}}
+.ws-sys{display:flex;flex-wrap:wrap;align-items:center;gap:6px 14px;max-width:1160px;margin:0 auto;padding:10px 16px;font:12.5px/1.4 "IBM Plex Sans","Noto Sans SC",-apple-system,system-ui,sans-serif;border-bottom:1px solid color-mix(in srgb,currentColor 14%,transparent)}.ws-sys a{color:inherit;text-decoration:none;opacity:.78}.ws-sys a:hover,.ws-sys a:focus-visible{opacity:1;text-decoration:underline}.ws-sys b{font-weight:600}.ws-sys .ws-n{opacity:.55;font-variant-numeric:tabular-nums}.ws-sys .ws-sp{flex:1}
+:root{color-scheme:light;box-sizing:border-box;padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}html{scroll-padding-top:env(safe-area-inset-top,0px)}body{margin:0;padding:0;font:14px -apple-system,BlinkMacSystemFont,sans-serif;background:#faf9f5;color:#141413}img{max-width:100%}[hidden]:not([hidden=until-found i]){display:none!important}</style></head><body>
+<nav class="ws-sys" aria-label="WindowShade 设计系统"><a href="https://claude.ai/artifact/Q2XdwfQttwpju6MvzpY93Y"><b>WindowShade 设计系统</b></a><span class="ws-n">第 5 / 16 张 · 从锁屏到窗口</span><span class="ws-sp"></span><a href="https://claude.ai/artifact/SNQWr7SD1vf5ULX7FUVzZ6">← 动效样片</a><a href="https://claude.ai/artifact/SDXbhwZr8wzwqSFnXD6TnQ">卡住时刘海开口 →</a></nav>
+
 <title>从锁屏到窗口</title>
 <style>
 @import url("https://fonts.googleapis.com/css2?family=Newsreader:opsz,wght@6..72,400;6..72,600&family=IBM+Plex+Sans:wght@400;500;600&family=IBM+Plex+Mono:wght@400;500&family=Noto+Sans+SC:wght@400;500;600&family=Noto+Serif+SC:wght@600&display=swap");
@@ -123,7 +130,7 @@ footer{margin-top:64px;padding-top:20px;border-top:1px solid var(--line);font-si
 <header>
   <p class="eyebrow">WindowShade · 设计稿 v2 · 2026-10-03 · 刷脸解锁（吸收 Glance）</p>
   <h1>开盖，认出你，窗口都还在原处</h1>
-  <p class="lede">这是 WindowShade 把 Glance 的刷脸解锁吸收进来以后的一整套体验：从第一次在刘海里录脸，到每天开盖、被认出、桌面从刘海展开、在刘海里找回窗口，再到你离开时自己锁上、有人偷看时把私事收起来。<b>一个刘海、一套弹簧、一条路走完。</b>可以一步步点着看，也可以切到光线暗、戴口罩、手机不在、没认出、减少动态效果。</p>
+  <p class="lede">这是 WindowShade 把 Glance 的刷脸解锁吸收进来以后的一整套体验：从第一次在刘海里录脸，到每天开盖、被认出、桌面从刘海展开、在刘海里找回窗口，再到你离开时自己锁上、有人在看时把私事收起来。<b>一个刘海、一套弹簧、一条路走完。</b>可以一步步点着看，也可以切到光线暗、戴口罩、手机不在、没认出、减少动态效果。</p>
 </header>
 
 <div class="player">
@@ -167,7 +174,7 @@ footer{margin-top:64px;padding-top:20px;border-top:1px solid var(--line);font-si
     <div class="rule"><b>系统永远是出路</b><p>系统的锁屏、密码框、Touch ID 不被遮挡、不被仿冒。刘海认不出、手机不在、戴口罩、连续 3 次失败，都清清楚楚把人交回系统，不让人对着一颗转圈的岛干等。</p></div>
     <div class="rule"><b>两样都对才放行</b><p>每次刷脸解锁都要“是你的脸”加“是你的手机或手表”。刘海上两枚小圆点分别亮起，人看得见是哪一样还差。</p></div>
     <div class="rule"><b>结果不由动画决定</b><p>对勾只在真的认出、真的放行之后出现；密码一个点一个点填进去是真的在输入；桌面展开要等系统确认已解锁，用解锁后的新画面。</p></div>
-    <div class="rule"><b>从哪里去，就从哪里回来</b><p>合盖时桌面折进刘海，解锁后从刘海展开；偷看时私人窗口收进刘海，人走了再从刘海放回。空间关系一路不变。</p></div>
+    <div class="rule"><b>从哪里去，就从哪里回来</b><p>合盖时桌面折进刘海，解锁后从刘海展开；有人在看时私人窗口收进刘海，人走了再从刘海放回。空间关系一路不变。</p></div>
     <div class="rule"><b>天天用的不加戏</b><p>一天几十次的解锁：短、不回弹。一天上百次的刘海悬停：0.12 秒展开。只有录脸、合盖这种少见时刻，才允许多一点表现。</p></div>
     <div class="rule"><b>摄像头可见、可控、少开</b><p>只在开盖、唤醒、锁屏、按空格，和你停手 30 秒以后才开；系统绿灯照常亮；每秒 2 帧、在 ANE 上看；图像不落盘。</p></div>
   </div>
@@ -175,7 +182,7 @@ footer{margin-top:64px;padding-top:20px;border-top:1px solid var(--line);font-si
 
 <section>
   <h2>每一刻的规格</h2>
-  <p>弹簧用设计系统的令牌（response 秒 / 阻尼比）。“减少动态效果”时一律换成 0.18 秒交叉淡化，位置不动。“现在”一栏是 2026-10-03 的实际进度。</p>
+  <p>弹簧用设计系统的令牌（response 秒 / 阻尼比）。“减少动态效果”时一律换成 0.18 秒交叉淡化，位置不动。“现在”一栏是 2026-10-03 的实际进度。2026-10-05 起本轮准入（D11）只允许人脸实验，不接系统解锁；Glance 的扫描保护（每帧重查锁态、去重帧、不是本人就清掉匹配）已记入借鉴台账，见总稿《<a href="https://claude.ai/artifact/Q2XdwfQttwpju6MvzpY93Y">WindowShade 设计系统</a>》。</p>
   <div class="scroll"><table>
     <thead><tr><th>时刻</th><th>看到什么</th><th>怎么动</th><th>失败或打断</th><th>现在</th></tr></thead>
     <tbody id="specRows"></tbody>
@@ -186,7 +193,7 @@ footer{margin-top:64px;padding-top:20px;border-top:1px solid var(--line);font-si
   <h2>写给接手的人：照这个方向走，不要绕开</h2>
   <p>这一页是 Aaron 2026-10-03 四轮问答后的定稿方向（逐项决定在 <code>docs/direction.md</code>“刷脸解锁：吸收 Glance”）。接手的模型或人，先读这一节，再动代码。下面每一条都是硬要求：做不到就停下来说明卡在哪，不要换一个更容易的东西交差。</p>
   <ol class="mandate">
-    <li><span><b>只有一个刘海宿主。</b>录脸、认你、补光、倒数、偷看提示、窗口那一排，全部长在已有的刘海面板里（<code>App/Notch.swift</code> 一系）。不新建认证窗口、不另起第二套浮层、不再交一个普通预览窗当成果。</span></li>
+    <li><span><b>只有一个刘海宿主。</b>录脸、认你、补光、倒数、有人在看的提示、窗口那一排，全部长在已有的刘海面板里（<code>App/Notch.swift</code> 一系）。不新建认证窗口、不另起第二套浮层、不再交一个普通预览窗当成果。</span></li>
     <li><span><b>两样都对才代打密码。</b>ArcFace 特征比对（跑在 ANE 上）+ 严格活体 + 注视 + 手机或手表的蓝牙因素，全部通过才在锁屏上输入密码。任何一样只是“看起来通过”（动画对勾、信号强、名字对得上）都不算。</span></li>
     <li><span><b>先把最没把握的做掉。</b>第一件事是蓝牙第二因素的可行性实验：Mac 扮成蓝牙配件、和 iPhone 配对一次、之后靠加密重连证明“是那台手机”；Apple Watch 能不能用要实验说话。做不成就如实写下卡在哪一层，再和 Aaron 定替代，不要悄悄去掉这个因素。</span></li>
     <li><span><b>攻击测试决定说明怎么写。</b>照片、手机屏幕、录像、换人、换手机，每一种都实测；风险说明只写测过的结果。没测过的，一个字都不承诺。</span></li>
@@ -207,7 +214,7 @@ footer{margin-top:64px;padding-top:20px;border-top:1px solid var(--line);font-si
       <tr><td class="mono">F3</td><td>在刘海里录脸（九个方向，可录几种样子）；ArcFace 在 ANE 上；特征加密存本机</td><td>录、删、重录都在刘海里完成；图像不落盘；主线程不卡</td></tr>
       <tr><td class="mono">F4</td><td>锁屏认你：补光圈、严格活体、注视、手机因素、3 次失败上限，Touch ID 保护的密码会话</td><td>两样都对才输入；每种失败都把人交回系统；实测开盖到桌面的耗时</td></tr>
       <tr><td class="mono">F5</td><td>攻击测试与风险说明</td><td>照片、屏幕、录像、换人、换手机都有实测结果，说明只写测过的</td></tr>
-      <tr><td class="mono">F6</td><td>离开就锁（手机手表走远、摄像头看不到你）、偷看时收起私人窗口</td><td>倒数可取消；误锁率实测；私人窗口按 App 标、可改</td></tr>
+      <tr><td class="mono">F6</td><td>离开就锁（手机手表走远、摄像头看不到你）、有人在看时收起私人窗口</td><td>倒数可取消；误锁率实测；私人窗口按 App 标、可改</td></tr>
       <tr><td class="mono">F7</td><td>回来时的“离开期间”摘要，接上窗口那条线</td><td>不补播；摘要里每一项都能点到对应的窗口或设备</td></tr>
     </tbody>
   </table></div>
@@ -241,7 +248,7 @@ footer{margin-top:64px;padding-top:20px;border-top:1px solid var(--line);font-si
   var tiles=[{c:'#5E8BE8',d:1,tag:''},{c:'#E07A5F',d:0,tag:'已最小化'},{c:'#34C759',d:0,tag:'私人 · 收着'}];
   function showRow(on){row.innerHTML='';if(on){tiles.forEach(function(x,i){var el=document.createElement('div');el.className='tile';el.innerHTML='<i style="top:22%"></i><i style="top:40%;right:30%"></i><i style="top:58%;right:20%"></i>'+(x.tag?'<span class="tag">'+x.tag+'</span>':'')+(x.d?'<span class="dot"></span>':'')+'<span class="ic" style="background:'+x.c+'"></span>';el.addEventListener('mouseenter',function(){if(cur===8)go(9)});el.addEventListener('click',function(){go(10)});row.appendChild(el);});}fade(row,on?1:0,on?220:100);}
   function showPeek(on){var b=$('winB');if(on){var s=screen.getBoundingClientRect(),r=b.getBoundingClientRect();peek.style.left=(r.left-s.left)+'px';peek.style.top=(r.top-s.top)+'px';peek.style.width=r.width+'px';peek.style.height=r.height+'px';
-      if(!reduce){peek.style.transition='none';peek.style.transform='translateY(-40%) scale(.3)';requestAnimationFrame(function(){peek.style.transition='transform 380ms cubic-bezier(.23,1,.32,1), opacity 180ms ease-out';peek.style.transform='none';peek.style.opacity=1});}else peek.style.opacity=1}
+      if(!reduce){peek.style.transition='none';peek.style.transform='translateY(-40%) scale(.3)';requestAnimationFrame(function(){peek.style.transition='transform var(--ws-flyout-t) var(--ws-flyout), opacity 180ms ease-out';peek.style.transform='none';peek.style.opacity=1});}else peek.style.opacity=1}
     else{peek.style.transition='opacity 120ms ease-out';peek.style.opacity=0;}}
   function privFold(p){priv.style.transform=reduce?'none':'translate('+(p*-80)+'%,'+(p*-95)+'%) scale('+(1-p*0.85)+')';priv.style.opacity=1-p;}
   function base(){clearLater();deskFold(0);fade(lock,0,1);ring.style.opacity=0;setIsland(12.2,3.6,1.1);content('');showRow(false);showPeek(false);pwReset();privFold(0);var b=$('winB');b.style.boxShadow='';}
@@ -274,7 +281,7 @@ footer{margin-top:64px;padding-top:20px;border-top:1px solid var(--line);font-si
      run:function(){content('');morph(12.2,3.6,1.1,0.34,1);fade(lock,0,220);pwReset();animate('fold',1,0,0.5,1,deskFold)}},
     {n:'回来了',d:'紧凑的刘海：离开期间的摘要',why:'不补播。左边是收在刘海里的窗口数，右边一个点：有变化、有设备低电。想看再展开。',spec:'calm 0.34 / 1.0 · 8 秒后收成数字',status:['要做（F7）','todo'],fail:'没有积压：刘海不说话',
      run:function(){base();morph(26,3.6,1.1,0.34,1);content('<div style="display:flex;width:100%;justify-content:space-between;align-items:center;padding-inline:1.2cqw"><span style="font-size:1.4cqw;font-weight:600">3</span><span style="width:1cqw;height:1cqw;border-radius:50%;background:#0A84FF"></span></div>')}},
-    {n:'有人偷看',d:'看到第二张脸：私人窗口收进刘海',why:'只在你停手 30 秒以后、或你自己打开时才看。看到第二张脸，按 App 标为私人的窗口（聊天、邮件、钱包类）沿原路收进刘海，刘海上留一枚眼睛记号。人走了，点一下放回。',
+    {n:'有人在看',d:'看到第二张脸：私人窗口收进刘海',why:'只在你停手 30 秒以后、或你自己打开时才看。看到第二张脸，按 App 标为私人的窗口（聊天、邮件、钱包类）沿原路收进刘海，刘海上留一枚眼睛记号。人走了，点一下放回。',
      spec:'收进刘海：settle 0.38 / 1.0（和收进刘海同一条路）',status:['要做（F6）','todo'],fail:'看错了：点刘海一下全部放回；摄像头关着时这一条不工作',
      run:function(){base();morph(26,3.6,1.1,0.34,1);later(function(){animate('priv',0,1,0.38,1,privFold);content('<div style="display:flex;width:100%;justify-content:space-between;align-items:center;padding-inline:1.2cqw"><span style="font-size:1.3cqw">👁</span><span style="font-size:1.2cqw;opacity:.75">私人窗口已收起</span></div>')},400)}},
     {n:'找窗口',d:'指针停到刘海上，展开一排看不见的窗口',why:'停 0.12 秒就展开，不回弹（天天用）。每一格是窗口画面；收着的私人窗口也在这一排里，标明“私人”。',spec:'expand 0.40 / 0.92 · 停留 0.12 s',status:['已有','done'],fail:'只是路过：0.12 秒内移开不展开',

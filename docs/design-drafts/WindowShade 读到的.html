@@ -1,4 +1,11 @@
-<!doctype html><html><head><meta charset=utf8><meta name=viewport content="width=device-width,initial-scale=1,viewport-fit=cover"><style>:root{color-scheme:light;box-sizing:border-box;padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}html{scroll-padding-top:env(safe-area-inset-top,0px)}body{margin:0;padding:0;font:14px -apple-system,BlinkMacSystemFont,sans-serif;background:#faf9f5;color:#141413}img{max-width:100%}[hidden]:not([hidden=until-found i]){display:none!important}</style></head><body>
+<!doctype html><html lang="zh-CN"><head><meta charset=utf8><meta name=viewport content="width=device-width,initial-scale=1,viewport-fit=cover"><style>
+/* 弹簧令牌（response 秒 / 阻尼比 ζ）照 design-system §4.6 现算成 linear()；位移不用贝塞尔曲线 */
+:root{--ws-calm:linear(0, 0.029, 0.099, 0.188, 0.285, 0.38, 0.47, 0.551, 0.623, 0.686, 0.74, 0.786, 0.825, 0.857, 0.883, 0.905, 0.924, 0.938, 0.95, 0.96, 0.968, 0.974, 0.98, 0.984, 0.987, 0.99, 0.992, 0.993, 0.995, 0.996, 0.997, 0.997, 0.998, 0.998, 0.999, 1);--ws-calm-t:0.5s;--ws-settle:linear(0, 0.029, 0.099, 0.189, 0.286, 0.381, 0.471, 0.552, 0.625, 0.687, 0.741, 0.787, 0.825, 0.858, 0.884, 0.906, 0.924, 0.939, 0.951, 0.96, 0.968, 0.975, 0.98, 0.984, 0.987, 0.99, 0.992, 0.994, 0.995, 0.996, 0.997, 0.997, 0.998, 0.998, 0.999, 1);--ws-settle-t:0.56s;--ws-expand:linear(0, 0.016, 0.056, 0.113, 0.18, 0.252, 0.325, 0.397, 0.466, 0.531, 0.59, 0.645, 0.694, 0.738, 0.777, 0.811, 0.841, 0.867, 0.889, 0.908, 0.924, 0.938, 0.95, 0.959, 0.967, 0.974, 0.979, 0.984, 0.988, 0.991, 0.993, 0.995, 0.996, 0.998, 0.998, 1);--ws-expand-t:0.42s;--ws-bloom:linear(0, 0.027, 0.093, 0.182, 0.282, 0.383, 0.481, 0.572, 0.653, 0.724, 0.784, 0.835, 0.876, 0.91, 0.937, 0.958, 0.973, 0.985, 0.994, 1, 1.003, 1.006, 1.007, 1.008, 1.008, 1.007, 1.007, 1.006, 1.005, 1.004, 1.004, 1.003, 1.002, 1.002, 1.001, 1);--ws-bloom-t:0.58s;--ws-pop:linear(0, 0.023, 0.082, 0.164, 0.259, 0.359, 0.457, 0.551, 0.638, 0.715, 0.782, 0.84, 0.887, 0.926, 0.957, 0.981, 0.999, 1.011, 1.02, 1.025, 1.028, 1.028, 1.028, 1.026, 1.023, 1.021, 1.018, 1.015, 1.012, 1.01, 1.008, 1.006, 1.004, 1.003, 1.002, 1);--ws-pop-t:0.38s;--ws-flyout:linear(0, 0.025, 0.087, 0.17, 0.263, 0.357, 0.449, 0.534, 0.611, 0.679, 0.738, 0.789, 0.832, 0.867, 0.896, 0.92, 0.94, 0.955, 0.967, 0.976, 0.983, 0.989, 0.993, 0.996, 0.998, 0.999, 1, 1.001, 1.001, 1.001, 1.002, 1.001, 1.001, 1.001, 1.001, 1);--ws-flyout-t:0.51s;}
+@media (prefers-reduced-motion:reduce){:root{--ws-calm:linear(0,1);--ws-calm-t:.25s;--ws-settle:linear(0,1);--ws-settle-t:.25s;--ws-expand:linear(0,1);--ws-expand-t:.25s;--ws-bloom:linear(0,1);--ws-bloom-t:.25s;--ws-pop:linear(0,1);--ws-pop-t:.25s;--ws-flyout:linear(0,1);--ws-flyout-t:.25s;}}
+.ws-sys{display:flex;flex-wrap:wrap;align-items:center;gap:6px 14px;max-width:1160px;margin:0 auto;padding:10px 16px;font:12.5px/1.4 "IBM Plex Sans","Noto Sans SC",-apple-system,system-ui,sans-serif;border-bottom:1px solid color-mix(in srgb,currentColor 14%,transparent)}.ws-sys a{color:inherit;text-decoration:none;opacity:.78}.ws-sys a:hover,.ws-sys a:focus-visible{opacity:1;text-decoration:underline}.ws-sys b{font-weight:600}.ws-sys .ws-n{opacity:.55;font-variant-numeric:tabular-nums}.ws-sys .ws-sp{flex:1}
+:root{color-scheme:light;box-sizing:border-box;padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}html{scroll-padding-top:env(safe-area-inset-top,0px)}body{margin:0;padding:0;font:14px -apple-system,BlinkMacSystemFont,sans-serif;background:#faf9f5;color:#141413}img{max-width:100%}[hidden]:not([hidden=until-found i]){display:none!important}</style></head><body>
+<nav class="ws-sys" aria-label="WindowShade 设计系统"><a href="https://claude.ai/artifact/Q2XdwfQttwpju6MvzpY93Y"><b>WindowShade 设计系统</b></a><span class="ws-n">第 3 / 16 张 · 读到的</span><span class="ws-sp"></span><a href="https://claude.ai/artifact/NSQU27GL6xVjhW2UFV9LKn">← 设计规范</a><a href="https://claude.ai/artifact/SNQWr7SD1vf5ULX7FUVzZ6">动效样片 →</a></nav>
+
 <title>WindowShade 读到的</title>
 <style>
 @import url("https://fonts.googleapis.com/css2?family=Newsreader:opsz,wght@6..72,400;6..72,600&family=IBM+Plex+Sans:wght@400;500;600&family=IBM+Plex+Mono:wght@400;500&family=Noto+Sans+SC:wght@400;500;600&family=Noto+Serif+SC:wght@600&display=swap");
@@ -52,8 +59,8 @@ code{font-family:var(--mono);font-size:.86em;background:var(--surface-2);border:
 .when{font-size:11.5px;color:var(--win-ink-2);margin:-6px 0 14px;display:flex;gap:10px;align-items:center;flex-wrap:wrap}
 .when button{font:inherit;color:var(--win-sel);background:none;border:0;padding:0;cursor:pointer}
 .tier{margin-bottom:18px}
-.tier > .tl{font-size:12px;font-weight:600;color:var(--win-ink-2);margin:0 4px 6px;display:flex;justify-content:space-between;gap:8px}
-.tier > .tl small{font-weight:400}
+.tier > .tl{font-size:11.5px;font-weight:600;color:var(--win-ink-2);margin:0 4px 6px;display:flex;justify-content:space-between;gap:8px}
+.tier > .tl small{font-weight:400;font-size:11.5px}
 .card{background:var(--win-card);border-radius:10px;box-shadow:0 0 0 .5px var(--win-line)}
 .row + .row{border-top:1px solid var(--win-line)}
 .rh{display:grid;grid-template-columns:minmax(0,1fr) auto auto;gap:10px;align-items:center;padding:9px 12px;width:100%;background:none;border:0;font:inherit;color:inherit;text-align:left;cursor:pointer;border-radius:10px}
@@ -62,9 +69,9 @@ code{font-family:var(--mono);font-size:.86em;background:var(--surface-2);border:
 .rs{font-size:11.5px;color:var(--win-ink-2);line-height:1.4;margin-top:1px}
 .val{font-size:12px;color:var(--win-ink-2);font-variant-numeric:tabular-nums;white-space:nowrap;max-width:15ch;overflow:hidden;text-overflow:ellipsis}
 .val.off{color:var(--win-ink-2);opacity:.7}
-.chev{width:8px;height:8px;border-right:1.6px solid var(--win-ink-2);border-bottom:1.6px solid var(--win-ink-2);transform:rotate(-45deg);transition:transform 220ms cubic-bezier(.23,1,.32,1);margin-right:2px}
+.chev{width:8px;height:8px;border-right:1.6px solid var(--win-ink-2);border-bottom:1.6px solid var(--win-ink-2);transform:rotate(-45deg);transition:transform var(--ws-settle-t) var(--ws-settle);margin-right:2px}
 .row.open .chev{transform:rotate(45deg)}
-.rb{display:grid;grid-template-rows:0fr;transition:grid-template-rows 260ms cubic-bezier(.23,1,.32,1)}
+.rb{display:grid;grid-template-rows:0fr;transition:grid-template-rows var(--ws-settle-t) var(--ws-settle)}
 .row.open .rb{grid-template-rows:1fr}
 .rb > div{overflow:hidden}
 .three{display:grid;grid-template-columns:4.4em minmax(0,1fr);gap:4px 10px;padding:0 12px 10px;font-size:12px;line-height:1.5}
@@ -72,7 +79,7 @@ code{font-family:var(--mono);font-size:.86em;background:var(--surface-2);border:
 .three dd{margin:0}
 .tech{grid-column:1/-1;font-family:var(--mono);font-size:10.5px;color:var(--win-ink-2);border-top:1px dashed var(--win-line);padding-top:6px;margin-top:2px;overflow-wrap:anywhere}
 .sw{position:relative;width:34px;height:20px;border-radius:10px;background:#34C759;border:0;cursor:pointer;flex:none;transition:background 160ms ease}
-.sw::after{content:"";position:absolute;top:2px;left:16px;width:16px;height:16px;border-radius:50%;background:#fff;box-shadow:0 1px 2px rgba(0,0,0,.25);transition:left 200ms cubic-bezier(.23,1,.32,1)}
+.sw::after{content:"";position:absolute;top:2px;left:16px;width:16px;height:16px;border-radius:50%;background:#fff;box-shadow:0 1px 2px rgba(0,0,0,.25);transition:left var(--ws-settle-t) var(--ws-settle)}
 .sw[aria-checked="false"]{background:rgba(120,120,128,.32)}
 .sw[aria-checked="false"]::after{left:2px}
 .sw:focus-visible{outline:2px solid var(--win-sel);outline-offset:2px}
@@ -159,7 +166,7 @@ footer{margin-top:48px;font-size:12.5px;color:var(--ink-3);max-width:80ch}
     <div class="note"><h3>三层，照 Loupe</h3><p>不用问就能读的、你同意后才读的、用了系统没公开的方法的。第三层 Newlearner 这样的读者最想知道，写得最直白。</p>
       <div class="legend"><span class="chip ok">已授权</span><span class="chip need">去授权</span></div></div>
     <div class="note"><h3>“显示技术细节”</h3><p>默认藏着。打开后每行多一行接口名，给想核对的人看。这是 copy-guide“实现不进界面”的唯一例外，要 Aaron 点头。</p></div>
-    <div class="note alarm"><h3>现在还不能这么写</h3><p>运行记录现在写在 <code>/tmp/windowshade.log</code>，这台 Mac 上的其他账户也能读，里面有 12 处会写窗口标题。“只有你能读，不写窗口标题”这句话，要等修好、核过才能上页面。</p></div>
+    <div class="note alarm"><h3>代码改了，还没核过</h3><p>运行记录已经移到 <code>~/Library/Logs/WindowShade/</code>：文件夹只有你能进，文件只有你能读，写窗口标题的地方都换成了 <code>[redacted]</code>。但新版还没在这台 Mac 上跑出过日志，也没用另一个账户试过。“只有你能读，不写窗口标题”这句话，要等实测过才能上页面。旧版留下的 <code>/tmp/windowshade.log</code> 如果还在，要一并删掉。</p></div>
   </div>
 </div>
 
@@ -190,7 +197,7 @@ footer{margin-top:48px;font-size:12.5px;color:var(--ink-3);max-width:80ch}
     <h2>写给接手的人：照这个方向走，不要绕开</h2>
     <p class="sub" style="margin:0">接手的模型或人先读这一节，再动代码。每一条都是硬要求，做不到就停下来写明卡在哪，不要换一个更容易的东西交差。仓库里的同一份在 <code>docs/privacy-page.md</code>。</p>
     <ol>
-      <li><b>先修日志，再上页面。</b><span>运行记录移到 <code>~/Library/Logs/WindowShade/</code>，权限 0600；12 处写窗口标题的日志改成不写标题。修完用另一个账户实测读不到。</span></li>
+      <li><b>先修日志，再上页面。</b><span>运行记录移到 <code>~/Library/Logs/WindowShade/</code>，文件夹 0700、文件 0600，写窗口标题的日志改成不写标题（代码已改）。还差两步：用另一个账户实测读不到；首次启动删掉旧版留下的 <code>/tmp/windowshade.log</code>。</span></li>
       <li><b>清单从代码里来，不手写。</b><span>每个读取点在一张登记表里登记（照 Loupe 的 <code>SignalProvider</code> 和三层 <code>Sensitivity</code>）；加一个检查：代码里出现名单上的接口却没登记，构建检查就失败。页面和官网都从这张表生成。</span></li>
       <li><b>只写核过的。</b><span>每一句承诺都在 <code>docs/privacy-page.md</code> 的核对表里有证据：联网用 <code>nettop</code> 实测，“不存图”查磁盘写入，“只看键位”查代码和日志。没核过的句子不上页面。</span></li>
       <li><b>打开这一页才读。</b><span>不为这一页加轮询、不常驻。空闲 CPU 和唤醒次数照 performance.md 第七节测，不许变差。</span></li>
@@ -203,7 +210,7 @@ footer{margin-top:48px;font-size:12.5px;color:var(--ink-3);max-width:80ch}
     <div class="tbl" style="margin-top:8px"><table style="min-width:600px">
       <thead><tr><th>步</th><th>做什么</th><th>算完成</th></tr></thead>
       <tbody>
-        <tr><td>P1</td><td>修日志：换位置、改权限、去掉窗口标题</td><td>另一个账户读不到；日志里搜不到任何窗口标题</td></tr>
+        <tr><td>P1</td><td>修日志：换位置、改权限、去掉窗口标题（代码已改，待实测）</td><td>另一个账户读不到；日志里搜不到任何窗口标题；旧的 /tmp/windowshade.log 已删</td></tr>
         <tr><td>P2</td><td>联网实测：开、关“自动检查更新”各跑一天</td><td><code>nettop</code> 记录里只有更新地址；关掉后为零</td></tr>
         <tr><td>P3</td><td>登记表 + 构建检查</td><td>下表每一行都登记；故意加一个没登记的调用，检查会失败</td></tr>
         <tr><td>P4</td><td>设置里的“隐私”一栏</td><td>照本页做；原值、展开、开关、深色都对；打开这一页前后耗电不变</td></tr>
@@ -272,7 +279,7 @@ footer{margin-top:48px;font-size:12.5px;color:var(--ink-3);max-width:80ch}
     return '<tr><td>'+tierShort[i]+'</td><td>'+esc(r.n)+'</td><td>'+esc(r.why)+'</td><td class="t">'+esc(r.api)+'</td><td>'+esc(r.go)+'</td><td>'+(r.sw?esc(r.sw):'—')+'</td><td>'+(r.ok?'<span class="st done">可以写</span>':'<span class="st todo">'+esc(r.chk)+'</span>')+'</td></tr>';
   }).join('')}).join('')+
   '<tr><td>去处</td><td>联网</td><td>检查更新</td><td class="t">Sparkle · SUFeedURL / 备用 GitHub</td><td>windowshade.aaronlau.me；不通时 GitHub</td><td>自动检查更新</td><td><span class="st todo">nettop 实测待做</span></td></tr>'+
-  '<tr><td>去处</td><td>运行记录</td><td>出问题时查原因</td><td class="t">Support/Diagnostics.swift</td><td>现在：/tmp/windowshade.log，别的账户可读，含窗口标题</td><td>—</td><td><span class="st bad">先修（P1）</span></td></tr>';
+  '<tr><td>去处</td><td>运行记录</td><td>出问题时查原因</td><td class="t">Support/Diagnostics.swift</td><td>~/Library/Logs/WindowShade/，只有你能读，不写窗口标题</td><td>—</td><td><span class="st todo">代码已改，待实测（P1）</span></td></tr>';
 })();
 </script>
 

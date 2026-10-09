@@ -162,6 +162,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSMenuDelegate {
     // 线程应用；退出用 dockWorkQueue.sync 兜底，按持久化的 session 键恢复，
     // 天然抗「启用/恢复」在途操作交错。
     private let dockWorkQueue = DispatchQueue(label: "WindowShade.dock", qos: .utility)
+    nonisolated(unsafe) var dockToolRunnerOverride: DockToolRunner?   // 仅测试注入
     private var dockOperationInFlight = false         // 主线程专用：防重复入队启用
     // 截图像素分析（chrome 高度扫描、健康检查、圆角镜像）用的后台队列：纯 CPU
     // 计算（4K Retina 全宽可达数 MB 缓冲），挪出主线程避免折叠瞬间卡 UI。
@@ -242,8 +243,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSMenuDelegate {
     var restorePinTokens: [CGWindowID: UUID] = [:]
     var titlebarEventTapBypassUntil: Date?
     var soundEnabled: Bool = {
-        if UserDefaults.standard.object(forKey: shadeSoundEnabledDefaultsKey) == nil { return true }
-        return UserDefaults.standard.bool(forKey: shadeSoundEnabledDefaultsKey)
+        ShadeSoundPreference.isEnabled(in: .standard, key: shadeSoundEnabledDefaultsKey)
     }()
     var foldSoundName: String = {
         UserDefaults.standard.string(forKey: shadeFoldSoundDefaultsKey) ?? shadeDefaultFoldSound
@@ -320,6 +320,9 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSMenuDelegate {
     }
 
     func applicationDidFinishLaunching(_ note: Notification) {
+        // 启动时发现要换回旧版、看护又不在：进程内换回在后台跑，这期间先不接管任何东西（事件钩子、收起……）。
+        // 换回成功进程直接退出；没成就在主线程上补跑下面整段启动（见 App/UpdaterLaunch.swift）。
+        if UpdateLaunch.deferLaunchIfRestoring({ [weak self] in self?.applicationDidFinishLaunching(note) }) { return }
         // 新装还是升级：赶在这一次启动写下任何设置之前认一次、存下来（声音迁移每次启动都写，清理收起记录会删键；
         // 见 App/GlobalShortcuts.swift 的 InstallHistory）。
         _ = InstallHistory.settled(in: .standard)
@@ -358,12 +361,21 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSMenuDelegate {
             MainActor.assumeIsolated { gestures.refreshMonitors() }
         }
         MainActor.assumeIsolated { installStripKeyForwarding() }
-        MainActor.assumeIsolated { SlideOverRecovery.recoverAbandoned(); notch.install() }
+        // 刷脸实验：默认关（FaceScan.experiment.enabled），关着时什么都不建。只产证据，不解锁。
+        MainActor.assumeIsolated { FaceScanExperiment.startIfEnabled() }
+        MainActor.assumeIsolated {
+            // 那一排里焦点落在会话格还是窗口格：告诉遥控器（M09）。遥控模式没开时没有宿主，什么都不会发生。
+            notch.onShelfFocusKind = { [weak self] kind in self?.inputController.remoteHostForSettings?.layerEffects?.focusChanged(kind) }
+            SlideOverRecovery.recoverAbandoned(); notch.install()
+        }
         // 番茄钟的唯一宿主：在这里点一次，让观察者和唯一 FocusTimerHost 建起来。
         MainActor.assumeIsolated { _ = ws2Runtime }
         // 卡住时刘海开口：跟着来处、刘海和教学的开关装上或拆掉只听的钩子（见 App/HabitContext.swift）。
         MainActor.assumeIsolated { HabitCenter.shared.start(owner: self) }
-        MainActor.assumeIsolated { launchpad.warmUp() }
+        // 预热推迟到启动后 4 秒，不和启动抢资源；第一次打开前通常早已完成，没完成时 show() 自己会解码。
+        DispatchQueue.main.asyncAfter(deadline: .now() + 4) { [weak self] in
+            MainActor.assumeIsolated { self?.launchpad.warmUp() }
+        }
         MainActor.assumeIsolated {
             dockClick.onHidden = { [weak self] app in
                 guard let self else { return }
@@ -429,14 +441,23 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSMenuDelegate {
                 return true
             }
             UpdaterController.shared.start()
-            deviceBattery.announce = { [weak self] key, text, detail, symbol, priority, ttl in
-                self?.notch.announceWhenFree(key: key, text: text, detail: detail, symbol: symbol, priority: priority, ttl: ttl)
+            deviceBattery.announce = { [weak self] key, text, detail, symbol, priority, ttl, ear, redEar, redIcon in
+                self?.notch.announceWhenFree(key: key, text: text, detail: detail, symbol: symbol, priority: priority, ttl: ttl,
+                                             ear: ear, speaks: true, redEar: redEar, redIcon: redIcon)
             }
+            deviceBattery.onPowerFlash = { [weak self] flash in self?.notch.showPowerFlash(flash) }
+            deviceBattery.isNotchBusy = { [weak self] in self?.notch.isBusyForPowerFlash ?? true }
+            deviceBattery.onLow = { [weak self] id, name, part, percent in
+                self?.notch.away.noteLowBattery(deviceID: id, name: name, part: part, percent: percent)
+            }
+            notch.away.deviceIsCurrent = { [weak self] id, part in self?.deviceBattery.isStillLow(deviceID: id, part: part) ?? false }
             deviceBattery.start()
             // 相机列表在后台枚举（菜单“检测面部动作”读缓存，主线程不再卡几百毫秒）。
             MainActor.assumeIsolated { FaceObservationSource.startWatchingCameras() }
         }
     }
+
+    func application(_ application: NSApplication, open urls: [URL]) { MainActor.assumeIsolated { _ = WS2URLHandler.shared.open(urls) } } // windowshade://lock（App/WS2URLHandler.swift）
 
     /// 更新下载、解包、把关的途中退出：先否决、确认 Sparkle 停了再放行（App/Updater.swift）；平时直接退出。
     func applicationShouldTerminate(_ sender: NSApplication) -> NSApplication.TerminateReply {
@@ -528,22 +549,34 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSMenuDelegate {
             // NSEvent 全局 monitor 仍在主线程回调；连 WindowServer 的标题栏预过滤
             // 也可能很慢。预热整体放到后台，连续点击至多留一份工作，过时结果直接丢弃。
             if #available(macOS 14.0, *), event.type == .leftMouseDown {
-                self?.scheduleTitlebarPrefetch()
+                self?.scheduleTitlebarPrefetch(clickState: event.clickCount)
             }
             self?.schedulePinnedPreviewTargetRefresh()
         }
     }
 
     @available(macOS 14.0, *)
-    private func scheduleTitlebarPrefetch() {
+    private func scheduleTitlebarPrefetch(clickState: Int) {
+        // 只在第一下点击时做：第二下落地时内容已就绪，或本来就会强制刷新。
+        guard clickState == 1 else { return }
         titlebarPrefetchGeneration &+= 1
         guard titlebarDoubleClickEnabled, !titlebarPrefetchInFlight else { return }
+        let wantsPrefetch = TitlebarPrefetchGate.shouldPrefetch(
+            clickState: clickState,
+            animationEnabled: DuoSettings.load().windowsEnabled,
+            fastCaptureDisabled: FastCapture.isDisabledByEnvironment)
+        let profileHeights = ChromeProfileCache.shared.freshHitBarHeights()
         titlebarPrefetchInFlight = true
         let generation = titlebarPrefetchGeneration
         let mouse = NSEvent.mouseLocation
         let point = CGPoint(x: mouse.x, y: coordinateBaselineY() - mouse.y)
         DispatchQueue.global(qos: .utility).async { [weak self] in
-            let mayBeTitlebar = pointMayLieInTitlebarBand(point)
+            // 第一下点击刷新窗口列表时顺手记下准入快照，给 tap 线程上的第二下用。
+            let windows = WindowListCache.shared.onScreenWindows()
+            WindowListCache.shared.recordAdmissionSnapshot(windows)
+            let mayBeTitlebar = wantsPrefetch && pointMayLieInTitlebarBand(point, windows: windows) { id in
+                TitlebarPrefetchGate.bandHeight(profileHeight: profileHeights[id])
+            }
             DispatchQueue.main.async { [weak self] in
                 guard let self else { return }
                 self.titlebarPrefetchInFlight = false
@@ -616,7 +649,8 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSMenuDelegate {
     func configureShadedAccessibility(for overlay: NSWindow, id: CGWindowID,
                                               appName: String, title: String) {
         let displayTitle = descriptiveDisplayTitle(appName: appName, windowTitle: title)
-        let label = "已收起的窗口：\(displayTitle)"
+        // 收成缩略图的：读屏先说要做什么，再说是谁（“展开窗口：App”）；其余形态照旧。
+        let label = overlay.contentView is ShadeThumbnailView ? "展开窗口：\(appName)" : "已收起的窗口：\(displayTitle)"
         let target = ShadedAccessibilityActionTarget { [weak self] in
             self?.unshade(id) ?? false
         }
@@ -672,48 +706,26 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSMenuDelegate {
 
 
     // 下面这一组只跑 defaults / killall，不读界面状态。Dock 串行队列和退出时的 sync 都直接调用。
-    @discardableResult
-    nonisolated private func runTool(_ path: String, _ args: [String]) -> Int32? {
-        let p = Process()
-        p.executableURL = URL(fileURLWithPath: path)
-        p.arguments = args
-        do {
-            try p.run()
-        } catch {
-            wlog("tool: failed to run \(path) \(args.joined(separator: " ")) error=\(error)")
-            return nil
-        }
-        p.waitUntilExit()
-        if p.terminationStatus != 0 {
-            wlog("tool: nonzero status=\(p.terminationStatus) \(path) \(args.joined(separator: " "))")
-        }
-        return p.terminationStatus
-    }
+    nonisolated private var toolRunner: DockToolRunner { dockToolRunnerOverride ?? .live }
 
-    nonisolated private func readTool(_ path: String, _ args: [String]) -> String? {
-        let p = Process()
-        let pipe = Pipe()
-        p.executableURL = URL(fileURLWithPath: path)
-        p.arguments = args
-        p.standardOutput = pipe
-        p.standardError = Pipe()
-        do { try p.run() } catch { return nil }
-        p.waitUntilExit()
-        guard p.terminationStatus == 0 else { return nil }
-        let data = pipe.fileHandleForReading.readDataToEndOfFile()
-        let text = String(data: data, encoding: .utf8)?
-            .trimmingCharacters(in: .whitespacesAndNewlines)
-        return text?.isEmpty == false ? text : nil
-    }
+    @discardableResult
+    nonisolated private func runTool(_ path: String, _ args: [String]) -> Int32? { toolRunner.run(path, args) }
+    nonisolated private func readTool(_ path: String, _ args: [String]) -> String? { toolRunner.read(path, args) }
 
     nonisolated private func runDefaults(_ args: [String]) { runTool("/usr/bin/defaults", args) }
     nonisolated private func readDefaults(_ args: [String]) -> String? { readTool("/usr/bin/defaults", args) }
     nonisolated private func killDock() { runTool("/usr/bin/killall", ["Dock"]) }   // 让 Dock 重读 mineffect
 
     nonisolated private func writeDockMinimizeEffect(_ value: String, reason: String) -> Bool {
+        let deadline = Date().addingTimeInterval(6)   // 两次尝试总预算
         for attempt in 1...2 {
-            runDefaults(["write", "com.apple.dock", "mineffect", "-string", value])
-            let effective = readDefaults(["read", "com.apple.dock", "mineffect"])
+            if deadline.timeIntervalSinceNow <= 0 {
+                wlog("dock: mineffect write budget exhausted reason=\(reason)")
+                break
+            }
+            let slice = { min(DockToolRunner.defaultTimeout, max(0.1, deadline.timeIntervalSinceNow)) }
+            toolRunner.run("/usr/bin/defaults", ["write", "com.apple.dock", "mineffect", "-string", value], timeout: slice())
+            let effective = toolRunner.read("/usr/bin/defaults", ["read", "com.apple.dock", "mineffect"], timeout: slice())
             if effective == value {
                 wlog("dock: mineffect=\(value) verified reason=\(reason) attempt=\(attempt)")
                 return true
@@ -847,9 +859,12 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSMenuDelegate {
         eventTapReenableWorkItem = nil
         // 退出前还原 Dock 偏好：同步等在途子进程排空，再按持久化 session 键
         // 恢复（session 键在改动前写入，异步启用/恢复交错下也正确）。
-        dockWorkQueue.sync {
-            recoverStaleDockMinimizeEffectSessionIfNeeded()
+        // 有时限：Dock 工具卡住时不拖死退出；超时就保留 session 键，下次启动由
+        // recoverStaleDockMinimizeEffectSessionIfNeeded 修复。
+        let dockRestored = DockToolRunner.runBounded(on: dockWorkQueue, timeout: 3) { [weak self] in
+            self?.recoverStaleDockMinimizeEffectSessionIfNeeded()
         }
+        if !dockRestored { wlog("dock: terminate restore timed out, session key kept for next launch") }
         scaleMinimizeActive = false
         WindowShadeLogger.shared.flushAndClose()
     }
@@ -908,7 +923,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSMenuDelegate {
     // tap 创建需要辅助功能权限；权限可能晚于启动才授予，所以轮询到授权后再装。
     func setupEventTapWhenTrusted() {
         if setupEventTap() {
-            rescueOffscreenWindows(silent: true)
+            rescueOffscreenWindows(silent: true, announceRestored: true)
             return
         }
         tapSetupTimer = Timer.scheduledTimer(withTimeInterval: 2, repeats: true) { [weak self] t in
@@ -916,7 +931,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSMenuDelegate {
             // 计时器本身留在闭包原来的隔离域里停掉，不送进主线程闭包。
             let installed = MainActor.assumeIsolated { () -> Bool in
                 guard self?.setupEventTap() == true else { return false }
-                self?.rescueOffscreenWindows(silent: true)
+                self?.rescueOffscreenWindows(silent: true, announceRestored: true)
                 return true
             }
             if installed { t.invalidate() }

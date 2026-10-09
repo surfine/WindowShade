@@ -119,6 +119,11 @@ for source in $SOURCES; do
   COMPILE_SOURCES+=("$WORK/$source")
 done
 cp Effects/Duo.metal "$WORK/Duo.metal"
+# 刘海文案译文（R19）：先查键齐全、中文源句和代码一致（缺键就在这里失败），再用 xcstringstool 编成
+# en.lproj / zh-Hans.lproj。--check、--stage 和普通构建都编；只有后两者把结果放进包。
+echo "==> 本地化检查与编译"
+python3 ../tests/check-localizable.py --repo .. || exit 1
+xcrun xcstringstool compile Resources/Localizable.xcstrings -o "$WORK/Localization"
 # 看护：Watchdog/ 下的源码（入口和它自己的菜单栏图标）加上和 App 共用的更新代码（日志、判断、换回、文案），
 # 单独成一个可执行文件。共用的只有 Core/Update*.swift、App/UpdaterSystem.swift、App/UpdaterCopy.swift，
 # 它们只能依赖 Foundation/AppKit 和彼此；别的 App 文件不进看护，改它们不会让 --check 的第二次类型检查失败。
@@ -130,6 +135,12 @@ for source in Watchdog/main.swift Watchdog/GuardIcon.swift Core/UpdateVersion.sw
   GUARD_SOURCES+=("$WORK/$source")
 done
 GUARD_FRAMEWORKS=(-framework AppKit -framework Security -framework ServiceManagement)
+# 编程会话的 hook（tools/ws2-hook）：Claude Code 每次事件起一个的小程序，只连本机 socket。
+# 同一份快照、同一套 Swift 6 与告警参数；放在 Contents/Helpers/WindowShadeHook。配置只给用户拷贝，不写 ~/.claude。
+mkdir -p "$WORK/ws2-hook"
+cp ../tools/ws2-hook/main.swift "$WORK/ws2-hook/main.swift"
+HOOK_SOURCES=("$WORK/Support/WS2AtomicConfiguration.swift" "$WORK/Support/WS2HookConfiguration.swift"
+  "$WORK/Support/WS2UnixSocket.swift" "$WORK/Support/WS2BoundedInput.swift" "$WORK/ws2-hook/main.swift")
 
 # Original C process supervisor is compiled from the SAME isolated snapshot as Swift.
 mkdir -p "$WORK/Native"
@@ -158,7 +169,19 @@ if [ "$check_only" = "1" ]; then
   env CLANG_MODULE_CACHE_PATH="$MODULE_CACHE" \
     swiftc "${SWIFT_LANGUAGE_FLAGS[@]}" -module-cache-path "$MODULE_CACHE" -target "$ARCH-apple-macosx14.0" -O -o "$WORK/WindowShadeUpdateGuard-check" \
       "${GUARD_SOURCES[@]}" "${GUARD_FRAMEWORKS[@]}"
+  env CLANG_MODULE_CACHE_PATH="$MODULE_CACHE" \
+    swiftc "${SWIFT_LANGUAGE_FLAGS[@]}" -module-cache-path "$MODULE_CACHE" -target "$ARCH-apple-macosx14.0" -O -parse-as-library \
+      -o "$WORK/WindowShadeHook-check" "${HOOK_SOURCES[@]}"
   echo "==> 编译验证通过"
+  # 隐私登记门禁：新增的读取点必须先登记，隐私页数据必须与登记表一致；任一失败即非零退出。
+  # 第 23 行已经 cd 到 prototype/，仓库根就是上一级。
+  PRIVACY_ROOT="$(cd .. && pwd)"
+  echo "==> 隐私登记检查"
+  python3 "$PRIVACY_ROOT/tools/privacy/check-registry.py" --repo "$PRIVACY_ROOT" || exit 1
+  bash "$PRIVACY_ROOT/tests/run-privacy-page-sync.sh" || exit 1
+  # 文案检查：禁词、内部代号、主句长度；失败非零退出（副标题超长只报告）。
+  echo "==> 文案检查"
+  bash "$PRIVACY_ROOT/tests/run-copy-lint.sh" --strict || exit 1
   exit 0
 fi
 
@@ -204,6 +227,10 @@ echo "==> 编译看护（WindowShadeUpdateGuard）"
 env CLANG_MODULE_CACHE_PATH="$MODULE_CACHE" \
   swiftc "${SWIFT_LANGUAGE_FLAGS[@]}" -module-cache-path "$MODULE_CACHE" -target "$ARCH-apple-macosx14.0" -O -o "$WORK/WindowShadeUpdateGuard" \
     "${GUARD_SOURCES[@]}" "${GUARD_FRAMEWORKS[@]}"
+echo "==> 编译编程会话的 hook（WindowShadeHook）"
+env CLANG_MODULE_CACHE_PATH="$MODULE_CACHE" \
+  swiftc "${SWIFT_LANGUAGE_FLAGS[@]}" -module-cache-path "$MODULE_CACHE" -target "$ARCH-apple-macosx14.0" -O -parse-as-library \
+    -o "$WORK/WindowShadeHook" "${HOOK_SOURCES[@]}"
 
 if [ "$stage_only" != "1" ]; then
   echo "==> 停止这个 bundle 的 WindowShade（编译通过后才替换）"
@@ -215,6 +242,10 @@ fi
 echo "==> 替换 Mach-O（保留 bundle、Info.plist、Resources）"
 cp "$TMP_BIN" "$BIN"
 cp "$WORK/Duo.metallib" "$APP/Contents/Resources/Duo.metallib"
+# 译文放在 Resources/Localization 下，不放 App 根目录的 .lproj，免得改变系统给这个 App 选的界面语言。
+rm -rf "$APP/Contents/Resources/Localization"
+mkdir -p "$APP/Contents/Resources/Localization"
+cp -R "$WORK/Localization/." "$APP/Contents/Resources/Localization/"
 cp ../docs/third-party-lock-overlay.txt "$APP/Contents/Resources/LockOverlay-LICENSE.txt"
 rm -rf "$APP/Contents/Resources/ThirdParty"
 # The released bundle historically carries the Swift concurrency runtime in
@@ -252,6 +283,19 @@ for lproj in "$EMBED_FW/Versions/B/Resources/"*.lproj; do
 done
 echo "==> Sparkle.framework：${SPARKLE_KB_BEFORE} KB → $(du -sk "$EMBED_FW" | cut -f1) KB（写进发布说明草稿）"
 
+# 正在播放推送流（计划 2-1，默认关）：vendored 的 mediaremote-adapter 编成框架放进 Frameworks，
+# perl 脚本放进 Resources（见 Vendor/mediaremote-adapter/UPSTREAM.md）。编不出来不挡构建：
+# App 找不到适配器就照旧问 Music / Spotify。
+ADAPTER_FW="$APP/Contents/Frameworks/MediaRemoteAdapter.framework"
+rm -rf "$ADAPTER_FW" "$APP/Contents/Resources/mediaremote-adapter.pl" "$APP/Contents/Resources/MediaRemoteAdapter-LICENSE.txt"
+if Vendor/mediaremote-adapter/build-adapter.sh "$WORK/mediaremote-adapter" "$ARCH"; then
+  ditto "$WORK/mediaremote-adapter/MediaRemoteAdapter.framework" "$ADAPTER_FW"
+  cp "$WORK/mediaremote-adapter/mediaremote-adapter.pl" "$APP/Contents/Resources/mediaremote-adapter.pl"
+  cp Vendor/mediaremote-adapter/LICENSE "$APP/Contents/Resources/MediaRemoteAdapter-LICENSE.txt"
+else
+  echo "WARNING: mediaremote-adapter 没编出来；正在播放推送流不可用，音乐退回问 Music / Spotify。" >&2
+fi
+
 # 看护：LSUIElement 小 App，放在 Contents/Helpers/（Apple 给辅助程序定的位置）。
 GUARD_APP="$APP/Contents/Helpers/WindowShadeUpdateGuard.app"
 rm -rf "$GUARD_APP"
@@ -284,6 +328,12 @@ cat > "$GUARD_APP/Contents/Info.plist" <<PLIST
 </plist>
 PLIST
 
+# 编程会话的 hook：单个可执行文件，和看护放在一起。
+HOOK_BIN="$APP/Contents/Helpers/WindowShadeHook"
+rm -f "$HOOK_BIN"
+cp "$WORK/WindowShadeHook" "$HOOK_BIN"
+chmod 755 "$HOOK_BIN"
+
 # Info.plist in the source tree owns release versions; synchronize only these
 # fields so existing bundle identity and local resources remain intact.
 for version_key in CFBundleShortVersionString CFBundleVersion; do
@@ -312,6 +362,8 @@ codesign --force -s "$IDENTITY" -o runtime "$EMBED_FW/Versions/B/Autoupdate"
 codesign --force -s "$IDENTITY" -o runtime "$EMBED_FW/Versions/B/Updater.app"
 codesign --force -s "$IDENTITY" -o runtime "$EMBED_FW"
 codesign --force -s "$IDENTITY" -o runtime -i com.windowshade.prototype.update-guard "$GUARD_APP"
+codesign --force -s "$IDENTITY" -o runtime -i com.windowshade.prototype.hook "$HOOK_BIN"
+if [ -d "$ADAPTER_FW" ]; then codesign --force -s "$IDENTITY" -o runtime "$ADAPTER_FW"; fi
 codesign --force -s "$IDENTITY" "$APP"
 codesign --verify --deep --strict "$APP"
 
@@ -323,7 +375,7 @@ if [ "$stage_only" = "1" ]; then
   fi
   team_of() { codesign -dv "$1" 2>&1 | sed -n 's/^TeamIdentifier=//p'; }
   MAIN_TEAM="$(team_of "$APP")"
-  for nested in "$EMBED_FW/Versions/B/Autoupdate" "$EMBED_FW/Versions/B/Updater.app" "$EMBED_FW" "$GUARD_APP"; do
+  for nested in "$EMBED_FW/Versions/B/Autoupdate" "$EMBED_FW/Versions/B/Updater.app" "$EMBED_FW" "$GUARD_APP" "$HOOK_BIN"; do
     if [ -z "$MAIN_TEAM" ] || [ "$(team_of "$nested")" != "$MAIN_TEAM" ]; then
       echo "ERROR: ${nested#"$APP"/} 的 Team 和主程序不同（${MAIN_TEAM:-无}）。" >&2
       exit 1

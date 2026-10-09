@@ -1,5 +1,5 @@
 import Cocoa
-import CoreVideo
+import QuartzCore
 
 /// 滚动钩子。策略不允许时不创建端口；被系统停掉后拆掉，不重新打开。
 final class ScrollTap: @unchecked Sendable {
@@ -16,11 +16,10 @@ final class ScrollTap: @unchecked Sendable {
     private var frontmostBundleID: String?
     private var requestedMask: CGEventMask = 0
     private var installedMask: CGEventMask = 0
-    private var displayLink: CVDisplayLink?
-    private var framePending = false
-    private var scrollPhaseBegan = false
-    private var remainderX = 0.0
-    private var remainderY = 0.0
+    // 平滑滚动的帧在钩子自己的线程上算、上发，不经过主线程。
+    private var frameLink: ScrollFrameLink?
+    private var linkStarting = false
+    private var frames = ScrollFrameAccumulator()
     private var foregroundObserver: NSObjectProtocol?
     private let nanosPerTick: Double
 
@@ -124,6 +123,7 @@ final class ScrollTap: @unchecked Sendable {
             CFRunLoopRemoveSource(runLoop, source, .commonModes)
         }
         thread.name = "WindowShade.ScrollTap"
+        thread.qualityOfService = .userInteractive
         thread.stackSize = 512 * 1024
         self.thread = thread
         thread.start()
@@ -139,9 +139,7 @@ final class ScrollTap: @unchecked Sendable {
             source = nil
             thread = nil
             session.cancel()
-            remainderX = 0
-            remainderY = 0
-            scrollPhaseBegan = false
+            frames.reset()
             return current
         }
         guard let created else { return }
@@ -184,6 +182,7 @@ final class ScrollTap: @unchecked Sendable {
             // 不知道前台是谁时不改这条事件，也不把它记成「在例外名单里」。
             guard frontmostBundleID != nil else { return .pass }
             var current = request
+            current.foregroundBundleID = frontmostBundleID
             if let frontmostBundleID, excludedBundleIDs.contains(frontmostBundleID) { current.foregroundExcluded = true }
             return session.handle(sample, request: current, at: now)
         }
@@ -204,8 +203,7 @@ final class ScrollTap: @unchecked Sendable {
             if finished || !ensureLink() {
                 withLock {
                     session.cancel()
-                    remainderX = 0
-                    remainderY = 0
+                    frames.reset()
                 }
                 return pass
             }
@@ -238,63 +236,54 @@ final class ScrollTap: @unchecked Sendable {
         up.post(tap: .cghidEventTap)
     }
 
+    /// 只在钩子线程里被叫到。已经有链接或正在建时直接算好了；
+    /// 建链接要拿 NSScreen，所以绕一下主线程，建好再挂回钩子线程的 RunLoop。
     private func ensureLink() -> Bool {
-        if withLock({ displayLink != nil }) { return true }
-        var link: CVDisplayLink?
-        guard CVDisplayLinkCreateWithActiveCGDisplays(&link) == kCVReturnSuccess, let link else { return false }
-        let context = Unmanaged.passUnretained(self).toOpaque()
-        guard CVDisplayLinkSetOutputCallback(link, { _, _, _, _, _, context -> CVReturn in
-            guard let context else { return kCVReturnSuccess }
-            Unmanaged<ScrollTap>.fromOpaque(context).takeUnretainedValue().frameOnDisplayLink()
-            return kCVReturnSuccess
-        }, context) == kCVReturnSuccess else { return false }
-        guard CVDisplayLinkStart(link) == kCVReturnSuccess else { return false }
-        withLock { displayLink = link }
+        let start = withLock { () -> Bool? in
+            if frameLink != nil || linkStarting { return false }
+            guard port != nil, threadRunLoop != nil else { return nil }
+            linkStarting = true
+            return true
+        }
+        guard let start else { return false }
+        if start {
+            DispatchQueue.main.async { [weak self] in
+                MainActor.assumeIsolated { self?.startLink() }
+            }
+        }
         return true
     }
 
-    private func frameOnDisplayLink() {
-        let schedule = withLock { () -> Bool in
-            if framePending { return false }
-            framePending = true
-            return true
+    @MainActor private func startLink() {
+        let point = NSEvent.mouseLocation
+        let screen = NSScreen.screens.first { NSMouseInRect(point, $0.frame, false) } ?? NSScreen.main ?? NSScreen.screens.first
+        let created = ScrollFrameLink(owner: self)
+        let runLoop = withLock { () -> CFRunLoop? in
+            guard linkStarting, port != nil, screen != nil, let runLoop = threadRunLoop else {
+                linkStarting = false
+                session.cancel()
+                frames.reset()
+                return nil
+            }
+            linkStarting = false
+            frameLink = created
+            return runLoop
         }
-        guard schedule else { return }
-        DispatchQueue.main.async { [weak self] in self?.emitFrame() }
+        guard let runLoop, let screen else { return }
+        created.attach(screen: screen, runLoop: runLoop)
     }
 
-    private func emitFrame() {
-        dispatchPrecondition(condition: .onQueue(.main))
-        let began = Int64(NSEvent.Phase.began.rawValue)
-        let changed = Int64(NSEvent.Phase.changed.rawValue)
-        let ended = Int64(NSEvent.Phase.ended.rawValue)
-        let posted: (x: Int32, y: Int32, phase: Int64, finished: Bool, endPhase: Bool)? = withLock {
-            framePending = false
-            guard let now = self.now(), case .smooth(let x, let y, let finished) = session.step(at: now) else { return nil }
-            remainderX += x
-            remainderY += y
-            let wholeX = remainderX.rounded(.towardZero)
-            let wholeY = remainderY.rounded(.towardZero)
-            remainderX -= wholeX
-            remainderY -= wholeY
-            let pixelsX = Int32(clamping: Int(wholeX))
-            let pixelsY = Int32(clamping: Int(wholeY))
-            let phase = scrollPhaseBegan ? changed : began
-            if pixelsX != 0 || pixelsY != 0 { scrollPhaseBegan = true }
-            let endPhase = finished && scrollPhaseBegan
-            if finished {
-                scrollPhaseBegan = false
-                remainderX = 0
-                remainderY = 0
-            }
-            return (pixelsX, pixelsY, phase, finished, endPhase)
+    fileprivate func emitFrame() {
+        let posted = withLock { () -> ScrollFrameAccumulator.Frame? in
+            guard let now = self.now() else { return nil }
+            return frames.advance(&session, at: now)
         }
         guard let posted else {
             stopFrames()
             return
         }
         if posted.x != 0 || posted.y != 0 { postScroll(x: posted.x, y: posted.y, phase: posted.phase) }
-        if posted.endPhase { postScroll(x: 0, y: 0, phase: ended) }
+        if posted.endPhase { postScroll(x: 0, y: 0, phase: ScrollFrameAccumulator.ended) }
         if posted.finished { stopFrames() }
     }
 
@@ -307,13 +296,13 @@ final class ScrollTap: @unchecked Sendable {
     }
 
     private func stopFrames() {
-        let link = withLock { () -> CVDisplayLink? in
-            let current = displayLink
-            displayLink = nil
-            framePending = false
+        let link = withLock { () -> ScrollFrameLink? in
+            let current = frameLink
+            frameLink = nil
+            linkStarting = false
             return current
         }
-        if let link { CVDisplayLinkStop(link) }
+        link?.invalidate()
     }
 
     private func now() -> WS2.Instant? {
@@ -326,5 +315,96 @@ final class ScrollTap: @unchecked Sendable {
         lock.lock()
         defer { lock.unlock() }
         return body()
+    }
+}
+
+/// 一次平滑滚动里的逐帧换算：小数余量攒到整像素再发，阶段从 began 走到 ended。
+struct ScrollFrameAccumulator: Equatable, Sendable {
+    struct Frame: Equatable, Sendable {
+        var x: Int32
+        var y: Int32
+        var phase: Int64
+        var finished: Bool
+        var endPhase: Bool
+    }
+
+    static let began = Int64(NSEvent.Phase.began.rawValue)
+    static let changed = Int64(NSEvent.Phase.changed.rawValue)
+    static let ended = Int64(NSEvent.Phase.ended.rawValue)
+
+    private(set) var remainderX = 0.0
+    private(set) var remainderY = 0.0
+    private(set) var phaseBegan = false
+
+    mutating func reset() {
+        remainderX = 0
+        remainderY = 0
+        phaseBegan = false
+    }
+
+    mutating func advance(_ session: inout ScrollSession, at now: WS2.Instant) -> Frame? {
+        guard case .smooth(let x, let y, let finished) = session.step(at: now) else { return nil }
+        remainderX += x
+        remainderY += y
+        let wholeX = remainderX.rounded(.towardZero)
+        let wholeY = remainderY.rounded(.towardZero)
+        remainderX -= wholeX
+        remainderY -= wholeY
+        let pixelsX = Int32(clamping: Int(wholeX))
+        let pixelsY = Int32(clamping: Int(wholeY))
+        let phase = phaseBegan ? Self.changed : Self.began
+        if pixelsX != 0 || pixelsY != 0 { phaseBegan = true }
+        let endPhase = finished && phaseBegan
+        if finished { reset() }
+        return Frame(x: pixelsX, y: pixelsY, phase: phase, finished: finished, endPhase: endPhase)
+    }
+}
+
+/// 跟随指针所在屏的刷新率（ProMotion 上是 120Hz）的显示链接，挂在钩子线程的 RunLoop 上。
+final class ScrollFrameLink: NSObject, @unchecked Sendable {
+    private let lock = NSLock()
+    private weak var owner: ScrollTap?
+    private var link: CADisplayLink?
+    private var invalidated = false
+
+    init(owner: ScrollTap?) {
+        self.owner = owner
+    }
+
+    @MainActor
+    func attach(screen: NSScreen, runLoop: CFRunLoop) {
+        let created = screen.displayLink(target: self, selector: #selector(tick(_:)))
+        let keep = lock.withLock { () -> Bool in
+            if invalidated { return false }
+            link = created
+            return true
+        }
+        guard keep else { created.invalidate(); return }
+        schedule(created, on: runLoop)
+    }
+
+    // 不带 MainActor：这段在钩子线程的 RunLoop 里执行。
+    private nonisolated func schedule(_ created: CADisplayLink, on runLoop: CFRunLoop) {
+        nonisolated(unsafe) let created = created
+        CFRunLoopPerformBlock(runLoop, CFRunLoopMode.commonModes.rawValue) { [self] in
+            let live = lock.withLock { !invalidated }
+            if live { created.add(to: RunLoop.current, forMode: .common) }
+        }
+        CFRunLoopWakeUp(runLoop)
+    }
+
+    func invalidate() {
+        let current = lock.withLock { () -> CADisplayLink? in
+            invalidated = true
+            let current = link
+            link = nil
+            return current
+        }
+        current?.invalidate()
+    }
+
+    @objc private func tick(_ sender: CADisplayLink) {
+        guard lock.withLock({ !invalidated }) else { return }
+        owner?.emitFrame()
     }
 }

@@ -1,0 +1,684 @@
+<!doctype html><html lang="zh-CN"><head><meta charset=utf8><meta name=viewport content="width=device-width,initial-scale=1,viewport-fit=cover">
+<title>iPhone 上的遥控器</title>
+<style>
+/* 弹簧令牌（response 秒 / 阻尼比 ζ）照 design-system §4.6 现算成 linear()；位移不用贝塞尔曲线 */
+:root{--ws-calm:linear(0, 0.029, 0.099, 0.188, 0.285, 0.38, 0.47, 0.551, 0.623, 0.686, 0.74, 0.786, 0.825, 0.857, 0.883, 0.905, 0.924, 0.938, 0.95, 0.96, 0.968, 0.974, 0.98, 0.984, 0.987, 0.99, 0.992, 0.993, 0.995, 0.996, 0.997, 0.997, 0.998, 0.998, 0.999, 1);--ws-calm-t:0.5s;--ws-settle:linear(0, 0.029, 0.099, 0.189, 0.286, 0.381, 0.471, 0.552, 0.625, 0.687, 0.741, 0.787, 0.825, 0.858, 0.884, 0.906, 0.924, 0.939, 0.951, 0.96, 0.968, 0.975, 0.98, 0.984, 0.987, 0.99, 0.992, 0.994, 0.995, 0.996, 0.997, 0.997, 0.998, 0.998, 0.999, 1);--ws-settle-t:0.56s;--ws-expand:linear(0, 0.016, 0.056, 0.113, 0.18, 0.252, 0.325, 0.397, 0.466, 0.531, 0.59, 0.645, 0.694, 0.738, 0.777, 0.811, 0.841, 0.867, 0.889, 0.908, 0.924, 0.938, 0.95, 0.959, 0.967, 0.974, 0.979, 0.984, 0.988, 0.991, 0.993, 0.995, 0.996, 0.998, 0.998, 1);--ws-expand-t:0.42s;--ws-bloom:linear(0, 0.027, 0.093, 0.182, 0.282, 0.383, 0.481, 0.572, 0.653, 0.724, 0.784, 0.835, 0.876, 0.91, 0.937, 0.958, 0.973, 0.985, 0.994, 1, 1.003, 1.006, 1.007, 1.008, 1.008, 1.007, 1.007, 1.006, 1.005, 1.004, 1.004, 1.003, 1.002, 1.002, 1.001, 1);--ws-bloom-t:0.58s;--ws-pop:linear(0, 0.023, 0.082, 0.164, 0.259, 0.359, 0.457, 0.551, 0.638, 0.715, 0.782, 0.84, 0.887, 0.926, 0.957, 0.981, 0.999, 1.011, 1.02, 1.025, 1.028, 1.028, 1.028, 1.026, 1.023, 1.021, 1.018, 1.015, 1.012, 1.01, 1.008, 1.006, 1.004, 1.003, 1.002, 1);--ws-pop-t:0.38s;--ws-flyout:linear(0, 0.025, 0.087, 0.17, 0.263, 0.357, 0.449, 0.534, 0.611, 0.679, 0.738, 0.789, 0.832, 0.867, 0.896, 0.92, 0.94, 0.955, 0.967, 0.976, 0.983, 0.989, 0.993, 0.996, 0.998, 0.999, 1, 1.001, 1.001, 1.001, 1.002, 1.001, 1.001, 1.001, 1.001, 1);--ws-flyout-t:0.51s;}
+@media (prefers-reduced-motion:reduce){:root{--ws-calm:linear(0,1);--ws-calm-t:.25s;--ws-settle:linear(0,1);--ws-settle-t:.25s;--ws-expand:linear(0,1);--ws-expand-t:.25s;--ws-bloom:linear(0,1);--ws-bloom-t:.25s;--ws-pop:linear(0,1);--ws-pop-t:.25s;--ws-flyout:linear(0,1);--ws-flyout-t:.25s;}}
+.ws-sys{display:flex;flex-wrap:wrap;align-items:center;gap:6px 14px;max-width:1160px;margin:0 auto;padding:10px 16px;font:12.5px/1.4 "IBM Plex Sans","Noto Sans SC",-apple-system,system-ui,sans-serif;border-bottom:1px solid color-mix(in srgb,currentColor 14%,transparent)}.ws-sys a{color:inherit;text-decoration:none;opacity:.78}.ws-sys a:hover,.ws-sys a:focus-visible{opacity:1;text-decoration:underline}.ws-sys b{font-weight:600}.ws-sys .ws-n{opacity:.55;font-variant-numeric:tabular-nums}.ws-sys .ws-sp{flex:1}
+
+@import url("https://fonts.googleapis.com/css2?family=Newsreader:opsz,wght@6..72,400;6..72,600&family=IBM+Plex+Sans:wght@400;500;600&family=IBM+Plex+Mono:wght@400;500&family=Noto+Sans+SC:wght@400;500;600&family=Noto+Serif+SC:wght@600&display=swap");
+/* 同一套纸面。上面是能玩的样片：左边 Mac 的刘海，右边 iPhone 控制中心的遥控器。下面先写为什么不要两个模式，再写层、键、开关、矛盾怎么收、分几段交 */
+:root{
+  --paper:#EEF1F6;--surface:#FFFFFF;--surface-2:#F5F7FB;--ink:#131A25;--ink-2:#46546A;--ink-3:#6F7D93;
+  --line:#D6DDE8;--line-soft:#E5EAF2;--accent:#2F62C4;--accent-soft:#E2EAF9;--cond:#B4527A;--cond-soft:#F7E6EE;--good:#2C7350;--good-soft:#E1F0E7;--warn:#A8600F;--warn-soft:#FBF0DF;--bad:#B3352B;--bad-soft:#FBE6E3;
+  --doc:"IBM Plex Sans","Noto Sans SC",-apple-system,system-ui,sans-serif;--head:"Newsreader","Noto Serif SC",Georgia,serif;--mono:"IBM Plex Mono",ui-monospace,Menlo,monospace;
+  --mac:-apple-system,"SF Pro Text","PingFang SC","Noto Sans SC",sans-serif;
+}
+@media (prefers-color-scheme:dark){:root:not([data-theme="light"]){color-scheme:dark;
+  --paper:#0E131B;--surface:#151C27;--surface-2:#1A222F;--ink:#E7EDF6;--ink-2:#A7B4C8;--ink-3:#7A889E;--line:#26303F;--line-soft:#1E2733;
+  --accent:#7FA5F0;--accent-soft:#1B2740;--cond:#E98BB2;--cond-soft:#2C1822;--good:#6CC495;--good-soft:#14271D;--warn:#E0A264;--warn-soft:#2A2115;--bad:#F08C80;--bad-soft:#2C1715;}}
+:root[data-theme="dark"]{color-scheme:dark;
+  --paper:#0E131B;--surface:#151C27;--surface-2:#1A222F;--ink:#E7EDF6;--ink-2:#A7B4C8;--ink-3:#7A889E;--line:#26303F;--line-soft:#1E2733;
+  --accent:#7FA5F0;--accent-soft:#1B2740;--cond:#E98BB2;--cond-soft:#2C1822;--good:#6CC495;--good-soft:#14271D;--warn:#E0A264;--warn-soft:#2A2115;--bad:#F08C80;--bad-soft:#2C1715;}
+*{box-sizing:border-box}
+[hidden]{display:none!important}
+body{margin:0;background:var(--paper);color:var(--ink);font:15px/1.72 var(--doc);-webkit-font-smoothing:antialiased}
+.wrap{max-width:1120px;margin:0 auto;padding-inline:16px;padding-block:0 96px}
+header{padding:60px 0 22px}
+.eyebrow{font-family:var(--mono);font-size:11.5px;letter-spacing:.14em;text-transform:uppercase;color:var(--ink-3);margin:0 0 14px}
+h1{font-family:var(--head);font-weight:600;font-size:clamp(34px,5.6vw,54px);line-height:1.08;letter-spacing:-.015em;margin:0 0 16px;text-wrap:balance}
+.lede{font-size:17.5px;color:var(--ink-2);max-width:66ch;margin:0}
+.lede b{color:var(--ink)}
+h2{font-family:var(--head);font-weight:600;font-size:clamp(23px,3.2vw,30px);line-height:1.25;margin:0 0 8px;text-wrap:balance}
+h3{font-size:15px;margin:0 0 4px}
+section{padding-top:60px}
+p{max-width:68ch}
+.sub{color:var(--ink-2);margin:0 0 20px}
+code{font-family:var(--mono);font-size:.86em;background:var(--surface-2);border:1px solid var(--line-soft);border-radius:4px;padding:1px 5px;overflow-wrap:anywhere}
+
+/* ---------- 舞台 ---------- */
+.stage{display:grid;grid-template-columns:minmax(0,1fr) 250px;gap:26px;margin-top:22px;align-items:start}
+@media (max-width:820px){.stage{grid-template-columns:1fr}.phonecol{justify-self:center}}
+.mac{position:relative;aspect-ratio:16/10.4;max-width:100%;border-radius:18px 18px 6px 6px;background:#0b0b0d;padding:1.6%;box-shadow:0 30px 60px -30px rgba(10,20,40,.55);transform-origin:50% 0}
+.far .mac{transform:scale(.42);margin-bottom:-36%}
+.far .screen{filter:blur(.7px)}
+.screen{position:relative;width:100%;height:100%;border-radius:12px 12px 2px 2px;overflow:hidden;background:#000;container-type:inline-size;font-family:var(--mac);outline:none}
+.screen:focus-visible{box-shadow:0 0 0 2px var(--accent)}
+.wall{position:absolute;inset:0;background:radial-gradient(110% 80% at 15% 0%,#5D86C9 0%,transparent 60%),radial-gradient(90% 80% at 100% 15%,#7FA9A0 0%,transparent 60%),radial-gradient(120% 90% at 60% 120%,#33507A 0%,transparent 60%),#24385A}
+.menubar{position:absolute;inset:0 0 auto;height:4.4cqw;display:flex;align-items:center;gap:2.6cqw;padding-inline:2.6cqw;font-size:1.55cqw;color:#fff;font-weight:600;background:rgba(10,12,24,.25);z-index:2}
+.menubar span{font-weight:400;opacity:.85}.menubar .r{margin-left:auto;opacity:.9}
+.win{position:absolute;border-radius:1.4cqw;box-shadow:0 1.2cqw 3cqw rgba(0,0,0,.4);overflow:hidden;background:#1E1F24;transform-origin:50% 0}
+.win .bar{height:3.2cqw;background:rgba(0,0,0,.28);display:flex;align-items:center;gap:.8cqw;padding-inline:1.3cqw;font-size:1.2cqw;color:rgba(255,255,255,.75);font-weight:600}
+.lamp{width:1cqw;height:1cqw;border-radius:50%;background:#ff5f57}.lamp:nth-child(2){background:#febc2e}.lamp:nth-child(3){background:#28c840}
+.win .t{flex:1;text-align:center;margin-right:4cqw}
+.lock{position:absolute;inset:0;z-index:8;background:rgba(10,14,24,.55);backdrop-filter:blur(14px);-webkit-backdrop-filter:blur(14px);display:grid;place-items:center;color:#fff;font-size:5cqw;font-weight:300}
+.lock small{display:block;font-size:1.5cqw;opacity:.75;text-align:center}
+
+/* 刘海：纯黑，贴着硬件 */
+.island{position:absolute;left:50%;top:0;transform:translateX(-50%);background:#000;color:#fff;overflow:hidden;z-index:6;width:12.2cqw;height:3.6cqw;border-radius:0 0 1.1cqw 1.1cqw}
+.ear{position:absolute;top:0;height:3.6cqw;display:flex;align-items:center;gap:.6cqw;font-size:1.3cqw;white-space:nowrap}
+.ear.l{left:1.4cqw}.ear.r{right:1.4cqw}
+.ear svg{width:2cqw;height:2cqw;flex:none}
+.ear .chip{font-size:1.1cqw;border-radius:1cqw;padding:.1cqw .8cqw;background:rgba(255,255,255,.14)}
+.ear .chip.hot{background:#E98BB2;color:#1a0b12;font-weight:600}
+.ic{position:absolute;inset:0;opacity:0;transition:opacity 120ms linear}
+.ic.on{opacity:1}
+.mid{position:absolute;left:0;right:0;top:3.6cqw;bottom:0;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:.4cqw;padding:0 2.4cqw 1.2cqw;text-align:center}
+.t1{font-weight:600;font-size:1.45cqw;line-height:1.3}.t2{opacity:.62;font-size:1.2cqw;line-height:1.35}
+.warnc{color:#FFB35C}.okc{color:#5FD38A}
+u{text-decoration-color:#FFB35C;text-underline-offset:.3cqw}
+.code{display:flex;gap:1cqw;justify-content:center}.code b{font-size:3.2cqw;font-weight:700;width:3.6cqw;text-align:center;background:rgba(255,255,255,.1);border-radius:.8cqw;font-variant-numeric:tabular-nums;line-height:1.3}
+.row{display:flex;gap:1.3cqw;justify-content:center;align-items:flex-start;padding-top:.4cqw}
+.sep{width:.12cqw;align-self:stretch;margin:.6cqw .2cqw 2.2cqw;background:rgba(255,255,255,.18)}
+.cell{width:8.6cqw;display:flex;flex-direction:column;align-items:center;gap:.4cqw;transform-origin:50% 40%}
+.thumb{width:100%;aspect-ratio:16/10;border-radius:.9cqw;position:relative;overflow:hidden;box-shadow:0 0 0 .12cqw rgba(255,255,255,.12);display:grid;place-items:center}
+.thumb .app{position:absolute;right:.5cqw;bottom:.5cqw;width:2.2cqw;height:2.2cqw;border-radius:.6cqw;box-shadow:0 .2cqw .6cqw rgba(0,0,0,.4)}
+.thumb.live{background:#1b1c20}
+.thumb.live svg{width:3cqw;height:3cqw;opacity:.9}
+.badge{position:absolute;left:.6cqw;top:.6cqw;width:1.1cqw;height:1.1cqw;border-radius:50%}
+.badge.run{border:.25cqw solid rgba(255,255,255,.25);border-top-color:#fff;animation:sp 900ms linear infinite}
+.badge.wait{background:#FFB35C}
+@keyframes sp{to{transform:rotate(360deg)}}
+.cell.on .thumb{box-shadow:0 0 0 .3cqw #fff,0 1.2cqw 2cqw -.6cqw rgba(0,0,0,.8)}
+.hc .cell.on .thumb{box-shadow:0 0 0 .55cqw #fff}
+.cell b{font-size:1.1cqw;font-weight:600;max-width:100%;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;opacity:.8}
+.cell.on b{opacity:1}
+.cell small{font-size:.95cqw;opacity:.55;margin-top:-.4cqw;white-space:nowrap}
+.trace{width:22cqw;height:5.5cqw}
+.wave{display:flex;gap:.35cqw;align-items:center;height:3cqw}.wave i{width:.42cqw;background:#fff;border-radius:.2cqw;animation:wv 620ms ease-in-out infinite alternate}
+.wave i:nth-child(2n){animation-delay:-200ms}.wave i:nth-child(3n){animation-delay:-400ms}
+@keyframes wv{from{height:.6cqw}to{height:2.8cqw}}
+
+/* iPhone 遥控器，比例照控制中心实拍 920×2000 */
+.phone{position:relative;width:250px;max-width:100%;aspect-ratio:920/2000;background:#000;border-radius:38px;box-shadow:0 0 0 7px #1b1b1e,0 0 0 8px #3a3a3e,0 30px 60px -28px rgba(0,0,0,.6);font-family:var(--mac);color:#fff;user-select:none;-webkit-user-select:none;touch-action:none}
+.pb{position:absolute;border:0;padding:0;cursor:pointer;color:#fff;display:grid;place-items:center;background:linear-gradient(#232326,#151517);box-shadow:inset 0 1px 0 rgba(255,255,255,.08),0 0 0 1px rgba(255,255,255,.06);transition:transform 100ms ease-out,filter 100ms}
+.pb:active{transform:scale(.94);filter:brightness(1.4)}
+.pb:focus-visible{outline:2px solid var(--accent);outline-offset:2px}
+.pb svg{width:42%;height:42%}
+.round{border-radius:50%}
+#bMute{left:4%;top:7.1%;width:13.8%;aspect-ratio:1}
+#bPick{left:22%;top:7.1%;width:56%;height:6.3%;border-radius:999px;font-size:11.5px;font-weight:600;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;padding-inline:10px;display:block;line-height:1}
+#bPower{left:82.2%;top:7.1%;width:13.8%;aspect-ratio:1}
+#pad{position:absolute;left:4%;top:17.2%;width:92%;height:59.3%;border-radius:22px;background:#1D1D1F;overflow:hidden;cursor:grab}
+#pad canvas{position:absolute;inset:0;width:100%;height:100%;pointer-events:none}
+#padMsg{position:absolute;inset:0;display:grid;place-items:center;color:#6b6b70;font-size:12px;text-align:center;pointer-events:none;padding:16px;line-height:1.5}
+#bPlay{left:4%;top:83.2%;width:20.8%;aspect-ratio:1}
+#bBack{left:36.4%;top:81.7%;width:27.2%;aspect-ratio:1;background:linear-gradient(#141416,#0b0b0c)}
+#bTV{left:75.2%;top:83.2%;width:20.8%;aspect-ratio:1}
+.side{position:absolute;right:-12px;top:24%;width:6px;height:13%;border-radius:0 4px 4px 0;background:#3a3a3e;border:0;cursor:pointer;padding:0}
+.side.down{background:#E98BB2}
+.sidelabel{position:absolute;right:-104px;top:26%;font-size:11.5px;color:var(--ink-3);width:90px;line-height:1.35;font-family:var(--doc)}
+@media (max-width:420px){.sidelabel{display:none}}
+.sheet{position:absolute;inset:0;border-radius:38px;background:rgba(0,0,0,.84);display:flex;flex-direction:column;align-items:center;justify-content:center;gap:14px;padding:22px;text-align:center;font-size:13px;z-index:3}
+.sheet .list{width:100%;display:flex;flex-direction:column;gap:6px}
+.sheet .list button{font:inherit;font-size:13px;color:#fff;background:#2a2a2d;border:0;border-radius:12px;padding:10px 12px;text-align:left;cursor:pointer}
+.sheet .list button small{display:block;opacity:.55;font-size:11px}
+.pin{display:flex;gap:8px}.pin b{width:34px;height:42px;border-radius:9px;background:#2a2a2d;display:grid;place-items:center;font-size:20px}
+.phonecol{display:flex;flex-direction:column;gap:12px;align-items:center;padding-right:14px}
+.hint{font-size:12.5px;color:var(--ink-3);text-align:center;max-width:250px;line-height:1.5}
+
+.depth{display:flex;gap:6px;margin-top:14px;flex-wrap:wrap}
+.depth span{font-size:12.5px;border-radius:999px;padding:2px 11px;border:1px solid var(--line);color:var(--ink-3);background:var(--surface)}
+.depth span.on{border-color:var(--accent);color:var(--accent);background:var(--accent-soft);font-weight:600}
+.depth span.on.c{border-color:var(--cond);color:var(--cond);background:var(--cond-soft)}
+.tools,.scenes{display:flex;flex-wrap:wrap;gap:6px;margin-top:10px}
+.tools button,.scenes button{font:inherit;font-size:13px;border:1px solid var(--line);background:var(--surface);color:var(--ink);border-radius:999px;padding:3px 11px;cursor:pointer;transition:transform 100ms ease-out}
+.tools button:active,.scenes button:active{transform:scale(.97)}
+.tools button[aria-pressed="true"],.scenes button[aria-pressed="true"]{border-color:var(--accent);background:var(--accent-soft)}
+.now{margin-top:14px;background:var(--surface);border:1px solid var(--line-soft);border-radius:14px;padding:14px 18px;min-height:104px}
+.now h3{font-size:15.5px}
+.now p{margin:4px 0 0;font-size:13.5px;color:var(--ink-2)}
+.now .rule{margin-top:8px;font-size:12.5px;color:var(--ink-3)}
+.settings{margin-top:14px;background:var(--surface);border:1px solid var(--line-soft);border-radius:14px;padding:6px 0;font-family:var(--mac);font-size:13px}
+.srow{display:flex;align-items:center;gap:10px;padding:8px 16px}
+.srow+.srow{border-top:1px solid var(--line-soft)}
+.srow.sub2{padding-left:44px}
+.srow svg{width:18px;height:18px;flex:none;color:var(--accent)}
+.srow .n{flex:1;min-width:0}.srow .n small{display:block;color:var(--ink-3);font-size:11.5px}
+.sw{width:38px;height:22px;border-radius:999px;background:var(--line);border:0;position:relative;cursor:pointer;flex:none}
+.sw::after{content:"";position:absolute;left:2px;top:2px;width:18px;height:18px;border-radius:50%;background:#fff;box-shadow:0 1px 2px rgba(0,0,0,.3);transition:transform 160ms ease-out}
+.sw[aria-checked="true"]{background:#34C759}.sw[aria-checked="true"]::after{transform:translateX(16px)}
+.sw:disabled{opacity:.4;cursor:default}
+.lnk{font:inherit;font-size:12.5px;border:0;background:none;color:var(--bad);cursor:pointer;padding:0}
+
+/* ---------- 下半 ---------- */
+.big{background:var(--surface);border:1.5px solid var(--ink);border-radius:14px;padding:22px 24px}
+.big p{margin:0 0 10px;color:var(--ink-2)}.big p:last-child{margin:0}.big b{color:var(--ink)}
+.rules ol{margin:6px 0 0;padding-left:1.5em;display:grid;gap:12px}
+.rules li b{color:var(--ink)}.rules li span{color:var(--ink-2);display:block;font-size:14px}
+.ladder{display:grid;gap:8px}
+.rung{display:grid;grid-template-columns:110px minmax(0,1fr) minmax(0,1fr);gap:14px;align-items:start;background:var(--surface);border:1px solid var(--line-soft);border-radius:12px;padding:12px 16px}
+@media (max-width:700px){.rung{grid-template-columns:1fr}}
+.rung .lv{font-family:var(--mono);font-size:12px;color:var(--accent)}
+.rung.c .lv{color:var(--cond)}
+.rung h3{margin:0}.rung p{margin:0;font-size:13.5px;color:var(--ink-2)}
+.tbl{overflow-x:auto;border:1px solid var(--line-soft);border-radius:12px;background:var(--surface)}
+table{border-collapse:collapse;width:100%;min-width:820px;font-size:13px;line-height:1.55}
+th,td{text-align:left;vertical-align:top;padding:9px 12px;border-bottom:1px solid var(--line-soft)}
+th{font-size:11.5px;font-weight:600;color:var(--ink-3);letter-spacing:.04em;background:var(--surface-2)}
+th.c{color:var(--cond)}
+tr:last-child td{border-bottom:0}
+td.k{font-weight:600;white-space:nowrap}
+td.mean{color:var(--ink);font-weight:500;background:var(--surface-2)}
+.st{font-size:11.5px;border-radius:999px;padding:1px 8px;white-space:nowrap}
+.st.done{background:var(--good-soft);color:var(--good)}.st.todo{background:var(--warn-soft);color:var(--warn)}.st.no{background:var(--surface-2);color:var(--ink-3);border:1px solid var(--line-soft)}
+.two{display:grid;grid-template-columns:repeat(auto-fit,minmax(min(100%,420px),1fr));gap:14px}
+.card{background:var(--surface);border:1px solid var(--line-soft);border-radius:12px;padding:14px 16px}
+.card ul{margin:6px 0 0;padding-left:1.2em;font-size:13.5px;color:var(--ink-2);display:grid;gap:4px}
+.card p{margin:0;font-size:13.5px;color:var(--ink-2)}
+.ask{background:var(--warn-soft);border:1px solid var(--line-soft);border-radius:14px;padding:18px 22px}
+.ask ol{margin:8px 0 0;padding-left:1.4em;display:grid;gap:10px;font-size:14px}
+.ask li span{color:var(--ink-2)}
+footer{margin-top:48px;font-size:12.5px;color:var(--ink-3);max-width:84ch}
+@media (prefers-reduced-motion:reduce){.ic,.pb,.sw::after{transition:none}.badge.run,.wave i{animation:none}}
+</style></head><body>
+<nav class="ws-sys" aria-label="WindowShade 设计系统"><a href="https://claude.ai/artifact/Q2XdwfQttwpju6MvzpY93Y"><b>WindowShade 设计系统</b></a><span class="ws-n">第 14 / 16 张 · iPhone 上的遥控器</span><span class="ws-sp"></span><a href="https://claude.ai/artifact/Ku2E7n1xFuXWWjDiF8Ddp1">← 指挥模式</a><a href="https://claude.ai/artifact/BPmRiSF26X44bpUqFMAZjs">离开就锁 →</a></nav>
+
+
+<div class="wrap">
+<header>
+  <p class="eyebrow">WindowShade 2 · 设计稿 · 2026-10-08 · 遥控模式与指挥模式合成一件事</p>
+  <h1>一个遥控器，碰一下刘海</h1>
+  <p class="lede">不要两个模式，只要一个地方。<b>看不见的东西都在刘海那一排：收起的窗口、正在播放的、在跑的 Codex 和 Claude。遥控器碰到什么，就操作什么。</b>碰到窗口，点一下放回；碰到正在播放的，按播放键暂停；碰到一个会话，点一下走进去，触控区就变成画档位的地方，侧边按钮变成说话。返回永远退一层。遥控模式是在那一排里走动，指挥模式是走进一个会话：同一次配对、同一条连接、同一套键。</p>
+</header>
+
+<div class="stage">
+  <div>
+    <div id="macbox"><div class="mac"><div class="screen" id="screen">
+      <div class="wall"></div>
+      <div class="menubar"><b>访达</b><span>文件</span><span>编辑</span><span>显示</span><span class="r">周三 22:10</span></div>
+      <div id="wins"></div>
+      <div class="island" id="island" role="status" aria-live="polite"><div class="ic" id="ic"></div></div>
+      <div class="lock" id="lock" hidden><div>22:10<small>这台 Mac 已锁定</small></div></div>
+    </div></div></div>
+    <div class="depth" id="depth" aria-label="现在在哪一层"><span data-l="0">连着</span><span data-l="1">刘海那一排</span><span data-l="2" class="c">会话里</span><span data-l="3" class="c">选模型</span></div>
+    <div class="scenes" id="scenes" role="group" aria-label="跳到某一步"></div>
+    <div class="tools" role="group" aria-label="现场">
+      <button type="button" id="tFar" aria-pressed="false">从沙发上看</button>
+      <button type="button" id="tLock" aria-pressed="false">锁屏</button>
+      <button type="button" id="tPointer">Mac 前有人动了指针</button>
+      <button type="button" id="tDrop">手机走出 Wi‑Fi</button>
+    </div>
+    <div class="now" id="now" aria-live="polite"></div>
+    <div class="settings" aria-label="设置里只有这些">
+      <div class="srow"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round"><rect x="7" y="2.5" width="10" height="19" rx="3"/><circle cx="12" cy="8" r="2"/><path d="M12 14v3"/></svg><div class="n">遥控模式<small>用 iPhone 上的遥控器操作这台 Mac</small></div><button class="sw" id="swOn" role="switch" aria-checked="false" aria-label="遥控模式"></button></div>
+      <div class="srow sub2"><svg viewBox="0 0 24 24" fill="none" stroke="var(--cond)" stroke-width="1.7" stroke-linecap="round"><path d="M4 20 15 9"/><path d="M15 9l2.5-5.5L20 6l-5 3"/></svg><div class="n">指挥模式<small>在那一排里走进 Codex 和 Claude 的会话</small></div><button class="sw" id="swCond" role="switch" aria-checked="false" aria-label="指挥模式" disabled></button></div>
+      <div class="srow sub2" id="peerRow" hidden><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round"><rect x="7" y="2.5" width="10" height="19" rx="3"/><path d="M11 18.5h2"/></svg><div class="n">Aaron 的 iPhone<small>配一次，两种都能用</small></div><button class="lnk" id="bRemove">移除</button></div>
+    </div>
+  </div>
+  <div class="phonecol">
+    <div class="phone" id="phone">
+      <button class="pb round" id="bMute" aria-label="静音：提示音开关"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><path d="M11 5 6 9H3v6h3l5 4z"/><path id="muteArc" d="M16 9a4 4 0 0 1 0 6"/></svg></button>
+      <button class="pb" id="bPick" aria-label="选择电视">搜索中…</button>
+      <button class="pb round" id="bPower" aria-label="电源：收工"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round"><path d="M12 3v9"/><path d="M6.3 7.2a8 8 0 1 0 11.4 0"/></svg></button>
+      <div id="pad" role="application" aria-label="触控区"><canvas id="cv"></canvas><div id="padMsg"></div></div>
+      <button class="pb round" id="bPlay" aria-label="播放或暂停：开始或停下眼前这件事"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linejoin="round"><path d="M3 6v12l9-6z"/><path d="M16 6v12M20 6v12" stroke-linecap="round"/></svg></button>
+      <button class="pb round" id="bBack" aria-label="返回：取消眼前这一件，没有就退一层"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="M15 4 7 12l8 8"/></svg></button>
+      <button class="pb round" id="bTV" aria-label="电视键：回到刘海那一排"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"><rect x="3" y="5" width="18" height="12" rx="1.5"/><path d="M9 20h6"/></svg></button>
+      <button class="side" id="bSide" aria-label="侧边按钮：在会话里按住说话"></button>
+      <div class="sidelabel">按住侧边按钮说话</div>
+      <div class="sheet" id="sheet" hidden></div>
+    </div>
+    <p class="hint">触控区：往下滑、左右滑、点一下、往上滑；走进会话后，从左往右画一横、↗、ˇ、↘ 选档位。也可以点一下左边的 Mac 画面，用方向键、回车、Esc。</p>
+  </div>
+</div>
+
+<section>
+  <h2>为什么不要两个模式</h2>
+  <div class="big">
+    <p><b>手机上没有我们的画面。</b>控制中心的遥控器是 Apple 的界面，看不出现在是“遥控”还是“指挥”。如果同一个键在两个模式里意思不同，又要靠“按住播放键 1 秒”来换，用户每按一下都得先想自己在哪个模式：这就是模式错误，而且是看不见的那种。</p>
+    <p><b>所以把“模式”换成“位置”。</b>tvOS 一直这样做：遥控器只有几个键，焦点停在什么上，键就作用在什么上；进一个 App 是往里走一层，Menu 是退一层。WindowShade 的设计文法第一句本来就是“看不见的东西都在刘海里，碰一下就回来”。遥控器只是又一只碰刘海的手。</p>
+    <p><b>两个名字都留着，但不再是两个开关之间的切换。</b>遥控模式 = 在刘海那一排里走动；指挥模式 = 走进一个编程会话。会话本来就在刘海里（《看与指挥》），指挥模式“选会话”的列表就是那一排里的会话格。</p>
+  </div>
+</section>
+
+<section>
+  <h2>四层，返回永远退一层</h2>
+  <p class="sub">越往里走，能做的事越重，要的确认越多。刘海左耳一直告诉你在哪一层：遥控器符号是前两层，指挥棒是后两层。</p>
+  <div class="ladder">
+    <div class="rung"><div class="lv">0 · 连着</div><div><h3>左耳一个遥控器符号</h3><p>持续活动，退成最小。屋里的人都看得见这台 Mac 正被遥控。</p></div><p>能做：往下滑或点一下展开那一排；播放键控制正在播放的；音量。不能做别的。</p></div>
+    <div class="rung"><div class="lv">1 · 刘海那一排</div><div><h3>遥控模式</h3><p>左段是收进刘海的窗口，竖线右边是正在进行的：正在播放的、编程会话。和指针停在刘海上打开的是同一页。</p></div><p>能做：挪焦点；点一下打开亮起的那一项（窗口放回、播放的去那扇窗、会话走进去）。都看得见、能撤回。不放行、不打字。</p></div>
+    <div class="rung c"><div class="lv">2 · 会话里</div><div><h3>指挥模式</h3><p>刘海写着项目 · 助手 · 档位。触控区变成画档位的地方，侧边按钮变成说话。不动光标，不碰前台窗口。</p></div><p>能做：画档位（只管下一轮）、说一句出草稿、播放键发出去 / 补一句 / 停下、刘海里问的那一次普通放行。高风险的到 Mac 前用 Touch ID。</p></div>
+    <div class="rung c"><div class="lv">3 · 会话里的选择</div><div><h3>选模型、确认候选</h3><p>往下滑展开四个模型位置；五拍的 max 等你点一下。</p></div><p>和第 1 层一样挪焦点、点一下选中、返回关掉。没有新的手势要学。</p></div>
+  </div>
+</section>
+
+<section>
+  <h2>一个键一个意思</h2>
+  <p class="sub">每个键先有一句不随层变的意思，再看它在每一层落到什么。表里每一格都是这句话的具体化，没有一格例外。<b>2026-10-08 从 atv-core 读到了键码</b>（返回 5、确认 6、电视键 7、播放 / 暂停 14、静音 18、电源 19；iOS 26/27 的控制中心遥控器把 18、19 复用成静音和电源），松开那一下才算；触控区是 1000×1000，移动小于 60 算点、至少 150 算滑。所以“待识别”改成“已知键码，待真机核对”。</p>
+  <div class="tbl"><table>
+    <thead><tr><th>键</th><th>不变的意思</th><th>0 连着</th><th>1 那一排</th><th class="c">2 会话里</th><th class="c">3 选择</th><th>真机</th></tr></thead>
+    <tbody>
+      <tr><td class="k">往下滑</td><td class="mean">往下打开一层</td><td>展开那一排</td><td>—</td><td>展开模型位置</td><td>—</td><td><span class="st done">触控已收到</span></td></tr>
+      <tr><td class="k">左右滑</td><td class="mean">在一排里挪焦点</td><td>—</td><td>挪焦点</td><td>没有一排可挪：这是画档位（见下）</td><td>挪焦点</td><td><span class="st done">触控已收到</span></td></tr>
+      <tr><td class="k">画 / 打拍子</td><td class="mean">只在会话里，只管档位</td><td>—</td><td>—</td><td>一到四声 = low…xhigh；五拍 max、六拍 ultra 要再点一下</td><td>—</td><td><span class="st todo">E1 采样率待测</span></td></tr>
+      <tr><td class="k">点一下</td><td class="mean">打开 / 确认亮着的那一个</td><td>展开那一排</td><td>放回窗口；走进会话</td><td>确认候选；允许这一次（普通）</td><td>选中</td><td><span class="st done">触控已收到</span></td></tr>
+      <tr><td class="k">往上滑 · 返回</td><td class="mean">取消眼前这一件；没有了就退一层</td><td>—</td><td>收回刘海</td><td>有审批：不允许；有草稿：再按一次丢掉；都没有：回到那一排</td><td>关掉，回第 2 层</td><td><span class="st done">上滑已收到</span> 返回键码 5，待真机核对</td></tr>
+      <tr><td class="k">播放 / 暂停</td><td class="mean">开始或停下眼前这件事</td><td>正在播放的</td><td>正在播放的</td><td>有草稿：发出去（在跑时是补一句）；在跑没草稿：停下</td><td>—</td><td><span class="st done">键码 14</span> 待真机核对</td></tr>
+      <tr><td class="k">电视键</td><td class="mean">回到刘海那一排</td><td>展开那一排</td><td>回到最前面</td><td>回到那一排（草稿留着）</td><td>回到那一排</td><td><span class="st done">键码 7</span> 待真机核对</td></tr>
+      <tr><td class="k">按住侧边按钮</td><td class="mean">对会话说话</td><td>—</td><td>焦点在会话上：走进去并开始听</td><td>说话，松开出草稿，不发送</td><td>—</td><td><span class="st todo">E2、E4</span></td></tr>
+      <tr><td class="k">静音</td><td class="mean">WindowShade 的提示音开关</td><td colspan="4">每一层一样</td><td><span class="st done">键码 18</span> 待真机核对</td></tr>
+      <tr><td class="k">电源</td><td class="mean">收工</td><td colspan="4">每一层一样：全部收回第 0 层；后台的会话照跑，Mac 不睡</td><td><span class="st done">键码 19</span> 待真机核对</td></tr>
+      <tr><td class="k">iPhone 音量键</td><td class="mean">Mac 的音量</td><td colspan="4">每一层一样；不调档位、不放行</td><td><span class="st no">没测</span></td></tr>
+    </tbody>
+  </table></div>
+  <p class="sub" style="margin-top:12px">竖着滑在指挥手势里本来就判为“没认出”，所以往上滑、往下滑在会话里不会和画档位撞车。</p>
+</section>
+
+<section>
+  <h2>互通有无</h2>
+  <div class="two">
+    <div class="card"><h3>指挥从遥控那里拿到的</h3><ul>
+      <li><b>配对、连接、断开、锁屏、撤销</b>：一套，遥控的第一段先验完</li>
+      <li><b>选会话</b>：不再要“按住电视键”和第二套列表，就是那一排里的会话格，挪焦点也是同一套</li>
+      <li><b>选模型</b>：变成第 3 层的一排，和挪窗口焦点同一个手感</li>
+      <li><b>“结果出来之前不说话”“从沙发上看得清”</b>：同样的规矩，同样的刘海</li>
+    </ul></div>
+    <div class="card"><h3>遥控从指挥那里拿到的</h3><ul>
+      <li><b>会话格本身</b>：在跑、等你、完成，把编程会话放进沙发上的那一排</li>
+      <li><b>“开始或停下眼前这件事”</b>：播放键在媒体上是播放暂停，在会话里是发出去和停下，同一句话</li>
+      <li><b>提示音</b>：静音键管的是 WindowShade 的提示音，两边共用</li>
+      <li><b>放行的边界</b>：遥控层永远不放行；只有走进会话、刘海问了那一次，才点得了</li>
+    </ul></div>
+  </div>
+</section>
+
+<section>
+  <h2>原来的矛盾怎么收</h2>
+  <p class="sub">四份文件各写过一种键位。这一张收成一种；2026-10-08 Aaron 点头，conductor-v2、input-devices、《手边的每一样》《指挥模式》已照这一张改。</p>
+  <div class="tbl"><table>
+    <thead><tr><th>矛盾</th><th>原来</th><th>这一张</th><th>理由</th></tr></thead>
+    <tbody>
+      <tr><td class="k">怎么换模式</td><td>《手边的每一样》：按住播放键 1 秒换；《指挥模式》：设置里打开才宣告</td><td>不换。走进会话就是指挥，返回就出来</td><td>手机上看不出模式；也不用等 E2 证明播放键有按下和松开</td></tr>
+      <tr><td class="k">开关</td><td>两个平行开关 / 一个开关加手势</td><td>遥控模式是总开关；指挥模式是它下面的一项，打开后那一排才出现会话</td><td>一次配对、一条连接；指挥多出的只是一种能走进去的东西，以及助手会真的执行这件事的同意</td></tr>
+      <tr><td class="k">电视键</td><td>遥控：启动台 / 按住开那一排；指挥：换档位和模型 / 按住选会话</td><td>回到刘海那一排</td><td>和 Apple TV 上“回主屏幕”同一个直觉；选会话、选模型都改成挪焦点</td></tr>
+      <tr><td class="k">“档位 / 模型”两个域</td><td>点电视键换域，拍子在模型域里选位置 1–4</td><td>没有域：手势只管档位，模型在第 3 层的一排里选</td><td>“现在在哪个域”又是一个看不见的模式</td></tr>
+      <tr><td class="k">播放键</td><td>遥控：媒体播放暂停；指挥：发出去 / 停下</td><td>一句话：开始或停下眼前这件事</td><td>原来两个意思其实是同一个</td></tr>
+      <tr><td class="k">侧边按钮</td><td>遥控：听写到当前输入框；指挥：说话出草稿</td><td>只对会话说话</td><td>遥控不往前台窗口打字</td></tr>
+      <tr><td class="k">电源</td><td>遥控：让显示器睡眠；指挥：退出指挥模式</td><td>收工：全部收回第 0 层，会话照跑</td><td>一个键一个意思；睡眠显示器有系统自己的办法</td></tr>
+      <tr><td class="k">放行</td><td>遥控稿：遥控不点审批；指挥：点一下允许</td><td>第 1 层不放行；第 2 层只放行刘海问的那一次普通请求</td><td>风险随层加深，两句话都成立</td></tr>
+      <tr><td class="k">那一排里有什么</td><td>窗口那一排和会话那一排是两个主人</td><td>一排：左段窗口，竖线右边正在进行的</td><td>指针和遥控看到同一页。实现上要把两个主人合成一页，记进设计文法的对照账</td></tr>
+    </tbody>
+  </table></div>
+</section>
+
+<section>
+  <h2>出岔子时，一张表管两边</h2>
+  <div class="tbl"><table>
+    <thead><tr><th>情况</th><th>刘海</th><th>第 0、1 层</th><th>第 2、3 层</th></tr></thead>
+    <tbody>
+      <tr><td>手机第一条连接被拒，自己再连</td><td>—</td><td colspan="2">等。验签成功才说“iPhone 已连接”；10 秒没成：“没连上，在 iPhone 上再选一次”</td></tr>
+      <tr><td>手机走出 Wi‑Fi、关掉遥控器</td><td>开着时：遥控器断开了</td><td>那一排收起，不放回任何窗口</td><td>手势、候选、录音取消；草稿留在这个会话里；会话照跑</td></tr>
+      <tr><td>Mac 锁屏、睡眠、切换用户</td><td>—</td><td>立刻收起；遥控输入作废</td><td>清掉项目名和草稿；解锁后不自动发送，不回到刚才那一层</td></tr>
+      <tr><td>Mac 前有人动了指针</td><td>—</td><td>Mac 前的人优先：那一排交给指针</td><td>退成左耳的指挥棒，草稿留着；指针离开刘海后，返回那一排</td></tr>
+      <tr><td>更高的层进来（Mac 上的放行、刷脸解锁）</td><td>—</td><td colspan="2">挂起；让出后原样回来，不重播进场（设计文法“协调共生”）</td></tr>
+      <tr><td>另一台配过对的 iPhone</td><td>另一台 iPhone 正在遥控</td><td colspan="2">同一时间只有一台能操作</td></tr>
+      <tr><td>移除这台 iPhone</td><td>这台 iPhone 不能再遥控了</td><td colspan="2">立刻断开；两种都不能再用</td></tr>
+      <tr><td>关掉指挥模式</td><td>—</td><td>那一排里的会话格消失</td><td>退回那一排；会话照跑</td></tr>
+    </tbody>
+  </table></div>
+</section>
+
+<section>
+  <h2>分四段交，每段一次真机</h2>
+  <p class="sub">同一根管道，一段只加一层。每段都能单独验收、单独停在那里不坏。</p>
+  <div class="tbl"><table>
+    <thead><tr><th>段</th><th>加什么</th><th>要的真机证据</th><th>现在</th></tr></thead>
+    <tbody>
+      <tr><td class="k">一</td><td>第 0、1 层，只有窗口：配对、连上、展开那一排、挪焦点、放回、收起、断开、锁屏。顺便做按键识别</td><td>触控方向；每个键的键名和按下 / 松开</td><td><span class="st done">触控已收到</span> 接收器还没进 App</td></tr>
+      <tr><td class="k">二</td><td>那一排右段：正在播放的、会话格（只看状态）。播放键、电视键、返回接上</td><td>按键识别的结果</td><td><span class="st todo">等第一段</span></td></tr>
+      <tr><td class="k">三</td><td>第 2、3 层：走进会话、画档位、选模型、发出去 / 停下、普通放行</td><td>E1：触控采样率够不够画声调和拍子</td><td><span class="st todo">指挥手势纯逻辑已有</span></td></tr>
+      <tr><td class="k">四</td><td>说话出草稿、iPhone 键盘改草稿、高风险的声纹加短语</td><td>E3、E4；声纹准确率</td><td><span class="st no">没开始</span></td></tr>
+    </tbody>
+  </table></div>
+</section>
+
+<section>
+  <h2>已定的三件事（2026-10-08）</h2>
+  <div class="ask" style="background:var(--good-soft)"><ol>
+    <li><b>不要切换模式，指挥模式就是走进一个会话。</b><span>已定。代价是去掉“按住播放键 1 秒”这个手势，conductor-v2 和《手边的每一样》的键位表已跟着改。</span></li>
+    <li><b>去掉“档位 / 模型”两个域：手势只管档位，模型在一排里选。</b><span>已定。代价是拍子不再选模型位置；好处是会话里没有第二个看不见的状态。</span></li>
+    <li><b>窗口和会话放进同一排，竖线隔开。</b><span>已定，指针和遥控看到同一页。另一个选法是两排，往下滑再进一排；更清楚，但多一层要记。</span></li>
+  </ol></div>
+</section>
+
+<footer>依据：本会话的《遥控模式》稿（被本稿取代）；docs/conductor-v2.md、docs/input-devices.md、docs/agents-in-notch.md、docs/design-grammar.md、docs/copy-guide.md；《手边的每一样》《指挥模式》《看与指挥》稿；2026-10-08 第 10 轮真机结果（触控 229 条，按键按下 / 松开各 3 条，键名没记）。tvOS 的焦点与 Menu 键做法只取想法。刘海、窗口、会话、模型名、配对码都是示意；“10 秒不碰就收”和滑动阈值是暂定值。</footer>
+</div>
+
+<script>
+(function(){
+  var $=function(id){return document.getElementById(id)};
+  var reduce=matchMedia('(prefers-reduced-motion: reduce)').matches;
+  var island=$('island'),ic=$('ic'),wins=$('wins'),pad=$('pad'),cv=$('cv'),ctx=cv.getContext('2d'),padMsg=$('padMsg'),sheet=$('sheet'),now=$('now'),screen=$('screen');
+
+  // ---------- 弹簧：令牌名 → response / ζ ----------
+  var TOK={calm:[.34,1],expand:[.40,.92],bloom:[.42,.84],pop:[.30,.75],flyOut:[.38,.90]};
+  function Spring(x){this.x=x;this.v=0;this.t=x;this.k=0;this.c=0;this.from=x}
+  Spring.prototype.to=function(t,tok){var p=TOK[tok];this.from=this.x;this.t=t;this.k=Math.pow(2*Math.PI/p[0],2);this.c=4*Math.PI*p[1]/p[0];if(reduce){this.x=t;this.v=0}};
+  Spring.prototype.step=function(dt){if(!this.k)return;var a=-this.k*(this.x-this.t)-this.c*this.v;this.v+=a*dt;this.x+=this.v*dt;if(Math.abs(this.x-this.t)<1e-3&&Math.abs(this.v)<1e-3){this.x=this.t;this.v=0}};
+  Spring.prototype.busy=function(){return this.x!==this.t||this.v!==0};
+  Spring.prototype.prog=function(){var d=this.t-this.from;return Math.abs(d)<1e-6?1:1-Math.abs(this.t-this.x)/Math.abs(d)};
+  var SH={idle:[12.2,3.6,1.1],min:[16.4,3.6,1.1],alert:[34,3.6,1.6],pair:[34,13.2,2.6],row:[66,18.6,3],cond:[40,12.6,2.6],models:[50,13.6,2.8]};
+  var W=new Spring(12.2),H=new Spring(3.6),R=new Spring(1.1),pending=null;
+
+  // ---------- 内容 ----------
+  var I={
+    remote:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"><rect x="7.5" y="2.5" width="9" height="19" rx="3"/><circle cx="12" cy="8" r="2"/><path d="M12 13.5v1M12 17v.5"/></svg>',
+    baton:'<svg viewBox="0 0 24 24" fill="none" stroke="#E98BB2" stroke-width="1.9" stroke-linecap="round"><path d="M4 20 15 9"/><path d="M15 9l2.5-5.5L20 6l-5 3"/></svg>',
+    play:'<svg viewBox="0 0 24 24" fill="#fff"><path d="M7 5v14l12-7z"/></svg>',
+    pause:'<svg viewBox="0 0 24 24" fill="#fff"><path d="M7 5h3.5v14H7zM13.5 5H17v14h-3.5z"/></svg>',
+    term:'<svg viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="4" width="18" height="16" rx="2.5"/><path d="m7 9 3 3-3 3M12.5 15H17"/></svg>'
+  };
+  var baseTiles=[
+    {k:'win',n:'Safari',s:'教程视频',c:'linear-gradient(135deg,#1F6FEB,#7A3FE0)',a:'#2F80ED',pos:[8,13,52,60]},
+    {k:'win',n:'备忘录',s:'已最小化',c:'linear-gradient(135deg,#F7D774,#F2B53A)',a:'#E8B020',pos:[14,22,34,58]},
+    {k:'win',n:'访达',s:'桌面 3',c:'linear-gradient(135deg,#59B6F2,#2F7FD8)',a:'#3A8EE6',pos:[52,16,40,56]},
+    {k:'media',n:'电影',s:'正在播放',playing:true,pos:[20,14,60,62],c:'linear-gradient(135deg,#222,#444)'},
+    {k:'sess',n:'WindowShade',b:'Claude',s:'在跑',effort:'high',next:null,model:'位置 1',round:4,running:true,draft:'',ask:null},
+    {k:'sess',n:'site',b:'Codex',s:'等你',effort:'medium',next:null,model:'位置 3',round:2,running:false,draft:'',ask:{cmd:'npm test',risk:'normal'}}
+  ];
+  var models=['位置 1','位置 2','位置 3','位置 4'];
+  var tiles=[];function cloneTiles(){tiles=baseTiles.map(function(t){var o={};for(var k in t)o[k]=(t[k]&&typeof t[k]==='object'&&!Array.isArray(t[k]))?Object.assign({},t[k]):t[k];return o})}
+  cloneTiles();
+  var st={on:false,cond:false,paired:false,connected:false,layer:0,focus:0,sess:null,mfocus:0,discardArmed:false,candidate:null,locked:false,phone:'search',muted:false,recording:false};
+  var cells=[],timers=[],idleT=null,flights=[];
+  function later(f,ms){var t=setTimeout(f,reduce?Math.min(ms,80):ms);timers.push(t);return t}
+  function clearTimers(){timers.forEach(clearTimeout);timers=[]}
+
+  function visibleTiles(){return tiles.filter(function(t){return t.k!=='sess'||st.cond})}
+  function earL(icon,t){return '<div class="ear l">'+icon+(t?'<span>'+t+'</span>':'')+'</div>'}
+  function earR(h){return '<div class="ear r">'+h+'</div>'}
+  function tileHTML(t,i){
+    var thumb;
+    if(t.k==='win')thumb='<div class="thumb" style="background:'+t.c+'"><span class="app" style="background:'+t.a+'"></span></div>';
+    else if(t.k==='media')thumb='<div class="thumb live">'+(t.playing?I.pause:I.play)+'</div>';
+    else thumb='<div class="thumb live"><span class="badge '+(t.ask?'wait':t.running?'run':'')+'"></span>'+I.term+'</div>';
+    var sub=t.k==='sess'?(t.b+' · '+(t.ask?'等你':t.running?'在跑':'完成')):(t.k==='media'?(t.playing?'正在播放':'已暂停'):t.s);
+    return '<div class="cell" data-i="'+i+'">'+thumb+'<b>'+t.n+'</b><small>'+sub+'</small></div>';
+  }
+  function content(mode,arg){
+    var s=st.sess;
+    switch(mode){
+      case 'idle':return '';
+      case 'min':return earL(st.layer>=2?I.baton:I.remote,'');
+      case 'alert':return earL(arg.icon||I.remote,'')+earR(arg.r);
+      case 'pair':return '<div class="mid" style="top:1.6cqw"><div class="t2">在 iPhone 上输入</div><div class="code"><b>4</b><b>8</b><b>1</b><b>6</b></div><div class="t2">60 秒内有效</div></div>';
+      case 'confirm':return '<div class="mid" style="top:1.6cqw"><div class="t1">允许这台 iPhone 遥控</div><div class="t2">用 Touch ID 确认 · 遥控和指挥都算</div></div>';
+      case 'row':
+        var v=visibleTiles();if(!v.length)return earL(I.remote,'')+'<div class="mid"><div class="t2">刘海里没有东西</div></div>';
+        var h='',seenLive=false;
+        v.forEach(function(t,i){if(t.k!=='win'&&!seenLive){seenLive=true;if(i>0)h+='<div class="sep"></div>'}h+=tileHTML(t,i)});
+        return earL(I.remote,'')+'<div class="mid" style="justify-content:flex-start;padding-top:.2cqw"><div class="row">'+h+'</div></div>';
+      case 'cond':
+        var eff=s.next?'<span class="chip">'+s.effort+'</span> → <span class="chip hot">'+s.next+'</span>':'<span class="chip hot">'+s.effort+'</span>';
+        return earL(I.baton,'')+earR(eff)+'<div class="mid"><div class="t1">'+s.n+' · '+s.b+' · '+s.model+'</div><div class="t2" id="condLine">'+(arg&&arg.line||condLine())+'</div>'+(arg&&arg.extra||'')+'</div>';
+      case 'models':
+        return earL(I.baton,'')+'<div class="mid" style="justify-content:flex-start;padding-top:.4cqw"><div class="t2">下一轮用哪个模型</div><div class="row">'+models.map(function(m,i){return '<div class="cell" data-i="'+i+'" style="width:9cqw"><div class="thumb live" style="aspect-ratio:2.4/1"><b style="opacity:1;font-size:1.2cqw">'+m+'</b></div><small>'+(m===st.sess.model?'现在用的':'&nbsp;')+'</small></div>'}).join('')+'</div></div>';
+    }
+  }
+  function condLine(){
+    var s=st.sess;
+    if(s.ask)return '<span class="warnc">想执行 '+s.ask.cmd+'</span> · 点一下允许这一次，返回不允许';
+    if(s.draft)return '草稿：“'+s.draft+'” · 播放键'+(s.running?'补进这一轮':'发出去');
+    return s.running?'在跑 · 第 '+s.round+' 轮':'完成 · 等你说下一句';
+  }
+  function show(mode,arg,tok){
+    var shape=SH[mode==='confirm'?'pair':mode];
+    var grow=shape[0]*shape[1]>=W.x*H.x;
+    var go=function(){
+      W.to(shape[0],tok);H.to(shape[1],tok);R.to(shape[2],tok);
+      ic.innerHTML=content(mode,arg||{});ic.classList.remove('on');cells=[];
+      [].forEach.call(ic.querySelectorAll('.cell'),function(el){cells.push({el:el,sc:new Spring(1),ly:new Spring(0),nx:new Spring(0)})});
+      if(mode==='row')setFocus(st.focus,true);
+      if(mode==='models')setFocus(st.mfocus,true);
+      pending=reduce?null:{};if(reduce)ic.classList.add('on');
+    };
+    if(!grow&&ic.classList.contains('on')&&!reduce){ic.classList.remove('on');later(go,100)}else go();
+    depthUI();
+  }
+  function refreshCond(arg){if(st.layer===2){ic.innerHTML=content('cond',arg);ic.classList.add('on')}}
+  function setFocus(i,instant){
+    if(!cells.length)return;
+    i=Math.max(0,Math.min(cells.length-1,i));
+    if(st.layer===3)st.mfocus=i;else st.focus=i;
+    cells.forEach(function(c,k){var on=k===i;c.el.classList.toggle('on',on);var sc=(on&&!reduce)?1.1:1,ly=(on&&!reduce)?-.5:0;if(instant){c.sc.x=c.sc.t=sc;c.ly.x=c.ly.t=ly}else{c.sc.to(sc,'calm');c.ly.to(ly,'calm')}});
+  }
+  function depthUI(){[].forEach.call($('depth').children,function(s){s.classList.toggle('on',+s.dataset.l===st.layer&&st.connected)})}
+
+  // ---------- 层的进出 ----------
+  function openRow(){
+    if(!st.connected||st.locked)return;
+    st.layer=1;st.sess=null;
+    var v=visibleTiles(),w=-1;v.forEach(function(t,i){if(w<0&&t.k==='sess'&&t.ask)w=i});
+    st.focus=w>=0?w:Math.min(st.focus,Math.max(0,v.length-1));
+    show('row',null,'expand');armIdle();
+    say('第 1 层 · 刘海那一排','往下滑或点一下。左段是收进刘海的窗口，竖线右边是正在进行的。',w>=0?'有会话在等你时，焦点先落在它上面。':'焦点落在最近收进去的那一扇。');
+  }
+  function toMin(){st.layer=0;st.sess=null;disarmIdle();show(st.connected?'min':'idle',null,'calm')}
+  function enterSess(t,listen){
+    st.layer=2;st.sess=t;st.discardArmed=false;st.candidate=null;disarmIdle();show('cond',null,'expand');
+    say('第 2 层 · 走进会话 = 指挥模式','点一下会话格。左耳换成指挥棒，触控区变成画档位的地方。','不动光标、不碰前台窗口。返回、往上滑或电视键回到那一排。');
+    if(listen)later(function(){startRec()},300);
+  }
+  function backToRow(){var t=st.sess;st.layer=1;st.sess=null;var v=visibleTiles();st.focus=Math.max(0,v.indexOf(t));show('row',null,'expand');armIdle()}
+  function armIdle(){disarmIdle();idleT=setTimeout(function(){if(st.layer===1){toMin();say('10 秒不碰','那一排自己收回刘海。','暂定值，真机再调。')}},10000)}
+  function disarmIdle(){if(idleT){clearTimeout(idleT);idleT=null}}
+
+  // ---------- 第 1 层动作 ----------
+  function move(d){
+    var n=(st.layer===3?st.mfocus:st.focus)+d;
+    if(n<0||n>=cells.length){var c=cells[st.layer===3?st.mfocus:st.focus];if(c&&!reduce){c.nx.to(0,'calm');c.nx.v=d*9}return}
+    setFocus(n);if(st.layer===1){armIdle();var t=visibleTiles()[n];say('挪焦点','左右滑，每走过约五分之一宽走一格。','读屏念“'+t.n+'，第 '+(n+1)+' 个，共 '+cells.length+' 个”。到头轻轻顶一下就停，不绕回。')}
+  }
+  function activate(){
+    var t=visibleTiles()[st.focus];if(!t)return;
+    if(t.k==='sess'){enterSess(t);return}
+    var w=document.createElement('div');w.className='win';
+    w.style.cssText='left:'+t.pos[0]+'%;top:'+t.pos[1]+'%;width:'+t.pos[2]+'%;height:'+t.pos[3]+'%;background:'+t.c;
+    w.innerHTML='<div class="bar"><span class="lamp"></span><span class="lamp"></span><span class="lamp"></span><span class="t">'+t.n+'</span></div>';
+    wins.appendChild(w);var sx=new Spring(.12),sy=new Spring(-t.pos[1]*1.2);sx.to(1,'flyOut');sy.to(0,'flyOut');flights.push({el:w,sx:sx,sy:sy});
+    if(t.k==='win')tiles.splice(tiles.indexOf(t),1);
+    var verb=t.k==='media'?'去':t.s==='已最小化'?'还原':t.s.indexOf('桌面')===0?'去':'放回';
+    later(toMin,260);
+    say(verb+'：'+t.n,'点一下。窗口从那一格飞回原处，那一排收起。','都看得见、能撤回：再收进刘海就回去了。');
+  }
+  function media(){
+    var m=tiles.filter(function(t){return t.k==='media'})[0];if(!m)return;
+    m.playing=!m.playing;
+    if(st.layer===1){var c=ic.querySelector('.cell[data-i="'+visibleTiles().indexOf(m)+'"]');if(c){c.querySelector('.thumb').innerHTML=m.playing?I.pause:I.play;c.querySelector('small').textContent=m.playing?'正在播放':'已暂停'}}
+    else if(st.layer===0){show('alert',{icon:m.playing?I.play:I.pause,r:(m.playing?'继续播放':'已暂停')+' · '+m.n},'bloom');later(function(){if(st.layer===0&&st.connected)show('min',null,'calm')},2600)}
+    say('播放键 · 开始或停下眼前这件事','第 0、1 层眼前是正在播放的：'+(m.playing?'继续播放。':'暂停。'),'走进会话之后，同一个键是发出去和停下。');
+  }
+
+  // ---------- 第 2 层动作 ----------
+  function tone(name,eff){
+    var s=st.sess;
+    if(s.running){s.next=eff;refreshCond({line:name+' · '+eff+' · 这一轮还是 '+s.effort+'，下一轮 '+eff})}
+    else{s.next=null;s.effort=eff;refreshCond({line:name+' · '+eff+' · 下一轮'})}
+    st.discardArmed=false;beep();
+    say('画档位','在触控区画：一横 low、↗ medium、ˇ high、↘ xhigh。抬手才判定。','只管下一轮，不打断正在跑的。竖着滑、从右往左都不算。');
+  }
+  function beats(n){
+    if(n===5){st.candidate='max';refreshCond({line:'五拍 · max · 点一下确认'});say('五拍 · max','完整五拍才是 max，要再点一下确认。','确认只管下一次提交；换会话、重连、超时就作废。')}
+  }
+  function condTap(){
+    var s=st.sess;
+    if(s.ask){var cmd=s.ask.cmd;s.ask=null;s.running=true;s.round++;refreshCond({line:'<span class="okc">已允许这一次</span> · '+cmd});later(function(){refreshCond()},1600);say('普通放行','刘海问了，点一下允许这一次。','只在第 2 层；审批出现前的那一下不算；没有“始终允许”。高风险的到 Mac 前用 Touch ID。');return}
+    if(st.candidate){var c=st.candidate;st.candidate=null;if(s.running)s.next=c;else s.effort=c;refreshCond({line:c+' · 已确认 · 下一轮'});return}
+  }
+  function condBack(){
+    var s=st.sess;
+    if(s.ask){var cmd=s.ask.cmd;s.ask=null;refreshCond({line:'没有允许 · '+cmd});later(function(){refreshCond()},1600);say('返回 · 不允许','有审批时，返回就是不允许。','取消眼前这一件。');return}
+    if(st.candidate){st.candidate=null;refreshCond();return}
+    if(s.draft){if(!st.discardArmed){st.discardArmed=true;refreshCond({line:'再按一次返回丢掉草稿'});return}s.draft='';st.discardArmed=false;refreshCond({line:'草稿丢掉了'});return}
+    backToRow();say('返回 · 退回那一排','眼前没有要取消的，就退一层。','草稿留在这个会话里。');
+  }
+  function condPlay(){
+    var s=st.sess;
+    if(s.draft&&s.running){s.draft='';refreshCond({line:'已补进这一轮'});later(function(){refreshCond()},1500);say('补一句','在跑时有草稿，播放键补进这一轮。','Codex 用 turn/steer，要对上当前这一轮。');return}
+    if(s.draft){s.draft='';refreshCond({line:'发出去了'});
+      later(function(){refreshCond({line:s.b+' 接受了 · '+s.effort})},800);
+      later(function(){s.running=true;s.round++;if(s.next){s.effort=s.next;s.next=null}refreshCond({line:'第 '+s.round+' 轮开始跑'})},1600);
+      later(function(){refreshCond()},2800);
+      say('发出去','播放键。','“发出去了”“接受了”“开始跑了”是三件事，分三次说。');return}
+    if(s.running){refreshCond({line:'正在停止…'});later(function(){s.running=false;refreshCond({line:'已停止'})},1200);later(function(){refreshCond()},2600);say('停下','在跑、没有草稿时，播放键请求停下。','后端真的停了才写“已停止”。');return}
+    say('没有要开始的','先按住侧边按钮说一句。','');
+  }
+  var DR=['把侧拉的阴影调淡一点','跑一遍刘海的探针，失败的贴给我','顺便把 <u>Launchpad</u> 的拼音搜索也测了'],di=0;
+  function startRec(){if(st.layer!==2||st.recording)return;st.recording=true;$('bSide').classList.add('down');refreshCond({line:'iPhone 麦克风 · 松开出草稿',extra:'<div class="wave"><i></i><i></i><i></i><i></i><i></i><i></i><i></i></div>'});say('说话','按住侧边按钮。','真收到声音才画波形；来源写清；松开出草稿，不发送。')}
+  function stopRec(){if(!st.recording)return;st.recording=false;$('bSide').classList.remove('down');st.sess.draft=DR[di++%DR.length];st.discardArmed=false;refreshCond()}
+  function models_open(){st.layer=3;st.mfocus=models.indexOf(st.sess.model);show('models',null,'expand');say('第 3 层 · 选模型','在会话里往下滑。左右挪，点一下选中，返回关掉。','和挪窗口焦点同一个手感。四个位置在设置里定，不随后端列表的排序变。')}
+  function models_pick(){st.sess.model=models[st.mfocus];st.layer=2;show('cond',{line:'下一轮用 '+st.sess.model},'calm')}
+  function beep(){}
+
+  // ---------- 输入分发：同一个键，按层落地 ----------
+  function input(k,arg){
+    if(!st.connected)return;
+    if(st.locked){say('锁着','滑了、点了，什么都不发生。','锁屏时遥控输入作废，刘海那一排和会话都不露出来。');return}
+    var L=st.layer;
+    if(k==='power'){toMin();say('电源 · 收工','每一层都一样：全部收回第 0 层。','后台的会话照跑，Mac 不睡。');return}
+    if(k==='tv'){if(L===0||L===1)openRow();else{backToRow();say('电视键 · 回到那一排','每一层都是回到刘海那一排。','草稿留在会话里。')}return}
+    if(k==='mute'){st.muted=!st.muted;$('muteArc').style.display=st.muted?'none':'';if(L===0)show('alert',{r:st.muted?'提示音已关':'提示音已开'},'bloom'),later(function(){if(st.layer===0&&st.connected)show('min',null,'calm')},2600);say('静音','WindowShade 的提示音开关，每一层一样。','');return}
+    if(L===0){if(k==='down'||k==='tap')openRow();else if(k==='play')media();return}
+    if(L===1){
+      if(k==='left')move(-1);else if(k==='right')move(1);
+      else if(k==='tap')activate();
+      else if(k==='up'||k==='back'){toMin();say('收起','往上滑或返回。从哪里下来就从哪里回去。','')}
+      else if(k==='play')media();
+      else if(k==='sidedown'){var t=visibleTiles()[st.focus];if(t&&t.k==='sess')enterSess(t,true)}
+      return}
+    if(L===2){
+      if(k==='tap')condTap();else if(k==='up'||k==='back')condBack();else if(k==='down')models_open();
+      else if(k==='play')condPlay();else if(k==='tone')tone(arg[0],arg[1]);else if(k==='reject'){refreshCond({line:'没认出，保持 '+(st.sess.next||st.sess.effort)});say('没认出','太短、从右往左、夹在两档之间都不猜。','保持原设置。')}
+      else if(k==='sidedown')startRec();else if(k==='sideup')stopRec();
+      return}
+    if(L===3){if(k==='left')move(-1);else if(k==='right')move(1);else if(k==='tap')models_pick();else if(k==='up'||k==='back'){st.layer=2;show('cond',null,'calm')}}
+  }
+
+  // ---------- 触控区：第 1、3 层逐格挪焦点；第 2 层抬手才判定 ----------
+  var g=null;
+  function sizeCv(){var r=pad.getBoundingClientRect();cv.width=r.width*devicePixelRatio;cv.height=r.height*devicePixelRatio}
+  pad.addEventListener('pointerdown',function(e){
+    if(!st.connected)return;pad.setPointerCapture(e.pointerId);sizeCv();
+    var r=pad.getBoundingClientRect();g={r:r,x0:e.clientX,y0:e.clientY,lx:e.clientX,moved:false,vert:false,pts:[[e.clientX-r.left,e.clientY-r.top]]};drawPts();
+  });
+  pad.addEventListener('pointermove',function(e){
+    if(!g)return;var r=g.r;g.pts.push([e.clientX-r.left,e.clientY-r.top]);drawPts();
+    var tx=e.clientX-g.x0,ty=e.clientY-g.y0;
+    if(st.layer===2)return;
+    var dx=e.clientX-g.lx;
+    if(!g.vert&&Math.abs(dx)>r.width*.2&&Math.abs(tx)>=Math.abs(ty)*.8){input(dx>0?'right':'left');g.lx=e.clientX;g.moved=true}
+    if(!g.vert&&!g.moved&&Math.abs(ty)>r.height*.16&&Math.abs(ty)>Math.abs(tx)*1.4){g.vert=true;g.moved=true;input(ty>0?'down':'up')}
+  });
+  pad.addEventListener('pointerup',function(e){
+    if(!g)return;var tx=e.clientX-g.x0,ty=e.clientY-g.y0,r=g.r;
+    if(st.layer===2){judge(g.pts,r)}
+    else if(!g.moved&&Math.hypot(tx,ty)<10)input('tap');
+    g=null;setTimeout(function(){ctx.clearRect(0,0,cv.width,cv.height)},reduce?0:350);
+  });
+  pad.addEventListener('pointercancel',function(){g=null;ctx.clearRect(0,0,cv.width,cv.height)});
+  function drawPts(){var d=devicePixelRatio;ctx.clearRect(0,0,cv.width,cv.height);ctx.strokeStyle=st.layer===2?'#E98BB2':'rgba(255,255,255,.35)';ctx.lineWidth=4*d;ctx.lineCap=ctx.lineJoin='round';ctx.beginPath();g.pts.forEach(function(p,i){i?ctx.lineTo(p[0]*d,p[1]*d):ctx.moveTo(p[0]*d,p[1]*d)});ctx.stroke()}
+  // 粗略的声调判定，只为样片；真判定照 ConductorGesture.swift
+  function judge(p,r){
+    var a=p[0],b=p[p.length-1],dx=(b[0]-a[0])/r.width,dy=(b[1]-a[1])/r.height,len=Math.hypot(dx,dy);
+    var maxY=Math.max.apply(null,p.map(function(q){return q[1]}));
+    if(len<.04&&(maxY-a[1])/r.height<.04){input('tap');return}
+    if(Math.abs(dy)>Math.abs(dx)*1.4&&Math.abs(dy)>.12){input(dy<0?'up':'down');return}
+    if(dx<.15){input('reject');return}
+    var valley=(maxY-Math.max(a[1],b[1]))/r.height;
+    if(valley>.08)input('tone',['三声','high']);
+    else if(dy/dx<-.35)input('tone',['二声','medium']);
+    else if(dy/dx>.35)input('tone',['四声','xhigh']);
+    else input('tone',['一声','low']);
+  }
+  $('bBack').onclick=function(){input('back')};$('bPlay').onclick=function(){input('play')};$('bTV').onclick=function(){input('tv')};
+  $('bPower').onclick=function(){input('power')};$('bMute').onclick=function(){input('mute')};
+  var side=$('bSide');
+  side.addEventListener('pointerdown',function(e){e.preventDefault();input('sidedown')});
+  ['pointerup','pointerleave'].forEach(function(ev){side.addEventListener(ev,function(){input('sideup')})});
+  screen.tabIndex=0;screen.setAttribute('aria-label','Mac 画面：方向键、回车、Esc');
+  screen.addEventListener('keydown',function(e){var m={ArrowLeft:'left',ArrowRight:'right',ArrowDown:'down',ArrowUp:'up',Enter:'tap',Escape:'back',' ':'play'}[e.key];if(m){e.preventDefault();input(m)}});
+
+  // ---------- 手机 ----------
+  function phoneUI(){
+    var pick=$('bPick');sheet.hidden=true;padMsg.textContent='';
+    if(!st.on){pick.textContent='搜索中…';padMsg.textContent='没有找到电视';return}
+    pick.textContent=st.phone==='search'?'选择电视 ›':'Aaron 的 MacBook Air ›';
+    if(st.phone==='search'){padMsg.textContent='点上面选这台 Mac';return}
+    if(st.phone==='pick'){sheet.hidden=false;sheet.innerHTML='<div style="opacity:.6">选择电视</div><div class="list"><button type="button" id="pickMac">Aaron 的 MacBook Air<small>这台 Mac</small></button><button type="button" disabled style="opacity:.4">客厅<small>Apple TV · 不在线</small></button></div>';
+      $('pickMac').onclick=function(){if(st.paired){st.phone='connecting';phoneUI();later(connect,700)}else startPair()};return}
+    if(st.phone==='pin'){sheet.hidden=false;sheet.innerHTML='<div>输入 Mac 上显示的密码</div><div class="pin" id="pinBox"><b></b><b></b><b></b><b></b></div><div style="opacity:.5;font-size:11.5px">示意：自动输入</div>';return}
+    if(st.phone==='connecting'){padMsg.textContent='正在连接…';return}
+  }
+  $('bPick').onclick=function(){if(!st.on){say('还找不到这台 Mac','设置里遥控模式是关的。','默认关；打开后这台 Mac 才出现在“选择电视”里。');return}if(st.connected)return;st.phone='pick';phoneUI()};
+  function startPair(){
+    st.phone='pin';phoneUI();show('pair',null,'pop');
+    say('第一次配对','iPhone 选这台 Mac，刘海给一个随机四位数。','配一次，遥控和指挥都能用。每次随机、60 秒有效、错 3 次停 5 分钟；码不写日志。');
+    var d='4816',k=0;var tick=function(){var bs=document.querySelectorAll('#pinBox b');if(!bs.length)return;if(k<4){bs[k].textContent=d[k];k++;later(tick,380)}else later(confirmStep,500)};later(tick,900);
+  }
+  function confirmStep(){st.phone='connecting';phoneUI();show('confirm',null,'pop');say('在 Mac 上确认','码输对之后，刘海问：允许这台 iPhone 遥控。','用 Touch ID 确认后才写进钥匙串。指挥模式另要设置里那一项开着：那是“助手会真的执行”的同意，不是第二次配对。');later(function(){st.paired=true;peerUI();connect()},2200)}
+  function connect(){st.connected=true;st.phone='remote';st.layer=0;phoneUI();show('alert',{r:'iPhone 已连接'},'bloom');later(function(){if(st.connected&&st.layer===0)show('min',null,'calm')},2600);say('连上','只在双方验签之后说一次。','手机第一条连接被拒、自己再连时什么都不说。2.6 秒后收成左耳的遥控器符号。')}
+  function disconnect(cause){
+    var open=st.layer>0;st.connected=false;st.layer=0;st.sess=null;st.recording=false;side.classList.remove('down');disarmIdle();
+    if(open||cause==='revoke'){show('alert',{r:cause==='revoke'?'这台 iPhone 不能再遥控了':'遥控器断开了'},'bloom');later(function(){if(!st.connected)show('idle',null,'calm')},2600)}else show('idle',null,'calm');
+  }
+  function peerUI(){$('peerRow').hidden=!st.paired}
+
+  // ---------- 设置 ----------
+  $('swOn').onclick=function(){setOn(!st.on)};
+  $('swCond').onclick=function(){setCond(!st.cond)};
+  function setOn(v){st.on=v;$('swOn').setAttribute('aria-checked',v);$('swCond').disabled=!v;if(!v){if(st.connected)disconnect('quiet');setCond(false,true)}st.phone='search';phoneUI();
+    say(v?'打开遥控模式':'关掉遥控模式',v?'这台 Mac 出现在 iPhone 的“选择电视”里。':'不再让 iPhone 找到，已连上的断开。',v?'总开关。指挥模式是它下面的一项。':'指挥模式跟着关。')}
+  function setCond(v,silent){st.cond=v;$('swCond').setAttribute('aria-checked',v);
+    if(!v&&st.layer>=2){st.layer=1;st.sess=null}
+    if(st.layer===1){st.focus=Math.min(st.focus,visibleTiles().length-1);show('row',null,'calm')}
+    if(!silent)say(v?'打开指挥模式':'关掉指挥模式',v?'那一排的竖线右边多出编程会话。':'会话格消失；会话照跑。','不是第二个模式，也不用再配对：多出的是一种能走进去的东西。')}
+  $('bRemove').onclick=function(){st.paired=false;peerUI();if(st.connected){st.phone='search';disconnect('revoke')}phoneUI();say('移除这台 iPhone','立刻断开。','遥控和指挥都不能再用；下次要重新配对。')};
+
+  // ---------- 现场 ----------
+  $('tFar').onclick=function(){var on=this.getAttribute('aria-pressed')!=='true';this.setAttribute('aria-pressed',on);$('macbox').classList.toggle('far',on);if(on)say('从沙发上看','约两三米外看 13 吋屏。','字糊了，亮起的那一格、会话格的状态点和指挥棒还认得出。')};
+  $('tLock').onclick=function(){var on=!st.locked;st.locked=on;this.setAttribute('aria-pressed',on);this.textContent=on?'解锁':'锁屏';$('lock').hidden=!on;
+    if(on){if(st.sess)st.sess.draft='';if(st.connected)toMin();say('Mac 锁了','那一排、会话都立刻收起。','草稿和项目名清掉；解锁后不自动发送，不回到刚才那一层。')}else say('解锁','回到桌面，什么都不自己打开。','')};
+  $('tPointer').onclick=function(){if(!st.connected||st.layer===0){say('Mac 前有人动了指针','遥控没打开什么，照旧。','');return}
+    if(st.layer===1){toMin();say('Mac 前的人优先','那一排交给指针。','遥控的焦点让开。')}else{st.layer=0;show('min',null,'calm');say('Mac 前的人优先','退成左耳的指挥棒，草稿留着。','会话照跑；遥控器再按电视键回到那一排。')}};
+  $('tDrop').onclick=function(){if(!st.connected){say('没连着','先连上再试。','');return}st.phone='search';disconnect('drop');phoneUI();say('断开','刘海开着时说“遥控器断开了”；没开就只把符号收掉。','手势、候选、录音取消；草稿留在会话里；会话照跑。')};
+
+  function say(h,p,r){now.innerHTML='<h3>'+h+'</h3><p>'+p+'</p>'+(r?'<p class="rule">'+r+'</p>':'')}
+
+  // ---------- 跳到某一步 ----------
+  function reset(){clearTimers();disarmIdle();flights=[];wins.innerHTML='';cloneTiles();st.layer=0;st.sess=null;st.locked=false;st.recording=false;side.classList.remove('down');$('lock').hidden=true;$('tLock').setAttribute('aria-pressed','false');$('tLock').textContent='锁屏';
+    W.x=W.t=12.2;H.x=H.t=3.6;R.x=R.t=1.1;W.v=H.v=R.v=0;ic.innerHTML='';ic.classList.remove('on');pending=null;cells=[];depthUI()}
+  function live(cond){st.on=true;$('swOn').setAttribute('aria-checked','true');$('swCond').disabled=false;st.cond=cond;$('swCond').setAttribute('aria-checked',cond);st.paired=true;st.connected=true;st.phone='remote';peerUI();phoneUI();show('min',null,'calm')}
+  function sessTile(n){return tiles.filter(function(t){return t.n===n})[0]}
+  var SC=[
+    {n:'配对一次',go:function(){reset();st.on=true;$('swOn').setAttribute('aria-checked','true');$('swCond').disabled=false;st.paired=false;st.connected=false;peerUI();startPair()}},
+    {n:'那一排：窗口和会话',go:function(){reset();live(true);later(openRow,250)}},
+    {n:'放回一扇窗',go:function(){reset();live(true);later(function(){openRow();st.focus=0;setFocus(0,true)},250);later(activate,1200)}},
+    {n:'播放键暂停电影',go:function(){reset();live(true);later(function(){input('play')},300)}},
+    {n:'走进会话',go:function(){reset();live(true);later(openRow,250);later(function(){st.focus=visibleTiles().indexOf(sessTile('WindowShade'));setFocus(st.focus)},700);later(function(){input('tap')},1300)}},
+    {n:'画三声',go:function(){reset();live(true);enterSess(sessTile('WindowShade'));later(function(){input('tone',['三声','high'])},700)}},
+    {n:'说一句再发出去',go:function(){reset();live(true);var t=sessTile('WindowShade');t.running=false;enterSess(t);later(function(){input('sidedown')},500);later(function(){input('sideup')},2000);later(function(){input('play')},3000)}},
+    {n:'等你批准',go:function(){reset();live(true);later(openRow,250);later(function(){input('tap')},1300);later(function(){input('tap')},2400)}},
+    {n:'选模型',go:function(){reset();live(true);enterSess(sessTile('WindowShade'));later(function(){input('down')},600);later(function(){input('right')},1300);later(function(){input('tap')},1900)}},
+    {n:'返回一层层退',go:function(){reset();live(true);var t=sessTile('WindowShade');t.draft='把侧拉的阴影调淡一点';enterSess(t);later(function(){input('back')},800);later(function(){input('back')},1600);later(function(){input('back')},2400);later(function(){input('back')},3200)}}
+  ];
+  var scWrap=$('scenes');
+  SC.forEach(function(s,i){var b=document.createElement('button');b.type='button';b.textContent=(i+1)+' '+s.n;b.setAttribute('aria-pressed','false');b.onclick=function(){[].forEach.call(scWrap.children,function(x){x.setAttribute('aria-pressed','false')});b.setAttribute('aria-pressed','true');s.go()};scWrap.appendChild(b)});
+
+  // ---------- 帧 ----------
+  var last=performance.now();
+  function frame(t){
+    var dt=Math.min(.05,(t-last)/1000);last=t;
+    var n=Math.ceil(dt/(1/240));for(var i=0;i<n;i++){var h=dt/n;W.step(h);H.step(h);R.step(h);cells.forEach(function(c){c.sc.step(h);c.ly.step(h);c.nx.step(h)});flights.forEach(function(f){f.sx.step(h);f.sy.step(h)})}
+    island.style.width=W.x+'cqw';island.style.height=H.x+'cqw';island.style.borderRadius='0 0 '+R.x+'cqw '+R.x+'cqw';
+    if(pending&&Math.max(W.prog(),H.prog())>=.4){ic.classList.add('on');pending=null}
+    cells.forEach(function(c){c.el.style.transform='translate('+c.nx.x+'cqw,'+c.ly.x+'cqw) scale('+c.sc.x+')'});
+    flights=flights.filter(function(f){f.el.style.transform='translateY('+f.sy.x+'cqw) scale('+f.sx.x+')';f.el.style.opacity=Math.min(1,f.sx.x*2.2);return f.sx.busy()||f.sy.busy()});
+    requestAnimationFrame(frame);
+  }
+  requestAnimationFrame(frame);
+  phoneUI();depthUI();
+  say('从这里开始','在下面的设置里打开遥控模式，再打开指挥模式，点 iPhone 上的“选择电视”。','也可以直接点上面的步骤。');
+})();
+</script>
+</body></html>

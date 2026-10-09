@@ -1,5 +1,7 @@
 # 交给 DeepSeek：指挥模式（WindowShade 2）
 
+> **2026-10-08 起键位已改**：没有模式切换，只有层；去掉“档位 / 模型”两个域、按住电视键选会话、按住播放键换模式。以 [iPhone 上的遥控器](../design-drafts/iPhone%20上的遥控器.html) 和 [conductor-v2.md](../conductor-v2.md)、[input-devices.md](../input-devices.md) 为准；下文与之冲突的键位作废。
+
 用法：先把总则和一个工作包整段贴给 DeepSeek，一次只给一个包，按 D1 → D6 的顺序做。
 每个包做完，把它交回的差异和检查输出给主模型（Claude）验收，验收过了再给下一个。
 

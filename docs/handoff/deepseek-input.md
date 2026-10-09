@@ -1,5 +1,7 @@
 # 交给 DeepSeek：鼠标、触控板与遥控器
 
+> **2026-10-08 起键位已改**：没有模式切换，只有层；去掉“档位 / 模型”两个域、按住电视键选会话、按住播放键换模式。以 [iPhone 上的遥控器](../design-drafts/iPhone%20上的遥控器.html) 和 [conductor-v2.md](../conductor-v2.md)、[input-devices.md](../input-devices.md) 为准；下文与之冲突的键位作废。
+
 用法和 [deepseek-conductor.md](deepseek-conductor.md) 一样：先贴总则，再一次贴一个工作包，顺序是 I1 → I9（纯逻辑部分）→ I2 → I3 → I5 → I8 → I7；
 I4、I6 由主模型做。每个包交回后，先给主模型（Claude）验收，再给下一个。
 

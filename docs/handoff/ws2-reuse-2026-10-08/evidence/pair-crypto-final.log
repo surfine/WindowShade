@@ -1,0 +1,1 @@
+PASS: M5 identity/key, verifiable M6 under the peer's rule (signature is randomised by CryptoKit, so bytes are not compared), replay rejection, authenticated wrong-signature rejection, AEAD tampering rejection. SRP is a known-key test double; no native interoperability.

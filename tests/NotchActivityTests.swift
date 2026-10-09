@@ -9,6 +9,7 @@ import Foundation
     }
 
     // 造一条活动，默认 startedAt=now，updatedAt 省略即 startedAt。
+    // 这里的老测试讲的是“结束就收掉”，收场方式一律给立即；留 4 秒的那一套在 NotchActivityLifecycleTests。
     static func make(
         _ id: String,
         _ kind: NotchActivityKind = .music,
@@ -27,12 +28,14 @@ import Foundation
             startedAt: startedAt,
             updatedAt: updatedAt,
             expiresAt: expiresAt,
-            progress: progress
+            progress: progress,
+            closing: .immediate
         )
     }
 
     static func main() {
         testPriorityOrderingAndCap()
+        testCalendarTimerWeights()
         testSelectionStickyAndContentUpdate()
         testFourthActivityPreservesSelection()
         testSelectionAfterEnd()
@@ -47,6 +50,7 @@ import Foundation
         testCapacityBounded()
         testLargeStepsNoOverflow()
         testPollingTiers()
+        testSwipeTarget()
 
         var future = NotchActivityStore()
         expect(!future.upsert(make("future", startedAt: 11), now: 10), "未来时间不能污染排序")
@@ -56,6 +60,26 @@ import Foundation
     }
 
     // 1) 三个上限与优先级排序。
+    static func testCalendarTimerWeights() {
+        let order: [NotchActivityKind] = [.session, .recording, .calendar, .download, .timer, .focus, .route, .music, .remote, .airPods]
+        let weights = order.map(\.priority)
+        expect(weights == [95, 90, 85, 80, 75, 70, 60, 40, 30, 20], "权重照稿，实际 \(weights)")
+        expect(NotchActivityKind.carPlayPriority == 100, "CarPlay 仍是 100")
+        expect(Set(NotchActivityKind.allCases.map(\.priority)).count == NotchActivityKind.allCases.count - 2, "只有进度三件共用 80")
+        var store = NotchActivityStore()
+        _ = store.upsert(make("m", .music, startedAt: 1), now: 10)
+        _ = store.upsert(make("c", .calendar, startedAt: 5), now: 10)
+        expect(store.activities.first?.id == "c", "日程 + 音乐：左耳是日程")
+        _ = store.upsert(make("t", .timer, startedAt: 6), now: 10)
+        expect(store.activities.map(\.id) == ["c", "t", "m"], "日程 > 计时器 > 音乐")
+        expect(store.visible.count == 3, "右段最多 3 格不变")
+        expect(NotchActivity(id: "x", kind: .calendar, title: "t", startedAt: 0).symbol == "calendar", "日程占位符号")
+        expect(NotchActivity(id: "y", kind: .timer, title: "t", startedAt: 0).symbol == "timer", "计时器占位符号")
+        expect(NotchActivity(id: "z", kind: .music, title: "t", startedAt: 0).symbol.isEmpty, "其余种类不改符号")
+        let layout = NotchMinimalPresentation.layout(items: store.activities, selected: nil, enabled: true)
+        expect(layout.compact?.id == "c" && layout.minimum.map(\.id) == ["t", "m"], "最小呈现复用：日程在左耳，其余退成最小")
+    }
+
     static func testPriorityOrderingAndCap() {
         var store = NotchActivityStore()
         expect(store.activities.isEmpty, "初始为空")
@@ -75,19 +99,20 @@ import Foundation
         expect(visible.count == 3, "最多 3 条可见")
         expect(visible.map(\.id) == ["r1", "d1", "o1"], "可见就是前三")
 
-        // 同优先级按 startedAt 升序，再按 id 稳定 tie-break。
+        // 同优先级、同相关度、同一更新时间：startedAt 升序，再按 id 稳定 tie-break。
         var tie = NotchActivityStore()
-        _ = tie.upsert(make("b", .music, startedAt: 2), now: 2)
-        _ = tie.upsert(make("a", .music, startedAt: 2), now: 2)
-        _ = tie.upsert(make("c", .music, startedAt: 1), now: 2)
+        _ = tie.upsert(make("b", .music, startedAt: 2, updatedAt: 3), now: 3)
+        _ = tie.upsert(make("a", .music, startedAt: 2, updatedAt: 3), now: 3)
+        _ = tie.upsert(make("c", .music, startedAt: 1, updatedAt: 3), now: 3)
         expect(tie.activities.map(\.id) == ["c", "a", "b"], "startedAt 升序 + id tie-break")
 
-        // 排序不看 updatedAt：把 u1 的 updatedAt 抬到最大，顺序也不该变。
-        var noReorder = NotchActivityStore()
-        _ = noReorder.upsert(make("x", .music, startedAt: 1), now: 1)
-        _ = noReorder.upsert(make("y", .music, startedAt: 2), now: 2)
-        _ = noReorder.upsert(make("x", .music, startedAt: 1, updatedAt: 99), now: 99)
-        expect(noReorder.activities.map(\.id) == ["x", "y"], "updatedAt 不影响排序")
+        // LA-6：同权重同相关度时，最近更新的在前（控制器只在内容真的变了才推进 updatedAt）。
+        var recent = NotchActivityStore()
+        _ = recent.upsert(make("x", .music, startedAt: 1), now: 1)
+        _ = recent.upsert(make("y", .music, startedAt: 2), now: 2)
+        expect(recent.activities.map(\.id) == ["y", "x"], "y 更新得更近")
+        _ = recent.upsert(make("x", .music, startedAt: 1, updatedAt: 99), now: 99)
+        expect(recent.activities.map(\.id) == ["x", "y"], "x 刚更新，排到前面")
     }
 
     // 2) 选中粘滞：普通内容更新不跳选、不重排。
@@ -147,8 +172,8 @@ import Foundation
     static func testMoveSelectionCycles() {
         var store = NotchActivityStore()
         _ = store.upsert(make("a", .recording, startedAt: 0), now: 0)
-        _ = store.upsert(make("b", .recording, startedAt: 1), now: 1)
-        _ = store.upsert(make("c", .recording, startedAt: 2), now: 2)
+        _ = store.upsert(make("b", .recording, startedAt: 0), now: 1)
+        _ = store.upsert(make("c", .recording, startedAt: 0), now: 2)
 
         store.moveSelection(by: 1)
         expect(store.selectedID == "a", "无选中时选第一个")
@@ -251,13 +276,13 @@ import Foundation
         var store = NotchActivityStore()
         _ = store.upsert(make("n", .recording, startedAt: 0), now: 0)
         expect(store.selected == nil, "没选中就没有 selected")
-        expect(store.activities.first?.progress == nil, "缺失进度就是 nil")
+        expect(store.activities.first?.progress == .unknown, "缺失进度就是不知道")
         _ = store.upsert(make("n", .recording, startedAt: 0, updatedAt: 1, progress: 0.5), now: 1)
-        expect(store.activities.first?.progress == 0.5, "0.5 保留")
+        expect(store.activities.first?.progress == .fraction(0.5), "0.5 保留")
         _ = store.upsert(make("n", .recording, startedAt: 0, updatedAt: 2, progress: 0), now: 2)
-        expect(store.activities.first?.progress == 0, "0 是合法值不是缺失")
+        expect(store.activities.first?.progress == .fraction(0), "0 是合法值不是缺失")
         _ = store.upsert(make("n", .recording, startedAt: 0, updatedAt: 3, progress: 1), now: 3)
-        expect(store.activities.first?.progress == 1, "1 合法")
+        expect(store.activities.first?.progress == .fraction(1), "1 合法")
     }
 
     // 10) NaN、负值、未来/倒退时间戳被拒。
@@ -359,5 +384,29 @@ import Foundation
         expect(p.interval(for: .idle) > p.interval(for: .source), "空闲档最慢")
         expect(p.tolerance(for: p.interval(for: .idle)) <= 1, "容忍度有上限，空闲唤醒不会被拖长")
         expect(p.tolerance(for: p.interval(for: .progress)) > 0, "进度档也允许系统合并唤醒")
+    }
+
+    // 14) 横扫翻页：一次最多一页，门槛 40% 页宽，或快拨（>=600 pt/s 且 >=15% 页宽）。
+    static func testSwipeTarget() {
+        let w: CGFloat = 300
+        func t(_ index: Int, _ count: Int = 3, _ d: CGFloat, _ v: CGFloat = 0) -> Int {
+            NotchActivitySwipe.target(index: index, count: count, distance: d, velocity: v, pageWidth: w)
+        }
+        expect(t(1, 3, 0.39 * w) == 1 && t(1, 3, -0.39 * w) == 1, "低于门槛不翻页")
+        expect(t(1, 3, -0.4 * w) == 2, "向左过门槛去后一页")
+        expect(t(1, 3, 0.4 * w) == 0, "向右过门槛回前一页")
+        expect(t(0, 3, -10 * w, -5000) == 1, "又快又长的横扫仍只翻一页")
+        expect(t(2, 3, 10 * w, 5000) == 1, "反方向同样只翻一页")
+        expect(t(1, 3, -0.2 * w, -800) == 2, "快拨 0.2 页、800 pt/s 翻页")
+        expect(t(1, 3, -0.2 * w, -300) == 1, "慢拖 0.2 页不翻页")
+        expect(t(1, 3, 0.2 * w, 0) == 1, "零速度 0.2 页不翻页")
+        expect(t(1, 3, -0.1 * w, -2000) == 1, "快但不足 15% 页宽不翻页")
+        expect(t(0, 3, 0.9 * w) == 0, "第一页再向右夹在 0")
+        expect(t(2, 3, -0.9 * w) == 2, "最后一页再向左夹在末尾")
+        expect(t(0, 1, -w) == 0, "只有一页时不动")
+        expect(t(1, 3, -0.2 * w, 800) == 1, "速度反向且位移不足：只按位移判断，不翻页")
+        expect(t(1, 3, -0.5 * w, 800) == 2, "速度反向但位移够：按位移翻页")
+        expect(t(1, 3, .nan, -800) == 1 && t(1, 3, -w, .infinity) == 1 && t(1, 3, -w, .nan) == 1, "NaN/Inf 保持原页")
+        expect(NotchActivitySwipe.target(index: 1, count: 3, distance: -w, velocity: 0, pageWidth: 0) == 1, "页宽为 0 保持原页")
     }
 }

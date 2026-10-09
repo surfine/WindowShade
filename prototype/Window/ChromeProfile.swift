@@ -244,6 +244,16 @@ final class ChromeProfileCache {
         return entry.profile.hitBarHeight
     }
 
+    /// 仍在 TTL 内的画像带高快照（窗口号 → 带高），供后台预过滤按真实带高判断。
+    func freshHitBarHeights() -> [CGWindowID: CGFloat] {
+        let now = CFAbsoluteTimeGetCurrent()
+        var out: [CGWindowID: CGFloat] = [:]
+        for (id, entry) in entries where now - entry.resolvedAt < ttl {
+            out[id] = entry.profile.hitBarHeight
+        }
+        return out
+    }
+
     private func isFresh(_ entry: Entry, id: CGWindowID, win: AXUIElement, size: CGSize) -> Bool {
         CFAbsoluteTimeGetCurrent() - entry.resolvedAt < ttl
             && CFEqual(win, entry.element)

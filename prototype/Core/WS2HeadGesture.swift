@@ -125,3 +125,54 @@ enum WS2HeadGesture {
         return WS2HeadRecognition(kind: .shake, startedAt: started)
     }
 }
+
+// MARK: - 按显示器记基线的头部朝向
+// 思路参考 quietglass DisplayHeadTracking（MIT）：每块屏各记一个回正基线；
+// 偏离基线要过迟滞角才算转头；换了耳机（左/右/别的设备）就丢基线重新校准。
+
+enum WS2HeadSource: Hashable, Sendable {
+    case left
+    case right
+    case other(String)
+}
+
+enum WS2HeadTurn: Equatable, Sendable {
+    case none
+    /// 刚（重新）记下基线，这一帧不判方向。
+    case calibrated
+    case left
+    case right
+}
+
+struct WS2DisplayHeadTracker: Sendable {
+    /// 偏离基线达到这个角度才算一次转向。初始值。
+    static let hysteresis: Double = 4
+
+    private struct Baseline: Sendable {
+        var yaw: Double
+        var source: WS2HeadSource
+    }
+
+    /// 键是稳定的显示器编号。
+    private var baselines: [UInt32: Baseline] = [:]
+
+    init() {}
+
+    /// 向右为正（与 WS2HeadSample.yaw 一致）。
+    mutating func update(display: UInt32, source: WS2HeadSource, yaw: Double) -> WS2HeadTurn {
+        guard yaw.isFinite else { return .none }
+        guard let base = baselines[display], base.source == source else {
+            baselines[display] = Baseline(yaw: yaw, source: source)
+            return .calibrated
+        }
+        let delta = yaw - base.yaw
+        if delta >= Self.hysteresis { return .right }
+        if delta <= -Self.hysteresis { return .left }
+        return .none
+    }
+
+    /// 屏幕拔掉后清掉它的基线。
+    mutating func forget(display: UInt32) {
+        baselines[display] = nil
+    }
+}

@@ -407,7 +407,7 @@ enum PaperSurfaceAccessibility {
     }
 
     static func stripHelp() -> String {
-        "双击展开窗口；也可以用标题条上的按钮关闭、缩放或展开。"
+        "双击展开窗口；也可以用标题栏上的按钮关闭、缩放或展开。"
     }
 
     /// 状态栏按钮的可访问性值：读成“没有折叠的窗口 / N 个折叠窗口”，

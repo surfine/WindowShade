@@ -1,0 +1,51 @@
+{
+  "date": "2026-10-08",
+  "base_head": "4accf310d505041f5d4458e204c62e55e022a900",
+  "source_sha256": {
+    "prototype/Support/WS2CompanionTCPTransport.swift": "731161802dcf084cd35e4d855a39a03f28cef58482c13babf5eae55d4aa5e940",
+    "prototype/Core/WS2CompanionFrame.swift": "2ecb698bdf16965242836f132a7bc801d0ac7db7b488abc0d5a1b878a4c0fabd",
+    "prototype/Core/WS2BoundedOutbox.swift": "80fb7f58123a2f9df5c0d7b94c206277427e269273be595ac25e4d554c68e326",
+    "tests/CompanionTransportTests.swift": "31cba84bd4309a9d68c51b3050d139dea52885d39a37c213dd3fd7e85cc0d142",
+    "tests/run-companion-transport-tests.sh": "58403feced2b871d3a882599ccc140e8ec4a7b35c2364efdd9815e7550cfaaf8"
+  },
+  "binary_sha256": "3725209fbacc8b1412870d797a696b57e3e063e5eeac40b5b3f85d872d12177b",
+  "commands": [
+    {
+      "command": "bash tests/run-companion-transport-tests.sh --controlled > /tmp/companion-transport-controlled.log",
+      "exit_code": 0
+    },
+    {
+      "command": ".build/companion-transport/companion-transport --loopback > /tmp/companion-transport-loopback.log",
+      "exit_code": 0,
+      "permission": "require_escalated after sandbox EPERM; 127.0.0.1 only"
+    },
+    {
+      "command": "swiftc -module-cache-path .build/companion-transport/module-cache -swift-version 6 -strict-concurrency=complete -warnings-as-errors -typecheck prototype/Core/WS2CompanionFrame.swift prototype/Core/WS2BoundedOutbox.swift prototype/Support/WS2CompanionTCPTransport.swift",
+      "exit_code": 0
+    }
+  ],
+  "policy": "EOF closes immediately without draining; pending output retained in close snapshot. Batch admission atomic; capacity failure closes, never retries. Existing queue caps unchanged.",
+  "limits": [
+    "Network.framework may deliver EOF with data or in a later empty callback; this run observed data=7+done=true.",
+    "No Bonjour, broadcast, iPhone, real action, or listener admission policies exercised.",
+    "Injected receive/send/network failures are controlled callback-path tests; no native RST case.",
+    "PIN/pending-candidate/owner-total deadlines belong to owners, not this transport test.",
+    "NET-04 transport batch budget is tested; profile/nonce integration requires owner integration tests.",
+    "NET-07/08/09 listener governance/logging remain outside this scoped block."
+  ],
+  "post_build_changes": "Two documentation comments only; no behavioral change. Parent will perform unified build from frozen sources.",
+  "results": {
+    "controlled_cases": 18,
+    "native_loopback_cases": 5,
+    "all_exit_codes": 0,
+    "native_eof_callback_bytes": 7,
+    "native_eof_pending_bytes": 65540,
+    "native_send_received_bytes": 65540,
+    "native_send_slices": 2,
+    "native_send_records": 1
+  },
+  "logs": {
+    ".build/luna-20261008/transport-control.log": "4817472fd0c74c8e6a4db5ae574dad75c6aae6ed3a8629eed853354371671003",
+    ".build/luna-20261008/transport-loopback.log": "d26f9ff698083ae5736491b9db62c4ef8724127f152c3fc661aad496c905854a"
+  }
+}

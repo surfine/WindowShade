@@ -39,6 +39,15 @@ struct PresenceLock: Sendable {
         /// 只能请求现有身份/授权流程。不能在此效果里读密码或合成解锁按键。
         case requestReturnAuthorization(lock: WS2.Token, attempt: WS2.Token)
         case resumeOwnedMedia(WS2.Token), fault(WS2.Fault)
+        /// 唤醒后先复查真实锁态，再重启扫描；每次唤醒各一次。
+        case recheckLockState, restartScanning
+        /// 只给「离开期间」记一行；不拍照、不开摄像头。
+        case awayNote(AwayNote)
+    }
+    struct AwayNote: Equatable, Sendable {
+        enum Kind: Equatable, Sendable { case unlockedWhilePhoneAway }
+        let kind: Kind; let at: WS2.Instant
+        var line: String { "手机不在身边时，这台 Mac 被解锁了一次" }
     }
     private struct Probe: Sendable { let id: UInt64; let deadline: WS2.Instant }
     private struct Link: Sendable {
@@ -55,6 +64,10 @@ struct PresenceLock: Sendable {
     static let returnHold: UInt64 = 2 * WS2.Duration.second
     static let rssiFreshness: UInt64 = 1 * WS2.Duration.second
     static let lockReceiptTimeout: UInt64 = 3 * WS2.Duration.second // 推荐，超时不认作自己锁定。
+    // 唤醒后蓝牙栈要一会儿才可用：0.5 秒复查锁态，1 秒重启扫描（思路参考 BLEUnlock，未用其代码）。
+    static let wakeRecheckDelay: UInt64 = 500 * WS2.Duration.millisecond
+    static let wakeRescanDelay: UInt64 = 1 * WS2.Duration.second
+    static let awayUnlockWindow: UInt64 = 10 * WS2.Duration.second
     private(set) var enabled = false
     private(set) var phase = Phase.idle
     private(set) var lockState = LockState.unknown
@@ -76,6 +89,10 @@ struct PresenceLock: Sendable {
     private var nearSince: WS2.Instant?
     private var lastRSSI: WS2.Instant?
     private var pendingReturn: WS2.Token?
+    private var recheckAt: WS2.Instant?
+    private var rescanAt: WS2.Instant?
+    private var wokeAt: WS2.Instant?
+    private var phoneAwayAtSleep = false
 
     init(configuration: Configuration = Configuration(), bootID: UUID) {
         self.configuration = configuration
@@ -99,10 +116,19 @@ struct PresenceLock: Sendable {
         case .disable:
             enabled = false; effects += cancelCountdown(); forgetSignals(); ownedLock = nil; pendingReturn = nil
             receiptDeadline = nil; phase = lockState == .locked ? .locked : .idle
+            clearWake()
         case .sleep:
+            // 重复的睡眠通知不能抹掉第一次记下的手机离开。
+            if !sleeping { phoneAwayAtSleep = enabled && links[.phone]?.status == .away }
+            recheckAt = nil; rescanAt = nil; wokeAt = nil
             sleeping = true; effects += cancelCountdown(); forgetSignals(); ownedLock = nil; pendingReturn = nil; lockState = .unknown
         case .wake:
+            // 没睡过的重复唤醒不重排期限，保持幂等。
+            guard sleeping else { break }
             sleeping = false; lockState = .unknown; forgetSignals()
+            if enabled {
+                recheckAt = now.adding(Self.wakeRecheckDelay); rescanAt = now.adding(Self.wakeRescanDelay); wokeAt = now
+            } else { clearWake() }
         case .lockStateUnknown:
             lockState = .unknown; effects += cancelCountdown(); ownedLock = nil; pendingReturn = nil
         case .sensorUnavailable:
@@ -136,6 +162,7 @@ struct PresenceLock: Sendable {
             guard enabled, !sleeping, var link = links[device], link.generation == generation,
                   let probe = link.probe, probe.id == request, now < probe.deadline else { break }
             link.probe = nil; link.replyAt = now; link.status = .present; links[device] = link
+            if device == .phone { phoneAwayAtSleep = false }
             effects += cancelCountdown()
         case .cameraFrame(let present, let healthy):
             guard enabled, !sleeping, configuration.cameraEnabled, lockState == .unlocked else { break }
@@ -156,6 +183,12 @@ struct PresenceLock: Sendable {
         case .systemUnlocked:
             guard lockState != .unlocked else { return [] }
             let wasLocked = lockState == .locked
+            // 锁着→解开，发生在唤醒后十秒内，睡前手机已离开且之后没回来，也不是自己的返回授权：记一行。
+            if wasLocked, enabled, phoneAwayAtSleep, pendingReturn == nil, let wokeAt,
+               now.elapsed(since: wokeAt) <= Self.awayUnlockWindow, links[.phone]?.status != .present {
+                effects.append(.awayNote(AwayNote(kind: .unlockedWhilePhoneAway, at: now)))
+            }
+            if wasLocked { phoneAwayAtSleep = false; self.wokeAt = nil }
             if let owner = ownedLock { effects.append(.resumeOwnedMedia(owner)) }
             phase = .idle; lockState = .unlocked; ownedLock = nil; pendingReturn = nil
             receiptDeadline = nil; returnAttempts = 0; nearSince = nil; lastRSSI = nil
@@ -212,6 +245,8 @@ struct PresenceLock: Sendable {
         default: break
         }
         if let receiptDeadline { deadlines.append(receiptDeadline) }
+        if let recheckAt { deadlines.append(recheckAt) }
+        if let rescanAt { deadlines.append(rescanAt) }
         if let cooldownUntil, cooldownUntil > (time.last ?? .zero) { deadlines.append(cooldownUntil) }
         // 摄像头和 RSSI 由真实回调推进；没有帧/样本不能由 timer 编造“连续”。
         return deadlines.min()
@@ -219,6 +254,9 @@ struct PresenceLock: Sendable {
     private mutating func reconcile(at now: WS2.Instant, allowReturn: Bool) -> [Effect] {
         guard enabled, !sleeping else { return [] }
         var effects: [Effect] = []
+        if let at = recheckAt, now >= at { recheckAt = nil; effects.append(.recheckLockState) }
+        if let at = rescanAt, now >= at { rescanAt = nil; effects.append(.restartScanning) }
+        if let wokeAt, now.elapsed(since: wokeAt) > Self.awayUnlockWindow { self.wokeAt = nil; phoneAwayAtSleep = false }
         for device in [Device.phone, .watch] {
             if let probe = links[device]?.probe, now >= probe.deadline {
                 links[device]?.probe = nil; links[device]?.status = .away; links[device]?.replyAt = nil
@@ -274,6 +312,9 @@ struct PresenceLock: Sendable {
         case .grace, .countdown, .prepared: phase = .idle; return [.cancelled]
         default: return []
         }
+    }
+    private mutating func clearWake() {
+        recheckAt = nil; rescanAt = nil; wokeAt = nil; phoneAwayAtSleep = false
     }
     private mutating func forgetSignals() {
         // 保留 generation 的高水位；不能接受旧连接回调。

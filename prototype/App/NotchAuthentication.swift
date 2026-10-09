@@ -23,6 +23,8 @@ final class NotchAuthenticationController {
     private var epoch = 0
     private var task: Task<Void, Never>?
     private var completion: ((AuthorizationGrant?) -> Void)?
+    /// 这一次的指纹画面离开刘海时调一次（成功后对勾收走、取消、失败都算）。给了它，没确认的文案由调用方写在自己的卡上。
+    private var gone: (() -> Void)?
     private var request: AuthRequest?
     private var target: AuthTarget?
     private var publicKey: P256.Signing.PublicKey?
@@ -74,7 +76,9 @@ final class NotchAuthenticationController {
 
     /// Ask for Touch ID to confirm this concrete target. `completion` gets a one-time grant only after the
     /// signature verified; every other outcome (cancel, timeout, lock, sleep, wrong finger, stale) gets nil, once.
-    func authorize(_ target: AuthTarget, completion: @escaping (AuthorizationGrant?) -> Void) {
+    /// `whenGone`：画面真正离开刘海之后调（只在画面出现过时调）；调用方据此接上排在后面的下一件。
+    func authorize(_ target: AuthTarget, whenGone: (() -> Void)? = nil,
+                   completion: @escaping (AuthorizationGrant?) -> Void) {
         if isPresenting && context == nil { cancel(animated: false, restoreFocus: false) }
         guard !isPresenting else { completion(nil); return }
         guard let owner, NotchController.isEnabled, let panel = owner.authenticationPanel() else { completion(nil); return }
@@ -101,7 +105,7 @@ final class NotchAuthenticationController {
         view.onCancel = { [weak self] in self?.cancel() }
         adoptedInteraction = true
         self.panel = panel; self.context = context; evaluating = false; self.presentation = view; self.completion = completion
-        self.request = request; self.target = target; self.publicKey = publicKey
+        self.request = request; self.target = target; self.publicKey = publicKey; self.gone = whenGone
         previousApplication = NSWorkspace.shared.frontmostApplication
         panel.setAuthentication(view)
         task = Task { @MainActor [weak self] in
@@ -152,7 +156,8 @@ final class NotchAuthenticationController {
         }
         self.request = nil  // completed in the ledger; nothing left to cancel there
         let reply = completion; completion = nil
-        presentation?.confirm()
+        // 助手审批这里不写“已允许”：应答还没送出，调用方拿到真回执后用 showReceipt 写。
+        presentation?.confirm(target.flatMap(AuthorizationCopy.confirmation(for:)))
         reply?(grant) // Authorization is never delayed until an animation finishes.
         guard epoch == transaction else { return }
         task = Task { @MainActor [weak self] in
@@ -172,9 +177,15 @@ final class NotchAuthenticationController {
     }
 
     private func fail(_ message: (AuthTarget) -> String) {
-        let host = panel, target = self.target
+        let host = panel, target = self.target, callerReports = gone != nil
         cancel()
-        if let host, let target { alert(message(target), on: host) }
+        if !callerReports, let host, let target { alert(message(target), on: host) }
+    }
+
+    /// 调用方拿到这次请求的真回执后调：写在还亮着的那一行上并念出来。画面已经收走时，只有没成的才补一条提醒。
+    func showReceipt(_ text: String, succeeded: Bool) {
+        if let presentation, presentation.isConfirmed { presentation.showReceipt(text, succeeded: succeeded); return }
+        if !succeeded { alert(text) }
     }
 
     private func alert(_ title: String, on host: NotchPanel? = nil) {
@@ -189,6 +200,7 @@ final class NotchAuthenticationController {
         if let request { service.ledger.cancel(requestID: request.requestID) }
         request = nil; target = nil; publicKey = nil
         let reply = completion; completion = nil
+        let left = gone; gone = nil
         panel?.setAuthentication(nil, animated: animated); panel?.resignKey()
         panel = nil; presentation = nil
         releaseInteraction?()
@@ -198,6 +210,7 @@ final class NotchAuthenticationController {
             previous.activate(options: [])
         }
         reply?(nil)
+        left?()
     }
 
     func reconcile(panels: [NotchPanel]) {
@@ -247,11 +260,18 @@ final class NotchAuthenticationView: NSView, NotchInteractiveContent {
         purpose.frame = NSRect(x: 68, y: (bounds.height - 32) / 2, width: max(0, bounds.width - 134), height: 32)
         cancelButton.frame = NSRect(x: bounds.width - 60, y: (bounds.height - 26) / 2, width: 44, height: 26)
     }
-    func confirm() {
+    /// 对勾出现。`text` 为 nil 时那一行先不变，等调用方的真回执（showReceipt）。
+    func confirm(_ text: String? = AuthorizationCopy.confirmed) {
         native.removeFromSuperview(); isConfirmed = true
-        check.isHidden = false; purpose.stringValue = "已确认"; cancelButton.isHidden = true
+        check.isHidden = false; cancelButton.isHidden = true
+        if let text { purpose.stringValue = text; announce(text) }
+    }
+    func showReceipt(_ text: String, succeeded: Bool) {
+        check.isHidden = !succeeded; purpose.stringValue = text; announce(text)
+    }
+    private func announce(_ text: String) {
         NSAccessibility.post(element: self, notification: .announcementRequested,
-                             userInfo: [.announcement: "已确认", .priority: NSAccessibilityPriorityLevel.medium.rawValue])
+                             userInfo: [.announcement: text, .priority: NSAccessibilityPriorityLevel.medium.rawValue])
     }
     @objc private func cancelRequest() { onCancel?() }
     override func cancelOperation(_ sender: Any?) { onCancel?() }

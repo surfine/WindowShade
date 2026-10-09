@@ -433,7 +433,8 @@ enum WS2SilentReadout {
         cover: WS2SilentCover.State = WS2SilentCover.State(),
         assistant: WS2SilentAssistant = WS2SilentAssistant(),
         draft: WS2SilentDraftHost = WS2SilentDraftHost(),
-        hooksPaused: Bool = false
+        hooksPaused: Bool = false,
+        away: String? = nil
     ) -> String {
         switch id {
         case "usage.quota":
@@ -479,7 +480,9 @@ enum WS2SilentReadout {
             if cover.covered { return "已遮住" }
             return cover.scopeSelected ? "尚未遮住" : "还没选范围"
         case "privacy.awaySummary":
-            return "没有"
+            // 摘要的原话（AwaySummary.Summary.spoken）；没有离开期间的事就是「没有」。
+            guard let away, !away.isEmpty else { return "没有" }
+            return away
         case "privacy.selectScope":
             return "还没选范围"
         case "input.profile":

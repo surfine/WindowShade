@@ -1,0 +1,1163 @@
+<!doctype html>
+<html lang="zh-Hans">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>文件架</title>
+<style>
+:root{
+  color-scheme:light;
+  --page:#eceef2; --panel:#fbfbfc; --line:rgba(0,0,0,.1); --ink:#1d1d1f; --muted:#5f6068; --faint:#6e6f76;
+  --accent:#0058cc; --bad:#b3261e; --ok:#0e6436; --hw:#d6336c;
+  --wall:radial-gradient(90% 70% at 12% 8%,#9cc9ff 0%,transparent 62%),radial-gradient(80% 70% at 92% 18%,#b9b3ff 0%,transparent 60%),linear-gradient(160deg,#cfe3ff,#8fb4ef);
+  --menu:#101114; --bar:rgba(255,255,255,.42); --sheet:rgba(246,246,248,.96); --sheet-ink:#1d1d1f; --label-shadow:0 1px 2px rgba(255,255,255,.6);
+  --sans:-apple-system,BlinkMacSystemFont,"SF Pro Text","PingFang SC","Hiragino Sans GB",sans-serif;
+  --mono:ui-monospace,"SF Mono",Menlo,monospace;
+}
+@media (prefers-color-scheme:dark){:root:not([data-theme="light"]){
+  color-scheme:dark;
+  --page:#121316; --panel:#1b1c20; --line:rgba(255,255,255,.12); --ink:#f2f2f5; --muted:#a4a5ad; --faint:#8e8f97;
+  --accent:#5a9cff; --bad:#ff8a80; --ok:#4cc38a; --hw:#ff6b9d;
+  --wall:linear-gradient(160deg,#10192e,#0b1222); --menu:#f4f5f8; --bar:rgba(20,22,28,.45); --sheet:rgba(40,41,46,.96); --sheet-ink:#f2f2f5; --label-shadow:0 1px 2px rgba(0,0,0,.7);
+}}
+:root[data-theme="dark"]{
+  color-scheme:dark;
+  --page:#121316; --panel:#1b1c20; --line:rgba(255,255,255,.12); --ink:#f2f2f5; --muted:#a4a5ad; --faint:#8e8f97;
+  --accent:#5a9cff; --bad:#ff8a80; --ok:#4cc38a; --hw:#ff6b9d;
+  --wall:linear-gradient(160deg,#10192e,#0b1222); --menu:#f4f5f8; --bar:rgba(20,22,28,.45); --sheet:rgba(40,41,46,.96); --sheet-ink:#f2f2f5; --label-shadow:0 1px 2px rgba(0,0,0,.7);
+}
+*{box-sizing:border-box}
+body{margin:0;background:var(--page);color:var(--ink);font:15px/1.55 var(--sans);padding:28px 16px 64px}
+.wrap{max-width:1040px;margin:0 auto}
+h1{font-size:28px;letter-spacing:-.02em;margin:0 0 8px}
+h2{font-size:17px;margin:34px 0 6px;letter-spacing:-.01em}
+.lede{color:var(--muted);max-width:72ch;margin:0 0 18px}
+.row{display:flex;flex-wrap:wrap;gap:8px 10px;align-items:center;margin:0 0 10px}
+.row .lab{font-size:12px;color:var(--faint);min-width:3.5em}
+button{font:inherit;font-size:14px;color:inherit;background:var(--panel);border:0;border-radius:9px;padding:6px 12px;box-shadow:inset 0 0 0 .5px var(--line);cursor:pointer}
+button[aria-pressed="true"]{background:var(--ink);color:var(--page)}
+button:disabled{opacity:.45;cursor:default}
+button:focus-visible,input:focus-visible,[tabindex]:focus-visible{outline:2px solid var(--accent);outline-offset:2px}
+.sw{display:inline-flex;align-items:center;gap:6px;font-size:13px;color:var(--muted)}
+.card{margin-top:14px;background:var(--panel);border-radius:14px;padding:14px 16px;box-shadow:inset 0 0 0 .5px var(--line)}
+.card h3{font-size:13px;margin:0 0 6px}
+.card p,.card li{margin:0;color:var(--muted);font-size:14px}
+.card ul,.card ol{margin:0;padding-left:18px}
+.card li+li{margin-top:4px}
+.token{font-family:var(--mono);font-size:12px;color:var(--accent)}
+.note{margin-top:10px;font-size:12.5px;color:var(--faint)}
+.tag-bad{color:var(--bad);font-weight:650}
+.tag-ok{color:var(--ok);font-weight:650}
+.tbl-wrap{overflow-x:auto;margin-top:10px;background:var(--panel);border-radius:14px;box-shadow:inset 0 0 0 .5px var(--line)}
+table{border-collapse:collapse;width:100%;font-size:13px;min-width:640px}
+th,td{text-align:left;vertical-align:top;padding:8px 10px;border-bottom:.5px solid var(--line)}
+th{font-size:12px;color:var(--faint);font-weight:600;white-space:nowrap}
+tr:last-child td{border-bottom:0}
+td:first-child{white-space:nowrap}
+td b{font-weight:650}
+td .token{font-size:11.5px}
+pre{font-family:var(--mono);font-size:11.5px;line-height:1.5;background:var(--page);border-radius:10px;padding:10px 12px;overflow-x:auto;margin:8px 0 0;color:var(--ink)}
+
+/* ---------- 舞台：按 Air 15 英寸的点，正中 980 × 470 点，1 点 = 1 像素再整体缩放 ---------- */
+.stage{position:relative;border-radius:10px;overflow:hidden;background:var(--wall);box-shadow:0 0 0 .5px var(--line);aspect-ratio:980/470;touch-action:none;user-select:none;-webkit-user-select:none}
+.screen{position:absolute;left:0;top:0;width:980px;height:470px;transform-origin:0 0}
+.menubar{position:absolute;left:0;top:0;right:0;height:33.5px;background:var(--bar);backdrop-filter:blur(18px);-webkit-backdrop-filter:blur(18px);display:flex;align-items:center;justify-content:space-between;padding:0 14px;font-size:13px;color:var(--menu);z-index:2}
+.menubar .l span{margin-right:16px}
+.menubar .l span:first-child{font-weight:650}
+.menubar .r{display:flex;align-items:center;gap:14px;font-variant-numeric:tabular-nums}
+.menubar .r i{display:inline-block;width:15px;height:11px;border:1.5px solid currentColor;border-radius:3px;opacity:.85}
+.menubar .r i.c{border-radius:50%;width:12px;height:12px}
+.hw{position:absolute;left:397.5px;top:0;width:185px;height:33.5px;background:#000;border-radius:0 0 10.71px 10.71px;z-index:45;pointer-events:none}
+.hwzone{position:absolute;left:397.5px;top:0;width:185px;height:33.5px;z-index:22;cursor:default}
+#island{position:absolute;left:490px;top:0;transform:translateX(-50%);background:#000;overflow:hidden;z-index:20;color:#fff;border-radius:0 0 10.71px 10.71px;box-shadow:0 10px 30px rgba(0,0,0,.18)}
+#island.flat{box-shadow:none}
+.lay{position:absolute;top:0;left:50%;opacity:0;pointer-events:none}
+.lay.live{pointer-events:auto}
+.ear{position:absolute;top:0;height:33.5px;display:flex;align-items:center;gap:5px;font-size:11px;font-weight:600;white-space:nowrap;color:rgba(255,255,255,.92)}
+.ear .dim{color:rgba(255,255,255,.6);font-weight:500}
+.ear svg{flex:none}
+.num{display:inline-grid;font-size:13px;font-weight:700;font-variant-numeric:tabular-nums;overflow:hidden;height:16px;line-height:16px}
+.num i{grid-area:1/1;font-style:normal;text-align:center}
+.num .old{animation:numOut .28s ease forwards}
+.num .new{animation:numIn .28s ease both}
+@keyframes numOut{to{transform:translateY(-100%);opacity:0}}
+@keyframes numIn{from{transform:translateY(100%);opacity:0}}
+.reduced .num .old{animation:none;opacity:0}
+.reduced .num .new{animation:none}
+
+/* 落点小岛的格子 */
+.cell{position:absolute;border-radius:12px;background:rgba(255,255,255,.08);display:flex;align-items:center;justify-content:center;gap:6px;font-size:11px;font-weight:600;color:rgba(255,255,255,.92)}
+.cell.hot{background:rgba(255,255,255,.16);box-shadow:inset 0 0 0 1.5px var(--accent)}
+.cell.soft{background:rgba(255,255,255,.12)}
+.cell.off{opacity:.32}
+/* 一排 */
+.rcell{position:absolute;border-radius:14px;background:rgba(255,255,255,.08);overflow:hidden;font-size:11px;color:rgba(255,255,255,.92)}
+.rcell .t{position:absolute;left:8px;right:8px;bottom:7px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;font-weight:600}
+.rcell .t .dim{color:rgba(255,255,255,.6);font-weight:500}
+.rcell.btn{cursor:pointer}
+.rcell.btn:hover{background:rgba(255,255,255,.14)}
+.divider{position:absolute;width:1px;background:rgba(255,255,255,.2)}
+/* 文件架卡 */
+.tiles{position:absolute;left:14px;right:14px;top:41.5px;height:104px;display:flex;gap:8px;overflow-x:auto;overflow-y:hidden;scrollbar-width:none}
+.tiles::-webkit-scrollbar{display:none}
+.tile{position:relative;flex:none;width:76px;height:104px;border-radius:14px;display:flex;flex-direction:column;align-items:center;padding-top:8px;cursor:grab;outline:none}
+.tile:hover,.tile:focus-visible{background:rgba(255,255,255,.1)}
+.tile:focus-visible{box-shadow:inset 0 0 0 1.5px var(--accent)}
+.tile .nm{margin-top:6px;width:68px;font-size:11px;line-height:13px;text-align:center;color:rgba(255,255,255,.92);display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden;word-break:break-all}
+.tile .why{color:rgba(255,255,255,.6)}
+.tile.stale .th{opacity:.35;filter:grayscale(1)}
+.tile.enter{animation:tileIn .32s cubic-bezier(.2,.9,.3,1.15) both}
+.tile.bump{animation:bump .36s cubic-bezier(.3,1.6,.5,1) both}
+.reduced .tile.enter,.reduced .tile.bump{animation:fadeIn .25s linear both}
+@keyframes tileIn{from{transform:scale(.6);opacity:0}}
+@keyframes bump{40%{transform:scale(1.12)}}
+@keyframes fadeIn{from{opacity:.2}}
+.tile .x{position:absolute;top:2px;right:4px;width:16px;height:16px;border-radius:50%;padding:0;background:#3a3a3e;color:#fff;font-size:10px;line-height:16px;box-shadow:0 0 0 1px #000;opacity:0;display:flex;align-items:center;justify-content:center}
+.tile:hover .x,.tile:focus-within .x{opacity:1}
+.ib{background:rgba(255,255,255,.12);color:#fff;border-radius:11px;height:22px;padding:0 9px;font-size:11px;font-weight:600;box-shadow:none;display:inline-flex;align-items:center;gap:4px}
+.ib:hover{background:rgba(255,255,255,.2)}
+.empty{position:absolute;left:0;right:0;top:41.5px;height:104px;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:8px;font-size:13px;font-weight:600}
+/* 提醒 */
+.al-title{position:absolute;left:0;right:0;top:40px;text-align:center;font-size:13px;font-weight:650}
+.al-sub{position:absolute;left:0;right:0;top:57px;text-align:center;font-size:11px;color:rgba(255,255,255,.6)}
+
+/* 缩略图 */
+.th{position:relative;flex:none}
+.th.doc{background:#f5f5f7;border-radius:3px 9px 3px 3px;box-shadow:0 0 0 .5px rgba(0,0,0,.25)}
+.th.doc::after{content:"";position:absolute;right:0;top:0;width:28%;height:28%;background:linear-gradient(225deg,transparent 50%,#d8d8de 50%);border-radius:0 9px 0 0}
+.th.doc b{position:absolute;left:0;right:0;bottom:16%;height:22%;display:flex;align-items:center;justify-content:center;color:#fff;font-size:9px;font-weight:800;letter-spacing:.02em}
+.th.doc s{position:absolute;left:18%;right:22%;height:5%;background:#c9c9d0;border-radius:2px;text-decoration:none}
+.th.pic{border-radius:6px;border:2px solid #fff;box-shadow:0 0 0 .5px rgba(0,0,0,.25);overflow:hidden}
+.th.mov{border-radius:6px;background:linear-gradient(160deg,#2b2f3a,#11131a);box-shadow:0 0 0 .5px rgba(255,255,255,.2)}
+.th.mov::after{content:"";position:absolute;left:40%;top:30%;border-left:12px solid rgba(255,255,255,.85);border-top:8px solid transparent;border-bottom:8px solid transparent}
+.th.link{border-radius:50%;background:linear-gradient(160deg,#e8edf6,#c9d3e6);display:flex;align-items:center;justify-content:center}
+.th .badge{position:absolute;right:-6px;bottom:-4px;min-width:20px;height:16px;border-radius:8px;background:var(--accent);color:#fff;font-size:10px;font-weight:700;display:flex;align-items:center;justify-content:center;padding:0 4px;box-shadow:0 0 0 1.5px #000}
+
+/* 桌面上的东西 */
+.dsk{position:absolute;width:86px;display:flex;flex-direction:column;align-items:center;gap:4px;cursor:grab;font-size:11px;line-height:13px;text-align:center;color:var(--ink);text-shadow:var(--label-shadow);z-index:3}
+.dsk .lb{max-width:86px;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden;word-break:break-all}
+.dsk .vol{font-size:10px;color:var(--muted)}
+.dsk.gone{opacity:.3}
+.dsk.fresh{animation:tileIn .3s cubic-bezier(.2,.9,.3,1.15) both}
+.win{position:absolute;left:40px;top:96px;width:300px;height:210px;border-radius:12px;background:var(--sheet);color:var(--sheet-ink);box-shadow:0 18px 40px rgba(0,0,0,.25),0 0 0 .5px rgba(0,0,0,.2);z-index:4;font-size:12px}
+.win .tb{height:30px;display:flex;align-items:center;gap:6px;padding:0 10px;border-bottom:.5px solid rgba(127,127,127,.25);cursor:grab;font-weight:600}
+.win .tb i{width:11px;height:11px;border-radius:50%;background:#c4c4c8;display:inline-block}
+.win .tb .px{display:inline-flex;align-items:center;gap:4px;margin-left:auto;margin-right:auto;padding:1px 4px;border-radius:4px;cursor:grab}
+.win .tb .px:hover{background:rgba(127,127,127,.15)}
+.win .bd{padding:10px 12px;display:flex;flex-direction:column;gap:8px}
+.chip{display:flex;align-items:center;gap:8px;padding:6px 8px;border-radius:8px;background:rgba(127,127,127,.12);cursor:grab}
+.chip:hover{background:rgba(127,127,127,.2)}
+.chip .th{width:22px;height:22px}
+.ghost{position:absolute;left:0;top:0;z-index:40;pointer-events:none;opacity:.92;filter:drop-shadow(0 6px 12px rgba(0,0,0,.3))}
+.ghost .gw{width:120px;height:84px;border-radius:9px;background:var(--sheet);box-shadow:0 0 0 .5px rgba(0,0,0,.25)}
+.ghost .gw::before{content:"";display:block;height:14px;border-bottom:.5px solid rgba(127,127,127,.3)}
+.ghost .op{position:absolute;left:28px;top:-4px;font:700 12px var(--sans);color:#fff;background:#30b050;border-radius:9px;min-width:18px;height:18px;display:flex;align-items:center;justify-content:center;box-shadow:0 0 0 1.5px #fff}
+/* 系统那边的东西（示意） */
+.ov{position:absolute;inset:0;z-index:30;display:none;align-items:center;justify-content:center}
+.ov.on{display:flex}
+.sheet{background:var(--sheet);color:var(--sheet-ink);border-radius:14px;box-shadow:0 24px 60px rgba(0,0,0,.35),0 0 0 .5px rgba(0,0,0,.25);padding:16px 18px;min-width:300px}
+.sheet h4{margin:0 0 2px;font-size:14px}
+.sheet .sm{font-size:11px;color:var(--muted);margin:0 0 12px}
+.sheet .devs{display:flex;gap:18px;justify-content:center;margin:6px 0 14px}
+.sheet .dev{display:flex;flex-direction:column;align-items:center;gap:6px;font-size:12px;background:none;box-shadow:none;padding:4px}
+.sheet .dev span{width:52px;height:52px;border-radius:50%;background:linear-gradient(160deg,#9bb8e8,#5c7fc0)}
+.sheet .acts{display:flex;justify-content:flex-end;gap:8px}
+#lp{background:rgba(10,12,20,.55);backdrop-filter:blur(14px);-webkit-backdrop-filter:blur(14px);flex-direction:column;gap:22px}
+#lp .pill{background:rgba(255,255,255,.18);color:#fff;border-radius:10px;padding:6px 14px;font-size:13px;min-width:320px;text-align:center}
+#lp .grid{display:grid;grid-template-columns:repeat(4,86px);gap:18px 30px}
+#lp .app{display:flex;flex-direction:column;align-items:center;gap:6px;color:#fff;font-size:11px;background:none;box-shadow:none;padding:0}
+#lp .app span{width:60px;height:60px;border-radius:14px}
+#lp .app.dim{opacity:.28}
+#lp .app.shake{animation:shake .32s}
+@keyframes shake{25%{transform:translateX(-5px)}75%{transform:translateX(5px)}}
+#ql .sheet{width:360px;text-align:center}
+#ql .big{margin:8px auto 12px;display:flex;justify-content:center}
+#fs{position:absolute;inset:0;z-index:15;display:none;background:linear-gradient(180deg,#1d2230,#2a3245);color:#cfd6e6;font-size:13px;align-items:center;justify-content:center}
+#fs.on{display:flex}
+#lock{position:absolute;inset:0;z-index:19;display:none;background:rgba(8,10,16,.55);backdrop-filter:blur(20px);-webkit-backdrop-filter:blur(20px);color:#fff;flex-direction:column;align-items:center;justify-content:center;gap:4px}
+#lock.on{display:flex}
+#lock b{font-size:64px;font-weight:600;letter-spacing:-.02em}
+.dot{position:absolute;width:8px;height:8px;border-radius:50%;background:var(--accent);z-index:23;left:486px;top:38px;opacity:0;transition:opacity .2s}
+
+.readout{display:flex;flex-wrap:wrap;gap:4px 14px;font-size:12.5px;color:var(--muted);margin-top:10px}
+.readout b{color:var(--ink);font-weight:600}
+.log{margin:8px 0 0;padding:0;list-style:none;font-size:12.5px;color:var(--muted);font-family:var(--sans)}
+.log li{padding:2px 0;border-top:.5px solid var(--line)}
+.log li:first-child{color:var(--ink);border-top:0}
+.hint{font-size:12px;color:var(--faint);margin:6px 0 0}
+</style>
+</head>
+<body>
+<div class="wrap">
+  <h1>文件架</h1>
+  <p class="lede">把文件拖向刘海，刘海垂下落点小岛：暂存、隔空投送、用 App 打开。暂存的东西放在文件架上：平时它只是刘海那一排右段的最后一格，有东西拖进来、或者你点开它时才长出来。这一张要证明三件事：文件和窗口共用一块落点小岛也分得清；文件架安静，只记位置不拷贝；隔空投送一步就到。示意机型 MacBook Air 15 英寸，刘海 185 × 33.5 点，舞台是屏幕正中 980 点宽的一段。</p>
+
+  <div class="row" role="group" aria-label="拖什么进来">
+    <span class="lab">拖进来</span>
+    <button type="button" data-drag="one">一个文件</button>
+    <button type="button" data-drag="three">3 个文件</button>
+    <button type="button" data-drag="fifty">50 个文件</button>
+    <button type="button" data-drag="folder">文件夹</button>
+    <button type="button" data-drag="text">一段文字</button>
+    <button type="button" data-drag="image">网页上的图</button>
+    <button type="button" data-drag="link">链接</button>
+    <button type="button" data-drag="mov">移动硬盘上的</button>
+    <button type="button" data-drag="again">同一个再放</button>
+    <button type="button" data-drag="window">窗口（拖标题栏）</button>
+  </div>
+  <div class="row" role="group" aria-label="松在哪">
+    <span class="lab">松在</span>
+    <button type="button" data-at="stash" aria-pressed="true">暂存</button>
+    <button type="button" data-at="airdrop" aria-pressed="false">隔空投送</button>
+    <button type="button" data-at="open" aria-pressed="false">用 App 打开</button>
+    <button type="button" data-at="notch" aria-pressed="false">刘海正中</button>
+    <button type="button" data-at="away" aria-pressed="false">拖走不放</button>
+    <span class="sw">窗口时：松在“收进刘海”</span>
+  </div>
+  <div class="row" role="group" aria-label="之后">
+    <span class="lab">之后</span>
+    <button type="button" id="bRow">指针停在刘海上</button>
+    <button type="button" id="bCard">打开文件架</button>
+    <button type="button" id="bClear">全部移出</button>
+    <button type="button" id="bVol" aria-pressed="false">拔掉移动硬盘</button>
+    <button type="button" id="bDelete">在访达里删掉一个原文件</button>
+    <button type="button" id="bRelaunch">退出再打开</button>
+    <button type="button" id="bFill">装满 24 格</button>
+  </div>
+  <div class="row" role="group" aria-label="环境">
+    <span class="lab">环境</span>
+    <label class="sw"><input id="music" type="checkbox"> 正在放音乐</label>
+    <label class="sw"><input id="noAirdrop" type="checkbox"> 隔空投送没开</label>
+    <label class="sw"><input id="reject" type="checkbox"> 对方拒收</label>
+    <label class="sw"><input id="fullscreen" type="checkbox"> 原生全屏</label>
+    <label class="sw"><input id="locked" type="checkbox"> 锁屏</label>
+    <label class="sw"><input id="showCount" type="checkbox" checked> 空闲时露个数</label>
+    <label class="sw"><input id="cmd" type="checkbox"> 拖出时按住 ⌘</label>
+    <label class="sw"><input id="reduced" type="checkbox"> 减少动态效果</label>
+    <button type="button" id="theme">主题：跟随系统</button>
+  </div>
+
+  <div class="stage" id="stage">
+    <div class="screen" id="screen">
+      <div class="menubar" aria-hidden="true">
+        <div class="l"><span>访达</span><span>文件</span><span>编辑</span><span>显示</span><span>前往</span><span>窗口</span></div>
+        <div class="r"><i></i><i class="c"></i><i></i><span>10月9日 周五 14:20</span></div>
+      </div>
+
+      <div class="win" id="win">
+        <div class="tb" id="winTb"><i></i><i></i><i></i><span class="px" id="proxy" title="标题栏上的文稿小图标：拖它就是拖文件">▤ 会议记录</span></div>
+        <div class="bd">
+          <div class="chip" data-src="text"><div class="th doc" style="width:22px;height:22px"></div><span>一段文字：下周二前把报价发过去</span></div>
+          <div class="chip" data-src="image"><div class="th pic" style="width:22px;height:22px;background:linear-gradient(170deg,#ff9a62,#ff5e7e 55%,#5b3a8e)"></div><span>网页上的一张图</span></div>
+          <div class="chip" data-src="link"><div class="th link" style="width:22px;height:22px"></div><span>链接：example.com/notch</span></div>
+          <p class="hint" style="margin:0">拖标题栏 = 拖窗口；拖“会议记录”那个小图标 = 拖文件。</p>
+        </div>
+      </div>
+      <div id="desk"></div>
+
+      <div id="island"></div>
+      <div class="hw" aria-hidden="true"></div>
+      <div class="hwzone" id="hwzone" aria-hidden="true"></div>
+      <i class="dot" id="dot"></i>
+
+      <div class="ov" id="lp" role="dialog" aria-label="主屏幕：用哪个 App 打开">
+        <div class="pill" id="lpPill">用哪个 App 打开</div>
+        <div class="grid" id="lpGrid"></div>
+      </div>
+      <div class="ov" id="ad" role="dialog" aria-label="系统的隔空投送窗口（示意）">
+        <div class="sheet">
+          <h4>隔空投送</h4>
+          <p class="sm">系统自己的窗口，这里只画个示意。WindowShade 不知道你发给了谁。</p>
+          <div class="devs">
+            <button type="button" class="dev" data-dev="iPhone"><span></span>我的 iPhone</button>
+            <button type="button" class="dev" data-dev="iPad"><span style="background:linear-gradient(160deg,#c9b3ec,#8a6cc4)"></span>客厅的 iPad</button>
+          </div>
+          <div class="acts"><button type="button" id="adCancel">取消</button></div>
+        </div>
+      </div>
+      <div class="ov" id="ql" role="dialog" aria-label="大图预览">
+        <div class="sheet"><div class="big" id="qlBig"></div><h4 id="qlName"></h4><p class="sm" id="qlSub" style="margin:2px 0 0"></p></div>
+      </div>
+      <div id="fs">一个原生全屏的 App。刘海这一块归它，拖到顶上会叫出系统菜单栏；落点小岛不出来。</div>
+      <div id="lock"><b>14:20</b><span>10月9日 星期五</span></div>
+    </div>
+  </div>
+  <div class="readout" id="readout"></div>
+  <p class="hint">舞台里能真拖：桌面上的文件、左边窗口里的三样东西、“会议记录”小图标、窗口标题栏；文件架卡里的每一格也能拖出来、点开、按 × 移出。指针停在刘海上会展开那一排。Esc 关掉预览和卡。</p>
+  <ul class="log" id="log" aria-live="polite"></ul>
+
+  <h2>规则</h2>
+  <p class="lede">层按 <a href="一颗岛.html">一颗岛</a> 和总稿：放行 &gt; 正在做的手势 &gt; 你主动打开的 &gt; 短暂提醒 &gt; 持续活动 &gt; 什么都没有。数字小的先占刘海。弹簧只用已有令牌（response 秒 / 阻尼比 ζ）。</p>
+  <div class="tbl-wrap"><table>
+    <thead><tr><th>时刻</th><th>什么样</th><th>数字</th><th>谁让谁</th></tr></thead>
+    <tbody>
+      <tr><td><b>拖近刘海</b></td><td>垂下落点小岛，和窗口用的是同一块：上面一条绕着刘海排，左耳是你手里拿的，右耳是松手会去哪；下面一排格子。不用停：拖动本身就是意思。</td><td>指针离屏幕顶 60 点内、横向在刘海中心 ±194 点内就出；340 × 84，圆角 22，<span class="token">catch 0.40/0.80</span></td><td>第 2 层“正在做的手势”。只让放行（认证卡）。你打开的一排、文件架卡、正在播放的紧凑都挂起，松手后原样回来，不重播。</td></tr>
+      <tr><td><b>文件的三格</b></td><td>暂存 / 隔空投送 / 用 App 打开，符号加两到五个字。指针下那格亮。指针在刘海那一条上（不在格子里）时，“暂存”淡淡地亮，表示松手去这里。</td><td>格 100.7 × 34.5，圆角 12（22 − 10 同心），格间 6，边距 10；亮：白 0.16 底加 1.5 点强调色描边</td><td>做不了的那格灰着（0.32），右耳说为什么：“文件架满了”“隔空投送没开”“文字挑不了 App”。</td></tr>
+      <tr><td><b>收回</b></td><td>指针出了岛外 24 点就收；松在格子外什么都不做，拖的东西飞回原处（系统画的）。</td><td>出界 0.15 秒后收，<span class="token">calm 0.34/1.0</span></td><td>被挂起的按现在的事实回来。</td></tr>
+      <tr><td><b>用 App 打开</b></td><td>今天的做法不变：停在这一格上主屏幕就弹开，只有能打开它的 App 亮着，搜索框写“用哪个 App 打开‘报价单.pdf’”；直接松手也一样。链接只亮浏览器。</td><td>停 0.35 秒（今天的值）</td><td>主屏幕从刘海里涌出来，岛回到原来的样子。</td></tr>
+      <tr><td><b>暂存之后</b></td><td>岛收成紧凑：左耳文件架符号，右耳个数滚到新值，右耳弹一下。不说话，不展开卡。之前开着卡的话，卡回来，新的一格从左边长出来。</td><td>收成紧凑 <span class="token">settle 0.38/1.0</span>；右耳 <span class="token">pop 0.30/0.75</span>；数字过渡 0.28 秒</td><td>—</td></tr>
+      <tr><td><b>紧凑的个数</b></td><td>文件架不空、又没有别的持续活动时，刘海两耳露出文件架符号和个数。点它直接打开文件架卡。</td><td>185 + 34 + 34 = 253 宽，高 33.5，底角 16</td><td>持续活动里排最后（优先级 10，低于 AirPods 的 20）。音乐、隔空投送、下载在时它不占耳朵，也不变成点，不算进右段最多 3 件。</td></tr>
+      <tr><td><b>一排里</b></td><td>右段最后一格是文件架：叠三张缩略图，下面写“文件架 · 6”。文件架空着时这一格不在。点它，岛长成文件架卡，和点正在播放长成大卡是同一个动作。</td><td>格 124 宽、圆角 14、格间 8、边距 14（沿用 <code>NotchRow</code>）</td><td>第 3 层“你主动打开的”。</td></tr>
+      <tr><td><b>文件架卡</b></td><td>左耳“文件架”和个数，右耳“隔空投送”“全部移出”。下面一格一件：缩略图、名字最多两行（中间省略，保留扩展名），最新的在左。一屏放六格半，多了横着滑。</td><td>560 × 160，圆角 28，<span class="token">expand 0.40/0.92</span>；格 76 × 104，圆角 14；缩略图 52，圆角 12；名字 11 点；指针离开 0.3 秒后 <span class="token">calm</span> 收回</td><td>拖进新文件时卡挂起，换成落点小岛；放完卡回来。</td></tr>
+      <tr><td><b>一格能做的</b></td><td>点一下或按空格：大图预览。拖出去：<b>拷贝</b>，原文件不动，这一格留着。按住 ⌘ 拖：<b>移动</b>（和访达里按 ⌘ 一样），移完这一格离开。悬停出 ×：移出文件架，原文件不动，⌘Z 撤销。右键：打开、用哪个 App 打开、在访达中显示、隔空投送、移出文件架。</td><td>× 是 16 点圆；拖出预览 52 点缩略图加个数角标</td><td>拖出时卡不收（拖动挂起自动收回）。从文件架拖出来的东西经过刘海时不再出落点小岛。</td></tr>
+      <tr><td><b>全部移出</b></td><td>格子都走，卡上留一句“文件架空了”和“撤销”。到时间卡收回，拖进来的文字、图片、链接这时才真的删掉。</td><td>留 5 秒</td><td>—</td></tr>
+      <tr><td><b>隔空投送</b></td><td>松在这一格（或卡上的“隔空投送”）：交给系统的隔空投送窗口挑设备。等的时候刘海是一件持续活动：左耳隔空投送符号，右耳一段转着的弧。系统不给进度，不画假进度。</td><td>完成：短暂提醒 400 × 72，圆角 24，<span class="token">bloom 0.42/0.84</span>，停 2.6 秒，淡入 0.18 淡出 0.10</td><td>持续活动优先级 80（沿用 <code>.airDrop</code>）。结果撞上手势或你打开的卡时变成一个点，不回来补说。你自己取消的不说。</td></tr>
+      <tr><td><b>减少动态效果</b></td><td>形状直接切，内容淡入淡出；放进去不飞，个数直接换，新的一格只淡入。</td><td>0.25 秒</td><td>—</td></tr>
+    </tbody>
+  </table></div>
+
+  <h2>落点小岛怎么分文件和窗口</h2>
+  <div class="tbl-wrap"><table>
+    <thead><tr><th></th><th>窗口（今天就有）</th><th>文件、文字、图片、链接</th></tr></thead>
+    <tbody>
+      <tr><td>怎么知道在拖</td><td>我们自己跟着标题栏算：按下标题栏、拖出 10 点（<code>MagicTiling.dropIslandThreshold</code>）</td><td>系统的拖动：拖动剪贴板换了一份，里面是文件、文字、图片或链接。标题栏上的文稿小图标也算文件。</td></tr>
+      <tr><td>同一时刻</td><td colspan="2">只会有一种：拖窗口不会碰拖动剪贴板，系统拖动也不会按住标题栏。</td></tr>
+      <tr><td>形状</td><td colspan="2">同一块：340 × 84，圆角 22，<span class="token">catch</span>。名字都叫落点小岛。</td></tr>
+      <tr><td>左耳</td><td>窗口符号</td><td>拿着的东西：缩略图（多个叠两张）加“3 个”“文件夹”“文字”“图片”“链接”</td></tr>
+      <tr><td>格子</td><td>五格只有符号：左半屏 / 铺满屏幕 / 收进刘海 / 魔法平铺 / 右半屏</td><td>三格，符号加字：暂存 / 隔空投送 / 用 App 打开</td></tr>
+      <tr><td>右耳</td><td>指着的那格叫什么</td><td>做不了时说为什么；平时空着（格子上已经写了字）</td></tr>
+    </tbody>
+  </table></div>
+
+  <h2>存什么、存在哪</h2>
+  <div class="card"><ul>
+    <li><b>文件、文件夹只记位置，不拷贝。</b>记成普通书签（不是 security-scoped：macOS 26 上不在沙盒里的 App 建不了那种），外加放进来时的路径和显示名。书签在后台解析，带“不弹窗、不去挂网络盘”两个选项；主线程上不碰书签，也不碰网络盘。</li>
+    <li><b>文字、图片、链接存成文件。</b>文字存成 .txt，名字取前 12 个字；网页上的图按原格式写下来（对方只给“承诺文件”时等它写完）；链接存成 .webloc。放在 <code>~/Library/Application Support/WindowShade/文件架/拿来的/</code>，不放缓存文件夹（系统会清）。移出后等撤销时间过了才删。</li>
+    <li><b>清单</b>：<code>~/Library/Application Support/WindowShade/文件架/items.json</code>，原子写；一条坏了只丢那一条。缩略图不落盘，打开卡时现做，只在内存里。</li>
+    <li><b>跨启动保留</b>：保留。关掉设置里的“文件架”就清空，连同“拿来的”文件夹一起删。</li>
+    <li><b>上限 24 格</b>。一次放 5 个以上叠成一格（“50 个文件”），一叠最多 999 个。满了“暂存”灰着，不挤掉旧的。</li>
+    <li><b>失效检查</b>：启动后在后台查一次，打开卡时查一次，有磁盘接上或拔掉时查一次（系统通知），不轮询。原文件进了废纸篓：灰着写“在废纸篓里”，下次启动移出。磁盘没接上：灰着写“硬盘没接上”，接回来自己亮。磁盘在、文件没了：打开卡时移出，右耳说“1 个找不到了”。改了名或挪了地方：书签跟着走，名字跟着变。</li>
+    <li><b>同一个文件不放两份</b>：按“哪块磁盘 + 文件编号”认，不按路径，改了名也认得出。原来那一格弹一下、挪到最前。</li>
+  </ul></div>
+
+  <h2>对照：Atoll、Alcove、今天、要做的</h2>
+  <div class="tbl-wrap"><table>
+    <thead><tr><th>项</th><th>Atoll</th><th>Alcove</th><th>WindowShade 今天</th><th>WindowShade 要做</th></tr></thead>
+    <tbody>
+      <tr><td>什么时候出现</td><td>任何拖动进了刘海窗口就自动切到货架标签并展开</td><td>没有（托盘说是 1.8 的主打，没发布）</td><td>拖文件停在刘海上 0.35 秒，主屏幕弹开挑 App；不暂存</td><td>拖近 60 点就垂下落点小岛，三格；只在拖的时候出现</td></tr>
+      <tr><td>长什么样</td><td>展开的标签页；虚线框“Drop files here”；左边一块分享区</td><td>—</td><td>落点小岛只给窗口，340 × 84</td><td>同一块落点小岛；不加标签页，不画虚线框</td></tr>
+      <tr><td>住在哪</td><td>独立的 Shelf 标签；关刘海时若非空默认打开它</td><td>—</td><td>—</td><td>一排右段最后一格；点开长成卡</td></tr>
+      <tr><td>收起时</td><td>最低优先级右翼：个数 + 托盘符号</td><td>—</td><td>—</td><td>一样排最低，两耳 253 宽；有别的活动就让</td></tr>
+      <tr><td>存储</td><td>普通书签 + 缓存路径，items.json，跨启动，<b>无上限</b>，按路径去重</td><td>—</td><td>—</td><td>同样书签 + 缓存路径，跨启动；24 格上限，5 个起叠放；按文件编号去重</td></tr>
+      <tr><td>权限</td><td>要完全磁盘访问，或文稿 + 下载两个文件夹</td><td>—</td><td>—</td><td>不要。只碰你交过来的（待真机验，见边缘情况）</td></tr>
+      <tr><td>拖出去</td><td>拷贝 + 移动都给；“允许移动”默认关，因为同一块盘上访达会真的移走原文件</td><td>—</td><td>—</td><td>只给拷贝；按住 ⌘ 才移动（和访达一样）</td></tr>
+      <tr><td>预览</td><td>点一下 = Quick Look，多选可翻</td><td>—</td><td>—</td><td>点一下或空格 = 大图预览，一叠能翻</td></tr>
+      <tr><td>隔空投送</td><td>分享区默认隔空投送；还自带 LocalSend 局域网传</td><td>说过要做个替代品</td><td>只能在打开面板里选文件再投</td><td>落点小岛一格 + 卡上一个按钮；不做局域网传</td></tr>
+      <tr><td>别的</td><td>框选、重命名、图片去背景 / 转格式、终端命令加入</td><td>—</td><td>—</td><td>不取</td></tr>
+    </tbody>
+  </table></div>
+  <div class="card"><h3>不取的，为什么</h3><ul>
+    <li><b>标签页</b>：展开“一页为主”，文件架是那一页里的一格，不是第二页。</li>
+    <li><b>空着时的虚线框和“放到这里”</b>：没在拖就不该看见文件架。</li>
+    <li><b>LocalSend 那种局域网传</b>：要自己发现设备、开监听、再登记一条网络读取；隔空投送已经够用。</li>
+    <li><b>去背景、转格式、重命名</b>：不是刘海的事，交给打开它的 App。</li>
+    <li><b>完全磁盘访问</b>：文件架只碰你亲手交来的东西，不需要看整块盘。</li>
+    <li><b>默认可以移动</b>：同一块盘上拖进访达会真的把原文件挪走，看起来像丢了文件。</li>
+    <li><b>没有上限</b>：没有上限的架子会变成第二个下载文件夹。</li>
+    <li><b>一收刘海就打开文件架</b>：刘海平时要安静，最多露个数。</li>
+  </ul></div>
+
+  <h2>边缘情况</h2>
+  <div class="tbl-wrap"><table>
+    <thead><tr><th>情况</th><th>怎么办</th></tr></thead>
+    <tbody>
+      <tr><td>文件夹</td><td>一格，文件夹符号；大图预览显示里面多少项；拖出去访达拷整个文件夹；隔空投送照样能发。</td></tr>
+      <tr><td>一次 50 个</td><td>左耳写“50 个”；暂存后叠成一格“50 个文件”，缩略图叠三张；拖出去 50 个一起；大图预览一个个翻。</td></tr>
+      <tr><td>网络盘、移动硬盘拔了</td><td>那一格灰着写“硬盘没接上”，留着；不去挂盘、不弹窗；接回来自己亮。灰的格拖不出来，轻轻摇一下。</td></tr>
+      <tr><td>同一个文件再放</td><td>不放两份：原来那一格弹一下、挪到最前；个数不变。</td></tr>
+      <tr><td>拖窗口 vs 拖文件</td><td>拖标题栏出五格；拖文件、拖标题栏上的文稿小图标出三格（见上表）。</td></tr>
+      <tr><td>文件和文字混着拖</td><td>有文件就只收文件；只有文字时才存文字。</td></tr>
+      <tr><td>从文件架拖出来又经过刘海</td><td>不出落点小岛。</td></tr>
+      <tr><td>满了</td><td>“暂存”灰着，右耳“文件架满了”；松手拖的东西飞回去。不挤掉旧的。</td></tr>
+      <tr><td>名字很长</td><td>两行，中间省略，保留扩展名；读屏念全名。</td></tr>
+      <tr><td>原生全屏</td><td>不出落点小岛：那一块归 App，拖到顶上会叫出系统菜单栏。退出全屏后文件架照旧。</td></tr>
+      <tr><td>锁屏</td><td>什么都不出。锁屏时到的隔空投送结果不补说。</td></tr>
+      <tr><td>没有刘海的屏</td><td>顶部正中的隐形刘海照样垂下落点小岛；文件架卡长在它下面。</td></tr>
+      <tr><td>几块屏</td><td>岛长在指针所在那块屏的刘海上；文件架只有一份，哪块屏打开都是同一份。</td></tr>
+      <tr><td>重启后读文稿、桌面里的文件</td><td><span class="tag-bad">待真机验</span>：拖进来那一下系统认你的意思，重启后再读（做缩略图）会不会弹“访问文稿文件夹”。会弹的话：重启后只画按类型的图标，不做缩略图，直到你点开那一格。</td></tr>
+      <tr><td>减少动态效果</td><td>形状直接切，0.25 秒淡化；不飞，不弹；数字直接换。</td></tr>
+      <tr><td>读屏</td><td>每格念“报价单.pdf，文件架”；动作：大图预览、移出文件架、隔空投送。拖不了的人：选中按 ⌘C，在访达里 ⌘V 拷过去。</td></tr>
+    </tbody>
+  </table></div>
+
+  <h2>权限与隐私</h2>
+  <div class="card"><ul>
+    <li><b>读什么</b>：你放进文件架的文件在哪、叫什么；拖进来的文字、图片、链接本身。拖动时只看“在拖的是哪一类、有几个”，不看内容，内容等你松在格子上才读。</li>
+    <li><b>什么时候读</b>：只在你松在“暂存”上时记；打开卡、启动、接拔磁盘时检查还在不在。不轮询。</li>
+    <li><b>记在哪</b>：只在这台 Mac 上（上面两个路径）。不发送，不写运行记录；运行记录里不出现文件名。</li>
+    <li><b>默认</b>：文件架开着（你不放东西就什么都不记）；设置里关掉就清空。不要完全磁盘访问。</li>
+    <li><b>隔空投送</b>：东西交给系统，WindowShade 不知道发给了谁，只知道成没成。</li>
+    <li><b>要登记</b>：是。<code>tools/privacy/registry.json</code> 加三行，扫描词补上新的读取点：</li>
+  </ul>
+<pre>{ "id": "file-shelf", "label": "放进文件架的东西", "sensitivity": "private",
+  "group": "不用问就能读的",
+  "reads": "你放进文件架的文件在哪、叫什么；拖进来的文字、图片、链接本身",
+  "purpose": "下次还在文件架上：拖出去、预览、隔空投送",
+  "destination": "只在这台 Mac：~/Library/Application Support/WindowShade/文件架/；不发送，不写运行记录",
+  "activation": "只在你松在“暂存”上时记；打开文件架、启动、接拔磁盘时检查还在不在",
+  "toggle": "设置 > 刘海 > 文件架（默认开，关掉即清空）", "status": "planned", "rule": "FILES",
+  "combined": "文件架上的名字合起来，能看出你最近在忙什么。", "subtitle": "记住你暂存的东西" }
+{ "id": "drag-kind", "label": "正在拖的是哪一类", "sensitivity": "public",
+  "group": "不用问就能读的", "reads": "正在拖的是文件、文字、图片还是链接，有几个；不看内容",
+  "purpose": "拖近刘海时垂下对的落点小岛", "destination": "只在内存里用",
+  "activation": "只在拖动期间", "toggle": "跟着文件架走", "status": "planned", "rule": "FILES" }
+{ "id": "airdrop-send", "label": "交给隔空投送的东西", "sensitivity": "private",
+  "group": "不用问就能读的", "reads": "只交出去，不读；只知道成没成",
+  "purpose": "把文件直接投给附近的设备", "destination": "交给系统的隔空投送；我们不知道发给了谁",
+  "activation": "只在你松在“隔空投送”上时", "toggle": "没有单独的开关", "status": "planned", "rule": "FILES" }
+
+扫描词补：bookmarkData\(|resolvingBookmarkData|NSSharingService\(|NSPasteboard\(name: *\.drag\)|NSFilePromiseReceiver|QLThumbnailGenerator</pre>
+  <p class="note">今天“从打开面板选文件投”那条路已经在用 <code>NSSharingService</code>，扫描词没覆盖到，借这次一起补登。</p>
+  </div>
+
+  <h2>实现落点</h2>
+  <div class="card"><p>代码里 <code>NotchShelf</code> 这个名字已经被“刘海里最小化和隐藏的窗口”占了。文件架一律叫 <code>FileShelf</code>，不混用。</p></div>
+  <div class="tbl-wrap"><table>
+    <thead><tr><th>包</th><th>文件</th><th>做什么</th><th>验收</th></tr></thead>
+    <tbody>
+      <tr><td><b>FS-01</b> 文件架模型</td><td>新建 <code>Core/FileShelfModel.swift</code></td><td>纯 Foundation：条目种类、按磁盘 + 文件编号去重、5 个起叠放、24 格上限、items.json 逐条容错编解码。</td><td>单测：改名后仍认得同一个；4 个分开、5 个叠；满了拒收；一条坏了只丢那一条。</td></tr>
+      <tr><td><b>FS-02</b> 存取与失效</td><td>新建 <code>App/FileShelfStore.swift</code></td><td>书签在后台建和解析（不弹窗、不挂盘）；“拿来的”文件夹写入与延时删除；磁盘接拔通知；启动后台检查。</td><td>拔 U 盘那格灰、接回亮；删原文件后打开卡移出并说一句；主线程断言不碰书签。</td></tr>
+      <tr><td><b>FS-03</b> 拖近刘海</td><td>新建 <code>App/FileDragSensor.swift</code>；改 <code>App/Notch.swift</code></td><td>只在拖动期间让刘海那块接拖放（平时不吃菜单栏点击）；落点小岛分窗口 / 文件两种；0.35 秒停留只留给“用 App 打开”；松在刘海那一条上 = 暂存。</td><td>拖文件出三格，拖标题栏出五格，拖文稿小图标出三格；平时点菜单栏两侧不受影响；全屏、锁屏不出。</td></tr>
+      <tr><td><b>FS-04</b> 文件架卡</td><td>新建 <code>App/FileShelfView.swift</code>；改 <code>Core/NotchRow.swift</code>、<code>App/Notch.swift</code></td><td>右段末格、卡、拖出（只拷贝，⌘ 移动）、大图预览（卡打开时面板要能成为主窗口）、×、⌘Z、右键菜单、读屏动作。</td><td>同一块盘拖进访达是拷贝（带 + 角标），⌘ 拖是移动；空格预览；读屏念名字和三个动作。</td></tr>
+      <tr><td><b>FS-05</b> 隔空投送</td><td>改 <code>App/NotchActivityController.swift</code>、<code>App/LaunchpadOpenWith.swift</code></td><td>落点和卡直接交给 sendViaAirDrop，不再经打开面板；不可用时灰格；结果文案统一成“已送出 / 没送出去”；链接让主屏幕只亮浏览器。</td><td>真机投一次到 iPhone：成功、对方拒收、自己取消各一次，刘海说的话对得上。</td></tr>
+      <tr><td><b>FS-06</b> 紧凑与仲裁</td><td>改 <code>Core/NotchActivities.swift</code>、<code>App/NotchActivityView.swift</code></td><td>文件架个数作为优先级 10 的紧凑；不进最小点、不算右段 3 件；隔空投送结果撞上手势时变成点。</td><td>放音乐时不露个数，停了才露；拖文件时音乐紧凑挂起、松手原样回来。</td></tr>
+      <tr><td><b>FS-07</b> 登记与文案</td><td>改 <code>tools/privacy/registry.json</code>、<code>docs/copy-guide.md</code></td><td>加三行信号与扫描词；词汇表加“文件架 / 暂存”一行。</td><td><code>check-registry.py</code> 通过；故意删一条登记时检查失败。</td></tr>
+    </tbody>
+  </table></div>
+  <p class="note">顺序：FS-01 → FS-02 → FS-03 → FS-04；FS-05、FS-06 可在 FS-03 之后并行；FS-07 跟 FS-02 同一个提交进。</p>
+
+  <h2>待 Aaron 定</h2>
+  <div class="card"><ol>
+    <li><b>直接松在刘海那一条上（不在格子里）去哪。</b>推荐<b>暂存</b>：能撤回，不打断你。另一种是保持今天的“用 App 打开”。舞台上选“刘海正中”就是推荐的样子。</li>
+    <li><b>空闲时露不露文件架的个数。</b>推荐<b>露</b>（排最低，两耳 253 宽，有别的活动就让），不然东西放上去就忘了。另一种是放进去后露 2.6 秒就收回到刘海原样，只在那一排里看得见。舞台上取消勾选“空闲时露个数”就是另一种。</li>
+  </ol></div>
+  <p class="note">文案新增词：<b>文件架</b>（那个地方）、<b>暂存</b>（放上去的动作）、<b>移出文件架</b>（原文件不动）。落点小岛仍叫落点小岛。</p>
+</div>
+
+<script>
+(function(){
+  'use strict';
+  /* ---------- 令牌 ---------- */
+  var TOK={calm:{r:.34,z:1,n:'calm'},settle:{r:.38,z:1,n:'settle'},bloom:{r:.42,z:.84,n:'bloom'},expand:{r:.40,z:.92,n:'expand'},pop:{r:.30,z:.75,n:'pop'},catchDrop:{r:.40,z:.80,n:'catch'}};
+  var HW={w:185,h:33.5,r:10.71};
+  var CX=490, EAR=(340-185)/2;
+  var LIMIT=24, STACK_AT=5;
+  var $=function(id){return document.getElementById(id)};
+  var stage=$('stage'), screen=$('screen'), island=$('island'), desk=$('desk');
+  var reducedBox=$('reduced');
+
+  /* ---------- 符号（简单内联 SVG） ---------- */
+  function svg(d,s,extra){s=s||16;return '<svg width="'+s+'" height="'+s+'" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" '+(extra||'')+'>'+d+'</svg>'}
+  var G={
+    tray:'<path d="M3 13l2.6-7h12.8L21 13v5a1 1 0 0 1-1 1H4a1 1 0 0 1-1-1z"/><path d="M3 13h5l1.5 2.5h5L16 13h5"/>',
+    airdrop:'<path d="M7 16.5a7 7 0 1 1 10 0"/><path d="M9.3 14a3.6 3.6 0 1 1 5.4 0"/><path d="M12 13l3 7H9z" fill="currentColor" stroke="none"/>',
+    open:'<rect x="4" y="4" width="6.5" height="6.5" rx="1.6"/><rect x="13.5" y="4" width="6.5" height="6.5" rx="1.6"/><rect x="4" y="13.5" width="6.5" height="6.5" rx="1.6"/><rect x="13.5" y="13.5" width="6.5" height="6.5" rx="1.6"/>',
+    note:'<path d="M9 18V6l10-2v12"/><circle cx="6.5" cy="18" r="2.5"/><circle cx="16.5" cy="16" r="2.5"/>',
+    check:'<path d="M5 12.5l4.5 4.5L19 7"/>',
+    bang:'<path d="M12 6v8"/><circle cx="12" cy="18" r=".6" fill="currentColor"/>',
+    win:'<rect x="3.5" y="5" width="17" height="14" rx="2"/><path d="M3.5 9h17"/>',
+    folder:'<path d="M3 7a2 2 0 0 1 2-2h4l2 2h8a2 2 0 0 1 2 2v8a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z" fill="currentColor" stroke="none"/>',
+    doc:'<path d="M7 3h7l4 4v14H7z"/><path d="M14 3v4h4"/>',
+    docs:'<path d="M9 2h6l4 4v12H9z"/><path d="M15 2v4h4"/><path d="M6 6v16h10"/>',
+    lines:'<path d="M5 6h14M5 10h14M5 14h10M5 18h7"/>',
+    picture:'<rect x="3.5" y="5" width="17" height="14" rx="2.5"/><path d="M4 17l5-5 4 4 2.5-2.5L20 18"/><circle cx="15.5" cy="9.5" r="1.4"/>',
+    chain:'<path d="M10 14a4 4 0 0 0 5.6 0l3-3a4 4 0 0 0-5.6-5.6l-1 1"/><path d="M14 10a4 4 0 0 0-5.6 0l-3 3a4 4 0 0 0 5.6 5.6l1-1"/>'
+  };
+  function layoutGlyph(kind){ // 窗口的五格：只有形状
+    var r='<rect x="3" y="5" width="18" height="14" rx="2.5" stroke="currentColor" stroke-width="1.5" fill="none"/>';
+    var f={left:'<rect x="4.5" y="6.5" width="7" height="11" rx="1.2" fill="currentColor"/>',
+           right:'<rect x="12.5" y="6.5" width="7" height="11" rx="1.2" fill="currentColor"/>',
+           fill:'<rect x="4.5" y="6.5" width="15" height="11" rx="1.2" fill="currentColor"/>',
+           tuck:'<rect x="9" y="5" width="6" height="3.5" rx="1" fill="currentColor"/><path d="M12 15.5v-4m-2 2l2-2 2 2" stroke="currentColor" stroke-width="1.5" fill="none"/>',
+           magic:'<rect x="4.5" y="6.5" width="7" height="5" rx="1" fill="currentColor"/><rect x="12.5" y="6.5" width="7" height="5" rx="1" fill="currentColor"/><rect x="4.5" y="12.5" width="15" height="5" rx="1" fill="currentColor"/>'}[kind];
+    return '<svg width="26" height="22" viewBox="0 0 24 24" aria-hidden="true">'+r+f+'</svg>';
+  }
+
+  /* ---------- 东西 ---------- */
+  var BAND={pdf:'#e5483f',docx:'#2f6fe4',md:'#555a66',txt:'#8a8f9c',key:'#f0a020',webloc:'#3d8ef0',zip:'#7a7f8c'};
+  function thumb(it,s){
+    s=s||52; var st='width:'+s+'px;height:'+s+'px;';
+    if(it.kind==='stack'){
+      var o='<div class="th" style="'+st+'">';
+      [-10,0,10].forEach(function(a,i){o+='<div class="th doc" style="position:absolute;left:'+(s*.14)+'px;top:'+(s*.06)+'px;width:'+(s*.72)+'px;height:'+(s*.86)+'px;transform:rotate('+a+'deg)">'+(i===2?'<b style="background:#7a7f8c">'+it.count+'</b>':'')+'</div>'});
+      return o+'</div>';
+    }
+    if(it.kind==='folder') return '<div class="th" style="'+st+'color:#4c9cf4">'+svg(G.folder,s)+'</div>';
+    if(it.kind==='link') return '<div class="th link" style="width:'+(s*.86)+'px;height:'+(s*.86)+'px;margin:'+(s*.07)+'px;color:#3d6fb8">'+svg(G.chain,s*.5)+'</div>';
+    if(it.ext==='png'||it.ext==='jpg') return '<div class="th pic" style="width:'+s+'px;height:'+(s*.78)+'px;margin-top:'+(s*.11)+'px;background:'+(it.ext==='jpg'?'linear-gradient(170deg,#ff9a62,#ff5e7e 55%,#5b3a8e)':'linear-gradient(180deg,#7fb6ff,#d6e8ff 60%,#9bc48a 61%,#6fa85e)')+'"></div>';
+    if(it.ext==='mov') return '<div class="th mov" style="width:'+s+'px;height:'+(s*.7)+'px;margin-top:'+(s*.15)+'px"></div>';
+    var band=BAND[it.ext]||'#7a7f8c', lines='';
+    if(it.kind==='text'||it.ext==='md') for(var i=0;i<4;i++) lines+='<s style="top:'+(20+i*12)+'%"></s>';
+    return '<div class="th doc" style="width:'+(s*.78)+'px;height:'+s+'px;margin:0 '+(s*.11)+'px">'+lines+(it.kind==='text'?'':'<b style="background:'+band+'">'+String(it.ext||'').toUpperCase()+'</b>')+'</div>';
+  }
+  var SRC={
+    quote:{kind:'file',name:'报价单.pdf',ext:'pdf',key:'d1#4021'},
+    shot:{kind:'file',name:'截屏 2026-10-09 下午2.14.06.png',ext:'png',key:'d1#4022'},
+    deck:{kind:'file',name:'第四季度复盘与明年计划（终版）.key',ext:'key',key:'d1#4023'},
+    contract:{kind:'file',name:'合同.docx',ext:'docx',key:'d1#4024'},
+    folder:{kind:'folder',name:'素材',key:'d1#900'},
+    mov:{kind:'file',name:'剪辑 第三版.mov',ext:'mov',key:'d2#88',vol:'移动硬盘'},
+    meeting:{kind:'file',name:'会议记录.md',ext:'md',key:'d1#4030'},
+    text:{kind:'text',name:'下周二前把报价发过去.txt',ext:'txt'},
+    image:{kind:'file',name:'晚霞.jpg',ext:'jpg',fromWeb:true},
+    link:{kind:'link',name:'example.com/notch.webloc',ext:'webloc'}
+  };
+  var DESK=[
+    {src:'quote',x:860,y:52},{src:'shot',x:860,y:146},{src:'deck',x:860,y:244},
+    {src:'folder',x:760,y:52},{src:'contract',x:760,y:146},{src:'mov',x:760,y:244}
+  ];
+  var desktopCopies=[];
+  function payload(key){
+    switch(key){
+      case 'one':return {kind:'files',items:[SRC.quote],from:'quote'};
+      case 'again':return {kind:'files',items:[SRC.quote],from:'quote'};
+      case 'three':return {kind:'files',items:[SRC.quote,SRC.shot,SRC.contract],from:'shot'};
+      case 'fifty':return {kind:'files',items:[{kind:'stack',name:'50 个文件',count:50,key:'stack50#'+Date.now()}],count:50,from:'deck'};
+      case 'folder':return {kind:'files',items:[SRC.folder],from:'folder'};
+      case 'mov':return {kind:'files',items:[SRC.mov],from:'mov'};
+      case 'text':return {kind:'text',items:[SRC.text],from:'chip:text'};
+      case 'image':return {kind:'image',items:[SRC.image],from:'chip:image'};
+      case 'link':return {kind:'link',items:[SRC.link],from:'chip:link'};
+      case 'proxy':return {kind:'files',items:[SRC.meeting],from:'proxy'};
+      case 'window':return {kind:'window',items:[],from:'win'};
+    }
+  }
+  function carryLabel(p){
+    if(p.kind==='text') return '文字';
+    if(p.kind==='image') return '图片';
+    if(p.kind==='link') return '链接';
+    var n=p.count||p.items.length;
+    if(n===1&&p.items[0].kind==='folder') return '文件夹';
+    if(n===1&&p.items[0].kind!=='stack') return shortName(p.items[0].name,8);
+    return n+' 个';
+  }
+
+  /* ---------- 状态 ---------- */
+  var shelf=[], lastRemoved=null, volOn=true, cleared=null, footNote=null;
+  var opened=null;          // 'row' | 'card'
+  var drag=null;            // 正在拖
+  var alertA=null;          // 短暂提醒
+  var airBusy=false;        // 隔空投送在等系统
+  var mode='none', prevMode='none', curTok=TOK.calm, dist0=1, justStashed=false;
+  var isl={w:HW.w,h:HW.h,r:HW.r,vw:0,vh:0,vr:0};
+  var pop={s:1,v:0};
+  var alpha={}, layers={}, lastCount=0, prevShownCount=0;
+  var at='stash', busy=false;
+  var LAYERS=['tray','music','airdrop','dropFile','dropWin','row','card','alert'];
+  LAYERS.forEach(function(n){var d=document.createElement('div');d.className='lay';d.dataset.l=n;island.appendChild(d);layers[n]=d;alpha[n]=0});
+
+  /* ---------- 日志与读数 ---------- */
+  var logEl=$('log'), logs=[];
+  function log(t){logs.unshift(t);logs=logs.slice(0,7);logEl.innerHTML=logs.map(function(x){return '<li>'+x+'</li>'}).join('')}
+  var LAYERNAME={none:'什么都没有',tray:'持续活动（文件架个数，优先级 10）',music:'持续活动（正在播放，40）',airdrop:'持续活动（隔空投送，80）',dropFile:'正在做的手势',dropWin:'正在做的手势',row:'你主动打开的',card:'你主动打开的',alert:'短暂提醒'};
+  var MODENAME={none:'刘海原样',tray:'紧凑：文件架个数',music:'紧凑：正在播放',airdrop:'紧凑：隔空投送',dropFile:'落点小岛（文件）',dropWin:'落点小岛（窗口）',row:'一排',card:'文件架卡',alert:'短暂提醒'};
+
+  /* ---------- 仲裁 ---------- */
+  function rest(){
+    if(airBusy) return 'airdrop';
+    if($('music').checked) return 'music';
+    if(shelf.length && $('showCount').checked) return 'tray';
+    if(shelf.length && justStashed) return 'tray';
+    return 'none';
+  }
+  function currentMode(){
+    if($('locked').checked||$('fullscreen').checked) return 'none';
+    if(drag && drag.open) return drag.p.kind==='window'?'dropWin':'dropFile';
+    if(opened) return opened;
+    if(alertA) return 'alert';
+    return rest();
+  }
+  function geom(m){
+    switch(m){
+      case 'tray': case 'airdrop': return {w:253,h:33.5,r:16};
+      case 'music': return {w:185+2*84,h:33.5,r:16};
+      case 'dropFile': case 'dropWin': return {w:340,h:84,r:22};
+      case 'row': return {w:rowWidth(),h:140,r:28};
+      case 'card': return {w:560,h:160,r:28};
+      case 'alert': return {w:400,h:72,r:24};
+    }
+    return {w:HW.w,h:HW.h,r:HW.r};
+  }
+  function tokenFor(m,prev){
+    if(m==='dropFile'||m==='dropWin') return TOK.catchDrop;
+    if(m==='row'||m==='card') return TOK.expand;
+    if(m==='alert') return TOK.bloom;
+    if(m==='tray'&&(prev==='dropFile')) return TOK.settle;
+    return TOK.calm;
+  }
+
+  /* ---------- 各层内容 ---------- */
+  function earL(html,w){return '<div class="ear" style="left:10px;width:'+(w-20)+'px">'+html+'</div>'}
+  function earR(html,w,x){return '<div class="ear" style="right:10px;width:'+(w-20)+'px;justify-content:flex-end'+(x||'')+'">'+html+'</div>'}
+  function size(el,g){el.style.width=g.w+'px';el.style.height=g.h+'px';el.style.marginLeft=(-g.w/2)+'px'}
+  function renderTray(){
+    var g=geom('tray'), n=shelf.length, el=layers.tray; size(el,g);
+    var num=(prevShownCount!==n && !reducedBox.checked)?'<span class="num"><i class="old">'+prevShownCount+'</i><i class="new">'+n+'</i></span>':'<span class="num"><i>'+n+'</i></span>';
+    prevShownCount=n;
+    el.innerHTML='<div class="ear" style="left:0;width:34px;justify-content:center">'+svg(G.tray,15)+'</div>'+
+      '<div class="ear" id="trayR" style="right:0;width:34px;justify-content:center">'+num+'</div>';
+    el.title='文件架，'+n+' 件';
+    el.onclick=function(){opened='card';checkStale();log('点紧凑的个数：直接打开文件架卡')};
+  }
+  function renderMusic(){
+    var g=geom('music'), el=layers.music; size(el,g);
+    el.innerHTML='<div class="ear" style="left:12px">'+svg(G.note,13)+'<span>September</span></div>'+
+      '<div class="ear" style="right:12px"><svg width="16" height="16" viewBox="0 0 20 20"><circle cx="10" cy="10" r="7" stroke="rgba(255,255,255,.25)" stroke-width="2.4" fill="none"/><circle cx="10" cy="10" r="7" stroke="#30d158" stroke-width="2.4" fill="none" stroke-dasharray="17.6 44" transform="rotate(-90 10 10)"/></svg></div>';
+  }
+  var spin=0;
+  function renderAirdrop(){
+    var g=geom('airdrop'), el=layers.airdrop; size(el,g);
+    el.innerHTML='<div class="ear" style="left:0;width:34px;justify-content:center">'+svg(G.airdrop,15)+'</div>'+
+      '<div class="ear" style="right:0;width:34px;justify-content:center"><svg id="arc" width="16" height="16" viewBox="0 0 20 20"><circle cx="10" cy="10" r="7" stroke="rgba(255,255,255,.22)" stroke-width="2.2" fill="none"/><circle cx="10" cy="10" r="7" stroke="#5ac8fa" stroke-width="2.2" fill="none" stroke-dasharray="11 44" stroke-linecap="round"/></svg></div>';
+  }
+  var FILECELLS=[{id:'stash',t:'暂存',g:G.tray},{id:'airdrop',t:'隔空投送',g:G.airdrop},{id:'open',t:'用 App 打开',g:G.open}];
+  var WINCELLS=[{id:'left',t:'左半屏'},{id:'fill',t:'铺满屏幕'},{id:'tuck',t:'收进刘海'},{id:'magic',t:'魔法平铺'},{id:'right',t:'右半屏'}];
+  function cellRects(kind){
+    var n=kind==='window'?5:3, m=10, gap=6, w=(340-2*m-gap*(n-1))/n, out=[];
+    for(var i=0;i<n;i++) out.push({x:CX-170+m+i*(w+gap),y:39.5,w:w,h:34.5});
+    return out;
+  }
+  function disabledReason(id,p){
+    if(id==='stash'&&shelfFullFor(p)) return '文件架满了';
+    if(id==='airdrop'&&$('noAirdrop').checked) return '隔空投送没开';
+    if(id==='open'&&p.kind==='text') return '文字挑不了 App';
+    return '';
+  }
+  function renderDrop(){
+    if(!drag) return;
+    var p=drag.p, win=p.kind==='window', el=layers[win?'dropWin':'dropFile'], g=geom('dropFile'); size(el,g);
+    var rects=cellRects(p.kind), h='';
+    var cells=win?WINCELLS:FILECELLS;
+    cells.forEach(function(c,i){
+      var r=rects[i], cls='cell', reason=win?'':disabledReason(c.id,p);
+      if(reason) cls+=' off';
+      else if(drag.hover===c.id) cls+=drag.soft?' soft':' hot';
+      h+='<div class="'+cls+'" style="left:'+(r.x-(CX-170))+'px;top:'+r.y+'px;width:'+r.w+'px;height:'+r.h+'px">'+
+        (win?layoutGlyph(c.id):svg(c.g,15)+'<span>'+c.t+'</span>')+'</div>';
+    });
+    var left, right='';
+    if(win){ left=svg(G.win,14)+'<span>1 扇窗口</span>'; var hc=WINCELLS.filter(function(c){return c.id===drag.hover})[0]; right=hc?hc.t:''; }
+    else{
+      var first=p.items[0], many=(p.count||p.items.length)>1;
+      var gl=p.kind==='text'?G.lines:p.kind==='image'?G.picture:p.kind==='link'?G.chain:first.kind==='folder'&&!many?G.folder:many?G.docs:G.doc;
+      left=svg(gl,14)+'<span>'+carryLabel(p)+'</span>';
+      var hr=drag.hover?disabledReason(drag.hover,p):'';
+      right=hr?'<span class="dim">'+hr+'</span>':'';
+    }
+    h+='<div class="ear" style="left:12px;width:'+(EAR-16)+'px">'+left+'</div>';
+    h+='<div class="ear" style="right:12px;width:'+(EAR-14)+'px;justify-content:flex-end">'+right+'</div>';
+    el.innerHTML=h;
+  }
+  function rowCells(){
+    var right=[];
+    if($('music').checked) right.push('music');
+    if(shelf.length) right.push('shelf');
+    return {left:['finder','preview'],right:right};
+  }
+  function rowWidth(){
+    var c=rowCells(), n=c.left.length+c.right.length;
+    return 14*2+n*124+(n-1)*8+(c.right.length?9:0);
+  }
+  function renderRow(){
+    var g=geom('row'), el=layers.row, c=rowCells(), x=14, h='', top=41.5, ch=84.5; size(el,g);
+    var W={finder:{t:'下载',a:'访达',bg:'linear-gradient(160deg,#3c4250,#262a33)'},preview:{t:'报价单.pdf',a:'预览',bg:'linear-gradient(160deg,#4a4f5c,#2c3039)'}};
+    c.left.forEach(function(k){
+      h+='<div class="rcell" style="left:'+x+'px;top:'+top+'px;width:124px;height:'+ch+'px"><div style="position:absolute;inset:6px 6px 26px;border-radius:9px;background:'+W[k].bg+'"></div><div class="t">'+W[k].t+' <span class="dim">'+W[k].a+'</span></div></div>';
+      x+=132;
+    });
+    if(c.right.length){ h+='<div class="divider" style="left:'+x+'px;top:'+(top+10)+'px;height:'+(ch-20)+'px"></div>'; x+=9; }
+    c.right.forEach(function(k){
+      if(k==='music'){
+        h+='<div class="rcell btn" style="left:'+x+'px;top:'+top+'px;width:124px;height:'+ch+'px"><div style="position:absolute;left:10px;top:10px;width:42px;height:42px;border-radius:9px;background:linear-gradient(140deg,#f6a35b,#c2416b)"></div><div class="t">September <span class="dim">正在播放</span></div></div>';
+      }else{
+        var th='', k3=shelf.slice(0,3);
+        var n3=k3.length, x0=62-17-(n3-1)*9;
+        k3.slice().reverse().forEach(function(it,j){var i=n3-1-j; th+='<div style="position:absolute;left:'+(x0+i*18)+'px;top:'+(14+(i===0?-2:0))+'px;transform:rotate('+((i-(n3-1)/2)*9)+'deg)">'+thumb(it,34)+'</div>'});
+        h+='<div class="rcell btn" id="shelfCell" role="button" tabindex="0" aria-label="文件架，'+shelf.length+' 件" style="left:'+x+'px;top:'+top+'px;width:124px;height:'+ch+'px">'+th+'<div class="t">文件架 <span class="dim">· '+shelf.length+'</span></div></div>';
+      }
+      x+=132;
+    });
+    el.innerHTML=h;
+    var sc=el.querySelector('#shelfCell');
+    if(sc){ sc.onclick=function(e){e.stopPropagation();opened='card';checkStale();log('点一排里的文件架：岛长成文件架卡（expand）')};
+            sc.onkeydown=function(e){if(e.key==='Enter'||e.key===' '){e.preventDefault();sc.onclick(e)}}; }
+  }
+  function renderCard(){
+    var g=geom('card'), el=layers.card; size(el,g);
+    var h='<div class="ear" style="left:14px;width:160px">'+svg(G.tray,14)+'<span>文件架</span><span class="dim">'+(shelf.length||'')+'</span></div>';
+    if(footNote) h+='<div class="ear" style="right:14px;width:170px;justify-content:flex-end"><span class="dim">'+footNote+'</span></div>';
+    else if(shelf.length) h+='<div class="ear" style="right:14px;width:170px;justify-content:flex-end;gap:6px"><button class="ib" id="cAir" aria-label="隔空投送全部">'+svg(G.airdrop,12)+'隔空投送</button><button class="ib" id="cClear">全部移出</button></div>';
+    if(cleared){
+      h+='<div class="empty"><span>文件架空了</span><button class="ib" id="cUndo">撤销</button></div>';
+    }else{
+      h+='<div class="tiles" id="tiles" role="list">';
+      shelf.forEach(function(it){
+        var why=it.trashed?'在废纸篓里':(it.vol&&!volOn?'硬盘没接上':'');
+        h+='<div class="tile'+(why?' stale':'')+(it._enter?' enter':'')+(it._bump?' bump':'')+'" role="listitem" tabindex="0" data-id="'+it.id+'" aria-label="'+it.name+(why?'，'+why:'')+'，文件架">'+
+          thumb(it,52)+'<div class="nm">'+(why?shortName(it.name,8)+'<br><span class="why">'+why+'</span>':shortName(it.name,18))+'</div>'+
+          '<button class="x" aria-label="移出文件架" data-x="'+it.id+'">✕</button></div>';
+        it._enter=false; it._bump=false;
+      });
+      h+='</div>';
+    }
+    el.innerHTML=h;
+    bindCard(el);
+  }
+  function shortName(n,max){
+    if(n.length<=max) return esc(n);
+    var dot=n.lastIndexOf('.'), ext=dot>0?n.slice(dot):'', base=dot>0?n.slice(0,dot):n, keep=max-ext.length-1;
+    return esc(base.slice(0,Math.ceil(keep*.6))+'…'+base.slice(base.length-Math.floor(keep*.4))+ext);
+  }
+  function esc(s){return String(s).replace(/[&<>"]/g,function(c){return {'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]})}
+  function renderAlert(){
+    if(!alertA) return;
+    var g=geom('alert'), el=layers.alert; size(el,g);
+    el.innerHTML='<div class="ear" style="left:14px">'+svg(alertA.glyph,15)+'</div><div class="ear" style="right:14px;color:'+(alertA.ok?'#30d158':'#ff9f0a')+'">'+svg(alertA.ok?G.check:G.bang,15)+'</div>'+
+      '<div class="al-title">'+alertA.title+'</div><div class="al-sub">'+alertA.sub+'</div>';
+  }
+  function renderLayer(m){
+    ({tray:renderTray,music:renderMusic,airdrop:renderAirdrop,dropFile:renderDrop,dropWin:renderDrop,row:renderRow,card:renderCard,alert:renderAlert}[m]||function(){})();
+  }
+
+  /* ---------- 文件架卡的交互 ---------- */
+  function bindCard(el){
+    var a=el.querySelector('#cAir'); if(a) a.onclick=function(e){e.stopPropagation();startAirdrop(shelf.filter(isLive),'卡上的“隔空投送”')};
+    var c=el.querySelector('#cClear'); if(c) c.onclick=function(e){e.stopPropagation();clearAll()};
+    var u=el.querySelector('#cUndo'); if(u) u.onclick=function(e){e.stopPropagation();undoClear()};
+    [].forEach.call(el.querySelectorAll('[data-x]'),function(b){
+      b.onpointerdown=function(e){e.stopPropagation()};
+      b.onclick=function(e){e.stopPropagation();removeItem(b.dataset.x)};
+    });
+    [].forEach.call(el.querySelectorAll('.tile'),function(t){
+      t.onpointerdown=function(e){tileDown(e,t.dataset.id)};
+      t.onkeydown=function(e){
+        if(e.key===' '){e.preventDefault();e.stopPropagation(); if($('ql').classList.contains('on')) $('ql').classList.remove('on'); else quickLook(byId(t.dataset.id));}
+        if(e.key==='Backspace'||e.key==='Delete'){e.preventDefault();removeItem(t.dataset.id)}
+      };
+    });
+  }
+  function byId(id){return shelf.filter(function(x){return x.id===id})[0]}
+  function isLive(it){return !it.trashed && !(it.vol&&!volOn)}
+  function removeItem(id){
+    var i=shelf.findIndex(function(x){return x.id===id}); if(i<0) return;
+    lastRemoved={it:shelf[i],i:i}; shelf.splice(i,1);
+    log('移出文件架：'+esc(lastRemoved.it.name)+'。原文件不动；⌘Z 撤销');
+    refresh();
+    if(!shelf.length && opened==='card'){ opened=null; }
+  }
+  function clearAll(){
+    if(!shelf.length) return;
+    cleared=shelf.slice(); shelf=[];
+    log('全部移出 '+cleared.length+' 个：卡上留“文件架空了 · 撤销” 5 秒；拿来的文字、图片、链接到时才删');
+    refresh();
+    clearTimeout(clearAll.t);
+    clearAll.t=setTimeout(function(){ if(cleared){ cleared=null; if(opened==='card') opened=null; log('撤销时间过了：拿来的文件删掉'); refresh(); } },5000);
+  }
+  function undoClear(){ if(!cleared) return; shelf=cleared; cleared=null; clearTimeout(clearAll.t); log('撤销：'+shelf.length+' 个回到文件架'); refresh(); }
+
+  var qlFor=null;
+  function quickLook(it){
+    if(!it) return; qlFor=it;
+    $('qlBig').innerHTML=thumb(it,150);
+    $('qlName').textContent=it.name;
+    $('qlSub').textContent=it.kind==='folder'?'文件夹 · 128 项':it.kind==='stack'?'第 1 个，共 '+it.count+' 个 · 方向键翻':it.vol?'在移动硬盘上':'空格或 Esc 关上';
+    $('ql').classList.add('on');
+    log('大图预览：'+esc(it.name));
+  }
+  $('ql').addEventListener('click',function(){$('ql').classList.remove('on')});
+
+  /* ---------- 存进文件架 ---------- */
+  var seq=0;
+  function shelfFullFor(p){
+    var add=p.kind==='window'?0:(p.items.length>=STACK_AT?1:p.items.filter(function(it){return !findSame(it)}).length);
+    return shelf.length+add>LIMIT && add>0;
+  }
+  function findSame(it){ return it.key?shelf.filter(function(x){return x.key===it.key})[0]:null; }
+  function stash(p){
+    if(shelfFullFor(p)){ log('文件架满了（24 格）：不收，不挤掉旧的'); return false; }
+    var added=0, bumped=0;
+    var items=p.items;
+    items.slice().reverse().forEach(function(src){
+      var same=findSame(src);
+      if(same){ shelf.splice(shelf.indexOf(same),1); shelf.unshift(same); same._bump=true; bumped++; return; }
+      var it={}; for(var k in src) it[k]=src[k];
+      it.id='i'+(++seq); it._enter=true; shelf.unshift(it); added++;
+      if(it.kind==='file'&&!it.fromWeb||it.kind==='folder') log('记成书签：'+esc(it.name)+'（只记位置，不拷贝）');
+      else if(it.kind==='stack') log('一次 '+it.count+' 个：叠成一格“'+it.name+'”，50 个书签');
+      else log('存进“拿来的”：'+esc(it.name));
+    });
+    if(bumped&&!added) log('同一个文件已经在文件架上：那一格弹一下、挪到最前，个数不变');
+    return true;
+  }
+
+  /* ---------- 隔空投送 ---------- */
+  var adItems=null;
+  function startAirdrop(items,from){
+    if($('noAirdrop').checked){ log('隔空投送没开：不收'); return; }
+    if(!items||!items.length) return;
+    adItems=items; airBusy=true;
+    log(from+'：交给系统的隔空投送，挑设备');
+    $('ad').classList.add('on');
+  }
+  function finishAirdrop(dev){
+    $('ad').classList.remove('on');
+    if(!dev){ airBusy=false; log('你自己取消了：刘海不说话'); return; }
+    log('发给“'+dev+'”：刘海右耳转着弧，系统不给进度，不画假进度');
+    setTimeout(function(){
+      airBusy=false;
+      var n=adItems.reduce(function(s,it){return s+(it.count||1)},0);
+      var ok=!$('reject').checked;
+      var one=n===1&&adItems[0].kind!=='stack';
+      showAlert({glyph:G.airdrop,ok:ok,title:ok?(one?'已送出':n+' 个文件已送出'):'没送出去',sub:ok?(one?esc(shortName(adItems[0].name,24))+' · 隔空投送':'隔空投送'):'对方拒收，或者断开了'});
+    },1600);
+  }
+  [].forEach.call(document.querySelectorAll('[data-dev]'),function(b){b.onclick=function(){finishAirdrop(b.dataset.dev==='iPhone'?'我的 iPhone':'客厅的 iPad')}});
+  $('adCancel').onclick=function(){finishAirdrop(null)};
+  var dotT=0;
+  function showAlert(a){
+    if((drag&&drag.open)||opened){ dotFlash(); log('结果撞上'+(drag?'手势':'你打开的卡')+'：变成一个点，不回来补说'); return; }
+    if($('locked').checked){ log('锁屏中：结果不补说'); return; }
+    a.until=performance.now()+2600; alertA=a; log('短暂提醒：'+a.title+'（bloom，停 2.6 秒）');
+    refresh();
+  }
+  function dotFlash(){ var d=$('dot'); d.style.opacity=1; clearTimeout(dotT); dotT=setTimeout(function(){d.style.opacity=0},1400); }
+
+  /* ---------- 主屏幕：用 App 打开（今天的做法） ---------- */
+  var APPS=[{n:'预览',c:'linear-gradient(160deg,#7fb2ff,#3b6fd8)',k:['pdf','png','jpg']},{n:'图像工具',c:'linear-gradient(160deg,#ffb36b,#e0603a)',k:['png','jpg']},{n:'文本编辑',c:'linear-gradient(160deg,#eaeaea,#a9a9b0)',k:['txt','md','docx']},{n:'视频播放器',c:'linear-gradient(160deg,#4b4f5a,#1c1e24)',k:['mov']},
+            {n:'浏览器',c:'linear-gradient(160deg,#7ad3ff,#2a8ae0)',k:['pdf','png','jpg','webloc']},{n:'代码编辑器',c:'linear-gradient(160deg,#6f7bf0,#3c3fa8)',k:['folder','md','txt']},{n:'演示',c:'linear-gradient(160deg,#ffc860,#e69a1e)',k:['key']},{n:'文稿',c:'linear-gradient(160deg,#ff9c6b,#e3602f)',k:['docx']}];
+  function openLaunchpad(p){
+    var exts=p.items.map(function(it){return it.kind==='folder'?'folder':it.kind==='stack'?'*':it.ext});
+    var nm=p.items.length===1&&p.items[0].kind!=='stack'?'“'+shortName(p.items[0].name,22)+'”':'这 '+(p.count||p.items.length)+' 个文件';
+    $('lpPill').innerHTML='用哪个 App 打开'+nm;
+    $('lpGrid').innerHTML=APPS.map(function(a,i){
+      var lit=exts.every(function(e){return e==='*'?true:a.k.indexOf(e)>=0});
+      return '<button type="button" class="app'+(lit?'':' dim')+'" data-app="'+i+'"><span style="background:'+a.c+'"></span>'+a.n+'</button>';
+    }).join('');
+    [].forEach.call($('lpGrid').querySelectorAll('.app'),function(b){
+      b.onclick=function(e){e.stopPropagation();
+        if(b.classList.contains('dim')){ b.classList.remove('shake'); void b.offsetWidth; b.classList.add('shake'); return; }
+        $('lp').classList.remove('on'); log('用“'+APPS[b.dataset.app].n+'”打开；主屏幕收回刘海');
+      };
+    });
+    $('lp').classList.add('on');
+    log('主屏幕从刘海里涌出来：只有能打开它的 App 亮着');
+  }
+  $('lp').addEventListener('click',function(){$('lp').classList.remove('on')});
+
+  var leaveT=0;
+  function scheduleLeave(){
+    clearTimeout(leaveT);
+    leaveT=setTimeout(function(){ if(opened&&!drag&&!cleared&&!$('ql').classList.contains('on')){ log((opened==='card'?'文件架卡':'一排')+'：指针离开 0.3 秒，calm 收回'); opened=null; } },300);
+  }
+  /* ---------- 拖动：真拖与模拟共用 ---------- */
+  function toScreen(e){var r=stage.getBoundingClientRect(), k=r.width/980; return {x:(e.clientX-r.left)/k,y:(e.clientY-r.top)/k}}
+  var ghost=null;
+  function makeGhost(p){
+    ghost=document.createElement('div'); ghost.className='ghost';
+    if(p.kind==='window') ghost.innerHTML='<div class="gw"></div>';
+    else if(p.kind==='out') ghost.innerHTML=thumb(p.items[0],52)+($('cmd').checked||p.move?'':'<span class="op">+</span>');
+    else{ var n=p.count||p.items.length; ghost.innerHTML='<div style="position:relative">'+thumb(p.items[0],40)+(n>1?'<span class="th" style="position:absolute;right:-4px;bottom:-2px"><span class="badge" style="position:static">'+n+'</span></span>':'')+'</div>'; }
+    screen.appendChild(ghost);
+  }
+  function placeGhost(x,y){ if(!ghost) return; var o=drag&&drag.p.kind==='window'?{x:60,y:-16}:{x:-6,y:-12}; ghost.style.transform='translate('+(x-o.x)+'px,'+(y-o.y)+'px)'; }
+  function beginDrag(p,x,y){
+    if($('locked').checked){ log('锁屏中：什么都不出'); return false; }
+    drag={p:p,x:x,y:y,open:false,hover:null,soft:false,leaveAt:0,hoverAt:0,suspended:opened};
+    if(p.kind!=='out'&&opened){ log('拖动进来：'+(opened==='card'?'文件架卡':'一排')+'挂起，换成落点小岛'); opened=null; }
+    makeGhost(p); placeGhost(x,y);
+    return true;
+  }
+  function dragMove(x,y){
+    if(!drag) return; drag.x=x; drag.y=y; placeGhost(x,y);
+    var p=drag.p; if(p.kind==='out') return;
+    if($('fullscreen').checked){ if(y<40&&!drag.fsLogged){drag.fsLogged=true;log('原生全屏：落点小岛不出来，系统菜单栏自己下来')} return; }
+    var dx=Math.abs(x-CX), now=performance.now();
+    if(!drag.open){
+      if(dx<=194&&y<=60){ drag.open=true; drag.leaveAt=0; log(p.kind==='window'?'拖标题栏靠近刘海：落点小岛（五格，窗口）':'拖着“'+carryLabel(p)+'”靠近刘海：落点小岛（三格，文件）'); }
+    }else{
+      var inside=dx<=170+24&&y<=84+24;
+      if(!inside){ if(!drag.leaveAt) drag.leaveAt=now; if(now-drag.leaveAt>150){ drag.open=false; drag.hover=null; renderDropIfOpen(); return; } }
+      else drag.leaveAt=0;
+    }
+    var hov=null, soft=false;
+    if(drag.open && dx<=170 && y<=84){
+      if(y<33.5){ if(p.kind!=='window'){ hov='stash'; soft=true; } }
+      else{ var rs=cellRects(p.kind), cells=p.kind==='window'?WINCELLS:FILECELLS, best=0, bd=1e9;
+        rs.forEach(function(r,i){var d=Math.abs(x-(r.x+r.w/2)); if(d<bd){bd=d;best=i}}); hov=cells[best].id; }
+    }
+    if(hov!==drag.hover||soft!==drag.soft){ drag.hover=hov; drag.soft=soft; drag.hoverAt=now; renderDropIfOpen(); }
+    if(hov==='open'&&!soft&&!disabledReason('open',p)&&now-drag.hoverAt>=350&&!drag.lpFired){ drag.lpFired=true; var pp=p; endDrag(true); openLaunchpad(pp); }
+  }
+  function renderDropIfOpen(){ if(drag&&drag.open) renderDrop(); }
+  function flyBack(){
+    if(!ghost) return; var g=ghost, src=drag&&drag.home; ghost=null;
+    if(reducedBox.checked||!src){ g.remove(); return; }
+    g.style.transition='transform .34s cubic-bezier(.3,.8,.3,1),opacity .34s'; g.style.transform='translate('+(src.x-26)+'px,'+(src.y-26)+'px)'; g.style.opacity='.3';
+    setTimeout(function(){g.remove()},360);
+  }
+  function endDrag(silent){
+    if(!drag) return;
+    var d=drag, p=d.p, target=d.open?d.hover:null;
+    if(silent){ if(ghost){ghost.remove();ghost=null} drag=null; restoreSuspended(d); return; }
+    if(p.kind==='out'){ dropOut(d); return; }
+    if(p.kind==='window'){
+      if(target){ var c=WINCELLS.filter(function(x){return x.id===target})[0]; log('窗口松在“'+c.t+'”（今天的落点小岛，示意）'); }
+      else log('窗口没松在落点小岛上：小岛收回');
+      if(ghost){ghost.remove();ghost=null} drag=null; restoreSuspended(d); return;
+    }
+    var reason=target?disabledReason(target,p):'';
+    if(!target||reason){
+      log(reason?reason+'：松手不收，东西飞回去':'松在落点小岛外：什么都不做，小岛收回');
+      flyBack(); drag=null; restoreSuspended(d); return;
+    }
+    if(ghost){ghost.remove();ghost=null}
+    drag=null;
+    if(target==='stash'){
+      if(stash(p)){ justStashed=true; pop.s=1; pop.v=reducedBox.checked?0:3.2; clearTimeout(endDrag.t);
+        if(!$('showCount').checked) endDrag.t=setTimeout(function(){justStashed=false;refresh()},2600); }
+      restoreSuspended(d);
+    }else if(target==='airdrop'){
+      restoreSuspended(d);
+      startAirdrop(p.items,'松在“隔空投送”');
+    }else if(target==='open'){
+      restoreSuspended(d); openLaunchpad(p);
+    }
+    refresh();
+  }
+  function restoreSuspended(d){ if(d.suspended&&d.p.kind!=='out'&&!opened){ opened=d.suspended; if(opened==='card'&&!shelf.length&&!cleared) opened=null; if(opened) log((opened==='card'?'文件架卡':'一排')+'原样回来，不重播进场'); } }
+
+  /* 拖出文件架 */
+  function tileDown(e,id){
+    if(e.button!==0&&e.pointerType==='mouse') return;
+    e.stopPropagation();
+    var it=byId(id), s=toScreen(e), moved=false, startX=s.x, startY=s.y, el=e.currentTarget;
+    function mv(ev){ var q=toScreen(ev);
+      if(!moved&&Math.hypot(q.x-startX,q.y-startY)>4){
+        if(!isLive(it)){ el.classList.remove('bump'); void el.offsetWidth; el.classList.add('bump'); log('这一格'+(it.trashed?'在废纸篓里':'的移动硬盘没接上')+'：拖不出来'); cleanup(); return; }
+        moved=true; beginDrag({kind:'out',items:[it],move:ev.metaKey},q.x,q.y); drag.id=id; drag.home={x:q.x,y:q.y};
+      }
+      if(moved) dragMove(q.x,q.y);
+    }
+    function up(ev){ cleanup(); if(moved){ if(ev.metaKey) drag.p.move=true; endDrag(); } else quickLook(it); }
+    function cleanup(){ window.removeEventListener('pointermove',mv); window.removeEventListener('pointerup',up); }
+    window.addEventListener('pointermove',mv); window.addEventListener('pointerup',up);
+  }
+  function dropOut(d){
+    var it=d.p.items[0], move=$('cmd').checked||d.p.move;
+    var onCard=opened==='card'&&Math.abs(d.x-CX)<=280&&d.y<=160;
+    if(ghost){ghost.remove();ghost=null} drag=null;
+    if(onCard||d.y<40){ log('松回文件架上：什么都不做'); return; }
+    desktopCopies.push({it:it,x:Math.min(880,Math.max(20,d.x-43)),y:Math.min(400,Math.max(44,d.y-30)),fresh:true,move:move});
+    if(move){ var i=shelf.indexOf(it); if(i>=0) shelf.splice(i,1); log('按住 ⌘ 拖到桌面：移动（和访达一样）；这一格离开文件架'); if(!shelf.length&&opened==='card') opened=null; }
+    else log('拖到桌面：拷贝。原文件不动，这一格留着（访达里带 + 角标）');
+    renderDesk(); refresh(); scheduleLeave();
+  }
+
+  /* 真拖：桌面、窗口里的东西、标题栏 */
+  function bindSource(el,key){
+    el.addEventListener('pointerdown',function(e){
+      if(e.button!==0&&e.pointerType==='mouse') return;
+      if(busy) return;
+      e.preventDefault(); e.stopPropagation();
+      var s=toScreen(e), started=false, sx=s.x, sy=s.y;
+      function mv(ev){ var q=toScreen(ev);
+        if(!started&&Math.hypot(q.x-sx,q.y-sy)>(key==='window'?10:4)){ started=beginDrag(payload(key),q.x,q.y); if(started) drag.home={x:sx,y:sy}; else cleanup(); }
+        if(started) dragMove(q.x,q.y);
+      }
+      function up(){ cleanup(); if(started) endDrag(); }
+      function cleanup(){ window.removeEventListener('pointermove',mv); window.removeEventListener('pointerup',up); }
+      window.addEventListener('pointermove',mv); window.addEventListener('pointerup',up);
+    });
+  }
+  function renderDesk(){
+    var h='';
+    DESK.forEach(function(d){ var it=SRC[d.src]; var gone=it.vol&&!volOn;
+      h+='<div class="dsk'+(gone?' gone':'')+'" data-d="'+d.src+'" style="left:'+d.x+'px;top:'+d.y+'px">'+thumb(it,48)+'<span class="lb">'+esc(shortName(it.name,16))+'</span>'+(it.vol?'<span class="vol">'+(gone?'移动硬盘没接上':'在移动硬盘上')+'</span>':'')+'</div>'; });
+    desktopCopies.forEach(function(c,i){ h+='<div class="dsk'+(c.fresh?' fresh':'')+'" style="left:'+c.x+'px;top:'+c.y+'px;cursor:default">'+thumb(c.it,48)+'<span class="lb">'+esc(shortName(c.move?c.it.name:c.it.name.replace(/(\.[^.]+)?$/,' 副本$1'),16))+'</span></div>'; c.fresh=false; });
+    desk.innerHTML=h;
+    [].forEach.call(desk.querySelectorAll('[data-d]'),function(el){
+      var k=el.dataset.d, key={quote:'one',shot:'one',deck:'one',contract:'one',folder:'folder',mov:'mov'}[k];
+      if(SRC[k].vol&&!volOn) return;
+      bindSource(el,key==='one'?'desk:'+k:key);
+    });
+  }
+  var _payload=payload;
+  payload=function(key){ if(key.indexOf('desk:')===0){ var it=SRC[key.slice(5)]; return {kind:'files',items:[it],from:key.slice(5)}; } return _payload(key); };
+  [].forEach.call(document.querySelectorAll('[data-src]'),function(el){bindSource(el,el.dataset.src)});
+  bindSource($('proxy'),'proxy');
+  bindSource($('winTb'),'window');
+
+  /* ---------- 模拟拖（按钮） ---------- */
+  function homeOf(p){
+    if(p.from==='win') return {x:190,y:110};
+    if(p.from==='proxy') return {x:190,y:110};
+    if(String(p.from).indexOf('chip:')===0){ var i={'chip:text':0,'chip:image':1,'chip:link':2}[p.from]; return {x:90,y:150+i*40}; }
+    var d=DESK.filter(function(d){return d.src===p.from})[0]; return d?{x:d.x+43,y:d.y+26}:{x:820,y:300};
+  }
+  function moveTo(x,y,ms){
+    return new Promise(function(res){
+      if(!drag){res();return}
+      var x0=drag.x,y0=drag.y,t0=performance.now();
+      (function st(){ if(!drag){res();return}
+        var t=Math.min(1,(performance.now()-t0)/ms), e=t<.5?2*t*t:1-Math.pow(-2*t+2,2)/2;
+        dragMove(x0+(x-x0)*e,y0+(y-y0)*e);
+        if(t<1) requestAnimationFrame(st); else res(); })();
+    });
+  }
+  function wait(ms){return new Promise(function(r){setTimeout(r,ms)})}
+  async function simulate(key){
+    if(busy||drag) return;
+    if(key==='mov'&&!volOn){ log('移动硬盘没接上：桌面上那个拖不了'); return; }
+    var p=payload(key), h=homeOf(p);
+    if(opened&&!cleared) opened=null; // 指针去拿东西了：卡和一排早就因为指针离开收回了
+    if(!beginDrag(p,h.x,h.y)) return;
+    busy=true; drag.home=h;
+    try{
+      await moveTo(CX+(h.x>CX?120:-120),110,620);
+      await moveTo(CX+(h.x>CX?40:-40),48,360);
+      if(!drag) return;
+      var spot;
+      if(p.kind==='window') spot=cellRects('window')[2];
+      else if(at==='notch') spot={x:CX+50,y:6,w:0,h:20};
+      else if(at==='away') spot=null;
+      else spot=cellRects('files')[{stash:0,airdrop:1,open:2}[at]];
+      if(spot){ await moveTo(spot.x+spot.w/2,spot.y+spot.h/2,380); await wait(at==='open'?480:420); }
+      else{ await wait(300); await moveTo(CX+330,250,560); await wait(200); }
+      if(drag) endDrag();
+    } finally { busy=false; }
+  }
+  [].forEach.call(document.querySelectorAll('[data-drag]'),function(b){b.addEventListener('click',function(){simulate(b.dataset.drag)})});
+  [].forEach.call(document.querySelectorAll('[data-at]'),function(b){b.addEventListener('click',function(){
+    at=b.dataset.at; [].forEach.call(document.querySelectorAll('[data-at]'),function(x){x.setAttribute('aria-pressed',x===b)});
+  })});
+
+  /* ---------- 其它按钮 ---------- */
+  var hoverT=0;
+  function openRow(){ if($('locked').checked||$('fullscreen').checked){log('锁屏或全屏：不展开');return} opened='row'; log('指针停在刘海上 0.12 秒：展开那一排（expand）'+(shelf.length?'，右段最后一格是文件架':'；文件架空着，这一格不在')); }
+  $('bRow').onclick=openRow;
+  $('bCard').onclick=function(){ if(!shelf.length&&!cleared){log('文件架是空的：没有可以打开的');return} opened='card'; checkStale(); };
+  $('bClear').onclick=function(){ if(!shelf.length){log('文件架已经是空的');return} opened='card'; clearAll(); };
+  $('bVol').onclick=function(){
+    volOn=!volOn; this.setAttribute('aria-pressed',!volOn); this.textContent=volOn?'拔掉移动硬盘':'接回移动硬盘';
+    log(volOn?'移动硬盘接回来：那一格自己亮（系统通知，不轮询）':'移动硬盘拔了：那一格灰着留着，不去挂盘、不弹窗');
+    renderDesk(); refresh();
+  };
+  $('bDelete').onclick=function(){
+    var f=shelf.filter(function(x){return x.kind==='file'&&!x.fromWeb&&!x.trashed})[0];
+    var t=shelf.filter(function(x){return x.trashed&&!x.gone})[0];
+    if(t){ t.gone=true; log('废纸篓清空了：“'+esc(t.name)+'”真的没了；下次打开文件架时移出，右耳说一句'); refresh(); return; }
+    if(!f){log('文件架上没有可删的原文件；先暂存一个文件');return}
+    f.trashed=true; log('“'+esc(f.name)+'”进了废纸篓：那一格灰着写“在废纸篓里”。再点一次 = 清空废纸篓');
+    refresh();
+  };
+  $('bRelaunch').onclick=function(){
+    opened=null; alertA=null; airBusy=false; justStashed=false;
+    var gone=shelf.filter(function(x){return x.trashed||x.gone}).length;
+    shelf=shelf.filter(function(x){return !x.trashed&&!x.gone});
+    prevShownCount=shelf.length;
+    log('退出再打开：文件架还在（'+shelf.length+' 个，书签 + 拿来的文件）'+(gone?'；废纸篓里的 '+gone+' 个移出':'')+'；后台查一次，不轮询');
+    refresh();
+  };
+  $('bFill').onclick=function(){
+    var exts=['pdf','docx','md','txt','key','zip','png'];
+    while(shelf.length<LIMIT){ var e=exts[shelf.length%exts.length]; shelf.push({id:'i'+(++seq),kind:'file',name:'文件 '+(shelf.length+1)+'.'+e,ext:e,key:'fill#'+seq}); }
+    prevShownCount=shelf.length; log('装满 24 格：再拖进来，“暂存”灰着写“文件架满了”'); refresh();
+  };
+  function checkStale(){
+    var gone=shelf.filter(function(x){return x.gone});
+    if(gone.length){ shelf=shelf.filter(function(x){return !x.gone}); footNote=gone.length+' 个找不到了，已移出'; log('打开文件架时检查：'+footNote); setTimeout(function(){footNote=null;refresh()},4000); refresh(); }
+  }
+  ['music','showCount','noAirdrop','reject'].forEach(function(id){$(id).addEventListener('change',function(){
+    if(id==='music') log(this.checked?'开始放音乐：紧凑归正在播放（40），文件架个数让开，不变成点':'音乐停了：文件架个数回到两耳');
+    if(id==='showCount'){ justStashed=false; } if(id==='showCount') log(this.checked?'空闲时露个数（推荐）':'另一种：放进去后露 2.6 秒就回到刘海原样');
+    refresh();
+  })});
+  $('fullscreen').addEventListener('change',function(){ $('fs').classList.toggle('on',this.checked); opened=null; log(this.checked?'进入原生全屏：刘海这一块归 App':'退出全屏：文件架照旧'); refresh(); });
+  $('locked').addEventListener('change',function(){ $('lock').classList.toggle('on',this.checked); opened=null; alertA=null; ['ql','lp'].forEach(function(id){$(id).classList.remove('on')}); if($('ad').classList.contains('on')){ $('ad').classList.remove('on'); airBusy=false; } log(this.checked?'锁屏：什么都不出':'解锁：只报现在的事实，不补说'); refresh(); });
+  reducedBox.addEventListener('change',function(){ stage.classList.toggle('reduced',this.checked); refresh(); });
+  var themes=['跟随系统','浅色','深色'], ti=0;
+  $('theme').onclick=function(){ ti=(ti+1)%3; var r=document.documentElement; if(ti===0) r.removeAttribute('data-theme'); else r.setAttribute('data-theme',ti===1?'light':'dark'); this.textContent='主题：'+themes[ti]; };
+
+  /* 指针停在刘海上 / 离开 */
+  $('hwzone').addEventListener('pointerenter',function(){ if(drag) return; clearTimeout(hoverT); hoverT=setTimeout(function(){ if(!opened&&!drag) openRow(); },120); });
+  $('hwzone').addEventListener('pointerleave',function(){ clearTimeout(hoverT); });
+  $('hwzone').addEventListener('click',function(){ if(!opened&&!drag) openRow(); });
+  island.addEventListener('pointerenter',function(){clearTimeout(leaveT)});
+  $('hwzone').addEventListener('pointerenter',function(){clearTimeout(leaveT)});
+  island.addEventListener('pointerleave',function(){ if(!drag) scheduleLeave(); });
+  $('hwzone').addEventListener('pointerleave',function(){ if(!drag&&opened) scheduleLeave(); });
+  stage.addEventListener('pointerdown',function(e){
+    if(island.contains(e.target)||e.target===$('hwzone')) return;
+    if(e.target.closest('.ov')) return;
+    if(opened&&!cleared){ opened=null; }
+  });
+  window.addEventListener('keydown',function(e){
+    if(e.key==='Escape'){ if($('ql').classList.contains('on')) $('ql').classList.remove('on'); else if($('lp').classList.contains('on')) $('lp').classList.remove('on'); else if($('ad').classList.contains('on')) finishAirdrop(null); else if(opened) opened=null; }
+    if(e.key===' '&&$('ql').classList.contains('on')){ e.preventDefault(); $('ql').classList.remove('on'); }
+    if((e.metaKey||e.ctrlKey)&&e.key.toLowerCase()==='z'&&lastRemoved&&opened==='card'){ e.preventDefault(); var r=lastRemoved; lastRemoved=null; shelf.splice(Math.min(r.i,shelf.length),0,r.it); r.it._enter=true; log('⌘Z：'+esc(r.it.name)+' 回到文件架'); refresh(); }
+  });
+
+  /* ---------- 帧 ---------- */
+  var dirty=true, last=performance.now();
+  function refresh(){ dirty=true; }
+  function enter(m){
+    prevMode=mode; mode=m;
+    var g=geom(m); dist0=Math.max(1,Math.abs(g.w-isl.w)+Math.abs(g.h-isl.h));
+    curTok=tokenFor(m,prevMode);
+    renderLayer(m);
+  }
+  function step(o,key,target,tok,dt){ var w=2*Math.PI/tok.r, k=w*w, c=2*tok.z*w; var a=k*(target-o[key])-c*o['v'+key]; o['v'+key]+=a*dt; o[key]+=o['v'+key]*dt; }
+  function frame(ts){
+    var dt=Math.min(.032,(ts-last)/1000||.016); last=ts;
+    var rm=reducedBox.checked;
+    if(alertA&&ts>alertA.until){ alertA=null; }
+    var m=currentMode();
+    if(m!==mode) enter(m);
+    else if(dirty){ renderLayer(m); }
+    dirty=false;
+    var g=geom(mode);
+    if(rm){ isl.w=g.w; isl.h=g.h; isl.r=g.r; isl.vw=isl.vh=isl.vr=0; }
+    else{ for(var i=0;i<2;i++){ step(isl,'w',g.w,curTok,dt/2); step(isl,'h',g.h,curTok,dt/2); step(isl,'r',g.r,curTok,dt/2); } }
+    island.style.width=Math.max(60,isl.w).toFixed(2)+'px';
+    island.style.height=Math.max(20,isl.h).toFixed(2)+'px';
+    var r=Math.max(4,isl.r).toFixed(2)+'px';
+    island.style.borderRadius='0 0 '+r+' '+r;
+    island.classList.toggle('flat',mode==='none'||mode==='tray'||mode==='music'||mode==='airdrop');
+    var prog=1-(Math.abs(g.w-isl.w)+Math.abs(g.h-isl.h))/dist0;
+    LAYERS.forEach(function(n){
+      var want=(n===mode&&(rm||prog>=.4))?1:0, a=alpha[n];
+      var rate=rm?dt/.25:(want>a?dt/.18:dt/.10);
+      a=want>a?Math.min(want,a+rate):Math.max(want,a-rate);
+      alpha[n]=a; layers[n].style.opacity=a.toFixed(3);
+      layers[n].classList.toggle('live',n===mode&&a>.5);
+      layers[n].style.visibility=a<=0?'hidden':'visible';
+    });
+    // 右耳弹一下
+    if(!rm){ step(pop,'s',1,TOK.pop,dt); } else pop.s=1;
+    var tr=document.getElementById('trayR'); if(tr) tr.style.transform='scale('+pop.s.toFixed(3)+')';
+    if(mode==='airdrop'){ spin=(spin+dt*360)%360; var arc=document.getElementById('arc'); if(arc) arc.style.transform='rotate('+spin+'deg)'; }
+    // 读数
+    readout(g);
+    requestAnimationFrame(frame);
+  }
+  var roLast='';
+  function readout(g){
+    var s='<span>此刻：<b>'+MODENAME[mode]+'</b></span><span>层：<b>'+LAYERNAME[mode]+'</b></span><span>弹簧：<b class="token">'+(reducedBox.checked?'reduced 0.25 秒淡化':curTok.n+' '+curTok.r.toFixed(2)+' / ζ '+curTok.z.toFixed(2))+'</b></span><span>形状：<b>'+(+g.w.toFixed(1))+' × '+g.h+'，圆角 '+g.r+'</b></span><span>文件架：<b>'+shelf.length+' / '+LIMIT+'</b></span>';
+    if(s!==roLast){ $('readout').innerHTML=s; roLast=s; }
+  }
+
+  /* ---------- 缩放舞台 ---------- */
+  function fit(){ var k=stage.clientWidth/980; screen.style.transform='scale('+k+')'; }
+  window.addEventListener('resize',fit); fit();
+  try{ if(window.matchMedia('(prefers-reduced-motion: reduce)').matches){ reducedBox.checked=true; stage.classList.add('reduced'); } }catch(e){}
+
+  // 开场：文件架里已有两件，好看出“空闲时露个数”
+  stash({kind:'files',items:[SRC.contract]}); stash({kind:'link',items:[SRC.link]});
+  shelf.forEach(function(x){x._enter=false}); prevShownCount=shelf.length; logs=[]; logEl.innerHTML='';
+  log('开场：文件架里已有 2 件，刘海两耳露出文件架符号和个数（最低优先级）。点上面的按钮，或在舞台里真拖。');
+  renderDesk();
+  requestAnimationFrame(frame);
+})();
+</script>
+</body>
+</html>

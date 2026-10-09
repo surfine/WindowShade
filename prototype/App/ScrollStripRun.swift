@@ -108,8 +108,11 @@ final class ScrollStripController {
 
     // MARK: 开、关
 
-    func start(_ strip: ScrollStrip, screen: NSScreen, elements: [CGWindowID: AXUIElement], pids: [CGWindowID: pid_t]) {
+    func start(_ initial: ScrollStrip, screen: NSScreen, elements: [CGWindowID: AXUIElement], pids: [CGWindowID: pid_t]) {
         stop(reason: "replaced")
+        // 设置 › 卷帘 › 排布：走到一列时贴边 / 居中 / 放不下才居中，放得下就居中。放得下时整组先摆到正中。
+        var strip = initial
+        strip.applyStoredCentering()
         self.strip = strip
         displayID = Self.displayID(screen)
         self.elements = elements
@@ -170,6 +173,7 @@ final class ScrollStripController {
         gestures.owner.notch.coachUsed(.stripScroll)
         endMotion()
         peek.dismiss(reason: "scroll")
+        strip?.forgetLastInsert()
         scrollStart = strip?.offset ?? 0
         scrollNow = scrollStart
         samples = []
@@ -179,25 +183,27 @@ final class ScrollStripController {
     func scroll(fingerDX: CGFloat, at time: TimeInterval) {
         guard let strip else { return }
         var value = scrollStart - fingerDX
-        // 两头越往外越拉不动（橡皮筋），松手弹回。
+        // 两头越往外越拉不动（橡皮筋），松手弹回。两头是 scrollBounds：贴边时是 [0, maxOffset]，
+        // 居中方式下第一列、最后一列居中的位置，整组居中时只有那一个点（offset 可以是负数）。
         let limit = Double(strip.area.width * 0.25)
-        if value < 0 { value = -CGFloat(FluidMotion.rubberBand(Double(-value), limit: limit)) }
-        else if value > strip.maxOffset {
-            value = strip.maxOffset + CGFloat(FluidMotion.rubberBand(Double(value - strip.maxOffset), limit: limit))
+        let bounds = strip.scrollBounds
+        if value < bounds.lowerBound {
+            value = bounds.lowerBound - CGFloat(FluidMotion.rubberBand(Double(bounds.lowerBound - value), limit: limit))
+        } else if value > bounds.upperBound {
+            value = bounds.upperBound + CGFloat(FluidMotion.rubberBand(Double(value - bounds.upperBound), limit: limit))
         }
         scrollNow = value
         samples.append((time, value))
-        if samples.count > 8 { samples.removeFirst(samples.count - 8) }
+        // 只留最近 0.3 秒，松手时再取最后 0.15 秒算速度。
+        samples.removeAll { time - $0.time > 0.3 }
         apply(offset: value)
     }
 
     /// 松手：按最后一小段的速度推算会停在哪，吸到最近的列边上，接着速度弹簧过去。
-    func endScroll() {
+    /// time 和 scroll(fingerDX:at:) 用同一个时钟：手指停住一会儿再抬起，不会带着旧的速度甩出去。
+    func endScroll(at time: TimeInterval) {
         guard let strip else { return }
-        var velocity: CGFloat = 0
-        if let first = samples.first, let last = samples.last, last.time - first.time > 0.008 {
-            velocity = (last.offset - first.offset) / CGFloat(last.time - first.time)
-        }
+        let velocity = ScrollStrip.releaseVelocity(samples: samples, releaseTime: time)
         // 减速率和官网一致（0.998，像普通滚动，滑得远、停得柔）；原来 0.995 停得太急。
         let projected = scrollNow + CGFloat(FluidMotion.projection(velocity: Double(velocity), decelerationRate: 0.998))
         let target = strip.snapped(projected)
@@ -211,6 +217,7 @@ final class ScrollStripController {
     /// focusVisible：手指滑完停下后，焦点所在的那扇已经滑出屏幕时，把焦点给停下后露在屏幕上的第一列（niri 也是这样）。
     private func animate(from start: CGFloat, to target: CGFloat, velocity: CGFloat, focusVisible: Bool = false) {
         endMotion()
+        self.strip?.forgetLastInsert()
         peek.dismiss(reason: "moving")
         guard abs(target - start) >= 0.5 else {
             settle(at: target, focusVisible: focusVisible)
@@ -284,8 +291,82 @@ final class ScrollStripController {
         guard strip.columns.indices.contains(next), let target = strip.columns[next].ids.first else { return false }
         lastFocused = target
         focus(target)
-        animate(from: strip.offset, to: strip.revealing(next), velocity: 0)
+        animate(from: strip.offset, to: strip.offsetFor(next, previous: index), velocity: 0)
         return true
+    }
+
+    /// 设置里改了“走到一列时”或“放得下就居中”：卷轴开着就按新的方式立刻停到该停的位置。
+    func refreshCentering() {
+        guard var strip, overview == nil else { return }
+        let stored = ScrollStrip.storedCentering()
+        guard strip.centering != stored.mode || strip.centersWhenFits != stored.whenFits else { return }
+        strip.centering = stored.mode
+        strip.centersWhenFits = stored.whenFits
+        self.strip = strip
+        let focusColumn = lastFocused.flatMap { strip.column(of: $0) } ?? strip.columns.indices.first { strip.revealing($0) == strip.offset }
+        let target = focusColumn.map { strip.offsetFor($0) } ?? strip.clamped(strip.offset)
+        animate(from: strip.offset, to: target, velocity: 0)
+    }
+
+    /// ⌃⌘[ ⌃⌘]：焦点那扇窗并进左边或右边那一列，已经在一列里就拆成自己一列。默认不占键（GlobalShortcut）。
+    /// 焦点不在卷轴里、旁边没有那一列返回 false。
+    @discardableResult
+    func joinFocused(toward side: ScrollStrip.Side) -> Bool {
+        guard let id = focusedWindow().flatMap({ windowID(of: $0) }), contains(id) else { return false }
+        return join(id, toward: side)
+    }
+
+    /// 并进左边或右边那一列（叠到那一列底下、高度平分）；已经在一列里就拆成自己一列，宽度同原来那一列。
+    /// 每扇至少 280 点高：放不下就不并进，那一列晃一下。返回 true 表示这个动作有了回应（含晃一下）。
+    @discardableResult
+    func join(_ id: CGWindowID, toward side: ScrollStrip.Side) -> Bool {
+        guard var strip, overview == nil, strip.column(of: id) != nil else { return false }
+        switch strip.join(id, toward: side) {
+        case .none:
+            return false
+        case .full(let column):
+            wlog("strip: join refused, column \(column) already holds \(strip.columns[column].ids.count)")
+            refuseJoin(column: column)
+            return true
+        case .merged(let column), .split(let column):
+            endMotion()
+            peek.dismiss(reason: "join")
+            lastFocused = id
+            self.strip = strip
+            apply()
+            wlog("strip: window \(id) joined/split toward \(side) → column \(column) of \(strip.columns.count)")
+            // 只剩一列：卷轴结束，窗口留在原处（和关窗口剩一列时一样）。
+            if strip.columns.count <= 1 { stop(reason: "one column left") }
+            return true
+        }
+    }
+
+    /// 那一列放不下：整列的窗口左右晃一下（pop）；减少动态效果、或那一列停在屏幕外时不晃，在刘海上说一句。
+    private func refuseJoin(column: Int) {
+        guard let strip, strip.columns.indices.contains(column) else { return }
+        let parked = strip.parked()
+        let ids = strip.columns[column].ids
+        if Motion.reduced || parked.left.contains(column) || parked.right.contains(column) {
+            _ = gestures.owner.notch.announce("这一列放不下了", tone: .problem)
+            return
+        }
+        for (step, dx) in [8, -8, 5, -3, 0].enumerated() {
+            let delta = CGFloat(dx)
+            DispatchQueue.main.asyncAfter(deadline: .now() + 0.05 * Double(step)) { [weak self] in
+                MainActor.assumeIsolated { self?.nudge(ids, dx: delta) }
+            }
+        }
+    }
+
+    /// 晃一下的一步：只在最近摆上去的外框上横着挪一点，不改大小、不改卷轴（挪得不到 24 点，对账不会当成被人拖走）。
+    private func nudge(_ ids: [CGWindowID], dx: CGFloat) {
+        guard strip != nil else { return }
+        for id in ids {
+            guard let element = elements[id], let pid = pids[id], var frame = applied[id] else { continue }
+            frame.origin.x += dx
+            mover.move(element, pid: pid, id: id, to: frame, resize: false)
+        }
+        busyUntil = max(busyUntil, CACurrentMediaTime() + 0.6)
     }
 
     /// 这一列宽一档或窄一档，并让它整列露出来。
@@ -301,10 +382,11 @@ final class ScrollStripController {
     /// 把这扇窗那一列整列滑出来，焦点给它（概览里点它）。
     func reveal(_ id: CGWindowID) {
         guard let strip, let index = strip.column(of: id) else { return }
+        let previous = lastFocused.flatMap { strip.column(of: $0) }
         lastFocused = id
         if let pid = pids[id] { NSRunningApplication(processIdentifier: pid)?.activate() }
         focus(id)
-        animate(from: strip.offset, to: strip.revealing(index), velocity: 0)
+        animate(from: strip.offset, to: strip.offsetFor(index, previous: previous), velocity: 0)
         wlog("strip: reveal id=\(id) column=\(index)")
     }
 
@@ -343,10 +425,29 @@ final class ScrollStripController {
             self?.reveal(id)
         }
         view.onClose = { [weak self] in self?.overview = nil }
+        let opened = strip
+        view.onMove = { [weak self] id, drop in
+            self?.overview = nil
+            self?.moveFromOverview(id, drop, opened: opened)
+        }
         overview = view
         view.show()
         wlog("strip: overview opens (\(reason)) columns=\(strip.columns.count) offset=\(Int(strip.offset))")
         return true
+    }
+
+    /// 概览里拖着换了位置（或 VoiceOver 动作）：真窗口只摆一轮。概览开着的时候卷轴变过（开了关了窗口）就作废。
+    private func moveFromOverview(_ id: CGWindowID, _ drop: ScrollStrip.Drop, opened: ScrollStrip) {
+        guard var strip, strip.columns == opened.columns, strip.move(id, to: drop) else { return }
+        endMotion()
+        peek.dismiss(reason: "overview move")
+        lastFocused = id
+        self.strip = strip
+        apply()
+        focus(id)
+        wlog("strip: overview moved window \(id) \(drop) → \(strip.columns.count) columns")
+        // 只剩一列：卷轴结束，窗口留在原处。
+        if strip.columns.count <= 1 { stop(reason: "one column left") }
     }
 
     /// 标题栏上两指张合了一帧（TrackpadGestures.magnify 转过来）。只记账、不吞事件：卷轴里的窗口张开原本不做事。
@@ -504,9 +605,10 @@ final class ScrollStripController {
         }
         // 点到（或 ⌘Tab 到）停在边上、只露出一部分的窗口：把它整列滑出来。只在焦点换了的时候。
         let focusChanged = facts.focusedID != lastFocused
+        let previousColumn = lastFocused.flatMap { strip.column(of: $0) }
         lastFocused = facts.focusedID
         if !changed, focusChanged, !motionActive, let focusedID = facts.focusedID, let index = strip.column(of: focusedID) {
-            let target = strip.revealing(index)
+            let target = strip.offsetFor(index, previous: previousColumn)
             if abs(target - strip.offset) > 1 {
                 self.strip = strip
                 animate(from: strip.offset, to: target, velocity: 0)
@@ -548,7 +650,7 @@ final class ScrollStripController {
             scroll(fingerDX: fingerDX * CGFloat(step) / CGFloat(max(1, steps)), at: t0 + Double(step) * 0.016)
             try? await Task.sleep(nanoseconds: 16_000_000)
         }
-        endScroll()
+        endScroll(at: t0 + Double(max(1, steps)) * 0.016)
     }
 }
 

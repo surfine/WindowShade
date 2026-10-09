@@ -121,6 +121,7 @@ final class MissionControlKeys {
             self.threadRunLoop = nil
         }
         thread.name = "WindowShade.MissionControlKeys"
+        thread.qualityOfService = .userInteractive
         thread.stackSize = 512 * 1024
         self.thread = thread
         installed = true

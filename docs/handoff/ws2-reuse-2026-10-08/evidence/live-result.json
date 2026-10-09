@@ -1,0 +1,32 @@
+{
+  "date": "2026-10-08T06:36:08.956643+00:00",
+  "binarySHA256": "98e0efa4735430a97a24047fdebf92698b8d9dca5b6509798db8cb7efa6290fe",
+  "command": ".build/remote-device-probe/RemoteDeviceProbe --serve 120 --discovery-profile atv-core",
+  "configuration": {
+    "replyPolicy": "current",
+    "pairingEnvelope": "default",
+    "identifierRepresentation": "compact",
+    "m6Metadata": "none"
+  },
+  "operatorReady": true,
+  "liveStarted": true,
+  "pinInPersistentLog": false,
+  "phoneObservations": null,
+  "pid": 77790,
+  "observedAt": "2026-10-08T06:42:13.944646+00:00",
+  "exitCode": 0,
+  "finished": {
+    "acceptedConnections": 0,
+    "applicationActions": 0,
+    "deniedConnections": 0,
+    "event": "finished",
+    "incomingConnections": 0,
+    "persistentCredentials": false,
+    "remainingListeners": 0,
+    "unsupportedConnections": 0
+  },
+  "candidateAEAD": null,
+  "validInputs": null,
+  "conclusion": "NO_CONNECTION_SAMPLE",
+  "liveLogSHA256": "8791adbc1d0764b548475081795c5d813544d55877aa6821fb78372edd28f3d1"
+}

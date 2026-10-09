@@ -3,7 +3,7 @@
 // 往下滑：让开这个 App（和 ⌘H、再点一下 Dock 图标是同一件事），点一下图标就回来。
 // Swish 往下滑是把窗口最小化；这里不往 Dock 里塞缩略图，让开整个 App，回来也只要点一下。
 //
-// 默认关。只旁听滚动（被动监听），不拦截：Dock 自己不理图标上的滚动，照常收到也没事。
+// 默认关。只旁听滚动（被动监听；打开合成输入监听时在输入线程上先过滤，见 GlobalInputFilter.swift），不拦截：Dock 自己不理图标上的滚动，照常收到也没事。
 // 全局监听会收到系统里每一个滚动事件：没有进行中的一下时，除了“开始”一律立刻返回；
 // 开始时只做几何粗筛和一次窗口表查询（事件落在 Dock 自己的窗口上才接）；
 // 松手、认准是上下滑之后，才在后台队列问 Dock 指针下是哪个图标。不开计时器，不轮询。
@@ -33,7 +33,10 @@ final class DockSwipeController {
 
     weak var owner: AppDelegate?
     private var monitor: Any?
-    private var session: Session?
+    private var session: Session? {
+        // 合成输入监听（GlobalInputFilter.swift）按它过滤，和 handle 开头的 guard 一样。
+        didSet { if (oldValue == nil) != (session == nil) { let on = session != nil; GlobalInputFilter.publish { $0.dockSwipeSessionActive = on } } }
+    }
     /// 每认出一下加一：后台问 Dock 的结果回来时，已经有更新的一下就作废。
     private var generation: UInt64 = 0
     private var lastCommit: (pid: pid_t, direction: DockSwipeDirection, at: TimeInterval)?
@@ -54,12 +57,12 @@ final class DockSwipeController {
         self.owner = owner
         if Self.isEnabled, owner.ownsGlobalInput {
             guard monitor == nil else { return }
-            monitor = NSEvent.addGlobalMonitorForEvents(matching: .scrollWheel) { [weak self] event in
-                MainActor.assumeIsolated { self?.handle(event) }
+            monitor = GlobalInputFilter.shared.addMonitor(.dockSwipe) { [weak self] event in
+                self?.handle(event)
             }
             wlog("dock-swipe: on")
         } else if let monitor {
-            NSEvent.removeMonitor(monitor)
+            GlobalInputFilter.shared.removeMonitor(monitor)
             self.monitor = nil
             session = nil
             cancelActivationWait()

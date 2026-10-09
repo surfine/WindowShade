@@ -47,6 +47,26 @@ enum UpdateCopy {
     static let settingsGroup = "更新"
     static let autoCheck = "自动检查更新"
     static let autoCheckDetail = "有新版本时在菜单里告诉你，不会自己装。"
+    /// “上次检查：今天 09:40”。昨天写“昨天 09:40”，更早写“10月3日 09:40”。没检查过时不显示（用 autoCheckDetail）。
+    static func lastChecked(_ date: Date, now: Date = Date(), calendar: Calendar = .current) -> String {
+        let clock = DateFormatter()
+        clock.calendar = calendar
+        clock.timeZone = calendar.timeZone
+        clock.locale = Locale(identifier: "en_US_POSIX")
+        clock.dateFormat = "HH:mm"
+        let time = clock.string(from: date)
+        let day: String
+        if calendar.isDate(date, inSameDayAs: now) {
+            day = "今天"
+        } else if let yesterday = calendar.date(byAdding: .day, value: -1, to: now),
+                  calendar.isDate(date, inSameDayAs: yesterday) {
+            day = "昨天"
+        } else {
+            let parts = calendar.dateComponents([.month, .day], from: date)
+            day = "\(parts.month ?? 1)月\(parts.day ?? 1)日"
+        }
+        return "上次检查：\(day) \(time)"
+    }
     static let frequency = "检查频率"
     static let daily = "每天"
     static let weekly = "每周"

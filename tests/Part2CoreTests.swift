@@ -46,7 +46,8 @@ final class TestClock: WS2Clock, @unchecked Sendable {
         test("LEASE05 obscured reminder not replayed") {
             c.remind(on:a,at:time(2)); c.release(auth,at:time(2))
             expect(c.snapshots(at:time(2)).first?.layer == .idle,"no replay")
-            expect(c.snapshots(at:time(2)).first?.hasSecondaryDot == true,"secondary dot")
+            // 点被那一层消耗：放行结束、屏上没人时熄，不补说（docs/design-grammar.md）。
+            expect(c.snapshots(at:time(2)).first?.hasSecondaryDot == false,"secondary dot consumed")
             expect(!c.isCurrent(shelf),"not restored")
         }
         test("LEASE06 lock barrier clears sensitive state") {

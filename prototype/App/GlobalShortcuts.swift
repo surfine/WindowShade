@@ -53,6 +53,15 @@ enum GlobalShortcut: String, CaseIterable {
     /// 画中画：当前窗口缩成一张实时画面浮在屏幕角落；再按一下回到原处。默认不占快捷键。
     case pictureInPicture
     case focusTimer
+    /// 展开刘海那一排，用方向键选、Return 打开、Esc 退出（M07）。默认不占快捷键，需要的人在设置里录一个。
+    case notchShelf
+    /// 卷轴里：焦点那扇窗并进左边或右边那一列，已经在一列里就拆成自己一列（niri 的 Mod+[ ]）。
+    /// 默认不占快捷键；设置里录一个（比如 ⌃⌘[ 和 ⌃⌘]）。
+    case joinColumnLeft
+    case joinColumnRight
+    /// 计时器：刘海里长出选分钟（↑ ↓ 调，回车开始，Esc 取消）；已经有一个在走就先显示它。
+    /// 计时器默认不占快捷键（Aaron 2026-10-09 定：和“新装默认不占快捷键”一致）。设置里一键用 ⌃⌥T 开启，也能录别的。
+    case countdownTimer
 
     typealias HotKey = WindowBrowserSettings.HotKey
 
@@ -95,6 +104,10 @@ enum GlobalShortcut: String, CaseIterable {
         case .previousDisplay: return 33
         case .pictureInPicture: return 34
         case .focusTimer: return 36
+        case .notchShelf: return 37
+        case .joinColumnLeft: return 38
+        case .joinColumnRight: return 39
+        case .countdownTimer: return 40
         }
     }
 
@@ -137,12 +150,17 @@ enum GlobalShortcut: String, CaseIterable {
         case .previousDisplay: return "移到上一块屏幕"
         case .pictureInPicture: return "画中画当前窗口"
         case .focusTimer: return "开始或暂停番茄钟"
+        case .notchShelf: return "展开刘海那一排"
+        case .joinColumnLeft: return "并进左边这一列"
+        case .joinColumnRight: return "并进右边这一列"
+        case .countdownTimer: return "开始计时器"
         }
     }
 
     /// 各版本出厂就占着的组合：新装的一个都不占；1.0.15 及以前是 ⌃⌘C、0、P、G 和四个方向键；
     /// 1.0.16 测试版另占 ⌃⌘S、L、M、N、H。只用来让升级上来的人照原样用下去，不再给新装的。
     func factoryHotKey(for history: InstallHistory) -> HotKey? {
+        // 计时器是新功能，1.0.15 及以前没有它，所以新装和升级都不占键；⌃⌥T 只在设置里手动启用。
         guard history.hadFactoryShortcuts else { return nil }
         let controlCommand = UInt32(controlKey | cmdKey)
         func key(_ code: Int) -> HotKey { HotKey(keyCode: UInt32(code), modifiers: controlCommand) }
@@ -160,7 +178,7 @@ enum GlobalShortcut: String, CaseIterable {
         case .magicTile: return history == .preview ? key(kVK_ANSI_M) : nil
         case .nextDisplay: return history == .preview ? key(kVK_ANSI_N) : nil
         case .tuckAll: return history == .preview ? key(kVK_ANSI_H) : nil
-        case .tuckCurrent, .focusTimer: return nil
+        case .tuckCurrent, .focusTimer, .notchShelf, .joinColumnLeft, .joinColumnRight, .countdownTimer: return nil
         case .windowBrowser, .suspendPins, .topHalf, .bottomHalf, .topLeft, .topRight, .bottomLeft, .bottomRight, .leftThird,
              .centerThird, .rightThird, .leftTwoThirds, .rightTwoThirds, .fill, .fullHeight, .larger, .smaller, .center,
              .undoPlacement, .previousDisplay, .pictureInPicture: return nil
@@ -174,6 +192,8 @@ enum GlobalShortcutSettings {
     typealias HotKey = WindowBrowserSettings.HotKey
 
     static let numberedExpandKey = "GlobalShortcut.numberedExpand"
+    /// 计时器的一键启用组合：设置里“用 ⌃⌥T 开计时器”按钮录的就是它。出厂不占，这里只是它的值。
+    static let countdownHotKey = HotKey(keyCode: UInt32(kVK_ANSI_T), modifiers: UInt32(controlKey | optionKey))
     /// ⌃⌘1…9 这一组的修饰键：编号和菜单顺序绑定，不单独改键，只能整组开关。
     static let numberedModifiers = UInt32(controlKey | cmdKey)
     static let numberedKeyCodes: [UInt32] = [

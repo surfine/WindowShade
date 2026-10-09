@@ -58,7 +58,25 @@ import Foundation
 
 @MainActor final class WS2PairSetupServer {
     enum Failure: Error { case sequence, malformed, expired, closed }
-    enum State { case fresh, awaitingM3, awaitingM5, finished, closed }
+    enum State { case fresh, awaitingM3, awaitingM5, awaitingConfirmation, finished, closed }
+    /// M5 验过签名、还没写进存储的那一台。等本机的人用 Touch ID 确认。
+    struct PendingEnrollment: Equatable, Sendable { let identifier: Data; let publicKey: Data }
+    private(set) var pendingEnrollment: PendingEnrollment?
+    private var pendingReply: Data?
+#if WS2_PROBE_DIAGNOSTICS
+    struct EnrollmentReceipt {
+        let connection: UUID
+        private let peer: WS2PeerRepository.Peer
+        fileprivate init(connection: UUID, peer: WS2PeerRepository.Peer) {
+            self.connection = connection; self.peer = peer
+        }
+        @MainActor func isCurrent(connection: UUID, repository: WS2PeerRepository) -> Bool {
+            self.connection == connection && repository.current(identifier: peer.identifier,
+                publicKey: peer.publicKey, revision: peer.revision)
+        }
+    }
+    private(set) var diagnosticEnrollment: EnrollmentReceipt?
+#endif
     let connection: UUID
     private(set) var state: State = .fresh
     private let admission: WS2PairingAdmission
@@ -70,7 +88,35 @@ import Foundation
         self.connection = connection; self.admission = admission; self.repository = repository; self.engine = engine
     }
     func receive(_ tlv: Data) throws -> Data {
-        guard state != .closed, state != .finished else { throw Failure.closed }
+        guard let reply = try advance(tlv, deferringEnrollment: false) else { throw Failure.sequence }
+        return reply
+    }
+    /// 同一流程，只是 M5 验过之后先停：返回 nil，`pendingEnrollment` 写着是哪一台；
+    /// 拿到 Touch ID 回执再 `commitEnrollment`，那之前不写存储、不发 M6。
+    func receiveDeferringEnrollment(_ tlv: Data) throws -> Data? {
+        try advance(tlv, deferringEnrollment: true)
+    }
+    /// 用这一台的回执登记，返回 M6。期限、回执对不上、存储失败都关掉这次配对。
+    func commitEnrollment(_ receipt: WS2EnrollmentReceipt) throws -> Data {
+        guard state == .awaitingConfirmation, let pending = pendingEnrollment, let reply = pendingReply else { throw Failure.sequence }
+        do {
+            guard admission.isCurrent(connection) else { throw Failure.expired }
+            let peer = try repository.enroll(identifier: pending.identifier, publicKey: pending.publicKey, receipt: receipt)
+            try admission.succeeded(connection); claimed = false; state = .finished
+            pendingEnrollment = nil; pendingReply = nil
+#if WS2_PROBE_DIAGNOSTICS
+            diagnosticEnrollment = EnrollmentReceipt(connection: connection, peer: peer)
+#else
+            _ = peer
+#endif
+            return reply
+        } catch {
+            if claimed { admission.failed(connection); claimed = false }
+            pendingEnrollment = nil; pendingReply = nil; state = .closed; engine.clear(); throw error
+        }
+    }
+    private func advance(_ tlv: Data, deferringEnrollment: Bool) throws -> Data? {
+        guard state != .closed, state != .finished, state != .awaitingConfirmation else { throw Failure.closed }
         do {
             guard tlv.count <= 4096 else { throw Failure.malformed }
             switch state {
@@ -100,10 +146,20 @@ import Foundation
                 guard admission.isCurrent(connection), (16...2048).contains(result.encryptedM6.count) else { throw Failure.expired }
                 // Form the bounded reply before committing, then durably store peer before exposing M6.
                 let reply = try PairingTLV.encode([(6, Data([6])), (5, result.encryptedM6)])
-                _ = try repository.enroll(identifier: result.identifier, publicKey: result.publicKey)
+                if deferringEnrollment {
+                    pendingEnrollment = PendingEnrollment(identifier: result.identifier, publicKey: result.publicKey)
+                    pendingReply = reply; state = .awaitingConfirmation; engine.clear()
+                    return nil
+                }
+                let peer = try repository.enroll(identifier: result.identifier, publicKey: result.publicKey)
                 try admission.succeeded(connection); claimed = false; state = .finished; engine.clear()
+#if WS2_PROBE_DIAGNOSTICS
+                diagnosticEnrollment = EnrollmentReceipt(connection: connection, peer: peer)
+#else
+                _ = peer
+#endif
                 return reply
-            case .finished, .closed: throw Failure.closed
+            case .awaitingConfirmation, .finished, .closed: throw Failure.closed
             }
         } catch {
             if claimed { admission.failed(connection); claimed = false }
@@ -111,7 +167,11 @@ import Foundation
         }
     }
     func cancel() {
+#if WS2_PROBE_DIAGNOSTICS
+        diagnosticEnrollment = nil
+#endif
         if claimed { admission.failed(connection); claimed = false }
+        pendingEnrollment = nil; pendingReply = nil
         state = .closed; engine.clear()
     }
 }

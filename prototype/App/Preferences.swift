@@ -204,8 +204,27 @@ static func noticeTone(_ message: String) -> NotchPanel.Tone {
                                  isOn: NotchController.isEnabled, action: #selector(prefToggleNotch(_:))),
             makeUnifiedToggleRow(name: "有变化时提醒", subtitle: "收起的窗口标题变了，比如编译完成，刘海会短暂展开告诉你",
                                  isOn: NotchController.alertsEnabled, action: #selector(prefToggleNotchAlerts(_:))),
+            makeUnifiedToggleRow(name: "回来时说一下离开期间的事", subtitle: "锁屏或睡眠时有变化才说",
+                                 isOn: AwaySummaryController.isEnabled, action: #selector(prefToggleAwaySummary(_:))),
             makeUnifiedToggleRow(name: "实时活动", subtitle: "在刘海和启动台负一屏查看音乐、耳机、隔空投送与路线",
                                  isOn: NotchActivityController.isEnabled, action: #selector(prefToggleActivities(_:))),
+            // 正在播放默认开（NP-4）：关了，刘海上不再显示歌，也不再长出大卡。
+            makeUnifiedToggleRow(name: "正在播放", subtitle: "歌名和封面显示在刘海上",
+                                 isOn: NotchNowPlayingDefaults.musicEnabled(in: .standard), action: #selector(prefToggleNowPlaying(_:))),
+            // 番茄钟的设置属于“实时活动”这一栏（R09：从「专注与输入」挪过来）。
+            MainActor.assumeIsolated { WS2FocusSettingsRows(runtime: ws2Runtime) },
+            makeUnifiedToggleRow(name: "计时器到时间响一声", subtitle: "响一次系统提示音，不循环；系统静音时不响",
+                                 isOn: CountdownTimerSettings.chimeEnabled, action: #selector(prefToggleTimerChime(_:))),
+            // 日程：开关加提前量（CAL-4）。没有权限时副标题这么写，点一下去系统设置。
+            makeCalendarSettingsRow(),
+            makeUnifiedToggleRow(name: "浏览器下载", subtitle: "读取「下载」文件夹，看有没有没下完的文件",
+                                 isOn: DownloadActivitySource.isEnabled, action: #selector(prefToggleDownloads(_:))),
+            // 音量和亮度：开关默认开；没允许辅助功能时副标题改说系统的提示也会出现，并带“允许…”。
+            LevelRowHost { [weak self] in self?.makeLevelKeysRow() ?? NSView() },
+            makeUnifiedToggleRow(name: "合成一排", subtitle: "窗口和正在进行的事排在同一排",
+                                 isOn: NotchController.mergedRowEnabled, action: #selector(prefToggleMergedRow(_:))),
+            makeUnifiedToggleRow(name: "文件架", subtitle: "拖到刘海暂存的文件放在这里；关掉后清空",
+                                 isOn: FileShelf.enabled, action: #selector(prefToggleFileShelf(_:))),
             // 欢迎窗口第二步问的那一句，在这里能改；没答时一段都不选。
             makeUnifiedControlRow(name: "之前常用", subtitle: "卡住时，刘海按你原来的习惯提示 Mac 上怎么做",
                                   control: SwitcherOriginControl.make()),
@@ -218,6 +237,11 @@ static func noticeTone(_ message: String) -> NotchPanel.Tone {
         let gapSeg = NSSegmentedControl(labels: ["不留", "窄", "宽"], trackingMode: .selectOne,
                                         target: self, action: #selector(prefSelectArrangeGap(_:)))
         gapSeg.selectedSegment = ArrangeGap.choices.firstIndex(of: ArrangeGap.points) ?? 0
+        let centeringPopup = NSPopUpButton(frame: .zero, pullsDown: false)
+        centeringPopup.addItems(withTitles: Self.centeringTitles)
+        centeringPopup.selectItem(at: ScrollStrip.Centering.allCases.firstIndex(of: ScrollStrip.storedCentering().mode) ?? 0)
+        centeringPopup.target = self
+        centeringPopup.action = #selector(prefSelectCentering(_:))
         let arrangeCard = makeUnifiedSettingsCard([
             makeUnifiedControlRow(name: "窗口之间留缝",
                                   subtitle: "半屏、四角、网格、魔法平铺、卷轴排好的窗口之间和屏幕边留一道缝",
@@ -225,6 +249,12 @@ static func noticeTone(_ message: String) -> NotchPanel.Tone {
             makeUnifiedToggleRow(name: "分屏把手",
                                  subtitle: "两扇窗口拼满一块屏时，中间出现一根小竖条：拖它两扇一起变，推到屏幕边那一扇进侧拉",
                                  isOn: SplitViewController.isEnabled, action: #selector(prefToggleSplitDivider(_:))),
+            makeUnifiedToggleRow(name: "拖到窗口上并排", subtitle: "把窗口拖到另一扇上，两扇并排",
+                                 isOn: TrackpadGestureController.dropSplitEnabled, action: #selector(prefToggleDropSplit(_:))),
+            makeUnifiedControlRow(name: "走到一列时", subtitle: "贴边：挪得最少。居中：永远在正中",
+                                  control: centeringPopup),
+            makeUnifiedToggleRow(name: "放得下就居中", subtitle: "列加起来不到一屏时，整组放在正中",
+                                 isOn: ScrollStrip.storedCentering().whenFits, action: #selector(prefToggleCenterWhenFits(_:))),
         ])
         stack.addArrangedSubview(makePrefGroupLabel("排布"))
         stack.addArrangedSubview(arrangeCard)
@@ -258,19 +288,42 @@ static func noticeTone(_ message: String) -> NotchPanel.Tone {
         ])
         stack.addArrangedSubview(sound)
         sound.widthAnchor.constraint(equalTo: stack.widthAnchor).isActive = true
+        stack.setCustomSpacing(18, after: sound)
+
+        // 实验：两项都默认关，开关只管自己那一个键。
+        stack.addArrangedSubview(makePrefGroupLabel("实验"))
+        let experiments = makeUnifiedSettingsCard([
+            makeUnifiedToggleRow(name: "拷贝进度", subtitle: "Finder 拷贝时在刘海上显示拷到哪了",
+                                 isOn: CopyProgressSource.isEnabled, action: #selector(prefToggleCopyProgress(_:))),
+            makeUnifiedToggleRow(name: "猜你从哪来", subtitle: "按出别的系统的习惯时问一次",
+                                 isOn: OriginGuess.isEnabled(in: .standard), action: #selector(prefToggleOriginGuess(_:))),
+        ])
+        stack.addArrangedSubview(experiments)
+        experiments.widthAnchor.constraint(equalTo: stack.widthAnchor).isActive = true
         return root
     }
 
     /// 隐私一栏（原「权限与启动」）：先摊开读到的每一样（内容从 tools/privacy/registry.json 生成），
     /// 再把两项系统授权、登录时启动和更新并进同一页——开关全都还是原来那一个，不复制。
+    /// 页头只保留第一句；“除了检查更新，都不离开这台 Mac”要等联网实测核过再开（WS2PrivacyCopy.showsNetworkPromise）。
     func makePermissionsSettingsPage() -> NSView {
         let (root, stack) = makeSettingsPageRoot()
         stack.addArrangedSubview(makeSettingsHeader(
-            title: "隐私", subtitle: "WindowShade 读到的每一样都列在这里。", symbolName: "lock.shield"))
+            title: "隐私", subtitle: WS2PrivacyCopy.headerSubtitle(), symbolName: "lock.shield"))
         let pane = MainActor.assumeIsolated { WS2PrivacyPane(owner: self) }
         stack.addArrangedSubview(pane)
         pane.widthAnchor.constraint(equalTo: stack.widthAnchor).isActive = true
         stack.setCustomSpacing(18, after: pane)
+        stack.addArrangedSubview(makePrefGroupLabel("私人窗口"))
+        let bystanderRow = BystanderRowHost { [weak self] in self?.makeBystanderToggleRow() ?? NSView() }
+        let cover = makeUnifiedSettingsCard([
+            bystanderRow,
+            makeUnifiedControlRow(name: PrivateAppListPanel.rowTitle, subtitle: PrivateAppListPanel.rowSubtitle,
+                                  control: NSButton(title: "管理…", target: self, action: #selector(prefOpenPrivateApps(_:)))),
+        ])
+        stack.addArrangedSubview(cover)
+        cover.widthAnchor.constraint(equalTo: stack.widthAnchor).isActive = true
+        stack.setCustomSpacing(18, after: cover)
         stack.addArrangedSubview(makePrefGroupLabel("权限"))
         let permissions = makeUnifiedSettingsCard([
             makeUnifiedPermissionRow(symbol: "accessibility", name: "辅助功能",
@@ -283,6 +336,11 @@ static func noticeTone(_ message: String) -> NotchPanel.Tone {
         stack.addArrangedSubview(permissions)
         permissions.widthAnchor.constraint(equalTo: stack.widthAnchor).isActive = true
         stack.setCustomSpacing(18, after: stack.arrangedSubviews.last!)
+        stack.addArrangedSubview(makePrefGroupLabel("锁屏"))
+        let presence = makeUnifiedSettingsCard([makePresenceLockRow()])
+        stack.addArrangedSubview(presence)
+        presence.widthAnchor.constraint(equalTo: stack.widthAnchor).isActive = true
+        stack.setCustomSpacing(18, after: presence)
         stack.addArrangedSubview(makePrefGroupLabel("启动"))
         let launch = makeUnifiedSettingsCard([
             makeUnifiedToggleRow(name: "登录时自动启动", subtitle: launchAtLoginSubtitle(),
@@ -296,6 +354,37 @@ static func noticeTone(_ message: String) -> NotchPanel.Tone {
         stack.addArrangedSubview(update)
         update.widthAnchor.constraint(equalTo: stack.widthAnchor).isActive = true
         return root
+    }
+
+    /// 离开就锁（默认关）。还认不出手机时开关灰着；已经打开的仍能关掉。
+    private func makePresenceLockRow() -> NSView {
+        let on = PresenceLockDriver.isEnabled
+        let usable = PresenceLockDriver.sourceAvailable
+        let row = makeUnifiedToggleRow(name: "离开就锁",
+                                       subtitle: usable ? "手机走远了，倒数 10 秒后锁屏" : "还认不出你的手机，先不能用",
+                                       isOn: on, action: #selector(prefTogglePresenceLock(_:)))
+        (row as? NSStackView)?.arrangedSubviews.compactMap { $0 as? NSSwitch }.first?.isEnabled = usable || on
+        return row
+    }
+
+    @objc func prefOpenPrivateApps(_ sender: NSButton) {
+        MainActor.assumeIsolated { PrivateAppListPanel.present(from: sender.window) }
+    }
+
+    /// 关掉直接关；打开前先看一页风险说明（PresenceLockRiskSheet），按「打开」才打开。
+    @objc func prefTogglePresenceLock(_ sender: NSSwitch) {
+        guard sender.state == .on, !PresenceLockDriver.isEnabled else {
+            PresenceLockDriver.isEnabled = sender.state == .on
+            return
+        }
+        sender.state = .off
+        MainActor.assumeIsolated {
+            PresenceLockRiskSheet.present(from: sender.window) { [weak sender] accepted in
+                guard accepted else { return }
+                PresenceLockDriver.isEnabled = true
+                sender?.state = .on
+            }
+        }
     }
 
     func makePrefGroupLabel(_ text: String) -> NSView {
@@ -362,10 +451,68 @@ static func noticeTone(_ message: String) -> NotchPanel.Tone {
         WS2SettingsCopy.content(name: name, subtitle: subtitle, symbol: symbol ?? WS2SettingsCopy.symbol(for: name)).view
     }
 
+    /// “有人在看时收起私人窗口”：名单变了由 BystanderRowHost 重画这一行。
+    fileprivate func makeBystanderToggleRow() -> NSView {
+        let isOn = BystanderCameraPick.isEnabled
+        let shown = BystanderTuckRow.presentation(isOn: isOn, listEmpty: PrivateAppList.shared.isEmpty)
+        let row = makeUnifiedToggleRow(name: BystanderTuckRow.title, subtitle: shown.subtitle, isOn: isOn,
+                                       enabled: shown.enabled, action: #selector(prefToggleBystanderCover(_:)))
+        row.toolTip = shown.toolTip
+        return row
+    }
+
+    /// “音量和亮度”这一行：符号、名字、副标题、ⓘ；没允许辅助功能时多一个“允许…”；右边是开关（默认开）。
+    /// 副标题与按钮的写法归 NotchLevelSettingRow；辅助功能或开关变了由 LevelRowHost 重画。
+    fileprivate func makeLevelKeysRow() -> NSView {
+        let shown = NotchLevelSettingRow.make(accessibilityTrusted: hasAccessibilityPermission(),
+                                              versionVerified: MainActor.assumeIsolated { NotchLevelObserver.currentVersionVerified() })
+        let toggle = NSSwitch()
+        toggle.state = NotchLevelSetting.isEnabled() ? .on : .off
+        toggle.target = self
+        toggle.action = #selector(prefToggleLevelKeys(_:))
+        toggle.setAccessibilityLabel(NotchLevelSettingRow.title)
+        toggle.controlSize = .regular
+        let labels = WS2SettingsCopy.content(name: NotchLevelSettingRow.title, subtitle: shown.subtitle,
+                                             symbol: NotchLevelSettingRow.symbol).view
+        labels.addArrangedSubview(WS2SettingsInfoButton(text: shown.info, name: NotchLevelSettingRow.title))
+        labels.setContentHuggingPriority(.defaultLow, for: .horizontal)
+        labels.setContentCompressionResistancePriority(.defaultLow, for: .horizontal)
+        var trailing: [NSView] = []
+        if let title = shown.allowButton {
+            let allow = NSButton(title: title, target: self, action: #selector(prefAllowLevelKeys(_:)))
+            allow.bezelStyle = .rounded
+            allow.controlSize = .small
+            allow.setAccessibilityLabel("允许辅助功能，让\(NotchLevelSettingRow.title)生效")
+            allow.setContentHuggingPriority(.required, for: .horizontal)
+            trailing.append(allow)
+        }
+        trailing.append(toggle)
+        let row = NSStackView(views: [labels] + trailing)
+        row.orientation = .horizontal
+        row.alignment = .centerY
+        row.spacing = 14
+        row.edgeInsets = NSEdgeInsets(top: 8, left: 0, bottom: 8, right: 0)
+        row.heightAnchor.constraint(greaterThanOrEqualToConstant: 48).isActive = true
+        return row
+    }
+
+    @objc func prefToggleLevelKeys(_ sender: NSSwitch) {
+        NotchLevelSetting.setEnabled(sender.state == .on)
+        NotificationCenter.default.post(name: NotchLevelSetting.didChange, object: nil)
+    }
+
+    /// 调系统的辅助功能询问并打开“隐私与安全性 › 辅助功能”；之后设置窗口在前台时每 1 秒看一次，允许了就装监听。
+    @objc func prefAllowLevelKeys(_ sender: NSButton) {
+        _ = ensureAccessibility()
+        openAccessibilityPrivacySettings()
+        MainActor.assumeIsolated { LevelAllowWatcher.shared.start(window: sender.window) }
+    }
+
     private func makeUnifiedToggleRow(name: String, subtitle: String?, isOn: Bool,
-                                      action: Selector) -> NSView {
+                                      enabled: Bool = true, action: Selector) -> NSView {
         let toggle = NSSwitch()
         toggle.state = isOn ? .on : .off
+        toggle.isEnabled = enabled
         toggle.target = self
         toggle.action = action
         toggle.setAccessibilityLabel(name)
@@ -389,8 +536,8 @@ static func noticeTone(_ message: String) -> NotchPanel.Tone {
         return row
     }
 
-    private func makeUnifiedControlRow(name: String, subtitle: String?, control: NSControl) -> NSView {
-        control.sizeToFit()
+    private func makeUnifiedControlRow(name: String, subtitle: String?, control: NSView) -> NSView {
+        (control as? NSControl)?.sizeToFit()
         control.setContentHuggingPriority(.required, for: .horizontal)
         control.setContentCompressionResistancePriority(.required, for: .horizontal)
         let labels = makeUnifiedLabels(name: name, subtitle: subtitle)
@@ -510,8 +657,139 @@ static func noticeTone(_ message: String) -> NotchPanel.Tone {
         NotchActivityController.isEnabled = sender.state == .on
         MainActor.assumeIsolated { notch.activities.configure() }
     }
+    @objc func prefToggleNowPlaying(_ sender: NSSwitch) {
+        MainActor.assumeIsolated { notch.activities.setMusicEnabled(sender.state == .on) }
+    }
+    @objc func prefToggleTimerChime(_ sender: NSSwitch) {
+        CountdownTimerSettings.chimeEnabled = sender.state == .on
+    }
+
+    // MARK: 日程（CAL-3、CAL-4）
+
+    /// 设置里“日程”一行：符号 + 名字 + 一行副标题，右边提前量和开关。没有权限时开关关着，副标题写原因，点一下去系统设置。
+    fileprivate func makeCalendarSettingsRow() -> NSView {
+        let access = CalendarSource.access()
+        let toggle = NSSwitch()
+        toggle.state = CalendarSettingsPolicy.sourceShouldRun(switchOn: CalendarSettings.enabled, access: access) ? .on : .off
+        toggle.target = self
+        toggle.action = #selector(prefToggleCalendar(_:))
+        toggle.setAccessibilityLabel(CalendarWords.name)
+        toggle.controlSize = .regular
+        let lead = NSPopUpButton(frame: .zero, pullsDown: false)
+        for choice in CalendarSettingsPolicy.leadChoices {
+            lead.addItem(withTitle: CalendarSettingsPolicy.leadTitle(choice))
+            lead.lastItem?.tag = choice.rawValue
+        }
+        lead.selectItem(withTag: CalendarSettings.lead.rawValue)
+        lead.controlSize = .small
+        lead.target = self
+        lead.action = #selector(prefSelectCalendarLead(_:))
+        lead.isEnabled = access.canRead
+        lead.setAccessibilityLabel("日程提前量")
+        let controls = NSStackView(views: [lead, toggle])
+        controls.orientation = .horizontal
+        controls.alignment = .centerY
+        controls.spacing = 10
+        controls.setContentHuggingPriority(.required, for: .horizontal)
+        controls.setContentCompressionResistancePriority(.required, for: .horizontal)
+        let labels = makeUnifiedLabels(name: CalendarWords.name, subtitle: CalendarSettingsPolicy.subtitle(access: access),
+                                       symbol: "calendar")
+        labels.setContentHuggingPriority(.defaultLow, for: .horizontal)
+        labels.setContentCompressionResistancePriority(.defaultLow, for: .horizontal)
+        if access == .denied {
+            labels.addGestureRecognizer(NSClickGestureRecognizer(target: self, action: #selector(openCalendarSettingsAction)))
+            labels.toolTip = "打开系统设置"
+        }
+        let row = NSStackView(views: [labels, controls])
+        NSLayoutConstraint.activate([
+            labels.leadingAnchor.constraint(equalTo: row.leadingAnchor),
+            labels.trailingAnchor.constraint(equalTo: controls.leadingAnchor, constant: -14),
+            controls.trailingAnchor.constraint(equalTo: row.trailingAnchor),
+            labels.topAnchor.constraint(greaterThanOrEqualTo: row.topAnchor, constant: 8),
+            labels.bottomAnchor.constraint(lessThanOrEqualTo: row.bottomAnchor, constant: -8),
+        ])
+        row.orientation = .horizontal
+        row.alignment = .centerY
+        row.spacing = 14
+        row.edgeInsets = NSEdgeInsets(top: 8, left: 0, bottom: 8, right: 0)
+        row.heightAnchor.constraint(greaterThanOrEqualToConstant: 48).isActive = true
+        return row
+    }
+
+    @objc func prefToggleCalendar(_ sender: NSSwitch) {
+        let access = CalendarSource.access()
+        switch CalendarSettingsPolicy.toggle(on: sender.state == .on, access: access) {
+        case .disable:
+            CalendarSettings.enabled = false
+            MainActor.assumeIsolated { notch.activities.calendarSettingsChanged() }
+        case .enable:
+            CalendarSettings.enabled = true
+            MainActor.assumeIsolated { notch.activities.calendarSettingsChanged() }
+        case .requestThenEnable:
+            // 点了才问一次；给了再打开，不给就维持关，什么都不出。
+            sender.state = .off
+            MainActor.assumeIsolated {
+                notch.activities.requestCalendarAccess { [weak self, weak sender] granted in
+                    CalendarSettings.enabled = granted
+                    sender?.state = granted ? .on : .off
+                    self?.notch.activities.calendarSettingsChanged()
+                }
+            }
+        case .openSystemSettings:
+            sender.state = .off
+            openCalendarSettingsAction()
+        }
+    }
+
+    @objc func prefSelectCalendarLead(_ sender: NSPopUpButton) {
+        CalendarSettings.lead = CalendarActivity.LeadTime(clamping: sender.selectedItem?.tag ?? 0)
+        MainActor.assumeIsolated { notch.activities.calendarSettingsChanged() }
+    }
+
+    @objc func openCalendarSettingsAction() {
+        if let url = URL(string: CalendarSettings.systemSettingsURL) { NSWorkspace.shared.open(url) }
+    }
+
+    /// 欢迎窗口第三步“允许”：点了才问系统；给了就顺手打开设置里的“日程”，不给就整行收起，之后不追问。
+    @objc func allowCalendarFromWelcome(_ sender: Any?) {
+        MainActor.assumeIsolated {
+            notch.activities.requestCalendarAccess { [weak self] granted in
+                if granted {
+                    CalendarSettings.enabled = true
+                    self?.notch.activities.calendarSettingsChanged()
+                }
+                self?.refreshOnboardingState()
+            }
+        }
+    }
+    @objc func prefToggleDownloads(_ sender: NSSwitch) {
+        MainActor.assumeIsolated { notch.activities.setDownloadsEnabled(sender.state == .on) }
+    }
+    @objc func prefToggleFileShelf(_ sender: NSSwitch) {
+        MainActor.assumeIsolated {
+            notch.fileShelf.setEnabled(sender.state == .on)
+            notch.configureFileDrag()
+        }
+    }
+    @objc func prefToggleMergedRow(_ sender: NSSwitch) {
+        NotchController.mergedRowEnabled = sender.state == .on
+        MainActor.assumeIsolated { notch.mergedRowSettingChanged() }
+    }
+    @objc func prefToggleCopyProgress(_ sender: NSSwitch) {
+        MainActor.assumeIsolated { notch.activities.setCopyProgressEnabled(sender.state == .on) }
+    }
+    @objc func prefToggleOriginGuess(_ sender: NSSwitch) {
+        UserDefaults.standard.set(sender.state == .on, forKey: OriginGuess.enabledKey)
+    }
+    @objc func prefToggleBystanderCover(_ sender: NSSwitch) {
+        MainActor.assumeIsolated { silentPrivacyCover.setBystanderEnabled(sender.state == .on) }
+    }
     @objc func prefToggleNotchAlerts(_ sender: NSSwitch) {
         MainActor.assumeIsolated { notch.setAlertsEnabled(sender.state == .on) }
+    }
+
+    @objc func prefToggleAwaySummary(_ sender: NSSwitch) {
+        AwaySummaryController.isEnabled = sender.state == .on
     }
 
     @objc func prefToggleGlance(_ sender: NSSwitch) {
@@ -711,21 +989,26 @@ static func noticeTone(_ message: String) -> NotchPanel.Tone {
         let ax = hasAccessibilityPermission()
         let screen = hasScreenRecordingPermission()
         let welcome = onboardingWelcomeView
-        if let welcome, welcome.shownGrants == [ax, screen] { return false }
+        let calendarAccess = CalendarSource.access()
+        if let welcome, welcome.shownGrants == [ax, screen], welcome.shownCalendar == calendarAccess { return false }
         welcome?.shownGrants = [ax, screen]
+        welcome?.shownCalendar = calendarAccess
 
         permissionStack.arrangedSubviews.forEach {
             permissionStack.removeArrangedSubview($0)
             $0.removeFromSuperview()
         }
-        let card = makeUnifiedSettingsCard([
+        var rows = [
             makeUnifiedPermissionRow(symbol: "accessibility", name: "辅助功能",
                 subtitle: "找到、移动和恢复窗口", granted: ax,
                 action: #selector(openAccessibilitySettingsAction)),
             makeUnifiedPermissionRow(symbol: "rectangle.inset.filled.and.person.filled", name: "屏幕录制",
                 subtitle: "截取窗口画面做预览", granted: screen,
                 action: #selector(openScreenRecordingSettingsAction)),
-        ])
+        ]
+        // 第三行：日程（CAL-4）。可有可无，不算进“还差几步”；点了“允许”才问系统，拒绝之后整行不出。
+        if let calendarRow = makeWelcomeCalendarRow(calendarAccess) { rows.append(calendarRow) }
+        let card = makeUnifiedSettingsCard(rows)
         permissionStack.addArrangedSubview(card)
         card.widthAnchor.constraint(equalToConstant: onboardingContentWidth).isActive = true
 
@@ -743,6 +1026,42 @@ static func noticeTone(_ message: String) -> NotchPanel.Tone {
         onboardingDoneButton?.isEnabled = allGranted
         onboardingCaption?.isHidden = allGranted
         return true
+    }
+
+    /// 欢迎窗口第三步的日程一行：没问过是“允许”，给了是“✓ 已允许”，不给就没有这一行。
+    private func makeWelcomeCalendarRow(_ access: CalendarAccess) -> NSView? {
+        let trailing: NSView
+        switch access.welcomeRow {
+        case .hidden:
+            return nil
+        case .allowButton:
+            let button = NSButton(title: "允许", target: self, action: #selector(allowCalendarFromWelcome(_:)))
+            button.bezelStyle = .rounded
+            button.controlSize = .regular
+            button.setAccessibilityLabel("日程，快开会时提醒你，允许")
+            trailing = button
+        case .allowed:
+            let chip = NSTextField(labelWithString: "✓ 已允许")
+            chip.font = SystemAppearancePolicy.font(relativeToBody: -1)
+            chip.textColor = .systemGreen
+            chip.setAccessibilityLabel("日程，已允许")
+            trailing = chip
+        }
+        let labels = makeUnifiedLabels(name: CalendarWords.name, subtitle: "快开会时提醒你", symbol: "calendar")
+        labels.setContentHuggingPriority(.defaultLow, for: .horizontal)
+        labels.setContentCompressionResistancePriority(.defaultLow, for: .horizontal)
+        trailing.setContentHuggingPriority(.required, for: .horizontal)
+        let row = NSStackView(views: [labels, trailing])
+        NSLayoutConstraint.activate([
+            labels.leadingAnchor.constraint(equalTo: row.leadingAnchor),
+            labels.trailingAnchor.constraint(equalTo: trailing.leadingAnchor, constant: -12),
+            trailing.trailingAnchor.constraint(equalTo: row.trailingAnchor),
+        ])
+        row.orientation = .horizontal
+        row.alignment = .centerY
+        row.spacing = 12
+        row.heightAnchor.constraint(greaterThanOrEqualToConstant: 48).isActive = true
+        return row
     }
 
     // MARK: 窗口浏览
@@ -777,7 +1096,7 @@ static func noticeTone(_ message: String) -> NotchPanel.Tone {
             subtitle: "在任何应用里都能用。点“录制…”再按下新的组合；“清除”会关掉这个快捷键。",
             symbolName: "command"))
 
-        func recorderRow(_ shortcut: GlobalShortcut, subtitle: String?) -> NSView {
+        func recorderRow(_ shortcut: GlobalShortcut, subtitle: String?, quickEnable: Bool = false) -> NSView {
             let recorder = HotKeyRecorderView(accessibilityName: shortcut.title)
             recorder.configure(current: GlobalShortcutSettings.hotKey(for: shortcut))
             recorder.validate = { hotKey in
@@ -788,7 +1107,17 @@ static func noticeTone(_ message: String) -> NotchPanel.Tone {
                 self?.applyShortcut(hotKey, for: shortcut)
                 recorder?.configure(current: GlobalShortcutSettings.hotKey(for: shortcut))
             }
-            return makeUnifiedControlRow(name: shortcut.title, subtitle: subtitle, control: recorder)
+            guard quickEnable else {
+                return makeUnifiedControlRow(name: shortcut.title, subtitle: subtitle, control: recorder)
+            }
+            // 计时器出厂不占键：这一个按钮一下用 ⌃⌥T 开上，已经是 ⌃⌥T 就不可按。
+            let enable = NSButton(title: "用 ⌃⌥T 开计时器", target: self, action: #selector(prefEnableCountdownShortcut))
+            enable.bezelStyle = .rounded
+            enable.isEnabled = GlobalShortcutSettings.hotKey(for: shortcut) != GlobalShortcutSettings.countdownHotKey
+            let control = NSStackView(views: [enable, recorder])
+            control.orientation = .horizontal
+            control.spacing = 8
+            return makeUnifiedControlRow(name: shortcut.title, subtitle: subtitle, control: control)
         }
 
         let window = makeUnifiedSettingsCard([
@@ -815,6 +1144,9 @@ static func noticeTone(_ message: String) -> NotchPanel.Tone {
             recorderRow(.nextDisplay, subtitle: "按原来的排法放到下一块屏幕上；上下摆的显示器也行"),
             recorderRow(.tuckAll, subtitle: "这块屏上的窗口全部收进刘海，再按一下放回来"),
             recorderRow(.tuckCurrent, subtitle: "只把当前窗口收进刘海"),
+            recorderRow(.notchShelf, subtitle: "展开后用方向键选、Return 打开、Esc 退出；默认不占用任何快捷键"),
+            recorderRow(.joinColumnLeft, subtitle: "卷轴里用；已经在一列里就拆成一列。默认不占用任何快捷键"),
+            recorderRow(.joinColumnRight, subtitle: "卷轴里用；已经在一列里就拆成一列。默认不占用任何快捷键"),
         ])
         stack.addArrangedSubview(makePrefGroupLabel("排布当前窗口"))
         stack.addArrangedSubview(arrange)
@@ -859,6 +1191,7 @@ static func noticeTone(_ message: String) -> NotchPanel.Tone {
             recorderRow(.undoPlacement, subtitle: "回到排之前的位置和大小"),
             recorderRow(.previousDisplay, subtitle: "和“移到另一块屏幕”反着转"),
             recorderRow(.focusTimer, subtitle: "开始、暂停或继续同一个番茄钟；默认不占用任何快捷键"),
+            recorderRow(.countdownTimer, subtitle: "刘海里选分钟，回车开始；默认不占用任何快捷键", quickEnable: true),
         ])
         stack.addArrangedSubview(makePrefGroupLabel("更多排法"))
         stack.addArrangedSubview(more)
@@ -919,6 +1252,11 @@ static func noticeTone(_ message: String) -> NotchPanel.Tone {
         registerGlobalShortcuts()
         rebuildMenu()
         refreshPreferencesWindowIfOpen()
+    }
+
+    /// 计时器的一键启用：把它录成 ⌃⌥T，照常注册、刷新菜单。
+    @objc func prefEnableCountdownShortcut() {
+        applyShortcut(GlobalShortcutSettings.countdownHotKey, for: .countdownTimer)
     }
 
     @objc func prefResetShortcuts() {
@@ -1110,6 +1448,24 @@ static func noticeTone(_ message: String) -> NotchPanel.Tone {
     @objc func prefToggleSplitDivider(_ sender: NSSwitch) {
         SplitViewController.isEnabled = sender.state == .on
         MainActor.assumeIsolated { splitView.refresh() }
+    }
+
+    /// “走到一列时”的三个选项，顺序同 ScrollStrip.Centering.allCases（edge、always、overflow）。
+    static let centeringTitles = ["贴边", "居中", "放不下才居中"]
+
+    @objc func prefSelectCentering(_ sender: NSPopUpButton) {
+        let modes = ScrollStrip.Centering.allCases
+        ScrollStrip.store(mode: modes[max(0, min(modes.count - 1, sender.indexOfSelectedItem))])
+        MainActor.assumeIsolated { gestures.strips.refreshCentering() }
+    }
+
+    @objc func prefToggleCenterWhenFits(_ sender: NSSwitch) {
+        ScrollStrip.store(whenFits: sender.state == .on)
+        MainActor.assumeIsolated { gestures.strips.refreshCentering() }
+    }
+
+    @objc func prefToggleDropSplit(_ sender: NSSwitch) {
+        TrackpadGestureController.dropSplitEnabled = sender.state == .on
     }
 
     @objc func prefToggleDockClickHide(_ sender: NSSwitch) {
@@ -1348,5 +1704,139 @@ final class HotKeyRecorderView: NSControl {
         if flags.contains(.control) { modifiers |= UInt32(controlKey) }
         if flags.contains(.shift) { modifiers |= UInt32(shiftKey) }
         return modifiers
+    }
+}
+
+
+/// 装着“有人在看时收起私人窗口”那一行；私人 App 名单一变就按最新名单重画，不用重进页面。
+@MainActor private final class BystanderRowHost: NSStackView {
+    private let build: () -> NSView
+    init(build: @escaping () -> NSView) {
+        self.build = build
+        super.init(frame: .zero)
+        orientation = .vertical; spacing = 0; alignment = .leading
+        place(build())
+        // 视图没了就把自己的监听摘掉；摘的时机是下一次名单变化。
+        let token = ObserverToken()
+        token.value = NotificationCenter.default.addObserver(
+            forName: PrivateAppList.didChange, object: nil, queue: .main) { [weak self] _ in
+            MainActor.assumeIsolated {
+                guard let self else {
+                    if let value = token.value { NotificationCenter.default.removeObserver(value) }
+                    return
+                }
+                self.reload()
+            }
+        }
+    }
+    private final class ObserverToken: @unchecked Sendable { var value: NSObjectProtocol? }
+    private func place(_ row: NSView) {
+        addArrangedSubview(row)
+        row.widthAnchor.constraint(equalTo: widthAnchor).isActive = true
+    }
+    required init?(coder: NSCoder) { nil }
+    private func reload() {
+        for view in arrangedSubviews { removeArrangedSubview(view); view.removeFromSuperview() }
+        place(build())
+    }
+}
+
+
+/// 装着“音量和亮度”那一行；设置开关、辅助功能授权变了（NotchLevelSetting.didChange）就按最新状态重画，不用重进页面。
+@MainActor private final class LevelRowHost: NSStackView {
+    private let build: () -> NSView
+    init(build: @escaping () -> NSView) {
+        self.build = build
+        super.init(frame: .zero)
+        orientation = .vertical; spacing = 0; alignment = .leading
+        place(build())
+        // 视图没了就把自己的监听摘掉；摘的时机是下一次通知。
+        let token = ObserverToken()
+        token.value = NotificationCenter.default.addObserver(
+            forName: NotchLevelSetting.didChange, object: nil, queue: .main) { [weak self] _ in
+            MainActor.assumeIsolated {
+                guard let self else {
+                    if let value = token.value { NotificationCenter.default.removeObserver(value) }
+                    return
+                }
+                self.reload()
+            }
+        }
+    }
+    private final class ObserverToken: @unchecked Sendable { var value: NSObjectProtocol? }
+    private func place(_ row: NSView) {
+        addArrangedSubview(row)
+        row.widthAnchor.constraint(equalTo: widthAnchor).isActive = true
+    }
+    required init?(coder: NSCoder) { nil }
+    private func reload() {
+        for view in arrangedSubviews { removeArrangedSubview(view); view.removeFromSuperview() }
+        place(build())
+    }
+}
+
+/// 点“允许…”之后等你在系统设置里打开辅助功能：设置窗口在前台时每 1 秒看一次，最多 2 分钟；
+/// 窗口不在前台就停，回到前台再看一次、接着数；不在后台轮询。允许了就马上装监听，不用重开。
+@MainActor private final class LevelAllowWatcher {
+    static let shared = LevelAllowWatcher()
+    private var watch: NotchLevelAllowWatch?
+    private var timer: Timer?
+    private weak var window: NSWindow?
+    private var observers: [NSObjectProtocol] = []
+
+    private var now: TimeInterval { ProcessInfo.processInfo.systemUptime }
+
+    func start(window: NSWindow?) {
+        finish()
+        self.window = window
+        watch = NotchLevelAllowWatch(startedAt: now)
+        let center = NotificationCenter.default
+        observers.append(center.addObserver(forName: NSApplication.didBecomeActiveNotification, object: nil,
+                                            queue: .main) { [weak self] _ in
+            MainActor.assumeIsolated { self?.evaluate() }
+        })
+        if let window {
+            observers.append(center.addObserver(forName: NSWindow.didBecomeKeyNotification, object: window,
+                                                queue: .main) { [weak self] _ in
+                MainActor.assumeIsolated { self?.evaluate() }
+            })
+        }
+        evaluate()
+    }
+
+    private func evaluate() {
+        guard let watch else { return }
+        let inFront = window.map { $0.isVisible && $0.isKeyWindow && NSApp.isActive } ?? false
+        switch watch.step(now: now, trusted: hasAccessibilityPermission(), windowInFront: inFront) {
+        case .allowed:
+            finish()
+            (NSApp.delegate as? AppDelegate)?.notch.installLevelTapIfAllowed()
+            NotificationCenter.default.post(name: NotchLevelSetting.didChange, object: nil)
+        case .expired:
+            finish()
+        case .paused:
+            stopTimer()
+        case .waiting:
+            guard timer == nil else { return }
+            let next = Timer.scheduledTimer(withTimeInterval: NotchLevelAllowWatch.interval, repeats: true) { [weak self] _ in
+                MainActor.assumeIsolated { self?.evaluate() }
+            }
+            next.tolerance = NotchLevelAllowWatch.interval / 4
+            RunLoop.main.add(next, forMode: .common)
+            timer = next
+        }
+    }
+
+    private func stopTimer() {
+        timer?.invalidate()
+        timer = nil
+    }
+
+    private func finish() {
+        stopTimer()
+        for token in observers { NotificationCenter.default.removeObserver(token) }
+        observers.removeAll()
+        watch = nil
+        window = nil
     }
 }

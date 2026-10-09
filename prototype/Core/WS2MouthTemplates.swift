@@ -29,6 +29,72 @@ struct WS2MouthRecording: Codable, Equatable, Sendable {
         }
     }
 }
+/// 一次取帧尝试：取到嘴形就带 frame，没找到脸就是 nil。time 与 WS2MouthFrame.time 同一时间轴（秒）。
+struct WS2MouthAttempt: Equatable, Sendable {
+    var time: Double
+    var frame: WS2MouthFrame?
+}
+enum WS2MouthQualityResult: Equatable, Sendable {
+    case accepted(frames: [WS2MouthFrame])
+    /// 质量不够，请用户重录。
+    case reRecord(Reason)
+    enum Reason: Equatable, Sendable {
+        case tooFewFrames
+        case faceMissing
+    }
+}
+/// 录制质量门。纯逻辑，不碰相机。思路参考 lipflow dictation.py（MIT）。
+enum WS2MouthQuality {
+    /// 至少要有的取帧次数；少于这个数直接重录（lipflow dictation.py，MIT）。
+    static let minimumAttempts = 12
+    /// 有脸的帧至少占 40%，以整数百分比比较避免浮点边界（lipflow dictation.py，MIT）。
+    static let minimumFacePercent = 40
+    /// 松手后继续收 0.4 秒，更晚的丢掉（lipflow dictation.py，MIT）。
+    static let postRollSeconds = 0.4
+
+    static func evaluate(_ attempts: [WS2MouthAttempt], releasedAt: Double) -> WS2MouthQualityResult {
+        guard releasedAt.isFinite else { return .reRecord(.tooFewFrames) }
+        let limit = releasedAt + postRollSeconds
+        let kept = attempts.filter { $0.time.isFinite && $0.time <= limit }
+        guard kept.count >= minimumAttempts else { return .reRecord(.tooFewFrames) }
+        let frames = kept.compactMap(\.frame)
+        guard frames.count * 100 >= kept.count * minimumFacePercent else { return .reRecord(.faceMissing) }
+        return .accepted(frames: frames)
+    }
+}
+/// 宿主用的取帧窗口：每次取帧（有脸或没脸）都记一笔，凑够录制长度加松手后 0.4 秒再交质量门。纯逻辑。
+struct WS2MouthAttemptWindow: Sendable {
+    /// 一次录制的名义长度（秒）。
+    static let recordingSeconds = 1.5
+    static let maximumAttempts = 100
+    private(set) var attempts: [WS2MouthAttempt] = []
+
+    mutating func reset() { attempts.removeAll() }
+
+    /// 记一次取帧。时间倒退或相邻间隔超过 0.25 秒视为断流，先清空再记。
+    mutating func record(_ attempt: WS2MouthAttempt) {
+        guard attempt.time.isFinite else { return }
+        if let last = attempts.last, attempt.time <= last.time || attempt.time - last.time > 0.25 { attempts.removeAll() }
+        attempts.append(attempt)
+        let horizon = Self.recordingSeconds + WS2MouthQuality.postRollSeconds + 0.3
+        while attempts.count > Self.maximumAttempts || attempts.first.map({ attempt.time - $0.time > horizon }) == true {
+            attempts.removeFirst()
+        }
+    }
+
+    /// 窗口够长时给出松手时刻（最新一笔往前 0.4 秒）；不够长返回 nil。
+    var releasedAt: Double? {
+        guard let first = attempts.first, let last = attempts.last,
+              last.time - first.time >= Self.recordingSeconds + WS2MouthQuality.postRollSeconds else { return nil }
+        return last.time - WS2MouthQuality.postRollSeconds
+    }
+
+    /// 取帧数够就过质量门；还没够长返回 nil。
+    func evaluate() -> WS2MouthQualityResult? {
+        guard let releasedAt else { return nil }
+        return WS2MouthQuality.evaluate(attempts, releasedAt: releasedAt)
+    }
+}
 struct WS2MouthProfile: Codable, Sendable {
     let speech: String
     let templates: [WS2MouthRecording]

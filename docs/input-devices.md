@@ -6,7 +6,7 @@
 
 “之前的要求”指 9 月 25 日那句：“我希望给 Magic Mouse 和 Magic Trackpad 用户一点惊喜，手势可以更完备一些，当然你要避免误触。”
 
-- 设计稿（可交互）：[手边的每一样](https://claude.ai/artifact/SAeiZhSezHbSqjXiSzhqDs)
+- 设计稿（可交互）：[手边的每一样](https://claude.ai/artifact/SAeiZhSezHbSqjXiSzhqDs)；遥控器上遥控与指挥怎么合成一件事：[iPhone 上的遥控器](design-drafts/iPhone%20上的遥控器.html)（2026-10-08 定稿）
 - 给 DeepSeek 的提示词：[handoff/deepseek-input.md](handoff/deepseek-input.md)
 - 相关：[gestures.md](gestures.md)（已有的标题栏手势）、[conductor-v2.md](conductor-v2.md)（指挥模式）、[device-battery.md](device-battery.md)、[privacy-page.md](privacy-page.md)
 
@@ -49,7 +49,7 @@ Siri 遥控器、iPhone 上的遥控器和 PS5 手柄能在沙发上操作这台
 | [Mac Mouse Fix](https://github.com/noah-nuebling/mac-mouse-fix) | 让普通鼠标像触控板：按住按键拖动切桌面、开调度中心，跟手；平滑滚动带惯性；修饰键滚动（精细、横向、缩放）；按键改写；“Scroll & Navigate”让滚轮像两指滑。3.x 收费 | **MMF License**（自定义：衍生作品要注明来源；不得收费，且必须保留它的付费系统，除非有实质改进） | **只借思路，不拷代码** |
 | [Remote Buddy](https://www.iospirit.com/products/remotebuddy/) | 用 Siri 遥控器、iPhone、红外遥控器控制 Mac：100+ App 的预设、网页视频、虚拟鼠标键盘、演示聚光灯 | 商业闭源（24.99 €） | 只看行为：按 App 切换按键含义、屏幕上的菜单 |
 | [Itsytv](https://github.com/nickustinov/itsytv-macos) + [itsytv-core](https://github.com/nickustinov/itsytv-core) | 反方向：在 Mac 上遥控 Apple TV。Swift 实现 Companion Link、MRP、配对（SRP、ChaCha20）、OPACK、TLV8、**文字输入会话** | MIT（itsytv-core 的 README 标 MIT，根目录没找到 LICENSE 文件，引用前要核对） | **可以用**：Swift 写的协议零件，做“这台 Mac 冒充一台电视”时省掉 Rust |
-| [atv-core](https://github.com/corvofeng/atv-core) | 让 Mac 被 iPhone 控制中心的遥控器当成电视 | 工作区声明 MIT（根目录没有 LICENSE 文件） | 服务端的参考实现；配对验证有洞（见 conductor-v2） |
+| [atv-core](https://github.com/corvofeng/atv-core) | 让 Mac 被 iPhone 控制中心的遥控器当成电视 | 工作区声明 MIT（根目录没有 LICENSE 文件） | 服务端的参考实现；配对验证有洞（见 conductor-v2）。键码表、松开才算、触控 60 / 150 门槛、会话 1 / 2.5 / 3 秒已写成纯逻辑 `Core/CompanionHIDMap.swift`（2026-10-08，`tests/run-companion-hid-tests.sh`），接收端还没接；键码待真机核对 |
 | [siri-remote-keyboard](https://github.com/JackyLobsterD/siri-remote-keyboard) | 把第三代 Siri 遥控器变成 Mac 键盘：12 个按键的 HID 用法已在真机核实；侧边 Siri 键有干净的按下 / 松开；**`hidutil` 按设备改映射能让系统不再处理遥控器按键**，而 IOHIDManager 照样收到原值；触控面要用私有 MultitouchSupport 才读得到 | MIT | 可以用：按键表、静音系统的做法 |
 | [VibeRemote](https://github.com/mmmmmmarcus/VibeRemote) | Siri 遥控器当键盘和麦克风：两代遥控器分别适配；**第二、三代的麦克风在独立的 `0xFA` 音频集合里**；显示遥控器电量 | MIT | 可以用：麦克风桥、电量、两代差异 |
 | [Remotastic](https://github.com/lauschue/Remotastic)、[Control Box](https://github.com/whitesticker/controlbox) | Siri 遥控器当指针、滚动、按键映射 | MIT | 参考 |
@@ -128,18 +128,20 @@ Siri 遥控器、iPhone 上的遥控器和 PS5 手柄能在沙发上操作这台
 
 ### Siri 遥控器（实体，蓝牙连 Mac）
 
-| 键 | 遥控模式（沙发上操作 Mac） | 指挥模式 |
-| --- | --- | --- |
-| 环 上下左右 | 在刘海那一排、启动台、窗口浏览里挪焦点 | — |
-| 环中心 / 点按触控面 | 打开 | 确认 |
-| 触控面滑动 | 可选：当指针用 | 画声调、打拍子（原始触点经 MultitouchSupport） |
-| 返回 | 退一层；收起展开的刘海 | 取消 |
-| 电视键 点一下 / 按住 | 启动台 / 刘海那一排 | 换档位与模型 / 选会话 |
-| 播放 / 暂停 | 媒体播放暂停（系统） | 发出去 / 停下 |
-| **按住播放键 1 秒** | 换到指挥模式 | 换到遥控模式 |
-| 侧边 Siri 键 按住 | 听写到当前输入框 | 说话（**用遥控器自己的麦克风**，`0xFA` 音频集合） |
-| 音量、静音 | 系统音量、静音 | 系统音量；静音键管提示音 |
-| 电源 | 让显示器睡眠 | 退出指挥模式 |
+遥控器上没有模式切换，只有层（Aaron 2026-10-08 定，四层和每个键的意思见 [iPhone 上的遥控器](design-drafts/iPhone%20上的遥控器.html)）：
+在刘海那一排里走动是遥控模式，点一下会话格走进去是指挥模式；返回退一层。下表左栏是第 0、1 层（连着、刘海那一排），右栏是第 2、3 层（会话里、选模型）。
+
+| 键 | 不变的意思 | 那一排（遥控模式） | 会话里（指挥模式） |
+| --- | --- | --- | --- |
+| 环 左右 / 下 / 上 | 在一排里挪 / 往下打开一层 / 退一层 | 挪焦点 / 展开那一排 / 收回刘海 | 在模型位置里挪 / 展开模型位置 / 同返回 |
+| 环中心 / 点按触控面 | 打开或确认亮着的那一个 | 窗口放回；会话走进去 | 确认候选；允许这一次（普通）；选中模型 |
+| 触控面滑动 | 第 0、1 层挪焦点；会话里画档位 | 和环一样挪焦点；不当指针用（和 iPhone 一致） | 画声调、打拍子，只管档位（原始触点经 MultitouchSupport） |
+| 返回 | 取消眼前这一件；没有了就退一层 | 收回刘海 | 不允许 / 再按一次丢草稿 / 回到那一排 |
+| 电视键 点一下 / 按住 | 回到刘海那一排 / 启动台 | 同左 | 回到那一排，草稿留着 |
+| 播放 / 暂停 | 开始或停下眼前这件事 | 正在播放的：播放暂停 | 有草稿：发出去（在跑时补一句）；在跑没草稿：停下 |
+| 侧边 Siri 键 按住 | 对会话说话 | 焦点在会话上：走进去并开始听；别处不听写 | 说话（**用遥控器自己的麦克风**，`0xFA` 音频集合），松开出草稿 |
+| 音量 / 静音 | Mac 音量 / WindowShade 的提示音 | 同左 | 同左 |
+| 电源 | 收工 | 全部收回刘海，会话照跑，Mac 不睡 | 同左 |
 
 - 指挥模式最没把握的两件事（拿到原始轨迹、能按住说话）在实体遥控器上都有现成的路：触控面走 MultitouchSupport，麦克风走 `0xFA`。
   所以实体 Siri 遥控器可以先于 iPhone 那条路跑通。
@@ -148,7 +150,7 @@ Siri 遥控器、iPhone 上的遥控器和 PS5 手柄能在沙发上操作这台
 
 ### iPhone 控制中心里的遥控器
 
-同上表的两种模式，键位照 [conductor-v2.md](conductor-v2.md)。协议层改为**优先用 Swift**：
+同上表的层和键的意思；按键少一个环，往下滑、左右滑、往上滑都在触控区上做。键位见 [iPhone 上的遥控器](design-drafts/iPhone%20上的遥控器.html) 与 [conductor-v2.md](conductor-v2.md)。协议层改为**优先用 Swift**：
 配对、加密、OPACK、TLV8、文字输入会话用 itsytv-core 的零件（MIT）从客户端反过来写服务端，atv-core 只当参考。这样不再需要 Rust 工具链。
 
 ### PS5 手柄（DualSense）
@@ -156,26 +158,28 @@ Siri 遥控器、iPhone 上的遥控器和 PS5 手柄能在沙发上操作这台
 全部用 Apple 公开的 GameController 框架（`GCDualSenseGamepad`，macOS 11.3 起）：按键、摇杆、**触控板两个触点的位置**、自适应扳机、灯条、
 触感（`GCDeviceHaptics` 接 Core Haptics）、电量（`GCDeviceBattery`）、陀螺仪。要在后台收到输入，设 `GCController.shouldMonitorBackgroundEvents`。不用私有接口。
 
-| 键 | 操作 Mac | 指挥模式 |
+手柄也是“指着用”的设备：摇杆和触控板照常当指针、滚动。焦点和会话照上面的层：左栏是第 0、1 层，右栏是走进会话之后。
+
+| 键 | 操作 Mac · 那一排 | 会话里（指挥模式） |
 | --- | --- | --- |
 | 左摇杆 | 指针（死区、加速度，靠近按钮时吸附） | — |
 | 右摇杆 | 滚动（走平滑滚动） | — |
-| 触控板 一指 / 两指 | 像触控板：指针 / 滚动；两指在标题栏上 = 标题栏手势 | 画声调、打拍子（公开接口直接给坐标） |
+| 触控板 一指 / 两指 | 像触控板：指针 / 滚动；两指在标题栏上 = 标题栏手势 | 画声调、打拍子，只管档位（公开接口直接给坐标） |
 | 按下触控板 | 点按；两指按下 = 右键 | 确认 |
-| 十字键 | 挪焦点（刘海那一排、启动台、窗口浏览、按窗口切换） | — |
-| × | 打开 / 点按 | 确认 |
-| ○ | 返回；收起展开的刘海 | 取消 |
-| □ | 右键（更多） | 换档位与模型 |
-| △ | 看不见的窗口（刘海那一排） | 选会话 |
+| 十字键 | 挪焦点（刘海那一排、启动台、窗口浏览、按窗口切换）；下 = 展开那一排 | 下 = 展开模型位置；左右在里面挪 |
+| × | 打开亮着的那一项（窗口放回、会话走进去）；指针下是点按 | 确认候选；允许这一次（普通）；选中模型 |
+| ○ | 取消眼前这一件；没有了就退一层 | 不允许 / 再按一次丢草稿 / 回到那一排 |
+| □ | 右键（更多） | — |
+| △ 按一下 / 按住 | 回到刘海那一排 / 启动台 | 回到那一排，草稿留着 |
 | L1 / R1 | 按窗口切换：上一扇 / 下一扇 | — |
-| L2 / R2 | 换桌面，按到一半有一道“咔”（自适应扳机给阻力，过了那道就换），松开回原处 | R2：发出去 / 停下 |
-| Options | 启动台 | 换到操作 Mac |
+| L2 / R2 | 换桌面，按到一半有一道“咔”（自适应扳机给阻力，过了那道就换），松开回原处 | — |
+| Options | 开始或停下眼前这件事：正在播放的 | 有草稿：发出去（在跑时补一句）；在跑没草稿：停下 |
 | 创建 | 截屏（系统的 ⇧⌘5） | — |
-| 静音键 按住 | 说话（USB 连接时用手柄的麦克风，蓝牙时用 Mac 的麦克风；要实验） | 说话 |
+| 静音键 按住 | 焦点在会话上：走进去并开始听 | 说话（USB 连接时用手柄的麦克风，蓝牙时用 Mac 的麦克风；要实验），松开出草稿 |
 | PS 键 | **不占**，留给系统 | 不占 |
 
 - **游戏在前台时整个让开**：前台 App 是游戏（App 分类为游戏，或它自己在用 GameController）时，WindowShade 不读、不改手柄。
-- 灯条和触感：指挥模式时灯条是指挥模式的粉；录音时变红；电量低时琥珀色。焦点移动轻震一下，半屏吸附、换桌面过了那道“咔”时扳机和手柄各震一下。
+- 灯条和触感：走进会话后灯条是指挥模式的粉；录音时变红；电量低时琥珀色。焦点移动轻震一下，半屏吸附、换桌面过了那道“咔”时扳机和手柄各震一下。
 - 电量接进设备电量那条线（“手柄电量低”）。
 - 每台手柄有自己的“控制这台 Mac”开关，默认关；同时连几台时，只有第一台开着的能操作。
 

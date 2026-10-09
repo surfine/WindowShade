@@ -217,6 +217,9 @@ enum WS2SilentApply {
                     return applied ? .displayed(WS2SilentReadout.sentence(id, draft: draft)) : notDone()
                 }
             }
+            if id == "privacy.awaySummary" {
+                return .displayed(WS2SilentReadout.sentence(id, away: gestures.owner.notch.away.readout?.spoken))
+            }
             return .displayed(WS2SilentReadout.sentence(id))
         case .intent(let id, let revision, let name):
             if WS2SilentDraftCommand.handles(name) {

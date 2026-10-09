@@ -1,0 +1,906 @@
+<!doctype html>
+<html lang="zh-Hans">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>音量与亮度</title>
+<style>
+:root{
+  color-scheme:light;
+  --page:#eceef2; --panel:#fbfbfc; --line:rgba(0,0,0,.1); --ink:#1d1d1f; --muted:#5f6068; --faint:#6e6f76;
+  --accent:#0058cc; --bad:#b3261e; --ok:#0e6436; --hw:#d6336c; --warn:#9a5b00;
+  --wall:radial-gradient(90% 70% at 12% 8%,#9cc9ff 0%,transparent 62%),radial-gradient(80% 70% at 92% 18%,#b9b3ff 0%,transparent 60%),linear-gradient(160deg,#cfe3ff,#8fb4ef);
+  --menu:#101114; --mbar:rgba(255,255,255,.34);
+  --sys:rgba(246,246,248,.9); --sysInk:#3a3a3e; --sysTrack:rgba(0,0,0,.14);
+  --win-bg:#f3f3f5; --win-card:#ffffff; --win-line:rgba(0,0,0,.09); --win-ink:#1d1d1f; --win-ink-2:#6b6b70;
+  --sans:-apple-system,BlinkMacSystemFont,"SF Pro Text","PingFang SC","Hiragino Sans GB",sans-serif;
+  --mono:ui-monospace,"SF Mono",Menlo,monospace;
+}
+@media (prefers-color-scheme:dark){:root:not([data-theme="light"]){
+  color-scheme:dark;
+  --page:#121316; --panel:#1b1c20; --line:rgba(255,255,255,.12); --ink:#f2f2f5; --muted:#a4a5ad; --faint:#8e8f97;
+  --accent:#5a9cff; --bad:#ff8a80; --ok:#4cc38a; --hw:#ff6b9d; --warn:#f0b35a;
+  --wall:linear-gradient(160deg,#10192e,#0b1222); --menu:#f4f5f8; --mbar:rgba(0,0,0,.28);
+  --sys:rgba(44,44,48,.92); --sysInk:#e6e6ea; --sysTrack:rgba(255,255,255,.18);
+  --win-bg:#232327; --win-card:#2c2c30; --win-line:rgba(255,255,255,.1); --win-ink:#f2f2f5; --win-ink-2:#a1a1a8;
+}}
+:root[data-theme="dark"]{
+  color-scheme:dark;
+  --page:#121316; --panel:#1b1c20; --line:rgba(255,255,255,.12); --ink:#f2f2f5; --muted:#a4a5ad; --faint:#8e8f97;
+  --accent:#5a9cff; --bad:#ff8a80; --ok:#4cc38a; --hw:#ff6b9d; --warn:#f0b35a;
+  --wall:linear-gradient(160deg,#10192e,#0b1222); --menu:#f4f5f8; --mbar:rgba(0,0,0,.28);
+  --sys:rgba(44,44,48,.92); --sysInk:#e6e6ea; --sysTrack:rgba(255,255,255,.18);
+  --win-bg:#232327; --win-card:#2c2c30; --win-line:rgba(255,255,255,.1); --win-ink:#f2f2f5; --win-ink-2:#a1a1a8;
+}
+*{box-sizing:border-box}
+body{margin:0;background:var(--page);color:var(--ink);font:15px/1.55 var(--sans);padding:28px 16px 64px}
+.wrap{max-width:1080px;margin:0 auto}
+h1{font-size:28px;letter-spacing:-.02em;margin:0 0 8px}
+h2{font-size:19px;margin:40px 0 6px;letter-spacing:-.01em}
+h3{font-size:14px;margin:0 0 6px}
+.lede{color:var(--muted);max-width:76ch;margin:0 0 18px}
+.sub{color:var(--muted);max-width:80ch;margin:0 0 12px;font-size:14px}
+.row{display:flex;flex-wrap:wrap;gap:8px 10px;align-items:center;margin:0 0 10px}
+.row .lab{font-size:12px;color:var(--faint);min-width:4.5em}
+button{font:inherit;font-size:14px;color:inherit;background:var(--panel);border:0;border-radius:9px;padding:6px 12px;box-shadow:inset 0 0 0 .5px var(--line);cursor:pointer;touch-action:manipulation;user-select:none;-webkit-user-select:none}
+button[aria-pressed="true"]{background:var(--ink);color:var(--page)}
+button.key{min-width:3.2em;font-variant-numeric:tabular-nums}
+button.key.down{background:var(--accent);color:#fff}
+button:focus-visible,input:focus-visible,.stage:focus-visible{outline:2px solid var(--accent);outline-offset:2px}
+.sw{display:inline-flex;align-items:center;gap:6px;font-size:13px;color:var(--muted)}
+.play{display:grid;grid-template-columns:minmax(0,1fr) 300px;gap:14px;align-items:start}
+@media (max-width:860px){.play{grid-template-columns:1fr}}
+.stage{position:relative;border-radius:12px;overflow:hidden;background:var(--wall);box-shadow:0 0 0 .5px var(--line)}
+.stage svg{display:block;width:100%;height:auto}
+.stage .hint{position:absolute;left:10px;bottom:8px;font-size:11.5px;color:rgba(255,255,255,.9);text-shadow:0 1px 2px rgba(0,0,0,.45);pointer-events:none}
+.panel{background:var(--panel);border-radius:14px;padding:12px 14px;box-shadow:inset 0 0 0 .5px var(--line);font-size:13.5px}
+.panel dl{display:grid;grid-template-columns:auto minmax(0,1fr);gap:4px 10px;margin:0}
+.panel dt{color:var(--faint);font-size:12px;padding-top:1px}
+.panel dd{margin:0}
+.chip{display:inline-block;font-size:12px;padding:1px 8px;border-radius:99px;box-shadow:inset 0 0 0 1px currentColor;margin-right:4px}
+.chip.on{color:var(--ok)} .chip.off{color:var(--faint);opacity:.75}
+.big{font-weight:650}
+.log{margin:10px 0 0;padding:8px 0 0;border-top:1px solid var(--line);list-style:none;font-size:12px;color:var(--muted);max-height:9.5em;overflow:hidden}
+.log li{margin:0 0 3px}
+.log li:first-child{color:var(--ink)}
+.controls{margin-top:12px}
+.card{margin-top:14px;background:var(--panel);border-radius:14px;padding:14px 16px;box-shadow:inset 0 0 0 .5px var(--line)}
+.card p,.card li{margin:0;color:var(--muted);font-size:14px}
+.card ul,.card ol{margin:0;padding-left:20px;display:grid;gap:5px}
+.card b{color:var(--ink)}
+.token{font-family:var(--mono);font-size:12px;color:var(--accent)}
+.callout{margin-top:14px;border-radius:14px;padding:14px 16px;background:var(--panel);box-shadow:inset 0 0 0 1.5px var(--bad)}
+.callout h3{color:var(--bad)}
+.callout p{margin:0 0 6px;font-size:14px;color:var(--muted)}
+.tbl{overflow-x:auto;margin-top:10px;border-radius:12px;box-shadow:inset 0 0 0 .5px var(--line);background:var(--panel)}
+table{border-collapse:collapse;width:100%;font-size:13px;min-width:720px}
+th,td{text-align:left;vertical-align:top;padding:8px 10px;border-bottom:1px solid var(--line)}
+th{font-size:12px;font-weight:600;color:var(--faint);white-space:nowrap}
+tr:last-child td{border-bottom:0}
+td.y{color:var(--ok);font-weight:600;white-space:nowrap}
+td.n{color:var(--warn);font-weight:600;white-space:nowrap}
+td small{color:var(--faint)}
+.dt td:nth-child(3),.dt td:nth-child(4){white-space:nowrap}
+.no{color:var(--faint)}
+.grid2{display:grid;grid-template-columns:repeat(auto-fit,minmax(min(100%,320px),1fr));gap:14px}
+/* 设置行：照番茄钟稿的“符号优先” */
+.pane{background:var(--win-bg);border-radius:12px;padding:12px;color:var(--win-ink)}
+.pane h4{margin:0 0 8px;font-size:12px;font-weight:600;color:var(--win-ink-2)}
+.scard{background:var(--win-card);border-radius:10px;box-shadow:0 0 0 .5px var(--win-line)}
+.srow{display:grid;grid-template-columns:auto minmax(0,1fr) auto;gap:10px;align-items:center;padding:9px 12px}
+.sym{width:24px;height:24px;border-radius:6px;display:grid;place-items:center;background:#5E8BE8}
+.sym svg{width:15px;height:15px}
+.sn{font-size:13px;font-weight:500;line-height:1.35}
+.ss{font-size:11.5px;color:var(--win-ink-2);line-height:1.4}
+.info{width:16px;height:16px;border-radius:50%;border:1.3px solid var(--win-ink-2);color:var(--win-ink-2);font-size:10px;display:inline-grid;place-items:center;margin-left:5px;font-weight:600;vertical-align:1px}
+.tg{width:30px;height:18px;border-radius:9px;background:#34C759;position:relative;flex:none;display:inline-block;vertical-align:middle}
+.tg::after{content:"";position:absolute;top:2px;left:14px;width:14px;height:14px;border-radius:50%;background:#fff}
+.tg.offsw{background:rgba(120,120,128,.32)} .tg.offsw::after{left:2px}
+.sbtn{font-size:12px;padding:2px 9px;border-radius:6px;background:var(--win-bg);box-shadow:inset 0 0 0 .5px var(--win-line);margin-right:8px;color:var(--win-ink)}
+.bubble{margin:6px 12px 10px 46px;font-size:11.5px;color:var(--win-ink-2);background:var(--win-bg);border-radius:8px;padding:6px 9px}
+.wp{display:grid;gap:10px}
+.wp > div{background:var(--panel);border-radius:12px;padding:10px 14px;box-shadow:inset 0 0 0 .5px var(--line)}
+.wp b{font-family:var(--mono);font-size:12.5px;color:var(--accent);margin-right:6px}
+.wp p{margin:2px 0 0;font-size:13.5px;color:var(--muted)}
+code{font-family:var(--mono);font-size:12.5px}
+footer{margin-top:40px;font-size:12.5px;color:var(--faint);max-width:84ch}
+svg text{font-family:var(--sans)}
+</style>
+</head>
+<body>
+<nav class="ws-sys" aria-label="WindowShade 设计系统"><a href="https://claude.ai/artifact/Q2XdwfQttwpju6MvzpY93Y"><b>WindowShade 设计系统</b></a><span class="ws-n">新稿 · 音量与亮度</span><span class="ws-sp"></span><a href="一颗岛.html">← 一颗岛</a></nav>
+
+<div class="wrap">
+  <h1>音量与亮度</h1>
+  <p class="lede">按音量、亮度、键盘灯键时，刘海向两边长出两只耳朵：左边一个随数值变的符号，右边一根条。这张稿证明三件事：两耳长在《一颗岛》那颗岛上、像灵动岛那样贴着硬件；系统自己的提示可以默认藏掉，而且<b>只有我们确定能写、确定看得见时才拦下按键</b>，其余时候原样交给系统；任何一步拿不准就退回“两个都在”，不说话。</p>
+
+  <div class="play">
+    <div>
+      <div class="stage" id="stage" tabindex="0" aria-label="舞台。聚焦后可用键盘：上下箭头调音量，M 静音，左右箭头调亮度，方括号调键盘灯；同时按住 Option 和 Shift 是细调">
+        <svg id="svg" viewBox="0 0 760 260" role="img" aria-label="刘海与菜单栏的模拟"></svg>
+        <div class="hint" id="hint">按住按钮看连发；聚焦舞台后可用 ↑ ↓ M ← → [ ]</div>
+      </div>
+
+      <div class="controls">
+        <div class="row" role="group" aria-label="按键">
+          <span class="lab">按键</span>
+          <button type="button" class="key" data-key="vdown" aria-label="音量减">音量 −</button>
+          <button type="button" class="key" data-key="vup" aria-label="音量加">音量 +</button>
+          <button type="button" class="key" data-key="mute">静音</button>
+          <button type="button" class="key" data-key="bdown" aria-label="亮度减">亮度 −</button>
+          <button type="button" class="key" data-key="bup" aria-label="亮度加">亮度 +</button>
+          <button type="button" class="key" data-key="kdown" aria-label="键盘灯减">键盘灯 −</button>
+          <button type="button" class="key" data-key="kup" aria-label="键盘灯加">键盘灯 +</button>
+          <label class="sw"><input type="checkbox" id="fine"> 按着 ⌥⇧（细调 1/64）</label>
+        </div>
+        <div class="row" role="group" aria-label="刘海此刻">
+          <span class="lab">刘海此刻</span>
+          <button type="button" data-ctx="none" aria-pressed="true">什么都没有</button>
+          <button type="button" data-ctx="music" aria-pressed="false">正在播放（紧凑）</button>
+          <button type="button" data-ctx="card" aria-pressed="false">正在播放大卡</button>
+          <button type="button" data-ctx="row" aria-pressed="false">那一排展开</button>
+          <button type="button" data-ctx="fullscreen" aria-pressed="false">全屏 App</button>
+          <button type="button" data-ctx="mc" aria-pressed="false">调度中心</button>
+          <button type="button" data-ctx="locked" aria-pressed="false">锁屏</button>
+          <button type="button" data-ctx="auth" aria-pressed="false">刷脸解锁中</button>
+        </div>
+        <div class="row" role="group" aria-label="声音从哪出">
+          <span class="lab">声音从哪出</span>
+          <button type="button" data-dev="builtin" aria-pressed="true">内建扬声器</button>
+          <button type="button" data-dev="airpods" aria-pressed="false">AirPods Pro</button>
+          <button type="button" data-dev="headphones" aria-pressed="false">有线耳机</button>
+          <button type="button" data-dev="hdmi" aria-pressed="false">HDMI 显示器（不能调）</button>
+        </div>
+        <div class="row" role="group" aria-label="条件">
+          <span class="lab">条件</span>
+          <label class="sw"><input type="checkbox" id="feat" checked> 设置开着</label>
+          <label class="sw"><input type="checkbox" id="ax" checked> 已允许辅助功能</label>
+          <label class="sw"><input type="checkbox" id="os" checked> 这个 macOS 核对过</label>
+          <label class="sw"><input type="checkbox" id="ext"> 亮度键对着外接屏</label>
+          <label class="sw"><input type="checkbox" id="foreign"> Alcove 在运行</label>
+        </div>
+        <div class="row" role="group" aria-label="不是按键的变化">
+          <span class="lab">没按键</span>
+          <button type="button" id="adaptive">个性化音量调了一下</button>
+          <button type="button" id="otherapp">别的 App 改了音量</button>
+          <button type="button" id="autob">自动亮度变了</button>
+        </div>
+        <div class="row" role="group" aria-label="外观">
+          <span class="lab">外观</span>
+          <label class="sw"><input type="checkbox" id="reduced"> 减少动态效果</label>
+          <label class="sw"><input type="checkbox" id="contrast"> 增强对比度</label>
+          <label class="sw"><input type="checkbox" id="zoom"> 放大看刘海</label>
+          <label class="sw"><input type="checkbox" id="ghost"> 叠上硬件轮廓</label>
+          <button type="button" data-theme-set="auto" aria-pressed="true">跟随系统</button>
+          <button type="button" data-theme-set="light" aria-pressed="false">浅色</button>
+          <button type="button" data-theme-set="dark" aria-pressed="false">深色</button>
+        </div>
+      </div>
+    </div>
+
+    <aside class="panel" aria-live="polite">
+      <h3>这一下怎么判</h3>
+      <dl>
+        <dt>按键</dt><dd id="rKey" class="big">还没按</dd>
+        <dt>拦不拦</dt><dd id="rSwallow">—</dd>
+        <dt>谁来写</dt><dd id="rWriter">—</dd>
+        <dt>看得见</dt><dd id="rSeen"><span class="chip off">刘海</span><span class="chip off">系统</span></dd>
+        <dt>为什么</dt><dd id="rWhy">—</dd>
+        <dt>数值</dt><dd id="rVal">音量 50% · 亮度 63% · 键盘灯 38%</dd>
+        <dt>弹簧</dt><dd id="rTok"><span class="token">—</span></dd>
+      </dl>
+      <h3 style="margin-top:12px">设置里这一行现在写</h3>
+      <div class="pane" style="padding:8px"><div class="scard" id="liveRow"></div></div>
+      <ul class="log" id="log"></ul>
+    </aside>
+  </div>
+
+  <h2>规则</h2>
+  <p class="sub">数字取 MacBook Air 15 英寸：刘海 185 × 33.5，底角 10.71。弹簧只用已有令牌（response 秒 / 阻尼比 ζ）。</p>
+  <div class="grid2">
+    <div class="card"><h3>形状：两耳，不往下鼓</h3><ul>
+      <li>每只耳朵 <b>76</b>，总宽 185 + 2 × 76 = <b>337</b>；高 = 刘海高 <b>33.5</b>，不往下鼓，没有额头。底角 <span class="token">island.hug</span> 10.71。</li>
+      <li>两耳对称，像灵动岛：右耳要放条，左耳跟着一样宽。</li>
+      <li>比 34 宽，按令牌 §5.1 S3 不画肩，顶角直角；肩在长出的前 24 点里收到 0，同一根弹簧。</li>
+      <li>两耳只在按键后亮 1.2 秒，点击穿透，菜单栏照常能点。</li>
+      <li>长出 <span class="token">pop</span> 0.30 / 0.75；收回 <span class="token">calm</span> 0.34 / 1.0。</li>
+    </ul></div>
+    <div class="card"><h3>左耳：一个会变的符号</h3><ul>
+      <li>离外沿 14；喇叭身子不动，声波往右长。</li>
+      <li>音量：0 → <code>speaker.fill</code>；≤ ⅓ → <code>wave.1</code>；≤ ⅔ → <code>wave.2</code>；以上 → <code>wave.3</code>；静音一律 <code>speaker.slash.fill</code>。</li>
+      <li>输出是 AirPods / 耳机时换成 <code>airpodspro</code> / <code>airpods</code> / <code>airpodsmax</code> / <code>headphones</code>；静音仍是带斜线的喇叭（一个意思一个符号）。</li>
+      <li>亮度：&lt; 50% <code>sun.min.fill</code>，否则 <code>sun.max.fill</code>。键盘灯：0 熄灭、&lt; 50% <code>light.min</code>、否则 <code>light.max</code>。符号名都在这台 Mac 上核对过。</li>
+    </ul></div>
+    <div class="card"><h3>右耳：一根条，不写数</h3><ul>
+      <li>条长 <b>54</b>、高 <b>6</b>，胶囊；离刘海 8，离外沿 14。轨道白 0.22（增强对比度 0.45），填充白 1.0。</li>
+      <li>不写百分比：系统的提示和灵动岛都不写；细调时数字是 23.4% 这种，读起来比条难。读屏念数。</li>
+      <li>条的变化用 <span class="token">pop</span>，按住时一格接一格，连成一条扫动。</li>
+      <li>步长照系统：一下 <b>1/16</b>（6.25%，条上 3.4 点）；按着 ⌥⇧ 是 <b>1/64</b>（0.84 点）。</li>
+    </ul></div>
+    <div class="card"><h3>到头了再按：拉长再弹回</h3><ul>
+      <li>100% 再按 +：条往外沿拉长；0% 再按 −：往刘海那侧拉长。数值不变、不再写。</li>
+      <li>拉长量用橡皮筋 <span class="token">rubberband</span> c = 0.55，最多 <b>8</b> 点；同时条变细到 5；符号顺着挪 ¼。</li>
+      <li>弹回用 <span class="token">pop</span>。按住时每次连发再顶一下，一直顶着，松手才弹回。</li>
+      <li>减少动态效果：不拉长，条的那一头亮一下（白 0.6 → 1，0.25 秒）。</li>
+    </ul></div>
+    <div class="card"><h3>多久出、多久收</h3><ul>
+      <li>按下就出，不等数值回来（到头了数值不会变）。</li>
+      <li>按住：系统“按键重复”连发（默认先等约 0.38 秒，之后约每 0.09 秒一下），每一下都把收回时间往后推。</li>
+      <li>最后一下之后 <b>1.2 秒</b>收（<span class="token">Motion.Hold.level</span>，现值 Notch.swift:2611）：内容先淡出 0.10，停 0.04，再沿 <span class="token">calm</span> 收形状。</li>
+      <li>内容在形状走到四成后淡入 0.18（C01）。减少动态效果：形状直接到位，内容交叉淡化 0.25。</li>
+    </ul></div>
+    <div class="card"><h3>和别的住户谁让谁</h3><ul>
+      <li>音量亮度是你手上正在按的，记在<b>交互</b>层：放行 &gt; 交互 &gt; 你打开的 &gt; 短暂提醒 &gt; 持续活动 &gt; 什么都没有。</li>
+      <li><b>放行</b>（刷脸解锁、等你批准）在上：不拦键，系统的提示出来。</li>
+      <li><b>你打开的</b>不被换页：正在播放大卡里，控制那一排换成滑条；那一排展开时，上沿两耳换成符号和条，形状不动。1.2 秒后换回，不重播进场。</li>
+      <li><b>短暂提醒</b>正在说：变成一个点并消耗掉，不回来补说。</li>
+      <li><b>持续活动</b>（正在播放、番茄钟的紧凑两耳）：耳朵从 34 长到 76、换内容，收回后原样回来。</li>
+    </ul></div>
+  </div>
+  <div class="card"><h3>只认按键，不认数值</h3>
+    <p>真的按了音量、静音、亮度、键盘灯键才出。AirPods 个性化音量、自适应音量、别的 App 或控制中心改了音量、自动亮度和原彩都不出（沿用 <code>Core/NotchLevelGate.swift</code> 的 0.6 秒窗口）。舞台下“没按键”那一行三个按钮可以试：数值变了，刘海不动。</p>
+  </div>
+
+  <h2>藏起系统的提示：什么时候拦键</h2>
+  <p class="sub">一句话：<b>拦键 = 能写 且 看得见 且 没有别的主人</b>。拦下来的键由我们照系统的步长写回，再画两耳；三者缺一，就不拦，按键原样交给系统。监听只订阅系统按键这一类事件（<code>CGEvent.tapCreate</code>，掩码只有 <code>NX_SYSDEFINED</code>，子类型 8），打字的键收不到。</p>
+  <div class="tbl"><table class="dt">
+    <thead><tr><th>情况</th><th>拦不拦</th><th>谁写</th><th>看得见</th><th>为什么</th></tr></thead>
+    <tbody>
+      <tr><td>已允许、版本核对过、扬声器或耳机能调</td><td class="y">拦</td><td>我们</td><td>只有刘海</td><td>能写、看得见。</td></tr>
+      <tr><td>原生全屏（看片最常见的那一下）</td><td class="y">拦</td><td>我们</td><td>只有刘海</td><td>顶上本来是黑边，两耳融进去。前提：面板此刻在这张全屏桌面上真的可见（<code>isOnActiveSpace</code> 且未被遮挡）；查不到就按下一行处理。<small>现状是全屏里不出，改成出。</small></td></tr>
+      <tr><td>调度中心</td><td class="n">不拦</td><td>系统</td><td>只有系统</td><td>它盖在所有窗口上，我们不能保证画在它上面。看不见就不拦，免得按了没反应。</td></tr>
+      <tr><td>锁屏、登录窗口、屏保</td><td class="n">不拦</td><td>系统</td><td>只有系统</td><td>锁屏归系统。解锁后下一下按键再接管。</td></tr>
+      <tr><td>刷脸解锁中、等你批准</td><td class="n">不拦</td><td>系统</td><td>只有系统</td><td>放行在交互之上，不分它的刘海。</td></tr>
+      <tr><td>输出不能调音量：HDMI / DP 显示器、部分 USB 声卡、多输出设备</td><td class="n">不拦</td><td>系统</td><td>只有系统</td><td>拦了键就失灵（Atoll 的坑：键被吞、写不进、没有任何反馈）。系统会画它自己的“不能调”。</td></tr>
+      <tr><td>亮度要调的是外接屏（⌃ + 亮度键、合盖只用外接屏）</td><td class="n">不拦</td><td>系统</td><td>只有系统</td><td>我们只写内建屏。不做 DDC。</td></tr>
+      <tr><td>读不到键盘灯（没有背光、接口不在）</td><td class="n">不拦</td><td>系统</td><td>只有系统</td><td>能写才拦。</td></tr>
+      <tr><td>按着 ⌥、⇧ 或 ⌃（不是 ⌥⇧）</td><td class="n">不拦</td><td>系统</td><td>只有系统</td><td>系统给这些组合另有用处，比如 ⌥ + 音量键打开声音设置。只有 ⌥⇧ 细调由我们接。</td></tr>
+      <tr><td>Alcove、MediaMate 在运行</td><td class="n">不拦</td><td>对方</td><td>对方的</td><td>让位（现状 <code>foreignHUDIsRunning</code>）。</td></tr>
+      <tr><td>没允许辅助功能</td><td class="n">不拦（只旁听）</td><td>系统</td><td>两个都在</td><td>拦不了。设置那一行写“系统的提示也会出现”，不弹窗。</td></tr>
+      <tr><td>这个 macOS 版本没核对过</td><td class="n">不拦（只旁听）</td><td>系统</td><td>两个都在</td><td>不说话、不弹窗；ⓘ 里写一句。核对过的版本列在代码里，真机按 20 次、系统提示 0 次出现才加进去。</td></tr>
+      <tr><td>写进去读回来不对</td><td class="n">这一下已拦 → 原样补发</td><td>系统</td><td>两个都在</td><td>把这一下标上记号补发给系统，监听认出记号放行；这一类键本次开机不再拦。</td></tr>
+      <tr><td>监听被系统暂停（回调超时、用户输入）</td><td class="n">暂停期间不拦</td><td>系统</td><td>两个都在</td><td>收到 <code>tapDisabledBy…</code> 立刻重新打开。回调里只分类和查缓存，写入放到后面的队列。</td></tr>
+      <tr><td>WindowShade 崩溃或被强制退出</td><td class="n">不拦</td><td>系统</td><td>只有系统</td><td>监听跟着进程一起没了，下一下就是系统的提示。我们没动过任何系统进程。</td></tr>
+    </tbody>
+  </table></div>
+  <div class="callout">
+    <h3>不冻结 OSDUIHelper</h3>
+    <p>Atoll 除了拦键，还对系统画提示的进程 OSDUIHelper 发 SIGSTOP。我们不这样做，两个理由：</p>
+    <p>一、macOS 26 起音量提示改由控制中心画，冻 OSDUIHelper 已经挡不住（Atoll 自己的更新记录在 26.6 上实测）。二、只要 App 在冻住期间崩溃或被强制退出，OSDUIHelper 就一直冻着，系统所有的音量、亮度、键盘灯提示（包括外接屏那些我们根本没接的）都消失，直到重启或手动解冻。</p>
+    <p>所以只拦键，不向任何系统进程发信号，不 <code>killall</code>，不 <code>launchctl kickstart</code>。</p>
+  </div>
+
+  <h2>对照：Atoll / Alcove / 今天 / 要做</h2>
+  <p class="sub">Atoll 是 GPL，只借做法和数字；Alcove 闭源，只看更新说明里的公开行为。</p>
+  <div class="tbl"><table>
+    <thead><tr><th>项</th><th>Atoll</th><th>Alcove</th><th>WindowShade 今天</th><th>WindowShade 要做</th></tr></thead>
+    <tbody>
+      <tr><td>什么时候出</td><td>任何来源改了都出（Core Audio 监听）；亮度看 1.5 秒内有没有按</td><td>只认用户输入；个性化、自适应音量不出</td><td>按键后 0.6 秒内的变化才出</td><td>同今天，只认按键</td></tr>
+      <tr><td>0% / 100% 再按</td><td>出；刘海里没有回弹（竖条样式才有）</td><td>出，过冲回弹（已强制开）</td><td>出，不回弹</td><td>出，条拉长最多 8 点再 <span class="token">pop</span> 弹回</td></tr>
+      <tr><td>按住</td><td>一格格连成扫动</td><td>未写</td><td>出，1.2 秒收</td><td>一直开着，最后一下后 1.2 秒收</td></tr>
+      <tr><td>样子</td><td>两翼各 92；左图标加字，右 5 点条加百分比</td><td>刘海两侧；标签、百分比可选</td><td>210 × 36 胶囊；右耳 3.5 点细条加百分比</td><td>两耳各 76、高同刘海；左符号，右 54 × 6 条</td></tr>
+      <tr><td>符号</td><td>三档声波；蓝牙耳机换设备图标</td><td>设备符号很多</td><td>喇叭不变</td><td>四档；AirPods、耳机换设备；静音一律斜线喇叭</td></tr>
+      <tr><td>颜色</td><td>按电平变色</td><td>分贝样式变橙、发光</td><td>强调色</td><td>白（见待定）</td></tr>
+      <tr><td>百分比</td><td>开</td><td>可选</td><td>有</td><td>不写，读屏念</td></tr>
+      <tr><td>步长</td><td>6%，精调 2%</td><td>AirPods 细分</td><td>系统的</td><td>照系统：1/16，⌥⇧ 1/64</td></tr>
+      <tr><td>键盘灯</td><td>有；⌘ + 亮度键改成键盘灯，另配 ⌘F1/F2</td><td>没提</td><td>没有</td><td>键盘上有键盘灯键才出；不另配快捷键</td></tr>
+      <tr><td>正在播放大卡</td><td>控制行换成滑条</td><td>卡片上可放音量</td><td>没有</td><td>控制那一排换成滑条，1.2 秒换回</td></tr>
+      <tr><td>藏系统提示</td><td>拦键 + SIGSTOP OSDUIHelper</td><td>拦键，依赖辅助功能；不能调时不拦</td><td>不拦，两个都在</td><td>拦键；能写且看得见才拦；不冻结任何进程</td></tr>
+      <tr><td>没权限</td><td>系统照常；亮度干脆没提示；后台每 2→15 秒查，查 1 小时</td><td>提醒授权，隐藏设置项</td><td>只旁听</td><td>两个都在；设置行一句话加“允许…”</td></tr>
+      <tr><td>锁屏</td><td>交还系统</td><td>锁屏不出</td><td>让系统</td><td>让系统</td></tr>
+      <tr><td>全屏 / 调度中心</td><td>未写</td><td>调度中心里藏</td><td>都不出</td><td>全屏出；调度中心放行</td></tr>
+      <tr><td>外接屏亮度</td><td>可选 DDC（BetterDisplay、Lunar）</td><td>外接屏、外接键盘都支持</td><td>读指针所在屏</td><td>不拦，交给系统；不做 DDC</td></tr>
+      <tr><td>提示音</td><td>自带音频文件，默认关</td><td>点击声</td><td>系统的</td><td>跟系统“调音量时播放反馈”，放系统自己的声音</td></tr>
+      <tr><td>拖条</td><td>能拖</td><td>能拖</td><td>不能</td><td>两耳点击穿透，不能拖；大卡里的滑条能拖</td></tr>
+    </tbody>
+  </table></div>
+  <div class="card"><h3>不取的，和为什么</h3><ul>
+    <li><b>冻结 OSDUIHelper</b>：26 上挡不住，崩溃后永久冻住，见上。</li>
+    <li><b>按电平变色、发光、分贝样式</b>：系统提示和灵动岛都是黑底白条；颜色留给活动的语气点。</li>
+    <li><b>中央方块、竖条、圆环三种替代样式、速度三档</b>：一个东西一种样子，不加设置。</li>
+    <li><b>百分比</b>：见右耳那一节。</li>
+    <li><b>DDC 外接屏亮度</b>：要另一条硬件通道，写坏了屏幕设置收不回来；交给系统和专门的 App。</li>
+    <li><b>自带提示音、3D AirPods 动画</b>：版权资源，也不像系统。</li>
+    <li><b>⌘ + 亮度键改成键盘灯</b>：抢了用户可能已经在用的组合；不为一件小事造新键。</li>
+  </ul></div>
+
+  <h2>边缘情况</h2>
+  <div class="tbl"><table>
+    <thead><tr><th>情况</th><th>怎么办</th></tr></thead>
+    <tbody>
+      <tr><td>静音时按音量 + / −</td><td>先取消静音再走一格，照系统（真机核对 − 的方向）。</td></tr>
+      <tr><td>细调之后再普通按</td><td>先落到 1/16 的格上，照系统（真机核对）。</td></tr>
+      <tr><td>降到 0 但没静音</td><td>符号是不带声波的喇叭；按静音才是斜线。</td></tr>
+      <tr><td>AirPods 连上或断开，音量跳了</td><td>不出。连上那一句由配件提醒说（“AirPods Pro 已连接 · 电量 82%”）。</td></tr>
+      <tr><td>按到一半换了输出设备</td><td>下一下按当时的默认设备算：能不能调、用哪个符号。</td></tr>
+      <tr><td>系统“调音量时播放反馈”开着</td><td>我们拦了键，系统就不响；由我们放系统自己的那一声，最快 80 毫秒一次。</td></tr>
+      <tr><td>Air 15 键盘上没有键盘灯键</td><td>这台 Mac 上不会出；只有带键盘灯键的键盘按了才出。控制中心里调键盘灯不出（不是按键）。</td></tr>
+      <tr><td>多块屏</td><td>音量出在指针所在那块屏；那块屏没刘海就用胶囊（S4，不画假刘海）。亮度出在被调的那块，也就是内建屏。</td></tr>
+      <tr><td>刘海旁边的菜单栏空位不够 76</td><td>两耳照样长，盖住的菜单只盖 1.2 秒，点击穿透。空位只决定紧凑两耳（34），不决定这里。</td></tr>
+      <tr><td>提醒正在说</td><td>变成一个点，消耗掉。</td></tr>
+      <tr><td>番茄钟正在紧凑两耳</td><td>和正在播放一样：耳朵长到 76、换内容，收回后原样回来，不重播“开始了”。</td></tr>
+      <tr><td>正在拖窗口到落点小岛、两指下拉刘海</td><td>不拦，系统出提示；交互层里先来的手势不让。</td></tr>
+      <tr><td>安全输入（密码框有焦点）时</td><td>系统按键事件还收不收得到，真机核对；收不到就等于不拦，系统照常。</td></tr>
+      <tr><td>VoiceOver</td><td>最后一下之后 0.5 秒念一次：“音量 45%”“静音”“亮度 70%”“键盘灯 40%”，不逐格念。</td></tr>
+      <tr><td>减少动态效果 / 增强对比度</td><td>形状直接到位、内容淡化 0.25 秒、不拉长；轨道白 0.45、岛边线 0.5。</td></tr>
+      <tr><td>开着 Atoll</td><td>它也拦键，两家抢同一个键会互相吞。和 Alcove 一样让位：查到在运行就不拦也不画。</td></tr>
+    </tbody>
+  </table></div>
+
+  <h2>设置这一行，和辅助功能</h2>
+  <p class="sub">只有一行，不加第二行。WindowShade 收起窗口本来就要“辅助功能”，多数人已经允许过，这里不另问。</p>
+  <div class="grid2">
+    <div class="pane"><h4>平时</h4><div class="scard">
+      <div class="srow"><span class="sym" aria-hidden="true">__SYM__</span><div><div class="sn">音量和亮度<span class="info">i</span></div><div class="ss">按音量、亮度键时显示</div></div><span class="tg"></span></div>
+      <div class="bubble">ⓘ 按音量、亮度、键盘灯键时，刘海两边显示一条，系统自己的提示藏起来。锁屏和调度中心里仍是系统的提示。</div>
+    </div></div>
+    <div class="pane"><h4>没允许辅助功能</h4><div class="scard">
+      <div class="srow"><span class="sym" aria-hidden="true">__SYM__</span><div><div class="sn">音量和亮度<span class="info">i</span></div><div class="ss">系统的提示也会出现</div></div><span><span class="sbtn">允许…</span><span class="tg"></span></span></div>
+      <div class="bubble">ⓘ 在“辅助功能”里打开 WindowShade，系统自己的提示就会藏起来。</div>
+    </div></div>
+    <div class="pane"><h4>允许了，但要重开</h4><div class="scard">
+      <div class="srow"><span class="sym" aria-hidden="true">__SYM__</span><div><div class="sn">音量和亮度<span class="info">i</span></div><div class="ss">重新打开后生效</div></div><span><span class="sbtn">重新打开</span><span class="tg"></span></span></div>
+    </div></div>
+    <div class="pane"><h4>版本没核对过 / Alcove 在运行</h4><div class="scard">
+      <div class="srow"><span class="sym" aria-hidden="true">__SYM__</span><div><div class="sn">音量和亮度<span class="info">i</span></div><div class="ss">按音量、亮度键时显示</div></div><span class="tg"></span></div>
+      <div class="bubble">ⓘ 这个 macOS 版本还没核对过，系统的提示会一起出现。<br>ⓘ Alcove 在运行，音量和亮度交给它。</div>
+    </div></div>
+  </div>
+  <div class="card"><h3>允许的那一路</h3><ol>
+    <li>没允许时只在设置这一行说，不弹窗，不在刘海里提。</li>
+    <li>点“允许…”：调系统的辅助功能询问，并打开“隐私与安全性 › 辅助功能”。</li>
+    <li>设置窗口在前台时每 1 秒查一次是否已允许，最多 2 分钟；App 回到前台再查一次。不在后台轮询。</li>
+    <li>允许了就马上装监听，不用重开，副标题换回“按音量、亮度键时显示”。装不上才写“重新打开后生效”。</li>
+    <li>之后被撤销：监听失效，立刻退回只旁听、两个都在，副标题回到“系统的提示也会出现”。</li>
+  </ol></div>
+
+  <h2>权限与隐私</h2>
+  <div class="grid2">
+    <div class="card"><h3>读什么、写什么、什么时候</h3><ul>
+      <li><b>按键</b>：音量 +/−、静音、亮度 +/−、键盘灯 +/− 的按下和松开（键码 0、1、7、2、3、21、22）；别的系统按键原样放行，不记。</li>
+      <li><b>读</b>：默认输出设备、它能不能调、传输方式（内建 / 蓝牙 / HDMI）和型号名；当前音量和静音；内建屏亮度；键盘灯亮度；系统“调音量时播放反馈”。都是按了键才读，平时不轮询。</li>
+      <li><b>写</b>：系统输出音量与静音、内建屏亮度、键盘灯亮度。只在拦下按键的那一下写，写完读回核对。</li>
+      <li><b>默认</b>：开（Aaron 2026-10-09）。拦键还要辅助功能，没有就只旁听。</li>
+      <li>只在内存里，不发送，不写运行记录。</li>
+    </ul></div>
+    <div class="card"><h3>登记进 tools/privacy/registry.json</h3><ul>
+      <li><b>要登记</b>。<code>level-hud</code> 一行不动（只旁听的那一路仍在）。</li>
+      <li>新增 <code>level-keys</code>“音量和亮度键”，归“你同意后才读的”（要辅助功能），状态 planned，接上后改 current；开关跟着“音量和亮度”。</li>
+      <li>那一行写清：只订阅系统按键这一类，打字的键收不到；会写回三种系统数值。</li>
+      <li>扫描词补 <code>DisplayServicesSetBrightness</code>、<code>KeyboardBrightnessClient</code>、<code>com.apple.sound.beep.feedback</code>；<code>CGEvent.tapCreate</code>、<code>AudioObjectSetPropertyData</code> 已在。</li>
+      <li>隐私页（<code>App/WS2PrivacyData.swift</code>、<code>docs/privacy-page.md</code>）同步一行。</li>
+    </ul></div>
+  </div>
+
+  <h2>实现落点</h2>
+  <div class="tbl"><table>
+    <thead><tr><th>文件</th><th>改什么</th></tr></thead>
+    <tbody>
+      <tr><td><code>Core/NotchLevelGate.swift</code></td><td>键加 21 / 22（键盘灯）和连发位；带上修饰键（无 / ⌥⇧ / 其它）；种类加 <code>.keyboardLight</code>。</td></tr>
+      <tr><td><code>Core/NotchLevelSuppression.swift</code>（新）</td><td>纯逻辑的判定表：输入是设置、监听状态、版本是否核对过、对方 App、锁屏、调度中心、全屏且可见、放行与手势层、设备能不能调、亮度目标、修饰键；输出拦或放、谁写、刘海画不画。</td></tr>
+      <tr><td><code>Core/NotchLevelStep.swift</code>（新）</td><td>1/16、1/64、落格、夹到 0–1、到头次数、橡皮筋拉长量、符号分档。</td></tr>
+      <tr><td><code>App/NotchLevelObserver.swift</code></td><td>能拦时换成主动的 <code>CGEvent</code> 监听（只订阅系统按键）；拦不了退回现在的全局旁听；超时立刻重开；回调只查缓存，不碰 Core Audio。</td></tr>
+      <tr><td><code>App/NotchLevelControl.swift</code>（新）</td><td>写音量与静音（复用 <code>App/WS2RemoteEffects.swift</code> 已有的写入）、写内建屏亮度、写键盘灯；读回核对；失败时带记号补发原键；放反馈声。</td></tr>
+      <tr><td><code>App/Notch.swift</code></td><td><code>presentLevel</code> 换成两耳 337 × 33.5；收回时间收进 <code>Motion.Hold.level</code> 1.2；拉长弹簧；读屏 0.5 秒后念一次；全屏可见性检查；探针加宽度、符号档、拉长量。</td></tr>
+      <tr><td><code>App/NotchActivityView.swift</code></td><td>两耳的符号与条；大卡控制那一排 ⇄ 滑条的内容替换。</td></tr>
+      <tr><td><code>Core/NotchRow.swift</code></td><td>那一排展开时，上沿两耳的内容替换成符号和条，格子不动。</td></tr>
+      <tr><td><code>App/NowPlayingStream.swift</code></td><td>不改数据源；大卡要的输出设备名和型号从 <code>NotchLevelControl</code> 拿。</td></tr>
+      <tr><td><code>App/Preferences.swift</code>、<code>App/WS2PrivacyData.swift</code>、<code>tools/privacy/registry.json</code></td><td>设置一行的三种副标题和“允许…”“重新打开”；隐私登记 <code>level-keys</code>。</td></tr>
+      <tr><td><code>tests/run-notch-level-tests.sh</code></td><td>判定表每一行一条；步长、落格、到头、符号分档。</td></tr>
+    </tbody>
+  </table></div>
+  <h3 style="margin-top:16px">工作包</h3>
+  <div class="wp">
+    <div><b>LV1</b>判定表和步长（纯逻辑）<p>写 <code>NotchLevelSuppression</code> 与 <code>NotchLevelStep</code>，扩 <code>NotchLevelGate</code>。验收：测试覆盖上面判定表 15 行、1/16 与 1/64、落格、0 和 100 再按、符号分档；不碰 AppKit。</p></div>
+    <div><b>LV2</b>拦键与写回<p>主动监听、写入、读回、补发、超时重开、反馈声、核对过的版本表。验收（真机 macOS 27）：内建扬声器连按 20 次，系统提示 0 次；HDMI 输出时系统提示照常、键有效；按住时 <code>kill -9</code> 进程，下一下就是系统提示；按住 5 秒不掉键。</p></div>
+    <div><b>LV3</b>两耳的画面<p><code>Notch.swift</code> 与 <code>NotchActivityView.swift</code>：337 × 33.5、符号四档、条、拉长、1.2 秒、读屏一次、全屏里出。验收：对着这张稿截图；减少动态效果、增强对比度各一张；探针读出宽度、符号档、拉长量。</p></div>
+    <div><b>LV4</b>大卡和那一排<p>大卡控制那一排换滑条、那一排展开时上沿换两耳。依赖正在播放大卡的包。验收：大卡开着按音量，控制那一排变滑条，1.2 秒换回，卡片不重播进场；滑条能拖。</p></div>
+    <div><b>LV5</b>设置、允许、登记<p>一行三种副标题、“允许…”那一路、隐私登记 <code>level-keys</code> 与扫描词。验收：隐私检查脚本通过；文案过 copy-guide；撤销辅助功能后 1 秒内退回两个都在。</p></div>
+  </div>
+
+  <h2>待 Aaron 定</h2>
+  <div class="card"><ol>
+    <li><b>右耳写不写百分比。</b>推荐<b>不写</b>：系统提示和灵动岛都只画条，细调时的 23.4% 比条难读；读屏照样念数。写的话右耳要再宽 30，两耳变 106。</li>
+    <li><b>条用白色还是强调色。</b>推荐<b>白色</b>：音量亮度是系统的数，不是一件活动，像系统一样黑底白条；颜色留给活动的语气点。现状（C01）是强调色，定白就把 C01 那一条改掉。</li>
+  </ol></div>
+
+  <footer>示意机型 MacBook Air 15 英寸，刘海 185 × 33.5。稿只画画面，不是源码。图标都是这页手画的简图，SF Symbols 名写在规则里。Atoll（GPL）只借做法与数字，Alcove 只看公开更新说明。2026-10-09。</footer>
+</div>
+
+<script>
+(function(){
+  'use strict';
+  /* ---------- 令牌 ---------- */
+  var TOK = { calm:[0.34,1.0], pop:[0.30,0.75], expand:[0.40,0.92], bloom:[0.42,0.84], settle:[0.38,1.0] };
+  var HW = { w:185, h:33.5, rb:10.71, e:7.4 };
+  var CX = 380, VBW = 760, VBH = 260;
+  var EAR = 76, HUDW = HW.w + 2*EAR;            // 337
+  var BAR = { len:54, h:6, gap:8, inset:14 };
+  var HOLD = 1.2, REPEAT_DELAY = 375, REPEAT_EVERY = 90, OV_MAX = 8, RB_C = 0.55;
+  var BASE = {
+    none:{W:HW.w,H:HW.h,R:HW.rb}, music:{W:HW.w+68,H:HW.h,R:HW.rb}, fullscreen:{W:HW.w,H:HW.h,R:HW.rb},
+    card:{W:440,H:190,R:28}, row:{W:560,H:175.5,R:28}, auth:{W:300,H:84,R:22},
+    locked:{W:HW.w,H:HW.h,R:HW.rb}, mc:{W:HW.w,H:HW.h,R:HW.rb}
+  };
+  var SURFACE = { none:'ears', music:'ears', fullscreen:'ears', card:'card', row:'row' };
+
+  var $ = function(id){ return document.getElementById(id); };
+  var svg = $('svg');
+  var S = {
+    ctx:'none', dev:'builtin', vol:0.5, muted:false, bri:0.625, kbd:0.375,
+    kind:'volume', hudUntil:0, sysUntil:0, sysKind:'volume', sysDim:false, voAt:0, flashAt:-9, lastTok:'—'
+  };
+  var G = { W:{x:HW.w,v:0}, H:{x:HW.h,v:0}, R:{x:HW.rb,v:0}, t:{W:HW.w,H:HW.h,R:HW.rb}, tok:'calm' };
+  var XFe = {base:1,hud:0,want:false,gate:0}, XFc = {base:1,hud:0,want:false,gate:0}, XFr = {base:1,hud:0,want:false,gate:0};
+  var earsPhase = 'idle', W0 = HW.w;
+  var F = {x:0.5,v:0}, OV = {x:0,v:0}, sysA = 0;
+  var reducedEl = $('reduced'), contrastEl = $('contrast');
+  function reduced(){ return reducedEl.checked; }
+  function now(){ return performance.now()/1000; }
+  function clamp(x,a,b){ return Math.max(a,Math.min(b,x)); }
+
+  /* ---------- 弹簧 ---------- */
+  function spring(s, target, tok, dt){
+    var p = TOK[tok], k = Math.pow(2*Math.PI/p[0],2), c = 4*Math.PI*p[1]/p[0];
+    var n = Math.max(1, Math.ceil(dt/0.004)), h = dt/n;
+    for(var i=0;i<n;i++){ var a = -k*(s.x-target) - c*s.v; s.v += a*h; s.x += s.v*h; }
+  }
+  function setShape(t, tok){
+    G.t = {W:t.W,H:t.H,R:t.R}; G.tok = tok; S.lastTok = tok;
+    if(reduced()){ G.W.x=t.W; G.H.x=t.H; G.R.x=t.R; G.W.v=G.H.v=G.R.v=0; }
+  }
+  function stepXF(xf, dt, canIn){
+    var red = reduced(), outR = dt/(red?0.25:0.10), inR = dt/(red?0.25:0.18);
+    var outK = xf.want ? 'base' : 'hud', inK = xf.want ? 'hud' : 'base';
+    if(red){ xf[outK]=Math.max(0,xf[outK]-outR); xf[inK]=Math.min(1,xf[inK]+inR); xf.gate=1; return; }
+    if(xf[outK] > 0){ xf[outK]=Math.max(0,xf[outK]-outR); xf.gate=0; return; }
+    xf.gate += dt;
+    if(xf.gate >= 0.04 && canIn) xf[inK]=Math.min(1,xf[inK]+inR);
+  }
+
+  /* ---------- 形状：主体 + 肩（照 宽形状画肩） ---------- */
+  function shoulderFor(W){ return W <= HW.w + 68 + 0.01 ? HW.e : HW.e*clamp(1-(W-(HW.w+68))/24,0,1); }
+  function shapePath(cx,W,H,rb,e){
+    var x0=cx-W/2, x1=cx+W/2, k=0.5523, kb=0.64, d='';
+    rb = Math.min(rb, H/2, W/2);
+    d += 'M'+(x0-e)+' -8 L'+(x0-e)+' 0 ';
+    if(e>0.02) d += 'C'+(x0-e+k*e)+' 0 '+x0+' '+(e-k*e)+' '+x0+' '+e+' '; else d += 'L'+x0+' 0 ';
+    d += 'L'+x0+' '+(H-rb)+' C'+x0+' '+(H-rb+kb*rb)+' '+(x0+rb-kb*rb)+' '+H+' '+(x0+rb)+' '+H+' ';
+    d += 'L'+(x1-rb)+' '+H+' C'+(x1-rb+kb*rb)+' '+H+' '+x1+' '+(H-rb+kb*rb)+' '+x1+' '+(H-rb)+' ';
+    if(e>0.02) d += 'L'+x1+' '+e+' C'+x1+' '+(e-k*e)+' '+(x1+e-k*e)+' 0 '+(x1+e)+' 0 '; else d += 'L'+x1+' 0 ';
+    d += 'L'+(x1+e)+' -8 Z';
+    return d;
+  }
+
+  /* ---------- 符号（手画简图，不是 SF Symbols 原图） ---------- */
+  function volTier(){
+    if(S.muted) return 'slash';
+    var v = S.vol; if(v <= 0.0001) return 0; if(v <= 1/3+1e-6) return 1; if(v <= 2/3+1e-6) return 2; return 3;
+  }
+  /* f 可强制某一档：{tier, dev, big, lv}，给大卡滑条两头的“最小 / 最大”和右上角的输出设备用 */
+  function glyph(kind, x, y, col, f){
+    col = col || '#fff'; f = f || {};
+    var o = '<g transform="translate('+x.toFixed(2)+' '+y.toFixed(2)+')" fill="'+col+'" stroke="'+col+'">';
+    if(kind === 'volume'){
+      var t = f.tier !== undefined ? f.tier : volTier(), dev = f.dev || S.dev;
+      if(t !== 'slash' && (dev === 'airpods' || dev === 'headphones')){
+        if(dev === 'airpods'){
+          o += '<g stroke="none"><ellipse cx="4" cy="-3" rx="3.1" ry="3.6"/><rect x="4.4" y="-3" width="2.2" height="9.5" rx="1.1"/>'+
+               '<ellipse cx="16" cy="-3" rx="3.1" ry="3.6"/><rect x="13.4" y="-3" width="2.2" height="9.5" rx="1.1"/></g>';
+        } else {
+          o += '<path d="M2 4 V1 A8 8 0 0 1 18 1 V4" fill="none" stroke-width="1.8"/>'+
+               '<rect x="0.5" y="1.5" width="4.2" height="7" rx="1.6" stroke="none"/><rect x="15.3" y="1.5" width="4.2" height="7" rx="1.6" stroke="none"/>';
+        }
+      } else {
+        o += '<path d="M0 -3.2 H3.2 L8 -7.2 V7.2 L3.2 3.2 H0 Z" stroke="none"/>';
+        var radii = [4.2, 7.6, 11];
+        for(var i=0;i<3;i++){
+          var r = radii[i], on = (t !== 'slash' && t > i);
+          o += '<path d="M'+(8+r*0.62)+' '+(-r*0.78)+' A'+r+' '+r+' 0 0 1 '+(8+r*0.62)+' '+(r*0.78)+'" fill="none" stroke-width="1.7" stroke-linecap="round" opacity="'+(on?1:0)+'"/>';
+        }
+        if(t === 'slash'){
+          /* 斜线先描一道底色的缝，再描白线，和系统符号一样“切开”喇叭 */
+          o += '<path d="M-1 -8 L15 8" fill="none" stroke="'+(col === '#fff' ? '#000' : 'var(--sys)')+'" stroke-width="4.2" stroke-linecap="round"/>'+
+               '<path d="M-1 -8 L15 8" fill="none" stroke-width="1.7" stroke-linecap="round"/>';
+        }
+      }
+    } else if(kind === 'brightness'){
+      var big = f.big !== undefined ? f.big : S.bri >= 0.5, L = big ? 3.2 : 1.6;
+      o += '<circle cx="9" cy="0" r="'+(big?3.8:3.3)+'" stroke="none"/>';
+      for(var a=0;a<8;a++){
+        var ang = a*Math.PI/4, r0 = 5.6, r1 = r0+L;
+        o += '<line x1="'+(9+Math.cos(ang)*r0).toFixed(2)+'" y1="'+(Math.sin(ang)*r0).toFixed(2)+'" x2="'+(9+Math.cos(ang)*r1).toFixed(2)+'" y2="'+(Math.sin(ang)*r1).toFixed(2)+'" stroke-width="1.6" stroke-linecap="round"/>';
+      }
+    } else {
+      var lv = f.lv !== undefined ? f.lv : S.kbd, off = lv <= 0.0001, bigk = lv >= 0.5;
+      o += '<rect x="1" y="1.5" width="17" height="6.5" rx="1.6" fill="none" stroke-width="1.5" opacity="'+(off?0.55:1)+'"/>';
+      o += '<line x1="4.5" y1="4.8" x2="14.5" y2="4.8" stroke-width="1.3" stroke-linecap="round" opacity="'+(off?0.55:1)+'"/>';
+      if(!off){
+        var LL = bigk ? 3.2 : 1.8;
+        [-0.55,-Math.PI/2,-(Math.PI-0.55)].forEach(function(ang){
+          var r0=4.2, r1=r0+LL;
+          o += '<line x1="'+(9.5+Math.cos(ang)*r0).toFixed(2)+'" y1="'+(-1+Math.sin(ang)*r0).toFixed(2)+'" x2="'+(9.5+Math.cos(ang)*r1).toFixed(2)+'" y2="'+(-1+Math.sin(ang)*r1).toFixed(2)+'" stroke-width="1.6" stroke-linecap="round"/>';
+        });
+      }
+    }
+    return o + '</g>';
+  }
+  function curVal(kind){ kind = kind || S.kind; return kind==='volume' ? (S.muted?0:S.vol) : kind==='brightness' ? S.bri : S.kbd; }
+
+  /* 条：x 左端，y 中线；stretch > 0 往右拉，< 0 往左拉 */
+  function bar(x, y, len, fill, stretch, alpha, track){
+    var s = reduced() ? 0 : stretch, h = BAR.h - Math.min(1, Math.abs(s)*0.125);
+    var x0 = s < 0 ? x + s : x, w = len + Math.abs(s);
+    var trackA = contrastEl.checked ? 0.45 : 0.22;
+    var o = '<g opacity="'+alpha.toFixed(3)+'">';
+    o += '<rect x="'+x0.toFixed(2)+'" y="'+(y-h/2).toFixed(2)+'" width="'+w.toFixed(2)+'" height="'+h.toFixed(2)+'" rx="'+(h/2)+'" fill="'+(track||('rgba(255,255,255,'+trackA+')'))+'"/>';
+    var fw = clamp(fill,0,1)*len;
+    if(s > 0 && fill >= 0.999) fw = w;
+    if(fw > 0.3){
+      var fx = s < 0 ? x0 : x;
+      o += '<rect x="'+fx.toFixed(2)+'" y="'+(y-h/2).toFixed(2)+'" width="'+Math.max(h,fw).toFixed(2)+'" height="'+h.toFixed(2)+'" rx="'+(h/2)+'" fill="#fff"/>';
+    }
+    var fl = now() - S.flashAt;
+    if(reduced() && fl < 0.25){
+      var ex = (OV.dir||1) > 0 ? x+len-h : x;
+      o += '<rect x="'+ex+'" y="'+(y-h/2)+'" width="'+h+'" height="'+h+'" rx="'+(h/2)+'" fill="#fff" opacity="'+(0.6+0.4*Math.sin(fl/0.25*Math.PI)).toFixed(2)+'"/>';
+    }
+    return o + '</g>';
+  }
+  function rubber(x){ var a = Math.abs(x); return Math.sign(x)*OV_MAX*(1-1/(a*RB_C/OV_MAX+1)); }
+
+  /* ---------- 判定表（和页面上那张表一一对应） ---------- */
+  function decide(kind){
+    function r(sw, ours, sys, why, writer, other){ return {swallow:sw, ours:ours, sys:sys, why:why, writer:writer, other:!!other}; }
+    if(!$('feat').checked) return r(false,false,true,'设置里关着：只有系统的提示。','系统');
+    if($('foreign').checked) return r(false,false,false,'Alcove 在运行：让给它，不拦也不画。','Alcove',true);
+    if(S.ctx==='locked') return r(false,false,true,'锁屏归系统：不拦，系统的提示出来。','系统');
+    if(S.ctx==='auth') return r(false,false,true,'刘海正在等你放行：不分它的刘海，不拦。','系统');
+    if(S.ctx==='mc') return r(false,false,true,'调度中心：我们不能保证画在它上面。看不见就不拦。','系统');
+    if(kind==='volume' && S.dev==='hdmi') return r(false,false,true,'这台设备不能调音量：拦了键就失灵，交给系统，它会提示不能调。','系统');
+    if(kind==='brightness' && $('ext').checked) return r(false,false,true,'要调的是外接屏：我们只写内建屏，交给系统。','系统');
+    if(!$('ax').checked) return r(false,true,true,'没允许辅助功能：只能旁听，两个都在。设置那一行会写“系统的提示也会出现”。','系统');
+    if(!$('os').checked) return r(false,true,true,'这个 macOS 版本没核对过：两个都在，不说话、不弹窗。','系统');
+    if(S.ctx==='fullscreen') return r(true,true,false,'全屏：顶上是黑边，两耳融进去。面板在这张全屏桌面上可见，才拦。','我们');
+    return r(true,true,false,'能写、看得见、没有别的主人：拦下，我们照系统的步长写回。','我们');
+  }
+
+  /* ---------- 按键 ---------- */
+  var KEYS = {
+    vup:{kind:'volume',dir:1,name:'音量 +'}, vdown:{kind:'volume',dir:-1,name:'音量 −'}, mute:{kind:'volume',dir:0,name:'静音'},
+    bup:{kind:'brightness',dir:1,name:'亮度 +'}, bdown:{kind:'brightness',dir:-1,name:'亮度 −'},
+    kup:{kind:'keyboard',dir:1,name:'键盘灯 +'}, kdown:{kind:'keyboard',dir:-1,name:'键盘灯 −'}
+  };
+  function stepVal(v, dir, fine){
+    var n = fine ? 64 : 16, u = v*n;
+    var nv = dir > 0 ? (Math.floor(u+1e-6)+1)/n : (Math.ceil(u-1e-6)-1)/n;
+    return clamp(nv,0,1);
+  }
+  function press(id, repeat, fineKey){
+    var k = KEYS[id], fine = fineKey || $('fine').checked, t = now();
+    var d = decide(k.kind);
+    var changes = !(k.kind==='volume' && S.dev==='hdmi') && !(k.kind==='brightness' && $('ext').checked);
+    var atLimit = false;
+    if(changes){
+      if(k.dir === 0){ S.muted = !S.muted; }
+      else {
+        var key = k.kind==='volume' ? 'vol' : k.kind==='brightness' ? 'bri' : 'kbd';
+        if(k.kind==='volume' && S.muted){ S.muted = false; }
+        var before = S[key], after = stepVal(before, k.dir, fine);
+        if(Math.abs(after-before) < 1e-9) atLimit = true;
+        S[key] = after;
+      }
+    }
+    if(d.ours){
+      S.kind = k.kind; S.hudUntil = t + HOLD; S.voAt = t + 0.5;
+      if(atLimit){ OV.dir = k.dir; if(reduced()) S.flashAt = t; else OV.v += k.dir*900; }
+    }
+    if(d.sys){ S.sysUntil = t + 1.6; S.sysKind = k.kind; S.sysDim = (k.kind==='volume' && S.dev==='hdmi'); }
+    if(!repeat) logLine(k.name + (fine && k.dir ? '（细调）' : '') + '：' + (d.swallow ? '拦下，我们写' : '放行') + (atLimit ? '，到头了' : ''));
+    showDecision(k, d, fine, atLimit);
+  }
+  function nonKey(kind, label){
+    if(kind==='volume') S.vol = clamp(S.vol + (Math.random() < 0.5 ? -1 : 1)*0.04, 0, 1);
+    else S.bri = clamp(S.bri + (Math.random() < 0.5 ? -1 : 1)*0.05, 0, 1);
+    $('rKey').textContent = label;
+    $('rSwallow').textContent = '没有按键可拦';
+    $('rWriter').textContent = kind==='volume' ? '系统或别的 App' : '系统';
+    $('rSeen').innerHTML = chips(false,false);
+    $('rWhy').textContent = '0.6 秒内没按过这一类键：只认按键，不认数值，刘海不动。';
+    updateVals();
+    logLine(label + '：数值变了，不出');
+  }
+
+  /* ---------- 面板 ---------- */
+  function chips(ours, sys){ return '<span class="chip '+(ours?'on':'off')+'">刘海'+(ours?' ✓':'')+'</span><span class="chip '+(sys?'on':'off')+'">系统'+(sys?' ✓':'')+'</span>'; }
+  function pct(v){ return Math.round(v*1000)/10 + '%'; }
+  function updateVals(){
+    $('rVal').textContent = '音量 ' + (S.muted ? '静音' : pct(S.vol)) + ' · 亮度 ' + pct(S.bri) + ' · 键盘灯 ' + pct(S.kbd);
+  }
+  function showDecision(k, d, fine, atLimit){
+    $('rKey').textContent = k.name + (fine && k.dir ? ' · ⌥⇧' : '');
+    $('rSwallow').textContent = d.swallow ? '拦下（这一下和它的松开都不给系统）' : (d.ours ? '不拦，只旁听' : '不拦，原样交给系统');
+    $('rWriter').textContent = d.writer + (k.dir ? '，步长 ' + (fine ? '1/64' : '1/16') : '');
+    $('rSeen').innerHTML = d.other ? '<span class="chip on">Alcove ✓</span>' + chips(false,false) : chips(d.ours, d.sys);
+    $('rWhy').textContent = d.why + (atLimit && d.ours ? ' 到头了：条拉长再弹回。' : '');
+    updateVals();
+  }
+  var logEl = $('log');
+  function logLine(s){
+    var li = document.createElement('li'); li.textContent = s;
+    logEl.insertBefore(li, logEl.firstChild);
+    while(logEl.children.length > 7) logEl.removeChild(logEl.lastChild);
+  }
+  var SYMSVG = '<svg viewBox="0 0 16 16" fill="#fff"><path d="M1.5 6h2.4L7.5 3v10L3.9 10H1.5z"/><path d="M9.6 5.6a3.4 3.4 0 0 1 0 4.8M11.6 3.8a6 6 0 0 1 0 8.4" fill="none" stroke="#fff" stroke-width="1.3" stroke-linecap="round"/></svg>';
+  function renderLiveRow(){
+    var sub, btn = '', bubble;
+    var feat = $('feat').checked;
+    if(!$('ax').checked){ sub = '系统的提示也会出现'; btn = '<span class="sbtn">允许…</span>'; bubble = '在“辅助功能”里打开 WindowShade，系统自己的提示就会藏起来。'; }
+    else { sub = '按音量、亮度键时显示'; bubble = $('foreign').checked ? 'Alcove 在运行，音量和亮度交给它。' : (!$('os').checked ? '这个 macOS 版本还没核对过，系统的提示会一起出现。' : '按音量、亮度、键盘灯键时，刘海两边显示一条，系统自己的提示藏起来。'); }
+    if(!feat){ btn=''; bubble = '关着时只有系统自己的提示。'; }
+    $('liveRow').innerHTML = '<div class="srow"><span class="sym" aria-hidden="true">'+SYMSVG+'</span><div><div class="sn">音量和亮度<span class="info">i</span></div><div class="ss">'+sub+'</div></div><span>'+btn+'<span class="tg'+(feat?'':' offsw')+'"></span></span></div><div class="bubble">ⓘ '+bubble+'</div>';
+  }
+  [].forEach.call(document.querySelectorAll('.sym'), function(el){ if(el.innerHTML.indexOf('__SYM__') >= 0) el.innerHTML = SYMSVG; });
+
+  /* ---------- 画面 ---------- */
+  var COVER = '<defs><linearGradient id="cov" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#ff8a5c"/><stop offset=".55" stop-color="#c2417a"/><stop offset="1" stop-color="#3b2a8f"/></linearGradient>'+
+              '<linearGradient id="vid" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#1d3a4a"/><stop offset="1" stop-color="#0d1a22"/></linearGradient>'+
+              '<clipPath id="clipI"><path id="clipPath"/></clipPath></defs>';
+  function menuBar(){
+    var o = '<rect x="0" y="0" width="'+VBW+'" height="'+HW.h+'" fill="var(--mbar)"/>';
+    var items = ['访达','文件','编辑','显示','前往','窗口','帮助'], x = 16;
+    items.forEach(function(s,i){ o += '<text x="'+x+'" y="21.5" font-size="13" font-weight="'+(i?400:650)+'" fill="var(--menu)">'+s+'</text>'; x += (i?40:44); });
+    var rx = VBW - 16;
+    o += '<text x="'+rx+'" y="21.5" font-size="13" text-anchor="end" fill="var(--menu)">周五 10:09</text>';
+    [0,1,2,3].forEach(function(i){ o += '<rect x="'+(rx-96-i*26)+'" y="11" width="16" height="12" rx="3" fill="var(--menu)" opacity=".55"/>'; });
+    return o;
+  }
+  function sysHud(alpha){
+    if(alpha < 0.01) return '';
+    var w = 200, h = 44, x = VBW - 16 - w, y = HW.h + 10, v = curVal(S.sysKind);
+    var o = '<g opacity="'+alpha.toFixed(3)+'">';
+    o += '<rect x="'+x+'" y="'+y+'" width="'+w+'" height="'+h+'" rx="13" fill="var(--sys)" stroke="var(--line)" stroke-width=".5"/>';
+    var save = S.kind; S.kind = S.sysKind;
+    o += glyph(S.sysKind, x+14, y+h/2, 'var(--sysInk)');
+    S.kind = save;
+    o += '<rect x="'+(x+46)+'" y="'+(y+h/2-2.5)+'" width="140" height="5" rx="2.5" fill="var(--sysTrack)"/>';
+    if(!S.sysDim && v > 0.003) o += '<rect x="'+(x+46)+'" y="'+(y+h/2-2.5)+'" width="'+Math.max(5,140*v)+'" height="5" rx="2.5" fill="var(--sysInk)"/>';
+    if(S.sysDim) o += '<g transform="translate('+(x+186)+' '+(y+h/2)+')" fill="none" stroke="var(--sysInk)" stroke-width="1.4"><circle r="5"/><line x1="-3.5" y1="3.5" x2="3.5" y2="-3.5"/></g>';
+    o += '<text x="'+(x+w)+'" y="'+(y+h+14)+'" font-size="11" text-anchor="end" fill="var(--menu)" opacity=".85">系统的提示</text>';
+    return o + '</g>';
+  }
+  function backdrop(){
+    var c = S.ctx, o = '';
+    if(c === 'fullscreen'){
+      o += '<rect x="0" y="0" width="'+VBW+'" height="'+VBH+'" fill="url(#vid)"/>';
+      o += '<rect x="0" y="0" width="'+VBW+'" height="'+HW.h+'" fill="#000"/>';
+      o += '<text x="'+(VBW/2)+'" y="160" font-size="12" text-anchor="middle" fill="rgba(255,255,255,.55)">全屏播放的影片（刘海两边是黑边，没有菜单栏）</text>';
+    } else if(c === 'mc'){
+      o += '<rect x="0" y="0" width="'+VBW+'" height="'+VBH+'" fill="rgba(0,0,0,.32)"/>';
+      o += '<rect x="0" y="0" width="'+VBW+'" height="70" fill="rgba(255,255,255,.18)"/>';
+      ['桌面 1','桌面 2','全屏'].forEach(function(s,i){ var x = 210 + i*120; o += '<rect x="'+x+'" y="40" width="100" height="22" rx="5" fill="rgba(255,255,255,.35)"/><text x="'+(x+50)+'" y="55" font-size="10.5" text-anchor="middle" fill="#fff">'+s+'</text>'; });
+      [[90,100,180,120],[300,110,200,130],[530,95,170,110]].forEach(function(r){ o += '<rect x="'+r[0]+'" y="'+r[1]+'" width="'+r[2]+'" height="'+r[3]+'" rx="8" fill="rgba(255,255,255,.55)"/>'; });
+    } else if(c === 'locked'){
+      o += '<rect x="0" y="0" width="'+VBW+'" height="'+VBH+'" fill="rgba(0,0,0,.28)"/>';
+      o += '<text x="'+(VBW/2)+'" y="125" font-size="52" font-weight="600" text-anchor="middle" fill="rgba(255,255,255,.92)">10:09</text>';
+      o += '<text x="'+(VBW/2)+'" y="150" font-size="12" text-anchor="middle" fill="rgba(255,255,255,.8)">锁屏</text>';
+    } else {
+      o += menuBar();
+      o += '<rect x="70" y="72" width="300" height="170" rx="10" fill="rgba(255,255,255,.55)"/><rect x="400" y="86" width="290" height="160" rx="10" fill="rgba(255,255,255,.4)"/>';
+    }
+    return o;
+  }
+  function baseContent(x0, x1, W, H){
+    var c = S.ctx, o = '', nL = CX - HW.w/2, nR = CX + HW.w/2;
+    if(c === 'music'){
+      o += '<g transform="translate('+(nL-24)+' 16.75)" fill="#fff"><path d="M3 5.5 V-6 L11 -8 V3.5" fill="none" stroke="#fff" stroke-width="1.6"/><circle cx="1.5" cy="5.5" r="2.3"/><circle cx="9.5" cy="3.5" r="2.3"/></g>';
+      o += '<circle cx="'+(nR+17)+'" cy="16.75" r="6.5" fill="none" stroke="rgba(255,255,255,.22)" stroke-width="2.2"/>';
+      o += '<path d="'+arc(nR+17,16.75,6.5,0.42)+'" fill="none" stroke="#30d158" stroke-width="2.2" stroke-linecap="round"/>';
+    } else if(c === 'auth'){
+      o += '<g transform="translate('+(x0+22)+' 16.75)" fill="none" stroke="#fff" stroke-width="1.6" stroke-linecap="round"><path d="M-6 -2 V-6 H-2 M2 -6 H6 V-2 M6 2 V6 H2 M-2 6 H-6 V2"/></g>';
+      o += '<text x="'+CX+'" y="'+(HW.h+28)+'" font-size="13" font-weight="600" text-anchor="middle" fill="#fff">刷脸解锁</text>';
+    } else if(c === 'row'){
+      o += '<g transform="translate('+(x0+14)+' 16.75)" fill="none" stroke="#fff" stroke-width="1.5"><rect x="0" y="-6" width="15" height="11" rx="2"/><line x1="0" y1="-2.5" x2="15" y2="-2.5"/></g>';
+      o += '<text x="'+(x1-14)+'" y="21" font-size="13" font-weight="650" text-anchor="end" fill="rgba(255,255,255,.92)">6</text>';
+    }
+    return o;
+  }
+  function rowTiles(x0, W, H, a){
+    var o = '<g opacity="'+a.toFixed(3)+'">', y = HW.h + 14, h = H - y - 14, tw = 124, gap = 8, x = x0 + 14;
+    var labels = ['备忘录','预览','邮件',null,'正在播放'];
+    labels.forEach(function(s){
+      if(s === null){ o += '<line x1="'+(x+1)+'" y1="'+(y+10)+'" x2="'+(x+1)+'" y2="'+(y+h-10)+'" stroke="rgba(255,255,255,.3)" stroke-width="1"/>'; x += 10; return; }
+      var w = s === '正在播放' ? W - 28 - (x - x0 - 14) : tw;
+      o += '<rect x="'+x+'" y="'+y+'" width="'+w+'" height="'+h+'" rx="14" fill="rgba(255,255,255,.12)"/>';
+      o += '<text x="'+(x+12)+'" y="'+(y+h-12)+'" font-size="11" fill="rgba(255,255,255,.75)">'+s+'</text>';
+      x += w + gap;
+    });
+    return o + '</g>';
+  }
+  function cardContent(x0, x1, W, H, aCtl, aSl, stretch){
+    var o = '', cy = HW.h;
+    o += '<rect x="'+(x0+16)+'" y="14" width="64" height="64" rx="12" fill="url(#cov)"/>';
+    o += '<text x="'+(x0+92)+'" y="'+(cy+16)+'" font-size="13" font-weight="650" fill="#fff">Night Drive</text>';
+    o += '<text x="'+(x0+92)+'" y="'+(cy+32)+'" font-size="11" fill="rgba(255,255,255,.6)">Local Demo</text>';
+    o += glyph('volume', x1-40, 22, 'rgba(255,255,255,.85)', {tier:2});  /* 输出设备，不随音量变 */
+    var py = 104;
+    o += '<rect x="'+(x0+16)+'" y="'+py+'" width="'+(W-32)+'" height="4" rx="2" fill="rgba(255,255,255,.2)"/><rect x="'+(x0+16)+'" y="'+py+'" width="'+((W-32)*0.34)+'" height="4" rx="2" fill="rgba(255,255,255,.9)"/>';
+    o += '<text x="'+(x0+16)+'" y="'+(py+18)+'" font-size="10.5" fill="rgba(255,255,255,.55)">1:12</text><text x="'+(x1-16)+'" y="'+(py+18)+'" font-size="10.5" text-anchor="end" fill="rgba(255,255,255,.55)">−2:31</text>';
+    var ry = H - 28;
+    o += '<g opacity="'+aCtl.toFixed(3)+'" fill="#fff">'+
+      '<g transform="translate('+(CX-64)+' '+ry+')"><path d="M8 -7 L-2 0 L8 7 Z M-2 -7 L-12 0 L-2 7 Z"/><rect x="-14" y="-7" width="2.2" height="14"/></g>'+
+      '<g transform="translate('+CX+' '+ry+')"><rect x="-7" y="-9" width="5" height="18" rx="1.2"/><rect x="2" y="-9" width="5" height="18" rx="1.2"/></g>'+
+      '<g transform="translate('+(CX+64)+' '+ry+')"><path d="M-8 -7 L2 0 L-8 7 Z M2 -7 L12 0 L2 7 Z"/><rect x="11.8" y="-7" width="2.2" height="14"/></g></g>';
+    if(aSl > 0.001){
+      var len = W - 32 - 76, bx = x0 + 16 + 30;
+      var sk = S.kind;
+      o += '<g opacity="'+aSl.toFixed(3)+'">';
+      o += '<g transform="translate('+(x0+16)+' '+ry+') scale(.8)">'+glyph(sk,0,0,'#fff',{tier:0,dev:'builtin',big:false,lv:0.2})+'</g>';
+      o += bar(bx, ry, len, F.x, stretch*1.4, 1);
+      o += glyph(sk, x1-16-24, ry, '#fff', {tier:3,dev:'builtin',big:true,lv:1});
+      o += '</g>';
+    }
+    return o;
+  }
+  function arc(cx, cy, r, frac){
+    var a0 = -Math.PI/2, a1 = a0 + Math.PI*2*clamp(frac,0.001,0.999);
+    var x0 = cx + r*Math.cos(a0), y0 = cy + r*Math.sin(a0), x1 = cx + r*Math.cos(a1), y1 = cy + r*Math.sin(a1);
+    return 'M'+x0+' '+y0+' A'+r+' '+r+' 0 '+(frac>0.5?1:0)+' 1 '+x1+' '+y1;
+  }
+
+  function render(){
+    var W = G.W.x, H = G.H.x, R = G.R.x, e = shoulderFor(W);
+    var x0 = CX - W/2, x1 = CX + W/2, nL = CX - HW.w/2, nR = CX + HW.w/2;
+    /* 只往按的方向拉：弹回时的欠冲不让条翻到另一头 */
+    var rs = rubber(OV.x), stretch = (OV.dir||1) > 0 ? Math.max(0, rs) : Math.min(0, rs);
+    var path = shapePath(CX, W, H, R, e);
+    var o = COVER + backdrop();
+    o += '<path d="'+shapePath(CX,HW.w,HW.h,HW.rb,HW.e)+'" fill="#000"/>';
+    o += '<path d="'+path+'" fill="#000"/>';
+    if(contrastEl.checked && W > HW.w + 1) o += '<path d="'+path+'" fill="none" stroke="rgba(255,255,255,.5)" stroke-width="1" clip-path="url(#clipI)"/>';
+    var inner = '';
+    var surf = SURFACE[S.ctx];
+    if(surf === 'ears' || S.ctx === 'auth'){
+      inner += '<g opacity="'+XFe.base.toFixed(3)+'">'+baseContent(x0,x1,W,H)+'</g>';
+      if(XFe.hud > 0.001){
+        var gx = x0 + BAR.inset + stretch*(stretch<0?0.25:0.25);
+        inner += '<g opacity="'+XFe.hud.toFixed(3)+'">'+glyph(S.kind, gx, HW.h/2)+'</g>';
+        inner += bar(nR + BAR.gap, HW.h/2, BAR.len, F.x, stretch, XFe.hud);
+      }
+    } else if(surf === 'row'){
+      inner += '<g opacity="'+XFr.base.toFixed(3)+'">'+baseContent(x0,x1,W,H)+'</g>';
+      if(XFr.hud > 0.001){
+        inner += '<g opacity="'+XFr.hud.toFixed(3)+'">'+glyph(S.kind, x0 + BAR.inset + stretch*0.25, HW.h/2)+'</g>';
+        inner += bar(x1 - BAR.inset - BAR.len, HW.h/2, BAR.len, F.x, stretch, XFr.hud);
+      }
+      inner += rowTiles(x0, W, H, clamp((H - HW.h)/(BASE.row.H - HW.h),0,1) > 0.4 ? 1 : 0);
+    } else if(surf === 'card'){
+      var ready = clamp((H - HW.h)/(BASE.card.H - HW.h),0,1) > 0.4;
+      if(ready) inner += cardContent(x0, x1, W, H, XFc.base, XFc.hud, stretch);
+    }
+    o += '<g clip-path="url(#clipI)">'+inner+'</g>';
+    if($('ghost').checked) o += '<path d="'+shapePath(CX,HW.w,HW.h,HW.rb,HW.e)+'" fill="none" stroke="var(--hw)" stroke-width=".8" stroke-dasharray="3 2"/>';
+    o += sysHud(sysA);
+    svg.innerHTML = o;
+    if($('zoom').checked){
+      var zw = clamp(Math.max(W + 80, (H + 40)*VBW/VBH), 360, VBW), zh = zw*VBH/VBW;
+      svg.setAttribute('viewBox', (CX - zw/2).toFixed(1)+' 0 '+zw.toFixed(1)+' '+zh.toFixed(1));
+    } else svg.setAttribute('viewBox', '0 0 '+VBW+' '+VBH);
+    var cp = document.getElementById('clipPath'); if(cp) cp.setAttribute('d', path);
+  }
+
+  /* ---------- 帧 ---------- */
+  var last = performance.now();
+  function frame(ms){
+    var dt = Math.min(0.05, (ms - last)/1000); last = ms;
+    var t = now(), red = reduced(), hudOn = t < S.hudUntil;
+    var surf = SURFACE[S.ctx], base = BASE[S.ctx];
+
+    if(surf === 'ears'){
+      var hudT = {W:Math.max(HUDW, base.W), H:base.H, R:HW.rb};
+      if(hudOn && earsPhase !== 'in'){ earsPhase = 'in'; W0 = G.W.x; XFe.want = true; setShape(hudT, 'pop'); }
+      if(!hudOn && earsPhase === 'in'){ earsPhase = 'out'; XFe.want = false; }
+      if(earsPhase === 'out' && XFe.hud <= 0 && XFe.gate >= 0.04){ earsPhase = 'return'; setShape(base, 'calm'); }
+      var canIn;
+      if(XFe.want){ var span = (HUDW - W0) || 1; canIn = red || (G.W.x - W0)/span >= 0.4; }
+      else { var sp2 = (HUDW - base.W) || 1; canIn = earsPhase === 'idle' || (HUDW - G.W.x)/sp2 >= 0.4 || red; }
+      stepXF(XFe, dt, canIn);
+      if(earsPhase === 'return' && Math.abs(G.W.x - base.W) < 0.3 && Math.abs(G.W.v) < 2) earsPhase = 'idle';
+    } else if(surf === 'card'){ XFc.want = hudOn; stepXF(XFc, dt, true); if(hudOn) S.lastTok = 'pop'; }
+    else if(surf === 'row'){ XFr.want = hudOn; stepXF(XFr, dt, true); if(hudOn) S.lastTok = 'pop'; }
+
+    if(!red){ spring(G.W, G.t.W, G.tok, dt); spring(G.H, G.t.H, G.tok, dt); spring(G.R, G.t.R, G.tok, dt); }
+    else { G.W.x = G.t.W; G.H.x = G.t.H; G.R.x = G.t.R; }
+
+    var target = curVal();
+    if(red){ F.x = target; F.v = 0; } else spring(F, target, 'pop', dt);
+    if(red){ OV.x = 0; OV.v = 0; } else spring(OV, 0, 'pop', dt);
+
+    var sysOn = t < S.sysUntil;
+    sysA = sysOn ? Math.min(1, sysA + dt/0.12) : Math.max(0, sysA - dt/0.3);
+
+    if(S.voAt && t >= S.voAt && hudOn){
+      var k = S.kind, txt = k==='volume' ? (S.muted ? '静音' : '音量 ' + Math.round(S.vol*100) + '%') : (k==='brightness' ? '亮度 ' : '键盘灯 ') + Math.round(curVal(k)*100) + '%';
+      logLine('读屏：“' + txt + '”'); S.voAt = 0;
+    }
+    $('rTok').innerHTML = '<span class="token">' + (red ? 'reduced（形状直接到位，内容淡化 0.25 秒）' : (hudOn ? 'pop' : S.lastTok)) + '</span>';
+    render();
+    requestAnimationFrame(frame);
+  }
+
+  /* ---------- 交互 ---------- */
+  function setCtx(c){
+    S.ctx = c; S.hudUntil = 0; earsPhase = 'idle';
+    XFe = {base:1,hud:0,want:false,gate:0}; XFc = {base:1,hud:0,want:false,gate:0}; XFr = {base:1,hud:0,want:false,gate:0};
+    var b = BASE[c], tok = (c==='card'||c==='row') ? 'expand' : (c==='auth' ? 'pop' : 'calm');
+    setShape(b, tok);
+    [].forEach.call(document.querySelectorAll('[data-ctx]'), function(x){ x.setAttribute('aria-pressed', x.dataset.ctx === c); });
+    logLine('刘海此刻：' + document.querySelector('[data-ctx="'+c+'"]').textContent);
+  }
+  [].forEach.call(document.querySelectorAll('[data-ctx]'), function(b){ b.addEventListener('click', function(){ setCtx(b.dataset.ctx); }); });
+  [].forEach.call(document.querySelectorAll('[data-dev]'), function(b){
+    b.addEventListener('click', function(){
+      S.dev = b.dataset.dev;
+      [].forEach.call(document.querySelectorAll('[data-dev]'), function(x){ x.setAttribute('aria-pressed', x === b); });
+      logLine('声音从' + b.textContent + '出（换设备本身不出提示）');
+    });
+  });
+  [].forEach.call(document.querySelectorAll('[data-theme-set]'), function(b){
+    b.addEventListener('click', function(){
+      var v = b.dataset.themeSet;
+      if(v === 'auto') document.documentElement.removeAttribute('data-theme'); else document.documentElement.setAttribute('data-theme', v);
+      [].forEach.call(document.querySelectorAll('[data-theme-set]'), function(x){ x.setAttribute('aria-pressed', x === b); });
+    });
+  });
+  ['feat','ax','os','ext','foreign'].forEach(function(id){ $(id).addEventListener('change', renderLiveRow); });
+  $('adaptive').addEventListener('click', function(){ nonKey('volume','个性化音量'); });
+  $('otherapp').addEventListener('click', function(){ nonKey('volume','别的 App 改音量'); });
+  $('autob').addEventListener('click', function(){ nonKey('brightness','自动亮度'); });
+
+  /* 按住按钮 = 按住键：先等 0.375 秒，之后每 0.09 秒连发 */
+  var holdT = 0, holdI = 0, holdBtn = null;
+  function stopHold(){ clearTimeout(holdT); clearInterval(holdI); holdT = holdI = 0; if(holdBtn){ holdBtn.classList.remove('down'); holdBtn = null; } }
+  [].forEach.call(document.querySelectorAll('[data-key]'), function(b){
+    b.addEventListener('pointerdown', function(ev){
+      if(ev.button !== 0) return;
+      ev.preventDefault(); stopHold(); holdBtn = b; b.classList.add('down');
+      try{ b.setPointerCapture(ev.pointerId); }catch(e){}
+      press(b.dataset.key, false);
+      holdT = setTimeout(function(){ holdI = setInterval(function(){ press(b.dataset.key, true); }, REPEAT_EVERY); }, REPEAT_DELAY);
+    });
+    ['pointerup','pointercancel','lostpointercapture'].forEach(function(t){ b.addEventListener(t, stopHold); });
+    b.addEventListener('click', function(ev){ if(ev.detail === 0) press(b.dataset.key, false); });
+  });
+  window.addEventListener('blur', stopHold);
+
+  var stage = $('stage');
+  var KMAP = { ArrowUp:'vup', ArrowDown:'vdown', m:'mute', M:'mute', ArrowRight:'bup', ArrowLeft:'bdown', ']':'kup', '[':'kdown', '}':'kup', '{':'kdown' };
+  stage.addEventListener('keydown', function(ev){
+    var id = KMAP[ev.key]; if(!id) return;
+    ev.preventDefault();
+    var fine = ev.altKey && ev.shiftKey;
+    press(id, ev.repeat, fine);
+  });
+  stage.addEventListener('pointerdown', function(){ stage.focus(); });
+
+  try{ if(window.matchMedia('(prefers-reduced-motion: reduce)').matches) reducedEl.checked = true; }catch(e){}
+  try{ if(window.matchMedia('(prefers-contrast: more)').matches) contrastEl.checked = true; }catch(e){}
+  renderLiveRow(); updateVals();
+  logLine('按一下“音量 +”，或按住它');
+  requestAnimationFrame(frame);
+})();
+</script>
+<style id="ws-family">
+@import url("https://fonts.googleapis.com/css2?family=Newsreader:opsz,wght@6..72,400;6..72,600&family=IBM+Plex+Sans:wght@400;500;600&family=IBM+Plex+Mono:wght@400;500&family=Noto+Sans+SC:wght@400;500;600&family=Noto+Serif+SC:wght@600&display=swap");
+.ws-sys{display:flex;flex-wrap:wrap;align-items:center;gap:6px 14px;max-width:1160px;margin:-12px auto 18px;padding:10px 16px;font:12.5px/1.4 "IBM Plex Sans","Noto Sans SC",-apple-system,system-ui,sans-serif;border-bottom:1px solid color-mix(in srgb,currentColor 14%,transparent)}.ws-sys a{color:inherit;text-decoration:none;opacity:.78}.ws-sys a:hover,.ws-sys a:focus-visible{opacity:1;text-decoration:underline}.ws-sys b{font-weight:600}.ws-sys .ws-n{opacity:.55;font-variant-numeric:tabular-nums}.ws-sys .ws-sp{flex:1}
+/* 设计系统的纸面（2026-10-08 统一）：只管页面外框——底色、标题字、正文字；舞台里的画面不动 */
+:root{--wsf-paper:#EEF1F6;--wsf-ink:#131A25;--wsf-ink2:#46546A}
+@media (prefers-color-scheme:dark){:root:not([data-theme="light"]){--wsf-paper:#0E131B;--wsf-ink:#E7EDF6;--wsf-ink2:#A7B4C8}}
+:root[data-theme="dark"]{--wsf-paper:#0E131B;--wsf-ink:#E7EDF6;--wsf-ink2:#A7B4C8}
+html body{background:var(--wsf-paper);color:var(--wsf-ink)}
+html body h1{font-family:"Newsreader","Noto Serif SC",Georgia,serif;font-weight:600;letter-spacing:-.015em;text-wrap:balance}
+html body h2{font-family:"Newsreader","Noto Serif SC",Georgia,serif;font-weight:600;text-wrap:balance}
+html body .lede,html body .sub{color:var(--wsf-ink2)}
+</style>
+</body>
+</html>

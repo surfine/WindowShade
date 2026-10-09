@@ -34,7 +34,7 @@ bash tools/carplay/test-session.sh
 
 ## WindowShade 适配边界
 
-新增 `WS2CarPlaySession` 仅为自主实现的纯状态契约，尚无运行时调用点：每次连接分配独立 ticket；迟到的旧 session end/ready 不能清除新会话；断开使 ticket 失效；退出全屏只返回桌面，保留连接；缺身份停在 missingIdentity，不产生 ready。`identityAvailable` 是未来适配器验证结果，不是认证实现，不能由 UI 勾选冒充通过。
+新增 `WS2CarPlaySession` 仅为自主实现的纯状态契约，尚无运行时调用点：每次连接分配独立 ticket；迟到的旧 session end/ready 不能清除新会话；断开使 ticket 失效；退出全屏只返回桌面，保留连接；缺身份停在 missingIdentity，不产生 ready。身份走可插拔接口 `WS2CarPlayAccessoryIdentity`：只接受来源为 Apple 签发的身份，提取出来的或来源不明的一律拒绝，仓库里不放任何提取的身份；接口只看来源，真正的校验归未来适配器，不能由 UI 勾选冒充通过。没有身份时会话只跑合成模式（2026-10-08 起 `failed` 状态由 `waitingToReconnect` / `gaveUp` 取代）。
 
 测试覆盖缺身份、旧会话结束不清新会话、断开后的迟到事件、失败后的迟到 ready、退出全屏与断开的差别。上游 `CarPlayServer.onSessionEnded` 的旧会话事件仍会无条件结束麦克风并广播离线；本轮未改 GPL checkout。将来接线必须在媒体清理与 UI 通知之前匹配 ticket，仅加 WS 状态模型不能修好上游内部副作用。
 
@@ -43,3 +43,34 @@ bash tools/carplay/test-session.sh
 无凭据构建与三组合成协议测试已完成。下一步由用户提供可使用的外部认证身份或服务，另行进入真实接收实验。PlayPort 无 dongle 但仍需认证身份；没有身份只能交付当前构建与适配契约。不得把 DiPlay APK 中实验性恢复身份当开源代码许可的一部分写入 WindowShade。
 
 有身份后的第一片保持 PlayPort 独立播放器，验证一台 iPhone、H.264、真实画面/音频/点击及断线恢复，再接宿主 Esc 返回桌面。PlayPort 默认 Esc 是 CarPlay Back，宿主返回桌面应另行截获。Siri/通话、锁屏睡眠恢复、旧会话晚到、麦克风拒绝均尚未实测。LIVI 的硬件认证路径与 DiPlay 的 Android/BYD UI 不进入本次交付。
+
+## 会话规则与测试矩阵（2026-10-08，合成事件，无真机）
+
+入口是长按刘海；CarPlay 画面保持抽象，不画车机界面。`WS2CarPlaySession` 不开传输、不起计时器，时间由适配器传入：
+
+- 全屏分辨率在会话开始时固定；改它或任何设置，只在下次重连生效。
+- 每次显示 CarPlay 画面（长按）只向手机请求一个关键帧。
+- 重连等待 2 s × 2^n，封顶 30 s，最多 5 次（2、4、8、16、30 s），第 5 次再失败就放弃，等用户重新连接；连接稳定满 60 s 清零重连计数。
+- 两套边距：可视区是手机铺画面的范围，安全区在其内，保证内容躲开刘海。
+- 收到的帧数和画出的帧数分开记，验收拿两者对比（画出只在画面显示时累计）。
+- 离开回到桌面，每个窗口留在原处：会话不持有任何窗口状态，也不因此断开手机。
+
+| 场景 | 预期 | 测试（`bash tests/run-carplay-session-tests.sh`） |
+| --- | --- | --- |
+| 退避序列 | 2、4、8、16、30 s 后放弃 | backoff 2,4,8,16,30 then stop |
+| 稳定清零 | 59.9 s 不清，60 s 清零 | 59.9 s / 60 s of stability |
+| 串流中改分辨率 | 当前会话不变，重连后生效 | running session keeps its resolution |
+| 显示画面 | 每次一个关键帧 | showing requests one keyframe |
+| 收与画 | 两个计数互不影响 | received and drawn move independently |
+| 无身份 | 只能合成，要求 live 被拒 | live without identity is refused |
+| 验收：冷启动 | 合成连上、首次显示请求关键帧、首秒收画一致 | cold start |
+| 验收：反复重连 | 稳定后掉线永远只等 2 s；快速闪断 5 次后放弃 | repeated reconnect |
+| 验收：长时间播放 | 1 小时 108000 帧收画一致，无多余关键帧或重连 | long playback |
+
+## Mac 上已知的阻断
+
+- 系统自带的 AirPlay 接收器占着 7000 端口，接收端要么让用户关掉它，要么换端口并如实告知。
+- 需要蓝牙权限。
+- 取 Wi-Fi 名称要定位权限；Wi-Fi 密码会交给手机，要在界面里说清。
+- 只有无线：Mac 上没有有线 CarPlay。
+- 没有 Apple 签发的配件身份前，一切只在合成模式下验证。

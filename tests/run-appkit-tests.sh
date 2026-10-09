@@ -3,7 +3,7 @@ set -euo pipefail
 cd "$(dirname "$0")/.."
 TEST_NAME="${1:-SettingsNavigationTests}"
 case "$TEST_NAME" in
-  all|SettingsNavigationTests|ClassicStripTests|WindowFoldEffectsTests|GlanceLifecycleTests|CarryControllerTests|NotchActivityViewTests|NotchAuthenticationTests|NotchLeaseHostTests) ;;
+  all|SettingsNavigationTests|ClassicStripTests|WindowFoldEffectsTests|GlanceLifecycleTests|CarryControllerTests|NotchActivityViewTests|NotchAuthenticationTests|NotchLeaseHostTests|CountdownTimerCardTests|NowPlayingCardViewTests|CalendarCardTests) ;;
   *) echo "Unknown AppKit test: $TEST_NAME" >&2; exit 2 ;;
 esac
 mkdir -p .build/appkit-tests
@@ -22,7 +22,7 @@ while IFS= read -r source; do
 done < <(rg --files prototype -g '*.swift' -g '!main.swift' -g '!*.app/**' | sort)
 TEST_SOURCE=()
 if [ "$TEST_NAME" = all ]; then
-  TESTS=(SettingsNavigationTests ClassicStripTests WindowFoldEffectsTests GlanceLifecycleTests CarryControllerTests NotchActivityViewTests NotchAuthenticationTests NotchLeaseHostTests)
+  TESTS=(SettingsNavigationTests ClassicStripTests WindowFoldEffectsTests GlanceLifecycleTests CarryControllerTests NotchActivityViewTests NotchAuthenticationTests NotchLeaseHostTests CountdownTimerCardTests NowPlayingCardViewTests CalendarCardTests)
 else
   TESTS=("$TEST_NAME")
 fi
@@ -56,6 +56,9 @@ import Cocoa
     case "NotchActivityViewTests": await NotchActivityViewTests.main()
     case "NotchAuthenticationTests": NotchAuthenticationTests.main()
     case "NotchLeaseHostTests": await NotchLeaseHostTests.main()
+    case "CountdownTimerCardTests": await CountdownTimerCardTests.main()
+    case "NowPlayingCardViewTests": await NowPlayingCardViewTests.main()
+    case "CalendarCardTests": await CalendarCardTests.main()
     default: preconditionFailure("Choose an AppKit test suite")
     }
   }

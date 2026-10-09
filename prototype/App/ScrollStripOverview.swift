@@ -2,6 +2,8 @@
 //
 // 入口：卷轴里任何一扇的标题栏上两指张开（卷轴里的窗口张开原本不做事，和普通标题栏上“张开把窗口铺开”同一个意思）。
 // 收起：Esc、点空白处、切到别的 App、换桌面、锁屏。←→ 换列、↑↓ 在一列里换、回车去那扇。
+// 拖着换位置：按下移动 4 点以上算拖，拖着那扇 75% 不透明，最近的缝画一条蓝条；松手一次摆好，Esc 或收起则这次拖动作废。
+// VoiceOver 动作：移到左边一列 / 移到右边一列 / 并进左边这一列 / 并进右边这一列。
 // 画面是打开那一刻的截图（后台截，不开流）：概览只停一下，不为每扇窗各开一路实时流。
 // 面板不激活 WindowShade：前台 App 不变，键盘先交给概览，收起后还给它。真窗口在点下去之前一动不动。
 
@@ -21,6 +23,8 @@ final class StripOverview {
 
     var onPick: ((CGWindowID) -> Void)?
     var onClose: (() -> Void)?
+    /// 拖着换了位置（落点按打开概览那一刻的卷轴算）。调用前概览已经收起，真窗口还没动。
+    var onMove: ((CGWindowID, ScrollStrip.Drop) -> Void)?
     private let panel: StripOverviewPanel
     private let view: StripOverviewView
     private let items: [Item]
@@ -53,8 +57,9 @@ final class StripOverview {
         panel = StripOverviewPanel(frame: frame)
         let focused = items.first { $0.id == selected } ?? items.first { strip.revealing($0.column) == strip.offset } ?? items.first
         view = StripOverviewView(frame: NSRect(origin: .zero, size: frame.size), items: items,
-                                 viewport: layout?.viewport, selected: focused?.id)
+                                 viewport: layout?.viewport, selected: focused?.id, strip: strip, layout: layout)
         panel.contentView = view
+        view.onMove = { [weak self] id, drop in self?.close(picking: nil, moving: (id, drop)) }
         view.onPick = { [weak self] id in self?.close(picking: id) }
         view.onDismiss = { [weak self] in self?.close(picking: nil) }
         panel.onResignKey = { [weak self] in self?.close(picking: nil) }
@@ -81,7 +86,7 @@ final class StripOverview {
     }
 
     /// picking：点了哪扇（nil = 只是收起）。
-    func close(picking id: CGWindowID?) {
+    func close(picking id: CGWindowID?, moving move: (CGWindowID, ScrollStrip.Drop)? = nil) {
         guard !closed else { return }
         closed = true
         panel.onResignKey = nil
@@ -98,7 +103,7 @@ final class StripOverview {
             }
         })
         wlog("strip: overview closes\(id.map { " → id=\($0)" } ?? "")")
-        if let id { onPick?(id) } else { onClose?() }
+        if let move { onMove?(move.0, move.1) } else if let id { onPick?(id) } else { onClose?() }
     }
 
     // MARK: 探针
@@ -111,6 +116,7 @@ final class StripOverview {
     var frameForProbe: NSRect { panel.frame }
     func keyForProbe(_ keyCode: UInt16) { view.handleKey(keyCode) }
     func pickForProbe(_ id: CGWindowID) { close(picking: id) }
+    func moveForProbe(_ id: CGWindowID, _ drop: ScrollStrip.Drop) { view.commitMove(id, drop) }
 }
 
 final class StripOverviewPanel: NSPanel {
@@ -145,21 +151,45 @@ final class StripOverviewPanel: NSPanel {
 final class StripOverviewView: NSView {
     var onPick: ((CGWindowID) -> Void)?
     var onDismiss: (() -> Void)?
+    var onMove: ((CGWindowID, ScrollStrip.Drop) -> Void)?
     private(set) var selected: CGWindowID?
     private let items: [StripOverview.Item]
     private var tiles: [CGWindowID: StripOverviewTile] = [:]
     private let viewportLayer = CAShapeLayer()
+    /// 画面内容（框和每扇窗）放在这一层里，拖着窗口靠边时整层平移；毛玻璃底不动。
+    private let content: NSView
+    /// 拖着窗口靠屏幕左右边时自动滑动，默认关；defaults 里 stripOverviewEdgeScroll 打开。
+    private let edgeScrollEnabled = UserDefaults.standard.bool(forKey: "stripOverviewEdgeScroll")
+    private var edgeTracker = EdgeScrollTracker()
+    private var edgePointerX: CGFloat = 0
+    private var edgeLink: CADisplayLink?
+    private var edgeLastTick: CFTimeInterval = 0
+    private var panOffset: CGFloat = 0
+    private let panRange: ClosedRange<CGFloat>
+    private let strip: ScrollStrip
+    private let layout: ScrollStrip.Overview?
+    /// 拖着换位置：拖的是哪扇、它原来的位置、按下时指针在内容里的位置、最近一次指针在窗口里的位置、此刻最近的缝。
+    private var dragging: (id: CGWindowID, frame: CGRect, start: CGPoint)?
+    private var dragWindowPoint: NSPoint = .zero
+    private var seam: ScrollStrip.Seam?
+    private let seamBar = NSView()
+    static let dragOpacity: CGFloat = 0.75
 
-    init(frame: NSRect, items: [StripOverview.Item], viewport: CGRect?, selected: CGWindowID?) {
+    init(frame: NSRect, items: [StripOverview.Item], viewport: CGRect?, selected: CGWindowID?,
+         strip: ScrollStrip, layout: ScrollStrip.Overview?) {
         self.items = items
+        self.strip = strip
+        self.layout = layout
         self.selected = selected
+        content = FlippedContentView(frame: NSRect(origin: .zero, size: frame.size))
+        // 内容比面板宽多少，就能滑多少（概览本来整条缩进一屏，通常为 0）。
+        let margin: CGFloat = 48
+        let minX = items.map(\.frame.minX).min() ?? 0, maxX = items.map(\.frame.maxX).max() ?? 0
+        panRange = min(0, minX - margin)...max(0, maxX + margin - frame.width)
         super.init(frame: frame)
         wantsLayer = true
-        let background = NSVisualEffectView(frame: bounds)
-        background.material = .fullScreenUI
-        background.blendingMode = .behindWindow
-        background.state = .active
-        background.autoresizingMask = [.width, .height]
+        let background = SlideOverGlass.makeMaterial()
+        background.frame = bounds
         addSubview(background)
         if let viewport {
             // 此刻露在屏幕上的那一段：一圈淡淡的框，点哪列之前先知道自己在哪。
@@ -173,15 +203,29 @@ final class StripOverviewView: NSView {
             viewportLayer.fillColor = nil
             viewportLayer.lineWidth = 2
             ringView.layer?.addSublayer(viewportLayer)
-            addSubview(ringView)
+            content.addSubview(ringView)
         }
         for item in items {
             let tile = StripOverviewTile(item: item)
             tile.onPick = { [weak self] in self?.onPick?(item.id) }
             tile.onHover = { [weak self] in self?.select(item.id) }
-            addSubview(tile)
+            tile.onDrag = { [weak self] event in self?.tileDragged(item.id, event) }
+            tile.onDragEnd = { [weak self] wasDrag in self?.tileReleased(wasDrag: wasDrag) }
+            tile.setMoveActions(strip: strip) { [weak self] side, joining in
+                guard let self, let drop = self.strip.drop(for: item.id, toward: side, joining: joining) else { return false }
+                self.commitMove(item.id, drop)
+                return true
+            }
+            content.addSubview(tile)
             tiles[item.id] = tile
         }
+        seamBar.wantsLayer = true
+        seamBar.isHidden = true
+        seamBar.layer?.cornerRadius = ScrollStrip.seamThickness / 2
+        seamBar.layer?.zPosition = 5
+        content.addSubview(seamBar)
+        content.autoresizingMask = [.width, .height]
+        addSubview(content)
         setAccessibilityElement(true)
         setAccessibilityRole(.group)
         setAccessibilityLabel("卷轴概览")
@@ -203,12 +247,99 @@ final class StripOverviewView: NSView {
     private func updateColors() {
         effectiveAppearance.performAsCurrentDrawingAppearance {
             viewportLayer.strokeColor = NSColor.secondaryLabelColor.cgColor
+            seamBar.layer?.backgroundColor = NSColor.controlAccentColor.cgColor
         }
         for tile in tiles.values { tile.updateColors() }
     }
 
     func setImage(_ image: CGImage?, for id: CGWindowID) {
         tiles[id]?.setImage(image)
+    }
+
+    // MARK: 拖着窗口靠边自动滑动（只在拖动中跑刷新时钟，没有常驻定时器）
+
+    private func tileDragged(_ id: CGWindowID, _ event: NSEvent) {
+        if dragging == nil, let tile = tiles[id] {
+            dragging = (id, tile.frame, content.convert(event.locationInWindow, from: nil))
+            tile.alphaValue = Self.dragOpacity
+            tile.layer?.zPosition = 10
+        }
+        dragWindowPoint = event.locationInWindow
+        updateDrag()
+        guard edgeScrollEnabled else { return }
+        edgePointerX = convert(event.locationInWindow, from: nil).x
+        guard edgeLink == nil else { return }
+        guard let screen = window?.screen else { return }
+        let link = screen.displayLink(target: EdgeScrollLinkProxy(owner: self), selector: #selector(EdgeScrollLinkProxy.step(_:)))
+        link.add(to: .main, forMode: .common)
+        edgeLink = link
+        edgeLastTick = CACurrentMediaTime()
+    }
+
+    fileprivate func edgeScrollStep() {
+        let now = CACurrentMediaTime()
+        let dt = min(0.05, now - edgeLastTick)
+        edgeLastTick = now
+        let velocity = edgeTracker.velocity(pointerX: edgePointerX, width: bounds.width, now: now)
+        guard velocity != 0 else { return }
+        let next = min(max(panOffset + velocity * dt, panRange.lowerBound), panRange.upperBound)
+        guard next != panOffset else { return }
+        panOffset = next
+        content.bounds.origin.x = next
+        updateDrag()
+    }
+
+    // MARK: 拖着换位置
+
+    /// 拖着的那扇跟着指针；找离指针最近的缝，蓝条画在缝上。
+    private func updateDrag() {
+        guard let drag = dragging, let tile = tiles[drag.id] else { return }
+        let point = content.convert(dragWindowPoint, from: nil)
+        tile.frame = drag.frame.offsetBy(dx: point.x - drag.start.x, dy: point.y - drag.start.y)
+        seam = layout.flatMap { strip.seam(nearest: point, dragging: drag.id, in: $0) }
+        if let seam {
+            seamBar.frame = seam.bar
+            seamBar.isHidden = false
+        } else {
+            seamBar.isHidden = true
+        }
+    }
+
+    /// 这次拖动作废：拖着的那扇回原位，蓝条收掉，窗口一扇不动。
+    func cancelDrag() {
+        if let drag = dragging, let tile = tiles[drag.id] {
+            tile.frame = drag.frame
+            tile.alphaValue = 1
+            tile.layer?.zPosition = 0
+        }
+        dragging = nil
+        seam = nil
+        seamBar.isHidden = true
+        stopEdgeScroll()
+    }
+
+    private func tileReleased(wasDrag: Bool) {
+        stopEdgeScroll()
+        guard wasDrag, let drag = dragging else { return }
+        let landing = seam
+        cancelDrag()
+        if let landing { commitMove(drag.id, landing.drop) }
+    }
+
+    /// 松手或 VoiceOver 动作：交给概览，它收起并把落点交出去。
+    func commitMove(_ id: CGWindowID, _ drop: ScrollStrip.Drop) {
+        onMove?(id, drop)
+    }
+
+    func stopEdgeScroll() {
+        edgeLink?.invalidate()
+        edgeLink = nil
+        edgeTracker.reset()
+    }
+
+    override func viewWillMove(toWindow newWindow: NSWindow?) {
+        super.viewWillMove(toWindow: newWindow)
+        if newWindow == nil { cancelDrag() }
     }
 
     /// 点在空白处：收起。
@@ -221,6 +352,7 @@ final class StripOverviewView: NSView {
     }
 
     override func cancelOperation(_ sender: Any?) {
+        cancelDrag()
         onDismiss?()
     }
 
@@ -230,6 +362,7 @@ final class StripOverviewView: NSView {
         let current = items.first { $0.id == selected }
         switch keyCode {
         case 53:
+            cancelDrag()
             onDismiss?()
         case 36, 76:
             if let current { onPick?(current.id) }
@@ -259,17 +392,38 @@ final class StripOverviewView: NSView {
     }
 }
 
+private final class EdgeScrollLinkProxy: NSObject {
+    weak var owner: StripOverviewView?
+    init(owner: StripOverviewView) { self.owner = owner }
+    @objc func step(_ link: CADisplayLink) {
+        let owner = owner
+        MainActor.assumeIsolated { owner?.edgeScrollStep() }
+    }
+}
+
+private final class FlippedContentView: NSView {
+    override var isFlipped: Bool { true }
+}
+
 /// 一扇窗缩小后的画面。截图到之前先放 App 图标和名字。不翻转（左下原点），画面图层和看一眼的卡片一样摆正。
 final class StripOverviewTile: NSView {
     var onPick: (() -> Void)?
     var onHover: (() -> Void)?
+    var onDrag: ((NSEvent) -> Void)?
+    var onDragEnd: ((Bool) -> Void)?
+    private var moveHandler: ((ScrollStrip.Side, Bool) -> Bool)?
+    private var dragStart: NSPoint?
+    private var dragged = false
     var isSelected = false { didSet { updateColors() } }
     private let picture = CALayer()
     private let icon = NSImageView()
     private let label: NSTextField
     private var tracking: NSTrackingArea?
 
+    private let item: StripOverview.Item
+
     init(item: StripOverview.Item) {
+        self.item = item
         label = NSTextField(labelWithString: item.title)
         super.init(frame: item.frame)
         wantsLayer = true
@@ -311,7 +465,46 @@ final class StripOverviewTile: NSView {
     }
 
     override func mouseEntered(with event: NSEvent) { onHover?() }
-    override func mouseDown(with event: NSEvent) { onPick?() }
+    /// 按下不立刻去选：松手时没拖动才算点选；拖动中把指针位置交给概览（靠边自动滑）。
+    override func mouseDown(with event: NSEvent) {
+        dragStart = event.locationInWindow
+        dragged = false
+    }
+
+    override func mouseDragged(with event: NSEvent) {
+        if let start = dragStart, hypot(event.locationInWindow.x - start.x, event.locationInWindow.y - start.y) >= 4 { dragged = true }
+        if dragged { onDrag?(event) }
+    }
+
+    override func mouseUp(with event: NSEvent) {
+        let wasDrag = dragged
+        dragStart = nil
+        dragged = false
+        onDragEnd?(wasDrag)
+        if !wasDrag { onPick?() }
+    }
+
+    /// VoiceOver 动作：去不了的（没有那一列、那一列已满）不列出来。
+    func setMoveActions(strip: ScrollStrip, handler: @escaping (ScrollStrip.Side, Bool) -> Bool) {
+        moveHandler = handler
+        let id = item.id
+        var actions: [NSAccessibilityCustomAction] = []
+        let specs: [(String, ScrollStrip.Side, Bool, Selector)] = [
+            ("移到左边一列", .left, false, #selector(axMoveLeft)),
+            ("移到右边一列", .right, false, #selector(axMoveRight)),
+            ("并进左边这一列", .left, true, #selector(axJoinLeft)),
+            ("并进右边这一列", .right, true, #selector(axJoinRight)),
+        ]
+        for (name, side, joining, selector) in specs where strip.drop(for: id, toward: side, joining: joining) != nil {
+            actions.append(NSAccessibilityCustomAction(name: name, target: self, selector: selector))
+        }
+        setAccessibilityCustomActions(actions)
+    }
+
+    @objc private func axMoveLeft() -> Bool { moveHandler?(.left, false) ?? false }
+    @objc private func axMoveRight() -> Bool { moveHandler?(.right, false) ?? false }
+    @objc private func axJoinLeft() -> Bool { moveHandler?(.left, true) ?? false }
+    @objc private func axJoinRight() -> Bool { moveHandler?(.right, true) ?? false }
 
     override func accessibilityPerformPress() -> Bool {
         onPick?()

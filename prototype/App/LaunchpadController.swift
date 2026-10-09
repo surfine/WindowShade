@@ -58,12 +58,22 @@ final class LaunchpadController {
             items.append(NotchActivity(id: "focus.idle", kind: .focus, title: label, subtitle: "按一下开始",
                                        symbol: "timer", startedAt: 0))
         }
+        // 再补一张计时器卡，和番茄钟卡同一排：按一下长出选分钟；计时器在走时，那一条活动自己就是这张卡。
+        if !items.contains(where: { $0.kind == .timer }) {
+            items.append(NotchActivity(id: LaunchpadActivityCards.idleTimerID, kind: .timer, title: "计时器", subtitle: "按一下选分钟",
+                                       symbol: "timer", startedAt: 0))
+        }
         panel?.view.today.updateActivities(items)
     }
 
     /// 启动时在后台先扫一遍、画好第一页（文件夹里的小图标也画），壁纸也先解码：第一次打开也是立刻出来。
     func warmUp() {
-        rescan { [weak self] in
+        // 低电量或机器发热时不抢资源：预热推迟到第一次打开（show 自己会扫描和解码）。
+        if PowerPolicyRules.deferLaunchpadWarmUp(tier: PowerPolicy.shared.tier) {
+            wlog("launchpad: warm-up deferred tier=\(PowerPolicy.shared.tier.rawValue)")
+            return
+        }
+        rescan(qos: .utility) { [weak self] in
             guard let self, let screen = NSScreen.main else { return }
             let grid = LaunchpadGrid.layout(for: screen.frame.size)
             let byPath = Dictionary(self.apps.map { ($0.path, $0) }, uniquingKeysWith: { first, _ in first })
@@ -76,7 +86,12 @@ final class LaunchpadController {
         DispatchQueue.global(qos: .utility).async {
             let made = screens.compactMap { url, pixels in AppCatalog.wallpaper(url: url, pixels: pixels).map { (url.path, $0) } }
             DispatchQueue.main.async {
-                MainActor.assumeIsolated { [weak self] in for (path, image) in made { self?.wallpapers[path] = image } }
+                MainActor.assumeIsolated { [weak self] in
+                    guard let self else { return }
+                    // 只留当前各屏的壁纸，换屏或换壁纸后旧的淘汰。
+                    self.wallpapers = LaunchpadBackdrop.retaining(self.wallpapers, keeping: Set(made.map { $0.0 }))
+                    for (path, image) in made { self.wallpapers[path] = image }
+                }
             }
         }
     }
@@ -223,7 +238,7 @@ final class LaunchpadController {
         view.onActivityAction = { [weak self] id, action in
             guard let self else { return }
             if let id { self.owner.notch.activities.select(id) }
-            if [.airDrop, .route, .voiceMemos, .open].contains(action) { self.hide(reason: "activity", launched: true) }
+            if [.airDrop, .route, .voiceMemos, .open, .timerOpen].contains(action) { self.hide(reason: "activity", launched: true) }
             self.owner.notch.activities.perform(action)
         }
         view.onSpotlight = { [weak self] in self?.openSystemSearch() }
@@ -246,6 +261,7 @@ final class LaunchpadController {
                     DispatchQueue.main.async {
                         MainActor.assumeIsolated { [weak self] in
                             guard let self, let image else { return }
+                            self.wallpapers = LaunchpadBackdrop.retaining(self.wallpapers, keeping: Set(NSScreen.screens.compactMap { NSWorkspace.shared.desktopImageURL(for: $0)?.path }))
                             self.wallpapers[url.path] = image
                             guard self.panel === panel else { return }
                             panel.view.setWallpaper(image)
@@ -256,6 +272,7 @@ final class LaunchpadController {
         }
         NSApp.activate(ignoringOtherApps: true)
         panel.present()
+        HabitCenter.shared.noteHome(open: true)
         wlog("launchpad: show apps=\(apps.count) items=\(layout.items.count) screen=\(screen.localizedName)")
         // 每次打开都在后台再扫一遍：新装、删掉的 App 马上反映出来（没变就不动）。
         rescan { [weak self] in
@@ -297,7 +314,7 @@ final class LaunchpadController {
             if let enabled = entry["enabled"] as? NSNumber, !enabled.boolValue { return nil }
             if let value = entry["value"] as? [String: Any], let parameters = value["parameters"] as? [NSNumber],
                parameters.count == 3 {
-                keyCode = CGKeyCode(parameters[1].intValue)
+                keyCode = CrashTrap.hotKeyCode(parameters[1].intValue, fallback: keyCode)
                 flags = CGEventFlags(rawValue: parameters[2].uint64Value)
             }
         }
@@ -318,18 +335,21 @@ final class LaunchpadController {
             self.shownDisplay = nil
         }
         hideReasonForProbe = reason
+        // 点刘海收起的话，系统要等一个双击时间才知道是不是双击。
+        HabitCenter.shared.noteHome(open: false, launched: launched,
+                                    doubleClickWait: notch == nil ? 0 : NSEvent.doubleClickInterval)
         panel.dismiss(launching: launched && reason == "launch")
         if !launched, let previousApp, !previousApp.isTerminated { previousApp.activate() }
         wlog("launchpad: hide reason=\(reason)")
     }
 
     /// 扫一遍，和记下的排列对上：删掉的 App 去掉，新装的接在最后。第一次用时照旧版启动台排好并记下来。
-    private func rescan(done: @escaping () -> Void) {
+    private func rescan(qos: DispatchQoS.QoSClass = .userInitiated, done: @escaping () -> Void) {
         scanCompletions.append(done)
         guard !scanning else { return }
         scanning = true
         let saved = loaded ? nil : UserDefaults.standard.data(forKey: Self.layoutKey)
-        DispatchQueue.global(qos: .userInitiated).async {
+        DispatchQueue.global(qos: qos).async {
             let found = AppCatalog.scan()
             DispatchQueue.main.async {
                 MainActor.assumeIsolated { [weak self] in

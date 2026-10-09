@@ -13,6 +13,7 @@ struct LaunchpadOpenable: Equatable {
     let paths: Set<String>
     let bundleIDs: Set<String>
 
+    /// files 里也可以是网址（FS-03 的链接）：LaunchServices 对网址只会说浏览器这一类能打开。
     static func of(_ files: [URL]) -> LaunchpadOpenable {
         var paths: Set<String>?
         var bundles: Set<String>?
@@ -43,6 +44,13 @@ extension LaunchpadView {
     /// 搜索框里的提示：平时“搜索”；给文件挑 App 时写要打开的是什么。
     var pillPrompt: String {
         if !pillAtTop, let files = openingFiles {
+            // 链接（网址）不是文件：写网站名，亮着的只有能打开网址的 App（浏览器）。
+            if files.allSatisfy({ !$0.isFileURL }) {
+                guard files.count == 1 else { return "用哪个 App 打开这 \(files.count) 个链接" }
+                var site = files[0].host ?? files[0].absoluteString
+                if site.count > 28 { site = String(site.prefix(14)) + "…" + String(site.suffix(10)) }
+                return "用哪个 App 打开“\(site)”"
+            }
             guard files.count == 1 else { return "用哪个 App 打开这 \(files.count) 个文件" }
             var name = files[0].lastPathComponent
             if name.count > 28 { name = String(name.prefix(14)) + "…" + String(name.suffix(10)) }
@@ -83,6 +91,7 @@ extension LaunchpadView {
     /// 能打开的照常，打不开的淡下去；文件夹里只要有一个能打开就亮着。App 资料库不淡（点暗的那个会摇头）。
     func applyOpenable() {
         CATransaction.begin()
+        // fade-only: 打不开的图标变淡。
         CATransaction.setAnimationDuration(reduced ? 0 : Motion.fadeDuration)
         for cell in cells.values { applyOpenable(to: cell) }
         if let folder {

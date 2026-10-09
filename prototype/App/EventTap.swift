@@ -138,6 +138,10 @@ extension AppDelegate {
         }
     }
     func handleHotKey(id: UInt32) {
+        if id == GlobalShortcut.countdownTimer.hotKeyID {
+            MainActor.assumeIsolated { notch.activities.countdown.openPicker() }
+            return
+        }
         if id == GlobalShortcut.focusTimer.hotKeyID {
             MainActor.assumeIsolated { ws2Runtime.toggleFocus() }
             return
@@ -197,6 +201,18 @@ extension AppDelegate {
         }
         if id == GlobalShortcut.tuckAll.hotKeyID {
             MainActor.assumeIsolated { _ = notch.tuckAll() }
+            return
+        }
+        if id == GlobalShortcut.notchShelf.hotKeyID {
+            MainActor.assumeIsolated { _ = notch.perform(.notchShelf) }
+            return
+        }
+        if id == GlobalShortcut.joinColumnLeft.hotKeyID {
+            MainActor.assumeIsolated { _ = gestures.strips.joinFocused(toward: .left) }
+            return
+        }
+        if id == GlobalShortcut.joinColumnRight.hotKeyID {
+            MainActor.assumeIsolated { _ = gestures.strips.joinFocused(toward: .right) }
             return
         }
         if id == GlobalShortcut.tuckCurrent.hotKeyID {

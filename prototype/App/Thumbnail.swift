@@ -227,7 +227,7 @@ final class ShadeThumbnailView: NSView {
         iconLayer.isHidden = icon == nil
         root.addSublayer(iconLayer)
         changeDot.isHidden = true
-        changeDot.borderWidth = 1.5
+        changeDot.borderWidth = 2
         root.addSublayer(changeDot)
         placeLayers()
         applySystemAppearance()
@@ -253,6 +253,30 @@ final class ShadeThumbnailView: NSView {
     override var isFlipped: Bool { false }
     override func acceptsFirstMouse(for event: NSEvent?) -> Bool { true }
 
+    // Tab 聚焦即看一眼（和指针停上去一样），Return / 空格展开。
+    override var acceptsFirstResponder: Bool { true }
+    override var canBecomeKeyView: Bool { true }
+    override func becomeFirstResponder() -> Bool {
+        hovered = true
+        refreshOpacity(animated: true)
+        if showsChange { showsChange = false; onSeen?() }
+        return super.becomeFirstResponder()
+    }
+    override func resignFirstResponder() -> Bool {
+        hovered = false
+        refreshOpacity(animated: true)
+        return super.resignFirstResponder()
+    }
+    override func keyDown(with event: NSEvent) {
+        switch event.keyCode {
+        case 36, 76, 49:   // Return、小键盘 Enter、空格
+            guard !isLaunching, !entranceFlying else { return }
+            onClick?()
+        default:
+            super.keyDown(with: event)
+        }
+    }
+
     override func setFrameSize(_ newSize: NSSize) {
         super.setFrameSize(newSize)
         placeLayers()
@@ -266,8 +290,9 @@ final class ShadeThumbnailView: NSView {
         iconLayer.frame = ThumbnailLayout.iconInView(overlaySize: bounds.size)
         // 点压在缩略图右上角（和刘海下巴上的点同样大小），描一圈底色，放在什么画面上都看得出来。
         let picture = pictureClip.frame
-        let size: CGFloat = 9
-        changeDot.frame = CGRect(x: picture.maxX - size * 0.75, y: picture.maxY - size * 0.75, width: size, height: size)
+        // 8pt，压在右上角外 2pt（稿：收成缩略图），描 2pt 黑圈。
+        let size: CGFloat = 8
+        changeDot.frame = CGRect(x: picture.maxX - size / 2 + 2, y: picture.maxY - size / 2 + 2, width: size, height: size)
         changeDot.cornerRadius = size / 2
         let scale = window?.backingScaleFactor ?? NSScreen.main?.backingScaleFactor ?? 2
         iconLayer.contentsScale = scale
@@ -296,7 +321,7 @@ final class ShadeThumbnailView: NSView {
         pictureClip.backgroundColor = hasPicture ? nil
             : SystemAppearancePolicy.cgColor(NSColor.windowBackgroundColor, for: self)
         changeDot.backgroundColor = SystemAppearancePolicy.cgColor(NSColor.controlAccentColor, for: self)
-        changeDot.borderColor = SystemAppearancePolicy.cgColor(NSColor.windowBackgroundColor, for: self)
+        changeDot.borderColor = NSColor.black.cgColor
         CATransaction.commit()
     }
 

@@ -110,6 +110,8 @@ private final class PinnedPreviewSession {
     // 挂起态（暂时取消全部置顶）：面板已 orderOut、capture 已停，会话保留，
     // 再按一次按原来的前后顺序放回。
     var isSuspended = false
+    // 锁屏/熄屏/会话切走时的自动暂停：只停流，面板与菜单状态不变（和 isSuspended 无关）。
+    var isEnvPaused = false
 
     init(windowID: CGWindowID, pid: pid_t, bundleIdentifier: String, appName: String,
          title: String, axWindow: AXUIElement, scWindow: SCWindow, display: SCDisplay?,
@@ -233,10 +235,94 @@ final class PinnedPreviewController {
     init(notice: @escaping NoticeHandler, sessionsDidChange: @escaping () -> Void) {
         self.notice = notice
         self.sessionsDidChange = sessionsDidChange
+        installEnvironmentPauseObservers()
     }
 
     func isPreviewing(id: CGWindowID) -> Bool {
         sessions[id] != nil
+    }
+
+    // MARK: 锁屏/熄屏自动暂停（F10）
+    // 画面没人看时不必继续抓。只停流，面板、菜单、会话原样保留；回来时先确认源窗口还在，
+    // 再重开流，第一帧新画面到了才会显示（停流时已清掉旧画面，不会闪旧内容）。
+    private var pauseGate = PinnedStreamPauseGate()
+    private var pauseObserverTokens: [(center: NotificationCenter, token: NSObjectProtocol)] = []
+
+    func installEnvironmentPauseObservers() {
+        guard pauseObserverTokens.isEmpty else { return }
+        let workspace = NSWorkspace.shared.notificationCenter
+        func observe(_ center: NotificationCenter, _ name: NSNotification.Name,
+                     _ body: @escaping @MainActor (PinnedPreviewController) -> Void) {
+            let token = center.addObserver(forName: name, object: nil, queue: .main) { [weak self] _ in
+                MainActor.assumeIsolated { if let self { body(self) } }
+            }
+            pauseObserverTokens.append((center, token))
+        }
+        observe(workspace, NSWorkspace.screensDidSleepNotification) { $0.environmentPause(.screensSlept) }
+        observe(workspace, NSWorkspace.screensDidWakeNotification) { $0.environmentResume(.screensSlept) }
+        observe(workspace, NSWorkspace.sessionDidResignActiveNotification) { $0.environmentPause(.sessionInactive) }
+        observe(workspace, NSWorkspace.sessionDidBecomeActiveNotification) { $0.environmentResume(.sessionInactive) }
+        let distributed = DistributedNotificationCenter.default()
+        observe(distributed, Notification.Name("com.apple.screenIsLocked")) { $0.environmentPause(.screenLocked) }
+        observe(distributed, Notification.Name("com.apple.screenIsUnlocked")) { $0.environmentResume(.screenLocked) }
+    }
+
+    func environmentPause(_ reason: PinnedStreamPauseGate.Reason) {
+        guard pauseGate.enter(reason) else { return }
+        var count = 0
+        for (id, session) in sessions where !session.isEnvPaused {
+            session.isEnvPaused = true
+            unexpectedStopRetryWorkItems.removeValue(forKey: id)?.cancel()
+            unexpectedStopRetries.removeValue(forKey: id)
+            session.capture.stop()
+            count += 1
+        }
+        wlog("pin-preview: env-pause reason=\(reason.rawValue) count=\(count)")
+    }
+
+    func environmentResume(_ reason: PinnedStreamPauseGate.Reason) {
+        guard pauseGate.leave(reason) else { return }
+        var count = 0
+        for id in Array(sessions.keys) {
+            guard let session = sessions[id], session.isEnvPaused else { continue }
+            session.isEnvPaused = false
+            let frame = session.isSuspended ? nil : currentSourceFrame(id: id)
+            switch PinnedStreamPauseGate.resumeAction(isUserSuspended: session.isSuspended,
+                                                      sourceFrameExists: frame != nil) {
+            case .keepUserSuspended:
+                continue
+            case .dropSession:
+                wlog("pin-preview: env-resume found closed source id=\(id)")
+                stopPreview(id: id, reason: "env-resume-lost-source")
+            case .restart:
+                guard let frame else { continue }
+                count += 1
+                restartCapture(session, id: id, frame: frame, label: "env-resume")
+            }
+        }
+        wlog("pin-preview: env-resume reason=\(reason.rawValue) count=\(count)")
+    }
+
+    private func restartCapture(_ session: PinnedPreviewSession, id: CGWindowID,
+                                frame: NSRect, label: String) {
+        session.lastKnownFrame = frame
+        session.pendingFrame = nil
+        session.rejectedFrame = nil
+        if !framesAlmostEqual(session.panel.frame, frame, tolerance: 1.0) {
+            session.panel.setFrame(frame, display: true)
+        }
+        Task { @MainActor [weak self, weak session] in
+            guard let self, let session, !session.isSuspended, !session.isEnvPaused else { return }
+            do {
+                try await session.capture.restart(window: session.scWindow, display: session.display,
+                                                  width: frame.width, height: frame.height)
+                wlog("pin-preview: \(label) restarted id=\(id)")
+            } catch {
+                self.notice("置顶的画面没能恢复",
+                            "pin-preview: \(label) restart failed id=\(id) \(error.localizedDescription)")
+                self.stopPreview(id: id, reason: "\(label)-restart-failed")
+            }
+        }
     }
 
     func noteSilentCompletion(id: CGWindowID, result: Result<Void, PinnedPreviewError>) {
@@ -713,6 +799,8 @@ final class PinnedPreviewController {
         session.panel.orderFrontRegardless()
         session.spaceCheckAt = 0
         enforcePanelSpaceInvariant(session, reason: "resume")
+        // 锁屏/熄屏中不开流；等环境恢复时由 environmentResume 开。
+        if session.isEnvPaused { return }
         Task { @MainActor [weak self, weak session] in
             guard let self, let session, !session.isSuspended else { return }
             do {
@@ -922,6 +1010,7 @@ final class PinnedPreviewController {
 
         let capture = WindowStreamCapture()
         capture.takesCleanPlate = true
+        capture.followsPowerTier = true
         let panel = PinnedPreviewPanel(frame: frame)
         let displayTitle = descriptiveDisplayTitle(appName: appName, windowTitle: title)
         // 窗口名与面板内标题一致：VoiceOver 读窗口时能听到是哪个窗口的置顶预览。
@@ -972,6 +1061,10 @@ final class PinnedPreviewController {
                     completion?(.failure(.targetChanged))
                     return
                 }
+                if self.pauseGate.isPaused, !session.isEnvPaused {
+                    session.isEnvPaused = true
+                    capture.stop()
+                }
                 wlog("pin-preview: capture started id=\(id) size=\(Int(frame.width))x\(Int(frame.height))")
                 completion?(.success(()))
             } catch {
@@ -1008,7 +1101,7 @@ final class PinnedPreviewController {
     }
 
     private func watchdogTick(id: CGWindowID, reason: String) {
-        guard let session = sessions[id], !session.isSuspended else { return }
+        guard let session = sessions[id], !session.isSuspended, !session.isEnvPaused else { return }
         // Space 切换动画期间 CGWindow 坐标整屏滑动，全部跳过（也不更新 lastKnownFrame，
         // 避免把动画中间坐标记成稳定值）；窗口期结束后下一次 tick 一次性校正。
         if isInSpaceTransition { return }
@@ -1463,7 +1556,7 @@ final class PinnedPreviewController {
     // 3) 仍失败 → 正常结束该 preview session，绝不无限重启
     // 源窗口真的关闭时（content 里找不到 windowID）快速结束会话。
     private func handleUnexpectedStreamStop(id: CGWindowID, error: Error) {
-        guard let session = sessions[id], !session.isSuspended else {
+        guard let session = sessions[id], !session.isSuspended, !session.isEnvPaused else {
             unexpectedStopRetries.removeValue(forKey: id)
             return
         }
@@ -1488,12 +1581,12 @@ final class PinnedPreviewController {
     }
 
     private func retryUnexpectedStopStream(id: CGWindowID) {
-        guard let session = sessions[id], !session.isSuspended else {
+        guard let session = sessions[id], !session.isSuspended, !session.isEnvPaused else {
             unexpectedStopRetries.removeValue(forKey: id)
             return
         }
         Task { @MainActor [weak self] in
-            guard let self, let session = self.sessions[id], !session.isSuspended else { return }
+            guard let self, let session = self.sessions[id], !session.isSuspended, !session.isEnvPaused else { return }
             do {
                 let content = try await ShareableContentLoader.current()
                 guard let freshWindow = content.windows.first(where: { $0.windowID == id }) else {

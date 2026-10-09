@@ -1,0 +1,979 @@
+<!doctype html><html lang="zh-CN"><head><meta charset=utf8><meta name=viewport content="width=device-width,initial-scale=1,viewport-fit=cover">
+<title>WindowShade 设计系统</title>
+<style>
+/* 弹簧令牌（response 秒 / 阻尼比 ζ）照 design-system §4.6 现算成 linear()；位移不用贝塞尔曲线 */
+:root{--ws-calm:linear(0, 0.029, 0.099, 0.188, 0.285, 0.38, 0.47, 0.551, 0.623, 0.686, 0.74, 0.786, 0.825, 0.857, 0.883, 0.905, 0.924, 0.938, 0.95, 0.96, 0.968, 0.974, 0.98, 0.984, 0.987, 0.99, 0.992, 0.993, 0.995, 0.996, 0.997, 0.997, 0.998, 0.998, 0.999, 1);--ws-calm-t:0.5s;--ws-settle:linear(0, 0.029, 0.099, 0.189, 0.286, 0.381, 0.471, 0.552, 0.625, 0.687, 0.741, 0.787, 0.825, 0.858, 0.884, 0.906, 0.924, 0.939, 0.951, 0.96, 0.968, 0.975, 0.98, 0.984, 0.987, 0.99, 0.992, 0.994, 0.995, 0.996, 0.997, 0.997, 0.998, 0.998, 0.999, 1);--ws-settle-t:0.56s;--ws-expand:linear(0, 0.016, 0.056, 0.113, 0.18, 0.252, 0.325, 0.397, 0.466, 0.531, 0.59, 0.645, 0.694, 0.738, 0.777, 0.811, 0.841, 0.867, 0.889, 0.908, 0.924, 0.938, 0.95, 0.959, 0.967, 0.974, 0.979, 0.984, 0.988, 0.991, 0.993, 0.995, 0.996, 0.998, 0.998, 1);--ws-expand-t:0.42s;--ws-bloom:linear(0, 0.027, 0.093, 0.182, 0.282, 0.383, 0.481, 0.572, 0.653, 0.724, 0.784, 0.835, 0.876, 0.91, 0.937, 0.958, 0.973, 0.985, 0.994, 1, 1.003, 1.006, 1.007, 1.008, 1.008, 1.007, 1.007, 1.006, 1.005, 1.004, 1.004, 1.003, 1.002, 1.002, 1.001, 1);--ws-bloom-t:0.58s;--ws-pop:linear(0, 0.023, 0.082, 0.164, 0.259, 0.359, 0.457, 0.551, 0.638, 0.715, 0.782, 0.84, 0.887, 0.926, 0.957, 0.981, 0.999, 1.011, 1.02, 1.025, 1.028, 1.028, 1.028, 1.026, 1.023, 1.021, 1.018, 1.015, 1.012, 1.01, 1.008, 1.006, 1.004, 1.003, 1.002, 1);--ws-pop-t:0.38s;--ws-flyout:linear(0, 0.025, 0.087, 0.17, 0.263, 0.357, 0.449, 0.534, 0.611, 0.679, 0.738, 0.789, 0.832, 0.867, 0.896, 0.92, 0.94, 0.955, 0.967, 0.976, 0.983, 0.989, 0.993, 0.996, 0.998, 0.999, 1, 1.001, 1.001, 1.001, 1.002, 1.001, 1.001, 1.001, 1.001, 1);--ws-flyout-t:0.51s;}
+@media (prefers-reduced-motion:reduce){:root{--ws-calm:linear(0,1);--ws-calm-t:.25s;--ws-settle:linear(0,1);--ws-settle-t:.25s;--ws-expand:linear(0,1);--ws-expand-t:.25s;--ws-bloom:linear(0,1);--ws-bloom-t:.25s;--ws-pop:linear(0,1);--ws-pop-t:.25s;--ws-flyout:linear(0,1);--ws-flyout-t:.25s;}}
+.ws-sys{display:flex;flex-wrap:wrap;align-items:center;gap:6px 14px;max-width:1160px;margin:0 auto;padding:10px 16px;font:12.5px/1.4 "IBM Plex Sans","Noto Sans SC",-apple-system,system-ui,sans-serif;border-bottom:1px solid color-mix(in srgb,currentColor 14%,transparent)}.ws-sys a{color:inherit;text-decoration:none;opacity:.78}.ws-sys a:hover,.ws-sys a:focus-visible{opacity:1;text-decoration:underline}.ws-sys b{font-weight:600}.ws-sys .ws-n{opacity:.55;font-variant-numeric:tabular-nums}.ws-sys .ws-sp{flex:1}
+
+@import url("https://fonts.googleapis.com/css2?family=Newsreader:opsz,wght@6..72,400;6..72,600&family=IBM+Plex+Sans:wght@400;500;600&family=IBM+Plex+Mono:wght@400;500&family=Noto+Sans+SC:wght@400;500;600&family=Noto+Serif+SC:wght@600&display=swap");
+/* 一份总稿：上面是一颗能玩的刘海和它的协调器，下面从原则一路写到边缘情况、宣传片和下一程。纸面沿用其余十六份稿 */
+:root{
+  --paper:#EEF1F6;--surface:#FFFFFF;--surface-2:#F5F7FB;--ink:#131A25;--ink-2:#46546A;--ink-3:#6F7D93;
+  --line:#D6DDE8;--line-soft:#E5EAF2;--accent:#2F62C4;--accent-soft:#E2EAF9;
+  --good:#2C7350;--good-soft:#E1F0E7;--warn:#A8600F;--warn-soft:#FBF0DF;--bad:#B3352B;--bad-soft:#FBE6E3;
+  --l-win:#3E6FD8;--l-live:#2C8F57;--l-batt:#B7791F;--l-cond:#B4527A;--l-car:#2B8FD6;--l-auth:#C2553B;--l-priv:#6B5FB5;--l-focus:#D0503F;
+  --doc:"IBM Plex Sans","Noto Sans SC",-apple-system,system-ui,sans-serif;--head:"Newsreader","Noto Serif SC",Georgia,serif;--mono:"IBM Plex Mono",ui-monospace,Menlo,monospace;
+  --mac:-apple-system,"SF Pro Text","PingFang SC","Noto Sans SC",sans-serif;
+}
+@media (prefers-color-scheme:dark){:root:not([data-theme="light"]){color-scheme:dark;
+  --paper:#0E131B;--surface:#151C27;--surface-2:#1A222F;--ink:#E7EDF6;--ink-2:#A7B4C8;--ink-3:#7A889E;--line:#26303F;--line-soft:#1E2733;
+  --accent:#7FA5F0;--accent-soft:#1B2740;--good:#6CC495;--good-soft:#14271D;--warn:#E0A264;--warn-soft:#2A2115;--bad:#F08C80;--bad-soft:#2C1715;
+  --l-win:#7FA5F0;--l-live:#6CC495;--l-batt:#E0A264;--l-cond:#E98BB2;--l-car:#6CB8F0;--l-auth:#F08C70;--l-priv:#A99BF0;--l-focus:#F08C80;}}
+:root[data-theme="dark"]{color-scheme:dark;
+  --paper:#0E131B;--surface:#151C27;--surface-2:#1A222F;--ink:#E7EDF6;--ink-2:#A7B4C8;--ink-3:#7A889E;--line:#26303F;--line-soft:#1E2733;
+  --accent:#7FA5F0;--accent-soft:#1B2740;--good:#6CC495;--good-soft:#14271D;--warn:#E0A264;--warn-soft:#2A2115;--bad:#F08C80;--bad-soft:#2C1715;
+  --l-win:#7FA5F0;--l-live:#6CC495;--l-batt:#E0A264;--l-cond:#E98BB2;--l-car:#6CB8F0;--l-auth:#F08C70;--l-priv:#A99BF0;--l-focus:#F08C80;}
+*{box-sizing:border-box}
+[hidden]{display:none!important}
+html{scroll-padding-top:64px}
+body{margin:0;background:var(--paper);color:var(--ink);font:15px/1.72 var(--doc);-webkit-font-smoothing:antialiased}
+.wrap{max-width:1160px;margin:0 auto;padding-inline:16px;padding-block:0 110px}
+header.top{padding:64px 0 18px}
+.eyebrow{font-family:var(--mono);font-size:11.5px;letter-spacing:.14em;text-transform:uppercase;color:var(--ink-3);margin:0 0 14px}
+h1{font-family:var(--head);font-weight:600;font-size:clamp(36px,6vw,60px);line-height:1.06;letter-spacing:-.015em;margin:0 0 18px;text-wrap:balance}
+.lede{font-size:18px;color:var(--ink-2);max-width:66ch;margin:0}
+.lede b{color:var(--ink)}
+h2{font-family:var(--head);font-weight:600;font-size:clamp(25px,3.4vw,34px);line-height:1.2;margin:0 0 8px;text-wrap:balance}
+h3{font-size:15px;margin:0 0 4px}
+section{padding-top:72px}
+.part{font-family:var(--mono);font-size:11.5px;letter-spacing:.12em;color:var(--accent);margin:0 0 8px}
+p{max-width:70ch}
+.sub{color:var(--ink-2);margin:0 0 20px}
+code{font-family:var(--mono);font-size:.86em;background:var(--surface-2);border:1px solid var(--line-soft);border-radius:4px;padding:1px 5px;overflow-wrap:anywhere}
+a{color:var(--accent)}
+.toc{position:sticky;top:env(safe-area-inset-top,0px);z-index:20;background:color-mix(in srgb,var(--paper) 92%,transparent);backdrop-filter:blur(10px);-webkit-backdrop-filter:blur(10px);border-bottom:1px solid var(--line-soft);margin-inline:-16px;padding:8px 16px;display:flex;gap:4px;overflow-x:auto;scrollbar-width:none}
+.toc a{flex:none;font-size:12.5px;text-decoration:none;color:var(--ink-2);padding:3px 10px;border-radius:999px;white-space:nowrap}
+.toc a:hover,.toc a:focus-visible{background:var(--surface);color:var(--ink);outline:none}
+.thesis{display:grid;grid-template-columns:repeat(auto-fit,minmax(min(100%,250px),1fr));gap:12px;margin-top:26px}
+.thesis div{background:var(--surface);border:1px solid var(--line-soft);border-radius:12px;padding:14px 16px}
+.thesis b{display:block;font-size:15px;margin-bottom:2px}.thesis span{font-size:13.5px;color:var(--ink-2)}
+.card{background:var(--surface);border:1px solid var(--line-soft);border-radius:12px;padding:14px 16px;min-width:0}
+.card p{margin:0;font-size:13.5px;color:var(--ink-2)}
+.card ul{margin:6px 0 0;padding-left:1.2em;font-size:13.5px;color:var(--ink-2);display:grid;gap:4px}
+.grid2{display:grid;grid-template-columns:repeat(auto-fit,minmax(min(100%,440px),1fr));gap:14px}
+.grid3{display:grid;grid-template-columns:repeat(auto-fit,minmax(min(100%,300px),1fr));gap:12px}
+.big{background:var(--surface);border:1.5px solid var(--ink);border-radius:14px;padding:22px 24px}
+.big p{margin:0 0 10px;color:var(--ink-2)}.big p:last-child{margin:0}.big b{color:var(--ink)}
+.tbl{overflow-x:auto;border:1px solid var(--line-soft);border-radius:12px;background:var(--surface)}
+table{border-collapse:collapse;width:100%;min-width:820px;font-size:13px;line-height:1.55}
+th,td{text-align:left;vertical-align:top;padding:9px 12px;border-bottom:1px solid var(--line-soft)}
+th{font-size:11.5px;font-weight:600;color:var(--ink-3);letter-spacing:.04em;background:var(--surface-2);position:sticky;top:0}
+tr:last-child td{border-bottom:0}
+td.k{font-weight:600}
+td.m{font-family:var(--mac);background:#0c0c0e;color:#f2f2f4;border-bottom-color:#222;white-space:nowrap}
+td.num,.num{font-variant-numeric:tabular-nums;font-family:var(--mono);font-size:12px}
+.chip{display:inline-block;font-size:11.5px;border-radius:999px;padding:1px 8px;white-space:nowrap;border:1px solid var(--line-soft);background:var(--surface-2);color:var(--ink-2)}
+.st{font-size:11.5px;border-radius:999px;padding:1px 8px;white-space:nowrap;display:inline-block}
+.st.ship{background:var(--good-soft);color:var(--good)}
+.st.dev{background:var(--accent-soft);color:var(--accent)}
+.st.exp{background:var(--warn-soft);color:var(--warn)}
+.st.draft{background:var(--surface-2);color:var(--ink-3);border:1px solid var(--line-soft)}
+.st.none{background:var(--bad-soft);color:var(--bad)}
+.ln{display:inline-flex;align-items:center;gap:6px;font-size:12.5px;white-space:nowrap}
+.ln::before{content:"";width:8px;height:8px;border-radius:50%;background:var(--c,var(--ink-3))}
+.rules ol{margin:6px 0 0;padding-left:1.6em;display:grid;gap:10px}
+.rules li b{color:var(--ink)}.rules li span{color:var(--ink-2);display:block;font-size:14px}
+footer{margin-top:56px;font-size:12.5px;color:var(--ink-3);max-width:90ch}
+:focus-visible{outline:2px solid var(--accent);outline-offset:2px}
+
+/* ---------- 令牌示意 ---------- */
+#symRows code{white-space:nowrap;overflow-wrap:normal}
+#symRows td{vertical-align:middle}
+.tok{display:grid;grid-template-columns:repeat(auto-fit,minmax(min(100%,210px),1fr));gap:10px}
+.tok .t{background:var(--surface);border:1px solid var(--line-soft);border-radius:12px;padding:12px 14px;min-width:0}
+.tok .t b{font-family:var(--mono);font-size:13px;font-weight:500}
+.tok .t small{display:block;color:var(--ink-3);font-size:12px;line-height:1.45}
+.tok svg{width:100%;height:52px;display:block;margin:6px 0 4px}
+.layers3{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:10px}
+@media (max-width:760px){.layers3{grid-template-columns:1fr}}
+.layers3 div{border-radius:12px;padding:14px 16px;min-height:120px;display:flex;flex-direction:column;gap:6px}
+.layers3 .hw{background:#000;color:#f2f2f4}
+.layers3 .gl{background:linear-gradient(135deg,rgba(255,255,255,.62),rgba(255,255,255,.32)),linear-gradient(135deg,#7FA5F0,#B4527A);color:#131A25;border:1px solid rgba(255,255,255,.5)}
+.layers3 .ct{background:linear-gradient(135deg,#3E6FD8,#7A3FE0);color:#fff}
+.layers3 small{opacity:.8;font-size:12.5px;line-height:1.5}
+
+/* ---------- 刘海（模拟器用 cqw，零件用 px） ---------- */
+.desk{display:grid;grid-template-columns:minmax(0,1fr) 300px;gap:18px;margin-top:20px;align-items:start}
+@media (max-width:900px){.desk{grid-template-columns:1fr}}
+.mac{position:relative;aspect-ratio:16/10.4;max-width:100%;border-radius:18px 18px 6px 6px;background:#0b0b0d;padding:1.4%;box-shadow:0 30px 60px -30px rgba(10,20,40,.55)}
+.screen{position:relative;width:100%;height:100%;border-radius:12px 12px 2px 2px;overflow:hidden;background:#000;container-type:inline-size;font-family:var(--mac)}
+.wall{position:absolute;inset:0;background:radial-gradient(110% 80% at 15% 0%,#5D86C9 0%,transparent 60%),radial-gradient(90% 80% at 100% 15%,#7FA9A0 0%,transparent 60%),radial-gradient(120% 90% at 60% 120%,#33507A 0%,transparent 60%),#24385A}
+.menubar{position:absolute;inset:0 0 auto;height:4.2cqw;display:flex;align-items:center;gap:2.4cqw;padding-inline:2.4cqw;font-size:1.45cqw;color:#fff;font-weight:600;background:rgba(10,12,24,.25);z-index:2}
+.menubar span{font-weight:400;opacity:.85}.menubar .r{margin-left:auto;opacity:.9;display:flex;gap:1.6cqw}
+.win{position:absolute;border-radius:1.3cqw;box-shadow:0 1.2cqw 3cqw rgba(0,0,0,.4);overflow:hidden;background:#1E1F24;transition:opacity 180ms linear}
+.win .bar{height:3cqw;background:rgba(0,0,0,.28);display:flex;align-items:center;gap:.7cqw;padding-inline:1.2cqw;font-size:1.15cqw;color:rgba(255,255,255,.78);font-weight:600}
+.lamp{width:.95cqw;height:.95cqw;border-radius:50%;background:#ff5f57}.lamp:nth-child(2){background:#febc2e}.lamp:nth-child(3){background:#28c840}
+.win .t{flex:1;text-align:center;margin-right:4cqw}
+.win.gone{opacity:0}
+.lockv{position:absolute;inset:0;z-index:9;background:rgba(10,14,24,.6);backdrop-filter:blur(16px);-webkit-backdrop-filter:blur(16px);display:grid;place-items:center;color:#fff;font-size:5.6cqw;font-weight:300;text-align:center}
+.lockv small{display:block;font-size:1.5cqw;opacity:.75}
+.carv{position:absolute;inset:0;z-index:7;background:#0d0f13;color:#fff;display:grid;place-items:center;font-size:1.6cqw;opacity:0;transition:opacity 200ms linear;pointer-events:none}
+.carv.on{opacity:1}
+.carv .road{width:60%;height:55%;border-radius:2cqw;border:.15cqw dashed rgba(255,255,255,.25);display:grid;place-items:center;text-align:center;line-height:1.6}
+.isl{position:absolute;left:50%;top:0;transform:translateX(-50%);background:#000;color:#fff;overflow:hidden;z-index:10;width:12.2cqw;height:3.6cqw;border-radius:0 0 1.1cqw 1.1cqw;box-shadow:0 0 0 .1cqw rgba(255,255,255,0)}
+.isl.cap{top:.9cqw;border-radius:1.8cqw}
+.isl.hc{box-shadow:0 0 0 .14cqw rgba(255,255,255,.5)}
+.isl .ic{position:absolute;inset:0;opacity:0;transition:opacity 120ms linear}
+.isl .ic.on{opacity:1}
+.ear{position:absolute;top:0;height:3.6cqw;display:flex;align-items:center;gap:.6cqw;font-size:1.25cqw;white-space:nowrap}
+.ear.l{left:1.3cqw}.ear.r{right:1.3cqw}
+.ear svg{width:1.9cqw;height:1.9cqw;flex:none}
+.isl .mid{position:absolute;left:0;right:0;top:3.6cqw;bottom:0;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:.35cqw;padding:0 2.2cqw 1.2cqw;text-align:center}
+.cap .mid{top:3cqw}
+.t1{font-weight:600;font-size:1.4cqw;line-height:1.3}.t2{opacity:.62;font-size:1.15cqw;line-height:1.35}
+.okc{color:#5FD38A}.warnc{color:#FFB35C}
+.dot2{position:absolute;right:.9cqw;bottom:.7cqw;width:.75cqw;height:.75cqw;border-radius:50%;background:var(--sim-accent,#7FA5F0);opacity:0;transition:opacity 160ms linear}
+.dot2.on{opacity:1}
+.cells{display:flex;gap:1.1cqw;justify-content:center}
+.cell{width:7.4cqw;display:flex;flex-direction:column;align-items:center;gap:.3cqw}
+.thumb{width:100%;aspect-ratio:16/10;border-radius:.8cqw;box-shadow:0 0 0 .1cqw rgba(255,255,255,.14)}
+.cell b{font-size:1cqw;font-weight:600;opacity:.85}.cell small{font-size:.9cqw;opacity:.55;margin-top:-.3cqw}
+.btnrow{display:flex;gap:.8cqw;justify-content:center;margin-top:.4cqw}
+.nbtn{font-size:1.1cqw;padding:.3cqw 1.1cqw;border-radius:1cqw;background:rgba(255,255,255,.16);font-weight:600}
+.nbtn.pri{background:#fff;color:#000}
+.ring{width:3.2cqw;height:3.2cqw}
+.spin{width:1.5cqw;height:1.5cqw;border-radius:50%;border:.25cqw solid rgba(255,255,255,.25);border-top-color:#fff;animation:sp 900ms linear infinite;flex:none}
+@keyframes sp{to{transform:rotate(360deg)}}
+.mdots{display:flex;gap:.5cqw;align-items:center}.mdots i{width:.7cqw;height:.7cqw;border-radius:50%;background:rgba(255,255,255,.4)}.mdots i.on{background:#fff}
+
+/* 右栏：协调器 */
+.panel{display:flex;flex-direction:column;gap:12px;min-width:0}
+.ladder{background:var(--surface);border:1px solid var(--line-soft);border-radius:12px;padding:10px 12px}
+.ladder ol{list-style:none;margin:0;padding:0;display:grid;gap:4px}
+.ladder li{display:flex;justify-content:space-between;gap:8px;font-size:12.5px;padding:5px 8px;border-radius:8px;color:var(--ink-3);border:1px solid transparent}
+.ladder li.on{color:var(--ink);background:var(--accent-soft);border-color:var(--accent);font-weight:600}
+.ladder li.held{color:var(--ink-2);border-style:dashed;border-color:var(--line)}
+.ladder li span:last-child{font-family:var(--mono);font-size:11px;text-align:right}
+.log{background:var(--surface);border:1px solid var(--line-soft);border-radius:12px;padding:10px 12px;font-size:12.5px;max-height:260px;overflow:auto;display:flex;flex-direction:column-reverse;gap:6px}
+.log div{color:var(--ink-2);line-height:1.5}.log div b{color:var(--ink)}
+.log div:first-child{color:var(--ink)}
+.evs{display:grid;gap:10px;margin-top:14px}
+.evg{display:flex;flex-wrap:wrap;gap:6px;align-items:center}
+.evg>span{font-size:12px;color:var(--ink-3);width:84px;flex:none}
+.evg button,.envs button{font:inherit;font-size:12.5px;border:1px solid var(--line);background:var(--surface);color:var(--ink);border-radius:999px;padding:3px 10px;cursor:pointer;transition:transform 100ms ease-out}
+.evg button:active,.envs button:active{transform:scale(.97)}
+.evg button[data-c]{border-left:3px solid var(--c)}
+.envs{display:flex;flex-wrap:wrap;gap:6px;margin-top:10px}
+.envs button[aria-pressed="true"]{border-color:var(--accent);background:var(--accent-soft)}
+.isl span>svg{width:100%;height:100%;display:block}
+@media (prefers-reduced-motion:reduce){.isl .ic,.win,.dot2,.carv{transition:none}.spin{animation:none}}
+</style></head><body>
+<nav class="ws-sys" aria-label="WindowShade 设计系统"><b>WindowShade 设计系统</b><span class="ws-n">总稿 · 收 16 张稿为一</span><span class="ws-sp"></span><a href="https://claude.ai/artifact/2AQPp5eEoFPBrCobUBxKsp">全景 →</a></nav>
+
+
+<div class="wrap">
+<header class="top">
+  <p class="eyebrow">WindowShade · 设计系统总稿 · 2026-10-08 · 收十六份稿为一</p>
+  <h1>一颗刘海，接住这台 Mac 的一天</h1>
+  <p class="lede">十六份稿各自讲对了一个时刻。这一份把它们收成一套能自己往下长的系统：<b>一句话、四条主张、一套令牌、一颗刘海和它的协调器、二十八个零件、十二种交互模式、七条线的每一个表面、每一种边缘情况</b>，再把宣传片里还没做到的那几幕，一幕一幕对到产品上。上面那颗刘海能玩：从任何一条线发事件，看它此刻听谁的。</p>
+  <div class="thesis">
+    <div><b>看不见的都在刘海里</b><span>收起的窗口、正在播放的、在跑的会话、电量、进度。碰一下就回来，从哪里出去就从哪里回来。</span></div>
+    <div><b>要你放行的，只问一次</b><span>刷脸解锁、Touch ID、助手审批都在刘海里问。一次只管一件事，用完作废，结果出来前不打勾。</span></div>
+    <div><b>顺利的时候不说话</b><span>和实体刘海重合，一个像素都不画。卡住时才开口，说一句 Mac 上怎么做。</span></div>
+    <div><b>任何输入，同一套动作</b><span>指针、键盘、遥控器、手柄、声音、点头，最后都落到同一组动作上。没有模式，只有层。</span></div>
+  </div>
+</header>
+
+<nav class="toc" aria-label="目录">
+  <a href="#sim">刘海模拟器</a><a href="#review">检讨</a><a href="#principles">原则</a><a href="#tokens">令牌</a><a href="#grammar">文法</a><a href="#parts">零件</a><a href="#patterns">交互模式</a><a href="#surfaces">表面目录</a><a href="#input">输入</a><a href="#edges">边缘情况</a><a href="#film">宣传片</a><a href="#next">下一程</a><a href="#ship">怎么发</a><a href="#ledger">对照账</a><a href="#borrow">借鉴台账</a>
+</nav>
+
+<section id="sim" style="padding-top:36px">
+  <p class="part">零 · 能玩的总图</p>
+  <h2>刘海模拟器：此刻听谁的</h2>
+  <p class="sub">一块屏只有一个前景。从任何一条线发事件，右边写出协调器为什么这样决定。规则就是第三部分的“文法”，没有一条是为这块样片另编的。</p>
+  <div class="desk">
+    <div>
+      <div class="mac"><div class="screen" id="scr">
+        <div class="wall"></div>
+        <div class="menubar"><b>Xcode</b><span>文件</span><span>编辑</span><span>窗口</span><span class="r"><span>周三 22:10</span></span></div>
+        <div id="wins"></div>
+        <div class="carv" id="carv"><div class="road">CarPlay 铺满这块屏<br><span style="opacity:.6">示意。不画 CarPlay 的界面；再长按刘海或按 Esc 回桌面</span></div></div>
+        <div class="isl" id="isl" role="status" aria-live="polite"><div class="ic" id="ic"></div><span class="dot2" id="dot2" aria-hidden="true"></span></div>
+        <div class="lockv" id="lockv" hidden><div>22:10<small>这台 Mac 已锁定</small></div></div>
+      </div></div>
+      <div class="envs" role="group" aria-label="环境">
+        <button type="button" id="eCap" aria-pressed="false">没有刘海的屏（胶囊）</button>
+        <button type="button" id="eReduce" aria-pressed="false">减少动态效果</button>
+        <button type="button" id="eHC" aria-pressed="false">增强对比度</button>
+        <button type="button" id="eLock" aria-pressed="false">锁屏</button>
+        <button type="button" id="eReset">清空重来</button>
+      </div>
+      <div class="evs" id="evs"></div>
+    </div>
+    <div class="panel">
+      <div class="ladder" aria-label="仲裁顺序"><ol id="ladder"></ol></div>
+      <div class="ladder" aria-label="持续活动名单"><div style="font-size:12px;color:var(--ink-3);margin-bottom:4px">持续活动（最多三条，两指横扫切换）</div><ol id="ongoing"></ol></div>
+      <div class="log" id="log" aria-live="polite"></div>
+    </div>
+  </div>
+</section>
+
+<section id="review">
+  <p class="part">一 · 检讨</p>
+  <h2>十六份稿，各自讲对了什么，又留下了什么</h2>
+  <p class="sub">不是重画一遍。每份稿讲对的那一件留下来当系统的一块；留下的问题在这一份里收掉，或者明确挂成待定。</p>
+  <div class="tbl"><table>
+    <thead><tr><th>稿</th><th>讲对了</th><th>留下的问题</th><th>这一份怎么收</th></tr></thead>
+    <tbody>
+      <tr><td class="k"><a href="https://claude.ai/artifact/2AQPp5eEoFPBrCobUBxKsp">全景</a></td><td>七条线一个结构；六层仲裁；五种形状；一天十三个时刻</td><td>输入表里遥控器一列还是“电视键换模型 / 档位”；“约 4 秒”的提醒；几处进度标签停在 10-03</td><td>仲裁做进模拟器；输入表换成四层（第八部分）；进度标签改成成熟度分级（第七部分）</td></tr>
+      <tr><td class="k"><a href="https://claude.ai/artifact/NSQU27GL6xVjhW2UFV9LKn">设计规范 v2</a></td><td>形状从硬件来、材质三层、动作都是弹簧；机型表；令牌</td><td>私有接口何时读与令牌并陈；§6 的“已对准去灰”“不留额头”“全程跟手”“玻璃审计”“启动台弹簧”还没做</td><td>令牌页列出“还欠的”，不在这里改数字（第三部分）</td></tr>
+      <tr><td class="k"><a href="https://claude.ai/artifact/3SXfR2wyxHBGiBBEHxvjRA">读到的</a></td><td>原值、为什么、去了哪里；三层照 Loupe</td><td>日志还在 <code>/tmp</code> 且写窗口标题，修好前“只有你能读”不能上页面</td><td>隐私表面挂上这条前置（第七部分、第九部分）</td></tr>
+      <tr><td class="k"><a href="https://claude.ai/artifact/SNQWr7SD1vf5ULX7FUVzZ6">动效样片</a></td><td>十一根弹簧；开口、收回、收进、放回；官网胶囊</td><td>产品里的胶囊还没走完五种呈现</td><td>零件“胶囊”与第十一部分的五态画完</td></tr>
+      <tr><td class="k"><a href="https://claude.ai/artifact/UepNxvLrJY5WDRANnjubyH">从锁屏到窗口</a></td><td>系统永远是出路；两样都对才放行；从哪里去就从哪里回来</td><td>减少动态效果写 0.18 秒交叉淡化，令牌是 <code>reduced</code>；本轮准入 D11 只允许人脸实验</td><td>成熟度标“实验”；减少动态效果统一走 <code>reduced</code>，0.18 留在对照账</td></tr>
+      <tr><td class="k"><a href="https://claude.ai/artifact/SDXbhwZr8wzwqSFnXD6TnQ">卡住时刘海开口</a></td><td>什么时候开口、哪些地方一句不说、同一条最多三次</td><td>“只关这一次”还是“这条不再说”没定</td><td>挂进待定（第十三部分）</td></tr>
+      <tr><td class="k"><a href="https://claude.ai/artifact/TGoNZE1WAAvZLeYDUoLA2N">收成缩略图</a></td><td>原地、屏幕边、刘海三处并排比过</td><td>三处还没收成设置里的一项</td><td>画成“一扇窗的三个住处”（第十一部分）</td></tr>
+      <tr><td class="k"><a href="https://claude.ai/artifact/GW69BJGFgzQW7WCeRAVxTc">欢迎使用</a></td><td>一分钟看完；问之前常用哪个</td><td>功能一多，每加一样就想塞一页</td><td>规则：欢迎只讲三件，其余在卡住时说</td></tr>
+      <tr><td class="k"><a href="https://claude.ai/artifact/RkLPV8yCJNhuYYoH636TrT">为什么不用最小化</a></td><td>看不见的每一扇窗都在刘海里</td><td>它是论证，不是画面</td><td>不另立规矩，画面回到“收进刘海”模式</td></tr>
+      <tr><td class="k"><a href="https://claude.ai/artifact/HH9PdqqsxgfASMkqNw6Uac">一颗岛</a></td><td>岛与半岛；两件同时露面时分开再合并；数字原地换</td><td>系统音量键和隐私登记还没接</td><td>表面目录写清；分合规则进文法</td></tr>
+      <tr><td class="k"><a href="https://claude.ai/artifact/SAeiZhSezHbSqjXiSzhqDs">手边的每一样</a></td><td>一个入口、一套动作、任何输入；让位</td><td>（10-08 已改成层）</td><td>输入统一表（第八部分）</td></tr>
+      <tr><td class="k"><a href="https://claude.ai/artifact/9mbRLt1QGpsKLKip991Xe3">看与指挥</a></td><td>会话三态；菜单收到 9 项</td><td>窗口那一排和会话那一排是两个主人</td><td>合成一排，竖线隔开（第五部分、第十三部分）</td></tr>
+      <tr><td class="k"><a href="https://claude.ai/artifact/Ku2E7n1xFuXWWjDiF8Ddp1">指挥模式</a></td><td>声调与拍子；三步回执；两级放行</td><td>（10-08 已改成层）</td><td>放行与会话模式（第六部分）</td></tr>
+      <tr><td class="k"><a href="https://claude.ai/artifact/BPmRiSF26X44bpUqFMAZjs">离开就锁</a></td><td>锁看断开，不看信号；先宽限再倒数</td><td>倒数用哪根弹簧没点名；只靠手机回来能不能开没定</td><td>提议倒数沿 <code>bloom</code> 开口、数字原地换；回来就开挂待定</td></tr>
+      <tr><td class="k"><a href="https://claude.ai/artifact/5fQkwURyoGwZRrFBp2XnWf">番茄钟</a></td><td>没有自己的窗口；设置只有两项</td><td>“专注时只收聊天”等私人 App 名单</td><td>私人 App 名单做成共用零件，番茄钟、离开就锁、有人在看共用</td></tr>
+      <tr><td class="k"><a href="https://claude.ai/artifact/1vJy6AnRnkMqpmp84fE9Q5">iPhone 上的遥控器</a></td><td>没有模式，只有四层；一个键一个意思</td><td>窗口与会话合一排还没实现</td><td>推广到所有输入（第八部分）</td></tr>
+    </tbody>
+  </table></div>
+  <p class="sub" style="margin-top:12px">还欠的两张稿“用量”“进度”，以及文法里“已经允许、还没画成一张”的六件，都在第十一部分画出来。</p>
+</section>
+
+<section id="principles">
+  <p class="part">二 · 原则</p>
+  <h2>一句话，四条主张，十二条规则</h2>
+  <div class="big">
+    <p><b>看不见的东西都在刘海里，碰一下就回来；要你放行的事，只在刘海里问你一次。</b></p>
+    <p>四条主张：<b>形状从硬件来</b>（贴着刘海的轮廓长，没有刘海就用胶囊）；<b>材质分三层</b>（硬件纯黑、浮层系统玻璃、内容不加材质）；<b>动作都是弹簧</b>（跟手、可打断、做到一半能改方向）；<b>状态来自数据</b>（动画不决定连上没有、认出没有、放行没有）。</p>
+    <p>它们压在 Apple 2026-06 的八条（Purpose、Agency、Responsibility、Familiarity、Flexibility、Simplicity、Craft、Delight）和设计系统的 V1–V6 上，这里不重抄。</p>
+  </div>
+  <div class="rules card" style="margin-top:14px">
+    <p style="font-size:13px;color:var(--ink-3)">下面十二条在边缘情况表里用编号引用。</p>
+    <ol>
+      <li><b>R1 一个宿主，一个协调器。</b><span>所有东西长在刘海面板里，经协调器出场。不新建浮层、认证窗口、菜单栏小工具。</span></li>
+      <li><b>R2 形状从硬件来。</b><span>第一帧、最后一帧和实体轮廓重合；比刘海宽的样子先把肩收到 0 再长；没有刘海的屏用胶囊，不画假刘海。</span></li>
+      <li><b>R3 材质只分三层。</b><span>刘海旁边不出现玻璃；窗口画面上不盖玻璃条；不手画高光和折射。</span></li>
+      <li><b>R4 弹簧只写令牌名。</b><span>打断时接着当时的位置和速度；减少动态效果时位置不动，只淡。</span></li>
+      <li><b>R5 结果出来之前不打勾。</b><span>“已连接”“认出了”“已允许”“已停止”都等真的回执。</span></li>
+      <li><b>R6 未知就是未知。</b><span>读不到不写 0%，没有量不画假进度，没跑的不写通过，模拟数据不冒充真机。</span></li>
+      <li><b>R7 放行只走授权账。</b><span>一次性、绑定用途和目标、可撤销。输入资格、设备名、动画、手势候选都不是放行。</span></li>
+      <li><b>R8 顺利的时候不说话。</b><span>提醒有上限、能合并；短暂提醒撞上更高的层就变成一个点，并且消耗掉。</span></li>
+      <li><b>R9 一个东西一个名字。</b><span>照 copy-guide；刘海里是符号加不超过 8 个字的主句，数字放副句。</span></li>
+      <li><b>R10 四种辅助，外加不用手的路。</b><span>减少动态效果、减少透明度、增强对比度、VoiceOver 各有答案；每个手势都有菜单或快捷键代替。</span></li>
+      <li><b>R11 读什么都登记，只在用到时读。</b><span>新的读取先进信号登记表；摄像头、麦克风可见、少开、不存。</span></li>
+      <li><b>R12 闲着就真闲着。</b><span>静止时不画、不刷新；空闲 CPU 和唤醒不高于 1.0.15；只做纯赚的改动。</span></li>
+    </ol>
+  </div>
+</section>
+
+<section id="tokens">
+  <p class="part">三 · 令牌</p>
+  <h2>一套令牌，数字只在一处</h2>
+  <p class="sub">数值以 <a href="../design-system.md">design-system.md</a>（2026-09-29）为准。这里只列令牌名、已定值和还欠的改值；这一份不改任何一个数。</p>
+  <h3 style="margin-top:8px">材质三层</h3>
+  <div class="layers3" style="margin-top:8px">
+    <div class="hw"><b>硬件层 · 纯黑</b><small>刘海的每个样子、下巴、截图飞进刘海的最后一段。不跟随浅色；增强对比度时细边白 0.14 → 0.5。</small></div>
+    <div class="gl"><b>浮层 · 系统玻璃</b><small>手势提示浮窗、窗口浏览、侧拉的边框、启动台的搜索胶囊。Regular，不用 Clear；减少透明度时改不透明。这里的渐变只是示意，产品里用系统材质。</small></div>
+    <div class="ct"><b>内容层 · 不加材质</b><small>窗口画面、缩略图、画中画、看一眼的卡片。画中画的按钮直接压在画面上，底下一层渐变暗。</small></div>
+  </div>
+  <h3 style="margin-top:22px">弹簧（response 秒 / 阻尼比 ζ；曲线按公式现算）</h3>
+  <div class="tok" id="springs" style="margin-top:8px"></div>
+  <div class="grid3" style="margin-top:16px">
+    <div class="card"><h3>圆角</h3><ul>
+      <li><code>hw.notchBottom</code> 本机 10.7、<code>hw.notchShoulder</code> 5.06：运行时取，不写死</li>
+      <li><code>island.drop / alert / expanded</code> 22 / 24 / 28</li>
+      <li>同心：子半径 = 父半径 − 14（格子 14、图标台 10）</li>
+      <li><code>system.window / card / item / control</code> 13 / 12 / 8 / 6；矮条用胶囊</li>
+    </ul></div>
+    <div class="card"><h3>字与色</h3><ul>
+      <li><code>notch.title</code> 13 semibold，<code>notch.detail</code> 11 regular</li>
+      <li><code>notch.text</code> 白 1.0，<code>notch.textSecondary</code> 白 0.6（纯黑上 7.37:1）</li>
+      <li><code>notch.count</code> SF Pro Rounded，等宽数字</li>
+      <li><code>accent</code> = <code>controlAccentColor</code>，<code>problem</code> = <code>systemOrange</code>，只给退出类的 <code>destructive</code></li>
+    </ul></div>
+    <div class="card"><h3>时序与触感</h3><ul>
+      <li><code>dwell.hoverExpand</code> 0.12 秒：等待，不是弹簧</li>
+      <li><code>alert.hold</code> 2.6 秒；<code>announce.hold</code> 1.8 + 0.05 × 字数，最长 4.5</li>
+      <li><code>coach.limit</code> 每条 3 次，间隔 300 秒</li>
+      <li>越过阈值 <code>.alignment</code>；落点确认 <code>.levelChange</code>；不加声音（指挥模式的提示音除外，静音键管）</li>
+    </ul></div>
+  </div>
+  <div class="card" style="margin-top:12px"><h3>还欠的改值（照 §4.10，一条一条改、一条一条验）</h3>
+    <p>§6-2 已对准去掉灰色填充 · §6-3 宽的样子画肩（先出小样）· §6-4 提醒图标 30 → 24、四周 14、不留额头 · §6-6 刘海手势全程跟手 · §6-7/8 玻璃审计（启动台还有一套自绘玻璃）· §6-9 启动台弹簧收口（已收）· §6-16 App 图标用 Icon Composer 重做（移到下一版）。已落的几项都还没和改前截图并排比过。</p>
+  </div>
+
+  <h3 style="margin-top:26px">符号</h3>
+  <p class="sub" style="margin:2px 0 10px;font-size:14px">一个符号能说清，就不写一句话。设置行的符号放在系统设置那样的圆角色块里，用 hierarchical 渲染；刘海里用单色白。下表每个名字都在这台 Mac 上用 <code>NSImage(systemSymbolName:)</code> 核过。</p>
+  <div class="tbl"><table style="min-width:640px">
+    <thead><tr><th>概念</th><th>符号</th><th>概念</th><th>符号</th></tr></thead>
+    <tbody id="symRows"></tbody>
+  </table></div>
+  <p class="sub" style="margin-top:8px;font-size:13px"><code>faceid</code> 只指 Apple 的 Face ID，刷脸解锁不用它；<code>touchid</code> 只在真的调用 Touch ID 时出现；指挥棒自绘，<code>wand.and.stars</code> 已经给了魔法平铺。</p>
+
+  <h3 style="margin-top:26px">读屏念法</h3>
+  <p class="sub" style="margin:2px 0 10px;font-size:14px">每种呈现都有一句 VoiceOver 念法。数字变化不逐帧念；提醒用播报，放行用高优先级；读屏念键名（Command、Option），不念符号。</p>
+  <div class="tbl"><table>
+    <thead><tr><th>呈现</th><th>念什么</th><th>例句</th><th>什么时候念</th></tr></thead>
+    <tbody>
+      <tr><td class="k">什么都没有</td><td>不念</td><td>—</td><td>—</td></tr>
+      <tr><td class="k">最小</td><td>正在进行的那一件</td><td>“正在播放：晴天，2 分 14 秒”</td><td>焦点到刘海时</td></tr>
+      <tr><td class="k">紧凑</td><td>左耳是谁，右耳是数</td><td>“收着 3 扇窗口，最近一扇是终端”</td><td>焦点到刘海时；数字变了不念</td></tr>
+      <tr><td class="k">短暂提醒</td><td>主句，再副句</td><td>“妙控鼠标已连接，电量 82%”</td><td>出现时播报一次</td></tr>
+      <tr><td class="k">展开</td><td>这一排有几项，再念焦点那一格</td><td>“刘海那一排，6 项。终端，收着，第 1 个，共 6 个”</td><td>展开时；挪焦点时念新的那一格</td></tr>
+      <tr><td class="k">交互 · 放行</td><td>谁、要做什么、两个按钮</td><td>“Claude 想执行 swift test。不允许。允许这一次”</td><td>出现时高优先级播报；回执到了念“已允许这一次”</td></tr>
+      <tr><td class="k">交互 · 认你</td><td>还差哪样</td><td>“正在认你：脸对上了，等手机”</td><td>每一样状态变化时</td></tr>
+      <tr><td class="k">交互 · 倒数</td><td>剩几秒和怎么取消</td><td>“手机不在身边，10 秒后锁屏，碰一下取消”</td><td>开始、5 秒、3 秒各念一次，不逐秒念</td></tr>
+      <tr><td class="k">交互 · 画档位</td><td>认出了什么</td><td>“三声，high，下一轮”</td><td>抬手判定后；画的过程不念</td></tr>
+    </tbody>
+  </table></div>
+
+  <h3 style="margin-top:26px">文案词表</h3>
+  <p class="sub" style="margin:2px 0 10px;font-size:14px">一个东西只有一个名字。刘海里是符号加不超过 8 个字的主句，数字放副句。完整规则与改前改后见 <code>docs/copy-guide.md</code>。</p>
+  <div class="tbl"><table style="min-width:640px">
+    <thead><tr><th>说</th><th>不说</th><th>说</th><th>不说</th></tr></thead>
+    <tbody>
+      <tr><td class="k">收起窗口 · 展开窗口</td><td>折叠、卷起、卷成</td><td class="k">卷帘条</td><td>标题条、细杠</td></tr>
+      <tr><td class="k">收进刘海 · 放回</td><td>塞进刘海、刘海收纳</td><td class="k">刘海那一排</td><td>窗口仓、收纳栏</td></tr>
+      <tr><td class="k">看一眼</td><td>偷看、peek、悬停展开</td><td class="k">实时活动</td><td>小组件、通知（用于这些活动）</td></tr>
+      <tr><td class="k">有变化时提醒</td><td>实时活动、通知、动态</td><td class="k">有人在看</td><td>偷看、防窥、窥屏</td></tr>
+      <tr><td class="k">遥控模式 · 指挥模式</td><td>远程模式、指挥控制</td><td class="k">iPhone 上的遥控器</td><td>iPhone 遥控、手机遥控器</td></tr>
+      <tr><td class="k">Siri 遥控器</td><td>Apple TV 遥控器</td><td class="k">静音操作</td><td>静音控制、无声模式</td></tr>
+      <tr><td class="k">刷脸解锁</td><td>Face ID（那是 Apple 的）</td><td class="k">离开就锁</td><td>动态锁、自动锁屏</td></tr>
+      <tr><td class="k">用 Touch ID 确认</td><td>验证身份、认证成功</td><td class="k">番茄钟</td><td>计时器、Pomodoro</td></tr>
+      <tr><td class="k">用量</td><td>五小时倒计时、额度面板</td><td class="k">画面暂时看不到</td><td>材质回退、权限缺失</td></tr>
+    </tbody>
+  </table></div>
+</section>
+
+<section id="grammar">
+  <p class="part">四 · 文法</p>
+  <h2>五种呈现、六层仲裁、三种住户</h2>
+  <p class="sub">协调器挑的是呈现，画出来的是几何样子，用户看见的是 copy-guide 里的词。三种名字不并成一套。完整条文在 <a href="../design-grammar.md">design-grammar.md</a>。</p>
+  <div class="tbl"><table>
+    <thead><tr><th>层（先到先占，数字小的先）</th><th>谁</th><th>撞上更高的层时</th><th>呈现</th><th>弹簧</th></tr></thead>
+    <tbody>
+      <tr><td class="k">1 要你放行的</td><td>刷脸解锁、Touch ID 确认、助手审批、配对确认</td><td>独占；只认审批出现之后的新动作</td><td>交互</td><td><code>pop</code> 确认；<code>expand</code> 展开</td></tr>
+      <tr><td class="k">2 你正在做的</td><td>指挥画到一半、按住说话、拖标题栏到落点小岛、点头前的候选</td><td>手离开前什么都不进来</td><td>交互</td><td><code>catch</code> 落点；<code>pop</code> 逐拍</td></tr>
+      <tr><td class="k">3 你主动打开的</td><td>刘海那一排、看一眼、展开的详情、番茄钟卡片、遥控打开的那一排</td><td>挂起，不撤销；让出后原样回来，不重播进场</td><td>展开</td><td><code>expand</code> / <code>calm</code></td></tr>
+      <tr><td class="k">4 短暂提醒</td><td>配件连上、电量低、有变化时提醒、卡住时提示、离开就锁的倒数</td><td>变成一个点，并且消耗掉，不回来补说</td><td>短暂提醒</td><td><code>bloom</code> 开口，<code>calm</code> 收回</td></tr>
+      <tr><td class="k">5 持续活动</td><td>音乐、收着的窗口、番茄钟、编程会话、CarPlay 导航、录音、进度、用量</td><td>名单留在数据里；上面让出后按现在的名单画</td><td>紧凑 / 最小</td><td><code>settle</code></td></tr>
+      <tr><td class="k">6 什么都没有</td><td>—</td><td>—</td><td>和实体刘海重合，不画</td><td>—</td></tr>
+    </tbody>
+  </table></div>
+  <div class="grid3" style="margin-top:14px">
+    <div class="card"><h3>左右耳是一种排版</h3><p>左耳是谁、或你刚做的；右耳是数、结果、或 Mac 上的做法。音乐、收着的窗口、番茄钟、会话、审批、电量、进度、用量都排在这一种上，不另起版式。展开时两耳在原处不动，格子绕着排。</p></div>
+    <div class="card"><h3>岛与半岛（只在说明里叫）</h3><p>岛是紧凑和最小，贴着传感器；半岛是展开往下鼓，分矮、高两档，避开临界高度，顶边贴传感器，不留空白额头。数字和曲名原地换，不整颗重来。</p></div>
+    <div class="card"><h3>分开再合并</h3><p>两件要同时露面（音乐在放，曲名变了；番茄在走，会话在等你）时，从一颗分成两颗，再合回一颗。半路可以改方向。侧拉、画中画、启动台不另开宿主。</p></div>
+    <div class="card"><h3>形状先动，内容后到</h3><p>形状走到四成，内容才淡入；退场时内容先淡出，形状再收。减少动态效果时位置不动，只淡。</p></div>
+    <div class="card"><h3>回来的是画面，不是输入权</h3><p>挂起后回来的只有选择、滚动位置、页码、草稿引用。旧租约、按下的确认、没做完的手势、还在等的那一笔都作废，回来要重新拿。</p></div>
+    <div class="card"><h3>锁屏、睡眠、切换用户、关掉功能</h3><p>清掉一切可见内容和输入。解锁后只报现在的事实，给一条“离开期间”摘要，不补播锁屏前那一句。</p></div>
+  </div>
+</section>
+
+<section id="parts">
+  <p class="part">五 · 零件</p>
+  <h2>二十八个零件，每个只有一种画法</h2>
+  <p class="sub">新表面从这里挑零件拼，不新画。每张卡写着它属于哪一层、哪种呈现、哪根弹簧。尺寸是示意，按本机比例缩小；真实数值看令牌。</p>
+  <div id="partsGrid" class="parts"></div>
+</section>
+<style>
+.parts{display:grid;grid-template-columns:repeat(auto-fill,minmax(min(100%,270px),1fr));gap:12px}
+.pc{background:var(--surface);border:1px solid var(--line-soft);border-radius:12px;overflow:hidden;display:flex;flex-direction:column;min-width:0}
+.pc .strip{position:relative;height:132px;background:radial-gradient(120% 120% at 20% 0%,#5D86C9,transparent 60%),radial-gradient(100% 100% at 100% 0%,#7FA9A0,transparent 60%),#24385A;overflow:hidden;font-family:var(--mac)}
+.pc .strip::before{content:"";position:absolute;inset:0 0 auto;height:14px;background:rgba(10,12,24,.25)}
+.pc .strip.light{background:var(--surface-2)}
+.pc .strip.light::before{display:none}
+.nb{position:absolute;left:50%;top:0;transform:translateX(-50%);background:#000;color:#fff;border-radius:0 0 9px 9px;display:flex;align-items:center;justify-content:center;font-size:10.5px;line-height:1.3;overflow:hidden}
+.nb.cap{top:5px;border-radius:999px}
+.nb .e{position:absolute;top:0;height:16px;display:flex;align-items:center;gap:4px;white-space:nowrap;font-size:9.5px}
+.nb .e.l{left:8px}.nb .e.r{right:8px;opacity:.85}
+.nb .e svg{width:11px;height:11px}
+.nb .m{position:absolute;left:0;right:0;top:16px;bottom:0;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:2px;padding:0 10px 6px;text-align:center}
+.nb .a{font-weight:600;font-size:10.5px}.nb .b{opacity:.62;font-size:9px}
+.nb .cl{display:flex;gap:5px}.nb .cl i{width:30px;height:19px;border-radius:4px;background:rgba(255,255,255,.22);display:block}.nb .cl i.f{box-shadow:0 0 0 1.5px #fff;background:rgba(255,255,255,.38)}
+.nb .sepv{width:1px;align-self:stretch;background:rgba(255,255,255,.25);margin:0 2px}
+.nb .bt{display:flex;gap:4px;margin-top:2px}.nb .bt span{font-size:8.5px;padding:1px 6px;border-radius:6px;background:rgba(255,255,255,.16);font-weight:600}.nb .bt span.p{background:#fff;color:#000}
+.nb .pd{width:5px;height:5px;border-radius:50%;background:#fff;opacity:.4;display:inline-block}.nb .pd.on{opacity:1}
+.nb span>svg{width:100%;height:100%;display:block}
+.pc .meta{padding:10px 12px;display:flex;flex-direction:column;gap:4px}
+.pc .meta b{font-size:13.5px}
+.pc .meta p{margin:0;font-size:12.5px;color:var(--ink-2);line-height:1.5}
+.pc .tags{display:flex;flex-wrap:wrap;gap:4px}
+.pc .tags span{font-size:11px;border-radius:999px;padding:0 7px;background:var(--surface-2);border:1px solid var(--line-soft);color:var(--ink-3);white-space:nowrap}
+.srowd{position:absolute;left:12px;right:12px;top:22px;background:var(--surface);border:1px solid var(--line-soft);border-radius:10px;font-family:var(--mac);font-size:12px;color:var(--ink)}
+.srowd .r{display:flex;align-items:center;gap:8px;padding:8px 10px}
+.srowd .r+.r{border-top:1px solid var(--line-soft)}
+.srowd .ico{width:22px;height:22px;border-radius:6px;display:grid;place-items:center;color:#fff;flex:none}
+.srowd .ico svg{width:13px;height:13px}
+.srowd .n{flex:1;min-width:0}.srowd .n small{display:block;color:var(--ink-3);font-size:10.5px}
+.srowd .sw{width:28px;height:16px;border-radius:999px;background:#34C759;position:relative;flex:none}.srowd .sw::after{content:"";position:absolute;right:2px;top:2px;width:12px;height:12px;border-radius:50%;background:#fff}
+.srowd .inf{width:14px;height:14px;border-radius:50%;border:1px solid var(--ink-3);color:var(--ink-3);font-size:9px;display:grid;place-items:center;flex:none}
+</style>
+
+<section id="patterns">
+  <p class="part">六 · 交互模式</p>
+  <h2>十二种交互模式：起因、过程、结果、半路、失败</h2>
+  <p class="sub">每个表面都是这些模式的一种组合。写新表面时先说它用哪几种模式，再说它多了什么。</p>
+  <div class="tbl"><table>
+    <thead><tr><th>模式</th><th>起因</th><th>过程中</th><th>结果</th><th>半路打断</th><th>失败时</th></tr></thead>
+    <tbody>
+      <tr><td class="k">收进与放回</td><td>朝刘海甩一下标题栏；两指上推全部；晃一晃</td><td>窗口沿投影落点飞向刘海（<code>settle</code>，终点是口子，不回弹）</td><td>紧凑：左耳最近那扇的图标，右耳几扇；放回从被点的那一格飞出（<code>flyOut</code>）</td><td>没松手前改方向，窗口跟手回来</td><td>收起结果分已收、还看得见、不确定；不确定不报成功，留恢复入口</td></tr>
+      <tr><td class="k">看一眼</td><td>指针停在刘海上 0.12 秒；停在一格上 0.2 秒；停在卷帘条或缩略图上</td><td>窗口在原处、原大小长出来，先给收起时的画面，实时画面一到就换</td><td>移开就收回；点一下才真的过去</td><td>移到另一格，直接换，不先收回</td><td>拿不到画面显示 App 图标；别的桌面、已最小化写“不是实时画面”</td></tr>
+      <tr><td class="k">开口</td><td>有变化、连上、电量低、卡住了</td><td>起因确定 → 等一拍 → <code>bloom</code> 开口；0.6 秒内的合成一句</td><td>停 2.6 秒，<code>calm</code> 收回</td><td>撞上更高的层变成一个点并消耗</td><td>读不到写“暂时读不到”；同一条节流，卡住的提示每条最多三次</td></tr>
+      <tr><td class="k">放行</td><td>助手审批、关安全设置、配对、解锁</td><td>独占；写清谁、要做什么、风险；只认审批出现后的新一下</td><td>真的回执才写“已允许这一次”；用一次作废</td><td>取消后晚到的成功不算</td><td>没确认写“没有确认，……仍然开着”；Touch ID 不可用就说暂时不可用</td></tr>
+      <tr><td class="k">认你</td><td>开盖、唤醒、按空格、停手 30 秒后</td><td>刘海一圈在转；两枚点：脸、手机，各自亮</td><td>两样都对才代打密码；系统确认解锁后桌面从刘海展开</td><td>碰键盘或鼠标就交回系统</td><td>口罩、太暗、手机不在、三次失败：说清缺哪样，交回 Touch ID 或密码</td></tr>
+      <tr><td class="k">落点</td><td>拖着标题栏到刘海附近</td><td>落点小岛垂下（<code>catch</code>，带拖动速度），五格画排好后的样子；对准时边线变强调色并 <code>.alignment</code></td><td>松手照那一格排；拖着时的提醒先进次区域，松手再开口</td><td>拖离刘海，小岛收回，窗口留在手里</td><td>那一格放不下（屏太小）就灰掉并说为什么</td></tr>
+      <tr><td class="k">层级导航</td><td>遥控器、手柄十字键、键盘方向键</td><td>焦点亮起那格放大一点（<code>calm</code>，不回弹）；左耳告诉你在哪一层</td><td>点一下打开或确认；返回退一层</td><td>Mac 前的人动了指针，焦点让开</td><td>收不到的键就只用触控；到头不绕回</td></tr>
+      <tr><td class="k">指挥回合</td><td>走进一个会话</td><td>画档位只亮已完成的拍；按住说话，真收到声音才画波形</td><td>“发出去了”“接受了”“开始跑了”分三次说</td><td>在跑时画只改下一轮；返回取消眼前这一件</td><td>后端断了草稿留着，不重发可能已执行的提交；不支持的档位明说</td></tr>
+      <tr><td class="k">离开与回来</td><td>手机断开 2 秒（宽限 1.5 秒）；刷脸开着时人不在</td><td>刘海倒数 10 秒，碰一下取消；收私人 App、暂停音乐</td><td>交给系统锁屏；回来四样都对才开，给“离开期间”摘要</td><td>手机回来就取消倒数</td><td>握着手机误判时一碰就停；碰过之后停手 1 分钟才再倒数</td></tr>
+      <tr><td class="k">有人在看与回来</td><td>相机看到旁人正对屏幕一会儿（借 quietglass 逐脸跟踪）</td><td>私人 App 名单里的窗口收进刘海，收起快</td><td>你一个人看回来再放回，放回慢；看不到脸不算放回</td><td>误判时一碰就还原</td><td>只在 ANE 上算、不存图；多张脸的帧不丢，交给判定</td></tr>
+      <tr><td class="k">长按换一种用法</td><td>长按刘海</td><td>CarPlay 从刘海展开铺满整块屏；分辨率启动时定死，画面出现要一个关键帧，留安全区避开刘海</td><td>导航和播放留在刘海里当持续活动；再长按或 Esc 回桌面，窗口都在原处</td><td>按住不够门槛就是点一下：启动台</td><td>没连上 iPhone 写“连接 iPhone”，不放假画面；断了按退避预算重连（2 秒×2ⁿ、≤30 秒、5 次）</td></tr>
+      <tr><td class="k">点头照做</td><td>不能出声时，用嘴选一个功能</td><td>刘海先冻结对象、给出预览（“左半屏 · 报表.numbers”）</td><td>预览出现之后的新点头才采用；摇头取消</td><td>低头看键盘不算确认；耳机断连只停动作</td><td>看到一张脸不等于解开了这台 Mac；认证仍由系统决定</td></tr>
+    </tbody>
+  </table></div>
+</section>
+
+<section id="surfaces">
+  <p class="part">七 · 表面目录</p>
+  <h2>七条线的每一个表面</h2>
+  <p class="sub">每一行回答：接在哪一层、用哪几种模式、现在到哪一步、哪张稿是它的画面。成熟度按各线文档的自述填，逐项以 <a href="../releases/v1.0.16-ledger.md">1.0.16 对照表</a> 为准，不在这里替它算完成率。</p>
+  <p style="display:flex;flex-wrap:wrap;gap:8px;font-size:12.5px;color:var(--ink-2)"><span class="st ship">发布线</span>已发或在 1.0.16 候选里 <span class="st dev">开发版</span>代码在本地开发版，没发 <span class="st exp">实验</span>只有隔离实验或探针 <span class="st draft">规格</span>只有规格或稿</p>
+  <div class="tbl"><table>
+    <thead><tr><th>线</th><th>表面</th><th>层 · 呈现</th><th>模式</th><th>成熟度</th><th>画面</th><th>最要紧的边缘</th></tr></thead>
+    <tbody id="surfRows"></tbody>
+  </table></div>
+</section>
+
+<section id="input">
+  <p class="part">八 · 输入</p>
+  <h2>任何输入，同一套动作，没有模式</h2>
+  <p class="sub">2026-10-08 定下的四层推广到所有输入：在刘海那一排里走动、走进一项、在一项里选择。每个键先有一句不随层变的意思。指着用的设备（触控板、鼠标、手柄的摇杆）照常当指针，焦点只在没有指针的时候出现。</p>
+  <div class="tbl"><table>
+    <thead><tr><th>想做的事</th><th>不变的意思</th><th>指针 · 触控板</th><th>键盘</th><th>Siri 遥控器</th><th>iPhone 上的遥控器</th><th>PS5 手柄</th><th>不出声时</th></tr></thead>
+    <tbody>
+      <tr><td class="k">展开刘海那一排</td><td>往下打开一层</td><td>停在刘海上 0.12 秒；四指轻点</td><td>菜单，或自定快捷键（默认不占）</td><td>环往下 / 点按</td><td>往下滑 / 点一下</td><td>十字键下 / △</td><td>嘴选“看不见的窗口”</td></tr>
+      <tr><td class="k">挪焦点</td><td>在一排里挪</td><td>指针移过去</td><td>方向键</td><td>环左右、触控面滑</td><td>左右滑</td><td>十字键</td><td>头左右（候选）</td></tr>
+      <tr><td class="k">打开 · 放回 · 走进去</td><td>打开或确认亮着的那一个</td><td>点一下</td><td>Return</td><td>环中心</td><td>点一下</td><td>×</td><td>预览出现后点头</td></tr>
+      <tr><td class="k">返回</td><td>取消眼前这一件；没有了就退一层</td><td>移开</td><td>Esc</td><td>返回</td><td>返回 · 往上滑</td><td>○</td><td>摇头</td></tr>
+      <tr><td class="k">回到那一排</td><td>回主屏幕那样回来</td><td>—</td><td>—</td><td>电视键</td><td>电视键</td><td>△</td><td>—</td></tr>
+      <tr><td class="k">开始或停下</td><td>开始或停下眼前这件事</td><td>点实时活动里的按钮</td><td>媒体键</td><td>播放 / 暂停</td><td>播放 / 暂停</td><td>Options</td><td>—</td></tr>
+      <tr><td class="k">收进刘海</td><td>—</td><td>朝刘海甩一下标题栏；拖到落点小岛</td><td>菜单快捷键</td><td>—</td><td>—</td><td>—</td><td>嘴选“收进刘海”，点头</td></tr>
+      <tr><td class="k">启动台</td><td>—</td><td>点一下刘海</td><td>⌃⌘L</td><td>按住电视键</td><td>按住电视键（有按下 / 松开时）</td><td>按住 △</td><td>—</td></tr>
+      <tr><td class="k">放行（普通）</td><td>只认审批出现后的新一下</td><td>点“允许”</td><td>Return</td><td>会话里点按</td><td>会话里点一下</td><td>会话里 ×</td><td>不放行；点头只确认预览</td></tr>
+      <tr><td class="k">放行（高风险）</td><td>到 Mac 前</td><td colspan="2">Touch ID</td><td colspan="3">到 Mac 前用 Touch ID；以后加“手机 + 声纹 + 随机短语”，声纹不单独放行</td><td>Touch ID</td></tr>
+      <tr><td class="k">画档位</td><td>只在会话里，只管档位</td><td>—</td><td>—</td><td>触控面</td><td>触控区</td><td>触控板</td><td>—</td></tr>
+      <tr><td class="k">说话出草稿</td><td>对会话说话</td><td>—</td><td>—</td><td>按住侧边 Siri 键</td><td>按住侧边按钮</td><td>按住静音键</td><td>口型听写（实验）</td></tr>
+      <tr><td class="k">收工</td><td>全部收回，会话照跑，Mac 不睡</td><td>—</td><td>—</td><td>电源</td><td>电源</td><td>—</td><td>—</td></tr>
+      <tr><td class="k">CarPlay</td><td>长按换一种用法</td><td>长按刘海；再长按回来</td><td>Esc 回来</td><td colspan="4">—</td></tr>
+    </tbody>
+  </table></div>
+  <div class="grid3" style="margin-top:14px">
+    <div class="card"><h3>让位</h3><p>Mos、Mac Mouse Fix、BetterTouchTool、Logi Options+ 在跑时，对应功能让给它们，设置里写明谁接管。游戏在前台时手柄整个让开，PS 键永远不占。</p></div>
+    <div class="card"><h3>Mac 前的人优先</h3><p>遥控器、手柄、声音在操作时，有人动了 Mac 的指针或键盘：焦点让开，那一排交给指针；会话里的草稿留着。</p></div>
+    <div class="card"><h3>按设备认，不按名字认</h3><p>每台设备按稳定 ID 认；名字只用来显示。每台都有自己的“控制这台 Mac”开关，默认关；同一时间只有一台能操作。</p></div>
+  </div>
+</section>
+
+<section id="edges">
+  <p class="part">九 · 边缘情况</p>
+  <h2>边缘情况：一张表管所有表面</h2>
+  <p class="sub">新表面不用另写一份边缘清单：先在这张表里找到它属于哪几行，照做；对不上的才补一行。右列是依据的规则编号（见第二部分）。</p>
+  <div class="tbl"><table>
+    <thead><tr><th>类</th><th>情况</th><th>刘海怎么做</th><th>依据</th></tr></thead>
+    <tbody id="edgeRows"></tbody>
+  </table></div>
+</section>
+
+<section id="film">
+  <p class="part">十 · 宣传片</p>
+  <h2>宣传片里的每一幕，对到产品上</h2>
+  <p class="sub">opus 片 13 段、169 秒（<code>film/ws2-opus/src/timeline.ts</code>）。片子画的是愿景；这张表说清每一幕靠哪个表面、现在到哪、还差什么。规矩照概念片：做了的用真机画面，没做的用抽象图形加说明，不画假界面。</p>
+  <div class="tbl"><table>
+    <thead><tr><th>段</th><th>那一句</th><th>表面与模式</th><th>产品现在</th><th>要补上才能用真机拍</th></tr></thead>
+    <tbody id="filmRows"></tbody>
+  </table></div>
+</section>
+
+<section id="next">
+  <p class="part">十一 · 下一程</p>
+  <h2>从蓝图往下长：还没画的，先画出来</h2>
+  <p class="sub">文法里“已经允许、还没画成一张”的六件，加上欠的“用量”“进度”和“离开期间”，这里各画一排状态。都从现有原则长出来，没有新的呈现、新的弹簧、新的宿主。</p>
+  <div id="nextStates" style="display:grid;gap:16px"></div>
+  <h3 style="margin-top:28px">七条线各自的下一步</h3>
+  <div class="tbl" style="margin-top:8px"><table>
+    <thead><tr><th>线</th><th>下一步做成什么样</th><th>门槛（过了才往下）</th><th>不做</th></tr></thead>
+    <tbody>
+      <tr><td><span class="ln" style="--c:var(--l-win)">窗口</span></td><td>三个住处收成“收起后的样子”一项；宽的样子画肩；已对准去掉灰色填充</td><td>小样给 Aaron 放大镜看过；28 套窗口探针在同一包上重跑</td><td>不把缩略图做成第二个收起动作</td></tr>
+      <tr><td><span class="ln" style="--c:var(--l-live)">实时活动</span></td><td>进度卡第一层来源（本工具自己发起的拷贝、隔空投送）；系统音量键接上一颗岛</td><td>读不到不画假进度；音量键接上前先做隐私登记</td><td>不收状态类（电量、时间、信号）</td></tr>
+      <tr><td><span class="ln" style="--c:var(--l-batt)">电量</span></td><td>AirPods 左、右、盒三组件；iPhone；手表经 iPhone 写“来自 iPhone”</td><td>每类设备一条真机记录；未知不写 0%</td><td>电量不常驻刘海</td></tr>
+      <tr><td><span class="ln" style="--c:var(--l-cond)">指挥</span></td><td>第一段：iPhone 上的遥控器进 App，配对、那一排、放回；第二段：会话格；第三段：走进会话</td><td>每段一次真机，15 分钟内验完</td><td>不往前台窗口盲发回车；不让遥控放行</td></tr>
+      <tr><td><span class="ln" style="--c:var(--l-auth)">刷脸与放行</span></td><td>F1 蓝牙因素证明“是那台手机”；离开就锁的倒数接上；Touch ID 允许路径端到端</td><td>攻击测试的真实结果；D11 之外的准入要 Aaron 定</td><td>心率、健康数据、atv-core 的 Verified 不放行</td></tr>
+      <tr><td><span class="ln" style="--c:var(--l-car)">CarPlay</span></td><td>拿到获准的认证材料后，接收器本体；长按进出跟手</td><td>停 CarPlay 不清电量；电量失败不断视频</td><td>没凭据前日常长按不改</td></tr>
+      <tr><td><span class="ln" style="--c:var(--l-priv)">隐私</span></td><td>日志搬到 <code>~/Library/Logs/WindowShade/</code>、0600、不写标题；“读到的”页从信号登记表生成</td><td>另一个账户实测读不到；每句都有测过的证据</td><td>不吓人，也不藏</td></tr>
+    </tbody>
+  </table></div>
+  <div class="grid3" style="margin-top:14px">
+    <div class="card"><h3>三样共用件</h3><p><b>私人 App 名单</b>：番茄钟的“专注时收聊天”、离开就锁的“锁前先收”、有人在看时收起，共用一份，设置里一处改。<b>授权账</b>：所有放行。<b>信号登记表</b>：所有读取。三样都不各写一份。</p></div>
+    <div class="card"><h3>离开期间</h3><p>锁屏、睡眠、离开回来时，刘海展开一条摘要：只列现在仍成立的事，每项能点过去。设备读数带采样时间，不补播离开时积下的提醒。</p></div>
+    <div class="card"><h3>一个遥控器到所有输入</h3><p>四层先在 iPhone 上验，Siri 遥控器、手柄、键盘焦点导航照同一张表接；声音和点头是同一套动作的又一种手。</p></div>
+  </div>
+</section>
+
+<section id="ship">
+  <p class="part">十二 · 怎么发</p>
+  <h2>大稿一次画完，产品一级一级升</h2>
+  <p class="sub">1.0.15 之后 170 个提交、0 次发布。瓶颈是一个人的验收加上范围长得比收敛快。所以这份稿画得全，交付却要分级：每个表面沿同一架梯子往上走，升一级要一种证据，不跳级。</p>
+  <div class="tbl"><table>
+    <thead><tr><th>级</th><th>意思</th><th>升到这一级要的证据</th><th>界面和官网能怎么说</th></tr></thead>
+    <tbody>
+      <tr><td><span class="st draft">规格</span></td><td>有稿，过了文法准入</td><td>十一问答完；对照账没有未记的</td><td>不上界面，不上官网</td></tr>
+      <tr><td><span class="st exp">实验</span></td><td>隔离探针或独立接收器</td><td>本机或真机的原始记录、退出清理、绑定源码和产物</td><td>只在开发版的实验开关里</td></tr>
+      <tr><td><span class="st dev">开发版</span></td><td>进了 App，默认关或在开发菜单</td><td>实际调用链、拒绝路径的测试、<code>build.sh --check</code>、能耗不变差</td><td>设置里能打开，副标题说清还不完整</td></tr>
+      <tr><td><span class="st ship">发布线</span></td><td>进 1.0.x 或 WindowShade 2</td><td>同一候选包上的探针、人工未验段 90 分钟以内、签名公证、真实升级</td><td>README、官网、宣传片照做到的写</td></tr>
+    </tbody>
+  </table></div>
+  <div class="grid2" style="margin-top:14px">
+    <div class="card"><h3>1.0.16</h3><p>窗口线，加上已经定的随版几件：实时活动、配件电量、应用内的 Touch ID 确认。刷脸解锁、指挥模式、CarPlay、全设备电量、多设备确认、图标重做都移出，各有自己的门槛。新增需求为 0。</p></div>
+    <div class="card"><h3>WindowShade 2</h3><p>按线各自升级，不等七条线齐发。最先能升的：iPhone 上的遥控器第一段、会话格、番茄钟的窗口效果准入、离开就锁。每升一级在这份稿的表面目录里改一格成熟度。</p></div>
+  </div>
+</section>
+
+<section id="ledger">
+  <p class="part">十三 · 对照账与待定</p>
+  <h2>这次收稿新发现的不一致，以及要 Aaron 定的</h2>
+  <div class="grid2">
+    <div class="card"><h3>新发现，记进 design-grammar 对照账</h3><ul>
+      <li>《全景》输入表的遥控器一列还是“电视键换模型 / 档位”：以《iPhone 上的遥控器》为准</li>
+      <li>conductor-v2 的结构图仍写 Rust 的 <code>control/remote-host</code>：现实是 Swift 写的独立接收器（2026-10-08 交接）</li>
+      <li>没有刘海时胶囊的位置：《设计规范》写“顶部正中浮出”，touch-id-island 写“菜单栏下方留 8 点”。本稿照后者画，待定</li>
+      <li>离开就锁的倒数没点名弹簧：本稿提议 <code>bloom</code> 开口、数字原地换、<code>calm</code> 收回</li>
+      <li>窗口那一排和会话那一排是两个主人：合成一页，竖线隔开（已记）</li>
+      <li>概念片的刘海尺寸是影片坐标：片子已注明示意，不回写令牌</li>
+    </ul></div>
+    <div class="card" style="background:var(--warn-soft)"><h3>要 Aaron 定</h3><ul>
+      <li>卡住时的提示，点“关掉”是只关这一次，还是这条不再说</li>
+      <li>没开刷脸解锁的人，能不能只靠手机回来就开（建议做成选项，默认关）</li>
+      <li>没有刘海时胶囊放在菜单栏里，还是菜单栏下方 8 点</li>
+      <li>“读到的”页里“显示技术细节”这一处实现进界面的例外</li>
+      <li>欢迎窗口只讲三件：收起、收进刘海、点一下刘海；其余在卡住时说</li>
+      <li>宽的样子画肩、已对准去掉灰色填充：两张小样先看</li>
+    </ul></div>
+  </div>
+</section>
+
+<section id="borrow">
+  <p class="part">十四 · 借鉴台账</p>
+  <h2>十六个开源项目，取了什么，不取什么</h2>
+  <p class="sub">2026-10-08 逐项读了源码和许可。<b>GPL / AGPL / 无许可证只借思路，用 Swift 重写；MIT、BSD-3 可用代码，带上版权声明；非商用的模型权重不进仓库。</b>来源、提交号和许可证明另见 <code>docs/handoff/oss-borrowing-2026-10-08.md</code>。</p>
+  <div class="tbl"><table>
+    <thead><tr><th>项目</th><th>许可</th><th>取什么</th><th>对应表面</th><th>不取</th></tr></thead>
+    <tbody id="borrowRows"></tbody>
+  </table></div>
+  <p class="sub" style="margin-top:12px">iPhone 上的遥控器第一帧的密钥（C4）在这些项目里都没有答案：atv-core 会用我们已经排除的那个 key，并在失败时断开，和我们现在一样。继续当独立研究项，保住已经能用的 fresh Pair-Verify 路径。</p>
+</section>
+
+<footer>依据：这十六个开源项目（2026-10-08 读）；docs/design-drafts/ 的十六份稿；docs/blueprint.md、design-system.md（2026-09-29）、design-grammar.md、copy-guide.md；conductor-v2、input-devices、agents-in-notch、live-activities、progress-in-notch、usage、device-battery、face-unlock、dynamic-lock、touch-id-island、windowshade-2.1、privacy-page、notch、slide-over、pip、launchpad、window-browser 各线文档；film/ws2-concept（9 章 126 秒）与 film/ws2-opus（13 段 169 秒）；docs/handoff/gpt6-review-2026-10-06/LANDING.md 与 ws2-reuse-2026-10-08。刘海、窗口、设备、会话名、数字都是示意；成熟度按各线文档自述，以 1.0.16 对照表为准。这一份不改任何令牌数值。</footer>
+</div>
+
+<script>
+(function(){
+var $=function(id){return document.getElementById(id)};
+var reduceOS=matchMedia('(prefers-reduced-motion: reduce)').matches;
+var REDUCE=reduceOS;
+
+/* ---------- 符号（示意线稿，产品里用 SF Symbols） ---------- */
+var I={
+ remote:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"><rect x="7.5" y="2.5" width="9" height="19" rx="3"/><circle cx="12" cy="8" r="2"/></svg>',
+ music:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"><path d="M9 18V5l11-2v13"/><circle cx="6.5" cy="18" r="2.5"/><circle cx="17.5" cy="16" r="2.5"/></svg>',
+ win:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><rect x="3" y="5" width="18" height="14" rx="2.5"/><path d="M3 9h18"/></svg>',
+ timer:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"><circle cx="12" cy="13" r="8"/><path d="M12 13V9M9 2h6"/></svg>',
+ term:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="4" width="18" height="16" rx="2.5"/><path d="m7 9 3 3-3 3M12.5 15H17"/></svg>',
+ mouse:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"><rect x="6" y="3" width="12" height="18" rx="6"/><path d="M12 7v3"/></svg>',
+ pods:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"><path d="M7 4a3 3 0 0 1 3 3v3a3 3 0 0 1-2 2.8V20H6v-7.2A3 3 0 0 1 4 10V7a3 3 0 0 1 3-3zM17 4a3 3 0 0 0-3 3v3a3 3 0 0 0 2 2.8V20h2v-7.2A3 3 0 0 0 20 10V7a3 3 0 0 0-3-3z"/></svg>',
+ copy:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><rect x="8" y="8" width="12" height="13" rx="2"/><path d="M16 8V5a2 2 0 0 0-2-2H6a2 2 0 0 0-2 2v11a2 2 0 0 0 2 2h2"/></svg>',
+ car:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"><path d="M4 16v-4l2-5h12l2 5v4zM4 16v3M20 16v3"/><circle cx="8" cy="13.5" r="1"/><circle cx="16" cy="13.5" r="1"/></svg>',
+ bulb:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"><path d="M9 18h6M10 21h4M12 3a6 6 0 0 0-3.5 10.9c.6.5 1 1.2 1 2.1h5c0-.9.4-1.6 1-2.1A6 6 0 0 0 12 3z"/></svg>',
+ lock:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><rect x="5" y="11" width="14" height="10" rx="2"/><path d="M8 11V7a4 4 0 0 1 8 0v4"/></svg>',
+ view:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"><path d="M4 8V5a1 1 0 0 1 1-1h3M16 4h3a1 1 0 0 1 1 1v3M20 16v3a1 1 0 0 1-1 1h-3M8 20H5a1 1 0 0 1-1-1v-3"/><circle cx="12" cy="12" r="3"/></svg>',
+ touch:'<svg viewBox="0 0 24 24" fill="none" stroke="#FF6B6B" stroke-width="1.5" stroke-linecap="round"><path d="M6.5 8.5a6.5 6.5 0 0 1 11 0"/><path d="M5 13c0-3.9 3.1-7 7-7s7 3.1 7 7v1"/><path d="M8.5 19c-.6-1.8-1-3.6-1-5.5a4.5 4.5 0 0 1 9 0c0 1.6.2 3 .6 4.3"/><path d="M12 13.5c0 2.6.6 5 1.6 7"/></svg>',
+ baton:'<svg viewBox="0 0 24 24" fill="none" stroke="#E98BB2" stroke-width="1.9" stroke-linecap="round"><path d="M4 20 15 9"/><path d="M15 9l2.5-5.5L20 6l-5 3"/></svg>',
+ gauge:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"><path d="M4 17a8 8 0 1 1 16 0"/><path d="M12 17l4-5"/></svg>',
+ shield:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M12 3 5 6v6c0 4 3 7.5 7 9 4-1.5 7-5 7-9V6z"/></svg>',
+ phone:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><rect x="7" y="2.5" width="10" height="19" rx="3"/></svg>',
+ people:'<svg viewBox="0 0 24 24" fill="currentColor"><circle cx="9" cy="8" r="3.2"/><path d="M2.5 19c.4-3.6 3.1-5.6 6.5-5.6s6.1 2 6.5 5.6z"/><circle cx="16.5" cy="8.6" r="2.6" opacity=".75"/><path d="M15.8 13.6c3 .2 5.3 2 5.7 5.4h-4.3c-.2-2-.7-3.9-1.4-5.4z" opacity=".75"/></svg>',
+ speaker:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M4 9.5h3.5L12 5.5v13l-4.5-4H4z" fill="currentColor"/><path d="M15.5 9a4.5 4.5 0 0 1 0 6M18 6.5a8 8 0 0 1 0 11"/></svg>',
+ down:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="9"/><path d="M12 7.5v8M8.5 12.5 12 16l3.5-3.5"/></svg>'
+};
+
+/* ---------- 弹簧令牌 ---------- */
+var TOK={calm:[.34,1],settle:[.38,1],expand:[.40,.92],bloom:[.42,.84],catch:[.40,.80],glide:[.42,.88],flyOut:[.38,.90],pull:[.36,.86],pop:[.30,.75],reduced:[.25,1]};
+var TOKUSE={calm:'没有动量的变化：悬停、收回、焦点',settle:'尺寸变化；飞进刘海，终点是口子',expand:'展开那一排（已上线的手感，例外）',bloom:'有变化时提醒、教学、倒数开口（例外）',catch:'拖到刘海时垂下的落点小岛',glide:'甩一下标题栏后的滑行；画中画落角',flyOut:'从刘海飞回原处',pull:'刘海下拉松手弹回',pop:'小元素的确认：对勾、拍点',reduced:'减少动态效果时替换以上全部'};
+function stepResp(t,r,z){var w=2*Math.PI/r;if(z>=1)return 1-(1+w*t)*Math.exp(-w*t);var wd=w*Math.sqrt(1-z*z);return 1-Math.exp(-z*w*t)*(Math.cos(wd*t)+z*w/wd*Math.sin(wd*t))}
+(function(){var box=$('springs');box.innerHTML=Object.keys(TOK).map(function(k){var p=TOK[k],pts=[];for(var i=0;i<=60;i++){var t=i/60*.9,y=stepResp(t,p[0],p[1]);pts.push((i/60*200).toFixed(1)+','+(48-y*36).toFixed(1))}
+ var b=Math.max(0,1-p[1]);return '<div class="t"><b>'+k+'</b> <span class="num">'+p[0].toFixed(2)+' / ζ '+p[1].toFixed(2)+(b?' · 回弹 '+b.toFixed(2):'')+'</span><svg viewBox="0 0 200 52" preserveAspectRatio="none" aria-hidden="true"><line x1="0" y1="12" x2="200" y2="12" stroke="var(--line)" stroke-dasharray="3 3"/><line x1="0" y1="48" x2="200" y2="48" stroke="var(--line)"/><polyline points="'+pts.join(' ')+'" fill="none" stroke="var(--accent)" stroke-width="2"/></svg><small>'+TOKUSE[k]+'</small></div>'}).join('')})();
+
+/* ---------- 模拟器 ---------- */
+function Spring(x){this.x=x;this.v=0;this.t=x;this.k=0;this.c=0;this.from=x}
+Spring.prototype.to=function(t,tok){var p=TOK[REDUCE?'reduced':tok];this.from=this.x;this.t=t;this.k=Math.pow(2*Math.PI/p[0],2);this.c=4*Math.PI*p[1]/p[0];if(REDUCE){this.x=t;this.v=0}};
+Spring.prototype.step=function(dt){if(!this.k)return;var a=-this.k*(this.x-this.t)-this.c*this.v;this.v+=a*dt;this.x+=this.v*dt;if(Math.abs(this.x-this.t)<1e-3&&Math.abs(this.v)<1e-3){this.x=this.t;this.v=0}};
+Spring.prototype.prog=function(){var d=this.t-this.from;return Math.abs(d)<1e-6?1:1-Math.abs(this.t-this.x)/Math.abs(d)};
+var isl=$('isl'),ic=$('ic'),dot2=$('dot2'),W=new Spring(12.2),H=new Spring(3.6),R=new Spring(1.1),pending=false,visible=true;
+var LN=['','要你放行的','你正在做的','你主动打开的','短暂提醒','持续活动','什么都没有'];
+var S;var timers=[];function later(f,ms){var t=setTimeout(f,REDUCE?Math.min(ms,ms):ms);timers.push(t);return t}
+var WINS=[{id:'x',n:'Xcode — ContentView.swift',c:'linear-gradient(135deg,#2B3550,#1C2234)',p:[6,12,52,62],a:'#3A8EE6'},{id:'t',n:'终端 — codex',c:'linear-gradient(135deg,#1E1F24,#2A2B31)',p:[48,22,44,52],a:'#555'},{id:'s',n:'Safari — 教程视频',c:'linear-gradient(135deg,#1F6FEB,#7A3FE0)',p:[22,30,46,56],a:'#2F80ED'}];
+function reset(){timers.forEach(clearTimeout);timers=[];S={cap:S?S.cap:false,hc:S?S.hc:false,locked:false,fg:null,susp:[],pendAuth:null,on:[],sel:0,dot:false,car:false,tucked:[]};
+ $('wins').innerHTML=WINS.map(function(w){return '<div class="win" data-w="'+w.id+'" style="left:'+w.p[0]+'%;top:'+w.p[1]+'%;width:'+w.p[2]+'%;height:'+w.p[3]+'%;background:'+w.c+'"><div class="bar"><span class="lamp"></span><span class="lamp"></span><span class="lamp"></span><span class="t">'+w.n+'</span></div></div>'}).join('');
+ $('lockv').hidden=true;$('carv').classList.remove('on');$('eLock').setAttribute('aria-pressed','false');$('log').innerHTML='';
+ log('<b>什么都没有</b>：和实体刘海重合，一个像素都不画');render();}
+function log(h){var d=document.createElement('div');d.innerHTML=h;var L=$('log');L.insertBefore(d,L.firstChild);while(L.children.length>40)L.removeChild(L.lastChild)}
+function e(icon,t){return '<div class="ear l">'+(icon||'')+(t?'<span>'+t+'</span>':'')+'</div>'}
+function er(h){return '<div class="ear r">'+h+'</div>'}
+function cur(){return S.on[S.sel]||S.on[0]}
+
+/* 持续活动 */
+var PRIO={car:1,session:2,progress:2,timer:3,music:4,shelf:5};
+function upsert(o){var i=S.on.findIndex(function(x){return x.id===o.id});
+ if(i>=0){S.on[i]=Object.assign(S.on[i],o);if(!o.silent)log('<b>持续活动</b>：'+S.on[i].name+' 原处更新，不重播进场');}
+ else{if(S.on.length>=3){S.on.sort(function(a,b){return PRIO[a.kind]-PRIO[b.kind]});var out=S.on.pop();log('<b>持续活动</b>：名单满三条，'+out.name+' 让出位置')}
+  S.on.push(o);S.on.sort(function(a,b){return PRIO[a.kind]-PRIO[b.kind]});S.sel=0;log('<b>持续活动</b>：'+o.name+' 进名单'+(S.fg?'；前景有人占着，先记下，让出后再画':''))}
+ renderLists();if(!S.fg)render()}
+function removeOn(id){S.on=S.on.filter(function(x){return x.id!==id});S.sel=0;renderLists();if(!S.fg)render()}
+
+/* 前景 */
+function request(layer,kind,data,hold){
+ if(S.locked&&layer!==1){log('<b>锁着</b>：'+(data&&data.t1||kind)+' 不出场；锁屏时只有系统和认你');return}
+ var c=S.fg;
+ if(c&&c.layer<layer){
+  if(layer===4){S.dot=true;log('<b>短暂提醒</b>：“'+(data&&data.t1||'')+'”撞上「'+LN[c.layer]+'」，变成一个点，并且消耗掉');render();return}
+  if(c.layer===2&&layer===1){}
+  else{log('<b>'+LN[layer]+'</b>：「'+LN[c.layer]+'」占着，不进来');return}}
+ if(c&&c.layer===2&&layer===1){S.pendAuth={layer:layer,kind:kind,data:data,hold:hold};log('<b>要你放行的</b>：等手离开再问；手势画到一半什么都不进来');return}
+ if(c&&c.layer>=layer){
+  if(c.layer===3&&layer<3){S.susp.push(c);log('<b>你主动打开的</b>：挂起，不撤销；让出后原样回来')}
+  else if(c.layer===4&&layer<4){log('<b>短暂提醒</b>：被更高的层顶掉，不回来补说')}
+  else if(c.layer===layer&&layer===4){log('<b>短暂提醒</b>：新的一句接上，旧的那句不再补')}}
+ S.fg={layer:layer,kind:kind,data:data||{}};
+ log('<b>'+LN[layer]+'</b>：'+(data&&data.why||kind));
+ render();
+ if(hold){var me=S.fg;later(function(){if(S.fg===me)release()},hold)}}
+function release(why){var c=S.fg;S.fg=null;if(why)log(why);
+ if(S.pendAuth){var p=S.pendAuth;S.pendAuth=null;request(p.layer,p.kind,p.data,p.hold);return}
+ if(S.susp.length){S.fg=S.susp.pop();log('<b>你主动打开的</b>：原样回来，不重播进场');render(true);return}
+ if(S.dot){S.dot=false}
+ render()}
+
+/* 形状与内容 */
+function shapeFor(k){return {idle:[12.2,3.6,1.1],compact:[28,3.6,1.1],alert:[34,8.8,2.2],summary:[42,13.6,2.6],row:[64,17.6,3],approve:[50,13,2.6],touchid:[46,13,2.6],drop:[52,12.6,2.4],draw:[42,12,2.4],count:[36,9.4,2.2],face:[26,4.6,1.6]}[k]}
+function contentFor(k){var d=S.fg&&S.fg.data||{};
+ switch(k){
+ case 'idle':return '';
+ case 'compact':var o=cur();var dots=S.on.length>1?'<span class="mdots">'+S.on.map(function(x,i){return '<i class="'+(x===o?'on':'')+'"></i>'}).join('')+'</span>':'';
+  return e(o.icon,o.left)+er(dots+'<span>'+o.right+'</span>');
+ case 'alert':return e(d.icon,'')+'<div class="mid"><div class="t1">'+d.t1+'</div><div class="t2">'+(d.t2||'')+'</div></div>';
+ case 'summary':return e(I.lock,'')+'<div class="mid"><div class="t1">离开期间</div><div class="t2">'+d.lines.join('<br>')+'</div></div>';
+ case 'row':var cells=S.tucked.map(function(id){var w=WINS.filter(function(x){return x.id===id})[0];return '<div class="cell" data-act="untuck" data-id="'+id+'" style="cursor:pointer"><div class="thumb" style="background:'+w.c+'"></div><b>'+w.n.split(' — ')[0]+'</b><small>收着</small></div>'});
+  var live=S.on.filter(function(x){return x.kind!=='shelf'}).map(function(x){return '<div class="cell"><div class="thumb" style="background:#1b1c20;display:grid;place-items:center">'+'<span style="width:2.4cqw;height:2.4cqw;display:block;color:#fff">'+x.icon+'</span></div><b>'+x.name+'</b><small>'+x.right+'</small></div>'});
+  var inner=cells.join('')+(cells.length&&live.length?'<div style="width:.12cqw;background:rgba(255,255,255,.22);margin:.4cqw .2cqw 2cqw"></div>':'')+live.join('');
+  return e(I.win,'')+'<div class="mid" style="justify-content:flex-start;padding-top:.4cqw">'+(inner?'<div class="cells">'+inner+'</div>':'<div class="t2" style="padding-top:2cqw">刘海里没有东西</div>')+'</div>';
+ case 'approve':return e(I.term,'')+er('<span class="warnc">等你</span>')+'<div class="mid"><div class="t2">'+d.who+' · 要你放行</div><div class="t1">想执行 '+d.cmd+'</div><div class="btnrow"><span class="nbtn" data-act="deny">不允许</span><span class="nbtn pri" data-act="allow">'+(d.high?'用 Touch ID 确认':'允许这一次')+'</span></div></div>';
+ case 'touchid':return '<div class="mid" style="top:1.2cqw"><span style="width:3.4cqw;height:3.4cqw;display:block">'+I.touch+'</span><div class="t1">'+d.what+'</div><div class="btnrow"><span class="nbtn" data-act="deny">取消</span><span class="nbtn pri" data-act="allow">用 Touch ID 确认</span></div></div>';
+ case 'drop':var L5=['左半屏','铺满屏幕','收进刘海','魔法平铺','右半屏'];return '<div class="mid" style="top:1cqw"><div class="cells">'+L5.map(function(x,i){return '<div class="cell"><div class="thumb" style="background:rgba(255,255,255,'+(i===d.on?'.42':'.14')+');'+(i===d.on?'box-shadow:0 0 0 .22cqw var(--sim-accent,#7FA5F0)':'')+'"></div><b>'+x+'</b></div>'}).join('')+'</div></div>';
+ case 'draw':return e(I.baton,'')+er('<span>'+(d.res?'<b>三声 · high</b>':'抬手才判定')+'</span>')+'<div class="mid"><svg viewBox="0 0 100 30" style="width:22cqw;height:5cqw"><path d="M8 6 Q 40 38 55 26 T 92 4" fill="none" stroke="#E98BB2" stroke-width="2.4" stroke-linecap="round" stroke-dasharray="140" stroke-dashoffset="'+(d.res?0:60)+'"/></svg><div class="t2">WindowShade · Claude · 下一轮</div></div>';
+ case 'count':return e(I.phone,'')+er('<b style="font-variant-numeric:tabular-nums">'+d.n+'</b>')+'<div class="mid"><div class="t1">手机不在身边</div><div class="t2">'+d.n+' 秒后锁屏 · <span data-act="cancel" style="text-decoration:underline;cursor:pointer">碰一下取消</span></div></div>';
+ case 'face':return e('<span class="spin"></span>','')+er('<span class="mdots"><i class="'+(d.f?'on':'')+'"></i><i class="'+(d.p?'on':'')+'"></i></span>');
+ }}
+var lastKind='';
+function render(restore){
+ var k;if(S.locked&&!(S.fg&&S.fg.kind==='face'))k='idle';else if(S.fg)k=S.fg.kind;else if(S.on.length)k='compact';else k='idle';
+ var sh=shapeFor(k),tok=k==='idle'?'calm':k==='compact'?'settle':k==='alert'||k==='count'||k==='summary'?'bloom':k==='row'?'expand':k==='drop'?'catch':'pop';
+ if(restore)tok='calm';
+ var html=contentFor(k);
+ var growing=sh[0]*sh[1]>W.x*H.x+0.01;
+ var go=function(){W.to(sh[0],tok);H.to(sh[1],tok);R.to(sh[2],tok);ic.innerHTML=html;ic.classList.remove('on');pending=!REDUCE&&k!=='idle';if(REDUCE&&k!=='idle')ic.classList.add('on');
+  visible=!(S.cap&&k==='idle');isl.setAttribute('aria-label',ic.textContent.replace(/\s+/g,' ').trim()||'刘海')};
+ if(k===lastKind&&!restore){ic.innerHTML=html;ic.classList.add('on')}
+ else if(!growing&&ic.classList.contains('on')&&!REDUCE){ic.classList.remove('on');later(go,100)}else go();
+ lastKind=k;
+ dot2.classList.toggle('on',S.dot&&!!S.fg);
+ isl.classList.toggle('cap',S.cap);isl.classList.toggle('hc',S.hc);
+ $('lockv').hidden=!S.locked;
+ renderLists()}
+function renderLists(){var lockedIdle=S.locked&&!(S.fg&&S.fg.kind==='face');var cl=lockedIdle?6:S.fg?S.fg.layer:(S.on.length?5:6);
+ $('ladder').innerHTML=[1,2,3,4,5,6].map(function(l){var held=S.susp.some(function(x){return x.layer===l})||(S.pendAuth&&l===1);return '<li class="'+(l===cl?'on':held?'held':'')+'"><span>'+l+' '+LN[l]+'</span><span>'+(l===cl?(lockedIdle?'锁着':'此刻'):held?(l===1?'等手离开':'挂起'):'')+'</span></li>'}).join('');
+ $('ongoing').innerHTML=S.on.length?S.on.map(function(x,i){return '<li class="'+(x===cur()?'on':'')+'"><span>'+x.name+'</span><span>'+x.right+'</span></li>'}).join(''):'<li><span>空</span><span></span></li>'}
+
+/* 帧 */
+var last=performance.now();
+function frame(t){var dt=Math.min(.05,(t-last)/1000);last=t;var n=Math.ceil(dt/(1/240));for(var i=0;i<n;i++){var h=dt/n;W.step(h);H.step(h);R.step(h)}
+ isl.style.width=W.x+'cqw';isl.style.height=H.x+'cqw';
+ isl.style.borderRadius=S.cap?(H.x<5?(H.x/2)+'cqw':'2.6cqw'):'0 0 '+R.x+'cqw '+R.x+'cqw';
+ isl.style.opacity=visible?1:Math.max(0,Math.min(1,(W.x-12.2)/4));
+ if(pending&&Math.max(W.prog(),H.prog())>=.4){ic.classList.add('on');pending=false}
+ requestAnimationFrame(frame)}
+requestAnimationFrame(frame);
+
+/* 刘海里的按钮 */
+isl.addEventListener('click',function(ev){var a=ev.target.closest('[data-act]');if(!a)return;var act=a.dataset.act,k=S.fg&&S.fg.kind;
+ if(act==='untuck'){var id=a.dataset.id;S.tucked=S.tucked.filter(function(x){return x!==id});document.querySelector('[data-w="'+id+'"]').classList.remove('gone');
+  if(S.tucked.length)upsert({id:'shelf',kind:'shelf',name:'收着的窗口',icon:I.win,left:'',right:S.tucked.length+' 扇',silent:true});else removeOn('shelf');release('<b>放回</b>：窗口从那一格飞回原处（flyOut），那一排收起');return}
+ if(act==='cancel'&&k==='count'){clearInterval(S.cd);release('<b>短暂提醒</b>：碰了一下，倒数取消；停手 1 分钟才会再倒数');return}
+ if(k==='approve'||k==='touchid'){if(act==='deny'){if(k==='approve'&&S.on.some(function(x){return x.id==='sess'}))upsert({id:'sess',right:'在跑',silent:true});release('<b>要你放行的</b>：'+(k==='approve'?'没有允许，'+S.fg.data.cmd+' 没有执行':'没有确认，自动检查更新仍然开着'));return}
+  if(act==='allow'){var d=S.fg.data;ic.querySelector('.btnrow').innerHTML='<span class="t2">'+(d.high||k==='touchid'?'正在等 Touch ID…':'正在交给授权账…')+'</span>';
+   later(function(){if(!S.fg||(S.fg.kind!=='approve'&&S.fg.kind!=='touchid'))return;ic.querySelector('.btnrow').innerHTML='<span class="t1 okc">'+(k==='approve'?'已允许这一次':'已确认')+'</span>';log('<b>要你放行的</b>：回执到了才打勾；这张票据用一次就作废');
+    if(k==='approve'){var s=S.on.filter(function(x){return x.id==='sess'})[0];if(s)upsert({id:'sess',right:'在跑'})}
+    later(function(){release()},900)},REDUCE?200:800)}}});
+
+/* 事件 */
+function tuck(){var w=WINS.filter(function(x){return S.tucked.indexOf(x.id)<0})[0];if(!w){log('<b>窗口</b>：桌面上没有能收的了');return}
+ if(S.locked){log('<b>锁着</b>：收不了窗口');return}
+ S.tucked.push(w.id);document.querySelector('[data-w="'+w.id+'"]').classList.add('gone');
+ log('<b>收进刘海</b>：'+w.n.split(' — ')[0]+' 飞进刘海（settle，终点是口子，不回弹）');
+ upsert({id:'shelf',kind:'shelf',name:'收着的窗口',icon:I.win,left:'',right:S.tucked.length+' 扇',silent:S.on.some(function(x){return x.id==='shelf'})})}
+var EV=[
+ {g:'窗口',c:'--l-win',b:[
+  ['收进一扇窗',tuck],
+  ['指针停在刘海上',function(){request(3,'row',{why:'指针停 0.12 秒，展开那一排（expand）'})}],
+  ['拖标题栏到刘海',function(){request(2,'drop',{why:'落点小岛垂下（catch），手离开前什么都不进来',on:0});var i=0;var step=function(){if(!S.fg||S.fg.kind!=='drop')return;i++;S.fg.data.on=Math.min(i,4);render();if(i<4)later(step,420);else later(function(){if(S.fg&&S.fg.kind==='drop')release('<b>你正在做的</b>：松手，窗口去右半屏；等着的提醒这才开口')},700)};later(step,600)}],
+  ['窗口标题有变化',function(){request(4,'alert',{icon:I.term,t1:'终端有变化',t2:'“构建完成”',why:'有变化时提醒（bloom），停 2.6 秒'},2600)}],
+  ['按了 Ctrl+C（卡住）',function(){request(4,'alert',{icon:I.bulb,t1:'Mac 上用 ⌘C 复制',t2:'⌘ 在空格键两边',why:'卡住时才开口；同一条最多三次'},2600)}]]},
+ {g:'实时活动',c:'--l-live',b:[
+  ['播放音乐（推送源）',function(){upsert({id:'music',kind:'music',name:'音乐',icon:I.music,left:'晴天',right:'2:14'});log('<b>实时活动</b>：正在播放改用推送更新，所有播放器都收得到（借 mediaremote-adapter，osascript 留作退路；进隐私第三层）')}],
+  ['拷贝文件',function(){var p=0;upsert({id:'copy',kind:'progress',name:'拷贝',icon:I.copy,left:'',right:'0%'});var tk=setInterval(function(){p+=9;if(p>=100){clearInterval(tk);removeOn('copy');request(4,'alert',{icon:I.copy,t1:'拷贝完成',t2:'12 个文件 · 访达',why:'有终点的事结束时说一句'},2600);return}upsert({id:'copy',right:p+'%',silent:true})},REDUCE?300:600);timers.push(tk)}],
+  ['浏览器下载',function(){var p=0;upsert({id:'dl',kind:'progress',name:'下载',icon:I.down,left:'',right:'下载中'});log('<b>进度</b>：浏览器下载没有百分比，画不确定弧（借 Atoll 看下载文件夹里的 .crdownload）');var tk=setInterval(function(){p++;if(p>=6){clearInterval(tk);removeOn('dl');request(4,'alert',{icon:I.down,t1:'下载完成',t2:'ios-26.ipsw · Safari',why:'目标文件改了算完成，没改算取消——这样分得清，不读浏览器'},2600);return}upsert({id:'dl',right:'下载中',silent:true})},REDUCE?300:600);timers.push(tk)}],
+  ['两指横扫',function(){if(S.on.length<2){log('<b>持续活动</b>：只有一条，横扫不动');return}S.sel=(S.sel+1)%S.on.length;log('<b>持续活动</b>：换到 '+cur().name+'；一次扫动只算一下，门槛调高（借 Alcove）；内容更新不打乱选中项');render()}]]},
+ {g:'音量/亮度',c:'--l-live',b:[
+  ['按音量键（已在 100%）',function(){request(4,'alert',{icon:I.speaker,t1:'音量',t2:'<div style="display:flex;gap:2px;justify-content:center;margin-top:.4cqw">'+Array(12).join('x').split('').map(function(){return '<span style="width:.8cqw;height:1.6cqw;border-radius:.3cqw;background:#fff;display:block"></span>'}).join('')+'</div>',why:'按了键才开口；到顶、到底也开口（借 Atoll 的按键监听 + Alcove）'},1600)}],
+  ['个性化音量自己变了',function(){log('<b>音量/亮度</b>：没人按键的数值变化（AirPods 个性化音量、某个 App 改音量）不开口；锁屏时让系统自己的提示显示')}]]},
+ {g:'隐私',c:'--l-priv',b:[
+  ['有人在看',function(){if(S.locked){log('<b>锁着</b>：不处理');return}var el=document.querySelector('[data-w="s"]');if(el)el.classList.add('gone');request(4,'alert',{icon:I.people,t1:'有人在看',t2:'私人窗口已收起',why:'旁人正对屏幕一会儿才算（借 quietglass 逐脸跟踪）；收起快、放回慢；看不到脸不算放回'},3000);later(function(){var e2=document.querySelector('[data-w="s"]');if(e2)e2.classList.remove('gone');log('<b>隐私</b>：你一个人看回来，窗口放回原处')},REDUCE?600:3400)}]]},
+ {g:'电量',c:'--l-batt',b:[
+  ['妙控鼠标连上',function(){request(4,'alert',{icon:I.mouse,t1:'妙控鼠标已连接',t2:'电量 82%',why:'连上时说一句；电量读到了在同一处补上'},2600)}],
+  ['AirPods 电量低',function(){request(4,'alert',{icon:I.pods,t1:'AirPods 电量低',t2:'左耳 10%，记得充电',why:'20/10/5 三档，同一周期一档一次'},2600)}]]},
+ {g:'指挥',c:'--l-cond',b:[
+  ['会话在跑',function(){upsert({id:'sess',kind:'session',name:'WindowShade',icon:I.term,left:'',right:'在跑'})}],
+  ['会话等你批准',function(){upsert({id:'sess',kind:'session',name:'WindowShade',icon:I.term,left:'',right:'等你',silent:S.on.some(function(x){return x.id==='sess'})});request(1,'approve',{who:'Claude · WindowShade',cmd:'swift test',why:'等你批准：独占；只认审批出现后的新一下'})}],
+  ['推送要你放行',function(){request(1,'approve',{who:'Codex · site',cmd:'git push origin main',high:true,why:'高风险：到 Mac 前用 Touch ID'})}],
+  ['遥控器画档位',function(){request(2,'draw',{why:'走进会话后画档位；抬手才判定',res:false});later(function(){if(S.fg&&S.fg.kind==='draw'){S.fg.data.res=true;render();later(function(){if(S.fg&&S.fg.kind==='draw')release('<b>你正在做的</b>：抬手，认出三声 · high，只管下一轮')},1100)}},1300)}]]},
+ {g:'放行',c:'--l-auth',b:[
+  ['关闭自动检查更新',function(){request(1,'touchid',{what:'关闭自动检查更新',why:'Touch ID 嵌在刘海里；绑定用途和目标'})}],
+  ['开盖认出你',function(){if(!S.locked){log('<b>认你</b>：只在锁屏时出现；先点“锁屏”');return}request(1,'face',{why:'认你：一圈在转，两枚点：脸、手机',f:false,p:false});later(function(){if(S.fg&&S.fg.kind==='face'){S.fg.data.f=true;render()}},800);later(function(){if(S.fg&&S.fg.kind==='face'){S.fg.data.p=true;render()}},1400);later(function(){if(S.fg&&S.fg.kind==='face'){S.fg=null;unlock('两样都对，系统确认解锁')}},2100)}]]},
+ {g:'更多',c:'--l-car',b:[
+  ['长按刘海（CarPlay）',function(){S.car=!S.car;$('carv').classList.toggle('on',S.car);if(S.car){upsert({id:'car',kind:'car',name:'导航',icon:I.car,left:'',right:'12 分钟'});log('<b>长按</b>：CarPlay 从刘海展开铺满；导航留在刘海里当持续活动')}else{removeOn('car');log('<b>再长按</b>：CarPlay 收回刘海，窗口都在原处')}}],
+  ['开始专注',function(){var m=25;upsert({id:'pomo',kind:'timer',name:'番茄钟',icon:I.timer,left:'专注',right:'25 分'});var tk=setInterval(function(){m--;if(m<=0){clearInterval(tk);upsert({id:'pomo',left:'休息',right:'5 分'});return}upsert({id:'pomo',right:m+' 分',silent:true})},REDUCE?250:500);timers.push(tk)}],
+  ['手机断开（离开就锁）',function(){log('<b>离开就锁</b>：先静默宽限 1.5 秒，挡掉瞬断');later(function(){var n=10;request(4,'count',{n:n,why:'倒数 10 秒（bloom 开口，数字原地换）'});S.cd=setInterval(function(){if(!S.fg||S.fg.kind!=='count'){clearInterval(S.cd);return}n--;S.fg.data.n=n;render();if(n<=0){clearInterval(S.cd);S.fg=null;lock('倒数完：私人 App 收进刘海 → 暂停音乐 → 交给系统锁屏')}},REDUCE?200:450);timers.push(S.cd)},REDUCE?100:900)}]]}
+];
+$('evs').innerHTML=EV.map(function(g,gi){return '<div class="evg"><span>'+g.g+'</span>'+g.b.map(function(b,bi){return '<button type="button" data-g="'+gi+'" data-b="'+bi+'" data-c style="--c:var('+g.c+')">'+b[0]+'</button>'}).join('')+'</div>'}).join('');
+$('evs').addEventListener('click',function(ev){var b=ev.target.closest('button');if(!b)return;EV[b.dataset.g].b[b.dataset.b][1]()});
+function lock(why){S.locked=true;S.fg=null;S.susp=[];S.pendAuth=null;S.dot=false;if(S.car){S.car=false;$('carv').classList.remove('on')}$('eLock').setAttribute('aria-pressed','true');log('<b>锁屏</b>：'+(why||'清掉一切可见内容和输入；名单留在数据里，不画'));render()}
+function unlock(why){S.locked=false;$('eLock').setAttribute('aria-pressed','false');log('<b>解锁</b>：'+(why||'系统确认已解锁'));
+ var lines=[];if(S.tucked.length)lines.push('收着 '+S.tucked.length+' 扇窗口');S.on.filter(function(x){return x.kind!=='shelf'}).forEach(function(x){lines.push(x.name+' · '+x.right)});if(!lines.length)lines.push('没有新的事');
+ request(4,'summary',{lines:lines.slice(0,3),why:'离开期间：只列现在仍成立的事，不补播'},4200)}
+$('eLock').onclick=function(){S.locked?unlock():lock()};
+$('eReset').onclick=reset;
+$('eCap').onclick=function(){S.cap=!S.cap;this.setAttribute('aria-pressed',S.cap);log('<b>没有刘海的屏</b>：'+(S.cap?'平时不画；开口时菜单栏下方浮出一颗胶囊，四角都圆，不画肩':'回到贴着刘海'));lastKind='';render()};
+$('eReduce').onclick=function(){REDUCE=!REDUCE;this.setAttribute('aria-pressed',REDUCE);log('<b>减少动态效果</b>：'+(REDUCE?'位置不动，只淡入淡出（reduced）':'回到弹簧'))};
+$('eHC').onclick=function(){S.hc=!S.hc;this.setAttribute('aria-pressed',S.hc);log('<b>增强对比度</b>：'+(S.hc?'刘海细边白 0.14 → 0.5':'恢复'));render()};
+$('eReduce').setAttribute('aria-pressed',REDUCE);
+S=null;reset();
+
+/* ---------- 零件 ---------- */
+function nb(o){var cls='nb'+(o.cap?' cap':'');return '<div class="'+cls+'" style="width:'+o.w+'px;height:'+o.h+'px;'+(o.cap?'':'border-radius:0 0 '+o.r+'px '+o.r+'px;')+(o.top?'top:'+o.top+'px;':'')+'">'+(o.html||'')+'</div>'}
+function L(i,t){return '<div class="e l">'+(I[i]||'')+(t?'<span>'+t+'</span>':'')+'</div>'}
+function Rr(h){return '<div class="e r">'+h+'</div>'}
+function M(a,b,extra){return '<div class="m">'+(a?'<div class="a">'+a+'</div>':'')+(b?'<div class="b">'+b+'</div>':'')+(extra||'')+'</div>'}
+var PARTS=[
+ {n:'静止',t:['6 什么都没有','不画','—'],d:'和实体刘海重合，一个像素都不画，不刷新。',o:{w:60,h:16,r:6}},
+ {n:'最小',t:['5 持续活动','最小','settle'],d:'退到旁边的那一件只露一个点或图标，仍带进度或语气色，不退成空标。',o:{w:84,h:16,r:6,html:Rr('<span class="pd on" style="background:#5FD38A"></span>')}},
+ {n:'紧凑 · 左右耳',t:['5 持续活动','紧凑','settle'],d:'左边是谁，右边是数。两段紧贴传感器，读成一件事。',o:{w:150,h:16,r:6,html:L('music','晴天')+Rr('2:14')}},
+ {n:'下巴',t:['5 持续活动','紧凑','settle'],d:'菜单栏两边挤满时，紧凑退成下巴：和刘海一样宽，往下多一截，一个点一扇收着的窗。',o:{w:60,h:24,r:7,html:'<div class="m" style="top:15px"><span><span class="pd on"></span> <span class="pd on"></span> <span class="pd on"></span></span></div>'}},
+ {n:'短暂提醒',t:['4 短暂提醒','短暂提醒','bloom → calm'],d:'主句说事，副句给数。停 2.6 秒；0.6 秒内的合成一句。',o:{w:176,h:40,r:12,html:L('mouse','')+M('妙控鼠标已连接','电量 82%')}},
+ {n:'音量 / 亮度',t:['4 短暂提醒','短暂提醒','bloom'],d:'看的是按键，不是数值变化：按了才开口，到顶到底也开口；没人按键的变化不开口；锁屏让系统提示。',o:{w:176,h:40,r:12,html:L('speaker','')+'<div class="m" style="top:0;padding-bottom:0"><div class="a">音量</div><div style="display:flex;gap:2px;justify-content:center;margin-top:4px">'+Array(11).join('x').split('').map(function(){return '<span style="width:6px;height:11px;border-radius:2px;background:#fff;display:block"></span>'}).join('')+'</div></div>'}},
+ {n:'有人在看',t:['4 短暂提醒','短暂提醒','bloom'],d:'旁人正对屏幕一会儿才算；私人窗口收起快、放回慢；看不到脸不算放回。只在 ANE 上算、不存图。',o:{w:176,h:40,r:12,html:L('people','')+M('有人在看','私人窗口已收起')}},
+ {n:'次区域的点',t:['4 撞上更高层','—','—'],d:'提醒撞上放行、手势、你打开的，变成右下一个点，并且消耗掉，不回来补说。',o:{w:176,h:44,r:12,html:M('想执行 swift test','')+'<span style="position:absolute;right:7px;bottom:6px;width:5px;height:5px;border-radius:50%;background:#7FA5F0"></span>'}},
+ {n:'刘海那一排',t:['3 你主动打开的','展开','expand'],d:'左段收着的窗口，竖线右边正在进行的。停一格看一眼，点一下放回。',o:{w:236,h:62,r:14,html:L('win','')+'<div class="m" style="justify-content:flex-start;padding-top:4px"><div class="cl"><i class="f"></i><i></i><span class="sepv"></span><i></i><i></i></div></div>'}},
+ {n:'看一眼',t:['3 你主动打开的','展开','calm'],d:'窗口在原处、原大小长出来；先给收起时的画面，实时画面一到就换。',o:{w:236,h:62,r:14,html:'<div class="m"><div class="a">终端 — codex</div><div class="b">不是实时画面 · 已最小化</div></div>'}},
+ {n:'落点小岛',t:['2 你正在做的','交互','catch'],d:'五格画排好后的样子；对准时边线变强调色，松手就成。',o:{w:220,h:50,r:12,html:'<div class="m" style="top:6px"><div class="cl"><i></i><i></i><i class="f"></i><i></i><i></i></div><div class="b">收进刘海</div></div>'}},
+ {n:'放行 · 普通',t:['1 要你放行的','交互','expand / pop'],d:'写清谁、要做什么；审批出现后的新一下才算。',o:{w:210,h:58,r:14,html:L('term','')+Rr('<span style="color:#FFB35C">等你</span>')+M('想执行 swift test','',  '<div class="bt"><span>不允许</span><span class="p">允许这一次</span></div>')}},
+ {n:'放行 · Touch ID',t:['1 要你放行的','交互','pop'],d:'系统的指纹控件嵌在刘海里；只有这次请求的原生回执算成功。',o:{w:190,h:58,r:14,html:'<div class="m" style="top:4px"><span style="width:16px;height:16px;display:block">'+I.touch+'</span><div class="a">关闭自动检查更新</div><div class="b">用 Touch ID 确认</div></div>'}},
+ {n:'认你',t:['1 要你放行的','交互','calm'],d:'一圈在转；两枚点分别是脸和手机。两样都对才代打密码。',o:{w:96,h:20,r:7,html:'<div class="e l"><span style="width:9px;height:9px;border-radius:50%;border:2px solid rgba(255,255,255,.3);border-top-color:#fff;display:block"></span></div>'+Rr('<span class="pd on"></span> <span class="pd"></span>')}},
+ {n:'倒数',t:['4 短暂提醒','短暂提醒','bloom'],d:'离开就锁的 10 秒；数字原地换，碰一下取消。',o:{w:170,h:42,r:12,html:L('phone','')+Rr('<b>7</b>')+M('手机不在身边','7 秒后锁屏 · 碰一下取消')}},
+ {n:'轨迹',t:['2 你正在做的','交互','pop 逐拍'],d:'画到哪就显示到哪；只亮已完成的拍；抬手才判定。',o:{w:190,h:52,r:12,html:L('baton','')+Rr('抬手才判定')+'<div class="m"><svg viewBox="0 0 100 30" style="width:110px;height:26px"><path d="M8 6 Q 40 38 55 26 T 92 4" fill="none" stroke="#E98BB2" stroke-width="3" stroke-linecap="round"/></svg></div>'}},
+ {n:'波形',t:['2 你正在做的','交互','—'],d:'真收到声音才画；来源写清；源断了就停，草稿留着。',o:{w:180,h:44,r:12,html:M('','iPhone 麦克风 · 松开出草稿','<div style="display:flex;gap:2px;align-items:center;height:14px">'+[5,10,14,8,12,6,10].map(function(h){return '<i style="width:2px;height:'+h+'px;background:#fff;border-radius:1px;display:block"></i>'}).join('')+'</div>')}},
+ {n:'草稿',t:['5 会话里','展开','calm'],d:'没把握的词划线；播放键才发出去；返回按两次才丢。',o:{w:210,h:50,r:12,html:L('baton','')+M('“把侧拉的阴影调淡一点”','播放键发出去')}},
+ {n:'三步回执',t:['5 会话里','紧凑','settle'],d:'“发出去了”“接受了”“开始跑了”分三次说；读不回实际档位就说还没确认。',o:{w:190,h:40,r:12,html:L('baton','')+M('Claude 接受了 · high','第 5 轮开始跑')}},
+ {n:'进度',t:['5 持续活动','紧凑','settle'],d:'有百分比画环；只有第 k / n 写数；两样都没有画不确定弧；读不到不画。',o:{w:150,h:16,r:6,html:L('copy','拷贝')+Rr('42%')}},
+ {n:'用量',t:['5 会话里','紧凑','settle'],d:'长在编程会话里；紧凑只看还剩多少，展开才看恢复时间。没有数据不画成无限。',o:{w:150,h:16,r:6,html:L('term','')+Rr('剩 62%')}},
+ {n:'离开期间',t:['4 短暂提醒','展开','bloom'],d:'只列现在仍成立的事，每项能点过去；不补播锁屏前那一句。',o:{w:210,h:58,r:14,html:L('lock','')+M('离开期间','收着 3 扇窗口<br>AirPods 左耳 8%')}},
+ {n:'胶囊',t:['没有刘海的屏','五种都有','同上'],d:'外接屏、Neo、网页滚出首屏：平时不画，开口时菜单栏下方浮出胶囊，四角都圆，不画肩。',o:{w:150,h:22,cap:true,top:20,html:L('music','晴天')+Rr('2:14')}},
+ {n:'卡住时的一句',t:['4 短暂提醒','短暂提醒','bloom'],d:'说 Mac 上怎么做，键帽照实物写两行；点一下替他做成，这条以后不再说。',o:{w:180,h:42,r:12,html:L('bulb','')+M('Mac 上用 ⌘C 复制','⌘ 在空格键两边')}},
+ {n:'点头确认',t:['2 你正在做的','交互','pop'],d:'刘海先冻结对象、给出预览；预览出现之后的新点头才采用，摇头取消。',o:{w:200,h:46,r:12,html:M('左半屏 · 报表.numbers','点头照做 · 摇头取消')}},
+ {n:'两颗岛',t:['5 持续活动','紧凑','calm'],d:'两件同时露面时分成两颗，再合回一颗；半路可以改方向。',o:{w:110,h:16,r:6,html:L('timer','18 分')}},
+ {n:'设置行',t:['系统窗口','—','—'],d:'行前一个符号色块加名字，副标题最多一行，细节进 info.circle。',light:true,custom:'<div class="srowd"><div class="r"><span class="ico" style="background:#3E6FD8">'+I.win+'</span><div class="n">收起后的样子<small>卷帘条、缩略图或收进刘海</small></div><span class="inf">i</span></div><div class="r"><span class="ico" style="background:#D0503F">'+I.timer+'</span><div class="n">专注时长<small>25 分钟，休息 5 分钟</small></div><span class="sw"></span></div></div>'},
+ {n:'读到的那一行',t:['系统窗口','—','—'],d:'读到的原值、为什么、去了哪里，三件缺一不可；能关的就在这一行关。',light:true,custom:'<div class="srowd"><div class="r"><span class="ico" style="background:#6B5FB5">'+I.mouse+'</span><div class="n">妙控鼠标 82%<small>为了电量低时提醒你 · 只在这台 Mac 上</small></div><span class="sw"></span></div></div>'}
+];
+$('partsGrid').innerHTML=PARTS.map(function(p){var strip=p.custom?'<div class="strip light">'+p.custom+'</div>':'<div class="strip">'+(p.n==='两颗岛'?'<div class="nb" style="width:110px;height:16px;left:calc(50% - 22px);border-radius:0 0 6px 6px"><div class="e l">'+I.timer+'<span>18 分</span></div></div><div class="nb" style="width:66px;height:16px;left:calc(50% + 70px);top:2px;border-radius:999px"><div class="e l">'+I.term+'<span>等你</span></div></div>':nb(p.o))+'</div>';
+ return '<div class="pc">'+strip+'<div class="meta"><b>'+p.n+'</b><div class="tags">'+p.t.map(function(x){return '<span>'+x+'</span>'}).join('')+'</div><p>'+p.d+'</p></div></div>'}).join('');
+
+/* ---------- 表面目录 ---------- */
+var ST={ship:['ship','发布线'],dev:['dev','开发版'],exp:['exp','实验'],draft:['draft','规格']};
+var SURF=[
+ ['--l-win','窗口','收起窗口 · 卷帘条','内容 · 不是刘海','收进与放回','ship','欢迎使用','卷帘条挤满屏幕顶边：整理卷帘条'],
+ ['--l-win','窗口','收起后的样子：缩略图','内容 · 不是刘海','看一眼','draft','收成缩略图','缩略图挡住下面窗口一角：半透明、⌃⌘0 排开'],
+ ['--l-win','窗口','收进刘海 · 放回','5 持续活动 · 紧凑','收进与放回','ship','动效样片','收起结果不确定：不报成功，留恢复入口'],
+ ['--l-win','窗口','刘海那一排 · 看一眼','3 你打开的 · 展开','看一眼、层级导航','ship','为什么不用最小化','别的桌面、已最小化：写“不是实时画面”'],
+ ['--l-win','窗口','落点小岛','2 你正在做的 · 交互','落点','ship','设计规范','拖边改大小时误触发：只认标题栏'],
+ ['--l-win','窗口','卡住时开口','4 短暂提醒','开口','ship','卡住时刘海开口','终端、IDE、密码框、正在组字时一句不说'],
+ ['--l-win','窗口','窗口浏览 · 按窗口切换','浮层 · 系统玻璃','层级导航','ship','—','收着的窗口也在里面'],
+ ['--l-win','窗口','侧拉 · 分屏把手 · 画中画','浮层 + 内容','收进与放回','ship','—','两边都紧挨其他显示器：不能侧拉，说为什么'],
+ ['--l-win','窗口','启动台 · 负一屏','浮层 + 内容','层级导航','ship','—','点一下刘海是启动台；长按是 CarPlay'],
+ ['--l-win','窗口','魔法平铺 · 卷轴','内容','落点','dev','—','窗口不能整个离开屏幕：屏幕边露一条'],
+ ['--l-live','实时活动','音乐 · AirPods · 隔空投送 · 路线 · 录音','5 持续活动 · 紧凑','开口','dev','一颗岛','最多三条；第四条让出位置'],
+ ['--l-live','实时活动','两颗岛分合 · 音量与亮度','5 持续活动','开口','dev','一颗岛','系统音量键与隐私登记还没接'],
+ ['--l-live','实时活动','进度','5 持续活动 · 紧凑','开口','draft','本稿第十一部分','读不到不画假进度；更新不重排'],
+ ['--l-live','实时活动','用量','5 持续活动 · 紧凑','—','draft','本稿第十一部分','账户额度与会话上下文不共用一个百分比'],
+ ['--l-batt','电量','妙控外设连上 · 电量低','4 短暂提醒','开口','dev','全景','读不到写“暂时读不到”，不写 0%'],
+ ['--l-batt','电量','AirPods 三组件 · iPhone · 手表','4 短暂提醒','开口','draft','全景','手表经 iPhone 写“来自 iPhone”'],
+ ['--l-cond','指挥','刘海里的编程会话','5 持续活动 · 紧凑；等你时 1','放行','dev','看与指挥','App 没开时 hook 照常放行'],
+ ['--l-cond','指挥','走进会话 · 画档位 · 说话 · 发出去','2 / 3','指挥回合','exp','指挥模式','后端断了草稿留着，不重发'],
+ ['--l-cond','指挥','iPhone 上的遥控器 · 四层','3 你打开的','层级导航','exp','iPhone 上的遥控器','手机第一条连接被拒：不报失败'],
+ ['--l-auth','刷脸与放行','应用内 Touch ID 确认','1 要你放行的','放行','dev','全景','取消后晚到的成功不算'],
+ ['--l-auth','刷脸与放行','刷脸解锁 · 认你','1 要你放行的','认你','exp','从锁屏到窗口','本轮只允许实验，不接系统解锁'],
+ ['--l-auth','刷脸与放行','离开就锁','4 短暂提醒 → 系统锁屏','离开与回来','exp','离开就锁','握着手机误判：一碰就停'],
+ ['--l-auth','刷脸与放行','静音操作 · 点头照做','2 你正在做的','点头照做','exp','—','低头看键盘不算确认'],
+ ['--l-auth','刷脸与放行','离开期间摘要','4 短暂提醒 · 展开','离开与回来','draft','本稿第十一部分','只列现在仍成立的事'],
+ ['--l-car','CarPlay','长按刘海进全屏','全屏 · 刘海留持续活动','长按换一种用法','exp','全景','没连上 iPhone：写“连接 iPhone”'],
+ ['--l-priv','隐私','读到的','系统窗口','—','draft','读到的','日志修好、核过之前不上页面'],
+ ['--l-focus','番茄钟','倒计时 · 专注收聊天 · 休息收桌面','5 持续活动；卡片是 3','收进与放回','dev','番茄钟','窗口效果没准入：只计时，设置里写不可用'],
+ ['--l-win','其它','欢迎窗口 · 设置 · 菜单 9 项','系统窗口','—','dev','看与指挥','新功能不默认进菜单：要加一项先拿掉一项']
+];
+$('surfRows').innerHTML=SURF.map(function(r){var s=ST[r[5]];return '<tr><td><span class="ln" style="--c:var('+r[0]+')">'+r[1]+'</span></td><td class="k">'+r[2]+'</td><td>'+r[3]+'</td><td>'+r[4]+'</td><td><span class="st '+s[0]+'">'+s[1]+'</span></td><td>'+r[6]+'</td><td>'+r[7]+'</td></tr>'}).join('');
+
+/* ---------- 边缘情况 ---------- */
+var EDGE=[
+ ['硬件','没有刘海的屏：外接屏、Neo、盒盖接外接屏','平时不画；开口时用胶囊，四角都圆，不画肩、不画假刘海','R2'],
+ ['硬件','两块以上的屏','每块屏一个协调器；放行只在你正在看的那块问；撤屏只撤那一块','R1'],
+ ['硬件','菜单栏两边挤满（菜单多、图标多）','紧凑退成下巴；有变化时提醒先让开系统的图标，旁边有系统图标就只标点','R2 R8'],
+ ['硬件','全屏 App、自动隐藏菜单栏','形状碰到屏幕角时只挪位置、不改半径；不盖住全屏视频的关键区域','R2'],
+ ['硬件','调度中心、那块屏在跑原生全屏','刘海让开（按全屏属性判断，不看窗口尺寸）；借 Alcove 的 hide in Mission Control','R2 R8'],
+ ['硬件','未知机型、私有接口读不到','退到机型表，再退到现版本几何，不画肩','R2 R6'],
+ ['系统','锁屏、睡眠、切换用户、关掉功能','清掉一切可见内容和输入；名单留在数据里不画；解锁后给“离开期间”','R5'],
+ ['系统','共享屏幕、录屏','卡住时的提示一句不说；私人 App 名单里的内容不进刘海那一排','R8 R11'],
+ ['系统','专注模式','提醒照系统的专注规则收敛；放行仍然问（它不是通知）','R8'],
+ ['系统','低电量模式','关掉非必要的实时画面和动效刷新；倒数、放行照常','R12'],
+ ['系统','按音量、亮度键到顶或到底','照样开口（看的是按键，不是数值变化）；锁屏时让系统自己的提示显示','R5 R8'],
+ ['系统','个性化音量、某个 App 自己改了音量','不开口：没人按键的数值变化不算','R6 R8'],
+ ['系统','WindowShade 崩溃或被强退','收着的窗口靠恢复记录找回；下次打开先放回，再说一句','R5 R6'],
+ ['辅助','减少动态效果','位置不动，只淡入淡出（reduced）；示范停在最能说明的那一帧','R4 R10'],
+ ['辅助','减少透明度','浮层改不透明；刘海本来就是纯黑，不变','R3 R10'],
+ ['辅助','增强对比度','刘海细边白 0.5；浮层不透明底加 1 点 labelColor 边','R10'],
+ ['辅助','VoiceOver','每种呈现有一句念法：最小念正在进行的那一件；提醒和教学同时播报；焦点念“第 2 个，共 4 个”','R10'],
+ ['辅助','只用键盘','每个刘海手势都有菜单或快捷键；方向键在那一排里挪焦点','R10'],
+ ['辅助','不只靠颜色','已对准、出了问题同时改边线粗细或图标','R10'],
+ ['数据','读不到电量、进度、用量','写“暂时读不到”，不写 0%，不画假进度，不画成无限','R6'],
+ ['数据','读数过期','超过 15 分钟的电量不发新提醒；带采样时间','R6'],
+ ['数据','两台同名设备','按稳定 ID 认，名字只用来显示','R6'],
+ ['数据','窗口标题含隐私','日志不写标题；私人 App 不进提醒正文；有人在看的规则存标题的单向摘要，不存标题','R11'],
+ ['数据','下载被取消还是完成','看目标文件改没改分得清，不读浏览器内部；取消就不说“完成”','R6'],
+ ['隐私','相机里不止一张脸 / 看不到脸','旁人正对屏幕一会儿才算在看；收起快、放回慢；看不到脸不算放回；只在 ANE 上算、不存图','R6 R11'],
+ ['权限','没给辅助功能','收进刘海、卡住开口不可用；欢迎窗口和设置写清怎么开，不反复弹','R8'],
+ ['权限','没给屏幕录制','那一排显示 App 图标代替画面；写“画面暂时看不到”','R6'],
+ ['权限','蓝牙关了、相机被别的 App 占着','离开就锁、认你写清少了哪样，交回系统；不换别的设备凑数','R7'],
+ ['并发','三条以上持续活动','名单只留三条，按优先级让位；两指横扫切换；内容更新不打乱选中项','R1'],
+ ['并发','提醒撞上放行或手势','变成一个点，并且消耗掉','R8'],
+ ['并发','放行撞上画到一半的手势','等手离开再问','R1 R7'],
+ ['并发','两个审批同时到','排队，一次只问一件；第二件在第一件结束后才出现','R7'],
+ ['并发','两台 iPhone、两只手柄','同一时间只有一台能操作；另一台只能看','R7'],
+ ['并发','Mac 前的人和遥控器同时操作','Mac 前的人优先；焦点让开，草稿留着','R1'],
+ ['并发','遥控器的后台探测连接','后台探测给 1 秒、普通 2.5 秒、验签后不开会话 3 秒就断，腾出连接名额；按键松开那一下才算','R7 R12'],
+ ['网络','后端断了、重连','草稿留着；不重发可能已执行的提交，先查状态；重连只显示现状','R5'],
+ ['网络','检查更新失败','不打断；设置里写上次检查的时间','R8'],
+ ['网络','CarPlay：改分辨率、端口被占、只能无线','分辨率启动时定死（一改要重连）；系统自带 AirPlay 接收器占着 7000 要先关；Mac 上没有有线 CarPlay','R5'],
+ ['网络','CarPlay 断了要重连','按 2 秒×2ⁿ 退避，最多 30 秒、5 次，稳定 60 秒后清零；设置改动等重连才生效','R5'],
+ ['首次','第一次打开','欢迎窗口只讲三件：收起、收进刘海、点一下刘海；问之前常用哪个','R8 R9'],
+ ['首次','第一次配对遥控器','随机四位码只在刘海里；Touch ID 确认后才记住','R7'],
+ ['文字','中文、英文长字串','刘海主句不超过 8 个字；超长截断在副句；设备名截在中间不截在头','R9'],
+ ['能耗','一直没事','静止不画、不刷新；不轮询；动效结束就停 display link','R12']
+];
+$('edgeRows').innerHTML=EDGE.map(function(r){return '<tr><td><span class="chip">'+r[0]+'</span></td><td class="k">'+r[1]+'</td><td>'+r[2]+'</td><td class="num">'+r[3]+'</td></tr>'}).join('');
+
+/* ---------- 宣传片 ---------- */
+var FILM=[
+ ['lid','合上盖子，桌面还在','合盖效果；认你；从锁屏到窗口','合盖效果开发版（默认关）；刷脸只到实验','刷脸接系统解锁的准入；暗光、口罩的攻击测试结果'],
+ ['live','正在发生的事，在刘海里','实时活动；短暂提醒（音乐、耳机、鼠标电量）','开发版','真机录屏；正在播放改推送源（借 mediaremote-adapter）；AirPods 左右耳盒电量（借 AirBattery 的读法）；按音量键才开口'],
+ ['tuck','窗口收进刘海，再放回','收进与放回；看一眼；有变化时提醒','发布线','同一候选包上录'],
+ ['home','点一下刘海，回到主屏幕','启动台','发布线','启动台自绘玻璃换成系统玻璃（§6-8）后再录'],
+ ['side','甩出去，点回来','侧拉','发布线','—'],
+ ['drop','拖到刘海，选个位置','落点；提醒进次区域、松手再开口','发布线（次区域的点待核）','已对准去灰的小样先定'],
+ ['draw','画一笔，说一句','走进会话；指挥回合','手势纯逻辑；iPhone 输入真机已通，没进 App','遥控第一、三段；说话（E4）'],
+ ['approve','要你放行的，只问一次','放行（普通）','应用内 Touch ID 开发版；助手审批允许路径没接','A2 允许路径端到端'],
+ ['hold','长按刘海，换一种用法','长按换一种用法；CarPlay','接收器生命周期做成合成测试（分辨率定死、要关键帧、重连预算、避开刘海的安全区；借 PlayPort / DiPlay / LIVI 的工程做法）','身份接口接上正式授权的配件身份（拿到当天就能跑）；CarPlay 画面只走抽象路径，不画 Apple 界面'],
+ ['nod','不出声，点头就照做','点头照做','实验','本人数据的准确率与延迟；一次录制少于 12 帧或不到 40% 有脸就重录、松开后多录 0.4 秒（借 lipflow）；头部方向按屏幕分开记（借 quietglass）'],
+ ['away','专注时安静，走开就锁','番茄钟；离开就锁','番茄钟开发版（窗口效果没准入）；离开就锁实验','T3 窗口效果准入；睡眠前后切激活方式（借 BLEUnlock）让醒来能接着扫；手机不在时被密码解开记进“离开期间”；关蓝牙约 11.5 秒内锁的真机记录'],
+ ['back','回来，窗口都在原处','认你；离开期间摘要','规格','摘要的稿（本稿已画）与实现'],
+ ['end','WindowShade 2','—','—','—']
+];
+$('filmRows').innerHTML=FILM.map(function(r){return '<tr><td class="num">'+r[0]+'</td><td class="k">'+r[1]+'</td><td>'+r[2]+'</td><td>'+r[3]+'</td><td>'+r[4]+'</td></tr>'}).join('');
+
+/* ---------- 下一程：还没画的状态 ---------- */
+function stripOf(o,label){return '<div class="pc"><div class="strip">'+nb(o)+'</div><div class="meta"><b>'+label+'</b></div></div>'}
+function desk(kind){var c='<div class="strip" style="background:#24385A"><div style="position:absolute;inset:14px 10px 10px;">';
+ if(kind==='inplace')c+='<div style="position:absolute;left:20px;top:22px;width:70px;height:8px;border-radius:3px;background:#3E6FD8"></div><div style="position:absolute;left:110px;top:40px;width:56px;height:36px;border-radius:5px;background:linear-gradient(135deg,#1F6FEB,#7A3FE0);box-shadow:0 0 0 1px rgba(255,255,255,.3)"></div>';
+ if(kind==='edge')c+='<div style="position:absolute;right:6px;top:10px;display:grid;gap:5px">'+[0,1,2].map(function(){return '<div style="width:46px;height:28px;border-radius:5px;background:linear-gradient(135deg,#1F6FEB,#7A3FE0);box-shadow:0 0 0 1px rgba(255,255,255,.3)"></div>'}).join('')+'</div>';
+ if(kind==='notch')c+='';
+ c+='</div>'+(kind==='notch'?nb({w:120,h:16,r:6,html:L('win','')+Rr('3 扇')}):nb({w:60,h:16,r:6}))+'</div>';return c}
+var NEXT=[
+ {t:'用量：三种状态长在会话里',d:'入口叫用量，长在编程会话这一项里。紧凑只看还剩多少；展开才看恢复时间、当前模型和思考强度。没有这个窗口就不画，不画成无限。',s:[
+  [{w:150,h:16,r:6,html:L('term','')+Rr('剩 62%')},'还有额度'],
+  [{w:150,h:16,r:6,html:L('term','')+Rr('<span style="color:#FFB35C">剩 8%</span>')},'额度不足：右耳变琥珀色，只提醒一次'],
+  [{w:150,h:16,r:6,html:L('term','')+Rr('在跑')},'没有这个数：右耳回到会话状态'],
+  [{w:210,h:58,r:14,html:L('term','')+Rr('剩 62%')+M('19:40 恢复','位置 1 · high · 账户额度')},'展开：恢复时间、模型、强度']]},
+ {t:'进度：三种量在同一排里换',d:'左耳是谁，右耳是量。更新不重排、不重播进场；结束时说一句，出错时说出了什么错。',s:[
+  [{w:150,h:16,r:6,html:L('copy','拷贝')+Rr('<svg viewBox="0 0 12 12" style="width:11px;height:11px"><circle cx="6" cy="6" r="4.5" fill="none" stroke="rgba(255,255,255,.25)" stroke-width="2"/><circle cx="6" cy="6" r="4.5" fill="none" stroke="#fff" stroke-width="2" stroke-dasharray="12 28" transform="rotate(-90 6 6)"/></svg> 42%')},'有百分比：环 + 数'],
+  [{w:150,h:16,r:6,html:L('copy','拷贝')+Rr('第 3 / 12 项')},'只有第 k / n：只写数，不画环'],
+  [{w:150,h:16,r:6,html:L('copy','拷贝')+Rr('<span style="width:9px;height:9px;border-radius:50%;border:2px solid rgba(255,255,255,.25);border-top-color:#fff;display:inline-block"></span>')},'两样都没有：不确定弧'],
+  [{w:150,h:16,r:6,html:L('copy','拷贝')},'读不到：不画量，不编一个']]},
+ {t:'胶囊：没有刘海的屏走完五种呈现',d:'平时什么都不画。开口时菜单栏下方浮出一颗胶囊，四角都圆，不画肩；从胶囊中心长出、收回胶囊中心。',s:[
+  [{w:26,h:22,cap:true,top:20,html:'<div class="e l" style="left:7px"><span class="pd on" style="background:#5FD38A"></span></div>'},'最小'],
+  [{w:150,h:22,cap:true,top:20,html:L('music','晴天')+Rr('2:14')},'紧凑'],
+  [{w:176,h:40,cap:true,top:20,html:'<div class="m" style="top:0;padding-bottom:0"><div class="a">妙控鼠标已连接</div><div class="b">电量 82%</div></div>'},'短暂提醒'],
+  [{w:230,h:64,cap:true,top:20,html:'<div class="m" style="top:0;padding-bottom:0"><div class="cl"><i class="f"></i><i></i><i></i><i></i></div></div>'},'展开'],
+  [{w:200,h:52,cap:true,top:20,html:'<div class="m" style="top:0;padding-bottom:0"><div class="a">想执行 swift test</div><div class="bt"><span>不允许</span><span class="p">允许这一次</span></div></div>'},'交互']]},
+ {t:'左右耳的三处新用法',d:'审批、电量、番茄钟沿用同一排：左耳是谁，右耳是数或状态。不另做版式。',s:[
+  [{w:150,h:16,r:6,html:L('term','site')+Rr('<span style="color:#FFB35C">● 等你</span>')},'审批：唯一会主动开口的会话状态'],
+  [{w:150,h:16,r:6,html:L('mouse','')+Rr('82%')},'电量：只在连上和低电量的那一刻'],
+  [{w:150,h:16,r:6,html:L('timer','专注')+Rr('18 分')},'番茄钟：最后一分钟写 0:42']]},
+ {t:'一扇窗的三个住处',d:'收的动作仍叫收起窗口；住处是“收起后的样子”里的一项。三处用同一套看一眼和放回，不是三个功能。',custom:true,s:[['inplace','原处：卷帘条或缩略图'],['edge','屏幕边：按 ⌃⌘0 排开'],['notch','刘海：桌面上什么都不留']]},
+ {t:'离开期间：回来时只说现在',d:'解锁后从刘海展开一条摘要，2.6 秒后收回；每项点一下就过去。离开时积下的提醒不补播。',s:[
+  [{w:210,h:58,r:14,html:L('lock','')+M('离开期间','收着 3 扇窗口 · 终端有变化<br>AirPods 左耳 8%')},'有事'],
+  [{w:150,h:40,r:12,html:L('lock','')+M('离开期间','没有新的事')},'没事：一句，或者干脆不说（待定）']]}
+];
+$('nextStates').innerHTML=NEXT.map(function(g){var row=g.custom?g.s.map(function(s){return '<div class="pc">'+desk(s[0])+'<div class="meta"><b>'+s[1]+'</b></div></div>'}).join(''):g.s.map(function(s){return stripOf(s[0],s[1])}).join('');
+ return '<div><h3>'+g.t+'</h3><p class="sub" style="margin:2px 0 10px;font-size:14px">'+g.d+'</p><div class="parts">'+row+'</div></div>'}).join('');
+
+/* ---------- 符号（2026-10-08 在这台 Mac 上逐个核过） ---------- */
+var SYM=[['收起窗口 · 展开窗口','rectangle.compress.vertical · rectangle.expand.vertical'],['收进刘海 · 刘海那一排','rectangle.topthird.inset.filled · macwindow.on.rectangle'],['看一眼','eye'],['置顶 · 取消置顶','pin · pin.slash'],['启动台 · 调度中心 · 窗口浏览','square.grid.3x3 · rectangle.3.group · rectangle.on.rectangle'],['卡住时提示','lightbulb'],['音乐 · 耳机 · 录音','music.note · airpods · waveform'],['番茄钟 · 休息','timer · cup.and.saucer'],['妙控鼠标 · 键盘','magicmouse · keyboard'],['Siri 遥控器 · 手柄 · iPhone','appletvremote.gen4 · gamecontroller · iphone'],['电量（按实际取 0/25/50/75/100）','battery.75percent'],['刷脸解锁 · Touch ID · 隐私','viewfinder · touchid · lock.shield'],['说话','mic.fill'],['音量 · 亮度（新）','speaker.wave.2.fill · sun.max.fill'],['下载 · 拷贝（进度，新）','arrow.down.circle · doc.on.doc'],['CarPlay 导航（新）','car.fill'],['有人在看（新）','person.2.fill'],['离开就锁 · 手机不在（新）','figure.walk · iphone.slash'],['用量（新）','gauge.with.dots.needle.33percent'],['更多说明','info.circle']];
+(function(){var h='';for(var i=0;i<SYM.length;i+=2){var a=SYM[i],b=SYM[i+1]||['',''];h+='<tr><td>'+a[0]+'</td><td><code>'+a[1].split(' · ').join('</code> <code>')+'</code></td><td>'+b[0]+'</td><td>'+(b[1]?'<code>'+b[1].split(' · ').join('</code> <code>')+'</code>':'')+'</td></tr>'}$('symRows').innerHTML=h})();
+
+/* ---------- 借鉴台账 ---------- */
+function lic(t){var cls=/MIT|BSD/.test(t)?'ship':/闭源/.test(t)?'draft':'exp';return '<span class="st '+cls+'">'+t+'</span>'}
+var BORROW=[
+ ['Atoll','GPL · 思路','按音量 / 亮度键才开口（含到顶到底）；锁屏让系统提示；下载看半成品文件；正在播放用推送源','--l-live','冻结 / 重启系统 HUD 进程、锁屏小组件、仿玻璃、它的四段曲线刘海'],
+ ['Peninsula','GPL · 思路','Dock 未读红点可上启动台和那一排的格子','--l-win','假的 24 点刘海、读通知中心私有库、替换 ⌘Tab'],
+ ['Alcove','闭源 · 只看行为','横扫一次只算一下、门槛调高、展开才切；音量到顶到底也开口、不挡系统 HUD；空闲降帧率；价 $14.99','--l-live','它的锁屏小组件、假刘海、私有绘制和代码'],
+ ['niri','GPL · 思路','松手速度只看最后 150 ms、补零位移样本；关掉刚开的列回到上一列；拖到边卷轴跟着滚','--l-win','把工作区原样搬来'],
+ ['Hyprland','BSD-3 · 可用代码','拖到另一扇上按指针角度决定从哪边分；落点要拖过一段距离才出现','--l-win','贝塞尔曲线、Lua / IPC / 插件、模糊'],
+ ['atv-core','无许可证 · 思路','遥控器按键表（5/6/7/14/18/19、松开才算）；触控 1000×1000、点 vs 滑门槛；后台探测连接超时；音量标志 0x0100','--l-cond','不验 M3、固定 PIN 1111、UUID 派生私钥、同 IP 踢旧连接、电源键睡显示器'],
+ ['Loupe','MIT · 可用代码','页面开着才实时更新、关掉就停；JSON 导出；“合起来能看出什么”；每个用途单独同意','--l-priv','它的名字、图标、图片；对你本人的敏感猜测'],
+ ['Glance','MIT · 可用代码','扫描每帧重查锁态、去重帧、不是本人清掉匹配；均值模板 + 最近样本都过线；旧模型版本不算；0.18 旁人线','--l-auth','往没确认是登录框的地方打字；ArcFace 权重'],
+ ['BLEUnlock','无许可证 · 思路','睡眠前后切激活方式让醒来能接着扫；手机不在被密码解开记一句；按地址认设备','--l-auth','只凭信号强弱解锁；手动锁后走回来自动解；字符串拼 SQL'],
+ ['AirBattery','AGPL · 思路','AirPods 左右耳盒电量用 system_profiler 读；iPhone 走标准 GATT 180F','--l-batt','它的代码、读系统日志、局域网共享电量'],
+ ['lipflow','MIT · 可用代码','录制少于 12 帧或不到 40% 有脸就重录；松开后多录 0.4 秒；相机懒开、45 秒空闲关、不自动用连续性相机','--l-auth','LRS3 权重、云端 / 大模型整理、读输入框学纠正'],
+ ['quietglass','MIT · 可用代码','逐脸跟踪、旁人正对一会儿才算、收起快放回慢；随机转头挑战（只加证据）；头部方向按屏幕分记；帧变了才做文字识别、存标题摘要','--l-priv','模板存进会备份的钥匙串；靠 sharingType 防录屏'],
+ ['PlayPort','GPL · 思路','CarPlay：蓝牙 iAP2 引导 → 交 Wi-Fi → AirPlay 收视频；改分辨率要重连；画面出现要关键帧；系统 AirPlay 占 7000 要先关','--l-car','它的代码、提取来的身份、CarPlay 商标'],
+ ['DiPlay','GPL · 思路','CarPlay 重连预算（2 秒×2ⁿ、≤30 秒、5 次、稳 60 秒清零）；设置改动等重连才生效；验收数收到帧和画出帧','--l-car','它的代码、提取来的身份、图标、车厂界面'],
+ ['LIVI','GPL · 思路','CarPlay 画面留安全区避开刘海；在已连的手机间切换不重连；签名走可插拔接口（M4 后、验过签名才装 key）','--l-car','它的代码；重刷固件的加密狗当成品'],
+ ['mediaremote-adapter','BSD-3 · 可用代码','正在播放的推送更新，所有播放器都收得到（配合 Atoll 的用法）','--l-live','它依赖私有框架、绕了一个授权，可能随系统更新失效，进隐私第三层']
+];
+$('borrowRows').innerHTML=BORROW.map(function(r){return '<tr><td class="k">'+r[0]+'</td><td>'+lic(r[1])+'</td><td>'+r[2]+'</td><td><span class="ln" style="--c:var('+r[3]+')">'+({'--l-win':'窗口','--l-live':'实时活动','--l-batt':'电量','--l-cond':'指挥','--l-car':'CarPlay','--l-auth':'刷脸与放行','--l-priv':'隐私'}[r[3]])+'</span></td><td>'+r[4]+'</td></tr>'}).join('');
+})();
+</script>
+</body></html>

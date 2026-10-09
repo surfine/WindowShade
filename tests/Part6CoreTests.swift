@@ -46,18 +46,18 @@ func lease(_ decision: WS2.LeaseDecision) throws -> WS2.LeaseHandle {
             var cancelled: [WS2.LeaseHandle] = []
             let c = InteractionCoordinator(bootID: UUID(), clock: TestClock(), environment: { .init(unlocked: true, displays: [display]) }, cancel: { h,_ in cancelled.append(h) })
             let a = try lease(c.acquire(request("pomodoro")))
-            let b = try lease(c.acquire(request("agentSessions"), replacing: a))
+            let b = try lease(c.acquire(request("windowBrowser"), replacing: a))
             t.check(!c.isCurrent(a) && c.isCurrent(b),"only new handle current"); t.check(cancelled == [a],"one cancellation")
         }
         t.run("ARB03 same priority without explicit navigation busy") {
             let c = InteractionCoordinator(bootID: UUID(), clock: TestClock(), environment: { .init(unlocked: true, displays: [display]) }, cancel: { _,_ in })
             let a = try lease(c.acquire(request("pomodoro")))
-            if case .busy = c.acquire(request("agentSessions")) { t.check(true,"busy") } else { t.check(false,"busy") }
+            if case .busy = c.acquire(request("windowBrowser")) { t.check(true,"busy") } else { t.check(false,"busy") }
             t.check(c.isCurrent(a),"old intact")
         }
         t.run("ARB04 stale replacement cannot evict newer page") {
             let c = InteractionCoordinator(bootID: UUID(), clock: TestClock(), environment: { .init(unlocked: true, displays: [display]) }, cancel: { _,_ in })
-            let a = try lease(c.acquire(request("pomodoro"))), b = try lease(c.acquire(request("agentSessions"), replacing: a))
+            let a = try lease(c.acquire(request("pomodoro"))), b = try lease(c.acquire(request("windowBrowser"), replacing: a))
             if case .unavailable = c.acquire(request("windowBrowser"), replacing: a) { t.check(true,"stale denied") } else { t.check(false,"stale denied") }
             t.check(c.isCurrent(b),"new page retained")
         }
@@ -67,24 +67,26 @@ func lease(_ decision: WS2.LeaseDecision) throws -> WS2.LeaseHandle {
             let a = try lease(c.acquire(request("pomodoro"))), b = try lease(c.acquire(request("agentReview", .authorization), replacing: a))
             t.check(c.isCurrent(b) && !c.isCurrent(a),"review wins"); t.check(reason == .suspended,"higher layer suspends the opened page")
         }
-        t.run("ARB06 equal authorization never replaces review") {
-            let c = InteractionCoordinator(bootID: UUID(), clock: TestClock(), environment: { .init(unlocked: true, displays: [display]) }, cancel: { _,_ in })
+        t.run("ARB06 equal authorization queues behind review, never replaces it") {
+            var cancelled = 0
+            let c = InteractionCoordinator(bootID: UUID(), clock: TestClock(), environment: { .init(unlocked: true, displays: [display]) }, cancel: { _,_ in cancelled += 1 })
             let a = try lease(c.acquire(request("agentReview", .authorization)))
-            if case .busy = c.acquire(request("authorization", .authorization), replacing: a) { t.check(true,"equal auth denied") } else { t.check(false,"equal auth denied") }
-            t.check(c.isCurrent(a),"review remains; explicit handoff required")
+            if case .queued(let position) = c.acquire(request("authorization", .authorization), replacing: a) { t.check(position == 1,"queued first") } else { t.check(false,"equal auth queued") }
+            t.check(c.isCurrent(a) && cancelled == 0,"review remains; the queued one waits for its result")
+            if case .busy = c.acquire(request("authorization", .authorization), queueing: false) { t.check(true,"opt-out keeps busy") } else { t.check(false,"opt-out keeps busy") }
         }
         t.run("ARB07 synchronous disable barrier aborts replacement") {
             var c: InteractionCoordinator?
             c = InteractionCoordinator(bootID: UUID(), clock: TestClock(), environment: { .init(unlocked: true, displays: [display]) }, cancel: { _,_ in c?.invalidate(.disabled, at: .init(nanoseconds: 100)) })
             let coordinator = try unwrap(c), a = try lease(coordinator.acquire(request("pomodoro")))
-            if case .unavailable = coordinator.acquire(request("agentSessions"), replacing: a) { t.check(true,"aborted") } else { t.check(false,"aborted") }
+            if case .unavailable = coordinator.acquire(request("windowBrowser"), replacing: a) { t.check(true,"aborted") } else { t.check(false,"aborted") }
             t.check(!coordinator.isCurrent(a) && coordinator.epoch == 2,"barrier preserved")
         }
         t.run("ARB08 reentrant acquire in cancellation refused") {
             var c: InteractionCoordinator?, reentrant: WS2.LeaseDecision?
             c = InteractionCoordinator(bootID: UUID(), clock: TestClock(), environment: { .init(unlocked: true, displays: [display]) }, cancel: { _,_ in reentrant = c?.acquire(request("agentReview", .authorization)) })
             let coordinator = try unwrap(c), a = try lease(coordinator.acquire(request("pomodoro")))
-            let b = try lease(coordinator.acquire(request("agentSessions"), replacing: a))
+            let b = try lease(coordinator.acquire(request("windowBrowser"), replacing: a))
             if case .unavailable = reentrant { t.check(true,"reentry refused") } else { t.check(false,"reentry refused") }
             t.check(coordinator.isCurrent(b),"outer replacement owns view")
         }
@@ -93,7 +95,7 @@ func lease(_ decision: WS2.LeaseDecision) throws -> WS2.LeaseHandle {
             let a = try lease(c.acquire(request("pomodoro")))
             _ = c.acquire(request("notRegistered"), replacing: a)
             t.check(c.isCurrent(a),"invalid owner retained old page")
-            _ = c.acquire(request("agentSessions", deadline: 100), replacing: a)
+            _ = c.acquire(request("windowBrowser", deadline: 100), replacing: a)
             t.check(c.isCurrent(a),"expired request retained old page")
         }
         t.run("ARB10 clock rollback safety invalidation still works") {
@@ -106,13 +108,13 @@ func lease(_ decision: WS2.LeaseDecision) throws -> WS2.LeaseHandle {
             var c: InteractionCoordinator?
             c = InteractionCoordinator(bootID: UUID(), clock: TestClock(), environment: { .init(unlocked: true, displays: [display]) }, cancel: { _,_ in c?.removeDisplay(display, at: .init(nanoseconds: 100)) })
             let coordinator = try unwrap(c), a = try lease(coordinator.acquire(request("pomodoro")))
-            if case .unavailable = coordinator.acquire(request("agentSessions"), replacing: a) { t.check(true,"display barrier") } else { t.check(false,"display barrier") }
+            if case .unavailable = coordinator.acquire(request("windowBrowser"), replacing: a) { t.check(true,"display barrier") } else { t.check(false,"display barrier") }
         }
         t.run("ARB12 expired expected handle is not resurrected") {
             let clock = TestClock()
             let c = InteractionCoordinator(bootID: UUID(), clock: clock, environment: { .init(unlocked: true, displays: [display]) }, cancel: { _,_ in })
             let a = try lease(c.acquire(request("pomodoro"))); clock.set(1000)
-            _ = c.acquire(request("agentSessions", deadline: 2000), replacing: a)
+            _ = c.acquire(request("windowBrowser", deadline: 2000), replacing: a)
             t.check(!c.isCurrent(a),"expired gone"); t.check(c.snapshots(at: clock.now()).first?.lease == nil,"no unexpected replacement")
         }
         let root = WS2OwnedScope.Directory(canonicalPath: "/tmp/project", device: 1, inode: 2)

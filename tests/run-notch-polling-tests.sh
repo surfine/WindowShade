@@ -8,6 +8,11 @@ swiftc -parse-as-library -O \
   prototype/Core/NotchActivities.swift \
   prototype/App/NotchActivityPollPolicy.swift \
   prototype/App/NotchActivitySources.swift \
+  prototype/App/NowPlayingStream.swift \
+  prototype/App/NowPlayingArtwork.swift \
+  prototype/Core/ArtworkPalette.swift \
+  prototype/App/CalendarSource.swift prototype/Core/CalendarActivity.swift \
+  prototype/Core/NowPlayingStreamParser.swift prototype/Core/NowPlayingCardLogic.swift \
   tests/NotchPollingTests.swift \
   -o .build/notch-polling-tests/tests
 .build/notch-polling-tests/tests

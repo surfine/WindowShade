@@ -13,6 +13,8 @@ final class MiddleTitlebarTap: @unchecked Sendable {
     private var drag = MiddleDrag()
     private var clock = WS2.Instant(nanoseconds: 1)
     private var tracking = false
+    /// 上一次送去画浮窗的预览（动作 + 进度档），同一档不重复送。
+    private var lastPreview: (action: WS2.Action, step: Int)?
 
     var systemStopped: Bool {
         dispatchPrecondition(condition: .onQueue(.main))
@@ -67,6 +69,7 @@ final class MiddleTitlebarTap: @unchecked Sendable {
             CFRunLoopRemoveSource(runLoop, source, .commonModes)
         }
         worker.name = "WindowShade.MiddleTitlebarTap"
+        worker.qualityOfService = .userInteractive
         worker.stackSize = 512 * 1024
         thread = worker
         worker.start()
@@ -135,8 +138,34 @@ final class MiddleTitlebarTap: @unchecked Sendable {
         }
         let consume = effects.contains { effect in
             switch effect {
-            case .clickTitlebar, .commit(.titlebarUp), .commit(.titlebarDown): return true
+            case .clickTitlebar, .commit(.titlebarUp), .commit(.titlebarDown),
+                 .commit(.titlebarLeft), .commit(.titlebarRight): return true
             default: return false
+            }
+        }
+        // 预览只画浮窗，不吞事件；同一档进度不重复送主线程。
+        var hudEffects: [MiddleDrag.Effect] = []
+        for effect in effects {
+            switch effect {
+            case .preview(let action, let progress):
+                guard Self.hudAction(for: action) != nil else { continue }
+                let step = Int((progress * 20).rounded(.down))
+                let changed = withLock { () -> Bool in
+                    if let last = lastPreview, last.action == action, last.step == step { return false }
+                    lastPreview = (action, step)
+                    return true
+                }
+                if changed { hudEffects.append(effect) }
+            case .cancelled, .commit, .clickTitlebar:
+                withLock { lastPreview = nil }
+                if case .cancelled = effect { hudEffects.append(effect) }
+            default:
+                break
+            }
+        }
+        if !hudEffects.isEmpty && !consume {
+            DispatchQueue.main.async {
+                MainActor.assumeIsolated { Self.perform(hudEffects, at: location) }
             }
         }
         if consume {
@@ -178,13 +207,40 @@ final class MiddleTitlebarTap: @unchecked Sendable {
         for effect in effects {
             switch effect {
             case .clickTitlebar, .commit(.titlebarUp):
+                // 拖动预览可能已画出浮窗；收起路径不经过排布，在这里收掉。
+                app.gestures.hud.cancel()
                 app.foldWindowAtScreenPoint(location)
-            case .commit(.titlebarDown):
-                app.expandWindowAtScreenPoint(location)
+            case .commit(let action) where Self.hudAction(for: action) != nil:
+                guard let placement = hudAction(for: action) else { break }
+                // 每次预览都以提交或取消收尾；排布成功时 keyPlace 会重新画。
+                app.gestures.hud.cancel()
+                app.placeWindowAtScreenPoint(location, placement)
+            case .preview(let action, let progress):
+                guard let shown = hudAction(for: action) else { break }
+                app.gestures.hud.update(GestureFrame(action: shown, progress: CGFloat(progress)),
+                                        anchor: hudAnchor(at: location), screen: nil)
+            case .cancelled:
+                app.gestures.hud.cancel()
             default:
                 break
             }
         }
+    }
+
+    /// 标题栏中键拖的方向对应触控板标题栏手势里的同一个动作：下拉铺满，左右半屏，上推收起。
+    nonisolated static func hudAction(for action: WS2.Action) -> GestureAction? {
+        switch action {
+        case .titlebarDown: return .fill
+        case .titlebarLeft: return .leftHalf
+        case .titlebarRight: return .rightHalf
+        case .titlebarUp: return .shade
+        default: return nil
+        }
+    }
+
+    private static func hudAnchor(at location: CGPoint) -> CGPoint {
+        let p = cocoaMousePoint(fromAXPoint: CGPoint(x: location.x, y: location.y + 14))
+        return CGPoint(x: p.x, y: p.y - 10)
     }
 
     private func withLock<T>(_ body: () -> T) -> T {
@@ -203,6 +259,37 @@ extension AppDelegate {
             _ = unshade(id)
         } else {
             shade(win, id)
+        }
+    }
+
+    /// 中键拖在标题栏：把该点下的窗口铺满或排成左、右半屏，走触控板手势同一条排布路径（含浮窗与撤销）。
+    func placeWindowAtScreenPoint(_ point: CGPoint, _ action: GestureAction) {
+        guard ensureAccessibility() else { gestures.hud.cancel(); return }
+        guard let win = frontmostWindowContaining(point: point, requireCompatProfile: false),
+              let id = windowID(of: win) else { gestures.hud.cancel(); return }
+        // 已收起的窗口：下拉照旧是展开（触控板也是这样），半屏不排卷帘条。
+        if shaded[id] != nil {
+            if action == .fill { _ = unshade(id) }
+            gestures.hud.cancel()
+            return
+        }
+        if let focused = focusedWindow(), windowID(of: focused) == id {
+            gestures.keyPlace(action)
+            return
+        }
+        // 点的不是当前焦点窗口：先把它带到前台，再排。
+        var pid: pid_t = 0
+        AXUIElementGetPid(win, &pid)
+        AXUIElementPerformAction(win, kAXRaiseAction as CFString)
+        NSRunningApplication(processIdentifier: pid)?.activate()
+        Task { @MainActor [weak self] in
+            try? await Task.sleep(for: .milliseconds(150), tolerance: .milliseconds(30))
+            guard let self else { return }
+            guard let focused = focusedWindow(), windowID(of: focused) == id else {
+                self.gestures.hud.cancel()
+                return
+            }
+            self.gestures.keyPlace(action)
         }
     }
 

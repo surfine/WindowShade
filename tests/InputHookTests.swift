@@ -110,6 +110,7 @@ struct InputHookTests {
                "BetterTouchTool uses the identifier already recorded for remap tools")
         expect(ScrollYield.name(among: ["com.caldis.Mos", "com.hegenberg.BetterTouchTool"]) == "Mos",
                "when two known tools are running, Mos is the one named")
+        expect(ScrollYield.name(among: ["com.logi.optionsplus"]) == "Logi Options+", "Logi Options+ takes the scroll hook")
         expect(ScrollYield.name(among: ["com.apple.finder"]) == nil, "an ordinary app does not take the hook")
     }
 
@@ -173,8 +174,18 @@ struct InputHookTests {
             association: .verifiedPerEvent)
         expect(session.handle(.scroll(trackpad, notchesX: 0, notchesY: 1, option: false), request: invert, at: WS2.Instant(nanoseconds: t0.nanoseconds + 8_000_000_000)) == .pass,
                "a trackpad event is not rewritten")
-        expect(session.handle(.sideButton(wheel(.verifiedPerEvent), number: 4), request: fine, at: WS2.Instant(nanoseconds: t0.nanoseconds + 9_000_000_000)) == .side(back: true),
-               "side button 4 asks for back")
+        var inSafari = fine
+        inSafari.foregroundBundleID = "com.apple.Safari"
+        expect(session.handle(.sideButton(wheel(.verifiedPerEvent), number: 4), request: inSafari, at: WS2.Instant(nanoseconds: t0.nanoseconds + 9_000_000_000)) == .side(back: true),
+               "side button 4 asks for back in a recognised app")
+        expect(session.handle(.sideButton(wheel(.verifiedPerEvent), number: 5), request: inSafari, at: WS2.Instant(nanoseconds: t0.nanoseconds + 9_500_000_000)) == .side(back: false),
+               "side button 5 asks for forward in a recognised app")
+        var inOther = fine
+        inOther.foregroundBundleID = "com.apple.TextEdit"
+        expect(session.handle(.sideButton(wheel(.verifiedPerEvent), number: 4), request: inOther, at: WS2.Instant(nanoseconds: t0.nanoseconds + 9_600_000_000)) == .pass,
+               "an unrecognised app keeps its own side button")
+        expect(session.handle(.sideButton(wheel(.verifiedPerEvent), number: 4), request: fine, at: WS2.Instant(nanoseconds: t0.nanoseconds + 9_700_000_000)) == .pass,
+               "an unknown foreground app keeps its own side button")
         expect(session.handle(.sideButton(wheel(.verifiedPerEvent), number: 3), request: fine, at: WS2.Instant(nanoseconds: t0.nanoseconds + 10_000_000_000)) == .pass,
                "button 3 is not treated as a side button")
     }
@@ -223,20 +234,24 @@ struct InputHookTests {
         let click = router.report(page: 0x0c, usage: 0xcd, value: 0, at: WS2.Instant(nanoseconds: t0.nanoseconds + 4), focusItems: nil)
         expect(down.effects.isEmpty && click.effects.contains(.action(.mediaPlayPause)) && !click.focusDelivered,
                "a short play press asks to play, and that request is not marked done")
-        var dictation = RemoteInputRouter()
-        _ = dictation.setEnabled(true, at: WS2.Instant(nanoseconds: t0.nanoseconds + 20))
-        _ = dictation.report(page: 0x0c, usage: 0x04, value: 1, at: WS2.Instant(nanoseconds: t0.nanoseconds + 21), focusItems: nil)
-        let spoken = dictation.report(page: 0x0c, usage: 0x04, value: 1,
-                                      at: WS2.Instant(nanoseconds: t0.nanoseconds + 21 + SiriRemoteButtons.half), focusItems: nil)
-        expect(spoken.effects.contains(.dictationRequested) && !spoken.focusDelivered,
-               "holding the side key asks for dictation and that request is not carried out")
+        var side = RemoteInputRouter()
+        _ = side.setEnabled(true, at: WS2.Instant(nanoseconds: t0.nanoseconds + 20))
+        _ = side.report(page: 0x0c, usage: 0x04, value: 1, at: WS2.Instant(nanoseconds: t0.nanoseconds + 21), focusItems: nil)
+        let spoken = side.report(page: 0x0c, usage: 0x04, value: 1,
+                                 at: WS2.Instant(nanoseconds: t0.nanoseconds + 21 + SiriRemoteButtons.half), focusItems: nil)
+        expect(spoken.effects.isEmpty && !spoken.focusDelivered,
+               "holding the side key does nothing unless the focus is on a session cell, and never asks for system dictation")
+        let released = side.report(page: 0x0c, usage: 0x04, value: 0,
+                                   at: WS2.Instant(nanoseconds: t0.nanoseconds + 22 + SiriRemoteButtons.half), focusItems: nil)
+        expect(released.effects.isEmpty, "letting go of an ignored side hold does not turn into a short press")
     }
 
     static func focusMovesOnlyWhenItemsExist() {
         var router = RemoteInputRouter()
         let t0 = WS2.Instant(nanoseconds: 4_000_000_000)
         _ = router.setEnabled(true, at: t0)
-        let nowhere = router.report(page: 0x0c, usage: 0x42, value: 1, at: WS2.Instant(nanoseconds: t0.nanoseconds + 1), focusItems: nil)
+        _ = router.report(page: 0x0c, usage: 0x42, value: 1, at: WS2.Instant(nanoseconds: t0.nanoseconds + 1), focusItems: nil)
+        let nowhere = router.report(page: 0x0c, usage: 0x42, value: 0, at: WS2.Instant(nanoseconds: t0.nanoseconds + 2), focusItems: nil)
         expect(nowhere.effects.contains(.action(.focusUp)) && nowhere.focusMove == nil && !nowhere.focusDelivered,
                "a direction press without focus items is not delivered")
         let display = WS2.DisplayID(value: 1)
@@ -246,7 +261,9 @@ struct InputHookTests {
         ]
         var hosted = RemoteInputRouter()
         _ = hosted.setEnabled(true, at: t0)
-        let moved = hosted.report(page: 0x0c, usage: 0x42, value: 1, at: WS2.Instant(nanoseconds: t0.nanoseconds + 1), focusItems: items)
+        let pressed = hosted.report(page: 0x0c, usage: 0x42, value: 1, at: WS2.Instant(nanoseconds: t0.nanoseconds + 1), focusItems: items)
+        expect(pressed.effects.isEmpty && !pressed.focusDelivered, "a direction press only counts when it is released")
+        let moved = hosted.report(page: 0x0c, usage: 0x42, value: 0, at: WS2.Instant(nanoseconds: t0.nanoseconds + 2), focusItems: items)
         expect(moved.focusDelivered && moved.focusMove == .focused("a"),
                "with items, the first direction press focuses one of them")
     }

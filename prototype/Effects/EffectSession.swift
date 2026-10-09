@@ -69,11 +69,16 @@ final class EffectDisplayClock: NSObject {
   private let isDesktop: Bool
   private var pendingPresentation: (revision: UInt64, completion: () -> Void)?
   private var pendingDeadline: CFTimeInterval?
+  /// 建渲染器花的主线程时间（毫秒）。首次收起时含 GPU 共享对象（着色器库、三条管线）的创建，
+  /// 预热过或之后的会话只剩视图与纹理缓存。只进诊断日志。
+  private let rendererInitMs: Double
 
   init(frame: CGRect, desktop: Bool) throws {
     isDesktop = desktop
     panel = EffectPanel(frame: frame, desktop: desktop)
+    let initStarted = CACurrentMediaTime()
     renderer = try FoldRenderer(size: frame.size)
+    rendererInitMs = (CACurrentMediaTime() - initStarted) * 1000
     panel.contentView = renderer.view
     source.removesCaptureIndicator = !desktop
     source.onStop = { [weak self] _ in if desktop { self?.onFailure?() } }
@@ -185,7 +190,9 @@ final class EffectDisplayClock: NSObject {
     onFailure = nil
     onVisible = nil
     if expectedLive && ProcessInfo.processInfo.environment["WINDOWSHADE_DUO_DIAGNOSTICS"] == "1" {
-      wlog("duo: \(renderer.metrics())")
+      wlog(
+        "duo: \(renderer.metrics()) rendererInit=\(String(format: "%.1f", rendererInitMs))ms inFlight=\(renderer.framesInFlightLimit)"
+      )
     }
   }
   deinit {

@@ -4,6 +4,7 @@
 刷脸解锁（吸收 Glance）、隐私一栏（照 Loupe）和窗口这条线合成一张总图。
 
 - 设计稿（可交互，一天里的十三个时刻）：[WindowShade 全景](https://claude.ai/artifact/2AQPp5eEoFPBrCobUBxKsp)
+- 总稿（2026-10-08，十六份收成一套）：[WindowShade 设计系统](https://claude.ai/artifact/Q2XdwfQttwpju6MvzpY93Y)，仓库里是 [design-drafts/WindowShade 设计系统.html](design-drafts/WindowShade%20设计系统.html)
 - 分线的设计稿：[从锁屏到窗口](https://claude.ai/artifact/UepNxvLrJY5WDRANnjubyH)、[WindowShade 读到的](https://claude.ai/artifact/3SXfR2wyxHBGiBBEHxvjRA)
 
 **一句话：看不见的东西都在刘海里，碰一下就回来；要你放行的事，只在刘海里问你一次。**

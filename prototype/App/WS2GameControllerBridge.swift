@@ -2,6 +2,25 @@
 import Cocoa
 @preconcurrency import GameController
 
+/// 同一台手柄的回调同一时间只归桌面控制或指挥页 / 选模型页之一。只在主线程动，不轮询。
+@MainActor final class WS2GamepadHandlerSeats {
+    static let shared = WS2GamepadHandlerSeats()
+    private var ledger = GamepadHandlerLedger<ObjectIdentifier>()
+    /// 页面放手后，桌面控制要自动收回手柄。
+    var onPageReleased: (() -> Void)?
+
+    func claim(_ controller: GCController, by holder: GamepadHandlerLedger<ObjectIdentifier>.Holder) -> Bool {
+        ledger.claim(ObjectIdentifier(controller), by: holder)
+    }
+    func release(_ controller: GCController, by holder: GamepadHandlerLedger<ObjectIdentifier>.Holder) {
+        let wasPage = ledger.holder(of: ObjectIdentifier(controller)) == .page
+        ledger.release(ObjectIdentifier(controller), by: holder)
+        if holder == .page, wasPage { onPageReleased?() }
+    }
+    func pageHolds(_ controller: GCController) -> Bool { ledger.holder(of: ObjectIdentifier(controller)) == .page }
+    var desktopHoldsAny: Bool { ledger.anyHeld(by: .desktop) }
+}
+
 @MainActor final class WS2GameControllerBridge: WS2ControllerBridge {
     typealias Environment = WS2ControllerEnvironment
     typealias Device = WS2ControllerDevice
@@ -95,7 +114,8 @@ import Cocoa
         publish()
     }
     private func installHandler(_ e: Entry) -> Bool {
-        guard let pad = e.controller.extendedGamepad, !e.ownsHandler, pad.valueChangedHandler == nil else { return false }
+        guard let pad = e.controller.extendedGamepad, !e.ownsHandler, pad.valueChangedHandler == nil,
+              WS2GamepadHandlerSeats.shared.claim(e.controller, by: .page) else { return false }
         e.previousQueue = e.controller.handlerQueue
         e.controller.handlerQueue = .main
         e.ownsHandler = true
@@ -108,6 +128,7 @@ import Cocoa
     private func releaseHandler(_ e: Entry) {
         guard e.ownsHandler else { return }
         e.ownsHandler = false
+        defer { WS2GamepadHandlerSeats.shared.release(e.controller, by: .page) }
         // All handler writes in this application are owned by this bridge after admission.
         // A future subsystem must use this owner rather than overwrite the callback while enabled.
         e.controller.extendedGamepad?.valueChangedHandler = nil
@@ -134,7 +155,7 @@ import Cocoa
         let right=GamepadMapping.Vector(x:Double(pad.rightThumbstick.xAxis.value),y:Double(pad.rightThumbstick.yAxis.value))
         let neutral=GamepadMapping.axis(left) == .zero && GamepadMapping.axis(right) == .zero
         if neutral { e.neutralSticks=true }
-        _ = e.mapping.configure(enabled:env.motionReady && env.domain == .desktop && e.neutralSticks,gameInFront:false)
+        _ = e.mapping.configure(enabled:env.motionReady && env.domain == .desktop && e.neutralSticks,gameInFront:env.gameOrUnknownInFront)
         guard env.motionReady, env.domain == .desktop, e.neutralSticks, !neutral else {
             e.movement?.cancel();e.movement=nil;_ = e.mapping.disconnect();return
         }

@@ -36,7 +36,9 @@ extension UpdaterController {
         if let status { bindSettings(statusLabel: status, frequency: frequency) }
 
         var rows: [NSView] = [
-            Self.row(name: UpdateCopy.autoCheck, subtitle: UpdateCopy.autoCheckDetail, control: toggle).0,
+            Self.row(name: UpdateCopy.autoCheck,
+                     subtitle: lastCheckDate.map { UpdateCopy.lastChecked($0) } ?? UpdateCopy.autoCheckDetail,
+                     control: toggle).0,
             Self.row(name: UpdateCopy.frequency, subtitle: nil, control: frequency).0,
             versionRow,
         ]

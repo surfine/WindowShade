@@ -5,6 +5,8 @@
 // 只在两件事都有证据时开口：刚才那一下在这里没反应（或做了别的、他马上撤回），而要教的那一下在这里一定管用。
 // 第一批：Windows 第一批 13 条、iPad 先上的 6 条（⌘H、🌐M、从 Dock 拖出图标、双击标题栏、往上甩、桌面两指下滑）；其余都不开。
 // 其中单按 ⇧ 切换中英文、PC 键盘的 Print Screen 要先上真机确认，确认之前不开（needsDeviceCheck）。
+// 另有 3 条 iPad 习惯（三指上滑瞥一眼调度中心、🌐H 显示桌面、点刘海打开主屏幕又关掉后往上滚）等真机探针
+// （tools/probes/HabitSignalProbe.swift）确认信号，同样放在 needsDeviceCheck 后面，默认不开。
 // 来处（SwitcherOrigin）决定开哪几条：答 Windows 开 Windows 那一半，答 iPad 开 iPad 那一半，答“一直用 Mac”都不开，
 // 没答的只开不会误报的几条（⌃C、⌃X、⌃S、访达里 Delete、强制退出、Alt+F4）。
 // 节奏和手势提示共用一本账（Core/GestureCoach.swift 的 HabitLedger、CoachPacing）。
@@ -19,6 +21,7 @@ enum HabitKey {
     static let a: UInt16 = 0, s: UInt16 = 1, f: UInt16 = 3, h: UInt16 = 4, z: UInt16 = 6, x: UInt16 = 7
     static let c: UInt16 = 8, v: UInt16 = 9, q: UInt16 = 12, w: UInt16 = 13, e: UInt16 = 14, k: UInt16 = 40, m: UInt16 = 46
     static let three: UInt16 = 20, four: UInt16 = 21, five: UInt16 = 23
+    static let up: UInt16 = 126
     static let space: UInt16 = 49, delete: UInt16 = 51, escape: UInt16 = 53, function: UInt16 = 63
     static let forwardDelete: UInt16 = 117, home: UInt16 = 115, end: UInt16 = 119
     static let f2: UInt16 = 120, f4: UInt16 = 118, f13: UInt16 = 105
@@ -38,7 +41,7 @@ enum HabitKey {
         if let letter = letters[code] { return letter }
         if let digit = digits[code] { return digit }
         switch code {
-        case space: return "空格"
+        case space: return WSL10n.text("habit.key.space", zh: "空格")
         case delete: return "delete"
         case escape: return "esc"
         case forwardDelete: return "Del"
@@ -49,6 +52,7 @@ enum HabitKey {
         case f13: return "F13"
         case left: return "←"
         case right: return "→"
+        case up: return "↑"
         case 82: return "0"
         case 83...89: return String(code - 82)
         case 91: return "8"
@@ -132,12 +136,15 @@ enum HabitRule: String, CaseIterable, Codable {
     case copy, paste, undo, save, imeShift, closeTab, cut, trash, lineEnds, forceQuit, closeWindow, screenshot, symbols
     // iPad 先上的 6 条（第二部分 §3 的第 6、22、17、7、11、14 条）
     case hideApp, menuBar, dockRemoved, titleDoubleClick, titleFlickUp, desktopSearch
+    // iPad 后加的 3 条（第二部分 §3 的第 2、5、18 条）：先等真机探针，确认前不开（needsDeviceCheck）
+    case missionPeek, globeHome, launchpadTop
 
     enum Side { case windows, ipad }
 
     var side: Side {
         switch self {
-        case .hideApp, .menuBar, .dockRemoved, .titleDoubleClick, .titleFlickUp, .desktopSearch: return .ipad
+        case .hideApp, .menuBar, .dockRemoved, .titleDoubleClick, .titleFlickUp, .desktopSearch,
+             .missionPeek, .globeHome, .launchpadTop: return .ipad
         default: return .windows
         }
     }
@@ -149,7 +156,13 @@ enum HabitRule: String, CaseIterable, Codable {
     var controlFamily: Bool { [.copy, .paste, .undo, .save, .closeTab, .cut].contains(self) }
 
     /// 上线前要先上真机确认：苹果拼音单按 ⇧ 是否确实没反应、PC 键盘的 PrtSc 是不是到达为 F13。确认之前不开。
-    var needsDeviceCheck: Bool { self == .imeShift || self == .screenshot }
+    /// 后加的 3 条 iPad 习惯：信号（调度中心开合、🌐H、主屏幕开合）能不能拿到要等真机，确认之前同样不开。
+    var needsDeviceCheck: Bool {
+        self == .imeShift || self == .screenshot || self == .missionPeek || self == .globeHome || self == .launchpadTop
+    }
+
+    /// “回到主屏幕：点一下刘海”这一组：他点过刘海回主屏幕，这一组就都记成会了（hideApp、i2、i5）。
+    static let homeGroup: [HabitRule] = [.hideApp, .missionPeek, .globeHome]
 
     /// 靠按键认出来的那几下（按了没用的那一下）。单按 ⇧、⌥ 加小键盘、鼠标和触控板的几条不在这里，由各自的状态机认。
     var foreignCombos: [HabitCombo] {
@@ -169,7 +182,9 @@ enum HabitRule: String, CaseIterable, Codable {
         case .screenshot: return [HabitCombo(HabitKey.f13), HabitCombo(HabitKey.f13, .option)]
         case .hideApp: return [HabitCombo(HabitKey.h, .command)]
         case .menuBar: return [HabitCombo(HabitKey.m, globe: true)]
-        case .imeShift, .symbols, .dockRemoved, .titleDoubleClick, .titleFlickUp, .desktopSearch: return []
+        case .globeHome: return [HabitCombo(HabitKey.h, globe: true)]
+        case .imeShift, .symbols, .dockRemoved, .titleDoubleClick, .titleFlickUp, .desktopSearch,
+             .missionPeek, .launchpadTop: return []
         }
     }
 
@@ -193,7 +208,8 @@ enum HabitRule: String, CaseIterable, Codable {
         case .imeShift: return [HabitCombo(HabitKey.space, .control)]
         case .menuBar: return [HabitCombo(HabitKey.f2, .control)]
         case .desktopSearch: return [HabitCombo(HabitKey.space, .command)]
-        case .hideApp, .dockRemoved, .titleDoubleClick, .titleFlickUp: return []
+        case .launchpadTop: return [HabitCombo(HabitKey.up, .command), HabitCombo(HabitKey.home)]
+        case .hideApp, .dockRemoved, .titleDoubleClick, .titleFlickUp, .missionPeek, .globeHome: return []
         }
     }
 
@@ -276,6 +292,8 @@ enum HabitGate {
         var homeLearned = false
         /// 聚焦搜索的快捷键开着：关着就没什么可教。
         var spotlightAvailable = true
+        /// 屏幕正在被共享或录制（App/SystemQuietState）：卡住提示一句不说，钩子整个拆掉。读不到当作没有。
+        var screenSharing = false
     }
 
     /// 真正开着的规则：来处开的，去掉已经不用再说的（会了、点掉、说满三次、听够了日子）和这台 Mac 上不该说的。
@@ -285,13 +303,18 @@ enum HabitGate {
         // 没答来处、又已经是 Mac 老手（用过三个 ⌘ 版本，或在文本里用 ⌃E、⌃K）：剩下的几条也是 Windows 的习惯，不会再有，
         // 全部不开，钩子整个拆掉（老用户升级后很快回到不听按键的样子；强制退出那条的 ⌥⌘esc 是系统键，钩子看不到，等不来“会了”）。
         if origin == .unanswered, memory.controlFamilySilenced { return [] }
+        if environment.screenSharing { return [] }
         var result = rules(for: origin, deviceChecked: deviceChecked).filter { !memory.ledger.isDone($0.rawValue) }
         if memory.controlFamilySilenced || environment.remappedModifiers { result = result.filter { !$0.controlFamily } }
         if environment.remapToolRunning { result.subtract([.imeShift, .screenshot]) }
-        if environment.homeLearned { result.remove(.hideApp) }
+        if environment.homeLearned { result.subtract(HabitRule.homeGroup) }
         if !environment.spotlightAvailable { result.remove(.desktopSearch) }
         if memory.shadeLearned { result.subtract([.titleDoubleClick, .titleFlickUp]) }
         if memory.desktopSearchExpired(now: now) { result.remove(.desktopSearch) }
+        // 🌐H 那条只对刚选 iPad 的人（选了不到 30 天）；记过哪天选的才算日子，没记过就还没开始数。
+        if memory.globeHomeExpired(now: now) { result.remove(.globeHome) }
+        // 他自己点过刘海回主屏幕（账里记过）：这一组一起不说。
+        if memory.homeGroupLearned { result.subtract(HabitRule.homeGroup) }
         return result
     }
 }
@@ -308,12 +331,17 @@ struct HabitMemory: Codable, Equatable {
     /// 桌面两指下滑那条从什么时候开始听（墙上时间）。它要听所有滚动，而“会了”要靠 ⌘空格，
     /// 钩子不一定看得到这个系统键（stuck-habits §4.10 第 3 条待真机确认），所以听满 14 天就收手。
     var desktopSearchSince: TimeInterval?
+    /// 他选了 iPad 的那天（墙上时间）：🌐H 那条只对选了不到 30 天的人开口。选的不是 iPad 时清掉，重新选了重新数。
+    var ipadSince: TimeInterval?
+    /// ⌃ 家族里他自己按出来的 ⌘ 版本（规则名）。点提示让刘海替他按的不算，只记进 ledger.used。
+    var userPressed: Set<String> = []
 
     static let emacsLimit = 3
     static let collapseLimit = 3
     /// ⌃ 家族里会了几条（他自己按过 ⌘ 版本、或点提示让刘海替他做过）到三条，就当他已经会了整个家族。
     static let familyLimit = 3
     static let desktopSearchDays: TimeInterval = 14
+    static let globeHomeDays: TimeInterval = 30
 
     init() {}
 
@@ -323,16 +351,49 @@ struct HabitMemory: Codable, Equatable {
         return now - since > Self.desktopSearchDays * 86_400
     }
 
+    /// 🌐H 那条过了期：选 iPad 已经超过 30 天。
+    func globeHomeExpired(now: TimeInterval) -> Bool {
+        guard let since = ipadSince else { return false }
+        return now - since > Self.globeHomeDays * 86_400
+    }
+
+    /// 点刘海回主屏幕这一组里，有一条记成会了，整组就都会了。
+    var homeGroupLearned: Bool { HabitRule.homeGroup.contains { ledger.used.contains($0.rawValue) } }
+
+    /// 他点过刘海回主屏幕：这一组（hideApp、i2、i5）都记成会了。返回有没有新记（要不要存盘）。
+    @discardableResult
+    mutating func learnedHome() -> Bool {
+        var changed = false
+        for rule in HabitRule.homeGroup where !ledger.used.contains(rule.rawValue) {
+            ledger.learned(rule.rawValue)
+            changed = true
+        }
+        return changed
+    }
+
     /// 已经是 Mac 老手：用过三个不同的 ⌘ 版本，或者在文本里用 ⌃E、⌃K 用了三次。
     var controlFamilySilenced: Bool {
         emacsHits >= Self.emacsLimit
-            || HabitRule.allCases.filter { $0.controlFamily && ledger.used.contains($0.rawValue) }.count >= Self.familyLimit
+            || HabitRule.allCases.filter { $0.controlFamily && userPressed.contains($0.rawValue) }.count >= Self.familyLimit
+    }
+
+    /// 他自己按了 Mac 上那一下：这条会了，⌃ 家族的还要记进他自己按过的。
+    mutating func learnedByUser(_ rule: HabitRule) {
+        ledger.learned(rule.rawValue)
+        if rule.controlFamily { userPressed.insert(rule.rawValue) }
+    }
+
+    /// ⌃C 或 ⌃X 的“⌃ 换 ⌘”已经说过了：⌃V 不再单独说。
+    func controlSwapAlreadyTold(_ rule: HabitRule) -> Bool {
+        rule == .paste && [HabitRule.copy, .cut].contains { (ledger.shown[$0.rawValue] ?? 0) > 0 }
     }
 
     /// 双击、往上甩那两条不用再说了：已经收起过三次，或者收起后停过 10 秒。
     var shadeLearned: Bool { heldShade || shadeCollapses >= Self.collapseLimit }
 
-    private enum CodingKeys: String, CodingKey { case ledger, shadeCollapses, heldShade, emacsHits, desktopSearchSince }
+    private enum CodingKeys: String, CodingKey {
+        case ledger, shadeCollapses, heldShade, emacsHits, desktopSearchSince, ipadSince, userPressed
+    }
 
     /// 缺哪一项就当没有（以后加字段、读老记录都不会整本作废）。
     init(from decoder: Decoder) throws {
@@ -342,6 +403,10 @@ struct HabitMemory: Codable, Equatable {
         heldShade = try values.decodeIfPresent(Bool.self, forKey: .heldShade) ?? false
         emacsHits = try values.decodeIfPresent(Int.self, forKey: .emacsHits) ?? 0
         desktopSearchSince = try values.decodeIfPresent(TimeInterval.self, forKey: .desktopSearchSince)
+        ipadSince = try values.decodeIfPresent(TimeInterval.self, forKey: .ipadSince)
+        // 老记录没有这一项：当时记的“会了”都按他自己按的算，升级后老手不会突然又被打扰。
+        userPressed = try values.decodeIfPresent(Set<String>.self, forKey: .userPressed)
+            ?? Set(HabitRule.allCases.filter { $0.controlFamily && ledger.used.contains($0.rawValue) }.map(\.rawValue))
     }
 }
 
@@ -690,12 +755,14 @@ enum HabitRules {
         if s.reacted { return .silent("reacted") }
         // 自带编辑器的网页壳（例如 Obsidian）：文本里整个 ⌃ 家族都不说。
         if rule.controlFamily, s.app == .webShell, s.focus.isText { return .silent("editor") }
+        // 访达里文件剪切不了（⌘X 是灰的）：⌃X 一律不说。改名框里的文字能剪切，但那时也不教，免得说了没用。
+        if rule == .cut, s.finder { return .silent("finder cannot cut files") }
         let weak = s.app != .native
         switch rule {
         case .copy, .cut:
             guard s.menu.supports else { return .silent("menu") }
             if s.pasteboardChanged { return .silent("copied") }
-            if rule == .cut, (s.selection ?? 0) <= 0, !s.finderSelection { return .silent("nothing selected") }
+            if rule == .cut, (s.selection ?? 0) <= 0 { return .silent("nothing selected") }
             return weak && !s.repeated ? .waitForRepeat : .teach
         case .paste:
             guard s.focus.isText else { return .silent("not text") }
@@ -745,8 +812,9 @@ enum HabitRules {
         case .menuBar:
             guard !s.focus.isText else { return .silent("typed an m") }
             return s.menuOpened ? .silent("found the menu") : .teach
-        case .imeShift, .hideApp, .dockRemoved, .titleDoubleClick, .titleFlickUp, .desktopSearch:
-            // 这几条的证据在各自的状态机里（HabitShiftTaps、HabitHideWatch……），走到这里已经齐了。
+        case .imeShift, .hideApp, .dockRemoved, .titleDoubleClick, .titleFlickUp, .desktopSearch,
+             .missionPeek, .globeHome, .launchpadTop:
+            // 这几条的证据在各自的状态机里（HabitShiftTaps、HabitHideWatch、HabitMissionPeek……），走到这里已经齐了。
             return .teach
         }
     }
@@ -1024,6 +1092,124 @@ struct HabitShadeWatch: Equatable {
     static var longest: TimeInterval { quick + max(hold, enlarge) + 1 }
 }
 
+/// iPad 第 2 条（i2，等真机）：三指上滑想回主屏幕，结果打开的是调度中心，瞥一眼就关。
+/// 调度中心开着不到 1.2 秒就关了，最前面的窗口没变（不是去挑窗口的）：算一次“瞥”。
+/// 关掉后 8 秒内他去 Dock 找 App、或停在刘海上：一次就说；没有这些后续，10 秒内再瞥一次才说。
+/// 靠开合通知的时间差判断，不轮询。按键、触发角、刘海打开的不算（opened 的 byOtherMeans）。
+struct HabitMissionPeek: Equatable {
+    static let quickClose: TimeInterval = 1.2
+    static let followUp: TimeInterval = 8
+    static let again: TimeInterval = 10
+
+    private var openedAt: TimeInterval?
+    private var lastPeekAt: TimeInterval?
+
+    /// 调度中心开了。byOtherMeans：是按键、触发角、刘海打开的，不是三指手势。
+    mutating func opened(at now: TimeInterval, byOtherMeans: Bool = false) {
+        openedAt = byOtherMeans ? nil : now
+    }
+
+    /// 调度中心关了。frontChanged：最前面的窗口变了（他是去挑窗口的）。返回 true：10 秒内第二次瞥，该说了。
+    mutating func closed(at now: TimeInterval, frontChanged: Bool) -> Bool {
+        defer { openedAt = nil }
+        guard let opened = openedAt, now >= opened, now - opened <= Self.quickClose, !frontChanged else { return false }
+        if let last = lastPeekAt, now >= last, now - last <= Self.again {
+            lastPeekAt = nil
+            return true
+        }
+        lastPeekAt = now
+        return false
+    }
+
+    /// 他去 Dock 找 App，或停在刘海上。返回 true：刚瞥完 8 秒内，该说了。
+    mutating func followedUp(at now: TimeInterval) -> Bool {
+        guard let last = lastPeekAt, now >= last, now - last <= Self.followUp else { return false }
+        lastPeekAt = nil
+        return true
+    }
+}
+
+/// iPad 第 5 条（i5，等真机）：按 🌐H 想回主屏幕，结果是把窗口推到一边。
+/// 一回：🌐H 之后 3 秒内又按 🌐H 把窗口叫回来（中间没点过别处），再 10 秒内他去 Dock 点开 App。
+/// 这样的一回出现两次（10 分钟内）才说。只对选了 iPad 不到 30 天的人（HabitMemory.ipadSince）。
+struct HabitGlobeHome: Equatable {
+    static let recall: TimeInterval = 3
+    static let dockOpen: TimeInterval = 10
+    static let episodeWindow: TimeInterval = 600
+
+    private var firstPressAt: TimeInterval?
+    private var recalledAt: TimeInterval?
+    private var episodes: [TimeInterval] = []
+
+    /// 按了一下 🌐H。
+    mutating func globeH(at now: TimeInterval) {
+        if let first = firstPressAt, now >= first, now - first <= Self.recall {
+            firstPressAt = nil
+            recalledAt = now
+        } else {
+            firstPressAt = now
+            recalledAt = nil
+        }
+    }
+
+    /// 点了一下。onDock：点在 Dock 上。返回 true：这是第二回，该说了。
+    mutating func clicked(onDock: Bool, at now: TimeInterval) -> Bool {
+        guard onDock else {
+            firstPressAt = nil
+            return false
+        }
+        guard let recalled = recalledAt, now >= recalled, now - recalled <= Self.dockOpen else { return false }
+        recalledAt = nil
+        episodes = episodes.filter { now - $0 <= Self.episodeWindow } + [now]
+        guard episodes.count >= 2 else { return false }
+        episodes = []
+        return true
+    }
+}
+
+/// iPad 第 18 条（i18，WindowShade 自己造成的撞车，等真机）：点刘海想让长页面回到顶部，结果打开了主屏幕。
+/// 主屏幕开了不到 1.5 秒（扣掉双击等待）就关了，期间没点任何图标；关掉后 5 秒内他在前台 App 里往上大幅滚动（400 点以上）。
+/// 这样出现两次（10 分钟内）才说“回页首按 ⌘↑”。关掉后 5 秒内按了 ⌘↑ 或 Home 是会了，由按键表认，不在这里。
+/// pageBelowTop：点之前页面不在顶部；false 就不盯，nil（读不到）照盯。
+struct HabitLaunchpadTop: Equatable {
+    static let quickClose: TimeInterval = 1.5
+    static let scrollWindow: TimeInterval = 5
+    static let distance: CGFloat = 400
+    static let episodeWindow: TimeInterval = 600
+
+    private var openedAt: TimeInterval?
+    private var pageBelowTop: Bool?
+    private var closedAt: TimeInterval?
+    private var episodes: [TimeInterval] = []
+
+    mutating func homeOpened(at now: TimeInterval, pageBelowTop: Bool? = nil) {
+        openedAt = now
+        self.pageBelowTop = pageBelowTop
+        closedAt = nil
+    }
+
+    /// 主屏幕关了。launched：关的原因是点了图标。wait：双击等待的时间（点刘海要等一下才知道是不是双击）。
+    mutating func homeClosed(at now: TimeInterval, launched: Bool, wait: TimeInterval = 0) {
+        defer { openedAt = nil }
+        guard let opened = openedAt, now >= opened, pageBelowTop != false, !launched,
+              now - opened - max(0, wait) < Self.quickClose else {
+            closedAt = nil
+            return
+        }
+        closedAt = now
+    }
+
+    /// 前台里一次完整的两指滚动结束了。deltaY 为正是页面往顶部走。返回 true：这是第二回，该说了。
+    mutating func scrolled(deltaY: CGFloat, at now: TimeInterval) -> Bool {
+        guard let closed = closedAt, now >= closed, now - closed <= Self.scrollWindow, deltaY >= Self.distance else { return false }
+        closedAt = nil
+        episodes = episodes.filter { now - $0 <= Self.episodeWindow } + [now]
+        guard episodes.count >= 2 else { return false }
+        episodes = []
+        return true
+    }
+}
+
 // MARK: - 说什么、演什么
 
 /// 刘海里那一小段演示（App/NotchCoach.swift 画）。
@@ -1039,19 +1225,19 @@ enum HabitDemo: Equatable {
 }
 
 enum HabitWords {
-    static let controlFamily = "常用快捷键把 ⌃ 换成 ⌘"
+    static var controlFamily: String { WSL10n.text("habit.controlFamily", zh: "常用快捷键把 ⌃ 换成 ⌘") }
 
     /// 读不到菜单时用系统菜单的叫法。
     static func fallback(_ rule: HabitRule) -> String {
         switch rule {
-        case .copy: return "拷贝"
-        case .paste: return "粘贴"
-        case .cut: return "剪切"
-        case .undo: return "撤销"
-        case .save: return "存储"
-        case .closeTab: return "关闭标签页"
-        case .closeWindow: return "关闭窗口"
-        case .trash: return "移到废纸篓"
+        case .copy: return WSL10n.text("habit.fallback.copy", zh: "拷贝")
+        case .paste: return WSL10n.text("habit.fallback.paste", zh: "粘贴")
+        case .cut: return WSL10n.text("habit.fallback.cut", zh: "剪切")
+        case .undo: return WSL10n.text("habit.fallback.undo", zh: "撤销")
+        case .save: return WSL10n.text("habit.fallback.save", zh: "存储")
+        case .closeTab: return WSL10n.text("habit.fallback.closeTab", zh: "关闭标签页")
+        case .closeWindow: return WSL10n.text("habit.fallback.closeWindow", zh: "关闭窗口")
+        case .trash: return WSL10n.text("habit.fallback.trash", zh: "移到废纸篓")
         default: return ""
         }
     }
@@ -1063,7 +1249,7 @@ enum HabitWords {
         for suffix in ["…", "..."] where text.hasSuffix(suffix) { text = String(text.dropLast(suffix.count)) }
         text = text.trimmingCharacters(in: .whitespaces)
         if rule == .undo {
-            if text.hasPrefix("撤销") { return "撤销" }
+            if text.hasPrefix("撤销") { return WSL10n.text("habit.fallback.undo", zh: "撤销") }
             if text.lowercased().hasPrefix("undo") { return "Undo" }
         }
         guard !text.isEmpty, text.count <= 10, !text.contains("\n") else { return fallback }
@@ -1094,35 +1280,71 @@ enum HabitWords {
                       shortcut: String? = nil) -> (title: String, subtitle: String) {
         let command = command(menuTitle, for: rule)
         switch rule {
-        case .copy: return (join("Mac 上", command, "按 ⌘C"), controlFamily)
-        case .cut: return (join("Mac 上", command, "按 ⌘X"), controlFamily)
+        case .copy: return (WSL10n.text("habit.copy.title", zh: join("Mac 上", command, "按 ⌘C"), command), controlFamily)
+        case .cut: return (WSL10n.text("habit.cut.title", zh: join("Mac 上", command, "按 ⌘X"), command), controlFamily)
         case .paste:
-            return (join("Mac 上", command, "按 ⌘V"), variant == .pagedDown ? "⌃V 在 Mac 上是往下翻页" : controlFamily)
-        case .undo: return (join("Mac 上", command, "按 ⌘Z"), "重做是 ⇧⌘Z")
-        case .save: return (join("Mac 上", command, "按 ⌘S"), controlFamily)
-        case .closeTab: return (join(command, "按 ⌘W"), finder ? "" : "App 不会跟着退出，退出按 ⌘Q")
-        case .closeWindow: return (join(command, "按 ⌘W"), finder ? "" : "退出整个 App 按 ⌘Q")
-        case .trash: return (join(command, "按 ⌘delete"), "废纸篓就是回收站")
-        case .lineEnds: return ("到行首、行尾按 ⌘← ⌘→", "Home、End 在 Mac 上只滚动页面")
-        case .forceQuit: return ("强制退出 App 按 ⌥⌘esc", "看谁占资源，打开“活动监视器”")
+            return (WSL10n.text("habit.paste.title", zh: join("Mac 上", command, "按 ⌘V"), command),
+                    variant == .pagedDown ? WSL10n.text("habit.paste.pagedDown", zh: "⌃V 在 Mac 上是往下翻页") : controlFamily)
+        case .undo: return (WSL10n.text("habit.undo.title", zh: join("Mac 上", command, "按 ⌘Z"), command), WSL10n.text("habit.undo.sub", zh: "重做是 ⇧⌘Z"))
+        case .save: return (WSL10n.text("habit.save.title", zh: join("Mac 上", command, "按 ⌘S"), command), controlFamily)
+        case .closeTab: return (WSL10n.text("habit.closeTab.title", zh: join(command, "按 ⌘W"), command), finder ? "" : WSL10n.text("habit.closeTab.sub", zh: "App 不会跟着退出，退出按 ⌘Q"))
+        case .closeWindow: return (WSL10n.text("habit.closeWindow.title", zh: join(command, "按 ⌘W"), command), finder ? "" : WSL10n.text("habit.closeWindow.sub", zh: "退出整个 App 按 ⌘Q"))
+        case .trash: return (WSL10n.text("habit.trash.title", zh: join(command, "按 ⌘delete"), command), WSL10n.text("habit.trash.sub", zh: "废纸篓就是回收站"))
+        case .lineEnds: return (WSL10n.text("habit.lineEnds.title", zh: "到行首、行尾按 ⌘← ⌘→"), WSL10n.text("habit.lineEnds.sub", zh: "Home、End 在 Mac 上只滚动页面"))
+        case .forceQuit: return (WSL10n.text("habit.forceQuit.title", zh: "强制退出 App 按 ⌥⌘esc"), WSL10n.text("habit.forceQuit.sub", zh: "看谁占资源，打开“活动监视器”"))
         case .screenshot:
-            return (variant == .window ? "截这扇窗口：⇧⌘4 再按空格" : "截一块屏幕按 ⇧⌘4", "整屏按 ⇧⌘3；加按 ⌃ 存进剪贴板")
-        case .symbols: return ("打特殊符号按 ⌃⌘空格", "在“表情与符号”里搜名字")
+            return (variant == .window ? WSL10n.text("habit.screenshot.window", zh: "截这扇窗口：⇧⌘4 再按空格") : WSL10n.text("habit.screenshot.title", zh: "截一块屏幕按 ⇧⌘4"),
+                    WSL10n.text("habit.screenshot.sub", zh: "整屏按 ⇧⌘3；加按 ⌃ 存进剪贴板"))
+        case .symbols: return (WSL10n.text("habit.symbols.title", zh: "打特殊符号按 ⌃⌘空格"), WSL10n.text("habit.symbols.sub", zh: "在“表情与符号”里搜名字"))
         case .imeShift:
             switch variant {
-            case .capsLock: return ("切换中英文：轻按 Caps Lock", "按住它才是大写锁定")
-            case .globe: return ("切换中英文按一下 🌐", "")
-            default: return ("切换中英文按 ⌃空格", "")
+            case .capsLock: return (WSL10n.text("habit.ime.capsLock.title", zh: "切换中英文：轻按 Caps Lock"), WSL10n.text("habit.ime.capsLock.sub", zh: "按住它才是大写锁定"))
+            case .globe: return (WSL10n.text("habit.ime.globe.title", zh: "切换中英文按一下 🌐"), "")
+            default: return (WSL10n.text("habit.ime.title", zh: "切换中英文按 ⌃空格"), "")
             }
         case .hideApp:
-            guard variant == .noNotch else { return ("⌘H 是隐藏 App", "回到主屏幕：点一下刘海") }
-            return ("⌘H 是隐藏 App", shortcut.map { "回到主屏幕按 \($0)" } ?? "")
-        case .menuBar: return ("菜单栏一直在屏幕最上面", "用键盘走到菜单栏按 ⌃F2")
-        case .dockRemoved: return ("图标从 Dock 移除了", "并排按 🌐⌃←")
-        case .titleDoubleClick: return ("双击标题栏是收起窗口", "铺满屏幕：往下甩一下标题栏")
-        case .titleFlickUp: return ("往上甩标题栏是收起窗口", "铺满屏幕：往下甩一下标题栏")
-        case .desktopSearch: return ("搜索按 \(shortcut ?? "⌘空格")，和 iPad 一样", "")
+            let title = WSL10n.text("habit.hideApp.title", zh: "⌘H 是隐藏 App")
+            guard variant == .noNotch else { return (title, WSL10n.text("habit.hideApp.notch", zh: "回到主屏幕：点一下刘海")) }
+            return (title, shortcut.map { WSL10n.text("habit.hideApp.key", zh: "回到主屏幕按 \($0)", $0) } ?? "")
+        case .menuBar: return (WSL10n.text("habit.menuBar.title", zh: "菜单栏一直在屏幕最上面"), WSL10n.text("habit.menuBar.sub", zh: "用键盘走到菜单栏按 ⌃F2"))
+        case .dockRemoved: return (WSL10n.text("habit.dockRemoved.title", zh: "图标从 Dock 移除了"), WSL10n.text("habit.dockRemoved.sub", zh: "并排按 🌐⌃←"))
+        case .titleDoubleClick: return (WSL10n.text("habit.titleDoubleClick.title", zh: "双击标题栏是收起窗口"), WSL10n.text("habit.title.fill", zh: "铺满屏幕：往下甩一下标题栏"))
+        case .titleFlickUp: return (WSL10n.text("habit.titleFlickUp.title", zh: "往上甩标题栏是收起窗口"), WSL10n.text("habit.title.fill", zh: "铺满屏幕：往下甩一下标题栏"))
+        case .desktopSearch:
+            let key = shortcut ?? WSL10n.text("habit.key.cmdSpace", zh: "⌘空格")
+            return (WSL10n.text("habit.desktopSearch.title", zh: "搜索按 \(key)，和 iPad 一样", key), "")
+        case .missionPeek, .globeHome:
+            let why = rule == .missionPeek
+                ? WSL10n.text("habit.missionPeek.why", zh: "三指上滑是调度中心")
+                : WSL10n.text("habit.globeHome.why", zh: "🌐H 把窗口推到了一边")
+            // 没有刘海可点：读启动台快捷键的实际绑定，没绑定就只说发生了什么。
+            guard variant == .noNotch else { return (WSL10n.text("habit.hideApp.notch", zh: "回到主屏幕：点一下刘海"), why) }
+            guard let shortcut else { return (why, "") }
+            return (WSL10n.text("habit.hideApp.key", zh: "回到主屏幕按 \(shortcut)", shortcut), why)
+        case .launchpadTop: return (WSL10n.text("habit.launchpadTop.title", zh: "回页首按 ⌘↑"), WSL10n.text("habit.launchpadTop.sub", zh: "点刘海打开的是主屏幕"))
         }
+    }
+
+    /// 同一条第 2 次起的副句：告诉他点一下就替他按。没有对应键的操作写“替你做一次”。
+    static func pressHint(_ rule: HabitRule, shortcut: String? = nil) -> String {
+        let key: String?
+        switch rule {
+        case .copy, .paste, .undo, .save, .closeTab, .cut, .trash, .closeWindow, .symbols, .lineEnds, .forceQuit, .screenshot,
+             .launchpadTop:
+            key = rule.taughtCombo?.label
+        case .desktopSearch: key = shortcut ?? WSL10n.text("habit.key.cmdSpace", zh: "⌘空格")
+        default: key = nil
+        }
+        guard let key, !key.isEmpty else { return WSL10n.text("habit.pressHint.once", zh: "点一下，替你做一次") }
+        return WSL10n.text("habit.pressHint.key", zh: "点一下，替你按 \(key)", key)
+    }
+
+    /// 提示整体念给读屏的话：主句、副句、再说点一下会怎样。副句已经是那句提示时不重复。
+    static func accessibilityLabel(title: String, subtitle: String, hint: String) -> String {
+        var parts = [title]
+        if !subtitle.isEmpty, subtitle != hint { parts.append(subtitle) }
+        parts.append(hint)
+        return spoken(parts.joined(separator: WSL10n.text("habit.sentenceJoin", zh: "。")))
     }
 
     /// 念给 VoiceOver 的样子：修饰键符号换成键名（⌃ 念 Control），第一次听到也知道是哪个键。
@@ -1148,6 +1370,9 @@ enum HabitWords {
                      shortcut: [String]? = nil) -> HabitDemo {
         let from = pressed?.parts ?? []
         switch rule {
+        case .missionPeek, .globeHome:
+            guard variant == .noNotch else { return .notchHome }
+            return .keys(from: rule == .globeHome ? ["🌐", "H"] : [], to: shortcut ?? [])
         case .hideApp:
             // 没有刘海可点：演他按的 ⌘H，和启动台快捷键（没绑定就只有 ⌘H 那一排）。
             guard variant == .noNotch else { return .notchHome }
@@ -1155,16 +1380,30 @@ enum HabitWords {
         case .titleDoubleClick, .titleFlickUp: return .flickDown
         case .menuBar: return .menuBar
         case .dockRemoved: return .keys(from: [], to: ["🌐", "⌃", "←"])
-        case .desktopSearch: return .keys(from: [], to: shortcut ?? ["⌘", "空格"])
+        case .desktopSearch: return .keys(from: [], to: shortcut ?? ["⌘", WSL10n.text("habit.key.space", zh: "空格")])
         case .lineEnds: return .keys(from: from, to: ["⌘", variant == .end ? "→" : "←"])
-        case .symbols: return .keys(from: ["⌥", "1", "2"], to: ["⌃", "⌘", "空格"])
+        case .symbols: return .keys(from: ["⌥", "1", "2"], to: ["⌃", "⌘", WSL10n.text("habit.key.space", zh: "空格")])
         case .imeShift:
             switch variant {
             case .capsLock: return .keys(from: ["⇧"], to: ["caps lock"])
             case .globe: return .keys(from: ["⇧"], to: ["🌐"])
-            default: return .keys(from: ["⇧"], to: ["⌃", "空格"])
+            default: return .keys(from: ["⇧"], to: ["⌃", WSL10n.text("habit.key.space", zh: "空格")])
             }
         default: return .keys(from: from, to: rule.taughtCombo?.parts ?? [])
+        }
+    }
+}
+
+// MARK: - 来处推断（没答来处时，只看键位）
+
+extension HabitRule {
+    /// 按了这一条的旧习惯键，说明他多半从哪来（只用来数“来处推断”，不教任何东西）。
+    /// 单按 delete、Home/End、⌘H 是 Mac 上也常按的键，不算。
+    var guessedOrigin: SwitcherOrigin? {
+        switch self {
+        case .copy, .paste, .undo, .save, .closeTab, .cut, .forceQuit, .closeWindow: return .windows
+        case .menuBar: return .ipad
+        default: return nil
         }
     }
 }

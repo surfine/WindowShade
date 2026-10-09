@@ -1,0 +1,6 @@
+COMMAND     PID  USER   FD   TYPE             DEVICE SIZE/OFF NODE NAME
+RemoteDev 77790 aaron    4u  IPv6 0x2d855db590541db2      0t0  TCP *:59671 (LISTEN)
+RemoteDev 77790 aaron    6u  IPv6 0xb5277bc2327c7d44      0t0  TCP *:59672 (LISTEN)
+RemoteDev 77790 aaron    8u  IPv6 0x512fc5ff3a5cbece      0t0  TCP *:59673 (LISTEN)
+
+exit=0

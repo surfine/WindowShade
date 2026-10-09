@@ -132,7 +132,10 @@ final class TrackpadGestureController {
     private var localMonitor: Any?
     private let pinchTap = PinchEventTap()
     private var pinchTapRetry: Timer?
-    private var session: Session?
+    private var session: Session? {
+        // 合成输入监听在输入线程上要知道“有没有进行中的手势”，才能和 handle 开头的 guard 一样过滤。
+        didSet { if (oldValue == nil) != (session == nil) { let on = session != nil; GlobalInputFilter.publish { $0.titleSessionActive = on } } }
+    }
     /// 松手时还没确认的那一下（见 finish）：新手势开始、手势被取消时作废，和进行中的手势一样。
     private var unconfirmed: Session?
     var undoRecords: [CGWindowID: PlacementUndo] = [:]
@@ -161,7 +164,9 @@ final class TrackpadGestureController {
     private var pressureMonitor: Any?
     private var flickMonitor: Any?
     /// 正在被拖着的标题栏（见 FlickDrag）。
-    private var flickDrag: FlickDrag?
+    private var flickDrag: FlickDrag? {
+        didSet { if (oldValue == nil) != (flickDrag == nil) { let on = flickDrag != nil; GlobalInputFilter.publish { $0.flickDragActive = on } } }
+    }
     /// 正在滑进位置的窗口（甩一下之后）。
     private var glides: [CGWindowID: WindowGlide] = [:]
     /// 正在用替身滑的窗口。
@@ -216,16 +221,15 @@ final class TrackpadGestureController {
                 return self.handle(event, ownWindow: event.window) ? nil : event
             }
         }
+        // 全局的滚动和左键：打开合成输入监听时挂在输入线程的 tap 上先过滤，否则照旧是 NSEvent 全局监听（GlobalInputFilter.swift）。
         if wanted, owner.ownsGlobalInput, globalMonitor == nil {
-            globalMonitor = NSEvent.addGlobalMonitorForEvents(matching: [.scrollWheel]) {
-                [weak self] event in
+            globalMonitor = GlobalInputFilter.shared.addMonitor(.titleScroll) { [weak self] event in
                 _ = self?.handle(event, ownWindow: nil)
             }
         }
         if wanted, owner.ownsGlobalInput, flickMonitor == nil {
-            flickMonitor = NSEvent.addGlobalMonitorForEvents(matching: [.leftMouseDown, .leftMouseDragged, .leftMouseUp]) {
-                [weak self] event in
-                MainActor.assumeIsolated { self?.handleFlick(event) }
+            flickMonitor = GlobalInputFilter.shared.addMonitor(.titleFlick) { [weak self] event in
+                self?.handleFlick(event)
             }
         }
         if wanted, owner.ownsGlobalInput {
@@ -236,9 +240,9 @@ final class TrackpadGestureController {
         if !wanted {
             pinchTapRetry?.invalidate()
             pinchTapRetry = nil
-            if let monitor = globalMonitor { NSEvent.removeMonitor(monitor) }
+            if let monitor = globalMonitor { GlobalInputFilter.shared.removeMonitor(monitor) }
             if let monitor = localMonitor { NSEvent.removeMonitor(monitor) }
-            if let monitor = flickMonitor { NSEvent.removeMonitor(monitor) }
+            if let monitor = flickMonitor { GlobalInputFilter.shared.removeMonitor(monitor) }
             globalMonitor = nil
             localMonitor = nil
             flickMonitor = nil
@@ -285,7 +289,7 @@ final class TrackpadGestureController {
         stopCheck?.cancel()
         dropUnconfirmed(reason: reason)
         guard let current = session else { return }
-        if current.stripHorizontal == true { strips.endScroll() }
+        if current.stripHorizontal == true { strips.endScroll(at: clock()) }
         wlog("gesture: cancel reason=\(reason)")
         stopFollowing(current)
         session?.recognizer.cancel()
@@ -414,10 +418,10 @@ final class TrackpadGestureController {
             strips.scroll(fingerDX: session.stripTravel.dx, at: clock())
         case .ended:
             self.session = nil
-            strips.endScroll()
+            strips.endScroll(at: clock())
         case .cancelled:
             self.session = nil
-            strips.endScroll()
+            strips.endScroll(at: clock())
         }
         return session.consumes
     }
@@ -1128,6 +1132,8 @@ final class TrackpadGestureController {
         var samples: [FlickSample]
         /// 按下时就去查好的辅助功能窗口，离手时不必再现查（现查要十几到几十毫秒）。
         var element: AXUIElement?
+        /// 窗口自己声明的最小尺寸（后台读 AXMinimumSize，读不到就是 nil）：落点小岛用它判断放不放得下。
+        var minimumSize: CGSize?
         /// 这一下拖动里触控板上最多同时有几根手指（0：不是触控板，或者没收到触摸）。
         var maxTouches: Int
         /// 按下时手指就在触控板上：这一下是用触控板拖的（三指拖移、按下触控板拖），手指离开才算离手。
@@ -1203,10 +1209,17 @@ final class TrackpadGestureController {
             }
             DispatchQueue.global(qos: .userInitiated).async { [weak self] in
                 let win = appWindows(pid: pid).first { windowID(of: $0) == id }
+                let minimum: CGSize? = {
+                    var size = CGSize.zero
+                    guard let win, let value = copyAXValue(win, "AXMinimumSize"),
+                          AXValueGetValue(value, .cgSize, &size) else { return nil }
+                    return size
+                }()
                 DispatchQueue.main.async {
                     MainActor.assumeIsolated {
                         guard let self, self.flickDrag === drag else { return }
                         drag.element = win
+                        drag.minimumSize = minimum
                     }
                 }
             }
@@ -1235,7 +1248,8 @@ final class TrackpadGestureController {
                 shake(keeping: drag.id, pid: drag.pid)
             }
             if drag.moving {
-                owner.notch.dragMoved(to: point)
+                owner.notch.dragMinimumSize = drag.minimumSize
+                owner.notch.dragMoved(to: point, downAt: drag.down)
                 if hypot(point.x - drag.down.x, point.y - drag.down.y) > 16, !owner.slideOver.isSlideOver(drag.id) {
                     owner.slideOver.dropHint.update(id: drag.id, at: point)
                     owner.pip.dropHint.update(id: drag.id, at: point)
@@ -1440,6 +1454,15 @@ final class TrackpadGestureController {
             return nil
         }
         let (outcome, measured) = judgeFlick(drag, source: source, signal: signal, release: release, lifted: lifted)
+        // 没被当成甩一下、也不是侧拉的窗口：松手时指针在另一扇窗口上，两扇并排（默认关闭）。
+        if outcome != nil, source != .pointerStopped, drag.moving, !drag.resizing, !owner.slideOver.isSlideOver(drag.id),
+           dropSplit(id: drag.id, pid: drag.pid, frameAtDown: drag.frameAtDown, down: drag.down, release: release,
+                     stillOpen: Self.dragStillOpen(source)) {
+            owner.notch.cancelDrag()
+            owner.slideOver.dropHint.cancel(); owner.pip.dropHint.cancel()
+            releaseGrab(drag)
+            return nil
+        }
         // 侧拉的窗口被拖着放下（不是甩）：靠回边上、换边，或者拖到中间就退出侧拉。
         if outcome != nil, owner.slideOver.isSlideOver(drag.id) { owner.slideOver.dragEnded(id: drag.id, moved: hypot(release.x - drag.down.x, release.y - drag.down.y) > 4) }
         let gap = signal - (drag.samples.last?.time ?? signal)
@@ -1562,7 +1585,7 @@ final class TrackpadGestureController {
     }
 
     /// 浮窗挂在目标位置的标题栏下，写着排成了什么。
-    private func announceFlick(_ action: GestureAction, id: CGWindowID, at target: CGRect, screen: NSScreen?,
+    func announceFlick(_ action: GestureAction, id: CGWindowID, at target: CGRect, screen: NSScreen?,
                                note: String? = nil) {
         hud.update(GestureFrame(action: action, progress: 1, available: true), anchor: flickAnchor(target), screen: screen)
         if let note { hud.note(note) }
@@ -1649,7 +1672,7 @@ final class TrackpadGestureController {
     }
 
     /// 不走窗口表缓存：判断“窗口有没有跟着指针动”要的是此刻的位置。
-    private func freshWindowInfo(_ id: CGWindowID) -> [String: Any]? {
+    func freshWindowInfo(_ id: CGWindowID) -> [String: Any]? {
         // 这个接口要的是窗口号本身当元素，不是 CFNumber；传 NSNumber 会一扇窗也查不到。
         var value = UnsafeRawPointer(bitPattern: UInt(id))
         guard let ids = CFArrayCreate(kCFAllocatorDefault, &value, 1, nil) else { return nil }

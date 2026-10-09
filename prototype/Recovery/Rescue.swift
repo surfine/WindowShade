@@ -210,7 +210,7 @@ extension AppDelegate {
                                                        preferredDisplayID: action.preferredDisplayID))
     }
 
-    func rescueOffscreenWindows(silent: Bool) {
+    func rescueOffscreenWindows(silent: Bool, announceRestored: Bool = false) {
         guard !isRescuingOffscreenWindows else {
             isRescueQueued = true
             return
@@ -267,50 +267,109 @@ extension AppDelegate {
                 }
                 self.pruneShadeJournal(reason: "rescue")
                 // 先恢复、逐条验证，再清理：验证失败的 entry 保留，下一轮重试。
-                var verifiedIDs = result.resolvedIDs
-                for action in result.actions {
-                    let target = action.id == 0 ? action.target : self.clampedRescueTarget(for: action)
-                    let applied = OffscreenRescueAction(
-                        id: action.id, win: action.win, target: target, size: action.size,
-                        pid: action.pid, hide: action.hide, targetAlpha: action.targetAlpha,
-                        preferredDisplayID: action.preferredDisplayID
-                    )
-                    guard applied.id != 0 else {
-                        setAXSize(applied.win, applied.size)
-                        setAXPosition(applied.win, applied.target)
-                        raiseAXWindow(applied.win)
-                        continue
-                    }
-                    if let alpha = applied.targetAlpha {
-                        _ = PrivateSLSWindowMover.shared.setAlpha(id: applied.id, alpha: alpha)
-                    }
-                    if applied.hide == .hidden, let pid = applied.pid {
-                        _ = NSRunningApplication(processIdentifier: pid)?.unhide()
-                    }
-                    if applied.hide == .minimized { setAXMinimized(applied.win, false) }
-                    setAXSize(applied.win, applied.size)
-                    setAXPosition(applied.win, applied.target)
-                    raiseAXWindow(applied.win)
-                    if self.rescueActionVerified(applied) {
-                        verifiedIDs.insert(applied.id)
-                        wlog("journal: rescue verified id=\(applied.id)")
-                    } else {
-                        wlog("journal: rescue unverified, keep entry for retry id=\(applied.id)")
-                    }
-                }
-                for restore in result.alphaRestores {
-                    if PrivateSLSWindowMover.shared.setAlpha(id: restore.id, alpha: restore.targetAlpha),
-                       self.alphaRestoreVerified(restore) {
-                        verifiedIDs.insert(restore.id)
-                        wlog("journal: alpha rescue verified id=\(restore.id)")
-                    } else {
-                        wlog("journal: alpha rescue unverified, keep entry for retry id=\(restore.id)")
-                    }
-                }
-                self.pruneRescuedJournalEntries(rescuedIDs: verifiedIDs)
-                wlog("rescueOffscreenWindows: rescued=\(rescued)")
-                finish(rescued == 0 && !silent ? "没有需要救援的窗口" : nil)
+                self.applyRescueBatch(result.actions, from: 0,
+                                      alphaRestores: result.alphaRestores,
+                                      verifiedSoFar: result.resolvedIDs,
+                                      rescued: rescued, silent: silent, announceRestored: announceRestored, finish: finish)
             }
         }
+    }
+
+    /// 写回一批：按单调时钟花满 1.5 秒就停，剩下的用 DispatchQueue.main.async 接着做，
+    /// 每批同样 1.5 秒，主线程不会被一长串窗口一口气占住。每批结束都按已验证的 id 清理 journal
+    /// （只删验证过的，没轮到的条目原样保留）；最后一批做完 alpha 恢复再收尾。
+    func applyRescueBatch(_ actions: [OffscreenRescueAction], from start: Int,
+                          alphaRestores: [JournalAlphaRestore],
+                          verifiedSoFar: Set<CGWindowID>, rescued: Int, silent: Bool, announceRestored: Bool = false,
+                          finish: @escaping @Sendable (String?) -> Void) {
+        var verifiedIDs = verifiedSoFar
+        let next = AXBatchBudget().run(actions, from: start) { action in
+            if applyRescueAction(action) { verifiedIDs.insert(action.id) }
+        }
+        if next < actions.count {
+            pruneRescuedJournalEntries(rescuedIDs: verifiedIDs)
+            wlog("rescue: batch budget spent; \(actions.count - next) actions continue next turn")
+            let carriedIDs = verifiedIDs
+            DispatchQueue.main.async { [weak self] in
+                MainActor.assumeIsolated {
+                    guard let self else { return }
+                    // 与扫描后的检查同理：这期间用户收起了窗口，剩下的这批不再写回，
+                    // 免得把刚停车的窗口又挪回来；没轮到的 journal 条目留给下一轮救援。
+                    if !self.shaded.isEmpty {
+                        wlog("rescue: shaded windows appeared between batches; skip \(actions.count - next) actions")
+                        finish(nil)
+                        return
+                    }
+                    self.applyRescueBatch(actions, from: next, alphaRestores: alphaRestores,
+                                          verifiedSoFar: carriedIDs, rescued: rescued,
+                                          silent: silent, announceRestored: announceRestored, finish: finish)
+                }
+            }
+            return
+        }
+        for restore in alphaRestores {
+            if PrivateSLSWindowMover.shared.setAlpha(id: restore.id, alpha: restore.targetAlpha),
+               alphaRestoreVerified(restore) {
+                verifiedIDs.insert(restore.id)
+                wlog("journal: alpha rescue verified id=\(restore.id)")
+            } else {
+                wlog("journal: alpha rescue unverified, keep entry for retry id=\(restore.id)")
+            }
+        }
+        pruneRescuedJournalEntries(rescuedIDs: verifiedIDs)
+        wlog("rescueOffscreenWindows: rescued=\(rescued)")
+        // 启动时放回了窗口：刘海上说一句（放回 0 扇不说话）。
+        if announceRestored, let line = RescueAnnounce.line(restored: rescued) {
+            _ = MainActor.assumeIsolated {
+                notch.announce(line.headline, detail: line.detail, tone: .info)
+            }
+        }
+        finish(rescued == 0 && !silent ? "没有需要救援的窗口" : nil)
+    }
+
+    /// 写回一个窗口；返回这条 journal 是否可以清掉（只有验证通过的 journal 条目才返回 true）。
+    /// 窗口所属 App 正被熔断（刚有 AX 调用等满预算）时不碰它，条目留给下一轮。
+    func applyRescueAction(_ action: OffscreenRescueAction) -> Bool {
+        let target = action.id == 0 ? action.target : clampedRescueTarget(for: action)
+        let applied = OffscreenRescueAction(
+            id: action.id, win: action.win, target: target, size: action.size,
+            pid: action.pid, hide: action.hide, targetAlpha: action.targetAlpha,
+            preferredDisplayID: action.preferredDisplayID
+        )
+        var pid = applied.pid ?? 0
+        if pid <= 0 { AXUIElementGetPid(applied.win, &pid) }   // 本地取值，不发消息
+        prepareBudgeted(applied.win)
+        if AXStallBreaker.shared.shouldSkip(pid) {
+            wlog("journal: rescue skipped, app not responding; keep entry for retry id=\(applied.id) pid=\(pid)")
+            return false
+        }
+        guard applied.id != 0 else {
+            timedSet(pid: pid) { setAXSize(applied.win, applied.size) }
+            timedSet(pid: pid) { setAXPositionReturningError(applied.win, applied.target) }
+            timedRaise(applied.win, pid: pid)
+            return false
+        }
+        if let alpha = applied.targetAlpha {
+            _ = PrivateSLSWindowMover.shared.setAlpha(id: applied.id, alpha: alpha)
+        }
+        if applied.hide == .hidden, let pid = applied.pid {
+            _ = NSRunningApplication(processIdentifier: pid)?.unhide()
+        }
+        if applied.hide == .minimized {
+            timedSet(pid: pid) { setAXMinimizedReturningError(applied.win, false) }
+        }
+        timedSet(pid: pid) { setAXSize(applied.win, applied.size) }
+        timedSet(pid: pid) { setAXPositionReturningError(applied.win, applied.target) }
+        timedRaise(applied.win, pid: pid)
+        if AXStallBreaker.shared.shouldSkip(pid) {
+            wlog("journal: rescue unverified, app stopped responding; keep entry for retry id=\(applied.id) pid=\(pid)")
+            return false
+        }
+        if rescueActionVerified(applied) {
+            wlog("journal: rescue verified id=\(applied.id)")
+            return true
+        }
+        wlog("journal: rescue unverified, keep entry for retry id=\(applied.id)")
+        return false
     }
 }

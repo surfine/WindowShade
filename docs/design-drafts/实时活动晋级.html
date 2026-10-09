@@ -1,0 +1,1397 @@
+<!doctype html>
+<html lang="zh-Hans">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>实时活动晋级</title>
+<style>
+:root{
+  color-scheme:light;
+  --page:#eceef2; --panel:#fbfbfc; --line:rgba(0,0,0,.1); --ink:#1d1d1f; --muted:#5f6068; --faint:#6e6f76;
+  --accent:#0058cc; --bad:#b3261e; --ok:#0e6436; --hw:#d6336c; --warn:#8a5a00;
+  --wall:radial-gradient(90% 70% at 12% 8%,#9cc9ff 0%,transparent 62%),radial-gradient(80% 70% at 92% 18%,#b9b3ff 0%,transparent 60%),linear-gradient(160deg,#cfe3ff,#8fb4ef);
+  --menu:#101114; --menubg:rgba(255,255,255,.18);
+  --sans:-apple-system,BlinkMacSystemFont,"SF Pro Text","PingFang SC","Hiragino Sans GB",sans-serif;
+  --mono:ui-monospace,"SF Mono",Menlo,monospace;
+}
+@media (prefers-color-scheme:dark){:root:not([data-theme="light"]){
+  color-scheme:dark;
+  --page:#121316; --panel:#1b1c20; --line:rgba(255,255,255,.12); --ink:#f2f2f5; --muted:#a4a5ad; --faint:#8e8f97;
+  --accent:#5a9cff; --bad:#ff8a80; --ok:#4cc38a; --hw:#ff6b9d; --warn:#f0b450;
+  --wall:linear-gradient(160deg,#10192e,#0b1222); --menu:#f4f5f8; --menubg:rgba(0,0,0,.22);
+}}
+:root[data-theme="dark"]{
+  color-scheme:dark;
+  --page:#121316; --panel:#1b1c20; --line:rgba(255,255,255,.12); --ink:#f2f2f5; --muted:#a4a5ad; --faint:#8e8f97;
+  --accent:#5a9cff; --bad:#ff8a80; --ok:#4cc38a; --hw:#ff6b9d; --warn:#f0b450;
+  --wall:linear-gradient(160deg,#10192e,#0b1222); --menu:#f4f5f8; --menubg:rgba(0,0,0,.22);
+}
+*{box-sizing:border-box}
+body{margin:0;background:var(--page);color:var(--ink);font:15px/1.55 var(--sans);padding:28px 16px 64px}
+.wrap{max-width:1040px;margin:0 auto}
+h1{font-size:28px;letter-spacing:-.02em;margin:0 0 8px}
+h2{font-size:19px;margin:40px 0 6px;letter-spacing:-.01em}
+h3{font-size:14px;margin:0 0 6px}
+.lede{color:var(--muted);max-width:76ch;margin:0 0 18px}
+.row{display:flex;flex-wrap:wrap;gap:8px;align-items:center;margin:0 0 10px}
+.row .lab{font-size:12px;color:var(--faint);min-width:4.5em}
+button{font:inherit;font-size:13.5px;color:inherit;background:var(--panel);border:0;border-radius:9px;padding:5px 11px;box-shadow:inset 0 0 0 .5px var(--line);cursor:pointer}
+button[aria-pressed="true"]{background:var(--ink);color:var(--page)}
+button:disabled{opacity:.4;cursor:default}
+button:focus-visible,input:focus-visible,select:focus-visible,.stage-outer:focus-visible{outline:2px solid var(--accent);outline-offset:2px}
+select{font:inherit;font-size:13.5px;color:inherit;background:var(--panel);border:0;border-radius:9px;padding:5px 8px;box-shadow:inset 0 0 0 .5px var(--line)}
+.sw{display:inline-flex;align-items:center;gap:6px;font-size:13px;color:var(--muted)}
+.slide{display:inline-flex;align-items:center;gap:8px;font-size:13px;color:var(--muted);flex:1;min-width:220px}
+.slide input{flex:1}
+.card{margin-top:14px;background:var(--panel);border-radius:14px;padding:14px 16px;box-shadow:inset 0 0 0 .5px var(--line)}
+.card p,.card li{margin:0 0 6px;color:var(--muted);font-size:14px}
+.card ul,.card ol{margin:0;padding-left:20px}
+.card p:last-child,.card li:last-child{margin-bottom:0}
+.grid2{display:grid;grid-template-columns:1fr 1fr;gap:12px}
+.grid2 .card{margin-top:0}
+@media (max-width:760px){.grid2{grid-template-columns:1fr}}
+.token{font-family:var(--mono);font-size:12px;color:var(--accent)}
+.note{margin-top:8px;font-size:12.5px;color:var(--faint)}
+b.no{color:var(--bad)} b.yes{color:var(--ok)}
+.chip{display:inline-block;font-size:12px;font-weight:650;border-radius:6px;padding:0 6px;box-shadow:inset 0 0 0 1px currentColor}
+.chip.ok{color:var(--ok)} .chip.warn{color:var(--warn)} .chip.bad{color:var(--bad)} .chip.mute{color:var(--faint)}
+
+/* 舞台：1 点 = 1 像素，窄屏整体缩放 */
+.stage-outer{position:relative;width:100%;aspect-ratio:980/300;border-radius:12px;overflow:hidden;box-shadow:0 0 0 .5px var(--line);background:var(--wall);cursor:default}
+.stage{position:absolute;left:0;top:0;width:980px;height:300px;transform-origin:0 0;font-family:var(--sans);user-select:none;-webkit-user-select:none}
+.wallpaper{position:absolute;inset:0;background:var(--wall)}
+.blackstrip{position:absolute;left:0;right:0;top:0;height:33.5px;background:#000;display:none}
+.menubar{position:absolute;left:0;right:0;top:0;height:33.5px;font-size:13px;color:var(--menu);pointer-events:none}
+.menubar .mi{position:absolute;top:0;height:100%;display:flex;align-items:center;white-space:nowrap;opacity:.88}
+.menubar .mi.b{font-weight:700}
+.menubar .si{position:absolute;top:50%;width:16px;height:16px;margin-top:-8px;opacity:.86}
+.menubar .si i{position:absolute;inset:3px 1px;border-radius:3px;box-shadow:inset 0 0 0 1.4px currentColor}
+.menubar .si.r i{border-radius:50%;inset:2px}
+.menubar .si.t i{inset:5px 0;border-radius:2px}
+.menubar .ovf{position:absolute;top:50%;height:20px;margin-top:-10px;width:22px;border-radius:6px;display:flex;align-items:center;justify-content:center;font-weight:700;font-size:14px;opacity:.9}
+.menubar .ovf.open{background:var(--menubg)}
+.menubar .shown{position:absolute;top:4px;bottom:4px;border-radius:7px;background:var(--menubg)}
+.menubar .hit{outline:1.5px solid var(--accent);outline-offset:1px;border-radius:4px}
+.menubar .mi.hit{outline:none;text-decoration:underline 1.5px var(--accent);text-underline-offset:5px}
+.probe{position:absolute;width:2px;height:5px;border-radius:1px;top:29px}
+.probe.f{background:#30d158}.probe.o{background:#ff453a}
+svg.shape{position:absolute;left:0;top:0;width:980px;height:300px;pointer-events:none;overflow:visible}
+.layer{position:absolute;inset:0;pointer-events:none;color:#fff}
+.layer.in{animation:fadein .18s ease-out .08s both}
+.layer.out{animation:fadeout .10s linear both}
+@keyframes fadein{from{opacity:0}to{opacity:1}}
+@keyframes fadeout{from{opacity:1}to{opacity:0}}
+.reduced .layer.in{animation:fadein .25s linear both}
+.veil{position:absolute;inset:0;display:none;align-items:center;justify-content:center;color:#fff;font-size:15px;font-weight:600;pointer-events:none}
+.veil.mc{display:flex;background:rgba(8,12,24,.55)}
+.veil.mc::before{content:"";position:absolute;left:60px;right:60px;top:60px;height:70px;border-radius:12px;background:rgba(255,255,255,.12)}
+.veil.fs{display:flex;background:#121212}
+.veil span{position:relative;top:40px}
+.ear{position:absolute;top:0;height:33.5px;display:flex;align-items:center;justify-content:center;font-size:12px;font-weight:650;font-variant-numeric:tabular-nums;white-space:nowrap}
+.dim{opacity:.5}
+.mini{position:absolute;width:36px;height:28px;display:flex;align-items:center;justify-content:center}
+.chindot{position:absolute;width:6px;height:6px;border-radius:3px}
+.flank{position:absolute;top:0;height:33.5px;display:flex;align-items:center;font-size:12.5px;white-space:nowrap;overflow:hidden}
+.flank .q{font-weight:650}
+.flank .h{color:rgba(255,255,255,.45);font-size:11.5px}
+.caret{display:inline-block;width:1.5px;height:13px;background:#fff;margin-left:1px;vertical-align:-2px;animation:blink 1s steps(1) infinite}
+@keyframes blink{50%{opacity:0}}
+.reduced .caret{animation:none}
+.ovbtn{position:absolute;top:5.75px;width:26px;height:22px;border-radius:7px;background:rgba(255,255,255,.14);display:flex;align-items:center;justify-content:center;font-weight:700;font-size:13px;pointer-events:auto;cursor:pointer}
+.tile{position:absolute;top:41.5px;width:124px;height:120px;border-radius:14px;background:rgba(255,255,255,.08);overflow:hidden;pointer-events:auto;cursor:pointer;transition:transform .2s}
+.tile.focus{transform:translateY(-4px) scale(1.1);box-shadow:inset 0 0 0 2px #fff;z-index:2}
+.tile.bumpL{transform:translateX(-6px)}.tile.bumpR{transform:translateX(6px)}
+.tile.focus.bumpL{transform:translate(-6px,-4px) scale(1.1)}.tile.focus.bumpR{transform:translate(6px,-4px) scale(1.1)}
+.tile .thumb{position:absolute;left:8px;right:8px;top:8px;height:60px;border-radius:7px;overflow:hidden}
+.tile .thumb i{position:absolute;left:0;right:0;top:0;height:11px;background:rgba(0,0,0,.12)}
+.tile .thumb b{position:absolute;left:8px;right:22px;height:4px;border-radius:2px;background:rgba(0,0,0,.18)}
+.tile .cap{position:absolute;left:10px;right:10px;bottom:12px;font-size:12px;font-weight:600;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.tile .cap small{display:block;font-size:11px;font-weight:400;color:rgba(255,255,255,.6)}
+.tile .big{position:absolute;left:12px;right:12px;top:14px;display:flex;align-items:center;justify-content:space-between}
+.tile .big b{font-size:20px;font-weight:650;font-variant-numeric:tabular-nums}
+.tile.ended{opacity:.6}
+.divider{position:absolute;top:49.5px;width:1px;height:104px;background:rgba(255,255,255,.18)}
+.empty{position:absolute;top:84px;font-size:13px;color:rgba(255,255,255,.6);text-align:center}
+.peek{position:absolute;top:184px;width:200px;height:112px;border-radius:14px;background:#000;color:#fff;padding:8px;font-size:11px;pointer-events:none}
+.peek .pv{height:76px;border-radius:8px;margin-bottom:6px}
+.peek small{color:rgba(255,255,255,.6)}
+.region{position:absolute;border:1px dashed rgba(255,255,255,.55);border-radius:8px}
+.region em{position:absolute;right:4px;bottom:2px;font-style:normal;font-size:10px;color:rgba(255,255,255,.7)}
+.reg{position:absolute;display:flex;align-items:center;gap:8px;font-size:13px;white-space:nowrap;overflow:hidden}
+.reg small{font-size:11px;color:rgba(255,255,255,.6)}
+.reg>svg,.reg>i,.reg>.pbtn{flex:none}
+.reg>span:not(.pbtn):not(.bar){min-width:0;overflow:hidden;text-overflow:ellipsis}
+.pbtn{display:inline-flex;align-items:center;justify-content:center;height:28px;padding:0 14px;border-radius:14px;background:rgba(255,255,255,.16);font-size:12.5px;font-weight:600;pointer-events:auto;cursor:pointer}
+.pbtn.go{background:#30d158;color:#000}
+.bar{flex:1;height:6px;border-radius:3px;background:rgba(255,255,255,.18);overflow:hidden}
+.bar i{display:block;height:100%;background:#fff;border-radius:3px}
+.spin{animation:spin 1s linear infinite;transform-origin:50% 50%}
+@keyframes spin{to{transform:rotate(360deg)}}
+.reduced .spin{animation:none}
+.alertdot{position:absolute;width:6px;height:6px;border-radius:3px;background:#ff9f0a;box-shadow:0 0 0 1.5px #000}
+
+/* 读数 */
+.readout{display:grid;grid-template-columns:repeat(auto-fit,minmax(220px,1fr));gap:8px 16px;margin-top:10px;font-size:13px;color:var(--muted)}
+.readout b{color:var(--ink);font-weight:650}
+.readout .mono{font-family:var(--mono);font-size:12px}
+.log{margin:8px 0 0;padding:0;list-style:none;font-family:var(--mono);font-size:12px;color:var(--faint);min-height:5.2em}
+.log li{white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.log li:first-child{color:var(--accent)}
+
+/* 表 */
+.tbl{overflow-x:auto;margin-top:10px;border-radius:12px;box-shadow:inset 0 0 0 .5px var(--line);background:var(--panel)}
+table{border-collapse:collapse;width:100%;font-size:13px;min-width:720px}
+th,td{text-align:left;vertical-align:top;padding:7px 10px;border-bottom:.5px solid var(--line)}
+th{font-size:12px;color:var(--faint);font-weight:600;background:var(--panel);position:sticky;top:0;white-space:nowrap}
+td:first-child,th:first-child{font-weight:650;color:var(--ink);white-space:nowrap}
+td{color:var(--muted)}
+tr:last-child td{border-bottom:0}
+td.us{color:var(--ink)}
+.wide table{min-width:1180px}
+.mid table{min-width:920px}
+svg.fig{display:block;width:100%;height:auto}
+svg.fig text{font-family:var(--sans)}
+.kbd{display:inline-block;font-size:11.5px;border-radius:5px;padding:0 5px;box-shadow:inset 0 0 0 1px var(--line);font-family:var(--sans)}
+</style>
+</head>
+<body>
+<div class="wrap">
+  <h1>实时活动晋级</h1>
+  <p class="lede">这张稿要证明一件事：刘海上的“正在进行的事”可以整体升一级，每件都有同一套样子、同一个生命周期，排在同一张权重表里，而且刘海长耳朵之前会先看一眼菜单栏有没有地方，从不挡你要点的图标。Bartender、Ice 这些菜单栏工具只拿来对照，我们不做菜单栏管理器。数字取 MacBook Air 15 英寸：刘海 185 × 33.5。舞台按 1 点 = 1 像素画，只把屏幕宽度缩成 980 点。</p>
+
+  <h2>能玩的舞台</h2>
+  <p class="lede">用真指针：停在刘海上会展开那一排，从菜单栏横扫过去不会；点耳朵长成大卡；点刘海后可以直接打字找东西。拖动下面的“菜单栏多挤”，看耳朵怎么让位。</p>
+
+  <div class="row" role="group" aria-label="菜单栏">
+    <span class="lab">菜单栏</span>
+    <label class="slide">多挤 <input id="crowd" type="range" min="0" max="100" value="20" aria-label="菜单栏右边有多少图标"> <span class="token" id="crowdRead">6 个图标</span></label>
+    <span class="sw">前台</span>
+    <button type="button" data-front="finder" aria-pressed="false">访达</button>
+    <button type="button" data-front="notes" aria-pressed="true">备忘录</button>
+    <button type="button" data-front="editor" aria-pressed="false">菜单很长的 App</button>
+  </div>
+  <div class="row" role="group" aria-label="系统状态">
+    <span class="lab">系统</span>
+    <button type="button" id="ovfBtn" aria-pressed="false">点开系统的 »</button>
+    <button type="button" id="later">3 秒后右边少两个图标</button>
+    <select id="spacing" aria-label="图标间距（用户自己改过系统设置时）"><option value="16">图标间距：系统默认</option><option value="12">用户改成 12</option><option value="8">用户改成 8</option></select>
+    <button type="button" data-env="below" aria-pressed="false">刘海下方模式</button>
+    <button type="button" data-env="external" aria-pressed="false">外接屏</button>
+    <button type="button" data-env="mission" aria-pressed="false">调度中心</button>
+    <button type="button" data-env="full" aria-pressed="false">全屏</button>
+  </div>
+  <div class="row" role="group" aria-label="开始或结束一件活动">
+    <span class="lab">活动</span>
+    <span id="actBtns" style="display:contents"></span>
+  </div>
+  <div class="row" role="group" aria-label="生命周期">
+    <span class="lab">这一件</span>
+    <select id="pick" aria-label="对哪一件活动操作"></select>
+    <button type="button" data-life="update">更新</button>
+    <button type="button" data-life="alert">提醒更新</button>
+    <button type="button" data-life="stale">过期</button>
+    <button type="button" data-life="fresh">恢复</button>
+    <button type="button" data-life="end">结束</button>
+    <button type="button" data-life="endNow">立即结束</button>
+    <button type="button" id="swipe">两指横扫：换一件上耳朵</button>
+  </div>
+  <div class="row" role="group" aria-label="看法">
+    <span class="lab">看法</span>
+    <button type="button" id="kbdOpen">按“展开刘海那一排”的快捷键</button>
+    <label class="sw"><input id="probesOn" type="checkbox" checked> 显示探针</label>
+    <label class="sw"><input id="regionsOn" type="checkbox" checked> 大卡标出四个区</label>
+    <label class="sw"><input id="proxyOn" type="checkbox" checked> 那一排里放 »（实验）</label>
+    <label class="sw"><input id="reduced" type="checkbox"> 减少动态效果</label>
+    <select id="theme" aria-label="外观"><option value="">外观：跟随系统</option><option value="light">浅色</option><option value="dark">深色</option></select>
+    <button type="button" id="reset">重来</button>
+  </div>
+
+  <div class="stage-outer" id="outer" tabindex="0" role="application" aria-label="刘海舞台。点刘海后可以打字筛选，方向键移动，Return 打开，Esc 退出。">
+    <div class="stage" id="stage">
+      <div class="wallpaper"></div>
+      <div class="blackstrip" id="strip"></div>
+      <div class="menubar" id="menubar"></div>
+      <div id="probes"></div>
+      <svg class="shape" id="shape" viewBox="0 0 980 300" aria-hidden="true"></svg>
+      <div class="layer" id="layer"></div>
+      <div class="layer" id="extra"></div>
+      <div class="veil" id="veil"><span id="veilText"></span></div>
+    </div>
+  </div>
+  <div class="readout" aria-live="polite">
+    <div>量到：左 <b id="rL">—</b> · 右 <b id="rR">—</b> <span class="mono">（读帧，到 1 点）</span></div>
+    <div>用的：<b id="useRead">—</b> <span id="levelChip"></span></div>
+    <div>量了 <b id="mCount">0</b> 次 · <span id="pendRead">没有待长的</span></div>
+    <div>刘海此刻听：<b id="layerRead">什么都没有</b></div>
+    <div>指针：<b id="ptrRead">不在舞台上</b></div>
+    <div>排序：<span id="rankRead" class="mono">—</span></div>
+  </div>
+  <ul class="log" id="log" aria-label="最近的事件"></ul>
+  <p class="note">舞台上的时间是真的：计时器、日程按秒走；“过期”“结束后留在那一排 15 分钟”演示时压成 15 秒。音乐右耳画的是没有录音权限时的静止取色点，这张稿不画波形。</p>
+
+  <h2>一 · 刘海先看有没有地方</h2>
+  <p class="lede">长耳朵之前，先问菜单栏“刘海两边这一段是什么”。只用辅助功能，不截屏、不录屏。量到哪一档，就画哪一档。</p>
+  <div class="tbl"><table>
+    <thead><tr><th>档</th><th>两边空位（取窄的那边）</th><th>刘海长什么</th><th>别的活动</th></tr></thead>
+    <tbody>
+      <tr><td>宽裕 <span class="chip ok">34</span></td><td>≥ 34 点</td><td class="us">两耳各 34：主体 26.6 + 肩 7.4（<span class="token">NotchIsland.compactSide</span>），整个 253 宽</td><td>右边再空 76 点挂一颗最小形，118 点挂两颗（36 × 28，间隔 6）</td></tr>
+      <tr><td>偏挤 <span class="chip warn">26–33</span></td><td>26 ≤ 空位 &lt; 34</td><td class="us">耳朵收窄到量到的宽度，不画肩；右耳换短写法（“4 分”→“4”，百分比 → 环）</td><td>最小形放得下才挂，放不下只进那一排</td></tr>
+      <tr><td>挤 <span class="chip bad">下巴</span></td><td>&lt; 26 点，或系统的 » 在</td><td class="us">不长耳朵。刘海往下垂 8 点（下巴），里面一件一个 6 点的点，最多 3 个，颜色是那件的语气色</td><td>全在那一排里</td></tr>
+      <tr><td>让开 <span class="chip mute">无</span></td><td>全屏、调度中心、锁屏</td><td class="us">不画、不量、不悬停（<span class="token">NotchSpaceGate</span>）</td><td>回来后按现在的事实画，不补播</td></tr>
+    </tbody>
+  </table></div>
+  <div class="grid2" style="margin-top:12px">
+    <div class="card">
+      <h3>怎么量</h3>
+      <ul>
+        <li>从刘海边往外每 12 点问一次“这一点是什么”，回答“菜单栏”就是空的，回答“菜单栏项”就停。</li>
+        <li>碰到的第一项，读它的位置和宽度，空位精确到 1 点。今天是每边固定 6 个点，只精确到 6 点。</li>
+        <li>一次最多问 22 次（每边 10 个点 + 1 次读帧），在后台问，主线程不等。</li>
+        <li>前台 App 的菜单读整排的位置（今天已有）；菜单跨过刘海排到右边，右边就算占着。</li>
+        <li>用户改过图标间距（<span class="token">NSStatusItemSpacing</span>）照样量对：我们量的是帧，不认默认值，也不去写它。</li>
+      </ul>
+    </div>
+    <div class="card">
+      <h3>什么时候量（不轮询）</h3>
+      <ul>
+        <li>屏幕参数变了；前台 App 换了；有 App 开了或退出（图标会多或少）；我们要长耳朵；我们自己收完了；睡醒。</li>
+        <li>每个事件量一次，0.6 秒后再复核一次，只这一次（新开的 App 图标常常晚到）。</li>
+        <li><b>收立刻，长要等</b>：读数比现在用的小，马上收到读数；读数比现在用的大 4 点以上，而且 0.6 秒后复核还一样，才长。</li>
+        <li>指针正在菜单栏上走（不在刘海热区里）：只收不长，等指针离开菜单栏再复核。你要点的那个图标不会被突然长出来的耳朵盖住。</li>
+        <li>结果只在内存里留一份，20 秒后作废（今天已有）；空闲时一次也不量。</li>
+      </ul>
+    </div>
+  </div>
+  <div class="card">
+    <h3>macOS 27 自己的 » 和“刘海下方”模式，都当正常状态</h3>
+    <ul>
+      <li><b>» 收着</b>：图标太多时，系统在状态图标那一段靠刘海的一端放一个 »。它也是“菜单栏项”，右边空位只剩约 6 点，所以直接落到下巴。</li>
+      <li><b>» 点开</b>：被藏的图标排到刘海左边，左边也满了，仍在下巴。<b>» 在的时候，悬停不展开那一排，只有点刘海才展开</b>：你此刻多半正要去点那些刚露出来的图标。</li>
+      <li>» 开合有没有辅助功能通知，要在真机上查（LA-0）。查不到就在下一个事件补量，耳朵本来就不在，不会盖住什么。</li>
+      <li><b>刘海下方模式</b>：系统把顶上一条涂黑，安全区报 0，辅助区没有。我们照公开接口当作没有刘海的屏：菜单栏正中一颗 80 宽的胶囊，两边各要 39 点，不够就挂到菜单栏下面 72 × 12。不画假刘海。</li>
+    </ul>
+  </div>
+
+  <h2>二 · 悬停和点击不误触</h2>
+  <div class="grid2">
+    <div class="card">
+      <h3>热区只有刘海这一块</h3>
+      <ul>
+        <li>热区 = 刘海（185 × 33.5）加上此刻长出来的耳朵、最小形、下巴。菜单栏别的地方不算。</li>
+        <li>停在热区里，连续 <span class="token">notchDwell</span> 0.12 秒移动不到 8 点，才展开那一排（<span class="token">expand</span>）。慢慢滑过去也不算停。</li>
+        <li>进来那一下速度超过 600 点/秒，算横扫：不给“这里能展开”的提示。停下来以后照常算停留。</li>
+        <li>提示只往下长 3 点（<span class="token">calm</span>），不往两边长：两边是量过的，不能借着提示越界。</li>
+        <li>那一排里，停在一格上 <span class="token">tileDwell</span> 0.20 秒才看一眼；从一格划到另一格不闪。</li>
+        <li>指针离开悬停打开的那一排，立刻 <span class="token">calm</span> 收回（今天的规矩，不改）。</li>
+      </ul>
+    </div>
+    <div class="card">
+      <h3>哪些从不触发</h3>
+      <ul>
+        <li>鼠标滚轮、惯性滚动：不算停留，也不重新计时。我们不拦截滚轮。</li>
+        <li>触控板两指下拉、两指横扫只在手指还在板上时算手势（今天已有的 <span class="token">pull</span> 与横扫）。</li>
+        <li>按着键拖东西进来：是落点小岛，不是悬停。</li>
+        <li>岛长到一动不动的指针下面：指针不动就不算停上来（今天已有）。</li>
+        <li>调度中心、全屏、锁屏：让开，热区一起消失。全屏时指针顶到屏幕上沿让菜单栏滑下来，也不展开。</li>
+        <li>外接屏和刘海下方模式：胶囊空着时不画，也没有热区。</li>
+        <li>点刘海本体 = 展开那一排；点耳朵 = 那一件的大卡（和《正在播放》一致）。</li>
+      </ul>
+    </div>
+  </div>
+
+  <h2>三 · 一件活动的样子</h2>
+  <p class="lede">照 ActivityKit 的说法翻到 Mac：紧凑（左耳、右耳）、最小、展开（左、右、中、下四个区）。Mac 上多一个“那一排的一格”，相当于 iPhone 锁屏上的那张卡：不打开 App 也能看清。不发明第六种呈现：一格属于展开，大卡属于展开，提醒是短暂提醒。</p>
+  <div class="card" style="padding:10px 12px">
+    <svg class="fig" id="anatomy" viewBox="0 0 1000 250" role="img" aria-label="一件活动的五个样子：紧凑两耳、最小形与下巴、那一排的一格、大卡四个区、提醒"></svg>
+  </div>
+  <div class="grid2" style="margin-top:12px">
+    <div class="card">
+      <h3>生命周期</h3>
+      <ul>
+        <li><b>开始</b>：<span class="token">settle</span> 从刘海长出两耳。开始后 1.5 秒内就结束的（很快的拷贝、秒下完的文件）不出现，免得一闪。</li>
+        <li><b>更新</b>：原地换字，数字逐位滚过去，形状不动；宽度变了才用 <span class="token">settle</span>。</li>
+        <li><b>提醒更新</b>：<span class="token">bloom</span> 鼓成提醒，宽 max(刘海 + 200, 400)、高 85.5、圆角 24，停 2.6 秒，淡入 0.18、淡出 0.10，<span class="token">calm</span> 回到紧凑。撞上第 1–3 层就只在右耳旁亮一个 6 点的点，读屏念一次，然后作废。要盖住系统自己的菜单栏图标时也不鼓，同样只亮点（今天已有）。</li>
+        <li><b>过期</b>：来源过了自己的过期时间还没消息，内容降到 0.5 透明度，右耳写“—”，读屏念“可能已停”。不猜、不补数。</li>
+        <li><b>结束</b>：最后的样子留在耳朵上，按收场方式走：默认 4 秒；立即；或到点（最长 5 分钟，日程有会议链接时用）。那一排里留到你看过一次，或 15 分钟。</li>
+      </ul>
+    </div>
+    <div class="card">
+      <h3>相关度和权重排在一起</h3>
+      <ul>
+        <li>排序键依次是：新鲜（过期的沉到所有新鲜的后面）＞ 种类权重 ＞ 来源给的相关度 0–4 ＞ 最近更新。</li>
+        <li>相关度只在同一种类里分先后（两个会话，在等你的那个 +4），不能让音乐跨过下载。</li>
+        <li>权重：会话 95、录音 90、日程 85、下载 / 拷贝 / 隔空投送 80、计时器 75、番茄钟 70、路线 60、音乐 40、遥控器 30、耳机 20、文件架个数 10。CarPlay 100 走自己的全屏，不进这张表。</li>
+        <li>第一件上耳朵，第二、第三件是最小形，放不下就只在那一排。文件架不当最小形，不算右段的 3 件。</li>
+        <li>你两指横扫选中的那件留在耳朵上，直到它结束。</li>
+      </ul>
+    </div>
+  </div>
+
+  <h3 style="margin-top:22px">每一件在每个区放什么</h3>
+  <div class="tbl wide"><table>
+    <thead><tr><th>活动</th><th>权重</th><th>左耳</th><th>右耳</th><th>最小</th><th>那一排的一格</th><th>大卡：左</th><th>大卡：右</th><th>大卡：中</th><th>大卡：下</th></tr></thead>
+    <tbody>
+      <tr><td>编程会话</td><td>95</td><td>会话符号</td><td>转圈 / 琥珀“等你” / ✓ / “剩 p%”</td><td>琥珀点（等你）或弧（在跑）</td><td>项目名 + 现在一步</td><td>符号 + 项目名</td><td>用了多久</td><td>“要改 3 个文件”</td><td>拒绝 · 批准 · 打开会话</td></tr>
+      <tr><td>日程</td><td>85</td><td>环（剩余 ÷ 5 分钟）</td><td>“4 分”；开始后绿摄像机</td><td>日历色的弧</td><td>会名 + 几点</td><td>日历色条 + 会名</td><td>15:00</td><td>“4 分钟后开始”</td><td>加入（只认会议链接）+ 还有几个</td></tr>
+      <tr><td>计时器</td><td>75</td><td>橙环</td><td>“9 分”，最后 60 秒“0:42”</td><td>橙弧</td><td>剩多少 + 总长</td><td>环</td><td>9:12</td><td>“10 分钟计时器”</td><td>暂停 · 结束</td></tr>
+      <tr><td>番茄钟</td><td>70</td><td>环 + 专注 / 休息的颜色</td><td>“18 分”</td><td>弧</td><td>专注 · 第几轮</td><td>环</td><td>18 分</td><td>“专注 · 第 2 轮”</td><td>跳过 · 结束</td></tr>
+      <tr><td>下载 / 拷贝</td><td>80</td><td>下载或拷贝符号</td><td>“42%”或“3/7”；不知道总量画不定弧</td><td>进度弧</td><td>文件名 + 进度</td><td>符号</td><td>还剩多久（来源给了才写）</td><td>文件名</td><td>进度条 · 在访达中显示</td></tr>
+      <tr><td>隔空投送</td><td>80</td><td>隔空投送符号</td><td>“68%”</td><td>进度弧</td><td>发给谁 + 进度</td><td>符号</td><td>68%</td><td>“发给 Aaron 的 iPhone”</td><td>进度条 · 取消</td></tr>
+      <tr><td>正在播放</td><td>40</td><td>封面 18 × 18</td><td>有权限画波形；没权限画静止取色点</td><td>封面小圆</td><td>封面 + 歌名 + 播放键</td><td>封面 56</td><td>输出设备键</td><td>歌名 · 歌手</td><td>进度条 · 上一首 · 播放 · 下一首</td></tr>
+      <tr><td>耳机 / 配件</td><td>20</td><td>耳机符号</td><td>电量环 + “80%”</td><td>电量弧</td><td>名字 + 电量</td><td>符号 + 名字</td><td>80%</td><td>“左 80% · 右 78%”</td><td>充电盒电量</td></tr>
+      <tr><td>文件架</td><td>10</td><td>托盘符号</td><td>个数“6”</td><td>不当最小形</td><td>右段最后一格：三张叠起来的缩略图</td><td colspan="4">点开是文件架卡（见《文件架》），不套四个区</td></tr>
+    </tbody>
+  </table></div>
+
+  <h3 style="margin-top:22px">每一件的生命周期</h3>
+  <div class="tbl mid"><table>
+    <thead><tr><th>活动</th><th>开始</th><th>更新</th><th>提醒更新（鼓）</th><th>过期：何时 · 样子</th><th>结束：留什么 · 怎么走</th></tr></thead>
+    <tbody>
+      <tr><td>编程会话</td><td>钩子报“在跑”</td><td>转圈 → “等你” → ✓，原地换</td><td>等你批准：“会话在等你”；做完：“会话做完了”</td><td>在跑却 120 秒没消息 · 0.5，右耳“—”</td><td>✓ 留 4 秒（默认）；那一排留到看过</td></tr>
+      <tr><td>日程</td><td>开会前 5 分钟</td><td>每分钟换数，环每 10 秒走一格（没有每秒的定时器）</td><td>最后 10 秒：“马上开始”+ 加入</td><td>不会过期；取消授权就立即结束</td><td>没链接：开始即走（立即）；有链接：再留 5 分钟或点了加入（到点）</td></tr>
+      <tr><td>计时器</td><td>⌃⌥T 选好分钟</td><td>每分钟，最后 60 秒按秒</td><td>时间到：“时间到”，停 10 秒，响一声</td><td>不会过期（本机时钟）</td><td>超时 10 分钟自己走；点结束立即</td></tr>
+      <tr><td>番茄钟</td><td>开始专注</td><td>每分钟</td><td>专注 ⇄ 休息换段时</td><td>不会过期</td><td>一轮做完 ✓ 留 4 秒</td></tr>
+      <tr><td>下载 / 拷贝</td><td>来源报进度，且 1.5 秒内没做完</td><td>百分比或第 k / n；读不到画不定弧，不补假数</td><td>做完：“下载好了”；失败：“下载没完成”</td><td>30 秒没进展 · 0.5，右耳“—”</td><td>✓ 留 4 秒；失败留在那一排到你看过</td></tr>
+      <tr><td>隔空投送</td><td>对方接受后</td><td>百分比</td><td>“已送达”或“对方拒绝了”</td><td>30 秒没进展</td><td>✓ 留 4 秒</td></tr>
+      <tr><td>正在播放</td><td>系统说有东西在放</td><td>换歌：换歌一瞥，下鼓 30，停 1.8 秒 + 每字 0.05 秒，最长 4.5 秒</td><td>换歌一瞥就是它的提醒</td><td>暂停 · 0.5；暂停满 10 分钟离开耳朵，那一排写“已暂停”</td><td>播放器退出：立即 <span class="token">calm</span> 收</td></tr>
+      <tr><td>耳机 / 配件</td><td>连上（先是一句“耳机已连接”）</td><td>电量变 5% 以上才换数</td><td>低于 20%：“耳机电量低”</td><td>10 分钟没读到 · “电量暂时读不到”，不写 0%</td><td>断开：立即</td></tr>
+      <tr><td>文件架</td><td>第一样东西放上去</td><td>个数</td><td>没有（拖放本身是手势层）</td><td>不会过期</td><td>空了：立即</td></tr>
+    </tbody>
+  </table></div>
+  <p class="note">录音 90、路线 60、遥控器 30 也走同一套样子；这张稿不单列。</p>
+
+  <h2>四 · 找东西更快</h2>
+  <div class="grid2">
+    <div class="card">
+      <h3>在那一排里打字</h3>
+      <ul>
+        <li>点刘海或按“展开刘海那一排”的快捷键打开时，那一排接键盘：直接打字就筛，不用先点输入框。字写在刘海左边那一段，13 半粗，后面一个光标。</li>
+        <li>只找自己的：收着的窗口（标题、App 名）和正在进行的事（标题、种类名）。拼音首字母也算，“zh”能找到“周会”。</li>
+        <li>不找别的 App 的菜单栏图标、不找菜单、不找文件。</li>
+        <li>对不上的格子离开，剩下的 <span class="token">settle</span> 并拢，焦点落在第一格；一格也没有时写“没有匹配的”，那一排不窄于两格。</li>
+        <li><b>悬停打开的那一排不接键盘</b>：你在别的 App 里打字，不会被刘海吃掉。</li>
+      </ul>
+    </div>
+    <div class="card">
+      <h3>焦点导航（今天已有，照旧）</h3>
+      <ul>
+        <li><span class="kbd">←</span> <span class="kbd">→</span> 移动，到头不绕回，朝那边轻顶 6 点再弹回。亮着的格子放大 1.1 倍、上移 4 点、白色描边。</li>
+        <li>默认落点：有“等你”的会话就落在它上面，否则最近收进来的那一扇，否则第一格。</li>
+        <li><span class="kbd">Return</span> 打开：窗口格是展开窗口，活动格长成大卡。</li>
+        <li><span class="kbd">Esc</span>：有字先清字，再按一次收起。</li>
+        <li>指针一进来焦点就熄，交给指针；筛选的字留着。</li>
+        <li>快捷键默认不占，需要的人在设置里录一个（今天已有）。遥控器和手柄走同一个出口。</li>
+      </ul>
+    </div>
+  </div>
+
+  <h2>五 · 被刘海挡住的图标：最多一个入口</h2>
+  <div class="card">
+    <ul>
+      <li>只在系统自己的 » 存在、而且收着的时候，那一排刘海右边那一段放一个 26 × 22 的 »。点它：那一排先 <span class="token">calm</span> 收回，再用辅助功能替你按一下系统的 »，被藏的图标由系统自己摆出来。</li>
+      <li>系统没有 »（图标放得下，或系统版本没有这个键）：什么都不放，也不说话。按了没反应：这次运行里不再放这个入口，也不说话。</li>
+      <li>它不是一格，不进筛选结果；方向键能走到它（最后一站），读屏念“显示菜单栏里藏着的图标”。</li>
+      <li>不重画别人的图标，不替系统藏图标，不排顺序，不要屏幕录制。藏、露、排都是系统的事。</li>
+      <li>先做成实验开关。真机上按 10 次都成功才谈默认打开（LA-0、LA-8）。</li>
+    </ul>
+  </div>
+
+  <h2>六 · 在刘海上比 Top Shelf 和 Lounge 好在哪</h2>
+  <p class="lede">Bartender Pro 的 Top Shelf（2026-05）已经把刘海做成可展开的面板，也跟 Claude Code、Codex 的进度；Lounge 有“做完了 / 等你批准”的提示。我们不跟它们比小组件多，比下面四件。它们的资料大多来自评测，没装来试。</p>
+  <div class="grid2">
+    <div class="card"><h3>两耳的写法</h3><p>平时不是一块面板，是活动本身：左耳是谁，右耳是数，各 34 点，不多占菜单栏。九种活动同一套样子，同一个生命周期，用户只学一次。</p></div>
+    <div class="card"><h3>一套仲裁</h3><p>放行 &gt; 手势 &gt; 你打开的 &gt; 短暂提醒 &gt; 持续活动 &gt; 什么都没有，加一张权重表。会话、日程、音乐、下载在同一个协调器里排；撞上的提醒变成一个点，不回来补说。窗口收进刘海也在同一排里，Top Shelf 没有这一层。</p></div>
+    <div class="card"><h3>隐私页</h3><p>只要辅助功能，读的只是刘海两边那一段“哪里空着”，每一处读取都登记在 <span class="token">tools/privacy/registry.json</span>，用户在《WindowShade 读到的》里看得见。Bartender 6 要屏幕录制（7 起不要了），Lounge 也只要辅助功能；我们多做的是把每一处读取逐项摆出来。不收集使用数据。</p></div>
+    <div class="card"><h3>省电</h3><p>只在事件来时量，一次最多 22 次询问，空闲 0 次；悬停靠系统的进出事件，不轮询指针。Atoll 的悬停检测按 50 / 100 / 1000 毫秒三档轮询。会话“等你批准”能在大卡下区直接批，也能交给 iPhone 上的遥控器。</p></div>
+  </div>
+
+  <h2>对照</h2>
+  <p class="lede">只列和刘海、实时活动有关的。来源见调研（2026-10-09 读），厂商自述没有独立验证；“—”是没查到，不是没有。</p>
+  <div class="tbl wide"><table>
+    <thead><tr><th>项</th><th>Bartender 6 / Top Shelf</th><th>Ice / Thaw</th><th>Hidden Bar 等</th><th>NotchNook / Boring Notch</th><th>Atoll</th><th>Alcove</th><th>WindowShade 今天</th><th>WindowShade 要做的</th></tr></thead>
+    <tbody>
+      <tr><td>长耳朵前量空位</td><td>它管整条菜单栏，知道每个图标在哪</td><td>同为管理器，知道图标位置</td><td>Hidden Bar 不量，用撑宽的分隔项把图标挤出去</td><td>没见到量；尺寸按刘海算</td><td>没见到量；宽 = 屏宽 − 两个辅助区 + 4</td><td>不公开</td><td>每边 6 个点问辅助功能，量到 34 点（最小形开着时 138）</td><td class="us">碰到第一项就读它的帧，精确到 1 点；一次最多 22 次询问</td></tr>
+      <tr><td>菜单栏挤的时候</td><td>被挡的图标挪进 Bartender Bar，或和显示的互换</td><td>Ice Bar / Thaw Bar 第二条栏</td><td>折叠；Lounge 悬停刘海弹出被藏图标</td><td>不让</td><td>不让</td><td>—</td><td>34 → 26 → 下巴；但活动的紧凑按每边 54 画（见实现落点）</td><td class="us">34 → 26 → 下巴的点 → 只在那一排；收立刻，长要复核</td></tr>
+      <tr><td>macOS 27 的 »</td><td>Bartender 7 测试中</td><td>Ice 在 27 上不能用；Thaw 恢复了系统的 »</td><td>Hidden Bar 换了原生引擎</td><td>—</td><td>—</td><td>—</td><td>当成普通的“占着”</td><td class="us">认出来；在时悬停不展开；可选替你按一次</td></tr>
+      <tr><td>悬停</td><td>指针移向刘海就展开；在 Studio Display 上和悬停菜单栏混淆</td><td>Ice 悬停默认关；Thaw 离开 1 秒后收</td><td>Barbee 悬停显示会干扰滚动</td><td>NotchNook 悬停略展开、点再展开；Boring Notch 悬停展开</td><td>默认停 0.3 秒；离开 100 毫秒防抖</td><td>悬停展开，时长可调</td><td>停 0.12 秒；进来先往外长一点</td><td class="us">停 0.12 秒且 8 点内；横扫不提示；提示只往下长</td></tr>
+      <tr><td>滚动、调度中心、全屏</td><td>调度中心、多桌面表现差（评测）</td><td>Thaw 有锁死全部触发的模式</td><td>—</td><td>Boring Notch 2.7 修了屏幕上沿的指针问题</td><td>全屏放视频时藏</td><td>全屏、调度中心时藏</td><td>全屏、调度中心让开</td><td class="us">同；滚轮从不算停留；» 在时只认点击</td></tr>
+      <tr><td>一件活动的样子</td><td>面板 + 进度条式的活动</td><td>—</td><td>—</td><td>以展开面板为主</td><td>收起时左右翼 + 展开里的标签页</td><td>紧凑、展开，多件并存</td><td>两耳 + 最小形 + 那一排</td><td class="us">左右耳、最小、一格、大卡四个区、提醒，九种活动同一套</td></tr>
+      <tr><td>几件同时在</td><td>—</td><td>—</td><td>—</td><td>—</td><td>固定顺序：计时器 &gt; 日程 &gt; 录屏 &gt; 专注 &gt; 大写锁定 &gt; 扩展 &gt; 货架</td><td>可循环：下滑、中键、边缘滑</td><td>权重表 + 两指横扫</td><td class="us">新鲜 &gt; 权重 &gt; 同类相关度 &gt; 最近更新</td></tr>
+      <tr><td>过期和结束</td><td>—</td><td>—</td><td>—</td><td>—</td><td>日程开始即结束</td><td>—</td><td>会话有“做完了”；别的直接消失</td><td class="us">过期变暗 0.5；结束留 4 秒；那一排留到看过</td></tr>
+      <tr><td>编程会话</td><td>跟 Codex、Claude Code 的进度</td><td>—</td><td>Lounge：做完了 / 需要批准</td><td>—</td><td>读本地用量和费用（默认关）</td><td>—</td><td>在跑 / 等你 / 做完了，能批准</td><td class="us">同一件活动里带用量；批准在大卡下区</td></tr>
+      <tr><td>键盘</td><td>Bartender 7 命令栏：搜菜单栏项</td><td>搜菜单栏项</td><td>—</td><td>—</td><td>—</td><td>⌥ 点切换动作</td><td>方向键、Return、Esc</td><td class="us">打字筛自己的活动和收着的窗口</td></tr>
+      <tr><td>权限</td><td>6：辅助功能 + 屏幕录制；7：不要屏幕录制</td><td>Ice 屏幕录制可选；Thaw 辅助功能必需、录屏可选</td><td>Hidden Bar 辅助功能 + 私有框架；Lounge 只要辅助功能</td><td>NotchNook 要辅助功能</td><td>辅助功能；屏幕助手要录屏</td><td>音量亮度提示要辅助功能</td><td>辅助功能</td><td class="us">同；读什么写进《WindowShade 读到的》</td></tr>
+      <tr><td>耗电</td><td>6.6.2 自称占用最低</td><td>Thaw 2.0 早期扫描拖慢整机</td><td>Tidy 每秒重扫一次</td><td>Boring Notch 2.8 修了 CPU 过高</td><td>悬停轮询 50 / 100 / 1000 毫秒</td><td>自称多数时候 0%</td><td>需要时量，结果存 20 秒</td><td class="us">只在事件时量，空闲 0 次</td></tr>
+    </tbody>
+  </table></div>
+
+  <h2>我们不做</h2>
+  <div class="card">
+    <ul>
+      <li><b class="no">不做菜单栏管理器</b>：不藏、不排、不分组、不搜别人的菜单栏图标，没有“总是隐藏”这种区。</li>
+      <li><b class="no">不要屏幕录制</b>，也不用 ScreenCaptureKit 拍菜单栏：录屏指示会挂在菜单栏上，权限又重。</li>
+      <li><b class="no">不用私有框架读写菜单栏</b>：系统一升级就坏，macOS 27 那一次几乎全军覆没。</li>
+      <li><b class="no">不写 NSStatusItemSpacing / NSStatusItemSelectionPadding</b>：那是改用户的系统设置。用户自己改过，我们照样量对。</li>
+      <li><b class="no">不重画别人的图标</b>，不盖遮罩窗口遮图标，不往壁纸上涂黑。</li>
+      <li><b class="no">不在悬停时拦截滚轮</b>，不在调度中心、全屏、共享屏幕时弹出。</li>
+      <li><b class="no">不把二手的测试版行为写进界面</b>：» 和刘海下方模式以本机真机为准。</li>
+      <li><b class="no">不收集使用数据</b>。</li>
+    </ul>
+  </div>
+
+  <h2>边缘情况</h2>
+  <div class="tbl"><table>
+    <thead><tr><th>情况</th><th>刘海怎么做</th><th>为什么</th></tr></thead>
+    <tbody>
+      <tr><td>Studio Display、外接屏</td><td>没有刘海：菜单栏正中一颗 80 宽的胶囊，两侧各要 39 点；不够就挂到菜单栏下面 72 × 12。空着时不画、没有热区</td><td>不画假刘海；Top Shelf 在这里把悬停菜单栏和悬停面板搞混</td></tr>
+      <tr><td>刘海下方模式</td><td>安全区报 0、辅助区没有：当作没有刘海的屏，走胶囊</td><td>公开接口说了算</td></tr>
+      <tr><td>调度中心</td><td>不画、不量、不悬停；关掉后按现在的事实画，不补播</td><td><span class="token">NotchSpaceGate</span> 今天已有</td></tr>
+      <tr><td>全屏</td><td>同上；菜单栏滑下来时也不展开</td><td>看片时不打扰</td></tr>
+      <tr><td>合盖接外接屏</td><td>活动跟去外接屏的胶囊；开盖时屏幕参数变了，在刘海上重量一次</td><td>屏幕变了是事件</td></tr>
+      <tr><td>» 收着</td><td>右边当满 → 下巴；悬停不展开那一排，点才展开；那一排里可选一个 »</td><td>不挡你要点的图标</td></tr>
+      <tr><td>» 点开</td><td>左边也满 → 仍在下巴；不因悬停打开那一排</td><td>刚露出来的图标就在刘海左边</td></tr>
+      <tr><td>App 菜单跨过刘海</td><td>两边都 &lt; 26 → 下巴的点；第二、第三件只在那一排</td><td>菜单比我们要紧</td></tr>
+      <tr><td>自动隐藏菜单栏</td><td>量菜单栏出来时的样子（辅助功能仍报得出位置，LA-0 核实）；核实不了就按占着算</td><td>菜单栏滑下来时耳朵不能已经压在图标上</td></tr>
+      <tr><td>用户改过图标间距</td><td>照样量帧</td><td>不认默认值</td></tr>
+      <tr><td>没有辅助功能权限</td><td>量不了：不长耳朵，只用下巴的点</td><td>下巴不碰菜单栏</td></tr>
+      <tr><td>VoiceOver</td><td>两耳是一个元素，念“正在进行：会话，在等你”；下巴念“3 件正在进行”；筛选后念“剩 2 项”；» 入口念“显示菜单栏里藏着的图标”</td><td>文法准入 9</td></tr>
+      <tr><td>减少动态效果</td><td>形状直接切，内容 0.25 秒交叉淡化；转圈换成静止的弧；提示不往下长</td><td>design-system §4.9</td></tr>
+      <tr><td>增强对比度</td><td>过期不只靠变暗：右耳同时换成“—”</td><td>不只靠颜色表达</td></tr>
+    </tbody>
+  </table></div>
+
+  <h2>权限与隐私</h2>
+  <div class="grid2">
+    <div class="card">
+      <h3>读什么</h3>
+      <ul>
+        <li>刘海两边那一段菜单栏上，某一点是“菜单栏”还是“菜单栏项”（今天已有）。</li>
+        <li>碰到的第一项的位置和宽度（新）。认 » 时多读一个属性，读哪个由真机核实定（新）。</li>
+        <li>前台 App 菜单那一排的位置和宽度（今天已有）。</li>
+        <li><b>不读</b>：图标长什么样、标题文字、是哪个 App 的（只比对是不是我们自己）。不截屏，不录屏。</li>
+      </ul>
+    </div>
+    <div class="card">
+      <h3>什么时候、去哪、要不要登记</h3>
+      <ul>
+        <li>只在事件来时读；空闲一次也不读。结果只在内存里留最新一份，20 秒后作废，不落盘，不上传。</li>
+        <li>默认开：这是长耳朵的前提。没有辅助功能权限就不量，只用下巴。</li>
+        <li>要登记：<span class="token">tools/privacy/registry.json</span> 已有 NotchWatch 的三处 <span class="token">window-ax</span>；新加读帧两处、认 » 一处、替你按 » 一处（实验）。</li>
+        <li>《WindowShade 读到的》加一行：“菜单栏哪里空着：为了让刘海不挡你的图标”。</li>
+      </ul>
+    </div>
+  </div>
+
+  <h2>实现落点</h2>
+  <div class="tbl"><table>
+    <thead><tr><th>文件</th><th>改什么</th></tr></thead>
+    <tbody>
+      <tr><td>App/NotchWatch.swift</td><td><span class="token">MenuBarRoom</span>：每 12 点探一次，碰到第一项读帧；事件清单；每个事件一次 0.6 秒复核；认 »。今天的 20 秒缓存和 <span class="token">MenuBarCoverRetry</span> 照旧。</td></tr>
+      <tr><td>Core/NotchRoomPolicy.swift（新）</td><td>纯规则：收立刻、长要等（+4 点、0.6 秒复核）、指针在菜单栏上只收不长；空位 → 档位 → 耳宽、肩、最小形个数。不碰系统，测试直接用。</td></tr>
+      <tr><td>App/Notch.swift</td><td><span class="token">sideWidth</span> 改由上面的规则给；活动紧凑那一支今天按 <span class="token">max(sideWidth, 54)</span> 画，而空位只要求 ≥ 26，菜单栏项落在 26 到 54 点之间时会被盖住（读源码得出，待真机核实）：改成按画出来的宽度验空位。<span class="token">compactSlots</span> 跟着耳宽走。<span class="token">hover(_:)</span> 加 8 点停留、600 点/秒横扫、提示只往下长、» 在时只认点击。</td></tr>
+      <tr><td>Core/DisplayShape.swift</td><td><span class="token">NotchIsland.compactSide</span> 不改约定；加 26 / 33 / 34 的测试。刘海下方模式走胶囊，进 <span class="token">tests/DisplayShapeTests.swift</span> 的一个场景。</td></tr>
+      <tr><td>Core/NotchActivities.swift</td><td>加 <span class="token">.calendar</span> 85、<span class="token">.timer</span> 75、<span class="token">.shelf</span> 10（和《日历、电量与计时器》的 ACT-W 同一处，不另加）；活动加相关度 0–4、过期时间、收场方式（默认 4 秒 / 立即 / 到点 ≤ 300 秒）、最后的样子；排序键改成新鲜 &gt; 权重 &gt; 相关度 &gt; 更新时间。<span class="token">NotchMinimalPresentation.islandExtent</span> 从 54 改成耳宽，放一颗要 76、两颗要 118。</td></tr>
+      <tr><td>App/NotchActivityView.swift</td><td>按四个区画大卡；过期 0.5 + 右耳“—”；结束时留最后的样子。</td></tr>
+      <tr><td>Core/NotchRow.swift</td><td>按筛选结果排格子，不窄于两格；刘海左边那段放筛选的字，右边那段放 » 入口。<span class="token">ongoingLimit</span> 3 不变。</td></tr>
+      <tr><td>App/NotchFocusController.swift、Core/FocusNavigator.swift</td><td>加筛选的字；拼音首字母用系统的汉字转拼音；焦点落第一个匹配；Esc 两步；悬停打开时不接键盘。</td></tr>
+      <tr><td>App/NotchSpaceGate.swift</td><td>不改判断；量空位照它的写法：只听通知，每次通知只补一次延后复核。</td></tr>
+      <tr><td>tools/privacy/registry.json、App/WS2PrivacyData.swift</td><td>新读取登记；《WindowShade 读到的》加一行。</td></tr>
+    </tbody>
+  </table></div>
+
+  <h2>工作包</h2>
+  <div class="tbl"><table>
+    <thead><tr><th>包</th><th>标题</th><th>一句话</th><th>验收</th></tr></thead>
+    <tbody>
+      <tr><td>LA-0</td><td>真机先查</td><td>在这台 macOS 27.0 上记下 » 收着、点开、刘海下方模式、自动隐藏菜单栏时辅助功能报什么；核实“54 点盖图标”。</td><td>一张读数表 + 截图；» 的角色和可用属性写清；有没有开合通知写清。决定 LA-8 做不做。</td></tr>
+      <tr><td>LA-1</td><td>量准空位</td><td>碰到第一项就读帧，每 12 点探一次，只在事件时量，每次一次 0.6 秒复核。</td><td>空闲 10 分钟日志里 0 次量；换前台、开关 App 各触发 ≤ 2 次；读数和截图里的图标边差 ≤ 1 点。</td></tr>
+      <tr><td>LA-2</td><td>耳宽按画的验</td><td>活动紧凑不再按 54 画；最小形放一颗要 76、两颗要 118。</td><td>测试：30 点处有图标时耳朵 ≤ 30，从不画 54；舞台截图和本稿逐档对得上。</td></tr>
+      <tr><td>LA-3</td><td>拥挤阶梯与迟滞</td><td>新的纯规则文件：收立刻、长要等、指针在菜单栏上只收不长；» 与刘海下方模式当正常状态。</td><td>规则测试覆盖四档和来回拖；来回拖 20 次，2 秒内最多长一次；刘海下方模式走胶囊的测试通过。</td></tr>
+      <tr><td>LA-4</td><td>悬停不误触</td><td>8 点停留、600 点/秒横扫、提示只往下长、滚轮不算、» 在时只认点击。</td><td>探针脚本：800 点/秒横扫 20 次 0 次展开；停住 0.12–0.20 秒内展开；滚轮 50 次 0 次展开。</td></tr>
+      <tr><td>LA-5</td><td>一件活动的样子</td><td>九种活动都填齐左耳、右耳、最小、一格、大卡四个区。</td><td>每种一张截图对本稿的表；VoiceOver 念出的句子逐种列出。</td></tr>
+      <tr><td>LA-6</td><td>生命周期与相关度</td><td>过期、收场方式、1.5 秒门槛、新排序键；依赖 ACT-W 的两个新权重。</td><td>排序测试：过期的会话排在新鲜的音乐后面；1 秒的拷贝不出现；结束留 4 秒、那一排留到看过。</td></tr>
+      <tr><td>LA-7</td><td>那一排里打字</td><td>点开或快捷键打开时接键盘筛选，拼音首字母，Esc 两步。</td><td>匹配测试（含“zh”→“周会”）；悬停打开时在备忘录里打字一个字都不丢。</td></tr>
+      <tr><td>LA-8</td><td>替你按 »（实验）</td><td>只在 » 在而且收着时放一个入口，按了交给系统；没有 » 不放。</td><td>真机按 10 次成功 10 次；系统没有 » 时入口从不出现；按失败后这次运行不再出现。LA-0 说不行就砍。</td></tr>
+      <tr><td>LA-9</td><td>隐私登记</td><td>新读取进 registry，《WindowShade 读到的》加一行。</td><td>隐私扫描通过；页面上能看到这一行。</td></tr>
+    </tbody>
+  </table></div>
+
+  <h2>待 Aaron 定</h2>
+  <div class="card">
+    <ol>
+      <li><b>两件同时在时，耳朵怎么分？</b>《日历、电量与计时器》写的是两只耳朵各放一件的最小样子；设计文法和今天的代码是两耳都给第一件，第二件挂在右边当最小形。<br><b>推荐</b>：照文法。耳朵是一件事的两半，读起来不打架；空位不够时两种写法都退到下巴，差别只在宽裕的时候。定了以后改那张稿。</li>
+      <li><b>点耳朵，先出那一排还是直接大卡？</b>《正在播放》写点耳朵直接长成大卡；《日历、电量与计时器》写先出那一排再点那一格。<br><b>推荐</b>：点耳朵直接大卡，点刘海本体或悬停出那一排。耳朵已经是“这一件”，再绕一步是多余的。</li>
+      <li><b>那一排里的 » 入口做不做？</b><br><b>推荐</b>：先做 LA-0 真机核实；能稳定按到才做成实验开关、默认关。按不到就砍，不找别的办法。</li>
+    </ol>
+  </div>
+</div>
+
+<script>
+(function(){
+'use strict';
+var $=function(id){return document.getElementById(id)};
+/* 弹簧令牌：response 秒 / 阻尼比 ζ（design-system §4.6） */
+var TOK={calm:{r:.34,z:1,n:'calm'},settle:{r:.38,z:1,n:'settle'},bloom:{r:.42,z:.84,n:'bloom'},expand:{r:.40,z:.92,n:'expand'},pop:{r:.30,z:.75,n:'pop'}};
+var HOLD={notchDwell:.12,tileDwell:.20,alert:2.6,linger:4};
+var N={w:185,h:33.5,rb:10.71,e:7.4};
+var CX=490,NL=CX-N.w/2,NR=CX+N.w/2;
+var EAR=34,EAR_MIN=26,MARGIN=4,RECHECK=.6,SWEEP=600,STILL=8,MINI_W=36,MINI_GAP=6;
+var WEIGHT={session:95,recording:90,calendar:85,download:80,airdrop:80,timer:75,focus:70,route:60,music:40,remote:30,device:20,shelf:10};
+var KINDS=['session','calendar','timer','focus','download','airdrop','music','device','shelf'];
+var NAME={session:'编程会话',calendar:'日程',timer:'计时器',focus:'番茄钟',download:'下载',airdrop:'隔空投送',music:'正在播放',device:'耳机',shelf:'文件架'};
+var TONE={session:'#ff9f0a',calendar:'#0a84ff',timer:'#ff9f0a',focus:'#ff6961',download:'#64d2ff',airdrop:'#0a84ff',music:'#e8785c',device:'#ffffff',shelf:'#c7c7cc'};
+var PY={session:'windowshade bchh biancheng huihua hh',calendar:'zh zhouhui rc richeng',timer:'jsq jishiqi',focus:'fqz fanqiezhong zz zhuanzhu',download:'xz xiazai design-kit zip',airdrop:'gktx gekongtousong',music:'zzbf zhengzaibofang yy yinyue september',device:'ej erji',shelf:'wjj wenjianjia'};
+var FRONT={
+  finder:{name:'访达',menus:['文件','编辑','显示','前往','窗口','帮助']},
+  notes:{name:'备忘录',menus:['文件','编辑','格式','显示','窗口','帮助']},
+  editor:{name:'编辑器',menus:['文件','编辑','选择','显示','查找','导航','编辑器','产品','调试','集成','窗口','帮助']}
+};
+var WINS=[
+  {id:'w1',title:'合同.pdf',sub:'预览',py:'ht hetong pdf yl yulan',g:'linear-gradient(160deg,#f4f1ea,#d9d2c3)'},
+  {id:'w2',title:'购物清单',sub:'备忘录',py:'gwqd gouwuqingdan bwl beiwanglu',g:'linear-gradient(160deg,#fff7c9,#f0dc84)'},
+  {id:'w3',title:'周报',sub:'文稿',py:'zb zhoubao wg wengao',g:'linear-gradient(160deg,#e3ecff,#b7c9f2)'}
+];
+
+/* ---------- 状态 ---------- */
+var S;
+function fresh(){
+  return {crowd:+$('crowd').value,front:'notes',spacing:16,ovfOpen:false,env:{below:false,external:false,mission:false,full:false},
+    acts:[],selected:null,room:{L:null,R:null},want:{},pendT:0,pendWhy:'',blocked:false,measures:0,lastRaw:null,
+    ui:'rest',rowBy:null,cardId:null,alert:null,alertQ:[],dot:null,query:'',focus:0,bump:'',peek:null,
+    hint:false,ptr:{x:-1,y:-1,in:false,band:false,t:0,speed:0,ax:0,ay:0,still:0,sweep:false,onStage:false},
+    wins:WINS.slice(),seq:0,lastMode:'',logs:[]};
+}
+S=fresh();
+var reduced=false;
+
+/* ---------- 文字宽度 ---------- */
+var ctx=document.createElement('canvas').getContext('2d');
+function tw(t,bold){ctx.font=(bold?'700 ':'400 ')+'13px -apple-system,"PingFang SC",sans-serif';return ctx.measureText(t).width;}
+
+/* ---------- 菜单栏布局：返回每一项的帧和两侧的空位 ---------- */
+function virtualMode(){return S.env.external||S.env.below;}
+function mbTop(){return S.env.below?33.5:0;}
+function mbH(){return S.env.external?24:(S.env.below?30:33.5);}
+function layout(){
+  var items=[],x=16,f=FRONT[S.front],virt=virtualMode(),gap=20;
+  var leftLimit=virt?9999:NL-6, spilled=false, menusRightEnd=0, rightSpillEnd=NR;
+  var names=[f.name].concat(f.menus);
+  names.forEach(function(nm,i){
+    var w=tw(nm,i===0);
+    if(!virt && x+w>leftLimit && !spilled){spilled=true;x=NR+10;}
+    items.push({kind:'menu',label:nm,b:i===0,x:x,w:w});
+    if(spilled) rightSpillEnd=x+w; else menusRightEnd=x+w;
+    x+=w+gap;
+  });
+  var clock='10月9日 周五 14:52', cw=tw(clock,false), clockX=964-cw;
+  items.push({kind:'clock',label:clock,x:clockX,w:cw});
+  /* 状态图标：宽度不一（有的 App 画得宽），从时钟往左排 */
+  var WID=[16,16,22,16,16,20,18,16,22,16,16,20,16], SH=['','r','t','','r','','t','','r','','t','',''];
+  var n=2+Math.round(S.crowd/100*11), end=clockX-10, sp=S.spacing;
+  var obstacle=spilled?rightSpillEnd:(virt?menusRightEnd:NR);
+  var xs=[],acc=end;
+  for(var i=0;i<n;i++){acc-=WID[i]+sp;xs.push(acc+sp/2);}
+  var ovf=null,hidden=0,shown=n;
+  if(!virt && n && xs[n-1]<obstacle+4){
+    var ovx=obstacle+6; shown=0;
+    while(shown<n && xs[shown]>=ovx+22+4) shown++;
+    hidden=n-shown; ovf={x:ovx,w:22};
+  }
+  for(var k=0;k<shown;k++) items.push({kind:'status',x:xs[k],w:WID[k],cls:SH[k]});
+  if(ovf) items.push({kind:'ovf',x:ovf.x,w:ovf.w});
+  var revealed=[];
+  if(ovf && S.ovfOpen){
+    var rx=NL-6;
+    for(var j=n-1;j>=shown;j--){rx-=WID[j]+sp;revealed.push({kind:'status',x:rx+sp/2,w:WID[j],cls:SH[j],rev:true});}
+  }
+  /* 空位：从刘海边（或胶囊正中）往外到第一项 */
+  var Ledge=virt?CX:NL, Redge=virt?CX:NR, all=items.concat(revealed);
+  var L=Infinity,R=Infinity,hitL=null,hitR=null;
+  all.forEach(function(it){
+    if(it.kind==='clock' && !virt) {}
+    var a=it.x,b=it.x+it.w;
+    if(b<=Ledge){var d=Ledge-b; if(d<L){L=d;hitL=it;}}
+    if(a>=Redge){var d2=a-Redge; if(d2<R){R=d2;hitR=it;}}
+  });
+  if(S.ovfOpen && revealed.length){var r0=revealed[0];L=Ledge-(r0.x+r0.w);hitL=r0;}
+  return {items:items,revealed:revealed,ovf:ovf,hidden:hidden,n:n,L:Math.max(0,L),R:Math.max(0,R),hitL:hitL,hitR:hitR};
+}
+
+/* ---------- 量空位与迟滞 ---------- */
+function ptrInBand(){var p=S.ptr;return p.onStage && p.y>=mbTop() && p.y<mbTop()+mbH() && !p.in;}
+function log(t){S.logs.unshift(clock()+'  '+t);S.logs=S.logs.slice(0,6);var ul=$('log');ul.innerHTML=S.logs.map(function(x){return '<li>'+x+'</li>'}).join('');}
+function clock(){var d=new Date();return ('0'+d.getMinutes()).slice(-2)+':'+('0'+d.getSeconds()).slice(-2)+'.'+String(d.getMilliseconds()).padStart(3,'0').slice(0,1);}
+function f1(v){return v==null?'—':(v>200?'200+':Math.round(v*10)/10)+' 点';}
+function measure(why){
+  if(S.env.mission||S.env.full){log(why+' → 让开中，不量');return;}
+  S.measures++;
+  var raw=layout(); S.lastRaw=raw;
+  var grew=false;
+  ['L','R'].forEach(function(s){
+    var cur=S.room[s];
+    if(cur==null||raw[s]<cur){S.room[s]=raw[s];}
+    else if(raw[s]>=cur+MARGIN){S.want[s]=raw[s];grew=true;}
+  });
+  if(grew){
+    if(!S.pendT){S.pendT=performance.now()+RECHECK*1000;S.pendWhy='0.6 秒后复核';}
+    log(why+' → 量一次：左 '+f1(raw.L)+'、右 '+f1(raw.R)+'；想长，等复核');
+  }else{
+    log(why+' → 量一次：左 '+f1(raw.L)+'、右 '+f1(raw.R));
+  }
+  drawMenubar(); dirty=true;
+}
+function recheck(){
+  S.pendT=0;
+  if(ptrInBand()){S.blocked=true;S.pendWhy='等指针离开菜单栏';log('复核：指针在菜单栏上，只收不长');dirty=true;return;}
+  S.blocked=false; S.measures++;
+  var raw=layout(); S.lastRaw=raw;
+  ['L','R'].forEach(function(s){
+    if(S.want[s]!=null && raw[s]>=S.room[s]+MARGIN) S.room[s]=raw[s];
+    else if(raw[s]<S.room[s]) S.room[s]=raw[s];
+  });
+  S.want={}; S.pendWhy='';
+  log('复核：还一样，长到 左 '+f1(S.room.L)+'、右 '+f1(S.room.R));
+  drawMenubar(); dirty=true;
+}
+
+/* 档位：空位 → 耳宽、肩、最小形 */
+function fit(){
+  var virt=virtualMode();
+  if(S.room.L==null) return {mode:'none'};
+  var side=Math.min(S.room.L,S.room.R);
+  if(virt){
+    return side>=39?{mode:'pill',ear:40,body:40,sh:false,level:'宽裕'}:{mode:'chin',level:'挤'};
+  }
+  if(S.lastRaw&&S.lastRaw.ovf) return {mode:'chin',level:'挤',why:'» 在'};
+  if(side>=EAR) return {mode:'ears',ear:EAR,body:EAR-N.e,sh:true,level:'宽裕'};
+  if(side>=EAR_MIN){var ew=Math.floor(side);return {mode:'ears',ear:ew,body:ew,sh:false,level:'偏挤'};}
+  return {mode:'chin',level:'挤'};
+}
+function miniFits(ear,want){
+  var k=Math.min(2,want);
+  while(k>0 && ear+MINI_GAP+k*MINI_W+(k-1)*MINI_GAP>S.room.R) k--;
+  return k;
+}
+
+/* ---------- 活动 ---------- */
+function now(){return performance.now()/1000;}
+function mk(kind){
+  var a={id:kind+(++S.seq),kind:kind,phase:'live',rel:0,t0:now(),upd:now(),ended:0,endPolicy:'default',seen:false};
+  switch(kind){
+    case 'session': a.step='running'; a.title='windowshade'; break;
+    case 'calendar': a.left=4*60+30; a.title='周会'; break;
+    case 'timer': a.left=9*60+12; a.total=600; a.title='10 分钟计时器'; break;
+    case 'focus': a.left=18*60; a.total=25*60; a.title='专注'; break;
+    case 'download': a.p=.42; a.title='design-kit.zip'; break;
+    case 'airdrop': a.p=.68; a.title='发给 Aaron 的 iPhone'; break;
+    case 'music': a.song='September'; a.artist='示例乐队'; a.p=.4; break;
+    case 'device': a.bat=80; break;
+    case 'shelf': a.count=6; break;
+  }
+  return a;
+}
+function live(){return S.acts.filter(function(a){return !a.gone;});}
+function rankKey(a){return [a.phase==='stale'?0:1,WEIGHT[a.kind],a.rel,a.upd];}
+function ranked(){
+  return live().slice().sort(function(a,b){var x=rankKey(a),y=rankKey(b);for(var i=0;i<4;i++){if(x[i]!==y[i])return y[i]-x[i];}return 0;});
+}
+function compactAct(){
+  var r=ranked().filter(function(a){return !(a.ended&&a.endPolicy==='row');});
+  if(!r.length) return null;
+  var sel=r.filter(function(a){return a.id===S.selected;})[0];
+  if(sel) return sel;
+  var non=r.filter(function(a){return a.kind!=='shelf';});
+  return non[0]||r[0];
+}
+function others(c){return ranked().filter(function(a){return a!==c && a.kind!=='shelf' && !a.ended;});}
+function startAct(kind){
+  var a=mk(kind); var wasEmpty=!compactAct();
+  S.acts.push(a);
+  if(kind==='calendar'||kind==='session') a.rel=0;
+  log('开始：'+NAME[kind]);
+  if(wasEmpty) measure('要长耳朵');
+  if(kind==='device') queueAlert(a,'耳机已连接','电量 '+a.bat+'%');
+  refreshPick(); dirty=true;
+}
+function endAct(a,policy){
+  if(!a) return;
+  if(policy==='now'){a.gone=true;log('立即结束：'+NAME[a.kind]);}
+  else{
+    a.ended=now(); a.endPolicy='default';
+    if(a.kind==='session'){a.step='done';queueAlert(a,'会话做完了','windowshade');}
+    if(a.kind==='download'){a.p=1;queueAlert(a,'下载好了',a.title);}
+    if(a.kind==='airdrop'){a.p=1;queueAlert(a,'已送达',a.title);}
+    log('结束：'+NAME[a.kind]+'，最后的样子留 4 秒');
+  }
+  if(S.selected===a.id && policy==='now') S.selected=null;
+  refreshPick(); dirty=true;
+}
+
+/* ---------- 提醒（第 4 层） ---------- */
+function queueAlert(a,title,sub,hold,btn){
+  var al={act:a,title:title,sub:sub,hold:hold||HOLD.alert,btn:btn||null,peek:(a.kind==='music'&&compactAct()===a)};
+  if(S.ui!=='rest' || S.env.mission || S.env.full){
+    S.dot={kind:a.kind,until:now()+2.6}; log('提醒撞上“你打开的”：只亮一个点，读屏念“'+title+'”，不补播');
+    dirty=true; return;
+  }
+  if(S.alert){S.alertQ.push(al);return;}
+  S.alert=al; S.alert.until=now()+al.hold; S.ui='alert'; dirty=true;
+}
+
+/* ---------- 每件活动的内容 ---------- */
+function G(name,size,col){
+  col=col||'#fff'; var s=size||18, o='<svg width="'+s+'" height="'+s+'" viewBox="0 0 20 20" fill="none" stroke="'+col+'" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round">';
+  switch(name){
+    case 'term': o+='<rect x="2.5" y="3.5" width="15" height="13" rx="3"/><path d="M6 8l2.5 2L6 12M10.5 12.5h3.5"/>';break;
+    case 'down': o+='<circle cx="10" cy="10" r="7.5"/><path d="M10 6v7M7 10.5l3 3 3-3"/>';break;
+    case 'air': o+='<path d="M4.5 13.5a7 7 0 1 1 11 0M7 11.5a3.6 3.6 0 1 1 6 0"/><circle cx="10" cy="10" r="1.2" fill="'+col+'"/>';break;
+    case 'head': o+='<path d="M3.5 12V10a6.5 6.5 0 0 1 13 0v2"/><rect x="3" y="11.5" width="3.5" height="5" rx="1.4"/><rect x="13.5" y="11.5" width="3.5" height="5" rx="1.4"/>';break;
+    case 'tray': o+='<path d="M3 11l2-6.5h10L17 11v4.5H3zM3 11h4l1 2h4l1-2h4"/>';break;
+    case 'cam': o+='<rect x="2.5" y="6" width="10" height="8" rx="2"/><path d="M12.5 9l5-2.5v7l-5-2.5"/>';break;
+    case 'spk': o+='<path d="M4 8h3l4-3v10l-4-3H4z"/><path d="M14 7.5a3.5 3.5 0 0 1 0 5"/>';break;
+    case 'play': o+='<path d="M7 5l8 5-8 5z" fill="'+col+'"/>';break;
+    case 'prev': o+='<path d="M15 5l-6 5 6 5zM7 5v10" fill="'+col+'"/>';break;
+    case 'next': o+='<path d="M5 5l6 5-6 5zM13 5v10" fill="'+col+'"/>';break;
+    case 'check': o+='<path d="M5 10.5l3.2 3L15 6.5"/>';break;
+  }
+  return o+'</svg>';
+}
+function ring(frac,col,s,w,paused){
+  s=s||18;w=w||2.4;var r=(s-w)/2,c=2*Math.PI*r,f=Math.max(0,Math.min(1,frac));
+  return '<svg width="'+s+'" height="'+s+'" viewBox="0 0 '+s+' '+s+'"><circle cx="'+s/2+'" cy="'+s/2+'" r="'+r+'" stroke="rgba(255,255,255,.2)" stroke-width="'+w+'" fill="none"/>'+
+    '<circle cx="'+s/2+'" cy="'+s/2+'" r="'+r+'" stroke="'+col+'" stroke-width="'+w+'" fill="none" stroke-linecap="round" stroke-dasharray="'+(c*f).toFixed(2)+' '+c.toFixed(2)+'" transform="rotate(-90 '+s/2+' '+s/2+')"/>'+
+    (paused?'<path d="M'+(s/2-2)+' '+(s/2-3)+'v6M'+(s/2+2)+' '+(s/2-3)+'v6" stroke="#fff" stroke-width="1.6"/>':'')+'</svg>';
+}
+function spinner(col,s){s=s||16;return '<svg width="'+s+'" height="'+s+'" viewBox="0 0 16 16"><g class="spin"><path d="M8 2a6 6 0 0 1 6 6" stroke="'+col+'" stroke-width="2" fill="none" stroke-linecap="round"/></g><circle cx="8" cy="8" r="6" stroke="rgba(255,255,255,.18)" stroke-width="2" fill="none"/></svg>';}
+function cover(s){return '<span style="display:inline-block;width:'+s+'px;height:'+s+'px;border-radius:'+(s>30?9:4)+'px;background:radial-gradient(70% 70% at 30% 25%,#ffcf8a,transparent 60%),linear-gradient(135deg,#e8785c,#7a3a8c)"></span>';}
+function dots(col){var o='<span style="display:inline-flex;gap:2.4px;align-items:center">';for(var i=0;i<5;i++)o+='<i style="display:block;width:2.4px;height:2.4px;border-radius:1.2px;background:'+(i%2?'#ffcf8a':col)+'"></i>';return o+'</span>';}
+function mmss(s){s=Math.max(0,Math.round(s));return Math.floor(s/60)+':'+('0'+s%60).slice(-2);}
+function mins(s){return Math.max(0,Math.ceil(s/60))+' 分';}
+function isStale(a){return a.phase==='stale';}
+
+function ears(a,short){
+  var L='',T='',col=TONE[a.kind],st=isStale(a);
+  switch(a.kind){
+    case 'session': L=G('term',18); T=a.step==='done'?G('check',16):(a.step==='waiting'?'<span style="color:#ff9f0a">'+(short?'●':'等你')+'</span>':spinner('#fff',15)); break;
+    case 'calendar':
+      if(a.left<=0){L=ring(1,col,18);T=G('cam',16,'#30d158');}
+      else{L=ring(a.left/300,col,18);T=short?String(Math.ceil(a.left/60)):mins(a.left);} break;
+    case 'timer': L=ring(a.left/a.total,col,18,2.4,a.paused); T=a.left<=0?'+'+mins(-a.left):(a.left<=60?mmss(a.left):(short?String(Math.ceil(a.left/60)):mins(a.left))); break;
+    case 'focus': L=ring(a.left/a.total,col,18); T=short?String(Math.ceil(a.left/60)):mins(a.left); break;
+    case 'download': L=G('down',18); T=a.p>=1?G('check',16):(short?ring(a.p,'#fff',16,2.2):Math.round(a.p*100)+'%'); break;
+    case 'airdrop': L=G('air',18); T=a.p>=1?G('check',16):(short?ring(a.p,'#fff',16,2.2):Math.round(a.p*100)+'%'); break;
+    case 'music': L=cover(18); T=dots(col); break;
+    case 'device': L=G('head',18); T=short?ring(a.bat/100,'#30d158',16,2.2):a.bat+'%'; break;
+    case 'shelf': L=G('tray',18); T=String(a.count); break;
+  }
+  if(st){T='—';}
+  if(a.ended && a.kind!=='session' && a.kind!=='download' && a.kind!=='airdrop') T=G('check',16);
+  return {L:L,T:T,dim:st||(a.kind==='music'&&a.paused)};
+}
+function miniHTML(a){
+  var col=TONE[a.kind];
+  if(a.kind==='session'&&a.step==='waiting') return '<span style="width:8px;height:8px;border-radius:4px;background:#ff9f0a"></span>';
+  if(a.kind==='music') return cover(14).replace('border-radius:4px','border-radius:7px');
+  var f={calendar:a.left/300,timer:a.left/(a.total||1),focus:a.left/(a.total||1),download:a.p,airdrop:a.p,device:a.bat/100,session:.3}[a.kind];
+  return ring(f==null?.5:f,col,16,2);
+}
+function tileHTML(a){
+  var big='',t='',s='';
+  switch(a.kind){
+    case 'session': big=G('term',20)+'<b style="font-size:13px;color:'+(a.step==='waiting'?'#ff9f0a':'#fff')+'">'+(a.step==='waiting'?'等你':a.step==='done'?'做完了':'在跑')+'</b>'; t='windowshade'; s=a.step==='waiting'?'要改 3 个文件':'第 4 步'; break;
+    case 'calendar': big=ring(a.left/300,TONE.calendar,22)+'<b>'+(a.left>0?mins(a.left):'在开')+'</b>'; t='周会'; s='15:00 · 有会议链接'; break;
+    case 'timer': big=ring(a.left/a.total,TONE.timer,22)+'<b>'+(a.left<=60?mmss(a.left):mins(a.left))+'</b>'; t='计时器'; s='共 10 分钟'; break;
+    case 'focus': big=ring(a.left/a.total,TONE.focus,22)+'<b>'+mins(a.left)+'</b>'; t='番茄钟'; s='专注 · 第 2 轮'; break;
+    case 'download': big=G('down',22)+'<b>'+Math.round(a.p*100)+'%</b>'; t=a.title; s='下载'; break;
+    case 'airdrop': big=G('air',22)+'<b>'+Math.round(a.p*100)+'%</b>'; t='隔空投送'; s=a.title; break;
+    case 'music': big=cover(30)+'<span style="width:24px;height:24px;border-radius:12px;background:rgba(255,255,255,.16);display:flex;align-items:center;justify-content:center">'+G('play',11)+'</span>'; t=a.song; s=a.paused?'已暂停':a.artist; break;
+    case 'device': big=G('head',22)+'<b>'+a.bat+'%</b>'; t='耳机'; s='左 80% · 右 78%'; break;
+    case 'shelf': big='<span style="position:relative;width:44px;height:30px">'+[0,1,2].map(function(i){return '<i style="position:absolute;left:'+(i*7)+'px;top:'+(i*2)+'px;width:26px;height:26px;border-radius:5px;background:'+['#9cc9ff','#f0dc84','#d9d2c3'][i]+';box-shadow:0 0 0 1px #000"></i>'}).join('')+'</span><b>'+a.count+'</b>'; t='文件架 · '+a.count; s='点开看全部'; break;
+  }
+  if(isStale(a)) s='可能已停';
+  return '<div class="big'+(isStale(a)?' dim':'')+'">'+big+'</div><div class="cap">'+t+'<small>'+s+'</small></div>';
+}
+
+/* ---------- 几何目标 ---------- */
+var P={W:{x:185,v:0},H:{x:33.5,v:0},rb:{x:10.71,v:0},e:{x:7.4,v:0},top:{x:0,v:0}},tok=TOK.calm,allCorners=false,visible=true;
+function setTarget(g,t){
+  tok=t||tok; allCorners=!!g.all; visible=g.vis!==false;
+  ['W','H','rb','e','top'].forEach(function(k){P[k].t=g[k];});
+  if(reduced){['W','H','rb','e','top'].forEach(function(k){P[k].x=P[k].t;P[k].v=0;});}
+}
+function rowCells(){
+  var q=S.query.toLowerCase(), m=function(s,title){return !q||s.toLowerCase().split(/\s+/).some(function(w){return w.indexOf(q)===0;})||(title||'').toLowerCase().indexOf(q)>=0;};
+  var w=S.wins.filter(function(x){return m(x.title+' '+x.sub+' '+x.py,x.title);}).map(function(x){return {type:'win',id:x.id,o:x};});
+  var r=ranked().filter(function(a){return a.kind!=='shelf';}).slice(0,3);
+  var sh=live().filter(function(a){return a.kind==='shelf';});
+  var on=r.concat(sh).filter(function(a){return m(NAME[a.kind]+' '+(a.title||'')+' '+(a.song||'')+' '+PY[a.kind],NAME[a.kind]+(a.title||'')+(a.song||''));}).map(function(a){return {type:'act',id:a.id,o:a};});
+  return {w:w,on:on};
+}
+function rowWidth(c){
+  var n=c.w.length+c.on.length; var div=(c.w.length&&c.on.length)?9:0;
+  var w=28+Math.max(2,n)*124+(Math.max(2,n)-1)*8+div;
+  return Math.min(892,Math.max(560,w));
+}
+function proxyShown(){return $('proxyOn').checked && S.lastRaw && S.lastRaw.ovf && !S.ovfOpen && !virtualMode();}
+function computeTarget(){
+  var virt=virtualMode(), top=mbTop(), yield_=S.env.mission||S.env.full;
+  var hw={W:185,H:33.5,rb:10.71,e:7.4,top:0,vis:!virt};
+  if(yield_) return {g:hw,t:TOK.calm,mode:'yield'};
+  var c=compactAct(), fitv=fit();
+  if(S.ui==='row'){
+    var cells=rowCells();
+    return {g:{W:rowWidth(cells),H:175.5,rb:28,e:0,top:top,all:virt},t:TOK.expand,mode:'row'};
+  }
+  if(S.ui==='card'){
+    var a=S.acts.filter(function(x){return x.id===S.cardId;})[0];
+    var W=a&&a.kind==='calendar'?440:420;
+    return {g:{W:W,H:175.5,rb:28,e:0,top:top,all:virt},t:TOK.expand,mode:'card'};
+  }
+  if(S.ui==='alert'&&S.alert){
+    if(S.alert.peek && fitv.mode==='ears') return {g:{W:185+2*fitv.ear,H:63.5,rb:24,e:fitv.sh?N.e:0,top:0},t:TOK.bloom,mode:'peek'};
+    return {g:{W:400,H:85.5,rb:24,e:0,top:top,all:virt},t:TOK.bloom,mode:'alert'};
+  }
+  if(!c) return {g:hw,t:TOK.calm,mode:'none'};
+  if(virt){
+    if(fitv.mode==='pill') return {g:{W:80,H:mbH()-6,rb:(mbH()-6)/2,e:0,top:top+3,all:true},t:TOK.settle,mode:'pill'};
+    return {g:{W:72,H:12,rb:6,e:0,top:top+mbH(),all:true},t:TOK.settle,mode:'vchin'};
+  }
+  if(fitv.mode==='ears'){
+    var hintH=(S.hint&&!reduced)?3:0;
+    return {g:{W:185+2*fitv.body,H:33.5+hintH,rb:10.71,e:fitv.sh?N.e:0,top:0},t:S.hint?TOK.calm:TOK.settle,mode:'ears'};
+  }
+  if(fitv.mode==='chin') return {g:{W:185,H:41.5+((S.hint&&!reduced)?3:0),rb:10.71,e:N.e,top:0},t:TOK.settle,mode:'chin'};
+  return {g:hw,t:TOK.calm,mode:'none'};
+}
+
+/* ---------- 形状路径（照《宽形状画肩》） ---------- */
+function shapePath(cx,W,H,rb,e,top){
+  var x0=cx-W/2,x1=cx+W/2,k=.5523,kb=.64,d='',y=top;
+  d+='M'+(x0-e)+' '+(y-8)+' L'+(x0-e)+' '+y+' ';
+  if(e>.02) d+='C'+(x0-e+k*e)+' '+y+' '+x0+' '+(y+e-k*e)+' '+x0+' '+(y+e)+' '; else d+='L'+x0+' '+y+' ';
+  d+='L'+x0+' '+(y+H-rb)+' C'+x0+' '+(y+H-rb+kb*rb)+' '+(x0+rb-kb*rb)+' '+(y+H)+' '+(x0+rb)+' '+(y+H)+' ';
+  d+='L'+(x1-rb)+' '+(y+H)+' C'+(x1-rb+kb*rb)+' '+(y+H)+' '+x1+' '+(y+H-rb+kb*rb)+' '+x1+' '+(y+H-rb)+' ';
+  if(e>.02) d+='L'+x1+' '+(y+e)+' C'+x1+' '+(y+e-k*e)+' '+(x1+e-k*e)+' '+y+' '+(x1+e)+' '+y+' '; else d+='L'+x1+' '+y+' ';
+  d+='L'+(x1+e)+' '+(y-8)+' Z';
+  return d;
+}
+function roundRect(cx,W,H,r,top){var x=cx-W/2;r=Math.min(r,H/2,W/2);return 'M'+(x+r)+' '+top+'H'+(x+W-r)+'A'+r+' '+r+' 0 0 1 '+(x+W)+' '+(top+r)+'V'+(top+H-r)+'A'+r+' '+r+' 0 0 1 '+(x+W-r)+' '+(top+H)+'H'+(x+r)+'A'+r+' '+r+' 0 0 1 '+x+' '+(top+H-r)+'V'+(top+r)+'A'+r+' '+r+' 0 0 1 '+(x+r)+' '+top+'Z';}
+
+/* ---------- 画菜单栏 ---------- */
+function drawMenubar(){
+  var lay=S.lastRaw||layout(), mb=$('menubar'), virt=virtualMode();
+  mb.style.top=mbTop()+'px'; mb.style.height=mbH()+'px';
+  $('strip').style.display=S.env.below?'block':'none';
+  var h='';
+  var hitL=lay.hitL,hitR=lay.hitR;
+  function cls(it){return (it===hitL||it===hitR)&&$('probesOn').checked?' hit':'';}
+  lay.items.forEach(function(it){
+    if(it.kind==='menu'||it.kind==='clock') h+='<span class="mi'+(it.b?' b':'')+cls(it)+'" style="left:'+it.x+'px">'+it.label+'</span>';
+    else if(it.kind==='status') h+='<span class="si '+(it.cls||'')+cls(it)+'" style="left:'+it.x+'px;width:'+it.w+'px"><i></i></span>';
+    else if(it.kind==='ovf') h+='<span class="ovf'+(S.ovfOpen?' open':'')+cls(it)+'" style="left:'+it.x+'px">»</span>';
+  });
+  if(lay.revealed.length){
+    var a=lay.revealed[lay.revealed.length-1].x-6, b=NL-2;
+    h+='<span class="shown" style="left:'+a+'px;width:'+(b-a)+'px"></span>';
+    lay.revealed.forEach(function(it){h+='<span class="si '+(it.cls||'')+cls(it)+'" style="left:'+it.x+'px;width:'+it.w+'px"><i></i></span>';});
+  }
+  mb.innerHTML=h;
+  /* 探针：从刘海边每 12 点往外，碰到第一项就停 */
+  var pr='';
+  if($('probesOn').checked && !S.env.mission && !S.env.full){
+    var Ledge=virt?CX:NL,Redge=virt?CX:NR,reach=EAR+MINI_GAP+2*MINI_W+MINI_GAP;
+    [['L',-1,Ledge],['R',1,Redge]].forEach(function(s){
+      var room=lay[s[0]];
+      for(var o=3;o<=reach;o+=12){
+        var occ=o>room; var x=s[2]+s[1]*o;
+        pr+='<span class="probe '+(occ?'o':'f')+'" style="left:'+(x-1)+'px;top:'+(mbTop()+mbH()-5)+'px"></span>';
+        if(occ) break;
+      }
+    });
+  }
+  $('probes').innerHTML=pr;
+  $('crowdRead').textContent=lay.n+' 个图标'+(lay.ovf?'，藏了 '+lay.hidden+' 个':'');
+}
+
+/* ---------- 画内容 ---------- */
+var dirty=true,lastKey='';
+function drawContent(m){
+  var layer=$('layer'), extra=$('extra'), h='', key=m.mode, virt=virtualMode();
+  var c=compactAct(), fitv=fit(), top=mbTop();
+  if(m.mode==='ears'&&c){
+    var e=ears(c,fitv.level==='偏挤'), b=fitv.body;
+    key+='|'+c.id+'|'+b;
+    h+='<div class="ear'+(e.dim?' dim':'')+'" style="left:'+(NL-b)+'px;width:'+b+'px">'+e.L+'</div>';
+    h+='<div class="ear'+(e.dim?' dim':'')+'" style="left:'+NR+'px;width:'+b+'px">'+e.T+'</div>';
+    var o=others(c), k=$('probesOn')?miniFits(fitv.ear,o.length):0;
+    for(var i=0;i<k;i++){
+      var mx=NR+fitv.ear+MINI_GAP+i*(MINI_W+MINI_GAP);
+      h+='<div class="mini" style="left:'+mx+'px;top:'+((33.5-28)/2)+'px">'+miniHTML(o[i])+'</div>';
+    }
+    key+='|m'+k;
+  }else if(m.mode==='chin'&&c){
+    var list=[c].concat(others(c)).slice(0,3), n=list.length, y=33.5+1.5+((S.hint&&!reduced)?1.5:0);
+    list.forEach(function(a,i){h+='<span class="chindot" style="left:'+(CX-(n-1)*6+i*12-3)+'px;top:'+y+'px;background:'+TONE[a.kind]+'"></span>';});
+    key+='|'+n;
+  }else if(m.mode==='pill'&&c){
+    var e2=ears(c,true);
+    h+='<div class="ear" style="left:'+(CX-40)+'px;width:40px;top:'+(top+3)+'px;height:'+(mbH()-6)+'px">'+e2.L.replace(/width="18" height="18"/,'width="15" height="15"')+'</div>';
+    h+='<div class="ear" style="left:'+CX+'px;width:40px;top:'+(top+3)+'px;height:'+(mbH()-6)+'px;font-size:11px">'+e2.T+'</div>';
+    key+='|'+c.id;
+  }else if(m.mode==='vchin'&&c){
+    var l2=[c].concat(others(c)).slice(0,3);
+    l2.forEach(function(a,i){h+='<span class="chindot" style="left:'+(CX-(l2.length-1)*6+i*12-3)+'px;top:'+(top+mbH()+3)+'px;background:'+TONE[a.kind]+'"></span>';});
+  }else if(m.mode==='row'){
+    var cells=rowCells(), W=rowWidth(cells), x0=CX-W/2, all=cells.w.concat(cells.on), x=x0+14, nC=all.length;
+    key+='|'+all.map(function(z){return z.id}).join(',')+'|'+S.query;
+    if(S.focus>=nC+(proxyShown()?1:0)) S.focus=Math.max(0,nC-1);
+    var lf='';
+    if(S.rowBy!=='hover'){ lf=S.query?'<span class="q"><svg width="13" height="13" viewBox="0 0 20 20" fill="none" stroke="rgba(255,255,255,.6)" stroke-width="2" stroke-linecap="round" style="vertical-align:-2px;margin-right:6px"><circle cx="8.5" cy="8.5" r="5.5"/><path d="M13 13l4 4"/></svg>'+esc(S.query)+'</span><span class="caret"></span>':'<span class="h">打字就能找</span>'; }
+    h+='<div class="flank" style="left:'+(x0+16)+'px;width:'+(NL-x0-24)+'px;top:'+top+'px">'+lf+'</div>';
+    if(proxyShown()){
+      var pf=S.rowBy!=='hover'&&S.focus===nC;
+      h+='<div class="ovbtn" data-proxy="1" title="显示菜单栏里藏着的图标" style="left:'+(x0+W-14-26)+'px;top:'+(top+5.75)+'px;'+(pf?'box-shadow:inset 0 0 0 2px #fff':'')+'">»</div>';
+    }
+    if(!nC){ h+='<div class="empty" style="left:'+x0+'px;width:'+W+'px;top:'+(top+84)+'px">没有匹配的</div>'; }
+    all.forEach(function(z,i){
+      if(i===cells.w.length && cells.w.length){ h+='<div class="divider" style="left:'+(x+0)+'px;top:'+(top+49.5)+'px"></div>'; x+=9; }
+      var foc=(S.rowBy!=='hover'&&S.focus===i&&!S.ptr.in), bump=foc&&S.bump?(' bump'+S.bump):'';
+      var cl='tile'+(foc?' focus':'')+bump+(z.type==='act'&&z.o.ended?' ended':'');
+      if(z.type==='win'){
+        h+='<div class="'+cl+'" data-tile="'+z.id+'" style="left:'+x+'px;top:'+(top+41.5)+'px"><div class="thumb" style="background:'+z.o.g+'"><i></i><b style="top:20px"></b><b style="top:30px;right:40px"></b><b style="top:40px"></b></div><div class="cap">'+z.o.title+'<small>'+z.o.sub+'</small></div></div>';
+      }else{
+        h+='<div class="'+cl+'" data-tile="'+z.id+'" style="left:'+x+'px;top:'+(top+41.5)+'px">'+tileHTML(z.o)+'</div>';
+      }
+      x+=124+8;
+    });
+  }else if(m.mode==='card'){
+    var a=S.acts.filter(function(q){return q.id===S.cardId;})[0];
+    if(a){ h+=cardHTML(a,top); key+='|'+a.id; }
+  }else if(m.mode==='alert'&&S.alert){
+    var al=S.alert, ax0=CX-200, sym=ears(al.act,false);
+    h+='<div class="ear" style="left:'+(ax0+14)+'px;width:'+(NL-ax0-22)+'px;top:'+top+'px;justify-content:flex-start">'+sym.L+'</div>';
+    h+='<div class="ear" style="left:'+(NR+8)+'px;width:'+(ax0+400-NR-22)+'px;top:'+top+'px;justify-content:flex-end">'+sym.T+'</div>';
+    h+='<div class="reg" style="left:'+(ax0+16)+'px;right:'+(980-ax0-400+16)+'px;top:'+(top+38)+'px;height:36px;display:block"><div style="font-size:13px;font-weight:650">'+al.title+'</div><small>'+al.sub+'</small></div>';
+    if(al.btn) h+='<div style="position:absolute;right:'+(980-ax0-400+16)+'px;top:'+(top+44)+'px;display:flex;gap:6px">'+al.btn.map(function(b,i){return '<span class="pbtn'+(i?' go':'')+'" data-alertbtn="'+i+'">'+b+'</span>'}).join('')+'</div>';
+    key+='|'+al.title;
+  }else if(m.mode==='peek'&&S.alert){
+    var bw=185+2*fitv.ear;
+    h+='<div class="ear" style="left:'+(NL-fitv.body)+'px;width:'+fitv.body+'px">'+cover(18)+'</div><div class="ear" style="left:'+NR+'px;width:'+fitv.body+'px">'+dots(TONE.music)+'</div>';
+    h+='<div style="position:absolute;left:'+(CX-bw/2+12)+'px;width:'+(bw-24)+'px;top:39px;text-align:center;font-size:13px;font-weight:600;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">'+S.alert.title+'<span style="font-size:11px;font-weight:500;margin-left:6px;color:#ffcf8a">'+S.alert.sub+'</span></div>';
+    key+='|'+S.alert.title;
+  }
+  /* 第 4 层撞上 1–3 层：一个点 */
+  var ex='';
+  if(S.dot && S.dot.until>now()){
+    var dx = (m.mode==='row'||m.mode==='card')?(CX+P.W.x/2-14):(NR+(fitv.ear||0)+4);
+    ex+='<span class="alertdot" style="left:'+dx+'px;top:'+(top+6)+'px;background:'+TONE[S.dot.kind]+'"></span>';
+  } else S.dot=null;
+  /* 看一眼 */
+  if(m.mode==='row' && S.peek){
+    var el=document.querySelector('[data-tile="'+S.peek+'"]');
+    var wv=WINS.filter(function(z){return z.id===S.peek})[0];
+    if(el&&wv){var px=parseFloat(el.style.left)+62-100;ex+='<div class="peek" style="left:'+px+'px"><div class="pv" style="background:'+wv.g+'"></div>'+wv.title+' <small>收起时的画面</small></div>';}
+  }
+  extra.innerHTML=ex;
+  if(key!==lastKey){
+    var modeChanged=key.split('|')[0]!==lastKey.split('|')[0];
+    layer.innerHTML=h;
+    if(modeChanged){layer.classList.remove('in');void layer.offsetWidth;layer.classList.add('in');}
+    lastKey=key;
+  }else{
+    layer.innerHTML=h;
+  }
+  S.lastMode=m.mode;
+}
+function esc(s){return s.replace(/[&<>"]/g,function(c){return {'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c];});}
+function cardHTML(a,top){
+  var W=a.kind==='calendar'?440:420, x0=CX-W/2, fl=(W-185)/2, h='';
+  var R={L:[x0+14,top+8,fl-22,61.5],T:[NR+8,top+8,fl-22,61.5],C:[NL,top+39.5,185,30],B:[x0+14,top+77.5,W-28,84]};
+  function box(k,inner,extra){var r=R[k];return '<div class="reg" style="left:'+r[0]+'px;top:'+r[1]+'px;width:'+r[2]+'px;height:'+r[3]+'px;'+(extra||'')+'">'+inner+'</div>';}
+  var L='',T='',C='',B='';
+  switch(a.kind){
+    case 'session': L=G('term',20)+'<span style="font-size:12px">windowshade</span>'; T='<b>12 分</b>'; C=a.step==='waiting'?'要改 3 个文件':(a.step==='done'?'做完了':'第 4 步：跑测试'); B=a.step==='waiting'?'<span class="pbtn" data-cardbtn="deny">拒绝</span><span class="pbtn go" data-cardbtn="ok">批准</span><span style="flex:1"></span><small>打开会话</small>':'<small>最近一步：改了 Notch.swift</small><span style="flex:1"></span><span class="pbtn">打开会话</span>'; break;
+    case 'calendar': L='<i style="width:4px;height:36px;border-radius:2px;background:'+TONE.calendar+'"></i><span>周会</span>'; T='<b>15:00</b>'; C=a.left>0?Math.ceil(a.left/60)+' 分钟后开始':'已经开始'; B='<span class="pbtn go">加入</span><span style="flex:1"></span><small>还有 1 个：设计评审 · 16:00</small>'; break;
+    case 'timer': L=ring(a.left/a.total,TONE.timer,34,3); T='<b style="font-variant-numeric:tabular-nums">'+mmss(Math.abs(a.left))+'</b>'; C='10 分钟计时器'; B='<span class="pbtn">'+(a.paused?'继续':'暂停')+'</span><span class="pbtn">结束</span>'; break;
+    case 'focus': L=ring(a.left/a.total,TONE.focus,34,3); T='<b>'+mins(a.left)+'</b>'; C='专注 · 第 2 轮'; B='<span class="pbtn">跳过</span><span class="pbtn">结束</span>'; break;
+    case 'download': L=G('down',26); T='<small>还剩 2 分</small>'; C=a.title; B='<span class="bar"><i style="width:'+(a.p*100)+'%"></i></span><span class="pbtn">在访达中显示</span>'; break;
+    case 'airdrop': L=G('air',26); T='<b>'+Math.round(a.p*100)+'%</b>'; C=a.title; B='<span class="bar"><i style="width:'+(a.p*100)+'%"></i></span><span class="pbtn">取消</span>'; break;
+    case 'music': L=cover(52); T=G('spk',20); C=a.song+' <small>· '+a.artist+'</small>'; B='<span class="bar"><i style="width:'+(a.p*100)+'%"></i></span>'+G('prev',18)+G('play',20)+G('next',18); break;
+    case 'device': L=G('head',24)+'<span>耳机</span>'; T='<b>'+a.bat+'%</b>'; C='左 80% · 右 78%'; B='<small>充电盒 60%</small>'; break;
+    case 'shelf': L=G('tray',22)+'<span>文件架</span>'; T='<b>'+a.count+'</b>'; C='点一格看大图预览'; B='<small>文件架卡见《文件架》，不套四个区</small>'; break;
+  }
+  var dim=isStale(a)?'opacity:.5;':'';
+  h+=box('L',L,dim)+box('T',T,'justify-content:flex-end;'+dim)+box('C',C,'justify-content:center;font-weight:600;'+dim)+box('B',B,dim);
+  if($('regionsOn').checked){
+    var lab={L:'左',T:'右',C:'中',B:'下'};
+    Object.keys(R).forEach(function(k){var r=R[k];h+='<div class="region" style="left:'+r[0]+'px;top:'+r[1]+'px;width:'+r[2]+'px;height:'+r[3]+'px"><em>'+lab[k]+'</em></div>';});
+  }
+  return h;
+}
+
+/* ---------- 画形状 ---------- */
+function drawShape(){
+  var svg=$('shape'),h='',virt=virtualMode();
+  if(!virt) h+='<path d="'+shapePath(CX,N.w,N.h,N.rb,N.e,0)+'" fill="#000"/>';
+  if(visible && !(virt && S.lastMode==='none')){
+    var W=P.W.x,H=P.H.x,rb=Math.max(0,P.rb.x),e=Math.max(0,P.e.x),top=P.top.x;
+    h+= allCorners?'<path d="'+roundRect(CX,W,H,rb,top)+'" fill="#000"/>':'<path d="'+shapePath(CX,W,H,rb,e,top)+'" fill="#000"/>';
+  }
+  /* 最小形 */
+  var m=S.lastMode;
+  if(m==='ears'){
+    var c=compactAct(),fitv=fit(),k=c?miniFits(fitv.ear,others(c).length):0;
+    for(var i=0;i<k;i++){var mx=NR+fitv.ear+MINI_GAP+i*(MINI_W+MINI_GAP);h+='<rect x="'+mx+'" y="'+((33.5-28)/2)+'" width="36" height="28" rx="14" fill="#000"/>';}
+  }
+  svg.innerHTML=h;
+}
+
+/* ---------- 主循环 ---------- */
+var last=performance.now(), lastTick=0;
+function frame(ts){
+  var dt=Math.min(.032,(ts-last)/1000||.016); last=ts;
+  var t=now();
+  /* 复核 */
+  if(S.pendT && ts>=S.pendT) recheck();
+  /* 停留 → 展开 */
+  var p=S.ptr;
+  if(p.in && S.ui==='rest' && !S.env.mission && !S.env.full && hoverAllowed()){
+    if(t-p.still>=HOLD.notchDwell){openRow('hover');}
+  }
+  /* 提醒到点 */
+  if(S.alert && t>=S.alert.until){
+    S.alert=null; S.ui='rest';
+    if(S.alertQ.length){var nx=S.alertQ.shift();S.alert=nx;S.alert.until=t+nx.hold;S.ui='alert';}
+    dirty=true;
+  }
+  /* 结束的留 4 秒；那一排留 15 秒（演示） */
+  S.acts.forEach(function(a){
+    if(a.ended && !a.gone){
+      if(a.endPolicy==='default' && t-a.ended>=HOLD.linger){a.endPolicy='row';dirty=true;if(S.selected===a.id)S.selected=null;}
+      if(a.endPolicy==='row' && (t-a.ended>=15 || a.seen)){a.gone=true;dirty=true;refreshPick();}
+    }
+  });
+  /* 每秒走一下 */
+  if(t-lastTick>=1){
+    lastTick=t;
+    S.acts.forEach(function(a){
+      if(a.gone||a.ended) return;
+      if(a.kind==='calendar'){a.left-=1; if(a.left===10) queueAlert(a,'马上开始','周会 · 15:00',HOLD.alert,['加入']); }
+      if(a.kind==='timer'&&!a.paused){a.left-=1; if(a.left===0) queueAlert(a,'时间到','10 分钟计时器',10,['结束','再来一个']); if(a.left<=-600) endAct(a,'now');}
+      if(a.kind==='focus'){a.left-=1;}
+      if(a.kind==='download'&&a.phase!=='stale'&&a.p<.99){a.p=Math.min(.99,a.p+.004);}
+    });
+    dirty=true;
+  }
+  var m=computeTarget();
+  setTarget(m.g,m.t);
+  var moving=false;
+  ['W','H','rb','e','top'].forEach(function(k){
+    var q=P[k]; if(q.t==null) return;
+    if(reduced){q.x=q.t;q.v=0;return;}
+    var w=2*Math.PI/tok.r,kk=w*w,cc=2*tok.z*w,acc=kk*(q.t-q.x)-cc*q.v;
+    q.v+=acc*dt;q.x+=q.v*dt;
+    if(Math.abs(q.t-q.x)<.01&&Math.abs(q.v)<.01){q.x=q.t;q.v=0;} else moving=true;
+  });
+  if(m.mode!==S.lastMode) dirty=true;
+  S.lastMode=m.mode;
+  drawShape();
+  if(dirty){drawContent(m);readouts(m);dirty=false;}
+  requestAnimationFrame(frame);
+}
+function hoverAllowed(){
+  if(S.lastRaw && S.lastRaw.ovf) return false;
+  if(virtualMode() && !compactAct()) return false;
+  return true;
+}
+
+/* ---------- 读数 ---------- */
+function readouts(m){
+  var lay=S.lastRaw;
+  $('rL').textContent=lay?f1(lay.L):'—'; $('rR').textContent=lay?f1(lay.R):'—';
+  var fv=fit(), use='—', chip='';
+  if(S.env.mission||S.env.full){use='让开';chip='<span class="chip mute">让开</span>';}
+  else if(!compactAct()) {use='什么都不长（和刘海重合）';}
+  else if(fv.mode==='ears'){use='两耳各 '+fv.ear+(fv.sh?'（主体 26.6 + 肩 7.4）':'（不画肩）');chip='<span class="chip '+(fv.level==='宽裕'?'ok':'warn')+'">'+fv.level+'</span>';}
+  else if(fv.mode==='chin'){use='下巴的点'+(fv.why?'（'+fv.why+'）':'');chip='<span class="chip bad">挤</span>';}
+  else if(fv.mode==='pill'){use='菜单栏正中的胶囊 80 宽';chip='<span class="chip ok">宽裕</span>';}
+  if(virtualMode()&&fv.mode==='chin'&&compactAct()) use='挂到菜单栏下面 72 × 12';
+  $('useRead').textContent=use; $('levelChip').innerHTML=chip;
+  $('mCount').textContent=S.measures;
+  $('pendRead').textContent=S.pendT?'想长，0.6 秒后复核':(S.blocked?'想长，等指针离开菜单栏':'没有待长的');
+  var lr={yield:'让开（调度中心或全屏）',row:'第 3 层 · 你打开的：那一排',card:'第 3 层 · 你打开的：大卡',alert:'第 4 层 · 短暂提醒',peek:'第 4 层 · 换歌一瞥',ears:'第 5 层 · 持续活动',chin:'第 5 层 · 持续活动（下巴）',pill:'第 5 层 · 持续活动（胶囊）',vchin:'第 5 层 · 持续活动',none:'第 6 层 · 什么都没有'}[m.mode]||m.mode;
+  $('layerRead').textContent=lr;
+  var r=ranked(), c=compactAct();
+  $('rankRead').textContent=r.length?r.map(function(a){var w=WEIGHT[a.kind]+(a.rel?'+'+a.rel:'');return (a===c?'[耳] ':'')+NAME[a.kind]+' '+w+(isStale(a)?' 过期':'')+(a.ended?' 已结束':'');}).join(' · '):'—';
+}
+function ptrText(){
+  var p=S.ptr;
+  if(!p.onStage) return '不在舞台上';
+  if(p.in) return '在热区里'+(p.sweep?'（横扫进来，'+Math.round(p.speed)+' 点/秒，不提示）':'')+(hoverAllowed()?'':'；» 在，只认点击');
+  if(ptrInBand()) return '在菜单栏上（只收不长）';
+  return '在桌面上';
+}
+
+/* ---------- 指针 ---------- */
+var outer=$('outer'),stage=$('stage'),scale=1;
+function fitStage(){scale=outer.clientWidth/980;stage.style.transform='scale('+scale+')';}
+window.addEventListener('resize',fitStage);
+function toStage(e){var r=outer.getBoundingClientRect();return {x:(e.clientX-r.left)/scale,y:(e.clientY-r.top)/scale};}
+function hotRect(){
+  var x0=CX-P.W.x/2-Math.max(0,P.e.x), y0=P.top.x, w=P.W.x+2*Math.max(0,P.e.x), h=P.H.x;
+  if(virtualMode() && (S.lastMode==='none')) return null;
+  var r=[{x:x0,y:y0,w:w,h:h}];
+  if(S.lastMode==='ears'){var c=compactAct(),fv=fit(),k=c?miniFits(fv.ear,others(c).length):0; if(k) r.push({x:NR+fv.ear+MINI_GAP,y:2.75,w:k*MINI_W+(k-1)*MINI_GAP,h:28});}
+  return r;
+}
+function inHot(p){var r=hotRect();if(!r)return false;return r.some(function(b){return p.x>=b.x&&p.x<=b.x+b.w&&p.y>=b.y-1&&p.y<=b.y+b.h;});}
+var tileTimer=0,tileOver=null;
+outer.addEventListener('mousemove',function(e){
+  var p=toStage(e),q=S.ptr,t=now(),dt=Math.max(.001,t-q.t),d=Math.hypot(p.x-q.x,p.y-q.y);
+  q.speed=q.onStage?d/dt:0; q.onStage=true;
+  var was=q.in, wasBand=ptrInBand();
+  q.x=p.x;q.y=p.y;q.t=t;
+  q.in=inHot(p);
+  if(q.in&&!was){
+    q.sweep=q.speed>SWEEP; q.ax=p.x;q.ay=p.y;q.still=t;
+    if(!q.sweep && S.ui==='rest' && compactAct() && hoverAllowed()){S.hint=true;}
+    if(S.focus!=null) dirty=true;
+  }else if(q.in){
+    if(Math.hypot(p.x-q.ax,p.y-q.ay)>STILL){q.ax=p.x;q.ay=p.y;q.still=t;}
+  }else if(was){
+    S.hint=false;
+    if(S.ui==='row'&&S.rowBy==='hover'){closeAll('指针离开');}
+  }
+  if(wasBand&&!ptrInBand()&&S.blocked){S.blocked=false;recheck();}
+  /* 看一眼：停在窗口格上 0.20 秒 */
+  var el=e.target.closest&&e.target.closest('[data-tile]'), id=el?el.getAttribute('data-tile'):null;
+  if(id!==tileOver){tileOver=id;clearTimeout(tileTimer);if(S.peek){S.peek=null;dirty=true;}
+    if(id&&id.charAt(0)==='w'){tileTimer=setTimeout(function(){S.peek=id;dirty=true;},HOLD.tileDwell*1000);}}
+  $('ptrRead').textContent=ptrText();
+  dirty=true;
+});
+outer.addEventListener('mouseleave',function(){var q=S.ptr;q.onStage=false;if(q.in){q.in=false;S.hint=false;if(S.ui==='row'&&S.rowBy==='hover')closeAll('指针离开');}clearTimeout(tileTimer);S.peek=null;if(S.blocked){S.blocked=false;recheck();}$('ptrRead').textContent=ptrText();dirty=true;});
+outer.addEventListener('wheel',function(e){
+  var p=toStage(e);
+  if(inHot(p)||S.ui!=='rest'){e.preventDefault();$('ptrRead').textContent='滚轮：不算停留，也不展开';}
+},{passive:false});
+outer.addEventListener('click',function(e){
+  var p=toStage(e);
+  if(S.env.mission||S.env.full) return;
+  var pb=e.target.closest&&e.target.closest('[data-proxy]');
+  if(pb){pressOverflow();return;}
+  var cb=e.target.closest&&e.target.closest('[data-cardbtn]');
+  if(cb){var a=S.acts.filter(function(x){return x.id===S.cardId})[0];if(a&&a.kind==='session'){a.step='running';a.rel=1;log(cb.dataset.cardbtn==='ok'?'批准了：会话接着跑':'拒绝了');dirty=true;}return;}
+  var ab=e.target.closest&&e.target.closest('[data-alertbtn]');
+  if(ab&&S.alert){var al=S.alert;S.alert=null;S.ui='rest';if(al.act.kind==='timer'){endAct(al.act,'now');}log('点了“'+ab.textContent+'”');dirty=true;return;}
+  var te=e.target.closest&&e.target.closest('[data-tile]');
+  if(te&&S.ui==='row'){activate(te.getAttribute('data-tile'));return;}
+  var hot=inHot(p);
+  if(S.ui==='rest'&&hot){
+    var c=compactAct(),fv=fit();
+    var onEar=c&&S.lastMode==='ears'&&((p.x<NL&&p.x>=NL-fv.ear)||(p.x>NR&&p.x<=NR+fv.ear));
+    if(onEar){openCard(c.id,'点耳朵');}
+    else{openRow('click');}
+    outer.focus();
+    return;
+  }
+  if(S.ui==='alert'&&hot){var al2=S.alert;S.alert=null;openCard(al2.act.id,'点提醒');return;}
+  if((S.ui==='row'||S.ui==='card')&&!hot){closeAll('点了外面');}
+});
+function openRow(by){
+  S.ui='row';S.rowBy=by;S.query='';S.hint=false;S.peek=null;
+  var cells=rowCells(),all=cells.w.concat(cells.on);
+  var wait=all.findIndex(function(z){return z.type==='act'&&z.o.kind==='session'&&z.o.step==='waiting';});
+  S.focus=wait>=0?wait:0;
+  all.forEach(function(z){if(z.type==='act'&&z.o.ended)z.o.seen=true;});
+  log((by==='hover'?'停够 0.12 秒':'点了刘海')+' → 展开那一排（expand）'+(by==='hover'?'，不接键盘':''));
+  dirty=true;
+}
+function openCard(id,why){S.ui='card';S.cardId=id;S.hint=false;log(why+' → 大卡（expand）');dirty=true;}
+function holdPointer(){if(S.ptr.in)S.ptr.still=now()+1e6;}
+function closeAll(why){if(S.ui==='rest')return;holdPointer();S.ui='rest';S.query='';S.peek=null;S.rowBy=null;log(why+' → 收回（calm）');dirty=true;}
+function activate(id){
+  if(id.charAt(0)==='w'){
+    S.wins=S.wins.filter(function(w){return w.id!==id;});
+    var w=WINS.filter(function(x){return x.id===id})[0];
+    log('展开窗口：'+w.title); holdPointer();
+    S.ui='rest';S.query='';dirty=true;return;
+  }
+  openCard(id,'点了那一格');
+}
+function pressOverflow(){
+  closeAll('点了 »');
+  log('替你按系统的 » 一下（辅助功能）');
+  setTimeout(function(){S.ovfOpen=true;$('ovfBtn').setAttribute('aria-pressed','true');measure('» 点开了');},340);
+}
+
+/* ---------- 键盘 ---------- */
+outer.addEventListener('keydown',function(e){
+  if(S.ui!=='row'&&S.ui!=='card') return;
+  if(S.rowBy==='hover'&&S.ui==='row'){ if(e.key.length===1){log('悬停打开的那一排不接键盘：这个字还给前台 App');} return; }
+  var cells=rowCells(),all=cells.w.concat(cells.on),n=all.length+(proxyShown()?1:0);
+  if(e.key==='Escape'){e.preventDefault();if(S.query){S.query='';S.focus=0;log('Esc：先清字');}else if(S.ui==='card'&&S.rowBy){S.ui='row';log('Esc：回到那一排');}else closeAll('Esc');dirty=true;return;}
+  if(S.ui==='card') return;
+  if(e.key==='ArrowRight'||e.key==='ArrowLeft'){
+    e.preventDefault(); var d=e.key==='ArrowRight'?1:-1, nf=S.focus+d;
+    if(nf<0||nf>=n){S.bump=d>0?'R':'L';dirty=true;setTimeout(function(){S.bump='';dirty=true;},160);}
+    else S.focus=nf;
+    dirty=true; return;
+  }
+  if(e.key==='Enter'){e.preventDefault(); if(S.focus===all.length&&proxyShown()){pressOverflow();return;} var z=all[S.focus]; if(z) activate(z.id); return;}
+  if(e.key==='Backspace'){e.preventDefault();S.query=S.query.slice(0,-1);S.focus=0;dirty=true;return;}
+  if(e.key.length===1&&!e.metaKey&&!e.ctrlKey&&!e.altKey){e.preventDefault();S.query+=e.key;S.focus=0;dirty=true;
+    var c2=rowCells();log('筛“'+S.query+'”：剩 '+(c2.w.length+c2.on.length)+' 项');}
+});
+
+/* ---------- 控件 ---------- */
+function refreshPick(){
+  var sel=$('pick'),cur=sel.value,l=live();
+  sel.innerHTML=l.length?l.map(function(a){return '<option value="'+a.id+'">'+NAME[a.kind]+(a.ended?'（已结束）':'')+'</option>'}).join(''):'<option value="">（先开始一件）</option>';
+  if(l.some(function(a){return a.id===cur;})) sel.value=cur;
+  [].forEach.call(document.querySelectorAll('[data-kind]'),function(b){var on=live().some(function(a){return a.kind===b.dataset.kind&&!a.ended;});b.setAttribute('aria-pressed',on);});
+}
+$('actBtns').innerHTML=KINDS.map(function(k){return '<button type="button" data-kind="'+k+'" aria-pressed="false">'+NAME[k]+' '+WEIGHT[k]+'</button>'}).join('');
+[].forEach.call(document.querySelectorAll('[data-kind]'),function(b){
+  b.addEventListener('click',function(){
+    var k=b.dataset.kind,a=live().filter(function(x){return x.kind===k&&!x.ended;})[0];
+    if(a) endAct(a,'default'); else startAct(k);
+  });
+});
+function picked(){var id=$('pick').value;return S.acts.filter(function(a){return a.id===id;})[0];}
+[].forEach.call(document.querySelectorAll('[data-life]'),function(b){
+  b.addEventListener('click',function(){
+    var a=picked(); if(!a||a.gone) return; var op=b.dataset.life; a.upd=now();
+    if(op==='update'){
+      switch(a.kind){
+        case 'session': a.step=a.step==='running'?'waiting':'running'; a.rel=a.step==='waiting'?4:1; break;
+        case 'calendar': a.left=Math.max(12,a.left-60); break;
+        case 'timer': a.left=Math.max(5,a.left-60); break;
+        case 'focus': a.left=Math.max(60,a.left-60); break;
+        case 'download': case 'airdrop': a.p=Math.min(.99,a.p+.17); break;
+        case 'music': a.paused=!a.paused; break;
+        case 'device': a.bat=Math.max(5,a.bat-10); break;
+        case 'shelf': a.count++; break;
+      }
+      log('更新：'+NAME[a.kind]+'，原地换字');
+    }
+    if(op==='alert'){
+      var M={session:['会话在等你','windowshade · 改 3 个文件'],calendar:['马上开始','周会 · 15:00'],timer:['时间到','10 分钟计时器'],focus:['该休息了','专注了 25 分钟'],download:['下载好了',a.title],airdrop:['已送达',a.title],music:['Golden Hour','示例歌手'],device:['耳机电量低','还剩 10%，记得充电'],shelf:['文件架','这一件没有提醒']}[a.kind];
+      if(a.kind==='session'){a.step='waiting';a.rel=4;}
+      if(a.kind==='music'){a.song=M[0];a.artist=M[1];}
+      if(a.kind==='shelf'){log('文件架没有提醒更新');return;}
+      queueAlert(a,M[0],M[1],a.kind==='timer'?10:(a.kind==='music'?Math.min(4.5,1.8+.05*(M[0].length+M[1].length)):HOLD.alert),a.kind==='calendar'?['加入']:(a.kind==='timer'?['结束','再来一个']:null));
+      log('提醒更新：'+NAME[a.kind]+(a.kind==='music'?'（换歌一瞥）':'（bloom）'));
+    }
+    if(op==='stale'){
+      if(a.kind==='calendar'||a.kind==='timer'||a.kind==='focus'||a.kind==='shelf'){log(NAME[a.kind]+'不会过期（按本机时间走）');return;}
+      a.phase='stale'; log('过期：'+NAME[a.kind]+' 变暗 0.5，右耳“—”，沉到新鲜的后面');
+    }
+    if(op==='fresh'){a.phase='live';log('恢复：'+NAME[a.kind]);}
+    if(op==='end') endAct(a,'default');
+    if(op==='endNow') endAct(a,'now');
+    dirty=true; refreshPick();
+  });
+});
+$('swipe').addEventListener('click',function(){
+  var r=ranked().filter(function(a){return a.kind!=='shelf'&&!a.ended;}); if(r.length<2){log('两指横扫：只有一件，不换');return;}
+  var c=compactAct(),i=r.indexOf(c); S.selected=r[(i+1)%r.length].id; log('两指横扫：'+NAME[r[(i+1)%r.length].kind]+'上耳朵，留到它结束'); dirty=true;
+});
+$('crowd').addEventListener('input',function(){S.crowd=+this.value;S.lastRaw=layout();drawMenubar();});
+$('crowd').addEventListener('change',function(){measure('App 开了 / 退出了（图标变了）');});
+[].forEach.call(document.querySelectorAll('[data-front]'),function(b){
+  b.addEventListener('click',function(){
+    S.front=b.dataset.front;[].forEach.call(document.querySelectorAll('[data-front]'),function(x){x.setAttribute('aria-pressed',x===b);});
+    measure('前台换成 '+FRONT[S.front].name);
+  });
+});
+$('spacing').addEventListener('change',function(){S.spacing=+this.value;measure('图标间距变了（用户自己改的）');});
+$('ovfBtn').addEventListener('click',function(){
+  var lay=layout(); if(!lay.ovf){log('现在图标放得下，系统没有 »');return;}
+  S.ovfOpen=!S.ovfOpen; this.setAttribute('aria-pressed',S.ovfOpen);
+  measure(S.ovfOpen?'» 点开了':'» 收起了');
+});
+$('later').addEventListener('click',function(){
+  log('3 秒后右边少两个图标：把指针放到菜单栏上试试');
+  setTimeout(function(){var v=Math.max(0,S.crowd-20);S.crowd=v;$('crowd').value=v;measure('有 App 退出了');},3000);
+});
+[].forEach.call(document.querySelectorAll('[data-env]'),function(b){
+  b.addEventListener('click',function(){
+    var k=b.dataset.env; S.env[k]=!S.env[k]; b.setAttribute('aria-pressed',S.env[k]);
+    if(k==='below'&&S.env.below){S.env.external=false;document.querySelector('[data-env="external"]').setAttribute('aria-pressed','false');}
+    if(k==='external'&&S.env.external){S.env.below=false;document.querySelector('[data-env="below"]').setAttribute('aria-pressed','false');}
+    if(k==='below'||k==='external'){S.ovfOpen=false;$('ovfBtn').setAttribute('aria-pressed','false');S.room={L:null,R:null};S.ui='rest';measure('屏幕参数变了');}
+    var v=$('veil');v.className='veil'+(S.env.mission?' mc':(S.env.full?' fs':''));
+    $('veilText').textContent=S.env.mission?'调度中心：刘海让开，不画、不量、不悬停':(S.env.full?'全屏：菜单栏收起，刘海让开':'');
+    if(k==='mission'||k==='full'){ if(S.env[k]){S.ui='rest';S.alert=null;log((k==='mission'?'调度中心':'全屏')+' → 让开');} else measure((k==='mission'?'调度中心关了':'退出全屏')+'，按现在的事实画'); }
+    drawMenubar(); dirty=true;
+  });
+});
+$('kbdOpen').addEventListener('click',function(){
+  if(S.env.mission||S.env.full){log('让开中，快捷键不展开');return;}
+  openRow('key'); outer.focus();
+});
+$('probesOn').addEventListener('change',function(){drawMenubar();dirty=true;});
+$('regionsOn').addEventListener('change',function(){dirty=true;lastKey='';});
+$('proxyOn').addEventListener('change',function(){dirty=true;});
+$('reduced').addEventListener('change',function(){reduced=this.checked;document.body.classList.toggle('reduced',reduced);dirty=true;});
+$('theme').addEventListener('change',function(){if(this.value)document.documentElement.setAttribute('data-theme',this.value);else document.documentElement.removeAttribute('data-theme');});
+$('reset').addEventListener('click',function(){
+  $('crowd').value=20; S=fresh(); S.crowd=20;
+  [].forEach.call(document.querySelectorAll('[data-env],[data-front]'),function(x){x.setAttribute('aria-pressed',x.dataset.front==='notes');});
+  $('ovfBtn').setAttribute('aria-pressed','false'); $('veil').className='veil'; $('spacing').value='16';
+  boot();
+});
+
+/* ---------- 解剖图 ---------- */
+function anatomy(){
+  var s='',ink='var(--ink)',mut='var(--muted)',acc='var(--accent)';
+  function notch(cx,y){return '<path d="'+shapePath(cx,185*.5,33.5*.5,5.4,3.7,y)+'" fill="#000"/>';}
+  function hwl(cx,y){return '<path d="'+shapePath(cx,185*.5,33.5*.5,5.4,3.7,y)+'" fill="none" stroke="var(--hw)" stroke-width="1" stroke-dasharray="3 2"/>';}
+  function lab(x,y,t,c,a){return '<text x="'+x+'" y="'+y+'" font-size="12" fill="'+(c||mut)+'" text-anchor="'+(a||'middle')+'">'+t+'</text>';}
+  var k=.5;
+  /* 1 紧凑 */
+  var cx=100; s+='<path d="'+shapePath(cx,(185+2*26.6)*k,33.5*k,5.4,3.7,30)+'" fill="#000"/>';
+  s+='<circle cx="'+(cx-(185/2+13.3)*k)+'" cy="'+(30+8.4)+'" r="5" fill="none" stroke="#ff9f0a" stroke-width="1.6"/><text x="'+(cx+(185/2+13.3)*k)+'" y="'+(30+12)+'" font-size="8" fill="#fff" text-anchor="middle" font-weight="700">9分</text>';
+  s+=hwl(cx,30)+lab(cx-60,80,'左耳：是谁')+lab(cx+60,80,'右耳：是数')+lab(cx,104,'紧凑 · 各 34 点',ink);
+  /* 2 最小 */
+  cx=290; s+='<path d="'+shapePath(cx,(185+2*26.6)*k,33.5*k,5.4,3.7,30)+'" fill="#000"/><rect x="'+(cx+(185/2+34+6)*k)+'" y="'+(30+1.4)+'" width="18" height="14" rx="7" fill="#000"/><circle cx="'+(cx+(185/2+34+6+18)*k)+'" cy="'+(30+8.4)+'" r="3" fill="#0a84ff"/>';
+  s+='<path d="'+shapePath(cx,185*k,41.5*k,5.4,3.7,120)+'" fill="#000"/>'+[0,1,2].map(function(i){return '<circle cx="'+(cx-6+i*6)+'" cy="'+(120+18.6)+'" r="1.6" fill="'+['#ff9f0a','#0a84ff','#e8785c'][i]+'"/>'}).join('');
+  s+=hwl(cx,30)+hwl(cx,120)+lab(cx,80,'最小：挂在右边 36 × 28')+lab(cx,104,'最小',ink)+lab(cx,166,'挤的时候：下巴里的点');
+  /* 3 一格 */
+  cx=470; s+='<rect x="'+(cx-31)+'" y="30" width="62" height="60" rx="7" fill="#000"/><circle cx="'+(cx-18)+'" cy="44" r="6" fill="none" stroke="#ff9f0a" stroke-width="1.6"/><text x="'+(cx+20)+'" y="48" font-size="9" fill="#fff" text-anchor="end" font-weight="700">9 分</text><text x="'+(cx-24)+'" y="78" font-size="7" fill="#fff">计时器</text>';
+  s+=lab(cx,104,'那一排的一格',ink)+lab(cx,122,'124 宽，圆角 14');
+  /* 4 大卡 */
+  cx=680; var W=420*k,H=175.5*k,x0=cx-W/2,y0=20;
+  s+='<path d="'+shapePath(cx,W,H,14,0,y0)+'" fill="#000"/>'+notch(cx,y0).replace('fill="#000"','fill="#222"');
+  var fl=(W-185*k)/2;
+  [['左',x0+7,y0+4,fl-11,30.7],['右',cx+185*k/2+4,y0+4,fl-11,30.7],['中',cx-185*k/2,y0+19.7,185*k,15],['下',x0+7,y0+38.7,W-14,42]].forEach(function(r){
+    s+='<rect x="'+r[1]+'" y="'+r[2]+'" width="'+r[3]+'" height="'+r[4]+'" rx="4" fill="none" stroke="rgba(255,255,255,.6)" stroke-dasharray="3 2"/><text x="'+(r[1]+r[3]/2)+'" y="'+(r[2]+r[4]/2+4)+'" font-size="10" fill="#fff" text-anchor="middle">'+r[0]+'</text>';
+  });
+  s+=lab(cx,y0+H+22,'大卡 420 × 175.5，四个区',ink)+lab(cx,y0+H+40,'左右贴着刘海两边，中在刘海下，下占满宽');
+  /* 5 提醒 */
+  cx=905; W=400*.42; H=85.5*.42;
+  s+='<path d="'+shapePath(cx,W,H,10,0,30)+'" fill="#000"/><text x="'+(cx-W/2+8)+'" y="'+(30+28)+'" font-size="8" fill="#fff" font-weight="700">会话在等你</text>';
+  s+=hwl(cx,30)+lab(cx,104,'提醒更新：鼓',ink)+lab(cx,122,'400 × 85.5，停 2.6 秒');
+  /* 生命周期条 */
+  var ly=212, steps=[['开始','settle'],['更新','原地换字'],['提醒更新','bloom · 2.6 秒'],['过期','0.5 · 右耳“—”'],['结束','留 4 秒 → calm']];
+  s+='<line x1="40" y1="'+ly+'" x2="960" y2="'+ly+'" stroke="var(--line)" stroke-width="2"/>';
+  steps.forEach(function(st,i){var x=60+i*220;s+='<circle cx="'+x+'" cy="'+ly+'" r="6" fill="'+acc+'"/>'+lab(x,ly-12,st[0],ink,'middle')+lab(x,ly+22,st[1]);});
+  $('anatomy').innerHTML=s;
+}
+
+function boot(){
+  fitStage(); S.lastRaw=layout(); drawMenubar(); refreshPick();
+  startAct('session'); startAct('download'); startAct('music');
+  S.acts.forEach(function(a){a.t0-=5;});
+  log('舞台就绪：三件活动，菜单栏右边 '+S.lastRaw.n+' 个图标');
+  dirty=true; lastKey='';
+}
+try{ if(window.matchMedia('(prefers-reduced-motion: reduce)').matches){$('reduced').checked=true;reduced=true;document.body.classList.add('reduced');} }catch(e){}
+anatomy();
+boot();
+requestAnimationFrame(frame);
+})();
+</script>
+</body>
+</html>

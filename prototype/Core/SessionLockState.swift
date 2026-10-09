@@ -13,4 +13,7 @@ enum SessionLockState: Equatable {
         if locked == true { return .locked }
         return .unlocked
     }
+
+    /// 只有确知已锁才算锁着；未知不算。刷脸扫描每一帧都按这个重查。
+    var isReallyLocked: Bool { self == .locked }
 }

@@ -1,0 +1,1100 @@
+{
+  "document_kind": "execution-results-current-worktree",
+  "date": "2026-10-07",
+  "reviewed_head": "4accf310d505041f5d4458e204c62e55e022a900",
+  "actual_executor_head": "4accf310d505041f5d4458e204c62e55e022a900",
+  "phone_test_executed_in_this_addendum": true,
+  "instructions": [
+    "所有条目当前均为 NOT_RUN；填写之前必须执行或核对相应实物证据。",
+    "all 是所有本轮实现共同门槛；其余 required_for 只适用于确实采用的改动。",
+    "original-pv-completion、compatibility-upgrade、connection-management 等未采用的扩展可标 NOT_APPLICABLE 并写理由，不为了填满矩阵强行实现。",
+    "live 条目仅在操作者明确就绪后运行；本机门槛未过不得开启 PIN。",
+    "可以批量参数化运行，条目不等于必须启动同样数量的进程，更不等于真机轮数。",
+    "characterization 差异不自动判失败，也不自动判兼容通过；记录 mode 及与其对应的精确期望。",
+    "无网络 wire、loopback、真实手机证据分开；loopback 有本地 listener，不能写 networkListener=false。"
+  ],
+  "allowed_statuses": [
+    "NOT_RUN",
+    "PASS",
+    "FAIL",
+    "BLOCKED",
+    "NOT_APPLICABLE",
+    "CHARACTERIZED"
+  ],
+  "groups": [
+    "codec",
+    "continuity",
+    "crypto",
+    "evidence",
+    "isolation",
+    "live",
+    "metadata",
+    "privacy",
+    "provenance",
+    "records",
+    "regression",
+    "reply-policy",
+    "session",
+    "test-configuration",
+    "transport",
+    "valid-input"
+  ],
+  "case_count": 53,
+  "cases": [
+    {
+      "id": "ENV-01",
+      "group": "provenance",
+      "required_for": [
+        "all"
+      ],
+      "objective": "确认当前工作区与审查基线关系",
+      "precondition": "打开实际目标工作区，禁止 reset/clean",
+      "exercise": "记录分支、完整 HEAD、dirty；比较审查提交以来相关文件差异",
+      "expected": "对当前文件形成明确输入集；不把旧提交冒称为实际 checkout",
+      "evidence_required": "HEAD、dirty 清单、相关差异与读取记录",
+      "source_refs": [
+        "A1",
+        "E4"
+      ],
+      "status": "PASS",
+      "actual": "已核对当前分支/HEAD/dirty，未覆盖原改动。",
+      "evidence_path": "evidence/checks.json"
+    },
+    {
+      "id": "ENV-02",
+      "group": "provenance",
+      "required_for": [
+        "all"
+      ],
+      "objective": "源与产物对应",
+      "precondition": "实际 SDK、Swift、OpenSSL 可用",
+      "exercise": "保存编译前后完整输入集哈希、编译命令和产物 SHA",
+      "expected": "前后输入一致；新增源包含在清单；不同机器不要求历史 binary SHA 相同",
+      "evidence_required": "构建输入/环境/退出码/产物 manifest",
+      "source_refs": [
+        "W13",
+        "A1",
+        "A2"
+      ],
+      "status": "PASS",
+      "actual": "27个实际构建输入编译前后SHA一致，二进制SHA复核通过。",
+      "evidence_path": "evidence/probe-build-manifest.json"
+    },
+    {
+      "id": "ENV-03",
+      "group": "privacy",
+      "required_for": [
+        "all"
+      ],
+      "objective": "禁止 PIN 或敏感载荷进入 live 日志",
+      "precondition": "准备日志与私有本地 PIN 展示通道",
+      "exercise": "用合成秘密字段触发成功/解析错误/密码学错误/异常输出",
+      "expected": "持久报告与 stdout 日志只含允许字段；无 PIN/key/raw payload/真实身份",
+      "evidence_required": "脱敏检测及人工审查结果；测试样本不得使用现场秘密",
+      "source_refs": [
+        "W2",
+        "A1"
+      ],
+      "status": "CHARACTERIZED",
+      "actual": "PIN仅stderr TTY；当前成功/错key/提前记录日志不含原始载荷；未穷举所有合成秘密注入。",
+      "evidence_path": "evidence/pipelined-final.log"
+    },
+    {
+      "id": "ENV-04",
+      "group": "isolation",
+      "required_for": [
+        "all"
+      ],
+      "objective": "确认没有产品动作出口",
+      "precondition": "明确探针构建输入和依赖",
+      "exercise": "审查链接/源依赖、所有 handler 可达分支与生产构建条件",
+      "expected": "探针不接系统/助手动作；不能只凭硬编码 systemActions=0 判通过",
+      "evidence_required": "构建输入与可达路径审查；生产 guard 回归",
+      "source_refs": [
+        "W3",
+        "W4",
+        "W8",
+        "A2"
+      ],
+      "status": "PASS",
+      "actual": "源码与链接输入检查：纯profile、内存repo、记录计数；无系统/窗口/音量动作出口。此项为人工审查，不以常量0自证。",
+      "evidence_path": "evidence/probe-build-manifest.json"
+    },
+    {
+      "id": "ENV-05",
+      "group": "test-configuration",
+      "required_for": [
+        "continuity",
+        "reply-policy",
+        "metadata"
+      ],
+      "objective": "测试的是明确配置",
+      "precondition": "接收器实现有界的测试初始配置入口",
+      "exercise": "握手前选择策略并报告配置；尝试中途更换配置",
+      "expected": "配置唯一且冻结；中途变更拒绝；不使用未实现 CLI 参数",
+      "evidence_required": "每个 case 的实际模式与配置摘要",
+      "source_refs": [
+        "W9",
+        "A2"
+      ],
+      "status": "PASS",
+      "actual": "配置let不可中途更换；独立客户端核对启动选项、M6身份及fresh PV。",
+      "evidence_path": "evidence/configuration-final.log"
+    },
+    {
+      "id": "CRY-01",
+      "group": "crypto",
+      "required_for": [
+        "continuity"
+      ],
+      "objective": "保持 PS 完整校验",
+      "precondition": "使用独立 SRP/Ed25519 客户端和原生后端",
+      "exercise": "正确 PIN、错误 PIN、错误 SRP proof、错误 M5 tag 与错误 M5 签名",
+      "expected": "仅完整成功才能登记；失败后无候选延续/输入资格",
+      "evidence_required": "逐个负例的拒绝阶段、peer 数和候选状态",
+      "source_refs": [
+        "W5",
+        "W6",
+        "W9"
+      ],
+      "status": "CHARACTERIZED",
+      "actual": "本轮独立SRP proof/M5/M6及签名成功；生产回归另有拒绝路径。错误PIN/M5所有变体未全重跑。 固定M5/M6向量另验证错误签名/AEAD篡改/重放拒绝；SRP是known-key test double，不能当错误PIN实测。",
+      "evidence_path": "evidence/handshake-final.log"
+    },
+    {
+      "id": "CRY-02",
+      "group": "crypto",
+      "required_for": [
+        "all"
+      ],
+      "objective": "保持 PV transcript 身份绑定",
+      "precondition": "预先登记一个合成 peer",
+      "exercise": "正确 PV；错误客户端签名；替换 peer identifier/临时公钥的签名输入",
+      "expected": "仅与本次 transcript 和当前 peer 匹配的签名产生 verified",
+      "evidence_required": "PV M3 校验结果与身份绑定字段",
+      "source_refs": [
+        "W3"
+      ],
+      "status": "CHARACTERIZED",
+      "actual": "独立客户端双方签名验证及错误PV签名拒绝；替换transcript每个分量未逐一新增。",
+      "evidence_path": "evidence/handshake-final.log"
+    },
+    {
+      "id": "CRY-03",
+      "group": "crypto",
+      "required_for": [
+        "all"
+      ],
+      "objective": "撤销不是只在握手检查一次",
+      "precondition": "已绑定会话和可控 repository",
+      "exercise": "在接收/发送前撤销或更换 peer revision；尝试后续消息及事件",
+      "expected": "身份失效后不再解锁输入或发送已许可之外的消息",
+      "evidence_required": "接收/发送拒绝首因、零新有效输入",
+      "source_refs": [
+        "W3",
+        "W4"
+      ],
+      "status": "CHARACTERIZED",
+      "actual": "候选撤销后拒绝，生产channel revokedPush等回归通过；所有key/revision排列未穷举。",
+      "evidence_path": "evidence/candidate-final.log"
+    },
+    {
+      "id": "CRY-04",
+      "group": "crypto",
+      "required_for": [
+        "continuity"
+      ],
+      "objective": "确认材料与字节表示",
+      "precondition": "沿用现有 proof convention",
+      "exercise": "原始 SRP key 与十六进制文本负例；前导零 PIN/整数表示回归；非法 X25519 公钥",
+      "expected": "字节表示与既有真实算法相符；错误材料拒绝，不产生零 key fallback",
+      "evidence_required": "独立向量与实际失败层",
+      "source_refs": [
+        "W3",
+        "W5",
+        "W9",
+        "W12",
+        "R4",
+        "R5"
+      ],
+      "status": "NOT_RUN",
+      "actual": null,
+      "evidence_path": null
+    },
+    {
+      "id": "CON-01",
+      "group": "continuity",
+      "required_for": [
+        "continuity"
+      ],
+      "objective": "保留初始 PV-main 的合成路径",
+      "precondition": "独立客户端保存初始 PV；有效 PS；探针模式",
+      "exercise": "M6 后立即用 initial-PV-main 的 rx0 发送合成 systemInfo",
+      "expected": "候选 AEAD 成功、rx 仅前进一次；identityBound=false；只在明确兼容处理器继续",
+      "evidence_required": "candidate 标签/计数/AEAD、绑定等级、输出记录核验",
+      "source_refs": [
+        "W1",
+        "W3",
+        "U1",
+        "A2"
+      ],
+      "status": "PASS",
+      "actual": "初始PV-M6后rx0 systemInfo完整三输出，真实TCP验证。",
+      "evidence_path": "evidence/pipelined-final.log"
+    },
+    {
+      "id": "CON-02",
+      "group": "continuity",
+      "required_for": [
+        "continuity"
+      ],
+      "objective": "错误 key 不进入兼容处理器",
+      "precondition": "与 CON-01 同阶段",
+      "exercise": "分别用无关 key、PS-Encrypt key；SRP-main 仅作为假设对照",
+      "expected": "默认 initial-PV 策略不接纳其它 key；报告实际校验层，不能将结果归因于手机",
+      "evidence_required": "候选结果、零投递/动作",
+      "source_refs": [
+        "W1",
+        "W3",
+        "A2"
+      ],
+      "status": "CHARACTERIZED",
+      "actual": "无关key和PS-Encrypt均拒绝，未增加假设性SRP-main候选。",
+      "evidence_path": "evidence/candidate-final.log"
+    },
+    {
+      "id": "CON-03",
+      "group": "continuity",
+      "required_for": [
+        "continuity"
+      ],
+      "objective": "PS 未成功不得提前开启候选控制",
+      "precondition": "建立初始 PV 后开始 PS",
+      "exercise": "在 M3/M5 失败、未完成 M5 或 admission 过期时发送 frame8",
+      "expected": "拒绝、清除候选；不把知道 DH key 当作配对通过",
+      "evidence_required": "失败阶段、候选生命周期与输入计数",
+      "source_refs": [
+        "W1",
+        "W5",
+        "W6"
+      ],
+      "status": "CHARACTERIZED",
+      "actual": "PS-M2后提前frame8真实TCP零回应并关闭；过期admission检查。所有M3/M5错误变体未齐。",
+      "evidence_path": "evidence/pipelined-final.log"
+    },
+    {
+      "id": "CON-04",
+      "group": "continuity",
+      "required_for": [
+        "continuity"
+      ],
+      "objective": "候选不可跨连接或代次串用",
+      "precondition": "两条独立合成连接",
+      "exercise": "将连接 A 的候选数据/迟到回调用于 B；重复 fallback",
+      "expected": "不授权、不改变 B 的 phase/counter、不关闭 B 的合法新握手",
+      "evidence_required": "两连接 phase/epoch/close 首因",
+      "source_refs": [
+        "W1",
+        "W3"
+      ],
+      "status": "CHARACTERIZED",
+      "actual": "generation先失效旧回调，重复fallback拒绝；两连接互换密文未实跑。",
+      "evidence_path": "evidence/handshake-final.log"
+    },
+    {
+      "id": "CON-05",
+      "group": "continuity",
+      "required_for": [
+        "continuity"
+      ],
+      "objective": "PIN 输入时间不误触原 verifier 期限",
+      "precondition": "统一可控时钟和明确的 ceremony/衔接期限",
+      "exercise": "跨过原 PV 10 秒仍处有效配对期；在 PIN 和衔接绝对期限两侧测试",
+      "expected": "按选择的有限策略判断；任意输入不续期；不复活已经关闭的旧 verifier",
+      "evidence_required": "每种 deadline 的来源、值、触发记录",
+      "source_refs": [
+        "W3",
+        "W6",
+        "A1"
+      ],
+      "status": "CHARACTERIZED",
+      "actual": "PS-M2后推进20秒仍可M6并兼容；10秒首记录和120秒owner到期拒绝，非所有边界左右采样。",
+      "evidence_path": "evidence/candidate-final.log"
+    },
+    {
+      "id": "CON-06",
+      "group": "continuity",
+      "required_for": [
+        "continuity"
+      ],
+      "objective": "成功 admission 结束与 receipt 分开",
+      "precondition": "有效 PS 已执行 admission.succeeded",
+      "exercise": "M6 后依 receipt 检查；篡改 connection/peer/revision；撤销后再用",
+      "expected": "合法 receipt 不因 PIN owner 已清空误拒绝；错误/撤销 receipt 不可用",
+      "evidence_required": "receipt 验证结果，日志不含真实身份",
+      "source_refs": [
+        "W6"
+      ],
+      "status": "CHARACTERIZED",
+      "actual": "receipt只能由PS成功生成，绑定connection+peer key/revision，撤销拒绝；伪造receipt构造无公开入口，非完整篡改变体。",
+      "evidence_path": "evidence/candidate-final.log"
+    },
+    {
+      "id": "CON-07",
+      "group": "continuity",
+      "required_for": [
+        "original-pv-completion"
+      ],
+      "objective": "原始 PV-M3 补完严格验签",
+      "precondition": "原始 PV 保留 transcript；PS 成功；尚无早期控制流量",
+      "exercise": "发送针对原始 transcript 的正确/错误 M3 并继续至少非零双向记录",
+      "expected": "正确签名才绑定；错误/过期/撤销拒绝；不主动制造假 M4",
+      "evidence_required": "M3/M4、identityBound、逐包计数",
+      "source_refs": [
+        "W3",
+        "W6",
+        "A2"
+      ],
+      "status": "NOT_APPLICABLE",
+      "actual": "未采用原始PV-M3在PS后补完路径；没有真实手机证据需要它。",
+      "evidence_path": null
+    },
+    {
+      "id": "CON-08",
+      "group": "continuity",
+      "required_for": [
+        "compatibility-upgrade"
+      ],
+      "objective": "若实现早期兼容后升级，不重放或清零",
+      "precondition": "已有 compatibility-only 流量，tx/rx 非零",
+      "exercise": "补完合法原始 PV-M3，再发送新的消息",
+      "expected": "同 key 计数连续；早期输入不追认、不重投递；仅升级后可记认证输入",
+      "evidence_required": "升级前后 ledger 与类别分开计数",
+      "source_refs": [
+        "W3",
+        "R1"
+      ],
+      "status": "NOT_APPLICABLE",
+      "actual": "未采用沿用原始key的资格升级路径。",
+      "evidence_path": null
+    },
+    {
+      "id": "CON-09",
+      "group": "continuity",
+      "required_for": [
+        "continuity"
+      ],
+      "objective": "fresh PV 继续独立有效",
+      "precondition": "有效 PS 之后",
+      "exercise": "客户端发 fresh PV，完成双方验签并发多条记录",
+      "expected": "使用新的 key/counter；旧候选清理且旧包不能混入",
+      "evidence_required": "key epoch 非秘密标记与负例",
+      "source_refs": [
+        "W1",
+        "W3",
+        "W9"
+      ],
+      "status": "PASS",
+      "actual": "fresh PV双向验签并重置key/counter，之后systemInfo+5个有效输入；两个策略均真实TCP通过。",
+      "evidence_path": "evidence/socket-current.log"
+    },
+    {
+      "id": "CON-10",
+      "group": "continuity",
+      "required_for": [
+        "continuity"
+      ],
+      "objective": "M6 排队与下一帧紧接到达",
+      "precondition": "可控发送完成事件",
+      "exercise": "分别在 M6 入队/未完成发送/完成后收到 next frame；测试同批解析顺序",
+      "expected": "状态由完整握手进展决定；不靠 sleep；先 M6 后 main 输出，不越过授权门槛",
+      "evidence_required": "有序阶段与 outbox ticket/record 时序",
+      "source_refs": [
+        "W1",
+        "W7",
+        "W14"
+      ],
+      "status": "CHARACTERIZED",
+      "actual": "M5与rx0同一sendall可按顺序得到M6和三条应答；未宣称内核必在同一个receive回调交付，未精确钩住每个发送完成时刻。",
+      "evidence_path": "evidence/pipelined-final.log"
+    },
+    {
+      "id": "REC-01",
+      "group": "records",
+      "required_for": [
+        "all"
+      ],
+      "objective": "双向 main nonce 与计数",
+      "precondition": "已验证或明确的兼容 channel",
+      "exercise": "逐包覆盖双向0、1、2、255、256；systemInfo 一入三出",
+      "expected": "LE64+zero4；tx/rx 分离；每条 main record 正确推进",
+      "evidence_required": "独立客户端每包验证结果",
+      "source_refs": [
+        "W3",
+        "W11",
+        "U2"
+      ],
+      "status": "PASS",
+      "actual": "独立AEAD核对双向0/1/2/255/256及一入三出；267条真实TCP兼容记录。",
+      "evidence_path": "evidence/socket-current.log"
+    },
+    {
+      "id": "REC-02",
+      "group": "records",
+      "required_for": [
+        "all"
+      ],
+      "objective": "错误保护参数在正确层拒绝",
+      "precondition": "会话已可处理 frame8，排除更早 state 拒绝",
+      "exercise": "非零 HAP 布局、错误方向 key、错误 AAD、篡改 tag、重放",
+      "expected": "AEAD 层拒绝并关闭；不扩大计数/key 搜索",
+      "evidence_required": "错误类型与最后成功计数",
+      "source_refs": [
+        "W3",
+        "W11",
+        "R1"
+      ],
+      "status": "CHARACTERIZED",
+      "actual": "错误key、错nonce布局、tamper、replay拒绝；独立AAD错误未单独新增。",
+      "evidence_path": "evidence/candidate-final.log"
+    },
+    {
+      "id": "REC-03",
+      "group": "records",
+      "required_for": [
+        "continuity"
+      ],
+      "objective": "业务会话变化不重置 record counter",
+      "precondition": "发送多包后 counters 非零",
+      "exercise": "sessionStart、TVRC、touchStart、sessionStop、再次初始化",
+      "expected": "同一 key 下记录连续；业务 SID 与 record counter 无混用",
+      "evidence_required": "逐次计数与返回包校验",
+      "source_refs": [
+        "W3",
+        "W8",
+        "W11"
+      ],
+      "status": "PASS",
+      "actual": "sessionStop/再次初始化连续计数，fresh PV后才切新key；独立解密全部输出。",
+      "evidence_path": "evidence/candidate-final.log"
+    },
+    {
+      "id": "REC-04",
+      "group": "records",
+      "required_for": [
+        "continuity"
+      ],
+      "objective": "候选判别只执行一次",
+      "precondition": "已唯一选定候选并处理一包",
+      "exercise": "后续发其它候选 key 或错误 nonce；注入多个匹配标签的诊断夹具",
+      "expected": "后续失败直接关闭；不每包试全部候选；歧义不自动授权",
+      "evidence_required": "候选阶段锁定与关闭原因",
+      "source_refs": [
+        "W3",
+        "A1"
+      ],
+      "status": "CHARACTERIZED",
+      "actual": "每条只尝试固定initial-PV key/current counter；错误后关闭不换候选。未注入多标签夹具。",
+      "evidence_path": "evidence/candidate-final.log"
+    },
+    {
+      "id": "REC-05",
+      "group": "records",
+      "required_for": [
+        "all"
+      ],
+      "objective": "拒绝状态恢复和 nonce 复用",
+      "precondition": "可控 seal/send 失败与 counter 边界",
+      "exercise": "加密成功后入队失败/部分发送后失败；counter 接近耗尽",
+      "expected": "不回退计数重新加密不同明文；关闭或既定安全处理；不 wrap",
+      "evidence_required": "记录分配和关闭 ledger",
+      "source_refs": [
+        "W3",
+        "W7",
+        "W11",
+        "R1"
+      ],
+      "status": "CHARACTERIZED",
+      "actual": "seal后send失败关闭；transport部分发送错误不重试。极限UInt64 counter用例本轮未新增。",
+      "evidence_path": "evidence/transport-receipt.json"
+    },
+    {
+      "id": "COD-01",
+      "group": "codec",
+      "required_for": [
+        "all"
+      ],
+      "objective": "帧流分片与合批正确",
+      "precondition": "固定合法帧序列",
+      "exercise": "遍历关键 header/payload/tag 分割点，多个完整帧合批、尾部半帧",
+      "expected": "不早派发、不漏帧/重帧；同批切换 phase 正确",
+      "evidence_required": "输入分块表与输出顺序",
+      "source_refs": [
+        "W11",
+        "R3"
+      ],
+      "status": "PASS",
+      "actual": "40个关键分割点、合批+尾部半帧、真实TCP分片。",
+      "evidence_path": "evidence/transport-receipt.json"
+    },
+    {
+      "id": "COD-02",
+      "group": "codec",
+      "required_for": [
+        "all"
+      ],
+      "objective": "OPACK 互解而非本地自洽",
+      "precondition": "固定来源支持的外部向量与独立 encoder",
+      "exercise": "E/F 字典、UUID/time、有界标量引用、重排键、多字节长度",
+      "expected": "语义正确；不要求完全同字节压缩；引用不跨帧",
+      "evidence_required": "向量来源/原始合成向量 hash/比较",
+      "source_refs": [
+        "W11",
+        "U5",
+        "P3"
+      ],
+      "status": "CHARACTERIZED",
+      "actual": "独立Python OPACK核对完整字典、引用和多长度路径，canonical/alias会话；全部固定codec向量未重跑。",
+      "evidence_path": "evidence/session-final.log"
+    },
+    {
+      "id": "COD-03",
+      "group": "codec",
+      "required_for": [
+        "all"
+      ],
+      "objective": "保留解析预算与重复检查",
+      "precondition": "decoder已允许到达目标层",
+      "exercise": "超限、深度、节点、非法UTF-8、重复键、未知tag、错误引用、尾随字节",
+      "expected": "有界拒绝且明确错误，不进入 profile",
+      "evidence_required": "逐类拒绝层与资源上界",
+      "source_refs": [
+        "W11"
+      ],
+      "status": "NOT_RUN",
+      "actual": null,
+      "evidence_path": null
+    },
+    {
+      "id": "COD-04",
+      "group": "codec",
+      "required_for": [
+        "metadata"
+      ],
+      "objective": "M2 与 TLV 正确解析",
+      "precondition": "不再依赖旧 e1 单字段前缀",
+      "exercise": "M2 加 pwTy、键重排，合法TLV分片与非法重复tag",
+      "expected": "只接受合法编码与有限扩展；合法元数据不造成测试假失败",
+      "evidence_required": "独立解码结果与负例",
+      "source_refs": [
+        "W12",
+        "W14",
+        "A2"
+      ],
+      "status": "CHARACTERIZED",
+      "actual": "M2 pwTy外层及M6独立解包验签，未穷举TLV非法重复与键重排。",
+      "evidence_path": "evidence/configuration-final.log"
+    },
+    {
+      "id": "RPL-01",
+      "group": "reply-policy",
+      "required_for": [
+        "reply-policy"
+      ],
+      "objective": "systemInfo 完整应答矩阵",
+      "precondition": "明确 current/strict/upstream-reference 策略",
+      "exercise": "request、event带x、event无x、缺t有x、缺t无x",
+      "expected": "按该 mode 精确核对 response 和两条状态 event；无x不造x；event次序正确",
+      "evidence_required": "每条 _i/_t/_x/_rT/_c 与有序输出比较",
+      "source_refs": [
+        "W4",
+        "W8",
+        "U1"
+      ],
+      "status": "PASS",
+      "actual": "current/reference两策略request/event±x及省略类型由独立矩阵和完整会话覆盖，完整字典/顺序核对。",
+      "evidence_path": "evidence/profile.log"
+    },
+    {
+      "id": "RPL-02",
+      "group": "reply-policy",
+      "required_for": [
+        "reply-policy"
+      ],
+      "objective": "已知方法逐个检查，不统一按x分类",
+      "precondition": "与 RPL-01 同 mode",
+      "exercise": "session/TVRC/touch/HID/文本和只读查询的 request与event变体",
+      "expected": "每种输入最多一次对应response；内容/版本/结果类型及事件均正确",
+      "evidence_required": "按方法的 exact expected/actual",
+      "source_refs": [
+        "W4",
+        "W8",
+        "U1"
+      ],
+      "status": "PASS",
+      "actual": "168个逐方法request/event±x完整输出对照。",
+      "evidence_path": "evidence/profile.log"
+    },
+    {
+      "id": "RPL-03",
+      "group": "reply-policy",
+      "required_for": [
+        "reply-policy"
+      ],
+      "objective": "interest 不是其它方法的统一ack规则",
+      "precondition": "按所选模式建立订阅",
+      "exercise": "event+x、event无x、request；重复注册、注销、重注册、未知名",
+      "expected": "明确区分本地与上游的差异；无槽位泄漏/无限推送；不把未知名当动作",
+      "evidence_required": "事件序列、outstanding 与 budget",
+      "source_refs": [
+        "W4",
+        "W8",
+        "U1"
+      ],
+      "status": "PASS",
+      "actual": "interest两策略、注册/注销/去重/限额及events完整内容顺序。",
+      "evidence_path": "evidence/session-final.log"
+    },
+    {
+      "id": "RPL-04",
+      "group": "reply-policy",
+      "required_for": [
+        "reply-policy"
+      ],
+      "objective": "未知方法与已知media内未知命令分开",
+      "precondition": "有效通道，计数前快照",
+      "exercise": "未知request、event+x、event无x、未知media子命令，之后已知HID",
+      "expected": "probe按预定空应答策略且未知不进profile/action；strict仍拒绝；已知后续不被破坏",
+      "evidence_required": "fallback数、投递数、后续known行为",
+      "source_refs": [
+        "W4",
+        "W8",
+        "W10",
+        "U1"
+      ],
+      "status": "PASS",
+      "actual": "未知方法按x、未知media子命令策略分离，后续合法HID可处理。",
+      "evidence_path": "evidence/profile.log"
+    },
+    {
+      "id": "RPL-05",
+      "group": "reply-policy",
+      "required_for": [
+        "reply-policy"
+      ],
+      "objective": "新应答许可不放松生产绑定",
+      "precondition": "真实已验证 request/message许可",
+      "exercise": "同一消息双回复、旧message触发event、跨connection/peer、无事务response",
+      "expected": "拒绝滥用；无x响应仅probe专用许可；全局/per-message预算覆盖",
+      "evidence_required": "permission ledger与原生产回归",
+      "source_refs": [
+        "W4"
+      ],
+      "status": "PASS",
+      "actual": "生产strict保持原channel路径；旧message/撤销/关闭/失败push回归通过。",
+      "evidence_path": "evidence/channel.log"
+    },
+    {
+      "id": "SES-01",
+      "group": "session",
+      "required_for": [
+        "continuity",
+        "reply-policy"
+      ],
+      "objective": "全流程并含非唯一初始化顺序",
+      "precondition": "独立客户端，不用手机明文名义",
+      "exercise": "systemInfo→sessionStart→TVRC→查询→订阅→HID；另测TVRC/touch先行",
+      "expected": "所有返回有序、内容正确；此测试只证明合成轨迹",
+      "evidence_required": "全消息与服务端记录核验摘要",
+      "source_refs": [
+        "W8",
+        "W10",
+        "A2"
+      ],
+      "status": "PASS",
+      "actual": "canonical及model/缺省两完整流程，TVRC/touch先行，查询/订阅/HID。",
+      "evidence_path": "evidence/session-final.log"
+    },
+    {
+      "id": "SES-02",
+      "group": "session",
+      "required_for": [
+        "continuity",
+        "reply-policy"
+      ],
+      "objective": "SID 与停止状态独立于密码计数",
+      "precondition": "有效会话",
+      "exercise": "SID别名/冲突、错误service、旧SID stop、stop后HID、显式再初始化",
+      "expected": "错误目标与停止后的隐式复活拒绝；显式重建符合策略；counter连续",
+      "evidence_required": "SID关系只记录本地非秘密分类、状态变化",
+      "source_refs": [
+        "W8"
+      ],
+      "status": "PASS",
+      "actual": "SID冲突/服务/旧SID stop拒绝，stop及恢复不重置record counter。",
+      "evidence_path": "evidence/session-final.log"
+    },
+    {
+      "id": "INP-01",
+      "group": "valid-input",
+      "required_for": [
+        "continuity"
+      ],
+      "objective": "真实输入计数不只按方法名",
+      "precondition": "输入解析代码或明确的验证层已实现",
+      "exercise": "合法按下/松开与touch序列；空内容、错类型、未知code/phase、NaN等",
+      "expected": "message/valid/unknown/invalid分开；不补造输入、不执行动作",
+      "evidence_required": "合成有效与无效数量断言",
+      "source_refs": [
+        "W8",
+        "U1"
+      ],
+      "status": "PASS",
+      "actual": "字段类型、已知code/phase、有限坐标、触控顺序分类；真实TCP每阶段5有效输入。",
+      "evidence_path": "evidence/profile.log"
+    },
+    {
+      "id": "MET-01",
+      "group": "metadata",
+      "required_for": [
+        "metadata"
+      ],
+      "objective": "元数据与签名身份保持一致",
+      "precondition": "每个变体在进程启动时固定",
+      "exercise": "分别启用M2、M6、带/不带连字符认证ID，独立解密M6并验签",
+      "expected": "PS/PV身份一致；TLV17位于AEAD内；无真实账号/MAC/上游固定秘密",
+      "evidence_required": "元数据存在/类型、签名校验与配置摘要",
+      "source_refs": [
+        "W3",
+        "W5",
+        "W13",
+        "U1",
+        "U3"
+      ],
+      "status": "CHARACTERIZED",
+      "actual": "默认和全部开关组合已独立M6解密验签/fresh PV；未逐一单开开关。",
+      "evidence_path": "evidence/configuration-final.log"
+    },
+    {
+      "id": "NET-01",
+      "group": "transport",
+      "required_for": [
+        "diagnostics",
+        "continuity",
+        "reply-policy"
+      ],
+      "objective": "首个关闭原因不可被cancel覆盖",
+      "precondition": "可控故障与原生loopback分别覆盖",
+      "exercise": "protocol/profile/frame错误、receive/send error、network failed/cancel、owner stop/not current",
+      "expected": "唯一 firstCause 对应起因；层层递归关闭幂等，无后续投递",
+      "evidence_required": "每条case首因、终结事件次数与回调记录",
+      "source_refs": [
+        "W1",
+        "W2",
+        "W7"
+      ],
+      "status": "PASS",
+      "actual": "18个controlled首次关闭锁存，recursive close/迟到completion不覆盖；真实EOF首因核对。",
+      "evidence_path": "evidence/transport-receipt.json"
+    },
+    {
+      "id": "NET-02",
+      "group": "transport",
+      "required_for": [
+        "diagnostics"
+      ],
+      "objective": "EOF+数据与待发送应答可观测",
+      "precondition": "原生loopback，明确是否实现有界排空",
+      "exercise": "对端发送最后请求后关闭写方向；另外做error与RST情形（只在测试可控环境）",
+      "expected": "记录API流结束而非无证据FIN；未完成输出可见；排空有界，不接新输入",
+      "evidence_required": "done/data/send/outbox相对时间与firstCause",
+      "source_refs": [
+        "W7",
+        "R3"
+      ],
+      "status": "CHARACTERIZED",
+      "actual": "实际NW回调data=7+done=true；排队65540字节未完成时EOF快照保留。错误回调已注入，原生RST未跑。",
+      "evidence_path": "evidence/transport-receipt.json"
+    },
+    {
+      "id": "NET-03",
+      "group": "transport",
+      "required_for": [
+        "diagnostics",
+        "reply-policy"
+      ],
+      "objective": "突发背压不是逐包wire成功",
+      "precondition": "先阻止发送完成的受控adapter，再原生loopback",
+      "exercise": "单回调多请求合批，使输出超过16项；包含一入多出",
+      "expected": "容量结果明确；若实施背压，有界保留已解码帧/游标且无丢包/重派发；不无限增队列",
+      "evidence_required": "outbox高水位、已处理/待处理数、恢复输出",
+      "source_refs": [
+        "W7",
+        "W8",
+        "W15"
+      ],
+      "status": "PASS",
+      "actual": "原生burst在第6个一入三出触发容量，整批拒绝；队列上限不变，不重试。",
+      "evidence_path": "evidence/transport-receipt.json"
+    },
+    {
+      "id": "NET-04",
+      "group": "transport",
+      "required_for": [
+        "diagnostics",
+        "reply-policy"
+      ],
+      "objective": "完整outcome准入与nonce分配",
+      "precondition": "实际使用批量准入或等效预约",
+      "exercise": "reply加events时容量刚好/不足；失败前后检查profile与records",
+      "expected": "策略原子或明确fail-closed；不半提交后透明重试导致nonce复用",
+      "evidence_required": "outcome/queue/record事务记录",
+      "source_refs": [
+        "W7",
+        "W8",
+        "W15",
+        "R1"
+      ],
+      "status": "CHARACTERIZED",
+      "actual": "13+3准入、14+3拒绝，原生burst，候选seal后发送失败；未把profile和nonce所有容量边界组合实跑。",
+      "evidence_path": "evidence/transport-receipt.json"
+    },
+    {
+      "id": "NET-05",
+      "group": "transport",
+      "required_for": [
+        "diagnostics"
+      ],
+      "objective": "slice与record完成区分",
+      "precondition": "构造会产生多slice的有界record",
+      "exercise": "分段advance；错误ticket/迟到completion/部分成功后error",
+      "expected": "只最后slice算record完成；错误completion关闭且不改新连接",
+      "evidence_required": "ticket/slice/record计数与首因",
+      "source_refs": [
+        "W7",
+        "W15"
+      ],
+      "status": "PASS",
+      "actual": "65540字节分2 slices完成1record；错误ticket/旧completion/部分错误检查。",
+      "evidence_path": "evidence/transport-receipt.json"
+    },
+    {
+      "id": "NET-06",
+      "group": "transport",
+      "required_for": [
+        "diagnostics",
+        "continuity"
+      ],
+      "objective": "每一种期限可独立定位",
+      "precondition": "可控时钟，不实际睡长时间",
+      "exercise": "协议、PIN、outbox、pending候选、owner总期限，以及旧timer迟到",
+      "expected": "首因与具体deadline一致；输入不续无限命；旧timer不关闭新epoch",
+      "evidence_required": "clock输入与deadline/layer/firstCause",
+      "source_refs": [
+        "W1",
+        "W3",
+        "W6",
+        "W7"
+      ],
+      "status": "CHARACTERIZED",
+      "actual": "协议/outbox/旧timer、候选10秒/owner120秒、admission过期分别检查；日志PIN期限仍并入协议阶段。",
+      "evidence_path": "evidence/candidate-final.log"
+    },
+    {
+      "id": "NET-07",
+      "group": "transport",
+      "required_for": [
+        "diagnostics"
+      ],
+      "objective": "所有接入尝试均有脱敏结果",
+      "precondition": "listener测试，不使用真实手机",
+      "exercise": "超过并发/总accept上限；辅助服务接入；随后合法连接",
+      "expected": "incoming/admitted/denied各自准确；不把accepted当所有尝试",
+      "evidence_required": "admission计数/理由/清理",
+      "source_refs": [
+        "W2",
+        "W13"
+      ],
+      "status": "NOT_RUN",
+      "actual": null,
+      "evidence_path": null
+    },
+    {
+      "id": "NET-08",
+      "group": "transport",
+      "required_for": [
+        "connection-management"
+      ],
+      "objective": "只有实现连接治理才要求此组",
+      "precondition": "同IP或相同描述ID的两条连接",
+      "exercise": "未验证新连接、已验证peer的新连接、伪造描述ID、不同peer同IP",
+      "expected": "不因无认证描述让任意新连接挤掉有效peer；无key/counter继承",
+      "evidence_required": "抢占资格、关闭首因、peer关系分类",
+      "source_refs": [
+        "W2",
+        "W3",
+        "U6"
+      ],
+      "status": "NOT_APPLICABLE",
+      "actual": "未移植同IP/描述ID的连接抢占。",
+      "evidence_path": null
+    },
+    {
+      "id": "NET-09",
+      "group": "transport",
+      "required_for": [
+        "diagnostics"
+      ],
+      "objective": "日志本身不导致失控",
+      "precondition": "受控stdout消费者/日志输出边界",
+      "exercise": "高频合成touch；阻塞/变慢的日志消费者；错误事件大量出现",
+      "expected": "诊断有界，重要首因仍可保留；不无限主线程阻塞或泄露载荷",
+      "evidence_required": "日志预算/丢弃聚合数/超时归因",
+      "source_refs": [
+        "W2"
+      ],
+      "status": "NOT_RUN",
+      "actual": null,
+      "evidence_path": null
+    },
+    {
+      "id": "REG-01",
+      "group": "regression",
+      "required_for": [
+        "all"
+      ],
+      "objective": "共享产品默认行为未放松",
+      "precondition": "当前实际分支及所有改动",
+      "exercise": "原strict/签名/撤销/过期/重放/旧SID/发送失败与构建回归",
+      "expected": "未改政策的用例继续通过；改动政策只限显式probe期望，不删除证据",
+      "evidence_required": "原命令、退出码、逐例结果、相关diff",
+      "source_refs": [
+        "W3",
+        "W4",
+        "W10",
+        "E4"
+      ],
+      "status": "PASS",
+      "actual": "生产channel回归、固定CryptoKit向量、M5/M6签名/篡改/重放和最终App优化编译均退出0。",
+      "evidence_path": "evidence/checks.json"
+    },
+    {
+      "id": "EVD-01",
+      "group": "evidence",
+      "required_for": [
+        "all"
+      ],
+      "objective": "空值与零、历史与本轮分开",
+      "precondition": "使用本包空结果模板",
+      "exercise": "填入实际观测，验证未跑项、文件哈希与原始结果关联",
+      "expected": "不填造数据；系统动作0需由隔离审查支持；旧helper不算新执行",
+      "evidence_required": "结果JSON+原始证据+源/产物绑定",
+      "source_refs": [
+        "A1",
+        "A2",
+        "E1"
+      ],
+      "status": "PASS",
+      "actual": "区分历史/合成/真实phone证据；零样本用null，第10轮实际计数与源/产物SHA、OS清理、手机观察关联。",
+      "evidence_path": "evidence/checks.json"
+    },
+    {
+      "id": "LIVE-01",
+      "group": "live",
+      "required_for": [
+        "live"
+      ],
+      "objective": "操作者就绪后才运行",
+      "precondition": "本机相关门槛已完成、配置与binary冻结、明确手机就绪",
+      "exercise": "启动已编译探针，显示新PIN，记录本轮发现/手机选择/PIN观察",
+      "expected": "不在窗口编译；不记录PIN；零连接只能记缺样本",
+      "evidence_required": "run配置、手机观察、相对时间与构建身份",
+      "source_refs": [
+        "E1",
+        "E4"
+      ],
+      "status": "PASS",
+      "actual": "用户明确再次启动，同一冻结二进制及配置；手机观察已记录，PIN仅stderr。",
+      "evidence_path": "evidence/live-10-result.json"
+    },
+    {
+      "id": "LIVE-02",
+      "group": "live",
+      "required_for": [
+        "live"
+      ],
+      "objective": "取得真实key候选与首因",
+      "precondition": "LIVE-01 的同一运行",
+      "exercise": "记录M6后首frame8 AEAD候选判据；跟随所有新连接直到关闭",
+      "expected": "AEAD与解析/绑定分开；每个关闭可归因；无原始载荷与秘密",
+      "evidence_required": "connection日志、候选结果、firstCause",
+      "source_refs": [
+        "W1",
+        "W7",
+        "U1",
+        "E1"
+      ],
+      "status": "PASS",
+      "actual": "连接1 initial-PV-main rx0 aead-failed/protocol-reject；连接2 fresh PV verified/owner-stop；均有connectionIndex与首因。",
+      "evidence_path": "evidence/live-10-result.json"
+    },
+    {
+      "id": "LIVE-03",
+      "group": "live",
+      "required_for": [
+        "live"
+      ],
+      "objective": "手机有效按键触控与资格对应",
+      "precondition": "手机确已进入可操作状态，否则不填成功",
+      "exercise": "已约定按键及触控，关联valid输入类别/phase计数",
+      "expected": "非零有效输入且对应手机观察；compatibility与authenticated分别报告",
+      "evidence_required": "手机观察、valid计数、identityBound与时序",
+      "source_refs": [
+        "W8",
+        "E1"
+      ],
+      "status": "PASS",
+      "actual": "手机确认已进入并操作；认证通道235有效事件：buttonDown3/buttonUp3/touchBegin22/touchMove185/touchEnd22；compat0。",
+      "evidence_path": "evidence/live-10-result.json"
+    },
+    {
+      "id": "LIVE-04",
+      "group": "live",
+      "required_for": [
+        "live"
+      ],
+      "objective": "退出与清理可核对",
+      "precondition": "探针运行结束或显式取消",
+      "exercise": "记录退出码/cancel状态/PID级OS listener检查；确认无残留服务实例",
+      "expected": "对象级与OS证据匹配；不把TIME_WAIT或端口复用当probe泄漏；不臆填0",
+      "evidence_required": "退出、取消与OS检查结果",
+      "source_refs": [
+        "W2",
+        "W13",
+        "R3"
+      ],
+      "status": "PASS",
+      "actual": "两轮自然退出0，对应PID级lsof与ps无结果；listener清理证据完整。",
+      "evidence_path": "evidence/live-10-cleanup.json"
+    },
+    {
+      "id": "LIVE-05",
+      "group": "live",
+      "required_for": [
+        "controlled-followup"
+      ],
+      "objective": "第二窗口仅验证已有变量",
+      "precondition": "第一窗口已给出明确可证伪假设，操作者重新就绪",
+      "exercise": "仅选择一个预先冻结差异，记录同时变化的进程身份/缓存条件",
+      "expected": "条件性结论，不宣称严密因果或自动重试；失败写清新缺口",
+      "evidence_required": "两run配置/产物/观测差异",
+      "source_refs": [
+        "A1",
+        "E1"
+      ],
+      "status": "CHARACTERIZED",
+      "actual": "第9轮零样本，用户要求第10轮同配置补样；未测试配置变量，新身份创建，不能当因果实验。",
+      "evidence_path": "evidence/live-10-result.json"
+    }
+  ]
+}

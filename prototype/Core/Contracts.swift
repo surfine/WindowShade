@@ -312,6 +312,8 @@ extension WS2 {
     }
     enum LeaseDecision: Sendable {
         case acquired(LeaseHandle)
+        /// 放行排在后面：轮到时由协调器的 `onGranted` 发租约。position 从 1 起，1 是下一件。
+        case queued(position: Int)
         case busy
         case unavailable
     }

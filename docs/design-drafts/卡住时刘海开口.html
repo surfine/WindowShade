@@ -1,4 +1,11 @@
-<!doctype html><html><head><meta charset=utf8><meta name=viewport content="width=device-width,initial-scale=1,viewport-fit=cover"><style>:root{color-scheme:light;box-sizing:border-box;padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}html{scroll-padding-top:env(safe-area-inset-top,0px)}body{margin:0;padding:0;font:14px -apple-system,BlinkMacSystemFont,sans-serif;background:#faf9f5;color:#141413}img{max-width:100%}[hidden]:not([hidden=until-found i]){display:none!important}</style></head><body>
+<!doctype html><html lang="zh-CN"><head><meta charset=utf8><meta name=viewport content="width=device-width,initial-scale=1,viewport-fit=cover"><style>
+/* 弹簧令牌（response 秒 / 阻尼比 ζ）照 design-system §4.6 现算成 linear()；位移不用贝塞尔曲线 */
+:root{--ws-calm:linear(0, 0.029, 0.099, 0.188, 0.285, 0.38, 0.47, 0.551, 0.623, 0.686, 0.74, 0.786, 0.825, 0.857, 0.883, 0.905, 0.924, 0.938, 0.95, 0.96, 0.968, 0.974, 0.98, 0.984, 0.987, 0.99, 0.992, 0.993, 0.995, 0.996, 0.997, 0.997, 0.998, 0.998, 0.999, 1);--ws-calm-t:0.5s;--ws-settle:linear(0, 0.029, 0.099, 0.189, 0.286, 0.381, 0.471, 0.552, 0.625, 0.687, 0.741, 0.787, 0.825, 0.858, 0.884, 0.906, 0.924, 0.939, 0.951, 0.96, 0.968, 0.975, 0.98, 0.984, 0.987, 0.99, 0.992, 0.994, 0.995, 0.996, 0.997, 0.997, 0.998, 0.998, 0.999, 1);--ws-settle-t:0.56s;--ws-expand:linear(0, 0.016, 0.056, 0.113, 0.18, 0.252, 0.325, 0.397, 0.466, 0.531, 0.59, 0.645, 0.694, 0.738, 0.777, 0.811, 0.841, 0.867, 0.889, 0.908, 0.924, 0.938, 0.95, 0.959, 0.967, 0.974, 0.979, 0.984, 0.988, 0.991, 0.993, 0.995, 0.996, 0.998, 0.998, 1);--ws-expand-t:0.42s;--ws-bloom:linear(0, 0.027, 0.093, 0.182, 0.282, 0.383, 0.481, 0.572, 0.653, 0.724, 0.784, 0.835, 0.876, 0.91, 0.937, 0.958, 0.973, 0.985, 0.994, 1, 1.003, 1.006, 1.007, 1.008, 1.008, 1.007, 1.007, 1.006, 1.005, 1.004, 1.004, 1.003, 1.002, 1.002, 1.001, 1);--ws-bloom-t:0.58s;--ws-pop:linear(0, 0.023, 0.082, 0.164, 0.259, 0.359, 0.457, 0.551, 0.638, 0.715, 0.782, 0.84, 0.887, 0.926, 0.957, 0.981, 0.999, 1.011, 1.02, 1.025, 1.028, 1.028, 1.028, 1.026, 1.023, 1.021, 1.018, 1.015, 1.012, 1.01, 1.008, 1.006, 1.004, 1.003, 1.002, 1);--ws-pop-t:0.38s;--ws-flyout:linear(0, 0.025, 0.087, 0.17, 0.263, 0.357, 0.449, 0.534, 0.611, 0.679, 0.738, 0.789, 0.832, 0.867, 0.896, 0.92, 0.94, 0.955, 0.967, 0.976, 0.983, 0.989, 0.993, 0.996, 0.998, 0.999, 1, 1.001, 1.001, 1.001, 1.002, 1.001, 1.001, 1.001, 1.001, 1);--ws-flyout-t:0.51s;}
+@media (prefers-reduced-motion:reduce){:root{--ws-calm:linear(0,1);--ws-calm-t:.25s;--ws-settle:linear(0,1);--ws-settle-t:.25s;--ws-expand:linear(0,1);--ws-expand-t:.25s;--ws-bloom:linear(0,1);--ws-bloom-t:.25s;--ws-pop:linear(0,1);--ws-pop-t:.25s;--ws-flyout:linear(0,1);--ws-flyout-t:.25s;}}
+.ws-sys{display:flex;flex-wrap:wrap;align-items:center;gap:6px 14px;max-width:1160px;margin:0 auto;padding:10px 16px;font:12.5px/1.4 "IBM Plex Sans","Noto Sans SC",-apple-system,system-ui,sans-serif;border-bottom:1px solid color-mix(in srgb,currentColor 14%,transparent)}.ws-sys a{color:inherit;text-decoration:none;opacity:.78}.ws-sys a:hover,.ws-sys a:focus-visible{opacity:1;text-decoration:underline}.ws-sys b{font-weight:600}.ws-sys .ws-n{opacity:.55;font-variant-numeric:tabular-nums}.ws-sys .ws-sp{flex:1}
+:root{color-scheme:light;box-sizing:border-box;padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}html{scroll-padding-top:env(safe-area-inset-top,0px)}body{margin:0;padding:0;font:14px -apple-system,BlinkMacSystemFont,sans-serif;background:#faf9f5;color:#141413}img{max-width:100%}[hidden]:not([hidden=until-found i]){display:none!important}</style></head><body>
+<nav class="ws-sys" aria-label="WindowShade 设计系统"><a href="https://claude.ai/artifact/Q2XdwfQttwpju6MvzpY93Y"><b>WindowShade 设计系统</b></a><span class="ws-n">第 6 / 16 张 · 卡住时刘海开口</span><span class="ws-sp"></span><a href="https://claude.ai/artifact/UepNxvLrJY5WDRANnjubyH">← 从锁屏到窗口</a><a href="https://claude.ai/artifact/TGoNZE1WAAvZLeYDUoLA2N">收成缩略图 →</a></nav>
+
 <title>卡住时刘海开口</title>
 <style>
 :root{
@@ -127,9 +134,9 @@ kbd{font:600 12px/1 var(--sans);display:inline-block;padding:3px 5px;border-radi
 .demo .nw{top:calc(36*var(--u))}
 .demo .arrow{left:calc(46*var(--u));top:calc(25*var(--u));width:calc(8*var(--u));height:calc(10*var(--u));color:rgba(255,255,255,.7);font:600 calc(9*var(--u))/1 var(--sans)}
 .demo .strike{left:30%;right:30%;top:calc(16*var(--u));height:calc(1.5*var(--u));background:#ff6961;transform-origin:0 50%;transform:scaleX(0)}
-.run .old{animation:dOld 2.2s cubic-bezier(.3,0,.2,1) 3 forwards}
-.run .strike{animation:dStrike 2.2s cubic-bezier(.3,0,.2,1) 3 forwards}
-.run .nw,.run .arrow{animation:dNew 2.2s cubic-bezier(.3,0,.2,1) 3 forwards}
+.run .old{animation:dOld 2.2s var(--ws-settle) 3 forwards}
+.run .strike{animation:dStrike 2.2s var(--ws-settle) 3 forwards}
+.run .nw,.run .arrow{animation:dNew 2.2s var(--ws-settle) 3 forwards}
 @keyframes dOld{0%{opacity:0}8%{opacity:1}35%{opacity:1}55%,100%{opacity:.4}}
 @keyframes dStrike{0%,30%{transform:scaleX(0)}45%,100%{transform:scaleX(1)}}
 @keyframes dNew{0%,40%{opacity:0;transform:translateY(calc(3*var(--u)))}58%,100%{opacity:1;transform:none}}
@@ -138,14 +145,14 @@ kbd{font:600 12px/1 var(--sans);display:inline-block;padding:3px 5px;border-radi
 .demo .ico{width:calc(14*var(--u));height:calc(14*var(--u));border-radius:calc(3.5*var(--u));opacity:0}
 .demo .mw{background:rgba(255,255,255,.92);border-radius:calc(3*var(--u));overflow:hidden}
 .demo .mw::before{content:"";position:absolute;left:0;right:0;top:0;height:calc(6*var(--u));background:#9e9e9e}
-.run.d-home .fg{animation:hFg 2.2s cubic-bezier(.3,0,.2,1) 3 forwards}
-.run.d-home .mn{animation:hNotch 2.2s cubic-bezier(.3,0,.2,1) 3 forwards}
-.run.d-home .ico{animation:hIco 2.2s cubic-bezier(.3,0,.2,1) 3 forwards}
+.run.d-home .fg{animation:hFg 2.2s var(--ws-settle) 3 forwards}
+.run.d-home .mn{animation:hNotch 2.2s var(--ws-settle) 3 forwards}
+.run.d-home .ico{animation:hIco 2.2s var(--ws-settle) 3 forwards}
 @keyframes hFg{0%{top:calc(30*var(--u));opacity:0}8%{opacity:1}25%{top:calc(4*var(--u))}40%{opacity:1;top:calc(4*var(--u))}50%,100%{opacity:0;top:calc(4*var(--u))}}
 @keyframes hNotch{0%,28%{transform:scale(1)}33%{transform:scale(.8)}40%,100%{transform:scale(1)}}
 @keyframes hIco{0%,40%{opacity:0}55%,90%{opacity:1}100%{opacity:0}}
-.run.d-fill .mw{animation:fWin 2.2s cubic-bezier(.3,0,.2,1) 3 forwards}
-.run.d-fill .fg{animation:fFg 2.2s cubic-bezier(.3,0,.2,1) 3 forwards}
+.run.d-fill .mw{animation:fWin 2.2s var(--ws-settle) 3 forwards}
+.run.d-fill .fg{animation:fFg 2.2s var(--ws-settle) 3 forwards}
 .run.d-fill .fg+.fg{animation-name:fFg2}
 @keyframes fWin{0%,42%{left:calc(26*var(--u));top:calc(14*var(--u));width:calc(48*var(--u));height:calc(34*var(--u))}62%,100%{left:calc(4*var(--u));top:calc(4*var(--u));width:calc(92*var(--u));height:calc(52*var(--u))}}
 @keyframes fFg{0%{left:calc(46*var(--u));top:calc(18*var(--u));opacity:0}8%{opacity:1}10%{top:calc(18*var(--u))}40%{top:calc(34*var(--u));opacity:1}60%,100%{top:calc(34*var(--u));opacity:0}}
@@ -153,13 +160,13 @@ kbd{font:600 12px/1 var(--sans);display:inline-block;padding:3px 5px;border-radi
 .demo .mb{left:0;right:0;top:0;height:calc(8*var(--u));background:rgba(255,255,255,.22)}
 .demo .mi{top:calc(2*var(--u));height:calc(4*var(--u));width:calc(12*var(--u));border-radius:calc(2*var(--u));background:rgba(255,255,255,.55)}
 .demo .dd{left:calc(20*var(--u));top:calc(9*var(--u));width:calc(40*var(--u));height:calc(34*var(--u));border-radius:calc(4*var(--u));background:rgba(255,255,255,.85);opacity:0;transform-origin:50% 0}
-.run.d-menu .dd{animation:mDd 2.2s cubic-bezier(.3,0,.2,1) 3 forwards}
-.run.d-menu .fg{animation:mFg 2.2s cubic-bezier(.3,0,.2,1) 3 forwards}
+.run.d-menu .dd{animation:mDd 2.2s var(--ws-settle) 3 forwards}
+.run.d-menu .fg{animation:mFg 2.2s var(--ws-settle) 3 forwards}
 @keyframes mFg{0%{left:calc(50*var(--u));top:calc(40*var(--u));opacity:0}8%{opacity:1}30%{left:calc(26*var(--u));top:calc(4*var(--u));opacity:1}40%,100%{left:calc(26*var(--u));top:calc(4*var(--u));opacity:0}}
 @keyframes mDd{0%,32%{opacity:0;transform:scaleY(.4)}45%,88%{opacity:1;transform:none}100%{opacity:1;transform:none}}
 /* 窗口（macOS 26 起的大圆角、浮起的红绿灯） */
 .win{position:absolute;background:var(--win);color:var(--win-ink);border-radius:calc(16*var(--u));box-shadow:var(--win-shadow);overflow:hidden;display:flex;flex-direction:column;
-  transition:left .38s cubic-bezier(.3,0,.2,1),top .38s cubic-bezier(.3,0,.2,1),width .38s cubic-bezier(.3,0,.2,1),height .38s cubic-bezier(.3,0,.2,1),transform .38s cubic-bezier(.3,0,.2,1),opacity .25s}
+  transition:left var(--ws-settle-t) var(--ws-settle),top var(--ws-settle-t) var(--ws-settle),width var(--ws-settle-t) var(--ws-settle),height var(--ws-settle-t) var(--ws-settle),transform var(--ws-settle-t) var(--ws-settle),opacity .25s}
 .win.tb{border-radius:calc(22*var(--u))}
 .win .title{height:calc(30*var(--u));flex:none;display:flex;align-items:center;gap:calc(8*var(--u));padding-inline:calc(13*var(--u));font-size:calc(12.5*var(--u));font-weight:600;color:var(--win-muted);position:relative}
 .win.front .title{color:var(--win-ink)}
@@ -189,7 +196,7 @@ kbd{font:600 12px/1 var(--sans);display:inline-block;padding:3px 5px;border-radi
 .side{width:30%;max-width:calc(140*var(--u));margin:calc(6*var(--u));border-radius:calc(14*var(--u));background:var(--win-bar);padding:calc(8*var(--u));font-size:calc(11*var(--u));color:var(--win-muted);display:grid;align-content:start;gap:calc(5*var(--u))}
 .side b{color:var(--win-ink);font-weight:500}
 .files{flex:1;display:grid;grid-template-columns:repeat(auto-fill,minmax(calc(72*var(--u)),1fr));gap:calc(8*var(--u));padding:calc(10*var(--u));align-content:start}
-.file{display:grid;justify-items:center;gap:calc(4*var(--u));font-size:calc(10.5*var(--u));text-align:center;transition:opacity .3s,transform .4s cubic-bezier(.5,0,.8,.4)}
+.file{display:grid;justify-items:center;gap:calc(4*var(--u));font-size:calc(10.5*var(--u));text-align:center;transition:opacity .3s,transform var(--ws-settle-t) var(--ws-settle)}
 .file i{width:calc(34*var(--u));height:calc(42*var(--u));border-radius:calc(4*var(--u));background:linear-gradient(#fff,#e9edf5);box-shadow:0 0 0 .5px rgba(0,0,0,.2),0 1px 2px rgba(0,0,0,.12);display:block;position:relative}
 .file i::after{content:attr(data-k);position:absolute;left:0;right:0;bottom:calc(5*var(--u));font:700 calc(7*var(--u))/1 var(--sans);color:#6b7280;font-style:normal}
 .file span{padding:0 calc(4*var(--u));border-radius:calc(4*var(--u));max-width:100%;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
@@ -218,7 +225,7 @@ kbd{font:600 12px/1 var(--sans);display:inline-block;padding:3px 5px;border-radi
 .dock button.full::before{content:"";position:absolute;left:30%;right:30%;top:36%;height:14%;border-radius:2px;background:rgba(255,255,255,.85)}
 .i-finder{background:linear-gradient(135deg,#6ec3ff,#1d74e6)}.i-safari{background:linear-gradient(#fff,#e8eef8)}.i-edit{background:linear-gradient(#fff,#eef0f4)}.i-term{background:linear-gradient(#3a3b40,#16171a)}.i-set{background:linear-gradient(#c9ccd3,#8e939c)}.i-trash{background:rgba(255,255,255,.35);box-shadow:inset 0 0 0 1px rgba(255,255,255,.6)!important}
 /* 叠在桌面上的几样 */
-.ov{position:absolute;z-index:15;opacity:0;visibility:hidden;transition:opacity .22s,visibility .22s,transform .3s cubic-bezier(.2,.8,.2,1)}
+.ov{position:absolute;z-index:15;opacity:0;visibility:hidden;transition:opacity .22s,visibility .22s,transform var(--ws-calm-t) var(--ws-calm)}
 .ov.on{opacity:1;visibility:visible}
 .o-home{inset:0;background:rgba(12,16,28,.28);-webkit-backdrop-filter:blur(14px);backdrop-filter:blur(14px);display:grid;place-items:center;z-index:18;transform:scale(.96);transform-origin:50% 0}
 .o-home.on{transform:none}
@@ -1059,4 +1066,15 @@ if (!/mac/i.test((navigator.userAgentData && navigator.userAgentData.platform) |
 })();
 </script>
 
+<style id="ws-family">
+@import url("https://fonts.googleapis.com/css2?family=Newsreader:opsz,wght@6..72,400;6..72,600&family=IBM+Plex+Sans:wght@400;500;600&family=IBM+Plex+Mono:wght@400;500&family=Noto+Sans+SC:wght@400;500;600&family=Noto+Serif+SC:wght@600&display=swap");
+/* 设计系统的纸面（2026-10-08 统一）：只管页面外框——底色、标题字、正文字；舞台里的画面不动 */
+:root{--wsf-paper:#EEF1F6;--wsf-ink:#131A25;--wsf-ink2:#46546A}
+@media (prefers-color-scheme:dark){:root:not([data-theme="light"]){--wsf-paper:#0E131B;--wsf-ink:#E7EDF6;--wsf-ink2:#A7B4C8}}
+:root[data-theme="dark"]{--wsf-paper:#0E131B;--wsf-ink:#E7EDF6;--wsf-ink2:#A7B4C8}
+html body{background:var(--wsf-paper);color:var(--wsf-ink)}
+html body h1{font-family:"Newsreader","Noto Serif SC",Georgia,serif;font-weight:600;letter-spacing:-.015em;text-wrap:balance}
+html body h2{font-family:"Newsreader","Noto Serif SC",Georgia,serif;font-weight:600;text-wrap:balance}
+html body .lede,html body .sub{color:var(--wsf-ink2)}
+</style>
 </body></html>

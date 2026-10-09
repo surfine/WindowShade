@@ -4,7 +4,13 @@ import Cocoa
 @MainActor final class WS2ModelPickerView: NSView, WS2LeaseContent, NSTableViewDataSource, NSTableViewDelegate {
     var onCancel: (() -> Void)?
     var inputIsCurrent: () -> Bool = { false }
-    var interactionSize: NSSize { NSSize(width: 520, height: 420) }
+    /// 屏宽的 50% × 13.6%（`ConductorShape`）。宿主在显示前可以给定屏宽；没给就取所在屏，再取主屏。
+    var hostScreenWidth: CGFloat?
+    var interactionSize: NSSize {
+        let width = hostScreenWidth ?? window?.screen?.frame.width ?? NSScreen.main?.frame.width ?? 1440
+        let size = ConductorShape.size(.modelPicker, screenWidth: width)
+        return NSSize(width: size.width, height: size.height)
+    }
     let pageID = UUID()
     let input = WS2VisibleListInput()
     private let controller: WS2OwnedLaunchController
@@ -38,34 +44,44 @@ import Cocoa
     init(controller: WS2OwnedLaunchController) {
         self.controller = controller
         super.init(frame: .zero)
-        let stack = NSStackView(); stack.orientation = .vertical; stack.alignment = .leading; stack.spacing = 10
-        stack.translatesAutoresizingMaskIntoConstraints = false; addSubview(stack)
-        NSLayoutConstraint.activate([stack.leadingAnchor.constraint(equalTo: leadingAnchor, constant: 16),
-            stack.trailingAnchor.constraint(equalTo: trailingAnchor, constant: -16), stack.topAnchor.constraint(equalTo: topAnchor, constant: 14),
-            stack.bottomAnchor.constraint(lessThanOrEqualTo: bottomAnchor, constant: -14)])
+        // 左边是模型列表，右边是手柄和按钮：刘海里这块只有屏宽 13.6% 高，竖着排放不下。
+        let list = NSStackView(); list.orientation = .vertical; list.alignment = .leading; list.spacing = 6
+        let controls = NSStackView(); controls.orientation = .vertical; controls.alignment = .leading; controls.spacing = 6
+        for view in [list, controls] { view.translatesAutoresizingMaskIntoConstraints = false; addSubview(view) }
+        NSLayoutConstraint.activate([
+            list.leadingAnchor.constraint(equalTo: leadingAnchor, constant: 16),
+            list.topAnchor.constraint(equalTo: topAnchor, constant: 12),
+            list.bottomAnchor.constraint(equalTo: bottomAnchor, constant: -12),
+            controls.leadingAnchor.constraint(equalTo: list.trailingAnchor, constant: 14),
+            controls.trailingAnchor.constraint(equalTo: trailingAnchor, constant: -16),
+            controls.topAnchor.constraint(equalTo: topAnchor, constant: 12),
+            controls.bottomAnchor.constraint(lessThanOrEqualTo: bottomAnchor, constant: -12),
+            controls.widthAnchor.constraint(equalToConstant: 200)])
         let title = NSTextField(labelWithString: "选择模型"); title.font = .systemFont(ofSize: 15, weight: .semibold)
-        stack.addArrangedSubview(title)
+        list.addArrangedSubview(title)
         let column = NSTableColumn(identifier: .init("model")); column.title = "当前助手提供的模型"
-        column.width = 460; column.minWidth = 140
+        column.width = 300; column.minWidth = 100
         table.columnAutoresizingStyle = .lastColumnOnlyAutoresizingStyle
         table.autoresizingMask = [.width]
-        table.addTableColumn(column); table.headerView = nil; table.rowHeight = 30; table.allowsEmptySelection = false
+        table.addTableColumn(column); table.headerView = nil; table.rowHeight = 28; table.allowsEmptySelection = false
         table.allowsMultipleSelection = false; table.delegate = self; table.dataSource = self
         table.target = self; table.doubleAction = #selector(useSelection); table.setAccessibilityLabel("当前可用模型")
         scroll.hasVerticalScroller = true; scroll.borderType = .bezelBorder; scroll.documentView = table
-        stack.addArrangedSubview(scroll)
-        scroll.widthAnchor.constraint(equalTo: stack.widthAnchor).isActive = true
-        scroll.heightAnchor.constraint(equalToConstant: 224).isActive = true
+        scroll.setContentHuggingPriority(.defaultLow, for: .vertical)
+        list.addArrangedSubview(scroll)
+        scroll.widthAnchor.constraint(equalTo: list.widthAnchor).isActive = true
+        scroll.heightAnchor.constraint(greaterThanOrEqualToConstant: 56).isActive = true
         deviceMenu.setAccessibilityLabel("本次连接的手柄")
         enableButton.target = self; enableButton.action = #selector(toggleDevice)
         enableButton.image = NSImage(systemSymbolName: "gamecontroller", accessibilityDescription: nil)
         chooseButton.target = self; chooseButton.action = #selector(useSelection)
         let back = NSButton(title: "返回会话", target: self, action: #selector(goBack))
-        let deviceRow = NSStackView(views: [deviceMenu, enableButton]); deviceRow.spacing = 8
+        for control in [deviceMenu, enableButton, chooseButton, back] as [NSControl] { control.controlSize = .small }
+        deviceMenu.widthAnchor.constraint(equalToConstant: 200).isActive = true
         let actionRow = NSStackView(views: [chooseButton, back]); actionRow.spacing = 8
-        stack.addArrangedSubview(deviceRow); stack.addArrangedSubview(actionRow)
+        controls.addArrangedSubview(deviceMenu); controls.addArrangedSubview(enableButton); controls.addArrangedSubview(actionRow)
         status.font = .systemFont(ofSize: 11); status.textColor = .secondaryLabelColor
-        status.widthAnchor.constraint(equalTo: stack.widthAnchor).isActive = true; stack.addArrangedSubview(status)
+        status.widthAnchor.constraint(equalTo: controls.widthAnchor).isActive = true; controls.addArrangedSubview(status)
         input.onArmed = { [weak self] id in self?.armedID = id; self?.renderHint() }
         input.onSelection = { [weak self] _ in self?.showSelection() }
         input.onActivate = { [weak self] id in
@@ -78,6 +94,14 @@ import Cocoa
     required init?(coder: NSCoder) { nil }
     override func viewDidMoveToWindow() {
         super.viewDidMoveToWindow()
+        // 形状进场用 pop（岛负责）；内容淡入，减少动态效果时用更短的同一种淡化。
+        if window != nil {
+            wantsLayer = true
+            let fade = CABasicAnimation(keyPath: "opacity")
+            fade.fromValue = 0; fade.toValue = 1; fade.duration = Motion.Fade.fadeIn()
+            fade.timingFunction = CAMediaTimingFunction(name: .easeOut)
+            layer?.add(fade, forKey: "content-fade")
+        }
         focusObservers.forEach { NotificationCenter.default.removeObserver($0) }; focusObservers.removeAll()
         if let window {
             focusObservers.append(NotificationCenter.default.addObserver(forName: NSWindow.didResignKeyNotification, object: window, queue: .main) { [weak self] _ in
@@ -154,7 +178,10 @@ import Cocoa
         sync()
         guard isInputReady, shownDevices.indices.contains(deviceMenu.indexOfSelectedItem) else { return }
         let id = shownDevices[deviceMenu.indexOfSelectedItem].attachment
-        if enableDevice?(id) != true { status.stringValue = "未能启用；请点击此页，再松开所有按键。" }
+        if enableDevice?(id) != true {
+            status.stringValue = WS2GamepadHandlerSeats.shared.desktopHoldsAny
+                ? "先在设置里关掉控制这台 Mac" : "未能启用；请点击此页，再松开所有按键。"
+        }
     }
     @objc private func useSelection() {
         guard isInputReady, let id = input.selection.selectedID else { return }

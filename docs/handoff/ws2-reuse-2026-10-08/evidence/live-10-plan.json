@@ -1,0 +1,15 @@
+{
+  "pid": 81518,
+  "configuration": {
+    "replyPolicy": "current",
+    "pairingEnvelope": "default",
+    "identifierRepresentation": "compact",
+    "m6Metadata": "none"
+  },
+  "discovery": "atv-core",
+  "binarySHA256": "98e0efa4735430a97a24047fdebf92698b8d9dca5b6509798db8cb7efa6290fe",
+  "phoneObservation": "已进入，已按键和滑动",
+  "repeatAuthorization": "再来一次",
+  "observedAt": "2026-10-08T06:47:26.812507+00:00",
+  "identityRecreated": true
+}

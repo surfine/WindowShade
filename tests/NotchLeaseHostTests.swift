@@ -108,13 +108,13 @@ import Cocoa
 
         print("CASE LEASE-H10 | 紧凑两耳就是当前这一件")
         let music = NotchActivity(id: "music", kind: .music, title: "September", subtitle: "Earth, Wind & Fire",
-                                  symbol: "music.note", startedAt: 1, progress: 0.4)
+                                  symbol: "music.note", startedAt: 1, progress: 0.4, trailing: "2:14")
         let ears = NotchPanel(notch: NSRect(x: -5200, y: 900, width: 180, height: 32), virtual: true)
         ears.setActivities([music], selected: "music")
         let earShape = ears.shapeForProbe!.island
         expect(earShape.width == 200 && abs(earShape.height - 26) < 0.01, "紧凑是一颗胶囊，不是旧的横条")
-        expect(ears.compactForProbe?.leading == "September" && ears.compactForProbe?.trailing == "40%",
-               "左耳是这一件，右耳是进度")
+        expect(ears.compactForProbe?.leading == "September" && ears.compactForProbe?.trailing == "2:14",
+               "左耳是这一件，右耳是剩余时间（音乐不写 %）")
         ears.expand(with: [])
         expect(ears.isExpanded && ears.shapeForProbe!.island.height > earShape.height, "展开是同一件事放大")
 
@@ -152,13 +152,32 @@ import Cocoa
         NotchPanel.foreignHUDOverride = false
         ears.presentLevel(.volume, value: 0.4)
         expect(ears.levelForProbe?.kind == "音量" && ears.levelForProbe?.value == 0.4, "合成的音量鼓起这一颗")
+        // 两耳各 76：总宽 = 刘海宽 + 152，高同刘海，不往下鼓（《音量与亮度》稿，真机 185 宽刘海上是 337×33.5）。
         let levelShape = ears.shapeForProbe!.island
-        if abs(levelShape.width - 210) >= 0.5 || abs(levelShape.height - 36) >= 0.5 {
+        let earsWidth = 180 + 2 * 76.0
+        if abs(levelShape.width - earsWidth) >= 0.5 || abs(levelShape.height - 32) >= 0.5 {
             print("INFO H13 level shape=\(levelShape) meter=\(String(describing: ears.levelForProbe))")
         }
-        expect(abs(levelShape.width - 210) < 0.5 && abs(levelShape.height - 36) < 0.5, "音量鼓成稿上的 210×36 胶囊")
+        expect(abs(levelShape.width - earsWidth) < 0.5 && abs(levelShape.height - 32) < 0.5, "音量鼓成两耳：刘海宽 + 152，高同刘海")
+        expect(ears.levelEarsForProbe?.symbol == "speaker.wave.2.fill", "音量 0.4 是两道声波")
+        ears.presentLevel(.volume, value: 0.4, muted: true)
+        expect(ears.levelEarsForProbe?.symbol == "speaker.slash.fill", "静音一律斜线喇叭")
+        ears.presentLevel(.volume, value: 0.4, output: .airPodsPro)
+        expect(ears.levelEarsForProbe?.symbol == "airpodspro", "AirPods Pro 换设备符号")
+        ears.presentLevel(.volume, value: 1, edge: .upper)
+        let pushed = ears.levelEarsForProbe
+        expect((pushed?.stretch ?? 0) > 0 && (pushed?.stretch ?? 9) < 8 && pushed?.fill == 1, "100% 再按条往外拉长，数值不变")
+        ears.presentLevel(.volume, value: 1, edge: .upper)
+        expect((ears.levelEarsForProbe?.stretch ?? 0) > (pushed?.stretch ?? 0), "一直顶着拉得更长")
+        ears.levelKeyReleased()
+        expect(ears.levelEarsForProbe?.stretch == 0, "松手弹回")
+        ears.presentLevel(.volume, value: 0.4)
+        expect(Motion.Hold.level == 1.2, "最后一下之后 1.2 秒收")
         ears.presentLevel(.brightness, value: 0.7)
         expect(ears.levelForProbe?.kind == "亮度" && ears.levelForProbe?.value == 0.7, "亮度也是这一颗")
+        expect(ears.levelEarsForProbe?.symbol == "sun.max.fill", "亮度过半是大太阳")
+        ears.presentLevel(.keyboardLight, value: 0.2)
+        expect(ears.levelForProbe?.kind == "键盘灯" && ears.levelEarsForProbe?.symbol == "light.min", "键盘灯也是这两耳")
         NotchPanel.foreignHUDOverride = nil
 
         print("CASE LEASE-H14 | 退场字先淡，展开保留两耳锚点")
@@ -175,11 +194,11 @@ import Cocoa
         expect(shelf.isExpanded && shelf.compactForProbe?.count == 2 && shelf.compactForProbe?.leading == nil,
                "展开一排仍留着紧凑两耳的个数")
 
-        print("CASE LEASE-H15 | 亮度也是 210×36；曲名变更走旁边那颗岛")
+        print("CASE LEASE-H15 | 亮度也是两耳；曲名变更走旁边那颗岛")
         let bright = NotchPanel(notch: NSRect(x: -6000, y: 900, width: 180, height: 32), virtual: true)
         bright.presentLevel(.brightness, value: 0.55)
         let brightShape = bright.shapeForProbe!.island
-        expect(abs(brightShape.width - 210) < 0.5 && abs(brightShape.height - 36) < 0.5, "亮度鼓成同一颗胶囊")
+        expect(abs(brightShape.width - (180 + 152)) < 0.5 && abs(brightShape.height - 32) < 0.5, "亮度鼓成同样的两耳")
         let duo = NotchPanel(notch: NSRect(x: -6200, y: 900, width: 180, height: 32), virtual: true)
         let tune = NotchActivity(id: "music", kind: .music, title: "September", subtitle: "Earth, Wind & Fire",
                                  symbol: "music.note", startedAt: 1, progress: 0.4)
@@ -187,7 +206,49 @@ import Cocoa
         duo.alert(NotchPanel.Alert(id: 0, icon: nil, title: "Boogie Wonderland", subtitle: "标题变了"), duration: 2.6)
         expect(duo.isSplit && duo.splitForProbe.separated, "曲名变了旁边分开一颗")
 
-        print(failures == 0 ? "PASS NotchLeaseHostTests: 15 cases, \(failures) failures" : "FAIL NotchLeaseHostTests: \(failures) failures")
+        print("CASE LEASE-H16 | 窗口和会话合成一排（M11）：同一排、同高，焦点跨过竖线并告诉遥控器")
+        func window(_ id: UInt32) -> NotchTile { NotchTile(id: id, kind: .tucked, snapshot: nil, icon: nil, title: "窗口\(id)") }
+        func ongoingTile(_ id: UInt32, _ kind: NotchTile.Kind, phase: NotchSessionPhase?, spoken: String) -> NotchTile {
+            var tile = NotchTile(id: id, kind: kind, snapshot: nil, icon: nil, title: "WindowShade")
+            tile.waiting = phase == .waiting
+            tile.ongoing = NotchTile.Ongoing(activityID: "a\(id)", subtitle: "Claude Code在跑", symbol: "terminal", phase: phase,
+                                             isPaused: false, spoken: spoken, action: .open, closesRow: true)
+            return tile
+        }
+        let busy = NotchActivity(id: "ws2.session", kind: .session, title: "WindowShade", subtitle: "Claude Code在跑",
+                                 symbol: "terminal", startedAt: 1, sessionPhase: .running)
+        let sessionTile = ongoingTile(NotchRow.ongoingIDBase, .session, phase: .waiting, spoken: "WindowShade，在等你")
+        let playTile = ongoingTile(NotchRow.ongoingIDBase + 1, .playing, phase: nil, spoken: "September，正在播放")
+        let plain = NotchPanel(notch: NSRect(x: -6400, y: 900, width: 180, height: 32), virtual: true)
+        plain.expand(with: [window(1), window(2)], merged: false)
+        let plainShape = plain.shapeForProbe!.island
+        let stacked = NotchPanel(notch: NSRect(x: -6600, y: 900, width: 180, height: 32), virtual: true)
+        stacked.setActivities([busy], selected: busy.id)
+        stacked.expand(with: [window(1), window(2)], merged: false)
+        expect(stacked.shapeForProbe!.island.height > plainShape.height + 100, "合成一排关着：活动卡和窗口格还是上下叠放（旧样子不变）")
+        let merged = NotchPanel(notch: NSRect(x: -6800, y: 900, width: 180, height: 32), virtual: true)
+        merged.setActivities([busy], selected: busy.id)
+        merged.expand(with: [window(1), window(2), sessionTile, playTile], merged: true)
+        let mergedShape = merged.shapeForProbe!.island
+        expect(merged.mergedRow && abs(mergedShape.height - plainShape.height) < 0.5, "合成一排：高度和只有窗口时一样，没有叠放")
+        expect(abs(mergedShape.width - (4 * 132 + 29)) < 0.5, "宽度 = 4 格 + 竖线多占的 9 + 两边边距")
+        expect(merged.ongoingSignatures.count == 2, "右段两格")
+        let noOngoing = NotchPanel(notch: NSRect(x: -7000, y: 900, width: 180, height: 32), virtual: true)
+        noOngoing.setActivities([busy], selected: busy.id)
+        noOngoing.expand(with: [window(1), window(2)], merged: true)
+        expect(abs(noOngoing.shapeForProbe!.island.width - plainShape.width) < 0.5, "没有正在进行的格：没有竖线，宽度和只有窗口时一样")
+        var kinds: [RemoteLayerHost.Focus] = []
+        merged.onFocusKind = { kinds.append($0) }
+        expect(merged.beginFocus(pointerInside: false) && merged.focus.focusedID == NotchRow.ongoingIDBase, "有会话在等你：焦点先落在会话格")
+        expect(kinds == [.session], "焦点落在会话格：告诉遥控器")
+        expect(merged.performFocus(.focusRight) && merged.focus.focusedID == NotchRow.ongoingIDBase + 1 && kinds == [.session, .window],
+               "越过竖线挪到播放格：不再是会话格")
+        _ = merged.performFocus(.focusLeft)
+        expect(kinds == [.session, .window, .session], "挪回会话格：再告诉一次")
+        merged.collapse()
+        expect(kinds.last == .window && !merged.isExpanded, "那一排收起：焦点回到窗口")
+
+        print(failures == 0 ? "PASS NotchLeaseHostTests: 16 cases, \(failures) failures" : "FAIL NotchLeaseHostTests: \(failures) failures")
         if failures > 0 { exit(1) }
     }
 }

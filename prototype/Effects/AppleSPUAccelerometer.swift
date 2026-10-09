@@ -52,6 +52,12 @@ final class AppleSPUAccelerometer: @unchecked Sendable {
   private var statusTicks = false
   // 以下只在 queue 上用。
   private var manager: IOHIDManager?
+  /// Activate 成功过才为真。Activate 和 Cancel 是一对：没激活就 Cancel，或激活了不 Cancel 就 Close，
+  /// IOKit 都会在 release 时 abort（见 LidAngleSource 同名标志）。
+  private var activated = false
+  /// 测试注入点：默认走真实的 IOHIDManagerOpen / 唤醒驱动。
+  private let openManager: (IOHIDManager) -> IOReturn
+  private let wakeDriver: (() -> Bool)?
   private var timeout: DispatchWorkItem?
   private var hasReading = false
   private var connection: UInt64 = 0
@@ -76,10 +82,19 @@ final class AppleSPUAccelerometer: @unchecked Sendable {
     lock.withLock { statusTicks = enabled }
   }
 
+  init(
+    openManager: @escaping (IOHIDManager) -> IOReturn = { IOHIDManagerOpen($0, IOOptionBits(0)) },
+    wakeDriver: (() -> Bool)? = nil
+  ) {
+    self.openManager = openManager
+    self.wakeDriver = wakeDriver
+  }
+
   deinit {
     timeout?.cancel()
     if let manager {
-      IOHIDManagerCancel(manager)
+      // 回调 context 的那一份引用由取消句柄释放，所以 Cancel 只在激活过时调用。
+      if activated { IOHIDManagerCancel(manager) }
     }
   }
 
@@ -120,7 +135,7 @@ final class AppleSPUAccelerometer: @unchecked Sendable {
     // AppleSPUHIDDriver keeps the IMU asleep until a client explicitly asks
     // for reports. IOHIDManagerOpen alone succeeds while producing no input
     // callbacks, which used to surface as “无法读取原始传感器报告”.
-    guard wakeSensorDriver() else {
+    guard (wakeDriver?() ?? wakeSensorDriver()) else {
       deliver(.unavailable("系统未能唤醒 Apple Silicon 传感器"), token: token)
       return
     }
@@ -136,7 +151,7 @@ final class AppleSPUAccelerometer: @unchecked Sendable {
 
     // The dispatch-queue API does not require a run-loop on the app's main
     // thread. It also lets us cancel promptly when settings are closed.
-    IOHIDManagerSetDispatchQueue(manager, queue)
+    let context = Unmanaged.passRetained(self).toOpaque()
     IOHIDManagerRegisterInputReportCallback(
       manager,
       { context, _, _, _, _, report, length in
@@ -144,14 +159,23 @@ final class AppleSPUAccelerometer: @unchecked Sendable {
         let source = Unmanaged<AppleSPUAccelerometer>.fromOpaque(context).takeUnretainedValue()
         source.receive(report, length: length)
       },
-      Unmanaged.passUnretained(self).toOpaque())
+      context)
 
-    let result = IOHIDManagerOpen(manager, IOOptionBits(0))
+    let result = openManager(manager)
     guard result == kIOReturnSuccess else {
+      // Open 失败：从没激活过，不 Cancel；这份 context 引用也没人会释放，这里自己还回去。
+      Unmanaged<AppleSPUAccelerometer>.fromOpaque(context).release()
       deliver(.unavailable("系统拒绝访问 HID 设备"), token: token)
       return
     }
+    // 回调里用的是 passRetained 出去的那一份引用，由取消句柄释放，避免 close 之后回调晚到踩到已释放对象。
+    // 设了派发队列的管理器必须激活并 Cancel，否则 release 时 abort；所以放在 Open 成功之后才设。
+    IOHIDManagerSetDispatchQueue(manager, queue)
+    IOHIDManagerSetCancelHandler(manager) {
+      Unmanaged<AppleSPUAccelerometer>.fromOpaque(context).release()
+    }
     IOHIDManagerActivate(manager)
+    activated = true
 
     let devices = (IOHIDManagerCopyDevices(manager) as? Set<IOHIDDevice>) ?? []
     guard !devices.isEmpty else {
@@ -257,10 +281,11 @@ final class AppleSPUAccelerometer: @unchecked Sendable {
     timeout?.cancel()
     timeout = nil
     if let manager {
-      IOHIDManagerCancel(manager)
+      if activated { IOHIDManagerCancel(manager) }
       IOHIDManagerClose(manager, IOOptionBits(0))
     }
     manager = nil
+    activated = false
     hasReading = false
     lastForward = 0
     lastStatusTick = 0

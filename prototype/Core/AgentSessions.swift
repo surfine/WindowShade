@@ -258,3 +258,118 @@ struct AgentSessions: Sendable {
     private func valid(_ summary: String) -> Bool { !summary.isEmpty && summary.utf8.count <= 16_384 }
     private func validID(_ id: String) -> Bool { !id.isEmpty && id.utf8.count <= 512 }
 }
+
+// MARK: - 刘海里的助手审批卡
+
+/// 审批卡的卡面：按风险给按钮、命令摘要怎么截、出现时怎么念、回执写什么。纯逻辑，界面在 WS2CodexApprovalHost。
+/// 文案按 docs/copy-guide.md：说要做的事，“允许”一个名字到底，不说授权、验证。
+enum AgentApprovalCard {
+    enum Button: Equatable, Sendable { case look, deny, allowOnce, allowWithTouchID, handleInTerminal }
+    /// 回执。“已允许这一次”只在这次请求的应答真的送出之后才有（见 AgentApprovalDesk）。
+    enum Receipt: Equatable, Sendable { case allowedOnce, denied, notConfirmed, touchIDUnavailable, notDelivered }
+
+    /// 普通的点一下就算；高风险和说不清的（shell 命令默认说不清，不猜）都要 Touch ID。
+    static func needsTouchID(_ risk: WS2.Risk) -> Bool { risk != .normal }
+    /// 卡上的按钮，从左到右。“去看看”永远在；Touch ID 用不了时给“在终端里处理”这条退路，不降成点一下。
+    static func buttons(for risk: WS2.Risk, touchIDAvailable: Bool = true) -> [Button] {
+        guard needsTouchID(risk) else { return [.look, .deny, .allowOnce] }
+        return [.look, .deny, touchIDAvailable ? .allowWithTouchID : .handleInTerminal]
+    }
+    static func title(_ button: Button) -> String {
+        switch button {
+        case .look: return "去看看"
+        case .deny: return "不允许"
+        case .allowOnce: return "允许这一次"
+        case .allowWithTouchID: return "用 Touch ID 允许"
+        case .handleInTerminal: return "在终端里处理"
+        }
+    }
+    /// 右耳。
+    static let waiting = "等你"
+    /// 卡面上的命令摘要最多这么多个字；完整命令在“去看看”里。
+    static let summaryLimit = 40
+    /// 第一行非空内容，空白压成一个空格；过长或不止一行时截断加“…”。控制字符由调用方先转成可见形式。
+    static func summary(of command: String) -> String {
+        let lines = command.split(whereSeparator: \.isNewline)
+            .map { $0.split(whereSeparator: \.isWhitespace).joined(separator: " ") }
+            .filter { !$0.isEmpty }
+        guard let first = lines.first else { return "" }
+        guard first.count > summaryLimit || lines.count > 1 else { return first }
+        return String(first.prefix(summaryLimit)) + "…"
+    }
+    static func headline(summary: String) -> String { "想执行 " + summary }
+    static func byline(agent: String, project: String) -> String { project.isEmpty ? agent : agent + " · " + project }
+    /// 卡出现时高优先级念这一句。
+    static func announcement(agent: String, summary: String) -> String { agent + "想执行 " + summary + "，等你决定" }
+    static func text(_ receipt: Receipt, agent: String) -> String {
+        switch receipt {
+        case .allowedOnce: return "已允许这一次"
+        case .denied: return "没有允许"
+        case .notConfirmed: return "没有确认，" + agent + "仍在等你"
+        case .touchIDUnavailable: return "Touch ID 暂时不可用"
+        case .notDelivered: return "连接断了，这一次可能没有送到"
+        }
+    }
+}
+
+/// 同层排队与真回执：先来先出，只有队首露面；它有结果后下一件才出现。
+/// 与 InteractionCoordinator 的同层 FIFO 一致（连同正在显示的最多 8 件）。
+/// 回执只认这一件、这一次：没在放行时到的“送出了”（比如取消之后晚到的成功）不算，什么也不改。
+struct AgentApprovalDesk<Key: Hashable & Sendable>: Sendable {
+    enum Stage: Equatable, Sendable { case waiting, allowing }
+    enum Outcome: Equatable, Sendable {
+        /// 应答真的送出（acceptOnce 已入队并写出）。
+        case delivered
+        /// 应答没送成，连接已断。
+        case notDelivered
+        case denied
+        /// Touch ID 取消、超时、指纹不符：请求还在，队首回到等你。
+        case notConfirmed
+        case touchIDUnavailable
+        /// 过期或被助手撤回：悄悄拿掉，不写回执。
+        case expired, withdrawn
+    }
+    static var limit: Int { AgentSessions.maximumApprovalsPerSession }
+    private(set) var queue: [Key] = []
+    private(set) var stage: Stage = .waiting
+    /// 队首再次出现时，副句换成这一句（没确认、Touch ID 不可用）。
+    private(set) var note: AgentApprovalCard.Receipt?
+    var head: Key? { queue.first }
+    var isEmpty: Bool { queue.isEmpty }
+
+    /// 排到最后。重复的、满了的不收。
+    mutating func arrive(_ key: Key) -> Bool {
+        guard !queue.contains(key), queue.count < Self.limit else { return false }
+        queue.append(key); return true
+    }
+    /// 队首开始放行。不是队首的、已经在放行的，不算。
+    mutating func beginAllowing(_ key: Key) -> Bool {
+        guard head == key, stage == .waiting else { return false }
+        stage = .allowing; note = nil; return true
+    }
+    /// 记下结果，返回这一次该写的回执；没有回执时为 nil。
+    mutating func resolve(_ key: Key, _ outcome: Outcome) -> AgentApprovalCard.Receipt? {
+        guard let index = queue.firstIndex(of: key) else { return nil }
+        guard index == 0 else {
+            // 还没露面的：只会过期或被撤回，没有回执。
+            if outcome == .expired || outcome == .withdrawn { queue.remove(at: index) }
+            return nil
+        }
+        switch outcome {
+        case .delivered, .notDelivered:
+            guard stage == .allowing else { return nil }
+            finishHead(); return outcome == .delivered ? .allowedOnce : .notDelivered
+        case .notConfirmed:
+            guard stage == .allowing else { return nil }
+            stage = .waiting; note = .notConfirmed; return .notConfirmed
+        case .touchIDUnavailable:
+            // 点之前就可能知道用不了；请求还在，队首照旧等你。
+            stage = .waiting; note = .touchIDUnavailable; return .touchIDUnavailable
+        case .denied:
+            finishHead(); return .denied
+        case .expired, .withdrawn:
+            finishHead(); return nil
+        }
+    }
+    private mutating func finishHead() { queue.removeFirst(); stage = .waiting; note = nil }
+}

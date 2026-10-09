@@ -63,7 +63,7 @@ final class PictureInPictureController {
                 MainActor.assumeIsolated { [weak self] in
                     guard let self else { return }
                     guard let win, let id else {
-                        self.owner.notch.announce("没有可以放进画中画的窗口", tone: .problem)
+                        self.owner.notch.announce("没有可放的窗口", detail: "先点一下要放的窗口", tone: .problem)
                         return
                     }
                     if self.sessions[id] != nil { self.exit(id, activate: true) } else { self.enter(win, id: id, pid: pid) }
@@ -83,14 +83,14 @@ final class PictureInPictureController {
               (info[kCGWindowOwnerPID as String] as? pid_t) == pid, pid != getpid(),
               let screen = targetScreen ?? screenForAXWindow(pos: frameAX.origin, size: frameAX.size) else { return }
         guard owner.shaded[id] == nil else {
-            owner.notch.announce("先展开这扇窗，再放进画中画", tone: .problem)
+            owner.notch.announce("先展开这扇窗", detail: "再放进画中画", tone: .problem)
             return
         }
         var original = home ?? frameAX
         if owner.slideOver.isSlideOver(id) {
             // 收在屏幕边外的侧拉窗口：它现在的位置不是原处，退出侧拉时滑回来的那一段还会和让开抢位置。
             guard !owner.slideOver.isHidden else {
-                owner.notch.announce("先拉出侧拉的窗口，再放进画中画", tone: .problem)
+                owner.notch.announce("先拉出侧拉窗口", detail: "再放进画中画", tone: .problem)
                 return
             }
             // 靠边那一格就是它的原处（滑到一半时读到的位置不算）。
@@ -98,14 +98,14 @@ final class PictureInPictureController {
         }
         // 让开要推到屏幕左右边外；两边都挨着别的屏幕时，推到哪边都会整扇露在旁边那块屏上。
         guard parkedFrame(CGRect(origin: original.origin, size: frameAX.size), on: screen) != nil else {
-            owner.notch.announce("这扇窗放不进画中画", detail: "两边都挨着别的屏幕", tone: .problem)
+            owner.notch.announce("放不进画中画", detail: "两边都挨着别的屏幕", tone: .problem)
             putBackDropped(win, home: home)
             return
         }
         if owner.slideOver.isSlideOver(id) { owner.slideOver.exit(reason: "picture in picture", restoringPosition: false) }
         if owner.pinnedPreviewController.isPreviewing(id: id) { owner.pinnedPreviewController.stopPreviewFromMenu(id: id) }
         guard SlideOverRecovery.record(id: id, pid: pid, frame: original) else {
-            owner.notch.announce("暂时不能放进画中画，请再试一次", tone: .problem)
+            owner.notch.announce("暂时放不进去", detail: "请再试一次", tone: .problem)
             putBackDropped(win, home: home)
             return
         }
@@ -265,7 +265,7 @@ final class PictureInPictureController {
         if sessions.isEmpty { maintenance?.invalidate(); maintenance = nil }
         wlog("pip: ended id=\(s.id) reason=\(reason)")
         if reason.hasPrefix("capture") || reason.hasPrefix("no shareable") {
-            owner.notch.announce("这扇窗放不进画中画", detail: "拿不到它的画面", tone: .problem)
+            owner.notch.announce("放不进画中画", detail: "拿不到它的画面", tone: .problem)
         }
     }
 
@@ -362,8 +362,9 @@ final class PictureInPictureController {
 
     // MARK: - 摆放
 
-    private func screen(of s: PiPSession) -> NSScreen {
-        screenForDisplayID(s.displayID) ?? NSScreen.screens.first { $0.frame.intersects(s.panel.frame) } ?? NSScreen.main ?? NSScreen.screens[0]
+    private func screen(of s: PiPSession) -> NSScreen? {
+        CrashTrap.pickScreen(preferred: screenForDisplayID(s.displayID), screens: NSScreen.screens,
+                             intersects: { $0.frame.intersects(s.panel.frame) }, main: NSScreen.main)
     }
 
     /// 这扇在它的角落里该在哪：同一角落里排在它前面的几扇先占着。
@@ -388,7 +389,8 @@ final class PictureInPictureController {
     private func restack(corner: PiPCorner) {
         for id in order {
             guard let s = sessions[id], s.corner == corner, s.stashed == nil, !s.dragging else { continue }
-            let target = frame(for: s, on: screen(of: s))
+            guard let screen = screen(of: s) else { continue }
+            let target = frame(for: s, on: screen)
             if !target.equalTo(s.panel.frame) { animate(s.panel, to: target, velocity: .zero) }
         }
     }
@@ -396,7 +398,7 @@ final class PictureInPictureController {
     private func released(_ s: PiPSession, velocity: CGVector) {
         // 拖着的时候它已经在回到原处（松手晚到）：不再排进哪个角落。
         guard sessions[s.id] === s else { return }
-        let screen = screen(of: s)
+        guard let screen = screen(of: s) else { return }
         switch PiPLayout.landing(frame: s.panel.frame, velocity: velocity, area: screen.visibleFrame, screen: screen.frame) {
         case .corner(let corner):
             let old = s.corner
@@ -416,7 +418,7 @@ final class PictureInPictureController {
 
     /// 推到屏幕边外藏起来：边上留一小片带箭头的玻璃（和侧拉收起后的一样）；藏着时不截画面。
     private func stash(_ s: PiPSession, side: PiPSide, velocity: CGVector) {
-        let screen = screen(of: s)
+        guard let screen = screen(of: s) else { return }
         s.stashed = side
         s.lastMidY = s.panel.frame.midY
         let target = PiPLayout.stashedFrame(s.panel.frame, side: side, screen: screen.frame)
@@ -441,7 +443,7 @@ final class PictureInPictureController {
         guard let side = s.stashed else { return }
         s.stashed = nil
         s.tab?.orderOut(nil)
-        let screen = screen(of: s)
+        guard let screen = screen(of: s) else { return }
         Task { @MainActor [weak self] in
             guard let self else { return }
             let content = try? await ShareableContentLoader.current()
@@ -470,7 +472,7 @@ final class PictureInPictureController {
         let next = PiPSizeLevel(rawValue: s.level.rawValue + (bigger ? 1 : -1))
         guard let next else { return }
         s.level = next
-        let screen = screen(of: s)
+        guard let screen = screen(of: s) else { return }
         let target = frame(for: s, on: screen)
         s.capture.setPictureInPictureOutput(pixels: pixels(target.size, screen: screen), source: s.crop)
         animate(s.panel, to: target, velocity: .zero)
@@ -487,7 +489,7 @@ final class PictureInPictureController {
         } else {
             s.crop = nil
         }
-        let screen = screen(of: s)
+        guard let screen = screen(of: s) else { return }
         let target = frame(for: s, on: screen)
         s.capture.setPictureInPictureOutput(pixels: pixels(target.size, screen: screen), source: s.crop)
         animate(s.panel, to: target, velocity: .zero)
@@ -741,9 +743,7 @@ final class PiPScroller: @unchecked Sendable {
     }
 
     private func describe(_ area: AXUIElement) -> Area? {
-        var bar: CFTypeRef?
-        guard AXUIElementCopyAttributeValue(area, kAXVerticalScrollBarAttribute as CFString, &bar) == .success, let bar else { return nil }
-        let barElement = bar as! AXUIElement
+        guard let barElement = axButtonElement(area, kAXVerticalScrollBarAttribute as String) else { return nil }
         var settable = DarwinBoolean(false)
         guard AXUIElementIsAttributeSettable(barElement, kAXValueAttribute as CFString, &settable) == .success, settable.boolValue,
               let frame = rect(area) else { return nil }
@@ -767,13 +767,11 @@ final class PiPScroller: @unchecked Sendable {
     }
 
     private func rect(_ element: AXUIElement) -> CGRect? {
-        var position: CFTypeRef?, size: CFTypeRef?
-        guard AXUIElementCopyAttributeValue(element, kAXPositionAttribute as CFString, &position) == .success,
-              AXUIElementCopyAttributeValue(element, kAXSizeAttribute as CFString, &size) == .success,
-              let position, let size else { return nil }
+        // copyAXValue 先核对类型再转换，读到的不是 AXValue 就返回 nil，不会崩。
         var p = CGPoint.zero, s = CGSize.zero
-        AXValueGetValue(position as! AXValue, .cgPoint, &p)
-        AXValueGetValue(size as! AXValue, .cgSize, &s)
+        guard let positionValue = copyAXValue(element, kAXPositionAttribute as String),
+              let sizeValue = copyAXValue(element, kAXSizeAttribute as String),
+              AXValueGetValue(positionValue, .cgPoint, &p), AXValueGetValue(sizeValue, .cgSize, &s) else { return nil }
         return CGRect(origin: p, size: s)
     }
 }

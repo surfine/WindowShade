@@ -93,7 +93,12 @@ enum UpdateLaunch {
         case .recordAndContinue(let selfCheckNow):
             if selfCheckNow && !UpdateCodeSign.runningSatisfies(journal.oldDR) {
                 // 关没跑完就被装上了，而签名要求对不上：授权会丢，换回。换不回就照常运行、说一次。
-                if UpdateRestorer.backupUsable(journal) { handToGuard(store: store, reason: .drChanged) }
+                if UpdateRestorer.backupUsable(journal),
+                   handToGuard(store: store, reason: .drChanged, journal: journal) == .restoringInBackground {
+                    // 进程内换回在后台跑：成了就退出，没成由它在主线程上 giveUpRestore 再接着启动。
+                    decided = .none
+                    break
+                }
                 giveUpRestore(store: store, journal: journal)
                 decided = .none
                 break
@@ -106,9 +111,10 @@ enum UpdateLaunch {
                 if j!.launches.count > 20 { j!.launches.removeFirst(j!.launches.count - 20) }
             }
         case .handToGuard(let reason):
-            handToGuard(store: store, reason: reason)
-            // 回到这里说明看护交不出去、进程内也没换回：照常运行这一版。
-            giveUpRestore(store: store, journal: journal)
+            if handToGuard(store: store, reason: reason, journal: journal) == .unavailable {
+                // 看护交不出去、进程内换回也起不来：照常运行这一版。
+                giveUpRestore(store: store, journal: journal)
+            }
             decided = .none
         case .announceRestoreFailed:
             giveUpRestore(store: store, journal: journal)
@@ -148,9 +154,19 @@ enum UpdateLaunch {
         store.removeBackup()
     }
 
+    enum HandToGuardOutcome: Equatable {
+        /// 看护交不出去，进程内换回也没开跑（已经有一份在跑）：调用方照常收尾。
+        case unavailable
+        /// 进程内换回已经在后台开跑：成了退出，没成它自己在主线程上收尾并接着启动。
+        case restoringInBackground
+    }
+
     /// 交给旧版的看护换回：发起回退的代码来自已知能跑的那一版。那份不在时才用这一版自带的 UpdateRestorer。
-    /// 交出去了、或进程内换回成功，这个进程直接退出；两条路都没走通才返回（UpdateRestorer 已写下 restoreFailed）。
-    static func handToGuard(store: UpdateStore, reason: UpdateRestoreReason) {
+    /// 交出去了就直接退出。进程内换回（ditto 最长 120 秒、再 open 10 秒）放到后台串行队列，主线程不等：
+    /// 换回期间 launchSuspendedForRestore 为真，applicationDidFinishLaunching 先不接管（见 deferLaunchIfRestoring）；
+    /// 换回并重新打开成功就退出，没成就 giveUpRestore、清掉标志、照常启动。换回的顺序和以前一样。
+    @discardableResult
+    static func handToGuard(store: UpdateStore, reason: UpdateRestoreReason, journal: UpdateJournal) -> HandToGuardOutcome {
         store.mutateJournal { j in
             guard j != nil else { return }
             j!.phase = .rollbackRequested
@@ -160,17 +176,32 @@ enum UpdateLaunch {
         do {
             try UpdateGuardHandoff.submit(store: store, restore: true)
             UpdateLog.write("handed to guard for restore (\(reason.rawValue))")
+            exit(0)
         } catch {
             UpdateLog.write("guard unavailable (\(error)); restoring in process")
-            do {
+        }
+        let started = InProcessRestore.shared.start(
+            work: {
                 try UpdateRestorer.restore(store: store, reason: reason)
                 if let journal = store.loadJournal() { reopen(journal.appPath) }
-            } catch {
+            },
+            // 换回、重新打开都做完了：回主线程退出，和以前一样由主线程结束进程。
+            succeeded: { DispatchQueue.main.async { exit(0) } },
+            failed: { error in
                 UpdateLog.write("in-process restore failed: \(error)")
-                return
-            }
-        }
-        exit(0)
+                giveUpRestore(store: store, journal: journal)
+            })
+        return started ? .restoringInBackground : .unavailable
+    }
+
+    /// 进程内换回进行中（只在主线程上读写）。为真时启动流程先不接管事件、不收起窗口。
+    static var launchSuspendedForRestore: Bool { InProcessRestore.shared.isSuspended }
+
+    /// applicationDidFinishLaunching 开头调用：换回进行中就把余下的启动步骤存起来，返回 true，调用方立刻返回；
+    /// 换回没成时在主线程上补跑。没有换回在跑时返回 false，照常启动。
+    @MainActor
+    static func deferLaunchIfRestoring(_ resume: @escaping @MainActor () -> Void) -> Bool {
+        InProcessRestore.shared.deferLaunch(resume)
     }
 
     static func reopen(_ appPath: String) {
@@ -318,5 +349,75 @@ enum UpdateStateSample {
         if id == CFArrayGetTypeID() { return "array" }
         if id == CFDictionaryGetTypeID() { return "dictionary" }
         return "other"
+    }
+}
+
+// MARK: - 进程内换回：后台串行、只许一份
+
+/// 进程内换回的执行者。工作放在 utility 串行队列上，主线程不等；同一时间只许一份在跑，第二次 start 返回 false。
+/// 成功回调在后台线程上直接调（产品里是 exit(0)）；失败回调回到主线程，先收尾再清标志、补跑被推迟的启动。
+final class InProcessRestore: @unchecked Sendable {  // 状态只在主线程上动；running 由 lock 管
+    static let shared = InProcessRestore()
+
+    private let queue = DispatchQueue(label: "WindowShade.update.restore", qos: .utility)
+    private let lock = NSLock()
+    private var running = false
+    /// 主线程上读写：换回进行中，启动先不接管。
+    private(set) var isSuspended = false
+    private var pendingLaunch: (@MainActor () -> Void)?
+
+    init() {}
+
+    /// 调用方必须在主线程上（main.swift 里、NSApplication 起来之前，或测试的主线程）。
+    @discardableResult
+    func start(work: @escaping @Sendable () throws -> Void,
+               succeeded: @escaping @Sendable () -> Void,
+               failed: @escaping @MainActor @Sendable (Error) -> Void) -> Bool {
+        dispatchPrecondition(condition: .onQueue(.main))
+        let claimed = lock.withLock { () -> Bool in
+            if running { return false }
+            running = true
+            return true
+        }
+        guard claimed else { return false }
+        isSuspended = true
+        queue.async { [weak self] in
+            do {
+                try work()
+                succeeded()
+                // 成功回调正常不会返回（exit）；测试里返回了，就和失败一样回主线程收尾，但不补跑启动。
+                DispatchQueue.main.async { MainActor.assumeIsolated { self?.finish(resume: false) } }
+            } catch {
+                let message = String(describing: error)
+                DispatchQueue.main.async {
+                    MainActor.assumeIsolated {
+                        failed(RestoreFailure(message: message))
+                        self?.finish(resume: true)
+                    }
+                }
+            }
+        }
+        return true
+    }
+
+    @MainActor
+    func deferLaunch(_ resume: @escaping @MainActor () -> Void) -> Bool {
+        guard isSuspended else { return false }
+        pendingLaunch = resume
+        return true
+    }
+
+    @MainActor
+    private func finish(resume: Bool) {
+        isSuspended = false
+        let launch = pendingLaunch
+        pendingLaunch = nil
+        lock.withLock { running = false }
+        if resume { launch?() }
+    }
+
+    struct RestoreFailure: Error, CustomStringConvertible {
+        var message: String
+        var description: String { message }
     }
 }

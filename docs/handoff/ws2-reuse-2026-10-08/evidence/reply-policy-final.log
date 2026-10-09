@@ -1,0 +1,1 @@
+{"case": "reply-policy-matrix", "passed": true, "results": [{"replyPolicy": "current", "interestReply": true, "hidRequestReply": true}, {"replyPolicy": "upstream-reference", "interestReply": false, "hidRequestReply": true}], "networkListener": false, "systemActions": 0}

@@ -44,3 +44,49 @@ enum NotchActivityPollPolicy {
         }
     }
 }
+
+/// 正在播放从哪里来（计划 2-1）：推送流健康时用推送，不再为音乐去问播放器；
+/// 推送没开、没装、或子进程挂了，就照原来的通知 + 兜底轮询走。
+enum NotchMusicSource: Equatable {
+    /// 音乐开关没开：不读。
+    case none
+    /// mediaremote-adapter 推送流在跑而且吐过有效数据。
+    case stream
+    /// 退路：按 PERF-08 的档位问 Music / Spotify（自动化脚本）。
+    case scripts
+}
+
+extension NotchActivityPollPolicy {
+    /// 音乐开关开着，再看推送流健不健康。
+    static func musicSource(musicEnabled: Bool, streamHealthy: Bool) -> NotchMusicSource {
+        guard musicEnabled else { return .none }
+        return streamHealthy ? .stream : .scripts
+    }
+
+    /// 这一轮要不要启动脚本问播放器。只有退路模式才问，问的条件和原来一样：
+    /// 播放器发过通知（dirty）或距上次问超过兜底间隔。
+    static func shouldAskScripts(source: NotchMusicSource, hasRunningPlayers: Bool,
+                                 dirty: Bool, sinceLastRead: TimeInterval) -> Bool {
+        source == .scripts && hasRunningPlayers && (dirty || sinceLastRead > idleInterval)
+    }
+
+    /// 档位里的 hasPlayer：退路模式和原来一样（有播放器在跑就进进度档）；
+    /// 推送模式下只有真的在放才需要 2 秒推进进度条，暂停就交给来源档。
+    static func hasProgressingPlayer(source: NotchMusicSource, streamPlaying: Bool, hasRunningPlayers: Bool) -> Bool {
+        switch source {
+        case .none: return false
+        case .stream: return streamPlaying
+        case .scripts: return hasRunningPlayers
+        }
+    }
+
+    /// 推送子进程退出后的重启间隔：1、2、4……128 秒；连续失败 8 次就不再重启，
+    /// 留在问播放器的退路上，直到实时活动下一次启动（解锁、唤醒、重新打开）。
+    static let streamMaxFailures = 8
+    static func streamRestartDelay(failures: Int) -> TimeInterval? {
+        guard failures >= 1, failures <= streamMaxFailures else { return nil }
+        return pow(2, Double(failures - 1))
+    }
+    /// 子进程健康地跑满这么久，连续失败数清零。
+    static let streamStableAfter: TimeInterval = 60
+}

@@ -1,3 +1,4 @@
+import CoreVideo
 import Foundation
 
 private final class CaptureDouble: FaceCaptureWorker, @unchecked Sendable {
@@ -5,6 +6,7 @@ private final class CaptureDouble: FaceCaptureWorker, @unchecked Sendable {
         var starts = 0
         var stops = 0
         var rates: [Double] = []
+        var identity: [Bool] = []
         var generations: [UInt64] = []
         var deliveries: [@Sendable (FaceObservation) -> Void] = []
         var failures: [@Sendable (Error) -> Void] = []
@@ -21,6 +23,7 @@ private final class CaptureDouble: FaceCaptureWorker, @unchecked Sendable {
         }
     }
     func setRequestedFPS(_ fps: Double) { lock.withLock { state.rates.append(fps) } }
+    func setIdentityEmbedder(_ embedder: (any FaceEmbedder)?) { lock.withLock { state.identity.append(embedder != nil) } }
     func stop() { lock.withLock { state.stops += 1 } }
     func countersSnapshot() async -> FacePipelineCounters { .init() }
     func emit(_ sample: FaceObservation, session: Int = 0) { snapshot().deliveries[session](sample) }
@@ -28,6 +31,11 @@ private final class CaptureDouble: FaceCaptureWorker, @unchecked Sendable {
 }
 
 @MainActor private final class TestClock { var now = 10.0 }
+
+private struct StubEmbedder: FaceEmbedder {
+    let modelVersion = "stub"
+    func embed(pixelBuffer: CVPixelBuffer, face: FaceGeometry) -> [Float]? { nil }
+}
 
 @main @MainActor struct FaceObservationSharingTests {
     static var checks = 0
@@ -157,6 +165,29 @@ private final class CaptureDouble: FaceCaptureWorker, @unchecked Sendable {
         _ = try await released!.subscribe(deviceID: "camera", purpose: .geometry) { _ in }
         released = nil; await drain()
         check(releasedWorker.snapshot().stops == 1, "owner deallocation releases its lease")
+        // 刷脸实验：特征只交给 .identity 订阅者；没有 identity 订阅者时工作队列不算特征。
+        let identityWorker = CaptureDouble()
+        let identityClock = TestClock()
+        let identityHub = FaceObservationHub(worker: identityWorker, clock: { identityClock.now }, authorize: { true })
+        let plain = FaceObservationSource(hub: identityHub), scanner = FaceObservationSource(hub: identityHub)
+        var plainSamples: [FaceObservation] = [], scannerSamples: [FaceObservation] = []
+        let plainToken = try await plain.subscribe(deviceID: "camera", purpose: .geometry, validFor: 20) { plainSamples.append($0) }
+        check(identityWorker.snapshot().identity.last == false, "geometry-only consumers never turn on feature extraction")
+        scanner.identityEmbedder = StubEmbedder()
+        check(identityWorker.snapshot().identity.last == false, "choosing a backend alone does not turn extraction on")
+        let scannerToken = try await scanner.subscribe(deviceID: "camera", purpose: .identity, validFor: 6) { scannerSamples.append($0) }
+        check(identityWorker.snapshot().identity.last == true, "an identity consumer turns on feature extraction")
+        check(identityWorker.snapshot().rates.last == 10, "identity asks for 10 Hz, not the 25 Hz command rate")
+        var withIdentity = sample(10, sequence: 1, generation: identityWorker.snapshot().generations[0])
+        withIdentity.identity = FaceIdentitySample(modelVersion: "m", faceIndex: 0, embedding: [0.6, 0.8])
+        identityWorker.emit(withIdentity); await drain()
+        check(scannerSamples.last?.identity?.embedding == [0.6, 0.8], "the identity consumer receives the embedding")
+        check(plainSamples.count == 1 && plainSamples.last?.identity == nil, "other consumers never see the embedding")
+        scanner.unsubscribe(scannerToken)
+        check(identityWorker.snapshot().identity.last == false && identityWorker.snapshot().stops == 0,
+              "the last identity consumer leaving turns extraction off without stopping the camera")
+        plain.unsubscribe(plainToken)
+        scanner.identityEmbedder = nil
         print("FaceObservationSharingTests: \(checks) checks passed; no camera or model was run")
     }
 }

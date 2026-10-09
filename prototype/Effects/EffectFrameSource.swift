@@ -89,6 +89,7 @@ final class EffectFrameSource: NSObject, SCStreamOutput, SCStreamDelegate, @unch
     set { lock.withLock { _removesCaptureIndicator = newValue } }
   }
   private var _removesCaptureIndicator = false
+  private let indicatorTracker = CaptureIndicatorTracker()
   var lastActivity: CFTimeInterval { lock.withLock { heartbeat } }
 
   private static func configuration(size: CGSize, fps: Int, color: EffectColorSpace)
@@ -123,6 +124,7 @@ final class EffectFrameSource: NSObject, SCStreamOutput, SCStreamDelegate, @unch
     let launch: (UInt64, Task<Void, Error>)? = lock.withLock {
       guard slot.accepts(request) else { return nil }
       stream = candidate
+      indicatorTracker.reset()
       pixels = size
       colorSpace = color
       heartbeat = CACurrentMediaTime()
@@ -258,6 +260,10 @@ final class EffectFrameSource: NSObject, SCStreamOutput, SCStreamDelegate, @unch
       let info = attachments.first, let raw = info[.status] as? Int,
       let status = SCFrameStatus(rawValue: raw)
     else { return }
+    // 捕获单扇窗口时，系统在它的红绿灯处画录屏胶囊；先在锁外抹平，再进锁写 slot。
+    if status == .complete, sample.imageBuffer != nil, removesCaptureIndicator {
+      CaptureIndicatorRemoval.clean(sample, tracker: indicatorTracker)
+    }
     var unavailable: UInt64?
     lock.withLock {
       guard stream === candidate else { return }
@@ -269,8 +275,6 @@ final class EffectFrameSource: NSObject, SCStreamOutput, SCStreamDelegate, @unch
         return
       }
       guard status == .complete, let buffer = sample.imageBuffer else { return }
-      // 捕获单扇窗口时，系统在它的红绿灯处画录屏胶囊；交给渲染前先抹平。
-      if _removesCaptureIndicator { CaptureIndicatorRemoval.clean(sample) }
       let scale = (info[.scaleFactor] as? NSNumber)?.doubleValue ?? 1
       let contentScale = (info[.contentScale] as? NSNumber)?.doubleValue ?? 1
       sequence &+= 1

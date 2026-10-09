@@ -3,6 +3,6 @@
 set -euo pipefail
 cd "$(dirname "$0")/.."
 mkdir -p .build/stall-sampler-tests
-swiftc -parse-as-library prototype/Support/Diagnostics.swift tests/StallSamplerTests.swift \
+swiftc -parse-as-library prototype/Support/Diagnostics.swift prototype/Support/SecureLogFile.swift tests/StallSamplerTests.swift \
   -o .build/stall-sampler-tests/sampler
-.build/stall-sampler-tests/sampler
+WINDOWSHADE_STALL_SAMPLER=1 .build/stall-sampler-tests/sampler

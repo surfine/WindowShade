@@ -16,10 +16,26 @@ struct FocusTimer: Sendable {
         case start, pause, resume, skip, end, tick
         case locked, unlocked, sleep, wake, dismissRestWindows
     }
+    /// 刘海上的短暂提醒。只在自然到点、人看得见时出现；跳过和结束不提醒。
+    struct Reminder: Equatable, Sendable {
+        enum Kind: Sendable { case focusDone, restDone }
+        let kind: Kind
+        let restMinutes: Int
+        /// 专注完成时是“今天第几个”（含刚完成的这个）；休息结束时不用。
+        let nth: Int
+        var title: String { kind == .focusDone ? "休息 \(restMinutes) 分钟" : "休息好了" }
+        var detail: String { kind == .focusDone ? "专注完成 · 今天第 \(nth) 个" : "再来一个？" }
+        var symbol: String { kind == .focusDone ? "cup.and.saucer" : "play.circle.fill" }
+        /// 停留秒数：专注结束 2.4，休息结束 5（要给人点“再来一个”的时间）。
+        var hold: Double { kind == .focusDone ? 2.4 : 5 }
+        /// 点一下开始下一轮专注。休息结束的提醒才有；提醒本身从不自动开始。
+        var startsNextFocus: Bool { kind == .restDone }
+    }
     enum Effect: Equatable, Sendable {
         case tuckChat(WS2.Token), tuckAll(WS2.Token)
         case restoreChat(WS2.Token), restoreAll(WS2.Token)
         case sound(Sound)
+        case remind(Reminder)
         case fault(WS2.Fault)
     }
     /// Calendar 由调用方计算。deadlineDay 是旧专注 deadline 对应的本地自然日，不是 tick 到达日。
@@ -147,12 +163,21 @@ struct FocusTimer: Sendable {
         guard let end = deadline, now >= end else { return [] }
         if phase == .focus {
             if calendar.deadlineDay == day { completedToday += 1 }
-            return beginRest(at: end, now: now, audible: now == end && !isLocked && !isSleeping)
+            let audible = now == end && !isLocked && !isSleeping
+            var out = beginRest(at: end, now: now, audible: audible)
+            if audible, phase == .rest {
+                out.append(.remind(.init(kind: .focusDone, restMinutes: Int(activePreset.rest / WS2.Duration.minute),
+                                         nth: max(1, completedToday))))
+            }
+            return out
         }
         if phase == .rest {
             let audible = now == end && !isLocked && !isSleeping
             var out = finish()
-            if audible { out.append(.sound(.restFinished)) }
+            if audible {
+                out.append(.sound(.restFinished))
+                out.append(.remind(.init(kind: .restDone, restMinutes: 0, nth: 0)))
+            }
             return out
         }
         return []
@@ -177,4 +202,17 @@ struct FocusTimer: Sendable {
         pauses.removeAll(); pausedRemaining = 0; runID = nil
         return out
     }
+}
+
+/// 休息视图的呼吸光环与帧率上限（照 docs/design-drafts/番茄钟.html：周期 5.5 秒，缩放 0.78↔1，不透明度 0.55↔1）。
+enum FocusBreath {
+    static let period: Double = 5.5
+    static let scaleLow: Double = 0.78
+    static let opacityLow: Double = 0.55
+    /// 倒计时环（线性、时间映射）：最低 1、最高 8、首选 4。
+    static let countdownFrameRate: (minimum: Float, maximum: Float, preferred: Float) = (1, 8, 4)
+    /// 呼吸：最低 10、最高 30、首选 20。
+    static let breathFrameRate: (minimum: Float, maximum: Float, preferred: Float) = (10, 30, 20)
+    /// 只有休息时呼吸；系统要求减少动态效果时光环静止。
+    static func breathes(phase: FocusTimer.Phase, reduceMotion: Bool) -> Bool { phase == .rest && !reduceMotion }
 }

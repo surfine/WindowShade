@@ -1,0 +1,1217 @@
+<!doctype html>
+<html lang="zh-Hans">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>卷轴</title>
+<style>
+:root{
+  color-scheme:light;
+  --page:#eceef2; --panel:#fbfbfc; --line:rgba(0,0,0,.1); --ink:#1d1d1f; --muted:#5f6068; --faint:#6e6f76;
+  --accent:#0058cc; --bad:#b3261e; --ok:#0e6436; --hw:#d6336c;
+  --wall:radial-gradient(90% 70% at 12% 8%,#9cc9ff 0%,transparent 62%),radial-gradient(80% 70% at 92% 18%,#b9b3ff 0%,transparent 60%),linear-gradient(160deg,#cfe3ff,#8fb4ef);
+  --menu:#101114; --grid:rgba(255,255,255,.35);
+  --menubg:rgba(255,255,255,.42); --menuink:#1d1d1f;
+  --winbg:#ffffff; --winbar:#f3f3f5; --wintext:#3a3a3f; --dot:rgba(0,0,0,.16); --skel:rgba(0,0,0,.10);
+  --winshadow:0 10px 30px rgba(0,0,0,.18),0 0 0 .5px rgba(0,0,0,.18);
+  --bodyl:88%; --bodys:70%; --bodyl2:80%;
+  --backdrop:rgba(28,30,38,.42);
+  --sans:-apple-system,BlinkMacSystemFont,"SF Pro Text","PingFang SC","Hiragino Sans GB",sans-serif;
+  --mono:ui-monospace,"SF Mono",Menlo,monospace;
+}
+@media (prefers-color-scheme:dark){:root:not([data-theme="light"]){
+  color-scheme:dark;
+  --page:#121316; --panel:#1b1c20; --line:rgba(255,255,255,.12); --ink:#f2f2f5; --muted:#a4a5ad; --faint:#8e8f97;
+  --accent:#5a9cff; --bad:#ff8a80; --ok:#4cc38a; --hw:#ff6b9d;
+  --wall:linear-gradient(160deg,#10192e,#0b1222); --menu:#f4f5f8; --grid:rgba(255,255,255,.22);
+  --menubg:rgba(20,22,28,.55); --menuink:#eef0f4;
+  --winbg:#26272c; --winbar:#2e2f35; --wintext:#d9dae0; --dot:rgba(255,255,255,.2); --skel:rgba(255,255,255,.10);
+  --winshadow:0 10px 30px rgba(0,0,0,.5),0 0 0 .5px rgba(255,255,255,.14);
+  --bodyl:24%; --bodys:30%; --bodyl2:18%;
+  --backdrop:rgba(0,0,0,.5);
+}}
+:root[data-theme="dark"]{
+  color-scheme:dark;
+  --page:#121316; --panel:#1b1c20; --line:rgba(255,255,255,.12); --ink:#f2f2f5; --muted:#a4a5ad; --faint:#8e8f97;
+  --accent:#5a9cff; --bad:#ff8a80; --ok:#4cc38a; --hw:#ff6b9d;
+  --wall:linear-gradient(160deg,#10192e,#0b1222); --menu:#f4f5f8; --grid:rgba(255,255,255,.22);
+  --menubg:rgba(20,22,28,.55); --menuink:#eef0f4;
+  --winbg:#26272c; --winbar:#2e2f35; --wintext:#d9dae0; --dot:rgba(255,255,255,.2); --skel:rgba(255,255,255,.10);
+  --winshadow:0 10px 30px rgba(0,0,0,.5),0 0 0 .5px rgba(255,255,255,.14);
+  --bodyl:24%; --bodys:30%; --bodyl2:18%;
+  --backdrop:rgba(0,0,0,.5);
+}
+*{box-sizing:border-box}
+body{margin:0;background:var(--page);color:var(--ink);font:15px/1.55 var(--sans);padding:28px 16px 64px}
+.wrap{max-width:1040px;margin:0 auto}
+h1{font-size:28px;letter-spacing:-.02em;margin:0 0 8px}
+h2{font-size:17px;margin:34px 0 6px;letter-spacing:-.01em}
+.lede{color:var(--muted);max-width:72ch;margin:0 0 18px}
+.row{display:flex;flex-wrap:wrap;gap:8px 10px;align-items:center;margin:0 0 10px}
+.row .lab{font-size:12px;color:var(--faint);min-width:3.5em}
+button{font:inherit;font-size:14px;color:inherit;background:var(--panel);border:0;border-radius:9px;padding:6px 12px;box-shadow:inset 0 0 0 .5px var(--line);cursor:pointer}
+button[aria-pressed="true"]{background:var(--ink);color:var(--page)}
+button:disabled{opacity:.38;cursor:not-allowed}
+button:focus-visible,input:focus-visible,.desk:focus-visible{outline:2px solid var(--accent);outline-offset:2px}
+.sw{display:inline-flex;align-items:center;gap:6px;font-size:13px;color:var(--muted)}
+.scrub{display:flex;align-items:center;gap:10px;margin:0 0 10px;font-size:13px;color:var(--muted);flex-wrap:wrap}
+.scrub input[type=range]{flex:1;min-width:120px}
+.read{font-family:var(--mono);font-size:12px;color:var(--accent)}
+.card{margin-top:14px;background:var(--panel);border-radius:14px;padding:14px 16px;box-shadow:inset 0 0 0 .5px var(--line)}
+.card h3{font-size:13px;margin:0 0 6px}
+.card p,.card li{margin:0;color:var(--muted);font-size:14px}
+.card ul{margin:0;padding-left:18px}
+.card li+li{margin-top:4px}
+.tag-bad{color:var(--bad);font-weight:650}
+.tag-ok{color:var(--ok);font-weight:650}
+.token{font-family:var(--mono);font-size:12px;color:var(--accent)}
+.note{margin-top:8px;font-size:12.5px;color:var(--faint)}
+
+/* 舞台：1470 × 956 点（MacBook Air 15 英寸默认分辨率），整体缩放 */
+.desk{position:relative;width:100%;border-radius:10px;overflow:hidden;background:var(--wall);box-shadow:0 0 0 .5px var(--line);touch-action:none;user-select:none;-webkit-user-select:none;cursor:grab}
+.desk.grabbing{cursor:grabbing}
+.world{position:absolute;left:0;top:0;width:1470px;height:956px;transform-origin:0 0}
+.menubar{position:absolute;left:0;top:0;width:1470px;height:34px;z-index:130;background:var(--menubg);backdrop-filter:blur(20px);-webkit-backdrop-filter:blur(20px);color:var(--menuink);font-size:13px;display:flex;align-items:center;justify-content:space-between;padding:0 18px;z-index:5}
+.menubar b{font-weight:650;margin-right:18px}
+.menubar span{margin-right:18px;opacity:.85}
+.win{position:absolute;left:0;top:0;border-radius:12px;overflow:hidden;background:var(--winbg);box-shadow:var(--winshadow);transform-origin:0 0;will-change:transform}
+.win .bar{height:30px;background:var(--winbar);display:flex;align-items:center;gap:7px;padding:0 12px;font-size:13px;color:var(--wintext);white-space:nowrap}
+.win .bar i{width:11px;height:11px;border-radius:50%;background:var(--dot);flex:none}
+.win .bar em{font-style:normal;margin-left:8px;font-weight:600;overflow:hidden;text-overflow:ellipsis}
+.win .body{position:absolute;top:30px;left:0;right:0;bottom:0;background:linear-gradient(160deg,hsl(var(--h) var(--bodys) var(--bodyl)),hsl(var(--h) var(--bodys) var(--bodyl2)))}
+.win .body s{position:absolute;left:24px;height:12px;border-radius:6px;background:var(--skel);text-decoration:none}
+.win.focus{box-shadow:0 18px 50px rgba(0,0,0,.28),0 0 0 .5px rgba(0,0,0,.25)}
+.win.focus .bar em{color:var(--ink)}
+.win.sel{outline:6px solid var(--accent);outline-offset:-6px}
+.win.lifted{opacity:.75}
+.win.ghostslot{opacity:.25}
+.backdrop{position:absolute;left:0;top:0;width:1470px;height:956px;background:var(--backdrop);backdrop-filter:blur(18px);-webkit-backdrop-filter:blur(18px);opacity:0;pointer-events:none}
+.viewport{position:absolute;border:3px solid rgba(255,255,255,.9);border-radius:10px;pointer-events:none;opacity:0}
+.hint{position:absolute;background:var(--accent);border-radius:4px;pointer-events:none;opacity:0;box-shadow:0 0 0 2px rgba(255,255,255,.7)}
+.notchsvg{position:absolute;left:0;top:0;width:1470px;height:300px;pointer-events:none;z-index:1000}
+.notchui{position:absolute;left:0;top:0;width:1470px;height:300px;z-index:1001;pointer-events:none}
+.ncell{position:absolute;width:124px;height:104px;border-radius:14px;background:rgba(255,255,255,.10);pointer-events:auto;cursor:grab;overflow:hidden}
+.ncell .th{position:absolute;left:8px;right:8px;top:8px;height:60px;border-radius:8px;background:linear-gradient(160deg,hsl(var(--h) 60% 62%),hsl(var(--h) 50% 40%))}
+.ncell .nm{position:absolute;left:10px;right:10px;bottom:10px;font-size:11px;color:rgba(255,255,255,.92);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.ncell.live{cursor:default}
+.ncell.live .th{background:conic-gradient(from 210deg,#ff8a5c,#d84d8c,#6a5cff,#ff8a5c)}
+.ndiv{position:absolute;width:1px;background:rgba(255,255,255,.22)}
+.nlabel{position:absolute;color:#fff;font-size:13px;font-weight:600;white-space:nowrap;display:flex;align-items:center;gap:8px}
+.nlabel small{font-size:11px;font-weight:400;color:rgba(255,255,255,.6)}
+.ghost{position:absolute;left:0;top:0;border-radius:10px;overflow:hidden;background:var(--winbg);box-shadow:0 20px 50px rgba(0,0,0,.35);transform-origin:0 0;pointer-events:none;opacity:0;z-index:7}
+.ghost .body{position:absolute;inset:0;background:linear-gradient(160deg,hsl(var(--h) var(--bodys) var(--bodyl)),hsl(var(--h) var(--bodys) var(--bodyl2)))}
+.peek{position:absolute;border-radius:12px;overflow:hidden;box-shadow:0 18px 48px rgba(0,0,0,.35),0 0 0 .5px rgba(0,0,0,.2);pointer-events:none;opacity:0;z-index:500;background:var(--winbg)}
+.peek .bar{height:30px;background:var(--winbar)}
+.peek .body{position:absolute;top:30px;left:0;right:0;bottom:0;background:linear-gradient(160deg,hsl(var(--h) var(--bodys) var(--bodyl)),hsl(var(--h) var(--bodys) var(--bodyl2)))}
+.toast{position:absolute;left:50%;bottom:16px;transform:translateX(-50%);background:rgba(20,20,24,.82);color:#fff;font-size:13px;padding:7px 14px;border-radius:10px;opacity:0;transition:opacity .18s;pointer-events:none;white-space:nowrap;z-index:1100}
+.mini{margin-top:10px}
+.mini svg{display:block;width:100%;height:56px}
+.readline{display:flex;flex-wrap:wrap;gap:4px 16px;margin-top:6px}
+
+/* 表格 */
+.tbl{width:100%;border-collapse:collapse;font-size:13px;margin-top:6px}
+.tbl th,.tbl td{text-align:left;vertical-align:top;padding:8px 10px;border-bottom:.5px solid var(--line)}
+.tbl th{font-size:12px;color:var(--faint);font-weight:600}
+.tbl td{color:var(--muted)}
+.tbl td:first-child{color:var(--ink);font-weight:600;white-space:nowrap}
+.tblwrap{overflow-x:auto;background:var(--panel);border-radius:14px;box-shadow:inset 0 0 0 .5px var(--line);padding:4px 6px}
+.pk{display:grid;grid-template-columns:repeat(auto-fill,minmax(300px,1fr));gap:10px;margin-top:8px}
+.pk .card{margin:0}
+.pk .id{font-family:var(--mono);font-size:12px;color:var(--accent)}
+.pk .acc{margin-top:6px;font-size:13px}
+</style>
+</head>
+<body>
+<div class="wrap">
+  <h1>卷轴</h1>
+  <p class="lede">Mac 上做不了合成器，窗口只能借辅助功能一扇一扇地挪。这一张要证明：卷轴照样能跟上 niri 的四件事，分别是列宽几档、居中、把窗口并进一列和概览里拖着换位置。卷轴还能接上刘海：在概览里把一扇拖进刘海就收起来，从刘海那一排拖出来就放回成一列。舞台按 MacBook Air 15 英寸画，屏幕 1470 × 956，刘海 185 × 33.5。小样只在这一页，不动产品。</p>
+
+  <div class="row" role="group" aria-label="看哪一种">
+    <span class="lab">看法</span>
+    <button type="button" data-mode="niri" aria-pressed="false">像 niri</button>
+    <button type="button" data-mode="today" aria-pressed="false">今天</button>
+    <button type="button" data-mode="target" aria-pressed="true">要做的</button>
+    <label class="sw"><input id="reduced" type="checkbox"> 减少动态效果</label>
+    <button type="button" id="theme" aria-label="切换浅色深色">外观：自动</button>
+  </div>
+  <div class="row" role="group" aria-label="这一列多宽">
+    <span class="lab">列宽</span>
+    <button type="button" data-w="0">⅓</button>
+    <button type="button" data-w="1">½</button>
+    <button type="button" data-w="2">⅔</button>
+    <button type="button" data-w="3">整屏</button>
+    <button type="button" id="wider">这一列宽一档</button>
+    <button type="button" id="narrower">这一列窄一档</button>
+  </div>
+  <div class="row" role="group" aria-label="走到哪一列">
+    <span class="lab">走</span>
+    <button type="button" id="goL">← 左边那一列</button>
+    <button type="button" id="goR">右边那一列 →</button>
+    <button type="button" id="open">新开一扇</button>
+    <button type="button" id="close">关掉这扇</button>
+  </div>
+  <div class="row" role="group" aria-label="走到一列时">
+    <span class="lab">居中</span>
+    <button type="button" data-center="edge" aria-pressed="true">贴边</button>
+    <button type="button" data-center="always" aria-pressed="false">居中</button>
+    <button type="button" data-center="overflow" aria-pressed="false">放不下才居中</button>
+    <label class="sw"><input id="fitcenter" type="checkbox" checked> 放得下就居中</label>
+  </div>
+  <div class="row" role="group" aria-label="一列里放几扇">
+    <span class="lab">一列</span>
+    <button type="button" id="consumeL">← 并进左边这一列</button>
+    <button type="button" id="expel">拆成一列</button>
+    <button type="button" id="consumeR">并进右边这一列 →</button>
+  </div>
+  <div class="row" role="group" aria-label="卷轴概览和刘海">
+    <span class="lab">概览</span>
+    <button type="button" id="ovBtn">卷轴概览</button>
+    <button type="button" id="rowBtn">展开刘海那一排</button>
+  </div>
+  <div class="scrub">
+    <label for="spread">两指张开多少：</label>
+    <input id="spread" type="range" min="0" max="1200" value="0" aria-label="两指张开的进度，满格是走满">
+    <span class="read" id="spreadRead">0%</span>
+  </div>
+
+  <div class="desk" id="desk" tabindex="0" aria-label="桌面舞台。横着拖或两指横扫是在标题栏上两指滑；左右方向键换列；回车、Esc 用在卷轴概览里">
+    <div class="world" id="world">
+      <div class="menubar"><div><b>WindowShade</b><span>文件</span><span>编辑</span><span>显示</span><span>窗口</span></div><div><span>周五 9:41</span></div></div>
+      <div id="wins"></div>
+      <div class="backdrop" id="backdrop"></div>
+      <div class="viewport" id="viewport"></div>
+      <div id="thumbs"></div>
+      <div class="hint" id="hint"></div>
+      <div class="peek" id="peek"><div class="bar"></div><div class="body"></div></div>
+      <div class="ghost" id="ghost"><div class="body"></div></div>
+      <svg class="notchsvg" id="notchsvg" viewBox="0 0 1470 300" aria-hidden="true"></svg>
+      <div class="notchui" id="notchui"></div>
+    </div>
+    <div class="toast" id="toast" role="status" aria-live="polite"></div>
+  </div>
+  <div class="mini"><svg id="mini" viewBox="0 0 1000 56" preserveAspectRatio="none" role="img" aria-label="整条卷轴和露在屏幕上的那一段"></svg></div>
+  <div class="readline">
+    <span class="read" id="rOff">位置 0</span>
+    <span class="read" id="rVel">松手速度 —</span>
+    <span class="read" id="rProj">推算停在 —</span>
+    <span class="read" id="rSpring">弹簧 glide</span>
+  </div>
+  <p class="note" id="modeNote"></p>
+
+  <div class="card">
+    <h3>怎么玩</h3>
+    <ul>
+      <li>在舞台上横着拖，或者用触控板两指横扫：这就是在卷轴里任何一扇的标题栏上两指滑。拖过头会越拉越紧，松手吸到最近的列边上。</li>
+      <li>点一扇窗：焦点给它，没整列露出来就滑出来。点屏幕边露出的那一条：那一列滑进来。指针在那一条上停 0.3 秒：看一眼。</li>
+      <li>卷轴概览里点一扇就去那一列。拖一扇到两列之间是换位置，拖到一列里两扇之间是并进那一列，拖到刘海上松手是收进刘海。</li>
+      <li>展开刘海那一排，把左段收着的一扇拖到桌面或概览里，它就放回成一列。触控板两指张开（或拖上面那条“张开多少”）打开卷轴概览。</li>
+    </ul>
+  </div>
+
+  <h2>规则</h2>
+  <div class="card">
+    <h3>跟手和松手（“今天”已有，“要做的”照旧）</h3>
+    <ul>
+      <li><b>跟手 1:1。</b>两指在标题栏上横滑，卷轴跟着手指走，内容和手指同方向。慢 App 跟不上时跳过中间几帧，只挪最新位置，每个 App 一条后台队列。</li>
+      <li><b>两头橡皮筋。</b>超出 = <span class="token">x·d·c / (d + c·x)</span>，c = 0.55，d = 屏宽 25%（368 点）。niri 横向没有橡皮筋，靠松手时不越过头尾。我们保留：手指有反馈。</li>
+      <li><b>松手速度。</b>只看最后 150 ms；松手那一刻补一个零位移的点（借 niri）。两点间隔不到 8 ms 算 0。</li>
+      <li><b>推算停在哪。</b>减速率 0.998，停点 = 现在 + 速度 × 0.5 秒（niri 0.997，约 × 0.33 秒）。吸到最近的“某一列左边贴屏幕左边”或“右边贴屏幕右边”。</li>
+      <li><b>停稳。</b><span class="token">glide</span>（0.42 / ζ 0.88），接着松手速度，最长 1.2 秒。niri 是 ζ 1、刚度 800（约 0.22 秒）。减少动态效果：ζ 1、0.2 秒，最长 0.6 秒，不回弹。</li>
+      <li><b>停在屏幕外。</b>macOS 不让窗口整个离开屏幕：停在外面的列露 10 点。挨着它的列正好贴边时让出这 10 点；滑动途中不改窗口大小。</li>
+    </ul>
+  </div>
+  <div class="card">
+    <h3>焦点和走列（要做的）</h3>
+    <ul>
+      <li><b>焦点不自己跑。</b>滑完只有焦点那一列整列滑出屏幕时才换焦点。换给朝滑动方向最远、整列露着的那一列（niri 的挑法），不再固定给第一列。换焦点就是激活另一个 App，所以能不换就不换。</li>
+      <li><b>走到一列（⌃⌘←→）。</b>贴边（默认）：已经整列露着就不动，否则挪得最少。居中：焦点列永远在正中。放不下才居中：这一列和上一个焦点列放不进一屏时才居中。</li>
+      <li><b>放得下就居中。</b>所有列加起来不到一屏宽时，整组放在正中，不再贴左、右边空一块。剩一列时卷轴结束，窗口留在原处（今天就是这样）。</li>
+      <li><b>关掉刚开的那扇。</b>中间没滑、没换焦点：回到上一列和开它之前的位置（已从 niri 取）。</li>
+    </ul>
+  </div>
+  <div class="card">
+    <h3>列宽和一列里几扇（要做的）</h3>
+    <ul>
+      <li><b>四档。</b>⅓、½、⅔、整屏。两指往下拉宽一档，往上推窄一档，最窄再往上推是收起。改宽后这一列整列露出来（居中模式下居中）。</li>
+      <li><b>新窗口多宽。</b>按 App 要的地方：要地方 ⅔、参考 ½、轻的 ⅓。你给某个 App 改过一次宽度，下次它开在卷轴里就用你改的那档，不用写配置。</li>
+      <li><b>并进、拆出。</b>并进左边或右边那一列：这扇窗叠到那一列底下，高度平分。已经在一列里时，这个动作改成拆成自己一列，宽度跟原来那一列一样。</li>
+      <li><b>一列最多几扇。</b>每扇至少 280 点高（和魔法平铺一致），Air 15 英寸上一列最多 3 扇。放不下就不并进，那一列轻轻晃一下。</li>
+      <li><b>键盘。</b>⌃⌘[ 并进左边、⌃⌘] 并进右边，默认关。niri 用 Mod+[ ]，同样是“单扇就并进，已在列里就拆出”。</li>
+    </ul>
+  </div>
+  <div class="card">
+    <h3>卷轴概览（要做的）</h3>
+    <ul>
+      <li><b>打开。</b>标题栏上两指张开，跟手：张到一半能停、能退。松手按推算的进度过一半就打开，否则收回（借 niri 四指上滑：300 单位走满，超出用橡皮筋 0.5 / 5% 夹住）。菜单“窗口”子菜单里加一项，快捷键默认关；顶层菜单不加项。</li>
+      <li><b>样子。</b>最多缩到原来的 0.5（niri 默认也是 0.5），列间 16，四周 48，框出此刻露在屏幕上的那一段。画面是打开那一刻截的图，不为每扇开实时流。缩放用 <span class="token">settle</span>（0.38 / ζ 1），减少动态效果时 0.25 秒淡入淡出。</li>
+      <li><b>拖着换位置。</b>按下移动 4 点以上算拖。拖着的那扇 75% 不透明（照 niri）。找离指针最近的缝：两列之间的竖缝近，就新开一列放进去；一列里两扇之间的横缝近，就并进那一列。蓝条画在缝上。</li>
+      <li><b>拖进刘海。</b>拖到刘海下方 84 点以内、左右 170 点以内：刘海长成落点（340 × 84，圆角 22，<span class="token">catch</span>），写“松手收进刘海”。松手，那扇沿 <span class="token">settle</span> 飞进刘海，卷轴补上空位。离开这块范围就用 <span class="token">calm</span> 收回。</li>
+      <li><b>从刘海拖回来。</b>刘海那一排展开时（<span class="token">expand</span>，圆角 28），左段收着的窗口每格 124 宽、圆角 14。拖一格出来：在概览里按同一条“最近的缝”规则放；不在概览里，就放在指针下那一列旁边，指针在那一列左半边就放左边，右半边就放右边。</li>
+      <li><b>收起。</b>Esc、点空白处、切到别的 App、换桌面、锁屏。拖到一半收起：这次拖动作废，窗口不动。</li>
+    </ul>
+  </div>
+  <div class="card">
+    <h3>刘海此刻听谁的</h3>
+    <ul>
+      <li>概览里拖着一扇窗靠近刘海，算“正在做的手势”，排在放行之下、提醒之上。这时来的短暂提醒变成一个点，不回来补说。</li>
+      <li>放行（要你确认的事）占着刘海时，刘海不当落点：拖上去没有反应，松手那扇回到原位。</li>
+      <li>持续活动（正在播放、番茄钟）在“展开那一排”的右段，不能拖进卷轴。只有左段收着的窗口能拖出来。</li>
+      <li>两指在标题栏上滑卷轴不占刘海。</li>
+    </ul>
+  </div>
+
+  <h2>对照：niri、今天、要做的</h2>
+  <div class="tblwrap"><table class="tbl" id="cmp">
+    <thead><tr><th>项</th><th>niri</th><th>WindowShade 今天（本地）</th><th>要做的</th><th>macOS 上做不到的，为什么</th></tr></thead>
+    <tbody>
+      <tr><td>开新窗口不挤别人</td><td>接在当前列右边</td><td>同样</td><td>同样</td><td>—</td></tr>
+      <tr><td>新窗口多宽</td><td>统一 ½，按 App 要写窗口规则</td><td>按 App：⅔ / ½ / ⅓，不用配置</td><td>再记住你给这个 App 改过的那档</td><td>—</td></tr>
+      <tr><td>列宽几档</td><td>⅓ ½ ⅔，Mod+R 轮换、Mod+Shift+R 反向；±10% 细调</td><td>⅓ ½ ⅔ 整屏，两指上下或 ⌃⌘↓↑</td><td>同今天；不加 ±10%（只有几档才好吸附、好看一眼）</td><td>—</td></tr>
+      <tr><td>居中</td><td>never / always / on-overflow，单列居中</td><td>只有贴边</td><td>贴边（默认）/ 居中 / 放不下才居中；放得下就居中</td><td>—</td></tr>
+      <tr><td>并进、拆出</td><td>Mod+[ ]、Mod+, .；拖到两扇之间</td><td>只有魔法平铺排出的那一列叠着几扇</td><td>⌃⌘[ ]（默认关）、概览里拖；一列最多 3 扇</td><td>—</td></tr>
+      <tr><td>标签页式的一列</td><td>Mod+W，旁边画标签条</td><td>没有</td><td><span class="tag-bad">不做</span></td><td>别的 App 的窗口不能塞进我们画的标签条；同一个 App 的窗口用系统自带的窗口标签页</td></tr>
+      <tr><td>手势</td><td>三指横滑；1200 单位 = 一屏</td><td>两指在标题栏上，1:1 跟手</td><td>同今天</td><td>三指给了三指拖移，四指给了切桌面，系统不让抢</td></tr>
+      <tr><td>松手速度</td><td>最后 150 ms，补零</td><td>同（已取）</td><td>同</td><td>—</td></tr>
+      <tr><td>推算停点</td><td>0.997 / ms，约速度 × 0.33 秒</td><td>0.998，约速度 × 0.5 秒</td><td>同今天（和官网那段一致）</td><td>—</td></tr>
+      <tr><td>两头</td><td>不拉紧，松手不越过头尾</td><td>橡皮筋 c 0.55，最多屏宽 25%</td><td>同今天</td><td>—</td></tr>
+      <tr><td>停稳</td><td>ζ 1、刚度 800（约 0.22 秒）</td><td><span class="token">glide</span> 0.42 / 0.88</td><td>同今天</td><td>—</td></tr>
+      <tr><td>滑完的焦点</td><td>朝方向最远、整列露着的那一列</td><td>焦点滑出去才换，给第一列露着的</td><td>焦点滑出去才换，挑法用 niri 的</td><td>换焦点 = 激活另一个 App，能不换就不换</td></tr>
+      <tr><td>关掉刚开的</td><td>回上一列和原位置</td><td>同（已取）</td><td>同</td><td>—</td></tr>
+      <tr><td>停在屏幕外的列</td><td>完全看不见</td><td>露 10 点；停 0.3 秒看一眼；单击滑进来</td><td>同今天，并进刘海那一排（待定）</td><td>窗口不能整个离开屏幕</td></tr>
+      <tr><td>概览</td><td>Mod+O、热角、四指上滑跟手；缩放 0.5；拖着换位置、换工作区</td><td>两指张开，走满才开；截图；不能拖</td><td>张开跟手；拖着换位置、并进；拖进刘海收起；从刘海拖回来；菜单和快捷键</td><td>画面只能是截图或屏幕录制流，每扇开一路流太费电</td></tr>
+      <tr><td>工作区</td><td>每块屏一套，竖排，按需增减</td><td>用 macOS 自己的桌面</td><td><span class="tag-bad">不做</span>；刘海那一排里的“桌面 3”格子就是去别的桌面</td><td>没有公开接口能把别的 App 的窗口换到另一张桌面</td></tr>
+      <tr><td>拖到边自动卷</td><td>30 / 100 ms / 1500 每秒</td><td>只在概览里，默认关</td><td>拖标题栏、拖刘海那一格靠边时都卷</td><td>—</td></tr>
+      <tr><td>拖着挪一扇</td><td>Mod+拖，256 像素才拔出，75% 透明，蓝条提示</td><td>拖走就离开卷轴</td><td>概览里拖；标题栏拖到两列之间也出蓝条，松手换位置</td><td>拖动途中窗口由系统画，我们只能在旁边画提示，松手后再摆</td></tr>
+      <tr><td>动画</td><td>合成器画，每帧都有</td><td>真窗口一扇扇挪，慢 App 跳帧</td><td>同今天</td><td>别的 App 的窗口不归我们画，也加不了模糊、边框、着色器</td></tr>
+      <tr><td>竖着放的屏幕</td><td>可以</td><td>放不下的收进刘海</td><td>同今天</td><td>窗口上沿不能出屏幕，滑出上沿的列没地方停</td></tr>
+      <tr><td>挨着别的显示器</td><td>每块屏一条</td><td>两边都空才接成卷轴</td><td>同今天</td><td>停在屏幕外的窗口会被系统挪到隔壁屏上</td></tr>
+      <tr><td>截图界面</td><td>自带区域截图</td><td>没有</td><td><span class="tag-bad">不做</span></td><td>系统 ⌘⇧5 已经有</td></tr>
+      <tr><td>配置</td><td>KDL 文件，改了立刻生效；窗口规则</td><td>设置里几个开关</td><td>加“走到一列时”和“放得下就居中”两行</td><td>—</td></tr>
+    </tbody>
+  </table></div>
+
+  <h2>边缘情况</h2>
+  <div class="tblwrap"><table class="tbl">
+    <thead><tr><th>情况</th><th>怎么办</th></tr></thead>
+    <tbody>
+      <tr><td>App 卡住、挪不动</td><td>它那条队列只留最新目标；别的 App 照常。每半秒对一次账：位置或大小差 24 点以上，当作被人拖走，让出位置。</td></tr>
+      <tr><td>窗口有最小宽度</td><td>这一列用它能接受的最窄那档；改宽时跳过它放不进的档。</td></tr>
+      <tr><td>窗口不能改大小</td><td>按它自己的宽度占一列，不参与宽一档、窄一档。</td></tr>
+      <tr><td>进原生全屏</td><td>它去了自己的桌面，卷轴让出位置；退出全屏不自动回来。</td></tr>
+      <tr><td>并进时那一列已满</td><td>不并进，那一列晃一下（<span class="token">pop</span>）；概览里拖过去时蓝条改画成新开一列。</td></tr>
+      <tr><td>只剩一列</td><td>卷轴结束，窗口留在原处，不弹回魔法平铺。</td></tr>
+      <tr><td>概览里列太多</td><td>缩放再小也要每列至少 40 点宽；放不下时概览里两指横滑也能卷。</td></tr>
+      <tr><td>拖进刘海时刘海被放行占着</td><td>不出落点；松手那扇回到原位。</td></tr>
+      <tr><td>屏幕排列变了、插拔显示器</td><td>卷轴结束，停在屏幕外的列全部挪回屏幕：放得下就排好，放不下的收进刘海。</td></tr>
+      <tr><td>滑到一半锁屏、换桌面</td><td>弹簧照样落到吸附点，概览收起，拖动作废。</td></tr>
+      <tr><td>没有屏幕录制权限</td><td>概览和看一眼只画 App 图标和名字；拖动、换位置都照样能用。</td></tr>
+      <tr><td>VoiceOver</td><td>概览每扇是一个按钮：“编辑器，第 1 列”；动作“移到左边一列 / 移到右边一列 / 并进左边这一列 / 收进刘海”。</td></tr>
+      <tr><td>只用鼠标</td><td>菜单里的卷轴概览；概览里左键拖；标题栏拖到两列之间。</td></tr>
+    </tbody>
+  </table></div>
+
+  <h2>权限与隐私</h2>
+  <div class="card">
+    <ul>
+      <li><b>辅助功能</b>（已有，<span class="token">window-ax</span>）：读、改卷轴里窗口的位置和大小。没有新读的东西。</li>
+      <li><b>屏幕录制</b>（已有，<span class="token">window-image</span>）：概览打开那一刻每扇截一张，看一眼时开一路卡片大小的流。只在内存里，概览一收就丢。拖回来的那扇沿用刘海那一排已有的画面。</li>
+      <li><b>标题栏手势</b>（已有，<span class="token">input-scroll</span> / <span class="token">input-multitouch</span>）：张开跟手只是把同一路事件的进度画出来，不新开监听。</li>
+      <li><b>新存的：每个 App 上次的列宽</b>。只存 App 的标识和一个比例，放在本机设置里，默认开，设置里一键忘掉。要登记进 <code>tools/privacy/registry.json</code>（<span class="token">settings</span> 一行），过 <code>tools/privacy/check-registry.py</code>。</li>
+      <li>不联网，不上传，不记窗口标题。</li>
+    </ul>
+  </div>
+
+  <h2>实现落点</h2>
+  <div class="card">
+    <ul>
+      <li><code>prototype/Core/ScrollStrip.swift</code>：居中三种（吸附点、界限、走列的目标位置）、放得下就居中、并进 / 拆出（一列容量按 280 点算）、列左右换位、按“最近的缝”算插入位置、滑完换焦点的挑法。都是纯逻辑，配单测。</li>
+      <li><code>prototype/App/ScrollStripRun.swift</code>：接上述动作和 ⌃⌘[ ]；滑完换焦点；按 App 记住宽度的读写；拖标题栏时的插入提示。</li>
+      <li><code>prototype/App/ScrollStripOverview.swift</code>：跟手打开（进度 0…1）；拖着换位置和蓝条；拖到刘海交给刘海；接住从刘海拖来的一格。</li>
+      <li><code>prototype/App/TrackpadGestures.swift</code>：张开的进度按帧交给卷轴（今天只在松手时判一次）。</li>
+      <li><code>prototype/App/Notch.swift</code>、<code>prototype/Core/NotchRow.swift</code>：概览拖来的一扇用落点样子和 <span class="token">catch</span> 接住；左段的格子能拖出刘海；（待定）停在屏幕外的列成为左段的格子。</li>
+      <li>新建 <code>prototype/Core/StripWidthMemory.swift</code>：App 标识 → 列宽比例。</li>
+      <li><code>prototype/App/Preferences.swift</code>：设置 → 卷帘 → 排布里加“走到一列时：贴边 / 居中 / 放不下才居中”和“放得下就居中”。</li>
+      <li>文档：<code>docs/copy-guide.md</code> 加“并进这一列 / 拆成一列”；<code>docs/gestures.md</code> 卷轴一节；<code>docs/niri.md</code> 对照表；<code>tools/privacy/registry.json</code>。</li>
+    </ul>
+  </div>
+
+  <h2>工作包</h2>
+  <div class="pk" id="packs">
+    <div class="card"><div class="id">SS-01</div><h3>居中三种和放得下就居中</h3><p>走列、改宽、松手吸附都按所选的居中方式算；所有列加起来不到一屏时整组居中。</p><p class="acc"><b>验收：</b>⅓ ½ ⅔ 整屏所有组合下，三种方式的吸附点和走列位置有单测；默认“贴边”时现有卷轴单测一条不改仍全过；真机三列来回走，焦点那一列不自己挪。</p></div>
+    <div class="card"><div class="id">SS-02</div><h3>并进和拆出</h3><p>⌃⌘[ ] 把这扇并进左边或右边那一列，已在一列里就拆成一列；一列最多按 280 点算的扇数。</p><p class="acc"><b>验收：</b>单测覆盖满列拒绝、拆出保宽、刚开的窗口并进后再关掉仍回原位；真机 3 个 App 并进再拆出，窗口外框和单测算的差不超过 2 点；快捷键默认关。</p></div>
+    <div class="card"><div class="id">SS-03</div><h3>卷轴概览里拖着换位置</h3><p>拖一扇到竖缝开新列、到横缝并进那一列，蓝条提示，松手一次摆好真窗口。</p><p class="acc"><b>验收：</b>“最近的缝”规则有单测；松手后真窗口只挪一轮；拖到一半按 Esc，窗口一扇不动；VoiceOver 能用“移到左边一列”完成同一件事。</p></div>
+    <div class="card"><div class="id">SS-04</div><h3>概览和刘海互通</h3><p>拖进刘海收起；从展开那一排拖一格出来，放回成卷轴的一列。</p><p class="acc"><b>验收：</b>落点第一帧和最后一帧与刘海硬件轮廓重合；拖到一半掉头，形状从当时的位置和速度接着走；放行占着刘海时不出落点；放回的那扇落在蓝条那道缝。</p></div>
+    <div class="card"><div class="id">SS-05</div><h3>张开跟手的概览和别的入口</h3><p>两指张开时概览跟着长，松手过一半就开；菜单“窗口”子菜单一项，快捷键默认关。</p><p class="acc"><b>验收：</b>张开 30% 停住再合拢，概览收回、没有闪；减少动态效果时只淡 0.25 秒；顶层菜单项数不变；只用鼠标能打开、能拖、能收起。</p></div>
+    <div class="card"><div class="id">SS-06</div><h3>滑完的焦点和按 App 记住宽度</h3><p>焦点滑出去才换，换给朝滑动方向最远、整列露着的那一列；改过宽度的 App 下次开在卷轴里用那档。</p><p class="acc"><b>验收：</b>焦点挑法有单测；记住的宽度换一次桌面、重启 App 后仍在；“忘掉”后回到按 App 定宽；隐私登记检查通过。</p></div>
+    <div class="card"><div class="id">SS-07</div><h3>标题栏拖到两列之间</h3><p>卷轴开着时拖标题栏，在最近的竖缝上画蓝条，松手换位置；拖远（离原位 256 点）或拖进刘海才离开卷轴；靠屏幕边按 30 / 100 ms / 1500 每秒自动卷。</p><p class="acc"><b>验收：</b>卷轴关着时拖窗口的手感一点不变；真机拖着靠边能卷到停在外面的列；松手前没有任何窗口改大小。</p></div>
+  </div>
+
+  <h2>待 Aaron 定</h2>
+  <div class="card">
+    <ul>
+      <li><b>停在屏幕外的列要不要进刘海那一排？</b>推荐：要，但只在展开时出现在左段收着的窗口后面，格子角上一个 ← 或 →；点一下是把它滑进来，不是放回。紧凑的两耳不画卷轴。这会让那一排多出几格（今天 docs/notch.md 写着“后面一步”）。</li>
+      <li><b>“走到一列时”默认用哪种？</b>推荐：默认贴边，和今天的手感一样；“放得下就居中”默认开，因为它只在列少的时候起作用、不改已经排满的样子。</li>
+    </ul>
+  </div>
+  <p class="note">来源：niri 提交 2c82b77（2026-10-08，GPL-3.0，只取想法和数字，不取代码）；WindowShade 本地 prototype/Core/ScrollStrip.swift、App/ScrollStripRun.swift、App/ScrollStripOverview.swift、docs/niri.md、docs/handoff/oss-borrowing-2026-10-08.md。</p>
+</div>
+
+<script>
+(function(){
+'use strict';
+/* ---------- 尺寸与令牌 ---------- */
+var SW=1470, SH=956, MENU=34, AREA={x:0,y:MENU,w:SW,h:SH-MENU};
+var SLIVER=10, FLUSH=2, MINH=280, MAXPER=Math.floor(AREA.h/MINH);
+var PRE=[1/3,0.5,2/3,1];
+var TOK={
+  glide:{r:0.42,z:0.88,name:'glide'}, reduced:{r:0.20,z:1,name:'reduced'}, niri:{r:0.222,z:1,name:'ζ1 k800'},
+  settle:{r:0.38,z:1,name:'settle'}, catchDrop:{r:0.40,z:0.80,name:'catch'}, expand:{r:0.40,z:0.92,name:'expand'},
+  calm:{r:0.34,z:1,name:'calm'}, pop:{r:0.30,z:0.75,name:'pop'}
+};
+var HW={W:185,H:33.5,r:10.71,e:7.4}, NCX=SW/2;
+var CELLW=124, CELLH=104, CELLGAP=8, NPAD=14;
+
+/* ---------- 窗口和卷轴 ---------- */
+var APPS={
+  ed:{name:'编辑器',h:212,role:'wide'}, nt:{name:'笔记',h:42,role:'ref'}, tm:{name:'终端',h:150,role:'ref'},
+  br:{name:'浏览器',h:200,role:'wide'}, fs:{name:'文件',h:28,role:'light'}, ds:{name:'设计',h:300,role:'wide'},
+  ml:{name:'邮件',h:190,role:'ref'}, pv:{name:'图片',h:330,role:'light'}, sh:{name:'表格',h:120,role:'wide'},
+  cl:{name:'日历',h:0,role:'light'}, md:{name:'音乐',h:350,role:'ref'}, rd:{name:'阅读',h:30,role:'ref'}
+};
+var wins={}, nextId=1;
+function mk(app){var id='w'+(nextId++);wins[id]={id:id,app:app,name:APPS[app].name,h:APPS[app].h,role:APPS[app].role};return id;}
+function roleW(role){return Math.round(SW*(role==='wide'?2/3:role==='ref'?0.5:1/3));}
+var memory={}; // 按 App 记住的宽度（要做的）
+function widthFor(id){var a=wins[id].app; if(mode==='target'&&memory[a]) return memory[a]; return roleW(wins[id].role);}
+
+var cols, offset, restOff, focusId, lastInsert, tucked, spawnQueue;
+function reset(){
+  wins={}; nextId=1;
+  var a=mk('ed'), b=mk('nt'), c=mk('tm'), d=mk('br'), e=mk('fs'), f=mk('ds');
+  cols=[{wins:[a],sh:[1],w:Math.round(SW*0.6)},{wins:[b,c],sh:[0.5,0.5],w:Math.round(SW*0.4)},
+        {wins:[d],sh:[1],w:roleW('wide')},{wins:[e],sh:[1],w:roleW('light')},{wins:[f],sh:[1],w:roleW('wide')}];
+  tucked=[mk('ml'),mk('pv')];
+  spawnQueue=['sh','rd','cl','md'];
+  offset=0; restOff=0; focusId=a; lastInsert=null; ended=false;
+}
+var ended=false;
+
+function total(){var t=0;for(var i=0;i<cols.length;i++)t+=cols[i].w;return t;}
+function startOf(i){var s=0;for(var k=0;k<i;k++)s+=cols[k].w;return s;}
+function maxOff(){return Math.max(0,total()-AREA.w);}
+function colOf(id){for(var i=0;i<cols.length;i++)if(cols[i].wins.indexOf(id)>=0)return i;return -1;}
+function clamp(x,a,b){return Math.max(a,Math.min(b,x));}
+function lerp(a,b,t){return a+(b-a)*t;}
+
+/* ---------- 看法：像 niri / 今天 / 要做的 ---------- */
+var mode='target', center='edge';
+function macOS(){return mode!=='niri';}
+function centerMode(){return mode==='today'?'edge':center;}
+function fitCenter(){return mode==='target'&&$('fitcenter').checked&&total()<=AREA.w;}
+
+/* 吸附点和界限 */
+function snapCands(){
+  var W=AREA.w, T=total(), c=[], cm=centerMode(), mo=maxOff(), i;
+  if(fitCenter()) return [-(W-T)/2];
+  if(cm!=='always'){
+    c.push(0,mo);
+    for(i=0;i<cols.length;i++){c.push(clamp(startOf(i),0,mo));c.push(clamp(startOf(i)+cols[i].w-W,0,mo));}
+  }
+  if(cm!=='edge'){
+    for(i=0;i<cols.length;i++){var cc=startOf(i)+cols[i].w/2-W/2; c.push(cm==='overflow'?clamp(cc,0,mo):cc);}
+  }
+  return c;
+}
+function range(){var c=snapCands();return [Math.min.apply(null,c),Math.max.apply(null,c)];}
+function snapped(p){
+  var c=snapCands(), r=range(), t=clamp(p,r[0],r[1]), best=c[0];
+  for(var i=1;i<c.length;i++) if(Math.abs(c[i]-t)<Math.abs(best-t)) best=c[i];
+  return best;
+}
+function revealing(i){
+  var l=startOf(i), r=l+cols[i].w, mo=maxOff();
+  if(cols[i].w>=AREA.w||l<offset) return clamp(l,0,mo);
+  if(r>offset+AREA.w) return clamp(r-AREA.w,0,mo);
+  return clamp(offset,0,mo);
+}
+function offsetFor(i,prev){
+  var W=AREA.w, cm=centerMode();
+  if(fitCenter()) return -(W-total())/2;
+  var s=startOf(i), w=cols[i].w;
+  if(cm==='always') return s+w/2-W/2;
+  if(cm==='overflow'&&prev!=null&&prev!==i&&cols[prev]){
+    var a=Math.min(s,startOf(prev)), b=Math.max(s+w,startOf(prev)+cols[prev].w);
+    if(b-a>W) return clamp(s+w/2-W/2,0,maxOff());
+  }
+  return revealing(i);
+}
+
+/* ---------- 摆放：停在屏幕外露 10 点（照 ScrollStrip.placedFrame） ---------- */
+function trueX(i,off){return AREA.x+startOf(i)-off;}
+function parked(off){
+  var L=[],R=[];
+  for(var i=0;i<cols.length;i++){var x=trueX(i,off);
+    if(x+cols[i].w<=AREA.x+SLIVER)L.push(i);else if(x>=AREA.x+AREA.w-SLIVER)R.push(i);}
+  return {L:L,R:R};
+}
+function restTrims(off){
+  var p=parked(off), out=[];
+  for(var i=0;i<cols.length;i++){
+    var t={l:0,r:0};
+    if(p.L.indexOf(i)<0&&p.R.indexOf(i)<0){
+      var x=trueX(i,off), mx=x+cols[i].w;
+      if(p.L.length&&x>AREA.x-FLUSH&&x<AREA.x+SLIVER) t.l=AREA.x+SLIVER-x;
+      if(p.R.length&&mx<AREA.x+AREA.w+FLUSH&&mx>AREA.x+AREA.w-SLIVER) t.r=mx-(AREA.x+AREA.w-SLIVER);
+    }
+    out.push(t);
+  }
+  return out;
+}
+function trims(off,moving){
+  if(!moving) return restTrims(off);
+  var rest=parked(restOff), now=parked(off);
+  var kL=rest.L.length&&now.L.indexOf(rest.L[rest.L.length-1])>=0;
+  var kR=rest.R.length&&now.R.indexOf(rest.R[0])>=0;
+  return restTrims(restOff).map(function(t){return {l:kL?t.l:0,r:kR?t.r:0};});
+}
+function deskFrames(off,moving){
+  var res={}, tr=macOS()?trims(off,moving):cols.map(function(){return {l:0,r:0};});
+  for(var i=0;i<cols.length;i++){
+    var c=cols[i], x=trueX(i,off), w=c.w, fx=x+tr[i].l, fw=w-tr[i].l-tr[i].r;
+    if(macOS()){
+      if(x+w<=AREA.x+SLIVER) fx=AREA.x-fw+SLIVER;
+      else if(x>=AREA.x+AREA.w-SLIVER) fx=AREA.x+AREA.w-SLIVER;
+    }
+    var y=AREA.y;
+    for(var k=0;k<c.wins.length;k++){
+      var h=k===c.wins.length-1?AREA.y+AREA.h-y:Math.round(AREA.h*c.sh[k]);
+      res[c.wins[k]]={x:fx,y:y,w:fw,h:h,col:i};
+      y+=h;
+    }
+  }
+  return res;
+}
+/* 停在边上的那一条（每边离屏幕最近的那一列） */
+function slivers(){
+  if(!macOS()) return [];
+  var p=parked(offset), out=[], f=deskFrames(offset,false);
+  function add(i,side){cols[i].wins.forEach(function(id){var r=f[id];out.push({id:id,col:i,side:side,band:{x:side==='L'?AREA.x:AREA.x+AREA.w-SLIVER,y:r.y,w:SLIVER,h:r.h}});});}
+  if(p.L.length) add(p.L[p.L.length-1],'L');
+  if(p.R.length) add(p.R[0],'R');
+  return out;
+}
+
+/* ---------- 概览布局（照 ScrollStrip.overview） ---------- */
+function ovLayout(){
+  var sp=16, m=48, n=cols.length, T=total(), gaps=sp*(n-1);
+  var s=Math.min(0.5,(AREA.w-2*m-gaps)/T,(AREA.h-2*m)/AREA.h);
+  s=Math.max(s,0.05);
+  var h=AREA.h*s, ox=AREA.x+(AREA.w-T*s-gaps)/2, oy=AREA.y+(AREA.h-h)/2;
+  function X(stripX,i){return ox+stripX*s+sp*i;}
+  var cr=[], wr={};
+  for(var i=0;i<n;i++){
+    var c=cols[i], r={x:X(startOf(i),i),y:oy,w:c.w*s,h:h}; cr.push(r);
+    var y=r.y;
+    for(var k=0;k<c.wins.length;k++){var hh=k===c.wins.length-1?r.y+r.h-y:r.h*c.sh[k];wr[c.wins[k]]={x:r.x,y:y,w:r.w,h:hh};y+=hh;}
+  }
+  var L=offset, R=offset+AREA.w, first=n-1, last=0;
+  for(i=0;i<n;i++){if(startOf(i)+cols[i].w>L){first=i;break;}}
+  for(i=n-1;i>=0;i--){if(startOf(i)<R){last=i;break;}}
+  var vx=X(clamp(L,startOf(first),startOf(first)+cols[first].w),first), vr=X(clamp(R,startOf(last),startOf(last)+cols[last].w),last);
+  return {s:s,sp:sp,cols:cr,wins:wr,vp:{x:vx,y:oy,w:Math.max(0,vr-vx),h:h}};
+}
+/* 最近的缝：竖缝 = 新开一列，横缝 = 并进那一列（借 niri insert_position） */
+function ovHint(px,py,L){
+  var n=L.cols.length, sp=L.sp, gi=0, dv=1e9, i;
+  for(i=0;i<=n;i++){
+    var gx=i===0?L.cols[0].x-sp/2:i===n?L.cols[n-1].x+L.cols[n-1].w+sp/2:(L.cols[i-1].x+L.cols[i-1].w+L.cols[i].x)/2;
+    if(Math.abs(px-gx)<dv){dv=Math.abs(px-gx);gi=i;}
+  }
+  var ci=-1;
+  for(i=0;i<n;i++){var r=L.cols[i];if(px>=r.x&&px<=r.x+r.w){ci=i;break;}}
+  if(ci>=0){
+    var ys=[], c=cols[ci], y=L.cols[ci].y;
+    for(var k=0;k<c.wins.length;k++){ys.push(y);y+=L.cols[ci].h*c.sh[k];}
+    ys.push(L.cols[ci].y+L.cols[ci].h);
+    var ti=0, dh=1e9;
+    for(k=0;k<ys.length;k++) if(Math.abs(py-ys[k])<dh){dh=Math.abs(py-ys[k]);ti=k;}
+    if(dh<dv) return {type:'in',col:ci,row:ti,y:ys[ti],x:L.cols[ci].x,w:L.cols[ci].w};
+  }
+  var gx2=gi===0?L.cols[0].x-sp/2:gi===n?L.cols[n-1].x+L.cols[n-1].w+sp/2:(L.cols[gi-1].x+L.cols[gi-1].w+L.cols[gi].x)/2;
+  return {type:'new',at:gi,x:gx2,y:L.cols[0].y,h:L.cols[0].h};
+}
+function deskHint(px){
+  var f=deskFrames(offset,false), best=null;
+  for(var i=0;i<cols.length;i++){
+    var r=f[cols[i].wins[0]];
+    if(px>=r.x&&px<=r.x+r.w){var right=px>r.x+r.w/2;return {type:'new',at:right?i+1:i,x:right?r.x+r.w:r.x,y:AREA.y,h:AREA.h};}
+  }
+  return {type:'new',at:px<SW/2?0:cols.length,x:px<SW/2?AREA.x:AREA.x+AREA.w,y:AREA.y,h:AREA.h};
+}
+
+/* ---------- 弹簧（response / ζ，质量 1） ---------- */
+function springStep(s,dt,tok){
+  var w=2*Math.PI/tok.r, k=w*w, c=2*tok.z*w, n=4, h=dt/n;
+  for(var i=0;i<n;i++){var a=k*(s.t-s.x)-c*s.v;s.v+=a*h;s.x+=s.v*h;}
+}
+var reducedEl, $=function(id){return document.getElementById(id);};
+function reduced(){return reducedEl.checked;}
+
+/* 卷轴位置 */
+var anim=null; // {x,v,t,tok,t0}
+function animateTo(target,v0){
+  if(Math.abs(target-offset)<0.5&&Math.abs(v0||0)<20){offset=target;settle();return;}
+  var tok=reduced()?TOK.reduced:mode==='niri'?TOK.niri:TOK.glide;
+  anim={x:offset,v:v0||0,t:target,tok:tok,age:0,limit:reduced()?0.6:1.2};
+  $('rSpring').textContent='弹簧 '+tok.name+(tok.name==='glide'?' 0.42 / ζ 0.88':tok.name==='reduced'?' ζ1 0.2 秒':' ≈0.22 秒');
+  kick();
+}
+function settle(){anim=null;restOff=offset;}
+
+/* 概览进度 */
+var ov={x:0,v:0,t:0,open:false,fade:0,ft:0};
+function setOverview(open,v0){
+  if(open&&(ended||cols.length<2)) return;
+  ov.open=open; ov.t=open?1:0; if(v0!=null) ov.v=v0;
+  ov.ft=open?1:0;
+  $('ovBtn').setAttribute('aria-pressed',open);
+  if(!open){sel=null;cancelDrag();}
+  else{sel=focusId;}
+  kick();
+}
+var sel=null;
+
+/* 刘海形状 */
+var notch={W:{x:HW.W,v:0,t:HW.W},H:{x:HW.H,v:0,t:HW.H},R:{x:HW.r,v:0,t:HW.r},tok:TOK.calm,shape:'hw',fade:0};
+function notchTo(shape){
+  if(notch.shape===shape) return;
+  notch.shape=shape;
+  var g=shapeGeom(shape);
+  notch.tok=shape==='drop'?TOK.catchDrop:shape==='open'?TOK.expand:TOK.calm;
+  notch.W.t=g.W; notch.H.t=g.H; notch.R.t=g.r;
+  if(reduced()){notch.W.x=g.W;notch.H.x=g.H;notch.R.x=g.r;notch.W.v=notch.H.v=notch.R.v=0;}
+  $('rowBtn').setAttribute('aria-pressed',shape==='open');
+  buildNotchUI();
+  kick();
+}
+function rowCells(){return tucked.length+1;}
+function shapeGeom(s){
+  if(s==='drop') return {W:340,H:84,r:22};
+  if(s==='open'){var n=rowCells();var W=Math.max(400,2*NPAD+n*CELLW+(n-1)*CELLGAP+(tucked.length?17:0));return {W:W,H:HW.H+10+CELLH+NPAD,r:28};}
+  return {W:HW.W,H:HW.H,r:HW.r};
+}
+
+/* ---------- 交互状态 ---------- */
+var drag=null, samples=[], swStart=0, peekT=null, peekOn=null, flyer=null, toastT=null;
+function toast(msg){var t=$('toast');t.textContent=msg;t.style.opacity=1;clearTimeout(toastT);toastT=setTimeout(function(){t.style.opacity=0;},2200);}
+
+function rb(x){var d=AREA.w*0.25,c=0.55;return x*d*c/(d+c*x);}
+function swipeBegin(){
+  anim=null; swStart=offset; samples=[]; lastInsert=null; hidePeek();
+}
+function swipeMove(dx,t){
+  var v=swStart-dx, r=range();
+  if(macOS()){ if(v<r[0]) v=r[0]-rb(r[0]-v); else if(v>r[1]) v=r[1]+rb(v-r[1]); }
+  offset=v; samples.push([t,v]);
+  while(samples.length&&t-samples[0][0]>0.3) samples.shift();
+  kick();
+}
+function releaseVel(t){
+  if(!samples.length) return 0;
+  var last=samples[samples.length-1], all=samples.concat([[Math.max(t,last[0]),last[1]]]);
+  var rec=all.filter(function(s){return s[0]>=t-0.150;});
+  if(rec.length<2) return 0;
+  var span=rec[rec.length-1][0]-rec[0][0]; if(span<=0.008) return 0;
+  return (rec[rec.length-1][1]-rec[0][1])/span;
+}
+function swipeEnd(t){
+  var v=releaseVel(t), proj=offset+v*(mode==='niri'?0.333:0.499), tgt=snapped(proj);
+  $('rVel').textContent='松手速度 '+Math.round(-v)+' 点/秒';
+  $('rProj').textContent='推算停在 '+Math.round(proj)+' → 吸到 '+Math.round(tgt);
+  // 滑完的焦点
+  var fi=colOf(focusId);
+  if(fi>=0){
+    var x=AREA.x+startOf(fi)-tgt, visible=x+cols[fi].w>AREA.x+1&&x<AREA.x+AREA.w-1;
+    var full=function(i){var xx=AREA.x+startOf(i)-tgt;return xx>=AREA.x-1&&xx+cols[i].w<=AREA.x+AREA.w+1;};
+    if(mode==='niri'){
+      var dir=tgt>=swStart?1:-1, pick=-1;
+      for(var i=0;i<cols.length;i++) if(full(i)) {if(pick<0||(dir>0?i>pick:i<pick)) pick=i;}
+      if(pick>=0) focusId=cols[pick].wins[0];
+    }else if(!visible){
+      if(mode==='today'){
+        for(i=0;i<cols.length;i++){var xi=AREA.x+startOf(i)-tgt;if(xi+cols[i].w>AREA.x+1&&xi<AREA.x+AREA.w-1){focusId=cols[i].wins[0];break;}}
+      }else{
+        var d2=tgt>=swStart?1:-1, p2=-1;
+        for(i=0;i<cols.length;i++) if(full(i)){if(p2<0||(d2>0?i>p2:i<p2)) p2=i;}
+        if(p2<0) for(i=0;i<cols.length;i++){var xj=AREA.x+startOf(i)-tgt;if(xj+cols[i].w>AREA.x+1&&xj<AREA.x+AREA.w-1){p2=i;if(d2<0)break;}}
+        if(p2>=0) focusId=cols[p2].wins[0];
+      }
+    }
+  }
+  animateTo(tgt,v);
+}
+
+/* ---------- 动作 ---------- */
+function focusCol(i,keepRow){
+  if(!cols[i]) return;
+  var prev=colOf(focusId);
+  focusId=cols[i].wins[0];
+  lastInsert=null;
+  animateTo(offsetFor(i,prev),0);
+}
+function step(d){
+  if(ov.open){moveSel(d,0);return;}
+  var i=colOf(focusId); if(i<0) return;
+  var j=i+d; if(j<0||j>=cols.length){bump();return;}
+  focusCol(j);
+}
+function bump(){ if(reduced()) return; var r=range(); anim={x:offset,v:(offset<=r[0]+1?-600:600),t:offset,tok:TOK.pop,age:0,limit:0.6}; kick(); }
+function setWidth(frac){
+  var i=colOf(focusId); if(i<0) return;
+  var w=Math.round(AREA.w*frac);
+  cols[i].w=w; memory[wins[focusId].app]=w; lastInsert=null;
+  animateTo(offsetFor(i,i),0); refresh();
+}
+function stepWidth(wider){
+  var i=colOf(focusId); if(i<0) return;
+  var f=cols[i].w/AREA.w, n=null, k;
+  if(wider){for(k=0;k<PRE.length;k++) if(PRE[k]>f+0.02){n=PRE[k];break;}}
+  else{for(k=PRE.length-1;k>=0;k--) if(PRE[k]<f-0.02){n=PRE[k];break;}}
+  if(n==null){toast(wider?'已经是整屏':'再窄就收起窗口');return;}
+  setWidth(n);
+}
+function openWin(){
+  if(!spawnQueue.length){toast('这一页只备了四扇');return;}
+  var id=mk(spawnQueue.shift());
+  if(ended){ended=false;}
+  var i=colOf(focusId), pos=i<0?cols.length:i+1, before=offset;
+  cols.splice(pos,0,{wins:[id],sh:[1],w:widthFor(id)});
+  var prev=i; focusId=id;
+  animateTo(offsetFor(pos,prev),0);
+  lastInsert={id:id,off:before,prev:i>=0?cols[i].wins[0]:null};
+  rebuild(); refresh();
+}
+function closeWin(){
+  var i=colOf(focusId); if(i<0) return;
+  var id=focusId, undo=lastInsert; lastInsert=null;
+  removeWin(id);
+  delete wins[id];
+  var restore=null;
+  if(undo&&undo.id===id){restore=undo.off; if(undo.prev&&colOf(undo.prev)>=0) focusId=undo.prev;}
+  if(colOf(focusId)<0){var j=Math.min(i,cols.length-1); focusId=j>=0?cols[j].wins[0]:null;}
+  rebuild();
+  if(checkEnd()) return;
+  animateTo(restore!=null?clamp(restore,range()[0],range()[1]):(fitCenter()?-(AREA.w-total())/2:clamp(offset,range()[0],range()[1])),0);
+  refresh();
+}
+function removeWin(id){
+  var i=colOf(id); if(i<0) return -1;
+  var c=cols[i], r=c.wins.indexOf(id);
+  c.wins.splice(r,1); c.sh.splice(r,1);
+  if(!c.wins.length){cols.splice(i,1);return i;}
+  c.sh=c.wins.map(function(){return 1/c.wins.length;});
+  return -1;
+}
+function checkEnd(){
+  if(cols.length<=1){
+    ended=true; setOverview(false); anim=null;
+    if(cols.length===1){ cols[0].w=Math.min(cols[0].w,AREA.w); offset=0; restOff=0; }
+    toast('只剩一列：卷轴结束，窗口留在原处'); refresh(); kick(); return true;
+  }
+  return false;
+}
+function consume(d){
+  if(mode==='today'){toast('今天没有：并进只在魔法平铺里出现');return;}
+  var i=colOf(focusId); if(i<0) return;
+  if(cols[i].wins.length>1){expel(d<0?-1:1);return;}
+  var j=i+d; if(!cols[j]){bump();return;}
+  if(cols[j].wins.length>=MAXPER){toast('那一列放不下了');shake(j);return;}
+  var id=focusId; cols.splice(i,1);
+  j=colOf(cols[j<i?j:j-1].wins[0]);
+  cols[j].wins.push(id); cols[j].sh=cols[j].wins.map(function(){return 1/cols[j].wins.length;});
+  lastInsert=null; rebuild();
+  if(checkEnd()) return;
+  animateTo(offsetFor(j,j),0); refresh();
+}
+function expel(side){
+  if(mode==='today'){toast('今天没有：拆成一列');return;}
+  var i=colOf(focusId); if(i<0) return;
+  if(cols[i].wins.length<2){toast('它已经自己一列');return;}
+  var id=focusId, w=cols[i].w; removeWin(id);
+  var pos=side<0?i:i+1;
+  cols.splice(pos,0,{wins:[id],sh:[1],w:w});
+  lastInsert=null; rebuild(); animateTo(offsetFor(pos,i),0); refresh();
+}
+var shakeCol=-1, shakeT=0;
+function shake(j){shakeCol=j;shakeT=performance.now();kick();}
+
+/* 概览里的选择 */
+function moveSel(dc,dr){
+  var i=colOf(sel); if(i<0){sel=focusId;i=colOf(sel);}
+  if(dc){var j=clamp(i+dc,0,cols.length-1);sel=cols[j].wins[0];}
+  if(dr){var c=cols[i],r=c.wins.indexOf(sel);sel=c.wins[clamp(r+dr,0,c.wins.length-1)];}
+  kick();
+}
+function pick(id){
+  focusId=id; setOverview(false);
+  var i=colOf(id); animateTo(offsetFor(i,null),0);
+}
+
+/* 放下：概览里拖一扇 / 从刘海拖一格 */
+function applyDrop(id,h,fromNotch){
+  var w=fromNotch?widthFor(id):null, sc=colOf(id);
+  if(!fromNotch&&sc<0) return;
+  var anchorId, side;
+  if(h.type==='in'){
+    var tc=cols[h.col];
+    if(sc===h.col&&!fromNotch){ // 一列里换上下
+      var c=cols[sc], r=c.wins.indexOf(id); c.wins.splice(r,1); var to=h.row>r?h.row-1:h.row; c.wins.splice(to,0,id); focusId=id; rebuild(); return;
+    }
+    if(tc.wins.length>=MAXPER){h={type:'new',at:h.col+1};}
+    else{
+      anchorId=tc.wins[Math.min(h.row,tc.wins.length-1)]; var after=h.row>=tc.wins.length;
+      var srcW=sc>=0?cols[sc].w:w;
+      if(sc>=0) removeWin(id);
+      var ti=colOf(anchorId), t=cols[ti], ai=t.wins.indexOf(anchorId);
+      t.wins.splice(after?ai+1:ai,0,id); t.sh=t.wins.map(function(){return 1/t.wins.length;});
+      focusId=id; lastInsert=null; rebuild(); return;
+    }
+  }
+  // 新开一列
+  if(!fromNotch&&cols[sc].wins.length===1&&(h.at===sc||h.at===sc+1)) return;
+  var nw=sc>=0?(cols[sc].wins.length===1?cols[sc].w:cols[sc].w):w;
+  var anchor=h.at<cols.length?cols[h.at].wins[0]:null;
+  if(sc>=0) removeWin(id);
+  var pos=anchor?colOf(anchor):cols.length;
+  cols.splice(pos,0,{wins:[id],sh:[1],w:nw});
+  focusId=id; lastInsert=null; rebuild();
+}
+function tuck(id,from){
+  var at=colOf(id);
+  removeWin(id); tucked.push(id);
+  flyer={id:id,from:from,s:{x:0,v:0,t:1}};
+  if(colOf(focusId)<0&&cols.length) focusId=cols[clamp(at,0,cols.length-1)].wins[0];
+  if(sel===id) sel=focusId;
+  rebuild(); notchTo('hw');
+  if(!checkEnd()) animateTo(clamp(offset,range()[0],range()[1]),0);
+  toast('已收进刘海');
+}
+
+/* ---------- DOM ---------- */
+var world, desk, winsEl, thumbsEl, scale=1;
+var els={};
+function winEl(id){
+  var w=wins[id], d=document.createElement('div');
+  d.className='win'; d.dataset.id=id; d.style.setProperty('--h',w.h);
+  d.innerHTML='<div class="bar"><i></i><i></i><i></i><em>'+w.name+'</em></div><div class="body"><s style="top:28px;width:46%"></s><s style="top:54px;width:70%"></s><s style="top:80px;width:58%"></s><s style="top:106px;width:36%"></s></div>';
+  return d;
+}
+function rebuild(){
+  var keep={};
+  cols.forEach(function(c){c.wins.forEach(function(id){keep[id]=1;if(!els[id]){els[id]=winEl(id);winsEl.appendChild(els[id]);}});});
+  Object.keys(els).forEach(function(id){if(!keep[id]){els[id].remove();delete els[id];}});
+}
+function fit(){
+  scale=desk.clientWidth/SW;
+  world.style.transform='scale('+scale+')';
+  desk.style.height=(SH*scale)+'px';
+}
+
+/* 刘海里那一排 */
+function buildNotchUI(){
+  var ui=$('notchui'); ui.innerHTML='';
+  if(notch.shape==='drop'){
+    var l=document.createElement('div'); l.className='nlabel'; l.id='nlab';
+    l.innerHTML='<svg width="18" height="18" viewBox="-9 -9 18 18" aria-hidden="true"><path d="M-6 -1v6h12v-6M0 -7v8M-3.5 -2.5L0 1l3.5-3.5" fill="none" stroke="#fff" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/></svg>松手收进刘海';
+    ui.appendChild(l); return;
+  }
+  if(notch.shape!=='open') return;
+  var g=shapeGeom('open'), x=NCX-g.W/2+NPAD, y=HW.H+10;
+  if(!tucked.length){
+    var e=document.createElement('div'); e.className='nlabel'; e.style.left=x+'px'; e.style.top=(y+40)+'px'; e.innerHTML='<small>没有收着的窗口</small>'; ui.appendChild(e);
+  }
+  tucked.forEach(function(id){
+    var c=document.createElement('div'); c.className='ncell'; c.dataset.cell=id; c.style.left=x+'px'; c.style.top=y+'px';
+    c.style.setProperty('--h',wins[id].h);
+    c.innerHTML='<div class="th"></div><div class="nm">'+wins[id].name+'</div>';
+    c.setAttribute('role','button'); c.setAttribute('aria-label',wins[id].name+'，收着的窗口，拖到桌面放回卷轴');
+    ui.appendChild(c); x+=CELLW+CELLGAP;
+  });
+  if(tucked.length){var dv=document.createElement('div');dv.className='ndiv';dv.style.left=(x+0)+'px';dv.style.top=(y+10)+'px';dv.style.height=(CELLH-20)+'px';ui.appendChild(dv);x+=9;}
+  var lv=document.createElement('div'); lv.className='ncell live'; lv.style.left=x+'px'; lv.style.top=y+'px';
+  lv.innerHTML='<div class="th"></div><div class="nm">正在播放</div>'; ui.appendChild(lv);
+}
+function notchPath(W,H,rb,e){
+  var x0=NCX-W/2, x1=NCX+W/2, k=0.5523, kb=0.64, d='';
+  d+='M'+(x0-e)+' -8 L'+(x0-e)+' 0 ';
+  if(e>0.02) d+='C'+(x0-e+k*e)+' 0 '+x0+' '+(e-k*e)+' '+x0+' '+e+' '; else d+='L'+x0+' 0 ';
+  d+='L'+x0+' '+(H-rb)+' C'+x0+' '+(H-rb+kb*rb)+' '+(x0+rb-kb*rb)+' '+H+' '+(x0+rb)+' '+H+' ';
+  d+='L'+(x1-rb)+' '+H+' C'+(x1-rb+kb*rb)+' '+H+' '+x1+' '+(H-rb+kb*rb)+' '+x1+' '+(H-rb)+' ';
+  if(e>0.02) d+='L'+x1+' '+e+' C'+x1+' '+(e-k*e)+' '+(x1+e-k*e)+' 0 '+(x1+e)+' 0 '; else d+='L'+x1+' 0 ';
+  d+='L'+(x1+e)+' -8 Z';
+  return d;
+}
+
+/* ---------- 画一帧 ---------- */
+function rectT(el,r,base){
+  el.style.width=base.w+'px'; el.style.height=base.h+'px';
+  el.style.transform='translate('+r.x+'px,'+r.y+'px) scale('+(r.w/base.w)+','+(r.h/base.h)+')';
+}
+function render(){
+  var moving=!!anim||(drag&&drag.kind==='swipe');
+  var f=deskFrames(offset,moving);
+  var p=reduced()?(ov.fade>0.001?1:0):clamp(ov.x,0,1.15);
+  var L=cols.length?ovLayout():null;
+  var showOv=(reduced()?ov.fade:ov.x)>0.001&&L;
+  // 摆放和前后
+  var order=[];
+  var pk=macOS()?parked(offset):{L:[],R:[]};
+  cols.forEach(function(c,i){
+    var z=pk.L.indexOf(i)>=0?10+i:pk.R.indexOf(i)>=0?10+(cols.length-i):100;
+    if(c.wins.indexOf(focusId)>=0) z=200;
+    c.wins.forEach(function(id){order.push([id,z]);});
+  });
+  var now=performance.now(), sh=(shakeCol>=0&&now-shakeT<360)?Math.sin((now-shakeT)/360*Math.PI*4)*8*(1-(now-shakeT)/360):0;
+  order.forEach(function(o){
+    var id=o[0], el=els[id]; if(!el) return;
+    var d=f[id]; if(!d) return;
+    var r={x:d.x+(d.col===shakeCol?sh:0),y:d.y,w:d.w,h:d.h};
+    if(showOv&&!reduced()){
+      var t=L.wins[id], tf={x:AREA.x+startOf(d.col)-offset,y:d.y,w:cols[d.col].w,h:d.h};
+      r={x:lerp(tf.x,t.x,p),y:lerp(tf.y,t.y,p),w:lerp(tf.w,t.w,p),h:lerp(tf.h,t.h,p)};
+    }else if(showOv&&reduced()){
+      var t2=L.wins[id]; r={x:t2.x,y:t2.y,w:t2.w,h:t2.h};
+      el.style.opacity=ov.fade;
+    }
+    if(!(showOv&&reduced())) el.style.opacity='';
+    if(showOv&&reduced()&&ov.fade<1){/* 淡入时底下是原来的样子 */}
+    var base={w:Math.max(80,d.w),h:Math.max(60,d.h)};
+    if(showOv){base={w:cols[d.col].w,h:d.h};}
+    rectT(el,r,base);
+    el.style.zIndex=showOv?(drag&&drag.id===id?300:150):o[1];
+    el.classList.toggle('focus',id===focusId&&!showOv);
+    el.classList.toggle('sel',showOv&&id===sel&&!(drag&&drag.kind==='thumb'));
+    el.classList.toggle('ghostslot',!!(drag&&drag.kind==='thumb'&&drag.moved&&drag.id===id));
+  });
+  // 概览底、框
+  var bd=$('backdrop'), vp=$('viewport');
+  var a=reduced()?ov.fade:clamp(ov.x,0,1);
+  bd.style.opacity=showOv?a:0; bd.style.zIndex=120;
+  if(showOv){
+    vp.style.left=L.vp.x+'px';vp.style.top=(L.vp.y-6)+'px';vp.style.width=L.vp.w+'px';vp.style.height=(L.vp.h+12)+'px';vp.style.opacity=a;vp.style.zIndex=160;
+  }else vp.style.opacity=0;
+  // 拖着的那一扇
+  var gh=$('ghost'), hint=$('hint');
+  if(drag&&drag.moved&&(drag.kind==='thumb'||drag.kind==='cell')){
+    var gw=drag.gw, gh2=drag.gh;
+    gh.style.setProperty('--h',wins[drag.id].h);
+    gh.style.width=gw+'px';gh.style.height=gh2+'px';
+    gh.style.transform='translate('+(drag.x-drag.ax*gw)+'px,'+(drag.y-drag.ay*gh2)+'px)';
+    gh.style.opacity=drag.kind==='thumb'?0.75:0.9; gh.style.zIndex=400;
+    var hh=drag.hint;
+    if(hh&&!drag.overNotch){
+      hint.style.opacity=1; hint.style.zIndex=350;
+      if(hh.type==='new'){hint.style.left=(hh.x-3)+'px';hint.style.top=hh.y+'px';hint.style.width='6px';hint.style.height=hh.h+'px';}
+      else{hint.style.left=hh.x+'px';hint.style.top=(hh.y-3)+'px';hint.style.width=hh.w+'px';hint.style.height='6px';}
+    }else hint.style.opacity=0;
+  }else{gh.style.opacity=0;hint.style.opacity=0;}
+  // 飞进刘海
+  if(flyer){
+    var q=clamp(flyer.s.x,0,1), fr=flyer.from;
+    var to={x:NCX-20,y:6,w:40,h:22};
+    var rr={x:lerp(fr.x,to.x,q),y:lerp(fr.y,to.y,q),w:lerp(fr.w,to.w,q),h:lerp(fr.h,to.h,q)};
+    gh.style.setProperty('--h',wins[flyer.id].h);
+    gh.style.width=rr.w+'px';gh.style.height=rr.h+'px';gh.style.transform='translate('+rr.x+'px,'+rr.y+'px)';
+    gh.style.opacity=reduced()?0:(1-q*q); gh.style.zIndex=7;
+  }
+  // 刘海
+  var W=notch.W.x, H=notch.H.x, R=notch.R.x;
+  var e=HW.e*clamp(1-(W-HW.W)/14,0,1);
+  $('notchsvg').innerHTML='<path d="'+notchPath(W,Math.max(H,1),Math.min(R,H/2),e)+'" fill="#000"/>';
+  var ui=$('notchui'), g=shapeGeom(notch.shape), prog=notch.shape==='hw'?0:clamp((W-HW.W)/(g.W-HW.W||1),0,1);
+  ui.style.opacity=reduced()?(notch.shape==='hw'?0:1):clamp((prog-0.55)/0.45,0,1);
+  var lab=$('nlab'); if(lab){lab.style.left=(NCX-lab.offsetWidth/2)+'px';lab.style.top=(HW.H+(84-HW.H)/2-10)+'px';}
+  // 看一眼
+  renderPeek(f);
+  var ci=colOf(focusId); $('expel').disabled=mode==='today'||!(ci>=0&&cols[ci].wins.length>1);
+  // 读数和小地图
+  $('rOff').textContent='位置 '+Math.round(offset)+' 点 / 共 '+Math.round(total())+' 点';
+  renderMini();
+}
+function renderPeek(f){
+  var pe=$('peek');
+  if(!peekOn||ov.open||anim||drag){pe.style.opacity=0;return;}
+  var s=peekOn, r=f[s.id]; if(!r){pe.style.opacity=0;return;}
+  var maxW=AREA.w/2, k=Math.min(1,maxW/r.w, (AREA.h-20)/r.h), w=r.w*k, h=r.h*k;
+  var x=s.side==='L'?AREA.x+SLIVER+6:AREA.x+AREA.w-SLIVER-6-w, y=clamp(r.y+(r.h-h)/2,AREA.y+10,AREA.y+AREA.h-h-10);
+  pe.style.setProperty('--h',wins[s.id].h);
+  pe.style.left=x+'px';pe.style.top=y+'px';pe.style.width=w+'px';pe.style.height=h+'px';pe.style.opacity=1;
+}
+function hidePeek(){clearTimeout(peekT);peekT=null;peekOn=null;}
+function renderMini(){
+  var svg=$('mini'), T=Math.max(total(),AREA.w), pad=40, lo=Math.min(0,offset), hi=Math.max(T,offset+AREA.w);
+  var span=hi-lo+2*pad, sx=1000/span, h='', i;
+  function X(v){return (v-lo+pad)*sx;}
+  for(i=0;i<cols.length;i++){
+    var c=cols[i], x=X(startOf(i)), w=c.w*sx, y=8;
+    for(var k=0;k<c.wins.length;k++){var hh=40*c.sh[k];
+      h+='<rect x="'+(x+1)+'" y="'+(y+1)+'" width="'+Math.max(1,w-2)+'" height="'+Math.max(1,hh-2)+'" rx="3" fill="hsl('+wins[c.wins[k]].h+' 55% 62%)" opacity="'+(c.wins[k]===focusId?1:.6)+'"/>';
+      y+=hh;}
+  }
+  h+='<rect x="'+X(offset)+'" y="3" width="'+(AREA.w*sx)+'" height="50" rx="6" style="fill:none;stroke:var(--accent);stroke-width:2"/>';
+  svg.innerHTML=h;
+}
+
+/* ---------- 每帧 ---------- */
+var raf=0, last=0;
+function kick(){if(!raf){last=performance.now();raf=requestAnimationFrame(tick);}}
+function tick(ts){
+  var dt=Math.min(1/30,(ts-last)/1000||1/60); last=ts; raf=0;
+  var busy=false;
+  if(anim){
+    var s={x:anim.x,v:anim.v,t:anim.t}; springStep(s,dt,anim.tok); anim.x=s.x; anim.v=s.v; anim.age+=dt; offset=anim.x;
+    if(anim.age>=anim.limit||(Math.abs(anim.x-anim.t)<0.5&&Math.abs(anim.v)<20)){offset=anim.t;settle();} else busy=true;
+  }
+  if(drag&&drag.kind==='swipe') busy=true;
+  if(!(drag&&drag.kind==='spread')){
+    if(reduced()){
+      var tgt=ov.open?1:0; if(ov.fade!==tgt){ov.fade=tgt>ov.fade?Math.min(1,ov.fade+dt/0.25):Math.max(0,ov.fade-dt/0.25);busy=true;}
+      ov.x=ov.fade>0.5?1:0; ov.v=0;
+    }else{
+      var o={x:ov.x,v:ov.v,t:ov.t}; springStep(o,dt,TOK.settle); ov.x=o.x; ov.v=o.v;
+      if(Math.abs(ov.x-ov.t)<0.001&&Math.abs(ov.v)<0.01){ov.x=ov.t;ov.v=0;} else busy=true;
+      ov.fade=ov.open?1:0;
+    }
+  }else busy=true;
+  ['W','H','R'].forEach(function(k){var q=notch[k];
+    if(Math.abs(q.x-q.t)>0.05||Math.abs(q.v)>0.5){springStep(q,dt,notch.tok);busy=true;} else {q.x=q.t;q.v=0;}});
+  if(flyer){springStep(flyer.s,dt,TOK.settle);if(Math.abs(flyer.s.x-1)<0.01&&Math.abs(flyer.s.v)<0.05) flyer=null; else busy=true;}
+  if(shakeCol>=0){if(performance.now()-shakeT<360) busy=true; else shakeCol=-1;}
+  render();
+  if(busy) raf=requestAnimationFrame(tick);
+}
+
+/* ---------- 指针 ---------- */
+function pt(e){var r=desk.getBoundingClientRect();return {x:(e.clientX-r.left)/scale,y:(e.clientY-r.top)/scale};}
+function hitWin(p){
+  // 前面的先算
+  var list=[].slice.call(winsEl.children).sort(function(a,b){return (+b.style.zIndex||0)-(+a.style.zIndex||0);});
+  for(var i=0;i<list.length;i++){var r=list[i].getBoundingClientRect(), d=desk.getBoundingClientRect();
+    var x=(r.left-d.left)/scale, y=(r.top-d.top)/scale, w=r.width/scale, h=r.height/scale;
+    if(p.x>=x&&p.x<=x+w&&p.y>=y&&p.y<=y+h) return {id:list[i].dataset.id,x:x,y:y,w:w,h:h};}
+  return null;
+}
+function hitSliver(p){var s=slivers();for(var i=0;i<s.length;i++){var b=s[i].band;if(p.x>=b.x-1&&p.x<=b.x+b.w+1&&p.y>=b.y&&p.y<=b.y+b.h)return s[i];}return null;}
+function overNotch(p){return mode==='target'&&p.y<MENU+84+20&&Math.abs(p.x-NCX)<170;}
+
+function onDown(e){
+  if(e.button!==0) return;
+  var p=pt(e), cellEl=e.target.closest&&e.target.closest('[data-cell]');
+  desk.focus({preventScroll:true});
+  if(cellEl&&notch.shape==='open'){
+    if(mode!=='target'){toast('今天：刘海那一排拖不进卷轴');return;}
+    var id=cellEl.dataset.cell;
+    drag={kind:'cell',id:id,sx:p.x,sy:p.y,x:p.x,y:p.y,moved:false,gw:CELLW*1.4,gh:CELLW*0.9,ax:.5,ay:.3};
+  }else if(ov.open){
+    var h=hitWin(p);
+    if(h) drag={kind:'thumb',id:h.id,sx:p.x,sy:p.y,x:p.x,y:p.y,moved:false,gw:h.w,gh:h.h,ax:(p.x-h.x)/h.w,ay:(p.y-h.y)/h.h};
+    else drag={kind:'bg',sx:p.x,sy:p.y,moved:false};
+  }else{
+    if(ended&&cols.length<2){toast('卷轴已结束：新开一扇再接上');return;}
+    drag={kind:'press',sx:p.x,sy:p.y,x:p.x,y:p.y,moved:false,t0:e.timeStamp/1000};
+  }
+  try{desk.setPointerCapture(e.pointerId);}catch(_){}
+  e.preventDefault();
+}
+function onMove(e){
+  var p=pt(e);
+  if(!drag){hoverPeek(p);return;}
+  var dx=p.x-drag.sx, dy=p.y-drag.sy;
+  if(drag.kind==='press'&&!drag.moved&&Math.hypot(dx,dy)>4){drag.kind='swipe';drag.moved=true;swipeBegin();desk.classList.add('grabbing');}
+  if(drag.kind==='swipe'){swipeMove(dx,e.timeStamp/1000);return;}
+  if((drag.kind==='thumb'||drag.kind==='cell')){
+    if(!drag.moved&&Math.hypot(dx,dy)>4){drag.moved=true;desk.classList.add('grabbing');}
+    if(!drag.moved) return;
+    drag.x=p.x; drag.y=p.y;
+    if(drag.kind==='thumb'&&mode==='today'){drag.hint=null;drag.overNotch=false;kick();return;}
+    drag.overNotch=drag.kind==='thumb'&&overNotch(p);
+    if(drag.overNotch) notchTo('drop'); else if(drag.kind==='thumb') notchTo('hw');
+    if(drag.kind==='cell'&&p.y<HW.H+CELLH+30&&Math.abs(p.x-NCX)<shapeGeom('open').W/2){drag.hint=null;}
+    else drag.hint=ov.open?ovHint(p.x,p.y,ovLayout()):deskHint(p.x);
+    if(drag.kind==='cell'&&drag.hint&&notch.shape==='open') notchTo('hw');
+    kick();
+  }
+}
+function onUp(e){
+  if(!drag) return;
+  var p=pt(e), d=drag; drag=null; desk.classList.remove('grabbing');
+  if(d.kind==='swipe'){swipeEnd(e.timeStamp/1000);kick();return;}
+  if(d.kind==='press'){
+    var s=hitSliver(p);
+    if(s){focusId=s.id;hidePeek();animateTo(offsetFor(s.col,null),0);toast('那一列滑进来了');return;}
+    var h=hitWin(p);
+    if(h){var i=colOf(h.id), prev=colOf(focusId);if(h.id!==focusId)lastInsert=null;focusId=h.id;animateTo(offsetFor(i,prev),0);}
+    kick();return;
+  }
+  if(d.kind==='bg'){if(!d.moved) setOverview(false);return;}
+  if(d.kind==='thumb'){
+    if(!d.moved){pick(d.id);return;}
+    if(mode==='today'){toast('今天：概览里拖动不换位置');kick();return;}
+    if(d.overNotch){var L=ovLayout(),r=L.wins[d.id];tuck(d.id,{x:d.x-d.ax*d.gw,y:d.y-d.ay*d.gh,w:d.gw,h:d.gh});kick();return;}
+    if(d.hint){applyDrop(d.id,d.hint,false);sel=d.id;if(!checkEnd())animateTo(offsetFor(colOf(d.id),null),0);}
+    kick();return;
+  }
+  if(d.kind==='cell'){
+    if(!d.moved||!d.hint){notchTo('open');kick();return;}
+    var id=d.id; tucked.splice(tucked.indexOf(id),1);
+    applyDrop(id,d.hint,true);
+    notchTo('hw');
+    if(!ov.open){var ci=colOf(id);animateTo(offsetFor(ci,null),0);}
+    toast('放回卷轴');kick();
+  }
+}
+function cancelDrag(){if(drag&&(drag.kind==='thumb'||drag.kind==='cell')){drag=null;notchTo('hw');}}
+function hoverPeek(p){
+  if(ov.open||anim){hidePeek();return;}
+  var s=hitSliver(p);
+  if(!s){if(peekOn||peekT){hidePeek();kick();}return;}
+  if(peekOn&&peekOn.id===s.id) return;
+  clearTimeout(peekT);
+  peekT=setTimeout(function(){peekOn=s;kick();},300);
+}
+
+/* 触控板：两指横扫 = 标题栏上两指滑；两指张开（浏览器里是 ctrl + 滚轮）= 卷轴概览 */
+var wheel=null;
+function onWheel(e){
+  if(e.ctrlKey){e.preventDefault();spreadWheel(-e.deltaY);return;}
+  if(Math.abs(e.deltaX)<=Math.abs(e.deltaY)) return;
+  e.preventDefault();
+  if(ov.open||ended) return;
+  var t=e.timeStamp/1000, a=Math.abs(e.deltaX);
+  if(wheel&&wheel.swallow){clearTimeout(wheel.idle);wheel.idle=setTimeout(function(){wheel=null;},140);return;}
+  if(!wheel){wheel={dx:0,peak:0,dec:0,lastA:0};swipeBegin();drag={kind:'swipe',wheel:true};}
+  clearTimeout(wheel.idle);
+  wheel.dx-=e.deltaX; swipeMove(wheel.dx,t);
+  // 系统惯性：幅度连续变小，当作手指已经抬起
+  if(a<wheel.lastA&&a<wheel.peak*0.7) wheel.dec++; else wheel.dec=0;
+  wheel.peak=Math.max(wheel.peak,a); wheel.lastA=a;
+  if(wheel.dec>=4){endWheel(t,true);return;}
+  wheel.idle=setTimeout(function(){endWheel(performance.now()/1000,false);},90);
+}
+function endWheel(t,momentum){
+  if(!wheel) return;
+  drag=null; swipeEnd(t);
+  if(momentum){wheel.swallow=true;wheel.idle=setTimeout(function(){wheel=null;},140);} else wheel=null;
+}
+var spreadAcc=0, spreadIdle=null, spreadSamples=[];
+function spreadWheel(d){
+  if(ended||cols.length<2) return;
+  if(mode==='today'){
+    spreadAcc+=d; clearTimeout(spreadIdle);
+    spreadIdle=setTimeout(function(){ if(spreadAcc>60) setOverview(true); else if(spreadAcc<-60) setOverview(false); spreadAcc=0; },120);
+    return;
+  }
+  if(reduced()){spreadAcc+=d;clearTimeout(spreadIdle);spreadIdle=setTimeout(function(){if(spreadAcc>40)setOverview(true);else if(spreadAcc<-40)setOverview(false);spreadAcc=0;},120);return;}
+  drag=drag||{kind:'spread'};
+  var t=performance.now()/1000;
+  var raw=(ov.raw!=null?ov.raw:ov.x)+d/120;
+  ov.raw=raw; ov.x=raw>1?1+(1-1/((raw-1)*0.5/0.05+1))*0.05:raw<0?-(1-1/((-raw)*0.5/0.05+1))*0.05:raw;
+  spreadSamples.push([t,raw]); while(spreadSamples.length&&t-spreadSamples[0][0]>0.15) spreadSamples.shift();
+  kick();
+  clearTimeout(spreadIdle);
+  spreadIdle=setTimeout(function(){
+    var s=spreadSamples, v=0;
+    if(s.length>1){var sp=s[s.length-1][0]-s[0][0]; if(sp>0.008) v=(s[s.length-1][1]-s[0][1])/sp;}
+    var proj=ov.x+v*0.333; ov.raw=null; spreadSamples=[];
+    if(drag&&drag.kind==='spread') drag=null;
+    setOverview(Math.round(clamp(proj,0,1))===1, v);
+  },120);
+}
+
+/* ---------- 控件 ---------- */
+function refresh(){
+  var today=mode==='today';
+  [].forEach.call(document.querySelectorAll('[data-center]'),function(b){b.disabled=today;b.setAttribute('aria-pressed',!today&&b.dataset.center===center||today&&b.dataset.center==='edge');});
+  $('fitcenter').disabled=mode!=='target';
+  ['consumeL','consumeR','expel'].forEach(function(k){$(k).disabled=today;});
+  var i=colOf(focusId), inCol=i>=0&&cols[i].wins.length>1;
+  $('expel').disabled=today||!inCol;
+  $('rowBtn').disabled=mode!=='target';
+  var notes={
+    niri:'像 niri：停在屏幕外的列整列看不见（合成器能这么做）；横滑不拉紧，松手不越过头尾；停稳 ζ 1、刚度 800（约 0.22 秒）；推算速度 × 0.33 秒；滑完焦点给朝方向最远、整列露着的那一列。刘海不参与。',
+    today:'今天（本地，未发布）：停在外面的列露 10 点；两头橡皮筋；glide 停稳；只有贴边；概览走满才开，拖动不换位置；没有并进、拆出；刘海那一排不接卷轴。',
+    target:'要做的：今天的手感不变，加上居中三种和放得下就居中、并进和拆出、概览跟手打开和拖着换位置、拖进刘海收起、从刘海那一排拖回来、按 App 记住宽度。'
+  };
+  $('modeNote').textContent=notes[mode];
+}
+function setMode(m){
+  mode=m;
+  [].forEach.call(document.querySelectorAll('[data-mode]'),function(b){b.setAttribute('aria-pressed',b.dataset.mode===m);});
+  setOverview(false); notchTo('hw'); hidePeek();
+  offset=clamp(offset,range()[0],range()[1]); animateTo(snapped(offset),0);
+  refresh(); kick();
+}
+
+function init(){
+  world=$('world'); desk=$('desk'); winsEl=$('wins'); thumbsEl=$('thumbs'); reducedEl=$('reduced');
+  try{ if(window.matchMedia('(prefers-reduced-motion: reduce)').matches) reducedEl.checked=true; }catch(e){}
+  reset(); rebuild(); fit(); refresh();
+  offset=snapped(0); restOff=offset;
+  window.addEventListener('resize',function(){fit();kick();});
+  desk.addEventListener('pointerdown',onDown);
+  desk.addEventListener('pointermove',onMove);
+  desk.addEventListener('pointerup',onUp);
+  desk.addEventListener('pointercancel',function(e){if(drag&&drag.kind==='swipe'){drag=null;swipeEnd(e.timeStamp/1000);}else cancelDrag();kick();});
+  desk.addEventListener('pointerleave',function(){if(!drag){hidePeek();kick();}});
+  desk.addEventListener('wheel',onWheel,{passive:false});
+  desk.addEventListener('keydown',function(e){
+    var k=e.key;
+    if(k==='ArrowLeft'){step(-1);e.preventDefault();}
+    else if(k==='ArrowRight'){step(1);e.preventDefault();}
+    else if(k==='ArrowUp'||k==='ArrowDown'){
+      var d=k==='ArrowUp'?-1:1;
+      if(ov.open) moveSel(0,d); else{var i=colOf(focusId),c=cols[i];if(c){var r=c.wins.indexOf(focusId);focusId=c.wins[clamp(r+d,0,c.wins.length-1)];kick();}}
+      e.preventDefault();
+    }
+    else if(k==='Enter'&&ov.open){pick(sel);e.preventDefault();}
+    else if(k==='Escape'){if(drag){cancelDrag();kick();}else if(ov.open)setOverview(false);else if(notch.shape==='open')notchTo('hw');e.preventDefault();}
+    else if(k==='['){consume(-1);} else if(k===']'){consume(1);}
+  });
+  [].forEach.call(document.querySelectorAll('[data-mode]'),function(b){b.addEventListener('click',function(){setMode(b.dataset.mode);});});
+  [].forEach.call(document.querySelectorAll('[data-center]'),function(b){b.addEventListener('click',function(){center=b.dataset.center;var i=colOf(focusId);if(i>=0)animateTo(offsetFor(i,null),0);refresh();});});
+  $('fitcenter').addEventListener('change',function(){animateTo(snapped(offset),0);});
+  [].forEach.call(document.querySelectorAll('[data-w]'),function(b){b.addEventListener('click',function(){setWidth(PRE[+b.dataset.w]);});});
+  $('wider').addEventListener('click',function(){stepWidth(true);});
+  $('narrower').addEventListener('click',function(){stepWidth(false);});
+  $('goL').addEventListener('click',function(){step(-1);});
+  $('goR').addEventListener('click',function(){step(1);});
+  $('open').addEventListener('click',openWin);
+  $('close').addEventListener('click',closeWin);
+  $('consumeL').addEventListener('click',function(){consume(-1);});
+  $('consumeR').addEventListener('click',function(){consume(1);});
+  $('expel').addEventListener('click',function(){expel(1);});
+  $('ovBtn').addEventListener('click',function(){setOverview(!ov.open);});
+  $('rowBtn').addEventListener('click',function(){notchTo(notch.shape==='open'?'hw':'open');});
+  reducedEl.addEventListener('change',function(){ov.fade=ov.open?1:0;ov.x=ov.open?1:0;kick();});
+  var themes=['auto','light','dark'], ti=0;
+  $('theme').addEventListener('click',function(){ti=(ti+1)%3;var t=themes[ti];if(t==='auto')document.documentElement.removeAttribute('data-theme');else document.documentElement.setAttribute('data-theme',t);this.textContent='外观：'+({auto:'自动',light:'浅',dark:'深'})[t];});
+  // 两指张开的滑块：要做的跟手；今天走满才开
+  var sl=$('spread'), sr=$('spreadRead');
+  sl.addEventListener('input',function(){
+    var v=sl.value/1000; sr.textContent=Math.round(v*100)+'%';
+    if(mode==='today'||reduced()||ended||cols.length<2) return;
+    drag={kind:'spread'}; ov.x=v>1?1+(1-1/((v-1)*0.5/0.05+1))*0.05:v; ov.v=0; kick();
+  });
+  sl.addEventListener('change',function(){
+    var v=sl.value/1000;
+    if(drag&&drag.kind==='spread') drag=null;
+    if(mode==='today'||reduced()) setOverview(v>=1); else setOverview(v>=0.5,0);
+    sl.value=0; sr.textContent='0%';
+  });
+  kick();
+}
+init();
+})();
+</script>
+</body>
+</html>

@@ -2,6 +2,7 @@ import Cocoa
 
 /// Preserves the original native grant-consuming route, but the new local launch UI deliberately
 /// uses the default deny-escalation host until native authorization and CLI tests are accepted.
+/// 这条路上的审批是刘海里的紧凑卡（WS2CodexApprovalHost）：排队、按风险给按钮、只认真回执。仍不默认接入。
 extension WS2OwnedCodexSession {
     convenience init(executable:URL,workingDirectory:URL,environment:[String:String],clock:any WS2Clock,
          island:NotchLeaseHub,authentication:NotchAuthenticationController,

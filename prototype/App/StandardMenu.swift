@@ -37,7 +37,7 @@ enum StandardMenu {
                                   build: String)
         -> [NSApplication.AboutPanelOptionKey: Any] {
         let credits = NSMutableAttributedString(
-            string: "卷起挡路的窗口，钉住要一直看的，或者停在 Dock 图标上翻出那个应用的所有窗口。\n",
+            string: "收起挡路的窗口，置顶要一直看的，或者停在 Dock 图标上翻出那个应用的所有窗口。\n",
             attributes: [.font: NSFont.systemFont(ofSize: 11),
                          .foregroundColor: NSColor.secondaryLabelColor])
         credits.append(NSAttributedString(
@@ -158,5 +158,80 @@ enum StandardMenu {
                      keyEquivalent: "m")
         item.submenu = menu
         return item
+    }
+}
+
+// MARK: 菜单栏菜单的顶层结构（D20B）
+
+/// 菜单栏菜单顶层固定 9 项；番茄钟和编程会话只在进行中时多出动态行，不算在 9 项里。
+/// 旧顶层项都没有删：这里记下每一项现在挂在哪里，测试逐条断言。
+enum StatusMenuLayout {
+    static let focusRowID = "ws.menu.dynamic.focus"
+    static let codingRowID = "ws.menu.dynamic.coding"
+    static let pinnedRowID = "ws.menu.dynamic.pinned"
+
+    /// 固定 9 项，按顺序。
+    static let fixedTopLevel: [(id: String, title: String)] = [
+        ("ws.menu.fold", "收起"),
+        ("ws.menu.tuck", "收进刘海"),
+        ("ws.menu.pin", "置顶"),
+        ("ws.menu.arrange", "整理"),
+        ("ws.menu.launchpad", "启动台"),
+        ("ws.menu.folded", "已收起的窗口"),
+        ("ws.menu.settings", "设置…"),
+        ("ws.menu.about", "关于"),
+        ("ws.menu.quit", "退出"),
+    ]
+
+    /// 旧顶层项（以 action 名为键）→ 现在的位置。action 本身与快捷键不变，只换位置。
+    static let legacyLocations: [(action: String, was: String, now: String)] = [
+        ("toggleAction", "顶层", "顶层「收起/展开」"),
+        ("tuckCurrentAction", "顶层", "顶层「收进刘海」"),
+        ("togglePinnedPreviewAction", "顶层", "顶层「置顶」"),
+        ("toggleSlideOverAction", "排列▸", "整理▸"),
+        ("pictureInPictureAction", "排列▸", "整理▸"),
+        ("magicTileAction", "排列▸", "整理▸"),
+        ("toggleCarryAction", "排列▸", "整理▸"),
+        ("tuckAllAction", "顶层", "整理▸「全部收进刘海」"),
+        ("openWindowBrowserPanel", "顶层", "整理▸「选择窗口…」"),
+        ("cancelPinnedPreviewMenuItem", "顶层", "有置顶窗口时的动态行「置顶的窗口（N）▸」"),
+        ("toggleSuspendPinnedPreviewsAction", "顶层", "有置顶窗口时的动态行「置顶的窗口（N）▸」"),
+        ("stopAllPinnedPreviewsAction", "顶层", "有置顶窗口时的动态行「置顶的窗口（N）▸」"),
+        ("toggleLaunchpadAction", "顶层", "顶层「启动台」"),
+        ("unshadeFromMenu", "顶层", "已收起的窗口▸"),
+        ("restoreAll", "顶层", "已收起的窗口▸「全部展开」"),
+        ("showPreferences", "顶层", "顶层「设置…」"),
+        ("showAboutPanel", "顶层（按住 ⌥）", "顶层「关于」（⌥, 不变）"),
+        ("quit", "顶层", "顶层「退出」"),
+        ("ws2ShowFocus", "顶层", "进行中才出现的动态行"),
+        ("ws2GoToCodingSession", "顶层", "进行中才出现的动态行"),
+    ]
+
+    /// 动态行：番茄钟进行中一行，编程会话每个等你的会话一行；都没有就一行也没有。
+    /// 有置顶窗口时再加一行「置顶的窗口（N）▸」。
+    static func dynamicRowIDs(focusActive: Bool, waitingCodingSessions: Int, pinnedCount: Int = 0) -> [String] {
+        (focusActive ? [focusRowID] : []) + Array(repeating: codingRowID, count: max(0, waitingCodingSessions))
+            + (pinnedCount > 0 ? [pinnedRowID] : [])
+    }
+
+    static func pinnedRowTitle(count: Int) -> String { "置顶的窗口（\(count)）" }
+
+    /// 顶层实际可见的固定项 id（不含动态行、分隔线、按住 ⌥ 才显示的隐藏项）。
+    static func visibleFixedIDs(in menu: NSMenu) -> [String] {
+        menu.items.compactMap { item in
+            guard !item.isSeparatorItem, !item.isHidden, let id = item.identifier?.rawValue,
+                  id.hasPrefix("ws.menu."), !id.hasPrefix("ws.menu.dynamic.") else { return nil }
+            return id
+        }
+    }
+
+    /// 悬停预览要认出子菜单里的窗口项：自己是根菜单，或沿 supermenu 能到根菜单。
+    static func belongsToStatusMenu(_ menu: NSMenu, root: NSMenu?) -> Bool {
+        var current: NSMenu? = menu
+        while let m = current {
+            if m === root { return true }
+            current = m.supermenu
+        }
+        return false
     }
 }

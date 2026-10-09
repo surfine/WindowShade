@@ -16,6 +16,17 @@
 	<string>APPL</string>
 	<key>CFBundleShortVersionString</key>
 	<string>1.0.16</string>
+	<key>CFBundleURLTypes</key>
+	<array>
+		<dict>
+			<key>CFBundleURLName</key>
+			<string>com.windowshade.prototype.lock</string>
+			<key>CFBundleURLSchemes</key>
+			<array>
+				<string>windowshade</string>
+			</array>
+		</dict>
+	</array>
 	<key>CFBundleVersion</key>
 	<string>16</string>
 	<key>LSMinimumSystemVersion</key>
@@ -24,10 +35,24 @@
 	<true/>
 	<key>NSAppleEventsUsageDescription</key>
 	<string>在刘海和启动台中显示并控制你正在播放的音乐。</string>
+	<key>NSBonjourServices</key>
+	<array>
+		<string>_companion-link._tcp</string>
+		<string>_mediaremotetv._tcp</string>
+		<string>_airplay._tcp</string>
+	</array>
+	<key>NSCalendarsFullAccessUsageDescription</key>
+	<string>快开会时，刘海提醒你。</string>
 	<key>NSCameraUsageDescription</key>
 	<string>检测你选择的眨眼和转头动作。</string>
+	<key>NSFocusStatusUsageDescription</key>
+	<string>开着专注模式时，刘海少说话。</string>
 	<key>NSHumanReadableCopyright</key>
 	<string>© 2026 Aaron (surfine). MIT License.</string>
+	<key>NSLocalNetworkUsageDescription</key>
+	<string>让 iPhone 上的遥控器找到这台 Mac。</string>
+	<key>NSMotionUsageDescription</key>
+	<string>用 AirPods 的点头和摇头来确认或取消。</string>
 	<key>SUAllowsAutomaticUpdates</key>
 	<false/>
 	<key>SUAutomaticallyUpdate</key>

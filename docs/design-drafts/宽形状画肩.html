@@ -1,0 +1,330 @@
+<!doctype html>
+<html lang="zh-Hans">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>宽形状画肩</title>
+<style>
+:root{
+  color-scheme:light;
+  --page:#eceef2; --panel:#fbfbfc; --line:rgba(0,0,0,.1); --ink:#1d1d1f; --muted:#5f6068; --faint:#6e6f76;
+  --accent:#0058cc; --bad:#b3261e; --ok:#0e6436; --hw:#d6336c;
+  --wall:radial-gradient(90% 70% at 12% 8%,#9cc9ff 0%,transparent 62%),radial-gradient(80% 70% at 92% 18%,#b9b3ff 0%,transparent 60%),linear-gradient(160deg,#cfe3ff,#8fb4ef);
+  --menu:#101114; --grid:rgba(255,255,255,.35);
+  --sans:-apple-system,BlinkMacSystemFont,"SF Pro Text","PingFang SC","Hiragino Sans GB",sans-serif;
+  --mono:ui-monospace,"SF Mono",Menlo,monospace;
+}
+@media (prefers-color-scheme:dark){:root:not([data-theme="light"]){
+  color-scheme:dark;
+  --page:#121316; --panel:#1b1c20; --line:rgba(255,255,255,.12); --ink:#f2f2f5; --muted:#a4a5ad; --faint:#8e8f97;
+  --accent:#5a9cff; --bad:#ff8a80; --ok:#4cc38a; --hw:#ff6b9d;
+  --wall:linear-gradient(160deg,#10192e,#0b1222); --menu:#f4f5f8; --grid:rgba(255,255,255,.22);
+}}
+:root[data-theme="dark"]{
+  color-scheme:dark;
+  --page:#121316; --panel:#1b1c20; --line:rgba(255,255,255,.12); --ink:#f2f2f5; --muted:#a4a5ad; --faint:#8e8f97;
+  --accent:#5a9cff; --bad:#ff8a80; --ok:#4cc38a; --hw:#ff6b9d;
+  --wall:linear-gradient(160deg,#10192e,#0b1222); --menu:#f4f5f8; --grid:rgba(255,255,255,.22);
+}
+*{box-sizing:border-box}
+body{margin:0;background:var(--page);color:var(--ink);font:15px/1.55 var(--sans);padding:28px 16px 64px}
+.wrap{max-width:1040px;margin:0 auto}
+h1{font-size:28px;letter-spacing:-.02em;margin:0 0 8px}
+h2{font-size:17px;margin:34px 0 6px;letter-spacing:-.01em}
+.lede{color:var(--muted);max-width:72ch;margin:0 0 18px}
+.row{display:flex;flex-wrap:wrap;gap:8px 10px;align-items:center;margin:0 0 12px}
+.row .lab{font-size:12px;color:var(--faint);min-width:3.5em}
+button{font:inherit;font-size:14px;color:inherit;background:var(--panel);border:0;border-radius:9px;padding:6px 12px;box-shadow:inset 0 0 0 .5px var(--line);cursor:pointer}
+button[aria-pressed="true"]{background:var(--ink);color:var(--page)}
+button:focus-visible,input:focus-visible{outline:2px solid var(--accent);outline-offset:2px}
+.sw{display:inline-flex;align-items:center;gap:6px;font-size:13px;color:var(--muted)}
+.pair{display:grid;grid-template-columns:1fr 1fr;gap:14px}
+@media (max-width:760px){.pair{grid-template-columns:1fr}}
+.cell{background:var(--panel);border-radius:14px;padding:12px;box-shadow:inset 0 0 0 .5px var(--line)}
+.cell h3{font-size:13px;margin:0 0 2px}
+.cell p{margin:0 0 8px;font-size:12.5px;color:var(--muted)}
+.stage{position:relative;border-radius:10px;overflow:hidden;background:var(--wall);box-shadow:0 0 0 .5px var(--line)}
+.stage svg{display:block;width:100%;height:auto}
+.scrub{display:flex;align-items:center;gap:10px;margin:0 0 12px;font-size:13px;color:var(--muted)}
+.scrub input[type=range]{flex:1;min-width:120px}
+.read{font-family:var(--mono);font-size:12px;color:var(--accent)}
+.card{margin-top:14px;background:var(--panel);border-radius:14px;padding:14px 16px;box-shadow:inset 0 0 0 .5px var(--line)}
+.card h3{font-size:13px;margin:0 0 6px}
+.card p,.card li{margin:0;color:var(--muted);font-size:14px}
+.card ul{margin:0;padding-left:18px}
+.tag-bad{color:var(--bad);font-weight:650}
+.tag-ok{color:var(--ok);font-weight:650}
+.token{font-family:var(--mono);font-size:12px;color:var(--accent)}
+.note{margin-top:10px;font-size:12.5px;color:var(--faint)}
+svg text{font-family:var(--sans)}
+</style>
+</head>
+<body>
+<div class="wrap">
+  <h1>宽形状画肩</h1>
+  <p class="lede">落点、提醒、教学、展开这四个比刘海宽的样子，现在顶角是直角，肩先收到 0 再长。这一张问一件事：让它们也画肩，刘海旁边的轮廓会不会更像一块东西。数字取 Air 15 英寸：刘海 185 × 33.5，底角 10.71，肩 5.06（延伸约 7.4）。小样只在这一页，不动产品。</p>
+
+  <div class="row" role="group" aria-label="哪一种样子">
+    <span class="lab">样子</span>
+    <button type="button" data-state="drop" aria-pressed="true">落点</button>
+    <button type="button" data-state="alert" aria-pressed="false">提醒</button>
+    <button type="button" data-state="teach" aria-pressed="false">教学</button>
+    <button type="button" data-state="open" aria-pressed="false">展开</button>
+    <label class="sw"><input id="reduced" type="checkbox"> 减少动态效果</label>
+  </div>
+  <div class="row" role="group" aria-label="放大">
+    <span class="lab">放大</span>
+    <button type="button" data-zoom="full" aria-pressed="true">全貌</button>
+    <button type="button" data-zoom="start" aria-pressed="false">放大 8×，看刘海边的肩</button>
+    <button type="button" data-zoom="end" aria-pressed="false">放大 8×，看形状外沿的肩</button>
+    <label class="sw"><input id="ghost" type="checkbox" checked> 叠上硬件轮廓</label>
+    <label class="sw"><input id="grid" type="checkbox"> 1 点网格</label>
+  </div>
+  <div class="scrub">
+    <button type="button" id="play">播放一次（长出再收回）</button>
+    <label for="u">手动拖：</label>
+    <input id="u" type="range" min="0" max="1000" value="0" aria-label="从硬件轮廓到这个样子的进度">
+    <span class="read" id="read">0%</span>
+  </div>
+
+  <div class="pair">
+    <div class="cell">
+      <h3>现在：肩先收到 0 再长</h3>
+      <p>顶角变成直角。开头和结尾各多一拍“收肩”。</p>
+      <div class="stage"><svg id="svgA" role="img" aria-label="肩先收到零再长的形状"></svg></div>
+    </div>
+    <div class="cell">
+      <h3>小样：宽形状也画肩</h3>
+      <p>肩一直在，跟着主体外沿一起走，一个形状，一条弹簧。</p>
+      <div class="stage"><svg id="svgB" role="img" aria-label="宽形状也画肩的形状"></svg></div>
+    </div>
+  </div>
+  <p class="note">这一下的弹簧：<span class="token" id="token">catch</span>。左边多出来的“收肩”用 <span class="token">calm</span>，占进度的前 18%。粉线是硬件轮廓；第一帧和最后一帧都应该和它重合。</p>
+
+  <h2>内容绕刘海排，不留额头</h2>
+  <p class="lede">同一个样子（带肩），左边把内容整块放在刘海下面，刘海两侧是两条空黑边；右边图标进左耳、数字进右耳，句子排在下面。</p>
+  <div class="pair">
+    <div class="cell">
+      <h3>留着额头</h3>
+      <p>刘海两侧是空的黑条，内容从刘海下面才开始。</p>
+      <div class="stage"><svg id="svgC" role="img" aria-label="内容全部在刘海下面的版本"></svg></div>
+    </div>
+    <div class="cell">
+      <h3>内容绕刘海排</h3>
+      <p>左耳图标，右耳数字，句子在下。四周内边距一样。</p>
+      <div class="stage"><svg id="svgD" role="img" aria-label="内容绕着刘海排的版本"></svg></div>
+    </div>
+  </div>
+
+  <div class="card">
+    <h3>看的时候对照这几条</h3>
+    <ul>
+      <li>开头第一帧：粉线和黑形状之间有没有缝。</li>
+      <li>左边：肩收到 0 的那一下，顶边有没有一个看得见的台阶。</li>
+      <li>右边：肩外沿在窄的样子（落点）里离屏幕顶角还有多远。</li>
+      <li>肩的描边不能一路描到顶边，这里的小样没有画描边，真实做时要渐隐收尾。</li>
+    </ul>
+  </div>
+  <div class="card">
+    <h3>实现前要先过的守卫</h3>
+    <p>这四个样子的肩外沿都在刘海两侧 34 点以外，那里没有菜单栏空位数据。真要做，只能在进入样子时量一次空位，空位不够就不画肩，回到现在的直角；肩的区域点击穿透，不吃菜单栏的点击。宽度上限随之变成“屏宽 − 2 ×（顶角延伸 + 肩延伸 + 8）”，展开一排的格子数不能比现版本少。</p>
+  </div>
+</div>
+
+<script>
+(function(){
+  /* 令牌（response 秒 / ζ），照 design-system §4.6 */
+  var TOK = {
+    catchDrop:{r:0.40,z:0.80,name:'catch'},
+    bloom:{r:0.42,z:0.84,name:'bloom'},
+    expand:{r:0.40,z:0.92,name:'expand'},
+    calm:{r:0.34,z:1.0,name:'calm'}
+  };
+  /* 硬件：Air 15 英寸，单位 pt */
+  var HW = {w:185, h:33.5, rb:10.71, rs:5.06, e:7.4};
+  var CX = 320;
+  var STATES = {
+    drop :{label:'落点', W:340, H:84,    r:22, tok:'catchDrop'},
+    alert:{label:'提醒', W:400, H:85.5,  r:24, tok:'bloom'},
+    teach:{label:'教学', W:500, H:117.5, r:24, tok:'bloom'},
+    open :{label:'展开', W:560, H:175.5, r:28, tok:'expand'}
+  };
+  var cur = 'drop', zoom = 'full', u = 0, target = 0, vel = 0, raf = 0, last = 0, auto = false;
+  var $ = function(id){return document.getElementById(id)};
+  var svgs = {A:$('svgA'), B:$('svgB'), C:$('svgC'), D:$('svgD')};
+  var reduced = $('reduced'), ghost = $('ghost'), grid = $('grid'), slider = $('u'), readEl = $('read');
+
+  function clamp(x,a,b){return Math.max(a,Math.min(b,x))}
+  function lerp(a,b,t){return a+(b-a)*t}
+
+  /* 形状路径：主体 W×H、底角 rb、两个肩（延伸 e，纵向落差 e）。e = 0 时是直角。 */
+  function shape(cx,W,H,rb,e){
+    var x0=cx-W/2, x1=cx+W/2, k=0.5523, kb=0.64, d='';
+    d += 'M'+(x0-e)+' -8 L'+(x0-e)+' 0 ';
+    if(e>0.02) d += 'C'+(x0-e+k*e)+' 0 '+x0+' '+(e-k*e)+' '+x0+' '+e+' ';
+    else d += 'L'+x0+' 0 ';
+    d += 'L'+x0+' '+(H-rb)+' C'+x0+' '+(H-rb+kb*rb)+' '+(x0+rb-kb*rb)+' '+H+' '+(x0+rb)+' '+H+' ';
+    d += 'L'+(x1-rb)+' '+H+' C'+(x1-rb+kb*rb)+' '+H+' '+x1+' '+(H-rb+kb*rb)+' '+x1+' '+(H-rb)+' ';
+    if(e>0.02) d += 'L'+x1+' '+e+' C'+x1+' '+(e-k*e)+' '+(x1+e-k*e)+' 0 '+(x1+e)+' 0 ';
+    else d += 'L'+x1+' 0 ';
+    d += 'L'+(x1+e)+' -8 Z';
+    return d;
+  }
+
+  /* 两条时间线：A 肩先收到 0 再长；B 肩一直在 */
+  var SHRINK = 0.18;
+  function geomA(p){
+    var s=STATES[cur], e, q;
+    if(p<=SHRINK){ var t=clamp(p/SHRINK,0,1); e=HW.e*(1-ease(t)); q=0; }
+    else{ e=0; q=(p-SHRINK)/(1-SHRINK); }
+    // 回程对称：p 从 1 回到 0 时，先缩主体，最后才长肩，已由同一映射给出
+    return {W:lerp(HW.w,s.W,q), H:lerp(HW.h,s.H,q), rb:lerp(HW.rb,s.r,q), e:e};
+  }
+  function geomB(p){
+    var s=STATES[cur];
+    return {W:lerp(HW.w,s.W,p), H:lerp(HW.h,s.H,p), rb:lerp(HW.rb,s.r,p), e:HW.e};
+  }
+  function ease(t){return t*t*(3-2*t)}
+
+  function viewBox(){
+    var s=STATES[cur];
+    if(zoom==='full') return [CX-300,0,600,Math.max(120,s.H+26)];
+    var fx = zoom==='start' ? CX-HW.w/2 : CX-s.W/2;
+    return [fx-42,0,84,36];
+  }
+
+  function gridLines(vb){
+    var out='', x, y;
+    for(x=Math.ceil(vb[0]);x<=vb[0]+vb[2];x++) out+='<line x1="'+x+'" y1="'+vb[1]+'" x2="'+x+'" y2="'+(vb[1]+vb[3])+'" />';
+    for(y=Math.ceil(vb[1]);y<=vb[1]+vb[3];y++) out+='<line x1="'+vb[0]+'" y1="'+y+'" x2="'+(vb[0]+vb[2])+'" y2="'+y+'" />';
+    return '<g stroke="var(--grid)" stroke-width="'+(vb[2]/84*0.05).toFixed(3)+'">'+out+'</g>';
+  }
+
+  function drawPair(svg,g){
+    var vb=viewBox(), mw=vb[2]/600, menuH=34;
+    var h='<rect x="'+vb[0]+'" y="0" width="'+vb[2]+'" height="'+menuH+'" fill="var(--menu)" opacity=".10"/>';
+    h+='<path d="'+shape(CX,g.W,g.H,g.rb,g.e)+'" fill="#000"/>';
+    if(ghost.checked){
+      h+='<path d="'+shape(CX,HW.w,HW.h,HW.rb,HW.e)+'" fill="none" stroke="var(--hw)" stroke-width="'+(zoom==='full'?0.9:0.22)+'" stroke-dasharray="'+(zoom==='full'?'3 2':'0.9 0.6')+'"/>';
+    }
+    if(grid.checked && zoom!=='full') h+=gridLines(vb);
+    svg.setAttribute('viewBox',vb.join(' '));
+    svg.setAttribute('preserveAspectRatio','xMidYMin meet');
+    svg.innerHTML=h;
+  }
+
+  function render(){
+    var a=geomA(u), b=geomB(u);
+    if(reduced.checked){ // 减少动态效果：形状直接到位，只看终点和起点
+      var done=u>=0.5?1:0; a=geomA(done); b=geomB(done);
+    }
+    drawPair(svgs.A,a); drawPair(svgs.B,b);
+    readEl.textContent=Math.round(u*100)+'%';
+    slider.value=Math.round(u*1000);
+  }
+
+  /* 内容对比：状态完全展开后的样子，肩都画 */
+  var ICON = {
+    drop:'M-6 -4h12v8h-12z',
+    alert:'M-5 -6a5 5 0 0 1 10 0v5l2 3h-14l2-3z',
+    teach:'M0 -7a5 5 0 0 1 3 9v2h-6v-2a5 5 0 0 1 3-9z',
+    open:'M-6 -5h5v4h-5zM1 -5h5v4h-5zM-6 1h5v4h-5zM1 1h5v4h-5z'
+  };
+  var COPY = {
+    drop :{ear:'3',  title:'松手就收起', sub:'3 个窗口',            btn:null},
+    alert:{ear:'82%',title:'妙控鼠标已连接', sub:'电量充足',          btn:null},
+    teach:{ear:'1/3',title:'指针停在刘海上，窗口就展开', sub:'试一次，之后不再提示', btn:'知道了'},
+    open :{ear:'6',  title:'音乐', sub:'正在播放 · September',     btn:'tiles'}
+  };
+  function drawContent(svg,ears){
+    var s=STATES[cur], c=COPY[cur], W=s.W, H=s.H, x0=CX-W/2, x1=CX+W/2, pad=14, nh=HW.h;
+    var vb=[CX-300,0,600,Math.max(120,H+26)];
+    var h='<path d="'+shape(CX,W,H,s.r,HW.e)+'" fill="#000"/>';
+    h+='<rect x="'+(CX-HW.w/2)+'" y="0" width="'+HW.w+'" height="'+nh+'" fill="none" stroke="var(--hw)" stroke-width=".8" stroke-dasharray="3 2"/>';
+    var ink='#fff', dim='rgba(255,255,255,.62)';
+    function icon(cx,cy){return '<g transform="translate('+cx+' '+cy+')"><circle r="12" fill="rgba(255,255,255,.16)"/><g transform="scale(.9)"><path d="'+ICON[cur]+'" fill="'+ink+'"/></g></g>';}
+    if(!ears){
+      // 额头：刘海两侧空着，内容从刘海下面开始
+      var y=nh+pad;
+      h+=icon(x0+pad+12,y+12);
+      h+='<text x="'+(x0+pad+32)+'" y="'+(y+9)+'" font-size="13" font-weight="650" fill="'+ink+'">'+c.title+'</text>';
+      h+='<text x="'+(x0+pad+32)+'" y="'+(y+24)+'" font-size="11" fill="'+dim+'">'+c.sub+'</text>';
+      h+='<text x="'+(x1-pad)+'" y="'+(y+9)+'" font-size="12" font-weight="700" text-anchor="end" fill="'+ink+'">'+c.ear+'</text>';
+      if(c.btn==='tiles') h+=tiles(x0+pad,y+36,W-2*pad,H-(y+36)-pad);
+      else if(c.btn) h+=btn(x1-pad,H-pad,c.btn);
+    }else{
+      // 绕刘海：图标进左耳，数字进右耳，句子在下
+      var ey=nh/2;
+      h+=icon(x0+pad+12,ey);
+      h+='<text x="'+(x1-pad)+'" y="'+(ey+4)+'" font-size="12" font-weight="700" text-anchor="end" fill="'+ink+'">'+c.ear+'</text>';
+      var ty=nh+pad+8;
+      h+='<text x="'+(x0+pad)+'" y="'+ty+'" font-size="13" font-weight="650" fill="'+ink+'">'+c.title+'</text>';
+      h+='<text x="'+(x0+pad)+'" y="'+(ty+15)+'" font-size="11" fill="'+dim+'">'+c.sub+'</text>';
+      if(c.btn==='tiles') h+=tiles(x0+pad,ty+26,W-2*pad,H-(ty+26)-pad);
+      else if(c.btn) h+=btn(x1-pad,H-pad,c.btn);
+    }
+    svg.setAttribute('viewBox',vb.join(' '));
+    svg.setAttribute('preserveAspectRatio','xMidYMin meet');
+    svg.innerHTML=h;
+  }
+  function btn(xr,yb,t){return '<rect x="'+(xr-64)+'" y="'+(yb-22)+'" width="64" height="22" rx="11" fill="rgba(255,255,255,.18)"/><text x="'+(xr-32)+'" y="'+(yb-7)+'" font-size="11" text-anchor="middle" fill="#fff">'+t+'</text>';}
+  function tiles(x,y,w,hh){
+    var n=5, gap=8, tw=(w-gap*(n-1))/n, o='';
+    for(var i=0;i<n;i++) o+='<rect x="'+(x+i*(tw+gap))+'" y="'+y+'" width="'+tw+'" height="'+Math.max(30,hh)+'" rx="12" fill="rgba(255,255,255,.14)"/>';
+    return o;
+  }
+
+  function renderAll(){
+    render();
+    drawContent(svgs.C,false); drawContent(svgs.D,true);
+    $('token').textContent=TOK[STATES[cur].tok].name;
+  }
+
+  /* 弹簧：一根给进度 u，目标 0 或 1 */
+  function step(ts){
+    var tk=TOK[STATES[cur].tok];
+    var dt=Math.min(0.032,(ts-last)/1000||0.016); last=ts;
+    var w=2*Math.PI/tk.r, k=w*w, c=2*tk.z*w;
+    var acc=k*(target-u)-c*vel;
+    vel+=acc*dt; u+=vel*dt;
+    render();
+    if(Math.abs(target-u)<0.0006 && Math.abs(vel)<0.004){
+      u=target; vel=0; render();
+      if(auto && target===1){ auto=false; target=0; raf=setTimeout(function(){last=performance.now();raf=requestAnimationFrame(step)},900); return; }
+      auto=false; raf=0; return;
+    }
+    raf=requestAnimationFrame(step);
+  }
+  function play(){
+    if(raf){cancelAnimationFrame(raf);clearTimeout(raf);raf=0}
+    u=0; vel=0; target=1; auto=true;
+    if(reduced.checked){ u=1; render(); setTimeout(function(){u=0;render()},1200); return; }
+    last=performance.now(); raf=requestAnimationFrame(step);
+  }
+
+  $('play').addEventListener('click',play);
+  slider.addEventListener('input',function(){
+    if(raf){cancelAnimationFrame(raf);clearTimeout(raf);raf=0}
+    u=slider.value/1000; vel=0; target=u; auto=false; render();
+  });
+  [].forEach.call(document.querySelectorAll('[data-state]'),function(b){
+    b.addEventListener('click',function(){
+      cur=b.dataset.state;
+      [].forEach.call(document.querySelectorAll('[data-state]'),function(x){x.setAttribute('aria-pressed',x===b)});
+      renderAll();
+    });
+  });
+  [].forEach.call(document.querySelectorAll('[data-zoom]'),function(b){
+    b.addEventListener('click',function(){
+      zoom=b.dataset.zoom;
+      [].forEach.call(document.querySelectorAll('[data-zoom]'),function(x){x.setAttribute('aria-pressed',x===b)});
+      render();
+    });
+  });
+  [ghost,grid,reduced].forEach(function(el){el.addEventListener('change',render)});
+  try{ if(window.matchMedia('(prefers-reduced-motion: reduce)').matches) reduced.checked=true; }catch(e){}
+  renderAll();
+})();
+</script>
+</body>
+</html>

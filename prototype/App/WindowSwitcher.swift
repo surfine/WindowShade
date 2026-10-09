@@ -193,9 +193,8 @@ final class WindowSwitcher {
         guard isOpen, items.indices.contains(selected) else { return }
         let item = items[selected]
         if item.kind == .window, let element = appWindows(pid: item.pid).first(where: { windowID(of: $0) == item.id }) {
-            var button: CFTypeRef?
-            if AXUIElementCopyAttributeValue(element, kAXCloseButtonAttribute as CFString, &button) == .success, let button {
-                AXUIElementPerformAction(button as! AXUIElement, kAXPressAction as CFString)
+            if let button = axButtonElement(element, kAXCloseButtonAttribute as String) {
+                AXUIElementPerformAction(button, kAXPressAction as CFString)
             }
         }
         items.remove(at: selected)

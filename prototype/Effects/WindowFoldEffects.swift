@@ -195,7 +195,7 @@ final class WindowFoldEffects {
       if let content {
         shareable = content
       } else {
-        shareable = try await SCShareableContent.excludingDesktopWindows(false, onScreenWindowsOnly: false)
+        shareable = try await OwnWindowContent.content(requiring: ids)
       }
       guard let display = shareable.displays.first(where: { $0.displayID == did }) else {
         throw EffectError.unavailable("窗口所在屏幕不可用")
@@ -300,8 +300,7 @@ final class WindowFoldEffects {
         // Show the valid stored frame immediately. A hidden window commonly produces no
         // fresh frame until restored; waiting for it delayed every unfold by the timeout.
         job.captureTask = Task { @MainActor [weak session] in
-          guard let content = try? await SCShareableContent.excludingDesktopWindows(
-                  false, onScreenWindowsOnly: false),
+          guard let content = try? await OwnWindowContent.content(requiring: [id]),
                 let window = content.windows.first(where: { $0.windowID == id }) else { return }
           try? await session?.start(
             filter: SCContentFilter(desktopIndependentWindow: window),
