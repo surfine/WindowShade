@@ -936,6 +936,108 @@
         }
       }
     },
+    "settings.hoverGuard.name": {
+      "extractionState": "manual",
+      "localizations": {
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "悬停不误触"
+          }
+        },
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Hover guard"
+          }
+        }
+      }
+    },
+    "settings.hoverGuard.sub": {
+      "extractionState": "manual",
+      "localizations": {
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "指针在刘海上停一下才展开，路过不展开"
+          }
+        },
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Expands the notch only when the pointer rests on it, not when it passes by"
+          }
+        }
+      }
+    },
+    "settings.stripTitleDrag.name": {
+      "extractionState": "manual",
+      "localizations": {
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "拖标题栏换位置"
+          }
+        },
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Drag the title bar to reorder"
+          }
+        }
+      }
+    },
+    "settings.stripTitleDrag.sub": {
+      "extractionState": "manual",
+      "localizations": {
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "在卷轴里拖标题栏换列；拉远一点才离开卷轴"
+          }
+        },
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Drag a title bar in the strip to swap columns; pull further to leave the strip"
+          }
+        }
+      }
+    },
+    "settings.stripWidths.name": {
+      "extractionState": "manual",
+      "localizations": {
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "记住每个 App 的列宽"
+          }
+        },
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Remember each app's column width"
+          }
+        }
+      }
+    },
+    "settings.stripWidths.sub": {
+      "extractionState": "manual",
+      "localizations": {
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "改过宽度的 App，下次开在卷轴里还是那个宽度"
+          }
+        },
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "An app you resized opens at that width in the strip next time"
+          }
+        }
+      }
+    },
     "silent.activity.airdrop": {
       "extractionState": "manual",
       "localizations": {

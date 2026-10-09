@@ -6,9 +6,11 @@ import Cocoa
 /// 录入：再写 `FaceScan.experiment.enrollRequested -bool true`，下次启动或解锁时（屏幕没锁）开相机
 ///       最多 20 秒，取 5 帧只有一张脸的画面，特征存进钥匙串（FaceTemplateKeychainStore）。
 /// 删除：`FaceScan.experiment.deleteTemplates -bool true`，下次启动或解锁时删掉这个模型版本的模板。
-/// 相机：默认第一台；`FaceScan.experiment.cameraID` 可指定。
-/// 挑战：`FaceScan.experiment.challenge`（默认关）。打开后，认出主人时再用同一台相机做一次随机转头挑战
-///       （看镜头、随机向左或向右转头、再看回来，最多 10 秒），日志多写一行 challenge passed 或 failed(原因)。
+/// 相机：只用内建镜头（传输类型 'bltn'），默认第一台内建；`FaceScan.experiment.cameraID` 可指定，
+///       指定的不是内建（外接显示器、iPhone、虚拟相机）就不扫、不录，也不悄悄换一台。
+/// 挑战：`FaceScan.experiment.challenge`（默认关）。打开后，认出主人时接着用同一个相机订阅做一次随机转头挑战
+///       （看镜头、随机向左或向右转头、再看回来，最多 10 秒），中间不关相机；挑战里每一帧都要再认出是本人、
+///       人脸框要连续，日志多写一行 challenge passed 或 failed(原因)。
 ///       参照的眼睛睁开程度来自录入时的模板；开着这个键之后需要重新录入一次。仍然只是证据。
 /// 后端：`FaceScan.experiment.backend`，"vision"（默认）或 "arcface"（这份源码里没有，选了退回 vision）。
 ///       模板按后端的模型版本分开存，换后端要重新录入。
@@ -65,7 +67,6 @@ import Cocoa
     private var templates: [FaceTemplate] = []
     private var guardian = FaceScanGuard(templates: [])
     private var lockGeneration: UInt64 = 0
-    private var frameCounter: UInt64 = 0
     private var scanID: UInt64?
     private var cameraTask: Task<Void, Never>?
     private var epoch: UInt64 = 0
@@ -73,6 +74,10 @@ import Cocoa
     private var lastEnrolledAt: Double?
     private var challenge: FaceScanChallengeFlow?
     private var challengeLockGeneration: UInt64 = 0
+    /// 这次扫描用的相机（已过准入）；挑战证据里的镜头类别取自它。
+    private var scanCamera: FaceCameraDescriptor?
+    /// 开着挑战时扫描和挑战共用一个订阅，租约放长；比对阶段仍在原来的 6 秒处收尾。
+    private var scanDeadline: Double?
     // 只在主线程写；deinit 里移除时已没有别的引用。
     nonisolated(unsafe) private var observers: [(NotificationCenter, NSObjectProtocol)] = []
 
@@ -145,39 +150,54 @@ import Cocoa
         scanID = nil
     }
 
-    private func cameraID() -> String? {
-        if let configured = defaults.string(forKey: Self.cameraKey), !configured.isEmpty { return configured }
-        return FaceObservationSource.devices().first?.id
+    /// 过了准入的内建镜头；没有就是 nil（见 FaceCameraAdmission）。
+    private func identityCamera() -> FaceCameraDescriptor? {
+        FaceCameraAdmission.identityCamera(among: FaceObservationSource.devices(),
+                                           configured: defaults.string(forKey: Self.cameraKey))
     }
 
     // MARK: - 锁屏时扫描（只产证据）
 
     private func beginScan() {
         guard enrolling == nil, !templates.isEmpty,
-              FaceObservationSource.authorizationStatus == .authorized, let camera = cameraID() else { return }
+              FaceObservationSource.authorizationStatus == .authorized, let camera = identityCamera() else { return }
         switch guardian.wake(at: CACurrentMediaTime(), lock: lockState(), lockGeneration: lockGeneration) {
         case .notLocked: stopCamera(); return
         case .started(let id): scanID = id
         case .coalesced: break
         }
         guard cameraTask == nil else { return }
-        openCamera(camera) { [weak self] frame in self?.scanFrame(frame) }
+        scanCamera = camera
+        var lease = Self.scanLease
+        if defaults.bool(forKey: Self.challengeKey) {
+            // 挑战接在比对后面、用同一个订阅：租约要够比对 6 秒加挑战 12 秒；比对阶段自己在 6 秒处收尾。
+            lease += Self.challengeLease
+            scanDeadline = CACurrentMediaTime() + Self.scanLease
+        }
+        openCamera(camera.id, lease: lease) { [weak self] frame in self?.lockedFrame(frame) }
+    }
+
+    /// 锁屏时的帧：挑战开始后交给挑战，之前交给比对。
+    private func lockedFrame(_ frame: FaceObservation) {
+        if challenge != nil { challengeFrame(frame) } else { scanFrame(frame) }
     }
 
     private func scanFrame(_ frame: FaceObservation) {
-        frameCounter &+= 1
+        if let scanDeadline, frame.observedAt >= scanDeadline { stopCamera(); return }
         let identity = frame.identity
         let faces = frame.faces.enumerated().map { index, face in
             FaceScanFace(widthFraction: Double(face.boundingBox.width),
                          embedding: identity?.faceIndex == index ? identity?.embedding : nil)
         }
-        let scan = FaceScanFrame(frameNumber: frameCounter, capturedAt: frame.observedAt,
+        // 相机、代次、帧号都用 Hub 给的，守卫不自己数帧。
+        let scan = FaceScanFrame(cameraID: frame.cameraID, generation: frame.generation, sequence: frame.sequence,
+                                 capturedAt: frame.observedAt,
                                  modelVersion: identity?.modelVersion ?? modelVersion, faces: faces)
         switch guardian.receive(scan, lock: lockState(), lockGeneration: lockGeneration) {
         case .owner(let evidence):
             // 只是证据：不进授权账本，不解锁。
-            if defaults.bool(forKey: Self.challengeKey) {
-                startChallenge(scanID: evidence.scanID, matchedAt: frame.observedAt)
+            if defaults.bool(forKey: Self.challengeKey), scanDeadline != nil {
+                startChallenge(scanID: evidence.scanID)
             } else {
                 log("face evidence: owner match scan=\(evidence.scanID)")
                 stopCamera()
@@ -192,27 +212,31 @@ import Cocoa
         }
     }
 
-    /// 认出主人之后：同一台相机换一个更长的租约，用后续的帧做转头挑战。证据只写日志。
-    private func startChallenge(scanID: UInt64, matchedAt: Double) {
-        guard let camera = cameraID() else { stopCamera(); return }
+    /// 认出主人之后：不关相机，同一个订阅的后续帧直接做转头挑战。证据只写日志。
+    private func startChallenge(scanID: UInt64) {
         var flow = FaceScanChallengeFlow(direction: (try? OwnerTurnDirection.random()) ?? .left,
-                                         enrolledEyeOpenness: FaceScanChallengeFlow.enrolledEyeOpenness(from: templates))
-        flow.ownerMatched(at: matchedAt)
+                                         enrolledEyeOpenness: FaceScanChallengeFlow.enrolledEyeOpenness(from: templates),
+                                         cameraClass: scanCamera?.cameraClass ?? .external)
+        // 这个实验没有画面：提示“出现”取主线程开始挑战的这一刻，不是比对那一帧的拍摄时刻。
+        flow.ownerMatched(presentedAt: CACurrentMediaTime())
         if let summary = flow.logSummary {
             log("face evidence: owner match scan=\(scanID) + \(summary)")
             stopCamera(); return
         }
-        stopCamera()
         challenge = flow
         challengeLockGeneration = lockGeneration
+        scanDeadline = nil
         self.scanID = scanID
-        openCamera(camera, lease: Self.challengeLease) { [weak self] frame in self?.challengeFrame(frame) }
     }
 
     private func challengeFrame(_ frame: FaceObservation) {
         guard var flow = challenge else { return }
         guard lockState().isReallyLocked, lockGeneration == challengeLockGeneration else { stopCamera(); return }
-        flow.receive(frame)
+        let before = flow.phase
+        flow.receive(frame, identityMatched: FaceScanChallengeFlow.identityMatched(frame, guardian: guardian,
+                                                                                     modelVersion: modelVersion))
+        // 换到下一步：同上，没有画面，提示“出现”取主线程处理到这一步的时刻。
+        if flow.phase != before, case .challenging = flow.phase { flow.promptShown(at: CACurrentMediaTime()) }
         challenge = flow
         if let summary = flow.logSummary {
             challenge = nil
@@ -224,8 +248,8 @@ import Cocoa
     // MARK: - 录入（只在没锁时）
 
     private func enroll() {
-        guard lockState() == .unlocked, let camera = cameraID() else {
-            log("face enrollment: skipped, no camera or screen locked"); return
+        guard lockState() == .unlocked, let camera = identityCamera() else {
+            log("face enrollment: skipped, no built-in camera or screen locked"); return
         }
         stopCamera()
         enrolling = []; lastEnrolledAt = nil
@@ -236,7 +260,7 @@ import Cocoa
             guard self.epoch == token, !Task.isCancelled else { return }
             guard granted else { self.log("face enrollment: camera not allowed"); self.stopCamera(); return }
             self.cameraTask = nil
-            self.openCamera(camera, lease: Self.enrollLease) { [weak self] frame in self?.enrollFrame(frame) }
+            self.openCamera(camera.id, lease: Self.enrollLease) { [weak self] frame in self?.enrollFrame(frame) }
         }
     }
 
@@ -249,8 +273,10 @@ import Cocoa
               lastEnrolledAt.map({ frame.observedAt - $0 >= Self.enrollSpacing }) ?? true else { return }
         lastEnrolledAt = frame.observedAt
         let eyes = [frame.leftEyeOpenness, frame.rightEyeOpenness].compactMap { $0 }
+        // 录入序号接在已有模板和这一轮已收的后面递增，不读墙钟。
+        let sequence = FaceTemplateSet.nextEnrollmentSequence(after: templates + collected, modelVersion: modelVersion)
         collected.append(FaceTemplate(embedding: embedding, modelVersion: modelVersion,
-                                      enrolledAt: Date().timeIntervalSince1970,
+                                      enrolledAt: sequence,
                                       eyeOpenness: eyes.count == 2 ? eyes.min() : nil))
         enrolling = collected
         guard collected.count >= Self.enrollFrameCount else { return }
@@ -305,5 +331,6 @@ import Cocoa
         cameraTask?.cancel(); cameraTask = nil
         source.stop()
         enrolling = nil; lastEnrolledAt = nil
+        scanCamera = nil; scanDeadline = nil
     }
 }

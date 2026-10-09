@@ -233,7 +233,7 @@ final class NotchAuthenticationView: NSView, NotchInteractiveContent {
     private let native: LAAuthenticationView
     private let purpose = NSTextField(labelWithString: "")
     private let cancelButton = NSButton(title: "取消", target: nil, action: nil)
-    private let check = NSImageView()
+    private let check = AuthorizationCheckmark()
     private(set) var isConfirmed = false
     init(context: LAContext, reason: String) {
         self.reason = reason
@@ -247,8 +247,7 @@ final class NotchAuthenticationView: NSView, NotchInteractiveContent {
         cancelButton.font = .systemFont(ofSize: 11); cancelButton.contentTintColor = .white.withAlphaComponent(0.65)
         cancelButton.target = self; cancelButton.action = #selector(cancelRequest)
         cancelButton.keyEquivalent = "\u{1b}"
-        check.image = NSImage(systemSymbolName: "checkmark", accessibilityDescription: "已确认")
-        check.contentTintColor = .white; check.isHidden = true
+        check.setAccessibilityLabel("已确认"); check.isHidden = true
         for view in [native, purpose, cancelButton, check] { addSubview(view) }
         setAccessibilityLabel("WindowShade Touch ID 认证")
     }
@@ -263,7 +262,7 @@ final class NotchAuthenticationView: NSView, NotchInteractiveContent {
     /// 对勾出现。`text` 为 nil 时那一行先不变，等调用方的真回执（showReceipt）。
     func confirm(_ text: String? = AuthorizationCopy.confirmed) {
         native.removeFromSuperview(); isConfirmed = true
-        check.isHidden = false; cancelButton.isHidden = true
+        check.isHidden = false; check.pop(reduceMotion: Motion.reduced); cancelButton.isHidden = true
         if let text { purpose.stringValue = text; announce(text) }
     }
     func showReceipt(_ text: String, succeeded: Bool) {
@@ -275,4 +274,49 @@ final class NotchAuthenticationView: NSView, NotchInteractiveContent {
     }
     @objc private func cancelRequest() { onCancel?() }
     override func cancelOperation(_ sender: Any?) { onCancel?() }
+}
+
+/// 授权对勾：用描边画出来。出现时 scale 0.9→1、opacity 0→1（0.18 秒）、描边从头画到尾；
+/// 减少动态效果时只淡入。只在验签成功后由 confirm() 叫出，失败路径永远不画。
+final class AuthorizationCheckmark: NSView {
+    static let duration: CFTimeInterval = 0.18
+    private let stroke = CAShapeLayer()
+    override init(frame: NSRect) {
+        super.init(frame: frame)
+        wantsLayer = true
+        stroke.fillColor = nil
+        stroke.strokeColor = NSColor.white.cgColor
+        stroke.lineWidth = 2.4
+        stroke.lineCap = .round; stroke.lineJoin = .round
+        layer?.addSublayer(stroke)
+        setAccessibilityElement(true); setAccessibilityRole(.image)
+    }
+    required init?(coder: NSCoder) { fatalError("init(coder:) is not used") }
+    override func layout() {
+        super.layout()
+        stroke.frame = bounds
+        let w = bounds.width, h = bounds.height
+        let path = CGMutablePath()
+        // layer 的 y 向上：短撇在左下，长捺向右上。
+        path.move(to: CGPoint(x: w * 0.20, y: h * 0.50))
+        path.addLine(to: CGPoint(x: w * 0.42, y: h * 0.28))
+        path.addLine(to: CGPoint(x: w * 0.80, y: h * 0.72))
+        stroke.path = path
+    }
+    func pop(reduceMotion: Bool) {
+        guard let layer else { return }
+        layer.removeAllAnimations(); stroke.removeAllAnimations()
+        let timing = CAMediaTimingFunction(name: .easeOut)
+        let fade = CABasicAnimation(keyPath: "opacity")
+        fade.fromValue = 0; fade.toValue = 1; fade.duration = Self.duration; fade.timingFunction = timing
+        layer.add(fade, forKey: "check.fade")
+        guard !reduceMotion else { return }
+        let draw = CABasicAnimation(keyPath: "strokeEnd")
+        draw.fromValue = 0; draw.toValue = 1; draw.duration = Self.duration; draw.timingFunction = timing
+        stroke.add(draw, forKey: "check.draw")
+        let scale = CABasicAnimation(keyPath: "transform.scale")
+        scale.fromValue = 0.9; scale.toValue = 1
+        scale.duration = Self.duration; scale.timingFunction = timing
+        stroke.add(scale, forKey: "check.scale")
+    }
 }

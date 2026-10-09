@@ -134,6 +134,10 @@ extension AppDelegate {
     }
     action("画中画", "pip", #selector(pictureInPictureAction), .pictureInPicture, enabled: ax && screen, menu: arrangement)
     action("魔法平铺", "wand.and.stars", #selector(magicTileAction), .magicTile, enabled: ax, menu: arrangement)
+    // 卷轴概览：和主菜单“窗口”里那一项同一个去处，卷轴没开时灰着（由 StripOverviewMenuTarget 验证）。
+    MainActor.assumeIsolated {
+      arrangement.addItem(StandardMenu.stripOverviewItem(id: StatusMenuLayout.stripOverviewRowID, symbol: "rectangle.split.3x1"))
+    }
     if NSScreen.screens.count > 1 { action("移到另一块屏幕", "display", #selector(nextDisplayAction), .nextDisplay, enabled: ax, menu: arrangement) }
     action("带到每张桌面", "square.on.square", #selector(toggleCarryAction), .carry, enabled: ax, menu: arrangement)
     if appearanceMode == .proxyTitleBar {

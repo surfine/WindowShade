@@ -202,6 +202,8 @@ final class StripOverview {
     func close(picking id: CGWindowID?, moving move: (CGWindowID, ScrollStrip.Drop)? = nil, tucking tuck: CGWindowID? = nil) {
         guard !closed else { return }
         closed = true
+        // 拖着靠近刘海时收起（Esc、换桌面、锁屏）：落点马上收回，不等面板淡出。
+        view.cancelDrag()
         stopProgress()
         progressDone = nil
         panel.onResignKey = nil
@@ -233,6 +235,18 @@ final class StripOverview {
     func pickForProbe(_ id: CGWindowID) { close(picking: id) }
     func moveForProbe(_ id: CGWindowID, _ drop: ScrollStrip.Drop) { view.commitMove(id, drop) }
     func tuckForProbe(_ id: CGWindowID) { close(picking: nil, tucking: id) }
+
+    // MARK: 从刘海拖回来的一格（SS-04）
+
+    /// 从刘海拖出来的一格（屏幕坐标，Cocoa）靠近概览哪里：指针在概览面板里就按“最近的缝”画蓝条并返回落点，
+    /// 不在面板里或 point 是 nil 就收掉蓝条返回 nil。这扇原来不在卷轴里，所以每一道缝都算（StripNotchExchange.seam）。
+    func returnPreview(atScreen point: CGPoint?) -> ScrollStrip.Drop? {
+        guard !closed, let point, panel.frame.contains(point) else {
+            view.returnSeam(atWindowPoint: nil)
+            return nil
+        }
+        return view.returnSeam(atWindowPoint: panel.convertPoint(fromScreen: point))?.drop
+    }
 }
 
 /// 刷新时钟强引用 target：这个代理只弱引用概览。回调在主线程的 run loop 上。
@@ -467,6 +481,26 @@ final class StripOverviewView: NSView {
         case .hideLanding: link.landing(false)
         case .none: break
         }
+    }
+
+    /// 从刘海拖回来的一格靠近了概览哪里（概览窗口坐标；nil 是拖完了）：最近的缝上画蓝条，返回那道缝。
+    @discardableResult
+    func returnSeam(atWindowPoint point: NSPoint?) -> ScrollStrip.Seam? {
+        guard dragging == nil else { return nil }
+        guard let point, let layout else {
+            seam = nil
+            seamBar.isHidden = true
+            return nil
+        }
+        let found = StripNotchExchange.seam(nearest: content.convert(point, from: nil), in: layout, strip: strip)
+        seam = found
+        if let found {
+            seamBar.frame = found.bar
+            seamBar.isHidden = false
+        } else {
+            seamBar.isHidden = true
+        }
+        return found
     }
 
     /// 这次拖动作废：拖着的那扇回原位，蓝条收掉，窗口一扇不动。

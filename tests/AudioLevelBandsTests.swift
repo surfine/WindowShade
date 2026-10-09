@@ -161,10 +161,10 @@ import Foundation
     static func facts(followSound: Bool = true, permission: AudioCapturePermission = .granted, earVisible: Bool = true,
                       playing: Bool = true, pausedFor: Double? = nil, locked: Bool = false, fullScreen: Bool = false,
                       reducedMotion: Bool = false, bundleID: String? = "com.apple.Music",
-                      bluetoothOutput: Bool = false) -> AudioLevelGate.Facts {
+                      bluetoothOutput: Bool = false, systemMuted: Bool = false) -> AudioLevelGate.Facts {
         AudioLevelGate.Facts(followSound: followSound, permission: permission, earVisible: earVisible, playing: playing,
                              pausedFor: pausedFor, locked: locked, fullScreen: fullScreen, reducedMotion: reducedMotion,
-                             bundleID: bundleID, bluetoothOutput: bluetoothOutput)
+                             bundleID: bundleID, bluetoothOutput: bluetoothOutput, systemMuted: systemMuted)
     }
 
     static func testGate() {
@@ -201,6 +201,10 @@ import Foundation
         expect(AudioLevelGate.mode(facts(reducedMotion: true), tapLive: false) == .still, "减少动态效果：静止的填充色点")
         expect(AudioLevelGate.mode(facts(bundleID: "com.spotify.client", bluetoothOutput: true), tapLive: true) == .dots,
                "蓝牙 + Spotify：静止点")
+        expect(AudioLevelGate.mode(facts(systemMuted: true), tapLive: true) == .dots, "系统静音：静止点，不跟着跳")
+        expect(AudioLevelGate.mode(facts(playing: false, systemMuted: true), tapLive: true) == .paused, "静音时暂停：仍是暂停的样子")
+        expect(AudioLevelGate.mode(facts(systemMuted: false), tapLive: true) == .live, "取消静音：接着跳")
+        expect(AudioLevelGate.wantsTap(facts(systemMuted: true), running: true), "静音时 tap 留着，取消静音马上接上")
     }
 
     static func testProcessMatching() {

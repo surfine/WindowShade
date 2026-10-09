@@ -35,6 +35,10 @@ struct NotchHoverPolicy: Equatable {
     static let defaultsKey = "Notch.hoverGuard"
     static let defaultEnabled = false
 
+    static func setEnabled(_ on: Bool, _ defaults: UserDefaults = .standard) {
+        if on { defaults.set(true, forKey: defaultsKey) } else { defaults.removeObject(forKey: defaultsKey) }
+    }
+
     // MARK: 输入与输出
 
     /// 这一刻的环境。

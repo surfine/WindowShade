@@ -1,6 +1,6 @@
 {
   "version": 1,
-  "basis": "round2 uploaded repo snapshot; main model must approve additions; 主模型逐点补登 2026-10-03：番茄钟专注时长三个 UserDefaults 读写点归 settings，另有一条注释里的 LAContext 字样改成中文说明（注释不是读取点）；2026-10-03 主模型补登第四份：番茄钟设置归 settings 并新增 focus-preferences/focus-window-receipts/手柄/审批/配对身份五行（未上线的标 planned，不进隐私页）；2026-10-03 主模型补登第五、六份：Companion TCP 的 NWConnection 三点归 cross-device，Keychain 适配器的 LAContext/SecItem 四点归 pair-verify-identity（都仍是候选，未接生产来源）；2026-10-03 主模型补登第八份：窗口收起证据适配器读 kAXMinimizedAttribute 归 window-ax（只观察本次收起，不新存截图/标题）；2026-10-03 主模型补登第九份：收起完成回调守卫读一条 AX 布尔属性归 window-ax（只作三态观察与旧回调复核），新增的事务戳/routeID/批次号只在该次操作的内存里，不新存也不外发；2026-10-07 主模型复核相机订阅/音量亮度与现有探针遗漏读取点，电量提醒持久化如实补记；仅源码登记不代表硬件验证；2026-10-08 计划 2-1：正在播放推送流（mediaremote-adapter，经系统 perl 调私有 MediaRemote）新增 now-playing-stream 一行，扫描词加 /usr/bin/perl 与适配器脚本名；默认关；2026-10-08 耳机头动来源：CMHeadphoneMotionManager 读 AirPods 头部朝向，只在静音页开着且开发者开关打开时读，归 headphone-motion；2026-10-08 主模型补登第一到第四波：level-hud、battery（AirPods 经 system_profiler）、download-files、camera-frame（有人在看时收起）、face-identity（Apple Vision 特征、钥匙串仅本机）、lock-now-private（立即锁屏，私有方法）；2026-10-09 M04：iPhone 上的遥控器接收端进 App，WS2RemoteHost 的监听、Bonjour 宣告和连接登记为 remote-lan / remote-advertise，钥匙串配对设备沿用 pair-verify-identity 并转为 current；2026-10-09 M06：编程会话的 hook 服务端（WS2HookServer）在 ~/Library/Application Support/WindowShade/hooks.sock 上只收本机同一用户的 hook 事件、不联网，agent-hooks 转为 current；默认关，配置只给用户拷贝；2026-10-09 M09：遥控器的音量键经 Core Audio 调系统输出音量（新增写入点，remote-volume，只在遥控模式连着时才写），提示音开关沿用 settings；2026-10-09 R03：共享屏幕、录屏和系统专注模式只读“有没有”两个布尔值（私有 CGS/SLS 屏幕观看者符号经 dlsym、INFocusStatusCenter 需用户授权），归新增的 system-quiet，只在通知或 App 激活时重算，不轮询，只会让刘海更安静；2026-10-09 M12：实验来源 CopyProgressSource（默认关）经系统的文件进度订阅口只读 Finder 拷贝时发布的进度（比例、已完成与总量、第几个共几个、文件名），归新增的 copy-progress，不读文件内容、不数目录、不轮询；2026-10-09 R07：离开就锁锁屏前暂停、解开后只续播自己暂停的那一个，经适配器 get/send（now-playing-stream）或 Music、Spotify 的固定脚本（music，只在已允许自动化时）各读一次播放状态，不读歌名、不轮询；默认关；2026-10-09 LV2：音量和亮度键的主动监听（CGEvent.tapCreate，只订阅系统按键 NX_SYSDEFINED 子类型 8）与写回（输出音量和静音经 Core Audio、内建屏亮度经 DisplayServicesSetBrightness、键盘灯经 KeyboardBrightnessClient），读系统“调音量时播放反馈”（com.apple.sound.beep.feedback），新增 level-keys（planned）；只在辅助功能已允许且这个 macOS 版本核对过（版本表现在为空，或 defaults 开关 Notch.levelSuppression.trustThisOS，开关读点归 settings）时才装，默认只旁听；level-hud 一行不动；2026-10-09 LV4：设置里“音量和亮度”开关 Notch.levelKeys.enabled（默认开，读写点归 settings）；level-keys 多读默认输出设备的传输方式和型号名（只为换左耳符号，换设备时读一次）；仍为 planned",
+  "basis": "round2 uploaded repo snapshot; main model must approve additions; 主模型逐点补登 2026-10-03：番茄钟专注时长三个 UserDefaults 读写点归 settings，另有一条注释里的 LAContext 字样改成中文说明（注释不是读取点）；2026-10-03 主模型补登第四份：番茄钟设置归 settings 并新增 focus-preferences/focus-window-receipts/手柄/审批/配对身份五行（未上线的标 planned，不进隐私页）；2026-10-03 主模型补登第五、六份：Companion TCP 的 NWConnection 三点归 cross-device，Keychain 适配器的 LAContext/SecItem 四点归 pair-verify-identity（都仍是候选，未接生产来源）；2026-10-03 主模型补登第八份：窗口收起证据适配器读 kAXMinimizedAttribute 归 window-ax（只观察本次收起，不新存截图/标题）；2026-10-03 主模型补登第九份：收起完成回调守卫读一条 AX 布尔属性归 window-ax（只作三态观察与旧回调复核），新增的事务戳/routeID/批次号只在该次操作的内存里，不新存也不外发；2026-10-07 主模型复核相机订阅/音量亮度与现有探针遗漏读取点，电量提醒持久化如实补记；仅源码登记不代表硬件验证；2026-10-08 计划 2-1：正在播放推送流（mediaremote-adapter，经系统 perl 调私有 MediaRemote）新增 now-playing-stream 一行，扫描词加 /usr/bin/perl 与适配器脚本名；默认关；2026-10-08 耳机头动来源：CMHeadphoneMotionManager 读 AirPods 头部朝向，只在静音页开着且开发者开关打开时读，归 headphone-motion；2026-10-08 主模型补登第一到第四波：level-hud、battery（AirPods 经 system_profiler）、download-files、camera-frame（有人在看时收起）、face-identity（Apple Vision 特征、钥匙串仅本机）、lock-now-private（立即锁屏，私有方法）；2026-10-09 M04：iPhone 上的遥控器接收端进 App，WS2RemoteHost 的监听、Bonjour 宣告和连接登记为 remote-lan / remote-advertise，钥匙串配对设备沿用 pair-verify-identity 并转为 current；2026-10-09 M06：编程会话的 hook 服务端（WS2HookServer）在 ~/Library/Application Support/WindowShade/hooks.sock 上只收本机同一用户的 hook 事件、不联网，agent-hooks 转为 current；默认关，配置只给用户拷贝；2026-10-09 M09：遥控器的音量键经 Core Audio 调系统输出音量（新增写入点，remote-volume，只在遥控模式连着时才写），提示音开关沿用 settings；2026-10-09 R03：共享屏幕、录屏和系统专注模式只读“有没有”两个布尔值（私有 CGS/SLS 屏幕观看者符号经 dlsym、INFocusStatusCenter 需用户授权），归新增的 system-quiet，只在通知或 App 激活时重算，不轮询，只会让刘海更安静；2026-10-09 M12：实验来源 CopyProgressSource（默认关）经系统的文件进度订阅口只读 Finder 拷贝时发布的进度（比例、已完成与总量、第几个共几个、文件名），归新增的 copy-progress，不读文件内容、不数目录、不轮询；2026-10-09 R07：离开就锁锁屏前暂停、解开后只续播自己暂停的那一个，经适配器 get/send（now-playing-stream）或 Music、Spotify 的固定脚本（music，只在已允许自动化时）各读一次播放状态，不读歌名、不轮询；默认关；2026-10-09 LV2：音量和亮度键的主动监听（CGEvent.tapCreate，只订阅系统按键 NX_SYSDEFINED 子类型 8）与写回（输出音量和静音经 Core Audio、内建屏亮度经 DisplayServicesSetBrightness、键盘灯经 KeyboardBrightnessClient），读系统“调音量时播放反馈”（com.apple.sound.beep.feedback），新增 level-keys（planned）；只在辅助功能已允许且这个 macOS 版本核对过（版本表现在为空，或 defaults 开关 Notch.levelSuppression.trustThisOS，开关读点归 settings）时才装，默认只旁听；level-hud 一行不动；2026-10-09 LV4：设置里“音量和亮度”开关 Notch.levelKeys.enabled（默认开，读写点归 settings）；level-keys 多读默认输出设备的传输方式和型号名（只为换左耳符号，换设备时读一次）；仍为 planned；2026-10-09 ID-10：face-identity 补登录入时眼睛睁开程度、录入序号（取代墙钟）和转头挑战读的朝向与眼睛开度；camera-frame 补登眼睛开度与认出你的实验（identity 实际每秒最多 10 帧、最多 6 秒，挑战再加最多 12 秒），“每秒 2 帧”只留给有人在看",
   "scanner_pattern": "AXUIElementCopyAttributeValue|CGEvent\\.tapCreate|SCShareableContent|SCScreenshotManager|SCStream\\b|AVCaptureDevice|AVCaptureSession|NSAppleScript|osascript|IOServiceMatching|CGSessionCopyCurrentDictionary|bezelPath|\\b(?:SLS|CGS)[A-Z][A-Za-z0-9_]*|INFocusStatusCenter|URLSession|NWConnection|NWListener|NetService|dns_sd|DNSService[A-Za-z0-9_]+|NSEvent\\.add(?:Global|Local)MonitorForEvents|SecItem(?:Add|CopyMatching|Update|Delete)|\\bMT(?:Device|Register|Unregister)[A-Za-z0-9_]+|\\bIOHID[A-Za-z0-9_]+|AVAudioEngine|SFSpeechRecognizer|\\bVNDetect[A-Za-z0-9_]+|SMAppService|UserDefaults|RecoveryJournal|kAudioHardwarePropertyProcessObjectList|\\bSecureEnclave\\b|\\bLAContext\\b|SecAccessControlCreateWithFlags|\\bbiometryState\\b|evaluatedPolicyDomainState|stateHash|DisplayServicesGetBrightness|kAudioDevicePropertyVolumeScalar|CMHeadphoneMotionManager|/usr/bin/perl|mediaremote-adapter\\.pl|AudioObjectSetPropertyData|addSubscriber\\(forFileURL|IOPSNotificationCreateRunLoopSource|isLowPowerModeEnabled|DisplayServicesSetBrightness|KeyboardBrightnessClient|com\\.apple\\.sound\\.beep\\.feedback|\\bEKEventStore\\b|requestFullAccessToEvents|bookmarkData\\(|resolvingBookmarkData|NSSharingService\\(|NSPasteboard\\(name: *\\.drag\\)|AudioHardwareCreateProcessTap|TCCAccess(?:Preflight|Request)",
   "signals": [
     {
@@ -138,10 +138,10 @@
       "label": "摄像头",
       "sensitivity": "private",
       "group": "你同意后才读的",
-      "reads": "摄像头拍到的画面里，脸朝哪边、有没有别人正对屏幕",
-      "purpose": "你在菜单里选“检测面部动作”时，看你眨眼或转头；打开“有人在看时收起私人窗口”后，看有没有别人正对屏幕，有就把私人窗口收进刘海",
+      "reads": "摄像头拍到的画面里，脸朝哪边、眼睛睁没睁开、有没有别人正对屏幕",
+      "purpose": "你在菜单里选“检测面部动作”时，看你眨眼或转头；打开“有人在看时收起私人窗口”后，看有没有别人正对屏幕，有就把私人窗口收进刘海；打开认出你的实验后，锁屏时看是不是你",
       "destination": "用来判断，不上传",
-      "activation": "检测面部动作：你在菜单里选了才开。有人在看：私人 App 里选了 App、你停手满 30 秒才开，每秒只看 2 帧，一碰键盘鼠标就关。锁屏、睡眠、切换用户时都停",
+      "activation": "检测面部动作：你在菜单里选了才开。有人在看：私人 App 里选了 App、你停手满 30 秒才开，每秒只看 2 帧，一碰键盘鼠标就关。这两样在锁屏、睡眠、切换用户时都停。认出你（实验，默认关）：锁屏后屏幕亮起才开，每秒最多 10 帧，最多看 6 秒；打开转头挑战，认出后再看最多 12 秒；睡眠、切换用户时停",
       "toggle": "“有人在看时收起私人窗口”，以及系统设置里的摄像头授权",
       "status": "current",
       "rule": "CAMERA",
@@ -453,10 +453,10 @@
       "label": "脸部特征与比对结果",
       "sensitivity": "private",
       "group": "你同意后才读的",
-      "reads": "实验：脸部裁出来的图像特征（Apple 的 Vision 算出）、登记过的模板、比对结果",
+      "reads": "实验：脸部裁出来的图像特征（Apple 的 Vision 算出）、登记过的模板、录入时眼睛睁开的程度、录入序号、比对结果；打开转头挑战后，还有转头时脸朝哪边、眼睛睁没睁开",
       "purpose": "锁屏后认出是不是你，只留一条证据，不会解锁",
       "destination": "模板只存在这台 Mac 的钥匙串里，不同步、不随备份迁走；画面和裁切图不存",
-      "activation": "默认关闭；打开实验后，锁屏时屏幕亮起最多看 6 秒",
+      "activation": "默认关闭；打开实验后，锁屏时屏幕亮起最多看 6 秒，每秒最多 10 帧；打开转头挑战，认出后再看最多 12 秒",
       "toggle": "实验开关和删除登记；不会标成 Face ID",
       "status": "planned",
       "rule": "FACE",
@@ -6047,6 +6047,34 @@
       "line": 89,
       "symbol": "UserDefaults",
       "source": "static func forgetAll(_ defaults: UserDefaults = .standard) {",
+      "signal": "settings"
+    },
+    {
+      "path": "prototype/App/FaceObservationSource.swift",
+      "line": 16,
+      "symbol": "AVCaptureDevice",
+      "source": "static let builtInWideAngleType = AVCaptureDevice.DeviceType.builtInWideAngleCamera.rawValue",
+      "signal": "camera-frame"
+    },
+    {
+      "path": "prototype/Core/NotchHoverPolicy.swift",
+      "line": 38,
+      "symbol": "UserDefaults",
+      "source": "static func setEnabled(_ on: Bool, _ defaults: UserDefaults = .standard) {",
+      "signal": "settings"
+    },
+    {
+      "path": "prototype/Core/ScrollStrip.swift",
+      "line": 889,
+      "symbol": "UserDefaults",
+      "source": "static func setEnabled(_ on: Bool, _ defaults: UserDefaults = .standard) {",
+      "signal": "settings"
+    },
+    {
+      "path": "prototype/App/ScrollStripRun.swift",
+      "line": 0,
+      "symbol": "UserDefaults",
+      "source": "static func notchLinkEnabled() -> Bool { UserDefaults.standard.bool(forKey: notchLinkKey) }",
       "signal": "settings"
     }
   ],

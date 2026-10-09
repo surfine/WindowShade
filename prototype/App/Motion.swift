@@ -67,6 +67,25 @@ enum Motion {
         static func secondLayerLag(reduced: Bool = Motion.reduced) -> TimeInterval { reduced ? 0 : secondLayerDelay }
     }
 
+    /// 倒数这类大数字原地换字（`docs/plans/identity-and-motion-2026-10-09.md` §5.1 第 7 条）：
+    /// 旧字淡出 0.10 并下移 2 点，新字从上 2 点淡入、`pop` 0.9→1；减少动态效果只交叉淡化 0.18，不位移不缩放。
+    enum DigitSwap {
+        static let outDuration: TimeInterval = Fade.out
+        static let inDuration: TimeInterval = Fade.in
+        static let shift: CGFloat = 2
+        static let popFrom: CGFloat = 0.9
+        struct Plan: Equatable {
+            var outDuration: TimeInterval
+            var inDuration: TimeInterval
+            var shift: CGFloat
+            var popFrom: CGFloat
+        }
+        static func plan(reduced: Bool) -> Plan {
+            reduced ? Plan(outDuration: inDuration, inDuration: inDuration, shift: 0, popFrom: 1)
+                    : Plan(outDuration: outDuration, inDuration: inDuration, shift: shift, popFrom: popFrom)
+        }
+    }
+
     /// 刘海这一刻是什么形状。弹簧按形状取令牌，调用点不再各写各的。
     enum NotchShape: CaseIterable {
         /// 什么都没有：岛就是刘海本身（含收回到这里）。

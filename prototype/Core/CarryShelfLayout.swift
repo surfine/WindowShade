@@ -87,8 +87,11 @@ enum NotchSmallBehaviour {
     static let tileFadeStart: Double = 0.09
     static let tileFadeStep: Double = 0.04
 
+    /// 错开最多数到第 4 格：格子再多，最后一格也在 0.25 秒内出现，不拖成一长串。
+    static let tileFadeMaxIndex = 4
+
     static func tileFadeDelay(index: Int) -> Double {
-        tileFadeStart + tileFadeStep * Double(max(0, index))
+        tileFadeStart + tileFadeStep * Double(min(tileFadeMaxIndex, max(0, index)))
     }
 
     /// 边线渐变：从岛的顶边往下 `keyLineHiddenDepth` 点还看不见，到 `keyLineFullDepth` 点完全显出。

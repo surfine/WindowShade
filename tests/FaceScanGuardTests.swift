@@ -1,4 +1,5 @@
-// 刷脸扫描守卫（Core/FaceScanGuard.swift）：锁态重查、帧去重、路人、双阈值、模型版本、认错 2 秒、唤醒合并。
+// 刷脸扫描守卫（Core/FaceScanGuard.swift）：锁态重查、帧去重（Hub 的相机 / 代次 / 帧号）、路人、双阈值、模型版本、
+// 认错 2 秒、唤醒合并、录入序号。
 // 只验证证据怎么产生；放行仍归授权账本。
 import Foundation
 
@@ -15,8 +16,9 @@ struct FaceScanGuardTests {
                          FaceTemplate(embedding: [1, -0.1, 0, 0], modelVersion: "m2", enrolledAt: 2)]
 
   static func frame(_ number: UInt64, at time: Double, _ embedding: [Float]?, width: Double = 0.3,
-                    model: String = "m2", extra: [FaceScanFace] = []) -> FaceScanFrame {
-    FaceScanFrame(frameNumber: number, capturedAt: time, modelVersion: model,
+                    model: String = "m2", extra: [FaceScanFace] = [], camera: String = "cam", generation: UInt64 = 1)
+    -> FaceScanFrame {
+    FaceScanFrame(cameraID: camera, generation: generation, sequence: number, capturedAt: time, modelVersion: model,
                   faces: [FaceScanFace(widthFraction: width, embedding: embedding)] + extra)
   }
   static func started(_ templates: [FaceTemplate] = enrolled) -> FaceScanGuard {
@@ -33,8 +35,9 @@ struct FaceScanGuardTests {
       var g = started()
       expect(g.receive(frame(1, at: 0.1, owner), lock: .locked, lockGeneration: 7) == .scanning, "one owner frame is only a partial match")
       let outcome = g.receive(frame(2, at: 0.2, owner), lock: .locked, lockGeneration: 7)
-      expect(outcome == .owner(FaceScanEvidence(scanID: 1, lockGeneration: 7, frameNumber: 2, matchedAt: 0.2, modelVersion: "m2")),
-             "two owner frames in a row produce evidence bound to scan and lock generation")
+      expect(outcome == .owner(FaceScanEvidence(scanID: 1, lockGeneration: 7, cameraID: "cam", generation: 1,
+                                                frames: 1...2, matchedAt: 0.2, modelVersion: "m2")),
+             "two owner frames in a row produce evidence bound to scan, lock generation, camera, Hub generation and frames")
       expect(g.receive(frame(3, at: 0.3, owner), lock: .locked, lockGeneration: 7) == .discarded(.finished), "a finished scan takes no more frames")
     }
 
@@ -63,6 +66,78 @@ struct FaceScanGuardTests {
       expect(g.receive(frame(4, at: 0.15, owner), lock: .locked, lockGeneration: 7) == .discarded(.duplicateFrame),
              "an older frame number is ignored")
       expect(isOwner(g.receive(frame(6, at: 0.2, owner), lock: .locked, lockGeneration: 7)), "a duplicate never completes a match by itself")
+    }
+
+    do {  // Hub 的帧链：换相机或代次就是另一路，部分匹配不接上；新一代帧号从头数照收
+      var g = started()
+      _ = g.receive(frame(9, at: 0.1, owner), lock: .locked, lockGeneration: 7)
+      expect(g.receive(frame(1, at: 0.2, owner, generation: 2), lock: .locked, lockGeneration: 7) == .scanning,
+             "a reopened camera (new Hub generation) restarts the frame numbers and the partial match")
+      let outcome = g.receive(frame(2, at: 0.3, owner, generation: 2), lock: .locked, lockGeneration: 7)
+      expect(outcome == .owner(FaceScanEvidence(scanID: 1, lockGeneration: 7, cameraID: "cam", generation: 2,
+                                                frames: 1...2, matchedAt: 0.3, modelVersion: "m2")),
+             "the evidence covers only frames of one stream")
+      var c = started()
+      _ = c.receive(frame(5, at: 0.1, owner), lock: .locked, lockGeneration: 7)
+      expect(c.receive(frame(6, at: 0.2, owner, camera: "other"), lock: .locked, lockGeneration: 7) == .scanning,
+             "a frame from another camera does not complete a match started on the first")
+      var m = started()
+      _ = m.receive(frame(1, at: 0.1, owner), lock: .locked, lockGeneration: 7)
+      _ = m.receive(frame(2, at: 0.2, stranger), lock: .locked, lockGeneration: 7)
+      _ = m.receive(frame(3, at: 0.3, owner), lock: .locked, lockGeneration: 7)
+      if case .owner(let evidence) = m.receive(frame(4, at: 0.4, owner), lock: .locked, lockGeneration: 7) {
+        expect(evidence.frames == 3...4, "the evidence frames start at the current run, not before the stranger frame")
+      } else { expect(false, "owner after a stranger frame") }
+    }
+
+    do {  // 录入序号：接在已有最大值后面，不读墙钟
+      let v = "m2"
+      expect(FaceTemplateSet.nextEnrollmentSequence(after: [], modelVersion: v) == 1, "the first enrolment is number 1")
+      let wallClock = [FaceTemplate(embedding: [1], modelVersion: v, enrolledAt: 1_760_000_000.5),
+                       FaceTemplate(embedding: [1], modelVersion: "other", enrolledAt: 9e9)]
+      let next = FaceTemplateSet.nextEnrollmentSequence(after: wallClock, modelVersion: v)
+      expect(next == 1_760_000_001, "a new enrolment still sorts after an old wall-clock template of the same version")
+      let same = [FaceTemplate(embedding: [1, 0], modelVersion: v, enrolledAt: 1_760_000_000),
+                  FaceTemplate(embedding: [0, 1], modelVersion: v, enrolledAt: next)]
+      expect(!FaceScanGuard(templates: same).isOwner([1, 0.3], modelVersion: v)
+               && FaceScanGuard(templates: same).isOwner([0.3, 1], modelVersion: v),
+             "the sequenced enrolment is the latest one")
+    }
+
+    do {  // 平均模板改成 init 里算一次：与原来每帧重算的结果逐个相同（固定种子的随机向量、混版本混维度）
+      struct LCG: RandomNumberGenerator {
+        var state: UInt64
+        mutating func next() -> UInt64 { state = state &* 6364136223846793005 &+ 1442695040888963407; return state }
+      }
+      func legacy(_ templates: [FaceTemplate], _ e: [Float], _ version: String, _ threshold: Float) -> Bool {
+        let eligible = templates.filter { $0.modelVersion == version && $0.embedding.count == e.count }
+        guard !eligible.isEmpty, let latest = eligible.max(by: { $0.enrolledAt < $1.enrolledAt }) else { return false }
+        let normalized = eligible.map { v -> [Float] in
+          let n = v.embedding.reduce(Float(0)) { $0 + $1 * $1 }.squareRoot()
+          return n > 0 && n.isFinite ? v.embedding.map { $0 / n } : v.embedding
+        }
+        var sum = [Float](repeating: 0, count: normalized[0].count)
+        for v in normalized { for i in sum.indices { sum[i] += v[i] } }
+        let mean = sum.map { $0 / Float(normalized.count) }
+        guard let a = FaceScanGuard.cosine(e, mean), let b = FaceScanGuard.cosine(e, latest.embedding) else { return false }
+        return a >= threshold && b >= threshold
+      }
+      var rng = LCG(state: 42)
+      var agree = 0, total = 0
+      for _ in 0..<200 {
+        let templates = (0..<Int.random(in: 0...6, using: &rng)).map { _ in
+          FaceTemplate(embedding: (0..<(Bool.random(using: &rng) ? 4 : 3)).map { _ in Float.random(in: -1...1, using: &rng) },
+                       modelVersion: Bool.random(using: &rng) ? "m2" : "m1",
+                       enrolledAt: Double(Int.random(in: 0...3, using: &rng)))
+        }
+        let guardian = FaceScanGuard(templates: templates)
+        for _ in 0..<5 {
+          let probe = (0..<4).map { _ in Float.random(in: -1...1, using: &rng) }
+          total += 1
+          if guardian.isOwner(probe, modelVersion: "m2") == legacy(templates, probe, "m2", 0.6) { agree += 1 }
+        }
+      }
+      expect(agree == total, "precomputed references match the per-frame computation on \(total) random probes")
     }
 
     do {  // 非主人清掉部分匹配

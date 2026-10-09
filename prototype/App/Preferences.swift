@@ -226,6 +226,9 @@ static func noticeTone(_ message: String) -> NotchPanel.Tone {
             LevelRowHost { [weak self] in self?.makeLevelKeysRow() ?? NSView() },
             makeUnifiedToggleRow(name: "合成一排", subtitle: "窗口和正在进行的事排在同一排",
                                  isOn: NotchController.mergedRowEnabled, action: #selector(prefToggleMergedRow(_:))),
+            makeUnifiedToggleRow(name: WSL10n.text("settings.hoverGuard.name", zh: "悬停不误触"),
+                                 subtitle: WSL10n.text("settings.hoverGuard.sub", zh: "指针在刘海上停一下才展开，路过不展开"),
+                                 isOn: NotchController.hoverGuardEnabled, action: #selector(prefToggleHoverGuard(_:))),
             makeUnifiedToggleRow(name: "文件架", subtitle: "拖到刘海暂存的文件放在这里；关掉后清空",
                                  isOn: FileShelf.enabled, action: #selector(prefToggleFileShelf(_:))),
             // 欢迎窗口第二步问的那一句，在这里能改；没答时一段都不选。
@@ -258,6 +261,12 @@ static func noticeTone(_ message: String) -> NotchPanel.Tone {
                                   control: centeringPopup),
             makeUnifiedToggleRow(name: "放得下就居中", subtitle: "列加起来不到一屏时，整组放在正中",
                                  isOn: ScrollStrip.storedCentering().whenFits, action: #selector(prefToggleCenterWhenFits(_:))),
+            makeUnifiedToggleRow(name: WSL10n.text("settings.stripWidths.name", zh: "记住每个 App 的列宽"),
+                                 subtitle: WSL10n.text("settings.stripWidths.sub", zh: "改过宽度的 App，下次开在卷轴里还是那个宽度"),
+                                 isOn: StripWidthMemory.isEnabled(), action: #selector(prefToggleStripWidths(_:))),
+            makeUnifiedToggleRow(name: WSL10n.text("settings.stripTitleDrag.name", zh: "拖标题栏换位置"),
+                                 subtitle: WSL10n.text("settings.stripTitleDrag.sub", zh: "在卷轴里拖标题栏换列；拉远一点才离开卷轴"),
+                                 isOn: StripTitleDrag.isEnabled(), action: #selector(prefToggleStripTitleDrag(_:))),
         ])
         stack.addArrangedSubview(makePrefGroupLabel("排布"))
         stack.addArrangedSubview(arrangeCard)
@@ -1473,6 +1482,18 @@ static func noticeTone(_ message: String) -> NotchPanel.Tone {
     @objc func prefToggleCenterWhenFits(_ sender: NSSwitch) {
         ScrollStrip.store(whenFits: sender.state == .on)
         MainActor.assumeIsolated { gestures.strips.refreshCentering() }
+    }
+
+    @objc func prefToggleHoverGuard(_ sender: NSSwitch) {
+        NotchHoverPolicy.setEnabled(sender.state == .on)
+    }
+
+    @objc func prefToggleStripWidths(_ sender: NSSwitch) {
+        StripWidthMemory.setEnabled(sender.state == .on)
+    }
+
+    @objc func prefToggleStripTitleDrag(_ sender: NSSwitch) {
+        StripTitleDrag.setEnabled(sender.state == .on)
     }
 
     @objc func prefToggleDropSplit(_ sender: NSSwitch) {

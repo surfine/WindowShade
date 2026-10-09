@@ -232,6 +232,10 @@ final class NowPlayingCard: NSView, WS2LeaseContent {
     private let coverLayer = CALayer()
     private let coverImage = CALayer()
     private let coverNote = CALayer()
+    /// 右耳 5 根（NP36）：大卡盖住刘海时波形仍留在右耳原处不动（稿“长成大卡”）。位置在刘海那一排里，
+    /// 真刘海屏上在卡片视图上沿之外，所以只用图层画，不随卡淡入淡出。
+    private let waveLayers: [CALayer] = (0..<NowPlayingEars.dotCount).map { _ in CALayer() }
+    private var wave = NowPlayingWave.dots
     private let titleField = NowPlayingCard.label(13, .semibold)
     private let artistField = NowPlayingCard.label(11, .medium)
     private let barHost = NSView()
@@ -312,6 +316,34 @@ final class NowPlayingCard: NSView, WS2LeaseContent {
         coverLayer.addSublayer(coverImage)
         coverLayer.addSublayer(coverNote)
         host.addSublayer(coverLayer)
+        for dot in waveLayers {
+            dot.actions = ["bounds": NSNull(), "position": NSNull(), "cornerRadius": NSNull(), "backgroundColor": NSNull()]
+            dot.anchorPoint = .zero
+            host.addSublayer(dot)
+        }
+    }
+
+    /// 右耳的样子变了（跟着声音跳时每秒 30 次）：只改那 5 个图层，不重排。
+    func setWave(_ next: NowPlayingWave) {
+        guard next != wave else { return }
+        wave = next
+        renderWave()
+    }
+
+    private func renderWave() {
+        let slot = NowPlayingWaveDots.trailingSlot(cardWidth: Double(bounds.width), notchWidth: Double(geometry.width),
+                                                   notchHeight: Double(geometry.height))
+        let dots = NowPlayingWaveDots.dots(wave: wave, paused: content?.isPaused ?? false, palette: palette, in: slot)
+        CATransaction.begin(); CATransaction.setDisableActions(true)
+        for (layer, dot) in zip(waveLayers, dots) {
+            let box = local(CGRect(x: dot.frame.x, y: dot.frame.y, width: dot.frame.width, height: dot.frame.height))
+            layer.bounds = CGRect(origin: .zero, size: box.size)
+            layer.position = box.origin
+            layer.cornerRadius = min(box.width, box.height) / 2
+            layer.backgroundColor = NSColor(srgbRed: CGFloat(dot.color.r), green: CGFloat(dot.color.g), blue: CGFloat(dot.color.b),
+                                            alpha: CGFloat(dot.color.alpha)).cgColor
+        }
+        CATransaction.commit()
     }
 
     private func buildViews() {
@@ -363,6 +395,7 @@ final class NowPlayingCard: NSView, WS2LeaseContent {
             artistField.toolTip = next.artist
         }
         setArtwork(image)
+        defer { renderWave() }
         let paused = next.isPaused
         playButton.setSymbol(paused ? "play.fill" : "pause.fill")
         let playLabel = paused ? "播放" : "暂停"
@@ -437,6 +470,7 @@ final class NowPlayingCard: NSView, WS2LeaseContent {
         coverNote.frame = coverImage.frame
         CATransaction.commit()
         refreshNote()
+        renderWave()
         titleField.frame = local(frames.title)
         artistField.frame = local(frames.artist)
         barHost.frame = local(frames.bar)
@@ -1037,6 +1071,8 @@ final class NowPlayingCardPresenter {
     var dismissCard: (NowPlayingCard) -> Void = { _ in }
     var unlocked: @MainActor () -> Bool = { AuthorizationService.shared.lockState() == .unlocked }
     var uptime: () -> Double = { ProcessInfo.processInfo.systemUptime }
+    /// 右耳此刻的样子（NP36）：卡长出来时先按它画，之后由 `setWave` 跟着变。测试里换掉。
+    var currentWave: () -> NowPlayingWave = { .dots }
     var outputKind: () -> AudioOutputKind? = { AudioOutputRoutes.currentKind() }
     var selectRoute: (AudioOutputRoute) -> Void = { _ = AudioOutputRoutes.select($0) }
     /// 拖音量条写系统音量（复用刘海音量键同一个写入端 NotchLevelSystemPort）；测试里换掉。
@@ -1082,6 +1118,7 @@ final class NowPlayingCardPresenter {
         made.onInteractionChange = { [weak self] in self?.retractInputsChanged() }
         made.onPointer = { [weak self] inside in self?.pointerInCard = inside; self?.retractInputsChanged() }
         made.setOutputKind(outputKind())
+        made.setWave(currentWave())
         made.update(content, artwork: source.nowPlayingArtwork)
         host = next
         let shown = present(made) { [weak self, weak made] _ in
@@ -1096,6 +1133,9 @@ final class NowPlayingCardPresenter {
         retractInputsChanged()
         return true
     }
+
+    /// 右耳的样子变了：开着的大卡跟着变（卡没开什么都不做）。
+    func setWave(_ wave: NowPlayingWave) { card?.setWave(wave) }
 
     func dismiss() {
         guard let card else { return }

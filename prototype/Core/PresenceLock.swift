@@ -14,7 +14,9 @@ struct PresenceLock: Sendable {
         var watchRequired = false
         var cameraEnabled = false
         var returnEnabled = false
-        var faceEnabled = true // false 时不开放仅手机解锁；Aaron 尚未作这个决定。
+        /// 只是一个开关，不代表脸已经核过。默认关：脸部证据（IdentityEvidence）还没有任何消费者，
+        /// 关着时不开放“仅凭手机就请求返回授权”。returnEnabled 也默认关、App 里没有地方打开，所以今天看不出差别。
+        var faceEnabled = false
         var returnThresholdDBm: Double = -60 // 源规格；不是距离测量。
     }
     enum Event: Sendable {

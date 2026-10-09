@@ -84,6 +84,8 @@ struct MenuStructureTests {
         check(source.contains("addPinnedPreviewMenuSection(menuState.pinnedPreviews, into: pinnedMenu)"), "置顶段进动态行")
         check(!source.contains("into: arrangement)"), "整理▸里不再重复置顶段")
         check(source.contains("phase != .idle"), "番茄钟行只在进行中才加")
+        check(source.contains("StatusMenuLayout.stripOverviewRowID"), "整理▸里有卷轴概览")
+        check(StatusMenuLayout.fixedTopLevel.count == 9, "卷轴概览在子菜单里，顶层仍是 9 项")
 
         // 卷轴概览（SS-05）：主菜单“窗口”里一项，快捷键默认不占；顶层项数不变；卷轴没接上时灰着。
         _ = NSApplication.shared  // make() 要写 NSApp.servicesMenu

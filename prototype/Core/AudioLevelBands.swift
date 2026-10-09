@@ -251,6 +251,8 @@ enum AudioLevelGate {
         /// 推送流报的播放器。
         var bundleID: String?
         var bluetoothOutput: Bool
+        /// 系统此刻静音：没有声音可跟，画静止点（tap 留着，取消静音时马上接上）。
+        var systemMuted = false
     }
 
     /// 除了授权以外都满足：这时才值得去问一次授权（问授权要跨进程，不在每次刷新时问）。
@@ -273,6 +275,7 @@ enum AudioLevelGate {
     static func mode(_ facts: Facts, tapLive: Bool) -> NowPlayingWaveMode {
         if !facts.playing { return .paused }
         guard facts.followSound, facts.permission == .granted else { return .dots }
+        if facts.systemMuted { return .dots }
         if let bundle = facts.bundleID, facts.bluetoothOutput, bluetoothSkips.contains(bundle) { return .dots }
         if facts.reducedMotion { return .still }
         return tapLive ? .live : .dots

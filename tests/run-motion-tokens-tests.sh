@@ -4,6 +4,6 @@
 set -euo pipefail
 cd "$(dirname "$0")/.."
 mkdir -p .build/motion-tokens-tests
-swiftc -parse-as-library prototype/App/Motion.swift prototype/Core/FlickMotion.swift tests/MotionTokensTests.swift \
+swiftc -parse-as-library prototype/App/Motion.swift prototype/Core/FlickMotion.swift prototype/Core/NotchLevelEars.swift prototype/Core/NotchLevelStep.swift prototype/Core/NotchLevelGate.swift prototype/Core/NotchLevelSuppression.swift tests/MotionTokensTests.swift \
   -o .build/motion-tokens-tests/tokens
 .build/motion-tokens-tests/tokens

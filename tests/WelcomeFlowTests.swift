@@ -15,6 +15,7 @@ struct WelcomeFlowTests {
         pageLabels()
         stageAndWindow()
         keycaps()
+        heightMotion()
         if failures > 0 { print("\(failures) failure(s)"); exit(1) }
         print("welcome flow: all passed")
     }
@@ -99,5 +100,29 @@ struct WelcomeFlowTests {
         expect(plan.glowFrom == 0.14 && plan.glowTo == 0.28, "command fill 0.14 -> 0.28")
         expect(plan.glowStart > plan.steps[0].oldFadeStart, "command lights up after the swap starts")
         expect(WelcomeFlow.keySwapPlan(reduceMotion: true).steps.map(\.oldFadeStart) == starts, "reduced motion keeps the same order and stagger")
+    }
+
+    // 窗口高度弹簧：不回弹、换目标沿用速度、停得下来。
+    static func heightMotion() {
+        let tall = Double(WelcomeFlow.Layout.heightWithStage), short = Double(WelcomeFlow.Layout.heightWithoutStage)
+        var m = WelcomeFlow.HeightMotion(at: tall)
+        expect(m.height(at: 5) == tall && m.isSettled(at: 5), "a fresh motion rests on its height")
+        m.retarget(to: short, at: 10)
+        expect(abs(m.height(at: 10) - tall) < 0.0001, "starts from the current height")
+        var monotone = true, last = tall, t = 10.0
+        while t < 11 { t += 1.0 / 120; let h = m.height(at: t); if h > last + 0.0001 || h < short - 0.0001 { monotone = false }; last = h }
+        expect(monotone, "critically damped: no bounce past the target")
+        expect(m.isSettled(at: 10.8) && abs(m.height(at: 11) - short) < 0.5, "settles within a calm 0.8 s")
+        // 中途换目标：位置连续、速度连续（不从零速度重起）。
+        var n = WelcomeFlow.HeightMotion(at: tall)
+        n.retarget(to: short, at: 0)
+        let hMid = n.height(at: 0.1), vMid = n.velocity(at: 0.1)
+        n.retarget(to: tall, at: 0.1)
+        expect(abs(n.height(at: 0.1) - hMid) < 0.0001, "retarget keeps the current height")
+        expect(vMid < 0 && abs(n.velocity(at: 0.1) - vMid) < 0.0001, "retarget keeps the current velocity")
+        expect(n.height(at: 0.12) < hMid, "momentum carries on before turning back")
+        expect(n.isSettled(at: 1.2) && abs(n.height(at: 1.2) - tall) < 0.5, "turns around and settles on the new target")
+        n.jump(to: short)
+        expect(n.height(at: 0) == short && n.isSettled(at: 0), "reduced motion jumps with no leftover speed")
     }
 }

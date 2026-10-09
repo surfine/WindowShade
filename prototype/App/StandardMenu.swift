@@ -168,11 +168,12 @@ enum StandardMenu {
     static let stripOverviewID = "ws.window.stripOverview"
 
     @MainActor
-    static func stripOverviewItem() -> NSMenuItem {
+    static func stripOverviewItem(id: String = stripOverviewID, symbol: String? = nil) -> NSMenuItem {
         let item = NSMenuItem(title: stripOverviewTitle,
                               action: #selector(StripOverviewMenuTarget.openStripOverview(_:)), keyEquivalent: "")
         item.target = StripOverviewMenuTarget.shared
-        item.identifier = NSUserInterfaceItemIdentifier(stripOverviewID)
+        item.identifier = NSUserInterfaceItemIdentifier(id)
+        if let symbol { item.image = NSImage(systemSymbolName: symbol, accessibilityDescription: nil) }
         return item
     }
 }
@@ -201,6 +202,8 @@ enum StatusMenuLayout {
     static let focusRowID = "ws.menu.dynamic.focus"
     static let codingRowID = "ws.menu.dynamic.coding"
     static let pinnedRowID = "ws.menu.dynamic.pinned"
+    /// “整理▸”里的卷轴概览（子菜单项，不算顶层 9 项）。
+    static let stripOverviewRowID = "ws.menu.arrange.stripOverview"
 
     /// 固定 9 项，按顺序。
     static let fixedTopLevel: [(id: String, title: String)] = [

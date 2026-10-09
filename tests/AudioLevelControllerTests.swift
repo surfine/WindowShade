@@ -54,9 +54,9 @@ final class Rig {
     }
 
     func context(visible: Bool = true, bundle: String? = "com.apple.Music", playing: Bool = true, locked: Bool = false,
-                 fullScreen: Bool = false, reduced: Bool = false) -> AudioLevelController.Context {
+                 fullScreen: Bool = false, reduced: Bool = false, muted: Bool = false) -> AudioLevelController.Context {
         AudioLevelController.Context(earVisible: visible, bundleID: bundle, playing: playing, locked: locked,
-                                     fullScreen: fullScreen, reducedMotion: reduced)
+                                     fullScreen: fullScreen, reducedMotion: reduced, systemMuted: muted)
     }
 
     /// 让主队列上排着的交付跑完。
@@ -80,7 +80,38 @@ final class Rig {
         testBluetoothSpotify()
         testReducedMotion()
         testToggle()
+        testSystemMuted()
+        testReducedMotionLive()
         print("PASS audio-level-controller")
+    }
+
+    @MainActor static func testSystemMuted() {
+        let rig = Rig(enabled: true)
+        rig.controller.update(rig.context())
+        rig.taps[0].deliver([0.4, 0.4, 0.4, 0.4, 0.4])
+        rig.drain()
+        expect(rig.controller.wave.mode == .live, "先在跳")
+        rig.controller.update(rig.context(muted: true))
+        expect(rig.controller.wave.mode == .dots && rig.controller.wave.levels.isEmpty, "系统静音：画静止点")
+        expect(rig.controller.tapsMade == 1 && rig.taps[0].stopped == 0, "静音时 tap 留着，不重建")
+        rig.controller.update(rig.context(muted: false))
+        expect(rig.controller.wave.mode == .live, "取消静音：接着跳")
+    }
+
+    /// 减少动态效果开关实时生效：切换后只要刘海把事实再喂进来，当场换成填充色点并拆 tap；关掉再回到跟着跳。
+    @MainActor static func testReducedMotionLive() {
+        let rig = Rig(enabled: true)
+        rig.controller.update(rig.context())
+        rig.taps[0].deliver([0.4, 0.4, 0.4, 0.4, 0.4])
+        rig.drain()
+        expect(rig.controller.wave.mode == .live, "先在跳")
+        rig.controller.update(rig.context(reduced: true))
+        expect(rig.controller.wave.mode == .still && !rig.controller.isTapping, "打开减少动态效果：当场换成静止填充点并拆 tap")
+        rig.controller.update(rig.context(reduced: false))
+        expect(rig.controller.tapsMade == 2, "关掉减少动态效果：重新建 tap")
+        rig.taps[1].deliver([0.2, 0.2, 0.2, 0.2, 0.2])
+        rig.drain()
+        expect(rig.controller.wave.mode == .live, "关掉后接着跟着跳")
     }
 
     @MainActor static func testDefaultOff() {

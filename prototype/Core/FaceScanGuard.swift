@@ -5,7 +5,8 @@ import Foundation
 //
 // 规则：
 // - 每一帧都重查“真的锁着”且锁屏代次没变；会话已不锁的帧连同这次扫描一起丢弃。
-// - 帧号去重：同号或更早的帧不再计数。
+// - 帧号用 Hub 透传的 cameraID / generation / sequence，守卫不自己数帧：同一路里同号或更早的帧不再计数；
+//   换了相机或代次（相机重开，帧号从头数）就是另一路，攒下的部分匹配清零，证据只绑一路帧。
 // - 宽度不到画面 0.18 的脸是路人，不算候选。
 // - 主人要同时过“平均模板”和“最近一次录入”两道阈值；模型版本不同的模板不参与。
 // - 阈值按模型版本选：登记过的版本用自己的阈值，其余沿用默认 0.6；阈值不合法就一律不认。
@@ -15,7 +16,8 @@ import Foundation
 struct FaceTemplate: Equatable, Sendable {
     let embedding: [Float]
     let modelVersion: String
-    /// 录入时刻；只用来找“最近一次录入”。
+    /// 录入序号，越大越新；只用来找“最近一次录入”。新录入接在已有最大值后面递增（FaceTemplateSet.nextEnrollmentSequence），
+    /// 不读墙钟，改系统时间改不了谁是最近一次。旧模板里存的是当时的墙钟秒数，照样按大小比较。
     let enrolledAt: Double
     /// 录入那一帧两只眼睁开程度的较小值（实验：随机转头挑战的参照）。旧模板没有，就是 nil。
     var eyeOpenness: Double? = nil
@@ -29,7 +31,11 @@ struct FaceScanFace: Equatable, Sendable {
 }
 
 struct FaceScanFrame: Equatable, Sendable {
-    let frameNumber: UInt64
+    /// 以下三项由相机 Hub 透传（FaceObservation），守卫不自己编号。
+    let cameraID: String
+    let generation: UInt64
+    let sequence: UInt64
+    /// 帧的主机时钟，只用于同一路帧之间比较（认错 2 秒）；不拿去和授权账本的期限比。
     let capturedAt: Double
     /// 产出这帧特征的模型版本。
     let modelVersion: String
@@ -75,11 +81,15 @@ struct FaceScanTuning: Equatable, Sendable {
     }
 }
 
-/// 认出主人的证据。只是证据，放行与否由授权账本决定。
+/// 认出主人的证据。只是证据，放行与否由授权账本决定；进账本时以账本收到的时刻为准（IdentityEvidence）。
 struct FaceScanEvidence: Equatable, Sendable {
     let scanID: UInt64
     let lockGeneration: UInt64
-    let frameNumber: UInt64
+    let cameraID: String
+    let generation: UInt64
+    /// 连续认出的首末帧号（同一路）。
+    let frames: ClosedRange<UInt64>
+    /// 最后一帧的主机时钟，只作日志与同路比较。
     let matchedAt: Double
     let modelVersion: String
 }
@@ -94,24 +104,55 @@ struct FaceScanGuard {
         case failed
     }
 
+    private struct Stream: Equatable {
+        let cameraID: String
+        let generation: UInt64
+    }
+
     private struct Scan {
         let id: UInt64
         let lockGeneration: UInt64
         let startedAt: Double
+        var stream: Stream?
         var lastFrame: UInt64?
         var consecutiveMatches = 0
+        var firstMatch: UInt64?
         var firstWrongAt: Double?
         var finished = false
     }
 
+    /// 同一模型版本、同一维度的模板算好的参照：平均模板（各条先归一化）和最近一次录入。
+    private struct ReferenceKey: Hashable {
+        let modelVersion: String
+        let dimension: Int
+    }
+    private struct Reference {
+        let mean: [Float]
+        let latest: [Float]
+    }
+
     let tuning: FaceScanTuning
-    private(set) var templates: [FaceTemplate]
+    let templates: [FaceTemplate]
+    /// 模板在 init 里定下就不变，平均模板只算这一次，不再每帧重算。
+    private let references: [ReferenceKey: Reference]
     private var scan: Scan?
     private var nextScanID: UInt64 = 1
 
     init(templates: [FaceTemplate], tuning: FaceScanTuning = FaceScanTuning()) {
         self.templates = templates
         self.tuning = tuning
+        var groups: [ReferenceKey: [FaceTemplate]] = [:]
+        for template in templates {
+            groups[ReferenceKey(modelVersion: template.modelVersion, dimension: template.embedding.count), default: []]
+                .append(template)
+        }
+        var references: [ReferenceKey: Reference] = [:]
+        for (key, group) in groups {
+            guard let latest = group.max(by: { $0.enrolledAt < $1.enrolledAt }),
+                  let mean = Self.mean(group.map { Self.normalized($0.embedding) }) else { continue }
+            references[key] = Reference(mean: mean, latest: latest.embedding)
+        }
+        self.references = references
     }
 
     var isScanning: Bool { scan.map { !$0.finished } ?? false }
@@ -136,8 +177,14 @@ struct FaceScanGuard {
             scan = nil; return .discarded(.notLocked)
         }
         if current.finished { return .discarded(.finished) }
-        if let last = current.lastFrame, frame.frameNumber <= last { return .discarded(.duplicateFrame) }
-        current.lastFrame = frame.frameNumber
+        let stream = Stream(cameraID: frame.cameraID, generation: frame.generation)
+        if current.stream != stream {
+            // 另一路帧：帧号从头数，之前那一路的部分匹配不能接上。
+            current.stream = stream; current.lastFrame = nil
+            current.consecutiveMatches = 0; current.firstMatch = nil
+        }
+        if let last = current.lastFrame, frame.sequence <= last { scan = current; return .discarded(.duplicateFrame) }
+        current.lastFrame = frame.sequence
         defer { scan = current }
 
         // 路人（脸太窄）不参与；取最大的候选脸。
@@ -146,14 +193,17 @@ struct FaceScanGuard {
 
         if let embedding = face.embedding, isOwner(embedding, modelVersion: frame.modelVersion) {
             current.consecutiveMatches += 1
+            let first = current.firstMatch ?? frame.sequence
+            current.firstMatch = first
             guard current.consecutiveMatches >= max(1, tuning.requiredConsecutiveMatches) else { return .scanning }
             current.finished = true
             return .owner(FaceScanEvidence(scanID: current.id, lockGeneration: current.lockGeneration,
-                                           frameNumber: frame.frameNumber, matchedAt: frame.capturedAt,
+                                           cameraID: frame.cameraID, generation: frame.generation,
+                                           frames: first...frame.sequence, matchedAt: frame.capturedAt,
                                            modelVersion: frame.modelVersion))
         }
         // 非主人：清掉部分匹配；从第一帧认错起满 2 秒才判失败。
-        current.consecutiveMatches = 0
+        current.consecutiveMatches = 0; current.firstMatch = nil
         let firstWrong = current.firstWrongAt ?? frame.capturedAt
         current.firstWrongAt = firstWrong
         if frame.capturedAt - firstWrong >= tuning.wrongFaceGrace {
@@ -163,13 +213,11 @@ struct FaceScanGuard {
         return .scanning
     }
 
-    /// 平均模板和最近一次录入都要过阈值；只用同一模型版本的模板。
+    /// 平均模板和最近一次录入都要过阈值；只用同一模型版本、同一维度的模板（参照在 init 里算好）。
     func isOwner(_ embedding: [Float], modelVersion: String) -> Bool {
-        guard let threshold = tuning.similarityThreshold(for: modelVersion) else { return false }
-        let eligible = templates.filter { $0.modelVersion == modelVersion && $0.embedding.count == embedding.count }
-        guard !eligible.isEmpty, let latest = eligible.max(by: { $0.enrolledAt < $1.enrolledAt }),
-              let mean = Self.mean(eligible.map { Self.normalized($0.embedding) }),
-              let toMean = Self.cosine(embedding, mean), let toLatest = Self.cosine(embedding, latest.embedding)
+        guard let threshold = tuning.similarityThreshold(for: modelVersion),
+              let reference = references[ReferenceKey(modelVersion: modelVersion, dimension: embedding.count)],
+              let toMean = Self.cosine(embedding, reference.mean), let toLatest = Self.cosine(embedding, reference.latest)
         else { return false }
         return toMean >= threshold && toLatest >= threshold
     }

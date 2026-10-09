@@ -80,6 +80,8 @@ enum NowPlayingPeek {
     static let baseHold: TimeInterval = 1.8
     static let perCharacter: TimeInterval = 0.05
     static let maxHold: TimeInterval = 4.5
+    /// 别的提醒占着时，这一瞥排在后面等多久；超过就放弃（稿“排在后面”，Aaron 定 4.5 秒）。
+    static let queueLimit: TimeInterval = 4.5
     /// 封面交叉淡化（沿用紧凑两耳的淡过去，同一个数）。
     static let crossfade: TimeInterval = 0.18
 
@@ -115,10 +117,12 @@ struct NowPlayingPeekTracker: Sendable {
         var shelfOrCardOpen = false
         var fullScreen = false
         var locked = false
-        /// 刘海上正挂着别的提醒：先到先占，这一瞥不排队补。
+        /// 刘海上正挂着别的提醒：先到先占，这一瞥排在后面（`queueLimit` 内），占着的收了且仍是同一首在放才补出。
         var otherAlertShowing = false
 
-        var isBlocked: Bool { shelfOrCardOpen || fullScreen || locked || otherAlertShowing }
+        /// 排队也没用的几种场面：这一首就算看过了。
+        var isHardBlocked: Bool { shelfOrCardOpen || fullScreen || locked }
+        var isBlocked: Bool { isHardBlocked || otherAlertShowing }
     }
 
     enum Decision: Equatable, Sendable {
@@ -131,8 +135,12 @@ struct NowPlayingPeekTracker: Sendable {
 
     private var lastKey: String?
     private var openUntil: TimeInterval?
+    /// 被别的提醒占着而排在后面的这一首：曲目的 key 和排上的时刻。
+    private var pending: (key: String, queuedAt: TimeInterval)?
 
     var isOpen: Bool { openUntil != nil }
+    /// 有一瞥排在后面等着（占着的提醒收了要再问一次 `retryPending`）。
+    var hasPending: Bool { pending != nil }
 
     private func key(_ sample: Sample) -> String { [sample.player, sample.title, sample.artist].joined(separator: "\u{1F}") }
 
@@ -144,22 +152,57 @@ struct NowPlayingPeekTracker: Sendable {
         guard let sample, !sample.title.isEmpty else {
             lastKey = nil
             openUntil = nil
+            pending = nil
             return .none
         }
-        guard sample.isPlaying else { return .none }
+        guard sample.isPlaying else {
+            pending = nil
+            return .none
+        }
         let current = key(sample)
         guard current != lastKey else { return .none }
         lastKey = current
-        if sample.isAdvertisement || gates.isBlocked {
+        pending = nil
+        if sample.isAdvertisement || gates.isHardBlocked {
             openUntil = nil
             return .none
         }
+        if gates.otherAlertShowing {
+            openUntil = nil
+            pending = (current, now)
+            return .none
+        }
+        return start(sample, now: now)
+    }
+
+    /// 占着刘海的提醒收了（或排队的时间到了）再问一次：还在放、还是排队的那一首、没有更硬的场面挡着、没超过 `queueLimit`，才补出。
+    /// 其余情况（换了歌、暂停、播放器退出、超时、大卡 / 全屏 / 锁屏）一律放弃，不再补。
+    mutating func retryPending(_ sample: Sample?, gates: Gates, now: TimeInterval) -> Decision {
+        guard let queued = pending else { return .none }
+        guard now - queued.queuedAt <= NowPlayingPeek.queueLimit,
+              let sample, !sample.title.isEmpty, sample.isPlaying, !sample.isAdvertisement,
+              key(sample) == queued.key, !gates.isHardBlocked else {
+            pending = nil
+            return .none
+        }
+        if gates.otherAlertShowing { return .none }
+        pending = nil
+        return start(sample, now: now)
+    }
+
+    private mutating func start(_ sample: Sample, now: TimeInterval) -> Decision {
         let hold = NowPlayingPeek.hold(title: sample.title, artist: sample.artist)
         let wasOpen = isOpen(at: now)
         openUntil = now + hold
         return wasOpen ? .replace(hold: hold) : .open(hold: hold)
     }
 
-    /// 一瞥被收掉了（到点、被别的盖住、锁屏）。
+    /// 一瞥被收掉了（到点、被别的盖住）。排在后面的那一瞥不动。
     mutating func dismissed() { openUntil = nil }
+
+    /// 锁屏、睡眠：开着的和排着的都不留，解锁后不补播。
+    mutating func cleared() {
+        openUntil = nil
+        pending = nil
+    }
 }
