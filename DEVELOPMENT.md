@@ -378,3 +378,7 @@ cd prototype
    续装和取消流程、`<bundle id>-sparkle-updater` 这个 launchd 标签有没有变。
 4. 跑 `tests/run-update-tests.sh`，再在发布机上把 docs/update.md“验收”里的集成测试走一遍。关找不到解开的 App 时结果是“不装”，
    这样发出去就等于没法更新，所以不过不发。
+
+### Computer Use 原生界面验收
+
+[操作手册](docs/computer-use-qa.md) 是隔离 VM、单步输入、截图/AX 取证和视觉复核的唯一入口；[工具说明](tools/computer-use-qa/README.md) 提供 CLI 与离线检查。涉及界面行为的改动应选择对应场景，报告实际构建身份、失败、未测项与清理结果。已有单元测试及 glance 探针继续使用，不以 Computer Use 替代它们；历史二进制的通过不构成当前源码通过。
