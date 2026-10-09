@@ -11,7 +11,6 @@ import Cocoa
         focus.bezelStyle = .rounded; focus.isEnabled = NotchController.isEnabled && NotchActivityController.isEnabled
         focus.toolTip = "打开番茄钟。快捷键可在快捷键设置中录制。"
         addArrangedSubview(focus)
-        addArrangedSubview(WS2FocusSettingsRows(runtime: owner.ws2Runtime))
         let coding=NSButton(title:"编程会话…",target:owner,action:#selector(AppDelegate.ws2OpenOwned))
         coding.bezelStyle = .rounded;coding.isEnabled=NotchController.isEnabled
         coding.toolTip="本地选择项目和 Codex，登录后进行只读查询。打开页面不会启动程序。"
@@ -27,7 +26,7 @@ import Cocoa
         conductor.toolTip = "看当前会话、模型和草稿。不会发送，也不会连接遥控器。"
         addArrangedSubview(conductor)
         for (title,reason) in [("指挥模式","需要已核准的输入设备和助手连接"),("平滑滚动","需要确认每条事件的设备来源"),
-                                ("Apple TV 遥控器","需要通过当前设备的按钮与触点探针"),("游戏手柄","需要完成当前连接的映射与阻力归零检查"),
+                                ("Siri 遥控器","需要通过当前设备的按钮与触点探针"),
                                 ("在场检测","需要已绑定身份的蓝牙读回来源")] {
             let row = NSStackView(); row.orientation = .horizontal; row.spacing = 10
             let toggle = NSButton(checkboxWithTitle:title,target:nil,action:nil)

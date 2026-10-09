@@ -1,0 +1,549 @@
+{
+  "date": "2026-10-08",
+  "base_head": "4accf310d505041f5d4458e204c62e55e022a900",
+  "source_sha256": {
+    "prototype/Support/WS2CompanionTCPTransport.swift": "731161802dcf084cd35e4d855a39a03f28cef58482c13babf5eae55d4aa5e940",
+    "prototype/Core/WS2CompanionFrame.swift": "2ecb698bdf16965242836f132a7bc801d0ac7db7b488abc0d5a1b878a4c0fabd",
+    "prototype/Core/WS2BoundedOutbox.swift": "80fb7f58123a2f9df5c0d7b94c206277427e269273be595ac25e4d554c68e326",
+    "tests/CompanionTransportTests.swift": "31cba84bd4309a9d68c51b3050d139dea52885d39a37c213dd3fd7e85cc0d142",
+    "tests/run-companion-transport-tests.sh": "58403feced2b871d3a882599ccc140e8ec4a7b35c2364efdd9815e7550cfaaf8"
+  },
+  "binary_sha256": "3725209fbacc8b1412870d797a696b57e3e063e5eeac40b5b3f85d872d12177b",
+  "commands": [
+    {
+      "command": "bash tests/run-companion-transport-tests.sh --controlled > /tmp/companion-transport-controlled.log",
+      "exit_code": 0
+    },
+    {
+      "command": ".build/companion-transport/companion-transport --loopback > /tmp/companion-transport-loopback.log",
+      "exit_code": 0,
+      "permission": "require_escalated after sandbox EPERM; 127.0.0.1 only"
+    },
+    {
+      "command": "swiftc -module-cache-path .build/companion-transport/module-cache -swift-version 6 -strict-concurrency=complete -warnings-as-errors -typecheck prototype/Core/WS2CompanionFrame.swift prototype/Core/WS2BoundedOutbox.swift prototype/Support/WS2CompanionTCPTransport.swift",
+      "exit_code": 0
+    }
+  ],
+  "controlled": [
+    {
+      "case": "first-cause-protocol-reject",
+      "closeCallbacks": 2,
+      "result": "PASS",
+      "snapshot": {
+        "at": 0,
+        "cause": "protocol-reject",
+        "connectionIndex": 1,
+        "highWaterBytes": 0,
+        "highWaterEntries": 0,
+        "outboxBytes": 0,
+        "outboxEntries": 0,
+        "phase": "initial",
+        "processedRecords": 0,
+        "processedSlices": 0,
+        "queuedRecords": 0,
+        "receivedFrames": 0,
+        "sending": false
+      }
+    },
+    {
+      "case": "first-cause-owner-stop",
+      "closeCallbacks": 2,
+      "result": "PASS",
+      "snapshot": {
+        "at": 0,
+        "cause": "owner-stop",
+        "connectionIndex": 1,
+        "highWaterBytes": 0,
+        "highWaterEntries": 0,
+        "outboxBytes": 0,
+        "outboxEntries": 0,
+        "phase": "initial",
+        "processedRecords": 0,
+        "processedSlices": 0,
+        "queuedRecords": 0,
+        "receivedFrames": 0,
+        "sending": false
+      }
+    },
+    {
+      "case": "first-cause-network-failed",
+      "closeCallbacks": 2,
+      "result": "PASS",
+      "snapshot": {
+        "at": 0,
+        "cause": "network-failed",
+        "connectionIndex": 1,
+        "highWaterBytes": 0,
+        "highWaterEntries": 0,
+        "outboxBytes": 0,
+        "outboxEntries": 0,
+        "phase": "initial",
+        "processedRecords": 0,
+        "processedSlices": 0,
+        "queuedRecords": 0,
+        "receivedFrames": 0,
+        "sending": false
+      }
+    },
+    {
+      "case": "first-cause-network-cancelled",
+      "closeCallbacks": 2,
+      "result": "PASS",
+      "snapshot": {
+        "at": 0,
+        "cause": "network-cancelled",
+        "connectionIndex": 1,
+        "highWaterBytes": 0,
+        "highWaterEntries": 0,
+        "outboxBytes": 0,
+        "outboxEntries": 0,
+        "phase": "initial",
+        "processedRecords": 0,
+        "processedSlices": 0,
+        "queuedRecords": 0,
+        "receivedFrames": 0,
+        "sending": false
+      }
+    },
+    {
+      "case": "first-cause-receive-error",
+      "closeCallbacks": 2,
+      "result": "PASS",
+      "snapshot": {
+        "at": 0,
+        "cause": "receive-error",
+        "connectionIndex": 1,
+        "eofCallbackBytes": 7,
+        "highWaterBytes": 0,
+        "highWaterEntries": 0,
+        "outboxBytes": 0,
+        "outboxEntries": 0,
+        "phase": "initial",
+        "processedRecords": 0,
+        "processedSlices": 0,
+        "queuedRecords": 0,
+        "receivedFrames": 0,
+        "sending": false
+      }
+    },
+    {
+      "case": "first-cause-frame-decode",
+      "closeCallbacks": 2,
+      "result": "PASS",
+      "snapshot": {
+        "at": 0,
+        "cause": "frame-decode",
+        "connectionIndex": 1,
+        "eofCallbackBytes": 4,
+        "highWaterBytes": 0,
+        "highWaterEntries": 0,
+        "outboxBytes": 0,
+        "outboxEntries": 0,
+        "phase": "initial",
+        "processedRecords": 0,
+        "processedSlices": 0,
+        "queuedRecords": 0,
+        "receivedFrames": 0,
+        "sending": false
+      }
+    },
+    {
+      "case": "coalesced-close-stops-delivery",
+      "result": "PASS",
+      "snapshot": {
+        "at": 0,
+        "cause": "protocol-reject",
+        "connectionIndex": 1,
+        "eofCallbackBytes": 14,
+        "highWaterBytes": 0,
+        "highWaterEntries": 0,
+        "lastFrameLength": 3,
+        "lastFrameType": 4,
+        "outboxBytes": 0,
+        "outboxEntries": 0,
+        "phase": "initial",
+        "processedRecords": 0,
+        "processedSlices": 0,
+        "queuedRecords": 0,
+        "receivedFrames": 1,
+        "sending": false
+      }
+    },
+    {
+      "case": "EOF-data-pending-reply-late-completion",
+      "result": "PASS",
+      "snapshot": {
+        "at": 0,
+        "cause": "remote-eof",
+        "connectionIndex": 1,
+        "eofCallbackBytes": 7,
+        "highWaterBytes": 7,
+        "highWaterEntries": 1,
+        "lastFrameLength": 3,
+        "lastFrameType": 4,
+        "lastSendOutcome": "queued",
+        "outboxBytes": 7,
+        "outboxDeadline": 5,
+        "outboxEntries": 1,
+        "phase": "initial",
+        "processedRecords": 0,
+        "processedSlices": 0,
+        "queuedRecords": 1,
+        "receivedFrames": 1,
+        "sending": true
+      }
+    },
+    {
+      "case": "multi-slice-record",
+      "result": "PASS",
+      "sliceSizes": [
+        65536,
+        4
+      ],
+      "snapshot": {
+        "at": 0,
+        "cause": "owner-stop",
+        "connectionIndex": 1,
+        "highWaterBytes": 65540,
+        "highWaterEntries": 1,
+        "lastSendOutcome": "content-processed",
+        "outboxBytes": 0,
+        "outboxEntries": 0,
+        "phase": "initial",
+        "processedRecords": 1,
+        "processedSlices": 2,
+        "queuedRecords": 1,
+        "receivedFrames": 0,
+        "sending": false
+      }
+    },
+    {
+      "case": "partial-send-error",
+      "result": "PASS",
+      "sliceSizes": [
+        65536,
+        4
+      ],
+      "snapshot": {
+        "at": 0,
+        "cause": "send-error",
+        "connectionIndex": 1,
+        "highWaterBytes": 65540,
+        "highWaterEntries": 1,
+        "lastSendOutcome": "failed",
+        "outboxBytes": 65540,
+        "outboxDeadline": 5,
+        "outboxEntries": 1,
+        "phase": "initial",
+        "processedRecords": 0,
+        "processedSlices": 1,
+        "queuedRecords": 1,
+        "receivedFrames": 0,
+        "sending": false
+      }
+    },
+    {
+      "case": "duplicate-ticket-completion",
+      "result": "PASS",
+      "snapshot": {
+        "at": 0,
+        "cause": "protocol-reject",
+        "connectionIndex": 1,
+        "highWaterBytes": 7,
+        "highWaterEntries": 1,
+        "lastSendOutcome": "failed",
+        "outboxBytes": 0,
+        "outboxEntries": 0,
+        "phase": "initial",
+        "processedRecords": 1,
+        "processedSlices": 1,
+        "queuedRecords": 1,
+        "receivedFrames": 0,
+        "sending": false
+      }
+    },
+    {
+      "case": "batch-budget-13-plus-3",
+      "result": "PASS",
+      "snapshot": {
+        "at": 0,
+        "cause": "owner-stop",
+        "connectionIndex": 1,
+        "highWaterBytes": 112,
+        "highWaterEntries": 16,
+        "lastSendOutcome": "queued",
+        "outboxBytes": 112,
+        "outboxDeadline": 5,
+        "outboxEntries": 16,
+        "phase": "initial",
+        "processedRecords": 0,
+        "processedSlices": 0,
+        "queuedRecords": 16,
+        "receivedFrames": 0,
+        "sending": false
+      }
+    },
+    {
+      "case": "batch-budget-14-plus-3",
+      "result": "PASS",
+      "snapshot": {
+        "at": 0,
+        "cause": "outbox-capacity",
+        "connectionIndex": 1,
+        "highWaterBytes": 98,
+        "highWaterEntries": 14,
+        "lastSendOutcome": "queued",
+        "outboxBytes": 98,
+        "outboxDeadline": 5,
+        "outboxEntries": 14,
+        "phase": "initial",
+        "processedRecords": 0,
+        "processedSlices": 0,
+        "queuedRecords": 14,
+        "receivedFrames": 0,
+        "sending": false
+      }
+    },
+    {
+      "case": "coalesced-burst-sixth-outcome-rejected",
+      "result": "PASS",
+      "snapshot": {
+        "at": 0,
+        "cause": "outbox-capacity",
+        "connectionIndex": 1,
+        "eofCallbackBytes": 70,
+        "highWaterBytes": 105,
+        "highWaterEntries": 15,
+        "lastFrameLength": 3,
+        "lastFrameType": 4,
+        "lastSendOutcome": "queued",
+        "outboxBytes": 105,
+        "outboxDeadline": 5,
+        "outboxEntries": 15,
+        "phase": "initial",
+        "processedRecords": 0,
+        "processedSlices": 0,
+        "queuedRecords": 15,
+        "receivedFrames": 6,
+        "sending": true
+      }
+    },
+    {
+      "case": "protocol-deadline-stale-timer",
+      "result": "PASS",
+      "snapshot": {
+        "at": 10,
+        "cause": "protocol-deadline",
+        "connectionIndex": 1,
+        "highWaterBytes": 0,
+        "highWaterEntries": 0,
+        "outboxBytes": 0,
+        "outboxEntries": 0,
+        "phase": "initial",
+        "processedRecords": 0,
+        "processedSlices": 0,
+        "protocolDeadline": 10,
+        "queuedRecords": 0,
+        "receivedFrames": 0,
+        "sending": false
+      }
+    },
+    {
+      "case": "outbox-deadline",
+      "result": "PASS",
+      "snapshot": {
+        "at": 3,
+        "cause": "outbox-deadline",
+        "connectionIndex": 1,
+        "highWaterBytes": 7,
+        "highWaterEntries": 1,
+        "lastSendOutcome": "queued",
+        "outboxBytes": 7,
+        "outboxDeadline": 3,
+        "outboxEntries": 1,
+        "phase": "initial",
+        "processedRecords": 0,
+        "processedSlices": 0,
+        "protocolDeadline": 10,
+        "queuedRecords": 1,
+        "receivedFrames": 0,
+        "sending": false
+      }
+    },
+    {
+      "case": "owner-revoked",
+      "result": "PASS",
+      "snapshot": {
+        "at": 0,
+        "cause": "not-current",
+        "connectionIndex": 1,
+        "highWaterBytes": 0,
+        "highWaterEntries": 0,
+        "outboxBytes": 0,
+        "outboxEntries": 0,
+        "phase": "initial",
+        "processedRecords": 0,
+        "processedSlices": 0,
+        "protocolDeadline": 5,
+        "queuedRecords": 0,
+        "receivedFrames": 0,
+        "sending": false
+      }
+    },
+    {
+      "case": "codec-all-splits",
+      "order": [
+        8,
+        4
+      ],
+      "result": "PASS",
+      "splitPoints": 40,
+      "tailPartial": true
+    }
+  ],
+  "native_loopback": [
+    {
+      "case": "native-send",
+      "clientBytes": 65540,
+      "closeEvents": 1,
+      "delivered": 1,
+      "loopback": true,
+      "result": "PASS",
+      "snapshot": {
+        "at": 0.002896709,
+        "cause": "owner-stop",
+        "connectionIndex": 2,
+        "highWaterBytes": 65540,
+        "highWaterEntries": 1,
+        "lastFrameLength": 3,
+        "lastFrameType": 4,
+        "lastSendOutcome": "content-processed",
+        "outboxBytes": 0,
+        "outboxEntries": 0,
+        "phase": "initial",
+        "processedRecords": 1,
+        "processedSlices": 2,
+        "protocolDeadline": 10.0024055,
+        "queuedRecords": 1,
+        "receivedFrames": 1,
+        "sending": false
+      }
+    },
+    {
+      "case": "native-eof",
+      "clientBytes": 0,
+      "closeEvents": 1,
+      "delivered": 1,
+      "loopback": true,
+      "result": "PASS",
+      "snapshot": {
+        "at": 0.000711917,
+        "cause": "remote-eof",
+        "connectionIndex": 2,
+        "eofCallbackBytes": 7,
+        "highWaterBytes": 65540,
+        "highWaterEntries": 1,
+        "lastFrameLength": 3,
+        "lastFrameType": 4,
+        "lastSendOutcome": "queued",
+        "outboxBytes": 65540,
+        "outboxDeadline": 4,
+        "outboxEntries": 1,
+        "phase": "initial",
+        "processedRecords": 0,
+        "processedSlices": 0,
+        "protocolDeadline": 10.000568042,
+        "queuedRecords": 1,
+        "receivedFrames": 1,
+        "sending": true
+      }
+    },
+    {
+      "case": "native-burst",
+      "clientBytes": 0,
+      "closeEvents": 1,
+      "delivered": 6,
+      "loopback": true,
+      "result": "PASS",
+      "snapshot": {
+        "at": 0.000852208,
+        "cause": "outbox-capacity",
+        "connectionIndex": 2,
+        "highWaterBytes": 75,
+        "highWaterEntries": 15,
+        "lastFrameLength": 3,
+        "lastFrameType": 4,
+        "lastSendOutcome": "queued",
+        "outboxBytes": 75,
+        "outboxDeadline": 4,
+        "outboxEntries": 15,
+        "phase": "initial",
+        "processedRecords": 0,
+        "processedSlices": 0,
+        "protocolDeadline": 10.000607708,
+        "queuedRecords": 15,
+        "receivedFrames": 6,
+        "sending": true
+      }
+    },
+    {
+      "case": "native-decode",
+      "clientBytes": 0,
+      "closeEvents": 1,
+      "delivered": 0,
+      "loopback": true,
+      "result": "PASS",
+      "snapshot": {
+        "at": 0.000612542,
+        "cause": "frame-decode",
+        "connectionIndex": 2,
+        "highWaterBytes": 0,
+        "highWaterEntries": 0,
+        "outboxBytes": 0,
+        "outboxEntries": 0,
+        "phase": "initial",
+        "processedRecords": 0,
+        "processedSlices": 0,
+        "protocolDeadline": 10.000513583,
+        "queuedRecords": 0,
+        "receivedFrames": 0,
+        "sending": false
+      }
+    },
+    {
+      "case": "native-revoke",
+      "clientBytes": 0,
+      "closeEvents": 1,
+      "delivered": 1,
+      "loopback": true,
+      "result": "PASS",
+      "snapshot": {
+        "at": 0.0005205,
+        "cause": "not-current",
+        "connectionIndex": 2,
+        "highWaterBytes": 0,
+        "highWaterEntries": 0,
+        "lastFrameLength": 3,
+        "lastFrameType": 4,
+        "outboxBytes": 0,
+        "outboxEntries": 0,
+        "phase": "initial",
+        "processedRecords": 0,
+        "processedSlices": 0,
+        "protocolDeadline": 10.000431708,
+        "queuedRecords": 0,
+        "receivedFrames": 1,
+        "sending": false
+      }
+    }
+  ],
+  "policy": "EOF closes immediately without draining; pending output retained in close snapshot. Batch admission atomic; capacity failure closes, never retries. Existing queue caps unchanged.",
+  "limits": [
+    "Network.framework may deliver EOF with data or in a later empty callback; this run observed data=7+done=true.",
+    "No Bonjour, broadcast, iPhone, real action, or listener admission policies exercised.",
+    "Injected receive/send/network failures are controlled callback-path tests; no native RST case.",
+    "PIN/pending-candidate/owner-total deadlines belong to owners, not this transport test.",
+    "NET-04 transport batch budget is tested; profile/nonce integration requires owner integration tests.",
+    "NET-07/08/09 listener governance/logging remain outside this scoped block."
+  ]
+}

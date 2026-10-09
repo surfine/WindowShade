@@ -447,7 +447,8 @@ import Cocoa
         guard isInputReady, shownDevices.indices.contains(deviceMenu.indexOfSelectedItem) else { return }
         let id = shownDevices[deviceMenu.indexOfSelectedItem].attachment
         if enableDevice?(id) != true {
-            status.stringValue = "未能启用。请点一下这一页，再松开所有按键。"
+            status.stringValue = WS2GamepadHandlerSeats.shared.desktopHoldsAny
+                ? "先在设置里关掉控制这台 Mac" : "未能启用。请点一下这一页，再松开所有按键。"
         }
     }
 }

@@ -1,6 +1,7 @@
 import Cocoa
 
 /// 把输入开关接到已有的纯逻辑。关着时不创建事件 tap，也不创建 HID 监听。
+@MainActor
 final class WS2InputController {
     let scrollTap = ScrollTap()
     let middleTap = MiddleTitlebarTap()
@@ -8,8 +9,12 @@ final class WS2InputController {
     private var routerClock = WS2.Instant(nanoseconds: 1)
     private(set) var preferences = WS2InputPreferences.Value.off
     private(set) var scrollDecision = ScrollInstallPolicy.Decision.hold(.off)
-    /// 监听没有创建。映射文本不在仓库里，打开开关也不会变成 true。
+    /// iPhone 上的遥控器：遥控模式开着且宣告、监听都就绪时才是 true。
     private(set) var remoteListening = false
+    /// 遥控模式第一次打开时才建；关着时不读钥匙串、不宣告、不监听。
+    private var remoteHost: WS2RemoteHost?
+    private var remotePresenter: WS2RemoteNotchPresenter?
+    private var remoteLock: WS2RemoteLockObserver?
     private(set) var middleListening = false
     private(set) var hooksPaused = false
 
@@ -50,10 +55,36 @@ final class WS2InputController {
             && !middleTap.systemStopped
         middleListening = middleOn
         middleTap.apply(installing: middleOn)
-        // 没有核对过的静音映射，打开遥控模式也不创建遥控器监听。
-        remoteListening = false
+        // Siri 遥控器：没有核对过的静音映射，仍不创建它的监听。
         _ = remote.setEnabled(false, at: tick())
+        let conductor = WS2ConductorSettings.flag(WS2ConductorSettings.enabledKey, in: store)
+        remoteListening = applyRemote(on: prefs.remoteMode, conductor: conductor)
+        // 手柄：有哪一台打开了才监听，全关就停（R09）。
+        WS2GamepadDesktopControl.shared.applyPreferences()
     }
+
+    /// 遥控模式是总开关，指挥模式跟着它。
+    private func applyRemote(on: Bool, conductor: Bool) -> Bool {
+        if on, remoteHost == nil {
+            let host = WS2RemoteHost.makeForApp()
+            let presenter = WS2RemoteNotchPresenter()
+            host.presenter = presenter
+            host.onChange = { [weak self] in
+                guard let self else { return }
+                self.remoteListening = self.remoteHost?.isListening == true
+                (NSApp.delegate as? AppDelegate)?.refreshPreferencesWindowIfOpen()
+            }
+            remoteHost = host; remotePresenter = presenter
+        }
+        guard let host = remoteHost else { return false }
+        if on, remoteLock == nil { remoteLock = WS2RemoteLockObserver(host: host) }
+        host.setEnabled(remote: on, conductor: conductor)
+        if !on { remoteLock?.invalidate(); remoteLock = nil }
+        return host.isListening
+    }
+
+    /// 设置页用：iPhone 上的遥控器现在的样子。
+    var remoteHostForSettings: WS2RemoteHost? { remoteHost }
 
     func shutdown() {
         dispatchPrecondition(condition: .onQueue(.main))
@@ -63,6 +94,8 @@ final class WS2InputController {
         middleTap.apply(installing: false)
         remoteListening = false
         _ = remote.setEnabled(false, at: tick())
+        remoteHost?.setEnabled(remote: false, conductor: false)
+        remoteLock?.invalidate(); remoteLock = nil
     }
 
     /// 静音「先停一下」。偏好还在，钩子先拆掉，再次 apply 也不会装上。

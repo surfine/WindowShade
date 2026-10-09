@@ -14,21 +14,30 @@ func pointMayLieInTitlebarBand(_ point: CGPoint) -> Bool {
 }
 
 /// 纯判定：给一份在屏窗口快照，判断点击点是否可能落在某窗口的标题栏带内。
-func pointMayLieInTitlebarBand(_ point: CGPoint, windows: [[String: Any]]) -> Bool {
+/// `bandHeight` 默认 300pt（tap 预过滤，宁可放过）；预热用窗口真实的带高。
+func pointMayLieInTitlebarBand(_ point: CGPoint, windows: [[String: Any]],
+                               bandHeight: ((CGWindowID) -> CGFloat)? = nil) -> Bool {
     let maxTitlebarBand: CGFloat = 300
     for info in windows {
         guard let bounds = cgWindowBounds(info) else { continue }
         let alpha = (info[kCGWindowAlpha as String] as? NSNumber)?.doubleValue ?? 1
         guard alpha > 0, bounds.contains(point) else { continue }
-        if point.y <= bounds.minY + min(maxTitlebarBand, bounds.height) { return true }
+        var band = maxTitlebarBand
+        if let bandHeight, let n = info[kCGWindowNumber as String] as? NSNumber {
+            band = bandHeight(CGWindowID(n.uint32Value))
+        }
+        if point.y <= bounds.minY + min(band, bounds.height) { return true }
     }
     return false
 }
 
 /// tap 线程上的准入：只用**已备好且够新**的快照做判断，绝不在这里枚举 WindowServer。
 /// 快照过期或还没准备好时返回 nil（资格不清），调用方交给主线程的完整判定；冷缓存不放行也不吞。
+/// 通用快照过期时，退到第一下点击记下的准入快照（有效期 doubleClickInterval）。
 func pointMayLieInTitlebarBandUsingFreshCache(_ point: CGPoint) -> Bool? {
-    guard let windows = WindowListCache.shared.freshOnScreenWindows() else { return nil }
+    let windows = WindowListCache.shared.freshOnScreenWindows()
+        ?? WindowListCache.shared.admissionSnapshot(validFor: NSEvent.doubleClickInterval)
+    guard let windows else { return nil }
     return pointMayLieInTitlebarBand(point, windows: windows)
 }
 
@@ -59,8 +68,13 @@ func eventTapCallback(proxy: CGEventTapProxy, type: CGEventType,
     let location = event.location
     // 快照新鲜且点击明显不在任何在屏窗口的标题栏带内：tap 线程上直接放行，不打扰主线程。
     // 三击另有不依赖 AX 的 pending 匹配，不走这条预过滤。
-    if clickState == 2, pointMayLieInTitlebarBandUsingFreshCache(location) == false {
-        return Unmanaged.passUnretained(event)
+    if clickState == 2 {
+        let verdict = pointMayLieInTitlebarBandUsingFreshCache(location)
+        if Diagnostics.stallSamplerOn {
+            let c = PrefilterStats.shared.note(verdict == nil ? .unknown : (verdict! ? .miss : .hit))
+            wlog("prefilter: hit=\(c.hit) miss=\(c.miss) nil=\(c.unknown)")
+        }
+        if verdict == false { return Unmanaged.passUnretained(event) }
     }
     let decision = TapDecision()
     DispatchQueue.main.async {

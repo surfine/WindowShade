@@ -9,6 +9,7 @@ const shared = {
   release: ['更新记录', 'Release notes'],
   issue: ['反馈问题', 'Report an issue'],
   privacy: ['权限与隐私', 'Permissions & privacy'],
+  privacyHref: ['/privacy/', '/privacy/'],
   theme: ['切换浅色或深色外观', 'Switch light or dark appearance'],
   skip: ['跳到主要内容', 'Skip to content'],
 };

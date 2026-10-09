@@ -35,7 +35,10 @@ final class NotchActivitySources {
     private var commandBusy = false
     private var workToken = ActivitySourceToken()
     private var musicApp: String?
-    static let musicKey = "Notch.activities.musicEnabled"
+    static let musicKey = NotchNowPlayingDefaults.musicKey
+    /// 日程（CAL-2）：默认关；没授权时不建日历仓库对象。画面属 CAL-3，这里只暴露来源。
+    static let calendarKey = "Notch.activities.calendarEnabled"
+    let calendar = CalendarSource()
     /// 音乐：问播放器要启动一次 osascript（几十毫秒），所以只在播放器发通知（换曲、播放、暂停）、
     /// 播放器开关、点了控制、或 30 秒兜底时才问；其余时候进度条按上次读到的位置和经过的时间推算。
     private var musicDirty = true
@@ -47,6 +50,13 @@ final class NotchActivitySources {
     /// 现在只在「设备/默认输出变了」或 30 秒兜底时才重新枚举。
     private let audioCache = AudioDeviceCache()
     private var audioListenersInstalled = false
+    /// 计划 2-1：所有播放器的推送流。健康时音乐不再去问播放器；挂了就回到下面的通知 + 兜底轮询。
+    private let nowPlaying = NowPlayingStream()
+    /// 正在播放的封面（NP-2）：换曲时取一次，只留最新一张在内存；推送流没开时什么都不做。
+    private let artwork = NowPlayingArtwork()
+    /// 封面取到、换掉或丢掉时通知（紧凑左耳的封面和右耳的取色点读它）。
+    var onArtwork: ((NowPlayingArtworkImage?) -> Void)?
+    var nowPlayingArtwork: NowPlayingArtworkImage? { artwork.latest }
 
     func start() {
         guard !running else { return }
@@ -55,12 +65,28 @@ final class NotchActivitySources {
         workToken = ActivitySourceToken()
         installAudioListeners()
         installMusicObservers()
+        artwork.onChange = { [weak self] image in self?.onArtwork?(image) }
+        nowPlaying.onUpdate = { [weak self] info in
+            self?.artwork.trackChanged(to: info)
+            self?.streamChanged()
+        }
+        nowPlaying.onHealthChange = { [weak self] healthy in
+            if !healthy { self?.artwork.clear() }
+            self?.musicChanged()
+        }
+        // 推送判坏了（NP-4）：退路上的 Music / Spotify 此时才可能问“自动化”授权，重新对账一次。
+        nowPlaying.onGiveUp = { [weak self] in self?.musicChanged() }
+        syncNowPlayingStream()
+        syncCalendar()
         currentTier = .idle
         scheduleTick()
         poll()
     }
     func stop() {
         running = false
+        nowPlaying.stop()
+        artwork.clear()
+        calendar.stop()
         workToken.cancel(); epoch += 1; timer?.invalidate(); timer = nil; tickInterval = 0
         musicApp = nil; musicRead = nil; musicDirty = true; lastSnapshotCount = 0
     }
@@ -116,7 +142,38 @@ final class NotchActivitySources {
 
     private func musicChanged() {
         musicDirty = true
+        syncNowPlayingStream()
         if running { poll() }
+    }
+
+    /// 日程开关开着、活动在跑、且已授权才启动来源；其余一律停掉。设置里改开关后调用。
+    func syncCalendar() {
+        let lead = CalendarSettings.lead, leadChanged = calendar.lead != lead
+        calendar.lead = lead
+        if running && UserDefaults.standard.bool(forKey: Self.calendarKey) { calendar.start() } else { calendar.stop() }
+        // 提前量变了：下一个“该出现”的时刻跟着挪，要重查一次。
+        if leadChanged && calendar.isRunning { calendar.reload() }
+    }
+
+    /// 推送流只在实时活动在跑、音乐开关开着、推送开关开着时启动；其余时候停掉子进程。
+    private func syncNowPlayingStream() {
+        if running && NotchNowPlayingDefaults.musicEnabled(in: .standard) && NowPlayingStream.isEnabled {
+            nowPlaying.start()
+        } else {
+            nowPlaying.stop()
+            artwork.clear()
+        }
+    }
+
+    /// 推送来了新现状：直接对账一次，不去问播放器。
+    private func streamChanged() {
+        if running { poll() }
+    }
+
+    /// 推送流的现状映射成卡片快照。detail 是来源 App，点卡片时打开它。
+    private static func snapshot(_ info: NowPlayingInfo, epoch: Double) -> NotchSourceSnapshot {
+        NotchSourceSnapshot(kind: .music, title: info.title, subtitle: info.artist, symbol: "music.note",
+                            progress: info.progress(atEpoch: epoch), isPaused: !info.isPlaying, detail: info.bundleID)
     }
 
     /// 设备或来源出现／消失：标脏之后立刻对账一次，不等兜底 tick。
@@ -144,8 +201,47 @@ final class NotchActivitySources {
             DispatchQueue.main.async { self?.commandBusy = false; self?.musicChanged() }
         }
     }
+    /// 设置里改了“正在播放”开关：对账一次，推送流跟着起停。
+    func musicSettingChanged() { musicChanged() }
+
+    // MARK: 大卡要的现状（NP-4）
+
+    /// 推送流此刻健康：进度条能拖（跳转走 MediaRemote）、封面有。退路上的 Music / Spotify 不让跳。
+    var nowPlayingStreamHealthy: Bool { nowPlaying.isHealthy }
+
+    /// 这首的位置和怎么往前走。推送流健康时用推送给的；否则用上次问播放器读到的。
+    var nowPlayingTimeline: NowPlayingTimeline? {
+        let epoch = Date().timeIntervalSince1970
+        if nowPlaying.isHealthy, let info = nowPlaying.latest { return NowPlayingTimeline(info: info, receivedAtEpoch: epoch) }
+        guard let read = musicRead, let position = read.position else { return nil }
+        let ago = ProcessInfo.processInfo.systemUptime - read.at
+        return NowPlayingTimeline(duration: read.duration > 0 ? read.duration : nil, elapsed: position, stamp: epoch - ago,
+                                  rate: read.snapshot.isPaused ? 0 : 1)
+    }
+
+    /// 松手那一下才调：跳到某个位置（秒）。只有推送流健康时有效。
+    func seek(toSeconds seconds: Double) {
+        guard nowPlaying.isHealthy, let adapter = NowPlayingStream.locateAdapter() else { return }
+        let token = workToken
+        worker.async { [weak self] in
+            if token.valid { NowPlayingStream.seek(toSeconds: seconds, adapter: adapter) }
+            DispatchQueue.main.async { self?.musicChanged() }
+        }
+    }
+
     func musicCommand(_ command: NotchMusicCommand) {
-        guard !commandBusy, let id = musicApp, runningPlayers().contains(id) else { return }
+        guard !commandBusy, let id = musicApp else { return }
+        // 推送流健康时，控制也走适配器：任何正在报告的播放器都能控制，不需要自动化授权。
+        if nowPlaying.isHealthy, let adapter = NowPlayingStream.locateAdapter() {
+            commandBusy = true
+            let token = workToken
+            worker.async { [weak self] in
+                if token.valid { NowPlayingStream.send(command, adapter: adapter) }
+                DispatchQueue.main.async { self?.commandBusy = false; self?.musicChanged() }
+            }
+            return
+        }
+        guard runningPlayers().contains(id) else { return }
         commandBusy = true
         let token = workToken
         worker.async { [weak self] in
@@ -164,20 +260,32 @@ final class NotchActivitySources {
         polls &+= 1
         let token = epoch, work = workToken
         let now = ProcessInfo.processInfo.systemUptime
-        let enabledPlayers = UserDefaults.standard.bool(forKey: Self.musicKey) ? runningPlayers() : []
+        let musicEnabled = NotchNowPlayingDefaults.musicEnabled(in: .standard)
+        let allowPrompt = musicEnabled && nowPlaying.allowsAutomationPrompt
+        let source = NotchActivityPollPolicy.musicSource(musicEnabled: musicEnabled, streamHealthy: nowPlaying.isHealthy)
+        let enabledPlayers = source == .scripts ? runningPlayers() : []
         // 只有该问的时候才启动 osascript；不问就用推算的结果。
-        let askPlayers = !enabledPlayers.isEmpty && (musicDirty || now - musicReadAt > 30)
+        // 推送流健康时完全不问。
+        let askPlayers = NotchActivityPollPolicy.shouldAskScripts(source: source, hasRunningPlayers: !enabledPlayers.isEmpty,
+                                                                  dirty: musicDirty, sinceLastRead: now - musicReadAt)
         let players = askPlayers ? enabledPlayers : []
-        let kept = enabledPlayers.isEmpty ? nil : (askPlayers ? nil : extrapolatedMusic(now: now))
+        let kept: NotchSourceSnapshot?
+        switch source {
+        case .stream: kept = nowPlaying.latest.map { Self.snapshot($0, epoch: Date().timeIntervalSince1970) }
+        case .scripts: kept = enabledPlayers.isEmpty ? nil : (askPlayers ? nil : extrapolatedMusic(now: now))
+        case .none: kept = nil
+        }
         if askPlayers { musicDirty = false; musicReadAt = now }
         if enabledPlayers.isEmpty { musicRead = nil }
+        let hadPlayer = NotchActivityPollPolicy.hasProgressingPlayer(
+            source: source, streamPlaying: nowPlaying.latest?.isPlaying == true, hasRunningPlayers: !enabledPlayers.isEmpty)
         // 语音备忘录没开着，就不用把系统里所有音频进程列一遍（每 2 秒列一次约占一个核的 1.7%）。
         let voiceMemos = !NSRunningApplication.runningApplications(withBundleIdentifier: "com.apple.VoiceMemos").isEmpty
         worker.async { [weak self] in
             var result: [NotchSourceSnapshot] = []
             var music: NotchSourceSnapshot? = kept
             var raw: (position: Double?, duration: Double)?
-            for id in players where work.valid && Self.authorized(id, prompt: false) {
+            for id in players where work.valid && Self.authorized(id, prompt: allowPrompt) {
                 guard let data = Self.script(id, mode: "read", token: work),
                       let obj = try? JSONSerialization.jsonObject(with: data) as? [String: Any],
                       let title = obj["title"] as? String, !title.isEmpty,
@@ -196,7 +304,6 @@ final class NotchActivitySources {
             let snapshots = result
             let readMusic = players.isEmpty ? nil : music
             let readRaw = raw
-            let hadPlayer = !enabledPlayers.isEmpty
             DispatchQueue.main.async {
                 guard let self else { return }
                 self.busy = false

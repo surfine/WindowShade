@@ -22,6 +22,11 @@ enum ScrollYield: Sendable {
             return "Mac Mouse Fix"
         }
         if bundleIDs.contains("com.hegenberg.BetterTouchTool") { return "BetterTouchTool" }
+        // Logi Options+：已知标识 com.logi.optionsplus（主程序）和同前缀的后台代理。
+        // 本机 mdfind 'kMDItemCFBundleIdentifier == "*logi*"' 没有找到安装，标识来自公开资料，未在本机核对。
+        if bundleIDs.contains(where: { $0 == "com.logi.optionsplus" || $0.hasPrefix("com.logi.optionsplus.") }) {
+            return "Logi Options+"
+        }
         return nil
     }
 }

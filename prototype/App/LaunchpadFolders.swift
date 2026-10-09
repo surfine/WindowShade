@@ -268,6 +268,7 @@ final class LaunchpadFolderOverlay {
         guard editable else { return }
         // 编辑时标题像一个可以点的输入框：底下垫一块浅色圆角。
         CATransaction.begin()
+        // fade-only: 标题底下那块浅色的深浅。
         CATransaction.setAnimationDuration(Motion.fadeDuration)
         titleLayer.backgroundColor = on ? NSColor.white.withAlphaComponent(0.16).cgColor : NSColor.clear.cgColor
         titleLayer.cornerRadius = 14
@@ -438,11 +439,12 @@ final class LaunchpadFolderOverlay {
         }
         guard !view.reduced, let plate else {
             CATransaction.begin()
+            // fade-only: 淡出；缩小走弹簧。
             CATransaction.setAnimationDuration(view.reduced ? Motion.Spring.reducedNotch.response : Motion.Spring.flyOut.response)
             CATransaction.setCompletionBlock(finish)
             for layer in layers {
                 layer.opacity = 0
-                if !view.reduced { layer.transform = CATransform3DMakeScale(0.94, 0.94, 1) }
+                if !view.reduced { layer.springTransform(CATransform3DMakeScale(0.94, 0.94, 1), .flyOut, reduced: false) }
             }
             CATransaction.commit()
             return
@@ -485,6 +487,7 @@ final class LaunchpadFolderOverlay {
         }
         CATransaction.commit()
         CATransaction.begin()
+        // fade-only
         CATransaction.setAnimationDuration(Motion.fadeDuration)
         titleLayer.opacity = 0
         dots.opacity = 0
@@ -678,11 +681,12 @@ extension LaunchpadView {
     func folderHoverChanged() {
         guard let overlay = folder else { return }
         CATransaction.begin()
+        // fade-only: 影子的深浅；浮起的缩放走弹簧。
         CATransaction.setAnimationDuration(reduced ? 0 : Motion.Spring.expand.response)
         CATransaction.setAnimationTimingFunction(nil)
         for (path, cell) in overlay.cells where overlay.dragging?.path != path {
             let lifted = path == hovered
-            cell.icon.transform = lifted ? CATransform3DMakeScale(1.08, 1.08, 1) : CATransform3DIdentity
+            cell.icon.springTransform(lifted ? CATransform3DMakeScale(1.08, 1.08, 1) : CATransform3DIdentity, .expand, reduced: reduced)
             cell.icon.shadowOpacity = lifted ? 0.32 : 0
         }
         CATransaction.commit()
@@ -755,12 +759,7 @@ extension LaunchpadView {
         hovered = nil
         cell.root.zPosition = 10
         cell.showBadge(false, animated: !reduced)
-        CATransaction.begin()
-        CATransaction.setAnimationDuration(Motion.Spring.expand.response)
-        cell.icon.transform = CATransform3DMakeScale(1.14, 1.14, 1)
-        cell.icon.shadowOpacity = 0.35
-        cell.root.opacity = 0.92
-        CATransaction.commit()
+        lift(cell)
         startEditDrag(at: point)
         moveFolderDrag(to: point)
     }
@@ -839,12 +838,7 @@ extension LaunchpadView {
                 land.duration = land.settlingDuration
                 cell.root.add(land, forKey: "slot")
             }
-            CATransaction.begin()
-            CATransaction.setAnimationDuration(Motion.Spring.expand.response)
-            cell.icon.transform = CATransform3DIdentity
-            cell.icon.shadowOpacity = 0
-            cell.root.opacity = 1
-            CATransaction.commit()
+            drop(cell)
             if jiggling { cell.showBadge(true, animated: !reduced) }
         }
         if current.now != current.from, let id = overlay.folderID {
@@ -883,12 +877,7 @@ extension LaunchpadView {
         reorder = Reorder(key: drag.path, from: index, now: index, grab: drag.grab, edgeSince: nil, aim: nil, merging: nil)
         moved.root.zPosition = 10
         moved.showBadge(false, animated: false)
-        CATransaction.begin()
-        CATransaction.setAnimationDuration(Motion.Spring.expand.response)
-        moved.icon.transform = CATransform3DMakeScale(1.14, 1.14, 1)
-        moved.icon.shadowOpacity = 0.35
-        moved.root.opacity = 0.92
-        CATransaction.commit()
+        lift(moved)
         startEditDrag(at: point)
         moveReorder(to: point)
     }
@@ -906,11 +895,12 @@ extension LaunchpadView {
         cells[current.key] = nil
         let destination = iconCenter(of: index)
         CATransaction.begin()
+        // fade-only: 淡出；飞进去和缩小走弹簧。
         CATransaction.setAnimationDuration(reduced ? Motion.Spring.reducedNotch.response : Motion.Spring.settle.response)
         CATransaction.setAnimationTimingFunction(nil)
         CATransaction.setCompletionBlock { dragged.root.removeFromSuperlayer() }
-        dragged.root.position = destination
-        dragged.root.transform = CATransform3DMakeScale(0.3, 0.3, 1)
+        dragged.root.springPosition(destination, .settle, reduced: reduced)
+        dragged.root.springTransform(CATransform3DMakeScale(0.3, 0.3, 1), .settle, reduced: reduced)
         dragged.root.opacity = 0
         CATransaction.commit()
         // 模型：先把拖动中的让位记上，再合并。

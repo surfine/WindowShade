@@ -15,6 +15,14 @@ struct ShadeSoundTests {
     }
 
     static func main() {
+        expect(ShadeSoundPreference.defaultEnabled == false, "sound defaults to off")
+        for (stored, expected) in [(nil, false), (true, true), (false, false)] as [(Bool?, Bool)] {
+            let suite = "ShadeSoundTests.\(UUID().uuidString)"
+            let defaults = UserDefaults(suiteName: suite)!
+            if let stored { defaults.set(stored, forKey: "ShadeSoundEnabled") }
+            expect(ShadeSoundPreference.isEnabled(in: defaults) == expected, "sound preference \(stored.map(String.init(describing:)) ?? "nil") reads \(expected)")
+            defaults.removePersistentDomain(forName: suite)
+        }
         let player = ShadeSoundPlayer()
         player.volume = 0 // 不出声，但走的是同一条播放路径
 

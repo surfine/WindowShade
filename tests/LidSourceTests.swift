@@ -13,11 +13,23 @@ struct LidSourceTests {
         if condition { print("ok   \(message)") } else { failures += 1; print("FAIL \(message)") }
     }
 
+    /// NSString.resolvingSymlinksInPath 会把 /private/var 反过来缩成 /var，这里要真实路径，只能用 realpath。
+    static func realPath(_ path: String) -> String {
+        guard let r = realpath(path, nil) else { return path }
+        defer { free(r) }
+        return String(cString: r)
+    }
+
     static func main() {
         // 先跑不依赖硬件的部分（PERF-09）：找不到传感器的机器上也要能验证退避节奏。
         backoffTests()
 
-        let logPath = NSTemporaryDirectory() + "windowshade-lid-source-\(UUID().uuidString).log"
+        // SecureLogFile 只接受放在专用、已存在、只有本人可进的目录里的路径，且不跟随符号链接。
+        let tmp = realPath(NSTemporaryDirectory())
+        let logDir = tmp + "/windowshade-lid-source-\(UUID().uuidString)"
+        try? FileManager.default.createDirectory(atPath: logDir, withIntermediateDirectories: false,
+                                                 attributes: [.posixPermissions: 0o700])
+        let logPath = logDir + "/windowshade.log"
         setenv("WINDOWSHADE_LOG_PATH", logPath, 1)
 
         let source = LidAngleSource()
@@ -51,8 +63,10 @@ struct LidSourceTests {
             print("SKIP: 这台机器没有可用的盖角传感器（\(statuses.last ?? "没有任何状态")）")
             exit(0)
         }
-        // 推送约 10Hz、静止时也推：3 秒应该有二三十份；只靠 4Hz 兜底轮询的话最多 12 份。
-        expect((20...40).contains(readings.count), "readings come from the push stream at about 10Hz (got \(readings.count) in 3s)")
+        // F05 之后读数只在有变化时回主线程，不能再数每秒回调次数；
+        // 区分推送与 4Hz 兜底轮询靠日志：推送健康才会出现 push 标记，而没有推送的话 3 秒内会一直停在 no push。
+        expect(!readings.isEmpty, "at least one reading reaches the main thread (got \(readings.count) in 3s)")
+        expect(readings.count <= 40, "readings are sent only on change, not on every tick (got \(readings.count))")
         expect(readings.allSatisfy { $0.angle.isFinite && (0...180).contains($0.angle) },
                "every reading is a sane angle (last \(readings.last.map { String(format: "%.2f", $0.angle) } ?? "-")°)")
         expect(lines.contains { $0.contains("lid: poll 1.0Hz (push)") }, "the log shows the push path with a 1Hz watchdog")

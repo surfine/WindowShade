@@ -1481,6 +1481,10 @@ struct SilentPrepTests {
                && !cover.revealed, "an observed overlay reports 已遮住 and does not reveal")
         expect(WS2SilentReadout.sentence("privacy.awaySummary") == "没有",
                "an away summary with no events stays 没有")
+        expect(WS2SilentReadout.sentence("privacy.awaySummary", away: "") == "没有",
+               "an empty away summary stays 没有")
+        expect(WS2SilentReadout.sentence("privacy.awaySummary", away: "收着 3 扇窗口；终端有变化") == "收着 3 扇窗口；终端有变化",
+               "a real away summary is read out as it is")
         expect(WS2SilentReadout.sentence("privacy.selectScope") == "还没选范围",
                "protection scope stays unchosen")
         expect(WS2SilentReadout.sentence("input.profile") == "还没录过",

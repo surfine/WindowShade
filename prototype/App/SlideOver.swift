@@ -35,7 +35,12 @@ final class SlideOverController {
     }
 
     unowned let owner: AppDelegate
-    private var docked: Docked?
+    private var docked: Docked? {
+        didSet {
+            // 维护定时器只在有侧拉窗口时跑。
+            if docked != nil { maintenance?.start() } else { maintenance?.stop() }
+        }
+    }
     private var glide: WindowGlide?
     private let tab = SlideOverTab()
     /// 拉出来时窗口外面那一圈玻璃边框和角上的把手（iPadOS 的样子，见 SlideOverChrome）。
@@ -50,7 +55,7 @@ final class SlideOverController {
     /// 点了实时画面、正在切去窗口所在的桌面：到了就把真窗口拉出来。
     private var openingAtHome = false
     private var generation: UInt64 = 0
-    private var maintenance: Timer?
+    private var maintenance: SlideOverMaintenanceTicker?
     private var dragWriter: SlideOverDragWriter?
     private var draggingMirror = false
     /// 正按着标题栏拖着的那扇（dragMoved 起，到松手）：这期间边框收着，定时检查不把它挂回来。
@@ -75,9 +80,7 @@ final class SlideOverController {
         chrome.onResizeBegin = { [weak self] in self?.beginResize() }
         chrome.onResize = { [weak self] delta in self?.updateResize(delta) }
         chrome.onResizeEnd = { [weak self] in self?.endResize() }
-        maintenance = Timer.scheduledTimer(withTimeInterval: 0.5, repeats: true) { [weak self] _ in
-            MainActor.assumeIsolated { self?.validateWindow() }
-        }
+        maintenance = SlideOverMaintenanceTicker { [weak self] in self?.validateWindow() }
         spaceObserver = NSWorkspace.shared.notificationCenter.addObserver(
             forName: NSWorkspace.activeSpaceDidChangeNotification, object: nil, queue: .main) { [weak self] _ in
             MainActor.assumeIsolated { self?.spaceChanged() }
@@ -146,7 +149,9 @@ final class SlideOverController {
         let size = current.size
         let chosen = preferred.flatMap { Self.neighborFree($0, screen) ? $0 : nil } ?? Self.side(for: current, on: screen)
         guard let side = chosen else {
-            owner.quietNotice("两边都挨着别的屏幕，侧拉没有地方收", log: "slide-over: both sides have displays")
+            if !owner.notch.announce("不能侧拉", detail: "两边都挨着别的屏幕", tone: .problem) {
+                owner.quietNotice("不能侧拉：两边都挨着别的屏幕", log: "slide-over: both sides have displays")
+            }
             return
         }
         if var existing = docked, existing.id == id {

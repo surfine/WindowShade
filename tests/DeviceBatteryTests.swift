@@ -194,6 +194,135 @@ struct DeviceBatteryTests {
       expect(!BatterySources.notes.contains { $0.fact.contains("能耗") }, "battery notes do not include energy")
     }
 
+    do {  // 蓝牙耳机：system_profiler JSON 解析
+      func profile(connected: String, notConnected: String = "") -> Data {
+        Data("""
+        {"SPBluetoothDataType":[{"controller_properties":{},"device_connected":[\(connected)],"device_not_connected":[\(notConnected)]}]}
+        """.utf8)
+      }
+      func entry(_ name: String, address: String, minor: String, extra: String = "") -> String {
+        "{\"\(name)\":{\"device_address\":\"\(address)\",\"device_minorType\":\"\(minor)\",\"device_productID\":\"0x2024\",\"device_vendorID\":\"0x004C\"\(extra)}}"
+      }
+      let triple = BluetoothBatteryParse.parse(profile(connected: entry(
+        "测试耳机", address: "AA:BB:CC:00:11:22", minor: "Headphones",
+        extra: ",\"device_batteryLevelLeft\":\"85%\",\"device_batteryLevelRight\":\"84%\",\"device_batteryLevelCase\":\"60%\"")))
+      expect(triple.count == 1 && triple[0].id == "spbt:aa-bb-cc-00-11-22" && triple[0].name == "测试耳机"
+             && triple[0].kind == .headphones
+             && triple[0].percents == [.left: 85, .right: 84, .chargingCase: 60],
+             "BT left + right + case are read with a lowercase dash id")
+
+      let leftOnly = BluetoothBatteryParse.parse(profile(connected: entry(
+        "测试耳机", address: "AA:BB:CC:00:11:22", minor: "Headphones", extra: ",\"device_batteryLevelLeft\":\"7%\"")))
+      expect(leftOnly.count == 1 && leftOnly[0].percents == [.left: 7], "BT left only leaves right and case with no reading")
+
+      let main = BluetoothBatteryParse.parse(profile(connected: entry(
+        "测试头戴", address: "AA:BB:CC:00:11:33", minor: "Headphones", extra: ",\"device_batteryLevelMain\":\"0%\"")))
+      expect(main.count == 1 && main[0].percents == [.main: 0], "BT single battery maps to main and a real 0% stays 0")
+
+      let bad = BluetoothBatteryParse.parse(profile(connected: entry(
+        "测试耳机", address: "AA:BB:CC:00:11:22", minor: "Headphones",
+        extra: ",\"device_batteryLevelLeft\":\"105%\",\"device_batteryLevelRight\":\"abc\",\"device_batteryLevelCase\":\"-3%\",\"device_batteryLevelMain\":\"50%\"")))
+      expect(bad.count == 1 && bad[0].percents == [.main: 50], "BT out-of-range, garbled and negative values are unknown, never clamped")
+
+      let none = BluetoothBatteryParse.parse(profile(connected: entry(
+        "测试耳机", address: "AA:BB:CC:00:11:22", minor: "Headphones",
+        extra: ",\"device_batteryLevelLeft\":\"105%\",\"device_batteryLevelRight\":\"abc\"")
+        + "," + entry("测试音箱", address: "AA:BB:CC:00:11:44", minor: "Speaker")))
+      expect(none.isEmpty, "BT devices with no valid battery value are left out")
+
+      let mixed = BluetoothBatteryParse.parse(profile(
+        connected: entry("测试鼠标", address: "AA:BB:CC:00:11:55", minor: "Mouse", extra: ",\"device_batteryLevelMain\":\"40%\"")
+          + "," + entry("测试耳机", address: "AA:BB:CC:00:11:22", minor: "Headphones", extra: ",\"device_batteryLevelLeft\":\"50%\""),
+        notConnected: entry("旧耳机", address: "AA:BB:CC:00:11:66", minor: "Headphones", extra: ",\"device_batteryLevelLeft\":\"90%\"")))
+      expect(mixed.map(\.id) == ["spbt:aa-bb-cc-00-11-22", "spbt:aa-bb-cc-00-11-55"]
+             && mixed.first { $0.id.hasSuffix("55") }?.kind == .mouse,
+             "BT only device_connected counts, and kinds follow device_minorType")
+      expect(BluetoothBatteryParse.kind(minorType: "Keyboard") == .keyboard && BluetoothBatteryParse.kind(minorType: "Trackpad") == .trackpad
+             && BluetoothBatteryParse.kind(minorType: "Speaker") == .other && BluetoothBatteryParse.kind(minorType: nil) == .other,
+             "BT minor types map to device kinds")
+      let noAddress = BluetoothBatteryParse.parse(Data("""
+        {"SPBluetoothDataType":[{"device_connected":[{"无地址":{"device_batteryLevelLeft":"50%"}}]}]}
+        """.utf8))
+      expect(noAddress.isEmpty, "BT a device without an address gets no id and is skipped")
+      expect(BluetoothBatteryParse.parse(Data("not json".utf8)).isEmpty && BluetoothBatteryParse.parse(Data()).isEmpty
+             && BluetoothBatteryParse.parse(Data("{\"SPBluetoothDataType\":5}".utf8)).isEmpty,
+             "BT broken or unexpected JSON gives an empty list")
+      expect(BluetoothBatteryParse.percent("100%") == 100 && BluetoothBatteryParse.percent(" 5 % ") == 5
+             && BluetoothBatteryParse.percent("85.5%") == nil && BluetoothBatteryParse.percent("%") == nil
+             && BluetoothBatteryParse.percent("+85%") == nil && BluetoothBatteryParse.percent(nil) == nil,
+             "BT percent strings are strict integers 0...100")
+
+      var book = DeviceBatteryBook()
+      _ = book.connect(DeviceIdentity(id: triple[0].id, displayName: triple[0].name, kind: triple[0].kind), at: 1, initialSnapshot: true)
+      for (component, value) in triple[0].percents {
+        _ = book.record(BatteryReading(deviceID: triple[0].id, component: component, provider: "system_profiler",
+                                       providerEpoch: 1, percent: value, charging: .unknown, sourceObservedAt: nil,
+                                       receivedAt: 1, sampleMethod: "system_profiler"), now: 1)
+      }
+      let rows = book.rows(now: 2)
+      expect(rows.map(\.component) == [.left, .right, .chargingCase] && rows.map(\.percent) == [85, 84, 60]
+             && rows.allSatisfy { $0.presence == .connected && $0.sampleMethod == "system_profiler" },
+             "BT parsed values feed the ledger as three headphone rows")
+    }
+
+    do {  // PWR-1：系统推送才读，变了才回调，台式 Mac 不建来源，低电量档位不变
+      final class Counter { var reads = 0; var lpm = false; var sample: InternalBatterySample? }
+      let box = Counter()
+      box.sample = InternalBatterySample(current: 80, max: 100, isCharging: false, name: nil, isCharged: false)
+      var gate = InternalPowerGate(readBattery: { box.reads += 1; return box.sample }, readLowPower: { box.lpm })
+      expect(box.reads == 0, "PWR-1 building the gate reads nothing")
+      expect(gate.refresh() != nil, "PWR-1 first push reports the reading")
+      expect(box.reads == 1, "PWR-1 one push is one read")
+      expect(gate.refresh() == nil && box.reads == 2, "PWR-1 an unchanged reading does not call back")
+      box.sample?.isCharging = true
+      expect(gate.refresh()?.isCharging == true, "PWR-1 plugging in calls back")
+      box.lpm = true
+      let lpm = gate.refresh()
+      expect(lpm?.lowPowerMode == true && lpm?.isCharged == false, "PWR-1 low power mode change calls back and carries isCharged")
+      box.sample?.isCharged = true
+      expect(gate.refresh()?.isCharged == true, "PWR-1 fully charged calls back")
+      gate.reset()
+      expect(gate.refresh() != nil, "PWR-1 a restarted source reports once")
+      box.sample = nil
+      let desktop = InternalPowerGate(readBattery: { box.reads += 1; return box.sample }, readLowPower: { false })
+      expect(!desktop.hasInternalBattery(), "PWR-1 a desktop Mac builds no source")
+      box.sample = InternalBatterySample(current: 50, max: 100, isCharging: nil, name: nil)
+      expect(desktop.hasInternalBattery(), "PWR-1 a laptop builds the source")
+      var book = DeviceBatteryBook()
+      let mac = DeviceIdentity(id: InternalBattery.deviceID, displayName: "这台 Mac", kind: .mac)
+      _ = book.connect(mac, at: 0, initialSnapshot: true)
+      func macReading(_ percent: Int, at: Double) -> BatteryReading {
+        BatteryReading(deviceID: mac.id, component: .main, provider: "iops.internal", providerEpoch: 1,
+                       percent: percent, charging: .notCharging, sourceObservedAt: nil, receivedAt: at,
+                       isCharged: false, lowPowerMode: true)
+      }
+      var tiers: [Int] = []
+      for (i, percent) in [30, 20, 19, 10, 9, 5, 4].enumerated() {
+        tiers += lows(book.record(macReading(percent, at: Double(i + 1)), now: Double(i + 1)))
+      }
+      expect(tiers == [20, 10, 5], "PWR-1 the 20/10/5 low-battery tiers are unchanged")
+      // 读数没变、一个小时没有推送：Mac 那一行仍是已连接；期间不读电源。
+      var quiet = DeviceBatteryBook()
+      _ = quiet.connect(mac, at: 0, initialSnapshot: true)
+      _ = quiet.record(macReading(100, at: 1), now: 1)
+      let readsBefore = box.reads
+      let later = 1.0 + 60 * 60
+      let macRow = quiet.rows(now: later).first { $0.deviceID == mac.id }
+      expect(macRow?.presence == .connected && macRow?.percent == 100,
+             "PWR-1 an unchanged push-fed Mac reading stays connected after an hour")
+      expect(quiet.freshness(DeviceBatteryBook.Key(deviceID: mac.id, component: .main), now: later) == .currentEnough,
+             "PWR-1 push-fed reading does not age")
+      expect(box.reads == readsBefore, "PWR-1 no push means no read")
+      // 其它来源仍按 15 分钟过期。
+      var polled = DeviceBatteryBook()
+      let pad = DeviceIdentity(id: "hid.bt:aa", displayName: "键盘", kind: .keyboard)
+      _ = polled.connect(pad, at: 0, initialSnapshot: true)
+      _ = polled.record(BatteryReading(deviceID: pad.id, component: .main, provider: "hid.apple-peripheral", providerEpoch: 1,
+                                       percent: 50, charging: .unknown, sourceObservedAt: nil, receivedAt: 1), now: 1)
+      expect(polled.rows(now: later).first { $0.deviceID == pad.id }?.presence == .stale,
+             "PWR-1 polled sources still go stale after 15 minutes")
+    }
+
     if failures == 0 { print("PASS: device battery identity, freshness and low-battery tiers") }
     else { print("FAILED \(failures)"); exit(1) }
   }

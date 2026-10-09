@@ -20,6 +20,7 @@ import Glibc
     private(set) var groupKillRequested = false
     private var child: OpaquePointer?
     private var childTimer: (any DispatchSourceTimer)?
+    private var childExitSource: (any DispatchSourceProcess)?
     private var inputHandle: FileHandle?, outputHandle: FileHandle?, errorHandle: FileHandle?
     private var reader: (any DispatchSourceRead)?, writer: (any DispatchSourceWrite)?, errorReader: (any DispatchSourceRead)?
     private var writeArmed = false
@@ -86,12 +87,29 @@ import Glibc
             e.setEventHandler { [weak self] in MainActor.assumeIsolated { self?.readDiagnosticReady() } }
             e.setCancelHandler { try? eh.close() }; errorReader=e; e.resume()
         }
-        // Only active while this explicit CLI session owns a child. No idle-app polling.
-        let timer=DispatchSource.makeTimerSource(queue:.main)
-        timer.schedule(deadline:.now(),repeating:.milliseconds(20),leeway:.milliseconds(5))
+        // 事件驱动：平时只挂一个直接子进程退出的内核事件，没有常驻定时器。
+        // 退出之后（或本端 stop 之后）才为 SIGTERM→SIGKILL 宽限期与收割起一个短期定时器。
+        let pid = ws2_child_pid(child)
+        let exitSource=DispatchSource.makeProcessSource(identifier:pid,eventMask:.exit,queue:.main)
         // Deliberate temporary self-retention until reaping. Runtime may release the closed session earlier.
+        exitSource.setEventHandler { [self] in MainActor.assumeIsolated { self.pollChild() } }
+        childExitSource=exitSource; exitSource.resume()
+        // 进程若在注册前已退出，内核事件可能不再来：异步补一次检查，不在 start() 内同步回调。
+        DispatchQueue.main.async { [weak self] in MainActor.assumeIsolated { self?.pollChild() } }
+    }
+    /// 测试与诊断用：是否还挂着 20 ms 收割定时器 / 退出事件源。空闲会话两者的定时器都应为 false。
+    var reaperTimerActive: Bool { childTimer != nil }
+    var exitSourceActive: Bool { childExitSource != nil }
+    private func armReaperTimerIfNeeded() {
+        guard child != nil, childTimer == nil, stopped || termination != nil else { return }
+        let timer=DispatchSource.makeTimerSource(queue:.main)
+        timer.schedule(deadline: DispatchTime.now() + .milliseconds(20),repeating:.milliseconds(20),leeway:.milliseconds(5))
         timer.setEventHandler { [self] in MainActor.assumeIsolated { self.pollChild() } }
         childTimer=timer; timer.resume()
+    }
+    private func releaseSupervision() {
+        childTimer?.setEventHandler {}; childTimer?.cancel(); childTimer=nil
+        childExitSource?.setEventHandler {}; childExitSource?.cancel(); childExitSource=nil
     }
     private func pollChild() {
         guard let child else { return }
@@ -105,16 +123,18 @@ import Glibc
         }
         if error != 0 {
             supervisionError=error
-            stop(.io(error)); childTimer?.setEventHandler {}; childTimer?.cancel(); childTimer=nil
+            stop(.io(error)); releaseSupervision()
             // Lost ownership must not lead to a signal against a potentially reused PID.
             _=ws2_child_destroy(child);self.child=nil
             return
         }
         if state.reaped != 0 {
             leaderReaped=true; _=ws2_child_destroy(child); self.child=nil
-            childTimer?.setEventHandler {}; childTimer?.cancel(); childTimer=nil
+            releaseSupervision()
             if let termination { let cb=onReaped; onReaped=nil; cb?(termination) }
+            return
         }
+        armReaperTimerIfNeeded()
     }
     // Boolean means only "retained by this connection's bounded queue". Never retry false/ambiguous approval.
     @discardableResult func admit(_ lines: [Data], connection: UUID, deadline: Double,
@@ -247,6 +267,7 @@ import Glibc
         writer?.cancel(); writer=nil; writeArmed=false
         errorReader?.cancel(); errorReader=nil
         if let child { let error=ws2_child_stop(child); if error != 0 { supervisionError=error } }
+        armReaperTimerIfNeeded()
         let cb=onEnd; onEnd=nil; onLine=nil; onLocallyWritten=nil; cb?(reason)
         // The reaper timer survives protocol closure. A stopped pipe is not reaping evidence.
     }

@@ -47,6 +47,8 @@ enum UpdateSettingsKeys {
     static let useFallbackFeed = "WindowShadeUpdateUseFallbackFeed"
     /// 欢迎窗口里点过“跳过”：不再追问“放进‘应用程序’文件夹”。
     static let moveDeclined = "WindowShadeMoveToApplicationsDeclined"
+    /// 上次检查更新的时间（成功或失败都记，秒数）。设置里“自动检查更新”那一行读它。
+    static let lastCheck = "WindowShadeUpdateLastCheck"
 
     static let daily: TimeInterval = 86_400
     static let weekly: TimeInterval = 604_800
@@ -467,7 +469,14 @@ final class UpdaterController: NSObject, NSMenuItemValidation {
         }
     }
 
+    /// 上次检查更新的时间；没检查过是 nil。
+    var lastCheckDate: Date? {
+        let seconds = UserDefaults.standard.double(forKey: UpdateSettingsKeys.lastCheck)
+        return seconds > 0 ? Date(timeIntervalSince1970: seconds) : nil
+    }
+
     func backendCycleFinished() {
+        UserDefaults.standard.set(Date().timeIntervalSince1970, forKey: UpdateSettingsKeys.lastCheck)
         manualCheckInFlight = false
         if case .checking = session { session = .idle }
         if settingsStatus == UpdateCopy.checking { setSettingsStatus(nil) }
@@ -804,7 +813,9 @@ final class UpdaterController: NSObject, NSMenuItemValidation {
             while UpdateJobs.exists(label: label) && Date() < deadline { Thread.sleep(forTimeInterval: 0.25) }
             if UpdateJobs.exists(label: label) { UpdateJobs.remove(label: label) }
             let stopped = !UpdateJobs.exists(label: label)
-            DispatchQueue.main.sync {
+            // 以前是 main.sync：后台这边之后不读任何结果，只是要它排在下面那段收尾之前。主队列是串行的，
+            // 两次 async 按提交顺序执行，次序不变，后台线程也不用干等主线程。
+            DispatchQueue.main.async {
                 MainActor.assumeIsolated {
                     if stopped {
                         self.cleanUpAfterStop(offer, phase: nil)

@@ -33,6 +33,8 @@ final class WindowShadeLogger: @unchecked Sendable {
         queue.sync { writer?.closeFiles(); writer = nil; disabled = true }
     }
     private func openWriter() throws -> SecureLogFile {
+        // 首次写日志（也就是启动时）顺手清一次旧版留在公用位置的日志；只做一次，失败也不影响写日志。
+        LegacyLogCleanup.runOnce()
         if let override = getenv("WINDOWSHADE_LOG_PATH") {
             // 开发覆盖仍支持，但必须给专用、受保护、已存在的父目录。
             return try SecureLogFile(path: String(cString: override))
@@ -48,6 +50,48 @@ final class WindowShadeLogger: @unchecked Sendable {
 
 func wlog(_ s: String) {
     WindowShadeLogger.shared.write(s)
+}
+
+/// 旧版把运行记录写在公用的 /tmp/windowshade.log，谁都能读。新版换了位置，首次启动时把旧文件删掉，只做一次。
+/// 只删「当前用户自己的普通文件」：符号链接、别人的文件、目录一律不动，也不会顺着链接去删别的东西。
+enum LegacyLogCleanup {
+    static let legacyDirectory = "/tmp"
+    static let legacyFileName = "windowshade.log"
+    /// 做过一次（不论结果）就记下，之后不再看。
+    static let doneKey = "Diagnostics.legacyTmpLogCleaned.v1"
+
+    enum Outcome: Equatable {
+        case alreadyDone
+        case absent
+        case removed
+        case refused(String)
+        case failed(Int32)
+    }
+
+    @discardableResult
+    static func runOnce(directory: String = legacyDirectory, fileName: String = legacyFileName,
+                        defaults: UserDefaults = .standard, uid: uid_t = getuid()) -> Outcome {
+        if defaults.bool(forKey: doneKey) { return .alreadyDone }
+        let outcome = remove(directory: directory, fileName: fileName, uid: uid)
+        defaults.set(true, forKey: doneKey)
+        return outcome
+    }
+
+    /// 用目录描述符加 AT_SYMLINK_NOFOLLOW 看文件本身（相当于 lstat），确认后再 unlinkat。
+    /// 目录本身可以是符号链接（/tmp 就是），要拒绝的是最后这个文件名。
+    static func remove(directory: String, fileName: String, uid: uid_t) -> Outcome {
+        let directoryFD = open(directory, O_RDONLY | O_DIRECTORY | O_CLOEXEC)
+        guard directoryFD >= 0 else { return errno == ENOENT ? .absent : .failed(errno) }
+        defer { close(directoryFD) }
+        var info = stat()
+        guard fstatat(directoryFD, fileName, &info, AT_SYMLINK_NOFOLLOW) == 0 else {
+            return errno == ENOENT ? .absent : .failed(errno)
+        }
+        guard (info.st_mode & S_IFMT) == S_IFREG else { return .refused("不是普通文件") }
+        guard info.st_uid == uid else { return .refused("不属于当前用户") }
+        guard unlinkat(directoryFD, fileName, 0) == 0 else { return errno == ENOENT ? .absent : .failed(errno) }
+        return .removed
+    }
 }
 
 /// 计时统一走单调时钟。`CFAbsoluteTimeGetCurrent`/`Date` 会随系统时间调整跳变，

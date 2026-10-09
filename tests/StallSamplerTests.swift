@@ -10,8 +10,24 @@ struct StallSamplerTests {
         if condition { print("ok   \(message)") } else { failures += 1; print("FAIL \(message)") }
     }
 
+    /// NSString.resolvingSymlinksInPath 会把 /private/var 反过来缩成 /var，这里要真实路径，只能用 realpath。
+    static func realPath(_ path: String) -> String {
+        guard let r = realpath(path, nil) else { return path }
+        defer { free(r) }
+        return String(cString: r)
+    }
+
     static func main() {
-        let path = NSTemporaryDirectory() + "windowshade-stall-\(UUID().uuidString).log"
+        // 采栈默认关（PERF-01），要显式打开；日志覆盖路径必须放在专用、只有自己能进的目录里（SecureLogFile）。
+        setenv("WINDOWSHADE_STALL_SAMPLER", "1", 1)
+        // 临时目录经过 /var -> /private/var 符号链接，SecureLogFile 不跟随链接，所以先用 realpath 解析成真实路径。
+        let base = (try? FileManager.default.url(for: .itemReplacementDirectory, in: .userDomainMask,
+                                                 appropriateFor: URL(fileURLWithPath: NSTemporaryDirectory()),
+                                                 create: true).path) ?? NSTemporaryDirectory()
+        let dir = realPath(base) + "/windowshade-stall-\(UUID().uuidString)"
+        try? FileManager.default.createDirectory(atPath: dir, withIntermediateDirectories: false,
+                                                 attributes: [.posixPermissions: 0o700])
+        let path = dir + "/windowshade.log"
         setenv("WINDOWSHADE_LOG_PATH", path, 1)
 
         MainThreadSampler.shared.start()

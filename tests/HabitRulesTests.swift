@@ -28,6 +28,10 @@ struct HabitRulesTests {
         desktopSwipes()
         dockDrop()
         shadeWatch()
+        missionPeek()
+        globeHome()
+        launchpadTop()
+        padGate()
         words()
         demo()
         menuKey()
@@ -115,19 +119,34 @@ struct HabitRulesTests {
         expect(!HabitGate.active(origin: .windows, memory: memory).contains(.copy), "a rule shown three times is dropped")
 
         memory = HabitMemory()
-        for rule in [HabitRule.copy, .paste, .undo] { memory.ledger.learned(rule.rawValue) }
+        for rule in [HabitRule.copy, .paste, .undo] { memory.learnedByUser(rule) }
         let quietFamily = HabitGate.active(origin: .windows, memory: memory)
         expect(!quietFamily.contains(.paste) && !quietFamily.contains(.save) && quietFamily.contains(.trash),
                "three learned control-family rules silence the whole family but not the others")
         memory = HabitMemory()
-        for rule in [HabitRule.copy, .cut, .save] { memory.ledger.learned(rule.rawValue) }
+        for rule in [HabitRule.copy, .cut, .save] { memory.learnedByUser(rule) }
         expect(HabitGate.active(origin: .unanswered, memory: memory).isEmpty,
                "someone who never answered and already uses three ⌘ shortcuts gets no tips at all, so nothing listens")
         memory = HabitMemory()
-        memory.ledger.learned("undo")
+        memory.learnedByUser(.undo)
         memory.emacsHits = 3
         expect(!HabitGate.active(origin: .windows, memory: memory).contains(.paste),
                "three ⌃E/⌃K presses silence the control family too")
+        // 点提示让刘海代按的不算“他自己会了”：三条都是代按的，整个家族照样说。
+        memory = HabitMemory()
+        for rule in [HabitRule.copy, .cut, .save] { memory.ledger.learned(rule.rawValue) }
+        expect(!memory.controlFamilySilenced && HabitGate.active(origin: .windows, memory: memory).contains(.paste),
+               "tips performed by the notch do not count toward silencing the control family")
+        memory.learnedByUser(.undo)
+        memory.learnedByUser(.paste)
+        expect(!memory.controlFamilySilenced, "two presses of his own are still below the limit")
+        memory.learnedByUser(.closeTab)
+        expect(memory.controlFamilySilenced, "three shortcuts he pressed himself silence the family")
+        // 老记录没有 userPressed：当时的“会了”按他自己按的算。
+        let oldJSON = try! JSONEncoder().encode(["ledger": ["used": ["copy", "cut", "save"]]])
+        if let old = try? JSONDecoder().decode(HabitMemory.self, from: oldJSON) {
+            expect(old.controlFamilySilenced, "an old record without userPressed keeps its veterans quiet")
+        } else { expect(false, "old memory record decodes") }
         memory = HabitMemory()
         var environment = HabitGate.Environment()
         environment.remappedModifiers = true
@@ -198,7 +217,13 @@ struct HabitRulesTests {
         expect(!learned.canShow("copy", at: 0), "a learned rule never shows again")
         var dismissed = HabitLedger()
         dismissed.dismiss("copy")
-        expect(!dismissed.canShow("copy", at: 0), "a dismissed rule never shows again")
+        expect(!dismissed.canShow("copy", at: 0), "an old record that says 'never again' is still honoured")
+        // 小叉只关这一次：HabitCenter 不再往账上记“不再说”，同一条下次（过了间隔）还会说。
+        CoachPacing.reset()
+        var closedOnce = HabitLedger()
+        closedOnce.didShow("copy", at: 0)
+        expect(closedOnce.dismissed.isEmpty && closedOnce.canShow("copy", at: 301), "closing the tip once leaves the rule able to show again")
+        CoachPacing.reset()
 
         CoachPacing.reset()
         CoachPacing.hold([.shade], for: 60)
@@ -289,7 +314,12 @@ struct HabitRulesTests {
         expect(HabitRules.judge(.cut, cut) == .teach, "⌃X with three characters selected teaches ⌘X")
         cut.selection = nil
         cut.finderSelection = true
-        expect(HabitRules.judge(.cut, cut) == .teach, "⌃X in a finder list with a selection teaches ⌘X")
+        expect(HabitRules.judge(.cut, cut) == .silent("nothing selected"), "a finder selection alone is not a reason to teach ⌘X")
+        cut.finder = true
+        cut.selection = 3
+        expect(HabitRules.judge(.cut, cut) == .silent("finder cannot cut files"), "⌃X in the finder is always silent: files cannot be cut")
+        cut.focus = .text
+        expect(HabitRules.judge(.cut, cut) == .silent("finder cannot cut files"), "even in a finder rename field")
 
         var paste = HabitSituation()
         paste.focus = .list
@@ -520,6 +550,284 @@ struct HabitRulesTests {
         expect(!sameApp.didHide(pid: 1, at: 1.1), "hiding the same app twice is not the story")
     }
 
+    // i2：调度中心开着不到 1.2 秒就关，最前面的窗口没变；8 秒内去 Dock 或停在刘海，或 10 秒内再瞥一次。
+    static func missionPeek() {
+        var peek = HabitMissionPeek()
+        peek.opened(at: 10)
+        expect(!peek.closed(at: 10.8, frontChanged: false), "one quick peek alone is not enough to speak")
+        expect(peek.followedUp(at: 15), "going to the Dock within eight seconds after a peek speaks")
+        expect(!peek.followedUp(at: 16), "the follow-up is spent once it spoke")
+
+        var slow = HabitMissionPeek()
+        slow.opened(at: 0)
+        expect(!slow.closed(at: 1.3, frontChanged: false), "a Mission Control left open for 1.3 s is not a peek")
+        expect(!slow.followedUp(at: 3), "so going to the Dock afterwards says nothing")
+
+        var edge = HabitMissionPeek()
+        edge.opened(at: 0)
+        _ = edge.closed(at: 1.2, frontChanged: false)
+        expect(edge.followedUp(at: 9.2), "1.2 s counts as quick and 8 s after the close still counts as a follow-up")
+        var late = HabitMissionPeek()
+        late.opened(at: 0)
+        _ = late.closed(at: 1, frontChanged: false)
+        expect(!late.followedUp(at: 9.1), "nine seconds after the peek is too late for the Dock")
+
+        var picked = HabitMissionPeek()
+        picked.opened(at: 0)
+        expect(!picked.closed(at: 0.8, frontChanged: true) && !picked.followedUp(at: 2),
+               "closing after picking another window is using Mission Control, not a peek")
+
+        var twice = HabitMissionPeek()
+        twice.opened(at: 0)
+        _ = twice.closed(at: 0.5, frontChanged: false)
+        twice.opened(at: 6)
+        expect(twice.closed(at: 6.6, frontChanged: false), "a second quick peek within ten seconds speaks without any follow-up")
+        twice.opened(at: 7)
+        expect(!twice.closed(at: 7.5, frontChanged: false), "after speaking the count starts over")
+        var spread = HabitMissionPeek()
+        spread.opened(at: 0)
+        _ = spread.closed(at: 0.5, frontChanged: false)
+        spread.opened(at: 11)
+        expect(!spread.closed(at: 11.5, frontChanged: false), "two peeks eleven seconds apart are two separate peeks")
+
+        var keyed = HabitMissionPeek()
+        keyed.opened(at: 0, byOtherMeans: true)
+        expect(!keyed.closed(at: 0.4, frontChanged: false) && !keyed.followedUp(at: 1),
+               "Mission Control opened by key, corner or notch is not the three-finger swipe")
+        var unopened = HabitMissionPeek()
+        expect(!unopened.closed(at: 1, frontChanged: false), "a close with no open before it is nothing")
+    }
+
+    // i5：🌐H 后 3 秒内叫回窗口，再 10 秒内去 Dock 开 App；这样的一回出现两次才说。
+    static func globeHome() {
+        var watch = HabitGlobeHome()
+        watch.globeH(at: 0)
+        watch.globeH(at: 2)
+        expect(!watch.clicked(onDock: true, at: 5), "the first round alone does not speak")
+        watch.globeH(at: 60)
+        watch.globeH(at: 61)
+        expect(watch.clicked(onDock: true, at: 66), "the second round of globe-H, recall, Dock speaks")
+        watch.globeH(at: 70)
+        watch.globeH(at: 71)
+        expect(!watch.clicked(onDock: true, at: 72), "after speaking the count starts over")
+
+        var slowRecall = HabitGlobeHome()
+        slowRecall.globeH(at: 0)
+        slowRecall.globeH(at: 3.5)
+        expect(!slowRecall.clicked(onDock: true, at: 4), "a second globe-H after 3.5 s is a new first press, not a recall")
+        var edge = HabitGlobeHome()
+        edge.globeH(at: 0)
+        edge.globeH(at: 3)
+        expect(!edge.clicked(onDock: true, at: 12.9), "exactly three seconds is a recall and the Dock click is the first round")
+        edge.globeH(at: 20)
+        edge.globeH(at: 22)
+        expect(edge.clicked(onDock: true, at: 31.9), "ten seconds after the recall still counts")
+
+        var lateDock = HabitGlobeHome()
+        lateDock.globeH(at: 0)
+        lateDock.globeH(at: 1)
+        _ = lateDock.clicked(onDock: true, at: 12)
+        lateDock.globeH(at: 30)
+        lateDock.globeH(at: 31)
+        expect(!lateDock.clicked(onDock: true, at: 41.5), "a Dock click more than ten seconds after the recall does not count")
+
+        var desktopClick = HabitGlobeHome()
+        desktopClick.globeH(at: 0)
+        expect(!desktopClick.clicked(onDock: false, at: 1), "a click elsewhere is not the Dock")
+        desktopClick.globeH(at: 2)
+        expect(!desktopClick.clicked(onDock: true, at: 4),
+               "clicking the desktop between the two presses breaks the pair, so the second press is a new first press")
+
+        var noRecall = HabitGlobeHome()
+        noRecall.globeH(at: 0)
+        expect(!noRecall.clicked(onDock: true, at: 2), "a Dock click with no recall is just using the Dock")
+
+        var stale = HabitGlobeHome()
+        stale.globeH(at: 0)
+        stale.globeH(at: 1)
+        _ = stale.clicked(onDock: true, at: 3)
+        stale.globeH(at: 700)
+        stale.globeH(at: 701)
+        expect(!stale.clicked(onDock: true, at: 703), "two rounds more than ten minutes apart are not two rounds")
+    }
+
+    // i18：主屏幕开了不到 1.5 秒又关，随后 5 秒内大幅上滚；出现两次才说。
+    static func launchpadTop() {
+        var pad = HabitLaunchpadTop()
+        pad.homeOpened(at: 0, pageBelowTop: true)
+        pad.homeClosed(at: 1.0, launched: false)
+        expect(!pad.scrolled(deltaY: 500, at: 3), "the first round alone does not speak")
+        pad.homeOpened(at: 100)
+        pad.homeClosed(at: 100.9, launched: false)
+        expect(pad.scrolled(deltaY: 450, at: 104), "the second round (page position unknown) speaks")
+        pad.homeOpened(at: 200)
+        pad.homeClosed(at: 200.5, launched: false)
+        expect(!pad.scrolled(deltaY: 450, at: 202), "after speaking the count starts over")
+
+        var stayed = HabitLaunchpadTop()
+        stayed.homeOpened(at: 0)
+        stayed.homeClosed(at: 1.6, launched: false)
+        expect(!stayed.scrolled(deltaY: 500, at: 3), "a home screen that stayed open 1.6 s was used on purpose")
+        var waited = HabitLaunchpadTop()
+        waited.homeOpened(at: 0)
+        waited.homeClosed(at: 2.0, launched: false, wait: 0.5)
+        expect(!waited.scrolled(deltaY: 500, at: 3), "2 s open with 0.5 s of double-click wait is 1.5 s, not quick")
+        waited.homeOpened(at: 50)
+        waited.homeClosed(at: 52, launched: false, wait: 0.6)
+        _ = waited.scrolled(deltaY: 500, at: 53)
+        waited.homeOpened(at: 60)
+        waited.homeClosed(at: 62, launched: false, wait: 0.6)
+        expect(waited.scrolled(deltaY: 500, at: 63), "with 0.6 s of double-click wait taken off, 2 s open counts as quick (second round)")
+
+        var launched = HabitLaunchpadTop()
+        launched.homeOpened(at: 0)
+        launched.homeClosed(at: 1, launched: true)
+        expect(!launched.scrolled(deltaY: 500, at: 2), "closing because an icon was tapped is not the story")
+
+        var top = HabitLaunchpadTop()
+        top.homeOpened(at: 0, pageBelowTop: false)
+        top.homeClosed(at: 0.5, launched: false)
+        expect(!top.scrolled(deltaY: 500, at: 1), "a page that was already at the top is not watched")
+
+        var small = HabitLaunchpadTop()
+        small.homeOpened(at: 0)
+        small.homeClosed(at: 0.5, launched: false)
+        expect(!small.scrolled(deltaY: 399, at: 1), "a scroll under 400 points is ordinary reading")
+        expect(!small.scrolled(deltaY: -600, at: 1.5), "scrolling down is not heading for the top")
+
+        var late = HabitLaunchpadTop()
+        late.homeOpened(at: 0)
+        late.homeClosed(at: 0.5, launched: false)
+        expect(!late.scrolled(deltaY: 500, at: 5.6), "a big scroll more than five seconds after the close does not count")
+
+        var spent = HabitLaunchpadTop()
+        spent.homeOpened(at: 0)
+        spent.homeClosed(at: 0.5, launched: false)
+        _ = spent.scrolled(deltaY: 500, at: 1)
+        expect(!spent.scrolled(deltaY: 500, at: 2), "one close gives one round, a second scroll does not count again")
+
+        var stale = HabitLaunchpadTop()
+        stale.homeOpened(at: 0)
+        stale.homeClosed(at: 0.5, launched: false)
+        _ = stale.scrolled(deltaY: 500, at: 1)
+        stale.homeOpened(at: 800)
+        stale.homeClosed(at: 800.5, launched: false)
+        expect(!stale.scrolled(deltaY: 500, at: 801), "rounds more than ten minutes apart are not two rounds")
+
+        // 按手指方向算：自然滚动开着，滚动量为正是往顶部；关着时滚动量为负才是手指往下。
+        for (natural, delta) in [(true, CGFloat(500)), (false, CGFloat(-500))] {
+            var pad = HabitLaunchpadTop()
+            pad.homeOpened(at: 0); pad.homeClosed(at: 0.5, launched: false)
+            expect(!pad.scrolled(deltaY: HabitDesktopSwipes.fingerTravel(deltaY: delta, natural: natural), at: 1), "first round alone (natural=\(natural))")
+            pad.homeOpened(at: 10); pad.homeClosed(at: 10.5, launched: false)
+            expect(pad.scrolled(deltaY: HabitDesktopSwipes.fingerTravel(deltaY: delta, natural: natural), at: 11), "finger-down counts in both scroll settings (natural=\(natural))")
+            var wrong = HabitLaunchpadTop()
+            wrong.homeOpened(at: 0); wrong.homeClosed(at: 0.5, launched: false)
+            expect(!wrong.scrolled(deltaY: HabitDesktopSwipes.fingerTravel(deltaY: -delta, natural: natural), at: 1), "finger-up never counts (natural=\(natural))")
+        }
+    }
+
+    // 3 条 iPad 后加规则：门、30 天、整组学会、按键表、话。
+    static func padGate() {
+        let added: [HabitRule] = [.missionPeek, .globeHome, .launchpadTop]
+        expect(added.allSatisfy { $0.side == .ipad && $0.needsDeviceCheck }, "the three added iPad rules sit behind the device check")
+        expect(added.allSatisfy { !HabitGate.rules(for: .ipad).contains($0) }, "none of them is open by default")
+        expect(HabitGate.rules(for: .ipad, deviceChecked: Set(added)).count == 9, "confirming on a real machine opens all three for iPad")
+        expect(added.allSatisfy { !HabitGate.rules(for: .windows, deviceChecked: Set(added)).contains($0) }, "Windows never gets them")
+        expect(added.allSatisfy { !HabitGate.rules(for: .unanswered, deviceChecked: Set(added)).contains($0) }, "unanswered never gets them")
+        expect(HabitGate.rules(for: .mac, deviceChecked: Set(added)).isEmpty, "always-Mac still opens nothing")
+
+        let checked = Set(added)
+        var memory = HabitMemory()
+        expect(HabitGate.active(origin: .ipad, deviceChecked: checked, memory: memory).isSuperset(of: added),
+               "after the check and with a fresh memory all three are active")
+        var shared = HabitGate.Environment()
+        shared.screenSharing = true
+        expect(HabitGate.active(origin: .ipad, deviceChecked: checked, memory: memory, environment: shared).isEmpty,
+               "while the screen is being shared none of them speaks")
+
+        // 30 天：只对 🌐H 那条。
+        let day: TimeInterval = 86_400
+        memory.ipadSince = 0
+        expect(HabitGate.active(origin: .ipad, deviceChecked: checked, memory: memory, now: 29 * day).contains(.globeHome),
+               "globe-H is still told 29 days after choosing iPad")
+        let later = HabitGate.active(origin: .ipad, deviceChecked: checked, memory: memory, now: 31 * day)
+        expect(!later.contains(.globeHome) && later.contains(.missionPeek) && later.contains(.launchpadTop),
+               "after 30 days only globe-H goes quiet")
+        memory.ipadSince = nil
+        expect(HabitGate.active(origin: .ipad, deviceChecked: checked, memory: memory, now: 900 * day).contains(.globeHome),
+               "no recorded day means the clock has not started")
+
+        // 点刘海回主屏幕：这一组都会了。
+        var home = HabitMemory()
+        expect(!home.homeGroupLearned, "nothing learned yet")
+        expect(home.learnedHome(), "tapping the notch home is new the first time")
+        expect(HabitRule.homeGroup.allSatisfy { home.ledger.used.contains($0.rawValue) }, "hideApp, i2 and i5 are all marked learned")
+        expect(!home.ledger.used.contains(HabitRule.launchpadTop.rawValue), "i18 is not part of the group")
+        expect(!home.learnedHome(), "a second time changes nothing")
+        let active = HabitGate.active(origin: .ipad, deviceChecked: checked, memory: home)
+        expect(!active.contains(.hideApp) && !active.contains(.missionPeek) && !active.contains(.globeHome) && active.contains(.launchpadTop),
+               "after the group is learned only the page-top tip is still told")
+        var one = HabitMemory()
+        one.ledger.learned(HabitRule.missionPeek.rawValue)
+        expect(one.homeGroupLearned && !HabitGate.active(origin: .ipad, deviceChecked: checked, memory: one).contains(.hideApp),
+               "learning one of the group silences the others")
+        var env = HabitGate.Environment()
+        env.homeLearned = true
+        let viaCoach = HabitGate.active(origin: .ipad, deviceChecked: checked, memory: HabitMemory(), environment: env)
+        expect(viaCoach.isDisjoint(with: HabitRule.homeGroup) && viaCoach.contains(.launchpadTop),
+               "the gesture coach having seen a notch tap silences the whole group too")
+
+        // 老记录读得回来，新字段会存。
+        var stored = HabitMemory()
+        stored.ipadSince = 123
+        if let data = try? JSONEncoder().encode(stored), let back = try? JSONDecoder().decode(HabitMemory.self, from: data) {
+            expect(back.ipadSince == 123, "the day iPad was chosen survives a save")
+        } else { expect(false, "memory with ipadSince round-trips") }
+        if let data = try? JSONEncoder().encode(["shadeCollapses": 2]), let old = try? JSONDecoder().decode(HabitMemory.self, from: data) {
+            expect(old.ipadSince == nil && old.shadeCollapses == 2, "an old record without the field reads back")
+        } else { expect(false, "old memory record still decodes") }
+
+        // 按键表：🌐H 只在 i5 开着时认；⌘↑ 和 Home 是 i18 会了的证据。
+        let globe = HabitTable(rules: [.globeHome], emacs: false)
+        expect(globe.classify(keyCode: 4, flags: HabitCombo.fnBit, autorepeat: false) == [.foreign(.globeHome)],
+               "🌐H is the foreign habit of globe-H")
+        expect(globe.classify(keyCode: 4, flags: HabitCombo.commandBit, autorepeat: false).isEmpty, "⌘H is not 🌐H")
+        expect(globe.classify(keyCode: 4, flags: 0, autorepeat: false).isEmpty, "a plain H is nothing")
+        let both = HabitTable(rules: [.hideApp, .globeHome], emacs: false)
+        expect(both.classify(keyCode: 4, flags: HabitCombo.commandBit, autorepeat: false) == [.foreign(.hideApp)],
+               "with both on, ⌘H stays hide-app's")
+        let top = HabitTable(rules: [.launchpadTop], emacs: false)
+        expect(top.classify(keyCode: 126, flags: HabitCombo.commandBit | HabitCombo.fnBit, autorepeat: false) == [.mac(.launchpadTop)],
+               "⌘↑ (arrow keys carry fn) means the user knows how to go to the top")
+        expect(top.classify(keyCode: 115, flags: HabitCombo.fnBit, autorepeat: false) == [.mac(.launchpadTop)], "Home also goes to the top")
+        expect(top.classify(keyCode: 126, flags: 0, autorepeat: false).isEmpty, "a plain up arrow is nothing")
+
+        // 话。
+        let peekWords = HabitWords.lines(.missionPeek)
+        expect(peekWords.title == "回到主屏幕：点一下刘海" && !peekWords.subtitle.isEmpty, "the Mission Control tip says to tap the notch")
+        expect(HabitWords.lines(.globeHome).title == "回到主屏幕：点一下刘海", "the globe-H tip says to tap the notch")
+        expect(HabitWords.lines(.launchpadTop).title == "回页首按 ⌘↑", "the page-top tip says ⌘↑")
+        expect(HabitWords.lines(.missionPeek, variant: .noNotch, shortcut: "⌃⌘L").title == "回到主屏幕按 ⌃⌘L",
+               "with no notch to tap the tip names the home-screen shortcut")
+        let bare = HabitWords.lines(.globeHome, variant: .noNotch)
+        expect(bare.subtitle.isEmpty && !bare.title.contains("刘海"), "with no notch and no shortcut it says only what happened")
+        expect(HabitWords.demo(.missionPeek) == .notchHome && HabitWords.demo(.globeHome) == .notchHome, "both play tapping the notch")
+        expect(HabitWords.demo(.globeHome, variant: .noNotch, shortcut: ["⌃", "⌘", "L"]) == .keys(from: ["🌐", "H"], to: ["⌃", "⌘", "L"]),
+               "with no notch the globe-H tip plays 🌐H and the shortcut")
+        expect(HabitWords.demo(.launchpadTop) == .keys(from: [], to: ["⌘", "↑"]), "the page-top tip plays ⌘↑")
+        expect(HabitWords.pressHint(.launchpadTop) == "点一下，替你按 ⌘↑", "the page-top tip offers to press ⌘↑ for him")
+        expect(HabitWords.pressHint(.missionPeek) == "点一下，替你做一次", "the notch tips offer to go home for him")
+        for rule in added {
+            let words = HabitWords.lines(rule)
+            let text = words.title + words.subtitle
+            expect(!text.contains("显示桌面") && !text.contains("Exposé") && !text.contains("Launchpad"),
+                   "\(rule.rawValue) uses the copy guide's words")
+        }
+        expect(HabitRule.launchpadTop.taughtCombo == HabitCombo(126, command), "i18 teaches ⌘↑")
+        expect(HabitKey.name(126) == "↑", "the up arrow has a keycap name")
+    }
+
     // 桌面两指下滑：手指方向换算回来，十秒内两次八十点以上。
     static func desktopSwipes() {
         expect(HabitDesktopSwipes.fingerTravel(deltaY: 30, natural: true) == 30, "natural scrolling keeps the finger direction")
@@ -624,6 +932,23 @@ struct HabitRulesTests {
         expect(!window.title.contains("⌘Q") && !window.subtitle.contains("⌘Q"), "the finder close window says nothing about ⌘Q")
         expect(HabitWords.lines(.closeWindow, menuTitle: "关闭窗口", finder: false).subtitle.contains("⌘Q"), "in an app close window mentions ⌘Q")
 
+        expect(HabitWords.pressHint(.copy) == "点一下，替你按 ⌘C", "the repeat subtitle names the key")
+        expect(HabitWords.pressHint(.hideApp) == "点一下，替你做一次", "an action without a key says it will do it once")
+        expect(HabitWords.pressHint(.desktopSearch, shortcut: "⌃空格") == "点一下，替你按 ⌃空格", "desktop search names the real binding in the hint")
+        let hint = HabitWords.pressHint(.save)
+        let label = HabitWords.accessibilityLabel(title: "Mac 上存储按 ⌘S", subtitle: HabitWords.controlFamily, hint: hint)
+        expect(label == "Mac 上存储按 Command S。常用快捷键把 Control 换成 Command。点一下，替你按 Command S", "the spoken label is title, subtitle, then the hint")
+        expect(HabitWords.accessibilityLabel(title: "A", subtitle: hint, hint: hint).components(separatedBy: "替你按").count == 2, "a repeat subtitle is not read twice")
+        var told = HabitMemory()
+        expect(!told.controlSwapAlreadyTold(.paste), "⌃V is told when nothing was told before")
+        told.ledger.didShow("cut", at: 0)
+        expect(told.controlSwapAlreadyTold(.paste) && !told.controlSwapAlreadyTold(.undo), "after ⌃X was told, ⌃V stays quiet but ⌃Z does not")
+        told = HabitMemory()
+        told.ledger.didShow("copy", at: 0)
+        expect(told.controlSwapAlreadyTold(.paste), "after ⌃C was told, ⌃V stays quiet")
+        for tip in CoachTip.allCases where tip != .habit {
+            expect(tip.text.count <= 8 && !tip.detail.isEmpty, "gesture tip \(tip.rawValue) has a main sentence of at most 8 characters and a detail")
+        }
         expect(HabitWords.lines(.paste, variant: .pagedDown).subtitle.contains("往下翻页"), "⌃V that paged down says what happened")
         let noNotch = HabitWords.lines(.hideApp, variant: .noNotch, shortcut: "⌃⌘L")
         expect(noNotch.subtitle.contains("⌃⌘L"), "on a screen without a notch the shortcut binding is named")

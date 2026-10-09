@@ -299,6 +299,47 @@ func raiseAXWindow(_ win: AXUIElement) {
     AXUIElementPerformAction(win, kAXRaiseAction as CFString)
 }
 
+// MARK: - 单次预算（收起 / 展开 / 救援路径，见 AXStallBreaker.swift）
+
+/// 窗口元素的单次 AX 消息上限。不动全局的 2 秒（WindowShade.swift 启动时设的那个）。
+let axBudgetedMessagingTimeout: Float = 1.0
+
+/// 触碰窗口元素前调用：这个元素上的每次 AX 调用最多等 1 秒（全局是 2 秒；照 HabitAX 的做法）。
+/// 上限跟着元素对象走，对健康的 App 没有影响（单次调用通常不到 20 毫秒）。
+func prepareBudgeted(_ el: AXUIElement) {
+    AXUIElementSetMessagingTimeout(el, axBudgetedMessagingTimeout)
+}
+
+/// 计时一次 AX 调用并报给熔断。这个进程正被熔断时不发消息，直接返回 `skipped`。
+private func measureAX<T>(pid: pid_t, skipped: T, failed: (T) -> Bool, _ body: () -> T) -> T {
+    let breaker = AXStallBreaker.shared
+    if breaker.shouldSkip(pid) { return skipped }
+    let started = axMonotonicNow()
+    let result = body()
+    breaker.record(pid: pid, duration: axMonotonicNow() - started, timedOut: failed(result))
+    return result
+}
+
+/// 计时的写入：`body` 里做一次 AX 写（setAXSize / setAXPositionReturningError …）。
+/// 熔断开着时返回 .cannotComplete，不发消息。
+@discardableResult
+func timedSet(pid: pid_t, _ body: () -> AXError) -> AXError {
+    measureAX(pid: pid, skipped: AXError.cannotComplete, failed: { $0 == .cannotComplete }, body)
+}
+
+@discardableResult
+func timedRaise(_ win: AXUIElement, pid: pid_t) -> AXError {
+    measureAX(pid: pid, skipped: AXError.cannotComplete, failed: { $0 == .cannotComplete }) {
+        AXUIElementPerformAction(win, kAXRaiseAction as CFString)
+    }
+}
+
+/// 计时的读取：`body` 里做一次 AX 读（axPosition / axSize …），读不到返回 nil。
+/// 熔断开着时返回 nil，不发消息。
+func timedRead<T>(pid: pid_t, _ body: () -> T?) -> T? {
+    measureAX(pid: pid, skipped: nil, failed: { $0 == nil }, body)
+}
+
 func focusAXWindow(_ win: AXUIElement, pid: pid_t) {
     let app = AXUIElementCreateApplication(pid)
     AXUIElementSetAttributeValue(app, kAXFocusedWindowAttribute as CFString, win)

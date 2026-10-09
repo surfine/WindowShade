@@ -7,6 +7,8 @@ enum FaceCameraTuning {
     /// 要求相机提供的源帧率。脸部姿势与睁眼程度不需要更高；与下方 Vision 最小间隔一致，
     /// 让相机不要产出我们注定丢掉、还要花钱解码的帧。
     static let targetSourceFPS: Double = 8
+    /// 有人在看这一路单开的一档：只看旁边有没有人朝屏幕，每秒 2 帧够用；其他用途不变。
+    static let bystanderSourceFPS: Double = 2
     /// Vision 一次请求的用时预算（毫秒）：超过就记一笔，供资格测试与真机对照。
     static let visionBudgetMs: Double = 60
     /// 连续几次 Vision 失败才算一次会话级异常。

@@ -132,6 +132,57 @@ struct PresenceLockTests {
         var validEffects:[PresenceLock.Effect]=[]
         for i in 1...4 {validEffects += invalid.handle(.rssi(generation:2,dbm:-40),at:sec(16+Double(i)/2))}
         t.expect(returnToken(validEffects) != nil,"重新连续两秒后才形成候选")
+        t.section("L1-15", "唤醒 → 0.5 秒复查锁态，1 秒重启扫描，各一次")
+        func notes(_ effects:[PresenceLock.Effect])->Int { effects.filter { if case .awayNote=$0{return true};return false }.count }
+        var w=ready();_=w.handle(.sleep,at:sec(1))
+        t.expect(w.handle(.wake,at:sec(10)).isEmpty && w.nextWake==sec(10.5),"唤醒先排期，不立刻扫描")
+        t.expect(w.handle(.tick,at:sec(10.499)).isEmpty,"未到复查点")
+        t.expect(w.handle(.tick,at:sec(10.5)) == [.recheckLockState] && w.nextWake==sec(11),"先复查锁态")
+        t.expect(w.handle(.tick,at:sec(11)) == [.restartScanning],"一秒后重启扫描")
+        t.expect(w.handle(.tick,at:sec(12)).isEmpty && w.nextWake==nil,"不重复、不留轮询")
+        t.section("L1-16", "重复睡眠/唤醒通知 → 幂等；睡着前未到点的扫描作废")
+        var rw=ready();_=rw.handle(.sleep,at:sec(1));_=rw.handle(.sleep,at:sec(1.1))
+        _=rw.handle(.wake,at:sec(5));_=rw.handle(.wake,at:sec(5.3))
+        var rwEffects=rw.handle(.tick,at:sec(5.5))+rw.handle(.tick,at:sec(6))+rw.handle(.tick,at:sec(6.3))
+        t.expect(rwEffects == [.recheckLockState,.restartScanning],"重复唤醒不推迟、不加倍")
+        _=rw.handle(.sleep,at:sec(7));_=rw.handle(.wake,at:sec(8));_=rw.handle(.sleep,at:sec(8.2))
+        t.expect(rw.handle(.tick,at:sec(9)).isEmpty && rw.nextWake==nil,"唤醒后又睡 → 旧期限作废")
+        _=rw.handle(.wake,at:sec(20)); rwEffects=rw.handle(.tick,at:sec(21))
+        t.expect(rwEffects == [.recheckLockState,.restartScanning],"新一轮照常各一次")
+        var offWake=PresenceLock(bootID:fixtureBoot);_=offWake.handle(.sleep,at:sec(1));_=offWake.handle(.wake,at:sec(2))
+        t.expect(offWake.handle(.tick,at:sec(5)).isEmpty && offWake.nextWake==nil,"功能关着不扫描")
+        t.section("L1-17", "手机离开 → 自动锁 → 睡眠；唤醒后十秒内被解开 → 恰好一行离开期间记录")
+        func awayAsleep()->PresenceLock {
+            var v=ready();_=v.handle(.disconnected(.phone,generation:1),at:sec(1))
+            let tok=prepared(v.handle(.tick,at:sec(12.5)))!;_=v.handle(.commitLock(tok),at:sec(12.5));_=v.handle(.lockConfirmed(tok),at:sec(12.6))
+            _=v.handle(.sleep,at:sec(20));_=v.handle(.wake,at:sec(100));_=v.handle(.tick,at:sec(100.5));_=v.handle(.systemLocked,at:sec(100.5))
+            return v
+        }
+        var intr=awayAsleep(); let note=intr.handle(.systemUnlocked,at:sec(108))
+        t.expect(notes(note)==1 && note.contains(.awayNote(.init(kind:.unlockedWhilePhoneAway,at:sec(108)))),"记一行")
+        _=intr.handle(.systemLocked,at:sec(109))
+        t.expect(notes(intr.handle(.systemUnlocked,at:sec(109.5)))==0,"同一次唤醒不重复记")
+        var edge=awayAsleep(); t.expect(notes(edge.handle(.systemUnlocked,at:sec(110)))==1,"正好十秒仍算")
+        var late=awayAsleep(); t.expect(notes(late.handle(.systemUnlocked,at:sec(111)))==0,"十一秒不记")
+        var lateTick=awayAsleep(); _=lateTick.handle(.tick,at:sec(111))
+        t.expect(notes(lateTick.handle(.systemUnlocked,at:sec(112)))==0,"过窗后的解锁不记")
+        t.section("L1-18", "手机在身边、或刚回来 → 不记")
+        var home=ready();_=home.handle(.sleep,at:sec(5));_=home.handle(.wake,at:sec(10));_=home.handle(.systemLocked,at:sec(10.5))
+        t.expect(notes(home.handle(.systemUnlocked,at:sec(12)))==0,"睡前手机在场")
+        var back=awayAsleep();_=back.handle(.connected(.phone,generation:2),at:sec(101))
+        _=back.handle(.readStarted(.phone,generation:2,request:1),at:sec(101));_=back.handle(.readSucceeded(.phone,generation:2,request:1),at:sec(101.1))
+        t.expect(notes(back.handle(.systemUnlocked,at:sec(103)))==0,"唤醒后手机已回来")
+        var noLock=ready();_=noLock.handle(.disconnected(.phone,generation:1),at:sec(1));_=noLock.handle(.sleep,at:sec(2));_=noLock.handle(.wake,at:sec(10))
+        t.expect(notes(noLock.handle(.systemUnlocked,at:sec(10.5)))==0,"复查发现本来没锁 → 不是有人解锁")
+        t.section("L1-19", "手动锁 → 睡醒后手机走回来、强信号 → 不自动解锁，也不请求返回授权")
+        cfg=PresenceLock.Configuration();cfg.returnEnabled=true
+        var walk=ready(cfg);_=walk.handle(.systemLocked,at:sec(1));_=walk.handle(.sleep,at:sec(2));_=walk.handle(.wake,at:sec(30))
+        var walkEffects=walk.handle(.tick,at:sec(30.5))+walk.handle(.systemLocked,at:sec(30.5))+walk.handle(.tick,at:sec(31))
+        _=walk.handle(.connected(.phone,generation:2),at:sec(31.2));_=walk.handle(.readStarted(.phone,generation:2,request:1),at:sec(31.2))
+        walkEffects += walk.handle(.readSucceeded(.phone,generation:2,request:1),at:sec(31.3))
+        for i in 0...8 {walkEffects += walk.handle(.rssi(generation:2,dbm:-40),at:sec(32+Double(i)/2))}
+        t.expect(returnToken(walkEffects)==nil && walk.ownedLock==nil && walk.lockState == .locked,"比 BLEUnlock 严：手动锁不靠手机解开")
+        t.expect(notes(walkEffects)==0,"没解锁就没有记录")
         t.finish()
     }
 }

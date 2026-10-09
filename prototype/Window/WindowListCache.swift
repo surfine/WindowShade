@@ -34,6 +34,9 @@ final class WindowListCache: @unchecked Sendable {
     // 窗口列表 provider。默认直连 WindowServer，测试可注入可控阻塞的假 provider。
     private let provider: (Kind) -> [[String: Any]]
 
+    /// 单飞等待的上限。
+    static let waitLimit: TimeInterval = 0.5
+
     // 单一状态锁保护缓存与 in-flight 标记；provider 调用一律在锁外进行，
     // 慢 provider 不会阻塞其他读写者。
     private let lock = NSCondition()
@@ -76,6 +79,26 @@ final class WindowListCache: @unchecked Sendable {
         return entry.snapshot.windows
     }
 
+    // 双击准入快照：第一下点击刷新时记下，在 doubleClickInterval 内给第二下点击用。
+    // 通用 150ms TTL 不变；这份快照只服务 tap 线程上的预过滤。
+    private var admission: (windows: [[String: Any]], at: CFAbsoluteTime)?
+
+    func recordAdmissionSnapshot(_ windows: [[String: Any]],
+                                 at: CFAbsoluteTime = CFAbsoluteTimeGetCurrent()) {
+        lock.lock()
+        admission = (windows, at)
+        lock.unlock()
+    }
+
+    /// 超过 `interval` 返回 nil；不做任何 IPC。
+    func admissionSnapshot(validFor interval: TimeInterval,
+                           now: CFAbsoluteTime = CFAbsoluteTimeGetCurrent()) -> [[String: Any]]? {
+        lock.lock()
+        defer { lock.unlock() }
+        guard let admission, now - admission.at >= 0, now - admission.at < interval else { return nil }
+        return admission.windows
+    }
+
     func onScreenWindows(ofPID pid: pid_t) -> [[String: Any]] {
         snapshot(.onScreen).byPID[pid] ?? []
     }
@@ -114,6 +137,7 @@ final class WindowListCache: @unchecked Sendable {
     private func snapshot(_ kind: Kind) -> Snapshot {
         lock.lock()
         defer { lock.unlock() }
+        let deadline = Date(timeIntervalSinceNow: Self.waitLimit)
 
         while true {
             let now = CFAbsoluteTimeGetCurrent()
@@ -125,9 +149,12 @@ final class WindowListCache: @unchecked Sendable {
 
             // 已有调用在锁外刷新同一种快照：等待其完成（锁在此期间被释放，
             // 因此慢 provider 不会阻塞状态锁），被唤醒后回到循环顶部重查 TTL。
+            // 等待有上限（0.5 秒）：刷新者卡在 WindowServer 时，等待者不跟着卡住，
+            // 超时返回最后一份缓存快照（过期也返回；快照只用来发现窗口，不是实时证明）。
+            // 没有快照时按现有签名返回空快照。
             if isRefreshing(kind) {
-                lock.wait()
-                continue
+                if lock.wait(until: deadline) || !isRefreshing(kind) { continue }
+                return cacheEntry(kind)?.snapshot ?? build([])
             }
 
             // 成为该 kind 的唯一刷新者。锁外取数，完成后写回缓存并广播唤醒全部等待者。

@@ -22,7 +22,18 @@ final class WindowGlide: @unchecked Sendable {
         var gaveUp: Bool
     }
 
+    /// 辅助功能读写入口。默认直连系统；测试注入计数或阻塞的替身。
+    struct Ops: @unchecked Sendable {
+        var setSize: (AXUIElement, CGSize) -> Void = { setAXSize($0, $1) }
+        var setPosition: (AXUIElement, CGPoint) -> Void = { setAXPosition($0, $1) }
+        var readPosition: (AXUIElement) -> CGPoint? = { axPosition($0) }
+        var readSize: (AXUIElement) -> CGSize? = { axSize($0) }
+    }
+
+    /// cancelAndWait 最多等这么久：滑行线程卡在某个 App 的辅助功能调用里时，不拖住调用方。
+    static let cancelWaitLimit: TimeInterval = 0.15
     private static let frameInterval = 1.0 / 120
+    private let ops: Ops
     /// 每次滑行一条自己的队列：等它停手时只等它自己，不会被另一扇正在滑的窗口拖住。
     private let queue = DispatchQueue(label: "WindowShade.window-glide", qos: .userInteractive)
 
@@ -35,7 +46,8 @@ final class WindowGlide: @unchecked Sendable {
     private let predecessor: WindowGlide?
     private let running = DispatchGroup()
 
-    init(id: CGWindowID, element: AXUIElement, path: FlickGlidePath, after predecessor: WindowGlide? = nil) {
+    init(id: CGWindowID, element: AXUIElement, path: FlickGlidePath, after predecessor: WindowGlide? = nil, ops: Ops = Ops()) {
+        self.ops = ops
         self.id = id
         self.element = element
         self.path = path
@@ -51,10 +63,11 @@ final class WindowGlide: @unchecked Sendable {
     }
 
     /// 停下，并等滑行线程真的停手再返回：之后马上要设窗口位置时用，免得滑行线程再补一帧把它挪走。
-    /// 最多等一帧（那个 App 卡住时等到辅助功能调用超时）。不要在滑行自己的队列上调用。
+    /// 最多等 150 毫秒：那个 App 卡住时超时照样返回，滑行线程每次设置前都会检查取消，醒来后不会再动窗口。
+    /// 不要在滑行自己的队列上调用。
     func cancelAndWait() {
         cancel()
-        queue.sync {}
+        _ = running.wait(timeout: .now() + Self.cancelWaitLimit)
     }
 
     private var cancelled: Bool {
@@ -86,6 +99,8 @@ final class WindowGlide: @unchecked Sendable {
         var sizeEvery: TimeInterval = 1.0 / 60
         var lastSizeAt = -Double.infinity
         var gaveUp = false
+        /// 最后一次请求设置的帧：取消后不再读回，直接把它当结果。
+        var lastRequested = path.from
 
         func timed(_ call: () -> Void) -> TimeInterval {
             let start = CACurrentMediaTime()
@@ -101,14 +116,16 @@ final class WindowGlide: @unchecked Sendable {
             let frame = path.frame(at: t)
             if sizeEvery.isFinite, t - lastSizeAt >= sizeEvery,
                abs(frame.width - appliedSize.width) >= 2 || abs(frame.height - appliedSize.height) >= 2 {
-                let cost = timed { setAXSize(element, frame.size) }
+                let cost = timed { ops.setSize(element, frame.size) }
+                lastRequested.size = frame.size
                 sizeSets += 1
                 appliedSize = frame.size
                 lastSizeAt = t
                 if cost > 0.012 {
                     // 这个 App 改尺寸慢（Electron 一类实测 30–80 毫秒）：趁刚松手一次改到位，后面只挪位置，
                     // 滑行才跑得满帧。尺寸的变化落在松手那一刻，眼睛本来就在等窗口变。
-                    _ = timed { setAXSize(element, path.to.size) }
+                    _ = timed { ops.setSize(element, path.to.size) }
+                    lastRequested.size = path.to.size
                     sizeSets += 1
                     appliedSize = path.to.size
                     sizeEvery = .infinity
@@ -117,7 +134,8 @@ final class WindowGlide: @unchecked Sendable {
                 }
             }
             guard !cancelled else { break }
-            let cost = timed { setAXPosition(element, frame.origin) }
+            let cost = timed { ops.setPosition(element, frame.origin) }
+            lastRequested.origin = frame.origin
             frames += 1
             if cost > 0.08 {
                 gaveUp = true
@@ -132,13 +150,19 @@ final class WindowGlide: @unchecked Sendable {
         let wasCancelled = cancelled
         if !wasCancelled {
             _ = timed {
-                if !cancelled { setAXSize(element, path.to.size) }
-                if !cancelled { setAXPosition(element, path.to.origin) }
-                if !cancelled { setAXSize(element, path.to.size) }
-                if !cancelled { setAXPosition(element, path.to.origin) }
+                if !cancelled { ops.setSize(element, path.to.size); lastRequested.size = path.to.size }
+                if !cancelled { ops.setPosition(element, path.to.origin); lastRequested.origin = path.to.origin }
+                if !cancelled { ops.setSize(element, path.to.size) }
+                if !cancelled { ops.setPosition(element, path.to.origin) }
             }
         }
-        let observed = CGRect(origin: axPosition(element) ?? path.to.origin, size: axSize(element) ?? path.to.size)
+        // 取消了就不再读回：那个 App 卡着的话读回会白等；调用方拿到的是最后一次请求的帧。
+        let observed: CGRect
+        if cancelled {
+            observed = lastRequested
+        } else {
+            observed = CGRect(origin: ops.readPosition(element) ?? path.to.origin, size: ops.readSize(element) ?? path.to.size)
+        }
         return Report(observed: observed, frames: frames, sizeSets: sizeSets, slowestCall: slowest,
                       elapsed: CACurrentMediaTime() - began, cancelled: cancelled, gaveUp: gaveUp)
     }

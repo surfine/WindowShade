@@ -220,3 +220,107 @@ enum MagicTiling {
         return parts.joined(separator: "，")
     }
 }
+
+// MARK: 拖窗口落到另一扇上：按指针角度分边
+// 思路来自 Hyprland DwindleAlgorithm 的 smart_split 与 DragController 的 drag_threshold（BSD-3），这里自己用 Swift 写。
+
+extension MagicTiling {
+    enum SplitSide: Equatable { case left, right, top, bottom }
+
+    struct Split: Equatable {
+        let side: SplitSide
+        /// 被拖的那扇拿到的一半。
+        let dragged: CGRect
+        /// 目标窗口留下的另一半。
+        let target: CGRect
+    }
+
+    /// 落点小岛要拖出多远才出现（点）：从按下标题栏算起。
+    static let dropIslandThreshold: CGFloat = 10
+
+    /// 拖够了才出小岛：点一下标题栏、手抖一下都不算。
+    static func dropIslandVisible(travel: CGFloat) -> Bool { travel >= dropIslandThreshold }
+
+    /// 指针相对目标中心，按半宽、半高归一后比大小：宽窗口和高窗口一样好选边。
+    /// 两边一样大（对角线、正中心）时取左右；刚好在中心线上取右、下。y 向下（AX 坐标）。
+    static func splitSide(target: CGRect, pointer: CGPoint) -> SplitSide {
+        let halfW = max(target.width / 2, 0.01), halfH = max(target.height / 2, 0.01)
+        let nx = (pointer.x - target.midX) / halfW
+        let ny = (pointer.y - target.midY) / halfH
+        if abs(nx) >= abs(ny) { return nx < 0 ? .left : .right }
+        return ny < 0 ? .top : .bottom
+    }
+
+    /// 被拖的占指针那一边的一半，目标留另一半。
+    static func split(target: CGRect, pointer: CGPoint) -> Split {
+        let side = splitSide(target: target, pointer: pointer)
+        let w = (target.width / 2).rounded(), h = (target.height / 2).rounded()
+        let first: CGRect, second: CGRect
+        switch side {
+        case .left, .right:
+            let l = CGRect(x: target.minX, y: target.minY, width: w, height: target.height)
+            let r = CGRect(x: target.minX + w, y: target.minY, width: target.width - w, height: target.height)
+            (first, second) = side == .left ? (l, r) : (r, l)
+        case .top, .bottom:
+            let t = CGRect(x: target.minX, y: target.minY, width: target.width, height: h)
+            let b = CGRect(x: target.minX, y: target.minY + h, width: target.width, height: target.height - h)
+            (first, second) = side == .top ? (t, b) : (b, t)
+        }
+        return Split(side: side, dragged: first, target: second)
+    }
+}
+
+// MARK: 拖窗口落到另一扇上：松手时哪个落点说了算
+
+extension MagicTiling {
+    /// 松手时指针下的一扇窗口。frames 按 AX 坐标；eligible：普通窗口（标准窗口、不是全屏、不在侧拉或刘海里）。
+    struct DropWindow: Equatable {
+        let id: CGWindowID
+        let frame: CGRect
+        let eligible: Bool
+    }
+
+    enum DropTarget: Equatable {
+        /// 落点小岛（收进刘海、半屏、铺满、魔法平铺）。
+        case notchIsland
+        /// 屏幕边上：系统自己的拖边平铺、侧拉、画中画在管。
+        case edge
+        /// 另一扇普通窗口：两扇并排。
+        case window(CGWindowID)
+        case nothing
+    }
+
+    /// 屏幕边上多宽算“在边上”（点）。
+    static let dropEdgeInset: CGFloat = 6
+    /// 并排后每一扇至少这么大，不够就不并排（和魔法平铺认窗口的下限一致）。
+    static let dropMinimumSize = CGSize(width: 240, height: 160)
+
+    /// 松手时谁说了算：落点小岛 > 屏幕边 > 指针下最上面的那扇普通窗口 > 什么都没有。
+    /// windows：这块屏上的窗口，最前面的在前；被拖的那扇自己不算。最上面的那扇不是普通窗口（对话框、浮动面板）就什么都不做，
+    /// 不穿过去落到它后面的窗口上。pointer、screen、windows 同一个坐标系（AX，y 向下）。
+    static func dropTarget(pointer: CGPoint, onNotchIsland: Bool, screen: CGRect, windows: [DropWindow],
+                           dragged: CGWindowID, edgeInset: CGFloat = dropEdgeInset) -> DropTarget {
+        if onNotchIsland { return .notchIsland }
+        guard screen.contains(pointer),
+              pointer.x > screen.minX + edgeInset, pointer.x < screen.maxX - edgeInset,
+              pointer.y > screen.minY + edgeInset, pointer.y < screen.maxY - edgeInset else { return .edge }
+        for window in windows where window.id != dragged && window.frame.contains(pointer) {
+            return window.eligible ? .window(window.id) : .nothing
+        }
+        return .nothing
+    }
+
+    /// 并排之后两扇各占的位置：目标先裁进可用区域，再按指针分边，最后留缝（ArrangeGap）。
+    /// 任何一半小于 dropMinimumSize 就返回 nil（那样的窗口并排不了）。
+    static func dropSplit(target: CGRect, pointer: CGPoint, area: CGRect, gap: CGFloat) -> Split? {
+        let visible = target.intersection(area)
+        guard !visible.isNull, visible.width > 0, visible.height > 0 else { return nil }
+        let raw = split(target: visible, pointer: pointer)
+        let dragged = ArrangeGap.apply(raw.dragged, in: area, gap: gap)
+        let rest = ArrangeGap.apply(raw.target, in: area, gap: gap)
+        for frame in [dragged, rest] where frame.width < dropMinimumSize.width || frame.height < dropMinimumSize.height {
+            return nil
+        }
+        return Split(side: raw.side, dragged: dragged, target: rest)
+    }
+}

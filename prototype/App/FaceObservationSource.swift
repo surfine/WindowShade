@@ -25,7 +25,12 @@ struct FacePipelineCounters: Sendable, Equatable {
     var visionTotalMs: Double = 0
     var visionMaxMs: Double = 0
     var visionSlow: UInt64 = 0
+    /// 刷脸实验：算出特征的帧数，和想算却没算出的帧数（脸太偏、没眼睛点、Vision 失败）。只是计数。
+    var identityEmbedded: UInt64 = 0
+    var identityUnavailable: UInt64 = 0
 }
+
+// FaceGeometry（每张脸的框、朝向和刷脸实验用的对齐几何）定义在 FaceEmbedder.swift。
 
 /// Geometry only. Head pose is not gaze; no face is not evidence of departure.
 struct FaceObservation: Sendable, Equatable {
@@ -46,6 +51,23 @@ struct FaceObservation: Sendable, Equatable {
     /// Negotiated physical source rate, not a claim about delivered Vision throughput.
     /// Nil means the camera did not accept a rate; use observedAt deltas to measure delivery.
     var sourceFPS: Double? = nil
+    /// 这一帧所有脸的几何，多人帧不再丢。上面的单脸字段仍只在恰好一张脸时填写。
+    var faces: [FaceGeometry] = []
+    /// 刷脸实验的特征，只发给 `.identity` 用途的订阅者；其余订阅者拿到的永远是 nil。
+    var identity: FaceIdentitySample? = nil
+
+    func withoutIdentity() -> FaceObservation {
+        var copy = self; copy.identity = nil; return copy
+    }
+}
+
+/// 一帧里最大那张脸的特征（实验）。只在内存里交给刷脸守卫，不写日志、不落盘。
+struct FaceIdentitySample: Sendable, Equatable {
+    let modelVersion: String
+    /// 对应 `FaceObservation.faces` 的下标。
+    let faceIndex: Int
+    /// 没算出来（脸太偏、没有眼睛点、Vision 失败）就是 nil。
+    let embedding: [Float]?
 }
 
 enum FaceObservationSourceError: Error {
@@ -55,8 +77,17 @@ enum FaceObservationSourceError: Error {
 }
 
 enum FaceObservationPurpose: Sendable {
-    case geometry, command, securityChallenge
-    var requestedFPS: Double { self == .geometry ? FaceCameraTuning.targetSourceFPS : 25 }
+    /// identity：刷脸实验，相机队列上额外算一次脸部特征（后端见 FaceEmbedder / FaceEmbedderBackends）。
+    /// bystander：有人在看，只要脸框和朝向，帧率单开一档（FaceCameraTuning.bystanderSourceFPS）。
+    case geometry, command, securityChallenge, identity, bystander
+    var requestedFPS: Double {
+        switch self {
+        case .geometry: FaceCameraTuning.targetSourceFPS
+        case .bystander: FaceCameraTuning.bystanderSourceFPS
+        case .identity: 10
+        case .command, .securityChallenge: 25
+        }
+    }
 }
 
 struct FaceObservationSubscription: Sendable, Hashable {
@@ -69,8 +100,14 @@ protocol FaceCaptureWorker: Sendable {
                deliver: @escaping @Sendable (FaceObservation) -> Void,
                fail: @escaping @Sendable (Error) -> Void) async throws
     func setRequestedFPS(_ fps: Double)
+    /// 有 `.identity` 订阅者时交给它特征后端，最后一个走了就传 nil。
+    func setIdentityEmbedder(_ embedder: (any FaceEmbedder)?)
     func stop()
     func countersSnapshot() async -> FacePipelineCounters
+}
+
+extension FaceCaptureWorker {
+    func setIdentityEmbedder(_ embedder: (any FaceEmbedder)?) {}
 }
 
 /// One process-wide physical camera, independently cancellable consumers, monotonic leases.
@@ -164,18 +201,27 @@ protocol FaceCaptureWorker: Sendable {
             }
             expireConsumers()
             guard generation == current, consumers[token] != nil else { throw CancellationError() }
-            worker.setRequestedFPS(requestedFPS)
+            syncWorkerDemand()
         } catch {
             remove(token)
             throw error
         }
     }
     private var requestedFPS: Double { consumers.values.map { $0.purpose.requestedFPS }.max() ?? FaceCameraTuning.targetSourceFPS }
+    private var wantsIdentity: Bool { consumers.values.contains { $0.purpose == .identity } }
+    /// 刷脸实验的特征后端；只有存在 `.identity` 订阅者时才交给相机工作队列。
+    var identityEmbedder: (any FaceEmbedder)? {
+        didSet { if !consumers.isEmpty { syncWorkerDemand() } }
+    }
+    private func syncWorkerDemand() {
+        worker.setRequestedFPS(requestedFPS)
+        worker.setIdentityEmbedder(wantsIdentity ? identityEmbedder : nil)
+    }
     func remove(_ token: FaceObservationSubscription) {
         guard consumers.removeValue(forKey: token) != nil else { return }
         waiters.removeValue(forKey: token)?.resume(throwing: CancellationError())
         if consumers.isEmpty { endCapture() }
-        else { worker.setRequestedFPS(requestedFPS); scheduleExpiry() }
+        else { syncWorkerDemand(); scheduleExpiry() }
     }
     /// Exposed internally for deterministic monotonic-clock tests; production also schedules expiry.
     func expireConsumers() {
@@ -187,7 +233,7 @@ protocol FaceCaptureWorker: Sendable {
         }
         if !expired.isEmpty {
             if consumers.isEmpty { endCapture() }
-            else { worker.setRequestedFPS(requestedFPS); scheduleExpiry() }
+            else { syncWorkerDemand(); scheduleExpiry() }
             for (_, consumer) in expired { consumer.failure(FaceObservationSourceError.expired) }
         }
     }
@@ -232,7 +278,7 @@ protocol FaceCaptureWorker: Sendable {
                observation.observedAt - previous < 1 / consumer.purpose.requestedFPS - 0.001 { continue }
             consumer.lastDelivered = observation.observedAt
             consumers[token] = consumer
-            consumer.observation(observation)
+            consumer.observation(consumer.purpose == .identity ? observation : observation.withoutIdentity())
         }
     }
     func countersSnapshot() async -> FacePipelineCounters { await worker.countersSnapshot() }
@@ -296,6 +342,11 @@ protocol FaceCaptureWorker: Sendable {
         subscriptions.removeAll(); legacy = nil; onFailure = nil
     }
     func pipelineCounters() async -> FacePipelineCounters { await hub.countersSnapshot() }
+    /// 刷脸实验的特征后端（整个进程共用一个相机，所以设在共享的 hub 上）。
+    var identityEmbedder: (any FaceEmbedder)? {
+        get { hub.identityEmbedder }
+        set { hub.identityEmbedder = newValue }
+    }
     deinit {
         let hub = hub, tokens = subscriptions
         Task { @MainActor in for token in tokens { hub.remove(token) } }
@@ -304,7 +355,8 @@ protocol FaceCaptureWorker: Sendable {
 
 /// @unchecked Sendable is limited to dispatching work; all mutable state is queue-confined.
 private final class FaceObservationWorker: NSObject, AVCaptureVideoDataOutputSampleBufferDelegate, FaceCaptureWorker, @unchecked Sendable {
-    private let queue = DispatchQueue(label: "WindowShade.face.observations", qos: .userInitiated)
+    /// F12：utility。主 stage 的推理在神经引擎上，时间不随队列 QoS 变；前后处理的 CPU 部分可以去能效核。
+    private let queue = DispatchQueue(label: "WindowShade.face.observations", qos: .utility)
     private var session: AVCaptureSession?
     private var output: AVCaptureVideoDataOutput?
     private var observers: [NSObjectProtocol] = []
@@ -319,6 +371,19 @@ private final class FaceObservationWorker: NSObject, AVCaptureVideoDataOutputSam
     private var counters = FacePipelineCounters()
     /// Vision 连续失败的会话级退路（PERF-07）。只在队列上动。
     private var fallback = FaceVisionFallbackPolicy()
+    /// F12：同一个 landmarks 请求与连续帧 handler 在会话内复用；退回系统预设或换会话时才重建。只在队列上动。
+    private var requests = FaceLandmarkRequestSlot<VNDetectFaceLandmarksRequest, VNSequenceRequestHandler>(
+        makeRequest: { pinned in
+            let request = VNDetectFaceLandmarksRequest()
+            // 钉在神经引擎上（main stage）：默认偶尔退回 GPU/CPU。实测钉住后结果一致（IoU 0.995）、
+            // 不占 GPU、延迟低 15–30%。注意这只决定 main stage 用哪个加速器，前处理与后处理仍会用到
+            // CPU/GPU，不能写成「整条路不用 CPU/GPU」。连续失败会退回系统预设（见 fallback）。
+            if pinned, let ane = FaceLandmarkComputeDevice.ane { request.setComputeDevice(ane, for: .main) }
+            return request
+        },
+        makeHandler: { VNSequenceRequestHandler() })
+    /// 刷脸实验：有 `.identity` 订阅者时才有后端、才算特征。只在队列上动。
+    private var identityEmbedder: (any FaceEmbedder)?
     private var deliver: (@Sendable (FaceObservation) -> Void)?
     private var fail: (@Sendable (Error) -> Void)?
 
@@ -409,6 +474,7 @@ private final class FaceObservationWorker: NSObject, AVCaptureVideoDataOutputSam
                     self.lastSample = 0
                     self.lastCaptured = 0
                     self.fallback = FaceVisionFallbackPolicy()
+                    self.requests.reset()
                     self.deliver = deliver
                     self.fail = fail
                     for name in [AVCaptureSession.runtimeErrorNotification, AVCaptureSession.wasInterruptedNotification] {
@@ -440,9 +506,14 @@ private final class FaceObservationWorker: NSObject, AVCaptureVideoDataOutputSam
             Self.negotiateFrameRate(device: device, target: fps, into: &self.counters.camera)
         }
     }
+    func setIdentityEmbedder(_ embedder: (any FaceEmbedder)?) {
+        queue.async { self.identityEmbedder = embedder }
+    }
     func stop() { queue.async { self.tearDown() } }
     private func tearDown() {
         deliver = nil; fail = nil
+        identityEmbedder = nil
+        requests.reset()
         observers.forEach { NotificationCenter.default.removeObserver($0) }; observers.removeAll()
         output?.setSampleBufferDelegate(nil, queue: nil)
         output = nil
@@ -483,17 +554,11 @@ private final class FaceObservationWorker: NSObject, AVCaptureVideoDataOutputSam
         }
         lastSample = now
         lastCaptured = captured
-        let request = VNDetectFaceLandmarksRequest()
-        // 钉在神经引擎上（main stage）：默认偶尔退回 GPU/CPU。实测钉住后结果一致（IoU 0.995）、
-        // 不占 GPU、延迟低 15–30%。注意这只决定 main stage 用哪个加速器，前处理与后处理仍会用到
-        // CPU/GPU，不能写成「整条路不用 CPU/GPU」。连续失败会退回系统预设（见下面的 fallback）。
-        if !fallback.usesDefaultComputeDevice, let ane = FaceLandmarkComputeDevice.ane {
-            request.setComputeDevice(ane, for: .main)
-        }
+        let (request, handler) = requests.acquire(pinned: !fallback.usesDefaultComputeDevice)
         counters.camera.pinsNeuralEngine = !fallback.usesDefaultComputeDevice
         counters.visionStarted &+= 1
         let visionStartedAt = CACurrentMediaTime()
-        do { try VNImageRequestHandler(cvPixelBuffer: buffer, orientation: .up).perform([request]) }
+        do { try handler.perform([request], on: buffer, orientation: .up) }
         catch {
             counters.visionFailed &+= 1
             // PERF-07：先记类别；连续失败才退路，而退路整个会话只有一次。退路后仍失败就停源报不可用。
@@ -527,16 +592,29 @@ private final class FaceObservationWorker: NSObject, AVCaptureVideoDataOutputSam
             return FaceEyeGeometry.openness(region.normalizedPoints,
                 scale: CGSize(width: face.boundingBox.width * imageSize.width, height: face.boundingBox.height * imageSize.height))
         }
-        func finite(_ number: NSNumber?) -> Double? {
-            guard let value = number?.doubleValue, value.isFinite else { return nil }; return value
+        func finite(_ number: NSNumber?) -> Double? { FaceAlignment.finite(number) }
+        let embedder = identityEmbedder
+        let geometry = faces.prefix(FaceGeometry.maxPerFrame).map {
+            FaceAlignment.geometry(for: $0, imageSize: imageSize, aligned: embedder != nil)
         }
+        let identity = embedder.flatMap { identitySample(faces: geometry, buffer: buffer, embedder: $0) }
         deliver?(.init(cameraID: deviceID, generation: token, sequence: sequence,
             observedAt: captured, faceCount: faces.count, yaw: finite(face?.yaw), pitch: finite(face?.pitch),
             leftEyeOpenness: eye(face?.landmarks?.leftEye), rightEyeOpenness: eye(face?.landmarks?.rightEye),
             faceBoundingBox: face?.boundingBox, confidence: face?.confidence,
             mouthLandmarks: face?.landmarks?.outerLips?.normalizedPoints,
-            sourceFPS: counters.camera.requestedSourceFPS > 0 ? counters.camera.requestedSourceFPS : nil))
+            sourceFPS: counters.camera.requestedSourceFPS > 0 ? counters.camera.requestedSourceFPS : nil,
+            faces: geometry, identity: identity))
         counters.delivered &+= 1
+    }
+
+    /// 只给最大那张脸算特征（守卫也只看最大那张，同样的取法）。同一帧、同一个缓冲区，算完即丢。
+    private func identitySample(faces: [FaceGeometry], buffer: CVPixelBuffer, embedder: any FaceEmbedder) -> FaceIdentitySample? {
+        guard let (index, face) = faces.enumerated().max(by: { $0.element.boundingBox.width < $1.element.boundingBox.width })
+        else { return nil }
+        let embedding = embedder.embed(pixelBuffer: buffer, face: face)
+        if embedding == nil { counters.identityUnavailable &+= 1 } else { counters.identityEmbedded &+= 1 }
+        return FaceIdentitySample(modelVersion: embedder.modelVersion, faceIndex: index, embedding: embedding)
     }
 }
 
@@ -560,6 +638,32 @@ enum FaceEyeGeometry {
     }
 }
 
+
+/// F12：一个会话里复用同一个 Vision 请求和连续帧 handler。`pinned` 变了（退回系统预设）或
+/// `reset()`（换会话、拆掉）才重建；computeDevice 只在建的时候设一次。不是线程安全的，
+/// 由持有者限定在一条队列上用。泛型只为让测试换成替身计数。
+struct FaceLandmarkRequestSlot<Request: AnyObject, Handler: AnyObject> {
+    private let makeRequest: (_ pinned: Bool) -> Request
+    private let makeHandler: () -> Handler
+    private var current: (request: Request, handler: Handler, pinned: Bool)?
+    /// 建过几次（测试与诊断用）。
+    private(set) var builds = 0
+
+    init(makeRequest: @escaping (_ pinned: Bool) -> Request, makeHandler: @escaping () -> Handler) {
+        self.makeRequest = makeRequest
+        self.makeHandler = makeHandler
+    }
+
+    mutating func acquire(pinned: Bool) -> (Request, Handler) {
+        if let current, current.pinned == pinned { return (current.request, current.handler) }
+        let built = (request: makeRequest(pinned), handler: makeHandler(), pinned: pinned)
+        current = built
+        builds += 1
+        return (built.request, built.handler)
+    }
+
+    mutating func reset() { current = nil }
+}
 
 /// 神经引擎只查一次（后台队列上第一次用到时）。
 private enum FaceLandmarkComputeDevice {

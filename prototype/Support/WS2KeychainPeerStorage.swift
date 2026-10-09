@@ -9,6 +9,8 @@ import LocalAuthentication
     private let service: String
     private let account = "companion-peer-snapshot-v1"
     init(service: String) { self.service = service }
+    /// 钥匙串里的配对活过重启：只接受带 Touch ID 回执的登记。
+    var requiresEnrollmentReceipt: Bool { true }
     private var query: [String: Any] {
         let context = LAContext(); context.interactionNotAllowed = true
         return [kSecClass as String: kSecClassGenericPassword,

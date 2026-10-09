@@ -193,15 +193,16 @@ final class LaunchpadLibraryPage {
         }
         guard layer !== hovered else { return }
         CATransaction.begin()
+        // fade-only: 影子的深浅；浮起的缩放走弹簧。
         CATransaction.setAnimationDuration(reduced ? 0 : Motion.Spring.expand.response)
         CATransaction.setAnimationTimingFunction(nil)
         if let old = hovered {
-            old.transform = CATransform3DIdentity
+            old.springTransform(CATransform3DIdentity, .expand, reduced: reduced)
             old.shadowOpacity = 0
         }
         if let layer {
             let lift: CGFloat = layer.sublayers?.isEmpty == false ? 1.05 : 1.08
-            layer.transform = CATransform3DMakeScale(lift, lift, 1)
+            layer.springTransform(CATransform3DMakeScale(lift, lift, 1), .expand, reduced: reduced)
             layer.shadowOpacity = layer.sublayers?.isEmpty == false ? 0 : 0.3
         }
         CATransaction.commit()
@@ -210,9 +211,10 @@ final class LaunchpadLibraryPage {
 
     func press(_ layer: CALayer, _ on: Bool, reduced: Bool) {
         CATransaction.begin()
+        // fade-only: 按下时变淡一点；缩放走弹簧。
         CATransaction.setAnimationDuration(on ? 0.08 : 0.2)
-        layer.transform = on ? CATransform3DMakeScale(0.94, 0.94, 1)
-            : (layer === hovered ? CATransform3DMakeScale(1.06, 1.06, 1) : CATransform3DIdentity)
+        layer.springTransform(on ? CATransform3DMakeScale(0.94, 0.94, 1)
+            : (layer === hovered ? CATransform3DMakeScale(1.06, 1.06, 1) : CATransform3DIdentity), .calm, reduced: reduced)
         layer.opacity = on ? 0.82 : 1
         CATransaction.commit()
     }
@@ -509,6 +511,7 @@ extension LaunchpadView {
                 list.animator().alphaValue = 1
             }
             CATransaction.begin()
+            // fade-only
             CATransaction.setAnimationDuration(Motion.fadeDuration)
             library.root.opacity = 0
             CATransaction.commit()
@@ -527,6 +530,7 @@ extension LaunchpadView {
                 }
             })
             CATransaction.begin()
+            // fade-only
             CATransaction.setAnimationDuration(Motion.fadeDuration)
             library.root.opacity = 1
             CATransaction.commit()

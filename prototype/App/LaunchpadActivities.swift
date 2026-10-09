@@ -17,7 +17,10 @@ final class LaunchpadActivityCards {
         empty.fontSize = 14; empty.foregroundColor = NSColor.white.withAlphaComponent(0.65).cgColor
         empty.isWrapped = true; root.addSublayer(empty)
     }
-    func update(_ activities: [NotchActivity]) { values = Array(activities.prefix(3)); render() }
+    /// 空闲的计时器卡的 id（LaunchpadController 和空闲的番茄钟卡一起补上）：按一下是长出选分钟，不是对已选中的那条活动动手。
+    static let idleTimerID = "timer.idle"
+    /// 真实的活动最多 3 条；空闲的番茄钟卡和计时器卡是补在后面的，所以最多放到 4 张。
+    func update(_ activities: [NotchActivity]) { values = Array(activities.prefix(4)); render() }
     func layout(_ frame: CGRect, scale: CGFloat) { area = frame; self.scale = scale; render() }
     private func render() {
         guard area.width > 0, area.height > 0 else { return }
@@ -31,9 +34,15 @@ final class LaunchpadActivityCards {
             let item = values[index]
             let rect = CGRect(x: area.minX, y: area.minY + CGFloat(index) * pitch, width: area.width, height: max(40, pitch - 12))
             card.root.isHidden = false; card.root.frame = rect; card.update(item, scale: scale)
-            let label = [item.title, item.subtitle].filter { !$0.isEmpty }.joined(separator: "，")
+            let label = [NotchEarText.cardTitle(item), item.subtitle].filter { !$0.isEmpty }.joined(separator: "，")
             let primary = CGRect(x: rect.maxX - 52, y: rect.midY - 20, width: 40, height: 40)
-            if item.kind == .music {
+            if item.id == Self.idleTimerID {
+                hits.append(Hit(frame: primary, title: "选分钟", id: item.id, action: .timerOpen))
+                hits.append(Hit(frame: rect, title: label, id: item.id, action: .timerOpen))
+                continue
+            } else if item.kind == .timer {
+                hits.append(Hit(frame: primary, title: item.isPaused ? "继续" : "暂停", id: item.id, action: .focusTogglePause))
+            } else if item.kind == .music {
                 hits.append(Hit(frame: primary, title: item.isPaused ? "播放" : "暂停", id: item.id, action: .playPause))
             } else if item.id == "focus.idle" {
                 hits.append(Hit(frame: primary, title: "开始", id: item.id, action: .focusOpen))
@@ -69,7 +78,7 @@ final class LaunchpadActivityCards {
         func update(_ value: NotchActivity, scale: CGFloat) {
             let width = root.bounds.width, height = root.bounds.height
             for field in [title, subtitle, status] { field.contentsScale = scale }
-            title.string = value.title
+            title.string = NotchEarText.cardTitle(value)
             subtitle.string = value.isPaused && value.kind == .music ? "已暂停 · \(value.subtitle)" : value.subtitle
             status.string = value.kind == .recording ? "打开语音备忘录查看录音" : (value.kind == .route ? "在地图中打开路线" : "")
             if symbol != value.symbol {
@@ -77,7 +86,7 @@ final class LaunchpadActivityCards {
                 icon.contents = NotchActivitySymbol.whiteImage(symbol)
             }
             icon.frame = CGRect(x: 16, y: 20, width: 26, height: 26)
-            let hasButton = value.kind == .music || value.kind == .focus
+            let hasButton = value.kind == .music || value.kind == .focus || value.kind == .timer
             let reserved: CGFloat = hasButton ? 70 : 18
             title.frame = CGRect(x: 54, y: 18, width: max(0, width - 54 - reserved), height: 23)
             subtitle.frame = CGRect(x: 54, y: 44, width: max(0, width - 54 - reserved), height: 20)
@@ -85,16 +94,21 @@ final class LaunchpadActivityCards {
             status.isHidden = height < 100
             button.isHidden = !hasButton
             button.frame = CGRect(x: width - 48, y: height / 2 - 12, width: 24, height: 24)
-            if value.kind == .focus {
+            if value.kind == .timer {
+                progress.backgroundColor = NSColor(srgbRed: 1, green: 0x9F / 255, blue: 0x0A / 255, alpha: 1).cgColor
+                // 空闲的那张卡按下是“选分钟”，所以画开始；在走的画暂停 / 继续。
+                let idle = value.id == LaunchpadActivityCards.idleTimerID
+                button.contents = NotchActivitySymbol.whiteImage(idle || value.isPaused ? "play.fill" : "pause.fill")
+            } else if value.kind == .focus {
                 progress.backgroundColor = NSColor.systemRed.cgColor
                 button.contents = NotchActivitySymbol.whiteImage(value.isPaused ? "play.fill" : "pause.fill")
             } else {
                 progress.backgroundColor = NSColor.systemGreen.cgColor
                 button.contents = NotchActivitySymbol.whiteImage(value.isPaused ? "play.fill" : "pause.fill")
             }
-            track.isHidden = value.progress == nil || height < 90
+            track.isHidden = value.progress.fractionValue == nil || height < 90
             track.frame = CGRect(x: 18, y: height - 14, width: max(0, width - 36), height: 3)
-            progress.frame = CGRect(x: 0, y: 0, width: track.bounds.width * CGFloat(value.progress ?? 0), height: 3)
+            progress.frame = CGRect(x: 0, y: 0, width: track.bounds.width * CGFloat(value.progress.fractionValue ?? 0), height: 3)
         }
     }
 }

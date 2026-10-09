@@ -62,29 +62,71 @@ extension AppDelegate {
 
     let menuState = makeMenuState()
 
-    statusMenu.addItem(.sectionHeader(title: pinnedPreviewController.ws2CachedMenuTitle()))
+    // D20B：顶层固定 9 项（见 StatusMenuLayout）。原来的“当前窗口”标题行不再占一行，
+    // 改成前三项的悬停提示；其余旧项挪进“整理▸”“已收起的窗口▸”，action 与快捷键不变。
+    let contextCaption = pinnedPreviewController.ws2CachedMenuTitle()
     func action(_ title: String, _ symbol: String, _ selector: Selector,
-                _ shortcut: GlobalShortcut? = nil, enabled: Bool = true, menu: NSMenu? = nil) {
+                _ shortcut: GlobalShortcut? = nil, enabled: Bool = true, menu: NSMenu? = nil,
+                id: String? = nil) {
       let item = NSMenuItem(title: title, action: selector, keyEquivalent: "")
       item.target = self; item.image = NSImage(systemSymbolName: symbol, accessibilityDescription: nil)
       item.isEnabled = enabled
+      if let id { item.identifier = NSUserInterfaceItemIdentifier(id) }
       if let shortcut { applyShortcut(shortcut, to: item) }
       (menu ?? statusMenu).addItem(item)
     }
+    // 进行中才出现的动态行，放在固定 9 项上方，不算在 9 项里。
+    var dynamicRowCount = 0
+    if MainActor.assumeIsolated({ ws2Runtime.focus.model.phase != .idle }) {
+      action(MainActor.assumeIsolated { ws2Runtime.menuTitle }, "timer", #selector(ws2ShowFocus),
+             id: StatusMenuLayout.focusRowID)
+      dynamicRowCount += 1
+    }
+    // 编程会话有人在等你才出现一行，点它就是“过去”；结束就消失。
+    for row in MainActor.assumeIsolated({ ws2Runtime.codingMenuRows }) {
+      let item = NSMenuItem(title: row.title, action: #selector(ws2GoToCodingSession(_:)), keyEquivalent: "")
+      item.target = self; item.representedObject = row.sessionID
+      item.identifier = NSUserInterfaceItemIdentifier(StatusMenuLayout.codingRowID)
+      item.image = NSImage(systemSymbolName: "hand.raised.fill", accessibilityDescription: nil)
+      statusMenu.addItem(item)
+      dynamicRowCount += 1
+    }
+    // 有置顶窗口才出现一行：点开是逐窗取消、暂时取消全部、全部取消（不再放进“整理▸”）。
+    if !menuState.pinnedPreviews.isEmpty {
+      let pinnedMenu = NSMenu()
+      pinnedMenu.delegate = self
+      addPinnedPreviewMenuSection(menuState.pinnedPreviews, into: pinnedMenu)
+      let pinnedItem = NSMenuItem(
+        title: StatusMenuLayout.pinnedRowTitle(count: menuState.pinnedPreviews.count),
+        action: nil, keyEquivalent: "")
+      pinnedItem.identifier = NSUserInterfaceItemIdentifier(StatusMenuLayout.pinnedRowID)
+      pinnedItem.image = NSImage(systemSymbolName: "pin.fill", accessibilityDescription: nil)
+      pinnedItem.submenu = pinnedMenu
+      statusMenu.addItem(pinnedItem)
+      dynamicRowCount += 1
+    }
+    if dynamicRowCount > 0 { statusMenu.addItem(.separator()) }
+
     let ax = AXIsProcessTrusted(), screen = hasScreenRecordingPermission()
+    let firstFixed = statusMenu.items.count
     let foldTitle = foldToggleMenuTitle().replacingOccurrences(of: "当前窗口", with: "窗口")
     action(foldTitle,
            foldTitle.contains("展开") ? "rectangle.expand.vertical" : "rectangle.compress.vertical",
-           #selector(toggleAction), .toggleShade)
+           #selector(toggleAction), .toggleShade, id: "ws.menu.fold")
     action("收进刘海", "rectangle.topthird.inset.filled", #selector(tuckCurrentAction), .tuckCurrent,
-           enabled: ax && NotchController.isEnabled)
+           enabled: ax && NotchController.isEnabled, id: "ws.menu.tuck")
     let pinTitle = pinnedPreviewMenuTitle().replacingOccurrences(of: "当前窗口", with: "窗口")
     action(pinTitle,
            pinTitle.contains("取消置顶") ? "pin.slash" : "pin",
-           #selector(togglePinnedPreviewAction), .pinPreview, enabled: ax && screen)
+           #selector(togglePinnedPreviewAction), .pinPreview, enabled: ax && screen, id: "ws.menu.pin")
+    if contextCaption != "当前窗口" {
+      for item in statusMenu.items[firstFixed...] { item.toolTip = contextCaption }
+    }
     let arrangement = NSMenu()
-    let arrangeItem = NSMenuItem(title: "排列", action: nil, keyEquivalent: "")
+    let arrangeItem = NSMenuItem(title: "整理", action: nil, keyEquivalent: "")
+    arrangeItem.identifier = NSUserInterfaceItemIdentifier("ws.menu.arrange")
     arrangeItem.image = NSImage(systemSymbolName: "rectangle.split.2x1", accessibilityDescription: nil)
+    arrangement.delegate = self
     arrangeItem.submenu = arrangement; statusMenu.addItem(arrangeItem)
     action(MainActor.assumeIsolated { slideOver.menuTitle }, "sidebar.right", #selector(toggleSlideOverAction), .slideOver, enabled: ax && screen, menu: arrangement)
     if MainActor.assumeIsolated({ slideOver.dockedWindowID != nil }) {
@@ -102,52 +144,56 @@ extension AppDelegate {
       action(title, "rectangle.grid.1x2", #selector(arrangeShadedWindows), .arrangeOrFocus,
              enabled: menuState.canArrangeShades, menu: arrangement)
     }
-    statusMenu.addItem(.separator())
-    action("全部收进刘海", "macwindow.on.rectangle", #selector(tuckAllAction), .tuckAll, enabled: ax && NotchController.isEnabled)
-    action("启动台", "square.grid.3x3", #selector(toggleLaunchpadAction), .launchpad)
+    arrangement.addItem(.separator())
+    action("全部收进刘海", "macwindow.on.rectangle", #selector(tuckAllAction), .tuckAll, enabled: ax && NotchController.isEnabled, menu: arrangement)
     action("选择窗口…", "rectangle.on.rectangle", #selector(openWindowBrowserPanel), .windowBrowser,
-           enabled: WindowBrowserSettings.keyboardPanelEnabled)
-    // 动态窗口段不计入 9 个常驻项；保留老板键、逐窗取消和全部取消。
-    addPinnedPreviewMenuSection(menuState.pinnedPreviews)
-    // 进行中才出现。番茄钟用真实计时；指挥模式和编程会话没有菜单文案来源，不编一行。
-    if MainActor.assumeIsolated({ ws2Runtime.focus.model.phase != .idle }) {
-      action(MainActor.assumeIsolated { ws2Runtime.menuTitle }, "timer", #selector(ws2ShowFocus))
-    }
+           enabled: WindowBrowserSettings.keyboardPanelEnabled, menu: arrangement)
+    action("启动台", "square.grid.3x3", #selector(toggleLaunchpadAction), .launchpad, id: "ws.menu.launchpad")
 
-    if !menuState.foldedWindows.isEmpty {
-      statusMenu.addItem(.separator())
-      statusMenu.addItem(.sectionHeader(title: "已收起的窗口"))
-      // 前 9 个内联并带 ⌃⌘1…9；其余进“更多已折叠窗口”子菜单（同样的动作与图标）。
+    // 已收起的窗口▸：没有收起的窗口时灰着，顶层仍是同样 9 项。
+    let foldedItem = NSMenuItem(title: "已收起的窗口", action: nil, keyEquivalent: "")
+    foldedItem.identifier = NSUserInterfaceItemIdentifier("ws.menu.folded")
+    foldedItem.image = NSImage(systemSymbolName: "rectangle.stack", accessibilityDescription: nil)
+    if menuState.foldedWindows.isEmpty {
+      foldedItem.isEnabled = false
+    } else {
+      let foldedMenu = NSMenu()
+      foldedMenu.delegate = self
+      // 前 9 个内联并带 ⌃⌘1…9；其余进“更多收起的窗口”子菜单（同样的动作与图标）。
       let sections = StandardMenu.splitFoldedWindows(menuState.foldedWindows)
       for (index, entry) in sections.inline.enumerated() {
-        statusMenu.addItem(foldedWindowMenuItem(entry, index: index))
+        foldedMenu.addItem(foldedWindowMenuItem(entry, index: index))
       }
       if !sections.overflow.isEmpty {
         let more = NSMenuItem(title: "更多收起的窗口（\(sections.overflow.count)）",
                               action: nil, keyEquivalent: "")
         let submenu = NSMenu()
+        submenu.delegate = self
         for entry in sections.overflow {
           submenu.addItem(foldedWindowMenuItem(entry, index: nil))
         }
         more.submenu = submenu
-        statusMenu.addItem(more)
+        foldedMenu.addItem(more)
       }
-      // 与「全部取消置顶」对称：仅在有已折叠窗口时才显示「全部展开」。
-      statusMenu.addItem(.separator())
+      foldedMenu.addItem(.separator())
       let restore = NSMenuItem(title: "全部展开", action: #selector(restoreAll), keyEquivalent: "")
-      statusMenu.addItem(restore)
+      restore.target = self
+      foldedMenu.addItem(restore)
+      foldedItem.submenu = foldedMenu
     }
+    statusMenu.addItem(foldedItem)
 
     statusMenu.addItem(.separator())
     // D03 / M1：不在重建时 if option { addItem } 插入行。
-    // 「设置…」↔「关于」用 isAlternate；「检查更新…」「开发」始终挂在菜单上，用 isHidden 随 ⌥ 显隐，这样按住 ⌥ 能同时多出几行。
+    // 「检查更新…」「开发」始终挂在菜单上，用 isHidden 随 ⌥ 显隐；它们不算在固定 9 项里。
     // 「欢迎使用」只在设置里。
     let optionHeld = NSEvent.modifierFlags.contains(.option)
     let settings = NSMenuItem(title: "设置…", action: #selector(showPreferences), keyEquivalent: ",")
     settings.image = NSImage(systemSymbolName: "gearshape", accessibilityDescription: nil)
+    settings.identifier = NSUserInterfaceItemIdentifier("ws.menu.settings")
     statusMenu.addItem(settings)
-    let about = NSMenuItem(title: "关于 WindowShade", action: #selector(showAboutPanel), keyEquivalent: ",")
-    about.isAlternate = true
+    let about = NSMenuItem(title: "关于", action: #selector(showAboutPanel), keyEquivalent: ",")
+    about.identifier = NSUserInterfaceItemIdentifier("ws.menu.about")
     about.keyEquivalentModifierMask = [.option]
     about.image = NSImage(systemSymbolName: "info.circle", accessibilityDescription: nil)
     statusMenu.addItem(about)
@@ -177,16 +223,20 @@ extension AppDelegate {
       statusMenu.addItem(developer)
     }
     let quitItem = NSMenuItem(title: "退出 WindowShade", action: #selector(quit), keyEquivalent: "q")
+    quitItem.identifier = NSUserInterfaceItemIdentifier("ws.menu.quit")
     quitItem.image = NSImage(systemSymbolName: "power", accessibilityDescription: nil); statusMenu.addItem(quitItem)
+    if StatusMenuLayout.visibleFixedIDs(in: statusMenu) != StatusMenuLayout.fixedTopLevel.map(\.id) {
+      wlog("menu: 顶层固定项与约定不一致")
+    }
     updateReconcileTimer()
     // 折叠/置顶状态也可能由原有菜单或快捷键改变：面板打开时同步刷新投影。
     windowBrowserController?.managedWindowsDidChange()
   }
-  func addPinnedPreviewMenuSection(_ entries: [PinnedPreviewMenuEntry]) {
+  func addPinnedPreviewMenuSection(_ entries: [PinnedPreviewMenuEntry], into menu: NSMenu) {
     guard !entries.isEmpty else { return }
 
-    statusMenu.addItem(.separator())
-    statusMenu.addItem(.sectionHeader(title: "已置顶的窗口（点一下取消）"))
+    if !menu.items.isEmpty { menu.addItem(.separator()) }
+    menu.addItem(.sectionHeader(title: "点一下取消置顶"))
 
     for (index, entry) in entries.enumerated() {
       let item = NSMenuItem(
@@ -196,7 +246,7 @@ extension AppDelegate {
       item.target = self
       item.representedObject = NSNumber(value: entry.id)
       item.image = windowMenuIcon(for: entry.pid)
-      statusMenu.addItem(item)
+      menu.addItem(item)
     }
 
     // 老板键：一下让开全部置顶，再按一下按原来的前后顺序放回（会话不结束）。
@@ -206,14 +256,14 @@ extension AppDelegate {
       keyEquivalent: "")
     suspendPinned.target = self
     applyShortcut(.suspendPins, to: suspendPinned)
-    statusMenu.addItem(suspendPinned)
+    menu.addItem(suspendPinned)
 
     let stopPinnedPreviews = NSMenuItem(
       title: "全部取消置顶",
       action: #selector(stopAllPinnedPreviewsAction),
       keyEquivalent: "")
     stopPinnedPreviews.target = self
-    statusMenu.addItem(stopPinnedPreviews)
+    menu.addItem(stopPinnedPreviews)
   }
   private func windowMenuIcon(for pid: pid_t) -> NSImage? {
     guard let icon = NSRunningApplication(processIdentifier: pid)?.icon?.copy() as? NSImage else {
@@ -277,7 +327,7 @@ extension AppDelegate {
     rebuildMenu()
   }
   func menu(_ menu: NSMenu, willHighlight item: NSMenuItem?) {
-    guard menu === statusMenu else { return }
+    guard StatusMenuLayout.belongsToStatusMenu(menu, root: statusMenu) else { return }
     hideMenuHoverPreview()
     menuPreviewHoverID = nil
     menuPreviewAnchor = nil

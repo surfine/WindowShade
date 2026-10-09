@@ -43,8 +43,8 @@ ID-01/02、DATA-01…04/07/10/12、ALERT-01…05/09/11、EVENT-02…04）。
 | --- | --- | --- | --- |
 | 妙控键盘 / 鼠标 / 触控板 | `BatteryPercent` | 连上时，之后每 120 秒 | 已接。充电状态读不到，记未知 |
 | 这台 Mac 的内部电池 | `IOPSCopyPowerSourcesInfo` 的当前容量 / 最大容量 | 开始看的时候，之后每 120 秒 | 已接。机器上没有电池时不建档 |
-| AirPods 左耳、右耳、充电盒 | 电量百分数 | — | 未接。活动条只知道「这副耳机在出声」，没有百分数。盒子不用左右耳的平均数 |
-| iPhone、iPad、Apple Watch、Vision Pro | 电量百分数 | — | 未接，需要真机上有已证明的读法 |
+| AirPods 左耳、右耳、充电盒 | 电量百分数 | 连上这台 Mac 时读一次，之后很少再读 | 未接。2026-10-08 找到读法（借 AirBattery 的思路，AGPL 只借思路）：`system_profiler SPBluetoothDataType -json` 的 `device_batteryLevelLeft / Right / Case`，公开命令，补上 IOBluetooth 只报已连接、没有数值的缺口；启动慢，只在连上时跑。盒子不用左右耳的平均数；附近别人的 AirPods 广播不认 |
+| iPhone、iPad、Apple Watch、Vision Pro | 电量百分数 | — | 未接，需要真机上有已证明的读法。iPhone 候选：在离开就锁已有的蓝牙连接上读标准 GATT 电池服务 180F / 2A19，先做探针（`tools/probes/BLEReadProbe.swift`） |
 
 每一行有四态：已连接、断开、陈旧、无数据。陈旧的读数还留着，但不算刚刚采样。无数据不写成 0%。
 

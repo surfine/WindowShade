@@ -60,9 +60,19 @@ final class LockOverlayController {
         timer?.invalidate()
         timer = nil
         guard running, enabled else { return }
-        timer = Timer.scheduledTimer(withTimeInterval: 0.5, repeats: true) { [weak self] _ in self?.refresh() }
-        timer?.tolerance = 0.1
         refresh()
+    }
+    /// 只在锁着或有过渡进行时轮询；解锁空闲时停掉，靠锁屏通知加 0.22 秒复查叫醒（F06）。
+    private func updatePolling(lock: SessionLockState) {
+        let needs = IdleTimerPolicy.lockOverlayNeedsPolling(running: running, enabled: enabled, lock: lock,
+                                                            transitionActive: lifecycle.active)
+        if !needs { timer?.invalidate(); timer = nil; return }
+        guard timer == nil else { return }
+        let poll = Timer.scheduledTimer(withTimeInterval: 0.5, repeats: true) { [weak self] _ in
+            MainActor.assumeIsolated { self?.refresh() }
+        }
+        poll.tolerance = 0.1
+        timer = poll
     }
     private func refreshSoon() {
         refresh()
@@ -74,6 +84,7 @@ final class LockOverlayController {
         guard running else { return }
         let locked = EffectSecurityBoundary.lockState
         let awake = !EffectEnvironment.asleep && EffectEnvironment.displayAwake
+        defer { updatePolling(lock: locked) }
         switch lifecycle.update(enabled: enabled, lock: locked, awake: awake, now: CACurrentMediaTime()) {
         case .none: break
         case .retreat: tearDownSessions()

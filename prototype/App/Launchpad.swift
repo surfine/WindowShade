@@ -163,15 +163,21 @@ enum AppCatalog {
         guard let source = CGImageSourceCreateWithURL(url as CFURL, nil) else { return nil }
         let options: [CFString: Any] = [
             kCGImageSourceCreateThumbnailFromImageAlways: true,
-            kCGImageSourceThumbnailMaxPixelSize: Int(pixels),
+            kCGImageSourceThumbnailMaxPixelSize: LaunchpadBackdrop.decodePixels(forScreenPixels: pixels),
             kCGImageSourceCreateThumbnailWithTransform: true,
         ]
         return CGImageSourceCreateThumbnailAtIndex(source, 0, options as CFDictionary)
     }
 
     private static func radius(for image: CGImage) -> CGFloat {
-        CGFloat(max(image.width, image.height)) * 0.018
+        LaunchpadBackdrop.radius(forPixelWidth: image.width, height: image.height)
     }
+}
+
+/// 启动台的开关。
+enum Launchpad {
+    /// 背景 veil 换成系统玻璃（NSGlassEffectView，macOS 26+）的小样开关；默认关，等看过再决定。
+    @MainActor static var systemGlassBackdrop = false
 }
 
 // MARK: - 面板
@@ -444,9 +450,10 @@ final class LaunchpadCell {
             badge = nil
             guard animated else { circle.removeFromSuperlayer(); return }
             CATransaction.begin()
+            // fade-only: 淡出；缩小走弹簧。
             CATransaction.setAnimationDuration(Motion.fadeDuration)
             CATransaction.setCompletionBlock { circle.removeFromSuperlayer() }
-            circle.transform = CATransform3DMakeScale(0.2, 0.2, 1)
+            circle.springTransform(CATransform3DMakeScale(0.2, 0.2, 1), .calm, reduced: false)
             circle.opacity = 0
             CATransaction.commit()
         }

@@ -23,6 +23,13 @@ protocol ProtectedKeySigning: AnyObject {
   func sign(_ message: [UInt8], context: LAContext) throws -> Data
 }
 
+/// 一把刚建好的密钥要落盘的三样东西：私钥句柄（Secure Enclave 包裹过的）、公钥、建钥时的指纹摘要。
+struct DeviceKeyMaterial {
+  var blob: Data
+  var publicKey: P256.Signing.PublicKey
+  var biometryState: Data?
+}
+
 enum DeviceKeyError: Error, Equatable {
   case secureEnclaveUnavailable
   case accessControlUnavailable
@@ -48,12 +55,27 @@ final class DeviceAuthorizationKey: ProtectedKeySigning, @unchecked Sendable {
   /// 取消、超时、未认证的 context 也会让签名失败，那种情况不能删掉一把好钥匙。
   private var stateFile: URL { directory.appendingPathComponent("device-key.v1.biometry") }
   private let lock = NSLock()
+  /// 建钥专用锁：“检查→建 Secure Enclave 密钥→写三个文件”整段只许一个线程在做，
+  /// 否则两个并发的 prepare() 会各建一把、交错写盘，留下对不上的私钥和公钥。
+  /// 和 `lock` 分开：锁里会调 publicKey（它拿 `lock`），不会自锁。
+  private let createLock = NSLock()
   private var cachedPublic: P256.Signing.PublicKey?
+  private let makeKey: () throws -> DeviceKeyMaterial
 
   init(directory: URL = FileManager.default.homeDirectoryForCurrentUser
-    .appendingPathComponent("Library/Application Support/WindowShade/Authorization", isDirectory: true))
+    .appendingPathComponent("Library/Application Support/WindowShade/Authorization", isDirectory: true),
+    makeKey: @escaping () throws -> DeviceKeyMaterial = DeviceAuthorizationKey.makeSecureEnclaveKey)
   {
     self.directory = directory
+    self.makeKey = makeKey
+  }
+
+  /// 正式路径：在 Secure Enclave 里建一把受当前指纹保护的签名密钥。
+  static func makeSecureEnclaveKey() throws -> DeviceKeyMaterial {
+    guard SecureEnclave.isAvailable else { throw DeviceKeyError.secureEnclaveUnavailable }
+    guard let control = AuthKeyPolicy.accessControl() else { throw DeviceKeyError.accessControlUnavailable }
+    let key = try SecureEnclave.P256.Signing.PrivateKey(accessControl: control)
+    return DeviceKeyMaterial(blob: key.dataRepresentation, publicKey: key.publicKey, biometryState: biometryState())
   }
 
   var publicKey: P256.Signing.PublicKey? {
@@ -70,16 +92,20 @@ final class DeviceAuthorizationKey: ProtectedKeySigning, @unchecked Sendable {
 
   func prepare() throws -> P256.Signing.PublicKey {
     if let existing = publicKey { return existing }
-    guard SecureEnclave.isAvailable else { throw DeviceKeyError.secureEnclaveUnavailable }
-    guard let control = AuthKeyPolicy.accessControl() else { throw DeviceKeyError.accessControlUnavailable }
-    let key = try SecureEnclave.P256.Signing.PrivateKey(accessControl: control)
-    try FileManager.default.createDirectory(
-      at: directory, withIntermediateDirectories: true, attributes: [.posixPermissions: 0o700])
-    try write(key.dataRepresentation, to: keyFile)
-    try write(key.publicKey.rawRepresentation, to: publicFile)
-    if let state = Self.biometryState() { try write(state, to: stateFile) }
-    lock.withLock { cachedPublic = key.publicKey }
-    return key.publicKey
+    return try createLock.withLock {
+      // 等锁期间别的线程可能已经建好了：锁里再看一次，有就用那一把。
+      if let existing = publicKey { return existing }
+      let material = try makeKey()
+      try FileManager.default.createDirectory(
+        at: directory, withIntermediateDirectories: true, attributes: [.posixPermissions: 0o700])
+      // 写盘顺序：私钥句柄、指纹摘要在前，公钥最后写，作为提交标记——publicKey 要求公钥和私钥文件都在，
+      // 中途崩溃只会留下没有公钥的半成品，下次 prepare() 当作没有密钥、整把重建。
+      try write(material.blob, to: keyFile)
+      if let state = material.biometryState { try write(state, to: stateFile) }
+      try write(material.publicKey.rawRepresentation, to: publicFile)
+      lock.withLock { cachedPublic = material.publicKey }
+      return material.publicKey
+    }
   }
 
   func sign(_ message: [UInt8], context: LAContext) throws -> Data {

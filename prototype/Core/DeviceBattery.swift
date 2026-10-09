@@ -53,6 +53,9 @@ struct BatteryReading: Equatable, Sendable {
   let receivedAt: Double
   /// 这次读数用的方法。空字符串表示来源没标明。
   var sampleMethod: String = ""
+  /// 这台 Mac 才有：是否已充满、是否开着低电量模式。nil = 来源没给，不当 false。供后续“电量那一下”用。
+  var isCharged: Bool? = nil
+  var lowPowerMode: Bool? = nil
 
   /// 原始数值转成有效电量：范围外当未知，不夹到 0 或 100。
   static func validPercent(_ raw: Int?) -> Int? {
@@ -78,6 +81,8 @@ struct DeviceBatteryBook: Sendable {
   static let rearmMargin = 5
   /// 读数（按来源采样时间，没有就按收到时间）多久以内算够新，能发新的提醒。
   static let freshFor: Double = 15 * 60
+  /// 由系统推送的来源（变了才通知，不轮询）：读数没变就不会再来，不能因为安静而算过期。
+  static let pushProviders: Set<String> = [InternalBattery.providerName]
 
   struct Key: Hashable, Codable, Sendable {
     let deviceID: String
@@ -161,6 +166,7 @@ struct DeviceBatteryBook: Sendable {
     guard let reading = readings[key] else { return .unknown }
     let at = reading.sourceObservedAt ?? reading.receivedAt
     guard at.isFinite, now >= at else { return .unknown }
+    if Self.pushProviders.contains(reading.provider) { return .currentEnough }
     return now - at <= Self.freshFor ? .currentEnough : .aged
   }
 
@@ -274,7 +280,7 @@ enum BatterySources {
     BatterySourceNote(id: "hid.apple-peripheral", fact: "外设电量百分数",
                       availability: .wired(method: "IOKit AppleDeviceManagementHIDEventService BatteryPercent", cadence: "120s")),
     BatterySourceNote(id: "power.internal", fact: "这台 Mac 的电池百分数",
-                      availability: .wired(method: "IOPSCopyPowerSourcesInfo", cadence: "120s")),
+                      availability: .wired(method: "IOPSCopyPowerSourcesInfo", cadence: "system push")),
     BatterySourceNote(id: "airpods.left", fact: "左耳电量", availability: .unproven),
     BatterySourceNote(id: "airpods.right", fact: "右耳电量", availability: .unproven),
     BatterySourceNote(id: "airpods.case", fact: "充电盒电量", availability: .unproven),
@@ -295,10 +301,46 @@ struct InternalBatterySample: Equatable, Sendable {
   var max: Int?
   var isCharging: Bool?
   var name: String?
+  var isCharged: Bool? = nil
+  var lowPowerMode: Bool? = nil
+}
+
+/// 这台 Mac 的电源读取闸：系统推送一次才读一次，读数和上次一样就不回调；空闲时一次都不读。
+/// 台式 Mac（读不到内置电池）不建来源。读取方法由外面注入，方便测试，不碰 IOKit。
+struct InternalPowerGate {
+  private let readBattery: () -> InternalBatterySample?
+  private let readLowPower: () -> Bool
+  private(set) var last: InternalBatterySample?
+
+  init(readBattery: @escaping () -> InternalBatterySample?, readLowPower: @escaping () -> Bool) {
+    self.readBattery = readBattery
+    self.readLowPower = readLowPower
+  }
+
+  /// 读一次。没有内置电池返回 nil（台式 Mac）。
+  private func sample() -> InternalBatterySample? {
+    guard var sample = readBattery() else { return nil }
+    sample.lowPowerMode = readLowPower()
+    return sample
+  }
+
+  /// 起步时问一次：有内置电池才值得建系统推送来源。
+  func hasInternalBattery() -> Bool { readBattery() != nil }
+
+  /// 系统推送到了：读一次，只有和上次不同才返回新读数。
+  mutating func refresh() -> InternalBatterySample? {
+    guard let now = sample(), now != last else { return nil }
+    last = now
+    return now
+  }
+
+  /// 来源重启：忘掉上次，下一次读数必然回调。
+  mutating func reset() { last = nil }
 }
 
 enum InternalBattery {
   static let deviceID = "power.internal"
+  static let providerName = "iops.internal"
   static let sampleMethod = "IOPSCopyPowerSourcesInfo"
 
   static func percent(_ sample: InternalBatterySample) -> Int? {

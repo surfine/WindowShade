@@ -391,19 +391,64 @@ extension AppDelegate {
         }
     }
 
+    // 全部展开按单调时钟分批：每批最多 1.5 秒，剩下的用 DispatchQueue.main.async 接着做。
+    // 退出时（applicationWillTerminate 调这里）后面的批次不会再跑：没轮到的窗口保留卷帘条记录，
+    // 下次启动由救援（Rescue.swift）按 journal 放回。正被熔断的 App（刚有 AX 调用等满预算）
+    // 的窗口这一轮跳过，卷帘条留着，过一会儿可以再展开。
     @objc func restoreAll() {
         duoController.windowEffects.cancelAll()
         guard !shaded.isEmpty else { return }
-        let playSound = soundEnabled
+        // 再次调用（比如退出菜单先调一次，applicationWillTerminate 再调一次）作废还没跑的续批，
+        // 当场从剩下的窗口重新开一批。
+        bulkRestoreGeneration &+= 1
+        restoreAllBatch(generation: bulkRestoreGeneration, playSound: soundEnabled,
+                        skippedForStall: [], restoredAny: false)
+    }
+
+    func restoreAllBatch(generation: Int, playSound: Bool, skippedForStall: Set<CGWindowID>,
+                         restoredAny: Bool) {
+        guard generation == bulkRestoreGeneration else { return }
+        var skipped = skippedForStall
+        var restored = restoredAny
+        let pending = shaded.keys.filter { !skipped.contains($0) }.sorted()
         suppressUnshadeSounds = true
         duoController.windowEffects.suppressedForBulkOperation = true
+        var next = pending.count
         withMenuRebuildSuppressed {
-            for id in Array(shaded.keys) { _ = unshadeReturningElement(id) }
+            next = AXBatchBudget().run(pending, from: 0) { id in
+                guard let state = shaded[id] else { return }
+                if AXStallBreaker.shared.shouldSkip(state.pid) {
+                    skipped.insert(id)
+                    wlog("restoreAll: skip id=\(id) pid=\(state.pid); app not responding")
+                    return
+                }
+                _ = unshadeReturningElement(id)
+                restored = true
+            }
         }
         duoController.windowEffects.suppressedForBulkOperation = false
         suppressUnshadeSounds = false
-        if playSound {
+        if next < pending.count {
+            wlog("restoreAll: batch budget spent; \(pending.count - next) windows continue next turn")
+            let carriedSkipped = skipped
+            let carriedRestored = restored
+            DispatchQueue.main.async { [weak self] in
+                MainActor.assumeIsolated {
+                    self?.restoreAllBatch(generation: generation, playSound: playSound,
+                                          skippedForStall: carriedSkipped, restoredAny: carriedRestored)
+                }
+            }
+            return
+        }
+        if playSound && restored {
             playUnfoldSound()
+        }
+        if !skipped.isEmpty {
+            quietNotice("有的 App 没有响应，它的窗口先不展开",
+                        log: "restoreAll: kept \(skipped.count) windows of unresponsive apps")
         }
     }
 }
+
+/// 全部展开的批次代号：新一轮全部展开开始时加一，旧的续批看到不一致就不做了。
+@MainActor var bulkRestoreGeneration = 0

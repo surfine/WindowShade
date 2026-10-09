@@ -552,3 +552,39 @@ enum NotchIsland {
         return raw
     }
 }
+
+// MARK: - 无刘海屏的胶囊五态（R02）
+
+/// 无刘海屏上岛的五种身形和落点。四角都圆（圆角 = 高 ÷ 2）、不画肩；形变以胶囊中心为锚，向两侧和向下长出。
+/// 开关 `Notch.capsuleBelowMenuBar` 默认关：关着时一个字节不差，仍画在菜单栏条内；开着时胶囊整体落在菜单栏下方 8 点。
+enum NotchCapsule {
+    nonisolated static let belowMenuBarKey = "Notch.capsuleBelowMenuBar"
+    /// 胶囊和菜单栏下沿的间距（与认证态的 notch.minY - 8 一致）。
+    static let menuBarGap: CGFloat = 8
+    static let minimalSize = CGSize(width: 26, height: 22)
+    static let expandedSize = CGSize(width: 230, height: 64)
+
+    enum State: CaseIterable { case minimal, compact, alert, expanded, interaction }
+
+    /// 五态尺寸。紧凑和提醒的宽高沿用现有规则，由调用方给；交互按内容给。
+    static func size(_ state: State, compact: CGSize, alert: CGSize, interaction: CGSize) -> CGSize {
+        switch state {
+        case .minimal: return minimalSize
+        case .compact: return compact
+        case .alert: return alert
+        case .expanded: return expandedSize
+        case .interaction: return interaction
+        }
+    }
+
+    static func radius(height: CGFloat) -> CGFloat { max(1, height / 2) }
+
+    /// 胶囊外框（Cocoa 坐标，y 向上）。slot 是菜单栏正中的槽位。
+    /// 关着：高度不超过菜单栏时垂直居中在条内，超过时顶边贴屏幕顶向下长；开着：顶边在菜单栏下沿以下 8 点向下长。横向永远以槽位中心为锚。
+    static func frame(size: CGSize, slot: CGRect, belowMenuBar: Bool) -> CGRect {
+        let x = slot.midX - size.width / 2
+        if belowMenuBar { return CGRect(x: x, y: slot.minY - menuBarGap - size.height, width: size.width, height: size.height) }
+        if size.height <= slot.height { return CGRect(x: x, y: slot.midY - size.height / 2, width: size.width, height: size.height) }
+        return CGRect(x: x, y: slot.maxY - size.height, width: size.width, height: size.height)
+    }
+}

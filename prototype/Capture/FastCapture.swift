@@ -25,6 +25,8 @@ enum FastCapture {
     /// 对照测量用：设了 WINDOWSHADE_DISABLE_FAST_CAPTURE 就一律退回 ScreenCaptureKit。
     private static let disabled = ProcessInfo.processInfo.environment["WINDOWSHADE_DISABLE_FAST_CAPTURE"] != nil
 
+    static var isDisabledByEnvironment: Bool { disabled }
+
     static var isAvailable: Bool { createImage != nil && !disabled }
 
     /// 整扇窗口，满分辨率，不含阴影；窗口被别的窗口挡住也照样截得到它自己。

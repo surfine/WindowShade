@@ -17,6 +17,16 @@ final class Probe: NSObject, CBCentralManagerDelegate, CBPeripheralDelegate, CBP
     private var selection: [String: [String: String]] = [:]
     private var seen: Set<UUID> = []
     private let serviceID = CBUUID(string: "7226818A-90D4-4755-AB5D-DC12AFE4C201")
+    // 电量模式：--role central --operation battery [--target UUID] [--notify 秒，最多 30]。
+    // 只取系统已连上、带 0x180F 的设备，不扫描、不广播；百分比与型号是测量值，设备标识只经 token()。
+    private var batteryMode: Bool { option("--operation") == "battery" }
+    private var batteryRead = false
+    private var finishing = false
+    private let batteryService = CBUUID(string: "180F")
+    private let batteryLevel = CBUUID(string: "2A19")
+    private let deviceInfoService = CBUUID(string: "180A")
+    private let modelNumber = CBUUID(string: "2A24")
+    private var notifySeconds: Double { option("--notify").flatMap(Double.init).map { min(max($0, 0), 30) } ?? 0 }
     func option(_ name: String) -> String? {
         let args = CommandLine.arguments
         guard let i = args.firstIndex(of: name), i + 1 < args.count else { return nil }
@@ -32,13 +42,13 @@ final class Probe: NSObject, CBCentralManagerDelegate, CBPeripheralDelegate, CBP
     func start() {
         print("elapsed_s,event,value,qualification")
         guard let role = option("--role"), ["central", "peripheral"].contains(role) else {
-            log("usage", "--role central|peripheral [--target UUID --service UUID --characteristic UUID --operation read|notify|rssi]")
+            log("usage", "--role central|peripheral [--target UUID --service UUID --characteristic UUID --operation read|notify|rssi|battery [--notify 秒]] | --self-test")
             exit(64)
         }
         active = true
         if role == "central" { central = CBCentralManager(delegate: self, queue: .main) }
         else { accessory = CBPeripheralManager(delegate: self, queue: .main) }
-        DispatchQueue.main.asyncAfter(deadline: .now() + 45) { [self] in
+        DispatchQueue.main.asyncAfter(deadline: .now() + (batteryMode ? 15 + notifySeconds : 45)) { [self] in
             active = false; epoch = UUID()
             central?.stopScan()
             if let p = retained { central?.cancelPeripheralConnection(p) }
@@ -53,13 +63,47 @@ final class Probe: NSObject, CBCentralManagerDelegate, CBPeripheralDelegate, CBP
                     log("selection_exported_private_file", String(selection.count))
                 } catch { log("selection_export_failed"); exit(2) }
             }
-            log("finished", completed ? "transport_observed_identity_unproven" : "inconclusive")
+            log("finished", completed ? (batteryMode ? "battery_read_completed" : "transport_observed_identity_unproven") : "inconclusive")
             exit(completed ? 0 : 2)
+        }
+    }
+    // 电量读完（或没找到设备）后收尾：取消订阅、断开、稍等断连回调再退出。
+    func finishBattery() {
+        guard !finishing else { return }; finishing = true
+        active = false; epoch = UUID()
+        if let p = retained {
+            for s in p.services ?? [] { for c in s.characteristics ?? [] where c.isNotifying { p.setNotifyValue(false, for: c) } }
+            central?.cancelPeripheralConnection(p)
+        }
+        log("finished", completed ? "battery_read_completed" : "inconclusive")
+        DispatchQueue.main.asyncAfter(deadline: .now() + 0.5) { [self] in exit(completed ? 0 : 2) }
+    }
+    func startBattery(_ central: CBCentralManager) {
+        let found = central.retrieveConnectedPeripherals(withServices: [batteryService])
+        log("connected_with_battery_service", String(found.count))
+        let target = option("--target").flatMap { UUID(uuidString: $0) }
+        guard let peripheral = found.first(where: { target == nil || $0.identifier == target }) else {
+            log("no_connected_peripheral"); finishBattery(); return
+        }
+        attempted = true; retained = peripheral; peripheral.delegate = self
+        log("selected_run_token", token(peripheral.identifier)); central.connect(peripheral, options: nil)
+    }
+    func handleBattery(_ characteristic: CBCharacteristic, _ peripheral: CBPeripheral, error: Error?) {
+        guard error == nil else { log("battery_value_failed", characteristic.uuid.uuidString); return }
+        if characteristic.uuid == batteryLevel {
+            log("battery_percent", BLEBatteryParsing.percent(characteristic.value).map(String.init) ?? "unknown")
+            guard !batteryRead else { return }
+            batteryRead = true; completed = true
+            // 型号读回可能稍晚；有 --notify 时听满再收尾。
+            DispatchQueue.main.asyncAfter(deadline: .now() + (notifySeconds > 0 ? notifySeconds : 2)) { [self] in finishBattery() }
+        } else if characteristic.uuid == modelNumber {
+            log("model_number", (BLEBatteryParsing.modelNumber(characteristic.value) ?? "unknown").replacingOccurrences(of: ",", with: "_"))
         }
     }
     func centralManagerDidUpdateState(_ central: CBCentralManager) {
         log("central_state", String(central.state.rawValue))
         guard active, central.state == .poweredOn else { retained = nil; epoch = UUID(); return }
+        if batteryMode { if !attempted { startBattery(central) }; return }
         if option("--operation") != "passive-rssi", !attempted, let raw = option("--target"), let id = UUID(uuidString: raw),
            let peripheral = central.retrievePeripherals(withIdentifiers: [id]).first {
             attempted = true; retained = peripheral; peripheral.delegate = self
@@ -70,7 +114,7 @@ final class Probe: NSObject, CBCentralManagerDelegate, CBPeripheralDelegate, CBP
     }
     func centralManager(_ central: CBCentralManager, didDiscover peripheral: CBPeripheral,
                         advertisementData: [String: Any], rssi RSSI: NSNumber) {
-        guard active else { return }
+        guard active, !batteryMode else { return }
         if option("--operation") == "passive-rssi" {
             let name = peripheral.name ?? advertisementData[CBAdvertisementDataLocalNameKey] as? String ?? ""
             guard option("--target")?.lowercased() == peripheral.identifier.uuidString.lowercased() ||
@@ -97,6 +141,7 @@ final class Probe: NSObject, CBCentralManagerDelegate, CBPeripheralDelegate, CBP
         guard valid(peripheral) else { central.cancelPeripheralConnection(peripheral); return }
         log("connected", token(peripheral.identifier))
         if option("--operation") == "rssi" { peripheral.readRSSI(); return }
+        if batteryMode { peripheral.discoverServices([batteryService, deviceInfoService]); return }
         peripheral.discoverServices(option("--service").map { [CBUUID(string: $0)] })
     }
     func peripheral(_ peripheral: CBPeripheral, didReadRSSI RSSI: NSNumber, error: Error?) {
@@ -113,20 +158,38 @@ final class Probe: NSObject, CBCentralManagerDelegate, CBPeripheralDelegate, CBP
     }
     func centralManager(_ central: CBCentralManager, didFailToConnect peripheral: CBPeripheral, error: Error?) {
         guard retained === peripheral else { return }; retained = nil; epoch = UUID(); log("connect_failed")
+        if batteryMode { finishBattery() }
     }
     func centralManager(_ central: CBCentralManager, didDisconnectPeripheral peripheral: CBPeripheral, error: Error?) {
         guard retained === peripheral else { return }; retained = nil; epoch = UUID(); log("disconnected_evidence_revoked")
     }
     func peripheral(_ peripheral: CBPeripheral, didDiscoverServices error: Error?) {
         guard valid(peripheral) else { return }
-        guard error == nil else { log("service_discovery_failed", String((error! as NSError).code)); return }
+        guard error == nil else {
+            log("service_discovery_failed", String((error! as NSError).code))
+            if batteryMode { finishBattery() }
+            return
+        }
         log("service_discovery_count", String(peripheral.services?.count ?? 0))
+        if batteryMode {
+            for s in peripheral.services ?? [] { peripheral.discoverCharacteristics([batteryLevel, modelNumber], for: s) }
+            return
+        }
         for s in peripheral.services ?? [] { peripheral.discoverCharacteristics(option("--characteristic").map { [CBUUID(string: $0)] }, for: s) }
     }
     func peripheral(_ peripheral: CBPeripheral, didDiscoverCharacteristicsFor service: CBService, error: Error?) {
         guard valid(peripheral) else { return }
         guard error == nil else { log("characteristic_discovery_failed", String((error! as NSError).code)); return }
         log("characteristic_discovery_count", String(service.characteristics?.count ?? 0))
+        if batteryMode {
+            for c in service.characteristics ?? [] where c.properties.contains(.read) || c.properties.contains(.notify) {
+                if c.properties.contains(.read) { log("read_requested", c.uuid.uuidString); peripheral.readValue(for: c) }
+                if c.uuid == batteryLevel, notifySeconds > 0, c.properties.contains(.notify) {
+                    log("subscription_requested"); peripheral.setNotifyValue(true, for: c)
+                }
+            }
+            return
+        }
         for c in service.characteristics ?? [] where option("--characteristic")?.lowercased() == c.uuid.uuidString.lowercased() {
             if option("--operation") == "notify", c.properties.contains(.notify) || c.properties.contains(.indicate) {
                 log("subscription_requested"); peripheral.setNotifyValue(true, for: c)
@@ -136,11 +199,12 @@ final class Probe: NSObject, CBCentralManagerDelegate, CBPeripheralDelegate, CBP
         }
     }
     func peripheral(_ peripheral: CBPeripheral, didUpdateNotificationStateFor characteristic: CBCharacteristic, error: Error?) {
-        guard valid(peripheral) else { return }
+        guard valid(peripheral), !batteryMode else { return }
         log(error == nil && characteristic.isNotifying ? "subscription_accepted_identity_unproven" : "subscription_failed")
         if error == nil && characteristic.isNotifying { completed = true }
     }
     func peripheral(_ peripheral: CBPeripheral, didUpdateValueFor characteristic: CBCharacteristic, error: Error?) {
+        if batteryMode { if valid(peripheral) { handleBattery(characteristic, peripheral, error: error) }; return }
         guard valid(peripheral), option("--characteristic")?.lowercased() == characteristic.uuid.uuidString.lowercased() else { return }
         guard error == nil else { log("value_failed"); return }
         completed = true; log("value_received_payload_discarded")
@@ -179,5 +243,14 @@ final class Probe: NSObject, CBCentralManagerDelegate, CBPeripheralDelegate, CBP
     }
 }
 @main struct Main {
-    static func main() { let p = Probe(); p.start(); withExtendedLifetime(p) { RunLoop.main.run() } }
+    static func main() {
+        // 只跑解析自检，不碰蓝牙。
+        if CommandLine.arguments.contains("--self-test") {
+            let ok = BLEBatteryParsing.percent(Data([100])) == 100 && BLEBatteryParsing.percent(Data([101])) == nil
+                && BLEBatteryParsing.percent(Data()) == nil && BLEBatteryParsing.percent(Data([1, 2])) == nil
+                && BLEBatteryParsing.modelNumber(Data("iPhone15,2".utf8)) == "iPhone15,2" && BLEBatteryParsing.modelNumber(Data()) == nil
+            print("self_test,\(ok ? "pass" : "fail"),,transport_only"); exit(ok ? 0 : 1)
+        }
+        let p = Probe(); p.start(); withExtendedLifetime(p) { RunLoop.main.run() }
+    }
 }

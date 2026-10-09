@@ -15,6 +15,7 @@
 // 纯 CPU 计算，不碰 AppKit，可在任意线程调用。
 
 import CoreGraphics
+import QuartzCore
 import CoreMedia
 import CoreVideo
 import Foundation
@@ -28,19 +29,31 @@ enum CaptureIndicatorRemoval {
         /// 需要修补的矩形（像素，左上原点，相对整块缓冲），已向外扩出光晕。
         let bounds: CGRect
         let purplePixels: Int
+        /// 全量检测时记下的几个紫色像素（帧像素坐标），之后的帧只抽检它们。
+        var probes: [CGPoint] = []
     }
 
     // MARK: 单张图（卷帘条、悬停预览）
 
     /// 返回清理后的新图；没有检测到胶囊时返回 nil（调用方继续用原图）。
+    /// 先裁出左上角的搜索区（外扩足够盖住光晕与取样余量）再检测：没有胶囊时不必把整图
+    /// 画进像素缓冲；有胶囊时只把修好的那一块画回原图，结果与整图修补逐像素一致。
     static func removingIndicator(from image: CGImage, scale: CGFloat) -> CGImage? {
-        guard var pixels = RGBAPixels(image) else { return nil }
-        let changed = pixels.withView { view in
-            guard let found = detect(in: view, origin: .zero, scale: scale) else { return false }
+        let ps = max(0.25, scale)
+        // 余量 = 光晕 pad（3pt）+ fill 向外取样的 reach + band（6px）+ 取整，再留 16pt。
+        let margin = ceil(16 * ps) + 8
+        let cropRect = CGRect(
+            x: 0, y: 0,
+            width: min(CGFloat(image.width), ceil(searchSize.width * ps) + margin),
+            height: min(CGFloat(image.height), ceil(searchSize.height * ps) + margin))
+        guard let crop = image.cropping(to: cropRect.integral), var pixels = RGBAPixels(crop) else { return nil }
+        let found = pixels.withView { view -> Detection? in
+            guard let found = detect(in: view, origin: .zero, scale: scale) else { return nil }
             fill(view, rect: found.bounds)
-            return true
+            return found
         }
-        return changed ? pixels.makeImage() : nil
+        guard let found, let repaired = pixels.makeImage() else { return nil }
+        return RGBAPixels.compositing(patch: repaired, at: found.bounds, over: image)
     }
 
     static func detect(in image: CGImage, scale: CGFloat) -> Detection? {
@@ -52,19 +65,39 @@ enum CaptureIndicatorRemoval {
 
     /// 在一帧 32BGRA 缓冲上原地修补。`content` 是窗口内容在缓冲里的像素矩形（SCK 可能
     /// 在四周留白），`scale` 是每 pt 的像素数。有底片时贴底片，否则抹平。返回是否改动。
+    /// `tracker` 为这条流的检测缓存：传入时只在必要时全量检测，其余帧抽检缓存位置。
     @discardableResult
     static func clean(_ buffer: CVPixelBuffer, content: CGRect, scale: CGFloat,
-                      plate: CleanPlate? = nil) -> Bool {
-        guard CVPixelBufferGetPixelFormatType(buffer) == kCVPixelFormatType_32BGRA,
-              CVPixelBufferLockBaseAddress(buffer, []) == kCVReturnSuccess else { return false }
+                      plate: CleanPlate? = nil, tracker: CaptureIndicatorTracker? = nil,
+                      now: Double = CACurrentMediaTime()) -> Bool {
+        guard CVPixelBufferGetPixelFormatType(buffer) == kCVPixelFormatType_32BGRA else { return false }
+        let origin = CGPoint(x: max(0, content.minX.rounded()), y: max(0, content.minY.rounded()))
+        // 检测只读：用只读锁，帧没有胶囊时不触发写回路径。
+        guard CVPixelBufferLockBaseAddress(buffer, .readOnly) == kCVReturnSuccess else { return false }
+        var found: Detection?
+        if let base = CVPixelBufferGetBaseAddress(buffer) {
+            let view = PixelView(base: base.assumingMemoryBound(to: UInt8.self),
+                                 width: CVPixelBufferGetWidth(buffer),
+                                 height: CVPixelBufferGetHeight(buffer),
+                                 bytesPerRow: CVPixelBufferGetBytesPerRow(buffer), order: .bgra)
+            if let tracker {
+                let key = CaptureIndicatorTracker.Key(width: view.width, height: view.height,
+                                                      content: content, scale: scale)
+                found = tracker.locate(in: view, origin: origin, scale: scale, key: key, now: now)
+            } else {
+                found = detect(in: view, origin: origin, scale: scale)
+            }
+        }
+        CVPixelBufferUnlockBaseAddress(buffer, .readOnly)
+        guard let found else { return false }
+        // 真要修补：换读写锁。
+        guard CVPixelBufferLockBaseAddress(buffer, []) == kCVReturnSuccess else { return false }
         defer { CVPixelBufferUnlockBaseAddress(buffer, []) }
         guard let base = CVPixelBufferGetBaseAddress(buffer) else { return false }
         let view = PixelView(base: base.assumingMemoryBound(to: UInt8.self),
                              width: CVPixelBufferGetWidth(buffer),
                              height: CVPixelBufferGetHeight(buffer),
                              bytesPerRow: CVPixelBufferGetBytesPerRow(buffer), order: .bgra)
-        let origin = CGPoint(x: max(0, content.minX.rounded()), y: max(0, content.minY.rounded()))
-        guard let found = detect(in: view, origin: origin, scale: scale) else { return false }
         if let plate, plate.paste(into: view, rect: found.bounds, contentOrigin: origin, scale: scale) {
             return true
         }
@@ -74,7 +107,8 @@ enum CaptureIndicatorRemoval {
 
     /// 直接处理 ScreenCaptureKit 的一帧：从帧信息里取内容区域与缩放比例。
     @discardableResult
-    static func clean(_ sample: CMSampleBuffer, plate: CleanPlate? = nil) -> Bool {
+    static func clean(_ sample: CMSampleBuffer, plate: CleanPlate? = nil,
+                      tracker: CaptureIndicatorTracker? = nil) -> Bool {
         guard let buffer = sample.imageBuffer,
               let attachments = CMSampleBufferGetSampleAttachmentsArray(sample, createIfNecessary: false)
                 as? [[SCStreamFrameInfo: Any]],
@@ -87,7 +121,7 @@ enum CaptureIndicatorRemoval {
             content = CGRect(x: rect.minX * scale, y: rect.minY * scale,
                              width: rect.width * scale, height: rect.height * scale)
         }
-        return clean(buffer, content: content, scale: scale, plate: plate)
+        return clean(buffer, content: content, scale: scale, plate: plate, tracker: tracker)
     }
 
     // MARK: 检测与抹平
@@ -124,7 +158,20 @@ enum CaptureIndicatorRemoval {
         let pad = ceil(3 * scale)
         let padded = box.offsetBy(dx: CGFloat(x0), dy: CGFloat(y0)).insetBy(dx: -pad, dy: -pad)
             .intersection(CGRect(x: 0, y: 0, width: view.width, height: view.height))
-        return Detection(bounds: padded.integral, purplePixels: count)
+        // 记 4 个均匀分布的紫色像素，供缓存抽检。
+        var probes: [CGPoint] = []
+        let targets = (0..<4).map { (2 * $0 + 1) * count / 8 }
+        var seen = 0, next = 0
+        scan: for y in Int(box.minY)..<Int(box.maxY) {
+            for x in Int(box.minX)..<Int(box.maxX) where view.isIndicatorPurple(x: x0 + x, y: y0 + y) {
+                while next < 4, targets[next] == seen {
+                    probes.append(CGPoint(x: x0 + x, y: y0 + y)); next += 1
+                }
+                seen += 1
+                if next == 4 { break scan }
+            }
+        }
+        return Detection(bounds: padded.integral, purplePixels: count, probes: probes)
     }
 
     /// 逐行用胶囊两侧的标题栏像素填回去：标题栏只有纵向渐变，逐行取样能保住它。
@@ -146,6 +193,56 @@ enum CaptureIndicatorRemoval {
             let window = rows[max(0, offset - 2)...min(rows.count - 1, offset + 2)].compactMap { $0 }
             guard let fill = Pixel.average(window) else { continue }
             for x in minX...maxX { view.set(x: x, y: y, fill) }
+        }
+    }
+}
+
+/// 一条捕获流的检测缓存：胶囊位置基本不动，没必要每帧扫整块搜索区。
+/// 开流后前 3 帧、源窗口尺寸/内容区/缩放变化后强制全量；其余每 1 s 全量一次，
+/// 中间的帧只抽检缓存位置的 4 个像素（缓存为“无胶囊”时直接沿用）。
+final class CaptureIndicatorTracker: @unchecked Sendable {
+    struct Key: Equatable {
+        let width: Int, height: Int
+        let content: CGRect
+        let scale: CGFloat
+    }
+    static let warmupFrames = 3
+    static let fullInterval: Double = 1
+
+    private let lock = NSLock()
+    private var key: Key?
+    private var frames = 0
+    private var lastFull = -Double.infinity
+    private var cached: CaptureIndicatorRemoval.Detection?
+    private var _fullScans = 0
+
+    /// 已做过的全量检测次数（测试与诊断用）。
+    var fullScans: Int { lock.withLock { _fullScans } }
+
+    func reset() {
+        lock.withLock { key = nil; frames = 0; lastFull = -.infinity; cached = nil }
+    }
+
+    func locate(in view: PixelView, origin: CGPoint, scale: CGFloat, key newKey: Key,
+                now: Double) -> CaptureIndicatorRemoval.Detection? {
+        lock.withLock {
+            if key != newKey {
+                key = newKey; frames = 0; lastFull = -.infinity; cached = nil
+            }
+            frames = min(frames + 1, Self.warmupFrames + 1)
+            if frames > Self.warmupFrames, now - lastFull < Self.fullInterval {
+                guard let cached else { return nil }
+                let intact = !cached.probes.isEmpty && cached.probes.allSatisfy { p in
+                    let x = Int(p.x), y = Int(p.y)
+                    return x >= 0 && x < view.width && y >= 0 && y < view.height
+                        && view.isIndicatorPurple(x: x, y: y)
+                }
+                if intact { return cached }
+            }
+            cached = CaptureIndicatorRemoval.detect(in: view, origin: origin, scale: scale)
+            lastFull = now
+            _fullScans += 1
+            return cached
         }
     }
 }
@@ -305,6 +402,25 @@ struct RGBAPixels {
     func pixel(x: Int, y: Int) -> Pixel {
         let i = (y * width + x) * 4
         return Pixel(r: bytes[i], g: bytes[i + 1], b: bytes[i + 2], a: bytes[i + 3])
+    }
+
+    /// 把 `patch` 上 `bounds`（左上原点像素）那一块原样盖到 `image` 上，其余保持 `image`。
+    /// 色彩空间与位图格式同 `init(_:)`，所以与整图修补的结果逐像素相同。
+    static func compositing(patch: CGImage, at bounds: CGRect, over image: CGImage) -> CGImage? {
+        let space = image.colorSpace.flatMap { $0.model == .rgb ? $0 : nil }
+            ?? CGColorSpace(name: CGColorSpace.sRGB)!
+        let w = image.width, h = image.height
+        let block = bounds.integral.intersection(CGRect(x: 0, y: 0, width: w, height: h))
+        guard !block.isEmpty, let piece = patch.cropping(to: block),
+              let context = CGContext(
+                data: nil, width: w, height: h, bitsPerComponent: 8, bytesPerRow: w * 4,
+                space: space, bitmapInfo: CGImageAlphaInfo.premultipliedLast.rawValue) else { return nil }
+        context.interpolationQuality = .none
+        context.draw(image, in: CGRect(x: 0, y: 0, width: w, height: h))
+        context.setBlendMode(.copy)
+        context.draw(piece, in: CGRect(x: block.minX, y: CGFloat(h) - block.maxY,
+                                       width: block.width, height: block.height))
+        return context.makeImage()
     }
 
     func makeImage() -> CGImage? {

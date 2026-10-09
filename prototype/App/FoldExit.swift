@@ -47,13 +47,15 @@ extension AppDelegate {
         accessibilityActionTargets.removeValue(forKey: id)
         if let overlayID = state.overlayID { overlayIDs.remove(overlayID) }
         removeObserver(state)                          // 先停掉监听，避免下面的恢复动作反过来触发自己
+        // 下面每次碰这扇窗最多等 0.4 秒：App 卡住时不再按全局 2 秒一次一次地停主线程。
+        prepareBudgeted(state.element)
         // 折叠条可能被拖动过 → 窗口在折叠条「当前」位置展开（标题栏带着窗口走）
         let pos: CGPoint
         if let overlay = state.overlay {
             pos = axPosition(fromCocoaFrame: thumbnailHome ?? restoreReferenceFrame(id: id, overlay: overlay))
             dismissOverlay(overlay)
         } else {
-            pos = axPosition(state.element) ?? state.originalPosition
+            pos = timedRead(pid: state.pid) { axPosition(state.element) } ?? state.originalPosition
         }
         if state.hide == .quickLookClosed {
             clearShadeJournal(id: id) // This strategy intentionally closes the original window.
@@ -72,12 +74,25 @@ extension AppDelegate {
             transitionOperationState(id: id, to: .normal, reason: "unshade-quicklook")
             return nil
         }
+        // 放回本身照做（私有 SkyLight 的放回不经过 AX）；整段耗时报给熔断：
+        // 健康的 App 几十毫秒，等满两次 0.4 秒预算才会超过 0.5 秒。
+        let restoreStartedAt = axMonotonicNow()
         let restoredElement = restoreWindow(state, to: pos)
-        bringRestoredWindowToFront(restoredElement, pid: state.pid, reason: "unshade id=\(id)")
-        if pinAfterRestore {
-            pinRestoredWindow(state, to: pos, reason: "unshade id=\(id)")
-        } else {
+        if state.hide != .ownWindowOrderedOut {   // 自己的窗口不走 AX，不计
+            AXStallBreaker.shared.record(pid: state.pid, duration: axMonotonicNow() - restoreStartedAt)
+        }
+        if AXStallBreaker.shared.shouldSkip(state.pid) {
+            // App 卡住：后续的提到前面、几何校正都要再问它好几次，跳过；
+            // 验证照常进行，窗口没回来就保留 journal 条目，下次救援再放回。
             cancelRestorePin(for: id)
+            wlog("restore: app not responding; skip front/pin id=\(id) pid=\(state.pid)")
+        } else {
+            bringRestoredWindowToFront(restoredElement, pid: state.pid, reason: "unshade id=\(id)")
+            if pinAfterRestore {
+                pinRestoredWindow(state, to: pos, reason: "unshade id=\(id)")
+            } else {
+                cancelRestorePin(for: id)
+            }
         }
         verifyRestoredWindow(state, to: pos, completion: onVerified)
         transitionOperationState(id: id, to: .normal, reason: "unshade")

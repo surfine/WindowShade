@@ -7,7 +7,7 @@ import QuartzCore
 /// @unchecked Sendable：wanted、epoch 在 `lock` 里；HID 设备、定时器、推送计时只在 `queue` 上动；
 /// `onReading` / `onStatus` 在主线程设好，也只在主线程调用。
 final class LidAngleSource: @unchecked Sendable {
-  struct Reading {
+  struct Reading: Sendable {
     let angle: Double
     let time: CFTimeInterval
     let readMilliseconds: Double
@@ -23,7 +23,8 @@ final class LidAngleSource: @unchecked Sendable {
       }
     }
   }
-  private let queue = DispatchQueue(label: "WindowShade.lid", qos: .userInteractive)
+  /// 设备、定时器和读数消化都在这条队列上；`LidFeed` 借同一条队列，保证和读数串行。
+  let queue = DispatchQueue(label: "WindowShade.lid", qos: .userInteractive)
   private let lock = NSLock()
   private var wanted = false
   private var epoch = EffectEpoch()
@@ -49,6 +50,15 @@ final class LidAngleSource: @unchecked Sendable {
   static let fallbackInterval = 0.25
   var onReading: ((Reading) -> Void)?
   var onStatus: ((Status) -> Void)?
+  /// 读数直接在 lid 队列上交给它（带当时的 token），不再每份都 async 到主线程；设了它就不走 `onReading`。
+  /// 由接收方（`LidFeed`）决定哪些值得回主线程。start() 之前在主线程设好。
+  var onQueueReading: (@Sendable (Reading, UInt64) -> Void)? {
+    get { lock.withLock { queueSink } }
+    set { lock.withLock { queueSink = newValue } }
+  }
+  private var queueSink: (@Sendable (Reading, UInt64) -> Void)?
+  /// 这个 token 还有效吗（没 stop、没被新的 start 顶掉）。任何线程都能问。
+  func accepts(_ token: UInt64) -> Bool { current(token) }
 
   func start() {
     let token: UInt64? = lock.withLock {
@@ -183,6 +193,10 @@ final class LidAngleSource: @unchecked Sendable {
   private func deliver(_ angle: Double, token: UInt64, startedAt: CFAbsoluteTime) {
     let reading = Reading(angle: angle, time: CACurrentMediaTime(),
                           readMilliseconds: (CACurrentMediaTime() - startedAt) * 1000)
+    if let sink = onQueueReading {
+      sink(reading, token)
+      return
+    }
     DispatchQueue.main.async { [weak self] in
       guard let self, current(token) else { return }
       onReading?(reading)
@@ -228,6 +242,112 @@ final class LidAngleSource: @unchecked Sendable {
       // 和 close() 同一条规则：激活过的必须先 Cancel，否则同样会过释放。
       if activated { IOHIDManagerCancel(manager) }
       IOHIDManagerClose(manager, 0)
+    }
+  }
+}
+
+/// 某一刻 `LidGesture` 的读数（值类型，可以跨线程拿）。
+struct LidSnapshot: Sendable, Equatable {
+  var phase: LidGesture.Phase = .resting
+  var progress = 0.0
+  var baseline: Double?
+  var restBeforeClose: Double?
+  /// 最近一份读数的角度和时间；还没有读数时是 nil / 0。
+  var angle: Double?
+  var readingTime: CFTimeInterval = 0
+}
+
+/// 把铰链读数在 lid 队列上喂给 `LidGesture`（每一份都照喂，静止角度的学习不变），
+/// 只在值得主线程知道的时候才 async 回去：阶段变了、进度变了、有人要每份读数（设置窗口开着、锁屏覆盖层要进度）。
+/// 盖子静止时主线程一次回调都没有。
+///
+/// 内建屏熄 / 亮也投递到同一条队列，和读数严格串行。主线程要看当前值，读 `snapshot()`（带锁的值拷贝）。
+/// @unchecked Sendable：`gesture` 和 `delivered*` 只在 `queue` 上动；其余在 `lock` 里。
+final class LidFeed: @unchecked Sendable {
+  private let queue: DispatchQueue
+  private let deliveryQueue: DispatchQueue
+  private let accepts: @Sendable (UInt64) -> Bool
+  private let lock = NSLock()
+  private var published = LidSnapshot()
+  private var demand = false
+  private var handler: (@Sendable (LidSnapshot) -> Void)?
+  // 以下只在 queue 上动。
+  private var gesture = LidGesture()
+  private var deliveredPhase: LidGesture.Phase = .resting
+  private var deliveredProgress = 0.0
+  /// 上一次投递被丢掉（读数源已经停了）：下一份读数不管变没变都补投一次，主线程别漏掉阶段变化。
+  private var redeliver = false
+
+  init(queue: DispatchQueue, deliveryQueue: DispatchQueue = .main,
+       accepts: @escaping @Sendable (UInt64) -> Bool = { _ in true }) {
+    self.queue = queue
+    self.deliveryQueue = deliveryQueue
+    self.accepts = accepts
+  }
+  convenience init(source: LidAngleSource) {
+    self.init(queue: source.queue, accepts: { [weak source] in source?.accepts($0) ?? false })
+  }
+
+  /// 回主线程的处理函数；在 `deliveryQueue`（默认主队列）上调用。
+  func setHandler(_ handler: (@Sendable (LidSnapshot) -> Void)?) {
+    lock.withLock { self.handler = handler }
+  }
+  /// 有人要每一份读数（设置窗口在刷状态、锁屏覆盖层在读进度）。
+  func setDemand(_ wanted: Bool) {
+    lock.withLock { demand = wanted }
+  }
+  func snapshot() -> LidSnapshot { lock.withLock { published } }
+
+  /// 在 lid 队列上调用：喂一份读数。
+  func ingest(_ reading: LidAngleSource.Reading, token: UInt64) {
+    gesture.feed(reading.angle, at: reading.time)
+    let snap = capture(angle: reading.angle, time: reading.time)
+    let (wanted, handler) = lock.withLock { () -> (Bool, (@Sendable (LidSnapshot) -> Void)?) in
+      published = snap
+      return (demand, self.handler)
+    }
+    let changed = snap.phase != deliveredPhase || snap.progress != deliveredProgress
+    guard changed || wanted || redeliver, let handler else { return }
+    deliveredPhase = snap.phase
+    deliveredProgress = snap.progress
+    redeliver = false
+    deliveryQueue.async { [weak self] in
+      guard let self else { return }
+      guard accepts(token) else {
+        queue.async { self.redeliver = true }
+        return
+      }
+      handler(snap)
+    }
+  }
+
+  /// 内建屏熄了（任何线程）。阶段变化不单独回主线程：下一份读数看到阶段和上次投递的不同，自然会补。
+  func displayOff() {
+    queue.async { [self] in
+      gesture.displayOff()
+      publish()
+    }
+  }
+  /// 内建屏亮了（任何线程）。熄过就开始展开；结果（是否开始了展开）在 `deliveryQueue` 上交回。
+  func displayOn(at time: Double, completion: @escaping @Sendable (Bool) -> Void) {
+    queue.async { [self] in
+      let started = gesture.displayOn(at: time)
+      publish()
+      deliveryQueue.async { completion(started) }
+    }
+  }
+
+  private func capture(angle: Double?, time: CFTimeInterval) -> LidSnapshot {
+    LidSnapshot(phase: gesture.phase, progress: gesture.progress, baseline: gesture.baseline,
+                restBeforeClose: gesture.restBeforeClose, angle: angle, readingTime: time)
+  }
+  /// 屏事件之后更新对外的值，角度和读数时间沿用上一份。
+  private func publish() {
+    lock.withLock {
+      published = LidSnapshot(
+        phase: gesture.phase, progress: gesture.progress, baseline: gesture.baseline,
+        restBeforeClose: gesture.restBeforeClose, angle: published.angle,
+        readingTime: published.readingTime)
     }
   }
 }

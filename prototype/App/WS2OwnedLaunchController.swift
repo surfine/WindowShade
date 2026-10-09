@@ -58,6 +58,8 @@ import Foundation
     private(set) var observedReaps=0
     var onQuiescent:(()->Void)?
     var onChange:(()->Void)?
+    /// 额度读数（用量，实验）：只来自这个会话发来的事件；会话结束就是 nil。
+    var onUsage:((UsageReading?)->Void)?
     var onBrowserURL:((URL)->Void)?
     var text:String { output.visibleText() }
     var isBusy:Bool { probe != nil || retiringProbe != nil || session != nil }
@@ -124,6 +126,7 @@ import Foundation
             ticket=t;session=s;_ = store.resume(at:clock.now());configured=false;authenticated=false;queries=[:];context=nil;activeTurn=nil;submission=nil;pendingDraft=nil;bumpConductor()
             let id=s.connectionID
             s.onEvent={ [weak self] event in self?.receive(event,connection:id) }
+            s.onUsage={ [weak self] reading in guard let self,self.session?.connectionID==id || reading == nil else { return };self.onUsage?(reading) }
             s.onUnavailable={ [weak self] text in guard let self,self.session?.connectionID==id else { return };self.notice=text;self.changed() }
             s.onEnd={ [weak self] in self?.ended(connection:id) }
             s.onReaped={ [weak self] fact in

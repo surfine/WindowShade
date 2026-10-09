@@ -10,6 +10,15 @@
 
 import AppKit
 
+/// 收起 / 展开音效总开关的默认值（Aaron 2026-10-09 裁定：默认关）。
+/// 键里没有值才用默认；人显式开过或关过的值原样保留。
+enum ShadeSoundPreference {
+    static let defaultEnabled = false
+    static func isEnabled(in defaults: UserDefaults, key: String = "ShadeSoundEnabled") -> Bool {
+        defaults.object(forKey: key) as? Bool ?? defaultEnabled
+    }
+}
+
 /// 不是 `@MainActor`：状态全部只在这条串行队列上访问（`@unchecked Sendable` 的依据），
 /// 所以主线程、手势队列都能直接 fire-and-forget 地叫它，不会有人等在半路上。
 final class ShadeSoundPlayer: @unchecked Sendable {

@@ -82,7 +82,25 @@ final class WindowStreamCapture: NSObject, SCStreamDelegate, SCStreamOutput, @un
     private var filter: SCContentFilter?
     /// 置顶预览要拍干净底片；窗口浏览的小预览在意启动速度，只抹平。
     var takesCleanPlate = false
+    /// 只有置顶预览听低电量/热状态的降级档（R01）；其它调用方保持原来的 15/30。
+    var followsPowerTier = false {
+        didSet {
+            guard followsPowerTier != oldValue, !isPreviewStream else { return }
+            if followsPowerTier {
+                powerObserver = NotificationCenter.default.addObserver(
+                    forName: PowerPolicy.tierDidChange, object: nil, queue: nil
+                ) { [weak self] _ in self?.scheduleFrameRateReconfig() }
+            } else if let token = powerObserver {
+                NotificationCenter.default.removeObserver(token)
+                powerObserver = nil
+            }
+        }
+    }
+    private var powerObserver: NSObjectProtocol?
+    deinit { if let powerObserver { NotificationCenter.default.removeObserver(powerObserver) } }
     private var cleanPlate: CleanPlate?
+    /// 本条流的胶囊检测缓存：换流时重置。
+    private let indicatorTracker = CaptureIndicatorTracker()
     private var configuration = SCStreamConfiguration()
     private let stateLock = NSLock()
     private var _isInteractive = false
@@ -317,6 +335,7 @@ final class WindowStreamCapture: NSObject, SCStreamDelegate, SCStreamOutput, @un
             _captureGeneration &+= 1
             let g = _captureGeneration
             stream = newStream
+            indicatorTracker.reset()
             _isStopped = false
             return g
         }
@@ -400,6 +419,11 @@ final class WindowStreamCapture: NSObject, SCStreamDelegate, SCStreamOutput, @un
         if #available(macOS 13.0, *) {
             configuration.capturesAudio = false
         }
+        if followsPowerTier, !isPreviewStream {
+            stateLock.withLock {
+                _streamFPS = PowerPolicyRules.pinnedFPS(tier: PowerPolicy.shared.tier, interactive: _isInteractive)
+            }
+        }
         let fps = stateLock.withLock { _streamFPS }
         configuration.minimumFrameInterval = CMTime(value: 1, timescale: CMTimeScale(max(1, fps)))
     }
@@ -420,7 +444,9 @@ final class WindowStreamCapture: NSObject, SCStreamDelegate, SCStreamOutput, @un
         stateLock.lock()
         frameRateReconfigWorkItem = nil
         let interactive = _isInteractive
-        _streamFPS = interactive ? 30 : 15
+        _streamFPS = followsPowerTier
+            ? PowerPolicyRules.pinnedFPS(tier: PowerPolicy.shared.tier, interactive: interactive)
+            : (interactive ? 30 : 15)
         let fps = _streamFPS
         stateLock.unlock()
         configuration.minimumFrameInterval = CMTime(value: 1, timescale: CMTimeScale(max(1, fps)))
@@ -450,11 +476,12 @@ final class WindowStreamCapture: NSObject, SCStreamDelegate, SCStreamOutput, @un
         // 探针的零帧注入：本路流收到的帧全丢，验证“没有首帧就不搬窗口”。
         guard !Self.probeDropAllFrames else { return }
         // 这扇窗正被我们的流捕获，系统在它的红绿灯处画了录屏胶囊：交给画面之前修掉。
-        CaptureIndicatorRemoval.clean(sampleBuffer, plate: stateLock.withLock { cleanPlate })
+        CaptureIndicatorRemoval.clean(sampleBuffer, plate: stateLock.withLock { cleanPlate },
+                                      tracker: indicatorTracker)
         mirrorFrameIndex &+= 1
         // 主画面按源流帧率全量投递（15/30fps 已由流本身自适应）；镜像层取
         // 约 8~10fps 的子集：15fps 源隔帧投（≈8fps），30fps 源每 3 帧投（10fps）。
-        let mirrorDivisor: UInt32 = fps >= 30 ? 3 : 2
+        let mirrorDivisor: UInt32 = fps >= 30 ? 3 : (fps >= 15 ? 2 : 1)
         let deliverMain = true
         let deliverMirror = mirrorLayer != nil && mirrorFrameIndex % mirrorDivisor == 1
         guard deliverMain || deliverMirror else { return }

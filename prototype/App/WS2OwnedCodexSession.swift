@@ -15,6 +15,8 @@ import Foundation
     private(set) var launched=false
     var onEvent:((CodexWire.Event)->Void)?
     var onEnd:(()->Void)?
+    /// 自己启动的这个会话发来的额度事件（rate limits）。nil = 没有数据（会话结束了）。不读别的来源，不主动去问。
+    var onUsage:((UsageReading?)->Void)?
     var onReaped:((WS2DuplexProcess.Termination)->Void)?
     var onUnavailable:((String)->Void)?
     var diagnostics:WS2DiagnosticTail? { channel.diagnostics }
@@ -51,7 +53,10 @@ import Foundation
         channel.onReaped={ [weak self] fact in
             guard let self else { return };let callback=self.onReaped;self.onReaped=nil;callback?(fact)
         }
-        approval.onEvent={ [weak self] event in self?.onEvent?(event) }
+        approval.onEvent={ [weak self] event in
+            if case .notification(let method,let params)=event,method == "account/rateLimits/updated" { self?.onUsage?(UsageReading.parse(params)) }
+            self?.onEvent?(event)
+        }
         approval.onUnavailable={ [weak self] note in self?.onUnavailable?(note) }
     }
     func start() throws {
@@ -80,6 +85,7 @@ import Foundation
     func stop() {
         guard !closed else { return };closed=true
         expiry?.cancel();expiry=nil;approval?.invalidate();channel?.stop()
+        let usage=onUsage;onUsage=nil;usage?(nil)
         let callback=onEnd;onEnd=nil;onEvent=nil;callback?()
         // onReaped remains until the native owner supplies an actual wait/reap fact.
     }

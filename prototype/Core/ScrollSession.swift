@@ -8,7 +8,15 @@ struct ScrollSession: Sendable {
         var fine: Bool
         var sideButtons: Bool
         var foregroundExcluded: Bool
+        /// 前台 App 的包标识。侧键只在认得的 App 里发前进/后退；nil（不知道前台）按放行处理。
+        var foregroundBundleID: String? = nil
     }
+
+    /// 侧键 4/5 在这些 App 里才被改成 ⌘[ / ⌘]；其余 App 的侧键原样放行，不吞。
+    static let sideButtonApps: Set<String> = [
+        "com.apple.Safari", "com.apple.finder", "com.google.Chrome", "company.thebrowser.Browser",
+        "com.microsoft.edgemac", "org.mozilla.firefox", "com.apple.dt.Xcode", "com.apple.Preview"
+    ]
 
     enum Sample: Sendable {
         case scroll(InputDeviceClassifier.ScrollEvidence, notchesX: Double, notchesY: Double, option: Bool)
@@ -33,6 +41,7 @@ struct ScrollSession: Sendable {
             return scroll(evidence, notchesX: notchesX, notchesY: notchesY, option: option, request: request, at: now)
         case .sideButton(let evidence, let number):
             guard request.sideButtons else { return .pass }
+            guard let app = request.foregroundBundleID, Self.sideButtonApps.contains(app) else { return .pass }
             guard InputDeviceClassifier.classify(evidence).mayRewrite else { return .pass }
             // 规格写的是侧键 4 / 5。不改成别的编号。
             if number == 4 { return .side(back: true) }

@@ -18,6 +18,12 @@ import Cocoa
     private var deviceHost: WS2DeviceActionHost?
     private var conductorOwnsDeviceHost = false
     private let silent = WS2SilentHost()
+    /// 离开就锁（2-7）。默认关；开关在设置的「隐私」页。
+    private var presenceLock: PresenceLockDriver?
+    /// 编程会话（默认关）：Claude Code 的 hook 报到本机 socket，只观测，不放行。
+    private var hookServer: WS2HookServer?
+    /// 旧监听器还没把 socket 文件处理完：这段时间不开新的，等它的 done 回调再对一次开关。
+    private var hookStopping = false
     private var sleeping=false
     private var quitBarrier=WS2QuitBarrier()
     private var quitToken:WS2QuitBarrier.Token?
@@ -45,6 +51,7 @@ import Cocoa
             }, effects:{ [weak self] effects in self?.focusWindowEffects?(effects) })
         island = owner.notch.leases
         silent.attach(runtime: self, owner: owner)
+        presenceLock = PresenceLockDriver(notch: owner.notch)
         focusPort = WS2FocusWindowPort(owner: owner)
         focusEffects = WS2FocusEffectExecutor(port: focusPort)
         // T3：窗口效果先走串行计划；端口未准入时只计时，不移动任何窗口。
@@ -78,7 +85,8 @@ import Cocoa
             self?.focusCard?.render(model,at:now); self?.publish()
         }
         defaultsObserver = NotificationCenter.default.addObserver(forName:UserDefaults.didChangeNotification,
-            object:nil,queue:.main) { [weak self] _ in MainActor.assumeIsolated { self?.refreshFocusSettings(); self?.owned?.environmentChanged(); self?.deviceHost?.environmentChanged() } }
+            object:nil,queue:.main) { [weak self] _ in MainActor.assumeIsolated { self?.refreshFocusSettings(); self?.owned?.environmentChanged(); self?.deviceHost?.environmentChanged(); self?.syncHookServer() } }
+        syncHookServer()
         owner.notch.activities.ws2FocusAction = { [weak self] action in
             guard let self else { return }
             switch action {
@@ -130,6 +138,99 @@ import Cocoa
             island.invalidate(.locked)
             focus.handle(.locked)
         }
+    }
+    /// 开关打开才监听；关掉就停听、删掉 socket 文件、忘掉会话。
+    private func syncHookServer() {
+        let on = WS2ConductorSettings.flag(WS2ConductorSettings.codingSessionsKey, in: .standard)
+        guard on != (hookServer != nil) else { return }
+        // 快速关了又开：旧监听器还占着 socket，新的会撞上“被占用”落到 failed。等旧的收完再开。
+        if on, hookStopping { return }
+        if on {
+            let server = WS2HookServer(clock: clock)
+            server.onChange = { [weak self] changes in self?.codingSessionsChanged(changes) }
+            server.onState = { state in if state == .failed { wlog("hooks: socket did not open") } }
+            hookServer = server
+            wireCodingSessions()
+            server.setEnabled(true)
+        } else {
+            hookStopping = true
+            hookServer?.setEnabled(false, done: { [weak self] in
+                DispatchQueue.main.async { MainActor.assumeIsolated {
+                    guard let self else { return }
+                    self.hookStopping = false
+                    self.syncHookServer()
+                } }
+            })
+            hookServer = nil
+            unwireCodingSessions()
+        }
+    }
+    /// 编程会话的状态变化成为刘海上的持续活动（在跑 / 等你 / 做完了），不再各说一句 announce。
+    /// 睡着、锁屏时控制器自己只记状态不上刘海；这里再把关“等你”那一句开口（项目名不上锁屏）。
+    private func codingSessionsChanged(_ changes: [WS2HookSessions.Change]) {
+        guard let owner, let server = hookServer else { return }
+        let model = server.model
+        for change in changes {
+            let status: CodingSessionActivities.Status
+            switch change.status {
+            case .running: status = .running
+            case .waiting: status = .waiting
+            case .completed: status = .completed
+            case .idle, .failed, .stale, .disconnected: status = .gone
+            }
+            owner.notch.activities.ws2PublishSession(CodingSessionActivities.Change(
+                id: change.sessionID, project: change.project, cwd: model.directory(of: change.sessionID),
+                assistant: Self.codingAssistantName, status: status,
+                summary: status == .waiting ? model.waitingSummary(of: change.sessionID) : ""))
+        }
+    }
+    static let codingAssistantName = "Claude Code"
+
+    private func wireCodingSessions() {
+        guard let activities = owner?.notch.activities else { return }
+        activities.onSessionBloom = { [weak self] bloom in
+            guard let self, let owner = self.owner, !self.sleeping, self.lockReasons.isEmpty,
+                  AuthorizationService.shared.lockState() == .unlocked else { return }
+            let cwd = self.hookServer?.model.directory(of: bloom.sessionID) ?? ""
+            owner.notch.announceWhenFree(key: "session." + bloom.sessionID, text: bloom.headline, detail: bloom.detail,
+                                         tone: .tip,
+                                         symbol: bloom.sessionID == CodingSessionActivities.usageBloomID ? "gauge.with.dots.needle.33percent" : "hand.raised.fill",
+                                         onClick: { [weak self] in self?.goToCodingSession(cwd: cwd) })
+        }
+        activities.onSessionGo = { [weak self] cwd in self?.goToCodingSession(cwd: cwd) }
+        activities.onSessionMenuChange = { [weak self] in self?.owner?.rebuildMenu() }
+        // 用量（实验）：随编程会话开关。只吃自己启动的 Codex 会话发来的额度事件。
+        owned.onUsage = { [weak self] reading in
+            MainActor.assumeIsolated {
+                guard let self, let owner = self.owner else { return }
+                let usage = reading?.sessionUsage(now: Date().timeIntervalSince1970, model: self.owned.model,
+                                                  effort: self.owned.effort.map(Self.effortName))
+                owner.notch.activities.ws2PublishUsage(usage)
+            }
+        }
+    }
+    private static func effortName(_ raw: String) -> String {
+        ["minimal": "极低", "low": "低", "medium": "中", "high": "高", "xhigh": "超高"][raw] ?? raw
+    }
+    private func unwireCodingSessions() {
+        guard let activities = owner?.notch.activities else { return }
+        activities.onSessionBloom = nil; activities.onSessionGo = nil; activities.onSessionMenuChange = nil
+        owned?.onUsage = nil
+        activities.ws2ResetSessions()
+    }
+    /// “过去”：去会话所在的终端窗口；找不到就打开会话页。
+    func goToCodingSession(cwd: String) {
+        WS2AgentSessionWindowFinder.go(cwd: cwd) { [weak self] in self?.openCodingSessions() }
+    }
+    /// 菜单里“等你”的几行。
+    var codingMenuRows: [CodingSessionActivities.MenuRow] { owner?.notch.activities.sessionMenuRows ?? [] }
+    func goToCodingSession(id: String) { owner?.notch.activities.ws2GoToSession(id) }
+    private func openCodingSessions() {
+        guard !sleeping, lockReasons.isEmpty, AuthorizationService.shared.lockState() == .unlocked,
+              let server = hookServer else { return }
+        showSessions(server.model.sessions, open: { [weak self] context in
+            if context.projectID.hasPrefix("/") { self?.goToCodingSession(cwd: context.projectID) }
+        }, stop: { _ in })
     }
     func applicationShouldTerminate() -> NSApplication.TerminateReply {
         if quitToken != nil { return .terminateLater }
@@ -320,15 +421,19 @@ import Cocoa
     @discardableResult func showSessions(_ sessions:[AgentSessions.Session], open:@escaping(WS2.Context)->Void,
                                          stop:@escaping(WS2.Context)->Void) -> Bool {
         let view = WS2AgentSessionView(frame:.zero); view.render(sessions); view.open = open; view.stop = stop
-        return island.show(view,ownerID:"agentSessions")
+        return island.show(view,ownerID:"notchShelf")
     }
     @discardableResult func showConductor(_ state:ConductorNotch, action:@escaping(WS2ConductorView.Action)->Void) -> Bool {
         if let view = conductorSample, view.window != nil {
             guard view.render(state) else { return false }
+            view.hostScreenWidth = island.hostScreenWidth
             view.onAction = action
             return true
         }
         let view = WS2ConductorView(frame:.zero)
+        view.hostScreenWidth = island.hostScreenWidth
+        // canOpenDiff 保持 false：现在没有“打开会话原来的 diff 查看方式”的入口可接（会话页只有回复和诊断），
+        // 不为了露按钮另起一次 review。
         guard view.render(state) else { return false }
         view.onAction = action
         guard island.show(view, ownerID: "conductor", onDismiss: { [weak self, weak view] _ in
@@ -340,8 +445,11 @@ import Cocoa
     private func publish() {
         guard let owner else { return }
         let m = focus.model,now = clock.now()
-        owner.notch.activities.ws2PublishFocus(title:m.phase == .idle ? nil : (m.phase == .focus ? "专注" : "休息")+" · "+m.compactText(at:now),
-                                              subtitle:m.isPaused ? "已暂停" : "今天完成 \(m.completedToday) 个",paused:m.isPaused,progress:m.phase == .idle ? nil : m.progress(at:now))
+        // 左耳“专注”或“休息”加一圈环，右耳“18 分”（最后 60 秒“0:42”，暂停时“暂停”）。
+        owner.notch.activities.ws2PublishFocus(title:m.phase == .idle ? nil : (m.phase == .focus ? "专注" : "休息"),
+                                              trailing:NotchEarText.focusTrailing(compactText:m.compactText(at:now),paused:m.isPaused),
+                                              subtitle:NotchEarText.focusSubtitle(isRest:m.phase == .rest,completedToday:m.completedToday,paused:m.isPaused),
+                                              paused:m.isPaused,progress:m.phase == .idle ? nil : m.progress(at:now))
         let title = menuTitle + (m.isPaused ? ":paused" : "") + ":" + m.phase.rawValue
         if title != lastMenuTitle { lastMenuTitle = title; owner.rebuildMenu() }
     }
@@ -350,6 +458,9 @@ import Cocoa
         conductorOwnsDeviceHost=false
         owned?.stop(reason:"应用正在退出",clearPrivate:true)
         owned?.onChange=nil;owned?.onBrowserURL=nil
+        presenceLock?.shutdown(); presenceLock = nil
+        hookServer?.setEnabled(false); hookServer = nil
+        unwireCodingSessions()
         island?.stop(); focus?.stop()
         if let defaultsObserver { NotificationCenter.default.removeObserver(defaultsObserver) }; defaultsObserver = nil
         workspaceObservers.forEach { NSWorkspace.shared.notificationCenter.removeObserver($0) }
@@ -375,11 +486,21 @@ import Cocoa
                     wlog("focus: window effects not admitted yet; counting only")
                     continue
                 }
-                do { try focusEffects.transition(run: token, windows: focusTargets()) }
-                catch { wlog("focus: plan rejected the tuck phase") }
+                do {
+                    try focusEffects.transition(run: token, windows: focusTargets())
+                    // 窗口收着的这段时间，任意键或点一下把它们放回来；休息照走。
+                    FocusRestReturnMonitor.shared.start { [weak self] in self?.focus.handle(.dismissRestWindows) }
+                } catch { wlog("focus: plan rejected the tuck phase") }
             case .restoreAll:
+                FocusRestReturnMonitor.shared.stop()
                 do { try focusEffects.transition(run: nil, windows: []) }
                 catch { wlog("focus: plan rejected the restore phase") }
+            case .remind(let reminder):
+                // 刘海正展开、关着或落点垂着时不抢位置：提示音已经响过，计时照走。
+                let next: (() -> Void)? = reminder.startsNextFocus
+                    ? { [weak self] in MainActor.assumeIsolated { self?.startFocus() } } : nil
+                owner?.notch.announce(reminder.title, detail: reminder.detail, tone: .done, symbol: reminder.symbol,
+                                      duration: reminder.hold, onClick: next)
             case .sound(.restStarted): owner?.playFoldSound()
             case .sound(.restFinished): owner?.playUnfoldSound()
             case .tuckChat(let token), .restoreChat(let token):
@@ -412,4 +533,8 @@ extension AppDelegate {
     @objc func ws2ShowFocus() { MainActor.assumeIsolated { ws2Runtime.showFocusStatus() } }
     @objc func ws2OpenSilent() { MainActor.assumeIsolated { _ = ws2Runtime.openSilent() } }
     @objc func ws2OpenConductor() { MainActor.assumeIsolated { _ = ws2Runtime.openConductor() } }
+    @objc func ws2GoToCodingSession(_ sender: NSMenuItem) {
+        guard let id = sender.representedObject as? String else { return }
+        MainActor.assumeIsolated { ws2Runtime.goToCodingSession(id: id) }
+    }
 }

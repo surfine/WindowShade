@@ -1,9 +1,9 @@
 import Cocoa
 import CoreVideo
-import Accelerate
 import MetalKit
 
-/// Main-thread presentation. Capture buffers are retained through GPU completion, one submission at a time.
+/// Main-thread presentation. Capture buffers are retained through GPU completion; at most
+/// `FoldFrameSlots.capacity` submissions (1 by default, 2 opt-in) are in flight.
 @MainActor final class FoldRenderer: NSObject, MTKViewDelegate {
   struct Parameters: Equatable {
     var progress: Float = 0
@@ -24,10 +24,12 @@ import MetalKit
       }
     }
   }
-  private let queue: MTLCommandQueue
-  private let pipeline: MTLRenderPipelineState
-  private let pagePipeline: MTLRenderPipelineState
-  private let compositePipeline: MTLRenderPipelineState
+  /// 进程级共享的 device／队列／着色器库／三条管线（FoldGPU）。会话只持有引用，clear() 不释放。
+  private let gpu: FoldGPU.Objects
+  private var queue: any MTLCommandQueue { gpu.queue }
+  private var pipeline: any MTLRenderPipelineState { gpu.optics }
+  private var pagePipeline: any MTLRenderPipelineState { gpu.page }
+  private var compositePipeline: any MTLRenderPipelineState { gpu.composite }
   private var opticalSurface: MTLTexture?
   private var pageTexture: MTLTexture?
   private var cache: CVMetalTextureCache?
@@ -57,15 +59,19 @@ import MetalKit
   }
 
   private var dirty = true
-  private var busy = false
+  /// 在飞帧的空位（取代原来的 busy 标志）。空位在 GPU 完成回调线程上归还，见 FoldFrameSlots。
+  private let slots = FoldFrameSlots()
+  /// 同时在飞的帧数上限（诊断日志用）。
+  var framesInFlightLimit: Int { slots.capacity }
+  /// render() 刚拿到、还没交给某个命令缓冲的空位。只在主线程读写。
+  private var slotHeld = false
   private var cleared = false
   private var epoch = EffectEpoch()
   /// 静图换入序号（PERF-06）：换一张位图就是一次新的源版本，page 金字塔必须跟着重建。
   private var stillVersion: UInt64 = 0
   /// page 金字塔的重建依据与「已被 GPU 证实」的上一份键。只由源内容与采样范围决定，
-  /// 呈现参数变了不会让它重建。
-  private var pageState = FoldPagePyramidState()
-  private var pendingPageKey: FoldPageKey?
+  /// 呈现参数变了不会让它重建。两帧在飞时每帧只确认自己重建的那个键。
+  private var pageState = FoldPageSubmissions()
   private var latencies: [Double] = []
   private var gpuTimes: [Double] = []
   private var intervals: [Double] = []
@@ -79,7 +85,8 @@ import MetalKit
   private var lastNewSourceTime: CFTimeInterval?
   /// 被更晚的源帧追上的呈现次数（旧帧）。
   private(set) var stalePresented = 0
-  /// GPU 完成到主线程解除 busy 的延迟（毫秒）：这一段就是主线程被别的事占着。
+  /// GPU 完成到主线程处理完成回调的延迟（毫秒）：这一段就是主线程被别的事占着。
+  /// 空位已经不经过主线程归还，字段名沿用 gpuToBusy，便于和旧数据对比。
   private var gpuToBusy: [Double] = []
   var onFrameReady: (() -> Void)?
   var onPresented: ((UInt64) -> Void)?
@@ -87,24 +94,8 @@ import MetalKit
   var onReadback: ((CGImage) -> Void)? { didSet { view.framebufferOnly = onReadback == nil } }
 
   init(size: CGSize) throws {
-    guard let device = MTLCreateSystemDefaultDevice(), let queue = device.makeCommandQueue() else {
-      throw EffectError.unavailable("Metal 不可用")
-    }
-    self.queue = queue
-    let url =
-      Bundle.main.url(forResource: "Duo", withExtension: "metallib")
-      ?? URL(fileURLWithPath: FileManager.default.currentDirectoryPath).appendingPathComponent(
-        ".build/duo-metal/Duo.metallib")
-    let library = try device.makeLibrary(URL: url)
-    let descriptor = MTLRenderPipelineDescriptor()
-    descriptor.vertexFunction = library.makeFunction(name: "duoVertex")
-    descriptor.fragmentFunction = library.makeFunction(name: "duoFragment")
-    descriptor.colorAttachments[0].pixelFormat = .bgra8Unorm
-    pipeline = try device.makeRenderPipelineState(descriptor: descriptor)
-    descriptor.fragmentFunction = library.makeFunction(name: "duoPage")
-    pagePipeline = try device.makeRenderPipelineState(descriptor: descriptor)
-    descriptor.fragmentFunction = library.makeFunction(name: "duoComposite")
-    compositePipeline = try device.makeRenderPipelineState(descriptor: descriptor)
+    gpu = try FoldGPU.shared.objects()
+    let device = gpu.device
     let transparent = MTLTextureDescriptor.texture2DDescriptor(
       pixelFormat: .bgra8Unorm, width: 1, height: 1, mipmapped: false)
     guard let texture = device.makeTexture(descriptor: transparent) else {
@@ -207,7 +198,7 @@ import MetalKit
       let result: Result<MTLTexture, Error>
       do {
         result = .success(
-          try Self.makeTexture(
+          try FoldStillTexture.make(
             image: request.image, colorSpace: request.colorSpace, device: request.device))
       } catch {
         result = .failure(error)
@@ -257,74 +248,21 @@ import MetalKit
     return FoldPageKey.stillSourceVersion(swapCount: stillVersion)
   }
 
-  private nonisolated static func makeTexture(
-    image: CGImage, colorSpace space: CGColorSpace, device: MTLDevice
-  ) throws -> MTLTexture {
-    let width = image.width
-    let height = image.height
-    let bitmap =
-      CGBitmapInfo.byteOrder32Little.rawValue | CGImageAlphaInfo.premultipliedFirst.rawValue
-    // 先用 vImage 换色彩空间：它会用上所有核心。实测 5K 屏上 4800×2600 的窗口背景，从显示器的色彩空间
-    // 换到 Display P3，CGContext 画一遍要 650ms（单线程，收起动画开头主线程卡住的就是这里），vImage 30ms，
-    // 抽样逐字节一致。换不了（少见的格式）再走原来的画法。
-    if let converted = Self.convert(image, to: space, bitmap: CGBitmapInfo(rawValue: bitmap)) {
-      defer { converted.free() }
-      let descriptor = MTLTextureDescriptor.texture2DDescriptor(
-        pixelFormat: .bgra8Unorm, width: width, height: height, mipmapped: false)
-      descriptor.usage = .shaderRead
-      guard let texture = device.makeTexture(descriptor: descriptor) else {
-        throw EffectError.unavailable("图像纹理分配失败")
-      }
-      texture.replace(
-        region: MTLRegionMake2D(0, 0, width, height), mipmapLevel: 0, withBytes: converted.data,
-        bytesPerRow: converted.rowBytes)
-      return texture
-    }
-    guard
-      let context = CGContext(
-        data: nil, width: width, height: height, bitsPerComponent: 8, bytesPerRow: width * 4,
-        space: space, bitmapInfo: bitmap),
-      let data = context.data
-    else { throw EffectError.unavailable("图像转换失败") }
-    context.draw(image, in: CGRect(x: 0, y: 0, width: width, height: height))
-    let descriptor = MTLTextureDescriptor.texture2DDescriptor(
-      pixelFormat: .bgra8Unorm, width: width, height: height, mipmapped: false)
-    descriptor.usage = .shaderRead
-    guard let texture = device.makeTexture(descriptor: descriptor) else {
-      throw EffectError.unavailable("图像纹理分配失败")
-    }
-    texture.replace(
-      region: MTLRegionMake2D(0, 0, width, height), mipmapLevel: 0, withBytes: data,
-      bytesPerRow: width * 4)
-    return texture
-  }
-  private nonisolated static func convert(_ image: CGImage, to space: CGColorSpace, bitmap: CGBitmapInfo) -> vImage_Buffer? {
-    guard let source = vImage_CGImageFormat(cgImage: image),
-      let target = vImage_CGImageFormat(
-        bitsPerComponent: 8, bitsPerPixel: 32, colorSpace: space, bitmapInfo: bitmap),
-      let converter = try? vImageConverter.make(sourceFormat: source, destinationFormat: target),
-      let input = try? vImage_Buffer(cgImage: image, format: source)
-    else { return nil }
-    defer { input.free() }
-    guard var output = try? vImage_Buffer(width: image.width, height: image.height, bitsPerPixel: 32) else {
-      return nil
-    }
-    do {
-      try converter.convert(source: input, destination: &output)
-    } catch {
-      output.free()
-      return nil
-    }
-    return output
-  }
   func invalidate() { if !cleared { dirty = true } }
   func render() {
     guard !cleared, dirty else { return }
-    if busy {
+    // 两个空位都在飞：跳过这次，不在主线程上等 GPU。
+    guard slots.tryAcquire() else {
       skippedBusy += 1
       return
     }
+    slotHeld = true
     view.draw()
+    // draw(in:) 没有提交（缺 drawable 等）：空位原样还回去。提交了的由 GPU 完成回调归还。
+    if slotHeld {
+      slotHeld = false
+      slots.release()
+    }
   }
   func clear() {
     guard !cleared else { return }
@@ -344,7 +282,6 @@ import MetalKit
     imageCache.removeAll()
     // page 金字塔：纹理没了，键也一起作废。
     pageState.invalidate()
-    pendingPageKey = nil
     dirty = false
     view.isHidden = true
     onFrameReady = nil
@@ -400,7 +337,8 @@ import MetalKit
   }
   func mtkView(_ view: MTKView, drawableSizeWillChange size: CGSize) { dirty = true }
   func draw(in view: MTKView) {
-    guard !cleared, dirty, !busy, let device = view.device else { return }
+    // 只在 render() 拿到空位时画；MTKView 自己调进来（没有空位）一律不画。
+    guard !cleared, dirty, slotHeld, let device = view.device else { return }
     var wrapped: CVMetalTexture?
     var source = imageTexture
     if let frame, let cache {
@@ -450,7 +388,8 @@ import MetalKit
       return
     }
     let hasMotion = hypot(parameters.motionX, parameters.motionY) > 0.0001
-    pendingPageKey = nil
+    // 这一帧自己重建的 page 键；完成回调只确认它。
+    var rebuiltPageKey: FoldPageKey?
     if parameters.progress > 0 || hasMotion {
       // The page pyramid carries the defocus: one base level plus generated mips, so the
       // wide part of the blur is a filtered fetch instead of a disk of taps.
@@ -496,7 +435,7 @@ import MetalKit
           blit.endEncoding()
         }
         // GPU 真的完成这一帧后才作数（见完成回调）。
-        pendingPageKey = pageKey
+        rebuiltPageKey = pageKey
       }
       let opticalPass = MTLRenderPassDescriptor()
       opticalPass.colorAttachments[0].texture = opticalSurface
@@ -545,7 +484,7 @@ import MetalKit
     let revision = self.revision
     let retainedFrame = frame
     let frameTiming = frame.map { (id: $0.id, origin: $0.displayTime ?? $0.presentationTime.seconds) }
-    let gpu = FoldGPUInFlight(wrapper: wrapped, source: source, opticalSurface: opticalSurface,
+    let inFlight = FoldGPUInFlight(wrapper: wrapped, source: source, opticalSurface: opticalSurface,
                               readback: readback)
     let space = colorSpace
     let size = (drawable.texture.width, drawable.texture.height)
@@ -580,12 +519,17 @@ import MetalKit
       }
     }
     command.present(drawable)
-    busy = true
     dirty = false
+    let rebuiltKey = rebuiltPageKey
+    if let rebuiltKey { pageState.submitted(rebuild: rebuiltKey) }
+    // 空位交给这个命令缓冲；完成回调强持有 slots，在 GPU 回调线程上直接归还。
+    slotHeld = false
+    let slots = self.slots
     command.addCompletedHandler { [weak self] result in
-      withExtendedLifetime((retainedFrame, gpu)) {}
+      slots.release()
+      withExtendedLifetime((retainedFrame, inFlight)) {}
       let gpuMilliseconds = (result.gpuEndTime - result.gpuStartTime) * 1000
-      // GPU 完成到主线程解除 busy 的延迟（PERF-11）：这一段就是主线程被别的事占着的时间。
+      // GPU 完成到主线程处理完成回调的延迟（PERF-11）：这一段就是主线程被别的事占着的时间。
       let completedAt = CACurrentMediaTime()
       let completed = result.status == .completed
       let failure = result.error
@@ -593,29 +537,24 @@ import MetalKit
         guard let self else { return }
         let waited = (CACurrentMediaTime() - completedAt) * 1000
         if waited.isFinite, waited >= 0 { append(waited, to: &gpuToBusy) }
-        busy = false
         guard epoch.accepts(token), !cleared else { return }
+        // page 渲染和消费它的光学通道在同一个命令缓冲里；到这里才证实金字塔可用。
+        // 完成回调按 GPU 完成顺序到达，只确认这一帧自己重建的键。
+        pageState.completed(rebuilt: rebuiltKey, success: completed)
         guard completed else {
-          // 这一帧没成：page 金字塔可能没画完，作废它，下一帧重建，绝不拿它去离焦。
-          pendingPageKey = nil
-          pageState.invalidate()
+          // 这一帧没成：page 金字塔可能没画完，已作废，下一帧重建，绝不拿它去离焦。
           onFailure?(failure ?? EffectError.unavailable("GPU 呈现失败"))
           return
-        }
-        // page 渲染和消费它的光学通道在同一个命令缓冲里；到这里才证实金字塔可用。
-        if let promoted = pendingPageKey {
-          pageState.confirm(promoted)
-          pendingPageKey = nil
         }
         append(gpuMilliseconds, to: &gpuTimes)
         onFrameReady?()
         // The first command may complete while the panel is still transparent.
         // onFrameReady can then invalidate the view, but a paused MTKView is not
         // guaranteed to receive a display-link tick before the presentation
-        // deadline. Submit the newly dirty frame from the completion callback,
-        // after busy is cleared, so visibility is proven by a real drawable.
+        // deadline. Submit the newly dirty frame from the completion callback
+        // (its slot is already free), so visibility is proven by a real drawable.
         if dirty { render() }
-        if let output = gpu.readback,
+        if let output = inFlight.readback,
           let provider = CGDataProvider(
             data: Data(bytes: output.contents(), count: output.length) as CFData),
           let image = CGImage(
@@ -631,13 +570,6 @@ import MetalKit
       }
     }
     command.commit()
-  }
-}
-enum EffectError: LocalizedError {
-  case unavailable(String)
-  var errorDescription: String? {
-    if case .unavailable(let message) = self { return message }
-    return nil
   }
 }
 

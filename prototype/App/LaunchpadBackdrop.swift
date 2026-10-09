@@ -12,6 +12,24 @@ enum LaunchpadBackdrop {
     /// (and its caches) instead of allocating one per call.
     private static let context = CIContext(options: [.useSoftwareRenderer: false])
 
+    /// 模糊图只解码到整屏像素的 1/4：模糊后本来就没有细节，图层放大时线性过滤，省约 15/16 的内存和计算。
+    static let downscale = 4
+
+    /// 解码用的最长边像素（整屏最长边像素除以 `downscale`，至少 1）。
+    static func decodePixels(forScreenPixels pixels: CGFloat) -> Int {
+        max(1, Int((pixels / CGFloat(downscale)).rounded(.down)))
+    }
+
+    /// 模糊半径：按已降采样图的最长边算，放大 `downscale` 倍后与整屏尺寸上 `0.018 × 最长边` 的半径一致。
+    static func radius(forPixelWidth width: Int, height: Int) -> CGFloat {
+        CGFloat(max(width, height)) * 0.018
+    }
+
+    /// 只保留 `keeping` 里还在用的键；其余淘汰。屏幕或壁纸变了，旧缓存不再占内存。
+    static func retaining<Value>(_ cache: [String: Value], keeping keys: Set<String>) -> [String: Value] {
+        cache.filter { keys.contains($0.key) }
+    }
+
     /// Returns a Gaussian-blurred copy of `image` using `radius`.
     ///
     /// - Parameters:

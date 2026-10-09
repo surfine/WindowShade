@@ -9,8 +9,16 @@ final class DuoController: NSObject {
   var persistsSettings = true
   var pausedByUser = false
   private let sensor = LidAngleSource()
+  /// 读数在 lid 队列上消化，主线程只在有变化时被叫醒（见 LidFeed）。
+  private lazy var feed = LidFeed(source: sensor)
   private(set) var sensorStatus = "传感器未启动"
-  private(set) var angle: Double?
+  /// 最近一份读数的角度；断开、恢复后清掉，直到新的读数到来。读数在 feed 里，这里只记清掉的时刻。
+  var angle: Double? {
+    let latest = feed.snapshot()
+    guard let angle = latest.angle, latest.readingTime >= angleClearedAt else { return nil }
+    return angle
+  }
+  private var angleClearedAt: CFTimeInterval = 0
   private var observers: [(NotificationCenter, NSObjectProtocol)] = []
   private var distributedObservers: [NSObjectProtocol] = []
   private var inputMonitors: [Any] = []
@@ -20,7 +28,6 @@ final class DuoController: NSObject {
   private var suspended = false
   // 合盖效果（docs/lid-effect.md）：合上和展开都跟着盖子走，进度只由 LidGesture 一处算，
   // 桌面效果和锁屏效果读的是同一份；这里只负责把进度画出来。
-  private var gesture = LidGesture()
   private var loggedPhase: LidGesture.Phase = .resting
   private var previousTime: CFTimeInterval = 0
   /// 把约 10Hz 的整度推送抹平成连续的画面（临界阻尼，约 0.2 秒跟上）。
@@ -30,7 +37,6 @@ final class DuoController: NSObject {
   private var closedStill: (image: CGImage, displayID: CGDirectDisplayID, color: EffectColorSpace)?
   /// 这一次开合里效果被撤掉了（按键、点击、会话失败）：盖子回到静止之前不再起会话，免得反复重开。
   private var dismissed = false
-  private var lastReadingTime: CFTimeInterval = 0
   private var desktopFPS = 15
   private var displayCallbackRegistered = false
   private struct DisplayConfiguration: Equatable {
@@ -51,7 +57,9 @@ final class DuoController: NSObject {
         wideColor: screen.canRepresent(.p3))
     }.sorted { $0.id < $1.id }
   }
-  var settingsWindow: DuoSettingsWindow?
+  var settingsWindow: DuoSettingsWindow? {
+    didSet { refreshFeedDemand() }
+  }
   let windowEffects = WindowFoldEffects()
   let lockOverlay = LockOverlayController()
   var desktopActive: Bool { desktop != nil || startTask != nil }
@@ -70,15 +78,20 @@ final class DuoController: NSObject {
     displayConfiguration = currentDisplayConfiguration()
     windowEffects.owner = owner
     windowEffects.controller = self
+    // 效果开着才在启动 4 秒后预热共享的 GPU 对象，避免第一次收起时主线程卡一下；没开效果的不多建 Metal 设备。
+    if settings.desktopEnabled || settings.windowsEnabled { FoldGPU.shared.scheduleWarmUp() }
     sensor.onStatus = { [weak self] status in
       self?.sensorStatus = status.message
       self?.settingsWindow?.refreshStatus()
       if case .disconnected = status {
-        self?.angle = nil
+        self?.angleClearedAt = CACurrentMediaTime()
         self?.stopDesktop()
       }
     }
-    sensor.onReading = { [weak self] in self?.receive($0) }
+    feed.setHandler { [weak self] snapshot in
+      MainActor.assumeIsolated { self?.receive(snapshot) }
+    }
+    sensor.onQueueReading = { [feed] reading, token in feed.ingest(reading, token: token) }
     // 内建屏熄 / 亮就是「盖子真的合上过 / 打开了」（docs/lid-effect.md）。系统重排显示器结束时回调，在主线程上。
     if !displayCallbackRegistered {
       displayCallbackRegistered = true
@@ -178,10 +191,17 @@ final class DuoController: NSObject {
   private func builtinDisplayChanged(lit: Bool) {
     wlog("duo: builtin display \(lit ? "lit" : "dark") angle=\(angle.map { String(format: "%.0f", $0) } ?? "-")")
     guard lit else {
-      gesture.displayOff()
+      feed.displayOff()
       return
     }
-    guard gesture.displayOn(at: CACurrentMediaTime()), settings.desktopEnabled, allowsAnimation else { return }
+    // 投递到 lid 队列，和读数串行；结果在主线程交回。
+    feed.displayOn(at: CACurrentMediaTime()) { [weak self] started in
+      MainActor.assumeIsolated { self?.displayDidLight(started: started) }
+    }
+  }
+
+  private func displayDidLight(started: Bool) {
+    guard started, settings.desktopEnabled, allowsAnimation else { return }
     dismissed = false
     guard desktop == nil, startTask == nil else { return }
     if !showClosedStill() { prepareDesktop(startProgress: 1) }
@@ -209,25 +229,30 @@ final class DuoController: NSObject {
     } else {
       sensor.stop()
     }
+    refreshFeedDemand()
     settingsWindow?.refreshStatus(force: true)
   }
 
-  private func receive(_ reading: LidAngleSource.Reading) {
-    angle = reading.angle
-    lastReadingTime = reading.time
-    // 每份读数都喂给 LidGesture（静止角度要一直跟着学），锁屏效果和桌面效果读同一份进度。
-    gesture.feed(reading.angle, at: reading.time)
-    if gesture.phase != loggedPhase {
+  /// 谁要每一份读数：设置窗口开着（要刷状态）、锁屏覆盖层在读进度。其余时候盖子静止就不叫醒主线程。
+  private func refreshFeedDemand() {
+    let lockOverlayReadsProgress = lockOverlay.enabled && EffectEnvironment.lockState == .locked
+    feed.setDemand(settingsWindow != nil || lockOverlayReadsProgress)
+  }
+
+  /// 读数在 lid 队列上喂给 LidGesture（每一份都喂，静止角度一直在学），这里只在阶段或进度变了、
+  /// 或有人要每份读数时才被叫到。锁屏效果和桌面效果读同一份进度。
+  private func receive(_ reading: LidSnapshot) {
+    if reading.phase != loggedPhase {
       // 阶段变化才记一行（静止 / 跟手 / 熄屏），低频，用来事后看一次开合是怎么走的。
-      loggedPhase = gesture.phase
-      wlog(String(format: "duo: lid %@ angle=%.0f progress=%.2f rest=%@ restBeforeClose=%@", "\(gesture.phase)",
-                  reading.angle, gesture.progress, gesture.baseline.map { String(format: "%.0f", $0) } ?? "-",
-                  gesture.restBeforeClose.map { String(format: "%.0f", $0) } ?? "-"))
+      loggedPhase = reading.phase
+      wlog(String(format: "duo: lid %@ angle=%.0f progress=%.2f rest=%@ restBeforeClose=%@", "\(reading.phase)",
+                  reading.angle ?? 0, reading.progress, reading.baseline.map { String(format: "%.0f", $0) } ?? "-",
+                  reading.restBeforeClose.map { String(format: "%.0f", $0) } ?? "-"))
     }
-    lockOverlay.receive(progress: gesture.progress)
+    lockOverlay.receive(progress: reading.progress)
     settingsWindow?.refreshStatus()
     guard settings.desktopEnabled else { return }
-    guard gesture.phase == .following else {
+    guard reading.phase == .following else {
       // 回到静止：这次开合结束，留帧作废、撤掉的效果下次可以再起；会话由 tickDesktop 收到 0 后收掉。
       dismissed = false
       closedStill = nil
@@ -262,6 +287,24 @@ final class DuoController: NSObject {
     return true
   }
 
+  /// 排除效果面板的过滤器：面板在窗口表里就只排除它；
+  /// 不在（orderOut 的高层面板有时不在表里）就排除本应用、再把卷帘条和置顶预览等其余本进程窗口逐个放回来。
+  /// 两条都不成立返回 nil。
+  private static func desktopFilter(
+    display: SCDisplay, content: OwnWindowContent.Fetched, effectWindowID: CGWindowID
+  ) -> SCContentFilter? {
+    let content = content.content
+    let excluded = content.windows.filter { $0.windowID == effectWindowID }
+    if excluded.count == 1 {
+      return SCContentFilter(display: display, excludingWindows: excluded)
+    }
+    guard let app = content.applications.first(where: { $0.processID == getpid() }) else { return nil }
+    let retained = content.windows.filter {
+      $0.owningApplication?.processID == getpid() && $0.windowID != effectWindowID
+    }
+    return SCContentFilter(display: display, excludingApplications: [app], exceptingWindows: retained)
+  }
+
   private func prepareDesktop(startProgress: Double) {
     guard allowsAnimation, settings.desktopEnabled else { return }
     let token = epoch.advance()
@@ -270,8 +313,9 @@ final class DuoController: NSObject {
       defer { if self.epoch.accepts(token) { self.startTask = nil } }
       var session: EffectSession?
       do {
+        // 第一次只要显示器：onScreenWindowsOnly 让窗口表缩到屏上的，不必把全系统窗口都枚举一遍。
         let content = try await SCShareableContent.excludingDesktopWindows(
-          false, onScreenWindowsOnly: false)
+          false, onScreenWindowsOnly: true)
         guard self.epoch.accepts(token), self.allowsAnimation,
           let display = content.displays.first(where: { CGDisplayIsBuiltin($0.displayID) != 0 }),
           let screen = screenForDisplayID(display.displayID)
@@ -283,25 +327,24 @@ final class DuoController: NSObject {
         session = effect
         // Allocate the window number before enumeration; otherwise SCK cannot exclude it.
         let windowID = CGWindowID(effect.panel.windowNumber)
-        let refreshed = try await SCShareableContent.excludingDesktopWindows(
-          false, onScreenWindowsOnly: false)
+        // 第二次只需要本进程的窗口：14.4+ 用 currentProcess（含已 orderOut 的面板，不碰别的 App 的窗口），
+        // 14.0–14.3 或拿不到可用的过滤器时仍走完整枚举。
+        var refreshed = try await OwnWindowContent.fetch()
+        var filter = Self.desktopFilter(
+          display: display, content: refreshed, effectWindowID: windowID)
+        if filter == nil, refreshed.isCurrentProcessOnly {
+          refreshed = OwnWindowContent.Fetched(
+            content: try await SCShareableContent.excludingDesktopWindows(
+              false, onScreenWindowsOnly: false),
+            isCurrentProcessOnly: false)
+          filter = Self.desktopFilter(
+            display: display, content: refreshed, effectWindowID: windowID)
+        }
         guard self.epoch.accepts(token), self.allowsAnimation else {
           effect.stop()
           return
         }
-        let excluded = refreshed.windows.filter { $0.windowID == windowID }
-        let filter: SCContentFilter
-        if excluded.count == 1 {
-          filter = SCContentFilter(display: display, excludingWindows: excluded)
-        } else if let app = refreshed.applications.first(where: { $0.processID == getpid() }) {
-          // Ordered-out high-level panels can be absent from SCShareableContent.
-          // Exclude our app but explicitly retain the existing strips and pin previews.
-          let retained = refreshed.windows.filter {
-            $0.owningApplication?.processID == getpid() && $0.windowID != windowID
-          }
-          filter = SCContentFilter(
-            display: display, excludingApplications: [app], exceptingWindows: retained)
-        } else {
+        guard let filter else {
           throw EffectError.unavailable("无法从捕获中排除效果窗口")
         }
         let width = screen.frame.width * screen.backingScaleFactor
@@ -341,19 +384,21 @@ final class DuoController: NSObject {
     guard let desktop else { return }
     // 每帧只读缓存；最多每秒重读一次权威状态（通知丢了最多错一秒），不再一帧一次 WindowServer 往返。
     EffectEnvironment.recheckIfStale()
+    let lid = feed.snapshot()
     guard allowsAnimation else {
       suspend()
       return
     }
     // 推送约 10Hz、断了退回 4Hz 轮询；3 秒以上一份读数都没有，说明传感器真没了。
-    guard now - lastReadingTime < 3 else {
+    guard now - lid.readingTime < 3 else {
       stopDesktop()
       return
     }
     let dt = now - previousTime
     previousTime = now
-    let target = gesture.progress
-    let fps = target > 0 || spring.value > 0 ? 60 : 15
+    let target = lid.progress
+    let fps = PowerPolicyRules.lidDesktopFPS(
+      tier: PowerPolicy.shared.tier, animating: target > 0 || spring.value > 0)
     if fps != desktopFPS, !desktop.holdsLastFrame {
       desktopFPS = fps
       desktop.source.updateFPS(fps)
@@ -369,13 +414,13 @@ final class DuoController: NSObject {
       desktop.holdsLastFrame = holding
       desktop.source.updateFPS(holding ? 1 : desktopFPS)
       if holding, let image = desktop.renderer.currentStill,
-        let id = displayID(for: desktop.panel.screen ?? NSScreen.main ?? NSScreen.screens[0])
+        let id = displayID(for: desktop.panel.screen ?? NSScreen.main ?? NSScreen.screens.first)
       {
         closedStill = (image, id, EffectColorSpace.display(desktop.panel.screen))
       }
     }
     // 回到静止、画面也回到桌面，收掉会话。
-    if gesture.phase == .resting, spring.value == 0 { stopDesktop() }
+    if lid.phase == .resting, spring.value == 0 { stopDesktop() }
   }
 
   private func dismissForInput() {
@@ -393,6 +438,7 @@ final class DuoController: NSObject {
                         preset: settings.preset)
     stopDesktop()
     windowEffects.cancelAll()
+    refreshFeedDemand()
     if lockOverlay.enabled && EffectEnvironment.lockState == .locked
       && !EffectEnvironment.asleep && EffectEnvironment.displayAwake { sensor.start() }
     else { sensor.stop() }
@@ -404,7 +450,7 @@ final class DuoController: NSObject {
       return
     }
     suspended = false
-    angle = nil
+    angleClearedAt = CACurrentMediaTime()
     settingsChanged()
   }
   func stopDesktop() {
@@ -441,5 +487,39 @@ final class DuoController: NSObject {
     inputMonitors.removeAll()
     settingsWindow?.close()
     settingsWindow = nil
+  }
+}
+
+/// 只要本进程自己的窗口时的 ScreenCaptureKit 枚举。
+/// macOS 14.4+ 的 `currentProcess` 只带本进程的窗口（实测含已 orderOut 的面板，且不含别的 App 的窗口，
+/// 也不需要全系统枚举的几百毫秒），显示器和本应用条目也都在；更早的系统退回完整枚举。
+enum OwnWindowContent {
+  struct Fetched {
+    let content: SCShareableContent
+    /// true = 来自 currentProcess：别的 App 的窗口不在里面，调用方拿不到想要的窗口时要自己退回完整枚举。
+    let isCurrentProcessOnly: Bool
+  }
+
+  static func fetch() async throws -> Fetched {
+    if #available(macOS 14.4, *), let own = try? await SCShareableContent.currentProcess {
+      return Fetched(content: own, isCurrentProcessOnly: true)
+    }
+    return Fetched(
+      content: try await SCShareableContent.excludingDesktopWindows(false, onScreenWindowsOnly: false),
+      isCurrentProcessOnly: false)
+  }
+
+  /// 需要这些窗口（都得是本进程自己的才走 currentProcess）；别的 App 的窗口，或表里缺了任何一个，走完整枚举。
+  @MainActor
+  static func content(requiring ids: Set<CGWindowID>) async throws -> SCShareableContent {
+    let wanted = ids.filter { $0 != 0 }
+    if #available(macOS 14.4, *), !wanted.isEmpty,
+      wanted.allSatisfy({ NSApp.window(withWindowNumber: Int($0)) != nil }),
+      let own = try? await SCShareableContent.currentProcess,
+      wanted.allSatisfy({ id in own.windows.contains { $0.windowID == id } })
+    {
+      return own
+    }
+    return try await SCShareableContent.excludingDesktopWindows(false, onScreenWindowsOnly: false)
   }
 }

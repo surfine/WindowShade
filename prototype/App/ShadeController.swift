@@ -103,10 +103,15 @@ extension AppDelegate {
     }
     func makeShadePlan(win: AXUIElement, pos: CGPoint, size: CGSize,
                                pid: pid_t, profile: WindowChromeProfile,
-                               options: ShadeInvocationOptions) -> ShadePlan? {
+                               options: ShadeInvocationOptions,
+                               stalled: Bool = false) -> ShadePlan? {
         guard windowIsVisible(pos: pos, size: size) else {
             wlog("plan: reject invisible/off-space window pid=\(pid)")
             return nil
+        }
+        if stalled {
+            // App 卡住：不再问它全屏/最小化（各要等满预算），只走统一标题栏这条不靠 AX 的路。
+            return ShadePlan(mode: .proxyTitleBar, policy: shadePolicy(for: pid), reason: "ax-stalled")
         }
         if axBoolAttribute(win, "AXFullScreen") {
             wlog("plan: reject fullscreen window pid=\(pid)")
@@ -208,14 +213,24 @@ extension AppDelegate {
         prewarmFoldSound()
         let memoScope = beginAppWindowsMemo()
         defer { endAppWindowsMemo(memoScope) }
+        // 每次碰这扇窗最多等 0.4 秒；这个 App 刚卡过（熔断开着）就不再枚举它的窗口。
+        prepareBudgeted(win)
+        var entryPID: pid_t = 0
+        AXUIElementGetPid(win, &entryPID)      // 本地取值，不发消息
+        // 自己的窗口不进熔断（pid 0 从不记、从不跳过）：它们另有不经过 AX 的收起路径。
+        if entryPID == getpid() { entryPID = 0 }
+        let stalledAtEntry = AXStallBreaker.shared.shouldSkip(entryPID)
         let win = foldPhase("元素刷新") {
-            refreshedWindowElement(id: id, fallback: win, trustFallback: trustElement)
+            stalledAtEntry ? win : refreshedWindowElement(id: id, fallback: win, trustFallback: trustElement)
         }
+        prepareBudgeted(win)
         // 缩略图有自己的收起动画（截图缩进缩略图，见 Thumbnail.swift），不再播卷帘动画；
         // 手势跟手中已经开始的那一段照旧交给它收尾。
         let thumbnailFold = (options?.forcedAppearanceMode ?? appearanceMode) == .thumbnail
             && !duoController.windowEffects.hasActiveTransition(for: id)
-        if !bypassDuo, !thumbnailFold, duoController.windowEffects.interceptFold(win, id: id, options: options) {
+        // App 卡住时不交给卷帘动画：动画前要解析外框，得问它十几次。
+        if !bypassDuo, !thumbnailFold, !stalledAtEntry,
+           duoController.windowEffects.interceptFold(win, id: id, options: options) {
             return
         }
         // 状态机防护：折叠中/已折叠/展开中的窗口再次触发折叠一律忽略，
@@ -248,7 +263,19 @@ extension AppDelegate {
                 // successful native resize owns the success notification.
             }
         }
-        guard let pos = axPosition(win), let size = axSize(win) else {
+        // 读位置、大小时计时：等满预算就记下这个 App 卡住了，这一次改用窗口服务器给的外框，
+        // 后面也不再问它（统一标题栏 + 私有 SkyLight 停车，结果按“未确认”处理）。
+        var readFrame: (pos: CGPoint, size: CGSize)?
+        if !stalledAtEntry, let p = timedRead(pid: entryPID, { axPosition(win) }),
+           let s = timedRead(pid: entryPID, { axSize(win) }) {
+            readFrame = (p, s)
+        }
+        let stalled = AXStallBreaker.shared.shouldSkip(entryPID)
+        if stalled {
+            readFrame = stalledWindowServerFrame(id)
+            wlog("shade: app not responding; window-server frame id=\(id) pid=\(entryPID) frame=\(readFrame == nil ? "-" : "ok")")
+        }
+        guard let pos = readFrame?.pos, let size = readFrame?.size else {
             quietNotice("无法读取窗口", log: "shade: 取不到 pos/size")
             return
         }
@@ -256,33 +283,35 @@ extension AppDelegate {
         let readStartedAt = CFAbsoluteTimeGetCurrent()
         AXUIElementGetPid(win, &pid)
         if let evidence, evidence.pid != pid || evidence.window != id || windowID(of: win) != id { return }
-        let role = axRole(win)
+        let role = stalled ? nil : axRole(win)
         // Adobe AE/Premiere 工作区窗口的 role 是 AXLayoutArea：有 layer-0 真实
         // CGWindow 背书时按窗口放行（见 isWindowLikeRole），其余非窗口角色照旧拒绝。
         let adobeLayoutWindow = role != kAXWindowRole as String
             && isWindowLikeRole(role, pid: pid) && cgWindowLayer(id) == 0
-        guard role == kAXWindowRole as String || adobeLayoutWindow else {
+        // App 卡住时问不到 role：要求窗口服务器里这扇窗属于它、在普通窗口层。
+        let stalledWindow = stalled && cgWindowLayer(id) == 0 && windowServerOwner(id) == pid
+        guard role == kAXWindowRole as String || adobeLayoutWindow || stalledWindow else {
             quietNotice("这个窗口不能收起", log: "shade: reject non-window role=\(role ?? "?") id=\(id)")
             return
         }
         let bundleID = appBundleID(pid: pid)
         let appName = appDisplayName(pid: pid)
-        let title = axTitle(win)
+        let title = stalled ? (cgWindowInfo(id).map { cgWindowName($0) } ?? "") : axTitle(win)
         foldPhaseTotals["窗口属性读取", default: 0] += CFAbsoluteTimeGetCurrent() - readStartedAt
         let autoJoinFocusShelf = foldPhase("shelf 判定") { shouldAutoJoinFocusShelf(id: id, pid: pid) }
         let options = options ?? (autoJoinFocusShelf ? focusShadeOptions : defaultShadeOptions)
         if UserDefaults.standard.bool(forKey: shadeDebugWindowDumpDefaultsKey) {
-            dumpWindow(win)
+            if !stalled { dumpWindow(win) }
         }
         // 预解析的结果直接用，绕开 ChromeProfileCache 的 2s TTL：分帧折叠十几个
         // 窗口会跨越好几秒，靠缓存的话后面几帧全部过期、白白重算一遍。
-        let profile = preparedProfile ?? foldPhase("外框解析") {
+        let profile = preparedProfile ?? (stalled ? stalledWindowChromeProfile() : foldPhase("外框解析") {
             resolveWindowChromeProfile(win: win, id: id, pos: pos, size: size, pid: pid, title: title)
-        }
+        })
         // guard 的条件里不能写尾随闭包，先算好再解包。
         let shadePlan = foldPhase("折叠计划") {
             makeShadePlan(win: win, pos: pos, size: size,
-                          pid: pid, profile: profile, options: options)
+                          pid: pid, profile: profile, options: options, stalled: stalled)
         }
         guard let plan = shadePlan else {
             quietNotice("这个窗口不能收起", log: "shade: plan rejected app=\(appName) id=\(id)")
@@ -332,7 +361,10 @@ extension AppDelegate {
             // 折叠事务序：先把焦点交给当前 Space 的继承人，再隐藏真实窗口。
             // 隐藏非前台窗口不会触发 macOS 的焦点级联（跳 Space / 激活兄弟窗口的病灶）。
             // 无处交接（当前 Space 只有这一个窗口）时 app-hide 不安全，改走 minimize。
-            let appHideSafe = foldPhase("焦点交接") { handOffFocusBeforeHiding(win: win, pid: pid, id: id) }
+            // App 卡住时不做焦点交接（要枚举它的窗口）；私有 SkyLight 停车本来就不触发焦点级联。
+            let appHideSafe = foldPhase("焦点交接") {
+                stalled ? false : handOffFocusBeforeHiding(win: win, pid: pid, id: id)
+            }
             // crash consistency：先把 durable recovery intent 落盘，再执行任何
             // 可能让窗口长期不可见的动作。若进程在 hideWindow 中途被杀，重启后
             // rescue 仍能按 intent 找回窗口；隐藏成功验证后由 recordShadeJournal
@@ -356,7 +388,8 @@ extension AppDelegate {
             // 源码顺序断言守卫崩溃一致性，包装会让它认不出来。改成手工计时，
             // 既保留分段数据，也不动那道守卫认的文本。
             var finalPID: pid_t = 0
-            if AXUIElementGetPid(win, &finalPID) != .success || finalPID != pid || windowID(of: win) != id || !admissionCurrent() {
+            let identityChanged = stalled ? windowServerOwner(id) != pid : windowID(of: win) != id
+            if AXUIElementGetPid(win, &finalPID) != .success || finalPID != pid || identityChanged || !admissionCurrent() {
                 dismissOverlay(overlay); transitionOperationState(id: id, to: .failed, reason: "changed-before-hide")
                 completeFold(success: false); return
             }
@@ -366,8 +399,16 @@ extension AppDelegate {
             }
             let hideStartedAt = CFAbsoluteTimeGetCurrent()
             let hide = hideWindow(win, pid: pid, originalPosition: pos, size: size,
-                                  policy: policy, appHideSafe: appHideSafe)
+                                  policy: policy, appHideSafe: appHideSafe,
+                                  stalledWindowID: stalled ? id : nil)
             foldPhaseTotals["隐藏窗口", default: 0] += CFAbsoluteTimeGetCurrent() - hideStartedAt
+            if stalled && hide == .none {
+                // 停车和调透明都没成：窗口原样没动，不装卷帘条。恢复意图留给救援按“窗口可见”清理。
+                dismissOverlay(overlay); transitionOperationState(id: id, to: .failed, reason: "ax-stalled-unparked")
+                completeFold(success: false)
+                quietNotice("没能收起这个窗口", log: "shade: app not responding and window-server parking failed id=\(id)")
+                return
+            }
             // minimize / app-hide 的状态读回是异步的（最小化动画进行中 kAXMinimized
             // 尚未翻转、NSRunningApplication.isHidden 缓存滞后），立即验证会产生假阴性。
             // 立即通过 → 立即 reveal；否则延迟验证（+0.15/+0.45s），通过后才 reveal，
@@ -375,7 +416,7 @@ extension AppDelegate {
             // 与上面的 hideWindow 同理：duo-integration-check.py 用这行的源码文本
             // 断言「验证发生在 didVerifyFold 之前」，所以手工计时不做包装。
             let verifyStartedAt = CFAbsoluteTimeGetCurrent()
-            let hideVerifiedNow = hideTookEffect(hide, win: win, pid: pid, id: id, size: size)
+            let hideVerifiedNow = hideTookEffect(hide, win: win, pid: pid, id: id, size: size, stalled: stalled)
             foldPhaseTotals["隐藏验证", default: 0] += CFAbsoluteTimeGetCurrent() - verifyStartedAt
             foldPhase("日志落盘") {
                 recordShadeJournal(id: id, win: win, hide: hide, pid: pid, bundleID: bundleID,
@@ -413,7 +454,8 @@ extension AppDelegate {
             // AXObserverCreate + 3 次 AXObserverAddNotification 共四次同步 IPC，
             // 发给的正是刚被要求隐藏自己、此刻最忙的那个 App——实测 18 个窗口
             // 1363ms，占整次折叠的 32%。推迟到下一轮 runloop 注册，从关键路径上拿掉。
-            let wantsObserver = !(hide == .quickLookClosed || hide == .ownWindowOrderedOut)
+            // App 卡住时不注册观察者：AXObserver 注册要它回四次消息。
+            let wantsObserver = !(hide == .quickLookClosed || hide == .ownWindowOrderedOut) && !stalled
             let observer: AXObserver? = nil
             let state = ShadeState(element: win, sourceWindowID: id,
                                    originalPosition: recordedPosition ?? pos, originalSize: size,
@@ -466,7 +508,10 @@ extension AppDelegate {
                 completeFold(success: true, transaction: state.foldTransactionID)
             } else {
                 wlog("shade: hide not yet verified; deferring overlay reveal id=\(id) hide=\(hide)")
-                if admissionCurrent() { scheduleFoldVerification(id: id) }
+                if stalled, admissionCurrent() {
+                    // 卡住的 App 不回验证要问的那几次 AX：记“未确认”，保留恢复入口，不报成功。
+                    retainUnconfirmedFold(id: id, state: state)
+                } else if admissionCurrent() { scheduleFoldVerification(id: id) }
                 else {
                     MainActor.assumeIsolated {
                         settleFoldWaiters(id: id, transaction: state.foldTransactionID, success: false)
@@ -571,8 +616,9 @@ extension AppDelegate {
 
         if mode == .proxyTitleBar {
             let barH = min(proxyTitleBarHeight, min(size.height, 300))
-            let canProxyResize = allowsProxyHorizontalResize(win, pid: pid)
-            let windowManagementCapability = realWindowManagementCapability(win)
+            let canProxyResize = stalled ? false : allowsProxyHorizontalResize(win, pid: pid)
+            let windowManagementCapability: WindowManagementCapability =
+                stalled ? .none : realWindowManagementCapability(win)
             guard #available(macOS 14.0, *) else {
                 let overlay = makeProxyOverlay(axPos: pos, width: size.width, height: barH,
                                                pid: pid, appName: appName, title: title, id: id,
@@ -585,7 +631,7 @@ extension AppDelegate {
             }
             let quickPreview = preparedImage.map { NSImage(cgImage: $0, size: size) }
                 ?? quickWindowPreviewImage(id: id, logicalSize: size)
-            if quickPreview != nil || !options.capturePreview {
+            if quickPreview != nil || !options.capturePreview || stalled {
                 // legacy 快照已经成功，或者这次折叠本来就不需要预览（比如专注 shelf
                 // 批量折叠）——两种情况都跟以前一样同步立刻装上，不引入任何延迟。
                 let overlay = foldPhase("建 overlay") {
@@ -869,34 +915,69 @@ extension AppDelegate {
     private func raceCaptureWithTimeout(id: CGWindowID, axPos: CGPoint, size: CGSize,
                                         maxPixelSize: CGSize?, timeoutNanoseconds: UInt64,
                                         key: WindowSnapshotKey) async -> CGImage? {
-        let resumeGuard = SingleResumeGuard()
-        let image: CGImage? = await withCheckedContinuation { continuation in
-            let captureTask: Task<CGImage?, Never> = Task { [weak self] in
-                guard let self else { return nil }
-                let image = await self.captureWindow(id: id, axPos: axPos, size: size,
-                                                     maxPixelSize: maxPixelSize)
-                // 被取消/超时过期的 capture 不写回缓存，避免晚到的结果污染 TTL 窗口。
-                guard !Task.isCancelled else { return nil }
-                if let image {
-                    WindowSnapshotCache.shared.store(image: image, key: key)
-                }
-                return image
+        let captureTask: Task<CGImage?, Never> = Task { [weak self] in
+            guard let self else { return nil }
+            let image = await self.captureWindow(id: id, axPos: axPos, size: size,
+                                                 maxPixelSize: maxPixelSize)
+            // 被取消/超时过期的 capture 不写回缓存，避免晚到的结果污染 TTL 窗口。
+            guard !Task.isCancelled else { return nil }
+            if let image {
+                WindowSnapshotCache.shared.store(image: image, key: key)
             }
-            let timeoutTask = Task {
-                try? await Task.sleep(nanoseconds: timeoutNanoseconds)
-                if await resumeGuard.tryResume() {
-                    captureTask.cancel()
-                    continuation.resume(returning: nil)
-                }
-            }
-            Task {
-                let image = await captureTask.value
-                timeoutTask.cancel()
-                if await resumeGuard.tryResume() {
-                    continuation.resume(returning: image)
-                }
-            }
+            return image
         }
-        return image
+        // 计时器被取消（截图先完成）时直接退出，不再去抢 resume：旧写法 `try? await Task.sleep`
+        // 吞掉取消后照样去抢，偶尔把已经成功的截图报成 nil（见 TimeoutRace）。
+        return await TimeoutRace.race(timeoutNanoseconds: timeoutNanoseconds, work: captureTask)
+    }
+
+    // MARK: App 卡住时的收起（熔断开着，见 AXStallBreaker.swift）
+
+    /// 窗口服务器里这扇窗的主人。不经过 AX。
+    func windowServerOwner(_ id: CGWindowID) -> pid_t? {
+        (cgWindowInfo(id)?[kCGWindowOwnerPID as String] as? NSNumber)?.int32Value
+    }
+
+    /// 窗口服务器给的外框（左上角原点，和 AX 坐标一致）。不经过 AX。
+    func stalledWindowServerFrame(_ id: CGWindowID) -> (pos: CGPoint, size: CGSize)? {
+        guard let bounds = cgWindowInfo(id).flatMap({ cgWindowBounds($0) }),
+              bounds.width > 1, bounds.height > 1 else { return nil }
+        return (CGPoint(x: bounds.minX, y: bounds.minY), bounds.size)
+    }
+
+    /// 不问 AX 的外框描述：按标准标题栏处理（只走统一标题栏，用不到截图裁剪的高度）。
+    func stalledWindowChromeProfile() -> WindowChromeProfile {
+        WindowChromeProfile(hasToolbar: false, trafficLightHeight: nil, adobeProfile: .none,
+                            trafficLights: .standard, preciseChrome: false,
+                            toolbarlessStandardTitleBar: false, standardTitleBarOnly: false,
+                            hasContentBelowTitleBar: false, standardCropHeight: titleBarHeight,
+                            axBarHeight: titleBarHeight, hitBarHeight: titleBarHeight)
+    }
+
+    /// 收起时的隐藏。`stalledWindowID` 为 nil（App 没卡住）：原样交给 hideWindow。
+    /// 卡住了：它不回 AX 消息，只用窗口服务器把窗口停到屏幕外，不行再调透明；
+    /// 都不行返回 .none（窗口原样没动）。
+    func hideWindow(_ win: AXUIElement, pid: pid_t, originalPosition pos: CGPoint,
+                    size: CGSize, policy: ShadePolicy, appHideSafe: Bool,
+                    stalledWindowID: CGWindowID?) -> HideMethod {
+        guard let id = stalledWindowID else {
+            return hideWindow(win, pid: pid, originalPosition: pos, size: size,
+                              policy: policy, appHideSafe: appHideSafe)
+        }
+        if let hide = privateSLSOffscreenHide(win, id: id, originalPosition: pos,
+                                              size: size, pid: pid, reason: "ax-stalled") {
+            return hide
+        }
+        if let hide = privateSLSAlphaHide(id: id, pid: pid, reason: "ax-stalled") {
+            return hide
+        }
+        wlog("    ax-stalled: window-server parking unavailable id=\(id) pid=\(pid)")
+        return .none
+    }
+
+    /// 卡住的 App 的验证不问 AX：直接当作没确认（调用方转去 retainUnconfirmedFold）。
+    func hideTookEffect(_ hide: HideMethod, win: AXUIElement, pid: pid_t,
+                        id: CGWindowID, size: CGSize, stalled: Bool) -> Bool {
+        stalled ? false : hideTookEffect(hide, win: win, pid: pid, id: id, size: size)
     }
 }

@@ -129,6 +129,50 @@ struct MagicTilingTests {
       expect(wide.offset == 1500, "scrolling never goes past the last column")
     }
 
+    // 刚开的窗口紧接着关掉：卷轴回到开它之前的位置；中间有过别的变动就不回。
+    do {
+      let screen = CGRect(x: 0, y: 25, width: 1500, height: 900)
+      func make() -> ScrollStrip {
+        ScrollStrip(columns: [.init(ids: [1], width: 1000), .init(ids: [2], width: 750), .init(ids: [3], width: 500)], area: screen, offset: 250)
+      }
+      var plain = make()
+      plain.insert(9, width: 750, after: 2)
+      expect(plain.offset != 250, "a window opened at the end scrolls the strip to show it")
+      plain.remove(9)
+      expect(plain.offset == 250 && plain.columns.map(\.ids) == [[1], [2], [3]], "closing the window just opened returns to the view before it")
+
+      var scrolled = make()
+      scrolled.insert(9, width: 750, after: 2)
+      scrolled.offset = 100
+      scrolled.remove(9)
+      expect(scrolled.offset == 100, "scrolling in between forgets the old view; the strip stays where it is")
+
+      var another = make()
+      another.insert(9, width: 750, after: 2)
+      another.insert(8, width: 500, after: 3)
+      another.remove(8)
+      expect(another.offset != 250 && another.offset == another.clamped(another.offset), "after two opens, closing the last does not jump back to before the first")
+      another.remove(9)
+      expect(another.offset == another.clamped(another.offset), "and closing the first then only clamps")
+
+      var other = make()
+      other.insert(9, width: 750, after: 2)
+      let shown = other.offset
+      other.remove(1)
+      expect(other.offset == other.clamped(shown), "closing a different window only clamps the view")
+      other.remove(9)
+      expect(other.offset != 250 || other.maxOffset < 250, "and the just-opened one no longer restores after something else closed")
+
+      var stacked = make()
+      stacked.insert(9, width: 750, after: 2)
+      stacked.columns[3].ids.append(7); stacked.columns[3].shares = [0.5, 0.5]
+      stacked.remove(9)
+      expect(stacked.columns.count == 4 && stacked.offset != 250, "if the column stays (another window is in it), nothing is restored")
+
+      expect(make() == { var s = make(); s.insert(9, width: 750, after: 2); s.remove(9); return s }(),
+             "a strip compares by columns, offset and area, not by what it remembers")
+    }
+
     // 窗口之间留缝：贴屏幕边让一整道，挨着别的窗口让半道，两扇之间合起来正好一道。
     do {
       let screen = CGRect(x: 0, y: 25, width: 1200, height: 800)
@@ -170,6 +214,75 @@ struct MagicTilingTests {
       expect(!coach.canShow(.shake, at: 9000), "a tip clicked away does not come back")
       let data = try? JSONEncoder().encode(coach)
       expect(data.flatMap { try? JSONDecoder().decode(GestureCoach.self, from: $0) } == coach, "the coach remembers across launches")
+    }
+
+    // 拖窗口落到另一扇上：按指针角度分边；拖够 10 点才出小岛。
+    do {
+      let shapes: [(String, CGRect)] = [("square", CGRect(x: 100, y: 100, width: 400, height: 400)),
+                                        ("wide", CGRect(x: 0, y: 0, width: 1200, height: 300)),
+                                        ("tall", CGRect(x: 0, y: 0, width: 300, height: 1200))]
+      for (name, r) in shapes {
+        expect(MagicTiling.splitSide(target: r, pointer: CGPoint(x: r.minX + 1, y: r.midY)) == .left, "\(name): left edge midpoint is left")
+        expect(MagicTiling.splitSide(target: r, pointer: CGPoint(x: r.maxX - 1, y: r.midY)) == .right, "\(name): right edge midpoint is right")
+        expect(MagicTiling.splitSide(target: r, pointer: CGPoint(x: r.midX, y: r.minY + 1)) == .top, "\(name): top edge midpoint is top")
+        expect(MagicTiling.splitSide(target: r, pointer: CGPoint(x: r.midX, y: r.maxY - 1)) == .bottom, "\(name): bottom edge midpoint is bottom")
+      }
+      let wide = shapes[1].1
+      expect(MagicTiling.splitSide(target: wide, pointer: CGPoint(x: wide.midX + 200, y: wide.minY + 30)) == .top, "wide: near the top is top, not right")
+      let tall = shapes[2].1
+      expect(MagicTiling.splitSide(target: tall, pointer: CGPoint(x: tall.minX + 30, y: tall.midY + 200)) == .left, "tall: near the left is left, not bottom")
+      let sq = shapes[0].1
+      for corner in [CGPoint(x: sq.minX, y: sq.minY), CGPoint(x: sq.minX, y: sq.maxY)] {
+        expect(MagicTiling.splitSide(target: sq, pointer: corner) == .left, "corner resolves to left deterministically")
+      }
+      for corner in [CGPoint(x: sq.maxX, y: sq.minY), CGPoint(x: sq.maxX, y: sq.maxY)] {
+        expect(MagicTiling.splitSide(target: sq, pointer: corner) == .right, "corner resolves to right deterministically")
+      }
+      expect(MagicTiling.splitSide(target: sq, pointer: CGPoint(x: sq.midX, y: sq.midY)) == .right, "centre is defined (right)")
+      let s = MagicTiling.split(target: sq, pointer: CGPoint(x: sq.minX + 5, y: sq.midY))
+      expect(s.side == .left && s.dragged.minX == sq.minX && s.target.minX == s.dragged.maxX && s.dragged.union(s.target) == sq,
+             "dragged window takes the pointer's half, the target keeps the other")
+      let b = MagicTiling.split(target: sq, pointer: CGPoint(x: sq.midX, y: sq.maxY - 5))
+      expect(b.side == .bottom && b.dragged.minY == b.target.maxY && b.dragged.union(b.target) == sq, "bottom split stacks the dragged window below")
+      expect(!MagicTiling.dropIslandVisible(travel: 9.9), "9.9 pt of travel: no drop island")
+      expect(MagicTiling.dropIslandVisible(travel: 10), "10 pt of travel: drop island")
+    }
+
+    // 拖窗口落到另一扇上：松手时谁说了算。
+    do {
+      let screen = CGRect(x: 0, y: 0, width: 1728, height: 1117)
+      let a = MagicTiling.DropWindow(id: 1, frame: CGRect(x: 100, y: 100, width: 800, height: 600), eligible: true)
+      let b = MagicTiling.DropWindow(id: 2, frame: CGRect(x: 600, y: 200, width: 800, height: 600), eligible: true)
+      let panel = MagicTiling.DropWindow(id: 3, frame: CGRect(x: 650, y: 250, width: 200, height: 200), eligible: false)
+      func target(_ p: CGPoint, island: Bool = false, _ windows: [MagicTiling.DropWindow], dragged: CGWindowID = 1) -> MagicTiling.DropTarget {
+        MagicTiling.dropTarget(pointer: p, onNotchIsland: island, screen: screen, windows: windows, dragged: dragged)
+      }
+      expect(target(CGPoint(x: 700, y: 300), island: true, [a, b]) == .notchIsland, "island beats a window under the pointer")
+      expect(target(CGPoint(x: 3, y: 300), [b, a]) == .edge, "left screen edge: left to snapping and slide over")
+      expect(target(CGPoint(x: 1726, y: 300), [b, a]) == .edge, "right screen edge is an edge")
+      expect(target(CGPoint(x: 700, y: 2), [b, a]) == .edge, "top screen edge is an edge")
+      expect(target(CGPoint(x: 5, y: 300), [MagicTiling.DropWindow(id: 9, frame: CGRect(x: 0, y: 0, width: 400, height: 900), eligible: true), a]) == .edge,
+             "a window at the screen edge does not beat the edge")
+      expect(target(CGPoint(x: 700, y: 300), [a, b]) == .window(2), "dragged window under the pointer is skipped, the next one is the target")
+      expect(target(CGPoint(x: 300, y: 300), [a, b]) == .nothing, "only the dragged window under the pointer: nothing")
+      expect(target(CGPoint(x: 1000, y: 900), [a, b]) == .nothing, "empty desktop: nothing")
+      expect(target(CGPoint(x: 700, y: 300), [panel, b, a]) == .nothing, "a dialog on top of the window: do nothing, do not reach through")
+      expect(target(CGPoint(x: 1500, y: 300), [b, a]) == .nothing, "outside every window: nothing")
+      expect(MagicTiling.dropTarget(pointer: CGPoint(x: 2000, y: 300), onNotchIsland: false, screen: screen, windows: [b], dragged: 1) == .edge,
+             "off the screen counts as an edge")
+
+      let split = MagicTiling.dropSplit(target: b.frame, pointer: CGPoint(x: 650, y: 500), area: screen, gap: 0)
+      expect(split?.side == .left && split?.dragged == CGRect(x: 600, y: 200, width: 400, height: 600)
+             && split?.target == CGRect(x: 1000, y: 200, width: 400, height: 600), "pointer on the left: dragged window takes the left half")
+      let gapped = MagicTiling.dropSplit(target: b.frame, pointer: CGPoint(x: 1300, y: 500), area: screen, gap: 8)
+      expect(gapped?.side == .right && gapped.map { $0.dragged.minX - $0.target.maxX == 8 } == true,
+             "gap 8 leaves 8 points between the two windows (half from each)")
+      let clipped = MagicTiling.dropSplit(target: CGRect(x: 1000, y: 200, width: 1000, height: 600), pointer: CGPoint(x: 1100, y: 500), area: screen, gap: 0)
+      expect(clipped != nil && clipped!.dragged.union(clipped!.target).maxX == screen.maxX, "a window sticking out of the screen is split inside the usable area")
+      expect(MagicTiling.dropSplit(target: CGRect(x: 100, y: 100, width: 400, height: 600), pointer: CGPoint(x: 150, y: 400), area: screen, gap: 0) == nil,
+             "halves narrower than 240 points: no split")
+      expect(MagicTiling.dropSplit(target: CGRect(x: 2000, y: 100, width: 400, height: 600), pointer: CGPoint(x: 2100, y: 400), area: screen, gap: 0) == nil,
+             "target outside the area: no split")
     }
 
     if failures == 0 { print("PASS: magic tiling — roles, ratios 5:5/6:4/7:3, main side kept, portrait split, chat to slide over, extras to the notch, narrow side column, shake recognition, scroll strip (parking, snapping, reveal, width ladder, insert without squeezing, removal), gaps, Dock lock edge, gesture coach") }

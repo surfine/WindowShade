@@ -24,6 +24,17 @@ final class SplitViewController {
     private var seams: [Seam] = []
     private var timer: Timer?
     private var observers: [NSObjectProtocol] = []
+    private var distributedObservers: [NSObjectProtocol] = []
+    /// 认缝在后台算：一次只放一个；锁屏、睡眠时作废在途的结果。
+    private static let scanQueue = DispatchQueue(label: "windowshade.splitview.scan", qos: .utility)
+    private var scanInFlight = false
+    private var scanGeneration = 0
+    private var signatureGate = SplitSignatureGate()
+    /// 上一次算出来的候选缝（还没按收起、侧拉等过滤）：签名相同时直接拿它再过滤。
+    private var candidates: [Seam] = []
+    private var pause = SplitPauseState()
+    /// 探针/测试用：相同签名跳过的次数。
+    var skippedScansForProbe: Int { signatureGate.skipped }
     /// 拖着一根把手：起点那条缝、缝两边窗口的辅助功能元素和各自写外框的那条链、缝现在在哪。
     private var drag: Drag?
     @MainActor private final class Drag {
@@ -97,6 +108,42 @@ final class SplitViewController {
             forName: NSApplication.didChangeScreenParametersNotification, object: nil, queue: .main) { [weak self] _ in
             MainActor.assumeIsolated { self?.soon() }
         })
+        for name in [NSWorkspace.screensDidSleepNotification, NSWorkspace.sessionDidResignActiveNotification] {
+            let reason: SplitPauseState.Reason = name == NSWorkspace.screensDidSleepNotification ? .screensAsleep : .sessionInactive
+            observers.append(center.addObserver(forName: name, object: nil, queue: .main) { [weak self] _ in
+                MainActor.assumeIsolated { self?.suspend(reason) }
+            })
+        }
+        for name in [NSWorkspace.screensDidWakeNotification, NSWorkspace.sessionDidBecomeActiveNotification] {
+            let reason: SplitPauseState.Reason = name == NSWorkspace.screensDidWakeNotification ? .screensAsleep : .sessionInactive
+            observers.append(center.addObserver(forName: name, object: nil, queue: .main) { [weak self] _ in
+                MainActor.assumeIsolated { self?.unsuspend(reason) }
+            })
+        }
+        let distributed = DistributedNotificationCenter.default()
+        distributedObservers.append(distributed.addObserver(forName: .init("com.apple.screenIsLocked"), object: nil, queue: .main) { [weak self] _ in
+            MainActor.assumeIsolated { self?.suspend(.locked) }
+        })
+        distributedObservers.append(distributed.addObserver(forName: .init("com.apple.screenIsUnlocked"), object: nil, queue: .main) { [weak self] _ in
+            MainActor.assumeIsolated { self?.unsuspend(.locked) }
+        })
+        schedule()
+    }
+
+    /// 锁屏、屏幕睡眠、会话切走：停掉定时器，作废在途的结果。
+    private func suspend(_ reason: SplitPauseState.Reason) {
+        guard pause.pause(reason) else { return }
+        timer?.invalidate()
+        timer = nil
+        scanGeneration += 1
+        scanInFlight = false
+    }
+
+    /// 解锁、亮屏、会话回来：全回来了就立刻看一次再恢复定时器。
+    private func unsuspend(_ reason: SplitPauseState.Reason) {
+        guard pause.resume(reason) else { return }
+        signatureGate.reset()
+        refresh()
         schedule()
     }
 
@@ -115,6 +162,8 @@ final class SplitViewController {
 
     private func schedule() {
         timer?.invalidate()
+        timer = nil
+        guard !pause.isPaused else { return }
         let interval: TimeInterval = seams.isEmpty ? 2 : 0.5
         let t = Timer(timeInterval: interval, repeats: true) { [weak self] _ in
             MainActor.assumeIsolated { self?.refresh() }
@@ -124,13 +173,51 @@ final class SplitViewController {
         timer = t
     }
 
+    /// 平时的刷新：CGWindowList 和认缝在后台串行队列算，回到主线程再按收起、侧拉等状态过滤、摆把手。
     func refresh() {
-        guard drag == nil else { return }
-        show(currentSeams())
+        guard SplitScan.canRefresh(dragging: drag != nil, paused: pause.isPaused, inFlight: scanInFlight) else { return }
+        guard Self.isEnabled && AXIsProcessTrusted() else {
+            candidates = []; signatureGate.reset()
+            show([])
+            return
+        }
+        let glideTargets = glides.mapValues(\.to)
+        let areas = Self.areas()
+        let gap = ArrangeGap.points
+        let lastSignature = signatureGate.last
+        let generation = scanGeneration
+        scanInFlight = true
+        Self.scanQueue.async { [weak self] in
+            let windows = Self.windows(glideTargets: glideTargets)
+            let signature = SplitScan.signature(windows: windows, areas: areas)
+            let fresh: [Seam]? = signature == lastSignature ? nil : Self.candidateSeams(windows, areas: areas, gap: gap)
+            DispatchQueue.main.async {
+                MainActor.assumeIsolated { self?.finishScan(generation: generation, signature: signature, fresh: fresh) }
+            }
+        }
     }
 
+    private func finishScan(generation: Int, signature: Int, fresh: [Seam]?) {
+        guard generation == scanGeneration else { return }
+        scanInFlight = false
+        // 拖着把手时不刷新：结果丢掉，松手后会重认。
+        guard drag == nil, !pause.isPaused else { return }
+        _ = signatureGate.shouldCompute(signature)   // 不同则记下，相同则计一次跳过
+        if let fresh { candidates = fresh }
+        let found = filtered(candidates)
+        // 候选和收起、侧拉等状态都没变：把手已经摆好，不用再 show。
+        if fresh == nil, found == seams { return }
+        show(found)
+    }
+
+    /// 松手后马上重认：一次性、要立刻拿到结果，仍在主线程同步算。
     private func currentSeams() -> [Seam] {
-        Self.isEnabled && AXIsProcessTrusted() ? findSeams() : []
+        guard Self.isEnabled && AXIsProcessTrusted() else { return [] }
+        let windows = Self.windows(glideTargets: glides.mapValues(\.to))
+        let found = Self.candidateSeams(windows, areas: Self.areas(), gap: ArrangeGap.points)
+        candidates = found
+        signatureGate = SplitSignatureGate()
+        return filtered(found)
     }
 
     /// 按认出来的缝摆好把手（except 那根正在自己走、手上正拖着的那根，都不去动）；有没有缝变了，就换看的频率。
@@ -160,12 +247,19 @@ final class SplitViewController {
         return divider
     }
 
-    /// 每块屏上排好的窗口之间的缝。
-    private func findSeams() -> [Seam] {
+    /// 每块屏的可用区域（AX 坐标）。只能在主线程取。
+    private static func areas() -> [CGRect] {
+        NSScreen.screens.map { screen in
+            let visible = screen.visibleFrame
+            return CGRect(origin: axPosition(fromCocoaFrame: visible), size: visible.size)
+        }
+    }
+
+    /// 前后排好的普通窗口。松手后还在滑的窗口按终点算：滑到一半两边对不上，把手不该跟着消失又出现。
+    nonisolated private static func windows(glideTargets: [CGWindowID: CGRect]) -> [SplitWindow] {
         guard let list = CGWindowListCopyWindowInfo([.optionOnScreenOnly, .excludeDesktopElements], kCGNullWindowID)
             as? [[String: Any]] else { return [] }
         let me = getpid()
-        let gestures = owner.gestures
         var windows: [SplitWindow] = []
         for info in list {
             guard (info[kCGWindowLayer as String] as? Int) == 0,
@@ -173,25 +267,26 @@ final class SplitViewController {
                   (info[kCGWindowAlpha as String] as? Double ?? 1) > 0.01,
                   let id = info[kCGWindowNumber as String] as? CGWindowID,
                   var bounds = cgWindowBounds(info) else { continue }
-            // 松手后还在滑的窗口按终点算：滑到一半两边对不上，把手不该跟着消失又出现。
-            if let target = glides[id]?.to { bounds = target }
+            if let target = glideTargets[id] { bounds = target }
             guard bounds.width > 80, bounds.height > 60 else { continue }
             windows.append(SplitWindow(id: id, frame: bounds))
         }
-        var result: [Seam] = []
-        for screen in NSScreen.screens {
-            let visible = screen.visibleFrame
-            let area = CGRect(origin: axPosition(fromCocoaFrame: visible), size: visible.size)
-            for seam in SeamLayout.seams(frontToBack: windows, area: area, gap: ArrangeGap.points) {
-                let ids = (seam.before + seam.after).map(\.id)
-                if ids.contains(where: { owner.shaded[$0] != nil || owner.slideOver.isSlideOver($0) || owner.pip.isInPictureInPicture($0)
-                    || owner.notch.isTucked($0) || gestures.strips.contains($0) }) {
-                    continue
-                }
-                result.append(seam)
-            }
+        return windows
+    }
+
+    /// 候选缝：只看窗口外框，不碰收起、侧拉这些主线程状态（回到主线程再过滤）。
+    nonisolated private static func candidateSeams(_ windows: [SplitWindow], areas: [CGRect], gap: CGFloat) -> [Seam] {
+        areas.flatMap { SeamLayout.seams(frontToBack: windows, area: $0, gap: gap) }
+    }
+
+    /// 收起的、侧拉的、画中画的、收进刘海的、卷轴里的窗口不认。
+    private func filtered(_ candidates: [Seam]) -> [Seam] {
+        let gestures = owner.gestures
+        return candidates.filter { seam in
+            let ids = (seam.before + seam.after).map(\.id)
+            return !ids.contains(where: { owner.shaded[$0] != nil || owner.slideOver.isSlideOver($0) || owner.pip.isInPictureInPicture($0)
+                || owner.notch.isTucked($0) || gestures.strips.contains($0) })
         }
-        return result
     }
 
     /// 把手放在缝的中点；另一方向的缝正好从中间穿过时（四角），挪到被隔开的较长一段的中点，两根把手不叠在一起。

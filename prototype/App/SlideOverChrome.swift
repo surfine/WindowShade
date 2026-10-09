@@ -1,6 +1,6 @@
 // 侧拉窗口的外框：照 iPadOS 26.1 起的样子（尺寸按 Apple 支持文档 125309 里 iPadOS 27 的配图量的，
 // 11 英寸 iPad Pro 的图 1.2 像素一点）：
-// - 一圈 10 点宽的灰色玻璃边框贴着窗口外面，外圆角和窗口圆角同心，外沿一道亮边，往外落一层软阴影。
+// - 一圈 10 点宽的系统玻璃边框（macOS 26 起 NSGlassEffectView，之前磨砂；“减少透明度”时不透明）贴着窗口外面，外圆角和窗口圆角同心，往外落一层软阴影。
 //   拖边框能挪窗口，和拖标题栏一样（iPad 上“拖窗口顶边”挪、往边外划收起）。
 // - 靠屏幕里面的那个下角有一段黑色短弧，是调整大小的把手：弧的圆心离两条边 32 点、半径 27 点、线宽 3 点、跨 64°。
 //   拖它改宽和高，靠屏幕边的那一边和顶边不动。
@@ -33,7 +33,7 @@ final class SlideOverChrome {
     private(set) var frameAX: CGRect?
     private var side: SlideOverController.Side = .right
     var cornerRadius: CGFloat = defaultCornerRadius {
-        didSet { ringLayer?.innerRadius = cornerRadius }
+        didSet { ringLayer?.innerRadius = cornerRadius; ringHost?.innerRadius = cornerRadius }
     }
     private var following: Timer?
 
@@ -41,7 +41,8 @@ final class SlideOverChrome {
     /// 探针用：把手面板此刻的外框（Cocoa 坐标）。
     var handleFrame: NSRect? { handle?.isVisible == true ? handle?.frame : nil }
 
-    private var ringLayer: SlideOverRingLayer? { (ring?.contentView as? SlideOverRingHost)?.ring }
+    private var ringHost: SlideOverRingHost? { ring?.contentView as? SlideOverRingHost }
+    private var ringLayer: SlideOverRingLayer? { ringHost?.ring }
     /// 挂着，但挂在别的桌面上：面板挂上时在哪张桌面就留在哪张（见 panel(level:)）。
     private var onOtherDesktop: Bool { isVisible && ring?.isOnActiveSpace == false }
 
@@ -54,6 +55,7 @@ final class SlideOverChrome {
         let fresh = !isVisible
         place(frameAX)
         guard fresh else { return }
+        ringHost?.refreshMaterial()
         ringLayer?.dark = NSApp.effectiveAppearance.bestMatch(from: [.aqua, .darkAqua]) == .darkAqua
         for panel in [ring] + bands.map(Optional.some) + [handle] {
             guard let panel else { continue }
@@ -108,6 +110,7 @@ final class SlideOverChrome {
         self.ring = ring
         ring.setFrame(window.insetBy(dx: -t - Self.shadowMargin, dy: -t - Self.shadowMargin), display: false)
         ringLayer?.innerRadius = cornerRadius
+        ringHost?.innerRadius = cornerRadius
         if bands.isEmpty { bands = (0..<4).map { _ in makeBand() } }
         let rects = [
             NSRect(x: window.minX - t, y: window.maxY, width: window.width + 2 * t, height: t),
@@ -210,7 +213,7 @@ final class SlideOverChrome {
 
 // MARK: - 玻璃边框
 
-/// 边框那一圈：外圆角 = 窗口圆角 + 10，偶奇填充挖掉窗口那一块；外沿一道亮边、内沿一道暗线，往外落软阴影（不往里落在窗口上）。
+/// 边框外面那层软阴影（不往里落在窗口上）；外圆角 = 窗口圆角 + 10，偶奇填充挖掉窗口那一块。边框本身的玻璃在 SlideOverRingHost 里。
 final class SlideOverRingLayer: CALayer {
     var innerRadius: CGFloat = SlideOverChrome.defaultCornerRadius { didSet { if innerRadius != oldValue { setNeedsDisplay() } } }
     var dark = false { didSet { if dark != oldValue { setNeedsDisplay() } } }
@@ -244,7 +247,8 @@ final class SlideOverRingLayer: CALayer {
         ring.addPath(outerPath)
         ring.addPath(innerPath)
 
-        // 阴影只往外：先把窗口那一块挖出裁剪区。
+        // 阴影只往外：先把窗口那一块挖出裁剪区。边框本身是系统玻璃（见 SlideOverRingHost），
+        // 这里只借一次填充落阴影，随后把边框那一圈擦掉。
         ctx.saveGState()
         let clip = CGMutablePath()
         clip.addRect(bounds)
@@ -254,19 +258,12 @@ final class SlideOverRingLayer: CALayer {
         ctx.setShadow(offset: CGSize(width: 0, height: -4), blur: 20,
                       color: CGColor(gray: 0, alpha: dark ? 0.45 : 0.20))
         ctx.addPath(ring)
-        ctx.setFillColor(dark ? CGColor(gray: 0.30, alpha: 0.94) : CGColor(gray: 0.78, alpha: 0.94))
+        ctx.setFillColor(CGColor(gray: 0, alpha: 1))
         ctx.fillPath(using: .evenOdd)
-        ctx.restoreGState()
-
-        // 玻璃的光：上亮下暗一层。
-        ctx.saveGState()
+        ctx.setShadow(offset: .zero, blur: 0, color: nil)
+        ctx.setBlendMode(.clear)
         ctx.addPath(ring)
-        ctx.clip(using: .evenOdd)
-        let colors = [CGColor(gray: 1, alpha: dark ? 0.10 : 0.22), CGColor(gray: 1, alpha: 0)] as CFArray
-        if let gradient = CGGradient(colorsSpace: CGColorSpaceCreateDeviceGray(), colors: colors, locations: [0, 1]) {
-            ctx.drawLinearGradient(gradient, start: CGPoint(x: outer.midX, y: outer.maxY),
-                                   end: CGPoint(x: outer.midX, y: outer.minY), options: [])
-        }
+        ctx.fillPath(using: .evenOdd)
         ctx.restoreGState()
 
         if fillsWindow {
@@ -274,35 +271,57 @@ final class SlideOverRingLayer: CALayer {
             ctx.setFillColor(dark ? CGColor(gray: 0.16, alpha: 0.55) : CGColor(gray: 1, alpha: 0.55))
             ctx.fillPath()
         }
-
-        // 外沿亮边、内沿暗线。
-        ctx.setLineWidth(1)
-        ctx.setStrokeColor(CGColor(gray: 1, alpha: dark ? 0.22 : 0.70))
-        ctx.addPath(CGPath(roundedRect: outer.insetBy(dx: 0.5, dy: 0.5), cornerWidth: outerRadius - 0.5,
-                           cornerHeight: outerRadius - 0.5, transform: nil))
-        ctx.strokePath()
-        ctx.setLineWidth(0.5)
-        ctx.setStrokeColor(CGColor(gray: 0, alpha: dark ? 0.40 : 0.12))
-        ctx.addPath(CGPath(roundedRect: inner.insetBy(dx: -0.25, dy: -0.25), cornerWidth: innerRadius + 0.25,
-                           cornerHeight: innerRadius + 0.25, transform: nil))
-        ctx.strokePath()
     }
 }
 
 final class SlideOverRingHost: NSView {
     let ring = SlideOverRingLayer()
+    /// 边框的底（系统玻璃 / 磨砂 / 减少透明度时的不透明底），用偶奇蒙版挖掉窗口那一块。
+    private let clip = NSView()
+    private let mask = CAShapeLayer()
+    private var material: NSView?
+    var innerRadius: CGFloat = SlideOverChrome.defaultCornerRadius { didSet { if innerRadius != oldValue { needsLayout = true } } }
+
     override init(frame: NSRect) {
         super.init(frame: frame)
         wantsLayer = true
+        ring.zPosition = -1
         layer?.addSublayer(ring)
+        clip.wantsLayer = true
+        clip.layer?.mask = mask
+        mask.fillRule = .evenOdd
+        addSubview(clip)
+        refreshMaterial()
     }
     required init?(coder: NSCoder) { fatalError("init(coder:) is not used") }
+
+    /// 挂上时调一次：减少透明度可能在两次侧拉之间改过。
+    func refreshMaterial() {
+        material?.removeFromSuperview()
+        let view = SlideOverGlass.makeMaterial()
+        view.frame = clip.bounds
+        clip.addSubview(view)
+        material = view
+    }
+
     override func layout() {
         super.layout()
         CATransaction.begin()
         CATransaction.setDisableActions(true)
         ring.frame = bounds
         ring.contentsScale = window?.backingScaleFactor ?? ring.contentsScale
+        let t = SlideOverChrome.thickness
+        clip.frame = bounds.insetBy(dx: ring.margin, dy: ring.margin)
+        material?.frame = clip.bounds
+        let outerRadius = innerRadius + t
+        let path = CGMutablePath()
+        path.addPath(CGPath(roundedRect: clip.bounds, cornerWidth: outerRadius, cornerHeight: outerRadius, transform: nil))
+        let inner = clip.bounds.insetBy(dx: t, dy: t)
+        if inner.width > 0, inner.height > 0 {
+            path.addPath(CGPath(roundedRect: inner, cornerWidth: innerRadius, cornerHeight: innerRadius, transform: nil))
+        }
+        mask.frame = clip.bounds
+        mask.path = path
         CATransaction.commit()
     }
     override func setFrameSize(_ newSize: NSSize) {

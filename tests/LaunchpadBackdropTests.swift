@@ -137,6 +137,19 @@ struct LaunchpadBackdropTests {
         let passthrough = LaunchpadBackdrop.make(source, radius: 0)
         check(passthrough?.width == width && passthrough?.height == height, "radius 0 returns original image")
 
+        // 7. 1/4 降采样：5K 外接屏和内建屏的解码尺寸与半径。
+        check(LaunchpadBackdrop.decodePixels(forScreenPixels: 5120) == 1280, "5K screen decodes at 1280px")
+        check(LaunchpadBackdrop.decodePixels(forScreenPixels: 3024) == 756, "built-in 3024px decodes at 756px")
+        check(LaunchpadBackdrop.decodePixels(forScreenPixels: 2) == 1, "decode size never drops below 1px")
+        let fullRadius = LaunchpadBackdrop.radius(forPixelWidth: 5120, height: 2880)
+        let quarterRadius = LaunchpadBackdrop.radius(forPixelWidth: 1280, height: 720)
+        check(abs(fullRadius / 4 - quarterRadius) < 0.001, "quarter-size radius is full radius / 4")
+
+        // 8. 缓存淘汰：只留当前各屏的 URL。
+        let cache = ["a": 1, "b": 2, "c": 3]
+        check(LaunchpadBackdrop.retaining(cache, keeping: ["a", "c"]) == ["a": 1, "c": 3], "cache keeps only current paths")
+        check(LaunchpadBackdrop.retaining(cache, keeping: []).isEmpty, "cache clears when no screen has a wallpaper")
+
         if failures.isEmpty {
             print("\nAll LaunchpadBackdrop tests passed.")
             exit(0)

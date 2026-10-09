@@ -47,27 +47,88 @@ extension AppDelegate {
     func makeRemoteSettingsPage() -> NSView {
         inputController.apply()
         let prefs = inputController.preferences
+        let host = inputController.remoteHostForSettings
+        let conductorOn = WS2ConductorSettings.flag(WS2ConductorSettings.enabledKey, in: .standard)
         let (root, stack) = inputPageRoot()
         stack.addArrangedSubview(inputCaption("没打开时不听遥控器。"))
-        let link = NSButton(title: "指挥模式", target: self, action: nil)
-        link.isEnabled = false
-        link.bezelStyle = .rounded
-        link.setAccessibilityLabel("iPhone 上的遥控器")
-        let rows = [
+        var rows = [
             inputRow(name: "Siri 遥控器", subtitle: "没在听，连没连上未知",
                      detail: "没打开遥控模式时不听，所以不知道有没有连上。",
                      symbol: "appletvremote.gen4", control: inputStatus("未知")),
-            inputRow(name: "遥控模式", subtitle: inputController.remoteListening ? "在听" : (prefs.remoteMode ? "先不接管" : "关着"),
-                     detail: "还不能让系统放开这只遥控器的按键，所以先不听。",
-                     symbol: nil, control: inputSwitch(on: prefs.remoteMode, enabled: true, action: #selector(prefInputRemoteMode(_:)), name: "遥控模式")),
-            inputRow(name: "iPhone 上的遥控器", subtitle: "还不在这里",
-                     detail: "指挥模式的设置还不在这里。",
-                     symbol: "iphone", control: link),
+            inputRow(name: "遥控模式", subtitle: remoteSubtitle(on: prefs.remoteMode, host: host),
+                     detail: "打开后，这台 Mac 出现在 iPhone 上的遥控器的列表里。关掉就不再出现，连着的也会断开。",
+                     symbol: "iphone", control: inputSwitch(on: prefs.remoteMode, enabled: true, action: #selector(prefInputRemoteMode(_:)), name: "遥控模式")),
+            // 指挥模式是遥控模式下面的一项：总开关关着时灰着，也跟着关。
+            inputRow(name: "指挥模式", subtitle: prefs.remoteMode ? (conductorOn ? "开着" : "关着") : "先打开遥控模式",
+                     detail: "用遥控器走进刘海那一排里的会话：看会话、换模型、留草稿。",
+                     symbol: nil, control: inputSwitch(on: prefs.remoteMode && conductorOn, enabled: prefs.remoteMode,
+                                                       action: #selector(prefInputConductor(_:)), name: "指挥模式"),
+                     indent: true),
         ]
+        if prefs.remoteMode {
+            let peers = host?.pairedPeers ?? []
+            if peers.isEmpty {
+                rows.append(inputRow(name: "已配对的 iPhone", subtitle: "还没有",
+                                     detail: "在 iPhone 上的遥控器里选这台 Mac，就能配对。",
+                                     symbol: nil, control: inputStatus(""), indent: true))
+            }
+            for peer in peers {
+                let name = peer.displayName ?? WS2RemoteCopy.fallbackName
+                let remove = NSButton(title: "移除", target: self, action: #selector(prefInputRemovePeer(_:)))
+                remove.bezelStyle = .rounded
+                remove.identifier = NSUserInterfaceItemIdentifier(peer.identifier.map { String(format: "%02x", $0) }.joined())
+                remove.setAccessibilityLabel("移除 \(name)")
+                rows.append(inputRow(name: "\(name) · \(WS2RemoteCopy.pairedSuffix)", subtitle: "已配对的 iPhone",
+                                     detail: "移除后，这台 iPhone 不能再遥控，也不能指挥。",
+                                     symbol: nil, control: remove, indent: true))
+            }
+        }
+        rows.append(contentsOf: gamepadRows())
         let card = makeUnifiedSettingsCard(rows)
         stack.addArrangedSubview(card)
         card.widthAnchor.constraint(equalTo: stack.widthAnchor).isActive = true
         return root
+    }
+
+    /// 每台手柄一行“控制这台 Mac”，默认关。同一时间只有一台能操作，另一台只能看。
+    private func gamepadRows() -> [NSView] {
+        let control = WS2GamepadDesktopControl.shared
+        control.onChange = { [weak self] in self?.refreshPreferencesWindowIfOpen() }
+        let detail = "用十字键选，× 确认，○ 返回，△ 回到刘海那一排（按住 0.5 秒打开启动台），Options 播放或暂停。游戏在前台时手柄整个让开。"
+        let rows = control.rows()
+        guard !rows.isEmpty else {
+            return [inputRow(name: "游戏手柄", subtitle: "没连上", detail: "连上手柄后，这里会出现“控制这台 Mac”。",
+                             symbol: "gamecontroller", control: inputStatus(""))]
+        }
+        return rows.map { row in
+            let subtitle: String
+            switch row.access {
+            case .off: subtitle = "关着"
+            case .viewOnly: subtitle = "只能看"
+            case .controls: subtitle = row.yieldingToPage ? "指挥页在用" : row.yielding ? "游戏在前台，先让开" : "开着"
+            }
+            let toggle = inputSwitch(on: row.access != .off, enabled: true, action: #selector(prefGamepadControl(_:)),
+                                     name: "控制这台 Mac · \(row.name)")
+            toggle.identifier = NSUserInterfaceItemIdentifier(row.id.uuidString)
+            return inputRow(name: "控制这台 Mac · \(row.name)", subtitle: subtitle, detail: detail,
+                            symbol: "gamecontroller", control: toggle)
+        }
+    }
+
+    @objc func prefGamepadControl(_ sender: NSSwitch) {
+        guard let raw = sender.identifier?.rawValue, let id = UUID(uuidString: raw) else { return }
+        WS2GamepadDesktopControl.shared.setEnabled(sender.state == .on, padID: id)
+        refreshPreferencesWindowIfOpen()
+    }
+
+    private func remoteSubtitle(on: Bool, host: WS2RemoteHost?) -> String {
+        guard on else { return "关着" }
+        switch host?.status {
+        case .listening?: return host?.operatorIdentifier != nil ? "iPhone 已连接" : "在听"
+        case .failed?: return "没能打开，先关掉再开"
+        case .starting?: return "正在打开"
+        case .off?, nil: return "关着"
+        }
     }
 
     @objc func prefInputSmooth(_ sender: NSPopUpButton) {
@@ -104,7 +165,33 @@ extension AppDelegate {
     }
 
     @objc func prefInputRemoteMode(_ sender: NSSwitch) {
-        updateInput { $0.remoteMode = sender.state == .on }
+        let on = sender.state == .on
+        // 总开关关掉，指挥模式跟着关；再打开时不自动回来。
+        if !on { WS2ConductorSettings.setFlag(false, WS2ConductorSettings.enabledKey, in: .standard) }
+        updateInput { $0.remoteMode = on }
+    }
+
+    @objc func prefInputConductor(_ sender: NSSwitch) {
+        guard inputController.preferences.remoteMode else { refreshPreferencesWindowIfOpen(); return }
+        WS2ConductorSettings.setFlag(sender.state == .on, WS2ConductorSettings.enabledKey, in: .standard)
+        inputController.apply()
+        refreshPreferencesWindowIfOpen()
+    }
+
+    /// 撤销这台的配对、断开，刘海里说“这台 iPhone 不能再遥控了”。
+    @objc func prefInputRemovePeer(_ sender: NSButton) {
+        guard let hex = sender.identifier?.rawValue, hex.count % 2 == 0, !hex.isEmpty else { return }
+        var bytes: [UInt8] = []
+        var index = hex.startIndex
+        while index < hex.endIndex {
+            let next = hex.index(index, offsetBy: 2)
+            guard let byte = UInt8(hex[index..<next], radix: 16) else { return }
+            bytes.append(byte); index = next
+        }
+        let identifier = Data(bytes)
+        _ = inputController.remoteHostForSettings?.removePeer(identifier: identifier)
+        inputController.apply()
+        refreshPreferencesWindowIfOpen()
     }
 
     @objc func prefInputEditExceptions() {
@@ -217,7 +304,8 @@ extension AppDelegate {
         return (root, stack)
     }
 
-    private func inputRow(name: String, subtitle: String, detail: String, symbol: String?, control: NSView) -> NSView {
+    private func inputRow(name: String, subtitle: String, detail: String, symbol: String?, control: NSView,
+                          indent: Bool = false) -> NSView {
         let labels = NSStackView()
         labels.orientation = .vertical
         labels.alignment = .leading
@@ -263,7 +351,7 @@ extension AppDelegate {
         row.spacing = 14
         row.edgeInsets = NSEdgeInsets(top: 8, left: 0, bottom: 8, right: 0)
         NSLayoutConstraint.activate([
-            content.leadingAnchor.constraint(equalTo: row.leadingAnchor),
+            content.leadingAnchor.constraint(equalTo: row.leadingAnchor, constant: indent ? 24 : 0),
             content.trailingAnchor.constraint(equalTo: control.leadingAnchor, constant: -14),
             control.trailingAnchor.constraint(equalTo: row.trailingAnchor),
         ])

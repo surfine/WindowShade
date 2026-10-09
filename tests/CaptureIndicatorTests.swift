@@ -90,7 +90,80 @@ enum CaptureIndicatorTests {
         return ctx.makeImage()!
     }
 
+    /// 旧路径（整图进缓冲再检测修补）：新的先裁后测必须与它逐像素相同。
+    static func wholeImageReference(_ image: CGImage, scale: CGFloat) -> CGImage? {
+        guard var pixels = RGBAPixels(image) else { return nil }
+        let changed = pixels.withView { view -> Bool in
+            guard let found = CaptureIndicatorRemoval.detect(in: view, origin: .zero, scale: scale) else { return false }
+            CaptureIndicatorRemoval.fill(view, rect: found.bounds)
+            return true
+        }
+        return changed ? pixels.makeImage() : nil
+    }
+
+    static func bytes(_ image: CGImage) -> [UInt8] {
+        var p = RGBAPixels(image)!
+        return p.withView { v in Array(UnsafeBufferPointer(start: v.base, count: v.height * v.bytesPerRow)) }
+    }
+
     static func main() {
+        // 先裁后测：与整图路径逐像素相同；没有胶囊返回 nil。
+        var samples: [(String, CGImage)] = [
+            ("active", load("capture-indicator-active@2x.png")),
+            ("inactive", load("capture-indicator-inactive@2x.png")),
+            ("stream-frame", load("capture-indicator-stream-frame@2x.png")),
+            ("synthetic-light", synthetic(dark: false, capsule: true)),
+            ("synthetic-dark", synthetic(dark: true, capsule: true)),
+        ]
+        samples.append(("before-stream", load("capture-indicator-before-stream@2x.png")))
+        for (name, image) in samples {
+            let reference = wholeImageReference(image, scale: 2)
+            let fast = CaptureIndicatorRemoval.removingIndicator(from: image, scale: 2)
+            expect((reference == nil) == (fast == nil), "\(name): crop-first agrees with whole-image on detection")
+            if let reference, let fast {
+                expect(bytes(reference) == bytes(fast), "\(name): crop-first output is pixel-identical")
+            }
+        }
+        expect(CaptureIndicatorRemoval.removingIndicator(from: load("capture-indicator-before-stream@2x.png"), scale: 2) == nil,
+               "no capsule returns nil")
+
+        // 每条流的检测缓存。
+        do {
+            let frame = load("capture-indicator-stream-frame@2x.png")
+            // 同尺寸的无胶囊画面：缓存的键（缓冲尺寸、内容区）不变，才测得到抽检。
+            let clean = load("capture-indicator-before-stream@2x.png")
+                .cropping(to: CGRect(x: 0, y: 0, width: frame.width, height: frame.height))!
+            let tracker = CaptureIndicatorTracker()
+            func run(_ image: CGImage, at t: Double) -> (Bool, CGImage) {
+                let b = pixelBuffer(image)
+                let changed = CaptureIndicatorRemoval.clean(b, content: bufferRect(b), scale: 2,
+                                                            tracker: tracker, now: t)
+                return (changed, Self.image(b))
+            }
+            for i in 0..<3 {
+                let (changed, out) = run(frame, at: 100 + Double(i) * 0.016)
+                expect(changed && purpleCount(out, scale: 2) == 0, "warm-up frame \(i + 1) is scanned in full and cleaned")
+            }
+            expect(tracker.fullScans == 3, "first 3 frames force full scans (\(tracker.fullScans))")
+            let (hit, hitOut) = run(frame, at: 100.1)
+            expect(hit && purpleCount(hitOut, scale: 2) == 0 && tracker.fullScans == 3,
+                   "a later frame within 1 s spot-checks the cached position, no full scan")
+            let (gone, _) = run(clean, at: 100.2)
+            expect(!gone && tracker.fullScans == 4, "spot check fails when the capsule is gone, falls back to a full scan")
+            _ = run(clean, at: 100.3)
+            expect(tracker.fullScans == 4, "cached 'no capsule' is reused within 1 s")
+            _ = run(clean, at: 101.5)
+            expect(tracker.fullScans == 5, "a full scan runs again after 1 s")
+            let (back, backOut) = run(frame, at: 101.6)
+            expect(!back || purpleCount(backOut, scale: 2) == 0, "no capsule left when it returns")
+            // 尺寸变化后强制全量，且首帧不漏。
+            let small = synthetic(dark: false, capsule: true)
+            let before = tracker.fullScans
+            let (changed, out) = run(small, at: 101.7)
+            expect(changed && purpleCount(out, scale: 2) == 0 && tracker.fullScans == before + 1,
+                   "a size change forces a full scan and the first frame is cleaned")
+        }
+
         for name in ["capture-indicator-active@2x.png", "capture-indicator-inactive@2x.png"] {
             let image = load(name)
             expect(purpleCount(image, scale: 2) > 1000, "\(name): fixture really contains the capsule")

@@ -1,6 +1,7 @@
 // WindowShade 2.1 · 静音「方便遮一下」：逐屏不透明遮罩，按显示器身份对账（R02）。
 // 不是系统锁屏，也不宣称 loginwindow 隔离强度。Esc / 刘海清除会撤掉。
 // 验证后显示若加入，不得沿用本方便遮挡的清除策略。
+// 有人在看不再铺这层遮罩：改为把私人 App 窗口收进刘海（BystanderTuck.swift）；这里只保留它的开关入口。
 import Cocoa
 
 @MainActor
@@ -43,8 +44,39 @@ final class WS2SilentPrivacyCoverController {
     private var screenObserver: NSObjectProtocol?
     /// 刘海「清除遮挡」回调（由宿主接线）；方便遮挡专用，不用于验证后显示。
     var onClearRequested: (() -> Void)?
+    /// 有人在看（默认关）：没打开就是 nil，不开相机、不挂监听。
+    /// 它不再铺这层黑遮罩，而是把私人 App 的窗口收进刘海（见 BystanderTuck.swift）。
+    private var bystander: BystanderGuard?
 
     var isCovering: Bool { !expectedDisplays.isEmpty }
+
+    init() {
+        reloadBystander(requestAccess: false)
+    }
+
+    /// 设置里「有人在看时收起私人窗口」的开关。关掉立刻停相机、放回它收的窗口；
+    /// 打开时才可能出现系统的相机授权提示。
+    func setBystanderEnabled(_ on: Bool) {
+        BystanderCameraPick.isEnabled = on
+        reloadBystander(requestAccess: on)
+    }
+
+    /// 点一下刘海：把有人在看收起的整批放回（没有就返回 false，让点击走原来的路）。
+    func releaseBystanderTuckForUser() -> Bool { bystander?.releaseForUser() ?? false }
+
+    private func reloadBystander(requestAccess: Bool) {
+        bystander?.shutDown()
+        bystander = BystanderGuard.configured()
+        guard let guardian = bystander else { return }
+        if requestAccess {
+            Task { [weak guardian] in
+                await guardian?.requestAccessIfNeeded()
+                guardian?.evaluate()
+            }
+        } else {
+            guardian.evaluate()
+        }
+    }
 
     // 探针只读（R02 真机）：创建次数证明重复请求复用；监听是否还在，证明退出后没有残留。
     var probePanelsCreated: Int { panelsCreated }
@@ -56,8 +88,13 @@ final class WS2SilentPrivacyCoverController {
     }
 
     /// 在当前所有可识别屏上铺不透明黑层；重复请求复用面板，不先全撤。
+    /// 只给用户在静音页亲手要的「遮一下」用；有人在看不再走这里。
     @discardableResult
     func coverAllScreens() -> Observation {
+        applyCover()
+    }
+
+    private func applyCover() -> Observation {
         epoch &+= 1
         let snapshot = snapshotExpectedDisplays()
         expectedDisplays = snapshot
@@ -99,7 +136,7 @@ final class WS2SilentPrivacyCoverController {
         removeAllPanels()
     }
 
-    /// 供输入路由 / 刘海按钮调用的同一清除入口。
+    /// 供输入路由 / 刘海按钮调用的同一清除入口。只撤这层遮罩，不动有人在看收进刘海的窗口。
     func requestClear() {
         clear()
         onClearRequested?()
@@ -202,8 +239,8 @@ final class WS2SilentPrivacyCoverController {
         ) { [weak self] _ in
             MainActor.assumeIsolated {
                 guard let self, self.isCovering else { return }
-                // 热插拔：按新集合补画/回收，不宣称系统级隔离。
-                _ = self.coverAllScreens()
+                // 热插拔：按新集合补画/回收，不宣称系统级隔离。归属不变。
+                _ = self.applyCover()
             }
         }
     }

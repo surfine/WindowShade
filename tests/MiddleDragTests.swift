@@ -31,6 +31,12 @@ struct MiddleDragTests {
         }
         var x=MiddleDrag(); _=x.handle(.down(origin,.titlebar),at:sec(0))
         t.expect(x.handle(.up(.init(x:0,y:-180)),at:sec(1)) == [.commit(.titlebarDown)], "标题栏单独意图")
+        for (point,action) in [(WS2.Point(x:-180,y:0),WS2.Action.titlebarLeft),(.init(x:180,y:0),.titlebarRight),(.init(x:0,y:180),.titlebarUp)] {
+            var y=MiddleDrag(); _=y.handle(.down(origin,.titlebar),at:sec(0))
+            t.expect(y.handle(.up(point),at:sec(1)) == [.commit(action)], "标题栏方向映射 \(action)")
+        }
+        var z=MiddleDrag(); _=z.handle(.down(origin,.titlebar),at:sec(0))
+        t.expect(z.handle(.move(.init(x:0,y:-90)),at:sec(0.1)).contains { if case .preview(.titlebarDown,_) = $0 { return true } else { return false } }, "拖动中给出铺满预览")
         t.section("I1c-07", "未知区域/非法坐标/倒流/中途取消 → 不提交动作")
         var f=MiddleDrag(); _=f.handle(.down(origin,.unknown),at:sec(0))
         t.expect(!f.isTracking && f.handle(.up(.init(x:500,y:0)),at:sec(1)) == [.passThrough], "未知区域放行")

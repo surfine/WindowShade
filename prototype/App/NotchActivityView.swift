@@ -66,11 +66,27 @@ final class NotchActivityView: NSView {
             }
         }
         for (card, item) in zip(cards, next) { card.update(item, expanded: expanded) }
+        for (tab, item) in zip(tabs, next) {
+            tab.setAccessibilityLabel(item.isStale ? "\(item.title)，\(NotchActivity.staleSpoken)" : item.title)
+        }
         layoutContents()
         if !rebuilt && !resized && oldIndex != index && drag == nil {
             settle(from: oldX, velocity: 0)
         } else if drag == nil && (rebuilt || resized || oldWidth != pageWidth) {
             strip.layer?.removeAllAnimations(); position(targetX)
+        }
+    }
+
+    /// 第二层（副句、按钮、下面一排入口）的透明度。duration 为 nil 时立刻到位，否则淡到这个值。
+    func setSecondLayer(alpha: CGFloat, duration: TimeInterval?) {
+        cards.forEach { $0.setSecondLayer(alpha: alpha, duration: duration) }
+        for tool in tools { Self.set(tool, alpha: alpha, duration: duration) }
+    }
+    fileprivate static func set(_ view: NSView, alpha: CGFloat, duration: TimeInterval?) {
+        guard let duration else { view.alphaValue = alpha; return }
+        NSAnimationContext.runAnimationGroup { context in
+            context.duration = duration
+            view.animator().alphaValue = alpha
         }
     }
 
@@ -106,6 +122,11 @@ final class NotchActivityView: NSView {
     @discardableResult
     func swipe(_ distance: CGFloat, touching: Bool, velocity: CGFloat, cancelled: Bool = false) -> Bool {
         guard items.count > 1, distance.isFinite, velocity.isFinite else { return false }
+        // 只有展开时才翻页；收起时吞掉手势（不拖动、不换选中），也不落到今日/资料库导航。
+        guard expanded else {
+            if drag != nil { drag = nil; settle(from: presentationX(), velocity: 0) }  // 拖到一半被收起：回到原页
+            return true
+        }
         if touching {
             if drag == nil {
                 let current = presentationX()
@@ -126,8 +147,9 @@ final class NotchActivityView: NSView {
             self.drag = nil
             guard drag.ids == items.map(\.id), drag.id == selectedID else { settle(from: current, velocity: 0); return true }
             if !cancelled {
-                let projection = current + max(-1600, min(1600, velocity)) * 0.16
-                let next = max(0, min(items.count - 1, Int((-projection / pageWidth).rounded())))
+                // 一次横扫最多翻一页：位移与速度只决定“翻不翻”，不再按惯性投影跳多页。
+                let next = NotchActivitySwipe.target(index: index, count: items.count, distance: distance,
+                                                     velocity: velocity, pageWidth: pageWidth)
                 if next != index { selectedID = items[next].id; onSelect?(items[next].id) }
             }
             settle(from: current, velocity: cancelled ? 0 : velocity)
@@ -185,8 +207,8 @@ private final class ActivityCard: NSView {
             field.textColor = .white; field.lineBreakMode = .byTruncatingTail
             field.maximumNumberOfLines = 1; addSubview(field)
         }
-        title.font = .systemFont(ofSize: 12, weight: .semibold)
-        subtitle.font = .systemFont(ofSize: 11); subtitle.textColor = .white.withAlphaComponent(0.62)
+        title.font = .systemFont(ofSize: 13, weight: .semibold)
+        subtitle.font = .systemFont(ofSize: 11, weight: .regular); subtitle.textColor = .white.withAlphaComponent(0.6)
         icon.contentTintColor = .white; icon.imageScaling = .scaleProportionallyUpOrDown; addSubview(icon)
         track.backgroundColor = NSColor.white.withAlphaComponent(0.15).cgColor
         progress.backgroundColor = NSColor.systemGreen.cgColor
@@ -194,30 +216,67 @@ private final class ActivityCard: NSView {
     }
     required init?(coder: NSCoder) { fatalError("init(coder:) is not used") }
     private var reportedProgress: Double?
+    /// 第二层（副句、按钮）当前的透明度：换内容重建按钮时沿用，不让新按钮抢在第一层前面亮出来。
+    private var secondLayerAlpha: CGFloat = 1
+    func setSecondLayer(alpha: CGFloat, duration: TimeInterval?) {
+        secondLayerAlpha = alpha
+        for view in [subtitle] + buttons { NotchActivityView.set(view, alpha: alpha, duration: duration) }
+    }
     func update(_ item: NotchActivity, expanded: Bool) {
         self.expanded = expanded
-        title.stringValue = item.title
-        subtitle.stringValue = item.isPaused && item.kind == .music ? "已暂停 · \(item.subtitle)" : item.subtitle
+        // 过期：内容降到 0.5 透明（不猜、不补数）；结束：最后的样子照原样留着。
+        alphaValue = item.isStale ? CGFloat(NotchActivity.staleAlpha) : 1
+        setAccessibilityLabel(item.isStale ? "\(NotchEarText.cardTitle(item))，\(NotchActivity.staleSpoken)" : nil)
+        // 计时器：主句写“计时器 · 9 分”（和番茄钟同一种写法，超时写“+3 分”）。
+        // 日程：主句写“设计评审 · 4 分”，开始后能加入的写“设计评审 · 已开始”。
+        title.stringValue = item.kind == .timer
+            ? [item.title, item.trailing ?? ""].filter { !$0.isEmpty }.joined(separator: " · ")
+            : (item.kind == .calendar
+               ? [item.title, (item.trailing ?? "").isEmpty ? "已开始" : item.trailing ?? ""].joined(separator: " · ")
+               : NotchEarText.cardTitle(item))
+        subtitle.stringValue = item.isPaused && item.kind == .music ? "已暂停 · \(item.subtitle)"
+            // 下载卡：收起时只有“正在下载”和个数；展开后副标题换成文件名。
+            : (item.kind == .download && !item.detail.isEmpty ? (item.subtitle.isEmpty ? item.detail : "\(item.subtitle) · \(item.detail)") : item.subtitle)
         icon.image = NotchActivitySymbol.image(item.symbol)
-        reportedProgress = item.progress
-        focusStyle = item.kind == .focus
+        reportedProgress = item.progress.fractionValue
+        focusStyle = item.kind == .focus || item.kind == .timer
         // 番茄钟用大字和番茄红：展开时一眼看得到还剩多久。
-        title.font = focusStyle ? .monospacedDigitSystemFont(ofSize: 20, weight: .medium) : .systemFont(ofSize: 12, weight: .semibold)
-        progress.backgroundColor = (focusStyle ? NSColor.systemRed : NSColor.systemGreen).cgColor
+        title.font = focusStyle ? .monospacedDigitSystemFont(ofSize: 20, weight: .medium) : .systemFont(ofSize: 13, weight: .semibold)
+        progress.backgroundColor = (item.kind == .timer
+            ? NSColor(srgbRed: 1, green: 0x9F / 255, blue: 0x0A / 255, alpha: 1)
+            : (item.kind == .calendar ? CalendarEarImage.color(item.calendar?.colorRGB)
+               : (focusStyle ? NSColor.systemRed : NSColor.systemGreen))).cgColor
         buttons.forEach { $0.removeFromSuperview() }
         let actions: [(String, String, NotchActivityAction)]
-        if item.kind == .music {
+        if item.isEnded {
+            // 结束了只留最后的样子：没有能按的。
+            actions = []
+        } else if item.kind == .music {
             actions = [("上一首", "backward.end.fill", .previous), (item.isPaused ? "播放" : "暂停", item.isPaused ? "play.fill" : "pause.fill", .playPause), ("下一首", "forward.end.fill", .next)]
         } else if item.kind == .focus {
             actions = [(item.isPaused ? "继续" : "暂停", item.isPaused ? "play.fill" : "pause.fill", .focusTogglePause),
-                       ("跳过", "forward.end.fill", .focusSkip), ("结束", "xmark", .end)]
+                       ("跳过", "forward.end.fill", .focusSkip), ("结束", "stop.fill", .end)]
+        } else if item.kind == .timer {
+            // 计时器：暂停 / 继续、结束；已经超时就只剩结束。
+            let overtime = (item.trailing ?? "").hasPrefix("+")
+            let pauseAction: [(String, String, NotchActivityAction)] =
+                overtime ? [] : [(item.isPaused ? "继续" : "暂停", item.isPaused ? "play.fill" : "pause.fill", .focusTogglePause)]
+            actions = pauseAction + [("结束", "xmark", .end)]
+        } else if item.kind == .calendar {
+            // 日程：有会议链接才有“加入”；点卡片本身长成大卡。
+            actions = item.calendar?.hasLink == true ? [(CalendarWords.joinTitle, "video.fill", .join)]
+                : [("打开", "arrow.up.forward.app", .open)]
         } else if item.kind == .route {
             actions = [("地图", "arrow.up.forward.app", .open), ("移除路线", "xmark", .end)]
+        } else if item.kind == .session {
+            // 编程会话：去它所在的终端窗口（找不到就打开会话页）。
+            actions = [("过去", "arrow.up.forward.app", .open)]
         } else { actions = [("打开", "arrow.up.forward.app", .open)] }
         buttons = actions.map { label, symbol, action in
             let button = makeButton("", symbol: symbol)
             button.setAccessibilityLabel(label); button.toolTip = label
             button.identifier = .init(action.rawValue); button.target = self; button.action = #selector(activateAction(_:))
+            button.alphaValue = secondLayerAlpha
             addSubview(button); return button
         }
         needsLayout = true

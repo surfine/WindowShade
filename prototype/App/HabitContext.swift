@@ -212,6 +212,8 @@ struct HabitFocusRead {
 struct HabitDecision {
     let rule: HabitRule
     let lines: (title: String, subtitle: String)
+    /// “点一下，替你按 ⌘C”：第 2 次起当副句，也念给读屏。
+    let hint: String
     let demo: HabitDemo
     let action: HabitAction
     let bundleID: String?
@@ -248,6 +250,8 @@ final class HabitWorker: @unchecked Sendable {
         var dockPID: pid_t = 0
         /// 探针在听：每一次判定都报上去（平时只把读过 AX 的判定写进日志）。
         var traces = false
+        /// 没答来处、开着“来处推断”时，只数键位用的规则（不在 active 里，所以不会教任何东西）。
+        var guessRules: Set<HabitRule> = []
     }
 
     let queue = DispatchQueue(label: "WindowShade.Habits", qos: .utility)
@@ -261,11 +265,18 @@ final class HabitWorker: @unchecked Sendable {
     private var hides = HabitHideWatch()
     private var swipes = HabitDesktopSwipes()
     private var shiftTaps = HabitShiftTaps()
+    // iPad 后加的 3 条（等真机，默认不开）：调度中心瞥一眼、🌐H、主屏幕开了又关再往上滚。
+    private var peeks = HabitMissionPeek()
+    private var globeHomes = HabitGlobeHome()
+    private var pageTops = HabitLaunchpadTop()
+    /// 调度中心打开那一刻最前面的 App 和窗口（关掉时比一比，变了就是去挑窗口的）。
+    private var missionScene: (pid: pid_t, window: UInt32?)?
     private var lastMac: [HabitRule: TimeInterval] = [:]
     private var factsCache: [pid_t: HabitAppFacts] = [:]
     private var menus: [pid_t: HabitMenuIndex] = [:]
     private var unreadableMenus: [pid_t: TimeInterval] = [:]
     private var undoMiss: (at: TimeInterval, characters: Int?)?
+    private var lastGuess: [SwitcherOrigin: TimeInterval] = [:]
     private var altBefore: (pid: pid_t, characters: Int?, focus: HabitFocus)?
     private var menuWatch: (at: TimeInterval, pid: pid_t, clicked: Bool)?
     private var dockDrag: (bundleID: String, press: CGPoint, at: TimeInterval)?
@@ -286,6 +297,8 @@ final class HabitWorker: @unchecked Sendable {
     var onWatch: (@Sendable (TimeInterval) -> Void)?
     /// 鼠标按下、松开（主线程看 WindowShade 收起了哪扇）。
     var onMouse: (@Sendable (HabitKeys.Observation) -> Void)?
+    /// 没答来处时认出一次别系统的习惯键（只报来处，不带按了什么、在哪个 App）。
+    var onGuess: (@Sendable (SwitcherOrigin) -> Void)?
     /// 每一次判定的结果（探针看；只在 Settings.traces 开着时报）。
     var onVerdict: (@Sendable (HabitRule, String) -> Void)?
 
@@ -300,8 +313,10 @@ final class HabitWorker: @unchecked Sendable {
         queue.async {
             self.repeats = HabitRepeats(); self.clipboard = HabitClipboard(); self.hides = HabitHideWatch()
             self.swipes = HabitDesktopSwipes(); self.shiftTaps = HabitShiftTaps(); self.lastMac = [:]
+            self.peeks = HabitMissionPeek(); self.globeHomes = HabitGlobeHome(); self.pageTops = HabitLaunchpadTop()
+            self.missionScene = nil
             self.factsCache = [:]; self.menus = [:]; self.unreadableMenus = [:]; self.quietUntil = 0; self.undoMiss = nil
-            self.notDesktop = nil
+            self.notDesktop = nil; self.lastGuess = [:]
         }
     }
 
@@ -322,6 +337,7 @@ final class HabitWorker: @unchecked Sendable {
                 case .mac(let rule): mac(rule, at: at, pasteboard: pasteboard)
                 case .emacs: emacs(pid: pid)
                 case .foreign(let rule):
+                    noteGuess(rule, at: at, pid: pid)
                     foreign(rule, combo: combo, at: at, pid: pid, pasteboard: pasteboard, sinceLetter: sinceLetter, sinceFn: sinceFn)
                 }
             }
@@ -336,6 +352,7 @@ final class HabitWorker: @unchecked Sendable {
                 menuWatch = watch
             }
             if target == settings.dockPID, settings.active.contains(.dockRemoved) { dockPressed(at: location, time: at) }
+            dockOrElsewhere(onDock: settings.dockPID != 0 && target == settings.dockPID, at: at)
             if settings.active.contains(.titleDoubleClick) || settings.active.contains(.titleFlickUp) { onMouse?(observation) }
         case let .mouseUp(at, location, _, _, _, _):
             if let drag = dockDrag { dockReleased(drag, at: location, time: at) }
@@ -348,9 +365,11 @@ final class HabitWorker: @unchecked Sendable {
             scrollOnDesktop = Self.desktop(at: location)
             notDesktop = scrollOnDesktop ? nil : (location, at)
         case let .scrollEnded(at, deltaY):
+            // 两条都按手指方向算：关了“自然滚动”时滚动量和手指反向。
+            let travel = HabitDesktopSwipes.fingerTravel(deltaY: deltaY, natural: settings.natural)
+            if settings.active.contains(.launchpadTop), pageTops.scrolled(deltaY: travel, at: at) { launchpadTop() }
             guard scrollOnDesktop, settings.active.contains(.desktopSearch) else { return }
             scrollOnDesktop = false
-            let travel = HabitDesktopSwipes.fingerTravel(deltaY: deltaY, natural: settings.natural)
             if swipes.swipe(fingersDown: travel, onDesktop: true, at: at) { desktopSearch() }
         }
     }
@@ -371,6 +390,15 @@ final class HabitWorker: @unchecked Sendable {
     }
 
     // MARK: 旧习惯的那一下
+
+    /// 来处推断：只数这一下指向哪个来处。名单里的 App（终端、IDE……）天天按这些键，不算；同一来处两次之间隔够久才报。
+    private func noteGuess(_ rule: HabitRule, at: TimeInterval, pid: pid_t) {
+        guard let origin = rule.guessedOrigin, settings.guessRules.contains(rule) else { return }
+        if let last = lastGuess[origin], at >= last, at - last < OriginGuess.minGap { return }
+        guard !facts(pid).excluded else { return }
+        lastGuess[origin] = at
+        onGuess?(origin)
+    }
 
     private func foreign(_ rule: HabitRule, combo: HabitCombo, at: TimeInterval, pid: pid_t, pasteboard: Int?,
                          sinceLetter: TimeInterval, sinceFn: TimeInterval) {
@@ -393,6 +421,8 @@ final class HabitWorker: @unchecked Sendable {
             hides.commandH(pid: pid, at: at, hadWindows: hadWindows)
         case .menuBar:
             menuBarPressed(at: at, pid: pid)
+        case .globeHome:
+            globeHomes.globeH(at: at)
         case .lineEnds:
             lineEnds(combo: combo, at: at, pid: pid, sinceFn: sinceFn)
         default:
@@ -440,7 +470,7 @@ final class HabitWorker: @unchecked Sendable {
             report(rule, s, app: app, quiet: true)
             return
         }
-        let focus = trashFocus ?? readFocus(pid: pid, facts: app, items: rule == .cut && app.finder)
+        let focus = trashFocus ?? readFocus(pid: pid, facts: app)
         s.focus = focus.kind
         s.selection = focus.selection
         s.composing = focus.composing
@@ -495,7 +525,8 @@ final class HabitWorker: @unchecked Sendable {
         let finderApp = app.finder
         let lines = HabitWords.lines(rule, menuTitle: item.map { freshTitle($0) }, finder: finderApp, variant: s.variant)
         let demo = HabitWords.demo(rule, pressed: pressed, variant: s.variant)
-        onDecision?(HabitDecision(rule: rule, lines: lines, demo: demo, action: action(rule, pid: pid, item: item, variant: s.variant),
+        onDecision?(HabitDecision(rule: rule, lines: lines, hint: HabitWords.pressHint(rule), demo: demo,
+                                  action: action(rule, pid: pid, item: item, variant: s.variant),
                                   bundleID: app.bundleID))
     }
 
@@ -514,7 +545,8 @@ final class HabitWorker: @unchecked Sendable {
         case .forceQuit, .screenshot:
             return rule.taughtCombo.map { .systemKey($0) } ?? .none
         case .imeShift: return .selectASCII
-        case .hideApp: return .home
+        case .hideApp, .missionPeek, .globeHome: return .home
+        case .launchpadTop: return rule.taughtCombo.map { .postKey($0, pid: pid) } ?? .none
         case .menuBar: return menu(pid: pid).appMenu.map { .openMenu($0) } ?? .none
         case .dockRemoved: return .place(.leftHalf)
         case .titleDoubleClick, .titleFlickUp: return .place(.fill)
@@ -674,6 +706,74 @@ final class HabitWorker: @unchecked Sendable {
         verdictAndDecide(rule, s, app: app, pid: pid)
     }
 
+    // MARK: iPad 后加的 3 条（等真机探针确认信号；都在 needsDeviceCheck 后面，默认不开）
+
+    /// 点了一下：在 Dock 上，是 i2 的后续（刚瞥完调度中心就去 Dock 找 App），也是 i5 一回的收尾；在别处，打断 i5 的一对。
+    private func dockOrElsewhere(onDock: Bool, at now: TimeInterval) {
+        if onDock, settings.active.contains(.missionPeek), peeks.followedUp(at: now) { speakPad(.missionPeek) }
+        if settings.active.contains(.globeHome), globeHomes.clicked(onDock: onDock, at: now) { speakPad(.globeHome) }
+    }
+
+    /// 调度中心开了、关了（系统的开合通知，主线程转过来，带着当时的开机秒数）。
+    /// 关的时候要等前台交接完才能比“最前面的窗口变没变”：0.4 秒后读一次，一次性，不轮询。
+    func missionControlChanged(open: Bool, at now: TimeInterval) {
+        queue.async {
+            guard self.settings.active.contains(.missionPeek) else { return }
+            if open {
+                let pid = self.frontPID()
+                self.missionScene = (pid, self.focusedWindowID(pid))
+                self.peeks.opened(at: now)
+                return
+            }
+            let before = self.missionScene
+            self.missionScene = nil
+            self.queue.asyncAfter(deadline: .now() + 0.4) {
+                let pid = self.frontPID()
+                let changed = before.map { $0.pid != pid || $0.window != self.focusedWindowID(pid) } ?? false
+                if self.settings.active.contains(.missionPeek), self.peeks.closed(at: now, frontChanged: changed) {
+                    self.speakPad(.missionPeek)
+                }
+            }
+        }
+    }
+
+    /// 指针停在刘海上了（刘海那边报进来）：i2 的另一个后续。
+    func notchHovered(at now: TimeInterval) {
+        queue.async {
+            guard self.settings.active.contains(.missionPeek), self.peeks.followedUp(at: now) else { return }
+            self.speakPad(.missionPeek)
+        }
+    }
+
+    /// 主屏幕开了、关了（启动台那边报进来）。launched：关是因为点了图标。
+    func homeChanged(open: Bool, launched: Bool, doubleClickWait: TimeInterval, at now: TimeInterval) {
+        queue.async {
+            guard self.settings.active.contains(.launchpadTop) else { return }
+            if open {
+                self.pageTops.homeOpened(at: now)
+            } else {
+                self.pageTops.homeClosed(at: now, launched: launched, wait: doubleClickWait)
+            }
+        }
+    }
+
+    private func focusedWindowID(_ pid: pid_t) -> UInt32? {
+        guard pid > 0, let window = HabitAX.element(HabitAX.app(pid), kAXFocusedWindowAttribute) else { return nil }
+        return HabitAX.windowID(window)
+    }
+
+    private func launchpadTop() { speakPad(.launchpadTop) }
+
+    /// 三条里状态机已经认定的：只剩公共的门（VoiceOver、名单、节奏）。
+    private func speakPad(_ rule: HabitRule) {
+        let pid = frontPID()
+        let app = rule == .launchpadTop ? facts(pid) : HabitAppFacts()
+        var s = HabitSituation()
+        s.voiceOver = NSWorkspace.shared.isVoiceOverEnabled
+        s.excluded = app.excluded
+        verdictAndDecide(rule, s, app: app, pid: pid)
+    }
+
     /// 从 Dock 上按下：按在一个 App 图标上、而且它是留在 Dock 里的，才记下来。
     private func dockPressed(at location: CGPoint, time: TimeInterval) {
         dockDrag = nil
@@ -726,7 +826,8 @@ final class HabitWorker: @unchecked Sendable {
         let shortcut = rule == .desktopSearch ? settings.spotlight : nil
         let lines = HabitWords.lines(rule, variant: s.variant, shortcut: shortcut?.label)
         let demo = HabitWords.demo(rule, variant: s.variant, shortcut: shortcut?.parts)
-        onDecision?(HabitDecision(rule: rule, lines: lines, demo: demo, action: action(rule, pid: pid, item: nil, variant: s.variant),
+        onDecision?(HabitDecision(rule: rule, lines: lines, hint: HabitWords.pressHint(rule, shortcut: shortcut?.label), demo: demo,
+                                  action: action(rule, pid: pid, item: nil, variant: s.variant),
                                   bundleID: app.bundleID))
     }
 
@@ -994,6 +1095,8 @@ final class HabitCenter {
     let worker = HabitWorker()
     private weak var owner: AppDelegate?
     private(set) var memory = HabitMemory()
+    /// 来处推断（默认关，见 OriginGuess）。
+    private var guess = OriginGuess()
     private(set) var active: Set<HabitRule> = []
     private var started = false
     private var observers: [NSObjectProtocol] = []
@@ -1008,6 +1111,8 @@ final class HabitCenter {
     private var finderFront = false
     /// 桌面两指下滑那条听满日子时重算一次（一次性的 asyncAfter，不轮询）。
     private var desktopSearchExpiry: DispatchWorkItem?
+    /// 🌐H 那条选 iPad 满 30 天时重算一次（同样是一次性的 asyncAfter）。
+    private var globeHomeExpiry: DispatchWorkItem?
 
     /// 探针：按这个来处算（不读、不写设置）；记录只在内存里；自己进程发的按键也听。
     var originOverride: SwitcherOrigin?
@@ -1029,9 +1134,16 @@ final class HabitCenter {
             if let last = memory.ledger.lastShownAt { CoachPacing.note(last) }
             if let last = Self.gestureCoach()?.lastShownAt { CoachPacing.note(last) }
         }
+        if persists { guess = OriginGuess.load(from: .standard) }
+        // 屏幕开始或停止共享：重算一遍，共享时钩子整个拆掉。
+        observers.append(NotificationCenter.default.addObserver(forName: SystemQuietState.didChange, object: nil,
+                                                                queue: .main) { _ in
+            MainActor.assumeIsolated { HabitCenter.shared.apply() }
+        })
         keys.onObservation = { [worker] observation in worker.observe(observation) }
         worker.onDecision = { decision in DispatchQueue.main.async { MainActor.assumeIsolated { HabitCenter.shared.present(decision) } } }
-        worker.onLearned = { rule in DispatchQueue.main.async { MainActor.assumeIsolated { HabitCenter.shared.learned(rule) } } }
+        worker.onLearned = { rule in DispatchQueue.main.async { MainActor.assumeIsolated { HabitCenter.shared.learned(rule, byUser: true) } } }
+        worker.onGuess = { origin in DispatchQueue.main.async { MainActor.assumeIsolated { HabitCenter.shared.guessed(origin) } } }
         worker.onEmacs = { DispatchQueue.main.async { MainActor.assumeIsolated { HabitCenter.shared.emacsHit() } } }
         worker.onWatch = { [keys] until in keys.watch(until: until) }
         worker.onMouse = { observation in DispatchQueue.main.async { MainActor.assumeIsolated { HabitCenter.shared.mouse(observation) } } }
@@ -1062,6 +1174,8 @@ final class HabitCenter {
         defaultsObserver = nil
         desktopSearchExpiry?.cancel()
         desktopSearchExpiry = nil
+        globeHomeExpiry?.cancel()
+        globeHomeExpiry = nil
         CoachPacing.release()
         active = []
         started = false
@@ -1084,19 +1198,34 @@ final class HabitCenter {
         var rules: Set<HabitRule> = []
         var environment = HabitGate.Environment()
         let now = Date().timeIntervalSince1970
+        // 🌐H 那条只对选了 iPad 不到 30 天的人：它能开（真机确认过）时才开始数日子；选的不是 iPad 就清掉，重新选了重新数。
+        if origin == .ipad, deviceChecked.contains(.globeHome), memory.ipadSince == nil {
+            memory.ipadSince = now
+            save()
+        } else if origin != .ipad, memory.ipadSince != nil {
+            memory.ipadSince = nil
+            save()
+        }
         if NotchController.isEnabled, NotchController.teachEnabled, !NotchController.probeSilence, origin != .mac {
             environment = Self.environment(origin: origin)
+            // 他在刘海上点过回主屏幕（手势提示那本账里用过）：这一组都记成会了。
+            if environment.homeLearned, memory.learnedHome() { save() }
+            environment.screenSharing = SystemQuietState.shared.state.silencesStuckHints
             rules = HabitGate.active(origin: origin, deviceChecked: deviceChecked, memory: memory, environment: environment,
                                      now: now)
         }
         let changed = rules != active
         active = rules
+        // 来处推断：没答来处、开关开着、没在共享屏幕、不是 Mac 老手时，才多听那几个旧习惯键（只数，不教）。
+        let guessRules = guessingRules(origin: origin)
         // 收起后的普通提示只在刚双击、甩过标题栏的那十几秒里压着（见 mouse、collapsed）；两条都不开了就马上放开。
         if !rules.contains(.titleDoubleClick), !rules.contains(.titleFlickUp) { CoachPacing.release() }
         scheduleDesktopSearchExpiry(rules, now: now)
+        scheduleGlobeHomeExpiry(rules, now: now)
         var settings = HabitWorker.Settings()
         settings.active = rules
         settings.traces = acceptsOwnEvents
+        settings.guessRules = guessRules
         if rules.contains(where: { $0.side == .windows }) {
             settings.lettersMatch = Self.lettersMatchLayout()
             settings.inputSource = Self.inputSourceID()
@@ -1113,13 +1242,15 @@ final class HabitCenter {
         worker.update(settings)
         finderFront = NSWorkspace.shared.frontmostApplication?.bundleIdentifier == "com.apple.finder"
         var config = HabitKeys.Config()
-        config.table = HabitTable(rules: rules, emacs: rules.contains { $0.controlFamily }, finderFront: finderFront)
+        config.table = HabitTable(rules: rules.union(guessRules), emacs: !rules.union(guessRules).filter(\.controlFamily).isEmpty,
+                                 finderFront: finderFront)
         config.keys = !config.table.isEmpty
         config.flags = !rules.isDisjoint(with: [.lineEnds, .symbols, .imeShift])
         config.altDigits = rules.contains(.symbols)
         config.shiftTaps = rules.contains(.imeShift)
-        config.mouse = !rules.isDisjoint(with: [.hideApp, .menuBar, .dockRemoved, .titleDoubleClick, .titleFlickUp])
-        config.scroll = rules.contains(.desktopSearch)
+        config.mouse = !rules.isDisjoint(with: [.hideApp, .menuBar, .dockRemoved, .titleDoubleClick, .titleFlickUp,
+                                                .missionPeek, .globeHome])
+        config.scroll = !rules.isDisjoint(with: [.desktopSearch, .launchpadTop])
         config.acceptsOwnEvents = acceptsOwnEvents
         keys.apply(config)
         if changed {
@@ -1142,6 +1273,17 @@ final class HabitCenter {
         let remaining = max(0, since + HabitMemory.desktopSearchDays * 86_400 - now) + 1
         DispatchQueue.main.asyncAfter(wallDeadline: .now() + remaining, execute: item)
         desktopSearchExpiry = item
+    }
+
+    /// 🌐H 那条开着时，到选 iPad 满 30 天那一刻重算一次（到时 HabitGate 会把它去掉）。
+    private func scheduleGlobeHomeExpiry(_ rules: Set<HabitRule>, now: TimeInterval) {
+        globeHomeExpiry?.cancel()
+        globeHomeExpiry = nil
+        guard rules.contains(.globeHome), let since = memory.ipadSince else { return }
+        let item = DispatchWorkItem { MainActor.assumeIsolated { HabitCenter.shared.apply() } }
+        let remaining = max(0, since + HabitMemory.globeHomeDays * 86_400 - now) + 1
+        DispatchQueue.main.asyncAfter(wallDeadline: .now() + remaining, execute: item)
+        globeHomeExpiry = item
     }
 
     /// 换了前台 App：访达进出前台时只换钩子里的表（听的事件种类不变，钩子不重装）。
@@ -1189,6 +1331,15 @@ final class HabitCenter {
                 if let pid = HabitCenter.pid(of: note) { worker.appUnhidden(pid) }
             })
         }
+        if rules.contains(.missionPeek) {
+            // 调度中心开合：Dock 发的系统通知（NotchSpaceGate 也听这两条），不轮询。信号会不会在三指手势时发要等真机。
+            for (name, open) in [("com.apple.expose.awake", true), ("com.apple.expose.sleep", false)] {
+                workspaceObservers.append(DistributedNotificationCenter.default().addObserver(
+                    forName: Notification.Name(name), object: nil, queue: .main) { [worker] _ in
+                    worker.missionControlChanged(open: open, at: ProcessInfo.processInfo.systemUptime)
+                })
+            }
+        }
         if rules.contains(where: { $0.side == .windows }) {
             workspaceObservers.append(DistributedNotificationCenter.default().addObserver(
                 forName: Notification.Name(kTISNotifySelectedKeyboardInputSourceChanged as String), object: nil,
@@ -1209,6 +1360,21 @@ final class HabitCenter {
         settings.lettersMatch = Self.lettersMatchLayout()
         settings.inputSource = Self.inputSourceID()
         worker.update(settings)
+    }
+
+    // MARK: 刘海和主屏幕那边报进来的两件事（i2、i18 的信号；调用点在 Notch、LaunchpadController，见交接说明）
+
+    /// 指针停在刘海上了。i2 开着才有人听，其余时候什么都不做。
+    func noteNotchHover() {
+        guard started, active.contains(.missionPeek) else { return }
+        worker.notchHovered(at: ProcessInfo.processInfo.systemUptime)
+    }
+
+    /// 主屏幕开了、关了。launched：关是因为点了图标；doubleClickWait：点刘海关的话，系统要等的双击时间。i18 开着才有人听。
+    func noteHome(open: Bool, launched: Bool = false, doubleClickWait: TimeInterval = 0) {
+        guard started, active.contains(.launchpadTop) else { return }
+        worker.homeChanged(open: open, launched: launched, doubleClickWait: doubleClickWait,
+                           at: ProcessInfo.processInfo.systemUptime)
     }
 
     // MARK: 这台 Mac 的情况
@@ -1284,21 +1450,26 @@ final class HabitCenter {
         let now = Date().timeIntervalSince1970
         let id = decision.rule.rawValue
         guard active.contains(decision.rule), memory.ledger.canShow(id, at: now), let notch = owner?.notch else { return }
-        let lines = decision.lines
+        // ⌃C、⌃X 的“⌃ 换 ⌘”已经说过：⌃V 不再单独说。
+        guard !memory.controlSwapAlreadyTold(decision.rule) else { return }
+        // 同一条第 2 次起，副句换成“点一下，替你按 …”。
+        let repeated = (memory.ledger.shown[id] ?? 0) >= 1
+        var lines = decision.lines
+        if repeated { lines.subtitle = decision.hint }
         let action = decision.action
         var noNotch: HabitTip.Content?
-        if decision.rule == .hideApp {
+        if HabitRule.homeGroup.contains(decision.rule) {
             // 隐形刘海空着时点不到：落在没有刘海的屏上时，改说、改演启动台快捷键的实际绑定，没绑定就不提快捷键。
-            // 落在哪块屏由刘海挑（teachHabit），这里两种都备好。
+            // 落在哪块屏由刘海挑（teachHabit），这里两种都备好。hideApp、i2、i5 同一组，说法跟着这一组走。
             let shortcut = GlobalShortcutSettings.hotKey(for: .launchpad)
                 .map { HabitCombo(carbonKeyCode: $0.keyCode, carbonModifiers: $0.modifiers) }
-            let words = HabitWords.lines(.hideApp, variant: .noNotch, shortcut: shortcut?.label)
-            noNotch = HabitTip.Content(title: words.title, subtitle: words.subtitle,
-                                       demo: HabitWords.demo(.hideApp, variant: .noNotch, shortcut: shortcut?.parts))
+            let words = HabitWords.lines(decision.rule, variant: .noNotch, shortcut: shortcut?.label)
+            noNotch = HabitTip.Content(title: words.title, subtitle: repeated ? decision.hint : words.subtitle,
+                                       demo: HabitWords.demo(decision.rule, variant: .noNotch, shortcut: shortcut?.parts))
         }
         let rule = decision.rule
         let tip = HabitTip(rule: rule, content: HabitTip.Content(title: lines.title, subtitle: lines.subtitle, demo: decision.demo),
-                           noNotch: noNotch,
+                           noNotch: noNotch, hint: decision.hint,
                            perform: { HabitCenter.shared.perform(action, for: rule) },
                            close: { HabitCenter.shared.dismissed(rule) })
         guard notch.teachHabit(tip) else { return }
@@ -1373,18 +1544,79 @@ final class HabitCenter {
 
     // MARK: 记账
 
-    private func learned(_ rule: HabitRule) {
-        guard !memory.ledger.used.contains(rule.rawValue) else { return }
-        memory.ledger.learned(rule.rawValue)
+    /// byUser：他自己按的 Mac 那一下才算进“整个 ⌃ 家族都会了”；点提示让刘海代按的只让这一条不再说。
+    private func learned(_ rule: HabitRule, byUser: Bool = false) {
+        let firstTime = !memory.ledger.used.contains(rule.rawValue)
+        let newlyPressed = byUser && rule.controlFamily && !memory.userPressed.contains(rule.rawValue)
+        guard firstTime || newlyPressed else { return }
+        owner?.notch.habitPressedRight(rule, byUser: byUser)
+        if byUser { memory.learnedByUser(rule) } else { memory.ledger.learned(rule.rawValue) }
+        // 点刘海回主屏幕：hideApp、i2、i5 是同一件事，一条会了整组都会了。
+        if HabitRule.homeGroup.contains(rule) { memory.learnedHome() }
         save()
         wlog("habits: \(rule.rawValue) learned")
         apply()
     }
 
+    // MARK: 来处推断询问
+
+    private func guessingRules(origin: SwitcherOrigin) -> Set<HabitRule> {
+        guard origin == .unanswered, OriginGuess.isEnabled(in: .standard),
+              NotchController.isEnabled, NotchController.teachEnabled, !NotchController.probeSilence,
+              !SystemQuietState.shared.state.silencesStuckHints, !memory.controlFamilySilenced else { return [] }
+        return Set(HabitRule.allCases.filter { rule in rule.guessedOrigin.map { guess.listens(for: $0) } ?? false })
+    }
+
+    /// 队列认出一次别系统的习惯键：数一次，够了就问。
+    private func guessed(_ origin: SwitcherOrigin) {
+        guard started, (originOverride ?? SwitcherOrigin.current) == .unanswered, OriginGuess.isEnabled(in: .standard),
+              !SystemQuietState.shared.state.silencesStuckHints else { return }
+        let ask = guess.note(origin, at: Date().timeIntervalSince1970)
+        saveGuess()
+        if ask { askOrigin(origin) }
+    }
+
+    /// 在说话岛上问一次。岛正忙就先不问（不记已问，下一次认出来再试）。
+    private func askOrigin(_ origin: SwitcherOrigin) {
+        guard let notch = owner?.notch, let name = origin.title else { return }
+        let subtitle = "点一下，以后照 \(name) 的习惯提醒你"
+        // 借卡住提示的那一路：它有小叉。不演按键，所以演示是空的；rule 只用来认回声，.symbols 在没答来处时不开。
+        let tip = HabitTip(rule: .symbols,
+                           content: HabitTip.Content(title: "之前常用 \(name)？", subtitle: subtitle, demo: .keys(from: [], to: [])),
+                           hint: "不想答就点叉",
+                           perform: { HabitCenter.shared.originAnswered(origin) },
+                           close: { HabitCenter.shared.originDeclined() })
+        guard notch.teachHabit(tip) else { return }
+        guess.didAsk(origin)
+        saveGuess()
+        wlog("habits: asked origin \(origin.rawValue)")
+        apply()
+    }
+
+    /// 点了提示：写入来处，对应的规则随通知打开。
+    private func originAnswered(_ origin: SwitcherOrigin) {
+        if persists { SwitcherOrigin.current = origin } else { originOverride = origin }
+        apply()
+        wlog("habits: origin answered \(origin.rawValue)")
+    }
+
+    /// 点了小叉：不再问。
+    private func originDeclined() {
+        guess.decline()
+        saveGuess()
+        wlog("habits: origin question closed")
+        apply()
+    }
+
+    private func saveGuess() {
+        guard persists, !NotchController.probeSilence, !NotchController.probeCoachRun else { return }
+        guess.save(to: .standard)
+    }
+
     private func dismissed(_ rule: HabitRule) {
-        memory.ledger.dismiss(rule.rawValue)
-        save()
-        wlog("habits: tip \(rule.rawValue) closed")
+        // 小叉只关这一次（Aaron 2026-10-09）：不记“不再说”，下次再卡住还会说；次数和间隔照旧算。
+        // 以前记成“不再说”的旧数据（ledger.dismissed）不迁移，照旧尊重。
+        wlog("habits: tip \(rule.rawValue) closed once")
         apply()
     }
 

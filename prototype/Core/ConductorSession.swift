@@ -7,15 +7,20 @@ enum ConductorNotch: Equatable, Sendable {
     case trajectory(points: [ConductorPoint], beats: Int)
     case staged(label: String), next(current: String, next: String)
     case cost(label: String), models([String], selected: Int)
-    case waitingForAudio, listening(source: String), transcribing, draft(String)
+    case waitingForAudio, listening(source: String), transcribing
+    /// 草稿三行：`header`（“草稿 · 给 项目 · 助手 · 档位”）、草稿全文、“播放键发出去 · 返回收起”。全文单独带着，编辑框要用。
+    /// `uncertain` 是听写没把握的词（草稿全文里按“字”数的区间），画虚线下划线；人手改过就清空。
+    case draft(String, header: String, uncertain: [Range<Int>] = [])
     case sent, accepted(provider: WS2.Provider, effort: String?), running(turn: String)
     case steering, steered, stopping, stopped, completed(String)
-    case approval(String), voiceChallenge, authenticating, discardDraft
+    /// `phrase` 是宿主发来的随机短语；还没到时只提示怎么念。
+    case approval(String), voiceChallenge(phrase: String?), authenticating, discardDraft
     case disconnected, revoked, wrappedUp(taskRunning: Bool), muted(Bool), message(String)
+    static let draftFooter = "播放键发出去 · 返回收起"
     var text: String {
         switch self {
         case .hidden: return ""
-        case .connected(let project, let provider, let effort): return "指挥 · \(project) · \(provider.displayName) · \(effort)"
+        case .connected(let project, let provider, let effort): return "\(project) · \(provider.displayName) · \(effort)"
         case .trajectory: return "抬手才判定"
         case .staged(let label): return label
         case .next(let current, let next): return "这一轮 \(current) · 下一轮 \(next)"
@@ -24,7 +29,7 @@ enum ConductorNotch: Equatable, Sendable {
         case .waitingForAudio: return "没有收到声音"
         case .listening(let source): return "\(source) · 松开出草稿"
         case .transcribing: return "正在转写"
-        case .draft(let text): return text
+        case .draft(let text, let header, _): return "\(header)\n\(text)\n\(Self.draftFooter)"
         case .sent: return "发出去了"
         case .accepted(let provider, let effort): return effort.map { "\(provider.displayName) 接受了 · \($0)" } ?? "实际档位还没确认"
         case .running: return "开始跑了" // turnID 是不透明 ID，不能伪装成“第 4 轮”。
@@ -34,11 +39,11 @@ enum ConductorNotch: Equatable, Sendable {
         case .stopped: return "已停止"
         case .completed(let summary): return "完成 · \(summary)"
         case .approval(let summary): return "想执行 \(summary)"
-        case .voiceChallenge: return "念出这句话，或在 Mac 上用 Touch ID"
+        case .voiceChallenge(let phrase): return phrase.map { "按住侧边按钮念：\($0)" } ?? "按住侧边按钮念"
         case .authenticating: return "正在确认"
         case .discardDraft: return "再按一次返回丢掉草稿"
         case .disconnected: return "遥控器断开了"
-        case .revoked: return "这台 iPhone 不能再指挥"
+        case .revoked: return "这台 iPhone 不能再遥控了"
         case .wrappedUp(let running): return running ? "收工 · 任务还在跑" : "收工"
         case .muted(let yes): return yes ? "提示音已关" : "提示音已开"
         case .message(let text): return text
@@ -62,7 +67,8 @@ struct ConductorSession: Sendable {
         case source(id: String, label: String)
         case touch(TouchPhase, WS2.Point), button(WS2.ButtonEvent)
         case audioSamples(capture: WS2.Token)
-        case transcript(capture: WS2.Token, text: String, digest: WS2.Digest)
+        /// `uncertain`：转写里没把握的词（按“字”数的区间）。不带就是都有把握。
+        case transcript(capture: WS2.Token, text: String, digest: WS2.Digest, uncertain: [Range<Int>] = [])
         case sourceLost(capture: WS2.Token)
         case editDraft(text: String, digest: WS2.Digest)
         case backendAccepted(command: WS2.Token, actual: WS2.ExecutionConfig?)
@@ -74,6 +80,8 @@ struct ConductorSession: Sendable {
         case reconciled(command: WS2.Token, Reconciliation)
         case approval(WS2.ApprovalRequest)
         case voiceCheck(challenge: WS2.Token, target: WS2.Digest, phraseOK: Bool, voiceprintOK: Bool)
+        /// 宿主为这次声音挑战挑好的随机短语；刘海写“按住侧边按钮念：短语”。
+        case voicePhrase(challenge: WS2.Token, phrase: String)
         case approvalFinished(WS2.ApprovalKey)
         case tick
     }
@@ -96,7 +104,11 @@ struct ConductorSession: Sendable {
         case requestVoiceChallenge(WS2.Token, WS2.ApprovalKey)
         case disconnect, volume(up: Bool), sound(String), fault(WS2.Fault)
     }
-    struct Draft: Equatable, Sendable { let text: String; let digest: WS2.Digest; let revision: UInt64; let owner: WS2.Context }
+    struct Draft: Equatable, Sendable {
+        let text: String; let digest: WS2.Digest; let revision: UInt64; let owner: WS2.Context
+        /// 听写没把握的词，只用来画下划线；不参与发送，也不进摘要。
+        var uncertainRanges: [Range<Int>] = []
+    }
     private struct Press: Sendable { let id: UInt64; let beganAt: WS2.Instant; let sequence: UInt64; var consumed = false }
     private struct Stroke: Sendable { let beganAt: WS2.Instant; let sequence: UInt64; var points: [ConductorPoint] }
     private struct Capture: Sendable {
@@ -120,7 +132,8 @@ struct ConductorSession: Sendable {
     static let discardInterval: UInt64 = 2 * WS2.Duration.second
     static let tapLimit: UInt64 = 250 * WS2.Duration.millisecond
     static let tapMinimum: UInt64 = 50 * WS2.Duration.millisecond
-    static let tapExtent = 0.03 // 推荐；0.03…0.15 的灰区拒识，不猜点按。
+    /// 点按：起落位移小于 60/1000（和 CompanionHID.tapLimit 同一个谓词），另加 50–250 ms 的时长。暂定，待真机采样。
+    static let tapExtent = 0.06
     private(set) var enabled = false
     private(set) var locked = false
     private(set) var context: WS2.Context?
@@ -159,6 +172,7 @@ struct ConductorSession: Sendable {
     private var costBinding: WS2.CostBinding?
     private var requiresCost = false
     private var candidateLabel = ""
+    private var projectLabel = ""
     init(bootID: UUID, emptyDraftDigest: WS2.Digest) {
         tokens = WS2.TokenSource(bootID: bootID, domain: .conductor); self.emptyDraftDigest = emptyDraftDigest
     }
@@ -193,11 +207,11 @@ struct ConductorSession: Sendable {
                   initial.model.provider == envelope.context.session.provider,
                   validCapabilities(caps), caps.contains(where: { $0.accepts(initial) }),
                   let slots = ConductorModelSlots(modelSlots), !project.isEmpty, project.utf8.count <= 512 else { return [.fault(.malformedInput)] }
-            if let current = context, current.peerID != envelope.context.peerID { return show(.message("另一台 iPhone 正在指挥")) }
+            if let current = context, current.peerID != envelope.context.peerID { return show(.message("另一台 iPhone 正在遥控")) }
             var effects = clearTransient(at: now)
             context = envelope.context; lastEpoch = envelope.context.epoch; gate = WS2.EventGate()
             guard gate.accept(sequence: envelope.sequence, at: now) else { context = nil; return [.fault(.sequenceReplayed)] }
-            lastPressID = 0; self.capabilities = caps; self.slots = slots
+            lastPressID = 0; self.capabilities = caps; self.slots = slots; projectLabel = project
             nextConfig = initial; currentConfig = nil; runningTurn = nil; command = nil; uncertainCommand = nil
             requiresCost = false; backendReady = false; source = nil
             effects += show(.connected(project: project, provider: initial.model.provider, effort: initial.effort))
@@ -232,12 +246,12 @@ struct ConductorSession: Sendable {
         case .audioSamples(let id):
             guard var item = capture, item.id == id, item.recording else { return [] }
             item.samples = true; capture = item; effects += show(.listening(source: item.sourceLabel))
-        case .transcript(let id, let text, let digest):
+        case .transcript(let id, let text, let digest, let uncertain):
             guard let item = capture, item.id == id, !item.recording, now < item.deadline else { return [] }
             capture = nil
             guard item.challengeID == nil else { return [] }
             guard item.baseDraftRevision == draftRevision else { return show(.message("草稿已修改，未覆盖")) }
-            effects += replaceDraft(text, digest: digest, sequence: envelope.sequence, now: now)
+            effects += replaceDraft(text, digest: digest, uncertain: uncertain, sequence: envelope.sequence, now: now)
         case .sourceLost(let id):
             guard let item = capture, item.id == id else { return [] }
             if item.recording { effects.append(.stopCapture(id)) }
@@ -258,7 +272,8 @@ struct ConductorSession: Sendable {
         case .backendRejected(let id):
             guard let item = command, item.id == id else { return [] }
             command = nil; recoverDraft(item)
-            effects += show(.message("后端拒绝了，草稿保留"))
+            // 草稿已经由 recoverDraft 留着；刘海只说连不上哪一家。
+            effects += show(.message("连不上 \(envelope.context.session.provider.displayName)"))
         case .turnStarted(let id, let turn):
             guard let item = command, item.id == id, item.kind == .submit, validID(turn) else { return [] }
             runningTurn = turn; currentConfig = item.actual; currentRequested = item.requested
@@ -306,6 +321,9 @@ struct ConductorSession: Sendable {
             challenge = nil; approvalBusy = true
             effects.append(approvalEffect(request, confirmation: item.confirmation, confirm: true, deny: false, voice: phrase && voice))
             effects += show(.authenticating) // false 走授权服务的 Touch ID，不是允许，也不信任远端布尔值。
+        case .voicePhrase(let token, let phrase):
+            guard let item = challenge, item.id == token, approval != nil, !phrase.isEmpty, phrase.utf8.count <= 256 else { return [] }
+            effects += show(.voiceChallenge(phrase: phrase))
         case .approvalFinished(let key):
             guard approval?.key == key else { return [] }
             approval = nil; challenge = nil; approvalBusy = false; effects += show(.message("已处理"))
@@ -396,9 +414,11 @@ struct ConductorSession: Sendable {
         }
         stroke = nil
         let duration = now.elapsed(since: s.beganAt)
-        let xs = s.points.map(\.x), ys = s.points.map(\.y)
-        let extent = max((xs.max() ?? 0) - (xs.min() ?? 0),(ys.max() ?? 0) - (ys.min() ?? 0))
-        if extent < Self.tapExtent, duration >= Self.tapMinimum, duration <= Self.tapLimit {
+        var displacement = 0.0
+        if let first = s.points.first, let last = s.points.last {
+            displacement = ((last.x - first.x) * (last.x - first.x) + (last.y - first.y) * (last.y - first.y)).squareRoot()
+        }
+        if displacement < Self.tapExtent, duration >= Self.tapMinimum, duration <= Self.tapLimit {
             return tap(Confirmation(beganAt: s.beganAt, sequence: s.sequence), now: now)
         }
         if approval != nil { return [] }
@@ -415,13 +435,14 @@ struct ConductorSession: Sendable {
             switch cap.resolve(requested, keeping: current.effort) {
             case .unavailable(let message): return show(.message(message))
             case .supported(let config, let costly, let label):
-                if costly { return proposeCost(config, label: label, sequence: sequence, now: now) }
-                requiresCost = false; nextConfig = config
                 let gestureName: String
                 switch gesture {
                 case .tone(let n): gestureName = ["一声","二声","三声","四声"][n - 1]
                 case .beats(let n): gestureName = ["一拍","二拍","三拍","四拍","五拍","六拍"][n - 1]
                 }
+                // 高开销档位：刘海写“五拍 · max　点一下确认”，手势名加实际档位。
+                if costly { return proposeCost(config, label: "\(gestureName) · \(config.effort)", sequence: sequence, now: now) }
+                requiresCost = false; nextConfig = config
                 return [.stageConfig(config)] + show(runningTurn != nil ? .next(current: currentConfig?.effort ?? "实际档位还没确认", next: config.effort) : .staged(label: "\(gestureName) · \(label)　下一轮")) + sound("已识别")
             }
         }
@@ -435,7 +456,7 @@ struct ConductorSession: Sendable {
             guard case .cost = notch else { return [] }
             guard costVault.confirm(c, beganAt: confirmation.beganAt, sequence: confirmation.sequence, now: now) else { return [] }
             candidate = nil; nextConfig = c.binding.config; costBinding = c.binding; requiresCost = true
-            return [.stageConfig(c.binding.config)] + show(.staged(label: "已确认"))
+            return [.stageConfig(c.binding.config)] + show(.staged(label: "下一轮生效 · 只管一次提交"))
         }
         if let request = approval {
             guard !approvalBusy, challenge == nil, confirmation.beganAt >= request.createdAt,
@@ -446,7 +467,7 @@ struct ConductorSession: Sendable {
             }
             guard let id = tokens.next() else { return [.fault(.generationExhausted)] }
             challenge = Challenge(id: id, confirmation: confirmation, deadline: min(request.deadline,now.adding(30 * WS2.Duration.second)))
-            return [.requestVoiceChallenge(id, request.key)] + show(.voiceChallenge)
+            return [.requestVoiceChallenge(id, request.key)] + show(.voiceChallenge(phrase: nil))
         }
         return []
     }
@@ -503,13 +524,20 @@ struct ConductorSession: Sendable {
         c.recording = false; c.deadline = now.adding(Self.transcriptionLimit); capture = c
         effects += show(.transcribing); return effects
     }
-    private mutating func replaceDraft(_ text: String, digest: WS2.Digest, sequence: UInt64, now: WS2.Instant) -> [Effect] {
+    private mutating func replaceDraft(_ text: String, digest: WS2.Digest, uncertain: [Range<Int>] = [], sequence: UInt64, now: WS2.Instant) -> [Effect] {
         guard let owner = context, text.utf8.count <= Self.maximumDraftBytes, draftRevision < UInt64.max else { return [.fault(.malformedInput)] }
-        draftRevision += 1; draft = text.isEmpty ? nil : Draft(text: text, digest: digest, revision: draftRevision, owner: owner)
+        let marks = ConductorDraftMarks.sanitize(uncertain, in: text)
+        draftRevision += 1; draft = text.isEmpty ? nil : Draft(text: text, digest: digest, revision: draftRevision, owner: owner, uncertainRanges: marks)
         discardAt = nil; costVault.invalidate(); costBinding = nil
         if let c = candidate { return proposeCost(c.binding.config, label: candidateLabel, sequence: sequence, now: now) }
         if requiresCost, let config = nextConfig { return proposeCost(config, label: config.effort, sequence: sequence, now: now) }
-        return show(text.isEmpty ? .message("草稿已清空") : .draft(text))
+        return show(text.isEmpty ? .message("草稿已清空") : .draft(text, header: draftHeader, uncertain: marks))
+    }
+    /// 草稿第一行：给谁（项目 · 助手）和下一轮用的档位。
+    private var draftHeader: String {
+        let provider = context?.session.provider.displayName ?? ""
+        let effort = nextConfig?.effort ?? currentConfig?.effort ?? ""
+        return "草稿 · 给 \(projectLabel) · \(provider) · \(effort)"
     }
     private mutating func proposeCost(_ config: WS2.ExecutionConfig, label: String, sequence: UInt64, now: WS2.Instant) -> [Effect] {
         guard let context, let id = tokens.next() else { return [.fault(.generationExhausted)] }
@@ -585,7 +613,8 @@ struct ConductorSession: Sendable {
             nextConfig = config; return [.stageConfig(config)] + show(.staged(label: "下一轮 · \(cap.model.modelID)"))
         }
     }
-    static let swipeDistance = 0.2
+    /// 竖滑阈值 16%（和 iPhone 触控的 160/1000 一致）。暂定，待真机采样。
+    static let swipeDistance = 0.16
     /// 单向竖滑：true 往下，false 往上。中途反向超过识别器的抖动阈值（落下又回弹的半拍）不算滑动。
     static func verticalSwipe(_ points: [ConductorPoint]) -> Bool? {
         guard let first = points.first, let last = points.last else { return nil }
@@ -660,5 +689,136 @@ struct ConductorSession: Sendable {
     private func validID(_ text: String) -> Bool { !text.isEmpty && text.utf8.count <= 512 }
     private func validCapabilities(_ caps: [ConductorCapabilities]) -> Bool {
         !caps.isEmpty && caps.count <= 256 && caps.allSatisfy(\.isValid) && Set(caps.map(\.model)).count == caps.count
+    }
+}
+
+// MARK: - 刘海画面的纯逻辑（R10）
+// 画面怎么摆、哪些点亮、画不画波形、哪些字加下划线，都在这里定；AppKit 视图只照着画。
+
+/// 刘海里指挥画面的尺寸。cqw 是屏宽的 1%；岛按这个尺寸长出来，进场用 `Motion` 的 pop。
+enum ConductorShape {
+    enum Kind: Sendable { case conductor, modelPicker }
+    static func size(_ kind: Kind, screenWidth: CGFloat) -> CGSize {
+        guard screenWidth.isFinite, screenWidth > 0 else { return CGSize(width: 0, height: 0) }
+        let cqw = screenWidth / 100
+        switch kind {
+        case .conductor: return CGSize(width: (40 * cqw).rounded(), height: (12.6 * cqw).rounded())
+        case .modelPicker: return CGSize(width: (50 * cqw).rounded(), height: (13.6 * cqw).rounded())
+        }
+    }
+}
+
+/// 六个拍点。只亮已经完成的拍；画的时候不提前给出档位。
+enum ConductorBeatDots {
+    static let count = 6
+    static func lit(forBeats beats: Int) -> [Bool] {
+        let done = max(0, min(count, beats))
+        return (0..<count).map { $0 < done }
+    }
+    /// 这一次比上一次新亮起来的点（只有拍数变多才有），视图只给这些点一下强调。
+    static func newlyLit(from old: Int, to new: Int) -> [Int] {
+        let before = max(0, min(count, old)), after = max(0, min(count, new))
+        return after > before ? Array(before..<after) : []
+    }
+}
+
+/// 听写时的波形：20 根柱，每根是一段样本的 RMS。没有样本就没有柱，不画假波形。
+enum ConductorWaveform {
+    static let barCount = 20
+    /// 低于这个电平（dBFS）当作没声音。
+    static let floorDecibels = -50.0
+    static func bars(from samples: [Float]) -> [Double] {
+        let n = samples.count
+        guard n > 0 else { return [] }
+        return (0..<barCount).map { index in
+            let start = index * n / barCount
+            let end = min(n, max(start + 1, (index + 1) * n / barCount))
+            var sum = 0.0
+            for i in start..<end where samples[i].isFinite { sum += Double(samples[i]) * Double(samples[i]) }
+            let rms = (sum / Double(end - start)).squareRoot()
+            guard rms > 0 else { return 0 }
+            let decibels = 20 * log10(rms)
+            return max(0, min(1, (decibels - floorDecibels) / -floorDecibels))
+        }
+    }
+}
+
+/// 听写没把握的词：区间按“字”数（Character），画下划线时再换成 NSTextView 要的 UTF-16 区间。
+enum ConductorDraftMarks {
+    static let maximumRanges = 64
+    /// 夹进全文范围、去掉空区间、排序、并拢相连或重叠的区间；只留前 `maximumRanges` 个。
+    static func sanitize(_ ranges: [Range<Int>], in text: String) -> [Range<Int>] {
+        let total = text.count
+        let clamped = ranges.compactMap { range -> Range<Int>? in
+            let lower = max(0, range.lowerBound), upper = min(total, range.upperBound)
+            return lower < upper ? lower..<upper : nil
+        }.sorted { $0.lowerBound < $1.lowerBound }
+        var merged: [Range<Int>] = []
+        for range in clamped {
+            if let last = merged.last, range.lowerBound <= last.upperBound {
+                merged[merged.count - 1] = last.lowerBound..<max(last.upperBound, range.upperBound)
+            } else { merged.append(range) }
+        }
+        return Array(merged.prefix(maximumRanges))
+    }
+    static func nsRanges(_ ranges: [Range<Int>], in text: String) -> [NSRange] {
+        let indices = Array(text.indices) + [text.endIndex]
+        return sanitize(ranges, in: text).map { NSRange(indices[$0.lowerBound]..<indices[$0.upperBound], in: text) }
+    }
+}
+
+/// 一个 `ConductorNotch` 在刘海里怎么写、画什么。AppKit 视图只读它。
+struct ConductorPresentation: Equatable, Sendable {
+    /// “项目 · 助手”：判定之后的副句。来自连上时那一行。
+    struct Target: Equatable, Sendable {
+        let project: String, assistant: String
+        var text: String { "\(project) · \(assistant)" }
+    }
+    var title = "", subtitle = ""
+    /// 只有画的时候有；六个点亮不亮。
+    var beatDots: [Bool]?
+    var showsWaveform = false
+    /// 草稿：第一行、全文、第三行。
+    var draftBody: String?, draftFooter: String?
+    var uncertainRanges: [Range<Int>] = []
+    /// 完成：折起来只露一行，点一下展开全文。
+    var summary: String?
+    var modelRows: [String] = [], selectedModel = 0
+
+    static func target(from notch: ConductorNotch) -> Target? {
+        if case .connected(let project, let provider, _) = notch { return Target(project: project, assistant: provider.displayName) }
+        return nil
+    }
+
+    static func make(_ notch: ConductorNotch, target: Target?) -> ConductorPresentation {
+        var p = ConductorPresentation()
+        p.title = notch.text
+        switch notch {
+        case .connected(let project, let provider, let effort):
+            p.title = project; p.subtitle = "\(provider.displayName) · \(effort)"
+        case .trajectory(_, let beats):
+            // 抬手才判定：画的时候不写手势名，也不写档位。
+            p.beatDots = ConductorBeatDots.lit(forBeats: beats)
+        case .staged(let label):
+            // “三声 · high　下一轮” → 标题“三声 · high”，副句写给谁。
+            let head = label.components(separatedBy: "\u{3000}").first ?? label
+            p.title = head.isEmpty ? label : head; p.subtitle = target?.text ?? ""
+        case .cost(let label):
+            p.title = label; p.subtitle = "点一下确认"
+        case .models(let labels, let selected):
+            p.modelRows = Array(labels.prefix(4)); p.selectedModel = selected
+        case .waitingForAudio:
+            p.title = "没有收到声音" // 没收到声音就不画波形。
+        case .listening(let source):
+            p.title = "在听"; p.subtitle = "\(source) · 松开出草稿"; p.showsWaveform = true
+        case .draft(let text, let header, let uncertain):
+            p.title = header; p.draftBody = text; p.draftFooter = ConductorNotch.draftFooter
+            p.uncertainRanges = ConductorDraftMarks.sanitize(uncertain, in: text)
+        case .completed(let summary):
+            p.title = "完成"; p.summary = summary
+            p.subtitle = summary.split(whereSeparator: \.isNewline).first.map(String.init) ?? ""
+        default: break
+        }
+        return p
     }
 }

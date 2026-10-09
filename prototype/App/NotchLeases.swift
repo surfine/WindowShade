@@ -22,8 +22,10 @@ extension WS2LeaseContent {
 final class NotchLeaseHub {
     /// 编译期登记的主人表。层与协调器里的 permits 表一致，不接受表外的名字。
     enum Owner: String {
+        /// notchShelf 是“刘海那一排”：收着的窗口和正在进行的事（播放、编程会话）是同一排、同一个主人（M11）。
+        /// 会话的“去看看”详情页也用这个主人露面。
         case authorization, conductor, notchShelf, launchpad, windowBrowser, pomodoro
-        case agentSessions, agentReview
+        case agentReview
         /// 本地只读助手会话与其选模型页（D15）。不是授权账，不能批准命令。
         case ownedCodex, ownedModelPicker
         /// 静音操作。同一刘海，不另开窗口。
@@ -33,7 +35,7 @@ final class NotchLeaseHub {
             switch self {
             case .authorization, .agentReview: return .authorization
             case .conductor: return .interaction
-            case .notchShelf, .launchpad, .windowBrowser, .pomodoro, .agentSessions,
+            case .notchShelf, .launchpad, .windowBrowser, .pomodoro,
                  .ownedCodex, .ownedModelPicker, .silent: return .opened
             }
         }
@@ -80,6 +82,7 @@ final class NotchLeaseHub {
             guard let self else { return InteractionCoordinator.Environment(unlocked: false, displays: []) }
             return InteractionCoordinator.Environment(unlocked: !self.locked(), displays: self.displays())
         },
+        quiet: { SystemQuietState.shared.state.alertsLeaveDotOnly },
         cancel: { [weak self] handle, reason in self?.route(handle, reason) })
 
     init(displays: @escaping () -> Set<WS2.DisplayID>,
@@ -105,6 +108,12 @@ final class NotchLeaseHub {
 
     // MARK: - 内容型展示（会话、指挥、审批卡、卡片）
 
+    /// 刘海所在那块屏的宽度（内容按屏宽百分比算尺寸时用）；拿不到就是 nil。
+    var hostScreenWidth: CGFloat? {
+        guard let screen = controller?.authenticationPanel()?.screen ?? NSScreen.main else { return nil }
+        return screen.frame.width
+    }
+
     /// 显式的用户动作换掉我们自己的旧内容，但永远不换掉原生认证。
     @discardableResult
     func show(_ content: NSView & WS2LeaseContent, ownerID: String, layer: WS2.Layer = .opened,
@@ -121,7 +130,8 @@ final class NotchLeaseHub {
         let request = WS2.LeaseRequest(ownerID: owner.rawValue, display: display, layer: layer,
                                        requestedAt: now, deadline: now.adding(120 * WS2.Duration.second),
                                        containsPrivateContent: true)
-        guard case .acquired(let lease) = coordinator.acquire(request, replacing: previous),
+        // 审批宿主要同步知道有没有露面，没有「以后再出现」的接法：放行不排队，照旧答忙。
+        guard case .acquired(let lease) = coordinator.acquire(request, replacing: previous, queueing: false),
               coordinator.isCurrent(lease) else { return false }
         held[display] = (owner, lease)
         contentView = content; contentPanel = panel; contentHandle = lease; contentDismissed = onDismiss
@@ -176,7 +186,8 @@ final class NotchLeaseHub {
         let request = WS2.LeaseRequest(ownerID: Owner.authorization.rawValue, display: display, layer: .authorization,
                                        requestedAt: now, deadline: now.adding(31 * WS2.Duration.second),
                                        containsPrivateContent: true)
-        guard case .acquired(let lease) = coordinator.acquire(request),
+        // 原生认证同步要答案：轮不到就照旧不出现，不排队。
+        guard case .acquired(let lease) = coordinator.acquire(request, queueing: false),
               coordinator.isCurrent(lease) else { return false }
         held[display] = (.authorization, lease)
         authHandle = lease
@@ -202,11 +213,11 @@ final class NotchLeaseHub {
         let request = WS2.LeaseRequest(ownerID: owner.rawValue, display: display, layer: owner.layer,
                                        requestedAt: now, deadline: now.adding(lifetime),
                                        containsPrivateContent: owner == .authorization)
-        switch coordinator.acquire(request) {
+        switch coordinator.acquire(request, queueing: false) {
         case .acquired(let handle):
             held[display] = (owner, handle)
             return true
-        case .busy, .unavailable:
+        case .queued, .busy, .unavailable:
             return false
         }
     }
@@ -260,6 +271,20 @@ final class NotchLeaseHub {
         return snapshot.layer == .alert
     }
 
+    /// 带 key 的提醒：600 毫秒内同 key 只换内容，不同 key 累进同一次露面。返回值同 `remind(on:)`。
+    @discardableResult
+    func remind(_ item: InteractionCoordinator.AlertItem, on display: WS2.DisplayID) -> Bool {
+        let now = clock.now()
+        coordinator.remind(item, on: display, at: now)
+        guard let snapshot = coordinator.snapshots(at: now).first(where: { $0.display == display }) else { return false }
+        return snapshot.layer == .alert
+    }
+
+    /// 这块屏正在露面的提醒，按先来后到；展示层据此合成一句。
+    func alertItems(on display: WS2.DisplayID) -> [InteractionCoordinator.AlertItem] {
+        coordinator.alertItems(on: display, at: clock.now())
+    }
+
     func publishOngoing(_ ids: [String], on display: WS2.DisplayID) {
         coordinator.publishOngoing(ids, on: display)
     }
@@ -289,24 +314,25 @@ final class NotchLeaseHub {
         coordinator.snapshots(at: clock.now()).first { $0.display == display }
     }
 
-    private func clearParks(for reason: WS2.LeaseRevocation, owner: Owner?, display: WS2.DisplayID) {
+    /// `isContent`：被撤销的是内容型展示（会话详情页等，用的也可能是 notchShelf 这个主人），不是那一排自己。
+    private func clearParks(for reason: WS2.LeaseRevocation, owner: Owner?, display: WS2.DisplayID, isContent: Bool = false) {
         switch reason {
         case .locked, .sleeping, .disabled, .sessionChanged:
             parkedShelf.removeAll(); parkedContent = nil
         case .displayRemoved:
             parkedShelf[display] = nil
             if parkedContent?.display == display { parkedContent = nil }
-        case .suspended where owner == .notchShelf:
+        case .suspended where owner == .notchShelf && !isContent:
             parkedShelf[display] = .notchShelf
         case .released, .preempted, .expired, .suspended:
-            if owner == .notchShelf { parkedShelf[display] = nil }
+            if owner == .notchShelf, !isContent { parkedShelf[display] = nil }
             if owner == parkedContent?.owner { parkedContent = nil }
         }
     }
 
     private func route(_ handle: WS2.LeaseHandle, _ reason: WS2.LeaseRevocation) {
         let owner = held[handle.display]?.owner
-        clearParks(for: reason, owner: owner, display: handle.display)
+        clearParks(for: reason, owner: owner, display: handle.display, isContent: contentHandle == handle)
         if contentHandle == handle {
             let content = contentView, panel = contentPanel, callback = contentDismissed
             contentDeadline?.cancel(); contentDeadline = nil

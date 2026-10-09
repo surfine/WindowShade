@@ -24,7 +24,7 @@ export function siteHeader(en, page) {
 export function siteFooter(en, page) {
   const c = en ? copy.en : copy.zh;
   const history = en ? '/en/history/' : '/history/';
-  const privacy = page === 'home' ? '#privacy' : `${c.path}#privacy`;
+  const privacy = c.privacyHref;
   return `<footer class="footer wrap"><div><a class="brand" href="${c.path}"><img src="/media/icon.png" width="22" height="22" alt="">WindowShade</a><p>${c.footer}</p></div><div class="footer-links"><a href="${history}">${c.navHistory}</a><a href="${repo}">${c.source}</a><a href="${repo}/releases">${c.release}</a><a href="${repo}/issues">${c.issue}</a><a href="${privacy}">${c.privacy}</a></div></footer>`;
 }
 

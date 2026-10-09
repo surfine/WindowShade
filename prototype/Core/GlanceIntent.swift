@@ -9,7 +9,7 @@ import CoreGraphics
 import Foundation
 
 struct GlanceTiming: Equatable {
-    var intentDelay: TimeInterval = 0.22
+    var intentDelay: TimeInterval = 0.20
     var leaveGrace: TimeInterval = 0.16
     /// 从菜单选择后，留出移动到卷帘条或画面的时间。到达后恢复普通离开宽限。
     var menuHandoffGrace: TimeInterval = 1.2

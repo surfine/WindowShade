@@ -32,9 +32,22 @@ struct ScrollStrip: Equatable {
     }
 
     var columns: [Column]
-    var offset: CGFloat = 0
+    /// 任何一次位置变动（滑动、键盘走列、改宽）都让「刚开的窗口一关就回原处」的记忆作废。
+    var offset: CGFloat = 0 {
+        didSet { if offset != oldValue { lastInsert = nil } }
+    }
+    /// 刚开的那扇窗和开它之前卷轴停在哪：紧接着把它关掉，就回到开它之前的样子（见 remove）。
+    /// 只是记忆，不算卷轴的状态，不参与 ==。
+    /// joined：它之后被 join 并进了别的列（这时它的列里还有别的窗口，关掉它也回原位）。
+    private var lastInsert: (id: CGWindowID, offset: CGFloat, joined: Bool)?
     /// 屏幕可用区域（AX 坐标）。
     var area: CGRect
+    /// 走到一列、改宽、松手吸附时这一列放在哪：贴边（默认，等于从前）/ 居中 / 放不下才居中。
+    var centering: Centering = .edge
+    /// 放得下就居中：所有列加起来不到一屏宽时，整组放在正中（Aaron 2026-10-09 定：默认开，设置里能关）。
+    var centersWhenFits = true
+
+    enum Centering: String, Equatable, CaseIterable { case edge, always, overflow }
     /// 停在屏幕外的列露出来的那一条（macOS 不让窗口整个离开屏幕，露一条边也让人知道那边还有）。
     static let sliver: CGFloat = 10
     /// 列宽按屏幕宽度取整，两列加起来可能比屏幕宽一两点：边沿伸出屏幕这么一点也算正好贴着屏幕边。
@@ -47,6 +60,13 @@ struct ScrollStrip: Equatable {
     /// 列宽的几档：屏幕宽度的 ⅓、½、⅔、整屏（niri 默认的前三档，加上整屏）。
     static let presets: [CGFloat] = [1.0 / 3, 0.5, 2.0 / 3, 1]
 
+    static func == (a: ScrollStrip, b: ScrollStrip) -> Bool {
+        a.columns == b.columns && a.offset == b.offset && a.area == b.area
+    }
+
+    /// 别的操作（手指开始滑、键盘走列）开始时调用：之后关掉刚开的窗口，不再回到开它之前的位置。
+    mutating func forgetLastInsert() { lastInsert = nil }
+
     init(columns: [Column], area: CGRect, offset: CGFloat = 0) {
         self.columns = columns
         self.area = area
@@ -57,7 +77,108 @@ struct ScrollStrip: Equatable {
 
     var totalWidth: CGFloat { columns.reduce(0) { $0 + $1.width } }
     var maxOffset: CGFloat { max(0, totalWidth - area.width) }
-    func clamped(_ value: CGFloat) -> CGFloat { min(max(value, 0), maxOffset) }
+    func clamped(_ value: CGFloat) -> CGFloat {
+        let bounds = scrollBounds
+        return min(max(value, bounds.lowerBound), bounds.upperBound)
+    }
+    /// 手指能把卷轴拉到的范围（两头橡皮筋从这里算起）：贴边是 [0, maxOffset]；居中方式下第一列、最后一列
+    /// 居中时的位置可能是负数、也可能超过 maxOffset；整组居中时只有一个点。
+    var scrollBounds: ClosedRange<CGFloat> { centeredBounds ?? 0...maxOffset }
+
+    // MARK: 居中（稿：docs/design-drafts/卷轴.html 的 snapCands / offsetFor）
+
+    /// 所有列加起来不到一屏宽（等于也算），又打开了“放得下就居中”：整组居中，没有别的位置可去。
+    var fitsAndCenters: Bool { centersWhenFits && !columns.isEmpty && totalWidth <= area.width }
+    /// 放得下就居中时的位置（负数：卷轴左边在屏幕左边之内）。
+    var fitOffset: CGFloat { -(area.width - totalWidth) / 2 }
+
+    /// 贴边方式、放不下时仍按从前的 [0, maxOffset] 夹住，返回 nil；其余按吸附点的上下界夹住。
+    private var centeredBounds: ClosedRange<CGFloat>? {
+        if fitsAndCenters { return fitOffset...fitOffset }
+        guard centering != .edge, !columns.isEmpty else { return nil }
+        let all = snapCandidates()
+        guard let low = all.min(), let high = all.max() else { return nil }
+        return low...high
+    }
+
+    /// 第 index 列居中时的位置。
+    private func centeredOffset(_ index: Int) -> CGFloat { start(of: index) + columns[index].width / 2 - area.width / 2 }
+
+    /// 松手吸附可以停的位置（只在居中方式不是贴边、或整组居中时用；贴边照旧走 snapped 里原来那一套）。
+    func snapCandidates() -> [CGFloat] {
+        if fitsAndCenters { return [fitOffset] }
+        var result: [CGFloat] = []
+        if centering != .always {
+            result.append(0)
+            result.append(maxOffset)
+            for index in columns.indices {
+                let left = start(of: index)
+                result.append(min(max(left, 0), maxOffset))
+                result.append(min(max(left + columns[index].width - area.width, 0), maxOffset))
+            }
+        }
+        if centering != .edge {
+            for index in columns.indices {
+                let center = centeredOffset(index)
+                result.append(centering == .overflow ? min(max(center, 0), maxOffset) : center)
+            }
+        }
+        return result
+    }
+
+    /// 走到第 index 列（键盘 ⌃⌘←→、改宽、新开的窗口）后卷轴该停在哪。previous：上一个焦点列。
+    /// 贴边：整列已经露着就不动，否则挪得最少。居中：这一列永远在正中。放不下才居中：这一列和上一个焦点列
+    /// 放不进一屏时才居中，否则同贴边。整组放得下并打开了“放得下就居中”时，一律是整组居中的位置。
+    func offsetFor(_ index: Int, previous: Int? = nil) -> CGFloat {
+        guard columns.indices.contains(index) else { return offset }
+        if fitsAndCenters { return fitOffset }
+        switch centering {
+        case .edge: return revealing(index)
+        case .always: return centeredOffset(index)
+        case .overflow:
+            if let previous, previous != index, columns.indices.contains(previous) {
+                let low = min(start(of: index), start(of: previous))
+                let high = max(start(of: index) + columns[index].width, start(of: previous) + columns[previous].width)
+                if high - low > area.width { return min(max(centeredOffset(index), 0), maxOffset) }
+            }
+            return revealing(index)
+        }
+    }
+
+    /// 居中方式与“放得下就居中”的存法（设置 › 卷帘 › 排布，稿：卷轴.html）：
+    /// 走到一列时 ScrollStrip.centeringMode（edge 贴边 / always 居中 / overflow 放不下才居中，默认 edge）、
+    /// 放得下就居中 ScrollStrip.centerWhenFits（默认开）。没有总开关：方式默认贴边，等于从前的手感。
+    static let centeringModeKey = "ScrollStrip.centeringMode"
+    static let centerWhenFitsKey = "ScrollStrip.centerWhenFits"
+
+    static func resolvedCentering(mode: String?, whenFits: Bool?) -> (mode: Centering, whenFits: Bool) {
+        (mode.flatMap(Centering.init(rawValue:)) ?? .edge, whenFits ?? true)
+    }
+
+    static func storedCentering() -> (mode: Centering, whenFits: Bool) {
+        let mode = UserDefaults.standard.string(forKey: centeringModeKey)
+        let whenFits = UserDefaults.standard.object(forKey: centerWhenFitsKey) as? Bool
+        return resolvedCentering(mode: mode, whenFits: whenFits)
+    }
+
+    /// 设置里改了：和默认一样就删掉那个键，保持偏好干净。
+    static func store(mode: Centering) {
+        if mode == .edge { UserDefaults.standard.removeObject(forKey: centeringModeKey) }
+        else { UserDefaults.standard.set(mode.rawValue, forKey: centeringModeKey) }
+    }
+
+    static func store(whenFits: Bool) {
+        if whenFits { UserDefaults.standard.removeObject(forKey: centerWhenFitsKey) }
+        else { UserDefaults.standard.set(false, forKey: centerWhenFitsKey) }
+    }
+
+    /// 开卷轴时把设置读进来，并把卷轴停在该停的位置（整组放得下就居中时不再是 0）。
+    mutating func applyStoredCentering() {
+        let stored = Self.storedCentering()
+        centering = stored.mode
+        centersWhenFits = stored.whenFits
+        if fitsAndCenters { offset = fitOffset }
+    }
 
     /// 第 index 列的左边在卷轴上的位置。
     func start(of index: Int) -> CGFloat { columns.prefix(index).reduce(0) { $0 + $1.width } }
@@ -287,8 +408,10 @@ struct ScrollStrip: Equatable {
         let left = offset, right = offset + area.width
         let first = columns.indices.first { start(of: $0) + columns[$0].width > left } ?? columns.count - 1
         let last = columns.indices.last { start(of: $0) < right } ?? 0
+        // 居中方式下露着的那一段可能伸到卷轴两头之外（整组居中、第一列居中）：框只画在铺开的范围里。
         let viewport = CGRect(x: x(left, in: first), y: originY,
                               width: x(right, in: last) - x(left, in: first), height: height)
+            .intersection(CGRect(x: bounds.minX, y: originY, width: bounds.width, height: height))
         return Overview(scale: scale, columns: rects, windows: windows, viewport: viewport)
     }
 
@@ -296,6 +419,12 @@ struct ScrollStrip: Equatable {
 
     /// 松手后停在哪：按惯性推算的位置，找最近的“某一列的左边贴屏幕左边”或“某一列的右边贴屏幕右边”。
     func snapped(_ projected: CGFloat) -> CGFloat {
+        if centering != .edge || fitsAndCenters {
+            let all = snapCandidates()
+            guard let low = all.min(), let high = all.max() else { return clamped(projected) }
+            let target = min(max(projected, low), high)
+            return all.min { abs($0 - target) < abs($1 - target) } ?? target
+        }
         var candidates: [CGFloat] = [0, maxOffset]
         for index in columns.indices {
             let left = start(of: index)
@@ -334,32 +463,234 @@ struct ScrollStrip: Equatable {
     mutating func setWidth(_ width: CGFloat, of index: Int) {
         guard columns.indices.contains(index) else { return }
         columns[index].width = width
-        offset = revealing(index)
+        offset = offsetFor(index)
     }
 
     // MARK: 增减
+
+    /// 松手时的速度（点/秒，offset 方向）：只看松手前最后 0.15 秒，并在松手那一刻补一个「没再动」的点——
+    /// 手指停住了再抬起来就不该把卷轴甩出去；松手前一直在滑，速度就是那一小段的平均速度。
+    static func releaseVelocity(samples: [(time: TimeInterval, offset: CGFloat)], releaseTime: TimeInterval,
+                                window: TimeInterval = 0.150) -> CGFloat {
+        guard let last = samples.last else { return 0 }
+        let all = samples + [(time: max(releaseTime, last.time), offset: last.offset)]
+        let recent = all.filter { $0.time >= releaseTime - window }
+        guard let first = recent.first, let end = recent.last, recent.count >= 2 else { return 0 }
+        let span = end.time - first.time
+        guard span > 0.008 else { return 0 }
+        return (end.offset - first.offset) / CGFloat(span)
+    }
 
     /// 新窗口：接在第 after 列右边，自己一列（niri：开新窗口不挤别人），并露出来。
     mutating func insert(_ id: CGWindowID, width: CGFloat, after index: Int?) {
         guard !ids.contains(id) else { return }
         let position = index.map { min($0 + 1, columns.count) } ?? columns.count
+        let before = offset
+        lastInsert = nil
         columns.insert(Column(ids: [id], width: width), at: position)
-        offset = revealing(position)
+        offset = offsetFor(position, previous: index)
+        lastInsert = (id, before, false)
     }
 
     /// 窗口关了或被人挪走：从卷轴里拿掉；一列空了，整列让出来。当前露着的列尽量不动。
+    /// 刚开的窗口紧接着被关掉（中间没有别的增减、没有滑动）：整列消失，卷轴回到开它之前的位置，像没开过一样。
     mutating func remove(_ id: CGWindowID) {
         guard let index = column(of: id) else { return }
+        let undo = lastInsert
+        lastInsert = nil
         let row = columns[index].ids.firstIndex(of: id)!
         columns[index].ids.remove(at: row)
         columns[index].shares.remove(at: row)
+        var restore: CGFloat?
         if columns[index].ids.isEmpty {
             columns.remove(at: index)
+            if let undo, undo.id == id { restore = undo.offset }
         } else {
             let total = columns[index].shares.reduce(0, +)
             columns[index].shares = columns[index].shares.map { $0 / max(0.0001, total) }
+            // 刚开的窗口并进别的列后又被关掉（join 保留了这份记忆）：同样回到开它之前的位置。
+            if let undo, undo.id == id, undo.joined { restore = undo.offset }
         }
-        offset = clamped(offset)
+        offset = clamped(restore ?? offset)
+    }
+
+    // MARK: 并进、拆出（稿：卷轴.html“列宽和一列里几扇”，工作包 SS-02）
+
+    /// 一列里每扇至少这么高（点）。和魔法平铺旁边那一列一致，Air 15 英寸上一列最多 3 扇。
+    static let minRowHeight: CGFloat = 280
+    /// 一列最多叠几扇。
+    var rowCapacity: Int { max(1, Int(area.height / Self.minRowHeight)) }
+
+    enum Join: Equatable {
+        /// 单独一列的窗口并进了旁边那一列（column：并进之后那一列的位置）。
+        case merged(column: Int)
+        /// 一列里的窗口拆成了自己一列（column：它新的那一列）。
+        case split(column: Int)
+        /// 那一列已经放满了，没有动（column：那一列的位置，让界面晃一下）。
+        case full(column: Int)
+        /// 没有可并进的列。
+        case none
+    }
+
+    /// 并进左边或右边那一列，已经在一列里就拆成自己一列。
+    /// 并进：叠到那一列最底下，那一列各扇高度平分；那一列已有 rowCapacity 扇就不并进（.full）。
+    /// 拆出：窗口自己一列，宽度同原来那一列，放在原来那一列的 side 一边；剩下的几扇高度按原比例补满。
+    /// 之后卷轴停到该停的位置（居中方式、整组居中照旧）。刚开的窗口并进、拆出后再关掉，仍回开它之前的位置。
+    mutating func join(_ id: CGWindowID, toward side: Side) -> Join {
+        guard let index = column(of: id), let row = columns[index].ids.firstIndex(of: id) else { return .none }
+        let undo = lastInsert.flatMap { $0.id == id ? $0 : nil }
+        if columns[index].ids.count > 1 {
+            columns[index].ids.remove(at: row)
+            columns[index].shares.remove(at: row)
+            let total = columns[index].shares.reduce(0, +)
+            columns[index].shares = columns[index].shares.map { $0 / max(0.0001, total) }
+            let width = columns[index].width
+            let position = side == .left ? index : index + 1
+            columns.insert(Column(ids: [id], width: width), at: position)
+            offset = clamped(offsetFor(position, previous: side == .left ? index + 1 : index))
+            lastInsert = undo.map { ($0.id, $0.offset, true) }
+            return .split(column: position)
+        }
+        let target = side == .left ? index - 1 : index + 1
+        guard columns.indices.contains(target) else { return .none }
+        guard columns[target].ids.count < rowCapacity else { return .full(column: target) }
+        columns[target] = Column(ids: columns[target].ids + [id], width: columns[target].width)
+        columns.remove(at: index)
+        let merged = side == .left ? target : index
+        offset = clamped(offsetFor(merged))
+        lastInsert = undo.map { ($0.id, $0.offset, true) }
+        return .merged(column: merged)
+    }
+
+    // MARK: 概览里拖着换位置（稿：卷轴.html“拖着换位置”，工作包 SS-03）
+
+    /// 落在哪：index 是原来第几列的左边（0…列数）新开一列；或并进 column 列、插在第 row 扇之前（0…扇数）。
+    /// 序号都按拖动开始时的卷轴算，move 里自己换算。
+    enum Drop: Equatable {
+        case newColumn(at: Int)
+        case join(column: Int, row: Int)
+    }
+
+    /// 缝：落点和要画的蓝条（概览坐标，左上原点）。
+    struct Seam: Equatable {
+        var drop: Drop
+        var bar: CGRect
+    }
+
+    /// 蓝条的粗细（点）。
+    static let seamThickness: CGFloat = 4
+
+    /// 放下去等于没动：自己单独一列，落在它自己那一列的两边；或者在一列里落在自己上下紧挨着的缝。
+    func isNoOp(_ drop: Drop, moving id: CGWindowID) -> Bool {
+        guard let source = column(of: id), let row = columns[source].ids.firstIndex(of: id) else { return true }
+        switch drop {
+        case .newColumn(let index):
+            return columns[source].ids.count == 1 && (index == source || index == source + 1)
+        case .join(let column, let at):
+            return column == source && (at == row || at == row + 1)
+        }
+    }
+
+    /// 离指针最近的缝：两列之间（和两头）的竖缝 = 新开一列放进去；一列里两扇之间的横缝 = 并进那一列。
+    /// 距离算到那道缝的线段上（竖缝是整列的高、横缝是整列的宽）。落了也等于没动的缝不算。
+    /// 横缝所在那一列已满（不算拖着的这扇本来就在里面）：改画成那一列左边或右边（指针靠哪边就哪边）的新开一列。
+    func seam(nearest point: CGPoint, dragging id: CGWindowID, in layout: Overview) -> Seam? {
+        guard let source = column(of: id), layout.columns.count == columns.count, !columns.isEmpty else { return nil }
+        let t = Self.seamThickness
+        func vertical(_ index: Int) -> Seam {
+            let first = layout.columns[0], last = layout.columns[columns.count - 1]
+            let x: CGFloat
+            if index <= 0 { x = first.minX - 8 }
+            else if index >= columns.count { x = last.maxX + 8 }
+            else { x = (layout.columns[index - 1].maxX + layout.columns[index].minX) / 2 }
+            let ref = layout.columns[min(max(index, 0), columns.count - 1)]
+            return Seam(drop: .newColumn(at: index), bar: CGRect(x: x - t / 2, y: ref.minY, width: t, height: ref.height))
+        }
+        func distance(_ bar: CGRect) -> CGFloat {
+            let dx = max(0, bar.minX - point.x, point.x - bar.maxX)
+            let dy = max(0, bar.minY - point.y, point.y - bar.maxY)
+            return hypot(dx, dy)
+        }
+        var best: (seam: Seam, distance: CGFloat)?
+        func offer(_ seam: Seam) {
+            guard !isNoOp(seam.drop, moving: id) else { return }
+            let d = distance(seam.bar)
+            if best == nil || d < best!.distance { best = (seam, d) }
+        }
+        for index in 0...columns.count { offer(vertical(index)) }
+        for (c, column) in columns.enumerated() where column.ids.count > 1 {
+            let rect = layout.columns[c]
+            for row in 1..<column.ids.count {
+                guard let upper = layout.windows[column.ids[row - 1]] else { continue }
+                let bar = CGRect(x: rect.minX, y: upper.maxY - t / 2, width: rect.width, height: t)
+                let occupied = column.ids.count - (c == source ? 1 : 0)
+                if occupied >= rowCapacity {
+                    // 满列：改画成新开一列，靠指针那一边。
+                    offer(vertical(point.x < rect.midX ? c : c + 1))
+                } else {
+                    offer(Seam(drop: .join(column: c, row: row), bar: bar))
+                }
+            }
+        }
+        return best?.seam
+    }
+
+    /// VoiceOver 动作要去的落点：toward 一边的相邻一列。joining = false：自己一列放在那一边（“移到左边一列”）；
+    /// joining = true：并进那一列的最底下（“并进左边这一列”）。去不了（没有那一列、那一列已满、等于没动）返回 nil。
+    func drop(for id: CGWindowID, toward side: Side, joining: Bool) -> Drop? {
+        guard let source = column(of: id) else { return nil }
+        let single = columns[source].ids.count == 1
+        let target = side == .left ? source - 1 : source + 1
+        let result: Drop
+        if joining {
+            guard columns.indices.contains(target), columns[target].ids.count < rowCapacity else { return nil }
+            result = .join(column: target, row: columns[target].ids.count)
+        } else if single {
+            guard columns.indices.contains(target) else { return nil }
+            result = .newColumn(at: side == .left ? target : target + 1)
+        } else {
+            result = .newColumn(at: side == .left ? source : source + 1)
+        }
+        return isNoOp(result, moving: id) ? nil : result
+    }
+
+    /// 松手：一次把那扇摆到落点。新开的一列宽度同它原来那一列；并进的叠到落点那条缝，那一列各扇高度平分。
+    /// 之后卷轴停到该停的位置。返回是否真的动了。
+    @discardableResult
+    mutating func move(_ id: CGWindowID, to drop: Drop) -> Bool {
+        guard let source = column(of: id), let row = columns[source].ids.firstIndex(of: id), !isNoOp(drop, moving: id) else { return false }
+        switch drop {
+        case .newColumn(let index): guard (0...columns.count).contains(index) else { return false }
+        case .join(let column, let at):
+            guard columns.indices.contains(column), (0...columns[column].ids.count).contains(at) else { return false }
+            if column != source, columns[column].ids.count >= rowCapacity { return false }
+        }
+        let width = columns[source].width
+        let removedColumn = columns[source].ids.count == 1
+        lastInsert = nil
+        if removedColumn {
+            columns.remove(at: source)
+        } else {
+            columns[source].ids.remove(at: row)
+            columns[source].shares.remove(at: row)
+            let total = columns[source].shares.reduce(0, +)
+            columns[source].shares = columns[source].shares.map { $0 / max(0.0001, total) }
+        }
+        let landed: Int
+        switch drop {
+        case .newColumn(let index):
+            landed = removedColumn && source < index ? index - 1 : index
+            columns.insert(Column(ids: [id], width: width), at: landed)
+        case .join(let column, let at):
+            landed = removedColumn && source < column ? column - 1 : column
+            var position = at
+            if column == source, row < at { position -= 1 }
+            var ids = columns[landed].ids
+            ids.insert(id, at: position)
+            columns[landed] = Column(ids: ids, width: columns[landed].width)
+        }
+        offset = clamped(offsetFor(landed))
+        return true
     }
 
     /// 按窗口要的地方给新列一个宽度：要地方的 ⅔，参考 ½，轻的 ⅓。
@@ -371,5 +702,48 @@ struct ScrollStrip: Equatable {
         case .light, .chat: fraction = 1.0 / 3
         }
         return (area.width * fraction).rounded()
+    }
+}
+
+// MARK: 概览里拖着窗口靠边时的自动滑动（想法来自 niri 的手势配置，只借思路）
+
+enum EdgeScroll {
+    /// 离屏幕左右边多近算进入触发区（点）。
+    static let zone: CGFloat = 30
+    /// 指针在触发区里停够多久才开始滑（秒）。
+    static let dwellRequired: TimeInterval = 0.1
+    /// 贴着屏幕边时的最快速度（点/秒）。
+    static let maxSpeed: CGFloat = 1500
+
+    /// 速度大小（点/秒）：区外 0；没停够 dwellRequired 为 0；之后随深入线性升高，贴边 = maxSpeed。
+    static func edgeScrollSpeed(distanceToEdge: CGFloat, dwell: TimeInterval) -> CGFloat {
+        guard distanceToEdge < zone, dwell >= dwellRequired else { return 0 }
+        let depth = (zone - max(0, distanceToEdge)) / zone
+        return min(maxSpeed, maxSpeed * depth)
+    }
+
+    /// 带方向的速度：左边缘给负、右边缘给正（正 = 往右看更多内容）。
+    static func velocity(pointerX: CGFloat, width: CGFloat, dwell: TimeInterval) -> CGFloat {
+        let left = edgeScrollSpeed(distanceToEdge: pointerX, dwell: dwell)
+        if left > 0 { return -left }
+        return edgeScrollSpeed(distanceToEdge: width - pointerX, dwell: dwell)
+    }
+}
+
+/// 记着指针进触发区多久了；离开触发区或拖动结束就清零。
+struct EdgeScrollTracker {
+    private var enteredAt: TimeInterval?
+    private(set) var side: Int = 0   // -1 左、0 无、1 右
+
+    var isInZone: Bool { enteredAt != nil }
+
+    mutating func reset() { enteredAt = nil; side = 0 }
+
+    /// 当前该以多快的速度滑（点/秒，带方向）。
+    mutating func velocity(pointerX: CGFloat, width: CGFloat, now: TimeInterval) -> CGFloat {
+        let newSide = pointerX < EdgeScroll.zone ? -1 : (width - pointerX < EdgeScroll.zone ? 1 : 0)
+        if newSide == 0 { reset(); return 0 }
+        if newSide != side || enteredAt == nil { side = newSide; enteredAt = now }
+        return EdgeScroll.velocity(pointerX: pointerX, width: width, dwell: now - (enteredAt ?? now))
     }
 }

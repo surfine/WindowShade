@@ -134,6 +134,8 @@ final class LaunchpadView: NSView, NSTextFieldDelegate {
         guard let root = layer else { return }
         root.isGeometryFlipped = true
         wall.contentsGravity = .resizeAspectFill
+        // 壁纸只有 1/4 像素，铺满屏幕时线性放大。
+        wall.magnificationFilter = .linear
         wall.backgroundColor = NSColor(white: 0.12, alpha: 1).cgColor
         root.addSublayer(wall)
         dim.backgroundColor = NSColor.black.cgColor
@@ -297,6 +299,7 @@ final class LaunchpadView: NSView, NSTextFieldDelegate {
 
     func setWallpaper(_ image: CGImage) {
         CATransaction.begin()
+        // fade-only: 壁纸换图是交叉淡化，没有位移。
         CATransaction.setAnimationDuration(Motion.Spring.settle.response)
         wall.contents = image
         CATransaction.commit()
@@ -715,11 +718,12 @@ final class LaunchpadView: NSView, NSTextFieldDelegate {
     /// 停在上面的图标浮起来：大一点、底下有影子（iPad 接触控板时的样子），其余落回去。
     func applyHover() {
         CATransaction.begin()
+        // fade-only: 影子的深浅；浮起的缩放走弹簧。
         CATransaction.setAnimationDuration(reduced ? 0 : Motion.Spring.expand.response)
         CATransaction.setAnimationTimingFunction(nil)
         for (key, cell) in cells where reorder?.key != key && reorder?.merging.map({ LaunchpadCell.key(tiles[$0]) }) != key {
             let lifted = key == hovered
-            cell.icon.transform = lifted ? CATransform3DMakeScale(1.08, 1.08, 1) : CATransform3DIdentity
+            cell.icon.springTransform(lifted ? CATransform3DMakeScale(1.08, 1.08, 1) : CATransform3DIdentity, .expand, reduced: reduced)
             cell.icon.shadowOpacity = lifted ? 0.32 : 0
         }
         CATransaction.commit()
@@ -728,10 +732,11 @@ final class LaunchpadView: NSView, NSTextFieldDelegate {
     func setPressed(_ cell: LaunchpadCell?, _ on: Bool) {
         guard let cell else { return }
         CATransaction.begin()
+        // fade-only: 按下时盖上的那层暗色；缩放走弹簧。
         CATransaction.setAnimationDuration(on ? 0.08 : 0.2)
         cell.shade.opacity = on ? 1 : 0
-        cell.icon.transform = on ? CATransform3DMakeScale(0.96, 0.96, 1)
-            : (cell.key == hovered ? CATransform3DMakeScale(1.08, 1.08, 1) : CATransform3DIdentity)
+        cell.icon.springTransform(on ? CATransform3DMakeScale(0.96, 0.96, 1)
+            : (cell.key == hovered ? CATransform3DMakeScale(1.08, 1.08, 1) : CATransform3DIdentity), .calm, reduced: reduced)
         CATransaction.commit()
     }
 
@@ -1100,12 +1105,7 @@ final class LaunchpadView: NSView, NSTextFieldDelegate {
         hovered = nil
         cell.root.zPosition = 10
         cell.showBadge(false, animated: !reduced)
-        CATransaction.begin()
-        CATransaction.setAnimationDuration(Motion.Spring.expand.response)
-        cell.icon.transform = CATransform3DMakeScale(1.14, 1.14, 1)
-        cell.icon.shadowOpacity = 0.35
-        cell.root.opacity = 0.92
-        CATransaction.commit()
+        lift(cell)
         startEditDrag(at: point)
         moveReorder(to: point)
     }
@@ -1242,13 +1242,30 @@ final class LaunchpadView: NSView, NSTextFieldDelegate {
             land.duration = land.settlingDuration
             cell.root.add(land, forKey: "slot")
         }
+        drop(cell)
+        if jiggling, cell.app != nil { cell.showBadge(true, animated: !reduced) }
+    }
+
+    /// 拿起一个图标：放大一点，影子出来，略微变淡。放大走弹簧，影子和透明度只淡。
+    func lift(_ cell: LaunchpadCell) {
+        cell.icon.springTransform(CATransform3DMakeScale(1.14, 1.14, 1), .expand, reduced: reduced)
         CATransaction.begin()
-        CATransaction.setAnimationDuration(Motion.Spring.expand.response)
-        cell.icon.transform = CATransform3DIdentity
+        // fade-only: 影子和透明度。
+        CATransaction.setAnimationDuration(reduced ? Motion.Spring.reducedNotch.response : Motion.Spring.expand.response)
+        cell.icon.shadowOpacity = 0.35
+        cell.root.opacity = 0.92
+        CATransaction.commit()
+    }
+
+    /// 放下一个图标：落回原大小，影子收掉。
+    func drop(_ cell: LaunchpadCell) {
+        cell.icon.springTransform(CATransform3DIdentity, .expand, reduced: reduced)
+        CATransaction.begin()
+        // fade-only: 影子和透明度。
+        CATransaction.setAnimationDuration(reduced ? Motion.Spring.reducedNotch.response : Motion.Spring.expand.response)
         cell.icon.shadowOpacity = 0
         cell.root.opacity = 1
         CATransaction.commit()
-        if jiggling, cell.app != nil { cell.showBadge(true, animated: !reduced) }
     }
 
     /// 从主屏幕移除：App 不删，只是不在主屏幕上（资料库里还有）。图标缩小淡掉，后面的往前补。
@@ -1267,9 +1284,10 @@ final class LaunchpadView: NSView, NSTextFieldDelegate {
 
     func vanish(_ layer: CALayer) {
         CATransaction.begin()
+        // fade-only: 淡出；缩小走弹簧。
         CATransaction.setAnimationDuration(reduced ? Motion.Spring.reducedNotch.response : Motion.Spring.flyOut.response)
         CATransaction.setCompletionBlock { layer.removeFromSuperlayer() }
-        if !reduced { layer.transform = CATransform3DMakeScale(0.2, 0.2, 1) }
+        if !reduced { layer.springTransform(CATransform3DMakeScale(0.2, 0.2, 1), .flyOut, reduced: false) }
         layer.opacity = 0
         CATransaction.commit()
     }
@@ -1307,6 +1325,7 @@ final class LaunchpadView: NSView, NSTextFieldDelegate {
         source?.opacity = 0.2
         // 主屏幕让开：图标、壁纸、打开着的文件夹都淡掉，露出后面的桌面和窗口。
         CATransaction.begin()
+        // fade-only: 主屏幕让开，全是透明度。
         CATransaction.setAnimationDuration(reduced ? Motion.Spring.reducedNotch.response : Motion.Spring.settle.response)
         content.opacity = 0
         wall.opacity = 0
@@ -1348,18 +1367,19 @@ final class LaunchpadView: NSView, NSTextFieldDelegate {
         case .quarter: size = CGSize(width: 190, height: 130)
         case .slideOver: size = CGSize(width: 110, height: 230)
         }
-        CATransaction.begin()
-        CATransaction.setAnimationDuration(reduced ? 0 : Motion.Spring.expand.response)
-        CATransaction.setAnimationTimingFunction(nil)
-        plate.bounds = CGRect(origin: .zero, size: size)
-        plate.cornerRadius = 18
-        plate.backgroundColor = NSColor.white.withAlphaComponent(0.2).cgColor
-        plate.borderColor = NSColor.white.withAlphaComponent(0.45).cgColor
+        plate.springBounds(CGRect(origin: .zero, size: size), .expand, reduced: reduced)
+        plate.springNumber("cornerRadius", 18, .expand, reduced: reduced)
         if let icon = plate.sublayers?.first(where: { $0.name == "icon" }) {
             let side = min(64, grid.icon * 0.7)
-            icon.bounds = CGRect(x: 0, y: 0, width: side, height: side)
-            icon.position = CGPoint(x: size.width / 2, y: size.height / 2)
+            icon.springBounds(CGRect(x: 0, y: 0, width: side, height: side), .expand, reduced: reduced)
+            icon.springPosition(CGPoint(x: size.width / 2, y: size.height / 2), .expand, reduced: reduced)
         }
+        CATransaction.begin()
+        // fade-only: 底色和描边的深浅。
+        CATransaction.setAnimationDuration(reduced ? 0 : Motion.Spring.expand.response)
+        CATransaction.setAnimationTimingFunction(nil)
+        plate.backgroundColor = NSColor.white.withAlphaComponent(0.2).cgColor
+        plate.borderColor = NSColor.white.withAlphaComponent(0.45).cgColor
         CATransaction.commit()
         // 最边上：那一边的小箭头亮起来（侧拉）；另一边淡淡地提示一下。
         for (i, tab) in tabs.enumerated() {
@@ -1369,6 +1389,7 @@ final class LaunchpadView: NSView, NSTextFieldDelegate {
             var on = false
             if case .slideOver(let l) = zone { on = l == left }
             CATransaction.begin()
+            // fade-only
             CATransaction.setAnimationDuration(Motion.fadeDuration)
             tab.opacity = on ? 1 : 0.35
             CATransaction.commit()
@@ -1402,15 +1423,22 @@ final class LaunchpadView: NSView, NSTextFieldDelegate {
             rect = nil
             title = ""
         }
+        if let rect {
+            // 外框和文字还没显出来时直接就位，不从上一次的位置（或左下角）飞过来。
+            let jump = reduced || zoneShape.opacity == 0
+            zoneShape.springPath(CGPath(roundedRect: rect, cornerWidth: 18, cornerHeight: 18, transform: nil), .settle, reduced: jump)
+            let label = CGRect(x: rect.midX - 100, y: rect.minY + 24, width: 200, height: 28)
+            zoneLabel.springBounds(CGRect(origin: .zero, size: label.size), .settle, reduced: jump)
+            zoneLabel.springPosition(CGPoint(x: label.midX, y: label.midY), .settle, reduced: jump)
+        }
         CATransaction.begin()
+        // fade-only: 外框和文字的透明度；它们的位移和形状走弹簧。
         CATransaction.setAnimationDuration(reduced ? 0 : Motion.Spring.settle.response)
         CATransaction.setAnimationTimingFunction(nil)
-        if let rect {
-            zoneShape.path = CGPath(roundedRect: rect, cornerWidth: 18, cornerHeight: 18, transform: nil)
+        if rect != nil {
             zoneShape.opacity = 1
             zoneLabel.string = title
             zoneLabel.contentsScale = scale
-            zoneLabel.frame = CGRect(x: rect.midX - 100, y: rect.minY + 24, width: 200, height: 28)
             zoneLabel.opacity = 1
         } else {
             zoneShape.opacity = 0
@@ -1427,13 +1455,14 @@ final class LaunchpadView: NSView, NSTextFieldDelegate {
         // 拖着的那块落进标出的地方，淡掉；主屏幕跟着收起。
         if let plate = platter {
             CATransaction.begin()
+            // fade-only: 那块淡掉；位置、大小、放大走弹簧。
             CATransaction.setAnimationDuration(reduced ? Motion.Spring.reducedNotch.response : Motion.Spring.glide.response)
             if zone != .open, let path = zoneShape.path {
                 let target = path.boundingBox
-                plate.position = CGPoint(x: target.midX, y: target.midY)
-                plate.bounds = CGRect(origin: .zero, size: target.size)
+                plate.springPosition(CGPoint(x: target.midX, y: target.midY), .glide, reduced: reduced)
+                plate.springBounds(CGRect(origin: .zero, size: target.size), .glide, reduced: reduced)
             } else {
-                plate.transform = CATransform3DMakeScale(1.3, 1.3, 1)
+                plate.springTransform(CATransform3DMakeScale(1.3, 1.3, 1), .glide, reduced: reduced)
             }
             plate.opacity = 0
             CATransaction.commit()
@@ -1696,7 +1725,9 @@ final class LaunchpadView: NSView, NSTextFieldDelegate {
         let backToNotch = intoNotch && !launching && notchRect != nil && !reduced
         let duration: TimeInterval = reduced ? Motion.Spring.reducedNotch.response : (launching ? Motion.Spring.settle.response : backToNotch ? Motion.Spring.calm.response : Motion.Spring.expand.response)
         if backToNotch, let notch = notchRect { closeIntoNotch(notch, duration: duration) }
+        let token: MotionSpring = launching ? .settle : backToNotch ? .calm : .expand
         CATransaction.begin()
+        // fade-only: 整层淡出；图标、壁纸的缩放和散开走弹簧。
         CATransaction.setAnimationDuration(duration)
         CATransaction.setAnimationTimingFunction(nil)
         layer?.opacity = 0
@@ -1709,7 +1740,7 @@ final class LaunchpadView: NSView, NSTextFieldDelegate {
                 return center
             } ?? middle
             if let focus {
-                focus.transform = CATransform3DMakeScale(2.2, 2.2, 1)
+                focus.springTransform(CATransform3DMakeScale(2.2, 2.2, 1), token, reduced: false)
             }
             if folder == nil, !onLibrary {
                 for index in tiles.indices where grid.slot(index).page == pager.page {
@@ -1718,18 +1749,18 @@ final class LaunchpadView: NSView, NSTextFieldDelegate {
                     if let sink {
                         // 收回刘海：往刘海那边收三成、缩小一点。
                         let toward = CGPoint(x: (sink.x - x) * 0.3, y: (sink.y - cell.root.position.y) * 0.3)
-                        cell.root.transform = CATransform3DConcat(CATransform3DMakeScale(0.82, 0.82, 1),
-                                                                  CATransform3DMakeTranslation(toward.x, toward.y, 0))
+                        cell.root.springTransform(CATransform3DConcat(CATransform3DMakeScale(0.82, 0.82, 1),
+                                                                      CATransform3DMakeTranslation(toward.x, toward.y, 0)), token, reduced: false)
                         continue
                     }
                     let away = CGPoint(x: (x - origin.x) * 0.18, y: (cell.root.position.y - origin.y) * 0.18)
-                    cell.root.transform = CATransform3DConcat(CATransform3DMakeScale(1.15, 1.15, 1),
-                                                              CATransform3DMakeTranslation(away.x, away.y, 0))
+                    cell.root.springTransform(CATransform3DConcat(CATransform3DMakeScale(1.15, 1.15, 1),
+                                                                  CATransform3DMakeTranslation(away.x, away.y, 0)), token, reduced: false)
                 }
             } else if onLibrary, folder == nil {
-                library.root.transform = CATransform3DMakeScale(1.06, 1.06, 1)
+                library.root.springTransform(CATransform3DMakeScale(1.06, 1.06, 1), token, reduced: false)
             }
-            wall.transform = CATransform3DMakeScale(launching ? 1.08 : 1.04, launching ? 1.08 : 1.04, 1)
+            wall.springTransform(CATransform3DMakeScale(launching ? 1.08 : 1.04, launching ? 1.08 : 1.04, 1), token, reduced: false)
         }
         CATransaction.commit()
         return duration
@@ -1859,4 +1890,57 @@ final class LaunchpadView: NSView, NSTextFieldDelegate {
     }
     func libraryForProbe() { settle(to: homePages) }
     func homePageForProbe() { settle(to: 0) }
+}
+
+// MARK: 位移走弹簧
+
+extension CALayer {
+    /// 让一个会动的属性（transform、position、bounds、cornerRadius）用弹簧走到 `target`，
+    /// 弹簧参数只从令牌来（`Motion.spring`）。模型值马上落到终点；动画从**正在显示的值**（presentation）出发，
+    /// 所以走到一半被打断时，新的弹簧接着当前位置走，不会跳回起点。
+    /// 减少动态效果（`reduced`）：直接到终点，不播位移。
+    /// 动画的 key 就是 keyPath，和系统隐式动画同一个 key：之后同一属性再被隐式地改，旧弹簧会被顶掉。
+    func springTo(_ keyPath: String, _ target: Any, _ token: MotionSpring, reduced: Bool) {
+        let model = value(forKeyPath: keyPath)
+        if let model, (model as AnyObject).isEqual(target) { return }
+        let shown = (presentation() ?? self).value(forKeyPath: keyPath)
+        CATransaction.begin()
+        CATransaction.setDisableActions(true)
+        setValue(target, forKeyPath: keyPath)
+        CATransaction.commit()
+        guard !reduced, let shown else { removeAnimation(forKey: keyPath); return }
+        let animation = Motion.spring(token, keyPath: keyPath)
+        animation.fromValue = shown
+        animation.toValue = target
+        add(animation, forKey: keyPath)
+    }
+
+    func springTransform(_ transform: CATransform3D, _ token: MotionSpring, reduced: Bool) {
+        springTo("transform", NSValue(caTransform3D: transform), token, reduced: reduced)
+    }
+
+    func springPosition(_ point: CGPoint, _ token: MotionSpring, reduced: Bool) {
+        springTo("position", NSValue(point: point), token, reduced: reduced)
+    }
+
+    func springBounds(_ rect: CGRect, _ token: MotionSpring, reduced: Bool) {
+        springTo("bounds", NSValue(rect: rect), token, reduced: reduced)
+    }
+
+    func springNumber(_ keyPath: String, _ number: CGFloat, _ token: MotionSpring, reduced: Bool) {
+        springTo(keyPath, NSNumber(value: Double(number)), token, reduced: reduced)
+    }
+}
+
+extension CAShapeLayer {
+    /// 轮廓换一个形状：和 `springTo` 同一套规则，从正在显示的轮廓出发。
+    func springPath(_ target: CGPath, _ token: MotionSpring, reduced: Bool) {
+        let shown = presentation()?.path ?? path
+        path = target
+        guard !reduced, let shown else { removeAnimation(forKey: "path"); return }
+        let animation = Motion.spring(token, keyPath: "path")
+        animation.fromValue = shown
+        animation.toValue = target
+        add(animation, forKey: "path")
+    }
 }

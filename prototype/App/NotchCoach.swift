@@ -3,7 +3,7 @@
 // 全是 Core Animation 图层，由系统的渲染进程播，不占主线程。
 // 卡住时的提示（CoachTip.habit）演什么由那条规则给（HabitDemo，放在 NotchDemoView.habit 里）：按键的几条是两排键帽，
 // 上面一排是刚才按的（变暗），下面一排是 Mac 上那一下（亮起）。两排的修饰键都照 Mac 键帽印名字（⌃ 下面写 control）。
-// 卡住提示的右上角另有一个小叉：点它只是关掉（点提示别处是替他做成那一下，见 App/Notch+Habit.swift）。
+// 卡住提示的右上角另有一个小叉：点它只关这一次（点提示别处是替他做成那一下，见 App/Notch+Habit.swift）。
 
 import Cocoa
 
@@ -16,11 +16,18 @@ final class NotchDemoView: NSView {
     struct HabitShow {
         let demo: HabitDemo
         let onClose: () -> Void
+        /// 念给读屏的整句话（主句、副句、点一下会怎样），和点一下提示（替他做成那一下）。
+        var label: String = ""
+        var onPress: (() -> Void)?
+        /// 这条提示讲的规则（rawValue）：他按对时认得出是不是这一条，好做键帽回声（CoachEcho）。
+        var rule: String = ""
     }
     static var habit: HabitShow?
     /// 小叉在屏幕上的位置（点提示时，岛已经先收了，所以在摆好时就记下来）。
     private static var closeRect: NSRect?
     private var closeButton: HabitCloseButton?
+    /// 下面“Mac 上那一下”的键帽（强调色那一排）：按对时只有它们回声。
+    private var litCaps: [CALayer] = []
     private let tip: CoachTip
 
     static var closeRectForProbe: NSRect? { closeRect }
@@ -45,12 +52,22 @@ final class NotchDemoView: NSView {
         stage.borderColor = NSColor.white.withAlphaComponent(0.16).cgColor
         stage.borderWidth = 1
         build(tip)
-        setAccessibilityElement(false)
+        setAccessibilityElement(tip == .habit)
     }
 
     required init?(coder: NSCoder) { fatalError("init(coder:) is not used") }
 
     private var still: Bool { NSWorkspace.shared.accessibilityDisplayShouldReduceMotion }
+
+    // 卡住提示整体是一个可按的元素：念整句话，按一下等同点一下提示。
+    override func isAccessibilityElement() -> Bool { tip == .habit }
+    override func accessibilityRole() -> NSAccessibility.Role? { tip == .habit ? .button : nil }
+    override func accessibilityLabel() -> String? { tip == .habit ? Self.habit?.label : nil }
+    override func accessibilityPerformPress() -> Bool {
+        guard tip == .habit, let press = Self.habit?.onPress else { return false }
+        press()
+        return true
+    }
 
     /// 卡住提示：放进提示里时，在提示的右上角放一个小叉（和演示同进同出）。
     override func viewDidMoveToSuperview() {
@@ -61,10 +78,11 @@ final class NotchDemoView: NSView {
             closeButton = nil
             return
         }
-        let side: CGFloat = 16
+        let side = HabitCloseButton.side
         let button = closeButton ?? HabitCloseButton(frame: .zero)
         button.onPress = Self.habit?.onClose
-        button.frame = NSRect(x: host.bounds.width - side - 10, y: host.bounds.height - side - 8, width: side, height: side)
+        button.frame = NSRect(x: host.bounds.width - side - HabitCloseButton.trailing, y: host.bounds.height - side - HabitCloseButton.top,
+                              width: side, height: side)
         button.autoresizingMask = [.minXMargin, .minYMargin]
         host.addSubview(button)
         closeButton = button
@@ -325,6 +343,53 @@ final class NotchDemoView: NSView {
 
     // MARK: 卡住时的提示
 
+    /// 他按对了：新键帽在这一帧下沉 1.5pt、缩到 0.94、填充从白 0.14 到 0.28，隔一小会儿用 calm 回弹。不打勾，不夸。
+    /// 减少动态效果：只换填充，不位移不缩放。
+    func echoKeys() {
+        let fillOnly = still
+        let restFill = NSColor.controlAccentColor.withAlphaComponent(0.28).cgColor
+        let low = NSColor.white.withAlphaComponent(CoachEcho.restFill).cgColor
+        let high = NSColor.white.withAlphaComponent(CoachEcho.pressedFill).cgColor
+        let hold = CoachEcho.holdBeforeRelease
+        let omega = 2 * Double.pi / MotionSpring.calm.response
+        for cap in litCaps {
+            cap.removeAllAnimations()
+            cap.opacity = 1
+            let begin = cap.convertTime(CACurrentMediaTime(), from: nil) + hold
+            func press(_ keyPath: String, _ values: [Any]) {
+                let animation = CAKeyframeAnimation(keyPath: keyPath)
+                animation.values = values
+                animation.keyTimes = [0, 0.4, 1]
+                animation.duration = hold
+                animation.calculationMode = .linear
+                cap.add(animation, forKey: "echoPress." + keyPath)
+            }
+            func release(_ keyPath: String, from: Any, to: Any) {
+                let spring = CASpringAnimation(keyPath: keyPath)
+                spring.mass = 1
+                spring.stiffness = omega * omega
+                spring.damping = 2 * MotionSpring.calm.dampingRatio * omega
+                spring.fromValue = from
+                spring.toValue = to
+                spring.duration = spring.settlingDuration
+                spring.beginTime = begin
+                spring.fillMode = .backwards
+                cap.add(spring, forKey: "echoRelease." + keyPath)
+            }
+            CATransaction.begin()
+            CATransaction.setDisableActions(true)
+            cap.backgroundColor = restFill
+            CATransaction.commit()
+            press("backgroundColor", [low, high, high])
+            release("backgroundColor", from: high, to: restFill)
+            guard !fillOnly else { continue }
+            press("transform.scale", [1.0, CoachEcho.pressedScale, CoachEcho.pressedScale])
+            press("transform.translation.y", [0.0, -CoachEcho.sink, -CoachEcho.sink])
+            release("transform.scale", from: CoachEcho.pressedScale, to: 1.0)
+            release("transform.translation.y", from: -CoachEcho.sink, to: 0.0)
+        }
+    }
+
     /// Mac 键帽上印的字：修饰键写名字（和键盘上一样），别的照写。
     private static let keyWords: [String: String] = ["⌃": "control", "⌥": "option", "⇧": "shift", "⌘": "command", "🌐": "fn"]
 
@@ -386,6 +451,7 @@ final class NotchDemoView: NSView {
             }
             stage.addSublayer(cap)
             layers.append(cap)
+            if lit { litCaps.append(cap) }
             x += item.width + gap
         }
         return layers
@@ -492,18 +558,36 @@ final class NotchDemoView: NSView {
 
 }
 
-/// 卡住提示右上角的小叉：点它只是关掉，这条不再出。提示本身不接指针（刘海统一接点击，看落点是不是这里），
+/// 卡住提示右上角的小叉：点它只关这一次，下次再卡住还会说（Aaron 2026-10-09 裁定）。提示本身不接指针（刘海统一接点击，看落点是不是这里），
 /// 这个视图只负责画出来，并给辅助功能一个“关闭”按钮。
 final class HabitCloseButton: NSView {
+    /// 圆 18 点，距右 12、距上 7；叉 8 点。
+    static let side: CGFloat = 18, trailing: CGFloat = 12, top: CGFloat = 7
     var onPress: (() -> Void)?
+    /// 指针在上面：底色升亮。刘海统一接点击，所以悬停靠跟踪区域画，不靠这个视图接事件。
+    private var hovering = false { didSet { if hovering != oldValue { needsDisplay = true } } }
 
     override func hitTest(_ point: NSPoint) -> NSView? { nil }
 
+    override func updateTrackingAreas() {
+        super.updateTrackingAreas()
+        for area in trackingAreas { removeTrackingArea(area) }
+        addTrackingArea(NSTrackingArea(rect: bounds, options: [.mouseEnteredAndExited, .activeAlways, .inVisibleRect], owner: self))
+    }
+
+    override func mouseEntered(with event: NSEvent) { hovering = true }
+    override func mouseExited(with event: NSEvent) { hovering = false }
+
+    override func viewDidMoveToSuperview() {
+        super.viewDidMoveToSuperview()
+        if superview == nil { hovering = false }
+    }
+
     override func draw(_ dirtyRect: NSRect) {
-        NSColor.white.withAlphaComponent(0.16).setFill()
+        NSColor.white.withAlphaComponent(hovering ? 0.28 : 0.16).setFill()
         NSBezierPath(ovalIn: bounds).fill()
         guard let image = NSImage(systemSymbolName: "xmark", accessibilityDescription: nil)?
-            .withSymbolConfiguration(NSImage.SymbolConfiguration(pointSize: 7, weight: .bold)
+            .withSymbolConfiguration(NSImage.SymbolConfiguration(pointSize: 8, weight: .bold)
                 .applying(.init(paletteColors: [NSColor.white.withAlphaComponent(0.75)]))) else { return }
         let size = image.size
         image.draw(in: NSRect(x: (bounds.width - size.width) / 2, y: (bounds.height - size.height) / 2,
@@ -512,7 +596,8 @@ final class HabitCloseButton: NSView {
 
     override func isAccessibilityElement() -> Bool { true }
     override func accessibilityRole() -> NSAccessibility.Role? { .button }
-    override func accessibilityLabel() -> String? { "关闭" }
+    override func accessibilityLabel() -> String? { "只关这一次" }
+    override func accessibilityHelp() -> String? { "不想再看到，到设置里把「之前常用」改成「一直用 Mac」" }
     override func accessibilityPerformPress() -> Bool {
         onPress?()
         return onPress != nil

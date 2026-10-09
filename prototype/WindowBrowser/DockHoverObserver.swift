@@ -44,7 +44,7 @@ struct DockHoverTarget: Equatable {
     private var dockElement: AXUIElement?
     private var dockListElements: [AXUIElement] = []
     /// 每个 Dock 列表元素的实际矩形（逐块判断，不合成一个覆盖中间空白的大框）。
-    private var dockAreas: [NSRect] = []
+    private var dockAreas: [NSRect] = [] { didSet { publishInputRegion() } }
     /// 所有检测入口共用的排队器：最多一个在途 + 一个最新待处理。
     private var detection = WindowBrowserDetectionCoordinator()
     private var topologyVersion: UInt64 = 1
@@ -68,7 +68,7 @@ struct DockHoverTarget: Equatable {
     private var staleCheckWork: DispatchWorkItem?
     private var target: DockHoverTarget?
     private var generation: UInt64 = 1
-    private var running = false
+    private var running = false { didSet { publishInputRegion() } }
     private var notificationReliable = false
     private var retainedSelf: Unmanaged<DockHoverObserver>?
 
@@ -435,15 +435,25 @@ struct DockHoverTarget: Equatable {
 
     private func installMouseFallback() {
         guard globalMouseMonitor == nil else { return }
-        globalMouseMonitor = NSEvent.addGlobalMonitorForEvents(matching: [.mouseMoved]) { [weak self] _ in
+        // 打开合成输入监听时挂在输入线程的 tap 上：只有靠近 Dock（和离开的那一下）才叫醒主线程（GlobalInputFilter.swift）。
+        globalMouseMonitor = GlobalInputFilter.shared.addMonitor(.dockHover) { [weak self] _ in
             self?.mouseMoved()
         }
         // 面板内的事件本地 monitor 由控制器负责；这里只处理全局移动。
     }
 
+    /// 输入线程上判断“靠近 Dock”用的区域：和 mouseIsNearDock 同一组值，变了就写进快照。
+    private func publishInputRegion() {
+        let region = GlobalInputHoverRegion(running: running, dockAreas: dockAreas,
+                                            edgeBand: Limits.edgeActivationBand,
+                                            tolerance: Limits.knownAreaTolerance)
+        let key = ObjectIdentifier(self)
+        GlobalInputFilter.publish { $0.hoverRegions[key] = region.running ? region : nil }
+    }
+
     private func removeMouseFallback() {
         if let globalMouseMonitor {
-            NSEvent.removeMonitor(globalMouseMonitor)
+            GlobalInputFilter.shared.removeMonitor(globalMouseMonitor)
             self.globalMouseMonitor = nil
         }
         if let localMouseMonitor {

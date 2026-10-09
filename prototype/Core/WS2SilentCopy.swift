@@ -3,7 +3,11 @@
 import Foundation
 
 enum WS2SilentCopy {
-    static func line(_ id: String) -> String? { lines[id] }
+    /// 中文源句在下面的表里；英文译文的键是 "silent.<id>"（Localizable.xcstrings）。
+    static func line(_ id: String) -> String? {
+        guard let zh = lines[id] else { return nil }
+        return WSL10n.text("silent.\(id)", zh: zh)
+    }
     static let lines: [String: String] = [
         "ui.windows": "窗口",
         "ui.activities": "实时活动",
@@ -101,7 +105,7 @@ enum WS2SilentCopy {
         "desktop.showSwitcher": "切换桌面",
         "desktop.select": "这个桌面",
         "desktop.missionControl": "调度中心",
-        "desktop.showDesktop": "显示桌面",
+        "desktop.showDesktop": "显示桌面", // copy-lint: system-name（macOS 自己的键名）
         "window.magicTile": "魔法平铺",
         "window.stripPrevious": "卷轴上一个",
         "window.stripNext": "卷轴下一个",

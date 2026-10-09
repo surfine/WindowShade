@@ -63,12 +63,32 @@ struct SettingsNavigationTests {
     for group in WS2PrivacyData.groupOrder {
       precondition(privacyTexts.contains(group), "Missing privacy group: \(group)")
     }
-    for row in WS2PrivacyData.rows {
+    // planned 的行默认不显示，其余每一行都在。
+    let shownRows = WS2PrivacyVisibility.visibleRows(WS2PrivacyData.rows, enabledFeatures: [])
+    for row in shownRows {
       precondition(privacyTexts.contains(row.label), "Missing privacy row: \(row.label)")
     }
+    for row in WS2PrivacyData.rows where row.status == "planned" && row.appearsWith == nil {
+      precondition(!privacyTexts.contains(row.label), "planned 行默认要藏起来: \(row.label)")
+    }
     precondition(privacyTexts.contains("显示技术细节"), "Privacy page must offer the technical detail toggle")
-    precondition(privacyTexts.contains("已隐藏"), "private 值默认要藏起来")
-    precondition(privacyTexts.contains("还没读"), "planned 行保持还没读")
+    precondition(!privacyTexts.contains("已隐藏"), "值不再用「已隐藏」顶替")
+    precondition(privacyTexts.contains(where: { $0.hasPrefix(WS2PrivacyCopy.readAtPrefix) }),
+                 "页头下要写「打开这一页时读的 · 时间」")
+    guard let privacyPane = privacyViews.compactMap({ $0 as? WS2PrivacyPane }).first,
+          let rereadButton = privacyViews.compactMap({ $0 as? NSButton })
+            .first(where: { $0.title == WS2PrivacyCopy.rereadTitle })
+    else { preconditionFailure("Privacy page is missing the pane or its reread button") }
+    let readsBefore = privacyPane.readCount
+    precondition(readsBefore >= 1, "页面出现时读过一次")
+    rereadButton.performClick(nil)
+    precondition(privacyPane.readCount == readsBefore + 1, "按「再读一次」多读一次，别处不读")
+    await drainLayout()
+    precondition(privacyPane.readCount == readsBefore + 1, "读完之后没有定时再读")
+    for group in WS2PrivacyData.groups where !group.subtitle.isEmpty {
+      let texts = descendants(root).compactMap { ($0 as? NSTextField)?.stringValue }
+      precondition(texts.contains(group.subtitle), "Missing privacy group subtitle: \(group.subtitle)")
+    }
     precondition(WS2PrivacyData.rows.contains { $0.id == "agent-voice-proof" && $0.status == "planned" },
                  "声纹行留在 planned")
     settings.window?.setContentSize(NSSize(width: 820, height: 580))

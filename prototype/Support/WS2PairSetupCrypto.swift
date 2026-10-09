@@ -18,10 +18,13 @@ import CryptoKit
     private let srp: any WS2SRPPrimitive
     private let localIdentifier: Data
     private let signingKey: Curve25519.Signing.PrivateKey
+    private let m6Metadata: Data?
     private var sessionKey: SymmetricKey?
-    init(srp: any WS2SRPPrimitive, identifier: Data, signingSeed: Data) throws {
+    init(srp: any WS2SRPPrimitive, identifier: Data, signingSeed: Data, m6Metadata: Data? = nil) throws {
         guard (1...128).contains(identifier.count), signingSeed.count == 32 else { throw Failure.malformed }
+        guard m6Metadata == nil || (1...1024).contains(m6Metadata!.count) else { throw Failure.malformed }
         self.srp = srp; localIdentifier = identifier
+        self.m6Metadata = m6Metadata
         signingKey = try Curve25519.Signing.PrivateKey(rawRepresentation: signingSeed)
     }
     func begin(pin: String) throws -> (salt: Data, publicKey: Data) {
@@ -62,7 +65,9 @@ import CryptoKit
         let accessoryX = try derive("Accessory-Sign").withUnsafeBytes { Data($0) }
         let ownPublic = signingKey.publicKey.rawRepresentation
         let ownSignature = try signingKey.signature(for:accessoryX + localIdentifier + ownPublic)
-        let reply = try PairingTLV.encode([(1,localIdentifier),(3,ownPublic),(10,ownSignature)])
+        var replyFields: [(UInt8, Data)] = [(1,localIdentifier),(3,ownPublic),(10,ownSignature)]
+        if let m6Metadata { replyFields.append((17, m6Metadata)) }
+        let reply = try PairingTLV.encode(replyFields)
         let sealed = try ChaChaPoly.seal(reply,using:encryption,nonce:nonce("PS-Msg06"),authenticating:Data())
         return (identifier,publicKey,sealed.ciphertext + sealed.tag)
     }

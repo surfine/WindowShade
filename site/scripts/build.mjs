@@ -4,6 +4,7 @@ import path from 'node:path';
 import { copy } from './content.mjs';
 import { launchpadSection } from './launchpad.mjs';
 import { historyPage, historyIndex } from './history.mjs';
+import { privacyMain } from './privacy.mjs';
 import { siteHeader, siteFooter, shareMeta, shareFallback, repo, release } from './chrome.mjs';
 
 const root = fileURLToPath(new URL('../', import.meta.url));
@@ -141,8 +142,14 @@ for (const en of [false, true]) {
   await mkdir(target, { recursive: true });
   await writeFile(path.join(target, 'index.html'), historyPage(en, origin));
 }
+await mkdir(path.join(dist, 'privacy'), { recursive: true });
+await writeFile(path.join(dist, 'privacy/index.html'), `<!doctype html>
+<html lang="zh-CN"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover"><meta name="color-scheme" content="light dark"><title>权限与隐私 · WindowShade</title>
+${shareMeta({ origin, path: '/privacy/', title: '权限与隐私 · WindowShade', description: 'WindowShade 读到的每一样都列在这里。', image: '/media/og.jpg', imageAlt: copy.zh.shareAlt, en: false })}
+<script src="/motion.js" defer></script><link rel="stylesheet" href="/style.css"></head>
+<body>${shareFallback}${siteHeader(false, 'privacy')}${privacyMain()}${siteFooter(false, 'privacy')}</body></html>`);
 await writeFile(path.join(dist, '404.html'), `<!doctype html><html lang="zh-CN"><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>WindowShade · 404</title><link rel="stylesheet" href="/style.css"><main class="closing wrap section"><img src="/media/icon.png" width="72" height="72" alt=""><h1>这一页，暂时不在这里。</h1><p>This page has wandered off.</p><a class="button primary" href="/">回到首页 / Home</a></main></html>`);
 await writeFile(path.join(dist, 'robots.txt'), `User-agent: *\nAllow: /\nSitemap: ${origin}/sitemap.xml\n`);
-await writeFile(path.join(dist, 'sitemap.xml'), `<?xml version="1.0" encoding="UTF-8"?><urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9"><url><loc>${origin}/</loc></url><url><loc>${origin}/en/</loc></url><url><loc>${origin}/history/</loc></url><url><loc>${origin}/en/history/</loc></url></urlset>`);
+await writeFile(path.join(dist, 'sitemap.xml'), `<?xml version="1.0" encoding="UTF-8"?><urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9"><url><loc>${origin}/</loc></url><url><loc>${origin}/en/</loc></url><url><loc>${origin}/history/</loc></url><url><loc>${origin}/en/history/</loc></url><url><loc>${origin}/privacy/</loc></url></urlset>`);
 await writeFile(path.join(dist, '_headers'), `/*\n  X-Content-Type-Options: nosniff\n  Referrer-Policy: strict-origin-when-cross-origin\n  X-Frame-Options: DENY\n  Content-Security-Policy: default-src 'self'; script-src 'self'; style-src 'self'; img-src 'self' data:; frame-src https://infinitemac.org; object-src 'none'; base-uri 'self'; frame-ancestors 'none'\n/media/*\n  Cache-Control: public, max-age=86400\n`);
 console.log(`Built Chinese and English pages in ${dist}`);

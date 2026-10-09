@@ -315,7 +315,7 @@ struct ConductorSessionTests {
         t.section("D1-31", "另一台设备试图接管、能力列表为空 → 拒绝，不改变有效会话配置")
         var other=Driver();let saved=other.state.context;other.context=fixtureContext(epoch:2,peer:"other-peer")
         _=other.connect(epoch:2,at:other.now+0.1)
-        t.expect(other.state.context==saved && other.state.notch.text=="另一台 iPhone 正在指挥","同时间只有一台")
+        t.expect(other.state.context==saved && other.state.notch.text=="另一台 iPhone 正在遥控","同时间只有一台")
         var empty=Driver();t.expect(empty.send(.capabilities([])).contains(.fault(.malformedInput)) && empty.state.nextConfig?.effort=="high","空能力不启用任意值")
         t.section("D1-32", "错误 capture、challenge、command、turn 关联号 → 不影响当前运行和草稿")
         var stale=Driver();_=stale.edit();let real=submission(stale.click(.playPause))!;let wrong=WS2.Token(bootID:fixtureBoot,serial:9999)
@@ -340,6 +340,36 @@ struct ConductorSessionTests {
         t.expect(has(tick.send(.tick,at:k0+0.5),.launchpad) && !has(tick.up(.tv,kid,began:k0,at:k0+0.6),.returnToRow),"没有长按事件时按到期判定")
         var shortTV=Driver();let s0=shortTV.now+0.1;let sid=shortTV.down(.tv,at:s0)
         t.expect(has(shortTV.up(.tv,sid,began:s0,at:s0+0.2),.returnToRow) && !has(shortTV.send(.tick,at:s0+1),.launchpad),"不到半秒松开是点一下")
+
+        t.section("D1-35", "刘海文案对稿：连上、费用、确认、草稿三行、连不上、声音挑战、撤销")
+        let codex=WS2.Provider.codex.displayName
+        var copy=Driver()
+        t.expect(ConductorNotch.connected(project:"测试项目",provider:.codex,effort:"high").text=="测试项目 · \(codex) · high","连上：项目 · 助手 · 档位，没有“指挥 ·”前缀")
+        _=copy.draw(beats(5))
+        t.expect(copy.state.notch.text=="五拍 · max　点一下确认","费用：手势名 · 档位　点一下确认")
+        _=copy.click(.select)
+        t.expect(copy.state.notch.text=="下一轮生效 · 只管一次提交","确认之后")
+        var card=Driver();_=card.edit("把阴影调淡一点",byte:3)
+        t.expect(card.state.notch.text=="草稿 · 给 测试项目 · \(codex) · high\n把阴影调淡一点\n播放键发出去 · 返回收起" && card.state.notch == .draft("把阴影调淡一点",header:"草稿 · 给 测试项目 · \(codex) · high"),"草稿三行")
+        var lost=Driver();_=lost.edit("保留我");let lostCommand=submission(lost.click(.playPause))!
+        _=lost.send(.backendRejected(command:lostCommand))
+        t.expect(lost.state.notch.text=="连不上 \(codex)" && lost.state.draft?.text=="保留我","后端连不上：只说连不上谁，草稿留着")
+        var phrase=Driver();_=phrase.request(.high);let vc=challengeID(phrase.click(.select))!
+        t.expect(phrase.state.notch == .voiceChallenge(phrase:nil),"短语还没到")
+        _=phrase.send(.voicePhrase(challenge:vc,phrase:"蓝色的海"))
+        t.expect(phrase.state.notch.text=="按住侧边按钮念：蓝色的海","声音挑战")
+        var gone=Driver();_=gone.send(.revoked)
+        t.expect(gone.state.notch.text=="这台 iPhone 不能再遥控了","撤销")
+
+        t.section("D1-36", "触控阈值：竖滑 16%，点按位移 < 60/1000 且 50–250 ms")
+        t.expect(ConductorSession.swipeDistance==0.16 && ConductorSession.verticalSwipe([.init(t:0,x:0.5,y:0.5),.init(t:0.2,x:0.5,y:0.35)]) == nil,"差 1% 不算竖滑")
+        t.expect(ConductorSession.verticalSwipe([.init(t:0,x:0.5,y:0.5),.init(t:0.2,x:0.5,y:0.33)]) == true,"超过 16% 算往上")
+        var smallTap=Driver();_=smallTap.edit()
+        _=smallTap.draw([.init(t:0,x:0.5,y:0.5),.init(t:0.1,x:0.54,y:0.5)])
+        t.expect(smallTap.state.notch.text.hasPrefix("没认出") == false,"位移 0.04 仍是点按，不是没认出的笔画")
+        var bigTap=Driver();_=bigTap.edit()
+        _=bigTap.draw([.init(t:0,x:0.5,y:0.5),.init(t:0.1,x:0.58,y:0.5)])
+        t.expect(bigTap.state.notch.text.hasPrefix("没认出"),"位移 0.08 不是点按，也太短认不出")
 
  t.finish()
  }

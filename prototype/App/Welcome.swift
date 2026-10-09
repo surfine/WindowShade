@@ -1,7 +1,10 @@
 // 欢迎使用 WindowShade：首次打开时出现、菜单里随时能再打开（“欢迎使用 Macintosh”的现代版）。
-// 三步：一句话说清它是什么（配一段短动画）；问“你之前常用哪个？”（存进 SwitcherOrigin，设置里能改）；授权。
+// 三步（M4 样片，docs/design-drafts/安静的刘海 动效样片.html）：1 刚换 Mac？从刘海开始（舞台上一段短动画）；
+// 2 你之前常用哪个？（存进 SwitcherOrigin，设置里能改；选 Windows 时舞台左下四颗键帽原地换成 Mac 的）；3 授权（不放舞台，窗口跟着变矮）。
+// 状态机、文案和动效数值在 WelcomeFlow.swift（纯逻辑，有单测）；这里只负责画出来。
 // 其余的手势不在这里教，交给刘海在他卡住时教（docs/direction.md）。
-// 动画全是 Core Animation 图层（渲染进程播，不占主线程），窗口看不见时停下、看不见时也不重建。“减少动态效果”打开时不动，摆出最能说明问题的那一帧。
+// 三步之间窗口不关、舞台不重建：旧内容淡出 0.10 s，新内容淡入 0.18 s 并上浮 6 pt；整段只有窗口高度这一处形变（calm）。
+// 动画全是 Core Animation 图层（渲染进程播，不占主线程），窗口看不见时停下、看不见时也不重建。“减少动态效果”打开时只淡化、不位移。
 // 没有刘海的屏（外接屏、没有刘海的 Mac、“避开刘海”模式）上舞台不画刘海，开口时是浮着的胶囊（design-system V1、§8 问题 2）。
 // 最后一步是真实的授权行（沿用原来的刷新逻辑），关窗口也算看过，下次不再自动弹出。
 // 从“下载”等地方直接打开时，三步之前多一步“放进‘应用程序’文件夹”（UpdaterMove，不算在三步里）：放进去以后才能在菜单里更新。
@@ -18,24 +21,30 @@ struct WelcomePreview {
     var notched: Bool? = nil
 }
 
+/// 标题、选项、说明行、授权行放在这一块里：翻页时整块淡入、上浮，旧的那一块用截图淡出。
+final class WelcomeContent: NSView {
+    override var isFlipped: Bool { true }
+}
+
 @MainActor
 final class WelcomeView: NSView {
     struct Page {
         let title: String
         let lede: String
-        /// 舞台上那段动画演的是什么（VoiceOver 读它）；没有动画的一步是 nil，舞台不出现。
+        /// 舞台上那段动画演的是什么（VoiceOver 读它）；没有舞台的一步是 nil。
         var picture: String? = nil
     }
     static let pages: [Page] = [
-        // 一句话（direction.md）：先说熟悉的操作照样有，再说它替你做什么。候选见 docs/welcome.md，由 Aaron 挑。
-        Page(title: "欢迎使用 WindowShade",
-             lede: "你熟悉的操作 Mac 上照样有，卡住时刘海告诉你怎么做。",
-             picture: "动画：按了 ⌃C 没有反应，刘海展开说“Mac 上拷贝按 ⌘C”；按了 ⌘C，刘海收回。"),
-        Page(title: "你之前常用哪个？", lede: "刘海会按你原来的习惯来提示。设置里随时能改。"),
-        Page(title: "最后一步：授权", lede: "辅助功能让 WindowShade 能移动窗口，屏幕录制让它能显示实时画面。两项都打开就能用了。"),
+        // 一句话（docs/design-drafts 的 M4）：先说刚换 Mac 的人在哪卡住，再说它什么时候出声。
+        Page(title: WelcomeFlow.introTitle,
+             lede: WelcomeFlow.introLede,
+             picture: "动画：按了 ⌃C 没有反应，刘海展开说“Mac 上拷贝按 ⌘C”；按了 ⌘C，刘海收回；再按 ⌘V，那句话落进邮件。"),
+        Page(title: WelcomeFlow.originTitle, lede: WelcomeFlow.originNote(for: .unanswered),
+             picture: "示意图：选了 Windows，左下角四颗键帽换成 Mac 上的 fn、control、option、command。"),
+        Page(title: WelcomeFlow.permissionTitle, lede: WelcomeFlow.permissionLede),
     ]
     /// 问来处的那一步。
-    static let originPage = 1
+    static let originPage = WelcomeFlow.originStep
     /// 授权那一步（缺权限的提醒直接打开到这里）。
     static var permissionPage: Int { pages.count - 1 }
 
@@ -50,10 +59,13 @@ final class WelcomeView: NSView {
     let progressLabel = NSTextField(labelWithString: "")
     /// 授权行现在画的是哪种状态（辅助功能、屏幕录制）；没变就不拆了重画。
     var shownGrants: [Bool]?
+    /// 授权页第三行（日程）现在画的是哪种状态；变了才重画。
+    var shownCalendar: CalendarAccess?
     /// 装好新版本后系统要他重新打开两项授权：授权页换成“再打开一次这两项”那组文案。
     var permissionsAgain = false { didSet { if index == Self.permissionPage && !onMoveStep { show(index) } } }
 
     private let stage = WelcomeStage()
+    private let content = WelcomeContent()
     private let choices = WelcomeChoices()
     private let eyebrow = NSTextField(labelWithString: "")
     private let titleLabel = NSTextField(labelWithString: "")
@@ -64,6 +76,10 @@ final class WelcomeView: NSView {
     let next = NSButton(title: "继续", target: nil, action: nil)
     private let permissionBox = NSStackView()
     private(set) var index = 0
+    /// 第一次摆好页面之前不做翻页动画。
+    private var didShowPage = false
+    /// 翻页时旧内容的截图（淡出后留着不画，下次翻页或停掉时拆掉）。
+    private var leavingSnapshot: CALayer?
     /// 三步之前那一步：放进“应用程序”文件夹。AppDelegate 在从第一步打开时交进来；nil 就没有这一步。
     private var moveStep: UpdaterMoveStep?
     private(set) var onMoveStep = false
@@ -73,15 +89,17 @@ final class WelcomeView: NSView {
     /// 截图核对用：第二步画成这个答案（只画出来，不存）；平常是 nil，画的是存着的答案。
     private var previewOrigin: SwitcherOrigin?
 
-    static let size = NSSize(width: 720, height: 596)
+    static let size = NSSize(width: WelcomeFlow.Layout.width, height: WelcomeFlow.Layout.heightWithStage)
+
+    override var isFlipped: Bool { true }
 
     override init(frame: NSRect) {
         super.init(frame: frame)
-        let padding: CGFloat = 26
-        let stageWidth = Self.size.width - padding * 2
-        let stageHeight = (stageWidth * 9 / 16).rounded()
-        stage.frame = NSRect(x: padding, y: Self.size.height - 40 - stageHeight, width: stageWidth, height: stageHeight)
+        wantsLayer = true
         addSubview(stage)
+
+        content.wantsLayer = true
+        addSubview(content)
 
         permissionBox.orientation = .vertical
         permissionBox.alignment = .centerX
@@ -93,10 +111,13 @@ final class WelcomeView: NSView {
         permissionBox.addArrangedSubview(permissionStack)
         permissionBox.isHidden = true
         permissionBox.translatesAutoresizingMaskIntoConstraints = false
-        addSubview(permissionBox)
-        // 授权卡片、三个选项都放在舞台那块区域的正中（卡片宽度由 AppDelegate 定）。
+        content.addSubview(permissionBox)
+        NSLayoutConstraint.activate([
+            permissionBox.centerXAnchor.constraint(equalTo: content.centerXAnchor),
+            permissionBox.topAnchor.constraint(equalTo: content.topAnchor, constant: Self.permissionBoxTop),
+        ])
+        // 三个选项放在标题下面一排。
         choices.isHidden = true
-        choices.translatesAutoresizingMaskIntoConstraints = false
         choices.setAccessibilityLabel(Self.pages[Self.originPage].title)
         choices.onPick = { [weak self] origin in
             // 点了就存（关窗口、跳过都不丢）；和原来一样时 SwitcherOrigin 自己不发通知。
@@ -104,7 +125,7 @@ final class WelcomeView: NSView {
             SwitcherOrigin.current = origin
             self?.showOrigin()
         }
-        addSubview(choices)
+        content.addSubview(choices)
         // 放进“应用程序”那一步：这个 App 的图标 → “应用程序”文件夹的图标，都是系统给的图，不另画。
         moveIcon.image = NSApp.applicationIconImage
         moveIcon.wantsLayer = true
@@ -125,12 +146,11 @@ final class WelcomeView: NSView {
         moveBox.isHidden = true
         moveBox.translatesAutoresizingMaskIntoConstraints = false
         addSubview(moveBox)
-        for box in [permissionBox, choices, moveBox] as [NSView] {
-            NSLayoutConstraint.activate([
-                box.centerXAnchor.constraint(equalTo: leadingAnchor, constant: stage.frame.midX),
-                box.centerYAnchor.constraint(equalTo: bottomAnchor, constant: -stage.frame.midY),
-            ])
-        }
+        // 放进“应用程序”那一步没有舞台，图标摆在舞台那块区域的正中。
+        NSLayoutConstraint.activate([
+            moveBox.centerXAnchor.constraint(equalTo: centerXAnchor),
+            moveBox.centerYAnchor.constraint(equalTo: topAnchor, constant: WelcomeFlow.Layout.top + WelcomeFlow.Layout.stageHeight / 2),
+        ])
 
         eyebrow.font = .systemFont(ofSize: 12)
         eyebrow.textColor = .tertiaryLabelColor
@@ -138,14 +158,9 @@ final class WelcomeView: NSView {
         lede.font = .systemFont(ofSize: 14)
         lede.textColor = .secondaryLabelColor
         lede.maximumNumberOfLines = 3
-        let top = stage.frame.minY - 20
-        eyebrow.frame = NSRect(x: padding, y: top - 16, width: stageWidth, height: 16)
-        titleLabel.frame = NSRect(x: padding, y: top - 50, width: stageWidth, height: 30)
-        // 三行高（授权页在标准账户、更新后要重新授权时会到三行）；字从上往下排，一两行时位置不变。
-        lede.frame = NSRect(x: padding, y: top - 114, width: stageWidth, height: 60)
-        [eyebrow, titleLabel, lede].forEach(addSubview)
+        lede.wantsLayer = true
+        [eyebrow, titleLabel, lede].forEach(content.addSubview)
 
-        dots.frame = NSRect(x: padding, y: 24, width: 200, height: 16)
         dots.count = Self.pages.count
         dots.onSelect = { [weak self] in self?.show($0) }
         addSubview(dots)
@@ -167,17 +182,59 @@ final class WelcomeView: NSView {
         // 设置里改了、刘海问过之后他点了：第二步跟着变。
         NotificationCenter.default.addObserver(self, selector: #selector(originDidChange),
                                                name: SwitcherOrigin.didChangeNotification, object: nil)
-        layoutButtons()
+        relayout()
         show(0)
     }
 
     required init?(coder: NSCoder) { fatalError("init(coder:) is not used") }
 
+    /// 授权行的位置：小标题、标题、导语（最多三行）之后。
+    private static let permissionBoxTop: CGFloat = 126
+
+    override func setFrameSize(_ newSize: NSSize) {
+        super.setFrameSize(newSize)
+        relayout()
+    }
+
+    /// 所有位置都从窗口现在的高度算：窗口在 calm 里变矮时，舞台、文字、按钮一起跟着走，不用另外记动画进度。
+    private func relayout() {
+        typealias L = WelcomeFlow.Layout
+        let width = bounds.width, height = bounds.height
+        guard width > 0, height > 0 else { return }
+        let fraction = onMoveStep ? 1 : WelcomeFlow.stageFraction(forWindowHeight: height)
+        let stageWidth = width - L.padding * 2
+        stage.frame = NSRect(x: L.padding, y: L.top, width: stageWidth, height: (L.stageHeight * fraction).rounded())
+        stage.alphaValue = fraction
+        // 舞台收完了才停掉它的动画；平时（第一、二步）看不看得见由 show 定。
+        stage.isHidden = onMoveStep || fraction <= 0
+        if fraction <= 0 && !WelcomeFlow.hasStage(step: index) { stage.stop() }
+        let contentTop = L.top + fraction * (L.stageHeight + L.stageGap)
+        content.frame = NSRect(x: 0, y: contentTop, width: width, height: max(0, height - contentTop - L.bottomBar))
+        layoutContent(width: width)
+        dots.frame = NSRect(x: L.padding, y: height - 40, width: 200, height: 16)
+        layoutButtons()
+    }
+
+    /// 内容这一块里面的位置（从块的顶上量）：小标题、标题，然后是导语（第二步在选项下面）、授权行。
+    private func layoutContent(width: CGFloat) {
+        let padding = WelcomeFlow.Layout.padding
+        let textWidth = width - padding * 2
+        eyebrow.frame = NSRect(x: padding, y: 0, width: textWidth, height: 16)
+        titleLabel.frame = NSRect(x: padding, y: 20, width: textWidth, height: 30)
+        if index == Self.originPage && !onMoveStep {
+            choices.frame = NSRect(x: padding, y: 58, width: WelcomeChoices.totalSize.width, height: WelcomeChoices.totalSize.height)
+            lede.frame = NSRect(x: padding, y: 58 + WelcomeChoices.totalSize.height + 12, width: textWidth, height: 40)
+        } else {
+            // 三行高（授权页在标准账户、更新后要重新授权时会到三行）；字从上往下排，一两行时位置不变。
+            lede.frame = NSRect(x: padding, y: 58, width: textWidth, height: 60)
+        }
+    }
+
     private func layoutButtons() {
-        var x = Self.size.width - 26
+        var x = bounds.width - 26
         next.sizeToFit()
         // 无边框的“跳过”比有边框的按钮矮，按中线对齐，字才在同一条线上。
-        let midY = 18 + next.frame.height / 2
+        let midY = bounds.height - 18 - next.frame.height / 2
         for button in [next, back, skip] where !button.isHidden {
             button.sizeToFit()
             let width = max(button.frame.width, button === next ? 96 : 72)
@@ -189,16 +246,24 @@ final class WelcomeView: NSView {
 
     /// preview：截图核对用（--settings-shots），摆出静帧、画成某个答案、当作有没有刘海的屏；平常不传，照常循环播、画存着的答案。
     func show(_ page: Int, preview: WelcomePreview? = nil) {
-        index = max(0, min(Self.pages.count - 1, page))
+        let previous = didShowPage && !onMoveStep ? index : nil
+        let target = max(0, min(Self.pages.count - 1, page))
+        // 同一个窗口里换内容：旧内容淡出、新内容淡入并上浮；窗口没打开、截图核对、第一次摆页面时直接换。
+        let animates = preview == nil && window?.isVisible == true && previous != nil && previous != target
+        let transition = WelcomeFlow.transition(reduceMotion: Motion.reduced)
+        let snapshot = animates ? takeContentSnapshot() : nil
+
+        index = target
+        didShowPage = true
         onMoveStep = false
         moveBox.isHidden = true
         dots.isHidden = false
         [skip, next].forEach { $0.isEnabled = true }
         previewOrigin = preview?.origin
         let item = Self.pages[index]
-        eyebrow.stringValue = "\(index + 1) / \(Self.pages.count)"
+        eyebrow.stringValue = WelcomeFlow.eyebrow(forStep: index)
         titleLabel.stringValue = item.title
-        lede.stringValue = item.lede
+        lede.stringValue = index == Self.originPage ? WelcomeFlow.originNote(for: shownOrigin) : item.lede
         if index == Self.permissionPage {
             if permissionsAgain {
                 titleLabel.stringValue = UpdateCopy.permissionsAgainTitle
@@ -211,19 +276,99 @@ final class WelcomeView: NSView {
         let last = index == Self.permissionPage
         back.isHidden = index == 0
         next.title = last ? "开始使用" : "继续"
-        // 舞台只给有动画的那一步；第二步是三个选项，最后一步是授权行，都摆在舞台那块区域。
-        stage.isHidden = item.picture == nil
         // 焦点还在某个选项上就离开了第二步：交回这一页，← → 接着翻页，不会在看不见的选项之间换答案。
         if index != Self.originPage, let focused = window?.firstResponder as? NSView, focused.isDescendant(of: choices) {
             window?.makeFirstResponder(self)
         }
         choices.isHidden = index != Self.originPage
         permissionBox.isHidden = !last
-        if item.picture != nil { stage.play(index, stillAt: preview?.moment, notched: preview?.notched) } else { stage.stop() }
+        // 舞台只给前两步；离开舞台那一步时舞台随窗口变矮收掉（relayout 里收完才停）。
+        if item.picture != nil {
+            stage.play(index, stillAt: preview?.moment, notched: preview?.notched, origin: shownOrigin, settled: preview != nil)
+        }
         stage.setAccessibilityLabel(item.picture)
+        resizeWindow(forStep: index, animated: animates && transition.animatesWindow)
+        relayout()
         showOrigin()
+        if let snapshot { playContentTransition(from: snapshot, transition) }
         NSAccessibility.post(element: self, notification: .layoutChanged)
         onPageChange?()
+    }
+
+    /// 第二步现在画哪个答案。
+    private var shownOrigin: SwitcherOrigin { previewOrigin ?? SwitcherOrigin.current }
+
+    // MARK: 翻页：窗口高度和内容淡入淡出
+
+    /// 窗口变矮（或变高）：上边不动，下边挪。用 calm 的时长和不回弹的缓动；不动画（减少动态效果、窗口还没打开）就直接换。
+    private func resizeWindow(forStep step: Int, animated: Bool) {
+        guard let window else { return }
+        let delta = WelcomeFlow.windowHeight(forStep: step) - bounds.height
+        guard abs(delta) > 0.5 else { return }
+        var frame = window.frame
+        frame.size.height += delta
+        frame.origin.y -= delta
+        guard animated, window.isVisible else {
+            window.setFrame(frame, display: window.isVisible)
+            return
+        }
+        let calm = Motion.spring(.calm, keyPath: "bounds.size.height")
+        NSAnimationContext.runAnimationGroup { context in
+            context.duration = calm.duration
+            // 临界阻尼弹簧的形状：一上来就走得快，慢慢收住，没有回弹。
+            context.timingFunction = CAMediaTimingFunction(controlPoints: 0.2, 0.9, 0.3, 1)
+            window.animator().setFrame(frame, display: true)
+        }
+    }
+
+    private func takeContentSnapshot() -> CALayer? {
+        guard content.bounds.width > 0, content.bounds.height > 0,
+              let rep = content.bitmapImageRepForCachingDisplay(in: content.bounds) else { return nil }
+        content.cacheDisplay(in: content.bounds, to: rep)
+        guard let image = rep.cgImage else { return nil }
+        let layer = CALayer()
+        layer.contents = image
+        layer.contentsScale = window?.backingScaleFactor ?? 2
+        layer.frame = content.frame
+        layer.zPosition = 20
+        return layer
+    }
+
+    /// 旧内容的截图 0.10 s 淡出；新内容等它淡完，0.18 s 淡入并从下面上浮 6 pt（减少动态效果时不位移）。
+    private func playContentTransition(from snapshot: CALayer, _ transition: WelcomeFlow.StepTransition) {
+        guard let root = layer, let contentLayer = content.layer else { return }
+        leavingSnapshot?.removeFromSuperlayer()
+        leavingSnapshot = snapshot
+        root.addSublayer(snapshot)
+        CATransaction.begin()
+        CATransaction.setDisableActions(true)
+        snapshot.opacity = 0
+        CATransaction.commit()
+        let fadeOut = CABasicAnimation(keyPath: "opacity")
+        fadeOut.fromValue = 1
+        fadeOut.toValue = 0
+        fadeOut.duration = transition.fadeOut
+        snapshot.add(fadeOut, forKey: "welcome.out")
+
+        let begin = contentLayer.convertTime(CACurrentMediaTime(), from: nil) + transition.fadeOut
+        let fadeIn = CABasicAnimation(keyPath: "opacity")
+        fadeIn.fromValue = 0
+        fadeIn.toValue = 1
+        fadeIn.duration = transition.fadeIn
+        fadeIn.beginTime = begin
+        fadeIn.fillMode = .backwards
+        contentLayer.add(fadeIn, forKey: "welcome.in")
+        if transition.rise > 0 {
+            // 上浮：从低 rise pt 的地方回到原位。翻转的图层 y 向下为正。
+            let down = root.isGeometryFlipped ? CGFloat(transition.rise) : -CGFloat(transition.rise)
+            let rise = Motion.spring(.calm, keyPath: "position.y")
+            rise.isAdditive = true
+            rise.fromValue = down
+            rise.toValue = 0
+            rise.beginTime = begin
+            rise.fillMode = .backwards
+            contentLayer.add(rise, forKey: "welcome.rise")
+        }
     }
 
     /// 三步之前那一步：放进“应用程序”文件夹。没有这一步（已经在里面、他跳过过）就直接从第一步开始。
@@ -236,7 +381,6 @@ final class WelcomeView: NSView {
         titleLabel.stringValue = step.title
         lede.stringValue = step.lead + (step.note ?? "")
         stage.stop()
-        stage.isHidden = true
         choices.isHidden = true
         permissionBox.isHidden = true
         moveBox.isHidden = false
@@ -247,7 +391,9 @@ final class WelcomeView: NSView {
         next.title = step.primaryTitle
         [skip, next].forEach { $0.isEnabled = true }
         resetMoveIcon()
-        layoutButtons()
+        // 这一步没有舞台，窗口回到有舞台的高度（图标摆在舞台那块区域里）。
+        resizeWindow(forStep: 0, animated: false)
+        relayout()
         NSAccessibility.post(element: self, notification: .layoutChanged)
         onPageChange?()
     }
@@ -309,9 +455,24 @@ final class WelcomeView: NSView {
         CATransaction.commit()
     }
 
-    /// 第二步的选中状态和“继续”能不能点。
+    /// 第二步的选中状态、键帽、说明行和“继续”能不能点。
     private func showOrigin() {
-        choices.selected = previewOrigin ?? SwitcherOrigin.current
+        choices.selected = shownOrigin
+        if index == Self.originPage {
+            let note = WelcomeFlow.originNote(for: shownOrigin)
+            if lede.stringValue != note {
+                // 说明行跟着选项换：旧字淡出、新字淡入（图层的淡化过渡）。
+                if didShowPage, window?.isVisible == true, previewOrigin == nil, let layer = lede.layer {
+                    let fade = CATransition()
+                    fade.type = .fade
+                    fade.duration = WelcomeFlow.transition(reduceMotion: Motion.reduced).fadeIn
+                    layer.add(fade, forKey: "welcome.note")
+                }
+                lede.stringValue = note
+                NSAccessibility.post(element: lede, notification: .valueChanged)
+            }
+            stage.setOrigin(shownOrigin, animated: previewOrigin == nil)
+        }
         refreshButtons()
     }
 
@@ -324,23 +485,23 @@ final class WelcomeView: NSView {
     /// “开始使用”等授权后才能点。前几页用不着查授权。
     func refreshButtons() {
         guard !onMoveStep else { return }
-        let last = index == Self.permissionPage
+        let last = WelcomeFlow.isLast(index)
         let granted = last && permissionsGranted()
         skip.title = last ? "稍后再说" : "跳过"
         skip.isHidden = granted
         if last {
             next.isEnabled = granted
         } else {
-            next.isEnabled = index != Self.originPage || choices.selected.isAnswered
+            next.isEnabled = WelcomeFlow.canAdvance(from: index, origin: choices.selected)
         }
         layoutButtons()
     }
 
     @objc private func nextPressed() {
         if onMoveStep { pressMovePrimary(); return }
-        if index == Self.permissionPage { onFinish?() } else { show(index + 1) }
+        if index == Self.permissionPage { onFinish?() } else { show(WelcomeFlow.next(from: index)) }
     }
-    @objc private func backPressed() { show(index - 1) }
+    @objc private func backPressed() { show(WelcomeFlow.back(from: index)) }
     @objc private func skipPressed() {
         if onMoveStep {
             // 跳过就不再在欢迎窗口里问（没能移过去时的“继续”不算跳过）；更新小窗里位置不对时还会再给这一步。
@@ -348,7 +509,7 @@ final class WelcomeView: NSView {
             show(0)
             return
         }
-        if index == Self.permissionPage { onLater?() } else { show(Self.permissionPage) }
+        if index == Self.permissionPage { onLater?() } else { show(WelcomeFlow.skip(from: index)) }
     }
 
     override var acceptsFirstResponder: Bool { true }
@@ -359,8 +520,8 @@ final class WelcomeView: NSView {
             return
         }
         switch event.keyCode {
-        case 124: show(index + 1)
-        case 123: show(index - 1)
+        case 124: show(WelcomeFlow.next(from: index))
+        case 123: show(WelcomeFlow.back(from: index))
         default: super.keyDown(with: event)
         }
     }
@@ -370,8 +531,19 @@ final class WelcomeView: NSView {
 
 final class WelcomeDots: NSView {
     var count = 0 { didSet { needsDisplay = true } }
-    var current = 0 { didSet { needsDisplay = true } }
+    var current = 0 {
+        didSet {
+            needsDisplay = true
+            if current != oldValue { NSAccessibility.post(element: self, notification: .valueChanged) }
+        }
+    }
     var onSelect: ((Int) -> Void)?
+
+    // 读屏：页码点是一个整体，读“第 n 页”（n 从 1 数，跟着现在这一页走）。
+    override func isAccessibilityElement() -> Bool { true }
+    override func accessibilityRole() -> NSAccessibility.Role? { .group }
+    override func accessibilityLabel() -> String? { WelcomeFlow.pageLabel(current + 1) }
+
     private func rects() -> [NSRect] {
         var x: CGFloat = 0
         return (0..<count).map { i in
@@ -405,8 +577,12 @@ final class WelcomeChoices: NSView {
         }
     }
 
-    static let itemSize = NSSize(width: 180, height: 140)
-    static let spacing: CGFloat = 20
+    /// 标题下面一排三个：图标在左、名字在右（舞台还在上面，放不下大卡片）。
+    static let itemSize = NSSize(width: 212, height: 56)
+    static let spacing: CGFloat = 16
+    static var totalSize: NSSize {
+        NSSize(width: 3 * itemSize.width + 2 * spacing, height: itemSize.height)
+    }
 
     override init(frame: NSRect) {
         super.init(frame: frame)
@@ -434,8 +610,7 @@ final class WelcomeChoices: NSView {
     required init?(coder: NSCoder) { fatalError("init(coder:) is not used") }
 
     override var intrinsicContentSize: NSSize {
-        let count = CGFloat(items.count)
-        return NSSize(width: count * Self.itemSize.width + (count - 1) * Self.spacing, height: Self.itemSize.height)
+        Self.totalSize
     }
 
     /// ← → 在选项之间走一格，焦点和选中一起挪（到头不绕回）。
@@ -482,17 +657,17 @@ final class WelcomeChoice: NSView {
         }
         icon.image = (NSImage(systemSymbolName: symbol, accessibilityDescription: nil)
             ?? NSImage(systemSymbolName: "laptopcomputer", accessibilityDescription: nil))?
-            .withSymbolConfiguration(.init(pointSize: 40, weight: .regular))
+            .withSymbolConfiguration(.init(pointSize: 24, weight: .regular))
         icon.imageScaling = .scaleNone
-        icon.frame = NSRect(x: 0, y: 58, width: size.width, height: 52)
+        icon.frame = NSRect(x: 14, y: (size.height - 32) / 2, width: 40, height: 32)
         label.stringValue = origin.title ?? ""
         label.font = .systemFont(ofSize: 14, weight: .medium)
-        label.alignment = .center
-        label.frame = NSRect(x: 8, y: 24, width: size.width - 16, height: 20)
+        label.alignment = .left
+        label.frame = NSRect(x: 60, y: (size.height - 20) / 2, width: size.width - 60 - 40, height: 20)
         check.image = NSImage(systemSymbolName: "checkmark.circle.fill", accessibilityDescription: nil)?
             .withSymbolConfiguration(.init(pointSize: 16, weight: .regular))
         check.contentTintColor = .controlAccentColor
-        check.frame = NSRect(x: size.width - 12 - 18, y: size.height - 12 - 18, width: 18, height: 18)
+        check.frame = NSRect(x: size.width - 14 - 18, y: (size.height - 18) / 2, width: 18, height: 18)
         for view in [icon, label, check] as [NSView] {
             view.setAccessibilityElement(false)
             addSubview(view)
@@ -575,7 +750,14 @@ final class WelcomeChoice: NSView {
 // MARK: - 舞台：一块迷你桌面
 
 final class WelcomeStage: NSView {
+    /// 舞台整块的大小：窗口收起舞台时只是被裁掉（顶边对齐），画面不重排。
+    static let sceneSize = CGSize(width: WelcomeFlow.Layout.width - WelcomeFlow.Layout.padding * 2, height: WelcomeFlow.Layout.stageHeight)
+
     private var scene: CALayer?
+    private var builder: WelcomeScene?
+    /// 刚被换下的画面：淡出后拆掉（定时器拆，不在看不见的时候留着动画）。
+    private var retired: [CALayer] = []
+    private var retireTimer: Timer?
 
     override init(frame: NSRect) {
         super.init(frame: frame)
@@ -598,8 +780,24 @@ final class WelcomeStage: NSView {
         replay()
     }
 
+    override func setFrameSize(_ newSize: NSSize) {
+        super.setFrameSize(newSize)
+        alignScene()
+    }
+
+    /// 画面顶边对齐舞台顶边：舞台变矮时从下面被裁掉，像收起一块幕布。
+    private func alignScene() {
+        guard let scene else { return }
+        CATransaction.begin()
+        CATransaction.setDisableActions(true)
+        scene.frame.origin = CGPoint(x: 0, y: bounds.height - scene.bounds.height)
+        CATransaction.commit()
+    }
+
     private var currentIndex: Int?
     private var currentMoment: Double?
+    /// 第二步现在画的是哪个答案（键帽只在答 Windows 时出现）。
+    private var origin: SwitcherOrigin = .unanswered
     /// 截图核对用：当作有没有刘海的屏来画；nil 是看窗口所在的那块屏。
     private var forcedNotch: Bool?
     /// 现在这幕是按有刘海还是没有刘海画的（没建场景时是 nil）。
@@ -632,9 +830,8 @@ final class WelcomeStage: NSView {
             replay()
         } else if !parked {
             parked = true
-            scene?.removeFromSuperlayer()
-            scene = nil
-            builtNotched = nil
+            dropScene()
+            dropRetired()
         }
     }
     @objc private func screenDidChange() {
@@ -648,37 +845,93 @@ final class WelcomeStage: NSView {
     }
 
     @objc private func replay() {
-        if let current = currentIndex { play(current, stillAt: currentMoment, notched: forcedNotch) }
+        if let current = currentIndex { play(current, stillAt: currentMoment, notched: forcedNotch, origin: origin, settled: true) }
+    }
+
+    private func dropScene() {
+        scene?.removeFromSuperlayer()
+        scene = nil
+        builder = nil
+        builtNotched = nil
+    }
+
+    private func dropRetired() {
+        retireTimer?.invalidate()
+        retireTimer = nil
+        retired.forEach { $0.removeFromSuperlayer() }
+        retired.removeAll()
     }
 
     func stop() {
-        scene?.removeFromSuperlayer()
-        scene = nil
+        dropScene()
+        dropRetired()
         currentIndex = nil
         currentMoment = nil
         forcedNotch = nil
-        builtNotched = nil
+    }
+
+    /// 第二步选了别的答案：键帽跟着出现或收起。
+    func setOrigin(_ new: SwitcherOrigin, animated: Bool) {
+        guard new != origin else { return }
+        origin = new
+        builder?.setOrigin(new, animated: animated)
     }
 
     /// moment：截图核对用，摆出一轮里那一刻的静帧（和“减少动态效果”同一条路径）；平常是 nil，照常循环播。
     /// notched：截图核对用，当作有 / 没有刘海的屏来画；平常是 nil，看窗口所在的那块屏。
-    func play(_ index: Int, stillAt moment: Double? = nil, notched forced: Bool? = nil) {
-        stop()
+    /// origin：第二步画成哪个答案。settled：不放翻页的淡入淡出，直接摆到位（截图、重画）。
+    func play(_ index: Int, stillAt moment: Double? = nil, notched forced: Bool? = nil,
+              origin answer: SwitcherOrigin = .unanswered, settled: Bool = false) {
+        let outgoing = scene
+        scene = nil
+        builder = nil
+        builtNotched = nil
         currentIndex = index
         currentMoment = moment
         forcedNotch = forced
+        origin = answer
         // 窗口看不见时不建循环动画；静帧没有动画，照样摆（截图核对不受遮挡影响）。
-        guard !parked || moment != nil else { return }
+        guard !parked || moment != nil else { outgoing?.removeFromSuperlayer(); return }
         let notched = forced ?? screenHasNotch
         let dark = effectiveAppearance.bestMatch(from: [.aqua, .darkAqua]) == .darkAqua
-        let builder = WelcomeScene(size: bounds.size, dark: dark, scale: window?.backingScaleFactor ?? 2,
-                                   still: moment != nil || NSWorkspace.shared.accessibilityDisplayShouldReduceMotion,
-                                   notched: notched)
+        let builder = WelcomeScene(size: Self.sceneSize, dark: dark, scale: window?.backingScaleFactor ?? 2,
+                                   still: moment != nil || Motion.reduced, notched: notched)
         builder.stillOverride = moment
-        builder.build(index)
+        builder.build(index, origin: answer)
         layer?.addSublayer(builder.root)
         scene = builder.root
+        self.builder = builder
         builtNotched = notched
+        alignScene()
+        // 翻页：旧画面 0.10 s 淡出，新画面等它淡完再 0.18 s 淡入（只淡化，减少动态效果时也一样）。
+        if let outgoing, !settled, moment == nil, window?.isVisible == true {
+            let transition = WelcomeFlow.transition(reduceMotion: Motion.reduced)
+            let fadeOut = CABasicAnimation(keyPath: "opacity")
+            fadeOut.fromValue = 1
+            fadeOut.toValue = 0
+            fadeOut.duration = transition.fadeOut
+            CATransaction.begin()
+            CATransaction.setDisableActions(true)
+            outgoing.opacity = 0
+            CATransaction.commit()
+            outgoing.add(fadeOut, forKey: "welcome.stage.out")
+            retired.append(outgoing)
+            let fadeIn = CABasicAnimation(keyPath: "opacity")
+            fadeIn.fromValue = 0
+            fadeIn.toValue = 1
+            fadeIn.duration = transition.fadeIn
+            fadeIn.beginTime = builder.root.convertTime(CACurrentMediaTime(), from: nil) + transition.fadeOut
+            fadeIn.fillMode = .backwards
+            builder.root.add(fadeIn, forKey: "welcome.stage.in")
+            retireTimer?.invalidate()
+            let timer = Timer.scheduledTimer(withTimeInterval: transition.fadeOut + 0.05, repeats: false) { [weak self] _ in
+                MainActor.assumeIsolated { self?.dropRetired() }
+            }
+            timer.tolerance = 0.05
+            retireTimer = timer
+        } else {
+            outgoing?.removeFromSuperlayer()
+        }
     }
 }
 
@@ -796,7 +1049,7 @@ final class WelcomeScene {
     }
 
     /// 一扇迷你窗口：标题栏、红绿灯、几行字。返回（窗口，影子）两层；窗口那层是翻转坐标（从上往下量）。
-    private func window(_ frame: CGRect, title: String, lines: Int = 6) -> [CALayer] {
+    private func window(_ frame: CGRect, title: String, lines: Int = 6, skippingFirstLine: Bool = false) -> [CALayer] {
         let shadow = CALayer()
         shadow.frame = frame
         shadow.cornerRadius = 1.5 * u
@@ -825,7 +1078,7 @@ final class WelcomeScene {
         let name = text(title, size: 1.35 * u, color: dark ? Self.color(0xa1a1a6) : Self.color(0x8e8e93))
         name.frame = CGRect(x: 6 * u, y: (barHeight - 1.9 * u) / 2, width: frame.width - 12 * u, height: 1.9 * u)
         win.addSublayer(name)
-        for i in 0..<min(lines, Self.lineWidths.count) {
+        for i in (skippingFirstLine ? 1 : 0)..<min(lines, Self.lineWidths.count) {
             let line = CALayer()
             line.frame = lineFrame(i, in: frame)
             line.cornerRadius = 0.5 * u
@@ -879,23 +1132,23 @@ final class WelcomeScene {
     // MARK: 关键帧
 
     private func animate(_ layer: CALayer, _ keyPath: String, _ values: [Any], _ times: [Double]) {
+        // 停下时图层上留的是这一刻（开口帧）：减少动态效果直接摆它，播完几轮也停在它。
+        let rest = values[times.lastIndex { $0 <= (stillOverride ?? stillAt) } ?? 0]
         if still {
-            // 减少动态效果：取 stillAt 那一刻（它之前最近的一帧）。
-            let at = stillOverride ?? stillAt
-            let index = times.lastIndex { $0 <= at } ?? 0
-            layer.setValue(values[index], forKeyPath: keyPath)
+            layer.setValue(rest, forKeyPath: keyPath)
             return
         }
+        layer.setValue(rest, forKeyPath: keyPath)
         let a = CAKeyframeAnimation(keyPath: keyPath)
         a.values = values
         a.keyTimes = times.map { NSNumber(value: $0) }
         a.duration = cycle
-        a.repeatCount = .infinity
+        // 播 3 轮，再多播到开口帧那一刻停下：动画一结束，图层上本来就是开口帧，接得上，不用一直循环。
+        a.repeatCount = Float(WelcomeFlow.introLoopRounds) + Float(stillAt)
         a.calculationMode = .linear
         // 教学循环的节拍写在 keyTimes 里；段与段之间不另造贝塞尔，形变手感见 `calm`（文法欢迎页）。
         a.timingFunctions = nil
-        a.isRemovedOnCompletion = false
-        a.fillMode = .both
+        a.fillMode = .backwards
         layer.add(a, forKey: keyPath)
     }
 
@@ -907,27 +1160,52 @@ final class WelcomeScene {
         [0.2, 0.5],
     ]
 
-    func build(_ index: Int) {
+    /// origin：第二步画成哪个答案（键帽只在答 Windows 时出现）。
+    func build(_ index: Int, origin: SwitcherOrigin = .unanswered) {
         switch index {
         case 0: stuck()
+        case 1:
+            keysStep()
+            setOrigin(origin, animated: false)
         default: break
         }
     }
 
-    /// 按了 Windows 的 ⌃C 没反应；刘海从自己身上往下长，说 Mac 上按哪一下，键帽上的 ⌃ 换成 ⌘；按对了，刘海马上收回、不再出声。
-    /// 刘海里的字照卡住时的真提示写（docs/stuck-habits.md：菜单里那一项叫“拷贝”，副句“常用快捷键把 ⌃ 换成 ⌘”）。
-    private func stuck() {
-        cycle = 7; stillAt = 0.5
-        menubar("备忘录")
-        let n = notch()
-        let full = rect(20, 24, 60, 52)
-        let win = window(full, title: "购物清单", lines: 5)
-        // 要拷贝的那一行是选中的（系统的选中底色）。
+    /// 备忘录和邮件两扇窗口：左边是要拷贝的，右边是要粘贴的。
+    private func twoWindows() -> (memo: (frame: CGRect, layers: [CALayer]), mail: (frame: CGRect, layers: [CALayer])) {
+        let memoFrame = rect(5, 22, 43, 52), mailFrame = rect(52, 22, 43, 52)
+        return ((memoFrame, window(memoFrame, title: "购物清单", lines: 5)),
+                (mailFrame, window(mailFrame, title: "邮件", lines: 4, skippingFirstLine: true)))
+    }
+
+    /// 要拷贝的那一行是选中的（系统的选中底色）。
+    private func select(line: Int, in frame: CGRect, of win: CALayer) {
         let selection = CALayer()
-        selection.frame = lineFrame(1, in: full).insetBy(dx: -0.3 * u, dy: -0.5 * u)
+        selection.frame = lineFrame(line, in: frame).insetBy(dx: -0.3 * u, dy: -0.5 * u)
         selection.cornerRadius = 0.3 * u
         selection.backgroundColor = NSColor.controlAccentColor.withAlphaComponent(0.35).cgColor
-        win[1].insertSublayer(selection, at: 1)
+        win.insertSublayer(selection, at: 1)
+    }
+
+    /// 按了 Windows 的 ⌃C 没反应；刘海从自己身上往下长，说 Mac 上按哪一下，键帽上的 ⌃ 换成 ⌘；按对了，刘海马上收回、不再出声；
+    /// 再按 ⌘V，拷贝的那一行落进邮件。整轮播 3 遍后停在开口帧。
+    /// 刘海里的字照卡住时的真提示写（docs/stuck-habits.md：菜单里那一项叫“拷贝”，副句“常用快捷键把 ⌃ 换成 ⌘”）。
+    private func stuck() {
+        cycle = 8; stillAt = WelcomeFlow.introRestMoment
+        menubar("备忘录")
+        let n = notch()
+        let (memo, mail) = twoWindows()
+        select(line: 1, in: memo.frame, of: memo.layers[1])
+        // ⌘V：拷贝的那一行（和选中的一样长）落进邮件的第一行。
+        let pasted = CALayer()
+        var pastedFrame = lineFrame(0, in: mail.frame)
+        pastedFrame.size.width = (mail.frame.width - 4 * u) * Self.lineWidths[1]
+        pasted.frame = pastedFrame
+        pasted.cornerRadius = 0.5 * u
+        pasted.backgroundColor = ink.withAlphaComponent(0.5).cgColor
+        pasted.opacity = 0
+        mail.layers[1].addSublayer(pasted)
+        animate(pasted, "opacity", [0, 0, 1, 1, 0], [0, 0.82, 0.86, 0.96, 1])
 
         // 刘海展开成一块，下面两行字：主句白色，副句白 0.6（刘海永远是深色，不跟外观）。
         // 没有刘海：胶囊浮出来、长大，没有摄像头那一截，所以矮一些，两行字在正中。
@@ -956,24 +1234,158 @@ final class WelcomeScene {
             animate(line, "opacity", [0, 0, 1, 1, 0, 0], [0, 0.36, 0.41, 0.66, 0.71, 1])
         }
 
-        // 键帽：先按 ⌃C（没反应），刘海说完 ⌃ 换成 ⌘，再按 ⌘C。
+        // 键帽：先按 ⌃C（没反应），刘海说完 ⌃ 换成 ⌘，再按 ⌘C，最后按 ⌘V。
         let keys = CALayer()
         keys.frame = root.bounds
         keys.zPosition = 8
         keys.opacity = 0
         root.addSublayer(keys)
-        animate(keys, "opacity", [0, 0, 1, 1, 0, 0], [0, 0.06, 0.1, 0.86, 0.92, 1])
+        animate(keys, "opacity", [0, 0, 1, 1, 0, 0], [0, 0.06, 0.1, 0.9, 0.95, 1])
         let modWidth = 9 * u, capSide = 6.4 * u, gap = 1.2 * u
         let x0 = (size.width - modWidth - gap - capSide) / 2
         let (modifier, faces) = keycap(CGRect(x: x0, y: 3 * u, width: modWidth, height: capSide),
                                        faces: [("⌃", "control"), ("⌘", "command")], in: keys)
-        let (letter, _) = keycap(CGRect(x: x0 + modWidth + gap, y: 3 * u, width: capSide, height: capSide),
-                                 faces: [("C", nil)], in: keys)
+        let (letter, letterFaces) = keycap(CGRect(x: x0 + modWidth + gap, y: 3 * u, width: capSide, height: capSide),
+                                           faces: [("C", nil), ("V", nil)], in: keys)
         let swap: [Double] = [0, 0.44, 0.47, 0.93, 0.95, 1]
         animate(faces[0], "opacity", [1, 1, 0, 0, 1, 1], swap)
         animate(faces[1], "opacity", [0, 0, 1, 1, 0, 0], swap)
+        let letterSwap: [Double] = [0, 0.74, 0.77, 0.96, 0.99, 1]
+        animate(letterFaces[0], "opacity", [1, 1, 0, 0, 1, 1], letterSwap)
+        animate(letterFaces[1], "opacity", [0, 0, 1, 1, 0, 0], letterSwap)
         for cap in [modifier, letter] {
-            animate(cap, "transform.scale", [1, 1, 0.9, 1, 1, 0.9, 1, 1], [0, 0.16, 0.18, 0.21, 0.56, 0.58, 0.61, 1])
+            animate(cap, "transform.scale", [1, 1, 0.9, 1, 1, 0.9, 1, 1, 0.9, 1, 1],
+                    [0, 0.16, 0.18, 0.21, 0.56, 0.58, 0.61, 0.80, 0.82, 0.85, 1])
         }
+    }
+
+    // MARK: 第二步：左下四颗键帽
+
+    private var keyDeck: CALayer?
+    private var keyOld: [CALayer] = []
+    private var keyNew: [CALayer] = []
+    private var keyGlow: CALayer?
+    private var keysShown = false
+
+    /// 第二步的舞台：和第一步停下时同一张桌面，没有动画；左下角一块键盘，选了 Windows 才出现。
+    private func keysStep() {
+        stillAt = WelcomeFlow.introRestMoment
+        menubar("备忘录")
+        _ = notch()
+        let (memo, _) = twoWindows()
+        select(line: 1, in: memo.frame, of: memo.layers[1])
+
+        let capWidth = 7.2 * u, capHeight = 6 * u, gap = 1 * u, padding = 1.4 * u
+        let deckWidth = capWidth * 4 + gap * 3 + padding * 2
+        let deck = CALayer()
+        deck.frame = CGRect(x: 2.4 * u, y: 1.2 * u, width: deckWidth, height: capHeight + padding * 2)
+        deck.cornerRadius = 1.6 * u
+        deck.cornerCurve = .continuous
+        deck.backgroundColor = (dark ? NSColor.white.withAlphaComponent(0.08) : NSColor.black.withAlphaComponent(0.07)).cgColor
+        deck.zPosition = 8
+        deck.opacity = 0
+        root.addSublayer(deck)
+        keyDeck = deck
+        // 四颗按位置对应：Windows 的 Ctrl / Fn / ⊞ / Alt，原地换成 Mac 的 fn / control / option / command。
+        let macFaces: [(symbol: String, name: String?)] = [("fn", nil), ("⌃", "control"), ("⌥", "option"), ("⌘", "command")]
+        for i in 0..<4 {
+            let frame = CGRect(x: padding + CGFloat(i) * (capWidth + gap), y: padding, width: capWidth, height: capHeight)
+            let (cap, faces) = keycap(frame, faces: [(WelcomeFlow.windowsKeyNames[i], nil), macFaces[i]], in: deck)
+            faces[1].opacity = 0
+            keyOld.append(faces[0])
+            keyNew.append(faces[1])
+            if i == WelcomeFlow.litKeyIndex {
+                // ⌘ 的填充：换完字之后从 0.14 亮到 0.28（深色下是白，浅色下是强调色）。
+                let glow = CALayer()
+                glow.frame = cap.bounds
+                glow.cornerRadius = 1.1 * u
+                glow.cornerCurve = .continuous
+                glow.backgroundColor = (dark ? NSColor.white : NSColor.controlAccentColor).cgColor
+                glow.opacity = 0
+                cap.insertSublayer(glow, at: 0)
+                keyGlow = glow
+            }
+        }
+    }
+
+    private func setOpacity(_ layer: CALayer, _ value: Float) {
+        CATransaction.begin()
+        CATransaction.setDisableActions(true)
+        layer.removeAllAnimations()
+        layer.opacity = value
+        CATransaction.commit()
+    }
+
+    /// 模型值马上到位，显示上从现在的样子淡过去（start 秒后开始）。
+    private func fade(_ layer: CALayer, to value: Float, start: Double, duration: Double, at now: CFTimeInterval) {
+        let a = CABasicAnimation(keyPath: "opacity")
+        a.fromValue = layer.presentation()?.opacity ?? layer.opacity
+        a.toValue = value
+        a.duration = duration
+        a.beginTime = layer.convertTime(now, from: nil) + start
+        a.fillMode = .backwards
+        CATransaction.begin()
+        CATransaction.setDisableActions(true)
+        layer.opacity = value
+        CATransaction.commit()
+        layer.add(a, forKey: "welcome.keys")
+    }
+
+    /// 键帽跟着答案出现或收起。animated 为 false 时直接摆到位（截图、重画、第一次建场景）。
+    func setOrigin(_ origin: SwitcherOrigin, animated: Bool) {
+        guard let deck = keyDeck, let glow = keyGlow else { return }
+        let show = WelcomeFlow.keycapsShown(for: origin)
+        guard show != keysShown else { return }
+        keysShown = show
+        let plan = WelcomeFlow.keySwapPlan(reduceMotion: Motion.reduced)
+        let transition = WelcomeFlow.transition(reduceMotion: Motion.reduced)
+        let now = CACurrentMediaTime()
+        guard animated else {
+            for i in 0..<4 {
+                setOpacity(keyOld[i], show ? 0 : 1)
+                setOpacity(keyNew[i], show ? 1 : 0)
+            }
+            setOpacity(glow, show ? Float(plan.glowTo) : 0)
+            setOpacity(deck, show ? 1 : 0)
+            return
+        }
+        if !show {
+            // 收起：整块键盘 0.10 s 淡出（下次出现时再从 Windows 的字重新换）。
+            fade(deck, to: 0, start: 0, duration: transition.fadeOut, at: now)
+            return
+        }
+        // 起点：不论上次停在哪，先把键帽摆回 Windows 的字（键盘藏着，看不见）。
+        for i in 0..<4 {
+            setOpacity(keyOld[i], 1)
+            setOpacity(keyNew[i], 0)
+        }
+        setOpacity(glow, 0)
+        fade(deck, to: 1, start: 0, duration: transition.fadeIn, at: now)
+        for step in plan.steps {
+            fade(keyOld[step.index], to: 0, start: step.oldFadeStart, duration: step.oldFadeDuration, at: now)
+            fade(keyNew[step.index], to: 1, start: step.newFadeStart, duration: step.newFadeDuration, at: now)
+            if step.popFrom < 1 {
+                let pop = Motion.spring(.pop, keyPath: "transform.scale")
+                pop.fromValue = step.popFrom
+                pop.toValue = 1
+                pop.beginTime = keyNew[step.index].convertTime(now, from: nil) + step.newFadeStart
+                pop.fillMode = .backwards
+                keyNew[step.index].add(pop, forKey: "welcome.keys.pop")
+            }
+        }
+        // ⌘ 亮起：先随新字淡入到 0.14，再升到 0.28（calm 的时长）。
+        let last = plan.steps[WelcomeFlow.litKeyIndex]
+        let total = plan.glowStart + plan.glowDuration
+        let lit = CAKeyframeAnimation(keyPath: "opacity")
+        lit.values = [0, plan.glowFrom, plan.glowFrom, plan.glowTo]
+        lit.keyTimes = [0, (last.newFadeStart + last.newFadeDuration) / total, plan.glowStart / total, 1].map { NSNumber(value: $0) }
+        lit.duration = total
+        lit.beginTime = glow.convertTime(now, from: nil)
+        lit.fillMode = .backwards
+        CATransaction.begin()
+        CATransaction.setDisableActions(true)
+        glow.opacity = Float(plan.glowTo)
+        CATransaction.commit()
+        glow.add(lit, forKey: "welcome.keys.glow")
     }
 }

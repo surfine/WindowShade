@@ -29,6 +29,21 @@ import CoreGraphics
         evidence.end(.disconnected, lease: old)
         precondition(evidence.active == new)
         precondition(!evidence.observe(.connected, lease: new, now: 3))
+        var window = WS2MouthAttemptWindow()
+        func face(_ t: Double) -> WS2MouthAttempt { .init(time: t, frame: .init(time: t, values: [0.1, 0.2])) }
+        for i in 0..<30 { window.record(face(Double(i) * 0.05)) }
+        precondition(window.releasedAt == nil && window.evaluate() == nil)
+        for i in 30..<40 { window.record(face(Double(i) * 0.05)) }
+        precondition(abs(window.releasedAt! - 1.55) < 1e-9)
+        if case .accepted = window.evaluate()! {} else { preconditionFailure("window should accept") }
+        window.record(.init(time: 5, frame: nil))
+        precondition(window.attempts.count == 1)
+        var empty = WS2MouthAttemptWindow()
+        for i in 0..<40 { empty.record(.init(time: Double(i) * 0.05, frame: nil)) }
+        precondition(empty.evaluate() == .reRecord(.faceMissing))
+        var sparse = WS2MouthAttemptWindow()
+        for i in 0..<9 { sparse.record(face(Double(i) * 0.24)) }
+        precondition(sparse.evaluate() == .reRecord(.tooFewFrames))
         print("PASS mouth template rejection, holdout separation, device evidence epochs (synthetic only)")
     }
 }

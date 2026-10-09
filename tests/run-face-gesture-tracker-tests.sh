@@ -3,7 +3,7 @@
 set -euo pipefail
 cd "$(dirname "$0")/.."
 mkdir -p .build/face-gesture-tracker-tests
-swiftc -parse-as-library prototype/Core/FaceGestureTracker.swift prototype/App/FaceObservationSource.swift \
+swiftc -parse-as-library prototype/Core/FaceGestureTracker.swift prototype/App/FaceObservationSource.swift prototype/App/FaceEmbedder.swift \
   prototype/App/FaceVisionFallback.swift \
   tests/FaceGestureTrackerTests.swift -framework AVFoundation -framework Vision -framework CoreVideo \
   -o .build/face-gesture-tracker-tests/tracker

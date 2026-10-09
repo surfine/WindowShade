@@ -9,7 +9,7 @@ import Cocoa
 /// 2. ⌃S 之后 0.8 秒宽限内自己按了 ⌘S：不说，记成会了。
 /// 3. 焦点在不该开口的地方（说明写成网页终端的 “Terminal input”，临时 App 自己标的）：不说。
 /// 4. 点提示：替他按了“存储”（临时 App 的标题变成“已存储”），这条记成会了。
-/// 5. 小叉：记下了位置；点它只关掉，这条不再出。
+/// 5. 小叉：记下了位置；点它只关这一次，不记“不再说”。
 extension GlanceProbe {
   func exerciseHabits(pid: pid_t) async throws {
     guard AXIsProcessTrusted() else { print("FAIL habits: accessibility is not granted"); return }
@@ -87,7 +87,7 @@ extension GlanceProbe {
     print("\(saveTip?.title == "Mac 上存储按 ⌘S" && center.memory.ledger.used.contains("save") ? "PASS" : "FAIL") habits: clicking the tip "
           + "saves for him and the rule is learned (\(saveTip?.title ?? "nothing"); saved \(before) → \(savedCount(fixture)))")
 
-    // 5. 小叉：位置记下了，点它只是关掉，这条不再出。
+    // 5. 小叉：位置记下了，点它只关这一次，下次还会说。
     center.resetForProbe()
     try await wait("quiet before the close button", timeout: 8) { !notch.isAlerting }
     try await focusHabitsText(fixture, description: "正文")
@@ -98,8 +98,8 @@ extension GlanceProbe {
     let onButton = rect.map { NotchDemoView.closeHit(NSPoint(x: $0.midX, y: $0.midY)) } ?? false
     let farAway = rect.map { NotchDemoView.closeHit(NSPoint(x: $0.minX - 120, y: $0.midY - 40)) } ?? true
     NotchDemoView.habit?.onClose()
-    print("\(onButton && !farAway && center.memory.ledger.dismissed.contains("copy") ? "PASS" : "FAIL") habits: the small close button "
-          + "sits on the tip and closing it keeps the rule from coming back (button \(rect.map { "\($0)" } ?? "missing"))")
+    print("\(onButton && !farAway && !center.memory.ledger.dismissed.contains("copy") ? "PASS" : "FAIL") habits: the small close button "
+          + "sits on the tip and closing it only closes this once (button \(rect.map { "\($0)" } ?? "missing"))")
     try await wait("quiet at the end", timeout: 9) { !notch.isAlerting }
   }
 
