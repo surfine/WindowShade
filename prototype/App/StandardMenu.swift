@@ -6,7 +6,7 @@
 // （menuHandled=false / windowHandled=false）。
 //
 // 因此这里提供一份最小但标准的主菜单：应用菜单（关于/设置/服务/隐藏/退出）、编辑
-// 菜单（撤销/重做/剪切/拷贝/粘贴/删除/全选）与窗口菜单（关闭/最小化）。它不改变
+// 菜单（撤销/重做/剪切/拷贝/粘贴/删除/全选）与窗口菜单（关闭/最小化/卷轴概览）。它不改变
 // 代理应用的菜单栏行为，只让文本框和关闭快捷键恢复系统习惯。
 
 import Cocoa
@@ -149,6 +149,7 @@ enum StandardMenu {
         return item
     }
 
+    @MainActor
     private static func windowMenuItem() -> NSMenuItem {
         let item = NSMenuItem()
         let menu = NSMenu(title: "窗口")
@@ -156,8 +157,39 @@ enum StandardMenu {
                      keyEquivalent: "w")
         menu.addItem(withTitle: "最小化", action: #selector(NSWindow.performMiniaturize(_:)),
                      keyEquivalent: "m")
+        menu.addItem(.separator())
+        menu.addItem(stripOverviewItem())
         item.submenu = menu
         return item
+    }
+
+    /// 卷轴概览（稿：卷轴.html 工作包 SS-05）：只用鼠标也能打开。快捷键默认不占；卷轴没开时灰着。
+    static let stripOverviewTitle = "卷轴概览"
+    static let stripOverviewID = "ws.window.stripOverview"
+
+    @MainActor
+    static func stripOverviewItem() -> NSMenuItem {
+        let item = NSMenuItem(title: stripOverviewTitle,
+                              action: #selector(StripOverviewMenuTarget.openStripOverview(_:)), keyEquivalent: "")
+        item.target = StripOverviewMenuTarget.shared
+        item.identifier = NSUserInterfaceItemIdentifier(stripOverviewID)
+        return item
+    }
+}
+
+/// 菜单里“卷轴概览”那一项的去处：卷轴的控制器开着时把自己接上来（open / canOpen），没接上时这一项灰着。
+@MainActor
+final class StripOverviewMenuTarget: NSObject, NSMenuItemValidation {
+    static let shared = StripOverviewMenuTarget()
+    var open: (() -> Bool)?
+    var canOpen: (() -> Bool)?
+
+    @objc func openStripOverview(_ sender: Any?) {
+        _ = open?()
+    }
+
+    func validateMenuItem(_ menuItem: NSMenuItem) -> Bool {
+        canOpen?() ?? false
     }
 }
 

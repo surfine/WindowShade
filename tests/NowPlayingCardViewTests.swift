@@ -299,6 +299,78 @@ import Cocoa
         expect(presenter.isShowing, "数据回来了：留着")
         presenter.dismiss()
 
+        print("CASE NP5-C10 | 大卡里的音量条：按键换成条、不出两耳、1.2 秒换回、可拖、计时器空闲为 0")
+        // 展示端：卡没开时不接（归两耳）；开着就接。
+        presenter.dismiss()
+        expect(!presenter.showVolume(value: 0.5, muted: false), "大卡没开：不接，两耳照常")
+        expect(NotchLeaseHub.Owner.nowPlaying != .pomodoro && NotchLeaseHub.Owner.nowPlaying.layer == .opened,
+               "大卡有自己的租约主人，不再借番茄钟的名字")
+        var written: [Double] = []
+        presenter.writeVolume = { written.append($0) }
+        let stillPlaying = shownCards.count
+        expect(presenter.open(host: host), "再开一张")
+        let volumeCard = shownCards[stillPlaying]
+        let volumeWindow = NSWindow(contentRect: NSRect(x: 0, y: 0, width: 420, height: 142), styleMask: [.borderless], backing: .buffered, defer: false)
+        volumeCard.inputIsCurrent = { true }
+        volumeCard.clock = { 1000 }
+        volumeCard.update(content(paused: true), artwork: nil)
+        volumeWindow.contentView?.addSubview(volumeCard)
+        volumeCard.frame = NSRect(x: 0, y: 0, width: 420, height: 142)
+        volumeCard.layoutSubtreeIfNeeded()
+        presenter.pointerLocation = { NSPoint(x: 5, y: 5) }
+        inside = true
+        volumeCard.onPointer?(true)
+        expect(!volumeCard.volumeShown && volumeCard.pendingTimerCount == 0, "没按键：没有音量条，也没有计时器在等")
+        expect(!presenter.leaveTimerRunning, "指针在卡里：离开检查的 0.25 秒计时器是停的")
+        expect(presenter.showVolume(value: 0.4, muted: false), "大卡开着按音量键：卡接")
+        expect(volumeCard.volumeShown && abs(volumeCard.volumeValue - 0.4) < 1e-9, "控制那一行换成音量条")
+        expect(volumeCard.pendingTimerCount == 1, "只有一个“松键后换回”的计时器")
+        await settle(0.6)
+        presenter.showVolume(value: 0.5, muted: false)
+        await settle(0.8)
+        expect(volumeCard.volumeShown, "每按一下把换回往后推：距上一下 0.8 秒还在")
+        await settle(0.6)
+        expect(!volumeCard.volumeShown && volumeCard.pendingTimerCount == 0, "松键 1.2 秒后换回，计时器清零")
+        // 拖条改系统音量。
+        let row = NowPlayingVolumeRow.frame(cardWidth: 420)
+        let range = NowPlayingVolumeRow.barRange(rowWidth: row.width)
+        func volumePoint(_ fraction: Double) -> NSPoint {
+            NSPoint(x: row.minX + range.lowerBound + CGFloat(fraction) * (range.upperBound - range.lowerBound), y: 142 - (row.midY - 33.5))
+        }
+        presenter.showVolume(value: 0.2, muted: false)
+        volumeCard.mouseDown(with: mouse(.leftMouseDown, volumePoint(0.5), window: volumeWindow))
+        expect(volumeCard.isDragging && written.count == 1 && abs(written[0] - 0.5) < 0.02, "按在条上：跳到按下处并写系统音量")
+        expect(volumeCard.pendingTimerCount == 0, "手按在条上时不数 1.2 秒")
+        volumeCard.mouseDragged(with: mouse(.leftMouseDragged, volumePoint(0.9), window: volumeWindow))
+        expect(written.count == 2 && abs(written[1] - 0.9) < 0.02, "拖动跟手写")
+        volumeCard.mouseDragged(with: mouse(.leftMouseDragged, volumePoint(1.4), window: volumeWindow))
+        expect(abs(written[2] - 1) < 1e-9, "拖过头夹在 1")
+        presenter.pointerLocation = { NSPoint(x: 5, y: 5) }
+        volumeCard.onPointer?(false)
+        expect(!presenter.leaveTimerRunning, "拖音量条时离开检查的计时器停着")
+        volumeCard.mouseUp(with: mouse(.leftMouseUp, volumePoint(0.3), window: volumeWindow))
+        expect(!volumeCard.isDragging && volumeCard.volumeShown && volumeCard.pendingTimerCount == 1, "松手后才开始数 1.2 秒")
+        // 输入权被撤销：不接。
+        volumeCard.inputIsCurrent = { false }
+        let before = written.count
+        volumeCard.mouseDown(with: mouse(.leftMouseDown, volumePoint(0.7), window: volumeWindow))
+        expect(written.count == before && !volumeCard.isDragging, "输入权被撤销：条不接")
+        volumeCard.inputIsCurrent = { true }
+        await settle(1.4)
+        expect(!volumeCard.volumeShown && volumeCard.pendingTimerCount == 0, "再换回，计时器清零")
+        // 列表开着：键照接（不出两耳），但控制行本来就让位了，不换条。
+        volumeCard.loadRoutes = { routes }
+        volumeCard.openList()
+        expect(presenter.showVolume(value: 0.6, muted: false) && !volumeCard.volumeShown && volumeCard.pendingTimerCount == 0,
+               "列表开着：卡接下键但不换条，也不起计时器")
+        expect(!presenter.leaveTimerRunning, "列表开着：离开检查的计时器停着")
+        volumeCard.closeList()
+        expect(presenter.leaveTimerRunning, "列表关上、指针在卡外：计时器再起")
+        volumeCard.onPointer?(true)
+        expect(!presenter.leaveTimerRunning, "指针回到卡里：计时器又停")
+        presenter.dismiss()
+        expect(!presenter.leaveTimerRunning && volumeCard.pendingTimerCount == 0, "卡收回后一个计时器都不留")
+
         // 设了 NP4_SNAPSHOT_DIR 才出图：把卡画成 PNG 放进去，方便对着稿看（不设就什么都不做）。
         if let directory = ProcessInfo.processInfo.environment["NP4_SNAPSHOT_DIR"] {
             await snapshot(into: directory, geometry: geometry, content: content, settle: settle)

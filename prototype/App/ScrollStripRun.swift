@@ -69,6 +69,8 @@ final class ScrollStripController {
     private var motionOmega: CGFloat = 0
     private var motionLimit: CFTimeInterval = 0
     private var motionFocusVisible = false
+    /// 手指开始滑时卷轴停在哪：滑完换焦点时按卷轴走的方向挑（见 focusVisibleColumn）。
+    private var motionScrollFrom: CGFloat = 0
     /// CADisplayLink 会强引用它的 target；用一个小代理，免得和控制器成环。
     private lazy var motionProxy = DisplayLinkProxy(owner: self)
     /// 自己刚挪过窗口的这段时间里不对“被人拖走”的账（窗口还在路上）。
@@ -86,11 +88,31 @@ final class ScrollStripController {
     private(set) lazy var peek = StripPeek(strips: self)
     /// 概览开着时是它。
     private(set) var overview: StripOverview?
-    /// 标题栏上两指张开攒了多少（落在哪扇、最后一次什么时候）：走满松手打开概览。
+    /// 标题栏上两指张开攒了多少（落在哪扇、最后一次什么时候）：张开时概览跟着长，松手按推算过一半才打开。
     private var spread: (id: CGWindowID, total: CGFloat, at: TimeInterval)?
+    /// 张开的进度（原始进度，不夹）按时间记下：松手时取最后 0.15 秒算速度。
+    private var spreadSamples: [(time: TimeInterval, offset: CGFloat)] = []
+    /// 概览正跟着张开在长（还没松手）：这时 overview 是它，但还不接键盘和鼠标。
+    private var overviewTracking = false
+    /// 按 App 记住的列宽（本机设置）：开卷轴时读一次，你改了宽度时写回去。
+    private var widthMemory = StripWidthMemory()
+    /// 正在拖的标题栏（卷轴开着、开关开着时才有）。
+    private var titleDrag: StripTitleDrag?
+    /// 拖标题栏靠屏幕边自动卷：此刻卷到哪（松手前不写回 strip.offset）、刷新时钟、进触发区多久了。
+    private var titleDragOffset: CGFloat?
+    private var titleEdgeTracker = EdgeScrollTracker()
+    private var titleEdgeLink: CADisplayLink?
+    private var titleEdgeLastTick: CFTimeInterval = 0
+    private var titleEdgePointer: CGPoint = .zero
+    private lazy var titleEdgeProxy = TitleEdgeLinkProxy(owner: self)
+    /// 蓝条：画在屏幕上最近的那道竖缝上。
+    private lazy var seamBar = StripSeamBar()
 
     init(gestures: TrackpadGestureController) {
         self.gestures = gestures
+        // 菜单“窗口”里的“卷轴概览”：卷轴开着才能点。
+        StripOverviewMenuTarget.shared.open = { [weak self] in self?.showOverview(reason: "menu") ?? false }
+        StripOverviewMenuTarget.shared.canOpen = { [weak self] in self?.canShowOverview ?? false }
     }
 
     var isActive: Bool { strip != nil }
@@ -114,6 +136,7 @@ final class ScrollStripController {
         var strip = initial
         strip.applyStoredCentering()
         self.strip = strip
+        widthMemory = StripWidthMemory.load()
         displayID = Self.displayID(screen)
         self.elements = elements
         self.pids = pids
@@ -133,9 +156,12 @@ final class ScrollStripController {
         watchTimer?.invalidate(); watchTimer = nil
         endMotion()
         peek.stop()
+        cancelTitleDrag()
         overview?.close(picking: nil)
         overview = nil
+        overviewTracking = false
         spread = nil
+        spreadSamples = []
         strip = nil
         displayID = nil
         elements.removeAll(); pids.removeAll(); applied.removeAll(); seen.removeAll()
@@ -214,12 +240,14 @@ final class ScrollStripController {
     /// 停下来那一段：和官网一样的阻尼弹簧（ζ=0.88、ω=2π/0.42），接上手指离开时的速度。
     /// 位置按「经过了多少时间」解出来，不是每帧加一小步——所以 60Hz 和 120Hz 是同一条曲线，
     /// 掉一帧也不会走样、不会变慢。帧由显示器的刷新时钟（CADisplayLink）给，和屏幕同步。
-    /// focusVisible：手指滑完停下后，焦点所在的那扇已经滑出屏幕时，把焦点给停下后露在屏幕上的第一列（niri 也是这样）。
+    /// focusVisible：手指滑完停下后，焦点所在的那一列整列滑出了屏幕时，把焦点给朝卷轴走的方向最远、整列露着的那一列
+    /// （niri 的挑法，见 ScrollStrip.focusAfterScroll）。
     private func animate(from start: CGFloat, to target: CGFloat, velocity: CGFloat, focusVisible: Bool = false) {
         endMotion()
         self.strip?.forgetLastInsert()
         peek.dismiss(reason: "moving")
         guard abs(target - start) >= 0.5 else {
+            motionScrollFrom = focusVisible ? scrollStart : start
             settle(at: target, focusVisible: focusVisible)
             return
         }
@@ -233,6 +261,7 @@ final class ScrollStripController {
         motionSpeed = velocity
         motionStart = CACurrentMediaTime()
         motionFocusVisible = focusVisible
+        motionScrollFrom = focusVisible ? scrollStart : start
         if let screen = motionScreen() {
             let link = screen.displayLink(target: motionProxy, selector: #selector(DisplayLinkProxy.step(_:)))
             link.preferredFrameRateRange = CAFrameRateRange(minimum: 60, maximum: 120, preferred: 120)
@@ -376,7 +405,16 @@ final class ScrollStripController {
         self.strip = strip
         apply()
         wlog("strip: column \(index) → \(Int(width)) wide")
+        rememberWidth(width, of: id, screenWidth: strip.area.width)
         return true
+    }
+
+    /// 你给这个 App 改了一次宽度：记下那一档（只存 App 的标识和比例，本机设置，设置里能关、能一键忘掉）。
+    private func rememberWidth(_ width: CGFloat, of id: CGWindowID, screenWidth: CGFloat) {
+        guard StripWidthMemory.isEnabled(), let pid = pids[id],
+              let bundleID = NSRunningApplication(processIdentifier: pid)?.bundleIdentifier,
+              widthMemory.remember(bundleID: bundleID, width: width, screenWidth: screenWidth) else { return }
+        widthMemory.save()
     }
 
     /// 把这扇窗那一列整列滑出来，焦点给它（概览里点它）。
@@ -411,29 +449,42 @@ final class ScrollStripController {
     func pid(of id: CGWindowID) -> pid_t? { pids[id] }
 
     /// 概览：整条卷轴缩小铺开，点哪扇就把它那列滑出来。没开卷轴、已经开着返回 false。
-    /// 入口是标题栏上两指张开（见 noteSpread）；菜单、快捷键要接的话也调它。
+    /// 入口是标题栏上两指张开（见 noteSpread，跟手）和菜单“窗口”里的“卷轴概览”（StandardMenu）。
     @discardableResult
     func showOverview(reason: String) -> Bool {
+        guard let view = makeOverview() else { return false }
+        view.show()
+        wlog("strip: overview opens (\(reason)) columns=\(strip?.columns.count ?? 0) offset=\(Int(strip?.offset ?? 0))")
+        return true
+    }
+
+    /// 菜单里那一项能不能点：卷轴开着、概览没开。
+    var canShowOverview: Bool { strip != nil && overview == nil }
+
+    private func makeOverview() -> StripOverview? {
         guard let strip, overview == nil,
-              NSScreen.screens.contains(where: { Self.displayID($0) == displayID }) else { return false }
+              NSScreen.screens.contains(where: { Self.displayID($0) == displayID }) else { return nil }
         peek.dismiss(reason: "overview")
         let owner = gestures.owner
         let view = StripOverview(strip: strip, selected: lastFocused, pids: pids,
                                  snapshot: { id in await owner.fastWindowCapture(id) })
         view.onPick = { [weak self] id in
             self?.overview = nil
+            self?.overviewTracking = false
             self?.reveal(id)
         }
-        view.onClose = { [weak self] in self?.overview = nil }
+        view.onClose = { [weak self] in
+            self?.overview = nil
+            self?.overviewTracking = false
+        }
         let opened = strip
         view.onMove = { [weak self] id, drop in
             self?.overview = nil
+            self?.overviewTracking = false
             self?.moveFromOverview(id, drop, opened: opened)
         }
         overview = view
-        view.show()
-        wlog("strip: overview opens (\(reason)) columns=\(strip.columns.count) offset=\(Int(strip.offset))")
-        return true
+        return view
     }
 
     /// 概览里拖着换了位置（或 VoiceOver 动作）：真窗口只摆一轮。概览开着的时候卷轴变过（开了关了窗口）就作废。
@@ -450,39 +501,222 @@ final class ScrollStripController {
         if strip.columns.count <= 1 { stop(reason: "one column left") }
     }
 
-    /// 标题栏上两指张合了一帧（TrackpadGestures.magnify 转过来）。只记账、不吞事件：卷轴里的窗口张开原本不做事。
-    func noteSpread(on id: CGWindowID, delta: CGFloat) {
+    /// 标题栏上两指张合了一帧（TrackpadGestures.magnify 转过来）。不吞事件：卷轴里的窗口张开原本不做事。
+    /// visible：这一下已经确认落在这扇窗的标题栏上，可以把概览画出来了。张开时概览跟着长（减少动态效果时不跟）。
+    func noteSpread(on id: CGWindowID, delta: CGFloat, visible: Bool = false) {
         guard contains(id) else { return }
         let now = CACurrentMediaTime()
         if let last = spread, last.id == id, now - last.at < 0.3 {
             spread = (id, last.total + delta, now)
         } else {
+            if overviewTracking { cancelSpread() }
             spread = (id, delta, now)
+            spreadSamples = []
+        }
+        guard let total = spread?.total else { return }
+        let raw = StripOverviewSpread.rawProgress(total: total, arm: gestures.tuning.armMagnification)
+        spreadSamples.append((now, raw))
+        spreadSamples.removeAll { now - $0.time > 0.3 }
+        guard visible, !Motion.reduced else { return }
+        if overviewTracking {
+            overview?.track(StripOverviewSpread.shown(raw))
+        } else if overview == nil, raw > 0, let view = makeOverview() {
+            overviewTracking = true
+            view.beginTracking()
+            view.track(StripOverviewSpread.shown(raw))
+            wlog("strip: overview follows the spread")
         }
     }
 
-    /// 张合松手。confirmed：指针下确认是这扇窗的标题栏。张开走满（和魔法平铺同一个门槛）就打开概览。
+    /// 张合松手。confirmed：指针下确认是这扇窗的标题栏。按推算的进度过一半就打开（手停住时和从前走满的门槛一样），
+    /// 否则收回。没跟手（减少动态效果、确认晚到）时，开就只淡入。
     func endSpread(on id: CGWindowID, confirmed: Bool) {
-        defer { spread = nil }
-        guard confirmed, contains(id), let last = spread, last.id == id,
-              last.total >= gestures.tuning.armMagnification else { return }
+        defer { spread = nil; spreadSamples = [] }
+        let now = CACurrentMediaTime()
+        let raw = spread.flatMap { $0.id == id ? StripOverviewSpread.rawProgress(total: $0.total, arm: gestures.tuning.armMagnification) : nil }
+        let velocity = ScrollStrip.releaseVelocity(samples: spreadSamples, releaseTime: now)
+        let opens = confirmed && contains(id) && raw.map { StripOverviewSpread.opens(progress: $0, velocity: velocity) } == true
+        if overviewTracking, let view = overview {
+            // 不论开不开都不再跟手：开了就是一个普通的概览（铺好后接键盘、鼠标），收回时它收起会把 overview 清掉。
+            overviewTracking = false
+            view.finishTracking(open: opens, velocity: velocity)
+            wlog("strip: spread released at \(String(format: "%.2f", raw ?? 0)) v=\(String(format: "%.2f", velocity)) → \(opens ? "open" : "back")")
+            return
+        }
+        guard opens else { return }
         showOverview(reason: "spread")
     }
 
+    /// 张合被系统取消、手势换了：跟着长的概览收回，什么都不开。
+    func cancelSpread() {
+        spread = nil
+        spreadSamples = []
+        guard overviewTracking, let view = overview else { return }
+        overviewTracking = false
+        view.finishTracking(open: false, velocity: 0)
+    }
+
+    /// 焦点那一列整列滑出屏幕才换焦点（换焦点就是激活另一个 App，能不换就不换）；焦点不在卷轴里时照旧给一列。
     private func focusVisibleColumn() {
         guard let strip else { return }
         let focusedID = focusedWindow().flatMap { windowID(of: $0) }
-        if let focusedID, let index = strip.column(of: focusedID), strip.revealing(index) == strip.offset { return }
-        let visible = strip.columns.indices.first { strip.revealing($0) == strip.offset }
-        guard let visible, let target = strip.columns[visible].ids.first else { return }
+        let focusedColumn = focusedID.flatMap { strip.column(of: $0) }
+        guard let pick = strip.focusAfterScroll(focused: focusedColumn, from: motionScrollFrom),
+              pick != focusedColumn, let target = strip.columns[pick].ids.first else { return }
         lastFocused = target
         focus(target)
+        wlog("strip: focus after scroll → column \(pick)")
     }
 
     private func focus(_ id: CGWindowID) {
         guard let element = elements[id], let pid = pids[id] else { return }
         raiseAXWindow(element)
         focusAXWindow(element, pid: pid)
+    }
+
+    // MARK: 卷轴开着时拖标题栏（稿：卷轴.html“拖着挪一扇”，工作包 SS-07；开关默认关）
+
+    /// 拖着卷轴里一扇窗的标题栏挪了一下（TrackpadGestures 旁听到，窗口确实在跟着指针走）。坐标都是 AX。
+    /// 在最近的竖缝上画蓝条；靠屏幕边按 30 点 / 100 毫秒 / 每秒 1500 点自动卷（只挪别的窗口的位置，不改大小）。
+    /// 返回 true：这一下还归卷轴管，侧拉、画中画的落点提示先不出。卷轴关着、开关没开、竖着拉开了 256 点：返回 false，
+    /// 拖窗口和从前一模一样。
+    @discardableResult
+    func titleDragMoved(_ id: CGWindowID, down: CGPoint, to pointer: CGPoint) -> Bool {
+        if titleDrag?.id != id {
+            cancelTitleDrag()
+            guard overview == nil, !motionActive,
+                  let begun = StripTitleDrag.begin(id: id, down: down, strip: strip, enabled: StripTitleDrag.isEnabled())
+            else { return false }
+            titleDrag = begun
+            peek.dismiss(reason: "title drag")
+            wlog("strip: title drag on window \(id)")
+        }
+        guard var drag = titleDrag, let strip else { return false }
+        drag.update(pointer: pointer, strip: strip, offset: titleDragOffset)
+        titleDrag = drag
+        titleEdgePointer = pointer
+        guard !drag.leaving else {
+            seamBar.hide()
+            stopTitleEdgeScroll()
+            return false
+        }
+        showSeam(drag.seam)
+        updateTitleEdgeScroll()
+        return true
+    }
+
+    /// 这一下拖动此刻还归卷轴管（指针还在卷轴里挑缝）。
+    func holdsTitleDrag(_ id: CGWindowID) -> Bool {
+        guard let titleDrag else { return false }
+        return titleDrag.id == id && !titleDrag.leaving
+    }
+
+    /// 松手（侧拉、画中画、刘海下面的小岛先判过了，没接走才到这里）。返回 true：卷轴接住了（换到蓝条那道缝，
+    /// 或者回原位），甩一下那些判定不再做。返回 false：照从前的拖法走（拉远了就离开卷轴，对账时让出位置）。
+    /// stillOpen：三指拖移还没真结束，App 这时不理挪窗口，稍等再摆。
+    func titleDragEnded(_ id: CGWindowID, at pointer: CGPoint, intoNotch: Bool = false, stillOpen: Bool = false) -> Bool {
+        guard let drag = titleDrag, drag.id == id else { return false }
+        guard case .stay(let drop) = drag.end(pointer: pointer, intoNotch: intoNotch) else {
+            // 离开卷轴：靠边卷过的话，别的列停在卷到的地方附近，不弹回去；拖着的那扇留在松手的地方，对账时让出位置。
+            cancelTitleDrag()
+            wlog("strip: title drag on window \(id) leaves the strip")
+            return false
+        }
+        let scrolled = titleDragOffset
+        titleDrag = nil
+        titleDragOffset = nil
+        seamBar.hide()
+        stopTitleEdgeScroll()
+        guard var strip, strip.column(of: id) != nil else { return false }
+        if let scrolled { strip.offset = strip.snapped(scrolled) }
+        if let drop { strip.move(id, to: drop) }
+        self.strip = strip
+        lastFocused = id
+        // 拖着的那扇已经被系统挪开了：忘掉上次摆的外框，摆的时候它一定挪回去。
+        applied.removeValue(forKey: id)
+        if stillOpen {
+            DispatchQueue.main.asyncAfter(deadline: .now() + 0.45) { [weak self] in
+                MainActor.assumeIsolated { self?.apply() }
+            }
+        } else {
+            apply()
+        }
+        wlog("strip: title drag on window \(id) → \(drop.map { "\($0)" } ?? "back in place")")
+        return true
+    }
+
+    /// 这次拖动作废（又按下了一次、晃了一晃、卷轴结束）：蓝条收掉，自动卷停下，窗口由下一次摆放或对账归位。
+    func cancelTitleDrag() {
+        guard titleDrag != nil || titleDragOffset != nil else { return }
+        let dragged = titleDrag?.id
+        let scrolled = titleDragOffset
+        titleDrag = nil
+        titleDragOffset = nil
+        seamBar.hide()
+        stopTitleEdgeScroll()
+        // 靠边卷过：卷轴就停在卷到的地方附近（吸到最近的列边），拖着的那扇不跟着挪（它在指针下）。
+        guard let scrolled, var strip else { return }
+        strip.offset = strip.snapped(scrolled)
+        self.strip = strip
+        if let dragged, let raw = strip.frames()[dragged] { applied[dragged] = ArrangeGap.apply(raw, in: strip.area) }
+        apply()
+    }
+
+    private func showSeam(_ seam: ScrollStrip.Seam?) {
+        if let seam { seamBar.show(seam.bar) } else { seamBar.hide() }
+    }
+
+    /// 指针进了屏幕边 30 点以内就开刷新时钟（停够 100 毫秒才开始卷），出来就停：不拖、不靠边时没有任何定时器。
+    private func updateTitleEdgeScroll() {
+        guard let strip else { return }
+        _ = titleEdgeTracker.velocity(pointerX: titleEdgePointer.x - strip.area.minX, width: strip.area.width,
+                                      now: CACurrentMediaTime())
+        guard titleEdgeTracker.isInZone else {
+            stopTitleEdgeScroll()
+            return
+        }
+        guard titleEdgeLink == nil, let screen = motionScreen() else { return }
+        let link = screen.displayLink(target: titleEdgeProxy, selector: #selector(TitleEdgeLinkProxy.step(_:)))
+        link.add(to: .main, forMode: .common)
+        titleEdgeLink = link
+        titleEdgeLastTick = CACurrentMediaTime()
+    }
+
+    private func stopTitleEdgeScroll() {
+        titleEdgeLink?.invalidate()
+        titleEdgeLink = nil
+        titleEdgeTracker.reset()
+    }
+
+    /// 靠边自动卷的一帧：卷轴往那一边走，别的窗口只挪位置；蓝条跟着缝走。
+    fileprivate func titleEdgeStep() {
+        guard var drag = titleDrag, !drag.leaving, let strip else {
+            stopTitleEdgeScroll()
+            return
+        }
+        let now = CACurrentMediaTime()
+        let dt = min(0.05, now - titleEdgeLastTick)
+        titleEdgeLastTick = now
+        let velocity = titleEdgeTracker.velocity(pointerX: titleEdgePointer.x - strip.area.minX, width: strip.area.width, now: now)
+        guard titleEdgeTracker.isInZone else {
+            stopTitleEdgeScroll()
+            return
+        }
+        let current = titleDragOffset ?? strip.offset
+        let bounds = strip.scrollBounds
+        let next = min(max(current + velocity * dt, bounds.lowerBound), bounds.upperBound)
+        guard abs(next - current) >= 0.25 else { return }
+        titleDragOffset = next
+        for (id, frame) in strip.slidFrames(at: next, sizes: applied, excluding: drag.id, gap: ArrangeGap.points)
+        where applied[id] != frame {
+            guard let element = elements[id], let pid = pids[id] else { continue }
+            applied[id] = frame
+            mover.move(element, pid: pid, id: id, to: frame, resize: false)
+        }
+        busyUntil = CACurrentMediaTime() + 0.9
+        drag.update(pointer: titleEdgePointer, strip: strip, offset: next)
+        titleDrag = drag
+        showSeam(drag.seam)
     }
 
     // MARK: 对账
@@ -573,7 +807,8 @@ final class ScrollStripController {
             var leave = bounds[id] == nil || !visibleIDs.contains(id)
                 || owner.shaded[id] != nil || owner.slideOver.isSlideOver(id) || owner.notch.isTucked(id)
             // 被人拖走、改了大小：不再管它（露在屏幕上的列才比；停在边上的会被系统挪一点）。
-            if !leave, quiet, !parked.contains(id), let actual = bounds[id], let expected = applied[id],
+            // 拖着标题栏、还在卷轴里挑缝的那扇不算被拖走：松手才知道它去哪。
+            if !leave, quiet, !parked.contains(id), !holdsTitleDrag(id), let actual = bounds[id], let expected = applied[id],
                abs(actual.minX - expected.minX) > 24 || abs(actual.minY - expected.minY) > 24
                 || abs(actual.width - expected.width) > 24 || abs(actual.height - expected.height) > 24 {
                 leave = true
@@ -596,7 +831,9 @@ final class ScrollStripController {
             let category = app?.bundleURL.flatMap { Bundle(url: $0)?.object(forInfoDictionaryKey: "LSApplicationCategoryType") as? String }
             let role = MagicTiling.role(bundleID: app?.bundleIdentifier, category: category)
             let after = facts.focusedID.flatMap { strip.column(of: $0) } ?? (strip.columns.count - 1)
-            strip.insert(window.id, width: ScrollStrip.width(for: role, in: strip.area), after: after)
+            // 你给这个 App 改过宽度就用那一档，没改过照 App 要的地方给。
+            let remembered = StripWidthMemory.isEnabled() ? widthMemory.width(for: app?.bundleIdentifier, in: strip.area) : nil
+            strip.insert(window.id, width: remembered ?? ScrollStrip.width(for: role, in: strip.area), after: after)
             elements[window.id] = element
             pids[window.id] = window.pid
             gestures.noteJoined(window.id, element: element, before: window.bounds, area: strip.area)
@@ -662,5 +899,58 @@ private final class DisplayLinkProxy: NSObject {
     @objc func step(_ link: CADisplayLink) {
         let owner = owner
         MainActor.assumeIsolated { owner?.advanceMotion() }
+    }
+}
+
+/// 拖标题栏靠边自动卷的刷新时钟代理：只弱引用控制器。回调在主线程的 run loop 上。
+private final class TitleEdgeLinkProxy: NSObject {
+    weak var owner: ScrollStripController?
+    init(owner: ScrollStripController) { self.owner = owner }
+    @objc func step(_ link: CADisplayLink) {
+        let owner = owner
+        MainActor.assumeIsolated { owner?.titleEdgeStep() }
+    }
+}
+
+/// 拖标题栏时画在屏幕竖缝上的蓝条：不接鼠标、不抢焦点，浮在窗口上面（拖动途中窗口归系统画，我们只能在旁边画提示）。
+@MainActor
+final class StripSeamBar {
+    private var panel: NSPanel?
+
+    /// bar：AX 坐标。
+    func show(_ bar: CGRect) {
+        let frame = cocoaFrame(fromAXPosition: bar.origin, size: bar.size)
+        let panel = self.panel ?? makePanel()
+        self.panel = panel
+        if panel.frame != frame { panel.setFrame(frame, display: true) }
+        if let layer = panel.contentView?.layer {
+            panel.contentView?.effectiveAppearance.performAsCurrentDrawingAppearance {
+                layer.backgroundColor = NSColor.controlAccentColor.cgColor
+            }
+        }
+        if !panel.isVisible { panel.orderFrontRegardless() }
+    }
+
+    func hide() {
+        panel?.orderOut(nil)
+    }
+
+    private func makePanel() -> NSPanel {
+        let panel = NSPanel(contentRect: .zero, styleMask: [.borderless, .nonactivatingPanel], backing: .buffered, defer: true)
+        panel.level = .floating
+        panel.collectionBehavior = [.transient, .ignoresCycle, .fullScreenAuxiliary, .moveToActiveSpace]
+        panel.isOpaque = false
+        panel.backgroundColor = .clear
+        panel.hasShadow = false
+        panel.ignoresMouseEvents = true
+        panel.hidesOnDeactivate = false
+        panel.isReleasedWhenClosed = false
+        panel.animationBehavior = .none
+        let view = NSView()
+        view.wantsLayer = true
+        view.layer?.cornerRadius = ScrollStrip.seamThickness / 2
+        panel.contentView = view
+        panel.setAccessibilityElement(false)
+        return panel
     }
 }

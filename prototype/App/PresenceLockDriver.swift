@@ -25,13 +25,20 @@ enum PresenceScreenLock {
 
 /// 锁屏前把私人 App 的在屏窗口收进刘海。和「有人在看」（BystanderTuck）走同一条收进刘海的路、
 /// 用同一个账本挑窗口，只是不在刘海里说「有人在看」——马上就锁屏了。
-/// 名单为空、刘海关着、没有辅助功能权限时什么都不做。收进去的不自动放回，回来后在刘海那一排里拿。
+/// 名单为空、刘海关着、没有辅助功能权限时什么都不做。
+/// 自己锁的那一次（带令牌）收进去的，解锁后只把这一次自己收的放回原处（`restore`）；
+/// windowshade://lock 来的锁不带令牌，不记账，也不放回。
 @MainActor enum PresencePrivateTuck {
-    static func tuck() -> Int { tuck(list: .shared, owner: NSApp.delegate as? AppDelegate) }
+    private static var ledger = PresenceTuckLedger()
 
-    static func tuck(list: PrivateAppList, owner: AppDelegate?) -> Int {
+    static func tuck(token: WS2.Token?) -> Int {
+        tuck(list: .shared, owner: NSApp.delegate as? AppDelegate, token: token)
+    }
+
+    static func tuck(list: PrivateAppList, owner: AppDelegate?, token: WS2.Token? = nil) -> Int {
         guard !list.isEmpty, NotchController.isEnabled, AXIsProcessTrusted(),
               let owner, owner.notch.isAvailable else { return 0 }
+        if let token { ledger.begin(token: token) } else { ledger.forget() }
         let candidates = BystanderTuckLedger().toTuck(onScreenCandidates(owner: owner)) { list.contains(bundleID: $0) }
         guard !candidates.isEmpty else { return 0 }
         let pids = candidates.reduce(into: [pid_t]()) { if !$0.contains($1.pid) { $0.append($1.pid) } }
@@ -45,9 +52,21 @@ enum PresenceScreenLock {
                   size.width > 1, size.height > 1 else { continue }
             let frame = CGRect(origin: position, size: size)
             owner.notch.tuck(element, id: candidate.id, pid: candidate.pid, landed: frame, home: frame, velocity: .zero)
+            ledger.recordTucked(candidate)
             count += 1
         }
         return count
+    }
+
+    /// 解锁后：把 `token` 那次锁屏前自己收的窗口放回原处。还在刘海里、还是原来那个进程的才放；
+    /// 逐扇放回，不说话（读屏不念窗口标题，也不弹刘海提醒）。返回放回了几扇。
+    @discardableResult
+    static func restore(token: WS2.Token) -> Int {
+        guard let owner = NSApp.delegate as? AppDelegate else { ledger.forget(); return 0 }
+        let notch = owner.notch
+        let ids = ledger.takeRestores(for: token, tuckedPID: { notch.tuckedPID(of: $0) })
+        for id in ids { notch.release(id, reason: "presence unlock") }
+        return ids.count
     }
 
     /// 在屏、正常层级、不透明的窗口里，没被收起、没被卷起、不在侧边栏的（和 BystanderTuck 同一套条件）。
@@ -79,10 +98,15 @@ enum PresenceScreenLock {
 }
 
 /// 合盖效果开着时，锁屏前先让桌面折进刘海。
-/// 合盖效果（DuoController）现在只跟着盖子的角度走，还没有「不合盖、直接折一次」的入口，
-/// 所以这里一律返回 false：照旧直接锁。入口接上后在这里调用它，返回 true，驱动就等 0.35 秒再锁。
+/// 合盖效果开着、没减少动态效果、也没有别的会话时，DuoController 接受这一次「现在折一次」，
+/// 这里返回 true，驱动就等 0.35 秒再锁；其它情况返回 false，照旧直接锁。
 @MainActor enum PresenceLockFold {
-    static func begin() -> Bool { false }
+    static func begin() -> Bool {
+        (NSApp.delegate as? AppDelegate)?.duoController.foldOnce() ?? false
+    }
+
+    /// 锁没成功或被取消：把折起的桌面放回原样。
+    static func cancel() { (NSApp.delegate as? AppDelegate)?.duoController.cancelFoldOnce() }
 }
 
 /// 离开就锁的暂停与续播。只暂停正在放的，只续播自己暂停的那一个（账本见 PresenceMediaLedger）。
@@ -237,7 +261,7 @@ final class PresenceMediaControl: @unchecked Sendable {
     private let source: PresenceSource?
     private let readLockState: () -> SessionLockState
     private let lockScreen: () -> Bool
-    private let tuckPrivate: @MainActor () -> Int
+    private let tuckPrivate: @MainActor (WS2.Token?) -> Int
     private let foldDesktop: @MainActor () -> Bool
     private let media: PresenceMediaControl
     private let clock = WS2ContinuousClock()
@@ -252,7 +276,7 @@ final class PresenceMediaControl: @unchecked Sendable {
     init(notch: NotchController?, source: PresenceSource? = nil,
          readLockState: @escaping () -> SessionLockState = { EffectSecurityBoundary.lockState },
          lockScreen: @escaping () -> Bool = PresenceScreenLock.lock,
-         tuckPrivate: @escaping @MainActor () -> Int = PresencePrivateTuck.tuck,
+         tuckPrivate: @escaping @MainActor (WS2.Token?) -> Int = { PresencePrivateTuck.tuck(token: $0) },
          foldDesktop: @escaping @MainActor () -> Bool = PresenceLockFold.begin,
          media: PresenceMediaControl = PresenceMediaControl()) {
         self.notch = notch
@@ -379,17 +403,21 @@ final class PresenceMediaControl: @unchecked Sendable {
                     MainActor.assumeIsolated { self?.feed([.commitLock(token)]) }
                 }
             case .tuckPrivate(let token):
-                let count = tuckPrivate()
+                let count = tuckPrivate(token)
                 wlog("presence: tucked \(count) private windows, token \(token.serial)")
             case .pauseMedia(let token):
                 media.pause(token)
             case .resumeMedia(let token):
                 media.resume(token)
+                // 解开了：把锁屏前自己收进刘海的私人窗口放回原处（只放这一次收的）。
+                let restored = PresencePrivateTuck.restore(token: token)
+                if restored > 0 { wlog("presence: restored \(restored) private windows, token \(token.serial)") }
             case .lock(let token):
-                if foldDesktop() {
-                    // 桌面正折进刘海：0.35 秒后再锁，回执期限（3 秒）留得下。
+                let delay = PresenceFoldPlan.lockDelay(foldAccepted: foldDesktop())
+                if delay > 0 {
+                    // 桌面正折进刘海：到点再核对再锁，不晚于 0.5 秒；回执期限（3 秒）留得下。
                     wlog("presence: folding the desktop, then locking, token \(token.serial)")
-                    DispatchQueue.main.asyncAfter(deadline: .now() + PresenceLockGlue.foldLead) { [weak self] in
+                    DispatchQueue.main.asyncAfter(deadline: .now() + delay) { [weak self] in
                         MainActor.assumeIsolated { self?.lockAfterFold(token) }
                     }
                 } else if !lockNow(token) {
@@ -416,6 +444,7 @@ final class PresenceMediaControl: @unchecked Sendable {
     private func lockNow(_ token: WS2.Token) -> Bool {
         wlog("presence: locking the screen, token \(token.serial)")
         if lockScreen() { return true }
+        PresenceLockFold.cancel()
         media.resume(token)
         return false
     }
@@ -423,7 +452,8 @@ final class PresenceMediaControl: @unchecked Sendable {
     /// 折完再锁：这 0.35 秒里被取消（碰了键盘、手机回来、关掉开关）就不锁。
     private func lockAfterFold(_ token: WS2.Token) {
         guard running, case .awaitingReceipt(let expected) = model.phase, expected == token else {
-            // 没锁：这次暂停的歌续上（账本只认这个令牌，续过就忘）。
+            // 没锁：折起的桌面放回原样，这次暂停的歌续上（账本只认这个令牌，续过就忘）。
+            PresenceLockFold.cancel()
             media.resume(token)
             return
         }
@@ -434,7 +464,7 @@ final class PresenceMediaControl: @unchecked Sendable {
     /// 不留「自己锁的」归属：回来不会自动解锁，也不会替你续播。
     private func lockFromLink() {
         guard running else { return }
-        let count = tuckPrivate()
+        let count = tuckPrivate(nil)
         wlog("presence: lock from link, tucked \(count) private windows")
         if !lockScreen() { wlog("presence: lock from link failed") }
     }

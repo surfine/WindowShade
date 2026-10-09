@@ -59,3 +59,107 @@ struct ChangeAlertPolicy {
         lastAlert.removeValue(forKey: id)
     }
 }
+
+// MARK: 正在播放：换歌一瞥（设计稿《正在播放》“换歌一瞥”，工作包 NP-3）
+//
+// 在放的时候换了曲目（含开始播放的第一首），刘海往下鼓 30：高 = 刘海 + 30，宽不变，底角 24；
+// 一行“歌名 13 半粗，空 6，歌手 11 用封面字色”，太长从尾巴截。停 1.8 秒 + 每字 0.05 秒，最长 4.5 秒；
+// 还开着时又换了歌：原地换字，计时重算，不重开口。纯规则，不碰 AppKit、不读时钟、不起计时器。
+
+enum NowPlayingPeek {
+    /// 刘海下面多鼓出来的高度。
+    static let extraHeight = 30.0
+    /// 底角（提醒的底角，同 island.alert）。
+    static let cornerRadius = 24.0
+    static let titleSize = 13.0
+    static let artistSize = 11.0
+    /// 歌名和歌手之间的空。
+    static let gap = 6.0
+    /// 文字离两边的留白。
+    static let sideMargin = 14.0
+    static let baseHold: TimeInterval = 1.8
+    static let perCharacter: TimeInterval = 0.05
+    static let maxHold: TimeInterval = 4.5
+    /// 封面交叉淡化（沿用紧凑两耳的淡过去，同一个数）。
+    static let crossfade: TimeInterval = 0.18
+
+    /// 总高：刘海 + 30。
+    static func height(notchHeight: Double) -> Double { notchHeight + extraHeight }
+
+    /// 停多久：1.8 秒 + 每字 0.05 秒（歌名加歌手的字数），最长 4.5 秒。
+    static func hold(title: String, artist: String) -> TimeInterval {
+        min(maxHold, baseHold + Double(title.count + artist.count) * perCharacter)
+    }
+
+    /// 读屏念的话：歌名，歌手。全名在这里和大卡里，画面上可以被截。
+    static func spoken(title: String, artist: String) -> String {
+        artist.isEmpty ? title : "\(title)，\(artist)"
+    }
+}
+
+/// 什么时候一瞥、什么时候不一瞥。每次看到“正在播放”的一份样子就喂进来一次，它记着上一首。
+struct NowPlayingPeekTracker: Sendable {
+    struct Sample: Equatable, Sendable {
+        /// 播放器（bundle id），换了播放器也算换了曲目。
+        var player: String
+        var title: String
+        var artist: String
+        var isPlaying: Bool
+        /// 没有歌手且时长 ≤ 60 秒（`NowPlayingCardPolicy.isAdvertisement`）。
+        var isAdvertisement: Bool
+    }
+
+    /// 此刻不该一瞥的几种场面。任何一个为真，这一首就算看过了，不会事后补一瞥。
+    struct Gates: Equatable, Sendable {
+        /// 那一排或大卡开着（含认证卡、落点等占着刘海的）。
+        var shelfOrCardOpen = false
+        var fullScreen = false
+        var locked = false
+        /// 刘海上正挂着别的提醒：先到先占，这一瞥不排队补。
+        var otherAlertShowing = false
+
+        var isBlocked: Bool { shelfOrCardOpen || fullScreen || locked || otherAlertShowing }
+    }
+
+    enum Decision: Equatable, Sendable {
+        case none
+        /// 开口：往下鼓，停这么久。
+        case open(hold: TimeInterval)
+        /// 一瞥还开着：原地换字，计时按新的重算，不重开口。
+        case replace(hold: TimeInterval)
+    }
+
+    private var lastKey: String?
+    private var openUntil: TimeInterval?
+
+    var isOpen: Bool { openUntil != nil }
+
+    private func key(_ sample: Sample) -> String { [sample.player, sample.title, sample.artist].joined(separator: "\u{1F}") }
+
+    /// 一瞥是否还开着（按 `now`）。
+    func isOpen(at now: TimeInterval) -> Bool { openUntil.map { now < $0 } ?? false }
+
+    /// 暂停时不更新“上一首”：暂停后接着放同一首不算换歌，暂停时换成另一首、再放才算。
+    mutating func observe(_ sample: Sample?, gates: Gates, now: TimeInterval) -> Decision {
+        guard let sample, !sample.title.isEmpty else {
+            lastKey = nil
+            openUntil = nil
+            return .none
+        }
+        guard sample.isPlaying else { return .none }
+        let current = key(sample)
+        guard current != lastKey else { return .none }
+        lastKey = current
+        if sample.isAdvertisement || gates.isBlocked {
+            openUntil = nil
+            return .none
+        }
+        let hold = NowPlayingPeek.hold(title: sample.title, artist: sample.artist)
+        let wasOpen = isOpen(at: now)
+        openUntil = now + hold
+        return wasOpen ? .replace(hold: hold) : .open(hold: hold)
+    }
+
+    /// 一瞥被收掉了（到点、被别的盖住、锁屏）。
+    mutating func dismissed() { openUntil = nil }
+}

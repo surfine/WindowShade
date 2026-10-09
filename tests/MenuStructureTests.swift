@@ -84,6 +84,27 @@ struct MenuStructureTests {
         check(source.contains("addPinnedPreviewMenuSection(menuState.pinnedPreviews, into: pinnedMenu)"), "置顶段进动态行")
         check(!source.contains("into: arrangement)"), "整理▸里不再重复置顶段")
         check(source.contains("phase != .idle"), "番茄钟行只在进行中才加")
+
+        // 卷轴概览（SS-05）：主菜单“窗口”里一项，快捷键默认不占；顶层项数不变；卷轴没接上时灰着。
+        _ = NSApplication.shared  // make() 要写 NSApp.servicesMenu
+        let main = StandardMenu.make(appName: "WindowShade", settingsTarget: nil, settingsAction: nil)
+        check(main.items.count == 3, "主菜单顶层仍是 应用 / 编辑 / 窗口 三项")
+        let windowMenu = main.items.last?.submenu
+        let overview = windowMenu?.items.first { $0.identifier?.rawValue == StandardMenu.stripOverviewID }
+        check(overview?.title == "卷轴概览", "窗口菜单里有“卷轴概览”")
+        check(overview?.keyEquivalent == "", "卷轴概览默认不占快捷键")
+        check(windowMenu?.items.filter { !$0.isSeparatorItem }.map(\.title) == ["关闭", "最小化", "卷轴概览"],
+              "窗口菜单：关闭、最小化、卷轴概览")
+        StripOverviewMenuTarget.shared.canOpen = nil
+        check(overview.map { !StripOverviewMenuTarget.shared.validateMenuItem($0) } == true, "卷轴没开时灰着")
+        var opened = false
+        StripOverviewMenuTarget.shared.canOpen = { true }
+        StripOverviewMenuTarget.shared.open = { opened = true; return true }
+        check(overview.map { StripOverviewMenuTarget.shared.validateMenuItem($0) } == true, "卷轴开着时能点")
+        StripOverviewMenuTarget.shared.openStripOverview(nil)
+        check(opened, "点了就打开概览")
+        StripOverviewMenuTarget.shared.open = nil
+        StripOverviewMenuTarget.shared.canOpen = nil
     }
 
     static func main() {

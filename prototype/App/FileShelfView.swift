@@ -252,7 +252,9 @@ final class FileShelfController: NSObject, NSSharingServiceDelegate, @preconcurr
         let gone = rows.filter { ids.contains($0.entry.id) }
         guard !gone.isEmpty else { return }
         store.remove(ids: Set(ids))
-        announce(gone.count == 1 ? FileShelfActions.removedSpoken(gone[0].entry.name) : "已移出文件架，\(gone.count) 个")
+        // 屏幕正在共享时读屏也不念真文件名。
+        let redacted = SystemQuietState.shared.state.redactsPrivateTiles
+        announce(FileShelfActions.removedSpoken(name: redacted ? nil : gone.first?.entry.name, count: gone.count))
     }
 
     /// 拖出时按住 ⌘ 移动完成：这一格离开，不用再撤销提示。

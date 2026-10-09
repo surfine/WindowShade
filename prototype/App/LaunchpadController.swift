@@ -234,7 +234,7 @@ final class LaunchpadController {
         view.registerForDraggedTypes([.fileURL])
         view.notchRect = notch.map { view.convert(panel.convertFromScreen($0), from: nil) }
         view.onClose = { [weak self] in self?.hide(reason: "dismiss") }
-        view.today.updateActivities(owner.notch.activities.store.visible)
+        view.today.updateActivities(owner.notch.activities.store.visible.filter { !$0.kind.isShelf })
         view.onActivityAction = { [weak self] id, action in
             guard let self else { return }
             if let id { self.owner.notch.activities.select(id) }

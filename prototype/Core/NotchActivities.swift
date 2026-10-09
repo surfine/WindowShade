@@ -319,6 +319,9 @@ extension NotchActivityKind {
         }
     }
 
+    /// 日程收场：没有会议链接开始即走（立即）；有链接再留 5 分钟（到点，最长 300 秒）。
+    static func calendarClosing(hasLink: Bool) -> NotchActivity.Closing { hasLink ? .deadline(NotchActivity.Closing.deadlineLimit) : NotchActivityKind.calendar.closing }
+
     /// 文件架：不当最小形，不算右段的 3 件。
     var isShelf: Bool { self == .shelf }
 }
@@ -483,6 +486,15 @@ extension NotchActivityKind {
 
 /// 紧凑两耳上的字：纯逻辑，视图只负责画。
 enum NotchEarText {
+    /// 紧凑两耳的整体透明度：过期降到 0.5，其余 1。增强对比度时也一样：过期靠右耳的“—”认，不只靠暗。
+    static func earAlpha(_ item: NotchActivity) -> Double { item.isStale ? NotchActivity.staleAlpha : 1 }
+
+    /// 读屏念的话：过期的在后面加“可能已停”。
+    static func spoken(_ base: String, stale: Bool) -> String {
+        guard stale else { return base }
+        return base.isEmpty ? NotchActivity.staleSpoken : "\(base)，\(NotchActivity.staleSpoken)"
+    }
+
     /// 右耳。过期了写“—”（不猜、不补数）；来源给了 `trailing` 就用它；否则百分比只给本身是百分比的种类，
     /// 个数写短写法“3/7”（稿：右耳“42%”或“3/7”；那一排的一格才写全“第 3 / 7”）；音乐不退回到 detail（那是 App 的标识）。
     static func trailing(_ item: NotchActivity) -> String {
@@ -519,6 +531,35 @@ enum NotchEarText {
 
     /// 番茄钟现在是休息吗（来源把阶段写在标题里：“专注”或“休息”）。
     static func isRest(_ item: NotchActivity) -> Bool { item.kind == .focus && item.title == "休息" }
+}
+
+/// 文件架的紧凑两耳（《文件架》稿“紧凑的个数”）：左耳托盘符号、右耳个数，优先级 10、最低。
+/// 暂存后个数滚到新值、右耳弹一下；减少动态效果时直接换。纯逻辑，画面在 `NotchCompactView`。
+enum NotchShelfEars {
+    static let activityID = "ws2.shelf"
+    static let title = "文件架"
+    /// 稿：右耳 pop 0.30 / 0.75；数字过渡 0.28 秒。
+    static let popResponse: Double = 0.30
+    static let popDamping: Double = 0.75
+    static let rollDuration: Double = 0.28
+
+    static func trailing(count: Int) -> String { "\(count)" }
+    /// 读屏：和那一排的末格一句话。
+    static func spoken(count: Int) -> String { count > 0 ? "文件架，\(count) 个" : "文件架空了" }
+
+    enum Roll: Equatable { case none, up, down }
+
+    /// 个数变了往哪边滚：变多往上顶出新值，变少往下落。第一次露出（旧值没有）不滚。
+    static func roll(from old: Int?, to new: Int) -> Roll {
+        guard let old, old != new else { return .none }
+        return new > old ? .up : .down
+    }
+
+    /// 只有变多（暂存了东西）右耳才弹一下；移出不弹。
+    static func pops(from old: Int?, to new: Int) -> Bool {
+        guard let old else { return false }
+        return new > old
+    }
 }
 
 /// 紧凑两耳里番茄钟的进度环：16 pt 视口、半径 6.5、线宽 2.2。
@@ -635,6 +676,13 @@ struct NotchActivityStore {
         return live + ended
     }
 
+    /// 这一条还没开始露面就要结束了吗（开始后 `appearAfter` 秒内）：下载 / 拷贝 1.5 秒内做完，完成提醒也不出。
+    /// 没有这一条（或已结束）是 false：不知道多快的不压，照旧说。
+    func neverAppeared(id: String, at now: Double) -> Bool {
+        guard let item = storage[id], item.endedAt == nil, item.appearAfter > 0, now.isFinite else { return false }
+        return now < item.startedAt + item.appearAfter
+    }
+
     /// 下一次要醒来看一眼的时刻：最早的收掉时间、过期时间、出现门槛、那一排留到的时间。
     /// 什么都没有就是 nil，调用方不排定时器。
     var nextTransition: Double? {
@@ -697,12 +745,13 @@ struct NotchActivityStore {
     /// 按收场方式走：立即的马上收掉；其余换上最后的样子，留在原处直到 `expiresAt`（默认 4 秒，到点最长 300 秒）。
     /// 开始后还没过出现门槛就结束的（1 秒的拷贝）从来没露过面，直接收掉，不留最后的样子。
     @discardableResult
-    mutating func end(id: String, generation: UInt64, now: Double) -> Bool {
+    mutating func end(id: String, generation: UInt64, now: Double, immediately: Bool = false) -> Bool {
         guard Self.validNow(now), now >= (watermark ?? -.infinity) else { return false }
         guard let current = storage[id], current.generation == generation, current.endedAt == nil else { return false }
         watermark = max(watermark ?? -.infinity, now)
         registerTombstone(id: id, generation: generation)
-        let hold = current.closing.holdSeconds
+        // `immediately`：人点了结束、取消了授权这类不是“做完”的收场，不留最后的样子。
+        let hold = immediately ? 0 : current.closing.holdSeconds
         if hold <= 0 || isPending(current) {
             storage.removeValue(forKey: id)
             seenEnded.remove(id)

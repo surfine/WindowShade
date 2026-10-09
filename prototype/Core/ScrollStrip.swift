@@ -435,6 +435,37 @@ struct ScrollStrip: Equatable {
         return clamped(candidates.min { abs($0 - target) < abs($1 - target) } ?? target)
     }
 
+    // MARK: 滑完的焦点（稿：卷轴.html“焦点不自己跑”，工作包 SS-06）
+
+    /// 第 index 列停在 offset 这个位置时整列露着（列宽取整的一两点误差算露着）。
+    func isFullyVisible(_ index: Int, at offset: CGFloat? = nil) -> Bool {
+        guard columns.indices.contains(index) else { return false }
+        let frame = trueFrame(column: index, at: offset)
+        return frame.minX >= area.minX - Self.flush && frame.maxX <= area.maxX + Self.flush
+    }
+
+    /// 第 index 列停在 offset 这个位置时整列滑出了屏幕（只剩边上那一条，或者干脆看不见）。
+    func isOffscreen(_ index: Int, at offset: CGFloat? = nil) -> Bool {
+        guard columns.indices.contains(index) else { return true }
+        let frame = trueFrame(column: index, at: offset)
+        return frame.maxX <= area.minX + Self.sliver || frame.minX >= area.maxX - Self.sliver
+    }
+
+    /// 手指滑完、卷轴从 from 停到 offset 后焦点该换给哪一列；不用换返回 nil。
+    /// 焦点那一列还有一部分露在屏幕上就不换（换焦点就是激活另一个 App，能不换就不换）；
+    /// 整列滑出屏幕才换，换给朝卷轴走的方向最远、整列露着的那一列（niri 的挑法）：
+    /// 往右看（offset 变大）给最右边那列，往左看给最左边那列。没有整列露着的列也不换。
+    func focusAfterScroll(focused: Int?, from start: CGFloat, to end: CGFloat? = nil) -> Int? {
+        let end = end ?? offset
+        if let focused, columns.indices.contains(focused), !isOffscreen(focused, at: end) { return nil }
+        let visible = columns.indices.filter { isFullyVisible($0, at: end) }
+        if end > start { return visible.last }
+        if end < start { return visible.first }
+        // 没挪（只是松手吸回原处）：焦点那一列原本就看不见，给离它最近的那一列。
+        guard let focused else { return visible.first }
+        return visible.min { abs($0 - focused) < abs($1 - focused) }
+    }
+
     /// 让第 index 列整列露出来、挪得最少的位置（比屏幕还宽的列贴左边）。
     func revealing(_ index: Int) -> CGFloat {
         guard columns.indices.contains(index) else { return offset }
@@ -693,6 +724,53 @@ struct ScrollStrip: Equatable {
         return true
     }
 
+    // MARK: 张开跟手的概览（稿：卷轴.html“卷轴概览 · 打开”，工作包 SS-05）
+
+    /// 每扇窗此刻在屏幕上的外框，换成以屏幕可用区域左上角为原点（和概览面板同一坐标系）。
+    /// 张开到 0 时概览里每扇窗就叠在它真窗口的位置上，张开到 1 时落到概览的位置。
+    func screenFrames() -> [CGWindowID: CGRect] {
+        frames().mapValues { $0.offsetBy(dx: -area.minX, dy: -area.minY) }
+    }
+
+    // MARK: 卷轴开着时拖标题栏（稿：卷轴.html“拖着挪一扇”，工作包 SS-07）
+
+    /// 屏幕上离指针最近的竖缝（AX 坐标）：落在这里就是在那两列之间新开一列。只算露在屏幕里的缝
+    /// （卷轴两头那两道只在露着时算）。at：卷轴此刻停在哪（拖到屏幕边自动卷时会变）。
+    /// 最近的那道是拖着的这扇自己那一列的边就返回 nil：指针还在原来那一列上，不画蓝条，松手回原位。
+    /// 蓝条画在缝上，整屏高。
+    func screenSeam(nearest pointerX: CGFloat, dragging id: CGWindowID, at offset: CGFloat? = nil) -> Seam? {
+        guard column(of: id) != nil, !columns.isEmpty else { return nil }
+        let base = area.minX - (offset ?? self.offset)
+        let t = Self.seamThickness
+        var best: (seam: Seam, distance: CGFloat)?
+        for index in 0...columns.count {
+            let drop = Drop.newColumn(at: index)
+            let x = base + start(of: index)
+            // 露在屏幕里（两头各让出停靠时露的那一条）才画得出来。
+            guard x >= area.minX - Self.flush, x <= area.maxX + Self.flush else { continue }
+            let barX = min(max(x, area.minX + t / 2), area.maxX - t / 2)
+            let seam = Seam(drop: drop, bar: CGRect(x: barX - t / 2, y: area.minY, width: t, height: area.height))
+            let distance = abs(pointerX - barX)
+            if best == nil || distance < best!.distance { best = (seam, distance) }
+        }
+        // 自己那一列的两道边：单独一列时落了等于没动；叠在一列里时也不在这里拆出（拆出走 ⌃⌘[ ] 或概览）。
+        guard let seam = best?.seam, case .newColumn(let index) = seam.drop, let source = column(of: id),
+              index != source, index != source + 1 else { return nil }
+        return seam
+    }
+
+    /// 拖着标题栏靠屏幕边自动卷时别的窗口挪到哪：只挪位置，大小一律保持 sizes 里此刻的大小（松手前不改任何窗口大小）。
+    /// 拖着的那扇归系统挪，不在结果里；sizes 里没有的窗口（还没摆过）也不挪。gap：窗口之间留的缝（见 ArrangeGap）。
+    func slidFrames(at offset: CGFloat, sizes: [CGWindowID: CGRect], excluding id: CGWindowID,
+                    gap: CGFloat = 0) -> [CGWindowID: CGRect] {
+        var result: [CGWindowID: CGRect] = [:]
+        for (window, raw) in frames(at: offset, moving: true) where window != id {
+            guard let size = sizes[window]?.size else { continue }
+            result[window] = CGRect(origin: ArrangeGap.apply(raw, in: area, gap: gap).origin, size: size)
+        }
+        return result
+    }
+
     /// 按窗口要的地方给新列一个宽度：要地方的 ⅔，参考 ½，轻的 ⅓。
     static func width(for role: MagicTiling.Role, in area: CGRect) -> CGFloat {
         let fraction: CGFloat
@@ -745,5 +823,106 @@ struct EdgeScrollTracker {
         if newSide == 0 { reset(); return 0 }
         if newSide != side || enteredAt == nil { side = newSide; enteredAt = now }
         return EdgeScroll.velocity(pointerX: pointerX, width: width, dwell: now - (enteredAt ?? now))
+    }
+}
+
+// MARK: 张开跟手的概览（稿：卷轴.html“卷轴概览 · 打开”，工作包 SS-05）
+
+/// 标题栏上两指张开时概览跟着长：进度 0…1 按帧算，松手按推算的进度过一半才打开，否则收回。
+/// 超出 0…1 用橡皮筋夹住（借 niri 四指上滑概览的数：刚度 0.5、最多多走 5%）。纯逻辑。
+enum StripOverviewSpread {
+    static let stiffness: CGFloat = 0.5
+    static let limit: CGFloat = 0.05
+    /// 推算停点的减速率，和卷轴松手一致（0.998，约速度 × 0.5 秒）。
+    static let decelerationRate = 0.998
+
+    /// 张开走满要多少缩放量：今天走满就开的门槛（arm）落在一半上。手停住再松手时，开不开和从前一模一样。
+    static func full(arm: CGFloat) -> CGFloat { max(0.0001, 2 * arm) }
+
+    /// 攒下的缩放量 → 原始进度（不夹）。
+    static func rawProgress(total: CGFloat, arm: CGFloat) -> CGFloat { total / full(arm: arm) }
+
+    /// 超出部分走多远：(1 − 1 / (x·c/d + 1))·d，x 再大也到不了 d。
+    static func band(_ x: CGFloat) -> CGFloat {
+        guard x > 0 else { return 0 }
+        return (1 - 1 / (x * stiffness / limit + 1)) * limit
+    }
+
+    /// 画出来的进度：0…1 之内照实，超出用橡皮筋。
+    static func shown(_ raw: CGFloat) -> CGFloat {
+        if raw < 0 { return -band(-raw) }
+        if raw > 1 { return 1 + band(raw - 1) }
+        return raw
+    }
+
+    /// 松手开不开：画出来的进度加上按松手速度（进度/秒）推算还会走的一段，过一半就开。
+    static func opens(progress raw: CGFloat, velocity: CGFloat) -> Bool {
+        let ahead = FluidMotion.projection(velocity: Double(velocity), decelerationRate: decelerationRate)
+        return shown(raw) + CGFloat(ahead) >= 0.5
+    }
+
+    /// 张开到 progress 时一扇窗在概览面板里的外框：0 叠在真窗口上，1 落在概览里（超出时照比例多走一点）。
+    static func frame(from real: CGRect, to overview: CGRect, progress p: CGFloat) -> CGRect {
+        func lerp(_ a: CGFloat, _ b: CGFloat) -> CGFloat { a + (b - a) * p }
+        return CGRect(x: lerp(real.minX, overview.minX), y: lerp(real.minY, overview.minY),
+                      width: max(0, lerp(real.width, overview.width)), height: max(0, lerp(real.height, overview.height)))
+    }
+
+    /// 面板（毛玻璃底和画面）此刻多不透明：跟着进度，夹在 0…1。
+    static func opacity(_ shownProgress: CGFloat) -> CGFloat { min(1, max(0, shownProgress)) }
+}
+
+// MARK: 卷轴开着时拖标题栏（稿：卷轴.html“拖着挪一扇”，工作包 SS-07）
+
+/// 一次拖标题栏：拖着时在最近的竖缝上画蓝条，松手换位置；拉离原位 256 点（拉远过一次就算）或拖进刘海才离开卷轴。
+/// “离原位”按竖着拉开多远算：卷轴是一条整屏高的横带，左右拖是在卷轴里挑缝（隔一列就超过 256 点），
+/// 往下拉开才是把它从卷轴里拔出来（niri：256 像素才拔出）。
+/// 卷轴关着、这扇不在卷轴里、开关没开时根本不开始：拖窗口的手感一点不变。坐标用 AX（只算距离和横向位置）。纯逻辑。
+struct StripTitleDrag: Equatable {
+    /// 竖着拉离原位这么远才离开卷轴（niri：256 像素才拔出）。
+    static let leaveDistance: CGFloat = 256
+    /// 设置开关（默认关）：开了才在卷轴里拖标题栏换位置；关着时拖走就离开卷轴，和从前一样。
+    static let enabledKey = "ScrollStrip.titleDragReorder"
+
+    static func isEnabled(_ defaults: UserDefaults = .standard) -> Bool { defaults.bool(forKey: enabledKey) }
+
+    enum Outcome: Equatable {
+        /// 留在卷轴里：drop 不为 nil 就换到那道缝，为 nil 回原位。
+        case stay(ScrollStrip.Drop?)
+        /// 离开卷轴：照从前的拖法走（拖进刘海、侧拉、甩一下都照旧）。
+        case leave
+    }
+
+    let id: CGWindowID
+    let down: CGPoint
+    private(set) var seam: ScrollStrip.Seam?
+    private(set) var leaving = false
+
+    /// 开始一次拖动。卷轴没开、只剩一列、这扇不在卷轴里、开关没开：返回 nil，什么都不管。
+    static func begin(id: CGWindowID, down: CGPoint, strip: ScrollStrip?, enabled: Bool) -> StripTitleDrag? {
+        guard enabled, let strip, strip.columns.count > 1, strip.column(of: id) != nil else { return nil }
+        return StripTitleDrag(id: id, down: down)
+    }
+
+    private init(id: CGWindowID, down: CGPoint) {
+        self.id = id
+        self.down = down
+    }
+
+    /// 竖着拉开了多远。
+    func pull(to pointer: CGPoint) -> CGFloat { abs(pointer.y - down.y) }
+
+    /// 指针挪到 pointer：拖远了就记下“离开”（再拖回来也不回卷轴），否则找最近的竖缝。返回要画的蓝条（没有为 nil）。
+    @discardableResult
+    mutating func update(pointer: CGPoint, strip: ScrollStrip, offset: CGFloat? = nil) -> ScrollStrip.Seam? {
+        if pull(to: pointer) >= Self.leaveDistance { leaving = true }
+        seam = leaving ? nil : strip.screenSeam(nearest: pointer.x, dragging: id, at: offset)
+        return seam
+    }
+
+    /// 松手。intoNotch：松在刘海的落点上（刘海已经接走了）。
+    func end(pointer: CGPoint, intoNotch: Bool) -> Outcome {
+        if intoNotch || leaving || pull(to: pointer) >= Self.leaveDistance { return .leave }
+        return .stay(seam?.drop)
     }
 }

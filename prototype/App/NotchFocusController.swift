@@ -8,6 +8,8 @@
 // - 焦点只在指针不在刘海里时出现；指针一进来就隐藏，交给指针；指针出去时那一排本来就收起了，焦点随之结束。
 // - 默认落点：有“等你”的会话格就落在它上面，否则落在最近收进去的那一扇，再否则第一格。
 // - 到头不动：朝那个方向轻轻顶一下再弹回，焦点不换。
+// - 打字筛选（LA-7）：点刘海或按快捷键打开的那一排接键盘，直接打字就筛（规则在 NotchRowFilter）；悬停打开的不接键盘。
+//   对不上的格子离开，焦点落第一格；Esc 先清字，再按一次才收起；指针进来焦点熄灭，筛选的字留着。
 
 import Foundation
 
@@ -25,6 +27,17 @@ struct NotchFocusController: Sendable {
         var session = false
         /// 读屏念的整句（“项目，在等你”）。有它就不再按窗口标题截断。
         var spoken: String? = nil
+        /// 筛选时除标题以外还找的字：窗口格是 App 名，正在进行的格是种类名。共享屏幕时被遮住的格不给（和标题一样不露）。
+        var terms: [String] = []
+    }
+
+    /// 那一排是怎么打开的。点（长按）和快捷键接键盘；悬停打开的不接：你在别的 App 里打字，不会被刘海吃掉。
+    enum Origin: Sendable { case shortcut, press, hover }
+
+    /// 一次按键里和筛选有关的部分。
+    enum TypedInput: Equatable, Sendable {
+        case insert(String)
+        case deleteBackward
     }
 
     typealias Direction = FocusNavigator.Direction
@@ -40,11 +53,20 @@ struct NotchFocusController: Sendable {
         case bump(direction: Direction, announcement: String)
         /// 打开亮着的那一格：走和指针点击同一条路（放回、去、还原，沿用 flyOut 弹簧）。
         case activate(id: UInt32)
+        /// 筛选的字变了（或被清掉）：宿主按 `cells` 重排这一排，`announcement` 念“剩 n 项”。
+        case filtered(announcement: String)
         /// 收起这一排、交还键盘。
         case end
     }
 
+    /// 现在显示的格子（筛选之后）。没有筛选时就是 `allCells`。
     private(set) var cells: [Cell] = []
+    /// 这一排所有的格子（筛选之前）。
+    private(set) var allCells: [Cell] = []
+    /// 筛选字。空就是没有筛选。
+    private(set) var query = ""
+    /// 这一次打开接不接键盘打字（悬停打开的不接）。
+    private(set) var acceptsTyping = false
     private(set) var focusedID: UInt32?
     private(set) var isActive = false
     private(set) var pointerInside = false
@@ -133,6 +155,16 @@ struct NotchFocusController: Sendable {
         }
     }
 
+    /// 打字筛选用的按键：删除键，或可打印的字。带 ⌘⌃⌥ 的组合不拦；空格留给筛选字（标题里有空格），但不能是第一个字。
+    /// 方向键、Return、Esc、Tab 这类（它们的字符落在控制区或私用区）一律不是字。
+    static func typedInput(forKeyCode code: UInt16, characters: String?, hasCommandModifiers: Bool) -> TypedInput? {
+        guard !hasCommandModifiers else { return nil }
+        if code == 51 { return .deleteBackward }
+        guard let characters, !characters.isEmpty else { return nil }
+        let typable = String(characters.filter(NotchRowFilter.isTypable))
+        return typable.isEmpty ? nil : .insert(typable)
+    }
+
     /// 宿主要不要把这个动作交给这里：键盘、遥控器、手柄走同一个出口。
     static func handles(_ action: WS2.Action) -> Bool {
         switch action {
@@ -148,6 +180,13 @@ struct NotchFocusController: Sendable {
 
     /// 亮着的那一格；没开始或不在列表里是 nil。
     var focusedCell: Cell? { focusedID.flatMap { id in cells.first { $0.id == id } } }
+    /// 正在筛选吗。
+    var isFiltering: Bool { !query.isEmpty }
+    /// 筛选之后一格也没有：那一排写“没有匹配的”。
+    var showsNoMatch: Bool { isFiltering && cells.isEmpty }
+    /// 现在显示的格子的 id（宿主按它从自己的格子里挑出要画的）。
+    var visibleIDs: [UInt32] { cells.map(\.id) }
+
     /// 焦点此刻落在会话格上吗（不看指针：指针进来只是把焦点藏起来，它还在那一格）。
     var focusIsOnSession: Bool { isActive && focusedCell?.session == true }
 
@@ -158,11 +197,53 @@ struct NotchFocusController: Sendable {
 
     /// 那一排的格子变了（重新展开、缩略图之外的内容变了）。焦点还在就留着，不在了就重选默认。
     mutating func setCells(_ next: [Cell]) {
-        cells = next
+        allCells = next
+        cells = filtered(next)
         navigator.clear()
         guard isActive else { return }
-        if let focusedID, next.contains(where: { $0.id == focusedID }) { return }
-        focusedID = Self.defaultFocus(in: next)
+        if let focusedID, cells.contains(where: { $0.id == focusedID }) { return }
+        focusedID = isFiltering ? cells.first?.id : Self.defaultFocus(in: cells)
+    }
+
+    private func filtered(_ list: [Cell]) -> [Cell] {
+        isFiltering ? list.filter { NotchRowFilter.matches(query: query, title: $0.title, terms: $0.terms) } : list
+    }
+
+    /// 筛选字换了：重新挑格子，焦点落第一格（一格也没有就没有焦点）。
+    private mutating func refilter() -> Effect {
+        cells = filtered(allCells)
+        navigator.clear()
+        focusedID = isFiltering ? cells.first?.id : Self.defaultFocus(in: cells)
+        return .filtered(announcement: NotchRowFilter.remainingAnnouncement(count: cells.count))
+    }
+
+    /// 打字。不接键盘（悬停打开的、没开始的）什么都不做。
+    mutating func type(_ text: String) -> Effect {
+        guard isActive, acceptsTyping else { return .none }
+        var next = query
+        for character in text where NotchRowFilter.isTypable(character) {
+            if next.isEmpty, character.isWhitespace { continue }
+            guard next.count < NotchRowFilter.maxQueryLength else { break }
+            next.append(character)
+        }
+        guard next != query else { return .none }
+        query = next
+        return refilter()
+    }
+
+    /// 退格：删最后一个字。没有字时什么都不做。
+    mutating func deleteBackward() -> Effect {
+        guard isActive, acceptsTyping, !query.isEmpty else { return .none }
+        query.removeLast()
+        return refilter()
+    }
+
+    /// 按键对应的输入交给这里。
+    mutating func apply(_ input: TypedInput) -> Effect {
+        switch input {
+        case .insert(let text): return type(text)
+        case .deleteBackward: return deleteBackward()
+        }
     }
 
     mutating func pointerEntered() { pointerInside = true }
@@ -172,7 +253,22 @@ struct NotchFocusController: Sendable {
     mutating func shelfClosed() {
         isActive = false
         focusedID = nil
+        query = ""
+        acceptsTyping = false
+        cells = allCells
         navigator.clear()
+    }
+
+    /// 开始。`.hover` 不接键盘：什么都不做（那一排由悬停展开，焦点和键盘都不归这里）。
+    mutating func begin(origin: Origin) -> Effect {
+        guard origin != .hover, !isActive else { return .none }
+        isActive = true
+        acceptsTyping = true
+        query = ""
+        cells = allCells
+        focusedID = Self.defaultFocus(in: cells)
+        navigator.clear()
+        return .begin(announcement: Self.openAnnouncement(count: cells.count))
     }
 
     /// 统一出口。`.notchShelf` 是开关：没开始就开始，开着就结束。
@@ -180,10 +276,7 @@ struct NotchFocusController: Sendable {
         switch action {
         case .notchShelf:
             if isActive { shelfClosed(); return .end }
-            isActive = true
-            focusedID = Self.defaultFocus(in: cells)
-            navigator.clear()
-            return .begin(announcement: Self.openAnnouncement(count: cells.count))
+            return begin(origin: .shortcut)
         case .focusUp: return move(.up)
         case .focusDown: return move(.down)
         case .focusLeft: return move(.left)
@@ -193,7 +286,11 @@ struct NotchFocusController: Sendable {
             return .activate(id: id)
         case .back:
             guard isActive else { return .none }
-            // 这一排只有一层：Esc 直接收起。
+            // 有字先清字，再按一次才收起。
+            if isFiltering {
+                query = ""
+                return refilter()
+            }
             shelfClosed()
             return .end
         default:

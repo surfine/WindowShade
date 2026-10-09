@@ -16,8 +16,12 @@ final class NotchActivityController: NSObject, NSSharingServiceDelegate {
     var nowPlayingArtwork: NowPlayingArtworkImage? { sources.nowPlayingArtwork }
     /// 点了“正在播放”那一格（或启动台上那张卡）要长成大卡：刘海接上，选屏、收那一排都在那边做（NP-4）。
     var onOpenNowPlayingCard: (() -> Void)?
+    /// 点了紧凑的文件架个数：直接长成文件架卡（刘海接上）。
+    var onOpenFileShelf: (() -> Void)?
     /// 正在播放大卡的展示与收回。第一次用到才建；没建过就没有卡可刷新。
     private var nowPlayingPresenter: NowPlayingCardPresenter?
+    /// 大卡的展示端；还没建过就是 nil（问一声“开着没有”不该顺手把它建出来）。
+    var nowPlayingCardIfCreated: NowPlayingCardPresenter? { nowPlayingPresenter }
     var nowPlayingCard: NowPlayingCardPresenter {
         if let nowPlayingPresenter { return nowPlayingPresenter }
         let presenter = NowPlayingCardPresenter()
@@ -25,15 +29,17 @@ final class NotchActivityController: NSObject, NSSharingServiceDelegate {
         nowPlayingPresenter = presenter
         return presenter
     }
-    func ws2PublishFocus(title: String?, trailing: String? = nil, subtitle: String = "", paused: Bool = false, progress: Double? = nil) {
+    /// `finishedRound`：这一轮是自己走完的（不是点了结束）。走完的 ✓ 在耳朵上留 4 秒；点结束、关掉番茄钟立即收。
+    func ws2PublishFocus(title: String?, trailing: String? = nil, subtitle: String = "", paused: Bool = false, progress: Double? = nil,
+                         finishedRound: Bool = false) {
         guard Self.isEnabled, !suspended else { return }
         configure()
         if let title {
-            // 收场立即：番茄钟回到空闲时分不出是“一轮做完”还是点了结束（稿：一轮做完 ✓ 留 4 秒，要番茄钟的模型给出最后的样子才做）。
+            // 收场按种类默认（留 4 秒）；只有走完一轮才会真的留，点结束走下面的立即收。
             put(id: "ws2.focus", kind: .focus, title: title, subtitle: subtitle, symbol: "timer", progress: .reported(progress), paused: paused,
-                trailing: trailing, closing: .immediate)
+                trailing: trailing, finalLook: NotchActivity.FinalLook(symbol: "checkmark.circle.fill", trailing: "✓", clearsProgress: false))
         } else if let old = store.live(id: "ws2.focus") {
-            store.end(id: old.id, generation: old.generation, now: ProcessInfo.processInfo.systemUptime)
+            store.end(id: old.id, generation: old.generation, now: ProcessInfo.processInfo.systemUptime, immediately: !finishedRound)
         }
         publish()
     }
@@ -83,9 +89,11 @@ final class NotchActivityController: NSObject, NSSharingServiceDelegate {
             put(id: Self.calendarActivityID, kind: .calendar, title: CalendarWords.title(item.event, sharing: sharing),
                 subtitle: subtitle, symbol: "calendar", progress: .reported(ear.ringFraction), trailing: ear.trailing,
                 calendar: NotchCalendarFace(colorRGB: ear.colorRGB, joinable: ear.mode == .joinable, hasLink: ear.hasLink,
-                                            spoken: CalendarWords.spoken(item, sharing: sharing)), now: now)
-        } else if let old = store.activities.first(where: { $0.id == Self.calendarActivityID }) {
-            store.end(id: old.id, generation: old.generation, now: now)
+                                            spoken: CalendarWords.spoken(item, sharing: sharing)),
+                closing: NotchActivityKind.calendarClosing(hasLink: ear.hasLink), now: now)
+        } else if let old = store.live(id: Self.calendarActivityID) {
+            // 取消授权、关掉日程：立即结束，不留 5 分钟。
+            store.end(id: old.id, generation: old.generation, now: now, immediately: !CalendarSettings.enabled)
         }
         publish()
     }
@@ -100,6 +108,27 @@ final class NotchActivityController: NSObject, NSSharingServiceDelegate {
     }
     /// iPhone 上的遥控器连着时左耳的遥控器符号（只有符号，不写字）；断开就收掉。
     /// `symbol` 默认是遥控器；走进会话时换成指挥棒（M09）。
+    /// 文件架上现在几样（0 = 空着或没开）。stop() 清空 store 后回来时按它放回去。
+    private var shelfCount = 0
+    /// 文件架个数变了（暂存、移出、开关）：不空且没有别的持续活动时两耳露个数（优先级最低，仲裁在 store 里）。
+    func ws2PublishShelf(count: Int) {
+        shelfCount = max(0, count)
+        guard Self.isEnabled, !suspended else { return }
+        configure()
+        syncShelf()
+        publish()
+    }
+
+    private func syncShelf() {
+        let now = ProcessInfo.processInfo.systemUptime
+        if shelfCount > 0 {
+            put(id: NotchShelfEars.activityID, kind: .shelf, title: NotchShelfEars.title, subtitle: "",
+                symbol: NotchRow.fileShelfSymbol, trailing: NotchShelfEars.trailing(count: shelfCount), now: now)
+        } else if let old = store.live(id: NotchShelfEars.activityID) {
+            store.end(id: old.id, generation: old.generation, now: now)
+        }
+    }
+
     func ws2PublishRemote(connected: Bool, symbol: String = "appletvremote.gen4") {
         guard Self.isEnabled, !suspended else { return }
         configure()
@@ -242,6 +271,7 @@ final class NotchActivityController: NSObject, NSSharingServiceDelegate {
         rescheduleExpiry()
         // 睡眠、锁屏期间 store 被清空；回来时把还在跑、在等你的会话放回去。
         syncSessions(now: ProcessInfo.processInfo.systemUptime)
+        if shelfCount > 0 { syncShelf() }
     }
 
     private func suspend(_ reason: String) { suspensions.insert(reason); calendar.suspend(); stop() }
@@ -306,6 +336,8 @@ final class NotchActivityController: NSObject, NSSharingServiceDelegate {
     private func receiveCopies(_ update: CopyProgressUpdate) {
         guard running else { return }
         let now = ProcessInfo.processInfo.systemUptime
+        // 1.5 秒内就拷完的：从来没露过面，完成提醒也不出（失败仍说）。
+        let quick = update.active == nil && store.neverAppeared(id: "source.copy", at: now)
         if let summary = update.active {
             let card = CopyCard.copying(summary)
             // 1.5 秒内拷完的不出现；30 秒没进展算过期；收场立即（“拷好了”“没拷完”那一张卡就是最后的样子）。
@@ -316,7 +348,7 @@ final class NotchActivityController: NSObject, NSSharingServiceDelegate {
             store.end(id: old.id, generation: old.generation, now: now)
         }
         // 拷好了、没拷完各说一句；用户自己取消的什么都不说。这两张卡本身就是最后的样子（到点自己收），关掉开关时立即收。
-        if !update.finished.isEmpty {
+        if !update.finished.isEmpty, !quick {
             let card = CopyCard.finished(update.finished)
             put(id: "owned.copy.done", kind: .copy, title: card.title, subtitle: card.subtitle, symbol: card.symbol,
                 detail: card.detail, expires: now + (card.lifetime ?? 4), closing: .immediate, now: now)
@@ -332,6 +364,8 @@ final class NotchActivityController: NSObject, NSSharingServiceDelegate {
     private func receiveDownloads(_ update: DownloadUpdate) {
         guard running else { return }
         let now = ProcessInfo.processInfo.systemUptime
+        // 1.5 秒内就下完的：从来没露过面，完成提醒也不出。
+        let quick = update.active == nil && store.neverAppeared(id: "source.download", at: now)
         if let summary = update.active {
             let card = DownloadCard.downloading(summary)
             // 1.5 秒内下完的不出现；30 秒没进展算过期；收场立即（“下载好了”那一张卡就是最后的样子，留 4 秒）。
@@ -342,7 +376,7 @@ final class NotchActivityController: NSObject, NSSharingServiceDelegate {
             store.end(id: old.id, generation: old.generation, now: now)
         }
         // 下好了才提示一下；被取消的什么都不说，卡片安静收掉。
-        if !update.finished.isEmpty {
+        if !update.finished.isEmpty, !quick {
             onDownloadsFinished?(update.finished)
             let card = DownloadCard.finished(update.finished)
             put(id: "owned.download.done", kind: .download, title: card.title, subtitle: card.subtitle,
@@ -457,6 +491,7 @@ final class NotchActivityController: NSObject, NSSharingServiceDelegate {
         configure()
         if action == .timerOpen { countdown.openCard(); return }
         if action == .nowPlayingOpen { onOpenNowPlayingCard?(); return }
+        if action == .open, store.selected?.kind == .shelf { onOpenFileShelf?(); return }
         if store.selected?.kind == .calendar {
             switch action {
             case .open: calendar.openCard(); return
@@ -547,7 +582,8 @@ final class NotchActivityController: NSObject, NSSharingServiceDelegate {
         }
         sharing = service; service.delegate = self
         put(id: "owned.airDrop", kind: .airDrop, title: "隔空投送", subtitle: "",
-            symbol: "airdrop", progress: .indeterminate, trailing: "")
+            symbol: "airdrop", progress: .indeterminate, trailing: "",
+            stale: .at(NotchActivityKind.airDrop.staleAfter.map { ProcessInfo.processInfo.systemUptime + $0 }))
         publish()
         service.perform(withItems: items)
     }

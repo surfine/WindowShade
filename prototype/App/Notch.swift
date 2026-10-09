@@ -51,6 +51,11 @@ final class NotchController {
     }
     /// 每块屏一个：带刘海的屏挂在刘海上，别的屏挂在顶部正中。
     private var panels: [CGDirectDisplayID: NotchPanel] = [:]
+    /// 正在播放的真实波形（NP-6）：设置里“跟着声音跳”默认关；开着时只在封面耳或大卡露着、而且在放时录正在放的那个 App。
+    let audioLevels = AudioLevelController()
+    /// 锁屏、睡眠、换用户时不录（各自的通知来了就拆，回来再按现状算）。
+    private var audioScreenLocked = false
+    private var audioAsleep = false
     private var screenObserver: NSObjectProtocol?
     private var flights: [SnapshotFlight] = []
     /// 正在后台截图、还没收进去的窗口：防止同一扇收两次。
@@ -159,6 +164,11 @@ final class NotchController {
         get { NotchMinimalPresentation.isEnabled(in: .standard) }
         set { UserDefaults.standard.set(newValue, forKey: minimalPresentationKey) }
     }
+    /// 悬停不误触（LA-4，默认关）：停 0.12 秒且挪不到 8 点才展开、横扫不提示、提示只往下长 3 点、滚轮不算停留、
+    /// » 在时只认点击、全屏时不因悬停展开。关着是旧样子：进来 0.12 秒就展开，提示两边各长 5 点。
+    nonisolated static var hoverGuardEnabled: Bool {
+        UserDefaults.standard.object(forKey: NotchHoverPolicy.defaultsKey) as? Bool ?? NotchHoverPolicy.defaultEnabled
+    }
     /// 无刘海屏的胶囊落在菜单栏下方 8 点（R02，默认关，等 Aaron 裁定）。关着：胶囊仍画在菜单栏条内，一个字节不差。
     nonisolated static var capsuleBelowMenuBar: Bool {
         get { UserDefaults.standard.object(forKey: NotchCapsule.belowMenuBarKey) as? Bool ?? false }
@@ -184,12 +194,18 @@ final class NotchController {
                 MainActor.assumeIsolated {
                     self?.holdAnnouncements()
                     self?.leases.invalidate(reason)
+                    self?.audioAsleep = true
+                    self?.syncAudioLevels()
                 }
             })
         }
         for name in [NSWorkspace.didWakeNotification, NSWorkspace.sessionDidBecomeActiveNotification] {
             leaseObservers.append(workspace.addObserver(forName: name, object: nil, queue: .main) { [weak self] _ in
-                MainActor.assumeIsolated { self?.releaseAnnouncements() }
+                MainActor.assumeIsolated {
+                    self?.releaseAnnouncements()
+                    self?.audioAsleep = false
+                    self?.syncAudioLevels()
+                }
             })
         }
         leaseObservers.append(DistributedNotificationCenter.default().addObserver(
@@ -197,12 +213,24 @@ final class NotchController {
             MainActor.assumeIsolated {
                 self?.holdAnnouncements()
                 self?.leases.invalidate(.locked)
+                self?.audioScreenLocked = true
+                self?.syncAudioLevels()
             }
         })
         leaseObservers.append(DistributedNotificationCenter.default().addObserver(
             forName: .init("com.apple.screenIsUnlocked"), object: nil, queue: .main) { [weak self] _ in
-            MainActor.assumeIsolated { self?.releaseAnnouncements() }
+            MainActor.assumeIsolated {
+                self?.releaseAnnouncements()
+                self?.audioScreenLocked = false
+                self?.syncAudioLevels()
+            }
         })
+        // 右耳 5 根（NP-6）：电平和样子推给每块屏；每交来一批顺手问一次现状（耳朵收了、卡关了就拆）。
+        audioLevels.onWave = { [weak self] wave in
+            guard let self else { return }
+            for panel in self.panels.values { panel.setMusicWave(wave) }
+        }
+        audioLevels.contextProvider = { [weak self] in self?.audioLevelContext() ?? .hidden }
         // 屏幕开始或停止共享：展开着的那一排马上换成只有图标的格子，或换回来。
         leaseObservers.append(NotificationCenter.default.addObserver(
             forName: SystemQuietState.didChange, object: nil, queue: .main) { [weak self] _ in
@@ -222,6 +250,9 @@ final class NotchController {
                 self?.presentLevel(panelKind, value: value, muted: muted, output: output, edge: edge)
             }
         }
+        levelObserver.onCardVolume = { [weak self] value, muted in
+            MainActor.assumeIsolated { self?.activities.nowPlayingCardIfCreated?.showVolume(value: value, muted: muted) ?? false }
+        }
         levelObserver.onKeyReleased = { [weak self] in
             MainActor.assumeIsolated { self?.levelKeyReleased() }
         }
@@ -235,7 +266,7 @@ final class NotchController {
         spaceGate.start()
         activities.onChange = { [weak self] values, selected in
             guard let self else { return }
-            let ids = values.map(\.id)
+            let ids = values.filter { !$0.kind.isShelf }.map(\.id)
             let minimal = Self.minimalPresentationEnabled
             for (display, panel) in self.panels {
                 // 持续活动只登记在这里，不会顶掉上面的层；超过三条由协调器自己去重截断。
@@ -245,8 +276,9 @@ final class NotchController {
             }
             // 合成一排开着：右段的格子（会话换了状态、曲名变了）原地换，不重新展开。
             if Self.mergedRowEnabled { self.refreshOngoingRows() }
-            self.owner.launchpad.updateActivities(values, selected: selected)
+            self.owner.launchpad.updateActivities(values.filter { !$0.kind.isShelf }, selected: selected)
             self.noteActivityTitleChange(values, selected: selected)
+            self.syncAudioLevels()
         }
         activities.onNowPlayingArtwork = { [weak self] image in
             guard let self else { return }
@@ -340,6 +372,7 @@ final class NotchController {
         activities.countdown.attach(leases: leases)
         activities.nowPlayingCard.attach(leases: leases)
         activities.onOpenNowPlayingCard = { [weak self] in self?.openNowPlayingCard() }
+        activities.onOpenFileShelf = { [weak self] in self?.openFileShelfCard() }
         installFileShelf()
         activities.calendar.attach(leases: leases)
         activities.calendar.onBloom = { [weak self] bloom in self?.announceCalendar(bloom) }
@@ -367,6 +400,7 @@ final class NotchController {
             panel.setMusicArtwork(activities.nowPlayingArtwork)
             panel.onActivitySelect = { [weak self] id in self?.activities.select(id) }
             panel.onActivityAction = { [weak self] action in self?.activities.perform(action) }
+            panel.onRowSeen = { [weak self] in self?.activities.rowSeen() }
             panel.canSwipeActivities = { [weak self] in self?.owner.launchpad.isShowing == false }
             panel.onHold = { [weak self, weak panel] in
                 guard let self, let panel else { return false }
@@ -378,6 +412,10 @@ final class NotchController {
                 else {
                     panel.expand(with: self.tiles())
                     self.requestThumbnails()
+                    // 点（长按）打开的那一排接键盘，直接打字就筛（LA-7）；悬停打开的不接。
+                    if panel.isExpanded, !panel.isFocusActive {
+                        panel.beginFocus(pointerInside: panel.islandContains(NSEvent.mouseLocation), origin: .press)
+                    }
                 }
             }
             panel.onTileClicked = { [weak self] id, rect in self?.open(id, from: rect) }
@@ -428,6 +466,8 @@ final class NotchController {
                 if inside { self?.showPeek(id, tile: rect) } else { self?.endPeek() }
             }
             panel.onFocusKind = { [weak self] kind in self?.onShelfFocusKind?(kind) }
+            panel.onMusicEarChange = { [weak self] in self?.syncAudioLevels() }
+            panel.setMusicWave(audioLevels.wave)
         }
         for (id, panel) in panels where !alive.contains(id) {
             authentication.reconcile(panels: panels.filter { alive.contains($0.key) }.map(\.value))
@@ -444,6 +484,7 @@ final class NotchController {
         for (display, panel) in panels { _ = room(for: panel, display: display) }
         configureFileDrag()
         refresh()
+        syncAudioLevels()
         // 启动时不自我介绍、也不推荐“用 Rectangle 的快捷键”（docs/direction.md：没人问就不开口）。
         // 刘海能做什么，等他自己把指针停到刘海上时再说（hoverChanged）；Rectangle 那一套在设置 → 快捷键 → 更多排法。
     }
@@ -635,11 +676,10 @@ final class NotchController {
         defer { endFileDrag() }
         switch release {
         case .stage:
-            payload.stage(into: FileShelf.shared) { [weak self] outcome in
+            payload.stage(into: FileShelf.shared) { outcome in
                 guard outcome.accepted else { return }
                 NSHapticFeedbackManager.defaultPerformer.perform(.levelChange, performanceTime: .now)
-                // 文件架的紧凑个数（FS-06）接上之前，先说一句，免得放进去就没了下文。
-                self?.announce("已暂存", tone: .done)
+                // 不说话：岛收成紧凑，右耳个数滚到新值并弹一下（FS-06）。
             }
             return true
         case .airDrop:
@@ -963,7 +1003,8 @@ final class NotchController {
         endPeek()
         if ongoingIDs.activityID(for: id) == NotchRow.fileShelfActivityID { openFileShelfCard(); return }
         guard let activityID = ongoingIDs.activityID(for: id),
-              let cell = NotchRow.ongoingCells(from: activities.store.visible).first(where: { $0.activityID == activityID })
+              let cell = NotchRow.ongoingCells(from: activities.store.visible).first(where: { $0.activityID == activityID }),
+              !cell.isEnded
         else { return }
         if cell.closesRow { panels.values.forEach { $0.collapse() } }
         activities.select(activityID)
@@ -986,7 +1027,35 @@ final class NotchController {
         // 先问宿主（那一排开着时左耳没有封面，卡里的封面就不从耳朵长），再收那一排。
         let host = target.nowPlayingCardHost()
         if target.isExpanded { target.collapse() }
-        return activities.nowPlayingCard.open(host: host)
+        let opened = activities.nowPlayingCard.open(host: host)
+        syncAudioLevels()
+        return opened
+    }
+
+    // MARK: 正在播放的真实波形（NP-6）
+
+    /// 刘海这边的事实：封面耳露着（没让给全屏、调度中心）或大卡开着；推送流报的播放器；在不在放；锁屏、睡眠。
+    private func audioLevelContext() -> AudioLevelController.Context {
+        let earShown = panels.values.contains { !$0.yieldsToSystem && $0.showsMusicEar }
+        let music = activities.store.visible.first { $0.kind == .music }
+        return AudioLevelController.Context(
+            earVisible: earShown || activities.nowPlayingCard.isShowing,
+            bundleID: music.map(\.detail), playing: music.map { !$0.isPaused } ?? false,
+            locked: audioScreenLocked || audioAsleep,
+            fullScreen: !panels.isEmpty && panels.values.allSatisfy(\.yieldsToSystem),
+            reducedMotion: Motion.reduced)
+    }
+
+    /// 事实可能变了：交给 AudioLevelController 判断建、拆。只在事件上调，不轮询。
+    func syncAudioLevels() {
+        audioLevels.update(audioLevelContext())
+    }
+
+    /// 设置里切了“跟着声音跳”。打开时还没问过就请系统弹窗；以前拒绝过，带去系统设置的那一页。
+    func setFollowSound(_ on: Bool) {
+        let state = audioLevels.setEnabled(on)
+        syncAudioLevels()
+        if on, state == .denied, let url = AudioCaptureAccess.settingsURL { NSWorkspace.shared.open(url) }
     }
 
     /// 合成一排的开关被切换（两个方向）：已展开的刘海按新设置原地重排，收着的下次展开自然生效。
@@ -1093,18 +1162,41 @@ final class NotchController {
         }
     }
 
-    /// 正在播放时曲名变了：旁边长出第二颗岛说新标题，再合并（稿上的 duo）。
-    private var lastMediaTitle: (id: String, title: String)?
+    /// 正在播放时换了曲目（含开始播放的第一首）：刘海往下鼓 30，一行“歌名 歌手”（稿“换歌一瞥”，NP-3）。
+    /// 什么时候一瞥由 `NowPlayingPeekTracker` 定；这里只收集此刻的场面。
+    private var peekTracker = NowPlayingPeekTracker()
     private func noteActivityTitleChange(_ values: [NotchActivity], selected: String?) {
-        guard let selected, let item = values.first(where: { $0.id == selected }),
-              item.kind == .music, !item.title.isEmpty else {
-            if selected == nil { lastMediaTitle = nil }
+        let music = selected.flatMap { id in values.first { $0.id == id && $0.kind == .music } }
+        let content = music == nil ? nil : activities.nowPlayingContent
+        let sample: NowPlayingPeekTracker.Sample? = music.map { item in
+            NowPlayingPeekTracker.Sample(
+                player: item.detail, title: item.title, artist: item.subtitle, isPlaying: !item.isPaused,
+                isAdvertisement: NowPlayingCardPolicy.isAdvertisement(duration: content?.timeline?.duration, artist: item.subtitle))
+        }
+        let panel = pointerPanel()
+        var gates = NowPlayingPeekTracker.Gates()
+        if let panel {
+            gates.shelfOrCardOpen = panel.isExpanded || panel.dropState != .none || panel.isAuthenticating
+            gates.fullScreen = panel.yieldsToSystem
+            gates.otherAlertShowing = panel.isAlerting && !panel.isShowingPeek
+        } else {
+            gates.fullScreen = true
+        }
+        gates.locked = announcementsHeld
+        let decision = peekTracker.observe(sample, gates: gates, now: CACurrentMediaTime())
+        guard let panel, let music else {
+            if sample == nil { for panel in panels.values { panel.dismissPeek() } }
             return
         }
-        defer { lastMediaTitle = (item.id, item.title) }
-        guard let last = lastMediaTitle, last.id == item.id, last.title != item.title else { return }
-        guard let panel = pointerPanel(), !panel.isExpanded, panel.dropState == .none, !panel.isAuthenticating else { return }
-        panel.alert(NotchPanel.Alert(id: 0, icon: nil, title: item.title, subtitle: "标题变了", tone: .info), duration: 2.6)
+        let hold: TimeInterval
+        switch decision {
+        case .none: return
+        case let .open(value), let .replace(value): hold = value
+        }
+        // 歌手的字色等这一首的封面取到了再换上（上一首的封面颜色不能借用），先用副句的白 0.6。
+        let line = NotchPanel.PeekLine(title: music.title, artist: music.subtitle, artistColor: nil)
+        panel.alert(NotchPanel.Alert(id: 0, icon: nil, title: music.title, subtitle: music.subtitle, tone: .info, peek: line),
+                    duration: hold)
     }
 
     /// 在刘海上说一句：做成了（绿勾）、说明一下（白）、出了问题（橙色三角，说清原因）。
@@ -1744,6 +1836,7 @@ final class NotchController {
     private func applySpaceYield() {
         for (display, panel) in panels { panel.yieldsToSystem = spaceGate.yielding.contains(display) }
         refresh()
+        syncAudioLevels()
     }
 
     private func refresh() {
@@ -1797,15 +1890,19 @@ final class NotchController {
     private var ongoingIDs = NotchRow.IDMap()
     private func ongoingTiles() -> [NotchTile] {
         let redacting = SystemQuietState.shared.state.redactsPrivateTiles
-        return NotchRow.ongoingCells(from: activities.store.visible).compactMap { cell in
+        // 能露面的，后面接已经结束、那一排里还没看过的（留到看过一次或 15 分钟）。
+        return NotchRow.ongoingCells(from: activities.rowActivities).compactMap { cell in
             guard let id = ongoingIDs.id(for: cell.activityID) else { return nil }
             let kind: NotchTile.Kind = cell.isSession ? .session : cell.kind == .music ? .playing : .activity
             var tile = NotchTile(id: id, kind: kind, snapshot: nil, icon: nil, title: cell.title, changed: false)
             tile.waiting = cell.waiting
+            tile.searchTerms = [NotchRowFilter.kindName(cell.kind)]
             tile.ongoing = NotchTile.Ongoing(activityID: cell.activityID, subtitle: cell.subtitle, symbol: cell.symbol,
                                              phase: cell.phase, isPaused: cell.isPaused, quantity: cell.quantity,
                                              quantityText: cell.quantityText, spoken: cell.spoken,
                                              action: cell.action, closesRow: cell.closesRow, accessory: cell.accessory)
+            tile.ongoing?.isStale = cell.isStale
+            tile.ongoing?.isEnded = cell.isEnded
             return redacting && cell.isSession ? tile.sessionRedacted() : tile
         }
         + fileShelfTiles()
@@ -1821,6 +1918,7 @@ final class NotchController {
         ongoing.shelfCount = cell.count
         // 共享状态翻转时缩略图与图标互换：并进版本号，让那一格重画。
         ongoing.shelfRevision = fileShelf.revision &* 2 &+ (SystemQuietState.shared.state.redactsPrivateTiles ? 1 : 0)
+        tile.searchTerms = [NotchRowFilter.kindName(.shelf)]
         tile.ongoing = ongoing
         return [tile]
     }
@@ -1832,7 +1930,9 @@ final class NotchController {
             self?.authenticationPanel()?.cardStrip ?? (true, CGFloat(FileShelfCardLayout.referenceStrip))
         }
         fileShelf.onRowsChanged = { [weak self] in
-            guard let self, Self.mergedRowEnabled else { return }
+            guard let self else { return }
+            self.activities.ws2PublishShelf(count: self.fileShelf.cell?.count ?? 0)
+            guard Self.mergedRowEnabled else { return }
             self.refreshOngoingRows()
         }
         fileShelf.start()
@@ -1851,6 +1951,8 @@ final class NotchController {
         var list: [NotchTile] = []
         /// 屏幕正在共享时，私人 App 的格子只留 App 图标：不放画面、不写标题。
         func add(_ tile: NotchTile, pid: pid_t) {
+            var tile = tile
+            if let name = NSRunningApplication(processIdentifier: pid)?.localizedName, !name.isEmpty { tile.searchTerms = [name] }
             list.append(redacts(pid: pid) ? tile.iconOnly() : tile)
         }
         for item in tucked.reversed() {
@@ -2092,6 +2194,9 @@ struct NotchTile {
     var waiting: Bool = false
     /// 正在进行的格（竖线右边）才有的内容。
     var ongoing: Ongoing? = nil
+    /// 在那一排里打字筛选（LA-7）时，除标题以外还找的字：窗口格是 App 名，正在进行的格是种类名。
+    /// 屏幕正在共享而被遮住的格不给（和标题一样不露）。
+    var searchTerms: [String] = []
 
     struct Ongoing: Equatable {
         var activityID: String
@@ -2112,6 +2217,9 @@ struct NotchTile {
         /// 文件架这一格（FS-04）：叠几张缩略图；其它格是 nil。`shelfRevision` 变了说明缩略图换了，要重画。
         var shelfCount: Int? = nil
         var shelfRevision: Int = 0
+        /// 过期（格子画 0.5 透明；读屏的整句里已有“可能已停”）和结束（最后的样子，没有能点的动作）。
+        var isStale = false
+        var isEnded = false
     }
 
     /// 屏幕正在共享时的样子：只剩 App 图标，没有画面、没有标题、没有“有变化”的点。
@@ -2120,6 +2228,7 @@ struct NotchTile {
         copy.snapshot = nil
         copy.title = ""
         copy.changed = false
+        copy.searchTerms = []
         return copy
     }
 
@@ -2137,7 +2246,7 @@ struct NotchTile {
     /// 内容变没变（比较用，不含画面）。
     var ongoingSignature: String? {
         // 量只记画法：数变了走 NotchPanel.updateOngoingQuantities（只改数字和环的终点），不整排重换。
-        ongoing.map { "\($0.activityID)|\(title)|\($0.subtitle)|\($0.symbol)|\($0.phase.map(\.rawValue) ?? "")|\($0.isPaused)|\($0.spoken)|\($0.quantity.drawing)|\($0.shelfCount.map(String.init) ?? "")|\($0.shelfRevision)" }
+        ongoing.map { "\($0.activityID)|\(title)|\($0.subtitle)|\($0.symbol)|\($0.phase.map(\.rawValue) ?? "")|\($0.isPaused)|\($0.spoken)|\($0.quantity.drawing)|\($0.shelfCount.map(String.init) ?? "")|\($0.shelfRevision)|\($0.isStale)|\($0.isEnded)" }
     }
 }
 
@@ -2228,6 +2337,10 @@ final class NotchPanel: NSPanel {
         var flash: PowerFlash? = nil
         /// 日程的两耳（CAL-3）：左耳日历色环加日历符号，右耳“4 分”；开始后能加入时右耳换成绿色摄像机。
         var calendar: NotchCalendarFace? = nil
+        /// 文件架个数的两耳（左托盘符号、右个数）：读屏那一句。nil = 不是文件架。
+        var shelfSpoken: String? = nil
+        /// 过期（来源过了自己的过期时间还没消息）：两耳画 0.5 透明、右耳写“—”、读屏加“可能已停”。
+        var stale = false
         func same(as other: Compact?) -> Bool {
             guard let other else { return false }
             return count == other.count && changed == other.changed && pid == other.pid
@@ -2235,6 +2348,8 @@ final class NotchPanel: NSPanel {
                 && progress == other.progress && quantity == other.quantity && progressTone == other.progressTone
                 && progressStyle == other.progressStyle && dotTone == other.dotTone && sessionPhase == other.sessionPhase
                 && level == other.level && music == other.music && flash == other.flash && calendar == other.calendar
+                && shelfSpoken == other.shelfSpoken
+                && stale == other.stale
         }
 
         /// 版式相同（谁在左、什么语气）：曲名/进度数字可 content replace，不整岛淡出重建。
@@ -2247,7 +2362,7 @@ final class NotchPanel: NSPanel {
                 && (leading == nil) == (other.leading == nil) && (sessionPhase == nil) == (other.sessionPhase == nil)
                 // 两耳：同一种（音量、亮度、键盘灯）里数值、符号、拉长都原地换，条一格接一格地扫；换了一种才淡出淡入。
                 && level?.kind == other.level?.kind && flash?.symbol == other.flash?.symbol && flash?.tone == other.flash?.tone
-                && calendar?.joinable == other.calendar?.joinable
+                && calendar?.joinable == other.calendar?.joinable && (shelfSpoken == nil) == (other.shelfSpoken == nil)
                 // 暂停、换封面是原地换色，不整岛淡出重建；只有“是不是封面耳”变了才重建。
                 && (music == nil) == (other.music == nil)
         }
@@ -2341,6 +2456,15 @@ final class NotchPanel: NSPanel {
         var earRed = false
         /// 右边的绿色按钮字（日程的“加入”）。整条提醒仍然可点，点哪里都是同一件事；按钮只是告诉人点下去会发生什么。
         var actionLabel: String? = nil
+        /// 换歌一瞥（NP-3）：不为 nil 时是低矮的一行“歌名 + 歌手”，不画图标和副句。
+        var peek: PeekLine? = nil
+    }
+
+    /// 换歌一瞥那一行的字。歌手的颜色取自封面（`ArtworkPalette.text`），还没取到就是白 0.6 的副句色。
+    struct PeekLine: Equatable {
+        var title: String
+        var artist: String
+        var artistColor: NSColor?
     }
 
     enum Tone { case info, done, problem, tip }
@@ -2392,6 +2516,8 @@ final class NotchPanel: NSPanel {
     var onActivitySelect: ((String) -> Void)?
     var onActivityAction: ((NotchActivityAction) -> Void)?
     var canSwipeActivities: (() -> Bool)?
+    /// 那一排收起时，里面摆过结束了的活动：看过了，控制器据此调 `rowSeen()`。
+    var onRowSeen: (() -> Void)?
     var onLongPress: (() -> Void)?
     /// 真正的长按（不含智能展开、右键菜单）先问这里：返回 true 表示已处理，不再走 onLongPress。CarPlay 全屏开着时用。
     var onHold: (() -> Bool)?
@@ -2425,7 +2551,7 @@ final class NotchPanel: NSPanel {
             authenticationView = nil
             canvas.setAuthentication(nil)
             updateVisibility(); apply(animated: false)
-        case .launchpad, .windowBrowser, .conductor, .pomodoro, .agentReview,
+        case .launchpad, .windowBrowser, .conductor, .pomodoro, .nowPlaying, .agentReview,
              .ownedCodex, .ownedModelPicker, .silent:
             break
         }
@@ -2449,6 +2575,8 @@ final class NotchPanel: NSPanel {
     private(set) var lastShelfChangeAnimated = true
     private(set) var showsSecondaryDot = false
     private var activityItems: [NotchActivity] = []
+    /// 展开时的活动卡只放真正的活动：文件架个数只在紧凑两耳上露（《文件架》稿），不进卡、不进最小形。
+    private var cardItems: [NotchActivity] { activityItems.filter { !$0.kind.isShelf } }
     private var activitySelection: String?
     private var authenticationView: (NSView & NotchInteractiveContent)?
     var isAuthenticating: Bool { authenticationView != nil }
@@ -2464,6 +2592,7 @@ final class NotchPanel: NSPanel {
         canvas.resetInteractions()
         pressWork?.cancel(); pressWork = nil
         hoverTimer?.invalidate(); hinting = false; pulled = 0
+        _ = hoverPolicy.exit(); hoverGuarded = false
         alertTimer?.invalidate(); alertInfo = nil; dropState = .none
         authenticationView = view
         canvas.setAuthentication(view)
@@ -2485,10 +2614,24 @@ final class NotchPanel: NSPanel {
     func setMusicArtwork(_ image: NowPlayingArtworkImage?) {
         guard musicArtwork?.trackKey != image?.trackKey || musicArtwork?.fingerprint != image?.fingerprint else { return }
         musicArtwork = image
+        // 换歌一瞥还挂着：歌手那一截换成新封面的字色（原地换色，不动计时和形状）。
+        if var peek = alertInfo?.peek {
+            peek.artistColor = image.map {
+                NSColor(srgbRed: $0.palette.text.r, green: $0.palette.text.g, blue: $0.palette.text.b, alpha: 1)
+            }
+            alertInfo?.peek = peek
+            apply(animated: false)
+        }
         // 只有此刻画着音乐两耳才需要重排；原地换封面和取色，不动形状。
         guard displayCompact()?.music != nil else { return }
         apply(animated: false)
     }
+
+    /// 紧凑的封面耳此刻画着（NP-6：只在它露着时录声音）。变了叫 onMusicEarChange。
+    private(set) var showsMusicEar = false
+    var onMusicEarChange: (() -> Void)?
+    /// 右耳 5 根的样子（NP-6）：由 NotchController 推过来；跟着声音跳时每秒 30 次。只改那 5 个图层，不重排。
+    func setMusicWave(_ wave: NowPlayingWave) { canvas.setMusicWave(wave) }
 
     /// 点紧凑左耳或右耳（NP-2 留的钩子，NP-4 接上）：长成正在播放大卡。没接上（nil）或这一下开不了（没有在放的歌、锁屏）= 点刘海的行为，一点不变。
     var nowPlayingCardOpener: (() -> Bool)?
@@ -2539,6 +2682,11 @@ final class NotchPanel: NSPanel {
     private(set) var isExpanded = false
     /// 指针刚停上来、还没展开：岛先往外长一点点，告诉人“这里能展开”（WWDC18：顺着手势方向给提示、别等计时器）。
     private var hinting = false
+    /// 悬停不误触（LA-4）：这一趟进来时开关开着，就由 NotchHoverPolicy 决定提示和展开；关着走原来的计时器。
+    private var hoverGuarded = false
+    private var hoverPolicy = NotchHoverPolicy()
+    /// 系统的 » 在（图标太多被藏起来）：悬停只认点击。量菜单栏的人（LA-0 / NotchWatch）知道了再设；没人设就当不在。
+    var menuBarOverflowShown = false
     /// 两指往下拉了多少（点）。
     private var pulled: CGFloat = 0
     private(set) var dropState: DropState = .none
@@ -2555,6 +2703,13 @@ final class NotchPanel: NSPanel {
     private var alertInfo: Alert?
     private var alertTimer: Timer?
     var isAlerting: Bool { alertInfo != nil }
+    /// 正挂着的是换歌一瞥（NP-3）。
+    var isShowingPeek: Bool { alertInfo?.peek != nil }
+    /// 一瞥正挂着就收掉（播放器退出了）。别的提醒不动。
+    func dismissPeek() {
+        guard isShowingPeek else { return }
+        dismissVisibleAlert()
+    }
     /// 当前这句提醒挂上岛的时刻（卡住提示按对时判断形状长没长完）。
     private var alertShownAt: CFTimeInterval = 0
     var alertForProbe: (title: String, tone: Tone, demo: CoachTip?)? { alertInfo.map { ($0.title, $0.tone, $0.demo) } }
@@ -2642,10 +2797,12 @@ final class NotchPanel: NSPanel {
         canvas.registerForDraggedTypes([.fileURL])
         canvas.onIslandDrag = { [weak self] info, phase in self?.islandDrag(info, phase) ?? [] }
         canvas.onPointerMoved = { [weak self] in
-            guard let self, self.enterDeferred else { return }
+            guard let self else { return }
+            guard self.enterDeferred else { self.hoverMoved(); return }
             self.pointerWhenGrown = nil
             self.hover(true)
         }
+        canvas.onScrollNoise = { [weak self] in self?.hoverScrolled() }
         apply(animated: false)
         updateVisibility()
     }
@@ -2684,8 +2841,21 @@ final class NotchPanel: NSPanel {
     private func focusCells() -> [NotchFocusController.Cell] {
         tiles.map {
             NotchFocusController.Cell(id: $0.id, title: $0.title, waiting: $0.waiting, tucked: $0.kind == .tucked,
-                                      ongoing: $0.kind.isOngoing, session: $0.kind == .session, spoken: $0.ongoing?.spoken)
+                                      ongoing: $0.kind.isOngoing, session: $0.kind == .session, spoken: $0.ongoing?.spoken,
+                                      terms: $0.searchTerms)
         }
+    }
+
+    /// 在那一排里打字筛选（LA-7）时还留着的格子；没有筛选是 nil（所有格子）。`tiles` 始终是完整的一排。
+    private var filterIDs: Set<CGWindowID>?
+    /// 现在显示的格子（筛选之后）。
+    private var shownTiles: [NotchTile] {
+        guard let filterIDs else { return tiles }
+        return tiles.filter { filterIDs.contains($0.id) }
+    }
+    /// 按状态机里的筛选结果更新留着的格子：没有筛选字就是 nil。
+    private func syncFilter() {
+        filterIDs = focus.isActive && focus.isFiltering ? Set(focus.visibleIDs) : nil
     }
 
     /// 焦点落在会话格还是窗口格（遥控器 M09 要知道）。变了才告诉。
@@ -2705,11 +2875,12 @@ final class NotchPanel: NSPanel {
 
     /// 那一排已经展开着：从默认那一格开始，面板临时接键盘。指针这时在刘海里，焦点先藏着，交给指针。
     @discardableResult
-    func beginFocus(pointerInside: Bool) -> Bool {
-        guard isExpanded, !tiles.isEmpty, !isAuthenticating, !focus.isActive else { return false }
+    func beginFocus(pointerInside: Bool, origin: NotchFocusController.Origin = .shortcut) -> Bool {
+        // 悬停打开的那一排不接键盘：你在别的 App 里打字，不会被刘海吃掉。
+        guard origin != .hover, isExpanded, !tiles.isEmpty, !isAuthenticating, !focus.isActive else { return false }
         focus.setCells(focusCells())
         if pointerInside { focus.pointerEntered() } else { focus.pointerLeft() }
-        return applyFocus(focus.handle(.notchShelf))
+        return applyFocus(focus.begin(origin: origin))
     }
 
     /// 方向、Return、Esc、展开动作的统一出口（键盘、遥控器、手柄都从 NotchController.perform 进来）。返回有没有处理。
@@ -2748,6 +2919,13 @@ final class NotchPanel: NSPanel {
         case .bump(let direction, let line):
             canvas.setTileFocus(focus.focusedID, bump: direction)
             announceFocus(line)
+        case .filtered(let line):
+            // 筛选的字变了（打字、退格、Esc 清字）：对不上的格子离开，剩下的并拢，焦点落第一格。
+            syncFilter()
+            canvas.setTileFocus(focus.visibleFocusID, animated: false)
+            apply(animated: true)
+            announceFocus(line)
+            reportFocusKind()
         case .activate(let id):
             // 和指针点一下同一条路：onTileClicked → NotchController.open（放回、去、还原，flyOut 弹簧），之后这一排收起。
             if !canvas.activateTile(id) { onTileClicked?(id, nil) }
@@ -2777,6 +2955,7 @@ final class NotchPanel: NSPanel {
         guard focus.isActive || heldKey else { return }
         heldKey = false
         focus.shelfClosed()
+        filterIDs = nil
         reportFocusKind()
         canvas.setTileFocus(nil, animated: false)
         // 面板是不抢前台的：它当过 key，就让一下，键盘回到原来的 App。
@@ -2791,6 +2970,10 @@ final class NotchPanel: NSPanel {
         let command = !event.modifierFlags.intersection([.command, .control, .option]).isEmpty
         if let action = NotchFocusController.action(forKeyCode: event.keyCode, hasCommandModifiers: command) {
             performFocus(action)
+        } else if let input = NotchFocusController.typedInput(forKeyCode: event.keyCode, characters: event.characters,
+                                                              hasCommandModifiers: command) {
+            // 直接打字就筛（LA-7）；悬停打开的那一排不会走到这里（面板根本没接键盘）。
+            _ = applyFocus(focus.apply(input))
         }
         // 焦点模式里别的键吞掉，不让系统“嘟”一声。
     }
@@ -2987,8 +3170,8 @@ final class NotchPanel: NSPanel {
         }
         // 开关关着：撞上正在播放就分出第二颗岛（现状）；开着：不出第二颗，落到下面这一颗岛 bloom 成提醒，
         // 提醒结束后 `apply` 回到媒体紧凑。
-        if NotchMinimalPresentation.alertPlan(hasActivities: !activityItems.isEmpty, meterShowing: meter != nil,
-                                              enabled: minimalPresentation) == .split {
+        if info.peek == nil, NotchMinimalPresentation.alertPlan(hasActivities: !activityItems.isEmpty, meterShowing: meter != nil,
+                                                                enabled: minimalPresentation) == .split {
             split(showing: info.title)
             alertTimer?.invalidate()
             alertTimer = Timer.scheduledTimer(withTimeInterval: duration, repeats: false) { [weak self] _ in
@@ -3260,6 +3443,7 @@ final class NotchPanel: NSPanel {
         if focus.isActive {
             // 键盘焦点在时，那一排被重新排过（缩略图之外的内容变了）：焦点还在就留着，没了重选。
             focus.setCells(focusCells())
+            syncFilter()
             canvas.setTileFocus(focus.visibleFocusID, animated: false)
             reportFocusKind()
         }
@@ -3289,10 +3473,13 @@ final class NotchPanel: NSPanel {
         guard !isAuthenticating else { return }
         endFocus()
         guard isExpanded else { return }
+        // 那一排里摆过结束了的活动：算看过一次，之后不再留。
+        let showedEnded = tiles.contains { $0.ongoing?.isEnded == true }
         isExpanded = false
         tiles = []
         apply(animated: true)
         releaseLease(.notchShelf)
+        if showedEnded { onRowSeen?() }
     }
 
     /// 收下了：托盘换成对勾，触控板轻轻一下；0.55 秒后收回（刘海两边这时已经露出图标和个数）。
@@ -3454,6 +3641,13 @@ final class NotchPanel: NSPanel {
             enterDeferred = true
             return
         }
+        hoverGuarded = inside && NotchController.hoverGuardEnabled
+        if hoverGuarded {
+            let sample = canvas.pointerSample
+            applyHover(hoverPolicy.enter(at: sample.point, time: sample.time, context: hoverContext))
+            return
+        }
+        _ = hoverPolicy.exit()
         if inside {
             // 刘海上有东西时，岛马上往外长一点点；停够 0.12 秒再展开（从菜单栏划过去不算）。
             if compact != nil, !isExpanded, dropState == .none, alertInfo == nil, !hinting {
@@ -3473,6 +3667,58 @@ final class NotchPanel: NSPanel {
             }
             onHoverChanged?(false)
         }
+    }
+
+    /// LA-4 的环境：系统的 » 在就只认点击；这块屏在全屏桌面上（菜单栏滑下来时面板可能露着）不因悬停展开。
+    private var hoverContext: NotchHoverPolicy.Context {
+        NotchHoverPolicy.Context(clickOnly: menuBarOverflowShown, fullScreen: yieldsToSystem)
+    }
+
+    /// 指针在热区里动了（开关开着才算）。
+    private func hoverMoved() {
+        guard hoverGuarded, !isAuthenticating else { return }
+        let sample = canvas.pointerSample
+        applyHover(hoverPolicy.move(to: sample.point, time: sample.time, context: hoverContext))
+    }
+
+    /// 鼠标滚轮、惯性滚动：不算停留，也不重新计时（开关开着才算）。
+    private func hoverScrolled() {
+        guard hoverGuarded, !isAuthenticating else { return }
+        applyHover(hoverPolicy.scroll(time: ProcessInfo.processInfo.systemUptime, context: hoverContext))
+    }
+
+    private func hoverDeadlineReached() {
+        hoverTimer = nil
+        guard hoverGuarded, !isAuthenticating else { return }
+        applyHover(hoverPolicy.fire(time: ProcessInfo.processInfo.systemUptime, context: hoverContext))
+    }
+
+    /// 照 NotchHoverPolicy 的一步做：提示只往下长 3 点（calm）；到点展开；计时器只留一个，到点再问下一次。
+    private func applyHover(_ step: NotchHoverPolicy.Step) {
+        if step.expand {
+            hoverTimer?.invalidate(); hoverTimer = nil
+            hinting = false
+            onHoverChanged?(true)
+            return
+        }
+        let wantsHint = step.hint && compact != nil && !isExpanded && dropState == .none && alertInfo == nil
+        if wantsHint != hinting {
+            hinting = wantsHint
+            let calm = Motion.reduced ? Motion.Spring.reducedNotch : Motion.Spring.calm
+            apply(animated: true, spring: NotchCanvasView.Spring(response: calm.response, bounce: calm.bounce, initialVelocity: 0))
+        }
+        guard let deadline = step.deadline else {
+            hoverTimer?.invalidate(); hoverTimer = nil
+            return
+        }
+        // 已有一个在等：它到点时会拿到新的时刻再排，不为每次移动重排计时器。
+        if hoverTimer?.isValid == true { return }
+        let wait = max(0, deadline - ProcessInfo.processInfo.systemUptime)
+        let timer = Timer.scheduledTimer(withTimeInterval: wait, repeats: false) { [weak self] _ in
+            MainActor.assumeIsolated { self?.hoverDeadlineReached() }
+        }
+        timer.tolerance = NotchHoverPolicy.timerTolerance
+        hoverTimer = timer
     }
 
     /// 两指往下拉（见 NotchCanvasView.scrollWheel）：手指在上面时岛一比一跟着长，松手时按速度推算落点。
@@ -3525,10 +3771,13 @@ final class NotchPanel: NSPanel {
 
     /// 一排格子要占的岛宽（含两边 14 的边距和竖线）。一格没有时按一格算，和原来一样。
     private var rowLayout: NotchRow.Layout {
-        NotchRow.layout(windows: tiles.filter { !$0.kind.isOngoing }.count, ongoing: tiles.filter { $0.kind.isOngoing }.count)
+        let shown = shownTiles
+        return NotchRow.layout(windows: shown.filter { !$0.kind.isOngoing }.count, ongoing: shown.filter { $0.kind.isOngoing }.count)
     }
     private var rowIslandWidth: Double {
-        tiles.isEmpty ? NotchRow.pitch + 2 * NotchRow.edgeMargin - NotchRow.cellGap : rowLayout.islandWidth(minimum: 0)
+        // 筛选之后一格也没有：写“没有匹配的”，那一排不窄于两格（LA-7）。
+        if filterIDs != nil, shownTiles.isEmpty { return NotchRowFilter.emptyIslandWidth }
+        return tiles.isEmpty ? NotchRow.pitch + 2 * NotchRow.edgeMargin - NotchRow.cellGap : rowLayout.islandWidth(minimum: 0)
     }
 
     /// 这一刻岛该是什么样：外框（Cocoa 坐标）、样式、面板要占的范围、两个肩。
@@ -3577,6 +3826,9 @@ final class NotchPanel: NSPanel {
             if !isVirtual, rect.width < notch.width + 40 { rect = rect.insetBy(dx: -min(20, extra / 3), dy: 0) }
             style.cornerRadius = max(style.cornerRadius, NotchIsland.pullRadius(hardware, extra: extra))
             style.fill = .black
+        } else if resting, hinting, compact != nil, hoverGuarded {
+            // LA-4：提示只往下长 3 点，不往两边（两边是量过的）。
+            rect = NotchHoverPolicy.hintRect(rect)
         } else if resting, hinting, compact != nil {
             rect = rect.insetBy(dx: -5, dy: 0)
             rect.origin.y -= 3
@@ -3615,7 +3867,7 @@ final class NotchPanel: NSPanel {
         else if compact != nil || displayCompact()?.leading != nil { state = .compact }
         else { return legacy }
         // 展开里有窗口格或活动卡时，内容按旧外框排版，不能压进 230×64：这时只换落点，不换尺寸。
-        let hasContent = !tiles.isEmpty || !activityItems.isEmpty
+        let hasContent = !tiles.isEmpty || !cardItems.isEmpty
         let size = NotchCapsule.size(state, compact: legacy.rect.size, alert: legacy.rect.size,
                                      interaction: legacy.rect.size)
         let shaped = state == .expanded && hasContent ? legacy.rect.size : size
@@ -3660,7 +3912,7 @@ final class NotchPanel: NSPanel {
             // 半岛：从刘海顶边往下鼓（y = notch.maxY - height），内容绕传感器，不另加空白额头。
             let screenWidth = NSScreen.screens.first { $0.frame.contains(NSPoint(x: notch.midX, y: notch.midY)) }?.frame.width ?? 1000
             // 合成一排（M11）：活动不再另起一张卡叠在窗口上面，右段的格子和窗口格同高、同一排。
-            let stacksActivityCard = !mergedRow && !activityItems.isEmpty
+            let stacksActivityCard = !mergedRow && !cardItems.isEmpty
             let width = min(screenWidth - CGFloat(NotchRow.screenReserve),
                             max(stacksActivityCard ? 420 : notch.width + 120, CGFloat(rowIslandWidth)))
             let rawBelow: CGFloat = stacksActivityCard ? (tiles.isEmpty ? 144 : 286) : (tiles.isEmpty ? 56 : 142)
@@ -3669,6 +3921,15 @@ final class NotchPanel: NSPanel {
             // 无刘海：S4 四角全圆、不画肩；真刘海仍从硬件肩长出。
             return (NSRect(x: notch.midX - width / 2, y: notch.maxY - height, width: width, height: height),
                     IslandStyle(cornerRadius: 28, allCorners: isVirtual, fill: .black, border: 1))
+        }
+        if let alert = alertInfo, alert.peek != nil {
+            // 换歌一瞥：宽不变（还是两耳那么宽），只往下鼓 30（63.5），底角 24；不走半岛的矮档，那一档会把它撑到 72。
+            let side = NotchRoomPolicy.activitySide(earWidth: sideWidth, leading: room?.leading, trailing: room?.trailing)
+            let width = notch.width + side * 2
+            let height = CGFloat(NowPlayingPeek.height(notchHeight: Double(notch.height)))
+            return (NSRect(x: notch.midX - width / 2, y: notch.maxY - height, width: width, height: height),
+                    IslandStyle(cornerRadius: CGFloat(NowPlayingPeek.cornerRadius), allCorners: isVirtual, fill: .black, border: 1,
+                                borderColor: NotchPanel.hairline))
         }
         if let alert = alertInfo {
             let teaching = alert.demo != nil
@@ -3796,7 +4057,7 @@ final class NotchPanel: NSPanel {
         let shape = compactShape
         let visual = displayCompact()
         // 半岛展开时保留紧凑左右耳（谁 / 数）在传感器两侧，格子绕着排——相对位置继承，不留额头。
-        let shelfEars = isExpanded && (activityItems.isEmpty || mergedRow) && compact != nil
+        let shelfEars = isExpanded && (cardItems.isEmpty || mergedRow) && compact != nil
             && dropState == .none && alertInfo == nil && meter == nil
         let compactShown = (resting && visual != nil && (shape != .chin || visual?.leading != nil)) || shelfEars
         let chinShown = resting && visual?.leading == nil && meter == nil && compact != nil && shape == .chin
@@ -3818,11 +4079,14 @@ final class NotchPanel: NSPanel {
             drop: dropState, dropChoice: dropChoice,
             dropDisabled: dropState == .none || fileDrop != nil ? [] : Set(DropChoice.allCases.filter { isDisabled($0) }.map(\.rawValue)),
             fileDrop: dropState == .none ? nil : fileDrop,
-            activities: (dropState == .none && alertInfo == nil && meter == nil && !(isExpanded && mergedRow)) ? activityItems : [],
+            activities: (dropState == .none && alertInfo == nil && meter == nil && !(isExpanded && mergedRow)) ? cardItems : [],
             activitySelection: activitySelection,
-            activitiesExpanded: isExpanded && !activityItems.isEmpty && !mergedRow,
+            activitiesExpanded: isExpanded && !cardItems.isEmpty && !mergedRow,
             secondaryDot: showsSecondaryDot,
             companion: companionText)
+        content.shownIDs = isExpanded ? filterIDs : nil
+        content.query = isExpanded && focus.isActive ? focus.query : ""
+        content.notchWidth = notch.width
         // 封面耳：只在真刘海的两侧版式里换成封面；边长按这一耳的主体宽、肩宽、刘海高算，放不下就是 nil（退回今天的样子）。
         if var ears = content.compact, ears.music != nil, !shelfEars, let slots = content.compactSlots {
             let shoulder = target.shoulders.leading > 0 ? Double(hardware?.shoulderExtent ?? 0) : 0
@@ -3873,6 +4137,12 @@ final class NotchPanel: NSPanel {
         let interactionRect = NSRect(x: local.minX, y: local.minY, width: local.width,
                                      height: max(0, local.height - (isVirtual ? 0 : notch.height)))
         canvas.placeAuthentication(in: interactionRect)
+        // 封面耳露没露（NP-6）：变了才告诉 NotchController，由它决定建、拆录音。
+        let earShown = content.compact?.music?.coverSide != nil && content.compact?.level == nil && !shelfEars
+        if earShown != showsMusicEar {
+            showsMusicEar = earShown
+            onMusicEarChange?()
+        }
     }
 
     /// 肩这一次怎么动（§5.1 S3、S5）。肩和硬件的肩重合、或者岛没画时，肩是看不出来的：
@@ -3944,14 +4214,22 @@ final class NotchPanel: NSPanel {
                                    spoken: NowPlayingEars.spoken(title: item.title, artist: item.subtitle, paused: item.isPaused),
                                    coverSide: nil)
                 : nil
+            // 文件架个数（优先级最低，只在没有别的持续活动时轮到）：左耳托盘符号，右耳个数，不写字。
+            if item.kind == .shelf, let count = Int(item.trailing ?? "") {
+                return Compact(count: compact?.count ?? 0, changed: false, leading: "", leadingSymbol: item.symbol,
+                               trailing: item.trailing, dotTone: .accent, shelfSpoken: NotchShelfEars.spoken(count: count))
+            }
             // 番茄钟：左耳一圈环加“专注”或“休息”，不画符号，也不画横条。计时器：左耳只有橙环，没有字。
             return Compact(pid: compact?.pid, icon: compact?.icon, count: compact?.count ?? 0, changed: false,
                            leading: item.title,
                            leadingSymbol: focus ? nil : (item.symbol.isEmpty ? "circle.fill" : item.symbol),
-                           trailing: Self.earTrailing(item), progress: focus ? (item.progress.fractionValue ?? 0) : nil,
-                           quantity: focus ? .unknown : item.progress,
+                           trailing: Self.earTrailing(item),
+                           progress: item.isStale ? nil : (focus ? (item.progress.fractionValue ?? 0) : nil),
+                           quantity: focus || item.isStale ? .unknown : item.progress,
                            progressTone: tone, progressStyle: focus ? .ring : .bar, dotTone: NotchInfoDot.tone(for: item),
-                           sessionPhase: item.sessionPhase, music: music, calendar: item.calendar)
+                           // 过期的不转圈、不猜：右耳只剩“—”。
+                           sessionPhase: item.isStale ? nil : item.sessionPhase, music: music, calendar: item.calendar,
+                           stale: item.isStale)
         }
         return compact
     }
@@ -3986,7 +4264,7 @@ final class NotchPanel: NSPanel {
         case .confirmed: return dropChoice == .tuck ? "正在收起" : dropChoice.title
         case .none:
             if pulled > 0, compact == nil { return "启动台" }
-            return isExpanded && tiles.isEmpty && (activityItems.isEmpty || mergedRow) ? "点一下回主屏幕 · 左右滑换 App" : nil
+            return isExpanded && tiles.isEmpty && (cardItems.isEmpty || mergedRow) ? "点一下回主屏幕 · 左右滑换 App" : nil
         }
     }
 }
@@ -4038,6 +4316,11 @@ final class NotchCanvasView: NSView {
         var secondaryDot: Bool = false
         /// 旁边那颗岛上的一句。空着就是合并。
         var companion: String? = nil
+        /// 在那一排里打字筛选（LA-7）：留着的格子（nil 是全部）、筛选字、刘海宽（字写在刘海左边那一段）。
+        /// 都不进 `same`：筛选只是原地并拢，不整排淡出淡入。
+        var shownIDs: Set<CGWindowID>? = nil
+        var query = ""
+        var notchWidth: CGFloat = 0
         /// 最小呈现的最小形（画布坐标）。它们在岛外，自己一层，不参与“是不是同一份内容”。
         var minimum: [NotchMinimumShape] = []
 
@@ -4050,7 +4333,7 @@ final class NotchCanvasView: NSView {
                 && activities.isEmpty == other.activities.isEmpty && activitiesExpanded == other.activitiesExpanded
                 && dots == other.dots && dotsChanged == other.dotsChanged
                 && (compact?.layoutSame(as: other.compact) ?? (other.compact == nil))
-                && alert?.id == other.alert?.id && alert?.title == other.alert?.title
+                && alert?.id == other.alert?.id && ((alert?.peek != nil && other.alert?.peek != nil) || alert?.title == other.alert?.title)
                 && (pullIcon == nil) == (other.pullIcon == nil)
                 // 落点的几种样子是同一份内容：原地换符号和字（托盘 → 对勾），不淡出淡入。
                 && ((drop != .none && other.drop != .none) || (drop == .none && other.drop == .none && hint == other.hint))
@@ -4066,6 +4349,10 @@ final class NotchCanvasView: NSView {
 
     var onHover: ((Bool) -> Void)?
     var onPointerMoved: (() -> Void)?
+    /// 鼠标滚轮或惯性滚动经过刘海（LA-4：不算停留）。触控板手指还在板上的滚动是手势，不报。
+    var onScrollNoise: (() -> Void)?
+    /// 最近一次进来或移动时指针在哪（屏幕坐标）、什么时候（事件时钟 = 开机以来的秒数）。
+    private(set) var pointerSample: (point: NSPoint, time: TimeInterval) = (.zero, 0)
     var onTileClicked: ((CGWindowID, NSRect?) -> Void)?
     var onTileHover: ((CGWindowID, Bool, NSRect?) -> Void)?
     var onTileAccessory: ((CGWindowID) -> Void)?
@@ -4093,6 +4380,12 @@ final class NotchCanvasView: NSView {
     private let clipHost = NSView()
     private let clip = CALayer()
     private var current: NotchContentView?
+    /// 右耳 5 根的样子（NP-6）：新换上的内容层接着用。
+    private var musicWave = NowPlayingWave.dots
+    func setMusicWave(_ wave: NowPlayingWave) {
+        musicWave = wave
+        current?.setMusicWave(wave)
+    }
     /// 卡住提示里新的那排键帽按一下（CoachEcho）。
     func echoAlertKeys() { current?.echoAlertKeys() }
     /// 键盘焦点亮在哪一格；内容换了（整排重建）时新的一层按它亮起。
@@ -4513,6 +4806,7 @@ final class NotchCanvasView: NSView {
             }
         }
         let incoming = NotchContentView(content: content)
+        incoming.setMusicWave(musicWave)
         incoming.isHidden = authenticationView != nil
         incoming.onTileClicked = { [weak self] id, rect in self?.onTileClicked?(id, rect) }
         incoming.activityView.onSelect = { [weak self] id in self?.onActivitySelect?(id) }
@@ -4681,6 +4975,7 @@ final class NotchCanvasView: NSView {
     }
 
     override func mouseEntered(with event: NSEvent) {
+        pointerSample = (mouseScreenPoint(event), event.timestamp)
         if minimumView(at: event) != nil { hoverHeldByMinimum = true; return }
         hoverHeldByMinimum = false
         onHover?(true)
@@ -4690,6 +4985,7 @@ final class NotchCanvasView: NSView {
         holdTimer?.invalidate(); holdTimer = nil; if mouseDragAxis == nil { pressedAt = nil }; onHover?(false)
     }
     override func mouseMoved(with event: NSEvent) {
+        pointerSample = (mouseScreenPoint(event), event.timestamp)
         if hoverHeldByMinimum, minimumView(at: event) == nil { hoverHeldByMinimum = false; onHover?(true); return }
         onPointerMoved?()
     }
@@ -4852,6 +5148,7 @@ final class NotchCanvasView: NSView {
     override func scrollWheel(with event: NSEvent) {
         guard authenticationView == nil else { return }
         holdTimer?.invalidate(); holdTimer = nil; pressedAt = nil
+        if !event.hasPreciseScrollingDeltas || event.momentumPhase != [] { onScrollNoise?() }
         guard event.hasPreciseScrollingDeltas, event.momentumPhase == [] else { return }
         let fingerDown = event.isDirectionInvertedFromDevice ? event.scrollingDeltaY : -event.scrollingDeltaY
         let fingerRight = event.isDirectionInvertedFromDevice ? event.scrollingDeltaX : -event.scrollingDeltaX
@@ -5156,6 +5453,7 @@ final class NotchContentView: NSView {
     /// 左段窗口和右段正在进行的之间那一条竖线（只在两段都有格子时露出）。
     private let divider = NotchRowDivider()
     func echoAlertKeys() { alertView.echoKeys() }
+    func setMusicWave(_ wave: NowPlayingWave) { compactView.setMusicWave(wave) }
     private let pullView = NSImageView()
     /// 落点里的符号：托盘，收下后换成对勾（原地换，符号自己的过渡）。
     private let glyph = NSImageView()
@@ -5167,6 +5465,13 @@ final class NotchContentView: NSView {
     private var tileViews: [NotchTileView] = []
     private(set) var pullIconRect: NSRect?
     let isEmpty: Bool
+    /// 打字筛选（LA-7）：刘海左边那一段的字（13 半粗）加一个光标，以及一格也没有时的话。
+    private let queryLabel = NSTextField(labelWithString: "")
+    private let queryCursor = NSView()
+    private let noMatchLabel = NSTextField(labelWithString: NotchRowFilter.noMatchText)
+    /// 上一次排版时留着的格子：变了才动画。
+    private var placedShownIDs: Set<CGWindowID>?
+    private var placedOnce = false
 
     init(content: NotchCanvasView.Content) {
         isEmpty = content.tiles.isEmpty && content.hint == nil && content.compact == nil && content.alert == nil
@@ -5187,6 +5492,22 @@ final class NotchContentView: NSView {
         addSubview(activityView)
         divider.isHidden = true
         addSubview(divider)
+        queryLabel.font = .systemFont(ofSize: 13, weight: .semibold)
+        queryLabel.textColor = .white
+        queryLabel.alignment = .right
+        queryLabel.lineBreakMode = .byClipping
+        queryLabel.isHidden = true
+        queryCursor.wantsLayer = true
+        queryCursor.layer?.backgroundColor = NSColor.white.cgColor
+        queryCursor.layer?.cornerRadius = 0.75
+        queryCursor.isHidden = true
+        noMatchLabel.font = .systemFont(ofSize: 13, weight: .medium)
+        noMatchLabel.textColor = NSColor.white.withAlphaComponent(0.6)
+        noMatchLabel.alignment = .center
+        noMatchLabel.isHidden = true
+        addSubview(queryLabel)
+        addSubview(queryCursor)
+        addSubview(noMatchLabel)
         pullView.imageScaling = .scaleProportionallyUpOrDown
         pullView.image = content.pullIcon
         addSubview(pullView)
@@ -5243,8 +5564,8 @@ final class NotchContentView: NSView {
     /// 格子先全透明，再按序号一格一格淡入：第 i 格在形状开始后 0.09 + 0.04 × i 秒起。
     func staggerTiles(fade: TimeInterval) {
         guard tileViews.count > 0 else { return }
-        for view in tileViews { view.alphaValue = 0 }
-        for (index, view) in tileViews.enumerated() {
+        for view in tileViews where !view.isHidden { view.alphaValue = 0 }
+        for (index, view) in tileViews.enumerated() where !view.isHidden {
             DispatchQueue.main.asyncAfter(deadline: .now() + NotchSmallBehaviour.tileFadeDelay(index: index)) { [weak view] in
                 MainActor.assumeIsolated {
                     guard let view else { return }
@@ -5303,22 +5624,71 @@ final class NotchContentView: NSView {
         activityView.frame = NSRect(x: 0, y: max(0, rect.height - content.notchHeight - activityHeight), width: rect.width, height: activityHeight)
         activityView.update(content.activities, selected: content.activitySelection, expanded: content.activitiesExpanded)
         // 外框圆角 28、四周边距 14；格子之间 8。窗口在左，竖线，正在进行的在右（M11）。
+        // 打字筛选时（LA-7）只排留着的格子；离开的淡出，剩下的并拢（第一次排版直接到位，不动画）。
         let top = rect.height - content.notchHeight
-        let ongoingCount = content.tiles.filter { $0.kind.isOngoing }.count
-        let layout = NotchRow.layout(windows: tileViews.count - ongoingCount, ongoing: ongoingCount)
-        let cellsHeight = max(0, top - 22 - (content.activitiesExpanded ? 142 : 0))
-        for (index, tile) in tileViews.enumerated() {
-            tile.frame = NSRect(x: CGFloat(layout.leading(inRowWidth: Double(rect.width)) + layout.x(ofCell: index)), y: 14,
-                                width: CGFloat(NotchRow.cellWidth), height: cellsHeight)
-            // 内容没换整排、只是会话换了状态、曲名变了：原地换这一格。
-            if index < content.tiles.count, content.tiles[index].kind.isOngoing { tile.updateOngoing(content.tiles[index]) }
+        let shownIDs = content.shownIDs
+        func isShown(_ index: Int) -> Bool {
+            guard let shownIDs, index < content.tiles.count else { return true }
+            return shownIDs.contains(content.tiles[index].id)
         }
+        let shownCount = (0..<tileViews.count).filter(isShown).count
+        let ongoingCount = (0..<tileViews.count).filter { isShown($0) && $0 < content.tiles.count && content.tiles[$0].kind.isOngoing }.count
+        let layout = NotchRow.layout(windows: shownCount - ongoingCount, ongoing: ongoingCount)
+        let cellsHeight = max(0, top - 22 - (content.activitiesExpanded ? 142 : 0))
+        let filterChanged = placedOnce && placedShownIDs != shownIDs
+        let animateSettle = filterChanged && !Motion.reduced
+        var rank = 0
+        for (index, tile) in tileViews.enumerated() {
+            if index < content.tiles.count, content.tiles[index].kind.isOngoing { tile.updateOngoing(content.tiles[index]) }
+            guard isShown(index) else {
+                if tile.isHidden { continue }
+                if filterChanged {
+                    NSAnimationContext.runAnimationGroup({ context in
+                        context.duration = animateSettle ? Motion.fadeDuration : 0
+                        tile.animator().alphaValue = 0
+                    }, completionHandler: { [weak tile] in
+                        MainActor.assumeIsolated { tile?.isHidden = true }
+                    })
+                } else {
+                    tile.isHidden = true
+                }
+                continue
+            }
+            let frame = NSRect(x: CGFloat(layout.leading(inRowWidth: Double(rect.width)) + layout.x(ofCell: rank)), y: 14,
+                               width: CGFloat(NotchRow.cellWidth), height: cellsHeight)
+            if tile.isHidden {
+                tile.frame = frame
+                tile.isHidden = false
+                tile.alphaValue = 0
+            }
+            tile.setPosition(rank + 1, of: shownCount)
+            if animateSettle, tile.frame != frame {
+                NSAnimationContext.runAnimationGroup { context in
+                    context.duration = Motion.Spring.calm.response
+                    context.timingFunction = CAMediaTimingFunction(name: .easeOut)
+                    tile.animator().frame = frame
+                    tile.animator().alphaValue = 1
+                }
+            } else {
+                tile.frame = frame
+                if tile.alphaValue < 1, placedOnce {
+                    NSAnimationContext.runAnimationGroup { context in
+                        context.duration = animateSettle ? Motion.fadeDuration : 0
+                        tile.animator().alphaValue = 1
+                    }
+                }
+            }
+            rank += 1
+        }
+        placedShownIDs = shownIDs
+        placedOnce = true
         if let line = layout.dividerFrame(inRowWidth: Double(rect.width), cellsMinY: 14, cellsHeight: Double(cellsHeight)) {
             divider.frame = NSRect(x: line.x, y: line.y, width: line.width, height: line.height)
             divider.isHidden = false
         } else {
             divider.isHidden = true
         }
+        placeQuery(content, rect: rect, cellsMinY: 14, cellsHeight: cellsHeight, shownCount: shownCount)
         hint.stringValue = content.hint ?? ""
         hint.isHidden = content.hint == nil
         let size = hint.intrinsicContentSize
@@ -5384,6 +5754,46 @@ final class NotchContentView: NSView {
     }
 }
 
+extension NotchContentView {
+    /// 打字筛选（LA-7）：字写在刘海左边那一段（右对齐、紧挨刘海，13 半粗，后面一个光标）；一格也没有时在格子那一块写“没有匹配的”。
+    /// 左边放不下整串就留最后几个字。不用计时器：光标不闪，免得空闲时还在重画。
+    fileprivate func placeQuery(_ content: NotchCanvasView.Content, rect: NSRect, cellsMinY: CGFloat, cellsHeight: CGFloat,
+                                shownCount: Int) {
+        let query = content.query
+        let showsQuery = !query.isEmpty && content.notchHeight > 0
+        queryLabel.isHidden = !showsQuery
+        queryCursor.isHidden = !showsQuery
+        compactView.alphaValue = showsQuery ? 0 : 1
+        if showsQuery {
+            let notchLeft = (rect.width - content.notchWidth) / 2
+            let right = notchLeft - 8
+            let room = max(0, right - CGFloat(NotchRow.edgeMargin) - 3)
+            var text = query
+            var width = (text as NSString).size(withAttributes: [.font: queryLabel.font as Any]).width
+            var limit = query.count
+            while width > room, limit > 2 {
+                limit -= 1
+                text = NotchRowFilter.visibleTail(of: query, limit: limit)
+                width = (text as NSString).size(withAttributes: [.font: queryLabel.font as Any]).width
+            }
+            queryLabel.stringValue = text
+            queryLabel.setAccessibilityLabel("筛选：\(query)")
+            let height: CGFloat = 16
+            let y = rect.height - content.notchHeight / 2 - height / 2
+            queryCursor.frame = NSRect(x: right - 1.5, y: y + 1, width: 1.5, height: height - 2)
+            queryLabel.frame = NSRect(x: max(CGFloat(NotchRow.edgeMargin), right - 3.5 - ceil(width) - 2), y: y,
+                                      width: min(room, ceil(width) + 2), height: height)
+        }
+        let empty = shownCount == 0 && content.shownIDs != nil
+        noMatchLabel.isHidden = !empty
+        if empty {
+            let size = noMatchLabel.intrinsicContentSize
+            noMatchLabel.frame = NSRect(x: (rect.width - size.width) / 2, y: cellsMinY + (cellsHeight - size.height) / 2,
+                                        width: size.width, height: size.height)
+        }
+    }
+}
+
 /// 下巴上的点：一个点一扇收进刘海的窗；有变化的另加一个强调色的点。
 final class NotchDotsView: NSView {
     private var count = 0
@@ -5426,6 +5836,10 @@ final class NotchCompactView: NSView {
     /// 右耳上实际写的字：放不下“第 3 / 12”时换成短写法。
     private var earText: String?
 
+    // MARK: 文件架个数（右耳）：图层自己滚、自己弹，不重画。
+    private let shelfText = CATextLayer()
+    private var shelfShownText: String?
+
     // MARK: 音量亮度两耳（左耳符号、右耳白条）。图层自己动，不重画。
     private let levelSymbol = CALayer()
     private let levelTrack = CALayer()
@@ -5443,6 +5857,48 @@ final class NotchCompactView: NSView {
     private var musicShown = false
     private var shownCoverKey: String?
     private var shownNoteSide: Double?
+    /// 右耳 5 根（NP-6）：今天的静止点，或跟着声音跳 / 减少动态效果时的填充色点。暂停一律按暂停画。
+    private var wave = NowPlayingWave.dots
+
+    func setMusicWave(_ next: NowPlayingWave) {
+        guard next != wave else { return }
+        let modeChanged = next.mode != wave.mode
+        wave = next
+        guard musicShown, let (_, music) = coverEars, let slots else { return }
+        CATransaction.begin()
+        // 换样子（静止点 ↔ 跟着跳）沿 0.18 秒淡过去；每秒 30 次的高度直接到位，起落已经在电平里了。
+        if modeChanged && !Motion.reduced { CATransaction.setAnimationDuration(NowPlayingEars.fadeSeconds) }
+        else { CATransaction.setDisableActions(true) }
+        layoutDots(music: music, trailing: Self.slot(slots.trailing))
+        CATransaction.commit()
+    }
+
+    private static func slot(_ rect: NSRect) -> NowPlayingEars.Slot {
+        NowPlayingEars.Slot(minX: Double(rect.minX), minY: Double(rect.minY), width: Double(rect.width), height: Double(rect.height))
+    }
+
+    /// 5 个点的位置、大小、颜色。跟着跳：根高 = 2.4 + 11.6 × 电平，竖直居中，全部主色；
+    /// 减少动态效果：静止的填充色点；其余（没开、没权限、录不到、蓝牙 + Spotify）：主色副色交替的静止点；暂停：白 0.45。
+    private func layoutDots(music: NotchPanel.MusicEar, trailing: NowPlayingEars.Slot) {
+        let mode: NowPlayingWaveMode = music.paused ? .paused : (wave.mode == .paused ? .dots : wave.mode)
+        let base = NowPlayingEars.dotColors(palette: music.artwork?.palette, paused: music.paused)
+        let filled = mode == .live || mode == .still
+        for (index, dot) in dotLayers.enumerated() {
+            var box = NowPlayingEars.dotFrame(index: index, in: trailing)
+            if mode == .live, index < wave.levels.count {
+                let height = AudioLevelBands.rootHeight(level: wave.levels[index])
+                box.y += (box.height - height) / 2
+                box.height = height
+            }
+            dot.isHidden = false
+            dot.bounds = CGRect(x: 0, y: 0, width: box.width, height: box.height)
+            dot.position = CGPoint(x: box.x, y: box.y)
+            dot.cornerRadius = CGFloat(min(box.width, box.height) / 2)
+            let color = filled ? base[0] : base[index]
+            dot.backgroundColor = NSColor(srgbRed: CGFloat(color.r), green: CGFloat(color.g), blue: CGFloat(color.b),
+                                          alpha: CGFloat(color.alpha)).cgColor
+        }
+    }
 
 
     /// 计时器的橙色（稿 #ff9f0a）；超时的右耳字用它。
@@ -5506,13 +5962,21 @@ final class NotchCompactView: NSView {
         updateSpinner()
         syncLevel()
         syncMusic()
+        syncShelfCount()
         setAccessibilityElement(compact != nil && compact?.level == nil)
         setAccessibilityRole(.staticText)
+        // 过期：两耳降到 0.5；增强对比度时也靠右耳的“—”认，不只靠暗。
+        alphaValue = compact?.stale == true ? CGFloat(NotchActivity.staleAlpha) : 1
+        defer {
+            if compact?.stale == true { setAccessibilityLabel(NotchEarText.spoken(accessibilityLabel() ?? "", stale: true)) }
+        }
         if let compact {
             if let flash = compact.flash {
                 setAccessibilityLabel(flash.spoken)
             } else if let music = compact.music {
                 setAccessibilityLabel(music.spoken)
+            } else if let spoken = compact.shelfSpoken {
+                setAccessibilityLabel(spoken)
             } else if let spoken = compact.calendar?.spoken, !spoken.isEmpty {
                 setAccessibilityLabel(spoken)
             } else if let leading = compact.leading {
@@ -5637,17 +6101,7 @@ final class NotchCompactView: NSView {
                 shownNoteSide = side
             }
         }
-        let colors = NowPlayingEars.dotColors(palette: music.artwork?.palette, paused: music.paused)
-        for (index, dot) in dotLayers.enumerated() {
-            let box = NowPlayingEars.dotFrame(index: index, in: trailing)
-            dot.isHidden = false
-            dot.bounds = CGRect(x: 0, y: 0, width: box.width, height: box.height)
-            dot.position = CGPoint(x: box.x, y: box.y)
-            dot.cornerRadius = CGFloat(min(box.width, box.height) / 2)
-            let color = colors[index]
-            dot.backgroundColor = NSColor(srgbRed: CGFloat(color.r), green: CGFloat(color.g), blue: CGFloat(color.b),
-                                          alpha: CGFloat(color.alpha)).cgColor
-        }
+        layoutDots(music: music, trailing: trailing)
         CATransaction.commit()
         musicShown = true
     }
@@ -5821,7 +6275,7 @@ final class NotchCompactView: NSView {
         if let leading = compact.leading {
             let ring = compact.progressStyle == .ring ? (compact.progress ?? 0, compact.progressTone) : nil
             let timerEar = compact.progressTone == .timer || compact.progressTone == .timerPaused
-                || compact.progressTone == .calendar || compact.progressTone == .calendarJoin
+                || compact.progressTone == .calendar || compact.progressTone == .calendarJoin || compact.shelfSpoken != nil
             drawEar(timerEar ? "" : leading, symbol: compact.leadingSymbol, ring: ring, in: slots.leading, align: .left)
             if compact.progressTone == .calendarJoin {
                 // 开始后能加入：左耳满环，右耳一枚绿色摄像机，不写字。
@@ -5834,7 +6288,7 @@ final class NotchCompactView: NSView {
             }
             // 编程会话：在跑是转圈（子图层）、等你是橙色的字、做完是对勾。
             // 活动的量：环（或弧）是子图层，字让出它的位置。
-            drawEar(earText ?? "", symbol: nil, ring: nil, in: slots.trailing, align: .right,
+            drawEar(compact.shelfSpoken != nil ? "" : (earText ?? ""), symbol: nil, ring: nil, in: slots.trailing, align: .right,
                     color: (compact.sessionPhase == .waiting || compact.sessionPhase == .quotaLow) ? .systemOrange
                         : (compact.progressTone == .timerPaused ? NSColor.white.withAlphaComponent(0.92 * CGFloat(CountdownTimerStyle.pausedAlpha))
                            : (compact.progressTone == .timer && (earText ?? "").hasPrefix("+") ? Self.timerOrange : nil)),
@@ -5871,6 +6325,76 @@ final class NotchCompactView: NSView {
         if dot > 0 {
             NSColor.controlAccentColor.setFill()
             NSBezierPath(ovalIn: NSRect(x: startX + size.width + gap, y: slots.trailing.midY - dot / 2, width: dot, height: dot)).fill()
+        }
+    }
+
+    /// 文件架个数：右耳一个文字图层。变了滚到新值（0.28 秒），变多时右耳再弹一下（pop 0.30 / 0.75）；减少动态效果直接换。
+    private func syncShelfCount() {
+        guard let compact, compact.shelfSpoken != nil, compact.level == nil, let slots, let text = compact.trailing else {
+            shelfText.isHidden = true
+            shelfShownText = nil
+            return
+        }
+        wantsLayer = true
+        guard let host = layer else { return }
+        let font = Self.earFont()
+        let height = ceil(font.ascender - font.descender + font.leading)
+        let width = max(0, slots.trailing.width - 12)
+        let frame = CGRect(x: slots.trailing.maxX - 6 - width, y: slots.trailing.midY - height / 2, width: width, height: height)
+        let scale = window?.backingScaleFactor ?? NSScreen.main?.backingScaleFactor ?? 2
+        func style(_ layer: CATextLayer, _ string: String) {
+            layer.font = font
+            layer.fontSize = font.pointSize
+            layer.alignmentMode = .right
+            layer.foregroundColor = NSColor.white.withAlphaComponent(0.92).cgColor
+            layer.contentsScale = scale
+            layer.frame = frame
+            layer.string = string
+        }
+        CATransaction.begin(); CATransaction.setDisableActions(true)
+        if shelfText.superlayer == nil { host.addSublayer(shelfText) }
+        shelfText.isHidden = false
+        let old = shelfShownText
+        style(shelfText, text)
+        CATransaction.commit()
+        shelfShownText = text
+        guard let old, old != text, !NSWorkspace.shared.accessibilityDisplayShouldReduceMotion else { return }
+        let roll = NotchShelfEars.roll(from: Int(old), to: Int(text) ?? 0)
+        if roll != .none {
+            // 变多：旧值往上顶出去、新值从下面上来；变少反过来。
+            let travel: CGFloat = roll == .up ? 10 : -10
+            let outgoing = CATextLayer()
+            CATransaction.begin(); CATransaction.setDisableActions(true)
+            style(outgoing, old)
+            host.addSublayer(outgoing)
+            CATransaction.commit()
+            func slide(from: CGFloat, to: CGFloat, fadeFrom: Float, fadeTo: Float) -> CAAnimationGroup {
+                let move = CABasicAnimation(keyPath: "transform.translation.y")
+                move.fromValue = from; move.toValue = to
+                let fade = CABasicAnimation(keyPath: "opacity")
+                fade.fromValue = fadeFrom; fade.toValue = fadeTo
+                let group = CAAnimationGroup()
+                group.animations = [move, fade]
+                group.duration = NotchShelfEars.rollDuration
+                group.timingFunction = CAMediaTimingFunction(name: .easeOut)
+                return group
+            }
+            CATransaction.begin()
+            CATransaction.setCompletionBlock { outgoing.removeFromSuperlayer() }
+            outgoing.add(slide(from: 0, to: travel, fadeFrom: 1, fadeTo: 0), forKey: "roll")
+            outgoing.opacity = 0
+            CATransaction.commit()
+            shelfText.add(slide(from: -travel, to: 0, fadeFrom: 0, fadeTo: 1), forKey: "roll")
+        }
+        if NotchShelfEars.pops(from: Int(old), to: Int(text) ?? 0) {
+            let stiffness = pow(2 * Double.pi / NotchShelfEars.popResponse, 2)
+            let spring = CASpringAnimation(keyPath: "transform.scale")
+            spring.fromValue = 1.28; spring.toValue = 1
+            spring.mass = 1
+            spring.stiffness = stiffness
+            spring.damping = 2 * NotchShelfEars.popDamping * stiffness.squareRoot()
+            spring.duration = spring.settlingDuration
+            shelfText.add(spring, forKey: "pop")
         }
     }
 
@@ -6104,7 +6628,11 @@ final class NotchAlertView: NSView {
         if let alert {
             let ear = alert.ear.map { "，\($0)" } ?? ""
             let action = alert.actionLabel.map { "，点一下\($0)" } ?? ""
-            setAccessibilityLabel("\(alert.subtitle)：\(alert.title)\(ear)\(action)")
+            if let peek = alert.peek {
+                setAccessibilityLabel(NowPlayingPeek.spoken(title: peek.title, artist: peek.artist))
+            } else {
+                setAccessibilityLabel("\(alert.subtitle)：\(alert.title)\(ear)\(action)")
+            }
         }
     }
 
@@ -6131,8 +6659,31 @@ final class NotchAlertView: NSView {
                                  width: NotchDemoView.size.width, height: NotchDemoView.size.height)
     }
 
+    /// 换歌一瞥：一行，歌名 13 半粗白，空 6，歌手 11 取封面字色；整行在宽度里居中，太长从尾巴截。
+    private func drawPeek(_ peek: NotchPanel.PeekLine) {
+        let margin = CGFloat(NowPlayingPeek.sideMargin)
+        let paragraph = NSMutableParagraphStyle()
+        paragraph.lineBreakMode = .byTruncatingTail
+        paragraph.alignment = .center
+        let line = NSMutableAttributedString(string: peek.title, attributes: [
+            .font: NSFont.systemFont(ofSize: CGFloat(NowPlayingPeek.titleSize), weight: .semibold),
+            .foregroundColor: NSColor.white, .paragraphStyle: paragraph])
+        if !peek.artist.isEmpty {
+            // 稿的“空 6”：1 点的空格加 6 点字距，宽度约 6。
+            line.append(NSAttributedString(string: " ", attributes: [
+                .font: NSFont.systemFont(ofSize: 1), .kern: CGFloat(NowPlayingPeek.gap), .paragraphStyle: paragraph]))
+            line.append(NSAttributedString(string: peek.artist, attributes: [
+                .font: NSFont.systemFont(ofSize: CGFloat(NowPlayingPeek.artistSize), weight: .medium),
+                .foregroundColor: peek.artistColor ?? NSColor.white.withAlphaComponent(0.6), .paragraphStyle: paragraph]))
+        }
+        let height = ceil(line.size().height)
+        line.draw(with: NSRect(x: margin, y: (bounds.height - height) / 2, width: max(0, bounds.width - margin * 2), height: height),
+                  options: [.usesLineFragmentOrigin, .truncatesLastVisibleLine])
+    }
+
     override func draw(_ dirtyRect: NSRect) {
         guard let alert else { return }
+        if let peek = alert.peek { drawPeek(peek); return }
         let margin: CGFloat = 14
         let iconRect = Self.iconRect(in: bounds)
         if alert.demo == nil { alert.icon?.draw(in: iconRect) }
@@ -6265,6 +6816,7 @@ final class NotchTileView: NSView {
         if let ongoing = tile.ongoing {
             toolTip = ongoing.subtitle.isEmpty ? tile.title : "\(tile.title)\n\(ongoing.subtitle)"
             setAccessibilityLabel(ongoing.spoken)
+            alphaValue = ongoing.isStale ? CGFloat(NotchActivity.staleAlpha) : 1
         } else {
             toolTip = "\(tile.title)\n\(tile.place ?? Self.kindName(tile.kind))"
             setAccessibilityLabel("\(Self.verb(tile.kind)) \(NotchFocusController.label(for: tile.title))")

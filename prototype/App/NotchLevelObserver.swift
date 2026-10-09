@@ -27,6 +27,9 @@ final class NotchLevelObserver {
     /// 上面两个只是没接它时的退路。
     var onPresent: ((NotchLevelKind, _ value: Double, _ muted: Bool, _ output: NotchLevelEars.Output,
                      _ edge: NotchLevelStep.Edge?) -> Void)?
+    /// 音量这一下先问大卡：大卡开着就由它接（控制那一行换成音量条），返回 true，两耳不出；没接或返回 false 走原来的两耳。
+    /// 亮度、键盘灯不走这条。
+    var onCardVolume: ((_ value: Double, _ muted: Bool) -> Bool)?
     /// 拦下的键松开了（按住时顶在头上的条要弹回）。
     var onKeyReleased: (() -> Void)?
     /// 某块屏的面板在它当前的全屏桌面上有没有确认过看得见（由刘海控制器接上；没接按看不见）。
@@ -207,6 +210,7 @@ final class NotchLevelObserver {
     /// 发给刘海的一下。设置里关了就不出声；没接 onPresent 时退回只带数值的老出口。
     private func emit(_ kind: NotchLevelKind, value: Double, muted: Bool = false, edge: NotchLevelStep.Edge? = nil) {
         guard settingEnabled else { return }
+        if kind == .volume, onCardVolume?(value, muted) == true { return }
         if let onPresent {
             onPresent(kind, value, muted, output, edge)
             return
