@@ -41,3 +41,6 @@ prototype/local-codesign.env
 # Python probe caches
 __pycache__/
 *.py[cod]
+
+# Isolated Computer Use implementation run records
+/.qa-statem/

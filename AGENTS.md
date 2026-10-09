@@ -26,3 +26,7 @@
 
 - 面向开发者的构建、签名、发布流程见 [`DEVELOPMENT.md`](DEVELOPMENT.md)。
 - 面向用户的说明见 [`README_CN.md`](README_CN.md) / [`README.md`](README.md)。
+
+## Computer Use 验收
+
+涉及原生界面行为的改动，按 [Computer Use 验收手册](docs/computer-use-qa.md) 选择场景并提交对应构建证据。使用隔离 Mac 和受控资料，执行“观察、确认目标、单步操作、等待变化、重新观察、对照预期”；不能把工具退出 0、AX 写入成功或产品日志成功当作可见效果通过。缺证据写 inconclusive / not_run，保留首次失败与恢复记录。不要把历史签名二进制的结果套给当前源码，也不要用 VM 代替真实硬件矩阵。

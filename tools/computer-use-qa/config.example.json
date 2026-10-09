@@ -1,0 +1,15 @@
+{
+  "ssh_host": "lume@192.168.64.3",
+  "ssh_control": "/tmp/wsqa-control",
+  "driver_path": "/Users/lume/Applications/CuaDriver.app/Contents/MacOS/cua-driver",
+  "timeout_seconds": 45,
+  "vm_name": "wsqa-manual",
+  "vm_nvram": "/Volumes/QA/WindowShade-QA/vms/wsqa-manual/nvram.bin",
+  "lume_path": "/Volumes/QA/WindowShade-QA/tools/lume.app/Contents/MacOS/lume",
+  "lume_storage": "windowshade-qa",
+  "guest_root": "/Users/lume/wsqa-evidence",
+  "app_path": "/Users/lume/Applications/WindowShade.app",
+  "evidence_root": "/Volumes/QA/WindowShade-QA/evidence/computer-use-qa",
+  "source_root": "/path/to/WindowShade",
+  "build_source": "historical"
+}
