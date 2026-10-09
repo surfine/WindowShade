@@ -37,6 +37,10 @@ final class DuoController: NSObject {
   private var closedStill: (image: CGImage, displayID: CGDirectDisplayID, color: EffectColorSpace)?
   /// 这一次开合里效果被撤掉了（按键、点击、会话失败）：盖子回到静止之前不再起会话，免得反复重开。
   private var dismissed = false
+  /// 「现在折一次」（离开就锁用）：不看盖子，桌面自己折进刘海。会话收掉、起不来或超时都会清掉。
+  private var foldOnceStartedAt: CFTimeInterval?
+  /// 一次性折叠最多撑这么久；锁屏没跟上（锁失败）时自己撤掉，不让桌面停在折起的样子。
+  private static let foldOnceLimit: CFTimeInterval = 4
   private var desktopFPS = 15
   private var displayCallbackRegistered = false
   private struct DisplayConfiguration: Equatable {
@@ -207,6 +211,29 @@ final class DuoController: NSObject {
     if !showClosedStill() { prepareDesktop(startProgress: 1) }
   }
 
+  /// 现在折一次：合盖效果开着、没减少动态效果、没有别的会话时，桌面折进刘海，返回 true；
+  /// 其它情况什么都不做、返回 false，调用方直接做它自己的事。会话要先用 ScreenCaptureKit 起来，
+  /// 起得慢时调用方不等它；锁了屏、或会话迟到，晚到的会话会自己放弃。
+  func foldOnce() -> Bool {
+    guard !isDesignPreview, settings.desktopEnabled, allowsAnimation, !desktopActive,
+      !EffectSecurityBoundary.isLocked
+    else { return false }
+    dismissed = false
+    foldOnceStartedAt = CACurrentMediaTime()
+    prepareDesktop(startProgress: 0)
+    guard startTask != nil else {
+      foldOnceStartedAt = nil
+      return false
+    }
+    return true
+  }
+
+  /// 锁屏没成功或被取消：撤掉这一次折叠，桌面回到原样。
+  func cancelFoldOnce() {
+    guard foldOnceStartedAt != nil else { return }
+    stopDesktop()
+  }
+
   func settingsChanged() {
     if isDesignPreview {
       settingsWindow?.refreshStatus(force: true)
@@ -310,7 +337,12 @@ final class DuoController: NSObject {
     let token = epoch.advance()
     startTask = Task { @MainActor [weak self] in
       guard let self else { return }
-      defer { if self.epoch.accepts(token) { self.startTask = nil } }
+      defer {
+        if self.epoch.accepts(token) {
+          self.startTask = nil
+          if self.desktop == nil { self.foldOnceStartedAt = nil }
+        }
+      }
       var session: EffectSession?
       do {
         // 第一次只要显示器：onScreenWindowsOnly 让窗口表缩到屏上的，不必把全系统窗口都枚举一遍。
@@ -390,13 +422,17 @@ final class DuoController: NSObject {
       return
     }
     // 推送约 10Hz、断了退回 4Hz 轮询；3 秒以上一份读数都没有，说明传感器真没了。
-    guard now - lid.readingTime < 3 else {
+    if let started = foldOnceStartedAt, now - started > Self.foldOnceLimit {
+      stopDesktop()
+      return
+    }
+    guard foldOnceStartedAt != nil || now - lid.readingTime < 3 else {
       stopDesktop()
       return
     }
     let dt = now - previousTime
     previousTime = now
-    let target = lid.progress
+    let target = foldOnceStartedAt != nil ? 1 : lid.progress
     let fps = PowerPolicyRules.lidDesktopFPS(
       tier: PowerPolicy.shared.tier, animating: target > 0 || spring.value > 0)
     if fps != desktopFPS, !desktop.holdsLastFrame {
@@ -413,14 +449,14 @@ final class DuoController: NSObject {
     if holding != desktop.holdsLastFrame {
       desktop.holdsLastFrame = holding
       desktop.source.updateFPS(holding ? 1 : desktopFPS)
-      if holding, let image = desktop.renderer.currentStill,
+      if holding, foldOnceStartedAt == nil, let image = desktop.renderer.currentStill,
         let id = displayID(for: desktop.panel.screen ?? NSScreen.main ?? NSScreen.screens.first)
       {
         closedStill = (image, id, EffectColorSpace.display(desktop.panel.screen))
       }
     }
     // 回到静止、画面也回到桌面，收掉会话。
-    if lid.phase == .resting, spring.value == 0 { stopDesktop() }
+    if foldOnceStartedAt == nil, lid.phase == .resting, spring.value == 0 { stopDesktop() }
   }
 
   private func dismissForInput() {
@@ -462,6 +498,7 @@ final class DuoController: NSObject {
     desktop?.stop()
     let stopMilliseconds = Int((CACurrentMediaTime() - stopStarted) * 1000)
     desktop = nil
+    foldOnceStartedAt = nil
     if hadSession {
       // 性能记录用：一次桌面会话总共问了 WindowServer 几次锁屏状态；收掉面板花了多久
       // （内建屏熄灭、系统重排显示器时，orderOut 会在主线程上等 WindowServer）。

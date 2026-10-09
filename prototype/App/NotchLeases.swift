@@ -25,6 +25,8 @@ final class NotchLeaseHub {
         /// notchShelf 是“刘海那一排”：收着的窗口和正在进行的事（播放、编程会话）是同一排、同一个主人（M11）。
         /// 会话的“去看看”详情页也用这个主人露面。
         case authorization, conductor, notchShelf, launchpad, windowBrowser, pomodoro
+        /// 正在播放大卡自己的主人：不再借番茄钟的名字，免得与番茄钟、计时器、日程卡互相当成自己。
+        case nowPlaying
         case agentReview
         /// 本地只读助手会话与其选模型页（D15）。不是授权账，不能批准命令。
         case ownedCodex, ownedModelPicker
@@ -35,7 +37,7 @@ final class NotchLeaseHub {
             switch self {
             case .authorization, .agentReview: return .authorization
             case .conductor: return .interaction
-            case .notchShelf, .launchpad, .windowBrowser, .pomodoro,
+            case .notchShelf, .launchpad, .windowBrowser, .pomodoro, .nowPlaying,
                  .ownedCodex, .ownedModelPicker, .silent: return .opened
             }
         }

@@ -28,8 +28,12 @@ struct NotchActivityLifecycleTests {
         closingKinds()
         earAllocation()
         shelfDoesNotTakeASlot()
+        shelfEars()
         lifecycleTable()
         sessionStaleness()
+        staleEarsAndRow()
+        endLingerAndImmediate()
+        quickFinishIsSilent()
         if failures > 0 { print("\(failures) 处失败"); exit(1) }
         print("PASS notch activity lifecycle (LA56)")
     }
@@ -225,6 +229,37 @@ struct NotchActivityLifecycleTests {
         expect(NotchActivity(id: "x", kind: .shelf, title: "t", startedAt: 0).symbol == "tray.full", "托盘符号")
     }
 
+    // FS-06：文件架两耳的个数、滚动与弹一下，音乐在时不露、停了才露，个数变了同一条更新。
+    static func shelfEars() {
+        func shelf(_ count: Int, at t: Double = 0) -> NotchActivity {
+            NotchActivity(id: NotchShelfEars.activityID, kind: .shelf, title: NotchShelfEars.title,
+                          symbol: NotchRow.fileShelfSymbol, startedAt: t, trailing: NotchShelfEars.trailing(count: count))
+        }
+        var store = NotchActivityStore()
+        _ = store.upsert(shelf(3), now: 0)
+        store.followFirst()
+        expect(store.selectedID == NotchShelfEars.activityID && store.selected?.trailing == "3", "空闲时两耳露个数 3")
+        _ = store.upsert(item("music", .music, at: 1), now: 1)
+        store.followFirst()
+        expect(store.selectedID == "music", "音乐一放，耳朵让给音乐")
+        let layout = NotchMinimalPresentation.layout(items: store.visible, selected: store.selectedID, enabled: true)
+        expect(layout.compact?.id == "music" && layout.minimum.isEmpty, "文件架不变成最小形的点")
+        store.end(id: "music", generation: 1, now: 2)
+        store.prune(now: 7)
+        store.followFirst()
+        expect(store.selectedID == NotchShelfEars.activityID, "音乐停了才露个数：\(String(describing: store.selectedID))")
+        _ = store.upsert(shelf(4, at: 0), now: 8)
+        expect(store.selected?.trailing == "4" && store.visible.count == 1, "个数变了是原地更新，不多一条")
+        expect(NotchShelfEars.spoken(count: 4) == "文件架，4 个", "读屏念个数，不念文件名")
+        expect(NotchShelfEars.roll(from: 3, to: 4) == .up && NotchShelfEars.roll(from: 4, to: 3) == .down, "多了往上滚，少了往下滚")
+        expect(NotchShelfEars.roll(from: nil, to: 3) == .none && NotchShelfEars.roll(from: 3, to: 3) == .none, "第一次露出、没变都不滚")
+        expect(NotchShelfEars.pops(from: 3, to: 4) && !NotchShelfEars.pops(from: 4, to: 3) && !NotchShelfEars.pops(from: nil, to: 1), "只有暂存变多才弹")
+        expect(NotchShelfEars.popResponse == 0.30 && NotchShelfEars.popDamping == 0.75 && NotchShelfEars.rollDuration == 0.28, "数字照稿")
+        expect(FileShelfActions.removedSpoken(name: nil, count: 1) == "已移出文件架，1 个", "共享屏幕时移出不念真文件名")
+        expect(FileShelfActions.removedSpoken(name: "a.txt", count: 1) == "已移出文件架，a.txt", "平时念文件名")
+        expect(FileShelfActions.removedSpoken(name: "a.txt", count: 3) == "已移出文件架，3 个", "一次移出多个只念个数")
+    }
+
     // 各来源按表填过期与收场方式。
     static func lifecycleTable() {
         expect(NotchActivityKind.session.staleAfter == 120, "会话在跑 120 秒没消息过期")
@@ -258,5 +293,72 @@ struct NotchActivityLifecycleTests {
         expect(model.liveSpec?.staleAt == nil, "等你不过期")
         _ = model.apply(change(.completed), now: 70)
         expect(CodingSessionActivities.completionLifetime == 4 && model.doneSpec(at: 73.9) != nil && model.doneSpec(at: 74) == nil, "✓ 留 4 秒")
+    }
+
+    // 过期的样子：两耳 0.5 透明、右耳“—”（不靠暗也认得出）、读屏“可能已停”；那一格同样。
+    static func staleEarsAndRow() {
+        var store = NotchActivityStore()
+        _ = store.upsert(item("d", .download, at: 0, staleAt: 30, progress: .fraction(0.4)), now: 1)
+        let fresh = store.visible[0]
+        expect(NotchEarText.earAlpha(fresh) == 1 && NotchEarText.trailing(fresh) == "40%", "没过期：全亮、写百分比")
+        expect(NotchEarText.spoken("下载", stale: false) == "下载", "没过期不加话")
+        store.prune(now: 31)
+        let stale = store.visible[0]
+        expect(stale.isStale, "过了 30 秒没进展：过期")
+        expect(NotchEarText.earAlpha(stale) == 0.5, "过期 0.5 透明")
+        expect(NotchEarText.trailing(stale) == "—", "右耳写“—”，增强对比度时也靠它认")
+        expect(NotchEarText.spoken("下载，40%", stale: true) == "下载，40%，可能已停", "读屏念“可能已停”")
+        let cell = NotchRow.ongoingCells(from: [stale]).first
+        expect(cell?.isStale == true && cell?.spoken.hasSuffix("可能已停") == true, "那一格同样过期")
+    }
+
+    // 结束：做完留 4 秒（最后的样子），点结束 / 取消授权立即；日程有链接到点（300 秒）。那一排看过一次就走。
+    static func endLingerAndImmediate() {
+        let look = NotchActivity.FinalLook(symbol: "checkmark.circle.fill", trailing: "✓", clearsProgress: false)
+        var store = NotchActivityStore()
+        _ = store.upsert(item("f", .focus, finalLook: look), now: 10)
+        expect(store.end(id: "f", generation: 1, now: 20), "一轮做完")
+        expect(store.visible.first?.isEnded == true && store.visible.first?.trailing == "✓", "最后的样子在耳朵上")
+        store.prune(now: 23.9)
+        expect(store.visible.count == 1, "3.9 秒时还在")
+        store.prune(now: 24)
+        expect(store.visible.isEmpty && store.rowActivities.map(\.id) == ["f"], "4 秒到点收，转进那一排")
+        store.rowSeen()
+        expect(store.rowActivities.isEmpty, "看过一次就走")
+
+        _ = store.upsert(item("f2", .focus, finalLook: look), now: 30)
+        expect(store.end(id: "f2", generation: 1, now: 31, immediately: true), "点了结束")
+        expect(store.activities.isEmpty && store.rowActivities.isEmpty, "点结束立即收，不留 ✓、不进那一排")
+
+        expect(NotchActivityKind.calendarClosing(hasLink: true) == .deadline(300), "日程带链接 deadline(300)")
+        expect(NotchActivityKind.calendarClosing(hasLink: false) == .immediate, "日程没链接开始即走")
+        _ = store.upsert(item("cal", .calendar, closing: NotchActivityKind.calendarClosing(hasLink: true)), now: 40)
+        store.end(id: "cal", generation: 1, now: 41)
+        store.prune(now: 340.9)
+        expect(store.visible.count == 1, "带链接：300 秒内还在")
+        store.prune(now: 341)
+        expect(store.visible.isEmpty, "300 秒到点收")
+        _ = store.upsert(item("cal2", .calendar, closing: NotchActivityKind.calendarClosing(hasLink: true)), now: 400)
+        store.end(id: "cal2", generation: 1, now: 401, immediately: true)
+        expect(store.activities.isEmpty, "取消授权立即结束")
+
+        // 隔空投送 30 秒没进展过期。
+        _ = store.upsert(item("air", .airDrop, at: 500, staleAt: 500 + (NotchActivityKind.airDrop.staleAfter ?? 0)), now: 500)
+        store.prune(now: 529.9)
+        expect(store.visible.first?.isStale == false, "29.9 秒还新鲜")
+        store.prune(now: 530)
+        expect(store.visible.first?.isStale == true, "30 秒过期")
+    }
+
+    // 1.5 秒内做完的下载 / 拷贝：没露过面，不出完成提醒；露过面的照说。
+    static func quickFinishIsSilent() {
+        var store = NotchActivityStore()
+        let gate = NotchActivityKind.download.appearAfter
+        _ = store.upsert(item("d", .download, at: 10, appearAfter: gate), now: 10)
+        expect(store.neverAppeared(id: "d", at: 11.4), "1.4 秒：没露面，完成不提醒")
+        expect(!store.neverAppeared(id: "d", at: 11.5), "1.5 秒起：露过面，完成照说")
+        expect(!store.neverAppeared(id: "nope", at: 11), "不知道的不压")
+        _ = store.upsert(item("m", .music, at: 10), now: 10)
+        expect(!store.neverAppeared(id: "m", at: 10), "没有门槛的种类不压")
     }
 }

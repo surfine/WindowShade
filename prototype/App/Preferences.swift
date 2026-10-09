@@ -211,6 +211,9 @@ static func noticeTone(_ message: String) -> NotchPanel.Tone {
             // 正在播放默认开（NP-4）：关了，刘海上不再显示歌，也不再长出大卡。
             makeUnifiedToggleRow(name: "正在播放", subtitle: "歌名和封面显示在刘海上",
                                  isOn: NotchNowPlayingDefaults.musicEnabled(in: .standard), action: #selector(prefToggleNowPlaying(_:))),
+            // 跟着声音跳（NP-6）：默认关；打开时系统才问“系统音频录制”。拒绝过的，副标题写原因，再打开带去系统设置。
+            makeUnifiedToggleRow(name: "跟着声音跳", subtitle: followSoundSubtitle(),
+                                 isOn: AudioLevelController.isEnabled, action: #selector(prefToggleFollowSound(_:))),
             // 番茄钟的设置属于“实时活动”这一栏（R09：从「专注与输入」挪过来）。
             MainActor.assumeIsolated { WS2FocusSettingsRows(runtime: ws2Runtime) },
             makeUnifiedToggleRow(name: "计时器到时间响一声", subtitle: "响一次系统提示音，不循环；系统静音时不响",
@@ -659,6 +662,14 @@ static func noticeTone(_ message: String) -> NotchPanel.Tone {
     }
     @objc func prefToggleNowPlaying(_ sender: NSSwitch) {
         MainActor.assumeIsolated { notch.activities.setMusicEnabled(sender.state == .on) }
+    }
+    @objc func prefToggleFollowSound(_ sender: NSSwitch) {
+        MainActor.assumeIsolated { notch.setFollowSound(sender.state == .on) }
+    }
+    /// “跟着声音跳”的副标题：开着但系统拒绝过时说原因；其余说它做什么。
+    fileprivate func followSoundSubtitle() -> String {
+        AudioLevelController.isEnabled && AudioCaptureAccess.current() == .denied
+            ? "没有允许系统音频录制" : "刘海右边的小点随歌起伏"
     }
     @objc func prefToggleTimerChime(_ sender: NSSwitch) {
         CountdownTimerSettings.chimeEnabled = sender.state == .on

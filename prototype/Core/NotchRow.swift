@@ -248,6 +248,112 @@ enum NotchRow {
     }
 }
 
+// MARK: - 在那一排里打字筛选（LA-7）
+//
+// 规则来自 docs/design-drafts/实时活动晋级.html“四 · 找东西更快”。只找自己的：收着的窗口（标题、App 名）和正在进行的事
+// （标题、种类名）；不找别的 App 的菜单栏图标、菜单、文件。拼音首字母也算（“zh”找到“周会”）。
+// 这里只有字符串规则，不碰 AppKit、不读任何东西；输入的字由宿主从按键里拿，格子由宿主给。
+
+enum NotchRowFilter {
+    /// 筛选字最多多长：再长没有意义，也免得一直按着一个键撑爆。
+    static let maxQueryLength = 24
+    /// 一格也没有时写的话。
+    static let noMatchText = "没有匹配的"
+    /// 一格也没有时，那一排至少排几格宽（稿：不窄于两格）。
+    static let emptyMinimumCells = 2
+    /// 一格也没有时岛的宽度（含两边的边距）。
+    static var emptyIslandWidth: Double {
+        NotchRow.layout(windows: emptyMinimumCells, ongoing: 0).islandWidth(minimum: 0)
+    }
+
+    /// 去掉首尾空白、统一大小写和全半角。空串表示没有筛选。
+    static func normalize(_ text: String) -> String {
+        let folded = text.trimmingCharacters(in: .whitespacesAndNewlines)
+            .applyingTransform(.fullwidthToHalfwidth, reverse: false) ?? text
+        return folded.lowercased()
+    }
+
+    /// 读屏念的话：剩几项；一项也没有就是“没有匹配的”。
+    static func remainingAnnouncement(count: Int) -> String {
+        count > 0 ? "剩 \(count) 项" : noMatchText
+    }
+
+    /// 汉字是不是要转拼音（基本区、扩展 A、兼容区）。
+    private static func isHan(_ scalar: Unicode.Scalar) -> Bool {
+        (0x4E00...0x9FFF).contains(scalar.value) || (0x3400...0x4DBF).contains(scalar.value)
+            || (0xF900...0xFAFF).contains(scalar.value)
+    }
+
+    /// 一段文字的拼音首字母串：汉字取系统转出来的拼音第一个字母，字母数字原样（小写），其余（空格、标点）略过。
+    /// “周会”→“zh”，“Safari 浏览器”→“safarillq”。多音字取系统给的第一个读音。
+    static func initials(of text: String) -> String {
+        var cache: [Character: String] = [:]
+        var out = ""
+        for character in text {
+            if let first = character.unicodeScalars.first, isHan(first) {
+                if let known = cache[character] { out += known; continue }
+                let latin = String(character).applyingTransform(.mandarinToLatin, reverse: false)?
+                    .applyingTransform(.stripDiacritics, reverse: false) ?? ""
+                let initial = latin.first(where: { $0.isLetter }).map { String($0).lowercased() } ?? ""
+                cache[character] = initial
+                out += initial
+            } else if character.isLetter || character.isNumber {
+                out += String(character).lowercased()
+            }
+        }
+        return out
+    }
+
+    /// 这一段文字对不对得上筛选字：字面包含（不分大小写），或者拼音首字母串包含。空的筛选字什么都对得上。
+    static func matches(query: String, text: String) -> Bool {
+        let q = normalize(query)
+        guard !q.isEmpty else { return true }
+        let t = normalize(text)
+        if t.contains(q) { return true }
+        let letters = String(q.filter { $0.isLetter || $0.isNumber })
+        return !letters.isEmpty && initials(of: text).contains(letters)
+    }
+
+    /// 一格的所有可找字段里有一个对得上就算。`terms` 是格子自己给的（窗口的 App 名、活动的种类名）。
+    static func matches(query: String, title: String, terms: [String]) -> Bool {
+        guard !normalize(query).isEmpty else { return true }
+        return ([title] + terms).contains { !$0.isEmpty && matches(query: query, text: $0) }
+    }
+
+    /// 刘海左边那一段放不下整串时，留最后几个字（光标在末尾，最新打的那几个字必须看得见），前面用“…”。
+    static func visibleTail(of query: String, limit: Int) -> String {
+        guard limit > 1, query.count > limit else { return query }
+        return "…" + String(query.suffix(limit - 1))
+    }
+
+    /// 打字时能放进筛选字的字符：可打印的，不含控制字符、方向键一类功能键（它们落在私用区）。
+    static func isTypable(_ character: Character) -> Bool {
+        character.unicodeScalars.allSatisfy { scalar in
+            scalar.value >= 0x20 && scalar.value != 0x7F && !(0xF700...0xF8FF).contains(scalar.value)
+                && !(0x80...0x9F).contains(scalar.value)
+        }
+    }
+
+    /// 活动种类的名字（筛选用，也是用户平时的叫法）。
+    static func kindName(_ kind: NotchActivityKind) -> String {
+        switch kind {
+        case .music: return "音乐"
+        case .airPods: return "耳机"
+        case .airDrop: return "隔空投送"
+        case .route: return "路线"
+        case .recording: return "录音"
+        case .focus: return "番茄钟"
+        case .download: return "下载"
+        case .copy: return "拷贝"
+        case .remote: return "遥控器"
+        case .session: return "编程会话"
+        case .calendar: return "日程"
+        case .timer: return "计时器"
+        case .shelf: return "文件架"
+        }
+    }
+}
+
 // MARK: - 文件架（FS-04）：那一排右段的末格，以及文件架卡的纯逻辑
 //
 // 画面在 App/FileShelfView.swift；这里只有数字、句子和选择规则，不碰 AppKit，所以能单测。
@@ -431,4 +537,28 @@ enum FileShelfActions {
 
     static func cardSpoken(count: Int) -> String { count > 0 ? "文件架，\(count) 个" : "文件架空了" }
     static func removedSpoken(_ name: String) -> String { "已移出文件架，\(name)" }
+    /// 移出后念的一句。`name` 为 nil（屏幕正在共享，真文件名不念）或一次移出多个时只念个数。
+    static func removedSpoken(name: String?, count: Int) -> String {
+        if count == 1, let name { return removedSpoken(name) }
+        return count == 1 ? "已移出文件架，1 个" : "已移出文件架，\(count) 个"
+    }
+}
+
+// MARK: - 卷轴概览与刘海互通（SS-04）：左段多出停在屏幕外的卷轴列，左段的格子能拖出来
+//
+// 落点、放回的规则在 Core/StripNotchExchange.swift；这里只有左段怎么分和哪些格子能拖出来。
+
+extension NotchRow {
+    /// 左段放什么：收着的窗口排前面，停在屏幕外的卷轴列排它们后面；总数不超过左段上限。
+    /// 只在这一排展开时才有卷轴列的格子；紧凑的两耳不画卷轴。
+    static func leftSegment(tucked: Int, parked: Int, expanded: Bool) -> (tucked: Int, parked: Int) {
+        let t = min(max(0, tucked), windowLimit)
+        guard expanded else { return (t, 0) }
+        return (t, min(max(0, parked), windowLimit - t))
+    }
+
+    /// 左段的一格能不能拖出来放回卷轴：只有收着的窗口能；右段正在进行的事和停在屏幕外的卷轴列（点一下是滑进来）都不能。
+    static func canDragOut(cellID: UInt32, parkedCellIDs: Set<UInt32>) -> Bool {
+        !isOngoingID(cellID) && !parkedCellIDs.contains(cellID)
+    }
 }

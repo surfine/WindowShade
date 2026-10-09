@@ -288,6 +288,7 @@ final class TrackpadGestureController {
         dropFlickDrag()
         stopCheck?.cancel()
         dropUnconfirmed(reason: reason)
+        strips.cancelSpread()
         guard let current = session else { return }
         if current.stripHorizontal == true { strips.endScroll(at: clock()) }
         wlog("gesture: cancel reason=\(reason)")
@@ -466,12 +467,17 @@ final class TrackpadGestureController {
             return session.consumes
         case .changed:
             guard let session else { return false }
-            // 卷轴里的窗口张开原本不做事：卷轴自己记账，张开走满松手打开概览（见 ScrollStripRun.swift）。
-            if session.zone == .titleBar { strips.noteSpread(on: session.windowID, delta: delta) }
+            // 卷轴里的窗口张开原本不做事：卷轴自己记账，张开时概览跟着长，松手过一半打开（见 ScrollStripRun.swift）。
+            if session.zone == .titleBar {
+                strips.noteSpread(on: session.windowID, delta: delta,
+                                  visible: session.verified && !session.rejected && !session.suppressed)
+            }
             feed(session, session.recognizer.magnify(delta, at: clock()))
             return session.consumes
         case .ended:
             let consumes = session?.consumes ?? false
+            // 会话已经没了（被取消、换了手势）：跟着张开长出来的概览收回。
+            if session == nil { strips.cancelSpread() }
             finish { [weak self] ended in
                 guard ended.zone == .titleBar else { return }
                 self?.strips.endSpread(on: ended.windowID, confirmed: ended.verified && !ended.rejected && !ended.suppressed)
@@ -1243,14 +1249,19 @@ final class TrackpadGestureController {
             // 拖着标题栏晃一晃（Windows 的 Aero Shake）：别的窗口收走，再晃一下放回来。一次拖动只算一次。
             if drag.moving, !drag.shook, WindowShake.detected(in: drag.samples) {
                 drag.shook = true
+                strips.cancelTitleDrag()
                 owner.notch.cancelDrag()
                 owner.slideOver.dropHint.cancel(); owner.pip.dropHint.cancel()
                 shake(keeping: drag.id, pid: drag.pid)
             }
+            // 卷轴开着、拖的是卷轴里的一扇（设置里打开了“拖标题栏换位置”）：最近的竖缝上画蓝条，松手换位置。
+            // 这时侧拉、画中画的落点提示先不出（屏幕边上是自动卷）；竖着拉开 256 点才照从前的拖法走。卷轴关着时这里什么都不做。
+            let stripHolds = drag.moving && !drag.shook && strips.isActive
+                && strips.titleDragMoved(drag.id, down: axMouse(drag.down), to: axMouse(point))
             if drag.moving {
                 owner.notch.dragMinimumSize = drag.minimumSize
                 owner.notch.dragMoved(to: point, downAt: drag.down)
-                if hypot(point.x - drag.down.x, point.y - drag.down.y) > 16, !owner.slideOver.isSlideOver(drag.id) {
+                if !stripHolds, hypot(point.x - drag.down.x, point.y - drag.down.y) > 16, !owner.slideOver.isSlideOver(drag.id) {
                     owner.slideOver.dropHint.update(id: drag.id, at: point)
                     owner.pip.dropHint.update(id: drag.id, at: point)
                 }
@@ -1291,6 +1302,9 @@ final class TrackpadGestureController {
         }
     }
 
+    /// Cocoa 坐标的指针位置换成 AX 坐标（卷轴用 AX）。
+    private func axMouse(_ point: CGPoint) -> CGPoint { CGPoint(x: point.x, y: coordinateBaselineY() - point.y) }
+
     /// 这一下是在挪窗口，还是在拖顶边、侧边改大小：指针走出 6 点后看窗口外框（最多每 50 毫秒查一次，
     /// 认定之后不再查）。大小变了就是改大小；位置变了、大小没变就是挪。
     private func classifyDrag(_ drag: FlickDrag, at point: CGPoint, time: TimeInterval) {
@@ -1320,6 +1334,7 @@ final class TrackpadGestureController {
     /// 丢下正在拖的标题栏、不再判它（又按下了一次、手势被取消、设置关掉）。已经判过的由判的那一步收尾。
     private func dropFlickDrag() {
         titleHold?.invalidate(); titleHold = nil
+        if flickDrag != nil { strips.cancelTitleDrag() }
         if let drag = flickDrag, !drag.decided { releaseGrab(drag) }
         flickDrag = nil
     }
@@ -1359,7 +1374,8 @@ final class TrackpadGestureController {
     /// 拖着标题栏的指针 40 毫秒没动了：若是在高速中突然停住（甩的样子），就当手已经离开，
     /// 不等三指拖移迟到 0.2–0.7 秒的“松开”。只看系统里真的没有新拖动事件（不是本进程收得慢）。
     private func pointerMaybeStopped(_ drag: FlickDrag) {
-        guard flickDrag === drag, !drag.decided, !drag.resizing, !owner.slideOver.dropHint.isTracking(drag.id), !owner.pip.dropHint.isTracking(drag.id), let last = drag.samples.last,
+        guard flickDrag === drag, !drag.decided, !drag.resizing, !owner.slideOver.dropHint.isTracking(drag.id), !owner.pip.dropHint.isTracking(drag.id),
+              !strips.holdsTitleDrag(drag.id), let last = drag.samples.last,
               CGEventSource.secondsSinceLastEventType(.combinedSessionState, eventType: .leftMouseDragged) >= 0.035,
               let measured = FlickRelease.measure(drag.samples, lift: last.time), measured.isThrow,
               measured.speed >= (drag.direct ? FlickClassifier.directMinimumSpeed : FlickClassifier.minimumSpeed)
@@ -1388,6 +1404,8 @@ final class TrackpadGestureController {
     @discardableResult
     private func decideFlick(_ drag: FlickDrag, source: FlickLiftSource, signal: TimeInterval,
                              release: CGPoint, lifted: [CGPoint] = []) -> String? {
+        // 卷轴里拖标题栏的蓝条：不管这一下最后被谁接走（刘海、侧拉、甩一下），松手后都收掉。
+        defer { strips.cancelTitleDrag() }
         if drag.resizing || drag.shook {
             owner.notch.cancelDrag()
             owner.slideOver.dropHint.cancel(); owner.pip.dropHint.cancel()
@@ -1451,6 +1469,13 @@ final class TrackpadGestureController {
                 }
             }
             wlog("gesture: flick id=\(drag.id) source=\(source.rawValue) → dropped on the notch island: \(choice.title)")
+            return nil
+        }
+        // 卷轴里拖着挑缝（没拉开 256 点、没进刘海）：换到蓝条那道缝或回原位，不再当成甩一下。
+        if strips.titleDragEnded(drag.id, at: axMouse(release), stillOpen: Self.dragStillOpen(source)) {
+            owner.notch.cancelDrag()
+            owner.slideOver.dropHint.cancel(); owner.pip.dropHint.cancel()
+            releaseGrab(drag)
             return nil
         }
         let (outcome, measured) = judgeFlick(drag, source: source, signal: signal, release: release, lifted: lifted)

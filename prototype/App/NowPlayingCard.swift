@@ -125,6 +125,48 @@ private final class NowPlayingFlippedView: NSView {
 
 // MARK: - 大卡
 
+/// 大卡里的音量条（《正在播放》稿“音量与输出设备”、《音量与亮度》稿大卡一节）：
+/// 开着大卡按音量键，控制那一行 0.18 秒换成喇叭 + 白条，松键 1.2 秒后换回；条也能直接拖。
+enum NowPlayingVolumeRow {
+    /// 换进、换回的淡入淡出（C01 的 0.18 秒）。
+    static let fadeSeconds: TimeInterval = NowPlayingCardLayout.contentFadeIn
+    /// 最后一下之后多久换回（与两耳同一个 Motion.Hold.level）。
+    static let holdSeconds: TimeInterval = NotchLevelEars.holdSeconds
+    /// 行高、喇叭占的宽、条高。
+    static let height: CGFloat = 30
+    static let symbolWidth: CGFloat = 30
+    static let barThickness: CGFloat = CGFloat(NotchLevelStep.barThickness)
+
+    /// 整行在岛坐标里的位置：与控制那一行（上一首…输出键）同一条水平中线。
+    static func frame(cardWidth: CGFloat) -> CGRect {
+        let frames = NowPlayingCardLayout.frames(cardWidth: cardWidth)
+        return CGRect(x: NowPlayingCardLayout.margin, y: frames.play.midY - height / 2,
+                      width: cardWidth - 2 * NowPlayingCardLayout.margin, height: height)
+    }
+
+    /// 条的横向范围（行内坐标）：喇叭右边到行尾。
+    static func barRange(rowWidth: CGFloat) -> ClosedRange<CGFloat> {
+        let start = symbolWidth + 10
+        return start...max(start + 1, rowWidth)
+    }
+
+    /// 行内 x → 0…1（按下就跳到按下的地方，拖到两头夹住）。
+    static func value(atX x: CGFloat, rowWidth: CGFloat) -> Double {
+        let range = barRange(rowWidth: rowWidth)
+        return Double(min(1, max(0, (x - range.lowerBound) / (range.upperBound - range.lowerBound))))
+    }
+
+    /// 喇叭四档（静音带斜线）；大卡里声音从哪出由右端的输出键说，所以这里不换设备符号。
+    static func symbolName(value: Double, muted: Bool) -> String {
+        NotchLevelEars.symbolName(kind: .volume, value: value, muted: muted, output: .speaker)
+    }
+
+    /// 读屏念的那一句。
+    static func spoken(value: Double, muted: Bool) -> String {
+        NotchLevelEars.spokenText(kind: .volume, value: value, muted: muted)
+    }
+}
+
 @MainActor
 final class NowPlayingCard: NSView, WS2LeaseContent {
     /// 卡片所在的刘海：宽和高（封面从左耳长出来用），以及是不是没有硬件刘海的胶囊（那时整张岛都是内容）。
@@ -164,8 +206,20 @@ final class NowPlayingCard: NSView, WS2LeaseContent {
     private var entranceDone = false
     private var tickTimer: Timer?
     private var closeListTimer: Timer?
+    /// 音量条的“松键 1.2 秒后换回”。条没出来、或手还按在条上时是 nil。
+    private var volumeHoldTimer: Timer?
 
-    var isDragging: Bool { scrub.isDragging }
+    var isDragging: Bool { scrub.isDragging || volumeDragging }
+
+    // 音量条（控制那一行的另一面）
+    private(set) var volumeShown = false
+    private(set) var volumeValue = 0.0
+    private(set) var volumeMuted = false
+    private var volumeDragging = false
+    /// 拖条改系统音量：参数 0…1。由展示端接到系统写入。
+    var onVolumeSet: ((Double) -> Void)?
+    /// 卡里还活着的计时器个数（测试看：什么都没在等的时候必须是 0）。
+    var pendingTimerCount: Int { [tickTimer, closeListTimer, volumeHoldTimer].compactMap { $0 }.count }
 
     var interactionSize: NSSize {
         NSSize(width: NowPlayingCardLayout.width,
@@ -195,6 +249,7 @@ final class NowPlayingCard: NSView, WS2LeaseContent {
                                                        target: self, action: #selector(nextAction))
     private lazy var outputButton = NowPlayingCardButton(symbol: AudioOutputKind.speaker.symbol, label: "播放到", pointSize: 18,
                                                          target: self, action: #selector(outputAction))
+    private let volumeRow = NowPlayingVolumeRowView()
     private let listHeader = NowPlayingCard.label(11, .semibold, alpha: 0.6)
     private let listScroll = NSScrollView()
     private let listDocument = NowPlayingFlippedView()
@@ -203,6 +258,8 @@ final class NowPlayingCard: NSView, WS2LeaseContent {
     private var barHeightShown = NowPlayingScrub.restHeight
     /// 输出设备列表开着时让位的那一组（进度条、时间、三个键、输出键）；封面、歌名、歌手留着。点列表上面那行“播放到”收起列表。
     private var controlViews: [NSView] { [barHost, elapsedField, remainingField, previousButton, playButton, nextButton, outputButton] }
+    /// 音量条出来时让位的那一行（只有四个键；进度条和时间留着）。
+    private var buttonRow: [NSView] { [previousButton, playButton, nextButton, outputButton] }
 
     init(geometry: NotchGeometry) {
         self.geometry = geometry
@@ -224,6 +281,7 @@ final class NowPlayingCard: NSView, WS2LeaseContent {
     private func stopTimers() {
         tickTimer?.invalidate(); tickTimer = nil
         closeListTimer?.invalidate(); closeListTimer = nil
+        volumeHoldTimer?.invalidate(); volumeHoldTimer = nil
         fillLayer.removeAnimation(forKey: "progress")
     }
 
@@ -282,6 +340,9 @@ final class NowPlayingCard: NSView, WS2LeaseContent {
         fadables = [titleField, artistField, barHost, elapsedField, remainingField, liveTag, previousButton, playButton, nextButton,
                     outputButton, listHeader, listScroll]
         for view in fadables { addSubview(view) }
+        volumeRow.isHidden = true
+        volumeRow.alphaValue = 0
+        addSubview(volumeRow)
         listHeader.isHidden = true
         listScroll.isHidden = true
         liveTag.isHidden = true
@@ -390,6 +451,9 @@ final class NowPlayingCard: NSView, WS2LeaseContent {
         playButton.frame = local(frames.play)
         nextButton.frame = local(frames.next)
         outputButton.frame = local(frames.output)
+        volumeRow.frame = local(NowPlayingVolumeRow.frame(cardWidth: bounds.width))
+        volumeRow.render(value: volumeValue, muted: volumeMuted,
+                         symbol: NowPlayingVolumeRow.symbolName(value: volumeValue, muted: volumeMuted))
         layoutList(frames: frames)
         renderProgress(animatedBar: false)
     }
@@ -567,6 +631,10 @@ final class NowPlayingCard: NSView, WS2LeaseContent {
             closeList()
             return
         }
+        if volumeShown, volumeRow.frame.insetBy(dx: 0, dy: -4).contains(point) {
+            if point.x >= volumeRow.frame.minX + NowPlayingVolumeRow.symbolWidth { beginVolumeDrag(at: point) }
+            return
+        }
         if barHit(point), scrub.press(at: barX(point), trackWidth: barWidth) {
             onInteractionChange?()
             renderProgress()
@@ -576,6 +644,11 @@ final class NowPlayingCard: NSView, WS2LeaseContent {
     }
 
     override func mouseDragged(with event: NSEvent) {
+        if volumeDragging {
+            guard inputIsCurrent() else { endVolumeDrag(); return }
+            applyVolume(atPoint: convert(event.locationInWindow, from: nil))
+            return
+        }
         guard scrub.isDragging else { super.mouseDragged(with: event); return }
         guard inputIsCurrent() else { scrub.cancel(); renderProgress(); onInteractionChange?(); return }
         scrub.drag(to: barX(convert(event.locationInWindow, from: nil)), trackWidth: barWidth)
@@ -583,6 +656,11 @@ final class NowPlayingCard: NSView, WS2LeaseContent {
     }
 
     override func mouseUp(with event: NSEvent) {
+        if volumeDragging {
+            if inputIsCurrent() { applyVolume(atPoint: convert(event.locationInWindow, from: nil)) }
+            endVolumeDrag()
+            return
+        }
         guard scrub.isDragging else { super.mouseUp(with: event); return }
         let point = convert(event.locationInWindow, from: nil)
         let seconds = scrub.release(at: barX(point), trackWidth: barWidth, duration: timeline?.duration, now: clock())
@@ -594,7 +672,7 @@ final class NowPlayingCard: NSView, WS2LeaseContent {
     /// 两指往上推：收回（拖进度条、开着列表时不算）。
     private var pushAccumulated: CGFloat = 0
     override func scrollWheel(with event: NSEvent) {
-        guard !listOpen, !scrub.isDragging, event.hasPreciseScrollingDeltas, inputIsCurrent() else { super.scrollWheel(with: event); return }
+        guard !listOpen, !isDragging, event.hasPreciseScrollingDeltas, inputIsCurrent() else { super.scrollWheel(with: event); return }
         if event.phase == .began || event.phase == .mayBegin { pushAccumulated = 0 }
         // 手指往上推：自然滚动下 deltaY 为负，关了自然滚动为正。
         pushAccumulated += event.isDirectionInvertedFromDevice ? -event.scrollingDeltaY : event.scrollingDeltaY
@@ -620,12 +698,99 @@ final class NowPlayingCard: NSView, WS2LeaseContent {
         if listOpen { closeList() } else { openList() }
     }
 
+    // MARK: 音量条
+
+    /// 开着大卡按了音量键：控制那一行 0.18 秒换成音量条；每按一下把“换回”往后推到 1.2 秒后。
+    /// 手还按在条上时不数；列表开着（控制行本来就让位了）只记下数值，不换。
+    func showVolume(value: Double, muted: Bool) {
+        volumeValue = NotchLevelStep.clamp(value)
+        volumeMuted = muted
+        guard !listOpen else { return }
+        volumeRow.render(value: volumeValue, muted: muted, symbol: NowPlayingVolumeRow.symbolName(value: volumeValue, muted: muted))
+        volumeRow.setAccessibilityLabel(NowPlayingVolumeRow.spoken(value: volumeValue, muted: muted))
+        if !volumeShown {
+            volumeShown = true
+            crossfadeVolume(on: true)
+            NSAccessibility.post(element: self, notification: .layoutChanged)
+        }
+        armVolumeHold()
+    }
+
+    private func armVolumeHold() {
+        volumeHoldTimer?.invalidate(); volumeHoldTimer = nil
+        guard volumeShown, !volumeDragging else { return }
+        let timer = Timer(timeInterval: NowPlayingVolumeRow.holdSeconds, repeats: false) { [weak self] _ in
+            MainActor.assumeIsolated { self?.hideVolume(animated: true) }
+        }
+        timer.tolerance = 0.05
+        RunLoop.main.add(timer, forMode: .common)
+        volumeHoldTimer = timer
+    }
+
+    private func hideVolume(animated: Bool) {
+        volumeHoldTimer?.invalidate(); volumeHoldTimer = nil
+        guard volumeShown else { return }
+        let wasDragging = volumeDragging
+        volumeShown = false
+        volumeDragging = false
+        crossfadeVolume(on: false, animated: animated)
+        if wasDragging { onInteractionChange?() }
+    }
+
+    private func beginVolumeDrag(at point: NSPoint) {
+        volumeDragging = true
+        volumeHoldTimer?.invalidate(); volumeHoldTimer = nil
+        onInteractionChange?()
+        applyVolume(atPoint: point)
+    }
+
+    private func endVolumeDrag() {
+        guard volumeDragging else { return }
+        volumeDragging = false
+        armVolumeHold()
+        onInteractionChange?()
+    }
+
+    private func applyVolume(atPoint point: NSPoint) {
+        let next = NowPlayingVolumeRow.value(atX: point.x - volumeRow.frame.minX, rowWidth: volumeRow.frame.width)
+        volumeValue = next
+        volumeMuted = false
+        volumeRow.render(value: next, muted: false, symbol: NowPlayingVolumeRow.symbolName(value: next, muted: false))
+        volumeRow.setAccessibilityLabel(NowPlayingVolumeRow.spoken(value: next, muted: false))
+        onVolumeSet?(next)
+    }
+
+    private func crossfadeVolume(on: Bool, animated: Bool = true) {
+        let buttons = buttonRow
+        let duration = (Motion.reduced || !animated) ? 0 : NowPlayingVolumeRow.fadeSeconds
+        if duration == 0 {
+            for view in buttons { view.alphaValue = on ? 0 : 1; view.isHidden = on || listOpen }
+            volumeRow.alphaValue = on ? 1 : 0
+            volumeRow.isHidden = !on
+            return
+        }
+        if on { volumeRow.isHidden = false } else { for view in buttons { view.isHidden = false } }
+        NSAnimationContext.runAnimationGroup({ context in
+            context.duration = duration
+            for view in buttons { view.animator().alphaValue = on ? 0 : 1 }
+            volumeRow.animator().alphaValue = on ? 1 : 0
+        }, completionHandler: { [weak self] in
+            MainActor.assumeIsolated {
+                guard let self else { return }
+                self.volumeRow.isHidden = !self.volumeShown
+                // 让位的四个键藏起来：不占点按，读屏也不念；没换进音量条时它们必须是亮着可点的。
+                for view in self.buttonRow { view.isHidden = self.volumeShown || self.listOpen }
+            }
+        })
+    }
+
     // MARK: “播放到”列表
 
     func openList() {
         guard !listOpen else { return }
         let found = loadRoutes()
         guard !found.isEmpty else { return }
+        if volumeShown { hideVolume(animated: false) }
         routes = found
         rebuildRows()
         listOpen = true
@@ -772,6 +937,71 @@ private extension NSTextField {
     }
 }
 
+/// 音量条那一行：左边喇叭（四档），右边白色轨道 + 白色填充。只管画，拖动由卡处理。
+@MainActor
+final class NowPlayingVolumeRowView: NSView {
+    private let symbolLayer = CALayer()
+    private let trackLayer = CALayer()
+    private let fillLayer = CALayer()
+    private var shownSymbol: String?
+    private var value = 0.0
+    private var muted = false
+
+    override init(frame: NSRect) {
+        super.init(frame: frame)
+        wantsLayer = true
+        let still: [String: CAAction] = ["contents": NSNull(), "bounds": NSNull(), "position": NSNull()]
+        symbolLayer.actions = still
+        symbolLayer.contentsGravity = .center
+        trackLayer.actions = still
+        fillLayer.actions = still
+        fillLayer.anchorPoint = CGPoint(x: 0, y: 0.5)
+        trackLayer.anchorPoint = CGPoint(x: 0, y: 0.5)
+        // 轨道白 0.22（增强对比度 0.45），填充永远是白 1.0（Aaron 2026-10-09 定，替换 C01 的强调色）。
+        let contrast = NSWorkspace.shared.accessibilityDisplayShouldIncreaseContrast
+        trackLayer.backgroundColor = NSColor.white.withAlphaComponent(CGFloat(NotchLevelEars.trackAlpha(increasedContrast: contrast))).cgColor
+        fillLayer.backgroundColor = NSColor.white.withAlphaComponent(CGFloat(NotchLevelEars.fillAlpha)).cgColor
+        layer?.addSublayer(symbolLayer)
+        layer?.addSublayer(trackLayer)
+        layer?.addSublayer(fillLayer)
+        setAccessibilityElement(true)
+        setAccessibilityRole(.slider)
+        setAccessibilityLabel("音量")
+    }
+    required init?(coder: NSCoder) { nil }
+
+    override var isFlipped: Bool { true }
+
+    func render(value: Double, muted: Bool, symbol: String) {
+        self.value = value
+        self.muted = muted
+        let scale = window?.backingScaleFactor ?? NSScreen.main?.backingScaleFactor ?? 2
+        if symbol != shownSymbol {
+            shownSymbol = symbol
+            let configuration = NSImage.SymbolConfiguration(pointSize: 15, weight: .medium)
+                .applying(.init(paletteColors: [NSColor.white]))
+            if let image = NSImage(systemSymbolName: symbol, accessibilityDescription: nil)?.withSymbolConfiguration(configuration) {
+                var rect = NSRect(origin: .zero, size: image.size)
+                symbolLayer.contents = image.cgImage(forProposedRect: &rect, context: nil, hints: nil)
+            }
+            symbolLayer.contentsScale = scale
+        }
+        let range = NowPlayingVolumeRow.barRange(rowWidth: bounds.width)
+        let width = range.upperBound - range.lowerBound
+        let thickness = NowPlayingVolumeRow.barThickness
+        CATransaction.begin(); CATransaction.setDisableActions(true)
+        symbolLayer.frame = CGRect(x: 0, y: 0, width: NowPlayingVolumeRow.symbolWidth, height: bounds.height)
+        trackLayer.bounds = CGRect(x: 0, y: 0, width: width, height: thickness)
+        trackLayer.position = CGPoint(x: range.lowerBound, y: bounds.midY)
+        trackLayer.cornerRadius = thickness / 2
+        fillLayer.bounds = CGRect(x: 0, y: 0, width: width * CGFloat(muted ? 0 : value), height: thickness)
+        fillLayer.position = CGPoint(x: range.lowerBound, y: bounds.midY)
+        fillLayer.cornerRadius = thickness / 2
+        CATransaction.commit()
+        setAccessibilityValue(Int((value * 100).rounded()))
+    }
+}
+
 // MARK: - 宿主与展示
 
 /// 大卡长在哪一块屏的哪一个刘海上：卡要的几何和面板的回调。
@@ -809,6 +1039,8 @@ final class NowPlayingCardPresenter {
     var uptime: () -> Double = { ProcessInfo.processInfo.systemUptime }
     var outputKind: () -> AudioOutputKind? = { AudioOutputRoutes.currentKind() }
     var selectRoute: (AudioOutputRoute) -> Void = { _ = AudioOutputRoutes.select($0) }
+    /// 拖音量条写系统音量（复用刘海音量键同一个写入端 NotchLevelSystemPort）；测试里换掉。
+    lazy var writeVolume: (Double) -> Void = { [port = NotchLevelSystemPort()] value in _ = port.write(.volume, value: value) }
     /// 屏幕上指针此刻的位置；测试里换掉。
     var pointerLocation: () -> NSPoint = { NSEvent.mouseLocation }
     /// 开过几次卡（诊断和测试看它：从哪里点都只开一张）。
@@ -827,7 +1059,7 @@ final class NowPlayingCardPresenter {
 
     func attach(leases: NotchLeaseHub) {
         present = { [weak leases] card, onDismiss in
-            leases?.show(card, ownerID: "pomodoro", onDismiss: onDismiss) ?? false
+            leases?.show(card, ownerID: "nowPlaying", onDismiss: onDismiss) ?? false
         }
         dismissCard = { [weak leases] card in leases?.dismiss(ifShowing: card) }
     }
@@ -845,6 +1077,7 @@ final class NowPlayingCardPresenter {
         made.onCommand = { [weak self] command in self?.source?.nowPlayingCommand(command) }
         made.onSeek = { [weak self] seconds in self?.source?.nowPlayingSeek(toSeconds: seconds) }
         made.onSelectRoute = { [weak self] route in self?.selectRoute(route) }
+        made.onVolumeSet = { [weak self] value in self?.writeVolume(value) }
         made.onSizeChange = { [weak self] opening in self?.host?.interactionSizeChanged(opening) }
         made.onInteractionChange = { [weak self] in self?.retractInputsChanged() }
         made.onPointer = { [weak self] inside in self?.pointerInCard = inside; self?.retractInputsChanged() }
@@ -868,6 +1101,18 @@ final class NowPlayingCardPresenter {
         guard let card else { return }
         dismissCard(card)
     }
+
+    /// 音量键按下时由刘海的音量观察者问一声：大卡开着就由卡接（控制那一行换成音量条），返回 true，两耳不出；
+    /// 大卡没开返回 false，归《音量亮度》那张稿。
+    @discardableResult
+    func showVolume(value: Double, muted: Bool) -> Bool {
+        guard let card else { return false }
+        card.showVolume(value: value, muted: muted)
+        return true
+    }
+
+    /// 离开检查的 0.25 秒计时器在不在跑（测试看：不需要时必须停）。
+    var leaveTimerRunning: Bool { leaveTimer != nil }
 
     /// 数据变了（换歌、暂停、进度、封面）：原地换。没有这首歌了：等一小会儿再收。
     func refresh() {
@@ -927,7 +1172,8 @@ final class NowPlayingCardPresenter {
         guard let card, let host else { return }
         let inside = pointerInCard || host.islandContains(pointerLocation())
         retract.update(now: uptime(), pointerInside: inside, dragging: card.isDragging, listOpen: card.listOpen)
-        if pointerInCard { leaveTimer?.invalidate(); leaveTimer = nil; return }
+        // 指针在卡里、正在拖、列表开着：这几种情况下不会收回，不需要每 0.25 秒醒来；指针只在刘海那一截时仍要看它走了没有。
+        if pointerInCard || card.isDragging || card.listOpen { leaveTimer?.invalidate(); leaveTimer = nil; return }
         guard leaveTimer == nil else { return }
         let timer = Timer(timeInterval: 0.25, repeats: true) { [weak self] _ in
             MainActor.assumeIsolated { self?.leaveTick() }
@@ -942,6 +1188,7 @@ final class NowPlayingCardPresenter {
         let now = uptime()
         let inside = pointerInCard || host.islandContains(pointerLocation())
         retract.update(now: now, pointerInside: inside, dragging: card.isDragging, listOpen: card.listOpen)
-        if retract.isDue(now: now) { dismiss() }
+        if retract.isDue(now: now) { dismiss(); return }
+        if pointerInCard || card.isDragging || card.listOpen { leaveTimer?.invalidate(); leaveTimer = nil }
     }
 }
