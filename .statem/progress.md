@@ -107,3 +107,5 @@
 - 卸载功能抓虫轮（2026-10-11 上午，逐行过交互状态机）：①浮层「先不删」/Esc 不停等退出的轮询——App 恰好退出会在已拆掉的浮层上重建状态（abandon() 统一取消 + enterReview 对 detach 的视图直接退）；②三选弹层 alert.runModal() 应用模态锁全 App——有 window 时走 beginSheetModal（PresenceLockRiskSheet 先例）；③长按空白背景进抖动的官方路径被长按改菜单时误删——补回（0.55s、拖动过不进）；④抖动模式点图标误改为弹菜单——按调研回滚（iOS 编辑模式点图标照常启动，⊖ 只管移除）；⑤浮层没覆写 acceptsFirstResponder——Esc 通道丢失，补上；⑥扫描在主线程同步递归求字节（大 App 秒级卡启动台）——移后台 + presentUninstall 回主线程开浮层。全包 --check EXIT=0。
 
 - 卸载完成度补齐（2026-10-11 上午，交互/稳健性/辅助功能三片）：①勾选清单加「全选/全不选」（App 本体恒勾，不计入全不选）；②行高 26 + 无选中高亮 + 辅助标签（图标/两按钮 VoiceOver 可读）；③trashItem 失败不再只报数——失败项留在清单、「重试失败项」按钮重跑（state.done 的 failures 改存条目本体）；④执行中加不确定进度指示；⑤完成态 keyEquivalent 归位。全包 --check EXIT=0。
+
+- 提交与交接（2026-10-11 12:3x）：全部工作树按 COMMIT-PLAN 方案一快照提交为 4c2b11a（198 文件，+16750/-6757；.zcode 本地件除外）。未推送。启动台性能攻坚进行到一半：面板跨 show/hide 复用（retainedPanel + launchScreen 判定 + resetForReuse）已落地并编译通过，show prep 计时日志已埋（"launchpad: show prep xxms reused=yes/no"），量化验证与后续优化由下一会话接手。当前 /Applications 日常版未动；最新 staged 含性能修复。
