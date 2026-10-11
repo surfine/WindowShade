@@ -225,7 +225,7 @@ final class LaunchpadController {
         let reused = maybeReused != nil && maybeReused?.launchScreen === screen ? maybeReused : nil
         let panel: LaunchpadPanel
         if let reused {
-            panel = reused!
+            panel = reused
             retainedPanel = nil
             panel.view.resetForReuse()
         } else {
