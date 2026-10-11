@@ -5,6 +5,6 @@ set -euo pipefail
 root=$(cd "$(dirname "$0")/.." && pwd)
 mkdir -p "$root/.build/session-activity-tests"
 swiftc -swift-version 6 -strict-concurrency=complete -warnings-as-errors -parse-as-library \
-  "$root/prototype/Core/NotchActivities.swift" "$root/tests/SessionActivityTests.swift" \
+  "$root/prototype/Core/WireJSON.swift" "$root/prototype/Core/UsageReading.swift" "$root/prototype/Core/NotchActivities.swift" "$root/prototype/Core/ReleaseDefaults.swift" "$root/tests/SessionActivityTests.swift" \
   -o "$root/.build/session-activity-tests/tests"
 exec "$root/.build/session-activity-tests/tests"

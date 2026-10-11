@@ -248,6 +248,46 @@ struct FakeIdentity: WS2CarPlayAccessoryIdentity {
             expect(s.reconnectDueAt == 3602, "long playback: a drop after an hour starts again at 2 s")
         }
 
+        // 外部接收器（live，认证在接收器侧）：本机不持身份也能连。
+        do {
+            var s = S()
+            let t = s.connectViaReceiver()
+            expect(t != nil && s.state == .connecting && s.mode == .live, "receiver connect goes live")
+            expect(s.isReceiverLive && s.liveAuth == .delegated, "receiver session is delegated live")
+            s.becameReady(t!, at: 0)
+            expect(s.state == .ready && s.isReceiverLive, "receiver session becomes ready")
+            expect(s.enterFullscreen() == true, "receiver ready enters fullscreen once")
+            expect(s.enterFullscreen() == false, "second fullscreen request is a no-op")
+            s.frameReceived(t!)
+            expect(s.frames.received == 1, "frames count as received while fullscreen")
+            s.frameDrawn(t!)
+            expect(s.frames.drawn == 1, "drawn counts while fullscreen")
+            s.exitFullscreen()
+            s.frameReceived(t!)
+            s.frameDrawn(t!)
+            expect(s.frames.received == 2 && s.frames.drawn == 1, "drawn stops when leaving fullscreen, phone stays connected")
+            expect(s.state == .ready && s.isReceiverLive, "exitFullscreen keeps the receiver session")
+            let plan = s.ended(t!, failed: true, at: 10)
+            expect(plan == .retry(attempt: 1, after: 2), "receiver drop follows the same backoff")
+            let t2 = s.reconnectIfDue(identity: nil, at: 12)
+            expect(t2 != nil && s.isReceiverLive && s.state == .connecting, "receiver retry stays delegated live without identity")
+            s.becameReady(t2!, at: 12)
+            s.disconnect()
+            expect(s.state == .disconnected && s.mode == nil && s.liveAuth == nil && !s.isReceiverLive,
+                   "disconnect clears mode and auth delegation")
+        }
+
+        // 接收器会话与直连身份互斥：直连仍要 Apple 签发身份，接收器不需要。
+        do {
+            var s = S()
+            expect(s.connect(identity: FakeIdentity(provenance: .extracted), wantsLive: true) == nil,
+                   "direct live still refuses extracted identity")
+            expect(s.connect(identity: FakeIdentity(provenance: .userSupplied), wantsLive: true) == nil,
+                   "direct live refuses user-supplied identity")
+            var r = S()
+            expect(r.connectViaReceiver() != nil, "receiver connect needs no identity at all")
+        }
+
         if failures > 0 { print("\(failures) FAILED"); exit(1) }
         print("PASS CarPlay session")
     }

@@ -22,6 +22,7 @@ enum WindowBrowserTests {
         }
     }
 
+    @MainActor
     static func main() {
         identityAndCatalog()
         catalogFailureSemantics()
@@ -4097,6 +4098,7 @@ enum WindowBrowserTests {
 
     /// docs/design-proposal-claude.md 落地后的行为：悬停追踪、列表不溢出、翻页、
     /// Dock 面板不显示键盘选中环、三窗口单行三列、排布预览令牌、服务回调不在锁内执行。
+    @MainActor
     static func designProposalBehaviours() {
         _ = NSApplication.shared
         // Dock 面板永远不会成为 key window：悬停追踪必须不依赖 key 状态。

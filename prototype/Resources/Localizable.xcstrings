@@ -970,6 +970,40 @@
         }
       }
     },
+    "settings.stripNotch.name": {
+      "extractionState": "manual",
+      "localizations": {
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "卷轴概览能收进刘海"
+          }
+        },
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Strip overview can tuck into the notch"
+          }
+        }
+      }
+    },
+    "settings.stripNotch.sub": {
+      "extractionState": "manual",
+      "localizations": {
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "在卷轴概览里把窗口拖到刘海，松手就收进去"
+          }
+        },
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Drag a window to the notch in the strip overview and let go to tuck it away"
+          }
+        }
+      }
+    },
     "settings.stripTitleDrag.name": {
       "extractionState": "manual",
       "localizations": {

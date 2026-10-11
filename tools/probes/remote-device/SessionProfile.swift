@@ -3,6 +3,7 @@ import Foundation
 /// Isolated Apple Remote profile. Status describes this probe, never the Mac's media or app state.
 struct RemoteSessionProfile {
     enum Failure: Error { case unsupported, sequence, malformed, exhausted }
+    typealias ReplyPolicy = RemoteProbeConfiguration.ReplyPolicy
     struct Event: Equatable {
         let identifier: String
         let content: [String: WS2OPACK.Value]
@@ -30,7 +31,55 @@ struct RemoteSessionProfile {
     private(set) var virtualMuted = false
     let name: String
     let identifier: String
+    let replyPolicy: ReplyPolicy
     var model: String = "AppleTV6,2"
+
+    init(name: String, identifier: String, replyPolicy: ReplyPolicy = .current,
+         model: String = "AppleTV6,2") {
+        self.name = name
+        self.identifier = identifier
+        self.replyPolicy = replyPolicy
+        self.model = model
+    }
+
+    func shouldSendReply(for method: String, request: Bool) -> Bool {
+        if replyPolicy == .current { return request }
+        return method != "_interest"
+    }
+
+    struct InputCounts {
+        private(set) var summary: [String: Int] = [:]
+        var valid: Int { summary["valid", default: 0] }
+        mutating func record(_ key: String) { summary[key, default: 0] += 1 }
+    }
+    private(set) var inputCounts = InputCounts()
+    private var touching = false
+
+    private mutating func classifyInput(_ method: String, _ content: [String: WS2OPACK.Value]) {
+        inputCounts.record("messages")
+        func number(_ value: WS2OPACK.Value?) -> Double? {
+            switch value { case .real(let n): return n.isFinite ? n : nil
+            case .uint(let n): return Double(n)
+            default: return nil }
+        }
+        if method == "_hidC" {
+            guard case .uint(let command) = content["_hidC"],
+                  case .uint(let state) = content["_hBtS"] else { inputCounts.record("invalid"); return }
+            guard (1...19).contains(command) else { inputCounts.record("unknown"); return }
+            guard state == 1 || state == 2 else { inputCounts.record("unknown"); return }
+            inputCounts.record("valid"); inputCounts.record(state == 1 ? "buttonDown" : "buttonUp")
+        } else {
+            guard case .uint(let phase) = content["_tPh"] else { inputCounts.record("invalid"); touching = false; return }
+            guard [UInt64(1), 2, 4].contains(phase) else { inputCounts.record("unknown"); touching = false; return }
+            guard number(content["_cx"]) != nil, number(content["_cy"]) != nil else {
+                inputCounts.record("invalid"); touching = false; return
+            }
+            guard phase == 1 ? !touching : touching else { inputCounts.record("invalid"); touching = false; return }
+            touching = phase != 4
+            inputCounts.record("valid")
+            inputCounts.record(phase == 1 ? "touchBegin" : phase == 4 ? "touchEnd" : "touchMove")
+        }
+    }
 
     private func checkService(_ content: [String: WS2OPACK.Value]) throws {
         if let service = content["_srvT"], service != .string("com.apple.tvremoteservices") { throw Failure.malformed }
@@ -55,7 +104,8 @@ struct RemoteSessionProfile {
     mutating func receive(_ method: String, content: [String: WS2OPACK.Value], request: Bool) throws -> Outcome {
         guard Self.allowed.contains(method) else { throw Failure.unsupported }
         guard counts.values.reduce(0,+) < 2000 else { throw Failure.exhausted }
-        var outcome = Outcome(reply: request ? [:] : nil)
+        let reply = shouldSendReply(for: method, request: request)
+        var outcome = Outcome(reply: reply ? [:] : nil)
         switch method {
         case "_systemInfo", "SystemInfo":
             systemInfo = true
@@ -66,25 +116,27 @@ struct RemoteSessionProfile {
             if let requested, requested > UInt32.max { throw Failure.malformed }
             // Reinitialization changes only this verified connection's protocol SID, never identity or authority.
             let client = requested ?? clientSID ?? UInt64(UInt32.random(in: 1...UInt32.max))
-            clientSID = client; session = (serverSID << 32) | client; initialize()
-            if request { outcome.reply = ["_sid": .uint(serverSID)] }
+            clientSID = client; session = (serverSID << 32) | client; touching = false; initialize()
+            if reply { outcome.reply = ["_sid": .uint(serverSID)] }
         case "_sessionStop":
             try checkService(content)
             if let supplied = try sid(content), supplied != session { throw Failure.sequence }
-            active = false; stopped = true; session = nil; clientSID = nil; subscriptions.removeAll()
+            touching = false; active = false; stopped = true; session = nil; clientSID = nil; subscriptions.removeAll()
             serverSID = UInt64(UInt32.random(in: 1...UInt32.max))
         case "TVRCSessionStart":
             let version = content["ProtocolVersionKey"] ?? .string("1.2")
             guard case .string(let text) = version, !text.isEmpty, text.utf8.count <= 32 else { throw Failure.malformed }
-            initialize()
-            if request { outcome.reply = ["ProtocolVersionKey": version] }
+            touching = false; initialize()
+            if reply { outcome.reply = ["ProtocolVersionKey": version] }
             outcome.events = [statusEvent("MediaControlStatus"), statusEvent("_iMC")]
         case "_touchStart":
-            initialize(); if request { outcome.reply = ["_i": .uint(1)] }
-        case "_touchStop", "_touchMove", "_tiStop": break
-        case "_tiStart": if request { outcome.reply = ["_tiE": .bool(false)] }
+            touching = false; initialize(); if reply { outcome.reply = ["_i": .uint(1)] }
+        case "_touchStop": touching = false
+        case "_touchMove", "_tiStop": break
+        case "_tiStart": if reply { outcome.reply = ["_tiE": .bool(false)] }
         case "_hidC", "_hidT":
-            guard !stopped else { throw Failure.sequence }
+            guard !stopped else { inputCounts.record("messages"); inputCounts.record("invalid"); throw Failure.sequence }
+            classifyInput(method, content)
             // Authenticated HID can establish the initial probe session; never revive a stopped one.
             initialize()
         case "_interest":
@@ -102,15 +154,15 @@ struct RemoteSessionProfile {
             for name in additions where Self.serverEvents.contains(name) {
                 if subscriptions.insert(name).inserted { outcome.events.append(statusEvent(name)) }
             }
-        case "FetchMediaControlStatus": if request { outcome.reply = ["MediaControlFlags": .uint(0)] }
-        case "FetchAttentionState": if request { outcome.reply = ["state": .uint(3)] }
+        case "FetchMediaControlStatus": if reply { outcome.reply = ["MediaControlFlags": .uint(0)] }
+        case "FetchAttentionState": if reply { outcome.reply = ["state": .uint(3)] }
         case "FetchSiriRemoteInfo", "FetchCurrentNowPlayingInfoEvent": break
         case "FetchLaunchableApplicationsEvent": outcome.resultType = 2
         case "MediaControlCommand", "_mcc":
             if let long = content["MediaControlCommand"], let short = content["_mcc"], long != short { throw Failure.malformed }
             guard case .uint(let command) = content["MediaControlCommand"] ?? content["_mcc"] else { throw Failure.malformed }
             switch command {
-            case 5: if request { outcome.reply = ["_vol": .real(virtualMuted ? 0 : virtualVolume)] }
+            case 5: if reply { outcome.reply = ["_vol": .real(virtualMuted ? 0 : virtualVolume)] }
             case 6:
                 let value: Double
                 switch content["_vol"] {
@@ -120,8 +172,10 @@ struct RemoteSessionProfile {
                 }
                 guard value.isFinite else { throw Failure.malformed }
                 virtualVolume = min(1, max(0, value)); if virtualVolume > 0 { virtualMuted = false }
-            case 12: if request { outcome.reply = ["_cse": .bool(false)] }
-            default: throw Failure.unsupported
+            case 12: if reply { outcome.reply = ["_cse": .bool(false)] }
+            default:
+                // Reference behavior is an empty response; current retains its prior rejection.
+                if replyPolicy == .current { throw Failure.unsupported }
             }
         default: throw Failure.unsupported
         }
@@ -130,17 +184,45 @@ struct RemoteSessionProfile {
     }
 }
 
-/// One dispatch entry point for both real sockets and the independent-wire test harness.
+/// Pure-value dispatcher; transport owns encryption, budgets and delivery.
 @MainActor final class RemoteProfileHandler {
-    private(set) var profile: RemoteSessionProfile
-    init(name: String, identifier: String, model: String = "AppleTV6,2") {
-        profile = RemoteSessionProfile(name: name, identifier: identifier, model: model)
+    struct Envelope {
+        let identifier: String
+        let content: [String: WS2OPACK.Value]
+        let transaction: UInt64?
+        let isRequest: Bool
     }
-    func handle(_ message: WS2CompanionChannel.Message, handshake: RemoteHandshake) throws {
-        let outcome = try profile.receive(message.identifier, content: message.content, request: message.isRequest)
-        if let reply = outcome.reply { try handshake.reply(to: message, content: reply, resultType: outcome.resultType) }
-        for event in outcome.events {
-            try handshake.sendEvent(event.identifier, content: event.content, respondingTo: message, echoTransaction: event.echoTransaction)
+    private(set) var profile: RemoteSessionProfile
+    private(set) var unknownCounts: [String: Int] = [:]
+    init(name: String, identifier: String, model: String = "AppleTV6,2",
+         replyPolicy: RemoteProbeConfiguration.ReplyPolicy = .current) {
+        profile = RemoteSessionProfile(name: name, identifier: identifier, replyPolicy: replyPolicy, model: model)
+    }
+    func reset() {
+        profile = RemoteSessionProfile(name: profile.name, identifier: profile.identifier,
+            replyPolicy: profile.replyPolicy, model: profile.model)
+        unknownCounts = [:]
+    }
+    func handle(_ envelope: Envelope) throws -> [WS2OPACK.Value] {
+        func response(_ content: [String: WS2OPACK.Value], _ resultType: UInt64 = 0) -> WS2OPACK.Value {
+            var value: [String: WS2OPACK.Value] = ["_i": .string(envelope.identifier),
+                "_t": .uint(3), "_rT": .uint(resultType), "_c": .dictionary(content)]
+            if let xid = envelope.transaction { value["_x"] = .uint(xid) }
+            return .dictionary(value)
         }
+        guard RemoteSessionProfile.allowed.contains(envelope.identifier) else {
+            unknownCounts["messages", default: 0] += 1
+            return envelope.transaction == nil ? [] : [response([:])]
+        }
+        let outcome = try profile.receive(envelope.identifier, content: envelope.content, request: envelope.isRequest)
+        var output: [WS2OPACK.Value] = []
+        if let reply = outcome.reply { output.append(response(reply, outcome.resultType)) }
+        for event in outcome.events {
+            var value: [String: WS2OPACK.Value] = ["_i": .string(event.identifier), "_t": .uint(1),
+                "_c": .dictionary(event.content)]
+            if event.echoTransaction, let xid = envelope.transaction { value["_x"] = .uint(xid) }
+            output.append(.dictionary(value))
+        }
+        return output
     }
 }

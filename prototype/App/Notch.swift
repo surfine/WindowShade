@@ -124,10 +124,12 @@ final class NotchController {
     let carPlaySurface = CarPlaySurfaceController()
 
     /// 长按刘海：开着的全屏再长按退出；没开且这块屏上没有别的东西占着，进全屏。其余交回旧的长按。
+    /// 手指靠近必然先悬停展开那一排——收掉它再进全屏，否则入口永远撞不上（真机 2026-10-11 实证）。
     private func carPlayHold(on panel: NotchPanel) -> Bool {
         if carPlaySurface.isShowing { carPlaySurface.exit(); return true }
         guard CarPlaySurfaceController.isEnabled,
-              !panel.isExpanded, !panel.isAuthenticating, !owner.launchpad.isShowing else { return false }
+              !panel.isAuthenticating, !owner.launchpad.isShowing else { return false }
+        if panel.isExpanded { panel.collapse() }
         guard let id = panel.displayID?.value,
               let screen = NSScreen.screens.first(where: { Self.displayID($0) == id }) else { return false }
         carPlaySurface.enter(on: screen)
@@ -147,17 +149,17 @@ final class NotchController {
     nonisolated static let alertsKey = "Notch.changeAlerts"
     /// 用刘海收纳窗口（设置里能关；HIG：菜单栏里放不放东西由人决定）。
     nonisolated static var isEnabled: Bool {
-        get { UserDefaults.standard.object(forKey: enabledKey) as? Bool ?? true }
+        get { UserDefaults.standard.object(forKey: enabledKey) as? Bool ?? ReleaseDefaults.value(enabledKey) }
         set { UserDefaults.standard.set(newValue, forKey: enabledKey) }
     }
-    /// 展开时窗口和正在进行的事合成一排：左段收着的窗口，一条竖线，右段正在播放的、编程会话（M11，默认开，Aaron 2026-10-09 裁定）。
+    /// 展开时窗口和正在进行的事合成一排：左段收着的窗口，一条竖线，右段正在播放的、编程会话（M11，设计上默认开；1.0.16 真机验过前默认关，见 ReleaseDefaults）。
     /// 关着是旧样子：活动卡和窗口格上下叠放。
     nonisolated static let mergedRowKey = "Notch.mergedRow"
     nonisolated static var mergedRowEnabled: Bool {
         get { NotchMergedRowPreference.isEnabled(in: .standard) }
         set { UserDefaults.standard.set(newValue, forKey: mergedRowKey) }
     }
-    /// 最小呈现（M13，默认开）：同时有两件以上持续活动时，选中的是紧凑，其余退成岛右侧的最小形；
+    /// 最小呈现（M13，设计上默认开；1.0.16 真机验过前默认关，见 ReleaseDefaults）：同时有两件以上持续活动时，选中的是紧凑，其余退成岛右侧的最小形；
     /// 短暂提醒撞上正在播放时不另开第二颗岛，这一颗岛 bloom 成提醒。关着是旧样子。
     nonisolated static let minimalPresentationKey = NotchMinimalPresentation.defaultsKey
     nonisolated static var minimalPresentationEnabled: Bool {
@@ -176,7 +178,7 @@ final class NotchController {
     }
     /// 收起的窗口有变化时，刘海短暂展开提醒。
     nonisolated static var alertsEnabled: Bool {
-        get { UserDefaults.standard.object(forKey: alertsKey) as? Bool ?? true }
+        get { UserDefaults.standard.object(forKey: alertsKey) as? Bool ?? ReleaseDefaults.value(alertsKey) }
         set { UserDefaults.standard.set(newValue, forKey: alertsKey) }
     }
 
@@ -760,11 +762,13 @@ final class NotchController {
         defer { endFileDrag() }
         switch release {
         case .stage:
-            payload.stage(into: FileShelf.shared) { outcome in
+            payload.stage(into: FileShelf.shared, completion: { outcome in
                 guard outcome.accepted else { return }
                 NSHapticFeedbackManager.defaultPerformer.perform(.levelChange, performanceTime: .now)
                 // 不说话：岛收成紧凑，右耳个数滚到新值并弹一下（FS-06）。
-            }
+            }, failure: { [weak self] text in
+                _ = self?.announce(text, tone: .problem)   // 承诺文件没拿到：说一句
+            })
             return true
         case .airDrop:
             activities.sendViaAirDrop(items: payload.sharingItems)
@@ -1187,7 +1191,7 @@ final class NotchController {
     nonisolated static let coachKey = "Notch.coach"
     /// 在刘海上教手势（设置里能关）。
     nonisolated static var teachEnabled: Bool {
-        get { UserDefaults.standard.object(forKey: teachKey) as? Bool ?? true }
+        get { UserDefaults.standard.object(forKey: teachKey) as? Bool ?? ReleaseDefaults.value(teachKey) }
         set { UserDefaults.standard.set(newValue, forKey: teachKey) }
     }
     /// 探针跑的时候刘海不播报、不教（免得打断别的探针量刘海的样子）；只在探针进程里，不写进设置。
@@ -5824,9 +5828,11 @@ final class NotchContentView: NSView {
         }
     }
 
-    override func hitTest(_ point: NSPoint) -> NSView? {
+    /// 辅助功能的 hit-test 可以从后台线程进来：AppKit 随时可能调，方法不能挂 MainActor 隔离
+    /// （真机 --notch 探针实证：隔离断言在进方法体之前炸出 SIGTRAP）。主线程内才碰状态。
+    nonisolated override func hitTest(_ point: NSPoint) -> NSView? {
         guard Thread.isMainThread else { return nil }
-        return inert ? nil : super.hitTest(point)
+        return MainActor.assumeIsolated { inert ? nil : super.hitTest(point) }
     }
 
     /// 窗口坐标里的这一点，是不是落在正在播放的紧凑左耳或右耳上（NP-2：点耳朵的入口）。
@@ -6037,7 +6043,7 @@ final class NotchDotsView: NSView {
         needsDisplay = true
     }
 
-    override func hitTest(_ point: NSPoint) -> NSView? { nil }
+    nonisolated override func hitTest(_ point: NSPoint) -> NSView? { nil }
 
     override func draw(_ dirtyRect: NSRect) {
         let white = min(count, 5)
@@ -6225,7 +6231,7 @@ final class NotchCompactView: NSView {
         }
     }
 
-    override func hitTest(_ point: NSPoint) -> NSView? { nil }
+    nonisolated override func hitTest(_ point: NSPoint) -> NSView? { nil }
 
     /// 这一点（本视图坐标）在正在播放的左耳或右耳上。放不下封面退回音符时也算：它还是音乐的两耳。
     func containsMusicEar(_ point: NSPoint) -> Bool {
@@ -6793,7 +6799,7 @@ final class NotchMinimumView: NSView {
 
     required init?(coder: NSCoder) { fatalError("init(coder:) is not used") }
 
-    override func hitTest(_ point: NSPoint) -> NSView? { nil }
+    nonisolated override func hitTest(_ point: NSPoint) -> NSView? { nil }
 
     func update(_ shape: NotchMinimumShape) {
         shapeID = shape.id
@@ -6828,7 +6834,7 @@ final class NotchSecondaryMark: NSView {
     var visible = false {
         didSet { guard visible != oldValue else { return }; needsDisplay = true }
     }
-    override func hitTest(_ point: NSPoint) -> NSView? { nil }
+    nonisolated override func hitTest(_ point: NSPoint) -> NSView? { nil }
     override func draw(_ dirtyRect: NSRect) {
         guard visible else { return }
         NSColor.controlAccentColor.setFill()
@@ -6970,7 +6976,7 @@ final class NotchAlertView: NSView {
         }
     }
 
-    override func hitTest(_ point: NSPoint) -> NSView? { nil }
+    nonisolated override func hitTest(_ point: NSPoint) -> NSView? { nil }
 
     /// §6-4：图标 24，四周 14，不留额头。
     static func iconRect(in bounds: NSRect) -> NSRect {
@@ -7102,7 +7108,7 @@ final class NotchRowDivider: NSView {
         setAccessibilityElement(false)
     }
     required init?(coder: NSCoder) { fatalError("init(coder:) is not used") }
-    override func hitTest(_ point: NSPoint) -> NSView? { nil }
+    nonisolated override func hitTest(_ point: NSPoint) -> NSView? { nil }
 }
 
 /// 展开后的一格：窗口的画面（没有画面就放大 App 图标）、左上角标明它是哪一种、右上角有变化的点、App 图标和标题。

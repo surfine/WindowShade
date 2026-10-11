@@ -23,8 +23,10 @@ assert 'excludingWindows: excluded' in controller
 menu = (root / 'prototype/App/MenuBarController.swift').read_text()
 settings = (root / 'prototype/Effects/DuoSettingsWindow.swift').read_text()
 assert 'struct MenuState' in menu
-for title in ['屏幕开合角度：', '当前窗口', '欢迎使用 WindowShade…', '设置…']:
+for title in ['屏幕开合角度：', '当前窗口', '设置…']:
     assert title in menu, f'menu state entry missing: {title}'
+welcome = (root / 'prototype/App/WS2SupplementPane.swift').read_text()
+assert '欢迎使用 WindowShade…' in welcome and '#selector(AppDelegate.showWelcomeGuide)' in welcome, 'welcome must remain reachable from settings'
 for title in ['启用桌面开合效果', '启用窗口卷帘动画', '预览桌面效果…', '停止所有效果']:
     assert title not in menu, f'redundant menu entry still present: {title}'
 assert 'showDuoSettings(section: .effects)' in settings

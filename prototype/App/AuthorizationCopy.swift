@@ -12,6 +12,8 @@ enum AuthorizationCopy {
       return settingAction(target) ?? "更改安全设置"
     case (.enrollDevice, "remote.peer.ed25519"):
       return "允许这台 iPhone 遥控"
+    case (.enrollDevice, "face.template"):
+      return "保存你的脸"
     case (.enrollDevice, _):
       return "检查 Touch ID 确认"
     case (.revealOwnedContent, _): return "显示隐藏的内容"
@@ -25,6 +27,7 @@ enum AuthorizationCopy {
   /// 没确认成（取消、超时、指纹不符、锁屏）时的提示：说清楚什么都没变。
   static func notConfirmed(for target: AuthTarget) -> String {
     if target.purpose == .enrollDevice, target.kind == "remote.peer.ed25519" { return "没有确认，这台 iPhone 还不能遥控" }
+    if target.purpose == .enrollDevice, target.kind == "face.template" { return "没有确认，没有保存" }
     switch (target.purpose, settingKey(target)) {
     case (.changeSecurityPolicy, "SUEnableAutomaticChecks"): return "没有确认，自动检查更新仍然开着"
     case (.enrollDevice, _): return "没有确认，Touch ID 确认没有检查"

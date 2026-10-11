@@ -5,6 +5,90 @@ import CryptoKit
 
 @MainActor final class WS2CompanionCrypto {
     enum Failure: Error { case state, expired, malformed, unknownPeer, signature, revoked, closed }
+#if WS2_PROBE_DIAGNOSTICS
+    struct DiagnosticOutcome: Equatable, Sendable {
+        enum Classification: String, Equatable, Sendable {
+            case aeadFailed = "aead-failed"
+            case aeadMatched = "aead-matched"
+            case aeadMatchedInvalidOPACK = "aead-matched-invalid-opack"
+            case candidateExpired = "candidate-expired"
+            case candidateClosed = "candidate-closed"
+            case malformedFrame = "malformed-frame"
+        }
+        let candidate: String
+        let classification: Classification
+        let predictedCounter: UInt64
+        let identityBound: Bool
+    }
+    /// Probe-only record keys. No peer and no route to VerifiedSession or product Message.
+    @MainActor final class DiagnosticCandidate {
+        let label = "initial-pv-main"
+        let createdAt: Double
+        let expiresAt: Double
+        let generation: UInt64
+        private var receiveKey: SymmetricKey?
+        private var transmitKey: SymmetricKey?
+        private var receiveCounter = WS2CompanionCounter(), transmitCounter = WS2CompanionCounter()
+        private var currentEnrollment: (() -> Bool)?
+        private var firstRecordDeadline: Double?
+        private(set) var closed = false
+        var rx: UInt64 { receiveCounter.value }
+        var tx: UInt64 { transmitCounter.value }
+
+        fileprivate init(createdAt: Double, expiresAt: Double, generation: UInt64,
+                         receiveKey: SymmetricKey, transmitKey: SymmetricKey) {
+            self.createdAt = createdAt; self.expiresAt = expiresAt; self.generation = generation
+            self.receiveKey = receiveKey; self.transmitKey = transmitKey
+        }
+        func activate(now: Double, isCurrent: @escaping () -> Bool) throws {
+            guard !closed, currentEnrollment == nil, now.isFinite, now >= createdAt,
+                  now < expiresAt, isCurrent() else { close(); throw Failure.expired }
+            currentEnrollment = isCurrent
+            firstRecordDeadline = min(expiresAt, now + 10)
+        }
+        private func usable(now: Double) -> Bool {
+            !closed && now.isFinite && now >= createdAt && now < expiresAt &&
+                (firstRecordDeadline.map { now < $0 } ?? true) && currentEnrollment?() == true
+        }
+        func inspect(_ frame: WS2CompanionFrame, now: Double) -> (DiagnosticOutcome, Data?) {
+            let counter = receiveCounter.value
+            func result(_ classification: DiagnosticOutcome.Classification) -> DiagnosticOutcome {
+                DiagnosticOutcome(candidate: label, classification: classification,
+                    predictedCounter: counter, identityBound: false)
+            }
+            guard !closed else { return (result(.candidateClosed), nil) }
+            guard usable(now: now), let receiveKey else { close(); return (result(.candidateExpired), nil) }
+            guard frame.type == 8, frame.payload.count >= 16 else { close(); return (result(.malformedFrame), nil) }
+            do {
+                let header = try WS2CompanionFrame.header(type: frame.type, count: frame.payload.count)
+                let nonce = try ChaChaPoly.Nonce(data: receiveCounter.take())
+                let box = try ChaChaPoly.SealedBox(nonce: nonce,
+                    ciphertext: frame.payload.dropLast(16), tag: frame.payload.suffix(16))
+                let plain = try ChaChaPoly.open(box, using: receiveKey, authenticating: header)
+                firstRecordDeadline = nil
+                do {
+                    _ = try WS2OPACK.decode(plain)
+                    return (result(.aeadMatched), plain)
+                } catch {
+                    close(); return (result(.aeadMatchedInvalidOPACK), nil)
+                }
+            } catch { close(); return (result(.aeadFailed), nil) }
+        }
+        func seal(_ plaintext: Data, now: Double) throws -> Data {
+            do {
+                guard usable(now: now), let transmitKey else { throw Failure.expired }
+                let header = try WS2CompanionFrame.header(type: 8, count: plaintext.count + 16)
+                let nonce = try ChaChaPoly.Nonce(data: transmitCounter.take())
+                let box = try ChaChaPoly.seal(plaintext, using: transmitKey, nonce: nonce, authenticating: header)
+                return header + box.ciphertext + box.tag
+            } catch { close(); throw error }
+        }
+        func close() {
+            closed = true; receiveKey = nil; transmitKey = nil; currentEnrollment = nil
+            firstRecordDeadline = nil; receiveCounter.close(); transmitCounter.close()
+        }
+    }
+#endif
     struct Peer: Equatable {
         let identifier: Data
         let signingPublicKey: Data
@@ -28,6 +112,9 @@ import CryptoKit
             self.peer = peer; connectionID = UUID(); self.transmit = transmit; self.receive = receive
             self.isCurrent = isCurrent
         }
+#if WS2_PROBE_DIAGNOSTICS
+        var diagnosticCounters: (receive: UInt64, transmit: UInt64) { (rx.value, tx.value) }
+#endif
         func close() { transmit = nil; receive = nil; tx.close(); rx.close() }
         func seal(_ plaintext: Data) throws -> Data {
             do {
@@ -74,6 +161,15 @@ import CryptoKit
         guard value.utf8.count == 8 else { throw Failure.malformed }
         return try ChaChaPoly.Nonce(data: Data(repeating: 0, count: 4) + Data(value.utf8))
     }
+#if WS2_PROBE_DIAGNOSTICS
+    func diagnosticCandidate(createdAt: Double, expiresAt: Double, generation: UInt64) -> DiagnosticCandidate? {
+        guard state == .proving, clock.now() < deadline, createdAt.isFinite, expiresAt.isFinite,
+              expiresAt > createdAt, let shared else { return nil }
+        return DiagnosticCandidate(createdAt: createdAt, expiresAt: expiresAt, generation: generation,
+            receiveKey: Self.derive(shared, salt: "", info: "ClientEncrypt-main"),
+            transmitKey: Self.derive(shared, salt: "", info: "ServerEncrypt-main"))
+    }
+#endif
     /// Input/output are the bytes in OPACK `_pd`. OPACK and frame-type validation belong to the network adapter.
     func answerM1(_ tlv: Data) throws -> Data {
         do {

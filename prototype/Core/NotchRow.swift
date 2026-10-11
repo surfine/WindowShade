@@ -16,7 +16,7 @@ import Foundation
 /// 合成一排的开关（M11，默认开）。键里没有值用默认；显式开或关的值原样用。
 enum NotchMergedRowPreference {
     static let defaultsKey = "Notch.mergedRow"
-    static let defaultEnabled = true
+    static var defaultEnabled: Bool { ReleaseDefaults.value(defaultsKey) }
     static func isEnabled(in defaults: UserDefaults) -> Bool {
         defaults.object(forKey: defaultsKey) as? Bool ?? defaultEnabled
     }

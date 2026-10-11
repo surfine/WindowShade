@@ -12,8 +12,8 @@ h=module('handshake_reference',here/'handshake-interop.py')
 o=module('wire_opack',here/'wire-opack.py')
 
 class Client:
-    def __init__(self,path,alias=False):
-        self.bridge=h.Bridge(path);self.alias=alias;self.tx=0;self.rx=0;self.xid=0;self.nonce_negative_checked=False
+    def __init__(self,path,alias=False,extra_args=None):
+        self.bridge=h.Bridge(path, extra_args=extra_args);self.alias=alias;self.tx=0;self.rx=0;self.xid=0;self.nonce_negative_checked=False
         h.initial_verify(self.bridge)
         signing,identity,accessory,_=h.enroll(self.bridge)
         secret=h.verify(self.bridge,signing,identity,accessory)
@@ -151,8 +151,8 @@ def fallback_flow(path):
         r,m,x=c.request('_launchApp',{'_bundleID':'private-test'})
         expect(r,m,[reply('_launchApp',x)])
         assert r['unhandledMethods']==1 and r['delivered']==before and r['counts']==counts and r['systemActions']==0
-        r,m,_=c.event('UnsupportedClientEvent',{'ignored':'private-test'},with_xid=True)
-        expect(r,m,[])
+        r,m,x=c.event('UnsupportedClientEvent',{'ignored':'private-test'},with_xid=True)
+        expect(r,m,[reply('UnsupportedClientEvent',x)])
         assert r['unhandledMethods']==2 and r['delivered']==before and r['counts']==counts and r['systemActions']==0
         r,m,x=c.request('_hidC',{'_hidC':6,'_hBtS':2});expect(r,m,[reply('_hidC',x)])
         assert r['unhandledMethods']==2 and r['delivered']==before+1 and r['counts']['_hidC']==1 and r['systemActions']==0

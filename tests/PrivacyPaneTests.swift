@@ -55,12 +55,12 @@ struct PrivacyPaneTests {
     precondition(hidden.allSatisfy { $0.status != "planned" }, "planned 行默认隐藏")
     precondition(hidden.count == rows.filter { $0.status != "planned" && $0.appearsWith == nil }.count)
 
-    let faceRows: Set<String> = ["bluetooth-presence", "face-identity", "unlock-secret"]
+    let faceRows: Set<String> = ["bluetooth-presence", "face-identity", "face-quality", "unlock-secret"]
     let withFace = WS2PrivacyVisibility.visibleRows(rows, enabledFeatures: [WS2PrivacyCopy.faceUnlockFeature])
     let added = Set(withFace.map(\.id)).subtracting(hidden.map(\.id))
-    precondition(added == faceRows, "刷脸解锁实验打开后，只多出这三行：\(added)")
+    precondition(added == faceRows, "刷脸解锁实验打开后，只多出这四行：\(added)")
     for row in withFace where faceRows.contains(row.id) {
-      precondition(row.status == "planned", "这三行在登记表里仍是 planned，出现时值固定「还没读」")
+      precondition(row.status == "planned", "这四行在登记表里仍是 planned，出现时值固定「还没读」")
     }
     let other = WS2PrivacyVisibility.visibleRows(rows, enabledFeatures: ["不存在的功能"])
     precondition(other.map(\.id) == hidden.map(\.id), "别的功能名不会让它们出现")

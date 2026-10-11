@@ -135,6 +135,12 @@ enum NowPlayingVolumeRow {
     /// 行高、喇叭占的宽、条高。
     static let height: CGFloat = 30
     static let symbolWidth: CGFloat = 30
+    /// 条右端“最大”喇叭占的宽。
+    static let maxMarkerWidth: CGFloat = 24
+    /// 条两头的标记（《音量与亮度》稿大卡滑条：左“最小”= 不带声波的喇叭，缩到 0.8；右“最大”= 三道声波）。不随音量变。
+    static let minMarkerSymbol = "speaker.fill"
+    static let maxMarkerSymbol = "speaker.wave.3.fill"
+    static let minMarkerScale: CGFloat = 0.8
     static let barThickness: CGFloat = CGFloat(NotchLevelStep.barThickness)
 
     /// 整行在岛坐标里的位置：与控制那一行（上一首…输出键）同一条水平中线。
@@ -147,7 +153,7 @@ enum NowPlayingVolumeRow {
     /// 条的横向范围（行内坐标）：喇叭右边到行尾。
     static func barRange(rowWidth: CGFloat) -> ClosedRange<CGFloat> {
         let start = symbolWidth + 10
-        return start...max(start + 1, rowWidth)
+        return start...max(start + 1, rowWidth - maxMarkerWidth - 10)
     }
 
     /// 行内 x → 0…1（按下就跳到按下的地方，拖到两头夹住）。
@@ -975,6 +981,7 @@ private extension NSTextField {
 @MainActor
 final class NowPlayingVolumeRowView: NSView {
     private let symbolLayer = CALayer()
+    private let maxLayer = CALayer()
     private let trackLayer = CALayer()
     private let fillLayer = CALayer()
     private var shownSymbol: String?
@@ -987,6 +994,8 @@ final class NowPlayingVolumeRowView: NSView {
         let still: [String: CAAction] = ["contents": NSNull(), "bounds": NSNull(), "position": NSNull()]
         symbolLayer.actions = still
         symbolLayer.contentsGravity = .center
+        maxLayer.actions = still
+        maxLayer.contentsGravity = .center
         trackLayer.actions = still
         fillLayer.actions = still
         fillLayer.anchorPoint = CGPoint(x: 0, y: 0.5)
@@ -996,6 +1005,7 @@ final class NowPlayingVolumeRowView: NSView {
         trackLayer.backgroundColor = NSColor.white.withAlphaComponent(CGFloat(NotchLevelEars.trackAlpha(increasedContrast: contrast))).cgColor
         fillLayer.backgroundColor = NSColor.white.withAlphaComponent(CGFloat(NotchLevelEars.fillAlpha)).cgColor
         layer?.addSublayer(symbolLayer)
+        layer?.addSublayer(maxLayer)
         layer?.addSublayer(trackLayer)
         layer?.addSublayer(fillLayer)
         setAccessibilityElement(true)
@@ -1010,21 +1020,28 @@ final class NowPlayingVolumeRowView: NSView {
         self.value = value
         self.muted = muted
         let scale = window?.backingScaleFactor ?? NSScreen.main?.backingScaleFactor ?? 2
-        if symbol != shownSymbol {
-            shownSymbol = symbol
-            let configuration = NSImage.SymbolConfiguration(pointSize: 15, weight: .medium)
-                .applying(.init(paletteColors: [NSColor.white]))
-            if let image = NSImage(systemSymbolName: symbol, accessibilityDescription: nil)?.withSymbolConfiguration(configuration) {
+        if shownSymbol == nil {
+            // 两头的标记固定不变（稿：滑条两头的“最小 / 最大”），只画一次。
+            shownSymbol = NowPlayingVolumeRow.minMarkerSymbol
+            func image(_ name: String, size: CGFloat) -> CGImage? {
+                let configuration = NSImage.SymbolConfiguration(pointSize: size, weight: .medium)
+                    .applying(.init(paletteColors: [NSColor.white]))
+                guard let image = NSImage(systemSymbolName: name, accessibilityDescription: nil)?.withSymbolConfiguration(configuration) else { return nil }
                 var rect = NSRect(origin: .zero, size: image.size)
-                symbolLayer.contents = image.cgImage(forProposedRect: &rect, context: nil, hints: nil)
+                return image.cgImage(forProposedRect: &rect, context: nil, hints: nil)
             }
+            symbolLayer.contents = image(NowPlayingVolumeRow.minMarkerSymbol, size: 15 * NowPlayingVolumeRow.minMarkerScale)
+            maxLayer.contents = image(NowPlayingVolumeRow.maxMarkerSymbol, size: 15)
             symbolLayer.contentsScale = scale
+            maxLayer.contentsScale = scale
         }
         let range = NowPlayingVolumeRow.barRange(rowWidth: bounds.width)
         let width = range.upperBound - range.lowerBound
         let thickness = NowPlayingVolumeRow.barThickness
         CATransaction.begin(); CATransaction.setDisableActions(true)
         symbolLayer.frame = CGRect(x: 0, y: 0, width: NowPlayingVolumeRow.symbolWidth, height: bounds.height)
+        maxLayer.frame = CGRect(x: bounds.width - NowPlayingVolumeRow.maxMarkerWidth, y: 0,
+                                width: NowPlayingVolumeRow.maxMarkerWidth, height: bounds.height)
         trackLayer.bounds = CGRect(x: 0, y: 0, width: width, height: thickness)
         trackLayer.position = CGPoint(x: range.lowerBound, y: bounds.midY)
         trackLayer.cornerRadius = thickness / 2

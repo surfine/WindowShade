@@ -15,6 +15,7 @@ struct FileDragSensorTests {
 
     static func main() {
         classification()
+        promises()
         plan()
         geometry()
         MainActor.assumeIsolated { pasteboard() }
@@ -41,6 +42,27 @@ struct FileDragSensorTests {
         expect(FileDragKind.files(count: 1, hasFolder: true).holdingLabel == "文件夹", "左耳：文件夹")
         expect(FileDragKind.files(count: 1, hasFolder: false).holdingLabel == "文件", "左耳：一个文件")
         expect([FileDragKind.text, .image, .link].map(\.holdingLabel) == ["文字", "图片", "链接"], "左耳：文字、图片、链接")
+    }
+
+    static func promises() {
+        // 承诺文件：收齐后只回一次，成功的收下、失败的数出来。
+        nonisolated(unsafe) var calls: [([URL], Int)] = []
+        let collector = FileShelfPromises.Collector(expected: 3) { urls, failed in calls.append((urls, failed)) }
+        collector.record(url: URL(fileURLWithPath: "/tmp/b.pdf"))
+        expect(calls.isEmpty, "还有承诺没回来：先不交")
+        collector.record(url: nil)
+        collector.record(url: URL(fileURLWithPath: "/tmp/a.pdf"))
+        expect(calls.count == 1 && calls[0].0.map(\.lastPathComponent) == ["a.pdf", "b.pdf"] && calls[0].1 == 1,
+               "收齐后交一次：两个收下、一个失败")
+        nonisolated(unsafe) var empty: [([URL], Int)] = []
+        _ = FileShelfPromises.Collector(expected: 0) { urls, failed in empty.append((urls, failed)) }
+        expect(empty.count == 1 && empty[0].0.isEmpty, "没有承诺：立即交空")
+        expect(FileShelfPromises.defaultDestination.path.hasSuffix("WindowShade/文件架/收到的"), "承诺文件收在文件架自己的文件夹，不放临时目录")
+        expect(!FileShelfPromises.failureText.isEmpty && !FileShelfPromises.failureText.contains("NSFile"), "失败说一句人话")
+        let pb = NSPasteboard(name: NSPasteboard.Name("WindowShade.FileDragSensorTests.promise.\(UUID().uuidString)"))
+        defer { pb.releaseGlobally() }
+        pb.clearContents()
+        expect(FileDropPayload.read(pb, kind: .files(count: 1, hasFolder: false)) == nil, "什么都没有：认不出")
     }
 
     static func plan() {

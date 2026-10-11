@@ -5,7 +5,7 @@ cd "$(dirname "$0")/.."
 mkdir -p .build/file-drag-tests
 swiftc -parse-as-library -O -swift-version 6 -strict-concurrency=complete -warnings-as-errors \
   prototype/Core/FileShelfModel.swift \
-  prototype/App/FileShelfStore.swift \
+  prototype/App/FileShelfStore.swift prototype/Core/ReleaseDefaults.swift \
   prototype/App/FileDragSensor.swift \
   tests/FileDragSensorTests.swift \
   -o .build/file-drag-tests/tests

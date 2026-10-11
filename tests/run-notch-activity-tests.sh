@@ -4,7 +4,7 @@
 set -euo pipefail
 root=$(cd "$(dirname "$0")/.." && pwd)
 mkdir -p "$root/.build/notch-activity-tests"
-swiftc "$root/prototype/Core/NotchActivities.swift" "$root/prototype/App/NotchActivityPollPolicy.swift" \
+swiftc "$root/prototype/Core/WireJSON.swift" "$root/prototype/Core/UsageReading.swift" "$root/prototype/Core/NotchActivities.swift" "$root/prototype/Core/ReleaseDefaults.swift" "$root/prototype/App/NotchActivityPollPolicy.swift" \
   "$root/tests/NotchActivityTests.swift" \
   -o "$root/.build/notch-activity-tests/tests"
 "$root/.build/notch-activity-tests/tests"
@@ -12,6 +12,6 @@ swiftc "$root/prototype/Core/NotchActivities.swift" "$root/prototype/App/NotchAc
 swiftc -swift-version 6 "$root/prototype/Core/NowPlayingStreamParser.swift" "$root/prototype/App/NotchActivityPollPolicy.swift" \
   "$root/tests/NowPlayingStreamTests.swift" -o "$root/.build/notch-activity-tests/now-playing-tests"
 "$root/.build/notch-activity-tests/now-playing-tests"
-swiftc "$root/prototype/Core/NotchActivities.swift" "$root/prototype/Core/DownloadActivity.swift" "$root/prototype/Core/NotchSentence.swift" \
+swiftc "$root/prototype/Core/WireJSON.swift" "$root/prototype/Core/UsageReading.swift" "$root/prototype/Core/NotchActivities.swift" "$root/prototype/Core/ReleaseDefaults.swift" "$root/prototype/Core/DownloadActivity.swift" "$root/prototype/Core/NotchSentence.swift" \
   "$root/tests/DownloadActivityTests.swift" -o "$root/.build/notch-activity-tests/download-tests"
 exec "$root/.build/notch-activity-tests/download-tests"

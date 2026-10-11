@@ -5,8 +5,8 @@ def run(cmd):
  st=time.monotonic();v=subprocess.run(list(map(str,cmd)),capture_output=True,text=True,timeout=80)
  records.append(dict(argv=list(map(str,cmd)),exit_code=v.returncode,stdout=v.stdout,stderr=v.stderr,seconds=time.monotonic()-st));(out/'build-commands.json').write_text(json.dumps(records,indent=2,ensure_ascii=False)+'\n');print(v.stdout,end='');print(v.stderr,end='')
  if v.returncode:raise SystemExit(v.returncode)
-core='Contracts WS2FocusWindowOwnership WS2DeviceInputGate PairingAttemptWindow PairingTLV CodexWire WS2CompanionFrame WS2ApprovalReview FocusTimer GamepadMapping WS2BoundedOutbox WS2FocusEffectPlan WS2SemanticInputRouter WS2DiagnosticTail WS2OwnedScope WS2SelectionModel WS2ConnectionBudget WS2StrictJSON WS2OwnedProtocolHost WS2QuitBarrier AgentSessions WS2DeviceActionContracts WS2VisibleListInput WS2FoldEvidence FoldVerifier WS2FoldCallbackStamp'.split()
-support='WS2PeerRepository WS2PairSetupServer WS2PairSetupCrypto WS2FocusEffectExecutor WS2DuplexProcess WS2ProjectDirectory WS2LocalLaunchProfile WS2VersionProbe'.split()
+core='Contracts WireJSON UsageReading WS2FocusWindowOwnership WS2DeviceInputGate PairingAttemptWindow PairingTLV CodexWire WS2CompanionFrame WS2ApprovalReview FocusTimer GamepadMapping WS2BoundedOutbox WS2FocusEffectPlan WS2SemanticInputRouter WS2DiagnosticTail WS2OwnedScope WS2SelectionModel WS2ConnectionBudget WS2StrictJSON WS2OwnedProtocolHost WS2QuitBarrier AgentSessions WS2DeviceActionContracts WS2VisibleListInput WS2FoldEvidence FoldVerifier WS2FoldCallbackStamp'.split()
+support='WS2PeerRepository WS2PureSRP WS2PairSetupServer WS2PairSetupCrypto WS2FocusEffectExecutor WS2DuplexProcess WS2ProjectDirectory WS2LocalLaunchProfile WS2VersionProbe'.split()
 # 本仓库把共享仲裁放在 Core/（v9 候选里在 App/）。
 app_files=['FocusTimerHost','WS2OwnedCodexSession','WS2OwnedLaunchController','WS2DeviceActionHost']
 coord=r/'Core/InteractionCoordinator.swift' if (r/'Core/InteractionCoordinator.swift').exists() else r/'App/InteractionCoordinator.swift'

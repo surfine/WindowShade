@@ -148,7 +148,7 @@ import Foundation
         let suite = "NotchLevelLV4Tests.\(ProcessInfo.processInfo.processIdentifier)"
         let defaults = UserDefaults(suiteName: suite)!
         defer { defaults.removePersistentDomain(forName: suite) }
-        precondition(NotchLevelSetting.isEnabled(in: defaults), "默认开")
+        precondition(!NotchLevelSetting.isEnabled(in: defaults), "1.0.16 真机验过前默认关（ReleaseDefaults）")
         NotchLevelSetting.setEnabled(false, in: defaults)
         precondition(!NotchLevelSetting.isEnabled(in: defaults))
         NotchLevelSetting.setEnabled(true, in: defaults)

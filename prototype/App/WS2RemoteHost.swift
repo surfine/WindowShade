@@ -547,8 +547,9 @@ enum WS2RemoteCopy {
         func status(_ name: String) -> [String: WS2OPACK.Value] {
             switch name {
             case "SystemStatus", "TVSystemStatus": return ["state": .uint(3)]
-            case "MediaControlStatus": return ["MediaControlFlags": .uint(0)]
-            case "_iMC": return ["_mcF": .uint(0)]
+            // 0x0100 = 音量控制可用（atv-core 事实：通告它 iPhone 音量键和 _mcc 5/6 才会来）。
+            case "MediaControlStatus": return ["MediaControlFlags": .uint(0x0100)]
+            case "_iMC": return ["_mcF": .uint(0x0100)]
             default: return [:]
             }
         }
@@ -583,12 +584,30 @@ enum WS2RemoteCopy {
                     events.append((name, status(name), true))
                 }
             }
-        case "FetchMediaControlStatus": if reply != nil { reply = ["MediaControlFlags": .uint(0)] }
+        case "FetchMediaControlStatus": if reply != nil { reply = ["MediaControlFlags": .uint(0x0100)] }
         case "FetchAttentionState": if reply != nil { reply = ["state": .uint(3)] }
         case "FetchLaunchableApplicationsEvent": resultType = 2
         case "MediaControlCommand", "_mcc":
-            if case .uint(5) = message.content["MediaControlCommand"] ?? message.content["_mcc"] ?? .null, reply != nil {
-                reply = ["_vol": .real(0.5)]
+            if let long = message.content["MediaControlCommand"], let short = message.content["_mcc"], long != short { throw Failure.malformed }
+            guard case .uint(let command) = message.content["MediaControlCommand"] ?? message.content["_mcc"] ?? .null else { throw Failure.malformed }
+            switch command {
+            case 5:
+                // 读不到按 0：对端把 0 当静音，不会误报高音量。
+                if reply != nil { reply = ["_vol": .real(layerEffects?.mediaVolume() ?? 0)] }
+            case 6:
+                let value: Double
+                switch message.content["_vol"] {
+                case .real(let number): value = number
+                case .uint(let number): value = Double(number)
+                default: throw Failure.malformed
+                }
+                guard value.isFinite else { throw Failure.malformed }
+                layerEffects?.setMediaVolume(value)
+            case 12:
+                // 字幕开关：这台接收端没有字幕功能。
+                if reply != nil { reply = ["_cse": .bool(false)] }
+            default:
+                break // 参考行为：未知媒体命令回空应答。
             }
         default:
             break // 不认识的方法：有事务号就回空，没有就不说话；都不进输入或动作入口。
@@ -868,7 +887,7 @@ enum WS2RemoteCopy {
 }
 
 extension WS2RemoteHost {
-    /// App 里的宿主：钥匙串存配对、Bonjour 宣告、刘海里说话。App 还没有原生 SRP，暂时不能配新 iPhone。
+    /// App 里的宿主：钥匙串存配对、Bonjour 宣告、刘海里说话。原生 SRP 已接（WS2PureSRP），能配新 iPhone。
     static func makeForApp() -> WS2RemoteHost {
         let environment = WS2RemoteHostEnvironment(
             clock: WS2ContinuousClock(),
@@ -876,7 +895,11 @@ extension WS2RemoteHost {
             makeListener: { name, identifier, accept, state in
                 try WS2RemoteBonjourListener(name: name, identifier: identifier, accept: accept, state: state)
             },
-            makePairSetupEngine: nil,
+            makePairSetupEngine: { identifier, signingSeed in
+                // 纯 Swift SRP（真机第四轮起 srptoolsMinimal 规约配对通过；C 交叉验证见 tests/run-srp-cross-check.sh）。
+                try WS2PairSetupCrypto(srp: WS2PureSRP(convention: .srptoolsMinimal),
+                                       identifier: identifier, signingSeed: signingSeed)
+            },
             macName: { (SCDynamicStoreCopyComputerName(nil, nil) as String?) ?? "Mac" },
             makeEffectPort: { WS2RemoteSystemPort() })
         let host = WS2RemoteHost(environment: environment, log: WS2RemoteDiagnosticsLog())

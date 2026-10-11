@@ -8,7 +8,7 @@ swiftc -swift-version 6 -strict-concurrency=complete -warnings-as-errors -parse-
   prototype/Core/ScrollStrip.swift prototype/Core/MagicTiling.swift prototype/Core/ArrangeGap.swift \
   prototype/Core/FlickMotion.swift prototype/Core/StripNotchExchange.swift \
   prototype/Core/Contracts.swift prototype/Core/FocusNavigator.swift prototype/Core/NotchSentence.swift \
-  prototype/Core/NotchActivities.swift prototype/Core/NotchRow.swift prototype/Core/InteractionCoordinator.swift \
+  prototype/Core/WireJSON.swift prototype/Core/UsageReading.swift prototype/Core/NotchActivities.swift prototype/Core/ReleaseDefaults.swift prototype/Core/NotchRow.swift prototype/Core/InteractionCoordinator.swift \
   tests/StripNotchExchangeTests.swift \
   -o .build/strip-notch-exchange-tests/tests
 .build/strip-notch-exchange-tests/tests

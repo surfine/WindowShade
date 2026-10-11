@@ -7,14 +7,14 @@
 // 守卫（docs/direction.md 最后一张表）：这个 App 还有看不见的窗口（最小化的、在别的桌面上的、整扇在屏幕外面的）时，
 // 他点图标多半是在找窗口，不让开；有最小化的就把一扇还原到前面（一次一扇，不一下全放出来）。在别的桌面上、在屏幕外的不去搬。
 // 屏幕外的要 App 自己说是标准窗口才算（停在屏幕外的辅助窗口不算）。
-// 分类见 Core/DockClickGuard.swift。默认值：换机的人（欢迎窗口里答了 Windows 或 iPad）默认关，其余默认开。
+// 分类见 Core/DockClickGuard.swift。默认值由 ReleaseDefaults 控制；保留显式设置和既有测试版偏好。
 
 import Cocoa
 
 @MainActor
 final class DockClickHide {
     nonisolated static let key = "Dock.clickToHide"
-    /// 设置里的开关。没动过时：换机的人默认关；用过 1.0.16 测试版的照旧开着；其余默认开（见 DockClickHideDefault）。
+    /// 设置里的开关。没动过时：换机的人默认关；用过 1.0.16 测试版的照旧开着；其余按发布总账（见 DockClickHideDefault）。
     nonisolated static var isEnabled: Bool {
         get {
             if let stored = UserDefaults.standard.object(forKey: key) as? Bool { return stored }

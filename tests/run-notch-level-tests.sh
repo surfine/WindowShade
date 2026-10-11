@@ -35,6 +35,6 @@ swiftc -swift-version 6 -parse-as-library prototype/Core/NotchLevelGate.swift pr
 swiftc -swift-version 6 -strict-concurrency=complete -warnings-as-errors -parse-as-library \
   prototype/Core/NotchLevelGate.swift prototype/Core/NotchLevelStep.swift prototype/Core/NotchLevelSuppression.swift \
   prototype/Core/NotchLevelEars.swift prototype/Core/NotchLevelOutput.swift prototype/Core/NotchLevelScreen.swift \
-  prototype/Core/NotchLevelSetting.swift prototype/Core/FlickMotion.swift tests/NotchLevelLV4Tests.swift \
+  prototype/Core/NotchLevelSetting.swift prototype/Core/ReleaseDefaults.swift prototype/Core/FlickMotion.swift tests/NotchLevelLV4Tests.swift \
   -o .build/notch-level-tests/lv4
 .build/notch-level-tests/lv4

@@ -84,7 +84,7 @@ final class MissionControlKeys {
 
     static var isEnabled: Bool {
         let defaults = UserDefaults.standard
-        if defaults.object(forKey: defaultsKey) == nil { return true }
+        if defaults.object(forKey: defaultsKey) == nil { return ReleaseDefaults.value(defaultsKey) }
         return defaults.bool(forKey: defaultsKey)
     }
 

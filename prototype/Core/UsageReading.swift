@@ -4,6 +4,27 @@
 
 import Foundation
 
+/// 一次额度读数在会话右耳和展开格里要用的几项。来源见 `UsageReading`；这里只管怎么写。
+struct CodingSessionUsage: Equatable, Sendable {
+    /// 剩余百分比（0...100，整数）。同一屏始终写“剩余”。
+    var leftPercent: Int
+    /// “2 小时后”“周五 16:00”这样的恢复时间；来源没给就是 nil。后面接“恢复”。
+    var recovery: String?
+    var model: String?
+    var effort: String?
+    /// 额度窗口的身份（时长加恢复时刻）：同一个窗口只提醒一次。
+    var windowKey: String
+
+    static let lowThreshold = 10
+    var isLow: Bool { leftPercent <= Self.lowThreshold }
+    var compactText: String { "剩 \(leftPercent)%" }
+    /// 展开格里的一段：恢复时间 · 模型 · 强度，缺哪个省哪个。
+    var detailText: String {
+        [recovery.map { "\($0)恢复" }, model, effort].compactMap { $0 }.filter { !$0.isEmpty }.joined(separator: " · ")
+    }
+}
+
+
 struct UsageWindow: Equatable, Sendable {
     /// 已用百分比，0...100。
     var usedPercent: Double

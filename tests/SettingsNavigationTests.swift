@@ -51,6 +51,8 @@ struct SettingsNavigationTests {
     let rowsBySection: [(WindowShadeSettingsSection, [String])] = [
       (.browser, ["在菜单里显示“选择窗口…”", "面板背景", "默认显示方式"]),
       (.shortcuts, ["整理卷帘条", "选择窗口…"]),
+      // 卷轴概览能收进刘海（stripOverviewNotch，默认关）。
+      (.shade, ["卷轴概览能收进刘海"]),
       // 隐私页（原权限与启动）没有“标签 + 右侧控件”的行，这里只为出浅深色截图。
       (.permissions, []),
     ]
@@ -92,6 +94,22 @@ struct SettingsNavigationTests {
     precondition(WS2PrivacyData.rows.contains { $0.id == "agent-voice-proof" && $0.status == "planned" },
                  "声纹行留在 planned")
     settings.window?.setContentSize(NSSize(width: 820, height: 580))
+    // 开关：默认关，改了立刻发通知（卷轴开着也马上生效），关回去不留键。
+    do {
+      let key = ScrollStripController.notchLinkKey
+      let saved = UserDefaults.standard.object(forKey: key)
+      defer { if let saved { UserDefaults.standard.set(saved, forKey: key) } else { UserDefaults.standard.removeObject(forKey: key) } }
+      UserDefaults.standard.removeObject(forKey: key)
+      precondition(!ScrollStripController.notchLinkEnabled(), "卷轴概览收进刘海默认关")
+      nonisolated(unsafe) var heard = 0
+      let token = NotificationCenter.default.addObserver(forName: ScrollStripController.notchLinkChanged, object: nil, queue: nil) { _ in heard += 1 }
+      ScrollStripController.setNotchLinkEnabled(true)
+      precondition(ScrollStripController.notchLinkEnabled() && heard == 1, "打开：写键并通知")
+      ScrollStripController.setNotchLinkEnabled(false)
+      precondition(!ScrollStripController.notchLinkEnabled() && heard == 2
+                   && UserDefaults.standard.object(forKey: key) == nil, "关掉：通知并删键")
+      NotificationCenter.default.removeObserver(token)
+    }
     for (section, names) in rowsBySection {
     settings.select(section: section)
     for appearance in [NSAppearance.Name.aqua, .darkAqua] {

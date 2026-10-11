@@ -391,7 +391,9 @@ if [ "$stage_only" = "1" ]; then
   UPDATER_WIRED=1
   for wiring in "main.swift:UpdateLaunch.handleEarlyArguments" "main.swift:UpdateLaunch.recordLaunch" \
     "WindowShade.swift:UpdaterController.shared.start()" "WindowShade.swift:UpdaterController.shared.applicationWillTerminate()" \
-    "WindowShade.swift:UpdaterController.shared.applicationShouldTerminate()"; do
+    "WindowShade.swift:ws2Runtime.applicationShouldTerminate()" \
+    "App/WS2AppRuntime.swift:UpdaterController.shared.applicationShouldTerminate()" \
+    "App/WS2AppRuntime.swift:UpdaterController.shared.terminationResponse="; do
     if ! grep -qF "${wiring#*:}" "${wiring%%:*}"; then
       echo "WARNING: ${wiring%%:*} 里没有 ${wiring#*:}：更新器没接齐，这个包不能发布。" >&2
       UPDATER_WIRED=0

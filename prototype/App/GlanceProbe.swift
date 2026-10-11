@@ -674,7 +674,10 @@ final class GlanceProbe {
     owner.duoController.stop()
     fixture?.terminate()
     fixture = nil
-    print(error.map { "FAIL glance: \($0)" } ?? "PASS glance: suite\(single ? " (single window)" : "")")
+    let verdict = error.map { "FAIL \($0)" } ?? "PASS suite\(single ? " (single window)" : "")"
+    print("verdict: \(verdict)")
+    // open --args 启动时 stdout 不可收：判定同时进产品日志，验收从日志收割。
+    wlog("glance-probe verdict: \(verdict)")
     WindowShadeLogger.shared.flushAndClose()
     fflush(stdout)
     exit(error == nil ? 0 : 1)

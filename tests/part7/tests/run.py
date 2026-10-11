@@ -13,7 +13,7 @@ def run(args,timeout=40):
 files=['Core/Contracts.swift','Core/WS2QuitBarrier.swift','Core/WS2StrictJSON.swift','Core/CodexWire.swift','Core/WS2OwnedProtocolHost.swift',
        'Core/WS2BoundedOutbox.swift','Core/WS2DiagnosticTail.swift','Core/WS2OwnedScope.swift','Core/AgentSessions.swift',
        'Support/WS2ProjectDirectory.swift','Support/WS2LocalLaunchProfile.swift','Support/WS2VersionProbe.swift',
-       'Support/WS2DuplexProcess.swift','App/WS2OwnedCodexSession.swift','App/WS2OwnedLaunchController.swift']
+       'Support/WS2DuplexProcess.swift','Core/WireJSON.swift','Core/UsageReading.swift','App/WS2OwnedCodexSession.swift','App/WS2OwnedLaunchController.swift']
 with tempfile.TemporaryDirectory(prefix='ws2-build-') as d:
     build=pathlib.Path(d);obj=build/'child.o';binary=build/'suite'
     run(['cc','-std=c11','-O2','-Wall','-Wextra','-Werror','-c',source/'Native/WS2Child.c','-o',obj])

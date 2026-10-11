@@ -28,7 +28,8 @@ enum NotchActivityAction: String {
 enum NotchNowPlayingDefaults {
     static let musicKey = "Notch.activities.musicEnabled"
     static let streamKey = "Notch.activities.nowPlayingStream"
-    static let defaultEnabled = true
+    /// 没设过时的值：走 1.0.16 默认值总账（真机验过才开）。
+    static func defaultEnabled(forKey key: String) -> Bool { ReleaseDefaults.value(key) }
 
     /// 一个键现在是什么状态：没设过、显式开、显式关。
     enum State: Equatable { case unset, on, off }
@@ -40,7 +41,7 @@ enum NotchNowPlayingDefaults {
 
     static func isEnabled(key: String, in defaults: UserDefaults) -> Bool {
         switch state(forKey: key, in: defaults) {
-        case .unset: return defaultEnabled
+        case .unset: return defaultEnabled(forKey: key)
         case .on: return true
         case .off: return false
         }
@@ -1146,26 +1147,6 @@ struct CodingSessionActivities {
     }
 }
 
-/// 一次额度读数在会话右耳和展开格里要用的几项。来源见 `UsageReading`；这里只管怎么写。
-struct CodingSessionUsage: Equatable, Sendable {
-    /// 剩余百分比（0...100，整数）。同一屏始终写“剩余”。
-    var leftPercent: Int
-    /// “2 小时后”“周五 16:00”这样的恢复时间；来源没给就是 nil。后面接“恢复”。
-    var recovery: String?
-    var model: String?
-    var effort: String?
-    /// 额度窗口的身份（时长加恢复时刻）：同一个窗口只提醒一次。
-    var windowKey: String
-
-    static let lowThreshold = 10
-    var isLow: Bool { leftPercent <= Self.lowThreshold }
-    var compactText: String { "剩 \(leftPercent)%" }
-    /// 展开格里的一段：恢复时间 · 模型 · 强度，缺哪个省哪个。
-    var detailText: String {
-        [recovery.map { "\($0)恢复" }, model, effort].compactMap { $0 }.filter { !$0.isEmpty }.joined(separator: " · ")
-    }
-}
-
 /// 紧凑右耳上编程会话的样子。转圈只在状态变化时改，不另起计时：Core Animation 自己转，帧率压到最低够用。
 enum NotchSessionEar {
     /// 转圈的帧率范围（CAFrameRateRange）：最低 10、最高 20、首选 15。
@@ -1282,7 +1263,8 @@ enum NotchActivitySwipe {
 /// `enabled` 为 false 时这里的每个函数都给出和现在一模一样的决定：紧凑是谁、有没有最小形、提醒撞上播放时怎么办。
 enum NotchMinimalPresentation {
     static let defaultsKey = "Notch.minimalPresentation"
-    static let defaultEnabled = true
+    /// 走 1.0.16 默认值总账（真机验过才开）。
+    static var defaultEnabled: Bool { ReleaseDefaults.value(defaultsKey) }
 
     /// 键里没有值用默认；显式开或关的值原样用。
     static func isEnabled(in defaults: UserDefaults) -> Bool {

@@ -30,7 +30,7 @@ export const copy = {
     intro: '双击标题栏，窗口收成一条卷帘条，停在原处。<br>再双击，它原样回来。',
     try: '先看看怎么用',
     video: '看介绍视频',
-    facts: ['macOS 14 及以上', 'Apple Silicon', '免费 · MIT 开源', '1.0.16 · ZIP 6.49 MB'],
+    facts: ['macOS 14 及以上', 'Apple Silicon', '免费 · MIT 开源', '1.0.15 · ZIP 4.06 MB'],
 
     stageLabel: '网页示意：一张 Mac 桌面，上面有两扇窗口',
     stageMenu: ['文本编辑', '文件', '编辑', '格式', '显示', '窗口'],
@@ -112,7 +112,7 @@ export const copy = {
 
     notchKicker: '收进刘海',
     notchTitle: '刘海，<br>也能装窗口。',
-    notchIntro: '朝刘海甩一下标题栏，窗口缩小、飞进刘海，桌面一下子空了。刘海两边露出它的图标和个数；指针停上去，刘海往下展开成一排，点一下，它回到原来的位置。',
+    notchIntro: '1.0.16 候选功能，尚未发布，需在设置里打开。朝刘海甩一下标题栏，窗口缩小、飞进刘海，桌面一下子空了。刘海两边露出它的图标和个数；指针停上去，刘海往下展开成一排，点一下，它回到原来的位置。',
     notchPoints: [
       ['一个入口，找回所有收着的窗口', '收进刘海的、卷帘条、侧拉的、带到每张桌面的窗口，都排在这一排里。点哪一格，哪一扇就回到它该在的地方。'],
       ['有变化，刘海告诉你', '收着的窗口标题变了，比如编译完成、下载好了，刘海短暂展开说一句就收回，格子上留一个点。一直在变的窗口只标点，不打扰你。'],
@@ -244,7 +244,7 @@ export const copy = {
     intro: 'Double-click a title bar and the window rolls up into a thin bar, right where it was. Double-click again and it’s back.',
     try: 'See how it works',
     video: 'Watch the intro (in Chinese)',
-    facts: ['macOS 14 or later', 'Apple Silicon', 'Free · MIT licensed', '1.0.16 · ZIP 6.49 MB'],
+    facts: ['macOS 14 or later', 'Apple Silicon', 'Free · MIT licensed', '1.0.15 · ZIP 4.06 MB'],
 
     stageLabel: 'Browser illustration: a Mac desktop with two windows',
     stageMenu: ['TextEdit', 'File', 'Edit', 'Format', 'View', 'Window'],
@@ -326,7 +326,7 @@ export const copy = {
 
     notchKicker: 'Tuck into the notch',
     notchTitle: 'The notch<br>can hold windows.',
-    notchIntro: 'Flick a title bar toward the notch and the window shrinks and flies into it, clearing your desk. Its icon and a count show beside the notch; rest the pointer there and the notch opens into a row. Click one and it goes back where it was.',
+    notchIntro: 'An unreleased 1.0.16 candidate feature, off until enabled in Settings. Flick a title bar toward the notch and the window shrinks and flies into it, clearing your desk. Its icon and a count show beside the notch; rest the pointer there and the notch opens into a row. Click one and it goes back where it was.',
     notchPoints: [
       ['One place for every put-away window', 'Windows tucked into the notch, rolled-up bars, Slide Over and windows on every desktop all sit in that row. Click a card and that window goes back where it belongs.'],
       ['The notch tells you when something changes', 'When a tucked window’s title changes, say a build finishes or a download completes, the notch opens briefly to say so, then leaves a dot on its card. Windows that change all the time only get the dot.'],

@@ -254,6 +254,8 @@ enum FileDropGeometry {
 /// 松在格子上才读的内容。
 enum FileDropPayload {
     case files([URL])
+    /// 从邮件、照片这类 App 拖来的“承诺文件”：松手后才由对方写出来（NSFilePromiseReceiver）。
+    case promises([NSFilePromiseReceiver])
     case text(String)
     case image(Data, fileExtension: String)
     case link(URL)
@@ -263,7 +265,9 @@ enum FileDropPayload {
         switch kind {
         case .files:
             let urls = (pasteboard.readObjects(forClasses: [NSURL.self], options: [.urlReadingFileURLsOnly: true]) as? [URL]) ?? []
-            return urls.isEmpty ? nil : .files(urls)
+            if !urls.isEmpty { return .files(urls) }
+            let receivers = (pasteboard.readObjects(forClasses: [NSFilePromiseReceiver.self], options: nil) as? [NSFilePromiseReceiver]) ?? []
+            return receivers.isEmpty ? nil : .promises(receivers)
         case .image:
             if let png = pasteboard.data(forType: .png) { return .image(png, fileExtension: "png") }
             if let jpeg = pasteboard.data(forType: NSPasteboard.PasteboardType("public.jpeg")) { return .image(jpeg, fileExtension: "jpg") }
@@ -286,6 +290,7 @@ enum FileDropPayload {
     var sharingItems: [Any] {
         switch self {
         case .files(let urls): return urls
+        case .promises: return []
         case .text(let text): return [text]
         case .image(let data, _): return NSImage(data: data).map { [$0] } ?? []
         case .link(let url): return [url]
@@ -297,21 +302,90 @@ enum FileDropPayload {
         switch self {
         case .files(let urls): return urls
         case .link(let url): return [url]
-        case .text, .image: return []
+        case .text, .image, .promises: return []
         }
     }
 
     /// 放进文件架（异步；结果回主线程）。
     @MainActor
-    func stage(into store: FileShelfStore, completion: @escaping @MainActor (FileShelfAddOutcome) -> Void) {
+    func stage(into store: FileShelfStore, completion: @escaping @MainActor (FileShelfAddOutcome) -> Void,
+               failure: @escaping @MainActor (String) -> Void = { _ in }) {
         let done: @Sendable (FileShelfAddOutcome) -> Void = { outcome in
             DispatchQueue.main.async { MainActor.assumeIsolated { completion(outcome) } }
         }
         switch self {
         case .files(let urls): store.add(urls: urls, completion: done)
+        case .promises(let receivers):
+            FileShelfPromises.receive(receivers) { urls, failed in
+                if failed > 0 { DispatchQueue.main.async { MainActor.assumeIsolated { failure(FileShelfPromises.failureText) } } }
+                if urls.isEmpty {
+                    done(FileShelfAddOutcome(rejection: .empty))
+                } else {
+                    store.add(urls: urls, completion: done)
+                }
+            }
         case .text(let text): store.addText(text, completion: done)
         case .image(let data, let ext): store.addImage(data, fileExtension: ext, completion: done)
         case .link(let url): store.addLink(url, completion: done)
+        }
+    }
+}
+
+/// 收承诺文件（NSFilePromiseReceiver）：对方把文件写进我们给的文件夹，收齐后照常记位置（书签）。
+/// 写进文件架自己的“收到的”文件夹，不放临时目录，免得系统清掉后书签找不到。
+enum FileShelfPromises {
+    static let failureText = "这个文件没能拿到，没有放进文件架"
+
+    static var defaultDestination: URL {
+        FileShelf.defaultRoot.appendingPathComponent("收到的", isDirectory: true)
+    }
+
+    private static let queue: OperationQueue = {
+        let queue = OperationQueue()
+        queue.name = "WindowShade.FileShelf.promises"
+        queue.qualityOfService = .utility
+        return queue
+    }()
+
+    /// 汇总每个承诺的结果；全部回来后只调一次 finish。
+    final class Collector: @unchecked Sendable {
+        private let lock = NSLock()
+        private var remaining: Int
+        private var urls: [URL] = []
+        private var failed = 0
+        private let finish: @Sendable ([URL], Int) -> Void
+
+        init(expected: Int, finish: @escaping @Sendable ([URL], Int) -> Void) {
+            remaining = expected
+            self.finish = finish
+            if expected <= 0 { finish([], 0) }
+        }
+
+        func record(url: URL?) {
+            lock.lock()
+            if let url { urls.append(url) } else { failed += 1 }
+            remaining -= 1
+            let done = remaining == 0
+            let result = (urls, failed)
+            lock.unlock()
+            if done { finish(result.0.sorted { $0.path < $1.path }, result.1) }
+        }
+    }
+
+    @MainActor
+    static func receive(_ receivers: [NSFilePromiseReceiver], destination: URL = defaultDestination,
+                        finish: @escaping @Sendable ([URL], Int) -> Void) {
+        let expected = receivers.reduce(0) { $0 + max(1, $1.fileNames.count) }
+        let collector = Collector(expected: expected, finish: finish)
+        let batch = destination.appendingPathComponent(UUID().uuidString, isDirectory: true)
+        guard (try? FileManager.default.createDirectory(at: batch, withIntermediateDirectories: true)) != nil else {
+            for _ in 0..<expected { collector.record(url: nil) }
+            return
+        }
+        for receiver in receivers {
+            receiver.receivePromisedFiles(atDestination: batch, options: [:], operationQueue: queue) { url, error in
+                collector.record(url: error == nil ? url : nil)
+            }
         }
     }
 }
