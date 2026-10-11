@@ -1,4 +1,5 @@
 import Foundation
+@preconcurrency import Network
 
 @MainActor enum RemoteOfflineTests {
     enum Failure: Error { case assertion(String) }
@@ -103,6 +104,48 @@ import Foundation
         try check(owner.memory.bytes != nil, "memory provisioned")
         owner.stop()
         try check(owner.memory.bytes == nil && !owner.running, "stop destroys persisted-memory bytes")
+
+        // The close ledger is exercised without starting a listener or opening a socket.
+        let probeConnection = NWConnection(host: NWEndpoint.Host("127.0.0.1"),
+                                            port: NWEndpoint.Port(rawValue: 1)!, using: .tcp)
+        let transport = WS2CompanionTCPTransport(connection: probeConnection, connectionIndex: 7,
+            clock: { 1.0 }, isCurrent: { true })
+        var closeEvents = 0
+        var closeSnapshot: WS2TransportCloseSnapshot?
+        transport.onCloseWithDiagnostics = { snapshot in closeEvents += 1; closeSnapshot = snapshot }
+        _ = transport.close(cause: .protocolReject)
+        _ = transport.close(cause: .ownerStop)
+        try check(closeEvents == 1, "close diagnostics emit once")
+        try check(closeSnapshot?.connectionIndex == 7 && closeSnapshot?.cause == .protocolReject,
+                  "close diagnostics retain first cause")
+        try check(closeSnapshot?.outboxEntries == 0 && closeSnapshot?.outboxBytes == 0,
+                  "close diagnostics expose cleared outbox snapshot")
+
+        let capacityConnection = NWConnection(host: NWEndpoint.Host("127.0.0.1"),
+                                               port: NWEndpoint.Port(rawValue: 2)!, using: .tcp)
+        let capacityTransport = WS2CompanionTCPTransport(connection: capacityConnection,
+            connectionIndex: 8, clock: { 1.0 }, isCurrent: { true })
+        var outcomes: [WS2TransportSendOutcome] = []
+        var capacitySnapshot: WS2TransportCloseSnapshot?
+        capacityTransport.onSendOutcome = { outcomes.append($0) }
+        capacityTransport.onCloseWithDiagnostics = { capacitySnapshot = $0 }
+        let wireHeader = Data([1, 0, 0, 0])
+        for _ in 0..<16 { try check(capacityTransport.enqueue(wireHeader, deadline: 10), "outbox admits bounded records") }
+        try check(!capacityTransport.enqueue(wireHeader, deadline: 10), "outbox rejects the seventeenth record")
+        try check(capacitySnapshot?.cause == .outboxCapacity && outcomes == Array(repeating: .queued, count: 16),
+                  "outbox capacity and queued outcome are explicit")
+
+        var deadlineNow = 0.0
+        let deadlineConnection = NWConnection(host: NWEndpoint.Host("127.0.0.1"),
+                                              port: NWEndpoint.Port(rawValue: 3)!, using: .tcp)
+        let deadlineTransport = WS2CompanionTCPTransport(connection: deadlineConnection,
+            connectionIndex: 9, clock: { deadlineNow }, isCurrent: { true })
+        var deadlineSnapshot: WS2TransportCloseSnapshot?
+        deadlineTransport.onCloseWithDiagnostics = { deadlineSnapshot = $0 }
+        try check(deadlineTransport.enqueue(wireHeader, deadline: 1), "outbox accepts a future deadline")
+        deadlineNow = 2
+        try check(!deadlineTransport.enqueue(wireHeader, deadline: 3), "expired outbox is rejected")
+        try check(deadlineSnapshot?.cause == .outboxDeadline, "outbox deadline is distinct from protocol deadline")
         report("offline-tests-passed", ["checks": checks, "socketsOpened": 0, "realDeviceTest": false])
     }
 }

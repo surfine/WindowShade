@@ -276,9 +276,10 @@ import Foundation
         typealias D = NotchNowPlayingDefaults
         expect(D.musicKey == "Notch.activities.musicEnabled" && D.streamKey == "Notch.activities.nowPlayingStream", "键名不变")
 
-        // 没设过（nil）：默认开。
+        // 没设过（nil）：跟 1.0.16 默认值总账走（设计上默认开，真机验过前关）。
         expect(D.state(forKey: D.musicKey, in: suite) == .unset && D.state(forKey: D.streamKey, in: suite) == .unset, "没设过")
-        expect(D.musicEnabled(in: suite) && D.streamEnabled(in: suite), "两个键没设过：都是开")
+        expect(D.musicEnabled(in: suite) == ReleaseDefaults.value(D.musicKey) && D.streamEnabled(in: suite) == ReleaseDefaults.value(D.streamKey), "两个键没设过：跟总账走")
+        expect(!D.musicEnabled(in: suite) && !D.streamEnabled(in: suite), "没验过：都是关")
         expect(!D.streamExplicitlyEnabled(in: suite), "没设过不算“显式开过”（离开就锁暂停媒体沿用老行为）")
 
         // 显式关：保持关。
@@ -291,13 +292,13 @@ import Foundation
         expect(D.state(forKey: D.musicKey, in: suite) == .on, "显式开")
         expect(D.musicEnabled(in: suite) && D.streamEnabled(in: suite) && D.streamExplicitlyEnabled(in: suite), "显式开过的还是开")
 
-        // 两个键互不影响；清掉后回到默认开。
+        // 两个键互不影响；清掉后回到总账的值。
         suite.set(false, forKey: D.musicKey)
-        expect(!D.musicEnabled(in: suite) && D.streamEnabled(in: suite), "音乐关了，推送流的开关不受影响")
+        expect(!D.musicEnabled(in: suite) && D.streamEnabled(in: suite), "音乐关了，推送流的开关不受影响（推送流显式开着）")
         suite.removeObject(forKey: D.musicKey)
-        expect(D.musicEnabled(in: suite), "清掉键 = 回到默认开")
+        expect(D.musicEnabled(in: suite) == ReleaseDefaults.value(D.musicKey), "清掉键 = 回到总账的值")
         // 不是布尔值的脏数据按没设过算。
         suite.set("no", forKey: D.streamKey)
-        expect(D.state(forKey: D.streamKey, in: suite) == .unset && D.streamEnabled(in: suite), "脏数据按没设过算")
+        expect(D.state(forKey: D.streamKey, in: suite) == .unset && D.streamEnabled(in: suite) == ReleaseDefaults.value(D.streamKey), "脏数据按没设过算")
     }
 }

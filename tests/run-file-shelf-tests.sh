@@ -5,7 +5,7 @@ cd "$(dirname "$0")/.."
 mkdir -p .build/file-shelf-tests
 swiftc -parse-as-library -O -swift-version 6 -strict-concurrency=complete -warnings-as-errors \
   prototype/Core/FileShelfModel.swift \
-  prototype/App/FileShelfStore.swift \
+  prototype/App/FileShelfStore.swift prototype/Core/ReleaseDefaults.swift \
   tests/FileShelfTests.swift \
   -o .build/file-shelf-tests/tests
 .build/file-shelf-tests/tests

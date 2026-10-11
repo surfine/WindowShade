@@ -15,7 +15,7 @@ import Cocoa
 final class SplitViewController {
     nonisolated static let enabledKey = "SplitView.divider"
     nonisolated static var isEnabled: Bool {
-        get { UserDefaults.standard.object(forKey: enabledKey) as? Bool ?? true }
+        get { UserDefaults.standard.object(forKey: enabledKey) as? Bool ?? ReleaseDefaults.value(enabledKey) }
         set { UserDefaults.standard.set(newValue, forKey: enabledKey) }
     }
 

@@ -277,6 +277,11 @@ import Foundation
         catch { fail("无法恢复这条会话。可在当前项目新建会话。");return false }
     }
     private var lastAssociation:Association? { guard let project=scope.project else { return nil };return associations.last(where:{$0.project==project}) }
+    /// 会话列表的「停止」按钮只停自己那条：上下文对不上（不是当前这条在跑的会话）就不动。
+    @discardableResult func interruptSession(matching target:WS2.Context) -> Bool {
+        guard context == target,canInterrupt else { return false }
+        return interrupt()
+    }
     @discardableResult func interrupt() -> Bool {
         guard canInterrupt,revalidate() else { return false }
         do { phase = .interrupting;status="正在请求停止，等待助手确认";notice="";try session?.interrupt();changed();return true }

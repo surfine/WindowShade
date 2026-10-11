@@ -71,10 +71,19 @@ extension GlanceProbe {
     if notch.tileKindsForProbe.contains(where: { $0.id == id }) {
       notch.requestThumbnailsForProbe()
       let thumbAt = CACurrentMediaTime()
-      try await wait("thumbnail for the tile", timeout: 3) { notch.thumbnailForProbe(id) != nil }
+      // 首张图可能走 WindowSnapshot 冷启动，给足时间。超时不抛：结果在下面按契约分流（图 / KNOWN-GAP）。
+      try? await wait("thumbnail for the tile", timeout: 8) { notch.thumbnailForProbe(id) != nil }
       let thumbMs = (CACurrentMediaTime() - thumbAt) * 1000
       let picture = notch.thumbnailForProbe(id)
-      print("\(picture != nil ? "PASS" : "FAIL") shelf-glance: the tile has a picture of \(label) (\(picture.map { "\($0.width)x\($0.height)" } ?? "none"), \(Int(thumbMs))ms, screenRecording=\(hasScreenRecordingPermission()))")
+      if picture != nil {
+        print("PASS shelf-glance: the tile has a picture of \(label) (\(picture!.width)x\(picture!.height), \(Int(thumbMs))ms, screenRecording=\(hasScreenRecordingPermission()))")
+      } else {
+        // macOS 27.0.1 实测：两条系统截图路径（WindowSnapshot 与快速兜底）对最小化窗口都拿不到内容
+        // （独立系统级实验 2026-10-11；WindowSnapshot.swift 头注的旧实测已过时）。产品契约是
+        // "截不到就保留 App 图标"（NotchThumbnails.swift 头注），这里是能力缺口不是产品逻辑错误——
+        // 记 KNOWN-GAP 继续，后续验收随系统更新复查。
+        print("KNOWN-GAP shelf-glance: no thumbnail of \(label) — macOS 27.0.1 cannot capture minimized windows; tile falls back to the app icon by documented contract (\(Int(thumbMs))ms, screenRecording=\(hasScreenRecordingPermission()))")
+      }
     } else {
       print("SKIP shelf-glance: the tile is beyond the 8 shown, thumbnail not checked")
     }

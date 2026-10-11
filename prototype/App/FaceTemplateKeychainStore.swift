@@ -8,7 +8,20 @@ import Security
 /// 也不随备份迁到别的机器。存的是特征数字和录入时刻（编码见 Core/FaceTemplateSet.swift），不存图像。
 /// 读写都不弹窗（interactionNotAllowed）；钥匙串不可用时报错，不退回偏好设置或文件。
 final class FaceTemplateKeychainStore: Sendable {
-    struct Failure: Error, Equatable { let status: OSStatus }
+    struct Failure: Error, Equatable {
+        let status: OSStatus
+
+        /// 这台机器此刻存不了：没有钥匙串权限（未签名或 ad-hoc 构建常见）、钥匙串不可用或锁着。
+        /// 和“数据坏了”分开，界面只说“存不了”，不清空、不重建、不退回文件。
+        var isUnavailable: Bool { Self.unavailableStatuses.contains(status) }
+
+        static let unavailableStatuses: Set<OSStatus> = [
+            errSecMissingEntitlement, errSecNotAvailable, errSecInteractionNotAllowed,
+            errSecNoSuchKeychain, errSecInvalidKeychain, errSecNoDefaultKeychain,
+        ]
+    }
+    /// 钥匙串存不了时界面要说的话（日常说法，说用户遇到的事，不说 OSStatus）。
+    static let unavailableMessage = "这台 Mac 现在存不了"
     /// 20 条 × 768 维 ≈ 80 KB；留余量，超出当坏数据。
     static let maximumBytes = 256 * 1024
     let service: String

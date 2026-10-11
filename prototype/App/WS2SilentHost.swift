@@ -118,6 +118,15 @@ final class WS2SilentHost {
             guard let candidate = WS2MouthMatcher.match(sample, speech: profile.speech, profile: profile) else { return }
             mouthCandidate = candidate
             mouthCandidateAt = time
+            // 用户给六口令配过这个词：这条命令直接进提案（和点了一下一样），接下来点头或点选确认。
+            let phrases = WS2SilentPhraseStore.load()
+            let phraseSample = WS2SilentPhraseSample(speech: WS2SilentSpeech(rawValue: profile.speech),
+                                                     seenWord: candidate, cameraAvailable: true, microphoneWord: nil)
+            if case .sameAsTap(let commandID) = WS2SilentPhrases.match(phraseSample, profile: phrases) {
+                page?.note((WS2SilentCopy.line(commandID) ?? commandID) + "？点头或点一下确认")
+                offer(commandID)
+                return
+            }
             page?.note((WS2SilentCopy.line(candidate) ?? candidate) + "？点一下确认")
             page?.setConfirmEnabled(true)
         }

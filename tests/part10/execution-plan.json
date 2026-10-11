@@ -267,6 +267,7 @@
       "workorder": "workorders/W07-配对密钥与接收协议装配.md",
       "source_paths": [
         "prototype/Support/WS2PairSetupServer.swift",
+        "prototype/Support/WS2PureSRP.swift",
         "prototype/Support/WS2PairSetupCrypto.swift",
         "prototype/Support/WS2CompanionCrypto.swift",
         "prototype/Support/WS2KeychainPeerStorage.swift",

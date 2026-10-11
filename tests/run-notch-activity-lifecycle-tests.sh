@@ -5,7 +5,7 @@ set -euo pipefail
 cd "$(dirname "$0")/.."
 mkdir -p .build/notch-activity-lifecycle-tests
 swiftc -swift-version 6 -strict-concurrency=complete -warnings-as-errors -parse-as-library \
-  prototype/Core/NotchActivities.swift prototype/Core/NotchSentence.swift prototype/Core/NotchRow.swift \
+  prototype/Core/WireJSON.swift prototype/Core/UsageReading.swift prototype/Core/NotchActivities.swift prototype/Core/ReleaseDefaults.swift prototype/Core/NotchSentence.swift prototype/Core/NotchRow.swift \
   tests/NotchActivityLifecycleTests.swift \
   -o .build/notch-activity-lifecycle-tests/tests
 .build/notch-activity-lifecycle-tests/tests

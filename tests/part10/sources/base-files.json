@@ -945,6 +945,7 @@
   "prototype/Support/WS2KeychainPeerStorage.swift": "ffe7ecc5a1bbd58497156c645a074506371039f49ceb92bfc2d9b2c6f36a395f",
   "prototype/Support/WS2LocalLaunchProfile.swift": "34a52b15e0a183c0e0f8d45d999ab15e0f8d1b1998b7fa467fe15a4b1c843a27",
   "prototype/Support/WS2PairSetupCrypto.swift": "6345ec9ff7339c0845f4140beac96577ee1310968d71dab941a0266d315e6fda",
+  "prototype/Support/WS2PureSRP.swift": "309f90e249c72d9dce5ae4f1e4cf78c2a8b81a5c0517435cb2f7ca6f502fdf27",
   "prototype/Support/WS2PairSetupServer.swift": "56ba109e6d1f63c8771cb0788c6c3af4796eed38cea5fe9880f744651c6516b1",
   "prototype/Support/WS2PeerRepository.swift": "1ee4290d4151defac9a50b741c1128dbd8d6bcb7514cd4535ce39ac84f740b42",
   "prototype/Support/WS2ProcessChannel.swift": "a87b82db462cd9fa4e0bd132153482a6c1c9d9859a4434048829443bf821cf6b",

@@ -1,31 +1,8 @@
 // Original, pinned to the supplied Codex 0.153.0 schema. No process is launched here.
 import Foundation
-indirect enum WireJSON: Codable, Equatable, Sendable {
-    case null, bool(Bool), integer(Int64), number(Double), string(String), array([WireJSON]), object([String:WireJSON])
-    init(from decoder: any Decoder) throws {
-        let c = try decoder.singleValueContainer()
-        if c.decodeNil() { self = .null }
-        else if let x = try? c.decode(Bool.self) { self = .bool(x) }
-        else if let x = try? c.decode(Int64.self) { self = .integer(x) }
-        else if let x = try? c.decode(Double.self), x.isFinite { self = .number(x) }
-        else if let x = try? c.decode(String.self) { self = .string(x) }
-        else if let x = try? c.decode([WireJSON].self) { self = .array(x) }
-        else { self = .object(try c.decode([String:WireJSON].self)) }
-    }
-    func encode(to encoder: any Encoder) throws {
-        var c = encoder.singleValueContainer()
-        switch self {
-        case .null: try c.encodeNil()
-        case .bool(let x): try c.encode(x)
-        case .integer(let x): try c.encode(x)
-        case .number(let x): try c.encode(x)
-        case .string(let x): try c.encode(x)
-        case .array(let x): try c.encode(x)
-        case .object(let x): try c.encode(x)
-        }
-    }
-    subscript(_ key: String) -> WireJSON? { if case .object(let x) = self { return x[key] }; return nil }
-    var text: String? { if case .string(let x) = self { return x }; return nil }
+
+/// requestID 要看 WS2.RequestID（Contracts）。放这里让 WireJSON.swift 保持纯叶子，最小编译子集不必拖 Contracts。
+extension WireJSON {
     var requestID: WS2.RequestID? {
         switch self { case .integer(let i): return .integer(i); case .string(let s): return .string(s); default: return nil }
     }

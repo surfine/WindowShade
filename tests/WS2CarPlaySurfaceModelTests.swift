@@ -86,9 +86,28 @@ struct ExtractedIdentity: WS2CarPlayAccessoryIdentity {
             missing = d
             expect(d.phase == .needsIdentity && !d.showsTiles, "extracted identity never shows tiles")
         }
+        // 外部接收器（live）：等画面时说明在等，出画面后整块让开
+        var liveWaiting: WS2CarPlaySurfaceDisplay
+        var liveVideo: WS2CarPlaySurfaceDisplay
+        do {
+            var l = S()
+            let t = l.connectViaReceiver()!
+            l.becameReady(t, at: 0)
+            let d = M.display(for: l, hasStarted: true, now: 0, liveVideoStarted: false, phoneName: nil)
+            liveWaiting = d
+            expect(d.phase == .connectedLive(phoneName: nil) && !d.showsTiles && !d.showsLiveVideo,
+                   "receiver ready before first frame says it is waiting for video")
+            expect(d.title == "等待 iPhone 的画面" && d.detail == "iPhone 已连上接收器",
+                   "receiver waiting wording stays honest")
+            let v = M.display(for: l, hasStarted: true, now: 0, liveVideoStarted: true, phoneName: "Aaron 的 iPhone")
+            liveVideo = v
+            expect(v.phase == .connectedLive(phoneName: "Aaron 的 iPhone") && v.showsLiveVideo && !v.showsTiles,
+                   "receiver video phase shows live video and no tiles")
+            expect(v.title == "Aaron 的 iPhone" && v.detail == nil, "live video shows the phone name only")
+        }
         // 每个状态都有符号和标题，不含实现词
         do {
-            let all = [M.display(for: S(), hasStarted: false, now: 0), reconnectingPhase, endedDisplay, missing]
+            let all = [M.display(for: S(), hasStarted: false, now: 0), reconnectingPhase, endedDisplay, missing, liveWaiting, liveVideo]
             let banned = ["AirPlay", "iAP2", "CarPlay", "ticket", "state", "NWConnection"]
             expect(all.allSatisfy { !$0.symbol.isEmpty && !$0.title.isEmpty }, "every display has symbol and title")
             expect(all.allSatisfy { d in banned.allSatisfy { !d.title.contains($0) && !(d.detail ?? "").contains($0) } }, "no implementation words in user strings")

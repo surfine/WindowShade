@@ -89,13 +89,13 @@ enum DockClickGuard {
 
 /// “让开这个 App”没设置过时开不开。
 /// 换机的人（欢迎窗口里答了 Windows 或 iPad）默认关：这正是 Windows 任务栏的行为，他在 Dock 上找窗口时会把眼前的也藏掉。
-/// 用过 1.0.16 测试版的，这个开关当时默认开着：照旧开着。其余（一直用 Mac、没答的，包括从 1.0.15 升上来还没答的）默认开。
+/// 用过 1.0.16 测试版的，这个开关当时默认开着：照旧开着。其余（一直用 Mac、没答的，包括从 1.0.15 升上来还没答的）设计上默认开，1.0.16 真机验过前默认关（ReleaseDefaults）。
 enum DockClickHideDefault {
     static func isOn(previewInstall: Bool, origin: SwitcherOrigin) -> Bool {
         if previewInstall { return true }
         switch origin {
         case .windows, .ipad: return false
-        case .mac, .unanswered: return true
+        case .mac, .unanswered: return ReleaseDefaults.value("Dock.clickToHide")
         }
     }
 }

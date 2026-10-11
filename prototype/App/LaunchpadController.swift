@@ -221,7 +221,18 @@ final class LaunchpadController {
             shownDisplay = display
         }
         previousApp = NSWorkspace.shared.frontmostApplication
-        let panel = LaunchpadPanel(screen: screen)
+        let maybeReused = retainedPanel
+        let reused = maybeReused != nil && maybeReused?.launchScreen === screen ? maybeReused : nil
+        let panel: LaunchpadPanel
+        if let reused {
+            panel = reused!
+            retainedPanel = nil
+            panel.view.resetForReuse()
+        } else {
+            retainedPanel?.orderOut(nil)
+            retainedPanel = nil
+            panel = LaunchpadPanel(screen: screen)
+        }
         self.panel = panel
         let view = panel.view
         if NotchController.isEnabled {
@@ -234,6 +245,7 @@ final class LaunchpadController {
         view.registerForDraggedTypes([.fileURL])
         view.notchRect = notch.map { view.convert(panel.convertFromScreen($0), from: nil) }
         view.onClose = { [weak self] in self?.hide(reason: "dismiss") }
+        view.onUninstall = { [weak self] app in self?.beginUninstall(app) }
         view.today.updateActivities(owner.notch.activities.store.visible.filter { !$0.kind.isShelf })
         view.onActivityAction = { [weak self] id, action in
             guard let self else { return }
@@ -250,7 +262,9 @@ final class LaunchpadController {
         view.onLayoutChange = { [weak self] layout in self?.save(layout) }
         view.art = { [weak self] app in self?.artwork.art(for: app.path) ?? (nil, nil) }
         view.needArt = { [weak self] list, width in self?.loadArt(list, labelWidth: width, scale: screen.backingScaleFactor) }
+        let t0 = CACurrentMediaTime()
         view.setContent(apps: apps, layout: layout)
+        wlog(String(format: "launchpad: show prep %.0fms (reused=%@)", (CACurrentMediaTime() - t0) * 1000, reused != nil ? "yes" : "no"))
         if let url = NSWorkspace.shared.desktopImageURL(for: screen) {
             if let ready = wallpapers[url.path] {
                 view.setWallpaper(ready)
@@ -322,6 +336,9 @@ final class LaunchpadController {
     }
 
     /// 收起。launched：刚打开了一个 App（它自己会到前面来）；否则把之前在前面的 App 交还回去。
+    /// 复用的面板：hide 只收起不销毁，下次 show 直接换内容——整棵 layer 树和位图不用重建（启动台卡顿的主源）。
+    private var retainedPanel: LaunchpadPanel?
+
     func hide(reason: String, launched: Bool = false, into notch: NSRect? = nil) {
         guard let panel else { return }
         if let notch {
@@ -329,6 +346,7 @@ final class LaunchpadController {
             panel.view.intoNotch = true
         }
         navigationGeneration &+= 1
+        retainedPanel = panel
         self.panel = nil
         if let shownDisplay {
             owner.notch.leases.release(.launchpad, on: shownDisplay)
@@ -344,6 +362,63 @@ final class LaunchpadController {
     }
 
     /// 扫一遍，和记下的排列对上：删掉的 App 去掉，新装的接在最后。第一次用时照旧版启动台排好并记下来。
+    // MARK: 卸载 App（进废纸篓，可找回）
+
+    private var uninstallOverlay: LaunchpadUninstallOverlay?
+
+    func beginUninstall(_ app: LaunchpadApp) {
+        guard LaunchpadUninstallAvailability.isEnabled else { return }
+        let bundleID = app.bundleID ?? Bundle(path: app.path)?.bundleIdentifier ?? ""
+        // 扫描含递归求字节（大 App 可达秒级），丢后台跑；结果回主线程再开浮层。
+        let snapshot = apps.filter { $0.path != app.path }.compactMap(\.bundleID)
+        let path = app.path
+        let name = app.name
+        DispatchQueue.global(qos: .userInitiated).async { [weak self] in
+            let plan = WS2AppUninstallPlan.scan(
+                bundleID: bundleID, appPath: path, home: NSHomeDirectory(),
+                otherBundleIDs: snapshot,
+                selfBundlePath: Bundle.main.bundlePath,
+                fs: WS2AppUninstallRealFS())
+            DispatchQueue.main.async {
+                MainActor.assumeIsolated { self?.presentUninstall(app: app, name: name, plan: plan) }
+            }
+        }
+    }
+
+    private func presentUninstall(app: LaunchpadApp, name: String, plan: WS2AppUninstallPlan.Result) {
+        guard let panel else { return }
+        do {
+            guard plan.block == .none, plan.appItem != nil else {
+                // App 已不在盘上（刚卸载完、列表残影还在）：如实说，不误导为"不能卸载"。
+                let message = plan.block == .notAnApp && !app.path.isEmpty
+                    ? "\(name) 已经不在了"
+                    : "这个 App 不能从这里卸载"
+                owner.quietNotice(message, log: "launchpad: uninstall blocked \(app.path) reason=\(plan.block)")
+                return
+            }
+            let bundleID = app.bundleID ?? Bundle(path: app.path)?.bundleIdentifier ?? ""
+            let running = NSWorkspace.shared.runningApplications.first { $0.bundleIdentifier == bundleID }
+            let overlay = LaunchpadUninstallOverlay(
+                app: app, plan: plan,
+                runningApp: running,
+                onDismiss: { [weak self] in self?.closeUninstallOverlay() },
+                onFinished: { [weak self] trashed, displayName in
+                    self?.closeUninstallOverlay()
+                    self?.rescan { [weak self] in
+                        self?.owner.quietNotice("已把 \(displayName) 移到废纸篓（\(trashed) 项，可在废纸篓找回）",
+                                                log: "launchpad: uninstalled \(displayName) trashed=\(trashed)")
+                    }
+                })
+            uninstallOverlay = overlay
+            panel.view.presentUninstallOverlay(overlay)
+        }
+    }
+
+    private func closeUninstallOverlay() {
+        panel?.view.removeUninstallOverlay()
+        uninstallOverlay = nil
+    }
+
     private func rescan(qos: DispatchQoS.QoSClass = .userInitiated, done: @escaping () -> Void) {
         scanCompletions.append(done)
         guard !scanning else { return }

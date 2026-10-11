@@ -9,13 +9,19 @@ import Foundation
     private let deadline: Double
     private let send: (Data) -> Bool
     private let disconnect: () -> Void
+    private let pairingType: UInt64?
     private(set) var closed = false
     private(set) var enrolled = false
+#if WS2_PROBE_DIAGNOSTICS
+    var diagnosticEnrollment: WS2PairSetupServer.EnrollmentReceipt? { enrolled ? server.diagnosticEnrollment : nil }
+#endif
     private var started = false
     private var processing = false
     init(server: WS2PairSetupServer, clock: @escaping () -> Double,
+         pairingType: UInt64? = nil,
          send: @escaping (Data) -> Bool, disconnect: @escaping () -> Void) {
         self.server = server; self.clock = clock; self.send = send; self.disconnect = disconnect
+        self.pairingType = pairingType
         deadline = clock() + PairingAttemptWindow.lifetime
     }
     func receive(_ frame: WS2CompanionFrame) throws {
@@ -32,8 +38,11 @@ import Foundation
                   case .data(let tlv) = fields["_pd"], !tlv.isEmpty, tlv.count <= 4096 else { throw Failure.malformed }
             if let xid = fields["_x"], case .uint = xid {} else if fields["_x"] != nil { throw Failure.malformed }
             let result = try server.receive(tlv)
+            let isM2 = !started
             started = true
-            let reply = try WS2OPACK.encode(.dictionary(["_pd": .data(result)]))
+            var replyFields: [String: WS2OPACK.Value] = ["_pd": .data(result)]
+            if isM2, let pairingType { replyFields["_pwTy"] = .uint(pairingType) }
+            let reply = try WS2OPACK.encode(.dictionary(replyFields))
             guard send(try WS2CompanionFrame(type: 4, payload: reply).encoded()), !closed else { throw Failure.transport }
             if server.state == .finished { enrolled = true }
         } catch { close(); throw error }

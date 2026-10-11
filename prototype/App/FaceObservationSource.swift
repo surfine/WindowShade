@@ -105,6 +105,111 @@ struct FaceIdentitySample: Sendable, Equatable {
     let faceIndex: Int
     /// 没算出来（脸太偏、没有眼睛点、Vision 失败）就是 nil。
     let embedding: [Float]?
+    /// 画质门（身份线 §3.3，实验）：同一张脸的 Vision faceCaptureQuality，0...1；没跑成就是 nil。
+    var captureQuality: Double? = nil
+    /// 同一张脸的裁切里抽样的平均亮度（0...1）与近白、近灰占比；没注入采样或像素格式不认就是 nil。
+    var brightness: Double? = nil
+    var glareRatio: Double? = nil
+    /// 否决线索（§3.4）：屏幕/手机边框候选，Vision 的归一化框（原点左下，与脸框同一坐标系）。
+    /// 每 3 帧才跑一次（FaceIdentityAnalysis.rectangleInterval），没跑的帧是 nil，跑了没找到是空数组。
+    var rectangles: [CGRect]? = nil
+}
+
+/// 刷脸实验的画质采样：脸部裁切里抽样的像素（交错 RGB，每像素 3 字节）→ 平均亮度（0...1）与近白、近灰占比。
+/// 由刷脸实验注入（生产用 Core 的 FaceCaptureSampling.stats，见 FaceScanExperiment），在相机队列上同步调用；
+/// 像素只在这一次调用里活着，不存、不出相机队列、不写日志。
+typealias FaceRegionSampler = @Sendable (_ rgb: [UInt8]) -> (brightness: Double, glareRatio: Double)?
+
+/// identity 订阅时相机队列上多做的几件事（身份线 §3.3、§3.4，实验）。
+enum FaceIdentityAnalysis {
+    /// 矩形检测（屏幕/手机边框）每隔几帧跑一次；与 Core 的 RectangleCadence.interval 一致（测试核对）。
+    static let rectangleInterval: UInt64 = 3
+    /// 画质请求钉死的修订；换修订分数分布就变，阈值要重标。
+    static let captureQualityRevision = VNDetectFaceCaptureQualityRequestRevision3
+    /// 脸部裁切每边抽这么多个点（32×32 = 1024 个像素）。
+    static let samplingGrid = 32
+
+    static func makeRectangleRequest() -> VNDetectRectanglesRequest {
+        let request = VNDetectRectanglesRequest()
+        // 手机竖拿约 9:19.5（0.46），放宽到 0.3；最小边占画面短边 0.1。都是起点，待真机标定。
+        request.minimumAspectRatio = 0.3
+        request.maximumAspectRatio = 1
+        request.minimumSize = 0.1
+        request.maximumObservations = 4
+        return request
+    }
+}
+
+/// 从像素缓冲区里按网格抽脸部裁切的像素，换成交错 RGB（8 位）。只读、不拷整图、不存。
+enum FaceRegionPixels {
+    /// `box` 是 Vision 的归一化框（原点左下）；像素缓冲区第 0 行在上（采集方向 .up）。
+    /// 认 BGRA 与 420v/420f 双平面；别的格式、框不合法、锁不住缓冲区都返回 nil。
+    static func rgbSamples(_ buffer: CVPixelBuffer, box: CGRect, grid: Int = FaceIdentityAnalysis.samplingGrid) -> [UInt8]? {
+        let width = CVPixelBufferGetWidth(buffer), height = CVPixelBufferGetHeight(buffer)
+        guard grid > 0, width > 0, height > 0,
+              [box.minX, box.minY, box.width, box.height].allSatisfy(\.isFinite) else { return nil }
+        let clipped = box.intersection(CGRect(x: 0, y: 0, width: 1, height: 1))
+        guard !clipped.isNull, clipped.width > 0, clipped.height > 0 else { return nil }
+        let left = Double(clipped.minX) * Double(width), right = Double(clipped.maxX) * Double(width)
+        let top = (1 - Double(clipped.maxY)) * Double(height), bottom = (1 - Double(clipped.minY)) * Double(height)
+        func pick(_ index: Int, _ low: Double, _ high: Double, _ limit: Int) -> Int {
+            min(limit - 1, max(0, Int(low + (Double(index) + 0.5) * (high - low) / Double(grid))))
+        }
+        let format = CVPixelBufferGetPixelFormatType(buffer)
+        guard CVPixelBufferLockBaseAddress(buffer, .readOnly) == kCVReturnSuccess else { return nil }
+        defer { CVPixelBufferUnlockBaseAddress(buffer, .readOnly) }
+        var rgb = [UInt8]()
+        rgb.reserveCapacity(grid * grid * 3)
+        switch format {
+        case kCVPixelFormatType_32BGRA:
+            guard let base = CVPixelBufferGetBaseAddress(buffer)?.assumingMemoryBound(to: UInt8.self) else { return nil }
+            let stride = CVPixelBufferGetBytesPerRow(buffer)
+            for row in 0..<grid {
+                let y = pick(row, top, bottom, height)
+                for column in 0..<grid {
+                    let offset = y * stride + pick(column, left, right, width) * 4
+                    rgb.append(base[offset + 2]); rgb.append(base[offset + 1]); rgb.append(base[offset])
+                }
+            }
+        case kCVPixelFormatType_420YpCbCr8BiPlanarVideoRange, kCVPixelFormatType_420YpCbCr8BiPlanarFullRange:
+            guard CVPixelBufferGetPlaneCount(buffer) >= 2,
+                  let luma = CVPixelBufferGetBaseAddressOfPlane(buffer, 0)?.assumingMemoryBound(to: UInt8.self),
+                  let chroma = CVPixelBufferGetBaseAddressOfPlane(buffer, 1)?.assumingMemoryBound(to: UInt8.self)
+            else { return nil }
+            let lumaStride = CVPixelBufferGetBytesPerRowOfPlane(buffer, 0)
+            let chromaStride = CVPixelBufferGetBytesPerRowOfPlane(buffer, 1)
+            let chromaWidth = max(1, CVPixelBufferGetWidthOfPlane(buffer, 1))
+            let chromaHeight = max(1, CVPixelBufferGetHeightOfPlane(buffer, 1))
+            let fullRange = format == kCVPixelFormatType_420YpCbCr8BiPlanarFullRange
+            let bt709 = (CVBufferCopyAttachment(buffer, kCVImageBufferYCbCrMatrixKey, nil) as? String)
+                == (kCVImageBufferYCbCrMatrix_ITU_R_709_2 as String)
+            for row in 0..<grid {
+                let y = pick(row, top, bottom, height)
+                let cy = min(chromaHeight - 1, y * chromaHeight / height)
+                for column in 0..<grid {
+                    let x = pick(column, left, right, width)
+                    let cx = min(chromaWidth - 1, x * chromaWidth / width)
+                    let c = cy * chromaStride + cx * 2
+                    let (r, g, b) = Self.rgb(y: luma[y * lumaStride + x], cb: chroma[c], cr: chroma[c + 1],
+                                             fullRange: fullRange, bt709: bt709)
+                    rgb.append(r); rgb.append(g); rgb.append(b)
+                }
+            }
+        default:
+            return nil
+        }
+        return rgb
+    }
+
+    /// YCbCr（8 位）→ RGB。videoRange：Y 16...235、C 16...240；矩阵按缓冲区标注取 BT.709，否则 BT.601。
+    static func rgb(y: UInt8, cb: UInt8, cr: UInt8, fullRange: Bool, bt709: Bool) -> (UInt8, UInt8, UInt8) {
+        let luma = fullRange ? Double(y) : (Double(y) - 16) * 255 / 219
+        let scale = fullRange ? 1.0 : 255.0 / 224
+        let u = (Double(cb) - 128) * scale, v = (Double(cr) - 128) * scale
+        let (rv, gu, gv, bu) = bt709 ? (1.5748, 0.1873, 0.4681, 1.8556) : (1.402, 0.344136, 0.714136, 1.772)
+        func clamp(_ value: Double) -> UInt8 { UInt8(max(0, min(255, value.rounded()))) }
+        return (clamp(luma + rv * v), clamp(luma - gu * u - gv * v), clamp(luma + bu * u))
+    }
 }
 
 enum FaceObservationSourceError: Error {
@@ -141,12 +246,15 @@ protocol FaceCaptureWorker: Sendable {
     func setRequestedFPS(_ fps: Double)
     /// 有 `.identity` 订阅者时交给它特征后端，最后一个走了就传 nil。
     func setIdentityEmbedder(_ embedder: (any FaceEmbedder)?)
+    /// 同上，画质采样（亮度、反光）；没有 identity 订阅者就是 nil。
+    func setIdentitySampler(_ sampler: FaceRegionSampler?)
     func stop()
     func countersSnapshot() async -> FacePipelineCounters
 }
 
 extension FaceCaptureWorker {
     func setIdentityEmbedder(_ embedder: (any FaceEmbedder)?) {}
+    func setIdentitySampler(_ sampler: FaceRegionSampler?) {}
 }
 
 /// One process-wide physical camera, independently cancellable consumers, monotonic leases.
@@ -257,9 +365,14 @@ extension FaceCaptureWorker {
     var identityEmbedder: (any FaceEmbedder)? {
         didSet { if !consumers.isEmpty { syncWorkerDemand() } }
     }
+    /// 刷脸实验的画质采样；同样只在有 `.identity` 订阅者时交给相机工作队列。
+    var identitySampler: FaceRegionSampler? {
+        didSet { if !consumers.isEmpty { syncWorkerDemand() } }
+    }
     private func syncWorkerDemand() {
         worker.setRequestedFPS(requestedFPS)
         worker.setIdentityEmbedder(wantsIdentity ? identityEmbedder : nil)
+        worker.setIdentitySampler(wantsIdentity ? identitySampler : nil)
     }
     func remove(_ token: FaceObservationSubscription) {
         guard consumers.removeValue(forKey: token) != nil else { return }
@@ -391,6 +504,11 @@ extension FaceCaptureWorker {
         get { hub.identityEmbedder }
         set { hub.identityEmbedder = newValue }
     }
+    /// 刷脸实验的画质采样（同上，设在共享的 hub 上）。
+    var identitySampler: FaceRegionSampler? {
+        get { hub.identitySampler }
+        set { hub.identitySampler = newValue }
+    }
     deinit {
         let hub = hub, tokens = subscriptions
         Task { @MainActor in for token in tokens { hub.remove(token) } }
@@ -428,6 +546,11 @@ private final class FaceObservationWorker: NSObject, AVCaptureVideoDataOutputSam
         makeHandler: { VNSequenceRequestHandler() })
     /// 刷脸实验：有 `.identity` 订阅者时才有后端、才算特征。只在队列上动。
     private var identityEmbedder: (any FaceEmbedder)?
+    /// 刷脸实验的画质：采样（注入）、Vision 画质请求、矩形请求与它的节拍。只在 identity 订阅时用，只在队列上动。
+    private var identitySampler: FaceRegionSampler?
+    private var captureQualityRequest: VNDetectFaceCaptureQualityRequest?
+    private var rectangleRequest: VNDetectRectanglesRequest?
+    private var identityFrames: UInt64 = 0
     private var deliver: (@Sendable (FaceObservation) -> Void)?
     private var fail: (@Sendable (Error) -> Void)?
 
@@ -551,12 +674,19 @@ private final class FaceObservationWorker: NSObject, AVCaptureVideoDataOutputSam
         }
     }
     func setIdentityEmbedder(_ embedder: (any FaceEmbedder)?) {
-        queue.async { self.identityEmbedder = embedder }
+        queue.async {
+            if embedder == nil { self.identityFrames = 0 }
+            self.identityEmbedder = embedder
+        }
+    }
+    func setIdentitySampler(_ sampler: FaceRegionSampler?) {
+        queue.async { self.identitySampler = sampler }
     }
     func stop() { queue.async { self.tearDown() } }
     private func tearDown() {
         deliver = nil; fail = nil
-        identityEmbedder = nil
+        identityEmbedder = nil; identitySampler = nil
+        captureQualityRequest = nil; rectangleRequest = nil; identityFrames = 0
         requests.reset()
         observers.forEach { NotificationCenter.default.removeObserver($0) }; observers.removeAll()
         output?.setSampleBufferDelegate(nil, queue: nil)
@@ -641,7 +771,9 @@ private final class FaceObservationWorker: NSObject, AVCaptureVideoDataOutputSam
         let geometry = faces.prefix(FaceGeometry.maxPerFrame).map {
             FaceAlignment.geometry(for: $0, imageSize: imageSize, aligned: embedder != nil)
         }
-        let identity = embedder.flatMap { identitySample(faces: geometry, buffer: buffer, embedder: $0) }
+        let identity = embedder.flatMap {
+            identitySample(faces: geometry, observations: faces, buffer: buffer, handler: handler, embedder: $0)
+        }
         deliver?(.init(cameraID: deviceID, generation: token, sequence: sequence,
             observedAt: captured, faceCount: faces.count, yaw: finite(face?.yaw), pitch: finite(face?.pitch),
             leftEyeOpenness: eye(face?.landmarks?.leftEye), rightEyeOpenness: eye(face?.landmarks?.rightEye),
@@ -653,12 +785,51 @@ private final class FaceObservationWorker: NSObject, AVCaptureVideoDataOutputSam
     }
 
     /// 只给最大那张脸算特征（守卫也只看最大那张，同样的取法）。同一帧、同一个缓冲区，算完即丢。
-    private func identitySample(faces: [FaceGeometry], buffer: CVPixelBuffer, embedder: any FaceEmbedder) -> FaceIdentitySample? {
+    /// 画质也只看这张脸：画质请求用同一个 handler、直接拿 landmarks 的这张脸做输入（不再检测一遍）；
+    /// 亮度与反光在这张脸的框里抽样；矩形每 3 帧跑一次。
+    private func identitySample(faces: [FaceGeometry], observations: [VNFaceObservation], buffer: CVPixelBuffer,
+                                handler: VNSequenceRequestHandler, embedder: any FaceEmbedder) -> FaceIdentitySample? {
         guard let (index, face) = faces.enumerated().max(by: { $0.element.boundingBox.width < $1.element.boundingBox.width })
         else { return nil }
         let embedding = embedder.embed(pixelBuffer: buffer, face: face)
         if embedding == nil { counters.identityUnavailable &+= 1 } else { counters.identityEmbedded &+= 1 }
-        return FaceIdentitySample(modelVersion: embedder.modelVersion, faceIndex: index, embedding: embedding)
+        var sample = FaceIdentitySample(modelVersion: embedder.modelVersion, faceIndex: index, embedding: embedding)
+        if observations.indices.contains(index) {
+            sample.captureQuality = captureQuality(of: observations[index], buffer: buffer, handler: handler)
+        }
+        if let sampler = identitySampler, let rgb = FaceRegionPixels.rgbSamples(buffer, box: face.boundingBox),
+           let stats = sampler(rgb), stats.brightness.isFinite, stats.glareRatio.isFinite {
+            sample.brightness = stats.brightness
+            sample.glareRatio = stats.glareRatio
+        }
+        if identityFrames % FaceIdentityAnalysis.rectangleInterval == 0 {
+            sample.rectangles = rectangles(buffer: buffer, handler: handler)
+        }
+        identityFrames &+= 1
+        return sample
+    }
+
+    private func captureQuality(of face: VNFaceObservation, buffer: CVPixelBuffer, handler: VNSequenceRequestHandler) -> Double? {
+        let request = captureQualityRequest ?? {
+            let made = VNDetectFaceCaptureQualityRequest()
+            made.revision = FaceIdentityAnalysis.captureQualityRevision
+            return made
+        }()
+        captureQualityRequest = request
+        request.inputFaceObservations = [face]
+        defer { request.inputFaceObservations = nil }
+        guard (try? handler.perform([request], on: buffer, orientation: .up)) != nil,
+              let quality = request.results?.first?.faceCaptureQuality, quality.isFinite else { return nil }
+        return min(1, max(0, Double(quality)))
+    }
+
+    private func rectangles(buffer: CVPixelBuffer, handler: VNSequenceRequestHandler) -> [CGRect]? {
+        let request = rectangleRequest ?? FaceIdentityAnalysis.makeRectangleRequest()
+        rectangleRequest = request
+        guard (try? handler.perform([request], on: buffer, orientation: .up)) != nil else { return nil }
+        return (request.results ?? []).map(\.boundingBox).filter {
+            [$0.minX, $0.minY, $0.width, $0.height].allSatisfy(\.isFinite) && $0.width > 0 && $0.height > 0
+        }
     }
 }
 

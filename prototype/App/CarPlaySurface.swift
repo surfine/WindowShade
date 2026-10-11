@@ -11,12 +11,25 @@ import Cocoa
 final class CarPlaySurfaceController {
     nonisolated static let enabledKey = "CarPlay.surface.enabled"
     nonisolated static let scriptEnvironmentKey = "WINDOWSHADE_CARPLAY_SYNTHETIC"
+    /// 外部接收器的 ws:// 地址（含 ?token=）。设了就走真画面，不设保持合成示意。
+    nonisolated static let receiverEndpointKey = "CarPlay.receiver.endpoint"
     /// 合成的“握手”要多久；单次计时器，不重复。
     nonisolated static let handshakeDelay: TimeInterval = 0.4
 
     nonisolated static var isEnabled: Bool {
         get { UserDefaults.standard.bool(forKey: enabledKey) }
         set { UserDefaults.standard.set(newValue, forKey: enabledKey) }
+    }
+
+    nonisolated static var receiverEndpoint: String? {
+        get {
+            let value = UserDefaults.standard.string(forKey: receiverEndpointKey) ?? ""
+            return value.isEmpty ? nil : value
+        }
+        set {
+            if let newValue { UserDefaults.standard.set(newValue, forKey: receiverEndpointKey) }
+            else { UserDefaults.standard.removeObject(forKey: receiverEndpointKey) }
+        }
     }
 
     private(set) var isShowing = false
@@ -31,12 +44,22 @@ final class CarPlaySurfaceController {
     // 只在主线程写；进入时装上、退出时全部拆掉。
     private var observers: [(NotificationCenter, NSObjectProtocol)] = []
 
+    // MARK: 外部接收器（live）
+    private var client: WS2CarPlayReceiverClient?
+    private var decoder: WS2CarPlayVideoDecoder?
+    private var liveVideoStarted = false
+    private var phoneName: String?
+    private var touchDown = false
+    /// live 模式下把输入转成接收器消息；视图只管事件，语义在这里。
+    private var input: CarPlaySurfaceInput?
+
     private var now: TimeInterval { ProcessInfo.processInfo.systemUptime }
 
     // MARK: 进出
 
     func enter(on screen: NSScreen) {
         guard !isShowing else { return }
+        let receiverEndpoint = Self.receiverEndpoint
         script = WS2CarPlaySyntheticScript(environmentValue: ProcessInfo.processInfo.environment[Self.scriptEnvironmentKey])
         let slot = NotchController.slotRect(on: screen).rect
         let settings = WS2CarPlaySettings(
@@ -46,6 +69,9 @@ final class CarPlaySurfaceController {
         ticket = nil
         attempt = 0
         hasStarted = false
+        liveVideoStarted = false
+        phoneName = nil
+        touchDown = false
 
         let panel = CarPlaySurfacePanel(screen: screen)
         panel.onExit = { [weak self] in self?.exit() }
@@ -53,7 +79,20 @@ final class CarPlaySurfaceController {
         self.panel = panel
         isShowing = true
         installObservers()
-        if script.outcome(attempt: 0) != .nothing { startAttempt(userInitiated: true) }
+        if let receiverEndpoint {
+            let view = panel.surface
+            let decoder = WS2CarPlayVideoDecoder()
+            self.decoder = decoder
+            view.setVideoLayer(decoder.layer)
+            let input = CarPlaySurfaceInput(view: view) { [weak self] action in
+                MainActor.assumeIsolated { self?.handleInput(action) }
+            }
+            self.input = input
+            input.install()
+            connectReceiver(endpoint: receiverEndpoint, userInitiated: true)
+        } else if script.outcome(attempt: 0) != .nothing {
+            startAttempt(userInitiated: true)
+        }
         render()
         panel.present()
     }
@@ -63,12 +102,91 @@ final class CarPlaySurfaceController {
         isShowing = false
         timer?.invalidate(); timer = nil
         removeObservers()
+        client?.close()
+        client = nil
+        decoder?.flush()
+        decoder = nil
+        input?.remove()
+        input = nil
         session.disconnect()
         ticket = nil
+        liveVideoStarted = false
         let closing = panel
         panel = nil
         closing?.onExit = nil
         closing?.dismiss()
+    }
+
+    // MARK: 外部接收器会话
+
+    private func connectReceiver(endpoint: String, userInitiated: Bool) {
+        timer?.invalidate(); timer = nil
+        guard let client = try? WS2CarPlayReceiverClient(endpoint: endpoint) else {
+            session.disconnect()
+            render()
+            return
+        }
+        ticket = userInitiated ? session.connectViaReceiver() : session.reconnectIfDue(identity: nil, at: now) ?? session.connectViaReceiver()
+        hasStarted = true
+        liveVideoStarted = false
+        client.open(delegate: self)
+        self.client = client
+        render()
+    }
+
+    private func receiverReady() {
+        guard isShowing, let started = ticket else { return }
+        session.becameReady(started, at: now)
+        // 全屏就是本面板：进入画面请求一个关键帧（每次显示只请求一次）。
+        if session.enterFullscreen() {
+            client?.requestKeyframe()
+        }
+        session.observe(at: now)
+        render()
+    }
+
+    private func receiverLost(failed: Bool) {
+        guard isShowing, let started = ticket else { return }
+        touchDown = false
+        switch session.ended(started, failed: failed, at: now) {
+        case .retry(_, let after):
+            timer = Timer.scheduledTimer(withTimeInterval: after, repeats: false) { [weak self] _ in
+                MainActor.assumeIsolated { self?.receiverReconnectTimerFired() }
+            }
+            timer?.tolerance = min(0.5, after * 0.1)
+        case .gaveUp, .none:
+            break
+        }
+        render()
+    }
+
+    private func receiverReconnectTimerFired() {
+        timer = nil
+        guard isShowing, let endpoint = Self.receiverEndpoint else { return }
+        if let due = session.reconnectDueAt, now < due {
+            timer = Timer.scheduledTimer(withTimeInterval: due - now, repeats: false) { [weak self] _ in
+                MainActor.assumeIsolated { self?.receiverReconnectTimerFired() }
+            }
+            return
+        }
+        client?.close()
+        client = nil
+        connectReceiver(endpoint: endpoint, userInitiated: false)
+    }
+
+    private func handleInput(_ action: CarPlaySurfaceInput.Action) {
+        guard let client, session.isReceiverLive, session.state == .ready else { return }
+        switch action {
+        case .touch(let x, let y, let down):
+            touchDown = down
+            client.sendTouch([.init(id: 0, x: x, y: y, down: down)])
+        case .knob(let select, let home, let back, let x, let y):
+            client.sendKnob(select: select, home: home, back: back, x: x, y: y)
+        case .media(let code):
+            client.sendMedia(code)
+        case .siri:
+            client.sendSiri()
+        }
     }
 
     // MARK: 合成会话
@@ -132,12 +250,21 @@ final class CarPlaySurfaceController {
 
     private func userReconnect() {
         guard isShowing else { return }
+        if Self.receiverEndpoint != nil {
+            client?.close()
+            client = nil
+            session.disconnect()
+            connectReceiver(endpoint: Self.receiverEndpoint!, userInitiated: true)
+            return
+        }
         startAttempt(userInitiated: true)
     }
 
     private func render() {
         guard let panel else { return }
-        let display = WS2CarPlaySurfaceModel.display(for: session, hasStarted: hasStarted, now: now)
+        let display = WS2CarPlaySurfaceModel.display(
+            for: session, hasStarted: hasStarted, now: now,
+            liveVideoStarted: liveVideoStarted, phoneName: phoneName)
         panel.surface.apply(display, topInset: WS2CarPlaySurfaceModel.contentTopInset(layout: session.layout ?? WS2CarPlayLayout(notchHeight: session.pendingSettings.notchHeight)))
     }
 
@@ -165,6 +292,125 @@ final class CarPlaySurfaceController {
     private func removeObservers() {
         for (center, token) in observers { center.removeObserver(token) }
         observers.removeAll()
+    }
+}
+
+// MARK: - 接收器事件（live）
+
+extension CarPlaySurfaceController: WS2CarPlayReceiverClientDelegate {
+
+    func receiverClosed() {
+        guard isShowing, client != nil else { return }
+        receiverLost(failed: true)
+    }
+
+    func receiverReceivedControl(_ message: WS2CarPlayReceiverWire.ControlMessage) {
+        guard isShowing else { return }
+        switch message {
+        case .hello(let name, let active, _, _):
+            if let name { phoneName = name }
+            if active { receiverReady() }
+        case .session(let name, let active):
+            if let name { phoneName = name }
+            if active {
+                receiverReady()
+            } else if session.state == .ready, let started = ticket {
+                // iPhone 主动断了会话；接收器还在，不算失败，不重连。
+                session.ended(started, failed: false, at: now)
+                liveVideoStarted = false
+                render()
+            }
+        case .mic, .pong:
+            break
+        }
+    }
+
+    func receiverReceivedMedia(_ message: WS2CarPlayReceiverWire.MediaMessage) {
+        guard isShowing, let started = ticket else { return }
+        switch message {
+        case .videoConfig(let config):
+            decoder?.configure(record: config.codecRecord, codec: config.codec,
+                               width: config.width, height: config.height)
+        case .videoFrame(let frame):
+            session.frameReceived(started)
+            let drawn = decoder?.enqueue(annexB: frame.annexB) ?? false
+            if drawn, session.isFullscreen {
+                session.frameDrawn(started)
+            }
+            if !liveVideoStarted, drawn {
+                liveVideoStarted = true
+                render()
+            }
+        case .audioConfig, .audioPacket, .screenActive, .audioStopped:
+            break // 本轮只接画面；音频与屏幕开关留给下一轮
+        }
+    }
+}
+
+// MARK: - 输入映射（live）
+
+/// 视图的原始事件 → 接收器动作。坐标换算在视图里做，语义在这里。
+@MainActor
+final class CarPlaySurfaceInput {
+
+    enum Action {
+        /// 0...1 的画面相对坐标。
+        case touch(x: Double, y: Double, down: Bool)
+        case knob(select: Bool, home: Bool, back: Bool, x: Int, y: Int)
+        /// 3 播放/暂停，4 下一首，5 上一首。
+        case media(code: Int)
+        case siri
+    }
+
+    /// 旋钮一拨的量，和网页端一致。
+    static let knobFlick = 127
+
+    private weak var view: CarPlaySurfaceView?
+    private let handle: @MainActor (Action) -> Void
+
+    init(view: CarPlaySurfaceView, handle: @escaping @MainActor (Action) -> Void) {
+        self.view = view
+        self.handle = handle
+    }
+
+    func install() {
+        view?.input = self
+    }
+
+    func remove() {
+        view?.input = nil
+    }
+
+    func pointer(at location: NSPoint, down: Bool) {
+        guard let view else { return }
+        let frame = view.videoBounds
+        guard frame.width > 0, frame.height > 0 else { return }
+        let x = max(0, min(1, (location.x - frame.minX) / frame.width))
+        let y = max(0, min(1, (location.y - frame.minY) / frame.height))
+        handle(.touch(x: x, y: y, down: down))
+    }
+
+    func key(_ event: NSEvent) -> Bool {
+        switch event.specialKey {
+        case .upArrow?: handle(.knob(select: false, home: false, back: false, x: 0, y: -Self.knobFlick)); return true
+        case .downArrow?: handle(.knob(select: false, home: false, back: false, x: 0, y: Self.knobFlick)); return true
+        case .leftArrow?: handle(.knob(select: false, home: false, back: false, x: -Self.knobFlick, y: 0)); return true
+        case .rightArrow?: handle(.knob(select: false, home: false, back: false, x: Self.knobFlick, y: 0)); return true
+        case .home?: handle(.knob(select: false, home: true, back: false, x: 0, y: 0)); return true
+        default: break
+        }
+        switch event.charactersIgnoringModifiers {
+        case "\r":
+            handle(.knob(select: true, home: false, back: false, x: 0, y: 0)); return true
+        case "\u{7F}", "\u{8}":
+            handle(.knob(select: false, home: false, back: true, x: 0, y: 0)); return true
+        case " ":
+            handle(.media(code: 3)); return true
+        case "s", "S":
+            handle(.siri); return true
+        default:
+            return false
+        }
     }
 }
 
@@ -225,6 +471,8 @@ final class CarPlaySurfacePanel: NSPanel {
 final class CarPlaySurfaceView: NSView {
     var onExit: (() -> Void)?
     var onReconnect: (() -> Void)?
+    /// live 输入映射；合成模式为 nil，事件按原样走。
+    var input: CarPlaySurfaceInput?
 
     private var display: WS2CarPlaySurfaceDisplay?
     private var topInset: Double = 24
@@ -235,6 +483,8 @@ final class CarPlaySurfaceView: NSView {
     private let reconnectButton = NSButton(title: "重新连接", target: nil, action: nil)
     private var tileLayers: [CALayer] = []
     private let tileHost = CALayer()
+    /// live 真画面垫在最底层；没有就不加。
+    private var videoLayer: CALayer?
 
     override init(frame: NSRect) {
         super.init(frame: frame)
@@ -268,11 +518,41 @@ final class CarPlaySurfaceView: NSView {
 
     @available(*, unavailable) required init?(coder: NSCoder) { fatalError("init(coder:) is not used") }
 
+    /// live 模式装上解码器的层；退出时移除。
+    func setVideoLayer(_ layer: CALayer) {
+        videoLayer?.removeFromSuperlayer()
+        videoLayer = layer
+        layer.isHidden = true
+        layer.frame = bounds
+        self.layer?.insertSublayer(layer, at: 0)
+    }
+
+    /// 视频铺放的区域（供输入换算 0...1 坐标）。等比缩放由层的 videoGravity 决定，
+    /// 这里按"铺满整屏"换算，与接收器侧的整屏分辨率一致。
+    var videoBounds: NSRect { bounds }
+
     override var acceptsFirstResponder: Bool { true }
     override var isFlipped: Bool { true }
 
     override func keyDown(with event: NSEvent) {
-        if event.keyCode == 53 { onExit?() } else { super.keyDown(with: event) }
+        if event.keyCode == 53 { onExit?(); return } // Esc 永远是回桌面
+        if let input, input.key(event) { return }
+        super.keyDown(with: event)
+    }
+
+    override func mouseDown(with event: NSEvent) {
+        guard let input else { super.mouseDown(with: event); return }
+        input.pointer(at: convert(event.locationInWindow, from: nil), down: true)
+    }
+
+    override func mouseDragged(with event: NSEvent) {
+        guard let input else { super.mouseDragged(with: event); return }
+        input.pointer(at: convert(event.locationInWindow, from: nil), down: true)
+    }
+
+    override func mouseUp(with event: NSEvent) {
+        guard let input else { super.mouseUp(with: event); return }
+        input.pointer(at: convert(event.locationInWindow, from: nil), down: false)
     }
 
     @objc private func reconnectPressed() { onReconnect?() }
@@ -286,12 +566,20 @@ final class CarPlaySurfaceView: NSView {
         detailLabel.isHidden = next.detail == nil
         reconnectButton.isHidden = !next.offersReconnect
         tileHost.isHidden = !next.showsTiles
+        videoLayer?.isHidden = !next.showsLiveVideo
+        // 真画面流动时，垫底的标题、符号和提示都让开；只有画面本身。
+        let overlayHidden = next.showsLiveVideo
+        for overlay in [symbolView, titleLabel, detailLabel, hintLabel] { overlay.isHidden = overlayHidden }
         setAccessibilityLabel(next.accessibilityLabel)
         needsLayout = true
     }
 
     override func layout() {
         super.layout()
+        CATransaction.begin()
+        CATransaction.setDisableActions(true)
+        videoLayer?.frame = bounds
+        CATransaction.commit()
         guard let display else { return }
         let side: CGFloat = 48
         let bottomHint: CGFloat = 56

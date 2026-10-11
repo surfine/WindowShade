@@ -5,7 +5,7 @@ set -euo pipefail
 cd "$(dirname "$0")/.."
 mkdir -p .build/file-shelf-card-tests
 swiftc -swift-version 6 -strict-concurrency=complete -warnings-as-errors -parse-as-library \
-  prototype/Core/Contracts.swift prototype/Core/NotchSentence.swift prototype/Core/NotchActivities.swift \
+  prototype/Core/Contracts.swift prototype/Core/NotchSentence.swift prototype/Core/WireJSON.swift prototype/Core/UsageReading.swift prototype/Core/NotchActivities.swift prototype/Core/ReleaseDefaults.swift \
   prototype/Core/NotchRow.swift prototype/Core/FileShelfModel.swift prototype/App/FileShelfStore.swift \
   tests/support/WS2TestSupport.swift tests/FileShelfCardTests.swift \
   -o .build/file-shelf-card-tests/tests

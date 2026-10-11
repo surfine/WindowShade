@@ -1,23 +1,19 @@
-# 可见契约（第十份并入 + 复核交接）
+# WindowShade 2 开源借鉴实施契约（2026-10-07）
+目标：按用户批准计划先突破蓝牙身份/真解锁前提；落实相机共享、六口令实验、遥控生产接线、CarPlay无凭据验证，以及可独立完成的媒体/电量/隐私收益。
+交付物：两角色蓝牙隔离探针与证据分级；现有相机订阅生命周期；口令真实landmark管线与留出评估；既有遥控栈接线；固定PlayPort无凭据实验包；研究来源记录与既有版本台账更新。
+验收：新针对runner实际执行；现有相关silent/camera/remote/privacy回归；prototype/build.sh --check全App真编译。真实设备/权限/凭据/模型资格无法验证时明确not_run或blocked，不制造绿灯。查看入口tools/probes/BLEReadProbe.swift、prototype/App/FaceObservationSource.swift、Core/WS2SilentPhrases.swift、App/WS2SilentHost.swift、Support/WS2Companion*。
+约束：保留原7个未提交性能文件；不提交推送签名发布、不替换日常App、不动真实窗口、不读取/提取私钥或真实密码；不带GPL代码进MIT App；不用模拟认证接真解锁。无手机配套App、声纹不进2.1。已证实在场不等于设备身份；身份/活体/注视未过时解锁仍阻断。当前CarPlay无硬件无可用认证材料，仅无凭据实验。
+分工：主模型蓝牙、安全准入、静音口令集成、隐私与总验收；lip_sources相机共享；remote_implementation遥控；notch_sourcesCarPlay。
+保底：旧StateM三文件原始字节和sha256已存.build/ws2-reuse/preexisting-statem；现有性能改动不覆盖。无用户数据变异。
 
-目标: 把 ChatGPT 第二回合第十份（最终交接包）并入 main：`build.sh` 四条 swiftc 显式
-Swift 6 / 完整并发检查 / 警告视为错误、`--check` 不再 source local-codesign.env；
-`Journal.journalID` 改成精确非零 UInt32（拒绝布尔/小数/NaN/∞/零/超界）。
-跑第十份自检与现有九套回归、跑一次真实 Mac 构建（W00），
-再写一份交接说明让后续更高智能的模型复核。
+## 本次续接：原生Remote第二轮发现
+用户明确要求立即测试已备好的atv-core三服务配置。仅运行已验收的120秒工具，临时PIN60秒；不改App、不写Keychain、不路由输入。观察本机Bonjour、连接/配对/验签/事件阶段及用户手机结果，写device-tests；服务结束核对0listener。旧计划与未完成项保留，不把实验通过当全功能交付。
 
-交付物:
-- 三方合并 5 替换 + 1 新增（AGENTS.md、START-HERE、1.0.16 对照表、build.sh、Journal.swift、FINAL-HANDOFF.md）；
-  归档 docs/handoff/chatgpt-review-2/part10；仓库 runner tests/part10（含 workorders/docs/sources/drift.json）；
-- Mac 适配：bash 3.2 空数组展开、run-final 报告路径 /var、legacy 历史脚本接线、stage.py 的 /var 与 resolve()、
-  test-handoff-tools 的漂移门禁；
-- 复核交接：docs/handoff/round2-part10/REVIEW-HANDOFF.md + evidence/（工具链、mac-build 结果、
-  98 处严格并发诊断、九套 run-final 结果）。
+## 第四轮后续：OPACK真机兼容
+手机已完成真实PairVerify，frame8解码失败。只补有固定来源的UUID、原始时间、F0字典别名与错误offset；不猜宽引用、不降密码学门槛。读取Core/WS2OPACK.swift、独立reference fixtures与remote-device。验收run-companion-channel-tests.sh、remote-device离线与handshake-interop.py、全App build.sh --check；其后120秒真机观察，日志剔PIN，退出0listener。
 
-验收方式:
-- python3 tests/part10/tests/test-{journal-id,build-entry,handoff-tools,stage}.py；
-- python3 tests/part10/tools/run-final.py --candidate . --handoff tests --suite {window-core,frame,foundation,native,duo,input,flow,legacy-foundation,legacy-process}；
-- 同上 --suite mac-build（真 SDK + 真 Sparkle；记录真实结果，不追求绿色）。
+用户纠正后：停止逐报错开真机，先完整重审atv-core固定源码（server.rs/session.rs/opack.rs/identity.rs）与本地差异，完成发现、认证、消息信封、初始化、应答、事件订阅、HID的对照表与一次完整独立加密客户端回归。协议兼容不继承上游省略验签；隔离工具不路由系统动作。不再仅为诊断开手机测试。
 
-输出/格式约束: 中文提交信息；不签名/发布/推送/改更新源/替换日用 App；不启用自动窗口效果；
-不为拿绿色撤销第十份的构建参数；未知就写未知。
+
+## 2026-10-10 收尾计划（已批准执行）
+范围：工程收尾+本机验收，七条线均衡，遥控纳入纯工程。W1 接线收尾→W2 专注收聊天→W3 遥控SRP/音量/C1/C5→W4 蓝牙在场来源→W5 六口令前半→W6 自动化验收→W7 回归文档。红线：不提交推送发布、能耗不高于 1.0.15、没真机验证的开关默认关。执行结果见 progress.md 末段；剩余项全在 blocked.json。

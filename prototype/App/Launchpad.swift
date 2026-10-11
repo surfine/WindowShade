@@ -185,8 +185,11 @@ enum Launchpad {
 @MainActor
 final class LaunchpadPanel: NSPanel {
     let view: LaunchpadView
+    /// 复用判定用：这块面板当初建在哪块屏。
+    private(set) var launchScreen: NSScreen?
 
     init(screen: NSScreen) {
+        launchScreen = screen
         view = LaunchpadView(frame: NSRect(origin: .zero, size: screen.frame.size))
         super.init(contentRect: screen.frame, styleMask: [.borderless, .nonactivatingPanel], backing: .buffered, defer: false)
         setFrame(screen.frame, display: false)

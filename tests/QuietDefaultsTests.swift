@@ -219,8 +219,8 @@ struct QuietDefaultsTests {
     static func dockClickDefault() {
         expect(!DockClickHideDefault.isOn(previewInstall: false, origin: .windows), "off for people who came from Windows")
         expect(!DockClickHideDefault.isOn(previewInstall: false, origin: .ipad), "off for people who came from iPad")
-        expect(DockClickHideDefault.isOn(previewInstall: false, origin: .mac), "on for people who always used a Mac")
-        expect(DockClickHideDefault.isOn(previewInstall: false, origin: .unanswered), "on when nobody answered")
+        expect(!DockClickHideDefault.isOn(previewInstall: false, origin: .mac), "off until verified on a real Mac (ReleaseDefaults)")
+        expect(!DockClickHideDefault.isOn(previewInstall: false, origin: .unanswered), "off until verified on a real Mac (ReleaseDefaults)")
         expect(DockClickHideDefault.isOn(previewInstall: true, origin: .windows), "people who already had it on keep it on")
     }
 

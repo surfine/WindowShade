@@ -14,6 +14,7 @@
 |P-LOCK|`bash probes/run-probe.sh LockStateProbe`|60秒内用Apple菜单手动锁定再手动解锁，另做用户切换、睡眠恢复。不要远程输入密码|private key缺失记unknown而非false。真实操作与字段不一致时后端不可用。该只读探针**没有提供生产锁屏命令**|
 |P-HABIT|`bash tools/probes/run-probe.sh HabitSignalProbe [--seconds 6]`；现场 `--live 60`|无交互部分只看能不能装上 Dock 的辅助功能观察、会话监听，旁听调度中心开合通知；`--live` 时 Aaron 三指上滑瞥一眼调度中心、按 🌐H、点 Dock、往上大幅滑动页面|iPad 习惯规则 i2/i5/i18 的信号。打印 SIGNAL（available / unavailable / pending-device）和 EVENT（时间戳 + 键码或名字，不记按了什么字）。拿不到信号的规则不做；pending-device 的规则留在 needsDeviceCheck 门后|
 |P-FACE-FP|`bash tools/probes/run-probe.sh FaceFeaturePrintProbe [--backend vision\|arcface] [--frames 10] [--compare 40] [--camera UNIQUE_ID]`；不开相机的自检：`--self-test`|终端第一次会弹相机授权，Aaron 亲自点允许。见下面“刷脸阈值标定”的步骤|只打印余弦汇总（n/min/p5/median/p95/max）、当前阈值下的通过率和建议阈值；不存图像、不打印向量、不写文件。建议阈值只来自这一次的人和光线，改 `FaceScanModelProfile.table` 前至少要有两个不同的人、两种光线|
+|P-HEAD-X|`bash tools/probes/head-motion-crosscheck/run.sh [--rounds 3]`；只编译：`--check`|戴 AirPods 正对相机，按提示向自己的左、右转头再回正；第一次弹相机和“动作与健身”授权，Aaron 亲自点允许|每次转头一行 JSON（两路符号、起转时差），汇总说 `FaceGestureTracker`、`WS2HeadMotionMath`、`HeadMotionCrossCheck.cameraToHeadSign` 是否反了。见 `head-motion-crosscheck/README.md`|
 
 `results-template.csv` 是空白记录格式。禁止把预期值写进 observed。每次保存机器/系统/SDK、命令、退出码、操作时间和终端原输出；设备姓名/完整UUID保留在本机私有证据里，分享时删掉。
 
@@ -35,3 +36,7 @@
 编译失败 → 保存诊断与SDK号；先检查框架链接、方法签名、Swift隔离注解；不得用unsafeBitCast把公开API改成猜测签名。权限拒绝 → 停止该源、设置显示“未授权”，由用户决定是否授予。无设备/特征/数据 → 能力为unknown并关闭，不改为模拟成功。得到候选数据 → 重复断连、取消、锁屏测试，再由主模型把确切数据与能力登记绑定。只有数据通道通过、身份通道通过、生命周期撤销通过三项都各有证据，才允许接到执行入口。
 
 P-MT、P-ID与P-LOCK是边界探针，不是完成所有私有API、活体识别和OS解锁研究的替代品。它们阻止把第一轮的猜测继续传给执行模型；尚缺哪一项已明确写出。
+
+## 帧节奏探针（MO-07）
+
+`WindowShade --frame-rhythm-probe [--runs N] [--out path.json]`：用显示链接记录展开、收起、对勾、倒数换字（各 N 次，默认 10）和展开途中每 50 ms 反向打断的帧间隔，输出 JSON 与一行摘要；退出码 0 = 全部过线，1 = 有场景未过线。纯计算在 `prototype/Core/FrameRhythmAnalysis.swift`，测试 `bash tests/run-frame-rhythm-tests.sh`。当前采样对象是探针自己的小窗口图层（真实令牌，来源标 `token-layer`），接进真实刘海面板待 MO-02。入口需在 `main.swift` 加 `if FrameRhythmProbe.isRequested { ... await FrameRhythmProbe.run() }`。

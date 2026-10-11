@@ -1618,5 +1618,21 @@ struct SilentPrepTests {
         expect(seen.isCompleted, "a launcher visible on the frozen screen is completed")
         let pulled = WS2SilentEffectJudge.placement(frameMatched: false, commandID: "window.left", targetID: "win-1")
         expect(!pulled.isCompleted, "pulling the effect port fails the positive completion check")
+
+        // 个人口令的持久化：保存、读回、撞词拒绝、清空。
+        UserDefaults.standard.removeObject(forKey: WS2SilentPhraseStore.defaultsKey)
+        var profile = WS2SilentPhraseStore.load()
+        expect(profile.words.isEmpty && profile.speech == .mandarin, "empty store starts blank")
+        profile.speech = .cantonese
+        profile.words["ui.windows"] = "窗口"
+        profile.words["nav.next"] = "下一个"
+        expect(WS2SilentPhraseStore.save(profile), "saving distinct words succeeds")
+        let back = WS2SilentPhraseStore.load()
+        expect(back.speech == .cantonese && back.words["ui.windows"] == "窗口" && back.words["nav.next"] == "下一个", "store round-trips")
+        profile.words["ui.settings"] = "窗口"
+        expect(!WS2SilentPhraseStore.save(profile), "duplicate words are refused")
+        expect(WS2SilentPhraseStore.load().words["ui.settings"] == nil, "refused save leaves store unchanged")
+        WS2SilentPhraseStore.clear()
+        expect(WS2SilentPhraseStore.load().words.isEmpty, "clear empties the store")
     }
 }

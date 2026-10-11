@@ -51,7 +51,7 @@ import Cocoa
             }, effects:{ [weak self] effects in self?.focusWindowEffects?(effects) })
         island = owner.notch.leases
         silent.attach(runtime: self, owner: owner)
-        presenceLock = PresenceLockDriver(notch: owner.notch)
+        presenceLock = PresenceLockDriver(notch: owner.notch, source: WS2BluetoothPresenceSource())
         focusPort = WS2FocusWindowPort(owner: owner)
         focusEffects = WS2FocusEffectExecutor(port: focusPort)
         // T3：窗口效果先走串行计划；端口未准入时只计时，不移动任何窗口。
@@ -230,7 +230,10 @@ import Cocoa
               let server = hookServer else { return }
         showSessions(server.model.sessions, open: { [weak self] context in
             if context.projectID.hasPrefix("/") { self?.goToCodingSession(cwd: context.projectID) }
-        }, stop: { _ in })
+        }, stop: { [weak self] context in
+            // 只停 owned 且正在跑的那条（按钮本来就只在这两种条件都满足时出现）；observed 会话没有这个按钮。
+            _ = self?.owned.interruptSession(matching: context)
+        })
     }
     func applicationShouldTerminate() -> NSApplication.TerminateReply {
         if quitToken != nil { return .terminateLater }
@@ -449,7 +452,8 @@ import Cocoa
         owner.notch.activities.ws2PublishFocus(title:m.phase == .idle ? nil : (m.phase == .focus ? "专注" : "休息"),
                                               trailing:NotchEarText.focusTrailing(compactText:m.compactText(at:now),paused:m.isPaused),
                                               subtitle:NotchEarText.focusSubtitle(isRest:m.phase == .rest,completedToday:m.completedToday,paused:m.isPaused),
-                                              paused:m.isPaused,progress:m.phase == .idle ? nil : m.progress(at:now))
+                                              paused:m.isPaused,progress:m.phase == .idle ? nil : m.progress(at:now),
+                                              finishedRound:m.lingersAfterEnd)
         let title = menuTitle + (m.isPaused ? ":paused" : "") + ":" + m.phase.rawValue
         if title != lastMenuTitle { lastMenuTitle = title; owner.rebuildMenu() }
     }
@@ -503,9 +507,18 @@ import Cocoa
                                       duration: reminder.hold, onClick: next)
             case .sound(.restStarted): owner?.playFoldSound()
             case .sound(.restFinished): owner?.playUnfoldSound()
-            case .tuckChat(let token), .restoreChat(let token):
-                // 私人 App 名单（T3 的另一半）还不存在：只登记，不用“全部收起”顶替。
-                wlog("focus: chat tucking not wired, token \(token.serial)")
+            case .tuckChat(let token):
+                guard WS2FocusWindowPort.admitted else {
+                    wlog("focus: window effects not admitted yet; counting only")
+                    continue
+                }
+                // 专注期只收私人 App 名单里那几个；不打断打字，所以不挂“任意键放回”。
+                do { try focusEffects.transition(run: token, windows: focusTargets(privateOnly: true)) }
+                catch { wlog("focus: plan rejected the chat tuck phase") }
+            case .restoreChat(let token):
+                _ = token
+                do { try focusEffects.transition(run: nil, windows: []) }
+                catch { wlog("focus: plan rejected the chat restore phase") }
             case .fault(let fault):
                 wlog("focus executor fault: \(fault.rawValue)")
             }
@@ -513,10 +526,17 @@ import Cocoa
     }
 
     /// 进入阶段时的合格窗口快照：明确范围、身份完整；不每秒重扫。
-    private func focusTargets() -> [WS2FocusEffectPlan.Window] {
+    /// privateOnly 只留私人 App 名单里那几个 App 的窗口（专注期收聊天用）。
+    private func focusTargets(privateOnly: Bool = false) -> [WS2FocusEffectPlan.Window] {
         guard let owner, let screen = NSScreen.main else { return [] }
         let revision = owner.notch.tuckRevision
-        let windows: [WS2FocusEffectPlan.Window] = owner.gestures.arrangeableWindows(on: screen, focused: nil).map { entry in
+        let arrangeable = owner.gestures.arrangeableWindows(on: screen, focused: nil)
+        let picked = privateOnly
+            ? PrivateAppList.shared.filterPrivate(arrangeable) { entry in
+                NSRunningApplication(processIdentifier: entry.window.pid)?.bundleIdentifier
+            }
+            : arrangeable
+        let windows: [WS2FocusEffectPlan.Window] = picked.map { entry in
             let launch = NSRunningApplication(processIdentifier: entry.window.pid)?.launchDate?.timeIntervalSince1970 ?? 0
             let identity = WS2FocusWindowOwnership.Identity(pid: entry.window.pid,
                                                             processStart: UInt64(max(0, launch)),

@@ -5,7 +5,7 @@ set -euo pipefail
 cd "$(dirname "$0")/.."
 mkdir -p .build/notch-polling-tests
 swiftc -parse-as-library -O \
-  prototype/Core/NotchActivities.swift \
+  prototype/Core/WireJSON.swift prototype/Core/UsageReading.swift prototype/Core/NotchActivities.swift prototype/Core/ReleaseDefaults.swift \
   prototype/App/NotchActivityPollPolicy.swift \
   prototype/App/NotchActivitySources.swift \
   prototype/App/NowPlayingStream.swift \

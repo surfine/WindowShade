@@ -16,7 +16,7 @@ final class WindowSwitcherKeys: @unchecked Sendable {
 
     nonisolated static let defaultsKey = "Switcher.trigger"
     static var trigger: Trigger {
-        get { Trigger(rawValue: UserDefaults.standard.string(forKey: defaultsKey) ?? "") ?? .option }
+        get { Trigger(rawValue: UserDefaults.standard.string(forKey: defaultsKey) ?? "") ?? (ReleaseDefaults.value(defaultsKey) ? .option : .off) }
         set { UserDefaults.standard.set(newValue.rawValue, forKey: defaultsKey) }
     }
 

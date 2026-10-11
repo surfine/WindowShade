@@ -71,6 +71,15 @@ struct AuthTarget: Equatable, Sendable {
     AuthTarget(purpose: .enrollDevice, kind: "device.key.p256", fields: [Field(name: "publicKey", value: publicKeyRaw)])
   }
 
+  /// 把一组脸部模板存进钥匙串（录脸，ID-04）：目标是模型版本和这一组模板的摘要（FaceTemplateSet.digest）。
+  /// Touch ID 确认的就是“要存的这一组”；存的东西变了，摘要就变，授权就用不上。编码规则不变，只是新的 kind。
+  static func faceTemplate(modelVersion: String, digest: AuthDigest) -> AuthTarget {
+    AuthTarget(purpose: .enrollDevice, kind: "face.template", fields: [
+      Field(name: "modelVersion", value: Array(modelVersion.utf8)),
+      Field(name: "templates", value: digest.bytes),
+    ])
+  }
+
   var canonicalBytes: [UInt8] {
     var bytes = Array("WindowShade.AuthTarget\0".utf8)
     AuthCanonical.append(Self.version, to: &bytes)

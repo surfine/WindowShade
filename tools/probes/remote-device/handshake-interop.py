@@ -18,14 +18,21 @@ def frame(kind, fields):
 
 def read_frame(encoded, kind):
     packet = bytes.fromhex(encoded); assert packet[0] == kind
-    return r.read_wire((b'\x04' + packet[1:]).hex())
+    codec_path = Path(__file__).with_name('wire-opack.py')
+    spec = importlib.util.spec_from_file_location('handshake_opack', codec_path)
+    codec = importlib.util.module_from_spec(spec); spec.loader.exec_module(codec)
+    assert int.from_bytes(packet[1:4], 'big') == len(packet) - 4
+    value = codec.unpack(packet[4:])
+    assert isinstance(value, dict) and isinstance(value.get('_pd'), bytes)
+    return r.read_tlv(value['_pd'])
 
 def hkdf(key, salt, info):
     return r.HKDF(algorithm=r.hashes.SHA512(), length=32, salt=salt.encode(), info=info.encode()).derive(key)
 
 class Bridge:
-    def __init__(self, path):
-        self.p = subprocess.Popen([str(path), '--wire-test-json'], stdin=subprocess.PIPE, stdout=subprocess.PIPE, stderr=subprocess.PIPE, text=True)
+    def __init__(self, path, extra_args=None):
+        self.p = subprocess.Popen([str(path), '--wire-test-json'] + list(extra_args or []),
+                                  stdin=subprocess.PIPE, stdout=subprocess.PIPE, stderr=subprocess.PIPE, text=True)
     def send(self, **value):
         self.p.stdin.write(json.dumps(value)+'\n'); self.p.stdin.flush()
         line = self.p.stdout.readline(); assert line, self.p.stderr.read()
@@ -43,13 +50,16 @@ def initial_verify(b):
     client = X25519PrivateKey.generate()
     response = b.feed(frame(5, [(6,b'\x01'),(3,raw_key(client.public_key()))]))
     assert response['phase'] == 'pair-verify' and not response['closed']
-    assert read_frame(response['frames'][0],6)[6] == b'\x02'
+    m2 = read_frame(response['frames'][0],6)
+    assert m2[6] == b'\x02'
+    return client.exchange(X25519PublicKey.from_public_bytes(m2[3]))
 
-def enroll(b):
+def enroll(b, pause_seconds=None):
     response = b.feed(frame(3,[(6,b'\x01'),(0,b'\x00')]))
     assert response['phase'] == 'pair-setup' and not response['disconnected']
     assert response['generation'] == 2, 'old verifier close must not close replacement'
     m2 = read_frame(response['frames'][0],4)
+    if pause_seconds is not None: b.send(op='advance-clock', seconds=pause_seconds)
     ctx = r.SRPContext('Pair-Setup','3939',prime=r.constants.PRIME_3072,generator=r.constants.PRIME_3072_GEN,hash_func=hashlib.sha512)
     client = r.SRPClientSession(ctx); client.process(m2[3].hex(),m2[2].hex())
     response = b.feed(frame(4,[(6,b'\x03'),(3,r.raw(client.public)),(4,r.raw(client.key_proof))]))
@@ -67,10 +77,10 @@ def enroll(b):
     r.Ed25519PublicKey.from_public_bytes(accessory[3]).verify(accessory[10],r.derive(key,'Accessory-Sign')+accessory[1]+accessory[3])
     return signing,identifier,accessory,encryption
 
-def verify(b, signing, identifier, accessory, bad=False):
+def verify(b, signing, identifier, accessory, bad=False, expected_generation=3):
     private=X25519PrivateKey.generate(); public=raw_key(private.public_key())
     response=b.feed(frame(5,[(6,b'\x01'),(3,public)]))
-    assert response['phase']=='pair-verify' and not response['closed'] and response['generation']==3
+    assert response['phase']=='pair-verify' and not response['closed'] and response['generation']==expected_generation
     m2=read_frame(response['frames'][0],6)
     secret=private.exchange(X25519PublicKey.from_public_bytes(m2[3]))
     proofkey=hkdf(secret,'Pair-Verify-Encrypt-Salt','Pair-Verify-Encrypt-Info')
@@ -85,6 +95,7 @@ def verify(b, signing, identifier, accessory, bad=False):
         assert response.get('rejected') and response['closed'] and response['delivered']==0
     else:
         assert response['phase']=='verified' and not response['closed']
+        assert response['identityBound'] is True and response['authenticatedInputCount'] == 0
         assert read_frame(response['frames'][0],6)[6]==b'\x04'
     return secret
 
@@ -95,19 +106,31 @@ def encrypted_frame(key, payload, counter=0):
 def main():
     ap=argparse.ArgumentParser(); ap.add_argument('--bridge',type=Path,required=True); args=ap.parse_args()
     results=[]
-    for case in ('same-socket-success','verified-restart','invalid-verify-signature','setup-key-input','expired-admission','fallback-repeat'):
+    for case in ('same-socket-success','verified-restart','invalid-verify-signature','initial-pv-main-input','setup-key-input','expired-admission','fallback-repeat'):
         b=Bridge(args.bridge)
         try:
-            initial_verify(b)
+            initial_secret=initial_verify(b)
             if case=='expired-admission':
                 b.send(op='expire-admission')
                 denied=b.feed(frame(3,[(6,b'\x01'),(0,b'\x00')]))
                 assert denied.get('rejected') and denied['closed'] and denied['peers']==0
             else:
                 signing,identifier,accessory,setupkey=enroll(b)
-                if case=='setup-key-input':
+                if case=='initial-pv-main-input':
+                    payload=b'\xe3\x42_t\x09\x42_i\x45_hidC\x42_c\xe0'
+                    denied=b.feed(encrypted_frame(hkdf(initial_secret,'','ClientEncrypt-main'),payload))
+                    candidate=denied.get('candidateAead',{})
+                    assert candidate.get('candidate')=='initial-pv-main'
+                    assert candidate.get('classification')=='aead-matched'
+                    assert not denied['closed'] and denied['delivered']==0
+                    assert denied['identityBound'] is False and denied['compatibilityInputCount']==0 and denied['compatibilityMessageCount']==1
+                elif case=='setup-key-input':
                     denied=b.feed(encrypted_frame(setupkey,b'\xe3\x42_t\x09\x42_i\x45_hidC\x42_c\xe0'))
-                    assert denied.get('rejected') and denied['closed'] and denied['delivered']==0
+                    candidate=denied.get('candidateAead',{})
+                    assert candidate.get('candidate')=='initial-pv-main'
+                    assert candidate.get('classification')=='aead-failed'
+                    assert denied['closed'] and denied['delivered']==0
+                    assert denied['identityBound'] is False and denied['compatibilityInputCount']==0
                 elif case=='fallback-repeat':
                     ephemeral=X25519PrivateKey.generate()
                     first=b.feed(frame(5,[(6,b'\x01'),(3,raw_key(ephemeral.public_key()))])); assert not first['closed']
@@ -123,6 +146,7 @@ def main():
                         clientkey=hkdf(secret,'','ClientEncrypt-main')
                         response=b.feed(encrypted_frame(clientkey,payload))
                         assert not response['closed'] and response['delivered']==1 and len(response['frames'])==3
+                        assert response['identityBound'] is True and response['authenticatedInputCount'] == 0 and response['authenticatedMessageCount'] == 1
                         reply=bytes.fromhex(response['frames'][0]); assert reply[0]==8
                         serverkey=hkdf(secret,'','ServerEncrypt-main')
                         plaintext=r.ChaCha20Poly1305(serverkey).decrypt(b'\0'*12,reply[4:],reply[:4])

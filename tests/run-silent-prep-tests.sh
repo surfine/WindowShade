@@ -17,7 +17,7 @@ swiftc -swift-version 6 -strict-concurrency=complete -warnings-as-errors -parse-
   prototype/Core/WS2SilentProductPort.swift \
   prototype/Core/WS2SilentDraft.swift \
   prototype/Core/WS2SilentGates.swift \
-  prototype/Core/WS2SilentPhrases.swift \
+  prototype/Core/WS2SilentPhrases.swift prototype/Core/WS2SilentPhraseStore.swift \
   prototype/Core/WS2SilentSecurity.swift \
   prototype/Core/WSL10n.swift \
   prototype/Core/WS2SilentCopy.swift \

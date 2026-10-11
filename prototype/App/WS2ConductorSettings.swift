@@ -56,7 +56,7 @@ extension AppDelegate {
                                     action: #selector(prefConductorSound(_:)), name: "提示音")
         var rows = [
             conductorRow(name: "指挥模式", subtitle: "在遥控模式下面打开", symbol: nil, control: conductorStatus(on ? "开着" : "关着")),
-            conductorRow(name: "提示音", subtitle: "先记住，还不会响", symbol: nil, control: sound),
+            conductorRow(name: "提示音", subtitle: "每一拍轻敲一声，认没认出各有各的声", symbol: nil, control: sound),
         ]
         let coding = conductorSwitch(on: WS2ConductorSettings.flag(WS2ConductorSettings.codingSessionsKey, in: store),
                                      action: #selector(prefConductorCodingSessions(_:)), name: "编程会话")

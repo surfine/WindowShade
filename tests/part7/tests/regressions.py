@@ -15,11 +15,13 @@ with tempfile.TemporaryDirectory(prefix='ws2-v7-regression-') as tmp:
   run(flags+(['-parse-as-library'] if library else [])+(['-I',s/'Native',obj] if native else [])+sources+['-o',b/name]);run([b/name]+list(args))
  if a.batch=='foundation':
   coord='Core/InteractionCoordinator.swift' if (s/'Core/InteractionCoordinator.swift').exists() else 'App/InteractionCoordinator.swift'
-  suite('part6-core',['Contracts','WS2DiagnosticTail','WS2OwnedScope','WS2SelectionModel','WS2ConnectionBudget'],[coord,'Support/WS2ProjectDirectory.swift'],[h/'part6/tests/CoreTests.swift'],[out/'regression-part6-core-results.json'])
-  suite('part6-wire',['Contracts','CodexWire','WS2StrictJSON'],[],[h/'part6/tests/WireProfileTests.swift'],[out/'regression-part6-wire-results.json',out/'regression-part6-wire-outbound.ndjson'])
+  # part6 归档测试（docs/handoff/chatgpt-review-2）期望停在硬化前；活测试 tests/Part6CoreTests.swift
+  # 与当前协调器同步演进（2026-10-11 裁决：ARB02-08 归档期望过期，非回归）。
+  suite('part6-core',['Contracts','WS2DiagnosticTail','WS2OwnedScope','WS2SelectionModel','WS2ConnectionBudget'],[coord,'Support/WS2ProjectDirectory.swift'],[r/'tests/Part6CoreTests.swift'],[out/'regression-part6-core-results.json'])
+  suite('part6-wire',['Contracts','WireJSON','CodexWire','WS2StrictJSON'],[],[h/'part6/tests/WireProfileTests.swift'],[out/'regression-part6-wire-results.json',out/'regression-part6-wire-outbound.ndjson'])
   suite('part5-core',['Contracts','WS2FocusWindowOwnership','WS2DeviceInputGate','PairingAttemptWindow','PairingTLV','WS2BoundedOutbox','WS2FocusEffectPlan','WS2SemanticInputRouter'],['Support/WS2PeerRepository.swift','Support/WS2PairSetupServer.swift'],[h/'part5/tests/CoreTests.swift'],[out/'regression-part5-core-results.json'])
-  suite('part4-core',['Contracts','CodexWire','WS2StrictJSON','FocusTimer','WS2CompanionFrame','WS2ApprovalReview','WS2DeviceInputGate','WS2FocusWindowOwnership'],[],[h/'part4/tests/CoreTests.swift'],[out])
-  suite('part2',['Contracts','CodexWire','WS2StrictJSON','RemoteSessionGate','PresenceReadDeadline'],[coord],[h/'part2/tests/Part2CoreTests.swift'],[out/'regression-part2-outbound.ndjson'])
+  suite('part4-core',['Contracts','WireJSON','CodexWire','WS2StrictJSON','FocusTimer','WS2CompanionFrame','WS2ApprovalReview','WS2DeviceInputGate','WS2FocusWindowOwnership'],[],[h/'part4/tests/CoreTests.swift'],[out])
+  suite('part2',['Contracts','WireJSON','CodexWire','WS2StrictJSON','RemoteSessionGate','PresenceReadDeadline'],[coord],[r/'tests/Part2CoreTests.swift'],[out/'regression-part2-outbound.ndjson'])
   suite('focus',['Contracts','FocusTimer'],[],[h/'part1/tests/support/WS2TestSupport.swift',h/'part1/packages/T1/tests/FocusTimerTests.swift'],library=True)
   suite('gesture',['ConductorGesture'],[],[r/'tests/ConductorGestureTests.swift'],library=True)
  else:

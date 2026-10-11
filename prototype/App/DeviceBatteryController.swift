@@ -9,7 +9,7 @@ import Cocoa
 @MainActor final class DeviceBatteryController {
   static let enabledKey = "Notch.deviceBattery.enabled"
   static var isEnabled: Bool {
-    UserDefaults.standard.object(forKey: enabledKey) as? Bool ?? true
+    UserDefaults.standard.object(forKey: enabledKey) as? Bool ?? ReleaseDefaults.value(enabledKey)
   }
   private static let alertedKey = "DeviceBattery.alerted.v1"
 
@@ -56,8 +56,11 @@ import Cocoa
     airPods.onReading = { [weak self] reading in self?.record(reading) }
   }
 
+  private var watching = false
+
   func start() {
-    guard Self.isEnabled else { return }
+    guard Self.isEnabled, !watching else { return }
+    watching = true
     source.start()
     macBattery.start()
     airPods.start()
@@ -65,6 +68,8 @@ import Cocoa
   }
 
   func stop() {
+    guard watching else { return }
+    watching = false
     source.stop()
     macBattery.stop()
     airPods.stop()

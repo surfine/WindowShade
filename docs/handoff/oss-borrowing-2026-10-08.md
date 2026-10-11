@@ -36,6 +36,8 @@
 | [LIVI](https://github.com/f-io/LIVI) | 3968d38，864★ | GPL-3.0 | CarPlay 画面留 view-area / safe-area 两套 inset 避开刘海；已连手机间切换不重连；AirPlay Pair-Verify 验过客户端签名、M4 后才装控制 key（和我们 strict 路径一致，和 atv-core 相反） | 它的代码；重刷固件的 LIVI Link 加密狗当成品；Mac 上没有有线路径 |
 | [atv-core](https://github.com/corvofeng/atv-core) | 8a4ada2，235★ | 无（工作区声明 MIT，无 LICENSE 文件） | 遥控器按键表：5 返回、6 确认、7 电视键、14 播放/暂停、18 静音、19 电源（iOS 26/27 控制中心复用 18/19），`_hBtS` 1 按下 2 松开、松开才算；触控 `_hidT` 1000×1000、`_tPh` 1 开始 4 结束、<60 点 ≥150 滑；后台探测（`_x` 高位）1 秒、普通 2.5 秒、不开会话 3 秒断；音量标志 `_mcF` 0x0100 让 iPhone 音量键能调、GetVolume 返回 0 表示静音 | 不验 PV-M3、PIN 固定 1111 写日志、机器 UUID SHA 当私钥、SRP server 值固定、同 IP 新连接踢旧、播放键双击加 300 ms、电源键 `pmset displaysleepnow`（我们电源是收工不是睡眠） |
 
+| [Mole](https://github.com/tw93/Mole) | 2026-10-11，main | GPL-3.0 | 启动台卸载的思路：App 本体 + 按 bundleID 扫用户域关联文件（偏好/应用支持/缓存/状态/容器/启动代理），共用数据保留，删除前逐文件复核 | 它的代码（Go）、直接删除（我们进废纸篓）、系统域提权路径 |
+
 **mediaremote-adapter**（[ungive/mediaremote-adapter](https://github.com/ungive/mediaremote-adapter)，BSD-3）：通过 `/usr/bin/perl … stream --micros` 拿所有播放器的推送更新，配合 Atoll 的用法。它依赖私有框架、绕了一个 Apple 授权，可能随系统更新失效，进隐私第三层登记，osascript 留作退路。
 
 ## C4：第一帧密钥仍无答案

@@ -1162,5 +1162,8 @@
   "docs/handoff/reference/codex-app-server-schema-0.153.0/v2/ThreadSetNameParams.json": "8e334c816bbaeb80f807aca61bf659246f3f60c245c21b5cb7e3ca4ee3ce4820",
   "docs/handoff/reference/codex-app-server-schema-0.153.0/v2/ThreadRealtimeClosedNotification.json": "5290a73f8d4652b59d2f82d89c7bd289003fe2981fb0c628a61e801fa2123364",
   "assets/app-icon/windowshade-app-icon.png": "5f6fb9a4471230c9982865685ffadfb49608c4e0f026ff767e3407122804f5a1",
-  "assets/app-icon/WindowShade.icns": "c391bb38afb6d34d6ab250e67fb879f42c4d56af5919ab6b2b021947a904af78"
+  "assets/app-icon/WindowShade.icns": "c391bb38afb6d34d6ab250e67fb879f42c4d56af5919ab6b2b021947a904af78",
+  "prototype/Support/WS2PureSRP.swift": "309f90e249c72d9dce5ae4f1e4cf78c2a8b81a5c0517435cb2f7ca6f502fdf27",
+  "prototype/Core/UsageReading.swift": "a0f3a71e09aa326d6d512988d96f152a65f273b0b839e52447528dcaebfca518",
+  "prototype/Core/WS2BluetoothPresenceModel.swift": "341cc1ee6cea8ca3df2d74cc28b156ce4a5e742ac8b325fa420e84ff3f813806"
 }

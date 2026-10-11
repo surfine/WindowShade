@@ -11,6 +11,9 @@ struct FocusTimer: Sendable {
         var rest: UInt64 { (self == .minutes25 ? 5 : 10) * WS2.Duration.minute }
     }
     enum Presentation: Sendable { case hidden, compact, expanded }
+    /// 一轮是怎么收的。只有 `.completed`（休息自己走到 0）才值得在刘海两耳留 4 秒写“这一轮完成”；
+    /// 跳过、结束、睡过头才发现已过期（`.lapsed`）都立即收。不进持久化。
+    enum EndReason: Equatable, Sendable { case completed, skipped, ended, lapsed }
     enum Sound: Sendable { case restStarted, restFinished }
     enum Event: Sendable {
         case start, pause, resume, skip, end, tick
@@ -51,6 +54,10 @@ struct FocusTimer: Sendable {
     private(set) var runID: WS2.Token?
     private(set) var isLocked = false
     private(set) var isSleeping = false
+    /// 最近一轮的收法；开始新一轮时清掉。
+    private(set) var lastEnd: EndReason?
+    /// 刘海两耳要不要留 4 秒“这一轮完成”：只有自己走完、且这一刻没锁屏没睡眠才留；其余立即收。
+    var lingersAfterEnd: Bool { phase == .idle && lastEnd == .completed && !isLocked && !isSleeping }
     private var pausedRemaining: UInt64 = 0
     private var tokenSource: WS2.TokenSource
     private var time = WS2.TimeGate()
@@ -109,7 +116,7 @@ struct FocusTimer: Sendable {
         guard !calendar.today.isEmpty, !calendar.deadlineDay.isEmpty else { return [.fault(.malformedInput)] }
         if day != calendar.today { day = calendar.today; completedToday = 0 }
         // 明确结束优先于同刻自然到点；同刻锁屏则先结算已完成的专注，再暂停尚未完成的专注。
-        if case .end = event { return finish() }
+        if case .end = event { return finish(.ended) }
         // 锁屏/睡眠在同刻的可见效果之前生效；仍结算已经完成的专注。
         if case .locked = event { isLocked = true }
         if case .sleep = event { isSleeping = true }
@@ -118,7 +125,7 @@ struct FocusTimer: Sendable {
         case .start:
             guard phase == .idle, !isLocked, !isSleeping else { return out }
             guard let id = tokenSource.next() else { return out + [.fault(.generationExhausted)] }
-            runID = id; phase = .focus; pauses.removeAll(); pausedRemaining = 0
+            runID = id; phase = .focus; pauses.removeAll(); pausedRemaining = 0; lastEnd = nil
             activePreset = preset; activeTuckChat = tuckChatEnabled
             deadline = now.adding(activePreset.focus)
             if activeTuckChat { out.append(.tuckChat(id)) }
@@ -136,7 +143,7 @@ struct FocusTimer: Sendable {
             isSleeping = false; setPause(.sleeping, on: false, at: now)
         case .skip:
             if phase == .focus { out += beginRest(at: now, now: now, audible: true) }
-            else if phase == .rest { out += finish() }
+            else if phase == .rest { out += finish(.skipped) }
         case .dismissRestWindows:
             if phase == .rest, restWindowsRequested, let id = runID {
                 restWindowsRequested = false; out.append(.restoreAll(id))
@@ -173,7 +180,8 @@ struct FocusTimer: Sendable {
         }
         if phase == .rest {
             let audible = now == end && !isLocked && !isSleeping
-            var out = finish()
+            // 晚到超过 2 秒（睡过头醒来才结算）不算“刚刚走完”，不在耳朵上留 ✓。
+            var out = finish(now.nanoseconds - end.nanoseconds <= 2 * WS2.Duration.second ? .completed : .lapsed)
             if audible {
                 out.append(.sound(.restFinished))
                 out.append(.remind(.init(kind: .restDone, restMinutes: 0, nth: 0)))
@@ -188,13 +196,14 @@ struct FocusTimer: Sendable {
         phase = .rest; pauses.removeAll(); pausedRemaining = 0
         deadline = start.adding(activePreset.rest)
         // 晚到时跳过已经过去的休息，不瞬间收一次窗口、补播声音。
-        if let end = deadline, end <= now { out += finish(); return out }
+        if let end = deadline, end <= now { out += finish(.lapsed); return out }
         if !isLocked && !isSleeping { restWindowsRequested = true; out.append(.tuckAll(id)) }
         if audible { out.append(.sound(.restStarted)) }
         return out
     }
-    private mutating func finish() -> [Effect] {
+    private mutating func finish(_ reason: EndReason) -> [Effect] {
         guard let id = runID else { return [] }
+        lastEnd = reason
         var out: [Effect] = []
         if phase == .focus && activeTuckChat { out.append(.restoreChat(id)) }
         if restWindowsRequested { out.append(.restoreAll(id)) }

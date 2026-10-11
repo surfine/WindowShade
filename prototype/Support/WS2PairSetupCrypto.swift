@@ -1,12 +1,5 @@
 import Foundation
 
-@MainActor protocol WS2SRPPrimitive: AnyObject {
-    func begin(pin: String) throws -> (salt: Data, publicKey: Data)
-    // key is raw 64-byte SHA-512 session key, never its hexadecimal text.
-    func verify(publicKey: Data, proof: Data) throws -> (serverProof: Data, key: Data)
-    func clear()
-}
-
 #if canImport(CryptoKit)
 import CryptoKit
 

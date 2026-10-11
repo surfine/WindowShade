@@ -7,6 +7,8 @@ import Cocoa
 final class LaunchpadView: NSView, NSTextFieldDelegate {
     var onLaunch: ((LaunchpadApp, LaunchpadDrop) -> Void)?
     var onClose: (() -> Void)?
+    /// 右键「卸载 App…」：交给控制器走扫描与确认浮层。
+    var onUninstall: ((LaunchpadApp) -> Void)?
     var onSpotlight: (() -> Void)?
     var onCalendar: (() -> Void)?
     var onActivityAction: ((String?, NotchActivityAction) -> Void)?
@@ -303,6 +305,19 @@ final class LaunchpadView: NSView, NSTextFieldDelegate {
         CATransaction.setAnimationDuration(Motion.Spring.settle.response)
         wall.contents = image
         CATransaction.commit()
+    }
+
+    /// 面板复用前的复位：上一次留下的模态状态（文件夹、搜索、编辑、列表）全部回初值。
+    /// 只清交互状态，不碰 cells（复用的意义就是保住那棵 layer 树）。
+    func resetForReuse() {
+        if folder != nil { closeFolder() }
+        endJiggle()
+        if !field.stringValue.isEmpty { field.stringValue = ""; pillAtTop = false; refilter() }
+        if listActive { showList(false) }
+        settle(to: 0)
+        uninstallOverlay?.removeFromSuperview()
+        uninstallOverlay = nil
+        pager.count = pageCount
     }
 
     func setContent(apps list: [LaunchpadApp], layout: LaunchpadLayout) {
@@ -782,6 +797,12 @@ final class LaunchpadView: NSView, NSTextFieldDelegate {
             library.press(layer, true, reduced: reduced)
         case .empty:
             if folder == nil, !listActive {
+                // iOS 官方路径：长按空白背景进编辑模式（图标长按已改为弹菜单，这条要补回来）。
+                if !searching {
+                    holdTimer = Timer.scheduledTimer(withTimeInterval: 0.55, repeats: false) { [weak self] _ in
+                        MainActor.assumeIsolated { self?.holdFiredOnEmpty() }
+                    }
+                }
                 pager.begin(at: event.timestamp)
                 mousePaging = point.x
             }
@@ -792,14 +813,30 @@ final class LaunchpadView: NSView, NSTextFieldDelegate {
         }
     }
 
+    private func holdFiredOnEmpty() {
+        guard let current = press, !current.dragged else { return }
+        press = nil
+        beginJiggle()
+    }
+
     private func holdFired() {
         guard let current = press, !current.dragged else { return }
         setPressed(cell(for: current.target), false)
         switch current.target {
         case .tile(let index):
-            beginJiggle()
-            beginReorder(index, at: current.point)
+            // iOS 主屏幕式：长按图标直接弹上下文菜单（打开/访达/移除/卸载/编辑）。
+            guard let cell = cells[LaunchpadCell.key(tiles[index])], cell.app != nil else { return }
             press?.dragged = true
+            press = nil
+            // 先无动画落定按下态（0.2s 弹回动画会与菜单模态追踪叠帧——真机看出的破绽），
+            // 再给图标一个浮起放大，然后菜单才出现；菜单关闭后恢复悬停态。
+            CATransaction.begin()
+            CATransaction.setDisableActions(true)
+            cell.shade.opacity = 0
+            CATransaction.commit()
+            cell.icon.springTransform(CATransform3DMakeScale(1.12, 1.12, 1), .calm, reduced: reduced)
+            showMenu(for: cell.app!, event: nil)
+            applyHover()
         case .folderApp(let index) where folder?.editable == true:
             beginJiggle()
             beginFolderDrag(index, at: current.point)
@@ -945,7 +982,7 @@ final class LaunchpadView: NSView, NSTextFieldDelegate {
         home.items.contains { $0.paths.contains(path) }
     }
 
-    func showMenu(for app: LaunchpadApp, event: NSEvent) {
+    func showMenu(for app: LaunchpadApp, event: NSEvent?) {
         let menu = NSMenu()
         menu.addItem(withTitle: "打开", action: #selector(menuOpen(_:)), keyEquivalent: "").representedObject = app.path
         menu.addItem(withTitle: "在访达中显示", action: #selector(menuReveal(_:)), keyEquivalent: "").representedObject = app.path
@@ -956,18 +993,33 @@ final class LaunchpadView: NSView, NSTextFieldDelegate {
             menu.addItem(withTitle: "添加到主屏幕", action: #selector(menuAdd(_:)), keyEquivalent: "").representedObject = app.path
         }
         menu.addItem(withTitle: "编辑主屏幕", action: #selector(menuEdit(_:)), keyEquivalent: "")
+        // HIG：破坏性动作放菜单末尾、红显（iOS 主屏幕上下文菜单同规）。
+        if LaunchpadUninstallAvailability.menuItemEnabled(appPath: app.path) {
+            menu.addItem(.separator())
+            let uninstall = menu.addItem(withTitle: "卸载 App…", action: #selector(menuUninstall(_:)), keyEquivalent: "")
+            uninstall.representedObject = app.path
+            uninstall.attributedTitle = NSAttributedString(
+                string: "卸载 App…",
+                attributes: [.foregroundColor: NSColor.systemRed, .font: NSFont.systemFont(ofSize: 13)])
+        }
         for item in menu.items { item.target = self }
-        NSMenu.popUpContextMenu(menu, with: event, for: self)
+        let popEvent = event ?? NSEvent.mouseEvent(with: .rightMouseDown, location: NSEvent.mouseLocation,
+            modifierFlags: [], timestamp: ProcessInfo.processInfo.systemUptime, windowNumber: window?.windowNumber ?? 0,
+            context: nil, eventNumber: 0, clickCount: 1, pressure: 0)!
+        NSMenu.popUpContextMenu(menu, with: popEvent, for: self)
     }
 
-    func showMenu(forFolder folder: LaunchpadFolder, event: NSEvent) {
+    func showMenu(forFolder folder: LaunchpadFolder, event: NSEvent?) {
         let menu = NSMenu()
         menu.addItem(withTitle: "打开", action: #selector(menuOpenFolder(_:)), keyEquivalent: "").representedObject = folder.id
         menu.addItem(withTitle: "重新命名", action: #selector(menuRename(_:)), keyEquivalent: "").representedObject = folder.id
         menu.addItem(.separator())
         menu.addItem(withTitle: "编辑主屏幕", action: #selector(menuEdit(_:)), keyEquivalent: "")
         for item in menu.items { item.target = self }
-        NSMenu.popUpContextMenu(menu, with: event, for: self)
+        let popEvent = event ?? NSEvent.mouseEvent(with: .rightMouseDown, location: NSEvent.mouseLocation,
+            modifierFlags: [], timestamp: ProcessInfo.processInfo.systemUptime, windowNumber: window?.windowNumber ?? 0,
+            context: nil, eventNumber: 0, clickCount: 1, pressure: 0)!
+        NSMenu.popUpContextMenu(menu, with: popEvent, for: self)
     }
 
     @objc private func menuOpen(_ sender: NSMenuItem) {
@@ -993,6 +1045,49 @@ final class LaunchpadView: NSView, NSTextFieldDelegate {
     }
 
     @objc private func menuEdit(_ sender: NSMenuItem) { beginJiggle() }
+
+    @objc private func menuUninstall(_ sender: NSMenuItem) {
+        guard let path = sender.representedObject as? String, let app = apps[path] else { return }
+        // iOS 主屏幕式三选（HIG destructive 两段确认）：默认项是完整卸载，「取消」为安全默认。
+        let alert = NSAlert()
+        alert.messageText = "卸载「\(app.name)」？"
+        alert.informativeText = "App 和它在 ~/Library 的关联文件会一起移到废纸篓，可从废纸篓找回。也可以只把它从主屏幕移除，App 本体不动。"
+        alert.addButton(withTitle: "卸载并移到废纸篓")
+        alert.addButton(withTitle: "仅从主屏幕移除")
+        alert.addButton(withTitle: "取消")
+        alert.window.orderFrontRegardless()
+        let finish: (NSApplication.ModalResponse) -> Void = { response in
+            switch response {
+            case .alertFirstButtonReturn: self.onUninstall?(app)
+            case .alertSecondButtonReturn: self.removeFromHome(app.path)
+            default: break
+            }
+        }
+        if let window = window {
+            alert.beginSheetModal(for: window, completionHandler: finish)
+        } else {
+            finish(alert.runModal())
+        }
+    }
+
+    // MARK: 卸载确认浮层
+
+    var uninstallOverlay: LaunchpadUninstallOverlay?
+
+    func presentUninstallOverlay(_ overlay: LaunchpadUninstallOverlay) {
+        uninstallOverlay?.removeFromSuperview()
+        uninstallOverlay = overlay
+        let side = min(bounds.width - 80, 460)
+        overlay.frame = NSRect(x: (bounds.width - side) / 2, y: (bounds.height - side - 60) / 2 + 30,
+                               width: side, height: side + 60)
+        addSubview(overlay)
+        window?.makeFirstResponder(overlay)
+    }
+
+    func removeUninstallOverlay() {
+        uninstallOverlay?.removeFromSuperview()
+        uninstallOverlay = nil
+    }
 
     @objc private func menuOpenFolder(_ sender: NSMenuItem) {
         guard let id = sender.representedObject as? String else { return }

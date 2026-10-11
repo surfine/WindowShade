@@ -208,7 +208,7 @@ static func noticeTone(_ message: String) -> NotchPanel.Tone {
                                  isOn: AwaySummaryController.isEnabled, action: #selector(prefToggleAwaySummary(_:))),
             makeUnifiedToggleRow(name: "实时活动", subtitle: "在刘海和启动台负一屏查看音乐、耳机、隔空投送与路线",
                                  isOn: NotchActivityController.isEnabled, action: #selector(prefToggleActivities(_:))),
-            // 正在播放默认开（NP-4）：关了，刘海上不再显示歌，也不再长出大卡。
+            // 正在播放未验前默认关（NP-4）：关了，刘海上不再显示歌，也不再长出大卡。
             makeUnifiedToggleRow(name: "正在播放", subtitle: "歌名和封面显示在刘海上",
                                  isOn: NotchNowPlayingDefaults.musicEnabled(in: .standard), action: #selector(prefToggleNowPlaying(_:))),
             // 跟着声音跳（NP-6）：默认关；打开时系统才问“系统音频录制”。拒绝过的，副标题写原因，再打开带去系统设置。
@@ -222,7 +222,7 @@ static func noticeTone(_ message: String) -> NotchPanel.Tone {
             makeCalendarSettingsRow(),
             makeUnifiedToggleRow(name: "浏览器下载", subtitle: "读取「下载」文件夹，看有没有没下完的文件",
                                  isOn: DownloadActivitySource.isEnabled, action: #selector(prefToggleDownloads(_:))),
-            // 音量和亮度：开关默认开；没允许辅助功能时副标题改说系统的提示也会出现，并带“允许…”。
+            // 音量和亮度：开关未验前默认关；没允许辅助功能时副标题改说系统的提示也会出现，并带“允许…”。
             LevelRowHost { [weak self] in self?.makeLevelKeysRow() ?? NSView() },
             makeUnifiedToggleRow(name: "合成一排", subtitle: "窗口和正在进行的事排在同一排",
                                  isOn: NotchController.mergedRowEnabled, action: #selector(prefToggleMergedRow(_:))),
@@ -267,6 +267,9 @@ static func noticeTone(_ message: String) -> NotchPanel.Tone {
             makeUnifiedToggleRow(name: WSL10n.text("settings.stripTitleDrag.name", zh: "拖标题栏换位置"),
                                  subtitle: WSL10n.text("settings.stripTitleDrag.sub", zh: "在卷轴里拖标题栏换列；拉远一点才离开卷轴"),
                                  isOn: StripTitleDrag.isEnabled(), action: #selector(prefToggleStripTitleDrag(_:))),
+            makeUnifiedToggleRow(name: WSL10n.text("settings.stripNotch.name", zh: "卷轴概览能收进刘海"),
+                                 subtitle: WSL10n.text("settings.stripNotch.sub", zh: "在卷轴概览里把窗口拖到刘海，松手就收进去"),
+                                 isOn: ScrollStripController.notchLinkEnabled(), action: #selector(prefToggleStripNotch(_:))),
         ])
         stack.addArrangedSubview(makePrefGroupLabel("排布"))
         stack.addArrangedSubview(arrangeCard)
@@ -302,17 +305,69 @@ static func noticeTone(_ message: String) -> NotchPanel.Tone {
         sound.widthAnchor.constraint(equalTo: stack.widthAnchor).isActive = true
         stack.setCustomSpacing(18, after: sound)
 
-        // 实验：两项都默认关，开关只管自己那一个键。
+        // 实验：每项都默认关，开关只管自己那一个键。
         stack.addArrangedSubview(makePrefGroupLabel("实验"))
         let experiments = makeUnifiedSettingsCard([
             makeUnifiedToggleRow(name: "拷贝进度", subtitle: "Finder 拷贝时在刘海上显示拷到哪了",
                                  isOn: CopyProgressSource.isEnabled, action: #selector(prefToggleCopyProgress(_:))),
             makeUnifiedToggleRow(name: "猜你从哪来", subtitle: "按出别的系统的习惯时问一次",
                                  isOn: OriginGuess.isEnabled(in: .standard), action: #selector(prefToggleOriginGuess(_:))),
+            makeUnifiedToggleRow(name: "把 iPhone 的画面放到整块屏", subtitle: "长按刘海进入全屏；再长按或按 Esc 回到桌面",
+                                 isOn: CarPlaySurfaceController.isEnabled, action: #selector(prefToggleCarPlaySurface(_:))),
+            makeUnifiedControlRow(name: "接收器地址", subtitle: "ws:// 开头并带令牌；不填时全屏只显示示意画面",
+                                  control: makeCarPlayEndpointField()),
+            makeUnifiedToggleRow(name: "设备的电量", subtitle: "耳机、手机这些设备连上或电量低时，刘海说一声",
+                                 isOn: DeviceBatteryController.isEnabled, action: #selector(prefToggleDeviceBattery(_:))),
         ])
         stack.addArrangedSubview(experiments)
         experiments.widthAnchor.constraint(equalTo: stack.widthAnchor).isActive = true
+
+        stack.addArrangedSubview(makePrefGroupLabel("静音口令"))
+        stack.addArrangedSubview(makeSilentPhraseCard())
         return root
+    }
+
+    /// 六口令的个人词（2.1 前半）。词只存这台 Mac；认不认得出还得看实验里的嘴形模板。
+    private func makeSilentPhraseCard() -> NSView {
+        let profile = WS2SilentPhraseStore.load()
+        let speech = NSPopUpButton()
+        speech.addItem(withTitle: "普通话")
+        speech.item(at: 0)?.representedObject = WS2SilentSpeech.mandarin.rawValue
+        speech.addItem(withTitle: "粤语")
+        speech.item(at: 1)?.representedObject = WS2SilentSpeech.cantonese.rawValue
+        speech.addItem(withTitle: "吴语")
+        speech.item(at: 2)?.representedObject = WS2SilentSpeech.wu.rawValue
+        speech.selectItem(at: [WS2SilentSpeech.mandarin, .cantonese, .wu].firstIndex(of: profile.speech) ?? 0)
+        speech.target = self
+        speech.action = #selector(prefSetSilentSpeech(_:))
+        var rows: [NSView] = [makeUnifiedControlRow(name: "方言", subtitle: nil, control: speech)]
+        for id in WS2SilentPhrases.starterCommandIDs {
+            let field = NSTextField()
+            field.font = SystemAppearancePolicy.font(relativeToBody: -1)
+            field.placeholderString = "给这条配一个词"
+            field.stringValue = profile.words[id] ?? ""
+            field.target = self
+            field.action = #selector(prefSetSilentWord(_:))
+            field.widthAnchor.constraint(greaterThanOrEqualToConstant: 160).isActive = true
+            _ = field
+            field.identifier = NSUserInterfaceItemIdentifier(id)
+            rows.append(makeUnifiedControlRow(name: WS2SilentCopy.line(id) ?? id, subtitle: nil, control: field))
+        }
+        let card = makeUnifiedSettingsCard(rows)
+        card.widthAnchor.constraint(equalTo: card.superview?.widthAnchor ?? card.widthAnchor).isActive = true
+        return card
+    }
+
+    /// 接收器地址输入框：回车或失焦即保存；清空就是取消地址（全屏退回示意画面）。
+    private func makeCarPlayEndpointField() -> NSTextField {
+        let field = NSTextField()
+        field.font = SystemAppearancePolicy.font(relativeToBody: -1)
+        field.placeholderString = "ws://192.168.1.4:8080/ws?token=…"
+        field.stringValue = CarPlaySurfaceController.receiverEndpoint ?? ""
+        field.target = self
+        field.action = #selector(prefSetCarPlayEndpoint(_:))
+        field.widthAnchor.constraint(greaterThanOrEqualToConstant: 230).isActive = true
+        return field
     }
 
     /// 隐私一栏（原「权限与启动」）：先摊开读到的每一样（内容从 tools/privacy/registry.json 生成），
@@ -349,7 +404,8 @@ static func noticeTone(_ message: String) -> NotchPanel.Tone {
         permissions.widthAnchor.constraint(equalTo: stack.widthAnchor).isActive = true
         stack.setCustomSpacing(18, after: stack.arrangedSubviews.last!)
         stack.addArrangedSubview(makePrefGroupLabel("锁屏"))
-        let presence = makeUnifiedSettingsCard([makePresenceLockRow()])
+        let presence = makeUnifiedSettingsCard([makePresenceLockRow(),
+        makePresenceDeviceRow()])
         stack.addArrangedSubview(presence)
         presence.widthAnchor.constraint(equalTo: stack.widthAnchor).isActive = true
         stack.setCustomSpacing(18, after: presence)
@@ -368,15 +424,45 @@ static func noticeTone(_ message: String) -> NotchPanel.Tone {
         return root
     }
 
-    /// 离开就锁（默认关）。还认不出手机时开关灰着；已经打开的仍能关掉。
+    /// 离开就锁（默认关）。没选随身设备时开关灰着；选了才可用。
     private func makePresenceLockRow() -> NSView {
         let on = PresenceLockDriver.isEnabled
         let usable = PresenceLockDriver.sourceAvailable
         let row = makeUnifiedToggleRow(name: "离开就锁",
-                                       subtitle: usable ? "手机走远了，倒数 10 秒后锁屏" : "还认不出你的手机，先不能用",
+                                       subtitle: usable ? "随身设备走远了，倒数 10 秒后锁屏" : "先在下面选一台随身设备",
                                        isOn: on, action: #selector(prefTogglePresenceLock(_:)))
         (row as? NSStackView)?.arrangedSubviews.compactMap { $0 as? NSSwitch }.first?.isEnabled = usable || on
         return row
+    }
+
+    /// 随身设备选择器：列已配对的蓝牙设备；选「没有」即取消。改名/解除配对后来源自己降级。
+    private func makePresenceDeviceRow() -> NSView {
+        let authorized = WS2BluetoothPresenceChoice.bluetoothAuthorized
+        let devices = authorized ? (WS2BluetoothPresenceChoice.pairedDevices() ?? []) : []
+        let chosen = WS2BluetoothPresenceChoice.address
+        let popup = NSPopUpButton()
+        popup.addItem(withTitle: "没有")
+        for device in devices {
+            let title = device.name.isEmpty ? device.address : "\(device.name)（\(device.address)）"
+            popup.addItem(withTitle: title)
+            popup.lastItem?.representedObject = device.address
+        }
+        if let chosen, let match = popup.itemArray.first(where: { ($0.representedObject as? String) == chosen }) {
+            popup.select(match)
+        } else {
+            popup.selectItem(at: 0)
+        }
+        popup.target = self
+        popup.action = #selector(prefPickPresenceDevice(_:))
+        if !authorized || devices.isEmpty {
+            popup.isEnabled = false
+        }
+        let subtitle: String
+        if !authorized { subtitle = "先在系统设置 → 隐私与安全性 → 蓝牙里允许 WindowShade" }
+        else if devices.isEmpty { subtitle = "这台 Mac 还没有配对过的蓝牙设备" }
+        else { subtitle = "从配对过的设备里选一台" }
+        return makeUnifiedControlRow(name: "随身设备", subtitle: subtitle,
+                                     control: popup)
     }
 
     @objc func prefOpenPrivateApps(_ sender: NSButton) {
@@ -384,6 +470,28 @@ static func noticeTone(_ message: String) -> NotchPanel.Tone {
     }
 
     /// 关掉直接关；打开前先看一页风险说明（PresenceLockRiskSheet），按「打开」才打开。
+    @objc func prefSetSilentSpeech(_ sender: NSPopUpButton) {
+        guard let raw = sender.selectedItem?.representedObject as? String,
+              let speech = WS2SilentSpeech(rawValue: raw) else { return }
+        var profile = WS2SilentPhraseStore.load()
+        profile.speech = speech
+        WS2SilentPhraseStore.save(profile)
+    }
+    @objc func prefSetSilentWord(_ sender: NSTextField) {
+        guard let id = sender.identifier?.rawValue else { return }
+        var profile = WS2SilentPhraseStore.load()
+        let word = sender.stringValue.trimmingCharacters(in: .whitespacesAndNewlines)
+        if word.isEmpty { profile.words.removeValue(forKey: id) } else { profile.words[id] = word }
+        if !WS2SilentPhraseStore.save(profile) {
+            // 和别的命令撞词了：不保存，退回原值并说明。
+            NSApp.presentError(NSError(domain: "WindowShade.Silent", code: 1,
+                                       userInfo: [NSLocalizedDescriptionKey: "两条命令不能用同一个词"]))
+            sender.stringValue = WS2SilentPhraseStore.load().words[id] ?? ""
+        }
+    }
+    @objc func prefPickPresenceDevice(_ sender: NSPopUpButton) {
+        WS2BluetoothPresenceChoice.setAddress(sender.selectedItem?.representedObject as? String)
+    }
     @objc func prefTogglePresenceLock(_ sender: NSSwitch) {
         guard sender.state == .on, !PresenceLockDriver.isEnabled else {
             PresenceLockDriver.isEnabled = sender.state == .on
@@ -473,7 +581,7 @@ static func noticeTone(_ message: String) -> NotchPanel.Tone {
         return row
     }
 
-    /// “音量和亮度”这一行：符号、名字、副标题、ⓘ；没允许辅助功能时多一个“允许…”；右边是开关（默认开）。
+    /// “音量和亮度”这一行：符号、名字、副标题、ⓘ；没允许辅助功能时多一个“允许…”；右边是开关（未验前默认关）。
     /// 副标题与按钮的写法归 NotchLevelSettingRow；辅助功能或开关变了由 LevelRowHost 重画。
     fileprivate func makeLevelKeysRow() -> NSView {
         let shown = NotchLevelSettingRow.make(accessibilityTrusted: hasAccessibilityPermission(),
@@ -797,6 +905,26 @@ static func noticeTone(_ message: String) -> NotchPanel.Tone {
     }
     @objc func prefToggleCopyProgress(_ sender: NSSwitch) {
         MainActor.assumeIsolated { notch.activities.setCopyProgressEnabled(sender.state == .on) }
+    }
+    @objc func prefToggleCarPlaySurface(_ sender: NSSwitch) {
+        CarPlaySurfaceController.isEnabled = sender.state == .on
+    }
+    @objc func prefSetCarPlayEndpoint(_ sender: NSTextField) {
+        let value = sender.stringValue.trimmingCharacters(in: .whitespacesAndNewlines)
+        guard value.isEmpty || value.lowercased().hasPrefix("ws://") || value.lowercased().hasPrefix("wss://") else {
+            // 不像地址就不存：全屏还按原来的配置走，输入框退回已保存的值。
+            NSApp.presentError(NSError(domain: "WindowShade.CarPlay", code: 1,
+                                       userInfo: [NSLocalizedDescriptionKey: "接收器地址要以 ws:// 或 wss:// 开头"]))
+            sender.stringValue = CarPlaySurfaceController.receiverEndpoint ?? ""
+            return
+        }
+        CarPlaySurfaceController.receiverEndpoint = value.isEmpty ? nil : value
+    }
+    @objc func prefToggleDeviceBattery(_ sender: NSSwitch) {
+        UserDefaults.standard.set(sender.state == .on, forKey: DeviceBatteryController.enabledKey)
+        MainActor.assumeIsolated {
+            if sender.state == .on { deviceBattery.start() } else { deviceBattery.stop() }
+        }
     }
     @objc func prefToggleOriginGuess(_ sender: NSSwitch) {
         UserDefaults.standard.set(sender.state == .on, forKey: OriginGuess.enabledKey)
@@ -1490,6 +1618,10 @@ static func noticeTone(_ message: String) -> NotchPanel.Tone {
 
     @objc func prefToggleStripWidths(_ sender: NSSwitch) {
         StripWidthMemory.setEnabled(sender.state == .on)
+    }
+
+    @objc func prefToggleStripNotch(_ sender: NSSwitch) {
+        ScrollStripController.setNotchLinkEnabled(sender.state == .on)
     }
 
     @objc func prefToggleStripTitleDrag(_ sender: NSSwitch) {

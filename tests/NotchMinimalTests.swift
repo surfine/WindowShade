@@ -35,8 +35,8 @@ struct NotchMinimalTests {
         let items = [session, download, music]
 
         t.section("M13-01", "开关默认关，键名固定")
-        t.expect(NotchMinimalPresentation.defaultEnabled == true, "默认值是开（Aaron 2026-10-09）")
-        for (stored, expected, label) in [(nil, true, "键为 nil"), (true, true, "显式开"), (false, false, "显式关")] as [(Bool?, Bool, String)] {
+        t.expect(NotchMinimalPresentation.defaultEnabled == false, "1.0.16 真机验过前默认关（ReleaseDefaults；设计上默认开）")
+        for (stored, expected, label) in [(nil, false, "键为 nil"), (true, true, "显式开"), (false, false, "显式关")] as [(Bool?, Bool, String)] {
             let suite = "NotchMinimalTests.\(UUID().uuidString)"
             let defaults = UserDefaults(suiteName: suite)!
             if let stored { defaults.set(stored, forKey: NotchMinimalPresentation.defaultsKey) }

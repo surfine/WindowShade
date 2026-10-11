@@ -2,7 +2,19 @@
 
 2026-10-07（Asia/Taipei）。本轮用户没有 dongle、认证身份或服务。保留当前产品入口；没有接入长按、UI 或日常实例。
 
-## 固定对象与实际证据
+## 2026-10-10 转向：先求有——live 画面经外部接收器，MFi 模块真机可测
+
+用户三条指示改变了路线：优先接 LIVI / PlayPort / DiPlay；以用户体验为本、可推翻旧决策；先求有再求好、这是前卫实验。据此**推翻「没有 Apple 签发身份就不做 live 入口」**的旧决策：
+
+1. **App 侧 live 通路（已交付，默认关）**：`CarPlay.receiver.endpoint`（ws://…，用户自填，含接收器令牌）设了之后，长按刘海的全屏不再走合成动画，而是作为接收器的**前端**——`WS2CarPlayReceiverClient` 连接收器 WebSocket，`WS2CarPlayVideoDecoder` 用 avcC/hvcC + Annex B→AVCC 直接喂 `AVSampleBufferDisplayLayer`；触摸/方向键/回车/空格/s 映射成接收器的 touch/knob/media/siri JSON 回传。认证、iAP2、AirPlay 全在接收器进程里完成（GPL 隔离在进程边界外，App 全部原创 Swift，不读不存任何身份）。会话模型加了 `delegated` live 模式：本机无身份也可 live，退避/重连/关键帧/收画计数与直连同一套。全屏文案新增 live 相位：出画面前「等待 iPhone 的画面」，出画面后整屏只留视频，Esc/再长按回桌面不断开手机。
+   - 测试：`tests/run-carplay-session-tests.sh`、`run-carplay-surface-tests.sh`、`run-carplay-receiver-tests.sh` 全绿（线协议按 PlayPort 固定源 9a0882d 的 Wire.kt/WebHub.kt 逐字节核对，VIDEO_CONFIG 记录从偏移 11 起、上游多带一个尾零字节也已对齐）。
+   - 隐私登记：新增 `carplay-receiver`（URLSession×5），`CarPlay.receiver.endpoint` 读写归 `settings`×3；隐私页已重生成并过同步测试。默认关：开关和地址都不设就完全走旧路。
+2. **iAP2/MFi 真机探针（已交付，隔离工具）**：`tools/carplay/iap2/` 原创 Swift 实现 iAP2 链路层（FF 55 marker、FF 5A 帧与 8 位补码校验、0x80 同步交换、session 10）、CSM（0x4040）、识别消息 0x1D00→01→02（无线参数表含组 17 蓝牙传输/组 24 Wi-Fi，按上游 IdentificationClient 参数 ID 逐项核对）、MFi 交换 0xAA00→05（证书放参数 0、对 iPhone 给的 32 字节摘要做 ECDSA-P256 输出 64 字节 r||s）。身份走用户自备目录（identity.pk8 + certificate.p7b，PKCS#8 解析只认 P-256 OID），加载时当场自检私钥/证书匹配；Apple 私钥外部表示是 04||X||Y||标量（标量在最后 32 字节），导入按同格式重组。离线测试（现场生成自签测试身份，不碰蓝牙）全绿；`bash tools/carplay/build-iap2-probe.sh` 编出 `.build/carplay-tests/iap2-probe`。
+   - 真机跑法：iPhone 先与 Mac 配对（`iap2-probe --list` 找地址；iPhone 在蓝牙设置页等待），然后 `iap2-probe --identity-dir <dir> --address <addr>`，阶段日志在 stderr，`RESULT authenticated` 即 iPhone 认了这份身份。退出码区分：3 RFCOMM 打不开、4 通道被关、5 链路死、6 识别被拒、7 签名/挑战异常、8 MFi 拒绝、9 超时未完成。需要终端蓝牙权限。
+   - 尚未真机执行：MFi 通过只证明身份被认，Wi-Fi 交接（0x5703 组 24 的 SSID/密码发送）与 AirPlay 会话是下一片。
+3. **PlayPort 后端照旧**：固定 9a0882d 的无凭据验证（17 JVM 合成测试）不变；`check-playport.sh`/`test-session.sh` 可复现。live 通路对接的是它的 WebSocket（8080，`?token=`），实跑时由用户自己起服务、自己提供身份——App 不碰。
+
+## 固定对象与实际证据（2026-10-07 原文）
 
 研究对象为 [PlayPort](https://github.com/youcci/playport/tree/9a0882dd0ffe48e467b59d58b12d81391df55ade)，SHA `9a0882dd0ffe48e467b59d58b12d81391df55ade`。真实 checkout 在忽略目录 `.build/research/playport`，detached HEAD，tracked 状态干净。GPL 源码没有进入 MIT 主应用或被 vendor。
 

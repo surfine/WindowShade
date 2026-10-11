@@ -241,8 +241,8 @@ struct NotchRowMergeTests {
         t.expect(isBusy(c3.acquire(request("conductor", .opened))), "指挥模式的页面同样排队等")
 
         t.section("M11-16", "合成一排开关：默认开；键为 nil、显式开、显式关三种读值；两个方向的重排判定")
-        t.expect(NotchMergedRowPreference.defaultEnabled && NotchMergedRowPreference.defaultsKey == "Notch.mergedRow", "默认开，键名固定")
-        for (stored, expected, label) in [(nil, true, "键为 nil"), (true, true, "显式开"), (false, false, "显式关")] as [(Bool?, Bool, String)] {
+        t.expect(!NotchMergedRowPreference.defaultEnabled && NotchMergedRowPreference.defaultsKey == "Notch.mergedRow", "1.0.16 真机验过前默认关（设计上默认开），键名固定")
+        for (stored, expected, label) in [(nil, false, "键为 nil"), (true, true, "显式开"), (false, false, "显式关")] as [(Bool?, Bool, String)] {
             let suite = "NotchRowMergeTests.\(UUID().uuidString)"
             let defaults = UserDefaults(suiteName: suite)!
             if let stored { defaults.set(stored, forKey: NotchMergedRowPreference.defaultsKey) }

@@ -4,10 +4,13 @@ import Foundation
 // 时间由接入层以单调秒数传入，事件驱动，空闲时不轮询（能耗不高于 1.0.15）。
 // 工程做法参考 PlayPort / DiPlay / LIVI（GPL，只取思路，代码自写）。
 
-/// 配件身份的来源。只有 Apple 签发的身份会被接受；任何提取出来的身份一律拒绝。
+/// 配件身份的来源。只有 Apple 签发的身份会被直连接受；提取出来的与用户自备的一律不进直连
+/// （用户自备身份目前只允许出现在隔离探针与外部接收器路径里，App 不校验身份内容）。
 enum WS2CarPlayIdentityProvenance: Equatable {
     case appleIssued
     case extracted
+    /// 用户自己提供的身份文件。来源可信度未知，App 不基于它做直连授权。
+    case userSupplied
     case unknown
 }
 
@@ -62,6 +65,8 @@ struct WS2CarPlaySession {
     enum State: Equatable { case disconnected, missingIdentity, connecting, ready, waitingToReconnect, gaveUp }
     /// 没有 Apple 签发的身份时只能跑合成模式。
     enum Mode: Equatable { case synthetic, live }
+    /// live 模式的认证放在哪：本机持 Apple 签发身份直连，或交给外部接收器（本机不读取、不保存身份）。
+    enum LiveAuth: Equatable { case local, delegated }
     enum ReconnectPlan: Equatable {
         case none
         case retry(attempt: Int, after: TimeInterval)
@@ -82,6 +87,8 @@ struct WS2CarPlaySession {
     private(set) var state: State = .disconnected
     private(set) var ticket: Ticket?
     private(set) var mode: Mode?
+    /// 本次连接的认证位置；合成模式为 nil。断开后清空。
+    private(set) var liveAuth: LiveAuth?
     private(set) var isFullscreen = false
     /// 本次连接开始时固定的设置；串流中不变。
     private(set) var activeSettings: WS2CarPlaySettings?
@@ -99,6 +106,9 @@ struct WS2CarPlaySession {
 
     var layout: WS2CarPlayLayout? { activeSettings.map { WS2CarPlayLayout(notchHeight: $0.notchHeight) } }
 
+    /// 连着外部接收器的 live 会话：真画面来自接收器，不在全屏里画示意方块。
+    var isReceiverLive: Bool { mode == .live && liveAuth == .delegated }
+
     /// 串流中提交了不同的设置，要到下次重连才生效。
     var settingsChangePending: Bool {
         (state == .connecting || state == .ready) && activeSettings != pendingSettings
@@ -115,9 +125,19 @@ struct WS2CarPlaySession {
     /// 用户发起的连接。wantsLive 为真时必须有 Apple 签发的身份，否则停在缺身份，不连。
     mutating func connect(identity: (any WS2CarPlayAccessoryIdentity)?, wantsLive: Bool = false) -> Ticket? {
         self.wantsLive = wantsLive
+        liveAuth = wantsLive ? .local : nil
         reconnectAttempts = 0
         reconnectDueAt = nil
         return start(identity: identity)
+    }
+
+    /// 经外部接收器连真机：认证在接收器侧完成，本机不读取、不保存任何身份。
+    mutating func connectViaReceiver() -> Ticket? {
+        wantsLive = true
+        liveAuth = .delegated
+        reconnectAttempts = 0
+        reconnectDueAt = nil
+        return start(identity: nil)
     }
 
     mutating func becameReady(_ event: Ticket, at now: TimeInterval) {
@@ -188,6 +208,7 @@ struct WS2CarPlaySession {
         ticket = nil
         state = .disconnected
         mode = nil
+        liveAuth = nil
         isFullscreen = false
         reconnectAttempts = 0
         reconnectDueAt = nil
@@ -199,9 +220,11 @@ struct WS2CarPlaySession {
         isFullscreen = false
         stableSince = nil
         frames = WS2CarPlayFrameCounters()
-        if wantsLive, identity?.provenance != .appleIssued {
+        let delegated = liveAuth == .delegated
+        if wantsLive, !delegated, identity?.provenance != .appleIssued {
             state = .missingIdentity
             mode = nil
+            liveAuth = nil
             return nil
         }
         activeSettings = pendingSettings

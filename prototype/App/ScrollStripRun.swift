@@ -151,6 +151,10 @@ final class ScrollStripController {
         RunLoop.main.add(timer, forMode: .common)
         watchTimer = timer
         wireNotch()
+        notchSettingObserver = NotificationCenter.default.addObserver(
+            forName: Self.notchLinkChanged, object: nil, queue: .main) { [weak self] _ in
+            MainActor.assumeIsolated { self?.rewireNotch() }
+        }
         wlog("strip: start columns=\(strip.columns.map { $0.ids.count }) widths=\(strip.columns.map { Int($0.width) }) offset=\(Int(strip.offset))")
     }
 
@@ -164,6 +168,8 @@ final class ScrollStripController {
         overview = nil
         overviewOpened = nil
         unwireNotch()
+        if let token = notchSettingObserver { NotificationCenter.default.removeObserver(token) }
+        notchSettingObserver = nil
         overviewTracking = false
         spread = nil
         spreadSamples = []
@@ -526,9 +532,28 @@ final class ScrollStripController {
 
     // MARK: 刘海那一排和卷轴互通（SS-04）
 
-    /// 概览接线开关：设置里还没有这一行，用 defaults 打开（stripOverviewNotch）。默认关。
+    /// 概览接线开关：设置里“卷轴概览能收进刘海”（stripOverviewNotch）。默认关。
     static let notchLinkKey = "stripOverviewNotch"
     static func notchLinkEnabled() -> Bool { UserDefaults.standard.bool(forKey: notchLinkKey) }
+    static func setNotchLinkEnabled(_ on: Bool) {
+        if on { UserDefaults.standard.set(true, forKey: notchLinkKey) } else { UserDefaults.standard.removeObject(forKey: notchLinkKey) }
+        NotificationCenter.default.post(name: notchLinkChanged, object: nil)
+    }
+
+    /// 设置里改了“卷轴概览能收进刘海”：卷轴开着也马上接上或拆掉。
+    static let notchLinkChanged = Notification.Name("WindowShade.stripOverviewNotchChanged")
+    private var notchSettingObserver: NSObjectProtocol?
+
+    private func rewireNotch() {
+        guard strip != nil else { return }
+        unwireNotch()
+        wireNotch()
+        if !Self.notchLinkEnabled(), let overview {
+            overview.close(picking: nil)
+            self.overview = nil
+            overviewTracking = false
+        }
+    }
 
     private func wireNotch() {
         guard Self.notchLinkEnabled() else { return }

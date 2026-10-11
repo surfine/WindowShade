@@ -25,6 +25,15 @@ A free, open-source window utility for Mac.
 
 </div>
 
+## 1.0.16 candidate (not released)
+
+This candidate brings tucked windows, Now Playing, a file shelf and accessory battery notices together at the notch. It also adds a three-step welcome, scroll-strip overview and a “What WindowShade reads” privacy page. On a new installation, the notch, live activities, file shelf, accessory notices, volume/brightness display and Dock click-to-hide are off until enabled in Settings. Explicit choices made previously are preserved.
+
+The notch has compact ears, an expanded row and activity cards; displays without a notch use a top capsule. Website scenes are interactive illustrations, not evidence that this build has passed device testing. Face scanning, presence locking, remote control and CarPlay still have experimental or device limitations; they do not establish macOS face unlock or complete CarPlay reception.
+
+The current download remains 1.0.15. The signed arm64 candidate ZIP is 9,705,138 bytes (9.71 MB); its 26 regular files total 24,107,430 bytes (24.11 MB, excluding filesystem allocation and symlinks). Native acceptance remains incomplete, so this package is not ready to publish. See the [candidate notes](docs/releases/v1.0.16.md), [defaults](docs/releases/v1.0.16-defaults.md) and [current acceptance report](docs/releases/v1.0.16-acceptance-20261010.md).
+
+
 ## Live activities in development
 
 The notch and the Launchpad Today page share up to three live activities: Music/Spotify, AirPods, shares and routes started here, and Voice Memos microphone use or confirmed recording state. Swipe between them and hold to expand. Connect music explicitly to allow playback controls. Existing title-bar gestures and system three-finger dragging remain available. [API boundaries, gestures and validation](docs/live-activities.md). These changes are not in the current release download.

@@ -15,6 +15,14 @@ import Cocoa
 
     @MainActor static func main() async {
         _ = NSApplication.shared
+        // 候选默认关闭实时活动；本组测显式开启后的卡片，退出时恢复测试进程偏好。
+        let activityKey = NotchActivityController.enabledKey
+        let savedActivityPreference = UserDefaults.standard.object(forKey: activityKey)
+        defer {
+            if let savedActivityPreference { UserDefaults.standard.set(savedActivityPreference, forKey: activityKey) }
+            else { UserDefaults.standard.removeObject(forKey: activityKey) }
+        }
+        NotchActivityController.isEnabled = true
         var failures = 0
         func expect(_ condition: Bool, _ label: String) {
             if condition { print("ok   \(label)") } else { failures += 1; print("FAIL \(label)") }
@@ -182,6 +190,9 @@ import Cocoa
         let cell = NotchRow.OngoingCell(activityID: "source.music", kind: .music, title: "歌", subtitle: "人", symbol: "music.note",
                                         phase: nil, isPaused: false)
         expect(cell.action == .nowPlayingOpen, "那一格的动作是“长成大卡”")
+        NotchActivityController.isEnabled = false
+        expect(!presenter.open(host: host) && shownCards.isEmpty, "实时活动关闭时不创建大卡")
+        NotchActivityController.isEnabled = true
         expect(presenter.open(host: host), "点耳朵：开")
         expect(presenter.open(host: host), "再从那一格点：还是开着的那一张")
         expect(presenter.open(host: host), "从启动台点：同一张")
@@ -334,6 +345,9 @@ import Cocoa
         // 拖条改系统音量。
         let row = NowPlayingVolumeRow.frame(cardWidth: 420)
         let range = NowPlayingVolumeRow.barRange(rowWidth: row.width)
+        expect(NowPlayingVolumeRow.minMarkerSymbol == "speaker.fill" && NowPlayingVolumeRow.maxMarkerSymbol == "speaker.wave.3.fill",
+               "条两头固定“最小 / 最大”喇叭，不随音量变")
+        expect(range.upperBound <= row.width - NowPlayingVolumeRow.maxMarkerWidth, "条在右端“最大”标记之前收住")
         func volumePoint(_ fraction: Double) -> NSPoint {
             NSPoint(x: row.minX + range.lowerBound + CGFloat(fraction) * (range.upperBound - range.lowerBound), y: 142 - (row.midY - 33.5))
         }

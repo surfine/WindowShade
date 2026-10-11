@@ -19,6 +19,10 @@ import CoreAudio
 
 /// 刘海、启动台、系统音量、提示音开关、媒体键、定时和“本地的人在不在”。生产是 WS2RemoteSystemPort；单测用替身。
 @MainActor protocol WS2RemoteEffectPort: AnyObject {
+    /// 当前系统输出音量（0…1）；读不到返回 nil。iPhone 遥控器的 _mcc 5 用。
+    func mediaVolume() -> Double?
+    /// 写系统输出音量（0…1 夹住）。iPhone 遥控器的 _mcc 6 用。
+    func setMediaVolume(_ value: Double)
     /// 那一排现在展开着。
     var rowVisible: Bool { get }
     /// 遥控焦点现在落在那一排上。
@@ -55,6 +59,13 @@ extension WS2RemoteEffectPort {
         return true
     }
     func watchLocal(input: (@MainActor () -> Void)?, pointer: (@MainActor (Bool) -> Void)?) {}
+}
+
+extension WS2RemoteEffectPort {
+    /// 默认：读不到（测试替身与无音频栈的构建）。
+    func mediaVolume() -> Double? { nil }
+    /// 默认：什么都不做。
+    func setMediaVolume(_ value: Double) {}
 }
 
 // MARK: - 执行
@@ -249,6 +260,10 @@ extension WS2RemoteEffectPort {
         port.armWake(after: max(0.05, Double(nanos) / 1_000_000_000))
     }
 
+    /// iPhone 遥控器的音量问答（_mcc 5/6）：走端口；替身拿到默认实现。
+    func mediaVolume() -> Double? { port.mediaVolume() }
+    func setMediaVolume(_ value: Double) { port.setMediaVolume(value) }
+
     /// 日志只记动作类别，不带参数。
     static func label(_ action: RemoteLayerHost.Action) -> String {
         String(String(describing: action).prefix { $0 != "(" })
@@ -341,6 +356,26 @@ extension WS2RemoteEffectPort {
     }
 
     private static func stepSystemVolume(_ step: Int) -> Float? {
+        guard let (device, address) = volumeDevice(),
+              let value = readVolume(device: device, address: address) else { return nil }
+        let next = steppedVolume(from: value, step: step)
+        return writeVolume(next, device: device, address: address)
+    }
+
+    func mediaVolume() -> Double? {
+        guard let (device, address) = Self.volumeDevice(),
+              let value = Self.readVolume(device: device, address: address) else { return nil }
+        return Double(value)
+    }
+
+    func setMediaVolume(_ value: Double) {
+        guard value.isFinite, let (device, address) = Self.volumeDevice() else { return }
+        let clamped = Float(min(1, max(0, value)))
+        guard Self.writeVolume(clamped, device: device, address: address) != nil else { return }
+        notch?.presentLevel(.volume, value: Double(clamped))
+    }
+
+    private static func volumeDevice() -> (AudioObjectID, AudioObjectPropertyAddress)? {
         var device = AudioObjectID(kAudioObjectUnknown)
         var size = UInt32(MemoryLayout<AudioObjectID>.size)
         var defaultAddress = AudioObjectPropertyAddress(
@@ -348,17 +383,26 @@ extension WS2RemoteEffectPort {
             mScope: kAudioObjectPropertyScopeGlobal, mElement: kAudioObjectPropertyElementMain)
         guard AudioObjectGetPropertyData(AudioObjectID(kAudioObjectSystemObject), &defaultAddress, 0, nil, &size, &device) == noErr,
               device != AudioObjectID(kAudioObjectUnknown) else { return nil }
-        var address = AudioObjectPropertyAddress(
+        return (device, AudioObjectPropertyAddress(
             mSelector: kAudioHardwareServiceDeviceProperty_VirtualMainVolume,
-            mScope: kAudioObjectPropertyScopeGlobal, mElement: kAudioObjectPropertyElementMain)
+            mScope: kAudioObjectPropertyScopeGlobal, mElement: kAudioObjectPropertyElementMain))
+    }
+
+    private static func readVolume(device: AudioObjectID, address: AudioObjectPropertyAddress) -> Float32? {
+        var address = address
+        var value: Float32 = 0
+        var size = UInt32(MemoryLayout<Float32>.size)
+        guard AudioObjectGetPropertyData(device, &address, 0, nil, &size, &value) == noErr else { return nil }
+        return min(1, max(0, value))
+    }
+
+    private static func writeVolume(_ target: Float32, device: AudioObjectID, address: AudioObjectPropertyAddress) -> Float32? {
+        var address = address
         var settable: DarwinBoolean = false
         guard AudioObjectIsPropertySettable(device, &address, &settable) == noErr, settable.boolValue else { return nil }
-        var value: Float32 = 0
-        var valueSize = UInt32(MemoryLayout<Float32>.size)
-        guard AudioObjectGetPropertyData(device, &address, 0, nil, &valueSize, &value) == noErr else { return nil }
-        var next = Self.steppedVolume(from: value, step: step)
-        guard AudioObjectSetPropertyData(device, &address, 0, nil, UInt32(MemoryLayout<Float32>.size), &next) == noErr else { return nil }
-        return next
+        var value = min(1, max(0, target))
+        guard AudioObjectSetPropertyData(device, &address, 0, nil, UInt32(MemoryLayout<Float32>.size), &value) == noErr else { return nil }
+        return value
     }
 
     /// 音量按 1/16 一格走：先对齐到最近的一格，再加减；不出 0…1。

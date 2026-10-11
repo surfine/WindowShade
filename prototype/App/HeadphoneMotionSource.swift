@@ -17,9 +17,10 @@ final class HeadphoneMotionSource: NSObject, CMHeadphoneMotionManagerDelegate {
     /// 开始读。已经在读就先停再开，保证回调只有一份。
     func start(now: @escaping @MainActor () -> WS2.Instant, onRecognition: @escaping (WS2HeadRecognition) -> Void) {
         stop()
+        // 授权必须已是 .allowed：.notDetermined 时启动会让 TCC 在后台队列同步请求弹窗、
+        // 弹不出来直接杀进程（真机 2026-10-11 实证）。未决定 = 不启动，等用户在系统设置里授权。
         guard manager.isDeviceMotionAvailable,
-              CMHeadphoneMotionManager.authorizationStatus() != .denied,
-              CMHeadphoneMotionManager.authorizationStatus() != .restricted else { return }
+              CMHeadphoneMotionManager.authorizationStatus() == .authorized else { return }
         self.now = now
         self.onRecognition = onRecognition
         running = true

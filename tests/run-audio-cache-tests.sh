@@ -3,7 +3,7 @@
 set -euo pipefail
 cd "$(dirname "$0")/.."
 mkdir -p .build/audio-cache-tests
-swiftc -parse-as-library -O prototype/Core/NotchActivities.swift prototype/App/NotchActivityPollPolicy.swift prototype/App/NotchActivitySources.swift \
+swiftc -parse-as-library -O prototype/Core/WireJSON.swift prototype/Core/UsageReading.swift prototype/Core/NotchActivities.swift prototype/Core/ReleaseDefaults.swift prototype/App/NotchActivityPollPolicy.swift prototype/App/NotchActivitySources.swift \
   prototype/App/NowPlayingStream.swift prototype/App/NowPlayingArtwork.swift prototype/Core/NowPlayingStreamParser.swift prototype/Core/NowPlayingCardLogic.swift \
   prototype/Core/ArtworkPalette.swift \
   prototype/App/CalendarSource.swift prototype/Core/CalendarActivity.swift \

@@ -6,7 +6,7 @@ import MapKit
 final class NotchActivityController: NSObject, NSSharingServiceDelegate {
     nonisolated static let enabledKey = "Notch.activitiesEnabled"
     nonisolated static var isEnabled: Bool {
-        get { UserDefaults.standard.object(forKey: enabledKey) as? Bool ?? true }
+        get { UserDefaults.standard.object(forKey: enabledKey) as? Bool ?? ReleaseDefaults.value(enabledKey) }
         set { UserDefaults.standard.set(newValue, forKey: enabledKey) }
     }
     var onChange: (([NotchActivity], String?) -> Void)?
@@ -37,7 +37,7 @@ final class NotchActivityController: NSObject, NSSharingServiceDelegate {
         if let title {
             // 收场按种类默认（留 4 秒）；只有走完一轮才会真的留，点结束走下面的立即收。
             put(id: "ws2.focus", kind: .focus, title: title, subtitle: subtitle, symbol: "timer", progress: .reported(progress), paused: paused,
-                trailing: trailing, finalLook: NotchActivity.FinalLook(symbol: "checkmark.circle.fill", trailing: "✓", clearsProgress: false))
+                trailing: trailing, finalLook: NotchActivity.FinalLook(title: "这一轮完成", symbol: "checkmark.circle.fill", trailing: "✓", clearsProgress: false))
         } else if let old = store.live(id: "ws2.focus") {
             store.end(id: old.id, generation: old.generation, now: ProcessInfo.processInfo.systemUptime, immediately: !finishedRound)
         }
@@ -480,7 +480,7 @@ final class NotchActivityController: NSObject, NSSharingServiceDelegate {
         nowPlayingPresenter?.refresh()
     }
 
-    /// 设置里的“正在播放”开关（默认开）。关掉：音乐的两耳、那一格和大卡一起收；打开：重新对账。
+    /// 设置里的“正在播放”开关（未验前默认关）。关掉：音乐的两耳、那一格和大卡一起收；打开：重新对账。
     func setMusicEnabled(_ on: Bool) {
         UserDefaults.standard.set(on, forKey: NotchNowPlayingDefaults.musicKey)
         if running { sources.musicSettingChanged() }

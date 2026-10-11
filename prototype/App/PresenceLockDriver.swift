@@ -1,9 +1,8 @@
 import Cocoa
 
-/// 离开就锁的在场信号来源（手机、手表）。只发 PresenceLock 认得的连接、断开、读回事件。
-///
-/// 这一版不带任何来源：tools/probes/RESULTS-2026-10-03.md 里 P-BLE 没上机跑过，
-/// tools/probes/DECISIONS.md 定了「身份绑定协议完成前不开自动在场锁」。来源准入后从这里接入。
+/// 离开就锁的在场信号来源（随身蓝牙设备）。只发 PresenceLock 认得的连接、断开、读回事件。
+/// 现在的来源是经典蓝牙连接状态（WS2BluetoothPresenceSource）；RSSI 只作展示证据，不做距离判断。
+/// 只触发锁，永不解锁；在场不等于认证。
 @MainActor protocol PresenceSource: AnyObject {
     func start(emit: @escaping @MainActor ([PresenceLock.Event]) -> Void)
     /// 唤醒后蓝牙栈恢复了再重连；reducer 在唤醒一秒后发。
@@ -254,8 +253,8 @@ final class PresenceMediaControl: @unchecked Sendable {
         get { UserDefaults.standard.bool(forKey: defaultsKey) }
         set { UserDefaults.standard.set(newValue, forKey: defaultsKey) }
     }
-    /// 有没有能认出你手机的来源。这一版没有。
-    nonisolated static var sourceAvailable: Bool { false }
+    /// 有没有能认出你手机的来源：选了随身设备就算有（设备还在不在配对列表由来源运行时处理）。
+    nonisolated static var sourceAvailable: Bool { WS2BluetoothPresenceChoice.address != nil }
 
     private weak var notch: NotchController?
     private let source: PresenceSource?
