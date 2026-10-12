@@ -811,13 +811,14 @@ static func noticeTone(_ message: String) -> NotchPanel.Tone {
 
     func titlebarDoubleClickPreferenceSubtitle() -> SettingsText {
         // 标题已经说了"双击收起"，说明只补标题里没有的信息。系统把双击给了什么，用语义动作判断（不是读中文句子）。
+        // #39：三种系统动作下都追加修饰键出口——误触时按住 Option 双击即走系统行为，不用去设置里关开关。
         switch systemTitlebarDoubleClickAction() {
         case .zoom:
-            return WSL10n.setting("settings.shade.doubleClick.subZoom", zh: "三击标题栏会缩放窗口")
+            return WSL10n.setting("settings.shade.doubleClick.subZoom", zh: "三击标题栏会缩放窗口；按住 Option 双击不收起")
         case .minimize:
-            return WSL10n.setting("settings.shade.doubleClick.subMinimize", zh: "三击标题栏会最小化窗口")
+            return WSL10n.setting("settings.shade.doubleClick.subMinimize", zh: "三击标题栏会最小化窗口；按住 Option 双击不收起")
         case .none:
-            return WSL10n.setting("settings.shade.doubleClick.sub", zh: "在任意窗口的标题栏上双击")
+            return WSL10n.setting("settings.shade.doubleClick.sub", zh: "在任意窗口的标题栏上双击；按住 Option 双击不收起")
         }
     }
 

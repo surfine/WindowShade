@@ -107,6 +107,9 @@ final class DuoSettingsWindow: NSWindowController, NSWindowDelegate, NSTableView
   private let splitController = NSSplitViewController()
   private var activePageConstraints: [NSLayoutConstraint] = []
   private var currentSection: WindowShadeSettingsSection = .effects
+  /// 语言重建期间挂起侧栏选择事件：reloadData 在 allowsEmptySelection=false 的
+  /// sourceList 上会同步触发 tableViewSelectionDidChange（第27批卡点 A）。
+  private var isRebuildingLocalCopy = false
 
   init(controller: DuoController) {
     self.controller = controller
@@ -143,15 +146,23 @@ final class DuoSettingsWindow: NSWindowController, NSWindowDelegate, NSTableView
   /// 语言切换的显式重建：标题、侧栏、当前页整个换；缓存页整批作废。
   /// 已显示的刘海句子不回溯改写，下一句起就是新语言（证据里如实记录）。
   func refreshLocalizedCopy() {
+    // reloadData 在 allowsEmptySelection=false 的 sourceList 上会同步把选中打回第 0 行并
+    // 触发 tableViewSelectionDidChange，把 currentSection 拖去 .effects（第27批卡点 A 的根因）；
+    // 重建期间挂起选择处理，reloadData 之后再 select 当前分节（select 内部会把选中行拨回）。
+    isRebuildingLocalCopy = true
+    defer {
+      isRebuildingLocalCopy = false
+    }
     window?.title = Self.windowTitle
     window?.subtitle = currentSection.title
+    // 侧栏表格的读屏标签是建表时设的，reloadData 不会更新，这里随语言重建。
+    sidebarTable.setAccessibilityLabel(WSL10n.text("settings.shell.sidebar.label", zh: "设置侧边栏"))
     sidebarTable.reloadData()
     pages.removeAll()
     rebuildAllPages()
     // 同一分节也要真的换页：先清掉 pageHost 上的旧内容，绕开“同页不重装”的守卫。
     pageHost?.subviews.forEach { $0.removeFromSuperview() }
     select(section: currentSection)
-    sidebarTable.reloadData()
   }
 
   /// 建（或重建）全部页面。build() 与语言切换都走这里，保证两处一致。
@@ -286,8 +297,9 @@ final class DuoSettingsWindow: NSWindowController, NSWindowDelegate, NSTableView
     }
     guard identifier == .toggleSidebar else { return nil }
     let item = NSToolbarItem(itemIdentifier: identifier)
-    item.image = NSImage(systemSymbolName: "sidebar.left", accessibilityDescription: "切换侧边栏")
-    item.label = "切换侧边栏"
+    item.image = NSImage(systemSymbolName: "sidebar.left",
+                         accessibilityDescription: WSL10n.text("settings.shell.sidebar.toggle", zh: "切换侧边栏"))
+    item.label = WSL10n.text("settings.shell.sidebar.toggle", zh: "切换侧边栏")
     item.target = splitController
     item.action = #selector(NSSplitViewController.toggleSidebar(_:))
     return item
@@ -321,7 +333,7 @@ final class DuoSettingsWindow: NSWindowController, NSWindowDelegate, NSTableView
     sidebarTable.allowsMultipleSelection = false
     sidebarTable.dataSource = self
     sidebarTable.delegate = self
-    sidebarTable.setAccessibilityLabel("设置侧边栏")
+    sidebarTable.setAccessibilityLabel(WSL10n.text("settings.shell.sidebar.label", zh: "设置侧边栏"))
     scroll.documentView = sidebarTable
     return scroll
   }
@@ -356,6 +368,7 @@ final class DuoSettingsWindow: NSWindowController, NSWindowDelegate, NSTableView
   }
 
   func tableViewSelectionDidChange(_ notification: Notification) {
+    if isRebuildingLocalCopy { return }
     guard let section = WindowShadeSettingsSection(rawValue: sidebarTable.selectedRow),
           section != currentSection else { return }
     select(section: section)

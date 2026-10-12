@@ -66,6 +66,13 @@ func eventTapCallback(proxy: CGEventTapProxy, type: CGEventType,
     let clickState = event.getIntegerValueField(.mouseEventClickState)
     guard clickState >= 2 else { return Unmanaged.passUnretained(event) }   // 单击：不问主线程
     let location = event.location
+    // #39 防线一：修饰键按住的多击完整交还系统（选词、⌥拖拽、系统缩放/最小化）。
+    // 不吞、不折叠、不建三击 pending——修饰键是这个手势的"临时跳过"。
+    // 放在带内预过滤之前：带内判定有 AX/缓存成本，修饰键路径零成本放行。
+    if !event.flags.intersection([.maskAlternate, .maskCommand, .maskShift, .maskControl]).isEmpty {
+        DispatchQueue.main.async { MainActor.assumeIsolated { appDelegate?.clearPendingTitlebarTripleClickForModifierSkip() } }
+        return Unmanaged.passUnretained(event)
+    }
     // 快照新鲜且点击明显不在任何在屏窗口的标题栏带内：tap 线程上直接放行，不打扰主线程。
     // 三击另有不依赖 AX 的 pending 匹配，不走这条预过滤。
     if clickState == 2 {

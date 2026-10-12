@@ -52,9 +52,9 @@ enum WS2SilentSecurity {
         case "device.bind", "device.revoke", "device.range":
             return make(id, kind: .device, handedToSystem: true)
         case "device.status":
-            return make(id, kind: .device, handedToSystem: false, line: "未知")
+            return make(id, kind: .device, handedToSystem: false, line: WS2SilentCopy.saying("unknown"))
         case "carplay.enter", "carplay.exit":
-            return make(id, kind: .carPlay, handedToSystem: false, line: "还不能接收")
+            return make(id, kind: .carPlay, handedToSystem: false, line: WS2SilentCopy.saying("cannotReceive"))
         default:
             return nil
         }
@@ -91,15 +91,15 @@ enum WS2SilentSecurity {
 
     private static func spokenLine(_ id: String) -> String {
         switch id {
-        case "auth.settings", "auth.cancel", "auth.useSystem": return "不解锁"
-        case "auth.revokeSession": return "没有许可"
-        case "auth.lab": return "只做实验"
-        case "credential.chooseAlias": return "还没选"
-        case "credential.secretPhraseLab": return "要用原来的确认"
-        case "device.status": return "未知"
-        case "carplay.enter", "carplay.exit": return "还不能接收"
+        case "auth.settings", "auth.cancel", "auth.useSystem": return WS2SilentCopy.saying("noUnlock")
+        case "auth.revokeSession": return WS2SilentCopy.saying("noPermission")
+        case "auth.lab": return WS2SilentCopy.saying("labOnly")
+        case "credential.chooseAlias": return WS2SilentCopy.saying("notYetChosen")
+        case "credential.secretPhraseLab": return WS2SilentCopy.saying("useOriginalConfirm")
+        case "device.status": return WS2SilentCopy.saying("unknown")
+        case "carplay.enter", "carplay.exit": return WS2SilentCopy.saying("cannotReceive")
         default:
-            return "要用原来的确认"
+            return WS2SilentCopy.saying("useOriginalConfirm")
         }
     }
 }
@@ -168,7 +168,7 @@ struct WS2SilentDevicePairing: Equatable, Sendable {
     mutating func range() { stayUnknown() }
     mutating func showStatus() { stayUnknown() }
 
-    var statusLine: String { "未知" }
+    var statusLine: String { WS2SilentCopy.saying("unknown") }
 
     private mutating func stayUnknown() {
         bound = false
@@ -214,7 +214,7 @@ struct WS2SilentCarPlayReceiver: Equatable, Sendable {
     mutating func enter() { stayDisconnected() }
     mutating func exit() { stayDisconnected() }
 
-    var line: String { "还不能接收" }
+    var line: String { WS2SilentCopy.saying("cannotReceive") }
 
     private mutating func stayDisconnected() {
         connected = false

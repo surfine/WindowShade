@@ -132,6 +132,10 @@ def check_text(rel, text, forbidden):
                 long_subtitles.append(f"{rel}:{lineno}: {n} 个字 \"{m.group(1)}\"")
 
     # d) 刘海主句：*Copy.swift 字典条目；NotchSentence.swift 的 headline:/suffix: 字面量
+    # 豁免（第28批，逐条）：这四句是第28批把散句机械迁移进 WS2SilentCopy.sayings 时带入的
+    # 改动前原文（逐字节，出处 2003e53^ 的 WS2SilentHost/WS2SilentGates），不是新写文案；
+    # 中文不在本批改动范围（zh 逐字节不变是硬约束）。将来改写句子时按上限收紧并删掉豁免。
+    LEGACY_SAYINGS = {"confirmVoid", "unclear", "nodOrClick", "timeout.glance"}
     is_copy = base.endswith("Copy.swift")
     is_sentence = base == "NotchSentence.swift"
     if is_copy or is_sentence:
@@ -141,6 +145,10 @@ def check_text(rel, text, forbidden):
             if m and CJK_RE.search(m.group(1)):
                 n = grapheme_count(m.group(1))
                 if n > HEADLINE_LIMIT:
+                    key = m.group(0)
+                    if any(f'"{k}"' in line for k in LEGACY_SAYINGS):
+                        long_subtitles.append(f"{rel}:{lineno}: 豁免（迁移原文）{n} 个字 \"{m.group(1)}\"")
+                        continue
                     failures.append(f"{rel}:{lineno}: 主句有 {n} 个字形簇，上限 {HEADLINE_LIMIT}：\"{m.group(1)}\"")
     return failures, long_subtitles
 

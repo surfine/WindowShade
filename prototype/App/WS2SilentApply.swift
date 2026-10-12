@@ -28,7 +28,7 @@ enum WS2SilentApply {
     }
 
     private static func notDone() -> SilentExecutionResult {
-        .failed("这一笔没有做成")
+        .failed(WS2SilentCopy.saying("notDone"))
     }
 
     @discardableResult
@@ -54,7 +54,7 @@ enum WS2SilentApply {
                 launchpad.hide(reason: "silent")
                 return launchpad.isShowing ? .unknown(0) : completed("launcher.dismiss", "")
             }
-            guard presentation.screen == .caller, let screen else { return .unavailable("没屏幕") }
+            guard presentation.screen == .caller, let screen else { return .unavailable(WS2SilentCopy.saying("noScreen")) }
             switch destination {
             case .nextPage:
                 launchpad.turnPage(by: 1, on: screen)
@@ -85,7 +85,7 @@ enum WS2SilentApply {
             }
         case .showFocusStatus:
             runtime.showFocusStatus()
-            return runtime.showsFocusCard ? .displayed("只看不计时") : .unavailable("没打开")
+            return runtime.showsFocusCard ? .displayed(WS2SilentCopy.saying("watchOnly")) : .unavailable(WS2SilentCopy.saying("notOpen"))
         case .startFocus:
             let idle = runtime.focus.model.phase == .idle
             runtime.startFocus()
@@ -101,18 +101,18 @@ enum WS2SilentApply {
             }
             return notDone()
         case .glance(let id, let revision):
-            guard let window, frozen(id, revision, window) else { return .unavailable("没预览") }
+            guard let window, frozen(id, revision, window) else { return .unavailable(WS2SilentCopy.saying("noPreview")) }
             let invoked = gestures.owner.glance.showHeld(window.id)
             // 面板外框不够：要等到首帧真的挂上视频层（isLive）才算观察到预览。
             let live = gestures.owner.glance.isLive(window.id)
             return WS2SilentEffectJudge.glance(windowID: UInt64(window.id), invoked: invoked, visible: live)
         case .openLaunchpadFolder(let id):
-            guard let screen, !id.isEmpty else { return .unavailable("还没选") }
+            guard let screen, !id.isEmpty else { return .unavailable(WS2SilentCopy.saying("notYetChosen")) }
             guard launchpad.openFolder(id, on: screen) else { return notDone() }
             return launchpadSeen(launchpad, on: screen, commandID: "launcher.openFolder")
         case .adoptDraft(let id, let revision):
             let adopted = draft.adopt(id: id, revision: revision) == .preview && draft.mark != .sent
-            return adopted ? .displayed("已采用草稿") : notDone()
+            return adopted ? .displayed(WS2SilentCopy.saying("draftAdopted")) : notDone()
         case .submitDraft(let id, let revision):
             let result = draft.submit(commandID: "assistant.sendDraft", id: id, revision: revision, boundSessionID: boundSessionID)
             return WS2SilentDraftReceipt.execution(result)
@@ -134,21 +134,21 @@ enum WS2SilentApply {
         case .showAssistantRead:
             guard !assistant.turnStarted, !assistant.sessionStarted else { return notDone() }
             runtime.openOwned()
-            return .displayed("编程会话")
+            return .displayed(WS2SilentCopy.saying("preview.codingSessions"))
         case .showActivity:
             let before = activities.present
             guard activities.present == before, !activities.startsPlayback else { return notDone() }
-            return .displayed(activities.present.isEmpty ? "没有" : "有活动")
+            return .displayed(activities.present.isEmpty ? WS2SilentCopy.saying("none") : WS2SilentCopy.saying("hasActivity"))
         case .showNativeStop(let id, let revision):
             let mark = assistant.showNativeStop(turnID: id, revision: revision)
             guard mark == .showingNativeStop, assistant.stopMark != .stopped, !assistant.turnStarted else { return notDone() }
-            return .displayed("已显示停止")
+            return .displayed(WS2SilentCopy.saying("showedStop"))
         case .setNextModel(let id, _):
             guard assistant.setNextModel(id, allowed: allowedModels), !assistant.turnStarted else { return notDone() }
-            return .displayed("已记下模型")
+            return .displayed(WS2SilentCopy.saying("modelNoted"))
         case .setNextEffort(let id, _):
             guard assistant.setNextEffort(id, allowed: allowedEfforts), !assistant.turnStarted else { return notDone() }
-            return .displayed("已记下档位")
+            return .displayed(WS2SilentCopy.saying("effortNoted"))
         case .steerDraft(let id, let revision):
             let mark = assistant.steer(id: id, revision: revision, boundSessionID: boundSessionID)
             guard mark == .waitingForAck, assistant.steerMark != .acknowledged, !assistant.turnStarted else { return notDone() }
@@ -156,7 +156,7 @@ enum WS2SilentApply {
         case .collapseWindow(let id, let revision):
             guard let window, frozen(id, revision, window) else { return notDone() }
             if gestures.owner.shaded[window.id] != nil {
-                return .alreadySatisfied("已收起")
+                return .alreadySatisfied(WS2SilentCopy.saying("rolledUp"))
             }
             let foldID = window.id
             _ = gestures.owner.registerFoldWaiter(id: foldID) { success in
@@ -169,24 +169,24 @@ enum WS2SilentApply {
         case .expandWindow(let id, let revision):
             guard let window, frozen(id, revision, window) else { return notDone() }
             guard gestures.owner.shaded[window.id] != nil else {
-                return .alreadySatisfied("已展开")
+                return .alreadySatisfied(WS2SilentCopy.saying("unrolled"))
             }
             _ = gestures.owner.unshade(window.id)
             // 字典移除不等于原窗已可见；宿主短轮询终态（R03）。
             return .waiting(1)
         case .unlockNoted:
-            return .unavailable("不解锁")
+            return .unavailable(WS2SilentCopy.saying("noUnlock"))
         case .fillRefused:
-            return .unavailable("不代填")
+            return .unavailable(WS2SilentCopy.saying("noFill"))
         case .deviceRead:
-            return .displayed("未知")
+            return .displayed(WS2SilentCopy.saying("unknown"))
         case .carPlayUnavailable:
-            return .unavailable("还不能接收")
+            return .unavailable(WS2SilentCopy.saying("cannotReceive"))
         case .challengeOnly(let id):
             guard let command = WS2SilentCatalog.lookup(id),
                   let outcome = WS2SilentChallenge.outcome(for: command),
                   !outcome.unlocks, !outcome.fillsPassword else { return notDone() }
-            return .unavailable("要用原来的确认")
+            return .unavailable(WS2SilentCopy.saying("useOriginalConfirm"))
         case .showNamed(let id):
             switch WS2SilentSurface.surface(for: id) {
             case .settings(let page):
@@ -194,11 +194,11 @@ enum WS2SilentApply {
                 return .displayed(WS2SilentReadout.sentence(id))
             case .windowBrowser:
                 gestures.owner.openWindowBrowserPanel()
-                return .displayed("已开窗口浏览")
+                return .displayed(WS2SilentCopy.saying("openedWindowBrowsing"))
             case .readout:
                 if id == "input.pause" {
                     gestures.owner.inputController.pauseHooks()
-                    return gestures.owner.inputController.hooksPaused ? .displayed("输入已暂停") : notDone()
+                    return gestures.owner.inputController.hooksPaused ? .displayed(WS2SilentCopy.saying("inputPaused")) : notDone()
                 }
                 if id == "privacy.cover" || id == "scene.conversation" {
                     let obs = gestures.owner.silentPrivacyCover.coverAllScreens()
@@ -298,7 +298,7 @@ enum WS2SilentApply {
             }
             return WS2SilentEffectJudge.pin(alreadyPreviewing: already, started: !already)
         case .slideOver:
-            guard let screen else { return .unavailable("没屏幕") }
+            guard let screen else { return .unavailable(WS2SilentCopy.saying("noScreen")) }
             let already = owner.slideOver.isSlideOver(window.id)
             if !already {
                 owner.slideOver.enter(window.element, id: window.id, pid: window.pid, on: screen)
@@ -306,15 +306,15 @@ enum WS2SilentApply {
             return WS2SilentEffectJudge.asyncWindow(
                 already: already,
                 started: owner.slideOver.isSlideOver(window.id),
-                satisfied: "已在侧拉")
+                satisfied: WS2SilentCopy.saying("alreadySlideOver"))
         case .leaveSlideOver:
             guard owner.slideOver.isSlideOver(window.id) else {
-                return .alreadySatisfied("没在侧拉")
+                return .alreadySatisfied(WS2SilentCopy.saying("notInSlideOver"))
             }
             owner.slideOver.exit(reason: "silent")
             return .waiting(1)
         case .pictureInPicture:
-            guard let screen else { return .unavailable("没屏幕") }
+            guard let screen else { return .unavailable(WS2SilentCopy.saying("noScreen")) }
             let already = owner.pip.isInPictureInPicture(window.id)
             if !already {
                 owner.pip.enter(window.element, id: window.id, pid: window.pid, on: screen)
@@ -322,10 +322,10 @@ enum WS2SilentApply {
             return WS2SilentEffectJudge.asyncWindow(
                 already: already,
                 started: owner.pip.isInPictureInPicture(window.id),
-                satisfied: "已在画中画")
+                satisfied: WS2SilentCopy.saying("alreadyPiP"))
         case .leavePictureInPicture:
             guard owner.pip.isInPictureInPicture(window.id) else {
-                return .alreadySatisfied("没在画中画")
+                return .alreadySatisfied(WS2SilentCopy.saying("notInPiP"))
             }
             owner.pip.exit(window.id, activate: false)
             return .waiting(1)

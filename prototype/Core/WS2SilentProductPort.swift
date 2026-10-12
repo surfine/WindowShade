@@ -115,7 +115,7 @@ enum WS2SilentSettingsPage: String, Equatable, Sendable {
 }
 
 enum WS2SilentSelection {
-    static let emptyLine = "还没选"
+    static var emptyLine: String { WS2SilentCopy.saying("notYetChosen") }
 
     static func needsChoice(_ id: String) -> Bool {
         switch id {
@@ -149,10 +149,10 @@ enum WS2SilentNav {
     /// 翻页或取消已经发生之后的那一句。不重复芯片上的名字。
     static func resultLine(_ id: String) -> String? {
         switch id {
-        case "nav.next": return "已到下一项"
-        case "nav.previous": return "已到上一项"
-        case "nav.back": return "已返回"
-        case "nav.cancel": return "已取消"
+        case "nav.next": return WS2SilentCopy.saying("wentNext")
+        case "nav.previous": return WS2SilentCopy.saying("wentPrevious")
+        case "nav.back": return WS2SilentCopy.saying("wentBack")
+        case "nav.cancel": return WS2SilentCopy.saying("cancelled")
         default: return nil
         }
     }

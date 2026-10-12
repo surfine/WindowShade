@@ -100,13 +100,13 @@ struct WS2SilentActivityCursor: Equatable, Sendable {
     }
 
     func detail(in board: WS2SilentActivityBoard) -> String {
-        guard board.look(current), !board.startsPlayback else { return "没有" }
+        guard board.look(current), !board.startsPlayback else { return WS2SilentCopy.saying("none") }
         switch current {
-        case .music: return "正在播放"
-        case .airPods: return "电量"
-        case .airDrop: return "隔空投送"
-        case .route: return "路线"
-        case .recording: return "录音"
+        case .music: return WS2SilentCopy.line("activity.music") ?? WS2SilentCopy.saying("none")
+        case .airPods: return WS2SilentCopy.line("activity.battery") ?? WS2SilentCopy.saying("none")
+        case .airDrop: return WS2SilentCopy.line("activity.airdrop") ?? WS2SilentCopy.saying("none")
+        case .route: return WS2SilentCopy.line("activity.route") ?? WS2SilentCopy.saying("none")
+        case .recording: return WS2SilentCopy.line("activity.recording") ?? WS2SilentCopy.saying("none")
         }
     }
 }
@@ -124,7 +124,7 @@ enum WS2SilentActivityNav {
 }
 
 enum WS2SilentHelp {
-    static let line = "点命令再确认"
+    static var line: String { WS2SilentCopy.saying("help") }
 }
 
 struct WS2SilentStripCursor: Equatable, Sendable {
@@ -305,7 +305,9 @@ enum WS2SilentCover {
 }
 
 enum WS2SilentResultLine {
-    static let notDone = "这一笔没有做成"
+    static var notDone: String { WS2SilentCopy.saying("notDone") }
+
+    /// 确认之后的那一句。没做成一律是「这一笔没有做成」。
 
     /// 确认之后的那一句。没做成一律是「这一笔没有做成」。
     /// 看一眼不在这里，避免写成已经把窗口叫到前面。
@@ -317,7 +319,7 @@ enum WS2SilentResultLine {
         assistant: WS2SilentAssistant = WS2SilentAssistant()
     ) -> String? {
         if id == "music.pause" || id == "music.resume" || id == "music.nextTrack" {
-            return "先不改播放"
+            return WS2SilentCopy.saying("holdPlayback")
         }
         guard covers(id) else { return nil }
         guard succeeded else { return notDone }
@@ -337,7 +339,7 @@ enum WS2SilentResultLine {
         if WS2SilentSelection.needsChoice(id) { return WS2SilentSelection.emptyLine }
         if id == "assistant.source" { return WS2SilentReadout.sentence(id) }
         if WS2SilentDraftRead.reports(id) { return WS2SilentReadout.sentence(id, draft: draft) }
-        if id == "carplay.enter" || id == "carplay.exit" { return "还不能接收" }
+        if id == "carplay.enter" || id == "carplay.exit" { return WS2SilentCopy.saying("cannotReceive") }
         return notDone
     }
 
@@ -363,41 +365,42 @@ enum WS2SilentResultLine {
         assistant: WS2SilentAssistant
     ) -> String {
         switch id {
-        case "window.left": return "已到左半"
-        case "window.right": return "已到右半"
-        case "window.fill": return "已铺满屏幕"
-        case "window.center": return "已居中"
-        case "window.topLeft": return "已到左上"
-        case "window.topRight": return "已到右上"
-        case "window.bottomLeft": return "已到左下"
-        case "window.bottomRight": return "已到右下"
-        case "window.collapse": return "已收起"
-        case "window.expand": return "已展开"
-        case "window.tuck": return "已收进刘海"
-        case "window.untuck": return "已放回"
-        case "window.undo": return "已撤销"
-        case "window.restore": return "已还原"
-        case "window.moveToSelectedDisplay": return "已到这屏"
-        case "focus.start": return "已开始专注"
-        case "focus.pause": return "已暂停"
-        case "focus.resume": return "已继续"
-        case "window.magicTile": return "已魔法平铺"
-        case "window.unpin": return "已取消置顶"
-        case "dictation.adopt": return "已采用草稿"
-        case "dictation.discard": return "已丢掉"
-        case "dictation.insertPhrase": return "还没发送"
+        case "window.left": return WS2SilentCopy.saying("atLeftHalf")
+        case "window.right": return WS2SilentCopy.saying("atRightHalf")
+        case "window.fill": return WS2SilentCopy.saying("filledScreen")
+        case "window.center": return WS2SilentCopy.saying("centered")
+        case "window.topLeft": return WS2SilentCopy.saying("atTopLeft")
+        case "window.topRight": return WS2SilentCopy.saying("atTopRight")
+        case "window.bottomLeft": return WS2SilentCopy.saying("atBottomLeft")
+        case "window.bottomRight": return WS2SilentCopy.saying("atBottomRight")
+        case "window.collapse": return WS2SilentCopy.saying("rolledUp")
+        case "window.expand": return WS2SilentCopy.saying("unrolled")
+        case "window.tuck": return WS2SilentCopy.saying("tucked")
+        case "window.untuck": return WS2SilentCopy.saying("putBack")
+        case "window.undo": return WS2SilentCopy.saying("undone")
+        case "window.restore": return WS2SilentCopy.saying("restored")
+        case "window.moveToSelectedDisplay": return WS2SilentCopy.saying("atThisDisplay")
+        case "focus.start": return WS2SilentCopy.saying("focusStarted")
+        case "focus.pause": return WS2SilentCopy.saying("paused")
+        case "focus.resume": return WS2SilentCopy.saying("resumed")
+        case "window.magicTile": return WS2SilentCopy.saying("magicTiled")
+        case "window.unpin": return WS2SilentCopy.saying("unpinned")
+        case "dictation.adopt": return WS2SilentCopy.saying("draftAdopted")
+        case "dictation.discard": return WS2SilentCopy.saying("draftDiscarded")
+        case "dictation.insertPhrase": return WS2SilentCopy.saying("notSent")
         case "assistant.sendDraft":
             switch draft.mark {
-            case .waitingForAck: return "还在等"
-            case .outcomeUnknown: return "结果未确认"
-            case .sent: return "已送出"
-            case .idle, .preview: return "还在这台 Mac"
+            case .waitingForAck: return WS2SilentCopy.saying("waiting")
+            case .outcomeUnknown: return WS2SilentCopy.saying("outcomeUnknown")
+            case .sent: return WS2SilentCopy.saying("sent")
+            case .idle, .preview: return WS2SilentCopy.saying("stillOnThisMac")
             }
-        case "assistant.steerDraft": return "补充还在等"
+        case "assistant.steerDraft": return WS2SilentCopy.saying("steerWaiting")
         case "assistant.interrupt":
-            return assistant.stopMark == .stopped ? "已停下" : "已显示停止"
-        case "assistant.setModel": return "已记下模型"
-        case "assistant.setEffort": return "已记下档位"
+            return assistant.stopMark == .stopped
+                ? WS2SilentCopy.saying("stopped") : WS2SilentCopy.saying("showedStop")
+        case "assistant.setModel": return WS2SilentCopy.saying("modelNoted")
+        case "assistant.setEffort": return WS2SilentCopy.saying("effortNoted")
         default: return notDone
         }
     }
@@ -406,11 +409,11 @@ enum WS2SilentResultLine {
 enum WS2SilentDraftRead {
     static func line(_ draft: WS2SilentDraftHost) -> String {
         switch draft.mark {
-        case .idle: return "没有草稿"
-        case .preview: return "还没发送"
-        case .waitingForAck: return "还在等"
-        case .outcomeUnknown: return "结果未确认"
-        case .sent: return "已送出"
+        case .idle: return WS2SilentCopy.saying("noDraft")
+        case .preview: return WS2SilentCopy.saying("notSent")
+        case .waitingForAck: return WS2SilentCopy.saying("waiting")
+        case .outcomeUnknown: return WS2SilentCopy.saying("outcomeUnknown")
+        case .sent: return WS2SilentCopy.saying("sent")
         }
     }
 
@@ -438,137 +441,137 @@ enum WS2SilentReadout {
     ) -> String {
         switch id {
         case "usage.quota":
-            return number("账户额度", WS2SilentUsageRead.look(.accountQuota, in: usage))
+            return number(WS2SilentCopy.line("usage.quota") ?? WS2SilentCopy.saying("notProvided"), WS2SilentUsageRead.look(.accountQuota, in: usage))
         case "usage.session":
-            return number("这次用量", WS2SilentUsageRead.look(.selectedThread, in: usage))
+            return number(WS2SilentCopy.line("usage.session") ?? WS2SilentCopy.saying("notProvided"), WS2SilentUsageRead.look(.selectedThread, in: usage))
         case "usage.context":
-            return number("上下文", WS2SilentUsageRead.look(.selectedContext, in: usage))
+            return number(WS2SilentCopy.line("usage.context") ?? WS2SilentCopy.saying("notProvided"), WS2SilentUsageRead.look(.selectedContext, in: usage))
         case "usage.accountActivity":
-            return number("账户活动", WS2SilentUsageRead.look(.accountActivity, in: usage))
+            return number(WS2SilentCopy.line("usage.accountActivity") ?? WS2SilentCopy.saying("notProvided"), WS2SilentUsageRead.look(.accountActivity, in: usage))
         case "usage.refresh", "usage.chooseAccount":
-            return "未提供"
+            return WS2SilentCopy.saying("notProvided")
         case "activity.music":
-            return activities.look(.music) ? "正在播放" : "没有"
+            return activities.look(.music) ? WS2SilentCopy.line("activity.music") ?? WS2SilentCopy.saying("none") : WS2SilentCopy.saying("none")
         case "activity.battery":
-            return activities.look(.airPods) ? "电量" : "没有"
+            return activities.look(.airPods) ? WS2SilentCopy.line("activity.battery") ?? WS2SilentCopy.saying("none") : WS2SilentCopy.saying("none")
         case "activity.airdrop":
-            return activities.look(.airDrop) ? "隔空投送" : "没有"
+            return activities.look(.airDrop) ? WS2SilentCopy.line("activity.airdrop") ?? WS2SilentCopy.saying("none") : WS2SilentCopy.saying("none")
         case "activity.route":
-            return activities.look(.route) ? "路线" : "没有"
+            return activities.look(.route) ? WS2SilentCopy.line("activity.route") ?? WS2SilentCopy.saying("none") : WS2SilentCopy.saying("none")
         case "activity.recording":
-            return activities.look(.recording) ? "录音" : "没有"
+            return activities.look(.recording) ? WS2SilentCopy.line("activity.recording") ?? WS2SilentCopy.saying("none") : WS2SilentCopy.saying("none")
         case "device.status":
-            return "未知"
+            return WS2SilentCopy.saying("unknown")
         case "music.pause", "music.resume", "music.nextTrack":
-            return "先不改播放"
+            return WS2SilentCopy.saying("holdPlayback")
         case "carplay.enter", "carplay.exit":
-            return "还不能接收"
+            return WS2SilentCopy.saying("cannotReceive")
         case "desktop.showDesktop", "desktop.missionControl", "desktop.showSwitcher":
-            return "不代按键"
+            return WS2SilentCopy.saying("noKeysForYou")
         case "nav.help":
             return WS2SilentHelp.line
         case "launcher.openSelected", "app.activateSelected", "app.previous", "desktop.select",
              "credential.chooseAlias":
             return WS2SilentSelection.emptyLine
         case "scene.largeText":
-            return "不改系统字"
+            return WS2SilentCopy.saying("noSystemText")
         case "auth.settings":
-            return "不解锁"
+            return WS2SilentCopy.saying("noUnlock")
         case "auth.revokeSession":
-            return "没有许可"
+            return WS2SilentCopy.saying("noPermission")
         case "privacy.status":
-            if cover.covered { return "已遮住" }
-            return cover.scopeSelected ? "尚未遮住" : "还没选范围"
+            if cover.covered { return WS2SilentCopy.saying("covered") }
+            return cover.scopeSelected ? WS2SilentCopy.saying("notCoveredYet") : WS2SilentCopy.saying("scopeNotChosen")
         case "privacy.awaySummary":
             // 摘要的原话（AwaySummary.Summary.spoken）；没有离开期间的事就是「没有」。
-            guard let away, !away.isEmpty else { return "没有" }
+            guard let away, !away.isEmpty else { return WS2SilentCopy.saying("none") }
             return away
         case "privacy.selectScope":
-            return "还没选范围"
+            return WS2SilentCopy.saying("scopeNotChosen")
         case "input.profile":
-            return "还没录过"
+            return WS2SilentCopy.saying("notRecorded")
         case "scene.accessibility":
-            return "不改辅助"
+            return WS2SilentCopy.saying("noAssistantChanges")
         case "ui.activities":
-            guard activities.sourceConnected else { return "未连接" }
-            guard !activities.startsPlayback else { return "没有" }
-            if !activities.cardIDs.isEmpty { return "有活动" }
-            return activities.present.isEmpty ? "没有" : "有活动"
+            guard activities.sourceConnected else { return WS2SilentCopy.saying("notConnected") }
+            guard !activities.startsPlayback else { return WS2SilentCopy.saying("none") }
+            if !activities.cardIDs.isEmpty { return WS2SilentCopy.saying("hasActivity") }
+            return activities.present.isEmpty ? WS2SilentCopy.saying("none") : WS2SilentCopy.saying("hasActivity")
         case "ui.usage":
             let any = [usage.accountQuota, usage.selectedThread, usage.selectedContext, usage.accountActivity]
                 .contains { if case .provided = $0 { return true }; return false }
-            return any ? "有用量" : "未提供"
+            return any ? WS2SilentCopy.saying("hasUsage") : WS2SilentCopy.saying("notProvided")
         case "window.chooseDisplay":
-            return "还没选"
+            return WS2SilentCopy.saying("notYetChosen")
         case "assistant.show", "assistant.status", "assistant.chooseSession":
-            guard !assistant.sessionStarted, !assistant.turnStarted else { return "没有" }
-            return assistant.showSessions() ? "有会话" : "没有"
+            guard !assistant.sessionStarted, !assistant.turnStarted else { return WS2SilentCopy.saying("none") }
+            return assistant.showSessions() ? WS2SilentCopy.saying("hasSessions") : WS2SilentCopy.saying("none")
         case "assistant.models":
-            guard !assistant.turnStarted, let model = assistant.nextModel, !model.isEmpty else { return "未提供" }
-            return "已记下"
+            guard !assistant.turnStarted, let model = assistant.nextModel, !model.isEmpty else { return WS2SilentCopy.saying("notProvided") }
+            return WS2SilentCopy.saying("noted")
         case "assistant.effort":
-            guard !assistant.turnStarted, let effort = assistant.nextEffort, !effort.isEmpty else { return "未提供" }
-            return "已记下"
+            guard !assistant.turnStarted, let effort = assistant.nextEffort, !effort.isEmpty else { return WS2SilentCopy.saying("notProvided") }
+            return WS2SilentCopy.saying("noted")
         case "assistant.review", "assistant.showDiff":
-            return "没有"
+            return WS2SilentCopy.saying("none")
         case "assistant.source":
-            return "没有来源"
+            return WS2SilentCopy.saying("noSource")
         case "dictation.start", "dictation.stopCapture", "dictation.nextCandidate", "dictation.retry",
              "dictation.edit", "dictation.insertPhrase", "dictation.discard", "dictation.adopt",
              "assistant.sendDraft":
             return WS2SilentDraftRead.line(draft)
         case "activity.focus":
-            return "只看不计时"
+            return WS2SilentCopy.saying("watchOnly")
         case "window.glance":
-            return "只看一眼"
+            return WS2SilentCopy.saying("glanceOnly")
         case "auth.cancel", "auth.useSystem":
-            return "不解锁"
+            return WS2SilentCopy.saying("noUnlock")
         case "launcher.openFolder":
-            return "已开文件夹"
+            return WS2SilentCopy.saying("openedFolder")
         case "ui.settings":
-            return "打开了设置"
+            return WS2SilentCopy.saying("openedSettings")
         case "settings.appearance":
-            return "打开了外观"
+            return WS2SilentCopy.saying("openedAppearance")
         case "settings.windows":
-            return "打开窗口设置"
+            return WS2SilentCopy.saying("openedWindowSettings")
         case "settings.shortcuts":
-            return "打开了快捷键"
+            return WS2SilentCopy.saying("openedShortcuts")
         case "settings.permissions":
-            return "打开了权限"
+            return WS2SilentCopy.saying("openedPermissions")
         case "settings.privacy":
-            return "打开了隐私"
+            return WS2SilentCopy.saying("openedPrivacy")
         case "settings.silent":
-            return "打开静音操作"
+            return WS2SilentCopy.saying("openedSilent")
         case "ui.windows", "window.choose", "window.batchReview", "app.showSwitcher":
-            return "已开窗口浏览"
+            return WS2SilentCopy.saying("openedWindowBrowsing")
         case "privacy.cover", "scene.conversation":
-            if cover.covered { return "已遮住" }
-            return cover.scopeSelected ? "尚未遮住" : "还没选范围"
+            if cover.covered { return WS2SilentCopy.saying("covered") }
+            return cover.scopeSelected ? WS2SilentCopy.saying("notCoveredYet") : WS2SilentCopy.saying("scopeNotChosen")
         case "input.pause":
-            return hooksPaused ? "输入已暂停" : "输入还在"
+            return hooksPaused ? WS2SilentCopy.saying("inputPaused") : WS2SilentCopy.saying("inputActive")
         case "launcher.open", "launcher.home":
-            return "已开主屏幕"
+            return WS2SilentCopy.saying("openedHome")
         case "launcher.library":
-            return "已开资料库"
+            return WS2SilentCopy.saying("openedLibrary")
         case "launcher.today":
-            return "已开今天"
+            return WS2SilentCopy.saying("openedToday")
         case "launcher.search":
-            return "已开搜索"
+            return WS2SilentCopy.saying("openedSearch")
         case "launcher.back":
-            return "回到上一层"
+            return WS2SilentCopy.saying("backOneLevel")
         case "launcher.nextPage":
-            return "已翻下一页"
+            return WS2SilentCopy.saying("nextPageTurned")
         case "launcher.previousPage":
-            return "已翻上一页"
+            return WS2SilentCopy.saying("previousPageTurned")
         case "launcher.dismiss":
-            return "已关掉"
+            return WS2SilentCopy.saying("closed")
         default:
-            return WS2SilentCopy.line(id) ?? "这次没有做"
+            return WS2SilentCopy.line(id) ?? WS2SilentCopy.saying("notTried")
         }
     }
 
     private static func number(_ name: String, _ value: WS2SilentUsageValue) -> String {
-        guard let number = WS2SilentUsageRead.writtenNumber(value) else { return "未提供" }
+        guard let number = WS2SilentUsageRead.writtenNumber(value) else { return WS2SilentCopy.saying("notProvided") }
         _ = name
         return number == 0 ? "0" : String(number)
     }

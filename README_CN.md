@@ -97,6 +97,7 @@ WindowShade 要两项权限。**辅助功能**：找到、移动、恢复窗口�
 
 - **1.0.16 预览** —— 把收着的窗口、正在播放、文件架和配件电量集中到刘海，另有三步欢迎窗口、卷轴概览和“WindowShade 读到的”隐私页。新安装时，刘海及其实时活动、文件架、配件电量提醒、音量亮度提示和“让开这个 App”默认关闭，需要时在设置里打开。[候选说明](docs/releases/v1.0.16.md) · [默认值](docs/releases/v1.0.16-defaults.md) · [本轮验收](docs/releases/v1.0.16-acceptance-20261010.md)
 - **实时活动** —— 刘海和启动台负一屏共用最多三个：音乐、AirPods、由本工具发起的隔空投送与路线，以及语音备忘录的麦克风使用。[说明](docs/live-activities.md)
+- **英文界面** —— 设置里选界面语言（跟随系统/简体中文/English），切换立即生效，不用重启；正在开发，尚未覆盖全部界面。[说明](docs/handoff/BATCH27-ENGLISH-HANDOFF-2026-10-12.md)
 - **刘海 Touch ID** —— 菜单里选“验证 Touch ID…”，刘海展开显示系统指纹提示，确认本次 WindowShade 请求；它不解锁 macOS。[说明](docs/touch-id-island.md)
 - **启动台与新动作** —— 按 `⌃⌘L` 打开主屏幕（末页是 App 资料库）、魔法平铺、卷轴、画中画、带分屏把手的侧拉、`⌥`+Tab 按窗口切换、一键换上 Rectangle 快捷键、点 Dock 让开后隐藏，等等。[启动台](docs/launchpad.md) · [标题栏手势](docs/gestures.md)
 - **实验或有设备限制** —— 刷脸、离开就锁、遥控和 CarPlay 仍有实验与设备限制，不能据此声称支持系统刷脸解锁或完整 CarPlay 接收。

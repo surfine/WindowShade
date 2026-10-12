@@ -112,7 +112,7 @@ final class WS2SilentHost {
         case .reRecord:
             let sawFace = mouthWindow.attempts.contains { $0.frame != nil }
             mouthWindow.reset()
-            if sawFace { page?.note("没看清，请再说一次") }
+            if sawFace { page?.note(WS2SilentCopy.saying("unclear")) }
         case .accepted(let frames):
             let sample = WS2MouthRecording(session: intentLease, commandID: nil, frames: frames)
             guard let candidate = WS2MouthMatcher.match(sample, speech: profile.speech, profile: profile) else { return }
@@ -123,11 +123,11 @@ final class WS2SilentHost {
             let phraseSample = WS2SilentPhraseSample(speech: WS2SilentSpeech(rawValue: profile.speech),
                                                      seenWord: candidate, cameraAvailable: true, microphoneWord: nil)
             if case .sameAsTap(let commandID) = WS2SilentPhrases.match(phraseSample, profile: phrases) {
-                page?.note((WS2SilentCopy.line(commandID) ?? commandID) + "？点头或点一下确认")
+                page?.note((WS2SilentCopy.line(commandID) ?? commandID) + WS2SilentCopy.saying("nodOrClick"))
                 offer(commandID)
                 return
             }
-            page?.note((WS2SilentCopy.line(candidate) ?? candidate) + "？点一下确认")
+            page?.note((WS2SilentCopy.line(candidate) ?? candidate) + WS2SilentCopy.saying("clickToConfirm"))
             page?.setConfirmEnabled(true)
         }
     }
@@ -148,7 +148,7 @@ final class WS2SilentHost {
     /// 方便遮挡已撤：只同步静音页内存态与文案。
     func noteConvenienceCoverCleared() {
         WS2SilentCover.clearConvenience(&cover)
-        page?.note("已撤掉遮挡")
+        page?.note(WS2SilentCopy.saying("coverCleared"))
         page?.refreshCoverClearChip(covering: false)
     }
 
@@ -175,7 +175,7 @@ final class WS2SilentHost {
         page = view
         startPersonalPhrasesIfConfigured()
         startHeadphoneMotionIfConfigured()
-        view.note("看清，再确认。")
+        view.note(WS2SilentCopy.saying("seen"))
         view.refreshCoverClearChip(covering: owner.silentPrivacyCover.isCovering)
         return true
     }
@@ -184,7 +184,7 @@ final class WS2SilentHost {
         mouthCandidate = nil; mouthWindow.reset()
         if commandID == "privacy.clearCover" {
             guard let owner, owner.silentPrivacyCover.isCovering else {
-                page?.note("没有遮挡")
+                page?.note(WS2SilentCopy.saying("noCover"))
                 return
             }
             owner.silentPrivacyCover.requestClear()
@@ -194,12 +194,12 @@ final class WS2SilentHost {
             session.invalidate()
             pending = nil
             page?.setConfirmEnabled(false)
-            page?.note(WS2SilentNav.resultLine(commandID) ?? "已取消")
+            page?.note(WS2SilentNav.resultLine(commandID) ?? WS2SilentCopy.saying("cancelled"))
             return
         }
         if WS2SilentNav.selects(commandID) {
             if pending == nil {
-                page?.note("这次没有做")
+                page?.note(WS2SilentCopy.saying("notTried"))
                 return
             }
             confirm()
@@ -227,12 +227,12 @@ final class WS2SilentHost {
         if let delta = WS2SilentStripNav.delta(commandID) {
             invalidatePending()
             let column = stripCursor.move(delta)
-            page?.note("第 \(column) 列")
+            page?.note(WS2SilentCopy.saying2("column", String(column)))
             return
         }
         if WS2SilentStripNav.showsOverview(commandID) {
             invalidatePending()
-            page?.note("第 \(stripCursor.column) 列")
+            page?.note(WS2SilentCopy.saying2("column", String(stripCursor.column)))
             return
         }
         if let delta = WS2SilentNav.delta(commandID) {
@@ -240,7 +240,7 @@ final class WS2SilentHost {
             pending = nil
             page?.setConfirmEnabled(false)
             page?.turn(delta)
-            page?.note(WS2SilentNav.resultLine(commandID) ?? "这次没有做")
+            page?.note(WS2SilentNav.resultLine(commandID) ?? WS2SilentCopy.saying("notTried"))
             return
         }
         guard let runtime else { return }
@@ -266,11 +266,11 @@ final class WS2SilentHost {
         case .needsSystemConfirmation:
             pending = nil
             page?.setConfirmEnabled(false)
-            page?.note(WS2SilentSecurity.outcome(commandID)?.line ?? "要用原来的确认")
+            page?.note(WS2SilentSecurity.outcome(commandID)?.line ?? WS2SilentCopy.saying("useOriginalConfirm"))
         case .accepted, .rejected:
             pending = nil
             page?.setConfirmEnabled(false)
-            page?.note("这次没有做")
+            page?.note(WS2SilentCopy.saying("notTried"))
         }
     }
 
@@ -301,9 +301,9 @@ final class WS2SilentHost {
     private func accept(_ proposal: WS2SilentSession.Proposal, at gestureStart: WS2.Instant?) {
         guard let runtime, session.currentProposal?.id == proposal.id else {
             pending = nil
-            lastResult = .failed("确认对不上，这一笔作废")
+            lastResult = .failed(WS2SilentCopy.saying("confirmVoid"))
             page?.setConfirmEnabled(false)
-            page?.note("确认对不上，这一笔作废")
+            page?.note(WS2SilentCopy.saying("confirmVoid"))
             return
         }
         let live = proposal.command.effect == .draft ? proposal.targetRevision : liveRevision()
@@ -344,11 +344,11 @@ final class WS2SilentHost {
                 watchAsyncEnd(commandID: proposal.command.id, windowID: id)
             }
         case .rejected:
-            lastResult = .failed("确认对不上，这一笔作废")
-            page?.note("确认对不上，这一笔作废")
+            lastResult = .failed(WS2SilentCopy.saying("confirmVoid"))
+            page?.note(WS2SilentCopy.saying("confirmVoid"))
         case .shown, .awaiting, .needsSystemConfirmation:
-            lastResult = .failed("这次没有做")
-            page?.note("这次没有做")
+            lastResult = .failed(WS2SilentCopy.saying("notTried"))
+            page?.note(WS2SilentCopy.saying("notTried"))
         }
     }
 
@@ -357,7 +357,7 @@ final class WS2SilentHost {
     }
 
     private func apply(_ request: WS2SilentHostRequest) -> SilentExecutionResult {
-        guard let runtime, let owner else { return .failed("这一笔没有做成") }
+        guard let runtime, let owner else { return .failed(WS2SilentCopy.saying("notDone")) }
         let screen = frozenScreen
         let window = frozenWindow()
         var localDraft = draft
@@ -397,20 +397,20 @@ final class WS2SilentHost {
             guard let owner else { return }
             let now = CACurrentMediaTime()
             if now >= deadline {
-                if operations.finish(id: op, line: "结果未确认") {
+                if operations.finish(id: op, line: WS2SilentCopy.saying("outcomeUnknown")) {
                     lastResult = .failed(Self.asyncTimeoutLine(commandID))
-                    page?.note("结果未确认")
+                    page?.note(WS2SilentCopy.saying("outcomeUnknown"))
                 }
                 return
             }
             guard frozenID == windowID, frozenRevision == revision else {
-                _ = operations.finish(id: op, line: "目标已变")
+                _ = operations.finish(id: op, line: WS2SilentCopy.saying("targetChanged"))
                 return
             }
             if let outcome = Self.asyncObserved(
                 commandID: commandID, windowID: windowID, owner: owner, watchStarted: watchStarted
             ) {
-                let line = outcome ? "已完成" : "结果未确认"
+                let line = outcome ? WS2SilentCopy.saying("done") : WS2SilentCopy.saying("outcomeUnknown")
                 if operations.finish(id: op, line: line) {
                     if outcome {
                         lastResult = .completed(WS2EffectReceipt(
@@ -418,7 +418,7 @@ final class WS2SilentHost {
                         let noted = WS2SilentResultLine.noted(
                             commandID, succeeded: true, draft: draft, assistant: assistant)
                         // 看一眼/置顶等故意不写“已叫到前面”；无专属句时用中性「已完成」。
-                        page?.note(noted == WS2SilentResultLine.notDone ? "已完成" : noted)
+                        page?.note(noted == WS2SilentResultLine.notDone ? WS2SilentCopy.saying("done") : noted)
                     } else {
                         lastResult = .failed(Self.asyncTimeoutLine(commandID))
                         page?.note(line)
@@ -441,13 +441,13 @@ final class WS2SilentHost {
 
     private static func asyncTimeoutLine(_ commandID: String) -> String {
         switch commandID {
-        case "window.glance": return "看一眼没有等到画面"
-        case "window.pin": return "置顶没有等到画面"
-        case "window.collapse": return "收起没有确认"
-        case "window.expand": return "展开没有确认"
-        case "window.slideOver", "window.leaveSlideOver": return "侧拉没有确认"
-        case "window.pip", "window.leavePip": return "画中画没有确认"
-        default: return "这一笔没有做成"
+        case "window.glance": return WS2SilentCopy.saying("timeout.glance")
+        case "window.pin": return WS2SilentCopy.saying("timeout.pin")
+        case "window.collapse": return WS2SilentCopy.saying("timeout.rollUp")
+        case "window.expand": return WS2SilentCopy.saying("timeout.unroll")
+        case "window.slideOver", "window.leaveSlideOver": return WS2SilentCopy.saying("timeout.slideOver")
+        case "window.pip", "window.leavePip": return WS2SilentCopy.saying("timeout.pip")
+        default: return WS2SilentCopy.saying("notDone")
         }
     }
 
@@ -539,16 +539,16 @@ final class WS2SilentHost {
 
     private func previewLine(_ proposal: WS2SilentSession.Proposal) -> String {
         switch proposal.command.id {
-        case "window.left": return "左半屏"
-        case "window.right": return "右半屏"
-        case "window.fill": return "铺满屏幕"
-        case "window.collapse": return "收起窗口"
-        case "window.expand": return "展开窗口"
-        case "window.glance": return "看一眼"
-        case "dictation.adopt": return "采用草稿"
-        case "assistant.sendDraft": return "再确认发送"
-        case "focus.start": return "开始番茄钟"
-        default: return "确认这一笔"
+        case "window.left": return WS2SilentCopy.saying("preview.leftHalf")
+        case "window.right": return WS2SilentCopy.saying("preview.rightHalf")
+        case "window.fill": return WS2SilentCopy.saying("preview.fillScreen")
+        case "window.collapse": return WS2SilentCopy.saying("preview.rollUp")
+        case "window.expand": return WS2SilentCopy.saying("preview.unroll")
+        case "window.glance": return WS2SilentCopy.saying("preview.glance")
+        case "dictation.adopt": return WS2SilentCopy.saying("preview.useDraft")
+        case "assistant.sendDraft": return WS2SilentCopy.saying("preview.confirmSend")
+        case "focus.start": return WS2SilentCopy.saying("preview.startFocus")
+        default: return WS2SilentCopy.saying("preview.confirmThis")
         }
     }
 }
@@ -567,9 +567,9 @@ final class WS2SilentPageView: NSView, WS2LeaseContent {
         host?.invalidatePending()
     }
     private let status = NSTextField(labelWithString: "")
-    private let confirm = IslandChip(title: "确认", symbol: "checkmark", style: .solid)
+    private let confirm = IslandChip(title: WS2SilentCopy.saying("confirm"), symbol: "checkmark", style: .solid)
     /// 方便遮挡生效时显示；与「揭开遮挡」验证路径分开。
-    private let clearCover = IslandChip(title: "撤掉遮挡", symbol: "eye.slash", style: .glass)
+    private let clearCover = IslandChip(title: WS2SilentCopy.saying("clearCoverChip"), symbol: "eye.slash", style: .glass)
     private let rowA = NSStackView()
     private let rowB = NSStackView()
     private var pageIndex = 0
@@ -580,7 +580,7 @@ final class WS2SilentPageView: NSView, WS2LeaseContent {
         self.host = host
         super.init(frame: .zero)
         wantsLayer = true
-        let title = NSTextField(labelWithString: "静音操作")
+        let title = NSTextField(labelWithString: WS2SilentCopy.saying("silentTitle"))
         title.font = .systemFont(ofSize: 13, weight: .semibold)
         title.textColor = .white
         status.font = .systemFont(ofSize: 12, weight: .medium)
@@ -650,7 +650,7 @@ final class WS2SilentPageView: NSView, WS2LeaseContent {
             _ = offset
             return chip
         }
-        let more = IslandChip(title: "更多", symbol: "ellipsis", style: .glass)
+        let more = IslandChip(title: WS2SilentCopy.saying("more"), symbol: "ellipsis", style: .glass)
         more.target = self
         more.action = #selector(tapMore)
         chips.append(more)
@@ -688,7 +688,7 @@ final class WS2SilentPageView: NSView, WS2LeaseContent {
     @objc private func tapMore() {
         showPage(pageIndex + 1)
         host?.invalidatePending()
-        note("第 \(pageIndex + 1) 页")
+        note(WS2SilentCopy.saying2("page", String(pageIndex + 1)))
     }
 
     func turn(_ delta: Int) {

@@ -324,6 +324,11 @@ extension AppDelegate {
         titlebarEventTapBypassUntil = nil
         return false
     }
+    /// #39 防线二：修饰键放行的多击发生在 pending 窗口内时，清掉未完成的三击意图——
+    /// 否则「普通双击 → 按住 Option 的第三击（已放行）→ 普通第四击」会把第四击误配成三击。
+    func clearPendingTitlebarTripleClickForModifierSkip() {
+        pendingTitlebarTripleClick = nil
+    }
     func titlebarContains(point: CGPoint, in win: AXUIElement) -> (CGWindowID, pid_t)? {
         guard let id = windowID(of: win), !isDesktopWidgetWindow(id: id) else { return nil }
         if overlayIDs.contains(id) { return nil }

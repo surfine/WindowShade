@@ -19,8 +19,6 @@ import Cocoa
         _ = NSApplication.shared
         NSApp.setActivationPolicy(.prohibited)
         let out = URL(fileURLWithPath: CommandLine.arguments[1], isDirectory: true)
-        probeURL = out.appendingPathComponent("probe.txt")
-        try? FileManager.default.removeItem(at: probeURL!)
         let stringsDir = ProcessInfo.processInfo.environment["WS2_LOCALIZATION_DIR"]
         let enBundle = stringsDir.flatMap { Bundle(url: URL(fileURLWithPath: $0).appendingPathComponent("en.lproj")) }
         do {
@@ -42,6 +40,14 @@ import Cocoa
 
                 let owner = AppDelegate()
                 let page = owner.makeShadeSettingsPage()
+                // 产品路径对齐：真设置窗口 showPage 前会走 allowHorizontalExpansion
+                // （页内所有 NSStackView 横向 hugging 降 low），直接建页绕过了它，布局
+                // 环境就和产品不一致（门0 实测：产品窗稳定落"控件自然宽右对齐"形态，
+                // 未对齐的夹具在 696 宽会落到"控件被拉宽"形态）。这里复刻同一处理；
+                // 复刻后滑杆行仍在两种形态间漂（门0 后复跑实测），再按产品实测形态钉住
+                // labels 的 hugging（见 pinShadeRowForm）。
+                expandStacks(page)
+                pinShadeRowForm(page)
                 let root = Background(frame: NSRect(x: 0, y: 0, width: width, height: 720))
                 root.appearance = NSAppearance(named: appearance)
                 let scroll = NSScrollView(frame: root.bounds)
@@ -73,14 +79,10 @@ import Cocoa
                 window.contentView = root
                 window.setFrame(NSRect(x: -8000, y: -8000, width: width, height: 720), display: false)
                 root.layoutSubtreeIfNeeded()
-                probeShade(page, tag: "pass1", language: language, appearance: appearance, width: width)
                 try await Task.sleep(nanoseconds: 150_000_000)
-                probeShade(page, tag: "postSleep", language: language, appearance: appearance, width: width)
                 root.layoutSubtreeIfNeeded()
-                probeShade(page, tag: "pass2", language: language, appearance: appearance, width: width)
-                for pass in 3...6 {
+                for _ in 3...6 {
                     root.layoutSubtreeIfNeeded()
-                    probeShade(page, tag: "pass\(pass)", language: language, appearance: appearance, width: width)
                 }
                 guard !window.isVisible, !NSApp.isActive, window.alphaValue == 0,
                       NSScreen.screens.allSatisfy({ !$0.frame.intersects(window.frame) }) else {
@@ -92,6 +94,31 @@ import Cocoa
                 try writePNG(root, to: out.appendingPathComponent("\(name).png"))
                 window.contentView = nil
                 window.close()
+            }
+
+            // 门0：产品真实形态帧——真 DuoSettingsWindow 走产品自己的 select(.shade)
+            // （含 allowHorizontalExpansion 把页内 NSStackView hugging 降为 low），
+            // 探针读产品路径下 sliderGroup 落在哪一个布局形态（L=自然宽右对齐 / C=被拉宽）。
+            // controller 要挂 owner，卷帘页才会在 rebuildAllPages 里建出来（同切换测试写法）。
+            WSL10n.language = .zh
+            WSL10n.englishBundle = nil
+            let productOwner = AppDelegate()
+            let productController = productOwner.duoController
+            productController.owner = productOwner
+            productController.isDesignPreview = true
+            productController.persistsSettings = false
+            let productWindow = DuoSettingsWindow(controller: productController)
+            productController.settingsWindow = productWindow
+            productWindow.select(section: .shade)
+            try? await Task.sleep(nanoseconds: 300_000_000)
+            if let productContent = productWindow.window?.contentView {
+                productContent.layoutSubtreeIfNeeded()
+                let dumpProduct = dump(productContent, relativeTo: productContent)
+                frames.append(frame(named: "product-zh-aqua-900-shade", language: "zh", surface: "shade-product",
+                                    dumped: dumpProduct, width: 900,
+                                    windowTitle: productWindow.window?.title ?? "",
+                                    windowSubtitle: productWindow.window?.subtitle ?? ""))
+                try writePNG(productContent, to: out.appendingPathComponent("product-zh-aqua-900-shade.png"))
             }
 
             // 「高级」页 + 窗口外壳：真 DuoSettingsWindow，选到高级，同一个窗口做 zh→en→zh 重建。
@@ -159,54 +186,26 @@ import Cocoa
         name == .darkAqua ? "dark" : "light"
     }
 
-    /// 诊断用（交付前移除）：把布局收敛情况逐趟写入 out/probe.txt，进程被中途杀掉也留档。
-    nonisolated(unsafe) static var probeURL: URL?
-
-    static func appendProbe(_ line: String) {
-        guard let url = probeURL else { return }
-        let data = Data((line + "\n").utf8)
-        if let handle = try? FileHandle(forWritingTo: url) {
-            defer { try? handle.close() }
-            _ = try? handle.seekToEnd()
-            handle.write(data)
-        } else {
-            try? data.write(to: url)
+    /// 复刻 DuoSettingsWindow.allowHorizontalExpansion：页内所有 NSStackView 横向 hugging 降 low。
+    /// 夹具在卷帘页布局上必须和产品同一环境，否则滑杆组会在两种形态间漂（第27批卡点 B）。
+    static func expandStacks(_ view: NSView) {
+        if let stack = view as? NSStackView {
+            stack.setHuggingPriority(.defaultLow, for: .horizontal)
         }
+        view.subviews.forEach(expandStacks)
     }
 
-    @MainActor static func probeShade(_ page: NSView, tag: String, language: String,
-                                      appearance: NSAppearance.Name, width: CGFloat) {
-        func findGroup(_ v: NSView) -> NSStackView? {
-            if let group = v as? NSStackView, group.arrangedSubviews.count == 2,
-               group.arrangedSubviews.first is NSSlider { return group }
-            for sub in v.subviews { if let hit = findGroup(sub) { return hit } }
-            return nil
+    /// 把滑杆行钉到产品实测形态（门0：真窗口 select(.shade) 稳定落"labels 拉伸、
+    /// 控件自然宽右对齐"）。labels 与 sliderGroup 的 hugging 同为 defaultLow 时求解器
+    /// 在不同环境下二选一漂移；把 labels 再压一档（249 < 250），"谁被拉伸"就有了唯一解：
+    /// labels 拉满、sliderGroup 自然宽、读数贴行右缘。只动夹具，不改生产行几何。
+    static func pinShadeRowForm(_ view: NSView) {
+        if let group = view as? NSStackView, group.arrangedSubviews.count == 2,
+           group.arrangedSubviews.first is NSSlider, let row = group.superview as? NSStackView,
+           let labels = row.arrangedSubviews.first {
+            labels.setContentHuggingPriority(NSLayoutConstraint.Priority(249), for: .horizontal)
         }
-        var segs: [String] = []
-        func findSegs(_ v: NSView) {
-            if let seg = v as? NSSegmentedControl {
-                segs.append(String(format: "%.1f", seg.convert(seg.bounds, to: page).minX))
-            }
-            v.subviews.forEach(findSegs)
-        }
-        findSegs(page)
-        var parts = ["tag=\(tag)", "lang=\(language)", "app=\(appearanceName(appearance))", "w=\(Int(width))"]
-        if let group = findGroup(page), let slider = group.arrangedSubviews.first as? NSSlider,
-           let readout = group.arrangedSubviews.last as? NSTextField {
-            let gf = group.convert(group.bounds, to: page)
-            let sf = slider.convert(slider.bounds, to: page)
-            let rf = readout.convert(readout.bounds, to: page)
-            parts.append(String(format: "group.x=%.1f group.w=%.1f slider.x=%.1f readout.x=%.1f",
-                                gf.minX, gf.width, sf.minX, rf.minX))
-            if let row = group.superview {
-                let rof = row.convert(row.bounds, to: page)
-                parts.append(String(format: "row.x=%.1f row.w=%.1f", rof.minX, rof.width))
-            }
-        } else {
-            parts.append("sliderGroup=missing")
-        }
-        parts.append("segs=[\(segs.joined(separator: ","))]")
-        appendProbe(parts.joined(separator: " "))
+        view.subviews.forEach(pinShadeRowForm)
     }
 
     /// 只记录系统状态的读值（都不弹窗）：辅助功能、屏幕录制预检、日历读权限。

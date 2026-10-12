@@ -69,13 +69,55 @@ def main():
                     failures.append(f"{rel}: 键 {key} 的中文源句 {source!r} 和表里 {zh[key]!r} 不同")
 
     silent = open(os.path.join(root, "prototype", "Core", "WS2SilentCopy.swift"), encoding="utf-8").read()
-    for ident, source in SILENT_RE.findall(silent):
+    lines_match = re.search(r'static let lines: \[String: String\] = \[(.*?)\n    \]', silent, re.S)
+    if not lines_match:
+        failures.append("WS2SilentCopy: 找不到 lines 表")
+        lines_body = silent
+    else:
+        lines_body = lines_match.group(1)
+    for ident, source in SILENT_RE.findall(lines_body):
         key = "silent." + ident
         used.add(key)
         if key not in strings:
             failures.append(f"WS2SilentCopy: 缺键 {key}")
         elif json.loads('"%s"' % source) != zh[key]:
             failures.append(f"WS2SilentCopy: {key} 的中文和表里不同")
+
+    # 状态散句表（第28批）：sayings 里的每条都要有 "say.<id>"，中文逐字相同。
+    sayings_match = re.search(r'static let sayings: \[String: String\] = \[(.*?)\n    \]', silent, re.S)
+    if not sayings_match:
+        failures.append("WS2SilentCopy: 找不到 sayings 表")
+    else:
+        for ident, source in SILENT_RE.findall(sayings_match.group(1)):
+            key = "say." + ident
+            used.add(key)
+            if key not in strings:
+                failures.append(f"WS2SilentCopy.sayings: 缺键 {key}")
+            elif json.loads('"%s"' % source) != zh[key]:
+                failures.append(f"WS2SilentCopy.sayings: {key} 的中文和表里不同")
+
+    # 防漏网扫描（§9.4，第28批加）：全 prototype/ 的中文字符串字面量行数不得超过棘轮基线。
+    # 基线 = 第28批完成静音线迁移后的实况（3888），冻结在 tests/localizable-ratchet.json；
+    # 后续批次每迁一个表面就调低，只许降不许升。身份表（WS2SilentCopy/WS2SettingsInfo/生成的
+    # WS2PrivacyData）、QA 探针、权限名等仍占位数，逐批甄别消化。
+    ratchet_path = os.path.join(os.path.dirname(os.path.abspath(__file__)), "localizable-ratchet.json")
+    ratchet = 3888
+    if os.path.isfile(ratchet_path):
+        ratchet = json.load(open(ratchet_path, encoding="utf-8"))["han_literal_lines"]
+    han_lines = 0
+    HAN_SEARCH = HAN_RE.search
+    for path in swift_files(root):
+        for line in open(path, encoding="utf-8"):
+            stripped = line.lstrip()
+            if stripped.startswith("//"):
+                continue
+            code = line.split("//")[0]
+            if '"' in code and HAN_SEARCH(code):
+                han_lines += 1
+    if han_lines > ratchet:
+        failures.append(f"防漏网：中文字面量行数 {han_lines} 超过棘轮基线 {ratchet}（迁移只许降不许升）")
+    else:
+        print(f"防漏网扫描：{han_lines} 行（基线 {ratchet}）")
 
     for key in strings:
         if key not in used:
