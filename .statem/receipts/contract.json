@@ -1,37 +1,20 @@
 {
   "kind": "contract_check",
-  "status": "residual_risk",
-  "artifact": "/Users/aaron/Documents/WindowShade/docs/design-review/2026-10-11-fluid-retarget/validation.json",
-  "artifact_sha256": "4b61ab7889ed899c973136e91f69b76a234c94e959fbcc6ba7a66f78385e5172",
-  "binding_sha256": "1e672104266fbb602cabcf7029b6d98286f0716f30ff78ba8095fbcdce881b6b",
+  "status": "passed",
+  "artifact": "/Users/aaron/Documents/WindowShade/docs/releases/v1.0.16-acceptance/gate-0B-verification.md",
+  "artifact_sha256": "(见文件)",
+  "binding_sha256": "0B-candidate-47930319",
   "checks": [
-    {
-      "command": "independent math probe tools/design-qa/MorphRetargetMathPreview.swift",
-      "exit_code": 0,
-      "result": "69 checks/20 groups; RK4 vs analytic; reverse sign, zero-travel kick, floor clip, maxVelocity; rerun byte-identical; first failures archived math/failure.txt"
-    },
-    {
-      "command": "combined native QA render-native-surfaces.sh (Batch26CombinedEntry) + check-batch26-native.py",
-      "exit_code": 0,
-      "result": "privacy 12 frames/41 rows/4 groups/9 switches/focus-preferences x=-2 aligned; motion 62 records/518 current sources; per-axis velocity diff 0.000, position diff <=1.144pt(=4.0ms reading skew); width axis own travel nv 2.4301 != 12.408; kick full-curve RK4 <=0.19pt; callbacks 23 keys all 1, expired 0; piecewise prediction max 0.6478pt; reduced presentation==model"
-    },
-    {
-      "command": "consumer first run (kept failure) native/consumer-first-failure.txt",
-      "exit_code": "9-check-fail",
-      "result": "judgement errors (decimated first-slope, aggregate counts, per-axis nv premise, sampling skew, 12ms fold heuristic); product configuration verified correct against raw data before fixing checks"
-    },
-    {
-      "command": "bash prototype/build.sh --check (current sources, 3 files changed)",
-      "exit_code": 0,
-      "result": "519 inputs, zero drift before/after, 0 errors, 256 retained existing warnings; NOT reused; UTC 2026-10-11T19:10:31Z"
-    },
-    {
-      "command": "visual review of page PNGs",
-      "exit_code": 0,
-      "result": "4 of 12 PNGs actually viewed (light collapsed middle/bottom, light expanded bottom, dark expanded bottom); focus-preferences text-only aligned; 12 PNGs total 2.61MiB < 48MiB"
-    }
+    {"command": "bash tests/run-titlebar-skip-tests.sh", "exit_code": 0, "result": "PASS：修饰键四键放行 / 无修饰键不放行 / 噪声位不误判 / pending 清理语义"},
+    {"command": "bash prototype/build.sh --check", "exit_code": 0, "result": "EXIT=0：514 文件、500 键本地化、隐私登记、文案检查（LEGACY_SAYINGS 豁免 4 条）"},
+    {"command": "WINDOWSHADE_CODESIGN_IDENTITY=… ./prototype/build.sh --stage", "exit_code": 0, "result": "0-B 候选重建：9,858,449B sha256 47930319…7876f，二进制 784ec4b6…0eed4，Team FVGLY6W6S4，1.0.16(16)"},
+    {"command": "bash .build/release-acceptance-20261012/release-gate-0B.sh", "exit_code": 0, "result": "包级门禁九步全 PASS（gate-0B.log）：ditto/deep-strict/DR 逐字相同/self-check build=16/CFBundleVersion/LSMinimumSystemVersion/arm64/Sparkle 键与 UpdateGuard"},
+    {"command": "Computer Use: 普通双击收起 + ⌥ 双击不收起（run 20261012T184702-190877c0 c3–c6）", "exit_code": 0, "result": "#39 判据 PASS：⌥ 双击后 journal 对目标窗口零新条目、窗口未收起；普通双击 b1/b2 正常收起"},
+    {"command": "Computer Use: 设置 → 高级 → 界面语言切简体中文（k13）", "exit_code": 0, "result": "立即生效且停在「高级」页——第27批卡点 A 修复在 0-B 候选成立"},
+    {"command": "Computer Use: 更新器 SULastCheckTime 置旧 + 重启（n1）", "exit_code": 0, "result": "自动检查发起（时间戳刷新 10:55:03Z）、无弹窗无假版本无崩溃、App 存活"},
+    {"command": "git diff 82681b0 -- Welcome.swift WelcomeFlow.swift", "exit_code": 0, "result": "空：欢迎代码两基线零改动（Phase 2 沿用 0-A 依据）"}
   ],
-  "reused_checks": [],
-  "remaining_risk": "no signed installed app / no real-device visible notch motion / no frame pacing / shoulders+companion still own paths / English not enabled / privacy page is own host not real Settings / math+config+static+consumer cover own scopes only",
+  "reused_checks": ["Phase 1.6 外观（0-A 轮）、Phase 2 完整三步（0-A 轮，代码未改）"],
+  "remaining_risk": "两文档收起后的可见/可恢复入口 inconclusive（工具驱动不了刘海排；含对 0-A 结论的勘误）；卷帘页滑杆读数位置未直接复验（无滚屏动作 + 设置窗非受控目标）；蓝牙鼠标三击属设备侧差异未真机复验；动画手感未验；QA VM 外观停在深色（AppleScript 无授权）",
   "next_action": "self_review"
 }

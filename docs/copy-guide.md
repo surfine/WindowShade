@@ -132,6 +132,22 @@
 
 英文行长按渲染实测定预算（`WS2SettingsInfo.englishLineBudget`），超出词边界截断并给 ⓘ；不按中文字宽拍脑袋。**大小写照 Apple 惯例（2026-10-12 定案）**：菜单命令用 Title Case（`Reset Defaults`），设置行、说明、提示、按钮以外的正文用 sentence case（`Reset defaults`）。未迁移的表面继续中文回退，等它那一批对齐这张表；新批只在表里加行，不改已定词。官网（`site/scripts/content.mjs`）与 README 双份随批滚动同步同一张表。
 
+第二批（2026-10-12，静音流程散句）补充对照。静音页是刘海里的一块小表面：命令芯片沿用上表的动词，状态与结果句用短句，不写行话、不写进度黑话。刘海上每句不超过 8 个字的口径中英都守。
+
+| 概念 | English | 不要用 |
+| --- | --- | --- |
+| 这一笔没有做成 / 这次没有做 | **Didn't happen / Nothing done** | failed、error、operation aborted |
+| 还在等 / 结果未确认 | **Waiting / Result unconfirmed** | pending、ack timeout |
+| 已收起 / 已展开（结果句） | **Rolled up / Unrolled** | collapsed、expanded |
+| 已收进刘海 / 已放回 | **Tucked into the notch / Put back** | hidden、restored to notch |
+| 看清，再确认。 | **Look, then confirm.** | verify your identity、confirm the action |
+| 确认对不上，这一笔作废 | **Confirmation didn't match; cancelled** | mismatch error、stale proposal |
+| 还在这台 Mac（草稿没发） | **Still on this Mac** | draft is local、not uploaded |
+| 已遮住 / 尚未遮住 | **Covered / Not covered yet** | privacy on、mask applied |
+| 不解锁 / 不代填（能力边界句） | **Won't unlock / Won't fill passwords** | cannot unlock、filling disabled |
+| 第 N 列 / 第 N 页 | **Column N / Page N** | strip position N、page N of M |
+| 按住 Option 双击不收起（#39 修饰键出口） | **hold Option to skip** | bypass、disable、temporary off |
+
 
 ## 改前改后（真实例子）
 

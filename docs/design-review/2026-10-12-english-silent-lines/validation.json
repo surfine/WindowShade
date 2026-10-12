@@ -1,0 +1,43 @@
+{
+  "status": "scoped_pass_whole_goal_active",
+  "note": "第28批门5收尾：静音线7文件137条中文字面量全部出表、棘轮3406冻结、轻量档验收（2117静音纯测试+52本地化+集成r01/r03+4帧夹具+PNG实看+build --check+site build/check 未部署）；英语整体目标仍 active（§9 表面未清完前不写'英语已支持'）",
+  "formula": "binding_sha256 = sha256(canonical_json({source_sha256, evidence_sha256}))",
+  "source_sha256": {
+    "prototype/Core/WS2SilentCopy.swift": "81ca67ae90cdb95e9b400c3b5d08adaa40361511287eb354085ad09f4d29066d",
+    "prototype/Core/WS2SilentGates.swift": "1ac0085f131e885b9c798265df4e95457278a10a0d0e1dc0412aa5e33bcdf39c",
+    "prototype/App/WS2SilentHost.swift": "98ebec03cd0dc819789de118d2d7aa153a5cff2027e6287848adc85efd8225d1",
+    "prototype/App/WS2SilentApply.swift": "7e4c0288005c62263d54b1da51464e6bfa6333bfdfad6c1bfcbf53360e4eec62",
+    "prototype/Core/WS2SilentExecution.swift": "f11c1b6b42ec7c83b3c210b03c0b56371200f16e22afe8cffeda4d62ce27bd8e",
+    "prototype/Core/WS2SilentSecurity.swift": "b0e6ad467dd6e8b55d9c627e45b7a01559ce599fdc397baf304b5168db43b7d6",
+    "prototype/Core/WS2SilentDraft.swift": "9776bcfebc03ef7a053411a01ef6caebf0dd9a51c1b28e618b25371f52b74576",
+    "prototype/Core/WS2SilentProductPort.swift": "59f77d8d71e8528daa3862964c8dc1de7a71acecaa34189f743946cb273b2cb4",
+    "prototype/Resources/Localizable.xcstrings": "357339a2c605b655dd379c9b2da19ec5af74b945afeb17fe80b4e8382007f1c7",
+    "tests/SilentPrepTests.swift": "5520b16c15558b967d18f0e63b4b0e52803ce49b71e2343419534f1885c0c379",
+    "tests/LocalizationTests.swift": "dcac9a2054568fb52942fe22cbc322fafc89a9113a078ffaeaeffe989c3ff9a9",
+    "tests/check-localizable.py": "c95a349d13017a61f76187c1f0329ed34c7fc9ff94f52a6a39a024d40b9dcae1",
+    "tests/copy-lint.py": "8880d625a58ce11629a8b41ffd2232190c2d70a94ebf41fe3ebcd2ed62c34bdb",
+    "tests/localizable-ratchet.json": "613ac870475741f000d204cd9d301412802b7da24e3f3fcdffbee4b51e8fecda",
+    "tools/design-qa/SilentPageLanguagePreview.swift": "1e01ff3019f893fd0a3dac908f0a2b98dff8eb2c310a986bad5dc6573fbd0d10",
+    "tools/design-qa/run-silent-page-language-preview.sh": "91c06bca54dee767547b7efc6e166bc31e80675186e38900aa81f0ee64904a5a",
+    "docs/copy-guide.md": "d04d20ff86784308728d48fd693e585830ea216e0258f86048ad5dbf620dc43a"
+  },
+  "evidence_sha256": {
+    "README.md": "5f453bf4a01eb9868593ab225c051c8cb730abc6d6d29b0380970ca92b998dcd",
+    "native/build-check.log": "09822c35186f37f1abfe6c2bc6b11f21c28371117a948487c96a0c5db3aeba40",
+    "native/fixture-run.log": "27cd71dc7a79831aecc4a8cda719962f1c8069874c0f8d576309267410a3ffc7",
+    "native/integration-r01.log": "b868dcbd69034e85d76da7ea0fe7423aa961aa351904880cf37aa1270886682f",
+    "native/integration-r03.log": "9bcf714bb7f69648f5d4142c6a836897348b5d16ec8f810b908a2a58ec98c41b",
+    "native/silent-prep-tests.log": "40a8f5f1982774677af0f65a6afa63c58aa13553e60d2ffc8b83d21176dc40fe",
+    "native/localization-tests.log": "64e82c1165f7e608adbf7c20c5c9e718f156908607d8915fce8fb6977e71c6a2",
+    "native/site-build.log": "69dc3fdf7a71d35191fe4cb67eeb93740e25994720f370650b6d703345d60c22",
+    "native/site-check.log": "e053595715a05cfa01e6e679d9395f6c11321688f94d72e2a4af858f63f49f26",
+    "native/frames.json": "a0ca48c2972cd4661bffe74321436e24be08e87246597c01cbcc3a67bf5199ca",
+    "native/renderer.json": "45ce85f68d70e4d07db775b27e565224cc87604268775992dcd4ebe0e8ae3e23",
+    "native/sources.json": "a63a4e0821a19924af64af40b4fa71a3a605c3f9fc620ac65d2046f5858d103b",
+    "native/zh-silent-initial.png": "3b077e77cd90a416b920310460cd7ee337eebcd5df36cd12ada938df163388a2",
+    "native/en-silent-initial.png": "fa58c4417f50ba6ecff5072855e073f92d76e29c4a8becb20770e540192858c5",
+    "native/zh-silent-notdone.png": "46089d2c1bd0ec6b7b1498fea79a482728ed3b394fec1f4bba3f18d116620f8d",
+    "native/en-silent-notdone.png": "7431d45f3c73d02f6cfdb5c9d0ca3e818c704977222d936dec069ccfa1066894"
+  },
+  "binding_sha256": "5abf775956f990acfd46064c0e744197df223e87774bb2890625f0287280ad92"
+}

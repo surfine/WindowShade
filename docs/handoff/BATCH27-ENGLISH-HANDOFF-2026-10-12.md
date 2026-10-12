@@ -113,7 +113,7 @@ QA：`tools/design-qa/SettingsShadeLanguagePreview.swift`（新）、`tools/desi
 1. **用户可见字符串零遗漏**：菜单/状态栏、设置全部页、欢迎流程、刘海与实时活动、窗口浏览、卷轴与覆盖层、错误/空状态/权限说明、更新提示、辅助功能标签（ax label/tooltip 也算）——全部经 `WSL10n` 出当前语言；en 译文完整、无汉字（语言名等常量除外）。
 2. **切换立即生效覆盖全部驻留界面**：不止设置窗口——菜单、刘海提示、已打开的欢迎/面板等各自定义显式重建或声明"下一句起新语言"并在证据里写清（已显示的刘海句子不回溯改写是本批已定口径）。
 3. **语义身份不动**：`symbol(for:)`/`short` 表/静音 id 等仍以中文源句或 key 为身份路由；迁移不得用英文显示串反查行为（本批 `SettingsText` 机制可复用）。
-4. **打包资源路径实测 + 全目录检查**：`xcstringstool` 编译产物逐键实测（本批 `check-english-bundle-path.swift` 模式）；`checks` 扩到能防"手尾"——建议给 `tests/check-localizable.py` 加一条：扫 `prototype/` 用户可见代码里的中文字符串字面量，命中不在白名单（语义身份表/QA 探针/内部键/系统权限名）就失败。没有这条"防漏网"检查，"不留手尾"只能靠人肉。
+4. **打包资源路径实测 + 全目录检查**：`xcstringstool` 编译产物逐键实测（本批 `check-english-bundle-path.swift` 模式）；`checks` 扩到能防"手尾"——建议给 `tests/check-localizable.py` 加一条：扫 `prototype/` 用户可见代码里的中文字符串字面量，命中不在白名单（语义身份表/QA 探针/内部键/系统权限名）就失败。没有这条"防漏网"检查，"不留手尾"只能靠人肉。**第28批已落地（2026-10-12）**：实现为全仓扫描 + `tests/localizable-ratchet.json` 基线棘轮（3406，只许降不许升），不是逐条白名单硬失败；身份表/QA 探针/权限名占位在基线数内逐批消化（见 §12）。
 5. **每批验收用轻量档（用户 2026-10-12 定案）**：该表面关键逻辑的纯测试 + 全目录检查 + §9.4 防漏网扫描 + 少量实际帧抽查（2–4 帧）+ 图片实看 + 证据记录；未覆盖项如实写 not_run。仅当布局风险轻量档覆盖不了才升档，且证据里写明升档理由（不要主动回到"每表面全套夹具"）。
 
 **语言扩展口径（定案 6）**：本次不做繁体（zh-Hant），但解析、语言行、目录按可扩展写。将来加繁体时要做的事：`InterfaceLanguagePreference.resolve` 里把"zh 开头即中文"拆成按文字系统的 zh-Hans/zh-Hant 判定（现有一个注脚说明这个扩展点）、语言行加一项、目录补译文。不要为它预制界面或提前改数据模型。
@@ -124,7 +124,7 @@ QA：`tools/design-qa/SettingsShadeLanguagePreview.swift`（新）、`tools/desi
 |---|---|
 | 隐私 | `App/WS2PrivacyData.swift`(599)、`App/WS2PrivacyPane.swift`(33)、`App/WS2PrivacyModel.swift`(31)、`App/AuthorizationCopy.swift`(23，权限名沿 macOS 官方英文)、`App/WS2PrivacyExport.swift` |
 | 设置其它页 | `App/Preferences.swift`(176，卷帘页已迁移；剩快捷键/隐私/鼠标触控板/遥控/窗口浏览设置等页)、`App/WS2InputSettingsPane.swift`(66)、`Effects/DuoSettingsWindow.swift`(33，效果页)、`Effects/SettingsDesignPreview.swift`(19)、`App/PrivateAppListSettings.swift`(12) |
-| 静音操作 | **已本地化**：`Core/WS2SilentCopy.swift`(143 行) 是 zh 表、`WS2SilentCopy.line` 已走 `WSL10n.text("silent.<id>")`，目录里 143 个 `silent.*` 键齐全——**不是剩余工作**。剩余的是流程散句与状态词：`Core/WS2SilentGates.swift`(≈100 短状态词"已收起/已到左半/结果未确认…")、`App/WS2SilentHost.swift`(≈40，对话包装如"？点头或点一下确认"、"第 N 列"、页标题)、`App/WS2SilentApply.swift`、`Core/WS2SilentExecution.swift`、`Core/WS2SilentSecurity.swift`(12)、`App/SilentCoverProbe.swift`(7) |
+| 静音操作 | **已本地化**：`Core/WS2SilentCopy.swift`(143 行) 是 zh 表、`WS2SilentCopy.line` 已走 `WSL10n.text("silent.<id>")`，目录里 143 个 `silent.*` 键齐全——**不是剩余工作**。流程散句与状态词（列于下）**已由第28批全部迁出**（见 §12）：`Core/WS2SilentGates.swift`(≈100 短状态词"已收起/已到左半/结果未确认…")、`App/WS2SilentHost.swift`(≈40，对话包装如"？点头或点一下确认"、"第 N 列"、页标题)、`App/WS2SilentApply.swift`、`Core/WS2SilentExecution.swift`、`Core/WS2SilentSecurity.swift`(12) 等；`App/SilentCoverProbe.swift`(7) 属 QA 探针，按类别②豁免。 |
 | 菜单/状态栏/更新提示 | `App/StandardMenu.swift`(51)、`App/UpdaterCopy.swift`(58)、`App/MenuBarController.swift`(41)、`App/GlobalShortcuts.swift`(41)、`WindowShade.swift`(24) |
 | 刘海与实时活动 | `App/Notch.swift`(60)、`Core/NotchRow.swift`(35)、`Core/NotchActivities.swift`(22)、`App/NotchActivityController.swift`(18)、`App/DeviceBatteryCopy.swift`(19)、`App/CountdownTimerCard.swift`(15)、`Core/CalendarPresentation.swift`(15)、`App/NowPlayingCard.swift`(13)、`App/FocusTimerCard.swift`(12)、`App/FileShelfView.swift`(9)、`Core/AwaySummary.swift`(7)、`Core/NotchSentence.swift`(6)、`Core/UsageReading.swift`(6) 等 |
 | 窗口浏览 | `WindowBrowser/WindowBrowserController.swift`(85)、`WindowBrowserActionPresentation.swift`(45)、`WindowPlacement.swift`(21)、`WindowBrowserActions.swift`(19)、`WindowBrowserContentView.swift`(15)、`WindowBrowserSettings.swift`(9)、`WindowBrowserCardView.swift`(6)、`WindowBrowserActionBar.swift`(5) 等 |
@@ -134,7 +134,7 @@ QA：`tools/design-qa/SettingsShadeLanguagePreview.swift`（新）、`tools/desi
 | 手势/卷轴/覆盖层 | `Overlay/GestureHUD.swift`(39)、`App/TrackpadGestures.swift`(22)、`Core/GestureCoach.swift`(24)、`Overlay/ShadeStrip.swift`(8)、`App/ScrollStripOverview.swift`(6)、`Overlay/GlancePanel.swift`(4) 等 |
 | 窗口动作与其它 | `App/Carry.swift`(17)、`App/HabitContext.swift`、`App/PictureInPicture(+Views)`(13)、`App/MagicTilingRun.swift`(7)、`App/SlideOver.swift`(9)、`App/SplitView.swift`、`App/PresenceLockRiskSheet.swift`(7)、`Recovery/Rescue.swift`(4)、`Core/RescueAnnounce.swift`(2)、`Support/Diagnostics.swift`(6) 等 |
 
-**建议推进顺序**（每批独立验收，先拣用户最常看的）：① 静音流程散句（Gates/Host/Apply/Execution 的状态词与对话包装，先给这批短句定英文口径，建议扩充 copy-guide 英文表）+ 隐私（量最大）；② 设置其余页 + 窗口浏览；③ 菜单/状态栏 + 更新提示 + 欢迎；④ 刘海实时活动一串（卡片与句子）；⑤ 指挥/会话/遥控；⑥ 启动台/手势/覆盖层/窗口动作与错误态；⑦ 收尾：全仓防漏网检查（§9.4 的 checker 扩展）+ 检查"跟随系统"下其它界面的重建路径覆盖。顺序可调，但每批必须过 §9.1-9.5 的对应项。
+**建议推进顺序**（每批独立验收，先拣用户最常看的）：① 静音流程散句（Gates/Host/Apply/Execution 的状态词与对话包装，先给这批短句定英文口径，扩充 copy-guide 英文表——**第28批已完成，见 §12**）+ 隐私（量最大，下一批）；② 设置其余页 + 窗口浏览；③ 菜单/状态栏 + 更新提示 + 欢迎；④ 刘海实时活动一串（卡片与句子）；⑤ 指挥/会话/遥控；⑥ 启动台/手势/覆盖层/窗口动作与错误态；⑦ 收尾：全仓防漏网检查（§9.4 的 checker 扩展）+ 检查"跟随系统"下其它界面的重建路径覆盖。顺序可调，但每批必须过 §9.1-9.5 的对应项。
 
 **本批已铺好的可复用件**：`InterfaceLanguagePreference`（解析/存取/通知）、`WSL10n.setting`+`SettingsText`（语义身份路由）、`shortEn`+`englishLineBudget`（英文行预算）、夹具/消费者/切换测试三件套的写法与脚本、`check-english-bundle-path.swift`、`copy-guide.md` 英文用词表（新批只在表里加行）。
 
@@ -152,3 +152,75 @@ QA：`tools/design-qa/SettingsShadeLanguagePreview.swift`（新）、`tools/desi
 5. **第 27 批的两个卡点仍未修**（§3 切换落效果页、§4 滑杆两形态）——它们不阻塞 1.0.16（基线不含 23–27 批），1.0.17 再回头修。
 
 **新 session 的优先顺序**：① 用户真机 Phase 1–3 结果 → 发布收尾；② 回到 §7 门 0/门 1 修第 27 批卡点；③ §9 英语下一表面（轻量档）。
+
+---
+
+## 11. 卡点收尾补记（2026-10-12 晚，后继 session；§7 门 0–门 5 已全部走完）
+
+§3、§4 两个卡点已在 [docs/design-review/2026-10-12-english-settings-shade/README.md](../design-review/2026-10-12-english-settings-shade/README.md) 关闭并留证，本节只记结论与口径变化：
+
+1. **卡点 A（切换落「效果」页）已修生产**：根因确认为 §3 的最强嫌疑——`refreshLocalizedCopy` 的 `reloadData` 在 `allowsEmptySelection=false` 的 sourceList 上同步触发 `tableViewSelectionDidChange` 把选中打回第 0 行（诊断日志 `.statem/history-design-twentyseventh-round/qa/gate0/switch-tests-debug-run1.log` 实测）。修复：重建期间 `isRebuildingLocalCopy` 哨兵挂起选择处理（`DuoSettingsWindow.swift`），`select(section:)` 原有的选中行拨回复位。诊断已删，切换测试 **33 ok / 0 FAIL**。
+2. **卡点 B（滑杆两形态）不改生产**：门 0 用产品真窗口帧（夹具新增 `product-zh-aqua-900-shade`）实测产品落**形态 L**（控件自然宽 194、读数贴右缘，观感正常）——定案 4 的"修生产先看图"未触发。夹具复刻 `allowHorizontalExpansion` 后仍漂，按 §4 方案 1 在夹具里把 labels hugging 压一档（249）钉住；两跑四帧稳定。**消费者新增门 0 判据**（夹具滑杆行 span 必须等于产品实测 612/476）。生产行几何未动。
+3. **顺手修的漏网**（本批范围外发现、属 §9.4 防漏网精神）：设置外壳两处硬编码中文（侧栏 ax 标签「设置侧边栏」、工具栏标签「切换侧边栏」）迁目录（目录 371→**373 键**）；侧栏 ax 标签原来建表时设一次、语言切换不更新，已随重建刷新。隐私登记表补登 `InterfaceLanguage.swift` 的 4 处 `UserDefaults` 字样（门 4 首跑红过）。
+4. **基线重建方式变更**：`run-batch27-before-tree.sh` 不再用 15 文件快照拼接（缺其余生产源、必编不过），改为 `git archive 2003e53^` 完整检出（该父提交与快照 15 文件逐字节一致，已核对）；脚本还修了 cp 路径与 modulemap/header 两个 bug。重跑的 before 基线与 after 同夹具版本。
+5. **判据放宽记录**（护栏要求逐条）：两条 wrappingLabel（「需要已绑定身份的蓝牙读回来源」「名单里还没有 App」）的几何对比跳过——基线同一 run 内自身漂移，见 [gate2-geometry-drift.md](../design-review/2026-10-12-english-settings-shade/gate2-geometry-drift.md)。连同 §4 滑杆行，全批共三条布局歧义，均改动前已存在。
+6. **门 3 图像口径**：高级页与产品窗 PNG 在离屏渲染下黑屏（sourceList/材质视图不渲染，run2 起即如此），图像证据记 inconclusive，验收以帧数据为准（`windowSubtitle` 高级→Advanced→高级、产品窗 subtitle「卷帘」）。zh/en 卷帘页 PNG 已实看无事故。
+7. **门 4/门 5**：`build.sh --check` PASS（514 文件、373 键、隐私登记 PASS、文案检查 PASS）；证据目录与 `validation.json`（binding `b332ab69a03e41c6`）、`CONTINUE.md` 第二十七检查点、StateM run `20261012-english-settings-shade` 推进到 handoff、README 双版「开发中」各加英文界面条目；site 无词可同步（本批英文词与官网一致），build+check PASS 未部署。
+8. **改动均未提交**（按"未得指示时不提交不推送"）。**下一 session 优先顺序不变**：① 等用户真机 Phase 1–3 → 1.0.16 发布收尾；② §9 英语下一表面（按建议顺序 ①静音散句+隐私，轻量档）。本批的修复不属于 1.0.16 基线（82681b0），不阻塞发布。
+
+---
+
+## 12. 第28批补记（2026-10-12 深夜，本 session；按用户指示暂停收尾）
+
+第28批（§9 顺序 ① 的静音散句，轻量档）**实现与验收主体已完成**；门 5 的收尾件未走完，按用户指示停在这里。新 session 从本节接：
+
+1. **迁移完成**：静音线 7 个文件（`WS2SilentGates`/`Host`/`Apply`/`Execution`/`Security`/`Draft`/`ProductPort`）去重中文字面量 137 条全部出表：125 条直迁 + 9 条活动/用量读回复用既有 `lines` 表 id（`activity.*`/`usage.*`，无新键）+ 3 处插值并为 2 条 `saying2` 模板（第 %@ 列/页）；`WS2SilentCopy.sayings` 新增 **127 条**（`say.*`），目录 373→**500 键**。7 文件代码行零中文残留（身份表除外）；旧 `silent.*` 6 条英文按 copy-guide 对齐（只改 en，中文身份不动）；`docs/copy-guide.md` 追加第二批英文表 10 行。
+2. **测试与检查全过**：静音纯测试 2117 ok；本地化 52 ok（500 键逐键）；集成 `--case r01`（12 ok）/`--case r03`（5 ok）PASS；`check-localizable.py` 规则 3 拆 lines/sayings 两块 + **§9.4 防漏网棘轮**落地（`tests/localizable-ratchet.json` 基线 **3406**，只许降不许升；下一批迁完重跑并把基线调低，上涨会被拦）。
+3. **门 3/门 4 完成**：`SilentPageLanguagePreview.swift` 4 帧夹具（zh/en × 初始/结果句）PASS、4 张 PNG 实看（Launchpad 贴边=既有密度，记观察项）；`bash prototype/build.sh --check` **EXIT=0**（514 文件、500 键、全优化编译、隐私登记 PASS、文案检查 PASS）。首跑曾红：4 条迁入原文超 copy-lint 主句 8 字形簇上限，经 git diff 对照 `2003e53^` 确认为改动前逐字节原文（本批中文不许动），`tests/copy-lint.py` 加 `LEGACY_SAYINGS` 逐条豁免（日志有逐条记录）。
+4. **证据**：`docs/design-review/2026-10-12-english-silent-lines/`（README + native/：4 PNG、frames/renderer/sources、夹具日志、集成 r01/r03 日志、build-check.log，均已归档）。
+5. **未走完（下一 session 先收尾，再开新表面）**：① `validation.json`（binding 照第26批公式）；② `CONTINUE.md` 第二十八检查点；③ `.statem` 本批 contract/self-review + StateM run（`active_run` 仍是第27批 `20261012-english-settings-shade`）；④ site/README 同步检查（`cd site && npm run build && npm run check`，不部署；预计无词可同步——静音句只出现在刘海/面板，官网未涉及）。**【已收尾，见 §13】**
+6. **改动均未提交**（第27批门 5 起 + 第28批全部；未得指示不提交不推送）。本批不在 1.0.16 基线（82681b0）内，不阻塞发布。
+
+**新 session 优先顺序（更新版）**：① 等用户真机 Phase 1–3 → 1.0.16 发布收尾（§10 第 4 条 runbook）；② 收尾第28批门 5 剩余件（上条第 5 项）；③ §9 下一表面：**隐私**（`WS2PrivacyData` 是生成文件——迁移点在生成器 `tools/privacy/make-privacy-page-source.py` 与 `tools/privacy/registry.json`，先读生成链再动，生成器改完重生成并核对中文逐字节）或设置其余页，仍轻量档。
+
+---
+
+## 13. 第28批门5收尾完成（2026-10-12 深夜，后继 session；§12 第 5 条已清）
+
+§12 第 5 条四件收尾全部完成，改动仍**未提交**（未得指示不提交不推送）：
+
+1. **复跑留档**：`silent-prep-tests.log`（2117 ok / 0 FAIL）、`localization-tests.log`（52 ok）、`site-build.log`/`site-check.log`（42 项 exit 0，本地构建检查、**未部署**）——归档到 `docs/design-review/2026-10-12-english-silent-lines/native/`；此前纯测试只有口头记录，按"/tmp 不过夜"护栏补的。批内已归档的 build-check/fixture/integration 日志未重跑，按原档引用。
+2. **`validation.json`**（同目录）：binding `5abf775956f990ac`，17 源 + 16 证据；公式 `sha256(canonical_json({source_sha256, evidence_sha256}))` 先复算第27批 `b332ab69a03e41c6` 对上后才套用；evidence 表**不含 validation.json 自身**（第27批表内自引用哈希是绑定时的草稿快照，属既有惯例，本批不沿用）。证据 README 加了「门 5 收尾附记」节。
+3. **`CONTINUE.md` 第二十八检查点**已追加；`.statem` 已换成**本批**契约 `task.txt`（第27批契约归档至 `history-design-twentyseventh-round/task.txt`）+ 本批 `contract.json`/`self-review.json`（receipt 校验通过，不沿用第27批身份），新建 StateM run **`20261012-english-silent-lines`** 推进 solve → contract_check → self_review → **handoff**；`.statem/progress.md` 追加本批收尾记录；第28批契约与回执快照留档 `.statem/history-design-twentyeighth-round/`。
+4. **site/README 同步检查**：确认无词可同步（静音句只出现在刘海/面板；`site/scripts/content.mjs` 与 README 双版「开发中」小节在本批无新增词条），build+check PASS 未部署。
+
+**新 session 优先顺序（再更新）**：① 等用户真机 Phase 1–3 → 1.0.16 发布收尾（§10 第 4 条 runbook）；② §9 下一表面：**隐私**——`WS2PrivacyData.swift` 是生成文件，迁移点在生成器 `tools/privacy/make-privacy-page-source.py` 与 `tools/privacy/registry.json`，**先读生成链再动**，生成器改完重生成并核对中文逐字节；轻量档。第28批全部改动（含本批门5收尾）不在 1.0.16 基线（82681b0）内，不阻塞发布。
+
+---
+
+## 14. 1.0.16 发布关 Phase 1–3 Computer Use 代跑完成（2026-10-12 晚，本 session）
+
+用户明确选择"Computer Use 全代跑"（解除"真机观察由用户完成"边界，仅限本次发布关）。隔离 VM（/Volumes/TiPlus 7100/WindowShade-QA，wsqa-manual）内按 Computer Use 验收手册执行：
+
+1. **环境恢复**：来宾 SSH 公钥补装（lume/lume 默认凭据经 `lume ssh` 引导）、CuaDriver 以 GUI 会话重启（权限沿已配置状态）、doctor PASS。候选包（2c3b39ca…，源 82681b0）部署来宾，二进制 2d9a6e8b…/Team FVGLY6W6S4/1.0.16(16) 与 Phase 0 门禁一致。
+2. **结果**（证据表 [docs/releases/v1.0.16-acceptance/phase123-results.md](../releases/v1.0.16-acceptance/phase123-results.md)，八场景 review/verify/cleanup/report 齐，report 副本同目录）：
+   - Phase 1：单文档收/展、**同 App 两文档（历史雷未复现）**、菜单路径、深色模式全 **pass**（截图+AX+journal 三源互证）；「收起后的样子」两档对比与动画时序 **inconclusive**。
+   - Phase 2：欢迎三步 **pass**；「欢迎使用随时重开」**inconclusive**（基线实现里入口在设置卷帘页补充面板，不在状态菜单——runbook 口径与 82681b0 代码不一致，代码注释 MenuBarController.swift:193「欢迎使用只在设置里」）；减少动态效果 **not_run**。
+   - Phase 3：更新器自动检查（SULastCheckTime 置旧强制触发）**pass**——无崩溃、无假版本、无错误；⌥ 菜单「检查更新…」交互 **inconclusive**（CGEvent 修饰键时序够不到，真机 5 秒可验）。
+   - **判定：无 fail，核心路径全过**；inconclusive/not_run 四条带入发布说明与用户真机复验清单（动画手感建议用户亲验）。
+3. **过程留痕**：三次 run 因工具时效护栏 HALTED（截图 50 秒时效、press_key 参数缺失），全部按手册保留 CLOSED 记录未删标记；权限弹窗（shd-keygen，由我误触 osascript 引起）当场 Deny 留证。QA VM 外观停在深色（AppleScript 无授权），下次使用前可 UI 复原；VM 保留运行，测试文档与证据按手册保留。
+4. **发布日流程解锁**：门条件（Phase 1 全 PASS + Phase 2 全过 + Phase 3 简验无双异常）在代跑口径下满足；是否按此收尾发布由用户裁定——若要求真人复核 inconclusive 项后再发布，清单见 phase123-results.md 判定节。
+
+---
+
+## 15. #39/#40 收进 1.0.16（2026-10-12 晚，本 session；发布基线切 0-B）
+
+用户把两个 GitHub issue 交给本 session，并选定：**#40 走方案 A（英语进 1.0.16，基线切 main）**、**#39 加码多道防线**。
+
+1. **#39 实现**（按住 ⌥ 双击不收起）：`EventTapCallback` tap 线程读修饰键即放行（不吞/不折叠/不建三击 pending）+ `EventTap.clearPendingTitlebarTripleClickForModifierSkip()` 清意图（防"普通双击→⌥第三击→普通第四击"误配）+ 三种系统双击动作的副标题各加"按住 Option 双击不收起"（代码源句与 xcstrings 同步）+ copy-guide 加行 + 新纯测试 `TitlebarModifierSkipTests`（pass）。既有防线（控件角色拒绝、标题栏带校验、0.65s/96pt 三击意图窗）保持不动。
+2. **发布基线 0-B**：工作区 = main(5624b68) + 第28批 + #39。`build.sh --stage` 重建候选 → `WindowShade-v1.0.16.zip` **9,858,449 字节 sha256 `47930319…7876f`**、二进制 `784ec4b6…0eed4`、Team FVGLY6W6S4、1.0.16(16)；**包级门禁九步全 PASS**（`gate-0B.log`；0-A 包与 `gate.log` 存 `phase0-archive/`）。
+3. **Phase 1–3 复验**（Computer Use 代跑，[gate-0B-verification.md](../releases/v1.0.16-acceptance/gate-0B-verification.md)）：单文档收/展 pass、菜单路径 pass、**#39 ⌥ 判据 pass**；0-B 加验：**设置语言切换立即生效且停在当前页 pass**（第27批卡点 A 在候选上成立）、#39 文案 pass；更新器自动检查 pass；欢迎沿用 0-A（`Welcome.swift` 两基线零改动，已 git diff 核对）+ 0-B 第 1 页实见。
+   **勘误（重要）**：0-A 轮"两文档历史雷未复现"的判读**不成立**（那张有改名浮层、证据不足）；0-B 直测折叠后台文档→窗口离屏、原位置无条，与缺陷描述形态一致，但策略 `hiddenIfSingleWindowElseMinimized` 表明多窗走最小化可能是**有意设计**（最小化窗口归刘海排）；工具驱动不了刘海排，故 **inconclusive**，与"滑杆读数位置"一起进用户真机清单（各约 5 秒）。**勿再把两文档场景写成"已验证通过"。**
+4. **#40/#39 回复草稿**：[issue-replies.md](../releases/v1.0.16-acceptance/issue-replies.md)（英文+中文，未发布——外发动作留给用户）。发布说明 `v1.0.16.md` 中英双份加了「界面语言（#40）」与「收起不那么容易误触了（#39）」两节。
+5. **过程记录（如实）**：本 session 我误用 `git checkout` 撤掉 `Localizable.xcstrings` 的第28批改动（127 条 `say.*` + 6 条 en 对齐），随即用 `.build/localization-tests/strings/` 的编译产物（zh/en 各 500 键）**逐键恢复并核对零差异**（500 键、棘轮 3406、check-localizable/copy-lint 全过），仅 3 条副标题为有意变化；其余第28批文件未被波及（git status 可查）。另：`#39` 首次工具测试因参数形态错误（`modifier` 需数组 + 需 foreground）判为无效并重测；三次 run 因工具护栏 HALTED，均按手册留档未删标记。
+6. **未提交未推送**：本批改动（#39 全部 + 第28批 + 文档）仍在工作区。**发布日打包前必须先提交**（标签=源码=包=证据 一致），提交与否听用户指示。

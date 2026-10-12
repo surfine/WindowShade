@@ -1,0 +1,5 @@
+ok   r03 the current pin generation completes
+ok   r03 an already-previewing window reports already
+ok   r03 the host routes async window actions to one terminal watcher
+ok   r03 fold completion is recorded, not dropped
+ok   r03 a visible window is not completed without a frame readback

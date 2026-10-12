@@ -1,0 +1,20 @@
+{
+  "kind": "contract_check",
+  "status": "passed",
+  "artifact": "/Users/aaron/Documents/WindowShade/docs/releases/v1.0.16-acceptance/gate-0B-verification.md",
+  "artifact_sha256": "(见文件)",
+  "binding_sha256": "0B-candidate-47930319",
+  "checks": [
+    {"command": "bash tests/run-titlebar-skip-tests.sh", "exit_code": 0, "result": "PASS：修饰键四键放行 / 无修饰键不放行 / 噪声位不误判 / pending 清理语义"},
+    {"command": "bash prototype/build.sh --check", "exit_code": 0, "result": "EXIT=0：514 文件、500 键本地化、隐私登记、文案检查（LEGACY_SAYINGS 豁免 4 条）"},
+    {"command": "WINDOWSHADE_CODESIGN_IDENTITY=… ./prototype/build.sh --stage", "exit_code": 0, "result": "0-B 候选重建：9,858,449B sha256 47930319…7876f，二进制 784ec4b6…0eed4，Team FVGLY6W6S4，1.0.16(16)"},
+    {"command": "bash .build/release-acceptance-20261012/release-gate-0B.sh", "exit_code": 0, "result": "包级门禁九步全 PASS（gate-0B.log）：ditto/deep-strict/DR 逐字相同/self-check build=16/CFBundleVersion/LSMinimumSystemVersion/arm64/Sparkle 键与 UpdateGuard"},
+    {"command": "Computer Use: 普通双击收起 + ⌥ 双击不收起（run 20261012T184702-190877c0 c3–c6）", "exit_code": 0, "result": "#39 判据 PASS：⌥ 双击后 journal 对目标窗口零新条目、窗口未收起；普通双击 b1/b2 正常收起"},
+    {"command": "Computer Use: 设置 → 高级 → 界面语言切简体中文（k13）", "exit_code": 0, "result": "立即生效且停在「高级」页——第27批卡点 A 修复在 0-B 候选成立"},
+    {"command": "Computer Use: 更新器 SULastCheckTime 置旧 + 重启（n1）", "exit_code": 0, "result": "自动检查发起（时间戳刷新 10:55:03Z）、无弹窗无假版本无崩溃、App 存活"},
+    {"command": "git diff 82681b0 -- Welcome.swift WelcomeFlow.swift", "exit_code": 0, "result": "空：欢迎代码两基线零改动（Phase 2 沿用 0-A 依据）"}
+  ],
+  "reused_checks": ["Phase 1.6 外观（0-A 轮）、Phase 2 完整三步（0-A 轮，代码未改）"],
+  "remaining_risk": "两文档收起后的可见/可恢复入口 inconclusive（工具驱动不了刘海排；含对 0-A 结论的勘误）；卷帘页滑杆读数位置未直接复验（无滚屏动作 + 设置窗非受控目标）；蓝牙鼠标三击属设备侧差异未真机复验；动画手感未验；QA VM 外观停在深色（AppleScript 无授权）",
+  "next_action": "self_review"
+}

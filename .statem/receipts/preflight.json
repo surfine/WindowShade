@@ -1,61 +1,23 @@
 {
   "classes": [
-    "migration",
-    "external-effects",
-    "vision-image",
-    "arithmetic-financial"
+    "external-effects"
   ],
   "hazards": [
     {
-      "class": "migration",
-      "evidence_paths": [
-        "⑤prototype/build.sh",
-        "contract.json/self-review.json"
-      ],
-      "matched": [
-        "迁移"
-      ],
-      "requirement": "迁移前留一份可回溯副本；确认回滚路径与必达效果清单。",
-      "severity": "high"
-    },
-    {
       "class": "external-effects",
       "evidence_paths": [
-        "LocalizationTests/check-localizable.py",
-        "-tests.sh"
+        "gate-0B-verification.md",
+        "issue39-evidence.md"
       ],
       "matched": [
         "发布"
       ],
       "requirement": "不可逆外部效果先立效果清单；执行后要重新读回实际状态并对账。",
       "severity": "high"
-    },
-    {
-      "class": "vision-image",
-      "evidence_paths": [
-        "⑤prototype/build.sh",
-        "contract.json/self-review.json"
-      ],
-      "matched": [
-        "图片"
-      ],
-      "requirement": "内联图片计入 48 MiB 请求体上限；多图或长会话先算字节，超预算改用 Files API(file_id) 或丢弃旧图，并确认模型看到的图与结论依赖的图一致。",
-      "severity": "normal"
-    },
-    {
-      "class": "arithmetic-financial",
-      "evidence_paths": [
-        "check-localizable.py"
-      ],
-      "matched": [
-        "预算"
-      ],
-      "requirement": "后果性算术走精确十进制工具，数值输入与叙述文字分开。",
-      "severity": "normal"
     }
   ],
   "source": "preflight",
   "task_path": "task.txt",
-  "task_sha256": "b162cfacbcaac1c9d50e406dcb9167f566c873474b29361d2cdfd8166c7835db",
+  "task_sha256": "5a6abc58933f7adca6173be0fceece08bf02f2f5c9c1a261a61e5f62d04ea544",
   "version": 1
 }

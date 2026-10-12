@@ -1,0 +1,8 @@
+{
+  "renderer": "/Users/aaron/Documents/WindowShade/.build/native-surfaces.DJpVeB/render",
+  "sha256": "78958b53ab796251629158836510832fbeaa2f191d620e6c585b40f0d8f3e55d",
+  "swiftLanguageVersion": 6,
+  "strictConcurrency": true,
+  "warningsAsErrors": true,
+  "optimized": false
+}

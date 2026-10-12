@@ -1,0 +1,2119 @@
+ok   catalog keeps all 142 planned commands
+ok   unknown command stays unknown
+ok   left half stays the left-half placement
+ok   right half is a different placement
+ok   opening the launcher is show, not a toggle
+ok   adopting text and sending it are different commands
+ok   a read shows the page and does not invent a number
+ok   a nod that starts before the preview does not count
+ok   a changed window revision voids the old preview
+ok   the old preview cannot be confirmed after the window changed
+ok   the accepted placement is still left half
+ok   saying left half again does not reverse the placement
+ok   a nod cannot confirm enrollment that was never waiting
+ok   a product command is refused during a security challenge
+ok   a nod from before the challenge cannot open the window afterward
+ok   cancelling a challenge only shows the cancel
+ok   adopting a draft does not send it
+ok   confirming the earlier adopt does not accept the later send
+ok   a missing observation stays unknown and does not unlock
+ok   a name, a read, RSSI, and nearness each stay in their own layer
+ok   a name, a read, RSSI, and nearness do not become a device factor or an unlock
+ok   a failed identity check stays failed even when the signal is near
+ok   a verified enrollment is only a device factor, not an unlock
+ok   a nod leaves center, dips, and returns
+ok   a nod that starts as the preview appears can confirm it
+ok   a nod that started before the preview does not count
+ok   looking down at the keyboard is not a nod
+ok   a one-sided return is not a shake
+ok   a side-to-side return is a shake
+ok   a shake does not accept the preview
+ok   headphones, head tracking, RSSI, and someone leaving do not change the eye-distance decision
+ok   headphones, head tracking, RSSI, and someone leaving are not eye distance and do not cancel the away countdown
+ok   a look that is not sustained-close does not remind and does not cancel the away countdown
+ok   only a sustained close look at this screen reminds, and focus keeps running
+ok   a rest does not add a distance alert
+ok   an unknown eye distance stays unknown and is not written as just right or 0
+ok   opening the launcher shows home and does not toggle
+ok   opening the launcher shows home on the caller screen and stays open if it is already open
+ok   looking at the timer only shows it and does not start it while idle
+ok   a placement preview is not a move yet
+ok   a confirmed left half asks the existing WindowPlacement for leftHalf
+ok   the left half is the frozen window and the revision is unchanged
+ok   another window or a changed revision is not placed
+ok   a glance does not take the focus-stealing open path
+ok   enrollment is not applied by this port
+ok   window.right preview is not a move yet
+ok   window.right keeps its catalog placement
+ok   window.right is void when the frozen window changes
+ok   window.right old preview stays void after the window changes
+ok   window.right asks for rightHalf on the frozen window
+ok   window.right stays on the frozen window
+ok   window.right does not enter system fullscreen
+ok   saying window.right again does not reverse it
+ok   window.topLeft preview is not a move yet
+ok   window.topLeft keeps its catalog placement
+ok   window.topLeft is void when the frozen window changes
+ok   window.topLeft old preview stays void after the window changes
+ok   window.topLeft asks for topLeft on the frozen window
+ok   window.topLeft stays on the frozen window
+ok   window.topLeft does not enter system fullscreen
+ok   saying window.topLeft again does not reverse it
+ok   window.topRight preview is not a move yet
+ok   window.topRight keeps its catalog placement
+ok   window.topRight is void when the frozen window changes
+ok   window.topRight old preview stays void after the window changes
+ok   window.topRight asks for topRight on the frozen window
+ok   window.topRight stays on the frozen window
+ok   window.topRight does not enter system fullscreen
+ok   saying window.topRight again does not reverse it
+ok   window.bottomLeft preview is not a move yet
+ok   window.bottomLeft keeps its catalog placement
+ok   window.bottomLeft is void when the frozen window changes
+ok   window.bottomLeft old preview stays void after the window changes
+ok   window.bottomLeft asks for bottomLeft on the frozen window
+ok   window.bottomLeft stays on the frozen window
+ok   window.bottomLeft does not enter system fullscreen
+ok   saying window.bottomLeft again does not reverse it
+ok   window.bottomRight preview is not a move yet
+ok   window.bottomRight keeps its catalog placement
+ok   window.bottomRight is void when the frozen window changes
+ok   window.bottomRight old preview stays void after the window changes
+ok   window.bottomRight asks for bottomRight on the frozen window
+ok   window.bottomRight stays on the frozen window
+ok   window.bottomRight does not enter system fullscreen
+ok   saying window.bottomRight again does not reverse it
+ok   window.center preview is not a move yet
+ok   window.center keeps its catalog placement
+ok   window.center is void when the frozen window changes
+ok   window.center old preview stays void after the window changes
+ok   window.center asks for center on the frozen window
+ok   window.center stays on the frozen window
+ok   window.center does not enter system fullscreen
+ok   saying window.center again does not reverse it
+ok   window.fill preview is not a move yet
+ok   window.fill keeps its catalog placement
+ok   window.fill is void when the frozen window changes
+ok   window.fill old preview stays void after the window changes
+ok   window.fill asks for fill on the frozen window
+ok   window.fill stays on the frozen window
+ok   window.fill does not enter system fullscreen
+ok   saying window.fill again does not reverse it
+ok   right half, the four corners, and fill use the caller visible frame
+ok   center keeps the window size inside the caller visible frame
+ok   fill is the visible frame and does not enter system fullscreen
+ok   launcher.today shows today
+ok   launcher.today uses the caller screen and stays open if it is already open
+ok   launcher.library shows library
+ok   launcher.library uses the caller screen and stays open if it is already open
+ok   launcher.search shows spotlight
+ok   launcher.search uses the caller screen and stays open if it is already open
+ok   launcher.back shows back
+ok   launcher.back uses the caller screen and stays open if it is already open
+ok   starting the timer waits until it is confirmed
+ok   the timer starts only after confirmation
+ok   the first six catalog commands are the four entries plus previous and next
+ok   mandarin ui.windows matches only that catalog id
+ok   mandarin ui.windows proposes the same step as a tap
+ok   mandarin ui.windows is only a proposal and does not unlock
+ok   mandarin ui.activities matches only that catalog id
+ok   mandarin ui.activities proposes the same step as a tap
+ok   mandarin ui.activities is only a proposal and does not unlock
+ok   mandarin ui.usage matches only that catalog id
+ok   mandarin ui.usage proposes the same step as a tap
+ok   mandarin ui.usage is only a proposal and does not unlock
+ok   mandarin ui.settings matches only that catalog id
+ok   mandarin ui.settings proposes the same step as a tap
+ok   mandarin ui.settings is only a proposal and does not unlock
+ok   mandarin nav.previous matches only that catalog id
+ok   mandarin nav.previous proposes the same step as a tap
+ok   mandarin nav.previous is only a proposal and does not unlock
+ok   mandarin nav.next matches only that catalog id
+ok   mandarin nav.next proposes the same step as a tap
+ok   mandarin nav.next is only a proposal and does not unlock
+ok   cantonese ui.windows matches only that catalog id
+ok   cantonese ui.windows proposes the same step as a tap
+ok   cantonese ui.windows is only a proposal and does not unlock
+ok   cantonese ui.activities matches only that catalog id
+ok   cantonese ui.activities proposes the same step as a tap
+ok   cantonese ui.activities is only a proposal and does not unlock
+ok   cantonese ui.usage matches only that catalog id
+ok   cantonese ui.usage proposes the same step as a tap
+ok   cantonese ui.usage is only a proposal and does not unlock
+ok   cantonese ui.settings matches only that catalog id
+ok   cantonese ui.settings proposes the same step as a tap
+ok   cantonese ui.settings is only a proposal and does not unlock
+ok   cantonese nav.previous matches only that catalog id
+ok   cantonese nav.previous proposes the same step as a tap
+ok   cantonese nav.previous is only a proposal and does not unlock
+ok   cantonese nav.next matches only that catalog id
+ok   cantonese nav.next proposes the same step as a tap
+ok   cantonese nav.next is only a proposal and does not unlock
+ok   wu ui.windows matches only that catalog id
+ok   wu ui.windows proposes the same step as a tap
+ok   wu ui.windows is only a proposal and does not unlock
+ok   wu ui.activities matches only that catalog id
+ok   wu ui.activities proposes the same step as a tap
+ok   wu ui.activities is only a proposal and does not unlock
+ok   wu ui.usage matches only that catalog id
+ok   wu ui.usage proposes the same step as a tap
+ok   wu ui.usage is only a proposal and does not unlock
+ok   wu ui.settings matches only that catalog id
+ok   wu ui.settings proposes the same step as a tap
+ok   wu ui.settings is only a proposal and does not unlock
+ok   wu nav.previous matches only that catalog id
+ok   wu nav.previous proposes the same step as a tap
+ok   wu nav.previous is only a proposal and does not unlock
+ok   wu nav.next matches only that catalog id
+ok   wu nav.next proposes the same step as a tap
+ok   wu nav.next is only a proposal and does not unlock
+ok   no camera does not guess and does not fall back to the microphone
+ok   a word without the camera stays unknown
+ok   a microphone word does not fill in a missing camera match
+ok   an unknown speech stays unknown
+ok   a mandarin word does not match a cantonese sample
+ok   an unrecorded wu word stays unknown
+ok   an unrecorded word stays unknown
+ok   two commands with the same word stay unknown
+ok   a phrase cannot enroll or unlock
+ok   a camera match ignores a different microphone word
+ok   setting the same mode keeps the held phrase
+ok   switching to dictation clears the phrase buffer
+ok   dictation does not borrow a command phrase
+ok   switching mode clears the phrase buffer again
+ok   a security challenge does not accept a command phrase
+ok   leaving the challenge drops the phrase that was held there
+ok   adopting a draft waits, and that wait is not a send
+ok   a confirmed adopt only asks for a preview
+ok   adopt stores a preview and does not mark it sent
+ok   the earlier adopt nod cannot be reused as the send
+ok   send waits for a new confirmation
+ok   confirming the adopt proposal does not accept the send
+ok   only the send command can leave the preview
+ok   the send confirmation asks to submit that draft
+ok   without a bound session the draft stays on this Mac
+ok   a blank session id does not count as a bound session
+ok   waiting for an ack is not sent
+ok   a second submit while waiting does not send another copy
+ok   an ack for a different request does not mark the draft sent
+ok   a disconnect after handoff stays unknown and does not resend
+ok   an unknown result does not allocate another request
+ok   the original ack still settles the original request
+ok   after it is sent, disconnect does not send it again
+ok   a draft that was already sent is not sent again and is not a failure
+ok   an empty draft id is not adopted
+ok   discarding with no preview does nothing
+ok   sending with no preview is refused
+ok   a waiting draft starts as a preview
+ok   a send with the wrong revision does not leave the preview
+ok   discarding while waiting for an ack does not drop the draft
+ok   choosing a model only names the next round
+ok   stop shows the native control and does not mark the turn stopped
+ok   next page is a read on the existing launcher
+ok   previous page is a different read
+ok   nextPage uses the caller screen and stays open
+ok   previousPage uses the caller screen and stays open
+ok   opening a folder names that folder
+ok   an empty folder id is not opened
+ok   undo waits, and the preview is not a move
+ok   undo is void when the frozen window changes
+ok   the old undo preview cannot be confirmed after the window changes
+ok   undo asks to roll back the frozen window
+ok   undo stays on the frozen window
+ok   a move preview is not a move yet
+ok   the move stays move to the selected display
+ok   the confirmed move asks for the caller display
+ok   a move needs the caller screen and the frozen window
+ok   saying move again does not reverse it
+ok   accountQuota stays not provided and is not written as 0 or 100%
+ok   selectedThread stays not provided and is not written as 0 or 100%
+ok   selectedContext stays not provided and is not written as 0 or 100%
+ok   accountActivity stays not provided and is not written as 0 or 100%
+ok   quota, the thread, context, and account activity stay in separate cells
+ok   refreshing usage keeps the blanks and does not start a model task
+ok   an empty account list does not invent a selection
+ok   looking at music does not create it or start playback
+ok   a present activity stays present and a missing one stays missing
+ok   an unknown model is refused and does not start a turn
+ok   an allowed model is only remembered for the next round
+ok   an allowed effort does not start a turn
+ok   stop shows the native control and is not stopped yet
+ok   a mismatched stop ack does not mark the turn stopped
+ok   the matching stop ack marks it stopped without starting a turn
+ok   steering without a bound session does not send
+ok   a steer waits for its own ack
+ok   a stop ack does not acknowledge a steer
+ok   the matching steer ack does not start a session
+ok   showing assistants with none bound does not start a session
+ok   auth.begin does not unlock, fill a password, open a window, or start a model task
+ok   auth.cancel does not unlock, fill a password, open a window, or start a model task
+ok   auth.useSystem does not unlock, fill a password, open a window, or start a model task
+ok   auth.enroll does not unlock, fill a password, open a window, or start a model task
+ok   privacy.panicLock does not unlock, fill a password, open a window, or start a model task
+ok   switching into a challenge clears the held phrase
+ok   a nod from before the challenge cannot place the window
+ok   cancelling a challenge stays on that challenge
+ok   cancelling a challenge does not unlock or fill a password
+ok   pause is refused when no playback engine is bound
+ok   CarPlay enter names an unavailable receiver
+ok   collapse names the frozen window and stays collapsed when repeated
+ok   the windows page is shown and does not move a window
+ok   tuck is a recorded intent and does not touch the system in the simulator
+ok   the tuck simulation does not touch the system
+ok   window.left names one existing window effect
+ok   window.left does not enter system fullscreen or unlock
+ok   window.right names one existing window effect
+ok   window.right does not enter system fullscreen or unlock
+ok   window.fill names one existing window effect
+ok   window.fill does not enter system fullscreen or unlock
+ok   window.center names one existing window effect
+ok   window.center does not enter system fullscreen or unlock
+ok   window.topLeft names one existing window effect
+ok   window.topLeft does not enter system fullscreen or unlock
+ok   window.topRight names one existing window effect
+ok   window.topRight does not enter system fullscreen or unlock
+ok   window.bottomLeft names one existing window effect
+ok   window.bottomLeft does not enter system fullscreen or unlock
+ok   window.bottomRight names one existing window effect
+ok   window.bottomRight does not enter system fullscreen or unlock
+ok   window.restore names one existing window effect
+ok   window.restore does not enter system fullscreen or unlock
+ok   window.collapse names one existing window effect
+ok   window.collapse does not enter system fullscreen or unlock
+ok   window.expand names one existing window effect
+ok   window.expand does not enter system fullscreen or unlock
+ok   window.tuck names one existing window effect
+ok   window.tuck does not enter system fullscreen or unlock
+ok   window.untuck names one existing window effect
+ok   window.untuck does not enter system fullscreen or unlock
+ok   window.pin names one existing window effect
+ok   window.pin does not enter system fullscreen or unlock
+ok   window.unpin names one existing window effect
+ok   window.unpin does not enter system fullscreen or unlock
+ok   window.slideOver names one existing window effect
+ok   window.slideOver does not enter system fullscreen or unlock
+ok   window.leaveSlideOver names one existing window effect
+ok   window.leaveSlideOver does not enter system fullscreen or unlock
+ok   window.pip names one existing window effect
+ok   window.pip does not enter system fullscreen or unlock
+ok   window.leavePip names one existing window effect
+ok   window.leavePip does not enter system fullscreen or unlock
+ok   window.glance names one existing window effect
+ok   window.glance does not enter system fullscreen or unlock
+ok   window.choose names one existing window effect
+ok   window.choose does not enter system fullscreen or unlock
+ok   window.chooseDisplay names one existing window effect
+ok   window.chooseDisplay does not enter system fullscreen or unlock
+ok   window.moveToSelectedDisplay names one existing window effect
+ok   window.moveToSelectedDisplay does not enter system fullscreen or unlock
+ok   window.undo names one existing window effect
+ok   window.undo does not enter system fullscreen or unlock
+ok   window.batchReview names one existing window effect
+ok   window.batchReview does not enter system fullscreen or unlock
+ok   scene.reading names one existing window effect
+ok   scene.reading does not enter system fullscreen or unlock
+ok   scene.coding names one existing window effect
+ok   scene.coding does not enter system fullscreen or unlock
+ok   scene.presentation names one existing window effect
+ok   scene.presentation does not enter system fullscreen or unlock
+ok   window.magicTile names one existing window effect
+ok   window.magicTile does not enter system fullscreen or unlock
+ok   window.stripPrevious names one existing window effect
+ok   window.stripPrevious does not enter system fullscreen or unlock
+ok   window.stripNext names one existing window effect
+ok   window.stripNext does not enter system fullscreen or unlock
+ok   window.stripOverview names one existing window effect
+ok   window.stripOverview does not enter system fullscreen or unlock
+ok   scene.conversation names one existing window effect
+ok   scene.conversation does not enter system fullscreen or unlock
+ok   scene.resumeWork names one existing window effect
+ok   scene.resumeWork does not enter system fullscreen or unlock
+ok   scene.presenter names one existing window effect
+ok   scene.presenter does not enter system fullscreen or unlock
+ok   scene.largeText names one existing window effect
+ok   scene.largeText does not enter system fullscreen or unlock
+ok   scene.accessibility names one existing window effect
+ok   scene.accessibility does not enter system fullscreen or unlock
+ok   left half stays left half
+ok   tuck is not the same as collapse
+ok   collapse stays collapse
+ok   ui.windows does not unlock or fill a password
+ok   ui.activities does not unlock or fill a password
+ok   ui.usage does not unlock or fill a password
+ok   ui.settings does not unlock or fill a password
+ok   nav.previous does not unlock or fill a password
+ok   nav.next does not unlock or fill a password
+ok   nav.back does not unlock or fill a password
+ok   nav.cancel does not unlock or fill a password
+ok   nav.select does not unlock or fill a password
+ok   nav.help does not unlock or fill a password
+ok   settings.appearance does not unlock or fill a password
+ok   settings.windows does not unlock or fill a password
+ok   settings.shortcuts does not unlock or fill a password
+ok   settings.permissions does not unlock or fill a password
+ok   settings.privacy does not unlock or fill a password
+ok   settings.silent does not unlock or fill a password
+ok   window.left does not unlock or fill a password
+ok   window.right does not unlock or fill a password
+ok   window.fill does not unlock or fill a password
+ok   window.center does not unlock or fill a password
+ok   window.topLeft does not unlock or fill a password
+ok   window.topRight does not unlock or fill a password
+ok   window.bottomLeft does not unlock or fill a password
+ok   window.bottomRight does not unlock or fill a password
+ok   window.restore does not unlock or fill a password
+ok   window.collapse does not unlock or fill a password
+ok   window.expand does not unlock or fill a password
+ok   window.tuck does not unlock or fill a password
+ok   window.untuck does not unlock or fill a password
+ok   window.pin does not unlock or fill a password
+ok   window.unpin does not unlock or fill a password
+ok   window.slideOver does not unlock or fill a password
+ok   window.leaveSlideOver does not unlock or fill a password
+ok   window.pip does not unlock or fill a password
+ok   window.leavePip does not unlock or fill a password
+ok   window.glance does not unlock or fill a password
+ok   window.choose does not unlock or fill a password
+ok   window.chooseDisplay does not unlock or fill a password
+ok   window.moveToSelectedDisplay does not unlock or fill a password
+ok   window.undo does not unlock or fill a password
+ok   window.batchReview does not unlock or fill a password
+ok   activity.music does not unlock or fill a password
+ok   activity.battery does not unlock or fill a password
+ok   activity.airdrop does not unlock or fill a password
+ok   activity.route does not unlock or fill a password
+ok   activity.recording does not unlock or fill a password
+ok   activity.focus does not unlock or fill a password
+ok   activity.previous does not unlock or fill a password
+ok   activity.next does not unlock or fill a password
+ok   activity.details does not unlock or fill a password
+ok   music.pause does not unlock or fill a password
+ok   music.resume does not unlock or fill a password
+ok   music.nextTrack does not unlock or fill a password
+ok   focus.start does not unlock or fill a password
+ok   focus.pause does not unlock or fill a password
+ok   focus.resume does not unlock or fill a password
+ok   usage.quota does not unlock or fill a password
+ok   usage.session does not unlock or fill a password
+ok   usage.context does not unlock or fill a password
+ok   usage.accountActivity does not unlock or fill a password
+ok   usage.refresh does not unlock or fill a password
+ok   usage.chooseAccount does not unlock or fill a password
+ok   assistant.show does not unlock or fill a password
+ok   assistant.status does not unlock or fill a password
+ok   assistant.models does not unlock or fill a password
+ok   assistant.effort does not unlock or fill a password
+ok   assistant.review does not unlock or fill a password
+ok   assistant.source does not unlock or fill a password
+ok   assistant.interrupt does not unlock or fill a password
+ok   privacy.cover does not unlock or fill a password
+ok   privacy.reveal does not unlock or fill a password
+ok   privacy.status does not unlock or fill a password
+ok   input.pause does not unlock or fill a password
+ok   input.recenter does not unlock or fill a password
+ok   input.profile does not unlock or fill a password
+ok   scene.reading does not unlock or fill a password
+ok   scene.coding does not unlock or fill a password
+ok   scene.presentation does not unlock or fill a password
+ok   launcher.open does not unlock or fill a password
+ok   launcher.home does not unlock or fill a password
+ok   launcher.library does not unlock or fill a password
+ok   launcher.today does not unlock or fill a password
+ok   launcher.search does not unlock or fill a password
+ok   launcher.nextPage does not unlock or fill a password
+ok   launcher.previousPage does not unlock or fill a password
+ok   launcher.back does not unlock or fill a password
+ok   launcher.dismiss does not unlock or fill a password
+ok   launcher.openSelected does not unlock or fill a password
+ok   launcher.openFolder does not unlock or fill a password
+ok   app.showSwitcher does not unlock or fill a password
+ok   app.activateSelected does not unlock or fill a password
+ok   app.previous does not unlock or fill a password
+ok   desktop.showSwitcher does not unlock or fill a password
+ok   desktop.select does not unlock or fill a password
+ok   desktop.missionControl does not unlock or fill a password
+ok   desktop.showDesktop does not unlock or fill a password
+ok   window.magicTile does not unlock or fill a password
+ok   window.stripPrevious does not unlock or fill a password
+ok   window.stripNext does not unlock or fill a password
+ok   window.stripOverview does not unlock or fill a password
+ok   dictation.start does not unlock or fill a password
+ok   dictation.stopCapture does not unlock or fill a password
+ok   dictation.nextCandidate does not unlock or fill a password
+ok   dictation.retry does not unlock or fill a password
+ok   dictation.adopt does not unlock or fill a password
+ok   dictation.edit does not unlock or fill a password
+ok   dictation.insertPhrase does not unlock or fill a password
+ok   dictation.discard does not unlock or fill a password
+ok   dictation.enableWhisper does not unlock or fill a password
+ok   assistant.chooseSession does not unlock or fill a password
+ok   assistant.setModel does not unlock or fill a password
+ok   assistant.setEffort does not unlock or fill a password
+ok   assistant.sendDraft does not unlock or fill a password
+ok   assistant.steerDraft does not unlock or fill a password
+ok   assistant.showDiff does not unlock or fill a password
+ok   assistant.requestApproval does not unlock or fill a password
+ok   scene.conversation does not unlock or fill a password
+ok   scene.resumeWork does not unlock or fill a password
+ok   scene.presenter does not unlock or fill a password
+ok   scene.largeText does not unlock or fill a password
+ok   scene.accessibility does not unlock or fill a password
+ok   privacy.panicLock does not unlock or fill a password
+ok   privacy.awaySummary does not unlock or fill a password
+ok   privacy.selectScope does not unlock or fill a password
+ok   auth.settings does not unlock or fill a password
+ok   auth.enroll does not unlock or fill a password
+ok   auth.deleteEnrollment does not unlock or fill a password
+ok   auth.begin does not unlock or fill a password
+ok   auth.cancel does not unlock or fill a password
+ok   auth.useSystem does not unlock or fill a password
+ok   auth.authorizeSession does not unlock or fill a password
+ok   auth.revokeSession does not unlock or fill a password
+ok   auth.lab does not unlock or fill a password
+ok   auth.profiles does not unlock or fill a password
+ok   device.bind does not unlock or fill a password
+ok   device.revoke does not unlock or fill a password
+ok   device.status does not unlock or fill a password
+ok   device.range does not unlock or fill a password
+ok   credential.chooseAlias does not unlock or fill a password
+ok   credential.secretPhraseLab does not unlock or fill a password
+ok   carplay.enter does not unlock or fill a password
+ok   carplay.exit does not unlock or fill a password
+ok   privacy opens the privacy page
+ok   a window command does not open settings
+ok   the windows page opens window browser
+ok   choosing a window opens window browser
+ok   an activity read stays a readout
+ok   showing the desktop is not a synthesized key
+ok   a new journal write drops the window title
+ok   a new journal write still keeps the app name
+ok   an old journal entry can still be read
+ok   a blank old title is not a name
+ok   leaving shows a ten second countdown
+ok   the countdown preview does not request a system lock
+ok   no camera stays unknown
+ok   no camera does not unlock, does not say nobody is there, and has no centimeters
+ok   an unmeasured screen distance stays unknown
+ok   unknown distance does not cancel the away countdown and has no centimeters
+ok   starting a draft stays on this Mac and is not sent
+ok   a local draft says it has not been sent and does not listen
+ok   inserting a phrase does not send
+ok   an inserted phrase stays unsent
+ok   discarding a preview clears it and does not send
+ok   after discard there is no draft to send
+ok   discarding when there is no preview does nothing
+ok   looking at the timer does not start it
+ok   settings.appearance says the settings section opened
+ok   settings.appearance does not claim a setting value changed
+ok   settings.silent says the settings section opened
+ok   settings.silent does not claim a setting value changed
+ok   settings.privacy says the settings section opened
+ok   settings.privacy does not claim a setting value changed
+ok   ui.settings says the settings section opened
+ok   ui.settings does not claim a setting value changed
+ok   settings.windows says the settings section opened
+ok   settings.windows does not claim a setting value changed
+ok   settings.shortcuts says the settings section opened
+ok   settings.shortcuts does not claim a setting value changed
+ok   settings.permissions says the settings section opened
+ok   settings.permissions does not claim a setting value changed
+ok   ui.windows says the window browser opened
+ok   window.choose says the window browser opened
+ok   window.batchReview says the window browser opened
+ok   app.showSwitcher says the window browser opened
+ok   cover without a scope does not say it is covered
+ok   covering without an overlay does not mark the screen covered
+ok   an observed overlay marks the screen covered
+ok   a selected scope without a protector stays 尚未遮住
+ok   covering with an observed overlay says 已遮住
+ok   paused input says it is paused and does not clear preferences
+ok   launcher.back names the page and does not claim an app launched
+ok   launcher.open names the page and does not claim an app launched
+ok   launcher.nextPage names the page and does not claim an app launched
+ok   launcher.previousPage names the page and does not claim an app launched
+ok   launcher.home names the page and does not claim an app launched
+ok   launcher.dismiss names the page and does not claim an app launched
+ok   launcher.library names the page and does not claim an app launched
+ok   launcher.today names the page and does not claim an app launched
+ok   launcher.search names the page and does not claim an app launched
+ok   playback stays unchanged
+ok   focus.start names what finished
+ok   focus.start that did not run says it was not done
+ok   window.topRight names what finished
+ok   window.topRight that did not run says it was not done
+ok   window.collapse names what finished
+ok   window.collapse that did not run says it was not done
+ok   window.expand names what finished
+ok   window.expand that did not run says it was not done
+ok   window.bottomLeft names what finished
+ok   window.bottomLeft that did not run says it was not done
+ok   window.right names what finished
+ok   window.right that did not run says it was not done
+ok   window.center names what finished
+ok   window.center that did not run says it was not done
+ok   window.moveToSelectedDisplay names what finished
+ok   window.moveToSelectedDisplay that did not run says it was not done
+ok   window.topLeft names what finished
+ok   window.topLeft that did not run says it was not done
+ok   window.bottomRight names what finished
+ok   window.bottomRight that did not run says it was not done
+ok   focus.pause names what finished
+ok   focus.pause that did not run says it was not done
+ok   focus.resume names what finished
+ok   focus.resume that did not run says it was not done
+ok   window.magicTile names what finished
+ok   window.magicTile that did not run says it was not done
+ok   window.left names what finished
+ok   window.left that did not run says it was not done
+ok   window.untuck names what finished
+ok   window.untuck that did not run says it was not done
+ok   window.tuck names what finished
+ok   window.tuck that did not run says it was not done
+ok   window.restore names what finished
+ok   window.restore that did not run says it was not done
+ok   window.undo names what finished
+ok   window.undo that did not run says it was not done
+ok   window.fill names what finished
+ok   window.fill that did not run says it was not done
+ok   a glance does not get a line that says the window came forward
+ok   a glance says it only looked and does not say the window came forward
+ok   pin, slide, picture in picture, and scenes stay on the generic not-done line
+ok   unpin is the only pinned action with a synchronous result for that window
+ok   window.pin can start and is not a synchronous completion
+ok   window.pin is not reported as done
+ok   window.slideOver can start and is not a synchronous completion
+ok   window.slideOver is not reported as done
+ok   window.leaveSlideOver can start and is not a synchronous completion
+ok   window.leaveSlideOver is not reported as done
+ok   window.pip can start and is not a synchronous completion
+ok   window.pip is not reported as done
+ok   window.leavePip can start and is not a synchronous completion
+ok   window.leavePip is not reported as done
+ok   scene.reading names an engine that cannot be observed for the frozen window
+ok   scene.reading is not reported as done
+ok   scene.coding names an engine that cannot be observed for the frozen window
+ok   scene.coding is not reported as done
+ok   scene.presentation names an engine that cannot be observed for the frozen window
+ok   scene.presentation is not reported as done
+ok   scene.presenter names an engine that cannot be observed for the frozen window
+ok   scene.presenter is not reported as done
+ok   a playback command does not claim the track changed
+ok   a success without its own result line is not reported as done
+ok   an unknown command id is not reported as done
+ok   a command that already has a line keeps that line
+ok   restore uses the existing undo for the frozen window
+ok   adopting a draft leaves a preview
+ok   adopting names the draft and does not say it was sent
+ok   a refused adopt stays a failure
+ok   inserting a phrase keeps the preview
+ok   an inserted phrase stays unsent
+ok   discarding a preview clears it
+ok   discarding a preview says it was dropped
+ok   discarding with no preview is a failure
+ok   a send needs a preview first
+ok   sending without a session stays on this Mac
+ok   a local send says it stayed here
+ok   a bound send waits for an ack
+ok   a send that is still waiting does not say it was sent
+ok   a matching ack is the only send line that says it went out
+ok   a refused send stays a failure
+ok   the next model is only recorded
+ok   recording a model does not name it or start it
+ok   a model outside the allowed list is a failure
+ok   the next effort is only recorded
+ok   recording an effort does not start the turn
+ok   interrupt shows the native stop
+ok   showing the stop does not say the turn stopped
+ok   a matching stop ack is the line that says it stopped
+ok   a refused interrupt stays a failure
+ok   steering without a session does not leave this Mac
+ok   steering that did not wait is a failure
+ok   steering with a session waits and does not start a turn
+ok   a waiting steer does not say the turn started or the draft was sent
+ok   opening a folder without one does not open a folder
+ok   a folder that opened does not say nothing was chosen
+ok   covering without an overlay stays uncovered
+ok   an observed overlay marks the screen covered
+ok   a silent reveal does not uncover or invent a cover
+ok   revealing before a cover does not uncover or reveal
+ok   staying in the same mode keeps the pending command
+ok   an unknown command is rejected
+ok   next moves one page forward
+ok   previous and back move one page backward
+ok   a window command does not turn the page
+ok   cancel drops the pending line and select confirms it
+ok   nav.cancel names the page turn instead of repeating the chip
+ok   nav.next names the page turn instead of repeating the chip
+ok   nav.back names the page turn instead of repeating the chip
+ok   nav.previous names the page turn instead of repeating the chip
+ok   cancelling or yielding a challenge does not unlock
+ok   the phrase lab stays on the system confirmation and does not record
+ok   ui.windows outcome 已开窗口浏览 is not only the chip 窗口
+ok   ui.activities outcome 没有 is not only the chip 实时活动
+ok   ui.usage outcome 未提供 is not only the chip 用量
+ok   ui.settings outcome 打开了设置 is not only the chip 设置
+ok   nav.previous outcome 已到上一项 is not only the chip 上一项
+ok   nav.next outcome 已到下一项 is not only the chip 下一项
+ok   nav.back outcome 已返回 is not only the chip 返回
+ok   nav.cancel outcome 已取消 is not only the chip 取消
+ok   nav.select outcome 这次没有做 is not only the chip 选这个
+ok   nav.help outcome 点命令再确认 is not only the chip 怎么用
+ok   settings.appearance outcome 打开了外观 is not only the chip 外观
+ok   settings.windows outcome 打开窗口设置 is not only the chip 窗口设置
+ok   settings.shortcuts outcome 打开了快捷键 is not only the chip 快捷键
+ok   settings.permissions outcome 打开了权限 is not only the chip 权限
+ok   settings.privacy outcome 打开了隐私 is not only the chip 隐私
+ok   settings.silent outcome 打开静音操作 is not only the chip 静音操作
+ok   window.glance outcome 只看一眼 is not only the chip 看一眼
+ok   window.choose outcome 已开窗口浏览 is not only the chip 选择窗口
+ok   window.chooseDisplay outcome 还没选 is not only the chip 选择屏幕
+ok   window.batchReview outcome 已开窗口浏览 is not only the chip 先看一遍
+ok   activity.music outcome 没有 is not only the chip 正在播放
+ok   activity.battery outcome 没有 is not only the chip 电量
+ok   activity.airdrop outcome 没有 is not only the chip 隔空投送
+ok   activity.route outcome 没有 is not only the chip 路线
+ok   activity.recording outcome 没有 is not only the chip 录音
+ok   activity.focus outcome 只看不计时 is not only the chip 番茄钟
+ok   activity.previous outcome 没有 is not only the chip 上一条
+ok   activity.next outcome 没有 is not only the chip 下一条
+ok   activity.details outcome 没有 is not only the chip 活动详情
+ok   usage.quota outcome 未提供 is not only the chip 账户额度
+ok   usage.session outcome 未提供 is not only the chip 这次用量
+ok   usage.context outcome 未提供 is not only the chip 上下文
+ok   usage.accountActivity outcome 未提供 is not only the chip 账户活动
+ok   usage.refresh outcome 未提供 is not only the chip 重新看用量
+ok   usage.chooseAccount outcome 未提供 is not only the chip 选账户
+ok   assistant.show outcome 没有 is not only the chip 编程会话
+ok   assistant.status outcome 没有 is not only the chip 会话状态
+ok   assistant.models outcome 未提供 is not only the chip 选模型
+ok   assistant.effort outcome 未提供 is not only the chip 思考档位
+ok   assistant.review outcome 没有 is not only the chip 看审阅
+ok   privacy.cover outcome 还没选范围 is not only the chip 先遮住
+ok   privacy.status outcome 还没选范围 is not only the chip 遮住没遮住
+ok   input.pause outcome 输入还在 is not only the chip 先停一下
+ok   input.profile outcome 还没录过 is not only the chip 口令档案
+ok   launcher.open outcome 已开主屏幕 is not only the chip 启动台
+ok   launcher.home outcome 已开主屏幕 is not only the chip 主屏幕
+ok   launcher.library outcome 已开资料库 is not only the chip App 资料库
+ok   launcher.today outcome 已开今天 is not only the chip 今天
+ok   launcher.search outcome 已开搜索 is not only the chip 搜索
+ok   launcher.nextPage outcome 已翻下一页 is not only the chip 下一页
+ok   launcher.previousPage outcome 已翻上一页 is not only the chip 上一页
+ok   launcher.back outcome 回到上一层 is not only the chip 返回上一层
+ok   launcher.dismiss outcome 已关掉 is not only the chip 关掉启动台
+ok   launcher.openFolder outcome 已开文件夹 is not only the chip 打开文件夹
+ok   app.showSwitcher outcome 已开窗口浏览 is not only the chip 切换窗口
+ok   desktop.showSwitcher outcome 不代按键 is not only the chip 切换桌面
+ok   desktop.missionControl outcome 不代按键 is not only the chip 调度中心
+ok   desktop.showDesktop outcome 不代按键 is not only the chip 显示桌面
+ok   window.stripPrevious outcome 第 0 列 is not only the chip 卷轴上一个
+ok   window.stripNext outcome 第 0 列 is not only the chip 卷轴下一个
+ok   window.stripOverview outcome 第 0 列 is not only the chip 卷轴概览
+ok   dictation.start outcome 没有草稿 is not only the chip 开始草稿
+ok   dictation.stopCapture outcome 没有草稿 is not only the chip 草稿停在这
+ok   dictation.nextCandidate outcome 没有草稿 is not only the chip 下一个说法
+ok   dictation.retry outcome 没有草稿 is not only the chip 再来一次
+ok   dictation.edit outcome 没有草稿 is not only the chip 改这段字
+ok   assistant.chooseSession outcome 没有 is not only the chip 选会话
+ok   assistant.showDiff outcome 没有 is not only the chip 看改动
+ok   scene.conversation outcome 还没选范围 is not only the chip 先遮住聊天
+ok   scene.largeText outcome 不改系统字 is not only the chip 字大一点
+ok   scene.accessibility outcome 不改辅助 is not only the chip 同一条路径
+ok   privacy.awaySummary outcome 没有 is not only the chip 离开期间
+ok   privacy.selectScope outcome 还没选范围 is not only the chip 选遮住范围
+ok   auth.settings outcome 不解锁 is not only the chip 解锁设置
+ok   auth.cancel outcome 不解锁 is not only the chip 取消这次
+ok   auth.useSystem outcome 不解锁 is not only the chip 用系统确认
+ok   auth.revokeSession outcome 没有许可 is not only the chip 取消这次许可
+ok   device.status outcome 未知 is not only the chip 设备还未知
+ok   credential.chooseAlias outcome 还没选 is not only the chip 选一个名字
+ok   ui.windows is a read and does not start playback, the timer, or a model task
+ok   ui.activities is a read and does not start playback, the timer, or a model task
+ok   ui.usage is a read and does not start playback, the timer, or a model task
+ok   ui.settings is a read and does not start playback, the timer, or a model task
+ok   nav.previous is a read and does not start playback, the timer, or a model task
+ok   nav.next is a read and does not start playback, the timer, or a model task
+ok   nav.back is a read and does not start playback, the timer, or a model task
+ok   nav.cancel is a read and does not start playback, the timer, or a model task
+ok   nav.select is a read and does not start playback, the timer, or a model task
+ok   nav.help is a read and does not start playback, the timer, or a model task
+ok   settings.appearance is a read and does not start playback, the timer, or a model task
+ok   settings.windows is a read and does not start playback, the timer, or a model task
+ok   settings.shortcuts is a read and does not start playback, the timer, or a model task
+ok   settings.permissions is a read and does not start playback, the timer, or a model task
+ok   settings.privacy is a read and does not start playback, the timer, or a model task
+ok   settings.silent is a read and does not start playback, the timer, or a model task
+ok   window.glance is a read and does not start playback, the timer, or a model task
+ok   window.choose is a read and does not start playback, the timer, or a model task
+ok   window.chooseDisplay is a read and does not start playback, the timer, or a model task
+ok   window.batchReview is a read and does not start playback, the timer, or a model task
+ok   activity.music is a read and does not start playback, the timer, or a model task
+ok   activity.battery is a read and does not start playback, the timer, or a model task
+ok   activity.airdrop is a read and does not start playback, the timer, or a model task
+ok   activity.route is a read and does not start playback, the timer, or a model task
+ok   activity.recording is a read and does not start playback, the timer, or a model task
+ok   activity.focus is a read and does not start playback, the timer, or a model task
+ok   activity.previous is a read and does not start playback, the timer, or a model task
+ok   activity.next is a read and does not start playback, the timer, or a model task
+ok   activity.details is a read and does not start playback, the timer, or a model task
+ok   usage.quota is a read and does not start playback, the timer, or a model task
+ok   usage.session is a read and does not start playback, the timer, or a model task
+ok   usage.context is a read and does not start playback, the timer, or a model task
+ok   usage.accountActivity is a read and does not start playback, the timer, or a model task
+ok   usage.refresh is a read and does not start playback, the timer, or a model task
+ok   usage.chooseAccount is a read and does not start playback, the timer, or a model task
+ok   assistant.show is a read and does not start playback, the timer, or a model task
+ok   assistant.status is a read and does not start playback, the timer, or a model task
+ok   assistant.models is a read and does not start playback, the timer, or a model task
+ok   assistant.effort is a read and does not start playback, the timer, or a model task
+ok   assistant.review is a read and does not start playback, the timer, or a model task
+ok   assistant.source is a read and does not start playback, the timer, or a model task
+ok   privacy.status is a read and does not start playback, the timer, or a model task
+ok   input.profile is a read and does not start playback, the timer, or a model task
+ok   launcher.open is a read and does not start playback, the timer, or a model task
+ok   launcher.home is a read and does not start playback, the timer, or a model task
+ok   launcher.library is a read and does not start playback, the timer, or a model task
+ok   launcher.today is a read and does not start playback, the timer, or a model task
+ok   launcher.search is a read and does not start playback, the timer, or a model task
+ok   launcher.nextPage is a read and does not start playback, the timer, or a model task
+ok   launcher.previousPage is a read and does not start playback, the timer, or a model task
+ok   launcher.back is a read and does not start playback, the timer, or a model task
+ok   launcher.dismiss is a read and does not start playback, the timer, or a model task
+ok   launcher.openFolder is a read and does not start playback, the timer, or a model task
+ok   app.showSwitcher is a read and does not start playback, the timer, or a model task
+ok   desktop.showSwitcher is a read and does not start playback, the timer, or a model task
+ok   desktop.missionControl is a read and does not start playback, the timer, or a model task
+ok   desktop.showDesktop is a read and does not start playback, the timer, or a model task
+ok   window.stripPrevious is a read and does not start playback, the timer, or a model task
+ok   window.stripNext is a read and does not start playback, the timer, or a model task
+ok   window.stripOverview is a read and does not start playback, the timer, or a model task
+ok   assistant.chooseSession is a read and does not start playback, the timer, or a model task
+ok   assistant.showDiff is a read and does not start playback, the timer, or a model task
+ok   assistant.requestApproval is a read and does not start playback, the timer, or a model task
+ok   scene.conversation is a read and does not start playback, the timer, or a model task
+ok   scene.largeText is a read and does not start playback, the timer, or a model task
+ok   scene.accessibility is a read and does not start playback, the timer, or a model task
+ok   privacy.awaySummary is a read and does not start playback, the timer, or a model task
+ok   privacy.selectScope is a read and does not start playback, the timer, or a model task
+ok   device.status is a read and does not start playback, the timer, or a model task
+ok   device.range is a read and does not start playback, the timer, or a model task
+ok   credential.chooseAlias is a read and does not start playback, the timer, or a model task
+ok   every catalog command is wired or explicitly refused
+ok   ui.windows notch line stays within eight characters
+ok   ui.windows does not unlock or fill a password
+ok   ui.windows outcome 已开窗口浏览 is not only the chip 窗口
+ok   ui.windows outcome 已开窗口浏览 is a short specific line
+ok   ui.windows is not reportable as 已按这一笔做了
+ok   ui.activities notch line stays within eight characters
+ok   ui.activities does not unlock or fill a password
+ok   ui.activities outcome 没有 is not only the chip 实时活动
+ok   ui.activities outcome 没有 is a short specific line
+ok   ui.activities is not reportable as 已按这一笔做了
+ok   ui.usage notch line stays within eight characters
+ok   ui.usage does not unlock or fill a password
+ok   ui.usage outcome 未提供 is not only the chip 用量
+ok   ui.usage outcome 未提供 is a short specific line
+ok   ui.usage is not reportable as 已按这一笔做了
+ok   ui.settings notch line stays within eight characters
+ok   ui.settings does not unlock or fill a password
+ok   ui.settings outcome 打开了设置 is not only the chip 设置
+ok   ui.settings outcome 打开了设置 is a short specific line
+ok   ui.settings is not reportable as 已按这一笔做了
+ok   nav.previous notch line stays within eight characters
+ok   nav.previous does not unlock or fill a password
+ok   nav.previous outcome 已到上一项 is not only the chip 上一项
+ok   nav.previous outcome 已到上一项 is a short specific line
+ok   nav.previous is not reportable as 已按这一笔做了
+ok   nav.next notch line stays within eight characters
+ok   nav.next does not unlock or fill a password
+ok   nav.next outcome 已到下一项 is not only the chip 下一项
+ok   nav.next outcome 已到下一项 is a short specific line
+ok   nav.next is not reportable as 已按这一笔做了
+ok   nav.back notch line stays within eight characters
+ok   nav.back does not unlock or fill a password
+ok   nav.back outcome 已返回 is not only the chip 返回
+ok   nav.back outcome 已返回 is a short specific line
+ok   nav.back is not reportable as 已按这一笔做了
+ok   nav.cancel notch line stays within eight characters
+ok   nav.cancel does not unlock or fill a password
+ok   nav.cancel outcome 已取消 is not only the chip 取消
+ok   nav.cancel outcome 已取消 is a short specific line
+ok   nav.cancel is not reportable as 已按这一笔做了
+ok   nav.select notch line stays within eight characters
+ok   nav.select does not unlock or fill a password
+ok   nav.select outcome 这次没有做 is not only the chip 选这个
+ok   nav.select outcome 这次没有做 is a short specific line
+ok   nav.select is not reportable as 已按这一笔做了
+ok   nav.help notch line stays within eight characters
+ok   nav.help does not unlock or fill a password
+ok   nav.help outcome 点命令再确认 is not only the chip 怎么用
+ok   nav.help outcome 点命令再确认 is a short specific line
+ok   nav.help is not reportable as 已按这一笔做了
+ok   settings.appearance notch line stays within eight characters
+ok   settings.appearance does not unlock or fill a password
+ok   settings.appearance outcome 打开了外观 is not only the chip 外观
+ok   settings.appearance outcome 打开了外观 is a short specific line
+ok   settings.appearance is not reportable as 已按这一笔做了
+ok   settings.windows notch line stays within eight characters
+ok   settings.windows does not unlock or fill a password
+ok   settings.windows outcome 打开窗口设置 is not only the chip 窗口设置
+ok   settings.windows outcome 打开窗口设置 is a short specific line
+ok   settings.windows is not reportable as 已按这一笔做了
+ok   settings.shortcuts notch line stays within eight characters
+ok   settings.shortcuts does not unlock or fill a password
+ok   settings.shortcuts outcome 打开了快捷键 is not only the chip 快捷键
+ok   settings.shortcuts outcome 打开了快捷键 is a short specific line
+ok   settings.shortcuts is not reportable as 已按这一笔做了
+ok   settings.permissions notch line stays within eight characters
+ok   settings.permissions does not unlock or fill a password
+ok   settings.permissions outcome 打开了权限 is not only the chip 权限
+ok   settings.permissions outcome 打开了权限 is a short specific line
+ok   settings.permissions is not reportable as 已按这一笔做了
+ok   settings.privacy notch line stays within eight characters
+ok   settings.privacy does not unlock or fill a password
+ok   settings.privacy outcome 打开了隐私 is not only the chip 隐私
+ok   settings.privacy outcome 打开了隐私 is a short specific line
+ok   settings.privacy is not reportable as 已按这一笔做了
+ok   settings.silent notch line stays within eight characters
+ok   settings.silent does not unlock or fill a password
+ok   settings.silent outcome 打开静音操作 is not only the chip 静音操作
+ok   settings.silent outcome 打开静音操作 is a short specific line
+ok   settings.silent is not reportable as 已按这一笔做了
+ok   window.left notch line stays within eight characters
+ok   window.left preview before confirmation is only the waiting chip
+ok   window.left does not unlock or fill a password
+ok   window.left outcome 已到左半 is not only the chip 左半屏
+ok   window.left outcome 已到左半 is a short specific line
+ok   window.left is not reportable as 已按这一笔做了
+ok   window.left confirmed success is the result line
+ok   window.right notch line stays within eight characters
+ok   window.right preview before confirmation is only the waiting chip
+ok   window.right does not unlock or fill a password
+ok   window.right outcome 已到右半 is not only the chip 右半屏
+ok   window.right outcome 已到右半 is a short specific line
+ok   window.right is not reportable as 已按这一笔做了
+ok   window.right confirmed success is the result line
+ok   window.fill notch line stays within eight characters
+ok   window.fill preview before confirmation is only the waiting chip
+ok   window.fill does not unlock or fill a password
+ok   window.fill outcome 已铺满屏幕 is not only the chip 铺满屏幕
+ok   window.fill outcome 已铺满屏幕 is a short specific line
+ok   window.fill is not reportable as 已按这一笔做了
+ok   window.fill confirmed success is the result line
+ok   window.center notch line stays within eight characters
+ok   window.center preview before confirmation is only the waiting chip
+ok   window.center does not unlock or fill a password
+ok   window.center outcome 已居中 is not only the chip 居中
+ok   window.center outcome 已居中 is a short specific line
+ok   window.center is not reportable as 已按这一笔做了
+ok   window.center confirmed success is the result line
+ok   window.topLeft notch line stays within eight characters
+ok   window.topLeft preview before confirmation is only the waiting chip
+ok   window.topLeft does not unlock or fill a password
+ok   window.topLeft outcome 已到左上 is not only the chip 左上角
+ok   window.topLeft outcome 已到左上 is a short specific line
+ok   window.topLeft is not reportable as 已按这一笔做了
+ok   window.topLeft confirmed success is the result line
+ok   window.topRight notch line stays within eight characters
+ok   window.topRight preview before confirmation is only the waiting chip
+ok   window.topRight does not unlock or fill a password
+ok   window.topRight outcome 已到右上 is not only the chip 右上角
+ok   window.topRight outcome 已到右上 is a short specific line
+ok   window.topRight is not reportable as 已按这一笔做了
+ok   window.topRight confirmed success is the result line
+ok   window.bottomLeft notch line stays within eight characters
+ok   window.bottomLeft preview before confirmation is only the waiting chip
+ok   window.bottomLeft does not unlock or fill a password
+ok   window.bottomLeft outcome 已到左下 is not only the chip 左下角
+ok   window.bottomLeft outcome 已到左下 is a short specific line
+ok   window.bottomLeft is not reportable as 已按这一笔做了
+ok   window.bottomLeft confirmed success is the result line
+ok   window.bottomRight notch line stays within eight characters
+ok   window.bottomRight preview before confirmation is only the waiting chip
+ok   window.bottomRight does not unlock or fill a password
+ok   window.bottomRight outcome 已到右下 is not only the chip 右下角
+ok   window.bottomRight outcome 已到右下 is a short specific line
+ok   window.bottomRight is not reportable as 已按这一笔做了
+ok   window.bottomRight confirmed success is the result line
+ok   window.restore notch line stays within eight characters
+ok   window.restore preview before confirmation is only the waiting chip
+ok   window.restore does not unlock or fill a password
+ok   window.restore outcome 已还原 is not only the chip 还原
+ok   window.restore outcome 已还原 is a short specific line
+ok   window.restore is not reportable as 已按这一笔做了
+ok   window.restore confirmed success is the result line
+ok   window.collapse notch line stays within eight characters
+ok   window.collapse preview before confirmation is only the waiting chip
+ok   window.collapse does not unlock or fill a password
+ok   window.collapse outcome 已收起 is not only the chip 收起窗口
+ok   window.collapse outcome 已收起 is a short specific line
+ok   window.collapse is not reportable as 已按这一笔做了
+ok   window.collapse confirmed success is the result line
+ok   window.expand notch line stays within eight characters
+ok   window.expand preview before confirmation is only the waiting chip
+ok   window.expand does not unlock or fill a password
+ok   window.expand outcome 已展开 is not only the chip 展开窗口
+ok   window.expand outcome 已展开 is a short specific line
+ok   window.expand is not reportable as 已按这一笔做了
+ok   window.expand confirmed success is the result line
+ok   window.tuck notch line stays within eight characters
+ok   window.tuck preview before confirmation is only the waiting chip
+ok   window.tuck does not unlock or fill a password
+ok   window.tuck outcome 已收进刘海 is not only the chip 收进刘海
+ok   window.tuck outcome 已收进刘海 is a short specific line
+ok   window.tuck is not reportable as 已按这一笔做了
+ok   window.tuck confirmed success is the result line
+ok   window.untuck notch line stays within eight characters
+ok   window.untuck preview before confirmation is only the waiting chip
+ok   window.untuck does not unlock or fill a password
+ok   window.untuck outcome 已放回 is not only the chip 放回
+ok   window.untuck outcome 已放回 is a short specific line
+ok   window.untuck is not reportable as 已按这一笔做了
+ok   window.untuck confirmed success is the result line
+ok   window.pin notch line stays within eight characters
+ok   window.pin preview before confirmation is only the waiting chip
+ok   window.pin does not unlock or fill a password
+ok   window.pin outcome 这一笔没有做成 is not only the chip 置顶
+ok   window.pin outcome 这一笔没有做成 is a short specific line
+ok   window.pin is not reportable as 已按这一笔做了
+ok   window.pin has no result line and is not reported as done
+ok   window.unpin notch line stays within eight characters
+ok   window.unpin preview before confirmation is only the waiting chip
+ok   window.unpin does not unlock or fill a password
+ok   window.unpin outcome 已取消置顶 is not only the chip 取消置顶
+ok   window.unpin outcome 已取消置顶 is a short specific line
+ok   window.unpin is not reportable as 已按这一笔做了
+ok   window.unpin confirmed success is the result line
+ok   window.slideOver notch line stays within eight characters
+ok   window.slideOver preview before confirmation is only the waiting chip
+ok   window.slideOver does not unlock or fill a password
+ok   window.slideOver outcome 这一笔没有做成 is not only the chip 侧拉
+ok   window.slideOver outcome 这一笔没有做成 is a short specific line
+ok   window.slideOver is not reportable as 已按这一笔做了
+ok   window.slideOver has no result line and is not reported as done
+ok   window.leaveSlideOver notch line stays within eight characters
+ok   window.leaveSlideOver preview before confirmation is only the waiting chip
+ok   window.leaveSlideOver does not unlock or fill a password
+ok   window.leaveSlideOver outcome 这一笔没有做成 is not only the chip 退出侧拉
+ok   window.leaveSlideOver outcome 这一笔没有做成 is a short specific line
+ok   window.leaveSlideOver is not reportable as 已按这一笔做了
+ok   window.leaveSlideOver has no result line and is not reported as done
+ok   window.pip notch line stays within eight characters
+ok   window.pip preview before confirmation is only the waiting chip
+ok   window.pip does not unlock or fill a password
+ok   window.pip outcome 这一笔没有做成 is not only the chip 画中画
+ok   window.pip outcome 这一笔没有做成 is a short specific line
+ok   window.pip is not reportable as 已按这一笔做了
+ok   window.pip has no result line and is not reported as done
+ok   window.leavePip notch line stays within eight characters
+ok   window.leavePip preview before confirmation is only the waiting chip
+ok   window.leavePip does not unlock or fill a password
+ok   window.leavePip outcome 这一笔没有做成 is not only the chip 退出画中画
+ok   window.leavePip outcome 这一笔没有做成 is a short specific line
+ok   window.leavePip is not reportable as 已按这一笔做了
+ok   window.leavePip has no result line and is not reported as done
+ok   window.glance notch line stays within eight characters
+ok   window.glance does not unlock or fill a password
+ok   window.glance outcome 只看一眼 is not only the chip 看一眼
+ok   window.glance outcome 只看一眼 is a short specific line
+ok   window.glance is not reportable as 已按这一笔做了
+ok   window.choose notch line stays within eight characters
+ok   window.choose does not unlock or fill a password
+ok   window.choose outcome 已开窗口浏览 is not only the chip 选择窗口
+ok   window.choose outcome 已开窗口浏览 is a short specific line
+ok   window.choose is not reportable as 已按这一笔做了
+ok   window.chooseDisplay notch line stays within eight characters
+ok   window.chooseDisplay does not unlock or fill a password
+ok   window.chooseDisplay outcome 还没选 is not only the chip 选择屏幕
+ok   window.chooseDisplay outcome 还没选 is a short specific line
+ok   window.chooseDisplay is not reportable as 已按这一笔做了
+ok   window.moveToSelectedDisplay notch line stays within eight characters
+ok   window.moveToSelectedDisplay preview before confirmation is only the waiting chip
+ok   window.moveToSelectedDisplay does not unlock or fill a password
+ok   window.moveToSelectedDisplay outcome 已到这屏 is not only the chip 移到这屏
+ok   window.moveToSelectedDisplay outcome 已到这屏 is a short specific line
+ok   window.moveToSelectedDisplay is not reportable as 已按这一笔做了
+ok   window.moveToSelectedDisplay confirmed success is the result line
+ok   window.undo notch line stays within eight characters
+ok   window.undo preview before confirmation is only the waiting chip
+ok   window.undo does not unlock or fill a password
+ok   window.undo outcome 已撤销 is not only the chip 撤销
+ok   window.undo outcome 已撤销 is a short specific line
+ok   window.undo is not reportable as 已按这一笔做了
+ok   window.undo confirmed success is the result line
+ok   window.batchReview notch line stays within eight characters
+ok   window.batchReview does not unlock or fill a password
+ok   window.batchReview outcome 已开窗口浏览 is not only the chip 先看一遍
+ok   window.batchReview outcome 已开窗口浏览 is a short specific line
+ok   window.batchReview is not reportable as 已按这一笔做了
+ok   activity.music notch line stays within eight characters
+ok   activity.music does not unlock or fill a password
+ok   activity.music outcome 没有 is not only the chip 正在播放
+ok   activity.music outcome 没有 is a short specific line
+ok   activity.music is not reportable as 已按这一笔做了
+ok   activity.battery notch line stays within eight characters
+ok   activity.battery does not unlock or fill a password
+ok   activity.battery outcome 没有 is not only the chip 电量
+ok   activity.battery outcome 没有 is a short specific line
+ok   activity.battery is not reportable as 已按这一笔做了
+ok   activity.airdrop notch line stays within eight characters
+ok   activity.airdrop does not unlock or fill a password
+ok   activity.airdrop outcome 没有 is not only the chip 隔空投送
+ok   activity.airdrop outcome 没有 is a short specific line
+ok   activity.airdrop is not reportable as 已按这一笔做了
+ok   activity.route notch line stays within eight characters
+ok   activity.route does not unlock or fill a password
+ok   activity.route outcome 没有 is not only the chip 路线
+ok   activity.route outcome 没有 is a short specific line
+ok   activity.route is not reportable as 已按这一笔做了
+ok   activity.recording notch line stays within eight characters
+ok   activity.recording does not unlock or fill a password
+ok   activity.recording outcome 没有 is not only the chip 录音
+ok   activity.recording outcome 没有 is a short specific line
+ok   activity.recording is not reportable as 已按这一笔做了
+ok   activity.focus notch line stays within eight characters
+ok   activity.focus does not unlock or fill a password
+ok   activity.focus outcome 只看不计时 is not only the chip 番茄钟
+ok   activity.focus outcome 只看不计时 is a short specific line
+ok   activity.focus is not reportable as 已按这一笔做了
+ok   activity.previous notch line stays within eight characters
+ok   activity.previous does not unlock or fill a password
+ok   activity.previous outcome 没有 is not only the chip 上一条
+ok   activity.previous outcome 没有 is a short specific line
+ok   activity.previous is not reportable as 已按这一笔做了
+ok   activity.next notch line stays within eight characters
+ok   activity.next does not unlock or fill a password
+ok   activity.next outcome 没有 is not only the chip 下一条
+ok   activity.next outcome 没有 is a short specific line
+ok   activity.next is not reportable as 已按这一笔做了
+ok   activity.details notch line stays within eight characters
+ok   activity.details does not unlock or fill a password
+ok   activity.details outcome 没有 is not only the chip 活动详情
+ok   activity.details outcome 没有 is a short specific line
+ok   activity.details is not reportable as 已按这一笔做了
+ok   music.pause notch line stays within eight characters
+ok   music.pause preview before confirmation is only the waiting chip
+ok   music.pause does not unlock or fill a password
+ok   music.pause outcome 先不改播放 is not only the chip 暂停播放
+ok   music.pause outcome 先不改播放 is a short specific line
+ok   music.pause is not reportable as 已按这一笔做了
+ok   music.pause is refused as unsupported
+ok   music.pause readout is 先不改播放
+ok   music.resume notch line stays within eight characters
+ok   music.resume preview before confirmation is only the waiting chip
+ok   music.resume does not unlock or fill a password
+ok   music.resume outcome 先不改播放 is not only the chip 继续播放
+ok   music.resume outcome 先不改播放 is a short specific line
+ok   music.resume is not reportable as 已按这一笔做了
+ok   music.resume is refused as unsupported
+ok   music.resume readout is 先不改播放
+ok   music.nextTrack notch line stays within eight characters
+ok   music.nextTrack preview before confirmation is only the waiting chip
+ok   music.nextTrack does not unlock or fill a password
+ok   music.nextTrack outcome 先不改播放 is not only the chip 下一首
+ok   music.nextTrack outcome 先不改播放 is a short specific line
+ok   music.nextTrack is not reportable as 已按这一笔做了
+ok   music.nextTrack is refused as unsupported
+ok   music.nextTrack readout is 先不改播放
+ok   focus.start notch line stays within eight characters
+ok   focus.start preview before confirmation is only the waiting chip
+ok   focus.start does not unlock or fill a password
+ok   focus.start outcome 已开始专注 is not only the chip 开始番茄钟
+ok   focus.start outcome 已开始专注 is a short specific line
+ok   focus.start is not reportable as 已按这一笔做了
+ok   focus.start confirmed success is the result line
+ok   focus.pause notch line stays within eight characters
+ok   focus.pause preview before confirmation is only the waiting chip
+ok   focus.pause does not unlock or fill a password
+ok   focus.pause outcome 已暂停 is not only the chip 暂停
+ok   focus.pause outcome 已暂停 is a short specific line
+ok   focus.pause is not reportable as 已按这一笔做了
+ok   focus.pause confirmed success is the result line
+ok   focus.resume notch line stays within eight characters
+ok   focus.resume preview before confirmation is only the waiting chip
+ok   focus.resume does not unlock or fill a password
+ok   focus.resume outcome 已继续 is not only the chip 继续
+ok   focus.resume outcome 已继续 is a short specific line
+ok   focus.resume is not reportable as 已按这一笔做了
+ok   focus.resume confirmed success is the result line
+ok   usage.quota notch line stays within eight characters
+ok   usage.quota does not unlock or fill a password
+ok   usage.quota outcome 未提供 is not only the chip 账户额度
+ok   usage.quota outcome 未提供 is a short specific line
+ok   usage.quota is not reportable as 已按这一笔做了
+ok   usage.session notch line stays within eight characters
+ok   usage.session does not unlock or fill a password
+ok   usage.session outcome 未提供 is not only the chip 这次用量
+ok   usage.session outcome 未提供 is a short specific line
+ok   usage.session is not reportable as 已按这一笔做了
+ok   usage.context notch line stays within eight characters
+ok   usage.context does not unlock or fill a password
+ok   usage.context outcome 未提供 is not only the chip 上下文
+ok   usage.context outcome 未提供 is a short specific line
+ok   usage.context is not reportable as 已按这一笔做了
+ok   usage.accountActivity notch line stays within eight characters
+ok   usage.accountActivity does not unlock or fill a password
+ok   usage.accountActivity outcome 未提供 is not only the chip 账户活动
+ok   usage.accountActivity outcome 未提供 is a short specific line
+ok   usage.accountActivity is not reportable as 已按这一笔做了
+ok   usage.refresh notch line stays within eight characters
+ok   usage.refresh does not unlock or fill a password
+ok   usage.refresh outcome 未提供 is not only the chip 重新看用量
+ok   usage.refresh outcome 未提供 is a short specific line
+ok   usage.refresh is not reportable as 已按这一笔做了
+ok   usage.chooseAccount notch line stays within eight characters
+ok   usage.chooseAccount does not unlock or fill a password
+ok   usage.chooseAccount outcome 未提供 is not only the chip 选账户
+ok   usage.chooseAccount outcome 未提供 is a short specific line
+ok   usage.chooseAccount is not reportable as 已按这一笔做了
+ok   assistant.show notch line stays within eight characters
+ok   assistant.show does not unlock or fill a password
+ok   assistant.show outcome 没有 is not only the chip 编程会话
+ok   assistant.show outcome 没有 is a short specific line
+ok   assistant.show is not reportable as 已按这一笔做了
+ok   assistant.status notch line stays within eight characters
+ok   assistant.status does not unlock or fill a password
+ok   assistant.status outcome 没有 is not only the chip 会话状态
+ok   assistant.status outcome 没有 is a short specific line
+ok   assistant.status is not reportable as 已按这一笔做了
+ok   assistant.models notch line stays within eight characters
+ok   assistant.models does not unlock or fill a password
+ok   assistant.models outcome 未提供 is not only the chip 选模型
+ok   assistant.models outcome 未提供 is a short specific line
+ok   assistant.models is not reportable as 已按这一笔做了
+ok   assistant.effort notch line stays within eight characters
+ok   assistant.effort does not unlock or fill a password
+ok   assistant.effort outcome 未提供 is not only the chip 思考档位
+ok   assistant.effort outcome 未提供 is a short specific line
+ok   assistant.effort is not reportable as 已按这一笔做了
+ok   assistant.review notch line stays within eight characters
+ok   assistant.review does not unlock or fill a password
+ok   assistant.review outcome 没有 is not only the chip 看审阅
+ok   assistant.review outcome 没有 is a short specific line
+ok   assistant.review is not reportable as 已按这一笔做了
+ok   assistant.source notch line stays within eight characters
+ok   assistant.source preview before confirmation is only the waiting chip
+ok   assistant.source does not unlock or fill a password
+ok   assistant.source outcome 没有来源 is not only the chip 打开来源
+ok   assistant.source outcome 没有来源 is a short specific line
+ok   assistant.source is not reportable as 已按这一笔做了
+ok   assistant.source has no result line and is not reported as done
+ok   assistant.interrupt notch line stays within eight characters
+ok   assistant.interrupt preview before confirmation is only the waiting chip
+ok   assistant.interrupt does not unlock or fill a password
+ok   assistant.interrupt outcome 已显示停止 is not only the chip 停止这一轮
+ok   assistant.interrupt outcome 已显示停止 is a short specific line
+ok   assistant.interrupt is not reportable as 已按这一笔做了
+ok   assistant.interrupt confirmed success is the result line
+ok   privacy.cover notch line stays within eight characters
+ok   privacy.cover does not unlock or fill a password
+ok   privacy.cover outcome 还没选范围 is not only the chip 先遮住
+ok   privacy.cover outcome 还没选范围 is a short specific line
+ok   privacy.cover is not reportable as 已按这一笔做了
+ok   privacy.reveal notch line stays within eight characters
+ok   privacy.reveal does not unlock or fill a password
+ok   privacy.reveal outcome 要用原来的确认 is not only the chip 揭开遮挡
+ok   privacy.reveal outcome 要用原来的确认 is a short specific line
+ok   privacy.reveal is not reportable as 已按这一笔做了
+ok   privacy.reveal system confirmation does not unlock or fill a password
+ok   privacy.reveal does not unlock or fill a password
+ok   privacy.status notch line stays within eight characters
+ok   privacy.status does not unlock or fill a password
+ok   privacy.status outcome 还没选范围 is not only the chip 遮住没遮住
+ok   privacy.status outcome 还没选范围 is a short specific line
+ok   privacy.status is not reportable as 已按这一笔做了
+ok   input.pause notch line stays within eight characters
+ok   input.pause does not unlock or fill a password
+ok   input.pause outcome 输入还在 is not only the chip 先停一下
+ok   input.pause outcome 输入还在 is a short specific line
+ok   input.pause is not reportable as 已按这一笔做了
+ok   input.recenter notch line stays within eight characters
+ok   input.recenter does not unlock or fill a password
+ok   input.recenter outcome 要用原来的确认 is not only the chip 重新对准
+ok   input.recenter outcome 要用原来的确认 is a short specific line
+ok   input.recenter is not reportable as 已按这一笔做了
+ok   input.recenter system confirmation does not unlock or fill a password
+ok   input.profile notch line stays within eight characters
+ok   input.profile does not unlock or fill a password
+ok   input.profile outcome 还没录过 is not only the chip 口令档案
+ok   input.profile outcome 还没录过 is a short specific line
+ok   input.profile is not reportable as 已按这一笔做了
+ok   scene.reading notch line stays within eight characters
+ok   scene.reading preview before confirmation is only the waiting chip
+ok   scene.reading does not unlock or fill a password
+ok   scene.reading outcome 这一笔没有做成 is not only the chip 阅读排布
+ok   scene.reading outcome 这一笔没有做成 is a short specific line
+ok   scene.reading is not reportable as 已按这一笔做了
+ok   scene.reading has no result line and is not reported as done
+ok   scene.coding notch line stays within eight characters
+ok   scene.coding preview before confirmation is only the waiting chip
+ok   scene.coding does not unlock or fill a password
+ok   scene.coding outcome 这一笔没有做成 is not only the chip 编程排布
+ok   scene.coding outcome 这一笔没有做成 is a short specific line
+ok   scene.coding is not reportable as 已按这一笔做了
+ok   scene.coding has no result line and is not reported as done
+ok   scene.presentation notch line stays within eight characters
+ok   scene.presentation preview before confirmation is only the waiting chip
+ok   scene.presentation does not unlock or fill a password
+ok   scene.presentation outcome 这一笔没有做成 is not only the chip 演示排布
+ok   scene.presentation outcome 这一笔没有做成 is a short specific line
+ok   scene.presentation is not reportable as 已按这一笔做了
+ok   scene.presentation has no result line and is not reported as done
+ok   launcher.open notch line stays within eight characters
+ok   launcher.open does not unlock or fill a password
+ok   launcher.open outcome 已开主屏幕 is not only the chip 启动台
+ok   launcher.open outcome 已开主屏幕 is a short specific line
+ok   launcher.open is not reportable as 已按这一笔做了
+ok   launcher.home notch line stays within eight characters
+ok   launcher.home does not unlock or fill a password
+ok   launcher.home outcome 已开主屏幕 is not only the chip 主屏幕
+ok   launcher.home outcome 已开主屏幕 is a short specific line
+ok   launcher.home is not reportable as 已按这一笔做了
+ok   launcher.library notch line stays within eight characters
+ok   launcher.library does not unlock or fill a password
+ok   launcher.library outcome 已开资料库 is not only the chip App 资料库
+ok   launcher.library outcome 已开资料库 is a short specific line
+ok   launcher.library is not reportable as 已按这一笔做了
+ok   launcher.today notch line stays within eight characters
+ok   launcher.today does not unlock or fill a password
+ok   launcher.today outcome 已开今天 is not only the chip 今天
+ok   launcher.today outcome 已开今天 is a short specific line
+ok   launcher.today is not reportable as 已按这一笔做了
+ok   launcher.search notch line stays within eight characters
+ok   launcher.search does not unlock or fill a password
+ok   launcher.search outcome 已开搜索 is not only the chip 搜索
+ok   launcher.search outcome 已开搜索 is a short specific line
+ok   launcher.search is not reportable as 已按这一笔做了
+ok   launcher.nextPage notch line stays within eight characters
+ok   launcher.nextPage does not unlock or fill a password
+ok   launcher.nextPage outcome 已翻下一页 is not only the chip 下一页
+ok   launcher.nextPage outcome 已翻下一页 is a short specific line
+ok   launcher.nextPage is not reportable as 已按这一笔做了
+ok   launcher.previousPage notch line stays within eight characters
+ok   launcher.previousPage does not unlock or fill a password
+ok   launcher.previousPage outcome 已翻上一页 is not only the chip 上一页
+ok   launcher.previousPage outcome 已翻上一页 is a short specific line
+ok   launcher.previousPage is not reportable as 已按这一笔做了
+ok   launcher.back notch line stays within eight characters
+ok   launcher.back does not unlock or fill a password
+ok   launcher.back outcome 回到上一层 is not only the chip 返回上一层
+ok   launcher.back outcome 回到上一层 is a short specific line
+ok   launcher.back is not reportable as 已按这一笔做了
+ok   launcher.dismiss notch line stays within eight characters
+ok   launcher.dismiss does not unlock or fill a password
+ok   launcher.dismiss outcome 已关掉 is not only the chip 关掉启动台
+ok   launcher.dismiss outcome 已关掉 is a short specific line
+ok   launcher.dismiss is not reportable as 已按这一笔做了
+ok   launcher.openSelected notch line stays within eight characters
+ok   launcher.openSelected preview before confirmation is only the waiting chip
+ok   launcher.openSelected does not unlock or fill a password
+ok   launcher.openSelected outcome 还没选 is not only the chip 打开选中的
+ok   launcher.openSelected outcome 还没选 is a short specific line
+ok   launcher.openSelected is not reportable as 已按这一笔做了
+ok   launcher.openSelected has no result line and is not reported as done
+ok   launcher.openFolder notch line stays within eight characters
+ok   launcher.openFolder does not unlock or fill a password
+ok   launcher.openFolder outcome 已开文件夹 is not only the chip 打开文件夹
+ok   launcher.openFolder outcome 已开文件夹 is a short specific line
+ok   launcher.openFolder is not reportable as 已按这一笔做了
+ok   app.showSwitcher notch line stays within eight characters
+ok   app.showSwitcher does not unlock or fill a password
+ok   app.showSwitcher outcome 已开窗口浏览 is not only the chip 切换窗口
+ok   app.showSwitcher outcome 已开窗口浏览 is a short specific line
+ok   app.showSwitcher is not reportable as 已按这一笔做了
+ok   app.activateSelected notch line stays within eight characters
+ok   app.activateSelected preview before confirmation is only the waiting chip
+ok   app.activateSelected does not unlock or fill a password
+ok   app.activateSelected outcome 还没选 is not only the chip 打开这个
+ok   app.activateSelected outcome 还没选 is a short specific line
+ok   app.activateSelected is not reportable as 已按这一笔做了
+ok   app.activateSelected has no result line and is not reported as done
+ok   app.previous notch line stays within eight characters
+ok   app.previous preview before confirmation is only the waiting chip
+ok   app.previous does not unlock or fill a password
+ok   app.previous outcome 还没选 is not only the chip 上一个
+ok   app.previous outcome 还没选 is a short specific line
+ok   app.previous is not reportable as 已按这一笔做了
+ok   app.previous has no result line and is not reported as done
+ok   desktop.showSwitcher notch line stays within eight characters
+ok   desktop.showSwitcher does not unlock or fill a password
+ok   desktop.showSwitcher outcome 不代按键 is not only the chip 切换桌面
+ok   desktop.showSwitcher outcome 不代按键 is a short specific line
+ok   desktop.showSwitcher is not reportable as 已按这一笔做了
+ok   desktop.select notch line stays within eight characters
+ok   desktop.select preview before confirmation is only the waiting chip
+ok   desktop.select does not unlock or fill a password
+ok   desktop.select outcome 还没选 is not only the chip 这个桌面
+ok   desktop.select outcome 还没选 is a short specific line
+ok   desktop.select is not reportable as 已按这一笔做了
+ok   desktop.select has no result line and is not reported as done
+ok   desktop.missionControl notch line stays within eight characters
+ok   desktop.missionControl does not unlock or fill a password
+ok   desktop.missionControl outcome 不代按键 is not only the chip 调度中心
+ok   desktop.missionControl outcome 不代按键 is a short specific line
+ok   desktop.missionControl is not reportable as 已按这一笔做了
+ok   desktop.showDesktop notch line stays within eight characters
+ok   desktop.showDesktop does not unlock or fill a password
+ok   desktop.showDesktop outcome 不代按键 is not only the chip 显示桌面
+ok   desktop.showDesktop outcome 不代按键 is a short specific line
+ok   desktop.showDesktop is not reportable as 已按这一笔做了
+ok   window.magicTile notch line stays within eight characters
+ok   window.magicTile preview before confirmation is only the waiting chip
+ok   window.magicTile does not unlock or fill a password
+ok   window.magicTile outcome 已魔法平铺 is not only the chip 魔法平铺
+ok   window.magicTile outcome 已魔法平铺 is a short specific line
+ok   window.magicTile is not reportable as 已按这一笔做了
+ok   window.magicTile confirmed success is the result line
+ok   window.stripPrevious notch line stays within eight characters
+ok   window.stripPrevious does not unlock or fill a password
+ok   window.stripPrevious outcome 第 0 列 is not only the chip 卷轴上一个
+ok   window.stripPrevious outcome 第 0 列 is a short specific line
+ok   window.stripPrevious is not reportable as 已按这一笔做了
+ok   window.stripNext notch line stays within eight characters
+ok   window.stripNext does not unlock or fill a password
+ok   window.stripNext outcome 第 0 列 is not only the chip 卷轴下一个
+ok   window.stripNext outcome 第 0 列 is a short specific line
+ok   window.stripNext is not reportable as 已按这一笔做了
+ok   window.stripOverview notch line stays within eight characters
+ok   window.stripOverview does not unlock or fill a password
+ok   window.stripOverview outcome 第 0 列 is not only the chip 卷轴概览
+ok   window.stripOverview outcome 第 0 列 is a short specific line
+ok   window.stripOverview is not reportable as 已按这一笔做了
+ok   dictation.start notch line stays within eight characters
+ok   dictation.start does not unlock or fill a password
+ok   dictation.start outcome 没有草稿 is not only the chip 开始草稿
+ok   dictation.start outcome 没有草稿 is a short specific line
+ok   dictation.start is not reportable as 已按这一笔做了
+ok   dictation.stopCapture notch line stays within eight characters
+ok   dictation.stopCapture does not unlock or fill a password
+ok   dictation.stopCapture outcome 没有草稿 is not only the chip 草稿停在这
+ok   dictation.stopCapture outcome 没有草稿 is a short specific line
+ok   dictation.stopCapture is not reportable as 已按这一笔做了
+ok   dictation.nextCandidate notch line stays within eight characters
+ok   dictation.nextCandidate does not unlock or fill a password
+ok   dictation.nextCandidate outcome 没有草稿 is not only the chip 下一个说法
+ok   dictation.nextCandidate outcome 没有草稿 is a short specific line
+ok   dictation.nextCandidate is not reportable as 已按这一笔做了
+ok   dictation.retry notch line stays within eight characters
+ok   dictation.retry does not unlock or fill a password
+ok   dictation.retry outcome 没有草稿 is not only the chip 再来一次
+ok   dictation.retry outcome 没有草稿 is a short specific line
+ok   dictation.retry is not reportable as 已按这一笔做了
+ok   dictation.adopt notch line stays within eight characters
+ok   dictation.adopt preview before confirmation is only the waiting chip
+ok   dictation.adopt does not unlock or fill a password
+ok   dictation.adopt outcome 已采用草稿 is not only the chip 采用草稿
+ok   dictation.adopt outcome 已采用草稿 is a short specific line
+ok   dictation.adopt is not reportable as 已按这一笔做了
+ok   dictation.adopt confirmed success is the result line
+ok   dictation.edit notch line stays within eight characters
+ok   dictation.edit does not unlock or fill a password
+ok   dictation.edit outcome 没有草稿 is not only the chip 改这段字
+ok   dictation.edit outcome 没有草稿 is a short specific line
+ok   dictation.edit is not reportable as 已按这一笔做了
+ok   dictation.insertPhrase notch line stays within eight characters
+ok   dictation.insertPhrase preview before confirmation is only the waiting chip
+ok   dictation.insertPhrase does not unlock or fill a password
+ok   dictation.insertPhrase outcome 还没发送 is not only the chip 插入口令
+ok   dictation.insertPhrase outcome 还没发送 is a short specific line
+ok   dictation.insertPhrase is not reportable as 已按这一笔做了
+ok   dictation.insertPhrase confirmed success is the result line
+ok   dictation.discard notch line stays within eight characters
+ok   dictation.discard preview before confirmation is only the waiting chip
+ok   dictation.discard does not unlock or fill a password
+ok   dictation.discard outcome 已丢掉 is not only the chip 丢掉草稿
+ok   dictation.discard outcome 已丢掉 is a short specific line
+ok   dictation.discard is not reportable as 已按这一笔做了
+ok   dictation.discard confirmed success is the result line
+ok   dictation.enableWhisper notch line stays within eight characters
+ok   dictation.enableWhisper does not unlock or fill a password
+ok   dictation.enableWhisper outcome 要用原来的确认 is not only the chip 精细听写
+ok   dictation.enableWhisper outcome 要用原来的确认 is a short specific line
+ok   dictation.enableWhisper is not reportable as 已按这一笔做了
+ok   dictation.enableWhisper system confirmation does not unlock or fill a password
+ok   dictation.enableWhisper does not unlock or fill a password
+ok   assistant.chooseSession notch line stays within eight characters
+ok   assistant.chooseSession does not unlock or fill a password
+ok   assistant.chooseSession outcome 没有 is not only the chip 选会话
+ok   assistant.chooseSession outcome 没有 is a short specific line
+ok   assistant.chooseSession is not reportable as 已按这一笔做了
+ok   assistant.setModel notch line stays within eight characters
+ok   assistant.setModel preview before confirmation is only the waiting chip
+ok   assistant.setModel does not unlock or fill a password
+ok   assistant.setModel outcome 已记下模型 is not only the chip 下一轮模型
+ok   assistant.setModel outcome 已记下模型 is a short specific line
+ok   assistant.setModel is not reportable as 已按这一笔做了
+ok   assistant.setModel confirmed success is the result line
+ok   assistant.setEffort notch line stays within eight characters
+ok   assistant.setEffort preview before confirmation is only the waiting chip
+ok   assistant.setEffort does not unlock or fill a password
+ok   assistant.setEffort outcome 已记下档位 is not only the chip 下一轮档位
+ok   assistant.setEffort outcome 已记下档位 is a short specific line
+ok   assistant.setEffort is not reportable as 已按这一笔做了
+ok   assistant.setEffort confirmed success is the result line
+ok   assistant.sendDraft notch line stays within eight characters
+ok   assistant.sendDraft preview before confirmation is only the waiting chip
+ok   assistant.sendDraft does not unlock or fill a password
+ok   assistant.sendDraft outcome 还在这台 Mac is not only the chip 发送
+ok   assistant.sendDraft outcome 还在这台 Mac is a short specific line
+ok   assistant.sendDraft is not reportable as 已按这一笔做了
+ok   assistant.sendDraft confirmed success is the result line
+ok   assistant.steerDraft notch line stays within eight characters
+ok   assistant.steerDraft preview before confirmation is only the waiting chip
+ok   assistant.steerDraft does not unlock or fill a password
+ok   assistant.steerDraft outcome 补充还在等 is not only the chip 补充这句
+ok   assistant.steerDraft outcome 补充还在等 is a short specific line
+ok   assistant.steerDraft is not reportable as 已按这一笔做了
+ok   assistant.steerDraft confirmed success is the result line
+ok   assistant.showDiff notch line stays within eight characters
+ok   assistant.showDiff does not unlock or fill a password
+ok   assistant.showDiff outcome 没有 is not only the chip 看改动
+ok   assistant.showDiff outcome 没有 is a short specific line
+ok   assistant.showDiff is not reportable as 已按这一笔做了
+ok   assistant.requestApproval notch line stays within eight characters
+ok   assistant.requestApproval does not unlock or fill a password
+ok   assistant.requestApproval outcome 要用原来的确认 is not only the chip 请求批准
+ok   assistant.requestApproval outcome 要用原来的确认 is a short specific line
+ok   assistant.requestApproval is not reportable as 已按这一笔做了
+ok   assistant.requestApproval system confirmation does not unlock or fill a password
+ok   scene.conversation notch line stays within eight characters
+ok   scene.conversation does not unlock or fill a password
+ok   scene.conversation outcome 还没选范围 is not only the chip 先遮住聊天
+ok   scene.conversation outcome 还没选范围 is a short specific line
+ok   scene.conversation is not reportable as 已按这一笔做了
+ok   scene.resumeWork notch line stays within eight characters
+ok   scene.resumeWork does not unlock or fill a password
+ok   scene.resumeWork outcome 要用原来的确认 is not only the chip 回到刚才
+ok   scene.resumeWork outcome 要用原来的确认 is a short specific line
+ok   scene.resumeWork is not reportable as 已按这一笔做了
+ok   scene.resumeWork system confirmation does not unlock or fill a password
+ok   scene.presenter notch line stays within eight characters
+ok   scene.presenter preview before confirmation is only the waiting chip
+ok   scene.presenter does not unlock or fill a password
+ok   scene.presenter outcome 这一笔没有做成 is not only the chip 演示这一屏
+ok   scene.presenter outcome 这一笔没有做成 is a short specific line
+ok   scene.presenter is not reportable as 已按这一笔做了
+ok   scene.presenter has no result line and is not reported as done
+ok   scene.largeText notch line stays within eight characters
+ok   scene.largeText does not unlock or fill a password
+ok   scene.largeText outcome 不改系统字 is not only the chip 字大一点
+ok   scene.largeText outcome 不改系统字 is a short specific line
+ok   scene.largeText is not reportable as 已按这一笔做了
+ok   scene.accessibility notch line stays within eight characters
+ok   scene.accessibility does not unlock or fill a password
+ok   scene.accessibility outcome 不改辅助 is not only the chip 同一条路径
+ok   scene.accessibility outcome 不改辅助 is a short specific line
+ok   scene.accessibility is not reportable as 已按这一笔做了
+ok   privacy.panicLock notch line stays within eight characters
+ok   privacy.panicLock does not unlock or fill a password
+ok   privacy.panicLock outcome 要用原来的确认 is not only the chip 马上锁屏
+ok   privacy.panicLock outcome 要用原来的确认 is a short specific line
+ok   privacy.panicLock is not reportable as 已按这一笔做了
+ok   privacy.panicLock system confirmation does not unlock or fill a password
+ok   privacy.panicLock does not unlock or fill a password
+ok   privacy.awaySummary notch line stays within eight characters
+ok   privacy.awaySummary does not unlock or fill a password
+ok   privacy.awaySummary outcome 没有 is not only the chip 离开期间
+ok   privacy.awaySummary outcome 没有 is a short specific line
+ok   privacy.awaySummary is not reportable as 已按这一笔做了
+ok   privacy.selectScope notch line stays within eight characters
+ok   privacy.selectScope does not unlock or fill a password
+ok   privacy.selectScope outcome 还没选范围 is not only the chip 选遮住范围
+ok   privacy.selectScope outcome 还没选范围 is a short specific line
+ok   privacy.selectScope is not reportable as 已按这一笔做了
+ok   auth.settings notch line stays within eight characters
+ok   auth.settings does not unlock or fill a password
+ok   auth.settings outcome 不解锁 is not only the chip 解锁设置
+ok   auth.settings outcome 不解锁 is a short specific line
+ok   auth.settings is not reportable as 已按这一笔做了
+ok   auth.enroll notch line stays within eight characters
+ok   auth.enroll does not unlock or fill a password
+ok   auth.enroll outcome 要用原来的确认 is not only the chip 登记身份
+ok   auth.enroll outcome 要用原来的确认 is a short specific line
+ok   auth.enroll is not reportable as 已按这一笔做了
+ok   auth.enroll system confirmation does not unlock or fill a password
+ok   auth.enroll does not unlock or fill a password
+ok   auth.deleteEnrollment notch line stays within eight characters
+ok   auth.deleteEnrollment does not unlock or fill a password
+ok   auth.deleteEnrollment outcome 要用原来的确认 is not only the chip 删掉登记
+ok   auth.deleteEnrollment outcome 要用原来的确认 is a short specific line
+ok   auth.deleteEnrollment is not reportable as 已按这一笔做了
+ok   auth.deleteEnrollment system confirmation does not unlock or fill a password
+ok   auth.deleteEnrollment does not unlock or fill a password
+ok   auth.begin notch line stays within eight characters
+ok   auth.begin does not unlock or fill a password
+ok   auth.begin outcome 要用原来的确认 is not only the chip 开始确认
+ok   auth.begin outcome 要用原来的确认 is a short specific line
+ok   auth.begin is not reportable as 已按这一笔做了
+ok   auth.begin system confirmation does not unlock or fill a password
+ok   auth.begin does not unlock or fill a password
+ok   auth.cancel notch line stays within eight characters
+ok   auth.cancel does not unlock or fill a password
+ok   auth.cancel outcome 不解锁 is not only the chip 取消这次
+ok   auth.cancel outcome 不解锁 is a short specific line
+ok   auth.cancel is not reportable as 已按这一笔做了
+ok   auth.useSystem notch line stays within eight characters
+ok   auth.useSystem does not unlock or fill a password
+ok   auth.useSystem outcome 不解锁 is not only the chip 用系统确认
+ok   auth.useSystem outcome 不解锁 is a short specific line
+ok   auth.useSystem is not reportable as 已按这一笔做了
+ok   auth.authorizeSession notch line stays within eight characters
+ok   auth.authorizeSession does not unlock or fill a password
+ok   auth.authorizeSession outcome 要用原来的确认 is not only the chip 许可这次
+ok   auth.authorizeSession outcome 要用原来的确认 is a short specific line
+ok   auth.authorizeSession is not reportable as 已按这一笔做了
+ok   auth.authorizeSession system confirmation does not unlock or fill a password
+ok   auth.authorizeSession does not unlock or fill a password
+ok   auth.revokeSession notch line stays within eight characters
+ok   auth.revokeSession does not unlock or fill a password
+ok   auth.revokeSession outcome 没有许可 is not only the chip 取消这次许可
+ok   auth.revokeSession outcome 没有许可 is a short specific line
+ok   auth.revokeSession is not reportable as 已按这一笔做了
+ok   auth.lab notch line stays within eight characters
+ok   auth.lab does not unlock or fill a password
+ok   auth.lab outcome 只做实验 is not only the chip 人脸实验
+ok   auth.lab outcome 只做实验 is a short specific line
+ok   auth.lab is not reportable as 已按这一笔做了
+ok   auth.lab system confirmation does not unlock or fill a password
+ok   auth.lab does not unlock or fill a password
+ok   auth.profiles notch line stays within eight characters
+ok   auth.profiles does not unlock or fill a password
+ok   auth.profiles outcome 要用原来的确认 is not only the chip 确认档案
+ok   auth.profiles outcome 要用原来的确认 is a short specific line
+ok   auth.profiles is not reportable as 已按这一笔做了
+ok   auth.profiles system confirmation does not unlock or fill a password
+ok   auth.profiles does not unlock or fill a password
+ok   device.bind notch line stays within eight characters
+ok   device.bind does not unlock or fill a password
+ok   device.bind outcome 要用原来的确认 is not only the chip 绑定设备
+ok   device.bind outcome 要用原来的确认 is a short specific line
+ok   device.bind is not reportable as 已按这一笔做了
+ok   device.bind system confirmation does not unlock or fill a password
+ok   device.bind does not unlock or fill a password
+ok   device.revoke notch line stays within eight characters
+ok   device.revoke does not unlock or fill a password
+ok   device.revoke outcome 要用原来的确认 is not only the chip 解除绑定
+ok   device.revoke outcome 要用原来的确认 is a short specific line
+ok   device.revoke is not reportable as 已按这一笔做了
+ok   device.revoke system confirmation does not unlock or fill a password
+ok   device.revoke does not unlock or fill a password
+ok   device.status notch line stays within eight characters
+ok   device.status does not unlock or fill a password
+ok   device.status outcome 未知 is not only the chip 设备还未知
+ok   device.status outcome 未知 is a short specific line
+ok   device.status is not reportable as 已按这一笔做了
+ok   device.range notch line stays within eight characters
+ok   device.range does not unlock or fill a password
+ok   device.range outcome 要用原来的确认 is not only the chip 看一下远近
+ok   device.range outcome 要用原来的确认 is a short specific line
+ok   device.range is not reportable as 已按这一笔做了
+ok   device.range system confirmation does not unlock or fill a password
+ok   device.range does not unlock or fill a password
+ok   credential.chooseAlias notch line stays within eight characters
+ok   credential.chooseAlias does not unlock or fill a password
+ok   credential.chooseAlias outcome 还没选 is not only the chip 选一个名字
+ok   credential.chooseAlias outcome 还没选 is a short specific line
+ok   credential.chooseAlias is not reportable as 已按这一笔做了
+ok   credential.secretPhraseLab notch line stays within eight characters
+ok   credential.secretPhraseLab does not unlock or fill a password
+ok   credential.secretPhraseLab outcome 要用原来的确认 is not only the chip 口令实验
+ok   credential.secretPhraseLab outcome 要用原来的确认 is a short specific line
+ok   credential.secretPhraseLab is not reportable as 已按这一笔做了
+ok   credential.secretPhraseLab system confirmation does not unlock or fill a password
+ok   credential.secretPhraseLab does not unlock or fill a password
+ok   carplay.enter notch line stays within eight characters
+ok   carplay.enter preview before confirmation is only the waiting chip
+ok   carplay.enter does not unlock or fill a password
+ok   carplay.enter outcome 还不能接收 is not only the chip 进入车载
+ok   carplay.enter outcome 还不能接收 is a short specific line
+ok   carplay.enter is not reportable as 已按这一笔做了
+ok   carplay.enter does not start a receiver
+ok   carplay.enter readout is 还不能接收
+ok   carplay.enter leaves the receiver disconnected
+ok   carplay.exit notch line stays within eight characters
+ok   carplay.exit preview before confirmation is only the waiting chip
+ok   carplay.exit does not unlock or fill a password
+ok   carplay.exit outcome 还不能接收 is not only the chip 离开车载
+ok   carplay.exit outcome 还不能接收 is a short specific line
+ok   carplay.exit is not reportable as 已按这一笔做了
+ok   carplay.exit does not start a receiver
+ok   carplay.exit readout is 还不能接收
+ok   carplay.exit leaves the receiver disconnected
+ok   the outcome loop covered all 142 commands
+outcome loop covered 142 commands
+ok   notch phrase stays within eight characters: 离屏幕近了
+ok   notch phrase does not diagnose or claim a measurement: 离屏幕近了
+ok   notch phrase stays within eight characters: 头低久了
+ok   notch phrase does not diagnose or claim a measurement: 头低久了
+ok   notch phrase stays within eight characters: 近了，头低久了
+ok   notch phrase does not diagnose or claim a measurement: 近了，头低久了
+ok   the eye candidate is the existing short line
+ok   the posture candidate is one short line
+ok   both facts stay one notch line
+ok   sustained close and a level head is an eye reminder, not a claim that the neck is fine
+ok   sustained close and a level head is an eye reminder, not a claim that the neck is fine stays off the lock, the timer, and any measurement
+ok   not close and a long downward head is a posture reminder
+ok   not close and a long downward head is a posture reminder stays off the lock, the timer, and any measurement
+ok   an unknown distance with a long downward head is a posture reminder and stays not far enough
+ok   an unknown distance with a long downward head is a posture reminder and stays not far enough stays off the lock, the timer, and any measurement
+ok   sustained close and a long downward head are one notch line
+ok   sustained close and a long downward head are one notch line stays off the lock, the timer, and any measurement
+ok   a glance down at the keyboard does not remind (unknown)
+ok   a glance down at the keyboard does not remind (unknown) stays off the lock, the timer, and any measurement
+ok   a glance down at the keyboard does not remind (notNear)
+ok   a glance down at the keyboard does not remind (notNear) stays off the lock, the timer, and any measurement
+ok   a glance down at the keyboard does not remind (nearSustained)
+ok   a glance down at the keyboard does not remind (nearSustained) stays off the lock, the timer, and any measurement
+ok   noTracking with an unknown eye stays unknown
+ok   noTracking with an unknown eye stays unknown stays off the lock, the timer, and any measurement
+ok   noTracking does not turn a not-close look into a posture
+ok   noTracking does not turn a not-close look into a posture stays off the lock, the timer, and any measurement
+ok   noTracking leaves the head cell unknown and still allows the eye reminder
+ok   noTracking leaves the head cell unknown and still allows the eye reminder stays off the lock, the timer, and any measurement
+ok   otherDevice with an unknown eye stays unknown
+ok   otherDevice with an unknown eye stays unknown stays off the lock, the timer, and any measurement
+ok   otherDevice does not turn a not-close look into a posture
+ok   otherDevice does not turn a not-close look into a posture stays off the lock, the timer, and any measurement
+ok   otherDevice leaves the head cell unknown and still allows the eye reminder
+ok   otherDevice leaves the head cell unknown and still allows the eye reminder stays off the lock, the timer, and any measurement
+ok   a covered camera drops a stale close reading and does not call it far enough
+ok   a covered camera drops a stale close reading and does not call it far enough stays off the lock, the timer, and any measurement
+ok   a covered camera does not keep a not-close reading
+ok   a covered camera does not keep a not-close reading stays off the lock, the timer, and any measurement
+ok   a covered camera with a long downward head is only the posture reminder
+ok   a covered camera with a long downward head is only the posture reminder stays off the lock, the timer, and any measurement
+ok   a covered camera and no head tracking leave both cells unknown
+ok   a covered camera and no head tracking leave both cells unknown stays off the lock, the timer, and any measurement
+ok   a covered camera and headphones on another device leave both cells unknown
+ok   a covered camera and headphones on another device leave both cells unknown stays off the lock, the timer, and any measurement
+ok   a level head with an unknown distance is not written as upright or far enough
+ok   a level head with an unknown distance is not written as upright or far enough stays off the lock, the timer, and any measurement
+ok   not close and level does not remind and is not written as far enough
+ok   not close and level does not remind and is not written as far enough stays off the lock, the timer, and any measurement
+ok   rest does not add an eye reminder
+ok   rest does not add an eye reminder stays off the lock, the timer, and any measurement
+ok   rest does not add a posture reminder
+ok   rest does not add a posture reminder stays off the lock, the timer, and any measurement
+ok   rest does not add a second combined reminder
+ok   rest does not add a second combined reminder stays off the lock, the timer, and any measurement
+ok   focus keeps the timer running while the posture reminder shows
+ok   focus keeps the timer running while the posture reminder shows stays off the lock, the timer, and any measurement
+ok   focus keeps the timer running while the eye reminder shows
+ok   focus keeps the timer running while the eye reminder shows stays off the lock, the timer, and any measurement
+ok   focus keeps the timer running for the one combined line
+ok   focus keeps the timer running for the one combined line stays off the lock, the timer, and any measurement
+ok   headphones on this Mac and someone leaving do not change posture and do not cancel the away lock
+ok   headphones are not an identity and do not unlock
+ok   looking at the timer does not start it
+ok   a glance does not activate the window
+ok   filling the visible frame is not system fullscreen
+ok   an identical hook preview does not write
+ok   a different hook preview only describes the replacement
+ok   a missing hook proposal is refused
+ok   hook preview does not write the user home
+ok   posture lines stay the short candidates and are not a hardware pass
+ok   notch line stays within eight characters: ui.windows 窗口
+ok   notch line stays within eight characters: ui.activities 实时活动
+ok   notch line stays within eight characters: ui.usage 用量
+ok   notch line stays within eight characters: ui.settings 设置
+ok   notch line stays within eight characters: nav.previous 上一项
+ok   notch line stays within eight characters: nav.next 下一项
+ok   notch line stays within eight characters: nav.back 返回
+ok   notch line stays within eight characters: nav.cancel 取消
+ok   notch line stays within eight characters: nav.select 选这个
+ok   notch line stays within eight characters: nav.help 怎么用
+ok   notch line stays within eight characters: settings.appearance 外观
+ok   notch line stays within eight characters: settings.windows 窗口设置
+ok   notch line stays within eight characters: settings.shortcuts 快捷键
+ok   notch line stays within eight characters: settings.permissions 权限
+ok   notch line stays within eight characters: settings.privacy 隐私
+ok   notch line stays within eight characters: settings.silent 静音操作
+ok   notch line stays within eight characters: window.left 左半屏
+ok   notch line stays within eight characters: window.right 右半屏
+ok   notch line stays within eight characters: window.fill 铺满屏幕
+ok   notch line stays within eight characters: window.center 居中
+ok   notch line stays within eight characters: window.topLeft 左上角
+ok   notch line stays within eight characters: window.topRight 右上角
+ok   notch line stays within eight characters: window.bottomLeft 左下角
+ok   notch line stays within eight characters: window.bottomRight 右下角
+ok   notch line stays within eight characters: window.restore 还原
+ok   notch line stays within eight characters: window.collapse 收起窗口
+ok   notch line stays within eight characters: window.expand 展开窗口
+ok   notch line stays within eight characters: window.tuck 收进刘海
+ok   notch line stays within eight characters: window.untuck 放回
+ok   notch line stays within eight characters: window.pin 置顶
+ok   notch line stays within eight characters: window.unpin 取消置顶
+ok   notch line stays within eight characters: window.slideOver 侧拉
+ok   notch line stays within eight characters: window.leaveSlideOver 退出侧拉
+ok   notch line stays within eight characters: window.pip 画中画
+ok   notch line stays within eight characters: window.leavePip 退出画中画
+ok   notch line stays within eight characters: window.glance 看一眼
+ok   notch line stays within eight characters: window.choose 选择窗口
+ok   notch line stays within eight characters: window.chooseDisplay 选择屏幕
+ok   notch line stays within eight characters: window.moveToSelectedDisplay 移到这屏
+ok   notch line stays within eight characters: window.undo 撤销
+ok   notch line stays within eight characters: window.batchReview 先看一遍
+ok   notch line stays within eight characters: activity.music 正在播放
+ok   notch line stays within eight characters: activity.battery 电量
+ok   notch line stays within eight characters: activity.airdrop 隔空投送
+ok   notch line stays within eight characters: activity.route 路线
+ok   notch line stays within eight characters: activity.recording 录音
+ok   notch line stays within eight characters: activity.focus 番茄钟
+ok   notch line stays within eight characters: activity.previous 上一条
+ok   notch line stays within eight characters: activity.next 下一条
+ok   notch line stays within eight characters: activity.details 活动详情
+ok   notch line stays within eight characters: music.pause 暂停播放
+ok   notch line stays within eight characters: music.resume 继续播放
+ok   notch line stays within eight characters: music.nextTrack 下一首
+ok   notch line stays within eight characters: focus.start 开始番茄钟
+ok   notch line stays within eight characters: focus.pause 暂停
+ok   notch line stays within eight characters: focus.resume 继续
+ok   notch line stays within eight characters: usage.quota 账户额度
+ok   notch line stays within eight characters: usage.session 这次用量
+ok   notch line stays within eight characters: usage.context 上下文
+ok   notch line stays within eight characters: usage.accountActivity 账户活动
+ok   notch line stays within eight characters: usage.refresh 重新看用量
+ok   notch line stays within eight characters: usage.chooseAccount 选账户
+ok   notch line stays within eight characters: assistant.show 编程会话
+ok   notch line stays within eight characters: assistant.status 会话状态
+ok   notch line stays within eight characters: assistant.models 选模型
+ok   notch line stays within eight characters: assistant.effort 思考档位
+ok   notch line stays within eight characters: assistant.review 看审阅
+ok   notch line stays within eight characters: assistant.source 打开来源
+ok   notch line stays within eight characters: assistant.interrupt 停止这一轮
+ok   notch line stays within eight characters: privacy.cover 先遮住
+ok   notch line stays within eight characters: privacy.reveal 揭开遮挡
+ok   notch line stays within eight characters: privacy.status 遮住没遮住
+ok   notch line stays within eight characters: input.pause 先停一下
+ok   notch line stays within eight characters: input.recenter 重新对准
+ok   notch line stays within eight characters: input.profile 口令档案
+ok   notch line stays within eight characters: scene.reading 阅读排布
+ok   notch line stays within eight characters: scene.coding 编程排布
+ok   notch line stays within eight characters: scene.presentation 演示排布
+ok   notch line stays within eight characters: launcher.open 启动台
+ok   notch line stays within eight characters: launcher.home 主屏幕
+ok   notch line stays within eight characters: launcher.library App 资料库
+ok   notch line stays within eight characters: launcher.today 今天
+ok   notch line stays within eight characters: launcher.search 搜索
+ok   notch line stays within eight characters: launcher.nextPage 下一页
+ok   notch line stays within eight characters: launcher.previousPage 上一页
+ok   notch line stays within eight characters: launcher.back 返回上一层
+ok   notch line stays within eight characters: launcher.dismiss 关掉启动台
+ok   notch line stays within eight characters: launcher.openSelected 打开选中的
+ok   notch line stays within eight characters: launcher.openFolder 打开文件夹
+ok   notch line stays within eight characters: app.showSwitcher 切换窗口
+ok   notch line stays within eight characters: app.activateSelected 打开这个
+ok   notch line stays within eight characters: app.previous 上一个
+ok   notch line stays within eight characters: desktop.showSwitcher 切换桌面
+ok   notch line stays within eight characters: desktop.select 这个桌面
+ok   notch line stays within eight characters: desktop.missionControl 调度中心
+ok   notch line stays within eight characters: desktop.showDesktop 显示桌面
+ok   notch line stays within eight characters: window.magicTile 魔法平铺
+ok   notch line stays within eight characters: window.stripPrevious 卷轴上一个
+ok   notch line stays within eight characters: window.stripNext 卷轴下一个
+ok   notch line stays within eight characters: window.stripOverview 卷轴概览
+ok   notch line stays within eight characters: dictation.start 开始草稿
+ok   notch line stays within eight characters: dictation.stopCapture 草稿停在这
+ok   notch line stays within eight characters: dictation.nextCandidate 下一个说法
+ok   notch line stays within eight characters: dictation.retry 再来一次
+ok   notch line stays within eight characters: dictation.adopt 采用草稿
+ok   notch line stays within eight characters: dictation.edit 改这段字
+ok   notch line stays within eight characters: dictation.insertPhrase 插入口令
+ok   notch line stays within eight characters: dictation.discard 丢掉草稿
+ok   notch line stays within eight characters: dictation.enableWhisper 精细听写
+ok   notch line stays within eight characters: assistant.chooseSession 选会话
+ok   notch line stays within eight characters: assistant.setModel 下一轮模型
+ok   notch line stays within eight characters: assistant.setEffort 下一轮档位
+ok   notch line stays within eight characters: assistant.sendDraft 发送
+ok   notch line stays within eight characters: assistant.steerDraft 补充这句
+ok   notch line stays within eight characters: assistant.showDiff 看改动
+ok   notch line stays within eight characters: assistant.requestApproval 请求批准
+ok   notch line stays within eight characters: scene.conversation 先遮住聊天
+ok   notch line stays within eight characters: scene.resumeWork 回到刚才
+ok   notch line stays within eight characters: scene.presenter 演示这一屏
+ok   notch line stays within eight characters: scene.largeText 字大一点
+ok   notch line stays within eight characters: scene.accessibility 同一条路径
+ok   notch line stays within eight characters: privacy.panicLock 马上锁屏
+ok   notch line stays within eight characters: privacy.awaySummary 离开期间
+ok   notch line stays within eight characters: privacy.selectScope 选遮住范围
+ok   notch line stays within eight characters: auth.settings 解锁设置
+ok   notch line stays within eight characters: auth.enroll 登记身份
+ok   notch line stays within eight characters: auth.deleteEnrollment 删掉登记
+ok   notch line stays within eight characters: auth.begin 开始确认
+ok   notch line stays within eight characters: auth.cancel 取消这次
+ok   notch line stays within eight characters: auth.useSystem 用系统确认
+ok   notch line stays within eight characters: auth.authorizeSession 许可这次
+ok   notch line stays within eight characters: auth.revokeSession 取消这次许可
+ok   notch line stays within eight characters: auth.lab 人脸实验
+ok   notch line stays within eight characters: auth.profiles 确认档案
+ok   notch line stays within eight characters: device.bind 绑定设备
+ok   notch line stays within eight characters: device.revoke 解除绑定
+ok   notch line stays within eight characters: device.status 设备还未知
+ok   notch line stays within eight characters: device.range 看一下远近
+ok   notch line stays within eight characters: credential.chooseAlias 选一个名字
+ok   notch line stays within eight characters: credential.secretPhraseLab 口令实验
+ok   notch line stays within eight characters: carplay.enter 进入车载
+ok   notch line stays within eight characters: carplay.exit 离开车载
+ok   an unknown command has no invented line
+ok   CarPlay chip names the request
+ok   CarPlay says it cannot receive
+ok   pause chip names the request
+ok   playback stays unchanged until an engine exists
+ok   usage.quota with no reading stays 未提供
+ok   usage.quota is not invented as 0 or 100%
+ok   usage.session with no reading stays 未提供
+ok   usage.session is not invented as 0 or 100%
+ok   usage.context with no reading stays 未提供
+ok   usage.context is not invented as 0 or 100%
+ok   usage.accountActivity with no reading stays 未提供
+ok   usage.accountActivity is not invented as 0 or 100%
+ok   usage.refresh with no reading stays 未提供
+ok   usage.refresh is not invented as 0 or 100%
+ok   activity.music with nothing playing says 没有
+ok   activity.battery with nothing playing says 没有
+ok   activity.airdrop with nothing playing says 没有
+ok   activity.route with nothing playing says 没有
+ok   activity.recording with nothing playing says 没有
+ok   an unread device stays unknown
+ok   a real quota reading is kept
+ok   another usage cell stays unprovided
+ok   help stays a short line
+ok   desktop.showDesktop does not claim a system key was pressed
+ok   desktop.missionControl does not claim a system key was pressed
+ok   desktop.showSwitcher does not claim a system key was pressed
+ok   the activity list starts at music
+ok   next and previous stay on the list
+ok   previous from the first item wraps to the last
+ok   next from the last item wraps to the first
+ok   an empty activity stays 没有 and does not play
+ok   a present activity names itself and does not start playback
+ok   activity next and previous move one step
+ok   the strip column moves without tiling windows
+ok   the strip column can move before the first column without tiling
+ok   strip next and previous only change the column
+ok   overview reads the column
+ok   launcher.openSelected needs a chosen item
+ok   launcher.openSelected does not open an app or switch a space
+ok   launcher.openSelected says nothing is chosen
+ok   app.activateSelected needs a chosen item
+ok   app.activateSelected does not open an app or switch a space
+ok   app.activateSelected says nothing is chosen
+ok   app.previous needs a chosen item
+ok   app.previous does not open an app or switch a space
+ok   app.previous says nothing is chosen
+ok   desktop.select needs a chosen item
+ok   desktop.select does not open an app or switch a space
+ok   desktop.select says nothing is chosen
+ok   credential.chooseAlias needs a chosen item
+ok   credential.chooseAlias does not open an app or switch a space
+ok   credential.chooseAlias says nothing is chosen
+ok   a window command is not an app choice
+ok   the empty choice line stays short
+ok   large text does not change the system size
+ok   auth settings does not unlock
+ok   revoke does not invent a session
+ok   auth.settings does not unlock, hold a secret, or type one
+ok   auth.settings does not synthesize a key or call a private unlock
+ok   auth.settings does not record a voice or run the matched command
+ok   auth.settings does not bind a device or open a radio session
+ok   auth.settings does not connect a CarPlay receiver
+ok   security line stays within eight characters: auth.settings
+ok   auth.enroll does not unlock, hold a secret, or type one
+ok   auth.enroll does not synthesize a key or call a private unlock
+ok   auth.enroll does not record a voice or run the matched command
+ok   auth.enroll does not bind a device or open a radio session
+ok   auth.enroll does not connect a CarPlay receiver
+ok   security line stays within eight characters: auth.enroll
+ok   auth.enroll hands off without claiming the chip finished it
+ok   auth.deleteEnrollment does not unlock, hold a secret, or type one
+ok   auth.deleteEnrollment does not synthesize a key or call a private unlock
+ok   auth.deleteEnrollment does not record a voice or run the matched command
+ok   auth.deleteEnrollment does not bind a device or open a radio session
+ok   auth.deleteEnrollment does not connect a CarPlay receiver
+ok   security line stays within eight characters: auth.deleteEnrollment
+ok   auth.deleteEnrollment hands off without claiming the chip finished it
+ok   auth.begin does not unlock, hold a secret, or type one
+ok   auth.begin does not synthesize a key or call a private unlock
+ok   auth.begin does not record a voice or run the matched command
+ok   auth.begin does not bind a device or open a radio session
+ok   auth.begin does not connect a CarPlay receiver
+ok   security line stays within eight characters: auth.begin
+ok   auth.begin hands off without claiming the chip finished it
+ok   auth.cancel does not unlock, hold a secret, or type one
+ok   auth.cancel does not synthesize a key or call a private unlock
+ok   auth.cancel does not record a voice or run the matched command
+ok   auth.cancel does not bind a device or open a radio session
+ok   auth.cancel does not connect a CarPlay receiver
+ok   security line stays within eight characters: auth.cancel
+ok   auth.useSystem does not unlock, hold a secret, or type one
+ok   auth.useSystem does not synthesize a key or call a private unlock
+ok   auth.useSystem does not record a voice or run the matched command
+ok   auth.useSystem does not bind a device or open a radio session
+ok   auth.useSystem does not connect a CarPlay receiver
+ok   security line stays within eight characters: auth.useSystem
+ok   auth.useSystem hands off without claiming the chip finished it
+ok   auth.authorizeSession does not unlock, hold a secret, or type one
+ok   auth.authorizeSession does not synthesize a key or call a private unlock
+ok   auth.authorizeSession does not record a voice or run the matched command
+ok   auth.authorizeSession does not bind a device or open a radio session
+ok   auth.authorizeSession does not connect a CarPlay receiver
+ok   security line stays within eight characters: auth.authorizeSession
+ok   auth.authorizeSession hands off without claiming the chip finished it
+ok   auth.revokeSession does not unlock, hold a secret, or type one
+ok   auth.revokeSession does not synthesize a key or call a private unlock
+ok   auth.revokeSession does not record a voice or run the matched command
+ok   auth.revokeSession does not bind a device or open a radio session
+ok   auth.revokeSession does not connect a CarPlay receiver
+ok   security line stays within eight characters: auth.revokeSession
+ok   auth.lab does not unlock, hold a secret, or type one
+ok   auth.lab does not synthesize a key or call a private unlock
+ok   auth.lab does not record a voice or run the matched command
+ok   auth.lab does not bind a device or open a radio session
+ok   auth.lab does not connect a CarPlay receiver
+ok   security line stays within eight characters: auth.lab
+ok   auth.lab hands off without claiming the chip finished it
+ok   auth.profiles does not unlock, hold a secret, or type one
+ok   auth.profiles does not synthesize a key or call a private unlock
+ok   auth.profiles does not record a voice or run the matched command
+ok   auth.profiles does not bind a device or open a radio session
+ok   auth.profiles does not connect a CarPlay receiver
+ok   security line stays within eight characters: auth.profiles
+ok   auth.profiles hands off without claiming the chip finished it
+ok   device.bind does not unlock, hold a secret, or type one
+ok   device.bind does not synthesize a key or call a private unlock
+ok   device.bind does not record a voice or run the matched command
+ok   device.bind does not bind a device or open a radio session
+ok   device.bind does not connect a CarPlay receiver
+ok   security line stays within eight characters: device.bind
+ok   device.bind hands off without claiming the chip finished it
+ok   device.revoke does not unlock, hold a secret, or type one
+ok   device.revoke does not synthesize a key or call a private unlock
+ok   device.revoke does not record a voice or run the matched command
+ok   device.revoke does not bind a device or open a radio session
+ok   device.revoke does not connect a CarPlay receiver
+ok   security line stays within eight characters: device.revoke
+ok   device.revoke hands off without claiming the chip finished it
+ok   device.status does not unlock, hold a secret, or type one
+ok   device.status does not synthesize a key or call a private unlock
+ok   device.status does not record a voice or run the matched command
+ok   device.status does not bind a device or open a radio session
+ok   device.status does not connect a CarPlay receiver
+ok   security line stays within eight characters: device.status
+ok   device.range does not unlock, hold a secret, or type one
+ok   device.range does not synthesize a key or call a private unlock
+ok   device.range does not record a voice or run the matched command
+ok   device.range does not bind a device or open a radio session
+ok   device.range does not connect a CarPlay receiver
+ok   security line stays within eight characters: device.range
+ok   device.range hands off without claiming the chip finished it
+ok   credential.chooseAlias does not unlock, hold a secret, or type one
+ok   credential.chooseAlias does not synthesize a key or call a private unlock
+ok   credential.chooseAlias does not record a voice or run the matched command
+ok   credential.chooseAlias does not bind a device or open a radio session
+ok   credential.chooseAlias does not connect a CarPlay receiver
+ok   security line stays within eight characters: credential.chooseAlias
+ok   credential.secretPhraseLab does not unlock, hold a secret, or type one
+ok   credential.secretPhraseLab does not synthesize a key or call a private unlock
+ok   credential.secretPhraseLab does not record a voice or run the matched command
+ok   credential.secretPhraseLab does not bind a device or open a radio session
+ok   credential.secretPhraseLab does not connect a CarPlay receiver
+ok   security line stays within eight characters: credential.secretPhraseLab
+ok   credential.secretPhraseLab hands off without claiming the chip finished it
+ok   carplay.enter does not unlock, hold a secret, or type one
+ok   carplay.enter does not synthesize a key or call a private unlock
+ok   carplay.enter does not record a voice or run the matched command
+ok   carplay.enter does not bind a device or open a radio session
+ok   carplay.enter does not connect a CarPlay receiver
+ok   security line stays within eight characters: carplay.enter
+ok   carplay.exit does not unlock, hold a secret, or type one
+ok   carplay.exit does not synthesize a key or call a private unlock
+ok   carplay.exit does not record a voice or run the matched command
+ok   carplay.exit does not bind a device or open a radio session
+ok   carplay.exit does not connect a CarPlay receiver
+ok   security line stays within eight characters: carplay.exit
+ok   privacy.reveal does not unlock, hold a secret, or type one
+ok   privacy.reveal does not synthesize a key or call a private unlock
+ok   privacy.reveal does not record a voice or run the matched command
+ok   privacy.reveal does not bind a device or open a radio session
+ok   privacy.reveal does not connect a CarPlay receiver
+ok   security line stays within eight characters: privacy.reveal
+ok   privacy.reveal hands off without claiming the chip finished it
+ok   privacy.panicLock does not unlock, hold a secret, or type one
+ok   privacy.panicLock does not synthesize a key or call a private unlock
+ok   privacy.panicLock does not record a voice or run the matched command
+ok   privacy.panicLock does not bind a device or open a radio session
+ok   privacy.panicLock does not connect a CarPlay receiver
+ok   security line stays within eight characters: privacy.panicLock
+ok   privacy.panicLock hands off without claiming the chip finished it
+ok   dictation.enableWhisper does not unlock, hold a secret, or type one
+ok   dictation.enableWhisper does not synthesize a key or call a private unlock
+ok   dictation.enableWhisper does not record a voice or run the matched command
+ok   dictation.enableWhisper does not bind a device or open a radio session
+ok   dictation.enableWhisper does not connect a CarPlay receiver
+ok   security line stays within eight characters: dictation.enableWhisper
+ok   dictation.enableWhisper hands off without claiming the chip finished it
+ok   a window command is not an unlock or a fill
+ok   enroll only hands the confirmation to the system
+ok   settings does not unlock and does not hand off
+ok   the phrase lab does not keep or type a secret
+ok   a matched phrase shows the line and does not run it
+ok   pairing without a device stays unknown
+ok   CarPlay stays disconnected
+ok   device status is a readout
+ok   enroll still waits for the system's own confirmation
+ok   choosing an alias without one refuses the fill
+ok   an unavailable receiver does not unlock
+ok   a missing unlock outcome fails closed
+ok   an unscoped screen does not say it is covered
+ok   covering without an overlay stays unscoped
+ok   an observed overlay reports 已遮住 and does not reveal
+ok   an away summary with no events stays 没有
+ok   an empty away summary stays 没有
+ok   a real away summary is read out as it is
+ok   protection scope stays unchosen
+ok   phrase profiles are not invented
+ok   accessibility stays on the same path and does not change the system
+ok   the activity page with nothing present says 没有
+ok   the usage page with no readings stays 未提供
+ok   a provided cell is not rewritten as a total
+ok   choosing a display without one stays unchosen
+ok   choosing a display does not move a window
+ok   assistant.show with no session says 没有 and does not start one
+ok   assistant.status with no session says 没有 and does not start one
+ok   assistant.chooseSession with no session says 没有 and does not start one
+ok   assistant.review with no session says 没有 and does not start one
+ok   assistant.showDiff with no session says 没有 and does not start one
+ok   an unchosen model and effort stay 未提供
+ok   opening a source without one does not name a file
+ok   remembering a model does not start a turn
+ok   a remembered model is noted without printing the id
+ok   two proposals at the same instant have different ids
+ok   the older handle cannot confirm the newer proposal
+ok   only the newer proposal can be confirmed
+ok   a proposal lasts eight seconds from when it is proposed
+ok   a confirmation thirty seconds later is rejected
+ok   an expired proposal stays void
+ok   the eight-second deadline itself rejects the proposal
+ok   a nod that starts in the future voids the proposal
+ok   a future nod does not leave the proposal reusable
+ok   invalidate retires the pending proposal
+ok   an unknown command is rejected
+ok   an unknown command is rejected again
+ok   an unknown command clears the proposal that was waiting
+ok   the lab does not hold a real effect port
+ok   a glance without a preview is not completed
+ok   a glance that was invoked without a live frame waits
+ok   usage without a protocol response is not completed
+ok   a cover without an overlay is not completed
+ok   a cover observed on every screen is completed
+ok   a placement without a frame readback is not completed
+ok   a launcher that is not on the frozen screen is not completed
+ok   a launcher visible on the frozen screen is completed
+ok   pulling the effect port fails the positive completion check
+ok   empty store starts blank
+ok   saving distinct words succeeds
+ok   store round-trips
+ok   duplicate words are refused
+ok   refused save leaves store unchanged
+ok   clear empties the store
+silent prep tests passed

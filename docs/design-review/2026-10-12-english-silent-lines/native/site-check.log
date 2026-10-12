@@ -1,0 +1,5 @@
+
+> check
+> node scripts/check.mjs
+
+Checked 42 deploy assets: references, anchors, JS syntax, page headings, file sizes.

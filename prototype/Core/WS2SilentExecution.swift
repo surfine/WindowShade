@@ -28,11 +28,11 @@ enum SilentExecutionResult: Equatable, Sendable {
         case .displayed(let line), .alreadySatisfied(let line), .unavailable(let line), .cancelled(let line), .failed(let line):
             return line
         case .waiting:
-            return "还在等"
+            return WS2SilentCopy.saying("waiting")
         case .completed:
-            return "已完成"
+            return WS2SilentCopy.saying("done")
         case .unknown:
-            return "结果未确认"
+            return WS2SilentCopy.saying("outcomeUnknown")
         }
     }
 }
@@ -50,9 +50,9 @@ enum WS2SilentEffectJudge {
             return .completed(WS2EffectReceipt(commandID: commandID, targetID: "", observed: true))
         }
         if overlayCreated, missingScreens {
-            return .displayed("还有屏没遮住")
+            return .displayed(WS2SilentCopy.saying("screensLeftUncovered"))
         }
-        return .unavailable("尚未遮住")
+        return .unavailable(WS2SilentCopy.saying("notCoveredYet"))
     }
 
     static func glance(invoked: Bool, previewVisible: Bool) -> SilentExecutionResult {
@@ -62,24 +62,24 @@ enum WS2SilentEffectJudge {
         if invoked {
             return .waiting(1)
         }
-        return .unavailable("没预览")
+        return .unavailable(WS2SilentCopy.saying("noPreview"))
     }
 
     static func focusStart(wasIdle: Bool, runningAfter: Bool) -> SilentExecutionResult {
         if wasIdle && runningAfter {
             return .completed(WS2EffectReceipt(commandID: "focus.start", targetID: "focus", observed: true))
         }
-        if !wasIdle && runningAfter { return .alreadySatisfied("已在专注") }
-        return .failed("这一笔没有做成")
+        if !wasIdle && runningAfter { return .alreadySatisfied(WS2SilentCopy.saying("alreadyFocused")) }
+        return .failed(WS2SilentCopy.saying("notDone"))
     }
 
     static func pin(alreadyPreviewing: Bool) -> (result: SilentExecutionResult, start: Bool) {
-        if alreadyPreviewing { return (.alreadySatisfied("已在置顶"), false) }
+        if alreadyPreviewing { return (.alreadySatisfied(WS2SilentCopy.saying("alreadyPinned")), false) }
         return (.waiting(0), true)
     }
 
     static func usageRefresh(protocolParsed: Bool) -> SilentExecutionResult {
-        guard protocolParsed else { return .displayed("未提供") }
+        guard protocolParsed else { return .displayed(WS2SilentCopy.saying("notProvided")) }
         return .completed(WS2EffectReceipt(commandID: "usage.refresh", targetID: "", observed: true))
     }
 
@@ -97,21 +97,21 @@ enum WS2SilentEffectJudge {
         if invoked {
             return .waiting(1)
         }
-        return .unavailable("没预览")
+        return .unavailable(WS2SilentCopy.saying("noPreview"))
     }
 
     static func pin(alreadyPreviewing: Bool, started: Bool) -> SilentExecutionResult {
-        if alreadyPreviewing { return .alreadySatisfied("已在置顶") }
-        return started ? .waiting(1) : .failed("这一笔没有做成")
+        if alreadyPreviewing { return .alreadySatisfied(WS2SilentCopy.saying("alreadyPinned")) }
+        return started ? .waiting(1) : .failed(WS2SilentCopy.saying("notDone"))
     }
 
     static func asyncWindow(already: Bool, started: Bool, satisfied: String) -> SilentExecutionResult {
         if already { return .alreadySatisfied(satisfied) }
-        return started ? .waiting(1) : .failed("这一笔没有做成")
+        return started ? .waiting(1) : .failed(WS2SilentCopy.saying("notDone"))
     }
 
     static func launchpad(panelVisible: Bool, onFrozenScreen: Bool, commandID: String) -> SilentExecutionResult {
-        guard panelVisible, onFrozenScreen else { return .unavailable("没打开") }
+        guard panelVisible, onFrozenScreen else { return .unavailable(WS2SilentCopy.saying("notOpen")) }
         return .completed(WS2EffectReceipt(commandID: commandID, targetID: "", observed: true))
     }
 }
@@ -151,8 +151,8 @@ struct WS2SilentOperationLedger: Equatable, Sendable {
         records[id] = Record(
             id: id, commandID: commandID, targetID: targetID,
             targetRevision: targetRevision, captureGeneration: captureGeneration,
-            page: page, line: "还在等")
-        visible = "还在等"
+            page: page, line: WS2SilentCopy.saying("waiting"))
+        visible = WS2SilentCopy.saying("waiting")
         return id
     }
 

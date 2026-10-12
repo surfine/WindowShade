@@ -408,3 +408,56 @@ self_review边界：按当前validation检查源码/二进制/帧身份、主模
 26 contract_check边界：数学69条0（复跑逐字节相同）；组合原生0（隐私12帧+动效62记录/518当前源）；消费者首跑9判据错误原件保留、修正后0；视觉3/12PNG实看；519当前source完整优化--check0 UTC19:10:31（非复用、输入零漂移、0错误256既有警告）。13源/28证据绑定1e672104266fbb602cabcf7029b6d98286f0716f30ff78ba8095fbcdce881b6b，validation与receipts26身份，25回执未沿用。未验：真机可见动画/签名生命周期/帧率/肩部与companion逐轴速度/英语。整体目标active。
 
 26 self_review：两处修复在允许范围内完成并有独立数学、组合原生、当前完整优化三重证据；不把结构/配置证据升级为真机可见动效通过。保留的全部原件：math首跑失败、consumer九条判据错误、构建256条既有警告。未验风险已在validation里逐条列出（真机/签名生命周期/帧率/肩部与companion/英语/真实隐私来源）。整体目标active，下一步继续其余动效路径与英语最小表面；无外部阻塞，无发布授权，不提交不推送。
+
+
+## 第27批卡点收尾（2026-10-12，本 session）
+
+两卡点关闭：卡点 A（语言切换落「效果」页）根因=refreshLocalizedCopy 里 reloadData 在
+allowsEmptySelection=false 的 sourceList 上同步触发 tableViewSelectionDidChange 把选中打回
+第 0 行（诊断日志 .statem/history-design-twentyseventh-round/qa/gate0/switch-tests-debug-run1.log
+实测 after reloadData selectedRow=0），修复=重建期间 isRebuildingLocalCopy 哨兵挂起选择处理
+（prototype/Effects/DuoSettingsWindow.swift）；删诊断后 InterfaceLanguageSwitchTests 33 ok / 0 FAIL。
+卡点 B：门 0 产品真窗口实测（夹具新帧 product-zh-aqua-900-shade，走 select(.shade)+
+allowHorizontalExpansion）=形态 L（控件自然宽 194 右对齐），观感正常、不触发"修生产"；
+夹具复刻 expandStacks 后仍漂（同 run 内 L/C 互换），按交接 §4 方案 1 在夹具把 labels hugging
+压到 249 钉住；run4/run5 两跑四 zh 帧全部稳定 group.w=194。生产行几何未动。
+顺手：外壳两处硬编码中文（侧栏 ax「设置侧边栏」、工具栏「切换侧边栏」）迁目录
+（settings.shell.sidebar.*，目录 371→373 键），ax 标签随语言重建；隐私登记表补登
+InterfaceLanguage.swift 4 处 UserDefaults 字样（门 4 首跑红过，登记后 PASS）。
+门 2：before 基线由 run-batch27-before-tree.sh 重建（改为 git archive 2003e53^ 完整检出，
+修了 modulemap/header、cp 路径三个脚本 bug）；消费者 10 帧 + zh 回归 + 519 输入零漂移
+passed=true；两条 wrappingLabel 几何漂移逐条放宽并记录
+（docs/design-review/2026-10-12-english-settings-shade/gate2-geometry-drift.md）。
+门 3：zh/en 卷帘页 PNG 实看无事故；高级页/产品窗 PNG 黑屏=离屏材质限制（run2 起即如此），
+以帧数据为准（subtitle 高级→Advanced→高级）。门 4：build.sh --check PASS（514 文件、373 键）。
+门 5：证据 docs/design-review/2026-10-12-english-settings-shade/（README+validation.json
+binding b332ab69a03e41c6+两树帧/PNG/日志）；README 双版「开发中」各加英文界面条目；
+site 无词可同步（本批英文词与官网一致），build+check PASS 未部署。
+残余：真机设置窗口切换、VoiceOver 实听、离屏黑屏两面的图像证据 inconclusive；
+英语 §9 剩余表面未开工（不写"英语已支持"）。1.0.16 发布关 Phase 1–3 仍等用户真机。
+
+## 第28批门5收尾（2026-10-12 深夜，本 session；run 20261012-english-silent-lines）
+
+契约摘要：静音线 7 文件（Gates/Host/Apply/Execution/Security/Draft/ProductPort）137 条去重中文字面量出表
+（125 直迁 sayings、9 条复用 activity.*/usage.*、3 处插值并 2 条 saying2 模板），目录 373→500 键，
+中文逐字节不变；§9.4 棘轮基线 3406 冻结；copy-lint LEGACY_SAYINGS 豁免 4 条迁移原文。
+本 session 补齐门5剩余件：①复跑归档 silent-prep-tests.log（2117 ok）/localization-tests.log（52 ok）、
+site-build.log/site-check.log（42 项 exit 0，未部署）；②validation.json（binding 5abf775956f990ac，
+17 源+16 证据，公式 sha256(canonical_json({source,evidence})) 已复算第27批 b332ab69a03e41c6 验证后套用；
+evidence 表不含 validation.json 自身）；③CONTINUE.md 第二十八检查点；④本批 task.txt/contract/self-review
++ StateM run 20261012-english-silent-lines 推进至 handoff；⑤第27批 task.txt 归档至
+history-design-twentyseventh-round/。残余风险：真机刘海静音页英文可读性未验；QA 探针中文按类别②豁免；
+英语 §9 表面未清完（下一表面：隐私，先读生成器 tools/privacy/make-privacy-page-source.py 与 registry.json）。
+改动未提交未推送；1.0.16 发布关 Phase 1–3 仍等用户真机。
+
+## 第29批（#39 + 0-B 发布基线，2026-10-12 晚，本 session）
+
+issue #39（双击易误操作）：tap 线程修饰键放行 + 清三击 pending + 三分支副标题 + copy-guide 行 + 新纯测试（pass）；
+issue #40（英语）：用户定案方案 A——发布基线切 0-B（main + 第28批 + #39）。
+0-B 候选重建 `--stage`：9,858,449B sha256 47930319…7876f（二进制 784ec4b6…0eed4，Team FVGLY6W6S4，1.0.16(16)），
+包级门禁九步全 PASS（gate-0B.log；0-A 包/日志存 phase0-archive/）。
+Phase 1–3 Computer Use 复验（gate-0B-verification.md）：单文档收/展、菜单路径、#39 ⌥ 判据、语言切换停留当前页、
+#39 文案、更新器自动检查 —— 全 pass；两文档折叠形态 inconclusive（含对 0-A "未复现"判读的勘误）、
+滑杆读数位置未直接复验、蓝牙三击与动画手感 not_run —— 四项进用户真机清单。
+事故记录：误用 git checkout 丢掉 xcstrings 第28批改动，用 .build 编译产物逐键恢复并核对零差异（已在交接 §15 记明）。
+未提交未推送；发布日流程（提交→tag→gh release→appcast）待用户裁定。

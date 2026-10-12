@@ -6464,6 +6464,34 @@
    "symbol": "CMHeadphoneMotionManager",
    "source": "CMHeadphoneMotionManager.authorizationStatus() == .authorized else { return }",
    "signal": "headphone-motion"
+  },
+  {
+   "path": "prototype/Core/InterfaceLanguage.swift",
+   "line": 6,
+   "symbol": "UserDefaults",
+   "source": "//   - 用户在设置里可覆盖成 跟随系统 / 简体中文 / English，存 UserDefaults 一个键。",
+   "signal": "settings"
+  },
+  {
+   "path": "prototype/Core/InterfaceLanguage.swift",
+   "line": 45,
+   "symbol": "UserDefaults",
+   "source": "static func stored(in defaults: UserDefaults) -> InterfaceLanguagePreference {",
+   "signal": "settings"
+  },
+  {
+   "path": "prototype/Core/InterfaceLanguage.swift",
+   "line": 52,
+   "symbol": "UserDefaults",
+   "source": "static func applyAtLaunch(defaults: UserDefaults = .standard) {",
+   "signal": "settings"
+  },
+  {
+   "path": "prototype/Core/InterfaceLanguage.swift",
+   "line": 58,
+   "symbol": "UserDefaults",
+   "source": "static func set(_ preference: InterfaceLanguagePreference, in defaults: UserDefaults = .standard) {",
+   "signal": "settings"
   }
  ],
  "groups": [

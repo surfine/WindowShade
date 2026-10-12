@@ -1,0 +1,2 @@
+第28批 validation binding：5abf775956f990ac（docs/design-review/2026-10-12-english-silent-lines/validation.json；17 源 + 16 证据）
+StateM run：20261012-english-silent-lines，solve→contract_check→self_review→handoff（2026-10-12 深夜）

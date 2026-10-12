@@ -116,13 +116,13 @@ enum WS2SilentDraftReceipt {
     static func execution(_ result: WS2SilentDraftResult) -> SilentExecutionResult {
         switch result {
         case .keptLocal:
-            return .displayed("还在这台 Mac")
+            return .displayed(WS2SilentCopy.saying("stillOnThisMac"))
         case .waitingForAck(let id):
             return .waiting(id)
         case .alreadySatisfied:
-            return .alreadySatisfied("已送出")
+            return .alreadySatisfied(WS2SilentCopy.saying("sent"))
         case .preview, .sent, .refused:
-            return .failed("这一笔没有做成")
+            return .failed(WS2SilentCopy.saying("notDone"))
         }
     }
 }

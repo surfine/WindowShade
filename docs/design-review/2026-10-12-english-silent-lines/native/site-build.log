@@ -1,0 +1,5 @@
+
+> build
+> node scripts/build.mjs
+
+Built Chinese and English pages in /Users/aaron/Documents/WindowShade/site/dist
