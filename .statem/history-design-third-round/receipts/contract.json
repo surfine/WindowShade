@@ -1,0 +1,47 @@
+{
+  "kind": "contract",
+  "artifact": "docs/design-review/2026-10-11-conductor/validation.json:sha256:4b9bb43994259c6215d872c708982a13bf335163da99cb64d29a69698eb84d9a",
+  "status": "residual_risk",
+  "checks": [
+    {
+      "command": "bash tests/run-appkit-tests.sh CalendarCardTests",
+      "exit_code": 0,
+      "result": "9 cases, 34 assertions; actual hosted card 440x175.5 radius28; privacy and revoked input",
+      "log": "../2026-10-11-calendar/calendar-regression.log"
+    },
+    {
+      "command": "bash tests/run-conductor-view-tests.sh",
+      "exit_code": 0,
+      "result": "8 cases, 68 assertions; pure presentation model only",
+      "log": "conductor-core.log"
+    },
+    {
+      "command": "render-native-surfaces.sh before / after",
+      "exit_code": 0,
+      "result": "14 before and 14 after invisible-window production-view captures; visual failure before; observed correction after",
+      "log": "after-render.log"
+    },
+    {
+      "command": "compare PNG bytes for parent Aqua/darkAqua",
+      "exit_code": 0,
+      "result": "7 of 7 after state pairs identical; limited to these static fixtures",
+      "log": "theme-comparison.json"
+    },
+    {
+      "command": "bash prototype/build.sh --check",
+      "result": "optimized app/update guard/hook compiled; localization206, privacy725, copy checks complete; existing warnings and46 long subtitles retained",
+      "script_exit_code": 0,
+      "exit_evidence": "Original session handle no longer available after context truncation. Complete log ends in successful final copy check; unchanged build.sh lines182-185 then exit0. Inferred from terminal log and deterministic script, not recovered process status. No rerun.",
+      "log": "build-check.log"
+    },
+    {
+      "command": "bash -n tools/design-qa/render-native-surfaces.sh; git diff --check",
+      "exit_code": 0,
+      "result": "syntax/whitespace pass; bad output path and product main guards reject with expected2",
+      "log": "preview-entry-guards.json"
+    }
+  ],
+  "remaining_risk": "Three other black-surface pages need native reproduction. Owned session hierarchy and action workflow are not design-converged. Other original seven-line work remains. not_run: notch camera/multiple displays, motion, live input/VoiceOver, owned session backend flows",
+  "next_action": "self_review",
+  "updated": "2026-10-11"
+}

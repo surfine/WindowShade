@@ -1,0 +1,67 @@
+{
+  "classes": [
+    "external-effects",
+    "vision-image",
+    "bulk-write",
+    "arithmetic-financial",
+    "secret-handling"
+  ],
+  "hazards": [
+    {
+      "class": "external-effects",
+      "evidence_paths": [
+        "progress.md",
+        "blocked.json"
+      ],
+      "matched": [
+        "发布"
+      ],
+      "requirement": "不可逆外部效果先立效果清单；执行后要重新读回实际状态并对账。",
+      "severity": "high"
+    },
+    {
+      "class": "vision-image",
+      "evidence_paths": [],
+      "matched": [
+        "视觉",
+        "截图"
+      ],
+      "requirement": "内联图片计入 48 MiB 请求体上限；多图或长会话先算字节，超预算改用 Files API(file_id) 或丢弃旧图，并确认模型看到的图与结论依赖的图一致。",
+      "severity": "normal"
+    },
+    {
+      "class": "bulk-write",
+      "evidence_paths": [],
+      "matched": [
+        "批量"
+      ],
+      "requirement": "批量数据留在工具/文件边界，避免整包进出上下文；对账用计数与聚合结果。",
+      "severity": "normal"
+    },
+    {
+      "class": "arithmetic-financial",
+      "evidence_paths": [],
+      "matched": [
+        "对账"
+      ],
+      "requirement": "后果性算术走精确十进制工具，数值输入与叙述文字分开。",
+      "severity": "normal"
+    },
+    {
+      "class": "secret-handling",
+      "evidence_paths": [
+        "prototype/build.sh"
+      ],
+      "matched": [
+        "token",
+        "凭据"
+      ],
+      "requirement": "凭据不写进文件、日志或回执；只引用保存位置。",
+      "severity": "normal"
+    }
+  ],
+  "source": "preflight",
+  "task_path": "task.txt",
+  "task_sha256": "649670bf7c5c324b00fc4e68b1a705a8e459473e58296958a25e260bd4a01aca",
+  "version": 1
+}

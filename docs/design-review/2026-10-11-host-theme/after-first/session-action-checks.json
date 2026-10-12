@@ -1,0 +1,30 @@
+[
+  {
+    "name" : "four opens; only owned running can stop",
+    "pass" : true
+  },
+  {
+    "name" : "revoked input cannot invoke actions",
+    "pass" : true
+  },
+  {
+    "name" : "open carries exact observed context",
+    "pass" : true
+  },
+  {
+    "name" : "stop carries exact owned running context",
+    "pass" : true
+  },
+  {
+    "name" : "old removed row cannot act",
+    "pass" : true
+  },
+  {
+    "name" : "list bounded at 64 rows",
+    "pass" : true
+  },
+  {
+    "name" : "revoke clears bindings and visible actions",
+    "pass" : true
+  }
+]

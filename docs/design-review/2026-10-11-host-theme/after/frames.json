@@ -1,0 +1,156 @@
+[
+  {
+    "activeApplication" : false,
+    "contentHeight" : 196,
+    "contentWidth" : 720,
+    "darkContent" : true,
+    "height" : 230,
+    "image" : "light-model-picker-idle.png",
+    "intersectsScreen" : false,
+    "visibleWindow" : true,
+    "width" : 721
+  },
+  {
+    "activeApplication" : false,
+    "contentHeight" : 360,
+    "contentWidth" : 460,
+    "darkContent" : true,
+    "height" : 394,
+    "image" : "light-conductor-page-idle.png",
+    "intersectsScreen" : false,
+    "visibleWindow" : true,
+    "width" : 461
+  },
+  {
+    "activeApplication" : false,
+    "contentHeight" : 68,
+    "contentWidth" : 520,
+    "darkContent" : true,
+    "height" : 102,
+    "image" : "light-sessions-empty.png",
+    "intersectsScreen" : false,
+    "visibleWindow" : true,
+    "width" : 521
+  },
+  {
+    "activeApplication" : false,
+    "contentHeight" : 320,
+    "contentWidth" : 520,
+    "darkContent" : true,
+    "height" : 354,
+    "image" : "light-sessions-mixed.png",
+    "intersectsScreen" : false,
+    "visibleWindow" : true,
+    "width" : 521
+  },
+  {
+    "activeApplication" : false,
+    "contentHeight" : 320,
+    "contentWidth" : 520,
+    "darkContent" : true,
+    "height" : 354,
+    "image" : "light-sessions-long.png",
+    "intersectsScreen" : false,
+    "visibleWindow" : true,
+    "width" : 521
+  },
+  {
+    "activeApplication" : false,
+    "contentHeight" : 181,
+    "contentWidth" : 576,
+    "darkContent" : true,
+    "height" : 215,
+    "image" : "light-conductor-connected.png",
+    "intersectsScreen" : false,
+    "visibleWindow" : true,
+    "width" : 577
+  },
+  {
+    "activeApplication" : false,
+    "contentHeight" : 480,
+    "contentWidth" : 620,
+    "darkContent" : true,
+    "height" : 514,
+    "image" : "light-owned-session-idle.png",
+    "intersectsScreen" : false,
+    "visibleWindow" : true,
+    "width" : 621
+  },
+  {
+    "activeApplication" : false,
+    "contentHeight" : 196,
+    "contentWidth" : 720,
+    "darkContent" : true,
+    "height" : 230,
+    "image" : "dark-model-picker-idle.png",
+    "intersectsScreen" : false,
+    "visibleWindow" : true,
+    "width" : 721
+  },
+  {
+    "activeApplication" : false,
+    "contentHeight" : 360,
+    "contentWidth" : 460,
+    "darkContent" : true,
+    "height" : 394,
+    "image" : "dark-conductor-page-idle.png",
+    "intersectsScreen" : false,
+    "visibleWindow" : true,
+    "width" : 461
+  },
+  {
+    "activeApplication" : false,
+    "contentHeight" : 68,
+    "contentWidth" : 520,
+    "darkContent" : true,
+    "height" : 102,
+    "image" : "dark-sessions-empty.png",
+    "intersectsScreen" : false,
+    "visibleWindow" : true,
+    "width" : 521
+  },
+  {
+    "activeApplication" : false,
+    "contentHeight" : 320,
+    "contentWidth" : 520,
+    "darkContent" : true,
+    "height" : 354,
+    "image" : "dark-sessions-mixed.png",
+    "intersectsScreen" : false,
+    "visibleWindow" : true,
+    "width" : 521
+  },
+  {
+    "activeApplication" : false,
+    "contentHeight" : 320,
+    "contentWidth" : 520,
+    "darkContent" : true,
+    "height" : 354,
+    "image" : "dark-sessions-long.png",
+    "intersectsScreen" : false,
+    "visibleWindow" : true,
+    "width" : 521
+  },
+  {
+    "activeApplication" : false,
+    "contentHeight" : 181,
+    "contentWidth" : 576,
+    "darkContent" : true,
+    "height" : 215,
+    "image" : "dark-conductor-connected.png",
+    "intersectsScreen" : false,
+    "visibleWindow" : true,
+    "width" : 577
+  },
+  {
+    "activeApplication" : false,
+    "contentHeight" : 480,
+    "contentWidth" : 620,
+    "darkContent" : true,
+    "height" : 514,
+    "image" : "dark-owned-session-idle.png",
+    "intersectsScreen" : false,
+    "visibleWindow" : true,
+    "width" : 621
+  }
+]

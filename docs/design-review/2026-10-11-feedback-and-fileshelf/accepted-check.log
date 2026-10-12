@@ -1,0 +1,3 @@
+{"passed": true, "frames": 14, "input_and_resize_checks": 86, "current_inputs": 518, "cleanup": true, "scope": "synthetic fixture only; real hardware/input/animation quality not proven"}
+Navigation callbacks, UTF8/IME preservation, stale/revoke and long title: passed.
+{"passed": true, "owned_frames": 14, "media_frames": 12, "media_guard_reports": 4, "current_inputs": 518, "real_media_or_hardware": "not_run"}

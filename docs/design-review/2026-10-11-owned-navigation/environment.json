@@ -1,0 +1,7 @@
+{
+  "macOS": "27.0.1",
+  "architecture": "arm64",
+  "swift": "Apple Swift version 6.4 (swiftlang-6.4.0.34.1 clang-2100.3.34.1)\nTarget: arm64-apple-macosx27.0.0",
+  "native_fixture": "default Swift5 unoptimized; transparent offscreen; production library",
+  "formal_build": "optimized Swift6 strict concurrency/warnings-as-errors; no signature/install"
+}

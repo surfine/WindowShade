@@ -129,7 +129,7 @@ import Foundation
         let wrong=try adopt("wrong-turn")
         try check(c.addConductorDraftToTurn(wrong,hasMarkedText:false),"send negative receipt fixture")
         try await until("wrong target receipt closes") { !c.isBusy }
-        try check(c.draft=="wrong-turn" && c.notice.contains("没有把缺失状态当成成功"),"wrong turn ack is not success and preserves draft")
+        try check(c.draft=="wrong-turn" && c.notice=="请重新启动助手。" && c.status=="助手返回的信息不完整，已断开。" && !c.canSend,"wrong turn ack is not success and preserves draft")
         print("PASS Conductor owned flow: real stdio, known session resume, draft adoption/send separation, stale target/config/IME/replay rejection, next-turn settings, start/steer/interrupt receipts, draft preservation and lock invalidation")
     }
 }

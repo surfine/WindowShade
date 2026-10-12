@@ -127,6 +127,15 @@ struct NotchRowMergeTests {
         t.expect(quota.spoken == "WindowShade，在跑", "没有右耳字：只念在跑")
         quota.earText = "剩 42%"
         t.expect(quota.spoken == "WindowShade，在跑，剩 42%", "有额度：念出剩多少")
+        t.expect(quota.quantityText == "剩 42%" && quota.quantity.drawing == .none, "展开额度写剩余数字，不混成下载进度环")
+        var lowQuota = session("WindowShade", .quotaLow); lowQuota.earText = "剩 5%"
+        t.expect(lowQuota.quantityText == "剩 5%", "低额也把真实数字交给绘制与读屏")
+        let projectedLow = NotchRow.ongoingCells(from: [NotchActivity(id:"q",kind:.session,title:"WindowShade",symbol:"terminal",startedAt:0,trailing:"剩 5%",sessionPhase:.quotaLow)])[0]
+        t.expect(projectedLow.quantityText == "剩 5%", "实际Activity→Core投影也保低额耳字，不能只测手写cell")
+        lowQuota.earText = "剩 4%"
+        t.expect(lowQuota.quantityText == "剩 4%", "相同低额相位数字仍更新")
+        var waitingQuota = session("WindowShade", .waiting); waitingQuota.earText = "剩 4%"
+        t.expect(waitingQuota.quantityText == nil, "等你时额度数字退让")
         t.expect(session("完成", .done, subtitle: "改了 3 个文件").spoken == "完成，改了 3 个文件", "做完了")
         t.expect(session("WindowShade", nil).spoken == "WindowShade", "不知道状态：只念名字")
         let long = String(repeating: "很长的项目名", count: 8)

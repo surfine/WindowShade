@@ -1,0 +1,8 @@
+{
+  "exit_code": 0,
+  "exact_product_helper_extracted": true,
+  "helper_sha256": "9efecb9867c83a0ef8fc43f84faca5e7676e558a46dcf57bcffa9cb6a0cb2def",
+  "product_source_sha256": "31de9b973db078662f01bd1ff605373d591a4179ed67d47be3dc67e48d755bc8",
+  "cases": 16,
+  "scope": "actual font widths and same production helper; not app runtime or live hardware"
+}

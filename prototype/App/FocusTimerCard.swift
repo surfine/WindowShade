@@ -3,14 +3,14 @@ import QuartzCore
 @MainActor final class FocusTimerCard: NSView, WS2LeaseContent {
     var onCancel: (() -> Void)?
     var inputIsCurrent: (() -> Bool) = { false }
-    /// 休息视图照稿约 2.7:1（324×120）；其余照旧。
-    var interactionSize: NSSize { resting ? NSSize(width: 324, height: 120) : NSSize(width: 320, height: 210) }
+    /// 内容高度，不含宿主避让实体刘海的那一截。专注卡按稿保留四层内容，不另画大进度环。
+    var interactionSize: NSSize { resting ? NSSize(width: 324, height: 120) : NSSize(width: 320, height: 142) }
     private var resting = false
-    func revoke() { inputIsCurrent = { false }; ring.removeAllAnimations(); breath.removeAllAnimations() }
+    func revoke() { inputIsCurrent = { false }; breath.removeAllAnimations() }
     override func cancelOperation(_ sender: Any?) { onCancel?() }
     private let time = NSTextField(labelWithString:"")
+    private let phase = NSTextField(labelWithString:"")
     private let detail = NSTextField(labelWithString:"")
-    private let ring = CAShapeLayer()
     private let breath = CAShapeLayer()
     private let restTime = NSTextField(labelWithString:"")
     private let restHint = NSTextField(labelWithString:"看看远处 · 点一下回来")
@@ -24,31 +24,42 @@ import QuartzCore
     private let end = NSButton()
     private let host: FocusTimerHost
     init(host:FocusTimerHost) {
-        self.host = host; super.init(frame:.zero); wantsLayer = true; layer?.addSublayer(ring); layer?.addSublayer(breath)
+        self.host = host; super.init(frame:.zero); wantsLayer = true; layer?.addSublayer(breath)
+        // 刘海固定黑色，不让系统浅色外观把文字和控件变成黑色。
+        let secondary = NSColor.white.withAlphaComponent(0.6)
         restTime.font = .monospacedDigitSystemFont(ofSize:17,weight:.medium); restTime.alignment = .center
-        restHint.font = .systemFont(ofSize:12); restHint.textColor = .secondaryLabelColor; restHint.alignment = .center
+        restTime.textColor = .white
+        restHint.font = .systemFont(ofSize:12); restHint.textColor = secondary; restHint.alignment = .center
         addSubview(restTime); addSubview(restHint); restTime.isHidden = true; restHint.isHidden = true
-        restSkip.isBordered = false; restSkip.font = .systemFont(ofSize:11); restSkip.contentTintColor = .secondaryLabelColor
+        restSkip.isBordered = false; restSkip.font = .systemFont(ofSize:11); restSkip.contentTintColor = secondary
+        restSkip.attributedTitle = NSAttributedString(string:"跳过休息",attributes:[.font:NSFont.systemFont(ofSize:11),.foregroundColor:secondary])
         restSkip.target = self; restSkip.action = #selector(skipAction); restSkip.setAccessibilityLabel("跳过休息")
         restSkip.toolTip = "跳过休息"; restSkip.isHidden = true; addSubview(restSkip)
-        time.font = .monospacedDigitSystemFont(ofSize:28,weight:.medium)
-        detail.font = .systemFont(ofSize:12); detail.textColor = .secondaryLabelColor
+        time.font = .monospacedDigitSystemFont(ofSize:28,weight:.medium); time.textColor = .white
+        phase.font = .systemFont(ofSize:11,weight:.semibold); phase.textColor = secondary
+        detail.font = .systemFont(ofSize:11); detail.textColor = secondary
         let buttons = NSStackView(views:[pause,skip,end]); buttons.orientation = .horizontal
-        stack.setViews([time,detail,buttons],in:.center); stack.orientation = .vertical; stack.spacing = 10
+        buttons.spacing = 12
+        stack.setViews([phase,time,detail,buttons],in:.center); stack.orientation = .vertical; stack.spacing = 6
         stack.translatesAutoresizingMaskIntoConstraints = false; addSubview(stack)
         NSLayoutConstraint.activate([stack.centerXAnchor.constraint(equalTo:centerXAnchor),stack.centerYAnchor.constraint(equalTo:centerYAnchor),
             widthAnchor.constraint(greaterThanOrEqualToConstant:240),heightAnchor.constraint(greaterThanOrEqualToConstant:110)])
         configure(pause,"pause.fill","暂停",#selector(pauseAction)); configure(skip,"forward.end.fill","跳过",#selector(skipAction))
         configure(end,"stop.fill","结束",#selector(endAction))
+        for button in [pause,skip,end] {
+            NSLayoutConstraint.activate([button.widthAnchor.constraint(equalToConstant:32),button.heightAnchor.constraint(equalToConstant:32)])
+        }
     }
     required init?(coder:NSCoder) { nil }
     private func configure(_ b:NSButton,_ symbol:String,_ label:String,_ action:Selector) {
         b.image = NSImage(systemSymbolName:symbol,accessibilityDescription:label); b.imagePosition = .imageOnly
-        b.bezelStyle = .circular; b.target = self; b.action = action; b.toolTip = label; b.setAccessibilityLabel(label)
+        b.image = b.image?.withSymbolConfiguration(.init(pointSize:13,weight:.semibold))
+        b.isBordered = false; b.contentTintColor = .white; b.wantsLayer = true
+        b.layer?.cornerRadius = 16; b.layer?.backgroundColor = NSColor.white.withAlphaComponent(0.16).cgColor
+        b.target = self; b.action = action; b.toolTip = label; b.setAccessibilityLabel(label)
     }
     override func layout() {
-        super.layout(); ring.frame = bounds
-        ring.path = CGPath(ellipseIn:bounds.insetBy(dx:12,dy:12),transform:nil)
+        super.layout()
         // 休息：光环在上、时间在环中间，提示在下。
         let d: CGFloat = 64, hintH: CGFloat = 16, gap: CGFloat = 8
         let top = (bounds.height - d - gap - hintH) / 2 + hintH + gap
@@ -72,28 +83,17 @@ import QuartzCore
         let rest = model.phase == .rest
         if rest != resting { resting = rest; needsLayout = true }
         stack.isHidden = rest; restTime.isHidden = !rest; restHint.isHidden = !rest; restSkip.isHidden = !rest
-        ring.isHidden = rest; breath.isHidden = !rest
+        breath.isHidden = !rest
         time.stringValue = model.phase == .idle ? "开始专注" : model.expandedText(at:now)
-        detail.stringValue = "今天完成 \(model.completedToday) 个"
+        phase.stringValue = model.phase == .idle ? "番茄钟" : "专注\(model.isPaused ? " · 已暂停" : "")"
+        detail.stringValue = model.phase == .idle ? "今天完成 \(model.completedToday) 个" : "今天第 \(model.completedToday + 1) 个"
         restTime.stringValue = model.expandedText(at:now)
         let action = model.phase == .idle ? "开始" : model.isPaused ? "继续" : "暂停"
         configure(pause,model.phase == .idle || model.isPaused ? "play.fill" : "pause.fill",action,#selector(pauseAction))
         skip.isEnabled = model.phase != .idle; end.isEnabled = model.phase != .idle
-        ring.removeAllAnimations(); breath.removeAllAnimations()
-        ring.fillColor = NSColor.clear.cgColor; ring.lineWidth = 2; ring.strokeColor = NSColor.systemRed.cgColor
+        for button in [skip,end] { button.alphaValue = button.isEnabled ? 1 : 0.4 }
+        breath.removeAllAnimations()
         breath.fillColor = NSColor.clear.cgColor; breath.lineWidth = 3; breath.strokeColor = Self.restGreen.cgColor
-        let total = model.phaseDuration
-        let fraction = model.phase == .idle ? 0 : Double(model.remaining(at:now))/Double(total)
-        CATransaction.begin(); CATransaction.setDisableActions(true); ring.strokeEnd = min(1,max(0,fraction)); CATransaction.commit()
-        if !model.isPaused,model.phase == .focus,window != nil {
-            let a = CABasicAnimation(keyPath:"strokeEnd"); a.fromValue = ring.strokeEnd; a.toValue = 0
-            a.duration = Double(model.remaining(at:now))/1e9
-            // 倒计时进度是时间映射，保持线性；位移弹簧不套在这里。
-            a.timingFunction = CAMediaTimingFunction(name: .linear)
-            let r = FocusBreath.countdownFrameRate
-            a.preferredFrameRateRange = CAFrameRateRange(minimum:r.minimum,maximum:r.maximum,preferred:r.preferred)
-            ring.add(a,forKey:"countdown")
-        }
         if FocusBreath.breathes(phase:model.phase,reduceMotion:NSWorkspace.shared.accessibilityDisplayShouldReduceMotion),window != nil {
             let r = FocusBreath.breathFrameRate
             let range = CAFrameRateRange(minimum:r.minimum,maximum:r.maximum,preferred:r.preferred)
@@ -107,10 +107,10 @@ import QuartzCore
             breath.add(make("transform.scale",FocusBreath.scaleLow),forKey:"breathScale")
             breath.add(make("opacity",FocusBreath.opacityLow),forKey:"breathOpacity")
         }
-        let spoken = rest ? "\(restTime.stringValue)，\(restHint.stringValue)" : "\(time.stringValue)，\(detail.stringValue)"
+        let spoken = rest ? "休息\(model.isPaused ? "，已暂停" : "")，\(restTime.stringValue)，\(restHint.stringValue)" : "\(phase.stringValue)，\(time.stringValue)，\(detail.stringValue)"
         setAccessibilityLabel(spoken)
     }
-    override func viewDidMoveToWindow() { super.viewDidMoveToWindow(); if window == nil { ring.removeAllAnimations(); breath.removeAllAnimations() } }
+    override func viewDidMoveToWindow() { super.viewDidMoveToWindow(); if window == nil { breath.removeAllAnimations() } }
     @objc private func pauseAction() { guard inputIsCurrent() else { return }; host.handle(host.model.phase == .idle ? .start : host.model.isPaused ? .resume : .pause) }
     @objc private func skipAction() { guard inputIsCurrent() else { return }; host.handle(.skip) }
     @objc private func endAction() { guard inputIsCurrent() else { return }; host.handle(.end) }

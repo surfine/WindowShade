@@ -1,0 +1,31 @@
+{
+  "kind": "contract_check",
+  "status": "residual_risk",
+  "artifact": "/Users/aaron/Documents/WindowShade/docs/design-review/2026-10-11-window-images/validation.json",
+  "artifact_sha256": "a0f257497336140079991e00a2e4a54c3eff8f8843e1077eaf83eec106db2f05",
+  "binding_sha256": "ff089270afb1cfb0038dc62c85fb5db47074b15dbcf33e182a05af41188b9112",
+  "checks": [
+    {
+      "command": "WindowBrowserImagePreview + check-window-image-preview.py cached-fit",
+      "exit_code": 0,
+      "result": "82 actual ImageIO/Card frames;5 ratios;hover/busy;28hit/more/picture containment;reuse128→64;518 identities",
+      "receipt": "cached-fit-exit.json"
+    },
+    {
+      "command": "independent PNG chunk/pixel decoder",
+      "exit_code": 0,
+      "result": "5 opaque/border/4colors/cross/CRC;original red288 each",
+      "receipt": "fixture-final.log"
+    },
+    {
+      "command": "bash prototype/build.sh --check",
+      "exit_code": 0,
+      "result": "519 current optimized inputs",
+      "receipt": "build-exit.json"
+    }
+  ],
+  "reused_checks": [],
+  "remaining_risk": "diagnostic pixels only, no real windows;fixed viewport not actual Dock geometry;native cache not full compositor/animation;no controller/real actions/menu execution/focus/IME/accessibility/hardware;native runtime Swift5, optimized Swift6 compile only",
+  "next_action": "self_review",
+  "updated": "2026-10-11T11:36:22.762346+00:00"
+}

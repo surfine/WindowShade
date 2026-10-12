@@ -1,0 +1,50 @@
+{
+  "kind": "contract",
+  "artifact": "docs/design-review/2026-10-11-countdown/validation.json:sha256:d2ec868138c9c3a2fe2e401d0c1b24442574de7a406d19f7fab62017e63d3ed9",
+  "status": "residual_risk",
+  "checks": [
+    {
+      "command": "bash tests/run-appkit-tests.sh MenuBarObstructionTests",
+      "exit_code": 0,
+      "result": "7 checks, 0 failures; actual NSPanel visibility/alpha/orderOut",
+      "log": "obstruction-after.log"
+    },
+    {
+      "command": ".build/appkit-tests/CountdownTimerCardTests",
+      "exit_code": 0,
+      "result": "4 cases, 23 assertions, including real host dimensions/corners and revoked input",
+      "log": "countdown-execution.log",
+      "recovery": "Compile completed by runner; in-flight script edit broke continuation; executed same compiled binary without rebuilding"
+    },
+    {
+      "command": "bash tests/run-countdown-timer-tests.sh",
+      "exit_code": 0,
+      "result": "7 cases, 31 assertions"
+    },
+    {
+      "command": "bash tests/run-menubar-retry-tests.sh",
+      "exit_code": 0,
+      "result": "12 assertions; bounded retries and conservative unknown room"
+    },
+    {
+      "command": "bash tools/design-qa/render-countdown-card.sh <after>",
+      "exit_code": 0,
+      "result": "10 production frames; all windows invisible; running/alert/paused visually inspected"
+    },
+    {
+      "command": "bash prototype/build.sh --check",
+      "exit_code": 0,
+      "result": "513 Swift app source files; optimized full app, update guard, hook and build gates; localization 206 keys; existing warnings/copy debt retained",
+      "log": "build-check.log"
+    },
+    {
+      "command": "bash -n tests/run-appkit-tests.sh tools/design-qa/render-countdown-card.sh tools/design-qa/render-calendar-card.sh; git diff --check",
+      "exit_code": 0,
+      "result": "Shell syntax and diff whitespace pass"
+    }
+  ],
+  "reused_checks": [],
+  "remaining_risk": "Complete persistent design goal remains active; this is verified checkpoint only. Live notch, below-screen placement and animations not_run; calendar candidate not applied. Rest of original seven lines retained.",
+  "next_action": "self_review",
+  "updated": "2026-10-11"
+}

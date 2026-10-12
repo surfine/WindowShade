@@ -1,0 +1,9 @@
+{
+  "path": "/Users/aaron/.codex/statem/practices/deepseek-flash.yaml",
+  "before_sha256": "e6b512282ad9c7905781e03d4e546a85b9d1425b6a42e0f74a4952e3a551b6d1",
+  "after_sha256": "6fa2ae0e279b243c42da007d95293b44cd59f17f2987658485d20e04d84d7d0b",
+  "updated_practice": "evidence-freshness",
+  "activation": "StateM directory reuse or dependent packaging/transition",
+  "reason": "round15 stale receipts;round17 package source lookup failed but same shell progressed ensure",
+  "backup": "/Users/aaron/Documents/WindowShade/.build/design-window-images/practice-before.yaml"
+}

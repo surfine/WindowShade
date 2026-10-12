@@ -1,0 +1,355 @@
+/Users/aaron/Documents/WindowShade/prototype/Core/CodexWire.swift:5:11: error: cannot find type 'WireJSON' in scope
+  3 | 
+  4 | /// requestID 要看 WS2.RequestID（Contracts）。放这里让 WireJSON.swift 保持纯叶子，最小编译子集不必拖 Contracts。
+  5 | extension WireJSON {
+    |           `- error: cannot find type 'WireJSON' in scope
+  6 |     var requestID: WS2.RequestID? {
+  7 |         switch self { case .integer(let i): return .integer(i); case .string(let s): return .string(s); default: return nil }
+
+/Users/aaron/Documents/WindowShade/prototype/Core/CodexWire.swift:26:48: error: cannot find type 'WireJSON' in scope
+ 24 |     private(set) var turnID: String?
+ 25 |     private(set) var pending: [WS2.RequestID:Pending] = [:]
+ 26 |     private(set) var approvals: [WS2.RequestID:WireJSON] = [:]
+    |                                                `- error: cannot find type 'WireJSON' in scope
+ 27 |     private(set) var approvalMethods: [WS2.RequestID:String] = [:]
+ 28 |     private var buffer = Data()
+
+/Users/aaron/Documents/WindowShade/prototype/Core/CodexWire.swift:15:35: error: cannot find type 'WireJSON' in scope
+ 13 |     struct Pending: Sendable { let method: String; let deadline: WS2.Instant }
+ 14 |     enum Event: Equatable, Sendable {
+ 15 |         case result(WS2.RequestID,WireJSON), failed(WS2.RequestID), notification(String,WireJSON)
+    |                                   `- error: cannot find type 'WireJSON' in scope
+ 16 |         case approval(WS2.RequestID,String,WireJSON), ignoredLateReply(WS2.RequestID)
+ 17 |         case ambiguousCompletion(WS2.RequestID)
+
+/Users/aaron/Documents/WindowShade/prototype/Core/CodexWire.swift:15:89: error: cannot find type 'WireJSON' in scope
+ 13 |     struct Pending: Sendable { let method: String; let deadline: WS2.Instant }
+ 14 |     enum Event: Equatable, Sendable {
+ 15 |         case result(WS2.RequestID,WireJSON), failed(WS2.RequestID), notification(String,WireJSON)
+    |                                                                                         `- error: cannot find type 'WireJSON' in scope
+ 16 |         case approval(WS2.RequestID,String,WireJSON), ignoredLateReply(WS2.RequestID)
+ 17 |         case ambiguousCompletion(WS2.RequestID)
+
+/Users/aaron/Documents/WindowShade/prototype/Core/CodexWire.swift:16:44: error: cannot find type 'WireJSON' in scope
+ 14 |     enum Event: Equatable, Sendable {
+ 15 |         case result(WS2.RequestID,WireJSON), failed(WS2.RequestID), notification(String,WireJSON)
+ 16 |         case approval(WS2.RequestID,String,WireJSON), ignoredLateReply(WS2.RequestID)
+    |                                            `- error: cannot find type 'WireJSON' in scope
+ 17 |         case ambiguousCompletion(WS2.RequestID)
+ 18 |     }
+
+/Users/aaron/Documents/WindowShade/prototype/Core/CodexWire.swift:14:10: error: type 'CodexWire.Event' does not conform to protocol 'Equatable'
+ 12 |     enum State: Equatable, Sendable { case fresh, initializing, listingModels, ready, closed }
+ 13 |     struct Pending: Sendable { let method: String; let deadline: WS2.Instant }
+ 14 |     enum Event: Equatable, Sendable {
+    |          |- error: type 'CodexWire.Event' does not conform to protocol 'Equatable'
+    |          `- note: add stubs for conformance
+ 15 |         case result(WS2.RequestID,WireJSON), failed(WS2.RequestID), notification(String,WireJSON)
+    |                                   |                                                     `- note: associated value type '_' does not conform to protocol 'Equatable', preventing synthesized conformance of 'CodexWire.Event' to 'Equatable'
+    |                                   `- note: associated value type '_' does not conform to protocol 'Equatable', preventing synthesized conformance of 'CodexWire.Event' to 'Equatable'
+ 16 |         case approval(WS2.RequestID,String,WireJSON), ignoredLateReply(WS2.RequestID)
+    |                                            `- note: associated value type '_' does not conform to protocol 'Equatable', preventing synthesized conformance of 'CodexWire.Event' to 'Equatable'
+ 17 |         case ambiguousCompletion(WS2.RequestID)
+ 18 |     }
+
+Swift.==:1:24: note: candidate would match if 'CodexWire.Event' conformed to 'RawRepresentable'
+1 | @inlinable public func == <T>(lhs: T, rhs: T) -> Bool where T : RawRepresentable, T.RawValue : Equatable
+  |                        `- note: candidate would match if 'CodexWire.Event' conformed to 'RawRepresentable'
+
+Swift.FloatingPoint.==:2:20: note: candidate would match if 'CodexWire.Event' conformed to 'FloatingPoint'
+1 | protocol FloatingPoint {
+2 | public static func == (lhs: Self, rhs: Self) -> Bool}
+  |                    `- note: candidate would match if 'CodexWire.Event' conformed to 'FloatingPoint'
+3 | 
+
+Swift.BinaryInteger.==:2:20: note: candidate would match if 'CodexWire.Event' conformed to 'BinaryInteger'
+1 | protocol BinaryInteger {
+2 | public static func == <Other>(lhs: Self, rhs: Other) -> Bool where Other : BinaryInteger}
+  |                    `- note: candidate would match if 'CodexWire.Event' conformed to 'BinaryInteger'
+3 | 
+
+Swift._Pointer.==:2:20: note: candidate would match if 'CodexWire.Event' conformed to '_Pointer'
+1 | protocol _Pointer {
+2 | public static func == (lhs: Self, rhs: Self) -> Bool}
+  |                    `- note: candidate would match if 'CodexWire.Event' conformed to '_Pointer'
+3 | 
+
+Swift._Pointer.==:2:31: note: candidate would match if 'CodexWire.Event' conformed to '_Pointer'
+1 | protocol _Pointer {
+2 | @inlinable public static func == <Other>(lhs: Self, rhs: Other) -> Bool where Other : _Pointer}
+  |                               `- note: candidate would match if 'CodexWire.Event' conformed to '_Pointer'
+3 | 
+
+Swift.Strideable.==:2:31: note: candidate would match if 'CodexWire.Event' conformed to 'Strideable'
+1 | protocol Strideable {
+2 | @inlinable public static func == (x: Self, y: Self) -> Bool}
+  |                               `- note: candidate would match if 'CodexWire.Event' conformed to 'Strideable'
+3 | 
+
+Swift.StringProtocol.==:2:31: note: candidate would match if 'CodexWire.Event' conformed to 'StringProtocol'
+1 | protocol StringProtocol {
+2 | @inlinable public static func == <RHS>(lhs: Self, rhs: RHS) -> Bool where RHS : StringProtocol}
+  |                               `- note: candidate would match if 'CodexWire.Event' conformed to 'StringProtocol'
+3 | 
+
+Swift.SIMD.==:2:20: note: candidate would match if 'CodexWire.Event' conformed to 'SIMD'
+1 | protocol SIMD {
+2 | public static func == (a: Self, b: Self) -> Bool}
+  |                    `- note: candidate would match if 'CodexWire.Event' conformed to 'SIMD'
+3 | 
+
+Foundation.AttributedStringProtocol.==:2:20: note: candidate would match if 'CodexWire.Event' conformed to 'AttributedStringProtocol'
+1 | protocol AttributedStringProtocol {
+2 | public static func == <RHS>(lhs: Self, rhs: RHS) -> Bool where RHS : AttributedStringProtocol}
+  |                    `- note: candidate would match if 'CodexWire.Event' conformed to 'AttributedStringProtocol'
+3 | 
+
+Foundation._BridgedStoredNSError.==:2:20: note: candidate would match if 'CodexWire.Event' conformed to '_BridgedStoredNSError'
+1 | protocol _BridgedStoredNSError {
+2 | public static func == (lhs: Self, rhs: Self) -> Bool}
+  |                    `- note: candidate would match if 'CodexWire.Event' conformed to '_BridgedStoredNSError'
+3 | 
+
+CoreFoundation._CFObject.==:2:20: note: candidate would match if 'CodexWire.Event' conformed to '_CFObject'
+1 | protocol _CFObject {
+2 | public static func == (left: Self, right: Self) -> Bool}
+  |                    `- note: candidate would match if 'CodexWire.Event' conformed to '_CFObject'
+3 | 
+
+Swift.Equatable.==:2:13: note: protocol requires function '==' with type '(borrowing CodexWire.Event, borrowing CodexWire.Event) -> Bool'
+1 | protocol Equatable {
+2 | static func == (lhs: borrowing Self, rhs: borrowing Self) -> Bool}
+  |             `- note: protocol requires function '==' with type '(borrowing CodexWire.Event, borrowing CodexWire.Event) -> Bool'
+3 | 
+
+/Users/aaron/Documents/WindowShade/prototype/Core/CodexWire.swift:37:41: error: cannot find type 'WireJSON' in scope
+ 35 |     private(set) var outbound: [Data] = []
+ 36 |     mutating func drain() -> [Data] { defer { outbound.removeAll(keepingCapacity:true) }; return outbound }
+ 37 |     private mutating func send(_ value: WireJSON) throws {
+    |                                         `- error: cannot find type 'WireJSON' in scope
+ 38 |         let e = JSONEncoder(); e.outputFormatting = [.sortedKeys,.withoutEscapingSlashes]
+ 39 |         var data = try e.encode(value)
+
+/Users/aaron/Documents/WindowShade/prototype/Core/CodexWire.swift:43:71: error: cannot find type 'WireJSON' in scope
+ 41 |         data.append(10); outbound.append(data)
+ 42 |     }
+ 43 |     private mutating func request(_ method: String, _ params: [String:WireJSON]?, now: WS2.Instant) throws -> WS2.RequestID {
+    |                                                                       `- error: cannot find type 'WireJSON' in scope
+ 44 |         guard state != .closed, pending.count < Self.maximumPending, serial < .max else { throw Failure.capacity }
+ 45 |         serial += 1; let id = WS2.RequestID.integer(serial)
+
+/Users/aaron/Documents/WindowShade/prototype/Core/CodexWire.swift:135:40: error: cannot find type 'WireJSON' in scope
+133 |         return result
+134 |     }
+135 |     private mutating func receive(_ v: WireJSON, now: WS2.Instant) throws -> [Event] {
+    |                                        `- error: cannot find type 'WireJSON' in scope
+136 |         guard case .object = v else { throw Failure.malformed }
+137 |         if let version=v["jsonrpc"],version != .string("2.0") { throw Failure.malformed }
+
+/Users/aaron/Documents/WindowShade/prototype/Core/CodexWire.swift:229:58: error: cannot find type 'WireJSON' in scope
+227 |     enum ApprovalWireDecision { case acceptOnce, decline }
+228 |     mutating func enqueueApprovalResponse(_ id: WS2.RequestID, expectedMethod: String,
+229 |                                          expectedParams: WireJSON, decision: ApprovalWireDecision) throws {
+    |                                                          `- error: cannot find type 'WireJSON' in scope
+230 |         guard state == .ready, approvals[id] == expectedParams, approvalMethods[id] == expectedMethod,
+231 |               expectedParams["threadId"]?.text == threadID, expectedParams["turnId"]?.text == turnID,
+
+/Users/aaron/Documents/WindowShade/prototype/Core/CodexWire.swift:46:30: error: cannot find type 'WireJSON' in scope
+ 44 |         guard state != .closed, pending.count < Self.maximumPending, serial < .max else { throw Failure.capacity }
+ 45 |         serial += 1; let id = WS2.RequestID.integer(serial)
+ 46 |         var envelope:[String:WireJSON] = ["id":.integer(serial),"method":.string(method)]
+    |                              `- error: cannot find type 'WireJSON' in scope
+ 47 |         if let params { envelope["params"] = .object(params) };try send(.object(envelope))
+ 48 |         pending[id] = Pending(method:method,deadline:now.adding(30 * WS2.Duration.second))
+
+/Users/aaron/Documents/WindowShade/prototype/Core/CodexWire.swift:47:47: error: cannot infer contextual base in reference to member 'object'
+ 45 |         serial += 1; let id = WS2.RequestID.integer(serial)
+ 46 |         var envelope:[String:WireJSON] = ["id":.integer(serial),"method":.string(method)]
+ 47 |         if let params { envelope["params"] = .object(params) };try send(.object(envelope))
+    |                                               `- error: cannot infer contextual base in reference to member 'object'
+ 48 |         pending[id] = Pending(method:method,deadline:now.adding(30 * WS2.Duration.second))
+ 49 |         return id
+
+/Users/aaron/Documents/WindowShade/prototype/Core/CodexWire.swift:53:69: error: type 'Any' has no member 'string'
+ 51 |     mutating func initialize(now: WS2.Instant) throws {
+ 52 |         guard state == .fresh, time.accept(now) else { throw Failure.notReady }
+ 53 |         _ = try request("initialize",["clientInfo":.object(["name":.string("windowshade"),"version":.string("2-probe")])],now:now)
+    |                                                                     `- error: type 'Any' has no member 'string'
+ 54 |         state = .initializing
+ 55 |     }
+
+/Users/aaron/Documents/WindowShade/prototype/Core/CodexWire.swift:53:102: error: type 'Any' has no member 'string'
+ 51 |     mutating func initialize(now: WS2.Instant) throws {
+ 52 |         guard state == .fresh, time.accept(now) else { throw Failure.notReady }
+ 53 |         _ = try request("initialize",["clientInfo":.object(["name":.string("windowshade"),"version":.string("2-probe")])],now:now)
+    |                                                                                                      `- error: type 'Any' has no member 'string'
+ 54 |         state = .initializing
+ 55 |     }
+
+/Users/aaron/Documents/WindowShade/prototype/Core/CodexWire.swift:78:48: error: type 'Any' has no member 'string'
+ 76 |         _ = try request("turn/start",["threadId":.string(threadID),"model":.string(model),"effort":.string(effort),
+ 77 |               "approvalPolicy":.string("on-request"),"approvalsReviewer":.string("user"),
+ 78 |               "sandboxPolicy":.object(["type":.string("readOnly"),"networkAccess":.bool(false)]),
+    |                                                `- error: type 'Any' has no member 'string'
+ 79 |               "input":.array([.object(["type":.string("text"),"text":.string(text),"text_elements":.array([])])])],now:now)
+ 80 |     }
+
+/Users/aaron/Documents/WindowShade/prototype/Core/CodexWire.swift:78:84: error: type 'Any' has no member 'bool'
+ 76 |         _ = try request("turn/start",["threadId":.string(threadID),"model":.string(model),"effort":.string(effort),
+ 77 |               "approvalPolicy":.string("on-request"),"approvalsReviewer":.string("user"),
+ 78 |               "sandboxPolicy":.object(["type":.string("readOnly"),"networkAccess":.bool(false)]),
+    |                                                                                    `- error: type 'Any' has no member 'bool'
+ 79 |               "input":.array([.object(["type":.string("text"),"text":.string(text),"text_elements":.array([])])])],now:now)
+ 80 |     }
+
+/Users/aaron/Documents/WindowShade/prototype/Core/CodexWire.swift:79:32: error: type 'Any' has no member 'object'
+ 77 |               "approvalPolicy":.string("on-request"),"approvalsReviewer":.string("user"),
+ 78 |               "sandboxPolicy":.object(["type":.string("readOnly"),"networkAccess":.bool(false)]),
+ 79 |               "input":.array([.object(["type":.string("text"),"text":.string(text),"text_elements":.array([])])])],now:now)
+    |                                `- error: type 'Any' has no member 'object'
+ 80 |     }
+ 81 |     mutating func steer(text: String, expectedTurnID: String, now: WS2.Instant) throws {
+
+/Users/aaron/Documents/WindowShade/prototype/Core/CodexWire.swift:79:48: error: type 'Any' has no member 'string'
+ 77 |               "approvalPolicy":.string("on-request"),"approvalsReviewer":.string("user"),
+ 78 |               "sandboxPolicy":.object(["type":.string("readOnly"),"networkAccess":.bool(false)]),
+ 79 |               "input":.array([.object(["type":.string("text"),"text":.string(text),"text_elements":.array([])])])],now:now)
+    |                                                `- error: type 'Any' has no member 'string'
+ 80 |     }
+ 81 |     mutating func steer(text: String, expectedTurnID: String, now: WS2.Instant) throws {
+
+/Users/aaron/Documents/WindowShade/prototype/Core/CodexWire.swift:79:71: error: type 'Any' has no member 'string'
+ 77 |               "approvalPolicy":.string("on-request"),"approvalsReviewer":.string("user"),
+ 78 |               "sandboxPolicy":.object(["type":.string("readOnly"),"networkAccess":.bool(false)]),
+ 79 |               "input":.array([.object(["type":.string("text"),"text":.string(text),"text_elements":.array([])])])],now:now)
+    |                                                                       `- error: type 'Any' has no member 'string'
+ 80 |     }
+ 81 |     mutating func steer(text: String, expectedTurnID: String, now: WS2.Instant) throws {
+
+/Users/aaron/Documents/WindowShade/prototype/Core/CodexWire.swift:79:101: error: type 'Any' has no member 'array'
+ 77 |               "approvalPolicy":.string("on-request"),"approvalsReviewer":.string("user"),
+ 78 |               "sandboxPolicy":.object(["type":.string("readOnly"),"networkAccess":.bool(false)]),
+ 79 |               "input":.array([.object(["type":.string("text"),"text":.string(text),"text_elements":.array([])])])],now:now)
+    |                                                                                                     `- error: type 'Any' has no member 'array'
+ 80 |     }
+ 81 |     mutating func steer(text: String, expectedTurnID: String, now: WS2.Instant) throws {
+
+/Users/aaron/Documents/WindowShade/prototype/Core/CodexWire.swift:86:32: error: type 'Any' has no member 'object'
+ 84 |               text.utf8.count <= 65_536, time.accept(now) else { throw Failure.stale }
+ 85 |         _ = try request("turn/steer",["threadId":.string(threadID),"expectedTurnId":.string(expectedTurnID),
+ 86 |               "input":.array([.object(["type":.string("text"),"text":.string(text),"text_elements":.array([])])])],now:now)
+    |                                `- error: type 'Any' has no member 'object'
+ 87 |     }
+ 88 |     mutating func interrupt(now: WS2.Instant) throws {
+
+/Users/aaron/Documents/WindowShade/prototype/Core/CodexWire.swift:86:48: error: type 'Any' has no member 'string'
+ 84 |               text.utf8.count <= 65_536, time.accept(now) else { throw Failure.stale }
+ 85 |         _ = try request("turn/steer",["threadId":.string(threadID),"expectedTurnId":.string(expectedTurnID),
+ 86 |               "input":.array([.object(["type":.string("text"),"text":.string(text),"text_elements":.array([])])])],now:now)
+    |                                                `- error: type 'Any' has no member 'string'
+ 87 |     }
+ 88 |     mutating func interrupt(now: WS2.Instant) throws {
+
+/Users/aaron/Documents/WindowShade/prototype/Core/CodexWire.swift:86:71: error: type 'Any' has no member 'string'
+ 84 |               text.utf8.count <= 65_536, time.accept(now) else { throw Failure.stale }
+ 85 |         _ = try request("turn/steer",["threadId":.string(threadID),"expectedTurnId":.string(expectedTurnID),
+ 86 |               "input":.array([.object(["type":.string("text"),"text":.string(text),"text_elements":.array([])])])],now:now)
+    |                                                                       `- error: type 'Any' has no member 'string'
+ 87 |     }
+ 88 |     mutating func interrupt(now: WS2.Instant) throws {
+
+/Users/aaron/Documents/WindowShade/prototype/Core/CodexWire.swift:86:101: error: type 'Any' has no member 'array'
+ 84 |               text.utf8.count <= 65_536, time.accept(now) else { throw Failure.stale }
+ 85 |         _ = try request("turn/steer",["threadId":.string(threadID),"expectedTurnId":.string(expectedTurnID),
+ 86 |               "input":.array([.object(["type":.string("text"),"text":.string(text),"text_elements":.array([])])])],now:now)
+    |                                                                                                     `- error: type 'Any' has no member 'array'
+ 87 |     }
+ 88 |     mutating func interrupt(now: WS2.Instant) throws {
+
+/Users/aaron/Documents/WindowShade/prototype/Core/CodexWire.swift:124:58: error: cannot find 'WireJSON' in scope
+122 |                     guard !buffer.isEmpty else { throw Failure.malformed }
+123 |                     try WS2StrictJSON.validate(buffer,maximumBytes:Self.maximumFrame)
+124 |                     let value = try JSONDecoder().decode(WireJSON.self,from:buffer)
+    |                                                          `- error: cannot find 'WireJSON' in scope
+125 |                     buffer.removeAll(keepingCapacity:true)
+126 |                     result += try receive(value,now:now)
+
+/Users/aaron/Documents/WindowShade/prototype/Core/CodexWire.swift:124:51: error: failed to produce diagnostic for expression; please submit a bug report (https://swift.org/contributing/#reporting-bugs)
+122 |                     guard !buffer.isEmpty else { throw Failure.malformed }
+123 |                     try WS2StrictJSON.validate(buffer,maximumBytes:Self.maximumFrame)
+124 |                     let value = try JSONDecoder().decode(WireJSON.self,from:buffer)
+    |                                                   `- error: failed to produce diagnostic for expression; please submit a bug report (https://swift.org/contributing/#reporting-bugs)
+125 |                     buffer.removeAll(keepingCapacity:true)
+126 |                     result += try receive(value,now:now)
+
+/Users/aaron/Documents/WindowShade/prototype/Core/CodexWire.swift:137:49: error: cannot infer contextual base in reference to member 'string'
+135 |     private mutating func receive(_ v: WireJSON, now: WS2.Instant) throws -> [Event] {
+136 |         guard case .object = v else { throw Failure.malformed }
+137 |         if let version=v["jsonrpc"],version != .string("2.0") { throw Failure.malformed }
+    |                                                 `- error: cannot infer contextual base in reference to member 'string'
+138 |         if let raw=v["id"] {
+139 |             guard let id=raw.requestID else { throw Failure.malformed }
+
+/Users/aaron/Documents/WindowShade/prototype/Core/CodexWire.swift:189:41: error: type 'Any' has no member 'string'
+187 |         switch p.method {
+188 |         case "initialize":
+189 |             try send(.object(["method":.string("initialized")]))
+    |                                         `- error: type 'Any' has no member 'string'
+190 |             state = .listingModels
+191 |             _ = try request("model/list",["includeHidden":.bool(false),"limit":.integer(100)],now:now)
+
+/Users/aaron/Documents/WindowShade/prototype/Core/CodexWire.swift:196:31: error: failed to produce diagnostic for expression; please submit a bug report (https://swift.org/contributing/#reporting-bugs)
+194 |             for row in rows {
+195 |                 guard let model = row["model"]?.text, case .array(let options) = row["supportedReasoningEfforts"] else { throw Failure.malformed }
+196 |                 let efforts = Set(options.compactMap { $0["reasoningEffort"]?.text })
+    |                               `- error: failed to produce diagnostic for expression; please submit a bug report (https://swift.org/contributing/#reporting-bugs)
+197 |                 guard models.count < 512 || models[model] != nil else { throw Failure.capacity }
+198 |                 models[model] = efforts
+
+/Users/aaron/Documents/WindowShade/prototype/Core/CodexWire.swift:220:18: error: cannot find type 'WireJSON' in scope
+218 |     mutating func denyApproval(_ id: WS2.RequestID) throws {
+219 |         guard state == .ready, approvals[id] != nil, !sentApprovalIDs.contains(id) else { throw Failure.stale }
+220 |         let raw: WireJSON
+    |                  `- error: cannot find type 'WireJSON' in scope
+221 |         switch id { case .integer(let n): raw = .integer(n); case .string(let s): raw = .string(s) }
+222 |         try send(.object(["id":raw,"result":.object(["decision":.string("decline")])]))
+
+/Users/aaron/Documents/WindowShade/prototype/Core/CodexWire.swift:222:46: error: type 'Any' has no member 'object'
+220 |         let raw: WireJSON
+221 |         switch id { case .integer(let n): raw = .integer(n); case .string(let s): raw = .string(s) }
+222 |         try send(.object(["id":raw,"result":.object(["decision":.string("decline")])]))
+    |                                              `- error: type 'Any' has no member 'object'
+223 |         approvals[id] = nil; approvalMethods[id] = nil; sentApprovalIDs.insert(id)
+224 |     }
+
+/Users/aaron/Documents/WindowShade/prototype/Core/CodexWire.swift:222:66: error: type 'Any' has no member 'string'
+220 |         let raw: WireJSON
+221 |         switch id { case .integer(let n): raw = .integer(n); case .string(let s): raw = .string(s) }
+222 |         try send(.object(["id":raw,"result":.object(["decision":.string("decline")])]))
+    |                                                                  `- error: type 'Any' has no member 'string'
+223 |         approvals[id] = nil; approvalMethods[id] = nil; sentApprovalIDs.insert(id)
+224 |     }
+
+/Users/aaron/Documents/WindowShade/prototype/Core/CodexWire.swift:236:18: error: cannot find type 'WireJSON' in scope
+234 |             guard expectedMethod == "item/commandExecution/requestApproval" else { throw Failure.unsupported }
+235 |         }
+236 |         let raw: WireJSON
+    |                  `- error: cannot find type 'WireJSON' in scope
+237 |         switch id { case .integer(let n): raw = .integer(n); case .string(let s): raw = .string(s) }
+238 |         try send(.object(["id":raw,"result":.object(["decision":.string(decision == .acceptOnce ? "accept" : "decline")])]))
+
+/Users/aaron/Documents/WindowShade/prototype/Core/CodexWire.swift:238:46: error: type 'Any' has no member 'object'
+236 |         let raw: WireJSON
+237 |         switch id { case .integer(let n): raw = .integer(n); case .string(let s): raw = .string(s) }
+238 |         try send(.object(["id":raw,"result":.object(["decision":.string(decision == .acceptOnce ? "accept" : "decline")])]))
+    |                                              `- error: type 'Any' has no member 'object'
+239 |         approvals[id] = nil; approvalMethods[id] = nil; sentApprovalIDs.insert(id)
+240 |     }
+
+/Users/aaron/Documents/WindowShade/prototype/Core/CodexWire.swift:238:66: error: type 'Any' has no member 'string'
+236 |         let raw: WireJSON
+237 |         switch id { case .integer(let n): raw = .integer(n); case .string(let s): raw = .string(s) }
+238 |         try send(.object(["id":raw,"result":.object(["decision":.string(decision == .acceptOnce ? "accept" : "decline")])]))
+    |                                                                  `- error: type 'Any' has no member 'string'
+239 |         approvals[id] = nil; approvalMethods[id] = nil; sentApprovalIDs.insert(id)
+240 |     }

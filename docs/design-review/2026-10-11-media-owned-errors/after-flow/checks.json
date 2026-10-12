@@ -1,0 +1,40 @@
+{
+  "cleanup" : {
+    "reaped" : true,
+    "temporaryRemoved" : true
+  },
+  "failure" : null,
+  "passed" : true,
+  "records" : [
+    {
+      "canChooseModel" : false,
+      "canSend" : false,
+      "mode" : "signed-out",
+      "passed" : true,
+      "status" : "需要登录 ChatGPT"
+    },
+    {
+      "canSend" : false,
+      "mode" : "config-rejected",
+      "notice" : "",
+      "passed" : true,
+      "reaped" : true,
+      "status" : "助手设置与当前权限不符，已断开。"
+    },
+    {
+      "canSend" : false,
+      "mode" : "malformed-account",
+      "notice" : "请重新启动助手。",
+      "passed" : true,
+      "reaped" : true,
+      "status" : "助手返回的信息不完整，已断开。"
+    },
+    {
+      "mode" : "manual-stop",
+      "passed" : true,
+      "reaped" : true,
+      "status" : "已断开"
+    }
+  ],
+  "synthetic" : true
+}

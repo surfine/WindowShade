@@ -1,0 +1,6 @@
+landscape16x9_640x360.png 640 360 border: fail
+landscape4x3_480x360.png 480 360 border: fail
+square360x360_360x360.png 360 360 border: fail
+portrait9x16_360x640.png 360 640 border: fail
+ultrawide3x1_900x300.png 900 300 border: fail
+{"status": "fail", "images": 5, "failures": [{"file": "landscape16x9_640x360.png", "nonwhite_border_pixels": 288}, {"file": "landscape4x3_480x360.png", "nonwhite_border_pixels": 288}, {"file": "square360x360_360x360.png", "nonwhite_border_pixels": 288}, {"file": "portrait9x16_360x640.png", "nonwhite_border_pixels": 288}, {"file": "ultrawide3x1_900x300.png", "nonwhite_border_pixels": 288}]}

@@ -1,0 +1,1 @@
+{"status": "pass", "actual_frames": 12, "static_only": true, "parent_pairs": [{"sample": "windows", "identical": true}, {"sample": "activities", "identical": true}, {"sample": "mixed", "identical": true}, {"sample": "long", "identical": true}, {"sample": "unknown", "identical": true}, {"sample": "stale-ended", "identical": true}]}

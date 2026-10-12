@@ -1024,7 +1024,7 @@ struct CodingSessionActivities {
         guard usageAlerted.insert(next.windowKey).inserted else { return nil }
         if usageAlerted.count > 16, let drop = usageAlerted.first(where: { $0 != next.windowKey }) { usageAlerted.remove(drop) }
         return Bloom(sessionID: Self.usageBloomID, headline: "额度快用完了",
-                     detail: next.recovery.map { "\($0)恢复" } ?? "")
+                     detail: next.recoveryDetail ?? "")
     }
 
     @discardableResult

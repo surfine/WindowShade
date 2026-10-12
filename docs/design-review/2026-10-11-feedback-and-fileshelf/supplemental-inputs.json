@@ -1,0 +1,11 @@
+{
+  "tools/design-qa/FeedbackPreview.swift": "ac0b1898b39850a18426b978736e91be306866827f2464e0b94ebd73bffa62d2",
+  "tools/design-qa/MediaFeedbackPreview.swift": "0dc957d20d90c58084fc1eba92ff2be6dc9c279c65ef8fe6695b3d45678823f1",
+  "tools/design-qa/FileShelfSurfacePreview.swift": "04639acd5490e51c322a66ba1f1f8988292065fdebf603c752e6bd208ee69f78",
+  "tools/design-qa/check-feedback-preview.py": "fdb4d9a568d98e29de08a1e6fa2b015e53b78d89d47e1f4f197380251be6255c",
+  "tools/design-qa/check-fileshelf-preview.py": "fb5f814290b310f39e4e5c9b242c43dfa30fdff04252dc5ac17a0cf05b8fce67",
+  "tests/NowPlayingCardViewTests.swift": "abe4ff74757fdc134baf38db844294be180b8a79b7688410b10c3c49dac76108",
+  "tests/ConductorOwnedFlowTests.swift": "caa04931f7cdfe45f277085952116ca8fa93a7549b834594b386a3536dcf419b",
+  "tests/run-conductor-owned-flow-tests.sh": "35153cceafa658f69097ba94fd5b0d3a8d8e051b1f3540a74a6b8dc2fd7d1c2f",
+  "tests/fixtures/conductor-backend.py": "3cc79fb3045f3e62a6678c4bd718c017596f80b8f9bfc0bda800204bb5649afb"
+}

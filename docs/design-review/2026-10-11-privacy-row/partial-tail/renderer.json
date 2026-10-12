@@ -1,0 +1,8 @@
+{
+  "renderer": "/Users/aaron/Documents/WindowShade/.build/native-surfaces.qmJa1q/render",
+  "sha256": "64d388e9d6c3b0f85bc63d885035c643468c7d931091b4fbb1d3aadec06a6e7b",
+  "swiftLanguageVersion": 6,
+  "strictConcurrency": true,
+  "warningsAsErrors": true,
+  "optimized": false
+}

@@ -1,0 +1,8 @@
+{
+  "renderer": "/Users/aaron/Documents/WindowShade/.build/native-surfaces.WMrXJs/render",
+  "sha256": "86a3e6984070352a9e96f3924b355d94710b052203a7d652e3639dea3a3d2225",
+  "swiftLanguageVersion": 6,
+  "strictConcurrency": true,
+  "warningsAsErrors": true,
+  "optimized": false
+}

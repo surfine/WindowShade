@@ -77,7 +77,7 @@ final class WindowBrowserActionBar: NSView {
     /// 浮层样式：卡片上的操作按钮悬停时浮在画面右上角，需要一块圆角底托住符号，
     /// 让它在任意窗口画面上都清楚。底用窗口背景色（不透明度 0.9）+ 细边，不用玻璃。
     var overlayStyle = false {
-        didSet { refreshOverlayBackground() }
+        didSet { fittedWidth = nil; refreshOverlayBackground() }
     }
     /// 浮层四周的内边距（按钮与底托边缘之间）。
     static let overlayInset: CGFloat = 2
@@ -106,11 +106,15 @@ final class WindowBrowserActionBar: NSView {
 
     /// 紧凑操作条末尾固定的“更多操作”入口：不随动作数量变化，始终可在
     /// 悬停/选中状态的一条里发现（右键菜单仍然是同一份菜单）。
-    var showsMoreButton = true
+    var showsMoreButton = true {
+        didSet { fittedWidth = nil }
+    }
+    private var fittedWidth: CGFloat?
     private(set) var moreButtonIdentifier = "window-browser-more"
 
     func configure(items: [WindowBrowserActionItem], key: WindowKey,
                    target: AnyObject, action: Selector, busy: Bool = false) {
+        fittedWidth = nil
         windowKey = key
         self.items = items
         for button in buttons { button.removeFromSuperview() }
@@ -161,6 +165,7 @@ final class WindowBrowserActionBar: NSView {
     }
 
     func reset() {
+        fittedWidth = nil
         for button in buttons { button.removeFromSuperview() }
         buttons.removeAll()
         items.removeAll()
@@ -197,7 +202,20 @@ final class WindowBrowserActionBar: NSView {
     }
 
     private var arrangedViews: [NSView] {
-        (busyIndicator.map { [$0] } ?? []) + buttons
+        (busyIndicator.map { [$0] } ?? []) + buttons.filter { !$0.isHidden }
+    }
+
+    /// 窄缩略图先保留首个操作和更多；完整动作仍由原菜单与卡片辅助操作提供。
+    func fitActions(in availableWidth: CGFloat) {
+        guard fittedWidth != availableWidth else { return }
+        fittedWidth = availableWidth
+        for button in buttons { button.isHidden = false }
+        guard showsMoreButton else { return }
+        while requiredWidth > max(0, availableWidth),
+              let trailing = buttons.dropLast().last(where: { !$0.isHidden }) {
+            trailing.isHidden = true
+        }
+        needsLayout = true
     }
 
     /// 按钮实际占用的宽度（28 pt 命中区 + 4 pt 间距；浮层样式再加两侧内边距）。

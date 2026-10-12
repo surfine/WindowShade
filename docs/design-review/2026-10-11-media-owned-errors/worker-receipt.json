@@ -1,0 +1,35 @@
+{
+  "is_error": false,
+  "incomplete": false,
+  "finish_reason": "stop",
+  "changed_files": [
+    "tools/design-qa/artwork-palette-check.md"
+  ],
+  "checks": [
+    {
+      "check_index": 0,
+      "argv": [
+        "bash",
+        "tests/run-artwork-palette-tests.sh"
+      ],
+      "exit_code": 0,
+      "revision": 0,
+      "timed_out": false,
+      "output": "PASS artwork-palette\n",
+      "truncated": false
+    },
+    {
+      "check_index": 0,
+      "argv": [
+        "bash",
+        "tests/run-artwork-palette-tests.sh"
+      ],
+      "exit_code": 0,
+      "revision": 1,
+      "timed_out": false,
+      "output": "PASS artwork-palette\n",
+      "truncated": false
+    }
+  ],
+  "result": "已完成，无修复，无产品/测试改动。\n\n## 摘要\n\n**改动文件**：仅新建产物 `tools/design-qa/artwork-palette-check.md`（唯一授权写入文件）。\n\n**检查结果**：\n- 固定检查 `bash tests/run-artwork-palette-tests.sh`：**exit 0**，末尾输出原样 `PASS artwork-palette`。\n- 未重复跑套件。\n\n**产物内容**：\n- 记录退出码与原始输出；列出 runner 及其全部生产输入/测试源路径。\n- 按源函数标题登记语义覆盖（`testStable`、`testNeutralCases`、`testThresholdsAndFraction`、`testPrimaryAndSecondary`、`testClampsAndContrast`、`testUnpremultiplyAndFingerprint`、`testPayload`、`testDecoder`），未给出断言计数。\n- 明确边界：仅纯数学 + 当前源码 + 一次内存 PNG 解码；无真实媒体/UI/子进程/账号；不声称新原生帧、真实硬件、风格验收或“每一实际渲染帧”的对比度。\n\n**未解决**：SHA256 数值未在本环境计算（无通用哈希工具）；产物中登记了输入文件清单与该限制，供主模型在 Mac 上对同一路径独立核对数值。"
+}

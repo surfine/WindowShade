@@ -1,0 +1,22 @@
+{
+  "kind": "contract_check",
+  "status": "residual_risk",
+  "artifact": "/Users/aaron/Documents/WindowShade/docs/design-review/2026-10-11-merged-row/validation.json",
+  "artifact_sha256": "da6f4a7b3a95fc93e2c8d8f8162942443ed4e67da92567cf12ab0865bd6f3fa8",
+  "binding_sha256": "afdea2247616d01d41b3b9fcc90a6c1295f1ab5769dfaa98fd9a369c2caad76c",
+  "checks": [
+    {
+      "command": "check-merged-row-preview.py final",
+      "exit_code": 0,
+      "result": "12 actual frames;518 source hashes current"
+    }
+  ],
+  "reused_checks": [
+    {
+      "command": "round14 optimized check;519 current hashes compared",
+      "exit_code": 0
+    }
+  ],
+  "remaining_risk": "wrapper numeric exit unavailable;static only;synthetic icons;no real source/actions/motion",
+  "next_action": "self_review"
+}

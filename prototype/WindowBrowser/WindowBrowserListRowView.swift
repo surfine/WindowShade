@@ -195,7 +195,9 @@ final class WindowBrowserListRowView: NSView {
         actionBar.needsLayout = true
         actionBar.isHidden = !(isSelected || isHovering || actionBar.isBusy)
         let textLeft = params.rowIconLeading
-        let trailing = params.rowTrailingControlsWidth + params.rowTrailingPadding
+        // Keep the real action bar clear of text, including More and busy state.
+        // Reserve it while hidden too, so hovering does not move the title.
+        let trailing = max(params.rowTrailingControlsWidth, actionsWidth) + params.rowTrailingPadding
         let textWidth = max(1, bounds.width - textLeft - trailing - params.spacingSmall)
         // 有状态时“标题 + 状态”整体垂直居中；没有状态时标题单独居中。
         let hasStatus = !statusField.isHidden

@@ -1,0 +1,8 @@
+Traceback (most recent call last):
+  File "/Users/aaron/Documents/WindowShade/tools/design-qa/check-progress-quantity-preview.py", line 363, in <module>
+    main()
+    ~~~~^^
+  File "/Users/aaron/Documents/WindowShade/tools/design-qa/check-progress-quantity-preview.py", line 256, in main
+    assert frame.get("canvasDark") is APPEARANCES[appearance], \
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+AssertionError: light-zero: canvasDark mismatch

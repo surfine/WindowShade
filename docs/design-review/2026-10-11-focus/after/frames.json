@@ -1,0 +1,58 @@
+[
+  {
+    "height" : 142,
+    "image" : "light-idle.png",
+    "spoken" : "番茄钟，开始专注，今天完成 0 个",
+    "visibleWindow" : false,
+    "width" : 320
+  },
+  {
+    "height" : 142,
+    "image" : "light-focus.png",
+    "spoken" : "专注，18:42，今天第 1 个",
+    "visibleWindow" : false,
+    "width" : 320
+  },
+  {
+    "height" : 142,
+    "image" : "light-paused.png",
+    "spoken" : "专注 · 已暂停，18:42，今天第 1 个",
+    "visibleWindow" : false,
+    "width" : 320
+  },
+  {
+    "height" : 120,
+    "image" : "light-rest.png",
+    "spoken" : "休息，4:00，看看远处 · 点一下回来",
+    "visibleWindow" : false,
+    "width" : 324
+  },
+  {
+    "height" : 142,
+    "image" : "dark-idle.png",
+    "spoken" : "番茄钟，开始专注，今天完成 0 个",
+    "visibleWindow" : false,
+    "width" : 320
+  },
+  {
+    "height" : 142,
+    "image" : "dark-focus.png",
+    "spoken" : "专注，18:42，今天第 1 个",
+    "visibleWindow" : false,
+    "width" : 320
+  },
+  {
+    "height" : 142,
+    "image" : "dark-paused.png",
+    "spoken" : "专注 · 已暂停，18:42，今天第 1 个",
+    "visibleWindow" : false,
+    "width" : 320
+  },
+  {
+    "height" : 120,
+    "image" : "dark-rest.png",
+    "spoken" : "休息，4:00，看看远处 · 点一下回来",
+    "visibleWindow" : false,
+    "width" : 324
+  }
+]

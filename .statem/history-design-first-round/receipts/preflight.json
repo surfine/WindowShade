@@ -1,0 +1,35 @@
+{
+  "classes": [
+    "external-effects",
+    "secret-handling"
+  ],
+  "hazards": [
+    {
+      "class": "external-effects",
+      "evidence_paths": [
+        "progress.md",
+        "blocked.json"
+      ],
+      "matched": [
+        "发布"
+      ],
+      "requirement": "不可逆外部效果先立效果清单；执行后要重新读回实际状态并对账。",
+      "severity": "high"
+    },
+    {
+      "class": "secret-handling",
+      "evidence_paths": [
+        "prototype/build.sh"
+      ],
+      "matched": [
+        "凭据"
+      ],
+      "requirement": "凭据不写进文件、日志或回执；只引用保存位置。",
+      "severity": "normal"
+    }
+  ],
+  "source": "preflight",
+  "task_path": "task.txt",
+  "task_sha256": "4ea1b8238af5e3ca279412125254992f08a949778e1fe20200e97483237765bb",
+  "version": 1
+}

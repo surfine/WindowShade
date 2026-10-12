@@ -1,0 +1,17 @@
+[
+  {
+    "activeApplication" : false,
+    "height" : 176,
+    "image" : "light-playing.png",
+    "intersectsScreen" : false,
+    "listOpen" : false,
+    "panelAlpha" : 0,
+    "parentAppearance" : "NSAppearanceNameAqua",
+    "routeCount" : 0,
+    "routeReads" : 0,
+    "state" : "playing",
+    "synthetic" : true,
+    "title" : "样件音乐",
+    "width" : 421
+  }
+]

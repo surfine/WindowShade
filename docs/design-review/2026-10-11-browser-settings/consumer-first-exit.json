@@ -1,0 +1,12 @@
+{
+  "exit_code": 1,
+  "failure": {
+    "text": "\u89e6\u53d1",
+    "x": -2,
+    "right": 26,
+    "width": 28,
+    "height": 15
+  },
+  "reason": "consumer tested page origin rather than actual host bounds; native label extends 2pt into 28pt host margin; actual PNG visible",
+  "product_changed_for_check": false
+}

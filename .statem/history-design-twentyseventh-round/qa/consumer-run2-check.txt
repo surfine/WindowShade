@@ -1,0 +1,10 @@
+FAIL 9 checks:
+ - ('zh-light-560-shade', 'geometry x/w drift', '0%', 299, 450, 40, 40)
+ - ('zh-dark-560-shade', 'geometry x/w drift', '0%', 450, 299, 40, 40)
+ - ('rebuild-en-advanced', 'Han text in English frame', ['Notes on 桌面开合', '临时停用，不改动上面的开关。', '合上或打开时桌面跟着动', '合上或打开盖子时，桌面跟着动一下。', '实时预览', '实时预览需要此权限。'])
+ - ('en advanced anchors', ['Language', 'Interface language', 'Reset defaults', 'Diagnostics log', 'Accessibility'])
+ - ('language popup item', 'Follow the system')
+ - ('language popup item', '简体中文')
+ - ('language popup item', 'English')
+ - zh rebuild must match the initial zh window
+ - zh rebuild geometry must match

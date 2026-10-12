@@ -1,0 +1,1177 @@
+{
+  "cacheOnly" : true,
+  "compositorAccepted" : false,
+  "globalInputEvents" : 0,
+  "overrideRestored" : true,
+  "productEntry" : false,
+  "realSources" : 0,
+  "records" : [
+    {
+      "active" : false,
+      "alpha" : 0,
+      "animations" : [
+
+      ],
+      "callbacks" : 0,
+      "delegateNil" : true,
+      "mainThread" : true,
+      "model" : {
+        "height" : 400,
+        "width" : 800,
+        "x" : 0,
+        "y" : 0
+      },
+      "presentation" : null,
+      "reduced" : false,
+      "stage" : "initial-before",
+      "time" : 79013.18901016668,
+      "visible" : false
+    },
+    {
+      "active" : false,
+      "alpha" : 0,
+      "animations" : [
+
+      ],
+      "callbacks" : 0,
+      "delegateNil" : true,
+      "mainThread" : true,
+      "model" : {
+        "height" : 33.5,
+        "width" : 185,
+        "x" : 307.5,
+        "y" : 366.5
+      },
+      "presentation" : null,
+      "reduced" : false,
+      "stage" : "initial-after",
+      "time" : 79013.370809916683,
+      "visible" : false
+    },
+    {
+      "active" : false,
+      "alpha" : 0,
+      "animations" : [
+
+      ],
+      "callbacks" : 1,
+      "delegateNil" : true,
+      "mainThread" : true,
+      "model" : {
+        "height" : 33.5,
+        "width" : 185,
+        "x" : 307.5,
+        "y" : 366.5
+      },
+      "presentation" : {
+        "height" : 33.5,
+        "width" : 185,
+        "x" : 307.5,
+        "y" : 366.5
+      },
+      "reduced" : false,
+      "stage" : "open-before",
+      "time" : 79013.517452916683,
+      "visible" : false
+    },
+    {
+      "active" : false,
+      "alpha" : 0,
+      "animations" : [
+        {
+          "additive" : true,
+          "beginTime" : 0,
+          "damping" : 28.902652413026097,
+          "duration" : 0.56160572076454451,
+          "from" : [
+            0,
+            93.25
+          ],
+          "key" : "morph.position",
+          "mass" : 1,
+          "stiffness" : 246.74011002723395,
+          "velocity" : 0
+        },
+        {
+          "additive" : true,
+          "beginTime" : 0,
+          "damping" : 28.902652413026097,
+          "duration" : 0.56160572076454451,
+          "from" : [
+            -120,
+            -186.5
+          ],
+          "key" : "morph.bounds.size",
+          "mass" : 1,
+          "stiffness" : 246.74011002723395,
+          "velocity" : 0
+        },
+        {
+          "additive" : true,
+          "beginTime" : 0,
+          "damping" : 28.902652413026097,
+          "duration" : 0.56160572076454451,
+          "key" : "morph.cornerRadius",
+          "mass" : 1,
+          "stiffness" : 246.74011002723395,
+          "velocity" : 0
+        }
+      ],
+      "callbacks" : 1,
+      "delegateNil" : true,
+      "mainThread" : true,
+      "model" : {
+        "height" : 220,
+        "width" : 305,
+        "x" : 247.5,
+        "y" : 180
+      },
+      "presentation" : {
+        "height" : 33.5,
+        "width" : 185,
+        "x" : 307.5,
+        "y" : 366.5
+      },
+      "reduced" : false,
+      "stage" : "open-after",
+      "time" : 79013.520720041677,
+      "visible" : false
+    },
+    {
+      "active" : false,
+      "alpha" : 0,
+      "animations" : [
+        {
+          "additive" : true,
+          "beginTime" : 79013.525221291682,
+          "damping" : 28.902652413026097,
+          "duration" : 0.56160572076454451,
+          "from" : [
+            0,
+            93.25
+          ],
+          "key" : "morph.position",
+          "mass" : 1,
+          "stiffness" : 246.74011002723395,
+          "velocity" : 0
+        },
+        {
+          "additive" : true,
+          "beginTime" : 79013.525221291682,
+          "damping" : 28.902652413026097,
+          "duration" : 0.56160572076454451,
+          "from" : [
+            -120,
+            -186.5
+          ],
+          "key" : "morph.bounds.size",
+          "mass" : 1,
+          "stiffness" : 246.74011002723395,
+          "velocity" : 0
+        },
+        {
+          "additive" : true,
+          "beginTime" : 79013.525221291682,
+          "damping" : 28.902652413026097,
+          "duration" : 0.56160572076454451,
+          "key" : "morph.cornerRadius",
+          "mass" : 1,
+          "stiffness" : 246.74011002723395,
+          "velocity" : 0
+        }
+      ],
+      "callbacks" : 1,
+      "delegateNil" : true,
+      "mainThread" : true,
+      "model" : {
+        "height" : 220,
+        "width" : 305,
+        "x" : 247.5,
+        "y" : 180
+      },
+      "presentation" : {
+        "height" : 74.31090372800827,
+        "width" : 211.25902652740479,
+        "x" : 294.37048673629761,
+        "y" : 325.68909627199173
+      },
+      "reduced" : false,
+      "stage" : "open-sample",
+      "time" : 79013.614044375019,
+      "visible" : false
+    },
+    {
+      "active" : false,
+      "alpha" : 0,
+      "animations" : [
+        {
+          "additive" : true,
+          "beginTime" : 79013.525221291682,
+          "damping" : 28.902652413026097,
+          "duration" : 0.56160572076454451,
+          "from" : [
+            0,
+            93.25
+          ],
+          "key" : "morph.position",
+          "mass" : 1,
+          "stiffness" : 246.74011002723395,
+          "velocity" : 0
+        },
+        {
+          "additive" : true,
+          "beginTime" : 79013.525221291682,
+          "damping" : 28.902652413026097,
+          "duration" : 0.56160572076454451,
+          "from" : [
+            -120,
+            -186.5
+          ],
+          "key" : "morph.bounds.size",
+          "mass" : 1,
+          "stiffness" : 246.74011002723395,
+          "velocity" : 0
+        },
+        {
+          "additive" : true,
+          "beginTime" : 79013.525221291682,
+          "damping" : 28.902652413026097,
+          "duration" : 0.56160572076454451,
+          "key" : "morph.cornerRadius",
+          "mass" : 1,
+          "stiffness" : 246.74011002723395,
+          "velocity" : 0
+        }
+      ],
+      "callbacks" : 1,
+      "delegateNil" : true,
+      "mainThread" : true,
+      "model" : {
+        "height" : 220,
+        "width" : 305,
+        "x" : 247.5,
+        "y" : 180
+      },
+      "presentation" : {
+        "height" : 74.31090372800827,
+        "width" : 211.25902652740479,
+        "x" : 294.37048673629761,
+        "y" : 325.68909627199173
+      },
+      "reduced" : false,
+      "stage" : "reverse-before",
+      "time" : 79013.614254666682,
+      "visible" : false
+    },
+    {
+      "active" : false,
+      "alpha" : 0,
+      "animations" : [
+        {
+          "additive" : true,
+          "beginTime" : 0,
+          "damping" : 28.902652413026097,
+          "duration" : 0.51348419436617543,
+          "from" : [
+            0,
+            -20.405451864004135
+          ],
+          "key" : "morph.position",
+          "mass" : 1,
+          "stiffness" : 246.74011002723395,
+          "velocity" : 10.327173460728805
+        },
+        {
+          "additive" : true,
+          "beginTime" : 0,
+          "damping" : 28.902652413026097,
+          "duration" : 0.51348419436617543,
+          "from" : [
+            26.259026527404785,
+            40.81090372800827
+          ],
+          "key" : "morph.bounds.size",
+          "mass" : 1,
+          "stiffness" : 246.74011002723395,
+          "velocity" : 10.327173460728805
+        },
+        {
+          "additive" : true,
+          "beginTime" : 0,
+          "damping" : 28.902652413026097,
+          "duration" : 0.51348419436617543,
+          "key" : "morph.cornerRadius",
+          "mass" : 1,
+          "stiffness" : 246.74011002723395,
+          "velocity" : 10.327173460728805
+        }
+      ],
+      "callbacks" : 1,
+      "delegateNil" : true,
+      "mainThread" : true,
+      "model" : {
+        "height" : 33.5,
+        "width" : 185,
+        "x" : 307.5,
+        "y" : 366.5
+      },
+      "presentation" : {
+        "height" : 74.31090372800827,
+        "width" : 211.25902652740479,
+        "x" : 294.37048673629761,
+        "y" : 325.68909627199173
+      },
+      "reduced" : false,
+      "stage" : "reverse-after",
+      "time" : 79013.617069000014,
+      "visible" : false
+    },
+    {
+      "active" : false,
+      "alpha" : 0,
+      "animations" : [
+        {
+          "additive" : true,
+          "beginTime" : 79013.626268708351,
+          "damping" : 28.902652413026097,
+          "duration" : 0.51348419436617543,
+          "from" : [
+            0,
+            -20.405451864004135
+          ],
+          "key" : "morph.position",
+          "mass" : 1,
+          "stiffness" : 246.74011002723395,
+          "velocity" : 10.327173460728805
+        },
+        {
+          "additive" : true,
+          "beginTime" : 79013.626268708351,
+          "damping" : 28.902652413026097,
+          "duration" : 0.51348419436617543,
+          "from" : [
+            26.259026527404785,
+            40.81090372800827
+          ],
+          "key" : "morph.bounds.size",
+          "mass" : 1,
+          "stiffness" : 246.74011002723395,
+          "velocity" : 10.327173460728805
+        },
+        {
+          "additive" : true,
+          "beginTime" : 79013.626268708351,
+          "damping" : 28.902652413026097,
+          "duration" : 0.51348419436617543,
+          "key" : "morph.cornerRadius",
+          "mass" : 1,
+          "stiffness" : 246.74011002723395,
+          "velocity" : 10.327173460728805
+        }
+      ],
+      "callbacks" : 2,
+      "delegateNil" : true,
+      "mainThread" : true,
+      "model" : {
+        "height" : 33.5,
+        "width" : 185,
+        "x" : 307.5,
+        "y" : 366.5
+      },
+      "presentation" : {
+        "height" : 56.817844119670831,
+        "width" : 200.00343857565952,
+        "x" : 299.99828071217024,
+        "y" : 343.18215588032922
+      },
+      "reduced" : false,
+      "stage" : "reverse-sample",
+      "time" : 79013.674837500017,
+      "visible" : false
+    },
+    {
+      "active" : false,
+      "alpha" : 0,
+      "animations" : [
+        {
+          "additive" : true,
+          "beginTime" : 79013.626268708351,
+          "damping" : 28.902652413026097,
+          "duration" : 0.51348419436617543,
+          "from" : [
+            0,
+            -20.405451864004135
+          ],
+          "key" : "morph.position",
+          "mass" : 1,
+          "stiffness" : 246.74011002723395,
+          "velocity" : 10.327173460728805
+        },
+        {
+          "additive" : true,
+          "beginTime" : 79013.626268708351,
+          "damping" : 28.902652413026097,
+          "duration" : 0.51348419436617543,
+          "from" : [
+            26.259026527404785,
+            40.81090372800827
+          ],
+          "key" : "morph.bounds.size",
+          "mass" : 1,
+          "stiffness" : 246.74011002723395,
+          "velocity" : 10.327173460728805
+        },
+        {
+          "additive" : true,
+          "beginTime" : 79013.626268708351,
+          "damping" : 28.902652413026097,
+          "duration" : 0.51348419436617543,
+          "key" : "morph.cornerRadius",
+          "mass" : 1,
+          "stiffness" : 246.74011002723395,
+          "velocity" : 10.327173460728805
+        }
+      ],
+      "callbacks" : 2,
+      "delegateNil" : true,
+      "mainThread" : true,
+      "model" : {
+        "height" : 33.5,
+        "width" : 185,
+        "x" : 307.5,
+        "y" : 366.5
+      },
+      "presentation" : {
+        "height" : 56.817844119670831,
+        "width" : 200.00343857565952,
+        "x" : 299.99828071217024,
+        "y" : 343.18215588032922
+      },
+      "reduced" : false,
+      "stage" : "reopen-before",
+      "time" : 79013.674936291689,
+      "visible" : false
+    },
+    {
+      "active" : false,
+      "alpha" : 0,
+      "animations" : [
+        {
+          "additive" : true,
+          "beginTime" : 0,
+          "damping" : 28.902652413026097,
+          "duration" : 0.55539960862675652,
+          "from" : [
+            0,
+            81.59107794016461
+          ],
+          "key" : "morph.position",
+          "mass" : 1,
+          "stiffness" : 246.74011002723395,
+          "velocity" : 1.7677643358579731
+        },
+        {
+          "additive" : true,
+          "beginTime" : 0,
+          "damping" : 28.902652413026097,
+          "duration" : 0.55539960862675652,
+          "from" : [
+            -104.99656142434048,
+            -163.18215588032916
+          ],
+          "key" : "morph.bounds.size",
+          "mass" : 1,
+          "stiffness" : 246.74011002723395,
+          "velocity" : 1.7677643358579731
+        },
+        {
+          "additive" : true,
+          "beginTime" : 0,
+          "damping" : 28.902652413026097,
+          "duration" : 0.55539960862675652,
+          "key" : "morph.cornerRadius",
+          "mass" : 1,
+          "stiffness" : 246.74011002723395,
+          "velocity" : 1.7677643358579731
+        }
+      ],
+      "callbacks" : 2,
+      "delegateNil" : true,
+      "mainThread" : true,
+      "model" : {
+        "height" : 220,
+        "width" : 305,
+        "x" : 247.5,
+        "y" : 180
+      },
+      "presentation" : {
+        "height" : 56.817844119670831,
+        "width" : 200.00343857565952,
+        "x" : 299.99828071217024,
+        "y" : 343.18215588032922
+      },
+      "reduced" : false,
+      "stage" : "reopen-after",
+      "time" : 79013.683771208351,
+      "visible" : false
+    },
+    {
+      "active" : false,
+      "alpha" : 0,
+      "animations" : [
+        {
+          "additive" : true,
+          "beginTime" : 79013.694873750021,
+          "damping" : 28.902652413026097,
+          "duration" : 0.55539960862675652,
+          "from" : [
+            0,
+            81.59107794016461
+          ],
+          "key" : "morph.position",
+          "mass" : 1,
+          "stiffness" : 246.74011002723395,
+          "velocity" : 1.7677643358579731
+        },
+        {
+          "additive" : true,
+          "beginTime" : 79013.694873750021,
+          "damping" : 28.902652413026097,
+          "duration" : 0.55539960862675652,
+          "from" : [
+            -104.99656142434048,
+            -163.18215588032916
+          ],
+          "key" : "morph.bounds.size",
+          "mass" : 1,
+          "stiffness" : 246.74011002723395,
+          "velocity" : 1.7677643358579731
+        },
+        {
+          "additive" : true,
+          "beginTime" : 79013.694873750021,
+          "damping" : 28.902652413026097,
+          "duration" : 0.55539960862675652,
+          "key" : "morph.cornerRadius",
+          "mass" : 1,
+          "stiffness" : 246.74011002723395,
+          "velocity" : 1.7677643358579731
+        }
+      ],
+      "callbacks" : 3,
+      "delegateNil" : true,
+      "mainThread" : true,
+      "model" : {
+        "height" : 220,
+        "width" : 305,
+        "x" : 247.5,
+        "y" : 180
+      },
+      "presentation" : {
+        "height" : 121.42934530531927,
+        "width" : 241.57652244846281,
+        "x" : 279.21173877576859,
+        "y" : 278.57065469468074
+      },
+      "reduced" : false,
+      "stage" : "width-only-before",
+      "time" : 79013.771428833352,
+      "visible" : false
+    },
+    {
+      "active" : false,
+      "alpha" : 0,
+      "animations" : [
+        {
+          "additive" : true,
+          "beginTime" : 0,
+          "damping" : 28.902652413026097,
+          "duration" : 0.53399887941983315,
+          "from" : [
+            0,
+            49.285327347340399
+          ],
+          "key" : "morph.position",
+          "mass" : 1,
+          "stiffness" : 246.74011002723395,
+          "velocity" : 6.779464881883551
+        },
+        {
+          "additive" : true,
+          "beginTime" : 0,
+          "damping" : 28.902652413026097,
+          "duration" : 0.53399887941983315,
+          "from" : [
+            -183.42347755153719,
+            -98.570654694680726
+          ],
+          "key" : "morph.bounds.size",
+          "mass" : 1,
+          "stiffness" : 246.74011002723395,
+          "velocity" : 6.779464881883551
+        },
+        {
+          "additive" : true,
+          "beginTime" : 0,
+          "damping" : 28.902652413026097,
+          "duration" : 0.53399887941983315,
+          "key" : "morph.cornerRadius",
+          "mass" : 1,
+          "stiffness" : 246.74011002723395,
+          "velocity" : 6.779464881883551
+        }
+      ],
+      "callbacks" : 3,
+      "delegateNil" : true,
+      "mainThread" : true,
+      "model" : {
+        "height" : 220,
+        "width" : 425,
+        "x" : 187.5,
+        "y" : 180
+      },
+      "presentation" : {
+        "height" : 121.42934530531927,
+        "width" : 241.57652244846281,
+        "x" : 279.21173877576859,
+        "y" : 278.57065469468074
+      },
+      "reduced" : false,
+      "stage" : "width-only-after",
+      "time" : 79013.773178125019,
+      "visible" : false
+    },
+    {
+      "active" : false,
+      "alpha" : 0,
+      "animations" : [
+        {
+          "additive" : true,
+          "beginTime" : 79013.778667958351,
+          "damping" : 28.902652413026097,
+          "duration" : 0.53399887941983315,
+          "from" : [
+            0,
+            49.285327347340399
+          ],
+          "key" : "morph.position",
+          "mass" : 1,
+          "stiffness" : 246.74011002723395,
+          "velocity" : 6.779464881883551
+        },
+        {
+          "additive" : true,
+          "beginTime" : 79013.778667958351,
+          "damping" : 28.902652413026097,
+          "duration" : 0.53399887941983315,
+          "from" : [
+            -183.42347755153719,
+            -98.570654694680726
+          ],
+          "key" : "morph.bounds.size",
+          "mass" : 1,
+          "stiffness" : 246.74011002723395,
+          "velocity" : 6.779464881883551
+        },
+        {
+          "additive" : true,
+          "beginTime" : 79013.778667958351,
+          "damping" : 28.902652413026097,
+          "duration" : 0.53399887941983315,
+          "key" : "morph.cornerRadius",
+          "mass" : 1,
+          "stiffness" : 246.74011002723395,
+          "velocity" : 6.779464881883551
+        }
+      ],
+      "callbacks" : 4,
+      "delegateNil" : true,
+      "mainThread" : true,
+      "model" : {
+        "height" : 220,
+        "width" : 425,
+        "x" : 187.5,
+        "y" : 180
+      },
+      "presentation" : {
+        "height" : 155.56003059813082,
+        "width" : 305.08801080182604,
+        "x" : 247.45599459908698,
+        "y" : 244.43996940186921
+      },
+      "reduced" : false,
+      "stage" : "width-reverse-before",
+      "time" : 79013.827500375017,
+      "visible" : false
+    },
+    {
+      "active" : false,
+      "alpha" : 0,
+      "animations" : [
+        {
+          "additive" : true,
+          "beginTime" : 0,
+          "damping" : 28.902652413026097,
+          "duration" : 0.51911644668448609,
+          "from" : [
+            0,
+            32.219984700934617
+          ],
+          "key" : "morph.position",
+          "mass" : 1,
+          "stiffness" : 246.74011002723395,
+          "velocity" : 9.4554198974193984
+        },
+        {
+          "additive" : true,
+          "beginTime" : 0,
+          "damping" : 28.902652413026097,
+          "duration" : 0.51911644668448609,
+          "from" : [
+            0.088010801826044371,
+            -64.439969401869178
+          ],
+          "key" : "morph.bounds.size",
+          "mass" : 1,
+          "stiffness" : 246.74011002723395,
+          "velocity" : 9.4554198974193984
+        },
+        {
+          "additive" : true,
+          "beginTime" : 0,
+          "damping" : 28.902652413026097,
+          "duration" : 0.51911644668448609,
+          "key" : "morph.cornerRadius",
+          "mass" : 1,
+          "stiffness" : 246.74011002723395,
+          "velocity" : 9.4554198974193984
+        }
+      ],
+      "callbacks" : 4,
+      "delegateNil" : true,
+      "mainThread" : true,
+      "model" : {
+        "height" : 220,
+        "width" : 305,
+        "x" : 247.5,
+        "y" : 180
+      },
+      "presentation" : {
+        "height" : 155.56003059813082,
+        "width" : 305.08801080182604,
+        "x" : 247.45599459908698,
+        "y" : 244.43996940186921
+      },
+      "reduced" : false,
+      "stage" : "width-reverse-after",
+      "time" : 79013.828951083357,
+      "visible" : false
+    },
+    {
+      "active" : false,
+      "alpha" : 0,
+      "animations" : [
+
+      ],
+      "callbacks" : 6,
+      "delegateNil" : true,
+      "mainThread" : true,
+      "model" : {
+        "height" : 220,
+        "width" : 305,
+        "x" : 247.5,
+        "y" : 180
+      },
+      "presentation" : {
+        "height" : 220,
+        "width" : 305,
+        "x" : 247.5,
+        "y" : 180
+      },
+      "reduced" : false,
+      "stage" : "settled",
+      "time" : 79014.574259583344,
+      "visible" : false
+    },
+    {
+      "active" : false,
+      "alpha" : 0,
+      "animations" : [
+
+      ],
+      "callbacks" : 0,
+      "delegateNil" : true,
+      "mainThread" : true,
+      "model" : {
+        "height" : 400,
+        "width" : 800,
+        "x" : 0,
+        "y" : 0
+      },
+      "presentation" : null,
+      "reduced" : true,
+      "stage" : "initial-before",
+      "time" : 79014.600047791682,
+      "visible" : false
+    },
+    {
+      "active" : false,
+      "alpha" : 0,
+      "animations" : [
+
+      ],
+      "callbacks" : 0,
+      "delegateNil" : true,
+      "mainThread" : true,
+      "model" : {
+        "height" : 33.5,
+        "width" : 185,
+        "x" : 307.5,
+        "y" : 366.5
+      },
+      "presentation" : null,
+      "reduced" : true,
+      "stage" : "initial-after",
+      "time" : 79014.635651250021,
+      "visible" : false
+    },
+    {
+      "active" : false,
+      "alpha" : 0,
+      "animations" : [
+
+      ],
+      "callbacks" : 1,
+      "delegateNil" : true,
+      "mainThread" : true,
+      "model" : {
+        "height" : 33.5,
+        "width" : 185,
+        "x" : 307.5,
+        "y" : 366.5
+      },
+      "presentation" : {
+        "height" : 33.5,
+        "width" : 185,
+        "x" : 307.5,
+        "y" : 366.5
+      },
+      "reduced" : true,
+      "stage" : "open-before",
+      "time" : 79014.680839500012,
+      "visible" : false
+    },
+    {
+      "active" : false,
+      "alpha" : 0,
+      "animations" : [
+
+      ],
+      "callbacks" : 1,
+      "delegateNil" : true,
+      "mainThread" : true,
+      "model" : {
+        "height" : 220,
+        "width" : 305,
+        "x" : 247.5,
+        "y" : 180
+      },
+      "presentation" : {
+        "height" : 33.5,
+        "width" : 185,
+        "x" : 307.5,
+        "y" : 366.5
+      },
+      "reduced" : true,
+      "stage" : "open-after",
+      "time" : 79014.682216333356,
+      "visible" : false
+    },
+    {
+      "active" : false,
+      "alpha" : 0,
+      "animations" : [
+
+      ],
+      "callbacks" : 2,
+      "delegateNil" : true,
+      "mainThread" : true,
+      "model" : {
+        "height" : 220,
+        "width" : 305,
+        "x" : 247.5,
+        "y" : 180
+      },
+      "presentation" : {
+        "height" : 220,
+        "width" : 305,
+        "x" : 247.5,
+        "y" : 180
+      },
+      "reduced" : true,
+      "stage" : "open-sample",
+      "time" : 79014.776031125017,
+      "visible" : false
+    },
+    {
+      "active" : false,
+      "alpha" : 0,
+      "animations" : [
+
+      ],
+      "callbacks" : 2,
+      "delegateNil" : true,
+      "mainThread" : true,
+      "model" : {
+        "height" : 220,
+        "width" : 305,
+        "x" : 247.5,
+        "y" : 180
+      },
+      "presentation" : {
+        "height" : 220,
+        "width" : 305,
+        "x" : 247.5,
+        "y" : 180
+      },
+      "reduced" : true,
+      "stage" : "reverse-before",
+      "time" : 79014.776164250012,
+      "visible" : false
+    },
+    {
+      "active" : false,
+      "alpha" : 0,
+      "animations" : [
+
+      ],
+      "callbacks" : 2,
+      "delegateNil" : true,
+      "mainThread" : true,
+      "model" : {
+        "height" : 33.5,
+        "width" : 185,
+        "x" : 307.5,
+        "y" : 366.5
+      },
+      "presentation" : {
+        "height" : 220,
+        "width" : 305,
+        "x" : 247.5,
+        "y" : 180
+      },
+      "reduced" : true,
+      "stage" : "reverse-after",
+      "time" : 79014.779065291688,
+      "visible" : false
+    },
+    {
+      "active" : false,
+      "alpha" : 0,
+      "animations" : [
+
+      ],
+      "callbacks" : 3,
+      "delegateNil" : true,
+      "mainThread" : true,
+      "model" : {
+        "height" : 33.5,
+        "width" : 185,
+        "x" : 307.5,
+        "y" : 366.5
+      },
+      "presentation" : {
+        "height" : 33.5,
+        "width" : 185,
+        "x" : 307.5,
+        "y" : 366.5
+      },
+      "reduced" : true,
+      "stage" : "reverse-sample",
+      "time" : 79014.834211166686,
+      "visible" : false
+    },
+    {
+      "active" : false,
+      "alpha" : 0,
+      "animations" : [
+
+      ],
+      "callbacks" : 3,
+      "delegateNil" : true,
+      "mainThread" : true,
+      "model" : {
+        "height" : 33.5,
+        "width" : 185,
+        "x" : 307.5,
+        "y" : 366.5
+      },
+      "presentation" : {
+        "height" : 33.5,
+        "width" : 185,
+        "x" : 307.5,
+        "y" : 366.5
+      },
+      "reduced" : true,
+      "stage" : "reopen-before",
+      "time" : 79014.834263666678,
+      "visible" : false
+    },
+    {
+      "active" : false,
+      "alpha" : 0,
+      "animations" : [
+
+      ],
+      "callbacks" : 3,
+      "delegateNil" : true,
+      "mainThread" : true,
+      "model" : {
+        "height" : 220,
+        "width" : 305,
+        "x" : 247.5,
+        "y" : 180
+      },
+      "presentation" : {
+        "height" : 33.5,
+        "width" : 185,
+        "x" : 307.5,
+        "y" : 366.5
+      },
+      "reduced" : true,
+      "stage" : "reopen-after",
+      "time" : 79014.835430083345,
+      "visible" : false
+    },
+    {
+      "active" : false,
+      "alpha" : 0,
+      "animations" : [
+
+      ],
+      "callbacks" : 4,
+      "delegateNil" : true,
+      "mainThread" : true,
+      "model" : {
+        "height" : 220,
+        "width" : 305,
+        "x" : 247.5,
+        "y" : 180
+      },
+      "presentation" : {
+        "height" : 220,
+        "width" : 305,
+        "x" : 247.5,
+        "y" : 180
+      },
+      "reduced" : true,
+      "stage" : "width-only-before",
+      "time" : 79014.919657458348,
+      "visible" : false
+    },
+    {
+      "active" : false,
+      "alpha" : 0,
+      "animations" : [
+
+      ],
+      "callbacks" : 4,
+      "delegateNil" : true,
+      "mainThread" : true,
+      "model" : {
+        "height" : 220,
+        "width" : 425,
+        "x" : 187.5,
+        "y" : 180
+      },
+      "presentation" : {
+        "height" : 220,
+        "width" : 305,
+        "x" : 247.5,
+        "y" : 180
+      },
+      "reduced" : true,
+      "stage" : "width-only-after",
+      "time" : 79014.920943916688,
+      "visible" : false
+    },
+    {
+      "active" : false,
+      "alpha" : 0,
+      "animations" : [
+
+      ],
+      "callbacks" : 5,
+      "delegateNil" : true,
+      "mainThread" : true,
+      "model" : {
+        "height" : 220,
+        "width" : 425,
+        "x" : 187.5,
+        "y" : 180
+      },
+      "presentation" : {
+        "height" : 220,
+        "width" : 425,
+        "x" : 187.5,
+        "y" : 180
+      },
+      "reduced" : true,
+      "stage" : "width-reverse-before",
+      "time" : 79014.975388250023,
+      "visible" : false
+    },
+    {
+      "active" : false,
+      "alpha" : 0,
+      "animations" : [
+
+      ],
+      "callbacks" : 5,
+      "delegateNil" : true,
+      "mainThread" : true,
+      "model" : {
+        "height" : 220,
+        "width" : 305,
+        "x" : 247.5,
+        "y" : 180
+      },
+      "presentation" : {
+        "height" : 220,
+        "width" : 425,
+        "x" : 187.5,
+        "y" : 180
+      },
+      "reduced" : true,
+      "stage" : "width-reverse-after",
+      "time" : 79014.976205750019,
+      "visible" : false
+    },
+    {
+      "active" : false,
+      "alpha" : 0,
+      "animations" : [
+
+      ],
+      "callbacks" : 6,
+      "delegateNil" : true,
+      "mainThread" : true,
+      "model" : {
+        "height" : 220,
+        "width" : 305,
+        "x" : 247.5,
+        "y" : 180
+      },
+      "presentation" : {
+        "height" : 220,
+        "width" : 305,
+        "x" : 247.5,
+        "y" : 180
+      },
+      "reduced" : true,
+      "stage" : "settled",
+      "time" : 79015.723617708354,
+      "visible" : false
+    }
+  ]
+}

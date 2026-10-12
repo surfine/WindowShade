@@ -1,0 +1,12 @@
+{
+  "exit_code": 0,
+  "command": [
+    "swiftc",
+    "-frontend",
+    "-parse",
+    "tests/NowPlayingCardViewTests.swift"
+  ],
+  "stdout": "",
+  "stderr": "",
+  "behavior_evidence": "current native empty-list return/retry checks; old suite not run"
+}

@@ -1,15 +1,21 @@
 {
   "kind": "self_review",
-  "status": "clean",
-  "issues_found": false,
+  "status": "residual_risk",
+  "issues_found": true,
   "needs_evidence": false,
+  "artifact": "/Users/aaron/Documents/WindowShade/docs/design-review/2026-10-11-fluid-retarget/validation.json",
+  "artifact_sha256": "4b61ab7889ed899c973136e91f69b76a234c94e959fbcc6ba7a66f78385e5172",
+  "binding_sha256": "1e672104266fbb602cabcf7029b6d98286f0716f30ff78ba8095fbcdce881b6b",
   "lenses": {
-    "task_contract": "Push and GPT-6 Pro prompt committed at 4accf31; remote ref confirms identity",
-    "evidence_freshness": "82 source hashes match build; remote checked after push",
-    "edge_risk": "Real-device failure expressly unresolved in prompt; no release or main merge"
+    "task_contract": "both repairs implemented within allowed files (FlickMotion/Notch/WS2PrivacyPane; Motion untouched); separate math + native + optimized-build evidence; batch-25 receipts not reused",
+    "evidence_freshness": "14 source + 28 evidence entries under binding1e672104; native sources.json 518 files all current; build inputs 519 zero drift during build",
+    "edge_risk": "remaining unknowns are real-device visible motion, shoulders/companion per-axis speed, English enablement; no claim merges math/config/static/consumer into an Apple-level fluid pass"
   },
   "findings": [
-    "No outstanding issue for push-and-handoff scope"
+    "Product repaired: signed per-axis velocity retarget (batch-25 +10.327 wrong-direction defect fixed), stale presented on delayed exit re-read at actual start (0.1566s), privacy keyword icon branch removed (focus-preferences column aligned)",
+    "Consumer judgement errors found and kept as artifacts; product configuration independently verified against raw recorded data before check fixes (three kick axes full-curve max 0.19pt; reverse trajectory maxdiff 0.146pt)",
+    "This batch does NOT claim: signed app launch, real-device notch animation, frame pacing, input latency, VoiceOver, real permissions/data, English completeness",
+    "Whole goal remains active: next batch should continue notch motion remaining paths (shoulders/companion) and minimal English surface; keep evidence discipline (no reusing stale receipts)"
   ],
-  "next_action": "handoff"
+  "next_action": "continue"
 }

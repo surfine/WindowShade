@@ -1,0 +1,12 @@
+第25批：完整隐私内容列的原生静态组合候选。总目标持续提高WindowShade2设计质量。
+使用实际SettingsGroupBox/PrivacyRowView和纯登记数据、可见性及展示逻辑，640内容列/696×600自有隐藏窗口，浅深外观、折叠/展开含技术细节、页顶/中/底最多12图。展开真实switchSpec使用自有Mock目标，授权/工具栏按钮也只指向Mock，不触发。记录完整分组顺序、默认可见行、滚动边界、实际组件几何、控件目标及零动作。只读不等于不可选择。
+不得实例化WS2PrivacyPane、AppDelegate或任何来源控制器，不读取系统值/权限/真实文件/持久偏好，不发网络、不发送全局输入、不启动产品、不签名安装发布。产品源码与wrapper不改；仅新QA入口与消费者/画面稿/证据。卡片/标题/说明组合复现已读Preferences纯UI工厂，明确candidate并非真实Page。
+入口工具：PrivacyRowPreview.swift、WS2PrivacyPane.swift、WS2PrivacyModel.swift、WS2PrivacyData.swift、Preferences.swift510-560、DuoSettingsWindow.swift SettingsGroupBox。
+检查：bash tools/design-qa/render-native-surfaces.sh ABS_OUTPUT ABS_ENTRY --swift6；消费者独立核对登记可见行/分组/实际矩形/自有Mock/零动作及518当前SHA。生产519逐项与24正式构建身份匹配则复用。主模型检查有限PNG，累计图片低于48MiB。封存日志/源身份/失败原件；StateM回执绑定本批证据。真实Page/行为/隐私/大字/VO/硬件仍未验。前批DeepSeek无改动失败，本批主模型接手，不重复相同失败。
+
+补充允许：仅调用WS2PrivacyValues.hasValueSource纯集合查询，不调用read/value；Mock开关短标题按实际switchSpec映射，检查未知id无开关。首次89172编译1为主模型样件closure形参错误，已保全，未执行原生界面。
+用户追加动效硬要求后的并行独立基线：NotchRetargetPreview.swift使用实际Canvas.morph+CASpring配置，仅自有隐藏window/NSApp.run(delegate nil,prohibited)、合成空内容、保存恢复进程内Motion override，无真实来源/输入/窗口操作。与25页面编译使用各自wrapper临时目录和输出，不修改两在途入口/生产/wrapper。记录开合反向、宽度反向、模型/呈现层(可为null)、实际spring属性/回调；不做帧率/合成可见通过宣称。该动效基线另封存，发现失败后单独修复批次，不混入25页面通过结论。
+
+英语追加的独立已有入口基线：现有LocalizationTests6Swift源+xcstrings+key-check共8身份，在新的design-english-baseline-20261011输出运行，进程内明确设language/englishBundle，不读写持久偏好；保留默认编译模式，不能当Swift6/全App英语验收。7700检查在途，源身份记录在启动后同一源码冻结期间，完毕再匹配。
+
+动效附属物理单位核对：SpringVelocityUnitsPreview.swift直接调用实际CASpringAnimation，在自有隐藏Cocoa宿主比较距离100/200与初速度-1/0/1，Swift6 strict/warnings-as-errors，1Swift输入，30239；无产品源码/真实来源/输入。用于核对归一化速度的真实API语义，不当产品/可见合成/瞬时帧率验收。身份在源冻结期间、启动后记录，完毕再核对。

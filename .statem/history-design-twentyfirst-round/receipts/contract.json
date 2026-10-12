@@ -1,0 +1,25 @@
+{
+  "kind": "contract_check",
+  "status": "residual_risk",
+  "artifact": "/Users/aaron/Documents/WindowShade/docs/design-review/2026-10-11-usage-detail/validation.json",
+  "artifact_sha256": "cd293bac1a36040816a82d9e4aee86f5d4bf5d3da2609810c22821c6fffb291b",
+  "binding_sha256": "fb35f9f1de225da1a055a8f3a1a6d03d3ea984c17b75fb1135d396b8c37f6bf5",
+  "checks": [
+    {
+      "command": "actual UsageDetailDraftPreview Swift6 + actual output consumer",
+      "exit_code": 0,
+      "result": "16 candidate frames/current518/TextKit two-line tail/synthetic data only",
+      "receipt": "exit.json"
+    }
+  ],
+  "reused_checks": [
+    {
+      "command": "prototype/build.sh --check",
+      "exit_code": 0,
+      "result": "20th optimized519 all current SHA matched",
+      "receipt": "reused-build-exit.json"
+    }
+  ],
+  "remaining_risk": "candidate only, no product integration; synthetic context source unqualified; real account/source/actions/readscreen/motion/hardware not_run",
+  "next_action": "self_review"
+}

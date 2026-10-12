@@ -1,0 +1,20 @@
+[
+  {
+    "args": [
+      "relative-output",
+      "/Users/aaron/Documents/WindowShade/tools/design-qa/ConductorSurfacePreview.swift"
+    ],
+    "exit_code": 2,
+    "stderr": "output dir must be absolute: relative-output",
+    "expected_rejection": true
+  },
+  {
+    "args": [
+      "/tmp/windowshade-preview-reject",
+      "/Users/aaron/Documents/WindowShade/prototype/main.swift"
+    ],
+    "exit_code": 2,
+    "stderr": "refusing main.swift as render entry: /Users/aaron/Documents/WindowShade/prototype/main.swift",
+    "expected_rejection": true
+  }
+]

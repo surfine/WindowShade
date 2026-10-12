@@ -1,0 +1,948 @@
+[
+  {
+    "activeApplication" : false,
+    "buttons" : [
+      {
+        "enabled" : true,
+        "height" : 20,
+        "title" : "登录 ChatGPT",
+        "width" : 92.5,
+        "x" : 16,
+        "y" : 84
+      },
+      {
+        "enabled" : true,
+        "height" : 20,
+        "title" : "断开助手",
+        "width" : 64,
+        "x" : 16,
+        "y" : 40
+      },
+      {
+        "enabled" : true,
+        "height" : 20,
+        "title" : "查看诊断",
+        "width" : 64,
+        "x" : 88,
+        "y" : 40
+      }
+    ],
+    "canChooseModel" : false,
+    "canSend" : false,
+    "contentHeight" : 175,
+    "contentWidth" : 620,
+    "height" : 209,
+    "image" : "light-signed-out.png",
+    "intersectsScreen" : false,
+    "labels" : [
+      {
+        "height" : 19,
+        "text" : "light-signed-out",
+        "width" : 592,
+        "x" : 14,
+        "y" : 142
+      },
+      {
+        "height" : 14,
+        "text" : "需要登录 ChatGPT",
+        "width" : 592,
+        "x" : 14,
+        "y" : 116
+      },
+      {
+        "height" : 14,
+        "text" : "需要额外权限的操作会被拒绝。",
+        "width" : 592,
+        "x" : 14,
+        "y" : 14
+      }
+    ],
+    "notice" : "",
+    "panelAlpha" : 0,
+    "phase" : "signedOut",
+    "selectedModel" : null,
+    "state" : "signed-out",
+    "status" : "需要登录 ChatGPT",
+    "synthetic" : true,
+    "width" : 621
+  },
+  {
+    "activeApplication" : false,
+    "buttons" : [
+      {
+        "enabled" : true,
+        "height" : 20,
+        "title" : "选择项目…",
+        "width" : 73,
+        "x" : 16,
+        "y" : 195
+      },
+      {
+        "enabled" : true,
+        "height" : 20,
+        "title" : "选择 Codex…",
+        "width" : 87.5,
+        "x" : 16,
+        "y" : 166
+      },
+      {
+        "enabled" : true,
+        "height" : 16,
+        "title" : "运行所选 Codex；查询可能发送项目内容并消耗我的账号额度",
+        "width" : 321.5,
+        "x" : 16,
+        "y" : 141
+      },
+      {
+        "enabled" : true,
+        "height" : 16,
+        "title" : "仅本次保留诊断尾部",
+        "width" : 120.5,
+        "x" : 16,
+        "y" : 116
+      },
+      {
+        "enabled" : false,
+        "height" : 20,
+        "title" : "启动",
+        "width" : 42,
+        "x" : 16,
+        "y" : 84
+      },
+      {
+        "enabled" : true,
+        "height" : 20,
+        "title" : "查看诊断",
+        "width" : 64,
+        "x" : 16,
+        "y" : 40
+      }
+    ],
+    "canChooseModel" : false,
+    "canSend" : false,
+    "contentHeight" : 286,
+    "contentWidth" : 620,
+    "height" : 320,
+    "image" : "light-config-rejected.png",
+    "intersectsScreen" : false,
+    "labels" : [
+      {
+        "height" : 19,
+        "text" : "编程会话",
+        "width" : 592,
+        "x" : 14,
+        "y" : 253
+      },
+      {
+        "height" : 14,
+        "text" : "助手设置与当前权限不符，已断开。",
+        "width" : 592,
+        "x" : 14,
+        "y" : 227
+      },
+      {
+        "height" : 14,
+        "text" : "light-config-rejected",
+        "width" : 113.5,
+        "x" : 95,
+        "y" : 198
+      },
+      {
+        "height" : 14,
+        "text" : "\/var\/folders\/l6\/4_mrt4s51rv4sjb29v6x9n000000gn\/T\/owned-state-246FB0F0-2200-4965-9653-DCF0E33BA993\/light-config-rejected\/synthetic-codex.py",
+        "width" : 496.5,
+        "x" : 109.5,
+        "y" : 169
+      },
+      {
+        "height" : 14,
+        "text" : "需要额外权限的操作会被拒绝。",
+        "width" : 592,
+        "x" : 14,
+        "y" : 14
+      }
+    ],
+    "notice" : "",
+    "panelAlpha" : 0,
+    "phase" : "stopped",
+    "selectedModel" : null,
+    "state" : "config-rejected",
+    "status" : "助手设置与当前权限不符，已断开。",
+    "synthetic" : true,
+    "width" : 621
+  },
+  {
+    "activeApplication" : false,
+    "buttons" : [
+      {
+        "enabled" : true,
+        "height" : 20,
+        "title" : "选择项目…",
+        "width" : 73,
+        "x" : 16,
+        "y" : 195
+      },
+      {
+        "enabled" : true,
+        "height" : 20,
+        "title" : "选择 Codex…",
+        "width" : 87.5,
+        "x" : 16,
+        "y" : 166
+      },
+      {
+        "enabled" : true,
+        "height" : 16,
+        "title" : "运行所选 Codex；查询可能发送项目内容并消耗我的账号额度",
+        "width" : 321.5,
+        "x" : 16,
+        "y" : 141
+      },
+      {
+        "enabled" : true,
+        "height" : 16,
+        "title" : "仅本次保留诊断尾部",
+        "width" : 120.5,
+        "x" : 16,
+        "y" : 116
+      },
+      {
+        "enabled" : false,
+        "height" : 20,
+        "title" : "启动",
+        "width" : 42,
+        "x" : 16,
+        "y" : 84
+      },
+      {
+        "enabled" : true,
+        "height" : 20,
+        "title" : "查看诊断",
+        "width" : 64,
+        "x" : 16,
+        "y" : 40
+      }
+    ],
+    "canChooseModel" : false,
+    "canSend" : false,
+    "contentHeight" : 286,
+    "contentWidth" : 620,
+    "height" : 320,
+    "image" : "light-malformed-account.png",
+    "intersectsScreen" : false,
+    "labels" : [
+      {
+        "height" : 19,
+        "text" : "编程会话",
+        "width" : 592,
+        "x" : 14,
+        "y" : 253
+      },
+      {
+        "height" : 14,
+        "text" : "助手返回的信息不完整，已断开。",
+        "width" : 592,
+        "x" : 14,
+        "y" : 227
+      },
+      {
+        "height" : 14,
+        "text" : "light-malformed-account",
+        "width" : 136,
+        "x" : 95,
+        "y" : 198
+      },
+      {
+        "height" : 14,
+        "text" : "\/var\/folders\/l6\/4_mrt4s51rv4sjb29v6x9n000000gn\/T\/owned-state-246FB0F0-2200-4965-9653-DCF0E33BA993\/light-malformed-account\/synthetic-codex.py",
+        "width" : 496.5,
+        "x" : 109.5,
+        "y" : 169
+      },
+      {
+        "height" : 14,
+        "text" : "请重新启动助手。",
+        "width" : 592,
+        "x" : 14,
+        "y" : 14
+      }
+    ],
+    "notice" : "请重新启动助手。",
+    "panelAlpha" : 0,
+    "phase" : "stopped",
+    "selectedModel" : null,
+    "state" : "malformed-account",
+    "status" : "助手返回的信息不完整，已断开。",
+    "synthetic" : true,
+    "width" : 621
+  },
+  {
+    "activeApplication" : false,
+    "buttons" : [
+      {
+        "enabled" : true,
+        "height" : 24,
+        "title" : "synthetic-long-model-synthetic-long-model-synthetic-long-model-synthetic-long-model-synthetic-long-model-synthetic-long-model-synthetic-long-model-synthetic-long-model-synthetic-long-model-synthetic-long-model-synthetic-long-model-synthetic-long-model-synthetic-long-model-synthetic-long-model-a",
+        "width" : 564,
+        "x" : 16,
+        "y" : 214
+      },
+      {
+        "enabled" : true,
+        "height" : 24,
+        "title" : "medium",
+        "width" : 0,
+        "x" : 588,
+        "y" : 214
+      },
+      {
+        "enabled" : true,
+        "height" : 24,
+        "title" : "选择模型…",
+        "width" : 0,
+        "x" : 596,
+        "y" : 214
+      },
+      {
+        "enabled" : true,
+        "height" : 24,
+        "title" : "指挥模式",
+        "width" : 0,
+        "x" : 604,
+        "y" : 214
+      },
+      {
+        "enabled" : false,
+        "height" : 20,
+        "title" : "发送",
+        "width" : 42,
+        "x" : 16,
+        "y" : 72
+      },
+      {
+        "enabled" : true,
+        "height" : 20,
+        "title" : "断开助手",
+        "width" : 64,
+        "x" : 16,
+        "y" : 40
+      },
+      {
+        "enabled" : true,
+        "height" : 20,
+        "title" : "退出登录",
+        "width" : 64,
+        "x" : 88,
+        "y" : 40
+      },
+      {
+        "enabled" : true,
+        "height" : 20,
+        "title" : "查看诊断",
+        "width" : 64,
+        "x" : 160,
+        "y" : 40
+      }
+    ],
+    "canChooseModel" : true,
+    "canSend" : true,
+    "contentHeight" : 309,
+    "contentWidth" : 620,
+    "height" : 343,
+    "image" : "light-long-models.png",
+    "intersectsScreen" : false,
+    "labels" : [
+      {
+        "height" : 19,
+        "text" : "light-long-models",
+        "width" : 592,
+        "x" : 14,
+        "y" : 276
+      },
+      {
+        "height" : 14,
+        "text" : "已连接",
+        "width" : 592,
+        "x" : 14,
+        "y" : 250
+      },
+      {
+        "height" : 14,
+        "text" : "给助手的文字",
+        "width" : 70,
+        "x" : 14,
+        "y" : 188
+      },
+      {
+        "height" : 14,
+        "text" : "需要额外权限的操作会被拒绝。",
+        "width" : 592,
+        "x" : 14,
+        "y" : 14
+      }
+    ],
+    "notice" : "",
+    "panelAlpha" : 0,
+    "phase" : "ready",
+    "selectedModel" : "synthetic-long-model-synthetic-long-model-synthetic-long-model-synthetic-long-model-synthetic-long-model-synthetic-long-model-synthetic-long-model-synthetic-long-model-synthetic-long-model-synthetic-long-model-synthetic-long-model-synthetic-long-model-synthetic-long-model-synthetic-long-model-a",
+    "state" : "long-models",
+    "status" : "已连接",
+    "synthetic" : true,
+    "width" : 621
+  },
+  {
+    "activeApplication" : false,
+    "buttons" : [
+      {
+        "enabled" : true,
+        "height" : 20,
+        "title" : "",
+        "width" : 200,
+        "x" : 504,
+        "y" : 164
+      },
+      {
+        "enabled" : false,
+        "height" : 20,
+        "title" : "本次启用",
+        "width" : 39,
+        "x" : 504,
+        "y" : 138
+      },
+      {
+        "enabled" : false,
+        "height" : 20,
+        "title" : "使用此模型",
+        "width" : 75,
+        "x" : 504,
+        "y" : 112
+      },
+      {
+        "enabled" : true,
+        "height" : 20,
+        "title" : "返回会话",
+        "width" : 64,
+        "x" : 587,
+        "y" : 112
+      }
+    ],
+    "canChooseModel" : true,
+    "canSend" : true,
+    "contentHeight" : 196,
+    "contentWidth" : 720,
+    "height" : 230,
+    "image" : "light-long-model-picker.png",
+    "intersectsScreen" : false,
+    "labels" : [
+      {
+        "height" : 19,
+        "text" : "选择模型",
+        "width" : 64,
+        "x" : 14,
+        "y" : 165
+      },
+      {
+        "height" : 28,
+        "text" : "fixture-b",
+        "width" : 460,
+        "x" : 23,
+        "y" : 130
+      },
+      {
+        "height" : 28,
+        "text" : "synthetic-long-model-synthetic-long-model-synthetic-long-model-synthetic-long-model-synthetic-long-model-synthetic-long-model-synthetic-long-model-synthetic-long-model-synthetic-long-model-synthetic-long-model-synthetic-long-model-synthetic-long-model-synthetic-long-model-synthetic-long-model-a",
+        "width" : 460,
+        "x" : 23,
+        "y" : 102
+      },
+      {
+        "height" : 14,
+        "text" : "没有检测到游戏手柄；仍可用鼠标选择。",
+        "width" : 204,
+        "x" : 502,
+        "y" : 92
+      }
+    ],
+    "notice" : "",
+    "panelAlpha" : 0,
+    "phase" : "ready",
+    "selectedModel" : "synthetic-long-model-synthetic-long-model-synthetic-long-model-synthetic-long-model-synthetic-long-model-synthetic-long-model-synthetic-long-model-synthetic-long-model-synthetic-long-model-synthetic-long-model-synthetic-long-model-synthetic-long-model-synthetic-long-model-synthetic-long-model-a",
+    "state" : "long-model-picker",
+    "status" : "已连接",
+    "synthetic" : true,
+    "width" : 721
+  },
+  {
+    "activeApplication" : false,
+    "buttons" : [
+      {
+        "enabled" : true,
+        "height" : 20,
+        "title" : "登录 ChatGPT",
+        "width" : 92.5,
+        "x" : 16,
+        "y" : 84
+      },
+      {
+        "enabled" : true,
+        "height" : 20,
+        "title" : "断开助手",
+        "width" : 64,
+        "x" : 16,
+        "y" : 40
+      },
+      {
+        "enabled" : true,
+        "height" : 20,
+        "title" : "查看诊断",
+        "width" : 64,
+        "x" : 88,
+        "y" : 40
+      }
+    ],
+    "canChooseModel" : false,
+    "canSend" : false,
+    "contentHeight" : 175,
+    "contentWidth" : 620,
+    "height" : 209,
+    "image" : "dark-signed-out.png",
+    "intersectsScreen" : false,
+    "labels" : [
+      {
+        "height" : 19,
+        "text" : "dark-signed-out",
+        "width" : 592,
+        "x" : 14,
+        "y" : 142
+      },
+      {
+        "height" : 14,
+        "text" : "需要登录 ChatGPT",
+        "width" : 592,
+        "x" : 14,
+        "y" : 116
+      },
+      {
+        "height" : 14,
+        "text" : "需要额外权限的操作会被拒绝。",
+        "width" : 592,
+        "x" : 14,
+        "y" : 14
+      }
+    ],
+    "notice" : "",
+    "panelAlpha" : 0,
+    "phase" : "signedOut",
+    "selectedModel" : null,
+    "state" : "signed-out",
+    "status" : "需要登录 ChatGPT",
+    "synthetic" : true,
+    "width" : 621
+  },
+  {
+    "activeApplication" : false,
+    "buttons" : [
+      {
+        "enabled" : true,
+        "height" : 20,
+        "title" : "选择项目…",
+        "width" : 73,
+        "x" : 16,
+        "y" : 195
+      },
+      {
+        "enabled" : true,
+        "height" : 20,
+        "title" : "选择 Codex…",
+        "width" : 87.5,
+        "x" : 16,
+        "y" : 166
+      },
+      {
+        "enabled" : true,
+        "height" : 16,
+        "title" : "运行所选 Codex；查询可能发送项目内容并消耗我的账号额度",
+        "width" : 321.5,
+        "x" : 16,
+        "y" : 141
+      },
+      {
+        "enabled" : true,
+        "height" : 16,
+        "title" : "仅本次保留诊断尾部",
+        "width" : 120.5,
+        "x" : 16,
+        "y" : 116
+      },
+      {
+        "enabled" : false,
+        "height" : 20,
+        "title" : "启动",
+        "width" : 42,
+        "x" : 16,
+        "y" : 84
+      },
+      {
+        "enabled" : true,
+        "height" : 20,
+        "title" : "查看诊断",
+        "width" : 64,
+        "x" : 16,
+        "y" : 40
+      }
+    ],
+    "canChooseModel" : false,
+    "canSend" : false,
+    "contentHeight" : 286,
+    "contentWidth" : 620,
+    "height" : 320,
+    "image" : "dark-config-rejected.png",
+    "intersectsScreen" : false,
+    "labels" : [
+      {
+        "height" : 19,
+        "text" : "编程会话",
+        "width" : 592,
+        "x" : 14,
+        "y" : 253
+      },
+      {
+        "height" : 14,
+        "text" : "助手设置与当前权限不符，已断开。",
+        "width" : 592,
+        "x" : 14,
+        "y" : 227
+      },
+      {
+        "height" : 14,
+        "text" : "dark-config-rejected",
+        "width" : 113.5,
+        "x" : 95,
+        "y" : 198
+      },
+      {
+        "height" : 14,
+        "text" : "\/var\/folders\/l6\/4_mrt4s51rv4sjb29v6x9n000000gn\/T\/owned-state-246FB0F0-2200-4965-9653-DCF0E33BA993\/dark-config-rejected\/synthetic-codex.py",
+        "width" : 496.5,
+        "x" : 109.5,
+        "y" : 169
+      },
+      {
+        "height" : 14,
+        "text" : "需要额外权限的操作会被拒绝。",
+        "width" : 592,
+        "x" : 14,
+        "y" : 14
+      }
+    ],
+    "notice" : "",
+    "panelAlpha" : 0,
+    "phase" : "stopped",
+    "selectedModel" : null,
+    "state" : "config-rejected",
+    "status" : "助手设置与当前权限不符，已断开。",
+    "synthetic" : true,
+    "width" : 621
+  },
+  {
+    "activeApplication" : false,
+    "buttons" : [
+      {
+        "enabled" : true,
+        "height" : 20,
+        "title" : "选择项目…",
+        "width" : 73,
+        "x" : 16,
+        "y" : 195
+      },
+      {
+        "enabled" : true,
+        "height" : 20,
+        "title" : "选择 Codex…",
+        "width" : 87.5,
+        "x" : 16,
+        "y" : 166
+      },
+      {
+        "enabled" : true,
+        "height" : 16,
+        "title" : "运行所选 Codex；查询可能发送项目内容并消耗我的账号额度",
+        "width" : 321.5,
+        "x" : 16,
+        "y" : 141
+      },
+      {
+        "enabled" : true,
+        "height" : 16,
+        "title" : "仅本次保留诊断尾部",
+        "width" : 120.5,
+        "x" : 16,
+        "y" : 116
+      },
+      {
+        "enabled" : false,
+        "height" : 20,
+        "title" : "启动",
+        "width" : 42,
+        "x" : 16,
+        "y" : 84
+      },
+      {
+        "enabled" : true,
+        "height" : 20,
+        "title" : "查看诊断",
+        "width" : 64,
+        "x" : 16,
+        "y" : 40
+      }
+    ],
+    "canChooseModel" : false,
+    "canSend" : false,
+    "contentHeight" : 286,
+    "contentWidth" : 620,
+    "height" : 320,
+    "image" : "dark-malformed-account.png",
+    "intersectsScreen" : false,
+    "labels" : [
+      {
+        "height" : 19,
+        "text" : "编程会话",
+        "width" : 592,
+        "x" : 14,
+        "y" : 253
+      },
+      {
+        "height" : 14,
+        "text" : "助手返回的信息不完整，已断开。",
+        "width" : 592,
+        "x" : 14,
+        "y" : 227
+      },
+      {
+        "height" : 14,
+        "text" : "dark-malformed-account",
+        "width" : 136,
+        "x" : 95,
+        "y" : 198
+      },
+      {
+        "height" : 14,
+        "text" : "\/var\/folders\/l6\/4_mrt4s51rv4sjb29v6x9n000000gn\/T\/owned-state-246FB0F0-2200-4965-9653-DCF0E33BA993\/dark-malformed-account\/synthetic-codex.py",
+        "width" : 496.5,
+        "x" : 109.5,
+        "y" : 169
+      },
+      {
+        "height" : 14,
+        "text" : "请重新启动助手。",
+        "width" : 592,
+        "x" : 14,
+        "y" : 14
+      }
+    ],
+    "notice" : "请重新启动助手。",
+    "panelAlpha" : 0,
+    "phase" : "stopped",
+    "selectedModel" : null,
+    "state" : "malformed-account",
+    "status" : "助手返回的信息不完整，已断开。",
+    "synthetic" : true,
+    "width" : 621
+  },
+  {
+    "activeApplication" : false,
+    "buttons" : [
+      {
+        "enabled" : true,
+        "height" : 24,
+        "title" : "synthetic-long-model-synthetic-long-model-synthetic-long-model-synthetic-long-model-synthetic-long-model-synthetic-long-model-synthetic-long-model-synthetic-long-model-synthetic-long-model-synthetic-long-model-synthetic-long-model-synthetic-long-model-synthetic-long-model-synthetic-long-model-a",
+        "width" : 564,
+        "x" : 16,
+        "y" : 214
+      },
+      {
+        "enabled" : true,
+        "height" : 24,
+        "title" : "medium",
+        "width" : 0,
+        "x" : 588,
+        "y" : 214
+      },
+      {
+        "enabled" : true,
+        "height" : 24,
+        "title" : "选择模型…",
+        "width" : 0,
+        "x" : 596,
+        "y" : 214
+      },
+      {
+        "enabled" : true,
+        "height" : 24,
+        "title" : "指挥模式",
+        "width" : 0,
+        "x" : 604,
+        "y" : 214
+      },
+      {
+        "enabled" : false,
+        "height" : 20,
+        "title" : "发送",
+        "width" : 42,
+        "x" : 16,
+        "y" : 72
+      },
+      {
+        "enabled" : true,
+        "height" : 20,
+        "title" : "断开助手",
+        "width" : 64,
+        "x" : 16,
+        "y" : 40
+      },
+      {
+        "enabled" : true,
+        "height" : 20,
+        "title" : "退出登录",
+        "width" : 64,
+        "x" : 88,
+        "y" : 40
+      },
+      {
+        "enabled" : true,
+        "height" : 20,
+        "title" : "查看诊断",
+        "width" : 64,
+        "x" : 160,
+        "y" : 40
+      }
+    ],
+    "canChooseModel" : true,
+    "canSend" : true,
+    "contentHeight" : 309,
+    "contentWidth" : 620,
+    "height" : 343,
+    "image" : "dark-long-models.png",
+    "intersectsScreen" : false,
+    "labels" : [
+      {
+        "height" : 19,
+        "text" : "dark-long-models",
+        "width" : 592,
+        "x" : 14,
+        "y" : 276
+      },
+      {
+        "height" : 14,
+        "text" : "已连接",
+        "width" : 592,
+        "x" : 14,
+        "y" : 250
+      },
+      {
+        "height" : 14,
+        "text" : "给助手的文字",
+        "width" : 70,
+        "x" : 14,
+        "y" : 188
+      },
+      {
+        "height" : 14,
+        "text" : "需要额外权限的操作会被拒绝。",
+        "width" : 592,
+        "x" : 14,
+        "y" : 14
+      }
+    ],
+    "notice" : "",
+    "panelAlpha" : 0,
+    "phase" : "ready",
+    "selectedModel" : "synthetic-long-model-synthetic-long-model-synthetic-long-model-synthetic-long-model-synthetic-long-model-synthetic-long-model-synthetic-long-model-synthetic-long-model-synthetic-long-model-synthetic-long-model-synthetic-long-model-synthetic-long-model-synthetic-long-model-synthetic-long-model-a",
+    "state" : "long-models",
+    "status" : "已连接",
+    "synthetic" : true,
+    "width" : 621
+  },
+  {
+    "activeApplication" : false,
+    "buttons" : [
+      {
+        "enabled" : true,
+        "height" : 20,
+        "title" : "",
+        "width" : 200,
+        "x" : 504,
+        "y" : 164
+      },
+      {
+        "enabled" : false,
+        "height" : 20,
+        "title" : "本次启用",
+        "width" : 39,
+        "x" : 504,
+        "y" : 138
+      },
+      {
+        "enabled" : false,
+        "height" : 20,
+        "title" : "使用此模型",
+        "width" : 75,
+        "x" : 504,
+        "y" : 112
+      },
+      {
+        "enabled" : true,
+        "height" : 20,
+        "title" : "返回会话",
+        "width" : 64,
+        "x" : 587,
+        "y" : 112
+      }
+    ],
+    "canChooseModel" : true,
+    "canSend" : true,
+    "contentHeight" : 196,
+    "contentWidth" : 720,
+    "height" : 230,
+    "image" : "dark-long-model-picker.png",
+    "intersectsScreen" : false,
+    "labels" : [
+      {
+        "height" : 19,
+        "text" : "选择模型",
+        "width" : 64,
+        "x" : 14,
+        "y" : 165
+      },
+      {
+        "height" : 28,
+        "text" : "fixture-b",
+        "width" : 460,
+        "x" : 23,
+        "y" : 130
+      },
+      {
+        "height" : 28,
+        "text" : "synthetic-long-model-synthetic-long-model-synthetic-long-model-synthetic-long-model-synthetic-long-model-synthetic-long-model-synthetic-long-model-synthetic-long-model-synthetic-long-model-synthetic-long-model-synthetic-long-model-synthetic-long-model-synthetic-long-model-synthetic-long-model-a",
+        "width" : 460,
+        "x" : 23,
+        "y" : 102
+      },
+      {
+        "height" : 14,
+        "text" : "没有检测到游戏手柄；仍可用鼠标选择。",
+        "width" : 204,
+        "x" : 502,
+        "y" : 92
+      }
+    ],
+    "notice" : "",
+    "panelAlpha" : 0,
+    "phase" : "ready",
+    "selectedModel" : "synthetic-long-model-synthetic-long-model-synthetic-long-model-synthetic-long-model-synthetic-long-model-synthetic-long-model-synthetic-long-model-synthetic-long-model-synthetic-long-model-synthetic-long-model-synthetic-long-model-synthetic-long-model-synthetic-long-model-synthetic-long-model-a",
+    "state" : "long-model-picker",
+    "status" : "已连接",
+    "synthetic" : true,
+    "width" : 721
+  }
+]

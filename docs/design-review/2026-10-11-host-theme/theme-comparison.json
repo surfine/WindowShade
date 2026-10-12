@@ -1,0 +1,44 @@
+[
+  {
+    "state": "conductor-connected",
+    "equal": true,
+    "light_sha256": "3b1e2e5a071b24b07e461718afa450b7b77e083428d328cb2d7d53f23bcc5b34",
+    "dark_sha256": "3b1e2e5a071b24b07e461718afa450b7b77e083428d328cb2d7d53f23bcc5b34"
+  },
+  {
+    "state": "conductor-page-idle",
+    "equal": true,
+    "light_sha256": "94b65d5daaf4f9bf4ed60521822439e66ca93dd4bd843c066b981b6baef709bf",
+    "dark_sha256": "94b65d5daaf4f9bf4ed60521822439e66ca93dd4bd843c066b981b6baef709bf"
+  },
+  {
+    "state": "model-picker-idle",
+    "equal": true,
+    "light_sha256": "890b831f744f58c5063b893be36af3baa777e7a44b140556585e8623c2334216",
+    "dark_sha256": "890b831f744f58c5063b893be36af3baa777e7a44b140556585e8623c2334216"
+  },
+  {
+    "state": "owned-session-idle",
+    "equal": true,
+    "light_sha256": "9b7477a81203c17f138ed82d1d02abfda3911557680a178a3d5c186b1e62709f",
+    "dark_sha256": "9b7477a81203c17f138ed82d1d02abfda3911557680a178a3d5c186b1e62709f"
+  },
+  {
+    "state": "sessions-empty",
+    "equal": true,
+    "light_sha256": "6e5098dcb8ee0ed74595303bee532ef0c2d9d312b8ad0b7c78645c4922f132d7",
+    "dark_sha256": "6e5098dcb8ee0ed74595303bee532ef0c2d9d312b8ad0b7c78645c4922f132d7"
+  },
+  {
+    "state": "sessions-long",
+    "equal": true,
+    "light_sha256": "13fadfe6a3b548eb69d629469d01bb03118f9eab22106512dfcd315b8e3a4b8b",
+    "dark_sha256": "13fadfe6a3b548eb69d629469d01bb03118f9eab22106512dfcd315b8e3a4b8b"
+  },
+  {
+    "state": "sessions-mixed",
+    "equal": true,
+    "light_sha256": "ed8f4e0e46cb0f2ca87d873a228b6bfe5d8d008b51ed233ff0822646cc4e1835",
+    "dark_sha256": "ed8f4e0e46cb0f2ca87d873a228b6bfe5d8d008b51ed233ff0822646cc4e1835"
+  }
+]

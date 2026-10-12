@@ -1,0 +1,292 @@
+[
+  {
+    "activeApplication" : false,
+    "contentHeight" : 126.5,
+    "contentWidth" : 560,
+    "count" : 0,
+    "height" : 160,
+    "image" : "light-empty.png",
+    "intersectsScreen" : false,
+    "names" : [
+
+    ],
+    "panelAlpha" : 0,
+    "scrollHeight" : 104,
+    "scrollWidth" : 560,
+    "state" : "empty",
+    "synthetic" : true,
+    "tileRects" : [
+
+    ],
+    "typeIconsOnly" : true,
+    "width" : 561
+  },
+  {
+    "activeApplication" : false,
+    "contentHeight" : 126.5,
+    "contentWidth" : 560,
+    "count" : 1,
+    "height" : 160,
+    "image" : "light-one.png",
+    "intersectsScreen" : false,
+    "names" : [
+      "样件文件1.txt"
+    ],
+    "panelAlpha" : 0,
+    "scrollHeight" : 104,
+    "scrollWidth" : 560,
+    "state" : "one",
+    "synthetic" : true,
+    "tileRects" : [
+      [
+        14,
+        0,
+        76,
+        104
+      ]
+    ],
+    "typeIconsOnly" : true,
+    "width" : 561
+  },
+  {
+    "activeApplication" : false,
+    "contentHeight" : 126.5,
+    "contentWidth" : 560,
+    "count" : 7,
+    "height" : 160,
+    "image" : "light-many.png",
+    "intersectsScreen" : false,
+    "names" : [
+      "样件文件7.txt",
+      "样件文件6.txt",
+      "样件文件5.txt",
+      "样件文件4.txt",
+      "样件文件3.txt",
+      "样件文件2.txt",
+      "样件文件1.txt"
+    ],
+    "panelAlpha" : 0,
+    "scrollHeight" : 104,
+    "scrollWidth" : 560,
+    "state" : "many",
+    "synthetic" : true,
+    "tileRects" : [
+      [
+        14,
+        0,
+        76,
+        104
+      ],
+      [
+        98,
+        0,
+        76,
+        104
+      ],
+      [
+        182,
+        0,
+        76,
+        104
+      ],
+      [
+        266,
+        0,
+        76,
+        104
+      ],
+      [
+        350,
+        0,
+        76,
+        104
+      ],
+      [
+        434,
+        0,
+        76,
+        104
+      ],
+      [
+        518,
+        0,
+        76,
+        104
+      ]
+    ],
+    "typeIconsOnly" : true,
+    "width" : 561
+  },
+  {
+    "activeApplication" : false,
+    "contentHeight" : 126.5,
+    "contentWidth" : 560,
+    "count" : 1,
+    "height" : 160,
+    "image" : "light-long-name.png",
+    "intersectsScreen" : false,
+    "names" : [
+      "long-file-name-long-file-name-long-file-name-long-file-name-long-file-name-long-file-name-long-file-name-long-file-name-long-file-name-long-file-name-.txt"
+    ],
+    "panelAlpha" : 0,
+    "scrollHeight" : 104,
+    "scrollWidth" : 560,
+    "state" : "long-name",
+    "synthetic" : true,
+    "tileRects" : [
+      [
+        14,
+        0,
+        76,
+        104
+      ]
+    ],
+    "typeIconsOnly" : true,
+    "width" : 561
+  },
+  {
+    "activeApplication" : false,
+    "contentHeight" : 126.5,
+    "contentWidth" : 560,
+    "count" : 0,
+    "height" : 160,
+    "image" : "dark-empty.png",
+    "intersectsScreen" : false,
+    "names" : [
+
+    ],
+    "panelAlpha" : 0,
+    "scrollHeight" : 104,
+    "scrollWidth" : 560,
+    "state" : "empty",
+    "synthetic" : true,
+    "tileRects" : [
+
+    ],
+    "typeIconsOnly" : true,
+    "width" : 561
+  },
+  {
+    "activeApplication" : false,
+    "contentHeight" : 126.5,
+    "contentWidth" : 560,
+    "count" : 1,
+    "height" : 160,
+    "image" : "dark-one.png",
+    "intersectsScreen" : false,
+    "names" : [
+      "样件文件1.txt"
+    ],
+    "panelAlpha" : 0,
+    "scrollHeight" : 104,
+    "scrollWidth" : 560,
+    "state" : "one",
+    "synthetic" : true,
+    "tileRects" : [
+      [
+        14,
+        0,
+        76,
+        104
+      ]
+    ],
+    "typeIconsOnly" : true,
+    "width" : 561
+  },
+  {
+    "activeApplication" : false,
+    "contentHeight" : 126.5,
+    "contentWidth" : 560,
+    "count" : 7,
+    "height" : 160,
+    "image" : "dark-many.png",
+    "intersectsScreen" : false,
+    "names" : [
+      "样件文件7.txt",
+      "样件文件6.txt",
+      "样件文件5.txt",
+      "样件文件4.txt",
+      "样件文件3.txt",
+      "样件文件2.txt",
+      "样件文件1.txt"
+    ],
+    "panelAlpha" : 0,
+    "scrollHeight" : 104,
+    "scrollWidth" : 560,
+    "state" : "many",
+    "synthetic" : true,
+    "tileRects" : [
+      [
+        14,
+        0,
+        76,
+        104
+      ],
+      [
+        98,
+        0,
+        76,
+        104
+      ],
+      [
+        182,
+        0,
+        76,
+        104
+      ],
+      [
+        266,
+        0,
+        76,
+        104
+      ],
+      [
+        350,
+        0,
+        76,
+        104
+      ],
+      [
+        434,
+        0,
+        76,
+        104
+      ],
+      [
+        518,
+        0,
+        76,
+        104
+      ]
+    ],
+    "typeIconsOnly" : true,
+    "width" : 561
+  },
+  {
+    "activeApplication" : false,
+    "contentHeight" : 126.5,
+    "contentWidth" : 560,
+    "count" : 1,
+    "height" : 160,
+    "image" : "dark-long-name.png",
+    "intersectsScreen" : false,
+    "names" : [
+      "long-file-name-long-file-name-long-file-name-long-file-name-long-file-name-long-file-name-long-file-name-long-file-name-long-file-name-long-file-name-.txt"
+    ],
+    "panelAlpha" : 0,
+    "scrollHeight" : 104,
+    "scrollWidth" : 560,
+    "state" : "long-name",
+    "synthetic" : true,
+    "tileRects" : [
+      [
+        14,
+        0,
+        76,
+        104
+      ]
+    ],
+    "typeIconsOnly" : true,
+    "width" : 561
+  }
+]

@@ -1,0 +1,5 @@
+Traceback (most recent call last):
+  File "/Users/aaron/Documents/WindowShade/tools/design-qa/check-privacy-row-preview.py", line 23, in <module>
+    assert b['x']>=-2.1 and b['x']+b['width']<=width+2.1,(name,l['text'][:20],b)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+AssertionError: ('light-448-long-value', '演示配件 — 名字很长的键盘名字很长的键', {'height': 15, 'width': 766, 'x': 162, 'y': 18})

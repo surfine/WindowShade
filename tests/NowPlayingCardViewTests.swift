@@ -152,11 +152,13 @@ import Cocoa
         await settle(0.5)
         expect(!card.listOpen && sizeEvents.suffix(1) == [false], "选完 0.3 秒收列表，岛收回来")
         expect(card.interactionSize.height == 142, "收回后回到 142")
-        // 一个设备也读不到：不开列表。
+        // 一个设备也读不到：沿既有列表显示反馈，仍能返回播放控制。
         let (empty, _) = makeCard()
         empty.loadRoutes = { [] }
         empty.openList()
-        expect(!empty.listOpen, "读不到设备：不开空列表")
+        expect(empty.listOpen && empty.routes.isEmpty, "读不到设备：显示空列表反馈")
+        empty.closeList()
+        expect(!empty.listOpen && empty.interactionSize.height == 142, "空列表可以返回播放控制")
         // 超过 5 个设备：高度按 5 行封顶。
         let many = (0..<8).map { fakeRoute("设备\($0)", .speaker, current: $0 == 0) }
         let (big, _) = makeCard()

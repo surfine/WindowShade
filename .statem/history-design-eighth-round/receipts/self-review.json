@@ -1,0 +1,19 @@
+{
+  "kind": "self_review",
+  "status": "residual_risk",
+  "issues_found": true,
+  "needs_evidence": false,
+  "lenses": {
+    "task_contract": "Actual filename layout repair and controlled clear/undo/missing projections done; card and privacy branch retained. Original full seven-line goal active.",
+    "evidence_freshness": "Current optimized519/native518 manifests; published consumer0, exact-helper actual-font16; nine sources/46 evidence files bound to fc2c69c8. Before source reconstructed SHA exactly matches seventh immutable manifest.",
+    "edge_risk": "Wide glyphs/family graphemes/extensions fit in actual native views. Fresh remove/undo preserves own original; stale/revoked cannot mutate. Main directly drives clear/undo, not live pointer/keyboard/VoiceOver or actual user file actions."
+  },
+  "findings": [
+    "Main implemented production helper and drawing. Parse-only worker scaffold rejected, original preserved, native producer fully main-rewritten and directly reads tile.nameLines.",
+    "No two-stage approximation/wrapping remains in production drawName; independent metadata measures actual lines and actual PNGs show extension/one ellipsis.",
+    "Missing reason second line and clear/undo views observed; initial empty fixture is forced and not real openCard behavior.",
+    "Same current sources checked by default Swift5 unoptimized native library and separate optimized Swift6 full gate; no signed runtime isolation or motion claim.",
+    "Real thumbnails/sharing/drop/privacy matrix plus media artwork and owned error surfaces and original other lines remain. No commit/sign/install/release; whole goal active."
+  ],
+  "updated": "2026-10-11"
+}

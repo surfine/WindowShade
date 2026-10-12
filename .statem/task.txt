@@ -1,19 +1,9 @@
-# WindowShade 2 开源借鉴实施契约（2026-10-07）
-目标：按用户批准计划先突破蓝牙身份/真解锁前提；落实相机共享、六口令实验、遥控生产接线、CarPlay无凭据验证，以及可独立完成的媒体/电量/隐私收益。
-交付物：两角色蓝牙隔离探针与证据分级；现有相机订阅生命周期；口令真实landmark管线与留出评估；既有遥控栈接线；固定PlayPort无凭据实验包；研究来源记录与既有版本台账更新。
-验收：新针对runner实际执行；现有相关silent/camera/remote/privacy回归；prototype/build.sh --check全App真编译。真实设备/权限/凭据/模型资格无法验证时明确not_run或blocked，不制造绿灯。查看入口tools/probes/BLEReadProbe.swift、prototype/App/FaceObservationSource.swift、Core/WS2SilentPhrases.swift、App/WS2SilentHost.swift、Support/WS2Companion*。
-约束：保留原7个未提交性能文件；不提交推送签名发布、不替换日常App、不动真实窗口、不读取/提取私钥或真实密码；不带GPL代码进MIT App；不用模拟认证接真解锁。无手机配套App、声纹不进2.1。已证实在场不等于设备身份；身份/活体/注视未过时解锁仍阻断。当前CarPlay无硬件无可用认证材料，仅无凭据实验。
-分工：主模型蓝牙、安全准入、静音口令集成、隐私与总验收；lip_sources相机共享；remote_implementation遥控；notch_sourcesCarPlay。
-保底：旧StateM三文件原始字节和sha256已存.build/ws2-reuse/preexisting-statem；现有性能改动不覆盖。无用户数据变异。
-
-## 本次续接：原生Remote第二轮发现
-用户明确要求立即测试已备好的atv-core三服务配置。仅运行已验收的120秒工具，临时PIN60秒；不改App、不写Keychain、不路由输入。观察本机Bonjour、连接/配对/验签/事件阶段及用户手机结果，写device-tests；服务结束核对0listener。旧计划与未完成项保留，不把实验通过当全功能交付。
-
-## 第四轮后续：OPACK真机兼容
-手机已完成真实PairVerify，frame8解码失败。只补有固定来源的UUID、原始时间、F0字典别名与错误offset；不猜宽引用、不降密码学门槛。读取Core/WS2OPACK.swift、独立reference fixtures与remote-device。验收run-companion-channel-tests.sh、remote-device离线与handshake-interop.py、全App build.sh --check；其后120秒真机观察，日志剔PIN，退出0listener。
-
-用户纠正后：停止逐报错开真机，先完整重审atv-core固定源码（server.rs/session.rs/opack.rs/identity.rs）与本地差异，完成发现、认证、消息信封、初始化、应答、事件订阅、HID的对照表与一次完整独立加密客户端回归。协议兼容不继承上游省略验签；隔离工具不路由系统动作。不再仅为诊断开手机测试。
-
-
-## 2026-10-10 收尾计划（已批准执行）
-范围：工程收尾+本机验收，七条线均衡，遥控纳入纯工程。W1 接线收尾→W2 专注收聊天→W3 遥控SRP/音量/C1/C5→W4 蓝牙在场来源→W5 六口令前半→W6 自动化验收→W7 回归文档。红线：不提交推送发布、能耗不高于 1.0.15、没真机验证的开关默认关。执行结果见 progress.md 末段；剩余项全在 blocked.json。
+第27批：英语适配首个贯通表面——设置「卷帘」页 + 窗口外壳 + 「高级」页（含语言开关）。沿用现有 WSL10n 入口，不另造翻译系统。总目标含高级感、Designing Fluid Interfaces 与英语支持其余表面；本批只完成这一个表面。
+已定案：默认语言跟随系统（首选语言以 zh 开头→中文，否则→英文），设置里可覆盖「跟随系统/简体中文/English」，写 UserDefaults 键 WindowShade.InterfaceLanguage；切换立即生效（不重启），采用「显式重建」策略（发通知，DuoSettingsWindow 重建标题/侧栏/当前页并清 pages 缓存，AppDelegate rebuildMenu）。
+允许改：prototype/Core/InterfaceLanguage.swift（新）、prototype/Core/WSL10n.swift、prototype/main.swift、prototype/WindowShade.swift（状态菜单 rebuildMenu 观察者）、prototype/App/Preferences.swift、prototype/App/CollapseAppearanceSettings.swift、prototype/App/WS2FocusSettings.swift、prototype/App/WS2SupplementPane.swift、prototype/App/WS2SettingsInfo.swift、prototype/Effects/DuoSettingsWindow.swift、prototype/Resources/Localizable.xcstrings、tests/（新增 InterfaceLanguageTests、InterfaceLanguageSwitchTests，扩展 LocalizationTests/check-localizable.py/run-*-tests.sh）、tools/design-qa/（新夹具与消费者）、docs/、.statem/。主模型主导；分支 codex/ws2-remote-gpt6-handoff-20261007 不动 main/其它用户文件/.zcode。不签名安装运行产品、不读真实资料/系统值/持久偏好/账户/网络、不做真实权限/窗口/输入/发布操作。
+机制：InterfaceLanguage.resolve(preference:systemLanguages:) 纯函数可注入；applyAtLaunch() 只在 main.swift 顶部调一次（读 Locale.preferredLanguages + defaults）；set(_:) 写偏好→设 WSL10n.language→主线程发 didChangeNotification：DuoSettingsWindow 异步重建（标题/侧栏/当前页、清 pages 缓存）、AppDelegate rebuildMenu。语言读取不得藏进静态 copy 初始化；QA 夹具只直接设 WSL10n.language，不写持久偏好、不读标准域（消费者断言 preferencesWritten:false）。
+语义身份：新增 WSL10n.setting(key, zh:)→SettingsText（zh 源句=稳定身份，.shown 出当前语言译文）；WS2SettingsCopy.content/line 加 SettingsText 重载：显示 .shown、图标继续 symbol(for: .zh)、短副标题仍以 zh 源句查现有 short 表不动、新增 shortEn（按 key）、英文截断预算用渲染实测定（不按中文字宽）；WS2SettingsInfoButton「X 的说明」a11y 走 WSL10n；check-localizable.py 的扫描正则扩到 WSL10n\.(?:text|setting)\(，中文源句一致性照旧。
+表面迁移：卷帘页全部行（触发/刘海/排布/外观/声音/实验，含动态副标题函数、居中标题、留缝分段、音效名、番茄钟设置行、日程行、音量亮度行）+ 补充面板 + 窗口标题与 9 个侧栏标题 + 高级页（页头/恢复默认/诊断日志/减少动态效果提示）+ 语言行（NSPopUpButton，语言名常量字面量不进 xcstrings）+ Localizable.xcstrings 新增约 150–200 键（zh 源句+英文，术语沿 README：Roll up/Unroll、Pin/Unpin、Glance、Window browsing、tucked into the notch）。zh 不变式：迁移后中文输出逐字节不变。
+验收：①纯测试（resolve 表驱动：system×zh/en/其它、preference 覆盖；全目录 en 无 CJK、新键全解析）；②AppKit 真窗切换测试（切 en→标题/副标题/当前页即时变且缓存失效，切回 zh 复原）；③原生夹具（真 makeShadeSettingsPage/高级页，volatile domain 定状态）：zh/en × 浅/深 × 696/560 宽约 16 帧 + 同进程 zh→en→zh 重建；消费者：en 无 CJK、键全覆盖、几何不越界、截断带 tooltip/ⓘ、图标集合与 zh 一致、zh 帧与迁移前快照逐标签一致、零持久偏好写、零权限触发（只读 AXIsProcessTrusted/CGPreflightScreenCaptureAccess 并如实记录）；④资源路径实测（xcstringstool 编译 en.lproj → WSL10n.englishBundle 新键命中）；⑤prototype/build.sh --check 当前源全优化（519→520 输入，零漂移）；图片实看 ≤48MiB。数值/夹具/静态帧各证各的，不把结构 0 写成真机可见效果/英语已支持；未迁移表面保持中文回退并写清漏译原因。源/日志/首错/SHA 封存并写本批 contract.json/self-review.json，不沿用 26 回执；保留全部失败样件。
+（用户 2026-10-12 定案：英语要全量完全适配、不留手尾——剩余表面清单、完成标准与执行门顺序见 docs/handoff/BATCH27-ENGLISH-HANDOFF-2026-10-12.md §7/§9；另 AGENTS.md 只加了指向该交接的入口行，属本批实际改动。）
+（用户 2026-10-12 两轮问答补充定案：覆盖含官网 site/ 与 README 双份、随批滚动同步（只本地 build+check、不部署）；验收全部轻量档（纯测试+全目录检查+防漏网扫描+2–4 帧抽查+图片实看），布局风险覆盖不了才升档并写理由；推进顺序按交接 §9 建议；卡点 B 授权修生产布局但改前先把前后对比图给用户确认；英文大小写照 Apple 惯例（菜单 Title Case、设置行 sentence case）；繁体不做、架构留余地（resolve 注脚）；证据过即收尾。）

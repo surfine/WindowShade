@@ -1,0 +1,17 @@
+{
+  "kind": "self_review",
+  "status": "residual_risk",
+  "issues_found": true,
+  "needs_evidence": false,
+  "lenses": {
+    "task_contract": "Real title/action overlap24 repaired via actual requiredWidth, fixed8 gap; no button/state/eligibility/color production changes. Whole goal active.",
+    "evidence_freshness": "12 sources/169 evidence hashes independently match; 519 formal/518 final native sources match, actual before/final images viewed.",
+    "edge_risk": "Busy124/156 width and narrow320 actual fixtures pass title/status/action separation. Host sequence corrected in fixture; no real window controller, screenshots, permissions, persistent settings."
+  },
+  "findings": [
+    "Initial consumer missed visible overlap; measured native red1 retained, actual production one-expression fix accepted.",
+    "Blue/gray comparison is fixture host-order difference, no product color change; final attached-host captures accepted for static state only.",
+    "Grid title 2-line wrap still defective by minimal AppKit probe; not claimed fixed in this batch."
+  ],
+  "updated": "2026-10-11"
+}

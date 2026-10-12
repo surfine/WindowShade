@@ -1,0 +1,7 @@
+{
+  "prototype/Native/WS2Child.c": "0800b71fa1f43e9037901474da2118c8af71ed4ab12eba3fdf4da48de4515183",
+  "prototype/Native/WS2Child.h": "95380850f4cbd24d868fc785978cda939307f3962640b091200068a17ea1a9da",
+  "prototype/Native/module.modulemap": "9cac42ba9402e4324e393d07c155c9375e20846e3bca84117460fdd0e6a0db8e",
+  "tools/design-qa/OwnedErrorFlowChecks.swift": "52e4591a7be03505ede75503f1a0975110f9459eb167a716354e551db9c16190",
+  "tools/design-qa/run-owned-error-flow.sh": "98df6eea30d7017abb04a3414edd94bd4e248891ba7f940195c259af3d161bae"
+}

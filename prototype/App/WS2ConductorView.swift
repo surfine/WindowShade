@@ -53,7 +53,7 @@ import Cocoa
             stack.bottomAnchor.constraint(equalTo: bottomAnchor, constant: -12)])
         titleLabel.font = .systemFont(ofSize: 13, weight: .semibold); titleLabel.textColor = .white
         titleLabel.lineBreakMode = .byTruncatingTail; titleLabel.setContentHuggingPriority(.required, for: .vertical)
-        subtitleLabel.font = .systemFont(ofSize: 11); subtitleLabel.textColor = .secondaryLabelColor
+        subtitleLabel.font = .systemFont(ofSize: 11); subtitleLabel.textColor = .white.withAlphaComponent(0.68)
         subtitleLabel.lineBreakMode = .byTruncatingTail; subtitleLabel.setContentHuggingPriority(.required, for: .vertical)
         configure(text: draftText, in: draftScroll, editable: true)
         draftText.delegate = self; draftText.allowsUndo = true
@@ -149,7 +149,7 @@ import Cocoa
             for (index, label) in p.modelRows.enumerated() {
                 let line = NSTextField(labelWithString: index == p.selectedModel ? "● \(label)" : "○ \(label)")
                 line.font = .systemFont(ofSize: 12); line.lineBreakMode = .byTruncatingTail
-                line.textColor = index == p.selectedModel ? .white : .secondaryLabelColor
+                line.textColor = index == p.selectedModel ? .white : .white.withAlphaComponent(0.6)
                 stack.addArrangedSubview(line)
             }
             addButton("返回", .host(.leave))

@@ -32,6 +32,7 @@ import Foundation
     private var configured=false, authenticated=false
     private var loginID:String?
     private var loginDeadline:Task<Void,Never>?
+    private var disconnectReason:String?
     private var submission:Submission?
     private var pendingDraft:PendingDraft?
     private var draftRevision:UInt64=0,conductorRevision:UInt64=0
@@ -101,6 +102,7 @@ import Foundation
     }
     @discardableResult func launch(consent:Bool,diagnostics:Bool=false) -> Bool {
         guard consent,canLaunch,let projectURL,let executableURL,let project=scope.project else { return false }
+        disconnectReason=nil
         let request=UUID();launchID=request;status="正在核对 Codex 版本";phase = .checkingVersion
         output.clear();diagnosticSnapshot="";notice="";model=nil;effort=nil;models=[:]
         do {
@@ -133,7 +135,8 @@ import Foundation
                 guard let self,self.session?.connectionID==id else { return }
                 self.observedReaps += 1;self.diagnosticSnapshot=self.session?.diagnostics?.visibleText() ?? ""
                 self.session=nil;self.phase = .stopped
-                self.status=fact.wasSignalled ? "已断开，直属进程已终止" : "已断开，直属进程已回收"
+                self.status=self.disconnectReason ?? "已断开"
+                self.disconnectReason=nil
                 self.changed()
             }
             phase = .connecting;status="正在连接助手";changed();try s.start()
@@ -157,7 +160,9 @@ import Foundation
     }
     private func setNextModel(_ value:String) -> Bool {
         guard let choices=models[value],!choices.isEmpty else { return false }
-        model=value;effort=choices.contains("medium") ? "medium":choices.sorted().first;bumpConductor();changed();return true
+        model=value;effort=choices.contains("medium") ? "medium":choices.sorted().first
+        if phase == .ready && canSend { status="已连接" }
+        bumpConductor();changed();return true
     }
     @discardableResult func chooseEffort(_ value:String) -> Bool {
         guard revalidate(),canChooseModel,let model,models[model]?.contains(value)==true else { return false }
@@ -319,7 +324,7 @@ import Foundation
                 if let query=queries.removeValue(forKey:id) {
                     switch query {
                     case .config:
-                        guard WS2LocalLaunchProfile.admitsEffectiveConfig(value) else { stop(reason:"助手配置不符合当前只读入口要求，已断开。");return }
+                        guard WS2LocalLaunchProfile.admitsEffectiveConfig(value) else { stop(reason:"助手设置与当前权限不符，已断开。");return }
                         configured=true;try readAccount()
                     case .account:
                         guard let needed=value["requiresOpenaiAuth"],case .bool = needed else { throw CodexWire.Failure.malformed }
@@ -378,7 +383,7 @@ import Foundation
             case .ignoredLateReply:break
             }
             changed()
-        } catch { stop(reason:"助手返回的状态不完整，已断开。");notice="没有把缺失状态当成成功。";changed() }
+        } catch { stop(reason:"助手返回的信息不完整，已断开。");notice="请重新启动助手。";changed() }
     }
     private func readAccount() throws {
         guard configured,let s=session,!queries.values.contains(where:{if case .account=$0{return true};return false}) else { return }
@@ -417,9 +422,11 @@ import Foundation
         guard session?.connectionID==connection else { return }
         emit(.processExited);scope.invalidate();ticket=nil;context=nil;activeTurn=nil;submission=nil;pendingDraft=nil;bumpConductor()
         configured=false;authenticated=false;queries=[:];loginID=nil;loginDeadline?.cancel();loginDeadline=nil
-        phase = .stopping;status="已断开，正在回收直属进程";changed()
+        phase = .stopping;status="正在断开";changed()
     }
     func stop(reason:String="已断开连接",clearPrivate:Bool=false) {
+        let finalReason=reason == "已断开连接" ? "已断开" : reason
+        disconnectReason=finalReason
         launchID=nil
         let oldProbe=probe;probe=nil
         if let oldProbe,oldProbe.launched,!oldProbe.reaped {
@@ -433,7 +440,7 @@ import Foundation
         scope.invalidate();ticket=nil;bumpConductor();loginDeadline?.cancel();loginDeadline=nil;loginID=nil
         session?.stop()
         if session == nil { phase = .stopped }
-        status=reason;submission=nil;pendingDraft=nil;authenticated=false;configured=false
+        status=finalReason;submission=nil;pendingDraft=nil;authenticated=false;configured=false
         if clearPrivate { draft="";draftOwner=nil;sessionDrafts.removeAll();output.clear();diagnosticSnapshot="";session?.clearDiagnostics();_ = store.suspend(at:clock.now());notice="" }
         changed()
     }

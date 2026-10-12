@@ -1,0 +1,23 @@
+{
+  "is_error": false,
+  "incomplete": false,
+  "finish_reason": "stop",
+  "changed_files": [
+    "prototype/App/WS2OwnedLaunchController.swift"
+  ],
+  "checks": [
+    {
+      "check_index": 0,
+      "argv": [
+        "bash",
+        "tests/run-conductor-owned-flow-tests.sh"
+      ],
+      "exit_code": 0,
+      "revision": 2,
+      "timed_out": false,
+      "output": "PASS Conductor owned flow: real stdio, known session resume, draft adoption/send separation, stale target/config/IME/replay rejection, next-turn settings, start/steer/interrupt receipts, draft preservation and lock invalidation\n",
+      "truncated": false
+    }
+  ],
+  "main_acceptance": "actual two copy changes reviewed; reap/session/diagnostic paths intact; native stopped frame status independently checked"
+}

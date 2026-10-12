@@ -1,0 +1,8 @@
+{
+  "renderer": "/Users/aaron/Documents/WindowShade/.build/native-surfaces.coyySD/render",
+  "sha256": "dabd362c6bd7307b85a08e918799c9ac86e27386e59b6aa4f2cfe8644bd7ed75",
+  "swiftLanguageVersion": 6,
+  "strictConcurrency": true,
+  "warningsAsErrors": true,
+  "optimized": false
+}

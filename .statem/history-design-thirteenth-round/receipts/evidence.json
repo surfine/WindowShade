@@ -1,0 +1,42 @@
+{
+  "kind": "evidence",
+  "items": [
+    {
+      "name": "Final current App compile",
+      "command": "TOOLCHAINS=com.apple.dt.toolchain.Metal.32023.921.5,com.apple.dt.toolchain.XcodeDefault bash prototype/build.sh --check",
+      "cwd": "/Users/aaron/Documents/WindowShade",
+      "exit_code": 0,
+      "artifact_id": "4d749b58684bfc954d6f5a8fe8d117c4927c53e1e9f1a8923682c3c893d5c935",
+      "result": "394mainSwift+guard;396Swift snapshot matched; no signing or launch",
+      "reused": true
+    },
+    {
+      "name": "Independent multi-packet actual receiver",
+      "command": "PYTHONPATH=<fixed deps> python3 tools/probes/remote-device/session-interop.py --bridge .build/remote-device-probe/RemoteDeviceProbe",
+      "cwd": "/Users/aaron/Documents/WindowShade",
+      "exit_code": 0,
+      "artifact_id": "63449b6f8f99ff1eab986e1f14ef39366d236849d2accdb856251d187647b2b4",
+      "result": "Main rerun:2fullflows51/55 records,7negativecases,unknown request/event no delivery thenknownHID; remote-full-session-main.json",
+      "reused": true
+    },
+    {
+      "name": "Final real-device window",
+      "command": ".build/remote-device-probe/RemoteDeviceProbe --serve 120 --discovery-profile atv-core",
+      "cwd": "/Users/aaron/Documents/WindowShade",
+      "exit_code": 0,
+      "artifact_id": "63449b6f8f99ff1eab986e1f14ef39366d236849d2accdb856251d187647b2b4",
+      "result": "3readyservices;120s0connections;0inputs;0remaininglisteners; phone observation pending. .build/ws2-reuse/iphone-remote-device-final.log",
+      "reused": false
+    },
+    {
+      "name": "User requested finalreceiver retry",
+      "command": ".build/remote-device-probe/RemoteDeviceProbe --serve 120 --discovery-profile atv-core",
+      "artifact_id": "63449b6f8f99ff1eab986e1f14ef39366d236849d2accdb856251d187647b2b4",
+      "exit_code": 0,
+      "result": "Phone PIN shown but failed;2connections/1verified/systemInfo only,0HID,0listeners; .build/ws2-reuse/iphone-remote-device-final-retry.log",
+      "reused": false
+    }
+  ],
+  "remaining_risk": "最终版第八轮手机出现PIN框但连接失败；配对/验签通过，控制会话/输入未通过。",
+  "updated": "2026-10-07"
+}

@@ -1,0 +1,8 @@
+第26批：修正真实刘海反向衔接，并统一隐私登记行的列对齐。总目标含高级感、Designing Fluid Interfaces与英语支持；英语本批不启用，保留25已有资源基线。
+已证据：25 actual native68386/30/518；旧形状中点往展开走−20.405，新目标反向+20.405，actual CASpring initialVelocity仍+10.327。Cocoa14004/1源/180采样46比較证明行程翻倍速度扰动翻倍。25真实Row组合41行只有focus-preferences因中文关键词多出图标，详情列多38缩进；原隐私画面稿为纯文字登记行。
+允许改：prototype/App/Motion.swift、prototype/Core/FlickMotion.swift、prototype/App/Notch.swift、prototype/App/WS2PrivacyPane.swift及对应QA/消费者/稿/证据。主模型主导核心与验收，不重试失真的worker。先复制原始字节+SHA；分支codex/ws2-remote-gpt6-handoff-20261007已确认，不动main/其它用户文件/.zcode。不签名安装运行产品、不读真实资料/系统值/持久偏好/账户/网络、不做真实权限/窗口/输入/发布操作。
+实现：按实际CASpring系数、明确动画时钟与现有FlickSpring解析状态追踪各轴位置/尺寸/圆角物理速度；旧动画活跃时传有符号瞬时速度，未活跃时保留调用者提供的初速度；各轴转成相对剩余行程的initialVelocity，不用调用间均速/同一个标量。只在近零剩余行程且仍有速度时使用有限物理kick keyframes，避免丢惯性或无穷归一化；尺寸/圆角必要下界不能为保速度变负，边界策略独立验证。减少动态效果/直接跟手保持无形状动画，无常驻时钟或轮询。
+富内容先退文字仍保留generation/过期回调防护，但真正收形状时读取那一刻呈现层，不缓存早先presented。现空内容30探针不覆盖该延迟，需补真实Canvas合成富内容阶段。肩/companion和真实硬件尚需后续完整路径验证，不提前宣布全刘海动效通过。
+隐私只移除登记行偶发标题关键词图标，符合原纯文字表格画面；保留字段文本、字体、列预算、值中间省略82、开关/授权/读取政策及实际生产Page生命周期。默认41行详情列统一，非其它设置页图标改动。
+入口：App/Motion.swift；Core/FlickMotion.swift FlickSpring.state；App/Notch.swift Canvas.morph/performMorph/add/stripMorph/shoulders相关；WS2PrivacyPane.swift PrivacyRowView；25baseline源快照。独立核对数学用数值ODE积分/反向/零行程/下界边界，与实际消费者对照；原生Swift6 strict/warnings-as-errors与正式519优化必须新跑，源/当前入口/wrapper在所有构建运行时冻结。可生成一个组合QA入口让实际privacy组件和Canvas顺序运行于同一个自有NSApp.run，编译仍所有生产源而非缓存库/减参数，记录生成输入SHA和当前518。
+验收：同一实际层连续变更，配置与呈现位置/速度方向连续、各轴使用自己的剩余行程；富内容延迟收回在实际开始时位置连续；取消不由旧退场清空新内容；reduced没有形状动画且override真实恢复；隐私41登记顺序/9Mock开关/全文高度/列对齐；新formal --check0/519当前。有限图像实际查看，<=48MiB。Cocoa隐藏数值/层配置不能当可见合成、帧率、真机App生命周期、硬件、VO或全产品英语通过。源/日志/首错/当前产物SHA封存并写正确contract.json/self-review.json，不沿用25回执。

@@ -1,0 +1,95 @@
+{
+  "status": "scoped_pass_whole_goal_active",
+  "source_sha256": {
+    "prototype/App/Preferences.swift": "ee8dde1e6b99e89aca603314682b130c729d9c7a21dfd6da1580ae1286aa787d",
+    "prototype/App/WS2SettingsInfo.swift": "941bb672707657af7673a65e8f2ecdfd5a24081968f9eacf674ffef659ecce8c",
+    "prototype/App/WindowSwitcher.swift": "b1cf7b8e3f6a4c21cd3266f798b1971f3ad377c0237eea6d750186bf565f7d71",
+    "prototype/App/Permissions.swift": "7f7ffa614871ca3fd6241e11b8835764f3815875e0526910145db5483861a9e5",
+    "prototype/Effects/DuoSettingsWindow.swift": "8fdd6fd20b5851aef7670885d521d46ea42cd4fe02cea14ae508df74033678b8",
+    "prototype/WindowShade.swift": "b99b8180adaf84895686164de54be996b62b68adccb35874d033a727d1340197",
+    "tools/design-qa/BrowserSettingsPreview.swift": "96dbc4378ee7a29032a4b1cb7de37ebb0f016cb22590eb7c49de48586c5a1415",
+    "tools/design-qa/check-browser-settings-preview.py": "926eea67a1ad790efb6e508178f13ac802343910c28e8e85ec5a1bbf0c6f78ce",
+    "tools/design-qa/render-native-surfaces.sh": "2982efdd60574b0c0cb1f5de9e35a398e81c028c2bab5d3d8a7b47416c3406b0",
+    "docs/copy-guide.md": "baa45d476af6063d1977507c2e9d7934d04ebec7049bc3cd300ea90173c3d751",
+    "docs/design-drafts/WindowShade 设计规范.html": "9ce91a94e5e8b057c78b6757264939b3ad229630c7032759178c8ffff51ebe71"
+  },
+  "evidence_sha256": {
+    "before-BrowserSettingsPreview.swift": "bf842d1c1a8417b0efe5074dee78513250ad9bf30cd9b54275a9c01ad8602e73",
+    "build-inputs.json": "4ba00c4c367506891b06993d7c073c6a25c4ad8591869c21b3272e49c2a3cd40",
+    "before-Preferences.swift.sha256": "7fd36f0897f2cf9a13d230229dc0dfe583ddb19c1eccd3f49f0ffb1019538e35",
+    "after-exit.json": "16b3345adb48e7686244897c1d20ee8a99fb0c653f9d5a82b1aa7cb3a5a3f44d",
+    "consumer-first.py": "58f083fa449a5f65073339fe55e138cd399cb50948178cfc5d819a29bd4ac0a9",
+    "README.md": "193e123ce29f38879141413ab461db652b5f48b19e7fca99d31ca98ff7d86f19",
+    "build-exit.json": "3873b3206a2985cea597ba5598c0fc25b63564f079b4b3217b7dbb95c5e2fada",
+    "before.log": "612b81ee9217bd455fae63d158d62a435aa591c65582486e10acc09e7905d1a4",
+    "consumer-first-exit.json": "41a4feb761f411236d5b4e18c2873c0020b17d1b3e13b44f41386e76e5558c28",
+    "before-Preferences.swift": "d08e530596124aa69b263cb9ce39210e172d3650dab4dd16b8a981f33ed0b5f7",
+    "before-exit.json": "a1afe9459eae712989c8fbd7aa7ee9be84fccec191c255ecef48c8c7c114d75a",
+    "after.log": "875740def708cad30c4b2ae154881142dc358ea930d73821933c088c43c99da7",
+    "consumer.log": "7811c48e30b467ff1346b6168ee72942dd63ae4a3c8a7225df9d472a6a586e06",
+    "build.log": "1fac17eb4d47e0dea4bcdf46fc8b817ffbc6cb098480e9e495b3f03c9037d25d",
+    "before-BrowserSettingsPreview.swift.sha256": "ab3579b99ea4ce8746fa46c86f4362bf0d7612cd4e58196c4b6420a6b91acccf",
+    "before/sources.json": "53c0aa22cf1666bbb149ae53a42d7f7f54a444edf11cc74275350b1fcbda6b30",
+    "before/light-off-top.png": "4bc022257fbf182473d69ba69a335850359fc51f5719f984f59d2a0ed18d57c2",
+    "before/dark-command-bottom.png": "a8df5cdc66300e48d8ade0a3c3e4df2a2bb5afe49f434b4870b483c0ce8b4990",
+    "before/dark-off-bottom.png": "a8df5cdc66300e48d8ade0a3c3e4df2a2bb5afe49f434b4870b483c0ce8b4990",
+    "before/renderer.json": "f9c9ca614d6939f47ab83c521ef5ba72051fe774f0aa2b5de7ec3ad33b79a89c",
+    "before/frames.json": "0a8f0b4d86ce145e7bfe2f7ecf25cc6621b861980a4d68db430c561715670d09",
+    "before/light-off-bottom.png": "71b9cb68895ac62c8113a80a6720021ea30530b437376a8fc2c340d03348c1ae",
+    "before/dark-off-top.png": "64f4af5ea9f797c0ddb9b081eff05450087ffb08e21fd55dbf8174b023c12902",
+    "before/dark-command-top.png": "8558bd5d51f6ba4a3630c3ca33857e3417d655c404d7f4575f6ba04465d55eb7",
+    "before/light-command-top.png": "0a3db5a386964185250882e74cb885686df34302cd77e8b144d132bf5f35e53d",
+    "before/light-command-bottom.png": "71b9cb68895ac62c8113a80a6720021ea30530b437376a8fc2c340d03348c1ae",
+    "after/sources.json": "9323c3f1e80525628c910173ccf3d087c0e18fbc949d01fc62f9fc8168d9e782",
+    "after/light-off-top.png": "4bc022257fbf182473d69ba69a335850359fc51f5719f984f59d2a0ed18d57c2",
+    "after/dark-command-bottom.png": "5a4de9756b94d7e3390fc8edab12fe01c94c1da490bb75c8bfd3b8a0d3bf80ab",
+    "after/dark-off-bottom.png": "5a4de9756b94d7e3390fc8edab12fe01c94c1da490bb75c8bfd3b8a0d3bf80ab",
+    "after/renderer.json": "4a396105295ec85a6b27433f7e23db1710a7dc332fb0d5bc9acfce18a2c2d88a",
+    "after/frames.json": "f2088260abed0dda5909b31eeae4fd5ff7f0a7e534654693bf7021d881dfd53a",
+    "after/light-off-bottom.png": "af79abbc1b7ef92841097a1bd2b0beb98db737e1b5980c35d5d94c6b901f488b",
+    "after/dark-off-top.png": "64f4af5ea9f797c0ddb9b081eff05450087ffb08e21fd55dbf8174b023c12902",
+    "after/dark-command-top.png": "8558bd5d51f6ba4a3630c3ca33857e3417d655c404d7f4575f6ba04465d55eb7",
+    "after/light-command-top.png": "0a3db5a386964185250882e74cb885686df34302cd77e8b144d132bf5f35e53d",
+    "after/light-command-bottom.png": "af79abbc1b7ef92841097a1bd2b0beb98db737e1b5980c35d5d94c6b901f488b"
+  },
+  "checks": {
+    "formal": {
+      "inputs": 519,
+      "current_match": true
+    },
+    "native": {
+      "inputs": 518,
+      "current_match": true
+    }
+  },
+  "native": {
+    "exit_code": 0,
+    "frames": 8,
+    "trigger_states": [
+      "off",
+      "command"
+    ],
+    "parent_appearances": [
+      "aqua",
+      "darkAqua"
+    ],
+    "positions": [
+      "top",
+      "bottom"
+    ],
+    "consumer_exit": 0
+  },
+  "build": {
+    "exit_code": 0,
+    "command": "bash prototype/build.sh --check",
+    "utc": "2026-10-11T10:22:29.074979+00:00"
+  },
+  "limits": [
+    "static actual page factory only",
+    "no full settings window/sidebar/toolbar",
+    "no actions/hooks/window switching/permission requests",
+    "no hardware/motion/signed Swift6 runtime",
+    "not committed/signed/installed/released"
+  ],
+  "worker": "none: small localized copy fix directly handled by main"
+}

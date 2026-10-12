@@ -1,0 +1,13 @@
+Traceback (most recent call last):
+  File "/Users/aaron/Documents/WindowShade/tools/design-qa/check-progress-quantity-preview.py", line 382, in <module>
+    main()
+    ~~~~^^
+  File "/Users/aaron/Documents/WindowShade/tools/design-qa/check-progress-quantity-preview.py", line 304, in main
+    obs = check_tile(tile, tl, sample, index, width, height)
+  File "/Users/aaron/Documents/WindowShade/tools/design-qa/check-progress-quantity-preview.py", line 207, in check_tile
+    check_part(tile, label, expect_hidden=expect_hidden, expect_indeterminate=expect_ind)
+    ~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/Users/aaron/Documents/WindowShade/tools/design-qa/check-progress-quantity-preview.py", line 119, in check_part
+    assert isinstance(tile.get("layerChildren", "renderedQuantityText", "renderedQuantityWidth", "quantityAvailableWidth"), list), f"{label}: layerChildren must be a list"
+                      ~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+TypeError: get expected at most 2 arguments, got 4

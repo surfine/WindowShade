@@ -1,0 +1,21 @@
+{
+  "kind": "self_review",
+  "status": "residual_risk",
+  "issues_found": true,
+  "needs_evidence": false,
+  "artifact": "/Users/aaron/Documents/WindowShade/docs/design-review/2026-10-11-privacy-column-production/validation.json",
+  "artifact_sha256": "a933ad419e3b2efe1f273273697c1f786deab5552450c2831c83ca4304661b67",
+  "lenses": {
+    "task_contract": "proven candidate actualRow implementation and all real cell全文height contained; current font/columns/colors",
+    "evidence_freshness": "62/65 independent SHA;14669 actual48/518/consumer0 and36743 current519 optimized0",
+    "edge_risk": "switchSpec nil fixtures: real switch branch/fullPage not accepted; own mock binding composition next"
+  },
+  "findings": [
+    "Production only detailLine columns and detail child widths; rowData/sources/auth/export/reading unaffected.",
+    "Default12 is body-1, column relative to real font; fixed12 candidate not used as production proof.",
+    "Actual Cell fitted height contained; wide/narrow/unknown/granted/planned/technical/long82 main images reviewed.",
+    "Selectable readonly existing wrapping behavior retained.",
+    "Fixtures pass nil switchSpec; next whole composition should include own mock switches to cover width-binding branch without real settings.",
+    "Page/source/VO/largefont/privacy/hardware/lifecycle not_run; whole active."
+  ]
+}

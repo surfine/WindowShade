@@ -1,0 +1,452 @@
+{
+  "is_error": false,
+  "incomplete": false,
+  "result": "The only provided check is the ast.parse check, and it passes. Let me do one final logic review of the tile-quantity expectations against the Swift source to be certain they're right.\n\nFrom `NotchMotionPreview.swift`:\n- `empty = content(id: nil)` → no tiles.\n- `first = content(id: 900)` → count defaults to 2 → `.count(2,9)`.\n- `updated = content(id: 900, count: 3)` → `.count(3,9)`.\n- `replacement = content(id: 901, count: 4)` → `.count(4,9)`.\n\nSequence:\n1. `initial` → empty → ids `{}`, quantities `[]` ✓\n2. `open` with `first` (900, 2/9) → `open-start` (transition), `open-settled` → 900, 2/9 ✓\n3. `same-id` with `updated` (900, 3/9) → 900, 3/9 ✓\n4. `replace-id` with `replacement` (901, 4/9) → 901, 4/9 ✓\n5. `close-interrupted` with empty → `close-before-interrupt` (transition; regular stays expanded + pendingExit true; reduced compact + pendingExit false) ✓\n6. `reopen` with `replacement` (901, 4/9) → `reopened` → 901, 4/9 ✓\n7. `close-final` with empty → `closed` → `{}`, `[]`, pendingExit false ✓\n\nAll expectations match. The `same-id` TileIdentity reuse: `open-settled` and `same-id` both render tile 900 via the same ongoing cell id, so the view's ObjectIdentifier should be stable — asserted. `currentIdentity` compared between open-settled and same-id.\n\nThe script is complete and correct. Syntax check passes (exit 0).\n\n## Summary\n\n**Delivered:** `tools/design-qa/check-notch-motion-preview.py` — a Python stdlib-only consumer taking `ABS_OUTPUT`.\n\n**What it does:**\n- Reads only `frames.json`, `sources.json`, `renderer.json` from `ABS_OUTPUT`, plus the local source paths named in `sources.json` for SHA256. No UI/product/network/permission/other-source access; no other files touched.\n- **Report schema:** asserts `swiftLanguageVersion==6`, `productEntry false`, `realSources/globalInputEvents/windowActions==0`, `mainThread true`, `status==\"completed_callbacks_static_cache_only\"`, 16 frames (regular/reduced × 8), plus `callbacks`/`counts`.\n- **Frames:** stage order `initial/open-start/open-settled/same-id/replace-id/close-before-interrupt/reopened/closed`; each frame's `name/model[x,y,width,height]/presentation nullable/animations[key,duration,class]/pendingExit/tileIDs/tileIdentities/tileQuantities[{completed,total}]/currentIdentity/active false/visible false/alpha 0/mainThread true/cacheOnly true`.\n- **Geometry:** all numeric fields finite (width/height non-negative); model centre x=400, top edge y=400; `initial`/`closed` = 185×33.5, others 305×175.5.\n- **Transitions:** `open-start`/`close-before-interrupt` do not assert tile visibility or presentation. Regular `close-before-interrupt` stays expanded with `pendingExit true`; reduced is compact with `pendingExit false`.\n- **Identity/quantity:** settled/same-id IDs 900, replace/reopen 901, closed/initial empty; `same-id` reuses the same `TileIdentity`/`currentIdentity` as `open-settled`; quantities open 2/9 → same 3/9 → replace/reopen 4/9; final `pendingExit false`.\n- **Counts:** each mode's non-interrupted keys (`initial/open/open-settled/same-id/replace-id/reopen/close-final`) exactly 1; regular `close-interrupted` 0, reduced 0 or 1; no count >1.\n- **Callbacks:** all `mainThread true`, `time` finite, tally equals `counts`.\n- **renderer.json:** `swiftLanguageVersion 6`, `strictConcurrency true`, `warningsAsErrors true`, `optimized false`.\n- **sources.json:** exactly 518 entries, each SHA256 re-computed against the current on-disk source.\n- **Output:** prints `status: pass_control_path_visual_inconclusive`, plus explicit `inconclusive`/`untested` labels for presentation, cache-only motion, visual compositor, hardware, product lifecycle, and a docstring note that presentation/cacheOnly are recorded data, not motion evidence, and file existence / ast.parse are not behavioural evidence.\n\n**Check result:** the sole fixed check (ast.parse) passes — exit 0, `\"syntax parsed; actual native acceptance pending\"`.\n\n**Unresolved / not done by design:** I did not fabricate sample JSON, did not implement a mirror animation model, and did not run any native render — actual acceptance requires the main model to run the consumer against real JSON. If `frames.json`/`sources.json`/`renderer.json` or the 518 sources are absent, the script fails fast with an explicit message rather than relaxing constraints.",
+  "model": "deepseek-flash",
+  "finish_reason": "stop",
+  "changed_files": [
+    "tools/design-qa/check-notch-motion-preview.py"
+  ],
+  "checks": [
+    {
+      "check_index": 0,
+      "argv": [
+        "python3",
+        "-c",
+        "import ast,pathlib; ast.parse(pathlib.Path('tools/design-qa/check-notch-motion-preview.py').read_text()); print('syntax parsed; actual native acceptance pending')"
+      ],
+      "exit_code": 0,
+      "revision": 1,
+      "timed_out": false,
+      "output": "syntax parsed; actual native acceptance pending\n",
+      "truncated": false
+    },
+    {
+      "check_index": 0,
+      "argv": [
+        "python3",
+        "-c",
+        "import ast,pathlib; ast.parse(pathlib.Path('tools/design-qa/check-notch-motion-preview.py').read_text()); print('syntax parsed; actual native acceptance pending')"
+      ],
+      "exit_code": 0,
+      "revision": 1,
+      "timed_out": false,
+      "output": "syntax parsed; actual native acceptance pending\n",
+      "truncated": false
+    }
+  ],
+  "usage_by_round": [
+    {
+      "prompt_tokens": 1532,
+      "completion_tokens": 146,
+      "total_tokens": 1678,
+      "prompt_tokens_details": {
+        "cached_tokens": 0
+      },
+      "prompt_cache_hit_tokens": 0,
+      "prompt_cache_miss_tokens": 1532
+    },
+    {
+      "prompt_tokens": 2443,
+      "completion_tokens": 84,
+      "total_tokens": 2527,
+      "prompt_tokens_details": {
+        "cached_tokens": 1664
+      },
+      "prompt_cache_hit_tokens": 1664,
+      "prompt_cache_miss_tokens": 779
+    },
+    {
+      "prompt_tokens": 5624,
+      "completion_tokens": 164,
+      "total_tokens": 5788,
+      "prompt_tokens_details": {
+        "cached_tokens": 2432
+      },
+      "prompt_cache_hit_tokens": 2432,
+      "prompt_cache_miss_tokens": 3192
+    },
+    {
+      "prompt_tokens": 7429,
+      "completion_tokens": 85,
+      "total_tokens": 7514,
+      "prompt_tokens_details": {
+        "cached_tokens": 5760
+      },
+      "prompt_cache_hit_tokens": 5760,
+      "prompt_cache_miss_tokens": 1669
+    },
+    {
+      "prompt_tokens": 8722,
+      "completion_tokens": 3763,
+      "total_tokens": 12485,
+      "prompt_tokens_details": {
+        "cached_tokens": 7424
+      },
+      "prompt_cache_hit_tokens": 7424,
+      "prompt_cache_miss_tokens": 1298
+    },
+    {
+      "prompt_tokens": 12515,
+      "completion_tokens": 44,
+      "total_tokens": 12559,
+      "prompt_tokens_details": {
+        "cached_tokens": 12288
+      },
+      "prompt_cache_hit_tokens": 12288,
+      "prompt_cache_miss_tokens": 227
+    },
+    {
+      "prompt_tokens": 12671,
+      "completion_tokens": 304,
+      "total_tokens": 12975,
+      "prompt_tokens_details": {
+        "cached_tokens": 12416
+      },
+      "prompt_cache_hit_tokens": 12416,
+      "prompt_cache_miss_tokens": 255
+    },
+    {
+      "prompt_tokens": 14503,
+      "completion_tokens": 234,
+      "total_tokens": 14737,
+      "prompt_tokens_details": {
+        "cached_tokens": 12928
+      },
+      "prompt_cache_hit_tokens": 12928,
+      "prompt_cache_miss_tokens": 1575
+    },
+    {
+      "prompt_tokens": 14849,
+      "completion_tokens": 1196,
+      "total_tokens": 16045,
+      "prompt_tokens_details": {
+        "cached_tokens": 14592
+      },
+      "prompt_cache_hit_tokens": 14592,
+      "prompt_cache_miss_tokens": 257
+    }
+  ],
+  "api_rounds": 9,
+  "tool_calls": 10,
+  "tool_history": [
+    {
+      "tool": "list_files",
+      "args": {
+        "path": "tools/design-qa",
+        "offset": 1
+      },
+      "result": {
+        "files": [
+          "tools/design-qa/CalendarCardPreview.swift",
+          "tools/design-qa/ConductorSurfacePreview.swift",
+          "tools/design-qa/CountdownTimerCardPreview.swift",
+          "tools/design-qa/FeedbackPreview.swift",
+          "tools/design-qa/FileNameChecks.swift",
+          "tools/design-qa/FileShelfStatePreview.swift",
+          "tools/design-qa/FileShelfSurfacePreview.swift",
+          "tools/design-qa/FocusTimerCardPreview.swift",
+          "tools/design-qa/HostSurfacePreview.swift",
+          "tools/design-qa/MediaArtworkPreview.swift",
+          "tools/design-qa/MediaFeedbackPreview.swift",
+          "tools/design-qa/MediaOwnedStatePreview.swift",
+          "tools/design-qa/MediaSurfacePreview.swift",
+          "tools/design-qa/MergedRowPreview.swift",
+          "tools/design-qa/NotchMotionPreview.swift",
+          "tools/design-qa/OwnedErrorFlowChecks.swift",
+          "tools/design-qa/OwnedPhasePreview.swift",
+          "tools/design-qa/OwnedScrollPreview.swift",
+          "tools/design-qa/OwnedStatePreview.swift",
+          "tools/design-qa/PowerEarPreview.swift",
+          "tools/design-qa/WelcomeStatePreview.swift",
+          "tools/design-qa/WindowBrowserGridTitlePreview.swift",
+          "tools/design-qa/WindowBrowserImagePreview.swift",
+          "tools/design-qa/WindowBrowserStatePreview.swift",
+          "tools/design-qa/artwork-palette-check.md",
+          "tools/design-qa/check-browser-settings-preview.py",
+          "tools/design-qa/check-feedback-preview.py",
+          "tools/design-qa/check-fileshelf-preview.py",
+          "tools/design-qa/check-fileshelf-state-preview.py",
+          "tools/design-qa/check-grid-title-preview.py",
+          "tools/design-qa/check-media-owned-state-preview.py",
+          "tools/design-qa/check-media-preview.py",
+          "tools/design-qa/check-merged-row-preview.py",
+          "tools/design-qa/check-owned-navigation.py",
+          "tools/design-qa/check-owned-preview.py",
+          "tools/design-qa/check-owned-scroll-preview.py",
+          "tools/design-qa/check-power-ear-preview.py",
+          "tools/design-qa/check-welcome-state-preview.py",
+          "tools/design-qa/check-window-browser-preview.py",
+          "tools/design-qa/check-window-image-fixtures.py",
+          "tools/design-qa/check-window-image-preview.py",
+          "tools/design-qa/make-window-image-fixtures.py",
+          "tools/design-qa/media-boundary-review.md",
+          "tools/design-qa/power-flash-check.md",
+          "tools/design-qa/render-calendar-card.sh",
+          "tools/design-qa/render-countdown-card.sh",
+          "tools/design-qa/render-focus-card.sh",
+          "tools/design-qa/render-native-surfaces.sh",
+          "tools/design-qa/run-file-name-checks.py",
+          "tools/design-qa/run-owned-error-flow.sh"
+        ],
+        "truncated": false,
+        "next_offset": null
+      }
+    },
+    {
+      "tool": "search_files",
+      "args": {
+        "path": "tools/design-qa",
+        "query": "NotchMotionPreview",
+        "offset": 1
+      },
+      "result": {
+        "matches": [
+          {
+            "path": "tools/design-qa/NotchMotionPreview.swift",
+            "line": 8,
+            "text": "@main enum NotchMotionPreview {"
+          }
+        ],
+        "truncated": false,
+        "next_offset": null
+      }
+    },
+    {
+      "tool": "read_file",
+      "args": {
+        "path": "tools/design-qa/NotchMotionPreview.swift",
+        "start_line": 1
+      },
+      "result": {
+        "text": "1: import Cocoa\n2: import QuartzCore\n3: \n4: #if !swift(>=6.0)\n5: #error(\"NotchMotionPreview requires render-native-surfaces.sh --swift6\")\n6: #endif\n7: \n8: @main enum NotchMotionPreview {\n9:     enum Failure: Error { case check(String) }\n10:     /// Point-in-time diagnostic; no thread-local state is carried across an await.\n11:     @MainActor static func mainThreadNow() -> Bool { Thread.isMainThread }\n12:     @MainActor static func field(_ object: Any, _ name: String) -> Any? {\n13:         guard let value = Mirror(reflecting: object).children.first(where: { $0.label == name })?.value else { return nil }\n14:         let mirror = Mirror(reflecting: value)\n15:         return mirror.displayStyle == .optional ? mirror.children.first?.value : value\n16:     }\n17:     @MainActor static func box(_ r: NSRect) -> [String: CGFloat] { [\"x\":r.minX,\"y\":r.minY,\"width\":r.width,\"height\":r.height] }\n18:     @MainActor static func content(id: UInt32?, count: Int = 2) throws -> NotchCanvasView.Content {\n19:         var tiles = [NotchTile]()\n20:         if let id {\n21:             let item = NotchActivity(id: \"qa-motion-\\(id)\", kind: .download, title: \"演示下载\", subtitle: \"演示材料.zip\", symbol: \"arrow.down.circle\", startedAt: 0, progress: .count(count,9), isPaused: false, sessionPhase: nil)\n22:             guard let cell = NotchRow.ongoingCells(from: [item]).first else { throw Failure.check(\"pure Core projection\") }\n23:             let ongoing = NotchTile.Ongoing(activityID: cell.activityID, subtitle: cell.subtitle, symbol: cell.symbol,\n24:                 phase: cell.phase, isPaused: cell.isPaused, quantity: cell.quantity, quantityText: cell.quantityText,\n25:                 spoken: cell.spoken, action: cell.action, closesRow: cell.closesRow, accessory: cell.accessory,\n26:                 isStale: cell.isStale, isEnded: cell.isEnded)\n27:             tiles.append(NotchTile(id: id, kind: .activity, snapshot: nil, icon: nil, title: cell.title, waiting: false, ongoing: ongoing))\n28:         }\n29:         return .init(tiles: tiles, dots: 0, dotsChanged: false, dotsY: 0, compact: nil, compactSlots: nil, alert: nil, hint: nil, notchHeight: 33.5)\n30:     }\n31:     @MainActor static func main() {\n32:         _ = NSApplication.shared; NSApp.setActivationPolicy(.prohibited)\n33:         guard Thread.isMainThread, NSApp.delegate == nil else { fatalError(\"own main-thread entry only\") }\n34:         let out = URL(fileURLWithPath: CommandLine.arguments[1], isDirectory: true)\n35:         Task { @MainActor in\n36:             do { try await run(out); exit(0) }\n37:             catch {\n38:                 try? String(describing: error).write(to: out.appendingPathComponent(\"failure.txt\"), atomically: true, encoding: .utf8)\n39:                 print(\"FAILED motion probe: \\(error)\"); exit(1)\n40:             }\n41:         }\n42:         // Only our entry pumps Cocoa; no product delegate, listener, controller, menu or input injection.\n43:         NSApp.run()\n44:     }\n45:     @MainActor static func run(_ out: URL) async throws {\n46:         try FileManager.default.createDirectory(at: out, withIntermediateDirectories: true)\n47:         let oldOverride = Motion.reducedOverrideForProbe\n48:         defer { Motion.reducedOverrideForProbe = oldOverride }\n49:         var frames = [[String: Any]](), callbacks = [[String: Any]]()\n50:         var counts = [String: Int]()\n51:         var report: [String: Any] = [\"swiftLanguageVersion\":6,\"productEntry\":false,\"realSources\":0,\"globalInputEvents\":0,\"windowActions\":0,\"mainThread\":mainThreadNow()]\n52:         func flush() throws {\n53:             report[\"frames\"] = frames; report[\"callbacks\"] = callbacks; report[\"counts\"] = counts\n54:             try JSONSerialization.data(withJSONObject: report, options: [.prettyPrinted,.sortedKeys]).write(to: out.appendingPathComponent(\"frames.json\"), options: .atomic)\n55:         }\n56:         for reduced in [false,true] {\n57:             Motion.reducedOverrideForProbe = reduced\n58:             let mode = reduced ? \"reduced\" : \"regular\"\n59:             let bounds = NSRect(x:0,y:0,width:800,height:400)\n60:             let canvas = NotchCanvasView(frame: bounds)\n61:             let window = NSWindow(contentRect: bounds, styleMask: [.borderless], backing: .buffered, defer: false)\n62:             window.isReleasedWhenClosed = false; window.alphaValue = 0; window.contentView = canvas\n63:             window.setFrame(NSRect(x:-8000,y:-8000,width:800,height:400),display:false)\n64:             defer { window.close() }\n65:             guard let island = field(canvas,\"island\") as? CALayer else { throw Failure.check(\"actual island layer\") }\n66:             let empty = try content(id:nil), first = try content(id:900), updated = try content(id:900,count:3), replacement = try content(id:901,count:4)\n67:             let compact = NSRect(x:(800-185)/2,y:400-33.5,width:185,height:33.5)\n68:             let expandedHeight = 33.5 + NotchIsland.peninsulaContentHeight(142)\n69:             let expanded = NSRect(x:(800-305)/2,y:400-expandedHeight,width:305,height:expandedHeight)\n70:             func token(_ shape: Motion.NotchShape) -> NotchCanvasView.Spring {\n71:                 let value = Motion.notchSpring(for:shape)\n72:                 return .init(response:value.response,bounce:value.bounce)\n73:             }\n74:             func morph(_ name: String, to rect: NSRect, content: NotchCanvasView.Content, spring: NotchCanvasView.Spring?) {\n75:                 let key = mode + \"-\" + name\n76:                 canvas.morph(to:rect,style:.init(cornerRadius:rect.height>34 ? 28:12,allCorners:false,fill:.black,border:0.5),content:content,spring:spring) {\n77:                     counts[key,default:0] += 1\n78:                     callbacks.append([\"name\":key,\"mainThread\":Thread.isMainThread,\"time\":CACurrentMediaTime()])\n79:                     try? flush()\n80:                 }\n81:             }\n82:             func snapshot(_ stage: String) throws {\n83:                 guard !window.isVisible, !NSApp.isActive, Thread.isMainThread, NSApp.delegate == nil,\n84:                       !NSScreen.screens.contains(where:{$0.frame.intersects(window.frame)}) else { throw Failure.check(\"own hidden main-thread host\") }\n85:                 canvas.layoutSubtreeIfNeeded()\n86:                 let current = field(canvas,\"current\") as? NSView\n87:                 var ids = [UInt32](), identities = [String](), quantities = [[String:Int]]()\n88:                 func visit(_ view:NSView) {\n89:                     if let tile = view as? NotchTileView, let model = field(tile,\"tile\") as? NotchTile {\n90:                         ids.append(model.id); identities.append(String(describing:ObjectIdentifier(tile)))\n91:                         if case let .count(k,n) = model.ongoing?.quantity ?? .unknown { quantities.append([\"completed\":k,\"total\":n]) }\n92:                     }\n93:                     view.subviews.forEach(visit)\n94:                 }\n95:                 if let current { visit(current) }\n96:                 let name = mode + \"-\" + stage\n97:                 guard let bitmap=canvas.bitmapImageRepForCachingDisplay(in:bounds) else {throw Failure.check(\"bitmap\")}\n98:                 canvas.cacheDisplay(in:bounds,to:bitmap)\n99:                 guard let png=bitmap.representation(using:.png,properties:[:]) else {throw Failure.check(\"PNG\")}\n100:                 try png.write(to:out.appendingPathComponent(name+\".png\"))\n101:                 let keys=island.animationKeys() ?? []\n102:                 var animations=[[String:Any]]()\n103:                 for key in keys { if let a=island.animation(forKey:key) { animations.append([\"key\":key,\"duration\":a.duration,\"class\":String(describing:type(of:a))]) } }\n104:                 frames.append([\"name\":name,\"stage\":stage,\"reduced\":reduced,\"time\":CACurrentMediaTime(),\"model\":box(island.frame),\n105:                     \"presentation\":island.presentation().map{box($0.frame)} as Any? ?? NSNull(),\"animations\":animations,\n106:                     \"pendingExit\":field(canvas,\"contentExitPending\") as? Bool ?? false,\"tileIDs\":ids,\"tileIdentities\":identities,\"tileQuantities\":quantities,\n107:                     \"currentIdentity\":current.map{String(describing:ObjectIdentifier($0))} as Any? ?? NSNull(),\n108:                     \"active\":NSApp.isActive,\"visible\":window.isVisible,\"alpha\":window.alphaValue,\"mainThread\":Thread.isMainThread,\n109:                     \"cacheOnly\":true])\n110:                 try flush()\n111:             }\n112:             func wait(_ key: String) async throws {\n113:                 let animationTime = (island.animationKeys() ?? []).compactMap { island.animation(forKey:$0)?.duration }.max() ?? 0\n114:                 let deadline=ProcessInfo.processInfo.systemUptime+max(4,animationTime+1)\n115:                 while counts[mode+\"-\"+key,default:0]==0, ProcessInfo.processInfo.systemUptime<deadline {try await Task.sleep(nanoseconds:10_000_000)}\n116:                 guard counts[mode+\"-\"+key,default:0]==1 else {throw Failure.check(\"completion \\(mode)-\\(key)\")}\n117:                 try await Task.sleep(nanoseconds:180_000_000)\n118:             }\n119:             morph(\"initial\",to:compact,content:empty,spring:nil); try await wait(\"initial\"); try snapshot(\"initial\")\n120:             morph(\"open\",to:expanded,content:first,spring:token(.expanded)); try snapshot(\"open-start\"); try await wait(\"open\"); canvas.settle(); try snapshot(\"open-settled\")\n121:             morph(\"same-id\",to:expanded,content:updated,spring:token(.expanded)); try await wait(\"same-id\"); canvas.settle(); try snapshot(\"same-id\")\n122:             morph(\"replace-id\",to:expanded,content:replacement,spring:token(.expanded)); try await wait(\"replace-id\"); canvas.settle(); try snapshot(\"replace-id\")\n123:             morph(\"close-interrupted\",to:compact,content:empty,spring:token(.compact)); try snapshot(\"close-before-interrupt\")\n124:             try await Task.sleep(nanoseconds:10_000_000)\n125:             morph(\"reopen\",to:expanded,content:replacement,spring:token(.expanded)); try await wait(\"reopen\"); canvas.settle()\n126:             try await Task.sleep(nanoseconds:200_000_000); try snapshot(\"reopened\")\n127:             morph(\"close-final\",to:compact,content:empty,spring:token(.compact)); try await wait(\"close-final\"); canvas.settle(); try snapshot(\"closed\")\n128:             window.close()\n129:         }\n130:         report[\"overrideRestoredTo\"] = oldOverride as Any? ?? NSNull()\n131:         report[\"status\"] = \"completed_callbacks_static_cache_only\"\n132:         try flush(); print(\"PASS \\(frames.count) actual Swift6 motion/cancellation snapshots; callbacks main-thread; visual compositor untested\")\n133:     }\n134: }",
+        "total_lines": 134,
+        "next_line": null,
+        "truncated": false
+      }
+    },
+    {
+      "tool": "read_file",
+      "args": {
+        "path": "tools/design-qa/check-welcome-state-preview.py",
+        "start_line": 1
+      },
+      "result": {
+        "text": "1: #!/usr/bin/env python3\n2: \"\"\"Geometry/state consumer; layer z-order, live materials/focus and motion remain inconclusive.\"\"\"\n3: import hashlib,json,sys\n4: from pathlib import Path\n5: root=Path(__file__).resolve().parents[2];out=Path(sys.argv[1]).resolve()\n6: try:\n7:     frames=json.loads((out/'frames.json').read_text())\n8:     states={'intro-stuck','intro-hint','intro-no-notch','origin-unanswered','origin-windows','origin-ipad','origin-mac'}\n9:     assert len(frames)==14\n10:     for parent in ['light','dark']:\n11:         subset=[f for f in frames if f['image'].startswith(parent+'-')]\n12:         assert len(subset)==7 and {f['state'] for f in subset}==states\n13:         for f in subset:\n14:             assert f['width']==720 and f['height']==594\n15:             assert f['syntheticStage'] and not f['visibleWindow'] and not f['activeApplication'] and f['alpha']==0\n16:             assert not f['preferencesWritten'] and f['permissionQueries']==0\n17:             assert f['nextEnabled']==(f['state']!='origin-unanswered')\n18:             title='刚换 Mac？从刘海开始。' if f['page']==0 else '你之前常用哪个？'\n19:             assert title in {v['text'] for v in f['labels']}\n20:             for label in f['labels']:\n21:                 assert label['x']>=0 and label['y']>=0 and label['x']+label['width']<=720 and label['y']+label['height']<=594,label\n22:             assert (out/f['image']).read_bytes().startswith(b'\\x89PNG\\r\\n\\x1a\\n')\n23:     sources=json.loads((out/'sources.json').read_text())\n24:     for name,digest in sources.items():assert hashlib.sha256((root/name).read_bytes()).hexdigest()==digest,name\n25:     distinct={s:hashlib.sha256((out/f'light-{s}.png').read_bytes()).digest()!=hashlib.sha256((out/f'dark-{s}.png').read_bytes()).digest() for s in states}\n26:     assert all(distinct.values()),distinct\n27:     print(json.dumps({'passed':True,'geometry_state_frames':14,'current_inputs':len(sources),'system_appearance_pairs_distinct':7,'stage_z_order_live_material_focus_motion':'inconclusive','permission_functionality':'not_run'}))\n28: except (AssertionError,ValueError,OSError,KeyError) as e:\n29:     print('Welcome geometry/state FAILED: '+str(e),file=sys.stderr);sys.exit(1)",
+        "total_lines": 29,
+        "next_line": null,
+        "truncated": false
+      }
+    },
+    {
+      "tool": "search_files",
+      "args": {
+        "offset": 1,
+        "path": "tools/design-qa",
+        "query": "sources.json"
+      },
+      "result": {
+        "matches": [
+          {
+            "path": "tools/design-qa/check-feedback-preview.py",
+            "line": 11,
+            "text": "    sources = json.loads((out / 'sources.json').read_text())"
+          },
+          {
+            "path": "tools/design-qa/check-feedback-preview.py",
+            "line": 17,
+            "text": "    assert json.loads((owned / 'sources.json').read_text()) == sources"
+          },
+          {
+            "path": "tools/design-qa/check-fileshelf-preview.py",
+            "line": 30,
+            "text": "    sources = json.loads((out/'sources.json').read_text())"
+          },
+          {
+            "path": "tools/design-qa/check-fileshelf-state-preview.py",
+            "line": 48,
+            "text": "    sources=json.loads((out/'sources.json').read_text())"
+          },
+          {
+            "path": "tools/design-qa/check-grid-title-preview.py",
+            "line": 39,
+            "text": "for name, digest in json.loads((output / 'sources.json').read_text()).items():"
+          },
+          {
+            "path": "tools/design-qa/check-media-owned-state-preview.py",
+            "line": 38,
+            "text": "    sources=json.loads((out/'sources.json').read_text())"
+          },
+          {
+            "path": "tools/design-qa/check-media-preview.py",
+            "line": 32,
+            "text": "    sources = json.loads((out / 'sources.json').read_text())"
+          },
+          {
+            "path": "tools/design-qa/check-merged-row-preview.py",
+            "line": 46,
+            "text": "for name, digest in json.loads((output / 'sources.json').read_text()).items():"
+          },
+          {
+            "path": "tools/design-qa/check-owned-preview.py",
+            "line": 51,
+            "text": "    sources = read('sources.json')"
+          },
+          {
+            "path": "tools/design-qa/check-owned-scroll-preview.py",
+            "line": 44,
+            "text": "sources = json.loads((out / 'sources.json').read_text())"
+          },
+          {
+            "path": "tools/design-qa/check-power-ear-preview.py",
+            "line": 21,
+            "text": "    sources=json.loads((out/'sources.json').read_text())"
+          },
+          {
+            "path": "tools/design-qa/check-welcome-state-preview.py",
+            "line": 23,
+            "text": "    sources=json.loads((out/'sources.json').read_text())"
+          },
+          {
+            "path": "tools/design-qa/check-window-browser-preview.py",
+            "line": 64,
+            "text": "for name, digest in json.loads((output / 'sources.json').read_text()).items():"
+          },
+          {
+            "path": "tools/design-qa/check-window-image-preview.py",
+            "line": 49,
+            "text": "sources = json.loads((out / 'sources.json').read_text()); assert len(sources) == 518"
+          },
+          {
+            "path": "tools/design-qa/render-calendar-card.sh",
+            "line": 21,
+            "text": "(output/'sources.json').write_text(json.dumps({str(p.relative_to(root)) if p.is_relative_to(root) else str(p):"
+          },
+          {
+            "path": "tools/design-qa/render-countdown-card.sh",
+            "line": 22,
+            "text": "(output/'sources.json').write_text(json.dumps({str(p.relative_to(root)) if p.is_relative_to(root) else str(p):"
+          },
+          {
+            "path": "tools/design-qa/render-focus-card.sh",
+            "line": 23,
+            "text": "(output/'sources.json').write_text(json.dumps({str(p.relative_to(root)) if p.is_relative_to(root) else str(p):"
+          },
+          {
+            "path": "tools/design-qa/render-native-surfaces.sh",
+            "line": 88,
+            "text": "(output / 'sources.json').write_text(json.dumps({key(p): sha(p) for p in tracked}, indent=2) + '\\n')"
+          }
+        ],
+        "truncated": false,
+        "next_offset": null
+      }
+    },
+    {
+      "tool": "read_file",
+      "args": {
+        "path": "tools/design-qa/render-native-surfaces.sh",
+        "start_line": 60
+      },
+      "result": {
+        "text": "60: SOURCES=()\n61: while IFS= read -r source; do\n62:   mkdir -p \"$WORK/$(dirname \"$source\")\"\n63:   cp \"$source\" \"$WORK/$source\"\n64:   SOURCES+=(\"$WORK/$source\")\n65: done < <(rg --files prototype -g '*.swift' -g '!main.swift' -g '!*.app/**' | sort)\n66: \n67: # Copy the caller's standalone @main render entry into WORK.\n68: ENTRY_COPY=\"$WORK/$(basename \"$ENTRY\")\"\n69: cp \"$ENTRY\" \"$ENTRY_COPY\"\n70: \n71: # Immutable compiler inputs recorded by SHA256 before any build step.\n72: python3 - \"$ROOT\" \"$OUTPUT\" \"$WORK\" \"$ENTRY\" \"$SELF\" \"$ENTRY_COPY\" \"$NATIVE_DIR/WS2Child.c\" \"$NATIVE_DIR/WS2Child.h\" \"$NATIVE_DIR/module.modulemap\" \"${SOURCES[@]}\" <<'PY'\n73: from pathlib import Path\n74: import sys, hashlib, json\n75: root, output, work, entry = map(Path, sys.argv[1:5])\n76: tracked = [Path(p) for p in sys.argv[5:]]\n77: def key(p: Path) -> str:\n78:     if p == work / entry.name:\n79:         p = entry\n80:     elif p.is_relative_to(work / 'native'):\n81:         p = root / 'prototype/Native' / p.name\n82:     elif p.is_relative_to(work):\n83:         p = root / p.relative_to(work)\n84:     return str(p.relative_to(root)) if p.is_absolute() and p.is_relative_to(root) else str(p)\n85: def sha(p: Path) -> str:\n86:     return hashlib.sha256(p.read_bytes()).hexdigest()\n87: output.mkdir(parents=True, exist_ok=True)\n88: (output / 'sources.json').write_text(json.dumps({key(p): sha(p) for p in tracked}, indent=2) + '\\n')\n89: PY\n90: \n91: # GLASS_DEFINE detection is intentional and identical to tests/run-appkit-tests.sh.\n92: GLASS_DEFINE=()\n93: if [ -f \"$(xcrun --show-sdk-path --sdk macosx)/System/Library/Frameworks/AppKit.framework/Headers/NSGlassEffectView.h\" ]; then\n94:   GLASS_DEFINE=(-DWINDOWSHADE_SDK_HAS_GLASS)\n95: fi\n96: \n97: # Unoptimized production library. Default Swift 5; opt into the production Swift 6 strictness for runtime probes.\n98: swiftc \"${LANGUAGE_FLAGS[@]}\" -module-cache-path \"$ROOT/.build/module-cache\" -whole-module-optimization -target \"$(uname -m)-apple-macosx14.0\" ${GLASS_DEFINE[@]+\"${GLASS_DEFINE[@]}\"} \\\n99:   -I \"$NATIVE_DIR\" \"$NATIVE_DIR/WS2Child.o\" \\\n100:   \"${SOURCES[@]}\" \"$ENTRY_COPY\" \\\n101:   -framework Cocoa -framework Carbon -framework ApplicationServices -framework LocalAuthentication -framework LocalAuthenticationEmbeddedUI \\\n102:   -framework ScreenCaptureKit -framework QuartzCore -framework CoreText \\\n103:   -framework AVFoundation -framework Vision -framework ServiceManagement -framework Metal \\\n104:   -framework CoreAudio -framework MapKit -framework MetalKit -framework IOKit -framework CoreImage -framework VideoToolbox \\\n105:   -o \"$WORK/render\"\n106: \n107: python3 - \"$OUTPUT\" \"$WORK/render\" \"$LANGUAGE_VERSION\" <<'PY'\n108: from pathlib import Path\n109: import sys, hashlib, json\n110: output = Path(sys.argv[1]); binary = Path(sys.argv[2])\n111: output.mkdir(parents=True, exist_ok=True)\n112: (output / 'renderer.json').write_text(json.dumps(\n113:     {\"renderer\": str(binary), \"sha256\": hashlib.sha256(binary.read_bytes()).hexdigest(),\n114:      \"swiftLanguageVersion\": int(sys.argv[3]), \"strictConcurrency\": int(sys.argv[3]) == 6,\n115:      \"warningsAsErrors\": int(sys.argv[3]) == 6, \"optimized\": False}, indent=2) + '\\n')\n116: PY\n117: \n118: # Execute ONLY the caller entry; it owns its self-contained data and window capture.\n119: \"$WORK/render\" \"$OUTPUT\"",
+        "total_lines": 119,
+        "next_line": null,
+        "truncated": false
+      }
+    },
+    {
+      "tool": "create_file",
+      "args": {
+        "path": "tools/design-qa/check-notch-motion-preview.py",
+        "content_chars": 14012
+      },
+      "result": {
+        "written": "tools/design-qa/check-notch-motion-preview.py"
+      }
+    },
+    {
+      "tool": "run_check",
+      "args": {
+        "index": 0
+      },
+      "result": {
+        "check_index": 0,
+        "argv": [
+          "python3",
+          "-c",
+          "import ast,pathlib; ast.parse(pathlib.Path('tools/design-qa/check-notch-motion-preview.py').read_text()); print('syntax parsed; actual native acceptance pending')"
+        ],
+        "exit_code": 0,
+        "revision": 1,
+        "timed_out": false,
+        "output": "syntax parsed; actual native acceptance pending\n",
+        "truncated": false
+      }
+    },
+    {
+      "tool": "read_file",
+      "args": {
+        "path": "tools/design-qa/check-notch-motion-preview.py",
+        "start_line": 175
+      },
+      "result": {
+        "text": "175:             f\"{mode}-same-id: TileIdentity changed across same-id update\"\n176:         assert same[\"currentIdentity\"] == opened[\"currentIdentity\"], \\\n177:             f\"{mode}-same-id: currentIdentity changed across same-id update\"\n178: \n179:         # replace-id / reopened: identity content must switch to 901\n180:         repl = next(f for f in by_mode[mode] if f[\"stage\"] == \"replace-id\")\n181:         reop = next(f for f in by_mode[mode] if f[\"stage\"] == \"reopened\")\n182:         assert repl[\"tileIDs\"] == [901] and reop[\"tileIDs\"] == [901], f\"{mode}: replace/reopen must show id 901\"\n183: \n184:         # close-before-interrupt must reflect the interruption contract exactly\n185:         before = next(f for f in by_mode[mode] if f[\"stage\"] == \"close-before-interrupt\")\n186:         if mode == \"regular\":\n187:             check_model_rect(before, mode, \"close-before-interrupt\", EXPANDED_W, EXPANDED_H)\n188:             assert before[\"pendingExit\"] is True, \"regular close-before-interrupt: pendingExit must stay true\"\n189:         else:\n190:             check_model_rect(before, mode, \"close-before-interrupt\", *COMPACT)\n191:             assert before[\"pendingExit\"] is False, \"reduced close-before-interrupt: pendingExit must be false\"\n192: \n193:         # final stage must have no pending exit\n194:         closed = next(f for f in by_mode[mode] if f[\"stage\"] == \"closed\")\n195:         assert closed[\"pendingExit\"] is False, f\"{mode}-closed: pendingExit must be false\"\n196: \n197:     # --- counts: exact completions ------------------------------------------\n198:     for mode in MODES:\n199:         for key in EXPECT_ONE:\n200:             k = f\"{mode}-{key}\"\n201:             assert k in counts, f\"missing callback count: {k}\"\n202:             assert counts[k] == 1, f\"{k}: completion count expected 1 got {counts.get(k)!r}\"\n203:         for key in EXPECT_ZERO_REGULAR_ONLY:\n204:             k = f\"{mode}-{key}\"\n205:             if mode == \"regular\":\n206:                 assert counts.get(k, 0) == 0, f\"{k}: regular interrupted close must not complete (got {counts.get(k)!r})\"\n207:             else:\n208:                 assert counts.get(k, 0) in (0, 1), f\"{k}: reduced must be 0 or 1 (got {counts.get(k)!r})\"\n209:         # no count may exceed one\n210:         for k, v in counts.items():\n211:             if k.startswith(mode + \"-\"):\n212:                 assert v <= 1, f\"count for {k} exceeds 1: {v!r}\"\n213: \n214:     # --- callbacks: all main-thread, consistent with counts -----------------\n215:     callback_tally = {}\n216:     for cb in callbacks:\n217:         assert set((\"name\", \"mainThread\", \"time\")) <= set(cb), f\"callback missing keys: {cb!r}\"\n218:         assert cb[\"mainThread\"] is True, f\"callback {cb['name']} not on main thread\"\n219:         finite_nonnegative(cb[\"time\"], f\"callback {cb['name']}.time\")\n220:         callback_tally[cb[\"name\"]] = callback_tally.get(cb[\"name\"], 0) + 1\n221:     assert callback_tally == counts, f\"callbacks tally {callback_tally} != counts {counts}\"\n222: \n223:     # --- renderer.json -------------------------------------------------------\n224:     renderer = json.loads(renderer_path.read_text())\n225:     assert renderer.get(\"swiftLanguageVersion\") == 6, \"renderer swiftLanguageVersion must be 6\"\n226:     assert renderer.get(\"strictConcurrency\") is True, \"renderer strictConcurrency must be true\"\n227:     assert renderer.get(\"warningsAsErrors\") is True, \"renderer warningsAsErrors must be true\"\n228:     assert renderer.get(\"optimized\") is False, \"renderer optimized must be false\"\n229: \n230:     # --- sources.json: 518 entries, each SHA256 matches current source ------\n231:     sources = json.loads(sources_path.read_text())\n232:     assert isinstance(sources, dict) and len(sources) == 518, \\\n233:         f\"sources.json must contain 518 entries got {len(sources)}\"\n234:     for name, digest in sources.items():\n235:         local = root / name\n236:         assert local.is_file(), f\"missing local source: {name}\"\n237:         actual = hashlib.sha256(local.read_bytes()).hexdigest()\n238:         assert actual == digest, f\"source drift for {name}: {actual} != {digest}\"\n239: \n240:     print(json.dumps({\n241:         \"status\": \"pass_control_path_visual_inconclusive\",\n242:         \"frames\": len(frames),\n243:         \"callbacks\": len(callbacks),\n244:         \"sources_sha256\": len(sources),\n245:         \"geometry_state_control_path\": \"checked\",\n246:         \"presentation_real_motion\": \"inconclusive\",\n247:         \"cache_only_real_motion\": \"inconclusive\",\n248:         \"visual_compositor\": \"untested\",\n249:         \"hardware\": \"untested\",\n250:         \"product_lifecycle\": \"untested\",\n251:     }))\n252: \n253: \n254: # Prove this file parses as valid Python before trusting it as a consumer.\n255: # This check does not exercise the code paths above.\n256: ast.parse(Path(__file__).read_text())\n257: main()",
+        "total_lines": 257,
+        "next_line": null,
+        "truncated": false
+      }
+    },
+    {
+      "tool": "run_check",
+      "args": {
+        "index": 0
+      },
+      "result": {
+        "check_index": 0,
+        "argv": [
+          "python3",
+          "-c",
+          "import ast,pathlib; ast.parse(pathlib.Path('tools/design-qa/check-notch-motion-preview.py').read_text()); print('syntax parsed; actual native acceptance pending')"
+        ],
+        "exit_code": 0,
+        "revision": 1,
+        "timed_out": false,
+        "output": "syntax parsed; actual native acceptance pending\n",
+        "truncated": false
+      }
+    }
+  ],
+  "usage": {
+    "prompt_tokens": 80288,
+    "completion_tokens": 6020,
+    "total_tokens": 86308
+  },
+  "progress": {
+    "phase": "finished",
+    "api_rounds": 9,
+    "tool_calls": 10,
+    "changed_files": [
+      "tools/design-qa/check-notch-motion-preview.py"
+    ],
+    "checks": [
+      {
+        "check_index": 0,
+        "exit_code": 0,
+        "revision": 1,
+        "timed_out": false,
+        "truncated": false
+      }
+    ],
+    "last_tool": "run_check",
+    "updated_at": 1791719718.657086
+  },
+  "balance_check": {
+    "currency": "CNY",
+    "balance": "0.68",
+    "threshold": "10",
+    "low": true,
+    "available": true,
+    "notify": false
+  }
+}

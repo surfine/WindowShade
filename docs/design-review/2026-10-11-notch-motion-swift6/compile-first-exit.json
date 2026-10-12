@@ -1,0 +1,1 @@
+{"session": 3253, "exit_code": 1, "fixture_error": "Swift6 Thread.isMainThread unavailable directly in async body; no runtime executed"}

@@ -1,0 +1,8 @@
+{
+  "original_session": 91532,
+  "wrapper_exit": null,
+  "status_evidence": "session terminal; temporary renderer removed by wrapper cleanup; log ends PASS 12",
+  "consumer_exit": 0,
+  "frames": 12,
+  "limitation": "numeric wrapper exit unavailable after context output truncation; not asserted"
+}

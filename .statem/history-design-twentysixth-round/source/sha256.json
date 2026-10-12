@@ -1,0 +1,17 @@
+{
+  "FlickMotion.swift": "ddca64b4eef6b05fa4a7a3e207ffb35abb65a54b4c60811f4af22f27ac0d8fef",
+  "Motion.swift": "ce92dee8f379f849ff986b3f177bccc2340897829d486f2691e8ee98fdd7c423",
+  "Notch.swift": "c49701ac8ec894b7659c496cb4785313a33f8c0525d40f0304c64b2491a6d9f8",
+  "WS2PrivacyPane.swift": "6f81de168111f2fb72ac0cd3974740eb2dd2779f3ce36c388d8ccf8eadd75df9",
+  "after/FlickMotion.swift": "44404b5bc6cec700ddb6547d5c1af273ed9ca9191d7b629af023f304ebcee3f0",
+  "after/Motion.swift": "ce92dee8f379f849ff986b3f177bccc2340897829d486f2691e8ee98fdd7c423",
+  "after/Notch.swift": "a031697bb416b41668eed28c7b4ab7685e8d1a2e37b38426ab5ef2cb25937890",
+  "after/WS2PrivacyPane.swift": "2e4c466f87c17e3b8a12b5f54f091ef7ad58dab28b9642db5f9d4a25fda5b437",
+  "after-sha256.txt": "748c54f6109d4ef00645ecefa32ae179e28442919d8b18980cc83c731a05a00d",
+  "before-sha256.txt": "c84c9e51e75dd8a4e3c95b8b4f476ae94886771dcef09178719f79b73d75803d",
+  "qa/NotchRetargetPreview.swift.before": "a8cd761ba46cb82fd36b904cf1cc12769ad7b90b9588f528069049d3f44fadc5",
+  "qa/PrivacyPageCompositionPreview.swift.before": "e1c56f738aa9a6e8fff67d7e33501b23a4652f607f41a4551e9b1a8380c9e164",
+  "qa/before-sha256.txt": "7db24ec45e5172b8ad4813f31b387d4eb62aa326ffa524ce99d25bfa565a9c5c",
+  "qa/check-notch-retarget-preview.py.before": "63a807559c92c1984ccf372971432c957ddbd5dec8131d7b0fdb6342dae507fa",
+  "qa/check-privacy-page-composition.py.before": "871b352c30e7ed1b33599b26239c7930165928e927e9c61e29b9422cc2184839"
+}

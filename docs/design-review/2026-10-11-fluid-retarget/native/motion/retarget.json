@@ -1,0 +1,6952 @@
+{
+  "cacheOnly" : true,
+  "compositorAccepted" : false,
+  "counts" : {
+    "reduced-initial" : 1,
+    "reduced-open" : 1,
+    "reduced-pre-compact" : 1,
+    "reduced-reopen" : 1,
+    "reduced-reverse" : 1,
+    "reduced-rm-close" : 1,
+    "reduced-rm-open" : 1,
+    "reduced-width" : 1,
+    "reduced-width-reverse" : 1,
+    "regular-cancel-open" : 1,
+    "regular-cancel-reopen" : 1,
+    "regular-final-close" : 1,
+    "regular-initial" : 1,
+    "regular-kick" : 1,
+    "regular-kick-open" : 1,
+    "regular-open" : 1,
+    "regular-pre-compact" : 1,
+    "regular-reopen" : 1,
+    "regular-reverse" : 1,
+    "regular-rich-exit" : 1,
+    "regular-rich-exit-open" : 1,
+    "regular-width" : 1,
+    "regular-width-reverse" : 1
+  },
+  "globalInputEvents" : 0,
+  "mainThread" : true,
+  "overrideRestored" : true,
+  "productEntry" : false,
+  "realSources" : 0,
+  "records" : [
+    {
+      "active" : false,
+      "alpha" : 0,
+      "animations" : [
+
+      ],
+      "cacheOnly" : true,
+      "counts" : {
+        "regular-initial" : 1
+      },
+      "currentIdentity" : "ObjectIdentifier(0x0000007a97a19180)",
+      "delegateNil" : true,
+      "mainThread" : true,
+      "mode" : "regular",
+      "model" : {
+        "height" : 33.5,
+        "width" : 185,
+        "x" : 307.5,
+        "y" : 366.5
+      },
+      "modelRadius" : 12,
+      "otherKeys" : {
+        "clip" : [
+
+        ],
+        "keyLine" : [
+
+        ],
+        "keyMask" : [
+
+        ]
+      },
+      "pendingExit" : false,
+      "presentation" : {
+        "height" : 33.5,
+        "width" : 185,
+        "x" : 307.5,
+        "y" : 366.5
+      },
+      "presentedRadius" : 12,
+      "reduced" : false,
+      "stage" : "regular-initial",
+      "tileIDs" : [
+
+      ],
+      "time" : 93754.385174125026,
+      "visible" : false
+    },
+    {
+      "active" : false,
+      "alpha" : 0,
+      "animations" : [
+
+      ],
+      "cacheOnly" : true,
+      "counts" : {
+        "regular-initial" : 1
+      },
+      "currentIdentity" : "ObjectIdentifier(0x0000007a97a19180)",
+      "delegateNil" : true,
+      "mainThread" : true,
+      "mode" : "regular",
+      "model" : {
+        "height" : 33.5,
+        "width" : 185,
+        "x" : 307.5,
+        "y" : 366.5
+      },
+      "modelRadius" : 12,
+      "otherKeys" : {
+        "clip" : [
+
+        ],
+        "keyLine" : [
+
+        ],
+        "keyMask" : [
+
+        ]
+      },
+      "pendingExit" : false,
+      "presentation" : {
+        "height" : 33.5,
+        "width" : 185,
+        "x" : 307.5,
+        "y" : 366.5
+      },
+      "presentedRadius" : 12,
+      "reduced" : false,
+      "stage" : "regular-open-old",
+      "tileIDs" : [
+
+      ],
+      "time" : 93754.385976666686,
+      "visible" : false
+    },
+    {
+      "active" : false,
+      "alpha" : 0,
+      "animations" : [
+        {
+          "additive" : true,
+          "beginTime" : 93754.386492250022,
+          "class" : "CASpringAnimation",
+          "damping" : 28.902652413026097,
+          "duration" : 0.56160572076454451,
+          "from" : -186.5,
+          "key" : "morph.bounds.size.height",
+          "keyPath" : "bounds.size.height",
+          "mass" : 1,
+          "stiffness" : 246.74011002723395,
+          "velocity" : 0
+        },
+        {
+          "additive" : true,
+          "beginTime" : 93754.386492250022,
+          "class" : "CASpringAnimation",
+          "damping" : 28.902652413026097,
+          "duration" : 0.56160572076454451,
+          "from" : -120,
+          "key" : "morph.bounds.size.width",
+          "keyPath" : "bounds.size.width",
+          "mass" : 1,
+          "stiffness" : 246.74011002723395,
+          "velocity" : 0
+        },
+        {
+          "additive" : true,
+          "beginTime" : 93754.386492250022,
+          "class" : "CASpringAnimation",
+          "damping" : 28.902652413026097,
+          "duration" : 0.56160572076454451,
+          "from" : -16,
+          "key" : "morph.cornerRadius",
+          "keyPath" : "cornerRadius",
+          "mass" : 1,
+          "stiffness" : 246.74011002723395,
+          "velocity" : 0
+        },
+        {
+          "additive" : true,
+          "beginTime" : 93754.386492250022,
+          "class" : "CASpringAnimation",
+          "damping" : 28.902652413026097,
+          "duration" : 0.56160572076454451,
+          "from" : 93.25,
+          "key" : "morph.position.y",
+          "keyPath" : "position.y",
+          "mass" : 1,
+          "stiffness" : 246.74011002723395,
+          "velocity" : 0
+        }
+      ],
+      "cacheOnly" : true,
+      "counts" : {
+        "regular-initial" : 1
+      },
+      "currentIdentity" : "ObjectIdentifier(0x0000007a97a19880)",
+      "delegateNil" : true,
+      "mainThread" : true,
+      "mode" : "regular",
+      "model" : {
+        "height" : 220,
+        "width" : 305,
+        "x" : 247.5,
+        "y" : 180
+      },
+      "modelRadius" : 28,
+      "otherKeys" : {
+        "clip" : [
+          "morph.position.y",
+          "morph.bounds.size.width",
+          "morph.bounds.size.height",
+          "morph.cornerRadius"
+        ],
+        "keyLine" : [
+          "morph.position.x",
+          "morph.position.y",
+          "morph.bounds.size.width",
+          "morph.bounds.size.height",
+          "morph.cornerRadius"
+        ],
+        "keyMask" : [
+          "morph.position.x",
+          "morph.position.y",
+          "morph.bounds.size.width",
+          "morph.bounds.size.height"
+        ]
+      },
+      "pendingExit" : false,
+      "presentation" : {
+        "height" : 33.5,
+        "width" : 185,
+        "x" : 307.5,
+        "y" : 366.5
+      },
+      "presentedRadius" : 12,
+      "reduced" : false,
+      "stage" : "regular-open-new",
+      "tileIDs" : [
+        {
+          "id" : 900
+        }
+      ],
+      "time" : 93754.40112545836,
+      "visible" : false
+    },
+    {
+      "active" : false,
+      "alpha" : 0,
+      "animations" : [
+        {
+          "additive" : true,
+          "beginTime" : 93754.386492250022,
+          "class" : "CASpringAnimation",
+          "damping" : 28.902652413026097,
+          "duration" : 0.56160572076454451,
+          "from" : -186.5,
+          "key" : "morph.bounds.size.height",
+          "keyPath" : "bounds.size.height",
+          "mass" : 1,
+          "stiffness" : 246.74011002723395,
+          "velocity" : 0
+        },
+        {
+          "additive" : true,
+          "beginTime" : 93754.386492250022,
+          "class" : "CASpringAnimation",
+          "damping" : 28.902652413026097,
+          "duration" : 0.56160572076454451,
+          "from" : -120,
+          "key" : "morph.bounds.size.width",
+          "keyPath" : "bounds.size.width",
+          "mass" : 1,
+          "stiffness" : 246.74011002723395,
+          "velocity" : 0
+        },
+        {
+          "additive" : true,
+          "beginTime" : 93754.386492250022,
+          "class" : "CASpringAnimation",
+          "damping" : 28.902652413026097,
+          "duration" : 0.56160572076454451,
+          "from" : -16,
+          "key" : "morph.cornerRadius",
+          "keyPath" : "cornerRadius",
+          "mass" : 1,
+          "stiffness" : 246.74011002723395,
+          "velocity" : 0
+        },
+        {
+          "additive" : true,
+          "beginTime" : 93754.386492250022,
+          "class" : "CASpringAnimation",
+          "damping" : 28.902652413026097,
+          "duration" : 0.56160572076454451,
+          "from" : 93.25,
+          "key" : "morph.position.y",
+          "keyPath" : "position.y",
+          "mass" : 1,
+          "stiffness" : 246.74011002723395,
+          "velocity" : 0
+        }
+      ],
+      "cacheOnly" : true,
+      "counts" : {
+        "regular-initial" : 1
+      },
+      "currentIdentity" : "ObjectIdentifier(0x0000007a97a19880)",
+      "delegateNil" : true,
+      "mainThread" : true,
+      "mode" : "regular",
+      "model" : {
+        "height" : 220,
+        "width" : 305,
+        "x" : 247.5,
+        "y" : 180
+      },
+      "modelRadius" : 28,
+      "otherKeys" : {
+        "clip" : [
+          "morph.position.y",
+          "morph.bounds.size.width",
+          "morph.bounds.size.height",
+          "morph.cornerRadius"
+        ],
+        "keyLine" : [
+          "morph.position.x",
+          "morph.position.y",
+          "morph.bounds.size.width",
+          "morph.bounds.size.height",
+          "morph.cornerRadius"
+        ],
+        "keyMask" : [
+          "morph.position.x",
+          "morph.position.y",
+          "morph.bounds.size.width",
+          "morph.bounds.size.height"
+        ]
+      },
+      "pendingExit" : false,
+      "presentation" : {
+        "height" : 62.550772219896317,
+        "width" : 203.69218587875366,
+        "x" : 298.15390706062317,
+        "y" : 337.44922778010368
+      },
+      "presentedRadius" : 14.492291450500488,
+      "reduced" : false,
+      "stage" : "regular-open-attach",
+      "tileIDs" : [
+        {
+          "id" : 900
+        }
+      ],
+      "time" : 93754.430440375014,
+      "visible" : false
+    },
+    {
+      "active" : false,
+      "alpha" : 0,
+      "animations" : [
+        {
+          "additive" : true,
+          "beginTime" : 93754.386492250022,
+          "class" : "CASpringAnimation",
+          "damping" : 28.902652413026097,
+          "duration" : 0.56160572076454451,
+          "from" : -186.5,
+          "key" : "morph.bounds.size.height",
+          "keyPath" : "bounds.size.height",
+          "mass" : 1,
+          "stiffness" : 246.74011002723395,
+          "velocity" : 0
+        },
+        {
+          "additive" : true,
+          "beginTime" : 93754.386492250022,
+          "class" : "CASpringAnimation",
+          "damping" : 28.902652413026097,
+          "duration" : 0.56160572076454451,
+          "from" : -120,
+          "key" : "morph.bounds.size.width",
+          "keyPath" : "bounds.size.width",
+          "mass" : 1,
+          "stiffness" : 246.74011002723395,
+          "velocity" : 0
+        },
+        {
+          "additive" : true,
+          "beginTime" : 93754.386492250022,
+          "class" : "CASpringAnimation",
+          "damping" : 28.902652413026097,
+          "duration" : 0.56160572076454451,
+          "from" : -16,
+          "key" : "morph.cornerRadius",
+          "keyPath" : "cornerRadius",
+          "mass" : 1,
+          "stiffness" : 246.74011002723395,
+          "velocity" : 0
+        },
+        {
+          "additive" : true,
+          "beginTime" : 93754.386492250022,
+          "class" : "CASpringAnimation",
+          "damping" : 28.902652413026097,
+          "duration" : 0.56160572076454451,
+          "from" : 93.25,
+          "key" : "morph.position.y",
+          "keyPath" : "position.y",
+          "mass" : 1,
+          "stiffness" : 246.74011002723395,
+          "velocity" : 0
+        }
+      ],
+      "cacheOnly" : true,
+      "counts" : {
+        "regular-initial" : 1
+      },
+      "currentIdentity" : "ObjectIdentifier(0x0000007a97a19880)",
+      "delegateNil" : true,
+      "mainThread" : true,
+      "mode" : "regular",
+      "model" : {
+        "height" : 220,
+        "width" : 305,
+        "x" : 247.5,
+        "y" : 180
+      },
+      "modelRadius" : 28,
+      "otherKeys" : {
+        "clip" : [
+          "morph.position.y",
+          "morph.bounds.size.width",
+          "morph.bounds.size.height",
+          "morph.cornerRadius"
+        ],
+        "keyLine" : [
+          "morph.position.x",
+          "morph.position.y",
+          "morph.bounds.size.width",
+          "morph.bounds.size.height",
+          "morph.cornerRadius"
+        ],
+        "keyMask" : [
+          "morph.position.x",
+          "morph.position.y",
+          "morph.bounds.size.width",
+          "morph.bounds.size.height"
+        ]
+      },
+      "pendingExit" : false,
+      "presentation" : {
+        "height" : 149.09629637002945,
+        "width" : 259.37831401824951,
+        "x" : 270.31084299087524,
+        "y" : 250.90370362997055
+      },
+      "presentedRadius" : 21.917108535766602,
+      "reduced" : false,
+      "stage" : "regular-open-sample",
+      "tileIDs" : [
+        {
+          "id" : 900
+        }
+      ],
+      "time" : 93754.513029125024,
+      "visible" : false
+    },
+    {
+      "active" : false,
+      "alpha" : 0,
+      "animations" : [
+        {
+          "additive" : true,
+          "beginTime" : 93754.386492250022,
+          "class" : "CASpringAnimation",
+          "damping" : 28.902652413026097,
+          "duration" : 0.56160572076454451,
+          "from" : -186.5,
+          "key" : "morph.bounds.size.height",
+          "keyPath" : "bounds.size.height",
+          "mass" : 1,
+          "stiffness" : 246.74011002723395,
+          "velocity" : 0
+        },
+        {
+          "additive" : true,
+          "beginTime" : 93754.386492250022,
+          "class" : "CASpringAnimation",
+          "damping" : 28.902652413026097,
+          "duration" : 0.56160572076454451,
+          "from" : -120,
+          "key" : "morph.bounds.size.width",
+          "keyPath" : "bounds.size.width",
+          "mass" : 1,
+          "stiffness" : 246.74011002723395,
+          "velocity" : 0
+        },
+        {
+          "additive" : true,
+          "beginTime" : 93754.386492250022,
+          "class" : "CASpringAnimation",
+          "damping" : 28.902652413026097,
+          "duration" : 0.56160572076454451,
+          "from" : -16,
+          "key" : "morph.cornerRadius",
+          "keyPath" : "cornerRadius",
+          "mass" : 1,
+          "stiffness" : 246.74011002723395,
+          "velocity" : 0
+        },
+        {
+          "additive" : true,
+          "beginTime" : 93754.386492250022,
+          "class" : "CASpringAnimation",
+          "damping" : 28.902652413026097,
+          "duration" : 0.56160572076454451,
+          "from" : 93.25,
+          "key" : "morph.position.y",
+          "keyPath" : "position.y",
+          "mass" : 1,
+          "stiffness" : 246.74011002723395,
+          "velocity" : 0
+        }
+      ],
+      "cacheOnly" : true,
+      "counts" : {
+        "regular-initial" : 1
+      },
+      "currentIdentity" : "ObjectIdentifier(0x0000007a97a19880)",
+      "delegateNil" : true,
+      "mainThread" : true,
+      "mode" : "regular",
+      "model" : {
+        "height" : 220,
+        "width" : 305,
+        "x" : 247.5,
+        "y" : 180
+      },
+      "modelRadius" : 28,
+      "otherKeys" : {
+        "clip" : [
+          "morph.position.y",
+          "morph.bounds.size.width",
+          "morph.bounds.size.height",
+          "morph.cornerRadius"
+        ],
+        "keyLine" : [
+          "morph.position.x",
+          "morph.position.y",
+          "morph.bounds.size.width",
+          "morph.bounds.size.height",
+          "morph.cornerRadius"
+        ],
+        "keyMask" : [
+          "morph.position.x",
+          "morph.position.y",
+          "morph.bounds.size.width",
+          "morph.bounds.size.height"
+        ]
+      },
+      "pendingExit" : false,
+      "presentation" : {
+        "height" : 204.35295483469963,
+        "width" : 294.93219614028931,
+        "x" : 252.53390192985535,
+        "y" : 195.64704516530037
+      },
+      "presentedRadius" : 26.657626152038574,
+      "reduced" : false,
+      "stage" : "regular-reverse-old",
+      "tileIDs" : [
+        {
+          "id" : 900
+        }
+      ],
+      "time" : 93754.620404458357,
+      "visible" : false
+    },
+    {
+      "active" : false,
+      "alpha" : 0,
+      "animations" : [
+        {
+          "additive" : true,
+          "beginTime" : 93754.620934791688,
+          "class" : "CASpringAnimation",
+          "damping" : 33.069396353576771,
+          "duration" : 0.59999999999999998,
+          "from" : 170.85295483469963,
+          "key" : "morph.bounds.size.height",
+          "keyPath" : "bounds.size.height",
+          "mass" : 1,
+          "stiffness" : 273.39624379748915,
+          "velocity" : -1.4657104443020157
+        },
+        {
+          "additive" : true,
+          "beginTime" : 93754.620934791688,
+          "class" : "CASpringAnimation",
+          "damping" : 33.069396353576771,
+          "duration" : 0.59999999999999998,
+          "from" : 109.93219614028931,
+          "key" : "morph.bounds.size.width",
+          "keyPath" : "bounds.size.width",
+          "mass" : 1,
+          "stiffness" : 273.39624379748915,
+          "velocity" : -1.4657104443020159
+        },
+        {
+          "additive" : true,
+          "beginTime" : 93754.620934791688,
+          "class" : "CASpringAnimation",
+          "damping" : 33.069396353576771,
+          "duration" : 0.59999999999999998,
+          "from" : 14.657626152038574,
+          "key" : "morph.cornerRadius",
+          "keyPath" : "cornerRadius",
+          "mass" : 1,
+          "stiffness" : 273.39624379748915,
+          "velocity" : -1.4657104443020157
+        },
+        {
+          "additive" : true,
+          "beginTime" : 93754.620934791688,
+          "class" : "CASpringAnimation",
+          "damping" : 33.069396353576771,
+          "duration" : 0.59999999999999998,
+          "from" : -85.426477417349815,
+          "key" : "morph.position.y",
+          "keyPath" : "position.y",
+          "mass" : 1,
+          "stiffness" : 273.39624379748915,
+          "velocity" : -1.4657104443020157
+        }
+      ],
+      "cacheOnly" : true,
+      "counts" : {
+        "regular-initial" : 1
+      },
+      "currentIdentity" : "ObjectIdentifier(0x0000007a97a19880)",
+      "delegateNil" : true,
+      "mainThread" : true,
+      "mode" : "regular",
+      "model" : {
+        "height" : 33.5,
+        "width" : 185,
+        "x" : 307.5,
+        "y" : 366.5
+      },
+      "modelRadius" : 12,
+      "otherKeys" : {
+        "clip" : [
+          "morph.position.y",
+          "morph.bounds.size.width",
+          "morph.bounds.size.height",
+          "morph.cornerRadius"
+        ],
+        "keyLine" : [
+          "morph.position.x",
+          "morph.position.y",
+          "morph.bounds.size.width",
+          "morph.bounds.size.height",
+          "morph.cornerRadius"
+        ],
+        "keyMask" : [
+          "morph.position.x",
+          "morph.position.y",
+          "morph.bounds.size.width",
+          "morph.bounds.size.height"
+        ]
+      },
+      "pendingExit" : false,
+      "presentation" : {
+        "height" : 204.35295483469963,
+        "width" : 294.93219614028931,
+        "x" : 252.53390192985535,
+        "y" : 195.64704516530037
+      },
+      "presentedRadius" : 26.657626152038574,
+      "reduced" : false,
+      "stage" : "regular-reverse-new",
+      "tileIDs" : [
+        {
+          "id" : 900
+        }
+      ],
+      "time" : 93754.621759750022,
+      "visible" : false
+    },
+    {
+      "active" : false,
+      "alpha" : 0,
+      "animations" : [
+        {
+          "additive" : true,
+          "beginTime" : 93754.620934791688,
+          "class" : "CASpringAnimation",
+          "damping" : 33.069396353576771,
+          "duration" : 0.59999999999999998,
+          "from" : 170.85295483469963,
+          "key" : "morph.bounds.size.height",
+          "keyPath" : "bounds.size.height",
+          "mass" : 1,
+          "stiffness" : 273.39624379748915,
+          "velocity" : -1.4657104443020157
+        },
+        {
+          "additive" : true,
+          "beginTime" : 93754.620934791688,
+          "class" : "CASpringAnimation",
+          "damping" : 33.069396353576771,
+          "duration" : 0.59999999999999998,
+          "from" : 109.93219614028931,
+          "key" : "morph.bounds.size.width",
+          "keyPath" : "bounds.size.width",
+          "mass" : 1,
+          "stiffness" : 273.39624379748915,
+          "velocity" : -1.4657104443020159
+        },
+        {
+          "additive" : true,
+          "beginTime" : 93754.620934791688,
+          "class" : "CASpringAnimation",
+          "damping" : 33.069396353576771,
+          "duration" : 0.59999999999999998,
+          "from" : 14.657626152038574,
+          "key" : "morph.cornerRadius",
+          "keyPath" : "cornerRadius",
+          "mass" : 1,
+          "stiffness" : 273.39624379748915,
+          "velocity" : -1.4657104443020157
+        },
+        {
+          "additive" : true,
+          "beginTime" : 93754.620934791688,
+          "class" : "CASpringAnimation",
+          "damping" : 33.069396353576771,
+          "duration" : 0.59999999999999998,
+          "from" : -85.426477417349815,
+          "key" : "morph.position.y",
+          "keyPath" : "position.y",
+          "mass" : 1,
+          "stiffness" : 273.39624379748915,
+          "velocity" : -1.4657104443020157
+        }
+      ],
+      "cacheOnly" : true,
+      "counts" : {
+        "regular-initial" : 1,
+        "regular-open" : 1
+      },
+      "currentIdentity" : "ObjectIdentifier(0x0000007a97a19880)",
+      "delegateNil" : true,
+      "mainThread" : true,
+      "mode" : "regular",
+      "model" : {
+        "height" : 33.5,
+        "width" : 185,
+        "x" : 307.5,
+        "y" : 366.5
+      },
+      "modelRadius" : 12,
+      "otherKeys" : {
+        "clip" : [
+          "morph.position.y",
+          "morph.bounds.size.width",
+          "morph.bounds.size.height",
+          "morph.cornerRadius"
+        ],
+        "keyLine" : [
+          "morph.position.x",
+          "morph.position.y",
+          "morph.bounds.size.width",
+          "morph.bounds.size.height",
+          "morph.cornerRadius"
+        ],
+        "keyMask" : [
+          "morph.position.x",
+          "morph.position.y",
+          "morph.bounds.size.width",
+          "morph.bounds.size.height"
+        ]
+      },
+      "pendingExit" : false,
+      "presentation" : {
+        "height" : 201.99045872193045,
+        "width" : 293.41209140285071,
+        "x" : 253.29395429857465,
+        "y" : 198.00954127806952
+      },
+      "presentedRadius" : 26.454945520380093,
+      "reduced" : false,
+      "stage" : "regular-reverse-attach",
+      "tileIDs" : [
+        {
+          "id" : 900
+        }
+      ],
+      "time" : 93754.638029791691,
+      "visible" : false
+    },
+    {
+      "active" : false,
+      "alpha" : 0,
+      "animations" : [
+        {
+          "additive" : true,
+          "beginTime" : 93754.620934791688,
+          "class" : "CASpringAnimation",
+          "damping" : 33.069396353576771,
+          "duration" : 0.59999999999999998,
+          "from" : 170.85295483469963,
+          "key" : "morph.bounds.size.height",
+          "keyPath" : "bounds.size.height",
+          "mass" : 1,
+          "stiffness" : 273.39624379748915,
+          "velocity" : -1.4657104443020157
+        },
+        {
+          "additive" : true,
+          "beginTime" : 93754.620934791688,
+          "class" : "CASpringAnimation",
+          "damping" : 33.069396353576771,
+          "duration" : 0.59999999999999998,
+          "from" : 109.93219614028931,
+          "key" : "morph.bounds.size.width",
+          "keyPath" : "bounds.size.width",
+          "mass" : 1,
+          "stiffness" : 273.39624379748915,
+          "velocity" : -1.4657104443020159
+        },
+        {
+          "additive" : true,
+          "beginTime" : 93754.620934791688,
+          "class" : "CASpringAnimation",
+          "damping" : 33.069396353576771,
+          "duration" : 0.59999999999999998,
+          "from" : 14.657626152038574,
+          "key" : "morph.cornerRadius",
+          "keyPath" : "cornerRadius",
+          "mass" : 1,
+          "stiffness" : 273.39624379748915,
+          "velocity" : -1.4657104443020157
+        },
+        {
+          "additive" : true,
+          "beginTime" : 93754.620934791688,
+          "class" : "CASpringAnimation",
+          "damping" : 33.069396353576771,
+          "duration" : 0.59999999999999998,
+          "from" : -85.426477417349815,
+          "key" : "morph.position.y",
+          "keyPath" : "position.y",
+          "mass" : 1,
+          "stiffness" : 273.39624379748915,
+          "velocity" : -1.4657104443020157
+        }
+      ],
+      "cacheOnly" : true,
+      "counts" : {
+        "regular-initial" : 1,
+        "regular-open" : 1
+      },
+      "currentIdentity" : "ObjectIdentifier(0x0000007a97a19880)",
+      "delegateNil" : true,
+      "mainThread" : true,
+      "mode" : "regular",
+      "model" : {
+        "height" : 33.5,
+        "width" : 185,
+        "x" : 307.5,
+        "y" : 366.5
+      },
+      "modelRadius" : 12,
+      "otherKeys" : {
+        "clip" : [
+          "morph.position.y",
+          "morph.bounds.size.width",
+          "morph.bounds.size.height",
+          "morph.cornerRadius"
+        ],
+        "keyLine" : [
+          "morph.position.x",
+          "morph.position.y",
+          "morph.bounds.size.width",
+          "morph.bounds.size.height",
+          "morph.cornerRadius"
+        ],
+        "keyMask" : [
+          "morph.position.x",
+          "morph.position.y",
+          "morph.bounds.size.width",
+          "morph.bounds.size.height"
+        ]
+      },
+      "pendingExit" : false,
+      "presentation" : {
+        "height" : 83.007043578259541,
+        "width" : 216.85439801282115,
+        "x" : 291.57280099358945,
+        "y" : 316.99295642174047
+      },
+      "presentedRadius" : 16.247253068376153,
+      "reduced" : false,
+      "stage" : "regular-reverse-sample",
+      "tileIDs" : [
+        {
+          "id" : 900
+        }
+      ],
+      "time" : 93754.776808000024,
+      "visible" : false
+    },
+    {
+      "active" : false,
+      "alpha" : 0,
+      "animations" : [
+        {
+          "additive" : true,
+          "beginTime" : 93754.620934791688,
+          "class" : "CASpringAnimation",
+          "damping" : 33.069396353576771,
+          "duration" : 0.59999999999999998,
+          "from" : 170.85295483469963,
+          "key" : "morph.bounds.size.height",
+          "keyPath" : "bounds.size.height",
+          "mass" : 1,
+          "stiffness" : 273.39624379748915,
+          "velocity" : -1.4657104443020157
+        },
+        {
+          "additive" : true,
+          "beginTime" : 93754.620934791688,
+          "class" : "CASpringAnimation",
+          "damping" : 33.069396353576771,
+          "duration" : 0.59999999999999998,
+          "from" : 109.93219614028931,
+          "key" : "morph.bounds.size.width",
+          "keyPath" : "bounds.size.width",
+          "mass" : 1,
+          "stiffness" : 273.39624379748915,
+          "velocity" : -1.4657104443020159
+        },
+        {
+          "additive" : true,
+          "beginTime" : 93754.620934791688,
+          "class" : "CASpringAnimation",
+          "damping" : 33.069396353576771,
+          "duration" : 0.59999999999999998,
+          "from" : 14.657626152038574,
+          "key" : "morph.cornerRadius",
+          "keyPath" : "cornerRadius",
+          "mass" : 1,
+          "stiffness" : 273.39624379748915,
+          "velocity" : -1.4657104443020157
+        },
+        {
+          "additive" : true,
+          "beginTime" : 93754.620934791688,
+          "class" : "CASpringAnimation",
+          "damping" : 33.069396353576771,
+          "duration" : 0.59999999999999998,
+          "from" : -85.426477417349815,
+          "key" : "morph.position.y",
+          "keyPath" : "position.y",
+          "mass" : 1,
+          "stiffness" : 273.39624379748915,
+          "velocity" : -1.4657104443020157
+        }
+      ],
+      "cacheOnly" : true,
+      "counts" : {
+        "regular-initial" : 1,
+        "regular-open" : 1
+      },
+      "currentIdentity" : "ObjectIdentifier(0x0000007a97a19880)",
+      "delegateNil" : true,
+      "mainThread" : true,
+      "mode" : "regular",
+      "model" : {
+        "height" : 33.5,
+        "width" : 185,
+        "x" : 307.5,
+        "y" : 366.5
+      },
+      "modelRadius" : 12,
+      "otherKeys" : {
+        "clip" : [
+          "morph.position.y",
+          "morph.bounds.size.width",
+          "morph.bounds.size.height",
+          "morph.cornerRadius"
+        ],
+        "keyLine" : [
+          "morph.position.x",
+          "morph.position.y",
+          "morph.bounds.size.width",
+          "morph.bounds.size.height",
+          "morph.cornerRadius"
+        ],
+        "keyMask" : [
+          "morph.position.x",
+          "morph.position.y",
+          "morph.bounds.size.width",
+          "morph.bounds.size.height"
+        ]
+      },
+      "pendingExit" : false,
+      "presentation" : {
+        "height" : 83.007043578259541,
+        "width" : 216.85439801282115,
+        "x" : 291.57280099358945,
+        "y" : 316.99295642174047
+      },
+      "presentedRadius" : 16.247253068376153,
+      "reduced" : false,
+      "stage" : "regular-reopen-old",
+      "tileIDs" : [
+        {
+          "id" : 900
+        }
+      ],
+      "time" : 93754.777354416685,
+      "visible" : false
+    },
+    {
+      "active" : false,
+      "alpha" : 0,
+      "animations" : [
+        {
+          "additive" : true,
+          "beginTime" : 93754.777799541684,
+          "class" : "CASpringAnimation",
+          "damping" : 28.902652413026097,
+          "duration" : 0.5744842513070707,
+          "from" : -136.99295642174047,
+          "key" : "morph.bounds.size.height",
+          "keyPath" : "bounds.size.height",
+          "mass" : 1,
+          "stiffness" : 246.74011002723395,
+          "velocity" : -4.2154212929569974
+        },
+        {
+          "additive" : true,
+          "beginTime" : 93754.777799541684,
+          "class" : "CASpringAnimation",
+          "damping" : 28.902652413026097,
+          "duration" : 0.5744842513070707,
+          "from" : -88.14560198717885,
+          "key" : "morph.bounds.size.width",
+          "keyPath" : "bounds.size.width",
+          "mass" : 1,
+          "stiffness" : 246.74011002723395,
+          "velocity" : -4.2154212929569974
+        },
+        {
+          "additive" : true,
+          "beginTime" : 93754.777799541684,
+          "class" : "CASpringAnimation",
+          "damping" : 28.902652413026097,
+          "duration" : 0.5744842513070707,
+          "from" : -11.752746931623847,
+          "key" : "morph.cornerRadius",
+          "keyPath" : "cornerRadius",
+          "mass" : 1,
+          "stiffness" : 246.74011002723395,
+          "velocity" : -4.2154212929569965
+        },
+        {
+          "additive" : true,
+          "beginTime" : 93754.777799541684,
+          "class" : "CASpringAnimation",
+          "damping" : 28.902652413026097,
+          "duration" : 0.5744842513070707,
+          "from" : 68.496478210870237,
+          "key" : "morph.position.y",
+          "keyPath" : "position.y",
+          "mass" : 1,
+          "stiffness" : 246.74011002723395,
+          "velocity" : -4.2154212929569974
+        }
+      ],
+      "cacheOnly" : true,
+      "counts" : {
+        "regular-initial" : 1,
+        "regular-open" : 1
+      },
+      "currentIdentity" : "ObjectIdentifier(0x0000007a97a19880)",
+      "delegateNil" : true,
+      "mainThread" : true,
+      "mode" : "regular",
+      "model" : {
+        "height" : 220,
+        "width" : 305,
+        "x" : 247.5,
+        "y" : 180
+      },
+      "modelRadius" : 28,
+      "otherKeys" : {
+        "clip" : [
+          "morph.position.y",
+          "morph.bounds.size.width",
+          "morph.bounds.size.height",
+          "morph.cornerRadius"
+        ],
+        "keyLine" : [
+          "morph.position.x",
+          "morph.position.y",
+          "morph.bounds.size.width",
+          "morph.bounds.size.height",
+          "morph.cornerRadius"
+        ],
+        "keyMask" : [
+          "morph.position.x",
+          "morph.position.y",
+          "morph.bounds.size.width",
+          "morph.bounds.size.height"
+        ]
+      },
+      "pendingExit" : false,
+      "presentation" : {
+        "height" : 83.007043578259541,
+        "width" : 216.85439801282115,
+        "x" : 291.57280099358945,
+        "y" : 316.99295642174047
+      },
+      "presentedRadius" : 16.247253068376153,
+      "reduced" : false,
+      "stage" : "regular-reopen-new",
+      "tileIDs" : [
+        {
+          "id" : 900
+        }
+      ],
+      "time" : 93754.778563500018,
+      "visible" : false
+    },
+    {
+      "active" : false,
+      "alpha" : 0,
+      "animations" : [
+        {
+          "additive" : true,
+          "beginTime" : 93754.777799541684,
+          "class" : "CASpringAnimation",
+          "damping" : 28.902652413026097,
+          "duration" : 0.5744842513070707,
+          "from" : -136.99295642174047,
+          "key" : "morph.bounds.size.height",
+          "keyPath" : "bounds.size.height",
+          "mass" : 1,
+          "stiffness" : 246.74011002723395,
+          "velocity" : -4.2154212929569974
+        },
+        {
+          "additive" : true,
+          "beginTime" : 93754.777799541684,
+          "class" : "CASpringAnimation",
+          "damping" : 28.902652413026097,
+          "duration" : 0.5744842513070707,
+          "from" : -88.14560198717885,
+          "key" : "morph.bounds.size.width",
+          "keyPath" : "bounds.size.width",
+          "mass" : 1,
+          "stiffness" : 246.74011002723395,
+          "velocity" : -4.2154212929569974
+        },
+        {
+          "additive" : true,
+          "beginTime" : 93754.777799541684,
+          "class" : "CASpringAnimation",
+          "damping" : 28.902652413026097,
+          "duration" : 0.5744842513070707,
+          "from" : -11.752746931623847,
+          "key" : "morph.cornerRadius",
+          "keyPath" : "cornerRadius",
+          "mass" : 1,
+          "stiffness" : 246.74011002723395,
+          "velocity" : -4.2154212929569965
+        },
+        {
+          "additive" : true,
+          "beginTime" : 93754.777799541684,
+          "class" : "CASpringAnimation",
+          "damping" : 28.902652413026097,
+          "duration" : 0.5744842513070707,
+          "from" : 68.496478210870237,
+          "key" : "morph.position.y",
+          "keyPath" : "position.y",
+          "mass" : 1,
+          "stiffness" : 246.74011002723395,
+          "velocity" : -4.2154212929569974
+        }
+      ],
+      "cacheOnly" : true,
+      "counts" : {
+        "regular-initial" : 1,
+        "regular-open" : 1,
+        "regular-reverse" : 1
+      },
+      "currentIdentity" : "ObjectIdentifier(0x0000007a97a19880)",
+      "delegateNil" : true,
+      "mainThread" : true,
+      "mode" : "regular",
+      "model" : {
+        "height" : 220,
+        "width" : 305,
+        "x" : 247.5,
+        "y" : 180
+      },
+      "modelRadius" : 28,
+      "otherKeys" : {
+        "clip" : [
+          "morph.position.y",
+          "morph.bounds.size.width",
+          "morph.bounds.size.height",
+          "morph.cornerRadius"
+        ],
+        "keyLine" : [
+          "morph.position.x",
+          "morph.position.y",
+          "morph.bounds.size.width",
+          "morph.bounds.size.height",
+          "morph.cornerRadius"
+        ],
+        "keyMask" : [
+          "morph.position.x",
+          "morph.position.y",
+          "morph.bounds.size.width",
+          "morph.bounds.size.height"
+        ]
+      },
+      "pendingExit" : false,
+      "presentation" : {
+        "height" : 79.818776836195553,
+        "width" : 214.80296632891941,
+        "x" : 292.59851683554029,
+        "y" : 320.18122316380448
+      },
+      "presentedRadius" : 15.97372884385592,
+      "reduced" : false,
+      "stage" : "regular-reopen-attach",
+      "tileIDs" : [
+        {
+          "id" : 900
+        }
+      ],
+      "time" : 93754.797238708357,
+      "visible" : false
+    },
+    {
+      "active" : false,
+      "alpha" : 0,
+      "animations" : [
+        {
+          "additive" : true,
+          "beginTime" : 93754.777799541684,
+          "class" : "CASpringAnimation",
+          "damping" : 28.902652413026097,
+          "duration" : 0.5744842513070707,
+          "from" : -136.99295642174047,
+          "key" : "morph.bounds.size.height",
+          "keyPath" : "bounds.size.height",
+          "mass" : 1,
+          "stiffness" : 246.74011002723395,
+          "velocity" : -4.2154212929569974
+        },
+        {
+          "additive" : true,
+          "beginTime" : 93754.777799541684,
+          "class" : "CASpringAnimation",
+          "damping" : 28.902652413026097,
+          "duration" : 0.5744842513070707,
+          "from" : -88.14560198717885,
+          "key" : "morph.bounds.size.width",
+          "keyPath" : "bounds.size.width",
+          "mass" : 1,
+          "stiffness" : 246.74011002723395,
+          "velocity" : -4.2154212929569974
+        },
+        {
+          "additive" : true,
+          "beginTime" : 93754.777799541684,
+          "class" : "CASpringAnimation",
+          "damping" : 28.902652413026097,
+          "duration" : 0.5744842513070707,
+          "from" : -11.752746931623847,
+          "key" : "morph.cornerRadius",
+          "keyPath" : "cornerRadius",
+          "mass" : 1,
+          "stiffness" : 246.74011002723395,
+          "velocity" : -4.2154212929569965
+        },
+        {
+          "additive" : true,
+          "beginTime" : 93754.777799541684,
+          "class" : "CASpringAnimation",
+          "damping" : 28.902652413026097,
+          "duration" : 0.5744842513070707,
+          "from" : 68.496478210870237,
+          "key" : "morph.position.y",
+          "keyPath" : "position.y",
+          "mass" : 1,
+          "stiffness" : 246.74011002723395,
+          "velocity" : -4.2154212929569974
+        }
+      ],
+      "cacheOnly" : true,
+      "counts" : {
+        "regular-initial" : 1,
+        "regular-open" : 1,
+        "regular-reverse" : 1
+      },
+      "currentIdentity" : "ObjectIdentifier(0x0000007a97a19880)",
+      "delegateNil" : true,
+      "mainThread" : true,
+      "mode" : "regular",
+      "model" : {
+        "height" : 220,
+        "width" : 305,
+        "x" : 247.5,
+        "y" : 180
+      },
+      "modelRadius" : 28,
+      "otherKeys" : {
+        "clip" : [
+          "morph.position.y",
+          "morph.bounds.size.width",
+          "morph.bounds.size.height",
+          "morph.cornerRadius"
+        ],
+        "keyLine" : [
+          "morph.position.x",
+          "morph.position.y",
+          "morph.bounds.size.width",
+          "morph.bounds.size.height",
+          "morph.cornerRadius"
+        ],
+        "keyMask" : [
+          "morph.position.x",
+          "morph.position.y",
+          "morph.bounds.size.width",
+          "morph.bounds.size.height"
+        ]
+      },
+      "pendingExit" : false,
+      "presentation" : {
+        "height" : 174.57738840850095,
+        "width" : 275.77365474005421,
+        "x" : 262.11317262997289,
+        "y" : 225.42261159149905
+      },
+      "presentedRadius" : 24.103153965340564,
+      "reduced" : false,
+      "stage" : "regular-width-old",
+      "tileIDs" : [
+        {
+          "id" : 900
+        }
+      ],
+      "time" : 93754.931382666691,
+      "visible" : false
+    },
+    {
+      "active" : false,
+      "alpha" : 0,
+      "animations" : [
+        {
+          "additive" : true,
+          "beginTime" : 93754.931931833358,
+          "class" : "CASpringAnimation",
+          "damping" : 28.902652413026097,
+          "duration" : 0.4978346797860268,
+          "from" : -45.422611591499049,
+          "key" : "morph.bounds.size.height",
+          "keyPath" : "bounds.size.height",
+          "mass" : 1,
+          "stiffness" : 246.74011002723395,
+          "velocity" : 12.407991858922037
+        },
+        {
+          "additive" : true,
+          "beginTime" : 93754.931931833358,
+          "class" : "CASpringAnimation",
+          "damping" : 28.902652413026097,
+          "duration" : 0.55292294968598077,
+          "from" : -149.22634525994579,
+          "key" : "morph.bounds.size.width",
+          "keyPath" : "bounds.size.width",
+          "mass" : 1,
+          "stiffness" : 246.74011002723395,
+          "velocity" : 2.4301355998483261
+        },
+        {
+          "additive" : true,
+          "beginTime" : 93754.931931833358,
+          "class" : "CASpringAnimation",
+          "damping" : 28.902652413026097,
+          "duration" : 0.49783467978602686,
+          "from" : -3.8968460346594362,
+          "key" : "morph.cornerRadius",
+          "keyPath" : "cornerRadius",
+          "mass" : 1,
+          "stiffness" : 246.74011002723395,
+          "velocity" : 12.407991858922033
+        },
+        {
+          "additive" : true,
+          "beginTime" : 93754.931931833358,
+          "class" : "CASpringAnimation",
+          "damping" : 28.902652413026097,
+          "duration" : 0.4978346797860268,
+          "from" : 22.711305795749524,
+          "key" : "morph.position.y",
+          "keyPath" : "position.y",
+          "mass" : 1,
+          "stiffness" : 246.74011002723395,
+          "velocity" : 12.407991858922037
+        }
+      ],
+      "cacheOnly" : true,
+      "counts" : {
+        "regular-initial" : 1,
+        "regular-open" : 1,
+        "regular-reverse" : 1
+      },
+      "currentIdentity" : "ObjectIdentifier(0x0000007a97a19880)",
+      "delegateNil" : true,
+      "mainThread" : true,
+      "mode" : "regular",
+      "model" : {
+        "height" : 220,
+        "width" : 425,
+        "x" : 187.5,
+        "y" : 180
+      },
+      "modelRadius" : 28,
+      "otherKeys" : {
+        "clip" : [
+          "morph.position.y",
+          "morph.bounds.size.width",
+          "morph.bounds.size.height",
+          "morph.cornerRadius"
+        ],
+        "keyLine" : [
+          "morph.position.x",
+          "morph.position.y",
+          "morph.bounds.size.width",
+          "morph.bounds.size.height",
+          "morph.cornerRadius"
+        ],
+        "keyMask" : [
+          "morph.position.x",
+          "morph.position.y",
+          "morph.bounds.size.width",
+          "morph.bounds.size.height"
+        ]
+      },
+      "pendingExit" : false,
+      "presentation" : {
+        "height" : 174.57738840850095,
+        "width" : 275.77365474005421,
+        "x" : 262.11317262997289,
+        "y" : 225.42261159149905
+      },
+      "presentedRadius" : 24.103153965340564,
+      "reduced" : false,
+      "stage" : "regular-width-new",
+      "tileIDs" : [
+        {
+          "id" : 900
+        }
+      ],
+      "time" : 93754.932653958356,
+      "visible" : false
+    },
+    {
+      "active" : false,
+      "alpha" : 0,
+      "animations" : [
+        {
+          "additive" : true,
+          "beginTime" : 93754.931931833358,
+          "class" : "CASpringAnimation",
+          "damping" : 28.902652413026097,
+          "duration" : 0.4978346797860268,
+          "from" : -45.422611591499049,
+          "key" : "morph.bounds.size.height",
+          "keyPath" : "bounds.size.height",
+          "mass" : 1,
+          "stiffness" : 246.74011002723395,
+          "velocity" : 12.407991858922037
+        },
+        {
+          "additive" : true,
+          "beginTime" : 93754.931931833358,
+          "class" : "CASpringAnimation",
+          "damping" : 28.902652413026097,
+          "duration" : 0.55292294968598077,
+          "from" : -149.22634525994579,
+          "key" : "morph.bounds.size.width",
+          "keyPath" : "bounds.size.width",
+          "mass" : 1,
+          "stiffness" : 246.74011002723395,
+          "velocity" : 2.4301355998483261
+        },
+        {
+          "additive" : true,
+          "beginTime" : 93754.931931833358,
+          "class" : "CASpringAnimation",
+          "damping" : 28.902652413026097,
+          "duration" : 0.49783467978602686,
+          "from" : -3.8968460346594362,
+          "key" : "morph.cornerRadius",
+          "keyPath" : "cornerRadius",
+          "mass" : 1,
+          "stiffness" : 246.74011002723395,
+          "velocity" : 12.407991858922033
+        },
+        {
+          "additive" : true,
+          "beginTime" : 93754.931931833358,
+          "class" : "CASpringAnimation",
+          "damping" : 28.902652413026097,
+          "duration" : 0.4978346797860268,
+          "from" : 22.711305795749524,
+          "key" : "morph.position.y",
+          "keyPath" : "position.y",
+          "mass" : 1,
+          "stiffness" : 246.74011002723395,
+          "velocity" : 12.407991858922037
+        }
+      ],
+      "cacheOnly" : true,
+      "counts" : {
+        "regular-initial" : 1,
+        "regular-open" : 1,
+        "regular-reopen" : 1,
+        "regular-reverse" : 1
+      },
+      "currentIdentity" : "ObjectIdentifier(0x0000007a97a19880)",
+      "delegateNil" : true,
+      "mainThread" : true,
+      "mode" : "regular",
+      "model" : {
+        "height" : 220,
+        "width" : 425,
+        "x" : 187.5,
+        "y" : 180
+      },
+      "modelRadius" : 28,
+      "otherKeys" : {
+        "clip" : [
+          "morph.position.y",
+          "morph.bounds.size.width",
+          "morph.bounds.size.height",
+          "morph.cornerRadius"
+        ],
+        "keyLine" : [
+          "morph.position.x",
+          "morph.position.y",
+          "morph.bounds.size.width",
+          "morph.bounds.size.height",
+          "morph.cornerRadius"
+        ],
+        "keyMask" : [
+          "morph.position.x",
+          "morph.position.y",
+          "morph.bounds.size.width",
+          "morph.bounds.size.height"
+        ]
+      },
+      "pendingExit" : false,
+      "presentation" : {
+        "height" : 184.47699420167473,
+        "width" : 286.68464341006091,
+        "x" : 256.65767829496951,
+        "y" : 215.52300579832524
+      },
+      "presentedRadius" : 24.952449904701318,
+      "reduced" : false,
+      "stage" : "regular-width-attach",
+      "tileIDs" : [
+        {
+          "id" : 900
+        }
+      ],
+      "time" : 93754.951287625023,
+      "visible" : false
+    },
+    {
+      "active" : false,
+      "alpha" : 0,
+      "animations" : [
+
+      ],
+      "cacheOnly" : true,
+      "counts" : {
+        "regular-initial" : 1,
+        "regular-open" : 1,
+        "regular-reopen" : 1,
+        "regular-reverse" : 1,
+        "regular-width" : 1
+      },
+      "currentIdentity" : "ObjectIdentifier(0x0000007a97a19880)",
+      "delegateNil" : true,
+      "mainThread" : true,
+      "mode" : "regular",
+      "model" : {
+        "height" : 220,
+        "width" : 425,
+        "x" : 187.5,
+        "y" : 180
+      },
+      "modelRadius" : 28,
+      "otherKeys" : {
+        "clip" : [
+
+        ],
+        "keyLine" : [
+
+        ],
+        "keyMask" : [
+
+        ]
+      },
+      "pendingExit" : false,
+      "presentation" : {
+        "height" : 220,
+        "width" : 425,
+        "x" : 187.5,
+        "y" : 180
+      },
+      "presentedRadius" : 28,
+      "reduced" : false,
+      "stage" : "regular-wide-settled",
+      "tileIDs" : [
+        {
+          "id" : 900
+        }
+      ],
+      "time" : 93755.793209458352,
+      "visible" : false
+    },
+    {
+      "active" : false,
+      "alpha" : 0,
+      "animations" : [
+
+      ],
+      "cacheOnly" : true,
+      "counts" : {
+        "regular-initial" : 1,
+        "regular-open" : 1,
+        "regular-reopen" : 1,
+        "regular-reverse" : 1,
+        "regular-width" : 1
+      },
+      "currentIdentity" : "ObjectIdentifier(0x0000007a97a19880)",
+      "delegateNil" : true,
+      "mainThread" : true,
+      "mode" : "regular",
+      "model" : {
+        "height" : 220,
+        "width" : 425,
+        "x" : 187.5,
+        "y" : 180
+      },
+      "modelRadius" : 28,
+      "otherKeys" : {
+        "clip" : [
+
+        ],
+        "keyLine" : [
+
+        ],
+        "keyMask" : [
+
+        ]
+      },
+      "pendingExit" : false,
+      "presentation" : {
+        "height" : 220,
+        "width" : 425,
+        "x" : 187.5,
+        "y" : 180
+      },
+      "presentedRadius" : 28,
+      "reduced" : false,
+      "stage" : "regular-width-reverse-old",
+      "tileIDs" : [
+        {
+          "id" : 900
+        }
+      ],
+      "time" : 93755.79402825002,
+      "visible" : false
+    },
+    {
+      "active" : false,
+      "alpha" : 0,
+      "animations" : [
+        {
+          "additive" : true,
+          "beginTime" : 93755.794638416686,
+          "class" : "CASpringAnimation",
+          "damping" : 28.902652413026097,
+          "duration" : 0.56160572076454451,
+          "from" : 120,
+          "key" : "morph.bounds.size.width",
+          "keyPath" : "bounds.size.width",
+          "mass" : 1,
+          "stiffness" : 246.74011002723395,
+          "velocity" : 0
+        }
+      ],
+      "cacheOnly" : true,
+      "counts" : {
+        "regular-initial" : 1,
+        "regular-open" : 1,
+        "regular-reopen" : 1,
+        "regular-reverse" : 1,
+        "regular-width" : 1
+      },
+      "currentIdentity" : "ObjectIdentifier(0x0000007a97a19880)",
+      "delegateNil" : true,
+      "mainThread" : true,
+      "mode" : "regular",
+      "model" : {
+        "height" : 220,
+        "width" : 305,
+        "x" : 247.5,
+        "y" : 180
+      },
+      "modelRadius" : 28,
+      "otherKeys" : {
+        "clip" : [
+          "morph.bounds.size.width"
+        ],
+        "keyLine" : [
+          "morph.position.x",
+          "morph.bounds.size.width"
+        ],
+        "keyMask" : [
+          "morph.position.x",
+          "morph.bounds.size.width"
+        ]
+      },
+      "pendingExit" : false,
+      "presentation" : {
+        "height" : 220,
+        "width" : 425,
+        "x" : 187.5,
+        "y" : 180
+      },
+      "presentedRadius" : 28,
+      "reduced" : false,
+      "stage" : "regular-width-reverse-new",
+      "tileIDs" : [
+        {
+          "id" : 900
+        }
+      ],
+      "time" : 93755.795356333358,
+      "visible" : false
+    },
+    {
+      "active" : false,
+      "alpha" : 0,
+      "animations" : [
+        {
+          "additive" : true,
+          "beginTime" : 93755.794638416686,
+          "class" : "CASpringAnimation",
+          "damping" : 28.902652413026097,
+          "duration" : 0.56160572076454451,
+          "from" : 120,
+          "key" : "morph.bounds.size.width",
+          "keyPath" : "bounds.size.width",
+          "mass" : 1,
+          "stiffness" : 246.74011002723395,
+          "velocity" : 0
+        }
+      ],
+      "cacheOnly" : true,
+      "counts" : {
+        "regular-initial" : 1,
+        "regular-open" : 1,
+        "regular-reopen" : 1,
+        "regular-reverse" : 1,
+        "regular-width" : 1
+      },
+      "currentIdentity" : "ObjectIdentifier(0x0000007a97a19880)",
+      "delegateNil" : true,
+      "mainThread" : true,
+      "mode" : "regular",
+      "model" : {
+        "height" : 220,
+        "width" : 305,
+        "x" : 247.5,
+        "y" : 180
+      },
+      "modelRadius" : 28,
+      "otherKeys" : {
+        "clip" : [
+          "morph.bounds.size.width"
+        ],
+        "keyLine" : [
+          "morph.position.x",
+          "morph.bounds.size.width"
+        ],
+        "keyMask" : [
+          "morph.position.x",
+          "morph.bounds.size.width"
+        ]
+      },
+      "pendingExit" : false,
+      "presentation" : {
+        "height" : 220,
+        "width" : 420.94229698181152,
+        "x" : 189.52885150909424,
+        "y" : 180
+      },
+      "presentedRadius" : 28,
+      "reduced" : false,
+      "stage" : "regular-width-reverse-attach",
+      "tileIDs" : [
+        {
+          "id" : 900
+        }
+      ],
+      "time" : 93755.812816291684,
+      "visible" : false
+    },
+    {
+      "active" : false,
+      "alpha" : 0,
+      "animations" : [
+
+      ],
+      "cacheOnly" : true,
+      "counts" : {
+        "regular-initial" : 1,
+        "regular-open" : 1,
+        "regular-reopen" : 1,
+        "regular-reverse" : 1,
+        "regular-width" : 1,
+        "regular-width-reverse" : 1
+      },
+      "currentIdentity" : "ObjectIdentifier(0x0000007a97a19880)",
+      "delegateNil" : true,
+      "mainThread" : true,
+      "mode" : "regular",
+      "model" : {
+        "height" : 220,
+        "width" : 305,
+        "x" : 247.5,
+        "y" : 180
+      },
+      "modelRadius" : 28,
+      "otherKeys" : {
+        "clip" : [
+
+        ],
+        "keyLine" : [
+
+        ],
+        "keyMask" : [
+
+        ]
+      },
+      "pendingExit" : false,
+      "presentation" : {
+        "height" : 220,
+        "width" : 305,
+        "x" : 247.5,
+        "y" : 180
+      },
+      "presentedRadius" : 28,
+      "reduced" : false,
+      "stage" : "regular-settled",
+      "tileIDs" : [
+        {
+          "id" : 900
+        }
+      ],
+      "time" : 93756.549579166691,
+      "visible" : false
+    },
+    {
+      "active" : false,
+      "alpha" : 0,
+      "animations" : [
+
+      ],
+      "cacheOnly" : true,
+      "counts" : {
+        "regular-initial" : 1,
+        "regular-open" : 1,
+        "regular-pre-compact" : 1,
+        "regular-reopen" : 1,
+        "regular-reverse" : 1,
+        "regular-width" : 1,
+        "regular-width-reverse" : 1
+      },
+      "currentIdentity" : "ObjectIdentifier(0x0000007a97672d80)",
+      "delegateNil" : true,
+      "mainThread" : true,
+      "mode" : "regular",
+      "model" : {
+        "height" : 33.5,
+        "width" : 185,
+        "x" : 307.5,
+        "y" : 366.5
+      },
+      "modelRadius" : 12,
+      "otherKeys" : {
+        "clip" : [
+
+        ],
+        "keyLine" : [
+
+        ],
+        "keyMask" : [
+
+        ]
+      },
+      "pendingExit" : false,
+      "presentation" : {
+        "height" : 33.5,
+        "width" : 185,
+        "x" : 307.5,
+        "y" : 366.5
+      },
+      "presentedRadius" : 12,
+      "reduced" : false,
+      "stage" : "regular-pre-compact-settled",
+      "tileIDs" : [
+        {
+          "id" : 901
+        }
+      ],
+      "time" : 93757.258411083356,
+      "visible" : false
+    },
+    {
+      "active" : false,
+      "alpha" : 0,
+      "animations" : [
+        {
+          "additive" : true,
+          "beginTime" : 93757.258884416689,
+          "class" : "CASpringAnimation",
+          "damping" : 28.902652413026097,
+          "duration" : 0.56160572076454451,
+          "from" : -186.5,
+          "key" : "morph.bounds.size.height",
+          "keyPath" : "bounds.size.height",
+          "mass" : 1,
+          "stiffness" : 246.74011002723395,
+          "velocity" : 0
+        },
+        {
+          "additive" : true,
+          "beginTime" : 93757.258884416689,
+          "class" : "CASpringAnimation",
+          "damping" : 28.902652413026097,
+          "duration" : 0.56160572076454451,
+          "from" : -120,
+          "key" : "morph.bounds.size.width",
+          "keyPath" : "bounds.size.width",
+          "mass" : 1,
+          "stiffness" : 246.74011002723395,
+          "velocity" : 0
+        },
+        {
+          "additive" : true,
+          "beginTime" : 93757.258884416689,
+          "class" : "CASpringAnimation",
+          "damping" : 28.902652413026097,
+          "duration" : 0.56160572076454451,
+          "from" : -16,
+          "key" : "morph.cornerRadius",
+          "keyPath" : "cornerRadius",
+          "mass" : 1,
+          "stiffness" : 246.74011002723395,
+          "velocity" : 0
+        },
+        {
+          "additive" : true,
+          "beginTime" : 93757.258884416689,
+          "class" : "CASpringAnimation",
+          "damping" : 28.902652413026097,
+          "duration" : 0.56160572076454451,
+          "from" : 93.25,
+          "key" : "morph.position.y",
+          "keyPath" : "position.y",
+          "mass" : 1,
+          "stiffness" : 246.74011002723395,
+          "velocity" : 0
+        }
+      ],
+      "cacheOnly" : true,
+      "counts" : {
+        "regular-initial" : 1,
+        "regular-open" : 1,
+        "regular-pre-compact" : 1,
+        "regular-reopen" : 1,
+        "regular-reverse" : 1,
+        "regular-width" : 1,
+        "regular-width-reverse" : 1
+      },
+      "currentIdentity" : "ObjectIdentifier(0x0000007a97672d80)",
+      "delegateNil" : true,
+      "mainThread" : true,
+      "mode" : "regular",
+      "model" : {
+        "height" : 220,
+        "width" : 305,
+        "x" : 247.5,
+        "y" : 180
+      },
+      "modelRadius" : 28,
+      "otherKeys" : {
+        "clip" : [
+          "morph.position.y",
+          "morph.bounds.size.width",
+          "morph.bounds.size.height",
+          "morph.cornerRadius"
+        ],
+        "keyLine" : [
+          "morph.position.x",
+          "morph.position.y",
+          "morph.bounds.size.width",
+          "morph.bounds.size.height",
+          "morph.cornerRadius"
+        ],
+        "keyMask" : [
+          "morph.position.x",
+          "morph.position.y",
+          "morph.bounds.size.width",
+          "morph.bounds.size.height"
+        ]
+      },
+      "pendingExit" : false,
+      "presentation" : {
+        "height" : 120.08726572990417,
+        "width" : 240.71298599243164,
+        "x" : 279.64350700378418,
+        "y" : 279.91273427009583
+      },
+      "presentedRadius" : 19.428398132324219,
+      "reduced" : false,
+      "stage" : "regular-rich-exit-old",
+      "tileIDs" : [
+        {
+          "id" : 901
+        }
+      ],
+      "time" : 93757.35487491668,
+      "visible" : false
+    },
+    {
+      "active" : false,
+      "alpha" : 0,
+      "animations" : [
+        {
+          "additive" : true,
+          "beginTime" : 93757.258884416689,
+          "class" : "CASpringAnimation",
+          "damping" : 28.902652413026097,
+          "duration" : 0.56160572076454451,
+          "from" : -186.5,
+          "key" : "morph.bounds.size.height",
+          "keyPath" : "bounds.size.height",
+          "mass" : 1,
+          "stiffness" : 246.74011002723395,
+          "velocity" : 0
+        },
+        {
+          "additive" : true,
+          "beginTime" : 93757.258884416689,
+          "class" : "CASpringAnimation",
+          "damping" : 28.902652413026097,
+          "duration" : 0.56160572076454451,
+          "from" : -120,
+          "key" : "morph.bounds.size.width",
+          "keyPath" : "bounds.size.width",
+          "mass" : 1,
+          "stiffness" : 246.74011002723395,
+          "velocity" : 0
+        },
+        {
+          "additive" : true,
+          "beginTime" : 93757.258884416689,
+          "class" : "CASpringAnimation",
+          "damping" : 28.902652413026097,
+          "duration" : 0.56160572076454451,
+          "from" : -16,
+          "key" : "morph.cornerRadius",
+          "keyPath" : "cornerRadius",
+          "mass" : 1,
+          "stiffness" : 246.74011002723395,
+          "velocity" : 0
+        },
+        {
+          "additive" : true,
+          "beginTime" : 93757.258884416689,
+          "class" : "CASpringAnimation",
+          "damping" : 28.902652413026097,
+          "duration" : 0.56160572076454451,
+          "from" : 93.25,
+          "key" : "morph.position.y",
+          "keyPath" : "position.y",
+          "mass" : 1,
+          "stiffness" : 246.74011002723395,
+          "velocity" : 0
+        }
+      ],
+      "cacheOnly" : true,
+      "counts" : {
+        "regular-initial" : 1,
+        "regular-open" : 1,
+        "regular-pre-compact" : 1,
+        "regular-reopen" : 1,
+        "regular-reverse" : 1,
+        "regular-width" : 1,
+        "regular-width-reverse" : 1
+      },
+      "currentIdentity" : "ObjectIdentifier(0x0000007a97672d80)",
+      "delegateNil" : true,
+      "mainThread" : true,
+      "mode" : "regular",
+      "model" : {
+        "height" : 220,
+        "width" : 305,
+        "x" : 247.5,
+        "y" : 180
+      },
+      "modelRadius" : 28,
+      "otherKeys" : {
+        "clip" : [
+          "morph.position.y",
+          "morph.bounds.size.width",
+          "morph.bounds.size.height",
+          "morph.cornerRadius"
+        ],
+        "keyLine" : [
+          "morph.position.x",
+          "morph.position.y",
+          "morph.bounds.size.width",
+          "morph.bounds.size.height",
+          "morph.cornerRadius"
+        ],
+        "keyMask" : [
+          "morph.position.x",
+          "morph.position.y",
+          "morph.bounds.size.width",
+          "morph.bounds.size.height"
+        ]
+      },
+      "pendingExit" : true,
+      "presentation" : {
+        "height" : 164.95600682497025,
+        "width" : 269.58295345306396,
+        "x" : 265.20852327346802,
+        "y" : 235.04399317502975
+      },
+      "presentedRadius" : 23.277727127075195,
+      "reduced" : false,
+      "stage" : "regular-rich-exit-fade",
+      "tileIDs" : [
+        {
+          "id" : 901
+        }
+      ],
+      "time" : 93757.405954791684,
+      "visible" : false
+    },
+    {
+      "active" : false,
+      "alpha" : 0,
+      "animations" : [
+        {
+          "additive" : true,
+          "beginTime" : 93757.511455458356,
+          "class" : "CASpringAnimation",
+          "damping" : 33.069396353576771,
+          "duration" : 0.59999999999999998,
+          "from" : 175.03170382976532,
+          "key" : "morph.bounds.size.height",
+          "keyPath" : "bounds.size.height",
+          "mass" : 1,
+          "stiffness" : 273.39624379748915,
+          "velocity" : -1.1098452419686964
+        },
+        {
+          "additive" : true,
+          "beginTime" : 93757.511455458356,
+          "class" : "CASpringAnimation",
+          "damping" : 33.069396353576771,
+          "duration" : 0.59999999999999998,
+          "from" : 112.62093544006348,
+          "key" : "morph.bounds.size.width",
+          "keyPath" : "bounds.size.width",
+          "mass" : 1,
+          "stiffness" : 273.39624379748915,
+          "velocity" : -1.1098452419686966
+        },
+        {
+          "additive" : true,
+          "beginTime" : 93757.511455458356,
+          "class" : "CASpringAnimation",
+          "damping" : 33.069396353576771,
+          "duration" : 0.59999999999999998,
+          "from" : 15.016124725341797,
+          "key" : "morph.cornerRadius",
+          "keyPath" : "cornerRadius",
+          "mass" : 1,
+          "stiffness" : 273.39624379748915,
+          "velocity" : -1.1098452419686964
+        },
+        {
+          "additive" : true,
+          "beginTime" : 93757.511455458356,
+          "class" : "CASpringAnimation",
+          "damping" : 33.069396353576771,
+          "duration" : 0.59999999999999998,
+          "from" : -87.51585191488266,
+          "key" : "morph.position.y",
+          "keyPath" : "position.y",
+          "mass" : 1,
+          "stiffness" : 273.39624379748915,
+          "velocity" : -1.1098452419686964
+        }
+      ],
+      "cacheOnly" : true,
+      "counts" : {
+        "regular-initial" : 1,
+        "regular-open" : 1,
+        "regular-pre-compact" : 1,
+        "regular-reopen" : 1,
+        "regular-reverse" : 1,
+        "regular-rich-exit-open" : 1,
+        "regular-width" : 1,
+        "regular-width-reverse" : 1
+      },
+      "currentIdentity" : "ObjectIdentifier(0x0000007a97a18000)",
+      "delegateNil" : true,
+      "mainThread" : true,
+      "mode" : "regular",
+      "model" : {
+        "height" : 33.5,
+        "width" : 185,
+        "x" : 307.5,
+        "y" : 366.5
+      },
+      "modelRadius" : 12,
+      "otherKeys" : {
+        "clip" : [
+          "morph.position.y",
+          "morph.bounds.size.width",
+          "morph.bounds.size.height",
+          "morph.cornerRadius"
+        ],
+        "keyLine" : [
+          "morph.position.x",
+          "morph.position.y",
+          "morph.bounds.size.width",
+          "morph.bounds.size.height",
+          "morph.cornerRadius"
+        ],
+        "keyMask" : [
+          "morph.position.x",
+          "morph.position.y",
+          "morph.bounds.size.width",
+          "morph.bounds.size.height"
+        ]
+      },
+      "pendingExit" : false,
+      "presentation" : {
+        "height" : 104.98665130324382,
+        "width" : 230.99677295651077,
+        "x" : 284.50161352174462,
+        "y" : 295.01334869675622
+      },
+      "presentedRadius" : 18.132903060868102,
+      "reduced" : false,
+      "stage" : "regular-rich-exit-new",
+      "tileIDs" : [
+
+      ],
+      "time" : 93757.636151625018,
+      "visible" : false
+    },
+    {
+      "active" : false,
+      "alpha" : 0,
+      "animations" : [
+
+      ],
+      "cacheOnly" : true,
+      "counts" : {
+        "regular-initial" : 1,
+        "regular-open" : 1,
+        "regular-pre-compact" : 1,
+        "regular-reopen" : 1,
+        "regular-reverse" : 1,
+        "regular-rich-exit" : 1,
+        "regular-rich-exit-open" : 1,
+        "regular-width" : 1,
+        "regular-width-reverse" : 1
+      },
+      "currentIdentity" : "ObjectIdentifier(0x0000007a97a18000)",
+      "delegateNil" : true,
+      "mainThread" : true,
+      "mode" : "regular",
+      "model" : {
+        "height" : 33.5,
+        "width" : 185,
+        "x" : 307.5,
+        "y" : 366.5
+      },
+      "modelRadius" : 12,
+      "otherKeys" : {
+        "clip" : [
+
+        ],
+        "keyLine" : [
+
+        ],
+        "keyMask" : [
+
+        ]
+      },
+      "pendingExit" : false,
+      "presentation" : {
+        "height" : 33.5,
+        "width" : 185,
+        "x" : 307.5,
+        "y" : 366.5
+      },
+      "presentedRadius" : 12,
+      "reduced" : false,
+      "stage" : "regular-rich-exit-settled",
+      "tileIDs" : [
+
+      ],
+      "time" : 93758.154406958347,
+      "visible" : false
+    },
+    {
+      "active" : false,
+      "alpha" : 0,
+      "animations" : [
+        {
+          "additive" : true,
+          "beginTime" : 93758.155293583361,
+          "class" : "CASpringAnimation",
+          "damping" : 28.902652413026097,
+          "duration" : 0.56160572076454451,
+          "from" : -186.5,
+          "key" : "morph.bounds.size.height",
+          "keyPath" : "bounds.size.height",
+          "mass" : 1,
+          "stiffness" : 246.74011002723395,
+          "velocity" : 0
+        },
+        {
+          "additive" : true,
+          "beginTime" : 93758.155293583361,
+          "class" : "CASpringAnimation",
+          "damping" : 28.902652413026097,
+          "duration" : 0.56160572076454451,
+          "from" : -120,
+          "key" : "morph.bounds.size.width",
+          "keyPath" : "bounds.size.width",
+          "mass" : 1,
+          "stiffness" : 246.74011002723395,
+          "velocity" : 0
+        },
+        {
+          "additive" : true,
+          "beginTime" : 93758.155293583361,
+          "class" : "CASpringAnimation",
+          "damping" : 28.902652413026097,
+          "duration" : 0.56160572076454451,
+          "from" : -16,
+          "key" : "morph.cornerRadius",
+          "keyPath" : "cornerRadius",
+          "mass" : 1,
+          "stiffness" : 246.74011002723395,
+          "velocity" : 0
+        },
+        {
+          "additive" : true,
+          "beginTime" : 93758.155293583361,
+          "class" : "CASpringAnimation",
+          "damping" : 28.902652413026097,
+          "duration" : 0.56160572076454451,
+          "from" : 93.25,
+          "key" : "morph.position.y",
+          "keyPath" : "position.y",
+          "mass" : 1,
+          "stiffness" : 246.74011002723395,
+          "velocity" : 0
+        }
+      ],
+      "cacheOnly" : true,
+      "counts" : {
+        "regular-initial" : 1,
+        "regular-open" : 1,
+        "regular-pre-compact" : 1,
+        "regular-reopen" : 1,
+        "regular-reverse" : 1,
+        "regular-rich-exit" : 1,
+        "regular-rich-exit-open" : 1,
+        "regular-width" : 1,
+        "regular-width-reverse" : 1
+      },
+      "currentIdentity" : "ObjectIdentifier(0x0000007a97a18000)",
+      "delegateNil" : true,
+      "mainThread" : true,
+      "mode" : "regular",
+      "model" : {
+        "height" : 220,
+        "width" : 305,
+        "x" : 247.5,
+        "y" : 180
+      },
+      "modelRadius" : 28,
+      "otherKeys" : {
+        "clip" : [
+          "morph.position.y",
+          "morph.bounds.size.width",
+          "morph.bounds.size.height",
+          "morph.cornerRadius"
+        ],
+        "keyLine" : [
+          "morph.position.x",
+          "morph.position.y",
+          "morph.bounds.size.width",
+          "morph.bounds.size.height",
+          "morph.cornerRadius"
+        ],
+        "keyMask" : [
+          "morph.position.x",
+          "morph.position.y",
+          "morph.bounds.size.width",
+          "morph.bounds.size.height"
+        ]
+      },
+      "pendingExit" : false,
+      "presentation" : {
+        "height" : 125.67759156227112,
+        "width" : 244.30997848510742,
+        "x" : 277.84501075744629,
+        "y" : 274.32240843772888
+      },
+      "presentedRadius" : 19.907997131347656,
+      "reduced" : false,
+      "stage" : "regular-kick-old",
+      "tileIDs" : [
+
+      ],
+      "time" : 93758.256759583353,
+      "visible" : false
+    },
+    {
+      "active" : false,
+      "alpha" : 0,
+      "animations" : [
+        {
+          "additive" : true,
+          "beginTime" : 93758.257639083356,
+          "class" : "CAKeyframeAnimation",
+          "duration" : 0.42500000000000049,
+          "key" : "morph.bounds.size.height",
+          "keyPath" : "bounds.size.height",
+          "keyTimes" : [
+            0,
+            0.039215686274509762,
+            0.078431372549019523,
+            0.11764705882352927,
+            0.15686274509803905,
+            0.19607843137254879,
+            0.23529411764705854,
+            0.27450980392156826,
+            0.31372549019607809,
+            0.35294117647058781,
+            0.39215686274509759,
+            0.43137254901960731,
+            0.47058823529411709,
+            0.50980392156862686,
+            0.54901960784313653,
+            0.5882352941176463,
+            0.62745098039215619,
+            0.66666666666666596,
+            0.70588235294117585,
+            0.74509803921568574,
+            0.78431372549019562,
+            0.82352941176470551,
+            0.8627450980392154,
+            0.90196078431372528,
+            0.94117647058823517,
+            0.98039215686274506,
+            1
+          ],
+          "values" : [
+            -0,
+            13.122402844258021,
+            20.51876028053583,
+            23.977982064382303,
+            24.818052211863865,
+            23.994772481973762,
+            22.188523593732747,
+            19.872755204882864,
+            17.367485195731383,
+            14.88064546239044,
+            12.539684119611108,
+            10.415439724262127,
+            8.5399505594916505,
+            6.9195542867462141,
+            5.5443698804713408,
+            4.3950320030550838,
+            3.4473639324736531,
+            2.6755243593114448,
+            2.0540412683502662,
+            1.5590483471602081,
+            1.168961907591088,
+            0.86477558839742785,
+            0.63010301333139696,
+            0.45106244782708788,
+            0.3160700921737396,
+            0.21558811624699437,
+            0
+          ]
+        },
+        {
+          "additive" : true,
+          "beginTime" : 93758.257639083356,
+          "class" : "CAKeyframeAnimation",
+          "duration" : 0.40833333333333377,
+          "key" : "morph.bounds.size.width",
+          "keyPath" : "bounds.size.width",
+          "keyTimes" : [
+            0,
+            0.0408163265306122,
+            0.0816326530612244,
+            0.12244897959183659,
+            0.1632653061224488,
+            0.20408163265306101,
+            0.24489795918367319,
+            0.28571428571428537,
+            0.3265306122448976,
+            0.36734693877550978,
+            0.40816326530612201,
+            0.44897959183673419,
+            0.48979591836734637,
+            0.53061224489795855,
+            0.57142857142857073,
+            0.61224489795918291,
+            0.6530612244897952,
+            0.69387755102040749,
+            0.73469387755101989,
+            0.77551020408163218,
+            0.81632653061224447,
+            0.85714285714285687,
+            0.89795918367346916,
+            0.93877551020408145,
+            0.97959183673469385,
+            1
+          ],
+          "values" : [
+            -0,
+            8.4433691223107914,
+            13.20241948345469,
+            15.428192213007383,
+            15.968719921842707,
+            15.438995698857115,
+            14.276798022777102,
+            12.786759381157877,
+            11.174789402079174,
+            9.5746780455059124,
+            8.0684294603395887,
+            6.7016234150748284,
+            5.4948743546326986,
+            4.4522601308822827,
+            3.5674229793917474,
+            2.8279026293115828,
+            2.2181430128516806,
+            1.721517014034174,
+            1.3216351324505737,
+            1.003141027663405,
+            0.75214707190847496,
+            0.55642397108681685,
+            0.4054282123311938,
+            0.29022784846783145,
+            0.20336949630481904,
+            0
+          ]
+        },
+        {
+          "additive" : true,
+          "beginTime" : 93758.257639083356,
+          "class" : "CASpringAnimation",
+          "damping" : 28.902652413026097,
+          "duration" : 0.51135050677671412,
+          "from" : -8.0920028686523438,
+          "key" : "morph.cornerRadius",
+          "keyPath" : "cornerRadius",
+          "mass" : 1,
+          "stiffness" : 246.74011002723395,
+          "velocity" : 10.639328076122048
+        },
+        {
+          "additive" : true,
+          "beginTime" : 93758.257639083356,
+          "class" : "CAKeyframeAnimation",
+          "duration" : 0.39166666666666705,
+          "key" : "morph.position.y",
+          "keyPath" : "position.y",
+          "keyTimes" : [
+            0,
+            0.042553191489361659,
+            0.085106382978723319,
+            0.12765957446808496,
+            0.17021276595744664,
+            0.21276595744680829,
+            0.25531914893616992,
+            0.29787234042553157,
+            0.34042553191489328,
+            0.38297872340425493,
+            0.42553191489361658,
+            0.46808510638297823,
+            0.51063829787233983,
+            0.55319148936170148,
+            0.59574468085106314,
+            0.63829787234042479,
+            0.68085106382978655,
+            0.72340425531914831,
+            0.76595744680851019,
+            0.80851063829787195,
+            0.85106382978723372,
+            0.89361702127659548,
+            0.93617021276595735,
+            0.97872340425531912,
+            1
+          ],
+          "values" : [
+            0.011204218864463655,
+            -6.5503244629999964,
+            -10.249293586752971,
+            -11.97993823457076,
+            -12.401101480214425,
+            -11.990587096445683,
+            -11.088525602975412,
+            -9.9316082458791026,
+            -8.679828418367725,
+            -7.4371485035748446,
+            -6.267296588353048,
+            -5.2057004539464344,
+            -4.2683900481812138,
+            -3.4585458465033079,
+            -2.7712388690317149,
+            -2.1967972870553041,
+            -1.7231425654406511,
+            -1.3373627174467493,
+            -1.0267292193776425,
+            -0.77931526276541851,
+            -0.58433430614355431,
+            -0.43228753911279866,
+            -0.31498533146365415,
+            -0.22548967962393282,
+            0
+          ]
+        }
+      ],
+      "cacheOnly" : true,
+      "counts" : {
+        "regular-initial" : 1,
+        "regular-open" : 1,
+        "regular-pre-compact" : 1,
+        "regular-reopen" : 1,
+        "regular-reverse" : 1,
+        "regular-rich-exit" : 1,
+        "regular-rich-exit-open" : 1,
+        "regular-width" : 1,
+        "regular-width-reverse" : 1
+      },
+      "currentIdentity" : "ObjectIdentifier(0x0000007a97a18000)",
+      "delegateNil" : true,
+      "mainThread" : true,
+      "mode" : "regular",
+      "model" : {
+        "height" : 125.67759156227112,
+        "width" : 244.30997848510742,
+        "x" : 277.84501075744629,
+        "y" : 274.31120421886442
+      },
+      "modelRadius" : 28,
+      "otherKeys" : {
+        "clip" : [
+          "morph.position.y",
+          "morph.bounds.size.width",
+          "morph.bounds.size.height",
+          "morph.cornerRadius"
+        ],
+        "keyLine" : [
+          "morph.position.x",
+          "morph.position.y",
+          "morph.bounds.size.width",
+          "morph.bounds.size.height",
+          "morph.cornerRadius"
+        ],
+        "keyMask" : [
+          "morph.position.x",
+          "morph.position.y",
+          "morph.bounds.size.width",
+          "morph.bounds.size.height"
+        ]
+      },
+      "pendingExit" : false,
+      "presentation" : {
+        "height" : 125.67759156227112,
+        "width" : 244.30997848510742,
+        "x" : 277.84501075744629,
+        "y" : 274.32240843772888
+      },
+      "presentedRadius" : 19.907997131347656,
+      "reduced" : false,
+      "stage" : "regular-kick-new",
+      "tileIDs" : [
+
+      ],
+      "time" : 93758.259715500026,
+      "visible" : false
+    },
+    {
+      "active" : false,
+      "alpha" : 0,
+      "animations" : [
+        {
+          "additive" : true,
+          "beginTime" : 93758.257639083356,
+          "class" : "CAKeyframeAnimation",
+          "duration" : 0.42500000000000049,
+          "key" : "morph.bounds.size.height",
+          "keyPath" : "bounds.size.height",
+          "keyTimes" : [
+            0,
+            0.039215686274509762,
+            0.078431372549019523,
+            0.11764705882352927,
+            0.15686274509803905,
+            0.19607843137254879,
+            0.23529411764705854,
+            0.27450980392156826,
+            0.31372549019607809,
+            0.35294117647058781,
+            0.39215686274509759,
+            0.43137254901960731,
+            0.47058823529411709,
+            0.50980392156862686,
+            0.54901960784313653,
+            0.5882352941176463,
+            0.62745098039215619,
+            0.66666666666666596,
+            0.70588235294117585,
+            0.74509803921568574,
+            0.78431372549019562,
+            0.82352941176470551,
+            0.8627450980392154,
+            0.90196078431372528,
+            0.94117647058823517,
+            0.98039215686274506,
+            1
+          ],
+          "values" : [
+            -0,
+            13.122402844258021,
+            20.51876028053583,
+            23.977982064382303,
+            24.818052211863865,
+            23.994772481973762,
+            22.188523593732747,
+            19.872755204882864,
+            17.367485195731383,
+            14.88064546239044,
+            12.539684119611108,
+            10.415439724262127,
+            8.5399505594916505,
+            6.9195542867462141,
+            5.5443698804713408,
+            4.3950320030550838,
+            3.4473639324736531,
+            2.6755243593114448,
+            2.0540412683502662,
+            1.5590483471602081,
+            1.168961907591088,
+            0.86477558839742785,
+            0.63010301333139696,
+            0.45106244782708788,
+            0.3160700921737396,
+            0.21558811624699437,
+            0
+          ]
+        },
+        {
+          "additive" : true,
+          "beginTime" : 93758.257639083356,
+          "class" : "CAKeyframeAnimation",
+          "duration" : 0.40833333333333377,
+          "key" : "morph.bounds.size.width",
+          "keyPath" : "bounds.size.width",
+          "keyTimes" : [
+            0,
+            0.0408163265306122,
+            0.0816326530612244,
+            0.12244897959183659,
+            0.1632653061224488,
+            0.20408163265306101,
+            0.24489795918367319,
+            0.28571428571428537,
+            0.3265306122448976,
+            0.36734693877550978,
+            0.40816326530612201,
+            0.44897959183673419,
+            0.48979591836734637,
+            0.53061224489795855,
+            0.57142857142857073,
+            0.61224489795918291,
+            0.6530612244897952,
+            0.69387755102040749,
+            0.73469387755101989,
+            0.77551020408163218,
+            0.81632653061224447,
+            0.85714285714285687,
+            0.89795918367346916,
+            0.93877551020408145,
+            0.97959183673469385,
+            1
+          ],
+          "values" : [
+            -0,
+            8.4433691223107914,
+            13.20241948345469,
+            15.428192213007383,
+            15.968719921842707,
+            15.438995698857115,
+            14.276798022777102,
+            12.786759381157877,
+            11.174789402079174,
+            9.5746780455059124,
+            8.0684294603395887,
+            6.7016234150748284,
+            5.4948743546326986,
+            4.4522601308822827,
+            3.5674229793917474,
+            2.8279026293115828,
+            2.2181430128516806,
+            1.721517014034174,
+            1.3216351324505737,
+            1.003141027663405,
+            0.75214707190847496,
+            0.55642397108681685,
+            0.4054282123311938,
+            0.29022784846783145,
+            0.20336949630481904,
+            0
+          ]
+        },
+        {
+          "additive" : true,
+          "beginTime" : 93758.257639083356,
+          "class" : "CASpringAnimation",
+          "damping" : 28.902652413026097,
+          "duration" : 0.51135050677671412,
+          "from" : -8.0920028686523438,
+          "key" : "morph.cornerRadius",
+          "keyPath" : "cornerRadius",
+          "mass" : 1,
+          "stiffness" : 246.74011002723395,
+          "velocity" : 10.639328076122048
+        },
+        {
+          "additive" : true,
+          "beginTime" : 93758.257639083356,
+          "class" : "CAKeyframeAnimation",
+          "duration" : 0.39166666666666705,
+          "key" : "morph.position.y",
+          "keyPath" : "position.y",
+          "keyTimes" : [
+            0,
+            0.042553191489361659,
+            0.085106382978723319,
+            0.12765957446808496,
+            0.17021276595744664,
+            0.21276595744680829,
+            0.25531914893616992,
+            0.29787234042553157,
+            0.34042553191489328,
+            0.38297872340425493,
+            0.42553191489361658,
+            0.46808510638297823,
+            0.51063829787233983,
+            0.55319148936170148,
+            0.59574468085106314,
+            0.63829787234042479,
+            0.68085106382978655,
+            0.72340425531914831,
+            0.76595744680851019,
+            0.80851063829787195,
+            0.85106382978723372,
+            0.89361702127659548,
+            0.93617021276595735,
+            0.97872340425531912,
+            1
+          ],
+          "values" : [
+            0.011204218864463655,
+            -6.5503244629999964,
+            -10.249293586752971,
+            -11.97993823457076,
+            -12.401101480214425,
+            -11.990587096445683,
+            -11.088525602975412,
+            -9.9316082458791026,
+            -8.679828418367725,
+            -7.4371485035748446,
+            -6.267296588353048,
+            -5.2057004539464344,
+            -4.2683900481812138,
+            -3.4585458465033079,
+            -2.7712388690317149,
+            -2.1967972870553041,
+            -1.7231425654406511,
+            -1.3373627174467493,
+            -1.0267292193776425,
+            -0.77931526276541851,
+            -0.58433430614355431,
+            -0.43228753911279866,
+            -0.31498533146365415,
+            -0.22548967962393282,
+            0
+          ]
+        }
+      ],
+      "cacheOnly" : true,
+      "counts" : {
+        "regular-initial" : 1,
+        "regular-kick-open" : 1,
+        "regular-open" : 1,
+        "regular-pre-compact" : 1,
+        "regular-reopen" : 1,
+        "regular-reverse" : 1,
+        "regular-rich-exit" : 1,
+        "regular-rich-exit-open" : 1,
+        "regular-width" : 1,
+        "regular-width-reverse" : 1
+      },
+      "currentIdentity" : "ObjectIdentifier(0x0000007a97a18000)",
+      "delegateNil" : true,
+      "mainThread" : true,
+      "mode" : "regular",
+      "model" : {
+        "height" : 125.67759156227112,
+        "width" : 244.30997848510742,
+        "x" : 277.84501075744629,
+        "y" : 274.31120421886442
+      },
+      "modelRadius" : 28,
+      "otherKeys" : {
+        "clip" : [
+          "morph.position.y",
+          "morph.bounds.size.width",
+          "morph.bounds.size.height",
+          "morph.cornerRadius"
+        ],
+        "keyLine" : [
+          "morph.position.x",
+          "morph.position.y",
+          "morph.bounds.size.width",
+          "morph.bounds.size.height",
+          "morph.cornerRadius"
+        ],
+        "keyMask" : [
+          "morph.position.x",
+          "morph.position.y",
+          "morph.bounds.size.width",
+          "morph.bounds.size.height"
+        ]
+      },
+      "pendingExit" : false,
+      "presentation" : {
+        "height" : 138.93645719673171,
+        "width" : 252.84115208368797,
+        "x" : 273.57942395815599,
+        "y" : 261.06320096054975
+      },
+      "presentedRadius" : 21.293832330965643,
+      "reduced" : false,
+      "stage" : "regular-kick-attach",
+      "tileIDs" : [
+
+      ],
+      "time" : 93758.274903083351,
+      "visible" : false
+    },
+    {
+      "active" : false,
+      "alpha" : 0,
+      "animations" : [
+
+      ],
+      "cacheOnly" : true,
+      "counts" : {
+        "regular-initial" : 1,
+        "regular-kick" : 1,
+        "regular-kick-open" : 1,
+        "regular-open" : 1,
+        "regular-pre-compact" : 1,
+        "regular-reopen" : 1,
+        "regular-reverse" : 1,
+        "regular-rich-exit" : 1,
+        "regular-rich-exit-open" : 1,
+        "regular-width" : 1,
+        "regular-width-reverse" : 1
+      },
+      "currentIdentity" : "ObjectIdentifier(0x0000007a97a18000)",
+      "delegateNil" : true,
+      "mainThread" : true,
+      "mode" : "regular",
+      "model" : {
+        "height" : 125.67759156227112,
+        "width" : 244.30997848510742,
+        "x" : 277.84501075744629,
+        "y" : 274.31120421886442
+      },
+      "modelRadius" : 28,
+      "otherKeys" : {
+        "clip" : [
+
+        ],
+        "keyLine" : [
+
+        ],
+        "keyMask" : [
+
+        ]
+      },
+      "pendingExit" : false,
+      "presentation" : {
+        "height" : 125.67759156227112,
+        "width" : 244.30997848510742,
+        "x" : 277.84501075744629,
+        "y" : 274.31120421886442
+      },
+      "presentedRadius" : 28,
+      "reduced" : false,
+      "stage" : "regular-kick-settled",
+      "tileIDs" : [
+
+      ],
+      "time" : 93758.910420583357,
+      "visible" : false
+    },
+    {
+      "active" : false,
+      "alpha" : 0,
+      "animations" : [
+        {
+          "additive" : true,
+          "beginTime" : 93758.911123375015,
+          "class" : "CASpringAnimation",
+          "damping" : 28.902652413026097,
+          "duration" : 0.56160572076454451,
+          "from" : -94.322408437728882,
+          "key" : "morph.bounds.size.height",
+          "keyPath" : "bounds.size.height",
+          "mass" : 1,
+          "stiffness" : 246.74011002723395,
+          "velocity" : 0
+        },
+        {
+          "additive" : true,
+          "beginTime" : 93758.911123375015,
+          "class" : "CASpringAnimation",
+          "damping" : 28.902652413026097,
+          "duration" : 0.56160572076454451,
+          "from" : -60.690021514892578,
+          "key" : "morph.bounds.size.width",
+          "keyPath" : "bounds.size.width",
+          "mass" : 1,
+          "stiffness" : 246.74011002723395,
+          "velocity" : 0
+        },
+        {
+          "additive" : true,
+          "beginTime" : 93758.911123375015,
+          "class" : "CASpringAnimation",
+          "damping" : 28.902652413026097,
+          "duration" : 0.56160572076454451,
+          "from" : 47.149999999999977,
+          "key" : "morph.position.y",
+          "keyPath" : "position.y",
+          "mass" : 1,
+          "stiffness" : 246.74011002723395,
+          "velocity" : 0
+        }
+      ],
+      "cacheOnly" : true,
+      "counts" : {
+        "regular-initial" : 1,
+        "regular-kick" : 1,
+        "regular-kick-open" : 1,
+        "regular-open" : 1,
+        "regular-pre-compact" : 1,
+        "regular-reopen" : 1,
+        "regular-reverse" : 1,
+        "regular-rich-exit" : 1,
+        "regular-rich-exit-open" : 1,
+        "regular-width" : 1,
+        "regular-width-reverse" : 1
+      },
+      "currentIdentity" : "ObjectIdentifier(0x0000007a97a1b100)",
+      "delegateNil" : true,
+      "mainThread" : true,
+      "mode" : "regular",
+      "model" : {
+        "height" : 220,
+        "width" : 305,
+        "x" : 247.5,
+        "y" : 180
+      },
+      "modelRadius" : 28,
+      "otherKeys" : {
+        "clip" : [
+          "morph.position.y",
+          "morph.bounds.size.width",
+          "morph.bounds.size.height"
+        ],
+        "keyLine" : [
+          "morph.position.x",
+          "morph.position.y",
+          "morph.bounds.size.width",
+          "morph.bounds.size.height"
+        ],
+        "keyMask" : [
+          "morph.position.x",
+          "morph.position.y",
+          "morph.bounds.size.width",
+          "morph.bounds.size.height"
+        ]
+      },
+      "pendingExit" : false,
+      "presentation" : {
+        "height" : 125.67759156227112,
+        "width" : 244.30997848510742,
+        "x" : 277.84501075744629,
+        "y" : 274.31120421886442
+      },
+      "presentedRadius" : 28,
+      "reduced" : false,
+      "stage" : "regular-cancel-open-new",
+      "tileIDs" : [
+        {
+          "id" : 900
+        }
+      ],
+      "time" : 93758.927052000014,
+      "visible" : false
+    },
+    {
+      "active" : false,
+      "alpha" : 0,
+      "animations" : [
+        {
+          "additive" : true,
+          "beginTime" : 93758.911123375015,
+          "class" : "CASpringAnimation",
+          "damping" : 28.902652413026097,
+          "duration" : 0.56160572076454451,
+          "from" : -94.322408437728882,
+          "key" : "morph.bounds.size.height",
+          "keyPath" : "bounds.size.height",
+          "mass" : 1,
+          "stiffness" : 246.74011002723395,
+          "velocity" : 0
+        },
+        {
+          "additive" : true,
+          "beginTime" : 93758.911123375015,
+          "class" : "CASpringAnimation",
+          "damping" : 28.902652413026097,
+          "duration" : 0.56160572076454451,
+          "from" : -60.690021514892578,
+          "key" : "morph.bounds.size.width",
+          "keyPath" : "bounds.size.width",
+          "mass" : 1,
+          "stiffness" : 246.74011002723395,
+          "velocity" : 0
+        },
+        {
+          "additive" : true,
+          "beginTime" : 93758.911123375015,
+          "class" : "CASpringAnimation",
+          "damping" : 28.902652413026097,
+          "duration" : 0.56160572076454451,
+          "from" : 47.149999999999977,
+          "key" : "morph.position.y",
+          "keyPath" : "position.y",
+          "mass" : 1,
+          "stiffness" : 246.74011002723395,
+          "velocity" : 0
+        }
+      ],
+      "cacheOnly" : true,
+      "counts" : {
+        "regular-initial" : 1,
+        "regular-kick" : 1,
+        "regular-kick-open" : 1,
+        "regular-open" : 1,
+        "regular-pre-compact" : 1,
+        "regular-reopen" : 1,
+        "regular-reverse" : 1,
+        "regular-rich-exit" : 1,
+        "regular-rich-exit-open" : 1,
+        "regular-width" : 1,
+        "regular-width-reverse" : 1
+      },
+      "currentIdentity" : "ObjectIdentifier(0x0000007a97a1b100)",
+      "delegateNil" : true,
+      "mainThread" : true,
+      "mode" : "regular",
+      "model" : {
+        "height" : 220,
+        "width" : 305,
+        "x" : 247.5,
+        "y" : 180
+      },
+      "modelRadius" : 28,
+      "otherKeys" : {
+        "clip" : [
+          "morph.position.y",
+          "morph.bounds.size.width",
+          "morph.bounds.size.height"
+        ],
+        "keyLine" : [
+          "morph.position.x",
+          "morph.position.y",
+          "morph.bounds.size.width",
+          "morph.bounds.size.height"
+        ],
+        "keyMask" : [
+          "morph.position.x",
+          "morph.position.y",
+          "morph.bounds.size.width",
+          "morph.bounds.size.height"
+        ]
+      },
+      "pendingExit" : false,
+      "presentation" : {
+        "height" : 172.96435872733881,
+        "width" : 274.73578041437349,
+        "x" : 262.63210979281325,
+        "y" : 227.03005407839868
+      },
+      "presentedRadius" : 28,
+      "reduced" : false,
+      "stage" : "regular-cancel-close-old",
+      "tileIDs" : [
+        {
+          "id" : 900
+        }
+      ],
+      "time" : 93759.013858750026,
+      "visible" : false
+    },
+    {
+      "active" : false,
+      "alpha" : 0,
+      "animations" : [
+        {
+          "additive" : true,
+          "beginTime" : 93758.911123375015,
+          "class" : "CASpringAnimation",
+          "damping" : 28.902652413026097,
+          "duration" : 0.56160572076454451,
+          "from" : -94.322408437728882,
+          "key" : "morph.bounds.size.height",
+          "keyPath" : "bounds.size.height",
+          "mass" : 1,
+          "stiffness" : 246.74011002723395,
+          "velocity" : 0
+        },
+        {
+          "additive" : true,
+          "beginTime" : 93758.911123375015,
+          "class" : "CASpringAnimation",
+          "damping" : 28.902652413026097,
+          "duration" : 0.56160572076454451,
+          "from" : -60.690021514892578,
+          "key" : "morph.bounds.size.width",
+          "keyPath" : "bounds.size.width",
+          "mass" : 1,
+          "stiffness" : 246.74011002723395,
+          "velocity" : 0
+        },
+        {
+          "additive" : true,
+          "beginTime" : 93758.911123375015,
+          "class" : "CASpringAnimation",
+          "damping" : 28.902652413026097,
+          "duration" : 0.56160572076454451,
+          "from" : 47.149999999999977,
+          "key" : "morph.position.y",
+          "keyPath" : "position.y",
+          "mass" : 1,
+          "stiffness" : 246.74011002723395,
+          "velocity" : 0
+        }
+      ],
+      "cacheOnly" : true,
+      "counts" : {
+        "regular-initial" : 1,
+        "regular-kick" : 1,
+        "regular-kick-open" : 1,
+        "regular-open" : 1,
+        "regular-pre-compact" : 1,
+        "regular-reopen" : 1,
+        "regular-reverse" : 1,
+        "regular-rich-exit" : 1,
+        "regular-rich-exit-open" : 1,
+        "regular-width" : 1,
+        "regular-width-reverse" : 1
+      },
+      "currentIdentity" : "ObjectIdentifier(0x0000007a97a1b100)",
+      "delegateNil" : true,
+      "mainThread" : true,
+      "mode" : "regular",
+      "model" : {
+        "height" : 220,
+        "width" : 305,
+        "x" : 247.5,
+        "y" : 180
+      },
+      "modelRadius" : 28,
+      "otherKeys" : {
+        "clip" : [
+          "morph.position.y",
+          "morph.bounds.size.width",
+          "morph.bounds.size.height"
+        ],
+        "keyLine" : [
+          "morph.position.x",
+          "morph.position.y",
+          "morph.bounds.size.width",
+          "morph.bounds.size.height"
+        ],
+        "keyMask" : [
+          "morph.position.x",
+          "morph.position.y",
+          "morph.bounds.size.width",
+          "morph.bounds.size.height"
+        ]
+      },
+      "pendingExit" : true,
+      "presentation" : {
+        "height" : 172.96435872733881,
+        "width" : 274.73578041437349,
+        "x" : 262.63210979281325,
+        "y" : 227.03005407839868
+      },
+      "presentedRadius" : 28,
+      "reduced" : false,
+      "stage" : "regular-cancel-close-new",
+      "tileIDs" : [
+        {
+          "id" : 900
+        }
+      ],
+      "time" : 93759.014809875021,
+      "visible" : false
+    },
+    {
+      "active" : false,
+      "alpha" : 0,
+      "animations" : [
+        {
+          "additive" : true,
+          "beginTime" : 93758.911123375015,
+          "class" : "CASpringAnimation",
+          "damping" : 28.902652413026097,
+          "duration" : 0.56160572076454451,
+          "from" : -94.322408437728882,
+          "key" : "morph.bounds.size.height",
+          "keyPath" : "bounds.size.height",
+          "mass" : 1,
+          "stiffness" : 246.74011002723395,
+          "velocity" : 0
+        },
+        {
+          "additive" : true,
+          "beginTime" : 93758.911123375015,
+          "class" : "CASpringAnimation",
+          "damping" : 28.902652413026097,
+          "duration" : 0.56160572076454451,
+          "from" : -60.690021514892578,
+          "key" : "morph.bounds.size.width",
+          "keyPath" : "bounds.size.width",
+          "mass" : 1,
+          "stiffness" : 246.74011002723395,
+          "velocity" : 0
+        },
+        {
+          "additive" : true,
+          "beginTime" : 93758.911123375015,
+          "class" : "CASpringAnimation",
+          "damping" : 28.902652413026097,
+          "duration" : 0.56160572076454451,
+          "from" : 47.149999999999977,
+          "key" : "morph.position.y",
+          "keyPath" : "position.y",
+          "mass" : 1,
+          "stiffness" : 246.74011002723395,
+          "velocity" : 0
+        }
+      ],
+      "cacheOnly" : true,
+      "counts" : {
+        "regular-initial" : 1,
+        "regular-kick" : 1,
+        "regular-kick-open" : 1,
+        "regular-open" : 1,
+        "regular-pre-compact" : 1,
+        "regular-reopen" : 1,
+        "regular-reverse" : 1,
+        "regular-rich-exit" : 1,
+        "regular-rich-exit-open" : 1,
+        "regular-width" : 1,
+        "regular-width-reverse" : 1
+      },
+      "currentIdentity" : "ObjectIdentifier(0x0000007a97a1b100)",
+      "delegateNil" : true,
+      "mainThread" : true,
+      "mode" : "regular",
+      "model" : {
+        "height" : 220,
+        "width" : 305,
+        "x" : 247.5,
+        "y" : 180
+      },
+      "modelRadius" : 28,
+      "otherKeys" : {
+        "clip" : [
+          "morph.position.y",
+          "morph.bounds.size.width",
+          "morph.bounds.size.height"
+        ],
+        "keyLine" : [
+          "morph.position.x",
+          "morph.position.y",
+          "morph.bounds.size.width",
+          "morph.bounds.size.height"
+        ],
+        "keyMask" : [
+          "morph.position.x",
+          "morph.position.y",
+          "morph.bounds.size.width",
+          "morph.bounds.size.height"
+        ]
+      },
+      "pendingExit" : true,
+      "presentation" : {
+        "height" : 197.91355422277866,
+        "width" : 290.78888207363775,
+        "x" : 254.60555896318112,
+        "y" : 202.08382220794948
+      },
+      "presentedRadius" : 28,
+      "reduced" : false,
+      "stage" : "regular-cancel-close-fade",
+      "tileIDs" : [
+        {
+          "id" : 900
+        }
+      ],
+      "time" : 93759.075847875021,
+      "visible" : false
+    },
+    {
+      "active" : false,
+      "alpha" : 0,
+      "animations" : [
+        {
+          "additive" : true,
+          "beginTime" : 93758.911123375015,
+          "class" : "CASpringAnimation",
+          "damping" : 28.902652413026097,
+          "duration" : 0.56160572076454451,
+          "from" : -94.322408437728882,
+          "key" : "morph.bounds.size.height",
+          "keyPath" : "bounds.size.height",
+          "mass" : 1,
+          "stiffness" : 246.74011002723395,
+          "velocity" : 0
+        },
+        {
+          "additive" : true,
+          "beginTime" : 93758.911123375015,
+          "class" : "CASpringAnimation",
+          "damping" : 28.902652413026097,
+          "duration" : 0.56160572076454451,
+          "from" : -60.690021514892578,
+          "key" : "morph.bounds.size.width",
+          "keyPath" : "bounds.size.width",
+          "mass" : 1,
+          "stiffness" : 246.74011002723395,
+          "velocity" : 0
+        },
+        {
+          "additive" : true,
+          "beginTime" : 93758.911123375015,
+          "class" : "CASpringAnimation",
+          "damping" : 28.902652413026097,
+          "duration" : 0.56160572076454451,
+          "from" : 47.149999999999977,
+          "key" : "morph.position.y",
+          "keyPath" : "position.y",
+          "mass" : 1,
+          "stiffness" : 246.74011002723395,
+          "velocity" : 0
+        }
+      ],
+      "cacheOnly" : true,
+      "counts" : {
+        "regular-initial" : 1,
+        "regular-kick" : 1,
+        "regular-kick-open" : 1,
+        "regular-open" : 1,
+        "regular-pre-compact" : 1,
+        "regular-reopen" : 1,
+        "regular-reverse" : 1,
+        "regular-rich-exit" : 1,
+        "regular-rich-exit-open" : 1,
+        "regular-width" : 1,
+        "regular-width-reverse" : 1
+      },
+      "currentIdentity" : "ObjectIdentifier(0x0000007a97a1b100)",
+      "delegateNil" : true,
+      "mainThread" : true,
+      "mode" : "regular",
+      "model" : {
+        "height" : 220,
+        "width" : 305,
+        "x" : 247.5,
+        "y" : 180
+      },
+      "modelRadius" : 28,
+      "otherKeys" : {
+        "clip" : [
+          "morph.position.y",
+          "morph.bounds.size.width",
+          "morph.bounds.size.height"
+        ],
+        "keyLine" : [
+          "morph.position.x",
+          "morph.position.y",
+          "morph.bounds.size.width",
+          "morph.bounds.size.height"
+        ],
+        "keyMask" : [
+          "morph.position.x",
+          "morph.position.y",
+          "morph.bounds.size.width",
+          "morph.bounds.size.height"
+        ]
+      },
+      "pendingExit" : true,
+      "presentation" : {
+        "height" : 197.91355422277866,
+        "width" : 290.78888207363775,
+        "x" : 254.60555896318112,
+        "y" : 202.08382220794948
+      },
+      "presentedRadius" : 28,
+      "reduced" : false,
+      "stage" : "regular-cancel-reopen-old",
+      "tileIDs" : [
+        {
+          "id" : 900
+        }
+      ],
+      "time" : 93759.076626208349,
+      "visible" : false
+    },
+    {
+      "active" : false,
+      "alpha" : 0,
+      "animations" : [
+        {
+          "additive" : true,
+          "beginTime" : 93759.079478500018,
+          "class" : "CASpringAnimation",
+          "damping" : 28.902652413026097,
+          "duration" : 0.49328444548027378,
+          "from" : -22.086445777221343,
+          "key" : "morph.bounds.size.height",
+          "keyPath" : "bounds.size.height",
+          "mass" : 1,
+          "stiffness" : 246.74011002723395,
+          "velocity" : 12.92982545746192
+        },
+        {
+          "additive" : true,
+          "beginTime" : 93759.079478500018,
+          "class" : "CASpringAnimation",
+          "damping" : 28.902652413026097,
+          "duration" : 0.49328444548027361,
+          "from" : -14.211117926362249,
+          "key" : "morph.bounds.size.width",
+          "keyPath" : "bounds.size.width",
+          "mass" : 1,
+          "stiffness" : 246.74011002723395,
+          "velocity" : 12.929825457461929
+        },
+        {
+          "additive" : true,
+          "beginTime" : 93759.079478500018,
+          "class" : "CASpringAnimation",
+          "damping" : 28.902652413026097,
+          "duration" : 0.49328444548027384,
+          "from" : 11.04059931933881,
+          "key" : "morph.position.y",
+          "keyPath" : "position.y",
+          "mass" : 1,
+          "stiffness" : 246.74011002723395,
+          "velocity" : 12.929825457461913
+        }
+      ],
+      "cacheOnly" : true,
+      "counts" : {
+        "regular-initial" : 1,
+        "regular-kick" : 1,
+        "regular-kick-open" : 1,
+        "regular-open" : 1,
+        "regular-pre-compact" : 1,
+        "regular-reopen" : 1,
+        "regular-reverse" : 1,
+        "regular-rich-exit" : 1,
+        "regular-rich-exit-open" : 1,
+        "regular-width" : 1,
+        "regular-width-reverse" : 1
+      },
+      "currentIdentity" : "ObjectIdentifier(0x0000007a97672d80)",
+      "delegateNil" : true,
+      "mainThread" : true,
+      "mode" : "regular",
+      "model" : {
+        "height" : 220,
+        "width" : 305,
+        "x" : 247.5,
+        "y" : 180
+      },
+      "modelRadius" : 28,
+      "otherKeys" : {
+        "clip" : [
+          "morph.position.y",
+          "morph.bounds.size.width",
+          "morph.bounds.size.height"
+        ],
+        "keyLine" : [
+          "morph.position.x",
+          "morph.position.y",
+          "morph.bounds.size.width",
+          "morph.bounds.size.height"
+        ],
+        "keyMask" : [
+          "morph.position.x",
+          "morph.position.y",
+          "morph.bounds.size.width",
+          "morph.bounds.size.height"
+        ]
+      },
+      "pendingExit" : false,
+      "presentation" : {
+        "height" : 197.91355422277866,
+        "width" : 290.78888207363775,
+        "x" : 254.60555896318112,
+        "y" : 202.08382220794948
+      },
+      "presentedRadius" : 28,
+      "reduced" : false,
+      "stage" : "regular-cancel-reopen-new",
+      "tileIDs" : [
+        {
+          "id" : 901
+        }
+      ],
+      "time" : 93759.09679595835,
+      "visible" : false
+    },
+    {
+      "active" : false,
+      "alpha" : 0,
+      "animations" : [
+
+      ],
+      "cacheOnly" : true,
+      "counts" : {
+        "regular-cancel-open" : 1,
+        "regular-cancel-reopen" : 1,
+        "regular-initial" : 1,
+        "regular-kick" : 1,
+        "regular-kick-open" : 1,
+        "regular-open" : 1,
+        "regular-pre-compact" : 1,
+        "regular-reopen" : 1,
+        "regular-reverse" : 1,
+        "regular-rich-exit" : 1,
+        "regular-rich-exit-open" : 1,
+        "regular-width" : 1,
+        "regular-width-reverse" : 1
+      },
+      "currentIdentity" : "ObjectIdentifier(0x0000007a97672d80)",
+      "delegateNil" : true,
+      "mainThread" : true,
+      "mode" : "regular",
+      "model" : {
+        "height" : 220,
+        "width" : 305,
+        "x" : 247.5,
+        "y" : 180
+      },
+      "modelRadius" : 28,
+      "otherKeys" : {
+        "clip" : [
+
+        ],
+        "keyLine" : [
+
+        ],
+        "keyMask" : [
+
+        ]
+      },
+      "pendingExit" : false,
+      "presentation" : {
+        "height" : 220,
+        "width" : 305,
+        "x" : 247.5,
+        "y" : 180
+      },
+      "presentedRadius" : 28,
+      "reduced" : false,
+      "stage" : "regular-cancel-reopen-settled",
+      "tileIDs" : [
+        {
+          "id" : 901
+        }
+      ],
+      "time" : 93759.736336041693,
+      "visible" : false
+    },
+    {
+      "active" : false,
+      "alpha" : 0,
+      "animations" : [
+        {
+          "additive" : true,
+          "beginTime" : 93759.89469166669,
+          "class" : "CASpringAnimation",
+          "damping" : 33.069396353576771,
+          "duration" : 0.59999999999999998,
+          "from" : 186.5,
+          "key" : "morph.bounds.size.height",
+          "keyPath" : "bounds.size.height",
+          "mass" : 1,
+          "stiffness" : 273.39624379748915,
+          "velocity" : 0
+        },
+        {
+          "additive" : true,
+          "beginTime" : 93759.89469166669,
+          "class" : "CASpringAnimation",
+          "damping" : 33.069396353576771,
+          "duration" : 0.59999999999999998,
+          "from" : 120,
+          "key" : "morph.bounds.size.width",
+          "keyPath" : "bounds.size.width",
+          "mass" : 1,
+          "stiffness" : 273.39624379748915,
+          "velocity" : 0
+        },
+        {
+          "additive" : true,
+          "beginTime" : 93759.89469166669,
+          "class" : "CASpringAnimation",
+          "damping" : 33.069396353576771,
+          "duration" : 0.59999999999999998,
+          "from" : 16,
+          "key" : "morph.cornerRadius",
+          "keyPath" : "cornerRadius",
+          "mass" : 1,
+          "stiffness" : 273.39624379748915,
+          "velocity" : 0
+        },
+        {
+          "additive" : true,
+          "beginTime" : 93759.89469166669,
+          "class" : "CASpringAnimation",
+          "damping" : 33.069396353576771,
+          "duration" : 0.59999999999999998,
+          "from" : -93.25,
+          "key" : "morph.position.y",
+          "keyPath" : "position.y",
+          "mass" : 1,
+          "stiffness" : 273.39624379748915,
+          "velocity" : 0
+        }
+      ],
+      "cacheOnly" : true,
+      "counts" : {
+        "regular-cancel-open" : 1,
+        "regular-cancel-reopen" : 1,
+        "regular-initial" : 1,
+        "regular-kick" : 1,
+        "regular-kick-open" : 1,
+        "regular-open" : 1,
+        "regular-pre-compact" : 1,
+        "regular-reopen" : 1,
+        "regular-reverse" : 1,
+        "regular-rich-exit" : 1,
+        "regular-rich-exit-open" : 1,
+        "regular-width" : 1,
+        "regular-width-reverse" : 1
+      },
+      "currentIdentity" : "ObjectIdentifier(0x0000007a97a18000)",
+      "delegateNil" : true,
+      "mainThread" : true,
+      "mode" : "regular",
+      "model" : {
+        "height" : 33.5,
+        "width" : 185,
+        "x" : 307.5,
+        "y" : 366.5
+      },
+      "modelRadius" : 12,
+      "otherKeys" : {
+        "clip" : [
+          "morph.position.y",
+          "morph.bounds.size.width",
+          "morph.bounds.size.height",
+          "morph.cornerRadius"
+        ],
+        "keyLine" : [
+          "morph.position.x",
+          "morph.position.y",
+          "morph.bounds.size.width",
+          "morph.bounds.size.height",
+          "morph.cornerRadius"
+        ],
+        "keyMask" : [
+          "morph.position.x",
+          "morph.position.y",
+          "morph.bounds.size.width",
+          "morph.bounds.size.height"
+        ]
+      },
+      "pendingExit" : false,
+      "presentation" : {
+        "height" : 34.141964375972748,
+        "width" : 185.41306018829346,
+        "x" : 307.29346990585327,
+        "y" : 365.85803562402725
+      },
+      "presentedRadius" : 12.055074691772461,
+      "reduced" : false,
+      "stage" : "regular-final-closed",
+      "tileIDs" : [
+
+      ],
+      "time" : 93760.370094416692,
+      "visible" : false
+    },
+    {
+      "active" : false,
+      "alpha" : 0,
+      "animations" : [
+
+      ],
+      "cacheOnly" : true,
+      "counts" : {
+        "reduced-initial" : 1,
+        "regular-cancel-open" : 1,
+        "regular-cancel-reopen" : 1,
+        "regular-final-close" : 1,
+        "regular-initial" : 1,
+        "regular-kick" : 1,
+        "regular-kick-open" : 1,
+        "regular-open" : 1,
+        "regular-pre-compact" : 1,
+        "regular-reopen" : 1,
+        "regular-reverse" : 1,
+        "regular-rich-exit" : 1,
+        "regular-rich-exit-open" : 1,
+        "regular-width" : 1,
+        "regular-width-reverse" : 1
+      },
+      "currentIdentity" : "ObjectIdentifier(0x0000007a97a1b100)",
+      "delegateNil" : true,
+      "mainThread" : true,
+      "mode" : "reduced",
+      "model" : {
+        "height" : 33.5,
+        "width" : 185,
+        "x" : 307.5,
+        "y" : 366.5
+      },
+      "modelRadius" : 12,
+      "otherKeys" : {
+        "clip" : [
+
+        ],
+        "keyLine" : [
+
+        ],
+        "keyMask" : [
+
+        ]
+      },
+      "pendingExit" : false,
+      "presentation" : {
+        "height" : 33.5,
+        "width" : 185,
+        "x" : 307.5,
+        "y" : 366.5
+      },
+      "presentedRadius" : 12,
+      "reduced" : true,
+      "stage" : "reduced-initial",
+      "tileIDs" : [
+
+      ],
+      "time" : 93760.45069370835,
+      "visible" : false
+    },
+    {
+      "active" : false,
+      "alpha" : 0,
+      "animations" : [
+
+      ],
+      "cacheOnly" : true,
+      "counts" : {
+        "reduced-initial" : 1,
+        "regular-cancel-open" : 1,
+        "regular-cancel-reopen" : 1,
+        "regular-final-close" : 1,
+        "regular-initial" : 1,
+        "regular-kick" : 1,
+        "regular-kick-open" : 1,
+        "regular-open" : 1,
+        "regular-pre-compact" : 1,
+        "regular-reopen" : 1,
+        "regular-reverse" : 1,
+        "regular-rich-exit" : 1,
+        "regular-rich-exit-open" : 1,
+        "regular-width" : 1,
+        "regular-width-reverse" : 1
+      },
+      "currentIdentity" : "ObjectIdentifier(0x0000007a97a1b100)",
+      "delegateNil" : true,
+      "mainThread" : true,
+      "mode" : "reduced",
+      "model" : {
+        "height" : 33.5,
+        "width" : 185,
+        "x" : 307.5,
+        "y" : 366.5
+      },
+      "modelRadius" : 12,
+      "otherKeys" : {
+        "clip" : [
+
+        ],
+        "keyLine" : [
+
+        ],
+        "keyMask" : [
+
+        ]
+      },
+      "pendingExit" : false,
+      "presentation" : {
+        "height" : 33.5,
+        "width" : 185,
+        "x" : 307.5,
+        "y" : 366.5
+      },
+      "presentedRadius" : 12,
+      "reduced" : true,
+      "stage" : "reduced-open-old",
+      "tileIDs" : [
+
+      ],
+      "time" : 93760.451159333359,
+      "visible" : false
+    },
+    {
+      "active" : false,
+      "alpha" : 0,
+      "animations" : [
+
+      ],
+      "cacheOnly" : true,
+      "counts" : {
+        "reduced-initial" : 1,
+        "regular-cancel-open" : 1,
+        "regular-cancel-reopen" : 1,
+        "regular-final-close" : 1,
+        "regular-initial" : 1,
+        "regular-kick" : 1,
+        "regular-kick-open" : 1,
+        "regular-open" : 1,
+        "regular-pre-compact" : 1,
+        "regular-reopen" : 1,
+        "regular-reverse" : 1,
+        "regular-rich-exit" : 1,
+        "regular-rich-exit-open" : 1,
+        "regular-width" : 1,
+        "regular-width-reverse" : 1
+      },
+      "currentIdentity" : "ObjectIdentifier(0x0000007a97672d80)",
+      "delegateNil" : true,
+      "mainThread" : true,
+      "mode" : "reduced",
+      "model" : {
+        "height" : 220,
+        "width" : 305,
+        "x" : 247.5,
+        "y" : 180
+      },
+      "modelRadius" : 28,
+      "otherKeys" : {
+        "clip" : [
+
+        ],
+        "keyLine" : [
+
+        ],
+        "keyMask" : [
+
+        ]
+      },
+      "pendingExit" : false,
+      "presentation" : {
+        "height" : 33.5,
+        "width" : 185,
+        "x" : 307.5,
+        "y" : 366.5
+      },
+      "presentedRadius" : 12,
+      "reduced" : true,
+      "stage" : "reduced-open-new",
+      "tileIDs" : [
+        {
+          "id" : 900
+        }
+      ],
+      "time" : 93760.460281375024,
+      "visible" : false
+    },
+    {
+      "active" : false,
+      "alpha" : 0,
+      "animations" : [
+
+      ],
+      "cacheOnly" : true,
+      "counts" : {
+        "reduced-initial" : 1,
+        "reduced-open" : 1,
+        "regular-cancel-open" : 1,
+        "regular-cancel-reopen" : 1,
+        "regular-final-close" : 1,
+        "regular-initial" : 1,
+        "regular-kick" : 1,
+        "regular-kick-open" : 1,
+        "regular-open" : 1,
+        "regular-pre-compact" : 1,
+        "regular-reopen" : 1,
+        "regular-reverse" : 1,
+        "regular-rich-exit" : 1,
+        "regular-rich-exit-open" : 1,
+        "regular-width" : 1,
+        "regular-width-reverse" : 1
+      },
+      "currentIdentity" : "ObjectIdentifier(0x0000007a97672d80)",
+      "delegateNil" : true,
+      "mainThread" : true,
+      "mode" : "reduced",
+      "model" : {
+        "height" : 220,
+        "width" : 305,
+        "x" : 247.5,
+        "y" : 180
+      },
+      "modelRadius" : 28,
+      "otherKeys" : {
+        "clip" : [
+
+        ],
+        "keyLine" : [
+
+        ],
+        "keyMask" : [
+
+        ]
+      },
+      "pendingExit" : false,
+      "presentation" : {
+        "height" : 220,
+        "width" : 305,
+        "x" : 247.5,
+        "y" : 180
+      },
+      "presentedRadius" : 28,
+      "reduced" : true,
+      "stage" : "reduced-open-attach",
+      "tileIDs" : [
+        {
+          "id" : 900
+        }
+      ],
+      "time" : 93760.478849041683,
+      "visible" : false
+    },
+    {
+      "active" : false,
+      "alpha" : 0,
+      "animations" : [
+
+      ],
+      "cacheOnly" : true,
+      "counts" : {
+        "reduced-initial" : 1,
+        "reduced-open" : 1,
+        "regular-cancel-open" : 1,
+        "regular-cancel-reopen" : 1,
+        "regular-final-close" : 1,
+        "regular-initial" : 1,
+        "regular-kick" : 1,
+        "regular-kick-open" : 1,
+        "regular-open" : 1,
+        "regular-pre-compact" : 1,
+        "regular-reopen" : 1,
+        "regular-reverse" : 1,
+        "regular-rich-exit" : 1,
+        "regular-rich-exit-open" : 1,
+        "regular-width" : 1,
+        "regular-width-reverse" : 1
+      },
+      "currentIdentity" : "ObjectIdentifier(0x0000007a97672d80)",
+      "delegateNil" : true,
+      "mainThread" : true,
+      "mode" : "reduced",
+      "model" : {
+        "height" : 220,
+        "width" : 305,
+        "x" : 247.5,
+        "y" : 180
+      },
+      "modelRadius" : 28,
+      "otherKeys" : {
+        "clip" : [
+
+        ],
+        "keyLine" : [
+
+        ],
+        "keyMask" : [
+
+        ]
+      },
+      "pendingExit" : false,
+      "presentation" : {
+        "height" : 220,
+        "width" : 305,
+        "x" : 247.5,
+        "y" : 180
+      },
+      "presentedRadius" : 28,
+      "reduced" : true,
+      "stage" : "reduced-open-sample",
+      "tileIDs" : [
+        {
+          "id" : 900
+        }
+      ],
+      "time" : 93760.567743291685,
+      "visible" : false
+    },
+    {
+      "active" : false,
+      "alpha" : 0,
+      "animations" : [
+
+      ],
+      "cacheOnly" : true,
+      "counts" : {
+        "reduced-initial" : 1,
+        "reduced-open" : 1,
+        "regular-cancel-open" : 1,
+        "regular-cancel-reopen" : 1,
+        "regular-final-close" : 1,
+        "regular-initial" : 1,
+        "regular-kick" : 1,
+        "regular-kick-open" : 1,
+        "regular-open" : 1,
+        "regular-pre-compact" : 1,
+        "regular-reopen" : 1,
+        "regular-reverse" : 1,
+        "regular-rich-exit" : 1,
+        "regular-rich-exit-open" : 1,
+        "regular-width" : 1,
+        "regular-width-reverse" : 1
+      },
+      "currentIdentity" : "ObjectIdentifier(0x0000007a97672d80)",
+      "delegateNil" : true,
+      "mainThread" : true,
+      "mode" : "reduced",
+      "model" : {
+        "height" : 220,
+        "width" : 305,
+        "x" : 247.5,
+        "y" : 180
+      },
+      "modelRadius" : 28,
+      "otherKeys" : {
+        "clip" : [
+
+        ],
+        "keyLine" : [
+
+        ],
+        "keyMask" : [
+
+        ]
+      },
+      "pendingExit" : false,
+      "presentation" : {
+        "height" : 220,
+        "width" : 305,
+        "x" : 247.5,
+        "y" : 180
+      },
+      "presentedRadius" : 28,
+      "reduced" : true,
+      "stage" : "reduced-reverse-old",
+      "tileIDs" : [
+        {
+          "id" : 900
+        }
+      ],
+      "time" : 93760.720684708358,
+      "visible" : false
+    },
+    {
+      "active" : false,
+      "alpha" : 0,
+      "animations" : [
+
+      ],
+      "cacheOnly" : true,
+      "counts" : {
+        "reduced-initial" : 1,
+        "reduced-open" : 1,
+        "regular-cancel-open" : 1,
+        "regular-cancel-reopen" : 1,
+        "regular-final-close" : 1,
+        "regular-initial" : 1,
+        "regular-kick" : 1,
+        "regular-kick-open" : 1,
+        "regular-open" : 1,
+        "regular-pre-compact" : 1,
+        "regular-reopen" : 1,
+        "regular-reverse" : 1,
+        "regular-rich-exit" : 1,
+        "regular-rich-exit-open" : 1,
+        "regular-width" : 1,
+        "regular-width-reverse" : 1
+      },
+      "currentIdentity" : "ObjectIdentifier(0x0000007a97672d80)",
+      "delegateNil" : true,
+      "mainThread" : true,
+      "mode" : "reduced",
+      "model" : {
+        "height" : 33.5,
+        "width" : 185,
+        "x" : 307.5,
+        "y" : 366.5
+      },
+      "modelRadius" : 12,
+      "otherKeys" : {
+        "clip" : [
+
+        ],
+        "keyLine" : [
+
+        ],
+        "keyMask" : [
+
+        ]
+      },
+      "pendingExit" : false,
+      "presentation" : {
+        "height" : 220,
+        "width" : 305,
+        "x" : 247.5,
+        "y" : 180
+      },
+      "presentedRadius" : 28,
+      "reduced" : true,
+      "stage" : "reduced-reverse-new",
+      "tileIDs" : [
+        {
+          "id" : 900
+        }
+      ],
+      "time" : 93760.739479875017,
+      "visible" : false
+    },
+    {
+      "active" : false,
+      "alpha" : 0,
+      "animations" : [
+
+      ],
+      "cacheOnly" : true,
+      "counts" : {
+        "reduced-initial" : 1,
+        "reduced-open" : 1,
+        "reduced-reverse" : 1,
+        "regular-cancel-open" : 1,
+        "regular-cancel-reopen" : 1,
+        "regular-final-close" : 1,
+        "regular-initial" : 1,
+        "regular-kick" : 1,
+        "regular-kick-open" : 1,
+        "regular-open" : 1,
+        "regular-pre-compact" : 1,
+        "regular-reopen" : 1,
+        "regular-reverse" : 1,
+        "regular-rich-exit" : 1,
+        "regular-rich-exit-open" : 1,
+        "regular-width" : 1,
+        "regular-width-reverse" : 1
+      },
+      "currentIdentity" : "ObjectIdentifier(0x0000007a97672d80)",
+      "delegateNil" : true,
+      "mainThread" : true,
+      "mode" : "reduced",
+      "model" : {
+        "height" : 33.5,
+        "width" : 185,
+        "x" : 307.5,
+        "y" : 366.5
+      },
+      "modelRadius" : 12,
+      "otherKeys" : {
+        "clip" : [
+
+        ],
+        "keyLine" : [
+
+        ],
+        "keyMask" : [
+
+        ]
+      },
+      "pendingExit" : false,
+      "presentation" : {
+        "height" : 33.5,
+        "width" : 185,
+        "x" : 307.5,
+        "y" : 366.5
+      },
+      "presentedRadius" : 12,
+      "reduced" : true,
+      "stage" : "reduced-reverse-attach",
+      "tileIDs" : [
+        {
+          "id" : 900
+        }
+      ],
+      "time" : 93760.817576291694,
+      "visible" : false
+    },
+    {
+      "active" : false,
+      "alpha" : 0,
+      "animations" : [
+
+      ],
+      "cacheOnly" : true,
+      "counts" : {
+        "reduced-initial" : 1,
+        "reduced-open" : 1,
+        "reduced-reverse" : 1,
+        "regular-cancel-open" : 1,
+        "regular-cancel-reopen" : 1,
+        "regular-final-close" : 1,
+        "regular-initial" : 1,
+        "regular-kick" : 1,
+        "regular-kick-open" : 1,
+        "regular-open" : 1,
+        "regular-pre-compact" : 1,
+        "regular-reopen" : 1,
+        "regular-reverse" : 1,
+        "regular-rich-exit" : 1,
+        "regular-rich-exit-open" : 1,
+        "regular-width" : 1,
+        "regular-width-reverse" : 1
+      },
+      "currentIdentity" : "ObjectIdentifier(0x0000007a97672d80)",
+      "delegateNil" : true,
+      "mainThread" : true,
+      "mode" : "reduced",
+      "model" : {
+        "height" : 33.5,
+        "width" : 185,
+        "x" : 307.5,
+        "y" : 366.5
+      },
+      "modelRadius" : 12,
+      "otherKeys" : {
+        "clip" : [
+
+        ],
+        "keyLine" : [
+
+        ],
+        "keyMask" : [
+
+        ]
+      },
+      "pendingExit" : false,
+      "presentation" : {
+        "height" : 33.5,
+        "width" : 185,
+        "x" : 307.5,
+        "y" : 366.5
+      },
+      "presentedRadius" : 12,
+      "reduced" : true,
+      "stage" : "reduced-reverse-sample",
+      "tileIDs" : [
+        {
+          "id" : 900
+        }
+      ],
+      "time" : 93760.955313125014,
+      "visible" : false
+    },
+    {
+      "active" : false,
+      "alpha" : 0,
+      "animations" : [
+
+      ],
+      "cacheOnly" : true,
+      "counts" : {
+        "reduced-initial" : 1,
+        "reduced-open" : 1,
+        "reduced-reverse" : 1,
+        "regular-cancel-open" : 1,
+        "regular-cancel-reopen" : 1,
+        "regular-final-close" : 1,
+        "regular-initial" : 1,
+        "regular-kick" : 1,
+        "regular-kick-open" : 1,
+        "regular-open" : 1,
+        "regular-pre-compact" : 1,
+        "regular-reopen" : 1,
+        "regular-reverse" : 1,
+        "regular-rich-exit" : 1,
+        "regular-rich-exit-open" : 1,
+        "regular-width" : 1,
+        "regular-width-reverse" : 1
+      },
+      "currentIdentity" : "ObjectIdentifier(0x0000007a97672d80)",
+      "delegateNil" : true,
+      "mainThread" : true,
+      "mode" : "reduced",
+      "model" : {
+        "height" : 33.5,
+        "width" : 185,
+        "x" : 307.5,
+        "y" : 366.5
+      },
+      "modelRadius" : 12,
+      "otherKeys" : {
+        "clip" : [
+
+        ],
+        "keyLine" : [
+
+        ],
+        "keyMask" : [
+
+        ]
+      },
+      "pendingExit" : false,
+      "presentation" : {
+        "height" : 33.5,
+        "width" : 185,
+        "x" : 307.5,
+        "y" : 366.5
+      },
+      "presentedRadius" : 12,
+      "reduced" : true,
+      "stage" : "reduced-reopen-old",
+      "tileIDs" : [
+        {
+          "id" : 900
+        }
+      ],
+      "time" : 93760.959718958358,
+      "visible" : false
+    },
+    {
+      "active" : false,
+      "alpha" : 0,
+      "animations" : [
+
+      ],
+      "cacheOnly" : true,
+      "counts" : {
+        "reduced-initial" : 1,
+        "reduced-open" : 1,
+        "reduced-reverse" : 1,
+        "regular-cancel-open" : 1,
+        "regular-cancel-reopen" : 1,
+        "regular-final-close" : 1,
+        "regular-initial" : 1,
+        "regular-kick" : 1,
+        "regular-kick-open" : 1,
+        "regular-open" : 1,
+        "regular-pre-compact" : 1,
+        "regular-reopen" : 1,
+        "regular-reverse" : 1,
+        "regular-rich-exit" : 1,
+        "regular-rich-exit-open" : 1,
+        "regular-width" : 1,
+        "regular-width-reverse" : 1
+      },
+      "currentIdentity" : "ObjectIdentifier(0x0000007a97672d80)",
+      "delegateNil" : true,
+      "mainThread" : true,
+      "mode" : "reduced",
+      "model" : {
+        "height" : 220,
+        "width" : 305,
+        "x" : 247.5,
+        "y" : 180
+      },
+      "modelRadius" : 28,
+      "otherKeys" : {
+        "clip" : [
+
+        ],
+        "keyLine" : [
+
+        ],
+        "keyMask" : [
+
+        ]
+      },
+      "pendingExit" : false,
+      "presentation" : {
+        "height" : 33.5,
+        "width" : 185,
+        "x" : 307.5,
+        "y" : 366.5
+      },
+      "presentedRadius" : 12,
+      "reduced" : true,
+      "stage" : "reduced-reopen-new",
+      "tileIDs" : [
+        {
+          "id" : 900
+        }
+      ],
+      "time" : 93760.962521958354,
+      "visible" : false
+    },
+    {
+      "active" : false,
+      "alpha" : 0,
+      "animations" : [
+
+      ],
+      "cacheOnly" : true,
+      "counts" : {
+        "reduced-initial" : 1,
+        "reduced-open" : 1,
+        "reduced-reopen" : 1,
+        "reduced-reverse" : 1,
+        "regular-cancel-open" : 1,
+        "regular-cancel-reopen" : 1,
+        "regular-final-close" : 1,
+        "regular-initial" : 1,
+        "regular-kick" : 1,
+        "regular-kick-open" : 1,
+        "regular-open" : 1,
+        "regular-pre-compact" : 1,
+        "regular-reopen" : 1,
+        "regular-reverse" : 1,
+        "regular-rich-exit" : 1,
+        "regular-rich-exit-open" : 1,
+        "regular-width" : 1,
+        "regular-width-reverse" : 1
+      },
+      "currentIdentity" : "ObjectIdentifier(0x0000007a97672d80)",
+      "delegateNil" : true,
+      "mainThread" : true,
+      "mode" : "reduced",
+      "model" : {
+        "height" : 220,
+        "width" : 305,
+        "x" : 247.5,
+        "y" : 180
+      },
+      "modelRadius" : 28,
+      "otherKeys" : {
+        "clip" : [
+
+        ],
+        "keyLine" : [
+
+        ],
+        "keyMask" : [
+
+        ]
+      },
+      "pendingExit" : false,
+      "presentation" : {
+        "height" : 220,
+        "width" : 305,
+        "x" : 247.5,
+        "y" : 180
+      },
+      "presentedRadius" : 28,
+      "reduced" : true,
+      "stage" : "reduced-reopen-attach",
+      "tileIDs" : [
+        {
+          "id" : 900
+        }
+      ],
+      "time" : 93760.995008500016,
+      "visible" : false
+    },
+    {
+      "active" : false,
+      "alpha" : 0,
+      "animations" : [
+
+      ],
+      "cacheOnly" : true,
+      "counts" : {
+        "reduced-initial" : 1,
+        "reduced-open" : 1,
+        "reduced-reopen" : 1,
+        "reduced-reverse" : 1,
+        "regular-cancel-open" : 1,
+        "regular-cancel-reopen" : 1,
+        "regular-final-close" : 1,
+        "regular-initial" : 1,
+        "regular-kick" : 1,
+        "regular-kick-open" : 1,
+        "regular-open" : 1,
+        "regular-pre-compact" : 1,
+        "regular-reopen" : 1,
+        "regular-reverse" : 1,
+        "regular-rich-exit" : 1,
+        "regular-rich-exit-open" : 1,
+        "regular-width" : 1,
+        "regular-width-reverse" : 1
+      },
+      "currentIdentity" : "ObjectIdentifier(0x0000007a97672d80)",
+      "delegateNil" : true,
+      "mainThread" : true,
+      "mode" : "reduced",
+      "model" : {
+        "height" : 220,
+        "width" : 305,
+        "x" : 247.5,
+        "y" : 180
+      },
+      "modelRadius" : 28,
+      "otherKeys" : {
+        "clip" : [
+
+        ],
+        "keyLine" : [
+
+        ],
+        "keyMask" : [
+
+        ]
+      },
+      "pendingExit" : false,
+      "presentation" : {
+        "height" : 220,
+        "width" : 305,
+        "x" : 247.5,
+        "y" : 180
+      },
+      "presentedRadius" : 28,
+      "reduced" : true,
+      "stage" : "reduced-width-old",
+      "tileIDs" : [
+        {
+          "id" : 900
+        }
+      ],
+      "time" : 93761.135471875023,
+      "visible" : false
+    },
+    {
+      "active" : false,
+      "alpha" : 0,
+      "animations" : [
+
+      ],
+      "cacheOnly" : true,
+      "counts" : {
+        "reduced-initial" : 1,
+        "reduced-open" : 1,
+        "reduced-reopen" : 1,
+        "reduced-reverse" : 1,
+        "regular-cancel-open" : 1,
+        "regular-cancel-reopen" : 1,
+        "regular-final-close" : 1,
+        "regular-initial" : 1,
+        "regular-kick" : 1,
+        "regular-kick-open" : 1,
+        "regular-open" : 1,
+        "regular-pre-compact" : 1,
+        "regular-reopen" : 1,
+        "regular-reverse" : 1,
+        "regular-rich-exit" : 1,
+        "regular-rich-exit-open" : 1,
+        "regular-width" : 1,
+        "regular-width-reverse" : 1
+      },
+      "currentIdentity" : "ObjectIdentifier(0x0000007a97672d80)",
+      "delegateNil" : true,
+      "mainThread" : true,
+      "mode" : "reduced",
+      "model" : {
+        "height" : 220,
+        "width" : 425,
+        "x" : 187.5,
+        "y" : 180
+      },
+      "modelRadius" : 28,
+      "otherKeys" : {
+        "clip" : [
+
+        ],
+        "keyLine" : [
+
+        ],
+        "keyMask" : [
+
+        ]
+      },
+      "pendingExit" : false,
+      "presentation" : {
+        "height" : 220,
+        "width" : 305,
+        "x" : 247.5,
+        "y" : 180
+      },
+      "presentedRadius" : 28,
+      "reduced" : true,
+      "stage" : "reduced-width-new",
+      "tileIDs" : [
+        {
+          "id" : 900
+        }
+      ],
+      "time" : 93761.137528791689,
+      "visible" : false
+    },
+    {
+      "active" : false,
+      "alpha" : 0,
+      "animations" : [
+
+      ],
+      "cacheOnly" : true,
+      "counts" : {
+        "reduced-initial" : 1,
+        "reduced-open" : 1,
+        "reduced-reopen" : 1,
+        "reduced-reverse" : 1,
+        "reduced-width" : 1,
+        "regular-cancel-open" : 1,
+        "regular-cancel-reopen" : 1,
+        "regular-final-close" : 1,
+        "regular-initial" : 1,
+        "regular-kick" : 1,
+        "regular-kick-open" : 1,
+        "regular-open" : 1,
+        "regular-pre-compact" : 1,
+        "regular-reopen" : 1,
+        "regular-reverse" : 1,
+        "regular-rich-exit" : 1,
+        "regular-rich-exit-open" : 1,
+        "regular-width" : 1,
+        "regular-width-reverse" : 1
+      },
+      "currentIdentity" : "ObjectIdentifier(0x0000007a97672d80)",
+      "delegateNil" : true,
+      "mainThread" : true,
+      "mode" : "reduced",
+      "model" : {
+        "height" : 220,
+        "width" : 425,
+        "x" : 187.5,
+        "y" : 180
+      },
+      "modelRadius" : 28,
+      "otherKeys" : {
+        "clip" : [
+
+        ],
+        "keyLine" : [
+
+        ],
+        "keyMask" : [
+
+        ]
+      },
+      "pendingExit" : false,
+      "presentation" : {
+        "height" : 220,
+        "width" : 425,
+        "x" : 187.5,
+        "y" : 180
+      },
+      "presentedRadius" : 28,
+      "reduced" : true,
+      "stage" : "reduced-width-attach",
+      "tileIDs" : [
+        {
+          "id" : 900
+        }
+      ],
+      "time" : 93761.155341666687,
+      "visible" : false
+    },
+    {
+      "active" : false,
+      "alpha" : 0,
+      "animations" : [
+
+      ],
+      "cacheOnly" : true,
+      "counts" : {
+        "reduced-initial" : 1,
+        "reduced-open" : 1,
+        "reduced-reopen" : 1,
+        "reduced-reverse" : 1,
+        "reduced-width" : 1,
+        "regular-cancel-open" : 1,
+        "regular-cancel-reopen" : 1,
+        "regular-final-close" : 1,
+        "regular-initial" : 1,
+        "regular-kick" : 1,
+        "regular-kick-open" : 1,
+        "regular-open" : 1,
+        "regular-pre-compact" : 1,
+        "regular-reopen" : 1,
+        "regular-reverse" : 1,
+        "regular-rich-exit" : 1,
+        "regular-rich-exit-open" : 1,
+        "regular-width" : 1,
+        "regular-width-reverse" : 1
+      },
+      "currentIdentity" : "ObjectIdentifier(0x0000007a97672d80)",
+      "delegateNil" : true,
+      "mainThread" : true,
+      "mode" : "reduced",
+      "model" : {
+        "height" : 220,
+        "width" : 425,
+        "x" : 187.5,
+        "y" : 180
+      },
+      "modelRadius" : 28,
+      "otherKeys" : {
+        "clip" : [
+
+        ],
+        "keyLine" : [
+
+        ],
+        "keyMask" : [
+
+        ]
+      },
+      "pendingExit" : false,
+      "presentation" : {
+        "height" : 220,
+        "width" : 425,
+        "x" : 187.5,
+        "y" : 180
+      },
+      "presentedRadius" : 28,
+      "reduced" : true,
+      "stage" : "reduced-wide-settled",
+      "tileIDs" : [
+        {
+          "id" : 900
+        }
+      ],
+      "time" : 93761.978666791692,
+      "visible" : false
+    },
+    {
+      "active" : false,
+      "alpha" : 0,
+      "animations" : [
+
+      ],
+      "cacheOnly" : true,
+      "counts" : {
+        "reduced-initial" : 1,
+        "reduced-open" : 1,
+        "reduced-reopen" : 1,
+        "reduced-reverse" : 1,
+        "reduced-width" : 1,
+        "regular-cancel-open" : 1,
+        "regular-cancel-reopen" : 1,
+        "regular-final-close" : 1,
+        "regular-initial" : 1,
+        "regular-kick" : 1,
+        "regular-kick-open" : 1,
+        "regular-open" : 1,
+        "regular-pre-compact" : 1,
+        "regular-reopen" : 1,
+        "regular-reverse" : 1,
+        "regular-rich-exit" : 1,
+        "regular-rich-exit-open" : 1,
+        "regular-width" : 1,
+        "regular-width-reverse" : 1
+      },
+      "currentIdentity" : "ObjectIdentifier(0x0000007a97672d80)",
+      "delegateNil" : true,
+      "mainThread" : true,
+      "mode" : "reduced",
+      "model" : {
+        "height" : 220,
+        "width" : 425,
+        "x" : 187.5,
+        "y" : 180
+      },
+      "modelRadius" : 28,
+      "otherKeys" : {
+        "clip" : [
+
+        ],
+        "keyLine" : [
+
+        ],
+        "keyMask" : [
+
+        ]
+      },
+      "pendingExit" : false,
+      "presentation" : {
+        "height" : 220,
+        "width" : 425,
+        "x" : 187.5,
+        "y" : 180
+      },
+      "presentedRadius" : 28,
+      "reduced" : true,
+      "stage" : "reduced-width-reverse-old",
+      "tileIDs" : [
+        {
+          "id" : 900
+        }
+      ],
+      "time" : 93761.97945579169,
+      "visible" : false
+    },
+    {
+      "active" : false,
+      "alpha" : 0,
+      "animations" : [
+
+      ],
+      "cacheOnly" : true,
+      "counts" : {
+        "reduced-initial" : 1,
+        "reduced-open" : 1,
+        "reduced-reopen" : 1,
+        "reduced-reverse" : 1,
+        "reduced-width" : 1,
+        "regular-cancel-open" : 1,
+        "regular-cancel-reopen" : 1,
+        "regular-final-close" : 1,
+        "regular-initial" : 1,
+        "regular-kick" : 1,
+        "regular-kick-open" : 1,
+        "regular-open" : 1,
+        "regular-pre-compact" : 1,
+        "regular-reopen" : 1,
+        "regular-reverse" : 1,
+        "regular-rich-exit" : 1,
+        "regular-rich-exit-open" : 1,
+        "regular-width" : 1,
+        "regular-width-reverse" : 1
+      },
+      "currentIdentity" : "ObjectIdentifier(0x0000007a97672d80)",
+      "delegateNil" : true,
+      "mainThread" : true,
+      "mode" : "reduced",
+      "model" : {
+        "height" : 220,
+        "width" : 305,
+        "x" : 247.5,
+        "y" : 180
+      },
+      "modelRadius" : 28,
+      "otherKeys" : {
+        "clip" : [
+
+        ],
+        "keyLine" : [
+
+        ],
+        "keyMask" : [
+
+        ]
+      },
+      "pendingExit" : false,
+      "presentation" : {
+        "height" : 220,
+        "width" : 425,
+        "x" : 187.5,
+        "y" : 180
+      },
+      "presentedRadius" : 28,
+      "reduced" : true,
+      "stage" : "reduced-width-reverse-new",
+      "tileIDs" : [
+        {
+          "id" : 900
+        }
+      ],
+      "time" : 93761.980871416687,
+      "visible" : false
+    },
+    {
+      "active" : false,
+      "alpha" : 0,
+      "animations" : [
+
+      ],
+      "cacheOnly" : true,
+      "counts" : {
+        "reduced-initial" : 1,
+        "reduced-open" : 1,
+        "reduced-reopen" : 1,
+        "reduced-reverse" : 1,
+        "reduced-width" : 1,
+        "reduced-width-reverse" : 1,
+        "regular-cancel-open" : 1,
+        "regular-cancel-reopen" : 1,
+        "regular-final-close" : 1,
+        "regular-initial" : 1,
+        "regular-kick" : 1,
+        "regular-kick-open" : 1,
+        "regular-open" : 1,
+        "regular-pre-compact" : 1,
+        "regular-reopen" : 1,
+        "regular-reverse" : 1,
+        "regular-rich-exit" : 1,
+        "regular-rich-exit-open" : 1,
+        "regular-width" : 1,
+        "regular-width-reverse" : 1
+      },
+      "currentIdentity" : "ObjectIdentifier(0x0000007a97672d80)",
+      "delegateNil" : true,
+      "mainThread" : true,
+      "mode" : "reduced",
+      "model" : {
+        "height" : 220,
+        "width" : 305,
+        "x" : 247.5,
+        "y" : 180
+      },
+      "modelRadius" : 28,
+      "otherKeys" : {
+        "clip" : [
+
+        ],
+        "keyLine" : [
+
+        ],
+        "keyMask" : [
+
+        ]
+      },
+      "pendingExit" : false,
+      "presentation" : {
+        "height" : 220,
+        "width" : 305,
+        "x" : 247.5,
+        "y" : 180
+      },
+      "presentedRadius" : 28,
+      "reduced" : true,
+      "stage" : "reduced-width-reverse-attach",
+      "tileIDs" : [
+        {
+          "id" : 900
+        }
+      ],
+      "time" : 93761.997272750014,
+      "visible" : false
+    },
+    {
+      "active" : false,
+      "alpha" : 0,
+      "animations" : [
+
+      ],
+      "cacheOnly" : true,
+      "counts" : {
+        "reduced-initial" : 1,
+        "reduced-open" : 1,
+        "reduced-reopen" : 1,
+        "reduced-reverse" : 1,
+        "reduced-width" : 1,
+        "reduced-width-reverse" : 1,
+        "regular-cancel-open" : 1,
+        "regular-cancel-reopen" : 1,
+        "regular-final-close" : 1,
+        "regular-initial" : 1,
+        "regular-kick" : 1,
+        "regular-kick-open" : 1,
+        "regular-open" : 1,
+        "regular-pre-compact" : 1,
+        "regular-reopen" : 1,
+        "regular-reverse" : 1,
+        "regular-rich-exit" : 1,
+        "regular-rich-exit-open" : 1,
+        "regular-width" : 1,
+        "regular-width-reverse" : 1
+      },
+      "currentIdentity" : "ObjectIdentifier(0x0000007a97672d80)",
+      "delegateNil" : true,
+      "mainThread" : true,
+      "mode" : "reduced",
+      "model" : {
+        "height" : 220,
+        "width" : 305,
+        "x" : 247.5,
+        "y" : 180
+      },
+      "modelRadius" : 28,
+      "otherKeys" : {
+        "clip" : [
+
+        ],
+        "keyLine" : [
+
+        ],
+        "keyMask" : [
+
+        ]
+      },
+      "pendingExit" : false,
+      "presentation" : {
+        "height" : 220,
+        "width" : 305,
+        "x" : 247.5,
+        "y" : 180
+      },
+      "presentedRadius" : 28,
+      "reduced" : true,
+      "stage" : "reduced-settled",
+      "tileIDs" : [
+        {
+          "id" : 900
+        }
+      ],
+      "time" : 93762.744702458353,
+      "visible" : false
+    },
+    {
+      "active" : false,
+      "alpha" : 0,
+      "animations" : [
+
+      ],
+      "cacheOnly" : true,
+      "counts" : {
+        "reduced-initial" : 1,
+        "reduced-open" : 1,
+        "reduced-pre-compact" : 1,
+        "reduced-reopen" : 1,
+        "reduced-reverse" : 1,
+        "reduced-width" : 1,
+        "reduced-width-reverse" : 1,
+        "regular-cancel-open" : 1,
+        "regular-cancel-reopen" : 1,
+        "regular-final-close" : 1,
+        "regular-initial" : 1,
+        "regular-kick" : 1,
+        "regular-kick-open" : 1,
+        "regular-open" : 1,
+        "regular-pre-compact" : 1,
+        "regular-reopen" : 1,
+        "regular-reverse" : 1,
+        "regular-rich-exit" : 1,
+        "regular-rich-exit-open" : 1,
+        "regular-width" : 1,
+        "regular-width-reverse" : 1
+      },
+      "currentIdentity" : "ObjectIdentifier(0x0000007a97a1b100)",
+      "delegateNil" : true,
+      "mainThread" : true,
+      "mode" : "reduced",
+      "model" : {
+        "height" : 33.5,
+        "width" : 185,
+        "x" : 307.5,
+        "y" : 366.5
+      },
+      "modelRadius" : 12,
+      "otherKeys" : {
+        "clip" : [
+
+        ],
+        "keyLine" : [
+
+        ],
+        "keyMask" : [
+
+        ]
+      },
+      "pendingExit" : false,
+      "presentation" : {
+        "height" : 33.5,
+        "width" : 185,
+        "x" : 307.5,
+        "y" : 366.5
+      },
+      "presentedRadius" : 12,
+      "reduced" : true,
+      "stage" : "reduced-pre-compact-settled",
+      "tileIDs" : [
+        {
+          "id" : 901
+        }
+      ],
+      "time" : 93763.482893666689,
+      "visible" : false
+    },
+    {
+      "active" : false,
+      "alpha" : 0,
+      "animations" : [
+
+      ],
+      "cacheOnly" : true,
+      "counts" : {
+        "reduced-initial" : 1,
+        "reduced-open" : 1,
+        "reduced-pre-compact" : 1,
+        "reduced-reopen" : 1,
+        "reduced-reverse" : 1,
+        "reduced-width" : 1,
+        "reduced-width-reverse" : 1,
+        "regular-cancel-open" : 1,
+        "regular-cancel-reopen" : 1,
+        "regular-final-close" : 1,
+        "regular-initial" : 1,
+        "regular-kick" : 1,
+        "regular-kick-open" : 1,
+        "regular-open" : 1,
+        "regular-pre-compact" : 1,
+        "regular-reopen" : 1,
+        "regular-reverse" : 1,
+        "regular-rich-exit" : 1,
+        "regular-rich-exit-open" : 1,
+        "regular-width" : 1,
+        "regular-width-reverse" : 1
+      },
+      "currentIdentity" : "ObjectIdentifier(0x0000007a97672d80)",
+      "delegateNil" : true,
+      "mainThread" : true,
+      "mode" : "reduced",
+      "model" : {
+        "height" : 220,
+        "width" : 305,
+        "x" : 247.5,
+        "y" : 180
+      },
+      "modelRadius" : 28,
+      "otherKeys" : {
+        "clip" : [
+
+        ],
+        "keyLine" : [
+
+        ],
+        "keyMask" : [
+
+        ]
+      },
+      "pendingExit" : false,
+      "presentation" : {
+        "height" : 33.5,
+        "width" : 185,
+        "x" : 307.5,
+        "y" : 366.5
+      },
+      "presentedRadius" : 12,
+      "reduced" : true,
+      "stage" : "reduced-rm-open-after",
+      "tileIDs" : [
+        {
+          "id" : 900
+        }
+      ],
+      "time" : 93763.493277083355,
+      "visible" : false
+    },
+    {
+      "active" : false,
+      "alpha" : 0,
+      "animations" : [
+
+      ],
+      "cacheOnly" : true,
+      "counts" : {
+        "reduced-initial" : 1,
+        "reduced-open" : 1,
+        "reduced-pre-compact" : 1,
+        "reduced-reopen" : 1,
+        "reduced-reverse" : 1,
+        "reduced-rm-open" : 1,
+        "reduced-width" : 1,
+        "reduced-width-reverse" : 1,
+        "regular-cancel-open" : 1,
+        "regular-cancel-reopen" : 1,
+        "regular-final-close" : 1,
+        "regular-initial" : 1,
+        "regular-kick" : 1,
+        "regular-kick-open" : 1,
+        "regular-open" : 1,
+        "regular-pre-compact" : 1,
+        "regular-reopen" : 1,
+        "regular-reverse" : 1,
+        "regular-rich-exit" : 1,
+        "regular-rich-exit-open" : 1,
+        "regular-width" : 1,
+        "regular-width-reverse" : 1
+      },
+      "currentIdentity" : "ObjectIdentifier(0x0000007a97672d80)",
+      "delegateNil" : true,
+      "mainThread" : true,
+      "mode" : "reduced",
+      "model" : {
+        "height" : 220,
+        "width" : 305,
+        "x" : 247.5,
+        "y" : 180
+      },
+      "modelRadius" : 28,
+      "otherKeys" : {
+        "clip" : [
+
+        ],
+        "keyLine" : [
+
+        ],
+        "keyMask" : [
+
+        ]
+      },
+      "pendingExit" : false,
+      "presentation" : {
+        "height" : 220,
+        "width" : 305,
+        "x" : 247.5,
+        "y" : 180
+      },
+      "presentedRadius" : 28,
+      "reduced" : true,
+      "stage" : "reduced-rm-open-settled",
+      "tileIDs" : [
+        {
+          "id" : 900
+        }
+      ],
+      "time" : 93763.55466033335,
+      "visible" : false
+    },
+    {
+      "active" : false,
+      "alpha" : 0,
+      "animations" : [
+
+      ],
+      "cacheOnly" : true,
+      "counts" : {
+        "reduced-initial" : 1,
+        "reduced-open" : 1,
+        "reduced-pre-compact" : 1,
+        "reduced-reopen" : 1,
+        "reduced-reverse" : 1,
+        "reduced-rm-open" : 1,
+        "reduced-width" : 1,
+        "reduced-width-reverse" : 1,
+        "regular-cancel-open" : 1,
+        "regular-cancel-reopen" : 1,
+        "regular-final-close" : 1,
+        "regular-initial" : 1,
+        "regular-kick" : 1,
+        "regular-kick-open" : 1,
+        "regular-open" : 1,
+        "regular-pre-compact" : 1,
+        "regular-reopen" : 1,
+        "regular-reverse" : 1,
+        "regular-rich-exit" : 1,
+        "regular-rich-exit-open" : 1,
+        "regular-width" : 1,
+        "regular-width-reverse" : 1
+      },
+      "currentIdentity" : "ObjectIdentifier(0x0000007a97a18000)",
+      "delegateNil" : true,
+      "mainThread" : true,
+      "mode" : "reduced",
+      "model" : {
+        "height" : 33.5,
+        "width" : 185,
+        "x" : 307.5,
+        "y" : 366.5
+      },
+      "modelRadius" : 12,
+      "otherKeys" : {
+        "clip" : [
+
+        ],
+        "keyLine" : [
+
+        ],
+        "keyMask" : [
+
+        ]
+      },
+      "pendingExit" : false,
+      "presentation" : {
+        "height" : 220,
+        "width" : 305,
+        "x" : 247.5,
+        "y" : 180
+      },
+      "presentedRadius" : 28,
+      "reduced" : true,
+      "stage" : "reduced-rm-close-after",
+      "tileIDs" : [
+
+      ],
+      "time" : 93763.564418125025,
+      "visible" : false
+    },
+    {
+      "active" : false,
+      "alpha" : 0,
+      "animations" : [
+
+      ],
+      "cacheOnly" : true,
+      "counts" : {
+        "reduced-initial" : 1,
+        "reduced-open" : 1,
+        "reduced-pre-compact" : 1,
+        "reduced-reopen" : 1,
+        "reduced-reverse" : 1,
+        "reduced-rm-close" : 1,
+        "reduced-rm-open" : 1,
+        "reduced-width" : 1,
+        "reduced-width-reverse" : 1,
+        "regular-cancel-open" : 1,
+        "regular-cancel-reopen" : 1,
+        "regular-final-close" : 1,
+        "regular-initial" : 1,
+        "regular-kick" : 1,
+        "regular-kick-open" : 1,
+        "regular-open" : 1,
+        "regular-pre-compact" : 1,
+        "regular-reopen" : 1,
+        "regular-reverse" : 1,
+        "regular-rich-exit" : 1,
+        "regular-rich-exit-open" : 1,
+        "regular-width" : 1,
+        "regular-width-reverse" : 1
+      },
+      "currentIdentity" : "ObjectIdentifier(0x0000007a97a18000)",
+      "delegateNil" : true,
+      "mainThread" : true,
+      "mode" : "reduced",
+      "model" : {
+        "height" : 33.5,
+        "width" : 185,
+        "x" : 307.5,
+        "y" : 366.5
+      },
+      "modelRadius" : 12,
+      "otherKeys" : {
+        "clip" : [
+
+        ],
+        "keyLine" : [
+
+        ],
+        "keyMask" : [
+
+        ]
+      },
+      "pendingExit" : false,
+      "presentation" : {
+        "height" : 33.5,
+        "width" : 185,
+        "x" : 307.5,
+        "y" : 366.5
+      },
+      "presentedRadius" : 12,
+      "reduced" : true,
+      "stage" : "reduced-rm-close-settled",
+      "tileIDs" : [
+
+      ],
+      "time" : 93763.635069541691,
+      "visible" : false
+    }
+  ],
+  "swiftLanguageVersion" : 6,
+  "trajectory" : [
+    {
+      "reduced" : false,
+      "samples" : [
+        {
+          "midX" : 400,
+          "midY" : 325.45185181498528,
+          "model" : {
+            "height" : 220,
+            "width" : 305,
+            "x" : 247.5,
+            "y" : 180
+          },
+          "presentation" : {
+            "height" : 149.09629637002945,
+            "width" : 259.37831401824951,
+            "x" : 270.31084299087524,
+            "y" : 250.90370362997055
+          },
+          "radius" : 21.917108535766602,
+          "t" : 93754.513595375014
+        },
+        {
+          "midX" : 400,
+          "midY" : 317.94733272492886,
+          "model" : {
+            "height" : 220,
+            "width" : 305,
+            "x" : 247.5,
+            "y" : 180
+          },
+          "presentation" : {
+            "height" : 164.10533455014229,
+            "width" : 269.03560400009155,
+            "x" : 265.48219799995422,
+            "y" : 235.89466544985771
+          },
+          "radius" : 23.204747200012207,
+          "t" : 93754.532144875018
+        },
+        {
+          "midX" : 400,
+          "midY" : 312.0303498506546,
+          "model" : {
+            "height" : 220,
+            "width" : 305,
+            "x" : 247.5,
+            "y" : 180
+          },
+          "presentation" : {
+            "height" : 175.9393002986908,
+            "width" : 276.64995193481445,
+            "x" : 261.67502403259277,
+            "y" : 224.0606997013092
+          },
+          "radius" : 24.219993591308594,
+          "t" : 93754.550313291693
+        },
+        {
+          "midX" : 400,
+          "midY" : 307.83260315656662,
+          "model" : {
+            "height" : 220,
+            "width" : 305,
+            "x" : 247.5,
+            "y" : 180
+          },
+          "presentation" : {
+            "height" : 184.33479368686676,
+            "width" : 282.05187797546387,
+            "x" : 258.97406101226807,
+            "y" : 215.66520631313324
+          },
+          "radius" : 24.940250396728516,
+          "t" : 93754.565701291693
+        },
+        {
+          "midX" : 400,
+          "midY" : 303.71924003958702,
+          "model" : {
+            "height" : 220,
+            "width" : 305,
+            "x" : 247.5,
+            "y" : 180
+          },
+          "presentation" : {
+            "height" : 192.56151992082596,
+            "width" : 287.34521389007568,
+            "x" : 256.32739305496216,
+            "y" : 207.43848007917404
+          },
+          "radius" : 25.646028518676758,
+          "t" : 93754.583889041693
+        },
+        {
+          "midX" : 400,
+          "midY" : 300.42002114653587,
+          "model" : {
+            "height" : 220,
+            "width" : 305,
+            "x" : 247.5,
+            "y" : 180
+          },
+          "presentation" : {
+            "height" : 199.15995770692825,
+            "width" : 291.59085750579834,
+            "x" : 254.20457124710083,
+            "y" : 200.84004229307175
+          },
+          "radius" : 26.212114334106445,
+          "t" : 93754.602117500021
+        }
+      ],
+      "stage" : "regular-open-flight"
+    },
+    {
+      "reduced" : false,
+      "samples" : [
+        {
+          "midX" : 400,
+          "midY" : 299.00477063903475,
+          "model" : {
+            "height" : 33.5,
+            "width" : 185,
+            "x" : 307.5,
+            "y" : 366.5
+          },
+          "presentation" : {
+            "height" : 201.99045872193045,
+            "width" : 293.41209140285071,
+            "x" : 253.29395429857465,
+            "y" : 198.00954127806952
+          },
+          "radius" : 26.454945520380093,
+          "t" : 93754.638485875024
+        },
+        {
+          "midX" : 400,
+          "midY" : 305.46134477082751,
+          "model" : {
+            "height" : 33.5,
+            "width" : 185,
+            "x" : 307.5,
+            "y" : 366.5
+          },
+          "presentation" : {
+            "height" : 189.07731045834493,
+            "width" : 285.10336329759457,
+            "x" : 257.44831835120272,
+            "y" : 210.92268954165505
+          },
+          "radius" : 25.347115106345946,
+          "t" : 93754.656608041681
+        },
+        {
+          "midX" : 400,
+          "midY" : 314.16087909282749,
+          "model" : {
+            "height" : 33.5,
+            "width" : 185,
+            "x" : 307.5,
+            "y" : 366.5
+          },
+          "presentation" : {
+            "height" : 171.67824181434506,
+            "width" : 273.90825210574479,
+            "x" : 263.04587394712757,
+            "y" : 228.32175818565497
+          },
+          "radius" : 23.854433614099307,
+          "t" : 93754.674774833358
+        },
+        {
+          "midX" : 400,
+          "midY" : 323.59550408443675,
+          "model" : {
+            "height" : 33.5,
+            "width" : 185,
+            "x" : 307.5,
+            "y" : 366.5
+          },
+          "presentation" : {
+            "height" : 152.80899183112652,
+            "width" : 261.76717973048358,
+            "x" : 269.11641013475821,
+            "y" : 247.19100816887351
+          },
+          "radius" : 22.235623964064473,
+          "t" : 93754.692962291694
+        },
+        {
+          "midX" : 400,
+          "midY" : 332.19822709439029,
+          "model" : {
+            "height" : 33.5,
+            "width" : 185,
+            "x" : 307.5,
+            "y" : 366.5
+          },
+          "presentation" : {
+            "height" : 135.60354581121942,
+            "width" : 250.69665146030204,
+            "x" : 274.65167426984897,
+            "y" : 264.39645418878058
+          },
+          "radius" : 20.759553528040271,
+          "t" : 93754.709911375016
+        },
+        {
+          "midX" : 400,
+          "midY" : 340.61067916737005,
+          "model" : {
+            "height" : 33.5,
+            "width" : 185,
+            "x" : 307.5,
+            "y" : 366.5
+          },
+          "presentation" : {
+            "height" : 118.77864166525988,
+            "width" : 239.8709758704085,
+            "x" : 280.06451206479574,
+            "y" : 281.2213583347401
+          },
+          "radius" : 19.316130116054467,
+          "t" : 93754.727927000014
+        },
+        {
+          "midX" : 400,
+          "midY" : 348.13724711070489,
+          "model" : {
+            "height" : 33.5,
+            "width" : 185,
+            "x" : 307.5,
+            "y" : 366.5
+          },
+          "presentation" : {
+            "height" : 103.72550577859025,
+            "width" : 230.18531202911973,
+            "x" : 284.90734398544015,
+            "y" : 296.27449422140978
+          },
+          "radius" : 18.024708270549297,
+          "t" : 93754.746046708358
+        },
+        {
+          "midX" : 400,
+          "midY" : 352.70775685635545,
+          "model" : {
+            "height" : 33.5,
+            "width" : 185,
+            "x" : 307.5,
+            "y" : 366.5
+          },
+          "presentation" : {
+            "height" : 94.584486287289167,
+            "width" : 224.30369090871153,
+            "x" : 287.84815454564421,
+            "y" : 305.41551371271089
+          },
+          "radius" : 17.240492121161537,
+          "t" : 93754.758529166691
+        }
+      ],
+      "stage" : "regular-reverse-flight"
+    },
+    {
+      "reduced" : false,
+      "samples" : [
+        {
+          "midX" : 400,
+          "midY" : 360.09061158190224,
+          "model" : {
+            "height" : 220,
+            "width" : 305,
+            "x" : 247.5,
+            "y" : 180
+          },
+          "presentation" : {
+            "height" : 79.818776836195553,
+            "width" : 214.80296632891941,
+            "x" : 292.59851683554029,
+            "y" : 320.18122316380448
+          },
+          "radius" : 15.97372884385592,
+          "t" : 93754.797709375023
+        },
+        {
+          "midX" : 400,
+          "midY" : 356.26562926399401,
+          "model" : {
+            "height" : 220,
+            "width" : 305,
+            "x" : 247.5,
+            "y" : 180
+          },
+          "presentation" : {
+            "height" : 87.468741472011914,
+            "width" : 219.72519558520875,
+            "x" : 290.13740220739561,
+            "y" : 312.53125852798803
+          },
+          "radius" : 16.630026078027832,
+          "t" : 93754.815895166685
+        },
+        {
+          "midX" : 400,
+          "midY" : 350.6238929353284,
+          "model" : {
+            "height" : 220,
+            "width" : 305,
+            "x" : 247.5,
+            "y" : 180
+          },
+          "presentation" : {
+            "height" : 98.752214129343258,
+            "width" : 226.9853388499796,
+            "x" : 286.5073305750102,
+            "y" : 301.2477858706568
+          },
+          "radius" : 17.598045179997278,
+          "t" : 93754.832108791685
+        },
+        {
+          "midX" : 400,
+          "midY" : 345.56140819144292,
+          "model" : {
+            "height" : 220,
+            "width" : 305,
+            "x" : 247.5,
+            "y" : 180
+          },
+          "presentation" : {
+            "height" : 108.8771836171142,
+            "width" : 233.50006452575713,
+            "x" : 283.24996773712144,
+            "y" : 291.12281638288584
+          },
+          "radius" : 18.46667527010095,
+          "t" : 93754.844557916687
+        },
+        {
+          "midX" : 400,
+          "midY" : 338.3670628242852,
+          "model" : {
+            "height" : 220,
+            "width" : 305,
+            "x" : 247.5,
+            "y" : 180
+          },
+          "presentation" : {
+            "height" : 123.26587435142966,
+            "width" : 242.75820333604054,
+            "x" : 278.62089833197973,
+            "y" : 276.7341256485704
+          },
+          "radius" : 19.701093778138741,
+          "t" : 93754.86141570835
+        },
+        {
+          "midX" : 400,
+          "midY" : 330.74986421871552,
+          "model" : {
+            "height" : 220,
+            "width" : 305,
+            "x" : 247.5,
+            "y" : 180
+          },
+          "presentation" : {
+            "height" : 138.50027156256903,
+            "width" : 252.56049644776559,
+            "x" : 273.71975177611722,
+            "y" : 261.49972843743103
+          },
+          "radius" : 21.008066193035411,
+          "t" : 93754.879549208359
+        },
+        {
+          "midX" : 400,
+          "midY" : 324.71088343914931,
+          "model" : {
+            "height" : 220,
+            "width" : 305,
+            "x" : 247.5,
+            "y" : 180
+          },
+          "presentation" : {
+            "height" : 150.57823312170134,
+            "width" : 260.33183900592041,
+            "x" : 269.83408049703979,
+            "y" : 249.42176687829863
+          },
+          "radius" : 22.044245200789391,
+          "t" : 93754.894947958353
+        },
+        {
+          "midX" : 400,
+          "midY" : 318.28956315583412,
+          "model" : {
+            "height" : 220,
+            "width" : 305,
+            "x" : 247.5,
+            "y" : 180
+          },
+          "presentation" : {
+            "height" : 163.42087368833177,
+            "width" : 268.59520022841724,
+            "x" : 265.70239988579135,
+            "y" : 236.57912631166823
+          },
+          "radius" : 23.146026697122299,
+          "t" : 93754.913079708349
+        }
+      ],
+      "stage" : "regular-reopen-flight"
+    },
+    {
+      "reduced" : false,
+      "samples" : [
+        {
+          "midX" : 400,
+          "midY" : 307.76150289916262,
+          "model" : {
+            "height" : 220,
+            "width" : 425,
+            "x" : 187.5,
+            "y" : 180
+          },
+          "presentation" : {
+            "height" : 184.47699420167473,
+            "width" : 286.68464341006091,
+            "x" : 256.65767829496951,
+            "y" : 215.52300579832524
+          },
+          "radius" : 24.952449904701318,
+          "t" : 93754.951753750021
+        },
+        {
+          "midX" : 400,
+          "midY" : 303.78247500762075,
+          "model" : {
+            "height" : 220,
+            "width" : 425,
+            "x" : 187.5,
+            "y" : 180
+          },
+          "presentation" : {
+            "height" : 192.43504998475848,
+            "width" : 302.09787668951742,
+            "x" : 248.95106165524129,
+            "y" : 207.56495001524149
+          },
+          "radius" : 25.635178550971236,
+          "t" : 93754.969882708348
+        },
+        {
+          "midX" : 400,
+          "midY" : 300.64086446372056,
+          "model" : {
+            "height" : 220,
+            "width" : 425,
+            "x" : 187.5,
+            "y" : 180
+          },
+          "presentation" : {
+            "height" : 198.71827107255882,
+            "width" : 318.68872055507563,
+            "x" : 240.65563972246218,
+            "y" : 201.28172892744115
+          },
+          "radius" : 26.174221646975557,
+          "t" : 93754.988031875022
+        },
+        {
+          "midX" : 400,
+          "midY" : 298.31337613281124,
+          "model" : {
+            "height" : 220,
+            "width" : 425,
+            "x" : 187.5,
+            "y" : 180
+          },
+          "presentation" : {
+            "height" : 203.37324773437746,
+            "width" : 333.76524382458285,
+            "x" : 233.11737808770857,
+            "y" : 196.62675226562251
+          },
+          "radius" : 26.573576213136942,
+          "t" : 93755.004566875024
+        },
+        {
+          "midX" : 400,
+          "midY" : 296.26719193421923,
+          "model" : {
+            "height" : 220,
+            "width" : 425,
+            "x" : 187.5,
+            "y" : 180
+          },
+          "presentation" : {
+            "height" : 207.46561613156152,
+            "width" : 349.27654766768609,
+            "x" : 225.36172616615696,
+            "y" : 192.53438386843845
+          },
+          "radius" : 26.924664118525385,
+          "t" : 93755.022703208349
+        },
+        {
+          "midX" : 400,
+          "midY" : 294.66128896172143,
+          "model" : {
+            "height" : 220,
+            "width" : 425,
+            "x" : 187.5,
+            "y" : 180
+          },
+          "presentation" : {
+            "height" : 210.67742207655718,
+            "width" : 363.2208571924337,
+            "x" : 218.38957140378315,
+            "y" : 189.32257792344285
+          },
+          "radius" : 27.200207792090698,
+          "t" : 93755.04084270836
+        }
+      ],
+      "stage" : "regular-width-flight"
+    },
+    {
+      "reduced" : false,
+      "samples" : [
+        {
+          "midX" : 400,
+          "midY" : 317.52199658751488,
+          "model" : {
+            "height" : 220,
+            "width" : 305,
+            "x" : 247.5,
+            "y" : 180
+          },
+          "presentation" : {
+            "height" : 164.95600682497025,
+            "width" : 269.58295345306396,
+            "x" : 265.20852327346802,
+            "y" : 235.04399317502975
+          },
+          "radius" : 23.277727127075195,
+          "t" : 93757.40654583335
+        },
+        {
+          "midX" : 400,
+          "midY" : 311.44228824973106,
+          "model" : {
+            "height" : 220,
+            "width" : 305,
+            "x" : 247.5,
+            "y" : 180
+          },
+          "presentation" : {
+            "height" : 177.11542350053787,
+            "width" : 277.40670680999756,
+            "x" : 261.29664659500122,
+            "y" : 222.88457649946213
+          },
+          "radius" : 24.320894241333008,
+          "t" : 93757.42471008336
+        },
+        {
+          "midX" : 400,
+          "midY" : 306.66384448111057,
+          "model" : {
+            "height" : 220,
+            "width" : 305,
+            "x" : 247.5,
+            "y" : 180
+          },
+          "presentation" : {
+            "height" : 186.67231103777885,
+            "width" : 283.55591058731079,
+            "x" : 258.2220447063446,
+            "y" : 213.32768896222115
+          },
+          "radius" : 25.140788078308105,
+          "t" : 93757.442866375015
+        },
+        {
+          "midX" : 400,
+          "midY" : 302.78881411254406,
+          "model" : {
+            "height" : 220,
+            "width" : 305,
+            "x" : 247.5,
+            "y" : 180
+          },
+          "presentation" : {
+            "height" : 194.42237177491188,
+            "width" : 288.54254484176636,
+            "x" : 255.72872757911682,
+            "y" : 205.57762822508812
+          },
+          "radius" : 25.805672645568848,
+          "t" : 93757.461015541689
+        },
+        {
+          "midX" : 400,
+          "midY" : 299.6946514248848,
+          "model" : {
+            "height" : 220,
+            "width" : 305,
+            "x" : 247.5,
+            "y" : 180
+          },
+          "presentation" : {
+            "height" : 200.61069715023041,
+            "width" : 292.5243091583252,
+            "x" : 253.7378454208374,
+            "y" : 199.38930284976959
+          },
+          "radius" : 26.336574554443359,
+          "t" : 93757.479158041693
+        },
+        {
+          "midX" : 400,
+          "midY" : 297.25042903423309,
+          "model" : {
+            "height" : 220,
+            "width" : 305,
+            "x" : 247.5,
+            "y" : 180
+          },
+          "presentation" : {
+            "height" : 205.49914193153381,
+            "width" : 295.6696891784668,
+            "x" : 252.1651554107666,
+            "y" : 194.50085806846619
+          },
+          "radius" : 26.755958557128906,
+          "t" : 93757.497357166692
+        },
+        {
+          "midX" : 400,
+          "midY" : 295.73414808511734,
+          "model" : {
+            "height" : 33.5,
+            "width" : 185,
+            "x" : 307.5,
+            "y" : 366.5
+          },
+          "presentation" : {
+            "height" : 208.53170382976532,
+            "width" : 297.62093544006348,
+            "x" : 251.18953227996826,
+            "y" : 191.46829617023468
+          },
+          "radius" : 27.016124725341797,
+          "t" : 93757.523980875019
+        },
+        {
+          "midX" : 400,
+          "midY" : 302.02305680802078,
+          "model" : {
+            "height" : 33.5,
+            "width" : 185,
+            "x" : 307.5,
+            "y" : 366.5
+          },
+          "presentation" : {
+            "height" : 195.95388638395843,
+            "width" : 289.52796979128692,
+            "x" : 255.23601510435654,
+            "y" : 204.04611361604157
+          },
+          "radius" : 25.937062638838256,
+          "t" : 93757.542167541687
+        },
+        {
+          "midX" : 400,
+          "midY" : 310.59272905201294,
+          "model" : {
+            "height" : 33.5,
+            "width" : 185,
+            "x" : 307.5,
+            "y" : 366.5
+          },
+          "presentation" : {
+            "height" : 178.81454189597412,
+            "width" : 278.49997333789219,
+            "x" : 260.75001333105388,
+            "y" : 221.18545810402588
+          },
+          "radius" : 24.466663111718958,
+          "t" : 93757.560355625013
+        },
+        {
+          "midX" : 400,
+          "midY" : 320.21144344180095,
+          "model" : {
+            "height" : 33.5,
+            "width" : 185,
+            "x" : 307.5,
+            "y" : 366.5
+          },
+          "presentation" : {
+            "height" : 159.5771131163981,
+            "width" : 266.12200307757519,
+            "x" : 266.93899846121241,
+            "y" : 240.4228868836019
+          },
+          "radius" : 22.816267077010025,
+          "t" : 93757.578561791684
+        }
+      ],
+      "stage" : "regular-rich-exit-gap"
+    },
+    {
+      "reduced" : false,
+      "samples" : [
+        {
+          "midX" : 400,
+          "midY" : 330.53142955891559,
+          "model" : {
+            "height" : 125.67759156227112,
+            "width" : 244.30997848510742,
+            "x" : 277.84501075744629,
+            "y" : 274.31120421886442
+          },
+          "presentation" : {
+            "height" : 138.93645719673171,
+            "width" : 252.84115208368797,
+            "x" : 273.57942395815599,
+            "y" : 261.06320096054975
+          },
+          "radius" : 21.293832330965643,
+          "t" : 93758.275691958348
+        },
+        {
+          "midX" : 400,
+          "midY" : 327.53884323940059,
+          "model" : {
+            "height" : 125.67759156227112,
+            "width" : 244.30997848510742,
+            "x" : 277.84501075744629,
+            "y" : 274.31120421886442
+          },
+          "presentation" : {
+            "height" : 144.92035090806681,
+            "width" : 256.69137860036471,
+            "x" : 271.65431069981764,
+            "y" : 255.0786677853672
+          },
+          "radius" : 22.279161472126134,
+          "t" : 93758.288331208358
+        },
+        {
+          "midX" : 400,
+          "midY" : 325.47583634035556,
+          "model" : {
+            "height" : 125.67759156227112,
+            "width" : 244.30997848510742,
+            "x" : 277.84501075744629,
+            "y" : 274.31120421886442
+          },
+          "presentation" : {
+            "height" : 149.04438976989499,
+            "width" : 259.34491566963754,
+            "x" : 270.32754216518123,
+            "y" : 250.95364145540805
+          },
+          "radius" : 23.346204223935729,
+          "t" : 93758.30478270835
+        },
+        {
+          "midX" : 400,
+          "midY" : 324.81678161987998,
+          "model" : {
+            "height" : 125.67759156227112,
+            "width" : 244.30997848510742,
+            "x" : 277.84501075744629,
+            "y" : 274.31120421886442
+          },
+          "presentation" : {
+            "height" : 150.36024125148447,
+            "width" : 260.19157614036533,
+            "x" : 269.90421192981734,
+            "y" : 249.63666099413774
+          },
+          "radius" : 24.27297043687804,
+          "t" : 93758.321740958359
+        },
+        {
+          "midX" : 400,
+          "midY" : 325.13314100636632,
+          "model" : {
+            "height" : 125.67759156227112,
+            "width" : 244.30997848510742,
+            "x" : 277.84501075744629,
+            "y" : 274.31120421886442
+          },
+          "presentation" : {
+            "height" : 149.72505189459997,
+            "width" : 259.78287521368361,
+            "x" : 270.10856239315819,
+            "y" : 250.27061505906633
+          },
+          "radius" : 25.104547232806908,
+          "t" : 93758.339989250017
+        },
+        {
+          "midX" : 400,
+          "midY" : 325.94251731514561,
+          "model" : {
+            "height" : 125.67759156227112,
+            "width" : 244.30997848510742,
+            "x" : 277.84501075744629,
+            "y" : 274.31120421886442
+          },
+          "presentation" : {
+            "height" : 148.10430966762817,
+            "width" : 258.74003839203959,
+            "x" : 270.62998080398017,
+            "y" : 251.89036248133152
+          },
+          "radius" : 25.686761682616634,
+          "t" : 93758.355526416693
+        },
+        {
+          "midX" : 400,
+          "midY" : 327.17581144078127,
+          "model" : {
+            "height" : 125.67759156227112,
+            "width" : 244.30997848510742,
+            "x" : 277.84501075744629,
+            "y" : 274.31120421886442
+          },
+          "presentation" : {
+            "height" : 145.63557856267889,
+            "width" : 257.15157869984699,
+            "x" : 271.42421065007647,
+            "y" : 254.35802215944182
+          },
+          "radius" : 26.243764251387802,
+          "t" : 93758.373775500018
+        },
+        {
+          "midX" : 400,
+          "midY" : 328.18416494989748,
+          "model" : {
+            "height" : 125.67759156227112,
+            "width" : 244.30997848510742,
+            "x" : 277.84501075744629,
+            "y" : 274.31120421886442
+          },
+          "presentation" : {
+            "height" : 143.61748080315158,
+            "width" : 255.85307075806,
+            "x" : 272.07346462097001,
+            "y" : 256.37542454832169
+          },
+          "radius" : 26.578757377804322,
+          "t" : 93758.387276875015
+        }
+      ],
+      "stage" : "regular-kick-flight"
+    },
+    {
+      "reduced" : true,
+      "samples" : [
+        {
+          "midX" : 400,
+          "midY" : 290,
+          "model" : {
+            "height" : 220,
+            "width" : 305,
+            "x" : 247.5,
+            "y" : 180
+          },
+          "presentation" : {
+            "height" : 220,
+            "width" : 305,
+            "x" : 247.5,
+            "y" : 180
+          },
+          "radius" : 28,
+          "t" : 93760.570585916692
+        },
+        {
+          "midX" : 400,
+          "midY" : 290,
+          "model" : {
+            "height" : 220,
+            "width" : 305,
+            "x" : 247.5,
+            "y" : 180
+          },
+          "presentation" : {
+            "height" : 220,
+            "width" : 305,
+            "x" : 247.5,
+            "y" : 180
+          },
+          "radius" : 28,
+          "t" : 93760.58651641669
+        },
+        {
+          "midX" : 400,
+          "midY" : 290,
+          "model" : {
+            "height" : 220,
+            "width" : 305,
+            "x" : 247.5,
+            "y" : 180
+          },
+          "presentation" : {
+            "height" : 220,
+            "width" : 305,
+            "x" : 247.5,
+            "y" : 180
+          },
+          "radius" : 28,
+          "t" : 93760.624450875024
+        },
+        {
+          "midX" : 400,
+          "midY" : 290,
+          "model" : {
+            "height" : 220,
+            "width" : 305,
+            "x" : 247.5,
+            "y" : 180
+          },
+          "presentation" : {
+            "height" : 220,
+            "width" : 305,
+            "x" : 247.5,
+            "y" : 180
+          },
+          "radius" : 28,
+          "t" : 93760.639275208348
+        },
+        {
+          "midX" : 400,
+          "midY" : 290,
+          "model" : {
+            "height" : 220,
+            "width" : 305,
+            "x" : 247.5,
+            "y" : 180
+          },
+          "presentation" : {
+            "height" : 220,
+            "width" : 305,
+            "x" : 247.5,
+            "y" : 180
+          },
+          "radius" : 28,
+          "t" : 93760.655122416691
+        },
+        {
+          "midX" : 400,
+          "midY" : 290,
+          "model" : {
+            "height" : 220,
+            "width" : 305,
+            "x" : 247.5,
+            "y" : 180
+          },
+          "presentation" : {
+            "height" : 220,
+            "width" : 305,
+            "x" : 247.5,
+            "y" : 180
+          },
+          "radius" : 28,
+          "t" : 93760.675607958357
+        }
+      ],
+      "stage" : "reduced-open-flight"
+    },
+    {
+      "reduced" : true,
+      "samples" : [
+        {
+          "midX" : 400,
+          "midY" : 383.25,
+          "model" : {
+            "height" : 33.5,
+            "width" : 185,
+            "x" : 307.5,
+            "y" : 366.5
+          },
+          "presentation" : {
+            "height" : 33.5,
+            "width" : 185,
+            "x" : 307.5,
+            "y" : 366.5
+          },
+          "radius" : 12,
+          "t" : 93760.819449416682
+        },
+        {
+          "midX" : 400,
+          "midY" : 383.25,
+          "model" : {
+            "height" : 33.5,
+            "width" : 185,
+            "x" : 307.5,
+            "y" : 366.5
+          },
+          "presentation" : {
+            "height" : 33.5,
+            "width" : 185,
+            "x" : 307.5,
+            "y" : 366.5
+          },
+          "radius" : 12,
+          "t" : 93760.837541458357
+        },
+        {
+          "midX" : 400,
+          "midY" : 383.25,
+          "model" : {
+            "height" : 33.5,
+            "width" : 185,
+            "x" : 307.5,
+            "y" : 366.5
+          },
+          "presentation" : {
+            "height" : 33.5,
+            "width" : 185,
+            "x" : 307.5,
+            "y" : 366.5
+          },
+          "radius" : 12,
+          "t" : 93760.855804416686
+        },
+        {
+          "midX" : 400,
+          "midY" : 383.25,
+          "model" : {
+            "height" : 33.5,
+            "width" : 185,
+            "x" : 307.5,
+            "y" : 366.5
+          },
+          "presentation" : {
+            "height" : 33.5,
+            "width" : 185,
+            "x" : 307.5,
+            "y" : 366.5
+          },
+          "radius" : 12,
+          "t" : 93760.871358125019
+        },
+        {
+          "midX" : 400,
+          "midY" : 383.25,
+          "model" : {
+            "height" : 33.5,
+            "width" : 185,
+            "x" : 307.5,
+            "y" : 366.5
+          },
+          "presentation" : {
+            "height" : 33.5,
+            "width" : 185,
+            "x" : 307.5,
+            "y" : 366.5
+          },
+          "radius" : 12,
+          "t" : 93760.887897916691
+        },
+        {
+          "midX" : 400,
+          "midY" : 383.25,
+          "model" : {
+            "height" : 33.5,
+            "width" : 185,
+            "x" : 307.5,
+            "y" : 366.5
+          },
+          "presentation" : {
+            "height" : 33.5,
+            "width" : 185,
+            "x" : 307.5,
+            "y" : 366.5
+          },
+          "radius" : 12,
+          "t" : 93760.905822375018
+        },
+        {
+          "midX" : 400,
+          "midY" : 383.25,
+          "model" : {
+            "height" : 33.5,
+            "width" : 185,
+            "x" : 307.5,
+            "y" : 366.5
+          },
+          "presentation" : {
+            "height" : 33.5,
+            "width" : 185,
+            "x" : 307.5,
+            "y" : 366.5
+          },
+          "radius" : 12,
+          "t" : 93760.922119916693
+        },
+        {
+          "midX" : 400,
+          "midY" : 383.25,
+          "model" : {
+            "height" : 33.5,
+            "width" : 185,
+            "x" : 307.5,
+            "y" : 366.5
+          },
+          "presentation" : {
+            "height" : 33.5,
+            "width" : 185,
+            "x" : 307.5,
+            "y" : 366.5
+          },
+          "radius" : 12,
+          "t" : 93760.941254875026
+        }
+      ],
+      "stage" : "reduced-reverse-flight"
+    },
+    {
+      "reduced" : true,
+      "samples" : [
+        {
+          "midX" : 400,
+          "midY" : 290,
+          "model" : {
+            "height" : 220,
+            "width" : 305,
+            "x" : 247.5,
+            "y" : 180
+          },
+          "presentation" : {
+            "height" : 220,
+            "width" : 305,
+            "x" : 247.5,
+            "y" : 180
+          },
+          "radius" : 28,
+          "t" : 93760.996158458351
+        },
+        {
+          "midX" : 400,
+          "midY" : 290,
+          "model" : {
+            "height" : 220,
+            "width" : 305,
+            "x" : 247.5,
+            "y" : 180
+          },
+          "presentation" : {
+            "height" : 220,
+            "width" : 305,
+            "x" : 247.5,
+            "y" : 180
+          },
+          "radius" : 28,
+          "t" : 93761.013488000026
+        },
+        {
+          "midX" : 400,
+          "midY" : 290,
+          "model" : {
+            "height" : 220,
+            "width" : 305,
+            "x" : 247.5,
+            "y" : 180
+          },
+          "presentation" : {
+            "height" : 220,
+            "width" : 305,
+            "x" : 247.5,
+            "y" : 180
+          },
+          "radius" : 28,
+          "t" : 93761.037993083359
+        },
+        {
+          "midX" : 400,
+          "midY" : 290,
+          "model" : {
+            "height" : 220,
+            "width" : 305,
+            "x" : 247.5,
+            "y" : 180
+          },
+          "presentation" : {
+            "height" : 220,
+            "width" : 305,
+            "x" : 247.5,
+            "y" : 180
+          },
+          "radius" : 28,
+          "t" : 93761.056463500019
+        },
+        {
+          "midX" : 400,
+          "midY" : 290,
+          "model" : {
+            "height" : 220,
+            "width" : 305,
+            "x" : 247.5,
+            "y" : 180
+          },
+          "presentation" : {
+            "height" : 220,
+            "width" : 305,
+            "x" : 247.5,
+            "y" : 180
+          },
+          "radius" : 28,
+          "t" : 93761.071331250016
+        },
+        {
+          "midX" : 400,
+          "midY" : 290,
+          "model" : {
+            "height" : 220,
+            "width" : 305,
+            "x" : 247.5,
+            "y" : 180
+          },
+          "presentation" : {
+            "height" : 220,
+            "width" : 305,
+            "x" : 247.5,
+            "y" : 180
+          },
+          "radius" : 28,
+          "t" : 93761.087886375026
+        },
+        {
+          "midX" : 400,
+          "midY" : 290,
+          "model" : {
+            "height" : 220,
+            "width" : 305,
+            "x" : 247.5,
+            "y" : 180
+          },
+          "presentation" : {
+            "height" : 220,
+            "width" : 305,
+            "x" : 247.5,
+            "y" : 180
+          },
+          "radius" : 28,
+          "t" : 93761.103481125014
+        },
+        {
+          "midX" : 400,
+          "midY" : 290,
+          "model" : {
+            "height" : 220,
+            "width" : 305,
+            "x" : 247.5,
+            "y" : 180
+          },
+          "presentation" : {
+            "height" : 220,
+            "width" : 305,
+            "x" : 247.5,
+            "y" : 180
+          },
+          "radius" : 28,
+          "t" : 93761.121286291687
+        }
+      ],
+      "stage" : "reduced-reopen-flight"
+    },
+    {
+      "reduced" : true,
+      "samples" : [
+        {
+          "midX" : 400,
+          "midY" : 290,
+          "model" : {
+            "height" : 220,
+            "width" : 425,
+            "x" : 187.5,
+            "y" : 180
+          },
+          "presentation" : {
+            "height" : 220,
+            "width" : 425,
+            "x" : 187.5,
+            "y" : 180
+          },
+          "radius" : 28,
+          "t" : 93761.156085750015
+        },
+        {
+          "midX" : 400,
+          "midY" : 290,
+          "model" : {
+            "height" : 220,
+            "width" : 425,
+            "x" : 187.5,
+            "y" : 180
+          },
+          "presentation" : {
+            "height" : 220,
+            "width" : 425,
+            "x" : 187.5,
+            "y" : 180
+          },
+          "radius" : 28,
+          "t" : 93761.171813291687
+        },
+        {
+          "midX" : 400,
+          "midY" : 290,
+          "model" : {
+            "height" : 220,
+            "width" : 425,
+            "x" : 187.5,
+            "y" : 180
+          },
+          "presentation" : {
+            "height" : 220,
+            "width" : 425,
+            "x" : 187.5,
+            "y" : 180
+          },
+          "radius" : 28,
+          "t" : 93761.185113083353
+        },
+        {
+          "midX" : 400,
+          "midY" : 290,
+          "model" : {
+            "height" : 220,
+            "width" : 425,
+            "x" : 187.5,
+            "y" : 180
+          },
+          "presentation" : {
+            "height" : 220,
+            "width" : 425,
+            "x" : 187.5,
+            "y" : 180
+          },
+          "radius" : 28,
+          "t" : 93761.203354916681
+        },
+        {
+          "midX" : 400,
+          "midY" : 290,
+          "model" : {
+            "height" : 220,
+            "width" : 425,
+            "x" : 187.5,
+            "y" : 180
+          },
+          "presentation" : {
+            "height" : 220,
+            "width" : 425,
+            "x" : 187.5,
+            "y" : 180
+          },
+          "radius" : 28,
+          "t" : 93761.220221833355
+        },
+        {
+          "midX" : 400,
+          "midY" : 290,
+          "model" : {
+            "height" : 220,
+            "width" : 425,
+            "x" : 187.5,
+            "y" : 180
+          },
+          "presentation" : {
+            "height" : 220,
+            "width" : 425,
+            "x" : 187.5,
+            "y" : 180
+          },
+          "radius" : 28,
+          "t" : 93761.236220125022
+        }
+      ],
+      "stage" : "reduced-width-flight"
+    }
+  ]
+}

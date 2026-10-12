@@ -1,0 +1,19 @@
+{
+  "kind": "self_review",
+  "status": "residual_risk",
+  "issues_found": true,
+  "needs_evidence": false,
+  "lenses": {
+    "task_contract": "Sixth scoped navigation/title repairs complete; original seven-line goal active.",
+    "evidence_freshness": "Published consumers pass. Nine source hashes and91 evidence hashes verified; current optimized build0; transparent native fixtures are static evidence only.",
+    "edge_risk": "IME/UTF8/stale/revoke/navigation callbacks tested; hardware, motion, signed Swift6 runtime and artwork remain unverified."
+  },
+  "findings": [
+    "Main implements and independently accepts production changes; DeepSeek readonly report corrected by main.",
+    "Media QA compile/typecheck and size assumptions failed; original bytes, exits and images preserved; no product defect inferred from those failures.",
+    "Five route rows follow current production constant/draft; host integral bounds differ from requested content dimensions.",
+    "Empty route query has no feedback; disconnected copy, long model titles, live reply scrolling and FileShelf remain pending.",
+    "No signing/install/release; current checkpoint does not finish overall goal."
+  ],
+  "updated": "2026-10-11"
+}

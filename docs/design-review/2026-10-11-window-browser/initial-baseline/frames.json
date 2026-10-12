@@ -1,0 +1,2887 @@
+{
+  "actions" : 0,
+  "controllerStarted" : false,
+  "frames" : [
+    {
+      "actions" : 0,
+      "active" : false,
+      "alpha" : 0,
+      "buttons" : [
+        {
+          "enabled" : true,
+          "frame" : {
+            "height" : 30,
+            "width" : 21.5,
+            "x" : 15,
+            "y" : 225
+          },
+          "title" : "search"
+        }
+      ],
+      "cachedThumbnails" : 0,
+      "corner" : 13,
+      "footer" : {
+        "height" : 18,
+        "width" : 432,
+        "x" : 12,
+        "y" : 0
+      },
+      "header" : {
+        "height" : 40,
+        "width" : 432,
+        "x" : 12,
+        "y" : 260
+      },
+      "height" : 300,
+      "insideGlass" : false,
+      "labels" : [
+        "窗口选择",
+        "没有可显示的窗口"
+      ],
+      "list" : {
+        "height" : 194,
+        "width" : 432,
+        "x" : 12,
+        "y" : 26
+      },
+      "material" : "paper",
+      "name" : "light-paper-empty",
+      "records" : 0,
+      "requestedMaterial" : "paper",
+      "sample" : "empty",
+      "search" : {
+        "height" : 24,
+        "width" : 432,
+        "x" : 12,
+        "y" : 228
+      },
+      "searchVisible" : true,
+      "visible" : false,
+      "visibleKeys" : [
+
+      ],
+      "width" : 456
+    },
+    {
+      "actions" : 0,
+      "active" : false,
+      "alpha" : 0,
+      "buttons" : [
+        {
+          "enabled" : true,
+          "frame" : {
+            "height" : 30,
+            "width" : 21.5,
+            "x" : 15,
+            "y" : 225
+          },
+          "title" : "search"
+        },
+        {
+          "enabled" : true,
+          "frame" : {
+            "height" : 30,
+            "width" : 24,
+            "x" : 420,
+            "y" : 224.5
+          },
+          "title" : ""
+        }
+      ],
+      "cachedThumbnails" : 0,
+      "corner" : 13,
+      "footer" : {
+        "height" : 18,
+        "width" : 432,
+        "x" : 12,
+        "y" : 0
+      },
+      "header" : {
+        "height" : 40,
+        "width" : 432,
+        "x" : 12,
+        "y" : 260
+      },
+      "height" : 300,
+      "insideGlass" : false,
+      "labels" : [
+        "窗口选择",
+        "不存在的样件",
+        "没有匹配的窗口"
+      ],
+      "list" : {
+        "height" : 194,
+        "width" : 432,
+        "x" : 12,
+        "y" : 26
+      },
+      "material" : "paper",
+      "name" : "light-paper-no-match",
+      "records" : 0,
+      "requestedMaterial" : "paper",
+      "sample" : "no-match",
+      "search" : {
+        "height" : 24,
+        "width" : 432,
+        "x" : 12,
+        "y" : 228
+      },
+      "searchVisible" : true,
+      "visible" : false,
+      "visibleKeys" : [
+
+      ],
+      "width" : 456
+    },
+    {
+      "actions" : 0,
+      "active" : false,
+      "alpha" : 0,
+      "buttons" : [
+
+      ],
+      "cachedThumbnails" : 0,
+      "corner" : 13,
+      "firstCard" : {
+        "actions" : {
+          "height" : 32,
+          "width" : 128,
+          "x" : 153,
+          "y" : 173
+        },
+        "bounds" : {
+          "height" : 219,
+          "width" : 295,
+          "x" : 0,
+          "y" : 0
+        },
+        "title" : {
+          "height" : 34,
+          "width" : 279,
+          "x" : 8,
+          "y" : 25
+        }
+      },
+      "footer" : {
+        "height" : 18,
+        "width" : 296,
+        "x" : 12,
+        "y" : 0
+      },
+      "header" : {
+        "height" : 40,
+        "width" : 296,
+        "x" : 12,
+        "y" : 238
+      },
+      "height" : 278,
+      "insideGlass" : false,
+      "labels" : [
+        "1 个窗口",
+        "暂无画面",
+        "季度报告 — 项目讨论与修改记录项目讨论与修改记录项目讨论与修改记录项目讨论与修改记录项目讨论与修改记录项目讨论与修改记录项目讨论与修改记录项目讨论与修改记录项目讨论与修改记录项目讨论与修改记录项目讨论与修改记录项目讨论与修改记录"
+      ],
+      "list" : {
+        "height" : 208,
+        "width" : 296,
+        "x" : 12,
+        "y" : 26
+      },
+      "material" : "paper",
+      "name" : "light-paper-one",
+      "records" : 1,
+      "requestedMaterial" : "paper",
+      "sample" : "one",
+      "search" : {
+        "height" : 0,
+        "width" : 0,
+        "x" : 0,
+        "y" : 0
+      },
+      "searchVisible" : false,
+      "visible" : false,
+      "visibleKeys" : [
+        1
+      ],
+      "width" : 320
+    },
+    {
+      "actions" : 0,
+      "active" : false,
+      "alpha" : 0,
+      "buttons" : [
+
+      ],
+      "cachedThumbnails" : 0,
+      "corner" : 13,
+      "firstCard" : {
+        "actions" : {
+          "height" : 32,
+          "width" : 128,
+          "x" : 170,
+          "y" : 173
+        },
+        "bounds" : {
+          "height" : 219,
+          "width" : 312,
+          "x" : 0,
+          "y" : 0
+        },
+        "title" : {
+          "height" : 34,
+          "width" : 296,
+          "x" : 8,
+          "y" : 25
+        }
+      },
+      "footer" : {
+        "height" : 18,
+        "width" : 636,
+        "x" : 12,
+        "y" : 0
+      },
+      "header" : {
+        "height" : 40,
+        "width" : 636,
+        "x" : 12,
+        "y" : 440
+      },
+      "height" : 480,
+      "insideGlass" : false,
+      "labels" : [
+        "6 个窗口",
+        "暂无画面",
+        "季度报告 — 项目讨论与修改记录项目讨论与修改记录项目讨论与修改记录项目讨论与修改记录项目讨论与修改记录项目讨论与修改记录项目讨论与修改记录项目讨论与修改记录项目讨论与修改记录项目讨论与修改记录项目讨论与修改记录项目讨论与修改记录",
+        "暂无画面",
+        "工作窗口 2",
+        "已收起 · 置顶预览",
+        "暂无画面",
+        "工作窗口 3",
+        "暂无画面",
+        "工作窗口 4"
+      ],
+      "list" : {
+        "height" : 410,
+        "width" : 636,
+        "x" : 12,
+        "y" : 26
+      },
+      "material" : "paper",
+      "name" : "light-paper-many",
+      "records" : 6,
+      "requestedMaterial" : "paper",
+      "sample" : "many",
+      "search" : {
+        "height" : 0,
+        "width" : 0,
+        "x" : 0,
+        "y" : 0
+      },
+      "searchVisible" : false,
+      "visible" : false,
+      "visibleKeys" : [
+        1,
+        2,
+        3
+      ],
+      "width" : 660
+    },
+    {
+      "actions" : 0,
+      "active" : false,
+      "alpha" : 0,
+      "buttons" : [
+        {
+          "enabled" : true,
+          "frame" : {
+            "height" : 30,
+            "width" : 21.5,
+            "x" : 15,
+            "y" : 345
+          },
+          "title" : "search"
+        },
+        {
+          "enabled" : true,
+          "frame" : {
+            "height" : 28,
+            "width" : 28,
+            "x" : 396,
+            "y" : 297
+          },
+          "title" : ""
+        },
+        {
+          "enabled" : true,
+          "frame" : {
+            "height" : 28,
+            "width" : 28,
+            "x" : 428,
+            "y" : 297
+          },
+          "title" : ""
+        },
+        {
+          "enabled" : true,
+          "frame" : {
+            "height" : 28,
+            "width" : 28,
+            "x" : 460,
+            "y" : 297
+          },
+          "title" : ""
+        },
+        {
+          "enabled" : true,
+          "frame" : {
+            "height" : 28,
+            "width" : 28,
+            "x" : 492,
+            "y" : 297
+          },
+          "title" : ""
+        }
+      ],
+      "cachedThumbnails" : 0,
+      "corner" : 13,
+      "footer" : {
+        "height" : 18,
+        "width" : 516,
+        "x" : 12,
+        "y" : 0
+      },
+      "header" : {
+        "height" : 40,
+        "width" : 516,
+        "x" : 12,
+        "y" : 380
+      },
+      "height" : 420,
+      "insideGlass" : false,
+      "labels" : [
+        "窗口选择",
+        "季度报告 — 项目讨论与修改记录项目讨论与修改记录项目讨论与修改记录项目讨论与修改记录项目讨论与修改记录项目讨论与修改记录项目讨论与修改记录项目讨论与修改记录项目讨论与修改记录项目讨论与修改记录项目讨论与修改记录项目讨论与修改记录",
+        "工作窗口 2",
+        "已收起 · 置顶预览",
+        "工作窗口 3",
+        "工作窗口 4",
+        "工作窗口 5",
+        "工作窗口 6"
+      ],
+      "list" : {
+        "height" : 314,
+        "width" : 516,
+        "x" : 12,
+        "y" : 26
+      },
+      "material" : "paper",
+      "name" : "light-paper-long-list",
+      "records" : 7,
+      "requestedMaterial" : "paper",
+      "sample" : "long-list",
+      "search" : {
+        "height" : 24,
+        "width" : 516,
+        "x" : 12,
+        "y" : 348
+      },
+      "searchVisible" : true,
+      "visible" : false,
+      "visibleKeys" : [
+        1,
+        2,
+        3,
+        4,
+        5,
+        6
+      ],
+      "width" : 540
+    },
+    {
+      "actions" : 0,
+      "active" : false,
+      "alpha" : 0,
+      "buttons" : [
+        {
+          "enabled" : true,
+          "frame" : {
+            "height" : 30,
+            "width" : 21.5,
+            "x" : 15,
+            "y" : 355
+          },
+          "title" : "search"
+        },
+        {
+          "enabled" : false,
+          "frame" : {
+            "height" : 28,
+            "width" : 28,
+            "x" : 184,
+            "y" : 306
+          },
+          "title" : ""
+        },
+        {
+          "enabled" : false,
+          "frame" : {
+            "height" : 28,
+            "width" : 28,
+            "x" : 216,
+            "y" : 306
+          },
+          "title" : ""
+        },
+        {
+          "enabled" : false,
+          "frame" : {
+            "height" : 28,
+            "width" : 28,
+            "x" : 248,
+            "y" : 306
+          },
+          "title" : ""
+        },
+        {
+          "enabled" : true,
+          "frame" : {
+            "height" : 28,
+            "width" : 28,
+            "x" : 280,
+            "y" : 306
+          },
+          "title" : ""
+        },
+        {
+          "enabled" : false,
+          "frame" : {
+            "height" : 28,
+            "width" : 28,
+            "x" : 508,
+            "y" : 306
+          },
+          "title" : ""
+        },
+        {
+          "enabled" : false,
+          "frame" : {
+            "height" : 28,
+            "width" : 28,
+            "x" : 540,
+            "y" : 306
+          },
+          "title" : ""
+        },
+        {
+          "enabled" : false,
+          "frame" : {
+            "height" : 28,
+            "width" : 28,
+            "x" : 572,
+            "y" : 306
+          },
+          "title" : ""
+        },
+        {
+          "enabled" : true,
+          "frame" : {
+            "height" : 28,
+            "width" : 28,
+            "x" : 604,
+            "y" : 306
+          },
+          "title" : ""
+        },
+        {
+          "enabled" : false,
+          "frame" : {
+            "height" : 28,
+            "width" : 28,
+            "x" : 184,
+            "y" : 75
+          },
+          "title" : ""
+        },
+        {
+          "enabled" : false,
+          "frame" : {
+            "height" : 28,
+            "width" : 28,
+            "x" : 216,
+            "y" : 75
+          },
+          "title" : ""
+        },
+        {
+          "enabled" : false,
+          "frame" : {
+            "height" : 28,
+            "width" : 28,
+            "x" : 248,
+            "y" : 75
+          },
+          "title" : ""
+        },
+        {
+          "enabled" : true,
+          "frame" : {
+            "height" : 28,
+            "width" : 28,
+            "x" : 280,
+            "y" : 75
+          },
+          "title" : ""
+        }
+      ],
+      "cachedThumbnails" : 0,
+      "corner" : 13,
+      "firstCard" : {
+        "actions" : {
+          "height" : 32,
+          "width" : 160,
+          "x" : 138,
+          "y" : 173
+        },
+        "bounds" : {
+          "height" : 219,
+          "width" : 312,
+          "x" : 0,
+          "y" : 0
+        },
+        "title" : {
+          "height" : 34,
+          "width" : 296,
+          "x" : 8,
+          "y" : 25
+        }
+      },
+      "footer" : {
+        "height" : 18,
+        "width" : 636,
+        "x" : 12,
+        "y" : 0
+      },
+      "header" : {
+        "height" : 40,
+        "width" : 636,
+        "x" : 12,
+        "y" : 390
+      },
+      "height" : 430,
+      "insideGlass" : false,
+      "labels" : [
+        "窗口选择",
+        "暂无画面",
+        "季度报告 — 项目讨论与修改记录项目讨论与修改记录项目讨论与修改记录项目讨论与修改记录项目讨论与修改记录项目讨论与修改记录项目讨论与修改记录项目讨论与修改记录项目讨论与修改记录项目讨论与修改记录项目讨论与修改记录项目讨论与修改记录",
+        "暂无画面",
+        "工作窗口 2",
+        "已收起 · 置顶预览",
+        "暂无画面",
+        "工作窗口 3"
+      ],
+      "list" : {
+        "height" : 324,
+        "width" : 636,
+        "x" : 12,
+        "y" : 26
+      },
+      "material" : "paper",
+      "name" : "light-paper-busy-unknown",
+      "records" : 3,
+      "requestedMaterial" : "paper",
+      "sample" : "busy-unknown",
+      "search" : {
+        "height" : 24,
+        "width" : 636,
+        "x" : 12,
+        "y" : 358
+      },
+      "searchVisible" : true,
+      "visible" : false,
+      "visibleKeys" : [
+        1,
+        2,
+        3
+      ],
+      "width" : 660
+    },
+    {
+      "actions" : 0,
+      "active" : false,
+      "alpha" : 0,
+      "buttons" : [
+        {
+          "enabled" : true,
+          "frame" : {
+            "height" : 30,
+            "width" : 21.5,
+            "x" : 15,
+            "y" : 345
+          },
+          "title" : "search"
+        },
+        {
+          "enabled" : false,
+          "frame" : {
+            "height" : 28,
+            "width" : 28,
+            "x" : 396,
+            "y" : 297
+          },
+          "title" : ""
+        },
+        {
+          "enabled" : false,
+          "frame" : {
+            "height" : 28,
+            "width" : 28,
+            "x" : 428,
+            "y" : 297
+          },
+          "title" : ""
+        },
+        {
+          "enabled" : false,
+          "frame" : {
+            "height" : 28,
+            "width" : 28,
+            "x" : 460,
+            "y" : 297
+          },
+          "title" : ""
+        },
+        {
+          "enabled" : true,
+          "frame" : {
+            "height" : 28,
+            "width" : 28,
+            "x" : 492,
+            "y" : 297
+          },
+          "title" : ""
+        },
+        {
+          "enabled" : true,
+          "frame" : {
+            "height" : 14,
+            "width" : 111,
+            "x" : 417,
+            "y" : 2
+          },
+          "title" : "打开“屏幕录制”设置…"
+        }
+      ],
+      "cachedThumbnails" : 0,
+      "corner" : 13,
+      "footer" : {
+        "height" : 18,
+        "width" : 397,
+        "x" : 12,
+        "y" : 0
+      },
+      "header" : {
+        "height" : 40,
+        "width" : 516,
+        "x" : 12,
+        "y" : 380
+      },
+      "height" : 420,
+      "insideGlass" : false,
+      "labels" : [
+        "窗口选择",
+        "季度报告 — 项目讨论与修改记录项目讨论与修改记录项目讨论与修改记录项目讨论与修改记录项目讨论与修改记录项目讨论与修改记录项目讨论与修改记录项目讨论与修改记录项目讨论与修改记录项目讨论与修改记录项目讨论与修改记录项目讨论与修改记录",
+        "工作窗口 2",
+        "已收起 · 置顶预览",
+        "工作窗口 3",
+        "需要屏幕录制权限才能预览",
+        "打开“屏幕录制”设置…"
+      ],
+      "list" : {
+        "height" : 314,
+        "width" : 516,
+        "x" : 12,
+        "y" : 26
+      },
+      "material" : "paper",
+      "name" : "light-paper-no-permission",
+      "records" : 3,
+      "requestedMaterial" : "paper",
+      "sample" : "no-permission",
+      "search" : {
+        "height" : 24,
+        "width" : 516,
+        "x" : 12,
+        "y" : 348
+      },
+      "searchVisible" : true,
+      "visible" : false,
+      "visibleKeys" : [
+        1,
+        2,
+        3
+      ],
+      "width" : 540
+    },
+    {
+      "actions" : 0,
+      "active" : false,
+      "alpha" : 0,
+      "buttons" : [
+        {
+          "enabled" : true,
+          "frame" : {
+            "height" : 30,
+            "width" : 21.5,
+            "x" : 15,
+            "y" : 225
+          },
+          "title" : "search"
+        }
+      ],
+      "cachedThumbnails" : 0,
+      "corner" : 13,
+      "footer" : {
+        "height" : 18,
+        "width" : 432,
+        "x" : 12,
+        "y" : 0
+      },
+      "header" : {
+        "height" : 40,
+        "width" : 432,
+        "x" : 12,
+        "y" : 260
+      },
+      "height" : 300,
+      "insideGlass" : true,
+      "labels" : [
+        "窗口选择",
+        "没有可显示的窗口"
+      ],
+      "list" : {
+        "height" : 194,
+        "width" : 432,
+        "x" : 12,
+        "y" : 26
+      },
+      "material" : "glass",
+      "name" : "light-system-empty",
+      "records" : 0,
+      "requestedMaterial" : "system",
+      "sample" : "empty",
+      "search" : {
+        "height" : 24,
+        "width" : 432,
+        "x" : 12,
+        "y" : 228
+      },
+      "searchVisible" : true,
+      "visible" : false,
+      "visibleKeys" : [
+
+      ],
+      "width" : 456
+    },
+    {
+      "actions" : 0,
+      "active" : false,
+      "alpha" : 0,
+      "buttons" : [
+        {
+          "enabled" : true,
+          "frame" : {
+            "height" : 30,
+            "width" : 21.5,
+            "x" : 15,
+            "y" : 225
+          },
+          "title" : "search"
+        },
+        {
+          "enabled" : true,
+          "frame" : {
+            "height" : 30,
+            "width" : 24,
+            "x" : 420,
+            "y" : 224.5
+          },
+          "title" : ""
+        }
+      ],
+      "cachedThumbnails" : 0,
+      "corner" : 13,
+      "footer" : {
+        "height" : 18,
+        "width" : 432,
+        "x" : 12,
+        "y" : 0
+      },
+      "header" : {
+        "height" : 40,
+        "width" : 432,
+        "x" : 12,
+        "y" : 260
+      },
+      "height" : 300,
+      "insideGlass" : true,
+      "labels" : [
+        "窗口选择",
+        "不存在的样件",
+        "没有匹配的窗口"
+      ],
+      "list" : {
+        "height" : 194,
+        "width" : 432,
+        "x" : 12,
+        "y" : 26
+      },
+      "material" : "glass",
+      "name" : "light-system-no-match",
+      "records" : 0,
+      "requestedMaterial" : "system",
+      "sample" : "no-match",
+      "search" : {
+        "height" : 24,
+        "width" : 432,
+        "x" : 12,
+        "y" : 228
+      },
+      "searchVisible" : true,
+      "visible" : false,
+      "visibleKeys" : [
+
+      ],
+      "width" : 456
+    },
+    {
+      "actions" : 0,
+      "active" : false,
+      "alpha" : 0,
+      "buttons" : [
+
+      ],
+      "cachedThumbnails" : 0,
+      "corner" : 13,
+      "firstCard" : {
+        "actions" : {
+          "height" : 32,
+          "width" : 128,
+          "x" : 153,
+          "y" : 173
+        },
+        "bounds" : {
+          "height" : 219,
+          "width" : 295,
+          "x" : 0,
+          "y" : 0
+        },
+        "title" : {
+          "height" : 34,
+          "width" : 279,
+          "x" : 8,
+          "y" : 25
+        }
+      },
+      "footer" : {
+        "height" : 18,
+        "width" : 296,
+        "x" : 12,
+        "y" : 0
+      },
+      "header" : {
+        "height" : 40,
+        "width" : 296,
+        "x" : 12,
+        "y" : 238
+      },
+      "height" : 278,
+      "insideGlass" : true,
+      "labels" : [
+        "1 个窗口",
+        "暂无画面",
+        "季度报告 — 项目讨论与修改记录项目讨论与修改记录项目讨论与修改记录项目讨论与修改记录项目讨论与修改记录项目讨论与修改记录项目讨论与修改记录项目讨论与修改记录项目讨论与修改记录项目讨论与修改记录项目讨论与修改记录项目讨论与修改记录"
+      ],
+      "list" : {
+        "height" : 208,
+        "width" : 296,
+        "x" : 12,
+        "y" : 26
+      },
+      "material" : "glass",
+      "name" : "light-system-one",
+      "records" : 1,
+      "requestedMaterial" : "system",
+      "sample" : "one",
+      "search" : {
+        "height" : 0,
+        "width" : 0,
+        "x" : 0,
+        "y" : 0
+      },
+      "searchVisible" : false,
+      "visible" : false,
+      "visibleKeys" : [
+        1
+      ],
+      "width" : 320
+    },
+    {
+      "actions" : 0,
+      "active" : false,
+      "alpha" : 0,
+      "buttons" : [
+
+      ],
+      "cachedThumbnails" : 0,
+      "corner" : 13,
+      "firstCard" : {
+        "actions" : {
+          "height" : 32,
+          "width" : 128,
+          "x" : 170,
+          "y" : 173
+        },
+        "bounds" : {
+          "height" : 219,
+          "width" : 312,
+          "x" : 0,
+          "y" : 0
+        },
+        "title" : {
+          "height" : 34,
+          "width" : 296,
+          "x" : 8,
+          "y" : 25
+        }
+      },
+      "footer" : {
+        "height" : 18,
+        "width" : 636,
+        "x" : 12,
+        "y" : 0
+      },
+      "header" : {
+        "height" : 40,
+        "width" : 636,
+        "x" : 12,
+        "y" : 440
+      },
+      "height" : 480,
+      "insideGlass" : true,
+      "labels" : [
+        "6 个窗口",
+        "暂无画面",
+        "季度报告 — 项目讨论与修改记录项目讨论与修改记录项目讨论与修改记录项目讨论与修改记录项目讨论与修改记录项目讨论与修改记录项目讨论与修改记录项目讨论与修改记录项目讨论与修改记录项目讨论与修改记录项目讨论与修改记录项目讨论与修改记录",
+        "暂无画面",
+        "工作窗口 2",
+        "已收起 · 置顶预览",
+        "暂无画面",
+        "工作窗口 3",
+        "暂无画面",
+        "工作窗口 4"
+      ],
+      "list" : {
+        "height" : 410,
+        "width" : 636,
+        "x" : 12,
+        "y" : 26
+      },
+      "material" : "glass",
+      "name" : "light-system-many",
+      "records" : 6,
+      "requestedMaterial" : "system",
+      "sample" : "many",
+      "search" : {
+        "height" : 0,
+        "width" : 0,
+        "x" : 0,
+        "y" : 0
+      },
+      "searchVisible" : false,
+      "visible" : false,
+      "visibleKeys" : [
+        1,
+        2,
+        3
+      ],
+      "width" : 660
+    },
+    {
+      "actions" : 0,
+      "active" : false,
+      "alpha" : 0,
+      "buttons" : [
+        {
+          "enabled" : true,
+          "frame" : {
+            "height" : 30,
+            "width" : 21.5,
+            "x" : 15,
+            "y" : 345
+          },
+          "title" : "search"
+        },
+        {
+          "enabled" : true,
+          "frame" : {
+            "height" : 28,
+            "width" : 28,
+            "x" : 396,
+            "y" : 297
+          },
+          "title" : ""
+        },
+        {
+          "enabled" : true,
+          "frame" : {
+            "height" : 28,
+            "width" : 28,
+            "x" : 428,
+            "y" : 297
+          },
+          "title" : ""
+        },
+        {
+          "enabled" : true,
+          "frame" : {
+            "height" : 28,
+            "width" : 28,
+            "x" : 460,
+            "y" : 297
+          },
+          "title" : ""
+        },
+        {
+          "enabled" : true,
+          "frame" : {
+            "height" : 28,
+            "width" : 28,
+            "x" : 492,
+            "y" : 297
+          },
+          "title" : ""
+        }
+      ],
+      "cachedThumbnails" : 0,
+      "corner" : 13,
+      "footer" : {
+        "height" : 18,
+        "width" : 516,
+        "x" : 12,
+        "y" : 0
+      },
+      "header" : {
+        "height" : 40,
+        "width" : 516,
+        "x" : 12,
+        "y" : 380
+      },
+      "height" : 420,
+      "insideGlass" : true,
+      "labels" : [
+        "窗口选择",
+        "季度报告 — 项目讨论与修改记录项目讨论与修改记录项目讨论与修改记录项目讨论与修改记录项目讨论与修改记录项目讨论与修改记录项目讨论与修改记录项目讨论与修改记录项目讨论与修改记录项目讨论与修改记录项目讨论与修改记录项目讨论与修改记录",
+        "工作窗口 2",
+        "已收起 · 置顶预览",
+        "工作窗口 3",
+        "工作窗口 4",
+        "工作窗口 5",
+        "工作窗口 6"
+      ],
+      "list" : {
+        "height" : 314,
+        "width" : 516,
+        "x" : 12,
+        "y" : 26
+      },
+      "material" : "glass",
+      "name" : "light-system-long-list",
+      "records" : 7,
+      "requestedMaterial" : "system",
+      "sample" : "long-list",
+      "search" : {
+        "height" : 24,
+        "width" : 516,
+        "x" : 12,
+        "y" : 348
+      },
+      "searchVisible" : true,
+      "visible" : false,
+      "visibleKeys" : [
+        1,
+        2,
+        3,
+        4,
+        5,
+        6
+      ],
+      "width" : 540
+    },
+    {
+      "actions" : 0,
+      "active" : false,
+      "alpha" : 0,
+      "buttons" : [
+        {
+          "enabled" : true,
+          "frame" : {
+            "height" : 30,
+            "width" : 21.5,
+            "x" : 15,
+            "y" : 355
+          },
+          "title" : "search"
+        },
+        {
+          "enabled" : false,
+          "frame" : {
+            "height" : 28,
+            "width" : 28,
+            "x" : 184,
+            "y" : 306
+          },
+          "title" : ""
+        },
+        {
+          "enabled" : false,
+          "frame" : {
+            "height" : 28,
+            "width" : 28,
+            "x" : 216,
+            "y" : 306
+          },
+          "title" : ""
+        },
+        {
+          "enabled" : false,
+          "frame" : {
+            "height" : 28,
+            "width" : 28,
+            "x" : 248,
+            "y" : 306
+          },
+          "title" : ""
+        },
+        {
+          "enabled" : true,
+          "frame" : {
+            "height" : 28,
+            "width" : 28,
+            "x" : 280,
+            "y" : 306
+          },
+          "title" : ""
+        },
+        {
+          "enabled" : false,
+          "frame" : {
+            "height" : 28,
+            "width" : 28,
+            "x" : 508,
+            "y" : 306
+          },
+          "title" : ""
+        },
+        {
+          "enabled" : false,
+          "frame" : {
+            "height" : 28,
+            "width" : 28,
+            "x" : 540,
+            "y" : 306
+          },
+          "title" : ""
+        },
+        {
+          "enabled" : false,
+          "frame" : {
+            "height" : 28,
+            "width" : 28,
+            "x" : 572,
+            "y" : 306
+          },
+          "title" : ""
+        },
+        {
+          "enabled" : true,
+          "frame" : {
+            "height" : 28,
+            "width" : 28,
+            "x" : 604,
+            "y" : 306
+          },
+          "title" : ""
+        },
+        {
+          "enabled" : false,
+          "frame" : {
+            "height" : 28,
+            "width" : 28,
+            "x" : 184,
+            "y" : 75
+          },
+          "title" : ""
+        },
+        {
+          "enabled" : false,
+          "frame" : {
+            "height" : 28,
+            "width" : 28,
+            "x" : 216,
+            "y" : 75
+          },
+          "title" : ""
+        },
+        {
+          "enabled" : false,
+          "frame" : {
+            "height" : 28,
+            "width" : 28,
+            "x" : 248,
+            "y" : 75
+          },
+          "title" : ""
+        },
+        {
+          "enabled" : true,
+          "frame" : {
+            "height" : 28,
+            "width" : 28,
+            "x" : 280,
+            "y" : 75
+          },
+          "title" : ""
+        }
+      ],
+      "cachedThumbnails" : 0,
+      "corner" : 13,
+      "firstCard" : {
+        "actions" : {
+          "height" : 32,
+          "width" : 160,
+          "x" : 138,
+          "y" : 173
+        },
+        "bounds" : {
+          "height" : 219,
+          "width" : 312,
+          "x" : 0,
+          "y" : 0
+        },
+        "title" : {
+          "height" : 34,
+          "width" : 296,
+          "x" : 8,
+          "y" : 25
+        }
+      },
+      "footer" : {
+        "height" : 18,
+        "width" : 636,
+        "x" : 12,
+        "y" : 0
+      },
+      "header" : {
+        "height" : 40,
+        "width" : 636,
+        "x" : 12,
+        "y" : 390
+      },
+      "height" : 430,
+      "insideGlass" : true,
+      "labels" : [
+        "窗口选择",
+        "暂无画面",
+        "季度报告 — 项目讨论与修改记录项目讨论与修改记录项目讨论与修改记录项目讨论与修改记录项目讨论与修改记录项目讨论与修改记录项目讨论与修改记录项目讨论与修改记录项目讨论与修改记录项目讨论与修改记录项目讨论与修改记录项目讨论与修改记录",
+        "暂无画面",
+        "工作窗口 2",
+        "已收起 · 置顶预览",
+        "暂无画面",
+        "工作窗口 3"
+      ],
+      "list" : {
+        "height" : 324,
+        "width" : 636,
+        "x" : 12,
+        "y" : 26
+      },
+      "material" : "glass",
+      "name" : "light-system-busy-unknown",
+      "records" : 3,
+      "requestedMaterial" : "system",
+      "sample" : "busy-unknown",
+      "search" : {
+        "height" : 24,
+        "width" : 636,
+        "x" : 12,
+        "y" : 358
+      },
+      "searchVisible" : true,
+      "visible" : false,
+      "visibleKeys" : [
+        1,
+        2,
+        3
+      ],
+      "width" : 660
+    },
+    {
+      "actions" : 0,
+      "active" : false,
+      "alpha" : 0,
+      "buttons" : [
+        {
+          "enabled" : true,
+          "frame" : {
+            "height" : 30,
+            "width" : 21.5,
+            "x" : 15,
+            "y" : 345
+          },
+          "title" : "search"
+        },
+        {
+          "enabled" : false,
+          "frame" : {
+            "height" : 28,
+            "width" : 28,
+            "x" : 396,
+            "y" : 297
+          },
+          "title" : ""
+        },
+        {
+          "enabled" : false,
+          "frame" : {
+            "height" : 28,
+            "width" : 28,
+            "x" : 428,
+            "y" : 297
+          },
+          "title" : ""
+        },
+        {
+          "enabled" : false,
+          "frame" : {
+            "height" : 28,
+            "width" : 28,
+            "x" : 460,
+            "y" : 297
+          },
+          "title" : ""
+        },
+        {
+          "enabled" : true,
+          "frame" : {
+            "height" : 28,
+            "width" : 28,
+            "x" : 492,
+            "y" : 297
+          },
+          "title" : ""
+        },
+        {
+          "enabled" : true,
+          "frame" : {
+            "height" : 14,
+            "width" : 111,
+            "x" : 417,
+            "y" : 2
+          },
+          "title" : "打开“屏幕录制”设置…"
+        }
+      ],
+      "cachedThumbnails" : 0,
+      "corner" : 13,
+      "footer" : {
+        "height" : 18,
+        "width" : 397,
+        "x" : 12,
+        "y" : 0
+      },
+      "header" : {
+        "height" : 40,
+        "width" : 516,
+        "x" : 12,
+        "y" : 380
+      },
+      "height" : 420,
+      "insideGlass" : true,
+      "labels" : [
+        "窗口选择",
+        "季度报告 — 项目讨论与修改记录项目讨论与修改记录项目讨论与修改记录项目讨论与修改记录项目讨论与修改记录项目讨论与修改记录项目讨论与修改记录项目讨论与修改记录项目讨论与修改记录项目讨论与修改记录项目讨论与修改记录项目讨论与修改记录",
+        "工作窗口 2",
+        "已收起 · 置顶预览",
+        "工作窗口 3",
+        "需要屏幕录制权限才能预览",
+        "打开“屏幕录制”设置…"
+      ],
+      "list" : {
+        "height" : 314,
+        "width" : 516,
+        "x" : 12,
+        "y" : 26
+      },
+      "material" : "glass",
+      "name" : "light-system-no-permission",
+      "records" : 3,
+      "requestedMaterial" : "system",
+      "sample" : "no-permission",
+      "search" : {
+        "height" : 24,
+        "width" : 516,
+        "x" : 12,
+        "y" : 348
+      },
+      "searchVisible" : true,
+      "visible" : false,
+      "visibleKeys" : [
+        1,
+        2,
+        3
+      ],
+      "width" : 540
+    },
+    {
+      "actions" : 0,
+      "active" : false,
+      "alpha" : 0,
+      "buttons" : [
+        {
+          "enabled" : true,
+          "frame" : {
+            "height" : 30,
+            "width" : 21.5,
+            "x" : 15,
+            "y" : 225
+          },
+          "title" : "search"
+        }
+      ],
+      "cachedThumbnails" : 0,
+      "corner" : 13,
+      "footer" : {
+        "height" : 18,
+        "width" : 432,
+        "x" : 12,
+        "y" : 0
+      },
+      "header" : {
+        "height" : 40,
+        "width" : 432,
+        "x" : 12,
+        "y" : 260
+      },
+      "height" : 300,
+      "insideGlass" : false,
+      "labels" : [
+        "窗口选择",
+        "没有可显示的窗口"
+      ],
+      "list" : {
+        "height" : 194,
+        "width" : 432,
+        "x" : 12,
+        "y" : 26
+      },
+      "material" : "paper",
+      "name" : "dark-paper-empty",
+      "records" : 0,
+      "requestedMaterial" : "paper",
+      "sample" : "empty",
+      "search" : {
+        "height" : 24,
+        "width" : 432,
+        "x" : 12,
+        "y" : 228
+      },
+      "searchVisible" : true,
+      "visible" : false,
+      "visibleKeys" : [
+
+      ],
+      "width" : 456
+    },
+    {
+      "actions" : 0,
+      "active" : false,
+      "alpha" : 0,
+      "buttons" : [
+        {
+          "enabled" : true,
+          "frame" : {
+            "height" : 30,
+            "width" : 21.5,
+            "x" : 15,
+            "y" : 225
+          },
+          "title" : "search"
+        },
+        {
+          "enabled" : true,
+          "frame" : {
+            "height" : 30,
+            "width" : 24,
+            "x" : 420,
+            "y" : 224.5
+          },
+          "title" : ""
+        }
+      ],
+      "cachedThumbnails" : 0,
+      "corner" : 13,
+      "footer" : {
+        "height" : 18,
+        "width" : 432,
+        "x" : 12,
+        "y" : 0
+      },
+      "header" : {
+        "height" : 40,
+        "width" : 432,
+        "x" : 12,
+        "y" : 260
+      },
+      "height" : 300,
+      "insideGlass" : false,
+      "labels" : [
+        "窗口选择",
+        "不存在的样件",
+        "没有匹配的窗口"
+      ],
+      "list" : {
+        "height" : 194,
+        "width" : 432,
+        "x" : 12,
+        "y" : 26
+      },
+      "material" : "paper",
+      "name" : "dark-paper-no-match",
+      "records" : 0,
+      "requestedMaterial" : "paper",
+      "sample" : "no-match",
+      "search" : {
+        "height" : 24,
+        "width" : 432,
+        "x" : 12,
+        "y" : 228
+      },
+      "searchVisible" : true,
+      "visible" : false,
+      "visibleKeys" : [
+
+      ],
+      "width" : 456
+    },
+    {
+      "actions" : 0,
+      "active" : false,
+      "alpha" : 0,
+      "buttons" : [
+
+      ],
+      "cachedThumbnails" : 0,
+      "corner" : 13,
+      "firstCard" : {
+        "actions" : {
+          "height" : 32,
+          "width" : 128,
+          "x" : 153,
+          "y" : 173
+        },
+        "bounds" : {
+          "height" : 219,
+          "width" : 295,
+          "x" : 0,
+          "y" : 0
+        },
+        "title" : {
+          "height" : 34,
+          "width" : 279,
+          "x" : 8,
+          "y" : 25
+        }
+      },
+      "footer" : {
+        "height" : 18,
+        "width" : 296,
+        "x" : 12,
+        "y" : 0
+      },
+      "header" : {
+        "height" : 40,
+        "width" : 296,
+        "x" : 12,
+        "y" : 238
+      },
+      "height" : 278,
+      "insideGlass" : false,
+      "labels" : [
+        "1 个窗口",
+        "暂无画面",
+        "季度报告 — 项目讨论与修改记录项目讨论与修改记录项目讨论与修改记录项目讨论与修改记录项目讨论与修改记录项目讨论与修改记录项目讨论与修改记录项目讨论与修改记录项目讨论与修改记录项目讨论与修改记录项目讨论与修改记录项目讨论与修改记录"
+      ],
+      "list" : {
+        "height" : 208,
+        "width" : 296,
+        "x" : 12,
+        "y" : 26
+      },
+      "material" : "paper",
+      "name" : "dark-paper-one",
+      "records" : 1,
+      "requestedMaterial" : "paper",
+      "sample" : "one",
+      "search" : {
+        "height" : 0,
+        "width" : 0,
+        "x" : 0,
+        "y" : 0
+      },
+      "searchVisible" : false,
+      "visible" : false,
+      "visibleKeys" : [
+        1
+      ],
+      "width" : 320
+    },
+    {
+      "actions" : 0,
+      "active" : false,
+      "alpha" : 0,
+      "buttons" : [
+
+      ],
+      "cachedThumbnails" : 0,
+      "corner" : 13,
+      "firstCard" : {
+        "actions" : {
+          "height" : 32,
+          "width" : 128,
+          "x" : 170,
+          "y" : 173
+        },
+        "bounds" : {
+          "height" : 219,
+          "width" : 312,
+          "x" : 0,
+          "y" : 0
+        },
+        "title" : {
+          "height" : 34,
+          "width" : 296,
+          "x" : 8,
+          "y" : 25
+        }
+      },
+      "footer" : {
+        "height" : 18,
+        "width" : 636,
+        "x" : 12,
+        "y" : 0
+      },
+      "header" : {
+        "height" : 40,
+        "width" : 636,
+        "x" : 12,
+        "y" : 440
+      },
+      "height" : 480,
+      "insideGlass" : false,
+      "labels" : [
+        "6 个窗口",
+        "暂无画面",
+        "季度报告 — 项目讨论与修改记录项目讨论与修改记录项目讨论与修改记录项目讨论与修改记录项目讨论与修改记录项目讨论与修改记录项目讨论与修改记录项目讨论与修改记录项目讨论与修改记录项目讨论与修改记录项目讨论与修改记录项目讨论与修改记录",
+        "暂无画面",
+        "工作窗口 2",
+        "已收起 · 置顶预览",
+        "暂无画面",
+        "工作窗口 3",
+        "暂无画面",
+        "工作窗口 4"
+      ],
+      "list" : {
+        "height" : 410,
+        "width" : 636,
+        "x" : 12,
+        "y" : 26
+      },
+      "material" : "paper",
+      "name" : "dark-paper-many",
+      "records" : 6,
+      "requestedMaterial" : "paper",
+      "sample" : "many",
+      "search" : {
+        "height" : 0,
+        "width" : 0,
+        "x" : 0,
+        "y" : 0
+      },
+      "searchVisible" : false,
+      "visible" : false,
+      "visibleKeys" : [
+        1,
+        2,
+        3
+      ],
+      "width" : 660
+    },
+    {
+      "actions" : 0,
+      "active" : false,
+      "alpha" : 0,
+      "buttons" : [
+        {
+          "enabled" : true,
+          "frame" : {
+            "height" : 30,
+            "width" : 21.5,
+            "x" : 15,
+            "y" : 345
+          },
+          "title" : "search"
+        },
+        {
+          "enabled" : true,
+          "frame" : {
+            "height" : 28,
+            "width" : 28,
+            "x" : 396,
+            "y" : 297
+          },
+          "title" : ""
+        },
+        {
+          "enabled" : true,
+          "frame" : {
+            "height" : 28,
+            "width" : 28,
+            "x" : 428,
+            "y" : 297
+          },
+          "title" : ""
+        },
+        {
+          "enabled" : true,
+          "frame" : {
+            "height" : 28,
+            "width" : 28,
+            "x" : 460,
+            "y" : 297
+          },
+          "title" : ""
+        },
+        {
+          "enabled" : true,
+          "frame" : {
+            "height" : 28,
+            "width" : 28,
+            "x" : 492,
+            "y" : 297
+          },
+          "title" : ""
+        }
+      ],
+      "cachedThumbnails" : 0,
+      "corner" : 13,
+      "footer" : {
+        "height" : 18,
+        "width" : 516,
+        "x" : 12,
+        "y" : 0
+      },
+      "header" : {
+        "height" : 40,
+        "width" : 516,
+        "x" : 12,
+        "y" : 380
+      },
+      "height" : 420,
+      "insideGlass" : false,
+      "labels" : [
+        "窗口选择",
+        "季度报告 — 项目讨论与修改记录项目讨论与修改记录项目讨论与修改记录项目讨论与修改记录项目讨论与修改记录项目讨论与修改记录项目讨论与修改记录项目讨论与修改记录项目讨论与修改记录项目讨论与修改记录项目讨论与修改记录项目讨论与修改记录",
+        "工作窗口 2",
+        "已收起 · 置顶预览",
+        "工作窗口 3",
+        "工作窗口 4",
+        "工作窗口 5",
+        "工作窗口 6"
+      ],
+      "list" : {
+        "height" : 314,
+        "width" : 516,
+        "x" : 12,
+        "y" : 26
+      },
+      "material" : "paper",
+      "name" : "dark-paper-long-list",
+      "records" : 7,
+      "requestedMaterial" : "paper",
+      "sample" : "long-list",
+      "search" : {
+        "height" : 24,
+        "width" : 516,
+        "x" : 12,
+        "y" : 348
+      },
+      "searchVisible" : true,
+      "visible" : false,
+      "visibleKeys" : [
+        1,
+        2,
+        3,
+        4,
+        5,
+        6
+      ],
+      "width" : 540
+    },
+    {
+      "actions" : 0,
+      "active" : false,
+      "alpha" : 0,
+      "buttons" : [
+        {
+          "enabled" : true,
+          "frame" : {
+            "height" : 30,
+            "width" : 21.5,
+            "x" : 15,
+            "y" : 355
+          },
+          "title" : "search"
+        },
+        {
+          "enabled" : false,
+          "frame" : {
+            "height" : 28,
+            "width" : 28,
+            "x" : 184,
+            "y" : 306
+          },
+          "title" : ""
+        },
+        {
+          "enabled" : false,
+          "frame" : {
+            "height" : 28,
+            "width" : 28,
+            "x" : 216,
+            "y" : 306
+          },
+          "title" : ""
+        },
+        {
+          "enabled" : false,
+          "frame" : {
+            "height" : 28,
+            "width" : 28,
+            "x" : 248,
+            "y" : 306
+          },
+          "title" : ""
+        },
+        {
+          "enabled" : true,
+          "frame" : {
+            "height" : 28,
+            "width" : 28,
+            "x" : 280,
+            "y" : 306
+          },
+          "title" : ""
+        },
+        {
+          "enabled" : false,
+          "frame" : {
+            "height" : 28,
+            "width" : 28,
+            "x" : 508,
+            "y" : 306
+          },
+          "title" : ""
+        },
+        {
+          "enabled" : false,
+          "frame" : {
+            "height" : 28,
+            "width" : 28,
+            "x" : 540,
+            "y" : 306
+          },
+          "title" : ""
+        },
+        {
+          "enabled" : false,
+          "frame" : {
+            "height" : 28,
+            "width" : 28,
+            "x" : 572,
+            "y" : 306
+          },
+          "title" : ""
+        },
+        {
+          "enabled" : true,
+          "frame" : {
+            "height" : 28,
+            "width" : 28,
+            "x" : 604,
+            "y" : 306
+          },
+          "title" : ""
+        },
+        {
+          "enabled" : false,
+          "frame" : {
+            "height" : 28,
+            "width" : 28,
+            "x" : 184,
+            "y" : 75
+          },
+          "title" : ""
+        },
+        {
+          "enabled" : false,
+          "frame" : {
+            "height" : 28,
+            "width" : 28,
+            "x" : 216,
+            "y" : 75
+          },
+          "title" : ""
+        },
+        {
+          "enabled" : false,
+          "frame" : {
+            "height" : 28,
+            "width" : 28,
+            "x" : 248,
+            "y" : 75
+          },
+          "title" : ""
+        },
+        {
+          "enabled" : true,
+          "frame" : {
+            "height" : 28,
+            "width" : 28,
+            "x" : 280,
+            "y" : 75
+          },
+          "title" : ""
+        }
+      ],
+      "cachedThumbnails" : 0,
+      "corner" : 13,
+      "firstCard" : {
+        "actions" : {
+          "height" : 32,
+          "width" : 160,
+          "x" : 138,
+          "y" : 173
+        },
+        "bounds" : {
+          "height" : 219,
+          "width" : 312,
+          "x" : 0,
+          "y" : 0
+        },
+        "title" : {
+          "height" : 34,
+          "width" : 296,
+          "x" : 8,
+          "y" : 25
+        }
+      },
+      "footer" : {
+        "height" : 18,
+        "width" : 636,
+        "x" : 12,
+        "y" : 0
+      },
+      "header" : {
+        "height" : 40,
+        "width" : 636,
+        "x" : 12,
+        "y" : 390
+      },
+      "height" : 430,
+      "insideGlass" : false,
+      "labels" : [
+        "窗口选择",
+        "暂无画面",
+        "季度报告 — 项目讨论与修改记录项目讨论与修改记录项目讨论与修改记录项目讨论与修改记录项目讨论与修改记录项目讨论与修改记录项目讨论与修改记录项目讨论与修改记录项目讨论与修改记录项目讨论与修改记录项目讨论与修改记录项目讨论与修改记录",
+        "暂无画面",
+        "工作窗口 2",
+        "已收起 · 置顶预览",
+        "暂无画面",
+        "工作窗口 3"
+      ],
+      "list" : {
+        "height" : 324,
+        "width" : 636,
+        "x" : 12,
+        "y" : 26
+      },
+      "material" : "paper",
+      "name" : "dark-paper-busy-unknown",
+      "records" : 3,
+      "requestedMaterial" : "paper",
+      "sample" : "busy-unknown",
+      "search" : {
+        "height" : 24,
+        "width" : 636,
+        "x" : 12,
+        "y" : 358
+      },
+      "searchVisible" : true,
+      "visible" : false,
+      "visibleKeys" : [
+        1,
+        2,
+        3
+      ],
+      "width" : 660
+    },
+    {
+      "actions" : 0,
+      "active" : false,
+      "alpha" : 0,
+      "buttons" : [
+        {
+          "enabled" : true,
+          "frame" : {
+            "height" : 30,
+            "width" : 21.5,
+            "x" : 15,
+            "y" : 345
+          },
+          "title" : "search"
+        },
+        {
+          "enabled" : false,
+          "frame" : {
+            "height" : 28,
+            "width" : 28,
+            "x" : 396,
+            "y" : 297
+          },
+          "title" : ""
+        },
+        {
+          "enabled" : false,
+          "frame" : {
+            "height" : 28,
+            "width" : 28,
+            "x" : 428,
+            "y" : 297
+          },
+          "title" : ""
+        },
+        {
+          "enabled" : false,
+          "frame" : {
+            "height" : 28,
+            "width" : 28,
+            "x" : 460,
+            "y" : 297
+          },
+          "title" : ""
+        },
+        {
+          "enabled" : true,
+          "frame" : {
+            "height" : 28,
+            "width" : 28,
+            "x" : 492,
+            "y" : 297
+          },
+          "title" : ""
+        },
+        {
+          "enabled" : true,
+          "frame" : {
+            "height" : 14,
+            "width" : 111,
+            "x" : 417,
+            "y" : 2
+          },
+          "title" : "打开“屏幕录制”设置…"
+        }
+      ],
+      "cachedThumbnails" : 0,
+      "corner" : 13,
+      "footer" : {
+        "height" : 18,
+        "width" : 397,
+        "x" : 12,
+        "y" : 0
+      },
+      "header" : {
+        "height" : 40,
+        "width" : 516,
+        "x" : 12,
+        "y" : 380
+      },
+      "height" : 420,
+      "insideGlass" : false,
+      "labels" : [
+        "窗口选择",
+        "季度报告 — 项目讨论与修改记录项目讨论与修改记录项目讨论与修改记录项目讨论与修改记录项目讨论与修改记录项目讨论与修改记录项目讨论与修改记录项目讨论与修改记录项目讨论与修改记录项目讨论与修改记录项目讨论与修改记录项目讨论与修改记录",
+        "工作窗口 2",
+        "已收起 · 置顶预览",
+        "工作窗口 3",
+        "需要屏幕录制权限才能预览",
+        "打开“屏幕录制”设置…"
+      ],
+      "list" : {
+        "height" : 314,
+        "width" : 516,
+        "x" : 12,
+        "y" : 26
+      },
+      "material" : "paper",
+      "name" : "dark-paper-no-permission",
+      "records" : 3,
+      "requestedMaterial" : "paper",
+      "sample" : "no-permission",
+      "search" : {
+        "height" : 24,
+        "width" : 516,
+        "x" : 12,
+        "y" : 348
+      },
+      "searchVisible" : true,
+      "visible" : false,
+      "visibleKeys" : [
+        1,
+        2,
+        3
+      ],
+      "width" : 540
+    },
+    {
+      "actions" : 0,
+      "active" : false,
+      "alpha" : 0,
+      "buttons" : [
+        {
+          "enabled" : true,
+          "frame" : {
+            "height" : 30,
+            "width" : 21.5,
+            "x" : 15,
+            "y" : 225
+          },
+          "title" : "search"
+        }
+      ],
+      "cachedThumbnails" : 0,
+      "corner" : 13,
+      "footer" : {
+        "height" : 18,
+        "width" : 432,
+        "x" : 12,
+        "y" : 0
+      },
+      "header" : {
+        "height" : 40,
+        "width" : 432,
+        "x" : 12,
+        "y" : 260
+      },
+      "height" : 300,
+      "insideGlass" : true,
+      "labels" : [
+        "窗口选择",
+        "没有可显示的窗口"
+      ],
+      "list" : {
+        "height" : 194,
+        "width" : 432,
+        "x" : 12,
+        "y" : 26
+      },
+      "material" : "glass",
+      "name" : "dark-system-empty",
+      "records" : 0,
+      "requestedMaterial" : "system",
+      "sample" : "empty",
+      "search" : {
+        "height" : 24,
+        "width" : 432,
+        "x" : 12,
+        "y" : 228
+      },
+      "searchVisible" : true,
+      "visible" : false,
+      "visibleKeys" : [
+
+      ],
+      "width" : 456
+    },
+    {
+      "actions" : 0,
+      "active" : false,
+      "alpha" : 0,
+      "buttons" : [
+        {
+          "enabled" : true,
+          "frame" : {
+            "height" : 30,
+            "width" : 21.5,
+            "x" : 15,
+            "y" : 225
+          },
+          "title" : "search"
+        },
+        {
+          "enabled" : true,
+          "frame" : {
+            "height" : 30,
+            "width" : 24,
+            "x" : 420,
+            "y" : 224.5
+          },
+          "title" : ""
+        }
+      ],
+      "cachedThumbnails" : 0,
+      "corner" : 13,
+      "footer" : {
+        "height" : 18,
+        "width" : 432,
+        "x" : 12,
+        "y" : 0
+      },
+      "header" : {
+        "height" : 40,
+        "width" : 432,
+        "x" : 12,
+        "y" : 260
+      },
+      "height" : 300,
+      "insideGlass" : true,
+      "labels" : [
+        "窗口选择",
+        "不存在的样件",
+        "没有匹配的窗口"
+      ],
+      "list" : {
+        "height" : 194,
+        "width" : 432,
+        "x" : 12,
+        "y" : 26
+      },
+      "material" : "glass",
+      "name" : "dark-system-no-match",
+      "records" : 0,
+      "requestedMaterial" : "system",
+      "sample" : "no-match",
+      "search" : {
+        "height" : 24,
+        "width" : 432,
+        "x" : 12,
+        "y" : 228
+      },
+      "searchVisible" : true,
+      "visible" : false,
+      "visibleKeys" : [
+
+      ],
+      "width" : 456
+    },
+    {
+      "actions" : 0,
+      "active" : false,
+      "alpha" : 0,
+      "buttons" : [
+
+      ],
+      "cachedThumbnails" : 0,
+      "corner" : 13,
+      "firstCard" : {
+        "actions" : {
+          "height" : 32,
+          "width" : 128,
+          "x" : 153,
+          "y" : 173
+        },
+        "bounds" : {
+          "height" : 219,
+          "width" : 295,
+          "x" : 0,
+          "y" : 0
+        },
+        "title" : {
+          "height" : 34,
+          "width" : 279,
+          "x" : 8,
+          "y" : 25
+        }
+      },
+      "footer" : {
+        "height" : 18,
+        "width" : 296,
+        "x" : 12,
+        "y" : 0
+      },
+      "header" : {
+        "height" : 40,
+        "width" : 296,
+        "x" : 12,
+        "y" : 238
+      },
+      "height" : 278,
+      "insideGlass" : true,
+      "labels" : [
+        "1 个窗口",
+        "暂无画面",
+        "季度报告 — 项目讨论与修改记录项目讨论与修改记录项目讨论与修改记录项目讨论与修改记录项目讨论与修改记录项目讨论与修改记录项目讨论与修改记录项目讨论与修改记录项目讨论与修改记录项目讨论与修改记录项目讨论与修改记录项目讨论与修改记录"
+      ],
+      "list" : {
+        "height" : 208,
+        "width" : 296,
+        "x" : 12,
+        "y" : 26
+      },
+      "material" : "glass",
+      "name" : "dark-system-one",
+      "records" : 1,
+      "requestedMaterial" : "system",
+      "sample" : "one",
+      "search" : {
+        "height" : 0,
+        "width" : 0,
+        "x" : 0,
+        "y" : 0
+      },
+      "searchVisible" : false,
+      "visible" : false,
+      "visibleKeys" : [
+        1
+      ],
+      "width" : 320
+    },
+    {
+      "actions" : 0,
+      "active" : false,
+      "alpha" : 0,
+      "buttons" : [
+
+      ],
+      "cachedThumbnails" : 0,
+      "corner" : 13,
+      "firstCard" : {
+        "actions" : {
+          "height" : 32,
+          "width" : 128,
+          "x" : 170,
+          "y" : 173
+        },
+        "bounds" : {
+          "height" : 219,
+          "width" : 312,
+          "x" : 0,
+          "y" : 0
+        },
+        "title" : {
+          "height" : 34,
+          "width" : 296,
+          "x" : 8,
+          "y" : 25
+        }
+      },
+      "footer" : {
+        "height" : 18,
+        "width" : 636,
+        "x" : 12,
+        "y" : 0
+      },
+      "header" : {
+        "height" : 40,
+        "width" : 636,
+        "x" : 12,
+        "y" : 440
+      },
+      "height" : 480,
+      "insideGlass" : true,
+      "labels" : [
+        "6 个窗口",
+        "暂无画面",
+        "季度报告 — 项目讨论与修改记录项目讨论与修改记录项目讨论与修改记录项目讨论与修改记录项目讨论与修改记录项目讨论与修改记录项目讨论与修改记录项目讨论与修改记录项目讨论与修改记录项目讨论与修改记录项目讨论与修改记录项目讨论与修改记录",
+        "暂无画面",
+        "工作窗口 2",
+        "已收起 · 置顶预览",
+        "暂无画面",
+        "工作窗口 3",
+        "暂无画面",
+        "工作窗口 4"
+      ],
+      "list" : {
+        "height" : 410,
+        "width" : 636,
+        "x" : 12,
+        "y" : 26
+      },
+      "material" : "glass",
+      "name" : "dark-system-many",
+      "records" : 6,
+      "requestedMaterial" : "system",
+      "sample" : "many",
+      "search" : {
+        "height" : 0,
+        "width" : 0,
+        "x" : 0,
+        "y" : 0
+      },
+      "searchVisible" : false,
+      "visible" : false,
+      "visibleKeys" : [
+        1,
+        2,
+        3
+      ],
+      "width" : 660
+    },
+    {
+      "actions" : 0,
+      "active" : false,
+      "alpha" : 0,
+      "buttons" : [
+        {
+          "enabled" : true,
+          "frame" : {
+            "height" : 30,
+            "width" : 21.5,
+            "x" : 15,
+            "y" : 345
+          },
+          "title" : "search"
+        },
+        {
+          "enabled" : true,
+          "frame" : {
+            "height" : 28,
+            "width" : 28,
+            "x" : 396,
+            "y" : 297
+          },
+          "title" : ""
+        },
+        {
+          "enabled" : true,
+          "frame" : {
+            "height" : 28,
+            "width" : 28,
+            "x" : 428,
+            "y" : 297
+          },
+          "title" : ""
+        },
+        {
+          "enabled" : true,
+          "frame" : {
+            "height" : 28,
+            "width" : 28,
+            "x" : 460,
+            "y" : 297
+          },
+          "title" : ""
+        },
+        {
+          "enabled" : true,
+          "frame" : {
+            "height" : 28,
+            "width" : 28,
+            "x" : 492,
+            "y" : 297
+          },
+          "title" : ""
+        }
+      ],
+      "cachedThumbnails" : 0,
+      "corner" : 13,
+      "footer" : {
+        "height" : 18,
+        "width" : 516,
+        "x" : 12,
+        "y" : 0
+      },
+      "header" : {
+        "height" : 40,
+        "width" : 516,
+        "x" : 12,
+        "y" : 380
+      },
+      "height" : 420,
+      "insideGlass" : true,
+      "labels" : [
+        "窗口选择",
+        "季度报告 — 项目讨论与修改记录项目讨论与修改记录项目讨论与修改记录项目讨论与修改记录项目讨论与修改记录项目讨论与修改记录项目讨论与修改记录项目讨论与修改记录项目讨论与修改记录项目讨论与修改记录项目讨论与修改记录项目讨论与修改记录",
+        "工作窗口 2",
+        "已收起 · 置顶预览",
+        "工作窗口 3",
+        "工作窗口 4",
+        "工作窗口 5",
+        "工作窗口 6"
+      ],
+      "list" : {
+        "height" : 314,
+        "width" : 516,
+        "x" : 12,
+        "y" : 26
+      },
+      "material" : "glass",
+      "name" : "dark-system-long-list",
+      "records" : 7,
+      "requestedMaterial" : "system",
+      "sample" : "long-list",
+      "search" : {
+        "height" : 24,
+        "width" : 516,
+        "x" : 12,
+        "y" : 348
+      },
+      "searchVisible" : true,
+      "visible" : false,
+      "visibleKeys" : [
+        1,
+        2,
+        3,
+        4,
+        5,
+        6
+      ],
+      "width" : 540
+    },
+    {
+      "actions" : 0,
+      "active" : false,
+      "alpha" : 0,
+      "buttons" : [
+        {
+          "enabled" : true,
+          "frame" : {
+            "height" : 30,
+            "width" : 21.5,
+            "x" : 15,
+            "y" : 355
+          },
+          "title" : "search"
+        },
+        {
+          "enabled" : false,
+          "frame" : {
+            "height" : 28,
+            "width" : 28,
+            "x" : 184,
+            "y" : 306
+          },
+          "title" : ""
+        },
+        {
+          "enabled" : false,
+          "frame" : {
+            "height" : 28,
+            "width" : 28,
+            "x" : 216,
+            "y" : 306
+          },
+          "title" : ""
+        },
+        {
+          "enabled" : false,
+          "frame" : {
+            "height" : 28,
+            "width" : 28,
+            "x" : 248,
+            "y" : 306
+          },
+          "title" : ""
+        },
+        {
+          "enabled" : true,
+          "frame" : {
+            "height" : 28,
+            "width" : 28,
+            "x" : 280,
+            "y" : 306
+          },
+          "title" : ""
+        },
+        {
+          "enabled" : false,
+          "frame" : {
+            "height" : 28,
+            "width" : 28,
+            "x" : 508,
+            "y" : 306
+          },
+          "title" : ""
+        },
+        {
+          "enabled" : false,
+          "frame" : {
+            "height" : 28,
+            "width" : 28,
+            "x" : 540,
+            "y" : 306
+          },
+          "title" : ""
+        },
+        {
+          "enabled" : false,
+          "frame" : {
+            "height" : 28,
+            "width" : 28,
+            "x" : 572,
+            "y" : 306
+          },
+          "title" : ""
+        },
+        {
+          "enabled" : true,
+          "frame" : {
+            "height" : 28,
+            "width" : 28,
+            "x" : 604,
+            "y" : 306
+          },
+          "title" : ""
+        },
+        {
+          "enabled" : false,
+          "frame" : {
+            "height" : 28,
+            "width" : 28,
+            "x" : 184,
+            "y" : 75
+          },
+          "title" : ""
+        },
+        {
+          "enabled" : false,
+          "frame" : {
+            "height" : 28,
+            "width" : 28,
+            "x" : 216,
+            "y" : 75
+          },
+          "title" : ""
+        },
+        {
+          "enabled" : false,
+          "frame" : {
+            "height" : 28,
+            "width" : 28,
+            "x" : 248,
+            "y" : 75
+          },
+          "title" : ""
+        },
+        {
+          "enabled" : true,
+          "frame" : {
+            "height" : 28,
+            "width" : 28,
+            "x" : 280,
+            "y" : 75
+          },
+          "title" : ""
+        }
+      ],
+      "cachedThumbnails" : 0,
+      "corner" : 13,
+      "firstCard" : {
+        "actions" : {
+          "height" : 32,
+          "width" : 160,
+          "x" : 138,
+          "y" : 173
+        },
+        "bounds" : {
+          "height" : 219,
+          "width" : 312,
+          "x" : 0,
+          "y" : 0
+        },
+        "title" : {
+          "height" : 34,
+          "width" : 296,
+          "x" : 8,
+          "y" : 25
+        }
+      },
+      "footer" : {
+        "height" : 18,
+        "width" : 636,
+        "x" : 12,
+        "y" : 0
+      },
+      "header" : {
+        "height" : 40,
+        "width" : 636,
+        "x" : 12,
+        "y" : 390
+      },
+      "height" : 430,
+      "insideGlass" : true,
+      "labels" : [
+        "窗口选择",
+        "暂无画面",
+        "季度报告 — 项目讨论与修改记录项目讨论与修改记录项目讨论与修改记录项目讨论与修改记录项目讨论与修改记录项目讨论与修改记录项目讨论与修改记录项目讨论与修改记录项目讨论与修改记录项目讨论与修改记录项目讨论与修改记录项目讨论与修改记录",
+        "暂无画面",
+        "工作窗口 2",
+        "已收起 · 置顶预览",
+        "暂无画面",
+        "工作窗口 3"
+      ],
+      "list" : {
+        "height" : 324,
+        "width" : 636,
+        "x" : 12,
+        "y" : 26
+      },
+      "material" : "glass",
+      "name" : "dark-system-busy-unknown",
+      "records" : 3,
+      "requestedMaterial" : "system",
+      "sample" : "busy-unknown",
+      "search" : {
+        "height" : 24,
+        "width" : 636,
+        "x" : 12,
+        "y" : 358
+      },
+      "searchVisible" : true,
+      "visible" : false,
+      "visibleKeys" : [
+        1,
+        2,
+        3
+      ],
+      "width" : 660
+    },
+    {
+      "actions" : 0,
+      "active" : false,
+      "alpha" : 0,
+      "buttons" : [
+        {
+          "enabled" : true,
+          "frame" : {
+            "height" : 30,
+            "width" : 21.5,
+            "x" : 15,
+            "y" : 345
+          },
+          "title" : "search"
+        },
+        {
+          "enabled" : false,
+          "frame" : {
+            "height" : 28,
+            "width" : 28,
+            "x" : 396,
+            "y" : 297
+          },
+          "title" : ""
+        },
+        {
+          "enabled" : false,
+          "frame" : {
+            "height" : 28,
+            "width" : 28,
+            "x" : 428,
+            "y" : 297
+          },
+          "title" : ""
+        },
+        {
+          "enabled" : false,
+          "frame" : {
+            "height" : 28,
+            "width" : 28,
+            "x" : 460,
+            "y" : 297
+          },
+          "title" : ""
+        },
+        {
+          "enabled" : true,
+          "frame" : {
+            "height" : 28,
+            "width" : 28,
+            "x" : 492,
+            "y" : 297
+          },
+          "title" : ""
+        },
+        {
+          "enabled" : true,
+          "frame" : {
+            "height" : 14,
+            "width" : 111,
+            "x" : 417,
+            "y" : 2
+          },
+          "title" : "打开“屏幕录制”设置…"
+        }
+      ],
+      "cachedThumbnails" : 0,
+      "corner" : 13,
+      "footer" : {
+        "height" : 18,
+        "width" : 397,
+        "x" : 12,
+        "y" : 0
+      },
+      "header" : {
+        "height" : 40,
+        "width" : 516,
+        "x" : 12,
+        "y" : 380
+      },
+      "height" : 420,
+      "insideGlass" : true,
+      "labels" : [
+        "窗口选择",
+        "季度报告 — 项目讨论与修改记录项目讨论与修改记录项目讨论与修改记录项目讨论与修改记录项目讨论与修改记录项目讨论与修改记录项目讨论与修改记录项目讨论与修改记录项目讨论与修改记录项目讨论与修改记录项目讨论与修改记录项目讨论与修改记录",
+        "工作窗口 2",
+        "已收起 · 置顶预览",
+        "工作窗口 3",
+        "需要屏幕录制权限才能预览",
+        "打开“屏幕录制”设置…"
+      ],
+      "list" : {
+        "height" : 314,
+        "width" : 516,
+        "x" : 12,
+        "y" : 26
+      },
+      "material" : "glass",
+      "name" : "dark-system-no-permission",
+      "records" : 3,
+      "requestedMaterial" : "system",
+      "sample" : "no-permission",
+      "search" : {
+        "height" : 24,
+        "width" : 516,
+        "x" : 12,
+        "y" : 348
+      },
+      "searchVisible" : true,
+      "visible" : false,
+      "visibleKeys" : [
+        1,
+        2,
+        3
+      ],
+      "width" : 540
+    }
+  ],
+  "syntheticPID" : 2147483647
+}

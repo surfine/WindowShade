@@ -1,0 +1,32 @@
+{
+  "kind": "contract",
+  "artifact": "docs/design-review/2026-10-11-owned-navigation/validation.json:sha256:cc02ab4bc749128c0d1f0125a1042d80a8cd7451a2762ea59ed9934ce7dc3fed",
+  "status": "residual_risk",
+  "checks": [
+    {
+      "command": "actual OwnedPhasePreview + check-owned-navigation.py",
+      "exit_code": 0,
+      "result": "14 frames,86 actual input/navigation/host checks;child reaped,temp removed;6 PNG pairs identical"
+    },
+    {
+      "command": "actual MediaSurfacePreview + check-media-preview.py",
+      "exit_code": 0,
+      "result": "12 no-artwork synthetic media frames,2 actual control/revoke/timer reports;6 PNG pairs identical;no real media commands"
+    },
+    {
+      "command": "prototype/build.sh --check",
+      "exit_code": 0,
+      "receipt": "build-exit.json",
+      "result": "optimized Swift6 flags retained;localization/privacy/copy gates;current production inputs unchanged"
+    }
+  ],
+  "reused_checks": [
+    {
+      "command": "fifth final stdio flow test",
+      "basis": "reused-core-identity.json;211 core/support/native/controller inputs plus runner and fixture match; test source unchanged from HEAD;changed NSView is not in that suite"
+    }
+  ],
+  "remaining_risk": "signed Swift6 runtime/live hardware/animation/focus/VoiceOver;owned error/login/disconnect copy,long model names,live scrolling;media empty-device feedback/artwork/output/seek/volume/real streams;file shelf and remaining original seven lines",
+  "next_action": "self_review",
+  "updated": "2026-10-11"
+}

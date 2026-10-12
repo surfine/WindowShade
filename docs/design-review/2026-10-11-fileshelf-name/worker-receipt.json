@@ -1,0 +1,43 @@
+{
+  "is_error": false,
+  "incomplete": false,
+  "finish_reason": "stop",
+  "changed_files": [
+    "tools/design-qa/FileShelfStatePreview.swift"
+  ],
+  "checks": [
+    {
+      "check_index": 0,
+      "argv": [
+        "swiftc",
+        "-frontend",
+        "-parse",
+        "tools/design-qa/FileShelfStatePreview.swift"
+      ],
+      "exit_code": 0,
+      "revision": 1,
+      "timed_out": false,
+      "output": "",
+      "truncated": false
+    },
+    {
+      "check_index": 0,
+      "argv": [
+        "swiftc",
+        "-frontend",
+        "-parse",
+        "tools/design-qa/FileShelfStatePreview.swift"
+      ],
+      "exit_code": 0,
+      "revision": 2,
+      "timed_out": false,
+      "output": "",
+      "truncated": false
+    }
+  ],
+  "main_acceptance": {
+    "accepted": false,
+    "takeover": "Production already main-owned; QA scaffold rejected and fully rewritten by main before compilation",
+    "evidence": "worker-original.swift and SHA; actual after source belongs main and reads tile.nameLines"
+  }
+}

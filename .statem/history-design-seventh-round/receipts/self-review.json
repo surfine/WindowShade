@@ -1,0 +1,19 @@
+{
+  "kind": "self_review",
+  "status": "residual_risk",
+  "issues_found": true,
+  "needs_evidence": false,
+  "lenses": {
+    "task_contract": "Two state feedback repairs and first FileShelf measured baseline satisfy this scoped checkpoint; all original seven lines remain active. No new surface/settings or user files touched.",
+    "evidence_freshness": "Current native518/518 and optimized519 manifests checked; published consumers0 and18 sources/75 files SHA-bound in validation6209e731. Worker original stdio0 reviewed; old NowPlaying suite explicitly not_run, new behavior independently exercised.",
+    "edge_risk": "Empty list return/requery5/stale/revoke/timers and stopped status actual; FileShelf long name visibly fails and measurement39>28 confirms next repair. Static type-icons/alpha0 samples cannot prove live hardware/file actions/artwork or motion."
+  },
+  "findings": [
+    "DeepSeek bounded two-string copy change accepted after main source/reap-path review and actual native stopped frame; media design and implementation main.",
+    "First consumer TypeError came from reading frames wrapper incorrectly; frozen failing consumer preserved and same native outputs reaccepted after correction.",
+    "Initial FileShelf empty state forced for layout and not reachable by real openCard; no false product-defect claim.",
+    "Long filename extension lost through two-stage truncation; this baseline is not design-pass. Follow-up must measure actual font and preserve extension without widening card.",
+    "No sign/install/push/release; remaining scope documented in CONTINUE and validation. Overall goal not complete."
+  ],
+  "updated": "2026-10-11"
+}

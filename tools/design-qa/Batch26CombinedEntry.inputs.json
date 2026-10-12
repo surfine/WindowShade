@@ -1,0 +1,10 @@
+{
+  "entry": {
+    "tools/design-qa/Batch26CombinedEntry.swift": "5022c50015b3ae669bead15c1da6522bd1ceac7367a019fe88673e5999f08fcf"
+  },
+  "inputs": {
+    "tools/design-qa/NotchRetargetPreview.swift": "82d438ab290b203e328f804eeb73c9403871c84788b9a36a1a1104ea9f42c233",
+    "tools/design-qa/PrivacyPageCompositionPreview.swift": "03d3e257e94cec06a647c8996ad5ec6932f8643f77dedad6f97b459f0b35bf92",
+    "tools/design-qa/make-batch26-entry.py": "2a4f7f568649d0145550d9f81533e1ec619855de983271f71b56f2891cd2e703"
+  }
+}

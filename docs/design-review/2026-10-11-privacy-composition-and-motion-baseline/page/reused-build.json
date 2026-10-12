@@ -1,0 +1,8 @@
+{
+  "input_count": 519,
+  "changed_inputs": [],
+  "exit_code": 0,
+  "origin": ".build/design-privacy-column-production/build-exit.json",
+  "origin_sha256": "ba78682217dd97b13ded7887e31e665f2200f2a43adfe40c7f372ac3e22821bb",
+  "inputs_sha256": "ed090397da46954c7e0b779c5979907fd254ffc2a0a41c9d7e529f32a0d8fd16"
+}

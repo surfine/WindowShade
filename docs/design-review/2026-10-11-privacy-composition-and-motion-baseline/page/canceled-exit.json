@@ -1,0 +1,1 @@
+{"session_id": 71931, "exit_code": 1, "intentional_cancel": true, "reason": "own candidate header disagreed with actual Preferences178; no native execution; verified frontend filelist+driver+wrapper before SIGTERM"}

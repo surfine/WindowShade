@@ -1,0 +1,5 @@
+WindowShade2第二十一批：用量账户详情设计小样，先把账户窗口和当前会话分层，不直接铺新产品功能。完整设计目标active。
+候选只在QA私有NSView，复用既有会话交互宿主520宽/WS2Lease默认24底角、纯黑与原字体间距；自有alpha0未显示离屏NSWindow+Canvas.setAuthentication，真实AppKit AutoLayout/Cocoa字体，Swift6严格工具入口。绝不改生产数据接线、真实账户/会话/网络/权限/控制器/输入/偏好，不发布/签名/安装。
+用实际纯UsageReading解析合成WireJSON，分别显示两窗口的“剩”和对应恢复时间，不能把最紧值冒充两窗口或相加；当前会话另列项目/完整模型/思考档位，上下文明确占用口径。上下文合成值仅设计fixture，不称已有protocol资格。未知不造0/100/无限；过去时只等更新；窗口时长没给不猜5h/周；共享候选输入先遮隐。普通/未知/只有上下文/过期/长模型/无窗口时长/0/遮隐8场景×2父外观共16。
+交付候选画面及11问有限准入、实际字段/标签矩形/UIFont字宽/两行/完整tooltip/518源绑定消费者与图片主审；仅QA复用20的519当前优化SHA，不重复重检查。候选无真实动作，Back/Esc/选择账户等生产入口、实时刷新/事件/读屏/硬件不称通过。
+输入：usage.md当前口径、copy-guide、设计文法/用量稿、实际NotchLeases/Canvas放入方式、WS2AgentSessionView既有520、UsageReading/WS2SilentUsageSnapshot。可见候选不能把技术实现解释放进UI。新surface准入先记docs/design-grammar，再实现QA。主模型主导架构与视觉，按风险消费者实际输出，不用syntax自证。

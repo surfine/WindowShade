@@ -9,8 +9,8 @@ final class CountdownTimerCard: NSView, WS2LeaseContent {
 
     /// 选分钟：稿 400 × 117.5，扣掉刘海那一截。
     static let pickerSize = NSSize(width: 400, height: 84)
-    /// 时间到：稿 400 × 85.5。岛对内容高度有 68 的下限，所以比稿多出 16（记在 design-grammar 对照账）。
-    static let alertSize = NSSize(width: 400, height: 68)
+    /// 时间到：稿 400 × 85.5，扣掉刘海那一截。
+    static let alertSize = NSSize(width: 400, height: 52)
     /// 大卡：稿 440 × 175.5。
     static let cardSize = NSSize(width: 440, height: 142)
 
@@ -33,6 +33,8 @@ final class CountdownTimerCard: NSView, WS2LeaseContent {
         case .alert: return Self.alertSize
         }
     }
+    var interactionMinimumHeight: CGFloat { mode == .alert ? 52 : 68 }
+    var interactionCornerRadius: CGFloat { mode == .running ? 28 : 24 }
     override var isFlipped: Bool { true }
     override var acceptsFirstResponder: Bool { true }
 
@@ -198,10 +200,10 @@ final class CountdownTimerCard: NSView, WS2LeaseContent {
             end.frame = NSRect(x: w - 14 - 76 - 8 - 52, y: mid - 13, width: 52, height: 26)
         case .running:
             let cy: CGFloat = 58, cx: CGFloat = 14 + 34
-            let ring = CGPath(ellipseIn: CGRect(x: cx - 30, y: cy - 30, width: 60, height: 60), transform: nil)
-            // 从正上方顺时针走：翻转坐标里 y 朝下，用一条镜像的圆路径。
-            var flip = CGAffineTransform(translationX: 0, y: 2 * cy).scaledBy(x: 1, y: -1)
-            let path = ring.copy(using: &flip) ?? ring
+            // 翻转视图里 y 朝下；从十二点钟沿顺时针走，不借椭圆路径的三点钟起点。
+            let path = CGMutablePath()
+            path.addArc(center: CGPoint(x: cx, y: cy), radius: 30,
+                        startAngle: -.pi / 2, endAngle: .pi * 3 / 2, clockwise: false)
             CATransaction.begin(); CATransaction.setDisableActions(true)
             for layer in [track, fill] { layer.frame = bounds; layer.path = path; layer.lineWidth = 5 }
             CATransaction.commit()

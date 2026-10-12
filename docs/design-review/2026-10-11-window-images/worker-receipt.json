@@ -1,0 +1,51 @@
+{
+  "job_id": "e677be441e5c4c62b4ad25becddc9827",
+  "state": "completed",
+  "result_file_sha256": "bbbccb4d3492e4fb8927a90082e7b65705ee50edb0070facf60b4a7248bc919f",
+  "worker_changed_files": [
+    "tools/design-qa/make-window-image-fixtures.py"
+  ],
+  "worker_checks": [
+    {
+      "check_index": 0,
+      "argv": [
+        "python3",
+        "tools/design-qa/make-window-image-fixtures.py",
+        "/Users/aaron/Documents/WindowShade/.build/design-window-images/image-fixtures"
+      ],
+      "exit_code": 0,
+      "revision": 1,
+      "timed_out": false,
+      "output": "landscape16x9_640x360.png: 640x360 sha256=a22747422f7c3202...\nlandscape4x3_480x360.png: 480x360 sha256=4d3da3ff426f5f20...\nsquare360x360_360x360.png: 360x360 sha256=58465871d547eb4b...\nportrait9x16_360x640.png: 360x640 sha256=5f0d000b62ca389c...\nultrawide3x1_900x300.png: 900x300 sha256=42bb8ba9d439d24e...\nmanifest: /Users/aaron/Documents/WindowShade/.build/design-window-images/image-fixtures/manifest.json\n",
+      "truncated": false
+    },
+    {
+      "check_index": 0,
+      "argv": [
+        "python3",
+        "tools/design-qa/make-window-image-fixtures.py",
+        "/Users/aaron/Documents/WindowShade/.build/design-window-images/image-fixtures"
+      ],
+      "exit_code": 0,
+      "revision": 1,
+      "timed_out": false,
+      "output": "landscape16x9_640x360.png: 640x360 sha256=a22747422f7c3202...\nlandscape4x3_480x360.png: 480x360 sha256=4d3da3ff426f5f20...\nsquare360x360_360x360.png: 360x360 sha256=58465871d547eb4b...\nportrait9x16_360x640.png: 360x640 sha256=5f0d000b62ca389c...\nultrawide3x1_900x300.png: 900x300 sha256=42bb8ba9d439d24e...\nmanifest: /Users/aaron/Documents/WindowShade/.build/design-window-images/image-fixtures/manifest.json\n",
+      "truncated": false
+    },
+    {
+      "check_index": 0,
+      "argv": [
+        "python3",
+        "tools/design-qa/make-window-image-fixtures.py",
+        "/Users/aaron/Documents/WindowShade/.build/design-window-images/image-fixtures"
+      ],
+      "exit_code": 0,
+      "revision": 1,
+      "timed_out": false,
+      "output": "landscape16x9_640x360.png: 640x360 sha256=a22747422f7c3202...\nlandscape4x3_480x360.png: 480x360 sha256=4d3da3ff426f5f20...\nsquare360x360_360x360.png: 360x360 sha256=58465871d547eb4b...\nportrait9x16_360x640.png: 360x640 sha256=5f0d000b62ca389c...\nultrawide3x1_900x300.png: 900x300 sha256=42bb8ba9d439d24e...\nmanifest: /Users/aaron/Documents/WindowShade/.build/design-window-images/image-fixtures/manifest.json\n",
+      "truncated": false
+    }
+  ],
+  "accepted_contribution": "stdlib diagnostic image generator, 5 PNG manifest; main corrected cross overwriting border",
+  "main_acceptance": "original independent decoder red288 each; final PNG/CRC/opaque/white-border/four-colors0; actual native82 consumer0, geometry and source binding accepted by main"
+}

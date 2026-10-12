@@ -1,0 +1,5369 @@
+{
+  "exports" : 0,
+  "frames" : [
+    {
+      "active" : false,
+      "actualRowWidth" : 640,
+      "alpha" : 0,
+      "buttons" : [
+        {
+          "accessibilityLabel" : "配件电量的详情",
+          "frame" : {
+            "height" : 14,
+            "width" : 10,
+            "x" : 630,
+            "y" : 19
+          },
+          "isGrant" : false,
+          "title" : "Button"
+        }
+      ],
+      "expanded" : false,
+      "height" : 51,
+      "hostWidth" : 672,
+      "labels" : [
+        {
+          "breakMode" : 4,
+          "font" : 13,
+          "frame" : {
+            "height" : 16,
+            "width" : 56,
+            "x" : -2,
+            "y" : 26
+          },
+          "maxLines" : 0,
+          "naturalWidth" : 51.595330739299612,
+          "text" : "配件电量",
+          "tooltip" : "配件电量",
+          "wraps" : false
+        },
+        {
+          "breakMode" : 4,
+          "font" : 11,
+          "frame" : {
+            "height" : 14,
+            "width" : 158,
+            "x" : -2,
+            "y" : 9
+          },
+          "maxLines" : 0,
+          "naturalWidth" : 153.55058365758754,
+          "text" : "妙控鼠标、键盘、触控板、耳机",
+          "tooltip" : "妙控鼠标、键盘、触控板、耳机",
+          "wraps" : false
+        },
+        {
+          "breakMode" : 5,
+          "font" : 12,
+          "frame" : {
+            "height" : 15,
+            "width" : 81.5,
+            "x" : 540.5,
+            "y" : 18
+          },
+          "maxLines" : 0,
+          "naturalWidth" : 77.057917375972764,
+          "text" : "妙控鼠标 82%",
+          "tooltip" : "妙控鼠标 82%",
+          "wraps" : false
+        }
+      ],
+      "mainThread" : true,
+      "name" : "light-640-battery",
+      "registeredStatus" : "current",
+      "rowID" : "battery",
+      "sample" : "battery",
+      "toggles" : 0,
+      "visible" : false,
+      "width" : 640
+    },
+    {
+      "active" : false,
+      "actualRowWidth" : 640,
+      "alpha" : 0,
+      "buttons" : [
+        {
+          "accessibilityLabel" : "配件电量的详情",
+          "frame" : {
+            "height" : 14,
+            "width" : 10,
+            "x" : 630,
+            "y" : 19
+          },
+          "isGrant" : false,
+          "title" : "Button"
+        }
+      ],
+      "expanded" : false,
+      "height" : 51,
+      "hostWidth" : 672,
+      "labels" : [
+        {
+          "breakMode" : 4,
+          "font" : 13,
+          "frame" : {
+            "height" : 16,
+            "width" : 56,
+            "x" : -2,
+            "y" : 26
+          },
+          "maxLines" : 0,
+          "naturalWidth" : 51.595330739299612,
+          "text" : "配件电量",
+          "tooltip" : "配件电量",
+          "wraps" : false
+        },
+        {
+          "breakMode" : 4,
+          "font" : 11,
+          "frame" : {
+            "height" : 14,
+            "width" : 158,
+            "x" : -2,
+            "y" : 9
+          },
+          "maxLines" : 0,
+          "naturalWidth" : 153.55058365758754,
+          "text" : "妙控鼠标、键盘、触控板、耳机",
+          "tooltip" : "妙控鼠标、键盘、触控板、耳机",
+          "wraps" : false
+        },
+        {
+          "breakMode" : 5,
+          "font" : 12,
+          "frame" : {
+            "height" : 15,
+            "width" : 40,
+            "x" : 582,
+            "y" : 18
+          },
+          "maxLines" : 0,
+          "naturalWidth" : 35.754863813229576,
+          "text" : "没读到",
+          "tooltip" : "没读到",
+          "wraps" : false
+        }
+      ],
+      "mainThread" : true,
+      "name" : "light-640-missing",
+      "registeredStatus" : "current",
+      "rowID" : "battery",
+      "sample" : "missing",
+      "toggles" : 0,
+      "visible" : false,
+      "width" : 640
+    },
+    {
+      "active" : false,
+      "actualRowWidth" : 640,
+      "alpha" : 0,
+      "buttons" : [
+        {
+          "accessibilityLabel" : "窗口的标题、位置和大小的详情",
+          "frame" : {
+            "height" : 14,
+            "width" : 10,
+            "x" : 630,
+            "y" : 19
+          },
+          "isGrant" : false,
+          "title" : "Button"
+        }
+      ],
+      "expanded" : false,
+      "height" : 51,
+      "hostWidth" : 672,
+      "labels" : [
+        {
+          "breakMode" : 4,
+          "font" : 13,
+          "frame" : {
+            "height" : 16,
+            "width" : 146.5,
+            "x" : -2,
+            "y" : 26
+          },
+          "maxLines" : 0,
+          "naturalWidth" : 142.06420233463029,
+          "text" : "窗口的标题、位置和大小",
+          "tooltip" : "窗口的标题、位置和大小",
+          "wraps" : false
+        },
+        {
+          "breakMode" : 4,
+          "font" : 11,
+          "frame" : {
+            "height" : 14,
+            "width" : 190.5,
+            "x" : -2,
+            "y" : 9
+          },
+          "maxLines" : 0,
+          "naturalWidth" : 186.0101430329949,
+          "text" : "找到、移动和恢复窗口 · 要“辅助功能”",
+          "tooltip" : "找到、移动和恢复窗口 · 要“辅助功能”",
+          "wraps" : false
+        },
+        {
+          "breakMode" : 2,
+          "font" : 12,
+          "frame" : {
+            "height" : 15,
+            "width" : 40,
+            "x" : 582,
+            "y" : 18
+          },
+          "maxLines" : 0,
+          "naturalWidth" : 35.754863813229576,
+          "text" : "去授权",
+          "tooltip" : "",
+          "wraps" : false
+        }
+      ],
+      "mainThread" : true,
+      "name" : "light-640-denied",
+      "registeredStatus" : "current",
+      "rowID" : "window-ax",
+      "sample" : "denied",
+      "toggles" : 0,
+      "visible" : false,
+      "width" : 640
+    },
+    {
+      "active" : false,
+      "actualRowWidth" : 640,
+      "alpha" : 0,
+      "buttons" : [
+        {
+          "accessibilityLabel" : "窗口的标题、位置和大小的详情",
+          "frame" : {
+            "height" : 14,
+            "width" : 10,
+            "x" : 630,
+            "y" : 19
+          },
+          "isGrant" : false,
+          "title" : "Button"
+        }
+      ],
+      "expanded" : false,
+      "height" : 51,
+      "hostWidth" : 672,
+      "labels" : [
+        {
+          "breakMode" : 4,
+          "font" : 13,
+          "frame" : {
+            "height" : 16,
+            "width" : 146.5,
+            "x" : -2,
+            "y" : 26
+          },
+          "maxLines" : 0,
+          "naturalWidth" : 142.06420233463029,
+          "text" : "窗口的标题、位置和大小",
+          "tooltip" : "窗口的标题、位置和大小",
+          "wraps" : false
+        },
+        {
+          "breakMode" : 4,
+          "font" : 11,
+          "frame" : {
+            "height" : 14,
+            "width" : 190.5,
+            "x" : -2,
+            "y" : 9
+          },
+          "maxLines" : 0,
+          "naturalWidth" : 186.0101430329949,
+          "text" : "找到、移动和恢复窗口 · 要“辅助功能”",
+          "tooltip" : "找到、移动和恢复窗口 · 要“辅助功能”",
+          "wraps" : false
+        },
+        {
+          "breakMode" : 2,
+          "font" : 12,
+          "frame" : {
+            "height" : 15,
+            "width" : 40,
+            "x" : 582,
+            "y" : 18
+          },
+          "maxLines" : 0,
+          "naturalWidth" : 35.754863813229576,
+          "text" : "已授权",
+          "tooltip" : "",
+          "wraps" : false
+        }
+      ],
+      "mainThread" : true,
+      "name" : "light-640-granted",
+      "registeredStatus" : "current",
+      "rowID" : "window-ax",
+      "sample" : "granted",
+      "toggles" : 0,
+      "visible" : false,
+      "width" : 640
+    },
+    {
+      "active" : false,
+      "actualRowWidth" : 640,
+      "alpha" : 0,
+      "buttons" : [
+        {
+          "accessibilityLabel" : "配件电量的详情",
+          "frame" : {
+            "height" : 14,
+            "width" : 10,
+            "x" : 630,
+            "y" : 19
+          },
+          "isGrant" : false,
+          "title" : "Button"
+        }
+      ],
+      "expanded" : false,
+      "height" : 51,
+      "hostWidth" : 672,
+      "labels" : [
+        {
+          "breakMode" : 4,
+          "font" : 13,
+          "frame" : {
+            "height" : 16,
+            "width" : 56,
+            "x" : -2,
+            "y" : 26
+          },
+          "maxLines" : 0,
+          "naturalWidth" : 51.595330739299612,
+          "text" : "配件电量",
+          "tooltip" : "配件电量",
+          "wraps" : false
+        },
+        {
+          "breakMode" : 4,
+          "font" : 11,
+          "frame" : {
+            "height" : 14,
+            "width" : 158,
+            "x" : -2,
+            "y" : 9
+          },
+          "maxLines" : 0,
+          "naturalWidth" : 153.55058365758754,
+          "text" : "妙控鼠标、键盘、触控板、耳机",
+          "tooltip" : "妙控鼠标、键盘、触控板、耳机",
+          "wraps" : false
+        },
+        {
+          "breakMode" : 5,
+          "font" : 12,
+          "frame" : {
+            "height" : 15,
+            "width" : 260,
+            "x" : 362,
+            "y" : 18
+          },
+          "maxLines" : 0,
+          "naturalWidth" : 761.72032313959176,
+          "text" : "演示配件 — 名字很长的键盘名字很长的键盘名字很长的键盘名字很长的键盘名字很长的键盘名字很长的键盘名字很长的键盘名字很长的键盘 82%",
+          "tooltip" : "演示配件 — 名字很长的键盘名字很长的键盘名字很长的键盘名字很长的键盘名字很长的键盘名字很长的键盘名字很长的键盘名字很长的键盘 82%",
+          "wraps" : false
+        }
+      ],
+      "mainThread" : true,
+      "name" : "light-640-long-value",
+      "registeredStatus" : "current",
+      "rowID" : "battery",
+      "sample" : "long-value",
+      "toggles" : 0,
+      "visible" : false,
+      "width" : 640
+    },
+    {
+      "active" : false,
+      "actualRowWidth" : 640,
+      "alpha" : 0,
+      "buttons" : [
+        {
+          "accessibilityLabel" : "窗口的标题、位置和大小的详情",
+          "frame" : {
+            "height" : 9,
+            "width" : 15,
+            "x" : 625.5,
+            "y" : 133
+          },
+          "isGrant" : false,
+          "title" : "Button"
+        }
+      ],
+      "expanded" : true,
+      "height" : 163,
+      "hostWidth" : 672,
+      "labels" : [
+        {
+          "breakMode" : 4,
+          "font" : 13,
+          "frame" : {
+            "height" : 16,
+            "width" : 146.5,
+            "x" : -2,
+            "y" : 138
+          },
+          "maxLines" : 0,
+          "naturalWidth" : 142.06420233463029,
+          "text" : "窗口的标题、位置和大小",
+          "tooltip" : "窗口的标题、位置和大小",
+          "wraps" : false
+        },
+        {
+          "breakMode" : 4,
+          "font" : 11,
+          "frame" : {
+            "height" : 14,
+            "width" : 190.5,
+            "x" : -2,
+            "y" : 121
+          },
+          "maxLines" : 0,
+          "naturalWidth" : 186.0101430329949,
+          "text" : "找到、移动和恢复窗口 · 要“辅助功能”",
+          "tooltip" : "找到、移动和恢复窗口 · 要“辅助功能”",
+          "wraps" : false
+        },
+        {
+          "breakMode" : 2,
+          "font" : 12,
+          "frame" : {
+            "height" : 15,
+            "width" : 40,
+            "x" : 577.5,
+            "y" : 130
+          },
+          "maxLines" : 0,
+          "naturalWidth" : 35.754863813229576,
+          "text" : "已授权",
+          "tooltip" : "",
+          "wraps" : false
+        },
+        {
+          "breakMode" : 0,
+          "font" : 11,
+          "frame" : {
+            "height" : 14,
+            "width" : 280.5,
+            "x" : -2,
+            "y" : 99
+          },
+          "maxLines" : 0,
+          "naturalWidth" : 276.16416889591437,
+          "text" : "读到的：窗口的标题、位置和大小，以及它属于哪个 App",
+          "tooltip" : "",
+          "wraps" : true
+        },
+        {
+          "breakMode" : 0,
+          "font" : 11,
+          "frame" : {
+            "height" : 14,
+            "width" : 256.5,
+            "x" : -2,
+            "y" : 81
+          },
+          "maxLines" : 0,
+          "naturalWidth" : 252.12256809338518,
+          "text" : "为什么：收起、放回、排窗口，都要先知道窗口在哪",
+          "tooltip" : "",
+          "wraps" : true
+        },
+        {
+          "breakMode" : 0,
+          "font" : 11,
+          "frame" : {
+            "height" : 14,
+            "width" : 453,
+            "x" : -2,
+            "y" : 63
+          },
+          "maxLines" : 0,
+          "naturalWidth" : 448.81712062256815,
+          "text" : "去了哪里：只在内存里用；收起的窗口的标题和位置记在恢复记录里，出问题时用来找回窗口",
+          "tooltip" : "",
+          "wraps" : true
+        },
+        {
+          "breakMode" : 0,
+          "font" : 11,
+          "frame" : {
+            "height" : 14,
+            "width" : 179.5,
+            "x" : -2,
+            "y" : 45
+          },
+          "maxLines" : 0,
+          "naturalWidth" : 175.42217898832683,
+          "text" : "什么时候读：收起、放回、排窗口时",
+          "tooltip" : "",
+          "wraps" : true
+        },
+        {
+          "breakMode" : 0,
+          "font" : 11,
+          "frame" : {
+            "height" : 14,
+            "width" : 341.5,
+            "x" : -2,
+            "y" : 27
+          },
+          "maxLines" : 0,
+          "naturalWidth" : 337.09981266719359,
+          "text" : "开关：在系统设置里关掉“辅助功能”，WindowShade 就不能再读窗口",
+          "tooltip" : "",
+          "wraps" : true
+        },
+        {
+          "breakMode" : 0,
+          "font" : 11,
+          "frame" : {
+            "height" : 14,
+            "width" : 428.5,
+            "x" : -2,
+            "y" : 9
+          },
+          "maxLines" : 0,
+          "naturalWidth" : 424.3453307392997,
+          "text" : "合起来能看出什么：窗口的标题和位置合起来，能看出你在处理哪份文件、看哪个网页。",
+          "tooltip" : "",
+          "wraps" : true
+        }
+      ],
+      "mainThread" : true,
+      "name" : "light-640-expanded",
+      "registeredStatus" : "current",
+      "rowID" : "window-ax",
+      "sample" : "expanded",
+      "toggles" : 0,
+      "visible" : false,
+      "width" : 640
+    },
+    {
+      "active" : false,
+      "actualRowWidth" : 640,
+      "alpha" : 0,
+      "buttons" : [
+        {
+          "accessibilityLabel" : "窗口的标题、位置和大小的详情",
+          "frame" : {
+            "height" : 9,
+            "width" : 15,
+            "x" : 625.5,
+            "y" : 151
+          },
+          "isGrant" : false,
+          "title" : "Button"
+        }
+      ],
+      "expanded" : true,
+      "height" : 181,
+      "hostWidth" : 672,
+      "labels" : [
+        {
+          "breakMode" : 4,
+          "font" : 13,
+          "frame" : {
+            "height" : 16,
+            "width" : 146.5,
+            "x" : -2,
+            "y" : 156
+          },
+          "maxLines" : 0,
+          "naturalWidth" : 142.06420233463029,
+          "text" : "窗口的标题、位置和大小",
+          "tooltip" : "窗口的标题、位置和大小",
+          "wraps" : false
+        },
+        {
+          "breakMode" : 4,
+          "font" : 11,
+          "frame" : {
+            "height" : 14,
+            "width" : 190.5,
+            "x" : -2,
+            "y" : 139
+          },
+          "maxLines" : 0,
+          "naturalWidth" : 186.0101430329949,
+          "text" : "找到、移动和恢复窗口 · 要“辅助功能”",
+          "tooltip" : "找到、移动和恢复窗口 · 要“辅助功能”",
+          "wraps" : false
+        },
+        {
+          "breakMode" : 2,
+          "font" : 12,
+          "frame" : {
+            "height" : 15,
+            "width" : 40,
+            "x" : 577.5,
+            "y" : 148
+          },
+          "maxLines" : 0,
+          "naturalWidth" : 35.754863813229576,
+          "text" : "已授权",
+          "tooltip" : "",
+          "wraps" : false
+        },
+        {
+          "breakMode" : 0,
+          "font" : 11,
+          "frame" : {
+            "height" : 14,
+            "width" : 280.5,
+            "x" : -2,
+            "y" : 117
+          },
+          "maxLines" : 0,
+          "naturalWidth" : 276.16416889591437,
+          "text" : "读到的：窗口的标题、位置和大小，以及它属于哪个 App",
+          "tooltip" : "",
+          "wraps" : true
+        },
+        {
+          "breakMode" : 0,
+          "font" : 11,
+          "frame" : {
+            "height" : 14,
+            "width" : 256.5,
+            "x" : -2,
+            "y" : 99
+          },
+          "maxLines" : 0,
+          "naturalWidth" : 252.12256809338518,
+          "text" : "为什么：收起、放回、排窗口，都要先知道窗口在哪",
+          "tooltip" : "",
+          "wraps" : true
+        },
+        {
+          "breakMode" : 0,
+          "font" : 11,
+          "frame" : {
+            "height" : 14,
+            "width" : 453,
+            "x" : -2,
+            "y" : 81
+          },
+          "maxLines" : 0,
+          "naturalWidth" : 448.81712062256815,
+          "text" : "去了哪里：只在内存里用；收起的窗口的标题和位置记在恢复记录里，出问题时用来找回窗口",
+          "tooltip" : "",
+          "wraps" : true
+        },
+        {
+          "breakMode" : 0,
+          "font" : 11,
+          "frame" : {
+            "height" : 14,
+            "width" : 179.5,
+            "x" : -2,
+            "y" : 63
+          },
+          "maxLines" : 0,
+          "naturalWidth" : 175.42217898832683,
+          "text" : "什么时候读：收起、放回、排窗口时",
+          "tooltip" : "",
+          "wraps" : true
+        },
+        {
+          "breakMode" : 0,
+          "font" : 11,
+          "frame" : {
+            "height" : 14,
+            "width" : 341.5,
+            "x" : -2,
+            "y" : 45
+          },
+          "maxLines" : 0,
+          "naturalWidth" : 337.09981266719359,
+          "text" : "开关：在系统设置里关掉“辅助功能”，WindowShade 就不能再读窗口",
+          "tooltip" : "",
+          "wraps" : true
+        },
+        {
+          "breakMode" : 0,
+          "font" : 11,
+          "frame" : {
+            "height" : 14,
+            "width" : 428.5,
+            "x" : -2,
+            "y" : 27
+          },
+          "maxLines" : 0,
+          "naturalWidth" : 424.3453307392997,
+          "text" : "合起来能看出什么：窗口的标题和位置合起来，能看出你在处理哪份文件、看哪个网页。",
+          "tooltip" : "",
+          "wraps" : true
+        },
+        {
+          "breakMode" : 0,
+          "font" : 11,
+          "frame" : {
+            "height" : 14,
+            "width" : 353.5,
+            "x" : -2,
+            "y" : 9
+          },
+          "maxLines" : 0,
+          "naturalWidth" : 349.18537968142027,
+          "text" : "接口：AXUIElementCopyAttributeValue、SLSOffscreenCheckProbe",
+          "tooltip" : "",
+          "wraps" : true
+        }
+      ],
+      "mainThread" : true,
+      "name" : "light-640-technical",
+      "registeredStatus" : "current",
+      "rowID" : "window-ax",
+      "sample" : "technical",
+      "toggles" : 0,
+      "visible" : false,
+      "width" : 640
+    },
+    {
+      "active" : false,
+      "actualRowWidth" : 640,
+      "alpha" : 0,
+      "buttons" : [
+        {
+          "accessibilityLabel" : "脸部特征与比对结果的详情",
+          "frame" : {
+            "height" : 9,
+            "width" : 15,
+            "x" : 625.5,
+            "y" : 161
+          },
+          "isGrant" : false,
+          "title" : "Button"
+        }
+      ],
+      "expanded" : true,
+      "height" : 191,
+      "hostWidth" : 672,
+      "labels" : [
+        {
+          "breakMode" : 4,
+          "font" : 13,
+          "frame" : {
+            "height" : 16,
+            "width" : 120.5,
+            "x" : -2,
+            "y" : 166
+          },
+          "maxLines" : 0,
+          "naturalWidth" : 116.08949416342409,
+          "text" : "脸部特征与比对结果",
+          "tooltip" : "脸部特征与比对结果",
+          "wraps" : false
+        },
+        {
+          "breakMode" : 4,
+          "font" : 11,
+          "frame" : {
+            "height" : 14,
+            "width" : 102.5,
+            "x" : -2,
+            "y" : 149
+          },
+          "maxLines" : 0,
+          "naturalWidth" : 98.422178988326849,
+          "text" : "锁屏后认出是不是你",
+          "tooltip" : "锁屏后认出是不是你",
+          "wraps" : false
+        },
+        {
+          "breakMode" : 5,
+          "font" : 12,
+          "frame" : {
+            "height" : 15,
+            "width" : 40,
+            "x" : 577.5,
+            "y" : 158
+          },
+          "maxLines" : 0,
+          "naturalWidth" : 35.754863813229576,
+          "text" : "还没读",
+          "tooltip" : "还没读",
+          "wraps" : false
+        },
+        {
+          "breakMode" : 0,
+          "font" : 11,
+          "frame" : {
+            "height" : 28,
+            "width" : 644,
+            "x" : -2,
+            "y" : 113
+          },
+          "maxLines" : 0,
+          "naturalWidth" : 885.82680075085182,
+          "text" : "读到的：实验：脸部裁出来的图像特征（Apple 的 Vision 算出）、登记过的模板、录入时眼睛睁开的程度、录入序号、比对结果；打开转头挑战后，还有转头时脸朝哪边、眼睛睁没睁开",
+          "tooltip" : "",
+          "wraps" : true
+        },
+        {
+          "breakMode" : 0,
+          "font" : 11,
+          "frame" : {
+            "height" : 14,
+            "width" : 278,
+            "x" : -2,
+            "y" : 95
+          },
+          "maxLines" : 0,
+          "naturalWidth" : 273.84435797665378,
+          "text" : "为什么：锁屏后认出是不是你，只留一条证据，不会解锁",
+          "tooltip" : "",
+          "wraps" : true
+        },
+        {
+          "breakMode" : 0,
+          "font" : 11,
+          "frame" : {
+            "height" : 14,
+            "width" : 438,
+            "x" : -2,
+            "y" : 77
+          },
+          "maxLines" : 0,
+          "naturalWidth" : 433.5723682210604,
+          "text" : "去了哪里：模板只存在这台 Mac 的钥匙串里，不同步、不随备份迁走；画面和裁切图不存",
+          "tooltip" : "",
+          "wraps" : true
+        },
+        {
+          "breakMode" : 0,
+          "font" : 11,
+          "frame" : {
+            "height" : 28,
+            "width" : 644,
+            "x" : -2,
+            "y" : 45
+          },
+          "maxLines" : 0,
+          "naturalWidth" : 808.1578801374028,
+          "text" : "什么时候读：默认关闭；打开实验后，锁屏时屏幕亮起最多看 6 秒，每秒最多 10 帧；打开转头挑战，认出后再看最多 12 秒；每次锁屏最多 3 次，画面看不清不算次数",
+          "tooltip" : "",
+          "wraps" : true
+        },
+        {
+          "breakMode" : 0,
+          "font" : 11,
+          "frame" : {
+            "height" : 14,
+            "width" : 232.5,
+            "x" : -2,
+            "y" : 27
+          },
+          "maxLines" : 0,
+          "naturalWidth" : 228.27457745622567,
+          "text" : "开关：实验开关和删除登记；不会标成 Face ID",
+          "tooltip" : "",
+          "wraps" : true
+        },
+        {
+          "breakMode" : 0,
+          "font" : 11,
+          "frame" : {
+            "height" : 14,
+            "width" : 352,
+            "x" : -2,
+            "y" : 9
+          },
+          "maxLines" : 0,
+          "naturalWidth" : 347.64494163424132,
+          "text" : "合起来能看出什么：人脸特征和摄像头画面合起来，能认出这是不是你。",
+          "tooltip" : "",
+          "wraps" : true
+        }
+      ],
+      "mainThread" : true,
+      "name" : "light-640-planned",
+      "registeredStatus" : "planned",
+      "rowID" : "face-identity",
+      "sample" : "planned",
+      "toggles" : 0,
+      "visible" : false,
+      "width" : 640
+    },
+    {
+      "active" : false,
+      "actualRowWidth" : 448,
+      "alpha" : 0,
+      "buttons" : [
+        {
+          "accessibilityLabel" : "配件电量的详情",
+          "frame" : {
+            "height" : 14,
+            "width" : 10,
+            "x" : 438,
+            "y" : 19
+          },
+          "isGrant" : false,
+          "title" : "Button"
+        }
+      ],
+      "expanded" : false,
+      "height" : 51,
+      "hostWidth" : 480,
+      "labels" : [
+        {
+          "breakMode" : 4,
+          "font" : 13,
+          "frame" : {
+            "height" : 16,
+            "width" : 56,
+            "x" : -2,
+            "y" : 26
+          },
+          "maxLines" : 0,
+          "naturalWidth" : 51.595330739299612,
+          "text" : "配件电量",
+          "tooltip" : "配件电量",
+          "wraps" : false
+        },
+        {
+          "breakMode" : 4,
+          "font" : 11,
+          "frame" : {
+            "height" : 14,
+            "width" : 158,
+            "x" : -2,
+            "y" : 9
+          },
+          "maxLines" : 0,
+          "naturalWidth" : 153.55058365758754,
+          "text" : "妙控鼠标、键盘、触控板、耳机",
+          "tooltip" : "妙控鼠标、键盘、触控板、耳机",
+          "wraps" : false
+        },
+        {
+          "breakMode" : 5,
+          "font" : 12,
+          "frame" : {
+            "height" : 15,
+            "width" : 81.5,
+            "x" : 348.5,
+            "y" : 18
+          },
+          "maxLines" : 0,
+          "naturalWidth" : 77.057917375972764,
+          "text" : "妙控鼠标 82%",
+          "tooltip" : "妙控鼠标 82%",
+          "wraps" : false
+        }
+      ],
+      "mainThread" : true,
+      "name" : "light-448-battery",
+      "registeredStatus" : "current",
+      "rowID" : "battery",
+      "sample" : "battery",
+      "toggles" : 0,
+      "visible" : false,
+      "width" : 448
+    },
+    {
+      "active" : false,
+      "actualRowWidth" : 448,
+      "alpha" : 0,
+      "buttons" : [
+        {
+          "accessibilityLabel" : "配件电量的详情",
+          "frame" : {
+            "height" : 14,
+            "width" : 10,
+            "x" : 438,
+            "y" : 19
+          },
+          "isGrant" : false,
+          "title" : "Button"
+        }
+      ],
+      "expanded" : false,
+      "height" : 51,
+      "hostWidth" : 480,
+      "labels" : [
+        {
+          "breakMode" : 4,
+          "font" : 13,
+          "frame" : {
+            "height" : 16,
+            "width" : 56,
+            "x" : -2,
+            "y" : 26
+          },
+          "maxLines" : 0,
+          "naturalWidth" : 51.595330739299612,
+          "text" : "配件电量",
+          "tooltip" : "配件电量",
+          "wraps" : false
+        },
+        {
+          "breakMode" : 4,
+          "font" : 11,
+          "frame" : {
+            "height" : 14,
+            "width" : 158,
+            "x" : -2,
+            "y" : 9
+          },
+          "maxLines" : 0,
+          "naturalWidth" : 153.55058365758754,
+          "text" : "妙控鼠标、键盘、触控板、耳机",
+          "tooltip" : "妙控鼠标、键盘、触控板、耳机",
+          "wraps" : false
+        },
+        {
+          "breakMode" : 5,
+          "font" : 12,
+          "frame" : {
+            "height" : 15,
+            "width" : 40,
+            "x" : 390,
+            "y" : 18
+          },
+          "maxLines" : 0,
+          "naturalWidth" : 35.754863813229576,
+          "text" : "没读到",
+          "tooltip" : "没读到",
+          "wraps" : false
+        }
+      ],
+      "mainThread" : true,
+      "name" : "light-448-missing",
+      "registeredStatus" : "current",
+      "rowID" : "battery",
+      "sample" : "missing",
+      "toggles" : 0,
+      "visible" : false,
+      "width" : 448
+    },
+    {
+      "active" : false,
+      "actualRowWidth" : 448,
+      "alpha" : 0,
+      "buttons" : [
+        {
+          "accessibilityLabel" : "窗口的标题、位置和大小的详情",
+          "frame" : {
+            "height" : 14,
+            "width" : 10,
+            "x" : 438,
+            "y" : 19
+          },
+          "isGrant" : false,
+          "title" : "Button"
+        }
+      ],
+      "expanded" : false,
+      "height" : 51,
+      "hostWidth" : 480,
+      "labels" : [
+        {
+          "breakMode" : 4,
+          "font" : 13,
+          "frame" : {
+            "height" : 16,
+            "width" : 146.5,
+            "x" : -2,
+            "y" : 26
+          },
+          "maxLines" : 0,
+          "naturalWidth" : 142.06420233463029,
+          "text" : "窗口的标题、位置和大小",
+          "tooltip" : "窗口的标题、位置和大小",
+          "wraps" : false
+        },
+        {
+          "breakMode" : 4,
+          "font" : 11,
+          "frame" : {
+            "height" : 14,
+            "width" : 190.5,
+            "x" : -2,
+            "y" : 9
+          },
+          "maxLines" : 0,
+          "naturalWidth" : 186.0101430329949,
+          "text" : "找到、移动和恢复窗口 · 要“辅助功能”",
+          "tooltip" : "找到、移动和恢复窗口 · 要“辅助功能”",
+          "wraps" : false
+        },
+        {
+          "breakMode" : 2,
+          "font" : 12,
+          "frame" : {
+            "height" : 15,
+            "width" : 40,
+            "x" : 390,
+            "y" : 18
+          },
+          "maxLines" : 0,
+          "naturalWidth" : 35.754863813229576,
+          "text" : "去授权",
+          "tooltip" : "",
+          "wraps" : false
+        }
+      ],
+      "mainThread" : true,
+      "name" : "light-448-denied",
+      "registeredStatus" : "current",
+      "rowID" : "window-ax",
+      "sample" : "denied",
+      "toggles" : 0,
+      "visible" : false,
+      "width" : 448
+    },
+    {
+      "active" : false,
+      "actualRowWidth" : 448,
+      "alpha" : 0,
+      "buttons" : [
+        {
+          "accessibilityLabel" : "窗口的标题、位置和大小的详情",
+          "frame" : {
+            "height" : 14,
+            "width" : 10,
+            "x" : 438,
+            "y" : 19
+          },
+          "isGrant" : false,
+          "title" : "Button"
+        }
+      ],
+      "expanded" : false,
+      "height" : 51,
+      "hostWidth" : 480,
+      "labels" : [
+        {
+          "breakMode" : 4,
+          "font" : 13,
+          "frame" : {
+            "height" : 16,
+            "width" : 146.5,
+            "x" : -2,
+            "y" : 26
+          },
+          "maxLines" : 0,
+          "naturalWidth" : 142.06420233463029,
+          "text" : "窗口的标题、位置和大小",
+          "tooltip" : "窗口的标题、位置和大小",
+          "wraps" : false
+        },
+        {
+          "breakMode" : 4,
+          "font" : 11,
+          "frame" : {
+            "height" : 14,
+            "width" : 190.5,
+            "x" : -2,
+            "y" : 9
+          },
+          "maxLines" : 0,
+          "naturalWidth" : 186.0101430329949,
+          "text" : "找到、移动和恢复窗口 · 要“辅助功能”",
+          "tooltip" : "找到、移动和恢复窗口 · 要“辅助功能”",
+          "wraps" : false
+        },
+        {
+          "breakMode" : 2,
+          "font" : 12,
+          "frame" : {
+            "height" : 15,
+            "width" : 40,
+            "x" : 390,
+            "y" : 18
+          },
+          "maxLines" : 0,
+          "naturalWidth" : 35.754863813229576,
+          "text" : "已授权",
+          "tooltip" : "",
+          "wraps" : false
+        }
+      ],
+      "mainThread" : true,
+      "name" : "light-448-granted",
+      "registeredStatus" : "current",
+      "rowID" : "window-ax",
+      "sample" : "granted",
+      "toggles" : 0,
+      "visible" : false,
+      "width" : 448
+    },
+    {
+      "active" : false,
+      "actualRowWidth" : 448,
+      "alpha" : 0,
+      "buttons" : [
+        {
+          "accessibilityLabel" : "配件电量的详情",
+          "frame" : {
+            "height" : 14,
+            "width" : 10,
+            "x" : 438,
+            "y" : 19
+          },
+          "isGrant" : false,
+          "title" : "Button"
+        }
+      ],
+      "expanded" : false,
+      "height" : 51,
+      "hostWidth" : 480,
+      "labels" : [
+        {
+          "breakMode" : 4,
+          "font" : 13,
+          "frame" : {
+            "height" : 16,
+            "width" : 56,
+            "x" : -2,
+            "y" : 26
+          },
+          "maxLines" : 0,
+          "naturalWidth" : 51.595330739299612,
+          "text" : "配件电量",
+          "tooltip" : "配件电量",
+          "wraps" : false
+        },
+        {
+          "breakMode" : 4,
+          "font" : 11,
+          "frame" : {
+            "height" : 14,
+            "width" : 158,
+            "x" : -2,
+            "y" : 9
+          },
+          "maxLines" : 0,
+          "naturalWidth" : 153.55058365758754,
+          "text" : "妙控鼠标、键盘、触控板、耳机",
+          "tooltip" : "妙控鼠标、键盘、触控板、耳机",
+          "wraps" : false
+        },
+        {
+          "breakMode" : 5,
+          "font" : 12,
+          "frame" : {
+            "height" : 15,
+            "width" : 183,
+            "x" : 247,
+            "y" : 18
+          },
+          "maxLines" : 0,
+          "naturalWidth" : 761.72032313959176,
+          "text" : "演示配件 — 名字很长的键盘名字很长的键盘名字很长的键盘名字很长的键盘名字很长的键盘名字很长的键盘名字很长的键盘名字很长的键盘 82%",
+          "tooltip" : "演示配件 — 名字很长的键盘名字很长的键盘名字很长的键盘名字很长的键盘名字很长的键盘名字很长的键盘名字很长的键盘名字很长的键盘 82%",
+          "wraps" : false
+        }
+      ],
+      "mainThread" : true,
+      "name" : "light-448-long-value",
+      "registeredStatus" : "current",
+      "rowID" : "battery",
+      "sample" : "long-value",
+      "toggles" : 0,
+      "visible" : false,
+      "width" : 448
+    },
+    {
+      "active" : false,
+      "actualRowWidth" : 448,
+      "alpha" : 0,
+      "buttons" : [
+        {
+          "accessibilityLabel" : "窗口的标题、位置和大小的详情",
+          "frame" : {
+            "height" : 9,
+            "width" : 15,
+            "x" : 433.5,
+            "y" : 147
+          },
+          "isGrant" : false,
+          "title" : "Button"
+        }
+      ],
+      "expanded" : true,
+      "height" : 177,
+      "hostWidth" : 480,
+      "labels" : [
+        {
+          "breakMode" : 4,
+          "font" : 13,
+          "frame" : {
+            "height" : 16,
+            "width" : 146.5,
+            "x" : -2,
+            "y" : 152
+          },
+          "maxLines" : 0,
+          "naturalWidth" : 142.06420233463029,
+          "text" : "窗口的标题、位置和大小",
+          "tooltip" : "窗口的标题、位置和大小",
+          "wraps" : false
+        },
+        {
+          "breakMode" : 4,
+          "font" : 11,
+          "frame" : {
+            "height" : 14,
+            "width" : 190.5,
+            "x" : -2,
+            "y" : 135
+          },
+          "maxLines" : 0,
+          "naturalWidth" : 186.0101430329949,
+          "text" : "找到、移动和恢复窗口 · 要“辅助功能”",
+          "tooltip" : "找到、移动和恢复窗口 · 要“辅助功能”",
+          "wraps" : false
+        },
+        {
+          "breakMode" : 2,
+          "font" : 12,
+          "frame" : {
+            "height" : 15,
+            "width" : 40,
+            "x" : 385.5,
+            "y" : 144
+          },
+          "maxLines" : 0,
+          "naturalWidth" : 35.754863813229576,
+          "text" : "已授权",
+          "tooltip" : "",
+          "wraps" : false
+        },
+        {
+          "breakMode" : 0,
+          "font" : 11,
+          "frame" : {
+            "height" : 14,
+            "width" : 280.5,
+            "x" : -2,
+            "y" : 113
+          },
+          "maxLines" : 0,
+          "naturalWidth" : 276.16416889591437,
+          "text" : "读到的：窗口的标题、位置和大小，以及它属于哪个 App",
+          "tooltip" : "",
+          "wraps" : true
+        },
+        {
+          "breakMode" : 0,
+          "font" : 11,
+          "frame" : {
+            "height" : 14,
+            "width" : 256.5,
+            "x" : -2,
+            "y" : 95
+          },
+          "maxLines" : 0,
+          "naturalWidth" : 252.12256809338518,
+          "text" : "为什么：收起、放回、排窗口，都要先知道窗口在哪",
+          "tooltip" : "",
+          "wraps" : true
+        },
+        {
+          "breakMode" : 0,
+          "font" : 11,
+          "frame" : {
+            "height" : 28,
+            "width" : 452,
+            "x" : -2,
+            "y" : 63
+          },
+          "maxLines" : 0,
+          "naturalWidth" : 448.81712062256815,
+          "text" : "去了哪里：只在内存里用；收起的窗口的标题和位置记在恢复记录里，出问题时用来找回窗口",
+          "tooltip" : "",
+          "wraps" : true
+        },
+        {
+          "breakMode" : 0,
+          "font" : 11,
+          "frame" : {
+            "height" : 14,
+            "width" : 179.5,
+            "x" : -2,
+            "y" : 45
+          },
+          "maxLines" : 0,
+          "naturalWidth" : 175.42217898832683,
+          "text" : "什么时候读：收起、放回、排窗口时",
+          "tooltip" : "",
+          "wraps" : true
+        },
+        {
+          "breakMode" : 0,
+          "font" : 11,
+          "frame" : {
+            "height" : 14,
+            "width" : 341.5,
+            "x" : -2,
+            "y" : 27
+          },
+          "maxLines" : 0,
+          "naturalWidth" : 337.09981266719359,
+          "text" : "开关：在系统设置里关掉“辅助功能”，WindowShade 就不能再读窗口",
+          "tooltip" : "",
+          "wraps" : true
+        },
+        {
+          "breakMode" : 0,
+          "font" : 11,
+          "frame" : {
+            "height" : 14,
+            "width" : 428.5,
+            "x" : -2,
+            "y" : 9
+          },
+          "maxLines" : 0,
+          "naturalWidth" : 424.3453307392997,
+          "text" : "合起来能看出什么：窗口的标题和位置合起来，能看出你在处理哪份文件、看哪个网页。",
+          "tooltip" : "",
+          "wraps" : true
+        }
+      ],
+      "mainThread" : true,
+      "name" : "light-448-expanded",
+      "registeredStatus" : "current",
+      "rowID" : "window-ax",
+      "sample" : "expanded",
+      "toggles" : 0,
+      "visible" : false,
+      "width" : 448
+    },
+    {
+      "active" : false,
+      "actualRowWidth" : 448,
+      "alpha" : 0,
+      "buttons" : [
+        {
+          "accessibilityLabel" : "窗口的标题、位置和大小的详情",
+          "frame" : {
+            "height" : 9,
+            "width" : 15,
+            "x" : 433.5,
+            "y" : 165
+          },
+          "isGrant" : false,
+          "title" : "Button"
+        }
+      ],
+      "expanded" : true,
+      "height" : 195,
+      "hostWidth" : 480,
+      "labels" : [
+        {
+          "breakMode" : 4,
+          "font" : 13,
+          "frame" : {
+            "height" : 16,
+            "width" : 146.5,
+            "x" : -2,
+            "y" : 170
+          },
+          "maxLines" : 0,
+          "naturalWidth" : 142.06420233463029,
+          "text" : "窗口的标题、位置和大小",
+          "tooltip" : "窗口的标题、位置和大小",
+          "wraps" : false
+        },
+        {
+          "breakMode" : 4,
+          "font" : 11,
+          "frame" : {
+            "height" : 14,
+            "width" : 190.5,
+            "x" : -2,
+            "y" : 153
+          },
+          "maxLines" : 0,
+          "naturalWidth" : 186.0101430329949,
+          "text" : "找到、移动和恢复窗口 · 要“辅助功能”",
+          "tooltip" : "找到、移动和恢复窗口 · 要“辅助功能”",
+          "wraps" : false
+        },
+        {
+          "breakMode" : 2,
+          "font" : 12,
+          "frame" : {
+            "height" : 15,
+            "width" : 40,
+            "x" : 385.5,
+            "y" : 162
+          },
+          "maxLines" : 0,
+          "naturalWidth" : 35.754863813229576,
+          "text" : "已授权",
+          "tooltip" : "",
+          "wraps" : false
+        },
+        {
+          "breakMode" : 0,
+          "font" : 11,
+          "frame" : {
+            "height" : 14,
+            "width" : 280.5,
+            "x" : -2,
+            "y" : 131
+          },
+          "maxLines" : 0,
+          "naturalWidth" : 276.16416889591437,
+          "text" : "读到的：窗口的标题、位置和大小，以及它属于哪个 App",
+          "tooltip" : "",
+          "wraps" : true
+        },
+        {
+          "breakMode" : 0,
+          "font" : 11,
+          "frame" : {
+            "height" : 14,
+            "width" : 256.5,
+            "x" : -2,
+            "y" : 113
+          },
+          "maxLines" : 0,
+          "naturalWidth" : 252.12256809338518,
+          "text" : "为什么：收起、放回、排窗口，都要先知道窗口在哪",
+          "tooltip" : "",
+          "wraps" : true
+        },
+        {
+          "breakMode" : 0,
+          "font" : 11,
+          "frame" : {
+            "height" : 28,
+            "width" : 452,
+            "x" : -2,
+            "y" : 81
+          },
+          "maxLines" : 0,
+          "naturalWidth" : 448.81712062256815,
+          "text" : "去了哪里：只在内存里用；收起的窗口的标题和位置记在恢复记录里，出问题时用来找回窗口",
+          "tooltip" : "",
+          "wraps" : true
+        },
+        {
+          "breakMode" : 0,
+          "font" : 11,
+          "frame" : {
+            "height" : 14,
+            "width" : 179.5,
+            "x" : -2,
+            "y" : 63
+          },
+          "maxLines" : 0,
+          "naturalWidth" : 175.42217898832683,
+          "text" : "什么时候读：收起、放回、排窗口时",
+          "tooltip" : "",
+          "wraps" : true
+        },
+        {
+          "breakMode" : 0,
+          "font" : 11,
+          "frame" : {
+            "height" : 14,
+            "width" : 341.5,
+            "x" : -2,
+            "y" : 45
+          },
+          "maxLines" : 0,
+          "naturalWidth" : 337.09981266719359,
+          "text" : "开关：在系统设置里关掉“辅助功能”，WindowShade 就不能再读窗口",
+          "tooltip" : "",
+          "wraps" : true
+        },
+        {
+          "breakMode" : 0,
+          "font" : 11,
+          "frame" : {
+            "height" : 14,
+            "width" : 428.5,
+            "x" : -2,
+            "y" : 27
+          },
+          "maxLines" : 0,
+          "naturalWidth" : 424.3453307392997,
+          "text" : "合起来能看出什么：窗口的标题和位置合起来，能看出你在处理哪份文件、看哪个网页。",
+          "tooltip" : "",
+          "wraps" : true
+        },
+        {
+          "breakMode" : 0,
+          "font" : 11,
+          "frame" : {
+            "height" : 14,
+            "width" : 353.5,
+            "x" : -2,
+            "y" : 9
+          },
+          "maxLines" : 0,
+          "naturalWidth" : 349.18537968142027,
+          "text" : "接口：AXUIElementCopyAttributeValue、SLSOffscreenCheckProbe",
+          "tooltip" : "",
+          "wraps" : true
+        }
+      ],
+      "mainThread" : true,
+      "name" : "light-448-technical",
+      "registeredStatus" : "current",
+      "rowID" : "window-ax",
+      "sample" : "technical",
+      "toggles" : 0,
+      "visible" : false,
+      "width" : 448
+    },
+    {
+      "active" : false,
+      "actualRowWidth" : 448,
+      "alpha" : 0,
+      "buttons" : [
+        {
+          "accessibilityLabel" : "脸部特征与比对结果的详情",
+          "frame" : {
+            "height" : 9,
+            "width" : 15,
+            "x" : 433.5,
+            "y" : 161
+          },
+          "isGrant" : false,
+          "title" : "Button"
+        }
+      ],
+      "expanded" : true,
+      "height" : 191,
+      "hostWidth" : 480,
+      "labels" : [
+        {
+          "breakMode" : 4,
+          "font" : 13,
+          "frame" : {
+            "height" : 16,
+            "width" : 120.5,
+            "x" : -2,
+            "y" : 166
+          },
+          "maxLines" : 0,
+          "naturalWidth" : 116.08949416342409,
+          "text" : "脸部特征与比对结果",
+          "tooltip" : "脸部特征与比对结果",
+          "wraps" : false
+        },
+        {
+          "breakMode" : 4,
+          "font" : 11,
+          "frame" : {
+            "height" : 14,
+            "width" : 102.5,
+            "x" : -2,
+            "y" : 149
+          },
+          "maxLines" : 0,
+          "naturalWidth" : 98.422178988326849,
+          "text" : "锁屏后认出是不是你",
+          "tooltip" : "锁屏后认出是不是你",
+          "wraps" : false
+        },
+        {
+          "breakMode" : 5,
+          "font" : 12,
+          "frame" : {
+            "height" : 15,
+            "width" : 40,
+            "x" : 385.5,
+            "y" : 158
+          },
+          "maxLines" : 0,
+          "naturalWidth" : 35.754863813229576,
+          "text" : "还没读",
+          "tooltip" : "还没读",
+          "wraps" : false
+        },
+        {
+          "breakMode" : 0,
+          "font" : 11,
+          "frame" : {
+            "height" : 28,
+            "width" : 452,
+            "x" : -2,
+            "y" : 113
+          },
+          "maxLines" : 0,
+          "naturalWidth" : 885.82680075085182,
+          "text" : "读到的：实验：脸部裁出来的图像特征（Apple 的 Vision 算出）、登记过的模板、录入时眼睛睁开的程度、录入序号、比对结果；打开转头挑战后，还有转头时脸朝哪边、眼睛睁没睁开",
+          "tooltip" : "",
+          "wraps" : true
+        },
+        {
+          "breakMode" : 0,
+          "font" : 11,
+          "frame" : {
+            "height" : 14,
+            "width" : 278,
+            "x" : -2,
+            "y" : 95
+          },
+          "maxLines" : 0,
+          "naturalWidth" : 273.84435797665378,
+          "text" : "为什么：锁屏后认出是不是你，只留一条证据，不会解锁",
+          "tooltip" : "",
+          "wraps" : true
+        },
+        {
+          "breakMode" : 0,
+          "font" : 11,
+          "frame" : {
+            "height" : 14,
+            "width" : 438,
+            "x" : -2,
+            "y" : 77
+          },
+          "maxLines" : 0,
+          "naturalWidth" : 433.5723682210604,
+          "text" : "去了哪里：模板只存在这台 Mac 的钥匙串里，不同步、不随备份迁走；画面和裁切图不存",
+          "tooltip" : "",
+          "wraps" : true
+        },
+        {
+          "breakMode" : 0,
+          "font" : 11,
+          "frame" : {
+            "height" : 28,
+            "width" : 452,
+            "x" : -2,
+            "y" : 45
+          },
+          "maxLines" : 0,
+          "naturalWidth" : 808.1578801374028,
+          "text" : "什么时候读：默认关闭；打开实验后，锁屏时屏幕亮起最多看 6 秒，每秒最多 10 帧；打开转头挑战，认出后再看最多 12 秒；每次锁屏最多 3 次，画面看不清不算次数",
+          "tooltip" : "",
+          "wraps" : true
+        },
+        {
+          "breakMode" : 0,
+          "font" : 11,
+          "frame" : {
+            "height" : 14,
+            "width" : 232.5,
+            "x" : -2,
+            "y" : 27
+          },
+          "maxLines" : 0,
+          "naturalWidth" : 228.27457745622567,
+          "text" : "开关：实验开关和删除登记；不会标成 Face ID",
+          "tooltip" : "",
+          "wraps" : true
+        },
+        {
+          "breakMode" : 0,
+          "font" : 11,
+          "frame" : {
+            "height" : 14,
+            "width" : 352,
+            "x" : -2,
+            "y" : 9
+          },
+          "maxLines" : 0,
+          "naturalWidth" : 347.64494163424132,
+          "text" : "合起来能看出什么：人脸特征和摄像头画面合起来，能认出这是不是你。",
+          "tooltip" : "",
+          "wraps" : true
+        }
+      ],
+      "mainThread" : true,
+      "name" : "light-448-planned",
+      "registeredStatus" : "planned",
+      "rowID" : "face-identity",
+      "sample" : "planned",
+      "toggles" : 0,
+      "visible" : false,
+      "width" : 448
+    },
+    {
+      "active" : false,
+      "actualRowWidth" : 300,
+      "alpha" : 0,
+      "buttons" : [
+        {
+          "accessibilityLabel" : "配件电量的详情",
+          "frame" : {
+            "height" : 14,
+            "width" : 10,
+            "x" : 290,
+            "y" : 19
+          },
+          "isGrant" : false,
+          "title" : "Button"
+        }
+      ],
+      "expanded" : false,
+      "height" : 51,
+      "hostWidth" : 332,
+      "labels" : [
+        {
+          "breakMode" : 4,
+          "font" : 13,
+          "frame" : {
+            "height" : 16,
+            "width" : 56,
+            "x" : -2,
+            "y" : 26
+          },
+          "maxLines" : 0,
+          "naturalWidth" : 51.595330739299612,
+          "text" : "配件电量",
+          "tooltip" : "配件电量",
+          "wraps" : false
+        },
+        {
+          "breakMode" : 4,
+          "font" : 11,
+          "frame" : {
+            "height" : 14,
+            "width" : 158,
+            "x" : -2,
+            "y" : 9
+          },
+          "maxLines" : 0,
+          "naturalWidth" : 153.55058365758754,
+          "text" : "妙控鼠标、键盘、触控板、耳机",
+          "tooltip" : "妙控鼠标、键盘、触控板、耳机",
+          "wraps" : false
+        },
+        {
+          "breakMode" : 5,
+          "font" : 12,
+          "frame" : {
+            "height" : 15,
+            "width" : 81.5,
+            "x" : 200.5,
+            "y" : 18
+          },
+          "maxLines" : 0,
+          "naturalWidth" : 77.057917375972764,
+          "text" : "妙控鼠标 82%",
+          "tooltip" : "妙控鼠标 82%",
+          "wraps" : false
+        }
+      ],
+      "mainThread" : true,
+      "name" : "light-300-battery",
+      "registeredStatus" : "current",
+      "rowID" : "battery",
+      "sample" : "battery",
+      "toggles" : 0,
+      "visible" : false,
+      "width" : 300
+    },
+    {
+      "active" : false,
+      "actualRowWidth" : 300,
+      "alpha" : 0,
+      "buttons" : [
+        {
+          "accessibilityLabel" : "配件电量的详情",
+          "frame" : {
+            "height" : 14,
+            "width" : 10,
+            "x" : 290,
+            "y" : 19
+          },
+          "isGrant" : false,
+          "title" : "Button"
+        }
+      ],
+      "expanded" : false,
+      "height" : 51,
+      "hostWidth" : 332,
+      "labels" : [
+        {
+          "breakMode" : 4,
+          "font" : 13,
+          "frame" : {
+            "height" : 16,
+            "width" : 56,
+            "x" : -2,
+            "y" : 26
+          },
+          "maxLines" : 0,
+          "naturalWidth" : 51.595330739299612,
+          "text" : "配件电量",
+          "tooltip" : "配件电量",
+          "wraps" : false
+        },
+        {
+          "breakMode" : 4,
+          "font" : 11,
+          "frame" : {
+            "height" : 14,
+            "width" : 158,
+            "x" : -2,
+            "y" : 9
+          },
+          "maxLines" : 0,
+          "naturalWidth" : 153.55058365758754,
+          "text" : "妙控鼠标、键盘、触控板、耳机",
+          "tooltip" : "妙控鼠标、键盘、触控板、耳机",
+          "wraps" : false
+        },
+        {
+          "breakMode" : 5,
+          "font" : 12,
+          "frame" : {
+            "height" : 15,
+            "width" : 40,
+            "x" : 242,
+            "y" : 18
+          },
+          "maxLines" : 0,
+          "naturalWidth" : 35.754863813229576,
+          "text" : "没读到",
+          "tooltip" : "没读到",
+          "wraps" : false
+        }
+      ],
+      "mainThread" : true,
+      "name" : "light-300-missing",
+      "registeredStatus" : "current",
+      "rowID" : "battery",
+      "sample" : "missing",
+      "toggles" : 0,
+      "visible" : false,
+      "width" : 300
+    },
+    {
+      "active" : false,
+      "actualRowWidth" : 300,
+      "alpha" : 0,
+      "buttons" : [
+        {
+          "accessibilityLabel" : "窗口的标题、位置和大小的详情",
+          "frame" : {
+            "height" : 14,
+            "width" : 10,
+            "x" : 290,
+            "y" : 19
+          },
+          "isGrant" : false,
+          "title" : "Button"
+        }
+      ],
+      "expanded" : false,
+      "height" : 51,
+      "hostWidth" : 332,
+      "labels" : [
+        {
+          "breakMode" : 4,
+          "font" : 13,
+          "frame" : {
+            "height" : 16,
+            "width" : 146.5,
+            "x" : -2,
+            "y" : 26
+          },
+          "maxLines" : 0,
+          "naturalWidth" : 142.06420233463029,
+          "text" : "窗口的标题、位置和大小",
+          "tooltip" : "窗口的标题、位置和大小",
+          "wraps" : false
+        },
+        {
+          "breakMode" : 4,
+          "font" : 11,
+          "frame" : {
+            "height" : 14,
+            "width" : 190.5,
+            "x" : -2,
+            "y" : 9
+          },
+          "maxLines" : 0,
+          "naturalWidth" : 186.0101430329949,
+          "text" : "找到、移动和恢复窗口 · 要“辅助功能”",
+          "tooltip" : "找到、移动和恢复窗口 · 要“辅助功能”",
+          "wraps" : false
+        },
+        {
+          "breakMode" : 2,
+          "font" : 12,
+          "frame" : {
+            "height" : 15,
+            "width" : 40,
+            "x" : 242,
+            "y" : 18
+          },
+          "maxLines" : 0,
+          "naturalWidth" : 35.754863813229576,
+          "text" : "去授权",
+          "tooltip" : "",
+          "wraps" : false
+        }
+      ],
+      "mainThread" : true,
+      "name" : "light-300-denied",
+      "registeredStatus" : "current",
+      "rowID" : "window-ax",
+      "sample" : "denied",
+      "toggles" : 0,
+      "visible" : false,
+      "width" : 300
+    },
+    {
+      "active" : false,
+      "actualRowWidth" : 300,
+      "alpha" : 0,
+      "buttons" : [
+        {
+          "accessibilityLabel" : "窗口的标题、位置和大小的详情",
+          "frame" : {
+            "height" : 14,
+            "width" : 10,
+            "x" : 290,
+            "y" : 19
+          },
+          "isGrant" : false,
+          "title" : "Button"
+        }
+      ],
+      "expanded" : false,
+      "height" : 51,
+      "hostWidth" : 332,
+      "labels" : [
+        {
+          "breakMode" : 4,
+          "font" : 13,
+          "frame" : {
+            "height" : 16,
+            "width" : 146.5,
+            "x" : -2,
+            "y" : 26
+          },
+          "maxLines" : 0,
+          "naturalWidth" : 142.06420233463029,
+          "text" : "窗口的标题、位置和大小",
+          "tooltip" : "窗口的标题、位置和大小",
+          "wraps" : false
+        },
+        {
+          "breakMode" : 4,
+          "font" : 11,
+          "frame" : {
+            "height" : 14,
+            "width" : 190.5,
+            "x" : -2,
+            "y" : 9
+          },
+          "maxLines" : 0,
+          "naturalWidth" : 186.0101430329949,
+          "text" : "找到、移动和恢复窗口 · 要“辅助功能”",
+          "tooltip" : "找到、移动和恢复窗口 · 要“辅助功能”",
+          "wraps" : false
+        },
+        {
+          "breakMode" : 2,
+          "font" : 12,
+          "frame" : {
+            "height" : 15,
+            "width" : 40,
+            "x" : 242,
+            "y" : 18
+          },
+          "maxLines" : 0,
+          "naturalWidth" : 35.754863813229576,
+          "text" : "已授权",
+          "tooltip" : "",
+          "wraps" : false
+        }
+      ],
+      "mainThread" : true,
+      "name" : "light-300-granted",
+      "registeredStatus" : "current",
+      "rowID" : "window-ax",
+      "sample" : "granted",
+      "toggles" : 0,
+      "visible" : false,
+      "width" : 300
+    },
+    {
+      "active" : false,
+      "actualRowWidth" : 300,
+      "alpha" : 0,
+      "buttons" : [
+        {
+          "accessibilityLabel" : "配件电量的详情",
+          "frame" : {
+            "height" : 14,
+            "width" : 10,
+            "x" : 290,
+            "y" : 19
+          },
+          "isGrant" : false,
+          "title" : "Button"
+        }
+      ],
+      "expanded" : false,
+      "height" : 51,
+      "hostWidth" : 332,
+      "labels" : [
+        {
+          "breakMode" : 4,
+          "font" : 13,
+          "frame" : {
+            "height" : 16,
+            "width" : 56,
+            "x" : -2,
+            "y" : 26
+          },
+          "maxLines" : 0,
+          "naturalWidth" : 51.595330739299612,
+          "text" : "配件电量",
+          "tooltip" : "配件电量",
+          "wraps" : false
+        },
+        {
+          "breakMode" : 4,
+          "font" : 11,
+          "frame" : {
+            "height" : 14,
+            "width" : 154,
+            "x" : -2,
+            "y" : 9
+          },
+          "maxLines" : 0,
+          "naturalWidth" : 153.55058365758754,
+          "text" : "妙控鼠标、键盘、触控板、耳机",
+          "tooltip" : "妙控鼠标、键盘、触控板、耳机",
+          "wraps" : false
+        },
+        {
+          "breakMode" : 5,
+          "font" : 12,
+          "frame" : {
+            "height" : 15,
+            "width" : 124,
+            "x" : 158,
+            "y" : 18
+          },
+          "maxLines" : 0,
+          "naturalWidth" : 761.72032313959176,
+          "text" : "演示配件 — 名字很长的键盘名字很长的键盘名字很长的键盘名字很长的键盘名字很长的键盘名字很长的键盘名字很长的键盘名字很长的键盘 82%",
+          "tooltip" : "演示配件 — 名字很长的键盘名字很长的键盘名字很长的键盘名字很长的键盘名字很长的键盘名字很长的键盘名字很长的键盘名字很长的键盘 82%",
+          "wraps" : false
+        }
+      ],
+      "mainThread" : true,
+      "name" : "light-300-long-value",
+      "registeredStatus" : "current",
+      "rowID" : "battery",
+      "sample" : "long-value",
+      "toggles" : 0,
+      "visible" : false,
+      "width" : 300
+    },
+    {
+      "active" : false,
+      "actualRowWidth" : 300,
+      "alpha" : 0,
+      "buttons" : [
+        {
+          "accessibilityLabel" : "窗口的标题、位置和大小的详情",
+          "frame" : {
+            "height" : 9,
+            "width" : 15,
+            "x" : 285.5,
+            "y" : 175
+          },
+          "isGrant" : false,
+          "title" : "Button"
+        }
+      ],
+      "expanded" : true,
+      "height" : 205,
+      "hostWidth" : 332,
+      "labels" : [
+        {
+          "breakMode" : 4,
+          "font" : 13,
+          "frame" : {
+            "height" : 16,
+            "width" : 146.5,
+            "x" : -2,
+            "y" : 180
+          },
+          "maxLines" : 0,
+          "naturalWidth" : 142.06420233463029,
+          "text" : "窗口的标题、位置和大小",
+          "tooltip" : "窗口的标题、位置和大小",
+          "wraps" : false
+        },
+        {
+          "breakMode" : 4,
+          "font" : 11,
+          "frame" : {
+            "height" : 14,
+            "width" : 190.5,
+            "x" : -2,
+            "y" : 163
+          },
+          "maxLines" : 0,
+          "naturalWidth" : 186.0101430329949,
+          "text" : "找到、移动和恢复窗口 · 要“辅助功能”",
+          "tooltip" : "找到、移动和恢复窗口 · 要“辅助功能”",
+          "wraps" : false
+        },
+        {
+          "breakMode" : 2,
+          "font" : 12,
+          "frame" : {
+            "height" : 15,
+            "width" : 40,
+            "x" : 237.5,
+            "y" : 172
+          },
+          "maxLines" : 0,
+          "naturalWidth" : 35.754863813229576,
+          "text" : "已授权",
+          "tooltip" : "",
+          "wraps" : false
+        },
+        {
+          "breakMode" : 0,
+          "font" : 11,
+          "frame" : {
+            "height" : 14,
+            "width" : 280.5,
+            "x" : -2,
+            "y" : 141
+          },
+          "maxLines" : 0,
+          "naturalWidth" : 276.16416889591437,
+          "text" : "读到的：窗口的标题、位置和大小，以及它属于哪个 App",
+          "tooltip" : "",
+          "wraps" : true
+        },
+        {
+          "breakMode" : 0,
+          "font" : 11,
+          "frame" : {
+            "height" : 14,
+            "width" : 256.5,
+            "x" : -2,
+            "y" : 123
+          },
+          "maxLines" : 0,
+          "naturalWidth" : 252.12256809338518,
+          "text" : "为什么：收起、放回、排窗口，都要先知道窗口在哪",
+          "tooltip" : "",
+          "wraps" : true
+        },
+        {
+          "breakMode" : 0,
+          "font" : 11,
+          "frame" : {
+            "height" : 28,
+            "width" : 304,
+            "x" : -2,
+            "y" : 91
+          },
+          "maxLines" : 0,
+          "naturalWidth" : 448.81712062256815,
+          "text" : "去了哪里：只在内存里用；收起的窗口的标题和位置记在恢复记录里，出问题时用来找回窗口",
+          "tooltip" : "",
+          "wraps" : true
+        },
+        {
+          "breakMode" : 0,
+          "font" : 11,
+          "frame" : {
+            "height" : 14,
+            "width" : 179.5,
+            "x" : -2,
+            "y" : 73
+          },
+          "maxLines" : 0,
+          "naturalWidth" : 175.42217898832683,
+          "text" : "什么时候读：收起、放回、排窗口时",
+          "tooltip" : "",
+          "wraps" : true
+        },
+        {
+          "breakMode" : 0,
+          "font" : 11,
+          "frame" : {
+            "height" : 28,
+            "width" : 304,
+            "x" : -2,
+            "y" : 41
+          },
+          "maxLines" : 0,
+          "naturalWidth" : 337.09981266719359,
+          "text" : "开关：在系统设置里关掉“辅助功能”，WindowShade 就不能再读窗口",
+          "tooltip" : "",
+          "wraps" : true
+        },
+        {
+          "breakMode" : 0,
+          "font" : 11,
+          "frame" : {
+            "height" : 28,
+            "width" : 304,
+            "x" : -2,
+            "y" : 9
+          },
+          "maxLines" : 0,
+          "naturalWidth" : 424.3453307392997,
+          "text" : "合起来能看出什么：窗口的标题和位置合起来，能看出你在处理哪份文件、看哪个网页。",
+          "tooltip" : "",
+          "wraps" : true
+        }
+      ],
+      "mainThread" : true,
+      "name" : "light-300-expanded",
+      "registeredStatus" : "current",
+      "rowID" : "window-ax",
+      "sample" : "expanded",
+      "toggles" : 0,
+      "visible" : false,
+      "width" : 300
+    },
+    {
+      "active" : false,
+      "actualRowWidth" : 300,
+      "alpha" : 0,
+      "buttons" : [
+        {
+          "accessibilityLabel" : "窗口的标题、位置和大小的详情",
+          "frame" : {
+            "height" : 9,
+            "width" : 15,
+            "x" : 285.5,
+            "y" : 207
+          },
+          "isGrant" : false,
+          "title" : "Button"
+        }
+      ],
+      "expanded" : true,
+      "height" : 237,
+      "hostWidth" : 332,
+      "labels" : [
+        {
+          "breakMode" : 4,
+          "font" : 13,
+          "frame" : {
+            "height" : 16,
+            "width" : 146.5,
+            "x" : -2,
+            "y" : 212
+          },
+          "maxLines" : 0,
+          "naturalWidth" : 142.06420233463029,
+          "text" : "窗口的标题、位置和大小",
+          "tooltip" : "窗口的标题、位置和大小",
+          "wraps" : false
+        },
+        {
+          "breakMode" : 4,
+          "font" : 11,
+          "frame" : {
+            "height" : 14,
+            "width" : 190.5,
+            "x" : -2,
+            "y" : 195
+          },
+          "maxLines" : 0,
+          "naturalWidth" : 186.0101430329949,
+          "text" : "找到、移动和恢复窗口 · 要“辅助功能”",
+          "tooltip" : "找到、移动和恢复窗口 · 要“辅助功能”",
+          "wraps" : false
+        },
+        {
+          "breakMode" : 2,
+          "font" : 12,
+          "frame" : {
+            "height" : 15,
+            "width" : 40,
+            "x" : 237.5,
+            "y" : 204
+          },
+          "maxLines" : 0,
+          "naturalWidth" : 35.754863813229576,
+          "text" : "已授权",
+          "tooltip" : "",
+          "wraps" : false
+        },
+        {
+          "breakMode" : 0,
+          "font" : 11,
+          "frame" : {
+            "height" : 14,
+            "width" : 280.5,
+            "x" : -2,
+            "y" : 173
+          },
+          "maxLines" : 0,
+          "naturalWidth" : 276.16416889591437,
+          "text" : "读到的：窗口的标题、位置和大小，以及它属于哪个 App",
+          "tooltip" : "",
+          "wraps" : true
+        },
+        {
+          "breakMode" : 0,
+          "font" : 11,
+          "frame" : {
+            "height" : 14,
+            "width" : 256.5,
+            "x" : -2,
+            "y" : 155
+          },
+          "maxLines" : 0,
+          "naturalWidth" : 252.12256809338518,
+          "text" : "为什么：收起、放回、排窗口，都要先知道窗口在哪",
+          "tooltip" : "",
+          "wraps" : true
+        },
+        {
+          "breakMode" : 0,
+          "font" : 11,
+          "frame" : {
+            "height" : 28,
+            "width" : 304,
+            "x" : -2,
+            "y" : 123
+          },
+          "maxLines" : 0,
+          "naturalWidth" : 448.81712062256815,
+          "text" : "去了哪里：只在内存里用；收起的窗口的标题和位置记在恢复记录里，出问题时用来找回窗口",
+          "tooltip" : "",
+          "wraps" : true
+        },
+        {
+          "breakMode" : 0,
+          "font" : 11,
+          "frame" : {
+            "height" : 14,
+            "width" : 179.5,
+            "x" : -2,
+            "y" : 105
+          },
+          "maxLines" : 0,
+          "naturalWidth" : 175.42217898832683,
+          "text" : "什么时候读：收起、放回、排窗口时",
+          "tooltip" : "",
+          "wraps" : true
+        },
+        {
+          "breakMode" : 0,
+          "font" : 11,
+          "frame" : {
+            "height" : 28,
+            "width" : 304,
+            "x" : -2,
+            "y" : 73
+          },
+          "maxLines" : 0,
+          "naturalWidth" : 337.09981266719359,
+          "text" : "开关：在系统设置里关掉“辅助功能”，WindowShade 就不能再读窗口",
+          "tooltip" : "",
+          "wraps" : true
+        },
+        {
+          "breakMode" : 0,
+          "font" : 11,
+          "frame" : {
+            "height" : 28,
+            "width" : 304,
+            "x" : -2,
+            "y" : 41
+          },
+          "maxLines" : 0,
+          "naturalWidth" : 424.3453307392997,
+          "text" : "合起来能看出什么：窗口的标题和位置合起来，能看出你在处理哪份文件、看哪个网页。",
+          "tooltip" : "",
+          "wraps" : true
+        },
+        {
+          "breakMode" : 0,
+          "font" : 11,
+          "frame" : {
+            "height" : 28,
+            "width" : 304,
+            "x" : -2,
+            "y" : 9
+          },
+          "maxLines" : 0,
+          "naturalWidth" : 349.18537968142027,
+          "text" : "接口：AXUIElementCopyAttributeValue、SLSOffscreenCheckProbe",
+          "tooltip" : "",
+          "wraps" : true
+        }
+      ],
+      "mainThread" : true,
+      "name" : "light-300-technical",
+      "registeredStatus" : "current",
+      "rowID" : "window-ax",
+      "sample" : "technical",
+      "toggles" : 0,
+      "visible" : false,
+      "width" : 300
+    },
+    {
+      "active" : false,
+      "actualRowWidth" : 300,
+      "alpha" : 0,
+      "buttons" : [
+        {
+          "accessibilityLabel" : "脸部特征与比对结果的详情",
+          "frame" : {
+            "height" : 9,
+            "width" : 15,
+            "x" : 285.5,
+            "y" : 231
+          },
+          "isGrant" : false,
+          "title" : "Button"
+        }
+      ],
+      "expanded" : true,
+      "height" : 261,
+      "hostWidth" : 332,
+      "labels" : [
+        {
+          "breakMode" : 4,
+          "font" : 13,
+          "frame" : {
+            "height" : 16,
+            "width" : 120.5,
+            "x" : -2,
+            "y" : 236
+          },
+          "maxLines" : 0,
+          "naturalWidth" : 116.08949416342409,
+          "text" : "脸部特征与比对结果",
+          "tooltip" : "脸部特征与比对结果",
+          "wraps" : false
+        },
+        {
+          "breakMode" : 4,
+          "font" : 11,
+          "frame" : {
+            "height" : 14,
+            "width" : 102.5,
+            "x" : -2,
+            "y" : 219
+          },
+          "maxLines" : 0,
+          "naturalWidth" : 98.422178988326849,
+          "text" : "锁屏后认出是不是你",
+          "tooltip" : "锁屏后认出是不是你",
+          "wraps" : false
+        },
+        {
+          "breakMode" : 5,
+          "font" : 12,
+          "frame" : {
+            "height" : 15,
+            "width" : 40,
+            "x" : 237.5,
+            "y" : 228
+          },
+          "maxLines" : 0,
+          "naturalWidth" : 35.754863813229576,
+          "text" : "还没读",
+          "tooltip" : "还没读",
+          "wraps" : false
+        },
+        {
+          "breakMode" : 0,
+          "font" : 11,
+          "frame" : {
+            "height" : 56,
+            "width" : 304,
+            "x" : -2,
+            "y" : 155
+          },
+          "maxLines" : 0,
+          "naturalWidth" : 885.82680075085182,
+          "text" : "读到的：实验：脸部裁出来的图像特征（Apple 的 Vision 算出）、登记过的模板、录入时眼睛睁开的程度、录入序号、比对结果；打开转头挑战后，还有转头时脸朝哪边、眼睛睁没睁开",
+          "tooltip" : "",
+          "wraps" : true
+        },
+        {
+          "breakMode" : 0,
+          "font" : 11,
+          "frame" : {
+            "height" : 14,
+            "width" : 278,
+            "x" : -2,
+            "y" : 137
+          },
+          "maxLines" : 0,
+          "naturalWidth" : 273.84435797665378,
+          "text" : "为什么：锁屏后认出是不是你，只留一条证据，不会解锁",
+          "tooltip" : "",
+          "wraps" : true
+        },
+        {
+          "breakMode" : 0,
+          "font" : 11,
+          "frame" : {
+            "height" : 28,
+            "width" : 304,
+            "x" : -2,
+            "y" : 105
+          },
+          "maxLines" : 0,
+          "naturalWidth" : 433.5723682210604,
+          "text" : "去了哪里：模板只存在这台 Mac 的钥匙串里，不同步、不随备份迁走；画面和裁切图不存",
+          "tooltip" : "",
+          "wraps" : true
+        },
+        {
+          "breakMode" : 0,
+          "font" : 11,
+          "frame" : {
+            "height" : 42,
+            "width" : 304,
+            "x" : -2,
+            "y" : 59
+          },
+          "maxLines" : 0,
+          "naturalWidth" : 808.1578801374028,
+          "text" : "什么时候读：默认关闭；打开实验后，锁屏时屏幕亮起最多看 6 秒，每秒最多 10 帧；打开转头挑战，认出后再看最多 12 秒；每次锁屏最多 3 次，画面看不清不算次数",
+          "tooltip" : "",
+          "wraps" : true
+        },
+        {
+          "breakMode" : 0,
+          "font" : 11,
+          "frame" : {
+            "height" : 14,
+            "width" : 232.5,
+            "x" : -2,
+            "y" : 41
+          },
+          "maxLines" : 0,
+          "naturalWidth" : 228.27457745622567,
+          "text" : "开关：实验开关和删除登记；不会标成 Face ID",
+          "tooltip" : "",
+          "wraps" : true
+        },
+        {
+          "breakMode" : 0,
+          "font" : 11,
+          "frame" : {
+            "height" : 28,
+            "width" : 304,
+            "x" : -2,
+            "y" : 9
+          },
+          "maxLines" : 0,
+          "naturalWidth" : 347.64494163424132,
+          "text" : "合起来能看出什么：人脸特征和摄像头画面合起来，能认出这是不是你。",
+          "tooltip" : "",
+          "wraps" : true
+        }
+      ],
+      "mainThread" : true,
+      "name" : "light-300-planned",
+      "registeredStatus" : "planned",
+      "rowID" : "face-identity",
+      "sample" : "planned",
+      "toggles" : 0,
+      "visible" : false,
+      "width" : 300
+    },
+    {
+      "active" : false,
+      "actualRowWidth" : 640,
+      "alpha" : 0,
+      "buttons" : [
+        {
+          "accessibilityLabel" : "配件电量的详情",
+          "frame" : {
+            "height" : 14,
+            "width" : 10,
+            "x" : 630,
+            "y" : 19
+          },
+          "isGrant" : false,
+          "title" : "Button"
+        }
+      ],
+      "expanded" : false,
+      "height" : 51,
+      "hostWidth" : 672,
+      "labels" : [
+        {
+          "breakMode" : 4,
+          "font" : 13,
+          "frame" : {
+            "height" : 16,
+            "width" : 56,
+            "x" : -2,
+            "y" : 26
+          },
+          "maxLines" : 0,
+          "naturalWidth" : 51.595330739299612,
+          "text" : "配件电量",
+          "tooltip" : "配件电量",
+          "wraps" : false
+        },
+        {
+          "breakMode" : 4,
+          "font" : 11,
+          "frame" : {
+            "height" : 14,
+            "width" : 158,
+            "x" : -2,
+            "y" : 9
+          },
+          "maxLines" : 0,
+          "naturalWidth" : 153.55058365758754,
+          "text" : "妙控鼠标、键盘、触控板、耳机",
+          "tooltip" : "妙控鼠标、键盘、触控板、耳机",
+          "wraps" : false
+        },
+        {
+          "breakMode" : 5,
+          "font" : 12,
+          "frame" : {
+            "height" : 15,
+            "width" : 81.5,
+            "x" : 540.5,
+            "y" : 18
+          },
+          "maxLines" : 0,
+          "naturalWidth" : 77.057917375972764,
+          "text" : "妙控鼠标 82%",
+          "tooltip" : "妙控鼠标 82%",
+          "wraps" : false
+        }
+      ],
+      "mainThread" : true,
+      "name" : "dark-640-battery",
+      "registeredStatus" : "current",
+      "rowID" : "battery",
+      "sample" : "battery",
+      "toggles" : 0,
+      "visible" : false,
+      "width" : 640
+    },
+    {
+      "active" : false,
+      "actualRowWidth" : 640,
+      "alpha" : 0,
+      "buttons" : [
+        {
+          "accessibilityLabel" : "配件电量的详情",
+          "frame" : {
+            "height" : 14,
+            "width" : 10,
+            "x" : 630,
+            "y" : 19
+          },
+          "isGrant" : false,
+          "title" : "Button"
+        }
+      ],
+      "expanded" : false,
+      "height" : 51,
+      "hostWidth" : 672,
+      "labels" : [
+        {
+          "breakMode" : 4,
+          "font" : 13,
+          "frame" : {
+            "height" : 16,
+            "width" : 56,
+            "x" : -2,
+            "y" : 26
+          },
+          "maxLines" : 0,
+          "naturalWidth" : 51.595330739299612,
+          "text" : "配件电量",
+          "tooltip" : "配件电量",
+          "wraps" : false
+        },
+        {
+          "breakMode" : 4,
+          "font" : 11,
+          "frame" : {
+            "height" : 14,
+            "width" : 158,
+            "x" : -2,
+            "y" : 9
+          },
+          "maxLines" : 0,
+          "naturalWidth" : 153.55058365758754,
+          "text" : "妙控鼠标、键盘、触控板、耳机",
+          "tooltip" : "妙控鼠标、键盘、触控板、耳机",
+          "wraps" : false
+        },
+        {
+          "breakMode" : 5,
+          "font" : 12,
+          "frame" : {
+            "height" : 15,
+            "width" : 40,
+            "x" : 582,
+            "y" : 18
+          },
+          "maxLines" : 0,
+          "naturalWidth" : 35.754863813229576,
+          "text" : "没读到",
+          "tooltip" : "没读到",
+          "wraps" : false
+        }
+      ],
+      "mainThread" : true,
+      "name" : "dark-640-missing",
+      "registeredStatus" : "current",
+      "rowID" : "battery",
+      "sample" : "missing",
+      "toggles" : 0,
+      "visible" : false,
+      "width" : 640
+    },
+    {
+      "active" : false,
+      "actualRowWidth" : 640,
+      "alpha" : 0,
+      "buttons" : [
+        {
+          "accessibilityLabel" : "窗口的标题、位置和大小的详情",
+          "frame" : {
+            "height" : 14,
+            "width" : 10,
+            "x" : 630,
+            "y" : 19
+          },
+          "isGrant" : false,
+          "title" : "Button"
+        }
+      ],
+      "expanded" : false,
+      "height" : 51,
+      "hostWidth" : 672,
+      "labels" : [
+        {
+          "breakMode" : 4,
+          "font" : 13,
+          "frame" : {
+            "height" : 16,
+            "width" : 146.5,
+            "x" : -2,
+            "y" : 26
+          },
+          "maxLines" : 0,
+          "naturalWidth" : 142.06420233463029,
+          "text" : "窗口的标题、位置和大小",
+          "tooltip" : "窗口的标题、位置和大小",
+          "wraps" : false
+        },
+        {
+          "breakMode" : 4,
+          "font" : 11,
+          "frame" : {
+            "height" : 14,
+            "width" : 190.5,
+            "x" : -2,
+            "y" : 9
+          },
+          "maxLines" : 0,
+          "naturalWidth" : 186.0101430329949,
+          "text" : "找到、移动和恢复窗口 · 要“辅助功能”",
+          "tooltip" : "找到、移动和恢复窗口 · 要“辅助功能”",
+          "wraps" : false
+        },
+        {
+          "breakMode" : 2,
+          "font" : 12,
+          "frame" : {
+            "height" : 15,
+            "width" : 40,
+            "x" : 582,
+            "y" : 18
+          },
+          "maxLines" : 0,
+          "naturalWidth" : 35.754863813229576,
+          "text" : "去授权",
+          "tooltip" : "",
+          "wraps" : false
+        }
+      ],
+      "mainThread" : true,
+      "name" : "dark-640-denied",
+      "registeredStatus" : "current",
+      "rowID" : "window-ax",
+      "sample" : "denied",
+      "toggles" : 0,
+      "visible" : false,
+      "width" : 640
+    },
+    {
+      "active" : false,
+      "actualRowWidth" : 640,
+      "alpha" : 0,
+      "buttons" : [
+        {
+          "accessibilityLabel" : "窗口的标题、位置和大小的详情",
+          "frame" : {
+            "height" : 14,
+            "width" : 10,
+            "x" : 630,
+            "y" : 19
+          },
+          "isGrant" : false,
+          "title" : "Button"
+        }
+      ],
+      "expanded" : false,
+      "height" : 51,
+      "hostWidth" : 672,
+      "labels" : [
+        {
+          "breakMode" : 4,
+          "font" : 13,
+          "frame" : {
+            "height" : 16,
+            "width" : 146.5,
+            "x" : -2,
+            "y" : 26
+          },
+          "maxLines" : 0,
+          "naturalWidth" : 142.06420233463029,
+          "text" : "窗口的标题、位置和大小",
+          "tooltip" : "窗口的标题、位置和大小",
+          "wraps" : false
+        },
+        {
+          "breakMode" : 4,
+          "font" : 11,
+          "frame" : {
+            "height" : 14,
+            "width" : 190.5,
+            "x" : -2,
+            "y" : 9
+          },
+          "maxLines" : 0,
+          "naturalWidth" : 186.0101430329949,
+          "text" : "找到、移动和恢复窗口 · 要“辅助功能”",
+          "tooltip" : "找到、移动和恢复窗口 · 要“辅助功能”",
+          "wraps" : false
+        },
+        {
+          "breakMode" : 2,
+          "font" : 12,
+          "frame" : {
+            "height" : 15,
+            "width" : 40,
+            "x" : 582,
+            "y" : 18
+          },
+          "maxLines" : 0,
+          "naturalWidth" : 35.754863813229576,
+          "text" : "已授权",
+          "tooltip" : "",
+          "wraps" : false
+        }
+      ],
+      "mainThread" : true,
+      "name" : "dark-640-granted",
+      "registeredStatus" : "current",
+      "rowID" : "window-ax",
+      "sample" : "granted",
+      "toggles" : 0,
+      "visible" : false,
+      "width" : 640
+    },
+    {
+      "active" : false,
+      "actualRowWidth" : 640,
+      "alpha" : 0,
+      "buttons" : [
+        {
+          "accessibilityLabel" : "配件电量的详情",
+          "frame" : {
+            "height" : 14,
+            "width" : 10,
+            "x" : 630,
+            "y" : 19
+          },
+          "isGrant" : false,
+          "title" : "Button"
+        }
+      ],
+      "expanded" : false,
+      "height" : 51,
+      "hostWidth" : 672,
+      "labels" : [
+        {
+          "breakMode" : 4,
+          "font" : 13,
+          "frame" : {
+            "height" : 16,
+            "width" : 56,
+            "x" : -2,
+            "y" : 26
+          },
+          "maxLines" : 0,
+          "naturalWidth" : 51.595330739299612,
+          "text" : "配件电量",
+          "tooltip" : "配件电量",
+          "wraps" : false
+        },
+        {
+          "breakMode" : 4,
+          "font" : 11,
+          "frame" : {
+            "height" : 14,
+            "width" : 158,
+            "x" : -2,
+            "y" : 9
+          },
+          "maxLines" : 0,
+          "naturalWidth" : 153.55058365758754,
+          "text" : "妙控鼠标、键盘、触控板、耳机",
+          "tooltip" : "妙控鼠标、键盘、触控板、耳机",
+          "wraps" : false
+        },
+        {
+          "breakMode" : 5,
+          "font" : 12,
+          "frame" : {
+            "height" : 15,
+            "width" : 260,
+            "x" : 362,
+            "y" : 18
+          },
+          "maxLines" : 0,
+          "naturalWidth" : 761.72032313959176,
+          "text" : "演示配件 — 名字很长的键盘名字很长的键盘名字很长的键盘名字很长的键盘名字很长的键盘名字很长的键盘名字很长的键盘名字很长的键盘 82%",
+          "tooltip" : "演示配件 — 名字很长的键盘名字很长的键盘名字很长的键盘名字很长的键盘名字很长的键盘名字很长的键盘名字很长的键盘名字很长的键盘 82%",
+          "wraps" : false
+        }
+      ],
+      "mainThread" : true,
+      "name" : "dark-640-long-value",
+      "registeredStatus" : "current",
+      "rowID" : "battery",
+      "sample" : "long-value",
+      "toggles" : 0,
+      "visible" : false,
+      "width" : 640
+    },
+    {
+      "active" : false,
+      "actualRowWidth" : 640,
+      "alpha" : 0,
+      "buttons" : [
+        {
+          "accessibilityLabel" : "窗口的标题、位置和大小的详情",
+          "frame" : {
+            "height" : 9,
+            "width" : 15,
+            "x" : 625.5,
+            "y" : 133
+          },
+          "isGrant" : false,
+          "title" : "Button"
+        }
+      ],
+      "expanded" : true,
+      "height" : 163,
+      "hostWidth" : 672,
+      "labels" : [
+        {
+          "breakMode" : 4,
+          "font" : 13,
+          "frame" : {
+            "height" : 16,
+            "width" : 146.5,
+            "x" : -2,
+            "y" : 138
+          },
+          "maxLines" : 0,
+          "naturalWidth" : 142.06420233463029,
+          "text" : "窗口的标题、位置和大小",
+          "tooltip" : "窗口的标题、位置和大小",
+          "wraps" : false
+        },
+        {
+          "breakMode" : 4,
+          "font" : 11,
+          "frame" : {
+            "height" : 14,
+            "width" : 190.5,
+            "x" : -2,
+            "y" : 121
+          },
+          "maxLines" : 0,
+          "naturalWidth" : 186.0101430329949,
+          "text" : "找到、移动和恢复窗口 · 要“辅助功能”",
+          "tooltip" : "找到、移动和恢复窗口 · 要“辅助功能”",
+          "wraps" : false
+        },
+        {
+          "breakMode" : 2,
+          "font" : 12,
+          "frame" : {
+            "height" : 15,
+            "width" : 40,
+            "x" : 577.5,
+            "y" : 130
+          },
+          "maxLines" : 0,
+          "naturalWidth" : 35.754863813229576,
+          "text" : "已授权",
+          "tooltip" : "",
+          "wraps" : false
+        },
+        {
+          "breakMode" : 0,
+          "font" : 11,
+          "frame" : {
+            "height" : 14,
+            "width" : 280.5,
+            "x" : -2,
+            "y" : 99
+          },
+          "maxLines" : 0,
+          "naturalWidth" : 276.16416889591437,
+          "text" : "读到的：窗口的标题、位置和大小，以及它属于哪个 App",
+          "tooltip" : "",
+          "wraps" : true
+        },
+        {
+          "breakMode" : 0,
+          "font" : 11,
+          "frame" : {
+            "height" : 14,
+            "width" : 256.5,
+            "x" : -2,
+            "y" : 81
+          },
+          "maxLines" : 0,
+          "naturalWidth" : 252.12256809338518,
+          "text" : "为什么：收起、放回、排窗口，都要先知道窗口在哪",
+          "tooltip" : "",
+          "wraps" : true
+        },
+        {
+          "breakMode" : 0,
+          "font" : 11,
+          "frame" : {
+            "height" : 14,
+            "width" : 453,
+            "x" : -2,
+            "y" : 63
+          },
+          "maxLines" : 0,
+          "naturalWidth" : 448.81712062256815,
+          "text" : "去了哪里：只在内存里用；收起的窗口的标题和位置记在恢复记录里，出问题时用来找回窗口",
+          "tooltip" : "",
+          "wraps" : true
+        },
+        {
+          "breakMode" : 0,
+          "font" : 11,
+          "frame" : {
+            "height" : 14,
+            "width" : 179.5,
+            "x" : -2,
+            "y" : 45
+          },
+          "maxLines" : 0,
+          "naturalWidth" : 175.42217898832683,
+          "text" : "什么时候读：收起、放回、排窗口时",
+          "tooltip" : "",
+          "wraps" : true
+        },
+        {
+          "breakMode" : 0,
+          "font" : 11,
+          "frame" : {
+            "height" : 14,
+            "width" : 341.5,
+            "x" : -2,
+            "y" : 27
+          },
+          "maxLines" : 0,
+          "naturalWidth" : 337.09981266719359,
+          "text" : "开关：在系统设置里关掉“辅助功能”，WindowShade 就不能再读窗口",
+          "tooltip" : "",
+          "wraps" : true
+        },
+        {
+          "breakMode" : 0,
+          "font" : 11,
+          "frame" : {
+            "height" : 14,
+            "width" : 428.5,
+            "x" : -2,
+            "y" : 9
+          },
+          "maxLines" : 0,
+          "naturalWidth" : 424.3453307392997,
+          "text" : "合起来能看出什么：窗口的标题和位置合起来，能看出你在处理哪份文件、看哪个网页。",
+          "tooltip" : "",
+          "wraps" : true
+        }
+      ],
+      "mainThread" : true,
+      "name" : "dark-640-expanded",
+      "registeredStatus" : "current",
+      "rowID" : "window-ax",
+      "sample" : "expanded",
+      "toggles" : 0,
+      "visible" : false,
+      "width" : 640
+    },
+    {
+      "active" : false,
+      "actualRowWidth" : 640,
+      "alpha" : 0,
+      "buttons" : [
+        {
+          "accessibilityLabel" : "窗口的标题、位置和大小的详情",
+          "frame" : {
+            "height" : 9,
+            "width" : 15,
+            "x" : 625.5,
+            "y" : 151
+          },
+          "isGrant" : false,
+          "title" : "Button"
+        }
+      ],
+      "expanded" : true,
+      "height" : 181,
+      "hostWidth" : 672,
+      "labels" : [
+        {
+          "breakMode" : 4,
+          "font" : 13,
+          "frame" : {
+            "height" : 16,
+            "width" : 146.5,
+            "x" : -2,
+            "y" : 156
+          },
+          "maxLines" : 0,
+          "naturalWidth" : 142.06420233463029,
+          "text" : "窗口的标题、位置和大小",
+          "tooltip" : "窗口的标题、位置和大小",
+          "wraps" : false
+        },
+        {
+          "breakMode" : 4,
+          "font" : 11,
+          "frame" : {
+            "height" : 14,
+            "width" : 190.5,
+            "x" : -2,
+            "y" : 139
+          },
+          "maxLines" : 0,
+          "naturalWidth" : 186.0101430329949,
+          "text" : "找到、移动和恢复窗口 · 要“辅助功能”",
+          "tooltip" : "找到、移动和恢复窗口 · 要“辅助功能”",
+          "wraps" : false
+        },
+        {
+          "breakMode" : 2,
+          "font" : 12,
+          "frame" : {
+            "height" : 15,
+            "width" : 40,
+            "x" : 577.5,
+            "y" : 148
+          },
+          "maxLines" : 0,
+          "naturalWidth" : 35.754863813229576,
+          "text" : "已授权",
+          "tooltip" : "",
+          "wraps" : false
+        },
+        {
+          "breakMode" : 0,
+          "font" : 11,
+          "frame" : {
+            "height" : 14,
+            "width" : 280.5,
+            "x" : -2,
+            "y" : 117
+          },
+          "maxLines" : 0,
+          "naturalWidth" : 276.16416889591437,
+          "text" : "读到的：窗口的标题、位置和大小，以及它属于哪个 App",
+          "tooltip" : "",
+          "wraps" : true
+        },
+        {
+          "breakMode" : 0,
+          "font" : 11,
+          "frame" : {
+            "height" : 14,
+            "width" : 256.5,
+            "x" : -2,
+            "y" : 99
+          },
+          "maxLines" : 0,
+          "naturalWidth" : 252.12256809338518,
+          "text" : "为什么：收起、放回、排窗口，都要先知道窗口在哪",
+          "tooltip" : "",
+          "wraps" : true
+        },
+        {
+          "breakMode" : 0,
+          "font" : 11,
+          "frame" : {
+            "height" : 14,
+            "width" : 453,
+            "x" : -2,
+            "y" : 81
+          },
+          "maxLines" : 0,
+          "naturalWidth" : 448.81712062256815,
+          "text" : "去了哪里：只在内存里用；收起的窗口的标题和位置记在恢复记录里，出问题时用来找回窗口",
+          "tooltip" : "",
+          "wraps" : true
+        },
+        {
+          "breakMode" : 0,
+          "font" : 11,
+          "frame" : {
+            "height" : 14,
+            "width" : 179.5,
+            "x" : -2,
+            "y" : 63
+          },
+          "maxLines" : 0,
+          "naturalWidth" : 175.42217898832683,
+          "text" : "什么时候读：收起、放回、排窗口时",
+          "tooltip" : "",
+          "wraps" : true
+        },
+        {
+          "breakMode" : 0,
+          "font" : 11,
+          "frame" : {
+            "height" : 14,
+            "width" : 341.5,
+            "x" : -2,
+            "y" : 45
+          },
+          "maxLines" : 0,
+          "naturalWidth" : 337.09981266719359,
+          "text" : "开关：在系统设置里关掉“辅助功能”，WindowShade 就不能再读窗口",
+          "tooltip" : "",
+          "wraps" : true
+        },
+        {
+          "breakMode" : 0,
+          "font" : 11,
+          "frame" : {
+            "height" : 14,
+            "width" : 428.5,
+            "x" : -2,
+            "y" : 27
+          },
+          "maxLines" : 0,
+          "naturalWidth" : 424.3453307392997,
+          "text" : "合起来能看出什么：窗口的标题和位置合起来，能看出你在处理哪份文件、看哪个网页。",
+          "tooltip" : "",
+          "wraps" : true
+        },
+        {
+          "breakMode" : 0,
+          "font" : 11,
+          "frame" : {
+            "height" : 14,
+            "width" : 353.5,
+            "x" : -2,
+            "y" : 9
+          },
+          "maxLines" : 0,
+          "naturalWidth" : 349.18537968142027,
+          "text" : "接口：AXUIElementCopyAttributeValue、SLSOffscreenCheckProbe",
+          "tooltip" : "",
+          "wraps" : true
+        }
+      ],
+      "mainThread" : true,
+      "name" : "dark-640-technical",
+      "registeredStatus" : "current",
+      "rowID" : "window-ax",
+      "sample" : "technical",
+      "toggles" : 0,
+      "visible" : false,
+      "width" : 640
+    },
+    {
+      "active" : false,
+      "actualRowWidth" : 640,
+      "alpha" : 0,
+      "buttons" : [
+        {
+          "accessibilityLabel" : "脸部特征与比对结果的详情",
+          "frame" : {
+            "height" : 9,
+            "width" : 15,
+            "x" : 625.5,
+            "y" : 161
+          },
+          "isGrant" : false,
+          "title" : "Button"
+        }
+      ],
+      "expanded" : true,
+      "height" : 191,
+      "hostWidth" : 672,
+      "labels" : [
+        {
+          "breakMode" : 4,
+          "font" : 13,
+          "frame" : {
+            "height" : 16,
+            "width" : 120.5,
+            "x" : -2,
+            "y" : 166
+          },
+          "maxLines" : 0,
+          "naturalWidth" : 116.08949416342409,
+          "text" : "脸部特征与比对结果",
+          "tooltip" : "脸部特征与比对结果",
+          "wraps" : false
+        },
+        {
+          "breakMode" : 4,
+          "font" : 11,
+          "frame" : {
+            "height" : 14,
+            "width" : 102.5,
+            "x" : -2,
+            "y" : 149
+          },
+          "maxLines" : 0,
+          "naturalWidth" : 98.422178988326849,
+          "text" : "锁屏后认出是不是你",
+          "tooltip" : "锁屏后认出是不是你",
+          "wraps" : false
+        },
+        {
+          "breakMode" : 5,
+          "font" : 12,
+          "frame" : {
+            "height" : 15,
+            "width" : 40,
+            "x" : 577.5,
+            "y" : 158
+          },
+          "maxLines" : 0,
+          "naturalWidth" : 35.754863813229576,
+          "text" : "还没读",
+          "tooltip" : "还没读",
+          "wraps" : false
+        },
+        {
+          "breakMode" : 0,
+          "font" : 11,
+          "frame" : {
+            "height" : 28,
+            "width" : 644,
+            "x" : -2,
+            "y" : 113
+          },
+          "maxLines" : 0,
+          "naturalWidth" : 885.82680075085182,
+          "text" : "读到的：实验：脸部裁出来的图像特征（Apple 的 Vision 算出）、登记过的模板、录入时眼睛睁开的程度、录入序号、比对结果；打开转头挑战后，还有转头时脸朝哪边、眼睛睁没睁开",
+          "tooltip" : "",
+          "wraps" : true
+        },
+        {
+          "breakMode" : 0,
+          "font" : 11,
+          "frame" : {
+            "height" : 14,
+            "width" : 278,
+            "x" : -2,
+            "y" : 95
+          },
+          "maxLines" : 0,
+          "naturalWidth" : 273.84435797665378,
+          "text" : "为什么：锁屏后认出是不是你，只留一条证据，不会解锁",
+          "tooltip" : "",
+          "wraps" : true
+        },
+        {
+          "breakMode" : 0,
+          "font" : 11,
+          "frame" : {
+            "height" : 14,
+            "width" : 438,
+            "x" : -2,
+            "y" : 77
+          },
+          "maxLines" : 0,
+          "naturalWidth" : 433.5723682210604,
+          "text" : "去了哪里：模板只存在这台 Mac 的钥匙串里，不同步、不随备份迁走；画面和裁切图不存",
+          "tooltip" : "",
+          "wraps" : true
+        },
+        {
+          "breakMode" : 0,
+          "font" : 11,
+          "frame" : {
+            "height" : 28,
+            "width" : 644,
+            "x" : -2,
+            "y" : 45
+          },
+          "maxLines" : 0,
+          "naturalWidth" : 808.1578801374028,
+          "text" : "什么时候读：默认关闭；打开实验后，锁屏时屏幕亮起最多看 6 秒，每秒最多 10 帧；打开转头挑战，认出后再看最多 12 秒；每次锁屏最多 3 次，画面看不清不算次数",
+          "tooltip" : "",
+          "wraps" : true
+        },
+        {
+          "breakMode" : 0,
+          "font" : 11,
+          "frame" : {
+            "height" : 14,
+            "width" : 232.5,
+            "x" : -2,
+            "y" : 27
+          },
+          "maxLines" : 0,
+          "naturalWidth" : 228.27457745622567,
+          "text" : "开关：实验开关和删除登记；不会标成 Face ID",
+          "tooltip" : "",
+          "wraps" : true
+        },
+        {
+          "breakMode" : 0,
+          "font" : 11,
+          "frame" : {
+            "height" : 14,
+            "width" : 352,
+            "x" : -2,
+            "y" : 9
+          },
+          "maxLines" : 0,
+          "naturalWidth" : 347.64494163424132,
+          "text" : "合起来能看出什么：人脸特征和摄像头画面合起来，能认出这是不是你。",
+          "tooltip" : "",
+          "wraps" : true
+        }
+      ],
+      "mainThread" : true,
+      "name" : "dark-640-planned",
+      "registeredStatus" : "planned",
+      "rowID" : "face-identity",
+      "sample" : "planned",
+      "toggles" : 0,
+      "visible" : false,
+      "width" : 640
+    },
+    {
+      "active" : false,
+      "actualRowWidth" : 448,
+      "alpha" : 0,
+      "buttons" : [
+        {
+          "accessibilityLabel" : "配件电量的详情",
+          "frame" : {
+            "height" : 14,
+            "width" : 10,
+            "x" : 438,
+            "y" : 19
+          },
+          "isGrant" : false,
+          "title" : "Button"
+        }
+      ],
+      "expanded" : false,
+      "height" : 51,
+      "hostWidth" : 480,
+      "labels" : [
+        {
+          "breakMode" : 4,
+          "font" : 13,
+          "frame" : {
+            "height" : 16,
+            "width" : 56,
+            "x" : -2,
+            "y" : 26
+          },
+          "maxLines" : 0,
+          "naturalWidth" : 51.595330739299612,
+          "text" : "配件电量",
+          "tooltip" : "配件电量",
+          "wraps" : false
+        },
+        {
+          "breakMode" : 4,
+          "font" : 11,
+          "frame" : {
+            "height" : 14,
+            "width" : 158,
+            "x" : -2,
+            "y" : 9
+          },
+          "maxLines" : 0,
+          "naturalWidth" : 153.55058365758754,
+          "text" : "妙控鼠标、键盘、触控板、耳机",
+          "tooltip" : "妙控鼠标、键盘、触控板、耳机",
+          "wraps" : false
+        },
+        {
+          "breakMode" : 5,
+          "font" : 12,
+          "frame" : {
+            "height" : 15,
+            "width" : 81.5,
+            "x" : 348.5,
+            "y" : 18
+          },
+          "maxLines" : 0,
+          "naturalWidth" : 77.057917375972764,
+          "text" : "妙控鼠标 82%",
+          "tooltip" : "妙控鼠标 82%",
+          "wraps" : false
+        }
+      ],
+      "mainThread" : true,
+      "name" : "dark-448-battery",
+      "registeredStatus" : "current",
+      "rowID" : "battery",
+      "sample" : "battery",
+      "toggles" : 0,
+      "visible" : false,
+      "width" : 448
+    },
+    {
+      "active" : false,
+      "actualRowWidth" : 448,
+      "alpha" : 0,
+      "buttons" : [
+        {
+          "accessibilityLabel" : "配件电量的详情",
+          "frame" : {
+            "height" : 14,
+            "width" : 10,
+            "x" : 438,
+            "y" : 19
+          },
+          "isGrant" : false,
+          "title" : "Button"
+        }
+      ],
+      "expanded" : false,
+      "height" : 51,
+      "hostWidth" : 480,
+      "labels" : [
+        {
+          "breakMode" : 4,
+          "font" : 13,
+          "frame" : {
+            "height" : 16,
+            "width" : 56,
+            "x" : -2,
+            "y" : 26
+          },
+          "maxLines" : 0,
+          "naturalWidth" : 51.595330739299612,
+          "text" : "配件电量",
+          "tooltip" : "配件电量",
+          "wraps" : false
+        },
+        {
+          "breakMode" : 4,
+          "font" : 11,
+          "frame" : {
+            "height" : 14,
+            "width" : 158,
+            "x" : -2,
+            "y" : 9
+          },
+          "maxLines" : 0,
+          "naturalWidth" : 153.55058365758754,
+          "text" : "妙控鼠标、键盘、触控板、耳机",
+          "tooltip" : "妙控鼠标、键盘、触控板、耳机",
+          "wraps" : false
+        },
+        {
+          "breakMode" : 5,
+          "font" : 12,
+          "frame" : {
+            "height" : 15,
+            "width" : 40,
+            "x" : 390,
+            "y" : 18
+          },
+          "maxLines" : 0,
+          "naturalWidth" : 35.754863813229576,
+          "text" : "没读到",
+          "tooltip" : "没读到",
+          "wraps" : false
+        }
+      ],
+      "mainThread" : true,
+      "name" : "dark-448-missing",
+      "registeredStatus" : "current",
+      "rowID" : "battery",
+      "sample" : "missing",
+      "toggles" : 0,
+      "visible" : false,
+      "width" : 448
+    },
+    {
+      "active" : false,
+      "actualRowWidth" : 448,
+      "alpha" : 0,
+      "buttons" : [
+        {
+          "accessibilityLabel" : "窗口的标题、位置和大小的详情",
+          "frame" : {
+            "height" : 14,
+            "width" : 10,
+            "x" : 438,
+            "y" : 19
+          },
+          "isGrant" : false,
+          "title" : "Button"
+        }
+      ],
+      "expanded" : false,
+      "height" : 51,
+      "hostWidth" : 480,
+      "labels" : [
+        {
+          "breakMode" : 4,
+          "font" : 13,
+          "frame" : {
+            "height" : 16,
+            "width" : 146.5,
+            "x" : -2,
+            "y" : 26
+          },
+          "maxLines" : 0,
+          "naturalWidth" : 142.06420233463029,
+          "text" : "窗口的标题、位置和大小",
+          "tooltip" : "窗口的标题、位置和大小",
+          "wraps" : false
+        },
+        {
+          "breakMode" : 4,
+          "font" : 11,
+          "frame" : {
+            "height" : 14,
+            "width" : 190.5,
+            "x" : -2,
+            "y" : 9
+          },
+          "maxLines" : 0,
+          "naturalWidth" : 186.0101430329949,
+          "text" : "找到、移动和恢复窗口 · 要“辅助功能”",
+          "tooltip" : "找到、移动和恢复窗口 · 要“辅助功能”",
+          "wraps" : false
+        },
+        {
+          "breakMode" : 2,
+          "font" : 12,
+          "frame" : {
+            "height" : 15,
+            "width" : 40,
+            "x" : 390,
+            "y" : 18
+          },
+          "maxLines" : 0,
+          "naturalWidth" : 35.754863813229576,
+          "text" : "去授权",
+          "tooltip" : "",
+          "wraps" : false
+        }
+      ],
+      "mainThread" : true,
+      "name" : "dark-448-denied",
+      "registeredStatus" : "current",
+      "rowID" : "window-ax",
+      "sample" : "denied",
+      "toggles" : 0,
+      "visible" : false,
+      "width" : 448
+    },
+    {
+      "active" : false,
+      "actualRowWidth" : 448,
+      "alpha" : 0,
+      "buttons" : [
+        {
+          "accessibilityLabel" : "窗口的标题、位置和大小的详情",
+          "frame" : {
+            "height" : 14,
+            "width" : 10,
+            "x" : 438,
+            "y" : 19
+          },
+          "isGrant" : false,
+          "title" : "Button"
+        }
+      ],
+      "expanded" : false,
+      "height" : 51,
+      "hostWidth" : 480,
+      "labels" : [
+        {
+          "breakMode" : 4,
+          "font" : 13,
+          "frame" : {
+            "height" : 16,
+            "width" : 146.5,
+            "x" : -2,
+            "y" : 26
+          },
+          "maxLines" : 0,
+          "naturalWidth" : 142.06420233463029,
+          "text" : "窗口的标题、位置和大小",
+          "tooltip" : "窗口的标题、位置和大小",
+          "wraps" : false
+        },
+        {
+          "breakMode" : 4,
+          "font" : 11,
+          "frame" : {
+            "height" : 14,
+            "width" : 190.5,
+            "x" : -2,
+            "y" : 9
+          },
+          "maxLines" : 0,
+          "naturalWidth" : 186.0101430329949,
+          "text" : "找到、移动和恢复窗口 · 要“辅助功能”",
+          "tooltip" : "找到、移动和恢复窗口 · 要“辅助功能”",
+          "wraps" : false
+        },
+        {
+          "breakMode" : 2,
+          "font" : 12,
+          "frame" : {
+            "height" : 15,
+            "width" : 40,
+            "x" : 390,
+            "y" : 18
+          },
+          "maxLines" : 0,
+          "naturalWidth" : 35.754863813229576,
+          "text" : "已授权",
+          "tooltip" : "",
+          "wraps" : false
+        }
+      ],
+      "mainThread" : true,
+      "name" : "dark-448-granted",
+      "registeredStatus" : "current",
+      "rowID" : "window-ax",
+      "sample" : "granted",
+      "toggles" : 0,
+      "visible" : false,
+      "width" : 448
+    },
+    {
+      "active" : false,
+      "actualRowWidth" : 448,
+      "alpha" : 0,
+      "buttons" : [
+        {
+          "accessibilityLabel" : "配件电量的详情",
+          "frame" : {
+            "height" : 14,
+            "width" : 10,
+            "x" : 438,
+            "y" : 19
+          },
+          "isGrant" : false,
+          "title" : "Button"
+        }
+      ],
+      "expanded" : false,
+      "height" : 51,
+      "hostWidth" : 480,
+      "labels" : [
+        {
+          "breakMode" : 4,
+          "font" : 13,
+          "frame" : {
+            "height" : 16,
+            "width" : 56,
+            "x" : -2,
+            "y" : 26
+          },
+          "maxLines" : 0,
+          "naturalWidth" : 51.595330739299612,
+          "text" : "配件电量",
+          "tooltip" : "配件电量",
+          "wraps" : false
+        },
+        {
+          "breakMode" : 4,
+          "font" : 11,
+          "frame" : {
+            "height" : 14,
+            "width" : 158,
+            "x" : -2,
+            "y" : 9
+          },
+          "maxLines" : 0,
+          "naturalWidth" : 153.55058365758754,
+          "text" : "妙控鼠标、键盘、触控板、耳机",
+          "tooltip" : "妙控鼠标、键盘、触控板、耳机",
+          "wraps" : false
+        },
+        {
+          "breakMode" : 5,
+          "font" : 12,
+          "frame" : {
+            "height" : 15,
+            "width" : 183,
+            "x" : 247,
+            "y" : 18
+          },
+          "maxLines" : 0,
+          "naturalWidth" : 761.72032313959176,
+          "text" : "演示配件 — 名字很长的键盘名字很长的键盘名字很长的键盘名字很长的键盘名字很长的键盘名字很长的键盘名字很长的键盘名字很长的键盘 82%",
+          "tooltip" : "演示配件 — 名字很长的键盘名字很长的键盘名字很长的键盘名字很长的键盘名字很长的键盘名字很长的键盘名字很长的键盘名字很长的键盘 82%",
+          "wraps" : false
+        }
+      ],
+      "mainThread" : true,
+      "name" : "dark-448-long-value",
+      "registeredStatus" : "current",
+      "rowID" : "battery",
+      "sample" : "long-value",
+      "toggles" : 0,
+      "visible" : false,
+      "width" : 448
+    },
+    {
+      "active" : false,
+      "actualRowWidth" : 448,
+      "alpha" : 0,
+      "buttons" : [
+        {
+          "accessibilityLabel" : "窗口的标题、位置和大小的详情",
+          "frame" : {
+            "height" : 9,
+            "width" : 15,
+            "x" : 433.5,
+            "y" : 147
+          },
+          "isGrant" : false,
+          "title" : "Button"
+        }
+      ],
+      "expanded" : true,
+      "height" : 177,
+      "hostWidth" : 480,
+      "labels" : [
+        {
+          "breakMode" : 4,
+          "font" : 13,
+          "frame" : {
+            "height" : 16,
+            "width" : 146.5,
+            "x" : -2,
+            "y" : 152
+          },
+          "maxLines" : 0,
+          "naturalWidth" : 142.06420233463029,
+          "text" : "窗口的标题、位置和大小",
+          "tooltip" : "窗口的标题、位置和大小",
+          "wraps" : false
+        },
+        {
+          "breakMode" : 4,
+          "font" : 11,
+          "frame" : {
+            "height" : 14,
+            "width" : 190.5,
+            "x" : -2,
+            "y" : 135
+          },
+          "maxLines" : 0,
+          "naturalWidth" : 186.0101430329949,
+          "text" : "找到、移动和恢复窗口 · 要“辅助功能”",
+          "tooltip" : "找到、移动和恢复窗口 · 要“辅助功能”",
+          "wraps" : false
+        },
+        {
+          "breakMode" : 2,
+          "font" : 12,
+          "frame" : {
+            "height" : 15,
+            "width" : 40,
+            "x" : 385.5,
+            "y" : 144
+          },
+          "maxLines" : 0,
+          "naturalWidth" : 35.754863813229576,
+          "text" : "已授权",
+          "tooltip" : "",
+          "wraps" : false
+        },
+        {
+          "breakMode" : 0,
+          "font" : 11,
+          "frame" : {
+            "height" : 14,
+            "width" : 280.5,
+            "x" : -2,
+            "y" : 113
+          },
+          "maxLines" : 0,
+          "naturalWidth" : 276.16416889591437,
+          "text" : "读到的：窗口的标题、位置和大小，以及它属于哪个 App",
+          "tooltip" : "",
+          "wraps" : true
+        },
+        {
+          "breakMode" : 0,
+          "font" : 11,
+          "frame" : {
+            "height" : 14,
+            "width" : 256.5,
+            "x" : -2,
+            "y" : 95
+          },
+          "maxLines" : 0,
+          "naturalWidth" : 252.12256809338518,
+          "text" : "为什么：收起、放回、排窗口，都要先知道窗口在哪",
+          "tooltip" : "",
+          "wraps" : true
+        },
+        {
+          "breakMode" : 0,
+          "font" : 11,
+          "frame" : {
+            "height" : 28,
+            "width" : 452,
+            "x" : -2,
+            "y" : 63
+          },
+          "maxLines" : 0,
+          "naturalWidth" : 448.81712062256815,
+          "text" : "去了哪里：只在内存里用；收起的窗口的标题和位置记在恢复记录里，出问题时用来找回窗口",
+          "tooltip" : "",
+          "wraps" : true
+        },
+        {
+          "breakMode" : 0,
+          "font" : 11,
+          "frame" : {
+            "height" : 14,
+            "width" : 179.5,
+            "x" : -2,
+            "y" : 45
+          },
+          "maxLines" : 0,
+          "naturalWidth" : 175.42217898832683,
+          "text" : "什么时候读：收起、放回、排窗口时",
+          "tooltip" : "",
+          "wraps" : true
+        },
+        {
+          "breakMode" : 0,
+          "font" : 11,
+          "frame" : {
+            "height" : 14,
+            "width" : 341.5,
+            "x" : -2,
+            "y" : 27
+          },
+          "maxLines" : 0,
+          "naturalWidth" : 337.09981266719359,
+          "text" : "开关：在系统设置里关掉“辅助功能”，WindowShade 就不能再读窗口",
+          "tooltip" : "",
+          "wraps" : true
+        },
+        {
+          "breakMode" : 0,
+          "font" : 11,
+          "frame" : {
+            "height" : 14,
+            "width" : 428.5,
+            "x" : -2,
+            "y" : 9
+          },
+          "maxLines" : 0,
+          "naturalWidth" : 424.3453307392997,
+          "text" : "合起来能看出什么：窗口的标题和位置合起来，能看出你在处理哪份文件、看哪个网页。",
+          "tooltip" : "",
+          "wraps" : true
+        }
+      ],
+      "mainThread" : true,
+      "name" : "dark-448-expanded",
+      "registeredStatus" : "current",
+      "rowID" : "window-ax",
+      "sample" : "expanded",
+      "toggles" : 0,
+      "visible" : false,
+      "width" : 448
+    },
+    {
+      "active" : false,
+      "actualRowWidth" : 448,
+      "alpha" : 0,
+      "buttons" : [
+        {
+          "accessibilityLabel" : "窗口的标题、位置和大小的详情",
+          "frame" : {
+            "height" : 9,
+            "width" : 15,
+            "x" : 433.5,
+            "y" : 165
+          },
+          "isGrant" : false,
+          "title" : "Button"
+        }
+      ],
+      "expanded" : true,
+      "height" : 195,
+      "hostWidth" : 480,
+      "labels" : [
+        {
+          "breakMode" : 4,
+          "font" : 13,
+          "frame" : {
+            "height" : 16,
+            "width" : 146.5,
+            "x" : -2,
+            "y" : 170
+          },
+          "maxLines" : 0,
+          "naturalWidth" : 142.06420233463029,
+          "text" : "窗口的标题、位置和大小",
+          "tooltip" : "窗口的标题、位置和大小",
+          "wraps" : false
+        },
+        {
+          "breakMode" : 4,
+          "font" : 11,
+          "frame" : {
+            "height" : 14,
+            "width" : 190.5,
+            "x" : -2,
+            "y" : 153
+          },
+          "maxLines" : 0,
+          "naturalWidth" : 186.0101430329949,
+          "text" : "找到、移动和恢复窗口 · 要“辅助功能”",
+          "tooltip" : "找到、移动和恢复窗口 · 要“辅助功能”",
+          "wraps" : false
+        },
+        {
+          "breakMode" : 2,
+          "font" : 12,
+          "frame" : {
+            "height" : 15,
+            "width" : 40,
+            "x" : 385.5,
+            "y" : 162
+          },
+          "maxLines" : 0,
+          "naturalWidth" : 35.754863813229576,
+          "text" : "已授权",
+          "tooltip" : "",
+          "wraps" : false
+        },
+        {
+          "breakMode" : 0,
+          "font" : 11,
+          "frame" : {
+            "height" : 14,
+            "width" : 280.5,
+            "x" : -2,
+            "y" : 131
+          },
+          "maxLines" : 0,
+          "naturalWidth" : 276.16416889591437,
+          "text" : "读到的：窗口的标题、位置和大小，以及它属于哪个 App",
+          "tooltip" : "",
+          "wraps" : true
+        },
+        {
+          "breakMode" : 0,
+          "font" : 11,
+          "frame" : {
+            "height" : 14,
+            "width" : 256.5,
+            "x" : -2,
+            "y" : 113
+          },
+          "maxLines" : 0,
+          "naturalWidth" : 252.12256809338518,
+          "text" : "为什么：收起、放回、排窗口，都要先知道窗口在哪",
+          "tooltip" : "",
+          "wraps" : true
+        },
+        {
+          "breakMode" : 0,
+          "font" : 11,
+          "frame" : {
+            "height" : 28,
+            "width" : 452,
+            "x" : -2,
+            "y" : 81
+          },
+          "maxLines" : 0,
+          "naturalWidth" : 448.81712062256815,
+          "text" : "去了哪里：只在内存里用；收起的窗口的标题和位置记在恢复记录里，出问题时用来找回窗口",
+          "tooltip" : "",
+          "wraps" : true
+        },
+        {
+          "breakMode" : 0,
+          "font" : 11,
+          "frame" : {
+            "height" : 14,
+            "width" : 179.5,
+            "x" : -2,
+            "y" : 63
+          },
+          "maxLines" : 0,
+          "naturalWidth" : 175.42217898832683,
+          "text" : "什么时候读：收起、放回、排窗口时",
+          "tooltip" : "",
+          "wraps" : true
+        },
+        {
+          "breakMode" : 0,
+          "font" : 11,
+          "frame" : {
+            "height" : 14,
+            "width" : 341.5,
+            "x" : -2,
+            "y" : 45
+          },
+          "maxLines" : 0,
+          "naturalWidth" : 337.09981266719359,
+          "text" : "开关：在系统设置里关掉“辅助功能”，WindowShade 就不能再读窗口",
+          "tooltip" : "",
+          "wraps" : true
+        },
+        {
+          "breakMode" : 0,
+          "font" : 11,
+          "frame" : {
+            "height" : 14,
+            "width" : 428.5,
+            "x" : -2,
+            "y" : 27
+          },
+          "maxLines" : 0,
+          "naturalWidth" : 424.3453307392997,
+          "text" : "合起来能看出什么：窗口的标题和位置合起来，能看出你在处理哪份文件、看哪个网页。",
+          "tooltip" : "",
+          "wraps" : true
+        },
+        {
+          "breakMode" : 0,
+          "font" : 11,
+          "frame" : {
+            "height" : 14,
+            "width" : 353.5,
+            "x" : -2,
+            "y" : 9
+          },
+          "maxLines" : 0,
+          "naturalWidth" : 349.18537968142027,
+          "text" : "接口：AXUIElementCopyAttributeValue、SLSOffscreenCheckProbe",
+          "tooltip" : "",
+          "wraps" : true
+        }
+      ],
+      "mainThread" : true,
+      "name" : "dark-448-technical",
+      "registeredStatus" : "current",
+      "rowID" : "window-ax",
+      "sample" : "technical",
+      "toggles" : 0,
+      "visible" : false,
+      "width" : 448
+    },
+    {
+      "active" : false,
+      "actualRowWidth" : 448,
+      "alpha" : 0,
+      "buttons" : [
+        {
+          "accessibilityLabel" : "脸部特征与比对结果的详情",
+          "frame" : {
+            "height" : 9,
+            "width" : 15,
+            "x" : 433.5,
+            "y" : 161
+          },
+          "isGrant" : false,
+          "title" : "Button"
+        }
+      ],
+      "expanded" : true,
+      "height" : 191,
+      "hostWidth" : 480,
+      "labels" : [
+        {
+          "breakMode" : 4,
+          "font" : 13,
+          "frame" : {
+            "height" : 16,
+            "width" : 120.5,
+            "x" : -2,
+            "y" : 166
+          },
+          "maxLines" : 0,
+          "naturalWidth" : 116.08949416342409,
+          "text" : "脸部特征与比对结果",
+          "tooltip" : "脸部特征与比对结果",
+          "wraps" : false
+        },
+        {
+          "breakMode" : 4,
+          "font" : 11,
+          "frame" : {
+            "height" : 14,
+            "width" : 102.5,
+            "x" : -2,
+            "y" : 149
+          },
+          "maxLines" : 0,
+          "naturalWidth" : 98.422178988326849,
+          "text" : "锁屏后认出是不是你",
+          "tooltip" : "锁屏后认出是不是你",
+          "wraps" : false
+        },
+        {
+          "breakMode" : 5,
+          "font" : 12,
+          "frame" : {
+            "height" : 15,
+            "width" : 40,
+            "x" : 385.5,
+            "y" : 158
+          },
+          "maxLines" : 0,
+          "naturalWidth" : 35.754863813229576,
+          "text" : "还没读",
+          "tooltip" : "还没读",
+          "wraps" : false
+        },
+        {
+          "breakMode" : 0,
+          "font" : 11,
+          "frame" : {
+            "height" : 28,
+            "width" : 452,
+            "x" : -2,
+            "y" : 113
+          },
+          "maxLines" : 0,
+          "naturalWidth" : 885.82680075085182,
+          "text" : "读到的：实验：脸部裁出来的图像特征（Apple 的 Vision 算出）、登记过的模板、录入时眼睛睁开的程度、录入序号、比对结果；打开转头挑战后，还有转头时脸朝哪边、眼睛睁没睁开",
+          "tooltip" : "",
+          "wraps" : true
+        },
+        {
+          "breakMode" : 0,
+          "font" : 11,
+          "frame" : {
+            "height" : 14,
+            "width" : 278,
+            "x" : -2,
+            "y" : 95
+          },
+          "maxLines" : 0,
+          "naturalWidth" : 273.84435797665378,
+          "text" : "为什么：锁屏后认出是不是你，只留一条证据，不会解锁",
+          "tooltip" : "",
+          "wraps" : true
+        },
+        {
+          "breakMode" : 0,
+          "font" : 11,
+          "frame" : {
+            "height" : 14,
+            "width" : 438,
+            "x" : -2,
+            "y" : 77
+          },
+          "maxLines" : 0,
+          "naturalWidth" : 433.5723682210604,
+          "text" : "去了哪里：模板只存在这台 Mac 的钥匙串里，不同步、不随备份迁走；画面和裁切图不存",
+          "tooltip" : "",
+          "wraps" : true
+        },
+        {
+          "breakMode" : 0,
+          "font" : 11,
+          "frame" : {
+            "height" : 28,
+            "width" : 452,
+            "x" : -2,
+            "y" : 45
+          },
+          "maxLines" : 0,
+          "naturalWidth" : 808.1578801374028,
+          "text" : "什么时候读：默认关闭；打开实验后，锁屏时屏幕亮起最多看 6 秒，每秒最多 10 帧；打开转头挑战，认出后再看最多 12 秒；每次锁屏最多 3 次，画面看不清不算次数",
+          "tooltip" : "",
+          "wraps" : true
+        },
+        {
+          "breakMode" : 0,
+          "font" : 11,
+          "frame" : {
+            "height" : 14,
+            "width" : 232.5,
+            "x" : -2,
+            "y" : 27
+          },
+          "maxLines" : 0,
+          "naturalWidth" : 228.27457745622567,
+          "text" : "开关：实验开关和删除登记；不会标成 Face ID",
+          "tooltip" : "",
+          "wraps" : true
+        },
+        {
+          "breakMode" : 0,
+          "font" : 11,
+          "frame" : {
+            "height" : 14,
+            "width" : 352,
+            "x" : -2,
+            "y" : 9
+          },
+          "maxLines" : 0,
+          "naturalWidth" : 347.64494163424132,
+          "text" : "合起来能看出什么：人脸特征和摄像头画面合起来，能认出这是不是你。",
+          "tooltip" : "",
+          "wraps" : true
+        }
+      ],
+      "mainThread" : true,
+      "name" : "dark-448-planned",
+      "registeredStatus" : "planned",
+      "rowID" : "face-identity",
+      "sample" : "planned",
+      "toggles" : 0,
+      "visible" : false,
+      "width" : 448
+    },
+    {
+      "active" : false,
+      "actualRowWidth" : 300,
+      "alpha" : 0,
+      "buttons" : [
+        {
+          "accessibilityLabel" : "配件电量的详情",
+          "frame" : {
+            "height" : 14,
+            "width" : 10,
+            "x" : 290,
+            "y" : 19
+          },
+          "isGrant" : false,
+          "title" : "Button"
+        }
+      ],
+      "expanded" : false,
+      "height" : 51,
+      "hostWidth" : 332,
+      "labels" : [
+        {
+          "breakMode" : 4,
+          "font" : 13,
+          "frame" : {
+            "height" : 16,
+            "width" : 56,
+            "x" : -2,
+            "y" : 26
+          },
+          "maxLines" : 0,
+          "naturalWidth" : 51.595330739299612,
+          "text" : "配件电量",
+          "tooltip" : "配件电量",
+          "wraps" : false
+        },
+        {
+          "breakMode" : 4,
+          "font" : 11,
+          "frame" : {
+            "height" : 14,
+            "width" : 158,
+            "x" : -2,
+            "y" : 9
+          },
+          "maxLines" : 0,
+          "naturalWidth" : 153.55058365758754,
+          "text" : "妙控鼠标、键盘、触控板、耳机",
+          "tooltip" : "妙控鼠标、键盘、触控板、耳机",
+          "wraps" : false
+        },
+        {
+          "breakMode" : 5,
+          "font" : 12,
+          "frame" : {
+            "height" : 15,
+            "width" : 81.5,
+            "x" : 200.5,
+            "y" : 18
+          },
+          "maxLines" : 0,
+          "naturalWidth" : 77.057917375972764,
+          "text" : "妙控鼠标 82%",
+          "tooltip" : "妙控鼠标 82%",
+          "wraps" : false
+        }
+      ],
+      "mainThread" : true,
+      "name" : "dark-300-battery",
+      "registeredStatus" : "current",
+      "rowID" : "battery",
+      "sample" : "battery",
+      "toggles" : 0,
+      "visible" : false,
+      "width" : 300
+    },
+    {
+      "active" : false,
+      "actualRowWidth" : 300,
+      "alpha" : 0,
+      "buttons" : [
+        {
+          "accessibilityLabel" : "配件电量的详情",
+          "frame" : {
+            "height" : 14,
+            "width" : 10,
+            "x" : 290,
+            "y" : 19
+          },
+          "isGrant" : false,
+          "title" : "Button"
+        }
+      ],
+      "expanded" : false,
+      "height" : 51,
+      "hostWidth" : 332,
+      "labels" : [
+        {
+          "breakMode" : 4,
+          "font" : 13,
+          "frame" : {
+            "height" : 16,
+            "width" : 56,
+            "x" : -2,
+            "y" : 26
+          },
+          "maxLines" : 0,
+          "naturalWidth" : 51.595330739299612,
+          "text" : "配件电量",
+          "tooltip" : "配件电量",
+          "wraps" : false
+        },
+        {
+          "breakMode" : 4,
+          "font" : 11,
+          "frame" : {
+            "height" : 14,
+            "width" : 158,
+            "x" : -2,
+            "y" : 9
+          },
+          "maxLines" : 0,
+          "naturalWidth" : 153.55058365758754,
+          "text" : "妙控鼠标、键盘、触控板、耳机",
+          "tooltip" : "妙控鼠标、键盘、触控板、耳机",
+          "wraps" : false
+        },
+        {
+          "breakMode" : 5,
+          "font" : 12,
+          "frame" : {
+            "height" : 15,
+            "width" : 40,
+            "x" : 242,
+            "y" : 18
+          },
+          "maxLines" : 0,
+          "naturalWidth" : 35.754863813229576,
+          "text" : "没读到",
+          "tooltip" : "没读到",
+          "wraps" : false
+        }
+      ],
+      "mainThread" : true,
+      "name" : "dark-300-missing",
+      "registeredStatus" : "current",
+      "rowID" : "battery",
+      "sample" : "missing",
+      "toggles" : 0,
+      "visible" : false,
+      "width" : 300
+    },
+    {
+      "active" : false,
+      "actualRowWidth" : 300,
+      "alpha" : 0,
+      "buttons" : [
+        {
+          "accessibilityLabel" : "窗口的标题、位置和大小的详情",
+          "frame" : {
+            "height" : 14,
+            "width" : 10,
+            "x" : 290,
+            "y" : 19
+          },
+          "isGrant" : false,
+          "title" : "Button"
+        }
+      ],
+      "expanded" : false,
+      "height" : 51,
+      "hostWidth" : 332,
+      "labels" : [
+        {
+          "breakMode" : 4,
+          "font" : 13,
+          "frame" : {
+            "height" : 16,
+            "width" : 146.5,
+            "x" : -2,
+            "y" : 26
+          },
+          "maxLines" : 0,
+          "naturalWidth" : 142.06420233463029,
+          "text" : "窗口的标题、位置和大小",
+          "tooltip" : "窗口的标题、位置和大小",
+          "wraps" : false
+        },
+        {
+          "breakMode" : 4,
+          "font" : 11,
+          "frame" : {
+            "height" : 14,
+            "width" : 190.5,
+            "x" : -2,
+            "y" : 9
+          },
+          "maxLines" : 0,
+          "naturalWidth" : 186.0101430329949,
+          "text" : "找到、移动和恢复窗口 · 要“辅助功能”",
+          "tooltip" : "找到、移动和恢复窗口 · 要“辅助功能”",
+          "wraps" : false
+        },
+        {
+          "breakMode" : 2,
+          "font" : 12,
+          "frame" : {
+            "height" : 15,
+            "width" : 40,
+            "x" : 242,
+            "y" : 18
+          },
+          "maxLines" : 0,
+          "naturalWidth" : 35.754863813229576,
+          "text" : "去授权",
+          "tooltip" : "",
+          "wraps" : false
+        }
+      ],
+      "mainThread" : true,
+      "name" : "dark-300-denied",
+      "registeredStatus" : "current",
+      "rowID" : "window-ax",
+      "sample" : "denied",
+      "toggles" : 0,
+      "visible" : false,
+      "width" : 300
+    },
+    {
+      "active" : false,
+      "actualRowWidth" : 300,
+      "alpha" : 0,
+      "buttons" : [
+        {
+          "accessibilityLabel" : "窗口的标题、位置和大小的详情",
+          "frame" : {
+            "height" : 14,
+            "width" : 10,
+            "x" : 290,
+            "y" : 19
+          },
+          "isGrant" : false,
+          "title" : "Button"
+        }
+      ],
+      "expanded" : false,
+      "height" : 51,
+      "hostWidth" : 332,
+      "labels" : [
+        {
+          "breakMode" : 4,
+          "font" : 13,
+          "frame" : {
+            "height" : 16,
+            "width" : 146.5,
+            "x" : -2,
+            "y" : 26
+          },
+          "maxLines" : 0,
+          "naturalWidth" : 142.06420233463029,
+          "text" : "窗口的标题、位置和大小",
+          "tooltip" : "窗口的标题、位置和大小",
+          "wraps" : false
+        },
+        {
+          "breakMode" : 4,
+          "font" : 11,
+          "frame" : {
+            "height" : 14,
+            "width" : 190.5,
+            "x" : -2,
+            "y" : 9
+          },
+          "maxLines" : 0,
+          "naturalWidth" : 186.0101430329949,
+          "text" : "找到、移动和恢复窗口 · 要“辅助功能”",
+          "tooltip" : "找到、移动和恢复窗口 · 要“辅助功能”",
+          "wraps" : false
+        },
+        {
+          "breakMode" : 2,
+          "font" : 12,
+          "frame" : {
+            "height" : 15,
+            "width" : 40,
+            "x" : 242,
+            "y" : 18
+          },
+          "maxLines" : 0,
+          "naturalWidth" : 35.754863813229576,
+          "text" : "已授权",
+          "tooltip" : "",
+          "wraps" : false
+        }
+      ],
+      "mainThread" : true,
+      "name" : "dark-300-granted",
+      "registeredStatus" : "current",
+      "rowID" : "window-ax",
+      "sample" : "granted",
+      "toggles" : 0,
+      "visible" : false,
+      "width" : 300
+    },
+    {
+      "active" : false,
+      "actualRowWidth" : 300,
+      "alpha" : 0,
+      "buttons" : [
+        {
+          "accessibilityLabel" : "配件电量的详情",
+          "frame" : {
+            "height" : 14,
+            "width" : 10,
+            "x" : 290,
+            "y" : 19
+          },
+          "isGrant" : false,
+          "title" : "Button"
+        }
+      ],
+      "expanded" : false,
+      "height" : 51,
+      "hostWidth" : 332,
+      "labels" : [
+        {
+          "breakMode" : 4,
+          "font" : 13,
+          "frame" : {
+            "height" : 16,
+            "width" : 56,
+            "x" : -2,
+            "y" : 26
+          },
+          "maxLines" : 0,
+          "naturalWidth" : 51.595330739299612,
+          "text" : "配件电量",
+          "tooltip" : "配件电量",
+          "wraps" : false
+        },
+        {
+          "breakMode" : 4,
+          "font" : 11,
+          "frame" : {
+            "height" : 14,
+            "width" : 154,
+            "x" : -2,
+            "y" : 9
+          },
+          "maxLines" : 0,
+          "naturalWidth" : 153.55058365758754,
+          "text" : "妙控鼠标、键盘、触控板、耳机",
+          "tooltip" : "妙控鼠标、键盘、触控板、耳机",
+          "wraps" : false
+        },
+        {
+          "breakMode" : 5,
+          "font" : 12,
+          "frame" : {
+            "height" : 15,
+            "width" : 124,
+            "x" : 158,
+            "y" : 18
+          },
+          "maxLines" : 0,
+          "naturalWidth" : 761.72032313959176,
+          "text" : "演示配件 — 名字很长的键盘名字很长的键盘名字很长的键盘名字很长的键盘名字很长的键盘名字很长的键盘名字很长的键盘名字很长的键盘 82%",
+          "tooltip" : "演示配件 — 名字很长的键盘名字很长的键盘名字很长的键盘名字很长的键盘名字很长的键盘名字很长的键盘名字很长的键盘名字很长的键盘 82%",
+          "wraps" : false
+        }
+      ],
+      "mainThread" : true,
+      "name" : "dark-300-long-value",
+      "registeredStatus" : "current",
+      "rowID" : "battery",
+      "sample" : "long-value",
+      "toggles" : 0,
+      "visible" : false,
+      "width" : 300
+    },
+    {
+      "active" : false,
+      "actualRowWidth" : 300,
+      "alpha" : 0,
+      "buttons" : [
+        {
+          "accessibilityLabel" : "窗口的标题、位置和大小的详情",
+          "frame" : {
+            "height" : 9,
+            "width" : 15,
+            "x" : 285.5,
+            "y" : 175
+          },
+          "isGrant" : false,
+          "title" : "Button"
+        }
+      ],
+      "expanded" : true,
+      "height" : 205,
+      "hostWidth" : 332,
+      "labels" : [
+        {
+          "breakMode" : 4,
+          "font" : 13,
+          "frame" : {
+            "height" : 16,
+            "width" : 146.5,
+            "x" : -2,
+            "y" : 180
+          },
+          "maxLines" : 0,
+          "naturalWidth" : 142.06420233463029,
+          "text" : "窗口的标题、位置和大小",
+          "tooltip" : "窗口的标题、位置和大小",
+          "wraps" : false
+        },
+        {
+          "breakMode" : 4,
+          "font" : 11,
+          "frame" : {
+            "height" : 14,
+            "width" : 190.5,
+            "x" : -2,
+            "y" : 163
+          },
+          "maxLines" : 0,
+          "naturalWidth" : 186.0101430329949,
+          "text" : "找到、移动和恢复窗口 · 要“辅助功能”",
+          "tooltip" : "找到、移动和恢复窗口 · 要“辅助功能”",
+          "wraps" : false
+        },
+        {
+          "breakMode" : 2,
+          "font" : 12,
+          "frame" : {
+            "height" : 15,
+            "width" : 40,
+            "x" : 237.5,
+            "y" : 172
+          },
+          "maxLines" : 0,
+          "naturalWidth" : 35.754863813229576,
+          "text" : "已授权",
+          "tooltip" : "",
+          "wraps" : false
+        },
+        {
+          "breakMode" : 0,
+          "font" : 11,
+          "frame" : {
+            "height" : 14,
+            "width" : 280.5,
+            "x" : -2,
+            "y" : 141
+          },
+          "maxLines" : 0,
+          "naturalWidth" : 276.16416889591437,
+          "text" : "读到的：窗口的标题、位置和大小，以及它属于哪个 App",
+          "tooltip" : "",
+          "wraps" : true
+        },
+        {
+          "breakMode" : 0,
+          "font" : 11,
+          "frame" : {
+            "height" : 14,
+            "width" : 256.5,
+            "x" : -2,
+            "y" : 123
+          },
+          "maxLines" : 0,
+          "naturalWidth" : 252.12256809338518,
+          "text" : "为什么：收起、放回、排窗口，都要先知道窗口在哪",
+          "tooltip" : "",
+          "wraps" : true
+        },
+        {
+          "breakMode" : 0,
+          "font" : 11,
+          "frame" : {
+            "height" : 28,
+            "width" : 304,
+            "x" : -2,
+            "y" : 91
+          },
+          "maxLines" : 0,
+          "naturalWidth" : 448.81712062256815,
+          "text" : "去了哪里：只在内存里用；收起的窗口的标题和位置记在恢复记录里，出问题时用来找回窗口",
+          "tooltip" : "",
+          "wraps" : true
+        },
+        {
+          "breakMode" : 0,
+          "font" : 11,
+          "frame" : {
+            "height" : 14,
+            "width" : 179.5,
+            "x" : -2,
+            "y" : 73
+          },
+          "maxLines" : 0,
+          "naturalWidth" : 175.42217898832683,
+          "text" : "什么时候读：收起、放回、排窗口时",
+          "tooltip" : "",
+          "wraps" : true
+        },
+        {
+          "breakMode" : 0,
+          "font" : 11,
+          "frame" : {
+            "height" : 28,
+            "width" : 304,
+            "x" : -2,
+            "y" : 41
+          },
+          "maxLines" : 0,
+          "naturalWidth" : 337.09981266719359,
+          "text" : "开关：在系统设置里关掉“辅助功能”，WindowShade 就不能再读窗口",
+          "tooltip" : "",
+          "wraps" : true
+        },
+        {
+          "breakMode" : 0,
+          "font" : 11,
+          "frame" : {
+            "height" : 28,
+            "width" : 304,
+            "x" : -2,
+            "y" : 9
+          },
+          "maxLines" : 0,
+          "naturalWidth" : 424.3453307392997,
+          "text" : "合起来能看出什么：窗口的标题和位置合起来，能看出你在处理哪份文件、看哪个网页。",
+          "tooltip" : "",
+          "wraps" : true
+        }
+      ],
+      "mainThread" : true,
+      "name" : "dark-300-expanded",
+      "registeredStatus" : "current",
+      "rowID" : "window-ax",
+      "sample" : "expanded",
+      "toggles" : 0,
+      "visible" : false,
+      "width" : 300
+    },
+    {
+      "active" : false,
+      "actualRowWidth" : 300,
+      "alpha" : 0,
+      "buttons" : [
+        {
+          "accessibilityLabel" : "窗口的标题、位置和大小的详情",
+          "frame" : {
+            "height" : 9,
+            "width" : 15,
+            "x" : 285.5,
+            "y" : 207
+          },
+          "isGrant" : false,
+          "title" : "Button"
+        }
+      ],
+      "expanded" : true,
+      "height" : 237,
+      "hostWidth" : 332,
+      "labels" : [
+        {
+          "breakMode" : 4,
+          "font" : 13,
+          "frame" : {
+            "height" : 16,
+            "width" : 146.5,
+            "x" : -2,
+            "y" : 212
+          },
+          "maxLines" : 0,
+          "naturalWidth" : 142.06420233463029,
+          "text" : "窗口的标题、位置和大小",
+          "tooltip" : "窗口的标题、位置和大小",
+          "wraps" : false
+        },
+        {
+          "breakMode" : 4,
+          "font" : 11,
+          "frame" : {
+            "height" : 14,
+            "width" : 190.5,
+            "x" : -2,
+            "y" : 195
+          },
+          "maxLines" : 0,
+          "naturalWidth" : 186.0101430329949,
+          "text" : "找到、移动和恢复窗口 · 要“辅助功能”",
+          "tooltip" : "找到、移动和恢复窗口 · 要“辅助功能”",
+          "wraps" : false
+        },
+        {
+          "breakMode" : 2,
+          "font" : 12,
+          "frame" : {
+            "height" : 15,
+            "width" : 40,
+            "x" : 237.5,
+            "y" : 204
+          },
+          "maxLines" : 0,
+          "naturalWidth" : 35.754863813229576,
+          "text" : "已授权",
+          "tooltip" : "",
+          "wraps" : false
+        },
+        {
+          "breakMode" : 0,
+          "font" : 11,
+          "frame" : {
+            "height" : 14,
+            "width" : 280.5,
+            "x" : -2,
+            "y" : 173
+          },
+          "maxLines" : 0,
+          "naturalWidth" : 276.16416889591437,
+          "text" : "读到的：窗口的标题、位置和大小，以及它属于哪个 App",
+          "tooltip" : "",
+          "wraps" : true
+        },
+        {
+          "breakMode" : 0,
+          "font" : 11,
+          "frame" : {
+            "height" : 14,
+            "width" : 256.5,
+            "x" : -2,
+            "y" : 155
+          },
+          "maxLines" : 0,
+          "naturalWidth" : 252.12256809338518,
+          "text" : "为什么：收起、放回、排窗口，都要先知道窗口在哪",
+          "tooltip" : "",
+          "wraps" : true
+        },
+        {
+          "breakMode" : 0,
+          "font" : 11,
+          "frame" : {
+            "height" : 28,
+            "width" : 304,
+            "x" : -2,
+            "y" : 123
+          },
+          "maxLines" : 0,
+          "naturalWidth" : 448.81712062256815,
+          "text" : "去了哪里：只在内存里用；收起的窗口的标题和位置记在恢复记录里，出问题时用来找回窗口",
+          "tooltip" : "",
+          "wraps" : true
+        },
+        {
+          "breakMode" : 0,
+          "font" : 11,
+          "frame" : {
+            "height" : 14,
+            "width" : 179.5,
+            "x" : -2,
+            "y" : 105
+          },
+          "maxLines" : 0,
+          "naturalWidth" : 175.42217898832683,
+          "text" : "什么时候读：收起、放回、排窗口时",
+          "tooltip" : "",
+          "wraps" : true
+        },
+        {
+          "breakMode" : 0,
+          "font" : 11,
+          "frame" : {
+            "height" : 28,
+            "width" : 304,
+            "x" : -2,
+            "y" : 73
+          },
+          "maxLines" : 0,
+          "naturalWidth" : 337.09981266719359,
+          "text" : "开关：在系统设置里关掉“辅助功能”，WindowShade 就不能再读窗口",
+          "tooltip" : "",
+          "wraps" : true
+        },
+        {
+          "breakMode" : 0,
+          "font" : 11,
+          "frame" : {
+            "height" : 28,
+            "width" : 304,
+            "x" : -2,
+            "y" : 41
+          },
+          "maxLines" : 0,
+          "naturalWidth" : 424.3453307392997,
+          "text" : "合起来能看出什么：窗口的标题和位置合起来，能看出你在处理哪份文件、看哪个网页。",
+          "tooltip" : "",
+          "wraps" : true
+        },
+        {
+          "breakMode" : 0,
+          "font" : 11,
+          "frame" : {
+            "height" : 28,
+            "width" : 304,
+            "x" : -2,
+            "y" : 9
+          },
+          "maxLines" : 0,
+          "naturalWidth" : 349.18537968142027,
+          "text" : "接口：AXUIElementCopyAttributeValue、SLSOffscreenCheckProbe",
+          "tooltip" : "",
+          "wraps" : true
+        }
+      ],
+      "mainThread" : true,
+      "name" : "dark-300-technical",
+      "registeredStatus" : "current",
+      "rowID" : "window-ax",
+      "sample" : "technical",
+      "toggles" : 0,
+      "visible" : false,
+      "width" : 300
+    },
+    {
+      "active" : false,
+      "actualRowWidth" : 300,
+      "alpha" : 0,
+      "buttons" : [
+        {
+          "accessibilityLabel" : "脸部特征与比对结果的详情",
+          "frame" : {
+            "height" : 9,
+            "width" : 15,
+            "x" : 285.5,
+            "y" : 231
+          },
+          "isGrant" : false,
+          "title" : "Button"
+        }
+      ],
+      "expanded" : true,
+      "height" : 261,
+      "hostWidth" : 332,
+      "labels" : [
+        {
+          "breakMode" : 4,
+          "font" : 13,
+          "frame" : {
+            "height" : 16,
+            "width" : 120.5,
+            "x" : -2,
+            "y" : 236
+          },
+          "maxLines" : 0,
+          "naturalWidth" : 116.08949416342409,
+          "text" : "脸部特征与比对结果",
+          "tooltip" : "脸部特征与比对结果",
+          "wraps" : false
+        },
+        {
+          "breakMode" : 4,
+          "font" : 11,
+          "frame" : {
+            "height" : 14,
+            "width" : 102.5,
+            "x" : -2,
+            "y" : 219
+          },
+          "maxLines" : 0,
+          "naturalWidth" : 98.422178988326849,
+          "text" : "锁屏后认出是不是你",
+          "tooltip" : "锁屏后认出是不是你",
+          "wraps" : false
+        },
+        {
+          "breakMode" : 5,
+          "font" : 12,
+          "frame" : {
+            "height" : 15,
+            "width" : 40,
+            "x" : 237.5,
+            "y" : 228
+          },
+          "maxLines" : 0,
+          "naturalWidth" : 35.754863813229576,
+          "text" : "还没读",
+          "tooltip" : "还没读",
+          "wraps" : false
+        },
+        {
+          "breakMode" : 0,
+          "font" : 11,
+          "frame" : {
+            "height" : 56,
+            "width" : 304,
+            "x" : -2,
+            "y" : 155
+          },
+          "maxLines" : 0,
+          "naturalWidth" : 885.82680075085182,
+          "text" : "读到的：实验：脸部裁出来的图像特征（Apple 的 Vision 算出）、登记过的模板、录入时眼睛睁开的程度、录入序号、比对结果；打开转头挑战后，还有转头时脸朝哪边、眼睛睁没睁开",
+          "tooltip" : "",
+          "wraps" : true
+        },
+        {
+          "breakMode" : 0,
+          "font" : 11,
+          "frame" : {
+            "height" : 14,
+            "width" : 278,
+            "x" : -2,
+            "y" : 137
+          },
+          "maxLines" : 0,
+          "naturalWidth" : 273.84435797665378,
+          "text" : "为什么：锁屏后认出是不是你，只留一条证据，不会解锁",
+          "tooltip" : "",
+          "wraps" : true
+        },
+        {
+          "breakMode" : 0,
+          "font" : 11,
+          "frame" : {
+            "height" : 28,
+            "width" : 304,
+            "x" : -2,
+            "y" : 105
+          },
+          "maxLines" : 0,
+          "naturalWidth" : 433.5723682210604,
+          "text" : "去了哪里：模板只存在这台 Mac 的钥匙串里，不同步、不随备份迁走；画面和裁切图不存",
+          "tooltip" : "",
+          "wraps" : true
+        },
+        {
+          "breakMode" : 0,
+          "font" : 11,
+          "frame" : {
+            "height" : 42,
+            "width" : 304,
+            "x" : -2,
+            "y" : 59
+          },
+          "maxLines" : 0,
+          "naturalWidth" : 808.1578801374028,
+          "text" : "什么时候读：默认关闭；打开实验后，锁屏时屏幕亮起最多看 6 秒，每秒最多 10 帧；打开转头挑战，认出后再看最多 12 秒；每次锁屏最多 3 次，画面看不清不算次数",
+          "tooltip" : "",
+          "wraps" : true
+        },
+        {
+          "breakMode" : 0,
+          "font" : 11,
+          "frame" : {
+            "height" : 14,
+            "width" : 232.5,
+            "x" : -2,
+            "y" : 41
+          },
+          "maxLines" : 0,
+          "naturalWidth" : 228.27457745622567,
+          "text" : "开关：实验开关和删除登记；不会标成 Face ID",
+          "tooltip" : "",
+          "wraps" : true
+        },
+        {
+          "breakMode" : 0,
+          "font" : 11,
+          "frame" : {
+            "height" : 28,
+            "width" : 304,
+            "x" : -2,
+            "y" : 9
+          },
+          "maxLines" : 0,
+          "naturalWidth" : 347.64494163424132,
+          "text" : "合起来能看出什么：人脸特征和摄像头画面合起来，能认出这是不是你。",
+          "tooltip" : "",
+          "wraps" : true
+        }
+      ],
+      "mainThread" : true,
+      "name" : "dark-300-planned",
+      "registeredStatus" : "planned",
+      "rowID" : "face-identity",
+      "sample" : "planned",
+      "toggles" : 0,
+      "visible" : false,
+      "width" : 300
+    }
+  ],
+  "globalInputEvents" : 0,
+  "grantActions" : 0,
+  "pageInstantiated" : false,
+  "plannedFixtureOnly" : true,
+  "settingsWrites" : 0,
+  "sourcesRead" : 0
+}

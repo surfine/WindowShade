@@ -1,0 +1,31 @@
+{
+  "kind": "contract",
+  "artifact": "docs/design-review/2026-10-11-focus/validation.json:sha256:0ebfa07caaf19ac419b2a7c8587052caa09f419b4fd680cc6eb0b95772419199",
+  "status": "residual_risk",
+  "checks": [
+    {
+      "command": "bash tools/design-qa/render-focus-card.sh <output>",
+      "exit_code": 0,
+      "result": "8 before + 8 after native frames; no visible windows; final source hashes match"
+    },
+    {
+      "command": "bash tests/run-focus-surface-tests.sh",
+      "exit_code": 0,
+      "result": "20 cases / 60 assertions pass"
+    },
+    {
+      "command": "bash prototype/build.sh --check",
+      "exit_code": 0,
+      "result": "Full optimized app compilation and existing build gates completed; existing downgraded warnings retained"
+    },
+    {
+      "command": "git diff --check",
+      "exit_code": 0,
+      "result": "No whitespace errors"
+    }
+  ],
+  "reused_checks": [],
+  "remaining_risk": "Only first card and design takeover delivered. Live notch/animation/input/VoiceOver and remaining surfaces not_run. Prior tasks preserved; no commit/push/sign/install.",
+  "next_action": "self_review",
+  "updated": "2026-10-11"
+}

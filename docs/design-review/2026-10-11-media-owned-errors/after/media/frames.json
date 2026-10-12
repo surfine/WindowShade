@@ -1,0 +1,466 @@
+[
+  {
+    "activeApplication" : false,
+    "actualArtistRGB" : [
+      0.95753897238784769,
+      0.5399065534903138,
+      0.39237653436721126
+    ],
+    "artist" : "合成颜色资料",
+    "artworkRemoved" : false,
+    "contentHeight" : 142,
+    "contentWidth" : 420,
+    "decodedRGBABytes" : 65536,
+    "expectedTextRGB" : [
+      0.95753897238784769,
+      0.5399065534903138,
+      0.39237653436721126
+    ],
+    "hasDecodedColor" : true,
+    "height" : 176,
+    "image" : "light-warm.png",
+    "intersectsScreen" : false,
+    "listOpen" : false,
+    "panelAlpha" : 0,
+    "routeCount" : 0,
+    "routeReads" : 0,
+    "state" : "warm",
+    "synthetic" : true,
+    "width" : 421
+  },
+  {
+    "activeApplication" : false,
+    "actualArtistRGB" : [
+      0.37592798520937898,
+      0.69727441751433872,
+      0.96898104824273334
+    ],
+    "artist" : "合成颜色资料",
+    "artworkRemoved" : false,
+    "contentHeight" : 142,
+    "contentWidth" : 420,
+    "decodedRGBABytes" : 65536,
+    "expectedTextRGB" : [
+      0.37592798520937898,
+      0.69727441751433872,
+      0.96898104824273334
+    ],
+    "hasDecodedColor" : true,
+    "height" : 176,
+    "image" : "light-cool.png",
+    "intersectsScreen" : false,
+    "listOpen" : false,
+    "panelAlpha" : 0,
+    "routeCount" : 0,
+    "routeReads" : 0,
+    "state" : "cool",
+    "synthetic" : true,
+    "width" : 421
+  },
+  {
+    "activeApplication" : false,
+    "actualArtistRGB" : [
+      0.89557687271229358,
+      0.8955768727122938,
+      0.89557687271229369
+    ],
+    "artist" : "合成颜色资料",
+    "artworkRemoved" : false,
+    "contentHeight" : 142,
+    "contentWidth" : 420,
+    "decodedRGBABytes" : 65536,
+    "expectedTextRGB" : [
+      0.89557687271229358,
+      0.8955768727122938,
+      0.89557687271229369
+    ],
+    "hasDecodedColor" : false,
+    "height" : 176,
+    "image" : "light-neutral.png",
+    "intersectsScreen" : false,
+    "listOpen" : false,
+    "panelAlpha" : 0,
+    "routeCount" : 0,
+    "routeReads" : 0,
+    "state" : "neutral",
+    "synthetic" : true,
+    "width" : 421
+  },
+  {
+    "activeApplication" : false,
+    "actualArtistRGB" : [
+      0.95753897238784769,
+      0.5399065534903138,
+      0.39237653436721126
+    ],
+    "artist" : "合成颜色资料",
+    "artworkRemoved" : false,
+    "contentHeight" : 142,
+    "contentWidth" : 420,
+    "decodedRGBABytes" : 65536,
+    "expectedTextRGB" : [
+      0.95753897238784769,
+      0.5399065534903138,
+      0.39237653436721126
+    ],
+    "hasDecodedColor" : true,
+    "height" : 176,
+    "image" : "light-paused.png",
+    "intersectsScreen" : false,
+    "listOpen" : false,
+    "panelAlpha" : 0,
+    "routeCount" : 0,
+    "routeReads" : 0,
+    "state" : "paused",
+    "synthetic" : true,
+    "width" : 421
+  },
+  {
+    "activeApplication" : false,
+    "actualArtistRGB" : [
+      0.89557687271229358,
+      0.8955768727122938,
+      0.89557687271229369
+    ],
+    "artist" : "合成颜色资料",
+    "artworkRemoved" : true,
+    "contentHeight" : 142,
+    "contentWidth" : 420,
+    "decodedRGBABytes" : 65536,
+    "expectedTextRGB" : [
+      0.89557687271229358,
+      0.8955768727122938,
+      0.89557687271229369
+    ],
+    "hasDecodedColor" : true,
+    "height" : 176,
+    "image" : "light-removed.png",
+    "intersectsScreen" : false,
+    "listOpen" : false,
+    "panelAlpha" : 0,
+    "routeCount" : 0,
+    "routeReads" : 0,
+    "state" : "removed",
+    "synthetic" : true,
+    "width" : 421
+  },
+  {
+    "activeApplication" : false,
+    "actualArtistRGB" : [
+      0.95753897238784769,
+      0.5399065534903138,
+      0.39237653436721126
+    ],
+    "artist" : "合成颜色资料",
+    "artworkRemoved" : false,
+    "contentHeight" : 256.5,
+    "contentWidth" : 420,
+    "decodedRGBABytes" : 65536,
+    "expectedTextRGB" : [
+      0.95753897238784769,
+      0.5399065534903138,
+      0.39237653436721126
+    ],
+    "hasDecodedColor" : true,
+    "height" : 306,
+    "image" : "light-routes-eight.png",
+    "intersectsScreen" : false,
+    "listOpen" : true,
+    "panelAlpha" : 0,
+    "routeCount" : 8,
+    "routeReads" : 1,
+    "state" : "routes-eight",
+    "synthetic" : true,
+    "width" : 453
+  },
+  {
+    "activeApplication" : false,
+    "actualArtistRGB" : [
+      0.95753897238784769,
+      0.5399065534903138,
+      0.39237653436721126
+    ],
+    "artist" : "合成颜色资料",
+    "artworkRemoved" : false,
+    "contentHeight" : 256.5,
+    "contentWidth" : 420,
+    "decodedRGBABytes" : 65536,
+    "expectedTextRGB" : [
+      0.95753897238784769,
+      0.5399065534903138,
+      0.39237653436721126
+    ],
+    "hasDecodedColor" : true,
+    "height" : 290,
+    "image" : "light-routes-last.png",
+    "intersectsScreen" : false,
+    "listOpen" : true,
+    "panelAlpha" : 0,
+    "routeCount" : 8,
+    "routeReads" : 1,
+    "state" : "routes-last",
+    "synthetic" : true,
+    "width" : 421
+  },
+  {
+    "activeApplication" : false,
+    "actualArtistRGB" : [
+      0.95753897238784769,
+      0.5399065534903138,
+      0.39237653436721126
+    ],
+    "artist" : "",
+    "artworkRemoved" : false,
+    "contentHeight" : 142,
+    "contentWidth" : 420,
+    "decodedRGBABytes" : 65536,
+    "expectedTextRGB" : [
+      0.95753897238784769,
+      0.5399065534903138,
+      0.39237653436721126
+    ],
+    "hasDecodedColor" : true,
+    "height" : 176,
+    "image" : "light-no-artist.png",
+    "intersectsScreen" : false,
+    "listOpen" : false,
+    "panelAlpha" : 0,
+    "routeCount" : 0,
+    "routeReads" : 0,
+    "state" : "no-artist",
+    "synthetic" : true,
+    "width" : 421
+  },
+  {
+    "activeApplication" : false,
+    "actualArtistRGB" : [
+      0.95753897238784769,
+      0.5399065534903138,
+      0.39237653436721126
+    ],
+    "artist" : "合成颜色资料",
+    "artworkRemoved" : false,
+    "contentHeight" : 142,
+    "contentWidth" : 420,
+    "decodedRGBABytes" : 65536,
+    "expectedTextRGB" : [
+      0.95753897238784769,
+      0.5399065534903138,
+      0.39237653436721126
+    ],
+    "hasDecodedColor" : true,
+    "height" : 176,
+    "image" : "dark-warm.png",
+    "intersectsScreen" : false,
+    "listOpen" : false,
+    "panelAlpha" : 0,
+    "routeCount" : 0,
+    "routeReads" : 0,
+    "state" : "warm",
+    "synthetic" : true,
+    "width" : 421
+  },
+  {
+    "activeApplication" : false,
+    "actualArtistRGB" : [
+      0.37592798520937898,
+      0.69727441751433872,
+      0.96898104824273334
+    ],
+    "artist" : "合成颜色资料",
+    "artworkRemoved" : false,
+    "contentHeight" : 142,
+    "contentWidth" : 420,
+    "decodedRGBABytes" : 65536,
+    "expectedTextRGB" : [
+      0.37592798520937898,
+      0.69727441751433872,
+      0.96898104824273334
+    ],
+    "hasDecodedColor" : true,
+    "height" : 176,
+    "image" : "dark-cool.png",
+    "intersectsScreen" : false,
+    "listOpen" : false,
+    "panelAlpha" : 0,
+    "routeCount" : 0,
+    "routeReads" : 0,
+    "state" : "cool",
+    "synthetic" : true,
+    "width" : 421
+  },
+  {
+    "activeApplication" : false,
+    "actualArtistRGB" : [
+      0.89557687271229358,
+      0.8955768727122938,
+      0.89557687271229369
+    ],
+    "artist" : "合成颜色资料",
+    "artworkRemoved" : false,
+    "contentHeight" : 142,
+    "contentWidth" : 420,
+    "decodedRGBABytes" : 65536,
+    "expectedTextRGB" : [
+      0.89557687271229358,
+      0.8955768727122938,
+      0.89557687271229369
+    ],
+    "hasDecodedColor" : false,
+    "height" : 176,
+    "image" : "dark-neutral.png",
+    "intersectsScreen" : false,
+    "listOpen" : false,
+    "panelAlpha" : 0,
+    "routeCount" : 0,
+    "routeReads" : 0,
+    "state" : "neutral",
+    "synthetic" : true,
+    "width" : 421
+  },
+  {
+    "activeApplication" : false,
+    "actualArtistRGB" : [
+      0.95753897238784769,
+      0.5399065534903138,
+      0.39237653436721126
+    ],
+    "artist" : "合成颜色资料",
+    "artworkRemoved" : false,
+    "contentHeight" : 142,
+    "contentWidth" : 420,
+    "decodedRGBABytes" : 65536,
+    "expectedTextRGB" : [
+      0.95753897238784769,
+      0.5399065534903138,
+      0.39237653436721126
+    ],
+    "hasDecodedColor" : true,
+    "height" : 176,
+    "image" : "dark-paused.png",
+    "intersectsScreen" : false,
+    "listOpen" : false,
+    "panelAlpha" : 0,
+    "routeCount" : 0,
+    "routeReads" : 0,
+    "state" : "paused",
+    "synthetic" : true,
+    "width" : 421
+  },
+  {
+    "activeApplication" : false,
+    "actualArtistRGB" : [
+      0.89557687271229358,
+      0.8955768727122938,
+      0.89557687271229369
+    ],
+    "artist" : "合成颜色资料",
+    "artworkRemoved" : true,
+    "contentHeight" : 142,
+    "contentWidth" : 420,
+    "decodedRGBABytes" : 65536,
+    "expectedTextRGB" : [
+      0.89557687271229358,
+      0.8955768727122938,
+      0.89557687271229369
+    ],
+    "hasDecodedColor" : true,
+    "height" : 176,
+    "image" : "dark-removed.png",
+    "intersectsScreen" : false,
+    "listOpen" : false,
+    "panelAlpha" : 0,
+    "routeCount" : 0,
+    "routeReads" : 0,
+    "state" : "removed",
+    "synthetic" : true,
+    "width" : 421
+  },
+  {
+    "activeApplication" : false,
+    "actualArtistRGB" : [
+      0.95753897238784769,
+      0.5399065534903138,
+      0.39237653436721126
+    ],
+    "artist" : "合成颜色资料",
+    "artworkRemoved" : false,
+    "contentHeight" : 256.5,
+    "contentWidth" : 420,
+    "decodedRGBABytes" : 65536,
+    "expectedTextRGB" : [
+      0.95753897238784769,
+      0.5399065534903138,
+      0.39237653436721126
+    ],
+    "hasDecodedColor" : true,
+    "height" : 306,
+    "image" : "dark-routes-eight.png",
+    "intersectsScreen" : false,
+    "listOpen" : true,
+    "panelAlpha" : 0,
+    "routeCount" : 8,
+    "routeReads" : 1,
+    "state" : "routes-eight",
+    "synthetic" : true,
+    "width" : 453
+  },
+  {
+    "activeApplication" : false,
+    "actualArtistRGB" : [
+      0.95753897238784769,
+      0.5399065534903138,
+      0.39237653436721126
+    ],
+    "artist" : "合成颜色资料",
+    "artworkRemoved" : false,
+    "contentHeight" : 256.5,
+    "contentWidth" : 420,
+    "decodedRGBABytes" : 65536,
+    "expectedTextRGB" : [
+      0.95753897238784769,
+      0.5399065534903138,
+      0.39237653436721126
+    ],
+    "hasDecodedColor" : true,
+    "height" : 290,
+    "image" : "dark-routes-last.png",
+    "intersectsScreen" : false,
+    "listOpen" : true,
+    "panelAlpha" : 0,
+    "routeCount" : 8,
+    "routeReads" : 1,
+    "state" : "routes-last",
+    "synthetic" : true,
+    "width" : 421
+  },
+  {
+    "activeApplication" : false,
+    "actualArtistRGB" : [
+      0.95753897238784769,
+      0.5399065534903138,
+      0.39237653436721126
+    ],
+    "artist" : "",
+    "artworkRemoved" : false,
+    "contentHeight" : 142,
+    "contentWidth" : 420,
+    "decodedRGBABytes" : 65536,
+    "expectedTextRGB" : [
+      0.95753897238784769,
+      0.5399065534903138,
+      0.39237653436721126
+    ],
+    "hasDecodedColor" : true,
+    "height" : 176,
+    "image" : "dark-no-artist.png",
+    "intersectsScreen" : false,
+    "listOpen" : false,
+    "panelAlpha" : 0,
+    "routeCount" : 0,
+    "routeReads" : 0,
+    "state" : "no-artist",
+    "synthetic" : true,
+    "width" : 421
+  }
+]

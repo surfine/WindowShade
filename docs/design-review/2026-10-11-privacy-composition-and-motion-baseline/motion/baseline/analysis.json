@@ -1,0 +1,12 @@
+{
+  "kind": "configuration_and_hidden_presentation_only",
+  "compositor_pass": false,
+  "instantaneous_velocity_measured": false,
+  "incoming_mid_y_delta": -20.405451864004135,
+  "new_target_mid_y_delta": 20.405451864004135,
+  "retarget_initial_velocity": [
+    10.327173460728805
+  ],
+  "direction_configuration": "opposite_incoming_requires_negative",
+  "configured_direction_matches": false
+}

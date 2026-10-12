@@ -1,0 +1,110 @@
+{
+  "checkpoint": "tenth-welcome-baseline",
+  "goal": "active; complete original scope retained",
+  "status": "residual_risk",
+  "sources": {
+    "prototype/App/Welcome.swift": "8a66359e7e44a9e6244553dc68b2458778ab4b32ed32ab121800659e01d9aec5",
+    "prototype/App/WelcomeFlow.swift": "582be4f86481d1f018f222cb96393ee62048e6d7bc6cd97efbe64d3dac3f791d",
+    "prototype/App/Preferences.swift": "d08e530596124aa69b263cb9ce39210e172d3650dab4dd16b8a981f33ed0b5f7",
+    "prototype/Core/SwitcherOrigin.swift": "5914f273cc25e05edc17aae41428091ee46332b58442cd5aa54b051b96ded08c",
+    "tools/design-qa/WelcomeStatePreview.swift": "aa156b05acc1d70944605ef34b37c9f62366c4d48639e06c2b393c01f110ed46",
+    "tools/design-qa/check-welcome-state-preview.py": "0081a6fb348c009fcc5b5fb665e767b59e552f9bfffbadde233180c921f10df9",
+    "tools/design-qa/render-native-surfaces.sh": "2982efdd60574b0c0cb1f5de9e35a398e81c028c2bab5d3d8a7b47416c3406b0",
+    "docs/design-drafts/欢迎使用 WindowShade.html": "7e004249021b7edefbf890dd56adfa20e4b0225ef33510e7776d2c25d0631ece",
+    "docs/design-drafts/安静的刘海 动效样片.html": "6026ab0c04882edeb667b970deea1a463abf48fee752b50e2a9fe2e11d42a56d"
+  },
+  "evidence": {
+    "README.md": "9ea3a4117f7f84ddfb07a4cd30e61a36eba99ee76d394e61f34dde6d159ef0e9",
+    "Welcome.swift": "8a66359e7e44a9e6244553dc68b2458778ab4b32ed32ab121800659e01d9aec5",
+    "WelcomeFlow.swift": "582be4f86481d1f018f222cb96393ee62048e6d7bc6cd97efbe64d3dac3f791d",
+    "WelcomeStatePreview.swift": "aa156b05acc1d70944605ef34b37c9f62366c4d48639e06c2b393c01f110ed46",
+    "accepted-check.json": "bfb66896ea0a76c37141a487efc3cc7553047b05f7ff1a32e072422ab008116b",
+    "after/dark-intro-hint.png": "732137f62023c709d5cdfc8f2849e052f658bf84f97a4e72077c4728ec3104f1",
+    "after/dark-intro-no-notch.png": "45a1ae1a740463df4ae6092f096df0cefc56554a4beafcc240739f25ee6aab12",
+    "after/dark-intro-stuck.png": "8324d7a856aa231a28b7aa65d70733a8e5b677b5705e68a01468e3921c328788",
+    "after/dark-origin-ipad.png": "1196dea8fd9fcd282a34fe75e4da79b123a6450a4706eb99119bf5816768c002",
+    "after/dark-origin-mac.png": "28c3250e5090a1f08e6a1eeff7eb35c78ade71d5349f6d5642b6cb1739dac248",
+    "after/dark-origin-unanswered.png": "056f33a65757b112acbd37b5ef84766d736a501450ed31414c8a0eb63573e162",
+    "after/dark-origin-windows.png": "952e694212667f8cb69ee99f341c95529e992ee084bb60b786fbf1fdf685c916",
+    "after/frames.json": "006e7dc941664c305946de79dd3cc79dae13f3289e4e5901fa9c8de1708e554d",
+    "after/light-intro-hint.png": "b01837926ce0dc2f17e3db70273a1c7ddb020ecb1b825dd52cc767750bee2444",
+    "after/light-intro-no-notch.png": "2da609a30088e4b790d22a1b534aa5a8ca8b3ea60b59307edd118d3792db443b",
+    "after/light-intro-stuck.png": "23e86b5f61c215f0fda60f4d46c95770d42e4095cfa30fc236e074ebb613e060",
+    "after/light-origin-ipad.png": "711c5f462522594f1ccae72924e8002a779b2d92742b1a2e9c69aa3ef91b609a",
+    "after/light-origin-mac.png": "023f0596696411622fc33f154f36a109457c013bfa5869a245b5a38c193416f7",
+    "after/light-origin-unanswered.png": "0fdecd36bdb7820b064998f4f2e1f420b7db83619e8c8fa9371a28c21aa37883",
+    "after/light-origin-windows.png": "27c3da981866e50dc58d8b9ecd4788050aee7534a9a91c95243354d9bd294b89",
+    "after/renderer.json": "e90f350fd0bbb3901d6a631e560f85194e62449b59d112e14805ba976d2d3550",
+    "after/sources.json": "50e888e4cddd1581d79566421c2cb74828f34712fe0c7303daa33de3b7405af7",
+    "check-welcome-state-preview.py": "0081a6fb348c009fcc5b5fb665e767b59e552f9bfffbadde233180c921f10df9",
+    "design-welcome-baseline-exit.json": "2618b95f1f6be6bfde8537756f85b83845d039001563135b9d59d817446733eb",
+    "design-welcome-baseline.log": "84f91f2447d16f8399c8c273ab6e0125ad2ad83e494f81dc36cec55e4ab357b8",
+    "design-welcome-host-consumer.json": "bfb66896ea0a76c37141a487efc3cc7553047b05f7ff1a32e072422ab008116b",
+    "design-welcome-host-exit.json": "124fd50cb6d223cdd18fedc166d00af7254199b6e6dedf9be82f71db87af6d01",
+    "design-welcome-host.log": "0d8ee8a3393b2b2ffdf2c4e16ee470bbacad86b1ebab23e9fd7b755c08f8ec37",
+    "design-welcome-repaired-exit.json": "124fd50cb6d223cdd18fedc166d00af7254199b6e6dedf9be82f71db87af6d01",
+    "design-welcome-repaired.log": "d696e716841189c64bbc6e6a1ba3e0bfa50924590cb28a937d11598c11913de5",
+    "incomplete-host/dark-intro-hint.png": "f321d2da3aa7470da4037287a0cea3bcadecce5b471a8e7e1c69a31078973c88",
+    "incomplete-host/dark-intro-no-notch.png": "a0cf42863c0a2a72a5a424af2ce94c67144be39c6786ae3b896523ffa7f32560",
+    "incomplete-host/dark-intro-stuck.png": "9fe30148108073fdacf49dfa507c9001046ce30b6404151b7795e9ff7ead6af1",
+    "incomplete-host/dark-origin-ipad.png": "62d853055630390f56efaaee949a40ff6e0e3cb6be667ac17b03a87df29ab7d2",
+    "incomplete-host/dark-origin-mac.png": "febda743f91cfc3ec6a3852f0b2cc431c681699b71a6c508b67aa140b61b5b89",
+    "incomplete-host/dark-origin-unanswered.png": "25a418f5bd4d64602d91f7c7ebec5391edb6dace70fc157db980363a7daf39a2",
+    "incomplete-host/dark-origin-windows.png": "7fe0b3e3f913aad9ba9224fa3d46c1dcc312cb8dc7c9a4d9e6c153f8b54c9759",
+    "incomplete-host/frames.json": "006e7dc941664c305946de79dd3cc79dae13f3289e4e5901fa9c8de1708e554d",
+    "incomplete-host/incomplete-host-entry.sha256": "9905d95d3ffa89b1fa1b8ddd2d1212796b7246ce6cc4f379b0de348012b56a6e",
+    "incomplete-host/incomplete-host-entry.swift": "bd76f60170ba4f587f575fe73da900c1bffdf0b34ae983160c74aee7924659fa",
+    "incomplete-host/light-intro-hint.png": "f37c6843aaabf877d2d6ebbefdc3d9213d52cf8f784784c7513d791ca89ef586",
+    "incomplete-host/light-intro-no-notch.png": "30e805281e5c702db5fabf9c36bd7f22d34d3dabdf2a7192f77cf98be1649958",
+    "incomplete-host/light-intro-stuck.png": "f3e45934fc9671e239b12e1a240d091fa05dba75abeeb5476926e5519ac293d3",
+    "incomplete-host/light-origin-ipad.png": "d3dd5004d6bfc8165c0fe7dd82c7871639af10b0cbb74cf658d83301fbb0165c",
+    "incomplete-host/light-origin-mac.png": "81dda424f1a7140bba964fbdabba406a6cc7ae0b767b70621114c0138a9249cb",
+    "incomplete-host/light-origin-unanswered.png": "b2e7ec27528c2aa001d27c456b83523011efc4ef637d8dfc042577e14ee85963",
+    "incomplete-host/light-origin-windows.png": "6b509b644737aa22f159ce8227d17f53cdc2fc867fb63d16423254c59b01933a",
+    "incomplete-host/renderer.json": "4995e5bd536a7e8a7bc4f6fbac240c7082c07b2a77516869fa943fc62d7ddcb6",
+    "incomplete-host/sources.json": "b200cb865e171f32def19e662d1cc33685568dbc16ce9099462080816f9c4b24",
+    "initial-failure/failed-entry.sha256": "c5c66176bd77a1440ccfd7a7203e31170c698a562de350ff3b059924d8ee98c8",
+    "initial-failure/failed-entry.swift": "087f3017a32609cb7a69ac749fd9f9fe40e557fa239fa1ae452e4f78c91bd998",
+    "initial-failure/renderer.json": "10e30c5fea3cef6a3f9de56f0d98665aa0b30231fc7baa057bc8525903c6b9ec",
+    "initial-failure/sources.json": "316e6734e5f2d1c4f6fca63de7b97fbf90511909bd027fa929d7bf7a3e137aea",
+    "reused-build-identity.json": "6e42c09c4f83357646d4a60978c0d9189b6bdcac8dc99a18c4cd6738370ab963",
+    "welcome-layer-order-probe.log": "3fcfe13d9814064deacb34c49d71ffd1e70a94a43f7bc5e098dc7894b89419f0",
+    "welcome-layer-order-probe.swift": "ca2555f4e0d7753c9a3d30d9801aa67126d924dcb068fa86be910668494aad92",
+    "welcome-practices-check.log": "9d14338eb5e9e7f00e495af543cc57c7411a1b42c438008de3c3085ca0ce1d52",
+    "welcome-window-probe.log": "699cf825515ccef2b85be6fb5d6eb5e7aecbc5cee8c3bfaae5b121c5be51c9cf",
+    "welcome-window-probe.swift": "742a5f3595e1c8561c51063e4f04fad377bd75e768b72da467f2b652c38690a0"
+  },
+  "checks": [
+    {
+      "command": "WelcomeStatePreview + check-welcome-state-preview.py",
+      "exit_code": 0,
+      "result": "14 actual geometry/state frames;7 distinct system appearance pairs;0 permission closure calls;no stored origin change",
+      "receipt": "design-welcome-host-exit.json"
+    },
+    {
+      "command": "welcome-window-probe.swift",
+      "exit_code": 0,
+      "result": "constructor clamps offscreen origin;explicit frame retains outside screen",
+      "receipt": "welcome-window-probe.log"
+    },
+    {
+      "command": "welcome-layer-order-probe.swift",
+      "exit_code": 0,
+      "result": "cacheDisplay/layer.render output blueZ0 above redZ7;capture order inconclusive for real compositor",
+      "receipt": "welcome-layer-order-probe.log"
+    }
+  ],
+  "reused_checks": [
+    {
+      "command": "prototype/build.sh --check",
+      "exit_code": 0,
+      "from": "../2026-10-11-media-owned-errors/validation.json",
+      "matched_current_inputs": 519
+    }
+  ],
+  "identity": {
+    "native_inputs": 518,
+    "all_match": true
+  },
+  "remaining": "Welcome live material/z-order/focus/motion/VoiceOver/permission page not accepted;settings/windows/common five states/multiscreen/all original scope"
+}

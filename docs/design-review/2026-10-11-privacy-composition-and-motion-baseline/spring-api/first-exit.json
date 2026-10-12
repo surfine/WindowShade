@@ -1,0 +1,1 @@
+{"session_id": 30239, "exit_code": 127, "reason": "Main fixture compile failed: async Thread.isMainThread unavailable; subsequent shell attempted nonexistent binary; no runtime execution"}

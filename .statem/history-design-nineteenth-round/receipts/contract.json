@@ -1,0 +1,24 @@
+{
+  "kind": "contract_check",
+  "status": "residual_risk",
+  "artifact": "/Users/aaron/Documents/WindowShade/docs/design-review/2026-10-11-progress-draft/validation.json",
+  "artifact_sha256": "2c03610fc232faaae823ded678f42f7920a6dc9032df1a3cfa7af4b041ba0c76",
+  "binding_sha256": "61500573c278f5446ee178cebe49f222144ee7bdf885f82ebe99fb930ee77df8",
+  "checks": [
+    {
+      "command": "actual ProgressQuantityPreview Swift6 + stdlib consumer",
+      "exit_code": 0,
+      "result": "26 frames/30 tiles/518 identities/layers/glyphs/97.88<=104",
+      "receipt": "final-exit.json"
+    },
+    {
+      "command": "bash prototype/build.sh --check",
+      "exit_code": 0,
+      "result": "519 optimized inputs current",
+      "receipt": "build-exit.json"
+    }
+  ],
+  "reused_checks": [],
+  "remaining_risk": "own synthetic static values, real sources not qualified; extreme Int and paused plus long count not covered; full filename AX label currently clipped, tooltip full; compact new frames/animation/accessibility execution/hardware not_run",
+  "next_action": "self_review"
+}

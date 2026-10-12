@@ -1,0 +1,8 @@
+{
+  "renderer": "/Users/aaron/Documents/WindowShade/.build/native-surfaces.TUGyzT/render",
+  "sha256": "c1e8de1558a68c95334ef5be62d14c6e3c76b4f3e9b767d986b141f4bf574733",
+  "swiftLanguageVersion": 6,
+  "strictConcurrency": true,
+  "warningsAsErrors": true,
+  "optimized": false
+}

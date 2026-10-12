@@ -1,0 +1,8 @@
+Traceback (most recent call last):
+  File "/Users/aaron/Documents/WindowShade/tools/design-qa/check-notch-motion-preview.py", line 257, in <module>
+    main()
+    ~~~~^^
+  File "/Users/aaron/Documents/WindowShade/tools/design-qa/check-notch-motion-preview.py", line 164, in main
+    assert frame["tileQuantities"] == expected_q, \
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+AssertionError: regular-same-id: quantities expected [{'completed': 3, 'total': 9}] got [{'completed': 2, 'total': 9}]

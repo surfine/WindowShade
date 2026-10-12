@@ -1,0 +1,5 @@
+WindowShade2第二十批：补用量画面稿，账户额度与会话模型分开，剩余口径、未知不画0/无限、到恢复时刻不能假称已恢复。完整目标active。
+先从实际UsageReading→CodingSessionUsage→NotchActivities.applyUsage→NotchRow→Canvas/Tile采正常/低额/0/未知/过期/周额/长模型/上下文分离候选基线；仅纯WireJSON/单调值，无account/session真实读取、网络、模型任务、产品main/Runtime/Controller。读取现有用量文档/文法/稿/文案。范围不是新统计软件，不虚构当前套餐/计费规则。
+已读到疑点：recoveryText过去时写“马上”，detailText拼“马上恢复”，需现有纯测试与实际视图证明是否产生虚假确定性，再主模型修；默认不开新来源，不靠本机时间改实际额度。
+交付用量静态稿+11问准入+真实原生Swift6样件/518来源/独立消费者/当前优化519；必要纯UsageReadingTests验证过期/未知/双窗口/新真实数据确认状态，保原始失败和补丁前字节SHA。
+只自有alpha0隐藏离屏窗口，不sign/install/push/发布或真实用户UI输入，不写偏好。高风险模型/口径由主模型主导；常规消费者可以DeepSeek独立任务，主模型验收原结果。先write本批实际receipt/SHA再goto，各依赖分工具调用。任务层完成不是全目标完成。

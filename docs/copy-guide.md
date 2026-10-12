@@ -105,6 +105,34 @@
 | 头长时间低着 | **头低久了** | 坐姿警告、颈椎 |
 | 又近、头又低 | **近了，头低久了** | 综合提醒 |
 
+## 英文用词（第27批起）
+
+英文不是逐字翻译，是同一套规矩换英语写：一个东西一个名字、一句话一件事、术语先用日常说法、能删就删。中文表里的概念在英文里沿用 README 既有的动作词，不另造第二套同义词。第一批（设置外壳 + 「卷帘」页 + 「高级」页）已定下来的对照：
+
+| 概念 | English | 不要用 |
+| --- | --- | --- |
+| 收起窗口 / 展开窗口（动词） | **roll up / unroll** | collapse、fold、shade、expand（窗口垂直展开的 expand 另说） |
+| 收起后留在屏幕上的那条 / 收起后的窗口 | **the rolled-up window bar / a rolled-up window**（首次出现把 bar 解释成 rolled-up window） | strip、bar alone |
+| 收起后的样子（设置项） | **What a rolled-up window looks like**；两个选项 **Keep as-is / One consistent bar**；第三种 **Thumbnail** | roll-up style、collapsed look |
+| 看一眼 | **Glance** | peek、hover preview |
+| 置顶 / 取消置顶 | **Pin / Unpin** | float、keep on top |
+| 窗口浏览 | **Window browsing**；分节名同 | window browser panel、Dock hover panel |
+| 收进刘海 | **Tuck into the notch** | put in the notch、hide in the notch |
+| 实时活动 | **Live activities** | widgets、notifications |
+| 界面语言 / 切换后立即生效 | **Interface language / Takes effect immediately** | UI language、Requires restart |
+| 跟随系统（语言/外观） | **Follow the system** | Auto、System default |
+| 恢复默认值 / 诊断日志 | **Reset defaults / Diagnostics log** | factory reset、debug log |
+| 窗口之间留缝 | **Gap between windows**；档位 **None / Narrow / Wide** | spacing、margin |
+| 浮在其他窗口上面 | **Float above other windows** | always on top、pin |
+| 合成一排 / 悬停不误触 | **One merged row / Hover guard** | merge row、hover protection |
+| 文件架 / 之前常用 | **File shelf / Used before** | tray、shelf、source、migration |
+| 番茄钟 | **Focus timer** | Pomodoro（只在与用户原有习惯对照时提） |
+| 计时器到时间响一声 / 展开音 / 收起音 | **Chime when a timer ends / Unroll sound / Roll-up sound** | timer alarm |
+| 分节名 | **Effects / Roll up / Window browsing / Shortcuts / Privacy / Advanced / Mouse & trackpad / Remote / Conductor** | 照中文逐字直译 |
+
+英文行长按渲染实测定预算（`WS2SettingsInfo.englishLineBudget`），超出词边界截断并给 ⓘ；不按中文字宽拍脑袋。**大小写照 Apple 惯例（2026-10-12 定案）**：菜单命令用 Title Case（`Reset Defaults`），设置行、说明、提示、按钮以外的正文用 sentence case（`Reset defaults`）。未迁移的表面继续中文回退，等它那一批对齐这张表；新批只在表里加行，不改已定词。官网（`site/scripts/content.mjs`）与 README 双份随批滚动同步同一张表。
+
+
 ## 改前改后（真实例子）
 
 | 改前 | 改后 | 为什么 |

@@ -565,6 +565,54 @@ final class FileShelfScrollView: NSScrollView {
 
 // MARK: - 一格
 
+/// 按实际字体排名字；逐行绘制，不再让换行器把已省略的名字截第二次。
+@MainActor
+enum FileShelfNameLayout {
+    static func lines(_ name: String, width: CGFloat, font: NSFont, maxLines: Int = 2) -> [String] {
+        let text = name.map { $0.isNewline ? " " : String($0) }.joined()
+        guard width > 0, maxLines > 0 else { return [] }
+        func measure(_ value: String) -> CGFloat { NSAttributedString(string: value, attributes: [.font: font]).size().width }
+        func prefix(_ value: String, fitting room: CGFloat) -> String {
+            var result = ""
+            for character in value {
+                let next = result + String(character)
+                guard measure(next) <= room else { break }
+                result = next
+            }
+            return result
+        }
+        func suffix(_ value: String, fitting room: CGFloat) -> String {
+            var result = ""
+            for character in value.reversed() {
+                let next = String(character) + result
+                guard measure(next) <= room else { break }
+                result = next
+            }
+            return result
+        }
+        guard measure(text) > width else { return [text] }
+        let mark = "…"
+        let markWidth = measure(mark)
+        guard markWidth <= width else { return [""] }
+        let dot = text.lastIndex(of: ".")
+        let extensionStart = dot.flatMap { $0 != text.startIndex && text.distance(from: $0, to: text.endIndex) <= 6 ? $0 : nil }
+        if maxLines == 1 {
+            let extWidth = extensionStart.map { measure(String(text[$0...])) } ?? 0
+            let tail = suffix(text, fitting: min(width - markWidth, max(width * 0.4, extWidth)))
+            let head = prefix(String(text.dropLast(tail.count)), fitting: width - markWidth - measure(tail))
+            return [head + mark + tail]
+        }
+        var head = prefix(text, fitting: width)
+        // 常见扩展名保持完整；不要把 .txt 拆到两行。
+        if let extensionStart, head.count > text.distance(from: text.startIndex, to: extensionStart) {
+            head = String(text[..<extensionStart])
+        }
+        let remainder = String(text.dropFirst(head.count))
+        if measure(remainder) <= width { return [head, remainder] }
+        return [head, mark + suffix(remainder, fitting: width - markWidth)]
+    }
+}
+
 /// 一格：76 × 104。缩略图 52（圆角 12），名字 11 点最多两行；悬停出 ×；点一下大图预览，拖出去拷贝（按住 ⌘ 移动）。
 @MainActor
 final class FileShelfTileView: NSView {
@@ -694,23 +742,26 @@ final class FileShelfTileView: NSView {
         text.draw(at: NSPoint(x: pill.midX - size.width / 2, y: pill.midY - size.height / 2))
     }
 
-    private func drawName() {
-        let paragraph = NSMutableParagraphStyle()
-        paragraph.alignment = .center
-        paragraph.lineBreakMode = .byWordWrapping
-        paragraph.minimumLineHeight = 13
-        paragraph.maximumLineHeight = 13
-        let font = NSFont.systemFont(ofSize: CGFloat(FileShelfCardLayout.nameFont))
-        let text = NSMutableAttributedString()
-        let lines = shownName.components(separatedBy: "\n")
-        for (index, line) in lines.enumerated() {
-            let color = NSColor.white.withAlphaComponent(index == 0 ? 0.92 : 0.6)
-            text.append(NSAttributedString(string: index == 0 ? line : "\n" + line,
-                                           attributes: [.font: font, .foregroundColor: color, .paragraphStyle: paragraph]))
-        }
+    var nameLines: [String] {
         let width = CGFloat(FileShelfCardLayout.nameWidth)
-        text.draw(with: NSRect(x: (bounds.width - width) / 2, y: 8 + CGFloat(FileShelfCardLayout.thumbnail) + 6, width: width, height: 28),
-                  options: [.usesLineFragmentOrigin, .truncatesLastVisibleLine])
+        let font = NSFont.systemFont(ofSize: CGFloat(FileShelfCardLayout.nameFont))
+        let parts = shownName.components(separatedBy: "\n")
+        if parts.count > 1 {
+            return [parts[0], parts.dropFirst().joined(separator: " ")].flatMap {
+                FileShelfNameLayout.lines($0, width: width, font: font, maxLines: 1)
+            }
+        }
+        return FileShelfNameLayout.lines(shownName, width: width, font: font)
+    }
+
+    private func drawName() {
+        let font = NSFont.systemFont(ofSize: CGFloat(FileShelfCardLayout.nameFont))
+        let top = 8 + CGFloat(FileShelfCardLayout.thumbnail) + 6
+        for (index, line) in nameLines.enumerated() {
+            let color = NSColor.white.withAlphaComponent(index > 0 && shownName.contains("\n") ? 0.6 : 0.92)
+            let text = NSAttributedString(string: line, attributes: [.font: font, .foregroundColor: color])
+            text.draw(at: NSPoint(x: (bounds.width - text.size().width) / 2, y: top + CGFloat(index) * 13))
+        }
     }
 
     // MARK: 鼠标
@@ -792,6 +843,7 @@ final class FileShelfView: NSView, WS2LeaseContent, NSMenuDelegate {
     let hasNotch: Bool
     private let strip: Double
 
+    var interactionCornerRadius: CGFloat { CGFloat(FileShelfCardLayout.radius) }
     var interactionSize: NSSize {
         NSSize(width: FileShelfCardLayout.width, height: FileShelfCardLayout.contentHeight(hasNotch: hasNotch))
     }
@@ -959,8 +1011,9 @@ final class FileShelfView: NSView, WS2LeaseContent, NSMenuDelegate {
     private func name(of row: FileShelfRow) -> String {
         // 屏幕正在共享时，文件名不露：只写“文件”。
         if redacted { return row.availability.label.map { "文件\n" + $0 } ?? "文件" }
-        if let label = row.availability.label { return FileShelfTileName.stale(row.entry.name, reason: label) }
-        return FileShelfTileName.display(row.entry.name)
+        let name = row.entry.name.map { $0.isNewline ? " " : String($0) }.joined()
+        if let label = row.availability.label { return name + "\n" + label }
+        return name
     }
 
     private func art(of row: FileShelfRow) -> NSImage {

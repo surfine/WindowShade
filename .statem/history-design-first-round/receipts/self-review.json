@@ -1,0 +1,17 @@
+{
+  "kind": "self_review",
+  "status": "residual_risk",
+  "issues_found": false,
+  "needs_evidence": false,
+  "lenses": {
+    "task_contract": "task.txt + design-review README: primary model reviewed existing blueprint/drafts/source, corrected production FocusTimerCard and player-owner stale record; this is first round, not all WS2 completed.",
+    "evidence_freshness": "validation.json sources/frames SHA256; before card matched git 5daafb2; final after/sources.json matched current production card and renderer; full build exit 0 and regression logs archived after final source edit.",
+    "edge_risk": "Aqua black-on-black reproduced and corrected in native frames. Live host geometry, input/focus, interruption, accessibility modes remain not_run. Full build has pre-existing downgraded concurrency warnings; card renderer passed Swift6/strict/warnings-as-errors. Original tasks/receipts preserved with sha256; .zcode not modified."
+  },
+  "findings": [
+    "No further production edit after final render/build. Do not claim offline frames prove live notch acceptance.",
+    "Next design targets: notch five states/external-screen placement, then activity cards/settings; seven original lines remain.",
+    "Old blocked.json belongs to previous task; its historical constraints and later progress must be reconciled before hardware work."
+  ],
+  "updated": "2026-10-11"
+}

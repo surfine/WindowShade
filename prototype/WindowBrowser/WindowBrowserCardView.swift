@@ -63,7 +63,7 @@ final class WindowBrowserCardView: NSView {
         placeholderIconView.setAccessibilityElement(false)
         titleField.font = WindowBrowserTypography.title
         titleField.maximumNumberOfLines = 2
-        titleField.lineBreakMode = .byTruncatingTail
+        titleField.lineBreakMode = .byWordWrapping
         titleField.cell?.truncatesLastVisibleLine = true
         statusField.font = WindowBrowserTypography.detail
         statusField.textColor = .secondaryLabelColor
@@ -295,6 +295,7 @@ final class WindowBrowserCardView: NSView {
         titleField.frame = NSRect(x: padding, y: titleY, width: width, height: titleHeight)
         // 浮层贴着“实际画面”的右上角（画面比外框窄时不悬在空白处）。
         let picture = thumbnailHost.isHidden ? imageBox : thumbnailHost.frame
+        actionBar.fitActions(in: max(32, picture.width - 12))
         let actionsWidth = actionBar.requiredWidth
         let overlayHeight = 28 + WindowBrowserActionBar.overlayInset * 2
         let overlayInset: CGFloat = 6

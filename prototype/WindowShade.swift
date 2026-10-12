@@ -228,7 +228,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSMenuDelegate {
     private var titlebarPrefetchInFlight = false
     private var titlebarPrefetchGeneration: UInt64 = 0
     var spaceRefreshWorkItem: DispatchWorkItem?
-    /// 上一次看到的显示器与各屏可用区域，用来分辨“真的换了屏”和“只是菜单栏、Dock 变了”。
+    /// 上一次看到的显示器与各屏可用区域，用来分辨"真的换了屏"和"只是菜单栏、Dock 变了"。
     var lastDisplayLayout = DisplayLayout(screens: [])
     var lastVisibleFrames: [CGRect] = []
     weak var onboardingPermissionStack: NSStackView?
@@ -326,7 +326,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSMenuDelegate {
         // 新装还是升级：赶在这一次启动写下任何设置之前认一次、存下来（声音迁移每次启动都写，清理收起记录会删键；
         // 见 App/GlobalShortcuts.swift 的 InstallHistory）。
         _ = InstallHistory.settled(in: .standard)
-        // 量耗电等场合另开一份：刘海不播报、不教，也不把“教过”写进设置。
+        // 量耗电等场合另开一份：刘海不播报、不教，也不把"教过"写进设置。
         if CommandLine.arguments.contains("--no-teach") { NotchController.probeSilence = true }
         // 代理应用也要有标准主菜单：文本编辑快捷键与 ⌘W 都靠它的 key equivalent 派发。
         installStandardMainMenu()
@@ -422,6 +422,11 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSMenuDelegate {
         NotificationCenter.default.addObserver(
             self, selector: #selector(systemAppearanceOptionsChanged(_:)),
             name: NSColor.systemColorsDidChangeNotification, object: nil)
+        // 界面语言切换（第27批）：状态菜单立刻按新语言重建；设置窗口自己观察同一通知重建整窗。
+        // 已显示的刘海句子不回溯改写，下一句起就是新语言（证据里如实记录）。
+        NotificationCenter.default.addObserver(
+            self, selector: #selector(interfaceLanguageChanged(_:)),
+            name: InterfaceLanguagePreference.didChangeNotification, object: nil)
         // 浅深色切换没有公开的 NSApplication 通知：用 KVO 观察 effectiveAppearance，
         // 变化时同样只刷新材质与边线。
         appearanceObservation = NSApp.observe(\.effectiveAppearance, options: [.new]) {
@@ -452,7 +457,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSMenuDelegate {
             }
             notch.away.deviceIsCurrent = { [weak self] id, part in self?.deviceBattery.isStillLow(deviceID: id, part: part) ?? false }
             deviceBattery.start()
-            // 相机列表在后台枚举（菜单“检测面部动作”读缓存，主线程不再卡几百毫秒）。
+            // 相机列表在后台枚举（菜单"检测面部动作"读缓存，主线程不再卡几百毫秒）。
             MainActor.assumeIsolated { FaceObservationSource.startWatchingCameras() }
         }
     }
@@ -463,6 +468,18 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSMenuDelegate {
     func applicationShouldTerminate(_ sender: NSApplication) -> NSApplication.TerminateReply {
         // 第七份：正常退出由运行时统一把关（更新器 + owned 助手；先收票据与界面，再放行）。
         MainActor.assumeIsolated { ws2Runtime.applicationShouldTerminate() }
+    }
+
+    /// 界面语言切换（第27批）：重建状态菜单（文案按新语言）；设置窗口由自己的观察者重建整窗。
+    /// 已显示的刘海句子不回溯改写。放到本次事件之后再重建，避免在语言行的 action 里同步拆视图。
+    @objc func interfaceLanguageChanged(_ note: Notification) {
+        dispatchPrecondition(condition: .onQueue(.main))
+        DispatchQueue.main.async { [weak self] in
+            guard let self else { return }
+            MainThreadActivity.push("menu: 语言切换重建")
+            defer { MainThreadActivity.pop() }
+            self.rebuildMenu()
+        }
     }
 
     /// 辅助功能外观变化：只刷新材质/边线/阴影，不动窗口状态、不触发任何捕获。
@@ -486,7 +503,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSMenuDelegate {
         }
         // 置顶预览会话与临时悬停缩略图。
         pinnedPreviewController.refreshSystemAppearance(capabilities: capabilities)
-        // 刘海岛的边线跟着“提高对比度”走（设计系统 §6-11）：按当前状态重画一次。
+        // 刘海岛的边线跟着"提高对比度"走（设计系统 §6-11）：按当前状态重画一次。
         MainActor.assumeIsolated { notch.refreshAppearance() }
         (activePreview?.window.contentView as? SafariStylePreviewView)?
             .applySystemAppearance(capabilities: capabilities)
@@ -535,7 +552,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSMenuDelegate {
 
 
     // 目标解析是后台单飞 AX 工作；只有实际 target 改变才重建菜单。这样一次点击
-    // 不会再形成“刷新 → rebuild → 再刷新”的同步 AX 放大链路。
+    // 不会再形成"刷新 → rebuild → 再刷新"的同步 AX 放大链路。
     func refreshPinnedPreviewTarget(reason: String) {
         pinnedPreviewController.refreshCurrentTarget(reason: reason) { [weak self] _, didChange in
             guard didChange else { return }
@@ -649,7 +666,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSMenuDelegate {
     func configureShadedAccessibility(for overlay: NSWindow, id: CGWindowID,
                                               appName: String, title: String) {
         let displayTitle = descriptiveDisplayTitle(appName: appName, windowTitle: title)
-        // 收成缩略图的：读屏先说要做什么，再说是谁（“展开窗口：App”）；其余形态照旧。
+        // 收成缩略图的：读屏先说要做什么，再说是谁（"展开窗口：App"）；其余形态照旧。
         let label = overlay.contentView is ShadeThumbnailView ? "展开窗口：\(appName)" : "已收起的窗口：\(displayTitle)"
         let target = ShadedAccessibilityActionTarget { [weak self] in
             self?.unshade(id) ?? false
@@ -671,7 +688,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSMenuDelegate {
 
     // 动态翻转折叠项标题，与 ⌃⌘C 实际行为一致。这里绝不能为菜单文案同步读
     // focusedWindow：忙 app 的 AX timeout 会把每一次菜单重建卡住。使用置顶预览
-    // 控制器维护的后台 target 快照；快照尚未就绪时宁可显示保守的“折叠”。
+    // 控制器维护的后台 target 快照；快照尚未就绪时宁可显示保守的"折叠"。
 
     func currentShadedOverlayID() -> CGWindowID? {
         let activeWindows = [NSApp.keyWindow, NSApp.mainWindow].compactMap { $0 }

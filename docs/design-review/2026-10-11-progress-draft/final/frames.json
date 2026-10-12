@@ -1,0 +1,2136 @@
+{
+  "actions" : 0,
+  "frames" : [
+    {
+      "active" : false,
+      "alpha" : 0,
+      "canvasDark" : true,
+      "completions" : 1,
+      "height" : 175.5,
+      "name" : "light-zero",
+      "ongoing" : 1,
+      "sample" : "zero",
+      "tiles" : [
+        {
+          "accessibility" : "正在下载，演示材料.zip",
+          "accessibilityValue" : "0%",
+          "dark" : true,
+          "drawing" : "ring",
+          "ended" : false,
+          "frame" : {
+            "height" : 120,
+            "width" : 124,
+            "x" : 90.5,
+            "y" : 14
+          },
+          "id" : 850,
+          "kind" : "activity",
+          "layerChildren" : [
+            {
+              "animations" : [
+
+              ],
+              "hidden" : false,
+              "strokeEnd" : 1
+            },
+            {
+              "animations" : [
+
+              ],
+              "hidden" : true,
+              "strokeEnd" : 0
+            },
+            {
+              "animations" : [
+
+              ],
+              "hidden" : true,
+              "strokeEnd" : 1
+            }
+          ],
+          "naturalQuantityWidth" : 16.641279369592667,
+          "partFrame" : {
+            "height" : 14,
+            "width" : 14,
+            "x" : 100,
+            "y" : 96
+          },
+          "partHidden" : false,
+          "partQuantity" : "fraction(0.0)",
+          "paused" : false,
+          "quantity" : "fraction(0.0)",
+          "quantityAvailableWidth" : 86,
+          "quantityText" : "0%",
+          "renderedQuantityText" : "0%",
+          "renderedQuantityWidth" : 16.641279369592667,
+          "shelf" : null,
+          "stale" : false,
+          "subtitle" : "演示材料.zip",
+          "title" : "正在下载",
+          "tooltip" : "正在下载\n演示材料.zip"
+        }
+      ],
+      "visible" : false,
+      "width" : 305,
+      "windows" : 0
+    },
+    {
+      "active" : false,
+      "alpha" : 0,
+      "canvasDark" : true,
+      "completions" : 1,
+      "height" : 175.5,
+      "name" : "light-percent",
+      "ongoing" : 1,
+      "sample" : "percent",
+      "tiles" : [
+        {
+          "accessibility" : "正在下载，演示材料.zip",
+          "accessibilityValue" : "42%",
+          "dark" : true,
+          "drawing" : "ring",
+          "ended" : false,
+          "frame" : {
+            "height" : 120,
+            "width" : 124,
+            "x" : 90.5,
+            "y" : 14
+          },
+          "id" : 850,
+          "kind" : "activity",
+          "layerChildren" : [
+            {
+              "animations" : [
+
+              ],
+              "hidden" : false,
+              "strokeEnd" : 1
+            },
+            {
+              "animations" : [
+
+              ],
+              "hidden" : false,
+              "strokeEnd" : 0.41999999999999998
+            },
+            {
+              "animations" : [
+
+              ],
+              "hidden" : true,
+              "strokeEnd" : 1
+            }
+          ],
+          "naturalQuantityWidth" : 23.83609065413475,
+          "partFrame" : {
+            "height" : 14,
+            "width" : 14,
+            "x" : 100,
+            "y" : 96
+          },
+          "partHidden" : false,
+          "partQuantity" : "fraction(0.42)",
+          "paused" : false,
+          "quantity" : "fraction(0.42)",
+          "quantityAvailableWidth" : 86,
+          "quantityText" : "42%",
+          "renderedQuantityText" : "42%",
+          "renderedQuantityWidth" : 23.83609065413475,
+          "shelf" : null,
+          "stale" : false,
+          "subtitle" : "演示材料.zip",
+          "title" : "正在下载",
+          "tooltip" : "正在下载\n演示材料.zip"
+        }
+      ],
+      "visible" : false,
+      "width" : 305,
+      "windows" : 0
+    },
+    {
+      "active" : false,
+      "alpha" : 0,
+      "canvasDark" : true,
+      "completions" : 1,
+      "height" : 175.5,
+      "name" : "light-complete-value",
+      "ongoing" : 1,
+      "sample" : "complete-value",
+      "tiles" : [
+        {
+          "accessibility" : "正在下载，演示材料.zip",
+          "accessibilityValue" : "100%",
+          "dark" : true,
+          "drawing" : "ring",
+          "ended" : false,
+          "frame" : {
+            "height" : 120,
+            "width" : 124,
+            "x" : 90.5,
+            "y" : 14
+          },
+          "id" : 850,
+          "kind" : "activity",
+          "layerChildren" : [
+            {
+              "animations" : [
+
+              ],
+              "hidden" : false,
+              "strokeEnd" : 1
+            },
+            {
+              "animations" : [
+
+              ],
+              "hidden" : false,
+              "strokeEnd" : 1
+            },
+            {
+              "animations" : [
+
+              ],
+              "hidden" : true,
+              "strokeEnd" : 1
+            }
+          ],
+          "naturalQuantityWidth" : 31.030901938676834,
+          "partFrame" : {
+            "height" : 14,
+            "width" : 14,
+            "x" : 100,
+            "y" : 96
+          },
+          "partHidden" : false,
+          "partQuantity" : "fraction(1.0)",
+          "paused" : false,
+          "quantity" : "fraction(1.0)",
+          "quantityAvailableWidth" : 86,
+          "quantityText" : "100%",
+          "renderedQuantityText" : "100%",
+          "renderedQuantityWidth" : 31.030901938676834,
+          "shelf" : null,
+          "stale" : false,
+          "subtitle" : "演示材料.zip",
+          "title" : "正在下载",
+          "tooltip" : "正在下载\n演示材料.zip"
+        }
+      ],
+      "visible" : false,
+      "width" : 305,
+      "windows" : 0
+    },
+    {
+      "active" : false,
+      "alpha" : 0,
+      "canvasDark" : true,
+      "completions" : 1,
+      "height" : 175.5,
+      "name" : "light-count",
+      "ongoing" : 1,
+      "sample" : "count",
+      "tiles" : [
+        {
+          "accessibility" : "正在下载，演示材料.zip",
+          "accessibilityValue" : "第 2 \/ 9",
+          "dark" : true,
+          "drawing" : "countText",
+          "ended" : false,
+          "frame" : {
+            "height" : 120,
+            "width" : 124,
+            "x" : 90.5,
+            "y" : 14
+          },
+          "id" : 850,
+          "kind" : "activity",
+          "layerChildren" : [
+            {
+              "animations" : [
+
+              ],
+              "hidden" : true,
+              "strokeEnd" : 1
+            },
+            {
+              "animations" : [
+
+              ],
+              "hidden" : true,
+              "strokeEnd" : 0
+            },
+            {
+              "animations" : [
+
+              ],
+              "hidden" : true,
+              "strokeEnd" : 1
+            }
+          ],
+          "naturalQuantityWidth" : 37.179019648509268,
+          "partFrame" : {
+            "height" : 14,
+            "width" : 14,
+            "x" : 100,
+            "y" : 96
+          },
+          "partHidden" : true,
+          "partQuantity" : "count(2, 9)",
+          "paused" : false,
+          "quantity" : "count(2, 9)",
+          "quantityAvailableWidth" : 104,
+          "quantityText" : "第 2 \/ 9",
+          "renderedQuantityText" : "第 2 \/ 9",
+          "renderedQuantityWidth" : 37.179019648509268,
+          "shelf" : null,
+          "stale" : false,
+          "subtitle" : "演示材料.zip",
+          "title" : "正在下载",
+          "tooltip" : "正在下载\n演示材料.zip"
+        }
+      ],
+      "visible" : false,
+      "width" : 305,
+      "windows" : 0
+    },
+    {
+      "active" : false,
+      "alpha" : 0,
+      "canvasDark" : true,
+      "completions" : 1,
+      "height" : 175.5,
+      "name" : "light-large-count",
+      "ongoing" : 1,
+      "sample" : "large-count",
+      "tiles" : [
+        {
+          "accessibility" : "正在下载，演示材料.zip",
+          "accessibilityValue" : "第 999 \/ 1000",
+          "dark" : true,
+          "drawing" : "countText",
+          "ended" : false,
+          "frame" : {
+            "height" : 120,
+            "width" : 124,
+            "x" : 90.5,
+            "y" : 14
+          },
+          "id" : 850,
+          "kind" : "activity",
+          "layerChildren" : [
+            {
+              "animations" : [
+
+              ],
+              "hidden" : true,
+              "strokeEnd" : 1
+            },
+            {
+              "animations" : [
+
+              ],
+              "hidden" : true,
+              "strokeEnd" : 0
+            },
+            {
+              "animations" : [
+
+              ],
+              "hidden" : true,
+              "strokeEnd" : 1
+            }
+          ],
+          "naturalQuantityWidth" : 73.153076071219687,
+          "partFrame" : {
+            "height" : 14,
+            "width" : 14,
+            "x" : 100,
+            "y" : 96
+          },
+          "partHidden" : true,
+          "partQuantity" : "count(999, 1000)",
+          "paused" : false,
+          "quantity" : "count(999, 1000)",
+          "quantityAvailableWidth" : 104,
+          "quantityText" : "第 999 \/ 1000",
+          "renderedQuantityText" : "第 999 \/ 1000",
+          "renderedQuantityWidth" : 73.153076071219687,
+          "shelf" : null,
+          "stale" : false,
+          "subtitle" : "演示材料.zip",
+          "title" : "正在下载",
+          "tooltip" : "正在下载\n演示材料.zip"
+        }
+      ],
+      "visible" : false,
+      "width" : 305,
+      "windows" : 0
+    },
+    {
+      "active" : false,
+      "alpha" : 0,
+      "canvasDark" : true,
+      "completions" : 1,
+      "height" : 175.5,
+      "name" : "light-huge-count",
+      "ongoing" : 1,
+      "sample" : "huge-count",
+      "tiles" : [
+        {
+          "accessibility" : "正在下载，演示材料.zip",
+          "accessibilityValue" : "第 999999 \/ 1000000",
+          "dark" : true,
+          "drawing" : "countText",
+          "ended" : false,
+          "frame" : {
+            "height" : 120,
+            "width" : 124,
+            "x" : 90.5,
+            "y" : 14
+          },
+          "id" : 850,
+          "kind" : "activity",
+          "layerChildren" : [
+            {
+              "animations" : [
+
+              ],
+              "hidden" : true,
+              "strokeEnd" : 1
+            },
+            {
+              "animations" : [
+
+              ],
+              "hidden" : true,
+              "strokeEnd" : 0
+            },
+            {
+              "animations" : [
+
+              ],
+              "hidden" : true,
+              "strokeEnd" : 1
+            }
+          ],
+          "naturalQuantityWidth" : 116.32194377847219,
+          "partFrame" : {
+            "height" : 14,
+            "width" : 14,
+            "x" : 100,
+            "y" : 96
+          },
+          "partHidden" : true,
+          "partQuantity" : "count(999999, 1000000)",
+          "paused" : false,
+          "quantity" : "count(999999, 1000000)",
+          "quantityAvailableWidth" : 104,
+          "quantityText" : "第 999999 \/ 1000000",
+          "renderedQuantityText" : "999999\/1000000",
+          "renderedQuantityWidth" : 97.878102600574493,
+          "shelf" : null,
+          "stale" : false,
+          "subtitle" : "演示材料.zip",
+          "title" : "正在下载",
+          "tooltip" : "正在下载\n演示材料.zip"
+        }
+      ],
+      "visible" : false,
+      "width" : 305,
+      "windows" : 0
+    },
+    {
+      "active" : false,
+      "alpha" : 0,
+      "canvasDark" : true,
+      "completions" : 1,
+      "height" : 175.5,
+      "name" : "light-indeterminate",
+      "ongoing" : 1,
+      "sample" : "indeterminate",
+      "tiles" : [
+        {
+          "accessibility" : "正在下载，演示材料.zip",
+          "accessibilityValue" : null,
+          "dark" : true,
+          "drawing" : "spinningArc",
+          "ended" : false,
+          "frame" : {
+            "height" : 120,
+            "width" : 124,
+            "x" : 90.5,
+            "y" : 14
+          },
+          "id" : 850,
+          "kind" : "activity",
+          "layerChildren" : [
+            {
+              "animations" : [
+
+              ],
+              "hidden" : true,
+              "strokeEnd" : 1
+            },
+            {
+              "animations" : [
+
+              ],
+              "hidden" : true,
+              "strokeEnd" : 0
+            },
+            {
+              "animations" : [
+                "session.spin"
+              ],
+              "hidden" : false,
+              "strokeEnd" : 1
+            }
+          ],
+          "naturalQuantityWidth" : 0,
+          "partFrame" : {
+            "height" : 14,
+            "width" : 14,
+            "x" : 100,
+            "y" : 96
+          },
+          "partHidden" : false,
+          "partQuantity" : "indeterminate",
+          "paused" : false,
+          "quantity" : "indeterminate",
+          "quantityAvailableWidth" : 86,
+          "quantityText" : null,
+          "renderedQuantityText" : "",
+          "renderedQuantityWidth" : 0,
+          "shelf" : null,
+          "stale" : false,
+          "subtitle" : "演示材料.zip",
+          "title" : "正在下载",
+          "tooltip" : "正在下载\n演示材料.zip"
+        }
+      ],
+      "visible" : false,
+      "width" : 305,
+      "windows" : 0
+    },
+    {
+      "active" : false,
+      "alpha" : 0,
+      "canvasDark" : true,
+      "completions" : 1,
+      "height" : 175.5,
+      "name" : "light-unknown",
+      "ongoing" : 1,
+      "sample" : "unknown",
+      "tiles" : [
+        {
+          "accessibility" : "正在下载，演示材料.zip",
+          "accessibilityValue" : null,
+          "dark" : true,
+          "drawing" : "none",
+          "ended" : false,
+          "frame" : {
+            "height" : 120,
+            "width" : 124,
+            "x" : 90.5,
+            "y" : 14
+          },
+          "id" : 850,
+          "kind" : "activity",
+          "layerChildren" : [
+            {
+              "animations" : [
+
+              ],
+              "hidden" : true,
+              "strokeEnd" : 1
+            },
+            {
+              "animations" : [
+
+              ],
+              "hidden" : true,
+              "strokeEnd" : 0
+            },
+            {
+              "animations" : [
+
+              ],
+              "hidden" : true,
+              "strokeEnd" : 1
+            }
+          ],
+          "naturalQuantityWidth" : 0,
+          "partFrame" : {
+            "height" : 14,
+            "width" : 14,
+            "x" : -24,
+            "y" : -24
+          },
+          "partHidden" : true,
+          "partQuantity" : "unknown",
+          "paused" : false,
+          "quantity" : "unknown",
+          "quantityAvailableWidth" : 104,
+          "quantityText" : null,
+          "renderedQuantityText" : "",
+          "renderedQuantityWidth" : 0,
+          "shelf" : null,
+          "stale" : false,
+          "subtitle" : "演示材料.zip",
+          "title" : "正在下载",
+          "tooltip" : "正在下载\n演示材料.zip"
+        }
+      ],
+      "visible" : false,
+      "width" : 305,
+      "windows" : 0
+    },
+    {
+      "active" : false,
+      "alpha" : 0,
+      "canvasDark" : true,
+      "completions" : 1,
+      "height" : 175.5,
+      "name" : "light-paused",
+      "ongoing" : 1,
+      "sample" : "paused",
+      "tiles" : [
+        {
+          "accessibility" : "下载已暂停，演示材料.zip",
+          "accessibilityValue" : "42%",
+          "dark" : true,
+          "drawing" : "ring",
+          "ended" : false,
+          "frame" : {
+            "height" : 120,
+            "width" : 124,
+            "x" : 90.5,
+            "y" : 14
+          },
+          "id" : 850,
+          "kind" : "activity",
+          "layerChildren" : [
+            {
+              "animations" : [
+
+              ],
+              "hidden" : false,
+              "strokeEnd" : 1
+            },
+            {
+              "animations" : [
+
+              ],
+              "hidden" : false,
+              "strokeEnd" : 0.41999999999999998
+            },
+            {
+              "animations" : [
+
+              ],
+              "hidden" : true,
+              "strokeEnd" : 1
+            }
+          ],
+          "naturalQuantityWidth" : 23.83609065413475,
+          "partFrame" : {
+            "height" : 14,
+            "width" : 14,
+            "x" : 100,
+            "y" : 96
+          },
+          "partHidden" : false,
+          "partQuantity" : "fraction(0.42)",
+          "paused" : true,
+          "quantity" : "fraction(0.42)",
+          "quantityAvailableWidth" : 86,
+          "quantityText" : "42%",
+          "renderedQuantityText" : "42%",
+          "renderedQuantityWidth" : 23.83609065413475,
+          "shelf" : null,
+          "stale" : false,
+          "subtitle" : "演示材料.zip",
+          "title" : "下载已暂停",
+          "tooltip" : "下载已暂停\n演示材料.zip"
+        }
+      ],
+      "visible" : false,
+      "width" : 305,
+      "windows" : 0
+    },
+    {
+      "active" : false,
+      "alpha" : 0,
+      "canvasDark" : true,
+      "completions" : 1,
+      "height" : 175.5,
+      "name" : "light-ended",
+      "ongoing" : 1,
+      "sample" : "ended",
+      "tiles" : [
+        {
+          "accessibility" : "下载已完成，演示材料.zip",
+          "accessibilityValue" : "100%",
+          "dark" : true,
+          "drawing" : "ring",
+          "ended" : true,
+          "frame" : {
+            "height" : 120,
+            "width" : 124,
+            "x" : 90.5,
+            "y" : 14
+          },
+          "id" : 850,
+          "kind" : "activity",
+          "layerChildren" : [
+            {
+              "animations" : [
+
+              ],
+              "hidden" : false,
+              "strokeEnd" : 1
+            },
+            {
+              "animations" : [
+
+              ],
+              "hidden" : false,
+              "strokeEnd" : 1
+            },
+            {
+              "animations" : [
+
+              ],
+              "hidden" : true,
+              "strokeEnd" : 1
+            }
+          ],
+          "naturalQuantityWidth" : 31.030901938676834,
+          "partFrame" : {
+            "height" : 14,
+            "width" : 14,
+            "x" : 100,
+            "y" : 96
+          },
+          "partHidden" : false,
+          "partQuantity" : "fraction(1.0)",
+          "paused" : false,
+          "quantity" : "fraction(1.0)",
+          "quantityAvailableWidth" : 86,
+          "quantityText" : "100%",
+          "renderedQuantityText" : "100%",
+          "renderedQuantityWidth" : 31.030901938676834,
+          "shelf" : null,
+          "stale" : false,
+          "subtitle" : "演示材料.zip",
+          "title" : "下载已完成",
+          "tooltip" : "下载已完成\n演示材料.zip"
+        }
+      ],
+      "visible" : false,
+      "width" : 305,
+      "windows" : 0
+    },
+    {
+      "active" : false,
+      "alpha" : 0,
+      "canvasDark" : true,
+      "completions" : 1,
+      "height" : 175.5,
+      "name" : "light-stale",
+      "ongoing" : 1,
+      "sample" : "stale",
+      "tiles" : [
+        {
+          "accessibility" : "正在下载，演示材料.zip，可能已停",
+          "accessibilityValue" : "42%",
+          "dark" : true,
+          "drawing" : "ring",
+          "ended" : false,
+          "frame" : {
+            "height" : 120,
+            "width" : 124,
+            "x" : 90.5,
+            "y" : 14
+          },
+          "id" : 850,
+          "kind" : "activity",
+          "layerChildren" : [
+            {
+              "animations" : [
+
+              ],
+              "hidden" : false,
+              "strokeEnd" : 1
+            },
+            {
+              "animations" : [
+
+              ],
+              "hidden" : false,
+              "strokeEnd" : 0.41999999999999998
+            },
+            {
+              "animations" : [
+
+              ],
+              "hidden" : true,
+              "strokeEnd" : 1
+            }
+          ],
+          "naturalQuantityWidth" : 23.83609065413475,
+          "partFrame" : {
+            "height" : 14,
+            "width" : 14,
+            "x" : 100,
+            "y" : 96
+          },
+          "partHidden" : false,
+          "partQuantity" : "fraction(0.42)",
+          "paused" : false,
+          "quantity" : "fraction(0.42)",
+          "quantityAvailableWidth" : 86,
+          "quantityText" : "42%",
+          "renderedQuantityText" : "42%",
+          "renderedQuantityWidth" : 23.83609065413475,
+          "shelf" : null,
+          "stale" : true,
+          "subtitle" : "演示材料.zip",
+          "title" : "正在下载",
+          "tooltip" : "正在下载\n演示材料.zip"
+        }
+      ],
+      "visible" : false,
+      "width" : 305,
+      "windows" : 0
+    },
+    {
+      "active" : false,
+      "alpha" : 0,
+      "canvasDark" : true,
+      "completions" : 1,
+      "height" : 175.5,
+      "name" : "light-long",
+      "ongoing" : 1,
+      "sample" : "long",
+      "tiles" : [
+        {
+          "accessibility" : "正在下载，WindowShade_设计评审_最终材料_外…",
+          "accessibilityValue" : "42%",
+          "dark" : true,
+          "drawing" : "ring",
+          "ended" : false,
+          "frame" : {
+            "height" : 120,
+            "width" : 124,
+            "x" : 90.5,
+            "y" : 14
+          },
+          "id" : 850,
+          "kind" : "activity",
+          "layerChildren" : [
+            {
+              "animations" : [
+
+              ],
+              "hidden" : false,
+              "strokeEnd" : 1
+            },
+            {
+              "animations" : [
+
+              ],
+              "hidden" : false,
+              "strokeEnd" : 0.41999999999999998
+            },
+            {
+              "animations" : [
+
+              ],
+              "hidden" : true,
+              "strokeEnd" : 1
+            }
+          ],
+          "naturalQuantityWidth" : 23.83609065413475,
+          "partFrame" : {
+            "height" : 14,
+            "width" : 14,
+            "x" : 100,
+            "y" : 96
+          },
+          "partHidden" : false,
+          "partQuantity" : "fraction(0.42)",
+          "paused" : false,
+          "quantity" : "fraction(0.42)",
+          "quantityAvailableWidth" : 86,
+          "quantityText" : "42%",
+          "renderedQuantityText" : "42%",
+          "renderedQuantityWidth" : 23.83609065413475,
+          "shelf" : null,
+          "stale" : false,
+          "subtitle" : "WindowShade_设计评审_最终材料_外观与动作检查外观与动作检查外观与动作检查外观与动作检查外观与动作检查外观与动作检查外观与动作检查外观与动作检查外观与动作检查外观与动作检查外观与动作检查外观与动作检查.zip",
+          "title" : "正在下载",
+          "tooltip" : "正在下载\nWindowShade_设计评审_最终材料_外观与动作检查外观与动作检查外观与动作检查外观与动作检查外观与动作检查外观与动作检查外观与动作检查外观与动作检查外观与动作检查外观与动作检查外观与动作检查外观与动作检查.zip"
+        }
+      ],
+      "visible" : false,
+      "width" : 305,
+      "windows" : 0
+    },
+    {
+      "active" : false,
+      "alpha" : 0,
+      "canvasDark" : true,
+      "completions" : 1,
+      "height" : 175.5,
+      "name" : "light-three",
+      "ongoing" : 3,
+      "sample" : "three",
+      "tiles" : [
+        {
+          "accessibility" : "正在下载，演示材料.zip",
+          "accessibilityValue" : "42%",
+          "dark" : true,
+          "drawing" : "ring",
+          "ended" : false,
+          "frame" : {
+            "height" : 120,
+            "width" : 124,
+            "x" : 14,
+            "y" : 14
+          },
+          "id" : 850,
+          "kind" : "activity",
+          "layerChildren" : [
+            {
+              "animations" : [
+
+              ],
+              "hidden" : false,
+              "strokeEnd" : 1
+            },
+            {
+              "animations" : [
+
+              ],
+              "hidden" : false,
+              "strokeEnd" : 0.41999999999999998
+            },
+            {
+              "animations" : [
+
+              ],
+              "hidden" : true,
+              "strokeEnd" : 1
+            }
+          ],
+          "naturalQuantityWidth" : 23.83609065413475,
+          "partFrame" : {
+            "height" : 14,
+            "width" : 14,
+            "x" : 100,
+            "y" : 96
+          },
+          "partHidden" : false,
+          "partQuantity" : "fraction(0.42)",
+          "paused" : false,
+          "quantity" : "fraction(0.42)",
+          "quantityAvailableWidth" : 86,
+          "quantityText" : "42%",
+          "renderedQuantityText" : "42%",
+          "renderedQuantityWidth" : 23.83609065413475,
+          "shelf" : null,
+          "stale" : false,
+          "subtitle" : "演示材料.zip",
+          "title" : "正在下载",
+          "tooltip" : "正在下载\n演示材料.zip"
+        },
+        {
+          "accessibility" : "正在下载，演示材料.zip",
+          "accessibilityValue" : "第 2 \/ 9",
+          "dark" : true,
+          "drawing" : "countText",
+          "ended" : false,
+          "frame" : {
+            "height" : 120,
+            "width" : 124,
+            "x" : 146,
+            "y" : 14
+          },
+          "id" : 851,
+          "kind" : "activity",
+          "layerChildren" : [
+            {
+              "animations" : [
+
+              ],
+              "hidden" : true,
+              "strokeEnd" : 1
+            },
+            {
+              "animations" : [
+
+              ],
+              "hidden" : true,
+              "strokeEnd" : 0
+            },
+            {
+              "animations" : [
+
+              ],
+              "hidden" : true,
+              "strokeEnd" : 1
+            }
+          ],
+          "naturalQuantityWidth" : 37.179019648509268,
+          "partFrame" : {
+            "height" : 14,
+            "width" : 14,
+            "x" : 100,
+            "y" : 96
+          },
+          "partHidden" : true,
+          "partQuantity" : "count(2, 9)",
+          "paused" : false,
+          "quantity" : "count(2, 9)",
+          "quantityAvailableWidth" : 104,
+          "quantityText" : "第 2 \/ 9",
+          "renderedQuantityText" : "第 2 \/ 9",
+          "renderedQuantityWidth" : 37.179019648509268,
+          "shelf" : null,
+          "stale" : false,
+          "subtitle" : "演示材料.zip",
+          "title" : "正在下载",
+          "tooltip" : "正在下载\n演示材料.zip"
+        },
+        {
+          "accessibility" : "正在下载，演示材料.zip",
+          "accessibilityValue" : null,
+          "dark" : true,
+          "drawing" : "spinningArc",
+          "ended" : false,
+          "frame" : {
+            "height" : 120,
+            "width" : 124,
+            "x" : 278,
+            "y" : 14
+          },
+          "id" : 852,
+          "kind" : "activity",
+          "layerChildren" : [
+            {
+              "animations" : [
+
+              ],
+              "hidden" : true,
+              "strokeEnd" : 1
+            },
+            {
+              "animations" : [
+
+              ],
+              "hidden" : true,
+              "strokeEnd" : 0
+            },
+            {
+              "animations" : [
+                "session.spin"
+              ],
+              "hidden" : false,
+              "strokeEnd" : 1
+            }
+          ],
+          "naturalQuantityWidth" : 0,
+          "partFrame" : {
+            "height" : 14,
+            "width" : 14,
+            "x" : 100,
+            "y" : 96
+          },
+          "partHidden" : false,
+          "partQuantity" : "indeterminate",
+          "paused" : false,
+          "quantity" : "indeterminate",
+          "quantityAvailableWidth" : 86,
+          "quantityText" : null,
+          "renderedQuantityText" : "",
+          "renderedQuantityWidth" : 0,
+          "shelf" : null,
+          "stale" : false,
+          "subtitle" : "演示材料.zip",
+          "title" : "正在下载",
+          "tooltip" : "正在下载\n演示材料.zip"
+        }
+      ],
+      "visible" : false,
+      "width" : 416,
+      "windows" : 0
+    },
+    {
+      "active" : false,
+      "alpha" : 0,
+      "canvasDark" : true,
+      "completions" : 1,
+      "height" : 175.5,
+      "name" : "dark-zero",
+      "ongoing" : 1,
+      "sample" : "zero",
+      "tiles" : [
+        {
+          "accessibility" : "正在下载，演示材料.zip",
+          "accessibilityValue" : "0%",
+          "dark" : true,
+          "drawing" : "ring",
+          "ended" : false,
+          "frame" : {
+            "height" : 120,
+            "width" : 124,
+            "x" : 90.5,
+            "y" : 14
+          },
+          "id" : 850,
+          "kind" : "activity",
+          "layerChildren" : [
+            {
+              "animations" : [
+
+              ],
+              "hidden" : false,
+              "strokeEnd" : 1
+            },
+            {
+              "animations" : [
+
+              ],
+              "hidden" : true,
+              "strokeEnd" : 0
+            },
+            {
+              "animations" : [
+
+              ],
+              "hidden" : true,
+              "strokeEnd" : 1
+            }
+          ],
+          "naturalQuantityWidth" : 16.641279369592667,
+          "partFrame" : {
+            "height" : 14,
+            "width" : 14,
+            "x" : 100,
+            "y" : 96
+          },
+          "partHidden" : false,
+          "partQuantity" : "fraction(0.0)",
+          "paused" : false,
+          "quantity" : "fraction(0.0)",
+          "quantityAvailableWidth" : 86,
+          "quantityText" : "0%",
+          "renderedQuantityText" : "0%",
+          "renderedQuantityWidth" : 16.641279369592667,
+          "shelf" : null,
+          "stale" : false,
+          "subtitle" : "演示材料.zip",
+          "title" : "正在下载",
+          "tooltip" : "正在下载\n演示材料.zip"
+        }
+      ],
+      "visible" : false,
+      "width" : 305,
+      "windows" : 0
+    },
+    {
+      "active" : false,
+      "alpha" : 0,
+      "canvasDark" : true,
+      "completions" : 1,
+      "height" : 175.5,
+      "name" : "dark-percent",
+      "ongoing" : 1,
+      "sample" : "percent",
+      "tiles" : [
+        {
+          "accessibility" : "正在下载，演示材料.zip",
+          "accessibilityValue" : "42%",
+          "dark" : true,
+          "drawing" : "ring",
+          "ended" : false,
+          "frame" : {
+            "height" : 120,
+            "width" : 124,
+            "x" : 90.5,
+            "y" : 14
+          },
+          "id" : 850,
+          "kind" : "activity",
+          "layerChildren" : [
+            {
+              "animations" : [
+
+              ],
+              "hidden" : false,
+              "strokeEnd" : 1
+            },
+            {
+              "animations" : [
+
+              ],
+              "hidden" : false,
+              "strokeEnd" : 0.41999999999999998
+            },
+            {
+              "animations" : [
+
+              ],
+              "hidden" : true,
+              "strokeEnd" : 1
+            }
+          ],
+          "naturalQuantityWidth" : 23.83609065413475,
+          "partFrame" : {
+            "height" : 14,
+            "width" : 14,
+            "x" : 100,
+            "y" : 96
+          },
+          "partHidden" : false,
+          "partQuantity" : "fraction(0.42)",
+          "paused" : false,
+          "quantity" : "fraction(0.42)",
+          "quantityAvailableWidth" : 86,
+          "quantityText" : "42%",
+          "renderedQuantityText" : "42%",
+          "renderedQuantityWidth" : 23.83609065413475,
+          "shelf" : null,
+          "stale" : false,
+          "subtitle" : "演示材料.zip",
+          "title" : "正在下载",
+          "tooltip" : "正在下载\n演示材料.zip"
+        }
+      ],
+      "visible" : false,
+      "width" : 305,
+      "windows" : 0
+    },
+    {
+      "active" : false,
+      "alpha" : 0,
+      "canvasDark" : true,
+      "completions" : 1,
+      "height" : 175.5,
+      "name" : "dark-complete-value",
+      "ongoing" : 1,
+      "sample" : "complete-value",
+      "tiles" : [
+        {
+          "accessibility" : "正在下载，演示材料.zip",
+          "accessibilityValue" : "100%",
+          "dark" : true,
+          "drawing" : "ring",
+          "ended" : false,
+          "frame" : {
+            "height" : 120,
+            "width" : 124,
+            "x" : 90.5,
+            "y" : 14
+          },
+          "id" : 850,
+          "kind" : "activity",
+          "layerChildren" : [
+            {
+              "animations" : [
+
+              ],
+              "hidden" : false,
+              "strokeEnd" : 1
+            },
+            {
+              "animations" : [
+
+              ],
+              "hidden" : false,
+              "strokeEnd" : 1
+            },
+            {
+              "animations" : [
+
+              ],
+              "hidden" : true,
+              "strokeEnd" : 1
+            }
+          ],
+          "naturalQuantityWidth" : 31.030901938676834,
+          "partFrame" : {
+            "height" : 14,
+            "width" : 14,
+            "x" : 100,
+            "y" : 96
+          },
+          "partHidden" : false,
+          "partQuantity" : "fraction(1.0)",
+          "paused" : false,
+          "quantity" : "fraction(1.0)",
+          "quantityAvailableWidth" : 86,
+          "quantityText" : "100%",
+          "renderedQuantityText" : "100%",
+          "renderedQuantityWidth" : 31.030901938676834,
+          "shelf" : null,
+          "stale" : false,
+          "subtitle" : "演示材料.zip",
+          "title" : "正在下载",
+          "tooltip" : "正在下载\n演示材料.zip"
+        }
+      ],
+      "visible" : false,
+      "width" : 305,
+      "windows" : 0
+    },
+    {
+      "active" : false,
+      "alpha" : 0,
+      "canvasDark" : true,
+      "completions" : 1,
+      "height" : 175.5,
+      "name" : "dark-count",
+      "ongoing" : 1,
+      "sample" : "count",
+      "tiles" : [
+        {
+          "accessibility" : "正在下载，演示材料.zip",
+          "accessibilityValue" : "第 2 \/ 9",
+          "dark" : true,
+          "drawing" : "countText",
+          "ended" : false,
+          "frame" : {
+            "height" : 120,
+            "width" : 124,
+            "x" : 90.5,
+            "y" : 14
+          },
+          "id" : 850,
+          "kind" : "activity",
+          "layerChildren" : [
+            {
+              "animations" : [
+
+              ],
+              "hidden" : true,
+              "strokeEnd" : 1
+            },
+            {
+              "animations" : [
+
+              ],
+              "hidden" : true,
+              "strokeEnd" : 0
+            },
+            {
+              "animations" : [
+
+              ],
+              "hidden" : true,
+              "strokeEnd" : 1
+            }
+          ],
+          "naturalQuantityWidth" : 37.179019648509268,
+          "partFrame" : {
+            "height" : 14,
+            "width" : 14,
+            "x" : 100,
+            "y" : 96
+          },
+          "partHidden" : true,
+          "partQuantity" : "count(2, 9)",
+          "paused" : false,
+          "quantity" : "count(2, 9)",
+          "quantityAvailableWidth" : 104,
+          "quantityText" : "第 2 \/ 9",
+          "renderedQuantityText" : "第 2 \/ 9",
+          "renderedQuantityWidth" : 37.179019648509268,
+          "shelf" : null,
+          "stale" : false,
+          "subtitle" : "演示材料.zip",
+          "title" : "正在下载",
+          "tooltip" : "正在下载\n演示材料.zip"
+        }
+      ],
+      "visible" : false,
+      "width" : 305,
+      "windows" : 0
+    },
+    {
+      "active" : false,
+      "alpha" : 0,
+      "canvasDark" : true,
+      "completions" : 1,
+      "height" : 175.5,
+      "name" : "dark-large-count",
+      "ongoing" : 1,
+      "sample" : "large-count",
+      "tiles" : [
+        {
+          "accessibility" : "正在下载，演示材料.zip",
+          "accessibilityValue" : "第 999 \/ 1000",
+          "dark" : true,
+          "drawing" : "countText",
+          "ended" : false,
+          "frame" : {
+            "height" : 120,
+            "width" : 124,
+            "x" : 90.5,
+            "y" : 14
+          },
+          "id" : 850,
+          "kind" : "activity",
+          "layerChildren" : [
+            {
+              "animations" : [
+
+              ],
+              "hidden" : true,
+              "strokeEnd" : 1
+            },
+            {
+              "animations" : [
+
+              ],
+              "hidden" : true,
+              "strokeEnd" : 0
+            },
+            {
+              "animations" : [
+
+              ],
+              "hidden" : true,
+              "strokeEnd" : 1
+            }
+          ],
+          "naturalQuantityWidth" : 73.153076071219687,
+          "partFrame" : {
+            "height" : 14,
+            "width" : 14,
+            "x" : 100,
+            "y" : 96
+          },
+          "partHidden" : true,
+          "partQuantity" : "count(999, 1000)",
+          "paused" : false,
+          "quantity" : "count(999, 1000)",
+          "quantityAvailableWidth" : 104,
+          "quantityText" : "第 999 \/ 1000",
+          "renderedQuantityText" : "第 999 \/ 1000",
+          "renderedQuantityWidth" : 73.153076071219687,
+          "shelf" : null,
+          "stale" : false,
+          "subtitle" : "演示材料.zip",
+          "title" : "正在下载",
+          "tooltip" : "正在下载\n演示材料.zip"
+        }
+      ],
+      "visible" : false,
+      "width" : 305,
+      "windows" : 0
+    },
+    {
+      "active" : false,
+      "alpha" : 0,
+      "canvasDark" : true,
+      "completions" : 1,
+      "height" : 175.5,
+      "name" : "dark-huge-count",
+      "ongoing" : 1,
+      "sample" : "huge-count",
+      "tiles" : [
+        {
+          "accessibility" : "正在下载，演示材料.zip",
+          "accessibilityValue" : "第 999999 \/ 1000000",
+          "dark" : true,
+          "drawing" : "countText",
+          "ended" : false,
+          "frame" : {
+            "height" : 120,
+            "width" : 124,
+            "x" : 90.5,
+            "y" : 14
+          },
+          "id" : 850,
+          "kind" : "activity",
+          "layerChildren" : [
+            {
+              "animations" : [
+
+              ],
+              "hidden" : true,
+              "strokeEnd" : 1
+            },
+            {
+              "animations" : [
+
+              ],
+              "hidden" : true,
+              "strokeEnd" : 0
+            },
+            {
+              "animations" : [
+
+              ],
+              "hidden" : true,
+              "strokeEnd" : 1
+            }
+          ],
+          "naturalQuantityWidth" : 116.32194377847219,
+          "partFrame" : {
+            "height" : 14,
+            "width" : 14,
+            "x" : 100,
+            "y" : 96
+          },
+          "partHidden" : true,
+          "partQuantity" : "count(999999, 1000000)",
+          "paused" : false,
+          "quantity" : "count(999999, 1000000)",
+          "quantityAvailableWidth" : 104,
+          "quantityText" : "第 999999 \/ 1000000",
+          "renderedQuantityText" : "999999\/1000000",
+          "renderedQuantityWidth" : 97.878102600574493,
+          "shelf" : null,
+          "stale" : false,
+          "subtitle" : "演示材料.zip",
+          "title" : "正在下载",
+          "tooltip" : "正在下载\n演示材料.zip"
+        }
+      ],
+      "visible" : false,
+      "width" : 305,
+      "windows" : 0
+    },
+    {
+      "active" : false,
+      "alpha" : 0,
+      "canvasDark" : true,
+      "completions" : 1,
+      "height" : 175.5,
+      "name" : "dark-indeterminate",
+      "ongoing" : 1,
+      "sample" : "indeterminate",
+      "tiles" : [
+        {
+          "accessibility" : "正在下载，演示材料.zip",
+          "accessibilityValue" : null,
+          "dark" : true,
+          "drawing" : "spinningArc",
+          "ended" : false,
+          "frame" : {
+            "height" : 120,
+            "width" : 124,
+            "x" : 90.5,
+            "y" : 14
+          },
+          "id" : 850,
+          "kind" : "activity",
+          "layerChildren" : [
+            {
+              "animations" : [
+
+              ],
+              "hidden" : true,
+              "strokeEnd" : 1
+            },
+            {
+              "animations" : [
+
+              ],
+              "hidden" : true,
+              "strokeEnd" : 0
+            },
+            {
+              "animations" : [
+                "session.spin"
+              ],
+              "hidden" : false,
+              "strokeEnd" : 1
+            }
+          ],
+          "naturalQuantityWidth" : 0,
+          "partFrame" : {
+            "height" : 14,
+            "width" : 14,
+            "x" : 100,
+            "y" : 96
+          },
+          "partHidden" : false,
+          "partQuantity" : "indeterminate",
+          "paused" : false,
+          "quantity" : "indeterminate",
+          "quantityAvailableWidth" : 86,
+          "quantityText" : null,
+          "renderedQuantityText" : "",
+          "renderedQuantityWidth" : 0,
+          "shelf" : null,
+          "stale" : false,
+          "subtitle" : "演示材料.zip",
+          "title" : "正在下载",
+          "tooltip" : "正在下载\n演示材料.zip"
+        }
+      ],
+      "visible" : false,
+      "width" : 305,
+      "windows" : 0
+    },
+    {
+      "active" : false,
+      "alpha" : 0,
+      "canvasDark" : true,
+      "completions" : 1,
+      "height" : 175.5,
+      "name" : "dark-unknown",
+      "ongoing" : 1,
+      "sample" : "unknown",
+      "tiles" : [
+        {
+          "accessibility" : "正在下载，演示材料.zip",
+          "accessibilityValue" : null,
+          "dark" : true,
+          "drawing" : "none",
+          "ended" : false,
+          "frame" : {
+            "height" : 120,
+            "width" : 124,
+            "x" : 90.5,
+            "y" : 14
+          },
+          "id" : 850,
+          "kind" : "activity",
+          "layerChildren" : [
+            {
+              "animations" : [
+
+              ],
+              "hidden" : true,
+              "strokeEnd" : 1
+            },
+            {
+              "animations" : [
+
+              ],
+              "hidden" : true,
+              "strokeEnd" : 0
+            },
+            {
+              "animations" : [
+
+              ],
+              "hidden" : true,
+              "strokeEnd" : 1
+            }
+          ],
+          "naturalQuantityWidth" : 0,
+          "partFrame" : {
+            "height" : 14,
+            "width" : 14,
+            "x" : -24,
+            "y" : -24
+          },
+          "partHidden" : true,
+          "partQuantity" : "unknown",
+          "paused" : false,
+          "quantity" : "unknown",
+          "quantityAvailableWidth" : 104,
+          "quantityText" : null,
+          "renderedQuantityText" : "",
+          "renderedQuantityWidth" : 0,
+          "shelf" : null,
+          "stale" : false,
+          "subtitle" : "演示材料.zip",
+          "title" : "正在下载",
+          "tooltip" : "正在下载\n演示材料.zip"
+        }
+      ],
+      "visible" : false,
+      "width" : 305,
+      "windows" : 0
+    },
+    {
+      "active" : false,
+      "alpha" : 0,
+      "canvasDark" : true,
+      "completions" : 1,
+      "height" : 175.5,
+      "name" : "dark-paused",
+      "ongoing" : 1,
+      "sample" : "paused",
+      "tiles" : [
+        {
+          "accessibility" : "下载已暂停，演示材料.zip",
+          "accessibilityValue" : "42%",
+          "dark" : true,
+          "drawing" : "ring",
+          "ended" : false,
+          "frame" : {
+            "height" : 120,
+            "width" : 124,
+            "x" : 90.5,
+            "y" : 14
+          },
+          "id" : 850,
+          "kind" : "activity",
+          "layerChildren" : [
+            {
+              "animations" : [
+
+              ],
+              "hidden" : false,
+              "strokeEnd" : 1
+            },
+            {
+              "animations" : [
+
+              ],
+              "hidden" : false,
+              "strokeEnd" : 0.41999999999999998
+            },
+            {
+              "animations" : [
+
+              ],
+              "hidden" : true,
+              "strokeEnd" : 1
+            }
+          ],
+          "naturalQuantityWidth" : 23.83609065413475,
+          "partFrame" : {
+            "height" : 14,
+            "width" : 14,
+            "x" : 100,
+            "y" : 96
+          },
+          "partHidden" : false,
+          "partQuantity" : "fraction(0.42)",
+          "paused" : true,
+          "quantity" : "fraction(0.42)",
+          "quantityAvailableWidth" : 86,
+          "quantityText" : "42%",
+          "renderedQuantityText" : "42%",
+          "renderedQuantityWidth" : 23.83609065413475,
+          "shelf" : null,
+          "stale" : false,
+          "subtitle" : "演示材料.zip",
+          "title" : "下载已暂停",
+          "tooltip" : "下载已暂停\n演示材料.zip"
+        }
+      ],
+      "visible" : false,
+      "width" : 305,
+      "windows" : 0
+    },
+    {
+      "active" : false,
+      "alpha" : 0,
+      "canvasDark" : true,
+      "completions" : 1,
+      "height" : 175.5,
+      "name" : "dark-ended",
+      "ongoing" : 1,
+      "sample" : "ended",
+      "tiles" : [
+        {
+          "accessibility" : "下载已完成，演示材料.zip",
+          "accessibilityValue" : "100%",
+          "dark" : true,
+          "drawing" : "ring",
+          "ended" : true,
+          "frame" : {
+            "height" : 120,
+            "width" : 124,
+            "x" : 90.5,
+            "y" : 14
+          },
+          "id" : 850,
+          "kind" : "activity",
+          "layerChildren" : [
+            {
+              "animations" : [
+
+              ],
+              "hidden" : false,
+              "strokeEnd" : 1
+            },
+            {
+              "animations" : [
+
+              ],
+              "hidden" : false,
+              "strokeEnd" : 1
+            },
+            {
+              "animations" : [
+
+              ],
+              "hidden" : true,
+              "strokeEnd" : 1
+            }
+          ],
+          "naturalQuantityWidth" : 31.030901938676834,
+          "partFrame" : {
+            "height" : 14,
+            "width" : 14,
+            "x" : 100,
+            "y" : 96
+          },
+          "partHidden" : false,
+          "partQuantity" : "fraction(1.0)",
+          "paused" : false,
+          "quantity" : "fraction(1.0)",
+          "quantityAvailableWidth" : 86,
+          "quantityText" : "100%",
+          "renderedQuantityText" : "100%",
+          "renderedQuantityWidth" : 31.030901938676834,
+          "shelf" : null,
+          "stale" : false,
+          "subtitle" : "演示材料.zip",
+          "title" : "下载已完成",
+          "tooltip" : "下载已完成\n演示材料.zip"
+        }
+      ],
+      "visible" : false,
+      "width" : 305,
+      "windows" : 0
+    },
+    {
+      "active" : false,
+      "alpha" : 0,
+      "canvasDark" : true,
+      "completions" : 1,
+      "height" : 175.5,
+      "name" : "dark-stale",
+      "ongoing" : 1,
+      "sample" : "stale",
+      "tiles" : [
+        {
+          "accessibility" : "正在下载，演示材料.zip，可能已停",
+          "accessibilityValue" : "42%",
+          "dark" : true,
+          "drawing" : "ring",
+          "ended" : false,
+          "frame" : {
+            "height" : 120,
+            "width" : 124,
+            "x" : 90.5,
+            "y" : 14
+          },
+          "id" : 850,
+          "kind" : "activity",
+          "layerChildren" : [
+            {
+              "animations" : [
+
+              ],
+              "hidden" : false,
+              "strokeEnd" : 1
+            },
+            {
+              "animations" : [
+
+              ],
+              "hidden" : false,
+              "strokeEnd" : 0.41999999999999998
+            },
+            {
+              "animations" : [
+
+              ],
+              "hidden" : true,
+              "strokeEnd" : 1
+            }
+          ],
+          "naturalQuantityWidth" : 23.83609065413475,
+          "partFrame" : {
+            "height" : 14,
+            "width" : 14,
+            "x" : 100,
+            "y" : 96
+          },
+          "partHidden" : false,
+          "partQuantity" : "fraction(0.42)",
+          "paused" : false,
+          "quantity" : "fraction(0.42)",
+          "quantityAvailableWidth" : 86,
+          "quantityText" : "42%",
+          "renderedQuantityText" : "42%",
+          "renderedQuantityWidth" : 23.83609065413475,
+          "shelf" : null,
+          "stale" : true,
+          "subtitle" : "演示材料.zip",
+          "title" : "正在下载",
+          "tooltip" : "正在下载\n演示材料.zip"
+        }
+      ],
+      "visible" : false,
+      "width" : 305,
+      "windows" : 0
+    },
+    {
+      "active" : false,
+      "alpha" : 0,
+      "canvasDark" : true,
+      "completions" : 1,
+      "height" : 175.5,
+      "name" : "dark-long",
+      "ongoing" : 1,
+      "sample" : "long",
+      "tiles" : [
+        {
+          "accessibility" : "正在下载，WindowShade_设计评审_最终材料_外…",
+          "accessibilityValue" : "42%",
+          "dark" : true,
+          "drawing" : "ring",
+          "ended" : false,
+          "frame" : {
+            "height" : 120,
+            "width" : 124,
+            "x" : 90.5,
+            "y" : 14
+          },
+          "id" : 850,
+          "kind" : "activity",
+          "layerChildren" : [
+            {
+              "animations" : [
+
+              ],
+              "hidden" : false,
+              "strokeEnd" : 1
+            },
+            {
+              "animations" : [
+
+              ],
+              "hidden" : false,
+              "strokeEnd" : 0.41999999999999998
+            },
+            {
+              "animations" : [
+
+              ],
+              "hidden" : true,
+              "strokeEnd" : 1
+            }
+          ],
+          "naturalQuantityWidth" : 23.83609065413475,
+          "partFrame" : {
+            "height" : 14,
+            "width" : 14,
+            "x" : 100,
+            "y" : 96
+          },
+          "partHidden" : false,
+          "partQuantity" : "fraction(0.42)",
+          "paused" : false,
+          "quantity" : "fraction(0.42)",
+          "quantityAvailableWidth" : 86,
+          "quantityText" : "42%",
+          "renderedQuantityText" : "42%",
+          "renderedQuantityWidth" : 23.83609065413475,
+          "shelf" : null,
+          "stale" : false,
+          "subtitle" : "WindowShade_设计评审_最终材料_外观与动作检查外观与动作检查外观与动作检查外观与动作检查外观与动作检查外观与动作检查外观与动作检查外观与动作检查外观与动作检查外观与动作检查外观与动作检查外观与动作检查.zip",
+          "title" : "正在下载",
+          "tooltip" : "正在下载\nWindowShade_设计评审_最终材料_外观与动作检查外观与动作检查外观与动作检查外观与动作检查外观与动作检查外观与动作检查外观与动作检查外观与动作检查外观与动作检查外观与动作检查外观与动作检查外观与动作检查.zip"
+        }
+      ],
+      "visible" : false,
+      "width" : 305,
+      "windows" : 0
+    },
+    {
+      "active" : false,
+      "alpha" : 0,
+      "canvasDark" : true,
+      "completions" : 1,
+      "height" : 175.5,
+      "name" : "dark-three",
+      "ongoing" : 3,
+      "sample" : "three",
+      "tiles" : [
+        {
+          "accessibility" : "正在下载，演示材料.zip",
+          "accessibilityValue" : "42%",
+          "dark" : true,
+          "drawing" : "ring",
+          "ended" : false,
+          "frame" : {
+            "height" : 120,
+            "width" : 124,
+            "x" : 14,
+            "y" : 14
+          },
+          "id" : 850,
+          "kind" : "activity",
+          "layerChildren" : [
+            {
+              "animations" : [
+
+              ],
+              "hidden" : false,
+              "strokeEnd" : 1
+            },
+            {
+              "animations" : [
+
+              ],
+              "hidden" : false,
+              "strokeEnd" : 0.41999999999999998
+            },
+            {
+              "animations" : [
+
+              ],
+              "hidden" : true,
+              "strokeEnd" : 1
+            }
+          ],
+          "naturalQuantityWidth" : 23.83609065413475,
+          "partFrame" : {
+            "height" : 14,
+            "width" : 14,
+            "x" : 100,
+            "y" : 96
+          },
+          "partHidden" : false,
+          "partQuantity" : "fraction(0.42)",
+          "paused" : false,
+          "quantity" : "fraction(0.42)",
+          "quantityAvailableWidth" : 86,
+          "quantityText" : "42%",
+          "renderedQuantityText" : "42%",
+          "renderedQuantityWidth" : 23.83609065413475,
+          "shelf" : null,
+          "stale" : false,
+          "subtitle" : "演示材料.zip",
+          "title" : "正在下载",
+          "tooltip" : "正在下载\n演示材料.zip"
+        },
+        {
+          "accessibility" : "正在下载，演示材料.zip",
+          "accessibilityValue" : "第 2 \/ 9",
+          "dark" : true,
+          "drawing" : "countText",
+          "ended" : false,
+          "frame" : {
+            "height" : 120,
+            "width" : 124,
+            "x" : 146,
+            "y" : 14
+          },
+          "id" : 851,
+          "kind" : "activity",
+          "layerChildren" : [
+            {
+              "animations" : [
+
+              ],
+              "hidden" : true,
+              "strokeEnd" : 1
+            },
+            {
+              "animations" : [
+
+              ],
+              "hidden" : true,
+              "strokeEnd" : 0
+            },
+            {
+              "animations" : [
+
+              ],
+              "hidden" : true,
+              "strokeEnd" : 1
+            }
+          ],
+          "naturalQuantityWidth" : 37.179019648509268,
+          "partFrame" : {
+            "height" : 14,
+            "width" : 14,
+            "x" : 100,
+            "y" : 96
+          },
+          "partHidden" : true,
+          "partQuantity" : "count(2, 9)",
+          "paused" : false,
+          "quantity" : "count(2, 9)",
+          "quantityAvailableWidth" : 104,
+          "quantityText" : "第 2 \/ 9",
+          "renderedQuantityText" : "第 2 \/ 9",
+          "renderedQuantityWidth" : 37.179019648509268,
+          "shelf" : null,
+          "stale" : false,
+          "subtitle" : "演示材料.zip",
+          "title" : "正在下载",
+          "tooltip" : "正在下载\n演示材料.zip"
+        },
+        {
+          "accessibility" : "正在下载，演示材料.zip",
+          "accessibilityValue" : null,
+          "dark" : true,
+          "drawing" : "spinningArc",
+          "ended" : false,
+          "frame" : {
+            "height" : 120,
+            "width" : 124,
+            "x" : 278,
+            "y" : 14
+          },
+          "id" : 852,
+          "kind" : "activity",
+          "layerChildren" : [
+            {
+              "animations" : [
+
+              ],
+              "hidden" : true,
+              "strokeEnd" : 1
+            },
+            {
+              "animations" : [
+
+              ],
+              "hidden" : true,
+              "strokeEnd" : 0
+            },
+            {
+              "animations" : [
+                "session.spin"
+              ],
+              "hidden" : false,
+              "strokeEnd" : 1
+            }
+          ],
+          "naturalQuantityWidth" : 0,
+          "partFrame" : {
+            "height" : 14,
+            "width" : 14,
+            "x" : 100,
+            "y" : 96
+          },
+          "partHidden" : false,
+          "partQuantity" : "indeterminate",
+          "paused" : false,
+          "quantity" : "indeterminate",
+          "quantityAvailableWidth" : 86,
+          "quantityText" : null,
+          "renderedQuantityText" : "",
+          "renderedQuantityWidth" : 0,
+          "shelf" : null,
+          "stale" : false,
+          "subtitle" : "演示材料.zip",
+          "title" : "正在下载",
+          "tooltip" : "正在下载\n演示材料.zip"
+        }
+      ],
+      "visible" : false,
+      "width" : 416,
+      "windows" : 0
+    }
+  ],
+  "sourceControllers" : 0
+}

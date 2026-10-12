@@ -10,7 +10,7 @@
 - 仲裁与呈现：[design-grammar.md](design-grammar.md)、[blueprint.md](blueprint.md) 的「刘海此刻听谁的」。
 - 名额与数据结构：`prototype/Core/NotchActivities.swift`（最多三条、`progress` 可以为 `nil`、`generation` 防复活）。
 - 文案：本文的候选句还没进 [copy-guide.md](copy-guide.md) 的固定词表；真正进界面前按那份规则过一遍。
-- 画面：还没有「进度」那张稿。动手做界面前先出稿，并过 [design-grammar.md](design-grammar.md) 的准入。
+- 画面：2026-10-11已补[进度静态稿](design-drafts/进度.md)，过了文法的有限准入；三种量/三条共存/大项数真实视图样件，来源、紧凑新样件、动势和硬件仍未验。原planned来源不会因此晋级。
 
 ## 一句话与范围
 

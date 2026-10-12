@@ -1,0 +1,204 @@
+[
+  {
+    "extensionPreserved" : true,
+    "lines" : [
+      "样件文件7.txt"
+    ],
+    "maxLines" : 1,
+    "name" : "样件文件7.txt",
+    "passed" : true,
+    "widths" : [
+      67.333034411478593
+    ]
+  },
+  {
+    "extensionPreserved" : true,
+    "lines" : [
+      "long-fi…-.txt"
+    ],
+    "maxLines" : 1,
+    "name" : "long-file-name-long-file-name-long-file-name-long-file-name-long-file-name-long-file-name-long-file-name-long-file-name-long-file-name-long-file-name-.txt",
+    "passed" : true,
+    "widths" : [
+      65.763671875
+    ]
+  },
+  {
+    "extensionPreserved" : true,
+    "lines" : [
+      "WWW….pdf"
+    ],
+    "maxLines" : 1,
+    "name" : "WWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWW.pdf",
+    "passed" : true,
+    "widths" : [
+      60.94580078125
+    ]
+  },
+  {
+    "extensionPreserved" : true,
+    "lines" : [
+      "字👨‍👩‍👧‍👦字….txt"
+    ],
+    "maxLines" : 1,
+    "name" : "字👨‍👩‍👧‍👦字👨‍👩‍👧‍👦字👨‍👩‍👧‍👦字👨‍👩‍👧‍👦字👨‍👩‍👧‍👦字👨‍👩‍👧‍👦字👨‍👩‍👧‍👦字👨‍👩‍👧‍👦.txt",
+    "passed" : true,
+    "widths" : [
+      63.856946893239297
+    ]
+  },
+  {
+    "extensionPreserved" : true,
+    "lines" : [
+      "很长….pages"
+    ],
+    "maxLines" : 1,
+    "name" : "很长的文件名很长的文件名很长的文件名很长的文件名很长的文件名很长的文件名很长的文件名很长的文件名很长的文件名很长的文件名很长的文件名很长的文件名.pages",
+    "passed" : true,
+    "widths" : [
+      65.968275018239297
+    ]
+  },
+  {
+    "extensionPreserved" : true,
+    "lines" : [
+      "MMMM…MM"
+    ],
+    "maxLines" : 1,
+    "name" : "MMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMM",
+    "passed" : true,
+    "widths" : [
+      66.98828125
+    ]
+  },
+  {
+    "extensionPreserved" : true,
+    "lines" : [
+      ".gitignore"
+    ],
+    "maxLines" : 1,
+    "name" : ".gitignore",
+    "passed" : true,
+    "widths" : [
+      49.76318359375
+    ]
+  },
+  {
+    "extensionPreserved" : true,
+    "lines" : [
+      "a b.txt"
+    ],
+    "maxLines" : 1,
+    "name" : "a\nb.txt",
+    "passed" : true,
+    "widths" : [
+      33.0751953125
+    ]
+  },
+  {
+    "extensionPreserved" : true,
+    "lines" : [
+      "样件文件7.txt"
+    ],
+    "maxLines" : 2,
+    "name" : "样件文件7.txt",
+    "passed" : true,
+    "widths" : [
+      67.333034411478593
+    ]
+  },
+  {
+    "extensionPreserved" : true,
+    "lines" : [
+      "long-file-na",
+      "…-name-.txt"
+    ],
+    "maxLines" : 2,
+    "name" : "long-file-name-long-file-name-long-file-name-long-file-name-long-file-name-long-file-name-long-file-name-long-file-name-long-file-name-long-file-name-.txt",
+    "passed" : true,
+    "widths" : [
+      61.59033203125,
+      65.09228515625
+    ]
+  },
+  {
+    "extensionPreserved" : true,
+    "lines" : [
+      "WWWWWW",
+      "…WWW.pdf"
+    ],
+    "maxLines" : 2,
+    "name" : "WWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWW.pdf",
+    "passed" : true,
+    "widths" : [
+      64.259765625,
+      59.87158203125
+    ]
+  },
+  {
+    "extensionPreserved" : true,
+    "lines" : [
+      "字👨‍👩‍👧‍👦字👨‍👩‍👧‍👦字",
+      "…字👨‍👩‍👧‍👦.txt"
+    ],
+    "maxLines" : 2,
+    "name" : "字👨‍👩‍👧‍👦字👨‍👩‍👧‍👦字👨‍👩‍👧‍👦字👨‍👩‍👧‍👦字👨‍👩‍👧‍👦字👨‍👩‍👧‍👦字👨‍👩‍👧‍👦字👨‍👩‍👧‍👦.txt",
+    "passed" : true,
+    "widths" : [
+      64.807392996108945,
+      52.921149227869648
+    ]
+  },
+  {
+    "extensionPreserved" : true,
+    "lines" : [
+      "很长的文件名",
+      "…件名.pages"
+    ],
+    "maxLines" : 2,
+    "name" : "很长的文件名很长的文件名很长的文件名很长的文件名很长的文件名很长的文件名很长的文件名很长的文件名很长的文件名很长的文件名很长的文件名很长的文件名.pages",
+    "passed" : true,
+    "widths" : [
+      65.614785992217904,
+      65.968275018239297
+    ]
+  },
+  {
+    "extensionPreserved" : true,
+    "lines" : [
+      "MMMMMMM",
+      "…MMMMMM"
+    ],
+    "maxLines" : 2,
+    "name" : "MMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMM",
+    "passed" : true,
+    "widths" : [
+      67.7509765625,
+      66.98828125
+    ]
+  },
+  {
+    "extensionPreserved" : true,
+    "lines" : [
+      ".gitignore"
+    ],
+    "maxLines" : 2,
+    "name" : ".gitignore",
+    "passed" : true,
+    "widths" : [
+      49.76318359375
+    ]
+  },
+  {
+    "extensionPreserved" : true,
+    "lines" : [
+      "a b.txt"
+    ],
+    "maxLines" : 2,
+    "name" : "a\nb.txt",
+    "passed" : true,
+    "widths" : [
+      33.0751953125
+    ]
+  }
+]

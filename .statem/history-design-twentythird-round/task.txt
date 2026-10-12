@@ -1,0 +1,5 @@
+WindowShade2第二十三批：按原隐私稿恢复展开说明阅读层次，先独立原生两列候选，未接产品。完整目标active。
+原稿docs/design-drafts/WindowShade读到的.html的.three：4.4em/minmax(0,1fr)、4纵/10横间距、12号正文、标签secondary/正文正常。使用12号AppKit字体、标签列宽4.4×真实字号，长标签换行，不减字、不缩字号；长正文正常换行。适配640/448/300，Aqua/dark；只表内文字，不增卡片/新主宿主/开关/事实。
+输入只tools/privacy/registry.json静态登记表，三个实际行window-ax/battery/face-identity的reads/purpose/destination/activation/toggle/combined/interfaces原字串；planned实验仅fixture，不表示默认页显示。普通说明/长说明/技术接口各覆真实字宽、字段矩形、原文完整；独立私有NSView，不实例化Page/owner/SystemValues/controllers，不触真实权限/设备/网络/文件/源/偏好，不执行动作/全局事件，自己的未显示alpha0离屏Window/NSApp.prohibited。
+DeepSeek仅新增tools/design-qa/PrivacyDetailColumnDraftPreview.swift独立候选代码，main决定布局与消费者/验收，不许改prod/docs/tests/wrapper与共享状态。先swiftc Swift6严格Cocoa-only自己的QA临时binary与实际候选PNG/JSON；编译/运行退出码及entry/registry/runner输入绑定。主模型看实际PNG、独立矩形与font/type/source事实消费，不接到生产、不称VoiceOver/可见动态/真机/Page通过。
+现有产品519身份复用22的39527全包0，当前sha必须逐项一致；本批不重跑未改prod优化。交付候选稿、实际输出/来源/限制与准入对照，后续根据真实两列小样再决定最小prod接入，不先铺其它页。

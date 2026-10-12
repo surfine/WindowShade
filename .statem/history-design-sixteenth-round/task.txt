@@ -1,0 +1,7 @@
+WindowShade2第十六批：同一助手回复视图的长内容与追加滚动验收，整体品味目标active。
+实际WS2OwnedLaunchController + 独有临时profile/project/backend（既有fixture副本增受控delta）；同一已挂载WS2OwnedSessionView，实际onChange→scheduleRender。
+检查空→长输出首次跟随、底部追加、顶部回看追加、距离末尾30与20点的24点策略；读取真实NSTextView/NSClipView位置/字体/文本容器/可见行与实际PNG，两父外观。只操纵自己样件滚动，合成stdio发送，零真实助手/账号/项目/媒体/窗口/偏好/输入/权限。
+宿主自有alpha0隐藏离屏窗口，不用Panel避免orderFront，不激活。临时子进程退出后回收，只删自己UUID目录；首次失败留证据，不盲重试。若产品缺陷明确则修并当前完整优化，否则复用14优化当前519SHA。原生入口/wrapper/生产冻结直到构建终局。
+DeepSeek只读报告独立委派失败context budget，已检查无文件改动/无checks，主模型接手；不虚报报告通过。交付源码/证据绑定、真实消费者、看图与残余边界；不签名安装提交推送发布。
+
+视觉追加：对照既有Conductor透明正文与总稿草稿r12，回复区退去系统矩形框，输入区使用12点草稿表面/细边；保原字体、100/72高度、文字与发送/组合/草稿逻辑。先实际静帧小样再判断，重新同视图追加检查与当前完整优化。不声称原稿已有完整owned表单，只沿现有表面语法。

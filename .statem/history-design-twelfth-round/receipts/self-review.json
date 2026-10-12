@@ -1,0 +1,17 @@
+{
+  "kind": "self_review",
+  "status": "residual_risk",
+  "issues_found": true,
+  "needs_evidence": false,
+  "lenses": {
+    "task_contract": "Only conflicting implementation-heavy footer deleted; short labels and full command warning preserved. Whole design goal active.",
+    "evidence_freshness": "11 sources/37 evidence hashes independently match; 519 formal/518 native identities match; actual before and after PNG observed.",
+    "edge_risk": "Original native label frame extends into host margin, actual viewport containment checked; no product layout change for QA. Static page and permission preflight only."
+  },
+  "findings": [
+    "Actual command setting contradicts deleted footer; no preference or switching behavior changed.",
+    "8-state sample contains top/bottom and off/command in both appearances; actual tooltip warning retained.",
+    "First consumer incorrect page-bound guard preserved and corrected to viewport; no count or completion inflation."
+  ],
+  "updated": "2026-10-11"
+}

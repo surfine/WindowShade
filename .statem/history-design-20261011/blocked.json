@@ -1,0 +1,9 @@
+{
+  "kind": "blocked",
+  "reason": "验收全部可达边界完成并收口：探针 33/34 + shelf-glance KNOWN-GAP 最终确认（05:36 自动执行）、两真崩溃修复实证、九套 run-final 9/9、ARB 裁决定案。启动台卸载已交付并真机验证（trashed=4 铁证）。剩余需要用户：D 批真手项、CarPlay 长按真人复验、发布授权。",
+  "missing": "①shelf-glance 格子悬停缩略图缺陷定位修复（2/2 稳定失败，--thumbnail 全过）②CarPlay 全屏长按入口需真人手指复验（合成事件不触发面板手势）③D-BATCH.md：H07 拔插、H08 断流、iPhone 音量键/App 内配对/iAP2 真机 ④legacy ARB02-08 仲裁语义裁决 ⑤发布等授权。",
+  "owner": "主模型已交付全部可独立完成部分；上述需用户二选一：给 ZCode Helper 辅助功能授权（可能需重启 ZCode），或在有 AX 授权的终端跑 .build/acceptance/ 下两个脚本。",
+  "resume_state": "终树：候选 58024acb + 探针 KNOWN-GAP 对齐 + 蓝牙授权门；终回归 12/12 + iap2 + hook + 隐私 723 站点全 PASS。解锁监听会自动补 shelf-glance 最终确认（KNOWN-GAP 预期）。其余恢复入口同上。",
+  "artifact": "docs/handoff/ws2-reuse-2026-10-07/carplay.md",
+  "updated": "2026-10-11"
+}

@@ -1,0 +1,786 @@
+[
+  {
+    "activeApplication" : false,
+    "alpha" : 0,
+    "height" : 594,
+    "image" : "light-intro-stuck.png",
+    "labels" : [
+      {
+        "height" : 16,
+        "text" : "欢迎使用 WindowShade",
+        "width" : 668,
+        "x" : 26,
+        "y" : 360
+      },
+      {
+        "height" : 30,
+        "text" : "刚换 Mac？从刘海开始。",
+        "width" : 668,
+        "x" : 26,
+        "y" : 380
+      },
+      {
+        "height" : 60,
+        "text" : "按了 Windows 的快捷键没反应时，刘海说一句 Mac 上按哪一下。顺利的时候，它不出声。",
+        "width" : 668,
+        "x" : 26,
+        "y" : 418
+      },
+      {
+        "height" : 16,
+        "text" : "跳过",
+        "width" : 80,
+        "x" : 514,
+        "y" : 554
+      }
+    ],
+    "nextEnabled" : true,
+    "page" : 0,
+    "permissionQueries" : 0,
+    "preferencesWritten" : false,
+    "state" : "intro-stuck",
+    "syntheticStage" : true,
+    "visibleWindow" : false,
+    "width" : 720
+  },
+  {
+    "activeApplication" : false,
+    "alpha" : 0,
+    "height" : 594,
+    "image" : "light-intro-hint.png",
+    "labels" : [
+      {
+        "height" : 16,
+        "text" : "欢迎使用 WindowShade",
+        "width" : 668,
+        "x" : 26,
+        "y" : 360
+      },
+      {
+        "height" : 30,
+        "text" : "刚换 Mac？从刘海开始。",
+        "width" : 668,
+        "x" : 26,
+        "y" : 380
+      },
+      {
+        "height" : 60,
+        "text" : "按了 Windows 的快捷键没反应时，刘海说一句 Mac 上按哪一下。顺利的时候，它不出声。",
+        "width" : 668,
+        "x" : 26,
+        "y" : 418
+      },
+      {
+        "height" : 16,
+        "text" : "跳过",
+        "width" : 80,
+        "x" : 514,
+        "y" : 554
+      }
+    ],
+    "nextEnabled" : true,
+    "page" : 0,
+    "permissionQueries" : 0,
+    "preferencesWritten" : false,
+    "state" : "intro-hint",
+    "syntheticStage" : true,
+    "visibleWindow" : false,
+    "width" : 720
+  },
+  {
+    "activeApplication" : false,
+    "alpha" : 0,
+    "height" : 594,
+    "image" : "light-intro-no-notch.png",
+    "labels" : [
+      {
+        "height" : 16,
+        "text" : "欢迎使用 WindowShade",
+        "width" : 668,
+        "x" : 26,
+        "y" : 360
+      },
+      {
+        "height" : 30,
+        "text" : "刚换 Mac？从刘海开始。",
+        "width" : 668,
+        "x" : 26,
+        "y" : 380
+      },
+      {
+        "height" : 60,
+        "text" : "按了 Windows 的快捷键没反应时，刘海说一句 Mac 上按哪一下。顺利的时候，它不出声。",
+        "width" : 668,
+        "x" : 26,
+        "y" : 418
+      },
+      {
+        "height" : 16,
+        "text" : "跳过",
+        "width" : 80,
+        "x" : 514,
+        "y" : 554
+      }
+    ],
+    "nextEnabled" : true,
+    "page" : 0,
+    "permissionQueries" : 0,
+    "preferencesWritten" : false,
+    "state" : "intro-no-notch",
+    "syntheticStage" : true,
+    "visibleWindow" : false,
+    "width" : 720
+  },
+  {
+    "activeApplication" : false,
+    "alpha" : 0,
+    "height" : 594,
+    "image" : "light-origin-unanswered.png",
+    "labels" : [
+      {
+        "height" : 20,
+        "text" : "Windows",
+        "width" : 112,
+        "x" : 86,
+        "y" : 436
+      },
+      {
+        "height" : 20,
+        "text" : "iPad",
+        "width" : 112,
+        "x" : 314,
+        "y" : 436
+      },
+      {
+        "height" : 20,
+        "text" : "一直用 Mac",
+        "width" : 112,
+        "x" : 542,
+        "y" : 436
+      },
+      {
+        "height" : 16,
+        "text" : "",
+        "width" : 668,
+        "x" : 26,
+        "y" : 360
+      },
+      {
+        "height" : 30,
+        "text" : "你之前常用哪个？",
+        "width" : 668,
+        "x" : 26,
+        "y" : 380
+      },
+      {
+        "height" : 40,
+        "text" : "选一个，刘海按你的习惯来教。",
+        "width" : 668,
+        "x" : 26,
+        "y" : 486
+      },
+      {
+        "height" : 16,
+        "text" : "跳过",
+        "width" : 80,
+        "x" : 434,
+        "y" : 554
+      }
+    ],
+    "nextEnabled" : false,
+    "page" : 1,
+    "permissionQueries" : 0,
+    "preferencesWritten" : false,
+    "state" : "origin-unanswered",
+    "syntheticStage" : true,
+    "visibleWindow" : false,
+    "width" : 720
+  },
+  {
+    "activeApplication" : false,
+    "alpha" : 0,
+    "height" : 594,
+    "image" : "light-origin-windows.png",
+    "labels" : [
+      {
+        "height" : 20,
+        "text" : "Windows",
+        "width" : 112,
+        "x" : 86,
+        "y" : 436
+      },
+      {
+        "height" : 20,
+        "text" : "iPad",
+        "width" : 112,
+        "x" : 314,
+        "y" : 436
+      },
+      {
+        "height" : 20,
+        "text" : "一直用 Mac",
+        "width" : 112,
+        "x" : 542,
+        "y" : 436
+      },
+      {
+        "height" : 16,
+        "text" : "",
+        "width" : 668,
+        "x" : 26,
+        "y" : 360
+      },
+      {
+        "height" : 30,
+        "text" : "你之前常用哪个？",
+        "width" : 668,
+        "x" : 26,
+        "y" : 380
+      },
+      {
+        "height" : 40,
+        "text" : "拷贝、粘贴用拇指按 ⌘，就在你原来按 Alt 的地方。其余的，卡住时刘海会说。",
+        "width" : 668,
+        "x" : 26,
+        "y" : 486
+      },
+      {
+        "height" : 16,
+        "text" : "跳过",
+        "width" : 80,
+        "x" : 434,
+        "y" : 554
+      }
+    ],
+    "nextEnabled" : true,
+    "page" : 1,
+    "permissionQueries" : 0,
+    "preferencesWritten" : false,
+    "state" : "origin-windows",
+    "syntheticStage" : true,
+    "visibleWindow" : false,
+    "width" : 720
+  },
+  {
+    "activeApplication" : false,
+    "alpha" : 0,
+    "height" : 594,
+    "image" : "light-origin-ipad.png",
+    "labels" : [
+      {
+        "height" : 20,
+        "text" : "Windows",
+        "width" : 112,
+        "x" : 86,
+        "y" : 436
+      },
+      {
+        "height" : 20,
+        "text" : "iPad",
+        "width" : 112,
+        "x" : 314,
+        "y" : 436
+      },
+      {
+        "height" : 20,
+        "text" : "一直用 Mac",
+        "width" : 112,
+        "x" : 542,
+        "y" : 436
+      },
+      {
+        "height" : 16,
+        "text" : "",
+        "width" : 668,
+        "x" : 26,
+        "y" : 360
+      },
+      {
+        "height" : 30,
+        "text" : "你之前常用哪个？",
+        "width" : 668,
+        "x" : 26,
+        "y" : 380
+      },
+      {
+        "height" : 40,
+        "text" : "在 Mac 上，菜单要两指点按，和 iPad 接触控板时一样。卡住时刘海会说。",
+        "width" : 668,
+        "x" : 26,
+        "y" : 486
+      },
+      {
+        "height" : 16,
+        "text" : "跳过",
+        "width" : 80,
+        "x" : 434,
+        "y" : 554
+      }
+    ],
+    "nextEnabled" : true,
+    "page" : 1,
+    "permissionQueries" : 0,
+    "preferencesWritten" : false,
+    "state" : "origin-ipad",
+    "syntheticStage" : true,
+    "visibleWindow" : false,
+    "width" : 720
+  },
+  {
+    "activeApplication" : false,
+    "alpha" : 0,
+    "height" : 594,
+    "image" : "light-origin-mac.png",
+    "labels" : [
+      {
+        "height" : 20,
+        "text" : "Windows",
+        "width" : 112,
+        "x" : 86,
+        "y" : 436
+      },
+      {
+        "height" : 20,
+        "text" : "iPad",
+        "width" : 112,
+        "x" : 314,
+        "y" : 436
+      },
+      {
+        "height" : 20,
+        "text" : "一直用 Mac",
+        "width" : 112,
+        "x" : 542,
+        "y" : 436
+      },
+      {
+        "height" : 16,
+        "text" : "",
+        "width" : 668,
+        "x" : 26,
+        "y" : 360
+      },
+      {
+        "height" : 30,
+        "text" : "你之前常用哪个？",
+        "width" : 668,
+        "x" : 26,
+        "y" : 380
+      },
+      {
+        "height" : 40,
+        "text" : "那刘海多半不会开口。设置里随时能改。",
+        "width" : 668,
+        "x" : 26,
+        "y" : 486
+      },
+      {
+        "height" : 16,
+        "text" : "跳过",
+        "width" : 80,
+        "x" : 434,
+        "y" : 554
+      }
+    ],
+    "nextEnabled" : true,
+    "page" : 1,
+    "permissionQueries" : 0,
+    "preferencesWritten" : false,
+    "state" : "origin-mac",
+    "syntheticStage" : true,
+    "visibleWindow" : false,
+    "width" : 720
+  },
+  {
+    "activeApplication" : false,
+    "alpha" : 0,
+    "height" : 594,
+    "image" : "dark-intro-stuck.png",
+    "labels" : [
+      {
+        "height" : 16,
+        "text" : "欢迎使用 WindowShade",
+        "width" : 668,
+        "x" : 26,
+        "y" : 360
+      },
+      {
+        "height" : 30,
+        "text" : "刚换 Mac？从刘海开始。",
+        "width" : 668,
+        "x" : 26,
+        "y" : 380
+      },
+      {
+        "height" : 60,
+        "text" : "按了 Windows 的快捷键没反应时，刘海说一句 Mac 上按哪一下。顺利的时候，它不出声。",
+        "width" : 668,
+        "x" : 26,
+        "y" : 418
+      },
+      {
+        "height" : 16,
+        "text" : "跳过",
+        "width" : 80,
+        "x" : 514,
+        "y" : 554
+      }
+    ],
+    "nextEnabled" : true,
+    "page" : 0,
+    "permissionQueries" : 0,
+    "preferencesWritten" : false,
+    "state" : "intro-stuck",
+    "syntheticStage" : true,
+    "visibleWindow" : false,
+    "width" : 720
+  },
+  {
+    "activeApplication" : false,
+    "alpha" : 0,
+    "height" : 594,
+    "image" : "dark-intro-hint.png",
+    "labels" : [
+      {
+        "height" : 16,
+        "text" : "欢迎使用 WindowShade",
+        "width" : 668,
+        "x" : 26,
+        "y" : 360
+      },
+      {
+        "height" : 30,
+        "text" : "刚换 Mac？从刘海开始。",
+        "width" : 668,
+        "x" : 26,
+        "y" : 380
+      },
+      {
+        "height" : 60,
+        "text" : "按了 Windows 的快捷键没反应时，刘海说一句 Mac 上按哪一下。顺利的时候，它不出声。",
+        "width" : 668,
+        "x" : 26,
+        "y" : 418
+      },
+      {
+        "height" : 16,
+        "text" : "跳过",
+        "width" : 80,
+        "x" : 514,
+        "y" : 554
+      }
+    ],
+    "nextEnabled" : true,
+    "page" : 0,
+    "permissionQueries" : 0,
+    "preferencesWritten" : false,
+    "state" : "intro-hint",
+    "syntheticStage" : true,
+    "visibleWindow" : false,
+    "width" : 720
+  },
+  {
+    "activeApplication" : false,
+    "alpha" : 0,
+    "height" : 594,
+    "image" : "dark-intro-no-notch.png",
+    "labels" : [
+      {
+        "height" : 16,
+        "text" : "欢迎使用 WindowShade",
+        "width" : 668,
+        "x" : 26,
+        "y" : 360
+      },
+      {
+        "height" : 30,
+        "text" : "刚换 Mac？从刘海开始。",
+        "width" : 668,
+        "x" : 26,
+        "y" : 380
+      },
+      {
+        "height" : 60,
+        "text" : "按了 Windows 的快捷键没反应时，刘海说一句 Mac 上按哪一下。顺利的时候，它不出声。",
+        "width" : 668,
+        "x" : 26,
+        "y" : 418
+      },
+      {
+        "height" : 16,
+        "text" : "跳过",
+        "width" : 80,
+        "x" : 514,
+        "y" : 554
+      }
+    ],
+    "nextEnabled" : true,
+    "page" : 0,
+    "permissionQueries" : 0,
+    "preferencesWritten" : false,
+    "state" : "intro-no-notch",
+    "syntheticStage" : true,
+    "visibleWindow" : false,
+    "width" : 720
+  },
+  {
+    "activeApplication" : false,
+    "alpha" : 0,
+    "height" : 594,
+    "image" : "dark-origin-unanswered.png",
+    "labels" : [
+      {
+        "height" : 20,
+        "text" : "Windows",
+        "width" : 112,
+        "x" : 86,
+        "y" : 436
+      },
+      {
+        "height" : 20,
+        "text" : "iPad",
+        "width" : 112,
+        "x" : 314,
+        "y" : 436
+      },
+      {
+        "height" : 20,
+        "text" : "一直用 Mac",
+        "width" : 112,
+        "x" : 542,
+        "y" : 436
+      },
+      {
+        "height" : 16,
+        "text" : "",
+        "width" : 668,
+        "x" : 26,
+        "y" : 360
+      },
+      {
+        "height" : 30,
+        "text" : "你之前常用哪个？",
+        "width" : 668,
+        "x" : 26,
+        "y" : 380
+      },
+      {
+        "height" : 40,
+        "text" : "选一个，刘海按你的习惯来教。",
+        "width" : 668,
+        "x" : 26,
+        "y" : 486
+      },
+      {
+        "height" : 16,
+        "text" : "跳过",
+        "width" : 80,
+        "x" : 434,
+        "y" : 554
+      }
+    ],
+    "nextEnabled" : false,
+    "page" : 1,
+    "permissionQueries" : 0,
+    "preferencesWritten" : false,
+    "state" : "origin-unanswered",
+    "syntheticStage" : true,
+    "visibleWindow" : false,
+    "width" : 720
+  },
+  {
+    "activeApplication" : false,
+    "alpha" : 0,
+    "height" : 594,
+    "image" : "dark-origin-windows.png",
+    "labels" : [
+      {
+        "height" : 20,
+        "text" : "Windows",
+        "width" : 112,
+        "x" : 86,
+        "y" : 436
+      },
+      {
+        "height" : 20,
+        "text" : "iPad",
+        "width" : 112,
+        "x" : 314,
+        "y" : 436
+      },
+      {
+        "height" : 20,
+        "text" : "一直用 Mac",
+        "width" : 112,
+        "x" : 542,
+        "y" : 436
+      },
+      {
+        "height" : 16,
+        "text" : "",
+        "width" : 668,
+        "x" : 26,
+        "y" : 360
+      },
+      {
+        "height" : 30,
+        "text" : "你之前常用哪个？",
+        "width" : 668,
+        "x" : 26,
+        "y" : 380
+      },
+      {
+        "height" : 40,
+        "text" : "拷贝、粘贴用拇指按 ⌘，就在你原来按 Alt 的地方。其余的，卡住时刘海会说。",
+        "width" : 668,
+        "x" : 26,
+        "y" : 486
+      },
+      {
+        "height" : 16,
+        "text" : "跳过",
+        "width" : 80,
+        "x" : 434,
+        "y" : 554
+      }
+    ],
+    "nextEnabled" : true,
+    "page" : 1,
+    "permissionQueries" : 0,
+    "preferencesWritten" : false,
+    "state" : "origin-windows",
+    "syntheticStage" : true,
+    "visibleWindow" : false,
+    "width" : 720
+  },
+  {
+    "activeApplication" : false,
+    "alpha" : 0,
+    "height" : 594,
+    "image" : "dark-origin-ipad.png",
+    "labels" : [
+      {
+        "height" : 20,
+        "text" : "Windows",
+        "width" : 112,
+        "x" : 86,
+        "y" : 436
+      },
+      {
+        "height" : 20,
+        "text" : "iPad",
+        "width" : 112,
+        "x" : 314,
+        "y" : 436
+      },
+      {
+        "height" : 20,
+        "text" : "一直用 Mac",
+        "width" : 112,
+        "x" : 542,
+        "y" : 436
+      },
+      {
+        "height" : 16,
+        "text" : "",
+        "width" : 668,
+        "x" : 26,
+        "y" : 360
+      },
+      {
+        "height" : 30,
+        "text" : "你之前常用哪个？",
+        "width" : 668,
+        "x" : 26,
+        "y" : 380
+      },
+      {
+        "height" : 40,
+        "text" : "在 Mac 上，菜单要两指点按，和 iPad 接触控板时一样。卡住时刘海会说。",
+        "width" : 668,
+        "x" : 26,
+        "y" : 486
+      },
+      {
+        "height" : 16,
+        "text" : "跳过",
+        "width" : 80,
+        "x" : 434,
+        "y" : 554
+      }
+    ],
+    "nextEnabled" : true,
+    "page" : 1,
+    "permissionQueries" : 0,
+    "preferencesWritten" : false,
+    "state" : "origin-ipad",
+    "syntheticStage" : true,
+    "visibleWindow" : false,
+    "width" : 720
+  },
+  {
+    "activeApplication" : false,
+    "alpha" : 0,
+    "height" : 594,
+    "image" : "dark-origin-mac.png",
+    "labels" : [
+      {
+        "height" : 20,
+        "text" : "Windows",
+        "width" : 112,
+        "x" : 86,
+        "y" : 436
+      },
+      {
+        "height" : 20,
+        "text" : "iPad",
+        "width" : 112,
+        "x" : 314,
+        "y" : 436
+      },
+      {
+        "height" : 20,
+        "text" : "一直用 Mac",
+        "width" : 112,
+        "x" : 542,
+        "y" : 436
+      },
+      {
+        "height" : 16,
+        "text" : "",
+        "width" : 668,
+        "x" : 26,
+        "y" : 360
+      },
+      {
+        "height" : 30,
+        "text" : "你之前常用哪个？",
+        "width" : 668,
+        "x" : 26,
+        "y" : 380
+      },
+      {
+        "height" : 40,
+        "text" : "那刘海多半不会开口。设置里随时能改。",
+        "width" : 668,
+        "x" : 26,
+        "y" : 486
+      },
+      {
+        "height" : 16,
+        "text" : "跳过",
+        "width" : 80,
+        "x" : 434,
+        "y" : 554
+      }
+    ],
+    "nextEnabled" : true,
+    "page" : 1,
+    "permissionQueries" : 0,
+    "preferencesWritten" : false,
+    "state" : "origin-mac",
+    "syntheticStage" : true,
+    "visibleWindow" : false,
+    "width" : 720
+  }
+]

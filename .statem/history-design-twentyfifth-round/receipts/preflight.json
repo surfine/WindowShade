@@ -1,0 +1,20 @@
+{
+  "classes": [
+    "vision-image"
+  ],
+  "hazards": [
+    {
+      "class": "vision-image",
+      "evidence_paths": [],
+      "matched": [
+        "图片"
+      ],
+      "requirement": "内联图片计入 48 MiB 请求体上限；多图或长会话先算字节，超预算改用 Files API(file_id) 或丢弃旧图，并确认模型看到的图与结论依赖的图一致。",
+      "severity": "normal"
+    }
+  ],
+  "source": "preflight",
+  "task_path": "task.txt",
+  "task_sha256": "5bf9559708a954918ea125815c2f85ebce2c07360a5de4b890318dd8ca24c4ec",
+  "version": 1
+}

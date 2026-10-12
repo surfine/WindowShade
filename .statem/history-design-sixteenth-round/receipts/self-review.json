@@ -1,0 +1,19 @@
+{
+  "kind": "self_review",
+  "status": "residual_risk",
+  "issues_found": true,
+  "needs_evidence": false,
+  "artifact": "/Users/aaron/Documents/WindowShade/docs/design-review/2026-10-11-owned-scroll/validation.json",
+  "artifact_sha256": "fd51795c1af9ad1ffcc62a4642485b5203c0bb73f2a6d0486cf308ee983ad9e8",
+  "lenses": {
+    "task_contract": "same actual view handles five append positions;style distinct reply/draft following Conductor/12pt draft grammar;handlers/fonts/heights unchanged",
+    "evidence_freshness": "11 sources/71 evidence hashes independently match;519 optimized current;518 final native identities",
+    "edge_risk": "layer-only candidate excluded from shape acceptance;final native draw surface visible and48char draft kept;no real IME/focus/hardware"
+  },
+  "findings": [
+    "No production scroll defect found;actual coordinates baseline and final pass.",
+    "Native NSScrollView subclass only draws background;no event overrides or new observers/timers.",
+    "Prior round15 stale identity errata retained;current contract/self-review explicitly bind round16 actual validation file SHA."
+  ],
+  "updated": "2026-10-11T11:13:16.881573+00:00"
+}

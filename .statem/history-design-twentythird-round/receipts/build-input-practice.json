@@ -1,0 +1,7 @@
+{
+  "path": "/Users/aaron/.codex/statem/practices/deepseek-flash.yaml",
+  "before_sha256": "7a5d46a14d59726fdc53f94151ff9a19207b366aa283af0483c739c4909b03ef",
+  "after_sha256": "bd09621bd66ea8d7418a4a0b78a04a0313b11c08d058bb17ad0d843d0a281a3f",
+  "activation": "parallel builds or changing a runner while active",
+  "reason": "two observed consequential failures, no unrelated rules changed"
+}

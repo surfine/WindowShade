@@ -1,0 +1,1271 @@
+{
+  "active" : false,
+  "alpha" : 0,
+  "delegateNil" : true,
+  "globalInputEvents" : 0,
+  "mainThread" : true,
+  "productEntry" : false,
+  "records" : [
+    {
+      "distance" : 100,
+      "initialVelocity" : -1,
+      "modelX" : 100,
+      "presentationX" : -0.048067691386677325,
+      "time" : 0.0004727916675619781
+    },
+    {
+      "distance" : 100,
+      "initialVelocity" : 0,
+      "modelX" : 100,
+      "presentationX" : 0.0012185814739495981,
+      "time" : 0.0004727916675619781
+    },
+    {
+      "distance" : 100,
+      "initialVelocity" : 1,
+      "modelX" : 100,
+      "presentationX" : 0.050504854880273342,
+      "time" : 0.0004727916675619781
+    },
+    {
+      "distance" : 200,
+      "initialVelocity" : -1,
+      "modelX" : 200,
+      "presentationX" : -0.09613538277335465,
+      "time" : 0.0004727916675619781
+    },
+    {
+      "distance" : 200,
+      "initialVelocity" : 0,
+      "modelX" : 200,
+      "presentationX" : 0.0024371629478991963,
+      "time" : 0.0004727916675619781
+    },
+    {
+      "distance" : 200,
+      "initialVelocity" : 1,
+      "modelX" : 200,
+      "presentationX" : 0.10100970976054668,
+      "time" : 0.0004727916675619781
+    },
+    {
+      "distance" : 100,
+      "initialVelocity" : -1,
+      "modelX" : 100,
+      "presentationX" : 9.9070623517036438,
+      "time" : 0.059187874998315237
+    },
+    {
+      "distance" : 100,
+      "initialVelocity" : 0,
+      "modelX" : 100,
+      "presentationX" : 14.119903743267059,
+      "time" : 0.059187874998315237
+    },
+    {
+      "distance" : 100,
+      "initialVelocity" : 1,
+      "modelX" : 100,
+      "presentationX" : 18.332745134830475,
+      "time" : 0.059187874998315237
+    },
+    {
+      "distance" : 200,
+      "initialVelocity" : -1,
+      "modelX" : 200,
+      "presentationX" : 19.814124703407288,
+      "time" : 0.059187874998315237
+    },
+    {
+      "distance" : 200,
+      "initialVelocity" : 0,
+      "modelX" : 200,
+      "presentationX" : 28.239807486534119,
+      "time" : 0.059187874998315237
+    },
+    {
+      "distance" : 200,
+      "initialVelocity" : 1,
+      "modelX" : 200,
+      "presentationX" : 36.66549026966095,
+      "time" : 0.059187874998315237
+    },
+    {
+      "distance" : 100,
+      "initialVelocity" : -1,
+      "modelX" : 100,
+      "presentationX" : 15.142729878425598,
+      "time" : 0.071998791667283513
+    },
+    {
+      "distance" : 100,
+      "initialVelocity" : 0,
+      "modelX" : 100,
+      "presentationX" : 19.84717845916748,
+      "time" : 0.071998791667283513
+    },
+    {
+      "distance" : 100,
+      "initialVelocity" : 1,
+      "modelX" : 100,
+      "presentationX" : 24.551625549793243,
+      "time" : 0.071998791667283513
+    },
+    {
+      "distance" : 200,
+      "initialVelocity" : -1,
+      "modelX" : 200,
+      "presentationX" : 30.285459756851196,
+      "time" : 0.071998791667283513
+    },
+    {
+      "distance" : 200,
+      "initialVelocity" : 0,
+      "modelX" : 200,
+      "presentationX" : 39.694356918334961,
+      "time" : 0.071998791667283513
+    },
+    {
+      "distance" : 200,
+      "initialVelocity" : 1,
+      "modelX" : 200,
+      "presentationX" : 49.103251099586487,
+      "time" : 0.071998791667283513
+    },
+    {
+      "distance" : 100,
+      "initialVelocity" : -1,
+      "modelX" : 100,
+      "presentationX" : 20.872226357460022,
+      "time" : 0.084432083342107944
+    },
+    {
+      "distance" : 100,
+      "initialVelocity" : 0,
+      "modelX" : 100,
+      "presentationX" : 25.927945971488953,
+      "time" : 0.084432083342107944
+    },
+    {
+      "distance" : 100,
+      "initialVelocity" : 1,
+      "modelX" : 100,
+      "presentationX" : 30.983665585517883,
+      "time" : 0.084432083342107944
+    },
+    {
+      "distance" : 200,
+      "initialVelocity" : -1,
+      "modelX" : 200,
+      "presentationX" : 41.744452714920044,
+      "time" : 0.084432083342107944
+    },
+    {
+      "distance" : 200,
+      "initialVelocity" : 0,
+      "modelX" : 200,
+      "presentationX" : 51.855891942977905,
+      "time" : 0.084432083342107944
+    },
+    {
+      "distance" : 200,
+      "initialVelocity" : 1,
+      "modelX" : 200,
+      "presentationX" : 61.967331171035767,
+      "time" : 0.084432083342107944
+    },
+    {
+      "distance" : 100,
+      "initialVelocity" : -1,
+      "modelX" : 100,
+      "presentationX" : 71.921521425247192,
+      "time" : 0.18115391666651703
+    },
+    {
+      "distance" : 100,
+      "initialVelocity" : 0,
+      "modelX" : 100,
+      "presentationX" : 76.588857173919678,
+      "time" : 0.18115391666651703
+    },
+    {
+      "distance" : 100,
+      "initialVelocity" : 1,
+      "modelX" : 100,
+      "presentationX" : 81.256192922592163,
+      "time" : 0.18115391666651703
+    },
+    {
+      "distance" : 200,
+      "initialVelocity" : -1,
+      "modelX" : 200,
+      "presentationX" : 143.84304285049438,
+      "time" : 0.18115391666651703
+    },
+    {
+      "distance" : 200,
+      "initialVelocity" : 0,
+      "modelX" : 200,
+      "presentationX" : 153.17771434783936,
+      "time" : 0.18115391666651703
+    },
+    {
+      "distance" : 200,
+      "initialVelocity" : 1,
+      "modelX" : 200,
+      "presentationX" : 162.51238584518433,
+      "time" : 0.18115391666651703
+    },
+    {
+      "distance" : 100,
+      "initialVelocity" : -1,
+      "modelX" : 100,
+      "presentationX" : 98.243194818496704,
+      "time" : 0.24563495833717752
+    },
+    {
+      "distance" : 100,
+      "initialVelocity" : 0,
+      "modelX" : 100,
+      "presentationX" : 101.11402273178101,
+      "time" : 0.24563495833717752
+    },
+    {
+      "distance" : 100,
+      "initialVelocity" : 1,
+      "modelX" : 100,
+      "presentationX" : 103.98484468460083,
+      "time" : 0.24563495833717752
+    },
+    {
+      "distance" : 200,
+      "initialVelocity" : -1,
+      "modelX" : 200,
+      "presentationX" : 196.48638963699341,
+      "time" : 0.24563495833717752
+    },
+    {
+      "distance" : 200,
+      "initialVelocity" : 0,
+      "modelX" : 200,
+      "presentationX" : 202.22804546356201,
+      "time" : 0.24563495833717752
+    },
+    {
+      "distance" : 200,
+      "initialVelocity" : 1,
+      "modelX" : 200,
+      "presentationX" : 207.96968936920166,
+      "time" : 0.24563495833717752
+    },
+    {
+      "distance" : 100,
+      "initialVelocity" : -1,
+      "modelX" : 100,
+      "presentationX" : 112.51527070999146,
+      "time" : 0.45201908332819585
+    },
+    {
+      "distance" : 100,
+      "initialVelocity" : 0,
+      "modelX" : 100,
+      "presentationX" : 111.67389154434204,
+      "time" : 0.45201908332819585
+    },
+    {
+      "distance" : 100,
+      "initialVelocity" : 1,
+      "modelX" : 100,
+      "presentationX" : 110.83251237869263,
+      "time" : 0.45201908332819585
+    },
+    {
+      "distance" : 200,
+      "initialVelocity" : -1,
+      "modelX" : 200,
+      "presentationX" : 225.03054141998291,
+      "time" : 0.45201908332819585
+    },
+    {
+      "distance" : 200,
+      "initialVelocity" : 0,
+      "modelX" : 200,
+      "presentationX" : 223.34778308868408,
+      "time" : 0.45201908332819585
+    },
+    {
+      "distance" : 200,
+      "initialVelocity" : 1,
+      "modelX" : 200,
+      "presentationX" : 221.66502475738525,
+      "time" : 0.45201908332819585
+    },
+    {
+      "distance" : 100,
+      "initialVelocity" : -1,
+      "modelX" : 100,
+      "presentationX" : 111.38237714767456,
+      "time" : 0.46558766666566953
+    },
+    {
+      "distance" : 100,
+      "initialVelocity" : 0,
+      "modelX" : 100,
+      "presentationX" : 110.50716638565063,
+      "time" : 0.46558766666566953
+    },
+    {
+      "distance" : 100,
+      "initialVelocity" : 1,
+      "modelX" : 100,
+      "presentationX" : 109.63195562362671,
+      "time" : 0.46558766666566953
+    },
+    {
+      "distance" : 200,
+      "initialVelocity" : -1,
+      "modelX" : 200,
+      "presentationX" : 222.76475429534912,
+      "time" : 0.46558766666566953
+    },
+    {
+      "distance" : 200,
+      "initialVelocity" : 0,
+      "modelX" : 200,
+      "presentationX" : 221.01433277130127,
+      "time" : 0.46558766666566953
+    },
+    {
+      "distance" : 200,
+      "initialVelocity" : 1,
+      "modelX" : 200,
+      "presentationX" : 219.26391124725342,
+      "time" : 0.46558766666566953
+    },
+    {
+      "distance" : 100,
+      "initialVelocity" : -1,
+      "modelX" : 100,
+      "presentationX" : 106.20076656341553,
+      "time" : 0.52433495833247434
+    },
+    {
+      "distance" : 100,
+      "initialVelocity" : 0,
+      "modelX" : 100,
+      "presentationX" : 105.37388324737549,
+      "time" : 0.52433495833247434
+    },
+    {
+      "distance" : 100,
+      "initialVelocity" : 1,
+      "modelX" : 100,
+      "presentationX" : 104.54698801040649,
+      "time" : 0.52433495833247434
+    },
+    {
+      "distance" : 200,
+      "initialVelocity" : -1,
+      "modelX" : 200,
+      "presentationX" : 212.40153312683105,
+      "time" : 0.52433495833247434
+    },
+    {
+      "distance" : 200,
+      "initialVelocity" : 0,
+      "modelX" : 200,
+      "presentationX" : 210.74776649475098,
+      "time" : 0.52433495833247434
+    },
+    {
+      "distance" : 200,
+      "initialVelocity" : 1,
+      "modelX" : 200,
+      "presentationX" : 209.09397602081299,
+      "time" : 0.52433495833247434
+    },
+    {
+      "distance" : 100,
+      "initialVelocity" : -1,
+      "modelX" : 100,
+      "presentationX" : 105.12232780456543,
+      "time" : 0.5371854166733101
+    },
+    {
+      "distance" : 100,
+      "initialVelocity" : 0,
+      "modelX" : 100,
+      "presentationX" : 104.33679819107056,
+      "time" : 0.5371854166733101
+    },
+    {
+      "distance" : 100,
+      "initialVelocity" : 1,
+      "modelX" : 100,
+      "presentationX" : 103.55126857757568,
+      "time" : 0.5371854166733101
+    },
+    {
+      "distance" : 200,
+      "initialVelocity" : -1,
+      "modelX" : 200,
+      "presentationX" : 210.24465560913086,
+      "time" : 0.5371854166733101
+    },
+    {
+      "distance" : 200,
+      "initialVelocity" : 0,
+      "modelX" : 200,
+      "presentationX" : 208.67359638214111,
+      "time" : 0.5371854166733101
+    },
+    {
+      "distance" : 200,
+      "initialVelocity" : 1,
+      "modelX" : 200,
+      "presentationX" : 207.10253715515137,
+      "time" : 0.5371854166733101
+    },
+    {
+      "distance" : 100,
+      "initialVelocity" : -1,
+      "modelX" : 100,
+      "presentationX" : 103.86266708374023,
+      "time" : 0.55304433334094938
+    },
+    {
+      "distance" : 100,
+      "initialVelocity" : 0,
+      "modelX" : 100,
+      "presentationX" : 103.13788652420044,
+      "time" : 0.55304433334094938
+    },
+    {
+      "distance" : 100,
+      "initialVelocity" : 1,
+      "modelX" : 100,
+      "presentationX" : 102.41309404373169,
+      "time" : 0.55304433334094938
+    },
+    {
+      "distance" : 200,
+      "initialVelocity" : -1,
+      "modelX" : 200,
+      "presentationX" : 207.72533416748047,
+      "time" : 0.55304433334094938
+    },
+    {
+      "distance" : 200,
+      "initialVelocity" : 0,
+      "modelX" : 200,
+      "presentationX" : 206.27577304840088,
+      "time" : 0.55304433334094938
+    },
+    {
+      "distance" : 200,
+      "initialVelocity" : 1,
+      "modelX" : 200,
+      "presentationX" : 204.82618808746338,
+      "time" : 0.55304433334094938
+    },
+    {
+      "distance" : 100,
+      "initialVelocity" : -1,
+      "modelX" : 100,
+      "presentationX" : 102.88968086242676,
+      "time" : 0.56619875000615139
+    },
+    {
+      "distance" : 100,
+      "initialVelocity" : 0,
+      "modelX" : 100,
+      "presentationX" : 102.22139358520508,
+      "time" : 0.56619875000615139
+    },
+    {
+      "distance" : 100,
+      "initialVelocity" : 1,
+      "modelX" : 100,
+      "presentationX" : 101.55309438705444,
+      "time" : 0.56619875000615139
+    },
+    {
+      "distance" : 200,
+      "initialVelocity" : -1,
+      "modelX" : 200,
+      "presentationX" : 205.77936172485352,
+      "time" : 0.56619875000615139
+    },
+    {
+      "distance" : 200,
+      "initialVelocity" : 0,
+      "modelX" : 200,
+      "presentationX" : 204.44278717041016,
+      "time" : 0.56619875000615139
+    },
+    {
+      "distance" : 200,
+      "initialVelocity" : 1,
+      "modelX" : 200,
+      "presentationX" : 203.10618877410889,
+      "time" : 0.56619875000615139
+    },
+    {
+      "distance" : 100,
+      "initialVelocity" : -1,
+      "modelX" : 100,
+      "presentationX" : 100.10470151901245,
+      "time" : 0.61196483334060758
+    },
+    {
+      "distance" : 100,
+      "initialVelocity" : 0,
+      "modelX" : 100,
+      "presentationX" : 99.6540367603302,
+      "time" : 0.61196483334060758
+    },
+    {
+      "distance" : 100,
+      "initialVelocity" : 1,
+      "modelX" : 100,
+      "presentationX" : 99.203377962112427,
+      "time" : 0.61196483334060758
+    },
+    {
+      "distance" : 200,
+      "initialVelocity" : -1,
+      "modelX" : 200,
+      "presentationX" : 200.2094030380249,
+      "time" : 0.61196483334060758
+    },
+    {
+      "distance" : 200,
+      "initialVelocity" : 0,
+      "modelX" : 200,
+      "presentationX" : 199.3080735206604,
+      "time" : 0.61196483334060758
+    },
+    {
+      "distance" : 200,
+      "initialVelocity" : 1,
+      "modelX" : 200,
+      "presentationX" : 198.40675592422485,
+      "time" : 0.61196483334060758
+    },
+    {
+      "distance" : 100,
+      "initialVelocity" : -1,
+      "modelX" : 100,
+      "presentationX" : 98.304647207260132,
+      "time" : 0.65846849999797996
+    },
+    {
+      "distance" : 100,
+      "initialVelocity" : 0,
+      "modelX" : 100,
+      "presentationX" : 98.069286346435547,
+      "time" : 0.65846849999797996
+    },
+    {
+      "distance" : 100,
+      "initialVelocity" : 1,
+      "modelX" : 100,
+      "presentationX" : 97.833931446075439,
+      "time" : 0.65846849999797996
+    },
+    {
+      "distance" : 200,
+      "initialVelocity" : -1,
+      "modelX" : 200,
+      "presentationX" : 196.60929441452026,
+      "time" : 0.65846849999797996
+    },
+    {
+      "distance" : 200,
+      "initialVelocity" : 0,
+      "modelX" : 200,
+      "presentationX" : 196.13857269287109,
+      "time" : 0.65846849999797996
+    },
+    {
+      "distance" : 200,
+      "initialVelocity" : 1,
+      "modelX" : 200,
+      "presentationX" : 195.66786289215088,
+      "time" : 0.65846849999797996
+    },
+    {
+      "distance" : 100,
+      "initialVelocity" : -1,
+      "modelX" : 100,
+      "presentationX" : 97.784614562988281,
+      "time" : 0.68118470832996536
+    },
+    {
+      "distance" : 100,
+      "initialVelocity" : 0,
+      "modelX" : 100,
+      "presentationX" : 97.641181945800781,
+      "time" : 0.68118470832996536
+    },
+    {
+      "distance" : 100,
+      "initialVelocity" : 1,
+      "modelX" : 100,
+      "presentationX" : 97.497749328613281,
+      "time" : 0.68118470832996536
+    },
+    {
+      "distance" : 200,
+      "initialVelocity" : -1,
+      "modelX" : 200,
+      "presentationX" : 195.56922912597656,
+      "time" : 0.68118470832996536
+    },
+    {
+      "distance" : 200,
+      "initialVelocity" : 0,
+      "modelX" : 200,
+      "presentationX" : 195.28236389160156,
+      "time" : 0.68118470832996536
+    },
+    {
+      "distance" : 200,
+      "initialVelocity" : 1,
+      "modelX" : 200,
+      "presentationX" : 194.99549865722656,
+      "time" : 0.68118470832996536
+    },
+    {
+      "distance" : 100,
+      "initialVelocity" : -1,
+      "modelX" : 100,
+      "presentationX" : 97.428905963897705,
+      "time" : 0.70883979166683275
+    },
+    {
+      "distance" : 100,
+      "initialVelocity" : 0,
+      "modelX" : 100,
+      "presentationX" : 97.380942106246948,
+      "time" : 0.70883979166683275
+    },
+    {
+      "distance" : 100,
+      "initialVelocity" : 1,
+      "modelX" : 100,
+      "presentationX" : 97.332978248596191,
+      "time" : 0.70883979166683275
+    },
+    {
+      "distance" : 200,
+      "initialVelocity" : -1,
+      "modelX" : 200,
+      "presentationX" : 194.85781192779541,
+      "time" : 0.70883979166683275
+    },
+    {
+      "distance" : 200,
+      "initialVelocity" : 0,
+      "modelX" : 200,
+      "presentationX" : 194.7618842124939,
+      "time" : 0.70883979166683275
+    },
+    {
+      "distance" : 200,
+      "initialVelocity" : 1,
+      "modelX" : 200,
+      "presentationX" : 194.66595649719238,
+      "time" : 0.70883979166683275
+    },
+    {
+      "distance" : 100,
+      "initialVelocity" : -1,
+      "modelX" : 100,
+      "presentationX" : 97.351592779159546,
+      "time" : 0.72242662499775179
+    },
+    {
+      "distance" : 100,
+      "initialVelocity" : 0,
+      "modelX" : 100,
+      "presentationX" : 97.343277931213379,
+      "time" : 0.72242662499775179
+    },
+    {
+      "distance" : 100,
+      "initialVelocity" : 1,
+      "modelX" : 100,
+      "presentationX" : 97.334969043731689,
+      "time" : 0.72242662499775179
+    },
+    {
+      "distance" : 200,
+      "initialVelocity" : -1,
+      "modelX" : 200,
+      "presentationX" : 194.70318555831909,
+      "time" : 0.72242662499775179
+    },
+    {
+      "distance" : 200,
+      "initialVelocity" : 0,
+      "modelX" : 200,
+      "presentationX" : 194.68655586242676,
+      "time" : 0.72242662499775179
+    },
+    {
+      "distance" : 200,
+      "initialVelocity" : 1,
+      "modelX" : 200,
+      "presentationX" : 194.66993808746338,
+      "time" : 0.72242662499775179
+    },
+    {
+      "distance" : 100,
+      "initialVelocity" : -1,
+      "modelX" : 100,
+      "presentationX" : 97.329622507095337,
+      "time" : 0.73562287499953527
+    },
+    {
+      "distance" : 100,
+      "initialVelocity" : 0,
+      "modelX" : 100,
+      "presentationX" : 97.355163097381592,
+      "time" : 0.73562287499953527
+    },
+    {
+      "distance" : 100,
+      "initialVelocity" : 1,
+      "modelX" : 100,
+      "presentationX" : 97.380703687667847,
+      "time" : 0.73562287499953527
+    },
+    {
+      "distance" : 200,
+      "initialVelocity" : -1,
+      "modelX" : 200,
+      "presentationX" : 194.65924501419067,
+      "time" : 0.73562287499953527
+    },
+    {
+      "distance" : 200,
+      "initialVelocity" : 0,
+      "modelX" : 200,
+      "presentationX" : 194.71032619476318,
+      "time" : 0.73562287499953527
+    },
+    {
+      "distance" : 200,
+      "initialVelocity" : 1,
+      "modelX" : 200,
+      "presentationX" : 194.76140737533569,
+      "time" : 0.73562287499953527
+    },
+    {
+      "distance" : 100,
+      "initialVelocity" : -1,
+      "modelX" : 100,
+      "presentationX" : 97.350633144378662,
+      "time" : 0.74784229166107252
+    },
+    {
+      "distance" : 100,
+      "initialVelocity" : 0,
+      "modelX" : 100,
+      "presentationX" : 97.403407096862793,
+      "time" : 0.74784229166107252
+    },
+    {
+      "distance" : 100,
+      "initialVelocity" : 1,
+      "modelX" : 100,
+      "presentationX" : 97.456175088882446,
+      "time" : 0.74784229166107252
+    },
+    {
+      "distance" : 200,
+      "initialVelocity" : -1,
+      "modelX" : 200,
+      "presentationX" : 194.70126628875732,
+      "time" : 0.74784229166107252
+    },
+    {
+      "distance" : 200,
+      "initialVelocity" : 0,
+      "modelX" : 200,
+      "presentationX" : 194.80681419372559,
+      "time" : 0.74784229166107252
+    },
+    {
+      "distance" : 200,
+      "initialVelocity" : 1,
+      "modelX" : 200,
+      "presentationX" : 194.91235017776489,
+      "time" : 0.74784229166107252
+    },
+    {
+      "distance" : 100,
+      "initialVelocity" : -1,
+      "modelX" : 100,
+      "presentationX" : 97.472167015075684,
+      "time" : 0.76974604166753124
+    },
+    {
+      "distance" : 100,
+      "initialVelocity" : 0,
+      "modelX" : 100,
+      "presentationX" : 97.564142942428589,
+      "time" : 0.76974604166753124
+    },
+    {
+      "distance" : 100,
+      "initialVelocity" : 1,
+      "modelX" : 100,
+      "presentationX" : 97.656112909317017,
+      "time" : 0.76974604166753124
+    },
+    {
+      "distance" : 200,
+      "initialVelocity" : -1,
+      "modelX" : 200,
+      "presentationX" : 194.94433403015137,
+      "time" : 0.76974604166753124
+    },
+    {
+      "distance" : 200,
+      "initialVelocity" : 0,
+      "modelX" : 200,
+      "presentationX" : 195.12828588485718,
+      "time" : 0.76974604166753124
+    },
+    {
+      "distance" : 200,
+      "initialVelocity" : 1,
+      "modelX" : 200,
+      "presentationX" : 195.31222581863403,
+      "time" : 0.76974604166753124
+    },
+    {
+      "distance" : 100,
+      "initialVelocity" : -1,
+      "modelX" : 100,
+      "presentationX" : 97.598451375961304,
+      "time" : 0.78401387500343844
+    },
+    {
+      "distance" : 100,
+      "initialVelocity" : 0,
+      "modelX" : 100,
+      "presentationX" : 97.709625959396362,
+      "time" : 0.78401387500343844
+    },
+    {
+      "distance" : 100,
+      "initialVelocity" : 1,
+      "modelX" : 100,
+      "presentationX" : 97.820794582366943,
+      "time" : 0.78401387500343844
+    },
+    {
+      "distance" : 200,
+      "initialVelocity" : -1,
+      "modelX" : 200,
+      "presentationX" : 195.19690275192261,
+      "time" : 0.78401387500343844
+    },
+    {
+      "distance" : 200,
+      "initialVelocity" : 0,
+      "modelX" : 200,
+      "presentationX" : 195.41925191879272,
+      "time" : 0.78401387500343844
+    },
+    {
+      "distance" : 200,
+      "initialVelocity" : 1,
+      "modelX" : 200,
+      "presentationX" : 195.64158916473389,
+      "time" : 0.78401387500343844
+    },
+    {
+      "distance" : 100,
+      "initialVelocity" : -1,
+      "modelX" : 100,
+      "presentationX" : 97.72985577583313,
+      "time" : 0.79619395833287854
+    },
+    {
+      "distance" : 100,
+      "initialVelocity" : 0,
+      "modelX" : 100,
+      "presentationX" : 97.853767871856689,
+      "time" : 0.79619395833287854
+    },
+    {
+      "distance" : 100,
+      "initialVelocity" : 1,
+      "modelX" : 100,
+      "presentationX" : 97.977679967880249,
+      "time" : 0.79619395833287854
+    },
+    {
+      "distance" : 200,
+      "initialVelocity" : -1,
+      "modelX" : 200,
+      "presentationX" : 195.45971155166626,
+      "time" : 0.79619395833287854
+    },
+    {
+      "distance" : 200,
+      "initialVelocity" : 0,
+      "modelX" : 200,
+      "presentationX" : 195.70753574371338,
+      "time" : 0.79619395833287854
+    },
+    {
+      "distance" : 200,
+      "initialVelocity" : 1,
+      "modelX" : 200,
+      "presentationX" : 195.9553599357605,
+      "time" : 0.79619395833287854
+    },
+    {
+      "distance" : 100,
+      "initialVelocity" : -1,
+      "modelX" : 100,
+      "presentationX" : 98.049044609069824,
+      "time" : 0.82145162500091828
+    },
+    {
+      "distance" : 100,
+      "initialVelocity" : 0,
+      "modelX" : 100,
+      "presentationX" : 98.189342021942139,
+      "time" : 0.82145162500091828
+    },
+    {
+      "distance" : 100,
+      "initialVelocity" : 1,
+      "modelX" : 100,
+      "presentationX" : 98.329645395278931,
+      "time" : 0.82145162500091828
+    },
+    {
+      "distance" : 200,
+      "initialVelocity" : -1,
+      "modelX" : 200,
+      "presentationX" : 196.09808921813965,
+      "time" : 0.82145162500091828
+    },
+    {
+      "distance" : 200,
+      "initialVelocity" : 0,
+      "modelX" : 200,
+      "presentationX" : 196.37868404388428,
+      "time" : 0.82145162500091828
+    },
+    {
+      "distance" : 200,
+      "initialVelocity" : 1,
+      "modelX" : 200,
+      "presentationX" : 196.65929079055786,
+      "time" : 0.82145162500091828
+    },
+    {
+      "distance" : 100,
+      "initialVelocity" : -1,
+      "modelX" : 100,
+      "presentationX" : 98.304110765457153,
+      "time" : 0.8394748333375901
+    },
+    {
+      "distance" : 100,
+      "initialVelocity" : 0,
+      "modelX" : 100,
+      "presentationX" : 98.448967933654785,
+      "time" : 0.8394748333375901
+    },
+    {
+      "distance" : 100,
+      "initialVelocity" : 1,
+      "modelX" : 100,
+      "presentationX" : 98.593825101852417,
+      "time" : 0.8394748333375901
+    },
+    {
+      "distance" : 200,
+      "initialVelocity" : -1,
+      "modelX" : 200,
+      "presentationX" : 196.60822153091431,
+      "time" : 0.8394748333375901
+    },
+    {
+      "distance" : 200,
+      "initialVelocity" : 0,
+      "modelX" : 200,
+      "presentationX" : 196.89793586730957,
+      "time" : 0.8394748333375901
+    },
+    {
+      "distance" : 200,
+      "initialVelocity" : 1,
+      "modelX" : 200,
+      "presentationX" : 197.18765020370483,
+      "time" : 0.8394748333375901
+    },
+    {
+      "distance" : 100,
+      "initialVelocity" : -1,
+      "modelX" : 100,
+      "presentationX" : 98.456394672393799,
+      "time" : 0.8501117083360441
+    },
+    {
+      "distance" : 100,
+      "initialVelocity" : 0,
+      "modelX" : 100,
+      "presentationX" : 98.601502180099487,
+      "time" : 0.8501117083360441
+    },
+    {
+      "distance" : 100,
+      "initialVelocity" : 1,
+      "modelX" : 100,
+      "presentationX" : 98.746609687805176,
+      "time" : 0.8501117083360441
+    },
+    {
+      "distance" : 200,
+      "initialVelocity" : -1,
+      "modelX" : 200,
+      "presentationX" : 196.9127893447876,
+      "time" : 0.8501117083360441
+    },
+    {
+      "distance" : 200,
+      "initialVelocity" : 0,
+      "modelX" : 200,
+      "presentationX" : 197.20300436019897,
+      "time" : 0.8501117083360441
+    },
+    {
+      "distance" : 200,
+      "initialVelocity" : 1,
+      "modelX" : 200,
+      "presentationX" : 197.49321937561035,
+      "time" : 0.8501117083360441
+    },
+    {
+      "distance" : 100,
+      "initialVelocity" : -1,
+      "modelX" : 100,
+      "presentationX" : 98.633521795272827,
+      "time" : 0.86225833333446644
+    },
+    {
+      "distance" : 100,
+      "initialVelocity" : 0,
+      "modelX" : 100,
+      "presentationX" : 98.777002096176147,
+      "time" : 0.86225833333446644
+    },
+    {
+      "distance" : 100,
+      "initialVelocity" : 1,
+      "modelX" : 100,
+      "presentationX" : 98.92047643661499,
+      "time" : 0.86225833333446644
+    },
+    {
+      "distance" : 200,
+      "initialVelocity" : -1,
+      "modelX" : 200,
+      "presentationX" : 197.26704359054565,
+      "time" : 0.86225833333446644
+    },
+    {
+      "distance" : 200,
+      "initialVelocity" : 0,
+      "modelX" : 200,
+      "presentationX" : 197.55400419235229,
+      "time" : 0.86225833333446644
+    },
+    {
+      "distance" : 200,
+      "initialVelocity" : 1,
+      "modelX" : 200,
+      "presentationX" : 197.84095287322998,
+      "time" : 0.86225833333446644
+    },
+    {
+      "distance" : 100,
+      "initialVelocity" : -1,
+      "modelX" : 100,
+      "presentationX" : 98.811101913452148,
+      "time" : 0.87453433332848363
+    },
+    {
+      "distance" : 100,
+      "initialVelocity" : 0,
+      "modelX" : 100,
+      "presentationX" : 98.951101303100586,
+      "time" : 0.87453433332848363
+    },
+    {
+      "distance" : 100,
+      "initialVelocity" : 1,
+      "modelX" : 100,
+      "presentationX" : 99.091106653213501,
+      "time" : 0.87453433332848363
+    },
+    {
+      "distance" : 200,
+      "initialVelocity" : -1,
+      "modelX" : 200,
+      "presentationX" : 197.6222038269043,
+      "time" : 0.87453433332848363
+    },
+    {
+      "distance" : 200,
+      "initialVelocity" : 0,
+      "modelX" : 200,
+      "presentationX" : 197.90220260620117,
+      "time" : 0.87453433332848363
+    },
+    {
+      "distance" : 200,
+      "initialVelocity" : 1,
+      "modelX" : 200,
+      "presentationX" : 198.182213306427,
+      "time" : 0.87453433332848363
+    },
+    {
+      "distance" : 100,
+      "initialVelocity" : -1,
+      "modelX" : 100,
+      "presentationX" : 99.036175012588501,
+      "time" : 0.89049125000019558
+    },
+    {
+      "distance" : 100,
+      "initialVelocity" : 0,
+      "modelX" : 100,
+      "presentationX" : 99.169337749481201,
+      "time" : 0.89049125000019558
+    },
+    {
+      "distance" : 100,
+      "initialVelocity" : 1,
+      "modelX" : 100,
+      "presentationX" : 99.302494525909424,
+      "time" : 0.89049125000019558
+    },
+    {
+      "distance" : 200,
+      "initialVelocity" : -1,
+      "modelX" : 200,
+      "presentationX" : 198.072350025177,
+      "time" : 0.89049125000019558
+    },
+    {
+      "distance" : 200,
+      "initialVelocity" : 0,
+      "modelX" : 200,
+      "presentationX" : 198.3386754989624,
+      "time" : 0.89049125000019558
+    },
+    {
+      "distance" : 200,
+      "initialVelocity" : 1,
+      "modelX" : 200,
+      "presentationX" : 198.60498905181885,
+      "time" : 0.89049125000019558
+    },
+    {
+      "distance" : 100,
+      "initialVelocity" : -1,
+      "modelX" : 100,
+      "presentationX" : 99.361312389373779,
+      "time" : 0.91509258333826438
+    },
+    {
+      "distance" : 100,
+      "initialVelocity" : 0,
+      "modelX" : 100,
+      "presentationX" : 99.479955434799194,
+      "time" : 0.91509258333826438
+    },
+    {
+      "distance" : 100,
+      "initialVelocity" : 1,
+      "modelX" : 100,
+      "presentationX" : 99.598598480224609,
+      "time" : 0.91509258333826438
+    },
+    {
+      "distance" : 200,
+      "initialVelocity" : -1,
+      "modelX" : 200,
+      "presentationX" : 198.72262477874756,
+      "time" : 0.91509258333826438
+    },
+    {
+      "distance" : 200,
+      "initialVelocity" : 0,
+      "modelX" : 200,
+      "presentationX" : 198.95991086959839,
+      "time" : 0.91509258333826438
+    },
+    {
+      "distance" : 200,
+      "initialVelocity" : 1,
+      "modelX" : 200,
+      "presentationX" : 199.19719696044922,
+      "time" : 0.91509258333826438
+    },
+    {
+      "distance" : 100,
+      "initialVelocity" : -1,
+      "modelX" : 100,
+      "presentationX" : 99.743592739105225,
+      "time" : 0.94863075000466779
+    },
+    {
+      "distance" : 100,
+      "initialVelocity" : 0,
+      "modelX" : 100,
+      "presentationX" : 99.837672710418701,
+      "time" : 0.94863075000466779
+    },
+    {
+      "distance" : 100,
+      "initialVelocity" : 1,
+      "modelX" : 100,
+      "presentationX" : 99.931752681732178,
+      "time" : 0.94863075000466779
+    },
+    {
+      "distance" : 200,
+      "initialVelocity" : -1,
+      "modelX" : 200,
+      "presentationX" : 199.48718547821045,
+      "time" : 0.94863075000466779
+    },
+    {
+      "distance" : 200,
+      "initialVelocity" : 0,
+      "modelX" : 200,
+      "presentationX" : 199.6753454208374,
+      "time" : 0.94863075000466779
+    },
+    {
+      "distance" : 200,
+      "initialVelocity" : 1,
+      "modelX" : 200,
+      "presentationX" : 199.86350536346436,
+      "time" : 0.94863075000466779
+    }
+  ],
+  "visible" : false
+}

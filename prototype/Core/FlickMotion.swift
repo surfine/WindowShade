@@ -263,6 +263,148 @@ struct FlickSpring: Equatable {
     }
 }
 
+/// 岛变形半路改目标：把还在飞的旧动画一根轴一根轴地接到新目标上（《Designing Fluid Interfaces》：
+/// 中途改向要即时、可打断，位置和速度都要连续）。纯计算，可单测；这层只有解析解，不碰 CALayer。
+///
+/// 两块物理事实（25 批 Cocoa 实测验证，180 采样 46 对照）：
+/// - 产品挂出的 CASpringAnimation（perceptualDuration/bounce）与 `FlickSpring` 是同一条二阶 ODE：
+///   ω₀ = √(stiffness/mass)、ζ = damping/(2√(mass·stiffness))，所以瞬时速度能拿解析解直接算。
+/// - `initialVelocity` 的归一化语义是「每秒走完 to−from 行程的倍数」，正数朝目标：
+///   物理初速度 = initialVelocity × (to − from)。加法变形动画的 to 是 0，所以物理初速 = −nv·from。
+enum MorphRetarget {
+    /// 还挂在一根轴上的旧动画（只留解析解要用的数）。from 是加法动画的 fromValue（旧值减旧目标），
+    /// beginTime / duration 都是该层时间轴上的秒。
+    struct OldAxis {
+        var mass: Double
+        var stiffness: Double
+        var damping: Double
+        var from: Double
+        var normalizedVelocity: Double
+        var beginTime: Double
+        var duration: Double
+    }
+
+    /// 一根轴的接力结果。kick 非空时这根轴交给关键帧（剩余行程近零、只剩惯性），否则走弹簧。
+    struct Axis {
+        var initialVelocity: Double
+        var kick: (values: [Double], times: [Double])?
+    }
+
+    /// 旧轴此刻的带符号物理速度（点/秒，同动画空间的方向）。没在飞返回 nil：
+    /// 参数异常、还没开始、已过 duration（CASpring 到时后仍挂在层上）都不算在飞。
+    static func liveVelocity(of old: OldAxis, at time: Double) -> Double? {
+        guard old.mass > 0, old.stiffness > 0, old.damping >= 0, old.duration > 0 else { return nil }
+        let elapsed = time - old.beginTime
+        guard elapsed.isFinite, elapsed >= 0, elapsed < old.duration else { return nil }
+        let w0 = (old.stiffness / old.mass).squareRoot()
+        var zeta = old.damping / (2 * (old.mass * old.stiffness).squareRoot())
+        guard w0.isFinite, w0 > 0, zeta.isFinite else { return nil }
+        // CASpringAnimation 默认不允许过阻尼（allowsOverdamping = false）：ζ ≥ 1 按临界语义算，
+        // 不引入对不上的过阻尼轨迹。
+        zeta = min(zeta, 1)
+        let spring = FlickSpring(dampingRatio: zeta, response: 2 * Double.pi / w0)
+        let v0 = -old.normalizedVelocity * old.from
+        let state = spring.state(displacement: old.from, velocity: v0, at: elapsed)
+        guard state.v.isFinite else { return nil }
+        return state.v
+    }
+
+    /// 一根轴的接力。delta：新目标 − 此刻呈现值（带符号剩余行程）；liveVelocity：旧动画此刻的
+    /// 物理速度（nil = 没有还在飞的旧动画）；fallbackVelocity：调用者给的归一化初速度（旧动画
+    /// 不在飞时保留，不覆盖甩动初速度）；floor：这根轴加法位移的下界（宽、高、圆角不许推成负）。
+    /// 弹簧路径按剩余行程折算：nv = v / Δ，反向自然得到负的归一化速度，不取绝对值、不跨调用估速。
+    /// 剩余行程 ≤ smallTravel 但速度还在时交给有限时长的物理 kick：从当前位移带着 v 惯性走、
+    /// 弹簧自己收回来，避免除零和无穷初速度；要越界就只削幅值、保方向。
+    static func handoff(remainingTravel delta: Double, liveVelocity: Double?, fallbackVelocity: Double,
+                        response: Double, dampingRatio: Double, floor: Double?,
+                        smallTravel: Double = 0.5, stillVelocity: Double = 1.0) -> Axis? {
+        guard delta.isFinite else { return nil }
+        var physical = liveVelocity
+        if let floor, let v = physical {
+            // 下界要削：弹簧也能冲过头，提前把速度压到不越界（保方向）。
+            let spring = FlickSpring(dampingRatio: min(dampingRatio, 1), response: response)
+            physical = limitingFloor(spring: spring, displacement: -delta, velocity: v, floor: floor)
+        }
+        if abs(delta) <= smallTravel, let v = physical, abs(v) > stillVelocity {
+            return kickKeyframes(velocity: v, start: -delta, response: response,
+                                 dampingRatio: dampingRatio, floor: floor).map { Axis(initialVelocity: 0, kick: $0) }
+        }
+        guard delta != 0 else { return nil }
+        let normalized = physical.map { $0 / delta } ?? fallbackVelocity
+        guard normalized.isFinite, abs(normalized) < 1e6 else { return nil }
+        return Axis(initialVelocity: normalized, kick: nil)
+    }
+
+    /// 从当前位移（start，相对新目标）出发、带着速度 v 的整条解析曲线采样：首点就是 start（位置连续），
+    /// 收尾钉回 0（落定在新目标）。时钟从 0 到落定，有限时长。floor：曲线不允许跌破的下界，
+    /// 要破就把速度幅值二分割到刚好不越界（方向不动）。速度上限挡住异常样本。
+    static func kickKeyframes(velocity v: Double, start: Double = 0, response: Double, dampingRatio: Double,
+                              floor: Double? = nil, maxVelocity: Double = 5000) -> (values: [Double], times: [Double])? {
+        guard response.isFinite, response > 0, dampingRatio.isFinite, start.isFinite, v.isFinite else { return nil }
+        let speed = min(abs(v), maxVelocity)
+        guard speed > 0 else { return nil }
+        let spring = FlickSpring(dampingRatio: min(dampingRatio, 1), response: response)
+        func sampled(_ scale: Double) -> [(time: Double, displacement: Double)] {
+            let velocity = v < 0 ? -speed * scale : speed * scale
+            var points: [(time: Double, displacement: Double)] = [(0, start)]
+            var t = 1.0 / 120
+            var passedPeak = false
+            while t <= 1.2 {
+                let x = spring.state(displacement: start, velocity: velocity, at: t).x
+                let previous = points[points.count - 1].displacement
+                if abs(x) < abs(previous) { passedPeak = true }
+                if passedPeak, abs(x) <= 0.2 {
+                    points.append((t, 0))
+                    break
+                }
+                points.append((t, x))
+                t += 1.0 / 120
+            }
+            return points
+        }
+        var points = sampled(1)
+        if let floor, points.contains(where: { $0.displacement < floor }) {
+            var low = 0.0, high = 1.0
+            for _ in 0..<24 {
+                let mid = (low + high) / 2
+                if sampled(mid).contains(where: { $0.displacement < floor }) { high = mid } else { low = mid }
+            }
+            points = sampled(low)
+        }
+        guard points.count >= 2, let last = points.last, last.time > 0 else { return nil }
+        var values = points.map(\.displacement)
+        var times = points.map(\.time)
+        // 关键帧最多 40 个：超长按隔点抽稀，时间戳保留原值，曲线仍是解的线性插值。
+        if values.count > 40 {
+            let stride = (values.count + 39) / 40
+            let keep = points.enumerated().filter { $0.offset % stride == 0 || $0.offset == points.count - 1 }
+            values = keep.map { $0.element.displacement }
+            times = keep.map { $0.element.time }
+        }
+        return (values, times)
+    }
+
+    /// 把会跌破 floor 的初速度幅值削到刚好不越界（二分，保方向）。floor 之上不动。
+    static func limitingFloor(spring: FlickSpring, displacement x0: Double, velocity v0: Double, floor: Double) -> Double {
+        func lowest(_ scale: Double) -> Double {
+            var worst = x0
+            var t = 0.0
+            while t <= 1.2 {
+                worst = min(worst, spring.state(displacement: x0, velocity: v0 * scale, at: t).x)
+                t += 1.0 / 240
+            }
+            return worst
+        }
+        guard lowest(1) < floor else { return v0 }
+        var low = 0.0, high = 1.0
+        for _ in 0..<24 {
+            let mid = (low + high) / 2
+            if lowest(mid) < floor { high = mid } else { low = mid }
+        }
+        return v0 * low
+    }
+}
+
 /// 收进刘海时岛鼓一下：宽和高各一根 `calm`，在终点上被踢一脚初速度。
 /// 峰值不是关键帧写死的，是这根临界阻尼弹簧自己走到的地方（约 0.05 秒，+14 pt / +6 pt）。
 enum SwellKick {

@@ -1,0 +1,25 @@
+{
+  "kind": "contract_check",
+  "status": "residual_risk",
+  "artifact": "/Users/aaron/Documents/WindowShade/docs/design-review/2026-10-11-owned-scroll/validation.json",
+  "artifact_sha256": "fd51795c1af9ad1ffcc62a4642485b5203c0bb73f2a6d0486cf308ee983ad9e8",
+  "binding_sha256": "efbcb98589a48dba4a305e80dbd16d87cb05518b5d8bd3c6f80f4cac46d77b6c",
+  "checks": [
+    {
+      "command": "OwnedScrollPreview + check-owned-scroll-preview.py final",
+      "exit_code": 0,
+      "result": "12 actual same-view streams; initial/bottom/20pt follow; top/30pt preserve;48char draft;518 current sources",
+      "receipt": "final-exit.json"
+    },
+    {
+      "command": "bash prototype/build.sh --check",
+      "exit_code": 0,
+      "result": "519 current sources, unchanged during optimized build",
+      "receipt": "build-exit.json"
+    }
+  ],
+  "reused_checks": [],
+  "remaining_risk": "native cache not full compositor;no real assistant/accounts/projects;no signed Swift6 runtime/real IME/focus/accessibility/gestures/hardware",
+  "next_action": "self_review",
+  "updated": "2026-10-11T11:13:01.319148+00:00"
+}

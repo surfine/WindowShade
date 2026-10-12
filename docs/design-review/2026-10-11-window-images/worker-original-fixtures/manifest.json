@@ -1,0 +1,311 @@
+{
+  "generator": "tools/design-qa/make-window-image-fixtures.py",
+  "colorType": "RGBA8",
+  "images": [
+    {
+      "name": "landscape16x9",
+      "file": "landscape16x9_640x360.png",
+      "width": 640,
+      "height": 360,
+      "sha256": "a22747422f7c32026047c7cc9b48667188a6e55280f05594e5b23a69a8a603bd",
+      "cornerBlocks": {
+        "top_left": {
+          "center": {
+            "x": 29,
+            "y": 29,
+            "coordinateOrigin": "top-left"
+          },
+          "rgba": [
+            255,
+            0,
+            0,
+            255
+          ]
+        },
+        "top_right": {
+          "center": {
+            "x": 610,
+            "y": 29,
+            "coordinateOrigin": "top-left"
+          },
+          "rgba": [
+            0,
+            255,
+            0,
+            255
+          ]
+        },
+        "bottom_left": {
+          "center": {
+            "x": 29,
+            "y": 330,
+            "coordinateOrigin": "top-left"
+          },
+          "rgba": [
+            0,
+            0,
+            255,
+            255
+          ]
+        },
+        "bottom_right": {
+          "center": {
+            "x": 610,
+            "y": 330,
+            "coordinateOrigin": "top-left"
+          },
+          "rgba": [
+            255,
+            255,
+            0,
+            255
+          ]
+        }
+      }
+    },
+    {
+      "name": "landscape4x3",
+      "file": "landscape4x3_480x360.png",
+      "width": 480,
+      "height": 360,
+      "sha256": "4d3da3ff426f5f20f0d4fb04edec646b4a357ac40966ec0608fd09621502d695",
+      "cornerBlocks": {
+        "top_left": {
+          "center": {
+            "x": 29,
+            "y": 29,
+            "coordinateOrigin": "top-left"
+          },
+          "rgba": [
+            255,
+            0,
+            0,
+            255
+          ]
+        },
+        "top_right": {
+          "center": {
+            "x": 450,
+            "y": 29,
+            "coordinateOrigin": "top-left"
+          },
+          "rgba": [
+            0,
+            255,
+            0,
+            255
+          ]
+        },
+        "bottom_left": {
+          "center": {
+            "x": 29,
+            "y": 330,
+            "coordinateOrigin": "top-left"
+          },
+          "rgba": [
+            0,
+            0,
+            255,
+            255
+          ]
+        },
+        "bottom_right": {
+          "center": {
+            "x": 450,
+            "y": 330,
+            "coordinateOrigin": "top-left"
+          },
+          "rgba": [
+            255,
+            255,
+            0,
+            255
+          ]
+        }
+      }
+    },
+    {
+      "name": "square360x360",
+      "file": "square360x360_360x360.png",
+      "width": 360,
+      "height": 360,
+      "sha256": "58465871d547eb4b7dbff264f8c04825e1af7201937ef03ab8f36915b24ab461",
+      "cornerBlocks": {
+        "top_left": {
+          "center": {
+            "x": 29,
+            "y": 29,
+            "coordinateOrigin": "top-left"
+          },
+          "rgba": [
+            255,
+            0,
+            0,
+            255
+          ]
+        },
+        "top_right": {
+          "center": {
+            "x": 330,
+            "y": 29,
+            "coordinateOrigin": "top-left"
+          },
+          "rgba": [
+            0,
+            255,
+            0,
+            255
+          ]
+        },
+        "bottom_left": {
+          "center": {
+            "x": 29,
+            "y": 330,
+            "coordinateOrigin": "top-left"
+          },
+          "rgba": [
+            0,
+            0,
+            255,
+            255
+          ]
+        },
+        "bottom_right": {
+          "center": {
+            "x": 330,
+            "y": 330,
+            "coordinateOrigin": "top-left"
+          },
+          "rgba": [
+            255,
+            255,
+            0,
+            255
+          ]
+        }
+      }
+    },
+    {
+      "name": "portrait9x16",
+      "file": "portrait9x16_360x640.png",
+      "width": 360,
+      "height": 640,
+      "sha256": "5f0d000b62ca389c8d33385881e35af944b3fdbd36460c2ae0f8581516dc9b3d",
+      "cornerBlocks": {
+        "top_left": {
+          "center": {
+            "x": 29,
+            "y": 29,
+            "coordinateOrigin": "top-left"
+          },
+          "rgba": [
+            255,
+            0,
+            0,
+            255
+          ]
+        },
+        "top_right": {
+          "center": {
+            "x": 330,
+            "y": 29,
+            "coordinateOrigin": "top-left"
+          },
+          "rgba": [
+            0,
+            255,
+            0,
+            255
+          ]
+        },
+        "bottom_left": {
+          "center": {
+            "x": 29,
+            "y": 610,
+            "coordinateOrigin": "top-left"
+          },
+          "rgba": [
+            0,
+            0,
+            255,
+            255
+          ]
+        },
+        "bottom_right": {
+          "center": {
+            "x": 330,
+            "y": 610,
+            "coordinateOrigin": "top-left"
+          },
+          "rgba": [
+            255,
+            255,
+            0,
+            255
+          ]
+        }
+      }
+    },
+    {
+      "name": "ultrawide3x1",
+      "file": "ultrawide3x1_900x300.png",
+      "width": 900,
+      "height": 300,
+      "sha256": "42bb8ba9d439d24e520f7cb49c7b847ef25933391fc241b92cabef58ffcafdae",
+      "cornerBlocks": {
+        "top_left": {
+          "center": {
+            "x": 26,
+            "y": 26,
+            "coordinateOrigin": "top-left"
+          },
+          "rgba": [
+            255,
+            0,
+            0,
+            255
+          ]
+        },
+        "top_right": {
+          "center": {
+            "x": 874,
+            "y": 26,
+            "coordinateOrigin": "top-left"
+          },
+          "rgba": [
+            0,
+            255,
+            0,
+            255
+          ]
+        },
+        "bottom_left": {
+          "center": {
+            "x": 26,
+            "y": 274,
+            "coordinateOrigin": "top-left"
+          },
+          "rgba": [
+            0,
+            0,
+            255,
+            255
+          ]
+        },
+        "bottom_right": {
+          "center": {
+            "x": 874,
+            "y": 274,
+            "coordinateOrigin": "top-left"
+          },
+          "rgba": [
+            255,
+            255,
+            0,
+            255
+          ]
+        }
+      }
+    }
+  ]
+}

@@ -81,7 +81,8 @@ import Cocoa
         let actionRow = NSStackView(views: [chooseButton, back]); actionRow.spacing = 8
         controls.addArrangedSubview(deviceMenu); controls.addArrangedSubview(enableButton); controls.addArrangedSubview(actionRow)
         status.font = .systemFont(ofSize: 11); status.textColor = .secondaryLabelColor
-        status.widthAnchor.constraint(equalTo: controls.widthAnchor).isActive = true; controls.addArrangedSubview(status)
+        controls.addArrangedSubview(status)
+        status.widthAnchor.constraint(equalTo: controls.widthAnchor).isActive = true
         input.onArmed = { [weak self] id in self?.armedID = id; self?.renderHint() }
         input.onSelection = { [weak self] _ in self?.showSelection() }
         input.onActivate = { [weak self] id in
@@ -132,11 +133,14 @@ import Cocoa
         input.ready = isInputReady
         chooseButton.isEnabled = isInputReady && input.selection.selectedID != nil
         enableButton.isEnabled = isInputReady && !shownDevices.isEmpty
+        renderHint()
     }
     func renderDevices(_ devices: [WS2ControllerDevice]) {
         let previous = deviceMenu.indexOfSelectedItem
         let chosen = shownDevices.indices.contains(previous) ? shownDevices[previous].attachment : nil
         shownDevices = devices
+        deviceMenu.isHidden = devices.isEmpty
+        enableButton.isHidden = devices.isEmpty
         deviceMenu.removeAllItems()
         for (index, device) in devices.enumerated() {
             let clean = String(String.UnicodeScalarView(device.label.unicodeScalars.filter {
@@ -150,6 +154,8 @@ import Cocoa
         enableButton.isEnabled = isInputReady && !devices.isEmpty
     }
     private func renderHint() {
+        guard !rows.isEmpty else { status.stringValue = "还没有可选模型"; return }
+        guard controller.canChooseModel else { status.stringValue = "暂时不能选择模型"; return }
         if let armedID { status.stringValue = "松开 A 使用：" + armedID; return }
         status.stringValue = shownDevices.contains(where: \.enabled) ? "方向键选择，A 使用模型，B 返回。离开本页即停用。" : shownDevices.isEmpty ? "没有检测到游戏手柄；仍可用鼠标选择。" : "启用前先松开按键。仅操作当前列表。"
     }

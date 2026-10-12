@@ -4,16 +4,16 @@
     "habit.closeTab.sub": {
       "extractionState": "manual",
       "localizations": {
-        "zh-Hans": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "App 不会跟着退出，退出按 ⌘Q"
-          }
-        },
         "en": {
           "stringUnit": {
             "state": "translated",
             "value": "The app stays open. To quit, press ⌘Q"
+          }
+        },
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "App 不会跟着退出，退出按 ⌘Q"
           }
         }
       }
@@ -21,16 +21,16 @@
     "habit.closeTab.title": {
       "extractionState": "manual",
       "localizations": {
-        "zh-Hans": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "%@按 ⌘W"
-          }
-        },
         "en": {
           "stringUnit": {
             "state": "translated",
             "value": "%@ is ⌘W"
+          }
+        },
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "%@按 ⌘W"
           }
         }
       }
@@ -38,16 +38,16 @@
     "habit.closeWindow.sub": {
       "extractionState": "manual",
       "localizations": {
-        "zh-Hans": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "退出整个 App 按 ⌘Q"
-          }
-        },
         "en": {
           "stringUnit": {
             "state": "translated",
             "value": "To quit the whole app, press ⌘Q"
+          }
+        },
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "退出整个 App 按 ⌘Q"
           }
         }
       }
@@ -55,16 +55,16 @@
     "habit.closeWindow.title": {
       "extractionState": "manual",
       "localizations": {
-        "zh-Hans": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "%@按 ⌘W"
-          }
-        },
         "en": {
           "stringUnit": {
             "state": "translated",
             "value": "%@ is ⌘W"
+          }
+        },
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "%@按 ⌘W"
           }
         }
       }
@@ -72,16 +72,16 @@
     "habit.controlFamily": {
       "extractionState": "manual",
       "localizations": {
-        "zh-Hans": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "常用快捷键把 ⌃ 换成 ⌘"
-          }
-        },
         "en": {
           "stringUnit": {
             "state": "translated",
             "value": "Most shortcuts use ⌘ where Windows uses Ctrl"
+          }
+        },
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "常用快捷键把 ⌃ 换成 ⌘"
           }
         }
       }
@@ -89,16 +89,16 @@
     "habit.copy.title": {
       "extractionState": "manual",
       "localizations": {
-        "zh-Hans": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Mac 上%@按 ⌘C"
-          }
-        },
         "en": {
           "stringUnit": {
             "state": "translated",
             "value": "On a Mac, %@ is ⌘C"
+          }
+        },
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Mac 上%@按 ⌘C"
           }
         }
       }
@@ -106,16 +106,16 @@
     "habit.cut.title": {
       "extractionState": "manual",
       "localizations": {
-        "zh-Hans": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Mac 上%@按 ⌘X"
-          }
-        },
         "en": {
           "stringUnit": {
             "state": "translated",
             "value": "On a Mac, %@ is ⌘X"
+          }
+        },
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Mac 上%@按 ⌘X"
           }
         }
       }
@@ -123,16 +123,16 @@
     "habit.desktopSearch.title": {
       "extractionState": "manual",
       "localizations": {
-        "zh-Hans": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "搜索按 %@，和 iPad 一样"
-          }
-        },
         "en": {
           "stringUnit": {
             "state": "translated",
             "value": "Search is %@, just like iPad"
+          }
+        },
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "搜索按 %@，和 iPad 一样"
           }
         }
       }
@@ -140,16 +140,16 @@
     "habit.dockRemoved.sub": {
       "extractionState": "manual",
       "localizations": {
-        "zh-Hans": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "并排按 🌐⌃←"
-          }
-        },
         "en": {
           "stringUnit": {
             "state": "translated",
             "value": "To tile side by side, press 🌐⌃←"
+          }
+        },
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "并排按 🌐⌃←"
           }
         }
       }
@@ -157,16 +157,16 @@
     "habit.dockRemoved.title": {
       "extractionState": "manual",
       "localizations": {
-        "zh-Hans": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "图标从 Dock 移除了"
-          }
-        },
         "en": {
           "stringUnit": {
             "state": "translated",
             "value": "The icon was removed from the Dock"
+          }
+        },
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "图标从 Dock 移除了"
           }
         }
       }
@@ -174,16 +174,16 @@
     "habit.fallback.closeTab": {
       "extractionState": "manual",
       "localizations": {
-        "zh-Hans": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "关闭标签页"
-          }
-        },
         "en": {
           "stringUnit": {
             "state": "translated",
             "value": "Close Tab"
+          }
+        },
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "关闭标签页"
           }
         }
       }
@@ -191,16 +191,16 @@
     "habit.fallback.closeWindow": {
       "extractionState": "manual",
       "localizations": {
-        "zh-Hans": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "关闭窗口"
-          }
-        },
         "en": {
           "stringUnit": {
             "state": "translated",
             "value": "Close Window"
+          }
+        },
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "关闭窗口"
           }
         }
       }
@@ -208,16 +208,16 @@
     "habit.fallback.copy": {
       "extractionState": "manual",
       "localizations": {
-        "zh-Hans": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "拷贝"
-          }
-        },
         "en": {
           "stringUnit": {
             "state": "translated",
             "value": "Copy"
+          }
+        },
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "拷贝"
           }
         }
       }
@@ -225,16 +225,16 @@
     "habit.fallback.cut": {
       "extractionState": "manual",
       "localizations": {
-        "zh-Hans": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "剪切"
-          }
-        },
         "en": {
           "stringUnit": {
             "state": "translated",
             "value": "Cut"
+          }
+        },
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "剪切"
           }
         }
       }
@@ -242,16 +242,16 @@
     "habit.fallback.paste": {
       "extractionState": "manual",
       "localizations": {
-        "zh-Hans": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "粘贴"
-          }
-        },
         "en": {
           "stringUnit": {
             "state": "translated",
             "value": "Paste"
+          }
+        },
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "粘贴"
           }
         }
       }
@@ -259,16 +259,16 @@
     "habit.fallback.save": {
       "extractionState": "manual",
       "localizations": {
-        "zh-Hans": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "存储"
-          }
-        },
         "en": {
           "stringUnit": {
             "state": "translated",
             "value": "Save"
+          }
+        },
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "存储"
           }
         }
       }
@@ -276,16 +276,16 @@
     "habit.fallback.trash": {
       "extractionState": "manual",
       "localizations": {
-        "zh-Hans": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "移到废纸篓"
-          }
-        },
         "en": {
           "stringUnit": {
             "state": "translated",
             "value": "Move to Trash"
+          }
+        },
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "移到废纸篓"
           }
         }
       }
@@ -293,16 +293,16 @@
     "habit.fallback.undo": {
       "extractionState": "manual",
       "localizations": {
-        "zh-Hans": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "撤销"
-          }
-        },
         "en": {
           "stringUnit": {
             "state": "translated",
             "value": "Undo"
+          }
+        },
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "撤销"
           }
         }
       }
@@ -310,16 +310,16 @@
     "habit.forceQuit.sub": {
       "extractionState": "manual",
       "localizations": {
-        "zh-Hans": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "看谁占资源，打开“活动监视器”"
-          }
-        },
         "en": {
           "stringUnit": {
             "state": "translated",
             "value": "To see what uses resources, open Activity Monitor"
+          }
+        },
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "看谁占资源，打开“活动监视器”"
           }
         }
       }
@@ -327,16 +327,16 @@
     "habit.forceQuit.title": {
       "extractionState": "manual",
       "localizations": {
-        "zh-Hans": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "强制退出 App 按 ⌥⌘esc"
-          }
-        },
         "en": {
           "stringUnit": {
             "state": "translated",
             "value": "Force quit an app with ⌥⌘esc"
+          }
+        },
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "强制退出 App 按 ⌥⌘esc"
           }
         }
       }
@@ -344,16 +344,16 @@
     "habit.globeHome.why": {
       "extractionState": "manual",
       "localizations": {
-        "zh-Hans": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "🌐H 把窗口推到了一边"
-          }
-        },
         "en": {
           "stringUnit": {
             "state": "translated",
             "value": "🌐H moved your windows aside"
+          }
+        },
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "🌐H 把窗口推到了一边"
           }
         }
       }
@@ -361,16 +361,16 @@
     "habit.hideApp.key": {
       "extractionState": "manual",
       "localizations": {
-        "zh-Hans": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "回到主屏幕按 %@"
-          }
-        },
         "en": {
           "stringUnit": {
             "state": "translated",
             "value": "To go Home, press %@"
+          }
+        },
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "回到主屏幕按 %@"
           }
         }
       }
@@ -378,16 +378,16 @@
     "habit.hideApp.notch": {
       "extractionState": "manual",
       "localizations": {
-        "zh-Hans": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "回到主屏幕：点一下刘海"
-          }
-        },
         "en": {
           "stringUnit": {
             "state": "translated",
             "value": "To go Home, click the notch"
+          }
+        },
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "回到主屏幕：点一下刘海"
           }
         }
       }
@@ -395,16 +395,16 @@
     "habit.hideApp.title": {
       "extractionState": "manual",
       "localizations": {
-        "zh-Hans": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "⌘H 是隐藏 App"
-          }
-        },
         "en": {
           "stringUnit": {
             "state": "translated",
             "value": "⌘H hides an app"
+          }
+        },
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "⌘H 是隐藏 App"
           }
         }
       }
@@ -412,16 +412,16 @@
     "habit.ime.capsLock.sub": {
       "extractionState": "manual",
       "localizations": {
-        "zh-Hans": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "按住它才是大写锁定"
-          }
-        },
         "en": {
           "stringUnit": {
             "state": "translated",
             "value": "Hold it for caps lock"
+          }
+        },
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "按住它才是大写锁定"
           }
         }
       }
@@ -429,16 +429,16 @@
     "habit.ime.capsLock.title": {
       "extractionState": "manual",
       "localizations": {
-        "zh-Hans": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "切换中英文：轻按 Caps Lock"
-          }
-        },
         "en": {
           "stringUnit": {
             "state": "translated",
             "value": "Switch Chinese/English: tap Caps Lock"
+          }
+        },
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "切换中英文：轻按 Caps Lock"
           }
         }
       }
@@ -446,16 +446,16 @@
     "habit.ime.globe.title": {
       "extractionState": "manual",
       "localizations": {
-        "zh-Hans": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "切换中英文按一下 🌐"
-          }
-        },
         "en": {
           "stringUnit": {
             "state": "translated",
             "value": "Switch Chinese/English: press 🌐"
+          }
+        },
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "切换中英文按一下 🌐"
           }
         }
       }
@@ -463,16 +463,16 @@
     "habit.ime.title": {
       "extractionState": "manual",
       "localizations": {
-        "zh-Hans": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "切换中英文按 ⌃空格"
-          }
-        },
         "en": {
           "stringUnit": {
             "state": "translated",
             "value": "Switch Chinese/English with ⌃Space"
+          }
+        },
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "切换中英文按 ⌃空格"
           }
         }
       }
@@ -480,16 +480,16 @@
     "habit.key.cmdSpace": {
       "extractionState": "manual",
       "localizations": {
-        "zh-Hans": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "⌘空格"
-          }
-        },
         "en": {
           "stringUnit": {
             "state": "translated",
             "value": "⌘Space"
+          }
+        },
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "⌘空格"
           }
         }
       }
@@ -497,16 +497,16 @@
     "habit.key.space": {
       "extractionState": "manual",
       "localizations": {
-        "zh-Hans": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "空格"
-          }
-        },
         "en": {
           "stringUnit": {
             "state": "translated",
             "value": "Space"
+          }
+        },
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "空格"
           }
         }
       }
@@ -514,16 +514,16 @@
     "habit.launchpadTop.sub": {
       "extractionState": "manual",
       "localizations": {
-        "zh-Hans": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "点刘海打开的是主屏幕"
-          }
-        },
         "en": {
           "stringUnit": {
             "state": "translated",
             "value": "Clicking the notch opens Home"
+          }
+        },
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "点刘海打开的是主屏幕"
           }
         }
       }
@@ -531,16 +531,16 @@
     "habit.launchpadTop.title": {
       "extractionState": "manual",
       "localizations": {
-        "zh-Hans": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "回页首按 ⌘↑"
-          }
-        },
         "en": {
           "stringUnit": {
             "state": "translated",
             "value": "To go to the top, press ⌘↑"
+          }
+        },
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "回页首按 ⌘↑"
           }
         }
       }
@@ -548,16 +548,16 @@
     "habit.lineEnds.sub": {
       "extractionState": "manual",
       "localizations": {
-        "zh-Hans": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Home、End 在 Mac 上只滚动页面"
-          }
-        },
         "en": {
           "stringUnit": {
             "state": "translated",
             "value": "On a Mac, Home and End only scroll the page"
+          }
+        },
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Home、End 在 Mac 上只滚动页面"
           }
         }
       }
@@ -565,16 +565,16 @@
     "habit.lineEnds.title": {
       "extractionState": "manual",
       "localizations": {
-        "zh-Hans": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "到行首、行尾按 ⌘← ⌘→"
-          }
-        },
         "en": {
           "stringUnit": {
             "state": "translated",
             "value": "Line start and end: ⌘← ⌘→"
+          }
+        },
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "到行首、行尾按 ⌘← ⌘→"
           }
         }
       }
@@ -582,16 +582,16 @@
     "habit.menuBar.sub": {
       "extractionState": "manual",
       "localizations": {
-        "zh-Hans": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "用键盘走到菜单栏按 ⌃F2"
-          }
-        },
         "en": {
           "stringUnit": {
             "state": "translated",
             "value": "To reach it with the keyboard, press ⌃F2"
+          }
+        },
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "用键盘走到菜单栏按 ⌃F2"
           }
         }
       }
@@ -599,16 +599,16 @@
     "habit.menuBar.title": {
       "extractionState": "manual",
       "localizations": {
-        "zh-Hans": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "菜单栏一直在屏幕最上面"
-          }
-        },
         "en": {
           "stringUnit": {
             "state": "translated",
             "value": "The menu bar is always at the top of the screen"
+          }
+        },
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "菜单栏一直在屏幕最上面"
           }
         }
       }
@@ -616,16 +616,16 @@
     "habit.missionPeek.why": {
       "extractionState": "manual",
       "localizations": {
-        "zh-Hans": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "三指上滑是调度中心"
-          }
-        },
         "en": {
           "stringUnit": {
             "state": "translated",
             "value": "Swiping up with three fingers opens Mission Control"
+          }
+        },
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "三指上滑是调度中心"
           }
         }
       }
@@ -633,16 +633,16 @@
     "habit.paste.pagedDown": {
       "extractionState": "manual",
       "localizations": {
-        "zh-Hans": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "⌃V 在 Mac 上是往下翻页"
-          }
-        },
         "en": {
           "stringUnit": {
             "state": "translated",
             "value": "On a Mac, ⌃V pages down"
+          }
+        },
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "⌃V 在 Mac 上是往下翻页"
           }
         }
       }
@@ -650,16 +650,16 @@
     "habit.paste.title": {
       "extractionState": "manual",
       "localizations": {
-        "zh-Hans": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Mac 上%@按 ⌘V"
-          }
-        },
         "en": {
           "stringUnit": {
             "state": "translated",
             "value": "On a Mac, %@ is ⌘V"
+          }
+        },
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Mac 上%@按 ⌘V"
           }
         }
       }
@@ -667,16 +667,16 @@
     "habit.pressHint.key": {
       "extractionState": "manual",
       "localizations": {
-        "zh-Hans": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "点一下，替你按 %@"
-          }
-        },
         "en": {
           "stringUnit": {
             "state": "translated",
             "value": "Click to have %@ pressed for you"
+          }
+        },
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "点一下，替你按 %@"
           }
         }
       }
@@ -684,16 +684,16 @@
     "habit.pressHint.once": {
       "extractionState": "manual",
       "localizations": {
-        "zh-Hans": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "点一下，替你做一次"
-          }
-        },
         "en": {
           "stringUnit": {
             "state": "translated",
             "value": "Click to have it done once"
+          }
+        },
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "点一下，替你做一次"
           }
         }
       }
@@ -701,16 +701,16 @@
     "habit.save.title": {
       "extractionState": "manual",
       "localizations": {
-        "zh-Hans": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Mac 上%@按 ⌘S"
-          }
-        },
         "en": {
           "stringUnit": {
             "state": "translated",
             "value": "On a Mac, %@ is ⌘S"
+          }
+        },
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Mac 上%@按 ⌘S"
           }
         }
       }
@@ -718,16 +718,16 @@
     "habit.screenshot.sub": {
       "extractionState": "manual",
       "localizations": {
-        "zh-Hans": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "整屏按 ⇧⌘3；加按 ⌃ 存进剪贴板"
-          }
-        },
         "en": {
           "stringUnit": {
             "state": "translated",
             "value": "Whole screen: ⇧⌘3. Add ⌃ to copy to the clipboard"
+          }
+        },
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "整屏按 ⇧⌘3；加按 ⌃ 存进剪贴板"
           }
         }
       }
@@ -735,16 +735,16 @@
     "habit.screenshot.title": {
       "extractionState": "manual",
       "localizations": {
-        "zh-Hans": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "截一块屏幕按 ⇧⌘4"
-          }
-        },
         "en": {
           "stringUnit": {
             "state": "translated",
             "value": "Capture part of the screen with ⇧⌘4"
+          }
+        },
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "截一块屏幕按 ⇧⌘4"
           }
         }
       }
@@ -752,16 +752,16 @@
     "habit.screenshot.window": {
       "extractionState": "manual",
       "localizations": {
-        "zh-Hans": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "截这扇窗口：⇧⌘4 再按空格"
-          }
-        },
         "en": {
           "stringUnit": {
             "state": "translated",
             "value": "Capture this window: ⇧⌘4, then Space"
+          }
+        },
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "截这扇窗口：⇧⌘4 再按空格"
           }
         }
       }
@@ -769,16 +769,16 @@
     "habit.sentenceJoin": {
       "extractionState": "manual",
       "localizations": {
-        "zh-Hans": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "。"
-          }
-        },
         "en": {
           "stringUnit": {
             "state": "translated",
             "value": ". "
+          }
+        },
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "。"
           }
         }
       }
@@ -786,16 +786,16 @@
     "habit.symbols.sub": {
       "extractionState": "manual",
       "localizations": {
-        "zh-Hans": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "在“表情与符号”里搜名字"
-          }
-        },
         "en": {
           "stringUnit": {
             "state": "translated",
             "value": "Search by name in Emoji & Symbols"
+          }
+        },
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "在“表情与符号”里搜名字"
           }
         }
       }
@@ -803,16 +803,16 @@
     "habit.symbols.title": {
       "extractionState": "manual",
       "localizations": {
-        "zh-Hans": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "打特殊符号按 ⌃⌘空格"
-          }
-        },
         "en": {
           "stringUnit": {
             "state": "translated",
             "value": "Type special symbols with ⌃⌘Space"
+          }
+        },
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "打特殊符号按 ⌃⌘空格"
           }
         }
       }
@@ -820,16 +820,16 @@
     "habit.title.fill": {
       "extractionState": "manual",
       "localizations": {
-        "zh-Hans": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "铺满屏幕：往下甩一下标题栏"
-          }
-        },
         "en": {
           "stringUnit": {
             "state": "translated",
             "value": "To fill the screen, flick the title bar down"
+          }
+        },
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "铺满屏幕：往下甩一下标题栏"
           }
         }
       }
@@ -837,16 +837,16 @@
     "habit.titleDoubleClick.title": {
       "extractionState": "manual",
       "localizations": {
-        "zh-Hans": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "双击标题栏是收起窗口"
-          }
-        },
         "en": {
           "stringUnit": {
             "state": "translated",
             "value": "Double-clicking the title bar collapses the window"
+          }
+        },
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "双击标题栏是收起窗口"
           }
         }
       }
@@ -854,16 +854,16 @@
     "habit.titleFlickUp.title": {
       "extractionState": "manual",
       "localizations": {
-        "zh-Hans": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "往上甩标题栏是收起窗口"
-          }
-        },
         "en": {
           "stringUnit": {
             "state": "translated",
             "value": "Flicking the title bar up collapses the window"
+          }
+        },
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "往上甩标题栏是收起窗口"
           }
         }
       }
@@ -871,16 +871,16 @@
     "habit.trash.sub": {
       "extractionState": "manual",
       "localizations": {
-        "zh-Hans": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "废纸篓就是回收站"
-          }
-        },
         "en": {
           "stringUnit": {
             "state": "translated",
             "value": "The Trash is the Recycle Bin"
+          }
+        },
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "废纸篓就是回收站"
           }
         }
       }
@@ -888,16 +888,16 @@
     "habit.trash.title": {
       "extractionState": "manual",
       "localizations": {
-        "zh-Hans": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "%@按 ⌘delete"
-          }
-        },
         "en": {
           "stringUnit": {
             "state": "translated",
             "value": "%@ is ⌘delete"
+          }
+        },
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "%@按 ⌘delete"
           }
         }
       }
@@ -905,16 +905,16 @@
     "habit.undo.sub": {
       "extractionState": "manual",
       "localizations": {
-        "zh-Hans": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "重做是 ⇧⌘Z"
-          }
-        },
         "en": {
           "stringUnit": {
             "state": "translated",
             "value": "Redo is ⇧⌘Z"
+          }
+        },
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "重做是 ⇧⌘Z"
           }
         }
       }
@@ -922,16 +922,271 @@
     "habit.undo.title": {
       "extractionState": "manual",
       "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "On a Mac, %@ is ⌘Z"
+          }
+        },
         "zh-Hans": {
           "stringUnit": {
             "state": "translated",
             "value": "Mac 上%@按 ⌘Z"
           }
-        },
+        }
+      }
+    },
+    "settings.advanced.diagnostics.button": {
+      "extractionState": "manual",
+      "localizations": {
         "en": {
           "stringUnit": {
             "state": "translated",
-            "value": "On a Mac, %@ is ⌘Z"
+            "value": "Open diagnostics log"
+          }
+        },
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "打开诊断日志"
+          }
+        }
+      }
+    },
+    "settings.advanced.diagnostics.name": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Diagnostics log"
+          }
+        },
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "诊断日志"
+          }
+        }
+      }
+    },
+    "settings.advanced.diagnostics.sub": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Open the run log to find problems."
+          }
+        },
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "打开运行记录排查问题。"
+          }
+        }
+      }
+    },
+    "settings.advanced.reduceMotionA11y": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Reduce motion note"
+          }
+        },
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "减少动态效果提示"
+          }
+        }
+      }
+    },
+    "settings.advanced.reduceMotionHint": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "You can turn on “Reduce motion” in System Settings' Accessibility."
+          }
+        },
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "可在系统设置的辅助功能选项中开启“减少动态效果”。"
+          }
+        }
+      }
+    },
+    "settings.advanced.reduceMotionLink": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Open “Reduce motion” settings…"
+          }
+        },
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "打开“减少动态效果”设置…"
+          }
+        }
+      }
+    },
+    "settings.advanced.reduceMotionLinkHelp": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Configure Reduce motion in System Settings' Accessibility"
+          }
+        },
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "在系统设置的辅助功能中配置减少动态效果"
+          }
+        }
+      }
+    },
+    "settings.advanced.reduceMotionOn": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "“Reduce motion” is on, so continuous animation pauses."
+          }
+        },
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "系统已开启“减少动态效果”，连续动画会自动暂停。"
+          }
+        }
+      }
+    },
+    "settings.advanced.reset.button": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Reset defaults"
+          }
+        },
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "恢复默认值"
+          }
+        }
+      }
+    },
+    "settings.advanced.reset.name": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Reset effect defaults"
+          }
+        },
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "恢复动态效果默认值"
+          }
+        }
+      }
+    },
+    "settings.advanced.reset.sub": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Reset the desktop, windows and style."
+          }
+        },
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "把桌面、窗口和样式都恢复默认。"
+          }
+        }
+      }
+    },
+    "settings.advanced.section.accessibility": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Accessibility"
+          }
+        },
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "辅助功能"
+          }
+        }
+      }
+    },
+    "settings.advanced.section.actions": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Actions"
+          }
+        },
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "操作"
+          }
+        }
+      }
+    },
+    "settings.advanced.sub": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Reset defaults, or open the diagnostics log to troubleshoot."
+          }
+        },
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "恢复默认值，或打开诊断日志排查问题。"
+          }
+        }
+      }
+    },
+    "settings.advanced.title": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Advanced"
+          }
+        },
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "高级"
           }
         }
       }
@@ -939,16 +1194,16 @@
     "settings.hoverGuard.name": {
       "extractionState": "manual",
       "localizations": {
-        "zh-Hans": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "悬停不误触"
-          }
-        },
         "en": {
           "stringUnit": {
             "state": "translated",
             "value": "Hover guard"
+          }
+        },
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "悬停不误触"
           }
         }
       }
@@ -956,16 +1211,2549 @@
     "settings.hoverGuard.sub": {
       "extractionState": "manual",
       "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Expands the notch only when the pointer rests on it, not when it passes by"
+          }
+        },
         "zh-Hans": {
           "stringUnit": {
             "state": "translated",
             "value": "指针在刘海上停一下才展开，路过不展开"
           }
-        },
+        }
+      }
+    },
+    "settings.info.caption": {
+      "extractionState": "manual",
+      "localizations": {
         "en": {
           "stringUnit": {
             "state": "translated",
-            "value": "Expands the notch only when the pointer rests on it, not when it passes by"
+            "value": "Notes"
+          }
+        },
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "说明"
+          }
+        }
+      }
+    },
+    "settings.info.label": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Notes on %@"
+          }
+        },
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "%@的说明"
+          }
+        }
+      }
+    },
+    "settings.language.name": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Interface language"
+          }
+        },
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "界面语言"
+          }
+        }
+      }
+    },
+    "settings.language.section": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Language"
+          }
+        },
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "语言"
+          }
+        }
+      }
+    },
+    "settings.language.sub": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Takes effect immediately"
+          }
+        },
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "切换后立即生效"
+          }
+        }
+      }
+    },
+    "settings.language.system": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Follow the system"
+          }
+        },
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "跟随系统"
+          }
+        }
+      }
+    },
+    "settings.section.advanced": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Advanced"
+          }
+        },
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "高级"
+          }
+        }
+      }
+    },
+    "settings.section.browser": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Window browsing"
+          }
+        },
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "窗口浏览"
+          }
+        }
+      }
+    },
+    "settings.section.conductor": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Conductor"
+          }
+        },
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "指挥模式"
+          }
+        }
+      }
+    },
+    "settings.section.effects": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Effects"
+          }
+        },
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "效果"
+          }
+        }
+      }
+    },
+    "settings.section.permissions": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Privacy"
+          }
+        },
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "隐私"
+          }
+        }
+      }
+    },
+    "settings.section.pointer": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Mouse & trackpad"
+          }
+        },
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "鼠标与触控板"
+          }
+        }
+      }
+    },
+    "settings.section.remote": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Remote"
+          }
+        },
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "遥控器"
+          }
+        }
+      }
+    },
+    "settings.section.shade": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Roll up"
+          }
+        },
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "卷帘"
+          }
+        }
+      }
+    },
+    "settings.section.shortcuts": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Shortcuts"
+          }
+        },
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "快捷键"
+          }
+        }
+      }
+    },
+    "settings.shade.activities.name": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Live activities"
+          }
+        },
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "实时活动"
+          }
+        }
+      }
+    },
+    "settings.shade.activities.sub": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Music, accessories, AirDrop and routes at the notch and the launchpad's left page"
+          }
+        },
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "在刘海和启动台负一屏查看音乐、耳机、隔空投送与路线"
+          }
+        }
+      }
+    },
+    "settings.shade.appearance.name": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "What a rolled-up window looks like"
+          }
+        },
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "收起后的样子"
+          }
+        }
+      }
+    },
+    "settings.shade.awaySummary.name": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Catch me up after I'm away"
+          }
+        },
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "回来时说一下离开期间的事"
+          }
+        }
+      }
+    },
+    "settings.shade.awaySummary.sub": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Only when something changed while locked or asleep"
+          }
+        },
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "锁屏或睡眠时有变化才说"
+          }
+        }
+      }
+    },
+    "settings.shade.barTranslucent": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Translucent bar"
+          }
+        },
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "卷帘条半透明"
+          }
+        }
+      }
+    },
+    "settings.shade.calendar.lead": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "%d minutes before"
+          }
+        },
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "提前 %d 分钟"
+          }
+        }
+      }
+    },
+    "settings.shade.calendar.leadA11y": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Calendar lead time"
+          }
+        },
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "日程提前量"
+          }
+        }
+      }
+    },
+    "settings.shade.calendar.name": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Calendar"
+          }
+        },
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "日程"
+          }
+        }
+      }
+    },
+    "settings.shade.calendar.openSettings": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Open System Settings"
+          }
+        },
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "打开系统设置"
+          }
+        }
+      }
+    },
+    "settings.shade.calendar.subDenied": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "No access; click to open System Settings"
+          }
+        },
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "没有权限，点一下去系统设置"
+          }
+        }
+      }
+    },
+    "settings.shade.calendar.subGranted": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Counts down at the notch; join when a meeting link is there"
+          }
+        },
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "快开会时在刘海里倒数，有会议链接时可以加入"
+          }
+        }
+      }
+    },
+    "settings.shade.calendar.subNotAsked": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Counts down at the notch before meetings; macOS asks once when you turn it on"
+          }
+        },
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "快开会时在刘海里倒数；打开时系统会问你一次"
+          }
+        }
+      }
+    },
+    "settings.shade.carplay.name": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "iPhone screen on the full display"
+          }
+        },
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "把 iPhone 的画面放到整块屏"
+          }
+        }
+      }
+    },
+    "settings.shade.carplay.sub": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Long-press the notch for full screen; long-press again or press Esc to leave"
+          }
+        },
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "长按刘海进入全屏；再长按或按 Esc 回到桌面"
+          }
+        }
+      }
+    },
+    "settings.shade.carplayEndpoint.name": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Receiver address"
+          }
+        },
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "接收器地址"
+          }
+        }
+      }
+    },
+    "settings.shade.carplayEndpoint.sub": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Starts with ws:// and carries a token; empty shows a placeholder only"
+          }
+        },
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "ws:// 开头并带令牌；不填时全屏只显示示意画面"
+          }
+        }
+      }
+    },
+    "settings.shade.centerWhenFits.name": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Center when it fits"
+          }
+        },
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "放得下就居中"
+          }
+        }
+      }
+    },
+    "settings.shade.centerWhenFits.sub": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "When the columns fit on one screen, center the group"
+          }
+        },
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "列加起来不到一屏时，整组放在正中"
+          }
+        }
+      }
+    },
+    "settings.shade.centering.center": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Center"
+          }
+        },
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "居中"
+          }
+        }
+      }
+    },
+    "settings.shade.centering.edge": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Keep near"
+          }
+        },
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "贴边"
+          }
+        }
+      }
+    },
+    "settings.shade.centering.fits": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Center when it doesn't fit"
+          }
+        },
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "放不下才居中"
+          }
+        }
+      }
+    },
+    "settings.shade.centering.name": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "When you reach a column"
+          }
+        },
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "走到一列时"
+          }
+        }
+      }
+    },
+    "settings.shade.centering.sub": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Keep near: least moving. Center: always in the middle"
+          }
+        },
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "贴边：挪得最少。居中：永远在正中"
+          }
+        }
+      }
+    },
+    "settings.shade.collapse.native": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Keep as-is"
+          }
+        },
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "跟原来一样"
+          }
+        }
+      }
+    },
+    "settings.shade.collapse.proxy": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "One consistent bar"
+          }
+        },
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "统一标题栏"
+          }
+        }
+      }
+    },
+    "settings.shade.collapse.sub": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Keep the bar as-is, use one consistent title bar, or shrink to a thumbnail in place"
+          }
+        },
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "卷帘条跟原来一样或用统一标题栏，也可以在原处缩成缩略图"
+          }
+        }
+      }
+    },
+    "settings.shade.collapse.thumbnail": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Thumbnail"
+          }
+        },
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "缩略图"
+          }
+        }
+      }
+    },
+    "settings.shade.copyProgress.name": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Copy progress"
+          }
+        },
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "拷贝进度"
+          }
+        }
+      }
+    },
+    "settings.shade.copyProgress.sub": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Show copy progress at the notch while Finder copies"
+          }
+        },
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Finder 拷贝时在刘海上显示拷到哪了"
+          }
+        }
+      }
+    },
+    "settings.shade.deviceBattery.name": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Device batteries"
+          }
+        },
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "设备的电量"
+          }
+        }
+      }
+    },
+    "settings.shade.deviceBattery.sub": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "The notch says when headphones or phones connect or run low"
+          }
+        },
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "耳机、手机这些设备连上或电量低时，刘海说一声"
+          }
+        }
+      }
+    },
+    "settings.shade.doubleClick.name": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Double-click a title bar to roll up"
+          }
+        },
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "双击标题栏收起窗口"
+          }
+        }
+      }
+    },
+    "settings.shade.doubleClick.sub": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Double-click any window's title bar"
+          }
+        },
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "在任意窗口的标题栏上双击"
+          }
+        }
+      }
+    },
+    "settings.shade.doubleClick.subMinimize": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "A triple-click minimizes the window"
+          }
+        },
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "三击标题栏会最小化窗口"
+          }
+        }
+      }
+    },
+    "settings.shade.doubleClick.subZoom": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "A triple-click zooms the window"
+          }
+        },
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "三击标题栏会缩放窗口"
+          }
+        }
+      }
+    },
+    "settings.shade.downloads.name": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Browser downloads"
+          }
+        },
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "浏览器下载"
+          }
+        }
+      }
+    },
+    "settings.shade.downloads.sub": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Read the Downloads folder for unfinished downloads"
+          }
+        },
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "读取「下载」文件夹，看有没有没下完的文件"
+          }
+        }
+      }
+    },
+    "settings.shade.dropSplit.name": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Drop onto a window to split"
+          }
+        },
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "拖到窗口上并排"
+          }
+        }
+      }
+    },
+    "settings.shade.dropSplit.sub": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Drag a window onto another; they sit side by side"
+          }
+        },
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "把窗口拖到另一扇上，两扇并排"
+          }
+        }
+      }
+    },
+    "settings.shade.fileShelf.name": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "File shelf"
+          }
+        },
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "文件架"
+          }
+        }
+      }
+    },
+    "settings.shade.fileShelf.sub": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Files you drop on the notch wait here; turning it off clears it"
+          }
+        },
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "拖到刘海暂存的文件放在这里；关掉后清空"
+          }
+        }
+      }
+    },
+    "settings.shade.floating.name": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Float above other windows"
+          }
+        },
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "浮在其他窗口上面"
+          }
+        }
+      }
+    },
+    "settings.shade.floating.sub": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "A rolled-up window stays uncovered"
+          }
+        },
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "收起的窗口也不会被别的窗口挡住"
+          }
+        }
+      }
+    },
+    "settings.shade.focus.name": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Focus timer"
+          }
+        },
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "番茄钟"
+          }
+        }
+      }
+    },
+    "settings.shade.focus.noteCounting": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "For now it only counts time; windows aren't tucked yet."
+          }
+        },
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "现在只计时，还不会收起窗口。"
+          }
+        }
+      }
+    },
+    "settings.shade.focus.noteNoApps": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "No apps on the list yet"
+          }
+        },
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "名单里还没有 App"
+          }
+        }
+      }
+    },
+    "settings.shade.focus.preset25": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "25 min / 5 min"
+          }
+        },
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "25 分钟 / 5 分钟"
+          }
+        }
+      }
+    },
+    "settings.shade.focus.preset50": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "50 min / 10 min"
+          }
+        },
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "50 分钟 / 10 分钟"
+          }
+        }
+      }
+    },
+    "settings.shade.focus.presetTooltip": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "New lengths apply from the next round; the running one keeps its length."
+          }
+        },
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "新的时长从下一轮开始生效。正在进行的一轮保持原时长。"
+          }
+        }
+      }
+    },
+    "settings.shade.focus.tuck": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Tuck chats into the notch while focusing"
+          }
+        },
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "专注时把聊天收进刘海"
+          }
+        }
+      }
+    },
+    "settings.shade.focus.tuckTooltip": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Only windows from the private app list; unavailable when the list is empty or this isn't ready, and never replaced by rolling up everything."
+          }
+        },
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "只收私人 App 名单里的窗口；名单为空或这项还没开放时不可用，也不会拿“收起全部窗口”顶替。"
+          }
+        }
+      }
+    },
+    "settings.shade.foldSound.name": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Roll-up sound"
+          }
+        },
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "收起音效"
+          }
+        }
+      }
+    },
+    "settings.shade.followSound.name": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Bounce with the sound"
+          }
+        },
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "跟着声音跳"
+          }
+        }
+      }
+    },
+    "settings.shade.followSound.sub": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "The dots on the notch's right ear follow the music"
+          }
+        },
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "刘海右边的小点随歌起伏"
+          }
+        }
+      }
+    },
+    "settings.shade.followSound.subDenied": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "System audio recording isn't allowed"
+          }
+        },
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "没有允许系统音频录制"
+          }
+        }
+      }
+    },
+    "settings.shade.gap.name": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Gap between windows"
+          }
+        },
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "窗口之间留缝"
+          }
+        }
+      }
+    },
+    "settings.shade.gap.narrow": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Narrow"
+          }
+        },
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "窄"
+          }
+        }
+      }
+    },
+    "settings.shade.gap.none": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "None"
+          }
+        },
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "不留"
+          }
+        }
+      }
+    },
+    "settings.shade.gap.sub": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "A gap between arranged windows and the screen edges"
+          }
+        },
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "半屏、四角、网格、魔法平铺、卷轴排好的窗口之间和屏幕边留一道缝"
+          }
+        }
+      }
+    },
+    "settings.shade.gap.wide": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Wide"
+          }
+        },
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "宽"
+          }
+        }
+      }
+    },
+    "settings.shade.glance.name": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Glance"
+          }
+        },
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "看一眼"
+          }
+        }
+      }
+    },
+    "settings.shade.glance.sub": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Rest the pointer on the bar to see the window in place; move away and it rolls back"
+          }
+        },
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "指针停在卷帘条上，窗口在原处出现，移开就收回"
+          }
+        }
+      }
+    },
+    "settings.shade.group.appearance": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Appearance"
+          }
+        },
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "外观"
+          }
+        }
+      }
+    },
+    "settings.shade.group.arrange": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Arranging"
+          }
+        },
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "排布"
+          }
+        }
+      }
+    },
+    "settings.shade.group.experiments": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Experiments"
+          }
+        },
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "实验"
+          }
+        }
+      }
+    },
+    "settings.shade.group.notch": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Notch"
+          }
+        },
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "刘海"
+          }
+        }
+      }
+    },
+    "settings.shade.group.silentPhrase": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Silent phrases"
+          }
+        },
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "静音口令"
+          }
+        }
+      }
+    },
+    "settings.shade.group.sound": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Sound"
+          }
+        },
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "声音"
+          }
+        }
+      }
+    },
+    "settings.shade.group.trigger": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Triggers"
+          }
+        },
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "触发"
+          }
+        }
+      }
+    },
+    "settings.shade.levelKeys.allow": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Allow…"
+          }
+        },
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "允许…"
+          }
+        }
+      }
+    },
+    "settings.shade.levelKeys.allowA11y": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Allow Accessibility so %@ works"
+          }
+        },
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "允许辅助功能，让%@生效"
+          }
+        }
+      }
+    },
+    "settings.shade.levelKeys.info": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Press volume, brightness or keyboard-light keys and the notch shows a bar on each side while macOS's overlay stays hidden. On the lock screen and in Mission Control, macOS's overlay still shows."
+          }
+        },
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "按音量、亮度、键盘灯键时，刘海两边显示一条，系统自己的提示藏起来。锁屏和调度中心里仍是系统的提示。"
+          }
+        }
+      }
+    },
+    "settings.shade.levelKeys.infoMissing": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Turn on WindowShade in Accessibility to hide macOS's overlay."
+          }
+        },
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "在“辅助功能”里打开 WindowShade，系统自己的提示就会藏起来。"
+          }
+        }
+      }
+    },
+    "settings.shade.levelKeys.infoUnverified": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "This macOS version isn't verified yet, so macOS's overlay shows as well."
+          }
+        },
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "这个 macOS 版本还没核对过，系统的提示会一起出现。"
+          }
+        }
+      }
+    },
+    "settings.shade.levelKeys.name": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Volume & brightness"
+          }
+        },
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "音量和亮度"
+          }
+        }
+      }
+    },
+    "settings.shade.levelKeys.sub": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Shows while you press the volume or brightness keys"
+          }
+        },
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "按音量、亮度键时显示"
+          }
+        }
+      }
+    },
+    "settings.shade.levelKeys.subMissing": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "macOS's own overlay shows too"
+          }
+        },
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "系统的提示也会出现"
+          }
+        }
+      }
+    },
+    "settings.shade.mergedRow.name": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "One merged row"
+          }
+        },
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "合成一排"
+          }
+        }
+      }
+    },
+    "settings.shade.mergedRow.sub": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Windows and live activities in a single row"
+          }
+        },
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "窗口和正在进行的事排在同一排"
+          }
+        }
+      }
+    },
+    "settings.shade.notchAlerts.name": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Tell me when things change"
+          }
+        },
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "有变化时提醒"
+          }
+        }
+      }
+    },
+    "settings.shade.notchAlerts.sub": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "When a rolled-up window's title changes — a build finishing, say — the notch opens briefly"
+          }
+        },
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "收起的窗口标题变了，比如编译完成，刘海会短暂展开告诉你"
+          }
+        }
+      }
+    },
+    "settings.shade.nowPlaying.name": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Now playing"
+          }
+        },
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "正在播放"
+          }
+        }
+      }
+    },
+    "settings.shade.nowPlaying.sub": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Track name and artwork at the notch"
+          }
+        },
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "歌名和封面显示在刘海上"
+          }
+        }
+      }
+    },
+    "settings.shade.origin.mac": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Always used a Mac"
+          }
+        },
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "一直用 Mac"
+          }
+        }
+      }
+    },
+    "settings.shade.origin.name": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Used before"
+          }
+        },
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "之前常用"
+          }
+        }
+      }
+    },
+    "settings.shade.origin.sub": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "When stuck, the notch shows the Mac way based on what you used before"
+          }
+        },
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "卡住时，刘海按你原来的习惯提示 Mac 上怎么做"
+          }
+        }
+      }
+    },
+    "settings.shade.originGuess.name": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Guess where you came from"
+          }
+        },
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "猜你从哪来"
+          }
+        }
+      }
+    },
+    "settings.shade.originGuess.sub": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Asked once when you use another system's habits"
+          }
+        },
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "按出别的系统的习惯时问一次"
+          }
+        }
+      }
+    },
+    "settings.shade.silentPhrase.cantonese": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Cantonese"
+          }
+        },
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "粤语"
+          }
+        }
+      }
+    },
+    "settings.shade.silentPhrase.mandarin": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Mandarin"
+          }
+        },
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "普通话"
+          }
+        }
+      }
+    },
+    "settings.shade.silentPhrase.name": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Dialect"
+          }
+        },
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "方言"
+          }
+        }
+      }
+    },
+    "settings.shade.silentPhrase.placeholder": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Give this one a word"
+          }
+        },
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "给这条配一个词"
+          }
+        }
+      }
+    },
+    "settings.shade.silentPhrase.wu": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Wu"
+          }
+        },
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "吴语"
+          }
+        }
+      }
+    },
+    "settings.shade.sound.blow": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Airy (Blow)"
+          }
+        },
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "轻吹（Blow）"
+          }
+        }
+      }
+    },
+    "settings.shade.sound.glass": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Glassy (Glass)"
+          }
+        },
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "玻璃（Glass）"
+          }
+        }
+      }
+    },
+    "settings.shade.sound.name": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Play a sound on roll up and unroll"
+          }
+        },
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "收起和展开时播放音效"
+          }
+        }
+      }
+    },
+    "settings.shade.sound.pop": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Pops open (Pop)"
+          }
+        },
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "弹开（Pop）"
+          }
+        }
+      }
+    },
+    "settings.shade.sound.purr": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Soft (Purr)"
+          }
+        },
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "柔和（Purr）"
+          }
+        }
+      }
+    },
+    "settings.shade.sound.submarine": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Muted (Submarine)"
+          }
+        },
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "低调（Submarine）"
+          }
+        }
+      }
+    },
+    "settings.shade.sound.tink": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Faint (Tink)"
+          }
+        },
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "细微轻响（Tink）"
+          }
+        }
+      }
+    },
+    "settings.shade.splitHandle.name": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Split handle"
+          }
+        },
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "分屏把手"
+          }
+        }
+      }
+    },
+    "settings.shade.splitHandle.sub": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "When two windows fill a screen, drag the bar between them to resize both; push it to the edge to send one into Slide Over"
+          }
+        },
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "两扇窗口拼满一块屏时，中间出现一根小竖条：拖它两扇一起变，推到屏幕边那一扇进侧拉"
+          }
+        }
+      }
+    },
+    "settings.shade.sub": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "How windows roll up, how a rolled-up window looks, and whether to play a sound."
+          }
+        },
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "设置怎么收起窗口、收起后什么样、要不要提示音。"
+          }
+        }
+      }
+    },
+    "settings.shade.supplement.activities": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Open live activities"
+          }
+        },
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "打开实时活动"
+          }
+        }
+      }
+    },
+    "settings.shade.supplement.coding": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Coding sessions…"
+          }
+        },
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "编程会话…"
+          }
+        }
+      }
+    },
+    "settings.shade.supplement.codingTip": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Pick a project and Codex locally; after sign-in it queries read-only. Opening the page starts nothing."
+          }
+        },
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "本地选择项目和 Codex，登录后进行只读查询。打开页面不会启动程序。"
+          }
+        }
+      }
+    },
+    "settings.shade.supplement.conductor": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Conductor…"
+          }
+        },
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "指挥…"
+          }
+        }
+      }
+    },
+    "settings.shade.supplement.conductorTip": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "See the current session, model and drafts. It never sends and never connects the remote."
+          }
+        },
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "看当前会话、模型和草稿。不会发送，也不会连接遥控器。"
+          }
+        }
+      }
+    },
+    "settings.shade.supplement.focus": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Start a focus timer"
+          }
+        },
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "开始番茄钟"
+          }
+        }
+      }
+    },
+    "settings.shade.supplement.focusTip": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Open the focus timer. Record a shortcut in Shortcuts."
+          }
+        },
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "打开番茄钟。快捷键可在快捷键设置中录制。"
+          }
+        }
+      }
+    },
+    "settings.shade.supplement.gateConductor": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Conductor mode"
+          }
+        },
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "指挥模式"
+          }
+        }
+      }
+    },
+    "settings.shade.supplement.gateConductorWhy": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Needs an approved input device and an assistant connection"
+          }
+        },
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "需要已核准的输入设备和助手连接"
+          }
+        }
+      }
+    },
+    "settings.shade.supplement.gatePresence": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Presence detection"
+          }
+        },
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "在场检测"
+          }
+        }
+      }
+    },
+    "settings.shade.supplement.gatePresenceWhy": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Needs a bound-identity Bluetooth source"
+          }
+        },
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "需要已绑定身份的蓝牙读回来源"
+          }
+        }
+      }
+    },
+    "settings.shade.supplement.gateRemote": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Siri Remote"
+          }
+        },
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Siri 遥控器"
+          }
+        }
+      }
+    },
+    "settings.shade.supplement.gateRemoteWhy": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Needs button and touch probes for the current device"
+          }
+        },
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "需要通过当前设备的按钮与触点探针"
+          }
+        }
+      }
+    },
+    "settings.shade.supplement.gateScroll": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Smooth scrolling"
+          }
+        },
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "平滑滚动"
+          }
+        }
+      }
+    },
+    "settings.shade.supplement.gateScrollWhy": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Needs device-origin confirmation for every event"
+          }
+        },
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "需要确认每条事件的设备来源"
+          }
+        }
+      }
+    },
+    "settings.shade.supplement.heading": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Focus & input"
+          }
+        },
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "专注与输入"
+          }
+        }
+      }
+    },
+    "settings.shade.supplement.lockOverlay": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Lock-screen fold effect"
+          }
+        },
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "锁屏开合效果"
+          }
+        }
+      }
+    },
+    "settings.shade.supplement.silent": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Silent commands…"
+          }
+        },
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "静音操作…"
+          }
+        }
+      }
+    },
+    "settings.shade.supplement.silentTip": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Everything is read at the notch before you confirm. Using a draft never sends."
+          }
+        },
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "在刘海里看清再确认。采用草稿不会发送。"
+          }
+        }
+      }
+    },
+    "settings.shade.supplement.welcome": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Welcome to WindowShade…"
+          }
+        },
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "欢迎使用 WindowShade…"
+          }
+        }
+      }
+    },
+    "settings.shade.thumbnailTranslucent": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Translucent thumbnail"
+          }
+        },
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "缩略图半透明"
+          }
+        }
+      }
+    },
+    "settings.shade.timerChime.name": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Chime when a timer ends"
+          }
+        },
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "计时器到时间响一声"
+          }
+        }
+      }
+    },
+    "settings.shade.timerChime.sub": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "One system alert, no repeat; silent when the system is muted"
+          }
+        },
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "响一次系统提示音，不循环；系统静音时不响"
+          }
+        }
+      }
+    },
+    "settings.shade.trackpad.name": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Title bar gestures"
+          }
+        },
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "标题栏手势"
+          }
+        }
+      }
+    },
+    "settings.shade.trackpad.sub": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Two-finger swipe, scroll, or flick on a title bar: up to roll up, down to fill"
+          }
+        },
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "在标题栏上两指滑动、滚动滚轮或拖着甩一下：往上收起，往下铺满"
+          }
+        }
+      }
+    },
+    "settings.shade.trackpad.subSwish": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Swish is running and takes the title-bar gestures; swiping down on the bar still unrolls"
+          }
+        },
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Swish 正在运行，标题栏上的手势交给它；在卷帘条上往下滑仍可展开"
+          }
+        }
+      }
+    },
+    "settings.shade.translucent.sub": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "More see-through, so what's behind shows"
+          }
+        },
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "让它更透一些，能看到后面的内容"
+          }
+        }
+      }
+    },
+    "settings.shade.tuckNotch.name": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Tuck into the notch"
+          }
+        },
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "收进刘海"
+          }
+        }
+      }
+    },
+    "settings.shade.tuckNotch.sub": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Flick a title bar toward the notch to tuck the window; rest on the notch and click to bring it back"
+          }
+        },
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "朝刘海甩一下标题栏，窗口就收进刘海；指针停在刘海上，点一下放回"
+          }
+        }
+      }
+    },
+    "settings.shade.unfoldSound.name": {
+      "extractionState": "manual",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Unroll sound"
+          }
+        },
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "展开音效"
           }
         }
       }
@@ -973,16 +3761,16 @@
     "settings.stripNotch.name": {
       "extractionState": "manual",
       "localizations": {
-        "zh-Hans": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "卷轴概览能收进刘海"
-          }
-        },
         "en": {
           "stringUnit": {
             "state": "translated",
             "value": "Strip overview can tuck into the notch"
+          }
+        },
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "卷轴概览能收进刘海"
           }
         }
       }
@@ -990,16 +3778,16 @@
     "settings.stripNotch.sub": {
       "extractionState": "manual",
       "localizations": {
-        "zh-Hans": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "在卷轴概览里把窗口拖到刘海，松手就收进去"
-          }
-        },
         "en": {
           "stringUnit": {
             "state": "translated",
             "value": "Drag a window to the notch in the strip overview and let go to tuck it away"
+          }
+        },
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "在卷轴概览里把窗口拖到刘海，松手就收进去"
           }
         }
       }
@@ -1007,16 +3795,16 @@
     "settings.stripTitleDrag.name": {
       "extractionState": "manual",
       "localizations": {
-        "zh-Hans": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "拖标题栏换位置"
-          }
-        },
         "en": {
           "stringUnit": {
             "state": "translated",
             "value": "Drag the title bar to reorder"
+          }
+        },
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "拖标题栏换位置"
           }
         }
       }
@@ -1024,16 +3812,16 @@
     "settings.stripTitleDrag.sub": {
       "extractionState": "manual",
       "localizations": {
-        "zh-Hans": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "在卷轴里拖标题栏换列；拉远一点才离开卷轴"
-          }
-        },
         "en": {
           "stringUnit": {
             "state": "translated",
             "value": "Drag a title bar in the strip to swap columns; pull further to leave the strip"
+          }
+        },
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "在卷轴里拖标题栏换列；拉远一点才离开卷轴"
           }
         }
       }
@@ -1041,16 +3829,16 @@
     "settings.stripWidths.name": {
       "extractionState": "manual",
       "localizations": {
-        "zh-Hans": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "记住每个 App 的列宽"
-          }
-        },
         "en": {
           "stringUnit": {
             "state": "translated",
             "value": "Remember each app's column width"
+          }
+        },
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "记住每个 App 的列宽"
           }
         }
       }
@@ -1058,16 +3846,33 @@
     "settings.stripWidths.sub": {
       "extractionState": "manual",
       "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "An app you resized opens at that width in the strip next time"
+          }
+        },
         "zh-Hans": {
           "stringUnit": {
             "state": "translated",
             "value": "改过宽度的 App，下次开在卷轴里还是那个宽度"
           }
-        },
+        }
+      }
+    },
+    "settings.window.title": {
+      "extractionState": "manual",
+      "localizations": {
         "en": {
           "stringUnit": {
             "state": "translated",
-            "value": "An app you resized opens at that width in the strip next time"
+            "value": "WindowShade Settings"
+          }
+        },
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "WindowShade 设置"
           }
         }
       }
@@ -1075,16 +3880,16 @@
     "silent.activity.airdrop": {
       "extractionState": "manual",
       "localizations": {
-        "zh-Hans": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "隔空投送"
-          }
-        },
         "en": {
           "stringUnit": {
             "state": "translated",
             "value": "AirDrop"
+          }
+        },
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "隔空投送"
           }
         }
       }
@@ -1092,16 +3897,16 @@
     "silent.activity.battery": {
       "extractionState": "manual",
       "localizations": {
-        "zh-Hans": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "电量"
-          }
-        },
         "en": {
           "stringUnit": {
             "state": "translated",
             "value": "Battery"
+          }
+        },
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "电量"
           }
         }
       }
@@ -1109,16 +3914,16 @@
     "silent.activity.details": {
       "extractionState": "manual",
       "localizations": {
-        "zh-Hans": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "活动详情"
-          }
-        },
         "en": {
           "stringUnit": {
             "state": "translated",
             "value": "Activity details"
+          }
+        },
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "活动详情"
           }
         }
       }
@@ -1126,16 +3931,16 @@
     "silent.activity.focus": {
       "extractionState": "manual",
       "localizations": {
-        "zh-Hans": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "番茄钟"
-          }
-        },
         "en": {
           "stringUnit": {
             "state": "translated",
             "value": "Focus timer"
+          }
+        },
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "番茄钟"
           }
         }
       }
@@ -1143,16 +3948,16 @@
     "silent.activity.music": {
       "extractionState": "manual",
       "localizations": {
-        "zh-Hans": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "正在播放"
-          }
-        },
         "en": {
           "stringUnit": {
             "state": "translated",
             "value": "Now playing"
+          }
+        },
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "正在播放"
           }
         }
       }
@@ -1160,16 +3965,16 @@
     "silent.activity.next": {
       "extractionState": "manual",
       "localizations": {
-        "zh-Hans": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "下一条"
-          }
-        },
         "en": {
           "stringUnit": {
             "state": "translated",
             "value": "Next"
+          }
+        },
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "下一条"
           }
         }
       }
@@ -1177,16 +3982,16 @@
     "silent.activity.previous": {
       "extractionState": "manual",
       "localizations": {
-        "zh-Hans": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "上一条"
-          }
-        },
         "en": {
           "stringUnit": {
             "state": "translated",
             "value": "Previous"
+          }
+        },
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "上一条"
           }
         }
       }
@@ -1194,16 +3999,16 @@
     "silent.activity.recording": {
       "extractionState": "manual",
       "localizations": {
-        "zh-Hans": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "录音"
-          }
-        },
         "en": {
           "stringUnit": {
             "state": "translated",
             "value": "Recording"
+          }
+        },
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "录音"
           }
         }
       }
@@ -1211,16 +4016,16 @@
     "silent.activity.route": {
       "extractionState": "manual",
       "localizations": {
-        "zh-Hans": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "路线"
-          }
-        },
         "en": {
           "stringUnit": {
             "state": "translated",
             "value": "Route"
+          }
+        },
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "路线"
           }
         }
       }
@@ -1228,16 +4033,16 @@
     "silent.app.activateSelected": {
       "extractionState": "manual",
       "localizations": {
-        "zh-Hans": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "打开这个"
-          }
-        },
         "en": {
           "stringUnit": {
             "state": "translated",
             "value": "Open this"
+          }
+        },
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "打开这个"
           }
         }
       }
@@ -1245,16 +4050,16 @@
     "silent.app.previous": {
       "extractionState": "manual",
       "localizations": {
-        "zh-Hans": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "上一个"
-          }
-        },
         "en": {
           "stringUnit": {
             "state": "translated",
             "value": "Previous"
+          }
+        },
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "上一个"
           }
         }
       }
@@ -1262,16 +4067,16 @@
     "silent.app.showSwitcher": {
       "extractionState": "manual",
       "localizations": {
-        "zh-Hans": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "切换窗口"
-          }
-        },
         "en": {
           "stringUnit": {
             "state": "translated",
             "value": "Switch windows"
+          }
+        },
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "切换窗口"
           }
         }
       }
@@ -1279,16 +4084,16 @@
     "silent.assistant.chooseSession": {
       "extractionState": "manual",
       "localizations": {
-        "zh-Hans": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "选会话"
-          }
-        },
         "en": {
           "stringUnit": {
             "state": "translated",
             "value": "Choose session"
+          }
+        },
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "选会话"
           }
         }
       }
@@ -1296,16 +4101,16 @@
     "silent.assistant.effort": {
       "extractionState": "manual",
       "localizations": {
-        "zh-Hans": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "思考档位"
-          }
-        },
         "en": {
           "stringUnit": {
             "state": "translated",
             "value": "Thinking level"
+          }
+        },
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "思考档位"
           }
         }
       }
@@ -1313,16 +4118,16 @@
     "silent.assistant.interrupt": {
       "extractionState": "manual",
       "localizations": {
-        "zh-Hans": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "停止这一轮"
-          }
-        },
         "en": {
           "stringUnit": {
             "state": "translated",
             "value": "Stop this turn"
+          }
+        },
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "停止这一轮"
           }
         }
       }
@@ -1330,16 +4135,16 @@
     "silent.assistant.models": {
       "extractionState": "manual",
       "localizations": {
-        "zh-Hans": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "选模型"
-          }
-        },
         "en": {
           "stringUnit": {
             "state": "translated",
             "value": "Choose model"
+          }
+        },
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "选模型"
           }
         }
       }
@@ -1347,16 +4152,16 @@
     "silent.assistant.requestApproval": {
       "extractionState": "manual",
       "localizations": {
-        "zh-Hans": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "请求批准"
-          }
-        },
         "en": {
           "stringUnit": {
             "state": "translated",
             "value": "Ask for approval"
+          }
+        },
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "请求批准"
           }
         }
       }
@@ -1364,16 +4169,16 @@
     "silent.assistant.review": {
       "extractionState": "manual",
       "localizations": {
-        "zh-Hans": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "看审阅"
-          }
-        },
         "en": {
           "stringUnit": {
             "state": "translated",
             "value": "See review"
+          }
+        },
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "看审阅"
           }
         }
       }
@@ -1381,16 +4186,16 @@
     "silent.assistant.sendDraft": {
       "extractionState": "manual",
       "localizations": {
-        "zh-Hans": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "发送"
-          }
-        },
         "en": {
           "stringUnit": {
             "state": "translated",
             "value": "Send"
+          }
+        },
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "发送"
           }
         }
       }
@@ -1398,16 +4203,16 @@
     "silent.assistant.setEffort": {
       "extractionState": "manual",
       "localizations": {
-        "zh-Hans": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "下一轮档位"
-          }
-        },
         "en": {
           "stringUnit": {
             "state": "translated",
             "value": "Level for next turn"
+          }
+        },
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "下一轮档位"
           }
         }
       }
@@ -1415,16 +4220,16 @@
     "silent.assistant.setModel": {
       "extractionState": "manual",
       "localizations": {
-        "zh-Hans": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "下一轮模型"
-          }
-        },
         "en": {
           "stringUnit": {
             "state": "translated",
             "value": "Model for next turn"
+          }
+        },
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "下一轮模型"
           }
         }
       }
@@ -1432,16 +4237,16 @@
     "silent.assistant.show": {
       "extractionState": "manual",
       "localizations": {
-        "zh-Hans": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "编程会话"
-          }
-        },
         "en": {
           "stringUnit": {
             "state": "translated",
             "value": "Coding sessions"
+          }
+        },
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "编程会话"
           }
         }
       }
@@ -1449,16 +4254,16 @@
     "silent.assistant.showDiff": {
       "extractionState": "manual",
       "localizations": {
-        "zh-Hans": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "看改动"
-          }
-        },
         "en": {
           "stringUnit": {
             "state": "translated",
             "value": "See changes"
+          }
+        },
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "看改动"
           }
         }
       }
@@ -1466,16 +4271,16 @@
     "silent.assistant.source": {
       "extractionState": "manual",
       "localizations": {
-        "zh-Hans": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "打开来源"
-          }
-        },
         "en": {
           "stringUnit": {
             "state": "translated",
             "value": "Open source"
+          }
+        },
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "打开来源"
           }
         }
       }
@@ -1483,16 +4288,16 @@
     "silent.assistant.status": {
       "extractionState": "manual",
       "localizations": {
-        "zh-Hans": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "会话状态"
-          }
-        },
         "en": {
           "stringUnit": {
             "state": "translated",
             "value": "Session status"
+          }
+        },
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "会话状态"
           }
         }
       }
@@ -1500,16 +4305,16 @@
     "silent.assistant.steerDraft": {
       "extractionState": "manual",
       "localizations": {
-        "zh-Hans": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "补充这句"
-          }
-        },
         "en": {
           "stringUnit": {
             "state": "translated",
             "value": "Add this"
+          }
+        },
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "补充这句"
           }
         }
       }
@@ -1517,16 +4322,16 @@
     "silent.auth.authorizeSession": {
       "extractionState": "manual",
       "localizations": {
-        "zh-Hans": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "许可这次"
-          }
-        },
         "en": {
           "stringUnit": {
             "state": "translated",
             "value": "Allow this time"
+          }
+        },
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "许可这次"
           }
         }
       }
@@ -1534,16 +4339,16 @@
     "silent.auth.begin": {
       "extractionState": "manual",
       "localizations": {
-        "zh-Hans": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "开始确认"
-          }
-        },
         "en": {
           "stringUnit": {
             "state": "translated",
             "value": "Start confirming"
+          }
+        },
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "开始确认"
           }
         }
       }
@@ -1551,16 +4356,16 @@
     "silent.auth.cancel": {
       "extractionState": "manual",
       "localizations": {
-        "zh-Hans": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "取消这次"
-          }
-        },
         "en": {
           "stringUnit": {
             "state": "translated",
             "value": "Cancel this one"
+          }
+        },
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "取消这次"
           }
         }
       }
@@ -1568,16 +4373,16 @@
     "silent.auth.deleteEnrollment": {
       "extractionState": "manual",
       "localizations": {
-        "zh-Hans": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "删掉登记"
-          }
-        },
         "en": {
           "stringUnit": {
             "state": "translated",
             "value": "Delete enrollment"
+          }
+        },
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "删掉登记"
           }
         }
       }
@@ -1585,16 +4390,16 @@
     "silent.auth.enroll": {
       "extractionState": "manual",
       "localizations": {
-        "zh-Hans": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "登记身份"
-          }
-        },
         "en": {
           "stringUnit": {
             "state": "translated",
             "value": "Enroll identity"
+          }
+        },
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "登记身份"
           }
         }
       }
@@ -1602,16 +4407,16 @@
     "silent.auth.lab": {
       "extractionState": "manual",
       "localizations": {
-        "zh-Hans": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "人脸实验"
-          }
-        },
         "en": {
           "stringUnit": {
             "state": "translated",
             "value": "Face lab"
+          }
+        },
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "人脸实验"
           }
         }
       }
@@ -1619,16 +4424,16 @@
     "silent.auth.profiles": {
       "extractionState": "manual",
       "localizations": {
-        "zh-Hans": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "确认档案"
-          }
-        },
         "en": {
           "stringUnit": {
             "state": "translated",
             "value": "Confirmation profiles"
+          }
+        },
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "确认档案"
           }
         }
       }
@@ -1636,16 +4441,16 @@
     "silent.auth.revokeSession": {
       "extractionState": "manual",
       "localizations": {
-        "zh-Hans": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "取消这次许可"
-          }
-        },
         "en": {
           "stringUnit": {
             "state": "translated",
             "value": "Cancel this permission"
+          }
+        },
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "取消这次许可"
           }
         }
       }
@@ -1653,16 +4458,16 @@
     "silent.auth.settings": {
       "extractionState": "manual",
       "localizations": {
-        "zh-Hans": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "解锁设置"
-          }
-        },
         "en": {
           "stringUnit": {
             "state": "translated",
             "value": "Unlock settings"
+          }
+        },
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "解锁设置"
           }
         }
       }
@@ -1670,16 +4475,16 @@
     "silent.auth.useSystem": {
       "extractionState": "manual",
       "localizations": {
-        "zh-Hans": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "用系统确认"
-          }
-        },
         "en": {
           "stringUnit": {
             "state": "translated",
             "value": "Confirm with system"
+          }
+        },
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "用系统确认"
           }
         }
       }
@@ -1687,16 +4492,16 @@
     "silent.carplay.enter": {
       "extractionState": "manual",
       "localizations": {
-        "zh-Hans": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "进入车载"
-          }
-        },
         "en": {
           "stringUnit": {
             "state": "translated",
             "value": "Enter car mode"
+          }
+        },
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "进入车载"
           }
         }
       }
@@ -1704,16 +4509,16 @@
     "silent.carplay.exit": {
       "extractionState": "manual",
       "localizations": {
-        "zh-Hans": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "离开车载"
-          }
-        },
         "en": {
           "stringUnit": {
             "state": "translated",
             "value": "Leave car mode"
+          }
+        },
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "离开车载"
           }
         }
       }
@@ -1721,16 +4526,16 @@
     "silent.credential.chooseAlias": {
       "extractionState": "manual",
       "localizations": {
-        "zh-Hans": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "选一个名字"
-          }
-        },
         "en": {
           "stringUnit": {
             "state": "translated",
             "value": "Choose a name"
+          }
+        },
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "选一个名字"
           }
         }
       }
@@ -1738,16 +4543,16 @@
     "silent.credential.secretPhraseLab": {
       "extractionState": "manual",
       "localizations": {
-        "zh-Hans": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "口令实验"
-          }
-        },
         "en": {
           "stringUnit": {
             "state": "translated",
             "value": "Phrase lab"
+          }
+        },
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "口令实验"
           }
         }
       }
@@ -1755,16 +4560,16 @@
     "silent.desktop.missionControl": {
       "extractionState": "manual",
       "localizations": {
-        "zh-Hans": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "调度中心"
-          }
-        },
         "en": {
           "stringUnit": {
             "state": "translated",
             "value": "Mission Control"
+          }
+        },
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "调度中心"
           }
         }
       }
@@ -1772,16 +4577,16 @@
     "silent.desktop.select": {
       "extractionState": "manual",
       "localizations": {
-        "zh-Hans": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "这个桌面"
-          }
-        },
         "en": {
           "stringUnit": {
             "state": "translated",
             "value": "This desktop"
+          }
+        },
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "这个桌面"
           }
         }
       }
@@ -1789,16 +4594,16 @@
     "silent.desktop.showDesktop": {
       "extractionState": "manual",
       "localizations": {
-        "zh-Hans": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "显示桌面"
-          }
-        },
         "en": {
           "stringUnit": {
             "state": "translated",
             "value": "Show Desktop"
+          }
+        },
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "显示桌面"
           }
         }
       }
@@ -1806,16 +4611,16 @@
     "silent.desktop.showSwitcher": {
       "extractionState": "manual",
       "localizations": {
-        "zh-Hans": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "切换桌面"
-          }
-        },
         "en": {
           "stringUnit": {
             "state": "translated",
             "value": "Switch desktops"
+          }
+        },
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "切换桌面"
           }
         }
       }
@@ -1823,16 +4628,16 @@
     "silent.device.bind": {
       "extractionState": "manual",
       "localizations": {
-        "zh-Hans": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "绑定设备"
-          }
-        },
         "en": {
           "stringUnit": {
             "state": "translated",
             "value": "Pair device"
+          }
+        },
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "绑定设备"
           }
         }
       }
@@ -1840,16 +4645,16 @@
     "silent.device.range": {
       "extractionState": "manual",
       "localizations": {
-        "zh-Hans": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "看一下远近"
-          }
-        },
         "en": {
           "stringUnit": {
             "state": "translated",
             "value": "Check distance"
+          }
+        },
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "看一下远近"
           }
         }
       }
@@ -1857,16 +4662,16 @@
     "silent.device.revoke": {
       "extractionState": "manual",
       "localizations": {
-        "zh-Hans": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "解除绑定"
-          }
-        },
         "en": {
           "stringUnit": {
             "state": "translated",
             "value": "Unpair"
+          }
+        },
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "解除绑定"
           }
         }
       }
@@ -1874,16 +4679,16 @@
     "silent.device.status": {
       "extractionState": "manual",
       "localizations": {
-        "zh-Hans": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "设备还未知"
-          }
-        },
         "en": {
           "stringUnit": {
             "state": "translated",
             "value": "Device not known yet"
+          }
+        },
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "设备还未知"
           }
         }
       }
@@ -1891,16 +4696,16 @@
     "silent.dictation.adopt": {
       "extractionState": "manual",
       "localizations": {
-        "zh-Hans": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "采用草稿"
-          }
-        },
         "en": {
           "stringUnit": {
             "state": "translated",
             "value": "Use draft"
+          }
+        },
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "采用草稿"
           }
         }
       }
@@ -1908,16 +4713,16 @@
     "silent.dictation.discard": {
       "extractionState": "manual",
       "localizations": {
-        "zh-Hans": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "丢掉草稿"
-          }
-        },
         "en": {
           "stringUnit": {
             "state": "translated",
             "value": "Discard draft"
+          }
+        },
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "丢掉草稿"
           }
         }
       }
@@ -1925,16 +4730,16 @@
     "silent.dictation.edit": {
       "extractionState": "manual",
       "localizations": {
-        "zh-Hans": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "改这段字"
-          }
-        },
         "en": {
           "stringUnit": {
             "state": "translated",
             "value": "Edit this text"
+          }
+        },
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "改这段字"
           }
         }
       }
@@ -1942,16 +4747,16 @@
     "silent.dictation.enableWhisper": {
       "extractionState": "manual",
       "localizations": {
-        "zh-Hans": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "精细听写"
-          }
-        },
         "en": {
           "stringUnit": {
             "state": "translated",
             "value": "Precise dictation"
+          }
+        },
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "精细听写"
           }
         }
       }
@@ -1959,16 +4764,16 @@
     "silent.dictation.insertPhrase": {
       "extractionState": "manual",
       "localizations": {
-        "zh-Hans": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "插入口令"
-          }
-        },
         "en": {
           "stringUnit": {
             "state": "translated",
             "value": "Insert phrase"
+          }
+        },
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "插入口令"
           }
         }
       }
@@ -1976,16 +4781,16 @@
     "silent.dictation.nextCandidate": {
       "extractionState": "manual",
       "localizations": {
-        "zh-Hans": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "下一个说法"
-          }
-        },
         "en": {
           "stringUnit": {
             "state": "translated",
             "value": "Next wording"
+          }
+        },
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "下一个说法"
           }
         }
       }
@@ -1993,16 +4798,16 @@
     "silent.dictation.retry": {
       "extractionState": "manual",
       "localizations": {
-        "zh-Hans": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "再来一次"
-          }
-        },
         "en": {
           "stringUnit": {
             "state": "translated",
             "value": "Try again"
+          }
+        },
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "再来一次"
           }
         }
       }
@@ -2010,16 +4815,16 @@
     "silent.dictation.start": {
       "extractionState": "manual",
       "localizations": {
-        "zh-Hans": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "开始草稿"
-          }
-        },
         "en": {
           "stringUnit": {
             "state": "translated",
             "value": "Start draft"
+          }
+        },
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "开始草稿"
           }
         }
       }
@@ -2027,16 +4832,16 @@
     "silent.dictation.stopCapture": {
       "extractionState": "manual",
       "localizations": {
-        "zh-Hans": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "草稿停在这"
-          }
-        },
         "en": {
           "stringUnit": {
             "state": "translated",
             "value": "Stop draft here"
+          }
+        },
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "草稿停在这"
           }
         }
       }
@@ -2044,16 +4849,16 @@
     "silent.focus.pause": {
       "extractionState": "manual",
       "localizations": {
-        "zh-Hans": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "暂停"
-          }
-        },
         "en": {
           "stringUnit": {
             "state": "translated",
             "value": "Pause"
+          }
+        },
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "暂停"
           }
         }
       }
@@ -2061,16 +4866,16 @@
     "silent.focus.resume": {
       "extractionState": "manual",
       "localizations": {
-        "zh-Hans": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "继续"
-          }
-        },
         "en": {
           "stringUnit": {
             "state": "translated",
             "value": "Resume"
+          }
+        },
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "继续"
           }
         }
       }
@@ -2078,16 +4883,16 @@
     "silent.focus.start": {
       "extractionState": "manual",
       "localizations": {
-        "zh-Hans": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "开始番茄钟"
-          }
-        },
         "en": {
           "stringUnit": {
             "state": "translated",
             "value": "Start focus timer"
+          }
+        },
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "开始番茄钟"
           }
         }
       }
@@ -2095,16 +4900,16 @@
     "silent.input.pause": {
       "extractionState": "manual",
       "localizations": {
-        "zh-Hans": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "先停一下"
-          }
-        },
         "en": {
           "stringUnit": {
             "state": "translated",
             "value": "Pause for now"
+          }
+        },
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "先停一下"
           }
         }
       }
@@ -2112,16 +4917,16 @@
     "silent.input.profile": {
       "extractionState": "manual",
       "localizations": {
-        "zh-Hans": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "口令档案"
-          }
-        },
         "en": {
           "stringUnit": {
             "state": "translated",
             "value": "Voice profile"
+          }
+        },
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "口令档案"
           }
         }
       }
@@ -2129,16 +4934,16 @@
     "silent.input.recenter": {
       "extractionState": "manual",
       "localizations": {
-        "zh-Hans": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "重新对准"
-          }
-        },
         "en": {
           "stringUnit": {
             "state": "translated",
             "value": "Re-center"
+          }
+        },
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "重新对准"
           }
         }
       }
@@ -2146,16 +4951,16 @@
     "silent.launcher.back": {
       "extractionState": "manual",
       "localizations": {
-        "zh-Hans": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "返回上一层"
-          }
-        },
         "en": {
           "stringUnit": {
             "state": "translated",
             "value": "Back one level"
+          }
+        },
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "返回上一层"
           }
         }
       }
@@ -2163,16 +4968,16 @@
     "silent.launcher.dismiss": {
       "extractionState": "manual",
       "localizations": {
-        "zh-Hans": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "关掉启动台"
-          }
-        },
         "en": {
           "stringUnit": {
             "state": "translated",
             "value": "Close Launchpad"
+          }
+        },
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "关掉启动台"
           }
         }
       }
@@ -2180,16 +4985,16 @@
     "silent.launcher.home": {
       "extractionState": "manual",
       "localizations": {
-        "zh-Hans": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "主屏幕"
-          }
-        },
         "en": {
           "stringUnit": {
             "state": "translated",
             "value": "Home Screen"
+          }
+        },
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "主屏幕"
           }
         }
       }
@@ -2197,16 +5002,16 @@
     "silent.launcher.library": {
       "extractionState": "manual",
       "localizations": {
-        "zh-Hans": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "App 资料库"
-          }
-        },
         "en": {
           "stringUnit": {
             "state": "translated",
             "value": "App Library"
+          }
+        },
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "App 资料库"
           }
         }
       }
@@ -2214,16 +5019,16 @@
     "silent.launcher.nextPage": {
       "extractionState": "manual",
       "localizations": {
-        "zh-Hans": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "下一页"
-          }
-        },
         "en": {
           "stringUnit": {
             "state": "translated",
             "value": "Next page"
+          }
+        },
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "下一页"
           }
         }
       }
@@ -2231,16 +5036,16 @@
     "silent.launcher.open": {
       "extractionState": "manual",
       "localizations": {
-        "zh-Hans": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "启动台"
-          }
-        },
         "en": {
           "stringUnit": {
             "state": "translated",
             "value": "Launchpad"
+          }
+        },
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "启动台"
           }
         }
       }
@@ -2248,16 +5053,16 @@
     "silent.launcher.openFolder": {
       "extractionState": "manual",
       "localizations": {
-        "zh-Hans": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "打开文件夹"
-          }
-        },
         "en": {
           "stringUnit": {
             "state": "translated",
             "value": "Open folder"
+          }
+        },
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "打开文件夹"
           }
         }
       }
@@ -2265,16 +5070,16 @@
     "silent.launcher.openSelected": {
       "extractionState": "manual",
       "localizations": {
-        "zh-Hans": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "打开选中的"
-          }
-        },
         "en": {
           "stringUnit": {
             "state": "translated",
             "value": "Open selected"
+          }
+        },
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "打开选中的"
           }
         }
       }
@@ -2282,16 +5087,16 @@
     "silent.launcher.previousPage": {
       "extractionState": "manual",
       "localizations": {
-        "zh-Hans": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "上一页"
-          }
-        },
         "en": {
           "stringUnit": {
             "state": "translated",
             "value": "Previous page"
+          }
+        },
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "上一页"
           }
         }
       }
@@ -2299,16 +5104,16 @@
     "silent.launcher.search": {
       "extractionState": "manual",
       "localizations": {
-        "zh-Hans": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "搜索"
-          }
-        },
         "en": {
           "stringUnit": {
             "state": "translated",
             "value": "Search"
+          }
+        },
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "搜索"
           }
         }
       }
@@ -2316,16 +5121,16 @@
     "silent.launcher.today": {
       "extractionState": "manual",
       "localizations": {
-        "zh-Hans": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "今天"
-          }
-        },
         "en": {
           "stringUnit": {
             "state": "translated",
             "value": "Today"
+          }
+        },
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "今天"
           }
         }
       }
@@ -2333,16 +5138,16 @@
     "silent.music.nextTrack": {
       "extractionState": "manual",
       "localizations": {
-        "zh-Hans": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "下一首"
-          }
-        },
         "en": {
           "stringUnit": {
             "state": "translated",
             "value": "Next track"
+          }
+        },
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "下一首"
           }
         }
       }
@@ -2350,16 +5155,16 @@
     "silent.music.pause": {
       "extractionState": "manual",
       "localizations": {
-        "zh-Hans": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "暂停播放"
-          }
-        },
         "en": {
           "stringUnit": {
             "state": "translated",
             "value": "Pause"
+          }
+        },
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "暂停播放"
           }
         }
       }
@@ -2367,16 +5172,16 @@
     "silent.music.resume": {
       "extractionState": "manual",
       "localizations": {
-        "zh-Hans": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "继续播放"
-          }
-        },
         "en": {
           "stringUnit": {
             "state": "translated",
             "value": "Resume"
+          }
+        },
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "继续播放"
           }
         }
       }
@@ -2384,16 +5189,16 @@
     "silent.nav.back": {
       "extractionState": "manual",
       "localizations": {
-        "zh-Hans": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "返回"
-          }
-        },
         "en": {
           "stringUnit": {
             "state": "translated",
             "value": "Back"
+          }
+        },
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "返回"
           }
         }
       }
@@ -2401,16 +5206,16 @@
     "silent.nav.cancel": {
       "extractionState": "manual",
       "localizations": {
-        "zh-Hans": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "取消"
-          }
-        },
         "en": {
           "stringUnit": {
             "state": "translated",
             "value": "Cancel"
+          }
+        },
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "取消"
           }
         }
       }
@@ -2418,16 +5223,16 @@
     "silent.nav.help": {
       "extractionState": "manual",
       "localizations": {
-        "zh-Hans": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "怎么用"
-          }
-        },
         "en": {
           "stringUnit": {
             "state": "translated",
             "value": "How to use"
+          }
+        },
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "怎么用"
           }
         }
       }
@@ -2435,16 +5240,16 @@
     "silent.nav.next": {
       "extractionState": "manual",
       "localizations": {
-        "zh-Hans": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "下一项"
-          }
-        },
         "en": {
           "stringUnit": {
             "state": "translated",
             "value": "Next"
+          }
+        },
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "下一项"
           }
         }
       }
@@ -2452,16 +5257,16 @@
     "silent.nav.previous": {
       "extractionState": "manual",
       "localizations": {
-        "zh-Hans": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "上一项"
-          }
-        },
         "en": {
           "stringUnit": {
             "state": "translated",
             "value": "Previous"
+          }
+        },
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "上一项"
           }
         }
       }
@@ -2469,16 +5274,16 @@
     "silent.nav.select": {
       "extractionState": "manual",
       "localizations": {
-        "zh-Hans": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "选这个"
-          }
-        },
         "en": {
           "stringUnit": {
             "state": "translated",
             "value": "Choose this"
+          }
+        },
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "选这个"
           }
         }
       }
@@ -2486,16 +5291,16 @@
     "silent.privacy.awaySummary": {
       "extractionState": "manual",
       "localizations": {
-        "zh-Hans": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "离开期间"
-          }
-        },
         "en": {
           "stringUnit": {
             "state": "translated",
             "value": "While you were away"
+          }
+        },
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "离开期间"
           }
         }
       }
@@ -2503,16 +5308,16 @@
     "silent.privacy.clearCover": {
       "extractionState": "manual",
       "localizations": {
-        "zh-Hans": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "撤掉遮挡"
-          }
-        },
         "en": {
           "stringUnit": {
             "state": "translated",
             "value": "Remove cover"
+          }
+        },
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "撤掉遮挡"
           }
         }
       }
@@ -2520,16 +5325,16 @@
     "silent.privacy.cover": {
       "extractionState": "manual",
       "localizations": {
-        "zh-Hans": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "先遮住"
-          }
-        },
         "en": {
           "stringUnit": {
             "state": "translated",
             "value": "Cover first"
+          }
+        },
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "先遮住"
           }
         }
       }
@@ -2537,16 +5342,16 @@
     "silent.privacy.panicLock": {
       "extractionState": "manual",
       "localizations": {
-        "zh-Hans": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "马上锁屏"
-          }
-        },
         "en": {
           "stringUnit": {
             "state": "translated",
             "value": "Lock now"
+          }
+        },
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "马上锁屏"
           }
         }
       }
@@ -2554,16 +5359,16 @@
     "silent.privacy.reveal": {
       "extractionState": "manual",
       "localizations": {
-        "zh-Hans": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "揭开遮挡"
-          }
-        },
         "en": {
           "stringUnit": {
             "state": "translated",
             "value": "Uncover"
+          }
+        },
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "揭开遮挡"
           }
         }
       }
@@ -2571,16 +5376,16 @@
     "silent.privacy.selectScope": {
       "extractionState": "manual",
       "localizations": {
-        "zh-Hans": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "选遮住范围"
-          }
-        },
         "en": {
           "stringUnit": {
             "state": "translated",
             "value": "Choose what to cover"
+          }
+        },
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "选遮住范围"
           }
         }
       }
@@ -2588,16 +5393,16 @@
     "silent.privacy.status": {
       "extractionState": "manual",
       "localizations": {
-        "zh-Hans": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "遮住没遮住"
-          }
-        },
         "en": {
           "stringUnit": {
             "state": "translated",
             "value": "Covered or not"
+          }
+        },
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "遮住没遮住"
           }
         }
       }
@@ -2605,16 +5410,16 @@
     "silent.scene.accessibility": {
       "extractionState": "manual",
       "localizations": {
-        "zh-Hans": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "同一条路径"
-          }
-        },
         "en": {
           "stringUnit": {
             "state": "translated",
             "value": "Same path"
+          }
+        },
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "同一条路径"
           }
         }
       }
@@ -2622,16 +5427,16 @@
     "silent.scene.coding": {
       "extractionState": "manual",
       "localizations": {
-        "zh-Hans": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "编程排布"
-          }
-        },
         "en": {
           "stringUnit": {
             "state": "translated",
             "value": "Coding layout"
+          }
+        },
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "编程排布"
           }
         }
       }
@@ -2639,16 +5444,16 @@
     "silent.scene.conversation": {
       "extractionState": "manual",
       "localizations": {
-        "zh-Hans": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "先遮住聊天"
-          }
-        },
         "en": {
           "stringUnit": {
             "state": "translated",
             "value": "Cover chats first"
+          }
+        },
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "先遮住聊天"
           }
         }
       }
@@ -2656,16 +5461,16 @@
     "silent.scene.largeText": {
       "extractionState": "manual",
       "localizations": {
-        "zh-Hans": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "字大一点"
-          }
-        },
         "en": {
           "stringUnit": {
             "state": "translated",
             "value": "Bigger text"
+          }
+        },
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "字大一点"
           }
         }
       }
@@ -2673,16 +5478,16 @@
     "silent.scene.presentation": {
       "extractionState": "manual",
       "localizations": {
-        "zh-Hans": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "演示排布"
-          }
-        },
         "en": {
           "stringUnit": {
             "state": "translated",
             "value": "Presenting layout"
+          }
+        },
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "演示排布"
           }
         }
       }
@@ -2690,16 +5495,16 @@
     "silent.scene.presenter": {
       "extractionState": "manual",
       "localizations": {
-        "zh-Hans": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "演示这一屏"
-          }
-        },
         "en": {
           "stringUnit": {
             "state": "translated",
             "value": "Present this screen"
+          }
+        },
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "演示这一屏"
           }
         }
       }
@@ -2707,16 +5512,16 @@
     "silent.scene.reading": {
       "extractionState": "manual",
       "localizations": {
-        "zh-Hans": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "阅读排布"
-          }
-        },
         "en": {
           "stringUnit": {
             "state": "translated",
             "value": "Reading layout"
+          }
+        },
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "阅读排布"
           }
         }
       }
@@ -2724,16 +5529,16 @@
     "silent.scene.resumeWork": {
       "extractionState": "manual",
       "localizations": {
-        "zh-Hans": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "回到刚才"
-          }
-        },
         "en": {
           "stringUnit": {
             "state": "translated",
             "value": "Back to what I was doing"
+          }
+        },
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "回到刚才"
           }
         }
       }
@@ -2741,16 +5546,16 @@
     "silent.settings.appearance": {
       "extractionState": "manual",
       "localizations": {
-        "zh-Hans": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "外观"
-          }
-        },
         "en": {
           "stringUnit": {
             "state": "translated",
             "value": "Appearance"
+          }
+        },
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "外观"
           }
         }
       }
@@ -2758,16 +5563,16 @@
     "silent.settings.permissions": {
       "extractionState": "manual",
       "localizations": {
-        "zh-Hans": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "权限"
-          }
-        },
         "en": {
           "stringUnit": {
             "state": "translated",
             "value": "Permissions"
+          }
+        },
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "权限"
           }
         }
       }
@@ -2775,16 +5580,16 @@
     "silent.settings.privacy": {
       "extractionState": "manual",
       "localizations": {
-        "zh-Hans": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "隐私"
-          }
-        },
         "en": {
           "stringUnit": {
             "state": "translated",
             "value": "Privacy"
+          }
+        },
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "隐私"
           }
         }
       }
@@ -2792,16 +5597,16 @@
     "silent.settings.shortcuts": {
       "extractionState": "manual",
       "localizations": {
-        "zh-Hans": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "快捷键"
-          }
-        },
         "en": {
           "stringUnit": {
             "state": "translated",
             "value": "Shortcuts"
+          }
+        },
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "快捷键"
           }
         }
       }
@@ -2809,16 +5614,16 @@
     "silent.settings.silent": {
       "extractionState": "manual",
       "localizations": {
-        "zh-Hans": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "静音操作"
-          }
-        },
         "en": {
           "stringUnit": {
             "state": "translated",
             "value": "Silent actions"
+          }
+        },
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "静音操作"
           }
         }
       }
@@ -2826,16 +5631,16 @@
     "silent.settings.windows": {
       "extractionState": "manual",
       "localizations": {
-        "zh-Hans": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "窗口设置"
-          }
-        },
         "en": {
           "stringUnit": {
             "state": "translated",
             "value": "Window settings"
+          }
+        },
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "窗口设置"
           }
         }
       }
@@ -2843,16 +5648,16 @@
     "silent.ui.activities": {
       "extractionState": "manual",
       "localizations": {
-        "zh-Hans": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "实时活动"
-          }
-        },
         "en": {
           "stringUnit": {
             "state": "translated",
             "value": "Live activities"
+          }
+        },
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "实时活动"
           }
         }
       }
@@ -2860,16 +5665,16 @@
     "silent.ui.settings": {
       "extractionState": "manual",
       "localizations": {
-        "zh-Hans": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "设置"
-          }
-        },
         "en": {
           "stringUnit": {
             "state": "translated",
             "value": "Settings"
+          }
+        },
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "设置"
           }
         }
       }
@@ -2877,16 +5682,16 @@
     "silent.ui.usage": {
       "extractionState": "manual",
       "localizations": {
-        "zh-Hans": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "用量"
-          }
-        },
         "en": {
           "stringUnit": {
             "state": "translated",
             "value": "Usage"
+          }
+        },
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "用量"
           }
         }
       }
@@ -2894,16 +5699,16 @@
     "silent.ui.windows": {
       "extractionState": "manual",
       "localizations": {
-        "zh-Hans": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "窗口"
-          }
-        },
         "en": {
           "stringUnit": {
             "state": "translated",
             "value": "Windows"
+          }
+        },
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "窗口"
           }
         }
       }
@@ -2911,16 +5716,16 @@
     "silent.usage.accountActivity": {
       "extractionState": "manual",
       "localizations": {
-        "zh-Hans": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "账户活动"
-          }
-        },
         "en": {
           "stringUnit": {
             "state": "translated",
             "value": "Account activity"
+          }
+        },
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "账户活动"
           }
         }
       }
@@ -2928,16 +5733,16 @@
     "silent.usage.chooseAccount": {
       "extractionState": "manual",
       "localizations": {
-        "zh-Hans": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "选账户"
-          }
-        },
         "en": {
           "stringUnit": {
             "state": "translated",
             "value": "Choose account"
+          }
+        },
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "选账户"
           }
         }
       }
@@ -2945,16 +5750,16 @@
     "silent.usage.context": {
       "extractionState": "manual",
       "localizations": {
-        "zh-Hans": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "上下文"
-          }
-        },
         "en": {
           "stringUnit": {
             "state": "translated",
             "value": "Context"
+          }
+        },
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "上下文"
           }
         }
       }
@@ -2962,16 +5767,16 @@
     "silent.usage.quota": {
       "extractionState": "manual",
       "localizations": {
-        "zh-Hans": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "账户额度"
-          }
-        },
         "en": {
           "stringUnit": {
             "state": "translated",
             "value": "Account quota"
+          }
+        },
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "账户额度"
           }
         }
       }
@@ -2979,16 +5784,16 @@
     "silent.usage.refresh": {
       "extractionState": "manual",
       "localizations": {
-        "zh-Hans": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "重新看用量"
-          }
-        },
         "en": {
           "stringUnit": {
             "state": "translated",
             "value": "Refresh usage"
+          }
+        },
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "重新看用量"
           }
         }
       }
@@ -2996,16 +5801,16 @@
     "silent.usage.session": {
       "extractionState": "manual",
       "localizations": {
-        "zh-Hans": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "这次用量"
-          }
-        },
         "en": {
           "stringUnit": {
             "state": "translated",
             "value": "This session"
+          }
+        },
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "这次用量"
           }
         }
       }
@@ -3013,16 +5818,16 @@
     "silent.window.batchReview": {
       "extractionState": "manual",
       "localizations": {
-        "zh-Hans": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "先看一遍"
-          }
-        },
         "en": {
           "stringUnit": {
             "state": "translated",
             "value": "Review first"
+          }
+        },
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "先看一遍"
           }
         }
       }
@@ -3030,16 +5835,16 @@
     "silent.window.bottomLeft": {
       "extractionState": "manual",
       "localizations": {
-        "zh-Hans": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "左下角"
-          }
-        },
         "en": {
           "stringUnit": {
             "state": "translated",
             "value": "Bottom left"
+          }
+        },
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "左下角"
           }
         }
       }
@@ -3047,16 +5852,16 @@
     "silent.window.bottomRight": {
       "extractionState": "manual",
       "localizations": {
-        "zh-Hans": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "右下角"
-          }
-        },
         "en": {
           "stringUnit": {
             "state": "translated",
             "value": "Bottom right"
+          }
+        },
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "右下角"
           }
         }
       }
@@ -3064,16 +5869,16 @@
     "silent.window.center": {
       "extractionState": "manual",
       "localizations": {
-        "zh-Hans": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "居中"
-          }
-        },
         "en": {
           "stringUnit": {
             "state": "translated",
             "value": "Center"
+          }
+        },
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "居中"
           }
         }
       }
@@ -3081,16 +5886,16 @@
     "silent.window.choose": {
       "extractionState": "manual",
       "localizations": {
-        "zh-Hans": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "选择窗口"
-          }
-        },
         "en": {
           "stringUnit": {
             "state": "translated",
             "value": "Choose window"
+          }
+        },
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "选择窗口"
           }
         }
       }
@@ -3098,16 +5903,16 @@
     "silent.window.chooseDisplay": {
       "extractionState": "manual",
       "localizations": {
-        "zh-Hans": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "选择屏幕"
-          }
-        },
         "en": {
           "stringUnit": {
             "state": "translated",
             "value": "Choose display"
+          }
+        },
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "选择屏幕"
           }
         }
       }
@@ -3115,16 +5920,16 @@
     "silent.window.collapse": {
       "extractionState": "manual",
       "localizations": {
-        "zh-Hans": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "收起窗口"
-          }
-        },
         "en": {
           "stringUnit": {
             "state": "translated",
             "value": "Collapse window"
+          }
+        },
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "收起窗口"
           }
         }
       }
@@ -3132,16 +5937,16 @@
     "silent.window.expand": {
       "extractionState": "manual",
       "localizations": {
-        "zh-Hans": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "展开窗口"
-          }
-        },
         "en": {
           "stringUnit": {
             "state": "translated",
             "value": "Expand window"
+          }
+        },
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "展开窗口"
           }
         }
       }
@@ -3149,16 +5954,16 @@
     "silent.window.fill": {
       "extractionState": "manual",
       "localizations": {
-        "zh-Hans": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "铺满屏幕"
-          }
-        },
         "en": {
           "stringUnit": {
             "state": "translated",
             "value": "Fill screen"
+          }
+        },
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "铺满屏幕"
           }
         }
       }
@@ -3166,16 +5971,16 @@
     "silent.window.glance": {
       "extractionState": "manual",
       "localizations": {
-        "zh-Hans": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "看一眼"
-          }
-        },
         "en": {
           "stringUnit": {
             "state": "translated",
             "value": "Take a look"
+          }
+        },
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "看一眼"
           }
         }
       }
@@ -3183,16 +5988,16 @@
     "silent.window.leavePip": {
       "extractionState": "manual",
       "localizations": {
-        "zh-Hans": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "退出画中画"
-          }
-        },
         "en": {
           "stringUnit": {
             "state": "translated",
             "value": "Leave Picture in Picture"
+          }
+        },
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "退出画中画"
           }
         }
       }
@@ -3200,16 +6005,16 @@
     "silent.window.leaveSlideOver": {
       "extractionState": "manual",
       "localizations": {
-        "zh-Hans": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "退出侧拉"
-          }
-        },
         "en": {
           "stringUnit": {
             "state": "translated",
             "value": "Leave Slide Over"
+          }
+        },
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "退出侧拉"
           }
         }
       }
@@ -3217,16 +6022,16 @@
     "silent.window.left": {
       "extractionState": "manual",
       "localizations": {
-        "zh-Hans": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "左半屏"
-          }
-        },
         "en": {
           "stringUnit": {
             "state": "translated",
             "value": "Left half"
+          }
+        },
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "左半屏"
           }
         }
       }
@@ -3234,16 +6039,16 @@
     "silent.window.magicTile": {
       "extractionState": "manual",
       "localizations": {
-        "zh-Hans": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "魔法平铺"
-          }
-        },
         "en": {
           "stringUnit": {
             "state": "translated",
             "value": "Magic Tile"
+          }
+        },
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "魔法平铺"
           }
         }
       }
@@ -3251,16 +6056,16 @@
     "silent.window.moveToSelectedDisplay": {
       "extractionState": "manual",
       "localizations": {
-        "zh-Hans": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "移到这屏"
-          }
-        },
         "en": {
           "stringUnit": {
             "state": "translated",
             "value": "Move to this display"
+          }
+        },
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "移到这屏"
           }
         }
       }
@@ -3268,16 +6073,16 @@
     "silent.window.pin": {
       "extractionState": "manual",
       "localizations": {
-        "zh-Hans": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "置顶"
-          }
-        },
         "en": {
           "stringUnit": {
             "state": "translated",
             "value": "Keep on top"
+          }
+        },
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "置顶"
           }
         }
       }
@@ -3285,16 +6090,16 @@
     "silent.window.pip": {
       "extractionState": "manual",
       "localizations": {
-        "zh-Hans": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "画中画"
-          }
-        },
         "en": {
           "stringUnit": {
             "state": "translated",
             "value": "Picture in Picture"
+          }
+        },
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "画中画"
           }
         }
       }
@@ -3302,16 +6107,16 @@
     "silent.window.restore": {
       "extractionState": "manual",
       "localizations": {
-        "zh-Hans": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "还原"
-          }
-        },
         "en": {
           "stringUnit": {
             "state": "translated",
             "value": "Restore"
+          }
+        },
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "还原"
           }
         }
       }
@@ -3319,16 +6124,16 @@
     "silent.window.right": {
       "extractionState": "manual",
       "localizations": {
-        "zh-Hans": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "右半屏"
-          }
-        },
         "en": {
           "stringUnit": {
             "state": "translated",
             "value": "Right half"
+          }
+        },
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "右半屏"
           }
         }
       }
@@ -3336,16 +6141,16 @@
     "silent.window.slideOver": {
       "extractionState": "manual",
       "localizations": {
-        "zh-Hans": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "侧拉"
-          }
-        },
         "en": {
           "stringUnit": {
             "state": "translated",
             "value": "Slide Over"
+          }
+        },
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "侧拉"
           }
         }
       }
@@ -3353,16 +6158,16 @@
     "silent.window.stripNext": {
       "extractionState": "manual",
       "localizations": {
-        "zh-Hans": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "卷轴下一个"
-          }
-        },
         "en": {
           "stringUnit": {
             "state": "translated",
             "value": "Strip: next"
+          }
+        },
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "卷轴下一个"
           }
         }
       }
@@ -3370,16 +6175,16 @@
     "silent.window.stripOverview": {
       "extractionState": "manual",
       "localizations": {
-        "zh-Hans": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "卷轴概览"
-          }
-        },
         "en": {
           "stringUnit": {
             "state": "translated",
             "value": "Strip overview"
+          }
+        },
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "卷轴概览"
           }
         }
       }
@@ -3387,16 +6192,16 @@
     "silent.window.stripPrevious": {
       "extractionState": "manual",
       "localizations": {
-        "zh-Hans": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "卷轴上一个"
-          }
-        },
         "en": {
           "stringUnit": {
             "state": "translated",
             "value": "Strip: previous"
+          }
+        },
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "卷轴上一个"
           }
         }
       }
@@ -3404,16 +6209,16 @@
     "silent.window.topLeft": {
       "extractionState": "manual",
       "localizations": {
-        "zh-Hans": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "左上角"
-          }
-        },
         "en": {
           "stringUnit": {
             "state": "translated",
             "value": "Top left"
+          }
+        },
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "左上角"
           }
         }
       }
@@ -3421,16 +6226,16 @@
     "silent.window.topRight": {
       "extractionState": "manual",
       "localizations": {
-        "zh-Hans": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "右上角"
-          }
-        },
         "en": {
           "stringUnit": {
             "state": "translated",
             "value": "Top right"
+          }
+        },
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "右上角"
           }
         }
       }
@@ -3438,16 +6243,16 @@
     "silent.window.tuck": {
       "extractionState": "manual",
       "localizations": {
-        "zh-Hans": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "收进刘海"
-          }
-        },
         "en": {
           "stringUnit": {
             "state": "translated",
             "value": "Tuck into notch"
+          }
+        },
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "收进刘海"
           }
         }
       }
@@ -3455,16 +6260,16 @@
     "silent.window.undo": {
       "extractionState": "manual",
       "localizations": {
-        "zh-Hans": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "撤销"
-          }
-        },
         "en": {
           "stringUnit": {
             "state": "translated",
             "value": "Undo"
+          }
+        },
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "撤销"
           }
         }
       }
@@ -3472,16 +6277,16 @@
     "silent.window.unpin": {
       "extractionState": "manual",
       "localizations": {
-        "zh-Hans": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "取消置顶"
-          }
-        },
         "en": {
           "stringUnit": {
             "state": "translated",
             "value": "Stop keeping on top"
+          }
+        },
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "取消置顶"
           }
         }
       }
@@ -3489,16 +6294,16 @@
     "silent.window.untuck": {
       "extractionState": "manual",
       "localizations": {
-        "zh-Hans": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "放回"
-          }
-        },
         "en": {
           "stringUnit": {
             "state": "translated",
             "value": "Put back"
+          }
+        },
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "放回"
           }
         }
       }

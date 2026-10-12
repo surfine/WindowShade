@@ -1,0 +1,8 @@
+{
+  "kind": "contract-check",
+  "ok": true,
+  "artifact": "docs/design-review/2026-10-11-privacy-composition-and-motion-baseline/validation.json",
+  "sha256": "71d16af0a800d8b7a0e24dee9ed3dd070ccc0a910df272b1b16a18c7154296d3",
+  "binding_sha256": "92b8bffa633b98565c56064353b8c4e46f5ab905b7c9797b066e5683aba72511",
+  "scope": "baseline completion only; geometry passed, motion direction/one-row icon design need repair; whole goal active"
+}

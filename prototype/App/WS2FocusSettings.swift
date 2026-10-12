@@ -1,6 +1,6 @@
 import Cocoa
 @MainActor enum WS2FocusSettings {
-    /// 这一组设置属于“实时活动”那一栏；搬动由收尾包（R09）做，这里只暴露视图 WS2FocusSettingsRows。
+    /// 这一组设置属于"实时活动"那一栏；搬动由收尾包（R09）做，这里只暴露视图 WS2FocusSettingsRows。
     static let sectionTitle = "实时活动"
     static let tuckChatTitle = "专注时把聊天收进刘海"
     static let presetKey = "WS2.focus.preset"
@@ -16,24 +16,29 @@ import Cocoa
 }
 @MainActor final class WS2FocusSettingsRows: NSStackView {
     private weak var runtime: WS2AppRuntime?
-    private let presets = NSPopUpButton(), tuck = NSButton(checkboxWithTitle: WS2FocusSettings.tuckChatTitle, target: nil, action: nil)
+    private let presets = NSPopUpButton()
+    private let tuck = NSButton(checkboxWithTitle: WSL10n.text("settings.shade.focus.tuck", zh: WS2FocusSettings.tuckChatTitle),
+                                target: nil, action: nil)
     init(runtime: WS2AppRuntime) {
         self.runtime = runtime; super.init(frame: .zero)
         orientation = .vertical; alignment = .leading; spacing = 10
         let row = NSStackView(); row.orientation = .horizontal; row.spacing = 12
-        row.addArrangedSubview(NSTextField(labelWithString: "番茄钟"))
-        presets.addItems(withTitles: ["25 分钟 / 5 分钟", "50 分钟 / 10 分钟"])
+        row.addArrangedSubview(NSTextField(labelWithString: WSL10n.text("settings.shade.focus.name", zh: "番茄钟")))
+        presets.addItems(withTitles: [WSL10n.text("settings.shade.focus.preset25", zh: "25 分钟 / 5 分钟"),
+                                      WSL10n.text("settings.shade.focus.preset50", zh: "50 分钟 / 10 分钟")])
         presets.selectItem(at: WS2FocusSettings.preset == .minutes50 ? 1 : 0)
         presets.target = self; presets.action = #selector(changePreset); row.addArrangedSubview(presets)
-        presets.toolTip = "新的时长从下一轮开始生效。正在进行的一轮保持原时长。"
+        presets.toolTip = WSL10n.text("settings.shade.focus.presetTooltip", zh: "新的时长从下一轮开始生效。正在进行的一轮保持原时长。")
         addArrangedSubview(row)
         tuck.state = WS2FocusSettings.tuckChat ? .on : .off; tuck.target = self; tuck.action = #selector(changeTuck)
-        tuck.toolTip = "只收私人 App 名单里的窗口；名单为空或这项还没开放时不可用，也不会拿“收起全部窗口”顶替。"
+        tuck.toolTip = WSL10n.text("settings.shade.focus.tuckTooltip", zh: "只收私人 App 名单里的窗口；名单为空或这项还没开放时不可用，也不会拿“收起全部窗口”顶替。")
         let listed = !PrivateAppList.shared.isEmpty
         tuck.isEnabled = listed && WS2FocusWindowPort.admitted
         addArrangedSubview(tuck)
         if !tuck.isEnabled {
-            let note = NSTextField(wrappingLabelWithString: listed ? "现在只计时，还不会收起窗口。" : "名单里还没有 App")
+            let note = NSTextField(wrappingLabelWithString: listed
+                ? WSL10n.text("settings.shade.focus.noteCounting", zh: "现在只计时，还不会收起窗口。")
+                : WSL10n.text("settings.shade.focus.noteNoApps", zh: "名单里还没有 App"))
             note.textColor = .secondaryLabelColor; note.font = .systemFont(ofSize:11); addArrangedSubview(note)
         }
     }

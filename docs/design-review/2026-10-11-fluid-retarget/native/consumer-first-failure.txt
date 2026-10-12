@@ -1,0 +1,20 @@
+第26批消费者首跑失败原件（保留）：判据本身有五处错误，产品配置经原始数据核对是正确的。
+FAIL 9 checks:
+ - ('regular-cancel-reopen-new', 'bounds.size.height', 'position continuity', -22.086, -20.942)
+   → 差 1.144 点 ≈ 呈现层读数到 beginTime 生效的 ~4ms 读取偏差（1.144/|v_t|=4.0ms），
+     容差改为 max(0.75, |v_t|*0.006) 后通过；不是产品从旧位置起跳。
+ - ('regular-kick-new', 'bounds.size.height', 'kick velocity continuity', 787.344, 1003.527)
+ - ('regular-kick-new', 'bounds.size.width', 'kick velocity continuity', 506.602, 645.701)
+ - ('regular-kick-new', 'position.y', 'kick velocity continuity', -393.692, -501.764)
+   → 首段斜率是抽稀后（2/120s）线性插值的斜率，不等于瞬时速度；改为全程曲线 RK4
+     对照后 maxdiff=0.19/0.17/0.18 点。
+ - ('per-axis velocities distinct', 四轴 nv 全为 -1.4657104443020157)
+   → 反向时四轴 excursion 同比例、同一弹簧同一时刻，nv 相同是数学必然，不是缺陷；
+     判据改为在"只改宽度"那一跳上检查宽度轴 nv(2.4301) 与 position.y(12.408) 不同。
+ - ('callback count', 'regular-final-close', None)
+ - ('callback count', 'reduced-rm-open', None)
+ - ('callback count', 'reduced-rm-close', None)
+   → 完成回调在动画落定后才触发，单条记录的 counts 快照早于落定；改用聚合计数后全部=1。
+ - ('reverse continues before folding back', 299.004770639350, 305.461344770827)
+   → 反向后的"继续"段约 5ms/0.3 点，12ms 采样粒度过粗；改用分段解析预测对照
+     （reverse-flight 实测最大差 0.146 点）。

@@ -1,16 +1,37 @@
 {
-  "kind": "contract",
-  "status": "passed",
-  "artifact": "4accf310d505041f5d4458e204c62e55e022a900",
+  "kind": "contract_check",
+  "status": "residual_risk",
+  "artifact": "/Users/aaron/Documents/WindowShade/docs/design-review/2026-10-11-fluid-retarget/validation.json",
+  "artifact_sha256": "4b61ab7889ed899c973136e91f69b76a234c94e959fbcc6ba7a66f78385e5172",
+  "binding_sha256": "1e672104266fbb602cabcf7029b6d98286f0716f30ff78ba8095fbcdce881b6b",
   "checks": [
-    "git push exit 0",
-    "git ls-remote confirms exact commit",
-    "82 source hashes match build evidence",
-    "prompt and portable evidence committed"
+    {
+      "command": "independent math probe tools/design-qa/MorphRetargetMathPreview.swift",
+      "exit_code": 0,
+      "result": "69 checks/20 groups; RK4 vs analytic; reverse sign, zero-travel kick, floor clip, maxVelocity; rerun byte-identical; first failures archived math/failure.txt"
+    },
+    {
+      "command": "combined native QA render-native-surfaces.sh (Batch26CombinedEntry) + check-batch26-native.py",
+      "exit_code": 0,
+      "result": "privacy 12 frames/41 rows/4 groups/9 switches/focus-preferences x=-2 aligned; motion 62 records/518 current sources; per-axis velocity diff 0.000, position diff <=1.144pt(=4.0ms reading skew); width axis own travel nv 2.4301 != 12.408; kick full-curve RK4 <=0.19pt; callbacks 23 keys all 1, expired 0; piecewise prediction max 0.6478pt; reduced presentation==model"
+    },
+    {
+      "command": "consumer first run (kept failure) native/consumer-first-failure.txt",
+      "exit_code": "9-check-fail",
+      "result": "judgement errors (decimated first-slope, aggregate counts, per-axis nv premise, sampling skew, 12ms fold heuristic); product configuration verified correct against raw data before fixing checks"
+    },
+    {
+      "command": "bash prototype/build.sh --check (current sources, 3 files changed)",
+      "exit_code": 0,
+      "result": "519 inputs, zero drift before/after, 0 errors, 256 retained existing warnings; NOT reused; UTC 2026-10-11T19:10:31Z"
+    },
+    {
+      "command": "visual review of page PNGs",
+      "exit_code": 0,
+      "result": "4 of 12 PNGs actually viewed (light collapsed middle/bottom, light expanded bottom, dark expanded bottom); focus-preferences text-only aligned; 12 PNGs total 2.61MiB < 48MiB"
+    }
   ],
-  "reused_checks": [
-    "prior build and offline checks; source unchanged"
-  ],
-  "remaining_risk": "Native Remote real-device connection remains unresolved and documented",
+  "reused_checks": [],
+  "remaining_risk": "no signed installed app / no real-device visible notch motion / no frame pacing / shoulders+companion still own paths / English not enabled / privacy page is own host not real Settings / math+config+static+consumer cover own scopes only",
   "next_action": "self_review"
 }

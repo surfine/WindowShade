@@ -1,0 +1,10 @@
+{
+  "prototype/App/CountdownTimerCard.swift": "185c7d2ebf4389ddbe87ba55e4966c42f8071908da8e44425241fc9b04c8d816",
+  "prototype/App/NotchAuthentication.swift": "11f3f1c950cd34d0fe8364943011a4e06eec8448a979b8aa595a9c078fbc0945",
+  "prototype/App/NotchLeases.swift": "da57df03c261bbdd22e38c2fe82a566eb0b1ad6a960e0b5ccb53b4d364eb4d3c",
+  "prototype/Core/Contracts.swift": "1932fd07a030608e9b51064c38617da8d02ef9533eba4920581e47961b4f91ec",
+  "prototype/Core/CountdownTimer.swift": "65632b424dd85f6e4cde22b576bececa2f955fc7517c24db379ecc8872d814fc",
+  "prototype/App/CountdownTimerHost.swift": "76dc5c4e6709666bcdb8ce19f6080535f739c1c80cae859c551cc30ef64a0315",
+  "tools/design-qa/CountdownTimerCardPreview.swift": "7308d490c826c6757b624309ef7017a56e4031457ee90c8c5161c81c1da34832",
+  "tools/design-qa/render-countdown-card.sh": "47f5396da5435389b3d5c27b779e2bce01c0057c7c71f89bad28db40b4ea7529"
+}

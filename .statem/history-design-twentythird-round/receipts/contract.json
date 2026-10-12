@@ -1,0 +1,25 @@
+{
+  "kind": "contract_check",
+  "status": "residual_risk",
+  "artifact": "/Users/aaron/Documents/WindowShade/docs/design-review/2026-10-11-privacy-columns/validation.json",
+  "artifact_sha256": "55131a1780ca700349330f29f9e5ece5c45b3af5e6fd111143e4fb7ac6fdee9c",
+  "binding_sha256": "32f25fc8d4fb4fdf644c1433d8243542a917155cd9e14d1611e28ab71625918f",
+  "checks": [
+    {
+      "command": "swiftc Swift6 Cocoa-only candidate + actual native output consumer",
+      "exit_code": 0,
+      "result": "36 actual candidateframes/2 actual inputs/registry exact/interfaces real sites",
+      "receipt": "exit.json"
+    }
+  ],
+  "reused_checks": [
+    {
+      "command": "prototype/build.sh --check",
+      "exit_code": 0,
+      "result": "22 optimized519 current SHA all matched",
+      "receipt": "reused-build-exit.json"
+    }
+  ],
+  "remaining_risk": "candidate only, not production Row; static registry, experimental facts unqualified; actual selection/copy/VoiceOver/Page/actions not_run; dynamic font/auxiliary colors/real privacy/motion/hardware not_run",
+  "next_action": "self_review"
+}

@@ -1,0 +1,24 @@
+{
+  "session_id": 7700,
+  "exit_code": 0,
+  "pure_foundation": true,
+  "swift_source_count": 6,
+  "identity_count": 8,
+  "catalog_keys": 206,
+  "changed_inputs": [],
+  "artifacts": {
+    "identity-after.json": "d90a1f59e654bbcdf194d80910eb18d06427064eb0b122b0b2eb08721811fdc3",
+    "inputs.json": "c5314a8d9b38099c11987b46fdd61b01ce7a837cf56c322aba27777e2048b313",
+    "key-check.log": "db82ec5d2ef0682482ade74698d680b9cb83782fe09890f507e4c4f1646d8896",
+    "localization": "d4e2166deebfe32781c2f7c959d99091e6e460b39d053d94b1f181623a207d09",
+    "runtime.log": "f9665f8e86bc1f9765e7d58cf3fe1e4205e7b6d43228e904320f8a14ba51a49d",
+    "strings/en.lproj/Localizable.strings": "860f14613fce13aa04e4b057a398a265845f5251f5a85d055759ae53cf7c1af4",
+    "strings/zh-Hans.lproj/Localizable.strings": "5534000d688aa7ad66f198e2c3060cbe05bdd37ed942e45480085e8b6544d23d"
+  },
+  "limits": [
+    "default Swift mode, not current full Swift6 runtime",
+    "only existing WSL10n/HabitWords/SilentCopy paths",
+    "no actual App language switch or menu/settings completeness",
+    "input SHA recorded after start during source freeze, matched after completion"
+  ]
+}

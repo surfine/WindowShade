@@ -1,0 +1,17 @@
+{
+  "kind": "self_review",
+  "status": "residual_risk",
+  "issues_found": true,
+  "needs_evidence": false,
+  "lenses": {
+    "task_contract": "Actual tail disabled wrapping; only breakMode fixed, max2/final ellipsis/complete tooltip and existing geometry/font preserved.",
+    "evidence_freshness": "11 source/98 evidence hashes independently match;519 formal/518 final native current;actual before-after and derived CJK/ASCII/emoji/short images inspected.",
+    "edge_risk": "Default before-after geometry comparison separate from real pure derivedParams;short18/long34;fixed QA viewport not actual Dock placement;no controller/real image/permission/input."
+  },
+  "findings": [
+    "One actual production expression changed. Native cell switches wrap false to true, actual two-line draw seen.",
+    "Default samples reflect isolated ContentView parameters; actual caller pure derivation separately covered after, not retroactively claimed in before.",
+    "Static glass cache only host/geometry accepted; full signed runtime and real input remain not_run."
+  ],
+  "updated": "2026-10-11"
+}

@@ -1,0 +1,35 @@
+{
+  "kind": "contract",
+  "artifact": "docs/design-review/2026-10-11-feedback-and-fileshelf/validation.json:sha256:6209e7312c8fcbbbd64a0ca9b300b1b532e10c1b613e12c47eccb315e2e19df4",
+  "status": "residual_risk",
+  "checks": [
+    {
+      "command": "FeedbackPreview + check-feedback-preview.py",
+      "exit_code": 0,
+      "result": "Owned14/86;media12/4;empty feedback return/retry5/stale/revoke/timers0; six pairs identical",
+      "receipt": "native/native-exit.json"
+    },
+    {
+      "command": "FileShelfSurfacePreview + check-fileshelf-preview.py",
+      "exit_code": 0,
+      "result": "8 actual frames;4 pairs identical;own temp cleaned and volatile domain restored; long-name visual fails and remains pending",
+      "receipt": "fileshelf/native-exit.json"
+    },
+    {
+      "command": "original stdio flow (DeepSeek execution/main review)",
+      "exit_code": 0,
+      "result": "existing assertions unchanged;current controller included in immutable native/full build",
+      "receipt": "worker-receipt.json"
+    },
+    {
+      "command": "prototype/build.sh --check",
+      "exit_code": 0,
+      "result": "current519 inputs unchanged;optimized Swift6 gates passed",
+      "receipt": "build-exit.json"
+    }
+  ],
+  "reused_checks": [],
+  "remaining_risk": "FileShelf long-name extension/two-line bug,clear/undo/stale states and actual file actions;media artwork/output/seek/volume/more than5 routes;owned login/errors/long models/live scroll;real notch/multiple display/VoiceOver/animation/signed Swift6 actor isolation;remaining original blueprint lines",
+  "next_action": "self_review",
+  "updated": "2026-10-11"
+}

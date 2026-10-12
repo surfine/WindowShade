@@ -1,0 +1,44 @@
+[
+  {
+    "state": "completed",
+    "png_bytes_equal": true,
+    "light_sha256": "3aa404186af9cc978704a945eb8d7c56f2e47dd913e255871dc4fa384f177ba3",
+    "dark_sha256": "3aa404186af9cc978704a945eb8d7c56f2e47dd913e255871dc4fa384f177ba3"
+  },
+  {
+    "state": "connected",
+    "png_bytes_equal": true,
+    "light_sha256": "c3f77e14acdfcb7d7a770952476b8953c8951e158ea22dff0427d134d61dd2b2",
+    "dark_sha256": "c3f77e14acdfcb7d7a770952476b8953c8951e158ea22dff0427d134d61dd2b2"
+  },
+  {
+    "state": "disconnected",
+    "png_bytes_equal": true,
+    "light_sha256": "6ad82e9f4ebf8443b28a5054aca15fe5ec91ebccc3d977f00cdba90e8208154c",
+    "dark_sha256": "6ad82e9f4ebf8443b28a5054aca15fe5ec91ebccc3d977f00cdba90e8208154c"
+  },
+  {
+    "state": "draft",
+    "png_bytes_equal": true,
+    "light_sha256": "b37a68d760a400ef8771d415dfaaf1c11e1f5e8ee550cba1d63f8b938de2dbef",
+    "dark_sha256": "b37a68d760a400ef8771d415dfaaf1c11e1f5e8ee550cba1d63f8b938de2dbef"
+  },
+  {
+    "state": "listening",
+    "png_bytes_equal": true,
+    "light_sha256": "150c41d7cbc4117a3b159776dbc876e2ab584fe14794799758972c78fa25b2fd",
+    "dark_sha256": "150c41d7cbc4117a3b159776dbc876e2ab584fe14794799758972c78fa25b2fd"
+  },
+  {
+    "state": "models",
+    "png_bytes_equal": true,
+    "light_sha256": "549e20fa08985c33c9a7cc7de679be313e59b34a865757af2a5f72eb04118617",
+    "dark_sha256": "549e20fa08985c33c9a7cc7de679be313e59b34a865757af2a5f72eb04118617"
+  },
+  {
+    "state": "owned-session-idle",
+    "png_bytes_equal": true,
+    "light_sha256": "49f505b83a4d1afa59241c92e486418536636d6eb108ffde77c713484228a3f3",
+    "dark_sha256": "49f505b83a4d1afa59241c92e486418536636d6eb108ffde77c713484228a3f3"
+  }
+]

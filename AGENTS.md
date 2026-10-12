@@ -3,6 +3,8 @@
 > 第九、十份并入后的实际状态、本机证据与复核议程见 [docs/handoff/round2-part10/REVIEW-HANDOFF.md](docs/handoff/round2-part10/REVIEW-HANDOFF.md)：**W00 的编译门槛已达成：`main` 上 `prototype/build.sh --check` 退出 0，构建参数没撤；但新二进制没签名、没在真机上跑过，主线程隔离的执行期检查是否会在真机触发仍未知**（详见该文件开头一节）。
 >
 > 理想 vs 现实的检讨、给 GPT-6 Pro 的自包含审议包与破局落地方案见 [docs/handoff/gpt6-review-2026-10-06/README.md](docs/handoff/gpt6-review-2026-10-06/README.md)：1.0.15（2026-09-26）之后 170 个提交、0 次发布；瓶颈是一个人的验收漏斗加范围比收敛快。
+>
+> **最近一批未完事项（第27批 英语适配）：接手先读 [docs/handoff/BATCH27-ENGLISH-HANDOFF-2026-10-12.md](docs/handoff/BATCH27-ENGLISH-HANDOFF-2026-10-12.md)**。它是 [设计接手交接（DESIGN-TAKEOVER-2026-10-11.md）](docs/handoff/DESIGN-TAKEOVER-2026-10-11.md) 的延续，不是替代——那里面除英语外的动效/真机验证线同样继续。实现已全部完成并大部分验收通过；剩两个卡点（语言切换后设置窗口落到「效果」页；滑杆行读数两个布局形态）与收尾流水线。**英语已定案为全量完全适配、不留手尾（含官网与 README、随批滚动同步；验收轻量档；英文照 Apple 大小写惯例；繁体不做但留余地；证据过即收尾）**，剩余表面清单与完成标准在交接 §9、两轮问答全部定案在交接开头。
 
 # 项目约定
 

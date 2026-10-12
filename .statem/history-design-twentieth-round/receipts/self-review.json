@@ -1,0 +1,21 @@
+{
+  "kind": "self_review",
+  "status": "residual_risk",
+  "issues_found": true,
+  "needs_evidence": false,
+  "artifact": "/Users/aaron/Documents/WindowShade/docs/design-review/2026-10-11-usage-draft/validation.json",
+  "artifact_sha256": "b4ebe14c70aa599c389491f77f1b465ba7b260bfeab18ecbd732498302ca1f82",
+  "lenses": {
+    "task_contract": "actual quota projection/text update/pending recovery/static admission; full account page not claimed",
+    "evidence_freshness": "38 source/128 evidence/current20 native518/519 optimized0/49 usage/851 row actual0",
+    "edge_risk": "quotaLow projection tested through real Activity; current-only glyph getter not enough; new values redact with prior private path"
+  },
+  "findings": [
+    "Core preserves amount/unknown/windows; pending is a typed state, clock does not refill.",
+    "Panel guard forwards changed text even same quantity; low5→4 actual Canvas retains identity/signature/AX; full Panel lifecycle not_run.",
+    "Shared projection clears new exact account amount plus prior private details; actual own value fixture only.",
+    "Partial consumer1 and red projection preserve first failed contract; no worker self-report accepted.",
+    "Source gigantic reset rejected without discarding known percentage.",
+    "Next account multiwindow design candidate; no real account, refresh, notification, live view or hardware acceptance."
+  ]
+}

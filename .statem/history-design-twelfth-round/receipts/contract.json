@@ -1,0 +1,24 @@
+{
+  "kind": "contract_check",
+  "status": "residual_risk",
+  "artifact": "/Users/aaron/Documents/WindowShade/docs/design-review/2026-10-11-browser-settings/validation.json",
+  "artifact_sha256": "ebd46e508ec91bd21e6799d35d2cb26380bd16f95dbd48d51c780184cd9d0eea",
+  "checks": [
+    {
+      "command": "BrowserSettingsPreview + check-browser-settings-preview.py",
+      "exit_code": 0,
+      "result": "8 actual page frames/518 source identities; actual tooltip/selection/labels/viewport; original consumer geometry failure preserved",
+      "receipt": "after-exit.json"
+    },
+    {
+      "command": "prototype/build.sh --check",
+      "exit_code": 0,
+      "result": "519 optimized current identities; strict build parameters retained",
+      "receipt": "build-exit.json"
+    }
+  ],
+  "reused_checks": [],
+  "remaining_risk": "static actual page factory only;no full settings window/sidebar/toolbar;no actions/hooks/window switching/permission requests;no hardware/motion/signed Swift6 runtime;not committed/signed/installed/released",
+  "next_action": "self_review",
+  "updated": "2026-10-11"
+}

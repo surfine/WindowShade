@@ -1,0 +1,14 @@
+{
+  "exit_code": 0,
+  "utc": "2026-10-11T19:10:31.549421000",
+  "input_count": 519,
+  "changed_inputs": [],
+  "missing": [],
+  "added": [],
+  "command": "bash prototype/build.sh --check",
+  "milestones": [
+    "\u7f16\u8bd1\u9a8c\u8bc1\u901a\u8fc7",
+    "\u9690\u79c1\u767b\u8bb0\u68c0\u67e5",
+    "\u6587\u6848\u68c0\u67e5\u901a\u8fc7"
+  ]
+}

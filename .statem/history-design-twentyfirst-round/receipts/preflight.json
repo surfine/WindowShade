@@ -1,0 +1,20 @@
+{
+  "classes": [
+    "external-effects"
+  ],
+  "hazards": [
+    {
+      "class": "external-effects",
+      "evidence_paths": [],
+      "matched": [
+        "发布"
+      ],
+      "requirement": "不可逆外部效果先立效果清单；执行后要重新读回实际状态并对账。",
+      "severity": "high"
+    }
+  ],
+  "source": "preflight",
+  "task_path": "task.txt",
+  "task_sha256": "1c2d96f91cdb0b01232d73dd9e890bf9541d7454c31f414f0ff082fc453986da",
+  "version": 1
+}

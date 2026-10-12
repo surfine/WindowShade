@@ -1,0 +1,20 @@
+{
+  "is_error": true,
+  "incomplete": true,
+  "changed_files": [],
+  "checks": [
+    {
+      "check_index": 0,
+      "argv": [
+        "bash",
+        "tests/run-power-flash-tests.sh"
+      ],
+      "exit_code": 0,
+      "revision": 0,
+      "timed_out": false,
+      "output": "ok   first reading is a baseline, no flash\nok   plug flashes green with bolt and percent\nok   unplug is silent\nok   re-plug within 30 s does not flash\nok   plug 31 s after the last flash flashes again\nok   21% is green\nok   20% is red\nok   5% is red\nok   low power mode is yellow\nok   plug at 15% flashes red\nok   plug while low power mode is yellow\nok   optimised charging holding at 80% is not full\nok   IsCharged flashes full\nok   full flashes once per plug\nok   IsCharged flicker in the same plug does not flash again\nok   plug at 100% flashes the plug flash\nok   and no extra full flash in the same plug\nok   low power mode on flashes yellow\nok   low power mode off is silent\nok   low battery and low power mode together: only the low sentence\nok   busy notch: plug flash is dropped\nok   a dropped flash does not start the debounce\nok   unknown charging state keeps the last known state\nok   unknown first reading is only a baseline\nok   unknown percent never flashes a number\nok   charged first reading is only a baseline\nok   and does not flash full afterwards\nok   re-plug after baseline flashes normally\nok   only the internal battery flashes\nok   a desktop Mac has no source, so nothing can flash\nok   mac low headline\nok   mac low detail\nok   mac low detail with low power mode\nok   AirPods full sentence\nok   AirPods with only one ear writes only that ear\nok   AirPods with nothing read says unavailable, not 0%\nok   AirPods right ear shows the lower of the two\nok   AirPods with one ear shows that ear\nok   AirPods with nothing shows no number\nok   device ear is red at 20% and below\nok   unread percent: no number, not red\nok   device ear writes the percent\nPASS: power flash and device alert copy\n",
+      "truncated": false
+    }
+  ],
+  "result": "Context budget reached; inspect existing changes and delegate a narrower continuation."
+}

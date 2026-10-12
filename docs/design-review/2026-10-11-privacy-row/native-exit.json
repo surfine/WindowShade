@@ -1,0 +1,15 @@
+{
+  "baseline_session": 30646,
+  "baseline_exit": 0,
+  "baseline_consumer_exit": 1,
+  "baseline_frames": 32,
+  "partial_tail_session": 54275,
+  "partial_tail_exit": 0,
+  "partial_tail_geometry_consumer_exit": 0,
+  "partial_tail_visual": "trailing82% missing, not accepted",
+  "final_session": 62151,
+  "final_exit": 0,
+  "final_consumer_exit": 0,
+  "frames": 48,
+  "source_count": 518
+}

@@ -1,0 +1,169 @@
+{
+  "activated" : false,
+  "checks" : [
+    {
+      "actual" : "true",
+      "expected" : "true",
+      "name" : "precondition-ready-fixture-a-medium",
+      "passed" : true
+    },
+    {
+      "actual" : "外部草稿 native-input-check",
+      "expected" : "外部草稿 native-input-check",
+      "name" : "external-draft-update-syncs",
+      "passed" : true
+    },
+    {
+      "actual" : "",
+      "expected" : "",
+      "name" : "external-draft-clear-syncs",
+      "passed" : true
+    },
+    {
+      "actual" : "disabled",
+      "expected" : "disabled",
+      "name" : "blank-draft-disables-send",
+      "passed" : true
+    },
+    {
+      "actual" : "enabled",
+      "expected" : "enabled",
+      "name" : "valid-draft-enables-send",
+      "passed" : true
+    },
+    {
+      "actual" : "有效草稿 native-input-check",
+      "expected" : "有效草稿 native-input-check",
+      "name" : "valid-draft-adopted-by-controller",
+      "passed" : true
+    },
+    {
+      "actual" : "disabled",
+      "expected" : "disabled",
+      "name" : "over-limit-draft-disables-send",
+      "passed" : true
+    },
+    {
+      "actual" : "65537",
+      "expected" : "65537",
+      "name" : "over-limit-render-keeps-rejected-text",
+      "passed" : true
+    },
+    {
+      "actual" : "disabled",
+      "expected" : "disabled",
+      "name" : "over-limit-render-keeps-send-disabled",
+      "passed" : true
+    },
+    {
+      "actual" : "enabled",
+      "expected" : "enabled",
+      "name" : "before-marking-send-enabled",
+      "passed" : true
+    },
+    {
+      "actual" : "true",
+      "expected" : "true",
+      "name" : "marked-text-active",
+      "passed" : true
+    },
+    {
+      "actual" : "disabled",
+      "expected" : "disabled",
+      "name" : "marked-text-disables-send",
+      "passed" : true
+    },
+    {
+      "actual" : "false",
+      "expected" : "false",
+      "name" : "unmark-clears-marked-text",
+      "passed" : true
+    },
+    {
+      "actual" : "enabled",
+      "expected" : "enabled",
+      "name" : "unmark-restores-send",
+      "passed" : true
+    },
+    {
+      "actual" : "true",
+      "expected" : "true",
+      "name" : "diagnostic-action-dispatched",
+      "passed" : true
+    },
+    {
+      "actual" : "447.0",
+      "expected" : "larger",
+      "name" : "same-owner-expands-for-diagnostics",
+      "passed" : true
+    },
+    {
+      "actual" : "{{-8234, 403}, {653, 497}}",
+      "expected" : "larger",
+      "name" : "actual-panel-frame-expands",
+      "passed" : true
+    },
+    {
+      "actual" : "309.0",
+      "expected" : "309.0",
+      "name" : "same-owner-restores-content-height",
+      "passed" : true
+    },
+    {
+      "actual" : "{{-8218, 557}, {621, 343}}",
+      "expected" : "343.0",
+      "name" : "actual-panel-frame-restores",
+      "passed" : true
+    },
+    {
+      "actual" : "{{-8218, 557}, {621, 343}}",
+      "expected" : "true",
+      "name" : "same-owner-resize-offscreen",
+      "passed" : true
+    },
+    {
+      "actual" : "false",
+      "expected" : "true",
+      "name" : "same-owner-resize-inactive",
+      "passed" : true
+    },
+    {
+      "actual" : "disabled",
+      "expected" : "disabled",
+      "name" : "stale-input-disables-send",
+      "passed" : true
+    },
+    {
+      "actual" : "disabled",
+      "expected" : "disabled",
+      "name" : "revoked-send-disabled",
+      "passed" : true
+    },
+    {
+      "actual" : "true",
+      "expected" : "true",
+      "name" : "conductor-button-present",
+      "passed" : true
+    },
+    {
+      "actual" : "disabled",
+      "expected" : "disabled",
+      "name" : "revoked-open-conductor-disabled",
+      "passed" : true
+    },
+    {
+      "actual" : "0",
+      "expected" : "0",
+      "name" : "controller-draft-restored-empty",
+      "passed" : true
+    }
+  ],
+  "label" : "light",
+  "localDiagnosticActionDispatches" : 2,
+  "noRealAssistant" : true,
+  "note" : "实际输入投影与本地诊断action派发；没有发送\/登录点击，没有真实助手或网络；逐帧另验屏幕外位置。",
+  "parentAppearance" : "NSAppearanceNameAqua",
+  "passed" : true,
+  "performedSubmissionClick" : false,
+  "synthetic" : true
+}

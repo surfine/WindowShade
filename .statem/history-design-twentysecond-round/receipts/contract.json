@@ -1,0 +1,24 @@
+{
+  "kind": "contract_check",
+  "status": "residual_risk",
+  "artifact": "/Users/aaron/Documents/WindowShade/docs/design-review/2026-10-11-privacy-row/validation.json",
+  "artifact_sha256": "6accef55eddb839332f3a31ceb6c44472e2b5f3f5f942e124c10c453d3c5cd89",
+  "binding_sha256": "ca432947be31e5af0c59ca13d069f81c1734a071cccc084fd218116fd011a99b",
+  "checks": [
+    {
+      "command": "actual Swift6 PrivacyRowPreview + output consumer",
+      "exit_code": 0,
+      "result": "48/current518/middle82% visible/columns and height/complete hints",
+      "receipt": "native-exit.json"
+    },
+    {
+      "command": "prototype/build.sh --check",
+      "exit_code": 0,
+      "result": "current519 optimized inputs no drift",
+      "receipt": "build-exit.json"
+    }
+  ],
+  "reused_checks": [],
+  "remaining_risk": "row only; no Page/owner/source/action/persistent preference access; baseline loose viewport differs from fixed final; no product-window reproduction claim; partial geometry0 loses82% and rejected; its old consumer version not preserved; real page/source/readscreen/performance/network/disk/motion/hardware not_run; next restore draft two-column reading hierarchy",
+  "next_action": "self_review"
+}

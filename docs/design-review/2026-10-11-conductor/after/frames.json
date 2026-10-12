@@ -1,0 +1,100 @@
+[
+  {
+    "height" : 181,
+    "image" : "light-connected.png",
+    "spoken" : "设计工作间，Codex · high",
+    "visibleWindow" : false,
+    "width" : 576
+  },
+  {
+    "height" : 196,
+    "image" : "light-models.png",
+    "spoken" : "下一轮用哪个模型",
+    "visibleWindow" : false,
+    "width" : 720
+  },
+  {
+    "height" : 181,
+    "image" : "light-listening.png",
+    "spoken" : "在听，iPhone · 松开出草稿",
+    "visibleWindow" : false,
+    "width" : 576
+  },
+  {
+    "height" : 181,
+    "image" : "light-draft.png",
+    "spoken" : "草稿 · 给 设计工作间 · Codex · high",
+    "visibleWindow" : false,
+    "width" : 576
+  },
+  {
+    "height" : 181,
+    "image" : "light-completed.png",
+    "spoken" : "完成，已完成计时器检查。",
+    "visibleWindow" : false,
+    "width" : 576
+  },
+  {
+    "height" : 181,
+    "image" : "light-disconnected.png",
+    "spoken" : "遥控器断开了",
+    "visibleWindow" : false,
+    "width" : 576
+  },
+  {
+    "height" : 560,
+    "image" : "light-owned-session-idle.png",
+    "spoken" : "",
+    "visibleWindow" : false,
+    "width" : 620
+  },
+  {
+    "height" : 181,
+    "image" : "dark-connected.png",
+    "spoken" : "设计工作间，Codex · high",
+    "visibleWindow" : false,
+    "width" : 576
+  },
+  {
+    "height" : 196,
+    "image" : "dark-models.png",
+    "spoken" : "下一轮用哪个模型",
+    "visibleWindow" : false,
+    "width" : 720
+  },
+  {
+    "height" : 181,
+    "image" : "dark-listening.png",
+    "spoken" : "在听，iPhone · 松开出草稿",
+    "visibleWindow" : false,
+    "width" : 576
+  },
+  {
+    "height" : 181,
+    "image" : "dark-draft.png",
+    "spoken" : "草稿 · 给 设计工作间 · Codex · high",
+    "visibleWindow" : false,
+    "width" : 576
+  },
+  {
+    "height" : 181,
+    "image" : "dark-completed.png",
+    "spoken" : "完成，已完成计时器检查。",
+    "visibleWindow" : false,
+    "width" : 576
+  },
+  {
+    "height" : 181,
+    "image" : "dark-disconnected.png",
+    "spoken" : "遥控器断开了",
+    "visibleWindow" : false,
+    "width" : 576
+  },
+  {
+    "height" : 560,
+    "image" : "dark-owned-session-idle.png",
+    "spoken" : "",
+    "visibleWindow" : false,
+    "width" : 620
+  }
+]

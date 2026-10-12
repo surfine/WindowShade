@@ -284,7 +284,7 @@ final class WS2PrivacyPane: NSStackView {
 }
 
 /// 展开区里的开关：名字、现在开不开，以及原设置自己的处理函数。
-private struct PrivacySwitchSpec {
+struct PrivacySwitchSpec {
     let title: String
     let isOn: Bool
     let target: AnyObject
@@ -330,7 +330,7 @@ private final class PrivacyHeaderStack: NSStackView {
 
 /// 一次点击展开的行：名字 + 一行原因 + 右边的值，展开后是读到的、为什么、去了哪里，和能关的开关。
 @MainActor
-private final class PrivacyRowView: NSView {
+final class PrivacyRowView: NSView {
     private var onToggle: (() -> Void)?
 
     init(row: WS2PrivacyRow, presentation: WS2PrivacyRowPresentation, expanded: Bool, showDetails: Bool,
@@ -342,6 +342,8 @@ private final class PrivacyRowView: NSView {
 
         let title = NSTextField(labelWithString: row.label)
         title.font = SystemAppearancePolicy.font(relativeToBody: 0)
+        title.lineBreakMode = .byTruncatingTail
+        title.toolTip = row.label
         let subtitle = NSTextField(labelWithString: presentation.subtitleLine)
         subtitle.font = SystemAppearancePolicy.font(relativeToBody: -2)
         subtitle.textColor = .secondaryLabelColor
@@ -353,6 +355,8 @@ private final class PrivacyRowView: NSView {
         labels.spacing = 3
         labels.setContentHuggingPriority(.defaultLow, for: .horizontal)
         labels.setContentCompressionResistancePriority(.defaultLow, for: .horizontal)
+        title.widthAnchor.constraint(lessThanOrEqualTo: labels.widthAnchor).isActive = true
+        subtitle.widthAnchor.constraint(lessThanOrEqualTo: labels.widthAnchor).isActive = true
 
         let chevron = NSButton(image: NSImage(systemSymbolName: expanded ? "chevron.down" : "chevron.right",
                                               accessibilityDescription: expanded ? "收起" : "展开") ?? NSImage(),
@@ -371,20 +375,12 @@ private final class PrivacyRowView: NSView {
         header.distribution = .fill
         header.spacing = 10
         header.translatesAutoresizingMaskIntoConstraints = false
-        if let symbolName = WS2SettingsCopy.symbol(for: row.label),
-           let image = NSImage(systemSymbolName: symbolName, accessibilityDescription: row.label) {
-            let symbol = NSImageView(image: image)
-            symbol.symbolConfiguration = NSImage.SymbolConfiguration(hierarchicalColor: .controlAccentColor)
-            symbol.wantsLayer = true
-            symbol.layer?.backgroundColor = NSColor.controlAccentColor.withAlphaComponent(0.10).cgColor
-            symbol.layer?.cornerRadius = 7
-            symbol.widthAnchor.constraint(equalToConstant: 28).isActive = true
-            symbol.heightAnchor.constraint(equalToConstant: 28).isActive = true
-            header.addArrangedSubview(symbol)
-        }
+        // 登记行只有纯文字（原稿“WindowShade 读到的”画面）；不再按标题关键词挂图标——
+        // 偶发映射让个别行凭空多出 28+10 的缩进，登记表不再有统一的说明列。
         header.addArrangedSubview(labels)
         if let value = valueView(presentation.display, grantTarget: grantTarget, grantAction: grantAction) {
             header.addArrangedSubview(value)
+            value.widthAnchor.constraint(lessThanOrEqualTo: header.widthAnchor, multiplier: 0.4).isActive = true
         }
         header.addArrangedSubview(chevron)
         addSubview(header)
@@ -413,6 +409,7 @@ private final class PrivacyRowView: NSView {
             detail.alignment = .leading
             detail.spacing = 4
             detail.translatesAutoresizingMaskIntoConstraints = false
+            for line in lines { line.widthAnchor.constraint(equalTo: detail.widthAnchor).isActive = true }
             addSubview(detail)
             constraints += [
                 detail.leadingAnchor.constraint(equalTo: labels.leadingAnchor),
@@ -438,7 +435,7 @@ private final class PrivacyRowView: NSView {
             label.font = SystemAppearancePolicy.font(relativeToBody: -1)
             label.textColor = .secondaryLabelColor
             label.alignment = .right
-            label.lineBreakMode = .byTruncatingTail
+            label.lineBreakMode = .byTruncatingMiddle
             label.toolTip = text
             label.setContentHuggingPriority(.required, for: .horizontal)
             label.setContentCompressionResistancePriority(.defaultHigh, for: .horizontal)
@@ -485,11 +482,33 @@ private final class PrivacyRowView: NSView {
     }
 
     private func detailLine(_ title: String, _ text: String) -> NSView {
-        let label = NSTextField(wrappingLabelWithString: "\(title)：\(text)")
-        label.font = SystemAppearancePolicy.font(relativeToBody: -2)
+        let font = SystemAppearancePolicy.font(relativeToBody: -1)
+        let columnWidth = font.pointSize * 4.4
+        let caption = title == "什么时候读" ? "什么时候" : title == "合起来能看出什么" ? "合起来看" : title
+        let label = NSTextField(wrappingLabelWithString: caption)
+        label.font = font
         label.textColor = .secondaryLabelColor
         label.maximumNumberOfLines = 0
-        return label
+        label.preferredMaxLayoutWidth = columnWidth
+        label.toolTip = title
+        label.identifier = NSUserInterfaceItemIdentifier("privacy-detail-label")
+        label.widthAnchor.constraint(equalToConstant: columnWidth).isActive = true
+        let value = NSTextField(wrappingLabelWithString: text)
+        value.font = font
+        value.textColor = .labelColor
+        value.maximumNumberOfLines = 0
+        value.toolTip = text
+        value.identifier = NSUserInterfaceItemIdentifier("privacy-detail-body")
+        for field in [label, value] {
+            field.setContentCompressionResistancePriority(.required, for: .vertical)
+        }
+        value.setContentCompressionResistancePriority(.defaultLow, for: .horizontal)
+        let row = NSStackView(views: [label, value])
+        row.orientation = .horizontal
+        row.alignment = .firstBaseline
+        row.spacing = 10
+        value.widthAnchor.constraint(equalTo: row.widthAnchor, constant: -columnWidth - 10).isActive = true
+        return row
     }
 }
 
