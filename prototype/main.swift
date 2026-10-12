@@ -4,6 +4,9 @@ import Cocoa
 if let code = UpdateLaunch.handleEarlyArguments() { exit(code) }
 UpdateLaunch.recordLaunch()
 
+// 界面语言（第27批）：跟随系统或用户在设置里的选择；只在启动时读这一次，切换由设置里的语言行即时生效。
+InterfaceLanguagePreference.applyAtLaunch()
+
 if CommandLine.arguments.contains(where:{$0.hasPrefix("--duo-") || $0.hasPrefix("--glance-") || $0 == "--silent-milestone" || $0 == "--silent-cover-probe" || $0 == "--sls-offscreen-check"}) {
     let log=FileManager.default.currentDirectoryPath+"/.build/duo-tests/native-\(getpid()).log"
     try? FileManager.default.createDirectory(atPath:URL(fileURLWithPath:log).deletingLastPathComponent().path,withIntermediateDirectories:true)

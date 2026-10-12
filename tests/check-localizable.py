@@ -4,8 +4,10 @@
 用法：python3 tests/check-localizable.py [--repo DIR]
 
 检查：
-  1. Localizable.xcstrings 里每个键都有 zh-Hans 和 en，非空，占位符 %@ 个数一致。
-  2. prototype/ 下每个 WSL10n.text("键", zh: …) 的键都在表里；zh 是不带插值的字面量时，必须和表里的 zh-Hans 逐字相同。
+  1. Localizable.xcstrings 里每个键都有 zh-Hans 和 en，非空，占位符 %@ 个数一致；
+     en 里不许出现汉字（漏译/把中文抄进英文列的防线；语言名这类不进表）。
+  2. prototype/ 下每个 WSL10n.text("键", zh: …) 或 WSL10n.setting("键", zh: …) 的键都在表里；
+     zh 是不带插值的字面量时，必须和表里的 zh-Hans 逐字相同。
   3. WS2SilentCopy 里每条 id 都有 "silent.<id>"，中文逐字相同。
   4. 表里没有谁也不引用的键。
 """
@@ -15,8 +17,9 @@ import os
 import re
 import sys
 
-CALL_RE = re.compile(r'WSL10n\.text\(\s*"([^"\\]+)"\s*,\s*zh:\s*("(?:[^"\\\n]|\\.)*")?')
+CALL_RE = re.compile(r'WSL10n\.(?:text|setting)\(\s*"([^"\\]+)"\s*,\s*zh:\s*("(?:[^"\\\n]|\\.)*")?')
 SILENT_RE = re.compile(r'^\s*"([A-Za-z0-9_.]+)":\s*"((?:[^"\\\n]|\\.)*)"', re.M)
+HAN_RE = re.compile(r'[\u4e00-\u9fff]')
 
 
 def swift_files(root):
@@ -46,6 +49,8 @@ def main():
             values[lang] = value
         if values["zh-Hans"].count("%@") != values["en"].count("%@"):
             failures.append(f"{key}: zh-Hans 和 en 的 %@ 个数不同")
+        if HAN_RE.search(values["en"]):
+            failures.append(f"{key}: en 译文里有汉字（漏译或抄了中文）")
         zh[key] = values["zh-Hans"]
 
     used = set()

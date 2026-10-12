@@ -28,6 +28,7 @@ import Foundation
         testParse()
         testNoDataIsNil()
         testRecoveryText()
+        testRecoveryNeedsConfirmation()
         testCompactAndAmber()
         testAlertOncePerWindow()
         testNoDataFallsBack()
@@ -46,6 +47,8 @@ import Foundation
         expect(pooled.windows[0].leftPercent == 45, "按额度池发时认 codex 那一池")
         let partial = UsageReading.parse(json(#"{"rateLimits":{"primary":{"usedPercent":10}}}"#))!
         expect(partial.windows[0].resetsAt == nil && partial.sessionUsage(now: now)?.recovery == nil, "没给恢复时刻就不编")
+        let malformed = UsageReading.parse(json(#"{"rateLimits":{"primary":{"usedPercent":95,"resetsAt":1e300}}}"#))!
+        expect(malformed.windows[0].resetsAt == nil && malformed.sessionUsage(now: now)?.leftPercent == 5, "超出可表示恢复时间时保真实额度，拒绝坏时间，不在窗口身份转Int崩溃")
     }
 
     static func testNoDataIsNil() {
@@ -59,9 +62,23 @@ import Foundation
     static func testRecoveryText() {
         expect(UsageReading.recoveryText(resetsAt: now + 18 * 60, now: now, calendar: calendar) == "18 分钟后", "一小时内写分钟")
         expect(UsageReading.recoveryText(resetsAt: now + 2 * 3600, now: now, calendar: calendar) == "2 小时后", "一天内写小时")
-        expect(UsageReading.recoveryText(resetsAt: now - 5, now: now, calendar: calendar) == "马上", "过了就是马上")
+        expect(UsageReading.recoveryText(resetsAt: now - 5, now: now, calendar: calendar) == "等待用量更新", "过了只等待真实更新")
         let far = UsageReading.recoveryText(resetsAt: 1_800_400_000, now: now, calendar: calendar)
         expect(far == "周二 23:06", "更远写周几和时刻: \(far)")
+    }
+
+    static func testRecoveryNeedsConfirmation() {
+        for reset in [Int(now) - 5, Int(now)] {
+            let past = usage(95, reset: reset)
+            expect(past.leftPercent == 5 && past.compactText == "剩 5%", "到恢复时刻不重写真实剩余")
+            expect(past.recovery == nil && past.detailText.contains("等待用量更新"), "旧读数到期只预计，不许写马上恢复")
+            var sessions = running()
+            _ = sessions.applyUsage(past)
+            expect(sessions.liveSpec?.subtitle.contains("等待用量更新") == true, "等待确认交到实际会话内容")
+            expect(sessions.liveSpec?.subtitle.contains("gpt-5") == true, "等待确认仍保会话模型")
+            _ = sessions.applyUsage(usage(5, reset: Int(now) + 3600))
+            expect(sessions.liveSpec?.trailing == "剩 95%" && sessions.liveSpec?.subtitle.contains("等待更新") == false, "新来源读数才退出等待，量仍照来源")
+        }
     }
 
     static func testCompactAndAmber() {

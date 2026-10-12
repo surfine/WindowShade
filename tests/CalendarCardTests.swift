@@ -126,6 +126,16 @@ final class CalCardFakeAdapter: CalendarStoreAdapter {
         expect(card.text?.big == "4:12" && card.text?.small == "后开始", "大号倒数")
         expect(card.accessibilityLabel() == "日程，周会，5 分钟后开始", "读屏")
 
+        let panel = NotchPanel(notch: NSRect(x: -8000, y: 866.5, width: 185, height: 33.5), virtual: false)
+        panel.isReleasedWhenClosed = false
+        let hosted = CalendarCard(frame: .zero)
+        hosted.render(text, colorRGB: 0x0A84FF, spoken: "日程，周会，5 分钟后开始")
+        panel.setInteraction(hosted, animated: false)
+        let shape = panel.shapeForProbe
+        expect(shape?.island.size == NSSize(width: 440, height: 175.5) && shape?.radius == 28,
+               "实际宿主：440 × 175.5，底角 28")
+        panel.setInteraction(nil, animated: false); panel.close()
+
         print("CASE CAL3-C02 | 键盘：回车加入，Esc 收起；输入权撤销后不响应")
         var joins = 0, cancelled = 0
         card.onJoin = { joins += 1 }

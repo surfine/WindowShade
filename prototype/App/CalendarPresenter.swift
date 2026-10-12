@@ -87,6 +87,7 @@ final class CalendarCard: NSView, WS2LeaseContent {
     var inputIsCurrent: (() -> Bool) = { false }
     var onJoin: (() -> Void)?
 
+    var interactionCornerRadius: CGFloat { 28 }
     var interactionSize: NSSize { Self.cardSize }
     override var isFlipped: Bool { true }
     override var acceptsFirstResponder: Bool { true }
@@ -115,7 +116,7 @@ final class CalendarCard: NSView, WS2LeaseContent {
             .font: NSFont.systemFont(ofSize: 12, weight: .semibold), .foregroundColor: NSColor.white])
         join.image = NSImage(systemSymbolName: "video.fill", accessibilityDescription: nil)?
             .withSymbolConfiguration(.init(pointSize: 11, weight: .semibold))
-        join.imagePosition = .imageLeading; join.contentTintColor = .white
+        join.imagePosition = .imageLeading; join.imageHugsTitle = true; join.contentTintColor = .white
         join.setAccessibilityLabel(CalendarWords.joinTitle); join.toolTip = CalendarWords.joinTitle
         join.target = self; join.action = #selector(joinPressed)
     }

@@ -10,6 +10,8 @@ struct CodingSessionUsage: Equatable, Sendable {
     var leftPercent: Int
     /// “2 小时后”“周五 16:00”这样的恢复时间；来源没给就是 nil。后面接“恢复”。
     var recovery: String?
+    /// 服务端恢复时刻已到，尚未收到新的额度读数；不是已恢复。
+    var recoveryPending = false
     var model: String?
     var effort: String?
     /// 额度窗口的身份（时长加恢复时刻）：同一个窗口只提醒一次。
@@ -19,8 +21,9 @@ struct CodingSessionUsage: Equatable, Sendable {
     var isLow: Bool { leftPercent <= Self.lowThreshold }
     var compactText: String { "剩 \(leftPercent)%" }
     /// 展开格里的一段：恢复时间 · 模型 · 强度，缺哪个省哪个。
+    var recoveryDetail: String? { recoveryPending ? "等待用量更新" : recovery.map { "\($0)恢复" } }
     var detailText: String {
-        [recovery.map { "\($0)恢复" }, model, effort].compactMap { $0 }.filter { !$0.isEmpty }.joined(separator: " · ")
+        [recoveryDetail, model, effort].compactMap { $0 }.filter { !$0.isEmpty }.joined(separator: " · ")
     }
 }
 
@@ -56,7 +59,7 @@ struct UsageReading: Equatable, Sendable {
     private static func window(_ json: WireJSON) -> UsageWindow? {
         guard let used = number(json["usedPercent"]), used.isFinite, (0...100).contains(used) else { return nil }
         let minutes = number(json["windowDurationMins"]).flatMap { $0.isFinite && $0 > 0 && $0 < 1_000_000 ? Int($0) : nil }
-        let reset = number(json["resetsAt"]).flatMap { $0.isFinite && $0 > 0 ? $0 : nil }
+        let reset = number(json["resetsAt"]).flatMap { $0.isFinite && $0 > 0 && $0 < Double(Int.max) ? $0 : nil }
         return UsageWindow(usedPercent: used, windowMinutes: minutes, resetsAt: reset)
     }
 
@@ -77,17 +80,19 @@ struct UsageReading: Equatable, Sendable {
     func sessionUsage(now: Double, model: String? = nil, effort: String? = nil,
                       calendar: Calendar = .current) -> CodingSessionUsage? {
         guard let window = tightest else { return nil }
+        let pending = window.resetsAt.map { $0 <= now } ?? false
         return CodingSessionUsage(leftPercent: min(100, max(0, window.leftPercent)),
-                                  recovery: window.resetsAt.map { Self.recoveryText(resetsAt: $0, now: now, calendar: calendar) },
+                                  recovery: pending ? nil : window.resetsAt.map { Self.recoveryText(resetsAt: $0, now: now, calendar: calendar) },
+                                  recoveryPending: pending,
                                   model: model, effort: effort, windowKey: window.key)
     }
 
     private static let weekdays = ["周日", "周一", "周二", "周三", "周四", "周五", "周六"]
 
-    /// 恢复时间的说法：一小时内“18 分钟后”，一天内“2 小时后”，再远“周五 16:00”。已经过了就是“马上”。后面接“恢复”。
+    /// 恢复时间的说法：一小时内“18 分钟后”，一天内“2 小时后”，再远“周五 16:00”。已经过了只写“等待用量更新”。后面接“恢复”。
     static func recoveryText(resetsAt: Double, now: Double, calendar: Calendar) -> String {
         let delta = resetsAt - now
-        if delta <= 0 { return "马上" }
+        if delta <= 0 { return "等待用量更新" }
         if delta < 3600 { return "\(Int((delta / 60).rounded(.up))) 分钟后" }
         if delta < 86_400 { return "\(Int((delta / 3600).rounded())) 小时后" }
         let parts = calendar.dateComponents([.weekday, .hour, .minute], from: Date(timeIntervalSince1970: resetsAt))

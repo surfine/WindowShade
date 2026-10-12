@@ -1,8 +1,8 @@
-// 设置“外观”卡片里的两行：收起后的样子（跟原来一样 / 统一标题栏 / 缩略图）、透明度滑块。
-// 滑块这一行的名字跟着“收起后的样子”走：选缩略图时叫“缩略图半透明”，否则仍叫“卷帘条半透明”。
+// 设置"外观"卡片里的两行：收起后的样子（跟原来一样 / 统一标题栏 / 缩略图）、透明度滑块。
+// 滑块这一行的名字跟着"收起后的样子"走：选缩略图时叫"缩略图半透明"，否则仍叫"卷帘条半透明"。
 //
-// Preferences.swift 在别处维护：它在“外观”卡片里用 makeCollapseAppearanceRows() 的两行，换掉原来的
-// “收起后的样子”分段控件和“卷帘条半透明”开关（“浮在其他窗口上面”那一行不动）。换之前原来那两行照常能用：
+// Preferences.swift 在别处维护：它在"外观"卡片里用 makeCollapseAppearanceRows() 的两行，换掉原来的
+// "收起后的样子"分段控件和"卷帘条半透明"开关（"浮在其他窗口上面"那一行不动）。换之前原来那两行照常能用：
 // 分段控件走同一个 setAppearanceMode；老开关写的设置照旧生效，拖过滑块以后再拨它也管用（ShadeTranslucency）。
 // 最好还是在同一次改动里接上滑块、删掉老开关：同一件事在设置里只留一个控件。
 
@@ -13,21 +13,26 @@ extension AppDelegate {
     static let collapseAppearanceChoices: [ShadeAppearanceMode] = [.nativeScreenshot, .proxyTitleBar, .thumbnail]
 
     func makeCollapseAppearanceRows() -> [NSView] {
-        let segment = NSSegmentedControl(labels: ["跟原来一样", "统一标题栏", "缩略图"],
+        let segment = NSSegmentedControl(labels: [WSL10n.text("settings.shade.collapse.native", zh: "跟原来一样"),
+                                                  WSL10n.text("settings.shade.collapse.proxy", zh: "统一标题栏"),
+                                                  WSL10n.text("settings.shade.collapse.thumbnail", zh: "缩略图")],
                                          trackingMode: .selectOne,
                                          target: self,
                                          action: #selector(prefSelectCollapseAppearance(_:)))
         segment.selectedSegment = Self.collapseAppearanceChoices.firstIndex(of: appearanceMode) ?? 0
-        segment.setAccessibilityLabel("收起后的样子")
+        segment.setAccessibilityLabel(WSL10n.text("settings.shade.appearance.name", zh: "收起后的样子"))
 
-        let name = appearanceMode == .thumbnail ? "缩略图半透明" : "卷帘条半透明"
+        let translucentName: SettingsText = appearanceMode == .thumbnail
+            ? WSL10n.setting("settings.shade.thumbnailTranslucent", zh: "缩略图半透明")
+            : WSL10n.setting("settings.shade.barTranslucent", zh: "卷帘条半透明")
+        let name = translucentName.shown
         let percent = (ShadeTranslucency.fraction() * 100).rounded()
         let slider = NSSlider(value: percent, minValue: 0, maxValue: ShadeTranslucency.maximum * 100,
                               target: self, action: #selector(prefSlideShadeTranslucency(_:)))
         slider.isContinuous = true
         slider.numberOfTickMarks = 0
         slider.setAccessibilityLabel(name)
-        // 读屏念“18%”，不只念“18”（右边的读数不单独读）。
+        // 读屏念"18%"，不只念"18"（右边的读数不单独读）。
         slider.setAccessibilityValueDescription(Self.translucencyText(percent))
         slider.translatesAutoresizingMaskIntoConstraints = false
         slider.widthAnchor.constraint(equalToConstant: 150).isActive = true
@@ -44,9 +49,12 @@ extension AppDelegate {
         sliderGroup.spacing = 8
 
         return [
-            makeCollapseSettingsRow(name: "收起后的样子", subtitle: "卷帘条跟原来一样或用统一标题栏，也可以在原处缩成缩略图",
+            makeCollapseSettingsRow(name: WSL10n.setting("settings.shade.appearance.name", zh: "收起后的样子"),
+                                    subtitle: WSL10n.setting("settings.shade.collapse.sub", zh: "卷帘条跟原来一样或用统一标题栏，也可以在原处缩成缩略图"),
                                     control: segment),
-            makeCollapseSettingsRow(name: name, subtitle: "让它更透一些，能看到后面的内容", control: sliderGroup),
+            makeCollapseSettingsRow(name: translucentName,
+                                    subtitle: WSL10n.setting("settings.shade.translucent.sub", zh: "让它更透一些，能看到后面的内容"),
+                                    control: sliderGroup),
         ]
     }
 
@@ -73,11 +81,11 @@ extension AppDelegate {
     }
 
     /// 和 Preferences.swift 里的设置行同一个样子：左边名字和一句说明，右边控件。
-    private func makeCollapseSettingsRow(name: String, subtitle: String?, control: NSView) -> NSView {
+    private func makeCollapseSettingsRow(name: SettingsText, subtitle: SettingsText?, control: NSView) -> NSView {
         (control as? NSControl)?.sizeToFit()
         control.setContentHuggingPriority(.required, for: .horizontal)
         control.setContentCompressionResistancePriority(.required, for: .horizontal)
-        let labels = WS2SettingsCopy.content(name: name, subtitle: subtitle, symbol: WS2SettingsCopy.symbol(for: name)).view
+        let labels = WS2SettingsCopy.content(name: name, subtitle: subtitle).view
         labels.setContentHuggingPriority(.defaultLow, for: .horizontal)
         labels.setContentCompressionResistancePriority(.defaultLow, for: .horizontal)
         let row = NSStackView(views: [labels, control])

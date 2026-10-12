@@ -2389,6 +2389,9 @@ struct NotchTile {
         guard var copy = ongoing else { return self }
         var tile = self
         copy.subtitle = ""
+        // 共享时只留会话状态；新加的额度数字不能绕过同一条遮隐路径。
+        copy.quantity = .unknown
+        copy.quantityText = nil
         copy.spoken = copy.phase == .waiting ? "编程会话，在等你" : (copy.phase == .running || copy.phase == .quota) ? "编程会话，在跑" : copy.phase == .quotaLow ? "编程会话，在跑，额度快用完了" : "编程会话"
         tile.title = "编程会话"
         tile.ongoing = copy
@@ -3624,7 +3627,7 @@ final class NotchPanel: NSPanel {
     func updateOngoingQuantities(_ next: [NotchTile]) {
         for tile in next {
             guard let index = tiles.firstIndex(where: { $0.id == tile.id }), let ongoing = tile.ongoing,
-                  let current = tiles[index].ongoing, current.quantity != ongoing.quantity else { continue }
+                  let current = tiles[index].ongoing, current.quantity != ongoing.quantity || current.quantityText != ongoing.quantityText else { continue }
             tiles[index].ongoing?.quantity = ongoing.quantity
             tiles[index].ongoing?.quantityText = ongoing.quantityText
             canvas.updateOngoingQuantity(id: tile.id, quantity: ongoing.quantity, text: ongoing.quantityText)
@@ -4072,11 +4075,15 @@ final class NotchPanel: NSPanel {
             let width = max(240, min(screenWidth - 44, max(notch.width, min(widthCap, interactionSize.width))))
             // Actual notch: content below the camera. Other displays: a detached, fully rounded capsule below the menu bar.
             let available = max(68, (screen?.visibleFrame.height ?? 600) - 80)
-            let contentHeight = min(available, max(68, min(480, interactionSize.height)))
+            let content = authenticationView as? any WS2LeaseContent
+            let minimumHeight = content?.interactionMinimumHeight ?? 68
+            let contentHeight = min(available, max(minimumHeight, min(480, interactionSize.height)))
             let height = isVirtual ? contentHeight : notch.height + contentHeight
             let top = isVirtual ? notch.minY - 8 : notch.maxY
             // 正在播放大卡：底角 28、不画肩（S3，和那一排同一种半岛）。
-            let radius: CGFloat = authenticationView is NowPlayingCard ? NowPlayingCardLayout.bottomRadius : (isVirtual ? 34 : (authenticationView is FileShelfView ? CGFloat(FileShelfCardLayout.radius) : 24))
+            let radius: CGFloat = isVirtual
+                ? (authenticationView is NowPlayingCard ? NowPlayingCardLayout.bottomRadius : 34)
+                : (content?.interactionCornerRadius ?? 24)
             return (NSRect(x: notch.midX - width / 2, y: top - height, width: width, height: height),
                     IslandStyle(cornerRadius: radius, allCorners: isVirtual, fill: .black, border: 0.5))
         }
@@ -4617,7 +4624,6 @@ final class NotchCanvasView: NSView {
     private var contentWatchBegan: CFTimeInterval = 0
     private var contentWatchFade: TimeInterval = 0
     private var contentWatchLag: TimeInterval = 0
-    private var morphClock: (time: CFTimeInterval, mid: CGPoint)?
     private let companion = CALayer()
     private let companionLabel = CATextLayer()
     private var companionRetargeted = false
@@ -4642,6 +4648,8 @@ final class NotchCanvasView: NSView {
 
     override init(frame: NSRect) {
         super.init(frame: frame)
+        // 硬件刘海一直是黑底，原生子控件也统一按深色画；其它产品窗口仍跟随系统。
+        appearance = NSAppearance(named: .darkAqua)
         wantsLayer = true
         layer?.masksToBounds = false
         island.backgroundColor = NSColor.black.cgColor
@@ -4715,9 +4723,10 @@ final class NotchCanvasView: NSView {
     private var contentExitGeneration = 0
     private var contentExitPending = false
     /// 退场淡出完成后要接上的变形。放在 self 上，避免把 Content / done 送进 @Sendable 回调。
+    /// 不存那一刻的外框：内容淡出的 0.14 秒里旧形状还在飞，performMorph 真正开始时自己重读呈现层。
     private var pendingExitMorph: (
         rect: NSRect, style: NotchPanel.IslandStyle, content: Content, spring: Spring?,
-        presented: NSRect, scale: (leading: CGFloat, trailing: CGFloat),
+        scale: (leading: CGFloat, trailing: CGFloat),
         snap: (leading: Bool, trailing: Bool), shoulderFade: Bool, done: () -> Void
     )?
 
@@ -4729,7 +4738,6 @@ final class NotchCanvasView: NSView {
                shoulders scale: (leading: CGFloat, trailing: CGFloat) = (0, 0),
                shoulderSnap snap: (leading: Bool, trailing: Bool) = (false, false), shoulderFade: Bool = false,
                done: @escaping () -> Void) {
-        let presented = island.presentation()?.frame ?? island.frame
         contentExitGeneration += 1
         let exitGeneration = contentExitGeneration
         if contentExitPending {
@@ -4742,7 +4750,7 @@ final class NotchCanvasView: NSView {
                 shown = nil
             }
             performMorph(to: rect, style: style, content: content, spring: spring,
-                         from: presented, shoulders: scale, shoulderSnap: snap,
+                         shoulders: scale, shoulderSnap: snap,
                          shoulderFade: shoulderFade, done: done)
             return
         }
@@ -4752,7 +4760,7 @@ final class NotchCanvasView: NSView {
             presentGeneration += 1
             outgoing.inert = true
             contentExitPending = true
-            pendingExitMorph = (rect, style, content, spring, presented, scale, snap, shoulderFade, done)
+            pendingExitMorph = (rect, style, content, spring, scale, snap, shoulderFade, done)
             // 退场：内容 0.10 秒淡出，停 0.04 秒，再收形状（`Motion.Fade`）。
             NSAnimationContext.runAnimationGroup({ context in
                 context.duration = Motion.Fade.out
@@ -4773,7 +4781,7 @@ final class NotchCanvasView: NSView {
                             guard let pending = self.pendingExitMorph else { return }
                             self.pendingExitMorph = nil
                             self.performMorph(to: pending.rect, style: pending.style, content: pending.content,
-                                              spring: pending.spring, from: pending.presented,
+                                              spring: pending.spring,
                                               shoulders: pending.scale, shoulderSnap: pending.snap,
                                               shoulderFade: pending.shoulderFade, done: pending.done)
                         }
@@ -4783,7 +4791,7 @@ final class NotchCanvasView: NSView {
             return
         }
         performMorph(to: rect, style: style, content: content, spring: spring,
-                     from: presented, shoulders: scale, shoulderSnap: snap,
+                     shoulders: scale, shoulderSnap: snap,
                      shoulderFade: shoulderFade, done: done)
     }
 
@@ -4795,25 +4803,98 @@ final class NotchCanvasView: NSView {
         return wasRich && !nowRich
     }
 
+    /// 把还在飞的旧 morph 按轴接力到新目标。岛、遮罩、边线、渐变遮罩同一时刻挂的是同参数、
+    /// 同一刻开始的动画（位移成正比），所以速度从 island 那份算，各层 from 各自读。
+    /// 每根轴：旧动画在飞 → 它此刻的有符号物理速度 ÷ 该轴自己的剩余行程（新目标 − 呈现值）；
+    /// 不在飞 → 保留调用者传进来的初速度（甩动手感），不覆盖。
+    /// 剩余行程近零但速度还在 → 有限 kick 关键帧；宽、高、圆角的 kick 不许把量推成负（floor）。
+    private func handoffAxes(to target: (rect: NSRect, radius: CGFloat),
+                             presented: NSRect, presentedRadius: CGFloat,
+                             spring: Spring, now: CFTimeInterval) -> MorphShape {
+        let layerNow = island.convertTime(now, from: nil)
+        func axis(_ keyPath: String, delta: Double, floor: Double?, fallback: Double) -> MorphAxis? {
+            let live: Double?
+            if let old = island.animation(forKey: "morph.\(keyPath)") as? CASpringAnimation,
+               old.isAdditive, old.beginTime > 0, old.duration > 0,
+               let from = (old.fromValue as? NSNumber)?.doubleValue {
+                live = MorphRetarget.liveVelocity(of: MorphRetarget.OldAxis(mass: old.mass, stiffness: old.stiffness,
+                                                                           damping: old.damping, from: from,
+                                                                           normalizedVelocity: old.initialVelocity,
+                                                                           beginTime: old.beginTime,
+                                                                           duration: old.duration),
+                                                  at: layerNow)
+            } else if let frames = island.animation(forKey: "morph.\(keyPath)") as? CAKeyframeAnimation {
+                // 上一次接力用了 kick 关键帧：段内斜率就是此刻的瞬时速度（曲线是解析解的采样）。
+                live = Self.keyframeVelocity(frames, at: layerNow)
+            } else {
+                live = nil
+            }
+            guard let plan = MorphRetarget.handoff(remainingTravel: delta, liveVelocity: live,
+                                                   fallbackVelocity: fallback, response: spring.response,
+                                                   dampingRatio: 1 - Double(spring.bounce), floor: floor) else { return nil }
+            return MorphAxis(velocity: plan.initialVelocity, kick: plan.kick)
+        }
+        let callerVelocity = Double(spring.initialVelocity)
+        return MorphShape(
+            positionX: (from: Double(presented.midX - target.rect.midX),
+                        axis: axis("position.x", delta: Double(target.rect.midX - presented.midX),
+                                   floor: nil, fallback: callerVelocity)),
+            positionY: (from: Double(presented.midY - target.rect.midY),
+                        axis: axis("position.y", delta: Double(target.rect.midY - presented.midY),
+                                   floor: nil, fallback: callerVelocity)),
+            width: (from: Double(presented.width - target.rect.width),
+                    axis: axis("bounds.size.width", delta: Double(target.rect.width - presented.width),
+                               floor: -Double(target.rect.width), fallback: callerVelocity)),
+            height: (from: Double(presented.height - target.rect.height),
+                     axis: axis("bounds.size.height", delta: Double(target.rect.height - presented.height),
+                                floor: -Double(target.rect.height), fallback: callerVelocity)),
+            radius: (from: Double(presentedRadius - target.radius),
+                     axis: axis("cornerRadius", delta: Double(target.radius - presentedRadius),
+                                floor: -Double(target.radius), fallback: callerVelocity)))
+    }
+
+    /// kick 关键帧动画此刻的瞬时速度：段内线性插值的斜率（曲线本身是 120 Hz 的解析解采样）。
+    static func keyframeVelocity(_ frames: CAKeyframeAnimation, at time: CFTimeInterval) -> Double? {
+        guard frames.isAdditive, frames.beginTime > 0, frames.duration > 0,
+              let keyTimes = frames.keyTimes, let rawValues = frames.values,
+              rawValues.count == keyTimes.count, rawValues.count >= 2 else { return nil }
+        let elapsed = (time - frames.beginTime) / frames.duration
+        guard elapsed >= 0, elapsed < 1 else { return nil }
+        let values = rawValues.compactMap { ($0 as? NSNumber)?.doubleValue }
+        guard values.count == rawValues.count else { return nil }
+        var index = 0
+        while index + 2 < keyTimes.count, keyTimes[index + 1].doubleValue < elapsed { index += 1 }
+        let t0 = keyTimes[index].doubleValue, t1 = keyTimes[index + 1].doubleValue
+        let dt = (t1 - t0) * frames.duration
+        guard dt > 1e-9 else { return nil }
+        return (values[index + 1] - values[index]) / dt
+    }
+
+    /// kick 关键帧的位移减半（渐变遮罩的位置 = 尺寸一半，速度也跟着减半）；弹簧路径的
+    /// 归一化速度不用减：它按各自行程折算，同一条弹簧上行程减半速度也减半，比值不变。
+    private func halve(_ axis: MorphAxis?) -> MorphAxis? {
+        guard let axis else { return nil }
+        guard let kick = axis.kick else { return axis }
+        return MorphAxis(velocity: axis.velocity, kick: (kick.values.map { $0 / 2 }, kick.times))
+    }
+
     private func performMorph(to rect: NSRect, style: NotchPanel.IslandStyle, content: Content, spring: Spring?,
-                              from presented: NSRect,
                               shoulders scale: (leading: CGFloat, trailing: CGFloat),
                               shoulderSnap snap: (leading: Bool, trailing: Bool),
                               shoulderFade: Bool,
                               done: @escaping () -> Void) {
+        // 富有内容退场时形状收得晚（0.10 淡出 + 0.04 一拍）：真正开始时重读呈现层，
+        // 不复用 morph() 那一刻的旧位置——期间岛可能已经动过。
+        let presented = island.presentation()?.frame ?? island.frame
         let presentedRadius = CGFloat(island.presentation()?.cornerRadius ?? island.cornerRadius)
         let presentedKey = keyLine.presentation()?.frame ?? keyLine.frame
         let presentedClip = clip.presentation()?.frame ?? clip.frame
         let now = CACurrentMediaTime()
         // 减少动态效果：岛的外框和圆角直接跳到终点，不挂弹簧，也不做 position / bounds 动画；只交叉淡化内容。
-        var motion = Motion.reduced ? nil : spring
-        if !Motion.reduced, var spring, presented.width > 0 {
-            spring.initialVelocity = morphVelocity(now: now, from: CGPoint(x: presented.midX, y: presented.midY),
-                                                   to: CGPoint(x: rect.midX, y: rect.midY))
-            motion = spring
-        } else {
-            morphClock = (now, CGPoint(x: rect.midX, y: rect.midY))
-        }
+        // 呈现层还没进过渲染（width 为 0）时同样不挂动画：没有可接的起点，直接换模型值。
+        let motion = Motion.reduced ? nil : (presented.width > 0 ? spring : nil)
+        let shape = motion.map { handoffAxes(to: (rect, style.cornerRadius), presented: presented,
+                                             presentedRadius: presentedRadius, spring: $0, now: now) }
         stripMorph(island)
         stripMorph(clip)
         stripMorph(keyLine)
@@ -4846,27 +4927,33 @@ final class NotchCanvasView: NSView {
                 .map { NSNumber(value: $0) }
             keyLine.mask = keyMask
         }
-        if let motion, presented.width > 0 {
-            let moved = CGVector(dx: presented.midX - rect.midX, dy: presented.midY - rect.midY)
-            let resized = CGSize(width: presented.width - rect.width, height: presented.height - rect.height)
-            let rounded = presentedRadius - style.cornerRadius
-            add(motion, key: "morph", to: island, position: moved, size: resized, radius: rounded)
-            add(motion, key: "morph", to: clip,
-                position: CGVector(dx: presentedClip.midX - rect.midX, dy: presentedClip.midY - rect.midY),
-                size: CGSize(width: presentedClip.width - rect.width, height: presentedClip.height - rect.height),
-                radius: rounded)
-            add(motion, key: "morph", to: keyLine,
-                position: CGVector(dx: presentedKey.midX - keyFrame.midX, dy: presentedKey.midY - keyFrame.midY),
-                size: CGSize(width: presentedKey.width - keyFrame.width, height: presentedKey.height - keyFrame.height),
-                radius: rounded)
+        if let motion, var shape, presented.width > 0 {
+            add(motion, key: "morph", to: island, shape: shape, now: now)
+            // 遮罩和岛同一坐标系、同一刻挂同参数动画：from 换成自己的呈现值，轴计划原样复用。
+            shape.positionX = (Double(presentedClip.midX - rect.midX), shape.positionX.axis)
+            shape.positionY = (Double(presentedClip.midY - rect.midY), shape.positionY.axis)
+            shape.width = (Double(presentedClip.width - rect.width), shape.width.axis)
+            shape.height = (Double(presentedClip.height - rect.height), shape.height.axis)
+            add(motion, key: "morph", to: clip, shape: shape, now: now)
+            // 边线在岛坐标系里：位置 = 尺寸增量的一半（中心 = 尺寸一半），位置轴接宽、高的速度
+            // （归一化速度按各自行程折算，行程减半速度也减半，比值不变；kick 的位移要减半）。
+            shape.positionX = (Double(presentedKey.midX - keyFrame.midX), halve(shape.width.axis))
+            shape.positionY = (Double(presentedKey.midY - keyFrame.midY), halve(shape.height.axis))
+            shape.width = (Double(presentedKey.width - keyFrame.width), shape.width.axis)
+            shape.height = (Double(presentedKey.height - keyFrame.height), shape.height.axis)
+            add(motion, key: "morph", to: keyLine, shape: shape, now: now)
             if keyLine.mask != nil {
-                let resized = CGSize(width: presentedKey.width - keyFrame.width, height: presentedKey.height - keyFrame.height)
-                add(motion, key: "morph", to: keyMask, position: CGVector(dx: resized.width / 2, dy: resized.height / 2),
-                    size: resized, radius: 0)
+                // 渐变遮罩跟边线同坐标系：frame 是 (0,0,keyFrame 尺寸)，中心 = 尺寸一半，
+                // 位置增量 = 尺寸增量的一半；速度轴同宽、高（kick 位移减半，归一化速度比值不变）。
+                shape.positionX = (Double(presentedKey.width - keyFrame.width) / 2, halve(shape.width.axis))
+                shape.positionY = (Double(presentedKey.height - keyFrame.height) / 2, halve(shape.height.axis))
+                shape.radius = (0, nil)
+                add(motion, key: "morph", to: keyMask, shape: shape, now: now)
             }
         }
         // 肩的尖角 = 岛的两个上角（换成屏幕坐标：肩在另一层窗口里）。肩自己记着上一次的位置和大小，
         // 挂的是同参数、同一刻开始的叠加弹簧，所以横向位移正好是 moved.dx ∓ resized.width / 2，半路打断也跟得住。
+        // 肩仍是自己的动画路径（fluid-retarget-plan：后续批次再同步它的逐轴速度），本批不动它的物理。
         if let shoulders, let origin = window?.frame.origin {
             shoulders.place(leading: NSPoint(x: origin.x + rect.minX, y: origin.y + rect.maxY),
                             trailing: NSPoint(x: origin.x + rect.maxX, y: origin.y + rect.maxY),
@@ -4914,9 +5001,10 @@ final class NotchCanvasView: NSView {
                 guard view.frame != shape.frame else { continue }
                 view.frame = shape.frame
                 if !reduced, let layer = view.layer {
-                    add(motion, key: "minimum", to: layer,
-                        position: CGVector(dx: before.midX - shape.frame.midX, dy: before.midY - shape.frame.midY),
-                        size: .zero, radius: 0)
+                    add(motion, key: "minimum", to: layer, shape: MorphShape(
+                        positionX: (Double(before.midX - shape.frame.midX), MorphAxis(velocity: 0, kick: nil)),
+                        positionY: (Double(before.midY - shape.frame.midY), MorphAxis(velocity: 0, kick: nil)),
+                        width: (0, nil), height: (0, nil), radius: (0, nil)), now: CACurrentMediaTime())
                 }
             } else {
                 let view = NotchMinimumView(shape: shape)
@@ -4927,9 +5015,11 @@ final class NotchCanvasView: NSView {
                 minimumViews.append(view)
                 // 从岛的右边缘长出来：位置从紧贴岛边的地方接到终点，同时淡入。
                 if !reduced, let layer = view.layer {
-                    add(motion, key: "minimum", to: layer,
-                        position: CGVector(dx: island.maxX - shape.frame.width / 2 - shape.frame.midX, dy: 0),
-                        size: .zero, radius: 0)
+                    add(motion, key: "minimum", to: layer, shape: MorphShape(
+                        positionX: (Double(island.maxX - shape.frame.width / 2 - shape.frame.midX),
+                                    MorphAxis(velocity: 0, kick: nil)),
+                        positionY: (0, nil), width: (0, nil), height: (0, nil), radius: (0, nil)),
+                        now: CACurrentMediaTime())
                 }
                 NSAnimationContext.runAnimationGroup { context in
                     context.duration = Motion.fadeDuration
@@ -4945,34 +5035,56 @@ final class NotchCanvasView: NSView {
         }
     }
 
-    private func morphVelocity(now: CFTimeInterval, from: CGPoint, to: CGPoint) -> CGFloat {
-        let last = morphClock
-        morphClock = (now, from)
-        guard let last else { return 0 }
-        let dt = now - last.time
-        let travel = hypot(to.x - from.x, to.y - from.y)
-        guard dt > 0.001, travel > 0.5 else { return 0 }
-        return hypot(from.x - last.mid.x, from.y - last.mid.y) / dt / travel
+    /// 一根标量轴怎么接：nil = 不动；kick 非空时交给关键帧（剩余行程近零只剩惯性）；
+    /// velocity 是换算好的归一化初速度（旧动画在飞）或调用者给的初速度（不在飞，保留甩动手感）。
+    private struct MorphAxis {
+        var velocity: Double
+        var kick: (values: [Double], times: [Double])?
+    }
+    /// 变形的五根标量轴：中点 x/y、宽、高、圆角。逐轴独立挂加法弹簧，各自带自己的归一化初速度。
+    /// 中点、宽高、圆角各接各的：二维 keyPath 只能带一个初速度，宽和高的速度会互相顶掉。
+    private struct MorphShape {
+        var positionX: (from: Double, axis: MorphAxis?)
+        var positionY: (from: Double, axis: MorphAxis?)
+        var width: (from: Double, axis: MorphAxis?)
+        var height: (from: Double, axis: MorphAxis?)
+        var radius: (from: Double, axis: MorphAxis?)
     }
 
-    private func add(_ spring: Spring, key: String, to layer: CALayer, position: CGVector, size: CGSize, radius: CGFloat) {
-        func animate(_ keyPath: String, from: Any, zero: Any) {
+    private func add(_ spring: Spring, key: String, to layer: CALayer, shape: MorphShape, now: CFTimeInterval) {
+        // CASpring 设明确的 beginTime（同一层时钟）：接力核对可以按同一瞬间算速度，不靠提交时刻。
+        let begin = layer.convertTime(now, from: nil)
+        func axis(_ keyPath: String, from: Double, zero: Double, axis: MorphAxis?) {
+            guard let axis else { return }
+            // 归一化速度的换算依据（25 批实测）：物理初速 = initialVelocity × (to − from)；
+            // 加法动画 to 是 0，from 是该轴的位移。
+            if let kick = axis.kick {
+                let frames = CAKeyframeAnimation(keyPath: keyPath)
+                frames.isAdditive = true
+                frames.calculationMode = .linear
+                frames.values = kick.values.map { NSNumber(value: $0) }
+                frames.keyTimes = kick.times.map { NSNumber(value: min(1, $0 / (kick.times.last ?? 1))) }
+                frames.duration = kick.times.last ?? 0
+                frames.beginTime = begin
+                layer.add(frames, forKey: "\(key).\(keyPath)")
+                return
+            }
+            guard from != 0 else { return }
             let animation = CASpringAnimation(perceptualDuration: spring.response, bounce: spring.bounce)
             animation.keyPath = keyPath
             animation.isAdditive = true
             animation.fromValue = from
             animation.toValue = zero
-            animation.initialVelocity = spring.initialVelocity
+            animation.initialVelocity = CGFloat(axis.velocity)
             animation.duration = animation.settlingDuration
+            animation.beginTime = begin
             layer.add(animation, forKey: "\(key).\(keyPath)")
         }
-        if position != .zero {
-            animate("position", from: NSValue(point: NSPoint(x: position.dx, y: position.dy)), zero: NSValue(point: .zero))
-        }
-        if size != .zero {
-            animate("bounds.size", from: NSValue(size: size), zero: NSValue(size: .zero))
-        }
-        if radius != 0 { animate("cornerRadius", from: radius, zero: 0) }
+        axis("position.x", from: shape.positionX.from, zero: 0, axis: shape.positionX.axis)
+        axis("position.y", from: shape.positionY.from, zero: 0, axis: shape.positionY.axis)
+        axis("bounds.size.width", from: shape.width.from, zero: 0, axis: shape.width.axis)
+        axis("bounds.size.height", from: shape.height.from, zero: 0, axis: shape.height.axis)
+        axis("cornerRadius", from: shape.radius.from, zero: 0, axis: shape.radius.axis)
     }
 
     /// 这一段行程的宽度走到四成，内容才淡入。减少动态效果不等形状。
@@ -5130,10 +5242,14 @@ final class NotchCanvasView: NSView {
             if text != nil || wasVisible {
                 let from = wasVisible ? presented : together
                 let motion = spring ?? Spring(response: Motion.Spring.expand.response, bounce: Motion.Spring.expand.bounce)
-                add(motion, key: "companion", to: companion,
-                    position: CGVector(dx: from.midX - destination.midX, dy: from.midY - destination.midY),
-                    size: CGSize(width: from.width - destination.width, height: from.height - destination.height),
-                    radius: 0)
+                // 第二颗岛仍是自己的路径：各轴沿用调用者给的同一个归一化初速度（旧行为不变）。
+                let axis = MorphAxis(velocity: Double(motion.initialVelocity), kick: nil)
+                add(motion, key: "companion", to: companion, shape: MorphShape(
+                    positionX: (Double(from.midX - destination.midX), axis),
+                    positionY: (Double(from.midY - destination.midY), axis),
+                    width: (Double(from.width - destination.width), axis),
+                    height: (Double(from.height - destination.height), axis),
+                    radius: (0, nil)), now: CACurrentMediaTime())
             }
         }
         if text != nil || wasVisible || reduced {
@@ -6496,7 +6612,8 @@ final class NotchCompactView: NSView {
         if let flash = compact.flash {
             let tint = Self.flashColor(flash.tone)
             drawEar("", symbol: flash.symbol, ring: nil, in: slots.leading, align: .left, tint: tint)
-            drawEar(flash.trailing, symbol: nil, ring: nil, in: slots.trailing, align: .right, color: tint)
+            let percentage = Self.flashPercentageLayout(flash, in: slots.trailing, color: tint)
+            percentage.text.draw(at: percentage.frame.origin)
             return
         }
         if coverEars != nil {
@@ -6648,6 +6765,17 @@ final class NotchCompactView: NSView {
         case .red: return .systemRed
         case .yellow: return .systemYellow
         }
+    }
+
+    /// 0…100% is one compact value. Keep every digit and the percent sign within the 34pt ear.
+    static func flashPercentageLayout(_ flash: PowerFlash, in slot: NSRect, color: NSColor) -> (text: NSAttributedString, frame: NSRect) {
+        let base = earFont()
+        let font = NSFont(descriptor: base.fontDescriptor, size: 10)
+            ?? NSFont.monospacedDigitSystemFont(ofSize: 10, weight: .semibold)
+        let text = NSAttributedString(string: flash.trailing, attributes: [.font: font, .foregroundColor: color])
+        let size = text.size()
+        return (text, NSRect(x: slot.maxX - 2 - size.width, y: slot.midY - size.height / 2,
+                             width: size.width, height: size.height))
     }
 
     private func drawEar(_ text: String, symbol: String?, ring: (progress: Double, tone: NotchPanel.Compact.ProgressTone)?,
@@ -7468,6 +7596,18 @@ final class NotchTileView: NSView {
         }
     }
 
+    /// 量的完整说法放不下时，个数沿用右耳的短写；保字号与真实数，不把总数截成另一个数。
+    static func quantityLabel(_ quantity: NotchActivity.Quantity, text: String, font: NSFont, availableWidth: CGFloat, color: NSColor? = nil) -> NSAttributedString {
+        func label(_ string: String) -> NSAttributedString {
+            NSAttributedString(string: string, attributes: [
+                .font: font, .foregroundColor: color ?? NSColor.white.withAlphaComponent(0.92),
+            ])
+        }
+        let full = label(text)
+        guard full.size().width > availableWidth, let short = quantity.shortCountText else { return full }
+        return label(short)
+    }
+
     private func drawOngoing(in card: NSRect) {
         guard let ongoing = tile.ongoing else { return }
         if let count = ongoing.shelfCount {
@@ -7511,11 +7651,10 @@ final class NotchTileView: NSView {
         if let text = ongoing.quantityText, !text.isEmpty {
             let font = NSFont.monospacedDigitSystemFont(ofSize: 10.5, weight: .semibold)
             let rounded = font.fontDescriptor.withDesign(.rounded).flatMap { NSFont(descriptor: $0, size: font.pointSize) } ?? font
-            let label = NSAttributedString(string: text, attributes: [
-                .font: rounded, .foregroundColor: NSColor.white.withAlphaComponent(0.92),
-            ])
+            let available = max(0, quantityLeft - card.minX - 10)
+            let label = Self.quantityLabel(ongoing.quantity, text: text, font: rounded, availableWidth: available, color: ongoing.phase == .quotaLow ? .systemOrange : nil)
             let size = label.size()
-            let width = min(ceil(size.width), max(0, quantityLeft - card.minX - 10))
+            let width = min(ceil(size.width), available)
             label.draw(with: NSRect(x: quantityLeft - width, y: card.maxY - 10 - 7 - size.height / 2, width: width, height: size.height),
                        options: [.usesLineFragmentOrigin, .truncatesLastVisibleLine])
             quantityLeft -= width + CGFloat(NotchProgressPart.textGap)

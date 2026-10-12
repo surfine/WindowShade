@@ -209,10 +209,7 @@ final class MenuBarRoom {
         let screens = NSScreen.screens.map(\.frame)
         let baseline = coordinateBaselineY()
         let previous = known[display]?.spans == spans ? hits[display] : nil
-        let own = NSApp.windows.compactMap { window -> NSRect? in
-            guard window is NotchPanel || window is NotchShoulders else { return nil }
-            return window.frame
-        }
+        let own = Self.obstructionFrames(in: NSApp.windows)
         DispatchQueue.global(qos: .utility).async {
             let hit = Self.hitTest(spans, baseline: baseline, own: own)
             let menus = owner.map { Self.menuRoom(spans, owner: $0, screens: screens, baseline: baseline) }
@@ -270,6 +267,15 @@ final class MenuBarRoom {
                     }
                 }
             }
+        }
+    }
+
+    /// 后台测量使用主线程取得的不可变遮挡范围；不把 AppKit 窗口传进 AX 读取队列。
+    static func obstructionFrames(in windows: [NSWindow]) -> [NSRect] {
+        windows.compactMap { window -> NSRect? in
+            guard window is NotchPanel || window is NotchShoulders else { return nil }
+            guard window.isVisible, window.alphaValue > 0 else { return nil }
+            return window.frame
         }
     }
 

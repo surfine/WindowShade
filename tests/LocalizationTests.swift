@@ -66,6 +66,29 @@ struct LocalizationTests {
         }
         expect(untranslated.isEmpty, "every silent line has an English translation: \(untranslated.prefix(3))")
 
+        // 第27批：编译后的全目录逐键走 WSL10n 真实路径解析，都能出英文，且不夹汉字。
+        let enDir = URL(fileURLWithPath: CommandLine.arguments[1])
+        if let catalog = NSDictionary(contentsOf: enDir.appendingPathComponent("Localizable.strings"))
+            as? [String: String] {
+            let sentinel = "\u{1}<missing>"
+            var missing: [String] = []
+            var chinese: [String] = []
+            for key in catalog.keys.sorted() {
+                let resolved = WSL10n.text(key, zh: sentinel)
+                if resolved == sentinel {
+                    missing.append(key)
+                } else if resolved.unicodeScalars.contains(where: { (0x4E00...0x9FFF).contains($0.value) }) {
+                    chinese.append(key)
+                }
+            }
+            expect(missing.isEmpty, "every catalog key resolves through WSL10n in English: \(missing.prefix(3))")
+            expect(chinese.isEmpty, "no catalog English value contains Han characters: \(chinese.prefix(3))")
+            print("ok   catalog keys checked end to end: \(catalog.count)")
+        } else {
+            failures += 1
+            print("FAIL cannot read the compiled Localizable.strings")
+        }
+
         WSL10n.language = .zh
         expect(WS2SilentCopy.line("window.left") == "左半屏", "switching back to Chinese restores the source text")
 

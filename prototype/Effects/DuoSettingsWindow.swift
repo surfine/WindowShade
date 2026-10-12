@@ -16,17 +16,18 @@ enum WindowShadeSettingsSection: Int, CaseIterable {
     defaults.set(rawValue, forKey: Self.lastViewedKey)
   }
 
+  /// 侧栏与外框的分节名（第27批）：按当前语言取；语义身份是分节本身，不是中文两个字。
   var title: String {
     switch self {
-    case .effects: return "效果"
-    case .shade: return "卷帘"
-    case .browser: return "窗口浏览"
-    case .shortcuts: return "快捷键"
-    case .permissions: return "隐私"
-    case .advanced: return "高级"
-    case .pointer: return "鼠标与触控板"
-    case .remote: return "遥控器"
-    case .conductor: return "指挥模式"
+    case .effects: return WSL10n.text("settings.section.effects", zh: "效果")
+    case .shade: return WSL10n.text("settings.section.shade", zh: "卷帘")
+    case .browser: return WSL10n.text("settings.section.browser", zh: "窗口浏览")
+    case .shortcuts: return WSL10n.text("settings.section.shortcuts", zh: "快捷键")
+    case .permissions: return WSL10n.text("settings.section.permissions", zh: "隐私")
+    case .advanced: return WSL10n.text("settings.section.advanced", zh: "高级")
+    case .pointer: return WSL10n.text("settings.section.pointer", zh: "鼠标与触控板")
+    case .remote: return WSL10n.text("settings.section.remote", zh: "遥控器")
+    case .conductor: return WSL10n.text("settings.section.conductor", zh: "指挥模式")
     }
   }
 
@@ -114,9 +115,9 @@ final class DuoSettingsWindow: NSWindowController, NSWindowDelegate, NSTableView
       styleMask: [.titled, .closable, .miniaturizable, .resizable, .fullSizeContentView],
       backing: .buffered,
       defer: false)
-    window.title = "WindowShade 设置"
+    window.title = Self.windowTitle
     window.isReleasedWhenClosed = false
-    // 工具型窗口不与其它窗口合并成标签页（系统偏好设为“始终”时也保持一致）。
+    // 工具型窗口不与其它窗口合并成标签页（系统偏好设为"始终"时也保持一致）。
     window.tabbingMode = .disallowed
     window.minSize = NSSize(width: 820, height: 580)
     if !controller.isDesignPreview {
@@ -126,6 +127,45 @@ final class DuoSettingsWindow: NSWindowController, NSWindowDelegate, NSTableView
     window.delegate = self
     build()
     window.center()
+    // 语言切换立即生效（第27批）：整个窗口的文案（标题/侧栏/当前页）显式重建。
+    NotificationCenter.default.addObserver(self, selector: #selector(interfaceLanguageDidChange),
+                                           name: InterfaceLanguagePreference.didChangeNotification, object: nil)
+  }
+
+  /// 设置窗口的标题（第27批）。
+  static var windowTitle: String { WSL10n.text("settings.window.title", zh: "WindowShade 设置") }
+
+  /// 语言变了：重建放到本次事件之后，避免在语言行的 action 里同步拆自己的视图。
+  @objc private func interfaceLanguageDidChange() {
+    DispatchQueue.main.async { [weak self] in self?.refreshLocalizedCopy() }
+  }
+
+  /// 语言切换的显式重建：标题、侧栏、当前页整个换；缓存页整批作废。
+  /// 已显示的刘海句子不回溯改写，下一句起就是新语言（证据里如实记录）。
+  func refreshLocalizedCopy() {
+    window?.title = Self.windowTitle
+    window?.subtitle = currentSection.title
+    sidebarTable.reloadData()
+    pages.removeAll()
+    rebuildAllPages()
+    // 同一分节也要真的换页：先清掉 pageHost 上的旧内容，绕开“同页不重装”的守卫。
+    pageHost?.subviews.forEach { $0.removeFromSuperview() }
+    select(section: currentSection)
+    sidebarTable.reloadData()
+  }
+
+  /// 建（或重建）全部页面。build() 与语言切换都走这里，保证两处一致。
+  private func rebuildAllPages() {
+    guard let controller else { return }
+    pages[.effects] = makeEffectsPage(controller: controller)
+    pages[.advanced] = makeAdvancedPage(controller: controller)
+    pages[.shade] = controller.owner?.makeShadeSettingsPage()
+    pages[.browser] = controller.owner?.makeWindowBrowserSettingsPage()
+    pages[.shortcuts] = controller.owner?.makeShortcutsSettingsPage()
+    pages[.permissions] = controller.owner?.makePermissionsSettingsPage()
+    pages[.pointer] = controller.owner?.makePointerSettingsPage()
+    pages[.remote] = controller.owner?.makeRemoteSettingsPage()
+    pages[.conductor] = controller.owner?.makeConductorSettingsPage()
   }
 
   required init?(coder: NSCoder) { nil }
@@ -202,15 +242,7 @@ final class DuoSettingsWindow: NSWindowController, NSWindowDelegate, NSTableView
     toolbar.isVisible = true
     splitController.splitView.setPosition(214, ofDividerAt: 0)
 
-    pages[.effects] = makeEffectsPage(controller: controller)
-    pages[.advanced] = makeAdvancedPage(controller: controller)
-    pages[.shade] = controller.owner?.makeShadeSettingsPage()
-    pages[.browser] = controller.owner?.makeWindowBrowserSettingsPage()
-    pages[.shortcuts] = controller.owner?.makeShortcutsSettingsPage()
-    pages[.permissions] = controller.owner?.makePermissionsSettingsPage()
-    pages[.pointer] = controller.owner?.makePointerSettingsPage()
-    pages[.remote] = controller.owner?.makeRemoteSettingsPage()
-    pages[.conductor] = controller.owner?.makeConductorSettingsPage()
+    rebuildAllPages()
     select(section: controller.isDesignPreview ? .effects : .lastViewed())
 
     // 时钟只为实时预览的推帧服务。静态示意图不会自己变化，参数一改就已经
@@ -460,8 +492,19 @@ final class DuoSettingsWindow: NSWindowController, NSWindowDelegate, NSTableView
     return WS2SettingsCopy.content(name: nil, subtitle: subtitle, symbol: WS2SettingsCopy.tableSymbol(symbolName)).view
   }
 
+  /// 迁移过的页头（第27批）：副标题走当前语言。
+  private func makePageHeader(title: SettingsText, subtitle: SettingsText, symbolName: String?) -> NSView {
+    _ = title
+    return WS2SettingsCopy.content(name: nil, subtitle: subtitle, symbol: WS2SettingsCopy.tableSymbol(symbolName)).view
+  }
+
   private func settingsContent(title: String, subtitle: String) -> NSStackView {
     WS2SettingsCopy.content(name: title, subtitle: subtitle, symbol: WS2SettingsCopy.symbol(for: title)).view
+  }
+
+  /// 迁移过的行（第27批）：zh 是语义身份（图标按它查），显示走当前语言。
+  private func settingsContent(title: SettingsText, subtitle: SettingsText) -> NSStackView {
+    WS2SettingsCopy.content(name: title, subtitle: subtitle).view
   }
 
   private func makeSectionLabel(_ title: String) -> NSView {
@@ -549,8 +592,15 @@ final class DuoSettingsWindow: NSWindowController, NSWindowDelegate, NSTableView
   }
 
   private func makeControlRow(title: String, subtitle: String, control: NSView) -> NSView {
-    let labels = settingsContent(title: title, subtitle: subtitle)
+    makeControlRow(labels: settingsContent(title: title, subtitle: subtitle), control: control)
+  }
 
+  /// 迁移过的行（第27批）。
+  private func makeControlRow(title: SettingsText, subtitle: SettingsText, control: NSView) -> NSView {
+    makeControlRow(labels: settingsContent(title: title, subtitle: subtitle), control: control)
+  }
+
+  private func makeControlRow(labels: NSStackView, control: NSView) -> NSView {
     let row = NSStackView(views: [labels, control])
     NSLayoutConstraint.activate([
       labels.leadingAnchor.constraint(equalTo: row.leadingAnchor),
@@ -568,8 +618,16 @@ final class DuoSettingsWindow: NSWindowController, NSWindowDelegate, NSTableView
   }
 
   private func makeActionRow(title: String, subtitle: String, button: NSButton) -> NSView {
+    makeActionRow(labels: settingsContent(title: title, subtitle: subtitle), button: button)
+  }
+
+  /// 迁移过的行（第27批）。
+  private func makeActionRow(title: SettingsText, subtitle: SettingsText, button: NSButton) -> NSView {
+    makeActionRow(labels: settingsContent(title: title, subtitle: subtitle), button: button)
+  }
+
+  private func makeActionRow(labels: NSStackView, button: NSButton) -> NSView {
     button.font = SystemAppearancePolicy.font(relativeToBody: -1)
-    let labels = settingsContent(title: title, subtitle: subtitle)
 
     button.controlSize = .regular
     button.setContentHuggingPriority(.required, for: .horizontal)
@@ -719,31 +777,44 @@ final class DuoSettingsWindow: NSWindowController, NSWindowDelegate, NSTableView
       stack.bottomAnchor.constraint(lessThanOrEqualTo: root.bottomAnchor),
     ])
     let header = makePageHeader(
-      title: "高级", subtitle: "恢复默认值，或打开诊断日志排查问题。",
+      title: WSL10n.setting("settings.advanced.title", zh: "高级"),
+      subtitle: WSL10n.setting("settings.advanced.sub", zh: "恢复默认值，或打开诊断日志排查问题。"),
       symbolName: "slider.horizontal.3")
     stack.addArrangedSubview(header)
     stack.setCustomSpacing(16, after: header)
 
+    // 语言（第27批）：跟随系统 / 简体中文 / English；切换立即生效。
+    let languageSection = makeSectionLabel(WSL10n.text("settings.language.section", zh: "语言"))
+    stack.addArrangedSubview(languageSection)
+    stack.setCustomSpacing(6, after: languageSection)
+    let languageCard = makeSettingsCard([makeLanguageRow()])
+    stack.addArrangedSubview(languageCard)
+    languageCard.widthAnchor.constraint(equalTo: stack.widthAnchor).isActive = true
+    stack.setCustomSpacing(18, after: languageCard)
 
-    let actionSection = makeSectionLabel("操作")
+    let actionSection = makeSectionLabel(WSL10n.text("settings.advanced.section.actions", zh: "操作"))
     stack.addArrangedSubview(actionSection)
     stack.setCustomSpacing(6, after: actionSection)
-    let reset = NSButton(title: "恢复默认值", target: self, action: #selector(reset))
+    let reset = NSButton(title: WSL10n.text("settings.advanced.reset.button", zh: "恢复默认值"),
+                         target: self, action: #selector(reset))
     reset.bezelStyle = .rounded
-    reset.image = NSImage(systemSymbolName: "arrow.counterclockwise", accessibilityDescription: "恢复默认值")
+    reset.image = NSImage(systemSymbolName: "arrow.counterclockwise",
+                          accessibilityDescription: WSL10n.text("settings.advanced.reset.button", zh: "恢复默认值"))
     reset.imagePosition = .imageLeading
-    let diagnostics = NSButton(title: "打开诊断日志", target: self, action: #selector(openDiagnostics))
+    let diagnostics = NSButton(title: WSL10n.text("settings.advanced.diagnostics.button", zh: "打开诊断日志"),
+                               target: self, action: #selector(openDiagnostics))
     diagnostics.bezelStyle = .rounded
-    diagnostics.image = NSImage(systemSymbolName: "doc.text.magnifyingglass", accessibilityDescription: "诊断日志")
+    diagnostics.image = NSImage(systemSymbolName: "doc.text.magnifyingglass",
+                                accessibilityDescription: WSL10n.text("settings.advanced.diagnostics.name", zh: "诊断日志"))
     diagnostics.imagePosition = .imageLeading
     let actionCard = makeSettingsCard([
       makeActionRow(
-        title: "恢复动态效果默认值",
-        subtitle: "把桌面、窗口和样式都恢复默认。",
+        title: WSL10n.setting("settings.advanced.reset.name", zh: "恢复动态效果默认值"),
+        subtitle: WSL10n.setting("settings.advanced.reset.sub", zh: "把桌面、窗口和样式都恢复默认。"),
         button: reset),
       makeActionRow(
-        title: "诊断日志",
-        subtitle: "打开运行记录排查问题。",
+        title: WSL10n.setting("settings.advanced.diagnostics.name", zh: "诊断日志"),
+        subtitle: WSL10n.setting("settings.advanced.diagnostics.sub", zh: "打开运行记录排查问题。"),
         button: diagnostics),
     ])
     stack.addArrangedSubview(actionCard)
@@ -751,30 +822,59 @@ final class DuoSettingsWindow: NSWindowController, NSWindowDelegate, NSTableView
     stack.setCustomSpacing(18, after: actionCard)
 
     let reduced = NSTextField(wrappingLabelWithString: NSWorkspace.shared.accessibilityDisplayShouldReduceMotion
-      ? "系统已开启“减少动态效果”，连续动画会自动暂停。"
-      : "可在系统设置的辅助功能选项中开启“减少动态效果”。")
+      ? WSL10n.text("settings.advanced.reduceMotionOn", zh: "系统已开启“减少动态效果”，连续动画会自动暂停。")
+      : WSL10n.text("settings.advanced.reduceMotionHint", zh: "可在系统设置的辅助功能选项中开启“减少动态效果”。"))
     reduced.font = SystemAppearancePolicy.font(relativeToBody: -1)
     reduced.textColor = .secondaryLabelColor
     reduced.maximumNumberOfLines = 2
-    reduced.setAccessibilityLabel("减少动态效果提示")
+    reduced.setAccessibilityLabel(WSL10n.text("settings.advanced.reduceMotionA11y", zh: "减少动态效果提示"))
     reduced.setContentCompressionResistancePriority(.defaultLow, for: .horizontal)
     let reduceMotionLink = makeTextLinkButton(
-      title: "打开“减少动态效果”设置…",
+      title: WSL10n.text("settings.advanced.reduceMotionLink", zh: "打开“减少动态效果”设置…"),
       action: #selector(openReduceMotionSettings),
-      help: "在系统设置的辅助功能中配置减少动态效果")
+      help: WSL10n.text("settings.advanced.reduceMotionLinkHelp", zh: "在系统设置的辅助功能中配置减少动态效果"))
     let infoRow = NSStackView(views: [reduced, reduceMotionLink])
     infoRow.orientation = .horizontal
     infoRow.alignment = .centerY
     infoRow.spacing = 14
     infoRow.heightAnchor.constraint(greaterThanOrEqualToConstant: 40).isActive = true
     let infoCard = makeSettingsCard([infoRow])
-    let infoSection = makeSectionLabel("辅助功能")
+    let infoSection = makeSectionLabel(WSL10n.text("settings.advanced.section.accessibility", zh: "辅助功能"))
     stack.addArrangedSubview(infoSection)
     stack.setCustomSpacing(6, after: infoSection)
     stack.addArrangedSubview(infoCard)
     infoCard.widthAnchor.constraint(equalTo: stack.widthAnchor).isActive = true
     load(controller.settings)
     return root
+  }
+
+  /// 语言行（第27批）：跟随系统 / 简体中文 / English；语言名用各自的写法（不进目录表）。
+  private func makeLanguageRow() -> NSView {
+    let popup = NSPopUpButton(frame: .zero, pullsDown: false)
+    let choices: [(InterfaceLanguagePreference, String)] = [
+      (.system, WSL10n.text("settings.language.system", zh: "跟随系统")),
+      (.zh, "简体中文"),
+      (.en, "English"),
+    ]
+    for (preference, title) in choices {
+      popup.addItem(withTitle: title)
+      popup.lastItem?.representedObject = preference.rawValue
+    }
+    let stored = InterfaceLanguagePreference.stored(in: .standard)
+    popup.selectItem(at: choices.firstIndex { $0.0 == stored } ?? 0)
+    popup.target = self
+    popup.action = #selector(changeInterfaceLanguage(_:))
+    popup.setAccessibilityLabel(WSL10n.text("settings.language.name", zh: "界面语言"))
+    return makeControlRow(title: WSL10n.setting("settings.language.name", zh: "界面语言"),
+                          subtitle: WSL10n.setting("settings.language.sub", zh: "切换后立即生效"),
+                          control: popup)
+  }
+
+  @objc private func changeInterfaceLanguage(_ sender: NSPopUpButton) {
+    guard let raw = sender.selectedItem?.representedObject as? String,
+          let preference = InterfaceLanguagePreference(rawValue: raw) else { return }
+    // 写偏好 + 立刻设进程语言 + 发通知；本窗口的观察者收到后整窗重建（立即生效）。
+    InterfaceLanguagePreference.set(preference)
   }
 
   static func artwork() -> CGImage {
@@ -850,7 +950,7 @@ final class DuoSettingsWindow: NSWindowController, NSWindowDelegate, NSTableView
   }
 
   @objc private func openReduceMotionSettings() {
-    // 与权限深链共用同一份“按本机面板决定顺序”的策略。
+    // 与权限深链共用同一份"按本机面板决定顺序"的策略。
     let candidates = SystemSettingsLinks.accessibilityDisplayCandidates(
       hasModernPane: SystemSettingsLinks.hasModernAccessibilityPane())
     for rawValue in candidates {
@@ -993,6 +1093,7 @@ final class DuoSettingsWindow: NSWindowController, NSWindowDelegate, NSTableView
   }
 
   deinit {
+    NotificationCenter.default.removeObserver(self)
     NotificationCenter.default.removeObserver(
       self, name: NSView.frameDidChangeNotification, object: nil)
     clock.stop()

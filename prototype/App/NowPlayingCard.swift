@@ -227,6 +227,7 @@ final class NowPlayingCard: NSView, WS2LeaseContent {
     /// 卡里还活着的计时器个数（测试看：什么都没在等的时候必须是 0）。
     var pendingTimerCount: Int { [tickTimer, closeListTimer, volumeHoldTimer].compactMap { $0 }.count }
 
+    var interactionCornerRadius: CGFloat { NowPlayingCardLayout.bottomRadius }
     var interactionSize: NSSize {
         NSSize(width: NowPlayingCardLayout.width,
                height: NowPlayingCardLayout.interactionHeight(listDeviceCount: listOpen ? routes.count : nil, virtualNotch: geometry.virtual))
@@ -263,6 +264,7 @@ final class NowPlayingCard: NSView, WS2LeaseContent {
     private let listHeader = NowPlayingCard.label(11, .semibold, alpha: 0.6)
     private let listScroll = NSScrollView()
     private let listDocument = NowPlayingFlippedView()
+    private let emptyRoutes = NowPlayingCard.label(11, .medium, alpha: 0.6)
     private var rowViews: [NowPlayingRouteRow] = []
     private var fadables: [NSView] = []
     private var barHeightShown = NowPlayingScrub.restHeight
@@ -367,6 +369,10 @@ final class NowPlayingCard: NSView, WS2LeaseContent {
         liveTag.addSubview(liveText)
         remainingField.alignment = .right
         listHeader.stringValue = "播放到"
+        emptyRoutes.stringValue = "暂未找到设备"
+        emptyRoutes.alignment = .center
+        emptyRoutes.isHidden = true
+        listDocument.addSubview(emptyRoutes)
         listScroll.drawsBackground = false
         listScroll.hasVerticalScroller = false
         listScroll.hasHorizontalScroller = false
@@ -505,7 +511,10 @@ final class NowPlayingCard: NSView, WS2LeaseContent {
         let visible = NowPlayingCardLayout.visibleRows(deviceCount: routes.count)
         listScroll.frame = local(CGRect(x: rowsTop.minX, y: rowsTop.minY, width: rowsTop.width,
                                         height: CGFloat(visible) * NowPlayingCardLayout.rowHeight))
-        listDocument.frame = CGRect(x: 0, y: 0, width: rowsTop.width, height: CGFloat(routes.count) * NowPlayingCardLayout.rowHeight)
+        listDocument.frame = CGRect(x: 0, y: 0, width: rowsTop.width, height: CGFloat(max(1, routes.count)) * NowPlayingCardLayout.rowHeight)
+        emptyRoutes.frame = CGRect(x: 0, y: (NowPlayingCardLayout.rowHeight - 14) / 2,
+                                   width: rowsTop.width, height: 14)
+        emptyRoutes.isHidden = !routes.isEmpty
         for (index, row) in rowViews.enumerated() {
             row.frame = CGRect(x: 0, y: CGFloat(index) * NowPlayingCardLayout.rowHeight, width: rowsTop.width,
                                height: NowPlayingCardLayout.rowHeight)
@@ -827,9 +836,8 @@ final class NowPlayingCard: NSView, WS2LeaseContent {
     // MARK: “播放到”列表
 
     func openList() {
-        guard !listOpen else { return }
+        guard inputIsCurrent(), !listOpen else { return }
         let found = loadRoutes()
-        guard !found.isEmpty else { return }
         if volumeShown { hideVolume(animated: false) }
         routes = found
         rebuildRows()
@@ -843,6 +851,10 @@ final class NowPlayingCard: NSView, WS2LeaseContent {
         onSizeChange?(true)
         onInteractionChange?()
         NSAccessibility.post(element: self, notification: .layoutChanged)
+        if found.isEmpty {
+            NSAccessibility.post(element: self, notification: .announcementRequested,
+                                 userInfo: [.announcement: "暂未找到设备", .priority: NSAccessibilityPriorityLevel.medium.rawValue])
+        }
     }
 
     func closeList() {

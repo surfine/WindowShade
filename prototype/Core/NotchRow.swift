@@ -163,7 +163,12 @@ enum NotchRow {
         var isEnded = false
 
         /// 格子上量的数字：比例只给本身是百分比的种类写（和右耳一致），个数一律写；没有就不写。
-        var quantityText: String? { quantity.valueText(writesPercent: kind.writesPercent) }
+        var quantityText: String? {
+            if kind == .session, phase == .quota || phase == .quotaLow {
+                return earText.flatMap { $0.isEmpty ? nil : $0 }
+            }
+            return quantity.valueText(writesPercent: kind.writesPercent)
+        }
         /// 这个格子该怎么画量。
         var quantityDrawing: NotchProgressDrawing { quantity.drawing }
 
@@ -193,7 +198,7 @@ enum NotchRow {
                                    title: item.kind == .focus ? NotchEarText.cardTitle(item) : item.title,
                                    subtitle: subtitle(of: item), symbol: item.symbol, phase: item.sessionPhase,
                                    isPaused: item.isPaused, quantity: item.kind == .focus ? .unknown : item.progress,
-                                   earText: item.sessionPhase == .quota ? item.trailing : nil,
+                                   earText: item.sessionPhase == .quota || item.sessionPhase == .quotaLow ? item.trailing : nil,
                                    isStale: item.isStale, isEnded: item.isEnded)
             }
         }

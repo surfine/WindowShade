@@ -5,12 +5,17 @@ import Cocoa
 @MainActor protocol WS2LeaseContent: NotchInteractiveContent {
     var inputIsCurrent: (() -> Bool) { get set }
     var interactionSize: NSSize { get }
+    /// 卡片自己的内容下限与底角；宿主负责相机避让与屏幕边界。默认保留现有交互卡规格。
+    var interactionMinimumHeight: CGFloat { get }
+    var interactionCornerRadius: CGFloat { get }
     func revoke()
     /// 挂起时只撤掉输入权。页面数据留着，旧租约不留。
     func suspendInput()
 }
 
 extension WS2LeaseContent {
+    var interactionMinimumHeight: CGFloat { 68 }
+    var interactionCornerRadius: CGFloat { 24 }
     func suspendInput() { inputIsCurrent = { false } }
 }
 

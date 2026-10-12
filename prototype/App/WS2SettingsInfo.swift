@@ -103,6 +103,55 @@ import Cocoa
         return String(subtitle.prefix(16))
     }
 
+    /// 英文一行里放得下的字符量级（第27批）。值以渲染实测校准（见本批证据），
+    /// 中文的 16 字预算不能套在英文上。
+    nonisolated static let englishLineBudget = 34
+
+    /// 迁移过的行的短副标题（第27批）：zh 时与老路径逐字节相同；en 先查 shortEn（按目录键，
+    /// 语义身份），没有就在词边界截断——不把单词劈开。全文都在气泡与 tooltip 里。
+    nonisolated static func line(_ subtitle: SettingsText) -> String {
+        guard WSL10n.language == .en, WSL10n.englishBundle != nil else { return line(subtitle.zh) }
+        if let mapped = shortEn[subtitle.key] { return mapped }
+        let shown = subtitle.shown
+        guard shown.count > englishLineBudget else { return shown }
+        var head = String(shown.prefix(englishLineBudget))
+        if let cut = head.lastIndex(of: " "), head.distance(from: head.startIndex, to: cut) >= englishLineBudget - 12 {
+            head = String(head[..<cut])
+        }
+        return head + "…"
+    }
+
+    /// 英文短副标题表：目录键 → 一句能站住的英文短句。与中文 short 表同样的角色，
+    /// 只给英文行长预算里放不下的行。用词与目录里的英文译文保持同一套词汇。
+    nonisolated static let shortEn: [String: String] = [
+        "settings.shade.sub": "How windows roll up, how a bar looks, and sound",
+        "settings.shade.glance.sub": "Glance without unrolling",
+        "settings.shade.tuckNotch.sub": "Flick to tuck, click to bring back",
+        "settings.shade.notchAlerts.sub": "The notch opens when a title changes",
+        "settings.shade.activities.sub": "Music, accessories, transfers, routes",
+        "settings.shade.origin.sub": "Tips follow your old habits",
+        "settings.shade.gap.sub": "A gap between windows and screen edges",
+        "settings.shade.splitHandle.sub": "Drag the middle bar to resize both",
+        "settings.shade.floating.sub": "Rolled-up windows stay in front",
+        "settings.shade.fileShelf.sub": "Files you drop on the notch wait here",
+        "settings.shade.downloads.sub": "Watch the Downloads folder",
+        "settings.shade.copyProgress.sub": "Show copy progress at the notch",
+        "settings.shade.carplay.sub": "Long-press the notch for full screen",
+        "settings.shade.deviceBattery.sub": "The notch says when a device connects",
+        "settings.shade.collapse.sub": "Keep the bar, use one consistent bar, or thumbnail",
+        "settings.shade.calendar.subNotAsked": "Counts down before meetings; macOS asks once",
+        "settings.shade.calendar.subGranted": "Counts down; join when there's a link",
+        "settings.shade.focus.tuck": "Tuck chats while focusing",
+        "settings.shade.focus.presetTooltip": "New lengths apply from the next round.",
+        "settings.shade.focus.tuckTooltip": "Only windows from the private app list.",
+        "settings.shade.focus.noteCounting": "For now it only counts time.",
+        "settings.advanced.sub": "Reset defaults, or open the diagnostics log",
+        "settings.advanced.reset.sub": "Reset desktop, windows and style",
+        "settings.advanced.diagnostics.sub": "Open the run log to find problems",
+        "settings.advanced.reduceMotionHint": "Turn on Reduce motion in System Settings",
+        "settings.language.sub": "Takes effect immediately",
+    ]
+
     /// 只返回 §4.11 对得上的符号。对不上返回 nil，不另造一个。
     /// 更具体的名字放前面，避免「取消置顶」被「置顶」先截走。
     nonisolated static func symbol(for name: String) -> String? {
@@ -147,6 +196,19 @@ import Cocoa
     /// 设置行左侧：圆角色块里的符号（有才放）、名字、至多一行副标题，说不完的进 info.circle。
     /// 跟着枚举留在主线程：这里建的是 AppKit 视图。调用方都是主线程类型。
     static func content(name: String?, subtitle: String?, symbol: String? = nil) -> (view: NSStackView, detail: NSTextField?) {
+        content(name: name, subtitle: subtitle, shownLine: subtitle.map { line($0) },
+                symbol: symbol ?? name.flatMap { Self.symbol(for: $0) })
+    }
+
+    /// 迁移过的行（第27批）：zh 是语义身份——图标按它查；显示文本与短副标题走当前语言。
+    /// zh 模式下与本文件里的 String 版逐字节同输出（line 的 zh 分支就是老路径）。
+    static func content(name: SettingsText?, subtitle: SettingsText?, symbol: String? = nil) -> (view: NSStackView, detail: NSTextField?) {
+        content(name: name?.shown, subtitle: subtitle?.shown,
+                shownLine: subtitle.map { line($0) },
+                symbol: symbol ?? name.flatMap { Self.symbol(for: $0.zh) })
+    }
+
+    private static func content(name: String?, subtitle: String?, shownLine: String?, symbol: String?) -> (view: NSStackView, detail: NSTextField?) {
         let labels = NSStackView()
         labels.orientation = .vertical
         labels.alignment = .leading
@@ -157,8 +219,7 @@ import Cocoa
             labels.addArrangedSubview(title)
         }
         var detail: NSTextField?
-        if let subtitle {
-            let shown = line(subtitle)
+        if let subtitle, let shown = shownLine {
             let field = NSTextField(labelWithString: shown)
             field.font = SystemAppearancePolicy.font(relativeToBody: -2)
             field.textColor = .secondaryLabelColor
@@ -186,8 +247,8 @@ import Cocoa
         content.orientation = .horizontal
         content.alignment = .centerY
         content.spacing = 10
-        if let subtitle, line(subtitle) != subtitle {
-            let caption = (name?.isEmpty == false ? name! : "说明")
+        if let subtitle, let shown = shownLine, shown != subtitle {
+            let caption = (name?.isEmpty == false ? name! : WSL10n.text("settings.info.caption", zh: "说明"))
             content.addArrangedSubview(WS2SettingsInfoButton(text: subtitle, name: caption))
         }
         labels.setContentCompressionResistancePriority(.defaultLow, for: .horizontal)
@@ -201,10 +262,11 @@ final class WS2SettingsInfoButton: NSButton {
     private var popover: NSPopover?
     init(text:String,name:String) {
         fullText = text; super.init(frame:.zero)
-        image = NSImage(systemSymbolName:"info.circle",accessibilityDescription:"\(name)的说明")
+        let described = WSL10n.text("settings.info.label", zh: "%@的说明", name)
+        image = NSImage(systemSymbolName:"info.circle",accessibilityDescription: described)
         isBordered = false; imagePosition = .imageOnly
         target = self; action = #selector(showInfo); toolTip = text
-        setAccessibilityLabel("\(name)的说明")
+        setAccessibilityLabel(described)
     }
     required init?(coder:NSCoder) { nil }
     @objc private func showInfo() {

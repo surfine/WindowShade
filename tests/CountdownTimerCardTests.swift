@@ -18,7 +18,19 @@ import Cocoa
         let picker = CountdownTimerCard(mode: .picker, minutes: 10)
         expect(picker.interactionSize == NSSize(width: 400, height: 84), "选分钟 400 × (117.5 − 33.5)")
         expect(CountdownTimerCard(mode: .running, minutes: 10).interactionSize == NSSize(width: 440, height: 142), "大卡 440 × (175.5 − 33.5)")
-        expect(CountdownTimerCard(mode: .alert, minutes: 10).interactionSize == NSSize(width: 400, height: 68), "时间到 400 × 68（岛的内容下限，稿是 52）")
+        expect(CountdownTimerCard(mode: .alert, minutes: 10).interactionSize == NSSize(width: 400, height: 52), "时间到 400 × (85.5 − 33.5)")
+
+        // 经过实际宿主测形状，不能只验证卡片自报尺寸；夹具留在屏幕外。
+        let panel = NotchPanel(notch: NSRect(x: -8000, y: 866.5, width: 185, height: 33.5), virtual: false)
+        panel.isReleasedWhenClosed = false
+        defer { panel.setInteraction(nil, animated: false); panel.close() }
+        for (mode, width, height, radius) in [(CountdownTimerCard.Mode.picker, 400.0, 117.5, 24.0),
+                                            (.running, 440.0, 175.5, 28.0), (.alert, 400.0, 85.5, 24.0)] {
+            panel.setInteraction(CountdownTimerCard(mode: mode, minutes: 10), animated: false)
+            let shape = panel.shapeForProbe
+            expect(shape?.island.size == NSSize(width: width, height: height) && shape?.radius == CGFloat(radius),
+                   "实际宿主 \(mode)：\(width) × \(height)，底角 \(radius)")
+        }
 
         print("CASE TMR2-C02 | 选分钟：↑ ↓ 调，回车开始，Esc 取消")
         var started: [Int] = [], cancelled = 0
