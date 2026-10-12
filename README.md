@@ -42,7 +42,7 @@ Unlike minimizing, the window never leaves the desktop. Drag the bar somewhere e
 Get the latest ZIP from [Releases](https://github.com/surfine/WindowShade/releases/latest), unzip it, drag `WindowShade.app` into Applications and open it, then follow the permission prompts. It lives in the menu bar and stays out of your Dock.
 
 - **Needs macOS 14 or later and Apple Silicon.** There’s no Intel build.
-- **1.0.15 download:** 4.06 MB ZIP; the extracted app contains 7.98 MB of files (decimal MB; filesystem allocation may differ).
+- **1.0.16 download:** 9.86 MB ZIP; the extracted app contains 24.57 MB of files (decimal MB; filesystem allocation may differ). The ZIP now carries the updater, hence the bigger size.
 - **Not notarized yet.** If macOS blocks the first launch, go to System Settings → Privacy & Security and choose Open Anyway. You don’t need to turn off any system security.
 - Every release ships with a SHA-256 checksum file; for what changed in each version, see the [release notes](https://github.com/surfine/WindowShade/releases).
 
@@ -72,7 +72,7 @@ Today’s WindowShade is an independent Swift / AppKit app: the old name and the
 
 ## Shortcuts
 
-Record your own in Settings → Shortcuts, or bring Rectangle’s key set over in one click. 1.0.16 (in preparation) presets none of these for new setups; setups upgraded from 1.0.15 or earlier keep the combinations below. Every shortcut can be changed or turned off, and if another app already uses a combination, WindowShade tells you once.
+Record your own in Settings → Shortcuts, or bring Rectangle’s key set over in one click. 1.0.16 presets none of these for new setups; setups upgraded from 1.0.15 or earlier keep the combinations below. Every shortcut can be changed or turned off, and if another app already uses a combination, WindowShade tells you once.
 
 | Shortcut (upgraded setups) | What it does |
 | --- | --- |
@@ -91,13 +91,13 @@ WindowShade asks for two permissions. **Accessibility**: finding, moving and res
 
 Regular windows all roll up. Stickies rolls up in its own system way; apps like Adobe’s that draw their own title bars are handled separately. Full screen, Split View, Stage Manager and multiple displays still have a few gaps — try it once with the apps you use. If something goes wrong, please [report it](https://github.com/surfine/WindowShade/issues) with your macOS version, the app, and the steps.
 
-## In development (not in the current download)
+## In development
 
-The current download is **1.0.15**. These additions live in the repository and in preview builds; website scenes are interactive illustrations, not evidence that any build has passed device testing.
+The current download is **1.0.16** — tucked windows and the rest of the notch page above are in it, plus a three-step welcome, a “What WindowShade reads” privacy page and an interface-language switch. On a new installation, the notch, live activities, file shelf, accessory notices, volume/brightness display and Dock click-to-hide are off until enabled in Settings. [Release notes](docs/releases/v1.0.16.md) · [defaults](docs/releases/v1.0.16-defaults.md) · [gate report](docs/releases/v1.0.16-acceptance/gate-0B-verification.md)
 
-- **1.0.16 preview** — tucked windows, Now Playing, a file shelf and accessory battery notices brought together at the notch, plus a three-step welcome, scroll-strip overview and a “What WindowShade reads” privacy page. On a new installation, the notch, live activities, file shelf, accessory notices, volume/brightness display and Dock click-to-hide are off until enabled in Settings. [Candidate notes](docs/releases/v1.0.16.md) · [defaults](docs/releases/v1.0.16-defaults.md) · [acceptance report](docs/releases/v1.0.16-acceptance-20261010.md)
-- **Live activities** — the notch and the Launchpad Today page share up to three: music, AirPods, shares and routes started here, and Voice Memos microphone use. [Details](docs/live-activities.md)
-- **English interface** — pick the interface language in Settings (follow the system / 简体中文 / English); the switch takes effect immediately, no relaunch. Still in development; not every surface is covered yet. [Details](docs/handoff/BATCH27-ENGLISH-HANDOFF-2026-10-12.md)
+These are not in the download yet:
+
+- **English interface** — 1.0.16 covers the whole Settings window and the silent-action sentences at the notch; menus, the window browser, privacy and the rest are still being translated. Pick the language in Settings → Advanced (follow the system / 简体中文 / English); it takes effect immediately. [Details](docs/handoff/BATCH27-ENGLISH-HANDOFF-2026-10-12.md)
 - **Touch ID in the notch** — expands the notch around the system fingerprint prompt to confirm a WindowShade request; it does not unlock macOS. [Details](docs/touch-id-island.md)
 - **Launchpad and new gestures** — the Home grid with the App Library (`⌃⌘L`), Magic Tiling, the scroll strip, Picture in Picture, Slide Over with a split handle, `⌥`-Tab by window, Rectangle key import, Dock click-to-hide, and more. [Launchpad](docs/launchpad.md) · [title-bar gestures](docs/gestures.md)
 - **Experimental or device-limited** — face scanning, presence locking, remote control and CarPlay have experimental and device limits; none of this claims macOS face unlock or complete CarPlay reception.

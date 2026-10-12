@@ -7,11 +7,18 @@
 | 项 | 值 |
 |---|---|
 | 源码 | 工作区 = `main`(5624b68) + 第28批（静音散句英语）+ #39 修复 + 本批文档（**未提交**） |
-| 包 | `.build/release-acceptance-20261012/WindowShade-v1.0.16.zip`，9,858,449 字节，sha256 `47930319f62cce1ea43e14342b1b6aecb31a8cd837096ea883283da2e0e7876f` |
+| 包（发布件） | `WindowShade-v1.0.16.zip`，9,858,449 字节，sha256 `f28c967764b9c2a8aedec9584a3cad07199397d52a799a269f5ed4e44509f743`（GitHub Release v1.0.16 附件；回下载核对逐字一致） |
+| 包（VM 验收所用容器） | 同 app 树、另一容器：sha256 `47930319f62cce1ea43e14342b1b6aecb31a8cd837096ea883283da2e0e7876f`（见下方“容器不可复现”） |
 | 包内二进制 | sha256 `784ec4b618a46c185008a93eb1e200b96279acc66cc5b6379c81a65c7820eed4` |
 | 签名 | TeamIdentifier=FVGLY6W6S4，identifier=com.windowshade.prototype，1.0.16 (16) |
 | 包级门禁 | 九步全 PASS（`gate-0B.log`；DR 与官方 1.0.15 逐字相同；SUPublicEDKey/SUFeedURL/UpdateGuard 一致；第 9 步按首个更新器版跳过） |
 | 0-A 存档 | `phase0-archive/WindowShade-v1.0.16-0A.zip`（82681b0，9,484,290 字节，sha256 `2c3b39ca…c3fac`）+ `gate-0A.log` |
+
+## 容器字节不可复现（发布关发现，已核实）
+
+同一次 `--stage`、同一 app 树，两次 `ditto -c -k --sequesterRsrc --keepParent` 产出**容器字节不同**（`47930319…` 与 `f28c9677…`，大小同为 9,858,449）。解包后 `WindowShade.app` **文件清单与逐文件 sha256 完全一致**（`/tmp/tree-a.txt` vs `/tmp/tree-b.txt` diff 为空），差异只在 zip 容器层的元数据（时间戳）。
+
+处置：**以最终上传的那一份为准**（`f28c9677…`，包级门禁在同一份上重跑、全 PASS；VM 内的 Phase 1–3 验收跑在容器 `47930319…` 的 app 树上，与发布件 app 树逐文件相同）。结论：*验收内容 == 发布内容*；但"zip 哈希"不是可复现的身份，"app 树逐文件哈希"才是。以后发版把这两件事分开记。
 
 ## Phase 1 · 核心窗口路径（0-B 候选）
 

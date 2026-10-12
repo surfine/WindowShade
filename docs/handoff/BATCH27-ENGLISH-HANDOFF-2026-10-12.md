@@ -224,3 +224,16 @@ QA：`tools/design-qa/SettingsShadeLanguagePreview.swift`（新）、`tools/desi
 4. **#40/#39 回复草稿**：[issue-replies.md](../releases/v1.0.16-acceptance/issue-replies.md)（英文+中文，未发布——外发动作留给用户）。发布说明 `v1.0.16.md` 中英双份加了「界面语言（#40）」与「收起不那么容易误触了（#39）」两节。
 5. **过程记录（如实）**：本 session 我误用 `git checkout` 撤掉 `Localizable.xcstrings` 的第28批改动（127 条 `say.*` + 6 条 en 对齐），随即用 `.build/localization-tests/strings/` 的编译产物（zh/en 各 500 键）**逐键恢复并核对零差异**（500 键、棘轮 3406、check-localizable/copy-lint 全过），仅 3 条副标题为有意变化；其余第28批文件未被波及（git status 可查）。另：`#39` 首次工具测试因参数形态错误（`modifier` 需数组 + 需 foreground）判为无效并重测；三次 run 因工具护栏 HALTED，均按手册留档未删标记。
 6. **未提交未推送**：本批改动（#39 全部 + 第28批 + 文档）仍在工作区。**发布日打包前必须先提交**（标签=源码=包=证据 一致），提交与否听用户指示。
+
+---
+
+## 16. 1.0.16 已发布（2026-10-13，本 session 执行发布日流程）
+
+用户指示"先发布 1.0.16"。按 DEVELOPMENT.md §4–§8 与 runbook 走完：
+
+1. **提交与标签**：`5f6429b`「1.0.16 发布（第23–29批入库）」已提交并推送分支与 `main`（同步推进）；标签 **`v1.0.16` → `5f6429b`** 已推。发布说明去掉草稿标记。
+2. **包级门禁**：在待发 zip 上重跑九步全 PASS。**发布关发现**：`ditto` 容器字节不可复现（同 app 树两次打包哈希不同）；解包后 app 树逐文件 sha256 完全一致 → 以**最终上传件** `f28c967764b9c2a8aedec9584a3cad07199397d52a799a269f5ed4e44509f743`（9,858,449B）为准，并记入 [gate-0B-verification.md](../releases/v1.0.16-acceptance/gate-0B-verification.md)（"app 树哈希才是身份，zip 哈希不是"）。
+3. **GitHub Release**：`gh release create v1.0.16`（zip + `.sha256` + 说明），**回下载核对哈希逐字一致**。
+4. **appcast（首个）**：从官方发布页取 Sparkle 2.10.0 工具并核对 SHA-256（`c2bf58aa…da0c`，逐字一致）；`sign_update`（account `windowshade`）签 zip 得 `edSignature`；新建 `site/public/appcast.xml`（1.0.16 条目，`sparkle:version 16`、minimumSystemVersion 14.0.0、hardwareRequirements arm64、enclosure 指向 Release 附件）并**给清单本身签名**（`SURequireSignedFeed`）；`site/scripts/build.mjs` 给 `_headers` 加 `/appcast.xml → Cache-Control: public, max-age=300`；站点 build+check（43 资产）→ `wrangler pages deploy` → **线上核对**：`/appcast.xml` HTTP 200、`application/xml`、Cache-Control 生效、`sign_update --verify` 退出 0、包 URL 200。
+5. **README 双版 + 官网**：下载数字改 1.0.16（ZIP 9.86 MB / 解压 24.57 MB，包里多了更新器）；"开发中"节改口径（1.0.16 已是当前下载版，实时活动/欢迎/隐私页/语言开关在列；未进的只剩英文其余表面、Touch ID、启动台手势、实验项）；官网 `content.mjs` facts 改 `1.0.16 · ZIP 9.86 MB`，`releases/latest` 已解析到 v1.0.16。
+6. **未做（等用户）**：beta 频道自用一天与分批推送（`phasedRolloutInterval`）——本版是第一个带更新器的版本，**现有用户不会自动收到**（1.0.15 不联网）；用户真机清单（gate-0B-verification.md 末节 5 项）仍建议在自用时过一遍；#39/#40 的 issue 回复草稿在 [issue-replies.md](../releases/v1.0.16-acceptance/issue-replies.md)，待用户发布。
