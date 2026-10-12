@@ -137,3 +137,18 @@ QA：`tools/design-qa/SettingsShadeLanguagePreview.swift`（新）、`tools/desi
 **建议推进顺序**（每批独立验收，先拣用户最常看的）：① 静音流程散句（Gates/Host/Apply/Execution 的状态词与对话包装，先给这批短句定英文口径，建议扩充 copy-guide 英文表）+ 隐私（量最大）；② 设置其余页 + 窗口浏览；③ 菜单/状态栏 + 更新提示 + 欢迎；④ 刘海实时活动一串（卡片与句子）；⑤ 指挥/会话/遥控；⑥ 启动台/手势/覆盖层/窗口动作与错误态；⑦ 收尾：全仓防漏网检查（§9.4 的 checker 扩展）+ 检查"跟随系统"下其它界面的重建路径覆盖。顺序可调，但每批必须过 §9.1-9.5 的对应项。
 
 **本批已铺好的可复用件**：`InterfaceLanguagePreference`（解析/存取/通知）、`WSL10n.setting`+`SettingsText`（语义身份路由）、`shortEn`+`englishLineBudget`（英文行预算）、夹具/消费者/切换测试三件套的写法与脚本、`check-english-bundle-path.swift`、`copy-guide.md` 英文用词表（新批只在表里加行）。
+
+
+---
+
+## 10. 交接后补记（2026-10-12 晚，本 session；新 session 从这里接上）
+
+写完本文之后，同日又发生了这些（都已完成并推送），新 session 需要知道：
+
+1. **分支整理与合并**：grok/g8-site-motion、grok/g8-opus 已并入本分支（a38590c/08df5a4 旧号；影片线确认本分支即对方延续，零内容变化）；salvage/worktree-stash/十几个陈旧 worktree 与分支全部清理，未提交内容先归档 tar（仓库外 `~/Documents/WindowShade*.tar.gz` 两份 + 4 个本地 `archive/*` 标签）。现在本地/远端都只剩 main + 本分支。
+2. **并入 main + 全史重写两次**：经用户指示，本分支已 fast-forward 合入 main 并保持同步推进；随后 `git filter-repo` 把全部提交（作者+提交者）统一为 **`Aaron <12213433+surfine@users.noreply.github.com>`**（账号归因，名字仍显示 Aaron）。**旧 SHA 全部作废**——对照表在 `.statem/history-design-twentyseventh-round/qa/commit-map-final-2026-10-12.txt`（链式原始→最终），task.txt 里有文档引用过的 11 个旧 SHA 映射。重写前镜像备份 `~/Documents/WindowShade-pre-rewrite-mirror-2026-10-12.git`（228M，确认后可删）。
+3. **README 双版重写**（更简洁清楚：EN -45% 词、CN -34% 字；未发布功能收进「In development / 开发中」小节）。
+4. **1.0.16 发布关启动（当前最优先的活）**：runbook 在 [docs/releases/v1.0.16-release-gate.md](../releases/v1.0.16-release-gate.md)。**Phase 0 已完成**：从 `82681b0`（二十二波+崩溃修复；纯二十二波快照 e4db602 有 `reused!` 编译错误）重建 `--stage` EXIT=0，产出 `.build/release-acceptance-20261012/WindowShade-v1.0.16.zip`（9,484,290 字节，sha256 `f404884b…43cf`），**包级门禁九步全 PASS**（gate.log；DR 与官方 1.0.15 逐字相同，`codesign -R` 必须用纯路径形式——历史口径坑已修并记档）。**等用户真机跑 Phase 1–3**（核心窗口路径含同 App 两文档历史雷、欢迎三步、更新器简验）——全过即走 runbook 末尾的发布日流程（tag v1.0.16→82681b0、gh release、appcast 签名部署、README 数字）。
+5. **第 27 批的两个卡点仍未修**（§3 切换落效果页、§4 滑杆两形态）——它们不阻塞 1.0.16（基线不含 23–27 批），1.0.17 再回头修。
+
+**新 session 的优先顺序**：① 用户真机 Phase 1–3 结果 → 发布收尾；② 回到 §7 门 0/门 1 修第 27 批卡点；③ §9 英语下一表面（轻量档）。

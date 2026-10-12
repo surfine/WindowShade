@@ -4,7 +4,7 @@
 >
 > 理想 vs 现实的检讨、给 GPT-6 Pro 的自包含审议包与破局落地方案见 [docs/handoff/gpt6-review-2026-10-06/README.md](docs/handoff/gpt6-review-2026-10-06/README.md)：1.0.15（2026-09-26）之后 170 个提交、0 次发布；瓶颈是一个人的验收漏斗加范围比收敛快。
 >
-> **最近一批未完事项（第27批 英语适配）：接手先读 [docs/handoff/BATCH27-ENGLISH-HANDOFF-2026-10-12.md](docs/handoff/BATCH27-ENGLISH-HANDOFF-2026-10-12.md)**。它是 [设计接手交接（DESIGN-TAKEOVER-2026-10-11.md）](docs/handoff/DESIGN-TAKEOVER-2026-10-11.md) 的延续，不是替代——那里面除英语外的动效/真机验证线同样继续。实现已全部完成并大部分验收通过；剩两个卡点（语言切换后设置窗口落到「效果」页；滑杆行读数两个布局形态）与收尾流水线。**英语已定案为全量完全适配、不留手尾（含官网与 README、随批滚动同步；验收轻量档；英文照 Apple 大小写惯例；繁体不做但留余地；证据过即收尾）**，剩余表面清单与完成标准在交接 §9、两轮问答全部定案在交接开头。
+> **最近一批未完事项（第27批 英语适配）：接手先读 [docs/handoff/BATCH27-ENGLISH-HANDOFF-2026-10-12.md](docs/handoff/BATCH27-ENGLISH-HANDOFF-2026-10-12.md)**。它是 [设计接手交接（DESIGN-TAKEOVER-2026-10-11.md）](docs/handoff/DESIGN-TAKEOVER-2026-10-11.md) 的延续，不是替代——那里面除英语外的动效/真机验证线同样继续。实现已全部完成并大部分验收通过；剩两个卡点（语言切换后设置窗口落到「效果」页；滑杆行读数两个布局形态）与收尾流水线。**英语已定案为全量完全适配、不留手尾（含官网与 README、随批滚动同步；验收轻量档；英文照 Apple 大小写惯例；繁体不做但留余地；证据过即收尾）**，剩余表面清单与完成标准在交接 §9、两轮问答全部定案在交接开头。交接 §10 是**同日晚间补记**：全史已重写为账号归因 `Aaron <12213433+surfine@users.noreply.github.com>`（旧 SHA 作废，对照表在 .statem/history-design-twentyseventh-round/qa/commit-map-final-2026-10-12.txt）、README 双版已重写、**1.0.16 发布关 Phase 0 已过（候选包 + 包级门禁全 PASS），等用户真机 Phase 1–3 后走发布日流程**（runbook：docs/releases/v1.0.16-release-gate.md）——新 session 的优先顺序在 §10 末尾。
 
 # 项目约定
 
