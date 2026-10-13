@@ -491,3 +491,14 @@ build 号不变，Sparkle 不主动提示已装的 1.0.16 用户。`sign_update`
 **证据**：每批 `./prototype/build.sh --check` EXIT=0；离屏渲染逐页核对（`/tmp/shots-36c`、`/tmp/shots-44`）；
 `run-settings-tests.sh`、`run-localization-tests.sh` PASS；各次重发的门禁输出与回下载哈希记在对应提交信息里。
 本机 `/Applications/WindowShade.app` 已装 `8f09898` 的构建（就是第 4 次重发的那一份）。
+
+**第38批与第 5 次重发（2026-10-14 凌晨）**：提交 `64d11a7`——`pinInfoTrailing` 收进
+`WS2SettingsRow` 构造函数（行容器成为钉 ⓘ 的唯一所有者，调用方不可能漏）；DuoSettingsWindow
+最后三个老行构建器（String 版 makeToggleRow、makeControlRow(labels:)、makeActionRow(labels:)）
+迁入统一行容器——Advanced 页 Actions 卡 ⓘ 悬空即它们漏钉；Preferences 日历行与欢迎页日历行
+同迁；Remote 页三处 `indent: true` 去掉（子行图标对齐）。教训记两条：①「ⓘ 固定成列」与
+「ⓘ 贴控件」在控件宽窄不一的卡里不可兼得，终态规则是**永远贴控件**（同宽卡的列是自然结果
+不是目标）；② 验收必须用**已装 app 的渲染**，构建目录渲染不作数（第37批前一直混用）。
+第 5 次同版本号重发：tag v1.0.16 → `64d11a7`，包 sha256 `9676b485…`（9,767,275B），
+9 步门禁全 PASS（DR 逐字一致），appcast 重签部署，README 数字同步（ZIP 9.77 MB /
+解压 25.10 MB）。已知偏差不变：build 号 16，Sparkle 不主动提示已装用户。
