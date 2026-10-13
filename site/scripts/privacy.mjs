@@ -37,7 +37,8 @@ function swiftRows() {
 function swiftGroups() {
   const groups = new Map();
   // 第30批：分组标题/副标也走 WSL10n（zh 为语义身份，官网对照以 zh 为准）。
-  const groupChunk = swiftSource.split('static let groups')[1] ?? '';
+  // 第36批：生成器把声明改成了 static var groups，两种都认。
+  const groupChunk = swiftSource.split(/static (?:let|var) groups/)[1] ?? '';
   for (const m of groupChunk.matchAll(/WS2PrivacyGroup\(title: (?:WSL10n\.text\("[^"]*", zh: "((?:[^"\\]|\\.)*)"\)|"((?:[^"\\]|\\.)*)"), subtitle: (?:WSL10n\.text\("[^"]*", zh: "((?:[^"\\]|\\.)*)"\)|"((?:[^"\\]|\\.)*)")\)/g)) {
     groups.set(unswift(m[1] ?? m[2]), unswift(m[3] ?? m[4] ?? ''));
   }
