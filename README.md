@@ -42,7 +42,7 @@ Unlike minimizing, the window never leaves the desktop. Drag the bar somewhere e
 Get the latest ZIP from [Releases](https://github.com/surfine/WindowShade/releases/latest), unzip it, drag `WindowShade.app` into Applications and open it, then follow the permission prompts. It lives in the menu bar and stays out of your Dock.
 
 - **Needs macOS 14 or later and Apple Silicon.** There’s no Intel build.
-- **1.0.16 download:** 9.86 MB ZIP; the extracted app contains 24.57 MB of files (decimal MB; filesystem allocation may differ). The ZIP now carries the updater, hence the bigger size.
+- **1.0.16 download:** 10.04 MB ZIP; the extracted app contains 25.25 MB of files (decimal MB; filesystem allocation may differ). The ZIP now carries the updater, hence the bigger size.
 - **Not notarized yet.** If macOS blocks the first launch, go to System Settings → Privacy & Security and choose Open Anyway. You don’t need to turn off any system security.
 - Every release ships with a SHA-256 checksum file; for what changed in each version, see the [release notes](https://github.com/surfine/WindowShade/releases).
 
